@@ -1,11 +1,17 @@
+2001-03-21  Paul Eggert  <eggert@twinsun.com>
+
+	* international/mule-cmds.el (set-locale-environment): Set
+	system-messages-locale and system-time-locale, but only if the
+	caller specifies a non-nil locale name.
+
 2001-03-20  John Wiegley  <johnw@gnu.org>
 
 	* calendar/calendar.el (nongregorian-diary-listing-hook): Added
 	:options to cover the possible values.
-	(nongregorian-diary-marking-hook): ditto
+	(nongregorian-diary-marking-hook): Ditto
 
 	* cal-bahai.el, cal-menu.el, calendar.el, diary-lib.el,
-	holidays.el: Added support for the Baha'i calendar system.
+	* holidays.el: Added support for the Baha'i calendar system.
 
 	* pcvs-util.el (cvs-bury-buffer): Bodiless `if' statements cause
 	problems for the interpreter.
