@@ -1,3 +1,8 @@
+1999-10-20  Gerd Moellmann  <gerd@gnu.org>
+
+	* dired.el (dired-move-to-filename-regexp): Fix long comment lines
+	that were split so that part of the comment appeared as Lisp code.
+
 1999-10-20  Vinicius Jose Latorre  <vinicius@cpqd.com.br>
 
 	* ps-bdf.el: Doc fix.
