@@ -1,3 +1,8 @@
+2000-05-25  Stefan Monnier  <monnier@cs.yale.edu>
+
+	* regex.c (at_begline_loc_p): Also recognize the \\(?:^ case
+	of an anchor at the beginning of a shy-group.
+
 2000-05-25  Gerd Moellmann  <gerd@gnu.org>
 
 	* xdisp.c (handle_invisible_prop): Don't try to skip over
