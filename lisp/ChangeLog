@@ -1,3 +1,11 @@
+2000-10-04  Dave Love  <fx@gnu.org>
+
+	* toolbar/tool-bar.el (tool-bar-setup): New function.
+	(tool-bar-mode): Use it.
+
+	* subr.el (substitute-key-definition): Doc fix.
+	(play-sound-file): New command.
+
 2000-10-04  Andre Spiegel  <spiegel@gnu.org>
 
 	* vc-hooks.el (vc-before-save, vc-default-make-version-backups, 
