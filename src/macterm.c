@@ -12154,7 +12154,8 @@ init_required_apple_events ()
 
 #if USE_CARBON_EVENTS
 
-void init_service_handler()
+void
+init_service_handler ()
 {
   EventTypeSpec specs[] = {{kEventClassService, kEventServiceGetTypes},
 			   {kEventClassService, kEventServiceCopy},
@@ -12166,8 +12167,9 @@ void init_service_handler()
 /*
    MAC_TODO: Check to see if this is called by AEProcessDesc...
  */
-OSStatus mac_handle_service_event (EventHandlerCallRef callRef,
-				   EventRef event, void *data)
+OSStatus
+mac_handle_service_event (EventHandlerCallRef callRef,
+			  EventRef event, void *data)
 {
   OSStatus err = noErr; 
   switch (GetEventKind (event))
@@ -12343,8 +12345,9 @@ descriptor_error_exit:
 }
 
 
-static pascal OSErr mac_do_receive_drag (WindowPtr window, void *handlerRefCon,
-					 DragReference theDrag)
+static pascal OSErr
+mac_do_receive_drag (WindowPtr window, void *handlerRefCon,
+		     DragReference theDrag)
 {
   short items;
   short index;
@@ -13212,7 +13215,8 @@ NewMacWindow (FRAME_PTR fp)
 }
 
 
-void make_mac_frame (struct frame *f)
+void
+make_mac_frame (struct frame *f)
 {
   FRAME_CAN_HAVE_SCROLL_BARS (f) = 1;
   FRAME_VERTICAL_SCROLL_BAR_TYPE (f) = vertical_scroll_bar_right;
@@ -13245,7 +13249,8 @@ void make_mac_frame (struct frame *f)
   f->new_height = 0;
 }
 
-void make_mac_terminal_frame (struct frame *f)
+void
+make_mac_terminal_frame (struct frame *f)
 {
   Lisp_Object frame;
 
@@ -13428,7 +13433,8 @@ mac_term_init (display_name, xrm_option, resource_name)
 }
 
 #ifdef MAC_OSX
-void MakeMeTheFrontProcess ()
+void
+MakeMeTheFrontProcess ()
 {
   ProcessSerialNumber psn;
   OSErr err;
