@@ -1,3 +1,10 @@
+2000-12-01  Jason Rumney  <jasonr@gnu.org>
+
+	* w32term.c (w32_clear_window): Avoid clearing an invalid frame.
+
+	* w32xfns.c (get_frame_dc): Avoid changing the palette on an
+	invalid frame.
+
 2000-12-01  Gerd Moellmann  <gerd@gnu.org>
 
 	* window.c (struct saved_window): Add members orig_top and
@@ -9,6 +16,7 @@
 2000-12-01  Jason Rumney  <jasonr@gnu.org>
 
 	* w32term.c (x_draw_vertical_border): Fix call to w32_fill_rect.
+
 	* w32fns.c (x_set_cursor_color): Fix last change.
 
 2000-11-30  Gerd Moellmann  <gerd@gnu.org>
