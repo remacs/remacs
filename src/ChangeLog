@@ -1,3 +1,7 @@
+2000-09-10  Gerd Moellmann  <gerd@gnu.org>
+
+	* ralloc.c (mmap_enlarge): Don't return 0 if successful.
+
 2000-09-09  Ken Raeburn  <raeburn@gnu.org>
 
 	* s/netbsd.h: Use NOT_C_CODE, not NO_C_SOURCE, when deciding
@@ -6,7 +10,7 @@
 2000-09-09  Gerd Moellmann  <gerd@gnu.org>
 
 	* xfaces.c (CYCLE_CHECK): Don't use the Lisp_Object returned 
-	by Fmemq in a condition.
+	by Fmemq as a boolean.
 
 2000-09-08  Stefan Monnier  <monnier@cs.yale.edu>
 
