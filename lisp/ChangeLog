@@ -1,3 +1,7 @@
+2001-08-16  Gerd Moellmann  <gerd@gnu.org>
+
+	* replace.el (occur): Bind inhibit-read-only to t.
+
 2001-08-16  Miles Bader  <miles@gnu.org>
 
 	* simple.el (line-move): Pass an ESCAPE-FROM-EDGE argument of t
@@ -17,6 +21,8 @@
 	
 	* Makefile.in (finder_setwins): Renamed from nonobsolete_setwins.
 	Don't include term/.
+
+	* mail/sc.el:  Moved to obsolete/.
 
 2001-08-14  Vinicius Jose Latorre  <vinicius@cpqd.com.br>
 
