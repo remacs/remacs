@@ -1502,6 +1502,11 @@ releases have 8859-15.  There are new Latin-8 and Latin-9 prefix
 (only) and Polish slash input methods in Leim.
 
 +++
+** New language environments `Dutch' and `Spanish'.
+These new environments mainly select appropriate translations 
+of the tutorial.
+
++++
 ** Fortran mode has a new command `fortran-strip-sequence-nos' to
 remove text past column 72.  The syntax class of `\' in Fortran is now
 appropriate for C-style escape sequences in strings.
@@ -1660,6 +1665,11 @@ provides a number of functions vc-foo-... (see commentary at the end
 of vc.el for a detailed list of them).  To make VC use that library,
 you need to put it somewhere into Emacs' load path and add the atom
 `FOO' to the list `vc-handled-backends'.
+
+*** The customizable EDT emulation package now supports the EDT
+SUBS command and EDT scroll margins.  It also works with more
+terminal/keyboard configurations and it now works under XEmacs.
+See etc/edt-user.doc for more information.
 
 ** New modes and packages
 
@@ -1915,7 +1925,8 @@ the text at point.
 +++
 *** fortune.el uses the fortune program to create mail/news signatures.
 
-*** whitespace.el ???
+*** whitespace.el is a package for warning about and cleaning bogus
+whitespace in a file.
 
 *** PostScript mode (ps-mode) is a new major mode for editing PostScript
 files. It offers: interaction with a PostScript interpreter, including
