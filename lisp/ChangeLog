@@ -1,5 +1,7 @@
 2002-12-07  Andreas Schwab  <schwab@suse.de>
 
+	* eshell/em-ls.el (eshell-ls-product-regexp): Fix typo.
+
 	* files.el (find-file-read-args): Reenable wildcard processing
 	unconditionally.
 
@@ -7,7 +9,7 @@
 
 	* textmodes/texinfmt.el (texinfo-format-scan)
         Handle new functions for copyright notice and copying permissions.
-        (texinfo-copying, texinfo-insertcopying): New functions.
+	(texinfo-copying, texinfo-insertcopying): New functions.
 
 2002-12-03  TAKAHASHI Kaoru  <kaoru@kaisei.org>
 
