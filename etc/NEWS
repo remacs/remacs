@@ -798,9 +798,9 @@ to give it focus.
 +++
 ** The new command `describe-char' (C-u C-x =) pops up a buffer with
 description various information about a character, including its
-encodings and syntax, its text properties, overlays, and widgets at
-point.  You can get more information about some of them, by clicking
-on mouse-sensitive areas or moving there and pressing RET.
+encodings and syntax, its text properties, how to input, overlays, and
+widgets at point.  You can get more information about some of them, by
+clicking on mouse-sensitive areas or moving there and pressing RET.
 
 +++
 ** The new command `multi-occur' is just like `occur', except it can
@@ -2021,6 +2021,9 @@ a match if part of it has a read-only property.
 configuration files.
 
 * Lisp Changes in Emacs 21.4
+
+** New function quail-find-key returns a list of keys to type in the
+current input method to input a character.
 
 ** New functions posn-at-point and posn-at-x-y returns
 click-event-style position information for a given visible buffer
