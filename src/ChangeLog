@@ -1,7 +1,14 @@
 2001-10-20  Pavel Jan,Bm(Bk  <Pavel@Janik.cz>
 
-	* bytecode.c: Change doc-string comments to `new style' [w/`doc:'
-	keyword].
+	* xfns.c (x_laplace_read_row, x_laplace_write_row): Prototypes
+	removed.
+
+	* xdisp.c (invisible_text_between_p): Put prototype inside #if
+	0 because unused.
+
+	* bytecode.c, callint.c, callproc.c, casefiddle.c, casetab.c
+	* category.c, ccl.c, charset.c, process.c, window.c: Change
+	doc-string comments to `new style' [w/`doc:' keyword].
 
 2001-10-20  Miles Bader  <miles@gnu.org>
 
