@@ -1,5 +1,7 @@
 2000-07-04  Dave Love  <fx@gnu.org>
 
+	* hl-line.el (hl-line-overlay): Make it permanent-local.
+
 	* calendar/todo-mode.el: Replaced with a working version, based on
 	1998-01-12T11:43:22Z!os10000@seidel-space.de tidied up.
 
