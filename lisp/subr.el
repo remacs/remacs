@@ -344,6 +344,9 @@ and then modifies one entry in it."
 
 
 (defmacro lambda (&rest cdr)
+  "Macro which allows one to write (lambda ...) for anonymous functions
+instead of having to write (function (lambda ...)) or '(lambda ...), the
+latter of which won't get byte-compiled."
   (` (function (lambda (,@ cdr)))))
 
 ;;; subr.el ends here
