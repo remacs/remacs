@@ -1,3 +1,11 @@
+2001-03-06  Gerd Moellmann  <gerd@gnu.org>
+
+	* w32fns.c (Fx_create_frame): Clear Vwindow_list.
+
+	* xfns.c (Fx_create_frame): Clear Vwindow_list.
+
+	* lisp.h (Vwindow_list): Declare extern.
+
 2001-03-06  Eli Zaretskii  <eliz@is.elta.co.il>
 
 	* dispnew.c (syms_of_display) <glyph-table>: Doc fix.
@@ -8,7 +16,7 @@
 	to detect a case where we have to highlight a different region
 	despite not having left the currently highlighted region.
 	Set mouse_face_overlay in the x_display_info.
-	(x_term_init): Initialze the x_display_info's mouse_face_overlay.
+	(x_term_init): Initialize the x_display_info's mouse_face_overlay.
 
 	* xterm.h (struct x_display_info): Add mouse_face_overlay.
 
@@ -42,7 +50,7 @@
 
 	* charset.c (char_to_string): If a single byte char has modifier
 	bits that can't be reflected to the character code, ignore them
-	instead of signalling an error.
+	instead of signaling an error.
 
 2001-03-04  Eli Zaretskii  <eliz@is.elta.co.il>
 
