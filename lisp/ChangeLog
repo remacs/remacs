@@ -1,5 +1,8 @@
 2001-08-07  Gerd Moellmann  <gerd@gnu.org>
 
+	* tar-mode.el (tar-extract): Avoid generating a new buffer
+	for each file visited.  From Markus Rost <rost@math.ohio-state.edu>.
+
 	* textmodes/paragraphs.el (forward-sentence): Avoid building
 	a regexp from sentence-end.  From Kenichi Handa <handa@etl.go.jp>.
 
@@ -8,7 +11,7 @@
 	inserting it.
 
 	* image.el (image-type-regexps): For JPEG files, use a regexp
-	derived from the JPEG spec.
+	derived from the JFIF spec.
 	
 	* image.el (image-type-regexps): Use `\`' instead of `^' in
 	most regular expressions.
