@@ -1,8 +1,8 @@
-;;; nnspool.el --- spool access using NNTP for GNU Emacs
-
-;; Copyright (C) 1988, 1989, 1990, 1993 Free Software Foundation, Inc.
+;;; nnspool.el --- spool access for GNU Emacs
+;; Copyright (C) 1988,89,90,93,94,95 Free Software Foundation, Inc.
 
 ;; Author: Masanobu UMEDA <umerin@flab.flab.fujitsu.junet>
+;; 	Lars Magne Ingebrigtsen <larsi@ifi.uio.no>
 ;; Keywords: news
 
 ;; This file is part of GNU Emacs.
@@ -21,362 +21,409 @@
 ;; along with GNU Emacs; see the file COPYING.  If not, write to
 ;; the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 
+;;; Commentary:
+
 ;;; Code:
 
+(require 'nnheader)
 (require 'nntp)
+(require 'timezone)
 
 (defvar nnspool-inews-program news-inews-program
-  "*Program to post news.")
+  "Program to post news.
+This is most commonly `inews' or `injnews'.")
 
 (defvar nnspool-inews-switches '("-h")
-  "*Switches for nnspool-request-post to pass to `inews' for posting news.")
+  "Switches for nnspool-request-post to pass to `inews' for posting news.
+If you are using Cnews, you probably should set this variable to nil.")
 
 (defvar nnspool-spool-directory news-path
-  "*Local news spool directory.")
+  "Local news spool directory.")
 
-(defvar nnspool-active-file "/usr/lib/news/active"
-  "*Local news active file.")
+(defvar nnspool-nov-directory (concat nnspool-spool-directory "over.view/")
+  "Local news nov directory.")
 
-(defvar nnspool-newsgroups-file "/usr/lib/news/newsgroups"
-  "*Local news newsgroups file.")
+(defvar nnspool-lib-dir "/usr/lib/news/"
+  "Where the local news library files are stored.")
 
-(defvar nnspool-distributions-file "/usr/lib/news/distributions"
-  "*Local news distributions file.")
+(defvar nnspool-active-file (concat nnspool-lib-dir "active")
+  "Local news active file.")
 
-(defvar nnspool-history-file "/usr/lib/news/history"
-  "*Local news history file.")
+(defvar nnspool-newsgroups-file (concat nnspool-lib-dir "newsgroups")
+  "Local news newsgroups file.")
+
+(defvar nnspool-distributions-file (concat nnspool-lib-dir "distributions")
+  "Local news distributions file.")
+
+(defvar nnspool-history-file (concat nnspool-lib-dir "history")
+  "Local news history file.")
+
+(defvar nnspool-active-times-file (concat nnspool-lib-dir "active.times")
+  "Local news active date file.")
+
+(defvar nnspool-large-newsgroup 50
+  "The number of the articles which indicates a large newsgroup.
+If the number of the articles is greater than the value, verbose
+messages will be shown to indicate the current status.")
+
+(defvar nnspool-nov-is-evil nil
+  "Non-nil means that nnspool will never return NOV lines instead of headers.")
+
+(defconst nnspool-sift-nov-with-sed nil
+  "If non-nil, use sed to get the relevant portion from the overview file.
+If nil, nnspool will load the entire file into a buffer and process it
+there.")
 
 
 
-(defconst nnspool-version "NNSPOOL 1.12"
+(defconst nnspool-version "nnspool 2.0"
   "Version numbers of this version of NNSPOOL.")
 
 (defvar nnspool-current-directory nil
   "Current news group directory.")
 
-;;;
-;;; Replacement of Extended Command for retrieving many headers.
-;;;
-
-(defun nnspool-retrieve-headers (sequence)
-  "Return list of article headers specified by SEQUENCE of article id.
-The format of list is
- `([NUMBER SUBJECT FROM XREF LINES DATE MESSAGE-ID REFERENCES] ...)'.
-If there is no References: field, In-Reply-To: field is used instead.
-Reader macros for the vector are defined as `nntp-header-FIELD'.
-Writer macros for the vector are defined as `nntp-set-header-FIELD'.
-Newsgroup must be selected before calling this."
-  (save-excursion
-    (set-buffer nntp-server-buffer)
-    ;;(erase-buffer)
-    (let ((file nil)
-	  (number (length sequence))
-	  (count 0)
-	  (headers nil)			;Result list.
-	  (article 0)
-	  (subject nil)
-	  (message-id nil)
-	  (from nil)
-	  (xref nil)
-	  (lines 0)
-	  (date nil)
-	  (references nil))
-      (while sequence
-	;;(nntp-send-strings-to-server "HEAD" (car sequence))
-	(setq article (car sequence))
-	(setq file
-	      (concat nnspool-current-directory (prin1-to-string article)))
-	(if (and (file-exists-p file)
-		 (not (file-directory-p file)))
-	    (progn
-	      (erase-buffer)
-	      (insert-file-contents file)
-	      ;; Make message body invisible.
-	      (goto-char (point-min))
-	      (search-forward "\n\n" nil 'move)
-	      (narrow-to-region (point-min) (point))
-	      ;; Fold continuation lines.
-	      (goto-char (point-min))
-	      (while (re-search-forward "\\(\r?\n[ \t]+\\)+" nil t)
-		(replace-match " " t t))
-	      ;; Make it possible to search for `\nFIELD'.
-	      (goto-char (point-min))
-	      (insert "\n")
-	      ;; Extract From:
-	      (goto-char (point-min))
-	      (if (search-forward "\nFrom: " nil t)
-		  (setq from (buffer-substring
-			      (point)
-			      (save-excursion (end-of-line) (point))))
-		(setq from "(Unknown User)"))
-	      ;; Extract Subject:
-	      (goto-char (point-min))
-	      (if (search-forward "\nSubject: " nil t)
-		  (setq subject (buffer-substring
-				 (point)
-				 (save-excursion (end-of-line) (point))))
-		(setq subject "(None)"))
-	      ;; Extract Message-ID:
-	      (goto-char (point-min))
-	      (if (search-forward "\nMessage-ID: " nil t)
-		  (setq message-id (buffer-substring
-				    (point)
-				    (save-excursion (end-of-line) (point))))
-		(setq message-id nil))
-	      ;; Extract Date:
-	      (goto-char (point-min))
-	      (if (search-forward "\nDate: " nil t)
-		  (setq date (buffer-substring
-			      (point)
-			      (save-excursion (end-of-line) (point))))
-		(setq date nil))
-	      ;; Extract Lines:
-	      (goto-char (point-min))
-	      (if (search-forward "\nLines: " nil t)
-		  (setq lines (string-to-int
-			       (buffer-substring
-				(point)
-				(save-excursion (end-of-line) (point)))))
-		(setq lines 0))
-	      ;; Extract Xref:
-	      (goto-char (point-min))
-	      (if (search-forward "\nXref: " nil t)
-		  (setq xref (buffer-substring
-			      (point)
-			      (save-excursion (end-of-line) (point))))
-		(setq xref nil))
-	      ;; Extract References:
-	      ;; If no References: field, use In-Reply-To: field instead.
-	      (goto-char (point-min))
-	      (if (or (search-forward "\nReferences: " nil t)
-		      (search-forward "\nIn-Reply-To: " nil t))
-		  (setq references (buffer-substring
-				    (point)
-				    (save-excursion (end-of-line) (point))))
-		(setq references nil))
-	      ;; Collect valid article only.
-	      (and article
-		   message-id
-		   (setq headers
-			 (cons (vector article subject from
-				       xref lines date
-				       message-id references) headers)))
-	      ))
-	(setq sequence (cdr sequence))
-	(setq count (1+ count))
-	(and (numberp nntp-large-newsgroup)
-	     (> number nntp-large-newsgroup)
-	     (zerop (% count 20))
-	     (message "NNSPOOL: Receiving headers... %d%%"
-		      (/ (* count 100) number)))
-	)
-      (and (numberp nntp-large-newsgroup)
-	   (> number nntp-large-newsgroup)
-	   (message "NNSPOOL: Receiving headers... done"))
-      (nreverse headers)
-      )))
+(defvar nnspool-current-group nil)
+(defvar nnspool-status-string "")
 
 
-;;;
-;;; Replacement of NNTP Raw Interface.
-;;;
 
-(defun nnspool-open-server (host &optional service)
-  "Open news server on HOST.
-If HOST is nil, use value of environment variable `NNTPSERVER'.
-If optional argument SERVICE is non-nil, open by the service name."
-  (let ((host (or host (getenv "NNTPSERVER")))
-	(status nil))
-    (setq nntp-status-string "")
-    (cond ((and (file-directory-p nnspool-spool-directory)
-		(file-exists-p nnspool-active-file)
-		(string-equal host (system-name)))
-	   (setq status (nnspool-open-server-internal host service)))
-	  ((string-equal host (system-name))
-	   (setq nntp-status-string
-		 (format "%s has no news spool.  Goodbye." host)))
-	  ((null host)
-	   (setq nntp-status-string "NNTP server is not specified."))
-	  (t
-	   (setq nntp-status-string
-		 (format "NNSPOOL: cannot talk to %s." host)))
-	  )
-    status
-    ))
+(defvar nnspool-current-server nil)
+(defvar nnspool-server-alist nil)
+(defvar nnspool-server-variables 
+  (list
+   (list 'nnspool-inews-program nnspool-inews-program)
+   (list 'nnspool-inews-switches nnspool-inews-switches)
+   (list 'nnspool-spool-directory nnspool-spool-directory)
+   (list 'nnspool-nov-directory nnspool-nov-directory)
+   (list 'nnspool-lib-dir nnspool-lib-dir)
+   (list 'nnspool-active-file nnspool-active-file)
+   (list 'nnspool-newsgroups-file nnspool-newsgroups-file)
+   (list 'nnspool-distributions-file nnspool-distributions-file)
+   (list 'nnspool-history-file nnspool-history-file)
+   (list 'nnspool-active-times-file nnspool-active-times-file)
+   (list 'nnspool-large-newsgroup nnspool-large-newsgroup)
+   (list 'nnspool-nov-is-evil nnspool-nov-is-evil)
+   (list 'nnspool-sift-nov-with-sed nnspool-sift-nov-with-sed)
+   '(nnspool-current-directory nil)
+   '(nnspool-current-group nil)
+   '(nnspool-status-string "")))
 
-(defun nnspool-close-server ()
-  "Close news server."
-  (nnspool-close-server-internal))
+
+;;; Interface functions.
 
-(fset 'nnspool-request-quit (symbol-function 'nnspool-close-server))
+(defun nnspool-retrieve-headers (sequence &optional newsgroup server)
+  "Retrieve the headers for the articles in SEQUENCE.
+Newsgroup must be selected before calling this function."
+  (save-excursion
+    (set-buffer nntp-server-buffer)
+    (erase-buffer)
+    (let* ((number (length sequence))
+	   (count 0)
+	   (do-message (and (numberp nnspool-large-newsgroup)
+			    (> number nnspool-large-newsgroup)))
+	   file beg article)
+      (if (not (nnspool-possibly-change-directory newsgroup))
+	  ()
+	(if (and (numberp (car sequence))
+		 (nnspool-retrieve-headers-with-nov sequence))
+	    'nov
+	  (while sequence
+	    (setq article (car sequence))
+	    (if (stringp article)
+		(progn
+		  (setq file (nnspool-find-article-by-message-id article))
+		  (setq article 0))
+	      (setq file (concat nnspool-current-directory 
+				 (int-to-string article))))
+	    (and file (file-exists-p file)
+		 (progn
+		   (insert (format "221 %d Article retrieved.\n" article))
+		   (setq beg (point))
+		   (nnheader-insert-head file)
+		   (goto-char beg)
+		   (search-forward "\n\n" nil t)
+		   (forward-char -1)
+		   (insert ".\n")
+		   (delete-region (point) (point-max))))
+	    (setq sequence (cdr sequence))
+	    
+	    (and do-message
+		 (zerop (% (setq count (1+ count)) 20))
+		 (message "NNSPOOL: Receiving headers... %d%%"
+			  (/ (* count 100) number))))
+	  
+	  (and do-message (message "NNSPOOL: Receiving headers...done"))
+	  
+	  ;; Fold continuation lines.
+	  (goto-char (point-min))
+	  (while (re-search-forward "\\(\r?\n[ \t]+\\)+" nil t)
+	    (replace-match " " t t))
+	  'headers)))))
 
-(defun nnspool-server-opened ()
-  "Return server process status, T or NIL.
-If the stream is opened, return T, otherwise return NIL."
-  (and nntp-server-buffer
-       (get-buffer nntp-server-buffer)))
+(defun nnspool-open-server (server &optional defs)
+  (nnheader-init-server-buffer)
+  (if (equal server nnspool-current-server)
+      t
+    (if nnspool-current-server
+	(setq nnspool-server-alist 
+	      (cons (list nnspool-current-server
+			  (nnheader-save-variables nnspool-server-variables))
+		    nnspool-server-alist)))
+    (let ((state (assoc server nnspool-server-alist)))
+      (if state 
+	  (progn
+	    (nnheader-restore-variables (nth 1 state))
+	    (setq nnspool-server-alist (delq state nnspool-server-alist)))
+	(nnheader-set-init-variables nnspool-server-variables defs)))
+    (setq nnspool-current-server server)))
 
-(defun nnspool-status-message ()
+(defun nnspool-close-server (&optional server)
+  t)
+
+(defun nnspool-server-opened (&optional server)
+  (and (equal server nnspool-current-server)
+       nntp-server-buffer
+       (buffer-name nntp-server-buffer)))
+
+(defun nnspool-status-message (&optional server)
   "Return server status response as string."
-  nntp-status-string
-  )
+  nnspool-status-string)
 
-(defun nnspool-request-article (id)
+(defun nnspool-request-article (id &optional newsgroup server buffer)
   "Select article by message ID (or number)."
+  (nnspool-possibly-change-directory newsgroup)
   (let ((file (if (stringp id)
 		  (nnspool-find-article-by-message-id id)
-		(concat nnspool-current-directory (prin1-to-string id)))))
+		(concat nnspool-current-directory (prin1-to-string id))))
+	(nntp-server-buffer (or buffer nntp-server-buffer)))
     (if (and (stringp file)
 	     (file-exists-p file)
 	     (not (file-directory-p file)))
 	(save-excursion
-	  (nnspool-find-file file)))
-    ))
+	  (nnspool-find-file file)))))
 
-(defun nnspool-request-body (id)
+(defun nnspool-request-body (id &optional newsgroup server)
   "Select article body by message ID (or number)."
+  (nnspool-possibly-change-directory newsgroup)
   (if (nnspool-request-article id)
       (save-excursion
 	(set-buffer nntp-server-buffer)
 	(goto-char (point-min))
 	(if (search-forward "\n\n" nil t)
 	    (delete-region (point-min) (point)))
-	t
-	)
-    ))
+	t)))
 
-(defun nnspool-request-head (id)
+(defun nnspool-request-head (id &optional newsgroup server)
   "Select article head by message ID (or number)."
+  (nnspool-possibly-change-directory newsgroup)
   (if (nnspool-request-article id)
       (save-excursion
 	(set-buffer nntp-server-buffer)
 	(goto-char (point-min))
 	(if (search-forward "\n\n" nil t)
 	    (delete-region (1- (point)) (point-max)))
-	t
-	)
-    ))
+	t)))
 
-(defun nnspool-request-stat (id)
-  "Select article by message ID (or number)."
-  (setq nntp-status-string "NNSPOOL: STAT is not implemented.")
-  nil
-  )
-
-(defun nnspool-request-group (group)
+(defun nnspool-request-group (group &optional server dont-check)
   "Select news GROUP."
   (let ((pathname (nnspool-article-pathname
-		   (nnspool-replace-chars-in-string group ?. ?/))))
-    (if (file-directory-p pathname)
-	(setq nnspool-current-directory pathname))
-    ))
+		   (nnspool-replace-chars-in-string group ?. ?/)))
+	dir)
+    (if (not (file-directory-p pathname))
+	(progn
+	  (setq nnspool-status-string
+		"Invalid group name (no such directory)")
+	  nil)
+      (setq nnspool-current-directory pathname)
+      (setq nnspool-status-string "")
+      (if (not dont-check)
+	  (progn
+	    (setq dir (directory-files pathname nil "^[0-9]+$" t))
+	    ;; yes, completely empty spool directories *are* possible
+	    ;; Fix by Sudish Joseph <joseph@cis.ohio-state.edu>
+	    (and dir
+		 (setq dir
+		       (sort 
+			(mapcar
+			 (function
+			  (lambda (name)
+			    (string-to-int name)))
+			 dir)
+			'<)))
+	    (save-excursion
+	      (set-buffer nntp-server-buffer)
+	      (erase-buffer)
+	      (if dir
+		  (insert
+		   (format "211 %d %d %d %s\n" (length dir) (car dir)
+			   (progn (while (cdr dir) (setq dir (cdr dir)))
+				  (car dir))
+			   group))
+		(insert (format "211 0 0 0 %s\n" group))))))
+      t)))
 
-(defun nnspool-request-list ()
-  "List active newsgoups."
+(defun nnspool-close-group (group &optional server)
+  t)
+
+(defun nnspool-request-list (&optional server)
+  "List active newsgroups."
   (save-excursion
     (nnspool-find-file nnspool-active-file)))
 
-(defun nnspool-request-list-newsgroups ()
+(defun nnspool-request-list-newsgroups (&optional server)
   "List newsgroups (defined in NNTP2)."
   (save-excursion
     (nnspool-find-file nnspool-newsgroups-file)))
 
-(defun nnspool-request-list-distributions ()
+(defun nnspool-request-list-distributions (&optional server)
   "List distributions (defined in NNTP2)."
   (save-excursion
     (nnspool-find-file nnspool-distributions-file)))
 
-(defun nnspool-request-last ()
-  "Set current article pointer to the previous article
-in the current news group."
-  (setq nntp-status-string "NNSPOOL: LAST is not implemented.")
-  nil
-  )
+;; Suggested by Hallvard B Furuseth <h.b.furuseth@usit.uio.no>.
+(defun nnspool-request-newgroups (date &optional server)
+  "List groups created after DATE."
+  (if (nnspool-find-file nnspool-active-times-file)
+      (save-excursion
+	;; Find the last valid line.
+	(goto-char (point-max))
+	(while (and (not (looking-at 
+			  "\\([^ ]+\\) +\\([0-9]+\\)[0-9][0-9][0-9] "))
+		    (zerop (forward-line -1))))
+	(let ((seconds (nnspool-seconds-since-epoch date))
+	      groups)
+	  ;; Go through lines and add the latest groups to a list.
+	  (while (and (looking-at "\\([^ ]+\\) +[0-9]+ ")
+		      (progn
+			;; We insert a .0 to make the list reader
+			;; interpret the number as a float. It is far
+			;; too big to be stored in a lisp integer. 
+			(goto-char (1- (match-end 0)))
+			(insert ".0")
+			(> (progn
+			     (goto-char (match-end 1))
+			     (read (current-buffer)))
+			   seconds))
+		      (setq groups (cons (buffer-substring
+					  (match-beginning 1) (match-end 1))
+					 groups))
+		      (zerop (forward-line -1))))
+	  (erase-buffer)
+	  (while groups
+	    (insert (car groups) " 0 0 y\n")
+	    (setq groups (cdr groups))))
+	t)
+    nil))
 
-(defun nnspool-request-next ()
-  "Advance current article pointer."
-  (setq nntp-status-string "NNSPOOL: NEXT is not implemented.")
-  nil
-  )
-
-(defun nnspool-request-post ()
+(defun nnspool-request-post (&optional server)
   "Post a new news in current buffer."
   (save-excursion
-    ;; We have to work in the server buffer because of NEmacs hack.
-    (copy-to-buffer nntp-server-buffer (point-min) (point-max))
-    (set-buffer nntp-server-buffer)
-    (apply (function call-process-region)
-	   (point-min) (point-max)
-	   nnspool-inews-program 'delete t nil nnspool-inews-switches)
-    (prog1
-	(or (zerop (buffer-size))
-	    ;; If inews returns strings, it must be error message 
-	    ;;  unless SPOOLNEWS is defined.  
-	    ;; This condition is very weak, but there is no good rule 
-	    ;;  identifying errors when SPOOLNEWS is defined.  
-	    ;; Suggested by ohm@kaba.junet.
-	    (string-match "spooled" (buffer-string)))
+    (let* ((process-connection-type nil) ; t bugs out on Solaris
+	   (inews-buffer (generate-new-buffer " *nnspool post*"))
+	   (proc (apply 'start-process "*nnspool inews*" inews-buffer
+			nnspool-inews-program nnspool-inews-switches)))
+      (set-process-sentinel proc 'nnspool-inews-sentinel)
+      (process-send-region proc (point-min) (point-max))
+      ;; We slap a condition-case around this, because the process may
+      ;; have exited already...
+      (condition-case nil
+	  (process-send-eof proc)
+	(error nil))
+      t)))
+
+(defun nnspool-inews-sentinel (proc status)
+  (save-excursion
+    (set-buffer (process-buffer proc))
+    (goto-char (point-min))
+    (if (or (zerop (buffer-size))
+	    (search-forward "spooled" nil t))
+	(kill-buffer (current-buffer))
       ;; Make status message by unfolding lines.
       (subst-char-in-region (point-min) (point-max) ?\n ?\\ 'noundo)
-      (setq nntp-status-string (buffer-string))
-      (erase-buffer))
-    ))
+      (setq nnspool-status-string (buffer-string))
+      (message "nnspool: %s" nnspool-status-string)
+					;(kill-buffer (current-buffer))
+      )))
+
+(defalias 'nnspool-request-post-buffer 'nntp-request-post-buffer)
 
 
-;;;
-;;; Replacement of Low-Level Interface to NNTP Server.
-;;; 
+;;; Internal functions.
 
-(defun nnspool-open-server-internal (host &optional service)
-  "Open connection to news server on HOST by SERVICE (default is nntp)."
-  (save-excursion
-    (if (not (string-equal host (system-name)))
-	(error "NNSPOOL: cannot talk to %s." host))
-    ;; Initialize communication buffer.
-    (setq nntp-server-buffer (get-buffer-create " *nntpd*"))
-    (set-buffer nntp-server-buffer)
-    (buffer-flush-undo (current-buffer))
-    (erase-buffer)
-    (kill-all-local-variables)
-    (setq case-fold-search t)		;Should ignore case.
-    (setq nntp-server-process nil)
-    (setq nntp-server-name host)
-    ;; It is possible to change kanji-fileio-code in this hook.
-    (run-hooks 'nntp-server-hook)
-    t
-    ))
+(defun nnspool-retrieve-headers-with-nov (articles)
+  (if (or gnus-nov-is-evil nnspool-nov-is-evil)
+      nil
+    (let ((nov (concat (file-name-as-directory nnspool-nov-directory)
+		       (nnspool-replace-chars-in-string
+			nnspool-current-group ?. ?/)
+		       "/.overview"))
+	  article)
+      (if (file-exists-p nov)
+	  (save-excursion
+	    (set-buffer nntp-server-buffer)
+	    (erase-buffer)
+	    (if nnspool-sift-nov-with-sed
+		(nnspool-sift-nov-with-sed articles nov)
+	      (insert-file-contents nov)
+	      ;; First we find the first wanted line. We issue a number
+	      ;; of search-forwards - the first article we are lookign
+	      ;; for may be expired, so we have to go on searching until
+	      ;; we find one of the articles we want.
+	      (while (and articles
+			  (setq article (concat (int-to-string 
+						 (car articles)) "\t"))
+			  (not (or (looking-at article)
+				   (search-forward (concat "\n" article) 
+						   nil t))))
+		(setq articles (cdr articles)))
+	      (if (not articles)
+		  ()
+		(beginning-of-line)
+		(delete-region (point-min) (point))
+		;; Then we find the last wanted line. We go to the end
+		;; of the buffer and search backward much the same way
+		;; we did to find the first article.
+		;; !!! Perhaps it would be better just to do a (last articles), 
+		;; and go forward successively over each line and
+		;; compare to avoid this (reverse), like this:
+		;; (while (and (>= last (read nntp-server-buffer)))
+		;;             (zerop (forward-line 1))))
+		(setq articles (reverse articles))
+		(goto-char (point-max))
+		(while (and articles
+			    (not (search-backward 
+				  (concat "\n" (int-to-string (car articles))
+					  "\t") nil t)))
+		  (setq articles (cdr articles)))
+		(if articles
+		    (progn
+		      (forward-line 2)
+		      (delete-region (point) (point-max)))))
+	      (or articles (progn (erase-buffer) nil))))))))
 
-(defun nnspool-close-server-internal ()
-  "Close connection to news server."
-  (if (get-file-buffer nnspool-history-file)
-      (kill-buffer (get-file-buffer nnspool-history-file)))
-  (if nntp-server-buffer
-      (kill-buffer nntp-server-buffer))
-  (setq nntp-server-buffer nil)
-  (setq nntp-server-process nil))
+(defun nnspool-sift-nov-with-sed (articles file)
+  (let ((first (car articles))
+	(last (progn (while (cdr articles) (setq articles (cdr articles)))
+		     (car articles))))
+    (call-process "awk" nil t nil 
+		  (format "BEGIN {firstmsg=%d; lastmsg=%d;}\n $1 >= firstmsg && $1 <= lastmsg {print;}"
+			  (1- first) (1+ last))
+		  file)))
 
+;; Fixed by fdc@cliwe.ping.de (Frank D. Cringle). 
 (defun nnspool-find-article-by-message-id (id)
   "Return full pathname of an article identified by message-ID."
   (save-excursion
-    (let ((buffer (get-file-buffer nnspool-history-file)))
-      (if buffer
-	  (set-buffer buffer)
-	;; Finding history file may take lots of time.
-	(message "Reading history file...")
-	(set-buffer (find-file-noselect nnspool-history-file))
-	(message "Reading history file... done")))
-    ;; Search from end of the file. I think this is much faster than
-    ;; do from the beginning of the file.
-    (goto-char (point-max))
-    (if (re-search-backward
-	 (concat "^" (regexp-quote id)
-		 "[ \t].*[ \t]\\([^ \t/]+\\)/\\([0-9]+\\)[ \t]*$") nil t)
-	(let ((group (buffer-substring (match-beginning 1) (match-end 1)))
-	      (number (buffer-substring (match-beginning 2) (match-end 2))))
-	  (concat (nnspool-article-pathname
-		   (nnspool-replace-chars-in-string group ?. ?/))
-		  number))
-      )))
+    (let ((buf (get-buffer-create " *nnspool work*")))
+      (set-buffer buf)
+      (erase-buffer)
+      (call-process "grep" nil t nil id nnspool-history-file)
+      (goto-char (point-min))
+      (if (looking-at "<[^>]+>[ \t]+[-0-9~]+[ \t]+\\([^ \t\n]*\\)")
+	  (concat nnspool-spool-directory
+		  (nnspool-replace-chars-in-string 
+		   (buffer-substring (match-beginning 1) (match-end 1)) 
+		   ?. ?/))))))
 
 (defun nnspool-find-file (file)
   "Insert FILE in server buffer safely."
@@ -384,8 +431,20 @@ in the current news group."
   (erase-buffer)
   (condition-case ()
       (progn (insert-file-contents file) t)
-    (file-error nil)
-    ))
+    (file-error nil)))
+
+(defun nnspool-possibly-change-directory (newsgroup)
+  (if newsgroup
+      (let ((pathname (nnspool-article-pathname
+		       (nnspool-replace-chars-in-string newsgroup ?. ?/))))
+	(if (file-directory-p pathname)
+	    (progn
+	      (setq nnspool-current-directory pathname)
+	      (setq nnspool-current-group newsgroup))
+	  (setq nnspool-status-string 
+		(format "No such newsgroup: %s" newsgroup))
+	  nil))
+    t))
 
 (defun nnspool-article-pathname (group)
   "Make pathname for GROUP."
@@ -401,8 +460,32 @@ in the current news group."
       (if (= (aref string idx) from)
 	  (aset string idx to))
       (setq idx (1+ idx)))
-    string
-    ))
+    string))
+
+(defun nnspool-number-base-10 (num pos)
+  (if (<= pos 0) ""
+    (setcdr num (+ (* (% (car num) 10) 65536) (cdr num)))
+    (apply
+     'concat
+     (reverse
+      (list
+       (char-to-string
+	(aref "0123456789" (% (cdr num) 10)))
+       (progn
+	 (setcdr num (/ (cdr num) 10))
+	 (setcar num (/ (car num) 10))
+	 (nnspool-number-base-10 num (1- pos))))))))
+
+(defun nnspool-seconds-since-epoch (date)
+  (let* ((tdate (mapcar (lambda (ti) (and ti (string-to-int ti)))
+			(timezone-parse-date date)))
+	 (ttime (mapcar (lambda (ti) (and ti (string-to-int ti)))
+			(timezone-parse-time
+			 (aref (timezone-parse-date date) 3))))
+	 (unix (encode-time (nth 2 ttime) (nth 1 ttime) (nth 0 ttime)
+			    (nth 2 tdate) (nth 1 tdate) (nth 0 tdate) (nth 4 tdate))))
+    (+ (* (car unix) 65536.0)
+       (car (cdr unix)))))
 
 (provide 'nnspool)
 
