@@ -1,3 +1,8 @@
+2001-03-20  Gerd Moellmann  <gerd@gnu.org>
+
+	* mail/sendmail.el (mail-mode): Activate case-folding in
+	font-lock-defaults.
+
 2001-03-19  Stefan Monnier  <monnier@cs.yale.edu>
 
 	* bindings.el (mode-line-mode-menu): `glasses-mode' might be unbound.
@@ -49,8 +54,8 @@
 	
 2001-03-16  John Wiegley  <johnw@gnu.org>
 	
-	* (timeclock-workday-remaining): Check whether `discrep' is
-	non-null before using it.
+	* calendar/timeclock.el (timeclock-workday-remaining): Check
+	whether `discrep' is non-null before using it.
 
 2001-03-16  John Wiegley  <johnw@gnu.org>
 
