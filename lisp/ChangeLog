@@ -1,3 +1,15 @@
+2005-01-21  Carsten Dominik <dominik@science.uva.nl>
+	
+	* textmodes/reftex-global.el (reftex-isearch-push-state-function)
+	(reftex-isearch-pop-state-function)
+	(reftex-isearch-isearch-search)
+	(reftex-isearch-switch-to-next-file, reftex-isearch-turn-off)
+	(reftex-isearch-turn-on, reftex-isearch-minor-mode): New functions.
+
+	* textmodes/reftex.el (reftex-mode-menu): Add entry for reftex
+	isearch minor mode.
+
+
 2005-01-24  Luc Teirlinck  <teirllm@auburn.edu>
 
 	* help-at-pt.el (help-at-pt-display-when-idle): Add autoload cookie.
@@ -90,6 +102,7 @@
 	* term/mac-win.el (process-connection-type): Removed.
 	Controlled now by s/darwin.h:PTY_ITERATION.
 
+>>>>>>> 1.6921
 2005-01-20  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* window.el (handle-select-window): Don't switch window when we're
@@ -310,6 +323,7 @@
 	* ebrowse.el (ebrowse-class-in-tree): Return the tail of the tree
 	rather than the element found, thus enabling the tree to be setcar'd.
 
+>>>>>>> 1.6903
 2005-01-14  Carsten Dominik  <dominik@science.uva.nl>
 
 	* textmodes/org.el (org-show-following-heading): New option.
