@@ -377,7 +377,8 @@ The function is called from the article buffer."
   "Function to decode ``localized RFC 822 messages''.
 The function is called from the article buffer."
   :group 'gnus-article-mime
-  :type 'function)
+  :type 'function
+  :version "20.3")
 
 (defcustom gnus-page-delimiter "^\^L"
   "*Regexp describing what to use as article page delimiters.
@@ -411,7 +412,8 @@ If you want to run a special decoding program like nkf, use this hook."
 (defcustom gnus-article-hide-pgp-hook nil
   "*A hook called after successfully hiding a PGP signature."
   :type 'hook
-  :group 'gnus-article-various)
+  :group 'gnus-article-various
+  :version "20.3")
 
 (defcustom gnus-article-button-face 'bold
   "Face used for highlighting buttons in the article buffer.

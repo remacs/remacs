@@ -589,12 +589,14 @@ is created."
   (if (boundp 'user-mail-address) user-mail-address nil)
   "*Email address that `diary-mail-entries' will send email to."
   :group 'diary
-  :type 'string)
+  :type 'string
+  :version "20.3")
 
 (defcustom diary-mail-days 7
   "*Number of days for `diary-mail-entries' to check."
   :group 'diary
-  :type 'integer)
+  :type 'integer
+  :version "20.3")
 
 (defun diary-mail-entries (&optional ndays)
   "Send a mail message showing diary entries for next NDAYS days.
@@ -946,7 +948,8 @@ The default value -9999 causes entries with no recognizable time to be placed
 before those with times; 9999 would place entries with no recognizable time
 after those with times."
   :type 'integer
-  :group 'diary)
+  :group 'diary
+  :version "20.3")
  
 (defun diary-entry-time (s)
   "Time at the beginning of the string S in a military-style integer.  For
