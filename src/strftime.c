@@ -1,7 +1,7 @@
-/* Copyright (C) 1991, 92, 93, 94, 95, 96, 97 Free Software Foundation, Inc.
+/* Copyright (C) 1991,92,93,94,95,96,97,98 Free Software Foundation, Inc.
 
    NOTE: The canonical source of this file is maintained with the GNU C Library.
-   Bugs can be reported to bug-glibc@prep.ai.mit.edu.
+   Bugs can be reported to bug-glibc@gnu.org.
 
    This program is free software; you can redistribute it and/or modify it
    under the terms of the GNU General Public License as published by the
@@ -482,7 +482,7 @@ my_strftime (s, maxsize, format, tp)
 
   for (f = format; *f != '\0'; ++f)
     {
-      int pad;			/* Padding for number ('-', '_', or 0).  */
+      int pad = 0;		/* Padding for number ('-', '_', or 0).  */
       int modifier;		/* Field modifier ('E', 'O', or 0).  */
       int digits;		/* Max digits for numeric format.  */
       int number_value; 	/* Numeric value to be printed.  */
@@ -572,7 +572,6 @@ my_strftime (s, maxsize, format, tp)
 #endif /* ! DO_MULTIBYTE */
 
       /* Check for flags that can modify a format.  */
-      pad = 0;
       while (1)
 	{
 	  switch (*++f)
