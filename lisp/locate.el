@@ -165,7 +165,7 @@
 (defun locate-default-make-command-line (search-string)
   (list locate-command search-string))
 
-;;;### autoload
+;;;###autoload
 (defun locate (search-string &optional filter)
   "Run the program `locate', putting results in `*Locate*' buffer."
   (interactive
@@ -195,7 +195,7 @@
     )
   )
 
-;;;### autoload
+;;;###autoload
 (defun locate-with-filter (search-string filter)
   "Run the locate command with a filter."
   (interactive
