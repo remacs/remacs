@@ -1,8 +1,19 @@
+2005-10-21  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* progmodes/sh-script.el (sh-font-lock-syntactic-keywords): Make $@
+	and $? into sexps.
+
+	* font-lock.el (font-lock-compile-keywords): Add a help-echo to the
+	warning face on open-paren-in-column-0.
+
+	* emacs-lisp/syntax.el (syntax-ppss-flush-cache): Fix corner
+	boundary case.  Fix typo.
+	Suggested by Martin Rudalics <rudalics@gmx.at>.
+
 2005-10-21  Carsten Dominik  <dominik@science.uva.nl>
 
 	* textmodes/org.el: (org-combined-agenda-icalendar-file)
-	(org-icalendar-include-todo, org-icalendar-combined-name): New
-	options.
+	(org-icalendar-include-todo, org-icalendar-combined-name): New options.
 	(org-export-icalendar-this-file)
 	(org-export-icalendar-all-agenda-files)
 	(org-export-icalendar-combine-agenda-files): New commands.
@@ -12,8 +23,7 @@
 	(org-read-date, org-goto-calendar)
 	(org-agenda-goto-calendar): Inhibit displaying diary entries by
 	call to `calendar'.
-	(orgtbl-setup): Removed the :keys arguments from the menu
-	description.
+	(orgtbl-setup): Remove the :keys arguments from the menu description.
 	(org-after-save-iCalendar-file-hook): New variable.
 
 2005-10-21  Kenichi Handa  <handa@m17n.org>
@@ -25,6 +35,13 @@
 
 	* net/ange-ftp.el (ange-ftp-date-regexp): Handle also the case no
 	group id is given.
+
+2005-10-20  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* progmodes/sh-script.el (sh-escaped-line-re): New var.
+	(sh-here-doc-open-re, sh-font-lock-close-heredoc): Use it.
+	(sh-font-lock-open-heredoc): Try to properly handle heredoc starters
+	whose line is either continued or ends with a comment.
 
 2005-10-20  Romain Francoise  <romain@orebokech.com>
 
@@ -130,13 +147,12 @@
 
 2005-10-20  Reiner Steib  <Reiner.Steib@gmx.de>
 
-	* textmodes/org.el (org-level-color-stars-only): Fix typo in doc
-	string.
+	* textmodes/org.el (org-level-color-stars-only): Fix typo in docstring.
 
 2005-10-20  Eli Zaretskii  <eliz@gnu.org>
 
-	* makefile.w32-in ($(lisp)/mh-e/mh-loaddefs.el): Bind
-	find-file-suppress-same-file-warnings to t, to avoid warnings due
+	* makefile.w32-in ($(lisp)/mh-e/mh-loaddefs.el):
+	Bind find-file-suppress-same-file-warnings to t, to avoid warnings due
 	to different drive letter case in D:/foo/bar.el vs d:/foo/bar.el.
 
 2005-10-20  Kim F. Storm  <storm@cua.dk>
@@ -147,6 +163,18 @@
 	Explicitly handle ange-ftp completion oddities.
 	(ido-make-file-list): Don't rotate list at tramp root to avoid
 	triggering tramp file handler for expand-file-name via get-file-buffer.
+
+2005-10-19  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* simple.el (eval-expression-print-format): Put the char-string
+	inside the parenthesis, like the other alternative notations.
+	(kill-new): Use push.
+	(copy-to-buffer): Use with-current-buffer.
+	(completion-setup-function): Simplify.
+	(minibuffer-local-must-match-map): Don't add redundant bindings which
+	are already present in its parent (minibuffer-local-completion-map).
+
+	* savehist.el (savehist-coding-system): Revert to checking XEmacs.
 
 2005-10-19  Jay Belanger  <belanger@truman.edu>
 
@@ -166,6 +194,8 @@
 	docstring.
 
 2005-10-18  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* savehist.el (savehist-load): Revert to checking XEmacs.
 
 	* textmodes/conf-mode.el: Don't use font-lock-defaults-alist.
 	Various docstring and line-width fixups.
@@ -291,8 +321,7 @@
 
 	* progmodes/gdb-ui.el (gdb-var-create-handler): Make watch
 	expressions display in speedbar for all buffers when debugging.
-	(gdb-speedbar-expand-node): Ensure node contraction is always
-	updated.
+	(gdb-speedbar-expand-node): Ensure node contraction is always updated.
 
 	* speedbar.el (speedbar-set-mode-line-format): Indent properly.
 	(speedbar-insert-button, speedbar-make-button):
@@ -415,7 +444,6 @@
 
 	* progmodes/pascal.el (pascal-complete-word)
 	(pascal-show-completions): Ditto.
-
 
 	* textmodes/bibtex.el (bibtex-complete-internal): Ditto.
 
