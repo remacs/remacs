@@ -13238,9 +13238,10 @@ With optional NODE, go directly to that node."
   ;; through to `fill-paragraph' when appropriate.
   (set (make-local-variable 'fill-paragraph-function) 'org-fill-paragraph)
   ;; Adaptive filling: To get full control, first make sure that
-  ;; `adaptive-fill-regexp' never matches.  Then install our won matcher.
-  (setq adaptive-fill-regexp "\000")
-  (setq adaptive-fill-function 'org-adaptive-fill-function))
+  ;; `adaptive-fill-regexp' never matches.  Then install our own matcher.
+  (set (make-local-variable 'adaptive-fill-regexp) "\000")
+  (set (make-local-variable 'adaptive-fill-function)
+       'org-adaptive-fill-function))
 
 (defun org-fill-paragraph (&optional justify)
   "Re-align a table, pass through to fill-paragraph if no table."
