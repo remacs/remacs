@@ -1,3 +1,8 @@
+2006-09-21  Kim F. Storm  <storm@cua.dk>
+
+	* emacs-lisp/cl.el (pushnew-internal): Remove defvar.
+	(pushnew): Fix last change.
+
 2006-09-21  Kenichi Handa  <handa@m17n.org>
 
 	* language/european.el ("Latin-1"): Add windows-1252 to
@@ -57,7 +62,6 @@
 	* menu-bar.el (clipboard-yank): Bomb out in interactive use if
 	buffer is read-only.
 
->>>>>>> 1.10102
 2006-09-18  Ken Manheimer  <ken.manheimer@gmail.com>
 
 	* allout.el (allout-unprotected): Let inhibit-read-only only when
