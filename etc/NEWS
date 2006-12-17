@@ -4548,6 +4548,10 @@ autoloaded when not really necessary.
 *** The function `make-auto-save-file-name' is now handled by file
 name handlers.  This will be exploited for remote files mainly.
 
++++
+*** The function `file-name-completion' accepts an optional argument
+PREDICATE, and rejects completion candidates that don't satisfy PREDICATE.
+
 ** Input changes:
 
 +++
@@ -4557,7 +4561,7 @@ maximum time to wait for input, in seconds.  If no input arrives after
 this time elapses, the functions stop waiting and return nil.
 
 +++
-*** An interactive specification can now use the code letter 'U' to get
+*** An interactive specification can now use the code letter `U' to get
 the up-event that was discarded in case the last key sequence read for a
 previous `k' or `K' argument was a down-event; otherwise nil is used.
 
