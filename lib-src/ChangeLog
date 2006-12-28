@@ -6,6 +6,7 @@
 	under the hypothesis that the #line directive file name was
 	relative to the directory of the tagged file.  That hypothesis is
 	wrong with Cpp and Lex.
+	(Makefile_targets): Do not include spaces in tag names.
 
 2006-12-22  Eli Zaretskii  <eliz@gnu.org>
 
