@@ -74,6 +74,12 @@ bring back the old bug?
 
 ** andreas.roehler@easy-emacs.de, Feb 19: auto-insert help-buffer
 
+** david.hansen@physik.fu-berlin.de, Mar 5: isearch and Input Methods
+
+** alinsoar@voila.fr, Mar 5: EVAL and partial-completion-mode
+
+** alinsoar@voila.fr, Mar 5: EVAL and mouse selection in *Completions*
+
 * DOCUMENTATION
 
 ** Check the Emacs Tutorial.
