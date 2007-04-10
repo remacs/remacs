@@ -1,14 +1,21 @@
-2007-04-08  Alan Mackenzie  <acm@muc.de>
+2007-04-10  Markus Triska  <markus.triska@gmx.at>
+
+	* emacs-lisp/byte-opt.el (byte-optimize-char-before): Remove (move
+	to bytecomp.el as byte-compile-char-before).
+	* emacs-lisp/bytecomp.el (byte-compile-char-before): New
+	function (modified replacement for byte-optimize-char-before in
+	byte-opt.el).
+
+2007-04-09  Alan Mackenzie  <acm@muc.de>
 
 	* startup.el (inhibit-splash-screen): Emphatically state that it
 	can't be set in site-start.el.
 
 2007-04-09  Masatake YAMATO  <jet@gyve.org>
 
-	* progmodes/cc-subword.el (c-capitalize-subword): Implement
-	better mimic the behavior of `capitalize-word'.  They no longer
-	move point with a  negative argument.
-	Based on code by Paul Curry.
+	* progmodes/cc-subword.el (c-capitalize-subword): More closely
+	mimic the behavior of `capitalize-word'.  Do not move point with a
+	negative argument.  Based on tiny change by Paul Curry.
 
 2007-04-09  Paul Curry  <dashteacup@gmail.com>  (tiny change)
 
