@@ -1,3 +1,9 @@
+2007-08-02  Richard Stallman  <rms@gnu.org>
+
+	* progmodes/compile.el (compilation-find-buffer): Return current
+	buffer immediately if suitable.
+	(compile, compilation-buffer-name, compilation-start): Doc fixes.
+
 2007-08-02  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* vc-bzr.el (vc-bzr-admin-dirstate): Rename from `...-dirname'.
@@ -10,7 +16,7 @@
 
 	* ibuf-ext.el (ibuffer-mark-old-buffers): Docstring fix.
 
-2007-07-31  Drew Adams  <drew.adams@oracle.com>  (tiny change)
+2007-07-31  Drew Adams  <drew.adams@oracle.com>
 
 	* cus-edit.el (custom-group-value-create, custom-goto-parent):
 	Fix parent groups link.
@@ -12319,7 +12325,7 @@
 	(name, size, mode) <define-ibuffer-column>: Add a header-mouse-map
 	property.
 
-2006-04-02  Drew Adams  <drew.adams@oracle.com>  (tiny change)
+2006-04-02  Drew Adams  <drew.adams@oracle.com>
 
 	* speedbar.el (speedbar-after-create-hook): Doc fix.
 
