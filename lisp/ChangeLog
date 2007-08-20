@@ -1,3 +1,9 @@
+2007-08-20  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	* vc-rcs.el (vc-rcs-annotate-command):
+	Fix bug introduced 2007-07-18T16:32:40Z!esr@snark.thyrsus.com:
+	Add back :vc-annotate-prefix propertization.
+
 2007-08-20  Andreas Schwab  <schwab@suse.de>
 
 	* mail/rmail.el (rmail-autodetect): Doc fix.
@@ -21,19 +27,19 @@
 	all links in two columns on two lines.
 
 2007-08-19  Michael Kifer  <kifer@cs.stonybrook.edu>
-	
+
 	* viper.el (viper-remove-hooks): remove some additional viper hooks
 	when the user calls viper-go-away.
 	(viper-go-away): restore the default of default-major-mode.
 	Save the value of default-major-mode before vaperization.
-	
+
 	* viper-cmd.el: Replace error "" with "Viper bell".
-	
+
 	* viper-ex.el: Replace error "" with "Viper bell".
-	
+
 	* ediff-util.el (ediff-make-temp-file): use the coding system of the
 	buffer for which file is created.
-	
+
 2007-08-19  Glenn Morris  <rgm@gnu.org>
 
 	* Makefile.in (custom-deps, finder-data, autoloads, recompile)
