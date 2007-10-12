@@ -1,3 +1,9 @@
+2007-10-12  Glenn Morris  <rgm@gnu.org>
+
+	* cus-edit.el (custom-variable-menu, custom-face-menu)
+	(custom-group-menu): Check init-file-user rather than
+	user-init-file, in case cus-edit is loaded by site-run-file.
+
 2007-10-11  Dan Nicolaescu  <dann@ics.uci.edu>
 
 	* vc.el (vc-deduce-fileset): Delete unused code.
@@ -17,8 +23,8 @@
 	(with-vc-properties): Fievaluation time of a macro argument.
 
 	* ediff-vers.el (ediff-vc-internal):
-	vc-hooks.el:
-	loaddefs.el: Follow up on VC terminology change.
+	* vc-hooks.el:
+	* loaddefs.el: Follow up on VC terminology change.
 
 2007-10-11  Juanma Barranquero  <lekktu@gmail.com>
 
