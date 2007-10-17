@@ -1,3 +1,9 @@
+2007-10-17  Aaron S. Hawley  <aaronh@garden.org>
+
+	* building.texi (Source Buffers):
+	* custom.texi (Init Non-ASCII):
+	* glossary.texi (Glossary): Use "key binding" consistently.
+
 2007-10-17  Juanma Barranquero  <lekktu@gmail.com>
 
 	* calendar.texi (Diary): Fix directive.
@@ -18,7 +24,7 @@
 
 	* emacs.texi:
 	* files.texi (Version Systems): Minor fixes to version-control material
-	suggseted by RMS and Robert J. Chassell.
+	suggested by RMS and Robert J. Chassell.
 
 2007-10-10  Eric S. Raymond  <esr@snark.thyrsus.com>
 
