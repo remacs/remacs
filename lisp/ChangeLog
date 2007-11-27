@@ -49,6 +49,10 @@
 
 2007-11-27  Glenn Morris  <rgm@gnu.org>
 
+	* calc/calc-ext.el (math-read-big-rec):
+	* calc/calc-nlfit.el (math-map-binop):
+	* calc/calc.el (math-normalize-nonstandard): Fix declarations.
+
 	* eshell/eshell.el (eshell-report-bug): Add version number of
 	obsolescence.
 
