@@ -11,6 +11,10 @@
 
 2008-02-08  Glenn Morris  <rgm@gnu.org>
 
+	* custom.el (custom-theme-set-variables): Sort symbols that are
+	dependencies before symbols that depend on them.
+	(custom-enabled-themes): Set after custom-theme-directory.
+
 	* pcmpl-unix.el (top-level): Move provide statement to end.
 	(pcmpl-unix-group-file, pcmpl-unix-passwd-file): Remove leading
 	`*' from doc-string.  Allow to be nil.
