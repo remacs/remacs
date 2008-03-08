@@ -71,7 +71,7 @@
 	(hebrew-calendar-elapsed-days, hebrew-calendar-long-heshvan-p)
 	(hebrew-calendar-short-kislev-p, mark-hebrew-diary-entries)
 	(insert-hebrew-diary-entry, insert-monthly-hebrew-diary-entry)
-	(insert-yearly-hebrew-diary-entry, diary-yahrzeit): Doc fixes.
+	(insert-yearly-hebrew-diary-entry, diary-yahrzeit):
 	* calendar/cal-islam.el (islamic-calendar-leap-year-p)
 	(list-islamic-diary-entries, mark-islamic-diary-entries)
 	(insert-islamic-diary-entry, insert-monthly-islamic-diary-entry)
@@ -179,6 +179,11 @@
 	(solar-ecliptic-coordinates): Use unless.
 	(calendar-sunrise-sunset, diary-sunrise-sunset, diary-sabbath-candles):
 	Use or.
+
+	* calendar/timeclock.el: Add doc-strings to all functions.
+	(timeclock-workday, timeclock-in, timeclock-completing-read): Doc fixes.
+	(timeclock-entry-list-length, timeclock-entry-list-projects)
+	(timeclock-day-list-projects, timeclock-day-list): Use dolist.
 
 	* calendar/todo-mode.el: Remove un-needed eval-when-compile.
 
