@@ -1,5 +1,46 @@
 2008-04-22  Juri Linkov  <juri@jurta.org>
 
+	* isearch.el (eval-when-compile): Require `help-macro'.
+	(isearch-help-for-help-internal): Isearch specific Help screen
+	created by `make-help-screen'.
+	(isearch-help-map): New variable that binds "b", "k", "m" to
+	isearch-specific commands, and binds other keys to
+	isearch-other-control-char, thus allowing other Help keys to
+	exit isearch mode and execute their global definitions.
+	(isearch-help-for-help, isearch-describe-bindings)
+	(isearch-describe-key, isearch-describe-mode): New commands.
+	(isearch-mode-help): Define alias to isearch-describe-mode
+	and remove its old function definition.
+	(isearch-mode-map): Bind "\C-h" to isearch-help-map.
+	Remove old comments because this issue is settled now.
+	(isearch-forward): Describe three new Help commands in the docstring.
+	(isearch-mode): Remove \\{isearch-mode-map} from the docstring,
+	leave the single sentence at the first line of the docstring,
+	and prepend the word "function" before `isearch-forward'
+	to make the Help link to the function instead of variable.
+
+2008-04-22  Juri Linkov  <juri@jurta.org>
+
+	* isearch.el (isearch-success-function): New variable with default
+	to `isearch-success-function-default'.
+	(isearch-search): Call a function from `isearch-success-function'
+	instead of calling the hard-coded `isearch-range-invisible'.
+	(isearch-success-function-default): New function that calls
+	`isearch-range-invisible' and inverts its return value.
+
+	* info.el (Info-search): In two similar places that skip
+	undesired search matches move code to Info-search-success-function,
+	and call `isearch-success-function' instead.
+	(Info-search-success-function): New function copied from code
+	in Info-search.  Replace isearch-range-invisible with
+	text-property-not-all that checks for 'invisible and 'display
+	properties to skip partially invisible matches (whose display
+	properties were set by Info-fontify-node).
+	(Info-mode): Set buffer-local isearch-success-function
+	to Info-search-success-function.
+
+2008-04-22  Juri Linkov  <juri@jurta.org>
+
 	* minibuffer.el (internal-complete-buffer-except): New function.
 
 	* files.el (read-buffer-to-switch): New function.
