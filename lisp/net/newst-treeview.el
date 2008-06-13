@@ -1,13 +1,13 @@
-;;; newsticker-treeview.el --- Treeview frontend for newsticker.
+;;; newst-treeview.el --- Treeview frontend for newsticker.
 
 ;; Copyright (C) 2008 Free Software Foundation, Inc.
 
 ;; Author:      Ulf Jasper <ulf.jasper@web.de>
-;; Filename:    newsticker-treeview.el
+;; Filename:    newst-treeview.el
 ;; URL:         http://www.nongnu.org/newsticker
 ;; Created:     2007
 ;; Keywords:    News, RSS, Atom
-;; Time-stamp:  "8. Juni 2008, 20:42:16 (ulf)"
+;; Time-stamp:  "13. Juni 2008, 17:43:54 (ulf)"
 
 ;; ======================================================================
 
@@ -1985,4 +1985,4 @@ POS gives the position where EVENT occurred."
 (provide 'newsticker-treeview)
 
 ;; arch-tag: 5dbaff48-1f3e-4fc6-8ebd-e966fc90d2d4
-;;; newsticker-treeview.el ends here
+;;; newst-treeview.el ends here

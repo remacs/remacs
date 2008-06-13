@@ -1,12 +1,12 @@
-;;; newsticker-plainview.el --- Single buffer frontend for newsticker.
+;;; newst-plainview.el --- Single buffer frontend for newsticker.
 
 ;; Copyright (C) 2003, 2004, 2005, 2006, 2007, 2008
 ;;   Free Software Foundation, Inc.
 
 ;; Author:      Ulf Jasper <ulf.jasper@web.de>
-;; Filename:    newsticker-plainview.el
+;; Filename:    newst-plainview.el
 ;; URL:         http://www.nongnu.org/newsticker
-;; Time-stamp:  "8. Juni 2008, 20:39:46 (ulf)"
+;; Time-stamp:  "13. Juni 2008, 18:49:26 (ulf)"
 
 ;; ======================================================================
 
@@ -1827,4 +1827,4 @@ Take care: end of item is at the end of its last line!"
 (provide 'newsticker-plainview)
 
 ;; arch-tag: 4e48b683-d48b-48dd-a13e-fe45baf41184
-;;; newsticker-plainview.el ends here
+;;; newst-plainview.el ends here

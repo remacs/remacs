@@ -1,12 +1,12 @@
-;;; newsticker-reader.el --- Generic RSS reader functions.
+;;; newst-reader.el --- Generic RSS reader functions.
 
 ;; Copyright (C) 2003, 2004, 2005, 2006, 2007, 2008
 ;;   Free Software Foundation, Inc.
 
 ;; Author:      Ulf Jasper <ulf.jasper@web.de>
-;; Filename:    newsticker-reader.el
+;; Filename:    newst-reader.el
 ;; URL:         http://www.nongnu.org/newsticker
-;; Time-stamp:  "7. Juni 2008, 15:34:08 (ulf)"
+;; Time-stamp:  "13. Juni 2008, 17:45:36 (ulf)"
 
 ;; ======================================================================
 
@@ -1127,4 +1127,4 @@ static char * visit_xpm[] = {
 (provide 'newsticker-reader)
 
 ;; arch-tag: c604b701-bdf1-4fc1-8d05-5fabd1939533
-;;; newsticker-reader.el ends here
+;;; newst-reader.el ends here
