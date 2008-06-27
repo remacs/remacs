@@ -8103,7 +8103,7 @@
 	* tooltip.el (tooltip-gud-print-command): Add server prefix to the
 	print command for gdb to keep it out of the command history.
 
-	* gdb-ui.el: Major re-organisation.  Simplify legacy gdba
+	* gdb-ui.el: Major re-organization.  Simplify legacy gdba
 	code to allow only one gdb process.
 
 2002-11-23  Markus Rost  <rost@math.ohio-state.edu>
@@ -10404,7 +10404,7 @@
 	`file-exists-p.
 	(tramp-completion-handle-file-exists-p): New function.
 	(tramp-completion-handle-file-name-completion): Simplified.
-	(tramp-completion-dissect-file-name): Regexp's reorganised.
+	(tramp-completion-dissect-file-name): Regexp's reorganized.
 	(tramp-completion-handle-file-name-all-completions):
 	Call completion-function only if `user' or `host' is given.
 	(tramp-get-completion-user-host): New function.
