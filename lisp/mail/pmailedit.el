@@ -153,5 +153,5 @@ This functions runs the normal hook `pmail-edit-mode-hook'.
 
 (provide 'pmailedit)
 
-;; arch-tag: 93c22709-a14a-46c1-ab91-52c3f5a0ec12
+;; arch-tag: 9524f335-12cc-4e95-9e9b-3208dc30550b
 ;;; pmailedit.el ends here
