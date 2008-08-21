@@ -814,6 +814,7 @@ including `dired-do-query-replace-regexp', `vc-dir-query-replace-regexp',
 *** The line length of fixed-form Fortran is not fixed at 72 any more.
 Customize the variable `fortran-line-length' to change it.
 
++++
 *** In Fortran mode, M-; is now bound to the standard comment-dwim,
 rather than fortran-indent-comment.
 
@@ -1119,6 +1120,7 @@ coding-system used for decoding.  The functions
 `process-filter-multibyte-p' and `set-process-filter-multibyte' are
 obsolete.
 
+---
 ** The variable `byte-compile-warnings' can now be a list starting with `not',
 meaning to disable the specified warnings.  The meaning of this list
 may therefore be the reverse of what you expect (of course, this is
@@ -1208,6 +1210,7 @@ IDENTIFICATION specifies which part of the remote identifier has to be
 returned.  With CONNECTED passed non-nil, it is checked whether a
 remote connection has been established already.
 
++++
 ** The new macro `declare-function' suppresses compiler warnings about
 undefined functions.
 
@@ -1633,6 +1636,7 @@ certain variable as having been made within Custom.
 
 ** The new package avl-tree.el deals with the AVL tree data structure.
 
++++
 ** The new package check-declare.el verifies the accuracy of
 declare-function macros (see Lisp Changes, above).
 
