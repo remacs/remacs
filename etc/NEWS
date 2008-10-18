@@ -1285,15 +1285,19 @@ function to use for searching in `query-replace-regexp',
 `map-query-replace-regexp'.  The function it specifies is called by
 `perform-replace' when its 4th argument is non-nil.
 
++++
 *** New keymap `search-map' bound to `M-s' provides global bindings
 for search related commands.
 
++++
 *** New keymap `multi-query-replace-map' contains additonal keys bound
 to `automatic-all' and `exit-current' for multi-buffer interactive replacement.
 
+---
 *** The variable `inhibit-changing-match-data', if non-nil, prevents
 the search and match primitives from changing the match data.
 
+---
 *** New functions `word-search-forward-lax' and `word-search-backward-lax'.
 These are like `word-search-forward and `word-search-backward', except
 that the end of the search string need not match a word boundary,
