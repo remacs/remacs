@@ -43,3 +43,6 @@ leim*.tar.gz
 lock
 site-lisp
 update.log
+_dir-locals.el
+_dir-loc.el
+
