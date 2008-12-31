@@ -36,6 +36,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "blockinput.h"
 #include "termhooks.h"		/* For struct terminal.  */
 #include "font.h"
+
 #ifdef HAVE_XWIDGETS
 #include "xwidget.h"
 #endif
@@ -1805,7 +1806,7 @@ print_object (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag)
 	  strout ("#<xwidget-view ", -1, -1, printcharfun);
 	  PRINTCHAR ('>');
 	}
-#endif      
+#endif
       else if (WINDOWP (obj))
 	{
 	  int len;
