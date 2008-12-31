@@ -17,6 +17,7 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
+
 #include <config.h>
 
 #include "sysstdio.h"
@@ -198,7 +199,8 @@ add_window_display_history (struct window *w, const char *msg, bool paused_p)
    PAUSED_P means that the update has been interrupted for
    pending input.  */
 
-static void add_frame_display_history (struct frame *f, int paused_p)
+static void
+add_frame_display_history (struct frame *f, bool paused_p)
 {
   char *buf;
   void *ptr = f;
@@ -4137,7 +4139,7 @@ scrolling_window (struct window *w, bool header_line_p)
   //printf("scrolling_window\n");
     return 0;
 #endif
-  
+
   /* Give up if some rows in the desired matrix are not enabled.  */
   if (! MATRIX_ROW_ENABLED_P (desired_matrix, i))
     return -1;
