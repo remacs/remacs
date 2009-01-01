@@ -5324,7 +5324,7 @@ handle_single_display_spec (struct it *it, Lisp_Object spec, Lisp_Object object,
 
           it->xwidget = lookup_xwidget(value);
 	}
-#endif      
+#endif
 #ifdef HAVE_WINDOW_SYSTEM
       else
 	{
@@ -6065,7 +6065,7 @@ push_it (struct it *it, struct text_pos *position)
     case GET_FROM_XWIDGET:
       p->u.xwidget.object = it->object;
       break;
-#endif      
+#endif
     }
   p->position = position ? *position : it->position;
   p->current = it->current;
@@ -6828,7 +6828,7 @@ static int (* get_next_element[NUM_IT_METHODS]) (struct it *it) =
   next_element_from_stretch
 #ifdef HAVE_XWIDGETS
   ,next_element_from_xwidget
-#endif  
+#endif
 };
 
 #define GET_NEXT_DISPLAY_ELEMENT(it) (*get_next_element[(it)->method]) (it)
@@ -17061,8 +17061,6 @@ try_window (Lisp_Object window, struct text_pos pos, int flags)
   start_display (&it, w, pos);
   it.glyph_row->reversed_p = false;
 
-
-  
   /* Display all lines of W.  */
   while (it.current_y < it.last_visible_y)
     {
@@ -17942,7 +17940,7 @@ try_window_id (struct window *w)
     return -1;
 #endif
 
-  
+
   /* This is handy for debugging.  */
 #if 0
 #define GIVE_UP(X)						\
@@ -18759,7 +18757,7 @@ dump_glyph (struct glyph_row *row, struct glyph *glyph, int area)
 	       glyph->left_box_line_p,
 	       glyph->right_box_line_p);
     }
-#ifdef HAVE_XWIDGETS  
+#ifdef HAVE_XWIDGETS
   else if (glyph->type == XWIDGET_GLYPH)
     {
       fprintf (stderr,
@@ -18781,7 +18779,7 @@ dump_glyph (struct glyph_row *row, struct glyph *glyph, int area)
 
       //      printf("dump xwidget glyph\n");
     }
-#endif  
+#endif
 }
 
 
@@ -24206,7 +24204,7 @@ calc_pixel_width_or_height (double *res, struct it *it, Lisp_Object prop,
               printf("calc_pixel_width_or_height: return dummy size FIXME\n");
               return OK_PIXELS (width_p ? 100 : 100);
             }
-#endif          
+#endif
 #endif
 	  if (EQ (car, Qplus) || EQ (car, Qminus))
 	    {
@@ -24709,6 +24707,7 @@ fill_image_glyph_string (struct glyph_string *s)
   /* Adjust base line for subscript/superscript text.  */
   s->ybase += s->first_glyph->voffset;
 }
+
 
 #ifdef HAVE_XWIDGETS
 static void
@@ -25227,7 +25226,7 @@ compute_overhangs_and_x (struct glyph_string *s, int x, int backward_p)
 	      BUILD_IMAGE_GLYPH_STRING (START, END, HEAD, TAIL,		\
 					HL, X, LAST_X);			\
 	      break;
-              
+
 #define BUILD_GLYPH_STRINGS_XW(START, END, HEAD, TAIL, HL, X, LAST_X)	\
             case XWIDGET_GLYPH:                                         \
               BUILD_XWIDGET_GLYPH_STRING (START, END, HEAD, TAIL,       \
@@ -25262,9 +25261,9 @@ BUILD_GLYPH_STRINGS_2(START, END, HEAD, TAIL, HL, X, LAST_X)
 #define BUILD_GLYPH_STRINGS(START, END, HEAD, TAIL, HL, X, LAST_X)	\
 BUILD_GLYPH_STRINGS_1(START, END, HEAD, TAIL, HL, X, LAST_X)	\
 BUILD_GLYPH_STRINGS_2(START, END, HEAD, TAIL, HL, X, LAST_X)
-#endif 
+#endif
 
-        
+
 /* Draw glyphs between START and END in AREA of ROW on window W,
    starting at x-position X.  X is relative to AREA in W.  HL is a
    face-override with the following meaning:
@@ -27321,6 +27320,7 @@ x_produce_glyphs (struct it *it)
   else if (it->what == IT_XWIDGET)
     produce_xwidget_glyph (it);
 #endif
+
  done:
   /* Accumulate dimensions.  Note: can't assume that it->descent > 0
      because this isn't true for images with `:ascent 100'.  */
@@ -27690,12 +27690,12 @@ get_window_cursor_type (struct window *w, struct glyph *glyph, int *width,
   if (!w->cursor_off_p)
     {
 
-#ifdef HAVE_XWIDGETS      
+#ifdef HAVE_XWIDGETS
       if (glyph != NULL && glyph->type == XWIDGET_GLYPH){
         //printf("attempt xwidget cursor avoidance in get_window_cursor_type\n");
         return NO_CURSOR;
       }
-#endif      
+#endif
       if (glyph != NULL && glyph->type == IMAGE_GLYPH)
 	{
 	  if (cursor_type == FILLED_BOX_CURSOR)
