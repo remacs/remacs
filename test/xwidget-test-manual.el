@@ -35,45 +35,45 @@
      (insert "Some random text for xwidgets to be inserted in for demo purposes.\n")
      ,@body))
 
-(xwidget-demo "a-button" 
+(xwidget-demo "a-button"
               (xwidget-insert (point-min) 'Button  "button" 60  50)
               (define-key (current-local-map) [xwidget-event] 'xwidget-handler-demo-basic))
 
-(xwidget-demo "a-toggle-button" 
+(xwidget-demo "a-toggle-button"
               (xwidget-insert (point-min) 'ToggleButton  "toggle" 60  50)
               (define-key (current-local-map) [xwidget-event] 'xwidget-handler-demo-basic))
 
-(xwidget-demo "a-big-button" 
+(xwidget-demo "a-big-button"
               (xwidget-insert (point-min)  'Button "button" 400  500)
               (define-key (current-local-map) [xwidget-event] 'xwidget-handler-demo-basic))
 
-(xwidget-demo "a-socket" 
+(xwidget-demo "a-socket"
               (xwidget-insert (point-min)  'socket "socket" 500  500)
               (define-key (current-local-map) [xwidget-event] 'xwidget-handler-demo-basic))
 
-(xwidget-demo "a-socket-osr-broken" 
+(xwidget-demo "a-socket-osr-broken"
               (xwidget-insert (point-min)  'socket-osr "socket-osr" 500  500)
               (define-key (current-local-map) [xwidget-event] 'xwidget-handler-demo-basic))
 
 
-(xwidget-demo "a-slider" 
+(xwidget-demo "a-slider"
               (xwidget-insert (point-min)  'slider "slider" 500  100)
               (define-key (current-local-map) [xwidget-event] 'xwidget-handler-demo-basic))
 
-(xwidget-demo "a-canvas" 
+(xwidget-demo "a-canvas"
               (xwidget-insert (point-min)  'cairo "canvas" 1000  1000)
               (define-key (current-local-map) [xwidget-event] 'xwidget-handler-demo-basic))
 
-(xwidget-demo "a-webkit-broken" 
+(xwidget-demo "a-webkit-broken"
               (xwidget-insert (point-min)  'webkit "webkit" 1000  1000)
               (define-key (current-local-map) [xwidget-event] 'xwidget-handler-demo-basic))
 
-(xwidget-demo "a-webkit-osr" 
+(xwidget-demo "a-webkit-osr"
               (xwidget-insert (point-min)  'webkit-osr "webkit-osr" 1000  1000)
               (define-key (current-local-map) [xwidget-event] 'xwidget-handler-demo-basic)
               (xwidget-webkit-goto-uri (xwidget-at 1) "http://www.fsf.org"))
 
-(xwidget-demo "a-xwgir" 
+(xwidget-demo "a-xwgir"
               (xwidget-insert (point-min)  'xwgir "xwgir" 1000  1000)
               (define-key (current-local-map) [xwidget-event] 'xwidget-handler-demo-basic))
 
@@ -141,7 +141,7 @@
   (interactive)
   (insert "0 <<< grabbed appp will appear here\n")
   (xwidget-insert          1 1 3 "1" 1000 )
-  (define-key (current-local-map) [xwidget-event] 'xwidget-handler-demo-grab)  
+  (define-key (current-local-map) [xwidget-event] 'xwidget-handler-demo-grab)
   )
 
 ;ive basically found these xembeddable things:
@@ -171,7 +171,7 @@
 ;;               ((eq 5 xwidget-id)
 ;;                (start-process "xembed2" "*xembed2*" "uzbl-core"  "-s" (number-to-string xembed-id)  "http://www.fsf.org" )
                )
-               
+
                )
             ))))
 
@@ -195,4 +195,4 @@
 
 ;(xwidget-demo-basic)
 
-(provide 'xwidget-test)
+(provide 'xwidget-test-manual)
