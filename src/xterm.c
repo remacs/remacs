@@ -2686,6 +2686,7 @@ x_draw_glyph_string (struct glyph_string *s)
     case IMAGE_GLYPH:
       x_draw_image_glyph_string (s);
       break;
+
 #ifdef HAVE_XWIDGETS
     case XWIDGET_GLYPH:
       //erase xwidget background
@@ -8032,12 +8033,12 @@ x_draw_bar_cursor (struct window *w, struct glyph_row *row, int width, enum text
   cursor_glyph = get_phys_cursor_glyph (w);
   if (cursor_glyph == NULL)
     return;
-#ifdef HAVE_XWIDGETS  
+#ifdef HAVE_XWIDGETS
   if (cursor_glyph->type == XWIDGET_GLYPH){
     printf("tried avoiding xwidget cursor\n");
     return; //experimental avoidance of cursor on xwidget
   }
-#endif  
+#endif
   /* If on an image, draw like a normal cursor.  That's usually better
      visible than drawing a bar, esp. if the image is large so that
      the bar might not be in the window.  */
@@ -10756,6 +10757,7 @@ x_term_init (Lisp_Object display_name, char *xrm_option, char *resource_name)
            https://bugzilla.gnome.org/show_bug.cgi?id=563627.  */
         id = g_log_set_handler ("GLib", G_LOG_LEVEL_WARNING | G_LOG_FLAG_FATAL
                                   | G_LOG_FLAG_RECURSION, my_log_handler, NULL);
+
         /* NULL window -> events for all windows go to our function.
            Call before gtk_init so Gtk+ event filters comes after our.  */
         gdk_window_add_filter (NULL, event_handler_gdk, NULL);
