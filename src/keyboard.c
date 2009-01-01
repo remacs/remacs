@@ -4231,13 +4231,13 @@ kbd_buffer_get_event (KBOARD **kbp,
 	  kbd_fetch_ptr = event + 1;
 	}
 #endif
-#ifdef HAVE_XWIDGETS      
+#ifdef HAVE_XWIDGETS
       else if (event->kind == XWIDGET_EVENT)
 	{
 	  obj = make_lispy_event (event);
 	  kbd_fetch_ptr = event + 1;
 	}
-#endif      
+#endif
 #ifdef HAVE_INOTIFY
       else if (event->kind == FILE_NOTIFY_EVENT)
         {
