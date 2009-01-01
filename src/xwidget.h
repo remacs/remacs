@@ -20,12 +20,12 @@ lisp pseudovector.
 
  */
 struct xwidget{
-  struct vectorlike_header header;  
+  struct vectorlike_header header;
   Lisp_Object plist;//auxilliary data
   Lisp_Object type;//the widget type
   Lisp_Object buffer; //buffer where xwidget lives
   Lisp_Object title;//a title that is used for button labels for instance
-  
+
   //here ends the lisp part.
   //"height" is the marker field
   int height;
@@ -45,10 +45,10 @@ struct xwidget_view {
   struct vectorlike_header header;
   Lisp_Object model;
   Lisp_Object w;
-  
+
   //here ends the lisp part.
   //"redisplayed" is the marker field
-  int redisplayed; //if touched by redisplay  
+  int redisplayed; //if touched by redisplay
 
   int hidden;//if the "live" instance isnt drawn
 
@@ -90,7 +90,7 @@ struct xwidget_type
   /* Next in list of all supported image types.  */
   struct xwidget_type *next;
 };
-                             
+
 static struct xwidget_type *lookup_xwidget_type (Lisp_Object symbol);
 
 struct xwidget* xwidget_from_id(int id);
@@ -104,7 +104,7 @@ void xwidget_touch (struct xwidget_view *xw);
 
 //void assert_valid_xwidget_id(int id,char *str);
 
-struct xwidget* lookup_xwidget (Lisp_Object  spec); 
+struct xwidget* lookup_xwidget (Lisp_Object  spec);
 #define XG_XWIDGET "emacs_xwidget"
 #define XG_XWIDGET_VIEW "emacs_xwidget_view"
 void      xwidget_view_delete_all_in_window(  struct window *w );
