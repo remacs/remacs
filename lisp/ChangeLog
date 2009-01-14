@@ -1,9 +1,12 @@
 2009-01-14  Martin Rudalics  <rudalics@gmx.at>
 
+	* frame.el (special-display-popup-frame): Rewrite doc-string and
+	simplify code.
+
 	* window.el (special-display-buffer-names)
 	(special-display-regexps): Add customization support for
 	function/other-args elements.  Rewrite doc-strings.
-	(special-display-function): Rewrite doc-strings
+	(special-display-function): Rewrite doc-string.
 	(same-window-buffer-names, same-window-regexps): Minor
 	doc-string fixes.
 	(special-display-p): Minor rewrite.
