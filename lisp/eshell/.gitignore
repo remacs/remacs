@@ -1,14 +1,3 @@
-COPYING
-FEATURES
-INSTALL
-Makefile
-NEWS
-README
-_darcs
-_pkg.el
-auto-autoloads.el
 esh-groups.el
-esh-toggle.el
-eshell-auto.el
-eshell.info
-eshell.texi
+
+# arch-tag: 270e983f-fee5-4b6d-a00b-c1bafdee8690
