@@ -1,7 +1,5 @@
-*-spd
-*.pdb
 config.log
-makefile
-obj
-oo
 stamp_BLD
+
+oo/
+oo-spd/
