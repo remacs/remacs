@@ -185,7 +185,7 @@ edebug.texi
 elisp.texi
 errors.texi
 eval.texi         -- cyd
-files.texi
+files.texi        -- cyd
 frames.texi
 functions.texi    -- cyd
 hash.texi         -- cyd
