@@ -1,4 +1,4 @@
-;;; semantic/bovine/java.el --- Semantic functions for Java
+;;; semantic/java.el --- Semantic functions for Java
 
 ;;; Copyright (C) 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006,
 ;;; 2007, 2008, 2009 Free Software Foundation, Inc.
@@ -460,6 +460,6 @@ removed from the result list."
 
   )
 
-(provide 'semantic/bovine/java)
+(provide 'semantic/java)
 
-;;; semantic/bovine/java.el ends here
+;;; semantic/java.el ends here
