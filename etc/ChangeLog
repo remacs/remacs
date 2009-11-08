@@ -1,3 +1,7 @@
+2009-11-08  Chong Yidong  <cyd@stupidchicken.com>
+
+	* compilation.txt: Add one more error message for msft (Bug#4100).
+
 2009-10-09  Karl Fogel  <karl.fogel@red-bean.com>
 
 	* NEWS: Document bookmark.el at 2008-06-25T16:51:33Z!monnier@iro.umontreal.ca format upgrade.  (Bug#3375)
