@@ -28,6 +28,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "window.h"
 #include "blockinput.h"
 #include "region-cache.h"
+#include "xwidget.h"
 
 #ifndef NULL
 #define NULL 0
@@ -2001,6 +2002,8 @@ void
 modify_region (struct buffer *buffer, EMACS_INT start, EMACS_INT end,
 	       int preserve_chars_modiff)
 {
+  //  printf("modify region\n");
+  xwidget_modify_region();
   struct buffer *old_buffer = current_buffer;
 
   if (buffer != old_buffer)

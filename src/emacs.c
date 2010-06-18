@@ -54,6 +54,8 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "buffer.h"
 #include "window.h"
 
+#include "xwidget.h"
+
 #include "systty.h"
 #include "blockinput.h"
 #include "syssignal.h"
@@ -1642,6 +1644,7 @@ main (int argc, char **argv)
       syms_of_xfns ();
       syms_of_xmenu ();
       syms_of_fontset ();
+      syms_of_xwidget();
       syms_of_xsettings ();
 #ifdef HAVE_X_SM
       syms_of_xsmfns ();

@@ -69,6 +69,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "coding.h"
 #include "frame.h"
 #include "dispextern.h"
+#include "xwidget.h"
 #include "fontset.h"
 #include "termhooks.h"
 #include "termopts.h"
@@ -2419,7 +2420,7 @@ x_draw_image_foreground_1 (s, pixmap)
 /* Draw part of the background of glyph string S.  X, Y, W, and H
    give the rectangle to draw.  */
 
-static void
+ void
 x_draw_glyph_string_bg_rect (s, x, y, w, h)
      struct glyph_string *s;
      int x, y, w, h;
@@ -2645,6 +2646,7 @@ x_draw_glyph_string (s)
 {
   int relief_drawn_p = 0;
 
+  //printf("x_draw_glyph_string: %d\n",s->first_glyph->type);
   /* If S draws into the background of its successors, draw the
      background of the successors first so that S can draw into it.
      This makes S->next use XDrawString instead of XDrawImageString.  */
@@ -2700,6 +2702,11 @@ x_draw_glyph_string (s)
     {
     case IMAGE_GLYPH:
       x_draw_image_glyph_string (s);
+      break;
+
+    case XWIDGET_GLYPH:
+      x_draw_glyph_string_background (s, 0);
+      x_draw_xwidget_glyph_string (s);
       break;
 
     case STRETCH_GLYPH:
@@ -5889,6 +5896,21 @@ handle_one_xevent (dpyinfo, eventp, finish, hold_quit)
   EVENT_INIT (inev.ie);
   inev.ie.kind = NO_EVENT;
   inev.ie.arg = Qnil;
+
+          /*try to let events escape to xwidgets  if xwidget_owns_kbd. not as easy as it sounds...  */
+          if(xwidget_owns_kbd){
+            printf("xwidgets own events now!\n");
+            //according to xembed spec it seems like the toolkit is responsible for forwarding of events, so
+            //try to let gtk have the event now
+            *finish = 0;
+            
+            /*FINISH is X_EVENT_GOTO_OUT if caller should stop reading events.
+             *FINISH is zero if caller should continue reading events.
+             *FINISH is X_EVENT_DROP if event should not be passed to the toolkit.*/
+            goto OTHER;
+          }
+
+  
   
   if (pending_event_wait.eventtype == event.type)
     pending_event_wait.eventtype = 0; /* Indicates we got it.  */
@@ -6377,11 +6399,15 @@ handle_one_xevent (dpyinfo, eventp, finish, hold_quit)
 	  Lisp_Object c;
 
 #ifdef USE_GTK
+
           /* Don't pass keys to GTK.  A Tab will shift focus to the
              tool bar in GTK 2.4.  Keys will still go to menus and
              dialogs because in that case popup_activated is TRUE
-             (see above).  */
+             (see above).
+          */
           *finish = X_EVENT_DROP;
+          
+
 #endif
 
           event.xkey.state

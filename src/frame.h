@@ -500,6 +500,10 @@ struct frame
   /* All display backends seem to need these two pixel values. */
   unsigned long background_pixel;
   unsigned long foreground_pixel;
+
+  /* xwidgets need the gtk container to place gtk widgets*/
+  //GtkWidget *gwfixed;
+  void *gwfixed;//JAVE TODO i dont feel like fixing all compilation errors right now
 };
 
 #define FRAME_KBOARD(f) ((f)->terminal->kboard)

@@ -337,8 +337,10 @@ obj=    dispnew.o frame.o scroll.o xdisp.o menu.o $(XMENU_OBJ) window.o \
 	process.o callproc.o \
 	region-cache.o sound.o atimer.o \
 	doprnt.o strftime.o intervals.o textprop.o composite.o md5.o \
+	xwidget.o \
 	$(MSDOS_OBJ) $(MSDOS_X_OBJ) $(NS_OBJ) $(CYGWIN_OBJ) $(FONT_OBJ)
 
+xwidget.o: xwidget.c xwidget.h
 ## Object files used on some machine or other.
 ## These go in the DOC file on all machines in case they are needed.
 SOME_MACHINE_OBJECTS = dosfns.o msdos.o \

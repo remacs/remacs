@@ -24,7 +24,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #define DISPEXTERN_H_INCLUDED
 
 #ifdef HAVE_X_WINDOWS
-
 #include <X11/Xlib.h>
 #ifdef USE_X_TOOLKIT
 #include <X11/Intrinsic.h>
@@ -113,7 +112,7 @@ enum window_part
 
 /* If GLYPH_DEBUG is non-zero, additional checks are activated.  Turn
    it off by defining the macro GLYPH_DEBUG to zero.  */
-
+#define GLYPH_DEBUG 1
 #ifndef GLYPH_DEBUG
 #define GLYPH_DEBUG 0
 #endif
@@ -281,7 +280,10 @@ enum glyph_type
   IMAGE_GLYPH,
 
   /* Glyph is a space of fractional width and/or height.  */
-  STRETCH_GLYPH
+  STRETCH_GLYPH,
+
+  /* Glyph is an external widget drawn by the GUI toolkit.   */
+  XWIDGET_GLYPH
 };
 
 
@@ -331,7 +333,7 @@ struct glyph
 
   /* Which kind of glyph this is---character, image etc.  Value
      should be an enumerator of type enum glyph_type.  */
-  unsigned type : 2;
+  unsigned type : 3;
 
   /* 1 means this glyph was produced from multibyte text.  Zero
      means it was produced from unibyte text, i.e. charsets aren't
@@ -415,6 +417,8 @@ struct glyph
     /* Image ID for image glyphs (type == IMAGE_GLYPH).  */
     unsigned img_id;
 
+    unsigned xwidget_id;
+    
     /* Sub-structure for type == STRETCH_GLYPH.  */
     struct
     {
@@ -1262,6 +1266,8 @@ struct glyph_string
   /* Image, if any.  */
   struct image *img;
 
+  int xwidget_id;
+
   /* Slice */
   struct glyph_slice slice;
 
@@ -1912,7 +1918,9 @@ enum display_element_type
   IT_TRUNCATION,
 
   /* Continuation glyphs.  See the comment for IT_TRUNCATION.  */
-  IT_CONTINUATION
+  IT_CONTINUATION,
+
+  IT_XWIDGET
 };
 
 
@@ -1961,6 +1969,7 @@ enum it_method {
   GET_FROM_C_STRING,
   GET_FROM_IMAGE,
   GET_FROM_STRETCH,
+  GET_FROM_XWIDGET,
   NUM_IT_METHODS
 };
 
@@ -2162,6 +2171,12 @@ struct it
       struct {
 	Lisp_Object object;
       } stretch;
+      /* method == GET_FROM_XWIDGET */
+      struct {
+	Lisp_Object object;
+        int xwidget_lalala;
+      } xwidget;
+
     } u;
 
     /* current text and display positions.  */
@@ -2275,6 +2290,10 @@ struct it
   /* If what == IT_IMAGE, the id of the image to display.  */
   int image_id;
 
+  /* If what == IT_XWIDGET*/
+  int xwidget_id;
+
+  
   /* Values from `slice' property.  */
   struct it_slice slice;
 
@@ -3334,3 +3353,4 @@ extern Lisp_Object x_default_parameter P_ ((struct frame *, Lisp_Object,
 
 /* arch-tag: c65c475f-1c1e-4534-8795-990b8509fd65
    (do not change this comment) */
+

@@ -754,6 +754,10 @@ xg_pix_to_gcolor (w, pixel, c)
 /* Create and set up the GTK widgets for frame F.
    Return 0 if creation failed, non-zero otherwise.  */
 
+
+
+
+
 int
 xg_create_frame_widgets (f)
      FRAME_PTR f;
@@ -775,7 +779,7 @@ xg_create_frame_widgets (f)
   xg_set_screen (wtop, f);
 
   wvbox = gtk_vbox_new (FALSE, 0);
-  wfixed = gtk_fixed_new ();  /* Must have this to place scroll bars  */
+  f->gwfixed = wfixed = gtk_fixed_new ();  /* Must have this to place scroll bars  */
 
   if (! wtop || ! wvbox || ! wfixed)
     {
