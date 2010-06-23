@@ -745,6 +745,7 @@ build_vendor
 build_cpu
 build
 MAINT
+GZIP_INFO
 target_alias
 host_alias
 build_alias
@@ -815,6 +816,7 @@ with_dbus
 with_gconf
 with_selinux
 with_makeinfo
+with_compress_info
 with_pkg_config_prog
 with_crt_dir
 with_gnustep_conf
@@ -1517,6 +1519,7 @@ Optional Packages:
   --without-gconf         don't compile with GConf support
   --without-selinux       don't compile with SELinux support
   --without-makeinfo      don't require makeinfo for building manuals
+  --without-compress-info don't compress the installed Info pages
   --with-pkg-config-prog=PATH
                           path to pkg-config for finding GTK and librsvg
   --with-crt-dir=DIR      directory containing crtn.o etc. The default is
@@ -2817,6 +2820,23 @@ if test "${with_makeinfo+set}" = set; then :
   withval=$with_makeinfo;
 else
      with_makeinfo=yes
+fi
+
+
+## This is an option because I do not know if all info/man support
+## compressed files, nor how to test if they do so.
+
+# Check whether --with-compress-info was given.
+if test "${with_compress_info+set}" = set; then :
+  withval=$with_compress_info;
+else
+     with_compress_info=yes
+fi
+
+if test $with_compress_info = yes; then
+   GZIP_INFO=yes
+else
+   GZIP_INFO=
 fi
 
 
@@ -7751,6 +7771,7 @@ int
 main ()
 {
   char *data, *data2, *data3;
+  const char *cdata2;
   int i, pagesize;
   int fd, fd2;
 
@@ -7775,10 +7796,10 @@ main ()
   fd2 = open ("conftest.txt", O_RDWR | O_CREAT | O_TRUNC, 0600);
   if (fd2 < 0)
     return 4;
-  data2 = "";
-  if (write (fd2, data2, 1) != 1)
+  cdata2 = "";
+  if (write (fd2, cdata2, 1) != 1)
     return 5;
-  data2 = mmap (0, pagesize, PROT_READ | PROT_WRITE, MAP_SHARED, fd2, 0L);
+  data2 = (char *) mmap (0, pagesize, PROT_READ | PROT_WRITE, MAP_SHARED, fd2, 0L);
   if (data2 == MAP_FAILED)
     return 6;
   for (i = 0; i < pagesize; ++i)
