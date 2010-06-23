@@ -1,0 +1,43 @@
+* Xwidgets
+
+This is an experimental branch to enable embedding of GTK widgets
+inside an Emacs window. The Emacs abstraction is called an Xwidget,
+for eXternal widget, and also in reference to the Xembed protocoll.
+
+There is a demo file called xwidget-test.el which shows some of the
+possibilities. There are some screnshots at the emacswiki.
+
+Currently its possible to insert buttons, sliders, and xembed widgets
+in the buffer. It works similar to the support for images in Emacs.
+
+A difference from images is that xwidgets live their own life. You
+create them with an api, get a reference, and tie them to a particular
+buffer with a display spec. Also, xwidgets exists in only one copy,
+where a plain image can be shown in several windows. The xwidget code
+tries to handle this by essentialy making a screen capture of the
+widget and displaying those in the non-active windows, and the real
+widget in the active window. This doesnt currently work for xembed
+widgets.
+
+The current state is that one window, one frame, showing many xwidgets
+is a nice demo.
+
+
+TODO
+
+- Examine using XComposite rather than GTK off-screen rendering. This
+  would make xembed widgets work much better.
+
+- make the keyboard event code propagation code work.
+
+- remove the special-case for when the minibuffer is
+  active. Special-casing will never work properly.
+
+- disable cursor drawing on top of an active xwidget
+
+- figure out what to do with the multiple frames case
+
+- improve the xwidgets programming interface so its less of
+  hand-waving affair
+
+- more documentation
