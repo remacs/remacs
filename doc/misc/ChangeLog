@@ -1,3 +1,7 @@
+2010-07-19  Juanma Barranquero  <lekktu@gmail.com>
+
+	* org.texi: Fix typo in previous change (2010-07-19T09:47:27Z!carsten.dominik@gmail.com).
+
 2010-07-19  Carsten Dominik  <carsten.dominik@gmail.com>
 
 	* org.texi: Add macros to get plain quotes in PDF output.
