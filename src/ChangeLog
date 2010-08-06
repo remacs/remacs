@@ -1,3 +1,9 @@
+2010-08-06  Dan Nicolaescu  <dann@ics.uci.edu>
+
+	* process.c: Remove HAVE_SOCKETS #ifdefs inside #ifdef
+	subprocesses, only MSDOS does not define HAVE_SOCKETS.
+	(socket_options): Use const char* for name.
+
 2010-08-06  Juanma Barranquero  <lekktu@gmail.com>
 
 	Fix changes in 2010-08-05T23:15:24Z!dann@ics.uci.edu..2010-08-05T23:34:12Z!dann@ics.uci.edu for Windows build.
