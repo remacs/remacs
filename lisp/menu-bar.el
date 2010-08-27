@@ -526,17 +526,6 @@
   "Make CUT, PASTE and COPY (keys and menu bar items) use the clipboard.
 Do the same for the keys of the same name."
   (interactive)
-  ;; We can't use constant list structure here because it becomes pure,
-  ;; and because it gets modified with cache data.
-  (define-key menu-bar-edit-menu [paste]
-    (cons "Paste" (cons "Paste text from clipboard" 'clipboard-yank)))
-  (define-key menu-bar-edit-menu [copy]
-    (cons "Copy" (cons "Copy text in region to the clipboard"
-		       'clipboard-kill-ring-save)))
-  (define-key menu-bar-edit-menu [cut]
-    (cons "Cut" (cons "Delete text in region and copy it to the clipboard"
-		      'clipboard-kill-region)))
-
   ;; These are Sun server keysyms for the Cut, Copy and Paste keys
   ;; (also for XFree86 on Sun keyboard):
   (define-key global-map [f20] 'clipboard-kill-region)
@@ -979,11 +968,100 @@ mail status in mode line"))
 	      :help ,(purecopy "Turn menu-bar on/off")
 	      :button (:toggle . (> (frame-parameter nil 'menu-bar-lines) 0))))
 
-(define-key menu-bar-showhide-menu [showhide-tool-bar]
-  `(menu-item ,(purecopy "Tool-bar") toggle-tool-bar-mode-from-frame
-	      :help ,(purecopy "Turn tool-bar on/off")
-	      :visible (display-graphic-p)
-	      :button (:toggle . (> (frame-parameter nil 'tool-bar-lines) 0))))
+(defun menu-bar-set-tool-bar-position (position)
+  (customize-set-variable 'tool-bar-mode t)
+  (dolist (frame (frame-list))
+    (set-frame-parameter frame 'tool-bar-position position))
+  (customize-set-variable 'default-frame-alist
+			  (cons (cons 'tool-bar-position position)
+				(assq-delete-all 'tool-bar-position
+						 default-frame-alist))))
+
+(defun menu-bar-showhide-tool-bar-menu-customize-disable ()
+  "Do not display tool bars."
+  (interactive)
+  (customize-set-variable 'tool-bar-mode nil))
+(defun menu-bar-showhide-tool-bar-menu-customize-enable-left ()
+  "Display tool bars on the left side."
+  (interactive)
+  (menu-bar-set-tool-bar-position 'left))
+
+(defun menu-bar-showhide-tool-bar-menu-customize-enable-right ()
+  "Display tool bars on the right side."
+  (interactive)
+  (menu-bar-set-tool-bar-position 'right))
+(defun menu-bar-showhide-tool-bar-menu-customize-enable-top ()
+  "Display tool bars on the top side."
+  (interactive)
+  (menu-bar-set-tool-bar-position 'top))
+(defun menu-bar-showhide-tool-bar-menu-customize-enable-bottom ()
+  "Display tool bars on the bottom side."
+  (interactive)
+  (menu-bar-set-tool-bar-position 'bottom))
+
+(if (featurep 'move-toolbar)
+    (progn
+      (defvar menu-bar-showhide-tool-bar-menu (make-sparse-keymap "Tool-bar"))
+
+      (define-key menu-bar-showhide-tool-bar-menu [showhide-tool-bar-left]
+	`(menu-item ,(purecopy "On the left") 
+		    menu-bar-showhide-tool-bar-menu-customize-enable-left
+		    :help ,(purecopy "Tool-bar at the left side")
+		    :visible (display-graphic-p)
+		    :button 
+		    (:radio . (and tool-bar-mode 
+				   (eq (frame-parameter nil 'tool-bar-position)
+				       'left)))))
+
+      (define-key menu-bar-showhide-tool-bar-menu [showhide-tool-bar-right]
+	`(menu-item ,(purecopy "On the right") 
+		    menu-bar-showhide-tool-bar-menu-customize-enable-right
+		    :help ,(purecopy "Tool-bar at the right side")
+		    :visible (display-graphic-p)
+		    :button
+		    (:radio . (and tool-bar-mode 
+				   (eq (frame-parameter nil 'tool-bar-position)
+				       'right)))))
+
+      (define-key menu-bar-showhide-tool-bar-menu [showhide-tool-bar-bottom]
+	`(menu-item ,(purecopy "On the bottom") 
+		    menu-bar-showhide-tool-bar-menu-customize-enable-bottom
+		    :help ,(purecopy "Tool-bar at the bottom")
+		    :visible (display-graphic-p)
+		    :button
+		    (:radio . (and tool-bar-mode 
+				   (eq (frame-parameter nil 'tool-bar-position)
+				       'bottom)))))
+
+      (define-key menu-bar-showhide-tool-bar-menu [showhide-tool-bar-top]
+	`(menu-item ,(purecopy "On the top") 
+		    menu-bar-showhide-tool-bar-menu-customize-enable-top
+		    :help ,(purecopy "Tool-bar at the top")
+		    :visible (display-graphic-p)
+		    :button
+		    (:radio . (and tool-bar-mode 
+				   (eq (frame-parameter nil 'tool-bar-position)
+				       'top)))))
+
+      (define-key menu-bar-showhide-tool-bar-menu [showhide-tool-bar-none]
+	`(menu-item ,(purecopy "None") 
+		    menu-bar-showhide-tool-bar-menu-customize-disable
+		    :help ,(purecopy "Turn tool-bar off")
+		    :visible (display-graphic-p)
+		    :button (:radio . (eq tool-bar-mode nil))))
+
+      (define-key menu-bar-showhide-menu [showhide-tool-bar]
+	`(menu-item ,(purecopy "Tool-bar") ,menu-bar-showhide-tool-bar-menu
+		    :visible (display-graphic-p)))
+
+      )
+  ;; else not tool bar that can move.
+  (define-key menu-bar-showhide-menu [showhide-tool-bar]
+    `(menu-item ,(purecopy "Tool-bar") toggle-tool-bar-mode-from-frame
+		:help ,(purecopy "Turn tool-bar on/off")
+		:visible (display-graphic-p)
+		:button (:toggle . (> (frame-parameter nil 'tool-bar-lines) 0))))
+)
 
 (define-key menu-bar-options-menu [showhide]
   `(menu-item ,(purecopy "Show/Hide") ,menu-bar-showhide-menu))
@@ -1195,6 +1273,9 @@ mail status in mode line"))
 (define-key menu-bar-games-menu [life]
   `(menu-item ,(purecopy "Life")  life
 	      :help ,(purecopy "Watch how John Conway's cellular automaton evolves")))
+(define-key menu-bar-games-menu [land]
+  `(menu-item ,(purecopy "Landmark") landmark
+	      :help ,(purecopy "Watch a neural-network robot learn landmarks")))
 (define-key menu-bar-games-menu [hanoi]
   `(menu-item ,(purecopy "Towers of Hanoi") hanoi
 	      :help ,(purecopy "Watch Towers-of-Hanoi puzzle solved by Emacs")))
@@ -1404,6 +1485,9 @@ mail status in mode line"))
 (define-key menu-bar-describe-menu [describe-current-display-table]
   `(menu-item ,(purecopy "Describe Display Table") describe-current-display-table
 	      :help ,(purecopy "Describe the current display table")))
+(define-key menu-bar-describe-menu [describe-package]
+  `(menu-item ,(purecopy "Describe Package...") describe-package
+              :help ,(purecopy "Display documentation of a Lisp package")))
 (define-key menu-bar-describe-menu [describe-face]
   `(menu-item ,(purecopy "Describe Face...") describe-face
               :help ,(purecopy "Display the properties of a face")))
@@ -1535,11 +1619,11 @@ key, a click, or a menu-item")))
 (define-key menu-bar-help-menu [sep2]
   menu-bar-separator)
 (define-key menu-bar-help-menu [external-packages]
-  `(menu-item ,(purecopy "External Packages") menu-bar-help-extra-packages
+  `(menu-item ,(purecopy "Finding Extra Packages") menu-bar-help-extra-packages
 	      :help ,(purecopy "Lisp packages distributed separately for use in Emacs")))
 (define-key menu-bar-help-menu [find-emacs-packages]
-  `(menu-item ,(purecopy "Find Emacs Packages") finder-by-keyword
-	      :help ,(purecopy "Find packages and features by keyword")))
+  `(menu-item ,(purecopy "Search Built-in Packages") finder-by-keyword
+	      :help ,(purecopy "Find built-in packages and features by keyword")))
 (define-key menu-bar-help-menu [more-manuals]
   `(menu-item ,(purecopy "More Manuals") ,menu-bar-manuals-menu))
 (define-key menu-bar-help-menu [emacs-manual]
@@ -1924,36 +2008,33 @@ Buffers menu is regenerated."
     `(menu-item ,(purecopy "Previous History Item") previous-history-element
 		:help ,(purecopy "Put previous minibuffer history element in the minibuffer"))))
 
-;;;###autoload
-;; This comment is taken from tool-bar.el near
-;; (put 'tool-bar-mode ...)
-;; We want to pretend the menu bar by standard is on, as this will make
-;; customize consider disabling the menu bar a customization, and save
-;; that.  We could do this for real by setting :init-value below, but
-;; that would overwrite disabling the tool bar from X resources.
-(put 'menu-bar-mode 'standard-value '(t))
-
 (define-minor-mode menu-bar-mode
   "Toggle display of a menu bar on each frame.
 This command applies to all frames that exist and frames to be
 created in the future.
 With a numeric argument, if the argument is positive,
 turn on menu bars; otherwise, turn off menu bars."
-  :init-value nil
+  :init-value t
   :global t
   :group 'frames
 
-  ;; Make menu-bar-mode and default-frame-alist consistent.
-  (modify-all-frames-parameters (list (cons 'menu-bar-lines
-					    (if menu-bar-mode 1 0))))
-
+  ;; Turn the menu-bars on all frames on or off.
+  (let ((val (if menu-bar-mode 1 0)))
+    (dolist (frame (frame-list))
+      (set-frame-parameter frame 'menu-bar-lines val))
+    ;; If the user has given `default-frame-alist' a `menu-bar-lines'
+    ;; parameter, replace it.
+    (if (assq 'menu-bar-lines default-frame-alist)
+	(setq default-frame-alist
+	      (cons (cons 'menu-bar-lines val)
+		    (assq-delete-all 'menu-bar-lines
+				     default-frame-alist)))))
   ;; Make the message appear when Emacs is idle.  We can not call message
   ;; directly.  The minor-mode message "Menu-bar mode disabled" comes
   ;; after this function returns, overwriting any message we do here.
   (when (and (called-interactively-p 'interactive) (not menu-bar-mode))
     (run-with-idle-timer 0 nil 'message
-			 "Menu-bar mode disabled.  Use M-x menu-bar-mode to make the menu bar appear."))
-  menu-bar-mode)
+			 "Menu-bar mode disabled.  Use M-x menu-bar-mode to make the menu bar appear.")))
 
 (defun toggle-menu-bar-mode-from-frame (&optional arg)
   "Toggle menu bar on or off, based on the status of the current frame.

@@ -785,15 +785,16 @@ opening the first frame (e.g. open a connection to an X server).")
                 argi (match-string 1 argi)))
 	(when (string-match "\\`--." orig-argi)
 	  (let ((completion (try-completion argi longopts)))
-	    (if (eq completion t)
-		(setq argi (substring argi 1))
-	      (if (stringp completion)
-		  (let ((elt (assoc completion longopts)))
-		    (or elt
-			(error "Option `%s' is ambiguous" argi))
-		    (setq argi (substring (car elt) 1)))
-		(setq argval nil
-                      argi orig-argi)))))
+	    (cond ((eq completion t)
+		   (setq argi (substring argi 1)))
+		  ((stringp completion)
+		   (let ((elt (assoc completion longopts)))
+		     (unless elt
+		       (error "Option `%s' is ambiguous" argi))
+		     (setq argi (substring (car elt) 1))))
+		  (t
+		   (setq argval nil
+			 argi orig-argi)))))
 	(cond
 	 ;; The --display arg is handled partly in C, partly in Lisp.
 	 ;; When it shows up here, we just put it back to be handled
@@ -878,9 +879,32 @@ opening the first frame (e.g. open a connection to an X server).")
 
   (run-hooks 'before-init-hook)
 
-  ;; Under X Window, this creates the X frame and deletes the terminal frame.
+  ;; Under X, this creates the X frame and deletes the terminal frame.
   (unless (daemonp)
+    ;; Enable or disable the tool-bar and menu-bar.
+    ;; While we're at it, set `no-blinking-cursor' too.
+    (cond
+     ((or noninteractive emacs-basic-display)
+      (setq menu-bar-mode nil
+	    tool-bar-mode nil
+	    no-blinking-cursor t))
+     ;; Check X resources if available.
+     ((memq initial-window-system '(x w32 ns))
+      (let ((no-vals  '("no" "off" "false" "0")))
+	(if (member (x-get-resource "menuBar" "MenuBar") no-vals)
+	    (setq menu-bar-mode nil))
+	(if (member (x-get-resource "toolBar" "ToolBar") no-vals)
+	    (setq tool-bar-mode nil))
+	(if (member (x-get-resource "cursorBlink" "CursorBlink")
+		    no-vals)
+	    (setq no-blinking-cursor t)))))
     (frame-initialize))
+
+  (when (fboundp 'x-create-frame)
+    ;; Set up the tool-bar (even in tty frames, since Emacs might open a
+    ;; graphical frame later).
+    (unless noninteractive
+      (tool-bar-setup)))
 
   ;; Turn off blinking cursor if so specified in X resources.  This is here
   ;; only because all other settings of no-blinking-cursor are here.
@@ -890,25 +914,6 @@ opening the first frame (e.g. open a connection to an X server).")
 		   (not (member (x-get-resource "cursorBlink" "CursorBlink")
 				'("off" "false")))))
     (setq no-blinking-cursor t))
-
-  ;; If frame was created with a menu bar, set menu-bar-mode on.
-  (unless (or noninteractive
-	      emacs-basic-display
-              (and (memq initial-window-system '(x w32))
-                   (<= (frame-parameter nil 'menu-bar-lines) 0)))
-    (menu-bar-mode 1))
-
-  (unless (or noninteractive (not (fboundp 'tool-bar-mode)))
-    ;; Set up the tool-bar.  Do this even in tty frames, so that there
-    ;; is a tool-bar if Emacs later opens a graphical frame.
-    (if (or emacs-basic-display
-	    (and (numberp (frame-parameter nil 'tool-bar-lines))
-		 (<= (frame-parameter nil 'tool-bar-lines) 0)))
-	;; On a graphical display with the toolbar disabled via X
-	;; resources, set up the toolbar without enabling it.
-	(tool-bar-setup)
-      ;; Otherwise, enable tool-bar-mode.
-      (tool-bar-mode 1)))
 
   ;; Re-evaluate predefined variables whose initial value depends on
   ;; the runtime context.
@@ -2226,6 +2231,11 @@ A fancy display is used on graphic displays, normal otherwise."
 		   (unless (< cl1-column 1)
 		     (move-to-column (1- cl1-column)))
 		   (setq cl1-column 0))
+
+		  ;; These command lines now have no effect.
+		  ((string-match "\\`--?\\(no-\\)?\\(uni\\|multi\\)byte$" argi)
+		   (display-warning 'initialization
+				    (format "Ignoring obsolete arg %s" argi)))
 
 		  ((equal argi "--")
 		   (setq just-files t))

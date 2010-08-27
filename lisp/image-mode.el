@@ -128,6 +128,28 @@ A winprops object has the shape (WINDOW . ALIST)."
 
 (declare-function image-size "image.c" (spec &optional pixels frame))
 
+(defun image-display-size (spec &optional pixels frame)
+  "Wrapper around `image-size', to handle slice display properties.
+If SPEC is an image display property, call `image-size' with the
+given arguments.
+If SPEC is a list of properties containing `image' and `slice'
+properties, calculate the display size from the slice property.
+If SPEC contains `image' but not `slice', call `image-size' with
+the specified image."
+  (if (eq (car spec) 'image)
+      (image-size spec pixels frame)
+    (let ((image (assoc 'image spec))
+	  (slice (assoc 'slice spec)))
+      (cond ((and image slice)
+	     (if pixels
+		 (cons (nth 3 slice) (nth 4 slice))
+	       (cons (/ (float (nth 3 slice)) (frame-char-width frame))
+		     (/ (float (nth 4 slice)) (frame-char-height frame)))))
+	    (image
+	     (image-size image pixels frame))
+	    (t
+	     (error "Invalid image specification: %s" spec))))))
+
 (defun image-forward-hscroll (&optional n)
   "Scroll image in current window to the left by N character widths.
 Stop if the right edge of the image is reached."
@@ -139,7 +161,7 @@ Stop if the right edge of the image is reached."
 	 (let* ((image (image-get-display-property))
 		(edges (window-inside-edges))
 		(win-width (- (nth 2 edges) (nth 0 edges)))
-		(img-width (ceiling (car (image-size image)))))
+		(img-width (ceiling (car (image-display-size image)))))
 	   (image-set-window-hscroll (min (max 0 (- img-width win-width))
 					  (+ n (window-hscroll))))))))
 
@@ -160,7 +182,7 @@ Stop if the bottom edge of the image is reached."
 	 (let* ((image (image-get-display-property))
 		(edges (window-inside-edges))
 		(win-height (- (nth 3 edges) (nth 1 edges)))
-		(img-height (ceiling (cdr (image-size image)))))
+		(img-height (ceiling (cdr (image-display-size image)))))
 	   (image-set-window-vscroll (min (max 0 (- img-height win-height))
 					  (+ n (window-vscroll))))))))
 
@@ -233,7 +255,7 @@ stopping if the top or bottom edge of the image is reached."
   (let* ((image (image-get-display-property))
 	 (edges (window-inside-edges))
 	 (win-width (- (nth 2 edges) (nth 0 edges)))
-	 (img-width (ceiling (car (image-size image)))))
+	 (img-width (ceiling (car (image-display-size image)))))
     (image-set-window-hscroll (max 0 (- img-width win-width)))))
 
 (defun image-bob ()
@@ -248,9 +270,9 @@ stopping if the top or bottom edge of the image is reached."
   (let* ((image (image-get-display-property))
 	 (edges (window-inside-edges))
 	 (win-width (- (nth 2 edges) (nth 0 edges)))
-	 (img-width (ceiling (car (image-size image))))
+	 (img-width (ceiling (car (image-display-size image))))
 	 (win-height (- (nth 3 edges) (nth 1 edges)))
-	 (img-height (ceiling (cdr (image-size image)))))
+	 (img-height (ceiling (cdr (image-display-size image)))))
     (image-set-window-hscroll (max 0 (- img-width win-width)))
     (image-set-window-vscroll (max 0 (- img-height win-height)))))
 
@@ -264,7 +286,7 @@ This function assumes the current frame has only one window."
   (interactive)
   (let* ((saved (frame-parameter nil 'image-mode-saved-size))
          (display (image-get-display-property))
-         (size (image-size display)))
+         (size (image-display-size display)))
     (if (and saved
              (eq (caar saved) (frame-width))
              (eq (cdar saved) (frame-height)))
@@ -471,7 +493,10 @@ was inserted."
 			    (buffer-substring-no-properties (point-min) (point-max)))
 			 filename))
 	 (type (image-type file-or-data nil data-p))
-	 (image (create-animated-image file-or-data type data-p))
+         (image0 (create-animated-image file-or-data type data-p))
+	 (image (append image0
+                        (image-transform-properties image0)
+                        ))
 	 (props
 	  `(display ,image
 		    intangible ,image
@@ -516,15 +541,15 @@ the image file and `image-mode' showing the image as an image."
 
 
 ;;; Support for bookmark.el
-(declare-function bookmark-make-record-default "bookmark"
-                  (&optional point-only))
+(declare-function bookmark-make-record-default
+                  "bookmark" (&optional no-file no-context posn))
 (declare-function bookmark-prop-get "bookmark" (bookmark prop))
 (declare-function bookmark-default-handler "bookmark" (bmk))
 
 (defun image-bookmark-make-record ()
-  (nconc (bookmark-make-record-default)
-         `((image-type . ,image-type)
-           (handler    . image-bookmark-jump))))
+  `(,@(bookmark-make-record-default nil 'no-context 0)
+      (image-type . ,image-type)
+      (handler    . image-bookmark-jump)))
 
 ;;;###autoload
 (defun image-bookmark-jump (bmk)
@@ -534,6 +559,84 @@ the image file and `image-mode' showing the image as an image."
     (when (not (string= image-type (bookmark-prop-get bmk 'image-type)))
       (image-toggle-display))))
 
+
+(defvar image-transform-minor-mode-map
+  (let ((map (make-sparse-keymap)))
+;    (define-key map  [(control ?+)] 'image-scale-in)
+;    (define-key map  [(control ?-)] 'image-scale-out)
+;    (define-key map  [(control ?=)] 'image-scale-none)
+;;    (define-key map "c f h" 'image-scale-fit-height)
+;;    (define-key map "c ]" 'image-rotate-right)
+    map)
+  "Minor mode keymap for transforming the view of images Image mode.")
+
+(define-minor-mode image-transform-mode
+  "minor mode for scaleing and rotation"
+  nil "image-transform"
+  image-transform-minor-mode-map)
+
+(defvar image-transform-resize   nil
+  "The image resize operation. See the command
+  `image-transform-set-scale' for more information." )
+
+(defvar image-transform-rotation 0.0)
+
+
+(defun image-transform-properties (display)
+  "Calculate the display properties for transformations; scaling
+and rotation. "
+  (let*
+      ((size (image-size display t))
+       (height
+        (cond
+         ((and (numberp image-transform-resize) (eq 100 image-transform-resize))
+          nil)
+         ((numberp image-transform-resize)
+          (* image-transform-resize (cdr size)))
+         ((eq image-transform-resize 'fit-height)
+          (- (nth 3 (window-inside-pixel-edges)) (nth 1 (window-inside-pixel-edges))))
+         (t nil)))
+       (width (if (eq image-transform-resize 'fit-width)
+                  (- (nth 2 (window-inside-pixel-edges)) (nth 0 (window-inside-pixel-edges))))))
+
+    `(,@(if height (list :height height))
+      ,@(if width (list :width width))
+      ,@(if (not (equal 0.0 image-transform-rotation))
+            (list :rotation image-transform-rotation))
+      ;;TODO fit-to-* should consider the rotation angle
+      )))
+
+(defun image-transform-set-scale (scale)
+  "SCALE sets the scaling for images. "
+  (interactive "nscale:")
+  (image-transform-set-resize (float scale)))
+
+(defun image-transform-fit-to-height ()
+  "Fit image height to window height. "
+  (interactive)
+  (image-transform-set-resize 'fit-height))
+
+(defun image-transform-fit-to-width ()
+  "Fit image width to window width. "
+  (interactive)
+  (image-transform-set-resize 'fit-width))
+
+(defun image-transform-set-resize (resize)
+  "Set the resize mode for images. The RESIZE value can be the
+symbol fit-height which fits the image to the window height. The
+symbol fit-width fits the image to the window width.  A number
+indicates a scaling factor. nil indicates scale to 100%. "
+  (setq image-transform-resize resize)
+  (if (eq 'image-mode major-mode) (image-toggle-display-image)))
+
+(defun image-transform-set-rotation (rotation)
+  "Set the image ROTATION angle. "
+  (interactive "nrotation:")
+  ;;TODO 0 90 180 270 degrees are the only reasonable angles here
+  ;;otherwise combining with rescaling will get very awkward
+  (setq image-transform-rotation (float rotation))
+  (if (eq major-mode 'image-mode) (image-toggle-display-image)))
+
 (provide 'image-mode)
 
 ;; arch-tag: b5b2b7e6-26a7-4b79-96e3-1546b5c4c6cb

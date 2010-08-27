@@ -71,10 +71,10 @@ set or customize the variable @code{doc-view-resolution}.
 (@code{quit-window}).
 
 @menu
-* Navigation::	Navigation inside DocView buffers.
-* Searching::	Searching inside documents.
-* Slicing::	Specifying which part of pages should be displayed.
-* Conversion::	Influencing and triggering conversion.
+* Navigation::  Navigation inside DocView buffers.
+* Searching::   Searching inside documents.
+* Slicing::     Specifying which part of pages should be displayed.
+* Conversion::  Influencing and triggering conversion.
 @end menu
 
 @node Navigation
@@ -211,9 +211,9 @@ manual.
 To start Gnus, type @kbd{M-x gnus @key{RET}}.
 
 @menu
-* Buffers of Gnus::	The group, summary, and article buffers.
-* Gnus Startup::	What you should know about starting Gnus.
-* Summary of Gnus::	A short description of the basic Gnus commands.
+* Buffers of Gnus::     The group, summary, and article buffers.
+* Gnus Startup::        What you should know about starting Gnus.
+* Summary of Gnus::     A short description of the basic Gnus commands.
 @end menu
 
 @node Buffers of Gnus
@@ -1757,7 +1757,7 @@ whether to supply @samp{-T} and @samp{-J} options (suitable for
 not compatible with @code{lpr}.
 
 @menu
-* PostScript::	         Printing buffers or regions as PostScript.
+* PostScript::           Printing buffers or regions as PostScript.
 * PostScript Variables:: Customizing the PostScript printing commands.
 * Printing Package::     An optional advanced printing interface.
 @end menu
@@ -2784,6 +2784,10 @@ bored, try an argument of 9.  Sit back and watch.
   If you want a little more personal involvement, try @kbd{M-x gomoku},
 which plays the game Go Moku with you.
 
+@findex bubbles
+  @kbd{M-x bubbles} is a game in which the object is to remove as many
+bubbles as you can in the smallest number of moves.
+
 @findex blackbox
 @findex mpuz
 @findex 5x5
@@ -2831,6 +2835,11 @@ bats.
 @cindex solitaire
 @kbd{M-x solitaire} plays a game of solitaire in which you jump pegs
 across other pegs.
+
+@findex animate-birthday-present
+@cindex animate
+The @code{animate} package makes text dance.  For an example, try
+@kbd{M-x animate-birthday-present}.
 
 @findex studlify-region
 @cindex StudlyCaps

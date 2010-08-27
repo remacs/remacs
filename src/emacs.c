@@ -65,6 +65,10 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "keyboard.h"
 #include "keymap.h"
 
+#ifdef HAVE_NS
+#include "nsterm.h"
+#endif
+
 #ifdef HAVE_SETLOCALE
 #include <locale.h>
 #endif
@@ -89,14 +93,10 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #endif
 #endif
 
-const char emacs_copyright[] = "Copyright (C) 2010 Free Software Foundation, Inc.";
-const char emacs_version[] = "24.0.50";
-
-extern void malloc_warning P_ ((char *));
-extern void set_time_zone_rule P_ ((char *));
-#ifdef HAVE_INDEX
-extern char *index P_ ((const char *, int));
-#endif
+/* If you change the following line, remember to update
+   msdos/mainmake.v2 which gleans the Emacs version from it!  */
+static const char emacs_copyright[] = "Copyright (C) 2010 Free Software Foundation, Inc.";
+static const char emacs_version[] = "24.0.50";
 
 /* Make these values available in GDB, which doesn't see macros.  */
 
@@ -159,9 +159,9 @@ int initialized;
    static data inside glibc's malloc.  */
 void *malloc_state_ptr;
 /* From glibc, a routine that returns a copy of the malloc internal state.  */
-extern void *malloc_get_state ();
+extern void *malloc_get_state (void);
 /* From glibc, a routine that overwrites the malloc internal state.  */
-extern int malloc_set_state ();
+extern int malloc_set_state (void*);
 /* Non-zero if the MALLOC_CHECK_ environment variable was set while
    dumping.  Used to work around a bug in glibc's malloc.  */
 int malloc_using_checking;
@@ -221,15 +221,6 @@ static unsigned long heap_bss_diff;
    output a warning in dump-emacs.  */
 #define MAX_HEAP_BSS_DIFF (1024*1024)
 
-
-#ifdef HAVE_WINDOW_SYSTEM
-extern Lisp_Object Vinitial_window_system;
-#endif /* HAVE_WINDOW_SYSTEM */
-
-extern Lisp_Object Vauto_save_list_file_name;
-
-extern Lisp_Object Vinhibit_redisplay;
-
 /* Nonzero means running Emacs without interactive terminal.  */
 
 int noninteractive;
@@ -254,8 +245,8 @@ int daemon_pipe[2];
 char **initial_argv;
 int initial_argc;
 
-static void sort_args ();
-void syms_of_emacs ();
+static void sort_args (int argc, char **argv);
+void syms_of_emacs (void);
 
 /* MSVC needs each string be shorter than 2048 bytes, so the usage
    strings below are split to not overflow this limit.  */
@@ -363,7 +354,7 @@ int fatal_error_in_progress;
 /* If non-null, call this function from fatal_error_signal before
    committing suicide.  */
 
-void (*fatal_error_signal_hook) P_ ((void));
+void (*fatal_error_signal_hook) (void);
 
 #ifdef FORWARD_SIGNAL_TO_MAIN_THREAD
 /* When compiled with GTK and running under Gnome,
@@ -376,8 +367,7 @@ pthread_t main_thread;
 
 /* Handle bus errors, invalid instruction, etc.  */
 SIGTYPE
-fatal_error_signal (sig)
-     int sig;
+fatal_error_signal (int sig)
 {
   SIGNAL_THREAD_CHECK (sig);
   fatal_error_code = sig;
@@ -434,7 +424,7 @@ memory_warning_signal (sig)
 #if ! defined (DOS_NT) && ! defined (NO_ABORT)
 
 void
-abort ()
+abort (void)
 {
   kill (getpid (), SIGABRT);
   /* This shouldn't be executed, but it prevents a warning.  */
@@ -446,10 +436,7 @@ abort ()
 /* Code for dealing with Lisp access to the Unix command line.  */
 
 static void
-init_cmdargs (argc, argv, skip_args)
-     int argc;
-     char **argv;
-     int skip_args;
+init_cmdargs (int argc, char **argv, int skip_args)
 {
   register int i;
   Lisp_Object name, dir, tem;
@@ -591,7 +578,7 @@ init_cmdargs (argc, argv, skip_args)
 DEFUN ("invocation-name", Finvocation_name, Sinvocation_name, 0, 0, 0,
        doc: /* Return the program name that was used to run Emacs.
 Any directory names are omitted.  */)
-     ()
+  (void)
 {
   return Fcopy_sequence (Vinvocation_name);
 }
@@ -599,7 +586,7 @@ Any directory names are omitted.  */)
 DEFUN ("invocation-directory", Finvocation_directory, Sinvocation_directory,
        0, 0, 0,
        doc: /* Return the directory name in which the Emacs executable was located.  */)
-     ()
+  (void)
 {
   return Fcopy_sequence (Vinvocation_directory);
 }
@@ -618,11 +605,11 @@ static char dump_tz[] = "UtC0";
    (We don't have any real constructors or destructors.)  */
 #ifdef __GNUC__
 #ifndef GCC_CTORS_IN_LIBC
-void __do_global_ctors ()
+void __do_global_ctors (void)
 {}
-void __do_global_ctors_aux ()
+void __do_global_ctors_aux (void)
 {}
-void __do_global_dtors ()
+void __do_global_dtors (void)
 {}
 /* GNU/Linux has a bug in its library; avoid an error.  */
 #ifndef GNU_LINUX
@@ -630,7 +617,7 @@ char * __CTOR_LIST__[2] = { (char *) (-1), 0 };
 #endif
 char * __DTOR_LIST__[2] = { (char *) (-1), 0 };
 #endif /* GCC_CTORS_IN_LIBC */
-void __main ()
+void __main (void)
 {}
 #endif /* __GNUC__ */
 #endif /* ORDINARY_LINK */
@@ -646,14 +633,7 @@ void __main ()
    enough information to do it right.  */
 
 static int
-argmatch (argv, argc, sstr, lstr, minlen, valptr, skipptr)
-     char **argv;
-     int argc;
-     char *sstr;
-     char *lstr;
-     int minlen;
-     char **valptr;
-     int *skipptr;
+argmatch (char **argv, int argc, const char *sstr, const char *lstr, int minlen, char **valptr, int *skipptr)
 {
   char *p = NULL;
   int arglen;
@@ -677,7 +657,7 @@ argmatch (argv, argc, sstr, lstr, minlen, valptr, skipptr)
 	*skipptr += 1;
       return 1;
     }
-  arglen = (valptr != NULL && (p = index (arg, '=')) != NULL
+  arglen = (valptr != NULL && (p = strchr (arg, '=')) != NULL
 	    ? p - arg : strlen (arg));
   if (lstr == 0 || arglen < minlen || strncmp (arg, lstr, arglen) != 0)
     return 0;
@@ -711,7 +691,7 @@ argmatch (argv, argc, sstr, lstr, minlen, valptr, skipptr)
    possible using this special hook.  */
 
 static void
-malloc_initialize_hook ()
+malloc_initialize_hook (void)
 {
 #ifndef USE_CRT_DLL
   extern char **environ;
@@ -749,7 +729,7 @@ malloc_initialize_hook ()
     }
 }
 
-void (*__malloc_initialize_hook) () = malloc_initialize_hook;
+void (*__malloc_initialize_hook) (void) = malloc_initialize_hook;
 
 #endif /* DOUG_LEA_MALLOC */
 
@@ -776,7 +756,6 @@ main (int argc, char **argv)
   char *ch_to_dir;
 
 #if GC_MARK_STACK
-  extern Lisp_Object *stack_base;
   stack_base = &dummy;
 #endif
 
@@ -864,8 +843,9 @@ main (int argc, char **argv)
           || strcmp (argv[argc-1], "bootstrap") == 0)
       && ! getenv ("EMACS_HEAP_EXEC"))
     {
+      static char heapexec[] = "EMACS_HEAP_EXEC=true";
       /* Set this so we only do this once.  */
-      putenv("EMACS_HEAP_EXEC=true");
+      putenv(heapexec);
 
       /* A flag to turn off address randomization which is introduced
          in linux kernel shipped with fedora core 4 */
@@ -879,23 +859,6 @@ main (int argc, char **argv)
       perror ("execvp");
     }
 #endif /* HAVE_PERSONALITY_LINUX32 */
-
-
-/* Map in shared memory, if we are using that.  */
-#ifdef HAVE_SHM
-  if (argmatch (argv, argc, "-nl", "--no-shared-memory", 6, NULL, &skip_args))
-    {
-      map_in_data (0);
-      /* The shared memory was just restored, which clobbered this.  */
-      skip_args = 1;
-    }
-  else
-    {
-      map_in_data (1);
-      /* The shared memory was just restored, which clobbered this.  */
-      skip_args = 0;
-    }
-#endif
 
 #if defined (HAVE_SETRLIMIT) && defined (RLIMIT_STACK)
   /* Extend the stack space available.
@@ -975,12 +938,6 @@ main (int argc, char **argv)
       setmode (fileno (stdout), O_BINARY);
     }
 #endif /* MSDOS */
-
-#ifdef SET_EMACS_PRIORITY
-  if (emacs_priority)
-    nice (emacs_priority);
-  setuid (getuid ());
-#endif /* SET_EMACS_PRIORITY */
 
   /* Skip initial setlocale if LC_ALL is "C", as it's not needed in that case.
      The build procedure uses this while dumping, to ensure that the
@@ -1204,7 +1161,7 @@ main (int argc, char **argv)
 #endif
 #if defined (HAVE_GTK_AND_PTHREAD) && !defined (SYSTEM_MALLOC) && !defined (DOUG_LEA_MALLOC)
       {
-	extern void malloc_enable_thread P_ ((void));
+        extern void malloc_enable_thread (void);
 
 	malloc_enable_thread ();
       }
@@ -1301,9 +1258,7 @@ main (int argc, char **argv)
 #ifdef AIX
 /* 20 is SIGCHLD, 21 is SIGTTIN, 22 is SIGTTOU.  */
       signal (SIGXCPU, fatal_error_signal);
-#ifndef _I386
       signal (SIGIOINT, fatal_error_signal);
-#endif
       signal (SIGGRANT, fatal_error_signal);
       signal (SIGRETRACT, fatal_error_signal);
       signal (SIGSOUND, fatal_error_signal);
@@ -1378,68 +1333,6 @@ main (int argc, char **argv)
 #endif
   init_atimer ();
   running_asynch_code = 0;
-
-  /* Handle --unibyte and the EMACS_UNIBYTE envvar,
-     but not while dumping.  */
-  if (1)
-    {
-      int inhibit_unibyte = 0;
-
-      /* --multibyte overrides EMACS_UNIBYTE.  */
-      if (argmatch (argv, argc, "-no-unibyte", "--no-unibyte", 4, NULL, &skip_args)
-	  || argmatch (argv, argc, "-multibyte", "--multibyte", 4, NULL, &skip_args)
-	  /* Ignore EMACS_UNIBYTE before dumping.  */
-	  || (!initialized && noninteractive))
-	inhibit_unibyte = 1;
-
-      /* --unibyte requests that we set up to do everything with single-byte
-	 buffers and strings.  We need to handle this before calling
-	 init_lread, init_editfns and other places that generate Lisp strings
-	 from text in the environment.  */
-      /* Actually this shouldn't be needed as of 20.4 in a generally
-	 unibyte environment.  As handa says, environment values
-	 aren't now decoded; also existing buffers are now made
-	 unibyte during startup if .emacs sets unibyte.  Tested with
-	 8-bit data in environment variables and /etc/passwd, setting
-	 unibyte and Latin-1 in .emacs. -- Dave Love  */
-      if (argmatch (argv, argc, "-unibyte", "--unibyte", 4, NULL, &skip_args)
-	  || argmatch (argv, argc, "-no-multibyte", "--no-multibyte", 4, NULL, &skip_args)
-	  || (getenv ("EMACS_UNIBYTE") && !inhibit_unibyte))
-	{
-	  Lisp_Object old_log_max;
-	  Lisp_Object symbol, tail;
-
-	  symbol = intern_c_string ("enable-multibyte-characters");
-	  Fset_default (symbol, Qnil);
-
-	  if (initialized)
-	    {
-	      /* Erase pre-dump messages in *Messages* now so no abort.  */
-	      old_log_max = Vmessage_log_max;
-	      XSETFASTINT (Vmessage_log_max, 0);
-	      message_dolog ("", 0, 1, 0);
-	      Vmessage_log_max = old_log_max;
-	    }
-
-	  for (tail = Vbuffer_alist; CONSP (tail);
-	       tail = XCDR (tail))
-	    {
-	      Lisp_Object buffer;
-
-	      buffer = Fcdr (XCAR (tail));
-	      /* Make a multibyte buffer unibyte.  */
-	      if (BUF_Z_BYTE (XBUFFER (buffer)) > BUF_Z (XBUFFER (buffer)))
-		{
-		  struct buffer *current = current_buffer;
-
-		  set_buffer_temp (XBUFFER (buffer));
-		  Fset_buffer_multibyte (Qnil);
-		  set_buffer_temp (current);
-		}
-	    }
-	  message ("Warning: unibyte sessions are obsolete and will disappear");
-	}
-    }
 
   no_loadup
     = argmatch (argv, argc, "-nl", "--no-loadup", 6, NULL, &skip_args);
@@ -1666,6 +1559,9 @@ main (int argc, char **argv)
 
 #ifdef MSDOS
       syms_of_xmenu ();
+      syms_of_dosfns();
+      syms_of_msdos();
+      syms_of_win16select();
 #endif	/* MSDOS */
 
 #ifdef HAVE_NS
@@ -1680,13 +1576,9 @@ main (int argc, char **argv)
       syms_of_dbusbind ();
 #endif /* HAVE_DBUS */
 
-#ifdef SYMS_SYSTEM
-      SYMS_SYSTEM;
-#endif
-
-#ifdef SYMS_MACHINE
-      SYMS_MACHINE;
-#endif
+#ifdef WINDOWSNT
+      syms_of_ntterm ();
+#endif /* WINDOWSNT */
 
       keys_of_casefiddle ();
       keys_of_cmds ();
@@ -1774,15 +1666,26 @@ main (int argc, char **argv)
 #else
       extern char etext;
 #endif
+#ifdef HAVE___EXECUTABLE_START
+      /* This symbol is defined by GNU ld to the start of the text
+	 segment.  */
+      extern char __executable_start[];
+#else
       extern void safe_bcopy ();
-      extern void dump_opcode_frequencies ();
+#endif
 
       atexit (_mcleanup);
+#ifdef HAVE___EXECUTABLE_START
+      monstartup (__executable_start, &etext);
+#else
       /* This uses safe_bcopy because that function comes first in the
 	 Emacs executable.  It might be better to use something that
 	 gives the start of the text segment, but start_of_text is not
 	 defined on all systems now.  */
+      /* FIXME: Does not work on architectures with function
+	 descriptors.  */
       monstartup (safe_bcopy, &etext);
+#endif
     }
   else
     moncontrol (0);
@@ -1830,10 +1733,6 @@ const struct standard_args standard_args[] =
   { "-script", "--script", 100, 1 },
   { "-daemon", "--daemon", 99, 0 },
   { "-help", "--help", 90, 0 },
-  { "-no-unibyte", "--no-unibyte", 83, 0 },
-  { "-multibyte", "--multibyte", 82, 0 },
-  { "-unibyte", "--unibyte", 81, 0 },
-  { "-no-multibyte", "--no-multibyte", 80, 0 },
   { "-nl", "--no-loadup", 70, 0 },
   /* -d must come last before the options handled in startup.el.  */
   { "-d", "--display", 60, 1 },
@@ -1931,9 +1830,7 @@ const struct standard_args standard_args[] =
    than once, eliminate all but one copy of it.  */
 
 static void
-sort_args (argc, argv)
-     int argc;
-     char **argv;
+sort_args (int argc, char **argv)
 {
   char **new = (char **) xmalloc (sizeof (char *) * argc);
   /* For each element of argv,
@@ -1991,7 +1888,7 @@ sort_args (argc, argv)
 	    {
 	      match = -1;
 	      thislen = strlen (argv[from]);
-	      equals = index (argv[from], '=');
+	      equals = strchr (argv[from], '=');
 	      if (equals != 0)
 		thislen = equals - argv[from];
 
@@ -2074,7 +1971,7 @@ sort_args (argc, argv)
   while (to < argc)
     new[to++] = 0;
 
-  bcopy (new, argv, sizeof (char *) * argc);
+  memcpy (argv, new, sizeof (char *) * argc);
 
   xfree (options);
   xfree (new);
@@ -2089,8 +1986,7 @@ If ARG is a string, stuff it as keyboard input.
 The value of `kill-emacs-hook', if not void,
 is a list of functions (of no args),
 all of which are called before Emacs is actually killed.  */)
-     (arg)
-     Lisp_Object arg;
+  (Lisp_Object arg)
 {
   struct gcpro gcpro1;
 
@@ -2113,8 +2009,6 @@ all of which are called before Emacs is actually killed.  */)
     unlink (SDATA (Vauto_save_list_file_name));
 
   exit (INTEGERP (arg) ? XINT (arg) : EXIT_SUCCESS);
-  /* NOTREACHED */
-  return Qnil;
 }
 
 
@@ -2130,9 +2024,7 @@ all of which are called before Emacs is actually killed.  */)
    and Fkill_emacs.  */
 
 void
-shut_down_emacs (sig, no_x, stuff)
-     int sig, no_x;
-     Lisp_Object stuff;
+shut_down_emacs (int sig, int no_x, Lisp_Object stuff)
 {
   /* Prevent running of hooks from now on.  */
   Vrun_hooks = Qnil;
@@ -2141,7 +2033,7 @@ shut_down_emacs (sig, no_x, stuff)
   Vinhibit_redisplay = Qt;
 
   /* If we are controlling the terminal, reset terminal modes.  */
-#ifdef EMACS_HAVE_TTY_PGRP
+#ifndef DOS_NT
   {
     int pgrp = EMACS_GETPGRP (0);
 
@@ -2161,9 +2053,7 @@ shut_down_emacs (sig, no_x, stuff)
 
   stuff_buffered_input (stuff);
 
-#ifdef subprocesses
   inhibit_sentinels = 1;
-#endif
   kill_buffer_processes (Qnil);
   Fdo_auto_save (Qt, Qnil);
 
@@ -2220,8 +2110,7 @@ Take symbols from SYMFILE (presumably the file you executed to run Emacs).
 This is used in the file `loadup.el' when building Emacs.
 
 You must run Emacs in batch mode in order to dump it.  */)
-     (filename, symfile)
-     Lisp_Object filename, symfile;
+  (Lisp_Object filename, Lisp_Object symfile)
 {
   extern char my_edata[];
   Lisp_Object tem;
@@ -2315,7 +2204,7 @@ You must run Emacs in batch mode in order to dump it.  */)
 #if HAVE_SETLOCALE
 /* Recover from setlocale (LC_ALL, "").  */
 void
-fixup_locale ()
+fixup_locale (void)
 {
   /* The Emacs Lisp reader needs LC_NUMERIC to be "C",
      so that numbers are read and printed properly for Emacs Lisp.  */
@@ -2325,10 +2214,7 @@ fixup_locale ()
 /* Set system locale CATEGORY, with previous locale *PLOCALE, to
    DESIRED_LOCALE.  */
 static void
-synchronize_locale (category, plocale, desired_locale)
-     int category;
-     Lisp_Object *plocale;
-     Lisp_Object desired_locale;
+synchronize_locale (int category, Lisp_Object *plocale, Lisp_Object desired_locale)
 {
   if (! EQ (*plocale, desired_locale))
     {
@@ -2341,7 +2227,7 @@ synchronize_locale (category, plocale, desired_locale)
 
 /* Set system time locale to match Vsystem_time_locale, if possible.  */
 void
-synchronize_system_time_locale ()
+synchronize_system_time_locale (void)
 {
   synchronize_locale (LC_TIME, &Vprevious_system_time_locale,
 		      Vsystem_time_locale);
@@ -2350,7 +2236,7 @@ synchronize_system_time_locale ()
 /* Set system messages locale to match Vsystem_messages_locale, if
    possible.  */
 void
-synchronize_system_messages_locale ()
+synchronize_system_messages_locale (void)
 {
 #ifdef LC_MESSAGES
   synchronize_locale (LC_MESSAGES, &Vprevious_system_messages_locale,
@@ -2364,17 +2250,16 @@ synchronize_system_messages_locale ()
 #endif
 
 Lisp_Object
-decode_env_path (evarname, defalt)
-     char *evarname, *defalt;
+decode_env_path (const char *evarname, const char *defalt)
 {
-  register char *path, *p;
+  const char *path, *p;
   Lisp_Object lpath, element, tem;
 
   /* It's okay to use getenv here, because this function is only used
      to initialize variables when Emacs starts up, and isn't called
      after that.  */
   if (evarname != 0)
-    path = (char *) getenv (evarname);
+    path = getenv (evarname);
   else
     path = 0;
   if (!path)
@@ -2383,18 +2268,18 @@ decode_env_path (evarname, defalt)
   /* Ensure values from the environment use the proper directory separator.  */
   if (path)
     {
-      p = alloca (strlen (path) + 1);
-      strcpy (p, path);
-      path = p;
-
-      dostounix_filename (path);
+      char *path_copy = alloca (strlen (path) + 1);
+      strcpy (path_copy, path);
+      dostounix_filename (path_copy);
+      path = path_copy;
     }
 #endif
   lpath = Qnil;
   while (1)
     {
-      p = index (path, SEPCHAR);
-      if (!p) p = path + strlen (path);
+      p = strchr (path, SEPCHAR);
+      if (!p)
+	p = path + strlen (path);
       element = (p - path ? make_string (path, p - path)
 		 : build_string ("."));
 
@@ -2427,7 +2312,7 @@ decode_env_path (evarname, defalt)
 DEFUN ("daemonp", Fdaemonp, Sdaemonp, 0, 0, 0,
        doc: /* Return non-nil if the current emacs process is a daemon.
 If the daemon was given a name argument, return that name. */)
-  ()
+  (void)
 {
   if (IS_DAEMON)
     if (daemon_name)
@@ -2442,7 +2327,7 @@ DEFUN ("daemon-initialized", Fdaemon_initialized, Sdaemon_initialized, 0, 0, 0,
        doc: /* Mark the Emacs daemon as being initialized.
 This finishes the daemonization process by doing the other half of detaching
 from the parent process and its tty file descriptors.  */)
-  ()
+  (void)
 {
   int nfd;
 
@@ -2477,7 +2362,7 @@ from the parent process and its tty file descriptors.  */)
 }
 
 void
-syms_of_emacs ()
+syms_of_emacs (void)
 {
   Qfile_name_handler_alist = intern_c_string ("file-name-handler-alist");
   staticpro (&Qfile_name_handler_alist);

@@ -6,7 +6,7 @@
 ;; Author: Carsten Dominik <carsten at orgmode dot org>
 ;; Keywords: outlines, hypermedia, calendar, wp
 ;; Homepage: http://orgmode.org
-;; Version: 6.35i
+;; Version: 7.01
 ;;
 ;; This file is part of GNU Emacs.
 ;;
@@ -42,6 +42,11 @@
 (defmacro org-bound-and-true-p (var)
   "Return the value of symbol VAR if it is bound, else nil."
   `(and (boundp (quote ,var)) ,var))
+
+(defun org-not-nil (v)
+  "If V not nil, and also not the string \"nil\", then return V.
+Otherwise return nil."
+  (and v (not (equal v "nil")) v))
 
 (defmacro org-unmodified (&rest body)
   "Execute body without changing `buffer-modified-p'.
@@ -87,7 +92,7 @@ Also, do not record undo information."
 
 (defmacro org-maybe-intangible (props)
   "Add '(intangible t) to PROPS if Emacs version is earlier than Emacs 22.
-In emacs 21, invisible text is not avoided by the command loop, so the
+In Emacs 21, invisible text is not avoided by the command loop, so the
 intangible property is needed to make sure point skips this text.
 In Emacs 22, this is not necessary.  The intangible text property has
 led to problems with flyspell.  These problems are fixed in flyspell.el,
@@ -162,7 +167,8 @@ We use a macro so that the test can happen at compilation time."
   `(let ((inhibit-read-only t)) ,@body))
 
 (defconst org-rm-props '(invisible t face t keymap t intangible t mouse-face t
-				   rear-nonsticky t mouse-map t fontified t)
+				   rear-nonsticky t mouse-map t fontified t
+				   org-emphasis t)
   "Properties to remove when a string without properties is wanted.")
 
 (defsubst org-match-string-no-properties (num &optional string)
@@ -270,7 +276,6 @@ This is in contrast to merely setting it to 0."
       (setq plist (cddr plist)))
     p))
 
-
 (defun org-replace-match-keep-properties (newtext &optional fixedcase
 						  literal string)
   "Like `replace-match', but add the text properties found original text."
@@ -287,13 +292,73 @@ This is in contrast to merely setting it to 0."
 (defvar org-inlinetask-min-level) ; defined in org-inlinetask.el
 (defun org-get-limited-outline-regexp ()
   "Return outline-regexp with limited number of levels.
-The number of levels is controlled by "
+The number of levels is controlled by `org-inlinetask-min-level'"
   (if (or (not (org-mode-p)) (not (featurep 'org-inlinetask)))
 
       outline-regexp
     (let* ((limit-level (1- org-inlinetask-min-level))
 	   (nstars (if org-odd-levels-only (1- (* limit-level 2)) limit-level)))
       (format "\\*\\{1,%d\\} " nstars))))
+
+
+;;; Saving and restoring visibility
+
+(defun org-outline-overlay-data (&optional use-markers)
+  "Return a list of the locations of all outline overlays.
+The are overlays with the `invisible' property value `outline'.
+The return values is a list of cons cells, with start and stop
+positions for each overlay.
+If USE-MARKERS is set, return the positions as markers."
+  (let (beg end)
+    (save-excursion
+      (save-restriction
+	(widen)
+	(delq nil
+	      (mapcar (lambda (o)
+			(when (eq (overlay-get o 'invisible) 'outline)
+			  (setq beg (overlay-start o)
+				end (overlay-end o))
+			  (and beg end (> end beg)
+			       (if use-markers
+				   (cons (move-marker (make-marker) beg)
+					 (move-marker (make-marker) end))
+				 (cons beg end)))))
+		      (overlays-in (point-min) (point-max))))))))
+
+(autoload 'show-all "outline" nil t)
+
+(defun org-set-outline-overlay-data (data)
+  "Create visibility overlays for all positions in DATA.
+DATA should have been made by `org-outline-overlay-data'."
+  (let (o)
+    (save-excursion
+      (save-restriction
+	(widen)
+	(show-all)
+	(mapc (lambda (c)
+		(setq o (make-overlay (car c) (cdr c)))
+		(overlay-put o 'invisible 'outline))
+	      data)))))
+
+(defmacro org-save-outline-visibility (use-markers &rest body)
+  "Save and restore outline visibility around BODY.
+If USE-MARKERS is non-nil, use markers for the positions.
+This means that the buffer may change while running BODY,
+but it also means that the buffer should stay alive
+during the operation, because otherwise all these markers will
+point nowhere."
+  (declare (indent 1))
+  `(let ((data (org-outline-overlay-data ,use-markers)))
+     (unwind-protect
+	 (progn
+	   ,@body
+	   (org-set-outline-overlay-data data))
+       (when ,use-markers
+	 (mapc (lambda (c)
+		 (and (markerp (car c)) (move-marker (car c) nil))
+		 (and (markerp (cdr c)) (move-marker (cdr c) nil)))
+	       data)))))
+
 
 (provide 'org-macs)
 

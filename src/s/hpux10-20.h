@@ -35,9 +35,10 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
    if system supports pty's.  'p' means it is /dev/ptym/ptyp0  */
 #define FIRST_PTY_LETTER 'p'
 
-/* Define HAVE_TERMIO if the system provides sysV-style ioctls
-   for terminal control.  */
-#define HAVE_TERMIO
+#define HAVE_TERMIOS
+#define NO_TERMIO
+
+#define ORDINARY_LINK
 
 /* Define HAVE_PTYS if the system supports pty devices.  */
 #define HAVE_PTYS
@@ -113,12 +114,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
    on HP-UX.  (You get duplicate symbol errors on linking). */
 #undef _FILE_OFFSET_BITS
 
-/* Define NO_REMAP if memory segmentation makes it not work well
-   to change the boundary between the text section and data section
-   when Emacs is dumped.  If you define this, the preloaded Lisp
-   code will not be sharable; but that's better than failing completely.  */
-#define NO_REMAP
-
 /* Define VIRT_ADDR_VARIES if the virtual addresses of
    pure and impure space as loaded can vary, and even their
    relative order cannot be relied on.
@@ -131,7 +126,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #define DATA_SEG_BITS 0x40000000
 
 #define DATA_START    0x40000000
-#define TEXT_START    0x00000000
 
 /* Data type of load average, as read out of kmem.  */
 #define LOAD_AVE_TYPE double
@@ -146,10 +140,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 /* No underscore please.  */
 #define LDAV_SYMBOL "avenrun"
-
-/* On USG systems these have different names.  */
-#define index strchr
-#define rindex strrchr
 
 /* arch-tag: 8d8dcbf1-ca9b-48a1-94be-b750de18a5c6
    (do not change this comment) */

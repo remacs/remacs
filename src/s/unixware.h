@@ -19,16 +19,14 @@ You should have received a copy of the GNU General Public License
 along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 
-#include "usg5-4.h"
+#include "usg5-4-common.h"
 
-/* fnf@cygnus.com says these exist.  */
-#define HAVE_TCATTR
 /* #define HAVE_GETWD  (appears to be buggy on SVR4.2) */
 #undef HAVE_GETWD
 
 #undef HAVE_SYSV_SIGPAUSE
 
-/* This is the same definition as in usg5-4.h, but with sigblock/sigunblock
+/* This is the same definition as in usg5-4-common.h, but with sigblock/sigunblock
    rather than sighold/sigrelse, which appear to be BSD4.1 specific.
    It may also be appropriate for SVR4.x
    (x<2) but I'm not sure.   fnf@cygnus.com */

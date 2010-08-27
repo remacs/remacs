@@ -1,8 +1,8 @@
 ;;; cc-mode.el --- major mode for editing C and similar languages
 
 ;; Copyright (C) 1985, 1987, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
-;;   1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010
-;;   Free Software Foundation, Inc.
+;;   1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009,
+;;   2010  Free Software Foundation, Inc.
 
 ;; Authors:    2003- Alan Mackenzie
 ;;             1998- Martin Stjernholm
@@ -522,7 +522,7 @@ that requires a literal mode spec at compile time."
 
   (when (or c-recognize-<>-arglists
 	    (c-major-mode-is 'awk-mode)
-	    (c-major-mode-is '(c-mode c++-mode objc-mode)))
+	    (c-major-mode-is '(java-mode c-mode c++-mode objc-mode)))
     ;; We'll use the syntax-table text property to change the syntax
     ;; of some chars for this language, so do the necessary setup for
     ;; that.
@@ -616,6 +616,15 @@ that requires a literal mode spec at compile time."
     (font-lock-mode 0)
     (font-lock-mode 1)))
 
+;; Buffer local variables defining the region to be fontified by a font lock
+;; after-change function.  They are set in c-after-change to
+;; after-change-function's BEG and END, and may be modified by a
+;; `c-before-font-lock-function'.
+(defvar c-new-BEG 0)
+(make-variable-buffer-local 'c-new-BEG)
+(defvar c-new-END 0)
+(make-variable-buffer-local 'c-new-END)
+
 (defun c-common-init (&optional mode)
   "Common initialization for all CC Mode modes.
 In addition to the work done by `c-basic-common-init' and
@@ -662,6 +671,17 @@ compatible with old code; callers should always specify it."
       (and (cdr rfn)
 	   (setq require-final-newline mode-require-final-newline)))))
 
+(defun c-count-cfss (lv-alist)
+  ;; LV-ALIST is an alist like `file-local-variables-alist'.  Count how many
+  ;; elements with the key `c-file-style' there are in it.
+  (let ((elt-ptr lv-alist) elt (cownt 0))
+    (while elt-ptr
+      (setq elt (car elt-ptr)
+	    elt-ptr (cdr elt-ptr))
+      (when (eq (car elt) 'c-file-style)
+	(setq cownt (1+ cownt))))
+    cownt))
+							  
 (defun c-before-hack-hook ()
   "Set the CC Mode style and \"offsets\" when in the buffer's local variables.
 They are set only when, respectively, the pseudo variables
@@ -669,11 +689,24 @@ They are set only when, respectively, the pseudo variables
 
 This function is called from the hook `before-hack-local-variables-hook'."
   (when c-buffer-is-cc-mode
-    (let ((stile (cdr (assq 'c-file-style file-local-variables-alist)))
+    (let ((mode-cons (assq 'mode file-local-variables-alist))
+	  (stile (cdr (assq 'c-file-style file-local-variables-alist)))
 	  (offsets (cdr (assq 'c-file-offsets file-local-variables-alist))))
+      (when mode-cons
+	(hack-one-local-variable (car mode-cons) (cdr mode-cons))
+	(setq file-local-variables-alist
+	      (delq mode-cons file-local-variables-alist)))
       (when stile
 	(or (stringp stile) (error "c-file-style is not a string"))
-	(c-set-style stile))
+	(if (boundp 'dir-local-variables-alist)
+	    ;; Determine whether `c-file-style' was set in the file's local
+	    ;; variables or in a .dir-locals.el (a directory setting).
+	    (let ((cfs-in-file-and-dir-count
+		   (c-count-cfss file-local-variables-alist))
+		  (cfs-in-dir-count (c-count-cfss dir-local-variables-alist)))
+	      (c-set-style stile
+			   (= cfs-in-file-and-dir-count cfs-in-dir-count)))
+	  (c-set-style stile)))
       (when offsets
 	(mapc
 	 (lambda (langentry)
@@ -786,15 +819,6 @@ Note that the style variables are always made local to the buffer."
 
 
 ;;; Change hooks, linking with Font Lock.
-
-;; Buffer local variables defining the region to be fontified by a font lock
-;; after-change function.  They are set in c-after-change to
-;; after-change-function's BEG and END, and may be modified by a
-;; `c-before-font-lock-function'.
-(defvar c-new-BEG 0)
-(make-variable-buffer-local 'c-new-BEG)
-(defvar c-new-END 0)
-(make-variable-buffer-local 'c-new-END)
 
 ;; Buffer local variables recording Beginning/End-of-Macro position before a
 ;; change, when a macro straddles, respectively, the BEG or END (or both) of
