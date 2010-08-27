@@ -1,4 +1,4 @@
-void x_draw_xwidget_glyph_string P_ ((struct glyph_string *s));
+void x_draw_xwidget_glyph_string (struct glyph_string *s);
 void syms_of_xwidget ();
 
 extern Lisp_Object Qxwidget;
@@ -37,7 +37,7 @@ struct xwidget_type
 
   /* Check that SPEC is a valid image specification for the given
      image type.  Value is non-zero if SPEC is valid.  */
-  int (* valid_p) P_ ((Lisp_Object spec));
+  int (* valid_p) (Lisp_Object spec);
 
   /* Next in list of all supported image types.  */
   struct xwidget_type *next;

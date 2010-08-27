@@ -267,7 +267,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "fontset.h"
 #include "blockinput.h"
 
-
 #ifdef HAVE_X_WINDOWS
 #include "xterm.h"
 #endif
@@ -1038,6 +1037,7 @@ static int next_element_from_c_string (struct it *);
 static int next_element_from_buffer (struct it *);
 static int next_element_from_composition (struct it *);
 static int next_element_from_image (struct it *);
+static int next_element_from_xwidget(struct it *);
 static int next_element_from_stretch (struct it *);
 static void load_overlay_strings (struct it *, int);
 static int init_from_display_pos (struct it *, struct window *,
@@ -4374,7 +4374,6 @@ handle_single_display_spec (struct it *it, Lisp_Object spec, Lisp_Object object,
          STRINGP (value));
   
   valid_p = (STRINGP (value)
-             
 #ifdef HAVE_WINDOW_SYSTEM
              || (FRAME_WINDOW_P (it->f) && valid_image_p (value))
 #endif /* not HAVE_WINDOW_SYSTEM */
@@ -11571,7 +11570,6 @@ do { if (polling_stopped_here) start_polling ();	\
 static void
 redisplay_internal (int preserve_echo_area)
 {
-
   struct window *w = XWINDOW (selected_window);
   struct frame *f;
   int pause;
@@ -21276,6 +21274,7 @@ compute_overhangs_and_x (struct glyph_string *s, int x, int backward_p)
 	      BUILD_STRETCH_GLYPH_STRING (START, END, HEAD, TAIL,	\
 					  HL, X, LAST_X);		\
 	      break;							\
+	      								\
 	    case IMAGE_GLYPH:						\
 	      BUILD_IMAGE_GLYPH_STRING (START, END, HEAD, TAIL,		\
 					HL, X, LAST_X);			\
