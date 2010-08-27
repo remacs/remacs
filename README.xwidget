@@ -9,6 +9,8 @@ possibilities. There are some screnshots at the emacswiki.
 
 Currently its possible to insert buttons, sliders, and xembed widgets
 in the buffer. It works similar to the support for images in Emacs.
+Adding more types of widgets should be fairly straightforward, but
+will require adapter code for each type.
 
 A difference from images is that xwidgets live their own life. You
 create them with an api, get a reference, and tie them to a particular
@@ -33,7 +35,7 @@ TODO
 - remove the special-case for when the minibuffer is
   active. Special-casing will never work properly.
 
-- disable cursor drawing on top of an active xwidget
+- disable emacs cursor drawing on top of an active xwidget
 
 - figure out what to do with the multiple frames case
 
@@ -41,3 +43,6 @@ TODO
   hand-waving affair
 
 - more documentation
+
+- look into more ways of displaying xwidgets, like binding them to a
+window rather than a point in a buffer.
