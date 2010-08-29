@@ -19,30 +19,88 @@ where a plain image can be shown in several windows. The xwidget code
 tries to handle this by essentialy making a screen capture of the
 widget and displaying those in the non-active windows, and the real
 widget in the active window. This doesnt currently work for xembed
-widgets.
+gtk_socket widgets.
 
 The current state is that one window, one frame, showing many xwidgets
-is a nice demo.
+is a nice demo. One frame, many windows, will have lots of display
+glitches. Many frames, many windows, will probably work even worse.
 
+* Brief overview of how xwidgets work
+Xwidgets work in one way like images in Emacs. You bind a display spec very
+similar to an image display spec to buffer contents. The display engine will
+notice the display spec and try to display the xwidget there. The display engine
+prepares space at the right place for the xwidget and so on for free, as long as
+we provide proper sizes and so on. 
 
-TODO
+The problem is that Emacs cant actually draw the widgets, as it can with
+images. Emacs must notify GTK about where the widgets should be, and how they
+should be clipped and so on, and this information must be given to GTK
+synchonous with Emacs display changes. Ok, so why is that difficult then?
 
-- Examine using XComposite rather than GTK off-screen rendering. This
-  would make xembed widgets work much better.
+- How do we know when a widget is NOT to be drawn? The only way I found so far
+  is having a flag for each xwdiget, that is reset before a redisplay. When an
+  xwidget is encountered during display, the flag is set. After redisplay,
+  iterate all xwidgets and hide those which hasnt been displayed. 
 
-- make the keyboard event code propagation code work.
+- In the general case, there can only be one xwidget, and several views of
+  it. There is one real view, and several shadow views. The real view is defined
+  to be in the currently selected window. All other views are shadow views. 
 
-- remove the special-case for when the minibuffer is
-  active. Special-casing will never work properly.
+  Even this simple rule is difficult to implement in practice because Emacs
+  display is clever and optimized. It is often difficult to know that a xwdiget
+  hasnt actually been displayed after a redisplay.
 
-- disable emacs cursor drawing on top of an active xwidget
+- shadow views of xwidgets are thankfully not so hard because gtk supports
+  offscreen rendering of many widget types. Except it doesnt for the gtk socket
+  type, which happens to be very desirable. This might be solvable with
+  xcomposite, but is difficult.
 
-- figure out what to do with the multiple frames case
+- The gtk socket type for embedding external applications is desirable but
+  presents a lot of difficulties of its own. Offscreen rendering has been
+  mentioned already. Another difficulty is deciding which input events to
+  forward, and when and how to do it. 
 
-- improve the xwidgets programming interface so its less of
-  hand-waving affair
+- The case of showing an xwidget in several frames is not solved at all
+  currently. This would mean moving the real xwidget between frames when the
+  selected window moves. The gtk widget will need to be reparented between
+  windows, which seem fragile.
 
-- more documentation
+* ToDo:s
 
-- look into more ways of displaying xwidgets, like binding them to a
-window rather than a point in a buffer.
+** TODO Examine using XComposite rather than GTK off-screen rendering. This
+  would make xembed widgets work much better. This would probably be
+  rathter difficult, but could open up other interesting possibilities
+  for Emacs.
+
+** TODO  make the keyboard event code propagation code work. There is an attempt 
+to provide an api to send keyboard events to an xwidget, but it doesnt currently
+work very well.
+
+** TODO  remove the special-case for when the minibuffer is
+  active.  I added some code to reduce the annoying problem display artefacts
+  when making the minibuffer the selected window. This made xwidgets in the
+  buffer go grey or black whenever one did m-x to activate the minibuffer. The
+  coded tried to handle the minibuffer as a special case. That simply wasnt a
+  good idea. Special-casing will never work properly. It is much better to spend
+  time finding solutions that work acceptably in the general case.
+
+** TODO  disable emacs cursor drawing on top of an active xwidget. 
+  This ought to be rather simple and should improve the visuals a lot.
+
+** TODO  figure out what to do with the multiple frames case. 
+I havent spent any time at all on this.
+
+** TODO  improve the xwidgets programming interface so its less of
+  hand-waving affair. This shouldnt be too hard, but I have deliberatley not
+spent any time on it, since getting the visuals right is much harder.
+
+** TODO  more documentation
+There should be user docs, and xwidget contributor docs. The current README
+is all contributor docs there is now, apart from the code.
+
+** TODO  look into more ways of displaying xwidgets, like binding them to a
+window rather than a point in a buffer. This was suggested by Chidong.
+This would be a useful addition to Emacs in itself, and would avoid nearly all 
+display issues. I still think the general case is more interesting, but this
+special case should also be added.
+
