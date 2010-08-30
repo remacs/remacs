@@ -43,14 +43,14 @@ synchonous with Emacs display changes. Ok, so why is that difficult then?
   iterate all xwidgets and hide those which hasnt been displayed. 
 
 - In the general case, there can only be one xwidget, and several views of
-  it. There is one real view, and several shadow views. The real view is defined
-  to be in the currently selected window. All other views are shadow views. 
+  it. There is one real view, and several phantom views. The real view is defined
+  to be in the currently selected window. All other views are phantom views. 
 
   Even this simple rule is difficult to implement in practice because Emacs
   display is clever and optimized. It is often difficult to know that a xwdiget
   hasnt actually been displayed after a redisplay.
 
-- shadow views of xwidgets are thankfully not so hard because gtk supports
+- phantom views of xwidgets are thankfully not so hard because gtk supports
   offscreen rendering of many widget types. Except it doesnt for the gtk socket
   type, which happens to be very desirable. This might be solvable with
   xcomposite, but is difficult.
