@@ -55,6 +55,7 @@
 #ifdef USE_X_TOOLKIT
 #include <X11/Shell.h>
 #endif
+#include <X11/extensions/Xcomposite.h>
 
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
@@ -99,15 +100,14 @@ static void
 buttonclick_handler (GtkWidget * widget, gpointer data)
 {
   struct xwidget *xw = (struct xwidget *) data;
+  struct input_event event;
   Lisp_Object frame;
+  FRAME_PTR f = (FRAME_PTR) g_object_get_data (G_OBJECT (xw->widget), XG_FRAME_DATA);
   printf ("button clicked xw:%d id:%d\n", xw, xw->id);
 
-  struct input_event event;
   EVENT_INIT (event);
   event.kind = XWIDGET_EVENT;
 
-  FRAME_PTR f =
-    (FRAME_PTR) g_object_get_data (G_OBJECT (xw->widget), XG_FRAME_DATA);
   XSETFRAME (frame, f);
 
   event.frame_or_window = Qnil;	//frame; //how to get the frame here?
@@ -213,12 +213,40 @@ xwidget_draw_phantom (struct xwidget *xw, int x, int y, int clipx, int clipy,
   //but XCopyArea() might be sufficient for our needs here
 
 
-  GdkPixmap *xw_snapshot = gtk_widget_get_snapshot (xw->widget, NULL);
-  GdkGC *gdkgc = gdk_gc_new (xw_snapshot);
+  GdkPixmap *xw_snapshot = NULL;
+  GdkGC *gdkgc = NULL;
+  GdkNativeWindow p_xid;
+  GdkNativeWindow xid;
+  
+  if (0
+      //xw->type == 3 //this doesnt work atm
+      ) {
+    //its a gtk_socket, get_snapshot() doesnt work so try using composition methods
+    xid = gtk_socket_get_plug_window (GTK_SOCKET (xw->widget));
+    p_xid = XCompositeNameWindowPixmap( GDK_DISPLAY (), GDK_WINDOW_XID(xid)) ;
+    //xw_snapshot =  gdk_pixmap_foreign_new_for_display(GDK_DISPLAY(), p_xid);
+    printf("phantom socket 1: %d %d\n", xid, p_xid);
+    xw_snapshot =  gdk_pixmap_foreign_new(p_xid); //wraps the native window in a gdk windw, but it crashes!
+    printf("2\n");    
+  }else {
+    //if its not a socket, its got a snapshot method that works
+    printf("phantom other\n");    
+    xw_snapshot = gtk_widget_get_snapshot (xw->widget, NULL);
+  }
+
+  if(xw_snapshot==NULL){
+    printf(" xw_snapshot null for some reason ... \n");
+    return;
+  }
+    
+  printf("3\n");
+  gdkgc = gdk_gc_new (xw_snapshot);
 
   //currently a phanotm gets a line drawn across it to denote phantomness
   //dimming or such would be more elegant
+  printf("4\n");
   gdk_draw_line (xw_snapshot, gdkgc, 0, 0, xw->width, xw->height);
+  printf("5\n");
   gdk_draw_drawable (gtk_widget_get_window (s->f->gwfixed),	//convert to GdkWindow from gtkWindow
 		     gdkgc, xw_snapshot, 0, 0, x, y, clipx, clipy);
 }
@@ -226,8 +254,7 @@ xwidget_draw_phantom (struct xwidget *xw, int x, int y, int clipx, int clipy,
 
 
 void
-x_draw_xwidget_glyph_string (s)
-     struct glyph_string *s;
+x_draw_xwidget_glyph_string (struct glyph_string *s)
 {
   int box_line_hwidth = eabs (s->face->box_line_width);
   int box_line_vwidth = max (s->face->box_line_width, 0);
@@ -239,6 +266,9 @@ x_draw_xwidget_glyph_string (s)
   //  printf("x_draw_xwidget_glyph_string: id:%d %d %d  (%d,%d,%d,%d) selected win:%d\n",
   //     s->xwidget_id, box_line_hwidth, box_line_vwidth, s->x,s->y,s->height,s->width, drawing_in_selected_window);
   struct xwidget *xw = &xwidgets[s->xwidget_id];
+  int clipx; int clipy;
+
+
 
   int x = s->x;
   int y = s->y + (s->height / 2) - (xw->height / 2);
@@ -250,9 +280,8 @@ x_draw_xwidget_glyph_string (s)
 
   //calculate clip widht and height, which is used both for the xwidget
   //and its phantom counterpart
-  int clipx = min (xw->width, WINDOW_RIGHT_EDGE_X (s->w) - x);
-  int clipy =
-    min (xw->height,
+  clipx = min (xw->width, WINDOW_RIGHT_EDGE_X (s->w) - x);
+  clipy = min (xw->height,
 	 WINDOW_BOTTOM_EDGE_Y (s->w) - WINDOW_MODE_LINE_HEIGHT (s->w) - y);
 
 
@@ -306,13 +335,12 @@ x_draw_xwidget_glyph_string (s)
 
 DEFUN ("xwidget-embed-steal-window", Fxwidget_embed_steal_window, Sxwidget_embed_steal_window, 2, 2, 0, doc:	/* tell existing embed xwidget to steal other window id. */
        )
-  (xwidget_id, window_id)
-     Lisp_Object xwidget_id, window_id;
+  (Lisp_Object xwidget_id, Lisp_Object window_id)
 {
   struct xwidget *xw;
   int xid = XFASTINT (xwidget_id);
-  xw = &xwidgets[xid];
   int iwindow_id = XFASTINT (window_id);
+  xw = &xwidgets[xid];
   printf ("  gtk_socket_add_id: %d %d\n", xid, iwindow_id);
   //  gtk_socket_steal(GTK_SOCKET(xw->widget),iwindow_id);
   //try adding proper gtk plugs instead, i never once had "steal" work
@@ -327,14 +355,14 @@ DEFUN ("xwidget-embed-steal-window", Fxwidget_embed_steal_window, Sxwidget_embed
 DEFUN ("xwidget-resize-internal", Fxwidget_resize_internal, Sxwidget_resize_internal, 3, 3, 0, doc:
        /* tell existing embed xwidget to steal other window id. */
        )
-     (xwidget_id, new_width, new_height)
-     Lisp_Object xwidget_id, new_width, new_height;
+     (Lisp_Object xwidget_id, Lisp_Object new_width, Lisp_Object new_height)
 {
   struct xwidget *xw;
   int xid = XFASTINT (xwidget_id);
-  xw = &xwidgets[xid];
   int w = XFASTINT (new_width);
   int h = XFASTINT (new_height);
+  xw = &xwidgets[xid];
+  
   printf("resize xwidget %d (%d,%d)->(%d,%d)",xid,xw->width,xw->height,w,h);
   xw->width=w;
   xw->height=h;
@@ -350,13 +378,13 @@ DEFUN ("xwidget-resize-internal", Fxwidget_resize_internal, Sxwidget_resize_inte
 int xwidget_owns_kbd = 0;
 DEFUN ("xwidget-set-keyboard-grab", Fxwidget_set_keyboard_grab, Sxwidget_set_keyboard_grab, 2, 2, 0, doc:	/* set unset kbd grab for xwidget. */
        )
-  (xwidget_id, kbd_grab)
-     Lisp_Object xwidget_id, kbd_grab;
+  (Lisp_Object xwidget_id, Lisp_Object kbd_grab)
 {
   struct xwidget *xw;
   int xid = XFASTINT (xwidget_id);
-  xw = &xwidgets[xid];
   int kbd_flag = XFASTINT (kbd_grab);
+  xw = &xwidgets[xid];
+  
   printf ("kbd grab: %d %d\n", xid, kbd_flag);
   if (kbd_flag)
     {
@@ -395,10 +423,9 @@ DEFUN ("xwidget-set-keyboard-grab", Fxwidget_set_keyboard_grab, Sxwidget_set_key
 
 //lowlevel fn mostly cloned from xembed_send_message()
 void
-xwidget_key_send_message (f, destination_window, keycode, keypress, modifiers)
-     struct frame *f;
-     Window destination_window;
-     int keypress;
+xwidget_key_send_message (struct frame *f,
+                          Window destination_window,
+                          int keycode, int keypress, int modifiers)
 {
 
   XKeyEvent event;
@@ -432,29 +459,30 @@ xwidget_key_send_message (f, destination_window, keycode, keypress, modifiers)
 
 DEFUN ("xwidget-send-keyboard-event", Fxwidget_send_keyboard_event, Sxwidget_send_keyboard_event, 2, 2, 0, doc:/* synthesize a kbd event for a xwidget. */
        )
-  (xwidget_id, keydescriptor)
-     Lisp_Object xwidget_id, keydescriptor;
+  (Lisp_Object  xwidget_id, Lisp_Object keydescriptor)
 {
   int keyval;
   char *keystring = "";
-
+  FRAME_PTR f;
   struct xwidget *xw;
+  GdkWindow *window;
   int xwid = XFASTINT (xwidget_id);
+  XID xid;
+  
   xw = &xwidgets[xwid];
 
-  FRAME_PTR f =
-    (FRAME_PTR) g_object_get_data (G_OBJECT (xw->widget), XG_FRAME_DATA);
+  f = (FRAME_PTR) g_object_get_data (G_OBJECT (xw->widget), XG_FRAME_DATA);
 
   //GdkWindow* window=gtk_widget_get_window(xw->widget); //event winds up in emacs
 
   //TODO assert xw is a gtk_socket or THIS WILL FAIL GLORIOUSLY
-  GdkWindow *window = gtk_socket_get_plug_window (GTK_SOCKET (xw->widget));
+  window = gtk_socket_get_plug_window (GTK_SOCKET (xw->widget));
   //the event gets eaten somewhere.
   //i suspect you just cant send an event to a child window and not have emacs eat it.
   //but if this were true the event should pop to emacs right?
 
 
-  XID xid = gdk_x11_drawable_get_xid (window);
+  xid = gdk_x11_drawable_get_xid (window);
 
   printf ("xwidget-send-keyboard-event %d %d\n", window, xid);
 
@@ -465,7 +493,7 @@ DEFUN ("xwidget-send-keyboard-event", Fxwidget_send_keyboard_event, Sxwidget_sen
 }
 
 void
-syms_of_xwidget ()
+syms_of_xwidget (void)
 {
   int i;
 
@@ -516,8 +544,7 @@ syms_of_xwidget ()
    xwidget type.  */
 
 int
-valid_xwidget_p (object)
-     Lisp_Object object;
+valid_xwidget_p (Lisp_Object object)
 {
   int valid_p = 0;
 
@@ -592,9 +619,9 @@ xwidget_show (struct xwidget *xw)
 
 
 Lisp_Object
-xwidget_spec_value (spec, key, found)
-     Lisp_Object spec, key;
-     int *found;
+xwidget_spec_value (
+     Lisp_Object spec, Lisp_Object  key,
+     int *found)
 {
   Lisp_Object tail;
 
@@ -634,16 +661,18 @@ xwidget_from_id (int id)
 }
 
 int
-lookup_xwidget (spec)
-     Lisp_Object spec;
+lookup_xwidget (Lisp_Object  spec)
 {
 
   int found = 0, found1 = 0, found2 = 0;
   Lisp_Object value;
+  int id;
+  struct xwidget *xw;
+    
   value = xwidget_spec_value (spec, Qxwidget_id, &found1);
-  int id = INTEGERP (value) ? XFASTINT (value) : 0;	//id 0 by default, but id must be unique so this is dumb
+  id = INTEGERP (value) ? XFASTINT (value) : 0;	//id 0 by default, but id must be unique so this is dumb
 
-  struct xwidget *xw = &xwidgets[id];
+  xw = &xwidgets[id];
   value = xwidget_spec_value (spec, QCtype, &found);
   xw->type = INTEGERP (value) ? XFASTINT (value) : 1;	//default to button
   value = xwidget_spec_value (spec, Qtitle, &found2);
@@ -669,7 +698,7 @@ int region_modified = 0;
 
 /*set up detection of touched xwidget*/
 void
-xwidget_start_redisplay ()
+xwidget_start_redisplay (void)
 {
   int i;
   for (i = 0; i < MAX_XWIDGETS; i++)
@@ -698,19 +727,22 @@ in that case not phantomed.
 void
 xwidget_end_redisplay (struct glyph_matrix *matrix)
 {
-  //dont change anything if minibuffer is selected this redisplay
-  //this is mostly a workaround to reduce the phantoming of xwidgets
-  if( (XWINDOW (FRAME_MINIBUF_WINDOW (SELECTED_FRAME()))) ==
-      (XWINDOW (FRAME_SELECTED_WINDOW (SELECTED_FRAME()))))
-    return; 
-
   int i;
   struct xwidget *xw;
+  int area;
+  
+  //dont change anything if minibuffer is selected this redisplay
+  //this is mostly a workaround to reduce the phantoming of xwidgets
+  // this is special case handling and it doesnt work too well.
+  /* if( (XWINDOW (FRAME_MINIBUF_WINDOW (SELECTED_FRAME()))) == */
+  /*     (XWINDOW (FRAME_SELECTED_WINDOW (SELECTED_FRAME())))) */
+  /*   return;  */
+
   region_modified = 0;
   xwidget_start_redisplay ();
   //iterate desired glyph matrix of "live" window here, hide gtk widgets
   //not in the desired matrix.
-  int area;
+
   //the current scheme will fail on the case of several buffers showing xwidgets
 
   //  dump_glyph_matrix(matrix, 2);
@@ -767,7 +799,7 @@ xwidget_end_redisplay (struct glyph_matrix *matrix)
 
 /* some type of modification was made to the buffers*/
 void
-xwidget_modify_region ()
+xwidget_modify_region (void)
 {
   region_modified = 1;
 }
@@ -789,7 +821,7 @@ xwidget_delete (struct xwidget *xw)
 
 /* redraw all xwidgets */
 void
-xwidget_invalidate ()
+xwidget_invalidate (void)
 {
   int i;
   struct xwidget *xw;

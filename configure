@@ -14394,7 +14394,7 @@ TOOLKIT_LIBW=
 case "$USE_X_TOOLKIT" in
   MOTIF) TOOLKIT_LIBW="$MOTIF_LIBW" ;;
   LUCID) TOOLKIT_LIBW="$LUCID_LIBW" ;;
-  none) test "x$HAVE_GTK" = "xyes" && TOOLKIT_LIBW="$GTK_LIBS" ;;
+  none) test "x$HAVE_GTK" = "xyes" && TOOLKIT_LIBW="$GTK_LIBS -lXcomposite" ;;
 esac
 
 
