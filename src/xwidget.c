@@ -56,6 +56,7 @@
 #include <X11/Shell.h>
 #endif
 #include <X11/extensions/Xcomposite.h>
+#include <X11/extensions/Xrender.h>
 
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
@@ -141,6 +142,78 @@ send_xembed_ready_event (int xwid, int xembedid)
 
 }
 
+int xwidget_query_composition_called = 0;
+int hasNamePixmap = 0;
+
+
+int
+xwidget_has_composition(void){
+int event_base, error_base;
+Display* dpy = GDK_DISPLAY ();
+int i;
+  if(xwidget_query_composition_called)
+    return hasNamePixmap;
+  xwidget_query_composition_called = 1;
+  
+  //do this once in an emacs session
+  
+  if(gdk_display_supports_composite(gdk_display_get_default ())){
+    hasNamePixmap = 1;
+}else{
+    return 0;
+}
+
+  //redirect all toplevel windows to backing store.
+  //this should probably be optimized so only the gtk sockets we care for get redirected
+  //otoh, the wm might quite possibly already have requested backing store so the code is
+  //probably noop anyway
+  printf("enabling composition\n");
+  for ( i = 0; i < ScreenCount( dpy ); i++ )
+    XCompositeRedirectSubwindows( dpy, RootWindow( dpy, i ),
+                                  CompositeRedirectAutomatic );
+  return 1;
+
+
+}
+
+void
+xwidget_setup_socket_composition(struct xwidget* xw)
+{
+  //do this for every gtk_socket
+  //XCompositeRedirectWindow(); should probably replace the global backing request
+  //now residing in xwidget_has_composition()
+  
+//   int xid = gtk_socket_get_plug_window (GTK_SOCKET (xw->widget));
+//  Display* dpy = GDK_DISPLAY ();
+
+/*
+  XWindowAttributes attr;
+  XGetWindowAttributes( dpy, xid, &attr );
+
+  XRenderPictFormat *format = XRenderFindVisualFormat( dpy, attr.visual );
+  int hasAlpha             = ( format->type == PictTypeDirect && format->direct.alphaMask );
+  int x                     = attr.x;
+  int y                     = attr.y;
+  int width                 = attr.width;
+  int height                = attr.height;
+
+
+  XRenderPictureAttributes pa;
+  pa.subwindow_mode = IncludeInferiors; // Don't clip child widgets
+
+  Picture picture = XRenderCreatePicture( dpy, xid, format, CPSubwindowMode, &pa );
+  //  p_xid = XCompositeNameWindowPixmap( GDK_DISPLAY (), GDK_WINDOW_XID(xid)) ;
+
+  //this is the actual drawing call that probably should be somewhere else:
+  XRenderComposite( dpy, hasAlpha ? PictOpOver : PictOpSrc, picture, None,
+                    dest.x11RenderHandle(), 0, 0, 0, 0, destX, destY, width, height );
+*/
+}
+
+void
+xwidget_end_composition(struct xwidget* w){
+  //XCompositeUnredirectWindow(); stop redirecting, should be called when the socket is destroyed
+}
 
 void
 xwidget_init (struct xwidget *xw, struct glyph_string *s, int x, int y)
@@ -196,9 +269,13 @@ xwidget_init (struct xwidget *xw, struct glyph_string *s, int x, int y)
 	      gtk_socket_get_id (GTK_SOCKET (xw->widget)));
       send_xembed_ready_event (xw->id,
 			       gtk_socket_get_id (GTK_SOCKET (xw->widget)));
+      if(xwidget_has_composition())
+        xwidget_setup_socket_composition(xw);
       break;
     }
 }
+
+
 
 void
 xwidget_draw_phantom (struct xwidget *xw, int x, int y, int clipx, int clipy,
@@ -216,20 +293,21 @@ xwidget_draw_phantom (struct xwidget *xw, int x, int y, int clipx, int clipy,
   GdkPixmap *xw_snapshot = NULL;
   GdkGC *gdkgc = NULL;
   GdkNativeWindow p_xid;
-  GdkNativeWindow xid;
+  GdkWindow* xid;
   
-  if (0
-      //xw->type == 3 //this doesnt work atm
-      ) {
+  if (xw->type == 3 && xwidget_has_composition()){
     //its a gtk_socket, get_snapshot() doesnt work so try using composition methods
-    xid = gtk_socket_get_plug_window (GTK_SOCKET (xw->widget));
-    p_xid = XCompositeNameWindowPixmap( GDK_DISPLAY (), GDK_WINDOW_XID(xid)) ;
     //xw_snapshot =  gdk_pixmap_foreign_new_for_display(GDK_DISPLAY(), p_xid);
+    xid = gtk_socket_get_plug_window (GTK_SOCKET (xw->widget));
+    //should check the xid here, because it could be invalid
+    //p_xid = XCompositeNameWindowPixmap( GDK_DISPLAY (), GDK_WINDOW_XID(xid)) ;
+    
     printf("phantom socket 1: %d %d\n", xid, p_xid);
-    xw_snapshot =  gdk_pixmap_foreign_new(p_xid); //wraps the native window in a gdk windw, but it crashes!
+    xw_snapshot =  gdk_pixmap_foreign_new(GDK_WINDOW_XID(xid)); //wraps the native window in a gdk windw, but it crashes!
     printf("2\n");    
   }else {
     //if its not a socket, its got a snapshot method that works
+    //or if we dont have composition well try for sockets, but probably get a grey rect
     printf("phantom other\n");    
     xw_snapshot = gtk_widget_get_snapshot (xw->widget, NULL);
   }
@@ -282,7 +360,7 @@ x_draw_xwidget_glyph_string (struct glyph_string *s)
   //and its phantom counterpart
   clipx = min (xw->width, WINDOW_RIGHT_EDGE_X (s->w) - x);
   clipy = min (xw->height,
-	 WINDOW_BOTTOM_EDGE_Y (s->w) - WINDOW_MODE_LINE_HEIGHT (s->w) - y);
+               WINDOW_BOTTOM_EDGE_Y (s->w) - WINDOW_MODE_LINE_HEIGHT (s->w) - y);
 
 
   //TODO:
@@ -353,9 +431,8 @@ DEFUN ("xwidget-embed-steal-window", Fxwidget_embed_steal_window, Sxwidget_embed
 
 
 DEFUN ("xwidget-resize-internal", Fxwidget_resize_internal, Sxwidget_resize_internal, 3, 3, 0, doc:
-       /* tell existing embed xwidget to steal other window id. */
        )
-     (Lisp_Object xwidget_id, Lisp_Object new_width, Lisp_Object new_height)
+  (Lisp_Object xwidget_id, Lisp_Object new_width, Lisp_Object new_height)
 {
   struct xwidget *xw;
   int xid = XFASTINT (xwidget_id);
@@ -413,10 +490,10 @@ DEFUN ("xwidget-set-keyboard-grab", Fxwidget_set_keyboard_grab, Sxwidget_set_key
       xwidget_owns_kbd = FALSE;
     }
   /*
-     gdk_keyboard_grab(xw->widget,TRUE,GDK_CURRENT_TIME);
-     else
-     gdk_keyboard_ungrab(GDK_CURRENT_TIME);
-   */
+    gdk_keyboard_grab(xw->widget,TRUE,GDK_CURRENT_TIME);
+    else
+    gdk_keyboard_ungrab(GDK_CURRENT_TIME);
+  */
   return Qnil;
 }
 
@@ -620,8 +697,8 @@ xwidget_show (struct xwidget *xw)
 
 Lisp_Object
 xwidget_spec_value (
-     Lisp_Object spec, Lisp_Object  key,
-     int *found)
+                    Lisp_Object spec, Lisp_Object  key,
+                    int *found)
 {
   Lisp_Object tail;
 
@@ -716,14 +793,14 @@ xwidget_touch (struct xwidget *xw)
 
 /* redisplay has ended, now we should hide untouched xwidgets
 
-atm this works as follows: only check if xwidgets are displayed in the
-"selected window". if not, hide them or phantom them.
+   atm this works as follows: only check if xwidgets are displayed in the
+   "selected window". if not, hide them or phantom them.
 
-this means valid cases like xwidgets being displayed only once in
-non-selected windows, does not work well. they should also be visible
-in that case not phantomed.
+   this means valid cases like xwidgets being displayed only once in
+   non-selected windows, does not work well. they should also be visible
+   in that case not phantomed.
 
- */
+*/
 void
 xwidget_end_redisplay (struct glyph_matrix *matrix)
 {
@@ -783,17 +860,17 @@ xwidget_end_redisplay (struct glyph_matrix *matrix)
 	}
     }
 
-    for (i = 0; i < MAX_XWIDGETS; i++)
-      {
-        xw = &xwidgets[i];
-        if (xw->initialized)
-          {
-            if (xw->redisplayed)
-              xwidget_show (xw);
-            else
-              xwidget_hide (xw);
-          }
-      }
+  for (i = 0; i < MAX_XWIDGETS; i++)
+    {
+      xw = &xwidgets[i];
+      if (xw->initialized)
+        {
+          if (xw->redisplayed)
+            xwidget_show (xw);
+          else
+            xwidget_hide (xw);
+        }
+    }
   
 }
 

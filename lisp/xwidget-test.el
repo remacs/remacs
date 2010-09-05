@@ -34,7 +34,7 @@
   (xwidget-insert          15  2 "toggle" 60  30  2)
   (xwidget-insert          30  3 "emacs"  400 200 3)
   (xwidget-insert          20  4 "slider" 100 50  4)
-  (xwidget-insert          40  3 "uzbl"   400 400 5)
+;;  (xwidget-insert          40  3 "uzbl"   400 400 5)
   (define-key (current-local-map) [xwidget-event] 'xwidget-handler-demo-basic)
 )
 
