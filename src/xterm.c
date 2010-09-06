@@ -7095,7 +7095,7 @@ x_draw_hollow_cursor (struct window *w, struct glyph_row *row)
   cursor_glyph = get_phys_cursor_glyph (w);
   if (cursor_glyph == NULL)
     return;
-
+  
   /* Compute frame-relative coordinates for phys cursor.  */
   get_phys_cursor_geometry (w, row, cursor_glyph, &x, &y, &h);
   wd = w->phys_cursor_width;
@@ -7136,7 +7136,11 @@ x_draw_bar_cursor (struct window *w, struct glyph_row *row, int width, enum text
   cursor_glyph = get_phys_cursor_glyph (w);
   if (cursor_glyph == NULL)
     return;
-
+  if (cursor_glyph->type == XWIDGET_GLYPH){
+    printf("tried avoiding xwidget cursor\n");
+    return; //experimental avoidance of cursor on xwidget
+  }
+  
   /* If on an image, draw like a normal cursor.  That's usually better
      visible than drawing a bar, esp. if the image is large so that
      the bar might not be in the window.  */

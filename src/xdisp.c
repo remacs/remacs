@@ -23314,6 +23314,10 @@ get_window_cursor_type (struct window *w, struct glyph *glyph, int *width,
   if (!w->cursor_off_p)
     {
 #ifdef HAVE_WINDOW_SYSTEM
+      if (glyph != NULL && glyph->type == XWIDGET_GLYPH){
+        printf("attempt xwidget cursor avoidance in get_window_cursor_type\n");
+        return NO_CURSOR;
+      }
       if (glyph != NULL && glyph->type == IMAGE_GLYPH)
 	{
 	  if (cursor_type == FILLED_BOX_CURSOR)
