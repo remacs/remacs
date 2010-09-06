@@ -5,6 +5,7 @@
 
 ;; Maintainer: FSF
 ;; Keywords: internal
+;; Package: emacs
 
 ;; This file is part of GNU Emacs.
 
@@ -1629,6 +1630,7 @@ Return nil if there isn't one."
 	      load-elt (and loads (car loads)))))
     load-elt))
 
+(put 'eval-after-load 'lisp-indent-function 1)
 (defun eval-after-load (file form)
   "Arrange that, if FILE is ever loaded, FORM will be run at that time.
 If FILE is already loaded, evaluate FORM right now.
@@ -2712,7 +2714,7 @@ nor the buffer list."
   "Create a new buffer, evaluate BODY there, and write the buffer to FILE.
 The value returned is the value of the last form in BODY.
 See also `with-temp-buffer'."
-  (declare (debug t))
+  (declare (indent 1) (debug t))
   (let ((temp-file (make-symbol "temp-file"))
 	(temp-buffer (make-symbol "temp-buffer")))
     `(let ((,temp-file ,file)
@@ -2734,7 +2736,7 @@ The value returned is the value of the last form in BODY.
 MESSAGE is written to the message log buffer if `message-log-max' is non-nil.
 If MESSAGE is nil, the echo area and message log buffer are unchanged.
 Use a MESSAGE of \"\" to temporarily clear the echo area."
-  (declare (debug t))
+  (declare (debug t) (indent 1))
   (let ((current-message (make-symbol "current-message"))
 	(temp-message (make-symbol "with-temp-message")))
     `(let ((,temp-message ,message)
@@ -2764,7 +2766,7 @@ See also `with-temp-file' and `with-output-to-string'."
                 (kill-buffer ,temp-buffer)))))))
 
 (defmacro with-silent-modifications (&rest body)
-  "Execute BODY, pretending it does not modifies the buffer.
+  "Execute BODY, pretending it does not modify the buffer.
 If BODY performs real modifications to the buffer's text, other
 than cosmetic ones, undo data may become corrupted.
 Typically used around modifications of text-properties which do not really
@@ -3226,7 +3228,7 @@ that can be added."
 The syntax table of the current buffer is saved, BODY is evaluated, and the
 saved table is restored, even in case of an abnormal exit.
 Value is what BODY returns."
-  (declare (debug t))
+  (declare (debug t) (indent 1))
   (let ((old-table (make-symbol "table"))
 	(old-buffer (make-symbol "buffer")))
     `(let ((,old-table (syntax-table))
@@ -3584,11 +3586,11 @@ Usually the separator is \".\", but it can be any other string.")
 
 
 (defconst version-regexp-alist
-  '(("^[-_+ ]?a\\(lpha\\)?$"   . -3)
+  '(("^[-_+ ]?alpha$"   . -3)
     ("^[-_+]$"                 . -3) ; treat "1.2.3-20050920" and "1.2-3" as alpha releases
     ("^[-_+ ]cvs$"             . -3)	; treat "1.2.3-CVS" as alpha release
-    ("^[-_+ ]?b\\(eta\\)?$"    . -2)
-    ("^[-_+ ]?\\(pre\\|rc\\)$" . -1))
+    ("^[-_+ ]?beta$"    . -2)
+    ("^[-_+ ]?\\(pre\\|rcc\\)$" . -1))
   "*Specify association between non-numeric version and its priority.
 
 This association is used to handle version string like \"1.0pre2\",
@@ -3681,8 +3683,13 @@ See documentation for `version-separator' and `version-regexp-alist'."
 	    (setq al version-regexp-alist)
 	    (while (and al (not (string-match (caar al) s)))
 	      (setq al (cdr al)))
-	    (or al (error "Invalid version syntax: '%s'" ver))
-	    (setq lst (cons (cdar al) lst)))))
+	    (cond (al
+		   (push (cdar al) lst))
+		  ;; Convert 22.3a to 22.3.1.
+		  ((string-match "^[-_+ ]?\\([a-zA-Z]\\)$" s)
+		   (push (- (aref (downcase (match-string 1 s)) 0) ?a -1)
+			 lst))
+		  (t (error "Invalid version syntax: '%s'" ver))))))
       (if (null lst)
 	  (error "Invalid version syntax: '%s'" ver)
 	(nreverse lst)))))

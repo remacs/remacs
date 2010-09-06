@@ -6,6 +6,7 @@
 ;; Author: RMS
 ;; Maintainer: FSF
 ;; Keywords: internal, mouse
+;; Package: emacs
 
 ;; This file is part of GNU Emacs.
 
@@ -462,7 +463,7 @@
 			    ;; Emacs compiled --without-x doesn't have
 			    ;; x-selection-exists-p.
 			    (and (fboundp 'x-selection-exists-p)
-				 (x-selection-exists-p))
+				 (x-selection-exists-p 'CLIPBOARD))
 			    kill-ring)
 			   (not buffer-read-only))
 	      :help ,(purecopy "Paste (yank) text most recently cut/copied")))
