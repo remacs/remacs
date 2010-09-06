@@ -34,7 +34,7 @@
   (xwidget-insert          15  2 "toggle" 60  30  2)
   (xwidget-insert          30  3 "emacs"  400 200 3)
   (xwidget-insert          20  4 "slider" 100 50  4)
-;;  (xwidget-insert          40  3 "uzbl"   400 400 5)
+  (xwidget-insert          40  3 "uzbl-core"   400 400 5)
   (define-key (current-local-map) [xwidget-event] 'xwidget-handler-demo-basic)
 )
 
@@ -82,7 +82,7 @@
                ((eq 3 xwidget-id)
                 (start-process "xembed" "*xembed*" (format "%ssrc/emacs" default-directory) "-q" "--parent-id" (number-to-string xembed-id) ) )
                ((eq 5 xwidget-id)
-                (start-process "xembed2" "*xembed2*" "uzbl"  "-s" (number-to-string xembed-id)  "http://www.fsf.org" )  )
+                (start-process "xembed2" "*xembed2*" "uzbl-core"  "-s" (number-to-string xembed-id)  "http://www.fsf.org" )  )
                
               )
             )))))
