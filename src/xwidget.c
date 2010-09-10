@@ -556,7 +556,7 @@ xwidget_key_send_message (struct frame *f,
 
   event.display = FRAME_X_DISPLAY (f);
   event.window = destination_window;
-  event.root = FRAME_ROOT_WINDOW (f);
+  event.root = FRAME_X_WINDOW (f);
   event.subwindow = None;
   event.time = CurrentTime;
   event.x = 1;
