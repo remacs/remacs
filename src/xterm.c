@@ -10384,7 +10384,7 @@ static struct redisplay_interface x_redisplay_interface =
     x_write_glyphs,
     x_insert_glyphs,
     x_clear_end_of_line,
-    x_scroll_run,
+    x_scroll_run, //maybe xwidgets dont work too well with scrolling by blitting
     x_after_update_window_line,
     x_update_window_begin,
     x_update_window_end,

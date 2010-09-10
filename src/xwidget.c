@@ -354,10 +354,15 @@ x_draw_xwidget_glyph_string (struct glyph_string *s)
 
     BUG it seems this method for some reason is called with bad s->x and s->y sometimes.
     When this happens the xwidget doesnt move on screen as it should.
+    This maybe might perhaps be because of x_scroll_run. Maybe emacs decide to scroll the screen by blitting sometime,
+    for reasons unknown. then maybe emacs doesnt try to actualy call the paint routines, which means this here code will never
+    run so the xwidget wont know it has been moved. hmm.
 
+    
     BUG the phantoming code doesnt work very well when the live xwidget is off screen.
     you will get weirdo display artefacts. Composition ought to solve this, since that means the live window is
     always available in an off-screen buffer. My current attempt at composition doesnt work properly however.
+
     
    */
   int box_line_hwidth = eabs (s->face->box_line_width);
