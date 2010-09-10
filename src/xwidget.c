@@ -386,7 +386,7 @@ x_draw_xwidget_glyph_string (struct glyph_string *s)
 
   //calculate clip widht and height, which is used both for the xwidget
   //and its phantom counterpart
-  clipx = min (xw->width, WINDOW_RIGHT_EDGE_X (s->w) - x);
+  clipx = min (xw->width, WINDOW_RIGHT_EDGE_X (s->w) - x - WINDOW_RIGHT_SCROLL_BAR_AREA_WIDTH(s->w) - WINDOW_RIGHT_FRINGE_WIDTH(s->w));
   clipy = min (xw->height,
                WINDOW_BOTTOM_EDGE_Y (s->w) - WINDOW_MODE_LINE_HEIGHT (s->w) - y);
 
