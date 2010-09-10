@@ -2182,7 +2182,7 @@ struct it
       /* method == GET_FROM_XWIDGET */
       struct {
 	Lisp_Object object;
-        int xwidget_lalala;
+        int xwidget_id;
       } xwidget;
 
     } u;

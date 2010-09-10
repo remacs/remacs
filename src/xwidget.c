@@ -86,6 +86,7 @@ Lisp_Object Qxwidget_id;
 Lisp_Object Qtitle;
 Lisp_Object Qxwidget_set_keyboard_grab;
 Lisp_Object Qxwidget_embed_steal_window;
+Lisp_Object Qxwidget_info;
 Lisp_Object Qxwidget_resize_internal;
 Lisp_Object Qxwidget_send_keyboard_event;
 
@@ -154,9 +155,9 @@ int i;
   if(xwidget_query_composition_called)
     return hasNamePixmap;
   xwidget_query_composition_called = 1;
-  
+
   //do this once in an emacs session
-  
+
   if(gdk_display_supports_composite(gdk_display_get_default ())){
     hasNamePixmap = 1;
 }else{
@@ -182,7 +183,7 @@ xwidget_setup_socket_composition(struct xwidget* xw)
   //do this for every gtk_socket
   //XCompositeRedirectWindow(); should probably replace the global backing request
   //now residing in xwidget_has_composition()
-  
+
 //   int xid = gtk_socket_get_plug_window (GTK_SOCKET (xw->widget));
 //  Display* dpy = GDK_DISPLAY ();
 
@@ -216,11 +217,21 @@ xwidget_end_composition(struct xwidget* w){
 }
 
 void
+xwidget_show (struct xwidget *xw)
+{
+  //printf("xwidget %d shown\n",xw->id);
+  xw->hidden = 0;
+  //gtk_widget_show(GTK_WIDGET(xw->widgetwindow));
+  gtk_fixed_move (GTK_FIXED (xw->emacswindow), GTK_WIDGET (xw->widgetwindow),
+		  xw->x, xw->y);
+}
+
+void
 xwidget_init (struct xwidget *xw, struct glyph_string *s, int x, int y)
 {
   xw->initialized = 1;
   xw->id = s->xwidget_id;
-  xw->hidden = 0;
+  xwidget_show(xw);
 
   //widget creation
   switch (xw->type)
@@ -278,7 +289,9 @@ xwidget_init (struct xwidget *xw, struct glyph_string *s, int x, int y)
 
 
 void
-xwidget_draw_phantom (struct xwidget *xw, int x, int y, int clipx, int clipy,
+xwidget_draw_phantom (struct xwidget *xw,
+                      int x, int y,
+                      int clipx, int clipy,
 		      struct glyph_string *s)
 {
   //we cant always get real widgets, so here we try to fetch a snapshot of
@@ -294,21 +307,21 @@ xwidget_draw_phantom (struct xwidget *xw, int x, int y, int clipx, int clipy,
   GdkGC *gdkgc = NULL;
   GdkNativeWindow p_xid;
   GdkWindow* xid;
-  
+
   if (xw->type == 3 && xwidget_has_composition()){
     //its a gtk_socket, get_snapshot() doesnt work so try using composition methods
     //xw_snapshot =  gdk_pixmap_foreign_new_for_display(GDK_DISPLAY(), p_xid);
     xid = gtk_socket_get_plug_window (GTK_SOCKET (xw->widget));
     //should check the xid here, because it could be invalid
     //p_xid = XCompositeNameWindowPixmap( GDK_DISPLAY (), GDK_WINDOW_XID(xid)) ;
-    
+
     printf("phantom socket 1: %d %d\n", xid, p_xid);
     xw_snapshot =  gdk_pixmap_foreign_new(GDK_WINDOW_XID(xid)); //wraps the native window in a gdk windw, but it crashes!
-    printf("2\n");    
+    printf("2\n");
   }else {
     //if its not a socket, its got a snapshot method that works
     //or if we dont have composition well try for sockets, but probably get a grey rect
-    printf("phantom other\n");    
+    printf("phantom other\n");
     xw_snapshot = gtk_widget_get_snapshot (xw->widget, NULL);
   }
 
@@ -316,11 +329,11 @@ xwidget_draw_phantom (struct xwidget *xw, int x, int y, int clipx, int clipy,
     printf(" xw_snapshot null for some reason ... \n");
     return;
   }
-    
+
   printf("3\n");
   gdkgc = gdk_gc_new (xw_snapshot);
 
-  //currently a phanotm gets a line drawn across it to denote phantomness
+  //currently a phantom gets a line drawn across it to denote phantomness
   //dimming or such would be more elegant
   printf("4\n");
   gdk_draw_line (xw_snapshot, gdkgc, 0, 0, xw->width, xw->height);
@@ -334,27 +347,37 @@ xwidget_draw_phantom (struct xwidget *xw, int x, int y, int clipx, int clipy,
 void
 x_draw_xwidget_glyph_string (struct glyph_string *s)
 {
+  /*
+    this method is called by the redisplay engine and is supposed to put the xwidget on screen.
+
+    must handle both live xwidgets, and phantom xwidgets.
+
+    BUG it seems this method for some reason is called with bad s->x and s->y sometimes.
+    When this happens the xwidget doesnt move on screen as it should.
+
+    BUG the phantoming code doesnt work very well when the live xwidget is off screen.
+    you will get weirdo display artefacts. Composition ought to solve this, since that means the live window is
+    always available in an off-screen buffer. My current attempt at composition doesnt work properly however.
+    
+   */
   int box_line_hwidth = eabs (s->face->box_line_width);
   int box_line_vwidth = max (s->face->box_line_width, 0);
   int height = s->height;
-  Pixmap pixmap = None;
 
   int drawing_in_selected_window = (XWINDOW (FRAME_SELECTED_WINDOW (s->f))) == (s->w);
-  
-  //  printf("x_draw_xwidget_glyph_string: id:%d %d %d  (%d,%d,%d,%d) selected win:%d\n",
-  //     s->xwidget_id, box_line_hwidth, box_line_vwidth, s->x,s->y,s->height,s->width, drawing_in_selected_window);
   struct xwidget *xw = &xwidgets[s->xwidget_id];
   int clipx; int clipy;
 
-
+  printf("x_draw_xwidget_glyph_string: id:%d %d %d  (%d,%d,%d,%d) selected win:%d\n",
+     s->xwidget_id, box_line_hwidth, box_line_vwidth,
+         s->x, s->y, s->height, s->width,
+         drawing_in_selected_window);
 
   int x = s->x;
   int y = s->y + (s->height / 2) - (xw->height / 2);
   int doingsocket = 0;
   if (!xw->initialized)
-    {
       xwidget_init (xw, s, x, y);
-    }
 
   //calculate clip widht and height, which is used both for the xwidget
   //and its phantom counterpart
@@ -362,10 +385,9 @@ x_draw_xwidget_glyph_string (struct glyph_string *s)
   clipy = min (xw->height,
                WINDOW_BOTTOM_EDGE_Y (s->w) - WINDOW_MODE_LINE_HEIGHT (s->w) - y);
 
-
   //TODO:
   // 1) always draw live xwidget in slected window
-  // 2) if there were no live instances of the xwidget in selected window, also draw it live
+  // (2) if there were no live instances of the xwidget in selected window, also draw it live)
   // 3) if there was a live xwidget previously, now phantom it.
   if (drawing_in_selected_window)
     {
@@ -376,12 +398,12 @@ x_draw_xwidget_glyph_string (struct glyph_string *s)
       else
 	{
 	}
-      if (xw->hidden == 0)	//hidden equals not being seen in the live window
+      //TODO maybe theres a bug that the hidden flag sometimes dont get reset properly
+      if (!xwidget_hidden(xw))	//hidden equals not being seen in the live window
 	{
 	  gtk_fixed_move (GTK_FIXED (s->f->gwfixed),
 			  GTK_WIDGET (xw->widgetwindow), x, y);
-	  //adjust size of the widget window if some parts happen to be outside drawable area
-	  //that is, we should clip
+	  //clip the widget window if some parts happen to be outside drawable area
 	  //an emacs window is not a gtk window, a gtk window covers the entire frame
 	  gtk_widget_set_size_request (GTK_WIDGET (xw->widgetwindow), clipx,
 				       clipy);
@@ -391,7 +413,7 @@ x_draw_xwidget_glyph_string (struct glyph_string *s)
 	  //xwidget is hidden, hide it offscreen somewhere, still realized, so we may snapshot it
 	  //gtk_fixed_move(GTK_FIXED(s->f->gwfixed),GTK_WIDGET(xw->widgetwindow) ,10000,10000);
 	}
-      //xw is (aparently) supposed to refer to the *live* instance of the xwidget
+      //xw refers to the *live* instance of the xwidget
       xw->x = x;
       xw->y = y;
 
@@ -399,9 +421,7 @@ x_draw_xwidget_glyph_string (struct glyph_string *s)
     }
   else
     {
-      //ok, we are painting the xwidgets in non-selected window
-
-      //so draw a phantom
+      //ok, we are painting the xwidgets in non-selected window, so draw a phantom
       xwidget_draw_phantom (xw, x, y, clipx, clipy, s);
 
     }
@@ -439,17 +459,35 @@ DEFUN ("xwidget-resize-internal", Fxwidget_resize_internal, Sxwidget_resize_inte
   int w = XFASTINT (new_width);
   int h = XFASTINT (new_height);
   xw = &xwidgets[xid];
-  
+
   printf("resize xwidget %d (%d,%d)->(%d,%d)",xid,xw->width,xw->height,w,h);
   xw->width=w;
   xw->height=h;
   gtk_layout_set_size (GTK_LAYOUT (xw->widgetwindow), xw->width, xw->height);
   gtk_widget_set_size_request (GTK_WIDGET (xw->widget), xw->width,
-			       xw->height);  
+			       xw->height);
   return Qnil;
 }
 
 
+
+DEFUN("xwidget-info", Fxwidget_info , Sxwidget_info, 1,1,0, doc: /* get xwidget props */)
+     (Lisp_Object xwidget_id)
+{
+  struct xwidget *xw = &xwidgets[XFASTINT (xwidget_id)];
+  Lisp_Object info;
+
+  info = Fmake_vector (make_number (7), Qnil);
+  XVECTOR (info)->contents[0] = make_number(xw->id);
+  XVECTOR (info)->contents[1] = make_number(xw->type);
+  XVECTOR (info)->contents[2] = make_number(xw->x);
+  XVECTOR (info)->contents[3] = make_number(xw->y);
+  XVECTOR (info)->contents[4] = make_number(xw->width);
+  XVECTOR (info)->contents[5] = make_number(xw->height);
+  XVECTOR (info)->contents[6] = make_number(xw->hidden);
+
+  return info;
+}
 
 //xterm.c listens to xwidget_owns_kbd  and tries to not eat events when its set
 int xwidget_owns_kbd = 0;
@@ -461,7 +499,7 @@ DEFUN ("xwidget-set-keyboard-grab", Fxwidget_set_keyboard_grab, Sxwidget_set_key
   int xid = XFASTINT (xwidget_id);
   int kbd_flag = XFASTINT (kbd_grab);
   xw = &xwidgets[xid];
-  
+
   printf ("kbd grab: %d %d\n", xid, kbd_flag);
   if (kbd_flag)
     {
@@ -482,7 +520,7 @@ DEFUN ("xwidget-set-keyboard-grab", Fxwidget_set_keyboard_grab, Sxwidget_set_key
       /* gtk_container_set_focus_child (GTK_CONTAINER (lastparent), xw->widget); */
 
       gtk_container_set_focus_child (GTK_CONTAINER (xw->widgetwindow), xw->widget);
-      
+
       xwidget_owns_kbd = TRUE;
     }
   else
@@ -545,7 +583,7 @@ DEFUN ("xwidget-send-keyboard-event", Fxwidget_send_keyboard_event, Sxwidget_sen
   GdkWindow *window;
   int xwid = XFASTINT (xwidget_id);
   XID xid;
-  
+
   xw = &xwidgets[xwid];
 
   f = (FRAME_PTR) g_object_get_data (G_OBJECT (xw->widget), XG_FRAME_DATA);
@@ -586,17 +624,20 @@ syms_of_xwidget (void)
   staticpro (&Qxwidget_embed_steal_window);
   defsubr (&Sxwidget_embed_steal_window);
 
-
+  Qxwidget_info = intern ("xwidget-info");
+  staticpro (&Qxwidget_info);
+  defsubr (&Sxwidget_info);
+  
   Qxwidget_resize_internal = intern ("xwidget-resize-internal");
   staticpro (&Qxwidget_resize_internal);
   defsubr (&Sxwidget_resize_internal);
 
-  
+
   Qxwidget_embed_steal_window = intern ("xwidget-embed-steal-window");
   staticpro (&Qxwidget_embed_steal_window);
   defsubr (&Sxwidget_embed_steal_window);
 
-  
+
   Qxwidget = intern ("xwidget");
   staticpro (&Qxwidget);
 
@@ -606,7 +647,7 @@ syms_of_xwidget (void)
   Qtitle = intern (":title");
   staticpro (&Qtitle);
 
-  Fprovide (intern ("xwidget-internal"), Qnil);	
+  Fprovide (intern ("xwidget-internal"), Qnil);
 
   for (i = 0; i < MAX_XWIDGETS; i++)
     xwidgets[i].initialized = 0;
@@ -684,16 +725,13 @@ xwidget_hide (struct xwidget *xw)
 		  10000, 10000);
 }
 
-void
-xwidget_show (struct xwidget *xw)
-{
-  //printf("xwidget %d shown\n",xw->id);
-  xw->hidden = 0;
-  //gtk_widget_show(GTK_WIDGET(xw->widgetwindow));
-  gtk_fixed_move (GTK_FIXED (xw->emacswindow), GTK_WIDGET (xw->widgetwindow),
-		  xw->x, xw->y);
-}
 
+
+int
+xwidget_hidden(struct xwidget *xw)
+{
+  return  xw->hidden;
+}
 
 Lisp_Object
 xwidget_spec_value (
@@ -745,7 +783,7 @@ lookup_xwidget (Lisp_Object  spec)
   Lisp_Object value;
   int id;
   struct xwidget *xw;
-    
+
   value = xwidget_spec_value (spec, Qxwidget_id, &found1);
   id = INTEGERP (value) ? XFASTINT (value) : 0;	//id 0 by default, but id must be unique so this is dumb
 
@@ -791,6 +829,12 @@ xwidget_touch (struct xwidget *xw)
   xw->redisplayed = 1;
 }
 
+int
+xwidget_touched (struct xwidget *xw)
+{
+  return  xw->redisplayed;
+}
+
 /* redisplay has ended, now we should hide untouched xwidgets
 
    atm this works as follows: only check if xwidgets are displayed in the
@@ -807,7 +851,7 @@ xwidget_end_redisplay (struct glyph_matrix *matrix)
   int i;
   struct xwidget *xw;
   int area;
-  
+
   //dont change anything if minibuffer is selected this redisplay
   //this is mostly a workaround to reduce the phantoming of xwidgets
   // this is special case handling and it doesnt work too well.
@@ -865,13 +909,13 @@ xwidget_end_redisplay (struct glyph_matrix *matrix)
       xw = &xwidgets[i];
       if (xw->initialized)
         {
-          if (xw->redisplayed)
+          if (xwidget_touched(xw))
             xwidget_show (xw);
           else
             xwidget_hide (xw);
         }
     }
-  
+
 }
 
 /* some type of modification was made to the buffers*/

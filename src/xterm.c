@@ -2595,7 +2595,7 @@ x_draw_glyph_string (struct glyph_string *s)
       break;
 
     case XWIDGET_GLYPH:
-      x_draw_glyph_string_background (s, 0);
+      //x_draw_glyph_string_background (s, 0);
       x_draw_xwidget_glyph_string (s);
       break;
 

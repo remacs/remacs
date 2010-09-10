@@ -6625,8 +6625,7 @@ next_element_from_image (struct it *it)
 
 /* im not sure about this FIXME JAVE*/
 static int
-next_element_from_xwidget (it)
-     struct it *it;
+next_element_from_xwidget (struct it *it)
 {
   it->what = IT_XWIDGET;
   assert_valid_xwidget_id(it->xwidget_id,"next_element_from_xwidget");
