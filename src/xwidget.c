@@ -456,8 +456,12 @@ DEFUN ("xwidget-embed-steal-window", Fxwidget_embed_steal_window, Sxwidget_embed
   (Lisp_Object xwidget_id, Lisp_Object window_id)
 {
   struct xwidget *xw;
-  int xid = XFASTINT (xwidget_id);
-  int iwindow_id = XFASTINT (window_id);
+  int xid, iwindow_id;
+
+  CHECK_NUMBER (xwidget_id);
+  CHECK_NUMBER (window_id);
+  xid = XFASTINT (xwidget_id);
+  iwindow_id = XFASTINT (window_id);
   xw = &xwidgets[xid];
   printf ("  gtk_socket_add_id: %d %d\n", xid, iwindow_id);
   //  gtk_socket_steal(GTK_SOCKET(xw->widget),iwindow_id);
@@ -475,9 +479,14 @@ DEFUN ("xwidget-resize-internal", Fxwidget_resize_internal, Sxwidget_resize_inte
   (Lisp_Object xwidget_id, Lisp_Object new_width, Lisp_Object new_height)
 {
   struct xwidget *xw;
-  int xid = XFASTINT (xwidget_id);
-  int w = XFASTINT (new_width);
-  int h = XFASTINT (new_height);
+  int xid, w, h;
+
+  CHECK_NUMBER (xwidget_id);
+  CHECK_NUMBER (new_width);
+  CHECK_NUMBER (new_height);
+  xid = XFASTINT (xwidget_id);
+  w = XFASTINT (new_width);
+  h = XFASTINT (new_height);
   xw = &xwidgets[xid];
 
   printf("resize xwidget %d (%d,%d)->(%d,%d)",xid,xw->width,xw->height,w,h);
@@ -516,8 +525,12 @@ DEFUN ("xwidget-set-keyboard-grab", Fxwidget_set_keyboard_grab, Sxwidget_set_key
   (Lisp_Object xwidget_id, Lisp_Object kbd_grab)
 {
   struct xwidget *xw;
-  int xid = XFASTINT (xwidget_id);
-  int kbd_flag = XFASTINT (kbd_grab);
+  int xid, kbd_flag;
+
+  CHECK_NUMBER (xwidget_id);
+  CHECK_NUMBER (kbd_grab);
+  xid = XFASTINT (xwidget_id);
+  kbd_flag = XFASTINT (kbd_grab);
   xw = &xwidgets[xid];
 
   printf ("kbd grab: %d %d\n", xid, kbd_flag);
@@ -571,7 +584,7 @@ xwidget_key_send_message (struct frame *f,
 
   event.display = FRAME_X_DISPLAY (f);
   event.window = destination_window;
-  event.root = FRAME_ROOT_WINDOW (f);
+  event.root = FRAME_X_WINDOW (f);
   event.subwindow = None;
   event.time = CurrentTime;
   event.x = 1;
@@ -601,9 +614,11 @@ DEFUN ("xwidget-send-keyboard-event", Fxwidget_send_keyboard_event, Sxwidget_sen
   FRAME_PTR f;
   struct xwidget *xw;
   GdkWindow *window;
-  int xwid = XFASTINT (xwidget_id);
+  int xwid;
   XID xid;
 
+  CHECK_NUMBER (xwidget_id);
+  xwid = XFASTINT (xwidget_id);
   xw = &xwidgets[xwid];
 
   f = (FRAME_PTR) g_object_get_data (G_OBJECT (xw->widget), XG_FRAME_DATA);
