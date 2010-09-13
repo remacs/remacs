@@ -1677,20 +1677,22 @@ If SCAN, request a scan of that group as well."
   (let* ((newsrc (cdr gnus-newsrc-alist))
 	 (alevel (or level gnus-activate-level (1+ gnus-level-subscribed)))
 	 (foreign-level
-	  (min
-	   (cond ((and gnus-activate-foreign-newsgroups
-		       (not (numberp gnus-activate-foreign-newsgroups)))
-		  (1+ gnus-level-subscribed))
-		 ((numberp gnus-activate-foreign-newsgroups)
-		  gnus-activate-foreign-newsgroups)
-		 (t 0))
-	   alevel))
+	  (or
+	   level
+	   (min
+	    (cond ((and gnus-activate-foreign-newsgroups
+			(not (numberp gnus-activate-foreign-newsgroups)))
+		   (1+ gnus-level-subscribed))
+		  ((numberp gnus-activate-foreign-newsgroups)
+		   gnus-activate-foreign-newsgroups)
+		  (t 0))
+	    alevel)))
 	 (methods-cache nil)
 	 (type-cache nil)
 	 (gnus-agent-article-local-times 0)
 	 (archive-method (gnus-server-to-method "archive"))
 	 infos info group active method cmethod
-	 method-type method-group-list)
+	 method-type method-group-list entry)
     (gnus-message 6 "Checking new news...")
 
     (while newsrc
@@ -1735,12 +1737,18 @@ If SCAN, request a scan of that group as well."
 	(push (setq method-group-list (list method method-type nil))
 	      type-cache))
       ;; Only add groups that need updating.
-      (when (<= (gnus-info-level info)
-		(if (eq (cadr method-group-list) 'foreign)
-		    foreign-level
-		  alevel))
-	(setcar (nthcdr 2 method-group-list)
-		(cons info (nth 2 method-group-list)))))
+      (if (<= (gnus-info-level info)
+	      (if (eq (cadr method-group-list) 'foreign)
+		  foreign-level
+		alevel))
+	  (setcar (nthcdr 2 method-group-list)
+		  (cons info (nth 2 method-group-list)))
+	;; The group is inactive, so we nix out the number of unread articles.
+	;; It leads `(gnus-group-unread group)' to return t.  See also
+	;; `gnus-group-prepare-flat'.
+	(unless active
+	  (when (setq entry (gnus-group-entry group))
+	    (setcar entry t)))))
 
     ;; Sort the methods based so that the primary and secondary
     ;; methods come first.  This is done for legacy reasons to try to
@@ -1792,13 +1800,16 @@ If SCAN, request a scan of that group as well."
   (with-current-buffer nntp-server-buffer
     (cond
      ((gnus-check-backend-function 'retrieve-groups (car method))
-      (gnus-read-active-file-2
-       (mapcar (lambda (info)
-		 (gnus-group-real-name (gnus-info-group info)))
-	       infos)
-       method))
+      (when (gnus-check-backend-function 'request-scan (car method))
+	(dolist (info infos)
+	  (gnus-request-scan (gnus-info-group info) method)))
+      (let (groups)
+	(gnus-read-active-file-2
+	 (dolist (info infos (nreverse groups))
+	   (push (gnus-group-real-name (gnus-info-group info)) groups))
+	 method)))
      ((gnus-check-backend-function 'request-list (car method))
-      (gnus-read-active-file-1 method nil))
+      (gnus-read-active-file-1 method nil infos))
      (t
       (dolist (info infos)
 	(gnus-activate-group (gnus-info-group info) nil nil method t))))))
@@ -2027,7 +2038,7 @@ If SCAN, request a scan of that group as well."
 	       (message "Quit reading the active file")
 	       nil))))))))
 
-(defun gnus-read-active-file-1 (method force)
+(defun gnus-read-active-file-1 (method force &optional infos)
   (let (where mesg)
     (setq where (nth 1 method)
 	  mesg (format "Reading active file%s via %s..."
@@ -2037,10 +2048,14 @@ If SCAN, request a scan of that group as well."
     (gnus-message 5 mesg)
     (when (gnus-check-server method)
       ;; Request that the backend scan its incoming messages.
-      (when (and gnus-agent
-		 (gnus-online method)
+      (when (and (or (and gnus-agent
+			  (gnus-online method))
+		     (not gnus-agent))
 		 (gnus-check-backend-function 'request-scan (car method)))
-	(gnus-request-scan nil method))
+	(if infos
+	    (dolist (info infos)
+	      (gnus-request-scan (gnus-info-group info) method))
+	  (gnus-request-scan nil method)))
       (cond
        ((and (eq gnus-read-active-file 'some)
 	     (gnus-check-backend-function 'retrieve-groups (car method))

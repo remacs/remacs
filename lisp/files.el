@@ -1,3 +1,18 @@
+;;  (defun auto-save-mode (arg)
+;;   "Toggle auto-saving of contents of current buffer.
+;; With prefix argument ARG, turn auto-saving on if positive, else off."
+;;     (interactive)
+;;     (if (> arg 0) auto-save (null auto-save)))
+
+
+;; (defun auto-fill-mode (arg)
+;;   "Toggle Auto Fill mode.
+;; With ARG, turn Auto Fill mode on if and only if ARG is positive.
+;; In Auto Fill mode, inserting a space at a column beyond `current-fill-column'
+;; automatically breaks the line at a previous space."
+;;    (interactive)
+;;    (if (> arg 0) auto-fill (null auto-fill)))
+
 ;;; files.el --- file input and output commands for Emacs
 
 ;; Copyright (C) 1985, 1986, 1987, 1992, 1993, 1994, 1995, 1996,
@@ -67,9 +82,9 @@ Use this feature when you have directories which you normally refer to
 via absolute symbolic links.  Make TO the name of the link, and FROM
 the name it is linked to."
   :type '(repeat (cons :format "%v"
-		       :value ("" . "")
+		       :value ("\\`" . "")
 		       (regexp :tag "From")
-		       (regexp :tag "To")))
+		       (string :tag "To")))
   :group 'abbrev
   :group 'find-file)
 

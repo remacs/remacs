@@ -1,3 +1,84 @@
+2010-09-10  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* gnus-start.el (gnus-read-active-file-1): If gnus-agent isn't set,
+	then do request scans from the backends.
+
+	* gnus-sum.el (gnus-summary-update-hook): Change default to nil, to
+	avoid running a hook per line, since this takes a lot of time,
+	profiling shows.
+	(gnus-summary-prepare-threads): Call `gnus-summary-highlight-line'
+	directly if gnus-visual-p is true.
+
+2010-09-10  Katsumi Yamaoka  <yamaoka@jpl.org>
+
+	* gnus-start.el (gnus-read-active-for-groups): Check only subscribed
+	groups; replace mapcar with dolist which is a bit faster; pass groups
+	info to gnus-read-active-file-1.
+	(gnus-read-active-file-1): Scan only specified groups if the new
+	optional arg `infos' is given.
+
+2010-09-09  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* mail-source.el (mail-source-fetch-pop): Use pop3-movemail again.
+
+	* pop3.el (pop3-movemail): Removed.
+	(pop3-streaming-movemail): Renamed to pop3-movemail.
+
+	* gnus-html.el (gnus-html-wash-tags): Refactor out the image bit, and
+	don't restrict end-tag searches to the end of the line.
+
+2010-09-09  Katsumi Yamaoka  <yamaoka@jpl.org>
+
+	* gnus-start.el (gnus-get-unread-articles): Set the number of unread
+	articles of every unchecked group to t, which means unknown since the
+	server has never been opened.
+
+2010-09-08  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* gnus-html.el (gnus-html-show-alt-text): New command.
+	(gnus-html-browse-image): Ditto.
+	(gnus-html-wash-tags): Add the data to allow showing the ALT text and
+	to browse the image directly.
+	(gnus-html-wash-tags): Search for images first, so that <a><img> works
+	better.
+
+	* gnus-async.el (gnus-async-article-callback): Call
+	`gnus-html-prefetch-images' unconditionally.
+
+	* gnus-html.el (gnus-html-schedule-image-fetching): Decode entities
+	before feeding URLs to curl.
+
+2010-09-07  Katsumi Yamaoka  <yamaoka@jpl.org>
+
+	* gnus-html.el (gnus-html-wash-tags, gnus-html-put-image): Mark cid and
+	internal images as deletable by `W D D'.
+
+	* gnus-async.el (gnus-html-prefetch-images): Autoload it when compiling.
+	(gnus-async-article-callback): Fix typo.
+
+2010-09-06  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* gnus-html.el (gnus-html-wash-tags): Limit end-tag matching to the
+	current line to work around bugs in the output from w3m.
+
+	* gnus-async.el (gnus-async-article-callback): Always prefetch images
+	for groups that want that.
+
+	* nntp.el (nntp-wait-for-string): Supply a timeout for
+	accept-process-output to ensure progress.
+
+	* gnus-start.el (gnus-get-unread-articles): If being given an explicit
+	level to get unread articles from, then use that for foreign groups,
+	too.
+
+	* gnus-html.el (gnus-html-wash-tags): Remove <a name...> tags, which
+	confuses the rest of the function.
+
+	* gnus-start.el (gnus-read-active-for-groups): Do a `gnus-request-scan'
+	for the methods that support -retrieve-groups, too.
+
+	* nnml.el (nnml-save-nov): Remove some debugging-related messages.
+
 2010-09-06  Katsumi Yamaoka  <yamaoka@jpl.org>
 
 	* pop3.el: Require cl when compiling.
