@@ -184,9 +184,12 @@ xwidget_setup_socket_composition(struct xwidget* xw)
   //XCompositeRedirectWindow(); should probably replace the global backing request
   //now residing in xwidget_has_composition()
 
-//   int xid = gtk_socket_get_plug_window (GTK_SOCKET (xw->widget));
-//  Display* dpy = GDK_DISPLAY ();
+  int xid = gtk_socket_get_plug_window (GTK_SOCKET (xw->widget));
+  Display* dpy = GDK_DISPLAY ();
+  XCompositeRedirectSubwindows( dpy, xid,
+                                CompositeRedirectAutomatic );
 
+  
 /*
   XWindowAttributes attr;
   XGetWindowAttributes( dpy, xid, &attr );
@@ -280,8 +283,6 @@ xwidget_init (struct xwidget *xw, struct glyph_string *s, int x, int y)
 	      gtk_socket_get_id (GTK_SOCKET (xw->widget)));
       send_xembed_ready_event (xw->id,
 			       gtk_socket_get_id (GTK_SOCKET (xw->widget)));
-      if(xwidget_has_composition())
-        xwidget_setup_socket_composition(xw);
       break;
     }
 }
@@ -316,7 +317,8 @@ xwidget_draw_phantom (struct xwidget *xw,
     //p_xid = XCompositeNameWindowPixmap( GDK_DISPLAY (), GDK_WINDOW_XID(xid)) ;
 
     printf("phantom socket 1: %d %d\n", xid, p_xid);
-    xw_snapshot =  gdk_pixmap_foreign_new(GDK_WINDOW_XID(xid)); //wraps the native window in a gdk windw, but it crashes!
+    xw_snapshot =  gdk_pixmap_foreign_new(GDK_WINDOW_XID(xid));
+    //wraps the native window in a gdk windw, this doesnt seem to benefit from compositing
     printf("2\n");
   }else {
     //if its not a socket, its got a snapshot method that works
@@ -343,6 +345,14 @@ xwidget_draw_phantom (struct xwidget *xw,
 }
 
 
+/* gtk widget reparent snippet to be used:
+     g_object_ref((gpointer)xw->widgetwindow);
+     gtk_container_remove(GTK_CONTAINER(old_parent), xw->widgetwindow);
+     gtk_container_add(GTK_CONTAINER(new_parent), xw->widgetwindow);
+     g_object_unrefref((gpointer)xw->widgetwindow);
+*/
+
+
 
 void
 x_draw_xwidget_glyph_string (struct glyph_string *s)
@@ -354,10 +364,11 @@ x_draw_xwidget_glyph_string (struct glyph_string *s)
 
     BUG it seems this method for some reason is called with bad s->x and s->y sometimes.
     When this happens the xwidget doesnt move on screen as it should.
-    This maybe might perhaps be because of x_scroll_run. Maybe emacs decide to scroll the screen by blitting sometime,
-    for reasons unknown. then maybe emacs doesnt try to actualy call the paint routines, which means this here code will never
-    run so the xwidget wont know it has been moved. hmm.
+    This mightbe because of x_scroll_run. Emacs decides to scroll the screen by blitting sometimes.
+    then emacs doesnt try to actualy call the paint routines, which means this here code will never
+    run so the xwidget wont know it has been moved.
 
+    Solved temporarily by never optimizing in try_window_reusing_current_matrix().
     
     BUG the phantoming code doesnt work very well when the live xwidget is off screen.
     you will get weirdo display artefacts. Composition ought to solve this, since that means the live window is
@@ -370,6 +381,10 @@ x_draw_xwidget_glyph_string (struct glyph_string *s)
   int height = s->height;
 
   int drawing_in_selected_window = (XWINDOW (FRAME_SELECTED_WINDOW (s->f))) == (s->w);
+  //TODO drawing_in_selected_window can be true for several windows if we have several frames.
+  //we also need to check that the xwidget is to be drawn inside a window on a frame where it originaly lives.
+  //otherwise draw a phantom, or maybe reparent the xwidget.
+  
   struct xwidget *xw = &xwidgets[s->xwidget_id];
   int clipx; int clipy;
 
@@ -920,7 +935,6 @@ xwidget_end_redisplay (struct glyph_matrix *matrix)
             xwidget_hide (xw);
         }
     }
-
 }
 
 /* some type of modification was made to the buffers*/
