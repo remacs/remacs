@@ -94,7 +94,7 @@ extern Lisp_Object QCdata, QCtype;
 extern Lisp_Object QCwidth, QCheight;
 
 
-
+#define XG_XWIDGET "emacs_xwidget"
 
 
 
@@ -160,59 +160,12 @@ int i;
 
   if(gdk_display_supports_composite(gdk_display_get_default ())){
     hasNamePixmap = 1;
-}else{
+  }else{
     return 0;
-}
-
-  //redirect all toplevel windows to backing store.
-  //this should probably be optimized so only the gtk sockets we care for get redirected
-  //otoh, the wm might quite possibly already have requested backing store so the code is
-  //probably noop anyway
-  printf("enabling composition\n");
-  for ( i = 0; i < ScreenCount( dpy ); i++ )
-    XCompositeRedirectSubwindows( dpy, RootWindow( dpy, i ),
-                                  CompositeRedirectAutomatic );
+  }
   return 1;
-
-
 }
 
-void
-xwidget_setup_socket_composition(struct xwidget* xw)
-{
-  //do this for every gtk_socket
-  //XCompositeRedirectWindow(); should probably replace the global backing request
-  //now residing in xwidget_has_composition()
-
-  int xid = gtk_socket_get_plug_window (GTK_SOCKET (xw->widget));
-  Display* dpy = GDK_DISPLAY ();
-  XCompositeRedirectSubwindows( dpy, xid,
-                                CompositeRedirectAutomatic );
-
-
-/*
-  XWindowAttributes attr;
-  XGetWindowAttributes( dpy, xid, &attr );
-
-  XRenderPictFormat *format = XRenderFindVisualFormat( dpy, attr.visual );
-  int hasAlpha             = ( format->type == PictTypeDirect && format->direct.alphaMask );
-  int x                     = attr.x;
-  int y                     = attr.y;
-  int width                 = attr.width;
-  int height                = attr.height;
-
-
-  XRenderPictureAttributes pa;
-  pa.subwindow_mode = IncludeInferiors; // Don't clip child widgets
-
-  Picture picture = XRenderCreatePicture( dpy, xid, format, CPSubwindowMode, &pa );
-  //  p_xid = XCompositeNameWindowPixmap( GDK_DISPLAY (), GDK_WINDOW_XID(xid)) ;
-
-  //this is the actual drawing call that probably should be somewhere else:
-  XRenderComposite( dpy, hasAlpha ? PictOpOver : PictOpSrc, picture, None,
-                    dest.x11RenderHandle(), 0, 0, 0, 0, destX, destY, width, height );
-*/
-}
 
 void
 xwidget_end_composition(struct xwidget* w){
@@ -230,12 +183,13 @@ xwidget_show (struct xwidget *xw)
 }
 
 
+static gboolean
 xwidget_composite_draw(GtkWidget *widget,
     GdkEventExpose *event,
     gpointer data)
-//struct xwidget *xw)
 {
-  FRAME_PTR f = (FRAME_PTR) g_object_get_data (G_OBJECT (widget), XG_FRAME_DATA);  
+  //FRAME_PTR f = (FRAME_PTR) g_object_get_data (G_OBJECT (widget), XG_FRAME_DATA);
+  struct xwidget* xw = (struct xwidget*) g_object_get_data (G_OBJECT (widget), XG_XWIDGET);
   ////////////////////////////////////////////////////////////////
   //Example 7. Composited windows
   GdkRegion *region;
@@ -244,7 +198,7 @@ xwidget_composite_draw(GtkWidget *widget,
   /* get our child (in this case, the event box) */
   child = widget; //gtk_bin_get_child (GTK_BIN (widget));
   /* create a cairo context to draw to the window */
-  cr = gdk_cairo_create (gtk_widget_get_window(f->gwfixed));//xw->widgetwindow));//widget->window);
+  cr = gdk_cairo_create (gtk_widget_get_window(xw->widgetwindow));//widget->window);
   /* the source data is the (composited) event box */
   gdk_cairo_set_source_pixmap (cr, child->window,
                                child->allocation.x,
@@ -303,9 +257,9 @@ xwidget_init (struct xwidget *xw, struct glyph_string *s, int x, int y)
                  y);
   gtk_widget_show_all (GTK_WIDGET (xw->widgetwindow));
 
-  //a bit inconsistent, but the rest of emacs stores stuff in the widgets,
-  //like frame data. in my case it might as well reside in the xwidget struct i think
-  g_object_set_data (G_OBJECT (xw->widget), XG_FRAME_DATA, (gpointer) (s->f));
+  //store some xwidget data in the gtk widgets
+  g_object_set_data (G_OBJECT (xw->widget), XG_FRAME_DATA, (gpointer) (s->f)); //the emacs frame
+  g_object_set_data (G_OBJECT (xw->widget), XG_XWIDGET, (gpointer) (xw)); //the xwidget
 
   //this seems to enable xcomposition. later we need to paint ourselves somehow,
   //since the widget is no longer responsible for painting itself
