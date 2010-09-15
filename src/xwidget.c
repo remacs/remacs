@@ -189,7 +189,7 @@ xwidget_setup_socket_composition(struct xwidget* xw)
   XCompositeRedirectSubwindows( dpy, xid,
                                 CompositeRedirectAutomatic );
 
-  
+
 /*
   XWindowAttributes attr;
   XGetWindowAttributes( dpy, xid, &attr );
@@ -226,7 +226,40 @@ xwidget_show (struct xwidget *xw)
   xw->hidden = 0;
   //gtk_widget_show(GTK_WIDGET(xw->widgetwindow));
   gtk_fixed_move (GTK_FIXED (xw->emacswindow), GTK_WIDGET (xw->widgetwindow),
-		  xw->x, xw->y);
+                  xw->x, xw->y);
+}
+
+
+xwidget_composite_draw(GtkWidget *widget,
+    GdkEventExpose *event,
+    gpointer data)
+//struct xwidget *xw)
+{
+  FRAME_PTR f = (FRAME_PTR) g_object_get_data (G_OBJECT (widget), XG_FRAME_DATA);  
+  ////////////////////////////////////////////////////////////////
+  //Example 7. Composited windows
+  GdkRegion *region;
+  GtkWidget *child;
+  cairo_t *cr;
+  /* get our child (in this case, the event box) */
+  child = widget; //gtk_bin_get_child (GTK_BIN (widget));
+  /* create a cairo context to draw to the window */
+  cr = gdk_cairo_create (gtk_widget_get_window(f->gwfixed));//xw->widgetwindow));//widget->window);
+  /* the source data is the (composited) event box */
+  gdk_cairo_set_source_pixmap (cr, child->window,
+                               child->allocation.x,
+                               child->allocation.y);
+  /* draw no more than our expose event intersects our child */
+  /*  region = gdk_region_rectangle (&child->allocation);
+  gdk_region_intersect (region, event->region);
+  gdk_cairo_region (cr, region);
+  cairo_clip (cr);                                                        */
+  /* composite, with a 50% opacity */
+  cairo_set_operator (cr, CAIRO_OPERATOR_OVER);
+  cairo_paint_with_alpha (cr, 0.5);//transparency);
+  /* we're done */
+  cairo_destroy (cr);
+  //  return FALSE;
 }
 
 void
@@ -242,7 +275,7 @@ xwidget_init (struct xwidget *xw, struct glyph_string *s, int x, int y)
     case 1:
       xw->widget = gtk_button_new_with_label (xw->title);
       g_signal_connect (G_OBJECT (xw->widget), "clicked",
-			G_CALLBACK (buttonclick_handler), xw);
+                        G_CALLBACK (buttonclick_handler), xw);
       break;
     case 2:
       xw->widget = gtk_toggle_button_new_with_label (xw->title);
@@ -252,8 +285,8 @@ xwidget_init (struct xwidget *xw, struct glyph_string *s, int x, int y)
       break;
     case 4:
       xw->widget =
-	gtk_hscale_new (GTK_ADJUSTMENT
-			(gtk_adjustment_new (0, 0, 100, 1, 1, 0)));
+        gtk_hscale_new (GTK_ADJUSTMENT
+                        (gtk_adjustment_new (0, 0, 100, 1, 1, 0)));
       gtk_scale_set_draw_value (GTK_SCALE (xw->widget), FALSE);	//i think its emacs role to show text and stuff, so disable the widgets own text
     }
   //widget realization
@@ -265,24 +298,30 @@ xwidget_init (struct xwidget *xw, struct glyph_string *s, int x, int y)
   gtk_layout_set_size (GTK_LAYOUT (xw->widgetwindow), xw->width, xw->height);
   gtk_container_add (xw->widgetwindow, xw->widget);
   gtk_widget_set_size_request (GTK_WIDGET (xw->widget), xw->width,
-			       xw->height);
+                               xw->height);
   gtk_fixed_put (GTK_FIXED (s->f->gwfixed), GTK_WIDGET (xw->widgetwindow), x,
-		 y);
+                 y);
   gtk_widget_show_all (GTK_WIDGET (xw->widgetwindow));
 
   //a bit inconsistent, but the rest of emacs stores stuff in the widgets,
   //like frame data. in my case it might as well reside in the xwidget struct i think
   g_object_set_data (G_OBJECT (xw->widget), XG_FRAME_DATA, (gpointer) (s->f));
 
+  //this seems to enable xcomposition. later we need to paint ourselves somehow,
+  //since the widget is no longer responsible for painting itself
+  gdk_window_set_composited (xw->widget->window, TRUE);
+
+  g_signal_connect(xw->widget, "expose-event", G_CALLBACK(xwidget_composite_draw), NULL);
+  
   //widgettype specific initialization only possible after realization
   switch (xw->type)
     {
     case 3:
       printf ("socket id:%x %d\n",
-	      gtk_socket_get_id (GTK_SOCKET (xw->widget)),
-	      gtk_socket_get_id (GTK_SOCKET (xw->widget)));
+              gtk_socket_get_id (GTK_SOCKET (xw->widget)),
+              gtk_socket_get_id (GTK_SOCKET (xw->widget)));
       send_xembed_ready_event (xw->id,
-			       gtk_socket_get_id (GTK_SOCKET (xw->widget)));
+                               gtk_socket_get_id (GTK_SOCKET (xw->widget)));
       break;
     }
 }
@@ -293,7 +332,8 @@ void
 xwidget_draw_phantom (struct xwidget *xw,
                       int x, int y,
                       int clipx, int clipy,
-		      struct glyph_string *s)
+                      struct glyph_string *s,
+                      float transparency)
 {
   //we cant always get real widgets, so here we try to fetch a snapshot of
   //the real xwidget and paint that as a phantom image. if that fails, we
@@ -309,7 +349,7 @@ xwidget_draw_phantom (struct xwidget *xw,
   GdkNativeWindow p_xid;
   GdkWindow* xid;
 
-  if (xw->type == 3 && xwidget_has_composition()){
+  /*  if (xw->type == 3 && xwidget_has_composition()){
     //its a gtk_socket, get_snapshot() doesnt work so try using composition methods
     //xw_snapshot =  gdk_pixmap_foreign_new_for_display(GDK_DISPLAY(), p_xid);
     xid = gtk_socket_get_plug_window (GTK_SOCKET (xw->widget));
@@ -326,25 +366,29 @@ xwidget_draw_phantom (struct xwidget *xw,
     printf("phantom other\n");
     xw_snapshot = gtk_widget_get_snapshot (xw->widget, NULL);
   }
-
-  if(xw_snapshot==NULL){
-    printf(" xw_snapshot null for some reason ... \n");
-    return;
-  }
-
-  printf("3\n");
-  gdkgc = gdk_gc_new (xw_snapshot);
+  */
+#if 0
+   xw_snapshot=gdk_offscreen_window_get_pixmap(xw->widget->window); 
+   if(xw_snapshot==NULL){ 
+     printf(" xw_snapshot null for some reason ... \n"); 
+  /*   //return; */
+   } 
+   gdkgc = gdk_gc_new (xw_snapshot); 
 
   //currently a phantom gets a line drawn across it to denote phantomness
-  //dimming or such would be more elegant
-  printf("4\n");
-  gdk_draw_line (xw_snapshot, gdkgc, 0, 0, xw->width, xw->height);
-  printf("5\n");
-  gdk_draw_drawable (gtk_widget_get_window (s->f->gwfixed),	//convert to GdkWindow from gtkWindow
-		     gdkgc, xw_snapshot, 0, 0, x, y, clipx, clipy);
+  //dimming or such would be more elegant, but we cant be bothered atm
+    gdk_draw_line (xw_snapshot, gdkgc, 0, 0, xw->width, xw->height);
+    gdk_draw_drawable (gtk_widget_get_window (s->f->gwfixed),	//convert to GdkWindow from gtkWindow
+                       gdkgc, xw_snapshot, 0, 0, x, y, clipx, clipy);
+#else
+
+    xwidget_composite_draw(xw->widget, NULL, NULL);
+#endif
+  ////////////////////////////////////////////////////////////////
+    
+
+  //clean up here...
 }
-
-
 /* gtk widget reparent snippet to be used:
      g_object_ref((gpointer)xw->widgetwindow);
      gtk_container_remove(GTK_CONTAINER(old_parent), xw->widgetwindow);
@@ -369,12 +413,12 @@ x_draw_xwidget_glyph_string (struct glyph_string *s)
     run so the xwidget wont know it has been moved.
 
     Solved temporarily by never optimizing in try_window_reusing_current_matrix().
-    
+
     BUG the phantoming code doesnt work very well when the live xwidget is off screen.
     you will get weirdo display artefacts. Composition ought to solve this, since that means the live window is
     always available in an off-screen buffer. My current attempt at composition doesnt work properly however.
 
-    
+
    */
   int box_line_hwidth = eabs (s->face->box_line_width);
   int box_line_vwidth = max (s->face->box_line_width, 0);
@@ -384,7 +428,7 @@ x_draw_xwidget_glyph_string (struct glyph_string *s)
   //TODO drawing_in_selected_window can be true for several windows if we have several frames.
   //we also need to check that the xwidget is to be drawn inside a window on a frame where it originaly lives.
   //otherwise draw a phantom, or maybe reparent the xwidget.
-  
+
   struct xwidget *xw = &xwidgets[s->xwidget_id];
   int clipx; int clipy;
 
@@ -412,27 +456,31 @@ x_draw_xwidget_glyph_string (struct glyph_string *s)
   if (drawing_in_selected_window)
     {
       if ((xw->x != x) || (xw->y != y))	//has it moved?
-	{
-	  printf ("xwidget moved: id:%d (%d,%d)->(%d,%d)\n", xw->id, xw->x, xw->y, x, y);
-	}
+        {
+          printf ("xwidget moved: id:%d (%d,%d)->(%d,%d)\n", xw->id, xw->x, xw->y, x, y);
+        }
       else
-	{
-	}
+        {
+        }
       //TODO maybe theres a bug that the hidden flag sometimes dont get reset properly
       if (!xwidget_hidden(xw))	//hidden equals not being seen in the live window
-	{
-	  gtk_fixed_move (GTK_FIXED (s->f->gwfixed),
-			  GTK_WIDGET (xw->widgetwindow), x, y);
-	  //clip the widget window if some parts happen to be outside drawable area
-	  //an emacs window is not a gtk window, a gtk window covers the entire frame
-	  gtk_widget_set_size_request (GTK_WIDGET (xw->widgetwindow), clipx,
-				       clipy);
-	}
+        {
+          gtk_fixed_move (GTK_FIXED (s->f->gwfixed),
+                          GTK_WIDGET (xw->widgetwindow), x, y);
+          //clip the widget window if some parts happen to be outside drawable area
+          //an emacs window is not a gtk window, a gtk window covers the entire frame
+          gtk_widget_set_size_request (GTK_WIDGET (xw->widgetwindow), clipx,
+                                       clipy);
+
+          //if we are using compositing, we are always responsible for drawing the widget on the screen
+          //just reuse the phantom routine for now
+          xwidget_draw_phantom (xw, x, y, clipx, clipy, s, 1.0);
+        }
       else
-	{
-	  //xwidget is hidden, hide it offscreen somewhere, still realized, so we may snapshot it
-	  //gtk_fixed_move(GTK_FIXED(s->f->gwfixed),GTK_WIDGET(xw->widgetwindow) ,10000,10000);
-	}
+        {
+          //xwidget is hidden, hide it offscreen somewhere, still realized, so we may snapshot it
+          //gtk_fixed_move(GTK_FIXED(s->f->gwfixed),GTK_WIDGET(xw->widgetwindow) ,10000,10000);
+        }
       //xw refers to the *live* instance of the xwidget
       xw->x = x;
       xw->y = y;
@@ -442,7 +490,7 @@ x_draw_xwidget_glyph_string (struct glyph_string *s)
   else
     {
       //ok, we are painting the xwidgets in non-selected window, so draw a phantom
-      xwidget_draw_phantom (xw, x, y, clipx, clipy, s);
+      xwidget_draw_phantom (xw, x, y, clipx, clipy, s, 0.1);
 
     }
 
@@ -494,7 +542,7 @@ DEFUN ("xwidget-resize-internal", Fxwidget_resize_internal, Sxwidget_resize_inte
   xw->height=h;
   gtk_layout_set_size (GTK_LAYOUT (xw->widgetwindow), xw->width, xw->height);
   gtk_widget_set_size_request (GTK_WIDGET (xw->widget), xw->width,
-			       xw->height);
+                               xw->height);
   return Qnil;
 }
 
@@ -598,7 +646,7 @@ xwidget_key_send_message (struct frame *f,
   event.state = modifiers;
 
   XSendEvent (event.display, event.window, TRUE, KeyPressMask,
-	      (XEvent *) & event);
+              (XEvent *) & event);
 }
 
 //using "accessible" interfaces seems expensive
@@ -662,7 +710,7 @@ syms_of_xwidget (void)
   Qxwidget_info = intern ("xwidget-info");
   staticpro (&Qxwidget_info);
   defsubr (&Sxwidget_info);
-  
+
   Qxwidget_resize_internal = intern ("xwidget-resize-internal");
   staticpro (&Qxwidget_resize_internal);
   defsubr (&Sxwidget_resize_internal);
@@ -757,7 +805,7 @@ xwidget_hide (struct xwidget *xw)
   xw->hidden = 1;
   //gtk_widget_hide(GTK_WIDGET(xw->widgetwindow));
   gtk_fixed_move (GTK_FIXED (xw->emacswindow), GTK_WIDGET (xw->widgetwindow),
-		  10000, 10000);
+                  10000, 10000);
 }
 
 
@@ -781,11 +829,11 @@ xwidget_spec_value (
        CONSP (tail) && CONSP (XCDR (tail)); tail = XCDR (XCDR (tail)))
     {
       if (EQ (XCAR (tail), key))
-	{
-	  if (found)
-	    *found = 1;
-	  return XCAR (XCDR (tail));
-	}
+        {
+          if (found)
+            *found = 1;
+          return XCAR (XCDR (tail));
+        }
     }
 
   if (found)
@@ -835,7 +883,7 @@ lookup_xwidget (Lisp_Object  spec)
 
 
   printf ("xwidget_id:%d type:%d found:%d %d %d title:%s (%d,%d)\n", id,
-	  xw->type, found, found1, found2, xw->title, xw->height, xw->width);
+          xw->type, found, found1, found2, xw->title, xw->height, xw->width);
 
 
   assert_valid_xwidget_id (id, "lookup_xwidget");
@@ -908,35 +956,35 @@ xwidget_end_redisplay (struct glyph_matrix *matrix)
       struct glyph_row *row;
       row = MATRIX_ROW (matrix, i);
       if (row->enabled_p != 0)
-	{
-	  for (area = LEFT_MARGIN_AREA; area < LAST_AREA; ++area)
-	    {
-	      struct glyph *glyph = row->glyphs[area];
-	      struct glyph *glyph_end = glyph + row->used[area];
-	      for (; glyph < glyph_end; ++glyph)
-		{
-		  if (glyph->type == XWIDGET_GLYPH)
-		    {
-		      //printf("(%d)",glyph->u.xwidget_id);
-		      //here the id sometimes sucks, so maybe the desired glyph matrix isnt ready here?
-		      //also, it appears the desired matrix is not the entire window, but only the changed part. wtf?
-		      int id = glyph->u.xwidget_id;
-		      if (id < 0 || id > MAX_XWIDGETS)
-			{
-			  printf
-			    ("glyph matrix contains crap, abort xwidget handling and wait for better times\n ");
-			  //dump_glyph_matrix(matrix, 2);
-			  return;
-			}
-		      else
-			{
-			  // printf("row %d not enabled\n", i);
-			}
-		      xwidget_touch (&xwidgets[glyph->u.xwidget_id]);
-		    }
-		}
-	    }
-	}
+        {
+          for (area = LEFT_MARGIN_AREA; area < LAST_AREA; ++area)
+            {
+              struct glyph *glyph = row->glyphs[area];
+              struct glyph *glyph_end = glyph + row->used[area];
+              for (; glyph < glyph_end; ++glyph)
+                {
+                  if (glyph->type == XWIDGET_GLYPH)
+                    {
+                      //printf("(%d)",glyph->u.xwidget_id);
+                      //here the id sometimes sucks, so maybe the desired glyph matrix isnt ready here?
+                      //also, it appears the desired matrix is not the entire window, but only the changed part. wtf?
+                      int id = glyph->u.xwidget_id;
+                      if (id < 0 || id > MAX_XWIDGETS)
+                        {
+                          printf
+                            ("glyph matrix contains crap, abort xwidget handling and wait for better times\n ");
+                          //dump_glyph_matrix(matrix, 2);
+                          return;
+                        }
+                      else
+                        {
+                          // printf("row %d not enabled\n", i);
+                        }
+                      xwidget_touch (&xwidgets[glyph->u.xwidget_id]);
+                    }
+                }
+            }
+        }
     }
 
   for (i = 0; i < MAX_XWIDGETS; i++)
@@ -985,11 +1033,11 @@ xwidget_invalidate (void)
     {
       xw = &xwidgets[i];
       if (xw->initialized)
-	{
-	  printf ("%d,", i);
-	  gtk_widget_queue_draw_area (xw->widget, 0, 0, xw->width,
-				      xw->height);
-	}
+        {
+          printf ("%d,", i);
+          gtk_widget_queue_draw_area (xw->widget, 0, 0, xw->width,
+                                      xw->height);
+        }
     }
   printf ("\n");
 }
