@@ -57,7 +57,7 @@
 #endif
 #include <X11/extensions/Xcomposite.h>
 #include <X11/extensions/Xrender.h>
-
+#include <cairo.h>
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif
@@ -183,12 +183,14 @@ xwidget_show (struct xwidget *xw)
 }
 
 
+
 static gboolean
-xwidget_composite_draw(GtkWidget *widget,
-    GdkEventExpose *event,
-    gpointer data)
-{
-  //FRAME_PTR f = (FRAME_PTR) g_object_get_data (G_OBJECT (widget), XG_FRAME_DATA);
+xwidget_composite_draw_2(GtkWidget *widget,
+                         GdkEventExpose *event,
+                         gpointer data,
+                         int x, int y)
+{  
+  FRAME_PTR f = (FRAME_PTR) g_object_get_data (G_OBJECT (widget), XG_FRAME_DATA);
   struct xwidget* xw = (struct xwidget*) g_object_get_data (G_OBJECT (widget), XG_XWIDGET);
   ////////////////////////////////////////////////////////////////
   //Example 7. Composited windows
@@ -197,12 +199,17 @@ xwidget_composite_draw(GtkWidget *widget,
   cairo_t *cr;
   /* get our child (in this case, the event box) */
   child = widget; //gtk_bin_get_child (GTK_BIN (widget));
-  /* create a cairo context to draw to the window */
-  cr = gdk_cairo_create (gtk_widget_get_window(xw->widgetwindow));//widget->window);
-  /* the source data is the (composited) event box */
+  /* create a cairo context to draw to the emacs window */
+  cr = gdk_cairo_create (gtk_widget_get_window (f->gwfixed));//GTK_WIDGET(xw->emacswindow));//xw->widgetwindow));//widget->window);
+  /* the source data is the (composited) xwidget */
+  //cairo_move_to(cr, xw->x, xw->y);
+  cairo_set_source_rgb(cr,1.0,0,0);
+  cairo_rectangle(cr,x,y,xw->width,xw->height);
+  cairo_fill(cr);
   gdk_cairo_set_source_pixmap (cr, child->window,
-                               child->allocation.x,
-                               child->allocation.y);
+                               x,//child->allocation.x,
+                               y//child->allocation.y
+                               );
   /* draw no more than our expose event intersects our child */
   /*  region = gdk_region_rectangle (&child->allocation);
   gdk_region_intersect (region, event->region);
@@ -210,11 +217,25 @@ xwidget_composite_draw(GtkWidget *widget,
   cairo_clip (cr);                                                        */
   /* composite, with a 50% opacity */
   cairo_set_operator (cr, CAIRO_OPERATOR_OVER);
-  cairo_paint_with_alpha (cr, 0.5);//transparency);
+  //cairo_paint_with_alpha (cr, 0.5);//transparency);
+  cairo_paint(cr);//transparency);
   /* we're done */
   cairo_destroy (cr);
-  //  return FALSE;
+  return FALSE;
 }
+
+static gboolean
+xwidget_composite_draw(GtkWidget *widget,
+    GdkEventExpose *event,
+    gpointer data)
+{
+  struct xwidget* xw = (struct xwidget*) g_object_get_data (G_OBJECT (widget), XG_XWIDGET);  
+  xwidget_composite_draw_2(widget,
+                         event,
+                         data,
+                           xw->x, xw->y);
+
+}  
 
 void
 xwidget_init (struct xwidget *xw, struct glyph_string *s, int x, int y)
@@ -253,8 +274,8 @@ xwidget_init (struct xwidget *xw, struct glyph_string *s, int x, int y)
   gtk_container_add (xw->widgetwindow, xw->widget);
   gtk_widget_set_size_request (GTK_WIDGET (xw->widget), xw->width,
                                xw->height);
-  gtk_fixed_put (GTK_FIXED (s->f->gwfixed), GTK_WIDGET (xw->widgetwindow), x,
-                 y);
+  gtk_fixed_put (GTK_FIXED (s->f->gwfixed), GTK_WIDGET (xw->widgetwindow),
+                 x, y);
   gtk_widget_show_all (GTK_WIDGET (xw->widgetwindow));
 
   //store some xwidget data in the gtk widgets
@@ -336,7 +357,7 @@ xwidget_draw_phantom (struct xwidget *xw,
                        gdkgc, xw_snapshot, 0, 0, x, y, clipx, clipy);
 #else
 
-    xwidget_composite_draw(xw->widget, NULL, NULL);
+    xwidget_composite_draw_2(xw->widget, NULL, NULL,x,y);
 #endif
   ////////////////////////////////////////////////////////////////
     
@@ -423,8 +444,8 @@ x_draw_xwidget_glyph_string (struct glyph_string *s)
                           GTK_WIDGET (xw->widgetwindow), x, y);
           //clip the widget window if some parts happen to be outside drawable area
           //an emacs window is not a gtk window, a gtk window covers the entire frame
-          gtk_widget_set_size_request (GTK_WIDGET (xw->widgetwindow), clipx,
-                                       clipy);
+          gtk_widget_set_size_request (GTK_WIDGET (xw->widgetwindow),
+                                       clipx, clipy);
 
           //if we are using compositing, we are always responsible for drawing the widget on the screen
           //just reuse the phantom routine for now
