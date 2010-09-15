@@ -229,7 +229,8 @@ xwidget_composite_draw(GtkWidget *widget,
     GdkEventExpose *event,
     gpointer data)
 {
-  struct xwidget* xw = (struct xwidget*) g_object_get_data (G_OBJECT (widget), XG_XWIDGET);  
+  struct xwidget* xw = (struct xwidget*) g_object_get_data (G_OBJECT (widget), XG_XWIDGET);
+  printf("xwidget_composite_draw %s\n", data);
   xwidget_composite_draw_2(widget,
                          event,
                          data,
@@ -285,8 +286,8 @@ xwidget_init (struct xwidget *xw, struct glyph_string *s, int x, int y)
   //this seems to enable xcomposition. later we need to paint ourselves somehow,
   //since the widget is no longer responsible for painting itself
   gdk_window_set_composited (xw->widget->window, TRUE);
-
-  g_signal_connect(xw->widget, "expose-event", G_CALLBACK(xwidget_composite_draw), NULL);
+  g_signal_connect(xw->widget, "expose-event", G_CALLBACK(xwidget_composite_draw), "exposed");
+  g_signal_connect(xw->widget, "damage-event", G_CALLBACK(xwidget_composite_draw), "damaged");  
   
   //widgettype specific initialization only possible after realization
   switch (xw->type)
