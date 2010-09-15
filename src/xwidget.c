@@ -252,11 +252,10 @@ xwidget_composite_draw_widgetwindow(GtkWidget *widget,
   cairo_t *cr;
   cr = gdk_cairo_create (gtk_widget_get_window (widget));
   cairo_set_source_rgb(cr,0,1.0,0);
-  cairo_rectangle(cr, 0,0, xw->width,xw->height);
+  cairo_rectangle(cr, 0,0, xw->width, xw->height);
   cairo_fill(cr);
   gdk_cairo_set_source_pixmap (cr, xw->widget->window,
-                               0,0
-                               );
+                               0,0);
   
   cairo_set_operator (cr, CAIRO_OPERATOR_OVER);
   cairo_paint_with_alpha (cr, 0.9);
