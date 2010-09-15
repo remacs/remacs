@@ -177,9 +177,8 @@ xwidget_show (struct xwidget *xw)
 {
   //printf("xwidget %d shown\n",xw->id);
   xw->hidden = 0;
-  //gtk_widget_show(GTK_WIDGET(xw->widgetwindow));
-  gtk_fixed_move (GTK_FIXED (xw->emacswindow), GTK_WIDGET (xw->widgetwindow),
-                  xw->x, xw->y);
+  gtk_widget_show(GTK_WIDGET(xw->widgetwindow));
+  gtk_fixed_move (GTK_FIXED (xw->emacswindow), GTK_WIDGET (xw->widgetwindow),  xw->x, xw->y);
 }
 
 
@@ -188,7 +187,8 @@ static gboolean
 xwidget_composite_draw_2(GtkWidget *widget,
                          GdkEventExpose *event,
                          gpointer data,
-                         int x, int y)
+                         int x, int y,
+                         int phantom)
 {  
   FRAME_PTR f = (FRAME_PTR) g_object_get_data (G_OBJECT (widget), XG_FRAME_DATA);
   struct xwidget* xw = (struct xwidget*) g_object_get_data (G_OBJECT (widget), XG_XWIDGET);
@@ -197,18 +197,22 @@ xwidget_composite_draw_2(GtkWidget *widget,
   GdkRegion *region;
   GtkWidget *child;
   cairo_t *cr;
+  printf("xwidget_composite_draw_2 at:%d %d\n", x,y);
   /* get our child (in this case, the event box) */
   child = widget; //gtk_bin_get_child (GTK_BIN (widget));
   /* create a cairo context to draw to the emacs window */
-  cr = gdk_cairo_create (gtk_widget_get_window (f->gwfixed));//GTK_WIDGET(xw->emacswindow));//xw->widgetwindow));//widget->window);
+  //  cr = gdk_cairo_create (gtk_widget_get_window (f->gwfixed));//GTK_WIDGET(xw->emacswindow));//xw->widgetwindow));//widget->window);
+  cr = gdk_cairo_create (gtk_widget_get_window (phantom ?  f->gwfixed : xw->widgetwindow));//GTK_WIDGET(xw->emacswindow));//));//widget->window);  
   /* the source data is the (composited) xwidget */
   //cairo_move_to(cr, xw->x, xw->y);
-  cairo_set_source_rgb(cr,1.0,0,0);
-  cairo_rectangle(cr,x,y,xw->width,xw->height);
-  cairo_fill(cr);
+  if(phantom){
+    cairo_set_source_rgb(cr,1.0,0,0);
+    cairo_rectangle(cr,x,y,xw->width,xw->height);
+    cairo_fill(cr);
+  }
   gdk_cairo_set_source_pixmap (cr, child->window,
-                               x,//child->allocation.x,
-                               y//child->allocation.y
+                               phantom ?  x : 0,//child->allocation.x,
+                               phantom ?  y : 0//child->allocation.y
                                );
   /* draw no more than our expose event intersects our child */
   /*  region = gdk_region_rectangle (&child->allocation);
@@ -217,8 +221,9 @@ xwidget_composite_draw_2(GtkWidget *widget,
   cairo_clip (cr);                                                        */
   /* composite, with a 50% opacity */
   cairo_set_operator (cr, CAIRO_OPERATOR_OVER);
-  //cairo_paint_with_alpha (cr, 0.5);//transparency);
-  cairo_paint(cr);//transparency);
+  //cairo_paint_with_alpha (cr, phantom ? 0.5 : 0);
+  cairo_paint_with_alpha (cr, 0.9);
+  //cairo_paint(cr);//transparency);
   /* we're done */
   cairo_destroy (cr);
   return FALSE;
@@ -234,9 +239,32 @@ xwidget_composite_draw(GtkWidget *widget,
   xwidget_composite_draw_2(widget,
                          event,
                          data,
-                           xw->x, xw->y);
-
+                           xw->x, xw->y, 0);
+  return FALSE;
 }  
+
+static gboolean
+xwidget_composite_draw_widgetwindow(GtkWidget *widget,
+    GdkEventExpose *event,
+    gpointer data)
+{
+  struct xwidget* xw = (struct xwidget*) g_object_get_data (G_OBJECT (widget), XG_XWIDGET);  
+  cairo_t *cr;
+  cr = gdk_cairo_create (gtk_widget_get_window (widget));
+  cairo_set_source_rgb(cr,0,1.0,0);
+  cairo_rectangle(cr, 0,0, xw->width,xw->height);
+  cairo_fill(cr);
+  gdk_cairo_set_source_pixmap (cr, xw->widget->window,
+                               0,0
+                               );
+  
+  cairo_set_operator (cr, CAIRO_OPERATOR_OVER);
+  cairo_paint_with_alpha (cr, 0.9);
+  //cairo_paint(cr);
+  cairo_destroy (cr);
+  
+  return FALSE;
+}
 
 void
 xwidget_init (struct xwidget *xw, struct glyph_string *s, int x, int y)
@@ -282,12 +310,15 @@ xwidget_init (struct xwidget *xw, struct glyph_string *s, int x, int y)
   //store some xwidget data in the gtk widgets
   g_object_set_data (G_OBJECT (xw->widget), XG_FRAME_DATA, (gpointer) (s->f)); //the emacs frame
   g_object_set_data (G_OBJECT (xw->widget), XG_XWIDGET, (gpointer) (xw)); //the xwidget
+  g_object_set_data (G_OBJECT (xw->widgetwindow), XG_XWIDGET, (gpointer) (xw)); //the xwidget  
 
   //this seems to enable xcomposition. later we need to paint ourselves somehow,
   //since the widget is no longer responsible for painting itself
   gdk_window_set_composited (xw->widget->window, TRUE);
-  g_signal_connect(xw->widget, "expose-event", G_CALLBACK(xwidget_composite_draw), "exposed");
-  g_signal_connect(xw->widget, "damage-event", G_CALLBACK(xwidget_composite_draw), "damaged");  
+  //gdk_window_set_composited (xw->widgetwindow, TRUE);  
+  //g_signal_connect_after(xw->widget, "expose-event", G_CALLBACK(xwidget_composite_draw), "widget exposed");
+  g_signal_connect_after(xw->widgetwindow, "expose-event", G_CALLBACK(xwidget_composite_draw_widgetwindow), "widgetwindow exposed");  
+  //  g_signal_connect_after(xw->widget, "damage-event", G_CALLBACK(xwidget_composite_draw), "damaged");  
   
   //widgettype specific initialization only possible after realization
   switch (xw->type)
@@ -309,7 +340,7 @@ xwidget_draw_phantom (struct xwidget *xw,
                       int x, int y,
                       int clipx, int clipy,
                       struct glyph_string *s,
-                      float transparency)
+                      int phantom)
 {
   //we cant always get real widgets, so here we try to fetch a snapshot of
   //the real xwidget and paint that as a phantom image. if that fails, we
@@ -358,7 +389,7 @@ xwidget_draw_phantom (struct xwidget *xw,
                        gdkgc, xw_snapshot, 0, 0, x, y, clipx, clipy);
 #else
 
-    xwidget_composite_draw_2(xw->widget, NULL, NULL,x,y);
+    xwidget_composite_draw_2(xw->widget, NULL, NULL,x,y, phantom);
 #endif
   ////////////////////////////////////////////////////////////////
     
@@ -450,12 +481,14 @@ x_draw_xwidget_glyph_string (struct glyph_string *s)
 
           //if we are using compositing, we are always responsible for drawing the widget on the screen
           //just reuse the phantom routine for now
-          xwidget_draw_phantom (xw, x, y, clipx, clipy, s, 1.0);
+          printf("draw live xwidget at:%d %d\n",x,y);
+          xwidget_draw_phantom (xw, x, y, clipx, clipy, s, 1);
         }
       else
         {
           //xwidget is hidden, hide it offscreen somewhere, still realized, so we may snapshot it
           //gtk_fixed_move(GTK_FIXED(s->f->gwfixed),GTK_WIDGET(xw->widgetwindow) ,10000,10000);
+          //gtk_widget_hide(GTK_WIDGET(xw->widgetwindow));
         }
       //xw refers to the *live* instance of the xwidget
       xw->x = x;
@@ -466,7 +499,9 @@ x_draw_xwidget_glyph_string (struct glyph_string *s)
   else
     {
       //ok, we are painting the xwidgets in non-selected window, so draw a phantom
-      xwidget_draw_phantom (xw, x, y, clipx, clipy, s, 0.1);
+      printf("draw phantom xwidget at:%d %d\n",x,y);
+      
+      xwidget_draw_phantom (xw, x, y, clipx, clipy, s, 1);
 
     }
 
