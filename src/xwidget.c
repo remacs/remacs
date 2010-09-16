@@ -205,7 +205,11 @@ xwidget_composite_draw_2(GtkWidget *widget,
   cr = gdk_cairo_create (gtk_widget_get_window (phantom ?  f->gwfixed : xw->widgetwindow));//GTK_WIDGET(xw->emacswindow));//));//widget->window);  
   /* the source data is the (composited) xwidget */
   //cairo_move_to(cr, xw->x, xw->y);
+  
   if(phantom){
+    cairo_rectangle(cr, x,y, xw->width, xw->height);
+    cairo_clip(cr);
+    
     cairo_set_source_rgb(cr,1.0,0,0);
     cairo_rectangle(cr,x,y,xw->width,xw->height);
     cairo_fill(cr);
@@ -229,6 +233,7 @@ xwidget_composite_draw_2(GtkWidget *widget,
   return FALSE;
 }
 
+/*
 static gboolean
 xwidget_composite_draw(GtkWidget *widget,
     GdkEventExpose *event,
@@ -242,6 +247,15 @@ xwidget_composite_draw(GtkWidget *widget,
                            xw->x, xw->y, 0);
   return FALSE;
 }  
+*/
+
+
+void xwidget_plug_added(GtkSocket *socket,
+                        gpointer   user_data)
+{
+  //hmm this doesnt seem to get called for foreign windows
+  printf("xwidget_plug_added\n");
+}
 
 static gboolean
 xwidget_composite_draw_widgetwindow(GtkWidget *widget,
@@ -250,11 +264,17 @@ xwidget_composite_draw_widgetwindow(GtkWidget *widget,
 {
   struct xwidget* xw = (struct xwidget*) g_object_get_data (G_OBJECT (widget), XG_XWIDGET);  
   cairo_t *cr;
+  GdkPixmap *pixmap;
+  pixmap=xw->widget->window;
+
   cr = gdk_cairo_create (gtk_widget_get_window (widget));
+  cairo_rectangle(cr, 0,0, xw->width, xw->height);
+  cairo_clip(cr);
+
   cairo_set_source_rgb(cr,0,1.0,0);
   cairo_rectangle(cr, 0,0, xw->width, xw->height);
   cairo_fill(cr);
-  gdk_cairo_set_source_pixmap (cr, xw->widget->window,
+  gdk_cairo_set_source_pixmap (cr, pixmap,
                                0,0);
   
   cairo_set_operator (cr, CAIRO_OPERATOR_OVER);
@@ -273,7 +293,7 @@ xwidget_init (struct xwidget *xw, struct glyph_string *s, int x, int y)
   xwidget_show(xw);
 
   //widget creation
-  switch (xw->type)
+  switch (xw->type) 
     {
     case 1:
       xw->widget = gtk_button_new_with_label (xw->title);
@@ -285,6 +305,11 @@ xwidget_init (struct xwidget *xw, struct glyph_string *s, int x, int y)
       break;
     case 3:
       xw->widget = gtk_socket_new ();
+      //gtk_widget_set_app_paintable (xw->widget, TRUE); //workaround for composited sockets
+      GdkColor color;
+      gdk_color_parse("blue",&color); //the blue color never seems to show up. something else draw the bg
+      gtk_widget_modify_bg(xw->widget, GTK_STATE_NORMAL, &color);
+      g_signal_connect_after(xw->widget, "plug-added", G_CALLBACK(xwidget_plug_added), "plug added");        
       break;
     case 4:
       xw->widget =
@@ -313,7 +338,8 @@ xwidget_init (struct xwidget *xw, struct glyph_string *s, int x, int y)
 
   //this seems to enable xcomposition. later we need to paint ourselves somehow,
   //since the widget is no longer responsible for painting itself
-  gdk_window_set_composited (xw->widget->window, TRUE);
+  if(xw->type!=3)  //im having trouble with compositing and sockets. hmmm.
+    gdk_window_set_composited (xw->widget->window, TRUE);
   //gdk_window_set_composited (xw->widgetwindow, TRUE);  
   //g_signal_connect_after(xw->widget, "expose-event", G_CALLBACK(xwidget_composite_draw), "widget exposed");
   g_signal_connect_after(xw->widgetwindow, "expose-event", G_CALLBACK(xwidget_composite_draw_widgetwindow), "widgetwindow exposed");  
@@ -438,10 +464,10 @@ x_draw_xwidget_glyph_string (struct glyph_string *s)
   struct xwidget *xw = &xwidgets[s->xwidget_id];
   int clipx; int clipy;
 
-  printf("x_draw_xwidget_glyph_string: id:%d %d %d  (%d,%d,%d,%d) selected win:%d\n",
+  /*printf("x_draw_xwidget_glyph_string: id:%d %d %d  (%d,%d,%d,%d) selected win:%d\n",
      s->xwidget_id, box_line_hwidth, box_line_vwidth,
          s->x, s->y, s->height, s->width,
-         drawing_in_selected_window);
+         drawing_in_selected_window);*/
 
   int x = s->x;
   int y = s->y + (s->height / 2) - (xw->height / 2);
@@ -480,8 +506,8 @@ x_draw_xwidget_glyph_string (struct glyph_string *s)
 
           //if we are using compositing, we are always responsible for drawing the widget on the screen
           //just reuse the phantom routine for now
-          printf("draw live xwidget at:%d %d\n",x,y);
-          xwidget_draw_phantom (xw, x, y, clipx, clipy, s, 1);
+          //printf("draw live xwidget at:%d %d\n",x,y);
+          //xwidget_draw_phantom (xw, x, y, clipx, clipy, s, 1);
         }
       else
         {
@@ -498,7 +524,7 @@ x_draw_xwidget_glyph_string (struct glyph_string *s)
   else
     {
       //ok, we are painting the xwidgets in non-selected window, so draw a phantom
-      printf("draw phantom xwidget at:%d %d\n",x,y);
+      //printf("draw phantom xwidget at:%d %d\n",x,y);
       
       xwidget_draw_phantom (xw, x, y, clipx, clipy, s, 1);
 
@@ -509,7 +535,8 @@ x_draw_xwidget_glyph_string (struct glyph_string *s)
 
 
 
-DEFUN ("xwidget-embed-steal-window", Fxwidget_embed_steal_window, Sxwidget_embed_steal_window, 2, 2, 0, doc:	/* tell existing embed xwidget to steal other window id. */
+DEFUN ("xwidget-embed-steal-window", Fxwidget_embed_steal_window, Sxwidget_embed_steal_window, 2, 2, 0,
+       doc:	/* Tell existing embed xwidget to steal other window id. This is based on a deprecated method in GTK and doesnt work too well.*/
        )
   (Lisp_Object xwidget_id, Lisp_Object window_id)
 {
