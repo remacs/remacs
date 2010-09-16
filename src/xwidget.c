@@ -489,47 +489,32 @@ x_draw_xwidget_glyph_string (struct glyph_string *s)
     {
       if ((xw->x != x) || (xw->y != y))	//has it moved?
         {
-          printf ("xwidget moved: id:%d (%d,%d)->(%d,%d)\n", xw->id, xw->x, xw->y, x, y);
+          printf ("live xwidget moved: id:%d (%d,%d)->(%d,%d)\n", xw->id, xw->x, xw->y, x, y);
+          if (!xwidget_hidden(xw))	//hidden equals not being seen in the live window
+            {
+              gtk_fixed_move (GTK_FIXED (s->f->gwfixed),
+                              GTK_WIDGET (xw->widgetwindow), x, y);
+              //clip the widget window if some parts happen to be outside drawable area
+              //an emacs window is not a gtk window, a gtk window covers the entire frame
+              gtk_widget_set_size_request (GTK_WIDGET (xw->widgetwindow),
+                                           clipx, clipy);
+            }
         }
-      else
-        {
-        }
-      //TODO maybe theres a bug that the hidden flag sometimes dont get reset properly
-      if (!xwidget_hidden(xw))	//hidden equals not being seen in the live window
-        {
-          gtk_fixed_move (GTK_FIXED (s->f->gwfixed),
-                          GTK_WIDGET (xw->widgetwindow), x, y);
-          //clip the widget window if some parts happen to be outside drawable area
-          //an emacs window is not a gtk window, a gtk window covers the entire frame
-          gtk_widget_set_size_request (GTK_WIDGET (xw->widgetwindow),
-                                       clipx, clipy);
-
-          //if we are using compositing, we are always responsible for drawing the widget on the screen
-          //just reuse the phantom routine for now
-          //printf("draw live xwidget at:%d %d\n",x,y);
-          //xwidget_draw_phantom (xw, x, y, clipx, clipy, s, 1);
-        }
-      else
-        {
-          //xwidget is hidden, hide it offscreen somewhere, still realized, so we may snapshot it
-          //gtk_fixed_move(GTK_FIXED(s->f->gwfixed),GTK_WIDGET(xw->widgetwindow) ,10000,10000);
-          //gtk_widget_hide(GTK_WIDGET(xw->widgetwindow));
-        }
-      //xw refers to the *live* instance of the xwidget
+      //a live xwidget paints itself. when using composition, that
+      //happens through the expose handler for the xwidget
+      if (!xwidget_hidden(xw))
+        gtk_widget_queue_draw (xw->widget);
+      //xw refers to the *live* instance of the xwidget, so only
+      //update coords when drawing in the selected window
       xw->x = x;
       xw->y = y;
-
-
     }
   else
     {
       //ok, we are painting the xwidgets in non-selected window, so draw a phantom
       //printf("draw phantom xwidget at:%d %d\n",x,y);
-      
       xwidget_draw_phantom (xw, x, y, clipx, clipy, s, 1);
-
     }
-
 }
 
 
