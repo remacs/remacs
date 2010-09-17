@@ -4080,7 +4080,7 @@ handle_single_display_spec (struct it *it, Lisp_Object spec, Lisp_Object object,
   Lisp_Object location, value;
   struct text_pos start_pos, save_pos;
   int valid_p;
-  printf("handle_single_display_spec:\n");
+  //printf("handle_single_display_spec:\n");
 
   /* If SPEC is a list of the form `(when FORM . VALUE)', evaluate FORM.
      If the result is non-nil, use VALUE instead of SPEC.  */
@@ -4365,14 +4365,14 @@ handle_single_display_spec (struct it *it, Lisp_Object spec, Lisp_Object object,
      LOCATION specifies where to display: `left-margin',
      `right-margin' or nil.  */
 
-
+  /*
   printf("handle_single_display_spec xwidgetp:%d  imagep:%d spacep:%d display_replaced_before_p:%d stringp:%d\n",
          XWIDGETP(value),
          valid_image_p (value),
          (CONSP (value) && EQ (XCAR (value), Qspace)),
          display_replaced_before_p,
          STRINGP (value));
-  
+  */
   valid_p = (STRINGP (value)
 #ifdef HAVE_WINDOW_SYSTEM
              || (FRAME_WINDOW_P (it->f) && valid_image_p (value))
@@ -4422,7 +4422,7 @@ handle_single_display_spec (struct it *it, Lisp_Object spec, Lisp_Object object,
 	}
       else if (XWIDGETP(value))
 	{
-          printf("handle_single_display_spec: im an xwidget!!\n");
+          //printf("handle_single_display_spec: im an xwidget!!\n");
           it->what = IT_XWIDGET;
           it->method = GET_FROM_XWIDGET;
           it->position = start_pos;

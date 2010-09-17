@@ -27,6 +27,7 @@ struct xwidget{
   Lisp_Object message_hook;
   int redisplayed;
   GtkContainer* emacswindow;
+  int clipx; int clipy;
 };
 
 

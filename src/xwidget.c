@@ -96,6 +96,11 @@ extern Lisp_Object QCwidth, QCheight;
 
 #define XG_XWIDGET "emacs_xwidget"
 
+int
+xwidget_hidden(struct xwidget *xw)
+{
+  return  xw->hidden;
+}
 
 
 static void
@@ -184,14 +189,11 @@ xwidget_show (struct xwidget *xw)
 
 
 static gboolean
-xwidget_composite_draw_2(GtkWidget *widget,
-                         GdkEventExpose *event,
-                         gpointer data,
-                         int x, int y,
-                         int phantom)
+xwidget_composite_draw_phantom(struct xwidget* xw,
+                               int x, int y,
+                               int clipx, int clipy)
 {  
-  FRAME_PTR f = (FRAME_PTR) g_object_get_data (G_OBJECT (widget), XG_FRAME_DATA);
-  struct xwidget* xw = (struct xwidget*) g_object_get_data (G_OBJECT (widget), XG_XWIDGET);
+  FRAME_PTR f = (FRAME_PTR) g_object_get_data (G_OBJECT (xw->widget), XG_FRAME_DATA);
   ////////////////////////////////////////////////////////////////
   //Example 7. Composited windows
   GdkRegion *region;
@@ -199,24 +201,23 @@ xwidget_composite_draw_2(GtkWidget *widget,
   cairo_t *cr;
   printf("xwidget_composite_draw_2 at:%d %d\n", x,y);
   /* get our child (in this case, the event box) */
-  child = widget; //gtk_bin_get_child (GTK_BIN (widget));
+  child = xw->widget; //gtk_bin_get_child (GTK_BIN (widget));
   /* create a cairo context to draw to the emacs window */
   //  cr = gdk_cairo_create (gtk_widget_get_window (f->gwfixed));//GTK_WIDGET(xw->emacswindow));//xw->widgetwindow));//widget->window);
-  cr = gdk_cairo_create (gtk_widget_get_window (phantom ?  f->gwfixed : xw->widgetwindow));//GTK_WIDGET(xw->emacswindow));//));//widget->window);  
+  cr = gdk_cairo_create (gtk_widget_get_window (f->gwfixed));//GTK_WIDGET(xw->emacswindow));//));//widget->window);  
   /* the source data is the (composited) xwidget */
   //cairo_move_to(cr, xw->x, xw->y);
   
-  if(phantom){
-    cairo_rectangle(cr, x,y, xw->width, xw->height);
+    cairo_rectangle(cr, x,y, clipx, clipy);
     cairo_clip(cr);
     
     cairo_set_source_rgb(cr,1.0,0,0);
     cairo_rectangle(cr,x,y,xw->width,xw->height);
     cairo_fill(cr);
-  }
+
   gdk_cairo_set_source_pixmap (cr, child->window,
-                               phantom ?  x : 0,//child->allocation.x,
-                               phantom ?  y : 0//child->allocation.y
+                               x,//child->allocation.x,
+                               y//child->allocation.y
                                );
   /* draw no more than our expose event intersects our child */
   /*  region = gdk_region_rectangle (&child->allocation);
@@ -266,8 +267,10 @@ xwidget_composite_draw_widgetwindow(GtkWidget *widget,
   cairo_t *cr;
   GdkPixmap *pixmap;
   pixmap=xw->widget->window;
-
-  cr = gdk_cairo_create (gtk_widget_get_window (widget));
+  printf("xwidget_composite_draw_widgetwindow xw.id:%d xw.type:%d window:%d\n", xw->id,xw->type, gtk_widget_get_window (widget));
+  //if(xw->type!=3)//TODO this is just trial and terror to see if i can draw the live socket anywhere at all
+    cr = gdk_cairo_create (gtk_widget_get_window (widget));
+  //else    cr = gdk_cairo_create (gtk_widget_get_window (xw->emacswindow));
   cairo_rectangle(cr, 0,0, xw->width, xw->height);
   cairo_clip(cr);
 
@@ -307,7 +310,7 @@ xwidget_init (struct xwidget *xw, struct glyph_string *s, int x, int y)
       xw->widget = gtk_socket_new ();
       //gtk_widget_set_app_paintable (xw->widget, TRUE); //workaround for composited sockets
       GdkColor color;
-      gdk_color_parse("blue",&color); //the blue color never seems to show up. something else draw the bg
+      gdk_color_parse("blue",&color); //the blue color never seems to show up. something else draws a grey bg
       gtk_widget_modify_bg(xw->widget, GTK_STATE_NORMAL, &color);
       g_signal_connect_after(xw->widget, "plug-added", G_CALLBACK(xwidget_plug_added), "plug added");        
       break;
@@ -318,7 +321,7 @@ xwidget_init (struct xwidget *xw, struct glyph_string *s, int x, int y)
       gtk_scale_set_draw_value (GTK_SCALE (xw->widget), FALSE);	//i think its emacs role to show text and stuff, so disable the widgets own text
     }
   //widget realization
-  // mk container widget 1st, and put the widget inside
+  //make container widget 1st, and put the actual widget inside the container
   //later, drawing should crop container window if necessary to handle case where xwidget
   //is partially obscured by other emacs windows
   xw->emacswindow = GTK_CONTAINER (s->f->gwfixed);
@@ -340,6 +343,8 @@ xwidget_init (struct xwidget *xw, struct glyph_string *s, int x, int y)
   //since the widget is no longer responsible for painting itself
   if(xw->type!=3)  //im having trouble with compositing and sockets. hmmm.
     gdk_window_set_composited (xw->widget->window, TRUE);
+  gtk_widget_set_double_buffered (xw->widget,FALSE);
+  gtk_widget_set_double_buffered (xw->widgetwindow,FALSE);  
   //gdk_window_set_composited (xw->widgetwindow, TRUE);  
   //g_signal_connect_after(xw->widget, "expose-event", G_CALLBACK(xwidget_composite_draw), "widget exposed");
   g_signal_connect_after(xw->widgetwindow, "expose-event", G_CALLBACK(xwidget_composite_draw_widgetwindow), "widgetwindow exposed");  
@@ -354,80 +359,10 @@ xwidget_init (struct xwidget *xw, struct glyph_string *s, int x, int y)
               gtk_socket_get_id (GTK_SOCKET (xw->widget)));
       send_xembed_ready_event (xw->id,
                                gtk_socket_get_id (GTK_SOCKET (xw->widget)));
+      //gtk_widget_realize(xw->widget);
       break;
     }
 }
-
-
-
-void
-xwidget_draw_phantom (struct xwidget *xw,
-                      int x, int y,
-                      int clipx, int clipy,
-                      struct glyph_string *s,
-                      int phantom)
-{
-  //we cant always get real widgets, so here we try to fetch a snapshot of
-  //the real xwidget and paint that as a phantom image. if that fails, we
-  //get an even simpler phantom(grey rectangle currently)
-
-  //this annoyingly doesnt work for gtk_sockets(but gtk_plug then? TODO research (probably doesnt work))
-  //another way is composition: http://ktown.kde.org/~fredrik/composite_howto.html
-  //but XCopyArea() might be sufficient for our needs here
-
-
-  GdkPixmap *xw_snapshot = NULL;
-  GdkGC *gdkgc = NULL;
-  GdkNativeWindow p_xid;
-  GdkWindow* xid;
-
-  /*  if (xw->type == 3 && xwidget_has_composition()){
-    //its a gtk_socket, get_snapshot() doesnt work so try using composition methods
-    //xw_snapshot =  gdk_pixmap_foreign_new_for_display(GDK_DISPLAY(), p_xid);
-    xid = gtk_socket_get_plug_window (GTK_SOCKET (xw->widget));
-    //should check the xid here, because it could be invalid
-    //p_xid = XCompositeNameWindowPixmap( GDK_DISPLAY (), GDK_WINDOW_XID(xid)) ;
-
-    printf("phantom socket 1: %d %d\n", xid, p_xid);
-    xw_snapshot =  gdk_pixmap_foreign_new(GDK_WINDOW_XID(xid));
-    //wraps the native window in a gdk windw, this doesnt seem to benefit from compositing
-    printf("2\n");
-  }else {
-    //if its not a socket, its got a snapshot method that works
-    //or if we dont have composition well try for sockets, but probably get a grey rect
-    printf("phantom other\n");
-    xw_snapshot = gtk_widget_get_snapshot (xw->widget, NULL);
-  }
-  */
-#if 0
-   xw_snapshot=gdk_offscreen_window_get_pixmap(xw->widget->window); 
-   if(xw_snapshot==NULL){ 
-     printf(" xw_snapshot null for some reason ... \n"); 
-  /*   //return; */
-   } 
-   gdkgc = gdk_gc_new (xw_snapshot); 
-
-  //currently a phantom gets a line drawn across it to denote phantomness
-  //dimming or such would be more elegant, but we cant be bothered atm
-    gdk_draw_line (xw_snapshot, gdkgc, 0, 0, xw->width, xw->height);
-    gdk_draw_drawable (gtk_widget_get_window (s->f->gwfixed),	//convert to GdkWindow from gtkWindow
-                       gdkgc, xw_snapshot, 0, 0, x, y, clipx, clipy);
-#else
-
-    xwidget_composite_draw_2(xw->widget, NULL, NULL,x,y, phantom);
-#endif
-  ////////////////////////////////////////////////////////////////
-    
-
-  //clean up here...
-}
-/* gtk widget reparent snippet to be used:
-     g_object_ref((gpointer)xw->widgetwindow);
-     gtk_container_remove(GTK_CONTAINER(old_parent), xw->widgetwindow);
-     gtk_container_add(GTK_CONTAINER(new_parent), xw->widgetwindow);
-     g_object_unrefref((gpointer)xw->widgetwindow);
-*/
-
 
 
 void
@@ -472,6 +407,7 @@ x_draw_xwidget_glyph_string (struct glyph_string *s)
   int x = s->x;
   int y = s->y + (s->height / 2) - (xw->height / 2);
   int doingsocket = 0;
+  int moved=0;
   if (!xw->initialized)
       xwidget_init (xw, s, x, y);
 
@@ -487,33 +423,39 @@ x_draw_xwidget_glyph_string (struct glyph_string *s)
   // 3) if there was a live xwidget previously, now phantom it.
   if (drawing_in_selected_window)
     {
-      if ((xw->x != x) || (xw->y != y))	//has it moved?
-        {
-          printf ("live xwidget moved: id:%d (%d,%d)->(%d,%d)\n", xw->id, xw->x, xw->y, x, y);
-          if (!xwidget_hidden(xw))	//hidden equals not being seen in the live window
-            {
-              gtk_fixed_move (GTK_FIXED (s->f->gwfixed),
-                              GTK_WIDGET (xw->widgetwindow), x, y);
-              //clip the widget window if some parts happen to be outside drawable area
-              //an emacs window is not a gtk window, a gtk window covers the entire frame
-              gtk_widget_set_size_request (GTK_WIDGET (xw->widgetwindow),
-                                           clipx, clipy);
-            }
-        }
-      //a live xwidget paints itself. when using composition, that
-      //happens through the expose handler for the xwidget
-      if (!xwidget_hidden(xw))
-        gtk_widget_queue_draw (xw->widget);
+      moved = (xw->x != x) || (xw->y != y);
+      if(moved)
+        printf ("live xwidget moved: id:%d (%d,%d)->(%d,%d)\n", xw->id, xw->x, xw->y, x, y);
       //xw refers to the *live* instance of the xwidget, so only
       //update coords when drawing in the selected window
       xw->x = x;
       xw->y = y;
+      if (moved)	//has it moved?
+        {
+          if (!xwidget_hidden(xw))	//hidden equals not being seen in the live window
+            {
+              gtk_fixed_move (GTK_FIXED (s->f->gwfixed),
+                              GTK_WIDGET (xw->widgetwindow), x, y);
+            }
+        }
+      //clip the widget window if some parts happen to be outside drawable area
+      //an emacs window is not a gtk window, a gtk window covers the entire frame
+      //cliping might have changed even if we havent actualy moved, we try figure out when we need to reclip for real
+      if((xw->clipx != clipx) || (xw->clipy != clipy))
+        gtk_widget_set_size_request (GTK_WIDGET (xw->widgetwindow),
+                                     clipx, clipy);
+      xw->clipx = clipx; xw->clipy = clipy;
+      //a live xwidget paints itself. when using composition, that
+      //happens through the expose handler for the xwidget
+      //if emacs wants to repaint the area where the widget lives, queue a redraw
+      if (!xwidget_hidden(xw))
+        gtk_widget_queue_draw (xw->widget);
     }
   else
     {
       //ok, we are painting the xwidgets in non-selected window, so draw a phantom
       //printf("draw phantom xwidget at:%d %d\n",x,y);
-      xwidget_draw_phantom (xw, x, y, clipx, clipy, s, 1);
+      xwidget_composite_draw_phantom (xw, x, y, clipx, clipy);
     }
 }
 
@@ -832,11 +774,6 @@ xwidget_hide (struct xwidget *xw)
 
 
 
-int
-xwidget_hidden(struct xwidget *xw)
-{
-  return  xw->hidden;
-}
 
 Lisp_Object
 xwidget_spec_value (
