@@ -45,6 +45,9 @@
 
 ;; (: gnus-registry-split-fancy-with-parent)
 
+;; You should also consider using the nnregistry backend to look up
+;; articles.  See the Gnus manual for more information.
+
 ;; TODO:
 
 ;; - get the correct group on spool actions
@@ -122,12 +125,14 @@ display."
   :type 'symbol)
 
 (defcustom gnus-registry-unfollowed-groups
-  '("delayed$" "drafts$" "queue$" "INBOX$")
+  '("delayed$" "drafts$" "queue$" "INBOX$" "^nnmairix:")
   "List of groups that gnus-registry-split-fancy-with-parent won't return.
 The group names are matched, they don't have to be fully
 qualified.  This parameter tells the Registry 'never split a
 message into a group that matches one of these, regardless of
-references.'"
+references.'
+
+nnmairix groups are specifically excluded because they are ephemeral."
   :group 'gnus-registry
   :type '(repeat regexp))
 
@@ -241,8 +246,7 @@ considered precious) will not be trimmed."
   "Save the registry cache file."
   (interactive)
   (let ((file gnus-registry-cache-file))
-    (save-excursion
-      (set-buffer (gnus-get-buffer-create " *Gnus-registry-cache*"))
+    (with-current-buffer (gnus-get-buffer-create " *Gnus-registry-cache*")
       (make-local-variable 'version-control)
     (setq version-control gnus-backup-startup-file)
     (setq buffer-file-name file)
@@ -674,8 +678,7 @@ Consults `gnus-registry-unfollowed-groups' and
 	word words)
     (if (or (not (gnus-registry-fetch-extra id 'keywords))
 	    force)
-	(save-excursion
-	  (set-buffer gnus-article-buffer)
+	(with-current-buffer gnus-article-buffer
 	  (article-goto-body)
 	  (save-window-excursion
 	    (save-restriction
@@ -783,7 +786,7 @@ Uses `gnus-registry-marks' to find what shortcuts to install."
 		  (function-name (format function-format variant-name))
 		  (shortcut (format "%c" data))
 		  (shortcut (if remove (upcase shortcut) shortcut)))
-	     (unintern function-name)
+	     (unintern function-name obarray)
 	     (eval
 	      `(defun
 		 ;; function name
@@ -859,12 +862,11 @@ Uses `gnus-registry-marks' to find what shortcuts to install."
 
 (defun gnus-registry-read-mark ()
   "Read a mark name from the user with completion."
-  (let ((mark (gnus-completing-read-with-default
-	       (symbol-name gnus-registry-default-mark)
-	       "Label"
-	       (mapcar (lambda (x)	; completion list
-			 (cons (symbol-name (car-safe x)) (car-safe x)))
-		       gnus-registry-marks))))
+  (let ((mark (gnus-completing-read
+               "Label"
+               (mapcar 'symbol-name (mapcar 'car gnus-registry-marks))
+               nil nil nil
+	       (symbol-name gnus-registry-default-mark))))
     (when (stringp mark)
       (intern mark))))
 
@@ -1174,10 +1176,6 @@ Returns the first place where the trail finds a group name."
       (gnus-registry-initialize)))
 ;;; we could call it here: (customize-variable 'gnus-registry-install)
   gnus-registry-install)
-
-(when (or (eq gnus-registry-install t)
-	  (gnus-registry-install-p))
-  (gnus-registry-initialize))
 
 ;; TODO: a few things
 

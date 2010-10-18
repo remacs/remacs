@@ -26,7 +26,7 @@
 
 ;;; Code:
 
-;; For Emacs < 22.2.
+;; For Emacs <22.2 and XEmacs.
 (eval-and-compile
   (unless (fboundp 'declare-function) (defmacro declare-function (&rest r))))
 
@@ -267,6 +267,11 @@ NOTE: This variable is never seen to work in Emacs 20 and XEmacs 21.")
   "*Hook run just before posting an article.  It is supposed to be used
 to insert Cancel-Lock headers.")
 
+(defvoo nntp-server-list-active-group 'try
+  "If nil, then always use GROUP instead of LIST ACTIVE.
+This is usually slower, but on misconfigured servers that don't
+update their active files often, this can help.")
+
 ;;; Internal variables.
 
 (defvar nntp-record-commands nil
@@ -296,7 +301,6 @@ to insert Cancel-Lock headers.")
 (defvoo nntp-inhibit-output nil)
 
 (defvoo nntp-server-xover 'try)
-(defvoo nntp-server-list-active-group 'try)
 
 (defvar nntp-async-timer nil)
 (defvar nntp-async-process-list nil)
@@ -987,7 +991,7 @@ command whose response triggered the error."
     "\r?\n\\.\r?\n" "BODY"
     (if (numberp article) (int-to-string article) article))))
 
-(deffoo nntp-request-group (group &optional server dont-check)
+(deffoo nntp-request-group (group &optional server dont-check info)
   (nntp-with-open-group
     nil server
     (when (nntp-send-command "^[245].*\n" "GROUP" group)
@@ -1014,7 +1018,8 @@ command whose response triggered the error."
     (unless (assq 'nntp-address defs)
       (setq defs (append defs (list (list 'nntp-address server)))))
     (nnoo-change-server 'nntp server defs)
-    (unless connectionless
+    (if connectionless
+	t
       (or (nntp-find-connection nntp-server-buffer)
 	  (nntp-open-connection nntp-server-buffer)))))
 
@@ -1129,7 +1134,7 @@ command whose response triggered the error."
     (nntp-save-marks group server))
   nil)
 
-(deffoo nntp-request-update-info (group info &optional server)
+(deffoo nntp-request-marks (group info &optional server)
   (when (and (not nntp-marks-is-evil)
 	     nntp-marks-file-name)
     (nntp-possibly-create-directory group server)

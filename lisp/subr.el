@@ -1,7 +1,8 @@
 ;;; subr.el --- basic lisp subroutines for Emacs
 
 ;; Copyright (C) 1985, 1986, 1992, 1994, 1995, 1999, 2000, 2001, 2002, 2003,
-;;   2004, 2005, 2006, 2007, 2008, 2009, 2010 Free Software Foundation, Inc.
+;;   2004, 2005, 2006, 2007, 2008, 2009, 2010
+;;   Free Software Foundation, Inc.
 
 ;; Maintainer: FSF
 ;; Keywords: internal
@@ -239,7 +240,7 @@ letter but *do not* end with a period.  Please follow this convention
 for the sake of consistency."
   (while t
     (signal 'error (list (apply 'format args)))))
-(set-advertised-calling-convention 'error '(string &rest args))
+(set-advertised-calling-convention 'error '(string &rest args) "23.1")
 
 ;; We put this here instead of in frame.el so that it's defined even on
 ;; systems where frame.el isn't loaded.
@@ -288,14 +289,11 @@ If LIST is nil, return nil.
 If N is non-nil, return the Nth-to-last link of LIST.
 If N is bigger than the length of LIST, return LIST."
   (if n
-      (let ((m 0) (p list))
-	(while (consp p)
-	  (setq m (1+ m) p (cdr p)))
-	(if (<= n 0) p
-	  (if (< n m) (nthcdr (- m n) list) list)))
-    (while (consp (cdr list))
-      (setq list (cdr list)))
-    list))
+      (and (>= n 0)
+           (let ((m (safe-length list)))
+             (if (< n m) (nthcdr (- m n) list) list)))
+    (and list
+         (nthcdr (1- (safe-length list)) list))))
 
 (defun butlast (list &optional n)
   "Return a copy of LIST with the last N elements removed."
@@ -1017,7 +1015,6 @@ and `event-end' functions."
 (define-obsolete-function-alias 'eval-current-buffer 'eval-buffer "22.1")
 (define-obsolete-function-alias 'string-to-int 'string-to-number "22.1")
 
-(make-obsolete 'char-bytes "now always returns 1." "20.4")
 (make-obsolete 'forward-point "use (+ (point) N) instead." "23.1")
 
 (defun insert-string (&rest args)
@@ -1039,9 +1036,10 @@ is converted into a string by expressing it in decimal."
 (make-obsolete 'make-variable-frame-local
 	       "explicitly check for a frame-parameter instead." "22.2")
 (make-obsolete 'interactive-p 'called-interactively-p "23.2")
-(set-advertised-calling-convention 'called-interactively-p '(kind))
+(set-advertised-calling-convention 'called-interactively-p '(kind) "23.1")
 (set-advertised-calling-convention
- 'all-completions '(string collection &optional predicate))
+ 'all-completions '(string collection &optional predicate) "23.1")
+(set-advertised-calling-convention 'unintern '(name obarray) "23.3")
 
 ;;;; Obsolescence declarations for variables, and aliases.
 
@@ -1090,11 +1088,6 @@ is converted into a string by expressing it in decimal."
 
 (make-obsolete 'process-filter-multibyte-p nil "23.1")
 (make-obsolete 'set-process-filter-multibyte nil "23.1")
-
-(defconst directory-sep-char ?/
-  "Directory separator character for built-in functions that return file names.
-The value is always ?/.")
-(make-obsolete-variable 'directory-sep-char "do not use it, just use `/'." "21.1")
 
 (make-obsolete-variable
  'mode-line-inverse-video
@@ -1161,37 +1154,6 @@ to reread, so it now uses nil to mean `no event', instead of -1."
 
 
 ;;;; Hook manipulation functions.
-
-(defun make-local-hook (hook)
-  "Make the hook HOOK local to the current buffer.
-The return value is HOOK.
-
-You never need to call this function now that `add-hook' does it for you
-if its LOCAL argument is non-nil.
-
-When a hook is local, its local and global values
-work in concert: running the hook actually runs all the hook
-functions listed in *either* the local value *or* the global value
-of the hook variable.
-
-This function works by making t a member of the buffer-local value,
-which acts as a flag to run the hook functions in the default value as
-well.  This works for all normal hooks, but does not work for most
-non-normal hooks yet.  We will be changing the callers of non-normal
-hooks so that they can handle localness; this has to be done one by
-one.
-
-This function does nothing if HOOK is already local in the current
-buffer.
-
-Do not use `make-local-variable' to make a hook variable buffer-local."
-  (if (local-variable-p hook)
-      nil
-    (or (boundp hook) (set hook nil))
-    (make-local-variable hook)
-    (set hook (list t)))
-  hook)
-(make-obsolete 'make-local-hook "not necessary any more." "21.1")
 
 (defun add-hook (hook function &optional append local)
   "Add to the value of HOOK the function FUNCTION.
@@ -2064,7 +2026,7 @@ floating point support."
 		(setq read (cons t read)))
 	    (push read unread-command-events)
 	    nil))))))
-(set-advertised-calling-convention 'sit-for '(seconds &optional nodisp))
+(set-advertised-calling-convention 'sit-for '(seconds &optional nodisp) "22.1")
 
 ;;; Atomic change groups.
 
@@ -2419,8 +2381,9 @@ Otherwise, return nil."
   (or (stringp object) (null object)))
 
 (defun booleanp (object)
-  "Return non-nil if OBJECT is one of the two canonical boolean values: t or nil."
-  (memq object '(nil t)))
+  "Return t if OBJECT is one of the two canonical boolean values: t or nil.
+Otherwise, return nil."
+  (and (memq object '(nil t)) t))
 
 (defun field-at-pos (pos)
   "Return the field at position POS, taking stickiness etc into account."
@@ -2592,7 +2555,7 @@ discouraged."
   (start-process name buffer shell-file-name shell-command-switch
 		 (mapconcat 'identity args " ")))
 (set-advertised-calling-convention 'start-process-shell-command
-                                   '(name buffer command))
+                                   '(name buffer command) "23.1")
 
 (defun start-file-process-shell-command (name buffer &rest args)
   "Start a program in a subprocess.  Return the process object for it.
@@ -2603,7 +2566,7 @@ Similar to `start-process-shell-command', but calls `start-file-process'."
    (if (file-remote-p default-directory) "-c" shell-command-switch)
    (mapconcat 'identity args " ")))
 (set-advertised-calling-convention 'start-file-process-shell-command
-                                   '(name buffer command))
+                                   '(name buffer command) "23.1")
 
 (defun call-process-shell-command (command &optional infile buffer display
 					   &rest args)
@@ -3375,19 +3338,26 @@ is nil and `use-dialog-box' is non-nil."
   ;; ¡Beware! when I tried to edebug this code, Emacs got into a weird state
   ;; where all the keys were unbound (i.e. it somehow got triggered
   ;; within read-key, apparently).  I had to kill it.
-  (let ((answer 'none)
-        (xprompt prompt))
+  (let ((answer 'recenter))
     (if (and (display-popup-menus-p)
              (listp last-nonmenu-event)
              use-dialog-box)
         (setq answer
               (x-popup-dialog t `(,prompt ("yes" . act) ("No" . skip))))
+      (setq prompt (concat prompt
+                           (if (eq ?\s (aref prompt (1- (length prompt))))
+                               "" " ")
+                           "(y or n) "))
       (while
           (let* ((key
                   (let ((cursor-in-echo-area t))
                     (when minibuffer-auto-raise
                       (raise-frame (window-frame (minibuffer-window))))
-                    (read-key (propertize xprompt 'face 'minibuffer-prompt)))))
+                    (read-key (propertize (if (eq answer 'recenter)
+                                              prompt
+                                            (concat "Please answer y or n.  "
+                                                    prompt))
+                                          'face 'minibuffer-prompt)))))
             (setq answer (lookup-key query-replace-map (vector key) t))
             (cond
              ((memq answer '(skip act)) nil)
@@ -3395,10 +3365,7 @@ is nil and `use-dialog-box' is non-nil."
              ((memq answer '(exit-prefix quit)) (signal 'quit nil) t)
              (t t)))
         (ding)
-        (discard-input)
-        (setq xprompt
-              (if (eq answer 'recenter) prompt
-                (concat "Please answer y or n.  " prompt)))))
+        (discard-input)))
     (let ((ret (eq answer 'act)))
       (unless noninteractive
         (message "%s %s" prompt (if ret "y" "n")))

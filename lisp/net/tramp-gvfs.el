@@ -103,6 +103,7 @@
   (require 'custom))
 
 (require 'tramp)
+
 (require 'dbus)
 (require 'url-parse)
 (require 'url-util)
@@ -493,7 +494,8 @@ will be traced by Tramp with trace level 6."
 
 (put 'with-tramp-dbus-call-method 'lisp-indent-function 2)
 (put 'with-tramp-dbus-call-method 'edebug-form-spec '(form symbolp body))
-(font-lock-add-keywords 'emacs-lisp-mode '("\\<with-tramp-dbus-call-method\\>"))
+(tramp-compat-font-lock-add-keywords
+ 'emacs-lisp-mode '("\\<with-tramp-dbus-call-method\\>"))
 
 (defmacro with-tramp-gvfs-error-message (filename handler &rest args)
   "Apply a Tramp GVFS `handler'.
@@ -514,7 +516,8 @@ In case of an error, modify the error message by replacing
 
 (put 'with-tramp-gvfs-error-message 'lisp-indent-function 2)
 (put 'with-tramp-gvfs-error-message 'edebug-form-spec '(form symbolp body))
-(font-lock-add-keywords 'emacs-lisp-mode '("\\<with-tramp-gvfs-error-message\\>"))
+(tramp-compat-font-lock-add-keywords
+ 'emacs-lisp-mode '("\\<with-tramp-gvfs-error-message\\>"))
 
 (defvar tramp-gvfs-dbus-event-vector nil
   "Current Tramp file name to be used, as vector.
@@ -524,7 +527,6 @@ is no information where to trace the message.")
 (defun tramp-gvfs-dbus-event-error (event err)
   "Called when a D-Bus error message arrives, see `dbus-event-error-hooks'."
   (when tramp-gvfs-dbus-event-vector
-    ;(tramp-cleanup-connection tramp-gvfs-dbus-event-vector)
     (tramp-message tramp-gvfs-dbus-event-vector 10 "%S" event)
     (tramp-error tramp-gvfs-dbus-event-vector 'file-error "%s" (cadr err))))
 
@@ -968,7 +970,7 @@ ADDRESS can have the form \"xx:xx:xx:xx:xx:xx\" or \"[xx:xx:xx:xx:xx:xx]\"."
 	    ;; host signature.
 	    (with-temp-buffer
 	      ;; Preserve message for `progress-reporter'.
-	      (with-temp-message ""
+	      (tramp-compat-with-temp-message ""
 		(insert message)
 		(pop-to-buffer (current-buffer))
 		(setq choice (if (yes-or-no-p (concat (car choices) " ")) 0 1))
@@ -1191,7 +1193,7 @@ connection if a previous connection has died for some reason."
 	      :name (tramp-buffer-name vec)
 	      :buffer (tramp-get-buffer vec)
 	      :server t :host 'local :service t)))
-      (tramp-set-process-query-on-exit-flag p nil)))
+      (tramp-compat-set-process-query-on-exit-flag p nil)))
 
   (unless (tramp-gvfs-connection-mounted-p vec)
     (let* ((method (tramp-file-name-method vec))

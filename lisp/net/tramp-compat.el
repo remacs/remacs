@@ -29,9 +29,7 @@
 
 ;;; Code:
 
-(eval-when-compile
-
-  (require 'tramp-loaddefs))
+(require 'tramp-loaddefs)
 
 (eval-when-compile
 
@@ -40,7 +38,21 @@
 
 (eval-and-compile
 
+  (require 'advice)
   (require 'custom)
+  (require 'format-spec)
+
+  ;; As long as password.el is not part of (X)Emacs, it shouldn't be
+  ;; mandatory.
+  (if (featurep 'xemacs)
+      (load "password" 'noerror)
+    (or (require 'password-cache nil 'noerror)
+	(require 'password nil 'noerror))) ; Part of contrib.
+
+  ;; auth-source is relatively new.
+  (if (featurep 'xemacs)
+      (load "auth-source" 'noerror)
+    (require 'auth-source nil 'noerror))
 
   ;; Load the appropriate timer package.
   (if (featurep 'xemacs)
@@ -76,18 +88,18 @@
   ;; `directory-sep-char' is an obsolete variable in Emacs.  But it is
   ;; used in XEmacs, so we set it here and there.  The following is
   ;; needed to pacify Emacs byte-compiler.
-  (unless (boundp 'byte-compile-not-obsolete-var)
-    (defvar byte-compile-not-obsolete-var nil))
-  (setq byte-compile-not-obsolete-var 'directory-sep-char)
-  ;; Emacs 23.2.
-  (unless (boundp 'byte-compile-not-obsolete-vars)
-    (defvar byte-compile-not-obsolete-vars nil))
-  (setq byte-compile-not-obsolete-vars '(directory-sep-char))
+  ;; Note that it was removed altogether in Emacs 24.1.
+  (when (boundp 'directory-sep-char)
+    (defvar byte-compile-not-obsolete-var nil)
+    (setq byte-compile-not-obsolete-var 'directory-sep-char)
+    ;; Emacs 23.2.
+    (defvar byte-compile-not-obsolete-vars nil)
+    (setq byte-compile-not-obsolete-vars '(directory-sep-char)))
 
-  ;; `with-temp-message' does not exists in XEmacs.
-  (condition-case nil
-      (with-temp-message (current-message) nil)
-    (error (defmacro with-temp-message (message &rest body) `(progn ,@body))))
+  ;; `remote-file-name-inhibit-cache' has been introduced with Emacs 24.1.
+  ;; Besides `t', `nil', and integer, we use also timestamps (as
+  ;; returned by `current-time') internally.
+  (defvar remote-file-name-inhibit-cache nil)
 
   ;; For not existing functions, or functions with a changed argument
   ;; list, there are compiler warnings.  We want to avoid them in
@@ -101,10 +113,6 @@
   ;; `set-buffer-multibyte' comes from Emacs Leim.
   (unless (fboundp 'set-buffer-multibyte)
     (defalias 'set-buffer-multibyte 'ignore))
-
-  ;; `font-lock-add-keywords' does not exist in XEmacs.
-  (unless (fboundp 'font-lock-add-keywords)
-    (defalias 'font-lock-add-keywords 'ignore))
 
   ;; The following functions cannot be aliases of the corresponding
   ;; `tramp-handle-*' functions, because this would bypass the locking
@@ -177,6 +185,19 @@
        (ad-remove-advice
 	'file-expand-wildcards 'around 'tramp-advice-file-expand-wildcards)
        (ad-activate 'file-expand-wildcards)))))
+
+;; `with-temp-message' does not exists in XEmacs.
+(if (fboundp 'with-temp-message)
+    (defalias 'tramp-compat-with-temp-message 'with-temp-message)
+  (defmacro tramp-compat-with-temp-message (message &rest body)
+    "Display MESSAGE temporarily if non-nil while BODY is evaluated."
+    `(progn ,@body)))
+
+;; `font-lock-add-keywords' does not exist in XEmacs.
+(defun tramp-compat-font-lock-add-keywords (mode keywords &optional how)
+  "Add highlighting KEYWORDS for MODE."
+  (ignore-errors
+    (tramp-compat-funcall 'font-lock-add-keywords mode keywords how)))
 
 (defsubst tramp-compat-line-beginning-position ()
   "Return point at beginning of line (compat function).
@@ -462,9 +483,47 @@ Lisp error raised when PROGRAM is nil is trapped also, returning 1."
 	  (setenv "UNIX95" unix95)
 	  result)))))
 
+;; The following functions do not exist in XEmacs.  We ignore this;
+;; they are used for checking a remote tty.
+(defun tramp-compat-process-get (process propname)
+  "Return the value of PROCESS' PROPNAME property.
+This is the last value stored with `(process-put PROCESS PROPNAME VALUE)'."
+  (ignore-errors (tramp-compat-funcall 'process-get process propname)))
+
+(defun tramp-compat-process-put (process propname value)
+  "Change PROCESS' PROPNAME property to VALUE.
+It can be retrieved with `(process-get PROCESS PROPNAME)'."
+  (ignore-errors (tramp-compat-funcall 'process-put process propname value)))
+
+(defun tramp-compat-set-process-query-on-exit-flag (process flag)
+  "Specify if query is needed for process when Emacs is exited.
+If the second argument flag is non-nil, Emacs will query the user before
+exiting if process is running."
+  (if (fboundp 'set-process-query-on-exit-flag)
+      (tramp-compat-funcall 'set-process-query-on-exit-flag process flag)
+    (tramp-compat-funcall 'process-kill-without-query process flag)))
+
 (add-hook 'tramp-unload-hook
 	  (lambda ()
 	    (unload-feature 'tramp-compat 'force)))
+
+(defun tramp-compat-coding-system-change-eol-conversion (coding-system eol-type)
+  "Return a coding system like CODING-SYSTEM but with given EOL-TYPE.
+EOL-TYPE can be one of `dos', `unix', or `mac'."
+  (cond ((fboundp 'coding-system-change-eol-conversion)
+         (tramp-compat-funcall
+	  'coding-system-change-eol-conversion coding-system eol-type))
+        ((fboundp 'subsidiary-coding-system)
+         (tramp-compat-funcall
+	  'subsidiary-coding-system coding-system
+	  (cond ((eq eol-type 'dos) 'crlf)
+		((eq eol-type 'unix) 'lf)
+		((eq eol-type 'mac) 'cr)
+		(t
+		 (error "Unknown EOL-TYPE `%s', must be %s"
+			eol-type
+			"`dos', `unix', or `mac'")))))
+        (t (error "Can't change EOL conversion -- is MULE missing?"))))
 
 (provide 'tramp-compat)
 

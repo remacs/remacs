@@ -23,7 +23,7 @@
 
 ;;; Code:
 
-;; For Emacs < 22.2.
+;; For Emacs <22.2 and XEmacs.
 (eval-and-compile
   (unless (fboundp 'declare-function) (defmacro declare-function (&rest r))))
 
@@ -40,6 +40,7 @@
 (autoload 'message-make-message-id "message")
 (declare-function gnus-setup-posting-charset "gnus-msg" (group))
 (autoload 'gnus-make-local-hook "gnus-util")
+(autoload 'gnus-completing-read "gnus-util")
 (autoload 'message-fetch-field "message")
 (autoload 'message-mark-active-p "message")
 (autoload 'message-info "message")
@@ -123,6 +124,14 @@ match found will be used."
 (defcustom mml-insert-mime-headers-always t
   "If non-nil, always put Content-Type: text/plain at top of empty parts.
 It is necessary to work against a bug in certain clients."
+  :version "24.1"
+  :type 'boolean
+  :group 'message)
+
+(defcustom mml-enable-flowed t
+  "If non-nil, enable format=flowed usage when encoding a message.
+This is only performed when filling on text/plain with hard
+newlines in the text."
   :version "24.1"
   :type 'boolean
   :group 'message)
@@ -545,7 +554,8 @@ If MML is non-nil, return the buffer up till the correspondent mml tag."
 		    ;; in the mml tag or it says "flowed" and there
 		    ;; actually are hard newlines in the text.
 		    (let (use-hard-newlines)
-		      (when (and (string= type "text/plain")
+		      (when (and mml-enable-flowed
+                                 (string= type "text/plain")
 				 (not (string= (cdr (assq 'sign cont)) "pgp"))
 				 (or (null (assq 'format cont))
 				     (string= (cdr (assq 'format cont))
@@ -1188,9 +1198,10 @@ If not set, `default-directory' will be used."
 		      ;; looks like, and offer text/plain if it looks
 		      ;; like text/plain.
 		      "application/octet-stream"))
-	 (string (completing-read
-		  (format "Content type (default %s): " default)
-		  (mapcar 'list (mailcap-mime-types)))))
+	 (string (gnus-completing-read
+		  "Content type"
+		  (mailcap-mime-types)
+                  nil nil nil default)))
     (if (not (equal string ""))
 	string
       default)))
@@ -1204,10 +1215,10 @@ If not set, `default-directory' will be used."
 (defun mml-minibuffer-read-disposition (type &optional default filename)
   (unless default
     (setq default (mml-content-disposition type filename)))
-  (let ((disposition (completing-read
-		      (format "Disposition (default %s): " default)
-		      '(("attachment") ("inline") (""))
-		      nil t nil nil default)))
+  (let ((disposition (gnus-completing-read
+		      "Disposition"
+		      '("attachment" "inline")
+		      t nil nil default)))
     (if (not (equal disposition ""))
 	disposition
       default)))
@@ -1395,11 +1406,11 @@ TYPE is the MIME type to use."
 
 (defun mml-insert-multipart (&optional type)
   (interactive (if (message-in-body-p)
-		   (list (completing-read "Multipart type (default mixed): "
-					  '(("mixed") ("alternative")
-					    ("digest") ("parallel")
-					    ("signed") ("encrypted"))
-					  nil nil "mixed"))
+		   (list (gnus-completing-read "Multipart type"
+                                               '("mixed" "alternative"
+                                                 "digest" "parallel"
+                                                 "signed" "encrypted")
+                                               nil "mixed"))
 		 (error "Use this command in the message body")))
   (or type
       (setq type "mixed"))

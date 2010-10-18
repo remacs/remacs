@@ -83,15 +83,6 @@ If non-nil and not t, the user will be asked for each refresh request."
   :type 'boolean
   :group 'url-cache)
 
-;; Fixme: sanitize this.
-(defcustom url-cache-expired
-  (lambda (t1 t2) (>= (- (car t2) (car t1)) 5))
-  "A function determining if a cached item has expired.
-It takes two times (numbers) as its arguments, and returns non-nil if
-the second time is 'too old' when compared to the first time."
-  :type 'function
-  :group 'url-cache)
-
 (defconst url-bug-address "bug-gnu-emacs@gnu.org"
   "Where to send bug reports.")
 
@@ -243,7 +234,7 @@ Generated according to current coding system priorities."
 		(mapconcat 'symbol-name ordered ";q=0.5, ")
 		";q=0.5"))))
 
-(defvar url-mime-charset-string (url-mime-charset-string)
+(defvar url-mime-charset-string nil
   "*String to send in the Accept-charset: field in HTTP requests.
 The MIME charset corresponding to the most preferred coding system is
 given priority 1 and the rest are given priority 0.5.")

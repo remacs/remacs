@@ -82,6 +82,15 @@ valid value is 'apop'."
   :version "22.1" ;; Oort Gnus
   :group 'pop3)
 
+(defcustom pop3-stream-length 100
+  "How many messages should be requested at one time.
+The lower the number, the more latency-sensitive the fetching
+will be.  If your pop3 server doesn't support streaming at all,
+set this to 1."
+  :type 'number
+  :version "24.1"
+  :group 'pop3)
+
 (defcustom pop3-leave-mail-on-server nil
   "*Non-nil if the mail is to be left on the POP server after fetching.
 
@@ -140,7 +149,7 @@ Use streaming commands."
       (let ((size (pop3-stat process)))
 	(setq message-count (car size)
 	      message-total-size (cadr size)))
-      (when (plusp message-count)
+      (when (> message-count 0)
 	(pop3-send-streaming-command
 	 process "RETR" message-count message-total-size)
 	(pop3-write-to-file file)
@@ -156,7 +165,7 @@ Use streaming commands."
     (while (>= count i)
       (process-send-string process (format "%s %d\r\n" command i))
       ;; Only do 100 messages at a time to avoid pipe stalls.
-      (when (zerop (% i 100))
+      (when (zerop (% i pop3-stream-length))
 	(pop3-wait-for-messages process i total-size))
       (incf i)))
   (pop3-wait-for-messages process count total-size))
@@ -168,7 +177,7 @@ Use streaming commands."
 	       (truncate (/ (buffer-size) 1000))
 	       (truncate (* (/ (* (buffer-size) 1.0)
 			       total-size) 100))))
-    (nnheader-accept-process-output process)))
+    (pop3-accept-process-output process)))
 
 (defun pop3-write-to-file (file)
   (let ((pop-buffer (current-buffer))
@@ -279,9 +288,9 @@ Returns the process associated with the connection."
   (let ((coding-system-for-read 'binary)
 	(coding-system-for-write 'binary)
 	process)
-    (save-excursion
-      (set-buffer (get-buffer-create (concat " trace of POP session to "
-					     mailhost)))
+    (with-current-buffer
+        (get-buffer-create (concat " trace of POP session to "
+                                   mailhost))
       (erase-buffer)
       (setq pop3-read-point (point-min))
       (setq process
@@ -353,8 +362,7 @@ Returns the process associated with the connection."
 Return the response string if optional second argument is non-nil."
   (let ((case-fold-search nil)
 	match-end)
-    (save-excursion
-      (set-buffer (process-buffer process))
+    (with-current-buffer (process-buffer process)
       (goto-char pop3-read-point)
       (while (and (memq (process-status process) '(open run))
 		  (not (search-forward "\r\n" nil t)))
@@ -511,8 +519,7 @@ Otherwise, return the size of the message-id MSG"
     (if msg
 	(string-to-number (nth 2 (split-string response " ")))
       (let ((start pop3-read-point) end)
-	(save-excursion
-	  (set-buffer (process-buffer process))
+	(with-current-buffer (process-buffer process)
 	  (while (not (re-search-forward "^\\.\r\n" nil t))
 	    (pop3-accept-process-output process)
 	    (goto-char start))
@@ -522,16 +529,14 @@ Otherwise, return the size of the message-id MSG"
 	  (mapcar #'(lambda (s) (let ((split (split-string s " ")))
 				  (cons (string-to-number (nth 0 split))
 					(string-to-number (nth 1 split)))))
-		  (delete "" (split-string (buffer-substring start end)
-					   "\r\n"))))))))
+		  (split-string (buffer-substring start end) "\r\n" t)))))))
 
 (defun pop3-retr (process msg crashbuf)
   "Retrieve message-id MSG to buffer CRASHBUF."
   (pop3-send-command process (format "RETR %s" msg))
   (pop3-read-response process)
   (let ((start pop3-read-point) end)
-    (save-excursion
-      (set-buffer (process-buffer process))
+    (with-current-buffer (process-buffer process)
       (while (not (re-search-forward "^\\.\r\n" nil t))
 	(pop3-accept-process-output process)
 	(goto-char start))
@@ -547,8 +552,7 @@ Otherwise, return the size of the message-id MSG"
       (setq end (point-marker))
       (pop3-clean-region start end)
       (pop3-munge-message-separator start end)
-      (save-excursion
-	(set-buffer crashbuf)
+      (with-current-buffer crashbuf
 	(erase-buffer))
       (copy-to-buffer crashbuf start end)
       (delete-region start end)
@@ -585,8 +589,7 @@ and close the connection."
   (pop3-send-command process "QUIT")
   (pop3-read-response process t)
   (if process
-      (save-excursion
-	(set-buffer (process-buffer process))
+      (with-current-buffer (process-buffer process)
 	(goto-char (point-max))
 	(delete-process process))))
 
