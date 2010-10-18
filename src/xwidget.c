@@ -269,7 +269,7 @@ xwidget_composite_draw_widgetwindow(GtkWidget *widget,
   pixmap=xw->widget->window;
   printf("xwidget_composite_draw_widgetwindow xw.id:%d xw.type:%d window:%d\n", xw->id,xw->type, gtk_widget_get_window (widget));
   //if(xw->type!=3)//TODO this is just trial and terror to see if i can draw the live socket anywhere at all
-    cr = gdk_cairo_create (gtk_widget_get_window (widget));
+  cr = gdk_cairo_create (gtk_widget_get_window (widget));//GTK_LAYOUT (xw->widgetwindow)->bin_window);//
   //else    cr = gdk_cairo_create (gtk_widget_get_window (xw->emacswindow));
   cairo_rectangle(cr, 0,0, xw->width, xw->height);
   cairo_clip(cr);
@@ -325,13 +325,15 @@ xwidget_init (struct xwidget *xw, struct glyph_string *s, int x, int y)
   //later, drawing should crop container window if necessary to handle case where xwidget
   //is partially obscured by other emacs windows
   xw->emacswindow = GTK_CONTAINER (s->f->gwfixed);
-  xw->widgetwindow = GTK_CONTAINER (gtk_layout_new (NULL, NULL));
-  gtk_layout_set_size (GTK_LAYOUT (xw->widgetwindow), xw->width, xw->height);
+  //xw->widgetwindow = GTK_CONTAINER (gtk_layout_new (NULL, NULL));
+  xw->widgetwindow = GTK_CONTAINER (gtk_offscreen_window_new ());
+  //xw->widgetwindow = GTK_CONTAINER (gtk_fixed_new ());  
+  //xw->widgetwindow = GTK_CONTAINER (gtk_event_box_new ());
+  gtk_widget_set_size_request (GTK_WIDGET (xw->widget), xw->width, xw->height);  
+  //gtk_layout_set_size (GTK_LAYOUT (xw->widgetwindow), xw->width, xw->height);
   gtk_container_add (xw->widgetwindow, xw->widget);
-  gtk_widget_set_size_request (GTK_WIDGET (xw->widget), xw->width,
-                               xw->height);
-  gtk_fixed_put (GTK_FIXED (s->f->gwfixed), GTK_WIDGET (xw->widgetwindow),
-                 x, y);
+  gtk_widget_set_size_request (GTK_WIDGET (xw->widget), xw->width, xw->height);
+  //gtk_fixed_put (GTK_FIXED (s->f->gwfixed), GTK_WIDGET (xw->widgetwindow), x, y);
   gtk_widget_show_all (GTK_WIDGET (xw->widgetwindow));
 
   //store some xwidget data in the gtk widgets
@@ -341,8 +343,9 @@ xwidget_init (struct xwidget *xw, struct glyph_string *s, int x, int y)
 
   //this seems to enable xcomposition. later we need to paint ourselves somehow,
   //since the widget is no longer responsible for painting itself
-  if(xw->type!=3)  //im having trouble with compositing and sockets. hmmm.
-    gdk_window_set_composited (xw->widget->window, TRUE);
+  //if(xw->type!=3)  //im having trouble with compositing and sockets. hmmm.
+      //gdk_window_set_composited (xw->widget->window, TRUE);
+  //gdk_window_set_composited (GTK_LAYOUT (xw->widgetwindow)->bin_window, TRUE);  
   gtk_widget_set_double_buffered (xw->widget,FALSE);
   gtk_widget_set_double_buffered (xw->widgetwindow,FALSE);  
   //gdk_window_set_composited (xw->widgetwindow, TRUE);  
