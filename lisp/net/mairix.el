@@ -1,6 +1,6 @@
 ;;; mairix.el --- Mairix interface for Emacs
 
-;; Copyright (C) 2008, 2009, 2010  Free Software Foundation, Inc.
+;; Copyright (C) 2008-2011  Free Software Foundation, Inc.
 
 ;; Author: David Engster <dengste@eml.cc>
 ;; Keywords: mail searching
@@ -748,7 +748,7 @@ VALUES may contain values for editable fields from current article."
     (define-key map [(e)] 'mairix-select-edit)
     (define-key map [(d)] 'mairix-select-delete)
     (define-key map [(s)] 'mairix-select-save)
-    (setq mairix-searches-mode-map map))
+    map)
   "'mairix-searches-mode' keymap.")
 
 (defvar mairix-searches-mode-font-lock-keywords)
@@ -946,4 +946,3 @@ Use cursor keys or C-n,C-p to select next/previous search.\n\n")
 
 ;;; mairix.el ends here
 
-;; arch-tag: 787ab678-fcd5-4c50-9295-01c2ee5124a6

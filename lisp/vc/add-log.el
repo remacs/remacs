@@ -1,7 +1,6 @@
 ;;; add-log.el --- change log maintenance commands for Emacs
 
-;; Copyright (C) 1985, 1986, 1988, 1993, 1994, 1997, 1998, 2000, 2001,
-;;   2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010
+;; Copyright (C) 1985-1986, 1988, 1993-1994, 1997-1998, 2000-2011
 ;;   Free Software Foundation, Inc.
 
 ;; Maintainer: FSF
@@ -698,7 +697,7 @@ current buffer to the complete file name.
 Optional arg BUFFER-FILE overrides `buffer-file-name'."
   ;; If we are called from a diff, first switch to the source buffer;
   ;; in order to respect buffer-local settings of change-log-default-name, etc.
-  (with-current-buffer (let ((buff (if (eq major-mode 'diff-mode)
+  (with-current-buffer (let ((buff (if (derived-mode-p 'diff-mode)
 				       (car (ignore-errors
 					     (diff-find-source-location))))))
 			 (if (buffer-live-p buff) buff
@@ -1180,7 +1179,7 @@ Has a preference of looking backwards."
 		((apply 'derived-mode-p add-log-c-like-modes)
 		 (or (c-cpp-define-name)
 		     (c-defun-name)))
-		((memq major-mode add-log-tex-like-modes)
+		((apply #'derived-mode-p add-log-tex-like-modes)
 		 (if (re-search-backward
 		      "\\\\\\(sub\\)*\\(section\\|paragraph\\|chapter\\)"
 		      nil t)
@@ -1367,5 +1366,4 @@ old-style time formats for entries are supported."
 
 (provide 'add-log)
 
-;; arch-tag: 81eee6fc-088f-4372-a37f-80ad9620e762
 ;;; add-log.el ends here

@@ -1,7 +1,6 @@
 ;;; gnus-agent.el --- unplugged support for Gnus
 
-;; Copyright (C) 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005,
-;;   2006, 2007, 2008, 2009, 2010  Free Software Foundation, Inc.
+;; Copyright (C) 1997-2011  Free Software Foundation, Inc.
 
 ;; Author: Lars Magne Ingebrigtsen <larsi@gnus.org>
 ;; This file is part of GNU Emacs.
@@ -203,8 +202,7 @@ queue.  Otherwise, queue if and only if unplugged."
 		(const :format "When unplugged" t)))
 
 (defcustom gnus-agent-prompt-send-queue nil
-  "If non-nil, `gnus-group-send-queue' will prompt if called when
-unplugged."
+  "If non-nil, `gnus-group-send-queue' will prompt if called when unplugged."
   :version "22.1"
   :group 'gnus-agent
   :type 'boolean)
@@ -513,8 +511,8 @@ manipulated as follows:
     ;; Set up the menu.
     (when (gnus-visual-p 'agent-menu 'menu)
       (funcall (intern (format "gnus-agent-%s-make-menu-bar" buffer))))
-    (unless (assq 'gnus-agent-mode minor-mode-alist)
-      (push gnus-agent-mode-status minor-mode-alist))
+    (unless (assq mode minor-mode-alist)
+      (push (cons mode (cdr gnus-agent-mode-status)) minor-mode-alist))
     (unless (assq mode minor-mode-map-alist)
       (push (cons mode (symbol-value (intern (format "gnus-agent-%s-mode-map"
 						     buffer))))
@@ -685,7 +683,6 @@ This will modify the `gnus-setup-news-hook', and
 minor mode in all Gnus buffers."
   (interactive)
   (gnus-open-agent)
-  (add-hook 'gnus-setup-news-hook 'gnus-agent-queue-setup)
   (unless gnus-agent-send-mail-function
     (setq gnus-agent-send-mail-function
 	  (or message-send-mail-real-function
@@ -695,7 +692,9 @@ minor mode in all Gnus buffers."
   ;; If the servers file doesn't exist, auto-agentize some servers and
   ;; save the servers file so this auto-agentizing isn't invoked
   ;; again.
-  (unless (file-exists-p (nnheader-concat gnus-agent-directory "lib/servers"))
+  (when (and (not (file-exists-p (nnheader-concat
+				  gnus-agent-directory "lib/servers")))
+	     gnus-agent-auto-agentize-methods)
     (gnus-message 3 "First time agent user, agentizing remote groups...")
     (mapc
      (lambda (server-or-method)
@@ -730,7 +729,8 @@ Optional arg GROUP-NAME allows to specify another group."
      (concat "^" (regexp-quote mail-header-separator) "\n"))
     (replace-match "\n")
     (gnus-agent-insert-meta-information 'mail)
-    (gnus-request-accept-article "nndraft:queue" nil t t)))
+    (gnus-request-accept-article "nndraft:queue" nil t t)
+    (gnus-group-refresh-group "nndraft:queue")))
 
 (defun gnus-agent-insert-meta-information (type &optional method)
   "Insert meta-information into the message that says how it's to be posted.
@@ -801,12 +801,13 @@ be a select method."
   (setq group (or group gnus-newsgroup-name))
   (unless group
     (error "No group on the current line"))
-
-  (gnus-agent-while-plugged
-    (let ((gnus-command-method (gnus-find-method-for-group group)))
-      (gnus-agent-with-fetch
-        (gnus-agent-fetch-group-1 group gnus-command-method)
-        (gnus-message 5 "Fetching %s...done" group)))))
+  (if (not (gnus-agent-group-covered-p group))
+      (message "%s isn't covered by the agent" group)
+    (gnus-agent-while-plugged
+      (let ((gnus-command-method (gnus-find-method-for-group group)))
+	(gnus-agent-with-fetch
+	  (gnus-agent-fetch-group-1 group gnus-command-method)
+	  (gnus-message 5 "Fetching %s...done" group))))))
 
 (defun gnus-agent-add-group (category arg)
   "Add the current group to an agent category."
@@ -1511,7 +1512,7 @@ downloaded into the agent."
   "Fetch ARTICLES from GROUP and put them into the Agent."
   (when articles
     (gnus-agent-load-alist group)
-    (let* ((alist   gnus-agent-article-alist)
+    (let* ((alist gnus-agent-article-alist)
            (headers (if (< (length articles) 2) nil gnus-newsgroup-headers))
            (selected-sets (list nil))
            (current-set-size 0)
@@ -1553,9 +1554,9 @@ downloaded into the agent."
                                       ;; 65 char/line.  If the line count
                                       ;; is missing, arbitrarily assume a
                                       ;; size of 1000 characters.
-                                    (max (* 65 (mail-header-lines
-                                                (car headers)))
-                                         1000)
+				      (max (* 65 (mail-header-lines
+						  (car headers)))
+					   1000)
                                     char-size))
 			      0))))
             (setcar selected-sets (nreverse (car selected-sets)))

@@ -1,6 +1,6 @@
 ;;; bytecomp-testsuite.el
 
-;; Copyright (C) 2010  Free Software Foundation, Inc.
+;; Copyright (C) 2010-2011  Free Software Foundation, Inc.
 
 ;; This file is part of GNU Emacs.
 
@@ -34,7 +34,8 @@
   (interactive)
   (let ((password-strings
 	 '("foo@example.net's password: " ;ssh
-	   "Password for foo@example.org: " ; knit
+	   "Password for foo@example.org: " ; kinit
+	   "Please enter the password for foo@example.org: "   ; kinit
 	   "Kerberos password for devnull/root <at> GNU.ORG: " ; ksu
 	   "Enter passphrase: " ; ssh-add
 	   "Enter passphrase (empty for no passphrase): " ; ssh-keygen

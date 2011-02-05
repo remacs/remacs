@@ -1,7 +1,6 @@
 ;;; hideif.el --- hides selected code within ifdef
 
-;; Copyright (C) 1988, 1994, 2001, 2002, 2003, 2004, 2005, 2006, 2007,
-;;   2008, 2009, 2010  Free Software Foundation, Inc.
+;; Copyright (C) 1988, 1994, 2001-2011  Free Software Foundation, Inc.
 
 ;; Author: Brian Marick
 ;;	Daniel LaLiberte <liberte@holonexus.org>
@@ -760,7 +759,7 @@ Point is left unchanged."
       (cond ((hif-looking-at-else)
 	     (setq else (point)))
 	    (t
-	     (setq end (point)))) ; (save-excursion (end-of-line) (point))
+	     (setq end (point)))) ; (line-end-position)
       ;; If found #else, look for #endif.
       (when else
 	(while (progn
@@ -769,7 +768,7 @@ Point is left unchanged."
 	  (hif-ifdef-to-endif))
 	(if (hif-looking-at-else)
 	    (error "Found two elses in a row?  Broken!"))
-	(setq end (point)))	       ; (save-excursion (end-of-line) (point))
+	(setq end (point)))	       ; (line-end-position)
       (hif-make-range start end else))))
 
 
@@ -1025,5 +1024,4 @@ Return as (TOP . BOTTOM) the extent of ifdef block."
 
 (provide 'hideif)
 
-;; arch-tag: c6381d17-a59a-483a-b945-658f22277981
 ;;; hideif.el ends here

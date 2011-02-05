@@ -1,6 +1,5 @@
 @c This is part of the Emacs manual.
-@c Copyright (C) 1997, 1999, 2000, 2001, 2002, 2003, 2004,
-@c   2005, 2006, 2007, 2008, 2009, 2010 Free Software Foundation, Inc.
+@c Copyright (C) 1997, 1999-2011  Free Software Foundation, Inc.
 @c See file emacs.texi for copying conditions.
 @node International, Major Modes, Frames, Top
 @chapter International Character Set Support
@@ -351,10 +350,11 @@ which prefers Cyrillic characters and files encoded in Windows-1255).
 @cindex Intlfonts package, installation
   To display the script(s) used by your language environment on a
 graphical display, you need to have a suitable font.  If some of the
-characters appear as empty boxes, you should install the GNU Intlfonts
-package, which includes fonts for most supported scripts.@footnote{If
-you run Emacs on X, you need to inform the X server about the location
-of the newly installed fonts with the following commands:
+characters appear as empty boxes or hex codes, you should install the
+GNU Intlfonts package, which includes fonts for most supported
+scripts.@footnote{If you run Emacs on X, you need to inform the X
+server about the location of the newly installed fonts with the
+following commands:
 
 @example
  xset fp+ /usr/local/share/emacs/fonts
@@ -1314,10 +1314,11 @@ characters the font does not cover.  The standard fontset is only used if
 explicitly requested, despite its name.
 
   A fontset does not necessarily specify a font for every character
-code.  If a fontset specifies no font for a certain character, or if it
-specifies a font that does not exist on your system, then it cannot
-display that character properly.  It will display that character as an
-empty box instead.
+code.  If a fontset specifies no font for a certain character, or if
+it specifies a font that does not exist on your system, then it cannot
+display that character properly.  It will display that character as a
+hex code or thin space or an empty box instead.  (@xref{Text Display, ,
+glyphless characters}, for details.)
 
 @node Defining Fontsets
 @section Defining fontsets
@@ -1743,7 +1744,3 @@ highlighted region covering a contiguous range of character positions
 may look discontinuous if the region spans reordered text.  This is
 normal and similar to behavior of other programs that support
 bidirectional text.
-
-@ignore
-   arch-tag: 310ba60d-31ef-4ce7-91f1-f282dd57b6b3
-@end ignore

@@ -1,7 +1,6 @@
 ;;; w32-vars.el --- MS-Windows specific user options
 
-;; Copyright (C) 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010
-;;   Free Software Foundation, Inc.
+;; Copyright (C) 2002-2011  Free Software Foundation, Inc.
 
 ;; Author: Jason Rumney <jasonr@gnu.org>
 ;; Keywords: internal
@@ -148,17 +147,6 @@ menu if the variable `w32-use-w32-font-dialog' is nil."
 		      (string :tag "Font")))))))
     :group 'w32)
 
-(defcustom x-select-enable-clipboard t
-  "Non-nil means cutting and pasting uses the clipboard.
-This is in addition to, but in preference to, the primary selection.
-
-On MS-Windows, this is non-nil by default, since Windows does not
-support other types of selections.  \(The primary selection that is
-set by Emacs is not accessible to other programs on Windows.\)"
-  :type 'boolean
-  :group 'killing)
-
 (provide 'w32-vars)
 
-;; arch-tag: ee2394fb-9db7-4c15-a8f0-66b47f4a2bb1
 ;;; w32-vars.el ends here

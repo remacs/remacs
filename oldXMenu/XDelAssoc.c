@@ -17,6 +17,7 @@ void emacs_remque(struct qelem*);
  * an XId.  An association may be removed only once.  Redundant
  * deletes are meaningless (but cause no problems).
  */
+void
 XDeleteAssoc(register Display *dpy, register XAssocTable *table, register XID x_id)
 {
 	int hash;
@@ -56,5 +57,3 @@ XDeleteAssoc(register Display *dpy, register XAssocTable *table, register XID x_
 	return;
 }
 
-/* arch-tag: 90981a7e-601c-487a-b364-cdf55d6c475b
-   (do not change this comment) */

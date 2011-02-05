@@ -1,7 +1,6 @@
 /* Simple built-in editing commands.
-   Copyright (C) 1985, 1993, 1994, 1995, 1996, 1997, 1998, 2001, 2002,
-                 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010
-                 Free Software Foundation, Inc.
+
+Copyright (C) 1985, 1993-1998, 2001-2011  Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -230,7 +229,7 @@ Optional second arg KILLFLAG non-nil means kill instead (save in kill ring).
 Interactively, N is the prefix arg, and KILLFLAG is set if
 N was explicitly specified.
 
-The command `delete-forward' is preferable for interactive use.  */)
+The command `delete-forward-char' is preferable for interactive use.  */)
   (Lisp_Object n, Lisp_Object killflag)
 {
   EMACS_INT pos;
@@ -276,7 +275,7 @@ After insertion, the value of `auto-fill-function' is called if the
   (Lisp_Object n)
 {
   int remove_boundary = 1;
-  CHECK_NUMBER (n);
+  CHECK_NATNUM (n);
 
   if (!EQ (Vthis_command, current_kboard->Vlast_command))
     nonundocount = 0;
@@ -320,7 +319,7 @@ After insertion, the value of `auto-fill-function' is called if the
    A value of 2 means this did things that call for an undo boundary.  */
 
 static Lisp_Object Qexpand_abbrev;
-static Lisp_Object Qpost_self_insert_hook, Vpost_self_insert_hook;
+static Lisp_Object Qpost_self_insert_hook;
 
 static int
 internal_self_insert (int c, EMACS_INT n)
@@ -453,7 +452,7 @@ internal_self_insert (int c, EMACS_INT n)
 		 && SINGLE_BYTE_CHAR_P (c))
 		? UNIBYTE_TO_CHAR (c) : c);
       Lisp_Object string = Fmake_string (make_number (n), make_number (mc));
-					  
+
       if (spaces_to_insert)
 	{
 	  tem = Fmake_string (make_number (spaces_to_insert),
@@ -474,7 +473,7 @@ internal_self_insert (int c, EMACS_INT n)
       insert_and_inherit (strn, p - strn);
       SAFE_FREE ();
     }
-  else
+  else if (n > 0)
     insert_and_inherit (str, len);
 
   if ((CHAR_TABLE_P (Vauto_fill_chars)
@@ -523,7 +522,7 @@ syms_of_cmds (void)
   Qpost_self_insert_hook = intern_c_string ("post-self-insert-hook");
   staticpro (&Qpost_self_insert_hook);
 
-  DEFVAR_LISP ("post-self-insert-hook", &Vpost_self_insert_hook,
+  DEFVAR_LISP ("post-self-insert-hook", Vpost_self_insert_hook,
 	       doc: /* Hook run at the end of `self-insert-command'.
 This is run after inserting the character.  */);
   Vpost_self_insert_hook = Qnil;
@@ -561,5 +560,3 @@ keys_of_cmds (void)
   initial_define_key (global_map, Ctl ('F'), "forward-char");
 }
 
-/* arch-tag: 022ba3cd-67f9-4978-9c5d-7d2b18d8644e
-   (do not change this comment) */

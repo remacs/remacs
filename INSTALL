@@ -1,6 +1,5 @@
 GNU Emacs Installation Guide
-Copyright (C) 1992, 1994, 1996, 1997, 2000, 2001, 2002, 2003, 2004,
-  2005, 2006, 2007, 2008, 2009, 2010
+Copyright (C) 1992, 1994, 1996-1997, 2000-2011
   Free Software Foundation, Inc.
 See the end of the file for license conditions.
 
@@ -675,13 +674,15 @@ the following steps.
 `./src/epaths.h' from the template file `./src/epaths.in', changing
 the paths to the values specified in `./Makefile'.
 
-2) Go to directory `./lib-src' and run `make'.  This creates
-executables named `ctags' and `etags' and `make-docfile' and
-`digest-doc' and `test-distrib'.  And others.
+2) Go to directory `./lib' and run `make'.  This creates include files
+and libraries used in later steps.
 
-3) Go to directory `./src' and run `make'.  This refers to files in
-the `./lisp' and `./lib-src' subdirectories using names `../lisp' and
-`../lib-src'.
+3) Go to directory `./lib-src' and run `make'.  This creates
+executables named `etags', `make-docfile', and others.
+
+4) Go to directory `./src' and run `make'.  This refers to files in
+the `./lisp', `./lib', and `./lib-src' subdirectories using names
+`../lisp', `../lib', and `../lib-src'.
 
 This creates a file `./src/emacs' which is the runnable Emacs,
 which has another name that contains a version number.
@@ -709,8 +710,6 @@ Strictly speaking, not all of the executables in `./lib-src' need be copied.
     are intended to be run by users; they are handled below.
 - The programs `make-docfile' and `test-distrib' were
     used in building Emacs, and are not needed any more.
-- The programs `digest-doc' and `sorted-doc' convert a `DOC' file into
-    a file for users to read.  There is no important reason to move them.
 
 2) Copy the files in `./info' to the place specified in
 `./lisp/site-init.el' or `./lisp/paths.el'.  Note that if the

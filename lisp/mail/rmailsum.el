@@ -1,7 +1,6 @@
 ;;; rmailsum.el --- make summary buffers for the mail reader
 
-;; Copyright (C) 1985, 1993, 1994, 1995, 1996, 2000, 2001, 2002, 2003,
-;;   2004, 2005, 2006, 2007, 2008, 2009, 2010 Free Software Foundation, Inc.
+;; Copyright (C) 1985, 1993-1996, 2000-2011 Free Software Foundation, Inc.
 
 ;; Maintainer: FSF
 ;; Keywords: mail
@@ -32,6 +31,7 @@
 
 ;; For rmail-select-summary.
 (require 'rmail)
+(require 'rfc2047)
 
 (defcustom rmail-summary-scroll-between-messages t
   "Non-nil means Rmail summary scroll commands move between messages.
@@ -364,13 +364,15 @@ The current buffer contains the unrestricted message collection."
       (aset rmail-summary-vector (1- msgnum) line))
     line))
 
-(defcustom rmail-summary-line-decoder (function identity)
+(defcustom rmail-summary-line-decoder (function rfc2047-decode-string)
   "Function to decode a Rmail summary line.
 It receives the summary line for one message as a string
 and should return the decoded string.
 
-By default, it is `identity', which returns the string unaltered."
+By default, it is `rfc2047-decode-string', which decodes MIME-encoded
+subject."
   :type 'function
+  :version "23.3"
   :group 'rmail-summary)
 
 (defun rmail-create-summary-line (msgnum)
@@ -589,10 +591,17 @@ the message being processed."
 						     (t (- mch 14))))
 				      (min len (+ lo 25)))))))))
    (concat (if (re-search-forward "^Subject:" nil t)
-	       (progn (skip-chars-forward " \t")
-		      (buffer-substring (point)
-					(progn (end-of-line)
-					       (point))))
+	       (let (pos str)
+		 (skip-chars-forward " \t")
+		 (setq pos (point))
+		 (forward-line 1)
+		 (setq str (buffer-substring pos (1- (point))))
+		 (while (looking-at "\\s ")
+		   (setq str (concat str " " 
+				     (buffer-substring (match-end 0)
+						       (line-end-position))))
+		   (forward-line 1))
+		 str)
 	     (re-search-forward "[\n][\n]+" nil t)
 	     (buffer-substring (point) (progn (end-of-line) (point))))
 	   "\n")))
@@ -1837,5 +1846,4 @@ the summary is only showing a subset of messages."
 ;; generated-autoload-file: "rmail.el"
 ;; End:
 
-;; arch-tag: 80b0a27a-a50d-4f37-9466-83d32d1e0ca8
 ;;; rmailsum.el ends here

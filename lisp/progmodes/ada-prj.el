@@ -1,7 +1,6 @@
 ;;; ada-prj.el --- GUI editing of project files for the ada-mode
 
-;; Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006,
-;;   2007, 2008, 2009, 2010 Free Software Foundation, Inc.
+;; Copyright (C) 1998-2011 Free Software Foundation, Inc.
 
 ;; Author: Emmanuel Briot <briot@gnat.com>
 ;; Maintainer: Stephen Leake <stephen_leake@stephe-leake.org>
@@ -196,21 +195,17 @@ One item per line should be found in the file."
       (widen)
       (goto-char (point-min))
       (while (not (eobp))
-	(set 'line (buffer-substring-no-properties
-		    (point) (save-excursion (end-of-line) (point))))
+	(set 'line (buffer-substring-no-properties (point) (point-at-eol)))
 	(add-to-list 'list line)
-	(forward-line 1)
-	)
+	(forward-line 1))
       (kill-buffer nil)
       (set-buffer buffer)
       (set 'ada-prj-current-values
 	   (plist-put ada-prj-current-values
 		      symbol
 		      (append (plist-get ada-prj-current-values symbol)
-			      (reverse list))))
-      )
-    (ada-prj-display-page 2)
-  ))
+			      (reverse list)))))
+    (ada-prj-display-page 2)))
 
 (defun ada-prj-subdirs-of (dir)
   "Return a list of all the subdirectories of DIR, recursively."
@@ -518,11 +513,18 @@ If FILENAME is given, edit that file."
 
       (set (make-local-variable 'ada-prj-ada-buffer) ada-buffer)
 
-      (use-local-map (copy-keymap custom-mode-map))
-      (local-set-key "\C-x\C-s" 'ada-prj-save)
+      (use-local-map
+       (let ((map (make-sparse-keymap)))
+         (set-keymap-parent map custom-mode-map)
+         (define-key map "\C-x\C-s" 'ada-prj-save)
+         map))
 
-      (make-local-variable 'widget-keymap)
-      (define-key widget-keymap "\C-x\C-s" 'ada-prj-save)
+      ;; FIXME: Not sure if this works!!
+      (set (make-local-variable 'widget-keymap)
+           (let ((map (make-sparse-keymap)))
+             (set-keymap-parent map widget-keymap)
+             (define-key map "\C-x\C-s" 'ada-prj-save)
+             map))
 
       (set (make-local-variable 'ada-old-cross-prefix)
 	   (ada-xref-get-project-field 'cross-prefix))
@@ -568,8 +570,7 @@ Parameters WIDGET-MODIFIED, EVENT match :notify for the widget."
       ;;  variables
       (momentary-string-display
        (concat "*****Help*****\n" text "\n**************\n")
-       (save-excursion (forward-line) (beginning-of-line) (point)))
-      )))
+       (point-at-bol 2)))))
 
 (defun ada-prj-show-value (widget widget-modified event)
   "Show the current field value in WIDGET.
@@ -681,5 +682,4 @@ AFTER-TEXT is inserted just after the widget."
 
 (provide 'ada-prj)
 
-;; arch-tag: 65978c77-816e-49c6-896e-6905605d1b4c
 ;;; ada-prj.el ends here

@@ -1,7 +1,7 @@
 ;;; loadup.el --- load up standardly loaded Lisp files for Emacs
 
-;; Copyright (C) 1985, 1986, 1992, 1994, 2001, 2002, 2003, 2004, 2005,
-;;   2006, 2007, 2008, 2009, 2010  Free Software Foundation, Inc.
+;; Copyright (C) 1985-1986, 1992, 1994, 2001-2011
+;;   Free Software Foundation, Inc.
 
 ;; Maintainer: FSF
 ;; Keywords: internal
@@ -234,15 +234,14 @@
       (load "disp-table"))) ; needed to setup ibm-pc char set, see internal.el
 (if (featurep 'ns)
     (progn
-      (load "emacs-lisp/easymenu")  ;; for platform-related menu adjustments
+      (load "term/common-win")
       (load "term/ns-win")))
 (if (fboundp 'x-create-frame)
     ;; Do it after loading term/foo-win.el since the value of the
     ;; mouse-wheel-*-event vars depends on those files being loaded or not.
     (load "mwheel"))
-(if (fboundp 'atan)	; preload some constants and
-    (progn		; floating pt. functions if we have float support.
-      (load "emacs-lisp/float-sup")))
+;; Preload some constants and floating point functions.
+(load "emacs-lisp/float-sup")
 
 (load "vc/vc-hooks")
 (load "vc/ediff-hook")
@@ -293,46 +292,16 @@
       (error nil)))
 (message "Finding pointers to doc strings...done")
 
-;;;Note: You can cause additional libraries to be preloaded
-;;;by writing a site-init.el that loads them.
-;;;See also "site-load" above.
+;; Note: You can cause additional libraries to be preloaded
+;; by writing a site-init.el that loads them.
+;; See also "site-load" above.
 (load "site-init" t)
 (setq current-load-list nil)
 
-;; Write the value of load-history into fns-VERSION.el,
-;; then clear out load-history.
-;; (if (or (equal (nth 3 command-line-args) "dump")
-;; 	(equal (nth 4 command-line-args) "dump"))
-;;     (let ((buffer-undo-list t))
-;;       (princ "(setq load-history\n" (current-buffer))
-;;       (princ "      (nconc load-history\n" (current-buffer))
-;;       (princ "             '(" (current-buffer))
-;;       (let ((tem load-history))
-;; 	(while tem
-;; 	  (prin1 (car tem) (current-buffer))
-;; 	  (terpri (current-buffer))
-;; 	  (if (cdr tem)
-;; 	      (princ "               " (current-buffer)))
-;; 	  (setq tem (cdr tem))))
-;;       (princ ")))\n" (current-buffer))
-;;       (write-region (point-min) (point-max)
-;; 		    (expand-file-name
-;; 		     (cond
-;; 		      ((eq system-type 'ms-dos)
-;; 		       "../lib-src/fns.el")
-;; 		      ((eq system-type 'windows-nt)
-;; 		       (format "../../../lib-src/fns-%s.el" emacs-version))
-;; 		      (t
-;; 		       (format "../lib-src/fns-%s.el" emacs-version)))
-;; 		     invocation-directory))
-;;       (erase-buffer)
-;;       (setq load-history nil))
-;;   (setq symbol-file-load-history-loaded t))
-;; We don't use this fns-*.el file.  Instead we keep the data in PURE space.
+;; We keep the load-history data in PURE space.
 ;; Make sure that the spine of the list is not in pure space because it can
 ;; be destructively mutated in lread.c:build_load_history.
 (setq load-history (mapcar 'purecopy load-history))
-(setq symbol-file-load-history-loaded t)
 
 (set-buffer-modified-p nil)
 
@@ -373,7 +342,7 @@
       (dump-emacs "emacs" "temacs")
       (message "%d pure bytes used" pure-bytes-used)
       ;; Recompute NAME now, so that it isn't set when we dump.
-      (if (not (or (memq system-type '(ms-dos windows-nt cygwin))
+      (if (not (or (memq system-type '(ms-dos windows-nt))
                    ;; Don't bother adding another name if we're just
                    ;; building bootstrap-emacs.
                    (equal (nth 3 command-line-args) "bootstrap")
@@ -403,5 +372,4 @@
 ;; no-update-autoloads: t
 ;; End:
 
-;; arch-tag: 121e1dd4-36e1-45ac-860e-239f577a6335
 ;;; loadup.el ends here

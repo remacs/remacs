@@ -1,7 +1,6 @@
 ;;; em-ls.el --- implementation of ls in Lisp
 
-;; Copyright (C) 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007,
-;;   2008, 2009, 2010  Free Software Foundation, Inc.
+;; Copyright (C) 1999-2011  Free Software Foundation, Inc.
 
 ;; Author: John Wiegley <johnw@gnu.org>
 
@@ -612,11 +611,11 @@ In Eshell's implementation of ls, ENTRIES is always reversed."
 	     (let ((result
 		    (cond
 		     ((eq sort-method 'by-atime)
-		      (eshell-ls-compare-entries l r 4 'eshell-time-less-p))
+		      (eshell-ls-compare-entries l r 4 'time-less-p))
 		     ((eq sort-method 'by-mtime)
-		      (eshell-ls-compare-entries l r 5 'eshell-time-less-p))
+		      (eshell-ls-compare-entries l r 5 'time-less-p))
 		     ((eq sort-method 'by-ctime)
-		      (eshell-ls-compare-entries l r 6 'eshell-time-less-p))
+		      (eshell-ls-compare-entries l r 6 'time-less-p))
 		     ((eq sort-method 'by-size)
 		      (eshell-ls-compare-entries l r 7 '<))
 		     ((eq sort-method 'by-extension)
@@ -941,5 +940,4 @@ to use, and each member of which is the width of that column
 ;; generated-autoload-file: "esh-groups.el"
 ;; End:
 
-;; arch-tag: 9295181c-0cb2-499c-999b-89f5359842cb
 ;;; em-ls.el ends here

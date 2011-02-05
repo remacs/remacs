@@ -1,6 +1,5 @@
 /* Utility and Unix shadow routines for GNU Emacs on the Microsoft W32 API.
-   Copyright (C) 1994, 1995, 2000, 2001, 2002, 2003, 2004, 2005, 2006,
-                 2007, 2008, 2009, 2010  Free Software Foundation, Inc.
+   Copyright (C) 1994-1995, 2000-2011  Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -38,9 +37,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 /* must include CRT headers *before* config.h */
 
-#ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif
 
 #undef access
 #undef chdir
@@ -97,7 +94,7 @@ typedef struct _MEMORY_STATUS_EX {
 #include <w32api.h>
 #if !defined(__MINGW32__) || __W32API_MAJOR_VERSION < 3 || (__W32API_MAJOR_VERSION == 3 && __W32API_MINOR_VERSION < 15)
 /* This either is not in psapi.h or guarded by higher value of
-   _WIN32_WINNT than what we use.  w32api suplied with MinGW 3.15
+   _WIN32_WINNT than what we use.  w32api supplied with MinGW 3.15
    defines it in psapi.h  */
 typedef struct _PROCESS_MEMORY_COUNTERS_EX {
   DWORD cb;
@@ -150,13 +147,8 @@ typedef HRESULT (WINAPI * ShGetFolderPath_fn)
 void globals_of_w32 (void);
 static DWORD get_rid (PSID);
 
-extern Lisp_Object Vw32_downcase_file_names;
-extern Lisp_Object Vw32_generate_fake_inodes;
-extern Lisp_Object Vw32_get_true_file_attributes;
 /* Defined in process.c for its own purpose.  */
 extern Lisp_Object Qlocal;
-
-extern int w32_num_mouse_buttons;
 
 
 /* Initialization states.
@@ -1516,8 +1508,6 @@ w32_get_resource (char *key, LPDWORD lpdwtype)
 }
 
 char *get_emacs_configuration (void);
-extern Lisp_Object Vsystem_configuration;
-
 void
 init_environment (char ** argv)
 {
@@ -5186,9 +5176,6 @@ sys_pipe (int * phandles)
   return rc;
 }
 
-/* From ntproc.c */
-extern int w32_pipe_read_delay;
-
 /* Function to do blocking read of one byte, needed to implement
    select.  It is only allowed on sockets and pipes. */
 int
@@ -5668,7 +5655,6 @@ check_windows_init_file (void)
 
   if (!noninteractive && !inhibit_window_system)
     {
-      extern Lisp_Object Vwindow_system, Vload_path, Qfile_exists_p;
       Lisp_Object objs[2];
       Lisp_Object full_load_path;
       Lisp_Object init_file;
@@ -6086,5 +6072,3 @@ serial_configure (struct Lisp_Process *p, Lisp_Object contact)
 
 /* end of w32.c */
 
-/* arch-tag: 90442dd3-37be-482b-b272-ac752e3049f1
-   (do not change this comment) */

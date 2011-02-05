@@ -1,7 +1,6 @@
 ;;; timer.el --- run a function with args at some time in future
 
-;; Copyright (C) 1996, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008,
-;;   2009, 2010  Free Software Foundation, Inc.
+;; Copyright (C) 1996, 2001-2011  Free Software Foundation, Inc.
 
 ;; Maintainer: FSF
 ;; Package: emacs
@@ -93,31 +92,20 @@ fire each time Emacs is idle for that many seconds."
 More precisely, the next value, after TIME, that is an integral multiple
 of SECS seconds since the epoch.  SECS may be a fraction."
   (let ((time-base (ash 1 16)))
-    (if (fboundp 'atan)
-	;; Use floating point, taking care to not lose precision.
-	(let* ((float-time-base (float time-base))
-	       (million 1000000.0)
-	       (time-usec (+ (* million
-				(+ (* float-time-base (nth 0 time))
-				   (nth 1 time)))
-			     (nth 2 time)))
-	       (secs-usec (* million secs))
-	       (mod-usec (mod time-usec secs-usec))
-	       (next-usec (+ (- time-usec mod-usec) secs-usec))
-	       (time-base-million (* float-time-base million)))
-	  (list (floor next-usec time-base-million)
-		(floor (mod next-usec time-base-million) million)
-		(floor (mod next-usec million))))
-      ;; Floating point is not supported.
-      ;; Use integer arithmetic, avoiding overflow if possible.
-      (let* ((mod-sec (mod (+ (* (mod time-base secs)
-				 (mod (nth 0 time) secs))
-			      (nth 1 time))
-			   secs))
-	     (next-1-sec (+ (- (nth 1 time) mod-sec) secs)))
-	(list (+ (nth 0 time) (floor next-1-sec time-base))
-	      (mod next-1-sec time-base)
-	      0)))))
+    ;; Use floating point, taking care to not lose precision.
+    (let* ((float-time-base (float time-base))
+	   (million 1000000.0)
+	   (time-usec (+ (* million
+			    (+ (* float-time-base (nth 0 time))
+			       (nth 1 time)))
+			 (nth 2 time)))
+	   (secs-usec (* million secs))
+	   (mod-usec (mod time-usec secs-usec))
+	   (next-usec (+ (- time-usec mod-usec) secs-usec))
+	   (time-base-million (* float-time-base million)))
+      (list (floor next-usec time-base-million)
+	    (floor (mod next-usec time-base-million) million)
+	    (floor (mod next-usec million))))))
 
 (defun timer-relative-time (time secs &optional usecs)
   "Advance TIME by SECS seconds and optionally USECS microseconds.
@@ -543,5 +531,4 @@ If the user does not answer after SECONDS seconds, return DEFAULT-VALUE."
 
 (provide 'timer)
 
-;; arch-tag: b1a9237b-7787-4382-9e46-8f2c3b3273e0
 ;;; timer.el ends here

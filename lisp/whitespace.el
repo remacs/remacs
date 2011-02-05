@@ -1,12 +1,11 @@
 ;;; whitespace.el --- minor mode to visualize TAB, (HARD) SPACE, NEWLINE
 
-;; Copyright (C) 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010
-;;   Free Software Foundation, Inc.
+;; Copyright (C) 2000-2011  Free Software Foundation, Inc.
 
 ;; Author: Vinicius Jose Latorre <viniciusjl@ig.com.br>
 ;; Maintainer: Vinicius Jose Latorre <viniciusjl@ig.com.br>
 ;; Keywords: data, wp
-;; Version: 13.1
+;; Version: 13.2
 ;; X-URL: http://www.emacswiki.org/cgi-bin/wiki/ViniciusJoseLatorre
 
 ;; This file is part of GNU Emacs.
@@ -1103,7 +1102,7 @@ See also `whitespace-newline' and `whitespace-display-mappings'."
   :init-value nil
   :global     nil
   :group      'whitespace
-  (let ((whitespace-style '(newline-mark newline)))
+  (let ((whitespace-style '(face newline-mark newline)))
     (whitespace-mode whitespace-newline-mode)
     ;; sync states (running a batch job)
     (setq whitespace-newline-mode whitespace-mode)))
@@ -1188,7 +1187,8 @@ See also `whitespace-newline' and `whitespace-display-mappings'."
   :global     t
   :group      'whitespace
   (let ((whitespace-style '(newline-mark newline)))
-    (global-whitespace-mode global-whitespace-newline-mode)
+    (global-whitespace-mode (if global-whitespace-newline-mode
+                                1 -1))
     ;; sync states (running a batch job)
     (setq global-whitespace-newline-mode global-whitespace-mode)))
 
@@ -1652,12 +1652,12 @@ documentation."
 	    (whitespace-replace-action
 	     (if whitespace-indent-tabs-mode 'tabify 'untabify)
 	     rstart rend whitespace-space-before-tab-regexp
-	     (if whitespace-indent-tabs-mode 1 2)))
+	     (if whitespace-indent-tabs-mode 0 2)))
 	   ;; ACTION: replace SPACEs before TAB by TABs.
 	   ((memq 'space-before-tab::tab whitespace-style)
 	    (whitespace-replace-action
 	     'tabify rstart rend
-	     whitespace-space-before-tab-regexp 1))
+	     whitespace-space-before-tab-regexp 0))
 	   ;; ACTION: replace TABs by SPACEs.
 	   ((memq 'space-before-tab::space whitespace-style)
 	    (whitespace-replace-action
@@ -2668,5 +2668,4 @@ It should be added buffer-locally to `write-file-functions'."
 (run-hooks 'whitespace-load-hook)
 
 
-;; arch-tag: 1b1e2500-dbd4-4a26-8f7a-5a5edfd3c97e
 ;;; whitespace.el ends here

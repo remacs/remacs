@@ -1,6 +1,6 @@
 GNU Emacs NEWS -- history of user-visible changes.  26-Mar-1986
 
-Copyright (C) 1985, 1986, 2006, 2007, 2008, 2009, 2010  Free Software Foundation, Inc.
+Copyright (C) 1985-1986, 2006-2011  Free Software Foundation, Inc.
 See the end of the file for license conditions.
 
 
@@ -235,7 +235,7 @@ Various new commands and features exist; see the Emacs manual.
 
 * Nroff mode and TeX mode.
 
-The are two new major modes for editing nroff input and TeX input.
+There are two new major modes for editing nroff input and TeX input.
 See the Emacs manual for full information.
 
 * New C indentation style variable `c-brace-imaginary-offset'.
@@ -2531,4 +2531,3 @@ Local variables:
 mode: text
 end:
 
-arch-tag: 33dc900d-9c58-473b-87c9-b6d7222323ea

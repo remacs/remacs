@@ -1,7 +1,6 @@
 ;;; timeclock.el --- mode for keeping track of how much you work
 
-;; Copyright (C) 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007,
-;;   2008, 2009, 2010  Free Software Foundation, Inc.
+;; Copyright (C) 1999-2011  Free Software Foundation, Inc.
 
 ;; Author: John Wiegley <johnw@gnu.org>
 ;; Created: 25 Mar 1999
@@ -543,11 +542,8 @@ non-nil, the amount returned will be relative to past time worked."
 	(message "%s" string)
       string)))
 
-(defsubst timeclock-time-to-seconds (time)
-  "Convert TIME to a floating point number."
-  (+ (* (car time) 65536.0)
-     (cadr time)
-     (/ (or (nth 2 time) 0) 1000000.0)))
+(defalias 'timeclock-time-to-seconds (if (fboundp 'float-time) 'float-time
+				       'time-to-seconds))
 
 (defsubst timeclock-seconds-to-time (seconds)
   "Convert SECONDS (a floating point number) to an Emacs time structure."
@@ -1419,5 +1415,4 @@ HTML-P is non-nil, HTML markup is added."
 (if (file-readable-p timeclock-file)
     (timeclock-reread-log))
 
-;; arch-tag: a0be3377-deb6-44ec-b9a2-a7be28436a40
 ;;; timeclock.el ends here

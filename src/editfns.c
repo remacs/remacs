@@ -1,8 +1,6 @@
 /* Lisp functions pertaining to editing.
 
-Copyright (C) 1985, 1986, 1987, 1989, 1993, 1994, 1995, 1996, 1997,
-  1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008,
-  2009, 2010 Free Software Foundation, Inc.
+Copyright (C) 1985-1987, 1989, 1993-2011 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -29,9 +27,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <pwd.h>
 #endif
 
-#ifdef HAVE_UNISTD_H
 #include <unistd.h>
-#endif
 
 #ifdef HAVE_SYS_UTSNAME_H
 #include <sys/utsname.h>
@@ -49,6 +45,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #endif
 
 #include <ctype.h>
+#include <strftime.h>
 
 #include "intervals.h"
 #include "buffer.h"
@@ -86,9 +83,6 @@ extern char **environ;
     (1000 - TM_YEAR_BASE <= (tm_year) && (tm_year) <= 9999 - TM_YEAR_BASE)
 #endif
 
-extern size_t emacs_strftimeu (char *, size_t, const char *,
-                               const struct tm *, int);
-
 #ifdef WINDOWSNT
 extern Lisp_Object w32_get_internal_run_time (void);
 #endif
@@ -98,8 +92,8 @@ static void find_field (Lisp_Object, Lisp_Object, Lisp_Object,
 			EMACS_INT *, Lisp_Object, EMACS_INT *);
 static void update_buffer_properties (EMACS_INT, EMACS_INT);
 static Lisp_Object region_limit (int);
-static size_t emacs_memftimeu (char *, size_t, const char *,
-                               size_t, const struct tm *, int);
+static size_t emacs_nmemftime (char *, size_t, const char *,
+			       size_t, const struct tm *, int, int);
 static void general_insert_function (void (*) (const unsigned char *, EMACS_INT),
 				     void (*) (Lisp_Object, EMACS_INT,
 					       EMACS_INT, EMACS_INT,
@@ -110,23 +104,8 @@ static Lisp_Object subst_char_in_region_unwind_1 (Lisp_Object);
 static void transpose_markers (EMACS_INT, EMACS_INT, EMACS_INT, EMACS_INT,
 			       EMACS_INT, EMACS_INT, EMACS_INT, EMACS_INT);
 
-Lisp_Object Vbuffer_access_fontify_functions;
 Lisp_Object Qbuffer_access_fontify_functions;
-Lisp_Object Vbuffer_access_fontified_property;
-
 Lisp_Object Fuser_full_name (Lisp_Object);
-
-/* Non-nil means don't stop at field boundary in text motion commands.  */
-
-Lisp_Object Vinhibit_field_text_motion;
-
-/* Some static data, and a function to initialize it for each run */
-
-Lisp_Object Vsystem_name;
-Lisp_Object Vuser_real_login_name;	/* login name of current user ID */
-Lisp_Object Vuser_full_name;		/* full name of current user */
-Lisp_Object Vuser_login_name;		/* user name from LOGNAME or USER */
-Lisp_Object Voperating_system_release;  /* Operating System Release */
 
 /* Symbol for the text property used to mark fields.  */
 
@@ -218,11 +197,13 @@ usage: (char-to-string CHAR)  */)
 }
 
 DEFUN ("byte-to-string", Fbyte_to_string, Sbyte_to_string, 1, 1, 0,
-       doc: /* Convert arg BYTE to a string containing that byte.  */)
+       doc: /* Convert arg BYTE to a unibyte string containing that byte.  */)
   (Lisp_Object byte)
 {
   unsigned char b;
   CHECK_NUMBER (byte);
+  if (XINT (byte) < 0 || XINT (byte) > 255)
+    error ("Invalid byte");
   b = XINT (byte);
   return make_string_from_bytes (&b, 1, 1);
 }
@@ -1362,7 +1343,7 @@ name, or nil if there is no such user.  */)
   else if (STRINGP (uid))
     {
       BLOCK_INPUT;
-      pw = (struct passwd *) getpwnam (SDATA (uid));
+      pw = (struct passwd *) getpwnam (SSDATA (uid));
       UNBLOCK_INPUT;
     }
   else
@@ -1389,7 +1370,7 @@ name, or nil if there is no such user.  */)
       r = (unsigned char *) alloca (strlen (p) + SCHARS (login) + 1);
       memcpy (r, p, q - p);
       r[q - p] = 0;
-      strcat (r, SDATA (login));
+      strcat (r, SSDATA (login));
       r[q - p] = UPCASE (r[q - p]);
       strcat (r, q + 1);
       full = build_string (r);
@@ -1412,7 +1393,7 @@ const char *
 get_system_name (void)
 {
   if (STRINGP (Vsystem_name))
-    return (const char *) SDATA (Vsystem_name);
+    return SSDATA (Vsystem_name);
   else
     return "";
 }
@@ -1421,7 +1402,7 @@ const char *
 get_operating_system_release (void)
 {
   if (STRINGP (Voperating_system_release))
-    return (char *) SDATA (Voperating_system_release);
+    return SSDATA (Voperating_system_release);
   else
     return "";
 }
@@ -1568,22 +1549,24 @@ or (if you need time as a string) `format-time-string'.  */)
 /* Write information into buffer S of size MAXSIZE, according to the
    FORMAT of length FORMAT_LEN, using time information taken from *TP.
    Default to Universal Time if UT is nonzero, local time otherwise.
+   Use NS as the number of nanoseconds in the %N directive.
    Return the number of bytes written, not including the terminating
    '\0'.  If S is NULL, nothing will be written anywhere; so to
    determine how many bytes would be written, use NULL for S and
    ((size_t) -1) for MAXSIZE.
 
-   This function behaves like emacs_strftimeu, except it allows null
-   bytes in FORMAT.  */
+   This function behaves like nstrftime, except it allows null
+   bytes in FORMAT and it does not support nanoseconds.  */
 static size_t
-emacs_memftimeu (char *s, size_t maxsize, const char *format, size_t format_len, const struct tm *tp, int ut)
+emacs_nmemftime (char *s, size_t maxsize, const char *format,
+		 size_t format_len, const struct tm *tp, int ut, int ns)
 {
   size_t total = 0;
 
   /* Loop through all the null-terminated strings in the format
      argument.  Normally there's just one null-terminated string, but
      there can be arbitrarily many, concatenated together, if the
-     format contains '\0' bytes.  emacs_strftimeu stops at the first
+     format contains '\0' bytes.  nstrftime stops at the first
      '\0' byte so we must invoke it separately for each such string.  */
   for (;;)
     {
@@ -1593,7 +1576,7 @@ emacs_memftimeu (char *s, size_t maxsize, const char *format, size_t format_len,
       if (s)
 	s[0] = '\1';
 
-      result = emacs_strftimeu (s, maxsize, format, tp, ut);
+      result = nstrftime (s, maxsize, format, tp, ut, ns);
 
       if (s)
 	{
@@ -1639,6 +1622,7 @@ by text that describes the specified date and time in TIME:
 %p is the locale's equivalent of either AM or PM.
 %M is the minute.
 %S is the second.
+%N is the nanosecond, %6N the microsecond, %3N the millisecond, etc.
 %Z is the time zone name, %z is the numeric form.
 %s is the number of seconds since 1970-01-01 00:00:00 +0000.
 
@@ -1668,13 +1652,17 @@ For example, to produce full ISO 8601 format, use "%Y-%m-%dT%T%z".  */)
 {
   time_t value;
   int size;
+  int usec;
+  int ns;
   struct tm *tm;
   int ut = ! NILP (universal);
 
   CHECK_STRING (format_string);
 
-  if (! lisp_time_argument (time, &value, NULL))
+  if (! (lisp_time_argument (time, &value, &usec)
+	 && 0 <= usec && usec < 1000000))
     error ("Invalid time specification");
+  ns = usec * 1000;
 
   format_string = code_convert_string_norecord (format_string,
 						Vlocale_coding_system, 1);
@@ -1697,9 +1685,9 @@ For example, to produce full ISO 8601 format, use "%Y-%m-%dT%T%z".  */)
 
       buf[0] = '\1';
       BLOCK_INPUT;
-      result = emacs_memftimeu (buf, size, SDATA (format_string),
+      result = emacs_nmemftime (buf, size, SSDATA (format_string),
 				SBYTES (format_string),
-				tm, ut);
+				tm, ut, ns);
       UNBLOCK_INPUT;
       if ((result > 0 && result < size) || (result == 0 && buf[0] == '\0'))
 	return code_convert_string_norecord (make_unibyte_string (buf, result),
@@ -1707,10 +1695,10 @@ For example, to produce full ISO 8601 format, use "%Y-%m-%dT%T%z".  */)
 
       /* If buffer was too small, make it bigger and try again.  */
       BLOCK_INPUT;
-      result = emacs_memftimeu (NULL, (size_t) -1,
-				SDATA (format_string),
+      result = emacs_nmemftime (NULL, (size_t) -1,
+				SSDATA (format_string),
 				SBYTES (format_string),
-				tm, ut);
+				tm, ut, ns);
       UNBLOCK_INPUT;
       size = result + 1;
     }
@@ -1829,7 +1817,7 @@ usage: (encode-time SECOND MINUTE HOUR DAY MONTH YEAR &optional ZONE)  */)
       if (EQ (zone, Qt))
 	tzstring = "UTC0";
       else if (STRINGP (zone))
-	tzstring = (char *) SDATA (zone);
+	tzstring = SSDATA (zone);
       else if (INTEGERP (zone))
 	{
 	  int abszone = eabs (XINT (zone));
@@ -2018,7 +2006,7 @@ If TZ is t, use Universal Time.  */)
   else
     {
       CHECK_STRING (tz);
-      tzstring = (char *) SDATA (tz);
+      tzstring = SSDATA (tz);
     }
 
   set_time_zone_rule (tzstring);
@@ -4555,12 +4543,12 @@ syms_of_editfns (void)
     = intern_c_string ("buffer-access-fontify-functions");
   staticpro (&Qbuffer_access_fontify_functions);
 
-  DEFVAR_LISP ("inhibit-field-text-motion", &Vinhibit_field_text_motion,
+  DEFVAR_LISP ("inhibit-field-text-motion", Vinhibit_field_text_motion,
 	       doc: /* Non-nil means text motion commands don't notice fields.  */);
   Vinhibit_field_text_motion = Qnil;
 
   DEFVAR_LISP ("buffer-access-fontify-functions",
-	       &Vbuffer_access_fontify_functions,
+	       Vbuffer_access_fontify_functions,
 	       doc: /* List of functions called by `buffer-substring' to fontify if necessary.
 Each function is called with two arguments which specify the range
 of the buffer being accessed.  */);
@@ -4578,25 +4566,25 @@ of the buffer being accessed.  */);
   }
 
   DEFVAR_LISP ("buffer-access-fontified-property",
-	       &Vbuffer_access_fontified_property,
+	       Vbuffer_access_fontified_property,
 	       doc: /* Property which (if non-nil) indicates text has been fontified.
 `buffer-substring' need not call the `buffer-access-fontify-functions'
 functions if all the text being accessed has this property.  */);
   Vbuffer_access_fontified_property = Qnil;
 
-  DEFVAR_LISP ("system-name", &Vsystem_name,
+  DEFVAR_LISP ("system-name", Vsystem_name,
 	       doc: /* The host name of the machine Emacs is running on.  */);
 
-  DEFVAR_LISP ("user-full-name", &Vuser_full_name,
+  DEFVAR_LISP ("user-full-name", Vuser_full_name,
 	       doc: /* The full name of the user logged in.  */);
 
-  DEFVAR_LISP ("user-login-name", &Vuser_login_name,
+  DEFVAR_LISP ("user-login-name", Vuser_login_name,
 	       doc: /* The user's name, taken from environment variables if possible.  */);
 
-  DEFVAR_LISP ("user-real-login-name", &Vuser_real_login_name,
+  DEFVAR_LISP ("user-real-login-name", Vuser_real_login_name,
 	       doc: /* The user's name, based upon the real uid only.  */);
 
-  DEFVAR_LISP ("operating-system-release", &Voperating_system_release,
+  DEFVAR_LISP ("operating-system-release", Voperating_system_release,
 	       doc: /* The release of the operating system Emacs is running on.  */);
 
   defsubr (&Spropertize);
@@ -4692,6 +4680,3 @@ functions if all the text being accessed has this property.  */);
   defsubr (&Ssave_restriction);
   defsubr (&Stranspose_regions);
 }
-
-/* arch-tag: fc3827d8-6f60-4067-b11e-c3218031b018
-   (do not change this comment) */

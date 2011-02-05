@@ -1,7 +1,7 @@
 ;;; dired-aux.el --- less commonly used parts of dired
 
-;; Copyright (C) 1985, 1986, 1992, 1994, 1998, 2000, 2001, 2002, 2003,
-;;   2004, 2005, 2006, 2007, 2008, 2009, 2010 Free Software Foundation, Inc.
+;; Copyright (C) 1985-1986, 1992, 1994, 1998, 2000-2011
+;;   Free Software Foundation, Inc.
 
 ;; Author: Sebastian Kremer <sk@thp.uni-koeln.de>.
 ;; Maintainer: FSF
@@ -700,7 +700,7 @@ can be produced by `dired-get-marked-files', for example."
 	(save-excursion (and file
 			     (dired-goto-subdir file)
 			     (dired-kill-subdir)))
-	(delete-region (progn (beginning-of-line) (point))
+	(delete-region (line-beginning-position)
 		       (progn (forward-line 1) (point)))
 	(if (> arg 0)
 	    (setq arg (1- arg))
@@ -734,7 +734,7 @@ command with a prefix argument (the value does not matter)."
 	(while (and (not (eobp))
 		    (re-search-forward regexp nil t))
 	  (setq count (1+ count))
-	  (delete-region (progn (beginning-of-line) (point))
+	  (delete-region (line-beginning-position)
 			 (progn (forward-line 1) (point))))
 	(or (equal "" fmt)
 	    (message (or fmt "Killed %d line%s.") count (dired-plural-s count)))
@@ -888,55 +888,35 @@ Otherwise, the rule is a compression rule, and compression is done with gzip.")
 		   (downcase string) count total (dired-plural-s total))
 	   failures)))))
 
-(defvar dired-query-alist
-  '((?y . y) (?\040 . y)		; `y' or SPC means accept once
-    (?n . n) (?\177 . n)		; `n' or DEL skips once
-    (?! . yes)				; `!' accepts rest
-    (?q . no) (?\e . no)		; `q' or ESC skips rest
-    ;; None of these keys quit - use C-g for that.
-    ))
-
 ;;;###autoload
-(defun dired-query (qs-var qs-prompt &rest qs-args)
-  "Query user and return nil or t.
-Store answer in symbol VAR (which must initially be bound to nil).
-Format PROMPT with ARGS.
-Binding variable `help-form' will help the user who types the help key."
-  (let* ((char (symbol-value qs-var))
-	 (action (cdr (assoc char dired-query-alist))))
-    (cond ((eq 'yes action)
-	   t)				; accept, and don't ask again
-	  ((eq 'no action)
-	   nil)				; skip, and don't ask again
-	  (t;; no lasting effects from last time we asked - ask now
-	   (let ((cursor-in-echo-area t)
-		 (executing-kbd-macro executing-kbd-macro)
-		 (qprompt (concat qs-prompt
-				  (if help-form
-				      (format " [Type yn!q or %s] "
-					      (key-description
-					       (char-to-string help-char)))
-				    " [Type y, n, q or !] ")))
-		 done result elt)
-	     (while (not done)
-	       (apply 'message qprompt qs-args)
-	       (setq char (set qs-var (read-event)))
-	       (if (numberp char)
-		   (cond ((and executing-kbd-macro (= char -1))
-			  ;; read-event returns -1 if we are in a kbd
-			  ;; macro and there are no more events in the
-			  ;; macro.  Attempt to get an event
-			  ;; interactively.
-			  (setq executing-kbd-macro nil))
-			 ((eq (key-binding (vector char)) 'keyboard-quit)
-			  (keyboard-quit))
-			 (t
-			  (setq done (setq elt (assoc char
-						      dired-query-alist)))))))
-	     ;; Display the question with the answer.
-	     (message "%s" (concat (apply 'format qprompt qs-args)
-				   (char-to-string char)))
-	     (memq (cdr elt) '(t y yes)))))))
+(defun dired-query (sym prompt &rest args)
+  "Format PROMPT with ARGS, query user, and store the result in SYM.
+The return value is either nil or t.
+
+The user may type y or SPC to accept once; n or DEL to skip once;
+! to accept this and subsequent queries; or q or ESC to decline
+this and subsequent queries.
+
+If SYM is already bound to a non-nil value, this function may
+return automatically without querying the user.  If SYM is !,
+return t; if SYM is q or ESC, return nil."
+  (let* ((char (symbol-value sym))
+	 (char-choices '(?y ?\s ?n ?\177 ?! ?q ?\e)))
+    (cond ((eq char ?!)
+	   t)       ; accept, and don't ask again
+	  ((memq char '(?q ?\e))
+	   nil)     ; skip, and don't ask again
+	  (t        ; no previous answer - ask now
+	   (setq prompt
+		 (concat (apply 'format prompt args)
+			 (if help-form
+			     (format " [Type yn!q or %s] "
+				     (key-description
+				      (char-to-string help-char)))
+			   " [Type y, n, q or !] ")))
+	   (set sym (setq char (read-char-choice prompt char-choices)))
+	   (if (memq char '(?y ?\s ?!)) t)))))
+
 
 ;;;###autoload
 (defun dired-do-compress (&optional arg)
@@ -1018,10 +998,14 @@ See Info node `(emacs)Subdir switches' for more details."
     ;; message much faster than making dired-map-over-marks show progress
     (dired-uncache
      (if (consp dired-directory) (car dired-directory) dired-directory))
-    (dired-map-over-marks (let ((fname (dired-get-filename)))
+    (dired-map-over-marks (let ((fname (dired-get-filename))
+				;; Postphone readin hook till we map
+				;; over all marked files (Bug#6810).
+				(dired-after-readin-hook nil))
 			    (message "Redisplaying... %s" fname)
 			    (dired-update-file-line fname))
 			  arg)
+    (run-hooks 'dired-after-readin-hook)
     (dired-move-to-filename)
     (message "Redisplaying...done")))
 
@@ -1037,10 +1021,10 @@ See Info node `(emacs)Subdir switches' for more details."
   ;; Keeps any marks that may be present in column one (doing this
   ;; here is faster than with dired-add-entry's optional arg).
   ;; Does not update other dired buffers.  Use dired-relist-entry for that.
-  (beginning-of-line)
-  (let ((char (following-char)) (opoint (point))
+  (let ((char (following-char))
+	(opoint (line-beginning-position))
 	(buffer-read-only))
-    (delete-region (point) (progn (forward-line 1) (point)))
+    (delete-region opoint (progn (forward-line 1) (point)))
     (if file
 	(progn
 	  (dired-add-entry file nil t)
@@ -1133,8 +1117,7 @@ See Info node `(emacs)Subdir switches' for more details."
 		  (save-excursion ;; ...so we can run it right now:
 		    (save-restriction
 		      (beginning-of-line)
-		      (narrow-to-region (point) (save-excursion
-						  (forward-line 1) (point)))
+		      (narrow-to-region (point) (line-beginning-position 2))
 		      (run-hooks 'dired-after-readin-hook))))
 	      (dired-move-to-filename))
 	    ;; return nil if all went well
@@ -1167,7 +1150,7 @@ See Info node `(emacs)Subdir switches' for more details."
     (and (dired-goto-file file)
 	 (let (buffer-read-only)
 	   (delete-region (progn (beginning-of-line) (point))
-			  (save-excursion (forward-line 1) (point)))))))
+			  (line-beginning-position 2))))))
 
 ;;;###autoload
 (defun dired-relist-file (file)
@@ -1188,7 +1171,7 @@ See Info node `(emacs)Subdir switches' for more details."
 	   (delete-region (progn (beginning-of-line)
 				 (setq marker (following-char))
 				 (point))
-			  (save-excursion (forward-line 1) (point))))
+			  (line-beginning-position 2)))
       (setq file (directory-file-name file))
       (dired-add-entry file (if (eq ?\040 marker) nil marker)))))
 
@@ -2482,5 +2465,4 @@ true then the type of the file linked to by FILE is printed instead."
 ;; generated-autoload-file: "dired.el"
 ;; End:
 
-;; arch-tag: 4b508de9-a153-423d-8d3f-a1bbd86f4f60
 ;;; dired-aux.el ends here

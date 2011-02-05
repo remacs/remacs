@@ -1,7 +1,6 @@
 ;;; mail-source.el --- functions for fetching mail
 
-;; Copyright (C) 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007,
-;;   2008, 2009, 2010  Free Software Foundation, Inc.
+;; Copyright (C) 1999-2011  Free Software Foundation, Inc.
 
 ;; Author: Lars Magne Ingebrigtsen <larsi@gnus.org>
 ;; Keywords: news, mail
@@ -501,6 +500,8 @@ See `mail-source-bind'."
    (t
     value)))
 
+(autoload 'nnheader-message "nnheader")
+
 (defun mail-source-fetch (source callback &optional method)
   "Fetch mail from SOURCE and call CALLBACK zero or more times.
 CALLBACK will be called with the name of the file where (some of)
@@ -594,6 +595,8 @@ Deleting old (> %s day(s)) incoming mail file `%s'." diff bfile)
 	0)
     (funcall callback mail-source-crash-box info)))
 
+(autoload 'gnus-float-time "gnus-util")
+
 (defvar mail-source-incoming-last-checked-time nil)
 
 (defun mail-source-delete-crash-box ()
@@ -614,7 +617,7 @@ Deleting old (> %s day(s)) incoming mail file `%s'." diff bfile)
 	  ;; Don't check for old incoming files more than once per day to
 	  ;; save a lot of file accesses.
 	  (when (or (null mail-source-incoming-last-checked-time)
-		    (> (time-to-seconds
+		    (> (gnus-float-time
 			(time-since mail-source-incoming-last-checked-time))
 		       (* 24 60 60)))
 	    (setq mail-source-incoming-last-checked-time (current-time))

@@ -1,7 +1,6 @@
 ;;; array.el --- array editing commands for GNU Emacs
 
-;; Copyright (C) 1987, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007,
-;;   2008, 2009, 2010 Free Software Foundation, Inc.
+;; Copyright (C) 1987, 2000-2011 Free Software Foundation, Inc.
 
 ;; Author: David M. Brown
 ;; Maintainer: FSF
@@ -748,9 +747,7 @@ of `array-rows-numbered'."
 
 (defun current-line ()
   "Return the current buffer line at point.  The first line is 0."
-  (save-excursion
-    (beginning-of-line)
-    (count-lines (point-min) (point))))
+  (count-lines (point-min) (line-beginning-position)))
 
 (defun move-to-column-untabify (column)
   "Move to COLUMN on the current line, untabifying if necessary.
@@ -903,5 +900,4 @@ Entering array mode calls the function `array-mode-hook'."
 
 (provide 'array)
 
-;; arch-tag: 0086605d-79fe-4a1a-992a-456417261f80
 ;;; array.el ends here

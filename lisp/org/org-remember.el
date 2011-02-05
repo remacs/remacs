@@ -1,12 +1,11 @@
 ;;; org-remember.el --- Fast note taking in Org-mode
 
-;; Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010
-;;   Free Software Foundation, Inc.
+;; Copyright (C) 2004-2011  Free Software Foundation, Inc.
 
 ;; Author: Carsten Dominik <carsten at orgmode dot org>
 ;; Keywords: outlines, hypermedia, calendar, wp
 ;; Homepage: http://orgmode.org
-;; Version: 7.01
+;; Version: 7.4
 ;;
 ;; This file is part of GNU Emacs.
 ;;
@@ -157,7 +156,7 @@ Furthermore, the following %-escapes will be replaced with content:
 Apart from these general escapes, you can access information specific to the
 link type that is created.  For example, calling `remember' in emails or gnus
 will record the author and the subject of the message, which you can access
-with %:author and %:subject, respectively.  Here is a complete list of what
+with %:fromname and %:subject, respectively.  Here is a complete list of what
 is recorded for each link type.
 
 Link type          |  Available information
@@ -167,7 +166,8 @@ vm, wl, mh, rmail  |  %:type %:subject %:message-id
                    |  %:from %:fromname %:fromaddress
                    |  %:to   %:toname   %:toaddress
                    |  %:fromto (either \"to NAME\" or \"from NAME\")
-gnus               |  %:group, for messages also all email fields
+gnus               |  %:group, for messages also all email fields and
+                   |  %:org-date (the Date: header in Org format)
 w3, w3m            |  %:type %:url
 info               |  %:type %:file %:node
 calendar           |  %:type %:date"
@@ -223,8 +223,7 @@ for a Remember buffer.")
 
 (define-minor-mode org-remember-mode
   "Minor mode for special key bindings in a remember buffer."
-  nil " Rem" org-remember-mode-map
-  (run-hooks 'org-remember-mode-hook))
+  nil " Rem" org-remember-mode-map)
 (define-key org-remember-mode-map "\C-c\C-c" 'org-remember-finalize)
 (define-key org-remember-mode-map "\C-c\C-k" 'org-remember-kill)
 
@@ -574,7 +573,7 @@ to be run from that hook to function properly."
 			   'org-tags-completion-function nil nil nil
 			   'org-tags-history)))
 		(setq ins (mapconcat 'identity
-				     (org-split-string ins (org-re "[^[:alnum:]_@]+"))
+				     (org-split-string ins (org-re "[^[:alnum:]_@#%]+"))
 				     ":"))
 		(when (string-match "\\S-" ins)
 		  (or (equal (char-before) ?:) (insert ":"))
@@ -1148,7 +1147,6 @@ See also the variable `org-reverse-note-order'."
 
 (provide 'org-remember)
 
-;; arch-tag: 497f30d0-4bc3-4097-8622-2d27ac5f2698
 
 ;;; org-remember.el ends here
 

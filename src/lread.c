@@ -1,7 +1,6 @@
 /* Lisp parsing and input streams.
-   Copyright (C) 1985, 1986, 1987, 1988, 1989, 1993, 1994, 1995,
-                 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004,
-                 2005, 2006, 2007, 2008, 2009, 2010 Free Software Foundation, Inc.
+
+Copyright (C) 1985-1989, 1993-1995, 1997-2011  Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -44,10 +43,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "msdos.h"
 #endif
 
-#ifdef HAVE_UNISTD_H
 #include <unistd.h>
-#endif
-
 #include <math.h>
 
 #ifdef HAVE_SETLOCALE
@@ -72,11 +68,11 @@ Lisp_Object Qrehash_size;
 Lisp_Object Qrehash_threshold;
 
 Lisp_Object Qread_char, Qget_file_char, Qstandard_input, Qcurrent_load_list;
-Lisp_Object Qvariable_documentation, Vvalues, Vstandard_input, Vafter_load_alist;
+Lisp_Object Qvariable_documentation;
 Lisp_Object Qascii_character, Qload, Qload_file_name;
 Lisp_Object Qbackquote, Qcomma, Qcomma_at, Qcomma_dot, Qfunction;
 Lisp_Object Qinhibit_file_name_operation;
-Lisp_Object Qeval_buffer_list, Veval_buffer_list;
+Lisp_Object Qeval_buffer_list;
 Lisp_Object Qfile_truename, Qdo_after_load_evaluation; /* ACM 2006/5/16 */
 
 /* Used instead of Qget_file_char while loading *.elc files compiled
@@ -85,37 +81,7 @@ static Lisp_Object Qget_emacs_mule_file_char;
 
 static Lisp_Object Qload_force_doc_strings;
 
-/* non-zero if inside `load' */
-int load_in_progress;
 static Lisp_Object Qload_in_progress;
-
-/* Directory in which the sources were found.  */
-Lisp_Object Vsource_directory;
-
-/* Search path and suffixes for files to be loaded. */
-Lisp_Object Vload_path, Vload_suffixes, Vload_file_rep_suffixes;
-
-/* File name of user's init file.  */
-Lisp_Object Vuser_init_file;
-
-/* This is the user-visible association list that maps features to
-   lists of defs in their load files. */
-Lisp_Object Vload_history;
-
-/* This is used to build the load history. */
-Lisp_Object Vcurrent_load_list;
-
-/* List of files that were preloaded.  */
-Lisp_Object Vpreloaded_file_list;
-
-/* Name of file actually being read by `load'.  */
-Lisp_Object Vload_file_name;
-
-/* Function to use for reading, in `load' and friends.  */
-Lisp_Object Vload_read_function;
-
-/* Non-nil means read recursive structures using #n= and #n# syntax.  */
-Lisp_Object Vread_circle;
 
 /* The association list of objects read with the #n=object form.
    Each member of the list has the form (n . object), and is used to
@@ -123,30 +89,10 @@ Lisp_Object Vread_circle;
    It must be set to nil before all top-level calls to read0.  */
 Lisp_Object read_objects;
 
-/* Nonzero means load should forcibly load all dynamic doc strings.  */
-static int load_force_doc_strings;
-
-/* Nonzero means read should convert strings to unibyte.  */
-static int load_convert_to_unibyte;
-
 /* Nonzero means READCHAR should read bytes one by one (not character)
    when READCHARFUN is Qget_file_char or Qget_emacs_mule_file_char.
    This is set to 1 by read1 temporarily while handling #@NUMBER.  */
 static int load_each_byte;
-
-/* Function to use for loading an Emacs Lisp source file (not
-   compiled) instead of readevalloop.  */
-Lisp_Object Vload_source_file_function;
-
-/* List of all DEFVAR_BOOL variables.  Used by the byte optimizer.  */
-Lisp_Object Vbyte_boolean_vars;
-
-/* Whether or not to add a `read-positions' property to symbols
-   read. */
-Lisp_Object Vread_with_symbol_positions;
-
-/* List of (SYMBOL . POSITION) accumulated so far. */
-Lisp_Object Vread_symbol_positions_list;
 
 /* List of descriptors now open for Fload.  */
 static Lisp_Object load_descriptor_list;
@@ -191,24 +137,12 @@ static file_offset prev_saved_doc_string_position;
    Fread initializes this to zero, so we need not specbind it
    or worry about what happens to it when there is an error.  */
 static int new_backquote_flag;
-static Lisp_Object Vold_style_backquotes, Qold_style_backquotes;
+static Lisp_Object Qold_style_backquotes;
 
 /* A list of file names for files being loaded in Fload.  Used to
    check for recursive loads.  */
 
 static Lisp_Object Vloads_in_progress;
-
-/* Non-zero means load dangerous compiled Lisp files.  */
-
-int load_dangerous_libraries;
-
-/* Non-zero means force printing messages when loading Lisp files.  */
-
-int force_load_messages;
-
-/* A regular expression used to detect files compiled with Emacs.  */
-
-static Lisp_Object Vbytecomp_version_regexp;
 
 static int read_emacs_mule_char (int, int (*) (int, Lisp_Object),
                                  Lisp_Object);
@@ -551,8 +485,6 @@ readbyte_from_string (int c, Lisp_Object readcharfun)
    encoded in `emacs-mule' and the first byte is already read in
    C.  */
 
-extern char emacs_mule_bytes[256];
-
 static int
 read_emacs_mule_char (int c, int (*readbyte) (int, Lisp_Object), Lisp_Object readcharfun)
 {
@@ -583,7 +515,7 @@ read_emacs_mule_char (int c, int (*readbyte) (int, Lisp_Object), Lisp_Object rea
 
   if (len == 2)
     {
-      charset = emacs_mule_charset[buf[0]];
+      charset = CHARSET_FROM_ID (emacs_mule_charset[buf[0]]);
       code = buf[1] & 0x7F;
     }
   else if (len == 3)
@@ -591,18 +523,18 @@ read_emacs_mule_char (int c, int (*readbyte) (int, Lisp_Object), Lisp_Object rea
       if (buf[0] == EMACS_MULE_LEADING_CODE_PRIVATE_11
 	  || buf[0] == EMACS_MULE_LEADING_CODE_PRIVATE_12)
 	{
-	  charset = emacs_mule_charset[buf[1]];
+	  charset = CHARSET_FROM_ID (emacs_mule_charset[buf[1]]);
 	  code = buf[2] & 0x7F;
 	}
       else
 	{
-	  charset = emacs_mule_charset[buf[0]];
+	  charset = CHARSET_FROM_ID (emacs_mule_charset[buf[0]]);
 	  code = ((buf[1] << 8) | buf[2]) & 0x7F7F;
 	}
     }
   else
     {
-      charset = emacs_mule_charset[buf[1]];
+      charset = CHARSET_FROM_ID (emacs_mule_charset[buf[1]]);
       code = ((buf[2] << 8) | buf[3]) & 0x7F7F;
     }
   c = DECODE_CHAR (charset, code);
@@ -651,7 +583,7 @@ static void substitute_in_interval (INTERVAL, Lisp_Object);
    If SECONDS is a number, we wait that many seconds for input, and
    return Qnil if no input arrives within that time.  */
 
-Lisp_Object
+static Lisp_Object
 read_filtered_event (int no_switch_frame, int ascii_required,
 		     int error_nonascii, int input_method, Lisp_Object seconds)
 {
@@ -965,6 +897,10 @@ Loading a file records its definitions, and its `provide' and
 `require' calls, in an element of `load-history' whose
 car is the file name loaded.  See `load-history'.
 
+While the file is in the process of being loaded, the variable
+`load-in-progress' is non-nil and the variable `load-file-name'
+is bound to the file's name.
+
 Return t if the file exists and loads successfully.  */)
   (Lisp_Object file, Lisp_Object noerror, Lisp_Object nomessage, Lisp_Object nosuffix, Lisp_Object must_suffix)
 {
@@ -1027,10 +963,10 @@ Return t if the file exists and loads successfully.  */)
 	{
 	  /* Don't insist on adding a suffix if FILE already ends with one.  */
 	  if (size > 3
-	      && !strcmp (SDATA (file) + size - 3, ".el"))
+	      && !strcmp (SSDATA (file) + size - 3, ".el"))
 	    must_suffix = Qnil;
 	  else if (size > 4
-		   && !strcmp (SDATA (file) + size - 4, ".elc"))
+		   && !strcmp (SSDATA (file) + size - 4, ".elc"))
 	    must_suffix = Qnil;
 	  /* Don't insist on adding a suffix
 	     if the argument includes a directory name.  */
@@ -1144,9 +1080,9 @@ Return t if the file exists and loads successfully.  */)
 #ifdef DOS_NT
 	  fmode = "rb";
 #endif /* DOS_NT */
-	  stat ((char *)SDATA (efound), &s1);
+	  stat (SSDATA (efound), &s1);
 	  SSET (efound, SBYTES (efound) - 1, 0);
-	  result = stat ((char *)SDATA (efound), &s2);
+	  result = stat (SSDATA (efound), &s2);
 	  SSET (efound, SBYTES (efound) - 1, 'c');
 
 	  if (result >= 0 && (unsigned) s1.st_mtime < (unsigned) s2.st_mtime)
@@ -1187,7 +1123,7 @@ Return t if the file exists and loads successfully.  */)
 #ifdef WINDOWSNT
   emacs_close (fd);
   efound = ENCODE_FILE (found);
-  stream = fopen ((char *) SDATA (efound), fmode);
+  stream = fopen (SSDATA (efound), fmode);
 #else  /* not WINDOWSNT */
   stream = fdopen (fd, fmode);
 #endif /* not WINDOWSNT */
@@ -1412,19 +1348,19 @@ openp (Lisp_Object path, Lisp_Object str, Lisp_Object suffixes, Lisp_Object *sto
 	      && SREF (filename, 0) == '/'
 	      && SREF (filename, 1) == ':')
 	    {
-	      strncpy (fn, SDATA (filename) + 2,
+	      strncpy (fn, SSDATA (filename) + 2,
 		       SBYTES (filename) - 2);
 	      fn[SBYTES (filename) - 2] = 0;
 	    }
 	  else
 	    {
-	      strncpy (fn, SDATA (filename),
+	      strncpy (fn, SSDATA (filename),
 		       SBYTES (filename));
 	      fn[SBYTES (filename)] = 0;
 	    }
 
 	  if (lsuffix != 0)  /* Bug happens on CCI if lsuffix is 0.  */
-	    strncat (fn, SDATA (XCAR (tail)), lsuffix);
+	    strncat (fn, SSDATA (XCAR (tail)), lsuffix);
 
 	  /* Check that the file exists and is not a directory.  */
 	  /* We used to only check for handlers on non-absolute file names:
@@ -1459,7 +1395,7 @@ openp (Lisp_Object path, Lisp_Object str, Lisp_Object suffixes, Lisp_Object *sto
 	      const char *pfn;
 
 	      encoded_fn = ENCODE_FILE (string);
-	      pfn = SDATA (encoded_fn);
+	      pfn = SSDATA (encoded_fn);
 	      exists = (stat (pfn, &st) >= 0
 			&& (st.st_mode & S_IFMT) != S_IFDIR);
 	      if (exists)
@@ -2634,7 +2570,7 @@ read1 (register Lisp_Object readcharfun, int *pch, int first_in_list)
 	   old-style.  For Emacs-25, we should completely remove this
 	   first_in_list exception (old-style can still be obtained via
 	   "(\`" anyway).  */
-	if (first_in_list && next_char == ' ')
+	if (!new_backquote_flag && first_in_list && next_char == ' ')
 	  {
 	    Vold_style_backquotes = Qt;
 	    goto default_label;
@@ -2651,33 +2587,48 @@ read1 (register Lisp_Object readcharfun, int *pch, int first_in_list)
 	  }
       }
     case ',':
-      if (new_backquote_flag)
-	{
-	  Lisp_Object comma_type = Qnil;
-	  Lisp_Object value;
-	  int ch = READCHAR;
+      {
+	int next_char = READCHAR;
+	UNREAD (next_char);
+	/* Transition from old-style to new-style:
+           It used to be impossible to have a new-style , other than within
+	   a new-style `.  This is sufficient when ` and , are used in the
+	   normal way, but ` and , can also appear in args to macros that
+	   will not interpret them in the usual way, in which case , may be
+	   used without any ` anywhere near.
+	   So we now use the same heuristic as for backquote: old-style
+	   unquotes are only recognized when first on a list, and when
+	   followed by a space.
+	   Because it's more difficult to peak 2 chars ahead, a new-style
+	   ,@ can still not be used outside of a `, unless it's in the middle
+	   of a list.  */
+	if (new_backquote_flag
+	    || !first_in_list
+	    || (next_char != ' ' && next_char != '@'))
+	  {
+	    Lisp_Object comma_type = Qnil;
+	    Lisp_Object value;
+	    int ch = READCHAR;
 
-	  if (ch == '@')
-	    comma_type = Qcomma_at;
-	  else if (ch == '.')
-	    comma_type = Qcomma_dot;
-	  else
-	    {
-	      if (ch >= 0) UNREAD (ch);
-	      comma_type = Qcomma;
-	    }
+	    if (ch == '@')
+	      comma_type = Qcomma_at;
+	    else if (ch == '.')
+	      comma_type = Qcomma_dot;
+	    else
+	      {
+		if (ch >= 0) UNREAD (ch);
+		comma_type = Qcomma;
+	      }
 
-	  new_backquote_flag--;
-	  value = read0 (readcharfun);
-	  new_backquote_flag++;
-	  return Fcons (comma_type, Fcons (value, Qnil));
-	}
-      else
-	{
-	  Vold_style_backquotes = Qt;
-	  goto default_label;
-	}
-
+	    value = read0 (readcharfun);
+	    return Fcons (comma_type, Fcons (value, Qnil));
+	  }
+	else
+	  {
+	    Vold_style_backquotes = Qt;
+	    goto default_label;
+	  }
+      }
     case '?':
       {
 	int modifiers;
@@ -2704,26 +2655,9 @@ read1 (register Lisp_Object readcharfun, int *pch, int first_in_list)
 	c |= modifiers;
 
 	next_char = READCHAR;
-	if (next_char == '.')
-	  {
-	    /* Only a dotted-pair dot is valid after a char constant.  */
-	    int next_next_char = READCHAR;
-	    UNREAD (next_next_char);
-
-	    ok = (next_next_char <= 040
-		  || (next_next_char < 0200
-		      && (strchr ("\"';([#?", next_next_char)
-			  || (!first_in_list && next_next_char == '`')
-			  || (new_backquote_flag && next_next_char == ','))));
-	  }
-	else
-	  {
-	    ok = (next_char <= 040
-		  || (next_char < 0200
-		      && (strchr ("\"';()[]#?", next_char)
-			  || (!first_in_list && next_char == '`')
-			  || (new_backquote_flag && next_char == ','))));
-	  }
+	ok = (next_char <= 040
+	      || (next_char < 0200
+		  && (strchr ("\"';()[]#?`,.", next_char))));
 	UNREAD (next_char);
 	if (ok)
 	  return make_number (c);
@@ -2865,9 +2799,7 @@ read1 (register Lisp_Object readcharfun, int *pch, int first_in_list)
 
 	if (next_char <= 040
 	    || (next_char < 0200
-		&& (strchr ("\"';([#?", next_char)
-		    || (!first_in_list && next_char == '`')
-		    || (new_backquote_flag && next_char == ','))))
+		&& (strchr ("\"';([#?`,", next_char))))
 	  {
 	    *pch = c;
 	    return Qnil;
@@ -2889,12 +2821,7 @@ read1 (register Lisp_Object readcharfun, int *pch, int first_in_list)
 	{
 	  char *end = read_buffer + read_buffer_size;
 
-	  while (c > 040
-		 && c != 0x8a0 /* NBSP */
-		 && (c >= 0200
-		     || (!strchr ("\"';()[]#", c)
-			 && !(!first_in_list && c == '`')
-			 && !(new_backquote_flag && c == ','))))
+	  do
 	    {
 	      if (end - p < MAX_MULTIBYTE_LENGTH)
 		{
@@ -2918,7 +2845,10 @@ read1 (register Lisp_Object readcharfun, int *pch, int first_in_list)
 	      else
 		*p++ = c;
 	      c = READCHAR;
-	    }
+	    } while (c > 040
+		     && c != 0x8a0 /* NBSP */
+		     && (c >= 0200
+			 || !(strchr ("\"';()[]#`,", c))));
 
 	  if (p == end)
 	    {
@@ -3506,7 +3436,6 @@ read_list (int flag, register Lisp_Object readcharfun)
     }
 }
 
-Lisp_Object Vobarray;
 Lisp_Object initial_obarray;
 
 /* oblookup stores the bucket number here, for the sake of Funintern.  */
@@ -3598,7 +3527,7 @@ it defaults to the value of `obarray'.  */)
 
   CHECK_STRING (string);
 
-  tem = oblookup (obarray, SDATA (string),
+  tem = oblookup (obarray, SSDATA (string),
 		  SCHARS (string),
 		  SBYTES (string));
   if (!INTEGERP (tem))
@@ -3651,7 +3580,7 @@ it defaults to the value of `obarray'.  */)
   else
     string = SYMBOL_NAME (name);
 
-  tem = oblookup (obarray, SDATA (string), SCHARS (string), SBYTES (string));
+  tem = oblookup (obarray, SSDATA (string), SCHARS (string), SBYTES (string));
   if (INTEGERP (tem) || (SYMBOLP (name) && !EQ (name, tem)))
     return Qnil;
   else
@@ -3680,7 +3609,7 @@ OBARRAY defaults to the value of the variable `obarray'.  */)
       string = name;
     }
 
-  tem = oblookup (obarray, SDATA (string),
+  tem = oblookup (obarray, SSDATA (string),
 		  SCHARS (string),
 		  SBYTES (string));
   if (INTEGERP (tem))
@@ -3889,9 +3818,9 @@ defalias (sname, string)
 }
 #endif /* NOTDEF */
 
-/* Define an "integer variable"; a symbol whose value is forwarded
-   to a C variable of type int.  Sample call:
-   DEFVAR_INT ("emacs-priority", &emacs_priority, "Documentation");  */
+/* Define an "integer variable"; a symbol whose value is forwarded to a
+   C variable of type int.  Sample call (munged w "xx" to fool make-docfile):
+   DEFxxVAR_INT ("emacs-priority", &emacs_priority, "Documentation");  */
 void
 defvar_int (struct Lisp_Intfwd *i_fwd,
 	    const char *namestring, EMACS_INT *address)
@@ -4089,7 +4018,7 @@ init_lread (void)
 			Vload_path = Fcons (tem, Vload_path);
 		    }
 		}
-	      if (!NILP (sitelisp))
+	      if (!NILP (sitelisp) && !no_site_lisp)
 		Vload_path = nconc2 (Fnreverse (sitelisp), Vload_path);
 	    }
 	}
@@ -4126,7 +4055,7 @@ init_lread (void)
 	  if (STRINGP (dirfile))
 	    {
 	      dirfile = Fdirectory_file_name (dirfile);
-	      if (access (SDATA (dirfile), 0) < 0)
+	      if (access (SSDATA (dirfile), 0) < 0)
 		dir_warning ("Warning: Lisp directory `%s' does not exist.\n",
 			     XCAR (path_tail));
 	    }
@@ -4188,22 +4117,22 @@ syms_of_lread (void)
   defsubr (&Smapatoms);
   defsubr (&Slocate_file_internal);
 
-  DEFVAR_LISP ("obarray", &Vobarray,
+  DEFVAR_LISP ("obarray", Vobarray,
 	       doc: /* Symbol table for use by `intern' and `read'.
 It is a vector whose length ought to be prime for best results.
 The vector's contents don't make sense if examined from Lisp programs;
 to find all the symbols in an obarray, use `mapatoms'.  */);
 
-  DEFVAR_LISP ("values", &Vvalues,
+  DEFVAR_LISP ("values", Vvalues,
 	       doc: /* List of values of all expressions which were read, evaluated and printed.
 Order is reverse chronological.  */);
 
-  DEFVAR_LISP ("standard-input", &Vstandard_input,
+  DEFVAR_LISP ("standard-input", Vstandard_input,
 	       doc: /* Stream for read to get input from.
 See documentation of `read' for possible values.  */);
   Vstandard_input = Qt;
 
-  DEFVAR_LISP ("read-with-symbol-positions", &Vread_with_symbol_positions,
+  DEFVAR_LISP ("read-with-symbol-positions", Vread_with_symbol_positions,
 	       doc: /* If non-nil, add position of read symbols to `read-symbol-positions-list'.
 
 If this variable is a buffer, then only forms read from that buffer
@@ -4217,7 +4146,7 @@ The positions are relative to the last call to `read' or
 the toplevel; bind it instead. */);
   Vread_with_symbol_positions = Qnil;
 
-  DEFVAR_LISP ("read-symbol-positions-list", &Vread_symbol_positions_list,
+  DEFVAR_LISP ("read-symbol-positions-list", Vread_symbol_positions_list,
 	       doc: /* A list mapping read symbols to their positions.
 This variable is modified during calls to `read' or
 `read-from-string', but only when `read-with-symbol-positions' is
@@ -4232,24 +4161,24 @@ read multiple times.  The list is in the same order as the symbols
 were read in. */);
   Vread_symbol_positions_list = Qnil;
 
-  DEFVAR_LISP ("read-circle", &Vread_circle,
+  DEFVAR_LISP ("read-circle", Vread_circle,
 	       doc: /* Non-nil means read recursive structures using #N= and #N# syntax.  */);
   Vread_circle = Qt;
 
-  DEFVAR_LISP ("load-path", &Vload_path,
+  DEFVAR_LISP ("load-path", Vload_path,
 	       doc: /* *List of directories to search for files to load.
 Each element is a string (directory name) or nil (try default directory).
 Initialized based on EMACSLOADPATH environment variable, if any,
 otherwise to default specified by file `epaths.h' when Emacs was built.  */);
 
-  DEFVAR_LISP ("load-suffixes", &Vload_suffixes,
+  DEFVAR_LISP ("load-suffixes", Vload_suffixes,
 	       doc: /* List of suffixes for (compiled or source) Emacs Lisp files.
 This list should not include the empty string.
 `load' and related functions try to append these suffixes, in order,
 to the specified file name if a Lisp suffix is allowed or required.  */);
   Vload_suffixes = Fcons (make_pure_c_string (".elc"),
 			  Fcons (make_pure_c_string (".el"), Qnil));
-  DEFVAR_LISP ("load-file-rep-suffixes", &Vload_file_rep_suffixes,
+  DEFVAR_LISP ("load-file-rep-suffixes", Vload_file_rep_suffixes,
 	       doc: /* List of suffixes that indicate representations of \
 the same file.
 This list should normally start with the empty string.
@@ -4264,12 +4193,12 @@ the loading functions recognize as compression suffixes, you should
 customize `jka-compr-load-suffixes' rather than the present variable.  */);
   Vload_file_rep_suffixes = Fcons (empty_unibyte_string, Qnil);
 
-  DEFVAR_BOOL ("load-in-progress", &load_in_progress,
+  DEFVAR_BOOL ("load-in-progress", load_in_progress,
 	       doc: /* Non-nil if inside of `load'.  */);
   Qload_in_progress = intern_c_string ("load-in-progress");
   staticpro (&Qload_in_progress);
 
-  DEFVAR_LISP ("after-load-alist", &Vafter_load_alist,
+  DEFVAR_LISP ("after-load-alist", Vafter_load_alist,
 	       doc: /* An alist of expressions to be evalled when particular files are loaded.
 Each element looks like (REGEXP-OR-FEATURE FORMS...).
 
@@ -4284,7 +4213,7 @@ An error in FORMS does not undo the load, but does prevent execution of
 the rest of the FORMS.  */);
   Vafter_load_alist = Qnil;
 
-  DEFVAR_LISP ("load-history", &Vload_history,
+  DEFVAR_LISP ("load-history", Vload_history,
 	       doc: /* Alist mapping loaded file names to symbols and features.
 Each alist element should be a list (FILE-NAME ENTRIES...), where
 FILE-NAME is the name of a file that has been loaded into Emacs.
@@ -4304,11 +4233,11 @@ During preloading, the file name recorded is relative to the main Lisp
 directory.  These file names are converted to absolute at startup.  */);
   Vload_history = Qnil;
 
-  DEFVAR_LISP ("load-file-name", &Vload_file_name,
+  DEFVAR_LISP ("load-file-name", Vload_file_name,
 	       doc: /* Full name of file being loaded by `load'.  */);
   Vload_file_name = Qnil;
 
-  DEFVAR_LISP ("user-init-file", &Vuser_init_file,
+  DEFVAR_LISP ("user-init-file", Vuser_init_file,
 	       doc: /* File name, including directory, of user's initialization file.
 If the file loaded had extension `.elc', and the corresponding source file
 exists, this variable contains the name of source file, suitable for use
@@ -4317,16 +4246,16 @@ While Emacs loads and evaluates the init file, value is the real name
 of the file, regardless of whether or not it has the `.elc' extension.  */);
   Vuser_init_file = Qnil;
 
-  DEFVAR_LISP ("current-load-list", &Vcurrent_load_list,
+  DEFVAR_LISP ("current-load-list", Vcurrent_load_list,
 	       doc: /* Used for internal purposes by `load'.  */);
   Vcurrent_load_list = Qnil;
 
-  DEFVAR_LISP ("load-read-function", &Vload_read_function,
+  DEFVAR_LISP ("load-read-function", Vload_read_function,
 	       doc: /* Function used by `load' and `eval-region' for reading expressions.
 The default is nil, which means use the function `read'.  */);
   Vload_read_function = Qnil;
 
-  DEFVAR_LISP ("load-source-file-function", &Vload_source_file_function,
+  DEFVAR_LISP ("load-source-file-function", Vload_source_file_function,
 	       doc: /* Function called in `load' for loading an Emacs Lisp source file.
 This function is for doing code conversion before reading the source file.
 If nil, loading is done without any code conversion.
@@ -4335,45 +4264,45 @@ Arguments are FULLNAME, FILE, NOERROR, NOMESSAGE, where
 See `load' for the meaning of the remaining arguments.  */);
   Vload_source_file_function = Qnil;
 
-  DEFVAR_BOOL ("load-force-doc-strings", &load_force_doc_strings,
+  DEFVAR_BOOL ("load-force-doc-strings", load_force_doc_strings,
 	       doc: /* Non-nil means `load' should force-load all dynamic doc strings.
 This is useful when the file being loaded is a temporary copy.  */);
   load_force_doc_strings = 0;
 
-  DEFVAR_BOOL ("load-convert-to-unibyte", &load_convert_to_unibyte,
+  DEFVAR_BOOL ("load-convert-to-unibyte", load_convert_to_unibyte,
 	       doc: /* Non-nil means `read' converts strings to unibyte whenever possible.
 This is normally bound by `load' and `eval-buffer' to control `read',
 and is not meant for users to change.  */);
   load_convert_to_unibyte = 0;
 
-  DEFVAR_LISP ("source-directory", &Vsource_directory,
+  DEFVAR_LISP ("source-directory", Vsource_directory,
 	       doc: /* Directory in which Emacs sources were found when Emacs was built.
 You cannot count on them to still be there!  */);
   Vsource_directory
     = Fexpand_file_name (build_string ("../"),
 			 Fcar (decode_env_path (0, PATH_DUMPLOADSEARCH)));
 
-  DEFVAR_LISP ("preloaded-file-list", &Vpreloaded_file_list,
+  DEFVAR_LISP ("preloaded-file-list", Vpreloaded_file_list,
 	       doc: /* List of files that were preloaded (when dumping Emacs).  */);
   Vpreloaded_file_list = Qnil;
 
-  DEFVAR_LISP ("byte-boolean-vars", &Vbyte_boolean_vars,
+  DEFVAR_LISP ("byte-boolean-vars", Vbyte_boolean_vars,
 	       doc: /* List of all DEFVAR_BOOL variables, used by the byte code optimizer.  */);
   Vbyte_boolean_vars = Qnil;
 
-  DEFVAR_BOOL ("load-dangerous-libraries", &load_dangerous_libraries,
+  DEFVAR_BOOL ("load-dangerous-libraries", load_dangerous_libraries,
 	       doc: /* Non-nil means load dangerous compiled Lisp files.
 Some versions of XEmacs use different byte codes than Emacs.  These
 incompatible byte codes can make Emacs crash when it tries to execute
 them.  */);
   load_dangerous_libraries = 0;
 
-  DEFVAR_BOOL ("force-load-messages", &force_load_messages,
+  DEFVAR_BOOL ("force-load-messages", force_load_messages,
 	       doc: /* Non-nil means force printing messages when loading Lisp files.
 This overrides the value of the NOMESSAGE argument to `load'.  */);
   force_load_messages = 0;
 
-  DEFVAR_LISP ("bytecomp-version-regexp", &Vbytecomp_version_regexp,
+  DEFVAR_LISP ("bytecomp-version-regexp", Vbytecomp_version_regexp,
 	       doc: /* Regular expression matching safe to load compiled Lisp files.
 When Emacs loads a compiled Lisp file, it reads the first 512 bytes
 from the file, and matches them against this regular expression.
@@ -4382,11 +4311,11 @@ to load.  See also `load-dangerous-libraries'.  */);
   Vbytecomp_version_regexp
     = make_pure_c_string ("^;;;.\\(in Emacs version\\|bytecomp version FSF\\)");
 
-  DEFVAR_LISP ("eval-buffer-list", &Veval_buffer_list,
+  DEFVAR_LISP ("eval-buffer-list", Veval_buffer_list,
 	       doc: /* List of buffers being read from by calls to `eval-buffer' and `eval-region'.  */);
   Veval_buffer_list = Qnil;
 
-  DEFVAR_LISP ("old-style-backquotes", &Vold_style_backquotes,
+  DEFVAR_LISP ("old-style-backquotes", Vold_style_backquotes,
 	       doc: /* Set to non-nil when `read' encounters an old-style backquote.  */);
   Vold_style_backquotes = Qnil;
   Qold_style_backquotes = intern_c_string ("old-style-backquotes");
@@ -4473,6 +4402,3 @@ to load.  See also `load-dangerous-libraries'.  */);
   Qrehash_threshold = intern_c_string ("rehash-threshold");
   staticpro (&Qrehash_threshold);
 }
-
-/* arch-tag: a0d02733-0f96-4844-a659-9fd53c4f414d
-   (do not change this comment) */

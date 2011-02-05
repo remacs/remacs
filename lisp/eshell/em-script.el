@@ -1,7 +1,6 @@
 ;;; em-script.el --- Eshell script files
 
-;; Copyright (C) 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007,
-;;   2008, 2009, 2010  Free Software Foundation, Inc.
+;; Copyright (C) 1999-2011  Free Software Foundation, Inc.
 
 ;; Author: John Wiegley <johnw@gnu.org>
 
@@ -90,23 +89,25 @@ Comments begin with '#'."
   (interactive "f")
   (let ((orig (point))
 	(here (point-max))
-	(inhibit-point-motion-hooks t)
-	after-change-functions)
+	(inhibit-point-motion-hooks t))
     (goto-char (point-max))
-    (insert-file-contents file)
-    (goto-char (point-max))
-    (throw 'eshell-replace-command
-	   (prog1
-	       (list 'let
-		     (list (list 'eshell-command-name (list 'quote file))
-			   (list 'eshell-command-arguments
-				 (list 'quote args)))
-		     (let ((cmd (eshell-parse-command (cons here (point)))))
-		       (if subcommand-p
-			   (setq cmd (list 'eshell-as-subcommand cmd)))
-		       cmd))
-	     (delete-region here (point))
-	     (goto-char orig)))))
+    (with-silent-modifications
+      ;; FIXME: Why not use a temporary buffer and avoid this
+      ;; "insert&delete" business?  --Stef
+      (insert-file-contents file)
+      (goto-char (point-max))
+      (throw 'eshell-replace-command
+             (prog1
+                 (list 'let
+                       (list (list 'eshell-command-name (list 'quote file))
+                             (list 'eshell-command-arguments
+                                   (list 'quote args)))
+                       (let ((cmd (eshell-parse-command (cons here (point)))))
+                         (if subcommand-p
+                             (setq cmd (list 'eshell-as-subcommand cmd)))
+                         cmd))
+               (delete-region here (point))
+               (goto-char orig))))))
 
 (defun eshell/source (&rest args)
   "Source a file in a subshell environment."
@@ -140,5 +141,4 @@ environment, binding ARGS to $1, $2, etc.")
 ;; generated-autoload-file: "esh-groups.el"
 ;; End:
 
-;; arch-tag: a346439d-5ba8-4faf-ac2b-3aacfeaa4647
 ;;; em-script.el ends here

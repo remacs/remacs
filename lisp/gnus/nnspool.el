@@ -1,7 +1,6 @@
 ;;; nnspool.el --- spool access for GNU Emacs
 
-;; Copyright (C) 1988, 1989, 1990, 1993, 1994, 1995, 1996, 1997, 1998,
-;;   2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010
+;; Copyright (C) 1988-1990, 1993-1998, 2000-2011
 ;;   Free Software Foundation, Inc.
 
 ;; Author: Masanobu UMEDA <umerin@flab.flab.fujitsu.junet>
@@ -399,15 +398,16 @@ there.")
   "Read the head of ARTICLE, convert to NOV headers, and insert."
   (save-excursion
     (let ((cur (current-buffer))
-	  buf)
+          buf)
       (setq buf (nnheader-set-temp-buffer " *nnspool head*"))
       (when (nnheader-insert-head
-	     (nnspool-article-pathname nnspool-current-group article))
-	(nnheader-insert-article-line article)
-	(let ((headers (nnheader-parse-head)))
-	  (set-buffer cur)
-	  (goto-char (point-max))
-	  (nnheader-insert-nov headers)))
+             (nnspool-article-pathname nnspool-current-group article))
+        (nnheader-insert-article-line article)
+        (goto-char (point-min))
+        (let ((headers (nnheader-parse-head)))
+          (set-buffer cur)
+          (goto-char (point-max))
+          (nnheader-insert-nov headers)))
       (kill-buffer buf))))
 
 (defun nnspool-sift-nov-with-sed (articles file)

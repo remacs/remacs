@@ -1,7 +1,6 @@
 ;;; mm-view.el --- functions for viewing MIME objects
 
-;; Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006,
-;;   2007, 2008, 2009, 2010  Free Software Foundation, Inc.
+;; Copyright (C) 1998-2011  Free Software Foundation, Inc.
 
 ;; Author: Lars Magne Ingebrigtsen <larsi@gnus.org>
 ;; This file is part of GNU Emacs.
@@ -32,6 +31,7 @@
 (require 'mm-bodies)
 (require 'mm-decode)
 (require 'smime)
+(require 'mml-smime)
 
 (autoload 'gnus-completing-read "gnus-util")
 (autoload 'gnus-window-inside-pixel-edges "gnus-ems")
@@ -50,28 +50,18 @@
 (defvar w3m-minor-mode-map)
 
 (defvar mm-text-html-renderer-alist
-  '((w3  . mm-inline-text-html-render-with-w3)
+  '((shr . mm-shr)
+    (w3 . mm-inline-text-html-render-with-w3)
     (w3m . mm-inline-text-html-render-with-w3m)
     (w3m-standalone . mm-inline-text-html-render-with-w3m-standalone)
+    (gnus-w3m . gnus-article-html)
     (links mm-inline-render-with-file
 	   mm-links-remove-leading-blank
 	   "links" "-dump" file)
-    (lynx  mm-inline-render-with-stdin nil
-	   "lynx" "-dump" "-force_html" "-stdin" "-nolist")
-    (html2text  mm-inline-render-with-function html2text))
+    (lynx mm-inline-render-with-stdin nil
+	  "lynx" "-dump" "-force_html" "-stdin" "-nolist")
+    (html2text mm-inline-render-with-function html2text))
   "The attributes of renderer types for text/html.")
-
-(defvar mm-text-html-washer-alist
-  '((w3  . gnus-article-wash-html-with-w3)
-    (w3m . gnus-article-wash-html-with-w3m)
-    (w3m-standalone . gnus-article-wash-html-with-w3m-standalone)
-    (links mm-inline-wash-with-file
-	   mm-links-remove-leading-blank
-	   "links" "-dump" file)
-    (lynx  mm-inline-wash-with-stdin nil
-	   "lynx" "-dump" "-force_html" "-stdin" "-nolist")
-    (html2text  html2text))
-  "The attributes of washer types for text/html.")
 
 (defcustom mm-fill-flowed t
   "If non-nil a format=flowed article will be displayed flowed."
@@ -91,6 +81,8 @@
 ;;;
 ;;; Functions for displaying various formats inline
 ;;;
+
+(autoload 'gnus-rescale-image "gnus-util")
 
 (defun mm-inline-image-emacs (handle)
   (let ((b (point-marker))
@@ -426,7 +418,7 @@
        (buffer-string)))))
 
 (defun mm-inline-text-html (handle)
-  (let* ((func (or mm-inline-text-html-renderer mm-text-html-renderer))
+  (let* ((func mm-text-html-renderer)
 	 (entry (assq func mm-text-html-renderer-alist))
 	 (inhibit-read-only t))
     (if entry
@@ -639,6 +631,18 @@
 (defun mm-display-dns-inline (handle)
   (mm-display-inline-fontify handle 'dns-mode))
 
+(defun mm-display-org-inline (handle)
+  "Show an Org mode text from HANDLE inline."
+  (mm-display-inline-fontify handle 'org-mode))
+
+(defun mm-display-shell-script-inline (handle)
+  "Show a shell script from HANDLE inline."
+  (mm-display-inline-fontify handle 'shell-script-mode))
+
+(defun mm-display-javascript-inline (handle)
+  "Show JavsScript code from HANDLE inline."
+  (mm-display-inline-fontify handle 'javascript-mode))
+
 ;;      id-signedData OBJECT IDENTIFIER ::= { iso(1) member-body(2)
 ;;          us(840) rsadsi(113549) pkcs(1) pkcs7(7) 2 }
 (defvar mm-pkcs7-signed-magic
@@ -661,9 +665,9 @@
 	  (t
 	   (error "Could not identify PKCS#7 type")))))
 
-(defun mm-view-pkcs7 (handle)
+(defun mm-view-pkcs7 (handle &optional from)
   (case (mm-view-pkcs7-get-type handle)
-    (enveloped (mm-view-pkcs7-decrypt handle))
+    (enveloped (mm-view-pkcs7-decrypt handle from))
     (signed (mm-view-pkcs7-verify handle))
     (otherwise (error "Unknown or unimplemented PKCS#7 type"))))
 
@@ -688,19 +692,26 @@
     (replace-match "\n"))
   t)
 
-(defun mm-view-pkcs7-decrypt (handle)
+(defun mm-view-pkcs7-decrypt (handle &optional from)
   (insert-buffer-substring (mm-handle-buffer handle))
   (goto-char (point-min))
-  (insert "MIME-Version: 1.0\n")
-  (mm-insert-headers "application/pkcs7-mime" "base64" "smime.p7m")
-  (smime-decrypt-region
-   (point-min) (point-max)
-   (if (= (length smime-keys) 1)
-       (cadar smime-keys)
-     (smime-get-key-by-email
-      (gnus-completing-read
-       "Decipher using key"
-       smime-keys nil nil nil (car-safe (car-safe smime-keys))))))
+  (if (eq mml-smime-use 'epg)
+      ;; Use EPG/gpgsm
+      (let ((part (base64-decode-string (buffer-string))))
+	(erase-buffer)
+	(insert (epg-decrypt-string (epg-make-context 'CMS) part)))
+    ;; Use openssl
+    (insert "MIME-Version: 1.0\n")
+    (mm-insert-headers "application/pkcs7-mime" "base64" "smime.p7m")
+    (smime-decrypt-region
+     (point-min) (point-max)
+     (if (= (length smime-keys) 1)
+	 (cadar smime-keys)
+       (smime-get-key-by-email
+	(gnus-completing-read
+	 "Decipher using key"
+	 smime-keys nil nil nil (car-safe (car-safe smime-keys)))))
+     from))
   (goto-char (point-min))
   (while (search-forward "\r\n" nil t)
     (replace-match "\n"))

@@ -1,7 +1,6 @@
 /* Machine description file for the alpha chip.
 
-Copyright (C) 1994, 1997, 1999, 2001, 2002, 2003, 2004, 2005, 2006,
-  2007, 2008, 2009, 2010  Free Software Foundation, Inc.
+Copyright (C) 1994, 1997, 1999, 2001-2011  Free Software Foundation, Inc.
 
 Author: Rainer Schoepf
 (according to authors.el)
@@ -29,13 +28,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
    does not define it automatically.  */
 /* __alpha defined automatically */
 
-
-/* Define EXPLICIT_SIGN_EXTEND if XINT must explicitly sign-extend
-   the 24-bit bit field into an int.  In other words, if bit fields
-   are always unsigned.
-
-   This flag only matters if you use USE_LISP_UNION_TYPE.  */
-#define EXPLICIT_SIGN_EXTEND
 
 /* Data type of load average, as read out of kmem.  */
 #define LOAD_AVE_TYPE long
@@ -66,5 +58,3 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
    this avoids the assembler bug.  */
 #define DBL_MIN_REPLACEMENT 2.2250738585072019e-308
 
-/* arch-tag: 978cb578-1e25-4a60-819b-adae0972aa78
-   (do not change this comment) */

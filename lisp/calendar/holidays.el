@@ -1,7 +1,7 @@
 ;;; holidays.el --- holiday functions for the calendar package
 
-;; Copyright (C) 1989, 1990, 1992, 1993, 1994, 1997, 2001, 2002, 2003,
-;;   2004, 2005, 2006, 2007, 2008, 2009, 2010  Free Software Foundation, Inc.
+;; Copyright (C) 1989-1990, 1992-1994, 1997, 2001-2011
+;;   Free Software Foundation, Inc.
 
 ;; Author: Edward M. Reingold <reingold@cs.uiuc.edu>
 ;; Maintainer: Glenn Morris <rgm@gnu.org>
@@ -43,6 +43,9 @@
 ;; explicitly load this file.
 
 ;;;###autoload
+(define-obsolete-variable-alias 'general-holidays
+  'holiday-general-holidays "23.1")
+;;;###autoload
 (defcustom holiday-general-holidays
   (mapcar 'purecopy
   '((holiday-fixed 1 1 "New Year's Day")
@@ -68,10 +71,10 @@ See the documentation for `calendar-holidays' for details."
   :group 'holidays)
 ;;;###autoload
 (put 'holiday-general-holidays 'risky-local-variable t)
-;;;###autoload
-(define-obsolete-variable-alias 'general-holidays
-  'holiday-general-holidays "23.1")
 
+;;;###autoload
+(define-obsolete-variable-alias 'oriental-holidays
+  'holiday-oriental-holidays "23.1")
 ;;;###autoload
 (defcustom holiday-oriental-holidays
   (mapcar 'purecopy
@@ -93,10 +96,9 @@ See the documentation for `calendar-holidays' for details."
   :group 'holidays)
 ;;;###autoload
 (put 'holiday-oriental-holidays 'risky-local-variable t)
-;;;###autoload
-(define-obsolete-variable-alias 'oriental-holidays
-  'holiday-oriental-holidays "23.1")
 
+;;;###autoload
+(define-obsolete-variable-alias 'local-holidays 'holiday-local-holidays "23.1")
 ;;;###autoload
 (defcustom holiday-local-holidays nil
   "Local holidays.
@@ -105,9 +107,9 @@ See the documentation for `calendar-holidays' for details."
   :group 'holidays)
 ;;;###autoload
 (put 'holiday-local-holidays 'risky-local-variable t)
-;;;###autoload
-(define-obsolete-variable-alias 'local-holidays 'holiday-local-holidays "23.1")
 
+;;;###autoload
+(define-obsolete-variable-alias 'other-holidays 'holiday-other-holidays "23.1")
 ;;;###autoload
 (defcustom holiday-other-holidays nil
   "User defined holidays.
@@ -116,8 +118,6 @@ See the documentation for `calendar-holidays' for details."
   :group 'holidays)
 ;;;###autoload
 (put 'holiday-other-holidays 'risky-local-variable t)
-;;;###autoload
-(define-obsolete-variable-alias 'other-holidays 'holiday-other-holidays "23.1")
 
 ;;;###autoload
 (defvar hebrew-holidays-1
@@ -219,6 +219,9 @@ See the documentation for `calendar-holidays' for details."
 (make-obsolete-variable 'hebrew-holidays-4 'hebrew-holidays "23.1")
 
 ;;;###autoload
+(define-obsolete-variable-alias 'hebrew-holidays
+  'holiday-hebrew-holidays "23.1")
+;;;###autoload
 (defcustom holiday-hebrew-holidays
   (mapcar 'purecopy
   '((holiday-hebrew-passover)
@@ -235,10 +238,10 @@ See the documentation for `calendar-holidays' for details."
   :group 'holidays)
 ;;;###autoload
 (put 'holiday-hebrew-holidays 'risky-local-variable t)
-;;;###autoload
-(define-obsolete-variable-alias 'hebrew-holidays
-  'holiday-hebrew-holidays "23.1")
 
+;;;###autoload
+(define-obsolete-variable-alias 'christian-holidays
+  'holiday-christian-holidays "23.1")
 ;;;###autoload
 (defcustom holiday-christian-holidays
   (mapcar 'purecopy
@@ -257,10 +260,10 @@ See the documentation for `calendar-holidays' for details."
   :group 'holidays)
 ;;;###autoload
 (put 'holiday-christian-holidays 'risky-local-variable t)
-;;;###autoload
-(define-obsolete-variable-alias 'christian-holidays
-  'holiday-christian-holidays "23.1")
 
+;;;###autoload
+(define-obsolete-variable-alias 'islamic-holidays
+  'holiday-islamic-holidays "23.1")
 ;;;###autoload
 (defcustom holiday-islamic-holidays
   (mapcar 'purecopy
@@ -281,10 +284,9 @@ See the documentation for `calendar-holidays' for details."
   :group 'holidays)
 ;;;###autoload
 (put 'holiday-islamic-holidays 'risky-local-variable t)
-;;;###autoload
-(define-obsolete-variable-alias 'islamic-holidays
-  'holiday-islamic-holidays "23.1")
 
+;;;###autoload
+(define-obsolete-variable-alias 'bahai-holidays 'holiday-bahai-holidays "23.1")
 ;;;###autoload
 (defcustom holiday-bahai-holidays
   (mapcar 'purecopy
@@ -305,9 +307,9 @@ See the documentation for `calendar-holidays' for details."
   :group 'holidays)
 ;;;###autoload
 (put 'holiday-bahai-holidays 'risky-local-variable t)
-;;;###autoload
-(define-obsolete-variable-alias 'bahai-holidays 'holiday-bahai-holidays "23.1")
 
+;;;###autoload
+(define-obsolete-variable-alias 'solar-holidays 'holiday-solar-holidays "23.1")
 ;;;###autoload
 (defcustom holiday-solar-holidays
   (mapcar 'purecopy
@@ -328,8 +330,6 @@ See the documentation for `calendar-holidays' for details."
   :group 'holidays)
 ;;;###autoload
 (put 'holiday-solar-holidays 'risky-local-variable t)
-;;;###autoload
-(define-obsolete-variable-alias 'solar-holidays 'holiday-solar-holidays "23.1")
 
 ;; This one should not be autoloaded, else .emacs changes of
 ;; holiday-general-holidays etc have no effect.
@@ -919,5 +919,4 @@ is non-nil)."
 
 (provide 'holidays)
 
-;; arch-tag: 48eb3117-75a7-4dbe-8fd9-873c3cbb0d37
 ;;; holidays.el ends here

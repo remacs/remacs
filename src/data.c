@@ -1,6 +1,5 @@
 /* Primitive operations on Lisp data types for GNU Emacs Lisp interpreter.
-   Copyright (C) 1985, 1986, 1988, 1993, 1994, 1995, 1997, 1998, 1999, 2000,
-                 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010
+   Copyright (C) 1985-1986, 1988, 1993-1995, 1997-2011
                  Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
@@ -94,8 +93,6 @@ Lisp_Object Qinteractive_form;
 
 static void swap_in_symval_forwarding (struct Lisp_Symbol *, struct Lisp_Buffer_Local_Value *);
 
-Lisp_Object Vmost_positive_fixnum, Vmost_negative_fixnum;
-
 
 void
 circular_list_error (Lisp_Object list)
@@ -135,21 +132,6 @@ args_out_of_range_3 (Lisp_Object a1, Lisp_Object a2, Lisp_Object a3)
   xsignal3 (Qargs_out_of_range, a1, a2, a3);
 }
 
-/* On some machines, XINT needs a temporary location.
-   Here it is, in case it is needed.  */
-
-int sign_extend_temp;
-
-/* On a few machines, XINT can only be done by calling this.  */
-
-int
-sign_extend_lisp_int (EMACS_INT num)
-{
-  if (num & (((EMACS_INT) 1) << (VALBITS - 1)))
-    return num | (((EMACS_INT) (-1)) << VALBITS);
-  else
-    return num & ((((EMACS_INT) 1) << VALBITS) - 1);
-}
 
 /* Data type predicates */
 
@@ -2390,7 +2372,7 @@ NUMBER may be an integer or a floating point number.  */)
 
   if (FLOATP (number))
     {
-      char pigbuf[350];	/* see comments in float_to_string */
+      char pigbuf[FLOAT_TO_STRING_BUFSIZE];
 
       float_to_string (pigbuf, XFLOAT_DATA (number));
       return build_string (pigbuf);
@@ -3315,12 +3297,12 @@ syms_of_data (void)
 
   XSYMBOL (Qwholenump)->function = XSYMBOL (Qnatnump)->function;
 
-  DEFVAR_LISP ("most-positive-fixnum", &Vmost_positive_fixnum,
+  DEFVAR_LISP ("most-positive-fixnum", Vmost_positive_fixnum,
 	       doc: /* The largest value that is representable in a Lisp integer.  */);
   Vmost_positive_fixnum = make_number (MOST_POSITIVE_FIXNUM);
   XSYMBOL (intern_c_string ("most-positive-fixnum"))->constant = 1;
 
-  DEFVAR_LISP ("most-negative-fixnum", &Vmost_negative_fixnum,
+  DEFVAR_LISP ("most-negative-fixnum", Vmost_negative_fixnum,
 	       doc: /* The smallest value that is representable in a Lisp integer.  */);
   Vmost_negative_fixnum = make_number (MOST_NEGATIVE_FIXNUM);
   XSYMBOL (intern_c_string ("most-negative-fixnum"))->constant = 1;
@@ -3353,5 +3335,3 @@ init_data (void)
 #endif /* uts */
 }
 
-/* arch-tag: 25879798-b84d-479a-9c89-7d148e2109f7
-   (do not change this comment) */

@@ -1,7 +1,6 @@
 ;;; octave-inf.el --- running Octave as an inferior Emacs process
 
-;; Copyright (C) 1997, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010
-;; Free Software Foundation, Inc.
+;; Copyright (C) 1997, 2001-2011  Free Software Foundation, Inc.
 
 ;; Author: Kurt Hornik <Kurt.Hornik@wu-wien.ac.at>
 ;; Author: John Eaton <jwe@bevo.che.wisc.edu>
@@ -121,34 +120,24 @@ the regular expression `comint-prompt-regexp', a buffer local variable."
 This variable is used to initialize `comint-dynamic-complete-functions'
 in the Inferior Octave buffer.")
 
-(defun inferior-octave-mode ()
+(define-derived-mode inferior-octave-mode comint-mode "Inferior Octave"
   "Major mode for interacting with an inferior Octave process.
 Runs Octave as a subprocess of Emacs, with Octave I/O through an Emacs
 buffer.
 
 Entry to this mode successively runs the hooks `comint-mode-hook' and
 `inferior-octave-mode-hook'."
-  (interactive)
-  (delay-mode-hooks (comint-mode))
   (setq comint-prompt-regexp inferior-octave-prompt
-	major-mode 'inferior-octave-mode
-	mode-name "Inferior Octave"
 	mode-line-process '(":%s")
 	local-abbrev-table octave-abbrev-table)
-  (use-local-map inferior-octave-mode-map)
-  (set-syntax-table inferior-octave-mode-syntax-table)
 
-  (make-local-variable 'comment-start)
-  (setq comment-start octave-comment-start)
-  (make-local-variable 'comment-end)
-  (setq comment-end "")
-  (make-local-variable 'comment-column)
-  (setq comment-column 32)
-  (make-local-variable 'comment-start-skip)
-  (setq comment-start-skip octave-comment-start-skip)
+  (set (make-local-variable 'comment-start) octave-comment-start)
+  (set (make-local-variable 'comment-end) "")
+  (set (make-local-variable 'comment-column) 32)
+  (set (make-local-variable 'comment-start-skip) octave-comment-start-skip)
 
-  (make-local-variable 'font-lock-defaults)
-  (setq font-lock-defaults '(inferior-octave-font-lock-keywords nil nil))
+  (set (make-local-variable 'font-lock-defaults)
+       '(inferior-octave-font-lock-keywords nil nil))
 
   (setq comint-input-ring-file-name
 	(or (getenv "OCTAVE_HISTFILE") "~/.octave_hist")
@@ -157,9 +146,7 @@ Entry to this mode successively runs the hooks `comint-mode-hook' and
        inferior-octave-dynamic-complete-functions)
   (add-hook 'comint-input-filter-functions
 	'inferior-octave-directory-tracker nil t)
-  (comint-read-input-ring t)
-
-  (run-mode-hooks 'inferior-octave-mode-hook))
+  (comint-read-input-ring t))
 
 ;;;###autoload
 (defun inferior-octave (&optional arg)
@@ -403,5 +390,4 @@ directory and makes this the current buffer's default directory."
 
 (provide 'octave-inf)
 
-;; arch-tag: bdce0395-24d1-4bb4-bfba-6fb1eeb1a660
 ;;; octave-inf.el ends here

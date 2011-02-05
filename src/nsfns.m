@@ -1,6 +1,7 @@
 /* Functions for the NeXT/Open/GNUstep and MacOSX window system.
-   Copyright (C) 1989, 1992, 1993, 1994, 2005, 2006, 2008, 2009, 2010
-     Free Software Foundation, Inc.
+
+Copyright (C) 1989, 1992-1994, 2005-2006, 2008-2011
+  Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -81,24 +82,13 @@ extern Lisp_Object Qunderline, Qundefined;
 extern Lisp_Object Qheight, Qminibuffer, Qname, Qonly, Qwidth;
 extern Lisp_Object Qunsplittable, Qmenu_bar_lines, Qbuffer_predicate, Qtitle;
 extern Lisp_Object Qnone;
-extern Lisp_Object Vframe_title_format;
 
-/* The below are defined in frame.c.  */
-
-extern Lisp_Object Vmenu_bar_mode, Vtool_bar_mode;
 
 Lisp_Object Qbuffered;
 Lisp_Object Qfontsize;
 
 /* hack for OS X file panels */
 char panelOK = 0;
-
-/* Alist of elements (REGEXP . IMAGE) for images of icons associated
-   to frames.*/
-static Lisp_Object Vns_icon_type_alist;
-
-/* Toolkit version support. */
-static Lisp_Object Vns_version_string;
 
 EmacsTooltip *ns_tooltip;
 
@@ -472,54 +462,36 @@ x_set_icon_name (struct frame *f, Lisp_Object arg, Lisp_Object oldval)
         [NSString stringWithUTF8String: SDATA (arg)]];
 }
 
-
 static void
-ns_set_name_iconic (struct frame *f, Lisp_Object name, int explicit)
+ns_set_name_internal (FRAME_PTR f, Lisp_Object name)
 {
+  struct gcpro gcpro1;
+  Lisp_Object encoded_name, encoded_icon_name;
+  NSString *str;
   NSView *view = FRAME_NS_VIEW (f);
-  NSTRACE (ns_set_name_iconic);
 
-  if (ns_in_resize)
-    return;
+  GCPRO1 (name);
+  encoded_name = ENCODE_UTF_8 (name);
+  UNGCPRO;
 
-  /* Make sure that requests from lisp code override requests from
-     Emacs redisplay code.  */
-  if (explicit)
-    {
-      /* If we're switching from explicit to implicit, we had better
-         update the mode lines and thereby update the title.  */
-      if (f->explicit_name && NILP (name))
-        update_mode_lines = 1;
-
-      f->explicit_name = ! NILP (name);
-    }
-  else if (f->explicit_name)
-    name = f->name;
-
-  /* title overrides explicit name */
-  if (! NILP (f->title))
-    name = f->title;
-
-  /* icon_name overrides title and explicit name */
-  if (! NILP (f->icon_name))
-    name = f->icon_name;
-
-  if (NILP (name))
-    name = build_string([ns_app_name UTF8String]);
-  else
-    CHECK_STRING (name);
+  str = [NSString stringWithUTF8String: SDATA (encoded_name)];
 
   /* Don't change the name if it's already NAME.  */
+  if (! [[[view window] title] isEqualToString: str])
+    [[view window] setTitle: str];
+
+  if (!STRINGP (f->icon_name))
+    encoded_icon_name = encoded_name;
+  else
+    encoded_icon_name = ENCODE_UTF_8 (f->icon_name);    
+
+  str = [NSString stringWithUTF8String: SDATA (encoded_icon_name)];
+
   if ([[view window] miniwindowTitle] &&
-      ([[[view window] miniwindowTitle]
-             isEqualToString: [NSString stringWithUTF8String:
-                                           SDATA (name)]]))
-    return;
+      ! [[[view window] miniwindowTitle] isEqualToString: str])
+    [[view window] setMiniwindowTitle: str];
 
-  [[view window] setMiniwindowTitle:
-        [NSString stringWithUTF8String: SDATA (name)]];
 }
-
 
 static void
 ns_set_name (struct frame *f, Lisp_Object name, int explicit)
@@ -546,6 +518,12 @@ ns_set_name (struct frame *f, Lisp_Object name, int explicit)
 
   if (NILP (name))
     name = build_string([ns_app_name UTF8String]);
+  else
+    CHECK_STRING (name);
+
+  /* Don't change the name if it's already NAME.  */
+  if (! NILP (Fstring_equal (name, f->name)))
+    return;
 
   f->name = name;
 
@@ -553,17 +531,7 @@ ns_set_name (struct frame *f, Lisp_Object name, int explicit)
   if (! NILP (f->title))
     name = f->title;
 
-  CHECK_STRING (name);
-
-  view = FRAME_NS_VIEW (f);
-
-  /* Don't change the name if it's already NAME.  */
-  if ([[[view window] title]
-            isEqualToString: [NSString stringWithUTF8String:
-                                          SDATA (name)]])
-    return;
-  [[view window] setTitle: [NSString stringWithUTF8String:
-                                        SDATA (name)]];
+  ns_set_name_internal (f, name);
 }
 
 
@@ -574,7 +542,6 @@ static void
 x_explicitly_set_name (FRAME_PTR f, Lisp_Object arg, Lisp_Object oldval)
 {
   NSTRACE (x_explicitly_set_name);
-  ns_set_name_iconic (f, arg, 1);
   ns_set_name (f, arg, 1);
 }
 
@@ -586,9 +553,10 @@ void
 x_implicitly_set_name (FRAME_PTR f, Lisp_Object arg, Lisp_Object oldval)
 {
   NSTRACE (x_implicitly_set_name);
-  if (FRAME_ICONIFIED_P (f))
-    ns_set_name_iconic (f, arg, 0);
-  else if (FRAME_NS_P (f) && EQ (Vframe_title_format, Qt))
+
+  /* Deal with NS specific format t.  */
+  if (FRAME_NS_P (f) && ((FRAME_ICONIFIED_P (f) && EQ (Vicon_title_format, Qt))
+                         || EQ (Vframe_title_format, Qt)))
     ns_set_name_as_filename (f);
   else
     ns_set_name (f, arg, 0);
@@ -596,15 +564,8 @@ x_implicitly_set_name (FRAME_PTR f, Lisp_Object arg, Lisp_Object oldval)
 
 
 /* Change the title of frame F to NAME.
-   If NAME is nil, use the frame name as the title.
+   If NAME is nil, use the frame name as the title.  */
 
-   If EXPLICIT is non-zero, that indicates that lisp code is setting the
-   name; if NAME is a string, set F's name to NAME and set
-   F->explicit_name; if NAME is Qnil, then clear F->explicit_name.
-
-   If EXPLICIT is zero, that indicates that Emacs redisplay code is
-   suggesting a new name, which lisp code should override; if
-   F->explicit_name is set, ignore the new name; otherwise, set it.  */
 static void
 x_set_title (struct frame *f, Lisp_Object name, Lisp_Object old_name)
 {
@@ -616,6 +577,13 @@ x_set_title (struct frame *f, Lisp_Object name, Lisp_Object old_name)
   update_mode_lines = 1;
 
   f->title = name;
+
+  if (NILP (name))
+    name = f->name;
+  else
+    CHECK_STRING (name);
+
+  ns_set_name_internal (f, name);
 }
 
 
@@ -623,10 +591,13 @@ void
 ns_set_name_as_filename (struct frame *f)
 {
   NSView *view;
-  Lisp_Object name;
+  Lisp_Object name, filename;
   Lisp_Object buf = XWINDOW (f->selected_window)->buffer;
   const char *title;
   NSAutoreleasePool *pool;
+  struct gcpro gcpro1;
+  Lisp_Object encoded_name, encoded_filename;
+  NSString *str;
   NSTRACE (ns_set_name_as_filename);
 
   if (f->explicit_name || ! NILP (f->title) || ns_in_resize)
@@ -634,56 +605,66 @@ ns_set_name_as_filename (struct frame *f)
 
   BLOCK_INPUT;
   pool = [[NSAutoreleasePool alloc] init];
-  name = XBUFFER (buf)->filename;
-  if (NILP (name) || FRAME_ICONIFIED_P (f)) name =XBUFFER (buf)->name;
-
-  if (FRAME_ICONIFIED_P (f) && !NILP (f->icon_name))
-    name = f->icon_name;
+  filename = XBUFFER (buf)->filename;
+  name = XBUFFER (buf)->name;
 
   if (NILP (name))
-    name = build_string ([ns_app_name UTF8String]);
-  else
-    CHECK_STRING (name);
+    {
+      if (! NILP (filename))
+        name = Ffile_name_nondirectory (filename);
+      else
+        name = build_string ([ns_app_name UTF8String]);
+    }
+
+  GCPRO1 (name);
+  encoded_name = ENCODE_UTF_8 (name);
+  UNGCPRO;
 
   view = FRAME_NS_VIEW (f);
 
   title = FRAME_ICONIFIED_P (f) ? [[[view window] miniwindowTitle] UTF8String]
                                 : [[[view window] title] UTF8String];
 
-  if (title && (! strcmp (title, SDATA (name))))
+  if (title && (! strcmp (title, SDATA (encoded_name))))
     {
       [pool release];
       UNBLOCK_INPUT;
       return;
     }
 
-  if (! FRAME_ICONIFIED_P (f))
+  str = [NSString stringWithUTF8String: SDATA (encoded_name)];
+  if (str == nil) str = @"Bad coding";
+
+  if (FRAME_ICONIFIED_P (f))
+    [[view window] setMiniwindowTitle: str];
+  else 
     {
-#ifdef NS_IMPL_COCOA
-      /* work around a bug observed on 10.3 where
-         setTitleWithRepresentedFilename does not clear out previous state
-         if given filename does not exist */
-      NSString *str = [NSString stringWithUTF8String: SDATA (name)];
-      if (![[NSFileManager defaultManager] fileExistsAtPath: str])
+      NSString *fstr;
+
+      if (! NILP (filename))
         {
-          [[view window] setTitleWithRepresentedFilename: @""];
-          [[view window] setTitle: str];
+          GCPRO1 (filename);
+          encoded_filename = ENCODE_UTF_8 (filename);
+          UNGCPRO;
+
+          fstr = [NSString stringWithUTF8String: SDATA (encoded_filename)];
+          if (fstr == nil) fstr = @"";
+#ifdef NS_IMPL_COCOA
+          /* work around a bug observed on 10.3 and later where
+             setTitleWithRepresentedFilename does not clear out previous state
+             if given filename does not exist */
+          if (! [[NSFileManager defaultManager] fileExistsAtPath: fstr])
+            [[view window] setRepresentedFilename: @""];
+#endif
         }
       else
-        {
-          [[view window] setTitleWithRepresentedFilename: str];
-        }
-#else
-      [[view window] setTitleWithRepresentedFilename:
-                         [NSString stringWithUTF8String: SDATA (name)]];
-#endif
+        fstr = @"";
+
+      [[view window] setRepresentedFilename: fstr];
+      [[view window] setTitle: str];
       f->name = name;
     }
-  else
-    {
-      [[view window] setMiniwindowTitle:
-            [NSString stringWithUTF8String: SDATA (name)]];
-    }
+
   [pool release];
   UNBLOCK_INPUT;
 }
@@ -1223,8 +1204,6 @@ be shared by the new frame.  */)
                       "foreground", "Foreground", RES_TYPE_STRING);
   x_default_parameter (f, parms, Qbackground_color, build_string ("White"),
                       "background", "Background", RES_TYPE_STRING);
-  x_default_parameter (f, parms, Qcursor_color, build_string ("grey"),
-                      "cursorColor", "CursorColor", RES_TYPE_STRING);
   /* FIXME: not suppported yet in Nextstep */
   x_default_parameter (f, parms, Qline_spacing, Qnil,
 		       "lineSpacing", "LineSpacing", RES_TYPE_NUMBER);
@@ -1697,7 +1676,7 @@ If omitted or nil, the selected frame's display is used.  */)
 
 DEFUN ("x-display-save-under", Fx_display_save_under,
        Sx_display_save_under, 0, 1, 0,
-       doc: /* Non-nil if the Nextstep display server supports the save-under feature.
+       doc: /* Return t if DISPLAY supports the save-under feature.
 The optional argument DISPLAY specifies which display to ask about.
 DISPLAY should be a frame, the display name as a string, or a terminal ID.
 If omitted or nil, the selected frame's display is used.  */)
@@ -1722,9 +1701,12 @@ If omitted or nil, the selected frame's display is used.  */)
 
 DEFUN ("x-open-connection", Fx_open_connection, Sx_open_connection,
        1, 3, 0,
-       doc: /* Open a connection to a Nextstep display server.
+       doc: /* Open a connection to a display server.
 DISPLAY is the name of the display to connect to.
-Optional arguments XRM-STRING and MUST-SUCCEED are currently ignored.  */)
+Optional second arg XRM-STRING is a string of resources in xrdb format.
+If the optional third arg MUST-SUCCEED is non-nil,
+terminate Emacs if we can't open the connection.
+\(In the Nextstep version, the last two arguments are currently ignored.)  */)
      (Lisp_Object display, Lisp_Object resource_string, Lisp_Object must_succeed)
 {
   struct ns_display_info *dpyinfo;
@@ -2201,8 +2183,8 @@ x_sync (struct frame *f)
 
 
 DEFUN ("xw-color-defined-p", Fxw_color_defined_p, Sxw_color_defined_p, 1, 2, 0,
-       doc: /* Return t if the current Nextstep display supports the color COLOR.
-The optional argument FRAME is currently ignored.  */)
+       doc: /* Internal function called by `color-defined-p', which see.
+\(Note that the Nextstep version of this function ignores FRAME.)  */)
      (Lisp_Object color, Lisp_Object frame)
 {
   NSColor * col;
@@ -2233,10 +2215,7 @@ DEFUN ("xw-color-values", Fxw_color_values, Sxw_color_values, 1, 2, 0,
 
 
 DEFUN ("xw-display-color-p", Fxw_display_color_p, Sxw_display_color_p, 0, 1, 0,
-       doc: /* Return t if the Nextstep display supports color.
-The optional argument DISPLAY specifies which display to ask about.
-DISPLAY should be either a frame, a display name (a string), or terminal ID.
-If omitted or nil, that stands for the selected frame's display.  */)
+       doc: /* Internal function called by `display-color-p', which see.  */)
      (Lisp_Object display)
 {
   NSWindowDepth depth;
@@ -2430,6 +2409,8 @@ DEFUN ("x-show-tip", Fx_show_tip, Sx_show_tip, 1, 6, 0,
        doc: /* Show STRING in a \"tooltip\" window on frame FRAME.
 A tooltip window is a small window displaying a string.
 
+This is an internal function; Lisp code should call `tooltip-show'.
+
 FRAME nil or omitted means use the selected frame.
 
 PARMS is an optional list of frame parameters which can be used to
@@ -2601,7 +2582,7 @@ syms_of_nsfns (void)
   Qfontsize = intern_c_string ("fontsize");
   staticpro (&Qfontsize);
 
-  DEFVAR_LISP ("ns-icon-type-alist", &Vns_icon_type_alist,
+  DEFVAR_LISP ("ns-icon-type-alist", Vns_icon_type_alist,
                doc: /* Alist of elements (REGEXP . IMAGE) for images of icons associated to frames.
 If the title of a frame matches REGEXP, then IMAGE.tiff is
 selected as the image of the icon representing the frame when it's
@@ -2622,7 +2603,7 @@ When you miniaturize a Group, Summary or Article frame, Gnus.tiff will
 be used as the image of the icon representing the frame.  */);
   Vns_icon_type_alist = Fcons (Qt, Qnil);
 
-  DEFVAR_LISP ("ns-version-string", &Vns_version_string,
+  DEFVAR_LISP ("ns-version-string", Vns_version_string,
                doc: /* Toolkit version for NS Windowing.  */);
   Vns_version_string = ns_appkit_version_str ();
 
@@ -2675,4 +2656,3 @@ be used as the image of the icon representing the frame.  */);
 
 }
 
-// arch-tag: dc2a3f74-1123-4daa-8eed-fb78db6a5642

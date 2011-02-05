@@ -1,5 +1,5 @@
 /* Image support for the NeXT/Open/GNUstep and MacOSX window system.
-   Copyright (C) 1989, 1992, 1993, 1994, 2005, 2006, 2008, 2009, 2010
+   Copyright (C) 1989, 1992-1994, 2005-2006, 2008-2011
      Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
@@ -336,7 +336,7 @@ static EmacsImage *ImageList = nil;
   NSColor *rgbColor;
 
   if (bmRep == nil || color == nil)
-    return;
+    return self;
 
   if ([color colorSpaceName] != NSCalibratedRGBColorSpace)
     rgbColor = [color colorUsingColorSpaceName: NSCalibratedRGBColorSpace];
@@ -361,6 +361,8 @@ static EmacsImage *ImageList = nil;
           planes[2][i] = bb;
         }
   }
+
+  return self;
 }
 
 
@@ -497,4 +499,3 @@ static EmacsImage *ImageList = nil;
 
 @end
 
-// arch-tag: 6b310280-6892-4e5e-8f34-41c4d384874f

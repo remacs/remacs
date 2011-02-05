@@ -1,6 +1,5 @@
 /* Interfaces to system-dependent kernel and library entries.
-   Copyright (C) 1985, 1986, 1987, 1988, 1993, 1994, 1995, 1999, 2000, 2001,
-                 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010
+   Copyright (C) 1985-1988, 1993-1995, 1999-2011
                  Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
@@ -30,9 +29,9 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #ifdef HAVE_LIMITS_H
 #include <limits.h>
 #endif /* HAVE_LIMITS_H */
-#ifdef HAVE_UNISTD_H
 #include <unistd.h>
-#endif
+
+#include <ignore-value.h>
 
 #include "lisp.h"
 #include "sysselect.h"
@@ -90,12 +89,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "dispextern.h"
 #include "process.h"
 #include "cm.h"  /* for reset_sys_modes */
-#ifdef HAVE_TERM_H
-/* Include this last.  If it is ncurses header file, it adds a lot of
-   defines that interfere with stuff in other headers.  Someone responsible
-   for ncurses messed up bigtime.  See bug#6812.  */
-#include <term.h>
-#endif
 
 #ifdef WINDOWSNT
 #include <direct.h>
@@ -122,6 +115,9 @@ struct utimbuf {
 };
 #endif
 #endif
+
+/* Declare here, including term.h is problematic on some systems.  */
+extern void tputs (const char *, int, int (*)(int));
 
 static const int baud_convert[] =
   {
@@ -232,8 +228,8 @@ discard_tty_input (void)
       {
         if (tty->input)         /* Is the device suspended? */
           {
-            EMACS_GET_TTY (fileno (tty->input), &buf);
-            EMACS_SET_TTY (fileno (tty->input), &buf, 0);
+            emacs_get_tty (fileno (tty->input), &buf);
+            emacs_set_tty (fileno (tty->input), &buf, 0);
           }
       }
   }
@@ -269,7 +265,7 @@ void
 init_baud_rate (int fd)
 {
   int emacs_ospeed;
- 
+
   if (noninteractive)
     emacs_ospeed = 0;
   else
@@ -369,7 +365,7 @@ child_setup_tty (int out)
 #ifndef WINDOWSNT
   struct emacs_tty s;
 
-  EMACS_GET_TTY (out, &s);
+  emacs_get_tty (out, &s);
   s.main.c_oflag |= OPOST;	/* Enable output postprocessing */
   s.main.c_oflag &= ~ONLCR;	/* Disable map of NL to CR-NL on output */
 #ifdef NLDLY
@@ -447,7 +443,7 @@ child_setup_tty (int out)
   s.main.c_cc[VTIME] = 0;
 #endif
 
-  EMACS_SET_TTY (out, &s, 0);
+  emacs_set_tty (out, &s, 0);
 #endif /* not WINDOWSNT */
 }
 #endif	/* not MSDOS */
@@ -557,15 +553,6 @@ sys_subshell (void)
 
       close_process_descs ();	/* Close Emacs's pipes/ptys */
 
-#ifdef SET_EMACS_PRIORITY
-      {
-	extern EMACS_INT emacs_priority;
-
-	if (emacs_priority < 0)
-	  nice (-emacs_priority);
-      }
-#endif
-
 #ifdef MSDOS    /* Demacs 1.1.2 91/10/20 Manabu Higashida */
       {
 	char *epwd = getenv ("PWD");
@@ -593,7 +580,7 @@ sys_subshell (void)
 	write (1, "Can't execute subshell", 22);
 #else   /* not WINDOWSNT */
       execlp (sh, sh, (char *) 0);
-      write (1, "Can't execute subshell", 22);
+      ignore_value (write (1, "Can't execute subshell", 22));
       _exit (1);
 #endif  /* not WINDOWSNT */
 #endif /* not MSDOS */
@@ -859,7 +846,7 @@ init_sys_modes (struct tty_display_info *tty_out)
   if (! tty_out->old_tty)
     tty_out->old_tty = (struct emacs_tty *) xmalloc (sizeof (struct emacs_tty));
 
-  EMACS_GET_TTY (fileno (tty_out->input), tty_out->old_tty);
+  emacs_get_tty (fileno (tty_out->input), tty_out->old_tty);
 
   tty = *tty_out->old_tty;
 
@@ -1005,7 +992,7 @@ init_sys_modes (struct tty_display_info *tty_out)
   dos_ttraw (tty_out);
 #endif
 
-  EMACS_SET_TTY (fileno (tty_out->input), &tty, 0);
+  emacs_set_tty (fileno (tty_out->input), &tty, 0);
 
   /* This code added to insure that, if flow-control is not to be used,
      we have an unlocked terminal at the start. */
@@ -1097,8 +1084,16 @@ tabs_safe_p (int fd)
 {
   struct emacs_tty etty;
 
-  EMACS_GET_TTY (fd, &etty);
-  return EMACS_TTY_TABS_OK (&etty);
+  emacs_get_tty (fd, &etty);
+#ifndef DOS_NT
+#ifdef TABDLY
+  return ((etty.main.c_oflag & TABDLY) != TAB3);
+#else /* not TABDLY */
+  return 1;
+#endif /* not TABDLY */
+#else /* DOS_NT */
+  return 0;
+#endif /* DOS_NT */
 }
 
 /* Get terminal size from system.
@@ -1260,7 +1255,7 @@ reset_sys_modes (struct tty_display_info *tty_out)
 #endif /* F_SETFL */
 
   if (tty_out->old_tty)
-    while (EMACS_SET_TTY (fileno (tty_out->input),
+    while (emacs_set_tty (fileno (tty_out->input),
                           tty_out->old_tty, 0) < 0 && errno == EINTR)
       ;
 
@@ -1311,11 +1306,6 @@ setup_pty (int fd)
 }
 #endif /* HAVE_PTYS */
 
-/* init_system_name sets up the string for the Lisp function
-   system-name to return. */
-
-extern Lisp_Object Vsystem_name;
-
 #ifdef HAVE_SOCKETS
 #include <sys/socket.h>
 #include <netdb.h>
@@ -3070,7 +3060,3 @@ system_process_attributes (Lisp_Object pid)
 }
 
 #endif	/* !defined (WINDOWSNT) */
-
-
-/* arch-tag: edb43589-4e09-4544-b325-978b5b121dcf
-   (do not change this comment) */

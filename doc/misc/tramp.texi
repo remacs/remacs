@@ -37,8 +37,7 @@
 @end macro
 
 @copying
-Copyright @copyright{} 1999, 2000, 2001, 2002, 2003, 2004, 2005,
-2006, 2007, 2008, 2009, 2010 Free Software Foundation, Inc.
+Copyright @copyright{} 1999-2011 Free Software Foundation, Inc.
 
 @quotation
 Permission is granted to copy, distribute and/or modify this document
@@ -694,6 +693,14 @@ This supports the @samp{-p} argument.
 
 This method is also similar to @option{ssh}.  It only uses the
 @command{krlogin -x} command to log in to the remote host.
+
+
+@item @option{ksu}
+@cindex method ksu
+@cindex ksu method
+@cindex Kerberos (with ksu method)
+
+This is another method from the Kerberos suite.  It behaves like @option{su}.
 
 
 @item @option{plink}
@@ -1942,7 +1949,7 @@ understand this syntax and will emit a syntax error when it reaches
 this line.
 
 Another example is the tilde (@code{~}) character, say when adding
-@file{~/bin} to @code{$PATH}.  Many Bourne shells will not expand this
+@file{~/bin} to @code{PATH}.  Many Bourne shells will not expand this
 character, and since there is usually no directory whose name consists
 of the single character tilde, strange things will happen.
 
@@ -1968,6 +1975,38 @@ csh derivative like tcsh, or it could be zsh, or even rc.  If the
 shell is Bourne-ish already, then it might be prudent to omit the
 @command{exec /bin/sh} step.  But how to find out if the shell is
 Bourne-ish?
+
+
+@item Interactive shell prompt
+
+@value{tramp} redefines the shell prompt in order to parse the shell's
+output robustly.  When calling an interactive shell by @kbd{M-x
+shell}, this doesn't look nice.
+
+You can redefine the shell prompt by checking the environment variable
+@code{INSIDE_EMACS}, which is set by @value{tramp}, in your startup
+script @file{~/.emacs_SHELLNAME}. @code{SHELLNAME} might be the string
+@code{bash} or similar, in case of doubt you could set it the
+environment variable @code{ESHELL} in your @file{.emacs}:
+
+@lisp
+(setenv "ESHELL" "bash")
+@end lisp
+
+Your file @file{~/.emacs_SHELLNAME} could contain code like
+
+@example
+# Reset the prompt for remote Tramp shells.
+if [ "$@{INSIDE_EMACS/*tramp*/tramp@}" == "tramp" ] ; then
+   PS1="[\u@@\h \w]$ "
+fi
+@end example
+
+@ifinfo
+@ifset emacs
+@xref{Interactive Shell, , , @value{emacsdir}}.
+@end ifset
+@end ifinfo
 
 @end table
 
@@ -2451,6 +2490,15 @@ remote file names.  It does not work for the @option{ftp} and
 @option{smb} methods.  Association of a pty, as specified in
 @code{start-file-process}, is not supported.
 
+@code{process-file} and @code{start-file-process} work on the remote
+host, when the variable @code{default-directory} is remote:
+
+@lisp
+(let ((default-directory "/ssh:remote.host:"))
+  (start-file-process "grep" (get-buffer-create "*grep*")
+                      "/bin/sh" "-c" "grep -e tramp *"))
+@end lisp
+
 @ifset emacsgvfs
 If the remote host is mounted via GVFS (see @ref{GVFS based methods}),
 the remote filesystem is mounted locally.  Therefore, there are no
@@ -2493,7 +2541,7 @@ Adding an entry can be performed via @code{add-to-list}:
 Changing or removing an existing entry is not encouraged.  The default
 values are chosen for proper @value{tramp} work.  Nevertheless, if for
 example a paranoid system administrator disallows changing the
-@var{$HISTORY} environment variable, you can customize
+@code{HISTORY} environment variable, you can customize
 @code{tramp-remote-process-environment}, or you can apply the
 following code in your @file{.emacs}:
 
@@ -2512,7 +2560,7 @@ integrate them as well.  @xref{Bug Reports}.
 
 If you want to run a remote program, which shall connect the X11
 server you are using with your local host, you can set the
-@var{$DISPLAY} environment variable on the remote host:
+@code{DISPLAY} environment variable on the remote host:
 
 @lisp
 (add-to-list 'tramp-remote-process-environment
@@ -3633,7 +3681,3 @@ for @value{emacsothername}.
 @c * Use `filename' resp. `file name' consistently.
 @c * Use `host' resp. `machine' consistently.
 @c * Consistent small or capitalized words especially in menues.
-
-@ignore
-   arch-tag: f96dd66e-6dd3-4c92-8d77-9c56205ba808
-@end ignore

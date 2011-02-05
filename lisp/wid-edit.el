@@ -1,7 +1,6 @@
 ;;; wid-edit.el --- Functions for creating and using widgets -*-byte-compile-dynamic: t;-*-
 ;;
-;; Copyright (C) 1996, 1997, 1999, 2000, 2001, 2002, 2003, 2004, 2005,
-;;   2006, 2007, 2008, 2009, 2010  Free Software Foundation, Inc.
+;; Copyright (C) 1996-1997, 1999-2011  Free Software Foundation, Inc.
 ;;
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>
 ;; Maintainer: FSF
@@ -316,9 +315,8 @@ size field.")
 
 (defvar widget-field-use-before-change t
   "Non-nil means use `before-change-functions' to track editable fields.
-This enables the use of undo, but doesn't work on Emacs 19.34 and earlier.
-Using before hooks also means that the :notify function can't know the
-new value.")
+This enables the use of undo.  Using before hooks also means that
+the :notify function can't know the new value.")
 
 (defun widget-specify-field (widget from to)
   "Specify editable button for WIDGET between FROM and TO."
@@ -638,7 +636,8 @@ extension (xpm, xbm, gif, jpg, or png) located in
 		specs)
 	   (dolist (elt widget-image-conversion)
 	     (dolist (ext (cdr elt))
-	       (push (list :type (car elt) :file (concat image ext)) specs)))
+	       (push (list :type (car elt) :file (concat image ext))
+		     specs)))
  	   (find-image (nreverse specs))))
 	(t
 	 ;; Oh well.
@@ -1052,7 +1051,7 @@ POS defaults to the value of (point)."
 
 (defvar widget-use-overlay-change t
   "If non-nil, use overlay change functions to tab around in the buffer.
-This is much faster, but doesn't work reliably on Emacs 19.34.")
+This is much faster.")
 
 (defun widget-move (arg)
   "Move point to the ARG next field or button.
@@ -2162,21 +2161,13 @@ when he invoked the menu."
 
 (defun widget-toggle-value-create (widget)
   "Insert text representing the `on' and `off' states."
-  (if (widget-value widget)
-      (let ((image (widget-get widget :on-glyph)))
-	(and (display-graphic-p)
-	     (listp image)
-	     (not (eq (car image) 'image))
-	     (widget-put widget :on-glyph (setq image (eval image))))
-	(widget-image-insert widget
-			     (widget-get widget :on)
-			     image))
-    (let ((image (widget-get widget :off-glyph)))
-      (and (display-graphic-p)
-	   (listp image)
-	   (not (eq (car image) 'image))
-	   (widget-put widget :off-glyph (setq image (eval image))))
-      (widget-image-insert widget (widget-get widget :off) image))))
+  (let* ((val (widget-value widget))
+	 (text (widget-get widget (if val :on :off)))
+	 (img (widget-image-find
+	       (widget-get widget (if val :on-glyph :off-glyph)))))
+    (widget-image-insert widget (or text "")
+			 (if img
+			     (append img '(:ascent center))))))
 
 (defun widget-toggle-action (widget &optional event)
   ;; Toggle value.
@@ -2195,9 +2186,9 @@ when he invoked the menu."
   ;; We could probably do the same job as the images using single
   ;; space characters in a boxed face with a stretch specification to
   ;; make them square.
-  :on-glyph image-checkbox-checked
+  :on-glyph "checked"
   :off "[ ]"
-  :off-glyph image-checkbox-unchecked
+  :off-glyph "unchecked"
   :help-echo "Toggle this item."
   :action 'widget-checkbox-action)
 
@@ -2816,34 +2807,22 @@ Return an alist of (TYPE MATCH)."
   "An indicator and manipulator for hidden items.
 
 The following properties have special meanings for this widget:
-:on-image  Image filename or spec to display when the item is visible.
+:on-glyph  Image filename or spec to display when the item is visible.
 :on        Text shown if the \"on\" image is nil or cannot be displayed.
-:off-image Image filename or spec to display when the item is hidden.
+:off-glyph Image filename or spec to display when the item is hidden.
 :off       Text shown if the \"off\" image is nil cannot be displayed."
   :format "%[%v%]"
   :button-prefix ""
   :button-suffix ""
-  :on-image "down"
+  :on-glyph "down"
   :on "Hide"
-  :off-image "right"
+  :off-glyph "right"
   :off "Show"
   :value-create 'widget-visibility-value-create
   :action 'widget-toggle-action
   :match (lambda (widget value) t))
 
-(defun widget-visibility-value-create (widget)
-  ;; Insert text representing the `on' and `off' states.
-  (let* ((val (widget-value widget))
-	 (text (widget-get widget (if val :on :off)))
-	 (img (widget-image-find
-	       (widget-get widget (if val :on-image :off-image)))))
-    (widget-image-insert widget
-			 (if text
-			     (concat widget-push-button-prefix text
-				     widget-push-button-suffix)
-			   "")
-			 (if img
-			     (append img '(:ascent center))))))
+(defalias 'widget-visibility-value-create 'widget-toggle-value-create)
 
 ;;; The `documentation-link' Widget.
 ;;
@@ -3781,5 +3760,4 @@ example:
 
 (provide 'wid-edit)
 
-;; arch-tag: a076e75e-18a1-4b46-8be5-3f317bcbc707
 ;;; wid-edit.el ends here

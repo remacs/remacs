@@ -1,7 +1,6 @@
 ;;; repeat.el --- convenient way to repeat the previous command
 
-;; Copyright (C) 1998, 2001, 2002, 2003, 2004, 2005,
-;;   2006, 2007, 2008, 2009, 2010 Free Software Foundation, Inc.
+;; Copyright (C) 1998, 2001-2011 Free Software Foundation, Inc.
 
 ;; Author: Will Mengarini <seldon@eskimo.com>
 ;; Created: Mo 02 Mar 98
@@ -335,7 +334,7 @@ recently executed command not bound to an input event\"."
 	(setq real-last-command 'repeat)
 	(setq repeat-undo-count 1)
 	(unwind-protect
-	    (while (let ((evt (read-event))) ;FIXME: read-key maybe?
+	    (while (let ((evt (read-key)))
                      ;; For clicks, we need to strip the meta-data to
                      ;; check the underlying event name.
                      (eq (or (car-safe evt) evt)
@@ -392,5 +391,4 @@ recently executed command not bound to an input event\"."
 
 (provide 'repeat)
 
-;; arch-tag: cd569600-a1ad-4fa7-9062-bb91dfeaf1db
 ;;; repeat.el ends here

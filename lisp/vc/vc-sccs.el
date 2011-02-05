@@ -1,8 +1,6 @@
 ;;; vc-sccs.el --- support for SCCS version-control
 
-;; Copyright (C) 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
-;;   2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010
-;;   Free Software Foundation, Inc.
+;; Copyright (C) 1992-2011  Free Software Foundation, Inc.
 
 ;; Author:     FSF (see vc.el for full credits)
 ;; Maintainer: Andre Spiegel <spiegel@gnu.org>
@@ -237,7 +235,7 @@ expanded if `vc-keep-workfiles' is non-nil, otherwise, delete the workfile."
       (stringp (vc-sccs-search-project-dir (or (file-name-directory file) "")
 					   (file-name-nondirectory file)))))
 
-(defun vc-sccs-checkin (files rev comment &optional extra-args-ignored)
+(defun vc-sccs-checkin (files rev comment)
   "SCCS-specific version of `vc-backend-checkin'."
   (dolist (file (vc-expand-dirs files))
     (apply 'vc-sccs-do-command nil 0 "delta" (vc-name file)
@@ -483,5 +481,4 @@ If NAME is nil or a revision number string it's just passed through."
 
 (provide 'vc-sccs)
 
-;; arch-tag: d751dee3-d7b3-47e1-95e3-7ae98c052041
 ;;; vc-sccs.el ends here

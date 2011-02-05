@@ -1,7 +1,6 @@
 ;;; esh-opt.el --- command options processing
 
-;; Copyright (C) 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007,
-;;   2008, 2009, 2010  Free Software Foundation, Inc.
+;; Copyright (C) 1999-2011  Free Software Foundation, Inc.
 
 ;; Author: John Wiegley <johnw@gnu.org>
 
@@ -64,10 +63,9 @@ interned variable `args' (created using a `let' form)."
 	       macro-args
 	     (list 'eshell-stringify-list
 		   (list 'eshell-flatten-list macro-args)))))
-     (let ,(append (mapcar (function
-			    (lambda (opt)
-			      (or (and (listp opt) (nth 3 opt))
-				  'eshell-option-stub)))
+     (let ,(append (mapcar (lambda (opt)
+			     (or (and (listp opt) (nth 3 opt))
+				 'eshell-option-stub))
 			   (cadr options))
 		   '(usage-msg last-value ext-command args))
        (eshell-do-opt ,name ,options (quote ,body-forms)))))
@@ -78,6 +76,7 @@ interned variable `args' (created using a `let' form)."
 (defvar last-value)
 (defvar usage-msg)
 (defvar ext-command)
+;; Documented part of the interface; see eshell-eval-using-options.
 (defvar args)
 
 (defun eshell-do-opt (name options body-forms)
@@ -224,5 +223,4 @@ This assumes that symbols have been intern'd by `eshell-with-options'."
 		(setq index (1+ index)))))))))
   args)
 
-;; arch-tag: 45c6c2d0-8091-46a1-a205-2f4bafd8230c
 ;;; esh-opt.el ends here

@@ -1,11 +1,11 @@
 ;;; org-plot.el --- Support for plotting from Org-mode
 
-;; Copyright (C) 2008, 2009, 2010 Free Software Foundation, Inc.
+;; Copyright (C) 2008-2011 Free Software Foundation, Inc.
 ;;
 ;; Author: Eric Schulte <schulte dot eric at gmail dot com>
 ;; Keywords: tables, plotting
 ;; Homepage: http://orgmode.org
-;; Version: 7.01
+;; Version: 7.4
 ;;
 ;; This file is part of GNU Emacs.
 ;;
@@ -350,5 +350,4 @@ line directly before or after the table."
 
 (provide 'org-plot)
 
-;; arch-tag: 5763f7c6-0c75-416d-b070-398ee4ec0eca
 ;;; org-plot.el ends here

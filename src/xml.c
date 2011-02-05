@@ -1,5 +1,5 @@
 /* Interface to libxml2.
-   Copyright (C) 2010 Free Software Foundation, Inc.
+   Copyright (C) 2010-2011 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -62,7 +62,7 @@ Lisp_Object make_dom (xmlNode *node)
 
       return Fnreverse (result);
     }
-  else if (node->type == XML_TEXT_NODE)
+  else if (node->type == XML_TEXT_NODE || node->type == XML_CDATA_SECTION_NODE)
     {
       if (node->content)
 	return build_string (node->content);
@@ -96,7 +96,7 @@ parse_region (Lisp_Object start, Lisp_Object end, Lisp_Object base_url, int html
   if (! NILP (base_url))
     {
       CHECK_STRING (base_url);
-      burl = SDATA (base_url);
+      burl = SSDATA (base_url);
     }
 
   bytes = CHAR_TO_BYTE (iend) - CHAR_TO_BYTE (istart);
@@ -105,7 +105,8 @@ parse_region (Lisp_Object start, Lisp_Object end, Lisp_Object base_url, int html
     doc = htmlReadMemory (BYTE_POS_ADDR (CHAR_TO_BYTE (istart)),
 			  bytes, burl, "utf-8",
 			  HTML_PARSE_RECOVER|HTML_PARSE_NONET|
-			  HTML_PARSE_NOWARNING|HTML_PARSE_NOERROR);
+			  HTML_PARSE_NOWARNING|HTML_PARSE_NOERROR|
+			  HTML_PARSE_NOBLANKS);
   else
     doc = xmlReadMemory (BYTE_POS_ADDR (CHAR_TO_BYTE (istart)),
 			 bytes, burl, "utf-8",

@@ -1,7 +1,6 @@
 ;;; gametree.el --- manage game analysis trees in Emacs
 
-;; Copyright (C) 1997, 1999, 2001, 2002, 2003, 2004, 2005, 2006, 2007,
-;;   2008, 2009, 2010  Free Software Foundation, Inc.
+;; Copyright (C) 1997, 1999, 2001-2011  Free Software Foundation, Inc.
 
 ;; Author: Ian T Zimmerman <itz@rahul.net>
 ;; Created: Wed Dec 10 07:41:46 PST 1997
@@ -201,7 +200,7 @@ should be no leading white space."
     (let ((boundary (concat "[ \t]*\\([1-9][0-9]*\\)\\("
                             gametree-full-ply-regexp "\\|"
                             gametree-half-ply-regexp "\\)"))
-          (limit (save-excursion (beginning-of-line 1) (point))))
+          (limit (line-beginning-position 1)))
       (if (looking-at boundary)
           (+ (* 2 (string-to-number (match-string 1)))
              (if (string-match gametree-half-ply-regexp (match-string 2)) 1 0))
@@ -617,5 +616,4 @@ shogi, etc.) players, it is a slightly modified version of Outline mode.
 
 (provide 'gametree)
 
-;; arch-tag: aaa30943-9ae4-4cc1-813d-a46f96b7e4f1
 ;;; gametree.el ends here

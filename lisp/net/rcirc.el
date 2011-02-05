@@ -1,10 +1,10 @@
 ;;; rcirc.el --- default, simple IRC client.
 
-;; Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010
-;;   Free Software Foundation, Inc.
+;; Copyright (C) 2005-2011  Free Software Foundation, Inc.
 
-;; Author: Ryan Yeske
-;; URL: http://www.nongnu.org/rcirc
+;; Author: Ryan Yeske <rcyeske@gmail.com>
+;; Maintainers: Ryan Yeske <rcyeske@gmail.com>,
+;;              Deniz Dogan <deniz.a.m.dogan@gmail.com>
 ;; Keywords: comm
 
 ;; This file is part of GNU Emacs.
@@ -320,6 +320,16 @@ and the cdr part is used for encoding."
 (defcustom rcirc-multiline-major-mode 'fundamental-mode
   "Major-mode function to use in multiline edit buffers."
   :type 'function
+  :group 'rcirc)
+
+(defcustom rcirc-nick-completion-format "%s: "
+  "Format string to use in nick completions.
+
+The format string is only used when completing at the beginning
+of a line.  The string is passed as the first argument to
+`format' with the nickname as the second argument."
+  :version "24.1"
+  :type 'string
   :group 'rcirc)
 
 (defvar rcirc-nick nil)
@@ -827,11 +837,11 @@ IRC command completion is performed only if '/' is the first input char."
     (when completion
       (delete-region rcirc-completion-start (point))
       (insert
-       (concat completion
-	       (cond
-		((= (aref completion 0) ?/) " ")
-		((= rcirc-completion-start rcirc-prompt-end-marker) ": ")
-		(t "")))))))
+       (cond
+        ((= (aref completion 0) ?/) (concat completion " "))
+        ((= rcirc-completion-start rcirc-prompt-end-marker)
+         (format rcirc-nick-completion-format completion))
+        (t completion))))))
 
 (defun set-rcirc-decode-coding-system (coding-system)
   "Set the decode coding system used in this channel."
@@ -895,6 +905,7 @@ Each element looks like (FILENAME . TEXT).")
 This number is independent of the number of lines in the buffer.")
 
 (defun rcirc-mode (process target)
+  ;; FIXME: Use define-derived-mode.
   "Major mode for IRC channel buffers.
 
 \\{rcirc-mode-map}"
@@ -973,7 +984,7 @@ This number is independent of the number of lines in the buffer.")
   (add-hook 'completion-at-point-functions
             'rcirc-completion-at-point nil 'local)
 
-  (run-hooks 'rcirc-mode-hook))
+  (run-mode-hooks 'rcirc-mode-hook))
 
 (defun rcirc-update-prompt (&optional all)
   "Reset the prompt string in the current buffer.
@@ -1024,9 +1035,23 @@ If ALL is non-nil, update prompts in all IRC buffers."
        (or (eq (aref target 0) ?#)
            (eq (aref target 0) ?&))))
 
+(defcustom rcirc-log-directory "~/.emacs.d/rcirc-log"
+  "Directory to keep IRC logfiles."
+  :type 'directory
+  :group 'rcirc)
+
+(defcustom rcirc-log-flag nil
+  "Non-nil means log IRC activity to disk.
+Logfiles are kept in `rcirc-log-directory'."
+  :type 'boolean
+  :group 'rcirc)
+
 (defun rcirc-kill-buffer-hook ()
   "Part the channel when killing an rcirc buffer."
   (when (eq major-mode 'rcirc-mode)
+    (when (and rcirc-log-flag
+               rcirc-log-directory)
+      (rcirc-log-write))
     (rcirc-clean-up-buffer "Killed buffer")))
 
 (defun rcirc-change-major-mode-hook ()
@@ -1351,17 +1376,6 @@ is found by looking up RESPONSE in `rcirc-response-formats'."
 (defvar rcirc-last-sender nil)
 (make-variable-buffer-local 'rcirc-last-sender)
 
-(defcustom rcirc-log-directory "~/.emacs.d/rcirc-log"
-  "Directory to keep IRC logfiles."
-  :type 'directory
-  :group 'rcirc)
-
-(defcustom rcirc-log-flag nil
-  "Non-nil means log IRC activity to disk.
-Logfiles are kept in `rcirc-log-directory'."
-  :type 'boolean
-  :group 'rcirc)
-
 (defcustom rcirc-omit-threshold 100
   "Number of lines since last activity from a nick before `rcirc-omit-responses' are omitted."
   :type 'integer
@@ -1561,8 +1575,11 @@ return the filename, or nil if no logging is desired for this
 session.
 
 If the returned filename is absolute (`file-name-absolute-p'
-returns true), then it is used as-is, otherwise the resulting
-file is put into `rcirc-log-directory'."
+returns t), then it is used as-is, otherwise the resulting file
+is put into `rcirc-log-directory'.
+
+The filename is then cleaned using `convert-standard-filename' to
+guarantee valid filenames for the current OS."
   :group 'rcirc
   :type 'function)
 
@@ -1587,7 +1604,9 @@ file is put into `rcirc-log-directory'."
 Log data is written to `rcirc-log-directory', except for
 log-files with absolute names (see `rcirc-log-filename-function')."
   (dolist (cell rcirc-log-alist)
-    (let ((filename (expand-file-name (car cell) rcirc-log-directory))
+    (let ((filename (convert-standard-filename
+                     (expand-file-name (car cell)
+                                       rcirc-log-directory)))
 	  (coding-system-for-write 'utf-8))
       (make-directory (file-name-directory filename) t)
       (with-temp-buffer
@@ -2850,5 +2869,4 @@ Passwords are stored in `rcirc-authinfo' (which see)."
 
 (provide 'rcirc)
 
-;; arch-tag: b471b7e8-6b5a-4399-b2c6-a3c78dfc8ffb
 ;;; rcirc.el ends here

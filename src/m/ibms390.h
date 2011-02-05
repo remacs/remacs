@@ -1,7 +1,6 @@
 /* Machine description file for IBM S390 in 32-bit mode
 
-Copyright (C) 1985, 1986, 2001, 2002, 2003, 2004, 2005, 2006, 2007,
-  2008, 2009, 2010  Free Software Foundation, Inc.
+Copyright (C) 1985-1986, 2001-2011 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -19,13 +18,6 @@ You should have received a copy of the GNU General Public License
 along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 
-/* Define EXPLICIT_SIGN_EXTEND if XINT must explicitly sign-extend
-   the 24-bit bit field into an int.  In other words, if bit fields
-   are always unsigned.
-
-   This flag only matters if you use USE_LISP_UNION_TYPE.  */
-#define EXPLICIT_SIGN_EXTEND
-
 /* Data type of load average, as read out of kmem.  */
 #define LOAD_AVE_TYPE long
 
@@ -40,5 +32,3 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
    numerically.  */
 #define VIRT_ADDR_VARIES
 
-/* arch-tag: d8a0ffa4-a8f0-4736-90d3-7fd7b21b8314
-   (do not change this comment) */

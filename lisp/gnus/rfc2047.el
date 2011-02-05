@@ -1,7 +1,6 @@
 ;;; rfc2047.el --- functions for encoding and decoding rfc2047 messages
 
-;; Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006,
-;;   2007, 2008, 2009, 2010  Free Software Foundation, Inc.
+;; Copyright (C) 1998-2011  Free Software Foundation, Inc.
 
 ;; Author: Lars Magne Ingebrigtsen <larsi@gnus.org>
 ;;	MORIOKA Tomohiko <morioka@jaist.ac.jp>
@@ -346,13 +345,9 @@ The buffer may be narrowed."
     ;; it appears to be the cleanest way.
     ;; Play safe and don't assume the form of the word syntax entry --
     ;; copy it from ?a.
-    (if (fboundp 'set-char-table-range)	; Emacs
-	(funcall (intern "set-char-table-range")
-		 table t (aref (standard-syntax-table) ?a))
-      (if (fboundp 'put-char-table)
-	  (if (fboundp 'get-char-table)	; warning avoidance
-	      (put-char-table t (get-char-table ?a (standard-syntax-table))
-			      table))))
+    (if (featurep 'xemacs)
+	(put-char-table t (get-char-table ?a (standard-syntax-table)) table)
+      (set-char-table-range table t (aref (standard-syntax-table) ?a)))
     (modify-syntax-entry ?\\ "\\" table)
     (modify-syntax-entry ?\" "\"" table)
     (modify-syntax-entry ?\( "(" table)

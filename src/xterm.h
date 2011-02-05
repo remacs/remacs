@@ -1,6 +1,5 @@
 /* Definitions and headers for communication with X protocol.
-   Copyright (C) 1989, 1993, 1994, 1998, 1999, 2000, 2001, 2002, 2003,
-                 2004, 2005, 2006, 2007, 2008, 2009, 2010 Free Software Foundation, Inc.
+   Copyright (C) 1989, 1993-1994, 1998-2011 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -190,36 +189,9 @@ struct x_display_info
   /* Reusable Graphics Context for drawing a cursor in a non-default face. */
   GC scratch_cursor_gc;
 
-  /* These variables describe the range of text currently shown in its
-     mouse-face, together with the window they apply to.  As long as
-     the mouse stays within this range, we need not redraw anything on
-     its account.  Rows and columns are glyph matrix positions in
-     MOUSE_FACE_WINDOW.  */
-  int mouse_face_beg_row, mouse_face_beg_col;
-  int mouse_face_beg_x, mouse_face_beg_y;
-  int mouse_face_end_row, mouse_face_end_col;
-  int mouse_face_end_x, mouse_face_end_y;
-  int mouse_face_past_end;
-  Lisp_Object mouse_face_window;
-  int mouse_face_face_id;
-  Lisp_Object mouse_face_overlay;
-
-  /* 1 if a mouse motion event came and we didn't handle it right away because
-     gc was in progress.  */
-  int mouse_face_deferred_gc;
-
-  /* FRAME and X, Y position of mouse when last checked for
-     highlighting.  X and Y can be negative or out of range for the frame.  */
-  struct frame *mouse_face_mouse_frame;
-  int mouse_face_mouse_x, mouse_face_mouse_y;
-
-  /* Nonzero means defer mouse-motion highlighting.  */
-  int mouse_face_defer;
-
-  /* Nonzero means that the mouse highlight should not be shown.  */
-  int mouse_face_hidden;
-
-  int mouse_face_image_state;
+  /* Information about the range of text currently shown in
+     mouse-face.  */
+  Mouse_HLInfo mouse_highlight;
 
   char *x_id_name;
 
@@ -297,8 +269,8 @@ struct x_display_info
   Atom Xatom_Scrollbar;
 
   /* Atom used in XEmbed client messages.  */
-  Atom Xatom_XEMBED;
- 
+  Atom Xatom_XEMBED, Xatom_XEMBED_INFO;
+
   /* The frame (if any) which has the X window that has keyboard focus.
      Zero if none.  This is examined by Ffocus_frame in xfns.c.  Note
      that a mere EnterNotify event can set this; if you need to know the
@@ -359,15 +331,17 @@ struct x_display_info
 
   /* Extended window manager hints, Atoms supported by the window manager and
      atoms for settig the window type.  */
+  Atom Xatom_net_supported, Xatom_net_supporting_wm_check;
   Atom *net_supported_atoms;
   int nr_net_supported_atoms;
   Window net_supported_window;
   Atom Xatom_net_window_type, Xatom_net_window_type_tooltip;
+  Atom Xatom_net_active_window;
 
-  /* Atoms dealing with maximization and fullscreen */
-  Atom Xatom_net_wm_state, Xatom_net_wm_state_fullscreen_atom,
+  /* Atoms dealing with EWMH (i.e. _NET_...) */
+  Atom Xatom_net_wm_state, Xatom_net_wm_state_fullscreen,
     Xatom_net_wm_state_maximized_horz, Xatom_net_wm_state_maximized_vert,
-    Xatom_net_wm_state_sticky;
+    Xatom_net_wm_state_sticky, Xatom_net_frame_extents;
 
   /* XSettings atoms and windows.  */
   Atom Xatom_xsettings_sel, Xatom_xsettings_prop, Xatom_xsettings_mgr;
@@ -375,6 +349,11 @@ struct x_display_info
 
   /* Frame name and icon name */
   Atom Xatom_net_wm_name, Xatom_net_wm_icon_name;
+  /* Frame opacity */
+  Atom Xatom_net_wm_window_opacity;
+
+  /* SM */
+  Atom Xatom_SM_CLIENT_ID;
 };
 
 #ifdef HAVE_X_I18N
@@ -407,9 +386,6 @@ extern struct x_display_info *x_display_list;
    NAME is the name of the frame.
    FONT-LIST-CACHE records previous values returned by x-list-fonts.  */
 extern Lisp_Object x_display_name_list;
-
-/* Regexp matching a font name whose width is the same as `PIXEL_SIZE'.  */
-extern Lisp_Object Vx_pixel_size_width_font_regexp;
 
 extern struct x_display_info *x_display_info_for_display (Display *);
 extern struct x_display_info *x_display_info_for_name (Lisp_Object);
@@ -953,11 +929,7 @@ void x_handle_property_notify (XPropertyEvent *);
 
 /* From xfns.c.  */
 
-Lisp_Object display_x_get_resource (struct x_display_info *,
-                                    Lisp_Object, Lisp_Object,
-                                    Lisp_Object, Lisp_Object);
 struct frame *check_x_frame (Lisp_Object);
-EXFUN (Fx_display_color_p, 1);
 EXFUN (Fx_display_grayscale_p, 1);
 extern void x_free_gcs (struct frame *);
 extern int gray_bitmap_width, gray_bitmap_height;
@@ -965,25 +937,11 @@ extern char *gray_bitmap_bits;
 
 /* From xrdb.c.  */
 
-char *x_get_customization_string (XrmDatabase, const char *, const char *);
 XrmDatabase x_load_resources (Display *, const char *, const char *,
 			      const char *);
-int x_get_resource (XrmDatabase, const char *, const char *,
-                    XrmRepresentation, XrmValue *);
-void x_delete_display (struct x_display_info *);
-void x_make_frame_visible (struct frame *);
-void x_iconify_frame (struct frame *);
-void x_wm_set_size_hint (struct frame *, long, int);
-int x_text_icon (struct frame *, const char *);
-int x_bitmap_icon (struct frame *, Lisp_Object);
-void x_set_window_size (struct frame *, int, int, int);
-void x_wm_set_window_state (struct frame *, int);
-int x_alloc_nearest_color (struct frame *, Colormap, XColor *);
 
 /* Defined in xterm.c */
 
-extern void cancel_mouse_face (struct frame *);
-extern void x_scroll_bar_clear (struct frame *);
 extern int x_text_icon (struct frame *, const char *);
 extern int x_bitmap_icon (struct frame *, Lisp_Object);
 extern void x_catch_errors (Display *);
@@ -1012,11 +970,12 @@ extern void x_initialize (void);
 extern unsigned long x_copy_color (struct frame *, unsigned long);
 #ifdef USE_X_TOOLKIT
 extern XtAppContext Xt_app_con;
-extern int x_alloc_lighter_color_for_widget (Widget, Display*, Colormap,
+extern int x_alloc_lighter_color_for_widget (Widget, Display *, Colormap,
                                              unsigned long *,
                                              double, int);
 extern void x_activate_timeout_atimer (void);
 #endif
+extern int x_alloc_nearest_color (struct frame *, Colormap, XColor *);
 extern void x_query_colors (struct frame *f, XColor *, int);
 extern void x_query_color (struct frame *f, XColor *);
 extern void x_clear_area (Display *, Window, int, int, int, int, int);
@@ -1037,6 +996,13 @@ extern void x_handle_property_notify (XPropertyEvent *);
 extern void x_handle_selection_notify (XSelectionEvent *);
 extern void x_handle_selection_event (struct input_event *);
 extern void x_clear_frame_selections (struct frame *);
+
+extern void x_send_client_event (Lisp_Object display,
+                                 Lisp_Object dest,
+                                 Lisp_Object from,
+                                 Atom message_type,
+                                 Lisp_Object format,
+                                 Lisp_Object values);
 
 extern int x_handle_dnd_message (struct frame *,
                                  XClientMessageEvent *,
@@ -1089,8 +1055,6 @@ extern void x_set_tool_bar_lines (struct frame *, Lisp_Object, Lisp_Object);
 
 /* Defined in xfaces.c */
 
-extern int compute_glyph_face (struct frame *, int, int);
-extern int compute_glyph_face_1 (struct frame *, Lisp_Object, int);
 extern void x_free_dpy_colors (Display *, Screen *, Colormap,
                                unsigned long *, int);
 
@@ -1112,66 +1076,13 @@ extern void widget_store_internal_border (Widget);
 /* Defined in xsmfns.c */
 #ifdef HAVE_X_SM
 extern void x_session_initialize (struct x_display_info *dpyinfo);
-extern int x_session_check_input (struct input_event *bufp);
 extern int x_session_have_connection (void);
 extern void x_session_close (void);
 #endif
 
-/* XEmbed implementation.  */
-
-#define XEMBED_VERSION 0
-
-enum xembed_info
-  {
-    XEMBED_MAPPED = 1 << 0
-  };
-
-enum xembed_message
-  {
-    XEMBED_EMBEDDED_NOTIFY        = 0,
-    XEMBED_WINDOW_ACTIVATE        = 1,
-    XEMBED_WINDOW_DEACTIVATE      = 2,
-    XEMBED_REQUEST_FOCUS          = 3,
-    XEMBED_FOCUS_IN               = 4,
-    XEMBED_FOCUS_OUT              = 5,
-    XEMBED_FOCUS_NEXT             = 6,
-    XEMBED_FOCUS_PREV             = 7,
-
-    XEMBED_MODALITY_ON            = 10,
-    XEMBED_MODALITY_OFF           = 11,
-    XEMBED_REGISTER_ACCELERATOR   = 12,
-    XEMBED_UNREGISTER_ACCELERATOR = 13,
-    XEMBED_ACTIVATE_ACCELERATOR   = 14
-  };
-
-enum xembed_focus
-  {
-    XEMBED_FOCUS_CURRENT = 0,
-    XEMBED_FOCUS_FIRST   = 1,
-    XEMBED_FOCUS_LAST    = 2
-  };
-
-enum xembed_modifier
-  {
-    XEMBED_MODIFIER_SHIFT   = 1 << 0,
-    XEMBED_MODIFIER_CONTROL = 1 << 1,
-    XEMBED_MODIFIER_ALT     = 1 << 2,
-    XEMBED_MODIFIER_SUPER   = 1 << 3,
-    XEMBED_MODIFIER_HYPER   = 1 << 4
-  };
-
-enum xembed_accelerator
-  {
-    XEMBED_ACCELERATOR_OVERLOADED = 1 << 0
-  };
-
 /* Defined in xterm.c */
 
 extern Lisp_Object Qx_gtk_map_stock;
-extern void xembed_set_info (struct frame *f, enum xembed_info flags);
-extern void xembed_send_message (struct frame *f, Time time,
-                                 enum xembed_message message,
-                                 long detail, long data1, long data2);
 
 /* Is the frame embedded into another application? */
 
@@ -1196,6 +1107,3 @@ extern void xembed_send_message (struct frame *f, Time time,
    (nr).y = (ry),					\
    (nr).width = (rwidth),				\
    (nr).height = (rheight))
-
-/* arch-tag: 78a7972a-b18f-4694-861a-0780c4b3090e
-   (do not change this comment) */

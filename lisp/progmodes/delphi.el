@@ -1,7 +1,6 @@
 ;;; delphi.el --- major mode for editing Delphi source (Object Pascal) in Emacs
 
-;; Copyright (C) 1998, 1999, 2001, 2002, 2003, 2004, 2005, 2006, 2007,
-;;   2008, 2009, 2010  Free Software Foundation, Inc.
+;; Copyright (C) 1998-1999, 2001-2011  Free Software Foundation, Inc.
 
 ;; Authors: Ray Blaak <blaak@infomatch.com>,
 ;;          Simon South <ssouth@member.fsf.org>
@@ -1779,7 +1778,7 @@ If no extension is specified, .pas is assumed. Creates a buffer for the unit."
     (if (null file)
         (error "unit not found: %s" unit-file)
       (find-file file)
-      (if (not (eq major-mode 'delphi-mode))
+      (if (not (derived-mode-p 'delphi-mode))
           (delphi-mode)))
     file))
 
@@ -2015,7 +2014,7 @@ no args, if that value is non-nil."
   (interactive)
   (kill-all-local-variables)
   (use-local-map delphi-mode-map)
-  (setq major-mode 'delphi-mode)
+  (setq major-mode 'delphi-mode)        ;FIXME: Use define-derived-mode.
   (setq mode-name "Delphi")
 
   (setq local-abbrev-table delphi-mode-abbrev-table)
@@ -2025,8 +2024,7 @@ no args, if that value is non-nil."
   (mapc #'(lambda (var)
 	    (let ((var-symb (car var))
 		  (var-val (cadr var)))
-	      (make-local-variable var-symb)
-	      (set var-symb var-val)))
+              (set (make-local-variable var-symb) var-val)))
 	(list '(indent-line-function delphi-indent-line)
 	      '(comment-indent-function delphi-indent-line)
 	      '(case-fold-search t)
@@ -2048,5 +2046,4 @@ no args, if that value is non-nil."
 
   (run-mode-hooks 'delphi-mode-hook))
 
-;; arch-tag: 410e192d-e9b5-4397-ad62-12340fc3fa41
 ;;; delphi.el ends here

@@ -1,6 +1,6 @@
 /* 16-bit Windows Selection processing for emacs on MS-Windows
-   Copyright (C) 1996, 1997, 2001, 2002, 2003, 2004,
-                 2005, 2006, 2007, 2008, 2009, 2010 Free Software Foundation, Inc.
+
+Copyright (C) 1996-1997, 2001-2011  Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -67,13 +67,6 @@ unsigned close_clipboard (void);
 unsigned clipboard_compact (unsigned);
 
 Lisp_Object QCLIPBOARD, QPRIMARY;
-
-/* Coding system for communicating with other Windows programs via the
-   clipboard.  */
-static Lisp_Object Vselection_coding_system;
-
-/* Coding system for the next communicating with other Windows programs.  */
-static Lisp_Object Vnext_selection_coding_system;
 
 /* The segment address and the size of the buffer in low
    memory used to move data between us and WinOldAp module.  */
@@ -692,19 +685,44 @@ syms_of_win16select (void)
   defsubr (&Sw16_get_clipboard_data);
   defsubr (&Sx_selection_exists_p);
 
-  DEFVAR_LISP ("selection-coding-system", &Vselection_coding_system,
-	       doc: /* Coding system for communicating with other X clients.
-When sending or receiving text via cut_buffer, selection, and clipboard,
-the text is encoded or decoded by this coding system.
-The default value is `iso-latin-1-dos'.  */);
+  DEFVAR_LISP ("selection-coding-system", Vselection_coding_system,
+	       doc: /* Coding system for communicating with other programs.
+
+For MS-Windows and MS-DOS:
+When sending or receiving text via selection and clipboard, the text
+is encoded or decoded by this coding system.  The default value is
+the current system default encoding on 9x/Me, `utf-16le-dos'
+\(Unicode) on NT/W2K/XP, and `iso-latin-1-dos' on MS-DOS.
+
+For X Windows:
+When sending text via selection and clipboard, if the target
+data-type matches with the type of this coding system, it is used
+for encoding the text.  Otherwise (including the case that this
+variable is nil), a proper coding system is used as below:
+
+data-type	coding system
+---------	-------------
+UTF8_STRING	utf-8
+COMPOUND_TEXT	compound-text-with-extensions
+STRING		iso-latin-1
+C_STRING	no-conversion
+
+When receiving text, if this coding system is non-nil, it is used
+for decoding regardless of the data-type.  If this is nil, a
+proper coding system is used according to the data-type as above.
+
+See also the documentation of the variable `x-select-request-type' how
+to control which data-type to request for receiving text.
+
+The default value is nil.  */);
   Vselection_coding_system = intern ("iso-latin-1-dos");
 
-  DEFVAR_LISP ("next-selection-coding-system", &Vnext_selection_coding_system,
-	       doc: /* Coding system for the next communication with other X clients.
+  DEFVAR_LISP ("next-selection-coding-system", Vnext_selection_coding_system,
+	       doc: /* Coding system for the next communication with other programs.
 Usually, `selection-coding-system' is used for communicating with
-other X clients.  But, if this variable is set, it is used for the
-next communication only.  After the communication, this variable is
-set to nil.  */);
+other programs (X Windows clients or MS Windows programs).  But, if this
+variable is set, it is used for the next communication only.
+After the communication, this variable is set to nil.  */);
   Vnext_selection_coding_system = Qnil;
 
   QPRIMARY   = intern ("PRIMARY");	staticpro (&QPRIMARY);
@@ -713,5 +731,3 @@ set to nil.  */);
 
 #endif /* MSDOS */
 
-/* arch-tag: 085a22c8-7324-436e-a6da-102464ce95d8
-   (do not change this comment) */

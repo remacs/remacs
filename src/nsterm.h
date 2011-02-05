@@ -1,5 +1,5 @@
 /* Definitions and headers for communication with NeXT/Open/GNUstep API.
-   Copyright (C) 1989, 1993, 2005, 2008, 2009, 2010 Free Software Foundation, Inc.
+   Copyright (C) 1989, 1993, 2005, 2008-2011 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -66,6 +66,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
    int rows, cols;
    int scrollbarsNeedingUpdate;
    EmacsToolbar *toolbar;
+   NSRect ns_userRect;
    }
 
 /* AppKit-side interface */
@@ -492,21 +493,9 @@ struct ns_display_info
   /* The cursor to use for vertical scroll bars. */
   Cursor vertical_scroll_bar_cursor;
 
-  /* most mouse face stuff moved in here as of 21+ (and reasonably so) */
-  int mouse_face_beg_row, mouse_face_beg_col;
-  int mouse_face_end_row, mouse_face_end_col;
-  int mouse_face_beg_x, mouse_face_beg_y;
-  int mouse_face_end_x, mouse_face_end_y;
-  int mouse_face_past_end;
-  Lisp_Object mouse_face_window;
-  int mouse_face_face_id;
-  int mouse_face_deferred_gc;
-  Lisp_Object mouse_face_overlay;
-  FRAME_PTR mouse_face_mouse_frame;
-  int mouse_face_mouse_x, mouse_face_mouse_y;
-  int mouse_face_defer;
-  int mouse_face_hidden;
-  int mouse_face_image_state;
+  /* Information about the range of text currently shown in
+     mouse-face.  */
+  Mouse_HLInfo mouse_highlight;
 
   struct frame *x_highlight_frame;
   struct frame *x_focus_frame;
@@ -577,6 +566,12 @@ struct ns_output
 
   /* This is the Emacs structure for the NS display this frame is on.  */
   struct ns_display_info *display_info;
+
+  /* Non-zero if we want to constrain the frame to the screen.  */
+  int dont_constrain;
+
+  /* Non-zero if we are zooming (maximizing) the frame.  */
+  int zooming;
 };
 
 /* this dummy decl needed to support TTYs */
@@ -824,5 +819,3 @@ extern char gnustep_base_version[];  /* version tracking */
 
 #endif	/* HAVE_NS */
 
-/* arch-tag: 0a28b142-4ac1-4a81-a243-abcd82d9c4e5
-   (do not change this comment) */

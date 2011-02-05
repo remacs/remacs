@@ -1,7 +1,7 @@
 ;;; eieio-comp.el -- eieio routines to help with byte compilation
 
-;; Copyright (C) 1995,1996, 1998, 1999, 2000, 2001, 2002, 2005, 2008,
-;;   2009, 2010  Free Software Foundation, Inc.
+;; Copyright (C) 1995-1996, 1998-2002, 2005, 2008-2011
+;;   Free Software Foundation, Inc.
 
 ;; Author: Eric M. Ludlam <zappo@gnu.org>
 ;; Version: 0.2
@@ -47,10 +47,6 @@
 ;; This teaches the byte compiler how to do this sort of thing.
 (put 'defmethod 'byte-hunk-handler 'byte-compile-file-form-defmethod)
 
-;; Variables used free:
-(defvar outbuffer)
-(defvar filename)
-
 (defun byte-compile-file-form-defmethod (form)
   "Mumble about the method we are compiling.
 This function is mostly ripped from `byte-compile-file-form-defun',
@@ -83,14 +79,18 @@ that is called but rarely.  Argument FORM is the body of the method."
 	 (class (if (listp arg1) (nth 1 arg1) nil))
 	 (my-outbuffer (if (eval-when-compile (featurep 'xemacs))
 			   byte-compile-outbuffer
-			 (condition-case nil
-			     bytecomp-outbuffer
-			   (error outbuffer))))
-	 )
+			 (cond ((boundp 'bytecomp-outbuffer)
+				bytecomp-outbuffer) ; Emacs >= 23.2
+			       ((boundp 'outbuffer) outbuffer)
+			       (t (error "Unable to set outbuffer"))))))
     (let ((name (format "%s::%s" (or class "#<generic>") meth)))
       (if byte-compile-verbose
 	  ;; #### filename used free
-	  (message "Compiling %s... (%s)" (or filename "") name))
+	  (message "Compiling %s... (%s)"
+		   (cond ((boundp 'bytecomp-filename) bytecomp-filename)
+			 ((boundp 'filename) filename)
+			 (t ""))
+		   name))
       (setq byte-compile-current-form name) ; for warnings
       )
     ;; Flush any pending output
@@ -139,5 +139,4 @@ Argument PARAMLIST is the parameter list to convert."
 
 (provide 'eieio-comp)
 
-;; arch-tag: f2aacdd3-1da2-4ee9-b3e5-e8eac0832ee3
 ;;; eieio-comp.el ends here

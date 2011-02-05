@@ -1,7 +1,6 @@
 ;;; gnus-int.el --- backend interface functions for Gnus
 
-;; Copyright (C) 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004
-;;   2005, 2006, 2007, 2008, 2009, 2010 Free Software Foundation, Inc.
+;; Copyright (C) 1996-2011 Free Software Foundation, Inc.
 
 ;; Author: Lars Magne Ingebrigtsen <larsi@gnus.org>
 ;; Keywords: news
@@ -100,8 +99,6 @@ If CONFIRM is non-nil, the user will be asked for an NNTP server."
 	;; Stream is already opened.
 	nil
       ;; Open NNTP server.
-      (unless gnus-nntp-service
-	(setq gnus-nntp-server nil))
       (when confirm
 	;; Read server name with completion.
 	(setq gnus-nntp-server
@@ -261,20 +258,21 @@ If it is down, start it up (again)."
 	  (gnus-message 1 "Denied server %s" server)
 	  nil)
       ;; Open the server.
-      (let* ((open-server-function (gnus-get-function gnus-command-method 'open-server))
+      (let* ((open-server-function
+	      (gnus-get-function gnus-command-method 'open-server))
              (result
-             (condition-case err
-                 (funcall open-server-function
-                          (nth 1 gnus-command-method)
-                          (nthcdr 2 gnus-command-method))
-               (error
-                (gnus-message 1 "Unable to open server %s due to: %s"
-			      server (error-message-string err))
-                nil)
-               (quit
-                (gnus-message 1 "Quit trying to open server %s" server)
-                nil)))
-            open-offline)
+	      (condition-case err
+		  (funcall open-server-function
+			   (nth 1 gnus-command-method)
+			   (nthcdr 2 gnus-command-method))
+		(error
+		 (gnus-message 1 "Unable to open server %s due to: %s"
+			       server (error-message-string err))
+		 nil)
+		(quit
+		 (gnus-message 1 "Quit trying to open server %s" server)
+		 nil)))
+	     open-offline)
 	;; If this hasn't been opened before, we add it to the list.
 	(unless elem
 	  (setq elem (list gnus-command-method nil)
@@ -474,6 +472,18 @@ If FETCH-OLD, retrieve all headers (or some subset thereof) in the group."
       (funcall (gnus-get-function gnus-command-method 'request-type)
 	       (gnus-group-real-name group) article))))
 
+(defun gnus-request-update-group-status (group status)
+  "Change the status of a group.
+Valid statuses include `subscribe' and `unsubscribe'."
+  (let ((gnus-command-method (gnus-find-method-for-group group)))
+    (if (not (gnus-check-backend-function
+	      'request-update-group-status (car gnus-command-method)))
+	nil
+      (funcall
+       (gnus-get-function gnus-command-method 'request-update-group-status)
+       (gnus-group-real-name group) status
+       (nth 1 gnus-command-method)))))
+
 (defun gnus-request-set-mark (group action)
   "Set marks on articles in the back end."
   (let ((gnus-command-method (gnus-find-method-for-group group)))
@@ -504,11 +514,21 @@ If BUFFER, insert the article in that group."
 	     article (gnus-group-real-name group)
 	     (nth 1 gnus-command-method) buffer)))
 
-(defun gnus-request-thread (id)
-  "Request the thread containing the article specified by Message-ID id."
+(defun gnus-request-thread (header)
+  "Request the headers in the thread containing the article specified by HEADER."
   (let ((gnus-command-method (gnus-find-method-for-group gnus-newsgroup-name)))
     (funcall (gnus-get-function gnus-command-method 'request-thread)
-	     id)))
+	     header)))
+
+(defun gnus-warp-to-article ()
+  "Warps from an article in a virtual group to the article in its
+real group. Does nothing on a real group."
+  (interactive)
+  (let ((gnus-command-method
+	 (gnus-find-method-for-group gnus-newsgroup-name)))
+    (when (gnus-check-backend-function
+	   'warp-to-article (car gnus-command-method))
+      (funcall (gnus-get-function gnus-command-method 'warp-to-article)))))
 
 (defun gnus-request-head (article group)
   "Request the head of ARTICLE in GROUP."
@@ -618,8 +638,7 @@ If GROUP is nil, all groups on GNUS-COMMAND-METHOD are scanned."
   (when (gnus-check-backend-function
 	 'request-marks (car gnus-command-method))
     (let ((group (gnus-info-group info)))
-      (and (funcall (gnus-get-function gnus-command-method
-				       'request-update-info)
+      (and (funcall (gnus-get-function gnus-command-method 'request-marks)
 		    (gnus-group-real-name group)
 		    info (nth 1 gnus-command-method))
 	   ;; If the minimum article number is greater than 1, then all
@@ -655,7 +674,8 @@ If GROUP is nil, all groups on GNUS-COMMAND-METHOD are scanned."
 	 (result (funcall (gnus-get-function gnus-command-method
 					     'request-move-article)
 			  article (gnus-group-real-name group)
-			  (nth 1 gnus-command-method) accept-function last move-is-internal)))
+			  (nth 1 gnus-command-method) accept-function
+			  last move-is-internal)))
     (when (and result gnus-agent
 	       (gnus-agent-method-p gnus-command-method))
       (gnus-agent-unfetch-articles group (list article)))
@@ -689,7 +709,9 @@ If GROUP is nil, all groups on GNUS-COMMAND-METHOD are scanned."
 	  (if (stringp group) (gnus-group-real-name group) group)
 	  (cadr gnus-command-method)
 	  last)))
-    (when (and gnus-agent (gnus-agent-method-p gnus-command-method))
+    (when (and gnus-agent
+	       (gnus-agent-method-p gnus-command-method)
+	       (cdr result))
       (gnus-agent-regenerate-group group (list (cdr result))))
     result))
 

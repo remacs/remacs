@@ -1,7 +1,6 @@
 ;;; mixal-mode.el --- Major mode for the mix asm language.
 
-;; Copyright (C) 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010
-;;   Free Software Foundation, Inc.
+;; Copyright (C) 2003-2011  Free Software Foundation, Inc.
 
 ;; Author: Pieter E.J. Pareit <pieter.pareit@gmail.com>
 ;; Maintainer: Pieter E.J. Pareit <pieter.pareit@gmail.com>
@@ -1106,8 +1105,7 @@ Assumes that file has been compiled with debugging support."
 
 ;;;###autoload
 (define-derived-mode mixal-mode fundamental-mode "mixal"
-  "Major mode for the mixal asm language.
-\\{mixal-mode-map}"
+  "Major mode for the mixal asm language."
   (set (make-local-variable 'comment-start) "*")
   (set (make-local-variable 'comment-start-skip) "^\\*[ \t]*")
   (set (make-local-variable 'font-lock-defaults)
@@ -1117,13 +1115,8 @@ Assumes that file has been compiled with debugging support."
   ;; might add an indent function in the future
   ;;  (set (make-local-variable 'indent-line-function) 'mixal-indent-line)
   (set (make-local-variable 'compile-command) (concat "mixasm "
-						      buffer-file-name))
-  ;; mixasm will do strange when there is no final newline,
-  ;; so let Emacs ensure that it is always there
-  (set (make-local-variable 'require-final-newline)
-       mode-require-final-newline))
+						      buffer-file-name)))
 
 (provide 'mixal-mode)
 
-;; arch-tag: be7c128a-bf61-4951-a90e-9398267ce3f3
 ;;; mixal-mode.el ends here

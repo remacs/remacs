@@ -1,7 +1,6 @@
 ;;; ldap.el --- client interface to LDAP for Emacs
 
-;; Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006,
-;;   2007, 2008, 2009, 2010  Free Software Foundation, Inc.
+;; Copyright (C) 1998-2011  Free Software Foundation, Inc.
 
 ;; Author: Oscar Figueiredo <oscar@cpe.fr>
 ;; Maintainer: FSF
@@ -556,13 +555,10 @@ an alist of attribute/value pairs."
       (if (and sizelimit
 	       (not (equal "" sizelimit)))
 	  (setq arglist (nconc arglist (list (format "-z%s" sizelimit)))))
-      (eval `(call-process ldap-ldapsearch-prog
-			   nil
-			   buf
-			   nil
-			   ,@arglist
-			   ,@ldap-ldapsearch-args
-			   ,@filter))
+      (apply #'call-process ldap-ldapsearch-prog
+	     ;; Ignore stderr, which can corrupt results
+	     nil (list buf nil) nil
+	     (append arglist ldap-ldapsearch-args filter))
       (insert "\n")
       (goto-char (point-min))
 
@@ -579,9 +575,7 @@ an alist of attribute/value pairs."
 	(while (progn
 		 (skip-chars-forward " \t\n")
 		 (not (eobp)))
-	  (setq dn (buffer-substring (point) (save-excursion
-					       (end-of-line)
-					       (point))))
+	  (setq dn (buffer-substring (point) (point-at-eol)))
 	  (forward-line 1)
           (while (looking-at "^\\([A-Za-z][-A-Za-z0-9]*\
 \\|[0-9]+\\(?:\\.[0-9]+\\)*\\)\\(;[-A-Za-z0-9]+\\)*[=:\t ]+\
@@ -617,5 +611,4 @@ an alist of attribute/value pairs."
 
 (provide 'ldap)
 
-;; arch-tag: 47913a76-6155-42e6-ac58-6d28b5d50eb0
 ;;; ldap.el ends here

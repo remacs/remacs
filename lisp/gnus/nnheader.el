@@ -1,8 +1,7 @@
 ;;; nnheader.el --- header access macros for Gnus and its backends
 
-;; Copyright (C) 1987, 1988, 1989, 1990, 1993, 1994,
-;;   1995, 1996, 1997, 1998, 2000, 2001, 2002, 2003,
-;;   2004, 2005, 2006, 2007, 2008, 2009, 2010 Free Software Foundation, Inc.
+;; Copyright (C) 1987-1990, 1993-1998, 2000-2011
+;;   Free Software Foundation, Inc.
 
 ;; Author: Masanobu UMEDA <umerin@flab.flab.fujitsu.junet>
 ;;	Lars Magne Ingebrigtsen <larsi@gnus.org>
@@ -44,6 +43,8 @@
 (require 'mail-utils)
 (require 'mm-util)
 (require 'gnus-util)
+(autoload 'gnus-range-add "gnus-range")
+(autoload 'gnus-remove-from-range "gnus-range")
 ;; FIXME none of these are used explicitly in this file.
 (autoload 'gnus-sorted-intersection "gnus-range")
 (autoload 'gnus-intersection "gnus-range")
@@ -366,15 +367,13 @@ on your system, you could say something like:
 	      (setq num 0
 		    beg (point-min)
 		    end (point-max))
-	    (goto-char (point-min))
 	    ;; Search to the beginning of the next header.  Error
 	    ;; messages do not begin with 2 or 3.
 	    (when (re-search-forward "^[23][0-9]+ " nil t)
-	      (end-of-line)
 	      (setq num (read cur)
 		    beg (point)
 		    end (if (search-forward "\n.\n" nil t)
-			    (- (point) 2)
+			    (goto-char  (- (point) 2))
 			  (point)))))
       (with-temp-buffer
 	(insert-buffer-substring cur beg end)
@@ -1079,6 +1078,26 @@ See `find-file-noselect' for the arguments."
    (truncate (* (- nnheader-read-timeout
 		   (truncate nnheader-read-timeout))
 		1000))))
+
+(defun nnheader-update-marks-actions (backend-marks actions)
+  (dolist (action actions)
+    (let ((range (nth 0 action))
+	  (what  (nth 1 action))
+	  (marks (nth 2 action)))
+      (dolist (mark marks)
+	(setq backend-marks
+	      (gnus-update-alist-soft
+	       mark
+	       (cond
+		((eq what 'add)
+		 (gnus-range-add (cdr (assoc mark backend-marks)) range))
+		((eq what 'del)
+		 (gnus-remove-from-range
+		  (cdr (assoc mark backend-marks)) range))
+		((eq what 'set)
+		 range))
+	       backend-marks)))))
+  backend-marks)
 
 (when (featurep 'xemacs)
   (require 'nnheaderxm))

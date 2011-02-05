@@ -1,6 +1,5 @@
 /* Code for doing intervals.
-   Copyright (C) 1993, 1994, 1995, 1997, 1998, 2001, 2002, 2003, 2004,
-                 2005, 2006, 2007, 2008, 2009, 2010  Free Software Foundation, Inc.
+   Copyright (C) 1993-1995, 1997-1998, 2001-2011  Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -1875,15 +1874,6 @@ lookup_char_property (Lisp_Object plist, register Lisp_Object prop, int textprop
 }
 
 
-/* Set point "temporarily", without checking any text properties.  */
-
-INLINE void
-temp_set_point (struct buffer *buffer, EMACS_INT charpos)
-{
-  temp_set_point_both (buffer, charpos,
-		       buf_charpos_to_bytepos (buffer, charpos));
-}
-
 /* Set point in BUFFER "temporarily" to CHARPOS, which corresponds to
    byte position BYTEPOS.  */
 
@@ -1904,6 +1894,15 @@ temp_set_point_both (struct buffer *buffer,
 
   BUF_PT_BYTE (buffer) = bytepos;
   BUF_PT (buffer) = charpos;
+}
+
+/* Set point "temporarily", without checking any text properties.  */
+
+INLINE void
+temp_set_point (struct buffer *buffer, EMACS_INT charpos)
+{
+  temp_set_point_both (buffer, charpos,
+		       buf_charpos_to_bytepos (buffer, charpos));
 }
 
 /* Set point in BUFFER to CHARPOS.  If the target position is
@@ -2565,5 +2564,3 @@ set_intervals_multibyte (int multi_flag)
 			       BEG, BEG_BYTE, Z, Z_BYTE);
 }
 
-/* arch-tag: 3d402b60-083c-4271-b4a3-ebd9a74bfe27
-   (do not change this comment) */

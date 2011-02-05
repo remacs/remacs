@@ -1,7 +1,6 @@
 ;;; semantic/grammar.el --- Major mode framework for Semantic grammars
 
-;; Copyright (C) 2002, 2003, 2004, 2005, 2007, 2008, 2009, 2010
-;;   Free Software Foundation, Inc.
+;; Copyright (C) 2002-2005, 2007-2011  Free Software Foundation, Inc.
 
 ;; Author: David Ponce <david@dponce.com>
 ;; Maintainer: David Ponce <david@dponce.com>
@@ -248,10 +247,7 @@ That is tag names plus names defined in tag attribute `:rest'."
               (skip-chars-backward "\r\n\t")
               ;; If a grammar footer is found, skip it.
               (re-search-backward "^;;;\\s-+\\S-+\\s-+ends here"
-                                  (save-excursion
-                                    (beginning-of-line)
-                                    (point))
-                                  t)
+                                  (point-at-bol) t)
               (skip-chars-backward "\r\n\t")
               (point)))
            "\n"))
@@ -1897,5 +1893,4 @@ Optional argument COLOR determines if color is added to the text."
 
 (provide 'semantic/grammar)
 
-;; arch-tag: 12ffc9d5-557d-49af-a5fd-a66a006ddb3e
 ;;; semantic/grammar.el ends here

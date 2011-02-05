@@ -1,6 +1,4 @@
-# Copyright (C) 1992, 1993, 1994, 1995, 1996, 1997, 1998, 2000, 2001,
-#   2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009
-#   Free Software Foundation, Inc.
+# Copyright (C) 1992-1998, 2000-2011  Free Software Foundation, Inc.
 #
 # This file is part of GNU Emacs.
 #
@@ -51,7 +49,7 @@ handle SIGALRM ignore
 # Using a constant runs into GDB bugs sometimes.
 define xgetptr
   set $bugfix = $arg0
-  set $ptr = (gdb_use_union ? $bugfix.u.val : $bugfix & $valmask) | gdb_data_seg_bits
+  set $ptr = (gdb_use_union ? (gdb_use_lsb ? $bugfix.u.val << gdb_gctypebits : $bugfix.u.val) : $bugfix & $valmask) | gdb_data_seg_bits
 end
 
 define xgetint
@@ -494,14 +492,30 @@ define pgx
   end
   # COMPOSITE_GLYPH
   if ($g->type == 1)
-    printf "COMP[%d (%d..%d)]", $g->u.cmp.id, $g->u.cmp.from, $g->u.cmp.to
+    printf "COMP[%d (%d..%d)]", $g->u.cmp.id, $g->slice.cmp.from, $g->slice.cmp.to
+  end
+  # GLYPHLESS_GLYPH
+  if ($g->type == 2)
+    printf "GLYPHLESS["
+    if ($g->u.glyphless.method == 0)
+      printf "THIN]"
+    end
+    if ($g->u.glyphless.method == 1)
+      printf "EMPTY]"
+    end
+    if ($g->u.glyphless.method == 2)
+      printf "ACRO]"
+    end
+    if ($g->u.glyphless.method == 3)
+      printf "HEX]"
+    end
   end
   # IMAGE_GLYPH
-  if ($g->type == 2)
+  if ($g->type == 3)
     printf "IMAGE[%d]", $g->u.img_id
   end
   # STRETCH_GLYPH
-  if ($g->type == 3)
+  if ($g->type == 4)
     printf "STRETCH[%d+%d]", $g->u.stretch.height, $g->u.stretch.ascent
   end
   xgettype ($g->object)
@@ -544,8 +558,8 @@ define pgx
   if ($g->right_box_line_p)
     printf " ]"
   end
-  if ($g->slice.x || $g->slice.y || $g->slice.width || $g->slice.height)
-    printf " slice=%d,%d,%d,%d" ,$g->slice.x, $g->slice.y, $g->slice.width, $g->slice.height
+  if ($g->slice.img.x || $g->slice.img.y || $g->slice.img.width || $g->slice.img.height)
+    printf " slice=%d,%d,%d,%d" ,$g->slice.img.x, $g->slice.img.y, $g->slice.img.width, $g->slice.img.height
   end
   printf "\n"
 end
@@ -1211,7 +1225,8 @@ define xbacktrace
       xprintsym (*$bt->function)
       printf " (0x%x)\n", $bt->args
     else
-      printf "0x%x ", *$bt->function
+      xgetptr *$bt->function
+      printf "0x%x ", $ptr
       if $type == Lisp_Vectorlike
 	xgetptr (*$bt->function)
         set $size = ((struct Lisp_Vector *) $ptr)->size
@@ -1300,7 +1315,7 @@ show environment DISPLAY
 show environment TERM
 
 # People get bothered when they see messages about non-existent functions...
-xgetptr Vsystem_type
+xgetptr globals.f_Vsystem_type
 # $ptr is NULL in temacs
 if ($ptr != 0)
   set $tem = (struct Lisp_Symbol *) $ptr
@@ -1325,7 +1340,7 @@ end
 tbreak init_sys_modes
 commands
   silent
-  xgetptr Vinitial_window_system
+  xgetptr globals.f_Vinitial_window_system
   set $tem = (struct Lisp_Symbol *) $ptr
   xgetptr $tem->xname
   set $tem = (struct Lisp_String *) $ptr
@@ -1338,4 +1353,3 @@ commands
   end
   continue
 end
-# arch-tag: 12f34321-7bfa-4240-b77a-3cd3a1696dfe

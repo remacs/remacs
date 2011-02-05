@@ -1,8 +1,7 @@
 ;;; trampver.el --- Transparent Remote Access, Multiple Protocol
 ;;; lisp/trampver.el.  Generated from trampver.el.in by configure.
 
-;; Copyright (C) 2003, 2004, 2005, 2006, 2007, 2008, 2009,
-;;   2010 Free Software Foundation, Inc.
+;; Copyright (C) 2003-2011 Free Software Foundation, Inc.
 
 ;; Author: Kai Großjohann <kai.grossjohann@gmx.net>
 ;; Keywords: comm, processes
@@ -32,7 +31,7 @@
 ;; should be changed only there.
 
 ;;;###tramp-autoload
-(defconst tramp-version "2.2.0-pre"
+(defconst tramp-version "2.2.1-pre"
   "This version of Tramp.")
 
 ;;;###tramp-autoload
@@ -45,7 +44,7 @@
 		      (= emacs-major-version 21)
 		      (>= emacs-minor-version 4)))
 	     "ok"
-	   (format "Tramp 2.2.0-pre is not fit for %s"
+	   (format "Tramp 2.2.1-pre is not fit for %s"
 		   (when (string-match "^.*$" (emacs-version))
 		     (match-string 0 (emacs-version)))))))
   (unless (string-match "\\`ok\\'" x) (error "%s" x)))
@@ -56,7 +55,6 @@
 
 (provide 'trampver)
 
-;; arch-tag: 443576ca-f8f1-4bb1-addc-5c70861e93b1
 ;;; trampver.el ends here
 
 ;; Local Variables:

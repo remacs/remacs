@@ -1,7 +1,6 @@
 ;;; help-fns.el --- Complex help functions
 
-;; Copyright (C) 1985, 1986, 1993, 1994, 1998, 1999, 2000, 2001, 2002,
-;;   2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010
+;; Copyright (C) 1985-1986, 1993-1994, 1998-2011
 ;;   Free Software Foundation, Inc.
 
 ;; Maintainer: FSF
@@ -289,13 +288,19 @@ suitable file is found, return nil."
      ((not (stringp file-name))
       ;; If we don't have a file-name string by now, we lost.
       nil)
+     ;; Now, `file-name' should have become an absolute file name.
+     ;; For files loaded from ~/.emacs.elc, try ~/.emacs.
+     ((let (fn)
+	(and (string-equal file-name
+			   (expand-file-name ".emacs.elc" "~"))
+	     (file-readable-p (setq fn (expand-file-name ".emacs" "~")))
+	     fn)))
+     ;; When the Elisp source file can be found in the install
+     ;; directory, return the name of that file.
      ((let ((lib-name
 	     (if (string-match "[.]elc\\'" file-name)
 		 (substring-no-properties file-name 0 -1)
 	       file-name)))
-	;; When the Elisp source file can be found in the install
-	;; directory return the name of that file - `file-name' should
-	;; have become an absolute file name ny now.
 	(or (and (file-readable-p lib-name) lib-name)
 	    ;; The library might be compressed.
 	    (and (file-readable-p (concat lib-name ".gz")) lib-name))))
@@ -633,19 +638,16 @@ it is displayed along with the global value."
 		(if valvoid
 		    (princ " is void as a variable.")
 		  (princ "'s "))))
-	    (if valvoid
-		nil
+	    (unless valvoid
 	      (with-current-buffer standard-output
 		(setq val-start-pos (point))
 		(princ "value is ")
-		(terpri)
 		(let ((from (point)))
+		  (terpri)
 		  (pp val)
-		  ;; Hyperlinks in variable's value are quite frequently
-		  ;; inappropriate e.g C-h v <RET> features <RET>
-		  ;; (help-xref-on-pp from (point))
-		  (if (< (point) (+ from 20))
-		      (delete-region (1- from) from))
+		  (if (< (point) (+ 68 (line-beginning-position 0)))
+		      (delete-region from (1+ from))
+		    (delete-region (1- from) from))
 		  (let* ((sv (get variable 'standard-value))
 			 (origval (and (consp sv)
 				       (condition-case nil
@@ -660,7 +662,6 @@ it is displayed along with the global value."
 		      (if (< (point) (+ from 20))
 			  (delete-region (1- from) from)))))))
 	    (terpri)
-
 	    (when locus
 	      (if (bufferp locus)
 		  (princ (format "%socal in buffer %s; "
@@ -887,7 +888,111 @@ BUFFER should be a buffer or a buffer name."
 	  (insert "\nThe parent category table is:")
 	  (describe-vector table 'help-describe-category-set))))))
 
+
+;;; Replacements for old lib-src/ programs.  Don't seem especially useful.
+
+;; Replaces lib-src/digest-doc.c.
+;;;###autoload
+(defun doc-file-to-man (file)
+  "Produce an nroff buffer containing the doc-strings from the DOC file."
+  (interactive (list (read-file-name "Name of DOC file: " doc-directory
+                                     internal-doc-file-name t)))
+  (or (file-readable-p file)
+      (error "Cannot read file `%s'" file))
+  (pop-to-buffer (generate-new-buffer "*man-doc*"))
+  (setq buffer-undo-list t)
+  (insert ".TH \"Command Summary for GNU Emacs\"\n"
+          ".AU Richard M. Stallman\n")
+  (insert-file-contents file)
+  (let (notfirst)
+    (while (search-forward "" nil 'move)
+      (if (looking-at "S")
+          (delete-region (1- (point)) (line-end-position))
+        (delete-char -1)
+        (if notfirst
+            (insert "\n.DE\n")
+          (setq notfirst t))
+        (insert "\n.SH ")
+        (insert (if (looking-at "F") "Function " "Variable "))
+        (delete-char 1)
+        (forward-line 1)
+        (insert ".DS L\n"))))
+  (insert "\n.DE\n")
+  (setq buffer-undo-list nil)
+  (nroff-mode))
+
+;; Replaces lib-src/sorted-doc.c.
+;;;###autoload
+(defun doc-file-to-info (file)
+  "Produce a texinfo buffer with sorted doc-strings from the DOC file."
+  (interactive (list (read-file-name "Name of DOC file: " doc-directory
+                                     internal-doc-file-name t)))
+  (or (file-readable-p file)
+      (error "Cannot read file `%s'" file))
+  (let ((i 0) type name doc alist)
+    (with-temp-buffer
+      (insert-file-contents file)
+      ;; The characters "@{}" need special treatment.
+      (while (re-search-forward "[@{}]" nil t)
+        (backward-char)
+        (insert "@")
+        (forward-char 1))
+      (goto-char (point-min))
+      (while (search-forward "" nil t)
+        (unless (looking-at "S")
+          (setq type (char-after)
+                name (buffer-substring (1+ (point)) (line-end-position))
+                doc (buffer-substring (line-beginning-position 2)
+                                      (if (search-forward  "" nil 'move)
+                                          (1- (point))
+                                        (point)))
+                alist (cons (list name type doc) alist))
+          (backward-char 1))))
+    (pop-to-buffer (generate-new-buffer "*info-doc*"))
+    (setq buffer-undo-list t)
+    ;; Write the output header.
+    (insert "\\input texinfo  @c -*-texinfo-*-\n"
+            "@setfilename emacsdoc.info\n"
+            "@settitle Command Summary for GNU Emacs\n"
+            "@finalout\n"
+            "\n@node Top\n"
+            "@unnumbered Command Summary for GNU Emacs\n\n"
+            "@table @asis\n\n"
+            "@iftex\n"
+            "@global@let@ITEM@item\n"
+            "@def@item{@filbreak@vskip5pt@ITEM}\n"
+            "@font@tensy cmsy10 scaled @magstephalf\n"
+            "@font@teni cmmi10 scaled @magstephalf\n"
+            "@def\\{{@tensy@char110}}\n" ; this backslash goes with cmr10
+            "@def|{{@tensy@char106}}\n"
+            "@def@{{{@tensy@char102}}\n"
+            "@def@}{{@tensy@char103}}\n"
+            "@def<{{@teni@char62}}\n"
+            "@def>{{@teni@char60}}\n"
+            "@chardef@@64\n"
+            "@catcode43=12\n"
+            "@tableindent-0.2in\n"
+            "@end iftex\n")
+    ;; Sort the array by name; within each name, by type (functions first).
+    (setq alist (sort alist (lambda (e1 e2)
+                              (if (string-equal (car e1) (car e2))
+                                  (<= (cadr e1) (cadr e2))
+                                (string-lessp (car e1) (car e2))))))
+    ;; Print each function.
+    (dolist (e alist)
+      (insert "\n@item "
+              (if (char-equal (cadr e) ?\F) "Function" "Variable")
+              " @code{" (car e) "}\n@display\n"
+              (nth 2 e)
+              "\n@end display\n")
+      ;; Try to avoid a save size overflow in the TeX output routine.
+      (if (zerop (setq i (% (1+ i) 100)))
+          (insert "\n@end table\n@table @asis\n")))
+    (insert "@end table\n"
+            "@bye\n")
+    (setq buffer-undo-list nil)
+    (texinfo-mode)))
+
 (provide 'help-fns)
 
-;; arch-tag: 9e10331c-ae81-4d13-965d-c4819aaab0b3
 ;;; help-fns.el ends here

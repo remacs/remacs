@@ -1,6 +1,5 @@
 /* sound.c -- sound support.
-   Copyright (C) 1998, 1999, 2001, 2002, 2003, 2004,
-                 2005, 2006, 2007, 2008, 2009, 2010 Free Software Foundation, Inc.
+   Copyright (C) 1998-1999, 2001-2011 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -56,9 +55,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 /* BEGIN: Non Windows Includes */
 #ifndef WINDOWSNT
 
-#ifndef MSDOS
 #include <sys/ioctl.h>
-#endif
 
 /* FreeBSD has machine/soundcard.h.  Voxware sound driver docs mention
    sys/soundcard.h.  So, let's try whatever's there.  */
@@ -1502,5 +1499,3 @@ init_sound (void)
 
 #endif /* HAVE_SOUND */
 
-/* arch-tag: dd850ad8-0433-4e2c-9cba-b7aeeccc0dbd
-   (do not change this comment) */

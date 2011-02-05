@@ -1,6 +1,6 @@
-/* Functions for handle font and other changes dynamically.
-   Copyright (C) 2009, 2010
-                 Free Software Foundation, Inc.
+/* Functions for handling font and other changes dynamically.
+
+Copyright (C) 2009-2011  Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -44,8 +44,6 @@ static char *current_font;
 static struct x_display_info *first_dpyinfo;
 static Lisp_Object Qmonospace_font_name, Qfont_name, Qfont_render,
   Qtool_bar_style;
-static int use_system_font;
-static Lisp_Object Vxft_settings;
 static Lisp_Object current_tool_bar_style;
 
 #ifdef HAVE_GCONF
@@ -627,7 +625,9 @@ init_gconf (void)
 #if defined (HAVE_GCONF) && defined (HAVE_XFT)
   char *s;
 
+#ifdef HAVE_G_TYPE_INIT
   g_type_init ();
+#endif
   gconf_client = gconf_client_get_default ();
   s = gconf_client_get_string (gconf_client, SYSTEM_MONO_FONT, NULL);
   if (s)
@@ -656,17 +656,9 @@ init_gconf (void)
 static void
 init_xsettings (struct x_display_info *dpyinfo)
 {
-  char sel[64];
   Display *dpy = dpyinfo->display;
 
   BLOCK_INPUT;
-
-  sprintf (sel, "_XSETTINGS_S%d", XScreenNumberOfScreen (dpyinfo->screen));
-  dpyinfo->Xatom_xsettings_sel = XInternAtom (dpy, sel, False);
-  dpyinfo->Xatom_xsettings_prop = XInternAtom (dpy,
-                                               "_XSETTINGS_SETTINGS",
-                                               False);
-  dpyinfo->Xatom_xsettings_mgr = XInternAtom (dpy, "MANAGER", False);
 
   /* Select events so we can detect client messages sent when selection
      owner changes.  */
@@ -757,14 +749,14 @@ syms_of_xsettings (void)
   defsubr (&Sfont_get_system_font);
   defsubr (&Sfont_get_system_normal_font);
 
-  DEFVAR_BOOL ("font-use-system-font", &use_system_font,
+  DEFVAR_BOOL ("font-use-system-font", use_system_font,
     doc: /* *Non-nil means to apply the system defined font dynamically.
 When this is non-nil and the system defined fixed width font changes, we
 update frames dynamically.
 If this variable is nil, Emacs ignores system font changes.  */);
   use_system_font = 0;
 
-  DEFVAR_LISP ("xft-settings", &Vxft_settings,
+  DEFVAR_LISP ("xft-settings", Vxft_settings,
                doc: /* Font settings applied to Xft.  */);
   Vxft_settings = make_string ("", 0);
 
@@ -783,5 +775,3 @@ If this variable is nil, Emacs ignores system font changes.  */);
   Fprovide (intern_c_string ("dynamic-setting"), Qnil);
 }
 
-/* arch-tag: 541716ed-2e6b-42e1-8212-3197e01ea61d
-   (do not change this comment) */

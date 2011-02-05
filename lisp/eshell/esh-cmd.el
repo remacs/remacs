@@ -1,7 +1,6 @@
 ;;; esh-cmd.el --- command invocation
 
-;; Copyright (C) 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007,
-;;   2008, 2009, 2010  Free Software Foundation, Inc.
+;; Copyright (C) 1999-2011  Free Software Foundation, Inc.
 
 ;; Author: John Wiegley <johnw@gnu.org>
 
@@ -355,12 +354,14 @@ hooks should be run before and after the command."
 	   (if (consp command)
 	       (eshell-parse-arguments (car command) (cdr command))
 	     (let ((here (point))
-		   (inhibit-point-motion-hooks t)
-		   after-change-functions)
-	       (insert command)
-	       (prog1
-		   (eshell-parse-arguments here (point))
-		 (delete-region here (point)))))
+		   (inhibit-point-motion-hooks t))
+               (with-silent-modifications
+                 ;; FIXME: Why not use a temporary buffer and avoid this
+                 ;; "insert&delete" business?  --Stef
+                 (insert command)
+                 (prog1
+                     (eshell-parse-arguments here (point))
+                   (delete-region here (point))))))
 	   args))
 	 (commands
 	  (mapcar
@@ -1432,5 +1433,4 @@ messages, and errors."
 
 (provide 'esh-cmd)
 
-;; arch-tag: 8e4f3867-a0c5-441f-96ba-ddd142d94366
 ;;; esh-cmd.el ends here

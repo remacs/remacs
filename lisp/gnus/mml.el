@@ -1,7 +1,6 @@
 ;;; mml.el --- A package for parsing and validating MML documents
 
-;; Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006,
-;;   2007, 2008, 2009, 2010  Free Software Foundation, Inc.
+;; Copyright (C) 1998-2011  Free Software Foundation, Inc.
 
 ;; Author: Lars Magne Ingebrigtsen <larsi@gnus.org>
 ;; This file is part of GNU Emacs.
@@ -1466,6 +1465,7 @@ or the `pop-to-buffer' function."
   (require 'gnus-msg)		      ; for gnus-setup-posting-charset
   (save-excursion
     (let* ((buf (current-buffer))
+	   (article-editing (eq major-mode 'gnus-article-edit-mode))
 	   (message-options message-options)
 	   (message-this-is-mail (message-mail-p))
 	   (message-this-is-news (message-news-p))
@@ -1485,15 +1485,19 @@ or the `pop-to-buffer' function."
       (mml-preview-insert-mail-followup-to)
       (let ((message-deletable-headers (if (message-news-p)
 					   nil
-					 message-deletable-headers)))
+					 message-deletable-headers))
+	    (mail-header-separator (if article-editing
+				       ""
+				     mail-header-separator)))
 	(message-generate-headers
 	 (copy-sequence (if (message-news-p)
 			    message-required-news-headers
-			  message-required-mail-headers))))
-      (if (re-search-forward
-	   (concat "^" (regexp-quote mail-header-separator) "\n") nil t)
-	  (replace-match "\n"))
-      (let ((mail-header-separator ""));; mail-header-separator is removed.
+			  message-required-mail-headers)))
+	(unless article-editing
+	  (if (re-search-forward
+	       (concat "^" (regexp-quote mail-header-separator) "\n") nil t)
+	      (replace-match "\n"))
+	  (setq mail-header-separator ""))
 	(message-sort-headers)
 	(mml-to-mime))
       (if raw
@@ -1504,7 +1508,8 @@ or the `pop-to-buffer' function."
 	      (mm-disable-multibyte)
 	      (insert s)))
 	(let ((gnus-newsgroup-charset (car message-posting-charset))
-	      gnus-article-prepare-hook gnus-original-article-buffer)
+	      gnus-article-prepare-hook gnus-original-article-buffer
+	      gnus-displaying-mime)
 	  (run-hooks 'gnus-article-decode-hook)
 	  (let ((gnus-newsgroup-name "dummy")
 		(gnus-newsrc-hashtb (or gnus-newsrc-hashtb

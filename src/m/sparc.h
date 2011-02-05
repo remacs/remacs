@@ -1,7 +1,6 @@
 /* machine description file for Sun 4 SPARC.
 
-Copyright (C) 1987, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008,
-  2009, 2010  Free Software Foundation, Inc.
+Copyright (C) 1987, 2001-2011  Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -20,10 +19,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 /* __sparc__ is defined by the compiler by default.  */
 
-/* XINT must explicitly sign-extend
-   This flag only matters if you use USE_LISP_UNION_TYPE.  */
-#define EXPLICIT_SIGN_EXTEND
-
 /* Data type of load average, as read out of kmem.  */
 #define LOAD_AVE_TYPE long
 
@@ -40,5 +35,3 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #endif  /* __arch64__ */
 
-/* arch-tag: 0a6f7882-33fd-4811-9832-7466c51e50f7
-   (do not change this comment) */

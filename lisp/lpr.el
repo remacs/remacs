@@ -1,7 +1,7 @@
 ;;; lpr.el --- print Emacs buffer on line printer
 
-;; Copyright (C) 1985, 1988, 1992, 1994, 2001, 2002, 2003,
-;;   2004, 2005, 2006, 2007, 2008, 2009, 2010 Free Software Foundation, Inc.
+;; Copyright (C) 1985, 1988, 1992, 1994, 2001-2011
+;;   Free Software Foundation, Inc.
 
 ;; Maintainer: FSF
 ;; Keywords: unix
@@ -152,7 +152,9 @@ The variable `lpr-page-header-program' specifies the program to use."
   "Print buffer contents without pagination or page headers.
 See the variables `lpr-switches' and `lpr-command'
 for customization of the printer command."
-  (interactive)
+  (interactive
+   (unless (y-or-n-p "Send current buffer to default printer? ")
+     (error "Cancelled")))
   (print-region-1 (point-min) (point-max) lpr-switches nil))
 
 ;;;###autoload
@@ -169,7 +171,9 @@ in the print command itself; we expect them to request pagination.
 
 See the variables `lpr-switches' and `lpr-command'
 for further customization of the printer command."
-  (interactive)
+  (interactive
+   (unless (y-or-n-p "Send current buffer to default printer? ")
+     (error "Cancelled")))
   (print-region-1 (point-min) (point-max) lpr-switches t))
 
 ;;;###autoload
@@ -177,7 +181,10 @@ for further customization of the printer command."
   "Print region contents without pagination or page headers.
 See the variables `lpr-switches' and `lpr-command'
 for customization of the printer command."
-  (interactive "r")
+  (interactive
+   (if (y-or-n-p "Send selected text to default printer? ")
+       (list (region-beginning) (region-end))
+     (error "Cancelled")))
   (print-region-1 start end lpr-switches nil))
 
 ;;;###autoload
@@ -194,7 +201,10 @@ in the print command itself; we expect them to request pagination.
 
 See the variables `lpr-switches' and `lpr-command'
 for further customization of the printer command."
-  (interactive "r")
+  (interactive
+   (if (y-or-n-p "Send selected text to default printer? ")
+       (list (region-beginning) (region-end))
+     (error "Cancelled")))
   (print-region-1 start end lpr-switches t))
 
 (defun print-region-1 (start end switches page-headers)
@@ -327,5 +337,4 @@ The characters tab, linefeed, space, return and formfeed are not affected."
 
 (provide 'lpr)
 
-;; arch-tag: 21c3f821-ebec-4ca9-ac67-a81e4b75c62a
 ;;; lpr.el ends here

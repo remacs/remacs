@@ -1,6 +1,5 @@
 /* MS-DOS specific C utilities, interface.
-   Copyright (C) 1993, 2001, 2002, 2003, 2004,
-                 2005, 2006, 2007, 2008, 2009, 2010 Free Software Foundation, Inc.
+   Copyright (C) 1993, 2001-2011 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -34,6 +33,7 @@ void dostounix_filename (char *);
 char *rootrelativepath (char *);
 void init_environment (int, char **, int);
 void internal_terminal_init (void);
+void initialize_msdos_display (struct terminal *);
 
 extern int have_mouse;
 void mouse_init (void);
@@ -112,5 +112,3 @@ void XMenuDestroy (Display *, XMenu *);
 
 #endif /* not EMACS_MSDOS_H */
 
-/* arch-tag: ad21eeed-8fdb-4357-8007-36368a6bdbf3
-   (do not change this comment) */

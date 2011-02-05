@@ -1,7 +1,6 @@
 /* Window creation, deletion and examination for GNU Emacs.
    Does not include redisplay.
-   Copyright (C) 1985, 1986, 1987, 1993, 1994, 1995, 1996, 1997, 1998, 2000,
-                 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010
+   Copyright (C) 1985-1987, 1993-1998, 2000-2011
                  Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
@@ -80,10 +79,14 @@ static Lisp_Object next_window (Lisp_Object, Lisp_Object,
                                 Lisp_Object, int);
 static void decode_next_window_args (Lisp_Object *, Lisp_Object *,
                                      Lisp_Object *);
+static void foreach_window (struct frame *,
+				 int (* fn) (struct window *, void *),
+                            void *);
 static int foreach_window_1 (struct window *,
                              int (* fn) (struct window *, void *),
                              void *);
 static Lisp_Object window_list_1 (Lisp_Object, Lisp_Object, Lisp_Object);
+static Lisp_Object select_window (Lisp_Object, Lisp_Object, int);
 
 /* This is the window in which the terminal's cursor should
    be left when nothing is being done with it.  This must
@@ -113,41 +116,9 @@ Lisp_Object minibuf_window;
 
 Lisp_Object minibuf_selected_window;
 
-/* Non-nil means it is the window for C-M-v to scroll
-   when the mini-buffer is selected.  */
-
-Lisp_Object Vminibuf_scroll_window;
-
-/* Non-nil means this is the buffer whose window C-M-v should scroll.  */
-
-Lisp_Object Vother_window_scroll_buffer;
-
-/* Non-nil means it's function to call to display temp buffers.  */
-
-Lisp_Object Vtemp_buffer_show_function;
-
-/* Non-zero means line and page scrolling on tall lines (with images)
-   does partial scrolling by modifying window-vscroll.  */
-
-int auto_window_vscroll_p;
-
-/* Non-zero means to use mode-line-inactive face in all windows but the
-   selected-window and the minibuffer-scroll-window when the
-   minibuffer is active.  */
-int mode_line_in_non_selected_windows;
-
-/* If a window gets smaller than either of these, it is removed. */
-
-EMACS_INT window_min_height;
-EMACS_INT window_min_width;
-
 /* Hook run at end of temp_output_buffer_show.  */
 
 Lisp_Object Qtemp_buffer_show_hook;
-
-/* Number of lines of continuity in scrolling by screenfuls.  */
-
-EMACS_INT next_screen_context_lines;
 
 /* Incremented for each window created.  */
 
@@ -160,17 +131,6 @@ static int window_initialized;
 /* Hook to run when window config changes.  */
 
 static Lisp_Object Qwindow_configuration_change_hook;
-static Lisp_Object Vwindow_configuration_change_hook;
-
-/* Non-nil means scroll commands try to put point
-   at the same screen height as previously.  */
-
-Lisp_Object Vscroll_preserve_screen_position;
-
-/* Non-nil means that text is inserted before window's markers.  */
-
-Lisp_Object Vwindow_point_insertion_type;
-
 /* Incremented by 1 whenever a window is deleted.  */
 
 int window_deletion_count;
@@ -188,13 +148,7 @@ static int window_scroll_preserve_vpos;
 #if 0 /* This isn't used anywhere.  */
 /* Nonzero means we can split a frame even if it is "unsplittable".  */
 static int inhibit_frame_unsplittable;
-#endif /* 0 */
-
-/* If non-nil, then the `recenter' command with a nil argument
-   the entire frame to be redrawn; the special value `tty' causes the
-   frame to be redrawn only if it is a tty frame.  */
-
-static Lisp_Object Vrecenter_redisplay;
+#endif
 
 
 DEFUN ("windowp", Fwindowp, Swindowp, 1, 1, 0,
@@ -757,32 +711,26 @@ display margins, fringes, header line, and/or mode line.  */)
 			     - WINDOW_MODE_LINE_HEIGHT (w) + add_y));
 }
 
-/* Test if the character at column *X, row *Y is within window W.
+/* Test if the character at column X, row Y is within window W.
    If it is not, return ON_NOTHING;
-   if it is in the window's text area,
-      set *x and *y to its location relative to the upper left corner
-         of the window, and
-      return ON_TEXT;
+   if it is in the window's text area, return ON_TEXT;
    if it is on the window's modeline, return ON_MODE_LINE;
    if it is on the border between the window and its right sibling,
       return ON_VERTICAL_BORDER.
-   if it is on a scroll bar,
-      return ON_SCROLL_BAR.
+   if it is on a scroll bar, return ON_SCROLL_BAR.
    if it is on the window's top line, return ON_HEADER_LINE;
    if it is in left or right fringe of the window,
-      return ON_LEFT_FRINGE or ON_RIGHT_FRINGE, and convert *X and *Y
-      to window-relative coordinates;
+      return ON_LEFT_FRINGE or ON_RIGHT_FRINGE;
    if it is in the marginal area to the left/right of the window,
-      return ON_LEFT_MARGIN or ON_RIGHT_MARGIN, and convert *X and *Y
-      to window-relative coordinates.
+      return ON_LEFT_MARGIN or ON_RIGHT_MARGIN.
 
    X and Y are frame relative pixel coordinates.  */
 
 static enum window_part
-coordinates_in_window (register struct window *w, register int *x, register int *y)
+coordinates_in_window (register struct window *w, int x, int y)
 {
   struct frame *f = XFRAME (WINDOW_FRAME (w));
-  int left_x, right_x, top_y, bottom_y;
+  int left_x, right_x;
   enum window_part part;
   int ux = FRAME_COLUMN_WIDTH (f);
   int x0 = WINDOW_LEFT_EDGE_X (w);
@@ -791,6 +739,12 @@ coordinates_in_window (register struct window *w, register int *x, register int 
      (Between mode lines for instance.  */
   int grabbable_width = ux;
   int lmargin_width, rmargin_width, text_left, text_right;
+  int top_y = WINDOW_TOP_EDGE_Y (w);
+  int bottom_y = WINDOW_BOTTOM_EDGE_Y (w);
+
+  /* Outside any interesting row?  */
+  if (y < top_y || y >= bottom_y)
+    return ON_NOTHING;
 
   /* In what's below, we subtract 1 when computing right_x because we
      want the rightmost pixel, which is given by left_pixel+width-1.  */
@@ -798,20 +752,12 @@ coordinates_in_window (register struct window *w, register int *x, register int 
     {
       left_x = 0;
       right_x = WINDOW_TOTAL_WIDTH (w) - 1;
-      top_y = WINDOW_TOP_EDGE_Y (w);
-      bottom_y = WINDOW_BOTTOM_EDGE_Y (w);
     }
   else
     {
       left_x = WINDOW_BOX_LEFT_EDGE_X (w);
       right_x = WINDOW_BOX_RIGHT_EDGE_X (w) - 1;
-      top_y = WINDOW_TOP_EDGE_Y (w);
-      bottom_y = WINDOW_BOTTOM_EDGE_Y (w);
     }
-
-  /* Outside any interesting row?  */
-  if (*y < top_y || *y >= bottom_y)
-    return ON_NOTHING;
 
   /* On the mode line or header line?  If it's near the start of
      the mode or header line of window that's has a horizontal
@@ -820,7 +766,7 @@ coordinates_in_window (register struct window *w, register int *x, register int 
      scroll bars.  */
 
   if (WINDOW_WANTS_MODELINE_P (w)
-      && *y >= bottom_y - CURRENT_MODE_LINE_HEIGHT (w))
+      && y >= bottom_y - CURRENT_MODE_LINE_HEIGHT (w))
     {
       part = ON_MODE_LINE;
 
@@ -829,60 +775,37 @@ coordinates_in_window (register struct window *w, register int *x, register int 
 	 between mode lines of horizontally adjacent mode lines
 	 as the vertical border.  If scroll bars on the left,
 	 return the right window.  */
-      if (WINDOW_HAS_VERTICAL_SCROLL_BAR_ON_LEFT (w)
-	  || WINDOW_RIGHTMOST_P (w))
-	{
-	  if (!WINDOW_LEFTMOST_P (w) && eabs (*x - x0) < grabbable_width)
-	    {
-	      /* Convert X and Y to window relative coordinates.
-		 Vertical border is at the left edge of window.  */
-	      *x = max (0, *x - x0);
-	      *y -= top_y;
-	      return ON_VERTICAL_BORDER;
-	    }
-	}
-      else
-	{
-	  /* Make sure we're not at the rightmost position of a
-	     mode-/header-line and there's yet another window on
-	     the right.  (Bug#1372)  */
-	  if ((WINDOW_RIGHTMOST_P (w) || *x < x1)
-	      && eabs (*x - x1) < grabbable_width)
-	    {
-	      /* Convert X and Y to window relative coordinates.
-		 Vertical border is at the right edge of window.  */
-	      *x = min (x1, *x) - x0;
-	      *y -= top_y;
-	      return ON_VERTICAL_BORDER;
-	    }
-	}
+      if ((WINDOW_HAS_VERTICAL_SCROLL_BAR_ON_LEFT (w)
+	   || WINDOW_RIGHTMOST_P (w))
+	  && !WINDOW_LEFTMOST_P (w)
+	  && eabs (x - x0) < grabbable_width)
+	return ON_VERTICAL_BORDER;
 
-      if (*x < x0 || *x >= x1)
+      /* Make sure we're not at the rightmost position of a
+	 mode-/header-line and there's yet another window on the
+	 right.  (Bug#1372)  */
+      else if ((WINDOW_RIGHTMOST_P (w) || x < x1)
+	       && eabs (x - x1) < grabbable_width)
+	return ON_VERTICAL_BORDER;
+
+      if (x < x0 || x >= x1)
 	return ON_NOTHING;
 
-      /* Convert X and Y to window relative coordinates.
-	 Mode line starts at left edge of window.  */
-      *x -= x0;
-      *y -= top_y;
       return part;
     }
 
   if (WINDOW_WANTS_HEADER_LINE_P (w)
-      && *y < top_y + CURRENT_HEADER_LINE_HEIGHT (w))
+      && y < top_y + CURRENT_HEADER_LINE_HEIGHT (w))
     {
       part = ON_HEADER_LINE;
       goto header_vertical_border_check;
     }
 
-  if (*x < x0 || *x >= x1)
-    return ON_NOTHING;
+  if (x < x0 || x >= x1) return ON_NOTHING;
 
   /* Outside any interesting column?  */
-  if (*x < left_x || *x > right_x)
-    {
-      *y -= top_y;
-      return ON_SCROLL_BAR;
-    }
+  if (x < left_x || x > right_x)
+    return ON_SCROLL_BAR;
 
   lmargin_width = window_box_width (w, LEFT_MARGIN_AREA);
   rmargin_width = window_box_width (w, RIGHT_MARGIN_AREA);
@@ -895,75 +818,77 @@ coordinates_in_window (register struct window *w, register int *x, register int 
       if (!w->pseudo_window_p
 	  && !WINDOW_HAS_VERTICAL_SCROLL_BAR (w)
 	  && !WINDOW_RIGHTMOST_P (w)
-	  && (eabs (*x - right_x) < grabbable_width))
-	{
-	  /* Convert X and Y to window relative coordinates.
-	     Vertical border is at the right edge of window.  */
-	  *x = min (right_x, *x) - left_x;
-	  *y -= top_y;
-	  return ON_VERTICAL_BORDER;
-	}
+	  && (eabs (x - right_x) < grabbable_width))
+	return ON_VERTICAL_BORDER;
     }
-  else
-    {
-      /* Need to say "*x > right_x" rather than >=, since on character
-	 terminals, the vertical line's x coordinate is right_x.  */
-      if (!w->pseudo_window_p
-	  && !WINDOW_RIGHTMOST_P (w)
-	  && *x > right_x - ux)
-	{
-	  /* On the border on the right side of the window?  Assume that
-	     this area begins at RIGHT_X minus a canonical char width.  */
-	  *x = min (right_x, *x) - left_x;
-	  *y -= top_y;
-	  return ON_VERTICAL_BORDER;
-	}
-    }
+  /* Need to say "x > right_x" rather than >=, since on character
+     terminals, the vertical line's x coordinate is right_x.  */
+  else if (!w->pseudo_window_p
+	   && !WINDOW_RIGHTMOST_P (w)
+	   && x > right_x - ux)
+    return ON_VERTICAL_BORDER;
 
-  if (*x < text_left)
+  if (x < text_left)
     {
       if (lmargin_width > 0
 	  && (WINDOW_HAS_FRINGES_OUTSIDE_MARGINS (w)
-	      ? (*x >= left_x + WINDOW_LEFT_FRINGE_WIDTH (w))
-	      : (*x < left_x + lmargin_width)))
-	{
-	  *x -= left_x;
-	  if (WINDOW_HAS_FRINGES_OUTSIDE_MARGINS (w))
-	    *x -= WINDOW_LEFT_FRINGE_WIDTH (w);
-	  *y -= top_y;
-	  return ON_LEFT_MARGIN;
-	}
+	      ? (x >= left_x + WINDOW_LEFT_FRINGE_WIDTH (w))
+	      : (x < left_x + lmargin_width)))
+	return ON_LEFT_MARGIN;
 
-      /* Convert X and Y to window-relative pixel coordinates.  */
-      *x -= left_x;
-      *y -= top_y;
       return ON_LEFT_FRINGE;
     }
 
-  if (*x >= text_right)
+  if (x >= text_right)
     {
       if (rmargin_width > 0
 	  && (WINDOW_HAS_FRINGES_OUTSIDE_MARGINS (w)
-	      ? (*x < right_x - WINDOW_RIGHT_FRINGE_WIDTH (w))
-	      : (*x >= right_x - rmargin_width)))
-	{
-	  *x -= right_x - rmargin_width;
-	  if (WINDOW_HAS_FRINGES_OUTSIDE_MARGINS (w))
-	    *x += WINDOW_RIGHT_FRINGE_WIDTH (w);
-	  *y -= top_y;
-	  return ON_RIGHT_MARGIN;
-	}
+	      ? (x < right_x - WINDOW_RIGHT_FRINGE_WIDTH (w))
+	      : (x >= right_x - rmargin_width)))
+	return ON_RIGHT_MARGIN;
 
-      /* Convert X and Y to window-relative pixel coordinates.  */
-      *x -= left_x + WINDOW_LEFT_FRINGE_WIDTH (w);
-      *y -= top_y;
       return ON_RIGHT_FRINGE;
     }
 
   /* Everything special ruled out - must be on text area */
-  *x -= text_left;
-  *y -= top_y;
   return ON_TEXT;
+}
+
+/* Take X is the frame-relative pixel x-coordinate, and return the
+   x-coordinate relative to part PART of window W. */
+int
+window_relative_x_coord (struct window *w, enum window_part part, int x)
+{
+  int left_x = (w->pseudo_window_p) ? 0 : WINDOW_BOX_LEFT_EDGE_X (w);
+
+  switch (part)
+    {
+    case ON_TEXT:
+      return x - window_box_left (w, TEXT_AREA);
+
+    case ON_LEFT_FRINGE:
+      return x - left_x;
+
+    case ON_RIGHT_FRINGE:
+      return x - left_x - WINDOW_LEFT_FRINGE_WIDTH (w);
+
+    case ON_LEFT_MARGIN:
+      return (x - left_x
+	      - ((WINDOW_HAS_FRINGES_OUTSIDE_MARGINS (w))
+		 ? WINDOW_LEFT_FRINGE_WIDTH (w) : 0));
+
+    case ON_RIGHT_MARGIN:
+      return (x + 1
+	      - ((w->pseudo_window_p)
+		 ? WINDOW_TOTAL_WIDTH (w)
+		 : WINDOW_BOX_RIGHT_EDGE_X (w))
+	      + window_box_width (w, RIGHT_MARGIN_AREA)
+	      + ((WINDOW_HAS_FRINGES_OUTSIDE_MARGINS (w))
+		 ? WINDOW_RIGHT_FRINGE_WIDTH (w) : 0));
+    }
+
+  /* ON_SCROLL_BAR, ON_NOTHING, and ON_VERTICAL_BORDER:  */
+  return 0;
 }
 
 
@@ -1002,14 +927,16 @@ If they are in the windows's left or right marginal areas, `left-margin'\n\
   x = FRAME_PIXEL_X_FROM_CANON_X (f, lx) + FRAME_INTERNAL_BORDER_WIDTH (f);
   y = FRAME_PIXEL_Y_FROM_CANON_Y (f, ly) + FRAME_INTERNAL_BORDER_WIDTH (f);
 
-  switch (coordinates_in_window (w, &x, &y))
+  switch (coordinates_in_window (w, x, y))
     {
     case ON_NOTHING:
       return Qnil;
 
     case ON_TEXT:
-      /* X and Y are now window relative pixel coordinates.  Convert
-	 them to canonical char units before returning them.  */
+      /* Convert X and Y to window relative pixel coordinates, and
+	 return the canonical char units.  */
+      x -= window_box_left (w, TEXT_AREA);
+      y -= WINDOW_TOP_EDGE_Y (w);
       return Fcons (FRAME_CANON_X_FROM_PIXEL_X (f, x),
 		    FRAME_CANON_Y_FROM_PIXEL_Y (f, y));
 
@@ -1056,7 +983,7 @@ If they are in the windows's left or right marginal areas, `left-margin'\n\
 struct check_window_data
 {
   Lisp_Object *window;
-  int *x, *y;
+  int x, y;
   enum window_part *part;
 };
 
@@ -1083,8 +1010,7 @@ check_window_containing (struct window *w, void *user_data)
    return it as a Lisp_Object.
 
    If X, Y is on one of the window's special `window_part' elements,
-   set *PART to the id of that element, and return X and Y converted
-   to window relative coordinates in WX and WY.
+   set *PART to the id of that element.
 
    If there is no window under X, Y return nil and leave *PART
    unmodified.  TOOL_BAR_P non-zero means detect tool-bar windows.
@@ -1099,7 +1025,8 @@ check_window_containing (struct window *w, void *user_data)
    case.  */
 
 Lisp_Object
-window_from_coordinates (struct frame *f, int x, int y, enum window_part *part, int *wx, int *wy, int tool_bar_p)
+window_from_coordinates (struct frame *f, int x, int y,
+			 enum window_part *part, int tool_bar_p)
 {
   Lisp_Object window;
   struct check_window_data cw;
@@ -1109,7 +1036,7 @@ window_from_coordinates (struct frame *f, int x, int y, enum window_part *part, 
     part = &dummy;
 
   window = Qnil;
-  cw.window = &window, cw.x = &x, cw.y = &y; cw.part = part;
+  cw.window = &window, cw.x = x, cw.y = y; cw.part = part;
   foreach_window (f, check_window_containing, &cw);
 
   /* If not found above, see if it's in the tool bar window, if a tool
@@ -1118,15 +1045,12 @@ window_from_coordinates (struct frame *f, int x, int y, enum window_part *part, 
       && tool_bar_p
       && WINDOWP (f->tool_bar_window)
       && WINDOW_TOTAL_LINES (XWINDOW (f->tool_bar_window)) > 0
-      && (coordinates_in_window (XWINDOW (f->tool_bar_window), &x, &y)
+      && (coordinates_in_window (XWINDOW (f->tool_bar_window), x, y)
 	  != ON_NOTHING))
     {
       *part = ON_TEXT;
       window = f->tool_bar_window;
     }
-
-  if (wx) *wx = x;
-  if (wy) *wy = y;
 
   return window;
 }
@@ -1154,7 +1078,7 @@ column 0.  */)
 				   + FRAME_INTERNAL_BORDER_WIDTH (f)),
 				  (FRAME_PIXEL_Y_FROM_CANON_Y (f, y)
 				   + FRAME_INTERNAL_BORDER_WIDTH (f)),
-				  0, 0, 0, 0);
+				  0, 0);
 }
 
 DEFUN ("window-point", Fwindow_point, Swindow_point, 0, 1, 0,
@@ -1457,6 +1381,8 @@ DEFUN ("set-window-display-table", Fset_window_display_table, Sset_window_displa
   return table;
 }
 
+static void delete_window (Lisp_Object);
+
 /* Record info on buffer window w is displaying
    when it is about to cease to display that buffer.  */
 static void
@@ -1580,7 +1506,7 @@ Signal an error when WINDOW is the only window on its frame.  */)
   return Qnil;
 }
 
-void
+static void
 delete_window (register Lisp_Object window)
 {
   register Lisp_Object tem, parent, sib;
@@ -2420,6 +2346,16 @@ void
 check_all_windows (void)
 {
   window_loop (CHECK_ALL_WINDOWS, Qnil, 1, Qt);
+}
+
+DEFUN ("window-use-time", Fwindow_use_time, Swindow_use_time, 0, 1, 0,
+       doc: /* Return WINDOW's use time.
+WINDOW defaults to the selected window.  The window with the highest use
+time is the most recently selected one.  The window with the lowest use
+time is the least recently selected one.  */)
+  (Lisp_Object window)
+{
+  return decode_window (window)->use_time;
 }
 
 DEFUN ("get-lru-window", Fget_lru_window, Sget_lru_window, 0, 2, 0,
@@ -3544,11 +3480,12 @@ This function runs `window-scroll-functions' before running
   else if (!EQ (tem, Qt))
     /* w->buffer is t when the window is first being set up.  */
     {
-      if (!EQ (tem, buffer))
-	if (EQ (w->dedicated, Qt))
-	  error ("Window is dedicated to `%s'", SDATA (XBUFFER (tem)->name));
-	else
-	  w->dedicated = Qnil;
+      if (EQ (tem, buffer))
+	return Qnil;
+      else if (EQ (w->dedicated, Qt))
+	error ("Window is dedicated to `%s'", SDATA (XBUFFER (tem)->name));
+      else
+	w->dedicated = Qnil;
 
       unshow_buffer (w);
     }
@@ -3557,20 +3494,14 @@ This function runs `window-scroll-functions' before running
   return Qnil;
 }
 
-/* Note that selected_window can be nil when this is called from
-   Fset_window_configuration.  */
+/* If select_window is called with inhibit_point_swap non-zero it will
+   not store point of the old selected window's buffer back into that
+   window's pointm slot.  This is needed by Fset_window_configuration to
+   avoid that the display routine is called with selected_window set to
+   Qnil causing a subsequent crash.  */
 
-DEFUN ("select-window", Fselect_window, Sselect_window, 1, 2, 0,
-       doc: /* Select WINDOW.  Most editing will apply to WINDOW's buffer.
-If WINDOW is not already selected, make WINDOW's buffer current
-and make WINDOW the frame's selected window.  Return WINDOW.
-Optional second arg NORECORD non-nil means do not put this buffer
-at the front of the list of recently selected ones and do not
-make this window the most recently selected one.
-
-Note that the main editor command loop selects the buffer of the
-selected window before each command.  */)
-  (register Lisp_Object window, Lisp_Object norecord)
+static Lisp_Object
+select_window (Lisp_Object window, Lisp_Object norecord, int inhibit_point_swap)
 {
   register struct window *w;
   register struct window *ow;
@@ -3610,7 +3541,7 @@ selected window before each command.  */)
   /* Store the current buffer's actual point into the
      old selected window.  It belongs to that window,
      and when the window is not selected, must be in the window.  */
-  if (!NILP (selected_window))
+  if (!inhibit_point_swap)
     {
       ow = XWINDOW (selected_window);
       if (! NILP (ow->buffer))
@@ -3643,6 +3574,25 @@ selected window before each command.  */)
   xwidget_invalidate();
   windows_or_buffers_changed++;
   return window;
+}
+
+
+/* Note that selected_window can be nil when this is called from
+   Fset_window_configuration.  */
+
+DEFUN ("select-window", Fselect_window, Sselect_window, 1, 2, 0,
+       doc: /* Select WINDOW.  Most editing will apply to WINDOW's buffer.
+If WINDOW is not already selected, make WINDOW's buffer current
+and make WINDOW the frame's selected window.  Return WINDOW.
+Optional second arg NORECORD non-nil means do not put this buffer
+at the front of the list of recently selected ones and do not
+make this window the most recently selected one.
+
+Note that the main editor command loop selects the buffer of the
+selected window before each command.  */)
+     (register Lisp_Object window, Lisp_Object norecord)
+{
+  select_window (window, norecord, 0);
 }
 
 static Lisp_Object
@@ -3980,14 +3930,14 @@ fixed size windows is not altered by this function. */)
   return Qnil;
 }
 
-int
+static int
 window_height (Lisp_Object window)
 {
   register struct window *p = XWINDOW (window);
   return WINDOW_TOTAL_LINES (p);
 }
 
-int
+static int
 window_width (Lisp_Object window)
 {
   register struct window *p = XWINDOW (window);
@@ -5779,6 +5729,12 @@ zero means top of window, negative means relative to bottom of window.  */)
   int this_scroll_margin;
 #endif
 
+  if (!(BUFFERP (w->buffer)
+	&& XBUFFER (w->buffer) == current_buffer))
+    /* This test is needed to make sure PT/PT_BYTE make sense in w->buffer
+       when passed below to set_marker_both.  */
+    error ("move-to-window-line called from unrelated buffer");
+
   window = selected_window;
   start = marker_position (w->start);
   if (start < BEGV || start > ZV)
@@ -6155,10 +6111,6 @@ the return value is nil.  Otherwise the value is t.  */)
 	}
 
       FRAME_ROOT_WINDOW (f) = data->root_window;
-      /* Prevent "swapping out point" in the old selected window
-	 using the buffer that has been restored into it.
-	 We already swapped out point that from that window's old buffer.  */
-      selected_window = Qnil;
 
       /* Arrange *not* to restore point in the buffer that was
 	 current when the window configuration was saved.  */
@@ -6167,7 +6119,11 @@ the return value is nil.  Otherwise the value is t.  */)
 			       make_number (old_point),
 			       XWINDOW (data->current_window)->buffer);
 
-      Fselect_window (data->current_window, Qnil);
+      /* In the following call to `select-window, prevent "swapping
+	 out point" in the old selected window using the buffer that
+	 has been restored into it.  We already swapped out that point
+	 from that window's old buffer.  */
+      select_window (data->current_window, Qnil, 1);
       XBUFFER (XWINDOW (selected_window)->buffer)->last_selected_window
 	= selected_window;
 
@@ -6175,13 +6131,6 @@ the return value is nil.  Otherwise the value is t.  */)
 	  || (FRAMEP (data->focus_frame)
 	      && FRAME_LIVE_P (XFRAME (data->focus_frame))))
 	Fredirect_frame_focus (frame, data->focus_frame);
-
-#if 0 /* I don't understand why this is needed, and it causes problems
-         when the frame's old selected window has been deleted.  */
-      if (f != selected_frame && FRAME_WINDOW_P (f))
-	do_switch_frame (WINDOW_FRAME (XWINDOW (data->root_window)),
-			 0, 0, Qnil);
-#endif
 
       /* Set the screen height to the value it had before this function.  */
       if (previous_frame_lines != FRAME_LINES (f)
@@ -6839,8 +6788,9 @@ If PIXELS-P is non-nil, the return value is VSCROLL.  */)
    first argument being a pointer to the leaf window, and with
    additional argument USER_DATA.  Stops when FN returns 0.  */
 
-void
-foreach_window (struct frame *f, int (*fn) (struct window *, void *), void *user_data)
+static void
+foreach_window (struct frame *f, int (*fn) (struct window *, void *),
+		void *user_data)
 {
   /* delete_frame may set FRAME_ROOT_WINDOW (f) to Qnil.  */
   if (WINDOWP (FRAME_ROOT_WINDOW (f)))
@@ -7104,7 +7054,7 @@ syms_of_window (void)
   window_scroll_preserve_hpos = -1;
   window_scroll_preserve_vpos = -1;
 
-  DEFVAR_LISP ("temp-buffer-show-function", &Vtemp_buffer_show_function,
+  DEFVAR_LISP ("temp-buffer-show-function", Vtemp_buffer_show_function,
 	       doc: /* Non-nil means call as function to display a help buffer.
 The function is called with one argument, the buffer to be displayed.
 Used by `with-output-to-temp-buffer'.
@@ -7112,29 +7062,29 @@ If this function is used, then it must do the entire job of showing
 the buffer; `temp-buffer-show-hook' is not run unless this function runs it.  */);
   Vtemp_buffer_show_function = Qnil;
 
-  DEFVAR_LISP ("minibuffer-scroll-window", &Vminibuf_scroll_window,
+  DEFVAR_LISP ("minibuffer-scroll-window", Vminibuf_scroll_window,
 	       doc: /* Non-nil means it is the window that C-M-v in minibuffer should scroll.  */);
   Vminibuf_scroll_window = Qnil;
 
-  DEFVAR_BOOL ("mode-line-in-non-selected-windows", &mode_line_in_non_selected_windows,
+  DEFVAR_BOOL ("mode-line-in-non-selected-windows", mode_line_in_non_selected_windows,
 	       doc: /* Non-nil means to use `mode-line-inactive' face in non-selected windows.
 If the minibuffer is active, the `minibuffer-scroll-window' mode line
 is displayed in the `mode-line' face.  */);
   mode_line_in_non_selected_windows = 1;
 
-  DEFVAR_LISP ("other-window-scroll-buffer", &Vother_window_scroll_buffer,
+  DEFVAR_LISP ("other-window-scroll-buffer", Vother_window_scroll_buffer,
 	       doc: /* If non-nil, this is a buffer and \\[scroll-other-window] should scroll its window.  */);
   Vother_window_scroll_buffer = Qnil;
 
-  DEFVAR_BOOL ("auto-window-vscroll", &auto_window_vscroll_p,
+  DEFVAR_BOOL ("auto-window-vscroll", auto_window_vscroll_p,
 	       doc: /* *Non-nil means to automatically adjust `window-vscroll' to view tall lines.  */);
   auto_window_vscroll_p = 1;
 
-  DEFVAR_INT ("next-screen-context-lines", &next_screen_context_lines,
+  DEFVAR_INT ("next-screen-context-lines", next_screen_context_lines,
 	      doc: /* *Number of lines of continuity when scrolling by screenfuls.  */);
   next_screen_context_lines = 2;
 
-  DEFVAR_INT ("window-min-height", &window_min_height,
+  DEFVAR_INT ("window-min-height", window_min_height,
 	      doc: /* Allow deleting windows less than this tall.
 The value is measured in line units.  If a window wants a modeline it
 is counted as one line.
@@ -7143,7 +7093,7 @@ Emacs honors settings of this variable when enlarging or shrinking
 windows vertically.  A value less than 1 is invalid.  */);
   window_min_height = 4;
 
-  DEFVAR_INT ("window-min-width", &window_min_width,
+  DEFVAR_INT ("window-min-width", window_min_width,
 	      doc: /* Allow deleting windows less than this wide.
 The value is measured in characters and includes any fringes or
 the scrollbar.
@@ -7153,7 +7103,7 @@ windows horizontally.  A value less than 2 is invalid.  */);
   window_min_width = 10;
 
   DEFVAR_LISP ("scroll-preserve-screen-position",
-	       &Vscroll_preserve_screen_position,
+	       Vscroll_preserve_screen_position,
 	       doc: /* *Controls if scroll commands move point to keep its screen position unchanged.
 A value of nil means point does not keep its screen position except
 at the scroll margin or window boundary respectively.
@@ -7165,19 +7115,19 @@ Scroll commands should have the `scroll-command' property
 on their symbols to be controlled by this variable.  */);
   Vscroll_preserve_screen_position = Qnil;
 
-  DEFVAR_LISP ("window-point-insertion-type", &Vwindow_point_insertion_type,
+  DEFVAR_LISP ("window-point-insertion-type", Vwindow_point_insertion_type,
 	       doc: /* Type of marker to use for `window-point'.  */);
   Vwindow_point_insertion_type = Qnil;
 
   DEFVAR_LISP ("window-configuration-change-hook",
-	       &Vwindow_configuration_change_hook,
+	       Vwindow_configuration_change_hook,
 	       doc: /* Functions to call when window configuration changes.
 The buffer-local part is run once per window, with the relevant window
 selected; while the global part is run only once for the modified frame,
 with the relevant frame selected.  */);
   Vwindow_configuration_change_hook = Qnil;
 
-  DEFVAR_LISP ("recenter-redisplay", &Vrecenter_redisplay,
+  DEFVAR_LISP ("recenter-redisplay", Vrecenter_redisplay,
 	       doc: /* If non-nil, then the `recenter' command with a nil argument
 will redraw the entire frame; the special value `tty' causes the
 frame to be redrawn only if it is a tty frame.  */);
@@ -7220,6 +7170,7 @@ frame to be redrawn only if it is a tty frame.  */);
   defsubr (&Sprevious_window);
   defsubr (&Sother_window);
   defsubr (&Sget_lru_window);
+  defsubr (&Swindow_use_time);
   defsubr (&Sget_largest_window);
   defsubr (&Sget_buffer_window);
   defsubr (&Sdelete_other_windows);
@@ -7281,5 +7232,3 @@ keys_of_window (void)
   initial_define_key (meta_map, 'v', "scroll-down-command");
 }
 
-/* arch-tag: 90a9c576-0590-48f1-a5f1-6c96a0452d9f
-   (do not change this comment) */

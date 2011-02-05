@@ -1,8 +1,7 @@
 ;;; texinfmt.el --- format Texinfo files into Info files
 
-;; Copyright (C) 1985, 1986, 1988, 1990, 1991, 1992, 1993, 1994, 1995,
-;;   1996, 1997, 1998, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007,
-;;   2008, 2009, 2010  Free Software Foundation, Inc.
+;; Copyright (C) 1985-1986, 1988, 1990-1998, 2000-2011
+;;   Free Software Foundation, Inc.
 
 ;; Maintainer: Robert J. Chassell <bug-texinfo@gnu.org>
 ;; Keywords: maint, tex, docs
@@ -663,11 +662,12 @@ Do not append @refill to paragraphs containing @w{TEXT} or @*."
         ;; Else
         ;; 3. Do not refill a paragraph containing @w or @*, or ending
         ;;    with @<newline> followed by a newline.
-        (if  (or (>= (point) (point-max))
-		 (re-search-forward
-		  "@w{\\|@\\*\\|@\n\n"
-		  (save-excursion (forward-paragraph) (forward-line 1) (point))
-		  t))
+        (if (or (>= (point) (point-max))
+                (re-search-forward
+                 "@w{\\|@\\*\\|@\n\n"
+                 (save-excursion (forward-paragraph)
+                                 (line-beginning-position 2))
+                 t))
             ;; Go to end of paragraph and do nothing.
             (forward-paragraph)
           ;; 4. Else go to end of paragraph and insert @refill
@@ -944,8 +944,8 @@ insert the text with the @insertcopying command."
         (end  (progn (re-search-forward "^@end copying[ \t]*\n") (point))))
     (setq texinfo-copying-text
           (buffer-substring-no-properties
-           (save-excursion (goto-char beg) (forward-line 1) (point))
-           (save-excursion (goto-char end) (forward-line -1) (point))))
+           (save-excursion (goto-char beg) (line-beginning-position 2))
+           (save-excursion (goto-char end) (line-beginning-position 0))))
     (delete-region beg end)))
 
 (defun texinfo-insertcopying ()
@@ -4297,5 +4297,4 @@ For example, invoke
 ;;; Place `provide' at end of file.
 (provide 'texinfmt)
 
-;; arch-tag: 1e8d9a2d-bca0-40a0-ac6c-dab01bc6f725
 ;;; texinfmt.el ends here

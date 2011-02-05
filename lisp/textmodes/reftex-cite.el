@@ -1,7 +1,6 @@
 ;;; reftex-cite.el --- creating citations with RefTeX
 
-;; Copyright (C) 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005,
-;;   2006, 2007, 2008, 2009, 2010 Free Software Foundation, Inc.
+;; Copyright (C) 1997-2011 Free Software Foundation, Inc.
 
 ;; Author: Carsten Dominik <dominik@science.uva.nl>
 ;; Maintainer: auctex-devel@gnu.org
@@ -379,7 +378,7 @@
 					      (split-string
 					       (buffer-substring-no-properties
 						start end)
-					       "[ \t\n\r]*\\\\bibitem\
+					       "[ \t\n\r]*\\\\bibitem[ \t]*\
 \\(\\[[^]]*]\\)*\[ \t]*"))))))
 	      (goto-char end))))))
     (unless entries
@@ -1147,9 +1146,8 @@ The sequence in the new file is the same as it was in the old database."
            (save-restriction
              (widen)
              (goto-char (point-min))
-             (while (re-search-forward
-                     "^[ \t]*@[a-zA-Z]+[ \t]*{\\([^ \t\r\n]+\\),"
-                     nil t)
+             (while (re-search-forward "^[ \t]*@\\(?:\\w\\|\\s_\\)+[ \t\n\r]*\
+\[{(][ \t\n\r]*\\([^ \t\n\r,]+\\)" nil t)
                (setq key (match-string 1)
                      beg (match-beginning 0)
                      end (progn
@@ -1175,5 +1173,4 @@ The sequence in the new file is the same as it was in the old database."
              (length entries))))
 
 
-;; arch-tag: d53d0a5a-ab32-4b52-a846-2a7c3527cd89
 ;;; reftex-cite.el ends here

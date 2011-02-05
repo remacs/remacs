@@ -1,7 +1,6 @@
 ;;; tramp-smb.el --- Tramp access functions for SMB servers
 
-;; Copyright (C) 2002, 2003, 2004, 2005, 2006, 2007, 2008,
-;;   2009, 2010 Free Software Foundation, Inc.
+;; Copyright (C) 2002-2011 Free Software Foundation, Inc.
 
 ;; Author: Michael Albinus <michael.albinus@gmx.de>
 ;; Keywords: comm, processes
@@ -43,13 +42,15 @@
 
 ;; Add a default for `tramp-default-method-alist'. Rule: If there is
 ;; a domain in USER, it must be the SMB method.
+;;;###tramp-autoload
 (add-to-list 'tramp-default-method-alist
 	     `(nil ,tramp-prefix-domain-regexp ,tramp-smb-method))
 
 ;; Add a default for `tramp-default-user-alist'. Rule: For the SMB method,
 ;; the anonymous user is chosen.
+;;;###tramp-autoload
 (add-to-list 'tramp-default-user-alist
-	     `(,tramp-smb-method nil ""))
+	     `(,(concat "\\`" tramp-smb-method "\\'") nil nil))
 
 ;; Add completion function for SMB method.
 (tramp-set-completion-function
@@ -113,6 +114,7 @@ call, letting the SMB client use the default one."
      "NT_STATUS_OBJECT_NAME_NOT_FOUND"
      "NT_STATUS_SHARING_VIOLATION"
      "NT_STATUS_TRUSTED_RELATIONSHIP_FAILURE"
+     "NT_STATUS_UNSUCCESSFUL"
      "NT_STATUS_WRONG_PASSWORD")
    "\\|")
   "Regexp for possible error strings of SMB servers.
@@ -1079,7 +1081,7 @@ If SHARE is result, entries are of type dir. Otherwise, shares are listed.
 Result is the list (LOCALNAME MODE SIZE MTIME)."
 ;; We are called from `tramp-smb-get-file-entries', which sets the
 ;; current buffer.
-  (let ((line (buffer-substring (point) (tramp-compat-line-end-position)))
+  (let ((line (buffer-substring (point) (point-at-eol)))
 	localname mode size month day hour min sec year mtime)
 
     (if (not share)
@@ -1177,8 +1179,7 @@ Result is the list (LOCALNAME MODE SIZE MTIME)."
 		(member
 		 "pathnames"
 		 (split-string
-		  (buffer-substring
-		   (point) (tramp-compat-line-end-position)) nil t)))))))))
+		  (buffer-substring (point) (point-at-eol)) nil t)))))))))
 
 (defun tramp-smb-get-stat-capability (vec)
   "Check, whether the SMB server supports the STAT command."
@@ -1396,5 +1397,4 @@ Returns nil if an error message has appeared."
 ;;   regular again.
 ;; * Make it multi-hop capable.
 
-;; arch-tag: fcc9dbec-7503-4d73-b638-3c8aa59575f5
 ;;; tramp-smb.el ends here

@@ -1,7 +1,6 @@
 ;;; lucid.el --- emulate some Lucid Emacs functions
 
-;; Copyright (C) 1993, 1995, 2001, 2002, 2003, 2004, 2005, 2006, 2007,
-;;   2008, 2009, 2010  Free Software Foundation, Inc.
+;; Copyright (C) 1993, 1995, 2001-2011  Free Software Foundation, Inc.
 
 ;; Maintainer: FSF
 ;; Keywords: emulations
@@ -234,5 +233,8 @@ This is an XEmacs compatibility function."
 
 (provide 'lucid)
 
-;; arch-tag: 80f9ab46-0b36-4151-86ed-3edb6d449c9e
+;; Local Variables:
+;; byte-compile-warnings: (not cl-functions)
+;; End:
+
 ;;; lucid.el ends here

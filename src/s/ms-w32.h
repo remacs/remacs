@@ -1,7 +1,6 @@
 /* System description file for Windows NT.
 
-Copyright (C) 1993, 1994, 1995, 2001, 2002, 2003, 2004, 2005, 2006,
-  2007, 2008, 2009, 2010  Free Software Foundation, Inc.
+Copyright (C) 1993-1995, 2001-2011  Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -112,7 +111,6 @@ struct sigaction {
 #undef  HAVE_UTIME_H
 #undef  HAVE_LINUX_VERSION_H
 #undef  HAVE_SYS_SYSTEMINFO_H
-#undef  HAVE_TERMIOS_H
 #define HAVE_LIMITS_H 1
 #define HAVE_STRING_H 1
 #define HAVE_STDLIB_H 1
@@ -152,7 +150,6 @@ struct sigaction {
 #undef  HAVE_SETSID
 #undef  HAVE_FPATHCONF
 #define HAVE_SELECT 1
-#define HAVE_MKTIME 1
 #undef  HAVE_EUIDACCESS
 #define HAVE_GETPAGESIZE 1
 #define HAVE_TZSET 1
@@ -162,7 +159,6 @@ struct sigaction {
 #undef  HAVE_SETPGID
 #undef  HAVE_GETCWD
 #define HAVE_SHUTDOWN 1
-#define HAVE_STRFTIME 1
 
 #define LOCALTIME_CACHE
 #define HAVE_INET_SOCKETS 1
@@ -390,5 +386,3 @@ extern void _DebPrint (const char *fmt, ...);
 
 /* ============================================================ */
 
-/* arch-tag: 5d4a3a1c-40dc-4dea-9c7c-38fed9ae0eae
-   (do not change this comment) */

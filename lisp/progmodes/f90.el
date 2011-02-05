@@ -1,7 +1,6 @@
 ;;; f90.el --- Fortran-90 mode (free format)
 
-;; Copyright (C) 1995, 1996, 1997, 2000, 2001, 2002, 2003, 2004, 2005,
-;;   2006, 2007, 2008, 2009, 2010  Free Software Foundation, Inc.
+;; Copyright (C) 1995-1997, 2000-2011  Free Software Foundation, Inc.
 
 ;; Author: Torbj\"orn Einarsson <Torbjorn.Einarsson@era.ericsson.se>
 ;; Maintainer: Glenn Morris <rgm@gnu.org>
@@ -657,6 +656,7 @@ Can be overridden by the value of `font-lock-maximum-decoration'.")
     (define-key map "\C-c\C-f" 'f90-fill-region)
     (define-key map "\C-c\C-p" 'f90-previous-statement)
     (define-key map "\C-c\C-n" 'f90-next-statement)
+    (define-key map "\C-c]"    'f90-insert-end)
     (define-key map "\C-c\C-w" 'f90-insert-end)
     ;; Standard tab binding will call this, and also handle regions.
 ;;;    (define-key map "\t"       'f90-indent-line)
@@ -1066,11 +1066,9 @@ Variables controlling indentation style and extra features:
 Turning on F90 mode calls the value of the variable `f90-mode-hook'
 with no args, if that value is non-nil."
   :group 'f90
-  :syntax-table f90-mode-syntax-table
   :abbrev-table f90-mode-abbrev-table
   (set (make-local-variable 'indent-line-function) 'f90-indent-line)
   (set (make-local-variable 'indent-region-function) 'f90-indent-region)
-  (set (make-local-variable 'require-final-newline) mode-require-final-newline)
   (set (make-local-variable 'comment-start) "!")
   (set (make-local-variable 'comment-start-skip) "!+ *")
   (set (make-local-variable 'comment-indent-function) 'f90-comment-indent)
@@ -2206,7 +2204,7 @@ CHANGE-WORD should be one of 'upcase-word, 'downcase-word, 'capitalize-word."
 With optional argument ALL, change the default for all present
 and future F90 buffers.  F90 mode normally treats backslash as an
 escape character."
-  (or (eq major-mode 'f90-mode)
+  (or (derived-mode-p 'f90-mode)
       (error "This function should only be used in F90 buffers"))
   (when (equal (char-syntax ?\\ ) ?\\ )
     (or all (set-syntax-table (copy-syntax-table (syntax-table))))
@@ -2215,5 +2213,4 @@ escape character."
 
 (provide 'f90)
 
-;; arch-tag: fceac97c-c147-44bd-aec0-172d4b560ef8
 ;;; f90.el ends here

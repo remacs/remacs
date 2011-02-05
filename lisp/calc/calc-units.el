@@ -1,7 +1,6 @@
 ;;; calc-units.el --- unit conversion functions for Calc
 
-;; Copyright (C) 1990, 1991, 1992, 1993, 2001, 2002, 2003, 2004, 2005,
-;;   2006, 2007, 2008, 2009, 2010 Free Software Foundation, Inc.
+;; Copyright (C) 1990-1993, 2001-2011  Free Software Foundation, Inc.
 
 ;; Author: David Gillespie <daveg@synaptics.com>
 ;; Maintainer: Jay Belanger <jay.p.belanger@gmail.com>
@@ -57,23 +56,23 @@
               "149597870691 m (*)")
               ;; (approx) NASA JPL (http://neo.jpl.nasa.gov/glossary/au.html)
     ( lyr     "c yr"                 "Light Year" )
-    ( pc      "3.0856775854*10^16 m" "Parsec" nil
+    ( pc      "3.0856775854*10^16 m" "Parsec  (**)" nil
               "3.0856775854 10^16 m (*)") ;; (approx) ESUWM
     ( nmi     "1852 m"               "Nautical Mile" )
     ( fath    "6 ft"                 "Fathom" )
     ( fur     "660 ft"               "Furlong")
     ( mu      "1 um"                 "Micron" )
     ( mil     "(1/1000) in"          "Mil" )
-    ( point   "(1/72) in"            "Point (1/72 inch)" )
+    ( point   "(1/72) in"            "Point  (PostScript convention)" )
     ( Ang     "10^(-10) m"           "Angstrom" )
     ( mfi     "mi+ft+in"             "Miles + feet + inches" )
     ;; TeX lengths
-    ( texpt   "(100/7227) in"        "Point (TeX conventions)" )
-    ( texpc   "12 texpt"             "Pica" )
-    ( texbp   "point"                "Big point (TeX conventions)" )
-    ( texdd   "(1238/1157) texpt"    "Didot point" )
-    ( texcc   "12 texdd"             "Cicero" )
-    ( texsp   "(1/65536) texpt"      "Scaled TeX point" )
+    ( texpt   "(100/7227) in"        "Point  (TeX convention) (**)" )
+    ( texpc   "12 texpt"             "Pica  (TeX convention) (**)" )
+    ( texbp   "point"                "Big point  (TeX convention) (**)" )
+    ( texdd   "(1238/1157) texpt"    "Didot point  (TeX convention) (**)" )
+    ( texcc   "12 texdd"             "Cicero  (TeX convention) (**)" )
+    ( texsp   "(1/65536) texpt"      "Scaled TeX point (TeX convention) (**)" )
 
     ;; Area
     ( hect    "10000 m^2"            "*Hectare" )
@@ -86,7 +85,7 @@
     ( l       "L"                    "Liter" )
     ( gal     "4 qt"                 "US Gallon" )
     ( qt      "2 pt"                 "Quart" )
-    ( pt      "2 cup"                "Pint" )
+    ( pt      "2 cup"                "Pint (**)" )
     ( cup     "8 ozfl"               "Cup" )
     ( ozfl    "2 tbsp"               "Fluid Ounce" )
     ( floz    "2 tbsp"               "Fluid Ounce" )
@@ -296,7 +295,10 @@
     ( R0      "8.314472 J/(mol K)"          "Molar gas constant" nil
               "8.314472 J/(mol K) (*)")
     ( V0      "22.710981*10^(-3) m^3/mol"   "Standard volume of ideal gas" nil
-              "22.710981 10^-3 m^3/mol (*)")))
+              "22.710981 10^-3 m^3/mol (*)")
+    ;; Logarithmic units
+    ( Np      nil    "*Neper")
+    ( dB      "(ln(10)/20) Np" "decibel")))
 
 
 (defvar math-additional-units nil
@@ -871,6 +873,7 @@ If EXPR is nil, return nil."
 	   (or (eq (nth 1 expr) 'pi)
 	       (error "Unknown name %s in defining expression for unit %s"
 		      (nth 1 expr) (car math-fbu-entry))))
+          ((equal expr '(calcFunc-ln 10)))
 	  (t (error "Malformed defining expression for unit %s" (car math-fbu-entry))))))
 
 
@@ -1531,7 +1534,12 @@ If EXPR is nil, return nil."
               (indent-to 15)
               (insert "   " (nth 2 u) "\n")
               (while (eq (car (car (setq uptr (cdr uptr)))) 0)))
-            (insert "\n"))
+            (insert "\n\n")
+            (insert "(**) When in TeX or LaTeX display mode, the TeX specific unit\n"
+                     "names will not use the `tex' prefix; the unit name for a\n"
+                     "TeX point will be `pt' instead of `texpt', for example.\n"
+                     "To avoid conflicts, the unit names for pint and parsec will\n"
+                     "be `pint' and `parsec' instead of `pt' and `pc'."))
 	  (view-mode)
 	  (message "Formatting units table...done"))
 	(setq math-units-table-buffer-valid t)
@@ -1546,11 +1554,127 @@ If EXPR is nil, return nil."
 	(pop-to-buffer (get-buffer "*Units Table*"))
       (display-buffer (get-buffer "*Units Table*")))))
 
+;;; Logarithmic units functions
+
+(defvar math-logunits '((var dB var-dB)
+                        (var Np var-Np)))
+
+(defun math-extract-logunits (expr)
+  (if (memq (car-safe expr) '(* /))
+      (cons (car expr)
+	    (mapcar 'math-extract-logunits (cdr expr)))
+    (if (memq (car-safe expr) '(^))
+        (list '^ (math-extract-logunits (nth 1 expr)) (nth 2 expr))
+      (if (member expr math-logunits) expr 1))))
+
+(defun math-logcombine (a b neg)
+  (let ((aunit (math-simplify (math-extract-logunits a))))
+    (if (not (eq (car-safe aunit) 'var))
+        (calc-record-why "*Improper logarithmic unit" aunit)
+      (let* ((units (math-extract-units a))
+            (acoeff (math-simplify (math-remove-units a)))
+            (bcoeff (math-simplify (math-to-standard-units
+                                    (list '/ b units) nil))))
+        (if (math-units-in-expr-p bcoeff nil)
+            (calc-record-why "*Inconsistent units" nil)
+          (if (and neg
+                   (or (math-lessp acoeff bcoeff)
+                       (math-equal acoeff bcoeff)))
+              (calc-record-why "*Improper coefficients" nil)
+            (math-mul 
+             (if (equal aunit '(var dB var-dB))
+                 (math-mul 10
+                           (calcFunc-log10
+                            (if neg
+                                (math-sub
+                                 (math-pow 10 (math-div acoeff 10))
+                                 (math-pow 10 (math-div bcoeff 10)))
+                              (math-add
+                               (math-pow 10 (math-div acoeff 10))
+                               (math-pow 10 (math-div bcoeff 10))))))
+               (calcFunc-ln
+                (if neg
+                    (math-sub
+                     (calcFunc-exp acoeff)
+                     (calcFunc-exp bcoeff))
+                  (math-add
+                   (calcFunc-exp acoeff)
+                   (calcFunc-exp bcoeff)))))
+             units)))))))
+
+(defun calcFunc-luplus (a b)
+  (math-logcombine a b nil))
+
+(defun calcFunc-luminus (a b)
+  (math-logcombine a b t))
+
+(defun calc-luplus (arg)
+  (interactive "P")
+  (calc-slow-wrapper
+   (if (calc-is-inverse)
+       (calc-binary-op "lu-" 'calcFunc-luminus arg)
+     (calc-binary-op "lu+" 'calcFunc-luplus arg))))
+
+(defun calc-luminus (arg)
+  (interactive "P")
+  (calc-slow-wrapper
+   (if (calc-is-inverse)
+       (calc-binary-op "lu+" 'calcFunc-luplus arg)
+     (calc-binary-op "lu-" 'calcFunc-luminus arg))))
+
+;(defun calcFunc-lmul (a b)
+
+
+(defun math-logunit-level (val ref power)
+  (let ((lunit (math-simplify (math-extract-logunits val))))
+    (if (not (eq (car-safe lunit) 'var))
+        (calc-record-why "*Improper logarithmic unit" lunit)
+      (if (not (eq 1 (math-simplify (math-extract-units (math-div val lunit)))))
+          (calc-record-why "*Inappropriate units" nil)
+        (let ((coeff (math-simplify (math-div val lunit))))
+          (if (equal lunit '(var dB var-dB))
+              (math-mul 
+               ref
+               (math-pow 
+                10
+                (math-div
+                 coeff
+                 (if power 10 20))))
+            (math-mul 
+             ref
+             (calcFunc-exp
+              (if power 
+                  (math-mul 2 coeff)
+                coeff)))))))))
+
+(defvar calc-default-field-reference-level)
+(defvar calc-default-power-reference-level)
+
+(defun calcFunc-fieldlevel (val &optional ref)
+  (unless ref
+    (setq ref (math-read-expr calc-default-field-reference-level)))
+  (math-logunit-level val ref nil))
+
+(defun calcFunc-powerlevel (val &optional ref)
+  (unless ref
+    (setq ref (math-read-expr calc-default-power-reference-level)))
+  (math-logunit-level val ref t))
+
+(defun calc-level (arg)
+  (interactive "P")
+  (calc-slow-wrapper
+   (if (calc-is-hyperbolic)
+       (if (calc-is-option)
+           (calc-binary-op "plvl" 'calcFunc-powerlevel arg)
+         (calc-unary-op "plvl" 'calcFunc-powerlevel arg))
+     (if (calc-is-option)
+         (calc-binary-op "flvl" 'calcFunc-fieldlevel arg)
+       (calc-unary-op "flvl" 'calcFunc-fieldlevel arg)))))
+
 (provide 'calc-units)
 
 ;; Local variables:
 ;; coding: utf-8
 ;; End:
 
-;; arch-tag: e993314f-3adc-4191-be61-4ef8874881c4
 ;;; calc-units.el ends here

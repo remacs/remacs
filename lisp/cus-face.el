@@ -1,7 +1,6 @@
 ;;; cus-face.el --- customization support for faces
 ;;
-;; Copyright (C) 1996, 1997, 1999, 2000, 2001, 2002, 2003, 2004,
-;;   2005, 2006, 2007, 2008, 2009, 2010 Free Software Foundation, Inc.
+;; Copyright (C) 1996-1997, 1999-2011 Free Software Foundation, Inc.
 ;;
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>
 ;; Keywords: help, faces
@@ -349,8 +348,6 @@ FACE's list property `theme-face' \(using `custom-push-theme')."
 	      (put face 'face-override-spec nil)
 	      (face-spec-set face spec t))))))))
 
-(put 'custom-theme-set-faces 'safe-function t)
-
 ;; XEmacs compability function.  In XEmacs, when you reset a Custom
 ;; Theme, you have to specify the theme to reset it to.  We just apply
 ;; the next theme.
@@ -380,5 +377,4 @@ This means reset FACE to its value in FROM-THEME."
 
 (provide 'cus-face)
 
-;; arch-tag: 9a5c4b63-0d27-4c92-a5af-f2c7ed764c2b
 ;;; cus-face.el ends here

@@ -1,7 +1,7 @@
 /* Asynchronous subprocess control for GNU Emacs.
-   Copyright (C) 1985, 1986, 1987, 1988, 1993, 1994, 1995,
-		 1996, 1998, 1999, 2001, 2002, 2003, 2004,
-		 2005, 2006, 2007, 2008, 2009, 2010 Free Software Foundation, Inc.
+
+Copyright (C) 1985-1988, 1993-1996, 1998-1999, 2001-2011
+  Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -32,9 +32,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <inttypes.h>
 #endif
 
-#ifdef HAVE_UNISTD_H
 #include <unistd.h>
-#endif
 #include <fcntl.h>
 
 /* Only MS-DOS does not define `subprocesses'.  */
@@ -56,12 +54,10 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #endif
 #endif
 
-#if defined(HAVE_SYS_IOCTL_H)
 #include <sys/ioctl.h>
 #if defined(HAVE_NET_IF_H)
 #include <net/if.h>
 #endif /* HAVE_NET_IF_H */
-#endif /* HAVE_SYS_IOCTL_H */
 
 #ifdef NEED_BSDTTY
 #include <bsdtty.h>
@@ -115,8 +111,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "nsterm.h"
 #endif
 
-extern int timers_run;
-
 Lisp_Object Qeuid, Qegid, Qcomm, Qstate, Qppid, Qpgrp, Qsess, Qttname, Qtpgid;
 Lisp_Object Qminflt, Qmajflt, Qcminflt, Qcmajflt, Qutime, Qstime, Qcstime;
 Lisp_Object Qcutime, Qpri, Qnice, Qthcount, Qstart, Qvsize, Qrss, Qargs;
@@ -126,9 +120,6 @@ Lisp_Object QCname, QCtype;
 /* Non-zero if keyboard input is on hold, zero otherwise.  */
 
 static int kbd_is_on_hold;
-
-/* Nonzero means delete a process right away if it exits.  */
-static int delete_exited_processes;
 
 /* Nonzero means don't run process sentinels.  This is used
    when exiting.  */
@@ -180,10 +171,6 @@ extern void serial_configure (struct Lisp_Process *p, Lisp_Object contact);
 #ifndef HAVE_H_ERRNO
 extern int h_errno;
 #endif
-
-/* t means use pty, nil means use a pipe,
-   maybe other values to come.  */
-static Lisp_Object Vprocess_connection_type;
 
 /* These next two vars are non-static since sysdep.c uses them in the
    emulation of `select'.  */
@@ -253,11 +240,6 @@ static int process_output_delay_count;
 
 static int process_output_skip;
 
-/* Non-nil means to delay reading process output to improve buffering.
-   A value of t means that delay is reset after each send, any other
-   non-nil value does not reset the delay.  A value of nil disables
-   adaptive read buffering completely.  */
-static Lisp_Object Vprocess_adaptive_read_buffering;
 #else
 #define process_output_delay_count 0
 #endif
@@ -429,7 +411,7 @@ delete_write_fd (int fd)
               max_input_desc = fd;
               break;
             }
-      
+
     }
 }
 
@@ -516,7 +498,7 @@ status_message (struct Lisp_Process *p)
 	  if (! NILP (Vlocale_coding_system))
 	    string = (code_convert_string_norecord
 		      (string, Vlocale_coding_system, 0));
-	  c1 = STRING_CHAR ((char *) SDATA (string));
+	  c1 = STRING_CHAR (SDATA (string));
 	  c2 = DOWNCASE (c1);
 	  if (c1 != c2)
 	    Faset (string, make_number (0), make_number (c2));
@@ -1438,7 +1420,7 @@ list_processes_1 (Lisp_Object query_only)
 	    port = Fformat_network_address (Fplist_get (p->childp, QClocal), Qnil);
 	  sprintf (tembuf, "(network %s server on %s)\n",
 		   (DATAGRAM_CHAN_P (p->infd) ? "datagram" : "stream"),
-		   (STRINGP (port) ? (char *)SDATA (port) : "?"));
+		   (STRINGP (port) ? SSDATA (port) : "?"));
 	  insert_string (tembuf);
 	}
       else if (NETCONN1_P (p))
@@ -1456,7 +1438,7 @@ list_processes_1 (Lisp_Object query_only)
 	    host = Fformat_network_address (Fplist_get (p->childp, QCremote), Qnil);
 	  sprintf (tembuf, "(network %s connection to %s)\n",
 		   (DATAGRAM_CHAN_P (p->infd) ? "datagram" : "stream"),
-		   (STRINGP (host) ? (char *)SDATA (host) : "?"));
+		   (STRINGP (host) ? SSDATA (host) : "?"));
 	  insert_string (tembuf);
 	}
       else if (SERIALCONN1_P (p))
@@ -1465,7 +1447,7 @@ list_processes_1 (Lisp_Object query_only)
 	  Lisp_Object speed = Fplist_get (p->childp, QCspeed);
 	  insert_string ("(serial port ");
 	  if (STRINGP (port))
-	    insert_string (SDATA (port));
+	    insert_string (SSDATA (port));
 	  else
 	    insert_string ("?");
 	  if (INTEGERP (speed))
@@ -2535,7 +2517,7 @@ set_socket_option (int s, Lisp_Object opt, Lisp_Object val)
 
   CHECK_SYMBOL (opt);
 
-  name = (char *) SDATA (SYMBOL_NAME (opt));
+  name = SSDATA (SYMBOL_NAME (opt));
   for (sopt = socket_options; sopt->name; sopt++)
     if (strcmp (name, sopt->name) == 0)
       break;
@@ -2574,7 +2556,7 @@ set_socket_option (int s, Lisp_Object opt, Lisp_Object val)
 	memset (devname, 0, sizeof devname);
 	if (STRINGP (val))
 	  {
-	    char *arg = (char *) SDATA (val);
+	    char *arg = SSDATA (val);
 	    int len = min (strlen (arg), IFNAMSIZ);
 	    memcpy (devname, arg, len);
 	  }
@@ -2859,7 +2841,7 @@ usage:  (make-serial-process &rest ARGS)  */)
   record_unwind_protect (make_serial_process_unwind, proc);
   p = XPROCESS (proc);
 
-  fd = serial_open ((char*) SDATA (port));
+  fd = serial_open (SSDATA (port));
   p->infd = fd;
   p->outfd = fd;
   if (fd > max_process_desc)
@@ -3280,7 +3262,7 @@ usage: (make-network-process &rest ARGS)  */)
       CHECK_STRING (service);
       memset (&address_un, 0, sizeof address_un);
       address_un.sun_family = AF_LOCAL;
-      strncpy (address_un.sun_path, SDATA (service), sizeof address_un.sun_path);
+      strncpy (address_un.sun_path, SSDATA (service), sizeof address_un.sun_path);
       ai.ai_addr = (struct sockaddr *) &address_un;
       ai.ai_addrlen = sizeof address_un;
       goto open_socket;
@@ -3316,7 +3298,7 @@ usage: (make-network-process &rest ARGS)  */)
       else
 	{
 	  CHECK_STRING (service);
-	  portstring = SDATA (service);
+	  portstring = SSDATA (service);
 	}
 
       immediate_quit = 1;
@@ -3331,12 +3313,12 @@ usage: (make-network-process &rest ARGS)  */)
       res_init ();
 #endif
 
-      ret = getaddrinfo (SDATA (host), portstring, &hints, &res);
+      ret = getaddrinfo (SSDATA (host), portstring, &hints, &res);
       if (ret)
 #ifdef HAVE_GAI_STRERROR
-	error ("%s/%s %s", SDATA (host), portstring, gai_strerror (ret));
+	error ("%s/%s %s", SSDATA (host), portstring, gai_strerror (ret));
 #else
-	error ("%s/%s getaddrinfo error %d", SDATA (host), portstring, ret);
+	error ("%s/%s getaddrinfo error %d", SSDATA (host), portstring, ret);
 #endif
       immediate_quit = 0;
 
@@ -3355,7 +3337,7 @@ usage: (make-network-process &rest ARGS)  */)
     {
       struct servent *svc_info;
       CHECK_STRING (service);
-      svc_info = getservbyname (SDATA (service),
+      svc_info = getservbyname (SSDATA (service),
 				(socktype == SOCK_DGRAM ? "udp" : "tcp"));
       if (svc_info == 0)
 	error ("Unknown service: %s", SDATA (service));
@@ -3395,7 +3377,7 @@ usage: (make-network-process &rest ARGS)  */)
 	/* Attempt to interpret host as numeric inet address */
 	{
 	  unsigned long numeric_addr;
-	  numeric_addr = inet_addr ((char *) SDATA (host));
+	  numeric_addr = inet_addr (SSDATA (host));
 	  if (numeric_addr == -1)
 	    error ("Unknown host \"%s\"", SDATA (host));
 
@@ -3811,7 +3793,7 @@ usage: (make-network-process &rest ARGS)  */)
 }
 
 
-#if defined(HAVE_NET_IF_H) && defined(HAVE_SYS_IOCTL_H)
+#if defined(HAVE_NET_IF_H)
 
 #ifdef SIOCGIFCONF
 DEFUN ("network-interface-list", Fnetwork_interface_list, Snetwork_interface_list, 0, 0, 0,
@@ -4054,7 +4036,7 @@ FLAGS is the current flags of the interface.  */)
   return any ? res : Qnil;
 }
 #endif
-#endif	/* defined(HAVE_NET_IF_H) && defined(HAVE_SYS_IOCTL_H) */
+#endif	/* defined(HAVE_NET_IF_H) */
 
 /* Turn off input and output for process PROC.  */
 
@@ -5663,7 +5645,7 @@ send_process (volatile Lisp_Object proc, const unsigned char *volatile buf,
 #ifdef HAVE_GNUTLS
 		  if (XPROCESS (proc)->gnutls_p)
 		    rv = emacs_gnutls_write (outfd,
-					     XPROCESS (proc), 
+					     XPROCESS (proc),
 					     (char *) buf, this);
 		  else
 #endif
@@ -5825,7 +5807,7 @@ emacs_get_tty_pgrp (struct Lisp_Process *p)
       int fd;
       /* Some OS:es (Solaris 8/9) does not allow TIOCGPGRP from the
 	 master side.  Try the slave side.  */
-      fd = emacs_open (SDATA (p->tty_name), O_RDONLY, 0);
+      fd = emacs_open (SSDATA (p->tty_name), O_RDONLY, 0);
 
       if (fd != -1)
 	{
@@ -7648,14 +7630,14 @@ syms_of_process (void)
   Qargs = intern_c_string ("args");
   staticpro (&Qargs);
 
-  DEFVAR_BOOL ("delete-exited-processes", &delete_exited_processes,
+  DEFVAR_BOOL ("delete-exited-processes", delete_exited_processes,
 	       doc: /* *Non-nil means delete processes immediately when they exit.
 A value of nil means don't delete them until `list-processes' is run.  */);
 
   delete_exited_processes = 1;
 
 #ifdef subprocesses
-  DEFVAR_LISP ("process-connection-type", &Vprocess_connection_type,
+  DEFVAR_LISP ("process-connection-type", Vprocess_connection_type,
 	       doc: /* Control type of device used to communicate with subprocesses.
 Values are nil to use a pipe, or t or `pty' to use a pty.
 The value has no effect if the system has no ptys or if all ptys are busy:
@@ -7664,7 +7646,7 @@ The value takes effect when `start-process' is called.  */);
   Vprocess_connection_type = Qt;
 
 #ifdef ADAPTIVE_READ_BUFFERING
-  DEFVAR_LISP ("process-adaptive-read-buffering", &Vprocess_adaptive_read_buffering,
+  DEFVAR_LISP ("process-adaptive-read-buffering", Vprocess_adaptive_read_buffering,
 	       doc: /* If non-nil, improve receive buffering by delaying after short reads.
 On some systems, when Emacs reads the output from a subprocess, the output data
 is read in very small blocks, potentially resulting in very poor performance.
@@ -7708,14 +7690,14 @@ The variable takes effect when `start-process' is called.  */);
   defsubr (&Sset_network_process_option);
   defsubr (&Smake_network_process);
   defsubr (&Sformat_network_address);
-#if defined(HAVE_NET_IF_H) && defined(HAVE_SYS_IOCTL_H)
+#if defined(HAVE_NET_IF_H)
 #ifdef SIOCGIFCONF
   defsubr (&Snetwork_interface_list);
 #endif
 #if defined(SIOCGIFADDR) || defined(SIOCGIFHWADDR) || defined(SIOCGIFFLAGS)
   defsubr (&Snetwork_interface_info);
 #endif
-#endif /* defined(HAVE_NET_IF_H) && defined(HAVE_SYS_IOCTL_H) */
+#endif /* defined(HAVE_NET_IF_H) */
 #ifdef DATAGRAM_SOCKETS
   defsubr (&Sprocess_datagram_address);
   defsubr (&Sset_process_datagram_address);
@@ -7745,6 +7727,3 @@ The variable takes effect when `start-process' is called.  */);
   defsubr (&Slist_system_processes);
   defsubr (&Sprocess_attributes);
 }
-
-/* arch-tag: 3706c011-7b9a-4117-bd4f-59e7f701a4c4
-   (do not change this comment) */

@@ -1,7 +1,6 @@
 ;;; gud.el --- Grand Unified Debugger mode for running GDB and other debuggers
 
-;; Copyright (C) 1992, 1993, 1994, 1995, 1996, 1998, 2000, 2001, 2002, 2003,
-;;  2004, 2005, 2006, 2007, 2008, 2009, 2010 Free Software Foundation, Inc.
+;; Copyright (C) 1992-1996, 1998, 2000-2011 Free Software Foundation, Inc.
 
 ;; Author: Eric S. Raymond <esr@snark.thyrsus.com>
 ;; Maintainer: FSF
@@ -2533,7 +2532,7 @@ comint mode, which see."
   (gud-set-buffer))
 
 (defun gud-set-buffer ()
-  (when (eq major-mode 'gud-mode)
+  (when (derived-mode-p 'gud-mode)
     (setq gud-comint-buffer (current-buffer))))
 
 (defvar gud-filter-defer-flag nil
@@ -3344,10 +3343,8 @@ only tooltips in the buffer containing the overlay arrow."
 ACTIVATEP non-nil means activate mouse motion events."
   (if activatep
       (progn
-	(make-local-variable 'gud-tooltip-mouse-motions-active)
-	(setq gud-tooltip-mouse-motions-active t)
-	(make-local-variable 'track-mouse)
-	(setq track-mouse t))
+        (set (make-local-variable 'gud-tooltip-mouse-motions-active) t)
+        (set (make-local-variable 'track-mouse) t))
     (when gud-tooltip-mouse-motions-active
       (kill-local-variable 'gud-tooltip-mouse-motions-active)
       (kill-local-variable 'track-mouse))))
@@ -3473,5 +3470,4 @@ so they have been disabled."))
 
 (provide 'gud)
 
-;; arch-tag: 6d990948-df65-461a-be39-1c7fb83ac4c4
 ;;; gud.el ends here

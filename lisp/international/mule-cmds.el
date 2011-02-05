@@ -1,9 +1,8 @@
 ;;; mule-cmds.el --- commands for multilingual environment -*-coding: iso-2022-7bit -*-
 
-;; Copyright (C) 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006,
-;;   2007, 2008, 2009, 2010  Free Software Foundation, Inc.
+;; Copyright (C) 1997-2011  Free Software Foundation, Inc.
 ;; Copyright (C) 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004,
-;;   2005, 2006, 2007, 2008, 2009, 2010
+;;   2005, 2006, 2007, 2008, 2009, 2010, 2011
 ;;   National Institute of Advanced Industrial Science and Technology (AIST)
 ;;   Registration Number H14PRO021
 ;; Copyright (C) 2003
@@ -2033,10 +2032,11 @@ See `set-language-info-alist' for use in programs."
   "Do various unibyte-mode setups for language environment LANGUAGE-NAME."
   (set-display-table-and-terminal-coding-system language-name))
 
-(defsubst princ-list (&rest args)
+(defun princ-list (&rest args)
   "Print all arguments with `princ', then print \"\\n\"."
-  (while args (princ (car args)) (setq args (cdr args)))
+  (mapc #'princ args)
   (princ "\n"))
+(make-obsolete 'princ-list "use mapc and princ instead" "23.3")
 
 (put 'describe-specified-language-support 'apropos-inhibit t)
 
@@ -2978,5 +2978,4 @@ properties are sticky."
 
 (define-key ctl-x-map "8\r" 'ucs-insert)
 
-;; arch-tag: b382c432-4b36-460e-bf4c-05efd0bb18dc
 ;;; mule-cmds.el ends here

@@ -1,7 +1,6 @@
 /* Implementation of GUI terminal on the Microsoft W32 API.
-   Copyright (C) 1989, 1993, 1994, 1995, 1996, 1997, 1998,
-                 1999, 2000, 2001, 2002, 2003, 2004, 2005,
-                 2006, 2007, 2008, 2009, 2010 Free Software Foundation, Inc.
+
+Copyright (C) 1989, 1993-2011  Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -64,10 +63,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 static int max_fringe_bmp = 0;
 static HBITMAP *fringe_bmp = 0;
 
-/* Non-nil means Emacs uses toolkit scroll bars.  */
-
-Lisp_Object Vx_toolkit_scroll_bars;
-
 /* Temporary variables for w32_read_socket.  */
 
 static int last_mousemove_x = 0;
@@ -85,13 +80,6 @@ static int any_help_event_p;
 
 /* Last window where we saw the mouse.  Used by mouse-autoselect-window.  */
 static Lisp_Object last_window;
-
-/* Non-zero means make use of UNDERLINE_POSITION font properties.  */
-int x_use_underline_position_properties;
-
-/* Non-zero means to draw the underline at the same place as the descent line.  */
-
-int x_underline_at_descent_line;
 
 extern unsigned int msh_mousewheel;
 
@@ -165,8 +153,6 @@ HWND w32_system_caret_hwnd;
 int w32_system_caret_height;
 int w32_system_caret_x;
 int w32_system_caret_y;
-int w32_use_visible_system_caret;
-
 DWORD dwWindowsThreadId = 0;
 HANDLE hWindowsThread = NULL;
 DWORD dwMainThreadId = 0;
@@ -184,19 +170,6 @@ int last_scroll_bar_drag_pos;
 static RECT last_mouse_glyph;
 static FRAME_PTR last_mouse_glyph_frame;
 static Lisp_Object last_mouse_press_frame;
-
-int w32_num_mouse_buttons;
-
-Lisp_Object Vw32_swap_mouse_buttons;
-
-/* Control whether x_raise_frame also sets input focus.  */
-Lisp_Object Vw32_grab_focus_on_raise;
-
-/* Control whether Caps Lock affects non-ascii characters.  */
-Lisp_Object Vw32_capslock_is_shiftlock;
-
-/* Control whether right-alt and left-ctrl should be recognized as AltGr.  */
-Lisp_Object Vw32_recognize_altgr;
 
 /* The scroll bar in which the last motion event occurred.
 
@@ -224,11 +197,6 @@ static int volatile input_signal_count;
 #else
 static int input_signal_count;
 #endif
-
-extern Lisp_Object Vcommand_line_args, Vsystem_name;
-
-/* A mask of extra modifier bits to put into every keyboard char.  */
-extern EMACS_INT extra_keyboard_modifiers;
 
 /* Keyboard code page - may be changed by language-change events.  */
 static int keyboard_codepage;
@@ -504,7 +472,7 @@ static void
 x_update_window_begin (struct window *w)
 {
   struct frame *f = XFRAME (WINDOW_FRAME (w));
-  struct w32_display_info *display_info = FRAME_W32_DISPLAY_INFO (f);
+  Mouse_HLInfo *hlinfo = MOUSE_HL_INFO (f);
 
   /* Hide the system caret during an update.  */
   if (w32_use_visible_system_caret && w32_system_caret_hwnd)
@@ -517,15 +485,15 @@ x_update_window_begin (struct window *w)
 
   BLOCK_INPUT;
 
-  if (f == display_info->mouse_face_mouse_frame)
+  if (f == hlinfo->mouse_face_mouse_frame)
     {
       /* Don't do highlighting for mouse motion during the update.  */
-      display_info->mouse_face_defer = 1;
+      hlinfo->mouse_face_defer = 1;
 
       /* If F needs to be redrawn, simply forget about any prior mouse
 	 highlighting.  */
       if (FRAME_GARBAGED_P (f))
-	display_info->mouse_face_window = Qnil;
+	hlinfo->mouse_face_window = Qnil;
 
 #if 0 /* Rows in a current matrix containing glyphs in mouse-face have
 	 their mouse_face_p flag set, which means that they are always
@@ -539,8 +507,8 @@ x_update_window_begin (struct window *w)
 	 Likewise, don't do anything if the frame is garbaged;
 	 in that case, the frame's current matrix that we would use
 	 is all wrong, and we will redisplay that line anyway.  */
-      if (!NILP (display_info->mouse_face_window)
-	  && w == XWINDOW (display_info->mouse_face_window))
+      if (!NILP (hlinfo->mouse_face_window)
+	  && w == XWINDOW (hlinfo->mouse_face_window))
 	{
 	  int i;
 
@@ -549,7 +517,7 @@ x_update_window_begin (struct window *w)
 	      break;
 
 	  if (i < w->desired_matrix->nrows)
-	    clear_mouse_face (display_info);
+	    clear_mouse_face (hlinfo);
 	}
 #endif /* 0 */
     }
@@ -600,7 +568,7 @@ static void
 x_update_window_end (struct window *w, int cursor_on_p,
 		     int mouse_face_overwritten_p)
 {
-  struct w32_display_info *dpyinfo = FRAME_W32_DISPLAY_INFO (XFRAME (w->frame));
+  Mouse_HLInfo *hlinfo = MOUSE_HL_INFO (XFRAME (w->frame));
 
   if (!w->pseudo_window_p)
     {
@@ -621,9 +589,9 @@ x_update_window_end (struct window *w, int cursor_on_p,
      XTframe_up_to_date to redisplay the mouse highlight.  */
   if (mouse_face_overwritten_p)
     {
-      dpyinfo->mouse_face_beg_row = dpyinfo->mouse_face_beg_col = -1;
-      dpyinfo->mouse_face_end_row = dpyinfo->mouse_face_end_col = -1;
-      dpyinfo->mouse_face_window = Qnil;
+      hlinfo->mouse_face_beg_row = hlinfo->mouse_face_beg_col = -1;
+      hlinfo->mouse_face_end_row = hlinfo->mouse_face_end_col = -1;
+      hlinfo->mouse_face_window = Qnil;
     }
 
   /* Unhide the caret.  This won't actually show the cursor, unless it
@@ -648,7 +616,7 @@ x_update_end (struct frame *f)
     return;
 
   /* Mouse highlight may be displayed again.  */
-  FRAME_W32_DISPLAY_INFO (f)->mouse_face_defer = 0;
+  MOUSE_HL_INFO (f)->mouse_face_defer = 0;
 }
 
 
@@ -661,17 +629,17 @@ w32_frame_up_to_date (struct frame *f)
 {
   if (FRAME_W32_P (f))
     {
-      struct w32_display_info *dpyinfo = FRAME_W32_DISPLAY_INFO (f);
+      Mouse_HLInfo *hlinfo = MOUSE_HL_INFO (f);
 
-      if (dpyinfo->mouse_face_deferred_gc
-	  || f == dpyinfo->mouse_face_mouse_frame)
+      if (hlinfo->mouse_face_deferred_gc
+	  || f == hlinfo->mouse_face_mouse_frame)
 	{
 	  BLOCK_INPUT;
-	  if (dpyinfo->mouse_face_mouse_frame)
-	    note_mouse_highlight (dpyinfo->mouse_face_mouse_frame,
-				  dpyinfo->mouse_face_mouse_x,
-				  dpyinfo->mouse_face_mouse_y);
-	  dpyinfo->mouse_face_deferred_gc = 0;
+	  if (hlinfo->mouse_face_mouse_frame)
+	    note_mouse_highlight (hlinfo->mouse_face_mouse_frame,
+				  hlinfo->mouse_face_mouse_x,
+				  hlinfo->mouse_face_mouse_y);
+	  hlinfo->mouse_face_deferred_gc = 0;
 	  UNBLOCK_INPUT;
 	}
     }
@@ -998,7 +966,7 @@ x_set_mouse_face_gc (struct glyph_string *s)
   struct face *face;
 
   /* What face has to be used last for the mouse face?  */
-  face_id = FRAME_W32_DISPLAY_INFO (s->f)->mouse_face_face_id;
+  face_id = MOUSE_HL_INFO (s->f)->mouse_face_face_id;
   face = FACE_FROM_ID (s->f, face_id);
   if (face == NULL)
     face = FACE_FROM_ID (s->f, MOUSE_FACE_ID);
@@ -1390,6 +1358,94 @@ x_draw_composite_glyph_string_foreground (struct glyph_string *s)
 
       SelectObject (s->hdc, old_font);
     }
+}
+
+
+/* Draw the foreground of glyph string S for glyphless characters.  */
+
+static void
+x_draw_glyphless_glyph_string_foreground (struct glyph_string *s)
+{
+  struct glyph *glyph = s->first_glyph;
+  XChar2b char2b[8];
+  int x, i, j;
+  int with_background;
+
+  /* If first glyph of S has a left box line, start drawing the text
+     of S to the right of that box line.  */
+  if (s->face->box != FACE_NO_BOX
+      && s->first_glyph->left_box_line_p)
+    x = s->x + eabs (s->face->box_line_width);
+  else
+    x = s->x;
+
+  SetTextColor (s->hdc, s->gc->foreground);
+  SetBkColor (s->hdc, s->gc->background);
+  SetTextAlign (s->hdc, TA_BASELINE | TA_LEFT);
+
+  s->char2b = char2b;
+  with_background = ! (s->for_overlaps
+		       || (s->background_filled_p && s->hl != DRAW_CURSOR));
+  for (i = 0; i < s->nchars; i++, glyph++)
+    {
+      char buf[7], *str = NULL;
+      int len = glyph->u.glyphless.len;
+
+      if (glyph->u.glyphless.method == GLYPHLESS_DISPLAY_ACRONYM)
+	{
+	  if (len > 1
+	      && CHAR_TABLE_P (Vglyphless_char_display)
+	      && (CHAR_TABLE_EXTRA_SLOTS (XCHAR_TABLE (Vglyphless_char_display))
+		  >= 1))
+	    {
+	      Lisp_Object acronym
+		= (! glyph->u.glyphless.for_no_font
+		   ? CHAR_TABLE_REF (Vglyphless_char_display,
+				     glyph->u.glyphless.ch)
+		   : XCHAR_TABLE (Vglyphless_char_display)->extras[0]);
+	      if (STRINGP (acronym))
+		str = SSDATA (acronym);
+	    }
+	}
+      else if (glyph->u.glyphless.method == GLYPHLESS_DISPLAY_HEX_CODE)
+	{
+	  sprintf ((char *) buf, "%0*X",
+		   glyph->u.glyphless.ch < 0x10000 ? 4 : 6,
+		   glyph->u.glyphless.ch);
+	  str = buf;
+	}
+
+      if (glyph->u.glyphless.method != GLYPHLESS_DISPLAY_THIN_SPACE)
+	w32_draw_rectangle (s->hdc, s->gc,
+			    x, s->ybase - glyph->ascent,
+			    glyph->pixel_width - 1,
+			    glyph->ascent + glyph->descent - 1);
+      if (str)
+	{
+	  struct font *font = s->font;
+	  int upper_len = (len + 1) / 2;
+	  unsigned code;
+	  HFONT old_font;
+
+	  old_font = SelectObject (s->hdc, FONT_HANDLE (font));
+	  /* It is certain that all LEN characters in STR are ASCII.  */
+	  for (j = 0; j < len; j++)
+	    {
+	      code = font->driver->encode_char (font, str[j]);
+	      STORE_XCHAR2B (char2b + j, code >> 8, code & 0xFF);
+	    }
+	  font->driver->draw (s, 0, upper_len,
+			      x + glyph->slice.glyphless.upper_xoff,
+			      s->ybase + glyph->slice.glyphless.upper_yoff,
+			      with_background);
+	  font->driver->draw (s, upper_len, len,
+			      x + glyph->slice.glyphless.lower_xoff,
+			      s->ybase + glyph->slice.glyphless.lower_yoff,
+			      with_background);
+	  SelectObject (s->hdc, old_font);
+	}
+      x += glyph->pixel_width;
+   }
 }
 
 
@@ -2279,6 +2335,14 @@ x_draw_glyph_string (struct glyph_string *s)
       else
 	x_draw_glyph_string_background (s, 1);
       x_draw_composite_glyph_string_foreground (s);
+      break;
+
+    case GLYPHLESS_GLYPH:
+      if (s->for_overlaps)
+	s->background_filled_p = 1;
+      else
+	x_draw_glyph_string_background (s, 0);
+      x_draw_glyphless_glyph_string_foreground (s);
       break;
 
     default:
@@ -3963,6 +4027,7 @@ w32_read_socket (struct terminal *terminal, int expected,
   W32Msg msg;
   struct frame *f;
   struct w32_display_info *dpyinfo = &one_w32_display_info;
+  Mouse_HLInfo *hlinfo = &dpyinfo->mouse_highlight;
 
   if (interrupt_input_blocked)
     {
@@ -4063,11 +4128,11 @@ w32_read_socket (struct terminal *terminal, int expected,
 
 	  if (f && !f->iconified)
 	    {
-	      if (!dpyinfo->mouse_face_hidden && INTEGERP (Vmouse_highlight)
-		  && !EQ (f->tool_bar_window, dpyinfo->mouse_face_window))
+	      if (!hlinfo->mouse_face_hidden && INTEGERP (Vmouse_highlight)
+		  && !EQ (f->tool_bar_window, hlinfo->mouse_face_window))
 		{
-		  clear_mouse_face (dpyinfo);
-		  dpyinfo->mouse_face_hidden = 1;
+		  clear_mouse_face (hlinfo);
+		  hlinfo->mouse_face_hidden = 1;
 		}
 
 	      if (temp_index == sizeof temp_buffer / sizeof (short))
@@ -4088,11 +4153,11 @@ w32_read_socket (struct terminal *terminal, int expected,
 
 	  if (f && !f->iconified)
 	    {
-	      if (!dpyinfo->mouse_face_hidden && INTEGERP (Vmouse_highlight)
-		  && !EQ (f->tool_bar_window, dpyinfo->mouse_face_window))
+	      if (!hlinfo->mouse_face_hidden && INTEGERP (Vmouse_highlight)
+		  && !EQ (f->tool_bar_window, hlinfo->mouse_face_window))
 		{
-		  clear_mouse_face (dpyinfo);
-		  dpyinfo->mouse_face_hidden = 1;
+		  clear_mouse_face (hlinfo);
+		  hlinfo->mouse_face_hidden = 1;
 		}
 
 	      if (temp_index == sizeof temp_buffer / sizeof (short))
@@ -4166,11 +4231,11 @@ w32_read_socket (struct terminal *terminal, int expected,
 
 	  if (f && !f->iconified)
 	    {
-	      if (!dpyinfo->mouse_face_hidden && INTEGERP (Vmouse_highlight)
-		  && !EQ (f->tool_bar_window, dpyinfo->mouse_face_window))
+	      if (!hlinfo->mouse_face_hidden && INTEGERP (Vmouse_highlight)
+		  && !EQ (f->tool_bar_window, hlinfo->mouse_face_window))
 		{
-		  clear_mouse_face (dpyinfo);
-		  dpyinfo->mouse_face_hidden = 1;
+		  clear_mouse_face (hlinfo);
+		  hlinfo->mouse_face_hidden = 1;
 		}
 
 	      if (temp_index == sizeof temp_buffer / sizeof (short))
@@ -4204,10 +4269,10 @@ w32_read_socket (struct terminal *terminal, int expected,
 	  else
 	    f = x_window_to_frame (dpyinfo, msg.msg.hwnd);
 
-	  if (dpyinfo->mouse_face_hidden)
+	  if (hlinfo->mouse_face_hidden)
 	    {
-	      dpyinfo->mouse_face_hidden = 0;
-	      clear_mouse_face (dpyinfo);
+	      hlinfo->mouse_face_hidden = 0;
+	      clear_mouse_face (hlinfo);
 	    }
 
 	  if (f)
@@ -4219,7 +4284,7 @@ w32_read_socket (struct terminal *terminal, int expected,
 		  int x = LOWORD (msg.msg.lParam);
 		  int y = HIWORD (msg.msg.lParam);
 
-		  window = window_from_coordinates (f, x, y, 0, 0, 0, 0);
+		  window = window_from_coordinates (f, x, y, 0, 0);
 
 		  /* Window will be selected only when it is not
 		     selected now and last mouse movement event was
@@ -4248,7 +4313,7 @@ w32_read_socket (struct terminal *terminal, int expected,
             {
               /* If we move outside the frame, then we're
                  certainly no longer on any text in the frame.  */
-              clear_mouse_face (dpyinfo);
+              clear_mouse_face (hlinfo);
             }
 
           /* If the contents of the global variable help_echo_string
@@ -4298,7 +4363,7 @@ w32_read_socket (struct terminal *terminal, int expected,
 		    int x = XFASTINT (inev.x);
 		    int y = XFASTINT (inev.y);
 
-                    window = window_from_coordinates (f, x, y, 0, 0, 0, 1);
+                    window = window_from_coordinates (f, x, y, 0, 1);
 
                     if (EQ (window, f->tool_bar_window))
                       {
@@ -4537,12 +4602,12 @@ w32_read_socket (struct terminal *terminal, int expected,
 	  f = x_any_window_to_frame (dpyinfo, msg.msg.hwnd);
 	  if (f)
 	    {
-	      if (f == dpyinfo->mouse_face_mouse_frame)
+	      if (f == hlinfo->mouse_face_mouse_frame)
 		{
 		  /* If we move outside the frame, then we're
 		     certainly no longer on any text in the frame.  */
-		  clear_mouse_face (dpyinfo);
-		  dpyinfo->mouse_face_mouse_frame = 0;
+		  clear_mouse_face (hlinfo);
+		  hlinfo->mouse_face_mouse_frame = 0;
 		}
 
 	      /* Generate a nil HELP_EVENT to cancel a help-echo.
@@ -4572,12 +4637,12 @@ w32_read_socket (struct terminal *terminal, int expected,
               if (f == dpyinfo->w32_focus_frame)
                 x_new_focus_frame (dpyinfo, 0);
 
-              if (f == dpyinfo->mouse_face_mouse_frame)
+              if (f == hlinfo->mouse_face_mouse_frame)
                 {
                   /* If we move outside the frame, then we're
                      certainly no longer on any text in the frame.  */
-                  clear_mouse_face (dpyinfo);
-                  dpyinfo->mouse_face_mouse_frame = 0;
+                  clear_mouse_face (hlinfo);
+                  hlinfo->mouse_face_mouse_frame = 0;
                 }
 
               /* Generate a nil HELP_EVENT to cancel a help-echo.
@@ -5725,6 +5790,7 @@ void
 x_free_frame_resources (struct frame *f)
 {
   struct w32_display_info *dpyinfo = FRAME_W32_DISPLAY_INFO (f);
+  Mouse_HLInfo *hlinfo = MOUSE_HL_INFO (f);
 
   BLOCK_INPUT;
 
@@ -5763,15 +5829,15 @@ x_free_frame_resources (struct frame *f)
   if (f == dpyinfo->x_highlight_frame)
     dpyinfo->x_highlight_frame = 0;
 
-  if (f == dpyinfo->mouse_face_mouse_frame)
+  if (f == hlinfo->mouse_face_mouse_frame)
     {
-      dpyinfo->mouse_face_beg_row
-	= dpyinfo->mouse_face_beg_col = -1;
-      dpyinfo->mouse_face_end_row
-	= dpyinfo->mouse_face_end_col = -1;
-      dpyinfo->mouse_face_window = Qnil;
-      dpyinfo->mouse_face_deferred_gc = 0;
-      dpyinfo->mouse_face_mouse_frame = 0;
+      hlinfo->mouse_face_beg_row
+	= hlinfo->mouse_face_beg_col = -1;
+      hlinfo->mouse_face_end_row
+	= hlinfo->mouse_face_end_col = -1;
+      hlinfo->mouse_face_window = Qnil;
+      hlinfo->mouse_face_deferred_gc = 0;
+      hlinfo->mouse_face_mouse_frame = 0;
     }
 
   UNBLOCK_INPUT;
@@ -5837,6 +5903,7 @@ void
 w32_initialize_display_info (Lisp_Object display_name)
 {
   struct w32_display_info *dpyinfo = &one_w32_display_info;
+  Mouse_HLInfo *hlinfo = &dpyinfo->mouse_highlight;
 
   memset (dpyinfo, 0, sizeof (*dpyinfo));
 
@@ -5862,12 +5929,12 @@ w32_initialize_display_info (Lisp_Object display_name)
   dpyinfo->smallest_font_height = 1;
   dpyinfo->smallest_char_width = 1;
 
-  dpyinfo->mouse_face_beg_row = dpyinfo->mouse_face_beg_col = -1;
-  dpyinfo->mouse_face_end_row = dpyinfo->mouse_face_end_col = -1;
-  dpyinfo->mouse_face_face_id = DEFAULT_FACE_ID;
-  dpyinfo->mouse_face_window = Qnil;
-  dpyinfo->mouse_face_overlay = Qnil;
-  dpyinfo->mouse_face_hidden = 0;
+  hlinfo->mouse_face_beg_row = hlinfo->mouse_face_beg_col = -1;
+  hlinfo->mouse_face_end_row = hlinfo->mouse_face_end_col = -1;
+  hlinfo->mouse_face_face_id = DEFAULT_FACE_ID;
+  hlinfo->mouse_face_window = Qnil;
+  hlinfo->mouse_face_overlay = Qnil;
+  hlinfo->mouse_face_hidden = 0;
 
   dpyinfo->vertical_scroll_bar_cursor = w32_load_cursor (IDC_ARROW);
   /* TODO: dpyinfo->gray */
@@ -6283,18 +6350,18 @@ syms_of_w32term (void)
   DEFSYM (Qvendor_specific_keysyms, "vendor-specific-keysyms");
 
   DEFVAR_INT ("w32-num-mouse-buttons",
-	      &w32_num_mouse_buttons,
+	      w32_num_mouse_buttons,
 	      doc: /* Number of physical mouse buttons.  */);
   w32_num_mouse_buttons = 2;
 
   DEFVAR_LISP ("w32-swap-mouse-buttons",
-	      &Vw32_swap_mouse_buttons,
+	      Vw32_swap_mouse_buttons,
 	       doc: /* Swap the mapping of middle and right mouse buttons.
 When nil, middle button is mouse-2 and right button is mouse-3.  */);
   Vw32_swap_mouse_buttons = Qnil;
 
   DEFVAR_LISP ("w32-grab-focus-on-raise",
-	       &Vw32_grab_focus_on_raise,
+	       Vw32_grab_focus_on_raise,
 	       doc: /* Raised frame grabs input focus.
 When t, `raise-frame' grabs input focus as well.  This fits well
 with the normal Windows click-to-focus policy, but might not be
@@ -6302,20 +6369,20 @@ desirable when using a point-to-focus policy.  */);
   Vw32_grab_focus_on_raise = Qt;
 
   DEFVAR_LISP ("w32-capslock-is-shiftlock",
-	       &Vw32_capslock_is_shiftlock,
+	       Vw32_capslock_is_shiftlock,
 	       doc: /* Apply CapsLock state to non character input keys.
 When nil, CapsLock only affects normal character input keys.  */);
   Vw32_capslock_is_shiftlock = Qnil;
 
   DEFVAR_LISP ("w32-recognize-altgr",
-	       &Vw32_recognize_altgr,
+	       Vw32_recognize_altgr,
 	       doc: /* Recognize right-alt and left-ctrl as AltGr.
 When nil, the right-alt and left-ctrl key combination is
 interpreted normally.  */);
   Vw32_recognize_altgr = Qt;
 
   DEFVAR_BOOL ("w32-use-visible-system-caret",
-	       &w32_use_visible_system_caret,
+	       w32_use_visible_system_caret,
 	       doc: /* Flag to make the system caret visible.
 When this is non-nil, Emacs will indicate the position of point by
 using the system caret instead of drawing its own cursor.  Some screen
@@ -6332,28 +6399,31 @@ the cursor have no effect.  */);
   /* We don't yet support this, but defining this here avoids whining
      from cus-start.el and other places, like "M-x set-variable".  */
   DEFVAR_BOOL ("x-use-underline-position-properties",
-	       &x_use_underline_position_properties,
+	       x_use_underline_position_properties,
      doc: /* *Non-nil means make use of UNDERLINE_POSITION font properties.
 A value of nil means ignore them.  If you encounter fonts with bogus
 UNDERLINE_POSITION font properties, for example 7x13 on XFree prior
-to 4.1, set this to nil.  */);
+to 4.1, set this to nil.  You can also use `underline-minimum-offset'
+to override the font's UNDERLINE_POSITION for small font display
+sizes.  */);
   x_use_underline_position_properties = 0;
 
   DEFVAR_BOOL ("x-underline-at-descent-line",
-	       &x_underline_at_descent_line,
+	       x_underline_at_descent_line,
      doc: /* *Non-nil means to draw the underline at the same place as the descent line.
 A value of nil means to draw the underline according to the value of the
 variable `x-use-underline-position-properties', which is usually at the
 baseline level.  The default value is nil.  */);
   x_underline_at_descent_line = 0;
 
-  DEFVAR_LISP ("x-toolkit-scroll-bars", &Vx_toolkit_scroll_bars,
-	       doc: /* If not nil, Emacs uses toolkit scroll bars.  */);
+  DEFVAR_LISP ("x-toolkit-scroll-bars", Vx_toolkit_scroll_bars,
+	       doc: /* Which toolkit scroll bars Emacs uses, if any.
+A value of nil means Emacs doesn't use toolkit scroll bars.
+With the X Window system, the value is a symbol describing the
+X toolkit.  Possible values are: gtk, motif, xaw, or xaw3d.
+With MS Windows, the value is t.  */);
   Vx_toolkit_scroll_bars = Qt;
 
   staticpro (&last_mouse_motion_frame);
   last_mouse_motion_frame = Qnil;
 }
-
-/* arch-tag: 5fa70624-ab86-499c-8a85-473958ee4646
-   (do not change this comment) */

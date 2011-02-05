@@ -1,7 +1,6 @@
 ;;; facemenu.el --- create a face menu for interactively adding fonts to text
 
-;; Copyright (C) 1994, 1995, 1996, 2001, 2002, 2003, 2004,
-;;   2005, 2006, 2007, 2008, 2009, 2010 Free Software Foundation, Inc.
+;; Copyright (C) 1994-1996, 2001-2011 Free Software Foundation, Inc.
 
 ;; Author: Boris Goldowsky <boris@gnu.org>
 ;; Keywords: faces
@@ -358,7 +357,7 @@ inserted.  Moving point or switching buffers before
 typing a character to insert cancels the specification."
   (interactive (list (progn
 		       (barf-if-buffer-read-only)
-		       (facemenu-read-color "Foreground color: "))
+		       (read-color "Foreground color: "))
 		     (if (and mark-active (not current-prefix-arg))
 			 (region-beginning))
 		     (if (and mark-active (not current-prefix-arg))
@@ -380,7 +379,7 @@ inserted.  Moving point or switching buffers before
 typing a character to insert cancels the specification."
   (interactive (list (progn
 		       (barf-if-buffer-read-only)
-		       (facemenu-read-color "Background color: "))
+		       (read-color "Background color: "))
 		     (if (and mark-active (not current-prefix-arg))
 			 (region-beginning))
 		     (if (and mark-active (not current-prefix-arg))
@@ -462,23 +461,7 @@ These special properties include `invisible', `intangible' and `read-only'."
     (remove-text-properties
      start end '(invisible nil intangible nil read-only nil))))
 
-(defun facemenu-read-color (&optional prompt)
-  "Read a color using the minibuffer."
-  (let* ((completion-ignore-case t)
-	 (color-list (or facemenu-color-alist (defined-colors)))
-	 (completer
-	  (lambda (string pred all-completions)
-	    (if all-completions
-		(or (all-completions string color-list pred)
-		    (if (color-defined-p string)
-			(list string)))
-	      (or (try-completion string color-list pred)
-		  (if (color-defined-p string)
-		      string)))))
-	 (col (completing-read (or prompt "Color: ") completer nil t)))
-    (if (equal "" col)
-	nil
-      col)))
+(defalias 'facemenu-read-color 'read-color)
 
 (defun color-rgb-to-hsv (r g b)
   "For R, G, B color components return a list of hue, saturation, value.
@@ -926,5 +909,4 @@ Returns the non-nil value it found, or nil if all were nil."
 
 (provide 'facemenu)
 
-;; arch-tag: 85f6d02b-9085-420e-b651-0678f0e9c7eb
 ;;; facemenu.el ends here

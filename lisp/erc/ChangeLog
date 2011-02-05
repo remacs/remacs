@@ -1,3 +1,29 @@
+2011-01-31  Antoine Levitt  <antoine.levitt@gmail.com>  (tiny change)
+
+	* erc-track.el (track): Don't reset erc-modified-channels-object
+	each time erc-track-mode is activated.
+
+2011-01-13  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* erc.el (erc-mode):
+	* erc-dcc.el (erc-dcc-chat-mode): Use define-derived-mode.
+
+2010-11-11  Glenn Morris  <rgm@gnu.org>
+
+	* erc-lang.el (erc-cmd-LANG): Fix what may have been a typo.
+
+2010-11-05  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* erc-backend.el (erc-coding-system-precedence): New variable.
+	(erc-decode-string-from-target): Use it.
+
+2010-10-24  Julien Danjou  <julien@danjou.info>
+
+	* erc-backend.el (erc-server-JOIN): Set the correct target list on join.
+
+	* erc-backend.el (erc-process-sentinel): Check that buffer is alive
+	before setting it as current buffer.
+
 2010-10-14  Juanma Barranquero  <lekktu@gmail.com>
 
 	* erc-xdcc.el (erc-xdcc-help-text): Fix typo in docstring.
@@ -9,17 +35,17 @@
 2010-08-14  Vivek Dasmohapatra  <vivek@etla.org>
 
 	* erc-join.el (erc-autojoin-timing, erc-autojoin-delay): New vars.
-	(erc-autojoin-channels-delayed, erc-autojoin-after-ident): New
-	functions.
+	(erc-autojoin-channels-delayed, erc-autojoin-after-ident):
+	New functions.
 	(erc-autojoin-channels): Allow autojoining after ident (Bug#5521).
 
 2010-08-08  Fran Litterio  <flitterio@gmail.com>
 
-	* erc-backend.el (erc-server-filter-function): Call
-	erc-log-irc-protocol.
+	* erc-backend.el (erc-server-filter-function):
+	Call erc-log-irc-protocol.
 
-	* erc.el (erc-toggle-debug-irc-protocol): Bind
-	erc-toggle-debug-irc-protocol to t.
+	* erc.el (erc-toggle-debug-irc-protocol):
+	Bind erc-toggle-debug-irc-protocol to t.
 
 2010-05-07  Chong Yidong  <cyd@stupidchicken.com>
 
@@ -110,7 +136,7 @@
 
 See ChangeLog.08 for earlier changes.
 
-    Copyright (C) 2009, 2010 Free Software Foundation, Inc.
+	Copyright (C) 2009-2011 Free Software Foundation, Inc.
 
   This file is part of GNU Emacs.
 
@@ -132,4 +158,3 @@ See ChangeLog.08 for earlier changes.
 ;; add-log-time-zone-rule: t
 ;; End:
 
-;; arch-tag: d4703244-4a8d-49b1-ab34-ad0d56600ef8

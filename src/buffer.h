@@ -1,6 +1,6 @@
 /* Header file for the buffer manipulation primitives.
-   Copyright (C) 1985, 1986, 1993, 1994, 1995, 1997, 1998, 1999, 2000, 2001,
-                 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010
+
+Copyright (C) 1985-1986, 1993-1995, 1997-2011
                  Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
@@ -226,10 +226,10 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
   (temp_set_point ((buffer), (position)))
 
 extern void set_point (EMACS_INT);
-extern INLINE void temp_set_point (struct buffer *, EMACS_INT);
+extern void temp_set_point (struct buffer *, EMACS_INT);
 extern void set_point_both (EMACS_INT, EMACS_INT);
-extern INLINE void temp_set_point_both (struct buffer *,
-                                        EMACS_INT, EMACS_INT);
+extern void temp_set_point_both (struct buffer *,
+				 EMACS_INT, EMACS_INT);
 extern void enlarge_buffer_text (struct buffer *, EMACS_INT);
 
 
@@ -459,7 +459,7 @@ struct buffer_text
     struct Lisp_Marker *markers;
 
     /* Usually 0.  Temporarily set to 1 in decode_coding_gap to
-       prevent Fgarbage_collect from shrinking the gap and loosing
+       prevent Fgarbage_collect from shrinking the gap and losing
        not-yet-decoded bytes.  */
     int inhibit_shrinking;
   };
@@ -894,28 +894,16 @@ extern void mmap_set_vars (int);
       }									\
   } while (0)
 
-EXFUN (Fbuffer_list, 1);
 EXFUN (Fbuffer_live_p, 1);
 EXFUN (Fbuffer_name, 1);
-EXFUN (Fget_file_buffer, 1);
 EXFUN (Fnext_overlay_change, 1);
 EXFUN (Fdelete_overlay, 1);
 EXFUN (Fbuffer_local_value, 2);
-EXFUN (Fgenerate_new_buffer_name, 2);
 
-/* Functions to call before and after each text change.  */
-extern Lisp_Object Vbefore_change_functions;
-extern Lisp_Object Vafter_change_functions;
-extern Lisp_Object Vfirst_change_hook;
 extern Lisp_Object Qbefore_change_functions;
 extern Lisp_Object Qafter_change_functions;
 extern Lisp_Object Qfirst_change_hook;
 
-/* If nonzero, all modification hooks are suppressed.  */
-extern int inhibit_modification_hooks;
-
-extern Lisp_Object Vdeactivate_mark;
-extern Lisp_Object Vtransient_mark_mode;
 
 /* Overlays */
 
@@ -1019,5 +1007,3 @@ extern int last_per_buffer_idx;
 #define PER_BUFFER_VALUE(BUFFER, OFFSET) \
       (*(Lisp_Object *)((OFFSET) + (char *) (BUFFER)))
 
-/* arch-tag: 679305dd-d41c-4a50-b170-3caf5c97b2d1
-   (do not change this comment) */

@@ -1,7 +1,6 @@
 ;;; lisp-mode.el --- Lisp mode, and its idiosyncratic commands
 
-;; Copyright (C) 1985, 1986, 1999, 2000, 2001, 2002, 2003, 2004, 2005,
-;;   2006, 2007, 2008, 2009, 2010 Free Software Foundation, Inc.
+;; Copyright (C) 1985-1986, 1999-2011 Free Software Foundation, Inc.
 
 ;; Maintainer: FSF
 ;; Keywords: lisp, languages
@@ -407,10 +406,7 @@ All commands in `lisp-mode-shared-map' are inherited by this map.")
   (if (and (buffer-modified-p)
 	   (y-or-n-p (format "Save buffer %s first? " (buffer-name))))
       (save-buffer))
-  (let ((compiled-file-name (byte-compile-dest-file buffer-file-name)))
-    (if (file-newer-than-file-p compiled-file-name buffer-file-name)
-	(load-file compiled-file-name)
-      (byte-compile-file buffer-file-name t))))
+  (byte-recompile-file buffer-file-name nil 0 t))
 
 (defcustom emacs-lisp-mode-hook nil
   "Hook run when entering Emacs Lisp mode."
@@ -1070,7 +1066,7 @@ is the buffer position of the start of the containing expression."
                        (goto-char calculate-lisp-indent-last-sexp)
                        (or (and (looking-at ":")
                                 (setq indent (current-column)))
-                           (and (< (save-excursion (beginning-of-line) (point))
+                           (and (< (line-beginning-position)
                                    (prog2 (backward-sexp) (point)))
                                 (looking-at ":")
                                 (setq indent (current-column))))
@@ -1432,5 +1428,4 @@ means don't indent that line."
 
 (provide 'lisp-mode)
 
-;; arch-tag: 414c7f93-c245-4b77-8ed5-ed05ef7ff1bf
 ;;; lisp-mode.el ends here
