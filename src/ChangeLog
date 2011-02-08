@@ -1,3 +1,17 @@
+2011-02-08  Tom Tromey  <tromey@redhat.com>
+
+	* Makefile.in (NS_OBJC_OBJ): New variable.
+	(base_obj): Rename from 'obj'.
+	(obj): New variable.
+	(globals.h, gl-stamp, $(obj)): New targets.
+	(GLOBAL_SOURCES): New variable.
+	* globals.h: Remove.
+	* nsselect.m (Vselection_alist): Define.  Reverts part of
+	2011-01-19T22:11:33Z!jan.h.d@swipnet.se.
+	* buffer.c: Don't use "no_cell" for name of kill-buffer-hook's
+	variable.
+	* xselect.c (Vselection_alist): Define.  Reverts part of 2011-01-19T23:32:42Z!eggert@cs.ucla.edu.
+
 2011-02-08  Kenichi Handa  <handa@m17n.org>
 
 	* font.c (Ffont_get): Do not cache :otf value.
