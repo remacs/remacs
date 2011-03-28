@@ -1,3 +1,27 @@
+2011-03-28  Juanma Barranquero  <lekktu@gmail.com>
+
+	* dispextern.h (string_buffer_position): Remove declaration.
+
+	* print.c (strout): Remove parameter `multibyte', unused since
+	1999-08-21T19:30:21Z!gerd@gnu.org.  All callers changed.
+
+	* search.c (boyer_moore): Remove parameters `len', `pos' and `lim',
+	never used since function introduction in 1998-02-08T21:33:56Z!rms@gnu.org.
+	All callers changed.
+
+	* w32.c (_wsa_errlist): Use braces for struct initializers.
+
+	* xdisp.c (string_buffer_position_lim): Remove parameter `w',
+	never used since function introduction in 2001-03-09T18:41:50Z!gerd@gnu.org.
+	All callers changed.
+	(string_buffer_position): Likewise.  Also, make static (it's never
+	used outside xdisp.c).
+	(cursor_row_p): Remove parameter `w', unused since
+	2000-10-17T16:08:57Z!gerd@gnu.org.  All callers changed.
+	(decode_mode_spec): Remove parameter `precision', introduced during
+	Gerd Moellmann's rewrite at 1999-07-21T21:43:52Z!gerd@gnu.org, but never used.
+	All callers changed.
+
 2011-03-27  Jan Djärv  <jan.h.d@swipnet.se>
 
 	* nsterm.m (syms_of_nsterm): Use doc: for ns-auto-hide-menu-bar.
