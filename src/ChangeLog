@@ -1,3 +1,17 @@
+2011-03-31  Juanma Barranquero  <lekktu@gmail.com>
+
+	* dispextern.h (move_it_by_lines):
+	* xdisp.c (move_it_by_lines): Remove parameter `need_y_p', unused
+	since 2000-12-29T14:24:09Z!gerd@gnu.org.  All callers changed.
+	(message_log_check_duplicate): Remove parameters `prev_bol' and
+	`this_bol', unused since 1998-01-01T02:27:27Z!rms@gnu.org.  All callers changed.
+	(redisplay_internal): Remove parameter `preserve_echo_area',
+	unused since 1999-07-21T21:43:52Z!gerd@gnu.org.  All callers changed.
+
+	* indent.c (Fvertical_motion):
+	* window.c (window_scroll_pixel_based, Frecenter):
+	Don't pass `need_y_p' to `move_it_by_lines'.
+
 2011-03-30  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* eval.c (struct backtrace): Don't cheat with negative numbers, but do
