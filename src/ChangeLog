@@ -1,3 +1,15 @@
+2011-04-02  Juanma Barranquero  <lekktu@gmail.com>
+
+	* xdisp.c (display_count_lines): Remove parameter `start',
+	unused since 1998-01-01T02:27:27Z!rms@gnu.org.  All callers changed.
+	(get_char_face_and_encoding): Remove parameter `multibyte_p',
+	unused since 2008-05-14T01:40:23Z!handa@m17n.org.  All callers changed.
+	(fill_stretch_glyph_string): Remove parameters `row' and `area',
+	unused at least since Kim's GUI unification at 2003-03-16T20:45:46Z!storm@cua.dk
+	and thereabouts.  All callers changed.
+	(get_per_char_metric): Remove parameter `f', unused since
+	2008-05-14T01:40:23Z!handa@m17n.org.  All callers changed.
+
 2011-04-02  Jim Meyering  <meyering@redhat.com>
 
 	do not dereference NULL upon failed strdup
