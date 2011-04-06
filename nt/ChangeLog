@@ -1,3 +1,9 @@
+2011-04-06  Eli Zaretskii  <eliz@gnu.org>
+
+	* config.nt (NO_INLINE, ATTRIBUTE_FORMAT)
+	(ATTRIBUTE_FORMAT_PRINTF): Define, as followup to 2011-04-06T05:19:39Z!eggert@cs.ucla.edu
+	on the trunk on 2011-04-06.
+
 2011-03-27  Glenn Morris  <rgm@gnu.org>
 
 	* config.nt: Remove RETSIGTYPE, SIGTYPE (identical to void).
