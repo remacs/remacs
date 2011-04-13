@@ -1,5 +1,10 @@
 2011-04-13  Juanma Barranquero  <lekktu@gmail.com>
 
+	* autorevert.el (auto-revert-handler):
+	Bind `remote-file-name-inhibit-cache', not `tramp-cache-inhibit-cache',
+	which was removed in 2010-10-02T13:21:43Z!michael.albinus@gmx.de.
+	Don't quote lambda.
+
 	* image-mode.el (image-transform-set-scale):
 	Fix change in 2011-04-09T20:28:01Z!cyd@stupidchicken.com.
 
