@@ -12,6 +12,8 @@
 
 2011-05-30  Paul Eggert  <eggert@cs.ucla.edu>
 
+	* alloc.c (lisp_align_malloc): Omit unnecessary val==NULL tests.
+
 	* eval.c (Qdebug): Now static.
 	* lisp.h (Qdebug): Remove decl.  This reverts a part of the
 	2011-04-26T11:26:05Z!dan.colascione@gmail.com that inadvertently undid part of
