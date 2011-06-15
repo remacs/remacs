@@ -1,6 +1,6 @@
 \input texinfo                  @c -*-texinfo-*-
 
-@include overrides.texi
+@include gnus-overrides.texi
 
 @setfilename ../../info/sieve
 @settitle Emacs Sieve Manual
@@ -27,7 +27,7 @@ developing GNU and promoting software freedom.''
 @end quotation
 @end copying
 
-@dircategory Emacs
+@dircategory Emacs network features
 @direntry
 * Sieve: (sieve).               Managing Sieve scripts in Emacs.
 @end direntry

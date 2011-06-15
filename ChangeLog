@@ -1,3 +1,539 @@
+2011-06-15  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* lib/ftoastr.c, lib/stdio.in.h, lib/verify.h: Merge from gnulib.
+
+2011-06-14  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* configure.in: Add emacsgtkfixed.o to GTK_OBJ if HAVE_GTK3.
+
+2011-06-08  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* lib/gnulib.mk, m4/gnulib-common.m4: Merge from gnulib.
+
+2011-06-07  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* configure.in: Add --with-wide-int.
+	* INSTALL: Mention this.
+
+2011-06-06  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Merge from gnulib.
+	* lib/careadlinkat.c, lib/careadlinkat.h, m4/gnulib-common.m4: Merge.
+
+2011-06-02  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* lib/allocator.h, lib/careadlinkat.c: Merge from gnulib.
+
+2011-05-30  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Use 'inline', not 'INLINE'.
+	* configure.in (INLINE): Remove.
+
+2011-05-29  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Adjust to recent gnulib change for @GUARD_PREFIX@.
+	* lib/makefile.w32-in (getopt_h): Substitute @GUARD_PREFIX@, too.
+	All uses of _GL_ for guard prefixes in lib/*.h replaced with
+	_@GUARD_PREFIX@_.
+
+2011-05-27  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* lib/getopt.c, lib/intprops.h: Merge from gnulib.
+
+2011-05-24  Glenn Morris  <rgm@gnu.org>
+
+	* Makefile.in (check): Just give a message if no test/ directory.
+
+	* configure.in: Avoid using variables inside AC_CONFIG_FILES.
+
+	* configure.in (OPT_MAKEFILES_IN): Remove.
+	(SUBDIR_MAKEFILES): New variable, passed to AC_CONFIG_FILES.
+	(SUBDIR_MAKEFILES_IN): New output variable.
+	* Makefile.in (OPT_MAKEFILES_IN): Remove.
+	(SUBDIR_MAKEFILES_IN): Let configure set it.
+
+2011-05-24  Leo Liu  <sdl.web@gmail.com>
+
+	* m4/sha1.m4:
+	* m4/gl-comp.m4:
+	* lib/sha1.h:
+	* lib/sha1.c:
+	* lib/makefile.w32-in (GNULIBOBJS):
+	* lib/gnulib.mk:
+	* Makefile.in (GNULIB_MODULES): Add crypto/sha1 module.
+
+2011-05-24  Glenn Morris  <rgm@gnu.org>
+
+	* configure.in: Remove test for already configured source directory.
+	AM_INIT_AUTOMAKE has already done a more stringent test.  (Bug#953)
+
+	* Makefile.in (TAGS, tags, check): Pass MFLAGS to sub-makes.
+
+2011-05-24  Glenn Morris  <rgm@gnu.org>
+
+	* make-dist: Don't distribute test/.  (Bug#8107)
+	* configure.in (OPT_MAKEFILES_IN): New output variable.
+	(AC_CONFIG_FILES): Conditionally include test/automated/Makefile.
+	* Makefile.in (OPT_MAKEFILES_IN): New, set by configure.
+	(SUBDIR_MAKEFILES_IN): Use $OPT_MAKEFILES_IN.
+	(check): Give an explicit error if test/ is not present.
+
+	* Makefile.in (SUBDIR_MAKEFILES_IN): New variable.
+	(SUBDIR_MAKEFILES): Derive from $SUBDIR_MAKEFILES_IN.
+	(Makefile): Use $SUBDIR_MAKEFILES_IN.
+
+2011-05-23  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* lib/verify.h: Merge from gnulib.
+
+2011-05-22  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* lib/intprops.h, lib/stdint.in.h, m4/mktime.m4, m4/readlink.m4:
+	Merge from gnulib.
+
+2011-05-21  Andreas Schwab  <schwab@linux-m68k.org>
+
+	* Makefile.in (AUTOMAKE_INPUTS): Add $(srcdir)/lib/gnulib.mk.
+
+2011-05-20  Eli Zaretskii  <eliz@gnu.org>
+
+	* .bzrignore: Add lib/stdio.in-h, lib/stdbool.h, and lib/stdint.h.
+
+	* config.bat: Concatenate lisp.mk onto the end of src/Makefile.
+
+2011-05-20  Glenn Morris  <rgm@gnu.org>
+
+	* configure.in (lisp_frag): New output file.
+
+2011-05-19  Glenn Morris  <rgm@gnu.org>
+
+	* configure.in (NS_SUPPORT, MOUSE_SUPPORT, TOOLTIP_SUPPORT)
+	(WINDOW_SUPPORT): Remove output variables that are no longer used.
+
+2011-05-17  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* lib/gnulib.mk:
+	* lib/intprops.h:
+	* lib/unistd.in.h:
+	* m4/inttypes.m4:
+	* m4/stdint.m4:
+	* m4/unistd_h.m4: Sync from gnulib.
+
+2011-05-14  Glenn Morris  <rgm@gnu.org>
+
+	* configure.in: Treat failure to find an X toolkit the same way we treat
+	failure to find X and image support.
+
+2011-05-12  Glenn Morris  <rgm@gnu.org>
+
+	* Makefile.in (src, install-arch-indep, bootstrap-clean)
+	(check-declare): Shell portability fixes.  (Bug#8642)
+
+2011-05-09  Teodor Zlatanov  <tzz@lifelogs.com>
+
+	* configure.in: Require GnuTLS 2.6.x or higher.
+
+2011-05-06  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Use C99's va_copy to avoid undefined behavior on x86-64 GNU/Linux.
+	* Makefile.in (GNULIB_MODULES): Add stdarg, for va_copy.
+	* lib/stdarg.in.h, m4/stdarg.m4: New files, from gnulib.
+
+	* Makefile.in (GNULIB_TOOL_FLAG): Add --conditional-dependencies.
+	This new gnulib-tool option saves 'configure' the trouble of
+	checking for strtoull when strtoumax exists.
+
+	* configure.in (BITS_PER_LONG_LONG): New macro.
+
+2011-05-05  Glenn Morris  <rgm@gnu.org>
+
+	* Makefile.in (bootstrap-clean): Save config.log.  (Bug#765)
+	(top_distclean): Delete config.log~.
+
+2011-04-27  Ben Key  <bkey76@gmail.com>
+
+	* configure.in: Fixed a bug that caused configure with
+	--enable-checking=stringoverrun to have no effect.
+
+2011-04-26  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* configure.in: Suppress unnecessary checks for size_t.
+	(AC_TYPE_SIZE_T): Define an empty macro, to suppress obsolescent test.
+	(size_t): Do not check for this, and do not typedef.  This code
+	is never exercised now.
+
+	* Makefile.in (GNULIB_MODULES): Add strtoumax.
+	This is needed for the new integer-reading code in lread.c.
+	It automatically pulls in the following gnulib files, which
+	are used on old-fashioned platforms that don't have strtoumax:
+	lib/inttypes.in.h, lib/strtoimax.c, lib/strtol.c, lib/strtoul.c,
+	lib/strtoull.c, lib/strtoumax.c, lib/verify.h, m4/inttypes.m4,
+	m4/strtoull.m4, m4/strtoumax.m4.
+	* .bzrignore: Add lib/inttypes.h.
+
+2011-04-24  Teodor Zlatanov  <tzz@lifelogs.com>
+
+	* configure.in: Check for GnuTLS certificate verify callbacks.
+
+2011-04-20  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* Makefile.in (config.status): Don't erase in case of error.
+	In case it disappeared, rebuild it with `configure'.
+
+2011-04-20  Ken Brown  <kbrown@cornell.edu>
+
+	* configure.in (use_mmap_for_buffers): Set to yes on Cygwin.
+
+2011-04-12  Glenn Morris  <rgm@gnu.org>
+
+	* configure.in: Require ImageMagick >= 6.2.8.  (Bug#7955)
+
+2011-04-09  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* lib/allocator.c: New file, automatically generated by gnulib.
+
+2011-04-07  Glenn Morris  <rgm@gnu.org>
+
+	* autogen/update_autogen: Ignore comment diffs in ldefs-boot.el.
+
+2011-04-06  Eli Zaretskii  <eliz@gnu.org>
+
+	* lib/makefile.w32-in ($(BLD)/careadlinkat.$(O), GNULIBOBJS):
+	Revert last change.
+
+2011-04-06  Juanma Barranquero  <lekktu@gmail.com>
+
+	* lib/makefile.w32-in (GNULIBOBJS): Add careadlinkat.$(O).
+	($(BLD)/careadlinkat.$(O)): New target.
+	($(BLD)/dtoastr.$(O), $(BLD)/getopt.$(O), $(BLD)/getopt1.$(O))
+	($(BLD)/strftime.$(O), $(BLD)/time_r.$(O), $(BLD)/md5.$(O)):
+	Update dependencies.
+
+2011-04-06  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Fix more problems found by GCC 4.6.0's static checks.
+
+	* configure.in (ATTRIBUTE_FORMAT, ATTRIBUTE_FORMAT_PRINTF): New macros.
+
+	Replace 2 copies of readlink code with 1 gnulib version (Bug#8401).
+	* Makefile.in (GNULIB_MODULES): Add careadlinkat.
+	* lib/allocator.h, lib/careadlinkat.c, lib/careadlinkat.h:
+	* m4/ssize_t.m4: New files, automatically generated from gnulib.
+
+2011-04-06  Glenn Morris  <rgm@gnu.org>
+
+	* autogen/update_autogen: Handle loaddefs-like files as well.
+	(usage): Add -l, -C.
+	(clean, ldefs_flag, ldefs_in, ldefs_out): New variables.
+	With -l, check status of lisp/ as well.
+	With -C, clean before building.
+	(autoreconf): Only pass -f in the `clean' case.
+	(commit): New function.
+
+2011-03-28  Glenn Morris  <rgm@gnu.org>
+
+	* autogen/update_autogen: Pass -f to autoreconf.
+
+	* autogen.sh (get_version): Discard "not found" lines.
+	(check_version): Respect $AUTOCONF etc environment variables.
+
+2011-03-27  Glenn Morris  <rgm@gnu.org>
+
+	* configure.in (AC_TYPE_SIGNAL): Remove obsolete macro.
+	(AH_BOTTOM): Do not define SIGTYPE.
+
+2011-03-26  Glenn Morris  <rgm@gnu.org>
+
+	* configure.in: Replace obsolete macros AC_TRY_COMPILE, AC_TRY_LINK,
+	AC_TRY_RUN with AC_COMPILE_IFELSE, AC_LINK_IFELSE, AC_RUN_IFELSE.
+
+2011-03-25  Andreas Schwab  <schwab@linux-m68k.org>
+
+	* autogen/update_autogen: Remove useless function keyword.
+
+2011-03-25  Eli Zaretskii  <eliz@gnu.org>
+
+	* config.bat: Generate src/config.h and lib/Makefile from
+	autogen/config.in and autogen/Makefile.in.
+
+2011-03-25  Glenn Morris  <rgm@gnu.org>
+
+	* compile, config.guess, config.sub, depcomp, install-sh, missing:
+	Remove; autoreconf can supply them.
+	* Makefile.in (sync-from-gnulib): Don't sync config.sub,
+	config.guess, install-sh.  Pass -i to autoreconf.
+	* autogen/update_autogen (genfiles): Add compile, config.guess,
+	config.sub, depcomp, install-sh, missing.  Pass -i to autoreconf.
+	Discard non-error output from autoreconf in -q case.
+	* autogen/compile, autogen/config.guess, autogen/config.sub:
+	* autogen/depcomp, autogen/install-sh, autogen/missing: New.
+	* autogen/copy_autogen: Add compile, config.guess, config.sub, depcomp,
+	install-sh, missing.
+
+2011-03-23  Glenn Morris  <rgm@gnu.org>
+
+	* autogen/update_autogen: Fix typo.
+	(msg): Remove function; use `exec' instead.
+
+	* Makefile.in (mkdir): Use `install-sh -d' instead of mkinstalldirs.
+	(sync-from-gnulib): Don't sync mkinstalldirs.
+	* make-dist: Don't distribute mkinstalldirs.
+
+2011-03-23  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Fix more problems found by GCC 4.5.2's static checks.
+	* Makefile.in (GNULIB_MODULES): Add socklen.
+	* configure.in: Do not check for sys/socket.h, since socklen does that.
+	* m4/socklen.m4: New automatically-generated file, from gnulib.
+
+	fakemail: Remove dependency on ignore-value.
+	* Makefile.in (GNULIB_MODULES): Add stdio.
+	* lib/stdio.in.h, m4/stdio_h.m4: New files, automatically
+	imported from gnulib.
+	* .bzrignore: Add lib/stdio.h.
+
+2011-03-22  Glenn Morris  <rgm@gnu.org>
+
+	* autogen/copy_autogen: Work from ./ or ../.
+	Fix time-stamps.
+	* autogen.sh: Doc fix.
+
+2011-03-20  Glenn Morris  <rgm@gnu.org>
+
+	* autogen/: New directory, to be excluded from releases.
+	* autogen/copy_autogen, autogen/update_autogen: New scripts.
+	* autogen/README: New file.
+	* autogen/aclocal.m4, autogen/config.in, autogen/configure:
+	* autogen/Makefile.in: Add auto-updated generated files.
+	* autogen.sh: No longer a no-op, now it tests for autotools
+	and runs them as necessary.
+	* configure.in: Defaule maintainer-mode to on.
+	* aclocal.m4, configure, lib/Makefile.in: Remove files.
+
+2011-03-13  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Update for gnulib.
+	* Makefile.in (GNULIB_MODULES): Add intprops, as Emacs now
+	includes <intprops.h> directly.
+	* lib/sys_stat.in.h: New version from Gnulib, which fixes a bug
+	when building Emacs on Solaris 9 and running it on Solaris 10.
+
+2011-03-08  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* configure.in: Require 3.0 for --with-gtk3.  Add HAVE_GTK3.
+
+2011-03-07  Chong Yidong  <cyd@stupidchicken.com>
+
+	* Version 23.3 released.
+
+2011-03-06  Glenn Morris  <rgm@gnu.org>
+
+	* configure.in (FREETYPE_LIBS): Actually set it to something.
+
+2011-03-02  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Work around some portability problems with symlinks.
+
+	* Makefile.in (GNULIB_MODULES): Add lstat, readlink, symlink.
+	* configure.in (lstat, HAVE_LSTAT): Remove special hack.
+	* lib/dosname.h, lib/lstat.c, lib/readlink.c, lib/stat.c:
+	* lib/symlink.c, m4/lstat.m4, m4/readlink.m4, m4/stat.m4:
+	* m4/symlink.m4:
+	New files, automatically generated from gnulib.
+	* aclocal.m4, configure, lib/Makefile.in, lib/gnulib.mk:
+	* m4/gl-comp.m4, src/config.in, config.sub: Regenerate.
+
+2011-02-26  Eli Zaretskii  <eliz@gnu.org>
+
+	* .bzrignore: Ignore new lib/*.in-h files.
+
+	* config.bat: Rename stdint.in.h and sys_stat.in.h.  Call
+	depfiles.bat even if lib/deps already exist.
+
+2011-02-25  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* configure, lib/Makefile.in, lib/getopt_int.h, lib/gnulib.mk:
+	* lib/stdlib.in.h, m4/stdlib_h.m4: Regenerate to incorporate
+	recent changes to configure.in and to gnulib.
+
+2011-02-24  Glenn Morris  <rgm@gnu.org>
+
+	* configure.in: Replace obsolete AC_OUTPUT() with AC_CONFIG_FILES(),
+	AC_CONFIG_COMMANDS(), and AC_OUTPUT sans arguments.
+
+2011-02-22  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Assume S_ISLNK etc. work, since gnulib supports this.
+	* Makefile.in (GNULIB_MODULES): Add sys_stat.
+	* configure.in: Check for lstat and set HAVE_LSTAT=0 if not.
+	Pretend to be using the gnulib lstat module for benefit of sys/stat.h.
+	* configure, lib/Makefile.in, lib/gnulib.mk: Regenerate.
+
+2011-02-21  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* lib/min-max.h: New file, for "min" and "max".
+
+2011-02-21  Christoph Scholtes  <cschol2112@gmail.com>
+
+	* lib/makefile.w32-in ($(BLD)/md5.$(O)): Added dependency on
+	$(EMACS_ROOT)/nt/inc/stdint.h.
+
+2011-02-21  Eli Zaretskii  <eliz@gnu.org>
+
+	* lib/makefile.w32-in ($(BLD)/filemode.$(O)): Move from
+	src/makefile.w32-in and adapt.  Depend on stamp_BLD.
+	(GNULIBOBJS): Add $(BLD)/filemode.$(O).
+
+2011-02-20  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Import filemode module from gnulib.
+	* .bzrignore: Add lib/sys/.
+	* Makefile.in (GNULIB_MODULES): Add filemode.
+	* lib/Makefile.am (MOSTLYCLEANDIRS): New macro.
+	* lib/filemode.c: Renamed from src/filemode.c and regenerated
+	from gnulib.  This adds support for some more file types, e.g.,
+	Cray DMF migrated files.
+	* lisp/emacs-lisp/find-gc.el (find-gc-source-files): Remove filemode.c.
+	* lib/filemode.h, lib/sys_stat.in.h, m4/filemode.m4, m4/st_dm_mode.m4:
+	* m4/sys_stat_h.m4: New files, generated from gnulib.
+	* aclocal.m4, configure, lib/Makefile.in, lib/gnulib.mk, m4/gl-comp.m4:
+	Regenerate.
+
+2011-02-20  Eli Zaretskii  <eliz@gnu.org>
+
+	* lib/makefile.w32-in ($(BLD)/md5.$(O)): Don't depend on
+	$(EMACS_ROOT)/nt/inc/sys/stat.h.
+
+2011-02-20  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* configure.in (C_WARNINGS_SWITCH): Do not prepend -Wno-pointer-sign.
+	This undoes the 2006-01-02 change.  The -Wno-pointer-sign option
+	is no longer needed, due to the recent SSDATA and related changes.
+	Perhaps -Wno-pointer-sign should also be removed from
+	nextstep/Cocoa/Emacs.xcodeproj/project.pbxproj but I have no easy
+	way to test this so I left it alone.
+	* configure: Regenerate.
+
+2011-02-20  Christoph Scholtes  <cschol2112@gmail.com>
+
+	* lib/makefile.w32-in ($(BLD)/md5.$(O)): New recipe, moved from
+	src/makefile.w32-in.
+
+2011-02-20  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Import crypto/md5 and stdint modules from gnulib.
+	* aclocal.m4, configure, lib/Makefile.in, lib/gnulib.mk, m4/gl-comp.m4:
+	Regenerate.
+	* lib/md5.c, lib/md5.h: Rename from src/md5.h and lib/md5.h.
+	Import the new versions from gnulib; they assume a C99-style
+	<stdint.h>, supplied by the stdint module.
+	* lib/stdint.in.h, m4/longlong.m4, m4/stdint.m4, m4/md5.m4: New files,
+	imported from gnulib.
+	* Makefile.in (MAKEFILE_MODULES): Add crypto/md5.
+	* admin/notes/copyright: Remove src/md5.c and src/md5.h as
+	special cases.
+
+2011-02-19  Eli Zaretskii  <eliz@gnu.org>
+
+	* .bzrignore: Ignore cxxdefs.h and lib/*.in-h files.
+	Add lib/deps/.
+
+	* config.bat: Configure in `lib'.
+	Generate *.Po files in lib/deps.
+
+2011-02-18  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Import IRIX 6.5 getloadavg fixes from gnulib.
+	* configure, lib/getloadavg.c, m4/getloadavg.m4: Regenerate.
+
+2011-02-16  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Import getloadavg module from gnulib.
+	* .bzrignore: Add lib/stdlib.h.
+	* Makefile.in (GNULIB_MODULES): Add getloadavg.
+	* admin/notes/copyright: Remove src/getloadavg.c as a special case.
+	* configure.in (LIBS_SYSTEM): Omit -lkstat on sol2*; gnulib does this.
+	(AC_CONFIG_LIBOBJ_DIR, AC_FUNC_GETLOADAVG, GETLOADAVG_FILES):
+	Remove; gnulib does this now.
+	* lib/getloadavg.c: Rename from src/getloadavg.c, and sync
+	from gnulib.  This adds support for several other systems, such
+	as Tru64 4.0D, QNX, AIX perfstat, etc.  It also fixes a potential
+	buffer overrun on Linux hosts under very high load, and on hosts
+	that maintain a channel to the load average file it makes sure
+	the file descriptor is close-on-exec (on hosts that support this)
+	and is not stdin, stdout, or stderr.
+	* lib/stdlib.in.h, m4/getloadavg.m4, m4/stdlib_h.m4: New files,
+	from gnulib.
+	* aclocal.m4, configure, lib/Makefile.in, lib/gnulib.mk, m4/gl-comp.m4:
+	* src/config.in: Regenerate.
+
+2011-02-15  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Merge from gnulib.
+
+	* install-sh: Update to scriptversion 2011-01-19.21.
+
+	2011-02-13  Bruno Haible  <bruno@clisp.org>
+
+	Consistent macro naming for macros that use GCC __attribute__.
+	* lib/ignore-value.h (_GL_ATTRIBUTE_DEPRECATED): Renamed from
+	ATTRIBUTE_DEPRECATED.
+
+	2011-02-12  Bruno Haible  <bruno@clisp.org>
+
+	setlocale: Prefer gnulib's override over libintl's override.
+	* lib/gettext.h (setlocale): Redefine to rpl_setlocale if
+	GNULIB_defined_setlocale is set.
+
+2011-02-13  Glenn Morris  <rgm@gnu.org>
+
+	* make-dist: Exclude generated file src/globals.h.
+
+2011-02-10  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* arg-nonnull.h, c++defs.h, warn-on-use.h: Fix licenses.
+	Sync from gnulib, which has been patched to fix the problem
+	with the license notices.  Problem reported by Glenn Morris in
+	<http://lists.gnu.org/archive/html/emacs-devel/2011-02/msg00403.html>.
+
+2011-02-09  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* .bzrignore: Ignore globals.h and related stamp.
+
+2011-02-09  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* lib/Makefile.in, lib/gnulib.mk: Regenerate.
+	This merges the following fix from gnulib:
+
+	2011-02-08  Bruno Haible  <bruno@clisp.org>
+
+	Split large sed scripts, for HP-UX sed.
+
+2011-02-08  Tom Tromey  <tromey@redhat.com>
+
+	* configure: Rebuild.
+	* configure.in (NS_OBJC_OBJ): New subst.
+
+2011-02-06  Paul Eggert  <eggert@cs.ucla.edu>
+
+	gnulib: allow multiple gnulib generated replacements to coexist
+	This defines a few preprocessor symbols that should not affect Emacs.
+	* lib/getopt.in.h, lib/time.in.h, lib/unistd.in.h: Regenerate
+	via "make sync-from-gnulib".
+
+	gnulib: undo previous change
+	The upstream _HEADERS change was backed out of gnulib (see the
+	same thread).  Stay in sync with gnulib.
+
+	gnulib: adjust to upstream _HEADERS change
+	* lib/Makefile.am (EXTRA_HEADERS, nodist_pkginclude_HEADERS):
+	New empty macros, to accommodate recent changes to gnulib.  See
+	<http://lists.gnu.org/archive/html/bug-gnulib/2011-02/msg00068.html>.
+	* c++defs.h, lib/Makefile.in, lib/ftoastr.h, lib/getopt.in.h:
+	* lib/gnulib.mk, lib/ignore-value.h, lib/stdbool.in.h, lib/stddef.in.h:
+	* lib/time.in.h, lib/unistd.in.h:
+	Regenerate.
+
 2011-02-05  Paul Eggert  <eggert@cs.ucla.edu>
 
 	sync from gnulib to remove HAVE_STDBOOL_H
@@ -741,7 +1277,7 @@
 
 2010-06-28  Jan Djärv  <jan.h.d@swipnet.se>
 
-	* configure.in: Add --with-x-toolkit=gtk3. Remove HAVE_GTK_MULTIDISPLAY,
+	* configure.in: Add --with-x-toolkit=gtk3.  Remove HAVE_GTK_MULTIDISPLAY,
 	check for gtk_file_chooser_dialog_new, and HAVE_GTK_FILE_BOTH (implied
 	by minimum required Gtk+ 2.6).  Add checks for functions introduced
 	in Gtk+ 2.14 or newer (bug#6505).
@@ -7443,7 +7979,7 @@
 
 	* Makefile.in (lib-src/Makefile, src/Makefile, oldXMenu/Makefile):
 	Depend on vpath.sed.
-	Replace sed comand for VPATH with @vpath_sed@.
+	Replace sed command for VPATH with @vpath_sed@.
 
 	* configure.in: Substitute variable `vpath_sed'.
 	If not in $srcdir and $srcdir is configured,
@@ -8784,7 +9320,7 @@
 	there, and then copy it in, to make sure we get a real file.
 
 	* make-dist: Don't try to distribute *.defns files any more.  The
-	only such file was for simula.el, which has been superceded by a
+	only such file was for simula.el, which has been superseded by a
 	version which doesn't have a separate .defns file.
 
 1992-05-28  Ken Raeburn  (Raeburn@Cygnus.COM)

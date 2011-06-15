@@ -33,17 +33,18 @@
 (require 'view)
 (eval-when-compile (require 'easymenu))
 
-(defvar help-mode-map (make-sparse-keymap)
+(defvar help-mode-map
+  (let ((map (make-sparse-keymap)))
+    (set-keymap-parent map button-buffer-map)
+
+    (define-key map [mouse-2] 'help-follow-mouse)
+    (define-key map "\C-c\C-b" 'help-go-back)
+    (define-key map "\C-c\C-f" 'help-go-forward)
+    (define-key map "\C-c\C-c" 'help-follow-symbol)
+    ;; Documentation only, since we use minor-mode-overriding-map-alist.
+    (define-key map "\r" 'help-follow)
+    map)
   "Keymap for help mode.")
-
-(set-keymap-parent help-mode-map button-buffer-map)
-
-(define-key help-mode-map [mouse-2] 'help-follow-mouse)
-(define-key help-mode-map "\C-c\C-b" 'help-go-back)
-(define-key help-mode-map "\C-c\C-f" 'help-go-forward)
-(define-key help-mode-map "\C-c\C-c" 'help-follow-symbol)
-;; Documentation only, since we use minor-mode-overriding-map-alist.
-(define-key help-mode-map "\r" 'help-follow)
 
 (easy-menu-define help-mode-menu help-mode-map
   "Menu for Help Mode."
@@ -161,7 +162,7 @@ The format is (FUNCTION ARGS...).")
 (define-button-type 'help-info-variable
   :supertype 'help-xref
   ;; the name of the variable is put before the argument to Info
-  'help-function (lambda (a v) (info v))
+  'help-function (lambda (_a v) (info v))
   'help-echo (purecopy "mouse-2, RET: read this Info node"))
 
 (define-button-type 'help-info
@@ -304,23 +305,6 @@ Commands:
 
 ;;;###autoload
 (defun help-mode-finish ()
-  (if (eq help-window t)
-      ;; If `help-window' is t, `view-return-to-alist' is handled by
-      ;; `with-help-window'.  In this case set `help-window' to the
-      ;; selected window since now is the only moment where we can
-      ;; unambiguously identify it.
-      (setq help-window (selected-window))
-    (let ((entry (assq (selected-window) view-return-to-alist)))
-      (if entry
-	  ;; When entering Help mode from the Help window,
-	  ;; such as by following a link, preserve the same
-	  ;; meaning for the q command.
-	  ;; (setcdr entry (cons (selected-window) help-return-method))
-	  nil
-	(setq view-return-to-alist
-	      (cons (cons (selected-window) help-return-method)
-		    view-return-to-alist)))))
-
   (when (eq major-mode 'help-mode)
     ;; View mode's read-only status of existing *Help* buffer is lost
     ;; by with-output-to-temp-buffer.
@@ -329,7 +313,7 @@ Commands:
     (save-excursion
       (goto-char (point-min))
       (let ((inhibit-read-only t))
-	(when (re-search-forward "^This \\w+ is advised.$" nil t)
+	(when (re-search-forward "^This [^[:space:]]+ is advised.$" nil t)
 	  (put-text-property (match-beginning 0)
 			     (match-end 0)
 			     'face 'font-lock-warning-face))))
@@ -408,13 +392,16 @@ restore it properly when going back."
 (defun help-buffer ()
   "Return the name of a buffer for inserting help.
 If `help-xref-following' is non-nil, this is the name of the
-current buffer.
-Otherwise, it is *Help*; if no buffer with that name currently
-exists, it is created."
+current buffer.  Signal an error if this buffer is not derived
+from `help-mode'.
+Otherwise, return \"*Help*\", creating a buffer with that name if
+it does not already exist."
   (buffer-name				;for with-output-to-temp-buffer
-   (if help-xref-following
-       (current-buffer)
-     (get-buffer-create "*Help*"))))
+   (if (not help-xref-following)
+       (get-buffer-create "*Help*")
+     (unless (derived-mode-p 'help-mode)
+       (error "Current buffer is not in Help mode"))
+     (current-buffer))))
 
 (defvar help-xref-override-view-map
   (let ((map (make-sparse-keymap)))
@@ -774,7 +761,7 @@ help buffer."
       (help-xref-go-forward (current-buffer))
     (error "No next help buffer")))
 
-(defun help-do-xref (pos function args)
+(defun help-do-xref (_pos function args)
   "Call the help cross-reference function FUNCTION with args ARGS.
 Things are set up properly so that the resulting help-buffer has
 a proper [back] button."
@@ -815,7 +802,7 @@ Show all docs for that symbol as either a variable, function or face."
 	      (fboundp sym) (facep sym))
       (help-do-xref pos #'help-xref-interned (list sym)))))
 
-(defun help-mode-revert-buffer (ignore-auto noconfirm)
+(defun help-mode-revert-buffer (_ignore-auto noconfirm)
   (when (or noconfirm (yes-or-no-p "Revert help buffer? "))
     (let ((pos (point))
 	  (item help-xref-stack-item)

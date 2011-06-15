@@ -614,8 +614,11 @@ state data."
   :group 'speedbar
   :type 'hook)
 
-(defvar speedbar-ignored-modes '(fundamental-mode)
-  "*List of major modes which speedbar will not switch directories for.")
+(defcustom speedbar-ignored-modes '(fundamental-mode)
+  "List of major modes which speedbar will not switch directories for."
+  :group 'speedbar
+  :type '(choice (const nil)
+		 (repeat :tag "List of modes" (symbol :tag "Major mode"))))
 
 (defun speedbar-extension-list-to-regex (extlist)
   "Takes EXTLIST, a list of extensions and transforms it into regexp.
@@ -656,7 +659,7 @@ speedbar is loaded.  You may place anything you like in this list
 before speedbar has been loaded."
   :group 'speedbar
   :type '(repeat (regexp :tag "Directory Regexp"))
-  :set (lambda (sym val)
+  :set (lambda (_sym val)
 	 (setq speedbar-ignored-directory-expressions val
 	       speedbar-ignored-directory-regexp
 	       (speedbar-extension-list-to-regex val))))
@@ -669,7 +672,7 @@ directories here; see `vc-directory-exclusion-list'."
   :group 'speedbar
   :type 'string)
 
-(defvar speedbar-file-unshown-regexp
+(defcustom speedbar-file-unshown-regexp
   (let ((nstr "") (noext completion-ignored-extensions))
     (while noext
       (setq nstr (concat nstr (regexp-quote (car noext)) "\\'"
@@ -677,8 +680,10 @@ directories here; see `vc-directory-exclusion-list'."
 	    noext (cdr noext)))
     ;;               backup      refdir      lockfile
     (concat nstr "\\|#[^#]+#$\\|\\.\\.?\\'\\|\\.#"))
-  "*Regexp matching files we don't want displayed in a speedbar buffer.
-It is generated from the variable `completion-ignored-extensions'.")
+  "Regexp matching files we don't want displayed in a speedbar buffer.
+It is generated from the variable `completion-ignored-extensions'."
+  :group 'speedbar
+  :type 'string)
 
 (defvar speedbar-file-regexp nil
   "Regular expression matching files we know how to expand.
@@ -708,7 +713,7 @@ need to also modify `completion-ignored-extension' which will also help
 file completion."
   :group 'speedbar
   :type '(repeat (regexp :tag "Extension Regexp"))
-  :set (lambda (sym val)
+  :set (lambda (_sym val)
 	 (set 'speedbar-supported-extension-expressions val)
 	 (set 'speedbar-file-regexp (speedbar-extension-list-to-regex val))))
 
@@ -755,14 +760,17 @@ DIRECTORY-EXPRESSION to `speedbar-ignored-directory-expressions'."
 	  speedbar-ignored-directory-regexp (speedbar-extension-list-to-regex
 					speedbar-ignored-directory-expressions)))
 
-(defvar speedbar-update-flag dframe-have-timer-flag
-  "*Non-nil means to automatically update the display.
+(defcustom speedbar-update-flag dframe-have-timer-flag
+  "Non-nil means to automatically update the display.
 When this is nil then speedbar will not follow the attached frame's directory.
-When speedbar is active, use:
-
-\\<speedbar-key-map> `\\[speedbar-toggle-updates]'
-
-to toggle this value.")
+If you want to change this while speedbar is active, either use
+\\[customize] or call \\<speedbar-key-map> `\\[speedbar-toggle-updates]'."
+  :group 'speedbar
+  :initialize 'custom-initialize-default
+  :set (lambda (sym val)
+	 (set sym val)
+	 (speedbar-toggle-updates))
+  :type 'boolean)
 
 (defvar speedbar-update-flag-disable nil
   "Permanently disable changing of the update flag.")
@@ -1614,7 +1622,7 @@ Files can be renamed to new names or moved to new directories."
   (let ((f (speedbar-line-file)))
     (if f
 	(let* ((basedir (file-name-directory f))
-	       (nd (read-file-name "Create directory: "
+	       (nd (read-directory-name "Create directory: "
 				   basedir)))
 	  ;; Make the directory
 	  (make-directory nd t)
@@ -1914,7 +1922,7 @@ the file-system."
 	  nl))
       ))
 
-(defun speedbar-directory-buttons (directory index)
+(defun speedbar-directory-buttons (directory _index)
   "Insert a single button group at point for DIRECTORY.
 Each directory part is a different button.  If part of the directory
 matches the user directory ~, then it is replaced with a ~.
@@ -3305,7 +3313,7 @@ Optional argument ARG indicates that any cache should be flushed."
   ;; hidden by default anyway.  Yay!  It's easy.
   )
 
-(defun speedbar-find-file (text token indent)
+(defun speedbar-find-file (text _token indent)
   "Speedbar click handler for filenames.
 TEXT, the file will be displayed in the attached frame.
 TOKEN is unused, but required by the click handler.  INDENT is the
@@ -3325,7 +3333,7 @@ current indentation level."
     (speedbar-set-timer dframe-update-speed))
   (dframe-maybee-jump-to-attached-frame))
 
-(defun speedbar-dir-follow (text token indent)
+(defun speedbar-dir-follow (text _token indent)
   "Speedbar click handler for directory names.
 Clicking a directory will cause the speedbar to list files in
 the subdirectory TEXT.  TOKEN is an unused requirement.  The
@@ -3393,7 +3401,7 @@ expanded.  INDENT is the current indentation level."
   (speedbar-center-buffer-smartly)
   (save-excursion (speedbar-stealthy-updates)))
 
-(defun speedbar-directory-buttons-follow (text token indent)
+(defun speedbar-directory-buttons-follow (_text token _indent)
   "Speedbar click handler for default directory buttons.
 TEXT is the button clicked on.  TOKEN is the directory to follow.
 INDENT is the current indentation level and is unused."
@@ -3414,7 +3422,6 @@ indentation level."
   (cond ((string-match "+" text)	;we have to expand this file
 	 (let* ((fn (expand-file-name (concat (speedbar-line-directory indent)
 					      token)))
-		(mode nil)
 		(lst (speedbar-fetch-dynamic-tags fn)))
 	   ;; if no list, then remove expando button
 	   (if (not lst)
@@ -3430,7 +3437,7 @@ indentation level."
 	(t (error "Ooops...  not sure what to do")))
   (speedbar-center-buffer-smartly))
 
-(defun speedbar-tag-find (text token indent)
+(defun speedbar-tag-find (_text token indent)
   "For the tag TEXT in a file TOKEN, go to that position.
 INDENT is the current indentation level."
   (let ((file (speedbar-line-directory indent)))
@@ -3643,17 +3650,20 @@ to be at the beginning of a line in the etags buffer.
 
 This variable is ignored if `speedbar-use-imenu-flag' is non-nil.")
 
-(defvar speedbar-fetch-etags-command "etags"
-  "*Command used to create an etags file.
+(defcustom speedbar-fetch-etags-command "etags"
+  "Command used to create an etags file.
+This variable is ignored if `speedbar-use-imenu-flag' is t."
+  :group 'speedbar
+  :type 'string)
 
-This variable is ignored if `speedbar-use-imenu-flag' is t.")
-
-(defvar speedbar-fetch-etags-arguments '("-D" "-I" "-o" "-")
-  "*List of arguments to use with `speedbar-fetch-etags-command'.
+(defcustom speedbar-fetch-etags-arguments '("-D" "-I" "-o" "-")
+  "List of arguments to use with `speedbar-fetch-etags-command'.
 This creates an etags output buffer.  Use `speedbar-toggle-etags' to
 modify this list conveniently.
-
-This variable is ignored if `speedbar-use-imenu-flag' is t.")
+This variable is ignored if `speedbar-use-imenu-flag' is t."
+  :group 'speedbar
+  :type '(choice (const nil)
+		 (repeat :tag "List of arguments" string)))
 
 (defun speedbar-toggle-etags (flag)
   "Toggle FLAG in `speedbar-fetch-etags-arguments'.
@@ -3827,12 +3837,12 @@ regular expression EXPR."
     )
   "Menu item elements shown when displaying a buffer list.")
 
-(defun speedbar-buffer-buttons (directory zero)
+(defun speedbar-buffer-buttons (_directory _zero)
   "Create speedbar buttons based on the buffers currently loaded.
 DIRECTORY is the directory of the currently active buffer, and ZERO is 0."
   (speedbar-buffer-buttons-engine nil))
 
-(defun speedbar-buffer-buttons-temp (directory zero)
+(defun speedbar-buffer-buttons-temp (_directory _zero)
   "Create speedbar buttons based on the buffers currently loaded.
 DIRECTORY is the directory of the currently active buffer, and ZERO is 0."
   (speedbar-buffer-buttons-engine t))
@@ -3890,11 +3900,8 @@ If TEMP is non-nil, then clicking on a buffer restores the previous display."
 (defun speedbar-buffers-tail-notes (buffer)
   "Add a note to the end of the last tag line.
 Argument BUFFER is the buffer being tested."
-  (let (mod ro)
-    (with-current-buffer buffer
-      (setq mod (buffer-modified-p)
-	    ro buffer-read-only))
-    (if ro (speedbar-insert-button "%" nil nil nil nil t))))
+  (when (with-current-buffer buffer buffer-read-only)
+    (speedbar-insert-button "%" nil nil nil nil t)))
 
 (defun speedbar-buffers-item-info ()
   "Display information about the current buffer on the current line."
@@ -3909,7 +3916,7 @@ Argument BUFFER is the buffer being tested."
 			       (with-current-buffer buffer (buffer-size))
 			       (or (buffer-file-name buffer) "<No file>"))))))
 
-(defun speedbar-buffers-line-directory (&optional depth)
+(defun speedbar-buffers-line-directory (&optional _depth)
   "Fetch the directory of the file (buffer) specified on the current line.
 Optional argument DEPTH specifies the current depth of the back search."
   (save-excursion
@@ -3926,7 +3933,7 @@ Optional argument DEPTH specifies the current depth of the back search."
 		      "")
 		(buffer-file-name buffer))))))))
 
-(defun speedbar-buffer-click (text token indent)
+(defun speedbar-buffer-click (text token _indent)
   "When the users clicks on a buffer-button in speedbar.
 TEXT is the buffer's name, TOKEN and INDENT are unused."
   (if dframe-power-click

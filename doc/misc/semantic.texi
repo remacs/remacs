@@ -40,7 +40,7 @@ developing GNU and promoting software freedom.''
 @end quotation
 @end copying
 
-@dircategory Emacs
+@dircategory Emacs misc features
 @direntry
 * Semantic: (semantic).         Source code parser library and utilities.
 @end direntry
@@ -64,7 +64,7 @@ developing GNU and promoting software freedom.''
 @macro obsolete{old,new}
 @sp 1
 @strong{Compatibility}:
-@code{\new\} introduced in @semantic{} version 2.0 supercedes
+@code{\new\} introduced in @semantic{} version 2.0 supersedes
 @code{\old\} which is now obsolete.
 @end macro
 

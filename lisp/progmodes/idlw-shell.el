@@ -2187,7 +2187,7 @@ args of an executive .run, .rnew or .compile."
   ;; CWD might have changed, resync, to set default directory
   (idlwave-shell-resync-dirs)
   (let ((comint-file-name-chars idlwave-shell-file-name-chars))
-    (comint-dynamic-complete-as-filename)))
+    (comint-filename-completion)))
 
 (defun idlwave-shell-executive-command ()
   "Return the name of the current executive command, if any."
@@ -4243,15 +4243,15 @@ Otherwise, just expand the file name."
 (define-key idlwave-shell-electric-debug-mode-map "_"
   'idlwave-shell-stack-down)
 (define-key idlwave-shell-electric-debug-mode-map "e"
-  '(lambda () (interactive) (idlwave-shell-print '(16))))
+  (lambda () (interactive) (idlwave-shell-print '(16))))
 (define-key idlwave-shell-electric-debug-mode-map "q" 'idlwave-shell-retall)
 (define-key idlwave-shell-electric-debug-mode-map "t"
-  '(lambda () (interactive) (idlwave-shell-send-command "help,/TRACE")))
+  (lambda () (interactive) (idlwave-shell-send-command "help,/TRACE")))
 (define-key idlwave-shell-electric-debug-mode-map [(control ??)]
   'idlwave-shell-electric-debug-help)
 (define-key idlwave-shell-electric-debug-mode-map "x"
-  '(lambda (arg) (interactive "P")
-     (idlwave-shell-print arg nil nil t)))
+  (lambda (arg) (interactive "P")
+    (idlwave-shell-print arg nil nil t)))
 
 
 ; Enter the prefix map in two places.

@@ -1,4 +1,4 @@
-;;; smie.el --- Simple Minded Indentation Engine
+;;; smie.el --- Simple Minded Indentation Engine -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2010-2011  Free Software Foundation, Inc.
 
@@ -84,6 +84,26 @@
 ;; - Maybe accept two juxtaposed non-terminals in the BNF under the condition
 ;;   that the first always ends with a terminal, or that the second always
 ;;   starts with a terminal.
+;; - Permit EBNF-style notation.
+;; - If the grammar has conflicts, the only way is to make the lexer return
+;;   different tokens for the different cases.  This extra work performed by
+;;   the lexer can be costly and unnecessary: we perform this extra work every
+;;   time we find the conflicting token, regardless of whether or not the
+;;   difference between the various situations is relevant to the current
+;;   situation.  E.g. we may try to determine whether a ";" is a ";-operator"
+;;   or a ";-separator" in a case where we're skipping over a "begin..end" pair
+;;   where the difference doesn't matter.  For frequently occurring tokens and
+;;   rarely occurring conflicts, this can be a significant performance problem.
+;;   We could try and let the lexer return a "set of possible tokens
+;;   plus a refinement function" and then let parser call the refinement
+;;   function if needed.
+;; - Make it possible to better specify the behavior in the face of
+;;   syntax errors.  IOW provide some control over the choice of precedence
+;;   levels within the limits of the constraints.  E.g. make it possible for
+;;   the grammar to specify that "begin..end" has lower precedence than
+;;   "Module..EndModule", so that if a "begin" is missing, scanning from the
+;;   "end" will stop at "Module" rather than going past it (and similarly,
+;;   scanning from "Module" should not stop at a spurious "end").
 
 ;;; Code:
 
@@ -178,7 +198,7 @@ one of those elements share the same precedence level and associativity."
   ;; Maybe also add (or <elem1> <elem2>...) for things like
   ;; (exp (exp (or "+" "*" "=" ..) exp)).
   ;; Basically, make it EBNF (except for the specification of a separator in
-  ;; the repetition).
+  ;; the repetition, maybe).
   (let ((nts (mapcar 'car bnf))         ;Non-terminals
         (first-ops-table ())
         (last-ops-table ())
@@ -915,7 +935,7 @@ This uses SMIE's tables and is expected to be placed on `post-self-insert-hook'.
                      ;; anything else than this trigger char, lest we'd blink
                      ;; both when inserting the trigger char and when
                      ;; inserting a subsequent trigger char like SPC.
-                     (or (eq (point) pos)
+                     (or (eq (char-before) last-command-event)
                          (not (memq (char-before)
                                     smie-blink-matching-triggers)))
                      (or smie-blink-matching-inners
@@ -998,7 +1018,10 @@ the beginning of a line."
           (unless (numberp (cadr (assoc tok smie-grammar)))
             (goto-char pos))
           (setq smie--parent
-                (smie-backward-sexp 'halfsexp))))))
+                (or (smie-backward-sexp 'halfsexp)
+                    (let (res)
+                      (while (null (setq res (smie-backward-sexp))))
+                      (list nil (point) (nth 2 res)))))))))
 
 (defun smie-rule-parent-p (&rest parents)
   "Return non-nil if the current token's parent is among PARENTS.
@@ -1403,6 +1426,10 @@ should not be computed on the basis of the following token."
   (and (nth 4 (syntax-ppss))
        'noindent))
 
+(defun smie-indent-inside-string ()
+  (and (nth 3 (syntax-ppss))
+       'noindent))
+
 (defun smie-indent-after-keyword ()
   ;; Indentation right after a special keyword.
   (save-excursion
@@ -1476,8 +1503,9 @@ should not be computed on the basis of the following token."
 
 (defvar smie-indent-functions
   '(smie-indent-fixindent smie-indent-bob smie-indent-close
-                          smie-indent-comment smie-indent-comment-continue smie-indent-comment-close
-                          smie-indent-comment-inside smie-indent-keyword smie-indent-after-keyword
+    smie-indent-comment smie-indent-comment-continue smie-indent-comment-close
+    smie-indent-comment-inside smie-indent-inside-string
+    smie-indent-keyword smie-indent-after-keyword
                           smie-indent-exps)
   "Functions to compute the indentation.
 Each function is called with no argument, shouldn't move point, and should

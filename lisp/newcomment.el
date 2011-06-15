@@ -1,4 +1,4 @@
-;;; newcomment.el --- (un)comment regions of buffers
+;;; newcomment.el --- (un)comment regions of buffers -*- lexical-binding: t -*-
 
 ;; Copyright (C) 1999-2011 Free Software Foundation, Inc.
 
@@ -118,7 +118,7 @@ at the place matched by the close of the first pair.")
 
 ;;;###autoload
 (defvar comment-end-skip nil
-  "Regexp to match the end of a comment plus everything up to its body.")
+  "Regexp to match the end of a comment plus everything back to its body.")
 ;;;###autoload(put 'comment-end-skip 'safe-local-variable 'string-or-null-p)
 
 ;;;###autoload
@@ -722,7 +722,7 @@ With any other arg, set comment column to indentation of the previous comment
 With prefix ARG, kill comments on that many lines starting with this one."
   (interactive "P")
   (comment-normalize-vars)
-  (dotimes (_ (prefix-numeric-value arg))
+  (dotimes (_i (prefix-numeric-value arg))
     (save-excursion
       (beginning-of-line)
       (let ((cs (comment-search-forward (line-end-position) t)))

@@ -464,7 +464,8 @@ This is like `describe-bindings', but displays only Isearch keys."
     (define-key map    "\C-w" 'isearch-yank-word-or-char)
     (define-key map "\M-\C-w" 'isearch-del-char)
     (define-key map "\M-\C-y" 'isearch-yank-char)
-    (define-key map    "\C-y" 'isearch-yank-line)
+    (define-key map    "\C-y" 'isearch-yank-kill)
+    (define-key map "\M-s\C-e" 'isearch-yank-line)
 
     (define-key map (char-to-string help-char) isearch-help-map)
     (define-key map [help] isearch-help-map)
@@ -472,7 +473,7 @@ This is like `describe-bindings', but displays only Isearch keys."
 
     (define-key map "\M-n" 'isearch-ring-advance)
     (define-key map "\M-p" 'isearch-ring-retreat)
-    (define-key map "\M-y" 'isearch-yank-kill)
+    (define-key map "\M-y" 'isearch-yank-pop)
 
     (define-key map "\M-\t" 'isearch-complete)
 
@@ -636,6 +637,8 @@ Type \\[isearch-yank-char] to yank char from buffer onto end of search\
 Type \\[isearch-yank-line] to yank rest of line onto end of search string\
  and search for it.
 Type \\[isearch-yank-kill] to yank the last string of killed text.
+Type \\[isearch-yank-pop] to replace string just yanked into search prompt
+ with string killed before it.
 Type \\[isearch-quote-char] to quote control character to search for it.
 \\[isearch-abort] while searching or when search has failed cancels input\
  back to what has
@@ -1057,6 +1060,23 @@ nonincremental search instead via `isearch-edit-string'."
   (isearch-done)
   (isearch-clean-overlays))
 
+(defvar minibuffer-history-symbol) ;; from external package gmhist.el
+
+(defun isearch-fail-pos ()
+  "Position of first mismatch in search string, or its length if none."
+  (let ((cmds isearch-cmds))
+    (if (and isearch-success (not isearch-error))
+        (length isearch-message)
+      (while (or (not (isearch-success-state (car cmds)))
+                 (isearch-error-state (car cmds)))
+        (pop cmds))
+      (let ((succ-msg (and cmds (isearch-message-state (car cmds)))))
+        (if (and (stringp succ-msg)
+                 (< (length succ-msg) (length isearch-message))
+                 (equal succ-msg
+                        (substring isearch-message 0 (length succ-msg))))
+            (length succ-msg)
+          0)))))
 
 (defun isearch-edit-string ()
   "Edit the search string in the minibuffer.
@@ -1076,7 +1096,7 @@ If first char entered is \\[isearch-yank-word-or-char], then do word search inst
   ;; this could be simplified greatly.
   ;; Editing doesn't back up the search point.  Should it?
   (interactive)
-  (condition-case err
+  (condition-case nil
       (progn
 	(let ((isearch-nonincremental isearch-nonincremental)
 
@@ -1121,7 +1141,7 @@ If first char entered is \\[isearch-yank-word-or-char], then do word search inst
 	  ;; Actually terminate isearching until editing is done.
 	  ;; This is so that the user can do anything without failure,
 	  ;; like switch buffers and start another isearch, and return.
-	  (condition-case err
+	  (condition-case nil
 	      (isearch-done t t)
 	    (exit nil))			; was recursive editing
 
@@ -1137,7 +1157,7 @@ If first char entered is \\[isearch-yank-word-or-char], then do word search inst
 		(setq isearch-new-string
                       (read-from-minibuffer
                        (isearch-message-prefix nil nil isearch-nonincremental)
-                       isearch-string
+                        (cons isearch-string (1+ (isearch-fail-pos)))
                        minibuffer-local-isearch-map nil
                        (if isearch-regexp
 			   (cons 'regexp-search-ring
@@ -1494,6 +1514,18 @@ If search string is empty, just beep."
   "Pull string from kill ring into search string."
   (interactive)
   (isearch-yank-string (current-kill 0)))
+
+(defun isearch-yank-pop ()
+  "Replace just-yanked search string with previously killed string."
+  (interactive)
+  (if (not (memq last-command '(isearch-yank-kill isearch-yank-pop)))
+      ;; Fall back on `isearch-yank-kill' for the benefits of people
+      ;; who are used to the old behavior of `M-y' in isearch mode. In
+      ;; future, this fallback may be changed if we ever change
+      ;; `yank-pop' to do something like the kill-ring-browser.
+      (isearch-yank-kill)
+    (isearch-pop-state)
+    (isearch-yank-string (current-kill 1))))
 
 (defun isearch-yank-x-selection ()
   "Pull current X selection into search string."
@@ -2150,7 +2182,7 @@ If there is no completion possible, say so and continue searching."
 	     (isearch-message-suffix c-q-hack ellipsis)))
     (if c-q-hack m (let ((message-log-max nil)) (message "%s" m)))))
 
-(defun isearch-message-prefix (&optional c-q-hack ellipsis nonincremental)
+(defun isearch-message-prefix (&optional _c-q-hack ellipsis nonincremental)
   ;; If about to search, and previous search regexp was invalid,
   ;; check that it still is.  If it is valid now,
   ;; let the message we display while searching say that it is valid.
@@ -2183,7 +2215,7 @@ If there is no completion possible, say so and continue searching."
     (propertize (concat (upcase (substring m 0 1)) (substring m 1))
 		'face 'minibuffer-prompt)))
 
-(defun isearch-message-suffix (&optional c-q-hack ellipsis)
+(defun isearch-message-suffix (&optional c-q-hack _ellipsis)
   (concat (if c-q-hack "^Q" "")
 	  (if isearch-error
 	      (concat " [" isearch-error "]")
@@ -2418,14 +2450,8 @@ update the match data, and return point."
 	;; If the following character is currently invisible,
 	;; skip all characters with that same `invisible' property value.
 	;; Do that over and over.
-	(while (and (< (point) end)
-		    (let ((prop
-			   (get-char-property (point) 'invisible)))
-		      (if (eq buffer-invisibility-spec t)
-			  prop
-			(or (memq prop buffer-invisibility-spec)
-			    (assq prop buffer-invisibility-spec)))))
-	  (if (get-text-property (point) 'invisible)
+	(while (and (< (point) end) (invisible-p (point)))
+	  (if (invisible-p (get-text-property (point) 'invisible))
 	      (progn
 		(goto-char (next-single-property-change (point) 'invisible
 							nil end))
@@ -2440,10 +2466,7 @@ update the match data, and return point."
 		(while overlays
 		  (setq o (car overlays)
 			invis-prop (overlay-get o 'invisible))
-		  (if (if (eq buffer-invisibility-spec t)
-			  invis-prop
-			(or (memq invis-prop buffer-invisibility-spec)
-			    (assq invis-prop buffer-invisibility-spec)))
+		  (if (invisible-p invis-prop)
 		      (if (overlay-get o 'isearch-open-invisible)
 			  (setq ov-list (cons o ov-list))
 			;; We found one overlay that cannot be

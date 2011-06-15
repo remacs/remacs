@@ -975,7 +975,7 @@ Please send all bug fixes and enhancements to
 ;;	(setq ps-font-info-database '(<your stuff> <the standard stuff>))
 ;;   or, use `ps-print-hook' (see section Hooks):
 ;;	(add-hook 'ps-print-hook
-;;		  '(lambda ()
+;;		  (lambda ()
 ;;		     (or (assq 'Helvetica ps-font-info-database)
 ;;			 (setq ps-font-info-database (append ...)))))
 ;;
@@ -4592,16 +4592,16 @@ page-height == ((floor print-height ((th + ls) * zh)) * ((th + ls) * zh)) - th
 		     ps-print-height))))))
 
 
-(defun ps-print-preprint-region (prefix-arg)
+(defun ps-print-preprint-region (prefix)
   (or (ps-mark-active-p)
       (error "The mark is not set now"))
-  (list (point) (mark) (ps-print-preprint prefix-arg)))
+  (list (point) (mark) (ps-print-preprint prefix)))
 
 
-(defun ps-print-preprint (prefix-arg)
-  (and prefix-arg
-       (or (numberp prefix-arg)
-	   (listp prefix-arg))
+(defun ps-print-preprint (prefix)
+  (and prefix
+       (or (numberp prefix)
+	   (listp prefix))
        (let* ((name   (concat (file-name-nondirectory (or (buffer-file-name)
 							  (buffer-name)))
 			      ".ps"))
@@ -6020,7 +6020,7 @@ XSTART YSTART are the relative position for the first page in a sheet.")
     (ps-output " S\n")
     wrappoint))
 
-(defun ps-basic-plot-string (from to &optional bg-color)
+(defun ps-basic-plot-string (from to &optional _bg-color)
   (let* ((wrappoint (ps-find-wrappoint from to
 				       (ps-avg-char-width 'ps-font-for-text)))
 	 (to (car wrappoint))
@@ -6029,7 +6029,7 @@ XSTART YSTART are the relative position for the first page in a sheet.")
     (ps-output " S\n")
     wrappoint))
 
-(defun ps-basic-plot-whitespace (from to &optional bg-color)
+(defun ps-basic-plot-whitespace (from to &optional _bg-color)
   (let* ((wrappoint (ps-find-wrappoint from to
 				       (ps-space-width 'ps-font-for-text)))
 	 (to (car wrappoint)))
@@ -6645,7 +6645,8 @@ If FACE is not a valid face name, use default face."
 	 (error "Unprinted PostScript"))))
 
 (cond ((fboundp 'add-hook)
-       (funcall 'add-hook 'kill-emacs-hook 'ps-kill-emacs-check))
+       (unless noninteractive
+         (funcall 'add-hook 'kill-emacs-hook 'ps-kill-emacs-check)))
       (kill-emacs-hook
        (message "Won't override existing `kill-emacs-hook'"))
       (t
@@ -6657,7 +6658,7 @@ If FACE is not a valid face name, use default face."
 ;; But autoload them here to make the separation invisible.
 
 ;;;### (autoloads (ps-mule-end-job ps-mule-begin-job ps-mule-initialize
-;;;;;;  ps-multibyte-buffer) "ps-mule" "ps-mule.el" "14536f28e0dcaa956901bb59ad86a875")
+;;;;;;  ps-multibyte-buffer) "ps-mule" "ps-mule.el" "179b43ee432338186dde9e8c4fe761af")
 ;;; Generated autoloads from ps-mule.el
 
 (defvar ps-multibyte-buffer nil "\

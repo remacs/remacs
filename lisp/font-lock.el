@@ -563,7 +563,7 @@ we recommend setting `syntax-begin-function' instead.
 
 This is normally set via `font-lock-defaults'.")
 (make-obsolete-variable 'font-lock-beginning-of-syntax-function
-                        'syntax-begin-function "23.3")
+                        'syntax-begin-function "23.3" 'set)
 
 (defvar font-lock-mark-block-function nil
   "*Non-nil means use this function to mark a block of text.
@@ -1765,8 +1765,7 @@ variables directly.
 Note: This function will erase modifications done by
 `font-lock-add-keywords' or `font-lock-remove-keywords', but will
 preserve `hi-lock-mode' highlighting patterns."
-  (let ((hi-lock--inhibit-font-lock-hook t))
-    (font-lock-mode -1))
+  (font-lock-mode -1)
   (kill-local-variable 'font-lock-set-defaults)
   (font-lock-mode 1))
 
@@ -2242,7 +2241,7 @@ in which C preprocessor directives are used. e.g. `asm-mode' and
 		"\\)\\)\\>"
 		;; Any whitespace and defined object.
 		"[ \t'\(]*"
-		"\\(setf[ \t]+\\sw+)\\|\\sw+\\)?")
+		"\\(setf[ \t]+\\sw+\\|\\sw+\\)?")
        (1 font-lock-keyword-face)
        (9 (cond ((match-beginning 3) font-lock-function-name-face)
 		((match-beginning 6) font-lock-variable-name-face)

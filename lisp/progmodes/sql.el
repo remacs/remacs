@@ -1207,13 +1207,13 @@ Based on `comint-mode-map'.")
 
 (mapc
  ;; In Emacs 22+, provide SYSTEM-FLAG to define-abbrev.
- '(lambda (abbrev)
-    (let ((name (car abbrev))
-          (expansion (cdr abbrev)))
-      (condition-case nil
-          (define-abbrev sql-mode-abbrev-table name expansion nil 0 t)
-        (error
-         (define-abbrev sql-mode-abbrev-table name expansion)))))
+ (lambda (abbrev)
+   (let ((name (car abbrev))
+         (expansion (cdr abbrev)))
+     (condition-case nil
+         (define-abbrev sql-mode-abbrev-table name expansion nil 0 t)
+       (error
+        (define-abbrev sql-mode-abbrev-table name expansion)))))
  '(("ins"  . "insert")
    ("upd"  . "update")
    ("del"  . "delete")
@@ -2801,7 +2801,7 @@ server/database name."
 (defun sql-rename-buffer (&optional new-name)
   "Rename a SQL interactive buffer.
 
-Prompts for the new name if command is preceeded by
+Prompts for the new name if command is preceded by
 \\[universal-argument].  If no buffer name is provided, then the
 `sql-alternate-buffer-name' is used.
 
@@ -3262,7 +3262,7 @@ you must tell Emacs.  Here's how to do that in your `~/.emacs' file:
   :abbrev-table sql-mode-abbrev-table
   (if sql-mode-menu
       (easy-menu-add sql-mode-menu)); XEmacs
-  
+
   (set (make-local-variable 'comment-start) "--")
   ;; Make each buffer in sql-mode remember the "current" SQLi buffer.
   (make-local-variable 'sql-buffer)
@@ -3540,7 +3540,7 @@ optionally is saved to the user's init file."
               (append (list name)
                       (sql-for-each-login
                        `(product ,@login)
-                       (lambda (token plist)
+                       (lambda (token _plist)
                          (cond
                           ((eq token 'product)  `(sql-product  ',sql-product))
                           ((eq token 'user)     `(sql-user     ,sql-user))
@@ -4257,4 +4257,3 @@ buffer.
 (provide 'sql)
 
 ;;; sql.el ends here
-

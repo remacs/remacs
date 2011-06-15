@@ -104,6 +104,13 @@
 (require 'bindat)
 (eval-when-compile (require 'cl))
 
+(declare-function speedbar-change-initial-expansion-list "speedbar" (new-default))
+(declare-function speedbar-timer-fn "speedbar" ())
+(declare-function speedbar-line-text "speedbar" (&optional p))
+(declare-function speedbar-change-expand-button-char "speedbar" (char))
+(declare-function speedbar-delete-subblock "speedbar" (indent))
+(declare-function speedbar-center-buffer-smartly "speedbar" ())
+
 (defvar tool-bar-map)
 (defvar speedbar-initial-expansion-list-name)
 (defvar speedbar-frame)
@@ -544,7 +551,7 @@ the list) is deleted every time a new one is added (at the front)."
 
 (defun gdb-find-watch-expression ()
   (let* ((var (nth (- (line-number-at-pos (point)) 2) gdb-var-list))
-	 (varnum (car var)) expr array)
+	 (varnum (car var)) expr)
     (string-match "\\(var[0-9]+\\)\\.\\(.*\\)" varnum)
     (let ((var1 (assoc (match-string 1 varnum) gdb-var-list)) var2 varnumlet
 	  (component-list (split-string (match-string 2 varnum) "\\." t)))
@@ -648,21 +655,36 @@ detailed description of this mode.
   (set (make-local-variable 'gud-minor-mode) 'gdbmi)
   (setq comint-input-sender 'gdb-send)
   (when (ring-empty-p comint-input-ring) ; cf shell-mode
-    (let (hfile)
-      (when (catch 'done
-	      (dolist (file '(".gdbinit" "~/.gdbinit"))
-		(if (file-readable-p (setq file (expand-file-name file)))
-		    (with-temp-buffer
-		      (insert-file-contents file)
-		      (and (re-search-forward
-			    "^ *set history filename  *\\(.*\\)" nil t)
-			   (file-readable-p
-			    (setq hfile (expand-file-name
-					 (match-string 1)
-					 (file-name-directory file))))
-			   (throw 'done t))))))
-	(set (make-local-variable 'comint-input-ring-file-name) hfile)
-	(comint-read-input-ring t))))
+    (let ((hfile (expand-file-name (or (getenv "GDBHISTFILE")
+				       (if (eq system-type 'ms-dos)
+					   "_gdb_history"
+					 ".gdb_history"))))
+	  ;; gdb defaults to 256, but we'll default to comint-input-ring-size.
+	  (hsize (getenv "HISTSIZE")))
+      (dolist (file (append '("~/.gdbinit")
+			    (unless (string-equal (expand-file-name ".")
+					      (expand-file-name "~"))
+			      '(".gdbinit"))))
+	(if (file-readable-p (setq file (expand-file-name file)))
+	    (with-temp-buffer
+	      (insert-file-contents file)
+	      ;; TODO? check for "set history save\\(  *on\\)?" and do
+	      ;; not use history otherwise?
+	      (while (re-search-forward
+		      "^ *set history \\(filename\\|size\\)  *\\(.*\\)" nil t)
+		(cond ((string-equal (match-string 1) "filename")
+		       (setq hfile (expand-file-name
+				    (match-string 2)
+				    (file-name-directory file))))
+		      ((string-equal (match-string 1) "size")
+		       (setq hsize (match-string 2))))))))
+      (and (stringp hsize)
+	   (integerp (setq hsize (string-to-number hsize)))
+	   (> hsize 0)
+	   (set (make-local-variable 'comint-input-ring-size) hsize))
+      (if (stringp hfile)
+	  (set (make-local-variable 'comint-input-ring-file-name) hfile))
+      (comint-read-input-ring t)))
   (gud-def gud-tbreak "tbreak %f:%l" "\C-t"
 	   "Set temporary breakpoint at current line.")
   (gud-def gud-jump
@@ -1136,7 +1158,7 @@ With arg, enter name of variable to be watched in the minibuffer."
   (gdb-input
    (list (concat "-var-delete -c " varnum) 'ignore)))
 
-(defun gdb-edit-value (text token indent)
+(defun gdb-edit-value (_text _token _indent)
   "Assign a value to a variable displayed in the speedbar."
   (let* ((var (nth (- (count-lines (point-min) (point)) 2) gdb-var-list))
 	 (varnum (car var)) (value))
@@ -1805,7 +1827,7 @@ is running."
 
   ;; Start accumulating output for the GUD buffer
   (setq gdb-filter-output "")
-  (let ((output-record) (output-record-list))
+  (let (output-record-list)
 
     ;; Process all the complete markers in this chunk.
     (dolist (gdbmi-record gdbmi-record-list)
@@ -1845,17 +1867,17 @@ is running."
 
     gdb-filter-output))
 
-(defun gdb-gdb (output-field))
+(defun gdb-gdb (_output-field))
 
 (defun gdb-shell (output-field)
   (let ((gdb-output-sink gdb-output-sink))
     (setq gdb-filter-output
           (concat output-field gdb-filter-output))))
 
-(defun gdb-ignored-notification (output-field))
+(defun gdb-ignored-notification (_output-field))
 
 ;; gdb-invalidate-threads is defined to accept 'update-threads signal
-(defun gdb-thread-created (output-field))
+(defun gdb-thread-created (_output-field))
 (defun gdb-thread-exited (output-field)
   "Handle =thread-exited async record: unset `gdb-thread-number'
  if current thread exited and update threads list."
@@ -1903,7 +1925,7 @@ Sets `gdb-thread-number' to new id."
   (setq gdb-active-process t)
   (gdb-emit-signal gdb-buf-publisher 'update-threads))
 
-(defun gdb-starting (output-field)
+(defun gdb-starting (_output-field)
   ;; CLI commands don't emit ^running at the moment so use gdb-running too.
   (setq gdb-inferior-status "running")
   (gdb-force-mode-line-update
@@ -2204,8 +2226,7 @@ calling `gdb-table-string'."
 
 (defun gdb-table-string (table &optional sep)
   "Return TABLE as a string with columns separated with SEP."
-  (let ((column-sizes (gdb-table-column-sizes table))
-        (res ""))
+  (let ((column-sizes (gdb-table-column-sizes table)))
     (mapconcat
      'identity
      (gdb-mapcar*
@@ -2360,38 +2381,37 @@ HANDLER-NAME handler uses customization of CUSTOM-DEFUN. See
 
 ;; Put breakpoint icons in relevant margins (even those set in the GUD buffer).
 (defun gdb-place-breakpoints ()
-  (let ((flag) (bptno))
-    ;; Remove all breakpoint-icons in source buffers but not assembler buffer.
-    (dolist (buffer (buffer-list))
-      (with-current-buffer buffer
-	(if (and (eq gud-minor-mode 'gdbmi)
-		 (not (string-match "\\` ?\\*.+\\*\\'" (buffer-name))))
-	    (gdb-remove-breakpoint-icons (point-min) (point-max)))))
-    (dolist (breakpoint gdb-breakpoints-list)
-      (let* ((breakpoint (cdr breakpoint)) ; gdb-breakpoints-list is
-                                           ; an associative list
-             (line (bindat-get-field breakpoint 'line)))
-        (when line
-          (let ((file (bindat-get-field breakpoint 'fullname))
-                (flag (bindat-get-field breakpoint 'enabled))
-                (bptno (bindat-get-field breakpoint 'number)))
-            (unless (file-exists-p file)
-              (setq file (cdr (assoc bptno gdb-location-alist))))
-            (if (and file
-                     (not (string-equal file "File not found")))
-                (with-current-buffer
-                    (find-file-noselect file 'nowarn)
-                  (gdb-init-buffer)
-                  ;; Only want one breakpoint icon at each location.
-                  (gdb-put-breakpoint-icon (string-equal flag "y") bptno
-                                           (string-to-number line)))
-              (gdb-input
-               (list (concat "list " file ":1")
-                     'ignore))
-              (gdb-input
-               (list "-file-list-exec-source-file"
-                     `(lambda () (gdb-get-location
-                                  ,bptno ,line ,flag)))))))))))
+  ;; Remove all breakpoint-icons in source buffers but not assembler buffer.
+  (dolist (buffer (buffer-list))
+    (with-current-buffer buffer
+      (if (and (eq gud-minor-mode 'gdbmi)
+               (not (string-match "\\` ?\\*.+\\*\\'" (buffer-name))))
+          (gdb-remove-breakpoint-icons (point-min) (point-max)))))
+  (dolist (breakpoint gdb-breakpoints-list)
+    (let* ((breakpoint (cdr breakpoint)) ; gdb-breakpoints-list is
+                                         ; an associative list
+           (line (bindat-get-field breakpoint 'line)))
+      (when line
+        (let ((file (bindat-get-field breakpoint 'fullname))
+              (flag (bindat-get-field breakpoint 'enabled))
+              (bptno (bindat-get-field breakpoint 'number)))
+          (unless (file-exists-p file)
+            (setq file (cdr (assoc bptno gdb-location-alist))))
+          (if (and file
+                   (not (string-equal file "File not found")))
+              (with-current-buffer
+                  (find-file-noselect file 'nowarn)
+                (gdb-init-buffer)
+                ;; Only want one breakpoint icon at each location.
+                (gdb-put-breakpoint-icon (string-equal flag "y") bptno
+                                         (string-to-number line)))
+            (gdb-input
+             (list (concat "list " file ":1")
+                   'ignore))
+            (gdb-input
+             (list "-file-list-exec-source-file"
+                   `(lambda () (gdb-get-location
+                                ,bptno ,line ,flag))))))))))
 
 (defvar gdb-source-file-regexp "fullname=\"\\(.*?\\)\"")
 
@@ -2519,7 +2539,7 @@ If not in a source or disassembly buffer just set point."
     ;; Don't bind "q" to kill-this-buffer as we need it for breakpoint icons.
     (define-key map "q" 'gdb-delete-frame-or-window)
     (define-key map "\r" 'gdb-goto-breakpoint)
-    (define-key map "\t" '(lambda ()
+    (define-key map "\t" (lambda ()
                             (interactive)
                             (gdb-set-window-buffer
                              (gdb-get-buffer-create 'gdb-threads-buffer) t)))
@@ -2606,7 +2626,7 @@ corresponding to the mode line clicked."
     (define-key map "i" 'gdb-interrupt-thread)
     (define-key map "c" 'gdb-continue-thread)
     (define-key map "s" 'gdb-step-thread)
-    (define-key map "\t" '(lambda ()
+    (define-key map "\t" (lambda ()
                             (interactive)
                             (gdb-set-window-buffer
                              (gdb-get-buffer-create 'gdb-breakpoints-buffer) t)))
@@ -2983,24 +3003,26 @@ DOC is an optional documentation string."
     map)
   "Keymap to select format in the header line.")
 
-(defvar gdb-memory-format-menu (make-sparse-keymap "Format")
-  "Menu of display formats in the header line.")
+(defvar gdb-memory-format-menu
+  (let ((map (make-sparse-keymap "Format")))
 
-(define-key gdb-memory-format-menu [binary]
-  '(menu-item "Binary" gdb-memory-format-binary
-	      :button (:radio . (equal gdb-memory-format "t"))))
-(define-key gdb-memory-format-menu [octal]
-  '(menu-item "Octal" gdb-memory-format-octal
-	      :button (:radio . (equal gdb-memory-format "o"))))
-(define-key gdb-memory-format-menu [unsigned]
-  '(menu-item "Unsigned Decimal" gdb-memory-format-unsigned
-	      :button (:radio . (equal gdb-memory-format "u"))))
-(define-key gdb-memory-format-menu [signed]
-  '(menu-item "Signed Decimal" gdb-memory-format-signed
-	      :button (:radio . (equal gdb-memory-format "d"))))
-(define-key gdb-memory-format-menu [hexadecimal]
-  '(menu-item "Hexadecimal" gdb-memory-format-hexadecimal
-	      :button (:radio . (equal gdb-memory-format "x"))))
+    (define-key map [binary]
+      '(menu-item "Binary" gdb-memory-format-binary
+        :button (:radio . (equal gdb-memory-format "t"))))
+    (define-key map [octal]
+      '(menu-item "Octal" gdb-memory-format-octal
+        :button (:radio . (equal gdb-memory-format "o"))))
+    (define-key map [unsigned]
+      '(menu-item "Unsigned Decimal" gdb-memory-format-unsigned
+        :button (:radio . (equal gdb-memory-format "u"))))
+    (define-key map [signed]
+      '(menu-item "Signed Decimal" gdb-memory-format-signed
+        :button (:radio . (equal gdb-memory-format "d"))))
+    (define-key map [hexadecimal]
+      '(menu-item "Hexadecimal" gdb-memory-format-hexadecimal
+        :button (:radio . (equal gdb-memory-format "x"))))
+    map)
+  "Menu of display formats in the header line.")
 
 (defun gdb-memory-format-menu (event)
   (interactive "@e")
@@ -3061,21 +3083,22 @@ DOC is an optional documentation string."
     map)
   "Keymap to select units in the header line.")
 
-(defvar gdb-memory-unit-menu (make-sparse-keymap "Unit")
+(defvar gdb-memory-unit-menu
+  (let ((map (make-sparse-keymap "Unit")))
+    (define-key map [giantwords]
+      '(menu-item "Giant words" gdb-memory-unit-giant
+        :button (:radio . (equal gdb-memory-unit 8))))
+    (define-key map [words]
+      '(menu-item "Words" gdb-memory-unit-word
+        :button (:radio . (equal gdb-memory-unit 4))))
+    (define-key map [halfwords]
+      '(menu-item "Halfwords" gdb-memory-unit-halfword
+        :button (:radio . (equal gdb-memory-unit 2))))
+    (define-key map [bytes]
+      '(menu-item "Bytes" gdb-memory-unit-byte
+        :button (:radio . (equal gdb-memory-unit 1))))
+    map)
   "Menu of units in the header line.")
-
-(define-key gdb-memory-unit-menu [giantwords]
-  '(menu-item "Giant words" gdb-memory-unit-giant
-	      :button (:radio . (equal gdb-memory-unit 8))))
-(define-key gdb-memory-unit-menu [words]
-  '(menu-item "Words" gdb-memory-unit-word
-	      :button (:radio . (equal gdb-memory-unit 4))))
-(define-key gdb-memory-unit-menu [halfwords]
-  '(menu-item "Halfwords" gdb-memory-unit-halfword
-	      :button (:radio . (equal gdb-memory-unit 2))))
-(define-key gdb-memory-unit-menu [bytes]
-  '(menu-item "Bytes" gdb-memory-unit-byte
-	      :button (:radio . (equal gdb-memory-unit 1))))
 
 (defun gdb-memory-unit-menu (event)
   (interactive "@e")
@@ -3258,7 +3281,6 @@ DOC is an optional documentation string."
 (defun gdb-disassembly-handler-custom ()
   (let* ((instructions (bindat-get-field (gdb-json-partial-output) 'asm_insns))
          (address (bindat-get-field (gdb-current-buffer-frame) 'addr))
-         (pos 1)
          (table (make-gdb-table))
          (marked-line nil))
       (dolist (instr instructions)
@@ -3560,7 +3582,7 @@ member."
   (let ((map (make-sparse-keymap)))
     (suppress-keymap map)
     (define-key map "q" 'kill-this-buffer)
-    (define-key map "\t" '(lambda ()
+    (define-key map "\t" (lambda ()
                             (interactive)
                             (gdb-set-window-buffer
                              (gdb-get-buffer-create
@@ -3648,7 +3670,7 @@ member."
     (define-key map "\r" 'gdb-edit-register-value)
     (define-key map [mouse-2] 'gdb-edit-register-value)
     (define-key map "q" 'kill-this-buffer)
-    (define-key map "\t" '(lambda ()
+    (define-key map "\t" (lambda ()
                             (interactive)
                             (gdb-set-window-buffer
                              (gdb-get-buffer-create
@@ -3788,8 +3810,7 @@ already, in which case that window is splitted first."
       (let ((window (get-lru-window)))
 	(if (eq (buffer-local-value 'gud-minor-mode (window-buffer window))
 		  'gdbmi)
-	    (let* ((largest (get-largest-window))
-		   (cur-size (window-height largest)))
+	    (let ((largest (get-largest-window)))
 	      (setq answer (split-window largest))
 	      (set-window-buffer answer buf)
 	      (set-window-dedicated-p answer dedicated)

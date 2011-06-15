@@ -35,6 +35,9 @@
 (defconst bzrmerge-buffer "*bzrmerge*"
   "Working buffer for bzrmerge.")
 
+(defconst bzrmerge-warning-buffer "*bzrmerge warnings*"
+  "Buffer where bzrmerge will display any warnings.")
+
 (defun bzrmerge-merges ()
   "Return the list of already merged (not yet committed) revisions.
 The list returned is sorted by oldest-first."
@@ -143,7 +146,8 @@ are both lists of revnos, in oldest-first order."
   (unless (file-exists-p file) (error "Bzrmerge-resolve: Can't find %s" file))
   (with-demoted-errors
     (let ((exists (find-buffer-visiting file)))
-      (with-current-buffer (find-file-noselect file)
+      (with-current-buffer (let ((enable-local-variables :safe))
+                             (find-file-noselect file))
         (if (buffer-modified-p)
             (error "Unsaved changes in %s" (current-buffer)))
         (save-excursion
@@ -184,7 +188,9 @@ are both lists of revnos, in oldest-first order."
           (cond
            ((member file '("configure" "lisp/ldefs-boot.el"
                            "lisp/emacs-lisp/cl-loaddefs.el"))
-            (call-process "bzr" nil t nil "revert" file)
+            ;; We are in the file's buffer, so names are relative.
+            (call-process "bzr" nil t nil "revert"
+                          (file-name-nondirectory file))
             (revert-buffer nil 'noconfirm))
            (t
             (goto-char (point-max))
@@ -265,6 +271,9 @@ Does not make other difference."
           (sit-for 1)
           ;; (debug 'after-merge)
           ;; Check the conflicts.
+          ;; FIXME if using the helpful bzr changelog_merge plugin,
+          ;; there are normally no conflicts in ChangeLogs.
+          ;; But we still want the dates fixing, like bzrmerge-resolve does.
           (let ((conflicted nil)
                 (files ()))
             (goto-char (point-min))
@@ -290,7 +299,8 @@ Does not make other difference."
                   ;; are conflicts.
                   (display-warning 'bzrmerge "Resolve conflicts manually.
 ¡BEWARE!  Important metadata is kept in this Emacs session!
-Do not commit without re-running `M-x bzrmerge' first!"))
+Do not commit without re-running `M-x bzrmerge' first!"
+                                   :warning bzrmerge-warning-buffer))
               (error "Resolve conflicts manually")))))
         (cons merge skip)))))
 
@@ -305,6 +315,10 @@ Do not commit without re-running `M-x bzrmerge' first!"))
              (when (re-search-forward "submit branch: *" nil t)
                (buffer-substring (point) (line-end-position))))))
       (read-file-name "From branch: " nil nil nil def))))
+  ;; Eg we ran bzrmerge once, it stopped with conflicts, we fixed them
+  ;; and are running it again.
+  (if (get-buffer bzrmerge-warning-buffer)
+      (kill-buffer bzrmerge-warning-buffer))
   (message "Merging from %s..." from)
   (require 'vc-bzr)
   (let ((default-directory (or (vc-bzr-root default-directory)

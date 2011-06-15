@@ -411,13 +411,14 @@ That is, if it doesn't match any of the `recentf-exclude' checks."
         (checks recentf-exclude)
         (keepit t))
     (while (and checks keepit)
-      (setq keepit (condition-case nil
-                       (not (if (stringp (car checks))
-                                ;; A regexp
-                                (string-match (car checks) filename)
-                              ;; A predicate
-                              (funcall (car checks) filename)))
-                     (error nil))
+      ;; If there was an error in a predicate, err on the side of
+      ;; keeping the file.  (Bug#5843)
+      (setq keepit (not (ignore-errors
+                          (if (stringp (car checks))
+                              ;; A regexp
+                              (string-match (car checks) filename)
+                            ;; A predicate
+                            (funcall (car checks) filename))))
             checks (cdr checks)))
     keepit))
 
@@ -589,7 +590,7 @@ menu-elements (no sub-menu)."
 ;; Count the number of assigned menu shortcuts.
 (defvar recentf-menu-shortcuts)
 
-(defun recentf-make-menu-items (&optional menu)
+(defun recentf-make-menu-items (&optional _menu)
   "Make menu items from the recent list.
 This is a menu filter function which ignores the MENU argument."
   (setq recentf-menu-filter-commands nil)
@@ -1035,7 +1036,7 @@ That is, remove a non kept file from the recent list."
 
 ;;; Common dialog stuff
 ;;
-(defun recentf-cancel-dialog (&rest ignore)
+(defun recentf-cancel-dialog (&rest _ignore)
   "Cancel the current dialog.
 IGNORE arguments."
   (interactive)
@@ -1091,7 +1092,7 @@ Go to the beginning of buffer if not found."
 ;;
 (defvar recentf-edit-list nil)
 
-(defun recentf-edit-list-select (widget &rest ignore)
+(defun recentf-edit-list-select (widget &rest _ignore)
   "Toggle a file selection based on the checkbox WIDGET state.
 IGNORE other arguments."
   (let ((value (widget-get widget :tag))
@@ -1101,7 +1102,7 @@ IGNORE other arguments."
       (setq recentf-edit-list (delq value recentf-edit-list)))
     (message "%s %sselected" value (if check "" "un"))))
 
-(defun recentf-edit-list-validate (&rest ignore)
+(defun recentf-edit-list-validate (&rest _ignore)
   "Process the recent list when the edit list dialog is committed.
 IGNORE arguments."
   (if recentf-edit-list
@@ -1145,7 +1146,7 @@ Click on Cancel or type `q' to cancel.\n")
 
 ;;; Open file dialog
 ;;
-(defun recentf-open-files-action (widget &rest ignore)
+(defun recentf-open-files-action (widget &rest _ignore)
   "Open the file stored in WIDGET's value when notified.
 IGNORE other arguments."
   (kill-buffer (current-buffer))

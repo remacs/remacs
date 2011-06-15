@@ -29,7 +29,7 @@
 ;;; Code:
 (require 'mail-utils)
 
-(autoload 'rfc2047-encode-string "rfc2047")
+(require 'rfc2047)
 
 (defgroup sendmail nil
   "Mail sending commands for Emacs."
@@ -43,12 +43,14 @@
   :version "22.1")
 
 (defcustom sendmail-program
-  (cond
-    ((file-exists-p "/usr/sbin/sendmail") "/usr/sbin/sendmail")
-    ((file-exists-p "/usr/lib/sendmail") "/usr/lib/sendmail")
-    ((file-exists-p "/usr/ucblib/sendmail") "/usr/ucblib/sendmail")
-    (t "fakemail"))			;In ../etc, to interface to /bin/mail.
+  (or (executable-find "sendmail")
+      (cond
+       ((file-exists-p "/usr/sbin/sendmail") "/usr/sbin/sendmail")
+       ((file-exists-p "/usr/lib/sendmail") "/usr/lib/sendmail")
+       ((file-exists-p "/usr/ucblib/sendmail") "/usr/ucblib/sendmail")
+       (t "sendmail")))
   "Program used to send messages."
+  :version "24.1"		; add executable-find, remove fakemail
   :group 'mail
   :type 'file)
 
@@ -141,14 +143,18 @@ Otherwise, let mailer send back a message to report errors."
 ;; standard value.
 ;;;###autoload
 (put 'send-mail-function 'standard-value
-     '((if (and window-system (memq system-type '(darwin windows-nt)))
+     ;; MS-Windows can access the clipboard even under -nw.
+     '((if (or (and window-system (eq system-type 'darwin))
+	       (eq system-type 'windows-nt))
 	   'mailclient-send-it
 	 'sendmail-send-it)))
 
 ;; Useful to set in site-init.el
 ;;;###autoload
 (defcustom send-mail-function
-  (if (and window-system (memq system-type '(darwin windows-nt)))
+  (if (or (and window-system (eq system-type 'darwin))
+	  ;; MS-Windows can access the clipboard even under -nw.
+	  (eq system-type 'windows-nt))
       'mailclient-send-it
     'sendmail-send-it)
   "Function to call to send the current buffer as mail.
@@ -293,7 +299,7 @@ The default value matches citations like `foo-bar>' plus whitespace."
 (defvar mail-abbrevs-loaded nil)
 (defvar mail-mode-map
   (let ((map (make-sparse-keymap)))
-    (define-key map "\M-\t" 'mail-complete)
+    (define-key map "\M-\t" 'completion-at-point)
     (define-key map "\C-c?" 'describe-mode)
     (define-key map "\C-c\C-f\C-t" 'mail-to)
     (define-key map "\C-c\C-f\C-b" 'mail-bcc)
@@ -309,7 +315,6 @@ The default value matches citations like `foo-bar>' plus whitespace."
     (define-key map [remap split-line] 'mail-split-line)
     (define-key map "\C-c\C-q" 'mail-fill-yanked-message)
     (define-key map "\C-c\C-w" 'mail-signature)
-    (define-key map "\C-c\C-v" 'mail-sent-via)
     (define-key map "\C-c\C-c" 'mail-send-and-exit)
     (define-key map "\C-c\C-s" 'mail-send)
     (define-key map "\C-c\C-i" 'mail-attach-file)
@@ -348,9 +353,6 @@ The default value matches citations like `foo-bar>' plus whitespace."
 
     (define-key map [menu-bar headers expand-aliases]
       '("Expand Aliases" . expand-mail-aliases))
-
-    (define-key map [menu-bar headers sent-via]
-      '("Sent-Via" . mail-sent-via))
 
     (define-key map [menu-bar headers mail-reply-to]
       '("Mail-Reply-To" . mail-mail-reply-to))
@@ -468,7 +470,8 @@ by Emacs.)")
 
 (put 'mail-mailer-swallows-blank-line 'risky-local-variable t) ; gets evalled
 (make-obsolete-variable 'mail-mailer-swallows-blank-line
-			"no need to set this on any modern system." "24.1")
+			"no need to set this on any modern system."
+                        "24.1" 'set)
 
 (defvar mail-mode-syntax-table
   ;; define-derived-mode will make it inherit from text-mode-syntax-table.
@@ -665,7 +668,6 @@ Here are commands that move to a header field (and create it if there isn't):
 \\[mail-signature]  mail-signature (insert `mail-signature-file' file).
 \\[mail-yank-original]  mail-yank-original (insert current message, in Rmail).
 \\[mail-fill-yanked-message]  mail-fill-yanked-message (fill what was yanked).
-\\[mail-sent-via]  mail-sent-via (add a sent-via field for each To or CC).
 Turning on Mail mode runs the normal hooks `text-mode-hook' and
 `mail-mode-hook' (in that order)."
   (make-local-variable 'mail-reply-action)
@@ -693,6 +695,8 @@ Turning on Mail mode runs the normal hooks `text-mode-hook' and
   (setq adaptive-fill-first-line-regexp
 	(concat "[ \t]*[-[:alnum:]]*>+[ \t]*\\|"
 		adaptive-fill-first-line-regexp))
+  (add-hook 'completion-at-point-functions #'mail-completion-at-point-function
+            nil 'local)
   ;; `-- ' precedes the signature.  `-----' appears at the start of the
   ;; lines that delimit forwarded messages.
   ;; Lines containing just >= 3 dashes, perhaps after whitespace,
@@ -861,9 +865,9 @@ the user from the mailer."
 			  (let ((l))
 			    (mapc
 			     ;; remove duplicates
-			     '(lambda (e)
-				(unless (member e l)
-				  (push e l)))
+			     (lambda (e)
+                               (unless (member e l)
+                                 (push e l)))
 			     (split-string new-header-values
 					   ",[[:space:]]+" t))
 			    (mapconcat 'identity l ", "))
@@ -942,12 +946,14 @@ of outgoing mails regardless of the current language environment.
 See also the function `select-message-coding-system'.")
 
 (defun mail-insert-from-field ()
+  "Insert the \"From:\" field of a mail header.
+The style of the field is determined by the variable `mail-from-style'.
+This function does not perform RFC2047 encoding."
   (let* ((login user-mail-address)
 	 (fullname (user-full-name))
 	 (quote-fullname nil))
     (if (string-match "[^\0-\177]" fullname)
-	(setq fullname (rfc2047-encode-string fullname)
-	      quote-fullname t))
+	(setq quote-fullname t))
     (cond ((null mail-from-style)
 	   (insert "From: " login "\n"))
 	  ;; This is deprecated.
@@ -1007,6 +1013,21 @@ See also the function `select-message-coding-system'.")
 		 (goto-char fullname-start))))
 	   (insert ")\n")))))
 
+(defun mail-encode-header (beg end)
+  "Encode the mail header between BEG and END according to RFC2047.
+Return non-nil if and only if some part of the header is encoded."
+  (save-restriction
+    (narrow-to-region beg end)
+    (let* ((selected (select-message-coding-system))
+	   (mm-coding-system-priorities
+	    (if (and selected (coding-system-get selected :mime-charset))
+		(cons selected mm-coding-system-priorities)
+	      mm-coding-system-priorities))
+	   (tick (buffer-chars-modified-tick))
+	   (rfc2047-encode-encoded-words nil))
+      (rfc2047-encode-message-header)
+      (= tick (buffer-chars-modified-tick)))))
+
 ;; Normally you will not need to modify these options unless you are
 ;; using some non-genuine substitute for sendmail which does not
 ;; implement each and every option that the original supports.
@@ -1036,9 +1057,6 @@ external program defined by `sendmail-program'."
 	delimline
 	fcc-was-found
 	(mailbuf (current-buffer))
-	(program (if (boundp 'sendmail-program)
-		     sendmail-program
-		   "/usr/lib/sendmail"))
 	;; Examine these variables now, so that
 	;; local binding in the mail buffer will take effect.
 	(envelope-from
@@ -1050,6 +1068,7 @@ external program defined by `sendmail-program'."
 	  (unless multibyte
 	    (set-buffer-multibyte nil))
 	  (insert-buffer-substring mailbuf)
+	  (set-buffer-file-coding-system selected-coding)
 	  (goto-char (point-max))
 	  ;; require one newline at the end.
 	  (or (= (preceding-char) ?\n)
@@ -1155,6 +1174,8 @@ external program defined by `sendmail-program'."
 	    (if mail-interactive
 		(with-current-buffer errbuf
 		  (erase-buffer))))
+	  ;; Encode the header according to RFC2047.
+	  (mail-encode-header (point-min) delimline)
 	  (goto-char (point-min))
 	  (if (let ((case-fold-search t))
 		(or resend-to-addresses
@@ -1164,7 +1185,7 @@ external program defined by `sendmail-program'."
 		     (coding-system-for-write selected-coding)
 		     (args
 		      (append (list (point-min) (point-max)
-				    program
+				    sendmail-program
 				    nil errbuf nil "-oi")
 			      (and envelope-from
 				   (list "-f" envelope-from))
@@ -1346,6 +1367,9 @@ just append to the file, in Babyl format if necessary."
 				   (point)))))
 	  ;; Insert a copy, with altered header field name.
 	  (insert-before-markers "Sent-via:" to-line))))))
+
+(make-obsolete 'mail-sent-via "nobody can remember what it is for." "24.1")
+
 
 (defun mail-to ()
   "Move point to end of To field, creating it if necessary."
@@ -1777,7 +1801,7 @@ The seventh argument ACTIONS is a list of actions to take
       ;; unbound on exit from the let.
       (require 'dired)
       (let ((dired-trivial-filenames t))
-	(dired-other-window wildcard (concat dired-listing-switches "t")))
+	(dired-other-window wildcard (concat dired-listing-switches " -t")))
       (rename-buffer "*Auto-saved Drafts*" t)
       (save-excursion
 	(goto-char (point-min))
@@ -1857,7 +1881,7 @@ you can move to one of them and type C-c C-c to recover that one."
 		  ;; `ls' is not a standard program (it will use
 		  ;; ls-lisp instead).
 		  (dired-noselect file-name
-				  (concat dired-listing-switches "t"))))
+				  (concat dired-listing-switches " -t"))))
 	     (save-selected-window
 	       (select-window (display-buffer dispbuf t))
 	       (goto-char (point-min))

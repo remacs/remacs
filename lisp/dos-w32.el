@@ -228,10 +228,10 @@ dealing with untranslated filesystems."
       ;; directory separators changed to directory-sep-char.
       (let ((name nil))
 	(setq name (mapconcat
-		    '(lambda (char)
-		       (if (and (<= ?A char) (<= char ?Z))
-			   (char-to-string (+ (- char ?A) ?a))
-			 (char-to-string char)))
+		    (lambda (char)
+                      (if (and (<= ?A char) (<= char ?Z))
+                          (char-to-string (+ (- char ?A) ?a))
+                        (char-to-string char)))
 		    filename nil))
 	;; Use expand-file-name to canonicalize directory separators, except
 	;; with bare drive letters (which would have the cwd appended).
@@ -290,7 +290,7 @@ filesystem mounted on drive Z:, FILESYSTEM could be \"Z:\"."
 (defun direct-print-region-helper (printer
 				   start end
 				   lpr-prog
-				   delete-text buf display
+				   _delete-text _buf _display
 				   rest)
   (let* (;; Ignore case when matching known external program names.
 	 (case-fold-search t)
@@ -381,9 +381,9 @@ filesystem mounted on drive Z:, FILESYSTEM could be \"Z:\"."
 (declare-function default-printer-name "w32fns.c")
 
 (defun direct-print-region-function (start end
-					   &optional lpr-prog
-					   delete-text buf display
-					   &rest rest)
+                                     &optional lpr-prog
+                                     delete-text buf display
+                                     &rest rest)
   "DOS/Windows-specific function to print the region on a printer.
 Writes the region to the device or file which is a value of
 `printer-name' \(which see\), unless the value of `lpr-command'
@@ -399,7 +399,7 @@ indicates a specific program should be invoked."
 	 ;; paper if the file ends with a form-feed already.
 	 (write-region-annotate-functions
 	  (cons
-	   (lambda (start end)
+	   (lambda (_start end)
 	     (if (not (char-equal (char-before end) ?\C-l))
 		 `((,end . "\f"))))
 	   write-region-annotate-functions))

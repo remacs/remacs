@@ -1266,9 +1266,9 @@ functions for sets include @code{memq} and @code{delq}, and their
 @cindex CL note---lack @code{union}, @code{intersection}
 @quotation
 @b{Common Lisp note:} Common Lisp has functions @code{union} (which
-avoids duplicate elements) and @code{intersection} for set operations,
-but GNU Emacs Lisp does not have them.  You can write them in Lisp if
-you wish.
+avoids duplicate elements) and @code{intersection} for set operations.
+Although standard GNU Emacs Lisp does not have them, the @file{cl}
+library provides versions.  @inforef{Top, Overview, cl}.
 @end quotation
 
 @defun memq object list
@@ -1355,10 +1355,10 @@ and the @code{(4)} in the @code{sample-list} are not @code{eq}:
 (delq '(4) sample-list)
      @result{} (a c (4))
 @end group
+@end example
 
 If you want to delete elements that are @code{equal} to a given value,
 use @code{delete} (see below).
-@end example
 
 @defun remq object list
 This function returns a copy of @var{list}, with all elements removed

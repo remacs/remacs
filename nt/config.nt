@@ -299,6 +299,20 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 /* Define to 1 if you have the `localtime_r' function. */
 #undef HAVE_LOCALTIME_R
 
+/* Define to 1 if you have the declaration of `strtoull', and to 0 if you
+   don't. */
+#define HAVE_DECL_STRTOULL 1
+
+/* Define to 1 if you have the declaration of `strtoumax', and to 0 if you
+   don't. */
+#define HAVE_DECL_STRTOUMAX 1
+
+/* Define to 1 if you have the `strtoull' function. */
+#define HAVE_STRTOULL 1
+
+/* Define to 1 if you have the `strtoumax' function. */
+#define HAVE_STRTOUMAX 1
+
 /* Define if you have the 'wchar_t' type. */
 #define HAVE_WCHAR_T 1
 
@@ -323,6 +337,17 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 # define restrict
 #endif
 
+/* A va_copy replacement for MSVC.  */
+#ifdef _MSC_VER
+# ifdef _WIN64
+#  ifndef va_copy
+#   error "va_copy is needed, but not defined!"
+#  endif
+# else	/* not _WIN64 */
+#  define va_copy(d,s) ((d) = (s))
+# endif	 /* not _WIN64 */
+#endif	 /* _MSC_VER */
+
 /* Define as a marker that can be attached to declarations that might not
     be used.  This helps to reduce warnings, such as from
     GCC -Wunused-parameter.  */
@@ -337,18 +362,30 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 /* End of gnulib-related stuff.  */
 
-/* If using GNU, then support inline function declarations. */
-#ifdef __GNUC__
-#define INLINE __inline__
-#define inline __inline__
+#if __GNUC__ >= 3  /* On GCC 3.0 we might get a warning.  */
+#define NO_INLINE __attribute__((noinline))
 #else
-#define INLINE
+#define NO_INLINE
 #endif
 
 #if (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 1))
 #define EXTERNALLY_VISIBLE __attribute__((externally_visible))
 #else
 #define EXTERNALLY_VISIBLE
+#endif
+
+#if __GNUC__ > 2 || (__GNUC__ == 2 && __GNUC_MINOR__ >= 7)
+# define ATTRIBUTE_FORMAT(spec) __attribute__ ((__format__ spec))
+#else
+# define ATTRIBUTE_FORMAT(spec) /* empty */
+#endif
+
+#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 4)
+# define ATTRIBUTE_FORMAT_PRINTF(formatstring_parameter, first_argument) \
+   ATTRIBUTE_FORMAT ((__gnu_printf__, formatstring_parameter, first_argument))
+#else
+# define ATTRIBUTE_FORMAT_PRINTF(formatstring_parameter, first_argument) \
+   ATTRIBUTE_FORMAT ((__printf__, formatstring_parameter, first_argument))
 #endif
 
 #if (__GNUC__ > 2 || (__GNUC__ == 2 && __GNUC_MINOR__ >= 8))
@@ -393,15 +430,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #undef STACK_DIRECTION
 #endif
 
-/* Define the return type of signal handlers if the s-xxx file
-   did not already do so.  */
-#define RETSIGTYPE void
-
-/* SIGTYPE is the macro we actually use.  */
-#ifndef SIGTYPE
-#define SIGTYPE RETSIGTYPE
-#endif
-
 #ifdef emacs /* Don't do this for lib-src.  */
 /* Tell regex.c to use a type compatible with Emacs.  */
 #define RE_TRANSLATE_TYPE Lisp_Object
@@ -410,6 +438,9 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #endif
 
 #define my_strftime nstrftime   /* for strftime.c */
+
+/* Define to the type of st_nlink in struct stat, or a supertype. */
+#define nlink_t short
 
 #ifndef WINDOWSNT
 /* Some of the files of Emacs which are intended for use with other
@@ -440,6 +471,31 @@ extern char *getenv ();
 
 #ifndef BITS_PER_LONG
 #define BITS_PER_LONG 32
+#endif
+
+#if defined(__MINGW32__) || _MSC_VER >= 1400
+
+/* Define to 1 if the system has the type `long long int'. */
+# define HAVE_LONG_LONG_INT 1
+
+/* Define to 1 if the system has the type `unsigned long long int'. */
+# define HAVE_UNSIGNED_LONG_LONG_INT 1
+
+#elif _MSC_VER >= 1200
+
+/* Temporarily disable wider-than-pointer integers until they're tested more.
+   Build with CFLAGS='-DWIDE_EMACS_INT' to try them out.  */
+/* #undef WIDE_EMACS_INT */
+
+# ifdef WIDE_EMACS_INT
+
+/* Use pre-C99-style 64-bit integers.  */
+# define EMACS_INT __int64
+# define BITS_PER_EMACS_INT 64
+# define pI "I64"
+
+# endif
+
 #endif
 
 #ifndef POINTER_TYPE
@@ -480,4 +536,3 @@ void w32_abort (void) NO_RETURN;
 
 /* Make a leaner executable.  */
 #define WIN32_LEAN_AND_MEAN 1
-

@@ -390,11 +390,11 @@ do the work."
                     (equal nil mh-mime-save-parts-default-directory)
                     (equal t mh-mime-save-parts-default-directory))
                 (not mh-mime-save-parts-directory))
-           (read-file-name "Store in directory: " nil nil t nil))
+           (read-directory-name "Store in directory: " nil nil t))
           ((and (or prompt
                     (equal t mh-mime-save-parts-default-directory))
                 mh-mime-save-parts-directory)
-           (read-file-name (format
+           (read-directory-name (format
                             "Store in directory (default %s): "
                             mh-mime-save-parts-directory)
                            "" mh-mime-save-parts-directory t ""))
@@ -1637,8 +1637,8 @@ This action can be undone by running \\[undo]."
     ;; Do an alias lookup on recipients
     (message-options-set 'message-recipients
                          (mapconcat
-                          '(lambda (ali)
-                             (mail-strip-quoted-names (mh-alias-expand ali)))
+                          (lambda (ali)
+                            (mail-strip-quoted-names (mh-alias-expand ali)))
                           (split-string (message-options-get 'message-recipients) "[, ]+")
                           ", ")))
   (let ((saved-text (buffer-string))

@@ -485,7 +485,7 @@ If nil, use `temporary-file-directory'."
 ;; PostScript mode.
 
 ;;;###autoload
-(define-derived-mode ps-mode fundamental-mode "PostScript"
+(define-derived-mode ps-mode prog-mode "PostScript"
   "Major mode for editing PostScript with GNU Emacs.
 
 Entry to this mode calls `ps-mode-hook'.
@@ -540,6 +540,10 @@ Typing \\<ps-run-mode-map>\\[ps-run-goto-error] when the cursor is at the number
   "Show current version of PostScript mode."
   (interactive)
   (message " *** PostScript Mode (ps-mode) Version %s *** " ps-mode-version))
+
+;; From reporter.el
+(defvar reporter-prompt-for-summary-p)
+(defvar reporter-dont-compact-list)
 
 (defun ps-mode-submit-bug-report ()
   "Submit via mail a bug report on PostScript mode."

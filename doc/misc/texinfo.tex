@@ -3,7 +3,7 @@
 % Load plain if necessary, i.e., if running under initex.
 \expandafter\ifx\csname fmtname\endcsname\relax\input plain\fi
 %
-\def\texinfoversion{2011-02-01.10}
+\def\texinfoversion{2011-05-23.16}
 %
 % Copyright 1985, 1986, 1988, 1990, 1991, 1992, 1993, 1994, 1995,
 % 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006,
@@ -158,6 +158,7 @@
 \def\spaceisspace{\catcode`\ =\spacecat}
 
 % sometimes characters are active, so we need control sequences.
+\chardef\ampChar   = `\&
 \chardef\colonChar = `\:
 \chardef\commaChar = `\,
 \chardef\dashChar  = `\-
@@ -217,7 +218,7 @@
   \tracingmacros2
   \tracingrestores1
   \showboxbreadth\maxdimen \showboxdepth\maxdimen
-  \ifx\eTeXversion\undefined\else % etex gives us more logging
+  \ifx\eTeXversion\thisisundefined\else % etex gives us more logging
     \tracingscantokens1
     \tracingifs1
     \tracinggroups1
@@ -547,7 +548,7 @@
 }
 \def\inenvironment#1{%
   \ifx#1\empty
-    out of any environment%
+    outside of any environment%
   \else
     in environment \expandafter\string#1%
   \fi
@@ -610,7 +611,7 @@
   \else\ifx\temp\offword \plainnonfrenchspacing
   \else
     \errhelp = \EMsimple
-    \errmessage{Unknown @frenchspacing option `\temp', must be on/off}%
+    \errmessage{Unknown @frenchspacing option `\temp', must be on|off}%
   \fi\fi
 }
 
@@ -691,15 +692,6 @@ where each line of input produces a line of output.}
 % forces a page break if there is not space-in-mils remaining.
 
 \newdimen\mil  \mil=0.001in
-
-% Old definition--didn't work.
-%\parseargdef\need{\par %
-%% This method tries to make TeX break the page naturally
-%% if the depth of the box does not fit.
-%{\baselineskip=0pt%
-%\vtop to #1\mil{\vfil}\kern -#1\mil\nobreak
-%\prevdepth=-1000pt
-%}}
 
 \parseargdef\need{%
   % Ensure vertical mode, so we don't make a big box in the middle of a
@@ -1081,9 +1073,8 @@ where each line of input produces a line of output.}
 \newif\ifpdfmakepagedest
 
 % when pdftex is run in dvi mode, \pdfoutput is defined (so \pdfoutput=1
-% can be set).  So we test for \relax and 0 as well as \undefined,
-% borrowed from ifpdf.sty.
-\ifx\pdfoutput\undefined
+% can be set).  So we test for \relax and 0 as well as being undefined.
+\ifx\pdfoutput\thisisundefined
 \else
   \ifx\pdfoutput\relax
   \else
@@ -1515,7 +1506,7 @@ output) for that.)}
 % if we are producing pdf, and we have \pdffontattr, then define cmaps.
 % (\pdffontattr was introduced many years ago, but people still run
 % older pdftex's; it's easy to conditionalize, so we do.)
-\ifpdf \ifx\pdffontattr\undefined \else
+\ifpdf \ifx\pdffontattr\thisisundefined \else
   \begingroup
     \catcode`\^^M=\active \def^^M{^^J}% Output line endings as the ^^J char.
     \catcode`\%=12 \immediate\pdfobj stream {%!PS-Adobe-3.0 Resource-CMap
@@ -1782,7 +1773,7 @@ end
 % Use cm as the default font prefix.
 % To specify the font prefix, you must define \fontprefix
 % before you read in texinfo.tex.
-\ifx\fontprefix\undefined
+\ifx\fontprefix\thisisundefined
 \def\fontprefix{cm}
 \fi
 % Support font families that don't use the same naming scheme as CM.
@@ -2296,12 +2287,11 @@ end
 
 \let\markupsetuplqkbd \markupsetnoligaturesquoteleft
 
-% Allow an option to not replace quotes with a regular directed right
-% quote/apostrophe (char 0x27), but instead use the undirected quote
-% from cmtt (char 0x0d).  The undirected quote is ugly, so don't make it
-% the default, but it works for pasting with more pdf viewers (at least
-% evince), the lilypond developers report.  xpdf does work with the
-% regular 0x27.
+% Allow an option to not use regular directed right quote/apostrophe
+% (char 0x27), but instead the undirected quote from cmtt (char 0x0d).
+% The undirected quote is ugly, so don't make it the default, but it
+% works for pasting with more pdf viewers (at least evince), the
+% lilypond developers report.  xpdf does work with the regular 0x27.
 %
 \def\codequoteright{%
   \expandafter\ifx\csname SETtxicodequoteundirected\endcsname\relax
@@ -2323,6 +2313,36 @@ end
       \relax`%
     \else \char'22 \fi
   \else \char'22 \fi
+}
+
+% Commands to set the quote options.
+% 
+\parseargdef\codequoteundirected{%
+  \def\temp{#1}%
+  \ifx\temp\onword
+    \expandafter\let\csname SETtxicodequoteundirected\endcsname
+      = t%
+  \else\ifx\temp\offword
+    \expandafter\let\csname SETtxicodequoteundirected\endcsname
+      = \relax
+  \else
+    \errhelp = \EMsimple
+    \errmessage{Unknown @codequoteundirected value `\temp', must be on|off}%
+  \fi\fi
+}
+%
+\parseargdef\codequotebacktick{%
+  \def\temp{#1}%
+  \ifx\temp\onword
+    \expandafter\let\csname SETtxicodequotebacktick\endcsname
+      = t%
+  \else\ifx\temp\offword
+    \expandafter\let\csname SETtxicodequotebacktick\endcsname
+      = \relax
+  \else
+    \errhelp = \EMsimple
+    \errmessage{Unknown @codequotebacktick value `\temp', must be on|off}%
+  \fi\fi
 }
 
 % [Knuth] pp. 380,381,391, disable Spanish ligatures ?` and !` of \tt font.
@@ -2491,22 +2511,8 @@ end
     \codex
   }
 }
-% Handle @url similarly to \code, but allows line breaks after .#?/ (only).
-{
-  \catcode`\.=\active \catcode`\#=\active
-  \catcode`\?=\active \catcode`\/=\active
-  %
-  \global\def\urefcode{\begingroup
-    \setupmarkupstyle{code}%
-    \catcode\dotChar=\active   \catcode\hashChar=\active
-    \catcode\questChar=\active \catcode\slashChar=\active
-    \let.\urefcodedot
-    \let#\urefcodehash
-    \let?\urefcodequestion
-    \let/\urefcodeslash
-    \codex
-  }
-}
+
+\def\codex #1{\tclose{#1}\endgroup}
 
 \def\realdash{-}
 \def\codedash{-\discretionary{}{}{}}
@@ -2521,25 +2527,6 @@ end
              \discretionary{}{}{}}%
             {\_}%
 }
-% we put a little stretch before and after the breakable chars, to help
-% line breaking of long url's.  The unequal skips make look better in
-% cmtt at least, especially for dots.
-\def\urefprestretch{\nobreak \hskip0pt plus.13em }
-\def\urefpoststretch{\allowbreak \hskip0pt plus.1em }
-\def\urefcodedot{\urefprestretch .\urefpoststretch}
-\def\urefcodehash{\urefprestretch \#\urefpoststretch}
-\def\urefcodequestion{\urefprestretch ?\urefpoststretch}
-\def\urefcodeslash{\futurelet\next\urefcodeslashfinish}
-{
-  \catcode`\/=\active
-  \global\def\urefcodeslashfinish{%
-    \urefprestretch \slashChar
-    % Allow line break only after the final / in a sequence of
-    % slashes, to avoid line break between the slashes in http://.
-    \ifx\next/\else \urefpoststretch \fi
-  }
-}
-\def\codex #1{\tclose{#1}\endgroup}
 
 % An additional complication: the above will allow breaks after, e.g.,
 % each of the four underscores in __typeof__.  This is undesirable in
@@ -2559,9 +2546,155 @@ end
     \allowcodebreaksfalse
   \else
     \errhelp = \EMsimple
-    \errmessage{Unknown @allowcodebreaks option `\txiarg'}%
+    \errmessage{Unknown @allowcodebreaks option `\txiarg', must be true|false}%
   \fi\fi
 }
+
+% @uref (abbreviation for `urlref') takes an optional (comma-separated)
+% second argument specifying the text to display and an optional third
+% arg as text to display instead of (rather than in addition to) the url
+% itself.  First (mandatory) arg is the url.
+% (This \urefnobreak definition isn't used now, leaving it for a while
+% for comparison.)
+\def\urefnobreak#1{\dourefnobreak #1,,,\finish}
+\def\dourefnobreak#1,#2,#3,#4\finish{\begingroup
+  \unsepspaces
+  \pdfurl{#1}%
+  \setbox0 = \hbox{\ignorespaces #3}%
+  \ifdim\wd0 > 0pt
+    \unhbox0 % third arg given, show only that
+  \else
+    \setbox0 = \hbox{\ignorespaces #2}%
+    \ifdim\wd0 > 0pt
+      \ifpdf
+        \unhbox0             % PDF: 2nd arg given, show only it
+      \else
+        \unhbox0\ (\code{#1})% DVI: 2nd arg given, show both it and url
+      \fi
+    \else
+      \code{#1}% only url given, so show it
+    \fi
+  \fi
+  \endlink
+\endgroup}
+
+% This \urefbreak definition is the active one.
+\def\urefbreak{\begingroup \urefcatcodes \dourefbreak}
+\let\uref=\urefbreak
+\def\dourefbreak#1{\urefbreakfinish #1,,,\finish}
+\def\urefbreakfinish#1,#2,#3,#4\finish{% doesn't work in @example
+  \unsepspaces
+  \pdfurl{#1}%
+  \setbox0 = \hbox{\ignorespaces #3}%
+  \ifdim\wd0 > 0pt
+    \unhbox0 % third arg given, show only that
+  \else
+    \setbox0 = \hbox{\ignorespaces #2}%
+    \ifdim\wd0 > 0pt
+      \ifpdf
+        \unhbox0             % PDF: 2nd arg given, show only it
+      \else
+        \unhbox0\ (\urefcode{#1})% DVI: 2nd arg given, show both it and url
+      \fi
+    \else
+      \urefcode{#1}% only url given, so show it
+    \fi
+  \fi
+  \endlink
+\endgroup}
+
+% Allow line breaks around only a few characters (only).
+\def\urefcatcodes{%
+  \catcode\ampChar=\active   \catcode\dotChar=\active
+  \catcode\hashChar=\active  \catcode\questChar=\active
+  \catcode\slashChar=\active
+}
+{
+  \urefcatcodes
+  %
+  \global\def\urefcode{\begingroup
+    \setupmarkupstyle{code}%
+    \urefcatcodes
+    \let&\urefcodeamp
+    \let.\urefcodedot
+    \let#\urefcodehash
+    \let?\urefcodequest
+    \let/\urefcodeslash
+    \codex
+  }
+  %
+  % By default, they are just regular characters.
+  \global\def&{\normalamp}
+  \global\def.{\normaldot}
+  \global\def#{\normalhash}
+  \global\def?{\normalquest}
+  \global\def/{\normalslash}
+}
+
+% we put a little stretch before and after the breakable chars, to help
+% line breaking of long url's.  The unequal skips make look better in
+% cmtt at least, especially for dots.
+\def\urefprestretch{\urefprebreak \hskip0pt plus.13em }
+\def\urefpoststretch{\urefpostbreak \hskip0pt plus.1em }
+%
+\def\urefcodeamp{\urefprestretch \&\urefpoststretch}
+\def\urefcodedot{\urefprestretch .\urefpoststretch}
+\def\urefcodehash{\urefprestretch \#\urefpoststretch}
+\def\urefcodequest{\urefprestretch ?\urefpoststretch}
+\def\urefcodeslash{\futurelet\next\urefcodeslashfinish}
+{
+  \catcode`\/=\active
+  \global\def\urefcodeslashfinish{%
+    \urefprestretch \slashChar
+    % Allow line break only after the final / in a sequence of
+    % slashes, to avoid line break between the slashes in http://.
+    \ifx\next/\else \urefpoststretch \fi
+  }
+}
+
+% One more complication: by default we'll break after the special
+% characters, but some people like to break before the special chars, so
+% allow that.  Also allow no breaking at all, for manual control.
+% 
+\parseargdef\urefbreakstyle{%
+  \def\txiarg{#1}%
+  \ifx\txiarg\wordnone
+    \def\urefprebreak{\nobreak}\def\urefpostbreak{\nobreak}
+  \else\ifx\txiarg\wordbefore
+    \def\urefprebreak{\allowbreak}\def\urefpostbreak{\nobreak}
+  \else\ifx\txiarg\wordafter
+    \def\urefprebreak{\nobreak}\def\urefpostbreak{\allowbreak}
+  \else
+    \errhelp = \EMsimple
+    \errmessage{Unknown @urefbreakstyle setting `\txiarg'}%
+  \fi\fi\fi
+}
+\def\wordafter{after}
+\def\wordbefore{before}
+\def\wordnone{none}
+
+\urefbreakstyle after
+
+% @url synonym for @uref, since that's how everyone uses it.
+%
+\let\url=\uref
+
+% rms does not like angle brackets --karl, 17may97.
+% So now @email is just like @uref, unless we are pdf.
+%
+%\def\email#1{\angleleft{\tt #1}\angleright}
+\ifpdf
+  \def\email#1{\doemail#1,,\finish}
+  \def\doemail#1,#2,#3\finish{\begingroup
+    \unsepspaces
+    \pdfurl{mailto:#1}%
+    \setbox0 = \hbox{\ignorespaces #2}%
+    \ifdim\wd0>0pt\unhbox0\else\code{#1}\fi
+    \endlink
+  \endgroup}
+\else
+  \let\email=\uref
+\fi
 
 % @kbd is like @code, except that if the argument is just one @key command,
 % then @kbd has no effect.
@@ -2580,7 +2713,7 @@ end
     \gdef\kbdexamplefont{\tt}\gdef\kbdfont{\tt}%
   \else
     \errhelp = \EMsimple
-    \errmessage{Unknown @kbdinputstyle option `\txiarg'}%
+    \errmessage{Unknown @kbdinputstyle setting `\txiarg'}%
   \fi\fi\fi
 }
 \def\worddistinct{distinct}
@@ -2607,79 +2740,6 @@ end
 % @clickstyle @arrow   (by default)
 \parseargdef\clickstyle{\def\click{#1}}
 \def\click{\arrow}
-
-% @uref (abbreviation for `urlref') takes an optional (comma-separated)
-% second argument specifying the text to display and an optional third
-% arg as text to display instead of (rather than in addition to) the url
-% itself.  First (mandatory) arg is the url.  Perhaps eventually put in
-% a hypertex \special here.
-%
-\def\uref#1{\douref #1,,,\finish}
-\def\douref#1,#2,#3,#4\finish{\begingroup
-  \unsepspaces
-  \pdfurl{#1}%
-  \setbox0 = \hbox{\ignorespaces #3}%
-  \ifdim\wd0 > 0pt
-    \unhbox0 % third arg given, show only that
-  \else
-    \setbox0 = \hbox{\ignorespaces #2}%
-    \ifdim\wd0 > 0pt
-      \ifpdf
-        \unhbox0             % PDF: 2nd arg given, show only it
-      \else
-        \unhbox0\ (\code{#1})% DVI: 2nd arg given, show both it and url
-      \fi
-    \else
-      \code{#1}% only url given, so show it
-    \fi
-  \fi
-  \endlink
-\endgroup}
-
-\def\nouref#1,#2,#3,#4\finish{\begingroup  % doesn't work in @example
-  \unsepspaces
-  \pdfurl{#1}%
-  \setbox0 = \hbox{\ignorespaces #3}%
-  \ifdim\wd0 > 0pt
-    \unhbox0 % third arg given, show only that
-  \else
-    \setbox0 = \hbox{\ignorespaces #2}%
-    \ifdim\wd0 > 0pt
-      \ifpdf
-        \unhbox0             % PDF: 2nd arg given, show only it
-      \else
-        % \empty at the end of \scantokens arg gets rid of
-        % trailing newline (and ultimate spurious whitespace).
-        \unhbox0\ (\urefcode{\scantokens{#1\empty}})% DVI: 2nd arg given,
-                                                    % show both it and url
-      \fi
-    \else
-      \urefcode{\scantokens{#1\empty}}% only url given, so show it
-    \fi
-  \fi
-  \endlink
-\endgroup}
-
-% @url synonym for @uref, since that's how everyone uses it.
-%
-\let\url=\uref
-
-% rms does not like angle brackets --karl, 17may97.
-% So now @email is just like @uref, unless we are pdf.
-%
-%\def\email#1{\angleleft{\tt #1}\angleright}
-\ifpdf
-  \def\email#1{\doemail#1,,\finish}
-  \def\doemail#1,#2,#3\finish{\begingroup
-    \unsepspaces
-    \pdfurl{mailto:#1}%
-    \setbox0 = \hbox{\ignorespaces #2}%
-    \ifdim\wd0>0pt\unhbox0\else\code{#1}\fi
-    \endlink
-  \endgroup}
-\else
-  \let\email=\uref
-\fi
 
 % Typeset a dimension, e.g., `in' or `pt'.  The only reason for the
 % argument is to make the input look right: @dmn{pt} instead of @dmn{}pt.
@@ -3068,7 +3128,7 @@ end
 %  Textures 1.7.7 (preloaded format=plain 93.10.14)  (68K)  16 APR 2004 02:38
 % so we'll define it if necessary.
 %
-\ifx\Orb\undefined
+\ifx\Orb\thisisundefined
 \def\Orb{\mathhexbox20D}
 \fi
 
@@ -3158,7 +3218,7 @@ end
   \finishedtitlepagetrue
 }
 
-%%% Macros to be used within @titlepage:
+% Macros to be used within @titlepage:
 
 \let\subtitlerm=\tenrm
 \def\subtitlefont{\subtitlerm \normalbaselineskip = 13pt \normalbaselines}
@@ -3191,7 +3251,7 @@ end
 }
 
 
-%%% Set up page headings and footings.
+% Set up page headings and footings.
 
 \let\thispage=\folio
 
@@ -3343,7 +3403,7 @@ end
 % This produces Day Month Year style of output.
 % Only define if not already defined, in case a txi-??.tex file has set
 % up a different format (e.g., txi-cs.tex does this).
-\ifx\today\undefined
+\ifx\today\thisisundefined
 \def\today{%
   \number\day\space
   \ifcase\month
@@ -3890,9 +3950,9 @@ end
 \setbox0=\vbox{X}\global\multitablelinespace=\the\baselineskip
 \global\advance\multitablelinespace by-\ht0
 \fi
-%% Test to see if parskip is larger than space between lines of
-%% table. If not, do nothing.
-%%        If so, set to same dimension as multitablelinespace.
+% Test to see if parskip is larger than space between lines of
+% table. If not, do nothing.
+%        If so, set to same dimension as multitablelinespace.
 \ifdim\multitableparskip>\multitablelinespace
 \global\multitableparskip=\multitablelinespace
 \global\advance\multitableparskip-7pt %% to keep parskip somewhat smaller
@@ -5467,14 +5527,13 @@ end
 % (including whitespace, linebreaking, etc. around it),
 % given all the information in convenient, parsed form.
 
-%%% Args are the skip and penalty (usually negative)
+% Args are the skip and penalty (usually negative)
 \def\dobreak#1#2{\par\ifdim\lastskip<#1\removelastskip\penalty#2\vskip#1\fi}
 
-%%% Define plain chapter starts, and page on/off switching for it
 % Parameter controlling skip before chapter headings (if needed)
-
 \newskip\chapheadingskip
 
+% Define plain chapter starts, and page on/off switching for it.
 \def\chapbreak{\dobreak \chapheadingskip {-4000}}
 \def\chappager{\par\vfill\supereject}
 % Because \domark is called before \chapoddpage, the filler page will
@@ -5677,6 +5736,8 @@ end
 %
 \def\sectionheading#1#2#3#4{%
   {%
+    \checkenv{}% should not be in an environment.
+    %
     % Switch to the right set of fonts.
     \csname #2fonts\endcsname \rmisbold
     %
@@ -6422,7 +6483,7 @@ end
 %
 \def\Equotation{%
   \par
-  \ifx\quotationauthor\undefined\else
+  \ifx\quotationauthor\thisisundefined\else
     % indent a bit.
     \leftline{\kern 2\leftskip \sl ---\quotationauthor}%
   \fi
@@ -6631,7 +6692,7 @@ end
     % commands also insert a nobreak penalty, and we don't want to allow
     % a break between a section heading and a defun.
     %
-    % As a minor refinement, we avoid "club" headers by signalling
+    % As a further refinement, we avoid "club" headers by signalling
     % with penalty of 10003 after the very first @deffn in the
     % sequence (see above), and penalty of 10002 after any following
     % @def command.
@@ -6698,13 +6759,36 @@ end
 \def\domakedefun#1#2#3{%
   \envdef#1{%
     \startdefun
+    \doingtypefnfalse    % distinguish typed functions from all else
     \parseargusing\activeparens{\printdefunline#3}%
   }%
   \def#2{\dodefunx#1}%
   \def#3%
 }
 
-%%% Untyped functions:
+\newif\ifdoingtypefn       % doing typed function?
+\newif\ifrettypeownline    % typeset return type on its own line?
+
+% @deftypefnnewline on|off says whether the return type of typed functions
+% are printed on their own line.  This affects @deftypefn, @deftypefun,
+% @deftypeop, and @deftypemethod.
+% 
+\parseargdef\deftypefnnewline{%
+  \def\temp{#1}%
+  \ifx\temp\onword
+    \expandafter\let\csname SETtxideftypefnnl\endcsname
+      = \empty
+  \else\ifx\temp\offword
+    \expandafter\let\csname SETtxideftypefnnl\endcsname
+      = \relax
+  \else
+    \errhelp = \EMsimple
+    \errmessage{Unknown @txideftypefnnl value `\temp',
+                must be on|off}%
+  \fi\fi
+}
+
+% Untyped functions:
 
 % @deffn category name args
 \makedefun{deffn}{\deffngeneral{}}
@@ -6723,7 +6807,7 @@ end
   \defname{#2}{}{#3}\magicamp\defunargs{#4\unskip}%
 }
 
-%%% Typed functions:
+% Typed functions:
 
 % @deftypefn category type name args
 \makedefun{deftypefn}{\deftypefngeneral{}}
@@ -6738,10 +6822,11 @@ end
 %
 \def\deftypefngeneral#1#2 #3 #4 #5\endheader{%
   \dosubind{fn}{\code{#4}}{#1}%
+  \doingtypefntrue
   \defname{#2}{#3}{#4}\defunargs{#5\unskip}%
 }
 
-%%% Typed variables:
+% Typed variables:
 
 % @deftypevr category type var args
 \makedefun{deftypevr}{\deftypecvgeneral{}}
@@ -6759,7 +6844,7 @@ end
   \defname{#2}{#3}{#4}\defunargs{#5\unskip}%
 }
 
-%%% Untyped variables:
+% Untyped variables:
 
 % @defvr category var args
 \makedefun{defvr}#1 {\deftypevrheader{#1} {} }
@@ -6770,7 +6855,8 @@ end
 % \defcvof {category of}class var args
 \def\defcvof#1#2 {\deftypecvof{#1}#2 {} }
 
-%%% Type:
+% Types:
+
 % @deftp category name args
 \makedefun{deftp}#1 #2 #3\endheader{%
   \doind{tp}{\code{#2}}%
@@ -6798,25 +6884,49 @@ end
 % We are followed by (but not passed) the arguments, if any.
 %
 \def\defname#1#2#3{%
+  \par
   % Get the values of \leftskip and \rightskip as they were outside the @def...
   \advance\leftskip by -\defbodyindent
   %
-  % How we'll format the type name.  Putting it in brackets helps
+  % Determine if we are typesetting the return type of a typed function
+  % on a line by itself.
+  \rettypeownlinefalse
+  \ifdoingtypefn  % doing a typed function specifically?
+    % then check user option for putting return type on its own line:
+    \expandafter\ifx\csname SETtxideftypefnnl\endcsname\relax \else
+      \rettypeownlinetrue
+    \fi
+  \fi
+  %
+  % How we'll format the category name.  Putting it in brackets helps
   % distinguish it from the body text that may end up on the next line
   % just below it.
   \def\temp{#1}%
   \setbox0=\hbox{\kern\deflastargmargin \ifx\temp\empty\else [\rm\temp]\fi}
   %
-  % Figure out line sizes for the paragraph shape.
+  % Figure out line sizes for the paragraph shape.  We'll always have at
+  % least two.
+  \tempnum = 2
+  %
   % The first line needs space for \box0; but if \rightskip is nonzero,
   % we need only space for the part of \box0 which exceeds it:
   \dimen0=\hsize  \advance\dimen0 by -\wd0  \advance\dimen0 by \rightskip
+  %
+  % If doing a return type on its own line, we'll have another line.
+  \ifrettypeownline
+    \advance\tempnum by 1
+    \def\maybeshapeline{0in \hsize}%
+  \else
+    \def\maybeshapeline{}%
+  \fi
+  %
   % The continuations:
   \dimen2=\hsize  \advance\dimen2 by -\defargsindent
-  % (plain.tex says that \dimen1 should be used only as global.)
-  \parshape 2 0in \dimen0 \defargsindent \dimen2
   %
-  % Put the type name to the right margin.
+  % The final paragraph shape:
+  \parshape \tempnum  0in \dimen0  \maybeshapeline  \defargsindent \dimen2
+  %
+  % Put the category name at the right margin.
   \noindent
   \hbox to 0pt{%
     \hfil\box0 \kern-\hsize
@@ -6838,8 +6948,16 @@ end
     % . this still does not fix the ?` and !` ligatures, but so far no
     %   one has made identifiers using them :).
     \df \tt
-    \def\temp{#2}% return value type
-    \ifx\temp\empty\else \tclose{\temp} \fi
+    \def\temp{#2}% text of the return type
+    \ifx\temp\empty\else
+      \tclose{\temp}% typeset the return type
+      \ifrettypeownline
+        % put return type on its own line; prohibit line break following:
+        \hfil\vadjust{\nobreak}\break  
+      \else
+        \space  % type on same line, so just followed by a space
+      \fi
+    \fi           % no return type
     #3% output function name
   }%
   {\rm\enskip}% hskip 0.5 em of \tenrm
@@ -6957,7 +7075,7 @@ end
 
 % To do this right we need a feature of e-TeX, \scantokens,
 % which we arrange to emulate with a temporary file in ordinary TeX.
-\ifx\eTeXversion\undefined
+\ifx\eTeXversion\thisisundefined
   \newwrite\macscribble
   \def\scantokens#1{%
     \toks0={#1}%
@@ -6982,12 +7100,14 @@ end
   % ... and for \example:
   \spaceisspace
   %
-  % The \empty here causes a following catcode 5 newline to be eaten
-  % as part of reading whitespace after a control sequence.  It does
-  % not eat a catcode 13 newline.  There's no good way to handle the
-  % two cases.  See the Macro Details node in the manual for the
-  % workaround we currently have to recommend for macros and
+  % The \empty here causes a following catcode 5 newline to be eaten as
+  % part of reading whitespace after a control sequence.  It does not
+  % eat a catcode 13 newline.  There's no good way to handle the two
+  % cases (untried: maybe e-TeX's \everyeof could help, though plain TeX
+  % would then have different behavior).  See the Macro Details node in
+  % the manual for the workaround we recommend for macros and
   % line-oriented commands.
+  % 
   \scantokens{#1\empty}%
 \endgroup}
 
@@ -7379,6 +7499,27 @@ end
   \fi
 }
 
+% @xrefautosectiontitle on|off says whether @section(ing) names are used
+% automatically in xrefs, if the third arg is not explicitly specified.
+% This was provided as a "secret" @set xref-automatic-section-title
+% variable, now it's official.
+% 
+\parseargdef\xrefautomaticsectiontitle{%
+  \def\temp{#1}%
+  \ifx\temp\onword
+    \expandafter\let\csname SETxref-automatic-section-title\endcsname
+      = \empty
+  \else\ifx\temp\offword
+    \expandafter\let\csname SETxref-automatic-section-title\endcsname
+      = \relax
+  \else
+    \errhelp = \EMsimple
+    \errmessage{Unknown @xrefautomaticsectiontitle value `\temp',
+                must be on|off}%
+  \fi\fi
+}
+
+
 % @xref, @pxref, and @ref generate cross-references.  For \xrefX, #1 is
 % the node name, #2 the name of the Info cross-reference, #3 the printed
 % node name, #4 the name of the Info file, #5 the name of the printed
@@ -7395,7 +7536,7 @@ end
   \setbox0=\hbox{\printedrefname\unskip}%
   \ifdim \wd0 = 0pt
     % No printed node name was explicitly given.
-    \expandafter\ifx\csname SETxref-automatic-section-title\endcsname\relax
+    \expandafter\ifx\csname SETxref-automatic-section-title\endcsname \relax
       % Use the node name inside the square brackets.
       \def\printedrefname{\ignorespaces #1}%
     \else
@@ -7865,7 +8006,7 @@ end
   it from ftp://tug.org/tex/epsf.tex.}
 %
 \def\image#1{%
-  \ifx\epsfbox\undefined
+  \ifx\epsfbox\thisiundefined
     \ifwarnednoepsf \else
       \errhelp = \noepsfhelp
       \errmessage{epsf.tex not found, images will be ignored}%
@@ -8330,7 +8471,7 @@ directory should work if nowhere else does.}
 %
 % Latin1 (ISO-8859-1) character definitions.
 \def\latonechardefs{%
-  \gdef^^a0{~}
+  \gdef^^a0{\tie}
   \gdef^^a1{\exclamdown}
   \gdef^^a2{\missingcharmsg{CENT SIGN}}
   \gdef^^a3{{\pounds}}
@@ -8360,7 +8501,7 @@ directory should work if nowhere else does.}
   \gdef^^b9{$^1$}
   \gdef^^ba{\ordm}
   %
-  \gdef^^bb{\guilletright}
+  \gdef^^bb{\guillemetright}
   \gdef^^bc{$1\over4$}
   \gdef^^bd{$1\over2$}
   \gdef^^be{$3\over4$}
@@ -8452,7 +8593,7 @@ directory should work if nowhere else does.}
 
 % Latin2 (ISO-8859-2) character definitions.
 \def\lattwochardefs{%
-  \gdef^^a0{~}
+  \gdef^^a0{\tie}
   \gdef^^a1{\ogonek{A}}
   \gdef^^a2{\u{}}
   \gdef^^a3{\L}
@@ -9301,28 +9442,21 @@ directory should work if nowhere else does.}
 
 \message{and turning on texinfo input format.}
 
+\def^^L{\par} % remove \outer, so ^L can appear in an @comment
+
 % DEL is a comment character, in case @c does not suffice.
 \catcode`\^^? = 14
 
 % Define macros to output various characters with catcode for normal text.
-\catcode`\"=\other
-\catcode`\~=\other
-\catcode`\^=\other
-\catcode`\_=\other
-\catcode`\|=\other
-\catcode`\<=\other
-\catcode`\>=\other
-\catcode`\+=\other
-\catcode`\$=\other
-\def\normaldoublequote{"}
-\def\normaltilde{~}
-\def\normalcaret{^}
-\def\normalunderscore{_}
-\def\normalverticalbar{|}
-\def\normalless{<}
-\def\normalgreater{>}
-\def\normalplus{+}
-\def\normaldollar{$}%$ font-lock fix
+\catcode`\"=\other \def\normaldoublequote{"}
+\catcode`\$=\other \def\normaldollar{$}%$ font-lock fix
+\catcode`\+=\other \def\normalplus{+}
+\catcode`\<=\other \def\normalless{<}
+\catcode`\>=\other \def\normalgreater{>}
+\catcode`\^=\other \def\normalcaret{^}
+\catcode`\_=\other \def\normalunderscore{_}
+\catcode`\|=\other \def\normalverticalbar{|}
+\catcode`\~=\other \def\normaltilde{~}
 
 % This macro is used to make a character print one way in \tt
 % (where it can probably be output as-is), and another way in other fonts,
@@ -9415,16 +9549,16 @@ directory should work if nowhere else does.}
 % the literal character `\'.
 %
 @def@normalturnoffactive{%
-  @let\=@normalbackslash
   @let"=@normaldoublequote
-  @let~=@normaltilde
+  @let$=@normaldollar %$ font-lock fix
+  @let+=@normalplus
+  @let<=@normalless
+  @let>=@normalgreater
+  @let\=@normalbackslash
   @let^=@normalcaret
   @let_=@normalunderscore
   @let|=@normalverticalbar
-  @let<=@normalless
-  @let>=@normalgreater
-  @let+=@normalplus
-  @let$=@normaldollar %$ font-lock fix
+  @let~=@normaltilde
   @markupsetuplqdefault
   @markupsetuprqdefault
   @unsepspaces
@@ -9456,10 +9590,16 @@ directory should work if nowhere else does.}
 % Say @foo, not \foo, in error messages.
 @escapechar = `@@
 
+% These (along with & and #) are made active for url-breaking, so need
+% active definitions as the normal characters.
+@def@normaldot{.}
+@def@normalquest{?}
+@def@normalslash{/}
+
 % These look ok in all fonts, so just make them not special.
-@catcode`@& = @other
-@catcode`@# = @other
-@catcode`@% = @other
+@catcode`@& = @other @def@normalamp{&}
+@catcode`@# = @other @def@normalhash{#}
+@catcode`@% = @other @def@normalpercent{%}
 
 @c Finally, make ` and ' active, so that txicodequoteundirected and
 @c txicodequotebacktick work right in, e.g., @w{@code{`foo'}}.  If we

@@ -1,4 +1,5 @@
 /* A general interface to the widgets of different toolkits.
+
 Copyright (C) 1992, 1993 Lucid, Inc.
 Copyright (C) 1994-1996, 1999-2011  Free Software Foundation, Inc.
 
@@ -24,7 +25,7 @@ Boston, MA 02110-1301, USA.  */
 #endif
 
 #include <setjmp.h>
-#include "../src/lisp.h"
+#include <lisp.h>
 
 #include <sys/types.h>
 #include <stdio.h>
@@ -421,7 +422,7 @@ safe_strcmp (const char *s1, const char *s2)
 	      (nc == STRUCTURAL_CHANGE ? "structural" : "???")))),	\
 	   nc, desc, a1, a2)
 #else
-# define EXPLAIN(name, oc, nc, desc, a1, a2)
+# define EXPLAIN(name, oc, nc, desc, a1, a2) ((void) 0)
 #endif
 
 
@@ -911,8 +912,9 @@ destroy_one_instance (widget_instance *instance)
 	xaw_destroy_instance (instance);
       else
 #endif
-	/* do not remove the empty statement */
-	;
+	{
+	  /* Empty compound statement to terminate if-then-else chain.  */
+	}
     }
 
   free_widget_instance (instance);
@@ -977,7 +979,7 @@ lw_destroy_all_pop_ups (void)
 }
 
 #ifdef USE_MOTIF
-extern Widget first_child (/* Widget */);	/* garbage */
+extern Widget first_child (Widget);	/* garbage */
 #endif
 
 Widget
@@ -1418,4 +1420,3 @@ lw_separator_p (const char *label, enum menu_separator *type, int motif_p)
 
   return separator_p;
 }
-

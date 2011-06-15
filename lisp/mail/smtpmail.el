@@ -77,7 +77,7 @@
 (autoload 'netrc-machine "netrc")
 (autoload 'netrc-get "netrc")
 (autoload 'password-read "password-cache")
-(autoload 'auth-source-user-or-password "auth-source")
+(autoload 'auth-source-search "auth-source")
 
 ;;;
 (defgroup smtpmail nil
@@ -361,6 +361,8 @@ The list is in preference order.")
 	    (if mail-interactive
 		(with-current-buffer errbuf
 		  (erase-buffer))))
+	  ;; Encode the header according to RFC2047.
+	  (mail-encode-header (point-min) delimline)
 	  ;;
 	  (setq smtpmail-address-buffer (generate-new-buffer "*smtp-mail*"))
 	  (setq smtpmail-recipient-address-list
@@ -538,10 +540,14 @@ The list is in preference order.")
 (defun smtpmail-try-auth-methods (process supported-extensions host port)
   (let* ((mechs (cdr-safe (assoc 'auth supported-extensions)))
 	 (mech (car (smtpmail-intersection mechs smtpmail-auth-supported)))
-	 (auth-user (auth-source-user-or-password
-		     "login" host (or port "smtp")))
-	 (auth-pass (auth-source-user-or-password
-		     "password" host (or port "smtp")))
+         (auth-info (auth-source-search :max 1
+                                        :host host
+                                        :port (or port "smtp")))
+         (auth-user (plist-get (nth 0 auth-info) :user))
+         (auth-pass (plist-get (nth 0 auth-info) :secret))
+         (auth-pass (if (functionp auth-pass)
+                        (funcall auth-pass)
+                      auth-pass))
 	 (cred (if (and auth-user auth-pass) ; try user-auth-* before netrc-*
 		   (list host port auth-user auth-pass)
 		 ;; else, if auth-source didn't return them...
@@ -937,15 +943,20 @@ The list is in preference order.")
   (process-send-string process "\r\n"))
 
 (defun smtpmail-send-data (process buffer)
-  (let ((data-continue t) sending-data)
+  (let ((data-continue t) sending-data
+        (pr (with-current-buffer buffer
+              (make-progress-reporter "Sending email"
+                                      (point-min) (point-max)))))
     (with-current-buffer buffer
       (goto-char (point-min)))
     (while data-continue
       (with-current-buffer buffer
+        (progress-reporter-update pr (point))
         (setq sending-data (buffer-substring (point-at-bol) (point-at-eol)))
 	(end-of-line 2)
         (setq data-continue (not (eobp))))
-      (smtpmail-send-data-1 process sending-data))))
+      (smtpmail-send-data-1 process sending-data))
+    (progress-reporter-done pr)))
 
 (defun smtpmail-deduce-address-list (smtpmail-text-buffer header-start header-end)
   "Get address list suitable for smtp RCPT TO: <address>."

@@ -483,7 +483,7 @@ ns_set_name_internal (FRAME_PTR f, Lisp_Object name)
   if (!STRINGP (f->icon_name))
     encoded_icon_name = encoded_name;
   else
-    encoded_icon_name = ENCODE_UTF_8 (f->icon_name);    
+    encoded_icon_name = ENCODE_UTF_8 (f->icon_name);
 
   str = [NSString stringWithUTF8String: SDATA (encoded_icon_name)];
 
@@ -605,8 +605,8 @@ ns_set_name_as_filename (struct frame *f)
 
   BLOCK_INPUT;
   pool = [[NSAutoreleasePool alloc] init];
-  filename = XBUFFER (buf)->filename;
-  name = XBUFFER (buf)->name;
+  filename = BVAR (XBUFFER (buf), filename);
+  name = BVAR (XBUFFER (buf), name);
 
   if (NILP (name))
     {
@@ -637,7 +637,7 @@ ns_set_name_as_filename (struct frame *f)
 
   if (FRAME_ICONIFIED_P (f))
     [[view window] setMiniwindowTitle: str];
-  else 
+  else
     {
       NSString *fstr;
 
@@ -1021,8 +1021,8 @@ frame_parm_handler ns_frame_parm_handlers[] =
   0,  /* x_set_fullscreen will ignore */
   x_set_font_backend, /* generic OK */
   x_set_alpha,
-  0, /* x_set_sticky */  
-  0, /* x_set_tool_bar_position */  
+  0, /* x_set_sticky */
+  0, /* x_set_tool_bar_position */
 };
 
 
@@ -1329,9 +1329,9 @@ be shared by the new frame.  */)
     }
 
   if (FRAME_HAS_MINIBUF_P (f)
-      && (!FRAMEP (kb->Vdefault_minibuffer_frame)
-          || !FRAME_LIVE_P (XFRAME (kb->Vdefault_minibuffer_frame))))
-    kb->Vdefault_minibuffer_frame = frame;
+      && (!FRAMEP (KVAR (kb, Vdefault_minibuffer_frame))
+          || !FRAME_LIVE_P (XFRAME (KVAR (kb, Vdefault_minibuffer_frame)))))
+    KVAR (kb, Vdefault_minibuffer_frame) = frame;
 
   /* All remaining specified parameters, which have not been "used"
      by x_get_arg and friends, now go in the misc. alist of the frame.  */
@@ -1416,9 +1416,10 @@ DEFUN ("ns-popup-color-panel", Fns_popup_color_panel, Sns_popup_color_panel,
 DEFUN ("ns-read-file-name", Fns_read_file_name, Sns_read_file_name, 1, 4, 0,
        doc: /* Use a graphical panel to read a file name, using prompt PROMPT.
 Optional arg DIR, if non-nil, supplies a default directory.
-Optional arg ISLOAD, if non-nil, means read a file name for saving.
+Optional arg MUSTMATCH, if non-nil, means the returned file or
+directory must exist.
 Optional arg INIT, if non-nil, provides a default file name to use.  */)
-     (Lisp_Object prompt, Lisp_Object dir, Lisp_Object isLoad, Lisp_Object init)
+     (Lisp_Object prompt, Lisp_Object dir, Lisp_Object mustmatch, Lisp_Object init)
 {
   static id fileDelegate = nil;
   int ret;
@@ -1428,7 +1429,7 @@ Optional arg INIT, if non-nil, provides a default file name to use.  */)
   NSString *promptS = NILP (prompt) || !STRINGP (prompt) ? nil :
     [NSString stringWithUTF8String: SDATA (prompt)];
   NSString *dirS = NILP (dir) || !STRINGP (dir) ?
-    [NSString stringWithUTF8String: SDATA (current_buffer->directory)] :
+    [NSString stringWithUTF8String: SDATA (BVAR (current_buffer, directory))] :
     [NSString stringWithUTF8String: SDATA (dir)];
   NSString *initS = NILP (init) || !STRINGP (init) ? nil :
     [NSString stringWithUTF8String: SDATA (init)];
@@ -1443,7 +1444,7 @@ Optional arg INIT, if non-nil, provides a default file name to use.  */)
   if ([dirS characterAtIndex: 0] == '~')
     dirS = [dirS stringByExpandingTildeInPath];
 
-  panel = NILP (isLoad) ?
+  panel = NILP (mustmatch) ?
     (id)[EmacsSavePanel savePanel] : (id)[EmacsOpenPanel openPanel];
 
   [panel setTitle: promptS];
@@ -1457,7 +1458,7 @@ Optional arg INIT, if non-nil, provides a default file name to use.  */)
 
   panelOK = 0;
   BLOCK_INPUT;
-  if (NILP (isLoad))
+  if (NILP (mustmatch))
     {
       ret = [panel runModalForDirectory: dirS file: initS];
     }
@@ -2044,7 +2045,7 @@ In case the execution fails, an error is signaled. */)
      (Lisp_Object script)
 {
   Lisp_Object result;
-  long status;
+  int status;
 
   CHECK_STRING (script);
   check_ns ();
@@ -2330,7 +2331,7 @@ If omitted or nil, that stands for the selected frame's display.  */)
 {
   struct ns_display_info *dpyinfo;
   check_ns ();
-  
+
   dpyinfo = check_ns_display_info (display);
   /* We force 24+ bit depths to 24-bit to prevent an overflow.  */
   return make_number (1 << min (dpyinfo->n_planes, 24));
@@ -2373,7 +2374,7 @@ compute_tip_xy (struct frame *f,
       pt.y = x_display_pixel_height (FRAME_NS_DISPLAY_INFO (f)) - XINT (top)
         - height;
     }
-  
+
   /* Ensure in bounds.  (Note, screen origin = lower left.) */
   if (INTEGERP (left))
     *root_x = pt.x;
@@ -2655,4 +2656,3 @@ be used as the image of the icon representing the frame.  */);
   check_window_system_func = check_ns;
 
 }
-

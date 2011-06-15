@@ -769,7 +769,10 @@ narrowed."
 (defun browse-url-of-dired-file ()
   "In Dired, ask a WWW browser to display the file named on this line."
   (interactive)
-  (browse-url-of-file (dired-get-filename)))
+  (let ((tem (dired-get-filename t t)))
+    (if tem
+	(browse-url-of-file (expand-file-name tem))
+      (error "No file on this line"))))
 
 ;;;###autoload
 (defun browse-url-of-region (min max)
@@ -798,7 +801,12 @@ first, if that exists."
   (let ((process-environment (copy-sequence process-environment))
 	(function (or (and (string-match "\\`mailto:" url)
 			   browse-url-mailto-function)
-		      browse-url-browser-function)))
+		      browse-url-browser-function))
+	;; Ensure that `default-directory' exists and is readable (b#6077).
+	(default-directory (if (and (file-directory-p default-directory)
+				    (file-readable-p default-directory))
+			       default-directory
+			     (expand-file-name "~/"))))
     ;; When connected to various displays, be careful to use the display of
     ;; the currently selected frame, rather than the original start display,
     ;; which may not even exist any more.
@@ -1106,8 +1114,7 @@ URL in a new window."
 		 browse-url-firefox-program
 		 (append
 		  browse-url-firefox-arguments
-		  (if (or (featurep 'dos-w32)
-			  (string-match "win32" system-configuration))
+		  (if (memq system-type '(windows-nt ms-dos))
 		      (list url)
 		    (list "-remote"
 			  (concat "openURL("

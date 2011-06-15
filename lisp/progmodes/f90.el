@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 1995-1997, 2000-2011  Free Software Foundation, Inc.
 
-;; Author: Torbj\"orn Einarsson <Torbjorn.Einarsson@era.ericsson.se>
+;; Author: Torbjörn Einarsson <Torbjorn.Einarsson@era.ericsson.se>
 ;; Maintainer: Glenn Morris <rgm@gnu.org>
 ;; Keywords: fortran, f90, languages
 
@@ -78,9 +78,9 @@
 ;; To customize f90-mode for your taste, use, for example:
 ;; (you don't have to specify values for all the parameters below)
 ;;
-;;(add-hook 'f90-mode-hook
-;;      ;; These are the default values.
-;;      '(lambda () (setq f90-do-indent 3
+;; (add-hook 'f90-mode-hook
+;;       ;; These are the default values.
+;;       (lambda () (setq f90-do-indent 3
 ;;                        f90-if-indent 3
 ;;                        f90-type-indent 3
 ;;                        f90-program-indent 2
@@ -629,6 +629,7 @@ Can be overridden by the value of `font-lock-maximum-decoration'.")
     (modify-syntax-entry ?=  "."  table)
     (modify-syntax-entry ?*  "."  table)
     (modify-syntax-entry ?/  "."  table)
+    (modify-syntax-entry ?%  "."  table) ; bug#8820
     ;; I think that the f95 standard leaves the behavior of \
     ;; unspecified, but that f2k will require it to be non-special.
     ;; Use `f90-backslash-not-special' to change.
@@ -809,8 +810,10 @@ Can be overridden by the value of `font-lock-maximum-decoration'.")
   ;; type word
   ;; type :: word
   ;; type, stuff :: word
+  ;; type, bind(c) :: word
   ;; NOT "type ("
-  "\\<\\(type\\)\\>\\(?:[^()\n]*::\\)?[ \t]*\\(\\sw+\\)"
+  "\\<\\(type\\)\\>\\(?:\\(?:[^()\n]*\\|\
+.*,[ \t]*bind[ \t]*([ \t]*c[ \t]*)[ \t]*\\)::\\)?[ \t]*\\(\\sw+\\)"
   "Regexp matching the definition of a derived type.")
 
 (defconst f90-typeis-re
@@ -1355,11 +1358,10 @@ if all else fails."
 (defun f90-get-correct-indent ()
   "Get correct indent for a line starting with line number.
 Does not check type and subprogram indentation."
-  (let ((epnt (line-end-position)) icol cont)
+  (let ((epnt (line-end-position)) icol)
     (save-excursion
       (while (and (f90-previous-statement)
-                  (or (memq (setq cont (f90-present-statement-cont))
-                            '(middle end))
+                  (or (memq (f90-present-statement-cont) '(middle end))
                       (looking-at "[ \t]*[0-9]"))))
       (setq icol (current-indentation))
       (beginning-of-line)
@@ -2198,7 +2200,6 @@ CHANGE-WORD should be one of 'upcase-word, 'downcase-word, 'capitalize-word."
   (save-excursion
     (nth 1 (f90-beginning-of-subprogram))))
 
-
 (defun f90-backslash-not-special (&optional all)
   "Make the backslash character (\\) be non-special in the current buffer.
 With optional argument ALL, change the default for all present
@@ -2212,5 +2213,10 @@ escape character."
 
 
 (provide 'f90)
+
+;; Local Variables:
+;; coding: utf-8
+;; lexical-binding: t
+;; End:
 
 ;;; f90.el ends here

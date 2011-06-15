@@ -66,7 +66,7 @@ files conditionalize this setup based on the TERM environment variable."
   :group 'tramp
   :type 'string)
 
-;; ksh on OpenBSD 4.5 requires, that $PS1 contains a `#' character for
+;; ksh on OpenBSD 4.5 requires that $PS1 contains a `#' character for
 ;; root users.  It uses the `$' character for other users.  In order
 ;; to guarantee a proper prompt, we use "#$ " for the prompt.
 
@@ -90,7 +90,7 @@ detected as prompt when being sent on echoing hosts, therefore.")
     (tramp-login-args           (("%h") ("-l" "%u")))
     (tramp-remote-sh            "/bin/sh")
     (tramp-copy-program         "rcp")
-    (tramp-copy-args            (("%k" "-p") ("-r")))
+    (tramp-copy-args            (("-p" "%k") ("-r")))
     (tramp-copy-keep-date       t)
     (tramp-copy-recursive       t)))
 ;;;###tramp-autoload
@@ -100,7 +100,7 @@ detected as prompt when being sent on echoing hosts, therefore.")
     (tramp-login-args           (("%h") ("-l" "%u")))
     (tramp-remote-sh            "/bin/sh")
     (tramp-copy-program         "rcp")
-    (tramp-copy-args            (("%k" "-p")))
+    (tramp-copy-args            (("-p" "%k")))
     (tramp-copy-keep-date       t)))
 ;;;###tramp-autoload
 (add-to-list 'tramp-methods
@@ -110,7 +110,7 @@ detected as prompt when being sent on echoing hosts, therefore.")
    (tramp-async-args           (("-q")))
    (tramp-remote-sh            "/bin/sh")
    (tramp-copy-program         "scp")
-   (tramp-copy-args            (("-P" "%p") ("%k" "-p")	("-q") ("-r")))
+   (tramp-copy-args            (("-P" "%p") ("-p" "%k")	("-q") ("-r")))
    (tramp-copy-keep-date       t)
    (tramp-copy-recursive       t)
    (tramp-gw-args              (("-o" "GlobalKnownHostsFile=/dev/null")
@@ -126,7 +126,7 @@ detected as prompt when being sent on echoing hosts, therefore.")
     (tramp-async-args           (("-q")))
     (tramp-remote-sh            "/bin/sh")
     (tramp-copy-program         "scp")
-    (tramp-copy-args            (("-1") ("-P" "%p") ("%k" "-p") ("-q") ("-r")))
+    (tramp-copy-args            (("-1") ("-P" "%p") ("-p" "%k") ("-q") ("-r")))
     (tramp-copy-keep-date       t)
     (tramp-copy-recursive       t)
     (tramp-gw-args              (("-o" "GlobalKnownHostsFile=/dev/null")
@@ -142,7 +142,7 @@ detected as prompt when being sent on echoing hosts, therefore.")
     (tramp-async-args           (("-q")))
     (tramp-remote-sh            "/bin/sh")
     (tramp-copy-program         "scp")
-    (tramp-copy-args            (("-2") ("-P" "%p") ("%k" "-p") ("-q") ("-r")))
+    (tramp-copy-args            (("-2") ("-P" "%p") ("-p" "%k") ("-q") ("-r")))
     (tramp-copy-keep-date       t)
     (tramp-copy-recursive       t)
     (tramp-gw-args              (("-o" "GlobalKnownHostsFile=/dev/null")
@@ -160,7 +160,7 @@ detected as prompt when being sent on echoing hosts, therefore.")
     (tramp-async-args           (("-q")))
     (tramp-remote-sh            "/bin/sh")
     (tramp-copy-program         "scp")
-    (tramp-copy-args            (("-P" "%p") ("%k" "-p") ("-q") ("-r")
+    (tramp-copy-args            (("-P" "%p") ("-p" "%k") ("-q") ("-r")
 				 ("-o" "ControlPath=%t.%%r@%%h:%%p")
 				 ("-o" "ControlMaster=auto")))
     (tramp-copy-keep-date       t)
@@ -179,7 +179,7 @@ detected as prompt when being sent on echoing hosts, therefore.")
     (tramp-async-args           (("-q")))
     (tramp-remote-sh            "/bin/sh")
     (tramp-copy-program         "scp")
-    (tramp-copy-args            (("-P" "%p") ("%k" "-p") ("-q") ("-r")))
+    (tramp-copy-args            (("-P" "%p") ("-p" "%k") ("-q") ("-r")))
     (tramp-copy-keep-date       t)
     (tramp-copy-recursive       t)
     (tramp-gw-args              (("-o" "GlobalKnownHostsFile=/dev/null")
@@ -202,7 +202,7 @@ detected as prompt when being sent on echoing hosts, therefore.")
     (tramp-async-args           (("-q")))
     (tramp-remote-sh            "/bin/sh")
     (tramp-copy-program         "rsync")
-    (tramp-copy-args            (("-e" "ssh") ("%k" "-t") ("-r")))
+    (tramp-copy-args            (("-e" "ssh") ("-t" "%k") ("-r")))
     (tramp-copy-keep-date       t)
     (tramp-copy-keep-tmpfile    t)
     (tramp-copy-recursive       t)))
@@ -217,7 +217,7 @@ detected as prompt when being sent on echoing hosts, therefore.")
     (tramp-async-args           (("-q")))
     (tramp-remote-sh            "/bin/sh")
     (tramp-copy-program         "rsync")
-    (tramp-copy-args            (("%k" "-t") ("-r")))
+    (tramp-copy-args            (("-t" "%k") ("-r")))
     (tramp-copy-env             (("RSYNC_RSH")
 				 (,(concat
 				    "ssh"
@@ -353,7 +353,7 @@ detected as prompt when being sent on echoing hosts, therefore.")
     (tramp-login-args           (("-l" "%u") ("-P" "%p") ("-ssh") ("%h")))
     (tramp-remote-sh            "/bin/sh")
     (tramp-copy-program         "pscp")
-    (tramp-copy-args            (("-P" "%p") ("-scp") ("%k" "-p")
+    (tramp-copy-args            (("-P" "%p") ("-scp") ("-p" "%k")
 				 ("-q") ("-r")))
     (tramp-copy-keep-date       t)
     (tramp-copy-recursive       t)
@@ -366,7 +366,7 @@ detected as prompt when being sent on echoing hosts, therefore.")
     (tramp-login-args           (("-l" "%u") ("-P" "%p") ("-ssh") ("%h")))
     (tramp-remote-sh            "/bin/sh")
     (tramp-copy-program         "pscp")
-    (tramp-copy-args            (("-P" "%p") ("-sftp") ("%k" "-p")
+    (tramp-copy-args            (("-P" "%p") ("-sftp") ("-p" "%k")
 				 ("-q") ("-r")))
     (tramp-copy-keep-date       t)
     (tramp-copy-recursive       t)
@@ -378,7 +378,7 @@ detected as prompt when being sent on echoing hosts, therefore.")
     (tramp-login-args           (("%h") ("-l" "%u") ("sh" "-i")))
     (tramp-remote-sh            "/bin/sh -i")
     (tramp-copy-program         "fcp")
-    (tramp-copy-args            (("%k" "-p")))
+    (tramp-copy-args            (("-p" "%k")))
     (tramp-copy-keep-date       t)))
 
 ;;;###tramp-autoload
@@ -400,11 +400,13 @@ detected as prompt when being sent on echoing hosts, therefore.")
 		 "\\'")
 	       nil ,(user-login-name)))
 
+;;;###tramp-autoload
 (defconst tramp-completion-function-alist-rsh
   '((tramp-parse-rhosts "/etc/hosts.equiv")
     (tramp-parse-rhosts "~/.rhosts"))
   "Default list of (FUNCTION FILE) pairs to be examined for rsh methods.")
 
+;;;###tramp-autoload
 (defconst tramp-completion-function-alist-ssh
   '((tramp-parse-rhosts      "/etc/hosts.equiv")
     (tramp-parse-rhosts      "/etc/shosts.equiv")
@@ -420,47 +422,60 @@ detected as prompt when being sent on echoing hosts, therefore.")
     (tramp-parse-sknownhosts "~/.ssh2/knownhosts"))
   "Default list of (FUNCTION FILE) pairs to be examined for ssh methods.")
 
+;;;###tramp-autoload
 (defconst tramp-completion-function-alist-telnet
   '((tramp-parse-hosts "/etc/hosts"))
   "Default list of (FUNCTION FILE) pairs to be examined for telnet methods.")
 
+;;;###tramp-autoload
 (defconst tramp-completion-function-alist-su
   '((tramp-parse-passwd "/etc/passwd"))
   "Default list of (FUNCTION FILE) pairs to be examined for su methods.")
 
+;;;###tramp-autoload
 (defconst tramp-completion-function-alist-putty
   '((tramp-parse-putty
      "HKEY_CURRENT_USER\\Software\\SimonTatham\\PuTTY\\Sessions"))
   "Default list of (FUNCTION REGISTRY) pairs to be examined for putty methods.")
 
-(tramp-set-completion-function "rcp" tramp-completion-function-alist-rsh)
-(tramp-set-completion-function "remcp" tramp-completion-function-alist-rsh)
-(tramp-set-completion-function "scp" tramp-completion-function-alist-ssh)
-(tramp-set-completion-function "scp1" tramp-completion-function-alist-ssh)
-(tramp-set-completion-function "scp2" tramp-completion-function-alist-ssh)
-(tramp-set-completion-function "scpc" tramp-completion-function-alist-ssh)
-(tramp-set-completion-function "scpx" tramp-completion-function-alist-ssh)
-(tramp-set-completion-function "sftp" tramp-completion-function-alist-ssh)
-(tramp-set-completion-function "rsync" tramp-completion-function-alist-ssh)
-(tramp-set-completion-function "rsyncc" tramp-completion-function-alist-ssh)
-(tramp-set-completion-function "rsh" tramp-completion-function-alist-rsh)
-(tramp-set-completion-function "remsh" tramp-completion-function-alist-rsh)
-(tramp-set-completion-function "ssh" tramp-completion-function-alist-ssh)
-(tramp-set-completion-function "ssh1" tramp-completion-function-alist-ssh)
-(tramp-set-completion-function "ssh2" tramp-completion-function-alist-ssh)
-(tramp-set-completion-function "ssh1_old" tramp-completion-function-alist-ssh)
-(tramp-set-completion-function "ssh2_old" tramp-completion-function-alist-ssh)
-(tramp-set-completion-function "sshx" tramp-completion-function-alist-ssh)
-(tramp-set-completion-function "telnet" tramp-completion-function-alist-telnet)
-(tramp-set-completion-function "su" tramp-completion-function-alist-su)
-(tramp-set-completion-function "sudo" tramp-completion-function-alist-su)
-(tramp-set-completion-function "ksu" tramp-completion-function-alist-su)
-(tramp-set-completion-function "krlogin" tramp-completion-function-alist-rsh)
-(tramp-set-completion-function "plink" tramp-completion-function-alist-ssh)
-(tramp-set-completion-function "plink1" tramp-completion-function-alist-ssh)
-(tramp-set-completion-function "plinkx" tramp-completion-function-alist-putty)
-(tramp-set-completion-function "pscp" tramp-completion-function-alist-ssh)
-(tramp-set-completion-function "fcp" tramp-completion-function-alist-ssh)
+;;;###tramp-autoload
+(eval-after-load 'tramp
+  '(progn
+     (tramp-set-completion-function "rcp" tramp-completion-function-alist-rsh)
+     (tramp-set-completion-function "remcp" tramp-completion-function-alist-rsh)
+     (tramp-set-completion-function "scp" tramp-completion-function-alist-ssh)
+     (tramp-set-completion-function "scp1" tramp-completion-function-alist-ssh)
+     (tramp-set-completion-function "scp2" tramp-completion-function-alist-ssh)
+     (tramp-set-completion-function "scpc" tramp-completion-function-alist-ssh)
+     (tramp-set-completion-function "scpx" tramp-completion-function-alist-ssh)
+     (tramp-set-completion-function "sftp" tramp-completion-function-alist-ssh)
+     (tramp-set-completion-function "rsync" tramp-completion-function-alist-ssh)
+     (tramp-set-completion-function
+      "rsyncc" tramp-completion-function-alist-ssh)
+     (tramp-set-completion-function "rsh" tramp-completion-function-alist-rsh)
+     (tramp-set-completion-function "remsh" tramp-completion-function-alist-rsh)
+     (tramp-set-completion-function "ssh" tramp-completion-function-alist-ssh)
+     (tramp-set-completion-function "ssh1" tramp-completion-function-alist-ssh)
+     (tramp-set-completion-function "ssh2" tramp-completion-function-alist-ssh)
+     (tramp-set-completion-function
+      "ssh1_old" tramp-completion-function-alist-ssh)
+     (tramp-set-completion-function
+      "ssh2_old" tramp-completion-function-alist-ssh)
+     (tramp-set-completion-function "sshx" tramp-completion-function-alist-ssh)
+     (tramp-set-completion-function
+      "telnet" tramp-completion-function-alist-telnet)
+     (tramp-set-completion-function "su" tramp-completion-function-alist-su)
+     (tramp-set-completion-function "sudo" tramp-completion-function-alist-su)
+     (tramp-set-completion-function "ksu" tramp-completion-function-alist-su)
+     (tramp-set-completion-function
+      "krlogin" tramp-completion-function-alist-rsh)
+     (tramp-set-completion-function "plink" tramp-completion-function-alist-ssh)
+     (tramp-set-completion-function
+      "plink1" tramp-completion-function-alist-ssh)
+     (tramp-set-completion-function
+      "plinkx" tramp-completion-function-alist-putty)
+     (tramp-set-completion-function "pscp" tramp-completion-function-alist-ssh)
+     (tramp-set-completion-function "fcp" tramp-completion-function-alist-ssh)))
 
 ;; "getconf PATH" yields:
 ;; HP-UX: /usr/bin:/usr/ccs/bin:/opt/ansic/bin:/opt/langtools/bin:/opt/fortran/bin
@@ -509,7 +524,7 @@ entry ENVVARNAME= diables the corresponding environment variable,
 which might have been set in the init files like ~/.profile.
 
 Special handling is applied to the PATH environment, which should
-not be set here. Instead of, it should be set via `tramp-remote-path'."
+not be set here. Instead, it should be set via `tramp-remote-path'."
   :group 'tramp
   :type '(repeat string))
 
@@ -1145,13 +1160,15 @@ target of the symlink differ."
 	(save-excursion
 	  (tramp-convert-file-attributes
 	   v
-	   (cond
-	    ((tramp-get-remote-stat v)
-	     (tramp-do-file-attributes-with-stat v localname id-format))
-	    ((tramp-get-remote-perl v)
-	     (tramp-do-file-attributes-with-perl v localname id-format))
-	    (t
-	     (tramp-do-file-attributes-with-ls v localname id-format)))))))))
+	   (or
+	    (cond
+	     ((tramp-get-remote-stat v)
+	      (tramp-do-file-attributes-with-stat v localname id-format))
+	     ((tramp-get-remote-perl v)
+	      (tramp-do-file-attributes-with-perl v localname id-format))
+	     (t nil))
+	    ;; The scripts could fail, for example with huge file size.
+	    (tramp-do-file-attributes-with-ls v localname id-format))))))))
 
 (defun tramp-do-file-attributes-with-ls (vec localname &optional id-format)
   "Implement `file-attributes' for Tramp files using the ls(1) command."
@@ -1943,7 +1960,7 @@ file names."
 	(tramp-error
 	 v 'file-already-exists "File %s already exists" newname))
 
-      (with-progress-reporter
+      (tramp-with-progress-reporter
 	  v 0 (format "%s %s to %s"
 		      (if (eq op 'copy) "Copying" "Renaming")
 		      filename newname)
@@ -2209,7 +2226,7 @@ The method used must be an out-of-band method."
     (with-parsed-tramp-file-name (if t1 filename newname) nil
       (if (and t1 t2)
 
-	  ;; Both are Tramp files.  We shall optimize it, when the
+	  ;; Both are Tramp files.  We shall optimize it when the
 	  ;; methods for filename and newname are the same.
 	  (let* ((dir-flag (file-directory-p filename))
 		 (tmpfile (tramp-compat-make-temp-file localname dir-flag)))
@@ -2251,11 +2268,15 @@ The method used must be an out-of-band method."
 			'identity)
 		      (if t2 (tramp-make-copy-program-file-name v) newname)))
 
-	;; Check for port number.  Until now, there's no need for handling
-	;; like method, user, host.
-	(setq host (tramp-file-name-real-host v)
-	      port (tramp-file-name-port v)
-	      port (or (and port (number-to-string port)) ""))
+	;; Check for host and port number.  We cannot use
+	;; `tramp-file-name-port', because this returns also
+	;; `tramp-default-port', which might clash with settings in
+	;; "~/.ssh/config".
+	(setq host (tramp-file-name-host v)
+	      port "")
+	(when (string-match tramp-host-with-port-regexp host)
+	  (setq port (string-to-number (match-string 2 host))
+		host (string-to-number (match-string 1 host))))
 
 	;; Compose copy command.
 	(setq spec (format-spec-make
@@ -2270,7 +2291,7 @@ The method used must be an out-of-band method."
 	      copy-args
 	      (delete
 	       ;; " " has either been a replacement of "%k" (when
-	       ;; keep-date argument is non-nil), or a replacemtent
+	       ;; keep-date argument is non-nil), or a replacement
 	       ;; for the whole keep-date sublist.
 	       " "
 	       (dolist
@@ -2281,7 +2302,7 @@ The method used must be an out-of-band method."
 		       (append
 			copy-args
 			(let ((y (mapcar (lambda (z) (format-spec z spec)) x)))
-			  (if (zerop (length (car y))) '(" ") y))))))
+			  (if (member "" y) '(" ") y))))))
 	      copy-env
 	      (delq
 	       nil
@@ -2292,10 +2313,9 @@ The method used must be an out-of-band method."
 		(tramp-get-method-parameter method 'tramp-copy-env))))
 
 	;; Check for program.
-	(when (and (fboundp 'executable-find)
-		   (not (let ((default-directory
-				(tramp-compat-temporary-file-directory)))
-			  (executable-find copy-program))))
+	(unless (let ((default-directory
+			(tramp-compat-temporary-file-directory)))
+		  (executable-find copy-program))
 	  (tramp-error
 	   v 'file-error "Cannot find copy program: %s" copy-program))
 
@@ -2331,7 +2351,8 @@ The method used must be an out-of-band method."
 		   orig-vec 6 "%s"
 		   (mapconcat 'identity (process-command p) " "))
 		  (tramp-compat-set-process-query-on-exit-flag p nil)
-		  (tramp-process-actions p v tramp-actions-copy-out-of-band)))
+		  (tramp-process-actions
+		   p v nil tramp-actions-copy-out-of-band)))
 
 	    ;; Reset the transfer process properties.
 	    (tramp-message orig-vec 6 "%s" (buffer-string))
@@ -2405,7 +2426,7 @@ This is like `dired-recursive-delete-directory' for Tramp files."
     (tramp-send-command
      v
      (format "rm -rf %s" (tramp-shell-quote-argument localname))
-     ;; Don't read the output, do it explicitely.
+     ;; Don't read the output, do it explicitly.
      nil t)
     ;; Wait for the remote system to return to us...
     ;; This might take a while, allow it plenty of time.
@@ -2448,7 +2469,8 @@ This is like `dired-recursive-delete-directory' for Tramp files."
 	       nil)
 	      ((and suffix (nth 2 suffix))
 	       ;; We found an uncompression rule.
-	       (with-progress-reporter v 0 (format "Uncompressing %s" file)
+	       (tramp-with-progress-reporter
+                   v 0 (format "Uncompressing %s" file)
 		 (when (tramp-send-command-and-check
 			v (concat (nth 2 suffix) " "
 				  (tramp-shell-quote-argument localname)))
@@ -2459,7 +2481,7 @@ This is like `dired-recursive-delete-directory' for Tramp files."
 	      (t
 	       ;; We don't recognize the file as compressed, so compress it.
 	       ;; Try gzip.
-	       (with-progress-reporter v 0 (format "Compressing %s" file)
+	       (tramp-with-progress-reporter v 0 (format "Compressing %s" file)
 		 (when (tramp-send-command-and-check
 			v (concat "gzip -f "
 				  (tramp-shell-quote-argument localname)))
@@ -2942,7 +2964,7 @@ the result will be a local, non-Tramp, filename."
 	   ;; Use inline encoding for file transfer.
 	   (rem-enc
 	    (save-excursion
-	      (with-progress-reporter
+	      (tramp-with-progress-reporter
 	       v 3 (format "Encoding remote file %s" filename)
 	       (tramp-barf-unless-okay
 		v (format rem-enc (tramp-shell-quote-argument localname))
@@ -2956,7 +2978,7 @@ the result will be a local, non-Tramp, filename."
 		  (with-temp-buffer
 		    (set-buffer-multibyte nil)
 		    (insert-buffer-substring (tramp-get-buffer v))
-		    (with-progress-reporter
+		    (tramp-with-progress-reporter
 			v 3 (format "Decoding remote file %s with function %s"
 				    filename loc-dec)
 		      (funcall loc-dec (point-min) (point-max))
@@ -2974,7 +2996,7 @@ the result will be a local, non-Tramp, filename."
 		  (let (file-name-handler-alist
 			(coding-system-for-write 'binary))
 		    (write-region (point-min) (point-max) tmpfile2))
-		  (with-progress-reporter
+		  (tramp-with-progress-reporter
 		      v 3 (format "Decoding remote file %s with command %s"
 				  filename loc-dec)
 		    (unwind-protect
@@ -3150,7 +3172,7 @@ Returns a file name in `tramp-auto-save-directory' for autosaving this file."
 	  ;; filename does not exist (eq modes nil) it has been
 	  ;; renamed to the backup file.  This case `save-buffer'
 	  ;; handles permissions.
-	  ;; Ensure, that it is still readable.
+	  ;; Ensure that it is still readable.
 	  (when modes
 	    (set-file-modes
 	     tmpfile
@@ -3199,7 +3221,7 @@ Returns a file name in `tramp-auto-save-directory' for autosaving this file."
 		    (set-buffer-multibyte nil)
 		    ;; Use encoding function or command.
 		    (if (functionp loc-enc)
-			(with-progress-reporter
+			(tramp-with-progress-reporter
 			    v 3 (format "Encoding region using function `%s'"
 					loc-enc)
 			  (let ((coding-system-for-read 'binary))
@@ -3217,7 +3239,7 @@ Returns a file name in `tramp-auto-save-directory' for autosaving this file."
 				  (tramp-compat-temporary-file-directory)))
 			    (funcall loc-enc (point-min) (point-max))))
 
-		      (with-progress-reporter
+		      (tramp-with-progress-reporter
 			  v 3 (format "Encoding region using command `%s'"
 				      loc-enc)
 			(unless (zerop (tramp-call-local-coding-command
@@ -3231,7 +3253,7 @@ Returns a file name in `tramp-auto-save-directory' for autosaving this file."
 		    ;; Send buffer into remote decoding command which
 		    ;; writes to remote file.  Because this happens on
 		    ;; the remote host, we cannot use the function.
-		    (with-progress-reporter
+		    (tramp-with-progress-reporter
 			v 3
 			(format "Decoding region into remote file %s" filename)
 		      (goto-char (point-max))
@@ -3296,7 +3318,7 @@ Returns a file name in `tramp-auto-save-directory' for autosaving this file."
 	(when (or (eq visit t) (stringp visit))
           (let ((file-attr (file-attributes filename)))
             (set-visited-file-modtime
-             ;; We must pass modtime explicitely, because filename can
+             ;; We must pass modtime explicitly, because filename can
              ;; be different from (buffer-file-name), f.e. if
              ;; `file-precious-flag' is set.
              (nth 5 file-attr))
@@ -3331,7 +3353,7 @@ Returns a file name in `tramp-auto-save-directory' for autosaving this file."
   "Like `vc-registered' for Tramp files."
   (tramp-compat-with-temp-message ""
     (with-parsed-tramp-file-name file nil
-      (with-progress-reporter
+      (tramp-with-progress-reporter
 	  v 3 (format "Checking `vc-registered' for %s" file)
 
 	;; There could be new files, created by the vc backend.  We
@@ -3403,7 +3425,7 @@ Fall back to normal file name handler if no Tramp handler exists."
       (with-parsed-tramp-file-name filename nil
 	(cond
 	 ;; That's what we want: file names, for which checks are
-	 ;; applied.  We assume, that VC uses only `file-exists-p' and
+	 ;; applied.  We assume that VC uses only `file-exists-p' and
 	 ;; `file-readable-p' checks; otherwise we must extend the
 	 ;; list.  We do not perform any action, but return nil, in
 	 ;; order to keep `vc-registered' running.
@@ -3425,7 +3447,7 @@ Only send the definition if it has not already been done."
   (let* ((p (tramp-get-connection-process vec))
 	 (scripts (tramp-get-connection-property p "scripts" nil)))
     (unless (member name scripts)
-      (with-progress-reporter vec 5 (format "Sending script `%s'" name)
+      (tramp-with-progress-reporter vec 5 (format "Sending script `%s'" name)
 	;; The script could contain a call of Perl.  This is masked with `%s'.
 	(tramp-barf-unless-okay
 	 vec
@@ -3589,7 +3611,8 @@ file exists and nonzero exit status otherwise."
 
 (defun tramp-open-shell (vec shell)
   "Opens shell SHELL."
-  (with-progress-reporter vec 5 (format "Opening remote shell `%s'" shell)
+  (tramp-with-progress-reporter
+      vec 5 (format "Opening remote shell `%s'" shell)
     ;; Find arguments for this shell.
     (let ((tramp-end-of-output tramp-initial-end-of-output)
 	  (alist tramp-sh-extra-args)
@@ -3618,9 +3641,11 @@ file exists and nonzero exit status otherwise."
 	(tramp-send-command vec "echo ~root" t)
 	(cond
 	 ((or (string-match "^~root$" (buffer-string))
-	      ;; The default shell (ksh93) of OpenSolaris is buggy.
-	      (string-equal (tramp-get-connection-property vec "uname" "")
-			    "SunOS 5.11"))
+	      ;; The default shell (ksh93) of OpenSolaris and Solaris
+	      ;; is buggy.  We've got reports for "SunOS 5.10" and
+	      ;; "SunOS 5.11" so far.
+	      (string-match (regexp-opt '("SunOS 5.10" "SunOS 5.11"))
+			    (tramp-get-connection-property vec "uname" "")))
 	  (setq shell
 		(or (tramp-find-executable
 		     vec "bash" (tramp-get-remote-path vec) t t)
@@ -4207,7 +4232,8 @@ connection if a previous connection has died for some reason."
   (catch 'uname-changed
     (let ((p (tramp-get-connection-process vec))
 	  (process-name (tramp-get-connection-property vec "process-name" nil))
-	  (process-environment (copy-sequence process-environment)))
+	  (process-environment (copy-sequence process-environment))
+	  (pos (with-current-buffer (tramp-get-connection-buffer vec) (point))))
 
       ;; If too much time has passed since last command was sent, look
       ;; whether process is still alive.  If it isn't, kill it.  When
@@ -4240,7 +4266,7 @@ connection if a previous connection has died for some reason."
 	;; We call `tramp-get-buffer' in order to get a debug buffer for
 	;; messages from the beginning.
 	(tramp-get-buffer vec)
-	(with-progress-reporter
+	(tramp-with-progress-reporter
 	    vec 3
 	    (if (zerop (length (tramp-file-name-user vec)))
 		(format "Opening connection for %s using %s"
@@ -4303,7 +4329,7 @@ connection if a previous connection has died for some reason."
 		     ;; it is just a prefix for the ControlPath option
 		     ;; of ssh; the real temporary file has another
 		     ;; name, and it is created and protected by ssh.
-		     ;; It is also removed by ssh, when the connection
+		     ;; It is also removed by ssh when the connection
 		     ;; is closed.
 		     (tmpfile
 		      (tramp-set-connection-property
@@ -4361,7 +4387,7 @@ connection if a previous connection has died for some reason."
 		;; Send the command.
 		(tramp-message vec 3 "Sending command `%s'" command)
 		(tramp-send-command vec command t t)
-		(tramp-process-actions p vec tramp-actions-before-shell 60)
+		(tramp-process-actions p vec pos tramp-actions-before-shell 60)
 		(tramp-message
 		 vec 3 "Found remote shell prompt on `%s'" l-host))
 	      ;; Next hop.
@@ -5074,7 +5100,7 @@ function cell is returned to be applied on a buffer."
 ;; * It makes me wonder if tramp couldn't fall back to ssh when scp
 ;;   isn't on the remote host.  (Mark A. Hershberger)
 ;; * Use lsh instead of ssh.  (Alfred M. Szmidt)
-;; * Optimize out-of-band copying, when both methods are scp-like (not
+;; * Optimize out-of-band copying when both methods are scp-like (not
 ;;   rsync).
 ;; * Keep a second connection open for out-of-band methods like scp or
 ;;   rsync.

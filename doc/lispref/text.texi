@@ -2806,9 +2806,9 @@ construct each part with @code{propertize} and then combine them with
 @end smallexample
 @end defun
 
-  See also the function @code{buffer-substring-no-properties}
-(@pxref{Buffer Contents}) which copies text from the buffer
-but does not copy its properties.
+  @xref{Buffer Contents}, for the function
+@code{buffer-substring-no-properties}, which copies text from the
+buffer but does not copy its properties.
 
 @node Property Search
 @subsection Text Property Search Functions
@@ -2992,13 +2992,6 @@ face attribute name and @var{value} is a meaningful value for that
 attribute.  With this feature, you do not need to create a face each
 time you want to specify a particular attribute for certain text.
 @xref{Face Attributes}.
-
-@item
-A cons cell with the form @code{(foreground-color . @var{color-name})}
-or @code{(background-color . @var{color-name})}.  These are old,
-deprecated equivalents for @code{(:foreground @var{color-name})} and
-@code{(:background @var{color-name})}.  Please convert code that uses
-them.
 @end itemize
 
 It works to use the latter two forms directly as the value
@@ -3010,18 +3003,18 @@ the context.
 
 @item font-lock-face
 @kindex font-lock-face @r{(text property)}
-The @code{font-lock-face} property is equivalent to the @code{face}
-property when Font Lock mode is enabled.  When Font Lock mode is disabled,
+This property specifies a value for the @code{face} property that Font
+Lock mode should apply to the underlying text.  It is one of the
+fontification methods used by Font Lock mode, and is useful for
+special modes that implement their own highlighting.
+@xref{Precalculated Fontification}.  When Font Lock mode is disabled,
 @code{font-lock-face} has no effect.
-
-The @code{font-lock-face} property is useful for special modes that
-implement their own highlighting.  @xref{Precalculated Fontification}.
 
 @item mouse-face
 @kindex mouse-face @r{(text property)}
-The property @code{mouse-face} is used instead of @code{face} when the
-mouse is on or near the character.  For this purpose, ``near'' means
-that all text between the character and where the mouse is have the same
+This property is used instead of @code{face} when the mouse is on or
+near the character.  For this purpose, ``near'' means that all text
+between the character and where the mouse is have the same
 @code{mouse-face} property value.
 
 @item fontified
@@ -3272,15 +3265,28 @@ functions (which may be the same function).  In any case, all the
 @code{point-left} functions are called first, followed by all the
 @code{point-entered} functions.
 
-It is possible with @code{char-after} to examine characters at various
+It is possible to use @code{char-after} to examine characters at various
 buffer positions without moving point to those positions.  Only an
 actual change in the value of point runs these hook functions.
 
+The variable @code{inhibit-point-motion-hooks} can inhibit running the
+@code{point-left} and @code{point-entered} hooks, see @ref{Inhibit
+point motion hooks}.
+
+@item composition
+@kindex composition @r{(text property)}
+This text property is used to display a sequence of characters as a
+single glyph composed from components.  But the value of the property
+itself is completely internal to Emacs and should not be manipulated
+directly by, for instance, @code{put-text-property}.
+
+@end table
+
 @defvar inhibit-point-motion-hooks
-When this variable is non-@code{nil}, @code{point-left} and
-@code{point-entered} hooks are not run, and the @code{intangible}
-property has no effect.  Do not set this variable globally; bind it with
-@code{let}.
+@anchor{Inhibit point motion hooks} When this variable is
+non-@code{nil}, @code{point-left} and @code{point-entered} hooks are
+not run, and the @code{intangible} property has no effect.  Do not set
+this variable globally; bind it with @code{let}.
 @end defvar
 
 @defvar show-help-function
@@ -3292,15 +3298,6 @@ Bar}).  The specified function is called with one argument, the help
 string to display.  Tooltip mode (@pxref{Tooltips,,, emacs, The GNU Emacs
 Manual}) provides an example.
 @end defvar
-
-@item composition
-@kindex composition @r{(text property)}
-This text property is used to display a sequence of characters as a
-single glyph composed from components.  But the value of the property
-itself is completely internal to Emacs and should not be manipulated
-directly by, for instance, @code{put-text-property}.
-
-@end table
 
 @node Format Properties
 @subsection Formatted Text Properties
@@ -4095,17 +4092,16 @@ coding instead.
 @node Parsing HTML
 @section Parsing HTML
 @cindex parsing html
-@cindex parsing xml
 
-Emacs provides an interface to the @code{libxml2} library via two
-functions: @code{html-parse-buffer} and @code{xml-parse-buffer}.  The
-HTML function will parse ``real world'' HTML and try to return a
-sensible parse tree, while the XML function is somewhat stricter about
-syntax.
+@defun libxml-parse-html-region start end &optional base-url
+This function provides HTML parsing via the @code{libxml2} library.
+It parses ``real world'' HTML and tries to return a sensible parse tree
+regardless.
 
-They both take a two optional parameter.  The first is a buffer, and
-the second is a base URL to be used to expand relative URLs in the
-document, if any.
+In addition to @var{start} and @var{end} (specifying the start and end
+of the region to act on), it takes an optional parameter,
+@var{base-url}, which is used to expand relative URLs in the document,
+if any.
 
 Here's an example demonstrating the structure of the parsed data you
 get out.  Given this HTML document:
@@ -4134,12 +4130,21 @@ values.
 
 Attributes are coded the same way as child nodes, but with @samp{:} as
 the first character.
+@end defun
+
+@cindex parsing xml
+@defun libxml-parse-xml-region start end &optional base-url
+
+This is much the same as @code{libxml-parse-html-region} above, but
+operates on XML instead of HTML, and is correspondingly stricter about
+syntax.
+@end defun
 
 @node Atomic Changes
 @section Atomic Change Groups
 @cindex atomic changes
 
-  In data base terminology, an @dfn{atomic} change is an indivisible
+  In database terminology, an @dfn{atomic} change is an indivisible
 change---it can succeed entirely or it can fail entirely, but it
 cannot partly succeed.  A Lisp program can make a series of changes to
 one or several buffers as an @dfn{atomic change group}, meaning that

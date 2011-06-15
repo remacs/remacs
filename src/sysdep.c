@@ -31,6 +31,8 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #endif /* HAVE_LIMITS_H */
 #include <unistd.h>
 
+#include <allocator.h>
+#include <careadlinkat.h>
 #include <ignore-value.h>
 
 #include "lisp.h"
@@ -116,6 +118,12 @@ struct utimbuf {
 #endif
 #endif
 
+static int emacs_get_tty (int, struct emacs_tty *);
+static int emacs_set_tty (int, struct emacs_tty *, int);
+#if defined TIOCNOTTY || defined USG5 || defined CYGWIN
+static void croak (char *) NO_RETURN;
+#endif
+
 /* Declare here, including term.h is problematic on some systems.  */
 extern void tputs (const char *, int, int (*)(int));
 
@@ -124,12 +132,6 @@ static const int baud_convert[] =
     0, 50, 75, 110, 135, 150, 200, 300, 600, 1200,
     1800, 2400, 4800, 9600, 19200, 38400
   };
-
-void croak (char *) NO_RETURN;
-
-/* Temporary used by `sigblock' when defined in terms of signprocmask.  */
-
-SIGMASKTYPE sigprocmask_set;
 
 
 #if !defined (HAVE_GET_CURRENT_DIR_NAME) || defined (BROKEN_GET_CURRENT_DIR_NAME)
@@ -289,23 +291,18 @@ init_baud_rate (int fd)
 
 
 
-int wait_debugging;   /* Set nonzero to make following function work under dbx
-			 (at least for bsd).  */
-
-SIGTYPE
-wait_for_termination_signal (void)
-{}
+/* Set nonzero to make following function work under dbx
+   (at least for bsd).  */
+int wait_debugging EXTERNALLY_VISIBLE;
 
 #ifndef MSDOS
-/* Wait for subprocess with process id `pid' to terminate and
-   make sure it will get eliminated (not remain forever as a zombie) */
 
-void
-wait_for_termination (int pid)
+static void
+wait_for_termination_1 (int pid, int interruptible)
 {
   while (1)
     {
-#if defined (BSD_SYSTEM) || defined (HPUX)
+#if (defined (BSD_SYSTEM) || defined (HPUX)) && !defined(__GNU__)
       /* Note that kill returns -1 even if the process is just a zombie now.
 	 But inevitably a SIGCHLD interrupt should be generated
 	 and child_sig will do wait3 and make the process go away. */
@@ -340,7 +337,25 @@ wait_for_termination (int pid)
       sigsuspend (&empty_mask);
 #endif /* not WINDOWSNT */
 #endif /* not BSD_SYSTEM, and not HPUX version >= 6 */
+      if (interruptible)
+	QUIT;
     }
+}
+
+/* Wait for subprocess with process id `pid' to terminate and
+   make sure it will get eliminated (not remain forever as a zombie) */
+
+void
+wait_for_termination (int pid)
+{
+  wait_for_termination_1 (pid, 0);
+}
+
+/* Like the above, but allow keyboard interruption. */
+void
+interruptible_wait_for_termination (int pid)
+{
+  wait_for_termination_1 (pid, 1);
 }
 
 /*
@@ -453,7 +468,7 @@ child_setup_tty (int out)
 struct save_signal
 {
   int code;
-  SIGTYPE (*handler) (int);
+  void (*handler) (int);
 };
 
 static void save_signal_handlers (struct save_signal *);
@@ -492,7 +507,8 @@ sys_subshell (void)
   int pid;
   struct save_signal saved_handlers[5];
   Lisp_Object dir;
-  unsigned char *str = 0;
+  unsigned char *volatile str_volatile = 0;
+  unsigned char *str;
   int len;
 
   saved_handlers[0].code = SIGINT;
@@ -516,7 +532,7 @@ sys_subshell (void)
     goto xyzzy;
 
   dir = expand_and_dir_to_file (Funhandled_file_name_directory (dir), Qnil);
-  str = (unsigned char *) alloca (SCHARS (dir) + 2);
+  str_volatile = str = (unsigned char *) alloca (SCHARS (dir) + 2);
   len = SCHARS (dir);
   memcpy (str, SDATA (dir), len);
   if (str[len - 1] != '/') str[len++] = '/';
@@ -548,8 +564,14 @@ sys_subshell (void)
 	sh = "sh";
 
       /* Use our buffer's default directory for the subshell.  */
-      if (str)
-	chdir ((char *) str);
+      str = str_volatile;
+      if (str && chdir ((char *) str) != 0)
+	{
+#ifndef DOS_NT
+	  ignore_value (write (1, "Can't chdir\n", 12));
+	  _exit (1);
+#endif
+	}
 
       close_process_descs ();	/* Close Emacs's pipes/ptys */
 
@@ -567,7 +589,7 @@ sys_subshell (void)
 	    setenv ("PWD", str, 1);
 	  }
 	st = system (sh);
-	chdir (oldwd);
+	chdir (oldwd);	/* FIXME: Do the right thing on chdir failure.  */
 	if (epwd)
 	  putenv (old_pwd);	/* restore previous value */
       }
@@ -575,7 +597,7 @@ sys_subshell (void)
 #ifdef  WINDOWSNT
       /* Waits for process completion */
       pid = _spawnlp (_P_WAIT, sh, sh, NULL);
-      chdir (oldwd);
+      chdir (oldwd);	/* FIXME: Do the right thing on chdir failure.  */
       if (pid == -1)
 	write (1, "Can't execute subshell", 22);
 #else   /* not WINDOWSNT */
@@ -605,7 +627,7 @@ save_signal_handlers (struct save_signal *saved_handlers)
   while (saved_handlers->code)
     {
       saved_handlers->handler
-        = (SIGTYPE (*) (int)) signal (saved_handlers->code, SIG_IGN);
+        = (void (*) (int)) signal (saved_handlers->code, SIG_IGN);
       saved_handlers++;
     }
 }
@@ -627,7 +649,7 @@ init_sigio (int fd)
 {
 }
 
-void
+static void
 reset_sigio (int fd)
 {
 }
@@ -645,7 +667,7 @@ unrequest_sigio (void)
 #else
 #ifdef F_SETFL
 
-int old_fcntl_flags[MAXDESC];
+static int old_fcntl_flags[MAXDESC];
 
 void
 init_sigio (int fd)
@@ -657,7 +679,7 @@ init_sigio (int fd)
   interrupts_deferred = 0;
 }
 
-void
+static void
 reset_sigio (int fd)
 {
 #ifdef FASYNC
@@ -804,7 +826,7 @@ emacs_set_tty (int fd, struct emacs_tty *settings, int flushp)
 
 
 #ifdef F_SETOWN
-int old_fcntl_owner[MAXDESC];
+static int old_fcntl_owner[MAXDESC];
 #endif /* F_SETOWN */
 
 /* This may also be defined in stdio,
@@ -1103,8 +1125,7 @@ tabs_safe_p (int fd)
 void
 get_tty_size (int fd, int *widthp, int *heightp)
 {
-
-#ifdef TIOCGWINSZ
+#if defined TIOCGWINSZ
 
   /* BSD-style.  */
   struct winsize size;
@@ -1117,8 +1138,7 @@ get_tty_size (int fd, int *widthp, int *heightp)
       *heightp = size.ws_row;
     }
 
-#else
-#ifdef TIOCGSIZE
+#elif defined TIOCGSIZE
 
   /* SunOS - style.  */
   struct ttysize size;
@@ -1131,16 +1151,28 @@ get_tty_size (int fd, int *widthp, int *heightp)
       *heightp = size.ts_lines;
     }
 
-#else
-#ifdef MSDOS
+#elif defined WINDOWSNT
+
+  CONSOLE_SCREEN_BUFFER_INFO info;
+  if (GetConsoleScreenBufferInfo (GetStdHandle (STD_OUTPUT_HANDLE), &info))
+    {
+      *widthp = info.srWindow.Right - info.srWindow.Left + 1;
+      *heightp = info.srWindow.Bottom - info.srWindow.Top + 1;
+    }
+  else
+    *widthp = *heightp = 0;
+
+#elif defined MSDOS
+
   *widthp = ScreenCols ();
   *heightp = ScreenRows ();
+
 #else /* system doesn't know size */
+
   *widthp = 0;
   *heightp = 0;
+
 #endif
-#endif /* not SunOS-style */
-#endif /* not BSD-style */
 }
 
 /* Set the logical window size associated with descriptor FD
@@ -1446,7 +1478,7 @@ init_system_name (void)
 /* POSIX signals support - DJB */
 /* Anyone with POSIX signals should have ANSI C declarations */
 
-sigset_t empty_mask, full_mask;
+sigset_t empty_mask;
 
 #ifndef WINDOWSNT
 
@@ -1535,7 +1567,6 @@ void
 init_signals (void)
 {
   sigemptyset (&empty_mask);
-  sigfillset (&full_mask);
 
 #if !defined HAVE_STRSIGNAL && !HAVE_DECL_SYS_SIGLIST
   if (! initialized)
@@ -1755,23 +1786,14 @@ seed_random (long int arg)
  * Build a full Emacs-sized word out of whatever we've got.
  * This suffices even for a 64-bit architecture with a 15-bit rand.
  */
-long
+EMACS_INT
 get_random (void)
 {
-  long val = random ();
-#if VALBITS > RAND_BITS
-  val = (val << RAND_BITS) ^ random ();
-#if VALBITS > 2*RAND_BITS
-  val = (val << RAND_BITS) ^ random ();
-#if VALBITS > 3*RAND_BITS
-  val = (val << RAND_BITS) ^ random ();
-#if VALBITS > 4*RAND_BITS
-  val = (val << RAND_BITS) ^ random ();
-#endif /* need at least 5 */
-#endif /* need at least 4 */
-#endif /* need at least 3 */
-#endif /* need at least 2 */
-  return val & ((1L << VALBITS) - 1);
+  EMACS_UINT val = 0;
+  int i;
+  for (i = 0; i < (VALBITS + RAND_BITS - 1) / RAND_BITS; i++)
+    val = (val << RAND_BITS) ^ random ();
+  return val & (((EMACS_INT) 1 << VALBITS) - 1);
 }
 
 #ifndef HAVE_STRERROR
@@ -1820,10 +1842,27 @@ emacs_close (int fd)
   return rtnval;
 }
 
-int
-emacs_read (int fildes, char *buf, unsigned int nbyte)
+/* Maximum number of bytes to read or write in a single system call.
+   This works around a serious bug in Linux kernels before 2.6.16; see
+   <https://bugzilla.redhat.com/show_bug.cgi?format=multiple&id=612839>.
+   It's likely to work around similar bugs in other operating systems, so do it
+   on all platforms.  Round INT_MAX down to a page size, with the conservative
+   assumption that page sizes are at most 2**18 bytes (any kernel with a
+   page size larger than that shouldn't have the bug).  */
+#ifndef MAX_RW_COUNT
+#define MAX_RW_COUNT (INT_MAX >> 18 << 18)
+#endif
+
+/* Read from FILEDESC to a buffer BUF with size NBYTE, retrying if interrupted.
+   Return the number of bytes read, which might be less than NBYTE.
+   On error, set errno and return -1.  */
+EMACS_INT
+emacs_read (int fildes, char *buf, EMACS_INT nbyte)
 {
-  register int rtnval;
+  register ssize_t rtnval;
+
+  /* There is no need to check against MAX_RW_COUNT, since no caller ever
+     passes a size that large to emacs_read.  */
 
   while ((rtnval = read (fildes, buf, nbyte)) == -1
 	 && (errno == EINTR))
@@ -1831,18 +1870,22 @@ emacs_read (int fildes, char *buf, unsigned int nbyte)
   return (rtnval);
 }
 
-int
-emacs_write (int fildes, const char *buf, unsigned int nbyte)
+/* Write to FILEDES from a buffer BUF with size NBYTE, retrying if interrupted
+   or if a partial write occurs.  Return the number of bytes written, setting
+   errno if this is less than NBYTE.  */
+EMACS_INT
+emacs_write (int fildes, const char *buf, EMACS_INT nbyte)
 {
-  register int rtnval, bytes_written;
+  ssize_t rtnval;
+  EMACS_INT bytes_written;
 
   bytes_written = 0;
 
   while (nbyte > 0)
     {
-      rtnval = write (fildes, buf, nbyte);
+      rtnval = write (fildes, buf, min (nbyte, MAX_RW_COUNT));
 
-      if (rtnval == -1)
+      if (rtnval < 0)
 	{
 	  if (errno == EINTR)
 	    {
@@ -1854,14 +1897,31 @@ emacs_write (int fildes, const char *buf, unsigned int nbyte)
 	      continue;
 	    }
 	  else
-	    return (bytes_written ? bytes_written : -1);
+	    break;
 	}
 
       buf += rtnval;
       nbyte -= rtnval;
       bytes_written += rtnval;
     }
+
   return (bytes_written);
+}
+
+static struct allocator const emacs_norealloc_allocator =
+  { xmalloc, NULL, xfree, memory_full };
+
+/* Get the symbolic link value of FILENAME.  Return a pointer to a
+   NUL-terminated string.  If readlink fails, return NULL and set
+   errno.  If the value fits in INITIAL_BUF, return INITIAL_BUF.
+   Otherwise, allocate memory and return a pointer to that memory.  If
+   memory allocation fails, diagnose and fail without returning.  If
+   successful, store the length of the symbolic link into *LINKLEN.  */
+char *
+emacs_readlink (char const *filename, char initial_buf[READLINK_BUFSIZE])
+{
+  return careadlinkat (AT_FDCWD, filename, initial_buf, READLINK_BUFSIZE,
+		       &emacs_norealloc_allocator, careadlinkatcwd);
 }
 
 #ifdef USG
@@ -1885,12 +1945,12 @@ emacs_write (int fildes, const char *buf, unsigned int nbyte)
  *	under error conditions.
  */
 
+#ifndef HAVE_GETWD
+
 #ifndef MAXPATHLEN
 /* In 4.1, param.h fails to define this.  */
 #define MAXPATHLEN 1024
 #endif
-
-#ifndef HAVE_GETWD
 
 char *
 getwd (char *pathname)
@@ -2340,7 +2400,8 @@ serial_configure (struct Lisp_Process *p,
   CHECK_NUMBER (tem);
   err = cfsetspeed (&attr, XINT (tem));
   if (err != 0)
-    error ("cfsetspeed(%d) failed: %s", XINT (tem), emacs_strerror (errno));
+    error ("cfsetspeed(%"pI"d) failed: %s", XINT (tem),
+	   emacs_strerror (errno));
   childp2 = Fplist_put (childp2, QCspeed, tem);
 
   /* Configure bytesize.  */
@@ -2666,8 +2727,8 @@ system_process_attributes (Lisp_Object pid)
   size_t cmdsize = 0, cmdline_size;
   unsigned char c;
   int proc_id, ppid, uid, gid, pgrp, sess, tty, tpgid, thcount;
-  unsigned long long utime, stime, cutime, cstime, start;
-  long priority, nice, rss;
+  unsigned long long u_time, s_time, cutime, cstime, start;
+  long priority, niceness, rss;
   unsigned long minflt, majflt, cminflt, cmajflt, vsize;
   time_t sec;
   unsigned usec;
@@ -2747,8 +2808,8 @@ system_process_attributes (Lisp_Object pid)
 	  sscanf (p, "%c %d %d %d %d %d %*u %lu %lu %lu %lu %Lu %Lu %Lu %Lu %ld %ld %d %*d %Lu %lu %ld",
 		  &c, &ppid, &pgrp, &sess, &tty, &tpgid,
 		  &minflt, &cminflt, &majflt, &cmajflt,
-		  &utime, &stime, &cutime, &cstime,
-		  &priority, &nice, &thcount, &start, &vsize, &rss);
+		  &u_time, &s_time, &cutime, &cstime,
+		  &priority, &niceness, &thcount, &start, &vsize, &rss);
 	  {
 	    char state_str[2];
 
@@ -2776,13 +2837,14 @@ system_process_attributes (Lisp_Object pid)
 	  if (clocks_per_sec < 0)
 	    clocks_per_sec = 100;
 	  attrs = Fcons (Fcons (Qutime,
-				ltime_from_jiffies (utime, clocks_per_sec)),
+				ltime_from_jiffies (u_time, clocks_per_sec)),
 			 attrs);
 	  attrs = Fcons (Fcons (Qstime,
-				ltime_from_jiffies (stime, clocks_per_sec)),
+				ltime_from_jiffies (s_time, clocks_per_sec)),
 			 attrs);
 	  attrs = Fcons (Fcons (Qtime,
-				ltime_from_jiffies (stime+utime, clocks_per_sec)),
+				ltime_from_jiffies (s_time + u_time,
+						    clocks_per_sec)),
 			 attrs);
 	  attrs = Fcons (Fcons (Qcutime,
 				ltime_from_jiffies (cutime, clocks_per_sec)),
@@ -2794,7 +2856,7 @@ system_process_attributes (Lisp_Object pid)
 				ltime_from_jiffies (cstime+cutime, clocks_per_sec)),
 			 attrs);
 	  attrs = Fcons (Fcons (Qpri, make_number (priority)), attrs);
-	  attrs = Fcons (Fcons (Qnice, make_number (nice)), attrs);
+	  attrs = Fcons (Fcons (Qnice, make_number (niceness)), attrs);
 	  attrs = Fcons (Fcons (Qthcount, make_fixnum_or_float (thcount_eint)), attrs);
 	  EMACS_GET_TIME (tnow);
 	  get_up_time (&sec, &usec);
@@ -2824,7 +2886,7 @@ system_process_attributes (Lisp_Object pid)
 				       make_number
 				       (EMACS_USECS (telapsed)))),
 			 attrs);
-	  time_from_jiffies (utime + stime, clocks_per_sec, &sec, &usec);
+	  time_from_jiffies (u_time + s_time, clocks_per_sec, &sec, &usec);
 	  pcpu = (sec + usec / 1000000.0) / (EMACS_SECS (telapsed) + EMACS_USECS (telapsed) / 1000000.0);
 	  if (pcpu > 1.0)
 	    pcpu = 1.0;
@@ -2843,8 +2905,10 @@ system_process_attributes (Lisp_Object pid)
   fd = emacs_open (fn, O_RDONLY, 0);
   if (fd >= 0)
     {
-      for (cmdline_size = 0; emacs_read (fd, &c, 1) == 1; cmdline_size++)
+      char ch;
+      for (cmdline_size = 0; emacs_read (fd, &ch, 1) == 1; cmdline_size++)
 	{
+	  c = ch;
 	  if (isspace (c) || c == '\\')
 	    cmdline_size++;	/* for later quoting, see below */
 	}
@@ -2919,6 +2983,8 @@ system_process_attributes (Lisp_Object pid)
 
 #if PROCFS_FILE_OFFSET_BITS_HACK ==  1
 #define _FILE_OFFSET_BITS 64
+#ifdef _FILE_OFFSET_BITS /* Avoid unused-macro warnings.  */
+#endif
 #endif /* PROCFS_FILE_OFFSET_BITS_HACK ==  1 */
 
 Lisp_Object

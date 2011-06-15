@@ -583,12 +583,9 @@ If you run @code{normal-mode} interactively, the argument
 @var{find-file} is normally @code{nil}.  In this case,
 @code{normal-mode} unconditionally processes any file local variables.
 
-If @code{normal-mode} processes the local variables list and this list
-specifies a major mode, that mode overrides any mode chosen by
-@code{set-auto-mode}.  If neither @code{set-auto-mode} nor
-@code{hack-local-variables} specify a major mode, the buffer stays in
-the major mode determined by the default value of @code{major-mode}
-(see below).
+The function calls @code{set-auto-mode} to choose a major mode.  If this
+does not specify a mode, the buffer stays in the major mode determined
+by the default value of @code{major-mode} (see below).
 
 @cindex file mode specification error
 @code{normal-mode} uses @code{condition-case} around the call to the
@@ -600,15 +597,15 @@ mode specification error},  followed by the original error message.
 @cindex visited file mode
   This function selects the major mode that is appropriate for the
 current buffer.  It bases its decision (in order of precedence) on
-the @w{@samp{-*-}} line, on the @w{@samp{#!}} line (using
+the @w{@samp{-*-}} line, on any @samp{mode:} local variable near the
+end of a file, on the @w{@samp{#!}} line (using
 @code{interpreter-mode-alist}), on the text at the beginning of the
 buffer (using @code{magic-mode-alist}), and finally on the visited
 file name (using @code{auto-mode-alist}).  @xref{Choosing Modes, , How
-Major Modes are Chosen, emacs, The GNU Emacs Manual}.  However, this
-function does not look for the @samp{mode:} local variable near the
-end of a file; the @code{hack-local-variables} function does that.
+Major Modes are Chosen, emacs, The GNU Emacs Manual}. 
 If @code{enable-local-variables} is @code{nil}, @code{set-auto-mode}
-does not check the @w{@samp{-*-}} line for a mode tag either.
+does not check the @w{@samp{-*-}} line, or near the end of the file,
+for any mode tag.
 
 If @var{keep-mode-if-same} is non-@code{nil}, this function does not
 call the mode command if the buffer is already in the proper major
@@ -1049,8 +1046,8 @@ Turning on text-mode runs the hook `text-mode-hook'."
 @end group
 @group
   ;; @r{These four lines are absent from the current version}
-  ;; @r{not because this is done some other way, but rather}
-  ;; @r{because nowadays Text mode uses the normal definition of paragraphs.}
+  ;; @r{not because this is done some other way, but because}
+  ;; @r{nowadays Text mode uses the normal definition of paragraphs.}
   (set (make-local-variable 'paragraph-start)
        (concat "[ \t]*$\\|" page-delimiter))
   (set (make-local-variable 'paragraph-separate) paragraph-start)
@@ -1142,12 +1139,15 @@ modes should understand the Lisp conventions for comments.  The rest of
 
 @smallexample
 @group
-  (set (make-local-variable 'paragraph-start) (concat page-delimiter "\\|$" ))
-  (set (make-local-variable 'paragraph-separate) paragraph-start)
+  (set (make-local-variable 'paragraph-start)
+       (concat page-delimiter "\\|$" ))
+  (set (make-local-variable 'paragraph-separate)
+       paragraph-start)
   @dots{}
 @end group
 @group
-  (set (make-local-variable 'comment-indent-function) 'lisp-comment-indent))
+  (set (make-local-variable 'comment-indent-function)
+       'lisp-comment-indent))
   @dots{}
 @end group
 @end smallexample
@@ -3174,7 +3174,7 @@ subsequent lines.
 
 @menu
 * Font Lock Multiline::         Marking multiline chunks with a text property.
-* Region to Fontify::           Controlling which region gets refontified
+* Region to Refontify::         Controlling which region gets refontified
                                   after a buffer change.
 @end menu
 
@@ -3226,7 +3226,7 @@ place the @code{font-lock-multiline} property on the text before
 Font-Lock looks at it, or use
 @code{font-lock-fontify-region-function}.
 
-@node Region to Fontify
+@node Region to Refontify
 @subsubsection Region to Fontify after a Buffer Change
 
   When a buffer is changed, the region that Font Lock refontifies is
@@ -3235,15 +3235,15 @@ While this works well most of the time, sometimes it doesn't---for
 example, when a change alters the syntactic meaning of text on an
 earlier line.
 
-  You can enlarge (or even reduce) the region to fontify by setting
-one the following variables:
+  You can enlarge (or even reduce) the region to refontify by setting
+the following variable:
 
 @defvar font-lock-extend-after-change-region-function
 This buffer-local variable is either @code{nil} or a function for
 Font-Lock to call to determine the region to scan and fontify.
 
 The function is given three parameters, the standard @var{beg},
-@var{end}, and @var{old-len} from after-change-functions
+@var{end}, and @var{old-len} from @code{after-change-functions}
 (@pxref{Change Hooks}).  It should return either a cons of the
 beginning and end buffer positions (in that order) of the region to
 fontify, or @code{nil} (which means choose the region in the standard
@@ -3256,7 +3256,7 @@ reasonably fast.
 @end defvar
 
 @node Auto-Indentation
-@section Auto-indention of code
+@section Auto-indentation of code
 
 For programming languages, an important feature of a major mode is to
 provide automatic indentation.  This is controlled in Emacs by
@@ -3403,7 +3403,7 @@ Such pairs of precedences are sufficient to express left-associativity
 or right-associativity of infix operators, nesting of tokens like
 parentheses and many other cases.
 
-@c ¡Let's leave this undocumented to leave it more open for change!
+@c Let's leave this undocumented to leave it more open for change!
 @c @defvar smie-grammar
 @c The value of this variable is an alist specifying the left and right
 @c precedence of each token.  It is meant to be initialized by using one of
@@ -3622,7 +3622,9 @@ natural to have a BNF grammar that looks like this:
   (inst ("IF" exp "THEN" insts "ELSE" insts "END")
         ("CASE" exp "OF" cases "END")
         ...)
-  (cases (cases "|" cases) (caselabel ":" insts) ("ELSE" insts))
+  (cases (cases "|" cases)
+         (caselabel ":" insts)
+         ("ELSE" insts))
   ...
 @end example
 
@@ -3897,9 +3899,10 @@ and is always at the beginning of a line, we can use a more efficient
 rule:
 @example
 ((equal token "if")
- (and (not (smie-rule-bolp)) (smie-rule-prev-p "else")
+ (and (not (smie-rule-bolp))
+      (smie-rule-prev-p "else")
       (save-excursion
-        (sample-smie-backward-token)  ;Jump before the "else".
+        (sample-smie-backward-token)
         (cons 'column (current-column)))))
 @end example
 

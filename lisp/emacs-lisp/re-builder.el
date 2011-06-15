@@ -1,4 +1,4 @@
-;;; re-builder.el --- building Regexps with visual feedback
+;;; re-builder.el --- building Regexps with visual feedback -*- lexical-binding: t -*-
 
 ;; Copyright (C) 1999-2011 Free Software Foundation, Inc.
 
@@ -275,6 +275,13 @@ Except for Lisp syntax this is the same as `reb-regexp'.")
   (set (make-local-variable 'blink-matching-paren) nil)
   (reb-mode-common))
 
+(defvar reb-lisp-mode-map
+  (let ((map (make-sparse-keymap)))
+    ;; Use the same "\C-c" keymap as `reb-mode' and use font-locking from
+    ;; `emacs-lisp-mode'
+    (define-key map "\C-c" (lookup-key reb-mode-map "\C-c"))
+    map))
+
 (define-derived-mode reb-lisp-mode
   emacs-lisp-mode "RE Builder Lisp"
   "Major mode for interactively building symbolic Regular Expressions."
@@ -282,11 +289,6 @@ Except for Lisp syntax this is the same as `reb-regexp'.")
   (cond	((memq reb-re-syntax '(sregex rx)) ; rx-to-string is autoloaded
 	 (require 'rx)))                   ; require rx anyway
   (reb-mode-common))
-
-;; Use the same "\C-c" keymap as `reb-mode' and use font-locking from
-;; `emacs-lisp-mode'
-(define-key reb-lisp-mode-map "\C-c"
-  (lookup-key reb-mode-map "\C-c"))
 
 (defvar reb-subexp-mode-map
   (let ((m (make-keymap)))
@@ -349,9 +351,14 @@ Except for Lisp syntax this is the same as `reb-regexp'.")
 
 ;;;###autoload
 (defun re-builder ()
-  "Construct a regexp interactively."
-  (interactive)
+  "Construct a regexp interactively.
+This command makes the current buffer the \"target\" buffer of
+the regexp builder.  It displays a buffer named \"*RE-Builder*\"
+in another window, initially containing an empty regexp.
 
+As you edit the regexp in the \"*RE-Builder*\" buffer, the
+matching parts of the target buffer will be highlighted."
+  (interactive)
   (if (and (string= (buffer-name) reb-buffer)
 	   (reb-mode-buffer-p))
       (message "Already in the RE Builder")
@@ -504,7 +511,7 @@ If SUBEXP is non-nil mark only the corresponding sub-expressions."
   (reb-update-regexp)
   (reb-update-overlays subexp))
 
-(defun reb-auto-update (beg end lenold &optional force)
+(defun reb-auto-update (_beg _end _lenold &optional force)
   "Called from `after-update-functions' to update the display.
 BEG, END and LENOLD are passed in from the hook.
 An actual update is only done if the regexp has changed or if the

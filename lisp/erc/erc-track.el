@@ -84,8 +84,8 @@ Activity means that there was no user input in the last 10 seconds."
   :type  '(choice (const :tag "All frames" t)
 		  (const :tag "All visible frames" visible)
 		  (const :tag "Only the selected frame" nil)
-		  (const :tag "Only the selected frame if it was active"
-			 active)))
+		  (const :tag "Only the selected frame if it is visible"
+			 selected-visible)))
 
 (defcustom erc-track-exclude nil
   "A list targets (channel names or query targets) which should not be tracked."
@@ -653,7 +653,7 @@ module, otherwise the keybindings will not do anything useful."
 	   (defadvice switch-to-buffer (after erc-update (&rest args) activate)
 	     (erc-modified-channels-update))
 	 (add-hook 'window-configuration-change-hook
-		   'erc-modified-channels-update))
+		   'erc-window-configuration-change))
        (add-hook 'erc-insert-post-hook 'erc-track-modified-channels)
        (add-hook 'erc-disconnected-hook 'erc-modified-channels-update))
      ;; enable the tracking keybindings
@@ -675,7 +675,7 @@ module, otherwise the keybindings will not do anything useful."
        (if (featurep 'xemacs)
 	   (ad-disable-advice 'switch-to-buffer 'after 'erc-update)
 	 (remove-hook 'window-configuration-change-hook
-		      'erc-modified-channels-update))
+		      'erc-window-configuration-change))
        (remove-hook 'erc-disconnected-hook 'erc-modified-channels-update)
        (remove-hook 'erc-insert-post-hook 'erc-track-modified-channels))
      ;; disable the tracking keybindings
@@ -730,6 +730,12 @@ only consider active buffers visible.")
 
 ;;; Tracking the channel modifications
 
+(defun erc-window-configuration-change ()
+  (unless (minibuffer-window-active-p (minibuffer-window))
+    ;; delay this until command has finished to make sure window is
+    ;; actually visible before clearing activity
+    (add-hook 'post-command-hook 'erc-modified-channels-update)))
+
 (defvar erc-modified-channels-update-inside nil
   "Variable to prevent running `erc-modified-channels-update' multiple
 times.  Without it, you cannot debug `erc-modified-channels-display',
@@ -757,8 +763,9 @@ ARGS are ignored."
 		  (erc-modified-channels-remove-buffer buffer))))
 	    erc-modified-channels-alist)
       (when removed-channel
-      (erc-modified-channels-display)
-	(force-mode-line-update t)))))
+	(erc-modified-channels-display)
+	(force-mode-line-update t)))
+    (remove-hook 'post-command-hook 'erc-modified-channels-update)))
 
 (defvar erc-track-mouse-face (if (featurep 'xemacs)
 				 'modeline-mousable

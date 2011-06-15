@@ -278,7 +278,7 @@ The contents are the items that would be in the menu bar whether or
 not it is actually displayed."
   (interactive "@e \nP")
   (run-hooks 'activate-menubar-hook 'menu-bar-update-hook)
-  (popup-menu (mouse-menu-bar-map) event prefix))
+  (popup-menu (mouse-menu-bar-map) (unless (integerp event) event) prefix))
 (make-obsolete 'mouse-popup-menubar 'mouse-menu-bar-map "23.1")
 
 (defun mouse-popup-menubar-stuff (event prefix)
@@ -541,6 +541,9 @@ MODE-LINE-P non-nil means dragging a mode line; nil means a header line."
         ;; a `drag-mouse-1'.  In any case `on-link' would have been nulled
         ;; above if there had been any significant mouse movement.
         (when (and on-link (eq 'mouse-1 (car-safe event)))
+	  ;; If mouse-2 has never been done by the user, it doesn't
+	  ;; have the necessary property to be interpreted correctly.
+	  (put 'mouse-2 'event-kind 'mouse-click)
           (push (cons 'mouse-2 (cdr event)) unread-command-events))))))
 
 (defun mouse-drag-mode-line (start-event)
@@ -787,18 +790,9 @@ remains active.  Otherwise, it remains until the next input event.
 
 If the click is in the echo area, display the `*Messages*' buffer."
   (interactive "e")
-  (let ((w (posn-window (event-start start-event))))
-    (if (and (window-minibuffer-p w)
-	     (not (minibuffer-window-active-p w)))
-	(save-excursion
-	  ;; Swallow the up-event.
-	  (read-event)
-	  (set-buffer (get-buffer-create "*Messages*"))
-	  (goto-char (point-max))
-	  (display-buffer (current-buffer)))
-      ;; Give temporary modes such as isearch a chance to turn off.
-      (run-hooks 'mouse-leave-buffer-hook)
-      (mouse-drag-track start-event t))))
+  ;; Give temporary modes such as isearch a chance to turn off.
+  (run-hooks 'mouse-leave-buffer-hook)
+  (mouse-drag-track start-event t))
 
 
 (defun mouse-posn-property (pos property)

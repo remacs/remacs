@@ -117,7 +117,7 @@ Auto Revert Mode.")
 (defvar Buffer-menu--buffers nil
   "If non-nil, list of buffers shown in the current buffer-menu.
 This variable determines whether reverting the buffer lists only
-this buffers.  It affects both manual reverting and reverting by
+these buffers.  It affects both manual reverting and reverting by
 Auto Revert Mode.")
 (make-variable-buffer-local 'Buffer-menu--buffers)
 
@@ -264,21 +264,21 @@ Letters do not insert themselves; instead, they are commands.
   (set (make-local-variable 'revert-buffer-function)
        'Buffer-menu-revert-function)
   (set (make-local-variable 'buffer-stale-function)
-       #'(lambda (&optional noconfirm) 'fast))
+       (lambda (&optional _noconfirm) 'fast))
   (setq truncate-lines t)
   (setq buffer-read-only t))
 
 (define-obsolete-variable-alias 'buffer-menu-mode-hook
   'Buffer-menu-mode-hook "23.1")
 
-(defun Buffer-menu-revert-function (ignore1 ignore2)
+(defun Buffer-menu-revert-function (_ignore1 _ignore2)
   (or (eq buffer-undo-list t)
       (setq buffer-undo-list nil))
   ;; We can not use save-excursion here.  The buffer gets erased.
   (let ((opoint (point))
 	(eobp (eobp))
 	(ocol (current-column))
-	(oline (progn (move-to-column 4)
+	(oline (progn (move-to-column Buffer-menu-buffer-column)
 		      (get-text-property (point) 'buffer)))
 	(prop (point-min))
 	;; do not make undo records for the reversion.
@@ -688,7 +688,9 @@ For more information, see the function `buffer-menu'."
     (concat name
 	    (propertize (make-string (- name+space-width (string-width name))
 				     ?\s)
-			'display `(space :align-to ,(+ 4 name+space-width)))
+			'display `(space :align-to
+					 ,(+ Buffer-menu-buffer-column
+					     name+space-width)))
 	    size)))
 
 (defun Buffer-menu-sort (column)
@@ -703,7 +705,11 @@ For more information, see the function `buffer-menu'."
     (save-excursion
       (Buffer-menu-beginning)
       (while (not (eobp))
-	(when (buffer-live-p (setq buf (get-text-property (+ (point) 4) 'buffer)))
+	(when (buffer-live-p
+	       (setq buf (get-text-property
+			  (+ (point)
+			     Buffer-menu-buffer-column)
+			  'buffer)))
 	  (setq m1 (char-after)
 		m1 (if (memq m1 '(?> ?D)) m1)
 		m2 (char-after (+ (point) 2))
@@ -715,7 +721,9 @@ For more information, see the function `buffer-menu'."
     (save-excursion
       (Buffer-menu-beginning)
       (while (not (eobp))
-	(when (setq buf (assq (get-text-property (+ (point) 4) 'buffer) l))
+	(when (setq buf (assq (get-text-property (+ (point)
+						    Buffer-menu-buffer-column)
+						 'buffer) l))
 	  (setq m1 (cadr buf)
 		m2 (cadr (cdr buf)))
 	  (when m1

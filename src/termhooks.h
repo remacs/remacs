@@ -20,6 +20,8 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 /* Miscellanea.   */
 
+#include "systime.h" /* for Time */
+
 struct glyph;
 struct frame;
 
@@ -235,7 +237,7 @@ struct input_event
   int modifiers;		/* See enum below for interpretation.  */
 
   Lisp_Object x, y;
-  unsigned long timestamp;
+  Time timestamp;
 
   /* This is padding just to put the frame_or_window field
      past the size of struct selection_input_event.  */
@@ -308,7 +310,9 @@ enum {
 #ifdef HAVE_GPM
 #include <gpm.h>
 extern int handle_one_term_event (struct tty_display_info *, Gpm_Event *, struct input_event *);
+#ifndef HAVE_WINDOW_SYSTEM
 extern void term_mouse_moveto (int, int);
+#endif
 
 /* The device for which we have enabled gpm support.  */
 extern struct tty_display_info *gpm_tty;
@@ -322,10 +326,8 @@ struct w32_display_info;
 /* Terminal-local parameters. */
 struct terminal
 {
-  /* The first two fields are really the header of a vector */
-  /* The terminal code does not refer to them.  */
-  EMACS_UINT size;
-  struct Lisp_Vector *vec_next;
+  /* This is for Lisp; the terminal code does not refer to it.  */
+  struct vectorlike_header header;
 
   /* Parameter alist of this terminal.  */
   Lisp_Object param_alist;
@@ -334,6 +336,22 @@ struct terminal
      Fset_terminal_coding_system_internal along with
      the member terminal_coding.  */
   Lisp_Object charset_list;
+
+  /* This is an association list containing the X selections that
+     Emacs might own on this terminal.  Each element has the form
+       (SELECTION-NAME SELECTION-VALUE SELECTION-TIMESTAMP FRAME)
+     SELECTION-NAME is a lisp symbol, whose name is the name of an X Atom.
+     SELECTION-VALUE is the value that emacs owns for that selection.
+      It may be any kind of Lisp object.
+     SELECTION-TIMESTAMP is the time at which emacs began owning this
+      selection, as a cons of two 16-bit numbers (making a 32 bit
+      time.)
+     FRAME is the frame for which we made the selection.  If there is
+      an entry in this alist, then it can be assumed that Emacs owns
+      that selection.
+     The only (eq) parts of this list that are visible from Lisp are
+    the selection-values.  */
+  Lisp_Object Vselection_alist;
 
   /* All fields before `next_terminal' should be Lisp_Object and are traced
      by the GC.  All fields afterwards are ignored by the GC.  */
@@ -465,7 +483,7 @@ struct terminal
                                enum scroll_bar_part *part,
                                Lisp_Object *x,
                                Lisp_Object *y,
-                               unsigned long *time);
+                               Time *);
 
   /* The window system handling code should set this if the mouse has
      moved since the last call to the mouse_position_hook.  Calling that
@@ -484,10 +502,10 @@ struct terminal
      support overlapping frames, so there's no need to raise or lower
      anything.
 
-     If RAISE is non-zero, F is brought to the front, before all other
-     windows.  If RAISE is zero, F is sent to the back, behind all other
+     If RAISE_FLAG is non-zero, F is brought to the front, before all other
+     windows.  If RAISE_FLAG is zero, F is sent to the back, behind all other
      windows.  */
-  void (*frame_raise_lower_hook) (struct frame *f, int raise);
+  void (*frame_raise_lower_hook) (struct frame *f, int raise_flag);
 
   /* If the value of the frame parameter changed, whis hook is called.
      For example, if going from fullscreen to not fullscreen this hook
@@ -633,19 +651,6 @@ extern struct terminal *terminal_list;
 
 #define FRAME_TERMINAL(f) ((f)->terminal)
 
-/* FRAME_WINDOW_P tests whether the frame is a window, and is
-   defined to be the predicate for the window system being used.  */
-
-#ifdef HAVE_X_WINDOWS
-#define FRAME_WINDOW_P(f) FRAME_X_P (f)
-#endif
-#ifdef HAVE_NTGUI
-#define FRAME_WINDOW_P(f) FRAME_W32_P (f)
-#endif
-#ifndef FRAME_WINDOW_P
-#define FRAME_WINDOW_P(f) (0)
-#endif
-
 /* Return true if the terminal device is not suspended. */
 #define TERMINAL_ACTIVE_P(d) (((d)->type != output_termcap && (d)->type !=output_msdos_raw) || (d)->display_info.tty->input)
 
@@ -656,7 +661,9 @@ extern void delete_terminal (struct terminal *);
 /* The initial terminal device, created by initial_term_init. */
 extern struct terminal *initial_terminal;
 
+extern unsigned char *encode_terminal_code (struct glyph *, int,
+					    struct coding_system *);
+
 #ifdef HAVE_GPM
 extern void close_gpm (int gpm_fd);
 #endif
-

@@ -31,11 +31,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 /* Nonzero means there is at least one garbaged frame. */
 extern int frame_garbaged;
 
-/* Nonzero means FRAME_MESSAGE_BUF (selected_frame) is being used by
-   print.  */
-
-extern int message_buf_print;
-
 
 /* The structure representing a frame.  */
 
@@ -87,8 +82,7 @@ struct font_driver_list;
 
 struct frame
 {
-  EMACS_UINT size;
-  struct Lisp_Vector *next;
+  struct vectorlike_header header;
 
   /* All Lisp_Object components must come first.
      That ensures they are all aligned normally.  */
@@ -198,7 +192,7 @@ struct frame
   struct face_cache *face_cache;
 
   /* Number of elements in `menu_bar_vector' that have meaningful data.  */
-  EMACS_INT menu_bar_items_used;
+  int menu_bar_items_used;
 
   /* A buffer to hold the frame's name.  We can't use the Lisp
      string's pointer (`name', above) because it might get relocated.  */
@@ -845,8 +839,8 @@ extern Lisp_Object Qnoelisp;
 
 extern struct frame *last_nonminibuf_frame;
 
+extern void set_menu_bar_lines (struct frame *, Lisp_Object, Lisp_Object);
 extern struct frame *make_initial_frame (void);
-extern struct frame *make_terminal_frame (struct terminal *);
 extern struct frame *make_frame (int);
 #ifdef HAVE_WINDOW_SYSTEM
 extern struct frame *make_minibuffer_frame (void);
@@ -854,7 +848,6 @@ extern struct frame *make_frame_without_minibuffer (Lisp_Object,
                                                     struct kboard *,
                                                     Lisp_Object);
 #endif /* HAVE_WINDOW_SYSTEM */
-extern int other_visible_frames (struct frame *);
 extern void frame_make_pointer_invisible (void);
 extern void frame_make_pointer_visible (void);
 extern Lisp_Object delete_frame (Lisp_Object, Lisp_Object);
@@ -1050,7 +1043,7 @@ extern Lisp_Object selected_frame;
 
 extern Lisp_Object Qauto_raise, Qauto_lower;
 extern Lisp_Object Qborder_color, Qborder_width;
-extern Lisp_Object Qbuffer_predicate, Qbuffer_list, Qburied_buffer_list;
+extern Lisp_Object Qbuffer_predicate;
 extern Lisp_Object Qcursor_color, Qcursor_type;
 extern Lisp_Object Qfont;
 extern Lisp_Object Qbackground_color, Qforeground_color;
@@ -1079,7 +1072,6 @@ extern Lisp_Object Qminibuffer, Qmodeline;
 extern Lisp_Object Qx, Qw32, Qmac, Qpc, Qns;
 extern Lisp_Object Qvisible;
 extern Lisp_Object Qdisplay_type;
-extern Lisp_Object Qbackground_mode;
 
 extern Lisp_Object Qx_resource_name;
 
@@ -1104,11 +1096,12 @@ extern Lisp_Object x_new_font (struct frame *, Lisp_Object, int);
 
 extern Lisp_Object Qface_set_after_frame_default;
 
+#ifdef WINDOWSNT
 extern void x_fullscreen_adjust (struct frame *f, int *, int *,
                                  int *, int *);
+#endif
 
 extern void x_set_frame_parameters (struct frame *, Lisp_Object);
-extern void x_report_frame_params (struct frame *, Lisp_Object *);
 
 extern void x_set_fullscreen (struct frame *, Lisp_Object, Lisp_Object);
 extern void x_set_line_spacing (struct frame *, Lisp_Object, Lisp_Object);
@@ -1135,12 +1128,16 @@ extern int x_figure_window_size (struct frame *, Lisp_Object, int);
 extern void x_set_alpha (struct frame *, Lisp_Object, Lisp_Object);
 
 extern void validate_x_resource_name (void);
-                                           
+
 extern Lisp_Object display_x_get_resource (Display_Info *,
 					   Lisp_Object attribute,
 					   Lisp_Object class,
 					   Lisp_Object component,
 					   Lisp_Object subclass);
+
+#if defined HAVE_X_WINDOWS && !defined USE_X_TOOLKIT
+extern char *x_get_resource_string (const char *, const char *);
+#endif
 
 /* In xmenu.c */
 extern void set_frame_menubar (FRAME_PTR, int, int);
@@ -1148,4 +1145,3 @@ extern void set_frame_menubar (FRAME_PTR, int, int);
 #endif /* HAVE_WINDOW_SYSTEM */
 
 #endif /* not EMACS_FRAME_H */
-

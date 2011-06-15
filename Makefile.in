@@ -265,7 +265,8 @@ EMACSFULL = `echo emacs-${version}${EXEEXT} | sed '$(TRANSFORM)'`
 SUBDIR = lib lib-src src lisp
 
 # The subdir makefiles created by config.status.
-SUBDIR_MAKEFILES = lib/Makefile lib-src/Makefile doc/emacs/Makefile doc/misc/Makefile doc/lispref/Makefile doc/lispintro/Makefile src/Makefile oldXMenu/Makefile lwlib/Makefile leim/Makefile lisp/Makefile test/automated/Makefile
+SUBDIR_MAKEFILES_IN = @SUBDIR_MAKEFILES_IN@
+SUBDIR_MAKEFILES = `echo $(SUBDIR_MAKEFILES_IN:.in=) | sed 's|$(srcdir)/||g'`
 
 # Subdirectories to install, and where they'll go.
 # lib-src's makefile knows how to install it, so we don't do that here.
@@ -330,9 +331,13 @@ DOS_gnulib_comp.m4 = gl-comp.m4
 # Update modules from gnulib, for maintainers, who should have it in
 # $(gnulib_srcdir) (relative to $(srcdir) and should have build tools
 # as per $(gnulib_srcdir)/DEPENDENCIES.
-GNULIB_MODULES = dtoastr getopt-gnu ignore-value mktime strftime
+GNULIB_MODULES = \
+  careadlinkat crypto/md5 crypto/sha1 dtoastr filemode getloadavg \
+  getopt-gnu ignore-value intprops lstat mktime readlink \
+  socklen stdarg stdio strftime strtoumax symlink sys_stat
 GNULIB_TOOL_FLAGS = \
- --import --no-changelog --no-vc-files --makefile-name=gnulib.mk
+ --conditional-dependencies --import --no-changelog --no-vc-files \
+ --makefile-name=gnulib.mk
 sync-from-gnulib: $(gnulib_srcdir)
 	-cd $(srcdir)/m4 && cp $(DOS_gnulib_comp.m4) gnulib-comp.m4
 	cd $(srcdir) && \
@@ -341,13 +346,9 @@ sync-from-gnulib: $(gnulib_srcdir)
 	cd $(srcdir)/m4 && mv gnulib-comp.m4 $(DOS_gnulib_comp.m4)
 	cp $(gnulib_srcdir)/build-aux/texinfo.tex $(srcdir)/doc/misc
 	cp \
-	  $(gnulib_srcdir)/build-aux/config.sub \
-	  $(gnulib_srcdir)/build-aux/config.guess \
-	  $(gnulib_srcdir)/build-aux/install-sh \
-	  $(gnulib_srcdir)/build-aux/mkinstalldirs \
 	  $(gnulib_srcdir)/build-aux/move-if-change \
 	  $(srcdir)
-	cd $(srcdir) && autoreconf -I m4
+	cd $(srcdir) && autoreconf -i -I m4
 .PHONY: sync-from-gnulib
 
 # These targets should be "${SUBDIR} without `src'".
@@ -373,7 +374,7 @@ src: Makefile FRC
 	      LDFLAGS='${LDFLAGS}' MAKE='${MAKE}' BOOTSTRAPEMACS="$$boot"; \
 	fi;
 	if [ -r .bzr/checkout/dirstate ]; then 			\
-	    vcswitness="$$(pwd)/.bzr/checkout/dirstate"; 	\
+	    vcswitness="`pwd`/.bzr/checkout/dirstate"; 	\
 	fi; 							\
 	cd $@; $(MAKE) all $(MFLAGS)                           \
 	  CC='${CC}' CFLAGS='${CFLAGS}' CPPFLAGS='${CPPFLAGS}' \
@@ -388,23 +389,18 @@ blessmail: Makefile src FRC
 # conditions with parallel makes, so let's assume that the time stamp on
 # ./Makefile is representative of the time stamp on all the other Makefiles.
 Makefile: config.status $(srcdir)/src/config.in \
-          $(srcdir)/Makefile.in \
-          $(srcdir)/src/Makefile.in \
-          $(srcdir)/lib/Makefile.in \
-          $(srcdir)/lib-src/Makefile.in \
-          $(srcdir)/doc/emacs/Makefile.in \
-          $(srcdir)/doc/misc/Makefile.in \
-          $(srcdir)/doc/lispref/Makefile.in \
-          $(srcdir)/doc/lispintro/Makefile.in \
-          $(srcdir)/oldXMenu/Makefile.in \
-          $(srcdir)/lwlib/Makefile.in \
-          $(srcdir)/leim/Makefile.in \
-          $(srcdir)/lisp/Makefile.in \
-          $(srcdir)/test/automated/Makefile.in
+          $(srcdir)/Makefile.in $(SUBDIR_MAKEFILES_IN)
 	./config.status
 
+# Don't erase config.status if make is interrupted while refreshing it.
+.PRECIOUS: config.status
+
 config.status: ${srcdir}/configure ${srcdir}/lisp/version.el
-	./config.status --recheck
+	if [ -x ./config.status ]; then	\
+	    ./config.status --recheck;	\
+	else				\
+	    ./configure;		\
+	fi
 
 AUTOCONF_INPUTS = @MAINT@ $(srcdir)/configure.in $(srcdir)/aclocal.m4
 
@@ -415,7 +411,7 @@ ACLOCAL_INPUTS = @MAINT@ $(srcdir)/m4/$(DOS_gnulib_comp.m4)
 $(srcdir)/aclocal.m4: $(ACLOCAL_INPUTS)
 	cd $(srcdir) && aclocal -I m4
 
-AUTOMAKE_INPUTS = @MAINT@ $(srcdir)/aclocal.m4 $(srcdir)/lib/Makefile.am
+AUTOMAKE_INPUTS = @MAINT@ $(srcdir)/aclocal.m4 $(srcdir)/lib/Makefile.am $(srcdir)/lib/gnulib.mk
 $(srcdir)/lib/Makefile.in: $(AUTOMAKE_INPUTS)
 	cd $(srcdir) && automake --gnu -a -c lib/Makefile
 am--refresh: $(srcdir)/aclocal.m4 $(srcdir)/configure $(srcdir)/src/config.in
@@ -616,7 +612,7 @@ install-arch-indep: mkdir info install-etc
 	   fi; \
 	   cd ${srcdir}/info ; \
 	   for elt in $(INFO_FILES); do \
-	      test "$(HAVE_MAKEINFO)" = "no" && ! test -e $$elt && continue; \
+	      test "$(HAVE_MAKEINFO)" = "no" && test ! -f $$elt && continue; \
 	      for f in `ls $$elt $$elt-[1-9] $$elt-[1-9][0-9] 2>/dev/null`; do \
 	        ${INSTALL_DATA} $$f $(DESTDIR)${infodir}/$$f; \
 	        chmod a+r $(DESTDIR)${infodir}/$$f; \
@@ -632,7 +628,7 @@ install-arch-indep: mkdir info install-etc
 	if [ `(cd ${srcdir}/info && /bin/pwd)` != `(cd $(DESTDIR)${infodir} && /bin/pwd)` ]; \
 	then \
 	  for elt in $(INFO_FILES); do \
-	    test "$(HAVE_MAKEINFO)" = "no" && ! test -e $$elt && continue; \
+	    test "$(HAVE_MAKEINFO)" = "no" && test ! -f $$elt && continue; \
 	    (cd $${thisdir}; \
 	     ${INSTALL_INFO} --info-dir=$(DESTDIR)${infodir} $(DESTDIR)${infodir}/$$elt); \
 	  done; \
@@ -675,7 +671,7 @@ install-strip:
 
 ### Build all the directories we're going to install Emacs in.	Since
 ### we may be creating several layers of directories (for example,
-### /usr/local/lib/emacs/19.0/mips-dec-ultrix4.2), we use mkinstalldirs
+### /usr/local/lib/emacs/19.0/mips-dec-ultrix4.2), we use install-sh -d
 ### instead of mkdir.  Not all systems' mkdir programs have the `-p' flag.
 ### We set the umask so that any created directories are world-readable.
 ### FIXME it would be good to warn about non-standard permissions of
@@ -689,7 +685,7 @@ mkdir: FRC
 	done ; \
 	icondirs=`echo "$${icondirs}" | sed 's,$(srcdir)/etc/images/icons,$(DESTDIR)${icondir},g'` ; \
 	umask 022 ; \
-	$(srcdir)/mkinstalldirs $(DESTDIR)${datadir} ${COPYDESTS} \
+	$(srcdir)/install-sh -d $(DESTDIR)${datadir} ${COPYDESTS} \
 	  $(DESTDIR)${infodir} $(DESTDIR)${man1dir} \
 	  $(DESTDIR)${bindir} $(DESTDIR)${docdir} $(DESTDIR)${libexecdir} \
 	  $(DESTDIR)${datadir}/emacs/site-lisp \
@@ -792,7 +788,7 @@ top_bootclean=\
 ###      distribution.
 top_distclean=\
 	${top_bootclean}; \
-	rm -f config.status Makefile stamp-h1 ${SUBDIR_MAKEFILES}
+	rm -f config.status config.log~ Makefile stamp-h1 ${SUBDIR_MAKEFILES}
 distclean: FRC
 	(cd src;      $(MAKE) $(MFLAGS) distclean)
 	(cd oldXMenu; $(MAKE) $(MFLAGS) distclean)
@@ -822,7 +818,10 @@ bootstrap-clean: FRC
 	-(cd doc/lispintro &&   $(MAKE) $(MFLAGS) maintainer-clean)
 	(cd leim;     $(MAKE) $(MFLAGS) maintainer-clean)
 	(cd lisp;     $(MAKE) $(MFLAGS) bootstrap-clean)
+	[ ! -f config.log ] || mv -f config.log config.log~
 	${top_bootclean}
+## configure; make bootstrap replaces the real config.log from configure
+## with the truncated one from config.status.  The former is more useful.
 
 ### `maintainer-clean'
 ###      Delete everything from the current directory that can be
@@ -856,10 +855,15 @@ extraclean:
 # The src subdir knows how to do the right thing
 # even when the build directory and source dir are different.
 TAGS tags: lib lib-src src
-	cd src; $(MAKE) tags
+	cd src; $(MAKE) $(MFLAGS) tags
 
 check:
-	cd test/automated; $(MAKE) check
+	@if test ! -d test/automated; then \
+	  echo "You do not seem to have the test/ directory."; \
+	  echo "Maybe you are using a release tarfile, rather than a repository checkout."; \
+	else \
+	  cd test/automated && $(MAKE) $(MFLAGS) check; \
+	fi
 
 dist:
 	cd ${srcdir}; ./make-dist
@@ -921,6 +925,8 @@ dvi:
 
 .PHONY: bootstrap
 
+## configure; make bootstrap replaces the real config.log from configure
+## with the truncated one from config.status.  The former is more useful.
 bootstrap: bootstrap-clean FRC
 	if [ -x ./config.status ]; then           \
 	    ./config.status;                      \
@@ -932,7 +938,7 @@ bootstrap: bootstrap-clean FRC
 .PHONY: check-declare
 
 check-declare:
-	@if [ ! -e $(srcdir)/src/emacs ]; then \
+	@if [ ! -f $(srcdir)/src/emacs ]; then \
 	  echo "You must build Emacs to use this command"; \
 	  exit 1; \
 	fi

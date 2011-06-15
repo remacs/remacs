@@ -51,10 +51,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <utmp.h>
 #endif
 
-#if !defined (S_ISLNK) && defined (S_IFLNK)
-#define S_ISLNK(m) (((m) & S_IFMT) == S_IFLNK)
-#endif
-
 /* A file whose last-modified time is just after the most recent boot.
    Define this to be NULL to disable checking for this file.  */
 #ifndef BOOT_TIME_FILE
@@ -348,13 +344,13 @@ static int
 lock_file_1 (char *lfname, int force)
 {
   register int err;
-  time_t boot_time;
+  time_t boot;
   const char *user_name;
   const char *host_name;
   char *lock_info_str;
 
   /* Call this first because it can GC.  */
-  boot_time = get_boot_time ();
+  boot = get_boot_time ();
 
   if (STRINGP (Fuser_login_name (Qnil)))
     user_name = SSDATA (Fuser_login_name (Qnil));
@@ -367,9 +363,9 @@ lock_file_1 (char *lfname, int force)
   lock_info_str = (char *)alloca (strlen (user_name) + strlen (host_name)
 				  + LOCK_PID_MAX + 30);
 
-  if (boot_time)
+  if (boot)
     sprintf (lock_info_str, "%s@%s.%lu:%lu", user_name, host_name,
-	     (unsigned long) getpid (), (unsigned long) boot_time);
+	     (unsigned long) getpid (), (unsigned long) boot);
   else
     sprintf (lock_info_str, "%s@%s.%lu", user_name, host_name,
 	     (unsigned long) getpid ());
@@ -386,7 +382,7 @@ lock_file_1 (char *lfname, int force)
 
 /* Return 1 if times A and B are no more than one second apart.  */
 
-int
+static int
 within_one_second (time_t a, time_t b)
 {
   return (a - b >= -1 && a - b <= 1);
@@ -400,36 +396,16 @@ within_one_second (time_t a, time_t b)
 static int
 current_lock_owner (lock_info_type *owner, char *lfname)
 {
-  int len, ret;
+  int ret;
+  size_t len;
   int local_owner = 0;
   char *at, *dot, *colon;
-  char *lfinfo = 0;
-  int bufsize = 50;
-  /* Read arbitrarily-long contents of symlink.  Similar code in
-     file-symlink-p in fileio.c.  */
-  do
-    {
-      bufsize *= 2;
-      lfinfo = (char *) xrealloc (lfinfo, bufsize);
-      errno = 0;
-      len = readlink (lfname, lfinfo, bufsize);
-#ifdef ERANGE
-      /* HP-UX reports ERANGE if the buffer is too small.  */
-      if (len == -1 && errno == ERANGE)
-	len = bufsize;
-#endif
-    }
-  while (len >= bufsize);
+  char readlink_buf[READLINK_BUFSIZE];
+  char *lfinfo = emacs_readlink (lfname, readlink_buf);
 
   /* If nonexistent lock file, all is well; otherwise, got strange error. */
-  if (len == -1)
-    {
-      xfree (lfinfo);
-      return errno == ENOENT ? 0 : -1;
-    }
-
-  /* Link info exists, so `len' is its length.  Null terminate.  */
-  lfinfo[len] = 0;
+  if (!lfinfo)
+    return errno == ENOENT ? 0 : -1;
 
   /* Even if the caller doesn't want the owner info, we still have to
      read it to determine return value, so allocate it.  */
@@ -445,7 +421,8 @@ current_lock_owner (lock_info_type *owner, char *lfname)
   dot = strrchr (lfinfo, '.');
   if (!at || !dot)
     {
-      xfree (lfinfo);
+      if (lfinfo != readlink_buf)
+	xfree (lfinfo);
       return -1;
     }
   len = at - lfinfo;
@@ -471,7 +448,8 @@ current_lock_owner (lock_info_type *owner, char *lfname)
   owner->host[len] = 0;
 
   /* We're done looking at the link info.  */
-  xfree (lfinfo);
+  if (lfinfo != readlink_buf)
+    xfree (lfinfo);
 
   /* On current host?  */
   if (STRINGP (Fsystem_name ())
@@ -637,9 +615,9 @@ unlock_all_files (void)
   for (tail = Vbuffer_alist; CONSP (tail); tail = XCDR (tail))
     {
       b = XBUFFER (XCDR (XCAR (tail)));
-      if (STRINGP (b->file_truename) && BUF_SAVE_MODIFF (b) < BUF_MODIFF (b))
+      if (STRINGP (BVAR (b, file_truename)) && BUF_SAVE_MODIFF (b) < BUF_MODIFF (b))
 	{
-	  unlock_file(b->file_truename);
+	  unlock_file(BVAR (b, file_truename));
 	}
     }
 }
@@ -652,7 +630,7 @@ or else nothing is done if current buffer isn't visiting a file.  */)
   (Lisp_Object file)
 {
   if (NILP (file))
-    file = current_buffer->file_truename;
+    file = BVAR (current_buffer, file_truename);
   else
     CHECK_STRING (file);
   if (SAVE_MODIFF < MODIFF
@@ -669,8 +647,8 @@ should not be locked in that case.  */)
   (void)
 {
   if (SAVE_MODIFF < MODIFF
-      && STRINGP (current_buffer->file_truename))
-    unlock_file (current_buffer->file_truename);
+      && STRINGP (BVAR (current_buffer, file_truename)))
+    unlock_file (BVAR (current_buffer, file_truename));
   return Qnil;
 }
 
@@ -680,8 +658,8 @@ void
 unlock_buffer (struct buffer *buffer)
 {
   if (BUF_SAVE_MODIFF (buffer) < BUF_MODIFF (buffer)
-      && STRINGP (buffer->file_truename))
-    unlock_file (buffer->file_truename);
+      && STRINGP (BVAR (buffer, file_truename)))
+    unlock_file (BVAR (buffer, file_truename));
 }
 
 DEFUN ("file-locked-p", Ffile_locked_p, Sfile_locked_p, 1, 1, 0,

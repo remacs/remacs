@@ -27,8 +27,8 @@ struct interval
 {
   /* The first group of entries deal with the tree structure.  */
 
-  EMACS_UINT total_length;      /* Length of myself and both children.  */
-  EMACS_UINT position;	        /* Cache of interval's character position.  */
+  EMACS_INT total_length;       /* Length of myself and both children.  */
+  EMACS_INT position;	        /* Cache of interval's character position.  */
 				/* This field is usually updated
 				   simultaneously with an interval
 				   traversal, there is no guarantee
@@ -161,8 +161,13 @@ struct interval
    (INTERVAL_HAS_PARENT (i) ? INTERVAL_PARENT (i) : 0)
 
 /* Abort if interval I's size is negative.  */
-#define CHECK_TOTAL_LENGTH(i) \
-  if ((int) (i)->total_length < 0) abort (); else
+#define CHECK_TOTAL_LENGTH(i)		     \
+  do					     \
+    {					     \
+      if ((i)->total_length < 0)	     \
+	abort ();			     \
+    }					     \
+  while (0)
 
 /* Reset this interval to its vanilla, or no-property state. */
 #define RESET_INTERVAL(i) \
@@ -236,9 +241,9 @@ struct interval
    and 2 if it is invisible but with an ellipsis.  */
 
 #define TEXT_PROP_MEANS_INVISIBLE(prop)				\
-  (EQ (current_buffer->invisibility_spec, Qt)			\
+  (EQ (BVAR (current_buffer, invisibility_spec), Qt)			\
    ? !NILP (prop)						\
-   : invisible_p (prop, current_buffer->invisibility_spec))
+   : invisible_p (prop, BVAR (current_buffer, invisibility_spec)))
 
 /* Declared in alloc.c */
 
@@ -261,12 +266,11 @@ extern INTERVAL find_interval (INTERVAL, EMACS_INT);
 extern INTERVAL next_interval (INTERVAL);
 extern INTERVAL previous_interval (INTERVAL);
 extern INTERVAL merge_interval_left (INTERVAL);
-extern INTERVAL merge_interval_right (INTERVAL);
-extern void delete_interval (INTERVAL);
 extern void offset_intervals (struct buffer *, EMACS_INT, EMACS_INT);
 extern void graft_intervals_into_buffer (INTERVAL, EMACS_INT, EMACS_INT,
                                          struct buffer *, int);
-extern void verify_interval_modification (struct buffer *, int, int);
+extern void verify_interval_modification (struct buffer *,
+					  EMACS_INT, EMACS_INT);
 extern INTERVAL balance_intervals (INTERVAL);
 extern void copy_intervals_to_string (Lisp_Object, struct buffer *,
                                              EMACS_INT, EMACS_INT);
@@ -282,7 +286,7 @@ extern INTERVAL update_interval (INTERVAL, EMACS_INT);
 extern void set_intervals_multibyte (int);
 extern INTERVAL validate_interval_range (Lisp_Object, Lisp_Object *,
                                          Lisp_Object *, int);
-extern INTERVAL interval_of (int, Lisp_Object);
+extern INTERVAL interval_of (EMACS_INT, Lisp_Object);
 
 /* Defined in xdisp.c */
 extern int invisible_p (Lisp_Object, Lisp_Object);
@@ -290,8 +294,6 @@ extern int invisible_p (Lisp_Object, Lisp_Object);
 /* Declared in textprop.c */
 
 /* Types of hooks. */
-extern Lisp_Object Qmouse_left;
-extern Lisp_Object Qmouse_entered;
 extern Lisp_Object Qpoint_left;
 extern Lisp_Object Qpoint_entered;
 extern Lisp_Object Qmodification_hooks;
@@ -300,8 +302,8 @@ extern Lisp_Object Qlocal_map;
 extern Lisp_Object Qkeymap;
 
 /* Visual properties text (including strings) may have. */
-extern Lisp_Object Qforeground, Qbackground, Qfont, Qunderline, Qstipple;
-extern Lisp_Object Qinvisible, Qintangible, Qread_only;
+extern Lisp_Object Qfont;
+extern Lisp_Object Qinvisible, Qintangible;
 
 /* Sticky properties */
 extern Lisp_Object Qfront_sticky, Qrear_nonsticky;
@@ -310,10 +312,10 @@ EXFUN (Fget_char_property, 3);
 EXFUN (Fget_text_property, 3);
 EXFUN (Ftext_properties_at, 2);
 EXFUN (Fnext_property_change, 3);
-EXFUN (Fprevious_property_change, 3);
 EXFUN (Fadd_text_properties, 4);
 EXFUN (Fset_text_properties, 4);
 EXFUN (Fremove_text_properties, 4);
+EXFUN (Fremove_list_of_text_properties, 4);
 EXFUN (Ftext_property_any, 5);
 EXFUN (Fprevious_single_char_property_change, 4);
 extern Lisp_Object copy_text_properties (Lisp_Object, Lisp_Object,
@@ -339,4 +341,3 @@ extern Lisp_Object get_pos_property (Lisp_Object pos, Lisp_Object prop,
 extern void syms_of_textprop (void);
 
 #include "composite.h"
-

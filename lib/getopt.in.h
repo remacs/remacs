@@ -16,7 +16,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef _GL_GETOPT_H
+#ifndef _@GUARD_PREFIX@_GETOPT_H
 
 #if __GNUC__ >= 3
 @PRAGMA_SYSTEM_HEADER@
@@ -32,10 +32,10 @@
 # undef _GL_SYSTEM_GETOPT
 #endif
 
-#ifndef _GL_GETOPT_H
+#ifndef _@GUARD_PREFIX@_GETOPT_H
 
 #ifndef __need_getopt
-# define _GL_GETOPT_H 1
+# define _@GUARD_PREFIX@_GETOPT_H 1
 #endif
 
 /* Standalone applications should #define __GETOPT_PREFIX to an
@@ -181,6 +181,7 @@ extern int optopt;
    one).  For long options that have a zero `flag' field, `getopt'
    returns the contents of the `val' field.  */
 
+# if !GNULIB_defined_struct_option
 struct option
 {
   const char *name;
@@ -190,6 +191,8 @@ struct option
   int *flag;
   int val;
 };
+#  define GNULIB_defined_struct_option 1
+# endif
 
 /* Names for the values of the `has_arg' field of `struct option'.  */
 
@@ -246,5 +249,5 @@ extern int getopt_long_only (int ___argc, char *__getopt_argv_const *___argv,
 /* Make sure we later can get all the definitions and declarations.  */
 #undef __need_getopt
 
-#endif /* getopt.h */
-#endif /* getopt.h */
+#endif /* _@GUARD_PREFIX@_GETOPT_H */
+#endif /* _@GUARD_PREFIX@_GETOPT_H */

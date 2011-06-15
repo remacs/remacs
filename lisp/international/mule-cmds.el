@@ -366,7 +366,9 @@ This also sets the following values:
 		 (coding-system-get coding-system 'ascii-compatible-p)))
 	(setq default-file-name-coding-system coding-system)))
   (setq default-terminal-coding-system coding-system)
-  (setq default-keyboard-coding-system coding-system)
+  ;; Prevent default-terminal-coding-system from converting ^M to ^J.
+  (setq default-keyboard-coding-system
+	(coding-system-change-eol-conversion coding-system 'unix))
   ;; Preserve eol-type from existing default-process-coding-systems.
   ;; On non-unix-like systems in particular, these may have been set
   ;; carefully by the user, or by the startup code, to deal with the
@@ -2938,11 +2940,19 @@ on encoding."
 (defun read-char-by-name (prompt)
   "Read a character by its Unicode name or hex number string.
 Display PROMPT and read a string that represents a character by its
-Unicode property `name' or `old-name'.  You can type a few of first
-letters of the Unicode name and use completion.  This function also
-accepts a hexadecimal number of Unicode code point or a number in
-hash notation, e.g. #o21430 for octal, #x2318 for hex, or #10r8984
-for decimal.  Returns a character as a number."
+Unicode property `name' or `old-name'.
+
+This function returns the character as a number.
+
+You can type a few of the first letters of the Unicode name and
+use completion.  If you type a substring of the Unicode name
+preceded by an asterisk `*' and use completion, it will show all
+the characters whose names include that substring, not necessarily
+at the beginning of the name.
+
+This function also accepts a hexadecimal number of Unicode code
+point or a number in hash notation, e.g. #o21430 for octal,
+#x2318 for hex, or #10r8984 for decimal."
   (let* ((completion-ignore-case t)
 	 (input (completing-read prompt ucs-completions)))
     (cond
@@ -2957,6 +2967,13 @@ for decimal.  Returns a character as a number."
   "Insert COUNT copies of CHARACTER of the given Unicode code point.
 Interactively, prompts for a Unicode character name or a hex number
 using `read-char-by-name'.
+
+You can type a few of the first letters of the Unicode name and
+use completion.  If you type a substring of the Unicode name
+preceded by an asterisk `*' and use completion, it will show all
+the characters whose names include that substring, not necessarily
+at the beginning of the name.
+
 The optional third arg INHERIT (non-nil when called interactively),
 says to inherit text properties from adjoining text, if those
 properties are sticky."

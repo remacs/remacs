@@ -28,7 +28,7 @@ srcdir=@srcdir@
 # Note the other doc Makefiles do not use VPATH anymore, instead
 # they set infodir to an absolute path.  Not doing that here in
 # case INFO_TARGETS gets too long for some feeble shells.
-# (cf src/Makefile.in's shortlisp)
+# (cf src/Makefile.in's passing of $lisp to make-docfile)
 VPATH=@srcdir@
 
 ## Where the output files go.
@@ -197,6 +197,8 @@ PDF_TARGETS = \
 	widget.pdf \
 	woman.pdf
 
+HTML_TARGETS = emacs-faq.html
+
 TEXI2DVI = texi2dvi
 TEXI2PDF = texi2pdf
 
@@ -208,6 +210,10 @@ mkinfodir = @cd ${srcdir}; test -d ${infodir} || mkdir ${infodir} || test -d ${i
 .PHONY: info dvi pdf
 
 info: $(INFO_TARGETS)
+
+# please modify this for all the web manual targets
+webhack: clean
+	$(MAKE) pdf MAKEINFO_OPTS="-DWEBHACKDEVEL $(MAKEINFO_OPTS)"
 
 dvi: $(DVI_TARGETS)
 
@@ -283,12 +289,12 @@ dbus.pdf: ${srcdir}/dbus.texi
 	$(ENVADD) $(TEXI2PDF) $<
 
 dired-x : $(infodir)/dired-x
-$(infodir)/dired-x: dired-x.texi
+$(infodir)/dired-x: dired-x.texi $(emacsdir)/emacsver.texi
 	$(mkinfodir)
 	cd $(srcdir); $(MAKEINFO) $(MAKEINFO_OPTS) $<
-dired-x.dvi: ${srcdir}/dired-x.texi
+dired-x.dvi: ${srcdir}/dired-x.texi $(emacsdir)/emacsver.texi
 	$(ENVADD) $(TEXI2DVI) $<
-dired-x.pdf: ${srcdir}/dired-x.texi
+dired-x.pdf: ${srcdir}/dired-x.texi $(emacsdir)/emacsver.texi
 	$(ENVADD) $(TEXI2PDF) $<
 
 ebrowse : $(infodir)/ebrowse
@@ -397,6 +403,15 @@ faq.dvi: ${srcdir}/faq.texi $(emacsdir)/emacsver.texi
 	$(ENVADD) $(TEXI2DVI) $<
 faq.pdf: ${srcdir}/faq.texi $(emacsdir)/emacsver.texi
 	$(ENVADD) $(TEXI2PDF) $<
+## This is the name used on the Emacs web-page.
+## sed fixes up links to point to split version of the manual.
+emacs-faq.html: ${srcdir}/faq.texi $(emacsdir)/emacsver.texi
+	$(MAKEINFO) $(MAKEINFO_OPTS) --no-split \
+	  --css-ref='/layout.css' --html -o $@ $<
+	sed -i -e 's|a href="\([a-z]*\)\.html#\([^"]*\)"|a href="manual/html_node/\1/\2.html"|g' \
+	  -e 's|/Top\.html|/|g' $@
+emacs-faq.text: ${srcdir}/faq.texi $(emacsdir)/emacsver.texi
+	$(MAKEINFO) $(MAKEINFO_OPTS) --plaintext -o $@ $<
 
 flymake : $(infodir)/flymake
 $(infodir)/flymake: flymake.texi
@@ -680,7 +695,7 @@ mostlyclean:
 	rm -f gnustmp.*
 
 clean: mostlyclean
-	rm -f $(DVI_TARGETS) $(PDF_TARGETS)
+	rm -f $(DVI_TARGETS) $(PDF_TARGETS) $(HTML_TARGETS) emacs-faq.text
 
 distclean: clean
 #	rm -f Makefile

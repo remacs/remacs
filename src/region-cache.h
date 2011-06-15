@@ -110,4 +110,3 @@ extern int region_cache_backward (struct buffer *BUF,
                                   struct region_cache *CACHE,
                                   EMACS_INT POS,
                                   EMACS_INT *NEXT);
-

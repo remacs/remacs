@@ -26,12 +26,12 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <sys/file.h>
 #include <unistd.h>
 #include <signal.h>
-#include <stdarg.h>
 #include <setjmp.h>
 
 #include "lisp.h"
 #include "termchar.h"
 #include "termopts.h"
+#include "tparam.h"
 #include "buffer.h"
 #include "character.h"
 #include "charset.h"
@@ -52,18 +52,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "msdos.h"
 static int been_here = -1;
 #endif
-
-/* For now, don't try to include termcap.h.  On some systems,
-   configure finds a non-standard termcap.h that the main build
-   won't find.  */
-extern void tputs (const char *, int, int (*)(int));
-extern int tgetent (char *, const char *);
-extern int tgetflag (char *id);
-extern int tgetnum (char *id);
-
-char *tparam (char *, char *, int, int, ...);
-
-extern char *tgetstr (char *, char **);
 
 #include "cm.h"
 #ifdef HAVE_X_WINDOWS
@@ -88,16 +76,20 @@ extern char *tgetstr (char *, char **);
 static void tty_set_scroll_region (struct frame *f, int start, int stop);
 static void turn_on_face (struct frame *, int face_id);
 static void turn_off_face (struct frame *, int face_id);
+static void tty_turn_off_highlight (struct tty_display_info *);
 static void tty_show_cursor (struct tty_display_info *);
 static void tty_hide_cursor (struct tty_display_info *);
 static void tty_background_highlight (struct tty_display_info *tty);
+static struct terminal *get_tty_terminal (Lisp_Object, int);
 static void clear_tty_hooks (struct terminal *terminal);
 static void set_tty_hooks (struct terminal *terminal);
 static void dissociate_if_controlling_tty (int fd);
 static void delete_tty (struct terminal *);
 static void maybe_fatal (int must_succeed, struct terminal *terminal,
-			 const char *str1, const char *str2, ...) NO_RETURN;
-static void vfatal (const char *str, va_list ap) NO_RETURN;
+			 const char *str1, const char *str2, ...)
+  NO_RETURN ATTRIBUTE_FORMAT_PRINTF (3, 5) ATTRIBUTE_FORMAT_PRINTF (4, 5);
+static void vfatal (const char *str, va_list ap)
+  NO_RETURN ATTRIBUTE_FORMAT_PRINTF (1, 0);
 
 
 #define OUTPUT(tty, a)                                          \
@@ -112,10 +104,7 @@ static void vfatal (const char *str, va_list ap) NO_RETURN;
 #define OUTPUT_IF(tty, a)                                               \
   do {                                                                  \
     if (a)                                                              \
-      emacs_tputs ((tty), a,                                            \
-                   (int) (FRAME_LINES (XFRAME (selected_frame))         \
-                          - curY (tty) ),                               \
-                   cmputc);                                             \
+      OUTPUT (tty, a);							\
   } while (0)
 
 #define OUTPUT1_IF(tty, a) do { if (a) emacs_tputs ((tty), a, 1, cmputc); } while (0)
@@ -145,11 +134,11 @@ enum no_color_bit
 
 /* The largest frame width in any call to calculate_costs.  */
 
-int max_frame_cols;
+static int max_frame_cols;
 
 /* The largest frame height in any call to calculate_costs.  */
 
-int max_frame_lines;
+static int max_frame_lines;
 
 /* Non-zero if we have dropped our controlling tty and therefore
    should not open a frame on stdout. */
@@ -185,7 +174,7 @@ tty_ring_bell (struct frame *f)
 
 /* Set up termcap modes for Emacs. */
 
-void
+static void
 tty_set_terminal_modes (struct terminal *terminal)
 {
   struct tty_display_info *tty = terminal->display_info.tty;
@@ -213,7 +202,7 @@ tty_set_terminal_modes (struct terminal *terminal)
 
 /* Reset termcap modes before exiting Emacs. */
 
-void
+static void
 tty_reset_terminal_modes (struct terminal *terminal)
 {
   struct tty_display_info *tty = terminal->display_info.tty;
@@ -265,7 +254,7 @@ tty_set_scroll_region (struct frame *f, int start, int stop)
   struct tty_display_info *tty = FRAME_TTY (f);
 
   if (tty->TS_set_scroll_region)
-    buf = tparam (tty->TS_set_scroll_region, 0, 0, start, stop - 1);
+    buf = tparam (tty->TS_set_scroll_region, 0, 0, start, stop - 1, 0, 0);
   else if (tty->TS_set_scroll_region_1)
     buf = tparam (tty->TS_set_scroll_region_1, 0, 0,
 		  FRAME_LINES (f), start,
@@ -298,7 +287,7 @@ tty_turn_off_insert (struct tty_display_info *tty)
 
 /* Handle highlighting.  */
 
-void
+static void
 tty_turn_off_highlight (struct tty_display_info *tty)
 {
   if (tty->standout_mode)
@@ -547,8 +536,8 @@ encode_terminal_code (struct glyph *src, int src_len, struct coding_system *codi
     {
       if (src->type == COMPOSITE_GLYPH)
 	{
-	  struct composition *cmp;
-	  Lisp_Object gstring;
+	  struct composition *cmp IF_LINT (= NULL);
+	  Lisp_Object gstring IF_LINT (= Qnil);
 	  int i;
 
 	  nbytes = buf - encode_terminal_src;
@@ -609,7 +598,7 @@ encode_terminal_code (struct glyph *src, int src_len, struct coding_system *codi
       else if (! CHAR_GLYPH_PADDING_P (*src))
 	{
 	  GLYPH g;
-	  int c;
+	  int c IF_LINT (= 0);
 	  Lisp_Object string;
 
 	  string = Qnil;
@@ -667,8 +656,6 @@ encode_terminal_code (struct glyph *src, int src_len, struct coding_system *codi
 	    }
 	  else
 	    {
-	      unsigned char *p = SDATA (string);
-
 	      if (! STRING_MULTIBYTE (string))
 		string = string_to_multibyte (string);
 	      nbytes = buf - encode_terminal_src;
@@ -723,6 +710,7 @@ tty_write_glyphs (struct frame *f, struct glyph *string, int len)
 {
   unsigned char *conversion_buffer;
   struct coding_system *coding;
+  size_t n, stringlen;
 
   struct tty_display_info *tty = FRAME_TTY (f);
 
@@ -750,13 +738,12 @@ tty_write_glyphs (struct frame *f, struct glyph *string, int len)
      the tail.  */
   coding->mode &= ~CODING_MODE_LAST_BLOCK;
 
-  while (len > 0)
+  for (stringlen = len; stringlen != 0; stringlen -= n)
     {
       /* Identify a run of glyphs with the same face.  */
       int face_id = string->face_id;
-      int n;
 
-      for (n = 1; n < len; ++n)
+      for (n = 1; n < stringlen; ++n)
 	if (string[n].face_id != face_id)
 	  break;
 
@@ -764,7 +751,7 @@ tty_write_glyphs (struct frame *f, struct glyph *string, int len)
       tty_highlight_if_desired (tty);
       turn_on_face (f, face_id);
 
-      if (n == len)
+      if (n == stringlen)
 	/* This is the last run.  */
 	coding->mode |= CODING_MODE_LAST_BLOCK;
       conversion_buffer = encode_terminal_code (string, n, coding);
@@ -778,7 +765,6 @@ tty_write_glyphs (struct frame *f, struct glyph *string, int len)
 	    fwrite (conversion_buffer, 1, coding->produced, tty->termscript);
 	  UNBLOCK_INPUT;
 	}
-      len -= n;
       string += n;
 
       /* Turn appearance modes off.  */
@@ -864,7 +850,7 @@ tty_insert_glyphs (struct frame *f, struct glyph *start, int len)
 
   if (tty->TS_ins_multi_chars)
     {
-      buf = tparam (tty->TS_ins_multi_chars, 0, 0, len);
+      buf = tparam (tty->TS_ins_multi_chars, 0, 0, len, 0, 0, 0);
       OUTPUT1 (tty, buf);
       xfree (buf);
       if (start)
@@ -960,7 +946,7 @@ tty_delete_glyphs (struct frame *f, int n)
 
   if (tty->TS_del_multi_chars)
     {
-      buf = tparam (tty->TS_del_multi_chars, 0, 0, n);
+      buf = tparam (tty->TS_del_multi_chars, 0, 0, n, 0, 0, 0);
       OUTPUT1 (tty, buf);
       xfree (buf);
     }
@@ -977,9 +963,10 @@ static void
 tty_ins_del_lines (struct frame *f, int vpos, int n)
 {
   struct tty_display_info *tty = FRAME_TTY (f);
-  char *multi = n > 0 ? tty->TS_ins_multi_lines : tty->TS_del_multi_lines;
-  char *single = n > 0 ? tty->TS_ins_line : tty->TS_del_line;
-  char *scroll = n > 0 ? tty->TS_rev_scroll : tty->TS_fwd_scroll;
+  const char *multi =
+    n > 0 ? tty->TS_ins_multi_lines : tty->TS_del_multi_lines;
+  const char *single = n > 0 ? tty->TS_ins_line : tty->TS_del_line;
+  const char *scroll = n > 0 ? tty->TS_rev_scroll : tty->TS_fwd_scroll;
 
   register int i = n > 0 ? n : -n;
   register char *buf;
@@ -1002,7 +989,7 @@ tty_ins_del_lines (struct frame *f, int vpos, int n)
     {
       raw_cursor_to (f, vpos, 0);
       tty_background_highlight (tty);
-      buf = tparam (multi, 0, 0, i);
+      buf = tparam (multi, 0, 0, i, 0, 0, 0);
       OUTPUT (tty, buf);
       xfree (buf);
     }
@@ -1154,9 +1141,9 @@ calculate_costs (struct frame *frame)
   if (FRAME_TERMCAP_P (frame))
     {
       struct tty_display_info *tty = FRAME_TTY (frame);
-      register char *f = (tty->TS_set_scroll_region
-                          ? tty->TS_set_scroll_region
-                          : tty->TS_set_scroll_region_1);
+      register const char *f = (tty->TS_set_scroll_region
+				? tty->TS_set_scroll_region
+				: tty->TS_set_scroll_region_1);
 
       FRAME_SCROLL_REGION_COST (frame) = string_cost (f);
 
@@ -1210,7 +1197,7 @@ calculate_costs (struct frame *frame)
 }
 
 struct fkey_table {
-  char *cap, *name;
+  const char *cap, *name;
 };
 
   /* Termcap capability names that correspond directly to X keysyms.
@@ -1350,14 +1337,14 @@ term_get_fkeys_1 (void)
   KBOARD *kboard = term_get_fkeys_kboard;
 
   /* This can happen if CANNOT_DUMP or with strange options.  */
-  if (!KEYMAPP (kboard->Vinput_decode_map))
-    kboard->Vinput_decode_map = Fmake_sparse_keymap (Qnil);
+  if (!KEYMAPP (KVAR (kboard, Vinput_decode_map)))
+    KVAR (kboard, Vinput_decode_map) = Fmake_sparse_keymap (Qnil);
 
   for (i = 0; i < (sizeof (keys)/sizeof (keys[0])); i++)
     {
       char *sequence = tgetstr (keys[i].cap, address);
       if (sequence)
-	Fdefine_key (kboard->Vinput_decode_map, build_string (sequence),
+	Fdefine_key (KVAR (kboard, Vinput_decode_map), build_string (sequence),
 		     Fmake_vector (make_number (1),
 				   intern (keys[i].name)));
     }
@@ -1368,22 +1355,22 @@ term_get_fkeys_1 (void)
      "k;", and if it is present, assuming that "k0" denotes F0, otherwise F10.
      */
   {
-    char *k_semi  = tgetstr ("k;", address);
-    char *k0      = tgetstr ("k0", address);
-    char *k0_name = "f10";
+    const char *k_semi  = tgetstr ("k;", address);
+    const char *k0      = tgetstr ("k0", address);
+    const char *k0_name = "f10";
 
     if (k_semi)
       {
 	if (k0)
 	  /* Define f0 first, so that f10 takes precedence in case the
 	     key sequences happens to be the same.  */
-	  Fdefine_key (kboard->Vinput_decode_map, build_string (k0),
+	  Fdefine_key (KVAR (kboard, Vinput_decode_map), build_string (k0),
 		       Fmake_vector (make_number (1), intern ("f0")));
-	Fdefine_key (kboard->Vinput_decode_map, build_string (k_semi),
+	Fdefine_key (KVAR (kboard, Vinput_decode_map), build_string (k_semi),
 		     Fmake_vector (make_number (1), intern ("f10")));
       }
     else if (k0)
-      Fdefine_key (kboard->Vinput_decode_map, build_string (k0),
+      Fdefine_key (KVAR (kboard, Vinput_decode_map), build_string (k0),
 		   Fmake_vector (make_number (1), intern (k0_name)));
   }
 
@@ -1406,7 +1393,7 @@ term_get_fkeys_1 (void)
 	  if (sequence)
 	    {
 	      sprintf (fkey, "f%d", i);
-	      Fdefine_key (kboard->Vinput_decode_map, build_string (sequence),
+	      Fdefine_key (KVAR (kboard, Vinput_decode_map), build_string (sequence),
 			   Fmake_vector (make_number (1),
 					 intern (fkey)));
 	    }
@@ -1423,7 +1410,7 @@ term_get_fkeys_1 (void)
 	{								\
 	  char *sequence = tgetstr (cap2, address);			\
 	  if (sequence)                                                 \
-	    Fdefine_key (kboard->Vinput_decode_map, build_string (sequence), \
+	    Fdefine_key (KVAR (kboard, Vinput_decode_map), build_string (sequence), \
 			 Fmake_vector (make_number (1),                 \
 				       intern (sym)));                  \
 	}
@@ -1463,7 +1450,7 @@ static void append_glyph (struct it *);
 static void produce_stretch_glyph (struct it *);
 static void append_composite_glyph (struct it *);
 static void produce_composite_glyph (struct it *);
-static void append_glyphless_glyph (struct it *, int, char *);
+static void append_glyphless_glyph (struct it *, int, const char *);
 static void produce_glyphless_glyph (struct it *, int, Lisp_Object);
 
 /* Append glyphs to IT's glyph_row.  Called from produce_glyphs for
@@ -1831,7 +1818,7 @@ produce_composite_glyph (struct it *it)
    comes from it->nglyphs bytes).  */
 
 static void
-append_glyphless_glyph (struct it *it, int face_id, char *str)
+append_glyphless_glyph (struct it *it, int face_id, const char *str)
 {
   struct glyph *glyph, *end;
   int i;
@@ -1906,7 +1893,8 @@ produce_glyphless_glyph (struct it *it, int for_no_font, Lisp_Object acronym)
 {
   int face_id;
   int len;
-  char buf[9], *str = "    ";
+  char buf[9];
+  char const *str = "    ";
 
   /* Get a face ID for the glyph by utilizing a cache (the same way as
      done for `escape-glyph' in get_next_display_element).  */
@@ -1947,6 +1935,8 @@ produce_glyphless_glyph (struct it *it, int for_no_font, Lisp_Object acronym)
 	{
 	  if (! STRINGP (acronym) && CHAR_TABLE_P (Vglyphless_char_display))
 	    acronym = CHAR_TABLE_REF (Vglyphless_char_display, it->c);
+	  if (CONSP (acronym))
+	    acronym = XCDR (acronym);
 	  buf[0] = '[';
 	  str = STRINGP (acronym) ? SSDATA (acronym) : "";
 	  for (len = 0; len < 6 && str[len] && ASCII_BYTE_P (str[len]); len++)
@@ -1966,7 +1956,7 @@ produce_glyphless_glyph (struct it *it, int for_no_font, Lisp_Object acronym)
 
   it->pixel_width = len;
   it->nglyphs = len;
-  if (len > 0 && it->glyph_row)
+  if (it->glyph_row)
     append_glyphless_glyph (it, face_id, str);
 }
 
@@ -2125,12 +2115,13 @@ turn_on_face (struct frame *f, int face_id)
 
   if (tty->TN_max_colors > 0)
     {
-      char *ts, *p;
+      const char *ts;
+      char *p;
 
       ts = tty->standout_mode ? tty->TS_set_background : tty->TS_set_foreground;
       if (fg >= 0 && ts)
 	{
-          p = tparam (ts, NULL, 0, (int) fg);
+          p = tparam (ts, NULL, 0, (int) fg, 0, 0, 0);
 	  OUTPUT (tty, p);
 	  xfree (p);
 	}
@@ -2138,7 +2129,7 @@ turn_on_face (struct frame *f, int face_id)
       ts = tty->standout_mode ? tty->TS_set_foreground : tty->TS_set_background;
       if (bg >= 0 && ts)
 	{
-          p = tparam (ts, NULL, 0, (int) bg);
+          p = tparam (ts, NULL, 0, (int) bg, 0, 0, 0);
 	  OUTPUT (tty, p);
 	  xfree (p);
 	}
@@ -2380,7 +2371,7 @@ set_tty_color_mode (struct tty_display_info *tty, struct frame *f)
 
 /* Return the tty display object specified by TERMINAL. */
 
-struct terminal *
+static struct terminal *
 get_tty_terminal (Lisp_Object terminal, int throw)
 {
   struct terminal *t = get_terminal (terminal, throw);
@@ -2513,13 +2504,10 @@ A suspended tty may be resumed by calling `resume-tty' on it.  */)
       /* First run `suspend-tty-functions' and then clean up the tty
 	 state because `suspend-tty-functions' might need to change
 	 the tty state.  */
-      if (!NILP (Vrun_hooks))
-        {
-          Lisp_Object args[2];
-          args[0] = intern ("suspend-tty-functions");
-          XSETTERMINAL (args[1], t);
-          Frun_hook_with_args (2, args);
-        }
+      Lisp_Object args[2];
+      args[0] = intern ("suspend-tty-functions");
+      XSETTERMINAL (args[1], t);
+      Frun_hook_with_args (2, args);
 
       reset_sys_modes (t->display_info.tty);
       delete_keyboard_wait_descriptor (fileno (f));
@@ -2607,16 +2595,16 @@ frame's terminal). */)
 	  FRAME_SET_VISIBLE (XFRAME (t->display_info.tty->top_frame), 1);
 	}
 
+      set_tty_hooks (t);
       init_sys_modes (t->display_info.tty);
 
-      /* Run `resume-tty-functions'.  */
-      if (!NILP (Vrun_hooks))
-        {
-          Lisp_Object args[2];
-          args[0] = intern ("resume-tty-functions");
-          XSETTERMINAL (args[1], t);
-          Frun_hook_with_args (2, args);
-        }
+      {
+        /* Run `resume-tty-functions'.  */
+        Lisp_Object args[2];
+        args[0] = intern ("resume-tty-functions");
+        XSETTERMINAL (args[1], t);
+        Frun_hook_with_args (2, args);
+      }
     }
 
   set_tty_hooks (t);
@@ -2630,6 +2618,8 @@ frame's terminal). */)
  ***********************************************************************/
 
 #ifdef HAVE_GPM
+
+#ifndef HAVE_WINDOW_SYSTEM
 void
 term_mouse_moveto (int x, int y)
 {
@@ -2643,6 +2633,7 @@ term_mouse_moveto (int x, int y)
   last_mouse_x = x;
   last_mouse_y = y;  */
 }
+#endif /* HAVE_WINDOW_SYSTEM */
 
 /* Implementation of draw_row_with_mouse_face for TTY/GPM.  */
 void
@@ -2701,16 +2692,17 @@ term_mouse_movement (FRAME_PTR frame, Gpm_Event *event)
    Set *bar_window to Qnil, and *x and *y to the column and
    row of the character cell the mouse is over.
 
-   Set *time to the time the mouse was at the returned position.
+   Set *timeptr to the time the mouse was at the returned position.
 
    This clears mouse_moved until the next motion
    event arrives.  */
 static void
 term_mouse_position (FRAME_PTR *fp, int insist, Lisp_Object *bar_window,
 		     enum scroll_bar_part *part, Lisp_Object *x,
-		     Lisp_Object *y, unsigned long *time)
+		     Lisp_Object *y, Time *timeptr)
 {
   struct timeval now;
+  Time sec, usec;
 
   *fp = SELECTED_FRAME ();
   (*fp)->mouse_moved = 0;
@@ -2721,7 +2713,9 @@ term_mouse_position (FRAME_PTR *fp, int insist, Lisp_Object *bar_window,
   XSETINT (*x, last_mouse_x);
   XSETINT (*y, last_mouse_y);
   gettimeofday(&now, 0);
-  *time = (now.tv_sec * 1000) + (now.tv_usec / 1000);
+  sec = now.tv_sec;
+  usec = now.tv_usec;
+  *timeptr = (sec * 1000) + (usec / 1000);
 }
 
 /* Prepare a mouse-event in *RESULT for placement in the input queue.
@@ -3130,7 +3124,7 @@ init_tty (const char *name, const char *terminal_type, int must_succeed)
   terminal = create_terminal ();
 #ifdef MSDOS
   if (been_here > 0)
-    maybe_fatal (1, 0, "Attempt to create another terminal %s", "",
+    maybe_fatal (0, 0, "Attempt to create another terminal %s", "",
 		 name, "");
   been_here = 1;
   tty = &the_only_display_info;
@@ -3171,13 +3165,12 @@ init_tty (const char *name, const char *terminal_type, int must_succeed)
          if we don't have one at the moment.  */
       fd = emacs_open (name, O_RDWR | O_IGNORE_CTTY | O_NOCTTY, 0);
     else
-#else
+#endif /* O_IGNORE_CTTY */
       /* Alas, O_IGNORE_CTTY is a GNU extension that seems to be only
          defined on Hurd.  On other systems, we need to explicitly
          dissociate ourselves from the controlling tty when we want to
          open a frame on the same terminal.  */
       fd = emacs_open (name, O_RDWR | O_NOCTTY, 0);
-#endif /* O_IGNORE_CTTY */
 
     tty->name = xstrdup (name);
     terminal->name = xstrdup (name);
@@ -3418,7 +3411,7 @@ use the Bourne shell command `TERM=... export TERM' (C-shell:\n\
 
   terminal->kboard = (KBOARD *) xmalloc (sizeof (KBOARD));
   init_kboard (terminal->kboard);
-  terminal->kboard->Vwindow_system = Qnil;
+  KVAR (terminal->kboard, Vwindow_system) = Qnil;
   terminal->kboard->next_kboard = all_kboards;
   all_kboards = terminal->kboard;
   terminal->kboard->reference_count++;
@@ -3535,10 +3528,10 @@ use the Bourne shell command `TERM=... export TERM' (C-shell:\n\
 	 If it were in the termcap entry, it would confuse other programs.  */
       if (!tty->TS_set_window)
 	{
-	  p = tty->TS_termcap_modes;
-	  while (*p && strcmp (p, "\033v  "))
-	    p++;
-	  if (*p)
+	  const char *m = tty->TS_termcap_modes;
+	  while (*m && strcmp (m, "\033v  "))
+	    m++;
+	  if (*m)
 	    tty->TS_set_window = "\033v%C %C %C %C ";
 	}
       /* Termcap entry often fails to have :in: flag */
@@ -3629,7 +3622,6 @@ vfatal (const char *str, va_list ap)
   vfprintf (stderr, str, ap);
   if (!(strlen (str) > 0 && str[strlen (str) - 1] == '\n'))
     fprintf (stderr, "\n");
-  va_end (ap);
   fflush (stderr);
   exit (1);
 }
@@ -3637,7 +3629,7 @@ vfatal (const char *str, va_list ap)
 
 /* Auxiliary error-handling function for init_tty.
    Delete TERMINAL, then call error or fatal with str1 or str2,
-   respectively, according to MUST_SUCCEED.  */
+   respectively, according to whether MUST_SUCCEED is zero or not.  */
 
 static void
 maybe_fatal (int must_succeed, struct terminal *terminal,

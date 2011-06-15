@@ -76,7 +76,7 @@ If the buffer is locked, signal error and display its name."
   (set-process-sentinel
    (get-buffer-process (buffer-name)) (function emacs-lock-clear-sentinel)))
 
-(defun emacs-lock-clear-sentinel (proc str)
+(defun emacs-lock-clear-sentinel (_proc _str)
   (if emacs-lock-from-exiting
       (progn
 	(setq emacs-lock-from-exiting nil)
@@ -88,7 +88,8 @@ If the buffer is locked, signal error and display its name."
   (if emacs-lock-buffer-locked
       (setq emacs-lock-from-exiting t)))
 
-(add-hook 'kill-emacs-hook 'check-emacs-lock)
+(unless noninteractive
+  (add-hook 'kill-emacs-hook 'check-emacs-lock))
 (add-hook 'kill-buffer-hook 'emacs-lock-check-buffer-lock)
 (add-hook 'shell-mode-hook 'emacs-lock-was-buffer-locked)
 (add-hook 'shell-mode-hook 'emacs-lock-shell-sentinel)

@@ -76,6 +76,13 @@ regulate cache behavior."
        key
        (symbol-value (intern-soft key password-data))))
 
+;;;###autoload
+(defun password-in-cache-p (key)
+  "Check if KEY is in the cache."
+  (and password-cache
+       key
+       (intern-soft key password-data)))
+
 (defun password-read (prompt &optional key)
   "Read password, for use with KEY, from user, or from cache if wanted.
 KEY indicate the purpose of the password, so the cache can
@@ -111,9 +118,10 @@ that a password is invalid, so that `password-read' query the
 user again."
   (let ((password (symbol-value (intern-soft key password-data))))
     (when password
-      (if (fboundp 'clear-string)
-	  (clear-string password)
-	(fillarray password ?_))
+      (when (stringp password)
+        (if (fboundp 'clear-string)
+            (clear-string password)
+          (fillarray password ?_)))
       (unintern key password-data))))
 
 (defun password-cache-add (key password)

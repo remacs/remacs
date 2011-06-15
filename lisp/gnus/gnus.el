@@ -275,7 +275,7 @@
 
 (defgroup gnus-meta nil
   "Meta variables controlling major portions of Gnus.
-In general, modifying these variables does not take affect until Gnus
+In general, modifying these variables does not take effect until Gnus
 is restarted, and sometimes reloaded."
   :group 'gnus)
 
@@ -1043,12 +1043,15 @@ be set in `.emacs' instead."
                                          ((boundp 'image-load-path)
                                           (symbol-value 'image-load-path))
                                          (t load-path)))
-                  (image (find-image
-                          `((:type xpm :file "gnus.xpm"
+                  (image (gnus-splash-svg-color-symbols (find-image
+                          `((:type svg :file "gnus.svg"
+                                   :color-symbols
+                                   (("#bf9900" . ,(car gnus-logo-colors))
+                                    ("#ffcc00" . ,(cadr gnus-logo-colors))))
+                            (:type xpm :file "gnus.xpm"
                                    :color-symbols
                                    (("thing" . ,(car gnus-logo-colors))
                                     ("shadow" . ,(cadr gnus-logo-colors))))
-                            (:type svg :file "gnus.svg")
                             (:type png :file "gnus.png")
                             (:type pbm :file "gnus.pbm"
                                    ;; Account for the pbm's background.
@@ -1057,7 +1060,7 @@ be set in `.emacs' instead."
                             (:type xbm :file "gnus.xbm"
                                    ;; Account for the xbm's background.
                                    :background ,(face-foreground 'gnus-splash)
-                                   :foreground ,(face-background 'default))))))
+                                   :foreground ,(face-background 'default)))))))
              (when image
                (let ((size (image-size image)))
                  (insert-char ?\n (max 0 (round (- (window-height)
@@ -1102,6 +1105,22 @@ be set in `.emacs' instead."
     (goto-char (point-min))
     (setq mode-line-buffer-identification (concat " " gnus-version))
     (set-buffer-modified-p t)))
+
+(defun gnus-splash-svg-color-symbols (list)
+  "Do color-symbol search-and-replace in svg file."
+  (let ((type (plist-get (cdr list) :type))
+        (file (plist-get (cdr list) :file))
+        (color-symbols (plist-get (cdr list) :color-symbols)))
+    (if (string= type "svg")
+        (let ((data (with-temp-buffer (insert-file-contents file)
+                                      (buffer-string))))
+          (mapc (lambda (rule)
+                  (setq data (replace-regexp-in-string
+                              (concat "fill:" (car rule))
+                              (concat "fill:" (cdr rule)) data)))
+                color-symbols)
+          (cons (car list) (list :type type :data data)))
+       list)))
 
 (eval-when (load)
   (let ((command (format "%s" this-command)))
@@ -1607,7 +1626,8 @@ slower."
     ("nnweb" none)
     ("nnrss" none)
     ("nnagent" post-mail)
-    ("nnimap" post-mail address prompt-address physical-address respool)
+    ("nnimap" post-mail address prompt-address physical-address respool
+     server-marks)
     ("nnmaildir" mail respool address)
     ("nnnil" none))
   "*An alist of valid select methods.
@@ -1855,7 +1875,10 @@ total number of articles in the group.")
  :function-document
  "Whether this group should be ignored by the registry."
  :variable gnus-registry-ignored-groups
- :variable-default nil
+ :variable-default (mapcar
+                    (lambda (g) (list g t))
+                    '("delayed$" "drafts$" "queue$" "INBOX$"
+                      "^nnmairix:" "archive"))
  :variable-document
  "*Groups in which the registry should be turned off."
  :variable-group gnus-registry
@@ -2545,7 +2568,7 @@ a string, be sure to use a valid format, see RFC 2616."
 (defvar gnus-extended-servers nil)
 
 ;; The carpal mode has been removed, but define the variable for
-;; backwards compatability.
+;; backwards compatibility.
 (defvar gnus-carpal nil)
 (make-obsolete-variable 'gnus-carpal nil "Emacs 24.1")
 
@@ -2887,7 +2910,8 @@ gnus-registry.el will populate this if it's loaded.")
       gnus-agent-save-active gnus-agent-method-p
       gnus-agent-get-undownloaded-list gnus-agent-fetch-session
       gnus-summary-set-agent-mark gnus-agent-save-group-info
-      gnus-agent-request-article gnus-agent-retrieve-headers)
+      gnus-agent-request-article gnus-agent-retrieve-headers
+      gnus-agent-store-article gnus-agent-group-covered-p)
      ("gnus-agent" :interactive t
       gnus-unplugged gnus-agentize gnus-agent-batch)
      ("gnus-vm" :interactive t gnus-summary-save-in-vm
@@ -3114,6 +3138,10 @@ Return nil if not defined."
 (defmacro gnus-get-info (group)
   `(nth 2 (gnus-gethash ,group gnus-newsrc-hashtb)))
 
+(defun gnus-set-info (group info)
+  (setcar (nthcdr 2 (gnus-gethash group gnus-newsrc-hashtb))
+	  info))
+
 ;;; Load the compatibility functions.
 
 (require 'gnus-ems)
@@ -3263,7 +3291,7 @@ g -- Group name."
 	((= c ?d)
 	 (point))
 	((= c ?D)
-	 (read-file-name prompt nil default-directory 'lambda))
+	 (read-directory-name prompt nil default-directory 'lambda))
 	((= c ?f)
 	 (read-file-name prompt nil nil 'lambda))
 	((= c ?F)
@@ -4329,11 +4357,11 @@ current display is used."
 	  (switch-to-buffer gnus-group-buffer)
 	(funcall gnus-other-frame-function arg)
 	(add-hook 'gnus-exit-gnus-hook
-		  '(lambda nil
-		     (when (and (frame-live-p gnus-other-frame-object)
-				(cdr (frame-list)))
-		       (delete-frame gnus-other-frame-object))
-		     (setq gnus-other-frame-object nil)))))))
+		  (lambda nil
+                    (when (and (frame-live-p gnus-other-frame-object)
+                               (cdr (frame-list)))
+                      (delete-frame gnus-other-frame-object))
+                    (setq gnus-other-frame-object nil)))))))
 
 ;;;###autoload
 (defun gnus (&optional arg dont-connect slave)

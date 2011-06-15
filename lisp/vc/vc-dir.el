@@ -104,7 +104,7 @@ See `run-hooks'."
 	;; We pass a filename to create-file-buffer because it is what
 	;; the function expects, and also what uniquify needs (if active)
         (with-current-buffer (create-file-buffer (expand-file-name bname dir))
-          (cd dir)
+          (setq default-directory dir)
           (vc-setup-buffer (current-buffer))
           ;; Reset the vc-parent-buffer-name so that it does not appear
           ;; in the mode-line.
@@ -265,6 +265,7 @@ See `run-hooks'."
     (define-key map [C-up] 'vc-dir-previous-directory)
     ;; The remainder.
     (define-key map "f" 'vc-dir-find-file)
+    (define-key map "e" 'vc-dir-find-file) ; dired-mode compatibility
     (define-key map "\C-m" 'vc-dir-find-file)
     (define-key map "o" 'vc-dir-find-file-other-window)
     (define-key map "\C-c\C-c" 'vc-dir-kill-dir-status-process)
@@ -1001,7 +1002,7 @@ specific headers."
             (generate-new-buffer (format " *VC-%s* tmp status" backend))))
     (lexical-let ((buffer (current-buffer)))
       (with-current-buffer vc-dir-process-buffer
-        (cd def-dir)
+        (setq default-directory def-dir)
         (erase-buffer)
         (vc-call-backend
          backend 'dir-status-files def-dir files default-state
@@ -1061,9 +1062,12 @@ Throw an error if another update process is in progress."
 		  (unless (vc-dir-fileinfo->directory info)
 		    (setf (vc-dir-fileinfo->needs-update info) t) nil))
                 vc-ewoc)
+      ;; Bzr has serious locking problems, so setup the headers first (this is
+      ;; synchronous) rather than doing it while dir-status is running.
+      (ewoc-set-hf vc-ewoc (vc-dir-headers backend def-dir) "")
       (lexical-let ((buffer (current-buffer)))
         (with-current-buffer vc-dir-process-buffer
-          (cd def-dir)
+          (setq default-directory def-dir)
           (erase-buffer)
           (vc-call-backend
            backend 'dir-status def-dir
@@ -1081,8 +1085,7 @@ Throw an error if another update process is in progress."
                        (vc-dir-refresh-files
                         (mapcar 'vc-dir-fileinfo->name remaining)
                         'up-to-date)
-                     (setq mode-line-process nil)))))))))
-      (ewoc-set-hf vc-ewoc (vc-dir-headers backend def-dir) ""))))
+                     (setq mode-line-process nil))))))))))))
 
 (defun vc-dir-show-fileentry (file)
   "Insert an entry for a specific file into the current *VC-dir* listing.
@@ -1182,9 +1185,9 @@ These are the commands available for use in the file status buffer:
     ;; therefore it makes sense to always do that.
     ;; Otherwise if you do C-x v d -> C-x C-f -> C-c v d
     ;; you may get a new *vc-dir* buffer, different from the original
-    (file-truename (read-file-name "VC status for directory: "
-                                   default-directory default-directory t
-                                   nil #'file-directory-p))
+    (file-truename (read-directory-name "VC status for directory: "
+					default-directory default-directory t
+					nil))
     (if current-prefix-arg
 	(intern
 	 (completing-read
@@ -1235,6 +1238,7 @@ These are the commands available for use in the file status buffer:
       (format "%-20s" state)
       'face (cond ((eq state 'up-to-date) 'font-lock-builtin-face)
 		  ((memq state '(missing conflict)) 'font-lock-warning-face)
+		  ((eq state 'edited) 'font-lock-constant-face)
 		  (t 'font-lock-variable-name-face))
       'mouse-face 'highlight)
      " "

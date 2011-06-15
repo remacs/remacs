@@ -5,8 +5,9 @@
 
 ;; Authors: Emil Åström <emil_astrom(at)hotmail(dot)com>
 ;;          Milan Zamazal <pdm(at)freesoft(dot)cz>
-;;          Stefan Bruda <stefan(at)bruda(dot)ca>  (current maintainer)
+;;          Stefan Bruda <stefan(at)bruda(dot)ca>
 ;;          * See below for more details
+;; Maintainer: Stefan Bruda <stefan(at)bruda(dot)ca>
 ;; Keywords: prolog major mode sicstus swi mercury
 
 (defvar prolog-mode-version "1.22"
@@ -279,7 +280,6 @@
 ;;; Code:
 
 (eval-when-compile
-  (require 'compile)
   (require 'font-lock)
   ;; We need imenu everywhere because of the predicate index!
   (require 'imenu)
@@ -1010,7 +1010,7 @@ VERSION is of the format (Major . Minor)"
   (define-key map "\C-c\C-l" 'prolog-consult-file)
   (define-key map "\C-c\C-z" 'switch-to-prolog))
 
-(defun prolog-mode-keybindings-inferior (map)
+(defun prolog-mode-keybindings-inferior (_map)
   "Define keybindings for inferior Prolog mode in MAP."
   ;; No inferior mode specific keybindings now.
   )
@@ -1125,6 +1125,8 @@ Actually this is just customized `prolog-mode'."
         (comint-send-string proc (string last-command-event))
       (call-interactively 'self-insert-command))))
 
+(declare-function 'compilation-shell-minor-mode "compile" (&optional arg))
+(defvar compilation-error-regexp-alist)
 
 (define-derived-mode prolog-inferior-mode comint-mode "Inferior Prolog"
   "Major mode for interacting with an inferior Prolog process.
@@ -1155,6 +1157,7 @@ imitating normal Unix input editing.
 
 To find out what version of Prolog mode you are running, enter
 `\\[prolog-mode-version]'."
+  (require 'compile)
   (setq comint-input-filter 'prolog-input-filter)
   (setq mode-line-process '(": %s"))
   (prolog-mode-variables)
@@ -1277,6 +1280,10 @@ the variable `prolog-prompt-regexp'."
 ;;------------------------------------------------------------
 ;; Old consulting and compiling functions
 ;;------------------------------------------------------------
+
+(declare-function compilation-forget-errors "compile" ())
+(declare-function compilation-fake-loc "compile"
+                  (marker file &optional line col))
 
 (defun prolog-old-process-region (compilep start end)
   "Process the region limited by START and END positions.
@@ -1479,6 +1486,8 @@ Used for temporary files.")
 (defvar prolog-consult-compile-real-file nil
   "The file name of the buffer to compile/consult.")
 
+(defvar compilation-parse-errors-function)
+
 (defun prolog-consult-compile (compilep file &optional first-line)
   "Consult/compile FILE.
 If COMPILEP is non-nil, perform compilation, otherwise perform CONSULTING.
@@ -1539,6 +1548,8 @@ This function must be called from the source code buffer."
                   "\nCompilation finished.\n"
                 "\nConsulted.\n"))
       (set-process-filter process old-filter))))
+
+(defvar compilation-error-list)
 
 (defun prolog-parse-sicstus-compilation-errors (limit)
   "Parse the prolog compilation buffer for errors.
@@ -1704,7 +1715,7 @@ If COMPILEP is non-nil, compile, otherwise consult."
 ;; Font-lock stuff
 ;;-------------------------------------------------------------------
 
-;; Auxilliary functions
+;; Auxiliary functions
 (defun prolog-make-keywords-regexp (keywords &optional protect)
   "Create regexp from the list of strings KEYWORDS.
 If PROTECT is non-nil, surround the result regexp by word breaks."
@@ -2001,15 +2012,14 @@ Argument BOUND is a buffer position limiting searching."
 
 ;; NB: This function *MUST* have this optional argument since XEmacs
 ;; assumes it. This does not mean we have to use it...
-(defun prolog-indent-line (&optional whole-exp)
+(defun prolog-indent-line (&optional _whole-exp)
   "Indent current line as Prolog code.
 With argument, indent any additional lines of the same clause
 rigidly along with this one (not yet)."
   (interactive "p")
   (let ((indent (prolog-indent-level))
-        (pos (- (point-max) (point))) beg)
+        (pos (- (point-max) (point))))
     (beginning-of-line)
-    (setq beg (point))
     (skip-chars-forward " \t")
     (indent-line-to indent)
     (if (> (- (point-max) pos) (point))
@@ -3766,7 +3776,7 @@ If the point is not on a variable then insert underscore."
 
 
 (defun prolog-find-term (functor arity &optional prefix)
-  "Go to the position at the start of the next occurance of a term.
+  "Go to the position at the start of the next occurrence of a term.
 The term is specified with FUNCTOR and ARITY.  The optional argument
 PREFIX is the prefix of the search regexp."
   (let* (;; If prefix is not set then use the default "\\<"

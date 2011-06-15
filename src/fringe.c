@@ -64,9 +64,9 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
    must specify physical bitmap symbols.
 */
 
-Lisp_Object Qtruncation, Qcontinuation, Qoverlay_arrow;
-Lisp_Object Qempty_line, Qtop_bottom;
-Lisp_Object Qhollow_small;
+static Lisp_Object Qtruncation, Qcontinuation, Qoverlay_arrow;
+static Lisp_Object Qempty_line, Qtop_bottom;
+static Lisp_Object Qhollow_small;
 
 enum fringe_bitmap_align
 {
@@ -427,7 +427,7 @@ static unsigned short empty_line_bits[] = {
 /* NOTE:  The order of these bitmaps must match the sequence
    used in fringe.el to define the corresponding symbols.  */
 
-struct fringe_bitmap standard_bitmaps[] =
+static struct fringe_bitmap standard_bitmaps[] =
 {
   { NULL, 0, 0, 0, 0, 0 }, /* NO_FRINGE_BITMAP */
   { FRBITS (question_mark_bits),      8, 0, ALIGN_BITMAP_CENTER, 0 },
@@ -462,6 +462,9 @@ static struct fringe_bitmap **fringe_bitmaps;
 static Lisp_Object *fringe_faces;
 static int max_fringe_bitmaps;
 
+#ifndef HAVE_NS
+static
+#endif
 int max_used_fringe_bitmap = MAX_STANDARD_FRINGE_BITMAPS;
 
 
@@ -518,6 +521,20 @@ get_fringe_bitmap_name (int bn)
   return num;
 }
 
+/* Get fringe bitmap data for bitmap number BN.  */
+
+static struct fringe_bitmap *
+get_fringe_bitmap_data (int bn)
+{
+  struct fringe_bitmap *fb;
+
+  fb = fringe_bitmaps[bn];
+  if (fb == NULL)
+    fb = &standard_bitmaps[bn < MAX_STANDARD_FRINGE_BITMAPS
+			   ? bn : UNDEF_FRINGE_BITMAP];
+
+  return fb;
+}
 
 /* Draw the bitmap WHICH in one of the left or right fringes of
    window W.  ROW is the glyph row for which to display the bitmap; it
@@ -565,10 +582,7 @@ draw_fringe_bitmap_1 (struct window *w, struct glyph_row *row, int left_p, int o
 	face_id = FRINGE_FACE_ID;
     }
 
-  fb = fringe_bitmaps[which];
-  if (fb == NULL)
-    fb = &standard_bitmaps[which < MAX_STANDARD_FRINGE_BITMAPS
-			   ? which : UNDEF_FRINGE_BITMAP];
+  fb = get_fringe_bitmap_data (which);
 
   period = fb->period;
 
@@ -660,7 +674,7 @@ get_logical_cursor_bitmap (struct window *w, Lisp_Object cursor)
 {
   Lisp_Object cmap, bm = Qnil;
 
-  if ((cmap = XBUFFER (w->buffer)->fringe_cursor_alist), !NILP (cmap))
+  if ((cmap = BVAR (XBUFFER (w->buffer), fringe_cursor_alist)), !NILP (cmap))
     {
       bm = Fassq (cursor, cmap);
       if (CONSP (bm))
@@ -670,9 +684,9 @@ get_logical_cursor_bitmap (struct window *w, Lisp_Object cursor)
 	  return lookup_fringe_bitmap (bm);
 	}
     }
-  if (EQ (cmap, buffer_defaults.fringe_cursor_alist))
+  if (EQ (cmap, BVAR (&buffer_defaults, fringe_cursor_alist)))
     return NO_FRINGE_BITMAP;
-  bm = Fassq (cursor, buffer_defaults.fringe_cursor_alist);
+  bm = Fassq (cursor, BVAR (&buffer_defaults, fringe_cursor_alist));
   if (!CONSP (bm) || ((bm = XCDR (bm)), NILP (bm)))
     return NO_FRINGE_BITMAP;
   return lookup_fringe_bitmap (bm);
@@ -697,7 +711,7 @@ get_logical_fringe_bitmap (struct window *w, Lisp_Object bitmap, int right_p, in
      If partial, lookup partial bitmap in default value if not found here.
      If not partial, or no partial spec is present, use non-partial bitmap.  */
 
-  if ((cmap = XBUFFER (w->buffer)->fringe_indicator_alist), !NILP (cmap))
+  if ((cmap = BVAR (XBUFFER (w->buffer), fringe_indicator_alist)), !NILP (cmap))
     {
       bm1 = Fassq (bitmap, cmap);
       if (CONSP (bm1))
@@ -731,10 +745,10 @@ get_logical_fringe_bitmap (struct window *w, Lisp_Object bitmap, int right_p, in
 	}
     }
 
-  if (!EQ (cmap, buffer_defaults.fringe_indicator_alist)
-      && !NILP (buffer_defaults.fringe_indicator_alist))
+  if (!EQ (cmap, BVAR (&buffer_defaults, fringe_indicator_alist))
+      && !NILP (BVAR (&buffer_defaults, fringe_indicator_alist)))
     {
-      bm2 = Fassq (bitmap, buffer_defaults.fringe_indicator_alist);
+      bm2 = Fassq (bitmap, BVAR (&buffer_defaults, fringe_indicator_alist));
       if (CONSP (bm2))
 	{
 	  if ((bm2 = XCDR (bm2)), !NILP (bm2))
@@ -913,13 +927,18 @@ update_window_fringes (struct window *w, int keep_current_p)
   int bitmap_cache[MAX_BITMAP_CACHE];
   int top_ind_rn, bot_ind_rn;
   int top_ind_min_y, bot_ind_max_y;
-  int top_row_ends_at_zv_p, bot_row_ends_at_zv_p;
+
+  /* top_ind_rn is set to a nonnegative value whenver
+     row->indicate_bob_p is set, so it's OK that top_row_ends_at_zv_p
+     is not initialized here.  Similarly for bot_ind_rn,
+     row->indicate_eob_p and bot_row_ends_at_zv_p.  */
+  int top_row_ends_at_zv_p IF_LINT (= 0), bot_row_ends_at_zv_p IF_LINT (= 0);
 
   if (w->pseudo_window_p)
     return 0;
 
   if (!MINI_WINDOW_P (w)
-      && (ind = XBUFFER (w->buffer)->indicate_buffer_boundaries, !NILP (ind)))
+      && (ind = BVAR (XBUFFER (w->buffer), indicate_buffer_boundaries), !NILP (ind)))
     {
       if (EQ (ind, Qleft) || EQ (ind, Qright))
 	boundary_top = boundary_bot = arrow_top = arrow_bot = ind;
@@ -949,17 +968,9 @@ update_window_fringes (struct window *w, int keep_current_p)
 	   y < yb && rn < nrows;
 	   y += row->height, ++rn)
 	{
-	  unsigned indicate_bob_p, indicate_top_line_p;
-	  unsigned indicate_eob_p, indicate_bottom_line_p;
-
 	  row = w->desired_matrix->rows + rn;
 	  if (!row->enabled_p)
 	    row = w->current_matrix->rows + rn;
-
-	  indicate_bob_p = row->indicate_bob_p;
-	  indicate_top_line_p = row->indicate_top_line_p;
-	  indicate_eob_p = row->indicate_eob_p;
-	  indicate_bottom_line_p = row->indicate_bottom_line_p;
 
 	  row->indicate_bob_p = row->indicate_top_line_p = 0;
 	  row->indicate_eob_p = row->indicate_bottom_line_p = 0;
@@ -988,7 +999,7 @@ update_window_fringes (struct window *w, int keep_current_p)
 	}
     }
 
-  empty_pos = XBUFFER (w->buffer)->indicate_empty_lines;
+  empty_pos = BVAR (XBUFFER (w->buffer), indicate_empty_lines);
   if (!NILP (empty_pos) && !EQ (empty_pos, Qright))
     empty_pos = WINDOW_LEFT_FRINGE_WIDTH (w) == 0 ? Qright : Qleft;
 
@@ -1041,12 +1052,8 @@ update_window_fringes (struct window *w, int keep_current_p)
 
       if (bn != NO_FRINGE_BITMAP)
 	{
-	  struct fringe_bitmap *fb;
+	  struct fringe_bitmap *fb = get_fringe_bitmap_data (bn);
 
-	  fb = fringe_bitmaps[bn];
-	  if (fb == NULL)
-	    fb = &standard_bitmaps[bn < MAX_STANDARD_FRINGE_BITMAPS
-				   ? bn : UNDEF_FRINGE_BITMAP];
 	  if (fb->align == ALIGN_BITMAP_TOP && fb->period == 0)
 	    {
 	      struct glyph_row *row1;
@@ -1100,12 +1107,8 @@ update_window_fringes (struct window *w, int keep_current_p)
 
       if (bn != NO_FRINGE_BITMAP)
 	{
-	  struct fringe_bitmap *fb;
+	  struct fringe_bitmap *fb = get_fringe_bitmap_data (bn);
 
-	  fb = fringe_bitmaps[bn];
-	  if (fb == NULL)
-	    fb = &standard_bitmaps[bn < MAX_STANDARD_FRINGE_BITMAPS
-				   ? bn : UNDEF_FRINGE_BITMAP];
 	  if (fb->align == ALIGN_BITMAP_BOTTOM && fb->period == 0)
 	    {
 	      struct glyph_row *row1;
@@ -1141,6 +1144,7 @@ update_window_fringes (struct window *w, int keep_current_p)
       int left, right;
       unsigned left_face_id, right_face_id;
       int left_offset, right_offset;
+      int periodic_p;
 
       row = w->desired_matrix->rows + rn;
       cur = w->current_matrix->rows + rn;
@@ -1149,6 +1153,7 @@ update_window_fringes (struct window *w, int keep_current_p)
 
       left_face_id = right_face_id = DEFAULT_FACE_ID;
       left_offset = right_offset = 0;
+      periodic_p = 0;
 
       /* Decide which bitmap to draw in the left fringe.  */
       if (WINDOW_LEFT_FRINGE_WIDTH (w) == 0)
@@ -1240,6 +1245,9 @@ update_window_fringes (struct window *w, int keep_current_p)
       else
 	right = NO_FRINGE_BITMAP;
 
+      periodic_p = (get_fringe_bitmap_data (left)->period != 0
+		    || get_fringe_bitmap_data (right)->period != 0);
+
       if (row->y != cur->y
 	  || row->visible_height != cur->visible_height
 	  || row->ends_at_zv_p != cur->ends_at_zv_p
@@ -1249,6 +1257,7 @@ update_window_fringes (struct window *w, int keep_current_p)
 	  || right_face_id != cur->right_fringe_face_id
 	  || left_offset != cur->left_fringe_offset
 	  || right_offset != cur->right_fringe_offset
+	  || periodic_p != cur->fringe_bitmap_periodic_p
 	  || cur->redraw_fringe_bitmaps_p)
 	{
 	  redraw_p = row->redraw_fringe_bitmaps_p = 1;
@@ -1261,6 +1270,7 @@ update_window_fringes (struct window *w, int keep_current_p)
 	      cur->right_fringe_face_id = right_face_id;
 	      cur->left_fringe_offset = left_offset;
 	      cur->right_fringe_offset = right_offset;
+	      cur->fringe_bitmap_periodic_p = periodic_p;
 	    }
 	}
 
@@ -1269,8 +1279,12 @@ update_window_fringes (struct window *w, int keep_current_p)
 
       if (row->overlay_arrow_bitmap != cur->overlay_arrow_bitmap)
 	{
-	  redraw_p = row->redraw_fringe_bitmaps_p = cur->redraw_fringe_bitmaps_p = 1;
-	  cur->overlay_arrow_bitmap = row->overlay_arrow_bitmap;
+	  redraw_p = row->redraw_fringe_bitmaps_p = 1;
+	  if (!keep_current_p)
+	    {
+	      cur->redraw_fringe_bitmaps_p = 1;
+	      cur->overlay_arrow_bitmap = row->overlay_arrow_bitmap;
+	    }
 	}
 
       row->left_fringe_bitmap = left;
@@ -1279,6 +1293,7 @@ update_window_fringes (struct window *w, int keep_current_p)
       row->right_fringe_face_id = right_face_id;
       row->left_fringe_offset = left_offset;
       row->right_fringe_offset = right_offset;
+      row->fringe_bitmap_periodic_p = periodic_p;
     }
 
   return redraw_p && !keep_current_p;
@@ -1380,7 +1395,7 @@ compute_fringe_widths (struct frame *f, int redraw)
 
 /* Free resources used by a user-defined bitmap.  */
 
-void
+static void
 destroy_fringe_bitmap (int n)
 {
   struct fringe_bitmap **fbp;
@@ -1448,7 +1463,7 @@ static const unsigned char swap_nibble[16] = {
   0x3, 0xb, 0x7, 0xf};          /* 0011 1011 0111 1111 */
 #endif                          /* HAVE_X_WINDOWS */
 
-void
+static void
 init_fringe_bitmap (int which, struct fringe_bitmap *fb, int once_p)
 {
   if (once_p || fb->dynamic)
@@ -1531,7 +1546,7 @@ If BITMAP already exists, the existing definition is replaced.  */)
   if (STRINGP (bits))
     h = SCHARS (bits);
   else if (VECTORP (bits))
-    h = XVECTOR (bits)->size;
+    h = ASIZE (bits);
   else
     wrong_type_argument (Qsequencep, bits);
 
@@ -1831,4 +1846,3 @@ w32_reset_fringes (void)
 #endif /* HAVE_NTGUI */
 
 #endif /* HAVE_WINDOW_SYSTEM */
-

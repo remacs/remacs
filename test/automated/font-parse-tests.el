@@ -25,8 +25,6 @@
 
 ;; Type M-x test-font-parse RET to generate the test buffer.
 
-;; TODO: Convert to ERT format.
-
 ;;; Code:
 
 (require 'ert)
@@ -159,5 +157,9 @@ expected font properties from parsing NAME.")
 				    fail-face)))
 	(insert "\n"))))
   (goto-char (point-min)))
+
+;; Local Variables:
+;; no-byte-compile: t
+;; End:
 
 ;;; font-parse-tests.el ends here.

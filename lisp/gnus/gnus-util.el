@@ -672,11 +672,9 @@ If N, return the Nth ancestor instead."
 	(when (string-match "\\(<[^<]+>\\)[ \t]*\\'" references)
 	  (match-string 1 references))))))
 
-(defun gnus-buffer-live-p (buffer)
+(defsubst gnus-buffer-live-p (buffer)
   "Say whether BUFFER is alive or not."
-  (and buffer
-       (get-buffer buffer)
-       (buffer-name (get-buffer buffer))))
+  (and buffer (buffer-live-p (get-buffer buffer))))
 
 (defun gnus-horizontal-recenter ()
   "Recenter the current buffer horizontally."
@@ -870,6 +868,15 @@ Bind `print-quoted' and `print-readably' to t, and `print-length' and
   "Delete FILE if it exists."
   (when (file-exists-p file)
     (delete-file file)))
+
+(defun gnus-delete-duplicates (list)
+  "Remove duplicate entries from LIST."
+  (let ((result nil))
+    (while list
+      (unless (member (car list) result)
+	(push (car list) result))
+      (pop list))
+    (nreverse result)))
 
 (defun gnus-delete-directory (directory)
   "Delete files in DIRECTORY.  Subdirectories remain.

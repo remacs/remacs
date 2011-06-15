@@ -169,8 +169,10 @@ For example, there is no ocaml-mode in Emacs, but the mode to use is
 
 ;;; Editing source examples
 
-(defvar org-src-mode-map (make-sparse-keymap))
-(define-key org-src-mode-map "\C-c'" 'org-edit-src-exit)
+(defvar org-src-mode-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map "\C-c'" 'org-edit-src-exit)
+    map))
 
 (defvar org-edit-src-force-single-line nil)
 (defvar org-edit-src-from-org-mode nil)
@@ -333,26 +335,26 @@ buffer."
 
 (defun org-src-switch-to-buffer (buffer context)
   (case org-src-window-setup
-    ('current-window
+    (current-window
      (switch-to-buffer buffer))
-    ('other-window
+    (other-window
      (switch-to-buffer-other-window buffer))
-    ('other-frame
+    (other-frame
      (case context
-       ('exit
+       (exit
 	(let ((frame (selected-frame)))
 	  (switch-to-buffer-other-frame buffer)
 	  (delete-frame frame)))
-       ('save
+       (save
 	(kill-buffer (current-buffer))
 	(switch-to-buffer buffer))
        (t
 	(switch-to-buffer-other-frame buffer))))
-    ('reorganize-frame
+    (reorganize-frame
      (if (eq context 'edit) (delete-other-windows))
      (org-switch-to-buffer-other-window buffer)
      (if (eq context 'exit) (delete-other-windows)))
-    ('switch-invisibly
+    (switch-invisibly
      (set-buffer buffer))
     (t
      (message "Invalid value %s for org-src-window-setup"
@@ -672,7 +674,7 @@ the language, a switch telling if the content should be in a single line."
 (defun org-src-mode-configure-edit-buffer ()
   (when (org-bound-and-true-p org-edit-src-from-org-mode)
     (org-add-hook 'kill-buffer-hook
-		  '(lambda () (delete-overlay org-edit-src-overlay)) nil 'local)
+		  (lambda () (delete-overlay org-edit-src-overlay)) nil 'local)
     (if (org-bound-and-true-p org-edit-src-allow-write-back-p)
 	(progn
 	  (setq buffer-offer-save t)

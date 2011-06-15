@@ -1,4 +1,5 @@
 /* Defines some widget utility functions.
+
 Copyright (C) 1992 Lucid, Inc.
 Copyright (C) 1994, 2001-2011 Free Software Foundation, Inc.
 
@@ -23,15 +24,8 @@ Boston, MA 02110-1301, USA.  */
 #include <config.h>
 #endif
 
-/* Definitions of these in config.h can cause
-   declaration conflicts later on between declarations for index
-   and declarations for strchr.  This file doesn't use
-   index and rindex, so cancel them.  */
-#undef index
-#undef rindex
-
 #include <setjmp.h>
-#include "../src/lisp.h"
+#include <lisp.h>
 
 #include <X11/Xatom.h>
 #include <X11/IntrinsicP.h>
@@ -135,7 +129,7 @@ XtCompositeChildren (Widget widget, unsigned int *number)
       return NULL;
     }
   n = cw->composite.num_children;
-  result = (Widget*)XtMalloc (n * sizeof (Widget));
+  result = (Widget*)(void*)XtMalloc (n * sizeof (Widget));
   *number = n;
   for (i = 0; i < n; i++)
     result [i] = cw->composite.children [i];
@@ -147,30 +141,3 @@ XtWidgetBeingDestroyedP (Widget widget)
 {
   return widget->core.being_destroyed;
 }
-
-void
-XtSafelyDestroyWidget (Widget widget)
-{
-#if 0
-
-  /* this requires IntrinsicI.h (actually, InitialI.h) */
-
-  XtAppContext app = XtWidgetToApplicationContext(widget);
-
-  if (app->dispatch_level == 0)
-    {
-      app->dispatch_level = 1;
-      XtDestroyWidget (widget);
-      /* generates an event so that the event loop will be called */
-      XChangeProperty (XtDisplay (widget), XtWindow (widget),
-		       XA_STRING, XA_STRING, 32, PropModeAppend, NULL, 0);
-      app->dispatch_level = 0;
-    }
-  else
-    XtDestroyWidget (widget);
-
-#else
-  abort ();
-#endif
-}
-

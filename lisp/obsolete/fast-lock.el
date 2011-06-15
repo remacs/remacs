@@ -6,6 +6,7 @@
 ;; Maintainer: FSF
 ;; Keywords: faces files
 ;; Version: 3.14
+;; Obsolete-since: 22.1
 
 ;; This file is part of GNU Emacs.
 
@@ -23,8 +24,6 @@
 ;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Commentary:
-
-;; This file has been obsolete since Emacs 22.1.
 
 ;; Fast Lock mode is a Font Lock support mode.
 ;; It makes visiting a file in Font Lock mode faster by restoring its face text
@@ -840,7 +839,8 @@ See `fast-lock-get-face-properties'."
 
 (add-hook 'after-save-hook 'fast-lock-save-cache-after-save-file)
 (add-hook 'kill-buffer-hook 'fast-lock-save-cache-before-kill-buffer)
-(add-hook 'kill-emacs-hook 'fast-lock-save-caches-before-kill-emacs)
+(unless noninteractive
+  (add-hook 'kill-emacs-hook 'fast-lock-save-caches-before-kill-emacs))
 
 ;;;###autoload
 (when (fboundp 'add-minor-mode)

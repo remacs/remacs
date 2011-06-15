@@ -88,8 +88,6 @@ extern void free_frame_menubar (struct frame *);
 extern int w32_codepage_for_font (char *fontname);
 extern Cursor w32_load_cursor (LPCTSTR name);
 
-extern Lisp_Object Vwindow_system;
-
 #define x_any_window_to_frame x_window_to_frame
 #define x_top_window_to_frame x_window_to_frame
 
@@ -138,13 +136,6 @@ BOOL (WINAPI *pfnSetLayeredWindowAttributes) (HWND, COLORREF, BYTE, DWORD);
 #define WS_EX_LAYERED 0x80000
 #endif
 
-/* Frame being updated by update_frame.  This is declared in term.c.
-   This is set by update_begin and looked at by all the
-   w32 functions.  It is zero while not inside an update.
-   In that case, the w32 functions assume that `SELECTED_FRAME ()'
-   is the frame to apply to.  */
-extern struct frame *updating_frame;
-
 /* This is a frame waiting to be autoraised, within w32_read_socket.  */
 struct frame *pending_autoraise_frame;
 
@@ -169,7 +160,6 @@ int last_scroll_bar_drag_pos;
 /* Where the mouse was last time we reported a mouse event.  */
 static RECT last_mouse_glyph;
 static FRAME_PTR last_mouse_glyph_frame;
-static Lisp_Object last_mouse_press_frame;
 
 /* The scroll bar in which the last motion event occurred.
 
@@ -725,22 +715,22 @@ w32_draw_fringe_bitmap (struct window *w, struct glyph_row *row,
 
 	  if (sb_width > 0)
 	    {
-	      int left = WINDOW_SCROLL_BAR_AREA_X (w);
-	      int width = (WINDOW_CONFIG_SCROLL_BAR_COLS (w)
-			   * FRAME_COLUMN_WIDTH (f));
+	      int bar_area_x = WINDOW_SCROLL_BAR_AREA_X (w);
+	      int bar_area_width = (WINDOW_CONFIG_SCROLL_BAR_COLS (w)
+				    * FRAME_COLUMN_WIDTH (f));
 
 	      if (bx < 0)
 		{
 		  /* Bitmap fills the fringe.  */
-		  if (left + width == p->x)
-		    bx = left + sb_width;
-		  else if (p->x + p->wd == left)
-		    bx = left;
+		  if (bar_area_x + bar_area_width == p->x)
+		    bx = bar_area_x + sb_width;
+		  else if (p->x + p->wd == bar_area_x)
+		    bx = bar_area_x;
 		  if (bx >= 0)
 		    {
 		      int header_line_height = WINDOW_HEADER_LINE_HEIGHT (w);
 
-		      nx = width - sb_width;
+		      nx = bar_area_width - sb_width;
 		      by = WINDOW_TO_FRAME_PIXEL_Y (w, max (header_line_height,
 							    row->y));
 		      ny = row->visible_height;
@@ -748,13 +738,13 @@ w32_draw_fringe_bitmap (struct window *w, struct glyph_row *row,
 		}
 	      else
 		{
-		  if (left + width == bx)
+		  if (bar_area_x + bar_area_width == bx)
 		    {
-		      bx = left + sb_width;
-		      nx += width - sb_width;
+		      bx = bar_area_x + sb_width;
+		      nx += bar_area_width - sb_width;
 		    }
-		  else if (bx + nx == left)
-		    nx += width - sb_width;
+		  else if (bx + nx == bar_area_x)
+		    nx += bar_area_width - sb_width;
 		}
 	    }
 	}
@@ -1012,7 +1002,7 @@ x_set_mouse_face_gc (struct glyph_string *s)
    Faces to use in the mode line have already been computed when the
    matrix was built, so there isn't much to do, here.  */
 
-static INLINE void
+static inline void
 x_set_mode_line_face_gc (struct glyph_string *s)
 {
   s->gc = s->face->gc;
@@ -1023,7 +1013,7 @@ x_set_mode_line_face_gc (struct glyph_string *s)
    S->stippled_p to a non-zero value if the face of S has a stipple
    pattern.  */
 
-static INLINE void
+static inline void
 x_set_glyph_string_gc (struct glyph_string *s)
 {
   PREPARE_FACE_FOR_DISPLAY (s->f, s->face);
@@ -1068,7 +1058,7 @@ x_set_glyph_string_gc (struct glyph_string *s)
 /* Set clipping for output of glyph string S.  S may be part of a mode
    line or menu if we don't have X toolkit support.  */
 
-static INLINE void
+static inline void
 x_set_glyph_string_clipping (struct glyph_string *s)
 {
   RECT *r = s->clip;
@@ -1078,16 +1068,12 @@ x_set_glyph_string_clipping (struct glyph_string *s)
     w32_set_clip_rectangle (s->hdc, r);
   else if (n > 1)
     {
-      HRGN full_clip, clip1, clip2;
-      clip1 = CreateRectRgnIndirect (r);
-      clip2 = CreateRectRgnIndirect (r + 1);
-      if (CombineRgn (full_clip, clip1, clip2, RGN_OR) != ERROR)
-        {
-          SelectClipRgn (s->hdc, full_clip);
-        }
+      HRGN clip1 = CreateRectRgnIndirect (r);
+      HRGN clip2 = CreateRectRgnIndirect (r + 1);
+      if (CombineRgn (clip1, clip1, clip2, RGN_OR) != ERROR)
+        SelectClipRgn (s->hdc, clip1);
       DeleteObject (clip1);
       DeleteObject (clip2);
-      DeleteObject (full_clip);
     }
     s->num_clips = n;
 }
@@ -1142,7 +1128,7 @@ w32_compute_glyph_string_overhangs (struct glyph_string *s)
 
 /* Fill rectangle X, Y, W, H with background color of glyph string S.  */
 
-static INLINE void
+static inline void
 x_clear_glyph_string_rect (struct glyph_string *s,
 			   int x, int y, int w, int h)
 {
@@ -1303,7 +1289,6 @@ x_draw_composite_glyph_string_foreground (struct glyph_string *s)
   else if (! s->first_glyph->u.cmp.automatic)
     {
       int y = s->ybase;
-      int width = 0;
       HFONT old_font;
 
       old_font = SelectObject (s->hdc, FONT_HANDLE (font));
@@ -2536,8 +2521,7 @@ x_delete_glyphs (struct frame *f, register int n)
 }
 
 
-/* Clear entire frame.  If updating_frame is non-null, clear that
-   frame.  Otherwise clear the selected frame.  */
+/* Clear entire frame.  */
 
 static void
 x_clear_frame (struct frame *f)
@@ -2634,6 +2618,32 @@ x_scroll_run (struct window *w, struct run *run)
      without mode lines.  Include in this box the left and right
      fringes of W.  */
   window_box (w, -1, &x, &y, &width, &height);
+
+  /* If the fringe is adjacent to the left (right) scroll bar of a
+     leftmost (rightmost, respectively) window, then extend its
+     background to the gap between the fringe and the bar.  */
+  if ((WINDOW_LEFTMOST_P (w)
+       && WINDOW_HAS_VERTICAL_SCROLL_BAR_ON_LEFT (w))
+      || (WINDOW_RIGHTMOST_P (w)
+	  && WINDOW_HAS_VERTICAL_SCROLL_BAR_ON_RIGHT (w)))
+    {
+      int sb_width = WINDOW_CONFIG_SCROLL_BAR_WIDTH (w);
+
+      if (sb_width > 0)
+	{
+	  int bar_area_x = WINDOW_SCROLL_BAR_AREA_X (w);
+	  int bar_area_width = (WINDOW_CONFIG_SCROLL_BAR_COLS (w)
+				* FRAME_COLUMN_WIDTH (f));
+
+	  if (bar_area_x + bar_area_width == x)
+	    {
+	      x = bar_area_x + sb_width;
+	      width += bar_area_width - sb_width;
+	    }
+	  else if (x + width == bar_area_x)
+	    width += bar_area_width - sb_width;
+	}
+    }
 
   from_y = WINDOW_TO_FRAME_PIXEL_Y (w, run->current_y);
   to_y = WINDOW_TO_FRAME_PIXEL_Y (w, run->desired_y);
@@ -4852,7 +4862,6 @@ w32_read_socket (struct terminal *terminal, int expected,
 static void
 w32_clip_to_row (struct window *w, struct glyph_row *row, int area, HDC hdc)
 {
-  struct frame *f = XFRAME (WINDOW_FRAME (w));
   RECT clip_rect;
   int window_x, window_y, window_width;
 
@@ -5941,7 +5950,7 @@ w32_initialize_display_info (Lisp_Object display_name)
 
 }
 
-/* Create an xrdb-style database of resources to supercede registry settings.
+/* Create an xrdb-style database of resources to supersede registry settings.
    The database is just a concatenation of C strings, finished by an additional
    \0.  The strings are submitted to some basic normalization, so
 
@@ -6060,7 +6069,7 @@ w32_create_terminal (struct w32_display_info *dpyinfo)
   terminal->mouse_position_hook = w32_mouse_position;
   terminal->frame_rehighlight_hook = w32_frame_rehighlight;
   terminal->frame_raise_lower_hook = w32_frame_raise_lower;
-  //  terminal->fullscreen_hook = XTfullscreen_hook;
+  /* terminal->fullscreen_hook = XTfullscreen_hook; */
   terminal->set_vertical_scroll_bar_hook = w32_set_vertical_scroll_bar;
   terminal->condemn_scroll_bars_hook = w32_condemn_scroll_bars;
   terminal->redeem_scroll_bar_hook = w32_redeem_scroll_bar;
@@ -6082,7 +6091,7 @@ w32_create_terminal (struct w32_display_info *dpyinfo)
      terminal like X does.  */
   terminal->kboard = (KBOARD *) xmalloc (sizeof (KBOARD));
   init_kboard (terminal->kboard);
-  terminal->kboard->Vwindow_system = intern ("w32");
+  KVAR (terminal->kboard, Vwindow_system) = intern ("w32");
   terminal->kboard->next_kboard = all_kboards;
   all_kboards = terminal->kboard;
   /* Don't let the initial kboard remain current longer than necessary.
@@ -6099,7 +6108,6 @@ static void
 x_delete_terminal (struct terminal *terminal)
 {
   struct w32_display_info *dpyinfo = terminal->display_info.w32;
-  int i;
 
   /* Protect against recursive calls.  delete_frame in
      delete_terminal calls us back when it deletes our last frame.  */

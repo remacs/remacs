@@ -434,18 +434,23 @@ by displaying the sub-formula in `calc-selected-face'."
   :group 'calc
   :type 'boolean)
 
-(defcustom calc-default-field-reference-level
+(defcustom calc-lu-field-reference
   "20 uPa"
   "The default reference level for logarithmic units (field)."
   :group 'calc
   :type '(string))
 
-(defcustom calc-default-power-reference-level
+(defcustom calc-lu-power-reference
   "mW"
   "The default reference level for logarithmic units (power)."
   :group 'calc
   :type '(string))
 
+(defcustom calc-note-threshold "1" 
+  "The number of cents that a frequency should be near a note
+to be identified as that note."
+  :type 'string
+  :group 'calc)
 
 (defface calc-nonselected-face
   '((t :inherit shadow       
@@ -1079,7 +1084,7 @@ Used by `calc-user-invocation'.")
           "lOW")
     (mapc (lambda (x) (define-key map (char-to-string x) 'calc-missing-key))
           (concat "ABCDEFGHIJKLMNOPQRSTUVXZabcdfghjkmoprstuvwxyz"
-                  ":\\|!()[]<>{},;=~`\C-k\C-w\C-_"))
+                  ":\\|!()[]<>{},;=~`\C-k\C-w"))
     (define-key map "\M-w" 'calc-missing-key)
     (define-key map "\M-k" 'calc-missing-key)
     (define-key map "\M-\C-w" 'calc-missing-key)
@@ -1288,19 +1293,20 @@ the trail buffer."
     (if (not info-list)
         (progn
           (setq calc-buffer-list (delete cb calc-buffer-list))
-          (with-current-buffer calc-trail-buffer
-            (if (eq cb calc-main-buffer)
-                ;; If there are other Calc stacks, make another one
-                ;; the calc-main-buffer ...
-                (if calc-buffer-list
-                    (setq calc-main-buffer (car calc-buffer-list))
-                  ;; ... otherwise kill the trail and its windows.
-                  (let ((wl (get-buffer-window-list calc-trail-buffer)))
-                    (while wl
-                      (delete-window (car wl))
-                      (setq wl (cdr wl))))
-                  (kill-buffer calc-trail-buffer)
-                  (setq calc-trail-buffer nil))))
+          (if (buffer-live-p calc-trail-buffer)
+              (with-current-buffer calc-trail-buffer
+                (if (eq cb calc-main-buffer)
+                    ;; If there are other Calc stacks, make another one
+                    ;; the calc-main-buffer ...
+                    (if calc-buffer-list
+                        (setq calc-main-buffer (car calc-buffer-list))
+                      ;; ... otherwise kill the trail and its windows.
+                      (let ((wl (get-buffer-window-list calc-trail-buffer)))
+                        (while wl
+                          (delete-window (car wl))
+                          (setq wl (cdr wl))))
+                      (kill-buffer calc-trail-buffer)))))
+          (setq calc-trail-buffer nil)
           t))))
 
 (defun calc-mode ()

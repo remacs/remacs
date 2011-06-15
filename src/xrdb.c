@@ -28,6 +28,12 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <stdio.h>
 #include <setjmp.h>
 
+#include "lisp.h"
+
+/* This may include sys/types.h, and that somehow loses
+   if this is not done before the other system files.  */
+#include "xterm.h"
+
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
 #include <X11/X.h>
@@ -37,12 +43,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <pwd.h>
 #endif
 #include <sys/stat.h>
-
-#if !defined(S_ISDIR) && defined(S_IFDIR)
-#define S_ISDIR(m) (((m) & S_IFMT) == S_IFDIR)
-#endif
-
-#include "lisp.h"
 
 #ifdef USE_MOTIF
 /* For Vdouble_click_time.  */
@@ -54,8 +54,6 @@ extern char *getenv (const char *);
 extern struct passwd *getpwuid (uid_t);
 extern struct passwd *getpwnam (const char *);
 
-extern const char *get_system_name (void);
-
 char *x_get_string_resource (XrmDatabase rdb, const char *name,
 			     const char *class);
 static int file_p (const char *filename);
@@ -66,7 +64,7 @@ static int file_p (const char *filename);
 
 /* The string which gets substituted for the %C escape in XFILESEARCHPATH
    and friends, or zero if none was specified.  */
-char *x_customization_string;
+static char *x_customization_string;
 
 
 /* Return the value of the emacs.customization (Emacs.Customization)
@@ -468,7 +466,7 @@ get_environ_db (void)
 /* Types of values that we can find in a database */
 
 #define XrmStringType "String"	/* String representation */
-XrmRepresentation x_rm_string;	/* Quark representation */
+static XrmRepresentation x_rm_string;	/* Quark representation */
 
 /* Load X resources based on the display and a possible -xrm option. */
 
@@ -481,7 +479,9 @@ x_load_resources (Display *display, const char *xrm_string,
   XrmDatabase db;
   char line[256];
 
+#if defined USE_MOTIF || !defined HAVE_XFT || !defined USE_LUCID
   const char *helv = "-*-helvetica-medium-r-*--*-120-*-*-*-*-iso8859-1";
+#endif
 
 #ifdef USE_MOTIF
   const char *courier = "-*-courier-medium-r-*-*-*-120-*-*-*-*-iso8859-1";
@@ -536,22 +536,24 @@ x_load_resources (Display *display, const char *xrm_string,
      dialog from `double-click-time'.  */
   if (INTEGERP (Vdouble_click_time) && XINT (Vdouble_click_time) > 0)
     {
-      sprintf (line, "%s*fsb*DirList.doubleClickInterval: %d",
+      sprintf (line, "%s*fsb*DirList.doubleClickInterval: %"pI"d",
 	       myclass, XFASTINT (Vdouble_click_time));
       XrmPutLineResource (&rdb, line);
-      sprintf (line, "%s*fsb*ItemsList.doubleClickInterval: %d",
+      sprintf (line, "%s*fsb*ItemsList.doubleClickInterval: %"pI"d",
 	       myclass, XFASTINT (Vdouble_click_time));
       XrmPutLineResource (&rdb, line);
     }
 
 #else /* not USE_MOTIF */
 
-  sprintf (line, "Emacs.dialog*.font: %s", helv);
-  XrmPutLineResource (&rdb, line);
   sprintf (line, "Emacs.dialog*.background: grey75");
+  XrmPutLineResource (&rdb, line);
+#if !defined (HAVE_XFT) || !defined (USE_LUCID)
+  sprintf (line, "Emacs.dialog*.font: %s", helv);
   XrmPutLineResource (&rdb, line);
   sprintf (line, "*XlwMenu*font: %s", helv);
   XrmPutLineResource (&rdb, line);
+#endif
   sprintf (line, "*XlwMenu*background: grey75");
   XrmPutLineResource (&rdb, line);
   sprintf (line, "Emacs*verticalScrollBar.background: grey75");
@@ -762,4 +764,3 @@ main (argc, argv)
   XCloseDisplay (display);
 }
 #endif /* TESTRM */
-

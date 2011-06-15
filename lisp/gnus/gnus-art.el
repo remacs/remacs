@@ -44,6 +44,7 @@
 (require 'wid-edit)
 (require 'mm-uu)
 (require 'message)
+(require 'mouse)
 
 (autoload 'gnus-msg-mail "gnus-msg" nil t)
 (autoload 'gnus-button-mailto "gnus-msg")
@@ -683,7 +684,7 @@ beginning of a line."
   :type 'regexp
   :group 'gnus-article-various)
 
-(defcustom gnus-article-mode-line-format "Gnus: %g [%w] %S%m"
+(defcustom gnus-article-mode-line-format "Gnus: %g %S%m"
   "*The format specification for the article mode line.
 See `gnus-summary-mode-line-format' for a closer description.
 
@@ -691,6 +692,7 @@ The following additional specs are available:
 
 %w  The article washing status.
 %m  The number of MIME parts in the article."
+  :version "24.1"
   :type 'string
   :group 'gnus-article-various)
 
@@ -1039,7 +1041,7 @@ Some of these headers are updated automatically.  See
 	  (item :tag "User-defined" :value 'user-defined)))
 
 (defcustom gnus-article-update-date-headers 1
-  "How often to update the date header.
+  "A number that says how often to update the date header (in seconds).
 If nil, don't update it at all."
   :version "24.1"
   :group 'gnus-article-headers
@@ -1251,6 +1253,24 @@ predicate.  See Info node `(gnus)Customizing Articles'."
   :group 'gnus-article-treat
   :link '(custom-manual "(gnus)Customizing Articles")
   :type gnus-article-treat-custom)
+
+(gnus-define-group-parameter
+ list-identifier
+ :variable-document
+ "Alist of regexps and correspondent identifiers."
+ :variable-group gnus-article-washing
+ :parameter-type
+ '(choice :tag "Identifier"
+	  :value nil
+	  (symbol :tag "Item in `gnus-list-identifiers'" none)
+	  regexp
+	  (const :tag "None" nil))
+ :parameter-document
+ "If non-nil, specify how to remove `identifiers' from articles' subject.
+
+Any symbol is used to look up a regular expression to match the
+banner in `gnus-list-identifiers'.  A string is used as a regular
+expression to match the identifier directly.")
 
 (make-obsolete-variable 'gnus-treat-strip-pgp nil
 			"Gnus 5.10 (Emacs 22.1)")
@@ -1724,9 +1744,10 @@ Initialized from `text-mode-syntax-table.")
 (put 'gnus-with-article-headers 'edebug-form-spec '(body))
 
 (defmacro gnus-with-article-buffer (&rest forms)
-  `(with-current-buffer gnus-article-buffer
-     (let ((inhibit-read-only t))
-       ,@forms)))
+  `(when (buffer-live-p (get-buffer gnus-article-buffer))
+     (with-current-buffer gnus-article-buffer
+       (let ((inhibit-read-only t))
+         ,@forms))))
 
 (put 'gnus-with-article-buffer 'lisp-indent-function 0)
 (put 'gnus-with-article-buffer 'edebug-form-spec '(body))
@@ -2317,10 +2338,12 @@ long lines if and only if arg is positive."
       (let ((start (point)))
 	(insert "X-Boundary: ")
 	(gnus-add-text-properties start (point) '(invisible t intangible t))
-	(insert (let (str)
-		  (while (>= (window-width) (length str))
+       (insert (let (str (max (window-width)))
+                 (if (featurep 'xemacs)
+                     (setq max (1- max)))
+                 (while (>= max (length str))
 		    (setq str (concat str gnus-body-boundary-delimiter)))
-		  (substring str 0 (window-width)))
+                 (substring str 0 max))
 		"\n")
 	(gnus-put-text-property start (point) 'gnus-decoration 'header)))))
 
@@ -2788,14 +2811,11 @@ Return file name."
 	   ((equal (concat "<" cid ">") (mm-handle-id handle))
 	    (setq file
 		  (expand-file-name
-		   (or (mail-content-type-get
-			(mm-handle-disposition handle) 'filename)
-		       (mail-content-type-get
-			(setq type (mm-handle-type handle)) 'name)
-		       (concat
-			(make-temp-name "cid")
-			(car (rassoc (car type) mailcap-mime-extensions))))
-		   directory))
+                   (or (mm-handle-filename handle)
+                       (concat
+                        (make-temp-name "cid")
+                        (car (rassoc (car (mm-handle-type handle)) mailcap-mime-extensions))))
+                   directory))
 	    (mm-save-part-to-file handle file)
 	    (throw 'found file))))))))
 
@@ -2812,10 +2832,7 @@ message header will be added to the bodies of the \"text/html\" parts."
 	    ((or (equal (car (setq type (mm-handle-type handle))) "text/html")
 		 (and (equal (car type) "message/external-body")
 		      (or header
-			  (setq file (or (mail-content-type-get type 'name)
-					 (mail-content-type-get
-					  (mm-handle-disposition handle)
-					  'filename))))
+			  (setq file (mm-handle-filename handle)))
 		      (or (mm-handle-cache handle)
 			  (condition-case code
 			      (progn (mm-extern-cache-contents handle) t)
@@ -3054,10 +3071,8 @@ images if any to the browser, and deletes them when exiting the group
 The `gnus-list-identifiers' variable specifies what to do."
   (interactive)
   (let ((inhibit-point-motion-hooks t)
-	(regexp (if (consp gnus-list-identifiers)
-		    (mapconcat 'identity gnus-list-identifiers " *\\|")
-		  gnus-list-identifiers))
-	(inhibit-read-only t))
+        (regexp (gnus-group-get-list-identifiers gnus-newsgroup-name))
+        (inhibit-read-only t))
     (when regexp
       (save-excursion
 	(save-restriction
@@ -3392,7 +3407,11 @@ lines forward."
 	(setq ended t)))))
 
 (defun article-treat-date ()
-  (article-date-ut gnus-article-date-headers t))
+  (article-date-ut (if (gnus-buffer-live-p gnus-summary-buffer)
+		       (with-current-buffer gnus-summary-buffer
+			 gnus-article-date-headers)
+		     gnus-article-date-headers)
+		   t))
 
 (defun article-date-ut (&optional type highlight date-position)
   "Convert DATE date to TYPE in the current article.
@@ -3403,6 +3422,7 @@ possible values."
 	 (inhibit-read-only t)
 	 (inhibit-point-motion-hooks t)
 	 (first t)
+	 (visible-date (mail-fetch-field "Date"))
 	 pos date bface eface)
     (save-excursion
       (save-restriction
@@ -3426,6 +3446,9 @@ possible values."
 	    (delete-region (point-at-bol) (progn
 					    (gnus-article-forward-header)
 					    (point))))
+	  (when (and (not date)
+		     visible-date)
+	    (setq date visible-date))
 	  (when date
 	    (article-transform-date date type bface eface)))))))
 
@@ -3458,7 +3481,7 @@ possible values."
 			     combined-lapsed))
     (error "Unknown conversion type: %s" type))
   (condition-case ()
-      (let ((time (date-to-time date)))
+      (let ((time (ignore-errors (date-to-time date))))
 	(cond
 	 ;; Convert to the local timezone.
 	 ((eq type 'local)
@@ -3510,6 +3533,7 @@ possible values."
 		(segments 3)
 		lapsed-string)
 	    (while (and
+                    time
 		    (setq lapsed-string
 			  (concat " (" (article-lapsed-string time segments) ")"))
 		    (> (+ (length date-string)
@@ -3636,10 +3660,11 @@ function and want to see what the date was before converting."
 		 (let ((type (get-text-property (match-beginning 0)
 						'gnus-date-type)))
 		   (when (memq type '(lapsed combined-lapsed user-format))
-		     (unless (= window-start
-				(save-excursion
-				  (forward-line 1)
-				  (point)))
+		     (when (and window-start
+				(not (= window-start
+					(save-excursion
+					  (forward-line 1)
+					  (point)))))
 		       (setq window-start nil))
 		     (save-excursion
 		       (article-date-ut type t (match-beginning 0)))
@@ -4393,6 +4418,7 @@ If variable `gnus-use-long-file-name' is non-nil, it is
     (gnus-run-hooks 'gnus-article-menu-hook)))
 
 (defvar bookmark-make-record-function)
+(defvar shr-put-image-function)
 
 (defun gnus-article-mode ()
   "Major mode for displaying an article.
@@ -4436,6 +4462,8 @@ commands:
   ;; Prevent Emacs 22 from displaying non-break space with `nobreak-space'
   ;; face.
   (set (make-local-variable 'nobreak-char-display) nil)
+  ;; Enable `gnus-article-remove-images' to delete images shr.el renders.
+  (set (make-local-variable 'shr-put-image-function) 'gnus-shr-put-image)
   (setq cursor-in-non-selected-windows nil)
   (gnus-set-default-directory)
   (buffer-disable-undo)
@@ -4499,13 +4527,10 @@ commands:
 	(setq gnus-summary-buffer
 	      (gnus-summary-buffer-name gnus-newsgroup-name))
 	(gnus-summary-set-local-parameters gnus-newsgroup-name)
-	(cond
-	 ((and gnus-article-update-date-headers
-	       (not article-lapsed-timer))
+	(when article-lapsed-timer
+	  (gnus-stop-date-timer))
+	(when gnus-article-update-date-headers
 	  (gnus-start-date-timer gnus-article-update-date-headers))
-	 ((and (not gnus-article-update-date-headers)
-	       article-lapsed-timer)
-	  (gnus-stop-date-timer)))
 	(current-buffer)))))
 
 ;; Set article window start at LINE, where LINE is the number of lines
@@ -4631,6 +4656,7 @@ If ALL-HEADERS is non-nil, no headers are hidden."
 	      (forward-line -1))
 	    (set-window-point (get-buffer-window (current-buffer)) (point))
 	    (gnus-configure-windows 'article)
+	    (gnus-run-hooks 'gnus-article-prepare-hook)
 	    t))))))
 
 ;;;###autoload
@@ -4648,8 +4674,7 @@ If ALL-HEADERS is non-nil, no headers are hidden."
 	  gnus-article-image-alist nil)
     (gnus-run-hooks 'gnus-tmp-internal-hook)
     (when gnus-display-mime-function
-      (funcall gnus-display-mime-function))
-    (gnus-run-hooks 'gnus-article-prepare-hook)))
+      (funcall gnus-display-mime-function))))
 
 ;;;
 ;;; Gnus Sticky Article Mode
@@ -5019,14 +5044,11 @@ Deleting parts may malfunction or destroy the article; continue? "))
     (let* ((data (get-text-property (point) 'gnus-data))
 	   (id (get-text-property (point) 'gnus-part))
 	   (handles gnus-article-mime-handles)
-	   (none "(none)")
 	   (description
 	    (let ((desc (mm-handle-description data)))
 	      (when desc
 		(mail-decode-encoded-word-string desc))))
-	   (filename
-	    (or (mail-content-type-get (mm-handle-disposition data) 'filename)
-		none))
+	   (filename (or (mm-handle-filename data) "(none)"))
 	   (type (mm-handle-media-type data)))
       (unless data
 	(error "No MIME part under point"))
@@ -5144,10 +5166,7 @@ are decompressed."
   (unless handle
     (setq handle (get-text-property (point) 'gnus-data)))
   (when handle
-    (let ((filename (or (mail-content-type-get (mm-handle-type handle)
-					       'name)
-			(mail-content-type-get (mm-handle-disposition handle)
-					       'filename)))
+    (let ((filename (mm-handle-filename handle))
 	  contents dont-decode charset coding-system)
       (mm-with-unibyte-buffer
 	(mm-insert-part handle)
@@ -5237,12 +5256,7 @@ Compressed files like .gz and .bz2 are decompressed."
 	(mm-with-unibyte-buffer
 	  (mm-insert-part handle)
 	  (setq contents
-		(or (mm-decompress-buffer
-		     (or (mail-content-type-get (mm-handle-type handle)
-						'name)
-			 (mail-content-type-get (mm-handle-disposition handle)
-						'filename))
-		     nil t)
+		(or (mm-decompress-buffer (mm-handle-filename handle) nil t)
 		    (buffer-string))))
 	(cond
 	 ((not arg)
@@ -5647,8 +5661,7 @@ all parts."
 
 (defun gnus-insert-mime-button (handle gnus-tmp-id &optional displayed)
   (let ((gnus-tmp-name
-	 (or (mail-content-type-get (mm-handle-type handle) 'name)
-	     (mail-content-type-get (mm-handle-disposition handle) 'filename)
+	 (or (mm-handle-filename handle)
 	     (mail-content-type-get (mm-handle-type handle) 'url)
 	     ""))
 	(gnus-tmp-type (mm-handle-media-type handle))
@@ -6129,6 +6142,15 @@ Provided for backwards compatibility."
 	     (not gnus-inhibit-hiding))
     (gnus-article-hide-headers)))
 
+(declare-function shr-put-image "shr" (data alt))
+
+(defun gnus-shr-put-image (data alt)
+  "Put image DATA with a string ALT.  Enable image to be deleted."
+  (let ((image (shr-put-image data (propertize (or alt "*")
+					       'gnus-image-category 'shr))))
+    (when image
+      (gnus-add-image 'shr image))))
+
 ;;; Article savers.
 
 (defun gnus-output-to-file (file-name)
@@ -6316,7 +6338,8 @@ specifies."
 
 (defun gnus-article-next-page-1 (lines)
   (condition-case ()
-      (let ((scroll-in-place nil))
+      (let ((scroll-in-place nil)
+	    (auto-window-vscroll nil))
 	(scroll-up lines))
     (end-of-buffer
      ;; Long lines may cause an end-of-buffer error.
@@ -6830,7 +6853,10 @@ If given a prefix, show the hidden text instead."
 					      gnus-summary-buffer)
 		    (when gnus-keep-backlog
 		      (gnus-backlog-enter-article
-		       group article (current-buffer))))
+		       group article (current-buffer)))
+		    (when (and gnus-agent
+			       (gnus-agent-group-covered-p group))
+		      (gnus-agent-store-article article group)))
 		  (setq result 'article))
 		 (methods
 		  (setq gnus-override-method (pop methods)))

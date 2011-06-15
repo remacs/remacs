@@ -207,7 +207,7 @@
 ;;    (delete-minibuffer-contents))
 ;;
 ;; (add-hook 'iswitchb-define-mode-map-hook
-;; 	  '(lambda () (define-key
+;; 	     (lambda () (define-key
 ;; 			iswitchb-mode-map "\C-o"
 ;; 			'iswitchb-exclude-nonmatching)))
 
@@ -658,7 +658,7 @@ the selection process begins.  Used by isearchb.el."
 	     (not (iswitchb-existing-buffer-p)))
 	(let ((virt (car iswitchb-virtual-buffers))
 	      (new-buf))
-	  ;; Keep the name of the buffer returned by find-file-noselect, as 
+	  ;; Keep the name of the buffer returned by find-file-noselect, as
 	  ;; the buffer 'virt' could be a symlink to a file of a different name.
 	  (setq new-buf (buffer-name (find-file-noselect (cdr virt))))
 	  (setq iswitchb-matches (list new-buf)
@@ -1015,7 +1015,7 @@ Return the modified list with the last element prepended to it."
 	    (display-completion-list (or iswitchb-matches iswitchb-buflist)
 				     :help-string "iswitchb "
 				     :activate-callback
-				     (lambda (x y z)
+				     (lambda (_x _y _z)
 				       (message "doesn't work yet, sorry!")))
 	  ;; else running Emacs
 	  (display-completion-list (or iswitchb-matches iswitchb-buflist))))
@@ -1118,10 +1118,9 @@ Return the modified list with the last element prepended to it."
 If BUFFER is visible in the current frame, return nil."
   (interactive)
   (let ((blist (iswitchb-get-buffers-in-frames 'current)))
-    ;;If the buffer is visible in current frame, return nil
-    (if (memq buffer blist)
-	nil
-      ;;  maybe in other frame or icon
+    ;; If the buffer is visible in current frame, return nil
+    (unless (member buffer blist)
+      ;; maybe in other frame or icon
       (get-buffer-window buffer 0) ; better than 'visible
       )))
 

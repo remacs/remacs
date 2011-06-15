@@ -23,11 +23,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <time.h>
 #include <setjmp.h>
 
-/* Note on some machines this defines `vector' as a typedef,
-   so make sure we don't use that name in this file.  */
-#undef vector
-#define vector *****
-
 #include "lisp.h"
 #include "commands.h"
 #include "character.h"
@@ -49,16 +44,14 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #define NULL ((POINTER_TYPE *)0)
 #endif
 
-Lisp_Object Qstring_lessp, Qprovide, Qrequire;
-Lisp_Object Qyes_or_no_p_history;
+Lisp_Object Qstring_lessp;
+static Lisp_Object Qprovide, Qrequire;
+static Lisp_Object Qyes_or_no_p_history;
 Lisp_Object Qcursor_in_echo_area;
-Lisp_Object Qwidget_type;
-Lisp_Object Qcodeset, Qdays, Qmonths, Qpaper;
+static Lisp_Object Qwidget_type;
+static Lisp_Object Qcodeset, Qdays, Qmonths, Qpaper;
 
 static int internal_equal (Lisp_Object , Lisp_Object, int, int);
-
-extern long get_random (void);
-extern void seed_random (long);
 
 #ifndef HAVE_UNISTD_H
 extern long time ();
@@ -82,7 +75,7 @@ Other values of LIMIT are ignored.  */)
 {
   EMACS_INT val;
   Lisp_Object lispy_val;
-  unsigned long denominator;
+  EMACS_UINT denominator;
 
   if (EQ (limit, Qt))
     seed_random (getpid () + time (NULL));
@@ -95,7 +88,7 @@ Other values of LIMIT are ignored.  */)
 	 it's possible to get a quotient larger than n; discarding
 	 these values eliminates the bias that would otherwise appear
 	 when using a large n.  */
-      denominator = ((unsigned long)1 << VALBITS) / XFASTINT (limit);
+      denominator = ((EMACS_UINT) 1 << VALBITS) / XFASTINT (limit);
       do
 	val = get_random () / denominator;
       while (val >= XFASTINT (limit));
@@ -106,6 +99,10 @@ Other values of LIMIT are ignored.  */)
   return lispy_val;
 }
 
+/* Heuristic on how many iterations of a tight loop can be safely done
+   before it's time to do a QUIT.  This must be a power of 2.  */
+enum { QUIT_COUNT_HEURISTIC = 1 << 16 };
+
 /* Random data-structure functions */
 
 DEFUN ("length", Flength, Slength, 1, 1, 0,
@@ -117,7 +114,6 @@ To get the number of bytes, use `string-bytes'.  */)
   (register Lisp_Object sequence)
 {
   register Lisp_Object val;
-  register int i;
 
   if (STRINGP (sequence))
     XSETFASTINT (val, SCHARS (sequence));
@@ -131,19 +127,20 @@ To get the number of bytes, use `string-bytes'.  */)
     XSETFASTINT (val, ASIZE (sequence) & PSEUDOVECTOR_SIZE_MASK);
   else if (CONSP (sequence))
     {
-      i = 0;
-      while (CONSP (sequence))
+      EMACS_INT i = 0;
+
+      do
 	{
-	  sequence = XCDR (sequence);
 	  ++i;
-
-	  if (!CONSP (sequence))
-	    break;
-
+	  if ((i & (QUIT_COUNT_HEURISTIC - 1)) == 0)
+	    {
+	      if (MOST_POSITIVE_FIXNUM < i)
+		error ("List too long");
+	      QUIT;
+	    }
 	  sequence = XCDR (sequence);
-	  ++i;
-	  QUIT;
 	}
+      while (CONSP (sequence));
 
       CHECK_LIST_END (sequence, sequence);
 
@@ -166,22 +163,38 @@ it returns 0.  If LIST is circular, it returns a finite value
 which is at least the number of distinct elements.  */)
   (Lisp_Object list)
 {
-  Lisp_Object tail, halftail, length;
-  int len = 0;
+  Lisp_Object tail, halftail;
+  double hilen = 0;
+  uintmax_t lolen = 1;
+
+  if (! CONSP (list))
+    return 0;
 
   /* halftail is used to detect circular lists.  */
-  halftail = list;
-  for (tail = list; CONSP (tail); tail = XCDR (tail))
+  for (tail = halftail = list; ; )
     {
-      if (EQ (tail, halftail) && len != 0)
+      tail = XCDR (tail);
+      if (! CONSP (tail))
 	break;
-      len++;
-      if ((len & 1) == 0)
-	halftail = XCDR (halftail);
+      if (EQ (tail, halftail))
+	break;
+      lolen++;
+      if ((lolen & 1) == 0)
+	{
+	  halftail = XCDR (halftail);
+	  if ((lolen & (QUIT_COUNT_HEURISTIC - 1)) == 0)
+	    {
+	      QUIT;
+	      if (lolen == 0)
+		hilen += UINTMAX_MAX + 1.0;
+	    }
+	}
     }
 
-  XSETINT (length, len);
-  return length;
+  /* If the length does not fit into a fixnum, return a float.
+     On all known practical machines this returns an upper bound on
+     the true length.  */
+  return hilen ? make_float (hilen + lolen) : make_fixnum_or_float (lolen);
 }
 
 DEFUN ("string-bytes", Fstring_bytes, Sstring_bytes, 1, 1, 0,
@@ -351,7 +364,7 @@ Symbols are also allowed; their print names are used instead.  */)
   return i1 < SCHARS (s2) ? Qt : Qnil;
 }
 
-static Lisp_Object concat (int nargs, Lisp_Object *args,
+static Lisp_Object concat (ptrdiff_t nargs, Lisp_Object *args,
 			   enum Lisp_Type target_type, int last_special);
 
 /* ARGSUSED */
@@ -381,7 +394,7 @@ The result is a list whose elements are the elements of all the arguments.
 Each argument may be a list, vector or string.
 The last argument is not copied, just used as the tail of the new list.
 usage: (append &rest SEQUENCES)  */)
-  (int nargs, Lisp_Object *args)
+  (ptrdiff_t nargs, Lisp_Object *args)
 {
   return concat (nargs, args, Lisp_Cons, 1);
 }
@@ -391,7 +404,7 @@ DEFUN ("concat", Fconcat, Sconcat, 0, MANY, 0,
 The result is a string whose elements are the elements of all the arguments.
 Each argument may be a string or a list or vector of characters (integers).
 usage: (concat &rest SEQUENCES)  */)
-  (int nargs, Lisp_Object *args)
+  (ptrdiff_t nargs, Lisp_Object *args)
 {
   return concat (nargs, args, Lisp_String, 0);
 }
@@ -401,7 +414,7 @@ DEFUN ("vconcat", Fvconcat, Svconcat, 0, MANY, 0,
 The result is a vector whose elements are the elements of all the arguments.
 Each argument may be a list, vector or string.
 usage: (vconcat &rest SEQUENCES)   */)
-  (int nargs, Lisp_Object *args)
+  (ptrdiff_t nargs, Lisp_Object *args)
 {
   return concat (nargs, args, Lisp_Vectorlike, 0);
 }
@@ -423,7 +436,7 @@ with the original.  */)
   if (BOOL_VECTOR_P (arg))
     {
       Lisp_Object val;
-      int size_in_chars
+      ptrdiff_t size_in_chars
 	= ((XBOOL_VECTOR (arg)->size + BOOL_VECTOR_BITS_PER_CHAR - 1)
 	   / BOOL_VECTOR_BITS_PER_CHAR);
 
@@ -443,13 +456,14 @@ with the original.  */)
    a string and has text properties to be copied.  */
 struct textprop_rec
 {
-  int argnum;			/* refer to ARGS (arguments of `concat') */
+  ptrdiff_t argnum;		/* refer to ARGS (arguments of `concat') */
   EMACS_INT from;		/* refer to ARGS[argnum] (argument string) */
   EMACS_INT to;			/* refer to VAL (the target string) */
 };
 
 static Lisp_Object
-concat (int nargs, Lisp_Object *args, enum Lisp_Type target_type, int last_special)
+concat (ptrdiff_t nargs, Lisp_Object *args,
+	enum Lisp_Type target_type, int last_special)
 {
   Lisp_Object val;
   register Lisp_Object tail;
@@ -458,18 +472,18 @@ concat (int nargs, Lisp_Object *args, enum Lisp_Type target_type, int last_speci
   EMACS_INT toindex_byte = 0;
   register EMACS_INT result_len;
   register EMACS_INT result_len_byte;
-  register int argnum;
+  ptrdiff_t argnum;
   Lisp_Object last_tail;
   Lisp_Object prev;
   int some_multibyte;
   /* When we make a multibyte string, we can't copy text properties
-     while concatinating each string because the length of resulting
-     string can't be decided until we finish the whole concatination.
+     while concatenating each string because the length of resulting
+     string can't be decided until we finish the whole concatenation.
      So, we record strings that have text properties to be copied
-     here, and copy the text properties after the concatination.  */
+     here, and copy the text properties after the concatenation.  */
   struct textprop_rec  *textprops = NULL;
   /* Number of elements in textprops.  */
-  int num_textprops = 0;
+  ptrdiff_t num_textprops = 0;
   USE_SAFE_ALLOCA;
 
   tail = Qnil;
@@ -510,16 +524,18 @@ concat (int nargs, Lisp_Object *args, enum Lisp_Type target_type, int last_speci
 	     as well as the number of characters.  */
 	  EMACS_INT i;
 	  Lisp_Object ch;
+	  int c;
 	  EMACS_INT this_len_byte;
 
-	  if (VECTORP (this))
+	  if (VECTORP (this) || COMPILEDP (this))
 	    for (i = 0; i < len; i++)
 	      {
 		ch = AREF (this, i);
 		CHECK_CHARACTER (ch);
-		this_len_byte = CHAR_BYTES (XINT (ch));
+		c = XFASTINT (ch);
+		this_len_byte = CHAR_BYTES (c);
 		result_len_byte += this_len_byte;
-		if (! ASCII_CHAR_P (XINT (ch)) && ! CHAR_BYTE8_P (XINT (ch)))
+		if (! ASCII_CHAR_P (c) && ! CHAR_BYTE8_P (c))
 		  some_multibyte = 1;
 	      }
 	  else if (BOOL_VECTOR_P (this) && XBOOL_VECTOR (this)->size > 0)
@@ -529,9 +545,10 @@ concat (int nargs, Lisp_Object *args, enum Lisp_Type target_type, int last_speci
 	      {
 		ch = XCAR (this);
 		CHECK_CHARACTER (ch);
-		this_len_byte = CHAR_BYTES (XINT (ch));
+		c = XFASTINT (ch);
+		this_len_byte = CHAR_BYTES (c);
 		result_len_byte += this_len_byte;
-		if (! ASCII_CHAR_P (XINT (ch)) && ! CHAR_BYTE8_P (XINT (ch)))
+		if (! ASCII_CHAR_P (c) && ! CHAR_BYTE8_P (c))
 		  some_multibyte = 1;
 	      }
 	  else if (STRINGP (this))
@@ -637,23 +654,16 @@ concat (int nargs, Lisp_Object *args, enum Lisp_Type target_type, int last_speci
 	      {
 		int c;
 		if (STRING_MULTIBYTE (this))
-		  {
-		    FETCH_STRING_CHAR_ADVANCE_NO_CHECK (c, this,
-							thisindex,
-							thisindex_byte);
-		    XSETFASTINT (elt, c);
-		  }
+		  FETCH_STRING_CHAR_ADVANCE_NO_CHECK (c, this,
+						      thisindex,
+						      thisindex_byte);
 		else
 		  {
-		    XSETFASTINT (elt, SREF (this, thisindex)); thisindex++;
-		    if (some_multibyte
-			&& !ASCII_CHAR_P (XINT (elt))
-			&& XINT (elt) < 0400)
-		      {
-			c = BYTE8_TO_CHAR (XINT (elt));
-			XSETINT (elt, c);
-		      }
+		    c = SREF (this, thisindex); thisindex++;
+		    if (some_multibyte && !ASCII_CHAR_P (c))
+		      c = BYTE8_TO_CHAR (c);
 		  }
+		XSETFASTINT (elt, c);
 	      }
 	    else if (BOOL_VECTOR_P (this))
 	      {
@@ -685,12 +695,13 @@ concat (int nargs, Lisp_Object *args, enum Lisp_Type target_type, int last_speci
 	      }
 	    else
 	      {
-		CHECK_NUMBER (elt);
+		int c;
+		CHECK_CHARACTER (elt);
+		c = XFASTINT (elt);
 		if (some_multibyte)
-		  toindex_byte += CHAR_STRING (XINT (elt),
-					       SDATA (val) + toindex_byte);
+		  toindex_byte += CHAR_STRING (c, SDATA (val) + toindex_byte);
 		else
-		  SSET (val, toindex_byte++, XINT (elt));
+		  SSET (val, toindex_byte++, c);
 		toindex++;
 	      }
 	  }
@@ -710,7 +721,7 @@ concat (int nargs, Lisp_Object *args, enum Lisp_Type target_type, int last_speci
 				      make_number (0),
 				      make_number (SCHARS (this)),
 				      Qnil);
-	  /* If successive arguments have properites, be sure that the
+	  /* If successive arguments have properties, be sure that the
 	     value of `composition' property be the copy.  */
 	  if (last_to_end == textprops[argnum].to)
 	    make_composition_value_copy (props);
@@ -882,7 +893,7 @@ string_make_multibyte (Lisp_Object string)
   copy_text (SDATA (string), buf, SBYTES (string),
 	     0, 1);
 
-  ret = make_multibyte_string (buf, SCHARS (string), nbytes);
+  ret = make_multibyte_string ((char *) buf, SCHARS (string), nbytes);
   SAFE_FREE ();
 
   return ret;
@@ -904,7 +915,7 @@ string_to_multibyte (Lisp_Object string)
   if (STRING_MULTIBYTE (string))
     return string;
 
-  nbytes = parse_str_to_multibyte (SDATA (string), SBYTES (string));
+  nbytes = count_size_as_multibyte (SDATA (string), SBYTES (string));
   /* If all the chars are ASCII, they won't need any more bytes once
      converted.  */
   if (nbytes == SBYTES (string))
@@ -914,7 +925,7 @@ string_to_multibyte (Lisp_Object string)
   memcpy (buf, SDATA (string), SBYTES (string));
   str_to_multibyte (buf, nbytes, SBYTES (string));
 
-  ret = make_multibyte_string (buf, SCHARS (string), nbytes);
+  ret = make_multibyte_string ((char *) buf, SCHARS (string), nbytes);
   SAFE_FREE ();
 
   return ret;
@@ -940,7 +951,7 @@ string_make_unibyte (Lisp_Object string)
   copy_text (SDATA (string), buf, SBYTES (string),
 	     1, 0);
 
-  ret = make_unibyte_string (buf, nchars);
+  ret = make_unibyte_string ((char *) buf, nchars);
   SAFE_FREE ();
 
   return ret;
@@ -996,7 +1007,7 @@ If STRING is multibyte and contains a character of charset
 
       memcpy (str, SDATA (string), bytes);
       bytes = str_as_unibyte (str, bytes);
-      string = make_unibyte_string (str, bytes);
+      string = make_unibyte_string ((char *) str, bytes);
       xfree (str);
     }
   return string;
@@ -1078,8 +1089,8 @@ an error is signaled.  */)
       EMACS_INT converted = str_to_unibyte (SDATA (string), str, chars, 0);
 
       if (converted < chars)
-	error ("Can't convert the %dth character to unibyte", converted);
-      string = make_unibyte_string (str, chars);
+	error ("Can't convert the %"pI"dth character to unibyte", converted);
+      string = make_unibyte_string ((char *) str, chars);
       xfree (str);
     }
   return string;
@@ -1249,17 +1260,10 @@ substring_both (Lisp_Object string, EMACS_INT from, EMACS_INT from_byte,
 {
   Lisp_Object res;
   EMACS_INT size;
-  EMACS_INT size_byte;
 
   CHECK_VECTOR_OR_STRING (string);
 
-  if (STRINGP (string))
-    {
-      size = SCHARS (string);
-      size_byte = SBYTES (string);
-    }
-  else
-    size = ASIZE (string);
+  size = STRINGP (string) ? SCHARS (string) : ASIZE (string);
 
   if (!(0 <= from && from <= to && to <= size))
     args_out_of_range_3 (string, make_number (from), make_number (to));
@@ -1282,7 +1286,7 @@ DEFUN ("nthcdr", Fnthcdr, Snthcdr, 2, 2, 0,
        doc: /* Take cdr N times on LIST, return the result.  */)
   (Lisp_Object n, Lisp_Object list)
 {
-  register int i, num;
+  EMACS_INT i, num;
   CHECK_NUMBER (n);
   num = XINT (n);
   for (i = 0; i < num && !NILP (list); i++)
@@ -1747,7 +1751,7 @@ if the first element should sort before the second.  */)
   Lisp_Object front, back;
   register Lisp_Object len, tem;
   struct gcpro gcpro1, gcpro2;
-  register int length;
+  EMACS_INT length;
 
   front = list;
   len = Flength (list);
@@ -2076,14 +2080,12 @@ internal_equal (register Lisp_Object o1, register Lisp_Object o2, int depth, int
 	/* Boolvectors are compared much like strings.  */
 	if (BOOL_VECTOR_P (o1))
 	  {
-	    int size_in_chars
-	      = ((XBOOL_VECTOR (o1)->size + BOOL_VECTOR_BITS_PER_CHAR - 1)
-		 / BOOL_VECTOR_BITS_PER_CHAR);
-
 	    if (XBOOL_VECTOR (o1)->size != XBOOL_VECTOR (o2)->size)
 	      return 0;
 	    if (memcmp (XBOOL_VECTOR (o1)->data, XBOOL_VECTOR (o2)->data,
-			size_in_chars))
+			((XBOOL_VECTOR (o1)->size
+			  + BOOL_VECTOR_BITS_PER_CHAR - 1)
+			 / BOOL_VECTOR_BITS_PER_CHAR)))
 	      return 0;
 	    return 1;
 	  }
@@ -2091,7 +2093,7 @@ internal_equal (register Lisp_Object o1, register Lisp_Object o2, int depth, int
 	  return compare_window_configurations (o1, o2, 0);
 
 	/* Aside from them, only true vectors, char-tables, compiled
-	   functions, and fonts (font-spec, font-entity, font-ojbect)
+	   functions, and fonts (font-spec, font-entity, font-object)
 	   are sensible to compare, so eliminate the others now.  */
 	if (size & PSEUDOVECTOR_FLAG)
 	  {
@@ -2136,15 +2138,15 @@ DEFUN ("fillarray", Ffillarray, Sfillarray, 2, 2, 0,
 ARRAY is a vector, string, char-table, or bool-vector.  */)
   (Lisp_Object array, Lisp_Object item)
 {
-  register EMACS_INT size, index;
+  register EMACS_INT size, idx;
   int charval;
 
   if (VECTORP (array))
     {
       register Lisp_Object *p = XVECTOR (array)->contents;
       size = ASIZE (array);
-      for (index = 0; index < size; index++)
-	p[index] = item;
+      for (idx = 0; idx < size; idx++)
+	p[idx] = item;
     }
   else if (CHAR_TABLE_P (array))
     {
@@ -2180,8 +2182,8 @@ ARRAY is a vector, string, char-table, or bool-vector.  */)
 	    *p++ = str[i % len];
 	}
       else
-	for (index = 0; index < size; index++)
-	  p[index] = charval;
+	for (idx = 0; idx < size; idx++)
+	  p[idx] = charval;
     }
   else if (BOOL_VECTOR_P (array))
     {
@@ -2191,14 +2193,14 @@ ARRAY is a vector, string, char-table, or bool-vector.  */)
 	   / BOOL_VECTOR_BITS_PER_CHAR);
 
       charval = (! NILP (item) ? -1 : 0);
-      for (index = 0; index < size_in_chars - 1; index++)
-	p[index] = charval;
-      if (index < size_in_chars)
+      for (idx = 0; idx < size_in_chars - 1; idx++)
+	p[idx] = charval;
+      if (idx < size_in_chars)
 	{
 	  /* Mask out bits beyond the vector size.  */
 	  if (XBOOL_VECTOR (array)->size % BOOL_VECTOR_BITS_PER_CHAR)
 	    charval &= (1 << (XBOOL_VECTOR (array)->size % BOOL_VECTOR_BITS_PER_CHAR)) - 1;
-	  p[index] = charval;
+	  p[idx] = charval;
 	}
     }
   else
@@ -2235,9 +2237,9 @@ DEFUN ("nconc", Fnconc, Snconc, 0, MANY, 0,
        doc: /* Concatenate any number of lists by altering them.
 Only the last argument is not altered, and need not be a list.
 usage: (nconc &rest LISTS)  */)
-  (int nargs, Lisp_Object *args)
+  (ptrdiff_t nargs, Lisp_Object *args)
 {
-  register int argnum;
+  ptrdiff_t argnum;
   register Lisp_Object tail, tem, val;
 
   val = tail = Qnil;
@@ -2299,7 +2301,7 @@ mapcar1 (EMACS_INT leni, Lisp_Object *vals, Lisp_Object fn, Lisp_Object seq)
     1) lists are not relocated and 2) the list is marked via `seq' so will not
     be freed */
 
-  if (VECTORP (seq))
+  if (VECTORP (seq) || COMPILEDP (seq))
     {
       for (i = 0; i < leni; i++)
 	{
@@ -2360,9 +2362,8 @@ SEQUENCE may be a list, a vector, a bool-vector, or a string.  */)
 {
   Lisp_Object len;
   register EMACS_INT leni;
-  int nargs;
+  ptrdiff_t i, nargs;
   register Lisp_Object *args;
-  register EMACS_INT i;
   struct gcpro gcpro1;
   Lisp_Object ret;
   USE_SAFE_ALLOCA;
@@ -2541,8 +2542,8 @@ advisable.  */)
 
   while (loads-- > 0)
     {
-      Lisp_Object load = (NILP (use_floats) ?
-			  make_number ((int) (100.0 * load_ave[loads]))
+      Lisp_Object load = (NILP (use_floats)
+			  ? make_number (100.0 * load_ave[loads])
 			  : make_float (load_ave[loads]));
       ret = Fcons (load, ret);
     }
@@ -2550,7 +2551,7 @@ advisable.  */)
   return ret;
 }
 
-Lisp_Object Qsubfeatures;
+static Lisp_Object Qsubfeatures;
 
 DEFUN ("featurep", Ffeaturep, Sfeaturep, 1, 2, 0,
        doc: /* Return t if FEATURE is present in this Emacs.
@@ -2601,9 +2602,9 @@ particular subfeatures supported in this version of FEATURE.  */)
 
 /* List of features currently being require'd, innermost first.  */
 
-Lisp_Object require_nesting_list;
+static Lisp_Object require_nesting_list;
 
-Lisp_Object
+static Lisp_Object
 require_unwind (Lisp_Object old_value)
 {
   return require_nesting_list = old_value;
@@ -2766,7 +2767,7 @@ DEFUN ("widget-apply", Fwidget_apply, Swidget_apply, 2, MANY, 0,
        doc: /* Apply the value of WIDGET's PROPERTY to the widget itself.
 ARGS are passed as extra arguments to the function.
 usage: (widget-apply WIDGET PROPERTY &rest ARGS)  */)
-  (int nargs, Lisp_Object *args)
+  (ptrdiff_t nargs, Lisp_Object *args)
 {
   /* This function can GC. */
   Lisp_Object newargs[3];
@@ -2797,7 +2798,7 @@ ITEM should be one of the following:
 `months', returning a 12-element vector of month names (locale items MON_n);
 
 `paper', returning a list (WIDTH HEIGHT) for the default paper size,
-  both measured in milimeters (locale items PAPER_WIDTH, PAPER_HEIGHT).
+  both measured in millimeters (locale items PAPER_WIDTH, PAPER_HEIGHT).
 
 If the system can't provide such information through a call to
 `nl_langinfo', or if ITEM isn't from the list above, return nil.
@@ -2982,9 +2983,9 @@ into shorter lines.  */)
   allength += allength / MIME_LINE_LENGTH + 1 + 6;
 
   SAFE_ALLOCA (encoded, char *, allength);
-  encoded_length = base64_encode_1 (BYTE_POS_ADDR (ibeg), encoded, length,
-				    NILP (no_line_break),
-				    !NILP (current_buffer->enable_multibyte_characters));
+  encoded_length = base64_encode_1 ((char *) BYTE_POS_ADDR (ibeg),
+				    encoded, length, NILP (no_line_break),
+				    !NILP (BVAR (current_buffer, enable_multibyte_characters)));
   if (encoded_length > allength)
     abort ();
 
@@ -3072,7 +3073,7 @@ base64_encode_1 (const char *from, char *to, EMACS_INT length,
     {
       if (multibyte)
 	{
-	  c = STRING_CHAR_AND_LENGTH (from + i, bytes);
+	  c = STRING_CHAR_AND_LENGTH ((unsigned char *) from + i, bytes);
 	  if (CHAR_BYTE8_P (c))
 	    c = CHAR_TO_BYTE8 (c);
 	  else if (c >= 256)
@@ -3112,7 +3113,7 @@ base64_encode_1 (const char *from, char *to, EMACS_INT length,
 
       if (multibyte)
 	{
-	  c = STRING_CHAR_AND_LENGTH (from + i, bytes);
+	  c = STRING_CHAR_AND_LENGTH ((unsigned char *) from + i, bytes);
 	  if (CHAR_BYTE8_P (c))
 	    c = CHAR_TO_BYTE8 (c);
 	  else if (c >= 256)
@@ -3136,7 +3137,7 @@ base64_encode_1 (const char *from, char *to, EMACS_INT length,
 
       if (multibyte)
 	{
-	  c = STRING_CHAR_AND_LENGTH (from + i, bytes);
+	  c = STRING_CHAR_AND_LENGTH ((unsigned char *) from + i, bytes);
 	  if (CHAR_BYTE8_P (c))
 	    c = CHAR_TO_BYTE8 (c);
 	  else if (c >= 256)
@@ -3166,7 +3167,7 @@ If the region can't be decoded, signal an error and don't modify the buffer.  */
   EMACS_INT old_pos = PT;
   EMACS_INT decoded_length;
   EMACS_INT inserted_chars;
-  int multibyte = !NILP (current_buffer->enable_multibyte_characters);
+  int multibyte = !NILP (BVAR (current_buffer, enable_multibyte_characters));
   USE_SAFE_ALLOCA;
 
   validate_region (&beg, &end);
@@ -3183,7 +3184,8 @@ If the region can't be decoded, signal an error and don't modify the buffer.  */
   SAFE_ALLOCA (decoded, char *, allength);
 
   move_gap_both (XFASTINT (beg), ibeg);
-  decoded_length = base64_decode_1 (BYTE_POS_ADDR (ibeg), decoded, length,
+  decoded_length = base64_decode_1 ((char *) BYTE_POS_ADDR (ibeg),
+				    decoded, length,
 				    multibyte, &inserted_chars);
   if (decoded_length > allength)
     abort ();
@@ -3358,34 +3360,20 @@ base64_decode_1 (const char *from, char *to, EMACS_INT length,
 
 /* The list of all weak hash tables.  Don't staticpro this one.  */
 
-struct Lisp_Hash_Table *weak_hash_tables;
+static struct Lisp_Hash_Table *weak_hash_tables;
 
 /* Various symbols.  */
 
-Lisp_Object Qhash_table_p, Qeq, Qeql, Qequal, Qkey, Qvalue;
+static Lisp_Object Qhash_table_p, Qkey, Qvalue;
+Lisp_Object Qeq, Qeql, Qequal;
 Lisp_Object QCtest, QCsize, QCrehash_size, QCrehash_threshold, QCweakness;
-Lisp_Object Qhash_table_test, Qkey_or_value, Qkey_and_value;
+static Lisp_Object Qhash_table_test, Qkey_or_value, Qkey_and_value;
 
 /* Function prototypes.  */
 
 static struct Lisp_Hash_Table *check_hash_table (Lisp_Object);
-static int get_key_arg (Lisp_Object, int, Lisp_Object *, char *);
+static ptrdiff_t get_key_arg (Lisp_Object, ptrdiff_t, Lisp_Object *, char *);
 static void maybe_resize_hash_table (struct Lisp_Hash_Table *);
-static int cmpfn_eql (struct Lisp_Hash_Table *, Lisp_Object, unsigned,
-                      Lisp_Object, unsigned);
-static int cmpfn_equal (struct Lisp_Hash_Table *, Lisp_Object, unsigned,
-                        Lisp_Object, unsigned);
-static int cmpfn_user_defined (struct Lisp_Hash_Table *, Lisp_Object,
-                               unsigned, Lisp_Object, unsigned);
-static unsigned hashfn_eq (struct Lisp_Hash_Table *, Lisp_Object);
-static unsigned hashfn_eql (struct Lisp_Hash_Table *, Lisp_Object);
-static unsigned hashfn_equal (struct Lisp_Hash_Table *, Lisp_Object);
-static unsigned hashfn_user_defined (struct Lisp_Hash_Table *,
-                                     Lisp_Object);
-static unsigned sxhash_string (unsigned char *, int);
-static unsigned sxhash_list (Lisp_Object, int);
-static unsigned sxhash_vector (Lisp_Object, int);
-static unsigned sxhash_bool_vector (Lisp_Object);
 static int sweep_weak_table (struct Lisp_Hash_Table *, int);
 
 
@@ -3408,43 +3396,35 @@ check_hash_table (Lisp_Object obj)
 /* Value is the next integer I >= N, N >= 0 which is "almost" a prime
    number.  */
 
-int
-next_almost_prime (int n)
+EMACS_INT
+next_almost_prime (EMACS_INT n)
 {
-  if (n % 2 == 0)
-    n += 1;
-  if (n % 3 == 0)
-    n += 2;
-  if (n % 7 == 0)
-    n += 4;
-  return n;
+  for (n |= 1; ; n += 2)
+    if (n % 3 != 0 && n % 5 != 0 && n % 7 != 0)
+      return n;
 }
 
 
 /* Find KEY in ARGS which has size NARGS.  Don't consider indices for
    which USED[I] is non-zero.  If found at index I in ARGS, set
    USED[I] and USED[I + 1] to 1, and return I + 1.  Otherwise return
-   -1.  This function is used to extract a keyword/argument pair from
+   0.  This function is used to extract a keyword/argument pair from
    a DEFUN parameter list.  */
 
-static int
-get_key_arg (Lisp_Object key, int nargs, Lisp_Object *args, char *used)
+static ptrdiff_t
+get_key_arg (Lisp_Object key, ptrdiff_t nargs, Lisp_Object *args, char *used)
 {
-  int i;
+  ptrdiff_t i;
 
-  for (i = 0; i < nargs - 1; ++i)
-    if (!used[i] && EQ (args[i], key))
-      break;
+  for (i = 1; i < nargs; i++)
+    if (!used[i - 1] && EQ (args[i - 1], key))
+      {
+	used[i - 1] = 1;
+	used[i] = 1;
+	return i;
+      }
 
-  if (i >= nargs - 1)
-    i = -1;
-  else
-    {
-      used[i++] = 1;
-      used[i] = 1;
-    }
-
-  return i;
+  return 0;
 }
 
 
@@ -3453,10 +3433,10 @@ get_key_arg (Lisp_Object key, int nargs, Lisp_Object *args, char *used)
    vector that are not copied from VEC are set to INIT.  */
 
 Lisp_Object
-larger_vector (Lisp_Object vec, int new_size, Lisp_Object init)
+larger_vector (Lisp_Object vec, EMACS_INT new_size, Lisp_Object init)
 {
   struct Lisp_Vector *v;
-  int i, old_size;
+  EMACS_INT i, old_size;
 
   xassert (VECTORP (vec));
   old_size = ASIZE (vec);
@@ -3480,7 +3460,9 @@ larger_vector (Lisp_Object vec, int new_size, Lisp_Object init)
    KEY2 are the same.  */
 
 static int
-cmpfn_eql (struct Lisp_Hash_Table *h, Lisp_Object key1, unsigned int hash1, Lisp_Object key2, unsigned int hash2)
+cmpfn_eql (struct Lisp_Hash_Table *h,
+	   Lisp_Object key1, EMACS_UINT hash1,
+	   Lisp_Object key2, EMACS_UINT hash2)
 {
   return (FLOATP (key1)
 	  && FLOATP (key2)
@@ -3493,7 +3475,9 @@ cmpfn_eql (struct Lisp_Hash_Table *h, Lisp_Object key1, unsigned int hash1, Lisp
    KEY2 are the same.  */
 
 static int
-cmpfn_equal (struct Lisp_Hash_Table *h, Lisp_Object key1, unsigned int hash1, Lisp_Object key2, unsigned int hash2)
+cmpfn_equal (struct Lisp_Hash_Table *h,
+	     Lisp_Object key1, EMACS_UINT hash1,
+	     Lisp_Object key2, EMACS_UINT hash2)
 {
   return hash1 == hash2 && !NILP (Fequal (key1, key2));
 }
@@ -3504,7 +3488,9 @@ cmpfn_equal (struct Lisp_Hash_Table *h, Lisp_Object key1, unsigned int hash1, Li
    if KEY1 and KEY2 are the same.  */
 
 static int
-cmpfn_user_defined (struct Lisp_Hash_Table *h, Lisp_Object key1, unsigned int hash1, Lisp_Object key2, unsigned int hash2)
+cmpfn_user_defined (struct Lisp_Hash_Table *h,
+		    Lisp_Object key1, EMACS_UINT hash1,
+		    Lisp_Object key2, EMACS_UINT hash2)
 {
   if (hash1 == hash2)
     {
@@ -3524,10 +3510,10 @@ cmpfn_user_defined (struct Lisp_Hash_Table *h, Lisp_Object key1, unsigned int ha
    `eq' to compare keys.  The hash code returned is guaranteed to fit
    in a Lisp integer.  */
 
-static unsigned
+static EMACS_UINT
 hashfn_eq (struct Lisp_Hash_Table *h, Lisp_Object key)
 {
-  unsigned hash = XUINT (key) ^ XTYPE (key);
+  EMACS_UINT hash = XUINT (key) ^ XTYPE (key);
   xassert ((hash & ~INTMASK) == 0);
   return hash;
 }
@@ -3537,10 +3523,10 @@ hashfn_eq (struct Lisp_Hash_Table *h, Lisp_Object key)
    `eql' to compare keys.  The hash code returned is guaranteed to fit
    in a Lisp integer.  */
 
-static unsigned
+static EMACS_UINT
 hashfn_eql (struct Lisp_Hash_Table *h, Lisp_Object key)
 {
-  unsigned hash;
+  EMACS_UINT hash;
   if (FLOATP (key))
     hash = sxhash (key, 0);
   else
@@ -3554,10 +3540,10 @@ hashfn_eql (struct Lisp_Hash_Table *h, Lisp_Object key)
    `equal' to compare keys.  The hash code returned is guaranteed to fit
    in a Lisp integer.  */
 
-static unsigned
+static EMACS_UINT
 hashfn_equal (struct Lisp_Hash_Table *h, Lisp_Object key)
 {
-  unsigned hash = sxhash (key, 0);
+  EMACS_UINT hash = sxhash (key, 0);
   xassert ((hash & ~INTMASK) == 0);
   return hash;
 }
@@ -3567,7 +3553,7 @@ hashfn_equal (struct Lisp_Hash_Table *h, Lisp_Object key)
    user-defined function to compare keys.  The hash code returned is
    guaranteed to fit in a Lisp integer.  */
 
-static unsigned
+static EMACS_UINT
 hashfn_user_defined (struct Lisp_Hash_Table *h, Lisp_Object key)
 {
   Lisp_Object args[2], hash;
@@ -3610,26 +3596,33 @@ make_hash_table (Lisp_Object test, Lisp_Object size, Lisp_Object rehash_size,
 {
   struct Lisp_Hash_Table *h;
   Lisp_Object table;
-  int index_size, i, sz;
+  EMACS_INT index_size, i, sz;
+  double index_float;
 
   /* Preconditions.  */
   xassert (SYMBOLP (test));
   xassert (INTEGERP (size) && XINT (size) >= 0);
   xassert ((INTEGERP (rehash_size) && XINT (rehash_size) > 0)
-	   || (FLOATP (rehash_size) && XFLOATINT (rehash_size) > 1.0));
+	   || (FLOATP (rehash_size) && 1 < XFLOAT_DATA (rehash_size)));
   xassert (FLOATP (rehash_threshold)
-	   && XFLOATINT (rehash_threshold) > 0
-	   && XFLOATINT (rehash_threshold) <= 1.0);
+	   && 0 < XFLOAT_DATA (rehash_threshold)
+	   && XFLOAT_DATA (rehash_threshold) <= 1.0);
 
   if (XFASTINT (size) == 0)
     size = make_number (1);
+
+  sz = XFASTINT (size);
+  index_float = sz / XFLOAT_DATA (rehash_threshold);
+  index_size = (index_float < MOST_POSITIVE_FIXNUM + 1
+		? next_almost_prime (index_float)
+		: MOST_POSITIVE_FIXNUM + 1);
+  if (MOST_POSITIVE_FIXNUM < max (index_size, 2 * sz))
+    error ("Hash table too large");
 
   /* Allocate a table and initialize it.  */
   h = allocate_hash_table ();
 
   /* Initialize hash table slots.  */
-  sz = XFASTINT (size);
-
   h->test = test;
   if (EQ (test, Qeql))
     {
@@ -3661,8 +3654,6 @@ make_hash_table (Lisp_Object test, Lisp_Object size, Lisp_Object rehash_size,
   h->key_and_value = Fmake_vector (make_number (2 * sz), Qnil);
   h->hash = Fmake_vector (size, Qnil);
   h->next = Fmake_vector (size, Qnil);
-  /* Cast to int here avoids losing with gcc 2.95 on Tru64/Alpha...  */
-  index_size = next_almost_prime ((int) (sz / XFLOATINT (rehash_threshold)));
   h->index = Fmake_vector (make_number (index_size), Qnil);
 
   /* Set up the free list.  */
@@ -3698,9 +3689,9 @@ copy_hash_table (struct Lisp_Hash_Table *h1)
   struct Lisp_Vector *next;
 
   h2 = allocate_hash_table ();
-  next = h2->vec_next;
+  next = h2->header.next.vector;
   memcpy (h2, h1, sizeof *h2);
-  h2->vec_next = next;
+  h2->header.next.vector = next;
   h2->key_and_value = Fcopy_sequence (h1->key_and_value);
   h2->hash = Fcopy_sequence (h1->hash);
   h2->next = Fcopy_sequence (h1->next);
@@ -3721,25 +3712,34 @@ copy_hash_table (struct Lisp_Hash_Table *h1)
 /* Resize hash table H if it's too full.  If H cannot be resized
    because it's already too large, throw an error.  */
 
-static INLINE void
+static inline void
 maybe_resize_hash_table (struct Lisp_Hash_Table *h)
 {
   if (NILP (h->next_free))
     {
-      int old_size = HASH_TABLE_SIZE (h);
-      int i, new_size, index_size;
+      EMACS_INT old_size = HASH_TABLE_SIZE (h);
+      EMACS_INT i, new_size, index_size;
       EMACS_INT nsize;
+      double index_float;
 
       if (INTEGERP (h->rehash_size))
 	new_size = old_size + XFASTINT (h->rehash_size);
       else
-	new_size = old_size * XFLOATINT (h->rehash_size);
-      new_size = max (old_size + 1, new_size);
-      index_size = next_almost_prime ((int)
-				      (new_size
-				       / XFLOATINT (h->rehash_threshold)));
-      /* Assignment to EMACS_INT stops GCC whining about limited range
-	 of data type.  */
+	{
+	  double float_new_size = old_size * XFLOAT_DATA (h->rehash_size);
+	  if (float_new_size < MOST_POSITIVE_FIXNUM + 1)
+	    {
+	      new_size = float_new_size;
+	      if (new_size <= old_size)
+		new_size = old_size + 1;
+	    }
+	  else
+	    new_size = MOST_POSITIVE_FIXNUM + 1;
+	}
+      index_float = new_size / XFLOAT_DATA (h->rehash_threshold);
+      index_size = (index_float < MOST_POSITIVE_FIXNUM + 1
+		    ? next_almost_prime (index_float)
+		    : MOST_POSITIVE_FIXNUM + 1);
       nsize = max (index_size, 2 * new_size);
       if (nsize > MOST_POSITIVE_FIXNUM)
 	error ("Hash table too large to resize");
@@ -3773,8 +3773,8 @@ maybe_resize_hash_table (struct Lisp_Hash_Table *h)
       for (i = 0; i < old_size; ++i)
 	if (!NILP (HASH_HASH (h, i)))
 	  {
-	    unsigned hash_code = XUINT (HASH_HASH (h, i));
-	    int start_of_bucket = hash_code % ASIZE (h->index);
+	    EMACS_UINT hash_code = XUINT (HASH_HASH (h, i));
+	    EMACS_INT start_of_bucket = hash_code % ASIZE (h->index);
 	    HASH_NEXT (h, i) = HASH_INDEX (h, start_of_bucket);
 	    HASH_INDEX (h, start_of_bucket) = make_number (i);
 	  }
@@ -3786,11 +3786,11 @@ maybe_resize_hash_table (struct Lisp_Hash_Table *h)
    the hash code of KEY.  Value is the index of the entry in H
    matching KEY, or -1 if not found.  */
 
-int
-hash_lookup (struct Lisp_Hash_Table *h, Lisp_Object key, unsigned int *hash)
+EMACS_INT
+hash_lookup (struct Lisp_Hash_Table *h, Lisp_Object key, EMACS_UINT *hash)
 {
-  unsigned hash_code;
-  int start_of_bucket;
+  EMACS_UINT hash_code;
+  EMACS_INT start_of_bucket;
   Lisp_Object idx;
 
   hash_code = h->hashfn (h, key);
@@ -3803,7 +3803,7 @@ hash_lookup (struct Lisp_Hash_Table *h, Lisp_Object key, unsigned int *hash)
   /* We need not gcpro idx since it's either an integer or nil.  */
   while (!NILP (idx))
     {
-      int i = XFASTINT (idx);
+      EMACS_INT i = XFASTINT (idx);
       if (EQ (key, HASH_KEY (h, i))
 	  || (h->cmpfn
 	      && h->cmpfn (h, key, hash_code,
@@ -3820,10 +3820,11 @@ hash_lookup (struct Lisp_Hash_Table *h, Lisp_Object key, unsigned int *hash)
    HASH is a previously computed hash code of KEY.
    Value is the index of the entry in H matching KEY.  */
 
-int
-hash_put (struct Lisp_Hash_Table *h, Lisp_Object key, Lisp_Object value, unsigned int hash)
+EMACS_INT
+hash_put (struct Lisp_Hash_Table *h, Lisp_Object key, Lisp_Object value,
+	  EMACS_UINT hash)
 {
-  int start_of_bucket, i;
+  EMACS_INT start_of_bucket, i;
 
   xassert ((hash & ~INTMASK) == 0);
 
@@ -3853,8 +3854,8 @@ hash_put (struct Lisp_Hash_Table *h, Lisp_Object key, Lisp_Object value, unsigne
 static void
 hash_remove_from_table (struct Lisp_Hash_Table *h, Lisp_Object key)
 {
-  unsigned hash_code;
-  int start_of_bucket;
+  EMACS_UINT hash_code;
+  EMACS_INT start_of_bucket;
   Lisp_Object idx, prev;
 
   hash_code = h->hashfn (h, key);
@@ -3865,7 +3866,7 @@ hash_remove_from_table (struct Lisp_Hash_Table *h, Lisp_Object key)
   /* We need not gcpro idx, prev since they're either integers or nil.  */
   while (!NILP (idx))
     {
-      int i = XFASTINT (idx);
+      EMACS_INT i = XFASTINT (idx);
 
       if (EQ (key, HASH_KEY (h, i))
 	  || (h->cmpfn
@@ -3903,7 +3904,7 @@ hash_clear (struct Lisp_Hash_Table *h)
 {
   if (h->count > 0)
     {
-      int i, size = HASH_TABLE_SIZE (h);
+      EMACS_INT i, size = HASH_TABLE_SIZE (h);
 
       for (i = 0; i < size; ++i)
 	{
@@ -3941,7 +3942,8 @@ init_weak_hash_tables (void)
 static int
 sweep_weak_table (struct Lisp_Hash_Table *h, int remove_entries_p)
 {
-  int bucket, n, marked;
+  EMACS_INT bucket, n;
+  int marked;
 
   n = ASIZE (h->index) & ~ARRAY_MARK_FLAG;
   marked = 0;
@@ -3955,7 +3957,7 @@ sweep_weak_table (struct Lisp_Hash_Table *h, int remove_entries_p)
       prev = Qnil;
       for (idx = HASH_INDEX (h, bucket); !NILP (idx); idx = next)
 	{
-	  int i = XFASTINT (idx);
+	  EMACS_INT i = XFASTINT (idx);
 	  int key_known_to_survive_p = survives_gc_p (HASH_KEY (h, i));
 	  int value_known_to_survive_p = survives_gc_p (HASH_VALUE (h, i));
 	  int remove_p;
@@ -4043,7 +4045,7 @@ sweep_weak_hash_tables (void)
       marked = 0;
       for (h = weak_hash_tables; h; h = h->next_weak)
 	{
-	  if (h->size & ARRAY_MARK_FLAG)
+	  if (h->header.size & ARRAY_MARK_FLAG)
 	    marked |= sweep_weak_table (h, 0);
 	}
     }
@@ -4054,7 +4056,7 @@ sweep_weak_hash_tables (void)
     {
       next = h->next_weak;
 
-      if (h->size & ARRAY_MARK_FLAG)
+      if (h->header.size & ARRAY_MARK_FLAG)
 	{
 	  /* TABLE is marked as used.  Sweep its contents.  */
 	  if (h->count > 0)
@@ -4084,43 +4086,68 @@ sweep_weak_hash_tables (void)
 
 #define SXHASH_MAX_LEN   7
 
-/* Combine two integers X and Y for hashing.  */
+/* Combine two integers X and Y for hashing.  The result might not fit
+   into a Lisp integer.  */
 
 #define SXHASH_COMBINE(X, Y)						\
-     ((((unsigned)(X) << 4) + (((unsigned)(X) >> 24) & 0x0fffffff))	\
-      + (unsigned)(Y))
+  ((((EMACS_UINT) (X) << 4) + ((EMACS_UINT) (X) >> (BITS_PER_EMACS_INT - 4))) \
+   + (EMACS_UINT) (Y))
 
+/* Hash X, returning a value that fits into a Lisp integer.  */
+#define SXHASH_REDUCE(X) \
+  ((((X) ^ (X) >> (BITS_PER_EMACS_INT - FIXNUM_BITS))) & INTMASK)
 
 /* Return a hash for string PTR which has length LEN.  The hash
    code returned is guaranteed to fit in a Lisp integer.  */
 
-static unsigned
-sxhash_string (unsigned char *ptr, int len)
+static EMACS_UINT
+sxhash_string (unsigned char *ptr, EMACS_INT len)
 {
   unsigned char *p = ptr;
   unsigned char *end = p + len;
   unsigned char c;
-  unsigned hash = 0;
+  EMACS_UINT hash = 0;
 
   while (p != end)
     {
       c = *p++;
       if (c >= 0140)
 	c -= 40;
-      hash = ((hash << 4) + (hash >> 28) + c);
+      hash = SXHASH_COMBINE (hash, c);
     }
 
-  return hash & INTMASK;
+  return SXHASH_REDUCE (hash);
 }
 
+/* Return a hash for the floating point value VAL.  */
+
+static EMACS_INT
+sxhash_float (double val)
+{
+  EMACS_UINT hash = 0;
+  enum {
+    WORDS_PER_DOUBLE = (sizeof val / sizeof hash
+			+ (sizeof val % sizeof hash != 0))
+  };
+  union {
+    double val;
+    EMACS_UINT word[WORDS_PER_DOUBLE];
+  } u;
+  int i;
+  u.val = val;
+  memset (&u.val + 1, 0, sizeof u - sizeof u.val);
+  for (i = 0; i < WORDS_PER_DOUBLE; i++)
+    hash = SXHASH_COMBINE (hash, u.word[i]);
+  return SXHASH_REDUCE (hash);
+}
 
 /* Return a hash for list LIST.  DEPTH is the current depth in the
    list.  We don't recurse deeper than SXHASH_MAX_DEPTH in it.  */
 
-static unsigned
+static EMACS_UINT
 sxhash_list (Lisp_Object list, int depth)
 {
-  unsigned hash = 0;
+  EMACS_UINT hash = 0;
   int i;
 
   if (depth < SXHASH_MAX_DEPTH)
@@ -4128,63 +4155,62 @@ sxhash_list (Lisp_Object list, int depth)
 	 CONSP (list) && i < SXHASH_MAX_LEN;
 	 list = XCDR (list), ++i)
       {
-	unsigned hash2 = sxhash (XCAR (list), depth + 1);
+	EMACS_UINT hash2 = sxhash (XCAR (list), depth + 1);
 	hash = SXHASH_COMBINE (hash, hash2);
       }
 
   if (!NILP (list))
     {
-      unsigned hash2 = sxhash (list, depth + 1);
+      EMACS_UINT hash2 = sxhash (list, depth + 1);
       hash = SXHASH_COMBINE (hash, hash2);
     }
 
-  return hash;
+  return SXHASH_REDUCE (hash);
 }
 
 
 /* Return a hash for vector VECTOR.  DEPTH is the current depth in
    the Lisp structure.  */
 
-static unsigned
+static EMACS_UINT
 sxhash_vector (Lisp_Object vec, int depth)
 {
-  unsigned hash = ASIZE (vec);
+  EMACS_UINT hash = ASIZE (vec);
   int i, n;
 
   n = min (SXHASH_MAX_LEN, ASIZE (vec));
   for (i = 0; i < n; ++i)
     {
-      unsigned hash2 = sxhash (AREF (vec, i), depth + 1);
+      EMACS_UINT hash2 = sxhash (AREF (vec, i), depth + 1);
       hash = SXHASH_COMBINE (hash, hash2);
     }
 
-  return hash;
+  return SXHASH_REDUCE (hash);
 }
-
 
 /* Return a hash for bool-vector VECTOR.  */
 
-static unsigned
+static EMACS_UINT
 sxhash_bool_vector (Lisp_Object vec)
 {
-  unsigned hash = XBOOL_VECTOR (vec)->size;
+  EMACS_UINT hash = XBOOL_VECTOR (vec)->size;
   int i, n;
 
-  n = min (SXHASH_MAX_LEN, XBOOL_VECTOR (vec)->vector_size);
+  n = min (SXHASH_MAX_LEN, XBOOL_VECTOR (vec)->header.size);
   for (i = 0; i < n; ++i)
     hash = SXHASH_COMBINE (hash, XBOOL_VECTOR (vec)->data[i]);
 
-  return hash;
+  return SXHASH_REDUCE (hash);
 }
 
 
 /* Return a hash code for OBJ.  DEPTH is the current depth in the Lisp
    structure.  Value is an unsigned integer clipped to INTMASK.  */
 
-unsigned
+EMACS_UINT
 sxhash (Lisp_Object obj, int depth)
 {
-  unsigned hash;
+  EMACS_UINT hash;
 
   if (depth > SXHASH_MAX_DEPTH)
     return 0;
@@ -4228,20 +4254,14 @@ sxhash (Lisp_Object obj, int depth)
       break;
 
     case Lisp_Float:
-      {
-	double val = XFLOAT_DATA (obj);
-	unsigned char *p = (unsigned char *) &val;
-	unsigned char *e = p + sizeof val;
-	for (hash = 0; p < e; ++p)
-	  hash = SXHASH_COMBINE (hash, *p);
-	break;
-      }
+      hash = sxhash_float (XFLOAT_DATA (obj));
+      break;
 
     default:
       abort ();
     }
 
-  return hash & INTMASK;
+  return hash;
 }
 
 
@@ -4255,7 +4275,7 @@ DEFUN ("sxhash", Fsxhash, Ssxhash, 1, 1, 0,
        doc: /* Compute a hash code for OBJ and return it as integer.  */)
   (Lisp_Object obj)
 {
-  unsigned hash = sxhash (obj, 0);
+  EMACS_UINT hash = sxhash (obj, 0);
   return make_number (hash);
 }
 
@@ -4292,12 +4312,12 @@ WEAK.  WEAK t is equivalent to `key-and-value'.  Default value of WEAK
 is nil.
 
 usage: (make-hash-table &rest KEYWORD-ARGS)  */)
-  (int nargs, Lisp_Object *args)
+  (ptrdiff_t nargs, Lisp_Object *args)
 {
   Lisp_Object test, size, rehash_size, rehash_threshold, weak;
   Lisp_Object user_test, user_hash;
   char *used;
-  int i;
+  ptrdiff_t i;
 
   /* The vector `used' is used to keep track of arguments that
      have been consumed.  */
@@ -4306,7 +4326,7 @@ usage: (make-hash-table &rest KEYWORD-ARGS)  */)
 
   /* See if there's a `:test TEST' among the arguments.  */
   i = get_key_arg (QCtest, nargs, args, used);
-  test = i < 0 ? Qeql : args[i];
+  test = i ? args[i] : Qeql;
   if (!EQ (test, Qeq) && !EQ (test, Qeql) && !EQ (test, Qequal))
     {
       /* See if it is a user-defined test.  */
@@ -4323,7 +4343,7 @@ usage: (make-hash-table &rest KEYWORD-ARGS)  */)
 
   /* See if there's a `:size SIZE' argument.  */
   i = get_key_arg (QCsize, nargs, args, used);
-  size = i < 0 ? Qnil : args[i];
+  size = i ? args[i] : Qnil;
   if (NILP (size))
     size = make_number (DEFAULT_HASH_SIZE);
   else if (!INTEGERP (size) || XINT (size) < 0)
@@ -4331,23 +4351,22 @@ usage: (make-hash-table &rest KEYWORD-ARGS)  */)
 
   /* Look for `:rehash-size SIZE'.  */
   i = get_key_arg (QCrehash_size, nargs, args, used);
-  rehash_size = i < 0 ? make_float (DEFAULT_REHASH_SIZE) : args[i];
-  if (!NUMBERP (rehash_size)
-      || (INTEGERP (rehash_size) && XINT (rehash_size) <= 0)
-      || XFLOATINT (rehash_size) <= 1.0)
+  rehash_size = i ? args[i] : make_float (DEFAULT_REHASH_SIZE);
+  if (! ((INTEGERP (rehash_size) && 0 < XINT (rehash_size))
+	 || (FLOATP (rehash_size) && 1 < XFLOAT_DATA (rehash_size))))
     signal_error ("Invalid hash table rehash size", rehash_size);
 
   /* Look for `:rehash-threshold THRESHOLD'.  */
   i = get_key_arg (QCrehash_threshold, nargs, args, used);
-  rehash_threshold = i < 0 ? make_float (DEFAULT_REHASH_THRESHOLD) : args[i];
-  if (!FLOATP (rehash_threshold)
-      || XFLOATINT (rehash_threshold) <= 0.0
-      || XFLOATINT (rehash_threshold) > 1.0)
+  rehash_threshold = i ? args[i] : make_float (DEFAULT_REHASH_THRESHOLD);
+  if (! (FLOATP (rehash_threshold)
+	 && 0 < XFLOAT_DATA (rehash_threshold)
+	 && XFLOAT_DATA (rehash_threshold) <= 1))
     signal_error ("Invalid hash table rehash threshold", rehash_threshold);
 
   /* Look for `:weakness WEAK'.  */
   i = get_key_arg (QCweakness, nargs, args, used);
-  weak = i < 0 ? Qnil : args[i];
+  weak = i ? args[i] : Qnil;
   if (EQ (weak, Qt))
     weak = Qkey_and_value;
   if (!NILP (weak)
@@ -4454,7 +4473,7 @@ If KEY is not found, return DFLT which defaults to nil.  */)
   (Lisp_Object key, Lisp_Object table, Lisp_Object dflt)
 {
   struct Lisp_Hash_Table *h = check_hash_table (table);
-  int i = hash_lookup (h, key, NULL);
+  EMACS_INT i = hash_lookup (h, key, NULL);
   return i >= 0 ? HASH_VALUE (h, i) : dflt;
 }
 
@@ -4462,12 +4481,12 @@ If KEY is not found, return DFLT which defaults to nil.  */)
 DEFUN ("puthash", Fputhash, Sputhash, 3, 3, 0,
        doc: /* Associate KEY with VALUE in hash table TABLE.
 If KEY is already present in table, replace its current value with
-VALUE.  */)
+VALUE.  In any case, return VALUE.  */)
   (Lisp_Object key, Lisp_Object value, Lisp_Object table)
 {
   struct Lisp_Hash_Table *h = check_hash_table (table);
-  int i;
-  unsigned hash;
+  EMACS_INT i;
+  EMACS_UINT hash;
 
   i = hash_lookup (h, key, &hash);
   if (i >= 0)
@@ -4496,7 +4515,7 @@ FUNCTION is called with two arguments, KEY and VALUE.  */)
 {
   struct Lisp_Hash_Table *h = check_hash_table (table);
   Lisp_Object args[3];
-  int i;
+  EMACS_INT i;
 
   for (i = 0; i < HASH_TABLE_SIZE (h); ++i)
     if (!NILP (HASH_HASH (h, i)))
@@ -4531,42 +4550,22 @@ including negative integers.  */)
 
 
 /************************************************************************
-				 MD5
+			     MD5 and SHA1
  ************************************************************************/
 
 #include "md5.h"
+#include "sha1.h"
 
-DEFUN ("md5", Fmd5, Smd5, 1, 5, 0,
-       doc: /* Return MD5 message digest of OBJECT, a buffer or string.
+/* Convert a possibly-signed character to an unsigned character.  This is
+   a bit safer than casting to unsigned char, since it catches some type
+   errors that the cast doesn't.  */
+static inline unsigned char to_uchar (char ch) { return ch; }
 
-A message digest is a cryptographic checksum of a document, and the
-algorithm to calculate it is defined in RFC 1321.
+/* TYPE: 0 for md5, 1 for sha1. */
 
-The two optional arguments START and END are character positions
-specifying for which part of OBJECT the message digest should be
-computed.  If nil or omitted, the digest is computed for the whole
-OBJECT.
-
-The MD5 message digest is computed from the result of encoding the
-text in a coding system, not directly from the internal Emacs form of
-the text.  The optional fourth argument CODING-SYSTEM specifies which
-coding system to encode the text with.  It should be the same coding
-system that you used or will use when actually writing the text into a
-file.
-
-If CODING-SYSTEM is nil or omitted, the default depends on OBJECT.  If
-OBJECT is a buffer, the default for CODING-SYSTEM is whatever coding
-system would be chosen by default for writing this text into a file.
-
-If OBJECT is a string, the most preferred coding system (see the
-command `prefer-coding-system') is used.
-
-If NOERROR is non-nil, silently assume the `raw-text' coding if the
-guesswork fails.  Normally, an error is signaled in such case.  */)
-  (Lisp_Object object, Lisp_Object start, Lisp_Object end, Lisp_Object coding_system, Lisp_Object noerror)
+static Lisp_Object
+crypto_hash_function (int type, Lisp_Object object, Lisp_Object start, Lisp_Object end, Lisp_Object coding_system, Lisp_Object noerror, Lisp_Object binary)
 {
-  unsigned char digest[16];
-  unsigned char value[33];
   int i;
   EMACS_INT size;
   EMACS_INT size_byte = 0;
@@ -4575,6 +4574,7 @@ guesswork fails.  Normally, an error is signaled in such case.  */)
   register EMACS_INT b, e;
   register struct buffer *bp;
   EMACS_INT temp;
+  Lisp_Object res=Qnil;
 
   if (STRINGP (object))
     {
@@ -4683,12 +4683,12 @@ guesswork fails.  Normally, an error is signaled in such case.  */)
 	    {
 	      int force_raw_text = 0;
 
-	      coding_system = XBUFFER (object)->buffer_file_coding_system;
+	      coding_system = BVAR (XBUFFER (object), buffer_file_coding_system);
 	      if (NILP (coding_system)
 		  || NILP (Flocal_variable_p (Qbuffer_file_coding_system, Qnil)))
 		{
 		  coding_system = Qnil;
-		  if (NILP (current_buffer->enable_multibyte_characters))
+		  if (NILP (BVAR (current_buffer, enable_multibyte_characters)))
 		    force_raw_text = 1;
 		}
 
@@ -4705,11 +4705,11 @@ guesswork fails.  Normally, an error is signaled in such case.  */)
 		}
 
 	      if (NILP (coding_system)
-		  && !NILP (XBUFFER (object)->buffer_file_coding_system))
+		  && !NILP (BVAR (XBUFFER (object), buffer_file_coding_system)))
 		{
 		  /* If we still have not decided a coding system, use the
 		     default value of buffer-file-coding-system.  */
-		  coding_system = XBUFFER (object)->buffer_file_coding_system;
+		  coding_system = BVAR (XBUFFER (object), buffer_file_coding_system);
 		}
 
 	      if (!force_raw_text
@@ -4745,15 +4745,91 @@ guesswork fails.  Normally, an error is signaled in such case.  */)
 	object = code_convert_string (object, coding_system, Qnil, 1, 0, 0);
     }
 
-  md5_buffer (SSDATA (object) + start_byte,
-	      SBYTES (object) - (size_byte - end_byte),
-	      digest);
+  switch (type)
+    {
+    case 0:			/* MD5 */
+      {
+	char digest[16];
+	md5_buffer (SSDATA (object) + start_byte,
+		    SBYTES (object) - (size_byte - end_byte),
+		    digest);
 
-  for (i = 0; i < 16; i++)
-    sprintf (&value[2 * i], "%02x", digest[i]);
-  value[32] = '\0';
+	if (NILP (binary))
+	  {
+	    char value[33];
+	    for (i = 0; i < 16; i++)
+	      sprintf (&value[2 * i], "%02x", to_uchar (digest[i]));
+	    res = make_string (value, 32);
+	  }
+	else
+	  res = make_string (digest, 16);
+	break;
+      }
 
-  return make_string (value, 32);
+    case 1:			/* SHA1 */
+      {
+	char digest[20];
+	sha1_buffer (SSDATA (object) + start_byte,
+		     SBYTES (object) - (size_byte - end_byte),
+		     digest);
+	if (NILP (binary))
+	  {
+	    char value[41];
+	    for (i = 0; i < 20; i++)
+	      sprintf (&value[2 * i], "%02x", to_uchar (digest[i]));
+	    res = make_string (value, 40);
+	  }
+	else
+	  res = make_string (digest, 20);
+	break;
+      }
+    }
+
+  return res;
+}
+
+DEFUN ("md5", Fmd5, Smd5, 1, 5, 0,
+       doc: /* Return MD5 message digest of OBJECT, a buffer or string.
+
+A message digest is a cryptographic checksum of a document, and the
+algorithm to calculate it is defined in RFC 1321.
+
+The two optional arguments START and END are character positions
+specifying for which part of OBJECT the message digest should be
+computed.  If nil or omitted, the digest is computed for the whole
+OBJECT.
+
+The MD5 message digest is computed from the result of encoding the
+text in a coding system, not directly from the internal Emacs form of
+the text.  The optional fourth argument CODING-SYSTEM specifies which
+coding system to encode the text with.  It should be the same coding
+system that you used or will use when actually writing the text into a
+file.
+
+If CODING-SYSTEM is nil or omitted, the default depends on OBJECT.  If
+OBJECT is a buffer, the default for CODING-SYSTEM is whatever coding
+system would be chosen by default for writing this text into a file.
+
+If OBJECT is a string, the most preferred coding system (see the
+command `prefer-coding-system') is used.
+
+If NOERROR is non-nil, silently assume the `raw-text' coding if the
+guesswork fails.  Normally, an error is signaled in such case.  */)
+  (Lisp_Object object, Lisp_Object start, Lisp_Object end, Lisp_Object coding_system, Lisp_Object noerror)
+{
+  return crypto_hash_function (0, object, start, end, coding_system, noerror, Qnil);
+}
+
+DEFUN ("sha1", Fsha1, Ssha1, 1, 4, 0,
+       doc: /* Return the SHA-1 (Secure Hash Algorithm) of an OBJECT.
+
+OBJECT is either a string or a buffer.  Optional arguments START and
+END are character positions specifying which portion of OBJECT for
+computing the hash.  If BINARY is non-nil, return a string in binary
+form.  */)
+     (Lisp_Object object, Lisp_Object start, Lisp_Object end, Lisp_Object binary)
+{
+  return crypto_hash_function (1, object, start, end, Qnil, Qnil, binary);
 }
 
 
@@ -4928,6 +5004,7 @@ this variable.  */);
   defsubr (&Sbase64_encode_string);
   defsubr (&Sbase64_decode_string);
   defsubr (&Smd5);
+  defsubr (&Ssha1);
   defsubr (&Slocale_info);
 }
 

@@ -111,9 +111,9 @@ Leaving \"Default\" unchecked is equivalent with specifying a default of
 	     (cursor-in-non-selected-windows
 	      cursor boolean nil
 	      :tag "Cursor In Non-selected Windows"
-	      :set #'(lambda (symbol value)
-		       (set-default symbol value)
-		       (force-mode-line-update t)))
+	      :set (lambda (symbol value)
+		     (set-default symbol value)
+		     (force-mode-line-update t)))
 	     (transient-mark-mode editing-basics boolean nil
 				  :standard (not noninteractive)
 				  :initialize custom-initialize-delay
@@ -259,6 +259,11 @@ Leaving \"Default\" unchecked is equivalent with specifying a default of
 	     (suggest-key-bindings keyboard (choice (const :tag "off" nil)
 						    (integer :tag "time" 2)
 						    (other :tag "on")))
+             (debug-on-event debug
+                             (choice (const :tag "None" nil)
+                                     (const :tag "When sent SIGUSR1" sigusr1)
+                                     (const :tag "When sent SIGUSR2" sigusr2))
+                             "24.1")
 
 ;; This is not good news because it will use the wrong
 ;; version-specific directories when you upgrade.  We need
@@ -356,6 +361,7 @@ Leaving \"Default\" unchecked is equivalent with specifying a default of
 		      (const alt) (const hyper)
 		      (const super)) "23.1")
 	     (ns-antialias-text ns boolean "23.1")
+	     (ns-auto-hide-menu-bar ns boolean "24.0")
 	     ;; process.c
 	     (delete-exited-processes processes-basics boolean)
 	     ;; syntax.c
@@ -382,19 +388,18 @@ since it could result in memory overflow and make Emacs crash."
 	     ;; window.c
 	     (temp-buffer-show-function windows (choice (const nil) function))
 	     (next-screen-context-lines windows integer)
-	     (window-min-height windows integer)
-	     (window-min-width windows integer)
  	     (scroll-preserve-screen-position
  	      windows (choice
  		       (const :tag "Off (nil)" :value nil)
  		       (const :tag "Full screen (t)" :value t)
  		       (other :tag "Always" 1)) "22.1")
-	     (recenter-redisplay windows
-				 (choice
-				  (const :tag "Never (nil)" :value nil)
-				  (const :tag "Only on ttys" :value tty)
-				  (other :tag "Always" t))
-				 "23.1")
+	     (recenter-redisplay
+	      windows (choice
+		       (const :tag "Never (nil)" :value nil)
+		       (const :tag "Only on ttys" :value tty)
+		       (other :tag "Always" t)) "23.1")
+	     (window-splits windows boolean "24.1")
+	     (window-nest windows boolean "24.1")
 	     ;; xdisp.c
 	     (show-trailing-whitespace whitespace-faces boolean nil
 				       :safe booleanp)

@@ -49,6 +49,7 @@
 (require 'mail-parse)
 (require 'mml)
 (require 'rfc822)
+(require 'format-spec)
 
 (autoload 'mailclient-send-it "mailclient") ;; Emacs 22 or contrib/
 
@@ -128,17 +129,6 @@
   "Function called to rename the buffer after sending it."
   :group 'message-buffers
   :type '(choice function (const nil)))
-
-(defcustom message-cite-style nil
-  "The overall style to be used when yanking cited text.
-Values are either `traditional' (cited text first),
-`top-post' (cited text at the bottom), or nil (don't override the
-individual message variables)."
-  :version "24.1"
-  :group 'message-various
-  :type '(choice (const :tag "None" :value nil)
-		 (const :tag "Traditional" :value traditional)
-		 (const :tag "Top-post" :value top-post)))
 
 (defcustom message-fcc-handler-function 'message-output
   "*A function called to save outgoing articles.
@@ -449,7 +439,10 @@ whitespace)."
   :group 'message-various)
 
 (defcustom message-elide-ellipsis "\n[...]\n\n"
-  "*The string which is inserted for elided text."
+  "*The string which is inserted for elided text.
+This is a format-spec string, and you can use %l to say how many
+lines were removed, and %c to say how many characters were
+removed."
   :type 'string
   :link '(custom-manual "(message)Various Commands")
   :group 'message-various)
@@ -1087,6 +1080,71 @@ needed."
   :type 'boolean
   :link '(custom-manual "(message)Insertion Variables")
   :group 'message-insertion)
+
+(defcustom message-cite-reply-position 'traditional
+  "*Where the reply should be positioned.
+If `traditional', reply inline.
+If `above', reply above quoted text.
+If `below', reply below quoted text.
+
+Note: Many newsgroups frown upon nontraditional reply styles. You
+probably want to set this variable only for specific groups,
+e.g. using `gnus-posting-styles':
+
+  (eval (set (make-local-variable 'message-cite-reply-position) 'above))"
+  :type '(choice (const :tag "Reply inline" 'traditional)
+		 (const :tag "Reply above" 'above)
+		 (const :tag "Reply below" 'below))
+  :group 'message-insertion)
+
+(defcustom message-cite-style nil
+  "*The overall style to be used when yanking cited text.
+Value is either `nil' (no variable overrides) or a let-style list
+of pairs (VARIABLE VALUE) that will be bound in
+`message-yank-original' to do the quoting.
+
+Presets to impersonate popular mail agents are found in the
+message-cite-style-* variables.  This variable is intended for
+use in `gnus-posting-styles', such as:
+
+  ((posting-from-work-p) (eval (set (make-local-variable 'message-cite-style) message-cite-style-outlook)))"
+  :version "24.1"
+  :group 'message-insertion
+  :type '(choice (const :tag "Do not override variables" :value nil)
+		 (const :tag "MS Outlook" :value message-cite-style-outlook)
+		 (const :tag "Mozilla Thunderbird" :value message-cite-style-thunderbird)
+		 (const :tag "Gmail" :value message-cite-style-gmail)
+		 (variable :tag "User-specified")))
+
+(defconst message-cite-style-outlook
+  '((message-cite-function  'message-cite-original)
+    (message-citation-line-function  'message-insert-formatted-citation-line)
+    (message-cite-reply-position 'above)
+    (message-yank-prefix  "")
+    (message-yank-cited-prefix  "")
+    (message-yank-empty-prefix  "")
+    (message-citation-line-format  "\n\n-----------------------\nOn %a, %b %d %Y, %N wrote:\n"))
+  "Message citation style used by MS Outlook. Use with message-cite-style.")
+
+(defconst message-cite-style-thunderbird
+  '((message-cite-function  'message-cite-original)
+    (message-citation-line-function  'message-insert-formatted-citation-line)
+    (message-cite-reply-position 'above)
+    (message-yank-prefix  "> ")
+    (message-yank-cited-prefix  ">")
+    (message-yank-empty-prefix  ">")
+    (message-citation-line-format "On %D %R %p, %N wrote:"))
+  "Message citation style used by Mozilla Thunderbird. Use with message-cite-style.")
+
+(defconst message-cite-style-gmail
+  '((message-cite-function  'message-cite-original)
+    (message-citation-line-function  'message-insert-formatted-citation-line)
+    (message-cite-reply-position 'above)
+    (message-yank-prefix  "    ")
+    (message-yank-cited-prefix  "    ")
+    (message-yank-empty-prefix  "    ")
+    (message-citation-line-format "On %e %B %Y %R, %f wrote:\n"))
+  "Message citation style used by Gmail. Use with message-cite-style.")
 
 (defcustom message-distribution-function nil
   "*Function called to return a Distribution header."
@@ -1814,11 +1872,17 @@ You must have the \"hashcash\" binary installed, see `hashcash-path'."
 
 (defvar	message-options nil
   "Some saved answers when sending message.")
+;; FIXME: On XEmacs this causes problems since let-binding like:
+;; (let ((message-options message-options)) ...)
+;; as in `message-send' and `mml-preview' loses to buffer-local
+;; variable initialization.
+(unless (featurep 'xemacs)
+  (make-variable-buffer-local 'message-options))
 
 (defvar message-send-mail-real-function nil
   "Internal send mail function.")
 
-(defvar message-bogus-system-names "^localhost\\.\\|\\.local$"
+(defvar message-bogus-system-names "\\`localhost\\.\\|\\.local\\'"
   "The regexp of bogus system names.")
 
 (defcustom message-valid-fqdn-regexp
@@ -3475,8 +3539,12 @@ Note that this should not be used in newsgroups."
 An ellipsis (from `message-elide-ellipsis') will be inserted where the
 text was killed."
   (interactive "r")
-  (kill-region b e)
-  (insert message-elide-ellipsis))
+  (let ((lines (count-lines b e))
+        (chars (- e b)))
+    (kill-region b e)
+    (insert (format-spec message-elide-ellipsis
+                         `((?l . ,lines)
+                           (?c . ,chars))))))
 
 (defvar message-caesar-translation-table nil)
 
@@ -3644,16 +3712,49 @@ To use this automatically, you may add this function to
       (while (re-search-forward citexp nil t)
 	(replace-match (if remove "" "\n"))))))
 
-(defvar message-cite-reply-above nil
-  "If non-nil, start own text above the quote.
-
-Note: Top posting is bad netiquette.  Don't use it unless you
-really must.  You probably want to set variable only for specific
-groups, e.g. using `gnus-posting-styles':
-
-  (eval (set (make-local-variable 'message-cite-reply-above) t))
-
-This variable has no effect in news postings.")
+(defun message--yank-original-internal (arg)
+  (let ((modified (buffer-modified-p))
+	body-text)
+	(when (and message-reply-buffer
+		   message-cite-function)
+	  (when (equal message-cite-reply-position 'above)
+	    (save-excursion
+	      (setq body-text
+		    (buffer-substring (message-goto-body)
+				      (point-max)))
+	      (delete-region (message-goto-body) (point-max))))
+	  (if (bufferp message-reply-buffer)
+	      (delete-windows-on message-reply-buffer t))
+	  (push-mark (save-excursion
+		       (cond
+			((bufferp message-reply-buffer)
+			 (insert-buffer-substring message-reply-buffer))
+			((and (consp message-reply-buffer)
+			      (functionp (car message-reply-buffer)))
+			 (apply (car message-reply-buffer)
+				(cdr message-reply-buffer))))
+		       (unless (bolp)
+			 (insert ?\n))
+		       (point)))
+	  (unless arg
+	    (funcall message-cite-function)
+	    (unless (eq (char-before (mark t)) ?\n)
+	      (let ((pt (point)))
+		(goto-char (mark t))
+		(insert-before-markers ?\n)
+		(goto-char pt))))
+	  (case message-cite-reply-position
+	    (above
+	     (message-goto-body)
+	     (insert body-text)
+	     (insert (if (bolp) "\n" "\n\n"))
+	     (message-goto-body))
+	    (below
+	     (message-goto-signature)))
+	  ;; Add a `message-setup-very-last-hook' here?
+	  ;; Add `gnus-article-highlight-citation' here?
+	  (unless modified
+        (setq message-checksum (message-checksum))))))
 
 (defun message-yank-original (&optional arg)
   "Insert the message being replied to, if any.
@@ -3666,51 +3767,10 @@ This function uses `message-cite-function' to do the actual citing.
 Just \\[universal-argument] as argument means don't indent, insert no
 prefix, and don't delete any headers."
   (interactive "P")
-  (let ((modified (buffer-modified-p))
-	body-text)
-    (when (and message-reply-buffer
-	       message-cite-function)
-      (when message-cite-reply-above
-	(if (and (not (message-news-p))
-		 (or (eq message-cite-reply-above 'is-evil)
-		     (y-or-n-p "\
-Top posting is bad netiquette.  Please don't top post unless you really must.
-Really top post? ")))
-	    (save-excursion
-	      (setq body-text
-		    (buffer-substring (message-goto-body)
-				      (point-max)))
-	      (delete-region (message-goto-body) (point-max)))
-	  (set (make-local-variable 'message-cite-reply-above) nil)))
-      (if (bufferp message-reply-buffer)
-	  (delete-windows-on message-reply-buffer t))
-      (push-mark (save-excursion
-		   (cond
-		    ((bufferp message-reply-buffer)
-		     (insert-buffer-substring message-reply-buffer))
-		    ((and (consp message-reply-buffer)
-			  (functionp (car message-reply-buffer)))
-		     (apply (car message-reply-buffer)
-			    (cdr message-reply-buffer))))
-		   (unless (bolp)
-		     (insert ?\n))
-		   (point)))
-      (unless arg
-	(funcall message-cite-function)
-	(unless (eq (char-before (mark t)) ?\n)
-	  (let ((pt (point)))
-	    (goto-char (mark t))
-	    (insert-before-markers ?\n)
-	    (goto-char pt))))
-      (when message-cite-reply-above
-	(message-goto-body)
-	(insert body-text)
-	(insert (if (bolp) "\n" "\n\n"))
-	(message-goto-body))
-      ;; Add a `message-setup-very-last-hook' here?
-      ;; Add `gnus-article-highlight-citation' here?
-      (unless modified
-	(setq message-checksum (message-checksum))))))
+  ;; eval the let forms contained in message-cite-style
+  (eval
+   `(let ,message-cite-style
+      (message--yank-original-internal ',arg))))
 
 (defun message-yank-buffer (buffer)
   "Insert BUFFER into the current buffer and quote it."
@@ -4010,11 +4070,11 @@ Instead, just auto-save the buffer and then bury it."
 
 (defun message-bury (buffer)
   "Bury this mail BUFFER."
-  (let ((newbuf (other-buffer buffer)))
-    (bury-buffer buffer)
-    (if message-return-action
-	(apply (car message-return-action) (cdr message-return-action))
-      (switch-to-buffer newbuf))))
+  (if message-return-action
+      (progn
+        (bury-buffer buffer)
+        (apply (car message-return-action) (cdr message-return-action)))
+    (with-current-buffer buffer (bury-buffer))))
 
 (defun message-send (&optional arg)
   "Send the message in the current buffer.
@@ -4561,6 +4621,8 @@ If you always want Gnus to send messages in one piece, set
     (set-buffer mailbuf)
     (push 'mail message-sent-message-via)))
 
+(defvar sendmail-program)
+
 (defun message-send-mail-with-sendmail ()
   "Send off the prepared buffer with sendmail."
   (require 'sendmail)
@@ -4596,16 +4658,7 @@ If you always want Gnus to send messages in one piece, set
 		 (cpr (apply
 		       'call-process-region
 		       (append
-			(list (point-min) (point-max)
-			      (cond ((boundp 'sendmail-program)
-				     sendmail-program)
-				    ((file-exists-p "/usr/sbin/sendmail")
-				     "/usr/sbin/sendmail")
-				    ((file-exists-p "/usr/lib/sendmail")
-				     "/usr/lib/sendmail")
-				    ((file-exists-p "/usr/ucblib/sendmail")
-				     "/usr/ucblib/sendmail")
-				    (t "fakemail"))
+			(list (point-min) (point-max) sendmail-program
 			      nil errbuf nil "-oi")
 			message-sendmail-extra-arguments
 			;; Always specify who from,
@@ -6417,7 +6470,9 @@ are not included."
   ;; `References:' header if `message-generate-headers-first' was nil.
   ;; Therefore, always generate it first.
   (let ((message-generate-headers-first
-         (append message-generate-headers-first '(References))))
+         (if (eq message-generate-headers-first t)
+             t
+           (append message-generate-headers-first '(References)))))
     (when (message-news-p)
       (when message-default-news-headers
         (insert message-default-news-headers)
@@ -6776,7 +6831,7 @@ Useful functions to put in this list include:
   subject)
 
 ;;;###autoload
-(defun message-reply (&optional to-address wide)
+(defun message-reply (&optional to-address wide switch-function)
   "Start editing a reply to the article in the current buffer."
   (interactive)
   (require 'gnus-sum)			; for gnus-list-identifiers
@@ -6819,7 +6874,8 @@ Useful functions to put in this list include:
       (message-pop-to-buffer
        (message-buffer-name
 	(if wide "wide reply" "reply") from
-	(if wide to-address nil))))
+	(if wide to-address nil))
+       switch-function))
 
     (setq message-reply-headers
 	  (vector 0 subject from date message-id references 0 0 ""))

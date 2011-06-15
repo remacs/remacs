@@ -20,7 +20,8 @@
 ;;; Code:
 
 (deftheme tsdh-light
-  "Black on white theme used and created by Tassilo Horn.")
+  "Minor tweaks to the Emacs white-background defaults.
+Used and created by Tassilo Horn.")
 
 (custom-theme-set-faces
  'tsdh-light
@@ -57,3 +58,10 @@
  '(window-number-face ((t (:foreground "red" :weight bold)))))
 
 (provide-theme 'tsdh-light)
+
+
+;; Local Variables:
+;; no-byte-compile: t
+;; End:
+
+;;; tsdh-light-theme.el ends here

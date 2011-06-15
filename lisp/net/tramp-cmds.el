@@ -258,8 +258,8 @@ buffer in your bug report.
   (dolist (buffer
 	   (delq nil
 		 (mapcar
-		  '(lambda (b)
-		     (when (string-match "\\*tramp/" (buffer-name b)) b))
+		  (lambda (b)
+                    (when (string-match "\\*tramp/" (buffer-name b)) b))
 		  (buffer-list))))
     (let ((reporter-eval-buffer buffer)
 	  (buffer-name (buffer-name buffer))
@@ -280,6 +280,12 @@ buffer in your bug report.
 	(lisp-indent-line)
 	(insert ")\n"))
       (insert-buffer-substring elbuf)))
+
+  ;; Dump load-path shadows.
+  (insert "\nload-path shadows:\n==================\n")
+  (ignore-errors
+    (mapc (lambda (x) (when (string-match "tramp" x) (insert x "\n")))
+	  (split-string (list-load-path-shadows t) "\n")))
 
   ;; Append buffers only when we are in message mode.
   (when (and

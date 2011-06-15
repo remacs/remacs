@@ -61,8 +61,9 @@ by zsh for filename generation."
 
 ;;; User Variables:
 
-(defcustom eshell-glob-load-hook '(eshell-glob-initialize)
+(defcustom eshell-glob-load-hook nil
   "A list of functions to run when `eshell-glob' is loaded."
+  :version "24.1"			; removed eshell-glob-initialize
   :type 'hook
   :group 'eshell-glob)
 
@@ -147,10 +148,10 @@ This option slows down recursive glob processing by quite a bit."
     ;; if this is a glob pattern than needs to be expanded, then it
     ;; will need to expand each member of the resulting glob list
     (add-to-list 'eshell-current-modifiers
-		 '(lambda (list)
-		    (if (listp list)
-			(mapcar 'expand-file-name list)
-		      (expand-file-name list)))))
+		 (lambda (list)
+                   (if (listp list)
+                       (mapcar 'expand-file-name list)
+                     (expand-file-name list)))))
   (add-to-list 'eshell-current-modifiers 'eshell-extended-glob))
 
 (defun eshell-parse-glob-chars ()

@@ -29,21 +29,15 @@
 ;; If you add/remove Lisp files to be loaded here, consider the
 ;; following issues:
 
-;; i) Any file loaded on all platforms should appear in $lisp
-;; and $shortlisp in src/Makefile.in.  Use the .el or .elc version as
-;; appropriate.
+;; i) Any file loaded on any platform should appear in $lisp in src/lisp.mk.
+;; Use the .el or .elc version as appropriate.
 
-;; ii) Any file that is only loaded on some platforms should appear
-;; in the version of $lisp in the generated Makefile on that platform.
-;; At the present time, this is achieved by use of #ifdefs.
-;; It should also appear in $SOME_MACHINE_LISP on all platforms.
+;; This ensures both that the Lisp files are compiled (if necessary)
+;; before the emacs executable is dumped, and that they are passed to
+;; make-docfile.  (Any that are not processed for DOC will not have
+;; doc strings in the dumped Emacs.)  Because of this:
 
-;; The above steps ensure both that the Lisp files are compiled (if
-;; necessary) before the emacs executable is dumped, and that they are
-;; passed to make-docfile.  (Any that are not processed for DOC will
-;; not have doc strings in the dumped Emacs.)  Because of this:
-
-;; iii) If the file is loaded uncompiled, it should (where possible)
+;; ii) If the file is loaded uncompiled, it should (where possible)
 ;; obey the doc-string conventions expected by make-docfile.
 
 ;;; Code:
@@ -87,7 +81,7 @@
 
 ;; Do it after subr, since both after-load-functions and add-hook are
 ;; implemented in subr.el.
-(add-hook 'after-load-functions '(lambda (f) (garbage-collect)))
+(add-hook 'after-load-functions (lambda (f) (garbage-collect)))
 
 ;; We specify .el in case someone compiled version.el by mistake.
 (load "version.el")
@@ -101,12 +95,12 @@
 (load "env")
 (load "format")
 (load "bindings")
+(load "window")  ; Needed here for `replace-buffer-in-windows'.
 (setq load-source-file-function 'load-with-code-conversion)
 (load "files")
 
 (load "cus-face")
 (load "faces")  ; after here, `defface' may be used.
-(load "minibuffer")
 
 (load "button")
 (load "startup")
@@ -117,6 +111,7 @@
   ;; In case loaddefs hasn't been generated yet.
   (file-error (load "ldefs-boot.el")))
 
+(load "minibuffer")
 (load "abbrev")         ;lisp-mode.el and simple.el use define-abbrev-table.
 (load "simple")
 
@@ -162,7 +157,6 @@
 (load "language/cham")
 
 (load "indent")
-(load "window")
 (load "frame")
 (load "term/tty-colors")
 (load "font-core")
@@ -263,7 +257,7 @@
     (let* ((base (concat "emacs-" emacs-version "."))
 	   (files (file-name-all-completions base default-directory))
 	   (versions (mapcar (function (lambda (name)
-					 (string-to-int (substring name (length base)))))
+					 (string-to-number (substring name (length base)))))
 			     files)))
       ;; `emacs-version' is a constant, so we shouldn't change it with `setq'.
       (defconst emacs-version
@@ -310,7 +304,7 @@
 	(equal (nth 4 command-line-args) "bootstrap"))
     (setcdr load-path nil))
 
-(remove-hook 'after-load-functions '(lambda (f) (garbage-collect)))
+(remove-hook 'after-load-functions (lambda (f) (garbage-collect)))
 
 (setq inhibit-load-charset-map nil)
 (clear-charset-maps)

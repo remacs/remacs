@@ -213,19 +213,19 @@ static unsigned char gamegrid_bits[] = {
   (let ((data (gamegrid-match-spec-list data-spec-list))
 	(color (gamegrid-match-spec-list color-spec-list)))
     (case data
-      ('color-x
+      (color-x
        (gamegrid-make-color-x-face color))
-      ('grid-x
+      (grid-x
        (unless gamegrid-grid-x-face
 	 (setq gamegrid-grid-x-face (gamegrid-make-grid-x-face)))
        gamegrid-grid-x-face)
-      ('mono-x
+      (mono-x
        (unless gamegrid-mono-x-face
 	 (setq gamegrid-mono-x-face (gamegrid-make-mono-x-face)))
        gamegrid-mono-x-face)
-      ('color-tty
+      (color-tty
        (gamegrid-make-color-tty-face color))
-      ('mono-tty
+      (mono-tty
        (unless gamegrid-mono-tty-face
 	 (setq gamegrid-mono-tty-face (gamegrid-make-mono-tty-face)))
        gamegrid-mono-tty-face))))
@@ -485,12 +485,11 @@ FILE is created there."
 (defvar gamegrid-shared-game-dir)
 
 (defun gamegrid-add-score-with-update-game-score (file score)
-  (let* ((result nil) ;; What is this good for? -- os
-	 (gamegrid-shared-game-dir
-	  (not (zerop (logand (file-modes
-			       (expand-file-name "update-game-score"
-						 exec-directory))
-			      #o4000)))))
+  (let ((gamegrid-shared-game-dir
+	 (not (zerop (logand (file-modes
+			      (expand-file-name "update-game-score"
+						exec-directory))
+			     #o4000)))))
     (cond ((file-name-absolute-p file)
 	   (gamegrid-add-score-insecure file score))
 	  ((and gamegrid-shared-game-dir

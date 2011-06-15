@@ -62,7 +62,7 @@ TIT_GB=\
 	quail/TONEPY.elc
 
 # Files generated from TIT dictionaries for Chinese BIG5 character set.
-TIT-BIG5=\
+TIT_BIG5=\
 	quail/4Corner.elc	\
 	quail/ARRAY30.elc	\
 	quail/ECDICT.elc	\
@@ -126,6 +126,7 @@ OTHERS= \
 	${srcdir}/quail/ipa.elc \
 	${srcdir}/quail/hebrew.elc \
 	${srcdir}/quail/georgian.elc \
+	$(srcdir)/quail/persian.elc \
 	${srcdir}/quail/sisheng.elc
 
 MISC= \
@@ -220,7 +221,7 @@ MV_DIRS = for i in $$dir; do rm -fr `basename "$$i"` ; mv "$$i" . ; done
 
 install: all
 	if [ ! -d ${INSTALLDIR} ] ; then \
-          umask 022; ${srcdir}/../mkinstalldirs ${INSTALLDIR}; \
+          umask 022; ${srcdir}/../install-sh -d ${INSTALLDIR}; \
 	else true; fi
 	if [ x`(cd ${INSTALLDIR} && /bin/pwd)` != x`(/bin/pwd)` ] ; then \
 	  rm -f ${INSTALLDIR}/leim-list.el; \

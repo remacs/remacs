@@ -65,6 +65,14 @@
   :group 'vc-bzr
   :type 'string)
 
+(defcustom vc-bzr-sha1-program '("sha1sum")
+  "Name of program to compute SHA1.
+It must be a string \(program name\) or list of strings \(name and its args\)."
+  :type '(repeat string)
+  :group 'vc-bzr)
+
+(define-obsolete-variable-alias 'sha1-program 'vc-bzr-sha1-program "24.1")
+
 (defcustom vc-bzr-diff-switches nil
   "String or list of strings specifying switches for bzr diff under VC.
 If nil, use the value of `vc-diff-switches'.  If t, use no switches."
@@ -141,19 +149,25 @@ Use the current Bzr root directory as the ROOT argument to
       (let ((root (vc-find-root file vc-bzr-admin-checkout-format-file)))
 	(when root (vc-file-setprop file 'bzr-root root)))))
 
-(defun vc-bzr--branch-conf (file)
-  "Return the Bzr branch config for file FILE, as a string."
-  (with-temp-buffer
-    (insert-file-contents
-     (expand-file-name vc-bzr-admin-branchconf (vc-bzr-root file)))
-    (buffer-string)))
+(defun vc-bzr-branch-conf (file)
+  "Return the Bazaar branch settings for file FILE, as an alist.
+Each element of the returned alist has the form (NAME . VALUE),
+which are the name and value of a Bazaar setting, as strings.
 
-(require 'sha1)                         ;For sha1-program
+The settings are read from the file \".bzr/branch/branch.conf\"
+in the repository root directory of FILE."
+  (let (settings)
+    (with-temp-buffer
+      (insert-file-contents
+       (expand-file-name vc-bzr-admin-branchconf (vc-bzr-root file)))
+      (while (re-search-forward "^\\([^#=][^=]*?\\) *= *\\(.*\\)$" nil t)
+	(push (cons (match-string 1) (match-string 2)) settings)))
+    settings))
 
 (defun vc-bzr-sha1 (file)
   (with-temp-buffer
     (set-buffer-multibyte nil)
-    (let ((prog sha1-program)
+    (let ((prog vc-bzr-sha1-program)
           (args nil)
 	  process-file-side-effects)
       (when (consp prog)
@@ -174,10 +188,19 @@ Use the current Bzr root directory as the ROOT argument to
   ;; format 3' in the first line.
   ;; If the `checkout/dirstate' file cannot be parsed, fall back to
   ;; running `vc-bzr-state'."
+  ;;
+  ;; The format of the dirstate file is explained in bzrlib/dirstate.py
+  ;; in the bzr distribution.  Basically:
+  ;; header-line giving the version of the file format in use.
+  ;; a few lines of stuff
+  ;; entries, one per line, with null-separated fields.  Each line:
+  ;; entry_key = dirname (may be empty), basename, file-id
+  ;; current = common ( = kind, fingerprint, size, executable )
+  ;;           + working ( = packed_stat )
+  ;; parent = common ( as above ) + history ( = rev_id )
+  ;; kinds = (r)elocated, (a)bsent, (d)irectory, (f)ile, (l)ink
   (lexical-let ((root (vc-bzr-root file)))
     (when root    ; Short cut.
-      ;; This looks at internal files.  May break if they change
-      ;; their format.
       (lexical-let ((dirstate (expand-file-name vc-bzr-admin-dirstate root)))
         (condition-case nil
             (with-temp-buffer
@@ -202,13 +225,14 @@ Use the current Bzr root directory as the ROOT argument to
                                ;; was executable the last time bzr checked?
                                "[^\0]*\0"
                                "[^\0]*\0"       ;?
-                               "\\([^\0]*\\)\0" ;"a/f/d" a=added?
+                               ;; Parent information.  Absent in a new repo.
+                               "\\(?:\\([^\0]*\\)\0" ;"a/f/d" a=added?
                                "\\([^\0]*\\)\0" ;sha1 again?
                                "\\([^\0]*\\)\0" ;size again?
                                ;; y/n.  Whether or not the repo thinks
                                ;; the file should be executable?
                                "\\([^\0]*\\)\0"
-                               "[^\0]*\0" ;last revid?
+                               "[^\0]*\0\\)?" ;last revid?
                                ;; There are more fields when merges are pending.
                                )
                        nil t)
@@ -218,7 +242,10 @@ Use the current Bzr root directory as the ROOT argument to
                       ;; conflict markers).
                       (cond
                        ((eq (char-after (match-beginning 1)) ?a) 'removed)
-                       ((eq (char-after (match-beginning 4)) ?a) 'added)
+                       ;; If there is no parent, this must be a new repo.
+                       ;; If file is in dirstate, can only be added (b#8025).
+                       ((or (not (match-beginning 4))
+                            (eq (char-after (match-beginning 4)) ?a)) 'added)
                        ((or (and (eq (string-to-number (match-string 3))
                                  (nth 7 (file-attributes file)))
                                  (equal (match-string 5)
@@ -276,6 +303,13 @@ Use the current Bzr root directory as the ROOT argument to
     (when rootdir
          (file-relative-name filename* rootdir))))
 
+(defvar vc-bzr-error-regex-alist
+  '(("^\\( M[* ]\\|+N \\|-D \\|\\|  \\*\\|R[M ] \\) \\(.+\\)" 2 nil nil 1)
+    ("^C  \\(.+\\)" 2)
+    ("^Text conflict in \\(.+\\)" 1 nil nil 2)
+    ("^Using saved parent location: \\(.+\\)" 1 nil nil 0))
+  "Value of `compilation-error-regexp-alist' in *vc-bzr* buffers.")
+
 (defun vc-bzr-pull (prompt)
   "Pull changes into the current Bzr branch.
 Normally, this runs \"bzr pull\".  However, if the branch is a
@@ -283,19 +317,18 @@ bound branch, run \"bzr update\" instead.  If there is no default
 location from which to pull or update, or if PROMPT is non-nil,
 prompt for the Bzr command to run."
   (let* ((vc-bzr-program vc-bzr-program)
-	 (branch-conf (vc-bzr--branch-conf default-directory))
+	 (branch-conf (vc-bzr-branch-conf default-directory))
 	 ;; Check whether the branch is bound.
-	 (bound (string-match "^bound\\s-*=\\s-*True" branch-conf))
+	 (bound (assoc "bound" branch-conf))
+	 (bound (and bound (equal "true" (downcase (cdr bound)))))
 	 ;; If we need to do a "bzr pull", check for a parent.  If it
 	 ;; does not exist, bzr will need a pull location.
-	 (parent (unless bound
-		   (string-match
-		    "^parent_location\\s-*=\\s-*[^\n[:space:]]+"
-		    branch-conf)))
+	 (has-parent (unless bound
+		       (assoc "parent_location" branch-conf)))
 	 (command (if bound "update" "pull"))
 	 args)
     ;; If necessary, prompt for the exact command.
-    (when (or prompt (not (or bound parent)))
+    (when (or prompt (not (or bound has-parent)))
       (setq args (split-string
 		  (read-shell-command
 		   "Bzr pull command: "
@@ -305,28 +338,33 @@ prompt for the Bzr command to run."
       (setq vc-bzr-program (car  args)
 	    command        (cadr args)
 	    args           (cddr args)))
-    (vc-set-async-update
-     (apply 'vc-bzr-async-command command args))))
+    (let ((buf (apply 'vc-bzr-async-command command args)))
+      (with-current-buffer buf
+	(vc-exec-after
+	 `(progn
+	    (let ((compilation-error-regexp-alist
+		   vc-bzr-error-regex-alist))
+	      (compilation-mode))
+	    (set (make-local-variable 'compilation-error-regexp-alist)
+		 vc-bzr-error-regex-alist))))
+      (vc-set-async-update buf))))
 
 (defun vc-bzr-merge-branch ()
   "Merge another Bzr branch into the current one.
 Prompt for the Bzr command to run, providing a pre-defined merge
 source (an upstream branch or a previous merge source) as a
 default if it is available."
-  (let* ((branch-conf (vc-bzr--branch-conf default-directory))
+  (let* ((branch-conf (vc-bzr-branch-conf default-directory))
 	 ;; "bzr merge" without an argument defaults to submit_branch,
 	 ;; then parent_location.  Extract the specific location and
 	 ;; add it explicitly to the command line.
+	 (setting nil)
 	 (location
 	  (cond
-	   ((string-match
-	     "^submit_branch\\s-*=\\s-*\\(?:file://\\)?\\([^\n[:space:]]+\\)$"
-	     branch-conf)
-	    (match-string 1 branch-conf))
-	   ((string-match
-	     "^parent_location\\s-*=\\s-*\\(?:file://\\)?\\([^\n[:space:]]+\\)$"
-	     branch-conf)
-	    (match-string 1 branch-conf))))
+	   ((setq setting (assoc "submit_branch" branch-conf))
+	    (cdr setting))
+	   ((setq setting (assoc "parent_location" branch-conf))
+	    (cdr setting))))
 	 (cmd
 	  (split-string
 	   (read-shell-command
@@ -338,8 +376,16 @@ default if it is available."
 	 (vc-bzr-program (car  cmd))
 	 (command        (cadr cmd))
 	 (args           (cddr cmd)))
-    (vc-set-async-update
-     (apply 'vc-bzr-async-command command args))))
+    (let ((buf (apply 'vc-bzr-async-command command args)))
+      (with-current-buffer buf
+	(vc-exec-after
+	 `(progn
+	    (let ((compilation-error-regexp-alist
+		   vc-bzr-error-regex-alist))
+	      (compilation-mode))
+	    (set (make-local-variable 'compilation-error-regexp-alist)
+		 vc-bzr-error-regex-alist))))
+      (vc-set-async-update buf))))
 
 (defun vc-bzr-status (file)
   "Return FILE status according to Bzr.
@@ -395,8 +441,13 @@ If any error occurred in running `bzr status', then return nil."
 (defun vc-bzr-state (file)
   (lexical-let ((result (vc-bzr-status file)))
     (when (consp result)
-      (when (cdr result)
-	(message "Warnings in `bzr' output: %s" (cdr result)))
+      (let ((warnings (cdr result)))
+        (when warnings
+          ;; bzr 2.3.0 returns info about shelves, which is not really a warning
+          (when (string-match "[1-9]+ shel\\(f\\|ves\\) exists?\\..*?\n" warnings)
+            (setq warnings (replace-match "" nil nil warnings)))
+          (unless (string= warnings "")
+            (message "Warnings in `bzr' output: %s" warnings))))
       (cdr (assq (car result)
                  '((added . added)
                    (kindchanged . edited)
@@ -590,6 +641,7 @@ REV non-nil gets an error."
 (defvar log-view-font-lock-keywords)
 (defvar log-view-current-tag-function)
 (defvar log-view-per-file-logs)
+(defvar log-view-expanded-log-entry-function)
 
 (define-derived-mode vc-bzr-log-view-mode log-view-mode "Bzr-Log-View"
   (remove-hook 'log-view-mode-hook 'vc-bzr-log-view-mode) ;Deactivate the hack.
@@ -600,6 +652,11 @@ REV non-nil gets an error."
        (if (eq vc-log-view-type 'short)
 	   "^ *\\([0-9.]+\\): \\(.*?\\)[ \t]+\\([0-9]\\{4\\}-[0-9]\\{2\\}-[0-9]\\{2\\}\\)\\( \\[merge\\]\\)?"
 	 "^ *\\(?:revno: \\([0-9.]+\\)\\|merged: .+\\)"))
+  ;; Allow expanding short log entries
+  (when (eq vc-log-view-type 'short)
+    (setq truncate-lines t)
+    (set (make-local-variable 'log-view-expanded-log-entry-function)
+	 'vc-bzr-expanded-log-entry))
   (set (make-local-variable 'log-view-font-lock-keywords)
        ;; log-view-font-lock-keywords is careful to use the buffer-local
        ;; value of log-view-message-re only since Emacs-23.
@@ -636,6 +693,16 @@ REV non-nil gets an error."
 	    (if (stringp vc-bzr-log-switches)
 		(list vc-bzr-log-switches)
 	      vc-bzr-log-switches)))))
+
+(defun vc-bzr-expanded-log-entry (revision)
+  (with-temp-buffer
+    (apply 'vc-bzr-command "log" t nil nil
+	   (list (format "-r%s" revision)))
+    (goto-char (point-min))
+    (when (looking-at "^-+\n")
+      ;; Indent the expanded log entry.
+      (indent-region (match-end 0) (point-max) 2)
+      (buffer-substring (match-end 0) (point-max)))))
 
 (defun vc-bzr-log-incoming (buffer remote-location)
   (apply 'vc-bzr-command "missing" buffer 'async nil
@@ -823,38 +890,40 @@ stream.  Standard error output is discarded."
 	(result nil))
       (goto-char (point-min))
       (while (not (eobp))
-	(setq status-str
-	      (buffer-substring-no-properties (point) (+ (point) 3)))
-	(setq translated (cdr (assoc status-str translation)))
-	(cond
-	 ((eq translated 'conflict)
-	  ;; For conflicts the file appears twice in the listing: once
-	  ;; with the M flag and once with the C flag, so take care
-	  ;; not to add it twice to `result'.  Ugly.
-	  (let* ((file
-		  (buffer-substring-no-properties
-		   ;;For files with conflicts the format is:
-		   ;;C   Text conflict in FILENAME
-		   ;; Bah.
-		   (+ (point) 21) (line-end-position)))
-		 (entry (assoc file result)))
-	    (when entry
-	      (setf (nth 1 entry) 'conflict))))
-	 ((eq translated 'renamed)
-	  (re-search-forward "R[ M]  \\(.*\\) => \\(.*\\)$" (line-end-position) t)
-	  (let ((new-name (file-relative-name (match-string 2) relative-dir))
-		(old-name (file-relative-name (match-string 1) relative-dir)))
-	    (push (list new-name 'edited
-		      (vc-bzr-create-extra-fileinfo old-name)) result)))
-	 ;; do nothing for non existent files
-	 ((eq translated 'not-found))
-	 (t
-	  (push (list (file-relative-name
-		       (buffer-substring-no-properties
-			(+ (point) 4)
-			(line-end-position)) relative-dir)
-		      translated) result)))
-	(forward-line))
+        ;; Bzr 2.3.0 added this if there are shelves.  (Bug#8170)
+        (unless (looking-at "[1-9]+ shel\\(f\\|ves\\) exists?\\.")
+          (setq status-str
+                (buffer-substring-no-properties (point) (+ (point) 3)))
+          (setq translated (cdr (assoc status-str translation)))
+          (cond
+           ((eq translated 'conflict)
+            ;; For conflicts the file appears twice in the listing: once
+            ;; with the M flag and once with the C flag, so take care
+            ;; not to add it twice to `result'.  Ugly.
+            (let* ((file
+                    (buffer-substring-no-properties
+                     ;;For files with conflicts the format is:
+                     ;;C   Text conflict in FILENAME
+                     ;; Bah.
+                     (+ (point) 21) (line-end-position)))
+                   (entry (assoc file result)))
+              (when entry
+                (setf (nth 1 entry) 'conflict))))
+           ((eq translated 'renamed)
+            (re-search-forward "R[ M]  \\(.*\\) => \\(.*\\)$" (line-end-position) t)
+            (let ((new-name (file-relative-name (match-string 2) relative-dir))
+                  (old-name (file-relative-name (match-string 1) relative-dir)))
+              (push (list new-name 'edited
+                          (vc-bzr-create-extra-fileinfo old-name)) result)))
+           ;; do nothing for non existent files
+           ((eq translated 'not-found))
+           (t
+            (push (list (file-relative-name
+                         (buffer-substring-no-properties
+                          (+ (point) 4)
+                          (line-end-position)) relative-dir)
+                        translated) result))))
+        (forward-line))
       (funcall update-function result)))
 
 (defun vc-bzr-dir-status (dir update-function)

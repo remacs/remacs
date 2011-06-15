@@ -50,9 +50,9 @@ Note that Outline mode only checks this regexp at the start of a line,
 so the regexp need not (and usually does not) start with `^'.
 The recommended way to set this is with a Local Variables: list
 in the file it applies to.  See also `outline-heading-end-regexp'."
-  :type '(choice regexp (const nil))
+  :type 'regexp
   :group 'outlines)
-;;;###autoload(put 'outline-regexp 'safe-local-variable 'string-or-null-p)
+;;;###autoload(put 'outline-regexp 'safe-local-variable 'stringp)
 
 (defcustom outline-heading-end-regexp "\n"
   "Regular expression to match the end of a heading line.
@@ -62,6 +62,7 @@ The recommended way to set this is with a `Local Variables:' list
 in the file it applies to."
   :type 'regexp
   :group 'outlines)
+;;;###autoload(put 'outline-heading-end-regexp 'safe-local-variable 'stringp)
 
 (defvar outline-mode-prefix-map
   (let ((map (make-sparse-keymap)))
@@ -799,7 +800,7 @@ If FLAG is nil then text is shown, while if FLAG is t the text is hidden."
 ;; Function to be set as an outline-isearch-open-invisible' property
 ;; to the overlay that makes the outline invisible (see
 ;; `outline-flag-region').
-(defun outline-isearch-open-invisible (overlay)
+(defun outline-isearch-open-invisible (_overlay)
   ;; We rely on the fact that isearch places point on the matched text.
   (show-entry))
 

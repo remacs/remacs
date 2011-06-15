@@ -24,14 +24,11 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "buffer.h"
 #include "character.h"
 
-Lisp_Object Qcase_table_p, Qcase_table;
-Lisp_Object Vascii_downcase_table, Vascii_upcase_table;
-Lisp_Object Vascii_canon_table, Vascii_eqv_table;
-
-/* Used as a temporary in DOWNCASE and other macros in lisp.h.  No
-   need to mark it, since it is used only very temporarily.  */
-int case_temp1;
-Lisp_Object case_temp2;
+static Lisp_Object Qcase_table_p, Qcase_table;
+Lisp_Object Vascii_downcase_table;
+static Lisp_Object Vascii_upcase_table;
+Lisp_Object Vascii_canon_table;
+static Lisp_Object Vascii_eqv_table;
 
 static void set_canon (Lisp_Object case_table, Lisp_Object range, Lisp_Object elt);
 static void set_identity (Lisp_Object table, Lisp_Object c, Lisp_Object elt);
@@ -71,7 +68,7 @@ DEFUN ("current-case-table", Fcurrent_case_table, Scurrent_case_table, 0, 0, 0,
        doc: /* Return the case table of the current buffer.  */)
   (void)
 {
-  return current_buffer->downcase_table;
+  return BVAR (current_buffer, downcase_table);
 }
 
 DEFUN ("standard-case-table", Fstandard_case_table, Sstandard_case_table, 0, 0, 0,
@@ -106,7 +103,8 @@ EQUIVALENCES is a map that cyclicly permutes each equivalence class
   return set_case_table (table, 0);
 }
 
-DEFUN ("set-standard-case-table", Fset_standard_case_table, Sset_standard_case_table, 1, 1, 0,
+DEFUN ("set-standard-case-table", Fset_standard_case_table,
+       Sset_standard_case_table, 1, 1, 0,
        doc: /* Select a new standard case table for new buffers.
 See `set-case-table' for more info on case tables.  */)
   (Lisp_Object table)
@@ -160,10 +158,10 @@ set_case_table (Lisp_Object table, int standard)
     }
   else
     {
-      current_buffer->downcase_table = table;
-      current_buffer->upcase_table = up;
-      current_buffer->case_canon_table = canon;
-      current_buffer->case_eqv_table = eqv;
+      BVAR (current_buffer, downcase_table) = table;
+      BVAR (current_buffer, upcase_table) = up;
+      BVAR (current_buffer, case_canon_table) = canon;
+      BVAR (current_buffer, case_eqv_table) = eqv;
     }
 
   return table;
@@ -196,7 +194,8 @@ set_identity (Lisp_Object table, Lisp_Object c, Lisp_Object elt)
 {
   if (NATNUMP (elt))
     {
-      int from, to;
+      int from;
+      unsigned to;
 
       if (CONSP (c))
 	{
@@ -205,7 +204,7 @@ set_identity (Lisp_Object table, Lisp_Object c, Lisp_Object elt)
 	}
       else
 	from = to = XINT (c);
-      for (; from <= to; from++)
+      for (to++; from < to; from++)
 	CHAR_TABLE_SET (table, from, make_number (from));
     }
 }
@@ -220,7 +219,8 @@ shuffle (Lisp_Object table, Lisp_Object c, Lisp_Object elt)
 {
   if (NATNUMP (elt))
     {
-      int from, to;
+      int from;
+      unsigned to;
 
       if (CONSP (c))
 	{
@@ -230,7 +230,7 @@ shuffle (Lisp_Object table, Lisp_Object c, Lisp_Object elt)
       else
 	from = to = XINT (c);
 
-      for (; from <= to; from++)
+      for (to++; from < to; from++)
 	{
 	  Lisp_Object tem = Faref (table, elt);
 	  Faset (table, elt, make_number (from));
@@ -302,4 +302,3 @@ syms_of_casetab (void)
   defsubr (&Sset_case_table);
   defsubr (&Sset_standard_case_table);
 }
-

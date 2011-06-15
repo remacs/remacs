@@ -421,6 +421,20 @@
   (define-key calc-mode-map "kP" 'calc-utpp)
   (define-key calc-mode-map "kT" 'calc-utpt)
 
+  (define-key calc-mode-map "l" nil)
+  (define-key calc-mode-map "lq" 'calc-lu-quant)
+  (define-key calc-mode-map "ld" 'calc-db)
+  (define-key calc-mode-map "ln" 'calc-np)
+  (define-key calc-mode-map "l+" 'calc-lu-plus)
+  (define-key calc-mode-map "l-" 'calc-lu-minus)
+  (define-key calc-mode-map "l*" 'calc-lu-times)
+  (define-key calc-mode-map "l/" 'calc-lu-divide)
+  (define-key calc-mode-map "ls" 'calc-spn)
+  (define-key calc-mode-map "lm" 'calc-midi)
+  (define-key calc-mode-map "lf" 'calc-freq)
+  
+  (define-key calc-mode-map "l?" 'calc-l-prefix-help)
+
   (define-key calc-mode-map "m" nil)
   (define-key calc-mode-map "m?" 'calc-m-prefix-help)
   (define-key calc-mode-map "ma" 'calc-algebraic-mode)
@@ -546,10 +560,6 @@
   (define-key calc-mode-map "ud" 'calc-define-unit)
   (define-key calc-mode-map "ue" 'calc-explain-units)
   (define-key calc-mode-map "ug" 'calc-get-unit-definition)
-  (define-key calc-mode-map "ul+" 'calc-luplus)
-  (define-key calc-mode-map "ul-" 'calc-luminus)
-  (define-key calc-mode-map "ull" 'calc-level)
-  (define-key calc-mode-map "ul?" 'calc-ul-prefix-help)
   (define-key calc-mode-map "up" 'calc-permanent-units)
   (define-key calc-mode-map "ur" 'calc-remove-units)
   (define-key calc-mode-map "us" 'calc-simplify-units)
@@ -933,8 +943,11 @@ calc-store-value calc-var-name)
  ("calc-stuff" calc-explain-why calcFunc-clean
 calcFunc-pclean calcFunc-pfloat calcFunc-pfrac)
 
- ("calc-units" calcFunc-usimplify calcFunc-luplus
-calcFunc-luminus calcFunc-fieldlevel calcFunc-powerlevel
+ ("calc-units" calcFunc-usimplify calcFunc-lufadd calcFunc-lupadd
+calcFunc-lufsub calcFunc-lupsub calcFunc-lufmul calcFunc-lupmul
+calcFunc-lufdiv calcFunc-lupdiv calcFunc-lufquant calcFunc-lupquant
+calcFunc-dbfield calcFunc-dbpower calcFunc-npfield
+calcFunc-nppower calcFunc-spn calcFunc-midi calcFunc-freq
 math-build-units-table math-build-units-table-buffer
 math-check-unit-name math-convert-temperature math-convert-units
 math-extract-units math-remove-units math-simplify-units
@@ -1051,7 +1064,7 @@ calc-full-help calc-g-prefix-help calc-help-prefix
 calc-hyperbolic-prefix-help calc-inv-hyp-prefix-help calc-option-prefix-help
 calc-inverse-prefix-help calc-j-prefix-help calc-k-prefix-help
 calc-m-prefix-help calc-r-prefix-help calc-s-prefix-help
-calc-t-prefix-help calc-u-prefix-help calc-ul-prefix-help
+calc-t-prefix-help calc-u-prefix-help calc-l-prefix-help
 calc-v-prefix-help)
 
  ("calc-incom" calc-begin-complex calc-begin-vector calc-comma
@@ -1166,7 +1179,10 @@ calc-convert-temperature calc-convert-units calc-define-unit
 calc-enter-units-table calc-explain-units calc-extract-units
 calc-get-unit-definition calc-permanent-units calc-quick-units
 calc-remove-units calc-simplify-units calc-undefine-unit
-calc-view-units-table calc-luplus calc-luminus calc-level)
+calc-view-units-table calc-lu-quant calc-db
+calc-np calc-lu-plus calc-lu-minus
+calc-lu-times calc-lu-divide calc-spn calc-midi
+calc-freq)
 
  ("calc-vec" calc-arrange-vector calc-build-vector calc-cnorm
 calc-conj-transpose calc-cons calc-cross calc-kron calc-diag
@@ -2856,33 +2872,25 @@ If X is not an error form, return 1."
 
 (defmacro math-defintegral (funcs &rest code)
   (setq math-integral-cache nil)
-  (append '(progn)
-	  (mapcar (function
-		   (lambda (func)
-		     (list 'put (list 'quote func) ''math-integral
-			   (list 'nconc
-				 (list 'get (list 'quote func) ''math-integral)
-				 (list 'list
-				       (list 'function
-					     (append '(lambda (u))
-						     code)))))))
-		  (if (symbolp funcs) (list funcs) funcs))))
+  (cons 'progn
+        (mapcar #'(lambda (func)
+                    `(put ',func 'math-integral
+                          (nconc
+                           (get ',func 'math-integral)
+                           (list
+                            #'(lambda (u) ,@code)))))
+                (if (symbolp funcs) (list funcs) funcs))))
 (put 'math-defintegral 'lisp-indent-hook 1)
 
 (defmacro math-defintegral-2 (funcs &rest code)
   (setq math-integral-cache nil)
-  (append '(progn)
-	  (mapcar (function
-		   (lambda (func)
-		     (list 'put (list 'quote func) ''math-integral-2
-			   (list 'nconc
-				 (list 'get (list 'quote func)
-				       ''math-integral-2)
-				 (list 'list
-				       (list 'function
-					     (append '(lambda (u v))
-						     code)))))))
-		  (if (symbolp funcs) (list funcs) funcs))))
+  (cons 'progn
+        (mapcar #'(lambda (func)
+                    `(put ',func 'math-integral-2
+                          `(nconc
+                            (get ',func 'math-integral-2)
+                            (list #'(lambda (u v) ,@code)))))
+                (if (symbolp funcs) (list funcs) funcs))))
 (put 'math-defintegral-2 'lisp-indent-hook 1)
 
 (defvar var-IntegAfterRules 'calc-IntegAfterRules)

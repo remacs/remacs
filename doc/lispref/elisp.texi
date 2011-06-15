@@ -14,7 +14,7 @@
 @c in general, keep the following line commented out, unless doing a
 @c copy of this manual that will be published.  The manual should go
 @c onto the distribution in the full, 8.5 x 11" size.
-@c set smallbook
+@c @smallbook
 
 @ifset smallbook
 @smallbook
@@ -62,7 +62,9 @@ developing GNU and promoting software freedom.''
 @end quotation
 @end copying
 
-@dircategory Emacs
+@documentencoding ISO-8859-1
+
+@dircategory GNU Emacs Lisp
 @direntry
 * Elisp: (elisp).       The Emacs Lisp Reference Manual.
 @end direntry
@@ -826,7 +828,7 @@ Font Lock Mode
 Multiline Font Lock Constructs
 
 * Font Lock Multiline::     Marking multiline chunks with a text property.
-* Region to Fontify::       Controlling which region gets refontified
+* Region to Refontify::     Controlling which region gets refontified
                               after a buffer change.
 
 Documentation
@@ -1399,6 +1401,7 @@ Preparing Lisp code for distribution
 * Packaging Basics::        The basic concepts of Emacs Lisp packages.
 * Simple Packages::         How to package a single .el file.
 * Multi-file Packages::     How to package multiple files.
+* Package Archives::        Maintaining package archives.
 
 Starting Up Emacs
 

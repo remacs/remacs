@@ -246,7 +246,7 @@
 ;; [C-d] Moves (i.e. deletes and inserts) a single character to the
 ;;       global mark.
 ;; [backspace] deletes the character before the global mark, while
-;; [delete] deltes the character after the global mark.
+;; [delete] deletes the character after the global mark.
 
 ;; [S-C-space] Jumps to and cancels the global mark.
 ;; [C-u S-C-space] Cancels the global mark (stays in current buffer).
@@ -1518,6 +1518,9 @@ If ARG is the atom `-', scroll upward by nearly full screen."
    c-beginning-of-statement c-end-of-statement))
   (put cmd 'CUA 'move))
 
+;; Only called if pc-selection-mode is t, which means pc-select is loaded.
+(declare-function pc-selection-mode "pc-select" (&optional arg))
+
 ;; State prior to enabling cua-mode
 ;; Value is a list with the following elements:
 ;;   transient-mark-mode
@@ -1624,7 +1627,11 @@ shifted movement key, set `cua-highlight-region-shift-only'."
   "Enable CUA selection mode without the C-z/C-x/C-c/C-v bindings."
   (interactive "P")
   (setq-default cua-enable-cua-keys nil)
-  (cua-mode arg))
+  (if (not (called-interactively-p 'any))
+      (cua-mode arg)
+    ;; Use call-interactive to turn a nil prefix arg into `toggle'.
+    (call-interactively 'cua-mode)
+    (customize-mark-as-set 'cua-enable-cua-keys)))
 
 
 (defun cua-debug ()

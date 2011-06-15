@@ -158,7 +158,7 @@ long context_menu_value = 0;
 /* display update */
 NSPoint last_mouse_motion_position;
 static NSRect last_mouse_glyph;
-static unsigned long last_mouse_movement_time = 0;
+static Time last_mouse_movement_time = 0;
 static Lisp_Object last_mouse_motion_frame;
 static EmacsScroller *last_mouse_scroll_bar = nil;
 static struct frame *ns_updating_frame;
@@ -170,6 +170,7 @@ BOOL ns_in_resize = NO;
 static BOOL ns_fake_keydown = NO;
 int ns_tmp_flags; /* FIXME */
 struct nsfont_info *ns_tmp_font; /* FIXME */
+static BOOL ns_menu_bar_is_hidden = NO;
 /*static int debug_lock = 0; */
 
 /* event loop */
@@ -189,7 +190,7 @@ static NSMutableArray *ns_pending_files, *ns_pending_service_names,
   *ns_pending_service_args;
 static BOOL inNsSelect = 0;
 
-/* Convert modifiers in a NeXTSTEP event to emacs style modifiers.  */
+/* Convert modifiers in a NeXTstep event to emacs style modifiers.  */
 #define NS_FUNCTION_KEY_MASK 0x800000
 #define NSLeftControlKeyMask    (0x000001 | NSControlKeyMask)
 #define NSRightControlKeyMask   (0x002000 | NSControlKeyMask)
@@ -505,6 +506,125 @@ ns_resize_handle_rect (NSWindow *window)
 }
 
 
+//
+// Window constraining
+// -------------------
+//
+// To ensure that the windows are not placed under the menu bar, they
+// are typically moved by the call-back constrainFrameRect. However,
+// by overriding it, it's possible to inhibit this, leaving the window
+// in it's original position.
+//
+// It's possible to hide the menu bar. However, technically, it's only
+// possible to hide it when the application is active. To ensure that
+// this work properly, the menu bar and window constraining are
+// deferred until the application becomes active.
+//
+// Even though it's not possible to manually move a window above the
+// top of the screen, it is allowed if it's done programmatically,
+// when the menu is hidden. This allows the editable area to cover the
+// full screen height.
+//
+// Test cases
+// ----------
+//
+// Use the following extra files:
+//
+//    init.el:
+//       ;; Hide menu and place frame slightly above the top of the screen.
+//       (setq ns-auto-hide-menu-bar t)
+//       (set-frame-position (selected-frame) 0 -20)
+//
+// Test 1:
+//
+//    emacs -Q -l init.el
+//
+//    Result: No menu bar, and the title bar should be above the screen.
+//
+// Test 2:
+//
+//    emacs -Q
+//
+//    Result: Menu bar visible, frame placed immediately below the menu.
+//
+
+static void
+ns_constrain_all_frames (void)
+{
+  Lisp_Object tail, frame;
+
+  FOR_EACH_FRAME (tail, frame)
+    {
+      struct frame *f = XFRAME (frame);
+      if (FRAME_NS_P (f))
+        {
+          NSView *view = FRAME_NS_VIEW (f);
+          /* This no-op will trigger the default window placing
+           * constriant system. */
+          f->output_data.ns->dont_constrain = 0;
+          [[view window] setFrameOrigin:[[view window] frame].origin];
+        }
+    }
+}
+
+
+/* True, if the menu bar should be hidden.  */
+
+static BOOL
+ns_menu_bar_should_be_hidden (void)
+{
+  return !NILP (ns_auto_hide_menu_bar)
+    && [NSApp respondsToSelector:@selector(setPresentationOptions:)];
+}
+
+
+/* Show or hide the menu bar, based on user setting.  */
+
+static void
+ns_update_auto_hide_menu_bar (void)
+{
+#ifndef MAC_OS_X_VERSION_10_6
+#define MAC_OS_X_VERSION_10_6 1060
+#endif
+#ifdef NS_IMPL_COCOA
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_6
+  BLOCK_INPUT;
+
+  NSTRACE (ns_update_auto_hide_menu_bar);
+
+  if (NSApp != nil
+      && [NSApp isActive]
+      && [NSApp respondsToSelector:@selector(setPresentationOptions:)])
+    {
+      // Note, "setPresentationOptions" triggers an error unless the
+      // application is active.
+      BOOL menu_bar_should_be_hidden = ns_menu_bar_should_be_hidden ();
+
+      if (menu_bar_should_be_hidden != ns_menu_bar_is_hidden)
+        {
+          NSApplicationPresentationOptions options
+            = NSApplicationPresentationAutoHideDock;
+
+          if (menu_bar_should_be_hidden)
+            options |= NSApplicationPresentationAutoHideMenuBar;
+
+          [NSApp setPresentationOptions: options];
+
+          ns_menu_bar_is_hidden = menu_bar_should_be_hidden;
+
+          if (!ns_menu_bar_is_hidden)
+            {
+              ns_constrain_all_frames ();
+            }
+        }
+    }
+
+  UNBLOCK_INPUT;
+#endif
+#endif
+}
+
+
 static void
 ns_update_begin (struct frame *f)
 /* --------------------------------------------------------------------------
@@ -514,6 +634,8 @@ ns_update_begin (struct frame *f)
 {
   NSView *view = FRAME_NS_VIEW (f);
   NSTRACE (ns_update_begin);
+
+  ns_update_auto_hide_menu_bar ();
 
   ns_updating_frame = f;
   [view lockFocus];
@@ -1072,7 +1194,7 @@ x_set_offset (struct frame *f, int xoff, int yoff, int change_grav)
         : f->left_pos;
       /* We use visibleFrame here to take menu bar into account.
 	 Ideally we should also adjust left/top with visibleFrame.origin.  */
-      
+
       f->top_pos = f->size_hint_flags & YNegative
         ? ([screen visibleFrame].size.height + f->top_pos
            - FRAME_PIXEL_HEIGHT (f) - FRAME_NS_TITLEBAR_HEIGHT (f)
@@ -1154,7 +1276,7 @@ x_set_window_size (struct frame *f, int change_grav, int cols, int rows)
     FRAME_TOOLBAR_HEIGHT (f) = 0;
 
   wr.size.width = pixelwidth + f->border_width;
-  wr.size.height = pixelheight + FRAME_NS_TITLEBAR_HEIGHT (f) 
+  wr.size.height = pixelheight + FRAME_NS_TITLEBAR_HEIGHT (f)
                   + FRAME_TOOLBAR_HEIGHT (f);
 
   /* Do not try to constrain to this screen.  We may have multiple
@@ -1667,7 +1789,7 @@ note_mouse_movement (struct frame *frame, float x, float y)
 static void
 ns_mouse_position (struct frame **fp, int insist, Lisp_Object *bar_window,
                    enum scroll_bar_part *part, Lisp_Object *x, Lisp_Object *y,
-                   unsigned long *time)
+                   Time *time)
 /* --------------------------------------------------------------------------
     External (hook): inform emacs about mouse position and hit parts.
     If a scrollbar is being dragged, set bar_window, part, x, y, time.
@@ -2230,15 +2352,12 @@ ns_draw_window_cursor (struct window *w, struct glyph_row *glyph_row,
                        int x, int y, int cursor_type, int cursor_width,
                        int on_p, int active_p)
 /* --------------------------------------------------------------------------
-     External call (RIF): draw cursor
-     (modeled after x_draw_window_cursor
-     FIXME: cursor_width is effectively bogus -- it sometimes gets set
-     in xdisp.c set_frame_cursor_types, sometimes left uninitialized;
-     DON'T USE IT (no other terms do)
+     External call (RIF): draw cursor.
+     Note that CURSOR_WIDTH is meaningful only for (h)bar cursors.
    -------------------------------------------------------------------------- */
 {
   NSRect r, s;
-  int fx, fy, h;
+  int fx, fy, h, cursor_height;
   struct frame *f = WINDOW_XFRAME (w);
   struct glyph *phys_cursor_glyph;
   int overspill;
@@ -2251,7 +2370,6 @@ ns_draw_window_cursor (struct window *w, struct glyph_row *glyph_row,
      and mini-buffer.  */
 
   NSTRACE (dumpcursor);
-//fprintf(stderr, "drawcursor (%d,%d) activep = %d\tonp = %d\tc_type = %d\twidth = %d\n",x,y, active_p,on_p,cursor_type,cursor_width);
 
   if (!on_p)
     return;
@@ -2276,7 +2394,27 @@ ns_draw_window_cursor (struct window *w, struct glyph_row *glyph_row,
       return;
     }
 
+  /* We draw the cursor (with NSRectFill), then draw the glyph on top
+     (other terminals do it the other way round).  We must set
+     w->phys_cursor_width to the cursor width.  For bar cursors, that
+     is CURSOR_WIDTH; for box cursors, it is the glyph width.  */
   get_phys_cursor_geometry (w, glyph_row, phys_cursor_glyph, &fx, &fy, &h);
+
+  /* The above get_phys_cursor_geometry call set w->phys_cursor_width
+     to the glyph width; replace with CURSOR_WIDTH for (V)BAR cursors. */
+  if (cursor_type == BAR_CURSOR)
+    {
+      if (cursor_width < 1)
+	cursor_width = max (FRAME_CURSOR_WIDTH (f), 1);
+      w->phys_cursor_width = cursor_width;
+    }
+  /* If we have an HBAR, "cursor_width" MAY specify height. */
+  else if (cursor_type == HBAR_CURSOR)
+    {
+      cursor_height = (cursor_width < 1) ? lrint (0.25 * h) : cursor_width;
+      fy += h - cursor_height;
+      h = cursor_height;
+    }
 
   r.origin.x = fx, r.origin.y = fy;
   r.size.height = h;
@@ -2285,7 +2423,7 @@ ns_draw_window_cursor (struct window *w, struct glyph_row *glyph_row,
   /* FIXME: if we overwrite the internal border area, it does not get erased;
      fix by truncating cursor, but better would be to erase properly */
   overspill = r.origin.x + r.size.width -
-    WINDOW_TEXT_TO_FRAME_PIXEL_X (w, WINDOW_BOX_RIGHT_EDGE_X (w) 
+    WINDOW_TEXT_TO_FRAME_PIXEL_X (w, WINDOW_BOX_RIGHT_EDGE_X (w)
       - WINDOW_TOTAL_FRINGE_WIDTH (w) - FRAME_INTERNAL_BORDER_WIDTH (f));
   if (overspill > 0)
     r.size.width -= overspill;
@@ -2328,15 +2466,10 @@ ns_draw_window_cursor (struct window *w, struct glyph_row *glyph_row,
       [FRAME_CURSOR_COLOR (f) set];
       break;
     case HBAR_CURSOR:
-      s = r;
-      s.origin.y += lrint (0.75 * s.size.height);
-      s.size.height = lrint (s.size.height * 0.25);
-      NSRectFill (s);
+      NSRectFill (r);
       break;
     case BAR_CURSOR:
       s = r;
-      s.size.width = min (cursor_width, 2); //FIXME(see above)
-
       /* If the character under cursor is R2L, draw the bar cursor
          on the right of its glyph, rather than on the left.  */
       cursor_glyph = get_phys_cursor_glyph (w);
@@ -2984,7 +3117,7 @@ ns_draw_glyph_string (struct glyph_string *s)
           NS_FACE_BACKGROUND (s->face) = NS_FACE_FOREGROUND (s->face);
           NS_FACE_FOREGROUND (s->face) = tmp;
         }
-                    
+
       ns_tmp_font->font.driver->draw
         (s, 0, s->nchars, s->x, s->y,
          (ns_tmp_flags == NS_DUMPGLYPH_NORMAL && !s->background_filled_p)
@@ -3010,9 +3143,9 @@ ns_draw_glyph_string (struct glyph_string *s)
       else
         ns_maybe_dumpglyphs_background
           (s, s->first_glyph->type == COMPOSITE_GLYPH);
-      /* ... */ 
+      /* ... */
       /* Not yet implemented.  */
-      /* ... */ 
+      /* ... */
       ns_unfocus (s->f);
       break;
 
@@ -3762,7 +3895,7 @@ ns_term_init (Lisp_Object display_name)
 
   terminal->kboard = (KBOARD *) xmalloc (sizeof (KBOARD));
   init_kboard (terminal->kboard);
-  terminal->kboard->Vwindow_system = Qns;
+  KVAR (terminal->kboard, Vwindow_system) = Qns;
   terminal->kboard->next_kboard = all_kboards;
   all_kboards = terminal->kboard;
   /* Don't let the initial kboard remain current longer than necessary.
@@ -3785,7 +3918,7 @@ ns_term_init (Lisp_Object display_name)
   strncpy (terminal->name, SDATA (display_name), SBYTES (display_name));
   terminal->name[SBYTES (display_name)] = 0;
 
-  UNBLOCK_INPUT; 
+  UNBLOCK_INPUT;
 
   if (!inhibit_x_resources)
     {
@@ -3802,7 +3935,7 @@ ns_term_init (Lisp_Object display_name)
 			 stringForKey: @"AppleHighlightColor"];
   if (ns_selection_color == nil)
     ns_selection_color = NS_SELECTION_COLOR_DEFAULT;
-  
+
   {
     NSColorList *cl = [NSColorList colorListNamed: @"Emacs"];
 
@@ -3898,7 +4031,7 @@ ns_term_init (Lisp_Object display_name)
                    keyEquivalent: @"q"
                          atIndex: 9];
 
-    item = [mainMenu insertItemWithTitle: ns_app_name                       
+    item = [mainMenu insertItemWithTitle: ns_app_name
                                   action: @selector (menuDown:)
                            keyEquivalent: @""
                                  atIndex: 0];
@@ -3925,6 +4058,8 @@ ns_term_init (Lisp_Object display_name)
 void
 ns_term_shutdown (int sig)
 {
+  [[NSUserDefaults standardUserDefaults] synchronize];
+
   /* code not reached in emacs.c after this is called by shut_down_emacs: */
   if (STRINGP (Vauto_save_list_file_name))
     unlink (SDATA (Vauto_save_list_file_name));
@@ -4103,7 +4238,7 @@ ns_term_shutdown (int sig)
         -appShouldTerminate
           Cancel -> Nothing else
           Accept ->
-	  
+
 	  -terminate
 	  KEY_NS_POWER_OFF, (save-buffers-kill-emacs)
 	  ns_term_shutdown()
@@ -4113,10 +4248,10 @@ ns_term_shutdown (int sig)
 - (void) terminate: (id)sender
 {
   struct frame *emacsframe = SELECTED_FRAME ();
-  
+
   if (!emacs_event)
     return;
-  
+
   emacs_event->kind = NS_NONKEY_EVENT;
   emacs_event->code = KEY_NS_POWER_OFF;
   emacs_event->arg = Qt; /* mark as non-key event */
@@ -4194,7 +4329,13 @@ ns_term_shutdown (int sig)
 }
 - (void)applicationDidBecomeActive: (NSNotification *)notification
 {
+  NSTRACE (applicationDidBecomeActive);
+
   //ns_app_active=YES;
+
+  ns_update_auto_hide_menu_bar ();
+  // No constrining takes place when the application is not active.
+  ns_constrain_all_frames ();
 }
 - (void)applicationDidResignActive: (NSNotification *)notification
 {
@@ -4418,7 +4559,7 @@ ns_term_shutdown (int sig)
       code = ([[theEvent charactersIgnoringModifiers] length] == 0) ?
         0 : [[theEvent charactersIgnoringModifiers] characterAtIndex: 0];
       /* (Carbon way: [theEvent keyCode]) */
-      
+
       /* is it a "function key"? */
       fnKeysym = ns_convert_key (code);
       if (fnKeysym)
@@ -4542,6 +4683,7 @@ ns_term_shutdown (int sig)
 
       /* if it was a function key or had modifiers, pass it directly to emacs */
       if (fnKeysym || (emacs_event->modifiers
+                       && (emacs_event->modifiers != shift_modifier)
                        && [[theEvent charactersIgnoringModifiers] length] > 0))
 /*[[theEvent characters] length] */
         {
@@ -5445,7 +5587,7 @@ ns_term_shutdown (int sig)
 
   /*
     drawRect: may be called (at least in OS X 10.5) for invisible
-    views as well for some reason.  Thus, do not infer visibility 
+    views as well for some reason.  Thus, do not infer visibility
     here.
 
     emacsframe->async_visible = 1;
@@ -5677,7 +5819,10 @@ ns_term_shutdown (int sig)
   /* When making the frame visible for the first time, we want to
      constrain.  Other times not.  */
   struct frame *f = ((EmacsView *)[self delegate])->emacsframe;
-  if (f->output_data.ns->dont_constrain)
+  NSTRACE (constrainFrameRect);
+
+  if (f->output_data.ns->dont_constrain
+      || ns_menu_bar_should_be_hidden ())
     return frameRect;
 
   f->output_data.ns->dont_constrain = 1;
@@ -5783,6 +5928,7 @@ ns_term_shutdown (int sig)
   win = nwin;
   condemned = NO;
   pixel_height = NSHeight (r);
+  if (pixel_height == 0) pixel_height = 1;
   min_portion = 20 / pixel_height;
 
   frame = XFRAME (XWINDOW (win)->frame);
@@ -5812,6 +5958,7 @@ ns_term_shutdown (int sig)
   NSTRACE (EmacsScroller_setFrame);
 /*  BLOCK_INPUT; */
   pixel_height = NSHeight (newRect);
+  if (pixel_height == 0) pixel_height = 1;
   min_portion = 20 / pixel_height;
   [super setFrame: newRect];
   [self display];
@@ -6347,6 +6494,11 @@ allowing it to be used at a lower level for accented character entry.");
   staticpro (&last_mouse_motion_frame);
   last_mouse_motion_frame = Qnil;
 
+  DEFVAR_LISP ("ns-auto-hide-menu-bar", ns_auto_hide_menu_bar,
+               doc: /* Non-nil means that the menu bar is hidden, but appears when the mouse is near.
+Only works on OSX 10.6 or later.  */);
+  ns_auto_hide_menu_bar = Qnil;
+
   /* TODO: move to common code */
   DEFVAR_LISP ("x-toolkit-scroll-bars", Vx_toolkit_scroll_bars,
 	       doc: /* If not nil, Emacs uses toolkit scroll bars.  */);
@@ -6381,5 +6533,3 @@ baseline level.  The default value is nil.  */);
   /* Tell emacs about this window system. */
   Fprovide (intern ("ns"), Qnil);
 }
-
-
