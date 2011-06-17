@@ -1,3 +1,7 @@
+2011-06-17  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* buffer.c (struct sortvec.priority): Now EMACS_INT, not int.
+
 2011-06-16  Paul Eggert  <eggert@cs.ucla.edu>
 
 	* lisp.h: Include <limits.h>, for INT_MAX, LONG_MAX, LLONG_MAX.
@@ -1345,7 +1349,7 @@
 2011-05-18  Christoph Scholtes  <cschol2112@googlemail.com>
 
 	* menu.c: Include limits.h (fixes the MS-Windows build broken by
-	revision 104625).
+	2011-06-18T18:49:19Z!cyd@stupidchicken.com).
 
 2011-05-18  Paul Eggert  <eggert@cs.ucla.edu>
 
