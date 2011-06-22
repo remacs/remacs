@@ -802,20 +802,12 @@ xwidget_touched (struct xwidget_view *xw)
 void
 xwidget_end_redisplay (struct glyph_matrix *matrix)
 {
-  return; //until I convert this to MVC
-
+  //return; //until I convert this to MVC
 
   
   int i;
   struct xwidget *xw;
   int area;
-
-  //dont change anything if minibuffer is selected this redisplay
-  //this is mostly a workaround to reduce the phantoming of xwidgets
-  // this is special case handling and it doesnt work too well.
-  /* if( (XWINDOW (FRAME_MINIBUF_WINDOW (SELECTED_FRAME()))) == */
-  /*     (XWINDOW (FRAME_SELECTED_WINDOW (SELECTED_FRAME())))) */
-  /*   return;  */
 
   region_modified = 0;
   xwidget_start_redisplay ();
@@ -855,7 +847,13 @@ xwidget_end_redisplay (struct glyph_matrix *matrix)
                         {
                           // printf("row %d not enabled\n", i);
                         }
-                      xwidget_touch (&xwidgets[glyph->u.xwidget_id]);
+                        /*
+                          the only call to xwidget_end_redisplay is in dispnew and looks like:
+                          if ((XWINDOW(FRAME_SELECTED_WINDOW (SELECTED_FRAME()))) ==  (w))
+                          xwidget_end_redisplay(w->current_matrix);
+                        */
+                      xwidget_touch (xwidget_view_lookup(&xwidgets[glyph->u.xwidget_id],
+                                                         (XWINDOW(FRAME_SELECTED_WINDOW (SELECTED_FRAME())))));
                     }
                 }
             }
@@ -864,13 +862,14 @@ xwidget_end_redisplay (struct glyph_matrix *matrix)
 
   for (i = 0; i < MAX_XWIDGETS; i++)
     {
-      xw = &xwidgets[i];
-      if (xw->initialized)
+      struct xwidget_view* xv = &xwidget_views[i];
+        
+      if (xv->initialized && (         xv->w ==                   (XWINDOW(FRAME_SELECTED_WINDOW (SELECTED_FRAME())))))
         {
-          if (xwidget_touched(xw))
-            xwidget_show (xw);
+          if (xwidget_touched(xv))
+            xwidget_show_view (xv);
           else
-            xwidget_hide (xw);
+            xwidget_hide_view (xv);
         }
     }
 }
