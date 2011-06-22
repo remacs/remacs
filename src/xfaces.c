@@ -463,7 +463,8 @@ static Lisp_Object resolve_face_name (Lisp_Object, int);
 static void set_font_frame_param (Lisp_Object, Lisp_Object);
 static int get_lface_attributes (struct frame *, Lisp_Object, Lisp_Object *,
                                  int, struct named_merge_point *);
-static int load_pixmap (struct frame *, Lisp_Object, unsigned *, unsigned *);
+static ptrdiff_t load_pixmap (struct frame *, Lisp_Object,
+			      unsigned *, unsigned *);
 static struct frame *frame_or_selected_frame (Lisp_Object, int);
 static void load_face_colors (struct frame *, struct face *, Lisp_Object *);
 static void free_face_colors (struct frame *, struct face *);
@@ -963,10 +964,10 @@ the pixmap.  Bits are stored row by row, each row occupies
    zero.  Store the bitmap width in *W_PTR and its height in *H_PTR,
    if these pointers are not null.  */
 
-static int
+static ptrdiff_t
 load_pixmap (FRAME_PTR f, Lisp_Object name, unsigned int *w_ptr, unsigned int *h_ptr)
 {
-  int bitmap_id;
+  ptrdiff_t bitmap_id;
 
   if (NILP (name))
     return 0;
@@ -1858,8 +1859,7 @@ the WIDTH times as wide as FACE on FRAME.  */)
 /* Check consistency of Lisp face attribute vector ATTRS.  */
 
 static void
-check_lface_attrs (attrs)
-     Lisp_Object *attrs;
+check_lface_attrs (Lisp_Object *attrs)
 {
   xassert (UNSPECIFIEDP (attrs[LFACE_FAMILY_INDEX])
 	   || IGNORE_DEFFACE_P (attrs[LFACE_FAMILY_INDEX])
@@ -1930,8 +1930,7 @@ check_lface_attrs (attrs)
 /* Check consistency of attributes of Lisp face LFACE (a Lisp vector).  */
 
 static void
-check_lface (lface)
-     Lisp_Object lface;
+check_lface (Lisp_Object lface)
 {
   if (!NILP (lface))
     {
@@ -2008,24 +2007,6 @@ push_named_merge_point (struct named_merge_point *new_named_merge_point,
 }
 
 
-
-#if 0				/* Seems to be unused.  */
-static Lisp_Object
-internal_resolve_face_name (nargs, args)
-     int nargs;
-     Lisp_Object *args;
-{
-  return Fget (args[0], args[1]);
-}
-
-static Lisp_Object
-resolve_face_name_error (ignore)
-     Lisp_Object ignore;
-{
-  return Qnil;
-}
-#endif
-
 /* Resolve face name FACE_NAME.  If FACE_NAME is a string, intern it
    to make it a symbol.  If FACE_NAME is an alias for another face,
    return that face's name.
@@ -4399,6 +4380,21 @@ cache_face (struct face_cache *c, struct face *face, unsigned int hash)
       break;
   face->id = i;
 
+#if GLYPH_DEBUG
+  /* Check that FACE got a unique id.  */
+  {
+    int j, n;
+    struct face *face1;
+
+    for (j = n = 0; j < FACE_CACHE_BUCKETS_SIZE; ++j)
+      for (face1 = c->buckets[j]; face1; face1 = face1->next)
+	if (face1->id == i)
+	  ++n;
+
+    xassert (n == 1);
+  }
+#endif /* GLYPH_DEBUG */
+
   /* Maybe enlarge C->faces_by_id.  */
   if (i == c->used)
     {
@@ -4414,21 +4410,6 @@ cache_face (struct face_cache *c, struct face *face, unsigned int hash)
 	}
       c->used++;
     }
-
-#if GLYPH_DEBUG
-  /* Check that FACE got a unique id.  */
-  {
-    int j, n;
-    struct face *face;
-
-    for (j = n = 0; j < FACE_CACHE_BUCKETS_SIZE; ++j)
-      for (face = c->buckets[j]; face; face = face->next)
-	if (face->id == i)
-	  ++n;
-
-    xassert (n == 1);
-  }
-#endif /* GLYPH_DEBUG */
 
   c->faces_by_id[i] = face;
 }
@@ -5954,7 +5935,7 @@ face_at_buffer_position (struct window *w, EMACS_INT pos,
   struct frame *f = XFRAME (w->frame);
   Lisp_Object attrs[LFACE_VECTOR_SIZE];
   Lisp_Object prop, position;
-  int i, noverlays;
+  ptrdiff_t i, noverlays;
   Lisp_Object *overlay_vec;
   Lisp_Object frame;
   EMACS_INT endpos;
@@ -6331,8 +6312,7 @@ where R,G,B are numbers between 0 and 255 and name is an arbitrary string.  */)
 /* Print the contents of the realized face FACE to stderr.  */
 
 static void
-dump_realized_face (face)
-     struct face *face;
+dump_realized_face (struct face *face)
 {
   fprintf (stderr, "ID: %d\n", face->id);
 #ifdef HAVE_X_WINDOWS

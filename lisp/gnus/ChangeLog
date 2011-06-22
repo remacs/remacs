@@ -1,3 +1,38 @@
+2011-06-21  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* auth-source.el (auth-source-netrc-create): Don't print all tokens in
+	%S format, since that looks odd.
+	(auth-sources): Prefer the ~/.authinfo file over the ~/.authinfo.gpg
+	file, especially when saving.
+
+2011-06-21  Andrew Cohen  <cohen@andy.bu.edu>
+
+	* nnimap.el (nnimap-find-article-by-message-id): return nil when no
+	article found.
+
+2011-06-18  Teodor Zlatanov  <tzz@lifelogs.com>
+
+	* auth-source.el (auth-source-netrc-use-gpg-tokens): Replace
+	`auth-source-save-secrets' with a more sensitive alist that can be
+	configured per file.  Experimental, so defaults to 'never.
+	(auth-source-netrc-create): Use it.  Still experimental code.
+	(with-auth-source-epa-overrides): Use `find-file-hooks' if
+	`find-file-hook' is unbound (XEmacs fix).  Fix backquoting bug.
+
+2011-06-16  Teodor Zlatanov  <tzz@lifelogs.com>
+
+	* auth-source.el (auth-source-save-secrets): New variable to control if
+	secret tokens should be saved encrypted.
+	(auth-source-netrc-parse, auth-source-netrc-search): Pass the file name
+	to `auth-source-netrc-normalize'.
+	(with-auth-source-epa-overrides): Add convenience macro.  Don't depend
+	on the EPA variables being defined.
+	(auth-source-epa-make-gpg-token): Convert text to a "gpg:" token.
+	(auth-source-netrc-normalize): Convert "gpg:" tokens back to text in
+	the lexical-let closure.
+	(auth-source-netrc-create): Create "gpg:" tokens according to
+	`auth-source-save-secrets'.
+
 2011-06-10  Katsumi Yamaoka  <yamaoka@jpl.org>
 
 	* gnus-group.el (gnus-group-update-group): Add new argument

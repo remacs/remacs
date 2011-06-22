@@ -892,7 +892,8 @@ not the name of the pty that Emacs uses to talk with that terminal.  */)
 
 DEFUN ("set-process-buffer", Fset_process_buffer, Sset_process_buffer,
        2, 2, 0,
-       doc: /* Set buffer associated with PROCESS to BUFFER (a buffer, or nil).  */)
+       doc: /* Set buffer associated with PROCESS to BUFFER (a buffer, or nil).
+Return BUFFER.  */)
   (register Lisp_Object process, Lisp_Object buffer)
 {
   struct Lisp_Process *p;
@@ -1186,7 +1187,7 @@ Returns nil if format of ADDRESS is invalid.  */)
   if (VECTORP (address))  /* AF_INET or AF_INET6 */
     {
       register struct Lisp_Vector *p = XVECTOR (address);
-      EMACS_UINT size = p->header.size;
+      EMACS_INT size = p->header.size;
       Lisp_Object args[10];
       int nargs, i;
 

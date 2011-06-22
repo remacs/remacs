@@ -145,7 +145,7 @@ static Lisp_Object Qcompound_text, Qcancel_timer;
 Lisp_Object Qfont_param;
 
 #if GLYPH_DEBUG
-int image_cache_refcount, dpyinfo_refcount;
+static int image_cache_refcount, dpyinfo_refcount;
 #endif
 
 #if defined (USE_GTK) && defined (HAVE_FREETYPE)
@@ -1883,7 +1883,7 @@ xic_create_fontsetname (const char *base_fontname, int motif)
   /* Make a fontset name from the base font name.  */
   if (xic_defaut_fontset == base_fontname)
     { /* There is no base font name, use the default.  */
-      int len = strlen (base_fontname) + 2;
+      ptrdiff_t len = strlen (base_fontname) + 2;
       fontsetname = xmalloc (len);
       memset (fontsetname, 0, len);
       strcpy (fontsetname, base_fontname);
@@ -1896,7 +1896,7 @@ xic_create_fontsetname (const char *base_fontname, int motif)
 	 - the base font where the charset spec is replaced by -*-*.
 	 - the same but with the family also replaced with -*-*-.  */
       const char *p = base_fontname;
-      int i;
+      ptrdiff_t i;
 
       for (i = 0; *p; p++)
 	if (*p == '-') i++;
@@ -1904,7 +1904,8 @@ xic_create_fontsetname (const char *base_fontname, int motif)
 	{ /* As the font name doesn't conform to XLFD, we can't
 	     modify it to generalize it to allcs and allfamilies.
 	     Use the specified font plus the default.  */
-	  int len = strlen (base_fontname) + strlen (xic_defaut_fontset) + 3;
+	  ptrdiff_t len =
+	    strlen (base_fontname) + strlen (xic_defaut_fontset) + 3;
 	  fontsetname = xmalloc (len);
 	  memset (fontsetname, 0, len);
 	  strcpy (fontsetname, base_fontname);
@@ -1913,7 +1914,7 @@ xic_create_fontsetname (const char *base_fontname, int motif)
 	}
       else
 	{
-	  int len;
+	  ptrdiff_t len;
 	  const char *p1 = NULL, *p2 = NULL, *p3 = NULL;
 	  char *font_allcs = NULL;
 	  char *font_allfamilies = NULL;
@@ -1940,7 +1941,7 @@ xic_create_fontsetname (const char *base_fontname, int motif)
 	     wildcard.  */
 	  if (*p3 != '*')
 	    {
-	      int diff = (p2 - p3) - 2;
+	      ptrdiff_t diff = (p2 - p3) - 2;
 
 	      base = alloca (strlen (base_fontname) + 1);
 	      memcpy (base, base_fontname, p3 - base_fontname);
@@ -2434,7 +2435,7 @@ x_window (struct frame *f, long window_prompting, int minibuffer_only)
 
   /* Do some needed geometry management.  */
   {
-    int len;
+    ptrdiff_t len;
     char *tem, shell_position[32];
     Arg gal[10];
     int gac = 0;
@@ -2926,7 +2927,7 @@ unwind_create_frame (Lisp_Object frame)
   /* If frame is ``official'', nothing to do.  */
   if (!CONSP (Vframe_list) || !EQ (XCAR (Vframe_list), frame))
     {
-#if GLYPH_DEBUG
+#if GLYPH_DEBUG && XASSERTS
       struct x_display_info *dpyinfo = FRAME_X_DISPLAY_INFO (f);
 #endif
 
@@ -3156,11 +3157,6 @@ This function is an internal primitive--use `make-frame' instead.  */)
 
   /* With FRAME_X_DISPLAY_INFO set up, this unwind-protect is safe.  */
   record_unwind_protect (unwind_create_frame, frame);
-#if GLYPH_DEBUG
-  //JAVE TODO crashes 
-  //image_cache_refcount = FRAME_IMAGE_CACHE (f)->refcount;
-  //dpyinfo_refcount = dpyinfo->reference_count;
-#endif /* GLYPH_DEBUG */
 
   /* These colors will be set anyway later, but it's important
      to get the color reference counts right, so initialize them!  */
@@ -3314,6 +3310,11 @@ This function is an internal primitive--use `make-frame' instead.  */)
      end up in init_iterator with a null face cache, which should not
      happen.  */
   init_frame_faces (f);
+
+#if GLYPH_DEBUG
+  image_cache_refcount = FRAME_IMAGE_CACHE (f)->refcount;
+  dpyinfo_refcount = dpyinfo->reference_count;
+#endif /* GLYPH_DEBUG */
 
   /* The X resources controlling the menu-bar and tool-bar are
      processed specially at startup, and reflected in the mode
@@ -4607,10 +4608,6 @@ x_create_tip_frame (struct x_display_info *dpyinfo,
 #endif /* USE_TOOLKIT_SCROLL_BARS */
   f->icon_name = Qnil;
   FRAME_X_DISPLAY_INFO (f) = dpyinfo;
-#if GLYPH_DEBUG
-  image_cache_refcount = FRAME_IMAGE_CACHE (f)->refcount;
-  dpyinfo_refcount = dpyinfo->reference_count;
-#endif /* GLYPH_DEBUG */
   f->output_data.x->parent_desc = FRAME_X_DISPLAY_INFO (f)->root_window;
   f->output_data.x->explicit_parent = 0;
 
@@ -4721,6 +4718,11 @@ x_create_tip_frame (struct x_display_info *dpyinfo,
      end up in init_iterator with a null face cache, which should not
      happen.  */
   init_frame_faces (f);
+
+#if GLYPH_DEBUG
+  image_cache_refcount = FRAME_IMAGE_CACHE (f)->refcount;
+  dpyinfo_refcount = dpyinfo->reference_count;
+#endif /* GLYPH_DEBUG */
 
   f->output_data.x->parent_desc = FRAME_X_DISPLAY_INFO (f)->root_window;
 

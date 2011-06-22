@@ -86,21 +86,7 @@ extern Lisp_Object w32_get_internal_run_time (void);
 
 static void time_overflow (void) NO_RETURN;
 static int tm_diff (struct tm *, struct tm *);
-static void find_field (Lisp_Object, Lisp_Object, Lisp_Object,
-			EMACS_INT *, Lisp_Object, EMACS_INT *);
 static void update_buffer_properties (EMACS_INT, EMACS_INT);
-static Lisp_Object region_limit (int);
-static size_t emacs_nmemftime (char *, size_t, const char *,
-			       size_t, const struct tm *, int, int);
-static void general_insert_function (void (*) (const char *, EMACS_INT),
-				     void (*) (Lisp_Object, EMACS_INT,
-					       EMACS_INT, EMACS_INT,
-					       EMACS_INT, int),
-				     int, ptrdiff_t, Lisp_Object *);
-static Lisp_Object subst_char_in_region_unwind (Lisp_Object);
-static Lisp_Object subst_char_in_region_unwind_1 (Lisp_Object);
-static void transpose_markers (EMACS_INT, EMACS_INT, EMACS_INT, EMACS_INT,
-			       EMACS_INT, EMACS_INT, EMACS_INT, EMACS_INT);
 
 static Lisp_Object Qbuffer_access_fontify_functions;
 static Lisp_Object Fuser_full_name (Lisp_Object);
@@ -345,13 +331,13 @@ If you set the marker not to point anywhere, the buffer will have no mark.  */)
    Return the number found, and store them in a vector in VEC
    of length LEN.  */
 
-static int
-overlays_around (EMACS_INT pos, Lisp_Object *vec, int len)
+static ptrdiff_t
+overlays_around (EMACS_INT pos, Lisp_Object *vec, ptrdiff_t len)
 {
   Lisp_Object overlay, start, end;
   struct Lisp_Overlay *tail;
   EMACS_INT startpos, endpos;
-  int idx = 0;
+  ptrdiff_t idx = 0;
 
   for (tail = current_buffer->overlays_before; tail; tail = tail->next)
     {
@@ -419,7 +405,7 @@ get_pos_property (Lisp_Object position, register Lisp_Object prop, Lisp_Object o
   else
     {
       EMACS_INT posn = XINT (position);
-      int noverlays;
+      ptrdiff_t noverlays;
       Lisp_Object *overlay_vec, tem;
       struct buffer *obuf = current_buffer;
 
@@ -2328,12 +2314,11 @@ The optional third arg INHERIT, if non-nil, says to inherit text properties
 from adjoining text, if those properties are sticky.  */)
   (Lisp_Object character, Lisp_Object count, Lisp_Object inherit)
 {
-  register char *string;
-  register EMACS_INT stringlen;
-  register int i;
+  int i, stringlen;
   register EMACS_INT n;
   int c, len;
   unsigned char str[MAX_MULTIBYTE_LENGTH];
+  char string[4000];
 
   CHECK_CHARACTER (character);
   CHECK_NUMBER (count);
@@ -2343,16 +2328,15 @@ from adjoining text, if those properties are sticky.  */)
     len = CHAR_STRING (c, str);
   else
     str[0] = c, len = 1;
-  if (BUF_BYTES_MAX / len < XINT (count))
-    error ("Maximum buffer size would be exceeded");
-  n = XINT (count) * len;
-  if (n <= 0)
+  if (XINT (count) <= 0)
     return Qnil;
-  stringlen = min (n, 256 * len);
-  string = (char *) alloca (stringlen);
+  if (BUF_BYTES_MAX / len < XINT (count))
+    buffer_overflow ();
+  n = XINT (count) * len;
+  stringlen = min (n, sizeof string - sizeof string % len);
   for (i = 0; i < stringlen; i++)
     string[i] = str[i % len];
-  while (n >= stringlen)
+  while (n > stringlen)
     {
       QUIT;
       if (!NILP (inherit))
@@ -2361,13 +2345,10 @@ from adjoining text, if those properties are sticky.  */)
 	insert (string, stringlen);
       n -= stringlen;
     }
-  if (n > 0)
-    {
-      if (!NILP (inherit))
-	insert_and_inherit (string, n);
-      else
-	insert (string, n);
-    }
+  if (!NILP (inherit))
+    insert_and_inherit (string, n);
+  else
+    insert (string, n);
   return Qnil;
 }
 

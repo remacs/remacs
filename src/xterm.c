@@ -357,7 +357,7 @@ static int x_dispatch_event (XEvent *, Display *);
    interference with debugging failing X calls.  */
 static void x_connection_closed (Display *, const char *);
 static void x_wm_set_window_state (struct frame *, int);
-static void x_wm_set_icon_pixmap (struct frame *, int);
+static void x_wm_set_icon_pixmap (struct frame *, ptrdiff_t);
 static void x_initialize (void);
 
 
@@ -7459,7 +7459,7 @@ x_draw_window_cursor (struct window *w, struct glyph_row *glyph_row, int x, int 
 int
 x_bitmap_icon (struct frame *f, Lisp_Object file)
 {
-  int bitmap_id;
+  ptrdiff_t bitmap_id;
 
   if (FRAME_X_WINDOW (f) == 0)
     return 1;
@@ -7485,7 +7485,7 @@ x_bitmap_icon (struct frame *f, Lisp_Object file)
       /* Create the GNU bitmap and mask if necessary.  */
       if (FRAME_X_DISPLAY_INFO (f)->icon_bitmap_id < 0)
 	{
-	  int rc = -1;
+	  ptrdiff_t rc = -1;
 
 #ifdef USE_GTK
 
@@ -8116,7 +8116,7 @@ xim_initialize (struct x_display_info *dpyinfo, char *resource_name)
     {
 #ifdef HAVE_X11R6_XIM
       struct xim_inst_t *xim_inst;
-      int len;
+      ptrdiff_t len;
 
       xim_inst = (struct xim_inst_t *) xmalloc (sizeof (struct xim_inst_t));
       dpyinfo->xim_callback_data = xim_inst;
@@ -9633,7 +9633,7 @@ x_wm_set_window_state (struct frame *f, int state)
 }
 
 static void
-x_wm_set_icon_pixmap (struct frame *f, int pixmap_id)
+x_wm_set_icon_pixmap (struct frame *f, ptrdiff_t pixmap_id)
 {
   Pixmap icon_pixmap, icon_mask;
 
@@ -9705,8 +9705,6 @@ x_wm_set_icon_position (struct frame *f, int icon_x, int icon_y)
 static void
 x_check_font (struct frame *f, struct font *font)
 {
-  Lisp_Object frame;
-
   xassert (font != NULL && ! NILP (font->props[FONT_TYPE_INDEX]));
   if (font->driver->check)
     xassert (font->driver->check (f, font) == 0);
@@ -9752,8 +9750,8 @@ same_x_server (const char *name1, const char *name2)
 {
   int seen_colon = 0;
   const char *system_name = SSDATA (Vsystem_name);
-  int system_name_length = strlen (system_name);
-  int length_until_period = 0;
+  ptrdiff_t system_name_length = SBYTES (Vsystem_name);
+  ptrdiff_t length_until_period = 0;
 
   while (system_name[length_until_period] != 0
 	 && system_name[length_until_period] != '.')

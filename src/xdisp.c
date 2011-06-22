@@ -812,7 +812,7 @@ static int cursor_row_fully_visible_p (struct window *, int, int);
 static int try_scrolling (Lisp_Object, int, EMACS_INT, EMACS_INT, int, int);
 static int try_cursor_movement (Lisp_Object, struct text_pos, int *);
 static int trailing_whitespace_p (EMACS_INT);
-static unsigned long int message_log_check_duplicate (EMACS_INT, EMACS_INT);
+static intmax_t message_log_check_duplicate (EMACS_INT, EMACS_INT);
 static void push_it (struct it *, struct text_pos *);
 static void pop_it (struct it *);
 static void sync_frame_with_window_matrix_rows (struct window *);
@@ -2245,14 +2245,13 @@ check_it (it)
 #endif /* not 0 */
 
 
-#if GLYPH_DEBUG
+#if GLYPH_DEBUG && XASSERTS
 
 /* Check that the window end of window W is what we expect it
    to be---the last row in the current matrix displaying text.  */
 
 static void
-check_window_end (w)
-     struct window *w;
+check_window_end (struct window *w)
 {
   if (!MINI_WINDOW_P (w)
       && !NILP (w->window_end_valid))
@@ -2268,11 +2267,11 @@ check_window_end (w)
 
 #define CHECK_WINDOW_END(W)	check_window_end ((W))
 
-#else /* not GLYPH_DEBUG */
+#else
 
 #define CHECK_WINDOW_END(W)	(void) 0
 
-#endif /* not GLYPH_DEBUG */
+#endif
 
 
 
@@ -2388,7 +2387,7 @@ init_iterator (struct it *it, struct window *w,
      is invisible.  >0 means lines indented more than this value are
      invisible.  */
   it->selective = (INTEGERP (BVAR (current_buffer, selective_display))
-		   ? XFASTINT (BVAR (current_buffer, selective_display))
+		   ? XINT (BVAR (current_buffer, selective_display))
 		   : (!NILP (BVAR (current_buffer, selective_display))
 		      ? -1 : 0));
   it->selective_display_ellipsis_p
@@ -3066,10 +3065,9 @@ compute_stop_pos (struct it *it)
 static EMACS_INT
 next_overlay_change (EMACS_INT pos)
 {
-  int noverlays;
+  ptrdiff_t i, noverlays;
   EMACS_INT endpos;
   Lisp_Object *overlays;
-  int i;
 
   /* Get all overlays at the given position.  */
   GET_OVERLAYS_AT (pos, overlays, noverlays, &endpos, 1);
@@ -5214,7 +5212,8 @@ back_to_previous_line_start (struct it *it)
 static int
 forward_to_next_line_start (struct it *it, int *skipped_p)
 {
-  int old_selective, newline_found_p, n;
+  EMACS_INT old_selective;
+  int newline_found_p, n;
   const int MAX_NEWLINE_DISTANCE = 500;
 
   /* If already on a newline, just consume it to avoid unintended
@@ -5306,7 +5305,7 @@ back_to_previous_visible_line_start (struct it *it)
 	 invisible.  */
       if (it->selective > 0
 	  && indented_beyond_p (IT_CHARPOS (*it), IT_BYTEPOS (*it),
-				(double) it->selective)) /* iftc */
+				it->selective))
 	continue;
 
       /* Check the newline before point for invisibility.  */
@@ -5400,7 +5399,7 @@ reseat_at_next_visible_line_start (struct it *it, int on_newline_p)
   if (it->selective > 0)
     while (IT_CHARPOS (*it) < ZV
 	   && indented_beyond_p (IT_CHARPOS (*it), IT_BYTEPOS (*it),
-				 (double) it->selective)) /* iftc */
+				 it->selective))
       {
 	xassert (IT_BYTEPOS (*it) == BEGV
 		 || FETCH_BYTE (IT_BYTEPOS (*it) - 1) == '\n');
@@ -6862,7 +6861,7 @@ next_element_from_buffer (struct it *it)
 		  && IT_CHARPOS (*it) + 1 < ZV
 		  && indented_beyond_p (IT_CHARPOS (*it) + 1,
 					IT_BYTEPOS (*it) + 1,
-					(double) it->selective)) /* iftc */
+					it->selective))
 		{
 		  success_p = next_element_from_ellipsis (it);
 		  it->dpvec_char_len = -1;
@@ -8113,7 +8112,7 @@ message_dolog (const char *m, EMACS_INT nbytes, int nlflag, int multibyte)
       if (nlflag)
 	{
 	  EMACS_INT this_bol, this_bol_byte, prev_bol, prev_bol_byte;
-	  unsigned long int dups;
+	  intmax_t dups;
 	  insert_1 ("\n", 1, 1, 0, 0);
 
 	  scan_newline (Z, Z_BYTE, BEG, BEG_BYTE, -2, 0);
@@ -8136,12 +8135,13 @@ message_dolog (const char *m, EMACS_INT nbytes, int nlflag, int multibyte)
 				  this_bol, this_bol_byte, 0);
 		  if (dups > 1)
 		    {
-		      char dupstr[40];
+		      char dupstr[sizeof " [ times]"
+				  + INT_STRLEN_BOUND (intmax_t)];
 		      int duplen;
 
 		      /* If you change this format, don't forget to also
 			 change message_log_check_duplicate.  */
-		      sprintf (dupstr, " [%lu times]", dups);
+		      sprintf (dupstr, " [%"PRIdMAX" times]", dups);
 		      duplen = strlen (dupstr);
 		      TEMP_SET_PT_BOTH (Z - 1, Z_BYTE - 1);
 		      insert_1 (dupstr, duplen, 1, 0, 1);
@@ -8203,7 +8203,7 @@ message_dolog (const char *m, EMACS_INT nbytes, int nlflag, int multibyte)
    Return 0 if different, 1 if the new one should just replace it, or a
    value N > 1 if we should also append " [N times]".  */
 
-static unsigned long int
+static intmax_t
 message_log_check_duplicate (EMACS_INT prev_bol_byte, EMACS_INT this_bol_byte)
 {
   EMACS_INT i;
@@ -8225,8 +8225,8 @@ message_log_check_duplicate (EMACS_INT prev_bol_byte, EMACS_INT this_bol_byte)
   if (*p1++ == ' ' && *p1++ == '[')
     {
       char *pend;
-      unsigned long int n = strtoul ((char *) p1, &pend, 10);
-      if (strncmp (pend, " times]\n", 8) == 0)
+      intmax_t n = strtoimax ((char *) p1, &pend, 10);
+      if (0 < n && n < INTMAX_MAX && strncmp (pend, " times]\n", 8) == 0)
 	return n+1;
     }
   return 0;
@@ -11150,40 +11150,42 @@ hscroll_windows (Lisp_Object window)
 
 /* First and last unchanged row for try_window_id.  */
 
-int debug_first_unchanged_at_end_vpos;
-int debug_last_unchanged_at_beg_vpos;
+static int debug_first_unchanged_at_end_vpos;
+static int debug_last_unchanged_at_beg_vpos;
 
 /* Delta vpos and y.  */
 
-int debug_dvpos, debug_dy;
+static int debug_dvpos, debug_dy;
 
 /* Delta in characters and bytes for try_window_id.  */
 
-EMACS_INT debug_delta, debug_delta_bytes;
+static EMACS_INT debug_delta, debug_delta_bytes;
 
 /* Values of window_end_pos and window_end_vpos at the end of
    try_window_id.  */
 
-EMACS_INT debug_end_vpos;
+static EMACS_INT debug_end_vpos;
 
 /* Append a string to W->desired_matrix->method.  FMT is a printf
-   format string.  A1...A9 are a supplement for a variable-length
-   argument list.  If trace_redisplay_p is non-zero also printf the
+   format string.  If trace_redisplay_p is non-zero also printf the
    resulting string to stderr.  */
 
+static void debug_method_add (struct window *, char const *, ...)
+  ATTRIBUTE_FORMAT_PRINTF (2, 3);
+
 static void
-debug_method_add (w, fmt, a1, a2, a3, a4, a5, a6, a7, a8, a9)
-     struct window *w;
-     char *fmt;
-     int a1, a2, a3, a4, a5, a6, a7, a8, a9;
+debug_method_add (struct window *w, char const *fmt, ...)
 {
   char buffer[512];
   char *method = w->desired_matrix->method;
   int len = strlen (method);
   int size = sizeof w->desired_matrix->method;
   int remaining = size - len - 1;
+  va_list ap;
 
-  sprintf (buffer, fmt, a1, a2, a3, a4, a5, a6, a7, a8, a9);
+  va_start (ap, fmt);
+  vsprintf (buffer, fmt, ap);
+  va_end (ap);
   if (len && remaining)
     {
       method[len] = '|';
@@ -11196,8 +11198,8 @@ debug_method_add (w, fmt, a1, a2, a3, a4, a5, a6, a7, a8, a9)
     fprintf (stderr, "%p (%s): %s\n",
 	     w,
 	     ((BUFFERP (w->buffer)
-	       && STRINGP (XBUFFER (w->buffer)->name))
-	      ? SSDATA (XBUFFER (w->buffer)->name)
+	       && STRINGP (BVAR (XBUFFER (w->buffer), name)))
+	      ? SSDATA (BVAR (XBUFFER (w->buffer), name))
 	      : "no buffer"),
 	     buffer);
   */
@@ -16326,9 +16328,9 @@ try_window_id (struct window *w)
 
 #if GLYPH_DEBUG
 
-void dump_glyph_row (struct glyph_row *, int, int);
-void dump_glyph_matrix (struct glyph_matrix *, int);
-void dump_glyph (struct glyph_row *, struct glyph *, int);
+void dump_glyph_row (struct glyph_row *, int, int) EXTERNALLY_VISIBLE;
+void dump_glyph_matrix (struct glyph_matrix *, int) EXTERNALLY_VISIBLE;
+void dump_glyph (struct glyph_row *, struct glyph *, int) EXTERNALLY_VISIBLE;
 
 
 /* Dump the contents of glyph matrix MATRIX on stderr.
@@ -16338,9 +16340,7 @@ void dump_glyph (struct glyph_row *, struct glyph *, int);
    GLYPHS > 1 means show glyphs in long form.  */
 
 void
-dump_glyph_matrix (matrix, glyphs)
-     struct glyph_matrix *matrix;
-     int glyphs;
+dump_glyph_matrix (struct glyph_matrix *matrix, int glyphs)
 {
   int i;
   for (i = 0; i < matrix->nrows; ++i)
@@ -16352,15 +16352,12 @@ dump_glyph_matrix (matrix, glyphs)
    the glyph row and area where the glyph comes from.  */
 
 void
-dump_glyph (row, glyph, area)
-     struct glyph_row *row;
-     struct glyph *glyph;
-     int area;
+dump_glyph (struct glyph_row *row, struct glyph *glyph, int area)
 {
   if (glyph->type == CHAR_GLYPH)
     {
       fprintf (stderr,
-	       "  %5d %4c %6d %c %3d 0x%05x %c %4d %1.1d%1.1d\n",
+	       "  %5td %4c %6"pI"d %c %3d 0x%05x %c %4d %1.1d%1.1d\n",
 	       glyph - row->glyphs[TEXT_AREA],
 	       'C',
 	       glyph->charpos,
@@ -16381,7 +16378,7 @@ dump_glyph (row, glyph, area)
   else if (glyph->type == STRETCH_GLYPH)
     {
       fprintf (stderr,
-	       "  %5d %4c %6d %c %3d 0x%05x %c %4d %1.1d%1.1d\n",
+	       "  %5td %4c %6"pI"d %c %3d 0x%05x %c %4d %1.1d%1.1d\n",
 	       glyph - row->glyphs[TEXT_AREA],
 	       'S',
 	       glyph->charpos,
@@ -16400,7 +16397,7 @@ dump_glyph (row, glyph, area)
   else if (glyph->type == IMAGE_GLYPH)
     {
       fprintf (stderr,
-	       "  %5d %4c %6d %c %3d 0x%05x %c %4d %1.1d%1.1d\n",
+	       "  %5td %4c %6"pI"d %c %3d 0x%05x %c %4d %1.1d%1.1d\n",
 	       glyph - row->glyphs[TEXT_AREA],
 	       'I',
 	       glyph->charpos,
@@ -16419,7 +16416,7 @@ dump_glyph (row, glyph, area)
   else if (glyph->type == COMPOSITE_GLYPH)
     {
       fprintf (stderr,
-	       "  %5d %4c %6d %c %3d 0x%05x",
+	       "  %5td %4c %6"pI"d %c %3d 0x%05x",
 	       glyph - row->glyphs[TEXT_AREA],
 	       '+',
 	       glyph->charpos,
@@ -16469,16 +16466,14 @@ dump_glyph (row, glyph, area)
    GLYPHS > 1 means show glyphs in long form.  */
 
 void
-dump_glyph_row (row, vpos, glyphs)
-     struct glyph_row *row;
-     int vpos, glyphs;
+dump_glyph_row (struct glyph_row *row, int vpos, int glyphs)
 {
   if (glyphs != 1)
     {
       fprintf (stderr, "Row Start   End Used oE><\\CTZFesm     X    Y    W    H    V    A    P\n");
       fprintf (stderr, "======================================================================\n");
 
-      fprintf (stderr, "%3d %5d %5d %4d %1.1d%1.1d%1.1d%1.1d\
+      fprintf (stderr, "%3d %5"pI"d %5"pI"d %4d %1.1d%1.1d%1.1d%1.1d\
 %1.1d%1.1d%1.1d%1.1d%1.1d%1.1d%1.1d%1.1d  %4d %4d %4d %4d %4d %4d %4d\n",
 	       vpos,
 	       MATRIX_ROW_START_CHARPOS (row),
@@ -16506,7 +16501,7 @@ dump_glyph_row (row, vpos, glyphs)
       fprintf (stderr, "%9d %5d\t%5d\n", row->start.overlay_string_index,
 	       row->end.overlay_string_index,
 	       row->continuation_lines_width);
-      fprintf (stderr, "%9d %5d\n",
+      fprintf (stderr, "%9"pI"d %5"pI"d\n",
 	       CHARPOS (row->start.string_pos),
 	       CHARPOS (row->end.string_pos));
       fprintf (stderr, "%9d %5d\n", row->start.dpvec_index,
@@ -16571,7 +16566,7 @@ glyphs in short form, otherwise show glyphs in long form.  */)
   struct window *w = XWINDOW (selected_window);
   struct buffer *buffer = XBUFFER (w->buffer);
 
-  fprintf (stderr, "PT = %d, BEGV = %d. ZV = %d\n",
+  fprintf (stderr, "PT = %"pI"d, BEGV = %"pI"d. ZV = %"pI"d\n",
 	   BUF_PT (buffer), BUF_BEGV (buffer), BUF_ZV (buffer));
   fprintf (stderr, "Cursor x = %d, y = %d, hpos = %d, vpos = %d\n",
 	   w->cursor.x, w->cursor.y, w->cursor.hpos, w->cursor.vpos);
@@ -18818,8 +18813,7 @@ display_mode_element (struct it *it, int depth, int field_width, int precision,
 			break;
 		      case MODE_LINE_STRING:
 			{
-			  int len = strlen (spec);
-			  Lisp_Object tem = make_string (spec, len);
+			  Lisp_Object tem = build_string (spec);
 			  props = Ftext_properties_at (make_number (charpos), elt);
 			  /* Should only keep face property in props */
 			  n += store_mode_line_string (NULL, tem, 0, field, prec, props);
@@ -20559,8 +20553,7 @@ calc_pixel_width_or_height (double *res, struct it *it, Lisp_Object prop,
 #if GLYPH_DEBUG
 
 void
-dump_glyph_string (s)
-     struct glyph_string *s;
+dump_glyph_string (struct glyph_string *s)
 {
   fprintf (stderr, "glyph string\n");
   fprintf (stderr, "  x, y, w, h = %d, %d, %d, %d\n",
@@ -25696,13 +25689,13 @@ note_mouse_highlight (struct frame *f, int x, int y)
       && XFASTINT (w->last_modified) == BUF_MODIFF (b)
       && XFASTINT (w->last_overlay_modified) == BUF_OVERLAY_MODIFF (b))
     {
-      int hpos, vpos, i, dx, dy, area;
+      int hpos, vpos, dx, dy, area;
       EMACS_INT pos;
       struct glyph *glyph;
       Lisp_Object object;
       Lisp_Object mouse_face = Qnil, position;
       Lisp_Object *overlay_vec = NULL;
-      int noverlays;
+      ptrdiff_t i, noverlays;
       struct buffer *obuf;
       EMACS_INT obegv, ozv;
       int same_region;
