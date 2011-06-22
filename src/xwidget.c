@@ -192,19 +192,22 @@ void xwidget_plug_added(GtkSocket *socket,
 }
 
 
-
+int xwidget_view_index=0;
 
 /* initializes and does initial placement of an xwidget view on screen */
-void
-xwidget_init_view (struct xwidget *xww,
+struct xwidget_view*
+xwidget_init_view ( 
+                     struct xwidget *xww,
                    struct glyph_string *s,
                    int x, int y)
 {
-  struct xwidget_view *xv;//TODO create
+  struct xwidget_view *xv = &xwidget_views[xwidget_view_index++];
   GdkColor color;
+  
   xv->initialized = 1;
   xv->w = s->w;
-
+  xv->model = xww;
+  
   //widget creation
   switch (xww->type) 
     {
@@ -282,6 +285,7 @@ xwidget_init_view (struct xwidget *xww,
       //gtk_widget_realize(xw->widget);
       break;
     }
+  return xv;
 }
 
 
@@ -318,6 +322,10 @@ x_draw_xwidget_glyph_string (struct glyph_string *s)
 
   struct xwidget *xww = &xwidgets[s->xwidget_id];
   struct xwidget_view *xv = xwidget_view_lookup(xww, (s->w));
+
+
+
+  
   int clipx; int clipy;
 
   /*printf("x_draw_xwidget_glyph_string: id:%d %d %d  (%d,%d,%d,%d) selected win:%d\n",
@@ -329,8 +337,9 @@ x_draw_xwidget_glyph_string (struct glyph_string *s)
   int y = s->y + (s->height / 2) - (xww->height / 2);
   int doingsocket = 0;
   int moved=0;
-  if (!xv->initialized){
-    xwidget_init_view (xww, s, x, y); //once for each view TODO split
+
+  if (xv == NULL){
+    xv = xwidget_init_view (xww, s, x, y); //once for each view 
   }
 
   //calculate clip widht and height, which is used both for the xwidget
@@ -712,10 +721,12 @@ xwidget_from_id (int id)
 }
 
 struct xwidget_view* xwidget_view_lookup(struct xwidget* xw,     struct window *w){
+  struct xwidget_view* xv = NULL;
   for (int i = 0; i < MAX_XWIDGETS; i++)
     if ((xwidget_views[i].model == xw) && (xwidget_views[i].w == w))
-      return &xwidget_views[i];
-  return NULL;
+      xv =  &xwidget_views[i];
+  
+  return xv;
 }
 
 int
