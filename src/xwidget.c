@@ -223,8 +223,8 @@ xwidget_init_view (
       xv->widget = gtk_socket_new ();
       //gtk_widget_set_app_paintable (xw->widget, TRUE); //workaround for composited sockets
 
-      gdk_color_parse("blue",&color); //the blue color never seems to show up. something else draws a grey bg
-      gtk_widget_modify_bg(xv->widget, GTK_STATE_NORMAL, &color);
+      //gdk_color_parse("blue",&color); //the blue color never seems to show up. something else draws a grey bg
+      //gtk_widget_modify_bg(xv->widget, GTK_STATE_NORMAL, &color);
       g_signal_connect_after(xv->widget, "plug-added", G_CALLBACK(xwidget_plug_added), "plug added");        
       break;
     case 4:
@@ -277,7 +277,8 @@ xwidget_init_view (
   switch (xww->type)
     {
     case 3:
-      printf ("socket id:%x %d\n",
+      printf ("xwid:%d socket id:%x %d\n",
+              xww->id,
               gtk_socket_get_id (GTK_SOCKET (xv->widget)),
               gtk_socket_get_id (GTK_SOCKET (xv->widget)));
       send_xembed_ready_event (xww->id,
@@ -732,7 +733,7 @@ struct xwidget_view* xwidget_view_lookup(struct xwidget* xw,     struct window *
 int
 lookup_xwidget (Lisp_Object  spec)
 {
-
+  /*when a xwidget lisp spec is found initialize the C struct*/
   int found = 0, found1 = 0, found2 = 0;
   Lisp_Object value;
   int id;
@@ -742,6 +743,7 @@ lookup_xwidget (Lisp_Object  spec)
   id = INTEGERP (value) ? XFASTINT (value) : 0;	//id 0 by default, but id must be unique so this is dumb
 
   xw = &xwidgets[id];
+  xw->id=id;
   value = xwidget_spec_value (spec, QCtype, &found);
   xw->type = INTEGERP (value) ? XFASTINT (value) : 1;	//default to button
   value = xwidget_spec_value (spec, Qtitle, &found2);
@@ -802,8 +804,6 @@ xwidget_touched (struct xwidget_view *xw)
 void
 xwidget_end_redisplay (struct glyph_matrix *matrix)
 {
-  //return; //until I convert this to MVC
-
   
   int i;
   struct xwidget *xw;
@@ -863,8 +863,9 @@ xwidget_end_redisplay (struct glyph_matrix *matrix)
   for (i = 0; i < MAX_XWIDGETS; i++)
     {
       struct xwidget_view* xv = &xwidget_views[i];
-        
-      if (xv->initialized && (         xv->w ==                   (XWINDOW(FRAME_SELECTED_WINDOW (SELECTED_FRAME())))))
+
+      //"touched" is only meaningful for the "live" window, so disregard other views
+      if (xv->initialized && ( xv->w ==    (XWINDOW(FRAME_SELECTED_WINDOW (SELECTED_FRAME())))))
         {
           if (xwidget_touched(xv))
             xwidget_show_view (xv);

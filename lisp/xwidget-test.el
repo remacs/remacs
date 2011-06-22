@@ -24,18 +24,27 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; demo functions
+;; demo/test functions
 (require 'xwidget)
 
-(defun xwidget-demo-minimal ()
-  (interactive)
-  (insert "xwidgetdemo<<< a button. another button\n")
-  (xwidget-insert (point-min)  2 "button" 40  50  1)
-  (define-key (current-local-map) [xwidget-event] 'xwidget-handler-demo-basic)
-)
-(defun xwidget-demo-basic ()
-  (interactive)
-  (insert "xwidgetdemo<<< a button. another button\n")
+(defmacro xwidget-demo (name &rest body)
+  `(defun ,(intern (concat "xwidget-demo-" name)) ()
+     (interactive)
+     (switch-to-buffer ,(format "*xwidget-demo-%s*" name))
+     (text-mode);;otherwise no local keymap
+     (insert "Some random text for xwidgets to be inserted in for demo purposes.\n")
+     ,@body))
+
+(xwidget-demo "a-button" 
+              (xwidget-insert (point-min)  1 "button" 40  50  1)
+              (define-key (current-local-map) [xwidget-event] 'xwidget-handler-demo-basic))
+
+(xwidget-demo "a-socket" 
+              (xwidget-insert (point-min)  3 "socket" 500  500  5)
+              (define-key (current-local-map) [xwidget-event] 'xwidget-handler-demo-basic))
+
+
+(xwidget-demo "basic"
   (xwidget-insert (point-min)  1 "button" 40  50  1)
   (xwidget-insert          15  2 "toggle" 60  30  2)
   (xwidget-insert          30  3 "emacs"  400 200 3)
@@ -44,13 +53,6 @@
   (define-key (current-local-map) [xwidget-event] 'xwidget-handler-demo-basic)
 )
 
-
-(defun xwidget-demo-single ()
-  (interactive)
-  (insert "xwidgetdemo<<< a button. another button\n")
-  (xwidget-insert (point-min) 1 "1" 200 300 1)
-  (define-key (current-local-map) [xwidget-event] 'xwidget-handler-demo-basic)
-)
 
 ;it doesnt seem gtk_socket_steal works very well. its deprecated.
 ; xwininfo -int
@@ -82,7 +84,7 @@
     (cond ( (eq xwidget-event-type 'xembed-ready)
             (let*
                 ((xembed-id (nth 3 last-input-event)))
-              (message "xembed ready  %S" xembed-id)
+              (message "xembed ready  event: %S xw-id:%s" xembed-id xwidget-id)
               ;;will start emacs/uzbl in a xembed socket when its ready
               (cond
                ((eq 3 xwidget-id)
