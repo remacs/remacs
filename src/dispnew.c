@@ -296,6 +296,7 @@ static void add_frame_display_history (struct frame *, int);
    has been constructed.  PAUSED_P non-zero means that the update
    has been interrupted for pending input.  */
 
+
 static void
 add_window_display_history (struct window *w, const char *msg, int paused_p)
 {
@@ -305,7 +306,7 @@ add_window_display_history (struct window *w, const char *msg, int paused_p)
     history_idx = 0;
   buf = redisplay_history[history_idx].trace;
   ++history_idx;
-
+  /* glyph debug seems broken
   sprintf (buf, "%d: window %p (`%s')%s\n",
 	   history_tick++,
 	   w,
@@ -314,7 +315,9 @@ add_window_display_history (struct window *w, const char *msg, int paused_p)
 	    ? SSDATA (XBUFFER (w->buffer)->name)
 	    : "???"),
 	   paused_p ? " ***paused***" : "");
+  */
   strcat (buf, msg);
+
 }
 
 

@@ -9,26 +9,40 @@ int valid_xwidget_p (Lisp_Object object) ;
 
 #include <gtk/gtk.h>
 
+
 /*
-each xwidget instance is described by this struct.
+each xwidget instance/model is described by this struct.
  */
 struct xwidget{
   int id;
   int type;
-  int hidden;
-  GtkWidget* widget;
-  GtkContainer* widgetwindow;
-
   char* title;
-  int initialized;
+
+
   int height;
   int width;
-  int x; int y;
-  Lisp_Object message_hook;
-  int redisplayed;
-  GtkContainer* emacswindow;
-  int clipx; int clipy;
+  int initialized;
 };
+
+
+//struct for each xwidget view
+struct xwidget_view{
+  struct xwidget* model;
+
+  int hidden;//if the "live" instance isnt drawn
+  int redisplayed; //if touched by redisplay
+  int initialized;  
+
+  GtkWidget* widget;
+  GtkContainer* widgetwindow;
+  GtkContainer* emacswindow;
+  int x; int y;
+  int clipx; int clipy;
+  struct window *w;
+};
+
+
+
 
 
 struct xwidget_type
@@ -44,19 +58,18 @@ struct xwidget_type
   struct xwidget_type *next;
 };
                              
-
-static INLINE struct xwidget_type *lookup_xwidget_type (Lisp_Object symbol);
-
-
+static struct xwidget_type *lookup_xwidget_type (Lisp_Object symbol);
 
 struct xwidget* xwidget_from_id(int id);
 
 extern int xwidget_owns_kbd;
 
-void   xwidget_start_redisplay();
-void   xwidget_end_redisplay(struct glyph_matrix* matrix);
+void xwidget_start_redisplay();
+void xwidget_end_redisplay(struct glyph_matrix* matrix);
 void xwidget_modify_region();
 
-void xwidget_touch(struct xwidget* xw);
-void xwidget_delete(struct xwidget* xw);
+void xwidget_touch (struct xwidget_view *xw);
+
 void assert_valid_xwidget_id(int id,char *str);
+
+int lookup_xwidget (Lisp_Object  spec); 

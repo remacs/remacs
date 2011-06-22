@@ -139,6 +139,11 @@ This aproach seems promising, but complicated.
   particular case, and the user will simply have to accept that the
   phantom of a video widget isnt particularily beautiful.
 
+** Testing
+;;test like:
+;; cd /path/to/xwidgets-emacs-dir
+;; make   all&&  src/emacs -q --eval "(progn (load \"`pwd`/lisp/xwidget-test.el\") (xwidget-demo-basic))"
+
 * ToDo:s
 
 ** DONE Examine using XComposite rather than GTK off-screen
@@ -165,10 +170,6 @@ work very well.
 
 ** DONE disable emacs cursor drawing on top of an active xwidget. 
   This ought to be rather simple and should improve the visuals a lot.
-  
-
-** TODO  figure out what to do with the multiple frames case. 
-I havent spent any time at all on this.
 
 ** TODO  improve the xwidgets programming interface so its less of
   hand-waving affair. This shouldnt be too hard, but I have deliberatley not
@@ -188,3 +189,24 @@ special case should also be added. The xwidget would then be bound to
 replace the view of a particular window, and it would only show in
 that window.
 
+
+** TODO MVC mode for xwidgets
+It appears unfruitful to chase using the same display mode for all
+types of xwidgets. Composition is fun but not robust the way I'm
+tried to do it.
+
+Instead there should be a set of MVC xwidgets. Each on-screen instance
+of an MVC widget would be a real GTK widget. The instances would
+communciate state using signals. 
+
+There are drawbacks. There is no inbuilt support for MVC in GTK, so we
+have to roll our own, which is tedious if not much work for the few
+cases.
+
+MVC for xembedded application will need support from the applications
+themselves. Inkscape supports multiple views to the same document,
+other programs don't. In practice it might not be a big drawback.
+
+
+*** TODO figure out what to do with the multiple frames case. 
+This should be easier to solve with MVC.

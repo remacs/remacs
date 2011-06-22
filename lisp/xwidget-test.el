@@ -27,6 +27,12 @@
 ;; demo functions
 (require 'xwidget)
 
+(defun xwidget-demo-minimal ()
+  (interactive)
+  (insert "xwidgetdemo<<< a button. another button\n")
+  (xwidget-insert (point-min)  1 "button" 40  50  1)
+  (define-key (current-local-map) [xwidget-event] 'xwidget-handler-demo-basic)
+)
 (defun xwidget-demo-basic ()
   (interactive)
   (insert "xwidgetdemo<<< a button. another button\n")

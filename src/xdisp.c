@@ -3895,7 +3895,7 @@ handle_display_spec (struct it *it, Lisp_Object spec, Lisp_Object object,
   if (CONSP (spec)
       /* Simple specerties.  */
       && !EQ (XCAR (spec), Qimage)
-      && !EQ (XCAR (prop), Qxwidget)      
+      && !EQ (XCAR (spec), Qxwidget)      
       && !EQ (XCAR (spec), Qspace)
       && !EQ (XCAR (spec), Qwhen)
       && !EQ (XCAR (spec), Qslice)
@@ -11191,7 +11191,7 @@ debug_method_add (w, fmt, a1, a2, a3, a4, a5, a6, a7, a8, a9)
     }
 
   strncpy (method + len, buffer, remaining);
-
+  /* glyph debug broken
   if (trace_redisplay_p)
     fprintf (stderr, "%p (%s): %s\n",
 	     w,
@@ -11200,6 +11200,7 @@ debug_method_add (w, fmt, a1, a2, a3, a4, a5, a6, a7, a8, a9)
 	      ? SSDATA (XBUFFER (w->buffer)->name)
 	      : "no buffer"),
 	     buffer);
+  */
 }
 
 #endif /* GLYPH_DEBUG */

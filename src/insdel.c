@@ -1814,9 +1814,9 @@ void
 modify_region (struct buffer *buffer, EMACS_INT start, EMACS_INT end,
 	       int preserve_chars_modiff)
 {
+  struct buffer *old_buffer = current_buffer;
   //  printf("modify region\n");
   xwidget_modify_region();
-  struct buffer *old_buffer = current_buffer;
 
   if (buffer != old_buffer)
     set_buffer_internal (buffer);
