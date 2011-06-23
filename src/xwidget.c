@@ -246,8 +246,11 @@ xwidget_init_view (
   xv->emacswindow = GTK_CONTAINER (s->f->gwfixed);
   //xw->widgetwindow = GTK_CONTAINER (gtk_layout_new (NULL, NULL));
   //xw->widgetwindow = GTK_CONTAINER (gtk_offscreen_window_new ());
-  xv->widgetwindow = GTK_CONTAINER (gtk_fixed_new ());  
-  //xw->widgetwindow = GTK_CONTAINER (gtk_event_box_new ());
+
+  xv->widgetwindow = GTK_CONTAINER (gtk_fixed_new ());
+  gtk_widget_set_has_window(  xv->widgetwindow, TRUE); //if gtk_fixed doesnt have a window it will surprisingly not honor setsize so that children gets clipped later. the documentation is not consistent regarding if its legal to call this method
+  //xv->widgetwindow = GTK_CONTAINER (gtk_event_box_new ());
+
   //gtk_widget_set_size_request (GTK_WIDGET (xw->widget), xw->width, xw->height);  
   //gtk_layout_set_size (GTK_LAYOUT (xw->widgetwindow), xw->width, xw->height);
   gtk_container_add (xv->widgetwindow, xv->widget);
@@ -373,15 +376,17 @@ x_draw_xwidget_glyph_string (struct glyph_string *s)
       //clip the widget window if some parts happen to be outside drawable area
       //an emacs window is not a gtk window, a gtk window covers the entire frame
       //cliping might have changed even if we havent actualy moved, we try figure out when we need to reclip for real
-      if((xv->clipx != clipx) || (xv->clipy != clipy))
+      if((xv->clipx != clipx) || (xv->clipy != clipy)){
         gtk_widget_set_size_request (GTK_WIDGET (xv->widgetwindow),
                                      clipx, clipy);
-      xv->clipx = clipx; xv->clipy = clipy;
+        printf("reclip %d %d -> %d %d\n",xv->clipx, xv->clipy,  clipx, clipy );
+        xv->clipx = clipx; xv->clipy = clipy;
+      }
       //a live xwidget paints itself. when using composition, that
       //happens through the expose handler for the xwidget
       //if emacs wants to repaint the area where the widget lives, queue a redraw
-      if (!xwidget_hidden(xv))
-        gtk_widget_queue_draw (xv->widget);
+      //if (!xwidget_hidden(xv))
+      //gtk_widget_queue_draw (xv->widget);
     }
   else
     {

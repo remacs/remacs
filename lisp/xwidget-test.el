@@ -39,6 +39,10 @@
               (xwidget-insert (point-min)  1 "button" 40  50  1)
               (define-key (current-local-map) [xwidget-event] 'xwidget-handler-demo-basic))
 
+(xwidget-demo "a-big-button" 
+              (xwidget-insert (point-min)  1 "button" 400  500  1)
+              (define-key (current-local-map) [xwidget-event] 'xwidget-handler-demo-basic))
+
 (xwidget-demo "a-socket" 
               (xwidget-insert (point-min)  3 "socket" 500  500  5)
               (define-key (current-local-map) [xwidget-event] 'xwidget-handler-demo-basic))
