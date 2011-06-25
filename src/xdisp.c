@@ -20994,8 +20994,7 @@ fill_image_glyph_string (struct glyph_string *s)
 }
 
 static void
-fill_xwidget_glyph_string (s)
-     struct glyph_string *s;
+fill_xwidget_glyph_string (struct glyph_string *s)
 {
   xassert (s->first_glyph->type == XWIDGET_GLYPH);
   printf("fill_xwidget_glyph_string: width:%d \n",s->first_glyph->pixel_width);
@@ -22124,8 +22123,7 @@ produce_image_glyph (struct it *it)
 }
 
 static void
-produce_xwidget_glyph (it)
-     struct it *it;
+produce_xwidget_glyph (struct it *it)
 {
   //  struct image *img;
   struct face *face;

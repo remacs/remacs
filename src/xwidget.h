@@ -14,9 +14,11 @@ int valid_xwidget_p (Lisp_Object object) ;
 each xwidget instance/model is described by this struct.
  */
 struct xwidget{
-  int id;
-  int type;
-  char* title;
+  Lisp_Object plist;//auxilliary data
+  Lisp_Object type;//the widget type
+
+  int id; // id is stored inside the struct which is conveniont in some cases
+  char* title;//a title that is used for button labels for instance
 
 
   int height;

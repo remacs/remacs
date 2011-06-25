@@ -36,24 +36,24 @@
      ,@body))
 
 (xwidget-demo "a-button" 
-              (xwidget-insert (point-min)  1 "button" 40  50  1)
+              (xwidget-insert (point-min) 'button  "button" 40  50  1)
               (define-key (current-local-map) [xwidget-event] 'xwidget-handler-demo-basic))
 
 (xwidget-demo "a-big-button" 
-              (xwidget-insert (point-min)  1 "button" 400  500  1)
+              (xwidget-insert (point-min)  'button "button" 400  500  1)
               (define-key (current-local-map) [xwidget-event] 'xwidget-handler-demo-basic))
 
 (xwidget-demo "a-socket" 
-              (xwidget-insert (point-min)  3 "socket" 500  500  5)
+              (xwidget-insert (point-min)  'socket "socket" 500  500  5)
               (define-key (current-local-map) [xwidget-event] 'xwidget-handler-demo-basic))
 
 
 (xwidget-demo "basic"
-  (xwidget-insert (point-min)  1 "button" 40  50  1)
-  (xwidget-insert          15  2 "toggle" 60  30  2)
-  (xwidget-insert          30  3 "emacs"  400 200 3)
-  (xwidget-insert          20  4 "slider" 100 50  4)
-  (xwidget-insert          40  3 "uzbl-core"   400 400 5)
+  (xwidget-insert (point-min)  'button "button" 40  50  1)
+  (xwidget-insert          15  'toggle "toggle" 60  30  2)
+  (xwidget-insert          30  'socket "emacs"  400 200 3)
+  (xwidget-insert          20  'slider "slider" 100 50  4)
+  (xwidget-insert          40  'socket "uzbl-core"   400 400 5)
   (define-key (current-local-map) [xwidget-event] 'xwidget-handler-demo-basic)
 )
 

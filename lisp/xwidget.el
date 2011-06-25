@@ -38,6 +38,31 @@ hand-wave issues like these until the hard parts are solved.
     (xwidget-resize-internal id width height)
   ))
 
+
+(defun xwidget-socket-handler ()
+  "creates plug for socket."
+  (interactive)
+  (message "socket handler xwidget %S" last-input-event)
+  (let*
+      ((xwidget-event-type (nth 2 last-input-event))
+       (xwidget-id (nth 1 last-input-event)))
+    (cond ( (eq xwidget-event-type 'xembed-ready)
+            (let*
+                ((xembed-id (nth 3 last-input-event)))
+              (message "xembed ready  event: %S xw-id:%s" xembed-id xwidget-id)
+              ;;TODO fetch process data from the xwidget. create it, store process info
+              ;;will start emacs/uzbl in a xembed socket when its ready
+              ;; (cond
+              ;;  ((eq 3 xwidget-id)
+              ;;   (start-process "xembed" "*xembed*" (format "%ssrc/emacs" default-directory) "-q" "--parent-id" (number-to-string xembed-id) ) )
+              ;;  ((eq 5 xwidget-id)
+              ;;   (start-process "xembed2" "*xembed2*" "uzbl-core"  "-s" (number-to-string xembed-id)  "http://www.fsf.org" )  )
+               
+              )
+            ))))
+
+
+
 ;; use declare here?
 ;; (declare-function xwidget-resize-internal "xwidget.c" )
 ;; check-declare-function?

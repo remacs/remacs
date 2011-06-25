@@ -94,9 +94,11 @@ Lisp_Object Qxwidget_info;
 Lisp_Object Qxwidget_resize_internal;
 Lisp_Object Qxwidget_send_keyboard_event;
 
-extern Lisp_Object QCdata, QCtype;
-extern Lisp_Object QCwidth, QCheight;
+Lisp_Object Qbutton, Qtoggle, Qslider, Qsocket, Qcairo, QCplist;
 
+
+extern Lisp_Object  QCtype;   
+extern Lisp_Object QCwidth, QCheight;  
 
 #define XG_XWIDGET "emacs_xwidget"
 struct xwidget_view* xwidget_view_lookup(struct xwidget* xw,     struct window *w);
@@ -191,6 +193,13 @@ void xwidget_plug_added(GtkSocket *socket,
   printf("xwidget_plug_added\n");
 }
 
+gboolean xwidget_plug_removed(GtkSocket *socket,
+                        gpointer   user_data)
+{
+  printf("xwidget_plug_removed\n");
+  return TRUE; /* dont run the default handler because that kills the socket and we want to reuse it*/
+}
+
 
 int xwidget_view_index=0;
 
@@ -209,36 +218,32 @@ xwidget_init_view (
   xv->model = xww;
   
   //widget creation
-  switch (xww->type) 
+  if(EQ(xww->type, Qbutton))
     {
-    case 1:
       xv->widget = gtk_button_new_with_label (xww->title);
       g_signal_connect (G_OBJECT (xv->widget), "clicked",
                         G_CALLBACK (buttonclick_handler), xww); //the model rather than the view
-      break;
-    case 2:
+    } else if (EQ(xww->type, Qtoggle)) {
       xv->widget = gtk_toggle_button_new_with_label (xww->title);
-      break;
-    case 3:
+    } else if (EQ(xww->type, Qsocket)) {
       xv->widget = gtk_socket_new ();
       //gtk_widget_set_app_paintable (xw->widget, TRUE); //workaround for composited sockets
 
       //gdk_color_parse("blue",&color); //the blue color never seems to show up. something else draws a grey bg
       //gtk_widget_modify_bg(xv->widget, GTK_STATE_NORMAL, &color);
-      g_signal_connect_after(xv->widget, "plug-added", G_CALLBACK(xwidget_plug_added), "plug added");        
-      break;
-    case 4:
+      g_signal_connect_after(xv->widget, "plug-added", G_CALLBACK(xwidget_plug_added), "plug added");
+      g_signal_connect_after(xv->widget, "plug-removed", G_CALLBACK(xwidget_plug_removed), "plug removed");              
+    } else if (EQ(xww->type, Qsocket)) {
       xv->widget =
         gtk_hscale_new (GTK_ADJUSTMENT
                         (gtk_adjustment_new (0, 0, 100, 1, 1, 0)));
       gtk_scale_set_draw_value (GTK_SCALE (xv->widget), FALSE);	//i think its emacs role to show text and stuff, so disable the widgets own text
-      break;
-    case 5:
+    } else if (EQ(xww->type, Qcairo)) {
       //Cairo view
       //uhm cairo is differentish in gtk 3. 
       //gdk_cairo_create (gtk_widget_get_window (f->gwfixed));
-      break;
-    }
+  } else return NULL;
+  
   //widget realization
   //make container widget 1st, and put the actual widget inside the container
   //later, drawing should crop container window if necessary to handle case where xwidget
@@ -277,9 +282,7 @@ xwidget_init_view (
   //  g_signal_connect_after(xw->widget, "damage-event", G_CALLBACK(xwidget_composite_draw), "damaged");  
   
   //widgettype specific initialization only possible after realization
-  switch (xww->type)
-    {
-    case 3:
+ if (EQ(xww->type, Qsocket)) {
       printf ("xwid:%d socket id:%x %d\n",
               xww->id,
               gtk_socket_get_id (GTK_SOCKET (xv->widget)),
@@ -287,8 +290,7 @@ xwidget_init_view (
       send_xembed_ready_event (xww->id,
                                gtk_socket_get_id (GTK_SOCKET (xv->widget)));
       //gtk_widget_realize(xw->widget);
-      break;
-    }
+ }
   return xv;
 }
 
@@ -421,6 +423,7 @@ DEFUN ("xwidget-embed-steal-window", Fxwidget_embed_steal_window, Sxwidget_embed
   //oenvrml
   return Qnil;
 }
+
 
 
 DEFUN ("xwidget-resize-internal", Fxwidget_resize_internal, Sxwidget_resize_internal, 3, 3, 0, doc:
@@ -601,40 +604,24 @@ syms_of_xwidget (void)
 {
   int i;
 
-  Qxwidget_set_keyboard_grab = intern ("xwidget-set-keyboard-grab");
-  staticpro (&Qxwidget_set_keyboard_grab);
   defsubr (&Sxwidget_set_keyboard_grab);
-
-  Qxwidget_send_keyboard_event = intern ("xwidget-send-keyboard-event");
-  staticpro (&Qxwidget_send_keyboard_event);
   defsubr (&Sxwidget_send_keyboard_event);
-
-  Qxwidget_embed_steal_window = intern ("xwidget-embed-steal-window");
-  staticpro (&Qxwidget_embed_steal_window);
   defsubr (&Sxwidget_embed_steal_window);
-
-  Qxwidget_info = intern ("xwidget-info");
-  staticpro (&Qxwidget_info);
   defsubr (&Sxwidget_info);
-
-  Qxwidget_resize_internal = intern ("xwidget-resize-internal");
-  staticpro (&Qxwidget_resize_internal);
   defsubr (&Sxwidget_resize_internal);
-
-
-  Qxwidget_embed_steal_window = intern ("xwidget-embed-steal-window");
-  staticpro (&Qxwidget_embed_steal_window);
   defsubr (&Sxwidget_embed_steal_window);
 
+  DEFSYM (Qxwidget ,"xwidget");
+  DEFSYM (Qxwidget_id ,":xwidget-id");
+  DEFSYM (Qtitle ,":title");
 
-  Qxwidget = intern ("xwidget");
-  staticpro (&Qxwidget);
-
-  Qxwidget_id = intern (":xwidget-id");
-  staticpro (&Qxwidget_id);
-
-  Qtitle = intern (":title");
-  staticpro (&Qtitle);
+  DEFSYM (Qbutton, "button");  
+  DEFSYM (Qtoggle, "toggle");  
+  DEFSYM (Qslider, "slider");  
+  DEFSYM (Qsocket, "socket");
+  DEFSYM (Qcairo, "cairo");
+  
+  DEFSYM (QCplist, ":plist");  
 
   Fprovide (intern ("xwidget-internal"), Qnil);
 
@@ -683,7 +670,7 @@ valid_xwidget_p (Lisp_Object object)
 
 
 
-
+/* find a value associated with key in spec */
 Lisp_Object
 xwidget_spec_value (
                     Lisp_Object spec, Lisp_Object  key,
@@ -738,7 +725,9 @@ struct xwidget_view* xwidget_view_lookup(struct xwidget* xw,     struct window *
 int
 lookup_xwidget (Lisp_Object  spec)
 {
-  /*when a xwidget lisp spec is found initialize the C struct*/
+  /*when a xwidget lisp spec is found initialize the C struct that is used in the C code.
+
+   */
   int found = 0, found1 = 0, found2 = 0;
   Lisp_Object value;
   int id;
@@ -750,7 +739,7 @@ lookup_xwidget (Lisp_Object  spec)
   xw = &xwidgets[id];
   xw->id=id;
   value = xwidget_spec_value (spec, QCtype, &found);
-  xw->type = INTEGERP (value) ? XFASTINT (value) : 1;	//default to button
+  xw->type = SYMBOLP (value) ? value : Qbutton;	//default to button
   value = xwidget_spec_value (spec, Qtitle, &found2);
   xw->title = STRINGP (value) ? (char *) SDATA (value) : "?";	//funky cast FIXME
 
@@ -759,7 +748,8 @@ lookup_xwidget (Lisp_Object  spec)
   value = xwidget_spec_value (spec, QCwidth, NULL);
   xw->width = INTEGERP (value) ? XFASTINT (value) : 50;	//ok
 
-
+  value = xwidget_spec_value (spec, QCplist, Qnil);
+  xw->plist = value;
   printf ("xwidget_id:%d type:%d found:%d %d %d title:%s (%d,%d)\n", id,
           xw->type, found, found1, found2, xw->title, xw->height, xw->width);
 
@@ -768,6 +758,10 @@ lookup_xwidget (Lisp_Object  spec)
 
   return id;
 }
+
+
+
+
 
 //////////////////////////////////
 int region_modified = 0;
