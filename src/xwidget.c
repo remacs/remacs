@@ -101,6 +101,7 @@ extern Lisp_Object  QCtype;
 extern Lisp_Object QCwidth, QCheight;  
 
 #define XG_XWIDGET "emacs_xwidget"
+#define XG_XWIDGET_VIEW "emacs_xwidget_view"
 struct xwidget_view* xwidget_view_lookup(struct xwidget* xw,     struct window *w);
 
 int
@@ -201,6 +202,35 @@ gboolean xwidget_plug_removed(GtkSocket *socket,
 }
 
 
+void xwidget_slider_changed (GtkRange *range,
+                             gpointer  user_data)
+{
+  //slider value changed. change value of siblings correspondingly. but remember that changing value will again trigger signal
+  //gtk_range_set_value ()
+  //http://developer.gnome.org/gobject/unstable/gobject-Signals.html#g-signal-handler-block
+  double v;
+  printf("slider changed val:%f\n", v=gtk_range_get_value(range));
+  //code meant to be refactored
+  struct xwidget_view* xvp = g_object_get_data (G_OBJECT (range), XG_XWIDGET_VIEW);
+  struct xwidget_view* xv;
+  for (int i = 0; i < MAX_XWIDGETS; i++)
+    {
+      xv = &xwidget_views[i];
+      if(xvp->model == xv->model){
+        g_signal_handler_block( xv->widget,xv->handler_id);
+      }
+    }
+  for (int i = 0; i < MAX_XWIDGETS; i++)
+    {
+      xv = &xwidget_views[i];
+      if(xvp->model == xv->model){
+        gtk_range_set_value(xv->widget, v);
+        g_signal_handler_unblock( xv->widget,xv->handler_id);
+      }
+    }
+
+}
+
 int xwidget_view_index=0;
 
 /* initializes and does initial placement of an xwidget view on screen */
@@ -233,11 +263,12 @@ xwidget_init_view (
       //gtk_widget_modify_bg(xv->widget, GTK_STATE_NORMAL, &color);
       g_signal_connect_after(xv->widget, "plug-added", G_CALLBACK(xwidget_plug_added), "plug added");
       g_signal_connect_after(xv->widget, "plug-removed", G_CALLBACK(xwidget_plug_removed), "plug removed");              
-    } else if (EQ(xww->type, Qsocket)) {
+    } else if (EQ(xww->type, Qslider)) {
       xv->widget =
-        gtk_hscale_new (GTK_ADJUSTMENT
-                        (gtk_adjustment_new (0, 0, 100, 1, 1, 0)));
+        //gtk_hscale_new (GTK_ADJUSTMENT(gtk_adjustment_new (0.0, 0.0, 100.0, 1.0, 10.0, 10.0)));
+        gtk_hscale_new_with_range ( 0.0, 100.0, 10.0);
       gtk_scale_set_draw_value (GTK_SCALE (xv->widget), FALSE);	//i think its emacs role to show text and stuff, so disable the widgets own text
+      xv->handler_id = g_signal_connect_after(xv->widget, "value-changed", G_CALLBACK(xwidget_slider_changed), "slider changed");
     } else if (EQ(xww->type, Qcairo)) {
       //Cairo view
       //uhm cairo is differentish in gtk 3. 
@@ -253,7 +284,7 @@ xwidget_init_view (
   //xw->widgetwindow = GTK_CONTAINER (gtk_offscreen_window_new ());
 
   xv->widgetwindow = GTK_CONTAINER (gtk_fixed_new ());
-  gtk_widget_set_has_window(  xv->widgetwindow, TRUE); //if gtk_fixed doesnt have a window it will surprisingly not honor setsize so that children gets clipped later. the documentation is not consistent regarding if its legal to call this method
+  gtk_widget_set_has_window(GTK_WIDGET (  xv->widgetwindow), TRUE); //if gtk_fixed doesnt have a window it will surprisingly not honor setsize so that children gets clipped later. the documentation is not consistent regarding if its legal to call this method
   //xv->widgetwindow = GTK_CONTAINER (gtk_event_box_new ());
 
   //gtk_widget_set_size_request (GTK_WIDGET (xw->widget), xw->width, xw->height);  
@@ -267,6 +298,7 @@ xwidget_init_view (
   //store some xwidget data in the gtk widgets
   g_object_set_data (G_OBJECT (xv->widget), XG_FRAME_DATA, (gpointer) (s->f)); //the emacs frame
   g_object_set_data (G_OBJECT (xv->widget), XG_XWIDGET, (gpointer) (xww)); //the xwidget
+  g_object_set_data (G_OBJECT (xv->widget), XG_XWIDGET_VIEW, (gpointer) (xv)); //the xwidget
   g_object_set_data (G_OBJECT (xv->widgetwindow), XG_XWIDGET, (gpointer) (xww)); //the xwidget  
 
   //this seems to enable xcomposition. later we need to paint ourselves somehow,

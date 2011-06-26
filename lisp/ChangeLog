@@ -1,3 +1,100 @@
+2011-06-25  Glenn Morris  <rgm@gnu.org>
+
+	* progmodes/f90.el (f90-keywords-re, f90-procedures-re)
+	(f90-constants-re): Add some F2008 stuff.
+
+2011-06-25  Eli Zaretskii  <eliz@gnu.org>
+
+	* net/ange-ftp.el (ange-ftp-insert-file-contents): Let-bind
+	buffer-file-type before setting its value, to avoid disastrous
+	global effects on decoding files for DOS/Windows systems.  (Bug#8780)
+
+2011-06-25  Juanma Barranquero  <lekktu@gmail.com>
+
+	* allout.el (allout-unload-function): Pass -1 to `allout-mode'.
+
+	* ses.el (ses-unload-function):
+	* emacs-lisp/re-builder.el (re-builder-unload-function): Simplify.
+
+	* proced.el (proced-unload-function):
+	* progmodes/cperl-mode.el (cperl-mode-unload-function): Remove.
+
+2011-06-25  Andreas Rottmann  <a.rottmann@gmx.at>
+
+	* server.el (server-create-window-system-frame): Add parameters arg.
+	(server-process-filter): Doc fix.  Handle frame-parameters.
+
+2011-06-25  Juanma Barranquero  <lekktu@gmail.com>
+
+	Fix bug#8730, bug#8781.
+
+	* loadhist.el (unload--set-major-mode): New function.
+	(unload-feature): Use it.
+
+	* progmodes/python.el (python-after-info-look): Add autoload cookie.
+	(python-unload-function): New function.
+
+2011-06-25  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* mail/rmail.el (rmail-show-message-1): Use restore-buffer-modified-p.
+
+2011-06-25  Giuseppe Scrivano  <gscrivano@gnu.org>
+
+	* net/browse-url.el (browse-url-firefox-program): Add icecat to
+	the candidates list.
+
+2011-06-24  Juanma Barranquero  <lekktu@gmail.com>
+
+	* progmodes/verilog-mode.el (verilog-mode): Fix test for bound variable.
+
+2011-06-23  Richard Stallman  <rms@gnu.org>
+
+	* mail/rmail.el: Going to grep hit in Rmail buffer finds the message.
+	(rmail-variables): Set next-error-move-function.
+	(rmail-what-message): Take argument POS.
+	(rmail-next-error-move): New function.
+
+2011-06-23  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* emacs-lisp/smie.el (smie-bnf->prec2): Give more understandable error
+	messages for adjacent non-terminals.
+
+2011-06-23  Richard Stallman  <rms@gnu.org>
+
+	* mail/rmail.el (rmail-retry-ignored-headers): Add message-id.
+	(rmail-show-message-1): Preserve buffer modified flag.
+	(rmail-start-mail): Don't specify use of rmail-mail-return;
+	that's done by mail-bury now.
+	(rmail-mail-return): Handle arg NEWBUF.
+
+2011-06-23  Michael Albinus  <michael.albinus@gmx.de>
+
+	* net/tramp-sh.el (tramp-method-out-of-band-p): Check, whether
+	SIZE is a number.
+
+2011-06-23  Martin Rudalics  <rudalics@gmx.at>
+
+	* window.el (get-lru-window, get-mru-window)
+	(get-largest-window): Never return a minibuffer window.
+	(display-buffer-pop-up-window): Fix a bug that could lead to
+	reusing the minibuffer window.
+	(display-buffer): Pass original specifier argument to
+	display-buffer-function instead of the normalized one.
+	Reported by Thierry Volpiatto <thierry.volpiatto@gmail.com>.
+
+2011-06-22  Leo Liu  <sdl.web@gmail.com>
+
+	* minibuffer.el (completing-read-function)
+	(completing-read-default): Move from minibuf.c
+
+2011-06-22  Richard Stallman  <rms@gnu.org>
+
+	* mail/sendmail.el (mail-bury): If Rmail is in use, return nicely
+	to Rmail even if not started by a special Rmail command.
+
+	* mail/rmailmm.el (rmail-insert-mime-forwarded-message):
+	Copy the buffer currently showing just one message.
+
 2011-06-22  Roland Winkler  <winkler@gnu.org>
 
 	* textmodes/bibtex.el (bibtex-entry-update): Use mapc.

@@ -41,6 +41,8 @@ struct xwidget_view{
   int x; int y;
   int clipx; int clipy;
   struct window *w;
+
+  long handler_id;
 };
 
 
