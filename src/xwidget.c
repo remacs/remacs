@@ -205,14 +205,22 @@ gboolean xwidget_plug_removed(GtkSocket *socket,
 void xwidget_slider_changed (GtkRange *range,
                              gpointer  user_data)
 {
-  //slider value changed. change value of siblings correspondingly. but remember that changing value will again trigger signal
-  //gtk_range_set_value ()
-  //http://developer.gnome.org/gobject/unstable/gobject-Signals.html#g-signal-handler-block
+  //slider value changed. change value of siblings
+  //correspondingly. but remember that changing value will again
+  //trigger signal
+
+  //TODO view storage wont be an array futureish so the loop needs to change eventually
+  //TODO it would be nice if this code could be reusable but, alas, C is not a functional language
+  //issues are:
+  // - the type of the controllers value (double, boolean etc)
+  // - the getter and setter (but they can be func pointers)
+  // a behemoth macro is always an option.
   double v;
   printf("slider changed val:%f\n", v=gtk_range_get_value(range));
-  //code meant to be refactored
+
   struct xwidget_view* xvp = g_object_get_data (G_OBJECT (range), XG_XWIDGET_VIEW);
   struct xwidget_view* xv;
+  //block sibling views signal handlers
   for (int i = 0; i < MAX_XWIDGETS; i++)
     {
       xv = &xwidget_views[i];
@@ -220,6 +228,7 @@ void xwidget_slider_changed (GtkRange *range,
         g_signal_handler_block( xv->widget,xv->handler_id);
       }
     }
+  //set values of sibling views and unblock
   for (int i = 0; i < MAX_XWIDGETS; i++)
     {
       xv = &xwidget_views[i];
