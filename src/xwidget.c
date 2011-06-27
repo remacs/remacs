@@ -362,7 +362,7 @@ x_draw_xwidget_glyph_string (struct glyph_string *s)
   int box_line_vwidth = max (s->face->box_line_width, 0);
   int height = s->height;
 
-  int drawing_in_selected_window = (XWINDOW (FRAME_SELECTED_WINDOW (s->f))) == (s->w);
+  //int drawing_in_selected_window = (XWINDOW (FRAME_SELECTED_WINDOW (s->f))) == (s->w);
   //TODO drawing_in_selected_window can be true for several windows if we have several frames.
   //we also need to check that the xwidget is to be drawn inside a window on a frame where it originaly lives.
   //otherwise draw a phantom, or maybe reparent the xwidget.
@@ -468,10 +468,11 @@ DEFUN ("xwidget-embed-steal-window", Fxwidget_embed_steal_window, Sxwidget_embed
 
 
 DEFUN ("xwidget-resize-internal", Fxwidget_resize_internal, Sxwidget_resize_internal, 3, 3, 0, doc:
-       )
+       /* resize xwidgets */)
   (Lisp_Object xwidget_id, Lisp_Object new_width, Lisp_Object new_height)
 {
   struct xwidget *xw;
+  struct xwidget_view *xv;
   int xid, w, h;
 
   CHECK_NUMBER (xwidget_id);
@@ -491,6 +492,15 @@ DEFUN ("xwidget-resize-internal", Fxwidget_resize_internal, Sxwidget_resize_inte
   gtk_widget_set_size_request (GTK_WIDGET (xw->widget), xw->width,
                                xw->height);
   */
+  for (int i = 0; i < MAX_XWIDGETS; i++) //TODO MVC refactor lazy linear search
+    {
+      xv = &xwidget_views[i];
+      if(xv->model == xw){
+        gtk_layout_set_size (GTK_LAYOUT (xv->widgetwindow), xw->width, xw->height);
+        gtk_widget_set_size_request (GTK_WIDGET (xv->widget), xw->width, xw->height);
+      }
+    }
+
   return Qnil;
 }
 

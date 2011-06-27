@@ -14,18 +14,42 @@ will require adapter code for each type.
 
 A difference from images is that xwidgets live their own life. You
 create them with an api, get a reference, and tie them to a particular
-buffer with a display spec. Also, xwidgets exists in only one copy,
-where a plain image can be shown in several windows. The xwidget code
-tries to handle this by essentialy making a screen capture of the
-widget and displaying those in the non-active windows, and the live
-widget in the active window. The current snapshot code doesnt work if
-the live xwidget is off-screen. This seems to be solveable by using
-the XComposite interface, but that doesnt currently work.
+buffer with a display spec. 
 
-The current state is that one window, one frame, showing many xwidgets
-is a nice demo. One frame, many windows, will have lots of display
-glitches. Many frames, many windows, will work even worse.
+Each xwidget can have several views. In MVC terms, an xwidget is the
+model, and an xwidget-view is a view of the xwidget in a particular
+Emacs window.
 
+The xwidget code attempts to keep the visual appearance of the views
+in sync with through an Observer pattern implementation.
+
+** MVC and Xembedd
+The MVC approach appears to be at least in principle robust for plain gtk
+widgets. For the interesting case of gtk sockets which implements an
+xembed host widget that allows for embedding other applications inside
+an Emacs window, the story gets more complex.
+
+The problem is that xembed is designed to plug an application window
+inside a a secket and thats it. You can't move a plug between
+sockets. I tried numerous hacks to get around this but there is
+nothing that works realy well.
+
+Therefore the Emacs part of the code will only expose well-defined
+interfaces. cooperating applications will be able to use the interface
+in a well defined manner. The problem is that there is no known xembeddable
+application that implement the needed type of functionality, which is
+allowing for creating new windows on the fly that plug into new
+sockets.
+
+Therefore I will attempt to provide an external application that wraps
+another application and through hacks attempts to provide the needed
+multi view xembed function. That way Emacs is sane and the insanity
+contained.
+
+This app will work by providing a socket that an app plugs into. The
+socket window is copied efficientlp by means of composition to a
+number of other windows, that then are plugged into the different
+Emacs sockets. 
 
 * Brief overview of how xwidgets work
 Xwidgets work in one way like images in Emacs. You bind a display spec very
@@ -45,27 +69,9 @@ synchonous with Emacs display changes. Ok, so why is that difficult then?
   xwidget is encountered during display, the flag is set. After redisplay,
   iterate all xwidgets and hide those which hasnt been displayed. 
 
-- In the general case, there can only be one xwidget, and several views of
-  it. There is one live view, and several phantom views. The live view is defined
-  to be in the currently selected window. All other views are phantom views. 
-
-  Even this simple rule is difficult to implement in practice because Emacs
-  display is clever and optimized. It is often difficult to know that a xwdiget
-  hasnt actually been displayed after a redisplay.
-
-- phantom views of xwidgets are thankfully not so hard because gtk
-  supports snapshoting of many widget types. Snapshoting doesnt seem
-  to work if the live widget is offscreen. This might be solvable with
-  xcomposite, but attempts have so far failed.
-
 - The gtk socket type for embedding external applications is desirable
   but presents a lot of difficulties of its own. One difficulty is
   deciding which input events to forward, and when and how to do it.
-
-- The case of showing an xwidget in several frames is not solved at all
-  currently. This would mean moving the live xwidget between frames when the
-  selected window moves. The gtk widget will need to be reparented between
-  windows, which seems fragile. 
 
 ** placement and clipping
 the entire emacs frame is a gtk window. we use the fixed layout
@@ -77,32 +83,14 @@ emacs frame.
 this way was chosen to simplify clipping of the widgets against emacs
 window borders.
 
-** xwidget phantom views in particular
-The general aproach so far has been to have a "live" xwidget moved
-around in the emacs window. when the selected window changes, the live
-xwidget is moved there. the possibly other views of the xwidget are
-called "phantoms" and are snapshoted from the live xwidget.
-
-This turned out to be difficult and a lot of different aproaches has
-been tried. The current, somewhat promising, aproach is to enable
-composition for the xwidgets gtk widget peer. This enables renedering
-of the widget to offscreen backing store. snapshoting then becomes
-more robus, because otherwise snapshoting is dependent on the live
-xwidget being on-screen, which isnt necesarily the case.
-
-on the other hand, compositing introduces other issues. the live
-xwidget isnt drawn automatically at all any more, so we need our own
-expose handler to deal with drawing. this in turn enables us to toy
-with transparency and such.
 
 ** different strategies
 Integrating toolkit widgets(gtk in this case) and the emacs display
 engine is more difficult than your plain average gui application, and
 different strategies has been tested and will continue to be tested.
 
-There will probably always be a distinction between live xwidgets and
-phantom xwidgets. how this distinction is realized has and will
-change.
+There was a distinction between live xwidgets and
+phantom xwidgets, previous to the change to MVC.
 
 - the first aproach was to have the live xwidget on-screen, and move
   them about. the phantoms were generated by snapshoting the live
@@ -123,14 +111,12 @@ live and phantom widgets in different colors.
 the drawback is that its our own responsibility to handle drawing,
 which puts more of the display optimization burden on us.
 
-this is the currently tried aproach and it works so-so at the moment.
+this is aproach worked so-so.
 
 - another aproach is to have both live and phantom widgets drawn
   on-screen by proxy gtk objects. the live xwidget will be entirely
   handled in an off-screen window, and the proxy objects will redirect
   events there.
-
-This aproach seems promising, but complicated.
 
 - combine on-screen and off-screen aproaches. maybe composition is the
   way to go for most cases, but on-screen xembeding is the way to go
@@ -138,6 +124,8 @@ This aproach seems promising, but complicated.
   window. off-screen rendering and whatnot, is not efficient in that
   particular case, and the user will simply have to accept that the
   phantom of a video widget isnt particularily beautiful.
+
+- The current and seemingly sanest aproach implements a MVC pattern.
 
 ** Testing
 ;;test like:
@@ -176,10 +164,32 @@ work very well.
 spent any time on it, since getting the visuals right is much
 harder. Anyway, I sort of think the interface should be somewhat like
 it is, except symbols is used instead of integers.
+*** DONE use symbols for xwidget types rather than ints
+    CLOSED: [2011-06-27 Mon 12:52]
+
+
+*** TODO better lisp based structure for xwidgets
+something like this:
+- a "process" like aproach to create the xwidgets. xwidgets are
+  coupled to buffers, somewhat like processes, except a buffer can
+  hold several xwidgets
+- an xwidget has a plist to hold the model, like a process
+- an xwidget has an assoc list of xwidget views
+
+there are some things that arent clear:
+- an xwidget doesnt necessarily need to be coupled to a buffer but it
+  seems to be the clearest model. xwidgets would be buffer local
+- xwidget-views are by necessity coupled to a emacs window so it might
+  be better to store them window locally rather than in an assoc
+  coupled to the xwidget model
+
+
 
 ** TODO  more documentation
 There should be user docs, and xwidget contributor docs. The current README
 is all contributor docs there is now, apart from the code.
+
+
 
 ** TODO  look into more ways of displaying xwidgets, like binding them to a
 window rather than a point in a buffer. This was suggested by Chidong.
@@ -190,7 +200,8 @@ replace the view of a particular window, and it would only show in
 that window.
 
 
-** TODO MVC mode for xwidgets
+** DONE MVC mode for xwidgets
+   CLOSED: [2011-06-27 Mon 12:53]
 It appears unfruitful to chase using the same display mode for all
 types of xwidgets. Composition is fun but not robust the way I'm
 tried to do it.
@@ -208,5 +219,14 @@ themselves. Inkscape supports multiple views to the same document,
 other programs don't. In practice it might not be a big drawback.
 
 
-*** TODO figure out what to do with the multiple frames case. 
+*** DONE figure out what to do with the multiple frames case. 
+    CLOSED: [2011-06-27 Mon 12:52]
 This should be easier to solve with MVC.
+Surprisingly, this just worked!
+*** DONE how to propagate changes in views to other views?
+    CLOSED: [2011-06-27 Mon 12:53]
+I used gtk signals, the implementation for sliders works well!
+
+** TODO canvas support
+goocanvas is a gtk canvas implemented with cairo. investigate.
+http://developer.gnome.org/goocanvas/unstable/goocanvas-model-view-canvas.html
