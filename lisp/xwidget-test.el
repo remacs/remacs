@@ -52,6 +52,11 @@
               (xwidget-insert (point-min)  'slider "slider" 500  100  5)
               (define-key (current-local-map) [xwidget-event] 'xwidget-handler-demo-basic))
 
+(xwidget-demo "a-canvas" 
+              (xwidget-insert (point-min)  'cairo "canvas" 1000  1000  5)
+              (define-key (current-local-map) [xwidget-event] 'xwidget-handler-demo-basic))
+
+
 
 (xwidget-demo "basic"
   (xwidget-insert (point-min)  'button "button" 40  50  1)

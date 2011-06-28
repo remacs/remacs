@@ -72,6 +72,17 @@
 #include <gtk/gtk.h>
 #include <gdk/gdk.h>
 
+#include <librsvg/rsvg.h>
+
+#ifdef HAVE_GOOCANVAS
+#include <goocanvas.h>
+#endif
+
+#ifdef HAVE_CLUTTER
+#include <clutter/clutter.h>
+#include <clutter-gtk/clutter-gtk.h>
+#endif
+
 #include "xwidget.h"
 
 //TODO should of course not be a hardcoded array but I can't be bothered atm
@@ -209,8 +220,8 @@ void xwidget_slider_changed (GtkRange *range,
   //correspondingly. but remember that changing value will again
   //trigger signal
 
-  //TODO view storage wont be an array futureish so the loop needs to change eventually
-  //TODO it would be nice if this code could be reusable but, alas, C is not a functional language
+  //TODO MVC view storage wont be an array futureish so the loop needs to change eventually
+  //TODO MVC it would be nice if this code could be reusable but, alas, C is not a functional language
   //issues are:
   // - the type of the controllers value (double, boolean etc)
   // - the getter and setter (but they can be func pointers)
@@ -245,7 +256,7 @@ int xwidget_view_index=0;
 /* initializes and does initial placement of an xwidget view on screen */
 struct xwidget_view*
 xwidget_init_view ( 
-                     struct xwidget *xww,
+                   struct xwidget *xww,
                    struct glyph_string *s,
                    int x, int y)
 {
@@ -282,6 +293,52 @@ xwidget_init_view (
       //Cairo view
       //uhm cairo is differentish in gtk 3. 
       //gdk_cairo_create (gtk_widget_get_window (f->gwfixed));
+#ifdef HAVE_GOOCANVAS
+    xv->widget = goo_canvas_new();
+    GooCanvasItem *root, *rect_item, *text_item;
+    goo_canvas_set_bounds (GOO_CANVAS (xv->widget), 0, 0, 1000, 1000);
+     root = goo_canvas_get_root_item (GOO_CANVAS (xv->widget));
+      rect_item = goo_canvas_rect_new (root, 100, 100, 400, 400,
+                                   "line-width", 10.0,
+                                   "radius-x", 20.0,
+                                   "radius-y", 10.0,
+                                   "stroke-color", "yellow",
+                                   "fill-color", "red",
+                                   NULL);
+
+  text_item = goo_canvas_text_new (root, "Hello World", 300, 300, -1,
+                                   GTK_ANCHOR_CENTER,
+                                   "font", "Sans 24",
+                                   NULL);
+  goo_canvas_item_rotate (text_item, 45, 300, 300);
+  
+#endif
+#ifdef HAVE_CLUTTER
+        xv->widget = gtk_clutter_embed_new ();;
+        ClutterActor *stage = NULL;
+        stage = gtk_clutter_embed_get_stage (GTK_CLUTTER_EMBED (        xv->widget));
+        ClutterColor stage_color = { 0xaa, 0xaa, 0xaa, 0xff }; /* Black */
+        clutter_stage_set_color (CLUTTER_STAGE (stage), &stage_color);
+
+        ClutterActor *  texture =  clutter_cairo_texture_new (1000, 1000);
+        clutter_container_add_actor(stage, texture);
+        clutter_actor_set_position(texture, 0,0);
+        clutter_actor_show(texture);
+
+        cairo_t *cr;
+        cr = clutter_cairo_texture_create (CLUTTER_CAIRO_TEXTURE (texture));
+
+        /* draw on the context */
+        RsvgHandle *h =  rsvg_handle_new_from_file  ("/tmp/tst.svg",
+                                                     NULL);
+        
+        rsvg_handle_render_cairo(h, cr);
+        cairo_destroy (cr);
+          
+        /* Show the stage: */
+        clutter_actor_show (stage);        
+#endif        
+        
   } else return NULL;
   
   //widget realization
@@ -468,7 +525,7 @@ DEFUN ("xwidget-embed-steal-window", Fxwidget_embed_steal_window, Sxwidget_embed
 
 
 DEFUN ("xwidget-resize-internal", Fxwidget_resize_internal, Sxwidget_resize_internal, 3, 3, 0, doc:
-       /* resize xwidgets */)
+       /* resize xwidgets internal use only, because the lisp specs need to be updated also*/)
   (Lisp_Object xwidget_id, Lisp_Object new_width, Lisp_Object new_height)
 {
   struct xwidget *xw;
@@ -486,12 +543,6 @@ DEFUN ("xwidget-resize-internal", Fxwidget_resize_internal, Sxwidget_resize_inte
   printf("resize xwidget %d (%d,%d)->(%d,%d)",xid,xw->width,xw->height,w,h);
   xw->width=w;
   xw->height=h;
-  /*
-    //this will be more complex, need to iterate all views and resize each. tedious TODO MVC
-  gtk_layout_set_size (GTK_LAYOUT (xw->widgetwindow), xw->width, xw->height);
-  gtk_widget_set_size_request (GTK_WIDGET (xw->widget), xw->width,
-                               xw->height);
-  */
   for (int i = 0; i < MAX_XWIDGETS; i++) //TODO MVC refactor lazy linear search
     {
       xv = &xwidget_views[i];
@@ -538,7 +589,7 @@ DEFUN ("xwidget-set-keyboard-grab", Fxwidget_set_keyboard_grab, Sxwidget_set_key
   xid = XFASTINT (xwidget_id);
   kbd_flag = XFASTINT (kbd_grab);
   xw = &xwidgets[xid];
-  if(xw->type != 3) return Qnil; //only relevant for xembed 
+  if(xw->type != 3) return Qnil; //only relevant for xembed  //TODO MVC
   
   printf ("kbd grab: %d %d\n", xid, kbd_flag);
   if (kbd_flag)

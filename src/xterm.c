@@ -9911,7 +9911,11 @@ x_term_init (Lisp_Object display_name, char *xrm_option, char *resource_name)
            https://bugzilla.gnome.org/show_bug.cgi?id=563627.  */
         id = g_log_set_handler ("GLib", G_LOG_LEVEL_WARNING | G_LOG_FLAG_FATAL
                                   | G_LOG_FLAG_RECURSION, my_log_handler, NULL);
+#ifdef HAVE_CLUTTER
+        gtk_clutter_init (&argc, &argv2);
+#else        
         gtk_init (&argc, &argv2);
+#endif        
         g_log_remove_handler ("GLib", id);
 
         /* gtk_init does set_locale.  We must fix locale after calling it.  */

@@ -169,7 +169,12 @@ it is, except symbols is used instead of integers.
 
 
 *** TODO better lisp based structure for xwidgets
-something like this:
+the lisp interface woud be like this:
+- xwidget-create returns an xwidget object, similar to a process
+  object. this id is used when creating the display spec(instead of
+  the user defined id now used)
+
+the data structure would be something like this:
 - a "process" like aproach to create the xwidgets. xwidgets are
   coupled to buffers, somewhat like processes, except a buffer can
   hold several xwidgets
@@ -183,7 +188,11 @@ there are some things that arent clear:
   be better to store them window locally rather than in an assoc
   coupled to the xwidget model
 
-
+stuff that needs to work:
+- do something for all views of a xwidget(resize, value change)
+- do something for all xw-views in an emacs window(deletion etc)
+- lookup xw-view for xwidget in emacs window(during redisplay)
+(- do something for all siblings of a xw-view. not atm)
 
 ** TODO  more documentation
 There should be user docs, and xwidget contributor docs. The current README
@@ -228,5 +237,59 @@ Surprisingly, this just worked!
 I used gtk signals, the implementation for sliders works well!
 
 ** TODO canvas support
-goocanvas is a gtk canvas implemented with cairo. investigate.
+*** goocanvas
+goocanvas is a gtk canvas implemented using cairo. investigate.
 http://developer.gnome.org/goocanvas/unstable/goocanvas-model-view-canvas.html
+it has a MVC model aproach out of the box which is nice.
+
+
+export CFLAGS="`pkg-config --cflags goocanvas` -DHAVE_GOOCANVAS"
+export LDFLAGS=`pkg-config --libs goocanvas`
+./configure
+make
+
+I made a hello goo world xwidget so seems doable.
+I wanted to load a SVG which wasnt straightforward.
+*** clutter
+maybe clutter can be used as a canvas? seems to have a lot of traction atm.
+http://www.openismus.com/documents/clutter_tutorial/0.9/docs/tutorial/html/sec-stage-widget.html
+
+there is also cool stuff like this:
+http://gitorious.org/webkit-clutter/webkit-clutter which is an webkit actor for
+clutter! hmmmmm.
+
+I want to render svg. aparently:
+  librsvg rsvg_handle_render_cairo(h, cr);
+  ClutterCairoTexture
+  Clutter
+
+export CFLAGS="`pkg-config --cflags clutter-gtk-1.0` -DHAVE_CLUTTER"
+export LDFLAGS=`pkg-config --libs clutter-gtk-1.0`
+./configure
+make
+
+compiles but I get:
+Gtk-ERROR **: GTK+ 2.x symbols detected. Using GTK+ 2.x and GTK+ 3 in
+the same process is not supported
+
+export CFLAGS="`pkg-config --cflags clutter-gtk-0.10` -DHAVE_CLUTTER"
+export LDFLAGS=`pkg-config --libs clutter-gtk-0.10`
+./configure
+make
+
+
+** TODO mvc code crashes after a while
+seemingly only when compiling with optimizations
+
+** TODO delete xwidgets belonging to an emacs window
+when it closes
+** TODO xwidget-resize-at
+currently it rewrites the display spec. then it resizes the xwidget
+views. maybe rewriting the spec should be sufficient, and changes to
+it be picked up during redisplay somehow.
+
+** TODO display spec validation
+it is an error to reuse xwidgets in several buffers or in the same
+buffer. how do we catch these errors?
+
+
