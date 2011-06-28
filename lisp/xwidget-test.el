@@ -56,6 +56,10 @@
               (xwidget-insert (point-min)  'cairo "canvas" 1000  1000  5)
               (define-key (current-local-map) [xwidget-event] 'xwidget-handler-demo-basic))
 
+(xwidget-demo "a-webkit" 
+              (xwidget-insert (point-min)  'webkit "webkit" 1000  1000  5)
+              (define-key (current-local-map) [xwidget-event] 'xwidget-handler-demo-basic))
+
 
 
 (xwidget-demo "basic"

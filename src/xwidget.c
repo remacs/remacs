@@ -105,7 +105,7 @@ Lisp_Object Qxwidget_info;
 Lisp_Object Qxwidget_resize_internal;
 Lisp_Object Qxwidget_send_keyboard_event;
 
-Lisp_Object Qbutton, Qtoggle, Qslider, Qsocket, Qcairo, QCplist;
+Lisp_Object Qbutton, Qtoggle, Qslider, Qsocket, Qcairo, Qwebkit, QCplist;
 
 
 extern Lisp_Object  QCtype;   
@@ -339,6 +339,13 @@ xwidget_init_view (
         clutter_actor_show (stage);        
 #endif        
         
+  } else if (EQ(xww->type, Qwebkit)) {
+#ifdef HAVE_WEBKIT
+        xv->widget = webkit_web_view_new();
+        webkit_web_view_load_uri(xv->widget, "http://www.fsf.org"); 
+#endif        
+
+
   } else return NULL;
   
   //widget realization
@@ -722,7 +729,8 @@ syms_of_xwidget (void)
   DEFSYM (Qslider, "slider");  
   DEFSYM (Qsocket, "socket");
   DEFSYM (Qcairo, "cairo");
-  
+  DEFSYM (Qwebkit ,"webkit");
+    
   DEFSYM (QCplist, ":plist");  
 
   Fprovide (intern ("xwidget-internal"), Qnil);

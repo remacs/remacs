@@ -237,11 +237,15 @@ Surprisingly, this just worked!
 I used gtk signals, the implementation for sliders works well!
 
 ** TODO canvas support
+heresy an interesting comparision of gtk canvases
+http://live.gnome.org/ProjectRidley/CanvasOverview
 *** goocanvas
 goocanvas is a gtk canvas implemented using cairo. investigate.
-http://developer.gnome.org/goocanvas/unstable/goocanvas-model-view-canvas.html
-it has a MVC model aproach out of the box which is nice.
 
+pros:
+- it has a MVC model aproach out of the box which is nice.
+
+http://developer.gnome.org/goocanvas/unstable/goocanvas-model-view-canvas.html
 
 export CFLAGS="`pkg-config --cflags goocanvas` -DHAVE_GOOCANVAS"
 export LDFLAGS=`pkg-config --libs goocanvas`
@@ -249,9 +253,20 @@ export LDFLAGS=`pkg-config --libs goocanvas`
 make
 
 I made a hello goo world xwidget so seems doable.
-I wanted to load a SVG which wasnt straightforward.
+I wanted to load a SVG which wasnt immediately straightforward, so I
+tried clutter. but it turns out the exact same strategy could be used
+with goocanvas.
+
 *** clutter
-maybe clutter can be used as a canvas? seems to have a lot of traction atm.
+maybe clutter can be used as a canvas? 
+pros:
+- seems to have a lot of traction atm. many examples
+- potentialy fast and cool vector graphics
+cons:
+- no out of the box MVC support, but seems doable. no worse than the
+  other home brew mvc support I have in xwidgets
+(media-explorer in an application that employes the MVC pattern)
+
 http://www.openismus.com/documents/clutter_tutorial/0.9/docs/tutorial/html/sec-stage-widget.html
 
 there is also cool stuff like this:
@@ -293,3 +308,22 @@ it is an error to reuse xwidgets in several buffers or in the same
 buffer. how do we catch these errors?
 
 
+** TODO browser xwidget
+although embedding a browser is not my primary concern many are
+interested in this. some suitable browser component needs to be found
+supporting gtk.
+
+*** webkit
+there is a webkit gtk port. there is no obvious mvc support.
+http://live.gnome.org/WebKitGtk
+http://webkitgtk.org/
+
+
+export CFLAGS="`pkg-config --cflags webkit-1.0` -DHAVE_WEBKIT -g"
+export LDFLAGS=`pkg-config --libs webkit-1.0`
+./configure
+make
+
+*** firefox
+http://www-archive.mozilla.org/unix/gtk-embedding.html
+seems to be severly bitrotted
