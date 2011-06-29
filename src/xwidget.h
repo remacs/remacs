@@ -24,6 +24,12 @@ struct xwidget{
   int height;
   int width;
   int initialized;
+
+
+  //for offscreen widgets, unused if not osr
+  GtkWidget* widget_osr;
+  GtkContainer* widgetwindow_osr;
+
 };
 
 

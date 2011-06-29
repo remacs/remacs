@@ -187,6 +187,10 @@ there are some things that arent clear:
 - xwidget-views are by necessity coupled to a emacs window so it might
   be better to store them window locally rather than in an assoc
   coupled to the xwidget model
+- for some gtk widgets that resist an mvc approach, like the webkit
+  widgets, special operations are needed, similar to the old phantom
+  widgets aproach. so we need to differentiate live and phantom
+  instances for these troublesome widgets and let lisp manage all the trickery.
 
 stuff that needs to work:
 - do something for all views of a xwidget(resize, value change)
@@ -318,11 +322,23 @@ there is a webkit gtk port. there is no obvious mvc support.
 http://live.gnome.org/WebKitGtk
 http://webkitgtk.org/
 
+it might be possible to keep a set of webxits in artificial
+synchronisation by recursive deep copy of the DOM from one webkit to
+another. This will be error prone at best though. Another way might be
+to just use bitmap copy of the "live"instance to the "phantom"
+instances. the problem of transfering the live view remains though.
 
 export CFLAGS="`pkg-config --cflags webkit-1.0` -DHAVE_WEBKIT -g"
 export LDFLAGS=`pkg-config --libs webkit-1.0`
 ./configure
 make
+
+export CFLAGS="`pkg-config --cflags webkit-1.0` -DHAVE_WEBKIT_OSR -g"
+export LDFLAGS=`pkg-config --libs webkit-1.0`
+./configure
+make
+
+
 
 *** firefox
 http://www-archive.mozilla.org/unix/gtk-embedding.html

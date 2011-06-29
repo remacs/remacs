@@ -105,7 +105,8 @@ Lisp_Object Qxwidget_info;
 Lisp_Object Qxwidget_resize_internal;
 Lisp_Object Qxwidget_send_keyboard_event;
 
-Lisp_Object Qbutton, Qtoggle, Qslider, Qsocket, Qcairo, Qwebkit, QCplist;
+Lisp_Object Qbutton, Qtoggle, Qslider, Qsocket, Qcairo, Qwebkit,
+  Qwebkit_osr, QCplist;
 
 
 extern Lisp_Object  QCtype;   
@@ -251,6 +252,38 @@ void xwidget_slider_changed (GtkRange *range,
 
 }
 
+/* when the on-screen webkit peer view gets exposed this signal is called.
+   it copies the bitmap from the off-screen webkit instance */
+webkit_osr_expose_event_callback (GtkWidget *widget, GdkEventExpose *event, gpointer data) 
+ {                                                                               
+  struct xwidget* xw = (struct xwidget*) g_object_get_data (G_OBJECT (widget), XG_XWIDGET);  
+  cairo_t *cr;
+  GdkPixmap *src_pixmap;
+  src_pixmap = xw->widget_osr->window;
+  printf("xwidget_composite_draw_widgetwindow xw.id:%d xw.type:%d window:%d\n", xw->id,xw->type, gtk_widget_get_window (widget));
+
+  cr = gdk_cairo_create (gtk_widget_get_window (widget));
+
+  cairo_rectangle(cr, 0,0, xw->width, xw->height);
+  cairo_clip(cr);
+
+  /*
+  cairo_set_source_rgb(cr, 0.1, 1.0, 0.2);
+  cairo_rectangle(cr, 0,0, xw->width, xw->height);
+  cairo_fill(cr);
+  */
+  
+  gdk_cairo_set_source_pixmap (cr, src_pixmap,
+                               0,0);
+  
+  cairo_set_operator (cr, CAIRO_OPERATOR_OVER);
+  //cairo_paint_with_alpha (cr, 0.9);
+  cairo_paint(cr);
+  cairo_destroy (cr);
+  
+  return FALSE;
+ }                                                                               
+
 int xwidget_view_index=0;
 
 /* initializes and does initial placement of an xwidget view on screen */
@@ -343,6 +376,13 @@ xwidget_init_view (
 #ifdef HAVE_WEBKIT
         xv->widget = webkit_web_view_new();
         webkit_web_view_load_uri(xv->widget, "http://www.fsf.org"); 
+#endif        
+  } else if (EQ(xww->type, Qwebkit_osr)) {
+#ifdef HAVE_WEBKIT_OSR
+    xv->widget = gtk_drawing_area_new();
+    g_signal_connect (G_OBJECT (    xv->widget), "expose_event",                    
+                      G_CALLBACK (webkit_osr_expose_event_callback), NULL);                  
+
 #endif        
 
 
@@ -503,6 +543,19 @@ x_draw_xwidget_glyph_string (struct glyph_string *s)
     }
 }
 
+#ifdef HAVE_WEBKIT
+DEFUN ("xwidget-webkit-goto-uri", Fxwidget_webkit_goto_uri,  Sxwidget_webkit_goto_uri, 2, 2, 0,
+       doc:	/* webkit goto uri.*/
+       )
+  (Lisp_Object xwidget_id, Lisp_Object uri)
+{
+/* now we have the same issue as always except worse. webkit resists an MVC approach!
+   for now, the 1st webkit view will be manipulated only
+ */
+  
+//webkit_web_view_load_uri(xv->widget, "http://www.fsf.org");
+}
+#endif        
 
 
 
@@ -721,6 +774,7 @@ syms_of_xwidget (void)
   defsubr (&Sxwidget_embed_steal_window);
 
   DEFSYM (Qxwidget ,"xwidget");
+
   DEFSYM (Qxwidget_id ,":xwidget-id");
   DEFSYM (Qtitle ,":title");
 
@@ -730,7 +784,7 @@ syms_of_xwidget (void)
   DEFSYM (Qsocket, "socket");
   DEFSYM (Qcairo, "cairo");
   DEFSYM (Qwebkit ,"webkit");
-    
+  DEFSYM (Qwebkit_osr ,"webkit-osr");    
   DEFSYM (QCplist, ":plist");  
 
   Fprovide (intern ("xwidget-internal"), Qnil);
@@ -836,7 +890,7 @@ int
 lookup_xwidget (Lisp_Object  spec)
 {
   /*when a xwidget lisp spec is found initialize the C struct that is used in the C code.
-
+    xwidget_init
    */
   int found = 0, found1 = 0, found2 = 0;
   Lisp_Object value;
@@ -866,6 +920,17 @@ lookup_xwidget (Lisp_Object  spec)
 
   assert_valid_xwidget_id (id, "lookup_xwidget");
 
+#ifdef HAVE_WEBKIT_OSR
+  //diy mvc. widget is rendered offscreen, later blitted onscreen
+  if (EQ(xw->type, Qwebkit_osr)){
+    xw->widgetwindow_osr = GTK_CONTAINER (gtk_offscreen_window_new ());
+    xw->widget_osr = webkit_web_view_new();
+    gtk_container_add (xw->widgetwindow_osr, xw->widget_osr);
+    gtk_widget_show_all (GTK_WIDGET (xw->widgetwindow_osr));
+    webkit_web_view_load_uri(xw->widget_osr, "http://www.fsf.org");
+
+  }
+#endif          
   return id;
 }
 
