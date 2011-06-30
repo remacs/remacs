@@ -333,11 +333,29 @@ export LDFLAGS=`pkg-config --libs webkit-1.0`
 ./configure
 make
 
+**** off screen rendering
 export CFLAGS="`pkg-config --cflags webkit-1.0` -DHAVE_WEBKIT_OSR -g"
 export LDFLAGS=`pkg-config --libs webkit-1.0`
 ./configure
 make
 
+works a little bit  but i get errors like:
+
+(emacs:8362): GLib-GObject-WARNING **: invalid cast from `GdkOffscreenWindow' to `GdkDrawableImplX11'
+
+set a breakpoint in g_log, backtrace seems to indicate
+webkitViewportAttributesRecompute is the offender. 
+
+maybe try gtk3 variants?
+
+export CFLAGS="`pkg-config --cflags webkitgtk-3.0 ` -DHAVE_WEBKIT_OSR -g"
+export LDFLAGS=`pkg-config --libs webkitgtk-3.0 `
+./configure   --with-x-toolkit=gtk3
+make
+
+crash in gtk_window_get_size instead. great.
+
+http://gtkplus-p3.0.sourcearchive.com/documentation/2.91.5-0ubuntu1/testoffscreenwindow_8c-source.html
 
 
 *** firefox

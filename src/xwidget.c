@@ -72,6 +72,11 @@
 #include <gtk/gtk.h>
 #include <gdk/gdk.h>
 
+#ifdef HAVE_GTK3
+//for gtk3; sockets and plugs
+#include <gtk/gtkx.h>
+#endif
+
 #include <librsvg/rsvg.h>
 
 #ifdef HAVE_GOOCANVAS
@@ -82,6 +87,18 @@
 #include <clutter/clutter.h>
 #include <clutter-gtk/clutter-gtk.h>
 #endif
+
+
+#ifdef HAVE_WEBKIT
+#include <webkitgtk.h>
+#endif
+
+
+#ifdef HAVE_WEBKIT_OSR
+#include <webkit/webkitwebview.h>
+#endif
+
+
 
 #include "xwidget.h"
 
@@ -252,13 +269,21 @@ void xwidget_slider_changed (GtkRange *range,
 
 }
 
+double osr_dbg_color=0;
 void webkit_osr_redraw_child (  struct xwidget* xw, GtkWidget *widget)
 {
 
-  
+  //this stuff is different in gtk3
+#ifndef HAVE_GTK3  
   cairo_t *cr;
+
+
   GdkPixmap *src_pixmap;
-  src_pixmap = xw->widget_osr->window;
+  src_pixmap = gtk_offscreen_window_get_pixmap(xw->widgetwindow_osr);
+
+  //g_object_ref(src_pixmap);//TODO needs to be unrefed eventually, if we are to use his method
+
+  
   printf("webkit_osr_redraw_child xw.id:%d xw.type:%d window:%d\n", xw->id,xw->type, gtk_widget_get_window (widget));
 
   cr = gdk_cairo_create (gtk_widget_get_window (widget));
@@ -266,19 +291,70 @@ void webkit_osr_redraw_child (  struct xwidget* xw, GtkWidget *widget)
   cairo_rectangle(cr, 0,0, xw->width, xw->height);
   cairo_clip(cr);
 
-  /*
-  cairo_set_source_rgb(cr, 0.1, 1.0, 0.2);
-  cairo_rectangle(cr, 0,0, xw->width, xw->height);
-  cairo_fill(cr);
-  */
+  // debugging redraw:
+  //  - the bg colors always change, so theres no error in signal handling
+  //  - i get this error now and then:
+  //(emacs:7109): GLib-GObject-WARNING **: invalid cast from `GdkOffscreenWindow' to `GdkDrawableImplX11'
+  // seems to happen in webkit actually. see README
   
-  gdk_cairo_set_source_pixmap (cr, src_pixmap,
-                               0,0);
+  if(1){ //redraw debug hack
+    cairo_set_source_rgb(cr, osr_dbg_color, 1.0, 0.2);
+    cairo_rectangle(cr, 0,0, xw->width, xw->height);
+    cairo_fill(cr);
+    osr_dbg_color+=0.1;
+    if(osr_dbg_color>1.0)
+      osr_dbg_color=0.0;
+    
+  }
+  
+  gdk_cairo_set_source_pixmap (cr, src_pixmap, 0,0); //deprecated. use gdk_cairo_set_source_window
+  //gdk_cairo_set_source_window(cr, src_pixmap, 0,0);
   
   cairo_set_operator (cr, CAIRO_OPERATOR_OVER);
-  //cairo_paint_with_alpha (cr, 0.9);
-  cairo_paint(cr);
+  cairo_paint_with_alpha (cr, 0.7);
+  //cairo_paint(cr);
+
+
   cairo_destroy (cr);
+#elseif
+  cairo_t *cr;
+  cairo_surface_t * *src_pixmap;
+  src_pixmap =    gtk_offscreen_window_get_surface (xw->widgetwindow_osr);
+
+  //g_object_ref(src_pixmap);//TODO needs to be unrefed eventually, if we are to use his method
+
+  
+  printf("webkit_osr_redraw_child gtk3 xw.id:%d xw.type:%d window:%d\n", xw->id,xw->type, gtk_widget_get_window (widget));
+
+  cr = gdk_cairo_create (gtk_widget_get_window (widget));
+
+  cairo_rectangle(cr, 0,0, xw->width, xw->height);
+  cairo_clip(cr);
+
+  // debugging redraw:
+  //  - the bg colors always change, so theres no error in signal handling
+  //  - i get this error now and then:
+  //(emacs:7109): GLib-GObject-WARNING **: invalid cast from `GdkOffscreenWindow' to `GdkDrawableImplX11'
+  // seems to happen in webkit actually. see README
+  
+  if(1){ //redraw debug hack
+    cairo_set_source_rgb(cr, osr_dbg_color, 1.0, 0.2);
+    cairo_rectangle(cr, 0,0, xw->width, xw->height);
+    cairo_fill(cr);
+    osr_dbg_color+=0.1;
+    if(osr_dbg_color>1.0)
+      osr_dbg_color=0.0;
+    
+  }
+  
+  cairo_set_source_surface (cr, src_pixmap, 0,0); 
+
+  
+  cairo_set_operator (cr, CAIRO_OPERATOR_OVER);
+  cairo_paint_with_alpha (cr, 0.7);
+  //cairo_paint(cr);
+  cairo_destroy (cr);
+#endif
 }
 
 /* when the on-screen webkit peer view gets exposed this signal is called.
@@ -293,11 +369,71 @@ gboolean webkit_osr_expose_event_callback (GtkWidget *widget, GdkEventExpose *ev
 /* when the off-screen webkit master view changes this signal is called.
    it copies the bitmap from the off-screen webkit instance */
 gboolean webkit_osr_damage_event_callback (GtkWidget *widget, GdkEventExpose *event, gpointer data) 
- {                                                                               
-  struct xwidget* xw = (struct xwidget*) g_object_get_data (G_OBJECT (widget), XG_XWIDGET);  
-  webkit_osr_redraw_child(xw, widget);
-  return FALSE;
+ {
+   //TODO this is wrong! should just oueu a redraw of onscreen widget
+   struct xwidget* xw = (struct xwidget*) g_object_get_data (G_OBJECT (widget), XG_XWIDGET);
+   struct xwidget_view* xv;
+   //webkit_osr_redraw_child(xw, widget);
+   for (int i = 0; i < MAX_XWIDGETS; i++)//todo mvc refactor
+    {
+      xv = &xwidget_views[i];
+      if(xv->model == xw){
+        gtk_widget_queue_draw (xv->widget); //redraw all views, the master has changed
+      }
+    }
+
+   return TRUE;
  }                                                                               
+
+
+//for gtk3
+gboolean
+xwidget_osr_draw_callback (GtkWidget *widget, cairo_t *cr, gpointer data)
+{
+  struct xwidget* xw = (struct xwidget*) g_object_get_data (G_OBJECT (widget), XG_XWIDGET);
+  struct xwidget_view* xv = (struct xwidget_viev*) g_object_get_data (G_OBJECT (widget), XG_XWIDGET_VIEW);    
+  cairo_surface_t* src_pixmap;
+  //src_pixmap =    gtk_offscreen_window_get_surface (xw->widgetwindow_osr);
+
+  
+  printf("xwidget_osr_draw_callback gtk3 xw.id:%d xw.type:%d window:%d srcpix:%d vis:%d\n",
+         xw->id,xw->type, gtk_widget_get_window (widget),   src_pixmap, gtk_widget_get_visible (xw->widget_osr));
+
+  //  cr = gdk_cairo_create (gtk_widget_get_window (widget));
+
+  cairo_rectangle(cr, 0,0, xv->clipx, xv->clipy);//xw->width, xw->height);
+  cairo_clip(cr);
+
+  // debugging redraw:
+  //  - the bg colors always change, so theres no error in signal handling
+  //  - i get this error now and then:
+  //(emacs:7109): GLib-GObject-WARNING **: invalid cast from `GdkOffscreenWindow' to `GdkDrawableImplX11'
+  // seems to happen in webkit actually. see README
+  
+  if(1){ //redraw debug hack. 
+    cairo_set_source_rgb(cr, osr_dbg_color, 1.0, 0.2);
+    cairo_rectangle(cr, 0,0, xw->width, xw->height);
+    cairo_fill(cr);
+    osr_dbg_color+=0.1;
+    if(osr_dbg_color>1.0)
+      osr_dbg_color=0.0;
+    
+  }
+
+  //maybe use below instead?
+  gtk_widget_draw                     (xw->widget_osr,  cr);
+  
+  //cairo_set_source_surface (cr, src_pixmap, 0,0); 
+  cairo_set_operator (cr, CAIRO_OPERATOR_OVER);
+
+  cairo_paint_with_alpha (cr, 0.7);
+  //cairo_paint(cr);
+
+  
+  return FALSE;
+}
+
+
 
 int xwidget_view_index=0;
 
@@ -395,10 +531,16 @@ xwidget_init_view (
   } else if (EQ(xww->type, Qwebkit_osr)) {
 #ifdef HAVE_WEBKIT_OSR
     xv->widget = gtk_drawing_area_new();
+    gtk_widget_set_app_paintable (    xv->widget, TRUE); //because expose event handling
+#endif        
+#ifdef HAVE_GTK3 //and webkit_osr
+    g_signal_connect (G_OBJECT (    xv->widget), "draw",                    
+                      G_CALLBACK (xwidget_osr_draw_callback), NULL);                  
+    
+#else
     g_signal_connect (G_OBJECT (    xv->widget), "expose_event",                    
                       G_CALLBACK (webkit_osr_expose_event_callback), NULL);                  
-
-#endif        
+#endif
 
 
   } else return NULL;
@@ -411,11 +553,23 @@ xwidget_init_view (
   //xw->widgetwindow = GTK_CONTAINER (gtk_layout_new (NULL, NULL));
   //xw->widgetwindow = GTK_CONTAINER (gtk_offscreen_window_new ());
 
-  xv->widgetwindow = GTK_CONTAINER (gtk_fixed_new ());
-  gtk_widget_set_has_window(GTK_WIDGET (  xv->widgetwindow), TRUE); //if gtk_fixed doesnt have a window it will surprisingly not honor setsize so that children gets clipped later. the documentation is not consistent regarding if its legal to call this method
-  //xv->widgetwindow = GTK_CONTAINER (gtk_event_box_new ());
+  xv->widgetwindow = GTK_CONTAINER (gtk_fixed_new ()); //works well for clipping on gtk2 not gtk3
+  //xv->widgetwindow = GTK_CONTAINER (gtk_event_box_new ()); //doesnt help clipping gtk3
+  gtk_widget_set_size_request (GTK_WIDGET (xv->widgetwindow), xww->width, xww->height);
+  /* GtkAllocation a; */
+  /* a.x=0;  a.y=0;   a.width=xww->width;  a.height=xww->height; */
+  /* gtk_widget_set_allocation (GTK_WIDGET (xv->widget), &a); */
 
-  //gtk_widget_set_size_request (GTK_WIDGET (xw->widget), xw->width, xw->height);  
+  gtk_widget_set_has_window(GTK_WIDGET (  xv->widgetwindow), TRUE);
+  //if gtk_fixed doesnt have a window it will surprisingly not honor
+  //setsize so that children gets clipped later. the documentation is
+  //not consistent regarding if its legal to call this method.
+
+  //doesnt help on gtk3, and the docs seem clearer there that this is
+  //an internal function
+
+
+
   //gtk_layout_set_size (GTK_LAYOUT (xw->widgetwindow), xw->width, xw->height);
   gtk_container_add (xv->widgetwindow, xv->widget);
   gtk_widget_set_size_request (GTK_WIDGET (xv->widget), xww->width, xww->height);
@@ -901,6 +1055,17 @@ struct xwidget_view* xwidget_view_lookup(struct xwidget* xw,     struct window *
   return xv;
 }
 
+//attempting a workaround for a webkit offscreen bug
+void                gtk_window_get_position             (GtkWindow *window,
+                                                         gint *root_x,
+                                                         gint *root_y){
+  printf("my getsize\n");
+  *root_x = 0;
+  *root_y = 0;
+}
+
+  
+
 int
 lookup_xwidget (Lisp_Object  spec)
 {
@@ -939,14 +1104,22 @@ lookup_xwidget (Lisp_Object  spec)
   //diy mvc. widget is rendered offscreen, later blitted onscreen
   if (EQ(xw->type, Qwebkit_osr)){
     xw->widgetwindow_osr = GTK_CONTAINER (gtk_offscreen_window_new ());
+    gtk_window_resize(    GTK_WINDOW(xw->widgetwindow_osr), xw->width, xw->height);
     xw->widget_osr = webkit_web_view_new();
+
+    //random debug hack
+    gtk_widget_set_double_buffered (xw->widget_osr,FALSE);
+    gtk_widget_set_double_buffered (xw->widgetwindow_osr,FALSE);  
+
+    
+    //xw->widget_osr ///XXX
+    gtk_widget_set_size_request (GTK_WIDGET (xw->widget_osr), xw->width, xw->height);      
     gtk_container_add (xw->widgetwindow_osr, xw->widget_osr);
     gtk_widget_show_all (GTK_WIDGET (xw->widgetwindow_osr));
 
-  //store some xwidget data in the gtk widgets
-  g_object_set_data (G_OBJECT (xw->widget_osr), XG_XWIDGET, (gpointer) (xw)); //the xwidget
-  g_object_set_data (G_OBJECT (xw->widgetwindow_osr), XG_XWIDGET, (gpointer) (xw)); //the xwidget  
-    
+    //store some xwidget data in the gtk widgets
+    g_object_set_data (G_OBJECT (xw->widget_osr), XG_XWIDGET, (gpointer) (xw)); //the xwidget
+    g_object_set_data (G_OBJECT (xw->widgetwindow_osr), XG_XWIDGET, (gpointer) (xw)); //the xwidget  
     
     g_signal_connect (G_OBJECT (    xw->widgetwindow_osr), "damage_event",                    
     G_CALLBACK (webkit_osr_damage_event_callback), NULL);                  
