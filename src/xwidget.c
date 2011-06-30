@@ -252,15 +252,14 @@ void xwidget_slider_changed (GtkRange *range,
 
 }
 
-/* when the on-screen webkit peer view gets exposed this signal is called.
-   it copies the bitmap from the off-screen webkit instance */
-webkit_osr_expose_event_callback (GtkWidget *widget, GdkEventExpose *event, gpointer data) 
- {                                                                               
-  struct xwidget* xw = (struct xwidget*) g_object_get_data (G_OBJECT (widget), XG_XWIDGET);  
+void webkit_osr_redraw_child (  struct xwidget* xw, GtkWidget *widget)
+{
+
+  
   cairo_t *cr;
   GdkPixmap *src_pixmap;
   src_pixmap = xw->widget_osr->window;
-  printf("xwidget_composite_draw_widgetwindow xw.id:%d xw.type:%d window:%d\n", xw->id,xw->type, gtk_widget_get_window (widget));
+  printf("webkit_osr_redraw_child xw.id:%d xw.type:%d window:%d\n", xw->id,xw->type, gtk_widget_get_window (widget));
 
   cr = gdk_cairo_create (gtk_widget_get_window (widget));
 
@@ -280,7 +279,23 @@ webkit_osr_expose_event_callback (GtkWidget *widget, GdkEventExpose *event, gpoi
   //cairo_paint_with_alpha (cr, 0.9);
   cairo_paint(cr);
   cairo_destroy (cr);
-  
+}
+
+/* when the on-screen webkit peer view gets exposed this signal is called.
+   it copies the bitmap from the off-screen webkit instance */
+gboolean webkit_osr_expose_event_callback (GtkWidget *widget, GdkEventExpose *event, gpointer data) 
+ {                                                                               
+  struct xwidget* xw = (struct xwidget*) g_object_get_data (G_OBJECT (widget), XG_XWIDGET);  
+  webkit_osr_redraw_child(xw, widget);
+  return FALSE;
+ }                                                                               
+
+/* when the off-screen webkit master view changes this signal is called.
+   it copies the bitmap from the off-screen webkit instance */
+gboolean webkit_osr_damage_event_callback (GtkWidget *widget, GdkEventExpose *event, gpointer data) 
+ {                                                                               
+  struct xwidget* xw = (struct xwidget*) g_object_get_data (G_OBJECT (widget), XG_XWIDGET);  
+  webkit_osr_redraw_child(xw, widget);
   return FALSE;
  }                                                                               
 
@@ -532,8 +547,8 @@ x_draw_xwidget_glyph_string (struct glyph_string *s)
       //a live xwidget paints itself. when using composition, that
       //happens through the expose handler for the xwidget
       //if emacs wants to repaint the area where the widget lives, queue a redraw
-      //if (!xwidget_hidden(xv))
-      //gtk_widget_queue_draw (xv->widget);
+      if (!xwidget_hidden(xv))
+        gtk_widget_queue_draw (xv->widget);
     }
   else
     {
@@ -927,6 +942,17 @@ lookup_xwidget (Lisp_Object  spec)
     xw->widget_osr = webkit_web_view_new();
     gtk_container_add (xw->widgetwindow_osr, xw->widget_osr);
     gtk_widget_show_all (GTK_WIDGET (xw->widgetwindow_osr));
+
+  //store some xwidget data in the gtk widgets
+  g_object_set_data (G_OBJECT (xw->widget_osr), XG_XWIDGET, (gpointer) (xw)); //the xwidget
+  g_object_set_data (G_OBJECT (xw->widgetwindow_osr), XG_XWIDGET, (gpointer) (xw)); //the xwidget  
+    
+    
+    g_signal_connect (G_OBJECT (    xw->widgetwindow_osr), "damage_event",                    
+    G_CALLBACK (webkit_osr_damage_event_callback), NULL);                  
+
+
+      
     webkit_web_view_load_uri(xw->widget_osr, "http://www.fsf.org");
 
   }
