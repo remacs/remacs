@@ -553,14 +553,16 @@ xwidget_init_view (
   //xw->widgetwindow = GTK_CONTAINER (gtk_layout_new (NULL, NULL));
   //xw->widgetwindow = GTK_CONTAINER (gtk_offscreen_window_new ());
 
-  xv->widgetwindow = GTK_CONTAINER (gtk_fixed_new ()); //works well for clipping on gtk2 not gtk3
+  //xv->widgetwindow = GTK_CONTAINER (gtk_fixed_new ()); //works well for clipping on gtk2 not gtk3
   //xv->widgetwindow = GTK_CONTAINER (gtk_event_box_new ()); //doesnt help clipping gtk3
+  xv->widgetwindow = GTK_CONTAINER (gtk_scrolled_window_new (NULL, NULL)); //doesnt help clipping gtk3
+  
   gtk_widget_set_size_request (GTK_WIDGET (xv->widgetwindow), xww->width, xww->height);
   /* GtkAllocation a; */
   /* a.x=0;  a.y=0;   a.width=xww->width;  a.height=xww->height; */
   /* gtk_widget_set_allocation (GTK_WIDGET (xv->widget), &a); */
 
-  gtk_widget_set_has_window(GTK_WIDGET (  xv->widgetwindow), TRUE);
+  //gtk_widget_set_has_window(GTK_WIDGET (  xv->widgetwindow), TRUE);
   //if gtk_fixed doesnt have a window it will surprisingly not honor
   //setsize so that children gets clipped later. the documentation is
   //not consistent regarding if its legal to call this method.
@@ -571,7 +573,10 @@ xwidget_init_view (
 
 
   //gtk_layout_set_size (GTK_LAYOUT (xw->widgetwindow), xw->width, xw->height);
-  gtk_container_add (xv->widgetwindow, xv->widget);
+  //gtk_container_add (xv->widgetwindow, xv->widget);
+
+  gtk_scrolled_window_add_with_viewport (xv->widgetwindow, xv->widget);
+
   gtk_widget_set_size_request (GTK_WIDGET (xv->widget), xww->width, xww->height);
   gtk_fixed_put (GTK_FIXED (s->f->gwfixed), GTK_WIDGET (xv->widgetwindow), x, y);
   xv->x = x;  xv->y = y;

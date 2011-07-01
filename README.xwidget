@@ -361,3 +361,40 @@ http://gtkplus-p3.0.sourcearchive.com/documentation/2.91.5-0ubuntu1/testoffscree
 *** firefox
 http://www-archive.mozilla.org/unix/gtk-embedding.html
 seems to be severly bitrotted
+
+** TODO clipping of controllers
+
+Emacs uses a big GTK window and does its own clipping against Emacs
+windows inside this area. So, in order to layout gtk widgets in emacs
+windows we must clip thim ourselves. 
+
+The following method worked well for a long time:
+- make a gtk widget, say a button, xw
+- make a clipping area, of type gtkfixed(many types have been tested)
+- put the clip area in the main emacs gtk window
+- figure out clip area changes during emacs redisplay
+
+the only weirdness was that one has to tell gtk the clip area has a
+window in order to get clipping. This is weird because all gtkwidgets
+are windows in a sense and a window is almost by definition also a
+clipping area.
+
+Anyway, in GTK3 the   gtk_widget_set_has_window(GTK_WIDGET (
+xv->widgetwindow), TRUE); call is ignored. 
+
+The gtkeventbox which is documented to have its own window doesnt work
+either.
+
+http://www.lanedo.com/~carlos/gtk3-doc/chap-drawing-model.html
+
+*** TODO subclass my own clipping widget
+http://www.lanedo.com/~carlos/gtk3-doc/GtkWidget.html#gtk-widget-set-has-window
+mentions that it has_window can only be called inside a widget
+impementation.
+
+*** TODO try scrolled window
+clipping does in fact work with
+gtk_scrolled_window_add_with_viewport (xv->widgetwindow, xv->widget);
+!!
+
+I get unwanted scrollbars in the widget though.
