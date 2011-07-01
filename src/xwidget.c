@@ -75,6 +75,7 @@
 #ifdef HAVE_GTK3
 //for gtk3; sockets and plugs
 #include <gtk/gtkx.h>
+#include "emacsgtkfixed.h"
 #endif
 
 #include <librsvg/rsvg.h>
@@ -129,8 +130,6 @@ Lisp_Object Qbutton, Qtoggle, Qslider, Qsocket, Qcairo, Qwebkit,
 extern Lisp_Object  QCtype;   
 extern Lisp_Object QCwidth, QCheight;  
 
-#define XG_XWIDGET "emacs_xwidget"
-#define XG_XWIDGET_VIEW "emacs_xwidget_view"
 struct xwidget_view* xwidget_view_lookup(struct xwidget* xw,     struct window *w);
 
 int
@@ -555,7 +554,9 @@ xwidget_init_view (
 
   //xv->widgetwindow = GTK_CONTAINER (gtk_fixed_new ()); //works well for clipping on gtk2 not gtk3
   //xv->widgetwindow = GTK_CONTAINER (gtk_event_box_new ()); //doesnt help clipping gtk3
-  xv->widgetwindow = GTK_CONTAINER (gtk_scrolled_window_new (NULL, NULL)); //doesnt help clipping gtk3
+  //xv->widgetwindow = GTK_CONTAINER (gtk_scrolled_window_new (NULL, NULL)); //clips in gtk3
+  xv->widgetwindow = GTK_CONTAINER (gtk_viewport_new (NULL, NULL)); //clips in gtk3
+
   
   gtk_widget_set_size_request (GTK_WIDGET (xv->widgetwindow), xww->width, xww->height);
   /* GtkAllocation a; */
@@ -573,21 +574,24 @@ xwidget_init_view (
 
 
   //gtk_layout_set_size (GTK_LAYOUT (xw->widgetwindow), xw->width, xw->height);
-  //gtk_container_add (xv->widgetwindow, xv->widget);
+  gtk_container_add (xv->widgetwindow, xv->widget);
 
-  gtk_scrolled_window_add_with_viewport (xv->widgetwindow, xv->widget);
-
-  gtk_widget_set_size_request (GTK_WIDGET (xv->widget), xww->width, xww->height);
-  gtk_fixed_put (GTK_FIXED (s->f->gwfixed), GTK_WIDGET (xv->widgetwindow), x, y);
-  xv->x = x;  xv->y = y;
-  gtk_widget_show_all (GTK_WIDGET (xv->widgetwindow));
+  //gtk_scrolled_window_add_with_viewport (xv->widgetwindow, xv->widget); // when using scrollw
 
   //store some xwidget data in the gtk widgets
   g_object_set_data (G_OBJECT (xv->widget), XG_FRAME_DATA, (gpointer) (s->f)); //the emacs frame
   g_object_set_data (G_OBJECT (xv->widget), XG_XWIDGET, (gpointer) (xww)); //the xwidget
   g_object_set_data (G_OBJECT (xv->widget), XG_XWIDGET_VIEW, (gpointer) (xv)); //the xwidget
   g_object_set_data (G_OBJECT (xv->widgetwindow), XG_XWIDGET, (gpointer) (xww)); //the xwidget  
+  g_object_set_data (G_OBJECT (xv->widgetwindow), XG_XWIDGET_VIEW, (gpointer) (xv)); //the xwidget
 
+  
+  gtk_widget_set_size_request (GTK_WIDGET (xv->widget), xww->width, xww->height);
+  gtk_fixed_put (EMACS_FIXED (s->f->gwfixed), GTK_WIDGET (xv->widgetwindow), x, y);
+  xv->x = x;  xv->y = y;
+  gtk_widget_show_all (GTK_WIDGET (xv->widgetwindow));
+
+  
   //this seems to enable xcomposition. later we need to paint ourselves somehow,
   //since the widget is no longer responsible for painting itself
   //if(xw->type!=3)  //im having trouble with compositing and sockets. hmmm.
@@ -701,6 +705,13 @@ x_draw_xwidget_glyph_string (struct glyph_string *s)
         gtk_widget_set_size_request (GTK_WIDGET (xv->widgetwindow),
                                      clipx, clipy);
         printf("reclip %d %d -> %d %d\n",xv->clipx, xv->clipy,  clipx, clipy );
+
+        //allocation debugging. the correct values cant be expected to show upp immediately, but eventually they should get to be ok
+        // this is because we dont know when the container gets around to doing layout
+        GtkAllocation galloc;
+        gtk_widget_get_allocation(GTK_WIDGET (xv->widgetwindow), &galloc);
+        printf("allocation %d %d , %d %d\n", galloc.x,galloc.y,galloc.width,galloc.height);
+        
         xv->clipx = clipx; xv->clipy = clipy;
       }
       //a live xwidget paints itself. when using composition, that

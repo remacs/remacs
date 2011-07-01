@@ -357,10 +357,30 @@ crash in gtk_window_get_size instead. great.
 
 http://gtkplus-p3.0.sourcearchive.com/documentation/2.91.5-0ubuntu1/testoffscreenwindow_8c-source.html
 
+after many atempts, the basic issue remains. for some reason the
+offscreen widget isnt ok when I want to snapshot it, so i simply get
+emptiness. the surface is only ok someimes. 
+
+
+
+
+**** on-screen rendering to separate window
+an alternative might be to open a separate window and snapshot it. the
+idea is that whatever oddness webkit does so that offscreen rendering
+doesnt work, doesnt happen on-screen. the window could be opened
+somewhere not in the way.
 
 *** firefox
 http://www-archive.mozilla.org/unix/gtk-embedding.html
 seems to be severly bitrotted
+
+heres a newer aproach
+http://hg.mozilla.org/incubator/embedding/file/29ac0fe51754/gtk/tests/test.cpp
+
+while webkit clearly has the best traction as an embeddee, the
+offscreen rendering issues makes it interesting to see what ff brings
+to the table.
+
 
 ** TODO clipping of controllers
 
@@ -392,9 +412,66 @@ http://www.lanedo.com/~carlos/gtk3-doc/GtkWidget.html#gtk-widget-set-has-window
 mentions that it has_window can only be called inside a widget
 impementation.
 
-*** TODO try scrolled window
+*** DONE try scrolled window
+    CLOSED: [2011-07-01 Fri 10:56]
 clipping does in fact work with
 gtk_scrolled_window_add_with_viewport (xv->widgetwindow, xv->widget);
 !!
 
 I get unwanted scrollbars in the widget though.
+
+  gtk_scrolled_window_set_policy      (  xv->widgetwindow,
+  GTK_POLICY_NEVER, GTK_POLICY_NEVER); 
+
+stops clipping from working! 
+
+
+*** DONE try viewport
+    CLOSED: [2011-07-01 Fri 10:56]
+gtkviewport is used in scrolled window so in order to remove
+scrollbars it should be possible to use viewport directly. however, 
+viewport ignores size requests.
+
+
+*** TODO debug allocation
+the container determines how much size to allocate to child widgets.
+
+        GtkAllocation galloc;
+        gtk_widget_get_allocation(GTK_WIDGET (xv->widgetwindow), &galloc);
+        printf("allocation %d %d , %d %d\n", galloc.x,galloc.y,galloc.width,galloc.height);
+
+after my clipping attemp shows that my size request is ignored! this
+might be logical, since the container provided by emacs is a
+gtkfixed. gtkfixed might choose to heed the widgets size desires and
+allocate the entire widget size. but we want clipping!
+
+since i cant reasonably expect to change the emacs main container, i
+can maybe overide the setallocation method in gwfixed, and adjust
+allocation to clipping if its an xwidget asking for allocation.
+
+**** subclass gtkfixed
+possibly i need to subclass gtkfixed and override
+
+void                gtk_widget_size_allocate            (GtkWidget *widget,
+                                                         GtkAllocation *allocation);
+
+http://developer.gnome.org/gobject/stable/howto-gobject.html
+
+turns out emacs already does this for gtk3 according to jan D:
+>>For GTK3, Emacs already subclasses GtkFixed, see emacsgtkfixed.[ch].
+
+- widgets may not be underallocated, aparently
+http://mail.gnome.org/archives/commits-list/2011-April/msg10950.html
+
+- how to call base class method/chain up
+http://developer.gnome.org/gobject/stable/howto-gobject-chainup.html
+
+- the allocation modification could happen in the container or the
+  child. it feels more apropiate in the container
+
+it is however unexpectedy inconvenient to modify allocation because
+the needed data is private to the base class. to overcome this:
+
+ - run base class method 1st. 
+ - then, iterate all children, and modify allocation  for xwidget
+   children only. x y will then be set.

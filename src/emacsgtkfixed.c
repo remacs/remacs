@@ -27,7 +27,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "lisp.h"
 #include "frame.h"
 #include "xterm.h"
-
+#include "xwidget.h"
 struct _EmacsFixedPrivate
 {
   struct frame *f;
@@ -42,6 +42,49 @@ static void emacs_fixed_get_preferred_height (GtkWidget *widget,
                                               gint      *natural);
 G_DEFINE_TYPE (EmacsFixed, emacs_fixed, GTK_TYPE_FIXED)
 
+
+
+void aloc_callback(GtkWidget* child, GtkWidget* fixed){
+  GtkAllocation child_allocation;
+  GtkRequisition child_requisition;
+
+  //TODO
+  // if child is an xwidget, find its clipping area and modify allocation
+
+  struct xwidget_view* xv = (struct xwidget_viev*) g_object_get_data (G_OBJECT (child), XG_XWIDGET_VIEW);
+  printf("aloc callback %d %s\n", xv, gtk_widget_get_name(child));
+  if(xv){
+    printf(" allocation modification for xw\n");
+    gtk_widget_get_allocation(child, &child_allocation);
+    child_allocation.width = xv->clipx;
+    child_allocation.height = xv->clipy;
+    gtk_widget_size_allocate (child, &child_allocation);
+  }
+
+}
+
+static void emacs_fixed_gtk_widget_size_allocate (GtkWidget *widget,
+                                           GtkAllocation *allocation){
+  //for xwidgets
+  printf(" emacs_fixed_gtk_widget_size_allocate\n");
+
+  //TODO 1st call base class method
+  EmacsFixedClass *klass;
+  GtkWidgetClass *parent_class;
+  klass = EMACS_FIXED_GET_CLASS (widget);
+  parent_class = g_type_class_peek_parent (klass);
+  parent_class->size_allocate (widget, allocation);
+
+  
+  //then modify allocations
+  gtk_container_foreach  (widget,
+                          aloc_callback,
+                          widget);
+
+}
+
+
+
 static void
 emacs_fixed_class_init (EmacsFixedClass *klass)
 {
@@ -53,6 +96,9 @@ emacs_fixed_class_init (EmacsFixedClass *klass)
 
   widget_class->get_preferred_width = emacs_fixed_get_preferred_width;
   widget_class->get_preferred_height = emacs_fixed_get_preferred_height;
+
+  widget_class->size_allocate =  emacs_fixed_gtk_widget_size_allocate;
+  
   g_type_class_add_private (klass, sizeof (EmacsFixedPrivate));
 }
 
