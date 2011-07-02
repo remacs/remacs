@@ -475,3 +475,6 @@ the needed data is private to the base class. to overcome this:
  - run base class method 1st. 
  - then, iterate all children, and modify allocation  for xwidget
    children only. x y will then be set.
+
+** TODO use FRAME_GTK_WIDGET (f)
+rather than gwfixed

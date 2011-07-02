@@ -385,20 +385,15 @@ gboolean webkit_osr_damage_event_callback (GtkWidget *widget, GdkEventExpose *ev
  }                                                                               
 
 
-//for gtk3
+//for gtk3 webkit_osr
 gboolean
 xwidget_osr_draw_callback (GtkWidget *widget, cairo_t *cr, gpointer data)
 {
   struct xwidget* xw = (struct xwidget*) g_object_get_data (G_OBJECT (widget), XG_XWIDGET);
   struct xwidget_view* xv = (struct xwidget_viev*) g_object_get_data (G_OBJECT (widget), XG_XWIDGET_VIEW);    
-  cairo_surface_t* src_pixmap;
-  //src_pixmap =    gtk_offscreen_window_get_surface (xw->widgetwindow_osr);
-
   
-  printf("xwidget_osr_draw_callback gtk3 xw.id:%d xw.type:%d window:%d srcpix:%d vis:%d\n",
-         xw->id,xw->type, gtk_widget_get_window (widget),   src_pixmap, gtk_widget_get_visible (xw->widget_osr));
-
-  //  cr = gdk_cairo_create (gtk_widget_get_window (widget));
+  printf("xwidget_osr_draw_callback gtk3 xw.id:%d xw.type:%d window:%d vis:%d\n",
+         xw->id,xw->type, gtk_widget_get_window (widget),  gtk_widget_get_visible (xw->widget_osr));
 
   cairo_rectangle(cr, 0,0, xv->clipx, xv->clipy);//xw->width, xw->height);
   cairo_clip(cr);
@@ -419,7 +414,6 @@ xwidget_osr_draw_callback (GtkWidget *widget, cairo_t *cr, gpointer data)
     
   }
 
-  //maybe use below instead?
   gtk_widget_draw                     (xw->widget_osr,  cr);
   
   //cairo_set_source_surface (cr, src_pixmap, 0,0); 
@@ -1086,6 +1080,8 @@ int
 lookup_xwidget (Lisp_Object  spec)
 {
   /*when a xwidget lisp spec is found initialize the C struct that is used in the C code.
+    this is done by redisplay so values change if the spec changes.
+    so, take special care of one-shot events
     xwidget_init
    */
   int found = 0, found1 = 0, found2 = 0;
@@ -1117,20 +1113,25 @@ lookup_xwidget (Lisp_Object  spec)
   assert_valid_xwidget_id (id, "lookup_xwidget");
 
 #ifdef HAVE_WEBKIT_OSR
-  //diy mvc. widget is rendered offscreen, later blitted onscreen
-  if (EQ(xw->type, Qwebkit_osr)){
-    xw->widgetwindow_osr = GTK_CONTAINER (gtk_offscreen_window_new ());
+  //diy mvc. widget is rendered offscreen(or in an onscreen separate toplevel for testing), later blitted to the views
+  if (EQ(xw->type, Qwebkit_osr) && !xw->widgetwindow_osr){
+    BLOCK_INPUT;
+    xw->widgetwindow_osr = GTK_CONTAINER (gtk_window_new (  GTK_WINDOW_TOPLEVEL));
+    //xw->widgetwindow_osr = GTK_CONTAINER (gtk_dialog_new ());
+    //xw->widgetwindow_osr = GTK_CONTAINER (gtk_offscreen_window_new ());
     gtk_window_resize(    GTK_WINDOW(xw->widgetwindow_osr), xw->width, xw->height);
+    //xw->widgetwindow_osr = SELECTED_FRAME()->gwfixed;
     xw->widget_osr = webkit_web_view_new();
+    //xw->widget_osr = gtk_button_new();
 
     //random debug hack
-    gtk_widget_set_double_buffered (xw->widget_osr,FALSE);
-    gtk_widget_set_double_buffered (xw->widgetwindow_osr,FALSE);  
+    //gtk_widget_set_double_buffered (xw->widget_osr,FALSE);
+    //gtk_widget_set_double_buffered (xw->widgetwindow_osr,FALSE);  
 
-    
-    //xw->widget_osr ///XXX
     gtk_widget_set_size_request (GTK_WIDGET (xw->widget_osr), xw->width, xw->height);      
     gtk_container_add (xw->widgetwindow_osr, xw->widget_osr);
+    //gtk_fixed_put(GTK_FIXED(xw->widgetwindow_osr), xw->widget_osr, 0, 200);
+    
     gtk_widget_show_all (GTK_WIDGET (xw->widgetwindow_osr));
 
     //store some xwidget data in the gtk widgets
@@ -1138,11 +1139,12 @@ lookup_xwidget (Lisp_Object  spec)
     g_object_set_data (G_OBJECT (xw->widgetwindow_osr), XG_XWIDGET, (gpointer) (xw)); //the xwidget  
     
     g_signal_connect (G_OBJECT (    xw->widgetwindow_osr), "damage_event",                    
-    G_CALLBACK (webkit_osr_damage_event_callback), NULL);                  
+                      G_CALLBACK (webkit_osr_damage_event_callback), NULL);                  
 
 
       
-    webkit_web_view_load_uri(xw->widget_osr, "http://www.fsf.org");
+    webkit_web_view_load_uri(WEBKIT_WEB_VIEW(xw->widget_osr), "http://www.fsf.org");
+    UNBLOCK_INPUT;
 
   }
 #endif          
