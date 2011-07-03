@@ -428,6 +428,13 @@ xwidget_osr_draw_callback (GtkWidget *widget, cairo_t *cr, gpointer data)
 }
 
 
+gboolean
+xwidget_osr_button_callback ( GtkWidget *widget,
+                              GdkEvent  *event,
+                              gpointer   user_data)
+{
+  printf ("button callback\n",);
+}
 
 int xwidget_view_index=0;
 
@@ -528,8 +535,17 @@ xwidget_init_view (
     gtk_widget_set_app_paintable (    xv->widget, TRUE); //because expose event handling
 #endif        
 #ifdef HAVE_GTK3 //and webkit_osr
+    gtk_widget_add_events(xv->widget,
+                          GDK_BUTTON_PRESS_MASK
+                          | GDK_BUTTON_RELEASE_MASK
+                          );
+
     g_signal_connect (G_OBJECT (    xv->widget), "draw",                    
-                      G_CALLBACK (xwidget_osr_draw_callback), NULL);                  
+                      G_CALLBACK (xwidget_osr_draw_callback), NULL);
+
+    g_signal_connect (G_OBJECT (    xv->widget), "buton-press-event",                    
+                      G_CALLBACK (xwidget_osr_button_callback), NULL);
+
     
 #else
     g_signal_connect (G_OBJECT (    xv->widget), "expose_event",                    

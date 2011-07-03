@@ -478,3 +478,14 @@ the needed data is private to the base class. to overcome this:
 
 ** TODO use FRAME_GTK_WIDGET (f)
 rather than gwfixed
+
+** TODO translate clicks 
+on onscreen webkit peer to offscreen
+
+maybe
+http://developer.gnome.org/gdk/stable/gdk-Windows.html#GdkWindow-from-embedder
+
+
+** TODO investigate gdk_window_redirect_to_drawable
+http://developer.gnome.org/gdk/stable/gdk-Windows.html#gdk-offscreen-window-set-embedder
+maybe control be used in place of my own copy hacks?
