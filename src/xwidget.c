@@ -131,6 +131,7 @@ extern Lisp_Object  QCtype;
 extern Lisp_Object QCwidth, QCheight;  
 
 struct xwidget_view* xwidget_view_lookup(struct xwidget* xw,     struct window *w);
+Lisp_Object xwidget_spec_value ( Lisp_Object spec, Lisp_Object  key,  int *found);
 
 int
 xwidget_hidden(struct xwidget_view *xv)
@@ -243,11 +244,13 @@ void xwidget_slider_changed (GtkRange *range,
   // - the type of the controllers value (double, boolean etc)
   // - the getter and setter (but they can be func pointers)
   // a behemoth macro is always an option.
-  double v;
-  printf("slider changed val:%f\n", v=gtk_range_get_value(range));
-
+  double v=gtk_range_get_value(range);
   struct xwidget_view* xvp = g_object_get_data (G_OBJECT (range), XG_XWIDGET_VIEW);
   struct xwidget_view* xv;
+
+  printf("slider changed val:%f\n", v);
+
+  
   //block sibling views signal handlers
   for (int i = 0; i < MAX_XWIDGETS; i++)
     {
@@ -261,7 +264,7 @@ void xwidget_slider_changed (GtkRange *range,
     {
       xv = &xwidget_views[i];
       if(xvp->model == xv->model){
-        gtk_range_set_value(xv->widget, v);
+        gtk_range_set_value(GTK_RANGE(xv->widget), v);
         g_signal_handler_unblock( xv->widget,xv->handler_id);
       }
     }
@@ -391,7 +394,7 @@ gboolean
 xwidget_osr_draw_callback (GtkWidget *widget, cairo_t *cr, gpointer data)
 {
   struct xwidget* xw = (struct xwidget*) g_object_get_data (G_OBJECT (widget), XG_XWIDGET);
-  struct xwidget_view* xv = (struct xwidget_viev*) g_object_get_data (G_OBJECT (widget), XG_XWIDGET_VIEW);    
+  struct xwidget_view* xv = (struct xwidget_view*) g_object_get_data (G_OBJECT (widget), XG_XWIDGET_VIEW);    
   
   printf("xwidget_osr_draw_callback gtk3 xw.id:%d xw.type:%d window:%d vis:%d\n",
          xw->id,xw->type, gtk_widget_get_window (widget),  gtk_widget_get_visible (xw->widget_osr));
@@ -435,11 +438,12 @@ xwidget_osr_button_callback ( GtkWidget *widget,
 {
   gdouble x, y;
   struct xwidget* xw = (struct xwidget*) g_object_get_data (G_OBJECT (widget), XG_XWIDGET);    
+  GdkEventButton* eventcopy =  gdk_event_copy(event);
   x = ((GdkEventButton*)event)->x; 
   y = ((GdkEventButton*)event)->y; 
-
+ 
   printf ("button callback %d %d\n",x,y);
-  GdkEventButton* eventcopy =  gdk_event_copy(event);
+  
   eventcopy->window = gtk_widget_get_window(xw->widget_osr);
   gtk_main_do_event(eventcopy); //TODO this will leak events. they should be deallocated later
 }
@@ -606,7 +610,7 @@ xwidget_init_view (
 
   
   gtk_widget_set_size_request (GTK_WIDGET (xv->widget), xww->width, xww->height);
-  gtk_fixed_put (EMACS_FIXED (s->f->gwfixed), GTK_WIDGET (xv->widgetwindow), x, y);
+  gtk_fixed_put (GTK_FIXED (s->f->gwfixed), GTK_WIDGET (xv->widgetwindow), x, y);
   xv->x = x;  xv->y = y;
   gtk_widget_show_all (GTK_WIDGET (xv->widgetwindow));
 
@@ -727,9 +731,9 @@ x_draw_xwidget_glyph_string (struct glyph_string *s)
 
         //allocation debugging. the correct values cant be expected to show upp immediately, but eventually they should get to be ok
         // this is because we dont know when the container gets around to doing layout
-        GtkAllocation galloc;
-        gtk_widget_get_allocation(GTK_WIDGET (xv->widgetwindow), &galloc);
-        printf("allocation %d %d , %d %d\n", galloc.x,galloc.y,galloc.width,galloc.height);
+        //GtkAllocation galloc;
+        //gtk_widget_get_allocation(GTK_WIDGET (xv->widgetwindow), &galloc);
+        //printf("allocation %d %d , %d %d\n", galloc.x,galloc.y,galloc.width,galloc.height);
         
         xv->clipx = clipx; xv->clipy = clipy;
       }
@@ -747,16 +751,9 @@ x_draw_xwidget_glyph_string (struct glyph_string *s)
     }
 }
 
-#ifdef HAVE_WEBKIT_OSR
-DEFUN ("xwidget-webkit-goto-uri", Fxwidget_webkit_goto_uri,  Sxwidget_webkit_goto_uri, 2, 2, 0,
-       doc:	/* webkit goto uri.*/
-       )
-  (Lisp_Object xwidget_id, Lisp_Object uri)
-{
-/* now we have the same issue as always except worse. webkit resists an MVC approach!
-   for now, the 1st webkit view will be manipulated only
- */
 
+struct xwidget* xid2xw( Lisp_Object xwidget_id)
+{
   //TODO refactor this crap to something sane
   struct xwidget *xw;
   int xid;
@@ -764,10 +761,18 @@ DEFUN ("xwidget-webkit-goto-uri", Fxwidget_webkit_goto_uri,  Sxwidget_webkit_got
   CHECK_NUMBER (xwidget_id);
   xid = XFASTINT (xwidget_id);
   xw = &xwidgets[xid];
+  return xw;
+}
 
-  //TODO check xw actually is of the correct type before trying stuff with it
-    
-  webkit_web_view_load_uri(xw->widget_osr, SDATA(uri));
+
+#ifdef HAVE_WEBKIT_OSR
+DEFUN ("xwidget-webkit-goto-uri", Fxwidget_webkit_goto_uri,  Sxwidget_webkit_goto_uri, 2, 2, 0,
+       doc:	/* webkit goto uri.*/
+       )
+  (Lisp_Object xwidget_id, Lisp_Object uri)
+{
+  webkit_web_view_load_uri ( WEBKIT_WEB_VIEW(xid2xw(xwidget_id)->widget_osr), SDATA(uri));
+  return Qnil;
 }
 
 DEFUN ("xwidget-webkit-execute-script", Fxwidget_webkit_execute_script,  Sxwidget_webkit_execute_script, 2, 2, 0,
@@ -775,20 +780,20 @@ DEFUN ("xwidget-webkit-execute-script", Fxwidget_webkit_execute_script,  Sxwidge
        )
   (Lisp_Object xwidget_id, Lisp_Object script)
 {
-
-  //TODO refactor this crap to something sane
-  struct xwidget *xw;
-  int xid;
-
-  CHECK_NUMBER (xwidget_id);
-  xid = XFASTINT (xwidget_id);
-  xw = &xwidgets[xid];
-
-  //TODO check xw actually is of the correct type before trying stuff with it
-    
-  webkit_web_view_execute_script(xw->widget_osr, SDATA(script));
+  webkit_web_view_execute_script( WEBKIT_WEB_VIEW(xid2xw(xwidget_id)->widget_osr), SDATA(script));
   return Qnil;
 }
+
+DEFUN ("xwidget-webkit-get-title", Fxwidget_webkit_get_title,  Sxwidget_webkit_get_title, 1, 1, 0,
+       doc:	/* webkit get title. can be used to work around exec method lacks return val*/
+       )
+  (Lisp_Object xwidget_id)
+{
+  const gchar* str=webkit_web_view_get_title( WEBKIT_WEB_VIEW(xid2xw(xwidget_id)->widget_osr));
+  return make_string_from_bytes(str, strlen(str), strlen(str));
+}
+
+
 
 #endif        
 
@@ -799,15 +804,12 @@ DEFUN ("xwidget-embed-steal-window", Fxwidget_embed_steal_window, Sxwidget_embed
        )
   (Lisp_Object xwidget_id, Lisp_Object window_id)
 {
-  struct xwidget *xw;
-  int xid, iwindow_id;
-
-  CHECK_NUMBER (xwidget_id);
+  int iwindow_id;
+  struct xwidget* xw = xid2xw(xwidget_id);
+  
   CHECK_NUMBER (window_id);
-  xid = XFASTINT (xwidget_id);
   iwindow_id = XFASTINT (window_id);
-  xw = &xwidgets[xid];
-  printf ("  gtk_socket_add_id: %d %d\n", xid, iwindow_id);
+
   //  gtk_socket_steal(GTK_SOCKET(xw->widget),iwindow_id);
   //try adding proper gtk plugs instead, i never once had "steal" work
   /////////  gtk_socket_add_id (GTK_SOCKET (xw->widget), iwindow_id); /////TODO MVC
@@ -825,17 +827,15 @@ DEFUN ("xwidget-resize-internal", Fxwidget_resize_internal, Sxwidget_resize_inte
 {
   struct xwidget *xw;
   struct xwidget_view *xv;
-  int xid, w, h;
+  int  w, h;
 
-  CHECK_NUMBER (xwidget_id);
   CHECK_NUMBER (new_width);
   CHECK_NUMBER (new_height);
-  xid = XFASTINT (xwidget_id);
   w = XFASTINT (new_width);
   h = XFASTINT (new_height);
-  xw = &xwidgets[xid];
+  xw = xid2xw(xwidget_id);
 
-  printf("resize xwidget %d (%d,%d)->(%d,%d)",xid,xw->width,xw->height,w,h);
+  printf("resize xwidget %d (%d,%d)->(%d,%d)",xw->id,xw->width,xw->height,w,h);
   xw->width=w;
   xw->height=h;
   for (int i = 0; i < MAX_XWIDGETS; i++) //TODO MVC refactor lazy linear search
@@ -855,7 +855,7 @@ DEFUN ("xwidget-resize-internal", Fxwidget_resize_internal, Sxwidget_resize_inte
 DEFUN("xwidget-info", Fxwidget_info , Sxwidget_info, 1,1,0, doc: /* get xwidget props */)
      (Lisp_Object xwidget_id)
 {
-  struct xwidget *xw = &xwidgets[XFASTINT (xwidget_id)];
+  struct xwidget *xw = xid2xw(xwidget_id);
   Lisp_Object info;
 
   info = Fmake_vector (make_number (7), Qnil);
@@ -876,14 +876,12 @@ DEFUN ("xwidget-set-keyboard-grab", Fxwidget_set_keyboard_grab, Sxwidget_set_key
        )
   (Lisp_Object xwidget_id, Lisp_Object kbd_grab)
 {
-  struct xwidget *xw;
+  struct xwidget *xw = xid2xw(xwidget_id);
   int xid, kbd_flag;
 
-  CHECK_NUMBER (xwidget_id);
   CHECK_NUMBER (kbd_grab);
-  xid = XFASTINT (xwidget_id);
   kbd_flag = XFASTINT (kbd_grab);
-  xw = &xwidgets[xid];
+
 
   
   printf ("kbd grab: %d %d\n", xid, kbd_flag);
@@ -965,14 +963,9 @@ DEFUN ("xwidget-send-keyboard-event", Fxwidget_send_keyboard_event, Sxwidget_sen
   int keyval;
   char *keystring = "";
   FRAME_PTR f;
-  struct xwidget *xw;
+  struct xwidget *xw = xid2xw(xwidget_id);
   GdkWindow *window;
-  int xwid;
   XID xid;
-
-  CHECK_NUMBER (xwidget_id);
-  xwid = XFASTINT (xwidget_id);
-  xw = &xwidgets[xwid];
 
   /* TODO MVC
   f = (FRAME_PTR) g_object_get_data (G_OBJECT (xw->widget), XG_FRAME_DATA);
@@ -1010,6 +1003,7 @@ syms_of_xwidget (void)
 
   defsubr (&Sxwidget_webkit_goto_uri);
   defsubr (&Sxwidget_webkit_execute_script);
+    defsubr (&Sxwidget_webkit_get_title);
   
   DEFSYM (Qxwidget ,"xwidget");
 
@@ -1074,9 +1068,8 @@ valid_xwidget_p (Lisp_Object object)
 
 /* find a value associated with key in spec */
 Lisp_Object
-xwidget_spec_value (
-                    Lisp_Object spec, Lisp_Object  key,
-                    int *found)
+xwidget_spec_value ( Lisp_Object spec, Lisp_Object  key,
+                     int *found)
 {
   Lisp_Object tail;
 
@@ -1163,7 +1156,7 @@ lookup_xwidget (Lisp_Object  spec)
   value = xwidget_spec_value (spec, QCwidth, NULL);
   xw->width = INTEGERP (value) ? XFASTINT (value) : 50;	//ok
 
-  value = xwidget_spec_value (spec, QCplist, Qnil);
+  value = xwidget_spec_value (spec, QCplist, NULL);
   xw->plist = value;
   printf ("xwidget_id:%d type:%d found:%d %d %d title:%s (%d,%d)\n", id,
           xw->type, found, found1, found2, xw->title, xw->height, xw->width);

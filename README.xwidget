@@ -405,9 +405,28 @@ this works now:
 
 so it should be possible to do some interesting stuff.
 execute-script does however not return anything at the interface level
-so satisfaction is not total.
+so satisfaction is not total:
 
 http://markmail.org/message/4yowmdgras73z3x5
+
+maybe
+https://launchpad.net/gnome-seed
+
+or this funny hack:
+<jave> im trying to understanh how to interact via javascript to an embedded
+       webkit gtk instance  [23:38]
+<jave> i use webkit_web_view_execute_script() which is nice but doesnt return
+       a value, by design aparently  [23:39]
+<jave> any hints?
+<lucian> jave: afaik, webkit still doesn't have full gobject bindings  [23:48]
+<lucian> jave: you can hack it up by making the JS modify the title, and read
+         the title from gtk-side
+<jave> lucian: that was a pretty cool idea!
+
+
+**** webkit_web_view_load_string ()
+I would like preview of html in a buffer rather than from uri.
+
 
 
 ** TODO clipping of controllers
