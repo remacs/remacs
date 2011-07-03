@@ -540,26 +540,21 @@ xwidget_init_view (
   } else if (EQ(xww->type, Qwebkit_osr)) {
 #ifdef HAVE_WEBKIT_OSR
     xv->widget = gtk_drawing_area_new();
-    gtk_widget_set_app_paintable (    xv->widget, TRUE); //because expose event handling
+    gtk_widget_set_app_paintable ( xv->widget, TRUE); //because expose event handling
 #endif        
 #ifdef HAVE_GTK3 //and webkit_osr
     gtk_widget_add_events(xv->widget,
                           GDK_BUTTON_PRESS_MASK
                           | GDK_BUTTON_RELEASE_MASK
-                          | GDK_POINTER_MOTION_MASK
-                          );
-
+                          | GDK_POINTER_MOTION_MASK);
     g_signal_connect (G_OBJECT (    xv->widget), "draw",                    
                       G_CALLBACK (xwidget_osr_draw_callback), NULL);
-
     g_signal_connect (G_OBJECT (    xv->widget), "button-press-event",                    
                       G_CALLBACK (xwidget_osr_button_callback), NULL);
     g_signal_connect (G_OBJECT (    xv->widget), "button-release-event",                    
                       G_CALLBACK (xwidget_osr_button_callback), NULL);
     g_signal_connect (G_OBJECT (    xv->widget), "motion-notify-event",                    
                       G_CALLBACK (xwidget_osr_button_callback), NULL);
-
-    
 #else
     g_signal_connect (G_OBJECT (    xv->widget), "expose_event",                    
                       G_CALLBACK (webkit_osr_expose_event_callback), NULL);                  
@@ -774,6 +769,27 @@ DEFUN ("xwidget-webkit-goto-uri", Fxwidget_webkit_goto_uri,  Sxwidget_webkit_got
     
   webkit_web_view_load_uri(xw->widget_osr, SDATA(uri));
 }
+
+DEFUN ("xwidget-webkit-execute-script", Fxwidget_webkit_execute_script,  Sxwidget_webkit_execute_script, 2, 2, 0,
+       doc:	/* webkit exec js.*/
+       )
+  (Lisp_Object xwidget_id, Lisp_Object script)
+{
+
+  //TODO refactor this crap to something sane
+  struct xwidget *xw;
+  int xid;
+
+  CHECK_NUMBER (xwidget_id);
+  xid = XFASTINT (xwidget_id);
+  xw = &xwidgets[xid];
+
+  //TODO check xw actually is of the correct type before trying stuff with it
+    
+  webkit_web_view_execute_script(xw->widget_osr, SDATA(script));
+  return Qnil;
+}
+
 #endif        
 
 
@@ -868,7 +884,7 @@ DEFUN ("xwidget-set-keyboard-grab", Fxwidget_set_keyboard_grab, Sxwidget_set_key
   xid = XFASTINT (xwidget_id);
   kbd_flag = XFASTINT (kbd_grab);
   xw = &xwidgets[xid];
-  if(xw->type != 3) return Qnil; //only relevant for xembed  //TODO MVC
+
   
   printf ("kbd grab: %d %d\n", xid, kbd_flag);
   if (kbd_flag)
@@ -991,7 +1007,9 @@ syms_of_xwidget (void)
   defsubr (&Sxwidget_info);
   defsubr (&Sxwidget_resize_internal);
   defsubr (&Sxwidget_embed_steal_window);
+
   defsubr (&Sxwidget_webkit_goto_uri);
+  defsubr (&Sxwidget_webkit_execute_script);
   
   DEFSYM (Qxwidget ,"xwidget");
 

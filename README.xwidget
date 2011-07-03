@@ -317,7 +317,8 @@ although embedding a browser is not my primary concern many are
 interested in this. some suitable browser component needs to be found
 supporting gtk.
 
-*** webkit
+*** DONE webkit
+    CLOSED: [2011-07-03 Sun 22:13]
 there is a webkit gtk port. there is no obvious mvc support.
 http://live.gnome.org/WebKitGtk
 http://webkitgtk.org/
@@ -370,7 +371,8 @@ idea is that whatever oddness webkit does so that offscreen rendering
 doesnt work, doesnt happen on-screen. the window could be opened
 somewhere not in the way.
 
-*** firefox
+*** CANCELLED firefox
+    CLOSED: [2011-07-03 Sun 22:13]
 http://www-archive.mozilla.org/unix/gtk-embedding.html
 seems to be severly bitrotted
 
@@ -379,7 +381,33 @@ http://hg.mozilla.org/incubator/embedding/file/29ac0fe51754/gtk/tests/test.cpp
 
 while webkit clearly has the best traction as an embeddee, the
 offscreen rendering issues makes it interesting to see what ff brings
-to the table.
+to the table. turns out webkit has as good offscreen support as anyone.
+
+
+*** TODO text field support
+Emacs captures all keyboard events so text field support isn't super
+straightforward. 
+
+**** propagate keyboard events
+I have some old hacks for this and they are not good.
+**** use the DOM model
+expose document.activeElement to lisp. This is potentially more
+interesting than just forwarding keyboard events.
+
+webkit_web_view_get_dom_document ()
+
+**** DONE inject javascript
+     CLOSED: [2011-07-03 Sun 22:50]
+webkit_web_view_execute_script ()
+
+this works now:
+(xwidget-webkit-execute-script 5 "document.activeElement.value='test'")
+
+so it should be possible to do some interesting stuff.
+execute-script does however not return anything at the interface level
+so satisfaction is not total.
+
+http://markmail.org/message/4yowmdgras73z3x5
 
 
 ** TODO clipping of controllers
@@ -479,13 +507,18 @@ the needed data is private to the base class. to overcome this:
 ** TODO use FRAME_GTK_WIDGET (f)
 rather than gwfixed
 
-** TODO translate clicks 
+** DONE translate clicks 
+   CLOSED: [2011-07-03 Sun 22:12]
 on onscreen webkit peer to offscreen
 
 maybe
 http://developer.gnome.org/gdk/stable/gdk-Windows.html#GdkWindow-from-embedder
 
+turned out tell be not so hard, captured events, copied them and
+forwarded them offscreen!
 
 ** TODO investigate gdk_window_redirect_to_drawable
 http://developer.gnome.org/gdk/stable/gdk-Windows.html#gdk-offscreen-window-set-embedder
 maybe control be used in place of my own copy hacks?
+
+
