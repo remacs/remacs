@@ -433,7 +433,15 @@ xwidget_osr_button_callback ( GtkWidget *widget,
                               GdkEvent  *event,
                               gpointer   user_data)
 {
-  printf ("button callback\n",);
+  gdouble x, y;
+  struct xwidget* xw = (struct xwidget*) g_object_get_data (G_OBJECT (widget), XG_XWIDGET);    
+  x = ((GdkEventButton*)event)->x; 
+  y = ((GdkEventButton*)event)->y; 
+
+  printf ("button callback %d %d\n",x,y);
+  GdkEventButton* eventcopy =  gdk_event_copy(event);
+  eventcopy->window = gtk_widget_get_window(xw->widget_osr);
+  gtk_main_do_event(eventcopy); //TODO this will leak events. they should be deallocated later
 }
 
 int xwidget_view_index=0;
@@ -538,12 +546,17 @@ xwidget_init_view (
     gtk_widget_add_events(xv->widget,
                           GDK_BUTTON_PRESS_MASK
                           | GDK_BUTTON_RELEASE_MASK
+                          | GDK_POINTER_MOTION_MASK
                           );
 
     g_signal_connect (G_OBJECT (    xv->widget), "draw",                    
                       G_CALLBACK (xwidget_osr_draw_callback), NULL);
 
-    g_signal_connect (G_OBJECT (    xv->widget), "buton-press-event",                    
+    g_signal_connect (G_OBJECT (    xv->widget), "button-press-event",                    
+                      G_CALLBACK (xwidget_osr_button_callback), NULL);
+    g_signal_connect (G_OBJECT (    xv->widget), "button-release-event",                    
+                      G_CALLBACK (xwidget_osr_button_callback), NULL);
+    g_signal_connect (G_OBJECT (    xv->widget), "motion-notify-event",                    
                       G_CALLBACK (xwidget_osr_button_callback), NULL);
 
     
