@@ -373,6 +373,7 @@ gboolean webkit_osr_damage_event_callback (GtkWidget *widget, GdkEventExpose *ev
    struct xwidget* xw = (struct xwidget*) g_object_get_data (G_OBJECT (widget), XG_XWIDGET);
    struct xwidget_view* xv;
    //webkit_osr_redraw_child(xw, widget);
+   printf ("damage\n");
    for (int i = 0; i < MAX_XWIDGETS; i++)//todo mvc refactor
     {
       xv = &xwidget_views[i];
@@ -381,7 +382,7 @@ gboolean webkit_osr_damage_event_callback (GtkWidget *widget, GdkEventExpose *ev
       }
     }
 
-   return TRUE;
+   return FALSE;
  }                                                                               
 
 
@@ -404,7 +405,7 @@ xwidget_osr_draw_callback (GtkWidget *widget, cairo_t *cr, gpointer data)
   //(emacs:7109): GLib-GObject-WARNING **: invalid cast from `GdkOffscreenWindow' to `GdkDrawableImplX11'
   // seems to happen in webkit actually. see README
   
-  if(1){ //redraw debug hack. 
+  if(0){ //redraw debug hack. helped a lot in fact. use the with alpha painter below also
     cairo_set_source_rgb(cr, osr_dbg_color, 1.0, 0.2);
     cairo_rectangle(cr, 0,0, xw->width, xw->height);
     cairo_fill(cr);
@@ -414,12 +415,12 @@ xwidget_osr_draw_callback (GtkWidget *widget, cairo_t *cr, gpointer data)
     
   }
 
-  gtk_widget_draw                     (xw->widget_osr,  cr);
+  gtk_widget_draw (xw->widget_osr,  cr);
   
   //cairo_set_source_surface (cr, src_pixmap, 0,0); 
-  cairo_set_operator (cr, CAIRO_OPERATOR_OVER);
+  //cairo_set_operator (cr, CAIRO_OPERATOR_OVER);
 
-  cairo_paint_with_alpha (cr, 0.7);
+  //cairo_paint_with_alpha (cr, 1.0);
   //cairo_paint(cr);
 
   
@@ -722,7 +723,7 @@ x_draw_xwidget_glyph_string (struct glyph_string *s)
     }
 }
 
-#ifdef HAVE_WEBKIT
+#ifdef HAVE_WEBKIT_OSR
 DEFUN ("xwidget-webkit-goto-uri", Fxwidget_webkit_goto_uri,  Sxwidget_webkit_goto_uri, 2, 2, 0,
        doc:	/* webkit goto uri.*/
        )
@@ -731,8 +732,18 @@ DEFUN ("xwidget-webkit-goto-uri", Fxwidget_webkit_goto_uri,  Sxwidget_webkit_got
 /* now we have the same issue as always except worse. webkit resists an MVC approach!
    for now, the 1st webkit view will be manipulated only
  */
-  
-//webkit_web_view_load_uri(xv->widget, "http://www.fsf.org");
+
+  //TODO refactor this crap to something sane
+  struct xwidget *xw;
+  int xid;
+
+  CHECK_NUMBER (xwidget_id);
+  xid = XFASTINT (xwidget_id);
+  xw = &xwidgets[xid];
+
+  //TODO check xw actually is of the correct type before trying stuff with it
+    
+  webkit_web_view_load_uri(xw->widget_osr, SDATA(uri));
 }
 #endif        
 
@@ -951,7 +962,8 @@ syms_of_xwidget (void)
   defsubr (&Sxwidget_info);
   defsubr (&Sxwidget_resize_internal);
   defsubr (&Sxwidget_embed_steal_window);
-
+  defsubr (&Sxwidget_webkit_goto_uri);
+  
   DEFSYM (Qxwidget ,"xwidget");
 
   DEFSYM (Qxwidget_id ,":xwidget-id");
@@ -1116,9 +1128,9 @@ lookup_xwidget (Lisp_Object  spec)
   //diy mvc. widget is rendered offscreen(or in an onscreen separate toplevel for testing), later blitted to the views
   if (EQ(xw->type, Qwebkit_osr) && !xw->widgetwindow_osr){
     BLOCK_INPUT;
-    xw->widgetwindow_osr = GTK_CONTAINER (gtk_window_new (  GTK_WINDOW_TOPLEVEL));
+    //xw->widgetwindow_osr = GTK_CONTAINER (gtk_window_new (  GTK_WINDOW_TOPLEVEL));
     //xw->widgetwindow_osr = GTK_CONTAINER (gtk_dialog_new ());
-    //xw->widgetwindow_osr = GTK_CONTAINER (gtk_offscreen_window_new ());
+    xw->widgetwindow_osr = GTK_CONTAINER (gtk_offscreen_window_new ());
     gtk_window_resize(    GTK_WINDOW(xw->widgetwindow_osr), xw->width, xw->height);
     //xw->widgetwindow_osr = SELECTED_FRAME()->gwfixed;
     xw->widget_osr = webkit_web_view_new();
@@ -1138,10 +1150,8 @@ lookup_xwidget (Lisp_Object  spec)
     g_object_set_data (G_OBJECT (xw->widget_osr), XG_XWIDGET, (gpointer) (xw)); //the xwidget
     g_object_set_data (G_OBJECT (xw->widgetwindow_osr), XG_XWIDGET, (gpointer) (xw)); //the xwidget  
     
-    g_signal_connect (G_OBJECT (    xw->widgetwindow_osr), "damage_event",                    
-                      G_CALLBACK (webkit_osr_damage_event_callback), NULL);                  
-
-
+    g_signal_connect (G_OBJECT (    xw->widgetwindow_osr), "damage-event",    G_CALLBACK (webkit_osr_damage_event_callback), NULL);
+    //g_signal_connect (G_OBJECT (    xw->widget_osr), "draw",    G_CALLBACK (webkit_osr_damage_event_callback), NULL);                  
       
     webkit_web_view_load_uri(WEBKIT_WEB_VIEW(xw->widget_osr), "http://www.fsf.org");
     UNBLOCK_INPUT;
