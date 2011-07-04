@@ -45,7 +45,7 @@ struct xwidget_view{
   GtkContainer* widgetwindow;
   GtkContainer* emacswindow;
   int x; int y;
-  int clipx; int clipy;
+  int clipx; int clipy; int cliptop;
   struct window *w;
 
   long handler_id;

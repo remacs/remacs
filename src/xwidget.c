@@ -200,7 +200,7 @@ xwidget_show_view (struct xwidget_view *xv)
   //printf("xwidget %d shown\n",xw->id);
   xv->hidden = 0;
   gtk_widget_show(GTK_WIDGET(xv->widgetwindow));
-  gtk_fixed_move (GTK_FIXED (xv->emacswindow), GTK_WIDGET (xv->widgetwindow),  xv->x, xv->y);
+  gtk_fixed_move (GTK_FIXED (xv->emacswindow), GTK_WIDGET (xv->widgetwindow),  xv->x, xv->y + xv->cliptop); //TODO refactor 
 }
 
 
@@ -224,7 +224,7 @@ void xwidget_plug_added(GtkSocket *socket,
 }
 
 gboolean xwidget_plug_removed(GtkSocket *socket,
-                        gpointer   user_data)
+                              gpointer   user_data)
 {
   printf("xwidget_plug_removed\n");
   return TRUE; /* dont run the default handler because that kills the socket and we want to reuse it*/
@@ -323,9 +323,6 @@ void webkit_osr_redraw_child (  struct xwidget* xw, GtkWidget *widget)
   cairo_surface_t * *src_pixmap;
   src_pixmap =    gtk_offscreen_window_get_surface (xw->widgetwindow_osr);
 
-  //g_object_ref(src_pixmap);//TODO needs to be unrefed eventually, if we are to use his method
-
-  
   printf("webkit_osr_redraw_child gtk3 xw.id:%d xw.type:%d window:%d\n", xw->id,xw->type, gtk_widget_get_window (widget));
 
   cr = gdk_cairo_create (gtk_widget_get_window (widget));
@@ -360,24 +357,25 @@ void webkit_osr_redraw_child (  struct xwidget* xw, GtkWidget *widget)
 }
 
 /* when the on-screen webkit peer view gets exposed this signal is called.
-   it copies the bitmap from the off-screen webkit instance */
+   it copies the bitmap from the off-screen webkit instance to the onscreen view*/
 gboolean webkit_osr_expose_event_callback (GtkWidget *widget, GdkEventExpose *event, gpointer data) 
- {                                                                               
+{
+  //TODO optimize by cliping to damage region 
   struct xwidget* xw = (struct xwidget*) g_object_get_data (G_OBJECT (widget), XG_XWIDGET);  
   webkit_osr_redraw_child(xw, widget);
   return FALSE;
- }                                                                               
+}                                                                               
 
 /* when the off-screen webkit master view changes this signal is called.
    it copies the bitmap from the off-screen webkit instance */
 gboolean webkit_osr_damage_event_callback (GtkWidget *widget, GdkEventExpose *event, gpointer data) 
- {
-   //TODO this is wrong! should just oueu a redraw of onscreen widget
-   struct xwidget* xw = (struct xwidget*) g_object_get_data (G_OBJECT (widget), XG_XWIDGET);
-   struct xwidget_view* xv;
-   //webkit_osr_redraw_child(xw, widget);
-   printf ("damage\n");
-   for (int i = 0; i < MAX_XWIDGETS; i++)//todo mvc refactor
+{
+  //TODO this is wrong! should just oueu a redraw of onscreen widget
+  struct xwidget* xw = (struct xwidget*) g_object_get_data (G_OBJECT (widget), XG_XWIDGET);
+  struct xwidget_view* xv;
+  //webkit_osr_redraw_child(xw, widget);
+  printf ("damage\n");
+  for (int i = 0; i < MAX_XWIDGETS; i++)//todo mvc refactor
     {
       xv = &xwidget_views[i];
       if(xv->model == xw){
@@ -385,8 +383,8 @@ gboolean webkit_osr_damage_event_callback (GtkWidget *widget, GdkEventExpose *ev
       }
     }
 
-   return FALSE;
- }                                                                               
+  return FALSE;
+}                                                                               
 
 
 //for gtk3 webkit_osr
@@ -402,29 +400,7 @@ xwidget_osr_draw_callback (GtkWidget *widget, cairo_t *cr, gpointer data)
   cairo_rectangle(cr, 0,0, xv->clipx, xv->clipy);//xw->width, xw->height);
   cairo_clip(cr);
 
-  // debugging redraw:
-  //  - the bg colors always change, so theres no error in signal handling
-  //  - i get this error now and then:
-  //(emacs:7109): GLib-GObject-WARNING **: invalid cast from `GdkOffscreenWindow' to `GdkDrawableImplX11'
-  // seems to happen in webkit actually. see README
-  
-  if(0){ //redraw debug hack. helped a lot in fact. use the with alpha painter below also
-    cairo_set_source_rgb(cr, osr_dbg_color, 1.0, 0.2);
-    cairo_rectangle(cr, 0,0, xw->width, xw->height);
-    cairo_fill(cr);
-    osr_dbg_color+=0.1;
-    if(osr_dbg_color>1.0)
-      osr_dbg_color=0.0;
-    
-  }
-
   gtk_widget_draw (xw->widget_osr,  cr);
-  
-  //cairo_set_source_surface (cr, src_pixmap, 0,0); 
-  //cairo_set_operator (cr, CAIRO_OPERATOR_OVER);
-
-  //cairo_paint_with_alpha (cr, 1.0);
-  //cairo_paint(cr);
 
   
   return FALSE;
@@ -471,75 +447,75 @@ xwidget_init_view (
       g_signal_connect (G_OBJECT (xv->widget), "clicked",
                         G_CALLBACK (buttonclick_handler), xww); //the model rather than the view
     } else if (EQ(xww->type, Qtoggle)) {
-      xv->widget = gtk_toggle_button_new_with_label (xww->title);
-    } else if (EQ(xww->type, Qsocket)) {
-      xv->widget = gtk_socket_new ();
-      //gtk_widget_set_app_paintable (xw->widget, TRUE); //workaround for composited sockets
+    xv->widget = gtk_toggle_button_new_with_label (xww->title);
+  } else if (EQ(xww->type, Qsocket)) {
+    xv->widget = gtk_socket_new ();
+    //gtk_widget_set_app_paintable (xw->widget, TRUE); //workaround for composited sockets
 
-      //gdk_color_parse("blue",&color); //the blue color never seems to show up. something else draws a grey bg
-      //gtk_widget_modify_bg(xv->widget, GTK_STATE_NORMAL, &color);
-      g_signal_connect_after(xv->widget, "plug-added", G_CALLBACK(xwidget_plug_added), "plug added");
-      g_signal_connect_after(xv->widget, "plug-removed", G_CALLBACK(xwidget_plug_removed), "plug removed");              
-    } else if (EQ(xww->type, Qslider)) {
-      xv->widget =
-        //gtk_hscale_new (GTK_ADJUSTMENT(gtk_adjustment_new (0.0, 0.0, 100.0, 1.0, 10.0, 10.0)));
-        gtk_hscale_new_with_range ( 0.0, 100.0, 10.0);
-      gtk_scale_set_draw_value (GTK_SCALE (xv->widget), FALSE);	//i think its emacs role to show text and stuff, so disable the widgets own text
-      xv->handler_id = g_signal_connect_after(xv->widget, "value-changed", G_CALLBACK(xwidget_slider_changed), "slider changed");
-    } else if (EQ(xww->type, Qcairo)) {
-      //Cairo view
-      //uhm cairo is differentish in gtk 3. 
-      //gdk_cairo_create (gtk_widget_get_window (f->gwfixed));
+    //gdk_color_parse("blue",&color); //the blue color never seems to show up. something else draws a grey bg
+    //gtk_widget_modify_bg(xv->widget, GTK_STATE_NORMAL, &color);
+    g_signal_connect_after(xv->widget, "plug-added", G_CALLBACK(xwidget_plug_added), "plug added");
+    g_signal_connect_after(xv->widget, "plug-removed", G_CALLBACK(xwidget_plug_removed), "plug removed");              
+  } else if (EQ(xww->type, Qslider)) {
+    xv->widget =
+      //gtk_hscale_new (GTK_ADJUSTMENT(gtk_adjustment_new (0.0, 0.0, 100.0, 1.0, 10.0, 10.0)));
+      gtk_hscale_new_with_range ( 0.0, 100.0, 10.0);
+    gtk_scale_set_draw_value (GTK_SCALE (xv->widget), FALSE);	//i think its emacs role to show text and stuff, so disable the widgets own text
+    xv->handler_id = g_signal_connect_after(xv->widget, "value-changed", G_CALLBACK(xwidget_slider_changed), "slider changed");
+  } else if (EQ(xww->type, Qcairo)) {
+    //Cairo view
+    //uhm cairo is differentish in gtk 3. 
+    //gdk_cairo_create (gtk_widget_get_window (f->gwfixed));
 #ifdef HAVE_GOOCANVAS
     xv->widget = goo_canvas_new();
     GooCanvasItem *root, *rect_item, *text_item;
     goo_canvas_set_bounds (GOO_CANVAS (xv->widget), 0, 0, 1000, 1000);
-     root = goo_canvas_get_root_item (GOO_CANVAS (xv->widget));
-      rect_item = goo_canvas_rect_new (root, 100, 100, 400, 400,
-                                   "line-width", 10.0,
-                                   "radius-x", 20.0,
-                                   "radius-y", 10.0,
-                                   "stroke-color", "yellow",
-                                   "fill-color", "red",
-                                   NULL);
+    root = goo_canvas_get_root_item (GOO_CANVAS (xv->widget));
+    rect_item = goo_canvas_rect_new (root, 100, 100, 400, 400,
+                                     "line-width", 10.0,
+                                     "radius-x", 20.0,
+                                     "radius-y", 10.0,
+                                     "stroke-color", "yellow",
+                                     "fill-color", "red",
+                                     NULL);
 
-  text_item = goo_canvas_text_new (root, "Hello World", 300, 300, -1,
-                                   GTK_ANCHOR_CENTER,
-                                   "font", "Sans 24",
-                                   NULL);
-  goo_canvas_item_rotate (text_item, 45, 300, 300);
+    text_item = goo_canvas_text_new (root, "Hello World", 300, 300, -1,
+                                     GTK_ANCHOR_CENTER,
+                                     "font", "Sans 24",
+                                     NULL);
+    goo_canvas_item_rotate (text_item, 45, 300, 300);
   
 #endif
 #ifdef HAVE_CLUTTER
-        xv->widget = gtk_clutter_embed_new ();;
-        ClutterActor *stage = NULL;
-        stage = gtk_clutter_embed_get_stage (GTK_CLUTTER_EMBED (        xv->widget));
-        ClutterColor stage_color = { 0xaa, 0xaa, 0xaa, 0xff }; /* Black */
-        clutter_stage_set_color (CLUTTER_STAGE (stage), &stage_color);
+    xv->widget = gtk_clutter_embed_new ();;
+    ClutterActor *stage = NULL;
+    stage = gtk_clutter_embed_get_stage (GTK_CLUTTER_EMBED (        xv->widget));
+    ClutterColor stage_color = { 0xaa, 0xaa, 0xaa, 0xff }; /* Black */
+    clutter_stage_set_color (CLUTTER_STAGE (stage), &stage_color);
 
-        ClutterActor *  texture =  clutter_cairo_texture_new (1000, 1000);
-        clutter_container_add_actor(stage, texture);
-        clutter_actor_set_position(texture, 0,0);
-        clutter_actor_show(texture);
+    ClutterActor *  texture =  clutter_cairo_texture_new (1000, 1000);
+    clutter_container_add_actor(stage, texture);
+    clutter_actor_set_position(texture, 0,0);
+    clutter_actor_show(texture);
 
-        cairo_t *cr;
-        cr = clutter_cairo_texture_create (CLUTTER_CAIRO_TEXTURE (texture));
+    cairo_t *cr;
+    cr = clutter_cairo_texture_create (CLUTTER_CAIRO_TEXTURE (texture));
 
-        /* draw on the context */
-        RsvgHandle *h =  rsvg_handle_new_from_file  ("/tmp/tst.svg",
-                                                     NULL);
+    /* draw on the context */
+    RsvgHandle *h =  rsvg_handle_new_from_file  ("/tmp/tst.svg",
+                                                 NULL);
         
-        rsvg_handle_render_cairo(h, cr);
-        cairo_destroy (cr);
+    rsvg_handle_render_cairo(h, cr);
+    cairo_destroy (cr);
           
-        /* Show the stage: */
-        clutter_actor_show (stage);        
+    /* Show the stage: */
+    clutter_actor_show (stage);        
 #endif        
         
   } else if (EQ(xww->type, Qwebkit)) {
 #ifdef HAVE_WEBKIT
-        xv->widget = webkit_web_view_new();
-        webkit_web_view_load_uri(xv->widget, "http://www.fsf.org"); 
+    xv->widget = webkit_web_view_new();
+    webkit_web_view_load_uri(xv->widget, "http://www.fsf.org"); 
 #endif        
   } else if (EQ(xww->type, Qwebkit_osr)) {
 #ifdef HAVE_WEBKIT_OSR
@@ -578,10 +554,9 @@ xwidget_init_view (
   //xv->widgetwindow = GTK_CONTAINER (gtk_fixed_new ()); //works well for clipping on gtk2 not gtk3
   //xv->widgetwindow = GTK_CONTAINER (gtk_event_box_new ()); //doesnt help clipping gtk3
   //xv->widgetwindow = GTK_CONTAINER (gtk_scrolled_window_new (NULL, NULL)); //clips in gtk3
-  xv->widgetwindow = GTK_CONTAINER (gtk_viewport_new (NULL, NULL)); //clips in gtk3
-
+  xv->widgetwindow = GTK_CONTAINER (gtk_viewport_new (NULL, NULL));
   
-  gtk_widget_set_size_request (GTK_WIDGET (xv->widgetwindow), xww->width, xww->height);
+
   /* GtkAllocation a; */
   /* a.x=0;  a.y=0;   a.width=xww->width;  a.height=xww->height; */
   /* gtk_widget_set_allocation (GTK_WIDGET (xv->widget), &a); */
@@ -610,6 +585,7 @@ xwidget_init_view (
 
   
   gtk_widget_set_size_request (GTK_WIDGET (xv->widget), xww->width, xww->height);
+  gtk_widget_set_size_request (GTK_WIDGET (xv->widgetwindow), xww->width, xww->height);
   gtk_fixed_put (GTK_FIXED (s->f->gwfixed), GTK_WIDGET (xv->widgetwindow), x, y);
   xv->x = x;  xv->y = y;
   gtk_widget_show_all (GTK_WIDGET (xv->widgetwindow));
@@ -618,7 +594,7 @@ xwidget_init_view (
   //this seems to enable xcomposition. later we need to paint ourselves somehow,
   //since the widget is no longer responsible for painting itself
   //if(xw->type!=3)  //im having trouble with compositing and sockets. hmmm.
-      //gdk_window_set_composited (xw->widget->window, TRUE);
+  //gdk_window_set_composited (xw->widget->window, TRUE);
   //gdk_window_set_composited (GTK_LAYOUT (xw->widgetwindow)->bin_window, TRUE);  
   // gtk_widget_set_double_buffered (xw->widget,FALSE);
   // gtk_widget_set_double_buffered (xw->widgetwindow,FALSE);  
@@ -628,15 +604,15 @@ xwidget_init_view (
   //  g_signal_connect_after(xw->widget, "damage-event", G_CALLBACK(xwidget_composite_draw), "damaged");  
   
   //widgettype specific initialization only possible after realization
- if (EQ(xww->type, Qsocket)) {
-      printf ("xwid:%d socket id:%x %d\n",
-              xww->id,
-              gtk_socket_get_id (GTK_SOCKET (xv->widget)),
-              gtk_socket_get_id (GTK_SOCKET (xv->widget)));
-      send_xembed_ready_event (xww->id,
-                               gtk_socket_get_id (GTK_SOCKET (xv->widget)));
-      //gtk_widget_realize(xw->widget);
- }
+  if (EQ(xww->type, Qsocket)) {
+    printf ("xwid:%d socket id:%x %d\n",
+            xww->id,
+            gtk_socket_get_id (GTK_SOCKET (xv->widget)),
+            gtk_socket_get_id (GTK_SOCKET (xv->widget)));
+    send_xembed_ready_event (xww->id,
+                             gtk_socket_get_id (GTK_SOCKET (xv->widget)));
+    //gtk_widget_realize(xw->widget);
+  }
   return xv;
 }
 
@@ -645,45 +621,15 @@ void
 x_draw_xwidget_glyph_string (struct glyph_string *s)
 {
   /*
-    this method is called by the redisplay engine and is supposed to put the xwidget on screen.
+    this method is called by the redisplay engine and places the xwidget on screen.
 
-    must handle both live xwidgets, and phantom xwidgets.
-
-    BUG it seems this method for some reason is called with bad s->x and s->y sometimes.
-    When this happens the xwidget doesnt move on screen as it should.
-    This mightbe because of x_scroll_run. Emacs decides to scroll the screen by blitting sometimes.
-    then emacs doesnt try to actualy call the paint routines, which means this here code will never
-    run so the xwidget wont know it has been moved.
-
-    Solved temporarily by never optimizing in try_window_reusing_current_matrix().
-
-    BUG the phantoming code doesnt work very well when the live xwidget is off screen.
-    you will get weirdo display artefacts. Composition ought to solve this, since that means the live window is
-    always available in an off-screen buffer. My current attempt at composition doesnt work properly however.
-
-
-   */
+  */
   int box_line_hwidth = eabs (s->face->box_line_width);
   int box_line_vwidth = max (s->face->box_line_width, 0);
   int height = s->height;
-
-  //int drawing_in_selected_window = (XWINDOW (FRAME_SELECTED_WINDOW (s->f))) == (s->w);
-  //TODO drawing_in_selected_window can be true for several windows if we have several frames.
-  //we also need to check that the xwidget is to be drawn inside a window on a frame where it originaly lives.
-  //otherwise draw a phantom, or maybe reparent the xwidget.
-
   struct xwidget *xww = &xwidgets[s->xwidget_id];
   struct xwidget_view *xv = xwidget_view_lookup(xww, (s->w));
-
-
-
-  
-  int clipx; int clipy;
-
-  /*printf("x_draw_xwidget_glyph_string: id:%d %d %d  (%d,%d,%d,%d) selected win:%d\n",
-     s->xwidget_id, box_line_hwidth, box_line_vwidth,
-         s->x, s->y, s->height, s->width,
-         drawing_in_selected_window);*/
+  int clipx; int clipy; int cliptop;
 
   int x = s->x;
   int y = s->y + (s->height / 2) - (xww->height / 2);
@@ -691,65 +637,78 @@ x_draw_xwidget_glyph_string (struct glyph_string *s)
   int moved=0;
 
   if (xv == NULL){
-    xv = xwidget_init_view (xww, s, x, y); //once for each view 
+    /* Views must be initialized once(only once).
+       We do it here in the display loop because there is no other time to know things like
+       window placement etc.
+    */
+    printf ("xv init for xw %d\n", xww->id);
+    xv = xwidget_init_view (xww, s, x, y); 
   }
 
-  //calculate clip widht and height, which is used both for the xwidget
-  //and its phantom counterpart
+  //calculate clip width and height, which is used for all manner of onscreen xwidget views
   clipx = min (xww->width, WINDOW_RIGHT_EDGE_X (s->w) - x - WINDOW_RIGHT_SCROLL_BAR_AREA_WIDTH(s->w) - WINDOW_RIGHT_FRINGE_WIDTH(s->w));
   clipy = min (xww->height,
                WINDOW_BOTTOM_EDGE_Y (s->w) - WINDOW_MODE_LINE_HEIGHT (s->w) - y);
+  //TODO figure out how to clip the upper part of a widget
+  cliptop = max(0, WINDOW_TOP_EDGE_Y(s->w) -y ); //how much to cut from the topside of an xwidget
+  printf("cliptop %d\n", cliptop);
 
-  //TODO:
-  // 1) always draw live xwidget in slected window
-  // (2) if there were no live instances of the xwidget in selected window, also draw it live)
-  // 3) if there was a live xwidget previously, now phantom it.
-  if (1)//moving to MVC pattern, there will be no "phantom" support for a while //drawing_in_selected_window)
+  
+  moved = (xv->x != x) || ((xv->y + xv->cliptop)!= (y+cliptop));
+  if(moved)    printf ("live xwidget moved: id:%d (%d,%d)->(%d,%d) y+cliptop:%d\n", xww->id, xv->x, xv->y, x, y, y + cliptop);
+  xv->x = x;
+  xv->y = y;
+  if (moved)	//has it moved?
     {
-      moved = (xv->x != x) || (xv->y != y);
-      if(moved)
-        printf ("live xwidget moved: id:%d (%d,%d)->(%d,%d)\n", xww->id, xv->x, xv->y, x, y);
-      //xw refers to the *live* instance of the xwidget, so only
-      //update coords when drawing in the selected window
-      xv->x = x;
-      xv->y = y;
-      if (moved)	//has it moved?
+      if (!xwidget_hidden(xv))	//hidden equals not being seen during redisplay
         {
-          if (!xwidget_hidden(xv))	//hidden equals not being seen in the live window
-            {
-              gtk_fixed_move (GTK_FIXED (s->f->gwfixed),
-                              GTK_WIDGET (xv->widgetwindow), x, y);
-            }
+          //TODO should be possible to use xwidget_show_view here
+          gtk_fixed_move (GTK_FIXED (s->f->gwfixed),
+                          GTK_WIDGET (xv->widgetwindow),
+                          x, y + cliptop);
         }
-      //clip the widget window if some parts happen to be outside drawable area
-      //an emacs window is not a gtk window, a gtk window covers the entire frame
-      //cliping might have changed even if we havent actualy moved, we try figure out when we need to reclip for real
-      if((xv->clipx != clipx) || (xv->clipy != clipy)){
-        gtk_widget_set_size_request (GTK_WIDGET (xv->widgetwindow),
-                                     clipx, clipy);
-        printf("reclip %d %d -> %d %d\n",xv->clipx, xv->clipy,  clipx, clipy );
+    }
+  //clip the widget window if some parts happen to be outside drawable area
+  //an emacs window is not a gtk window, a gtk window covers the entire frame
+  //cliping might have changed even if we havent actualy moved, we try figure out when we need to reclip for real
+  if((xv->clipx != clipx) || (xv->clipy != clipy)|| (xv->cliptop != cliptop)){
+    printf("adj max:%f val:%f\n", gtk_adjustment_get_upper(gtk_viewport_get_vadjustment(GTK_VIEWPORT(xv->widgetwindow))),   gtk_adjustment_get_value(gtk_viewport_get_vadjustment(GTK_VIEWPORT(xv->widgetwindow))));    
+    gtk_widget_set_size_request (GTK_WIDGET (xv->widgetwindow),  clipx, clipy + cliptop);
+    printf("adj max:%f val:%f\n", gtk_adjustment_get_upper(gtk_viewport_get_vadjustment(GTK_VIEWPORT(xv->widgetwindow))),   gtk_adjustment_get_value(gtk_viewport_get_vadjustment(GTK_VIEWPORT(xv->widgetwindow))));
 
-        //allocation debugging. the correct values cant be expected to show upp immediately, but eventually they should get to be ok
-        // this is because we dont know when the container gets around to doing layout
-        //GtkAllocation galloc;
-        //gtk_widget_get_allocation(GTK_WIDGET (xv->widgetwindow), &galloc);
-        //printf("allocation %d %d , %d %d\n", galloc.x,galloc.y,galloc.width,galloc.height);
+    gtk_adjustment_set_value (gtk_viewport_get_vadjustment(GTK_VIEWPORT(xv->widgetwindow)), 1.0*cliptop);
+    //gtk_adjustment_value_changed (gtk_viewport_get_vadjustment(GTK_VIEWPORT(xv->widgetwindow)));
+    
+    printf("adj max:%f val:%f\n", gtk_adjustment_get_upper(gtk_viewport_get_vadjustment(GTK_VIEWPORT(xv->widgetwindow))),   gtk_adjustment_get_value(gtk_viewport_get_vadjustment(GTK_VIEWPORT(xv->widgetwindow))));    
+    /* gtk_adjustment_configure (gtk_viewport_get_vadjustment(GTK_VIEWPORT(xv->widgetwindow)), */
+    /*                           - cliptop,  //val */
+    /*                           - xww->height, //max */
+    /*                           0.0, //low */
+                              
+    /*                           1.0, //step. unused */
+    /*                           1.0, //page step. unused */
+    /*                           xww->height //page height */
+
+    /*                           ); */
+    printf("reclip %d %d -> %d %d  cliptop:%d\n",xv->clipx, xv->clipy,  clipx, clipy, cliptop );
+
+    //allocation debugging. the correct values cant be expected to show upp immediately, but eventually they should get to be ok
+    // this is because we dont know when the container gets around to doing layout
+    //GtkAllocation galloc;
+    //gtk_widget_get_allocation(GTK_WIDGET (xv->widgetwindow), &galloc);
+    //printf("allocation %d %d , %d %d\n", galloc.x,galloc.y,galloc.width,galloc.height);
         
-        xv->clipx = clipx; xv->clipy = clipy;
-      }
-      //a live xwidget paints itself. when using composition, that
-      //happens through the expose handler for the xwidget
-      //if emacs wants to repaint the area where the widget lives, queue a redraw
-      if (!xwidget_hidden(xv))
-        gtk_widget_queue_draw (xv->widget);
-    }
-  else
-    {
-      //ok, we are painting the xwidgets in non-selected window, so draw a phantom
-      //printf("draw phantom xwidget at:%d %d\n",x,y);
-      //xwidget_composite_draw_phantom (xw, x, y, clipx, clipy); //TODO MVC there will be very few cases of phantoming
-    }
+    xv->clipx = clipx; xv->clipy = clipy; xv->cliptop = cliptop;
+  }
+  //a live xwidget paints itself. when using composition, that
+  //happens through the expose handler for the xwidget
+  //if emacs wants to repaint the area where the widget lives, queue a redraw
+  if (!xwidget_hidden(xv)){
+    gtk_widget_queue_draw (xv->widgetwindow);
+    gtk_widget_queue_draw (xv->widget);
+  }
 }
+
 
 
 struct xwidget* xid2xw( Lisp_Object xwidget_id)
@@ -789,8 +748,9 @@ DEFUN ("xwidget-webkit-get-title", Fxwidget_webkit_get_title,  Sxwidget_webkit_g
        )
   (Lisp_Object xwidget_id)
 {
+  //TODO support multibyte strings
   const gchar* str=webkit_web_view_get_title( WEBKIT_WEB_VIEW(xid2xw(xwidget_id)->widget_osr));
-  return make_string_from_bytes(str, strlen(str), strlen(str));
+  return make_string_from_bytes(str, wcslen(str), strlen(str));
 }
 
 
@@ -853,7 +813,7 @@ DEFUN ("xwidget-resize-internal", Fxwidget_resize_internal, Sxwidget_resize_inte
 
 
 DEFUN("xwidget-info", Fxwidget_info , Sxwidget_info, 1,1,0, doc: /* get xwidget props */)
-     (Lisp_Object xwidget_id)
+  (Lisp_Object xwidget_id)
 {
   struct xwidget *xw = xid2xw(xwidget_id);
   Lisp_Object info;
@@ -968,23 +928,23 @@ DEFUN ("xwidget-send-keyboard-event", Fxwidget_send_keyboard_event, Sxwidget_sen
   XID xid;
 
   /* TODO MVC
-  f = (FRAME_PTR) g_object_get_data (G_OBJECT (xw->widget), XG_FRAME_DATA);
+     f = (FRAME_PTR) g_object_get_data (G_OBJECT (xw->widget), XG_FRAME_DATA);
 
-  //GdkWindow* window=gtk_widget_get_window(xw->widget); //event winds up in emacs
+     //GdkWindow* window=gtk_widget_get_window(xw->widget); //event winds up in emacs
 
-  //TODO assert xw is a gtk_socket or THIS WILL FAIL GLORIOUSLY
-  window = gtk_socket_get_plug_window (GTK_SOCKET (xw->widget));
-  //the event gets eaten somewhere.
-  //i suspect you just cant send an event to a child window and not have emacs eat it.
-  //but if this were true the event should pop to emacs right?
+     //TODO assert xw is a gtk_socket or THIS WILL FAIL GLORIOUSLY
+     window = gtk_socket_get_plug_window (GTK_SOCKET (xw->widget));
+     //the event gets eaten somewhere.
+     //i suspect you just cant send an event to a child window and not have emacs eat it.
+     //but if this were true the event should pop to emacs right?
 
 
-  xid = gdk_x11_drawable_get_xid (window);
+     xid = gdk_x11_drawable_get_xid (window);
 
-  printf ("xwidget-send-keyboard-event %d %d\n", window, xid);
+     printf ("xwidget-send-keyboard-event %d %d\n", window, xid);
 
-  xwidget_key_send_message (f, xid, 38, 1, 0);	//38 is 'a' HACK for now
-  xwidget_key_send_message (f, xid, 38, 0, 0);
+     xwidget_key_send_message (f, xid, 38, 1, 0);	//38 is 'a' HACK for now
+     xwidget_key_send_message (f, xid, 38, 0, 0);
   */
   return Qnil;
 }
@@ -1003,7 +963,7 @@ syms_of_xwidget (void)
 
   defsubr (&Sxwidget_webkit_goto_uri);
   defsubr (&Sxwidget_webkit_execute_script);
-    defsubr (&Sxwidget_webkit_get_title);
+  defsubr (&Sxwidget_webkit_get_title);
   
   DEFSYM (Qxwidget ,"xwidget");
 
@@ -1135,7 +1095,7 @@ lookup_xwidget (Lisp_Object  spec)
     this is done by redisplay so values change if the spec changes.
     so, take special care of one-shot events
     xwidget_init
-   */
+  */
   int found = 0, found1 = 0, found2 = 0;
   Lisp_Object value;
   int id;
@@ -1234,13 +1194,6 @@ xwidget_touched (struct xwidget_view *xw)
 
 /* redisplay has ended, now we should hide untouched xwidgets
 
-   atm this works as follows: only check if xwidgets are displayed in the
-   "selected window". if not, hide them or phantom them.
-
-   this means valid cases like xwidgets being displayed only once in
-   non-selected windows, does not work well. they should also be visible
-   in that case not phantomed.
-
 */
 void
 xwidget_end_redisplay (struct glyph_matrix *matrix)
@@ -1288,11 +1241,11 @@ xwidget_end_redisplay (struct glyph_matrix *matrix)
                         {
                           // printf("row %d not enabled\n", i);
                         }
-                        /*
-                          the only call to xwidget_end_redisplay is in dispnew and looks like:
-                          if ((XWINDOW(FRAME_SELECTED_WINDOW (SELECTED_FRAME()))) ==  (w))
-                          xwidget_end_redisplay(w->current_matrix);
-                        */
+                      /*
+                        the only call to xwidget_end_redisplay is in dispnew and looks like:
+                        if ((XWINDOW(FRAME_SELECTED_WINDOW (SELECTED_FRAME()))) ==  (w))
+                        xwidget_end_redisplay(w->current_matrix);
+                      */
                       xwidget_touch (xwidget_view_lookup(&xwidgets[glyph->u.xwidget_id],
                                                          (XWINDOW(FRAME_SELECTED_WINDOW (SELECTED_FRAME())))));
                     }

@@ -362,8 +362,32 @@ after many atempts, the basic issue remains. for some reason the
 offscreen widget isnt ok when I want to snapshot it, so i simply get
 emptiness. the surface is only ok someimes. 
 
+here is a useful debugging snippets:
+  // debugging redraw:
+  //  - the bg colors always change, so theres no error in signal handling
+  //  - i get this error now and then:
+  //(emacs:7109): GLib-GObject-WARNING **: invalid cast from `GdkOffscreenWindow' to `GdkDrawableImplX11'
+  // seems to happen in webkit actually. see README
+  
+  if(0){ //redraw debug hack. helped a lot in fact. use the with alpha painter below also
+    cairo_set_source_rgb(cr, osr_dbg_color, 1.0, 0.2);
+    cairo_rectangle(cr, 0,0, xw->width, xw->height);
+    cairo_fill(cr);
+    osr_dbg_color+=0.1;
+    if(osr_dbg_color>1.0)
+      osr_dbg_color=0.0;
+    
+  }
 
+you need to terminate drawing like this:
+  
+  //cairo_set_source_surface (cr, src_pixmap, 0,0); 
+  //cairo_set_operator (cr, CAIRO_OPERATOR_OVER);
 
+  //cairo_paint_with_alpha (cr, 1.0);
+  //cairo_paint(cr);
+
+the snippets change background color on oach redraw. 
 
 **** on-screen rendering to separate window
 an alternative might be to open a separate window and snapshot it. the
@@ -454,11 +478,14 @@ either.
 
 http://www.lanedo.com/~carlos/gtk3-doc/chap-drawing-model.html
 
-*** TODO subclass my own clipping widget
+
+*** DONE subclass my own clipping widget
+    CLOSED: [2011-07-04 Mon 16:55]
 http://www.lanedo.com/~carlos/gtk3-doc/GtkWidget.html#gtk-widget-set-has-window
 mentions that it has_window can only be called inside a widget
 impementation.
 
+this wasnt really the issue. allocation was the problem
 *** DONE try scrolled window
     CLOSED: [2011-07-01 Fri 10:56]
 clipping does in fact work with
@@ -477,10 +504,11 @@ stops clipping from working!
     CLOSED: [2011-07-01 Fri 10:56]
 gtkviewport is used in scrolled window so in order to remove
 scrollbars it should be possible to use viewport directly. however, 
-viewport ignores size requests.
+viewport ignores size requests. or rather the container does.
 
 
-*** TODO debug allocation
+*** DONE debug allocation
+    CLOSED: [2011-07-04 Mon 16:56]
 the container determines how much size to allocate to child widgets.
 
         GtkAllocation galloc;
@@ -496,7 +524,8 @@ since i cant reasonably expect to change the emacs main container, i
 can maybe overide the setallocation method in gwfixed, and adjust
 allocation to clipping if its an xwidget asking for allocation.
 
-**** subclass gtkfixed
+**** DONE subclass gtkfixed
+     CLOSED: [2011-07-04 Mon 16:56]
 possibly i need to subclass gtkfixed and override
 
 void                gtk_widget_size_allocate            (GtkWidget *widget,
@@ -523,6 +552,20 @@ the needed data is private to the base class. to overcome this:
  - then, iterate all children, and modify allocation  for xwidget
    children only. x y will then be set.
 
+JanD pointed out the GTK3 port already has its own subclass, so I
+modified that one.
+
+*** TODO clip top
+there are four controller edges that potentialy need clipping. I begun
+with right and bottom edges. clipping them is just a matter of setting
+the right size of the widgetwindow and also ensure it gets the right
+allocation from the container.
+
+clipping top (and left) is not equally straightforward. I'm using a
+viewport now and scroll it the amount that needs to be clipped.
+however, the viewport is sensitive to changes in allocation, which
+makes it harder to use the allocation workarounds.
+
 ** TODO use FRAME_GTK_WIDGET (f)
 rather than gwfixed
 
@@ -541,3 +584,39 @@ http://developer.gnome.org/gdk/stable/gdk-Windows.html#gdk-offscreen-window-set-
 maybe control be used in place of my own copy hacks?
 
 
+
+** notes from x_draw_xwidget_glyph_string
+
+    BUG it seems this method for some reason is called with bad s->x and s->y sometimes.
+    When this happens the xwidget doesnt move on screen as it should.
+    This mightbe because of x_scroll_run. Emacs decides to scroll the screen by blitting sometimes.
+    then emacs doesnt try to actualy call the paint routines, which means this here code will never
+    run so the xwidget wont know it has been moved.
+
+    Solved temporarily by never optimizing in try_window_reusing_current_matrix().
+
+    BUG the phantoming code doesnt work very well when the live xwidget is off screen.
+    you will get weirdo display artefacts. Composition ought to solve this, since that means the live window is
+    always available in an off-screen buffer. My current attempt at composition doesnt work properly however.
+
+*** old notes about the old live/phantom scheme
+
+   //TODO:
+   // 1) always draw live xwidget in slected window
+   // (2) if there were no live instances of the xwidget in selected window, also draw it live)
+   // 3) if there was a live xwidget previously, now phantom it.
+
+   else
+     {
+       //ok, we are painting the xwidgets in non-selected window, so draw a phantom
+       //printf("draw phantom xwidget at:%d %d\n",x,y);
+       //xwidget_composite_draw_phantom (xw, x, y, clipx, clipy); //TODO MVC there will be very few cases of phantoming
+     }
+
+
+   atm this works as follows: only check if xwidgets are displayed in the
+   "selected window". if not, hide them or phantom them.
+
+   this means valid cases like xwidgets being displayed only once in
+   non-selected windows, does not work well. they should also be visible
+   in that case not phantomed.

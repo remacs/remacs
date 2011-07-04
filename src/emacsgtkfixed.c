@@ -57,8 +57,10 @@ void aloc_callback(GtkWidget* child, GtkWidget* fixed){
     printf(" allocation modification for xw\n");
     gtk_widget_get_allocation(child, &child_allocation);
     child_allocation.width = xv->clipx;
-    child_allocation.height = xv->clipy;
+    child_allocation.height = xv->clipy - xv->cliptop;
     gtk_widget_size_allocate (child, &child_allocation);
+    //TODO find a way to remove this fooble workaround
+    gtk_adjustment_set_value (gtk_viewport_get_vadjustment(GTK_VIEWPORT(xv->widgetwindow)), 1.0*xv->cliptop);
   }
 
 }
