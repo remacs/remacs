@@ -200,7 +200,7 @@ xwidget_show_view (struct xwidget_view *xv)
   //printf("xwidget %d shown\n",xw->id);
   xv->hidden = 0;
   gtk_widget_show(GTK_WIDGET(xv->widgetwindow));
-  gtk_fixed_move (GTK_FIXED (xv->emacswindow), GTK_WIDGET (xv->widgetwindow),  xv->x, xv->y + xv->cliptop); //TODO refactor 
+  gtk_fixed_move (GTK_FIXED (xv->emacswindow), GTK_WIDGET (xv->widgetwindow),  xv->x  + xv->clip_left, xv->y + xv->clip_top); //TODO refactor 
 }
 
 
@@ -397,7 +397,7 @@ xwidget_osr_draw_callback (GtkWidget *widget, cairo_t *cr, gpointer data)
   printf("xwidget_osr_draw_callback gtk3 xw.id:%d xw.type:%d window:%d vis:%d\n",
          xw->id,xw->type, gtk_widget_get_window (widget),  gtk_widget_get_visible (xw->widget_osr));
 
-  cairo_rectangle(cr, 0,0, xv->clipx, xv->clipy);//xw->width, xw->height);
+  cairo_rectangle(cr, 0,0, xv->clip_right, xv->clip_bottom);//xw->width, xw->height);
   cairo_clip(cr);
 
   gtk_widget_draw (xw->widget_osr,  cr);
@@ -627,7 +627,7 @@ x_draw_xwidget_glyph_string (struct glyph_string *s)
   int height = s->height;
   struct xwidget *xww = &xwidgets[s->xwidget_id];
   struct xwidget_view *xv = xwidget_view_lookup(xww, (s->w));
-  int clipx; int clipy; int cliptop;
+  int clip_right; int clip_bottom; int clip_top; int clip_left;
 
   int x = s->x;
   int y = s->y + (s->height / 2) - (xww->height / 2);
@@ -644,16 +644,15 @@ x_draw_xwidget_glyph_string (struct glyph_string *s)
   }
 
   //calculate clip width and height, which is used for all manner of onscreen xwidget views
-  clipx = min (xww->width, WINDOW_RIGHT_EDGE_X (s->w) - x - WINDOW_RIGHT_SCROLL_BAR_AREA_WIDTH(s->w) - WINDOW_RIGHT_FRINGE_WIDTH(s->w));
-  clipy = min (xww->height,
-               WINDOW_BOTTOM_EDGE_Y (s->w) - WINDOW_MODE_LINE_HEIGHT (s->w) - y);
-  //TODO figure out how to clip the upper part of a widget
-  cliptop = max(0, WINDOW_TOP_EDGE_Y(s->w) -y ); //how much to cut from the topside of an xwidget
-  printf("cliptop %d\n", cliptop);
-
+  clip_right = min (xww->width, WINDOW_RIGHT_EDGE_X (s->w) - x - WINDOW_RIGHT_SCROLL_BAR_AREA_WIDTH(s->w) - WINDOW_RIGHT_FRINGE_WIDTH(s->w));
+  clip_left = max (0, WINDOW_LEFT_EDGE_X (s->w) - x - WINDOW_LEFT_SCROLL_BAR_AREA_WIDTH(s->w) - WINDOW_LEFT_FRINGE_WIDTH(s->w));
   
-  moved = (xv->x != x) || ((xv->y + xv->cliptop)!= (y+cliptop));
-  if(moved)    printf ("live xwidget moved: id:%d (%d,%d)->(%d,%d) y+cliptop:%d\n", xww->id, xv->x, xv->y, x, y, y + cliptop);
+  clip_bottom = min (xww->height, WINDOW_BOTTOM_EDGE_Y (s->w) - WINDOW_MODE_LINE_HEIGHT (s->w) - y);
+  clip_top = max(0, WINDOW_TOP_EDGE_Y(s->w) -y ); //how much to cut from the topside of an xwidget
+  
+  moved = (xv->x  + xv->clip_left != x+clip_left)
+    || ((xv->y + xv->clip_top)!= (y+clip_top));
+  if(moved)    printf ("live xwidget moved: id:%d (%d,%d)->(%d,%d) y+clip_top:%d\n", xww->id, xv->x, xv->y, x, y, y + clip_top);
   xv->x = x;
   xv->y = y;
   if (moved)	//has it moved?
@@ -663,16 +662,19 @@ x_draw_xwidget_glyph_string (struct glyph_string *s)
           //TODO should be possible to use xwidget_show_view here
           gtk_fixed_move (GTK_FIXED (s->f->gwfixed),
                           GTK_WIDGET (xv->widgetwindow),
-                          x, y + cliptop);
+                          x + clip_left, y + clip_top);
         }
     }
   //clip the widget window if some parts happen to be outside drawable area
   //an emacs window is not a gtk window, a gtk window covers the entire frame
   //cliping might have changed even if we havent actualy moved, we try figure out when we need to reclip for real
-  if((xv->clipx != clipx) || (xv->clipy != clipy)|| (xv->cliptop != cliptop)){
-    gtk_widget_set_size_request (GTK_WIDGET (xv->widgetwindow),  clipx, clipy + cliptop);
-    gtk_fixed_put(GTK_FIXED(xv->widgetwindow), xv->widget, 0, -cliptop);
-    printf("reclip %d %d -> %d %d  cliptop:%d\n",xv->clipx, xv->clipy,  clipx, clipy, cliptop );
+  if((xv->clip_right != clip_right)
+     || (xv->clip_bottom != clip_bottom)
+     || (xv->clip_top != clip_top)
+     || (xv->clip_left != clip_left)){
+    gtk_widget_set_size_request (GTK_WIDGET (xv->widgetwindow),  clip_right + clip_left, clip_bottom + clip_top);
+    gtk_fixed_put(GTK_FIXED(xv->widgetwindow), xv->widget, -clip_left, -clip_top);
+    printf("reclip %d %d -> %d %d  clip_top:%d clip_left:%d\n",xv->clip_right, xv->clip_bottom,  clip_right, clip_bottom, clip_top , clip_left);
 
     //allocation debugging. the correct values cant be expected to show upp immediately, but eventually they should get to be ok
     // this is because we dont know when the container gets around to doing layout
@@ -680,7 +682,7 @@ x_draw_xwidget_glyph_string (struct glyph_string *s)
     //gtk_widget_get_allocation(GTK_WIDGET (xv->widgetwindow), &galloc);
     //printf("allocation %d %d , %d %d\n", galloc.x,galloc.y,galloc.width,galloc.height);
         
-    xv->clipx = clipx; xv->clipy = clipy; xv->cliptop = cliptop;
+    xv->clip_right = clip_right; xv->clip_bottom = clip_bottom; xv->clip_top = clip_top;xv->clip_left = clip_left;
   }
   //a live xwidget paints itself. when using composition, that
   //happens through the expose handler for the xwidget
