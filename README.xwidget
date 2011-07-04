@@ -566,6 +566,9 @@ viewport now and scroll it the amount that needs to be clipped.
 however, the viewport is sensitive to changes in allocation, which
 makes it harder to use the allocation workarounds.
 
+see:
+- gtk_widget_set_size_request
+- gtkscrolledwindow
 ** TODO use FRAME_GTK_WIDGET (f)
 rather than gwfixed
 

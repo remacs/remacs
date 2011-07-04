@@ -551,24 +551,22 @@ xwidget_init_view (
   //xw->widgetwindow = GTK_CONTAINER (gtk_layout_new (NULL, NULL));
   //xw->widgetwindow = GTK_CONTAINER (gtk_offscreen_window_new ());
 
-  //xv->widgetwindow = GTK_CONTAINER (gtk_fixed_new ()); //works well for clipping on gtk2 not gtk3
+  xv->widgetwindow = GTK_CONTAINER (gtk_fixed_new ()); //works well for clipping on gtk2 not gtk3
   //xv->widgetwindow = GTK_CONTAINER (gtk_event_box_new ()); //doesnt help clipping gtk3
   //xv->widgetwindow = GTK_CONTAINER (gtk_scrolled_window_new (NULL, NULL)); //clips in gtk3
-  xv->widgetwindow = GTK_CONTAINER (gtk_viewport_new (NULL, NULL));
+  //xv->widgetwindow = GTK_CONTAINER (gtk_viewport_new (NULL, NULL));
   
 
   /* GtkAllocation a; */
   /* a.x=0;  a.y=0;   a.width=xww->width;  a.height=xww->height; */
   /* gtk_widget_set_allocation (GTK_WIDGET (xv->widget), &a); */
 
-  //gtk_widget_set_has_window(GTK_WIDGET (  xv->widgetwindow), TRUE);
-  //if gtk_fixed doesnt have a window it will surprisingly not honor
+  gtk_widget_set_has_window(GTK_WIDGET (  xv->widgetwindow), TRUE);
+  //on GTK2 if gtk_fixed doesnt have a window it will surprisingly not honor
   //setsize so that children gets clipped later. the documentation is
   //not consistent regarding if its legal to call this method.
 
-  //doesnt help on gtk3, and the docs seem clearer there that this is
-  //an internal function
-
+  //on GTK3 the call isnt necessary except for windowless widgets such as the drawarea used for the webkit views
 
 
   //gtk_layout_set_size (GTK_LAYOUT (xw->widgetwindow), xw->width, xw->height);
@@ -672,24 +670,8 @@ x_draw_xwidget_glyph_string (struct glyph_string *s)
   //an emacs window is not a gtk window, a gtk window covers the entire frame
   //cliping might have changed even if we havent actualy moved, we try figure out when we need to reclip for real
   if((xv->clipx != clipx) || (xv->clipy != clipy)|| (xv->cliptop != cliptop)){
-    printf("adj max:%f val:%f\n", gtk_adjustment_get_upper(gtk_viewport_get_vadjustment(GTK_VIEWPORT(xv->widgetwindow))),   gtk_adjustment_get_value(gtk_viewport_get_vadjustment(GTK_VIEWPORT(xv->widgetwindow))));    
     gtk_widget_set_size_request (GTK_WIDGET (xv->widgetwindow),  clipx, clipy + cliptop);
-    printf("adj max:%f val:%f\n", gtk_adjustment_get_upper(gtk_viewport_get_vadjustment(GTK_VIEWPORT(xv->widgetwindow))),   gtk_adjustment_get_value(gtk_viewport_get_vadjustment(GTK_VIEWPORT(xv->widgetwindow))));
-
-    gtk_adjustment_set_value (gtk_viewport_get_vadjustment(GTK_VIEWPORT(xv->widgetwindow)), 1.0*cliptop);
-    //gtk_adjustment_value_changed (gtk_viewport_get_vadjustment(GTK_VIEWPORT(xv->widgetwindow)));
-    
-    printf("adj max:%f val:%f\n", gtk_adjustment_get_upper(gtk_viewport_get_vadjustment(GTK_VIEWPORT(xv->widgetwindow))),   gtk_adjustment_get_value(gtk_viewport_get_vadjustment(GTK_VIEWPORT(xv->widgetwindow))));    
-    /* gtk_adjustment_configure (gtk_viewport_get_vadjustment(GTK_VIEWPORT(xv->widgetwindow)), */
-    /*                           - cliptop,  //val */
-    /*                           - xww->height, //max */
-    /*                           0.0, //low */
-                              
-    /*                           1.0, //step. unused */
-    /*                           1.0, //page step. unused */
-    /*                           xww->height //page height */
-
-    /*                           ); */
+    gtk_fixed_put(GTK_FIXED(xv->widgetwindow), xv->widget, 0, -cliptop);
     printf("reclip %d %d -> %d %d  cliptop:%d\n",xv->clipx, xv->clipy,  clipx, clipy, cliptop );
 
     //allocation debugging. the correct values cant be expected to show upp immediately, but eventually they should get to be ok
