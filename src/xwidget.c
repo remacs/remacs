@@ -1048,6 +1048,19 @@ xwidget_from_id (int id)
   return &xwidgets[id];
 }
 
+void      xwidget_view_delete_all_in_window(  struct window *w )
+{
+  //xxx
+  struct xwidget_view* xv = NULL;
+  for (int i = 0; i < MAX_XWIDGETS; i++){
+      xv =  &xwidget_views[i];
+      if(xv->w == w){
+        gtk_widget_destroy(xv->widgetwindow);
+      }
+  }
+}
+
+
 struct xwidget_view* xwidget_view_lookup(struct xwidget* xw,     struct window *w){
   struct xwidget_view* xv = NULL;
   for (int i = 0; i < MAX_XWIDGETS; i++)

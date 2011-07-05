@@ -588,6 +588,16 @@ maybe control be used in place of my own copy hacks?
 
 
 
+** TODO remove xwidget_views when emacs window is deleted
+removing xwidget views when an Emacs window closes is not reliable.
+
+- switching buffers in a window seems to hide the corresponding
+  xwidget-views properly, but they might as well be deleted.
+
+-  patching delete-window-internal could be used to delete the xwidget-views
+
+
+
 ** notes from x_draw_xwidget_glyph_string
 
     BUG it seems this method for some reason is called with bad s->x and s->y sometimes.

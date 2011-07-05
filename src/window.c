@@ -3953,6 +3953,7 @@ when WINDOW is the only window on its frame.  */)
     {
       /* Block input.  */
       BLOCK_INPUT;
+      xwidget_view_delete_all_in_window(w);
       window_resize_apply (p, horflag);
 
       windows_or_buffers_changed++;

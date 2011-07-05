@@ -85,3 +85,4 @@ void assert_valid_xwidget_id(int id,char *str);
 int lookup_xwidget (Lisp_Object  spec); 
 #define XG_XWIDGET "emacs_xwidget"
 #define XG_XWIDGET_VIEW "emacs_xwidget_view"
+void      xwidget_view_delete_all_in_window(  struct window *w );
