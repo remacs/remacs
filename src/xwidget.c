@@ -620,6 +620,7 @@ x_draw_xwidget_glyph_string (struct glyph_string *s)
 {
   /*
     this method is called by the redisplay engine and places the xwidget on screen.
+    moving and clpping
 
   */
   int box_line_hwidth = eabs (s->face->box_line_width);
@@ -631,7 +632,6 @@ x_draw_xwidget_glyph_string (struct glyph_string *s)
 
   int x = s->x;
   int y = s->y + (s->height / 2) - (xww->height / 2);
-  int doingsocket = 0;
   int moved=0;
 
   if (xv == NULL){
@@ -643,16 +643,19 @@ x_draw_xwidget_glyph_string (struct glyph_string *s)
     xv = xwidget_init_view (xww, s, x, y); 
   }
 
-  //calculate clip width and height, which is used for all manner of onscreen xwidget views
+  //calculate clipping, which is used for all manner of onscreen xwidget views
+  //each widget border can get clipped by other emacs objects so there are four clipping variables
   clip_right = min (xww->width, WINDOW_RIGHT_EDGE_X (s->w) - x - WINDOW_RIGHT_SCROLL_BAR_AREA_WIDTH(s->w) - WINDOW_RIGHT_FRINGE_WIDTH(s->w));
-  clip_left = max (0, WINDOW_LEFT_EDGE_X (s->w) - x - WINDOW_LEFT_SCROLL_BAR_AREA_WIDTH(s->w) - WINDOW_LEFT_FRINGE_WIDTH(s->w));
+  clip_left = max (0, WINDOW_LEFT_EDGE_X (s->w) - x + WINDOW_LEFT_SCROLL_BAR_AREA_WIDTH(s->w) + WINDOW_LEFT_FRINGE_WIDTH(s->w));
   
   clip_bottom = min (xww->height, WINDOW_BOTTOM_EDGE_Y (s->w) - WINDOW_MODE_LINE_HEIGHT (s->w) - y);
-  clip_top = max(0, WINDOW_TOP_EDGE_Y(s->w) -y ); //how much to cut from the topside of an xwidget
-  
+  clip_top = max(0, WINDOW_TOP_EDGE_Y(s->w) -y ); 
+
+  //we are conserned with movement of the onscreen area. the area might sit still when the widget actually moves
+  //this happens when an emacs window border moves across a widget winow
   moved = (xv->x  + xv->clip_left != x+clip_left)
     || ((xv->y + xv->clip_top)!= (y+clip_top));
-  if(moved)    printf ("live xwidget moved: id:%d (%d,%d)->(%d,%d) y+clip_top:%d\n", xww->id, xv->x, xv->y, x, y, y + clip_top);
+  //if(moved)    printf ("live xwidget moved: id:%d (%d,%d)->(%d,%d) y+clip_top:%d\n", xww->id, xv->x, xv->y, x, y, y + clip_top);
   xv->x = x;
   xv->y = y;
   if (moved)	//has it moved?
@@ -676,16 +679,9 @@ x_draw_xwidget_glyph_string (struct glyph_string *s)
     gtk_fixed_put(GTK_FIXED(xv->widgetwindow), xv->widget, -clip_left, -clip_top);
     printf("reclip %d %d -> %d %d  clip_top:%d clip_left:%d\n",xv->clip_right, xv->clip_bottom,  clip_right, clip_bottom, clip_top , clip_left);
 
-    //allocation debugging. the correct values cant be expected to show upp immediately, but eventually they should get to be ok
-    // this is because we dont know when the container gets around to doing layout
-    //GtkAllocation galloc;
-    //gtk_widget_get_allocation(GTK_WIDGET (xv->widgetwindow), &galloc);
-    //printf("allocation %d %d , %d %d\n", galloc.x,galloc.y,galloc.width,galloc.height);
         
     xv->clip_right = clip_right; xv->clip_bottom = clip_bottom; xv->clip_top = clip_top;xv->clip_left = clip_left;
   }
-  //a live xwidget paints itself. when using composition, that
-  //happens through the expose handler for the xwidget
   //if emacs wants to repaint the area where the widget lives, queue a redraw
   if (!xwidget_hidden(xv)){
     gtk_widget_queue_draw (xv->widgetwindow);

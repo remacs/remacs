@@ -602,6 +602,13 @@ maybe control be used in place of my own copy hacks?
     you will get weirdo display artefacts. Composition ought to solve this, since that means the live window is
     always available in an off-screen buffer. My current attempt at composition doesnt work properly however.
 
+    //allocation debugging. the correct values cant be expected to show upp immediately, but eventually they should get to be ok
+    // this is because we dont know when the container gets around to doing layout
+    //GtkAllocation galloc;
+    //gtk_widget_get_allocation(GTK_WIDGET (xv->widgetwindow), &galloc);
+    //printf("allocation %d %d , %d %d\n", galloc.x,galloc.y,galloc.width,galloc.height);
+
+
 *** old notes about the old live/phantom scheme
 
    //TODO:
