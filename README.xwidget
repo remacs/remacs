@@ -198,13 +198,62 @@ stuff that needs to work:
 - lookup xw-view for xwidget in emacs window(during redisplay)
 (- do something for all siblings of a xw-view. not atm)
 
+*** TODO xwidget creation interface
+xwidgets are a little bit like emacs processes but also a little bit
+like emacs images. Therefore its not perfectly obvious how to handle
+creation. Currently I just use hardcoded identifiers. the real scheme
+needs to be something else.
+
+Heres a tentative approach:
+- xwidget-create returns a xwidget object, like process creation
+  functions. the xwidget will be largely uninitialized until
+  discovered by redisplay. an xw belongs to a buffer
+- xwidget-insert inserts the xwidget in a buffer. when discovered by
+  redisplay it will be initialized and a xwidget-view allocated
+- an event will be emitted when initialization is finished when
+  relevant like for sockets
+
+the problem with this aproach is that its not really legal to reuse
+xwidget objects by writing several display specs who reference the
+same xwidget. It could presumably be done but it would just become
+weird for no real benefit. the big preblem is that the display spec
+decides the on-screen size, and its not sane to have xwidget views
+with different sizes. therefore such display specs would need to be
+catched and dissallowed. Except it is hard because AFAIK the specs
+don't have an identity as such. A flag in the structure could be set
+by lookup so the first display attempt would win. but then you can't
+rewrite the spec to change the size. hmmm. A third approach would be
+to just allow the 1st spec refering an xw during a redisplay to take
+effect, the rest are signaled as errors. this wouldnt be too bad.
+
+the other aproach would be to work more like images:
+
+- write the display spec with all information needed to create the
+  xwidget.
+- retrieve the xwidget objet from the spec with an xwidget-at-point function. It
+  can be uninitalized which client code must handle. Unlike
+  assynchronous process creation we dont get back a handle, because
+  there is none yet.
+- emitted event on initialization, when needed. Many widgets don't
+  need this. for instance, a button sends an event when pressed. but
+  you can't press it unless its on screen, and then its initialized
+  properly. 
+
+This approach seemed good, but how do I know which instance
+generates an event if I cant set the id beforehand?
+
+so, therefore, the first two aproach is used. 
+
+
+
 ** TODO  more documentation
 There should be user docs, and xwidget contributor docs. The current README
 is all contributor docs there is now, apart from the code.
 
 
 
-** TODO  look into more ways of displaying xwidgets, like binding them to a
+** CANCELLED look into more ways of displaying xwidgets, like binding them to a
+   CLOSED: [2011-07-05 Tue 11:34]
 window rather than a point in a buffer. This was suggested by Chidong.
 This would be a useful addition to Emacs in itself, and would avoid nearly all 
 display issues. I still think the general case is more interesting, but this
@@ -212,6 +261,9 @@ special case should also be added. The xwidget would then be bound to
 replace the view of a particular window, and it would only show in
 that window.
 
+I got the webkit xwidget to work well enough so I dont see the need
+for this now, except for sockets and I think it can better be dealt
+with at the lisp level.
 
 ** DONE MVC mode for xwidgets
    CLOSED: [2011-06-27 Mon 12:53]
@@ -298,10 +350,9 @@ make
 
 
 ** TODO mvc code crashes after a while
-seemingly only when compiling with optimizations
+seemingly only when compiling with optimizations.
+I have no idea why.
 
-** TODO delete xwidgets belonging to an emacs window
-when it closes
 ** TODO xwidget-resize-at
 currently it rewrites the display spec. then it resizes the xwidget
 views. maybe rewriting the spec should be sufficient, and changes to
@@ -349,7 +400,7 @@ webkitViewportAttributesRecompute is the offender.
 
 maybe try gtk3 variants?
 
-export CFLAGS="`pkg-config --cflags webkitgtk-3.0 ` -DHAVE_WEBKIT_OSR -g"
+export CFLAGS="`pkg-config --cflags webkitgtk-3.0 ` -DHAVE_WEBKIT_OSR "
 export LDFLAGS=`pkg-config --libs webkitgtk-3.0 `
 ./configure   --with-x-toolkit=gtk3
 make
@@ -420,6 +471,8 @@ interesting than just forwarding keyboard events.
 
 webkit_web_view_get_dom_document ()
 
+this is hard it seems. an idea might be to hack elisp support for swig
+to machine generate the bindings. 
 **** DONE inject javascript
      CLOSED: [2011-07-03 Sun 22:50]
 webkit_web_view_execute_script ()
@@ -448,12 +501,32 @@ or this funny hack:
 <jave> lucian: that was a pretty cool idea!
 
 
-**** webkit_web_view_load_string ()
+*** webkit_web_view_load_string ()
 I would like preview of html in a buffer rather than from uri.
 
 
 
-** TODO clipping of controllers
+*** TODO simple xwidget-webkit wrapper
+so that it could be used for actual browsing :)
+I dont want to reinvent too many wheels so i'd like to use existing
+emacs facilities here possible. use bindings similar to w3m(or info)
+
+- m-x xwidget-webkit starts a session
+- 'g' goes to a url
+- use bookmark-jump i suppose. I mostly use org for bookmarks myself
+- browse-url support so webkit can be the default browser
+- some way of getting around the quirky keyboard interaction since
+  xwidgets dont receive keyboard events because I hawe no idea how to
+  do that in a sane way
+
+... and one can of course go on bikeshedding forever. lets keep it
+simple and extensible, and compatible with other Emacs packages.
+
+the really cool ideas would need Emacs DOM integration, which is not
+easy. 
+
+** DONE clipping of controllers
+   CLOSED: [2011-07-05 Tue 11:33]
 
 Emacs uses a big GTK window and does its own clipping against Emacs
 windows inside this area. So, in order to layout gtk widgets in emacs
@@ -478,6 +551,7 @@ either.
 
 http://www.lanedo.com/~carlos/gtk3-doc/chap-drawing-model.html
 
+anyway clipping is rather complicated but seems to finally work okay.
 
 *** DONE subclass my own clipping widget
     CLOSED: [2011-07-04 Mon 16:55]
@@ -555,7 +629,8 @@ the needed data is private to the base class. to overcome this:
 JanD pointed out the GTK3 port already has its own subclass, so I
 modified that one.
 
-*** TODO clip top
+*** DONE clip top
+    CLOSED: [2011-07-05 Tue 11:30]
 there are four controller edges that potentialy need clipping. I begun
 with right and bottom edges. clipping them is just a matter of setting
 the right size of the widgetwindow and also ensure it gets the right
@@ -569,9 +644,20 @@ makes it harder to use the allocation workarounds.
 see:
 - gtk_widget_set_size_request
 - gtkscrolledwindow
-** TODO use FRAME_GTK_WIDGET (f)
-rather than gwfixed
 
+I returned to using a simple gtkfixed for the widgetwindow. with
+allocation hack and set_has_window it works. Idea prefer not to have
+the allocatien hack and it wasnt needed it gtk3 only gtk2. needs
+furthi investigation,
+
+** TODO various code cleanups
+There are many cleanups necessary before any hope of inclusion in
+Emacs trunk. To begin with, the part of the patch that touches other
+parts of emacs must be very clean. 
+*** TODO use FRAME_GTK_WIDGET (f)
+rather than gwfixed.
+
+*** TODO support configure
 ** DONE translate clicks 
    CLOSED: [2011-07-03 Sun 22:12]
 on onscreen webkit peer to offscreen
@@ -584,18 +670,21 @@ forwarded them offscreen!
 
 ** TODO investigate gdk_window_redirect_to_drawable
 http://developer.gnome.org/gdk/stable/gdk-Windows.html#gdk-offscreen-window-set-embedder
-maybe control be used in place of my own copy hacks?
+maybe control be used in place of my own copy hacks? to work it must
+support a chain of redirects, which seems unlikely. the benefit would
+be that I dont have to spend time optimizing redrawing.
 
 
 
-** TODO remove xwidget_views when emacs window is deleted
+** DONE remove xwidget_views when emacs window is deleted
+   CLOSED: [2011-07-05 Tue 11:29]
 removing xwidget views when an Emacs window closes is not reliable.
 
 - switching buffers in a window seems to hide the corresponding
   xwidget-views properly, but they might as well be deleted.
 
 -  patching delete-window-internal could be used to delete the xwidget-views
-
+this seems to work
 
 
 ** notes from x_draw_xwidget_glyph_string

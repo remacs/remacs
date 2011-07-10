@@ -90,8 +90,11 @@
 #endif
 
 
+#include <wchar.h>
+
 #ifdef HAVE_WEBKIT
 #include <webkitgtk.h>
+
 #endif
 
 
@@ -412,15 +415,10 @@ xwidget_osr_button_callback ( GtkWidget *widget,
                               GdkEvent  *event,
                               gpointer   user_data)
 {
-  gdouble x, y;
   struct xwidget* xw = (struct xwidget*) g_object_get_data (G_OBJECT (widget), XG_XWIDGET);    
-  GdkEventButton* eventcopy =  gdk_event_copy(event);
-  x = ((GdkEventButton*)event)->x; 
-  y = ((GdkEventButton*)event)->y; 
- 
-  printf ("button callback %d %d\n",x,y);
+  GdkEvent* eventcopy =  gdk_event_copy(event);
   
-  eventcopy->window = gtk_widget_get_window(xw->widget_osr);
+  ((GdkEventButton*)eventcopy)->window = gtk_widget_get_window(xw->widget_osr);
   gtk_main_do_event(eventcopy); //TODO this will leak events. they should be deallocated later
 }
 
@@ -620,7 +618,7 @@ x_draw_xwidget_glyph_string (struct glyph_string *s)
 {
   /*
     this method is called by the redisplay engine and places the xwidget on screen.
-    moving and clpping
+    moving and clipping is done here. also view init.
 
   */
   int box_line_hwidth = eabs (s->face->box_line_width);
@@ -676,7 +674,7 @@ x_draw_xwidget_glyph_string (struct glyph_string *s)
      || (xv->clip_top != clip_top)
      || (xv->clip_left != clip_left)){
     gtk_widget_set_size_request (GTK_WIDGET (xv->widgetwindow),  clip_right + clip_left, clip_bottom + clip_top);
-    gtk_fixed_put(GTK_FIXED(xv->widgetwindow), xv->widget, -clip_left, -clip_top);
+    gtk_fixed_move(GTK_FIXED(xv->widgetwindow), xv->widget, -clip_left, -clip_top);
     printf("reclip %d %d -> %d %d  clip_top:%d clip_left:%d\n",xv->clip_right, xv->clip_bottom,  clip_right, clip_bottom, clip_top , clip_left);
 
         
@@ -684,7 +682,7 @@ x_draw_xwidget_glyph_string (struct glyph_string *s)
   }
   //if emacs wants to repaint the area where the widget lives, queue a redraw
   if (!xwidget_hidden(xv)){
-    gtk_widget_queue_draw (xv->widgetwindow);
+    gtk_widget_queue_draw (GTK_WIDGET(xv->widgetwindow));
     gtk_widget_queue_draw (xv->widget);
   }
 }
@@ -730,7 +728,7 @@ DEFUN ("xwidget-webkit-get-title", Fxwidget_webkit_get_title,  Sxwidget_webkit_g
 {
   //TODO support multibyte strings
   const gchar* str=webkit_web_view_get_title( WEBKIT_WEB_VIEW(xid2xw(xwidget_id)->widget_osr));
-  return make_string_from_bytes(str, wcslen(str), strlen(str));
+  return make_string_from_bytes(str, wcslen((const wchar_t *)str), strlen(str));
 }
 
 
@@ -798,17 +796,36 @@ DEFUN("xwidget-info", Fxwidget_info , Sxwidget_info, 1,1,0, doc: /* get xwidget 
   struct xwidget *xw = xid2xw(xwidget_id);
   Lisp_Object info;
 
-  info = Fmake_vector (make_number (7), Qnil);
+  info = Fmake_vector (make_number (4), Qnil);
   XVECTOR (info)->contents[0] = make_number(xw->id);
-  XVECTOR (info)->contents[1] = make_number(xw->type);
-  XVECTOR (info)->contents[2] = Qnil; //make_number(xw->x);
-  XVECTOR (info)->contents[3] = Qnil;//make_number(xw->y);
-  XVECTOR (info)->contents[4] = make_number(xw->width);
-  XVECTOR (info)->contents[5] = make_number(xw->height);
-  XVECTOR (info)->contents[6] = Qnil;//make_number(xw->hidden);
+  XVECTOR (info)->contents[1] = xw->type;
+  XVECTOR (info)->contents[2] = make_number(xw->width);
+  XVECTOR (info)->contents[3] = make_number(xw->height);
+
 
   return info;
 }
+
+DEFUN("xwidget-view-info", Fxwidget_view_info , Sxwidget_view_info, 2,2,0, doc: /* get xwidget view props */)
+  (Lisp_Object xwidget_id, Lisp_Object window)
+{
+  struct xwidget *xw = xid2xw(xwidget_id);
+  struct xwidget_view* xv = xwidget_view_lookup(xw, XWINDOW(window));
+  
+  Lisp_Object info;
+
+  info = Fmake_vector (make_number (6), Qnil);
+  XVECTOR (info)->contents[0] = make_number(xv->x);
+  XVECTOR (info)->contents[1] = make_number(xv->y);
+  XVECTOR (info)->contents[2] = make_number(xv->clip_right);
+  XVECTOR (info)->contents[3] = make_number(xv->clip_bottom);
+  XVECTOR (info)->contents[4] = make_number(xv->clip_top);
+  XVECTOR (info)->contents[5] = make_number(xv->clip_left);
+
+  return info;
+}
+
+
 
 //xterm.c listens to xwidget_owns_kbd  and tries to not eat events when its set
 int xwidget_owns_kbd = 0;
@@ -938,6 +955,7 @@ syms_of_xwidget (void)
   defsubr (&Sxwidget_send_keyboard_event);
   defsubr (&Sxwidget_embed_steal_window);
   defsubr (&Sxwidget_info);
+  defsubr (&Sxwidget_view_info);
   defsubr (&Sxwidget_resize_internal);
   defsubr (&Sxwidget_embed_steal_window);
 
@@ -1050,12 +1068,11 @@ xwidget_from_id (int id)
 
 void      xwidget_view_delete_all_in_window(  struct window *w )
 {
-  //xxx
   struct xwidget_view* xv = NULL;
   for (int i = 0; i < MAX_XWIDGETS; i++){
       xv =  &xwidget_views[i];
       if(xv->w == w){
-        gtk_widget_destroy(xv->widgetwindow);
+        gtk_widget_destroy(GTK_WIDGET(xv->widgetwindow));
       }
   }
 }
