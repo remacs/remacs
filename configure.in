@@ -175,6 +175,8 @@ OPTION_DEFAULT_ON([gconf],[don't compile with GConf support])
 OPTION_DEFAULT_ON([selinux],[don't compile with SELinux support])
 OPTION_DEFAULT_ON([gnutls],[don't use -lgnutls for SSL/TLS support])
 
+OPTION_DEFAULT_OFF([xwidgets],[enable use of some gtk widgets it Emacs buffers])
+
 ## For the times when you want to build Emacs but don't have
 ## a suitable makeinfo, and can live without the manuals.
 dnl http://lists.gnu.org/archive/html/emacs-devel/2008-04/msg01844.html
@@ -1129,6 +1131,48 @@ AC_DEFUN([PKG_CHECK_MODULES], [
   fi
 ])
 
+HAVE_XWIDGETS=no
+HAVE_WEBKIT=no
+HAVE_GOOCANVAS=no
+HAVE_CLUTTER=no
+if test "${with_xwidgets}" != "no"; then
+   echo "xwidgets enabled, checking webkit, and others"
+   HAVE_XWIDGETS=yes
+   AC_DEFINE(HAVE_XWIDGETS, 1, [Define to 1 if you have xwidgets support.])        
+#xwidgets
+#TODO
+# - enable only if gtk/gtk3 enabled
+# - webkit, goocanvas, clutter
+# - only webkit_osr is good so remove plain webkit laterish
+
+#webkit version for gtk3. 
+  WEBKIT_REQUIRED=1.4.0
+  WEBKIT_MODULES="webkitgtk-3.0 >= $WEBKIT_REQUIRED"
+
+  PKG_CHECK_MODULES(WEBKIT, $WEBKIT_MODULES, HAVE_WEBKIT=yes, HAVE_WEBKIT=no)
+  if test $HAVE_WEBKIT = yes; then
+     AC_DEFINE(HAVE_WEBKIT, 1, [Define to 1 if you have webkit support.])
+     AC_DEFINE(HAVE_WEBKIT_OSR, 1, [Define to 1 if you have webkit_osr support.])     
+  fi
+
+  CLUTTER_REQUIRED=1.0.0
+  CLUTTER_MODULES="clutter-gtk-1.0 >= $CLUTTER_REQUIRED"
+
+  PKG_CHECK_MODULES(CLUTTER, $CLUTTER_MODULES, HAVE_CLUTTER=yes, HAVE_CLUTTER=no)
+  if test $HAVE_CLUTTER = yes; then
+     AC_DEFINE(HAVE_CLUTTER, 1, [Define to 1 if you have clutter support.])
+  fi
+
+#TODO  
+  GOOCANVAS_REQUIRED=1.4.0
+  GOOCANVAS_MODULES="goocanvasgtk-3.0 >= $GOOCANVAS_REQUIRED"
+
+  PKG_CHECK_MODULES(GOOCANVAS, $GOOCANVAS_MODULES, HAVE_GOOCANVAS=yes, HAVE_GOOCANVAS=no)
+  if test $HAVE_GOOCANVAS = yes; then
+     AC_DEFINE(HAVE_GOOCANVAS, 1, [Define to 1 if you have goocanvas support.])
+  fi
+
+fi
 
 if test "${with_sound}" != "no"; then
   # Sound support for GNU/Linux and the free BSDs.
@@ -3658,6 +3702,11 @@ echo "  Does Emacs use -lotf?                                   ${HAVE_LIBOTF}"
 echo "  Does Emacs use -lxft?                                   ${HAVE_XFT}"
 
 echo "  Does Emacs use toolkit scroll bars?                     ${USE_TOOLKIT_SCROLL_BARS}"
+
+echo "  Does Emacs support Xwidgets?                            ${HAVE_XWIDGETS}"
+echo "       Does xwidgets support webkit?                      ${HAVE_WEBKIT}"
+echo "       Does xwidgets support clutter?                     ${HAVE_CLUTTER}"
+echo "       Does xwidgets support goocanvas?                   ${HAVE_GOOCANVAS}"
 echo
 
 if test $USE_XASSERTS = yes; then
