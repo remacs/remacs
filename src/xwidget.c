@@ -986,6 +986,9 @@ lookup_xwidget (Lisp_Object  spec)
   /* When a xwidget lisp spec is found initialize the C struct that is used in the C code.
      This is done by redisplay so values change if the spec changes.
      So, take special care of one-shot events
+
+     TODO remove xwidget init from display spec. simply store an xwidget reference only and set
+     size etc when creating the xwidget, which should happen before insertion into buffer 
   */
   int found = 0, found1 = 0, found2 = 0;
   Lisp_Object value;

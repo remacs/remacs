@@ -3,15 +3,13 @@
 
 (require 'xwidget-internal)
 
-
+;;TODO model after make-text-button instead!
 (defun xwidget-insert (pos type title width height  &optional id)
  "Insert an xwidget at POS, given ID, TYPE, TITLE WIDTH and HEIGHT.
 Return ID
 ID will be made optional, but it isnt implemented yet!
 
-currently interface is lame:
- :type 1=button, 2=toggle btn, 3=xembed socket(id will be printed to stdout)
- obviously these should be symbols
+see xwidget.c for types suitable for TYPE.
 
  :xwidget-id 1, MUST be unique and < 100 !
  if slightly wrong, emacs WILL CRASH
@@ -40,7 +38,7 @@ hand-wave issues like these until the hard parts are solved.
 
 
 (defun xwidget-socket-handler ()
-  "creates plug for socket."
+  "creates plug for socket. TODO"
   (interactive)
   (message "socket handler xwidget %S" last-input-event)
   (let*
@@ -61,6 +59,43 @@ hand-wave issues like these until the hard parts are solved.
               )
             ))))
 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; webkit support
+
+;;;###autoload
+(defun xwidget-webkit-browse-url (url &optional new-session)
+  "Ask xwidget-webkit to browse URL.
+NEW-SESSION specifies whether to create a new xwidget-webkit session.  URL
+defaults to the string looking like a url around the cursor position."
+  (interactive (progn
+		 (require 'browse-url)
+		 (browse-url-interactive-arg "xwidget-webkit URL: ")))
+  (when (stringp url)
+    (if new-session
+	(xwidget-webkit-new-session url)
+      (xwidget-webkit-goto-url url))))
+
+
+;;todo.
+;; - support browse-url with xwidget-webkit
+;; - check that the webkit support is compiled in
+(define-derived-mode xwidget-webkit-mode special-mode "xwidget-webkit" "xwidget webkit special mode" )
+(defun xwidget-webkit-new-session (url)
+  (save-excursion
+    (let*
+        ((bufname (generate-new-buffer-name "*xwidget-webkit*"))
+         (xwid 1))
+      (set-buffer (get-buffer-create bufname))
+      (insert " ")
+      (xwidget-insert 1 'webkit-osr  bufname 1000 1000 xwid)
+      (xwidget-webkit-mode)
+      (xwidget-webkit-goto-uri xwid url ))
+    )
+
+  )
+
+(defun xwidget-webkit-goto-url (url))
 
 
 ;; use declare here?

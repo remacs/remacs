@@ -144,9 +144,11 @@ this is aproach worked so-so.
   the attempt was further worked on, and the xlib calls replaced with
   gdk calls, this works better.
 
-** TODO  make the keyboard event code propagation code work. There is an attempt 
-to provide an api to send keyboard events to an xwidget, but it doesnt currently
-work very well.
+** TODO  make the keyboard event code propagation code work. 
+There is an attempt to provide an api to send keyboard events to an
+xwidget, but it doesnt currently work very well.
+
+try gtk event creation instead since that works fine in the webkit osr code.
 
 ** DONE remove the special-case for when the minibuffer is
   active.  I added some code to reduce the annoying problem display artefacts
@@ -159,19 +161,20 @@ work very well.
 ** DONE disable emacs cursor drawing on top of an active xwidget. 
   This ought to be rather simple and should improve the visuals a lot.
 
-** TODO  improve the xwidgets programming interface so its less of
-  hand-waving affair. This shouldnt be too hard, but I have deliberatley not
-spent any time on it, since getting the visuals right is much
-harder. Anyway, I sort of think the interface should be somewhat like
-it is, except symbols is used instead of integers.
+** TODO  improve the xwidgets programming interface 
+so its less of hand-waving affair. This shouldnt be too hard, but I
+  have deliberatley not spent any time on it, since getting the
+  visuals right is much harder. Anyway, I sort of think the interface
+  should be somewhat like it is, except symbols is used instead of
+  integers.
 *** DONE use symbols for xwidget types rather than ints
     CLOSED: [2011-06-27 Mon 12:52]
 
 
 *** TODO better lisp based structure for xwidgets
 the lisp interface woud be like this:
-- xwidget-create returns an xwidget object, similar to a process
-  object. this id is used when creating the display spec(instead of
+- make-xwidget returns an xwidget object, similar to a process
+  object. this object is used when creating the display spec(instead of
   the user defined id now used)
 
 the data structure would be something like this:
@@ -245,6 +248,14 @@ generates an event if I cant set the id beforehand?
 so, therefore, the first two aproach is used. 
 
 
+*** TODO xwidget creation interface actually
+conclusion of above ramblings:
+- should be similar to make-text-button
+- don't init from display spec, instead during make-xwidget call
+*** TODO callbacks would be nice 
+but they need to be handled initially with events for technical
+reasons. C code can't call Lisp easily. The event handler can call the
+callback though.
 
 ** TODO  more documentation
 There should be user docs, and xwidget contributor docs. The current README
@@ -349,15 +360,14 @@ export LDFLAGS=`pkg-config --libs clutter-gtk-0.10`
 make
 
 
-** TODO mvc code crashes after a while
+** DONE mvc code crashes after a while
+   CLOSED: [2011-07-12 Tue 18:52]
 seemingly only when compiling with optimizations.
 I have no idea why.
 
+Doesn't seem to happen after some code cleanups.
 ** TODO xwidget-resize-at
-currently it rewrites the display spec. then it resizes the xwidget
-views. maybe rewriting the spec should be sufficient, and changes to
-it be picked up during redisplay somehow.
-
+reimplement so display special is not involved
 ** TODO display spec validation
 it is an error to reuse xwidgets in several buffers or in the same
 buffer. how do we catch these errors?
@@ -657,7 +667,8 @@ parts of emacs must be very clean.
 *** TODO use FRAME_GTK_WIDGET (f)
 rather than gwfixed.
 
-*** TODO support configure
+*** DONE support configure
+    CLOSED: [2011-07-12 Tue 18:48]
 ** DONE translate clicks 
    CLOSED: [2011-07-03 Sun 22:12]
 on onscreen webkit peer to offscreen
@@ -665,7 +676,7 @@ on onscreen webkit peer to offscreen
 maybe
 http://developer.gnome.org/gdk/stable/gdk-Windows.html#GdkWindow-from-embedder
 
-turned out tell be not so hard, captured events, copied them and
+turned out to be not so hard, captured events, copied them and
 forwarded them offscreen!
 
 ** TODO investigate gdk_window_redirect_to_drawable
