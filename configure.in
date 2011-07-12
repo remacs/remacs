@@ -1960,12 +1960,13 @@ if test "${with_xwidgets}" != "no"; then
   WEBKIT_REQUIRED=1.4.0
   WEBKIT_MODULES="webkitgtk-3.0 >= $WEBKIT_REQUIRED"
 
-  PKG_CHECK_MODULES(WEBKIT, $WEBKIT_MODULES, HAVE_WEBKIT=yes, HAVE_WEBKIT=no)
-  if test $HAVE_WEBKIT = yes; then
-#     AC_DEFINE(HAVE_WEBKIT, 1, [Define to 1 if you have webkit support.])
-     AC_DEFINE(HAVE_WEBKIT_OSR, 1, [Define to 1 if you have webkit_osr support.])     
+  if test "${with_gtk3}" = "yes"; then
+    PKG_CHECK_MODULES(WEBKIT, $WEBKIT_MODULES, HAVE_WEBKIT=yes, HAVE_WEBKIT=no)
+    if test $HAVE_WEBKIT = yes; then
+        AC_DEFINE(HAVE_WEBKIT_OSR, 1, [Define to 1 if you have webkit_osr support.])     
+    fi
   fi
-
+  
   CLUTTER_REQUIRED=1.0.0
   CLUTTER_MODULES="clutter-gtk-1.0 >= $CLUTTER_REQUIRED"
 
@@ -3707,9 +3708,9 @@ echo "  Does Emacs use -lxft?                                   ${HAVE_XFT}"
 echo "  Does Emacs use toolkit scroll bars?                     ${USE_TOOLKIT_SCROLL_BARS}"
 
 echo "  Does Emacs support Xwidgets?                            ${HAVE_XWIDGETS}"
-echo "       Does xwidgets support webkit?                      ${HAVE_WEBKIT}"
-echo "       Does xwidgets support clutter?                     ${HAVE_CLUTTER}"
-echo "       Does xwidgets support goocanvas?                   ${HAVE_GOOCANVAS}"
+echo "       Does xwidgets support webkit(requires gtk3)?       ${HAVE_WEBKIT}"
+echo "       Does xwidgets support clutter(demo code)?          ${HAVE_CLUTTER}"
+echo "       Does xwidgets support goocanvas(demo code)?        ${HAVE_GOOCANVAS}"
 echo
 
 if test $USE_XASSERTS = yes; then
