@@ -227,3 +227,90 @@ DEFUN ("xwidget-replug", Fxwidget_replug, Sxwidget_replug, 2, 2, 0,
   
   return Qnil;
 }
+
+
+
+double osr_dbg_color=0;
+void webkit_osr_redraw_child (  struct xwidget* xw, GtkWidget *widget)
+{
+
+  //this stuff is different in gtk3
+#ifndef HAVE_GTK3  
+  cairo_t *cr;
+
+
+  GdkPixmap *src_pixmap;
+  src_pixmap = gtk_offscreen_window_get_pixmap(xw->widgetwindow_osr);
+
+  //g_object_ref(src_pixmap);//TODO needs to be unrefed eventually, if we are to use his method
+
+  
+  printf("webkit_osr_redraw_child xw.id:%d xw.type:%d window:%d\n", xw->id,xw->type, gtk_widget_get_window (widget));
+
+  cr = gdk_cairo_create (gtk_widget_get_window (widget));
+
+  cairo_rectangle(cr, 0,0, xw->width, xw->height);
+  cairo_clip(cr);
+
+  // debugging redraw:
+  //  - the bg colors always change, so theres no error in signal handling
+  //  - i get this error now and then:
+  //(emacs:7109): GLib-GObject-WARNING **: invalid cast from `GdkOffscreenWindow' to `GdkDrawableImplX11'
+  // seems to happen in webkit actually. see README
+  
+  if(1){ //redraw debug hack
+    cairo_set_source_rgb(cr, osr_dbg_color, 1.0, 0.2);
+    cairo_rectangle(cr, 0,0, xw->width, xw->height);
+    cairo_fill(cr);
+    osr_dbg_color+=0.1;
+    if(osr_dbg_color>1.0)
+      osr_dbg_color=0.0;
+    
+  }
+  
+  gdk_cairo_set_source_pixmap (cr, src_pixmap, 0,0); //deprecated. use gdk_cairo_set_source_window
+  //gdk_cairo_set_source_window(cr, src_pixmap, 0,0);
+  
+  cairo_set_operator (cr, CAIRO_OPERATOR_OVER);
+  cairo_paint_with_alpha (cr, 0.7);
+  //cairo_paint(cr);
+
+
+  cairo_destroy (cr);
+#else
+  cairo_t *cr;
+  cairo_surface_t * *src_pixmap;
+  src_pixmap =    gtk_offscreen_window_get_surface (xw->widgetwindow_osr);
+
+  printf("webkit_osr_redraw_child gtk3 xw.id:%d xw.type:%d window:%d\n", xw->id,xw->type, gtk_widget_get_window (widget));
+
+  cr = gdk_cairo_create (gtk_widget_get_window (widget));
+
+  cairo_rectangle(cr, 0,0, xw->width, xw->height);
+  cairo_clip(cr);
+
+  // debugging redraw:
+  //  - the bg colors always change, so theres no error in signal handling
+  //  - i get this error now and then:
+  //(emacs:7109): GLib-GObject-WARNING **: invalid cast from `GdkOffscreenWindow' to `GdkDrawableImplX11'
+  // seems to happen in webkit actually. see README
+  
+  if(1){ //redraw debug hack
+    cairo_set_source_rgb(cr, osr_dbg_color, 1.0, 0.2);
+    cairo_rectangle(cr, 0,0, xw->width, xw->height);
+    cairo_fill(cr);
+    osr_dbg_color+=0.1;
+    if(osr_dbg_color>1.0)
+      osr_dbg_color=0.0;
+    
+  }
+  
+  cairo_set_source_surface (cr, src_pixmap, 0,0); 
+
+  
+  cairo_set_operator (cr, CAIRO_OPERATOR_OVER);
+  cairo_paint_with_alpha (cr, 0.7);
+  //cairo_paint(cr);
+  cairo_destroy (cr);
+#endif
+}

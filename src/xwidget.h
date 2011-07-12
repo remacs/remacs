@@ -76,7 +76,6 @@ extern int xwidget_owns_kbd;
 
 void xwidget_start_redisplay();
 void xwidget_end_redisplay(struct glyph_matrix* matrix);
-void xwidget_modify_region();
 
 void xwidget_touch (struct xwidget_view *xw);
 

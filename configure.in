@@ -1131,48 +1131,6 @@ AC_DEFUN([PKG_CHECK_MODULES], [
   fi
 ])
 
-HAVE_XWIDGETS=no
-HAVE_WEBKIT=no
-HAVE_GOOCANVAS=no
-HAVE_CLUTTER=no
-if test "${with_xwidgets}" != "no"; then
-   echo "xwidgets enabled, checking webkit, and others"
-   HAVE_XWIDGETS=yes
-   AC_DEFINE(HAVE_XWIDGETS, 1, [Define to 1 if you have xwidgets support.])        
-#xwidgets
-#TODO
-# - enable only if gtk/gtk3 enabled
-# - webkit, goocanvas, clutter
-# - only webkit_osr is good so remove plain webkit laterish
-
-#webkit version for gtk3. 
-  WEBKIT_REQUIRED=1.4.0
-  WEBKIT_MODULES="webkitgtk-3.0 >= $WEBKIT_REQUIRED"
-
-  PKG_CHECK_MODULES(WEBKIT, $WEBKIT_MODULES, HAVE_WEBKIT=yes, HAVE_WEBKIT=no)
-  if test $HAVE_WEBKIT = yes; then
-     AC_DEFINE(HAVE_WEBKIT, 1, [Define to 1 if you have webkit support.])
-     AC_DEFINE(HAVE_WEBKIT_OSR, 1, [Define to 1 if you have webkit_osr support.])     
-  fi
-
-  CLUTTER_REQUIRED=1.0.0
-  CLUTTER_MODULES="clutter-gtk-1.0 >= $CLUTTER_REQUIRED"
-
-  PKG_CHECK_MODULES(CLUTTER, $CLUTTER_MODULES, HAVE_CLUTTER=yes, HAVE_CLUTTER=no)
-  if test $HAVE_CLUTTER = yes; then
-     AC_DEFINE(HAVE_CLUTTER, 1, [Define to 1 if you have clutter support.])
-  fi
-
-#TODO  
-  GOOCANVAS_REQUIRED=1.4.0
-  GOOCANVAS_MODULES="goocanvasgtk-3.0 >= $GOOCANVAS_REQUIRED"
-
-  PKG_CHECK_MODULES(GOOCANVAS, $GOOCANVAS_MODULES, HAVE_GOOCANVAS=yes, HAVE_GOOCANVAS=no)
-  if test $HAVE_GOOCANVAS = yes; then
-     AC_DEFINE(HAVE_GOOCANVAS, 1, [Define to 1 if you have goocanvas support.])
-  fi
-
-fi
 
 if test "${with_sound}" != "no"; then
   # Sound support for GNU/Linux and the free BSDs.
@@ -1982,6 +1940,51 @@ if test "${HAVE_GTK}" = "yes"; then
                  gtk_orientable_set_orientation)
 
 fi
+
+
+HAVE_XWIDGETS=no
+HAVE_WEBKIT=no
+HAVE_GOOCANVAS=no
+HAVE_CLUTTER=no
+if test "${with_xwidgets}" != "no"; then
+   echo "xwidgets enabled, checking webkit, and others"
+   HAVE_XWIDGETS=yes
+   AC_DEFINE(HAVE_XWIDGETS, 1, [Define to 1 if you have xwidgets support.])        
+#xwidgets
+#TODO
+# - enable only if gtk/gtk3 enabled
+# - webkit, goocanvas, clutter
+# - only webkit_osr is good so remove plain webkit laterish
+
+#webkit version for gtk3. 
+  WEBKIT_REQUIRED=1.4.0
+  WEBKIT_MODULES="webkitgtk-3.0 >= $WEBKIT_REQUIRED"
+
+  PKG_CHECK_MODULES(WEBKIT, $WEBKIT_MODULES, HAVE_WEBKIT=yes, HAVE_WEBKIT=no)
+  if test $HAVE_WEBKIT = yes; then
+#     AC_DEFINE(HAVE_WEBKIT, 1, [Define to 1 if you have webkit support.])
+     AC_DEFINE(HAVE_WEBKIT_OSR, 1, [Define to 1 if you have webkit_osr support.])     
+  fi
+
+  CLUTTER_REQUIRED=1.0.0
+  CLUTTER_MODULES="clutter-gtk-1.0 >= $CLUTTER_REQUIRED"
+
+  PKG_CHECK_MODULES(CLUTTER, $CLUTTER_MODULES, HAVE_CLUTTER=yes, HAVE_CLUTTER=no)
+  if test $HAVE_CLUTTER = yes; then
+     AC_DEFINE(HAVE_CLUTTER, 1, [Define to 1 if you have clutter support.])
+  fi
+
+#TODO  
+  GOOCANVAS_REQUIRED=1.4.0
+  GOOCANVAS_MODULES="goocanvasgtk-3.0 >= $GOOCANVAS_REQUIRED"
+
+  PKG_CHECK_MODULES(GOOCANVAS, $GOOCANVAS_MODULES, HAVE_GOOCANVAS=yes, HAVE_GOOCANVAS=no)
+  if test $HAVE_GOOCANVAS = yes; then
+     AC_DEFINE(HAVE_GOOCANVAS, 1, [Define to 1 if you have goocanvas support.])
+  fi
+
+fi
+
 
 dnl D-Bus has been tested under GNU/Linux only.  Must be adapted for
 dnl other platforms.  Support for higher D-Bus versions than 1.0 is

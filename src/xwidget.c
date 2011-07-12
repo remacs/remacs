@@ -89,20 +89,11 @@
 #include <clutter-gtk/clutter-gtk.h>
 #endif
 
-
 #include <wchar.h>
-
-#ifdef HAVE_WEBKIT
-#include <webkitgtk.h>
-
-#endif
-
 
 #ifdef HAVE_WEBKIT_OSR
 #include <webkit/webkitwebview.h>
 #endif
-
-
 
 #include "xwidget.h"
 
@@ -114,9 +105,6 @@
 struct xwidget xwidgets[MAX_XWIDGETS];
 struct xwidget_view xwidget_views[MAX_XWIDGETS]; 
 
-
-
-
 Lisp_Object Qxwidget;
 Lisp_Object Qxwidget_id;
 Lisp_Object Qtitle;
@@ -126,7 +114,7 @@ Lisp_Object Qxwidget_info;
 Lisp_Object Qxwidget_resize_internal;
 Lisp_Object Qxwidget_send_keyboard_event;
 
-Lisp_Object Qbutton, Qtoggle, Qslider, Qsocket, Qcairo, Qwebkit,
+Lisp_Object Qbutton, Qtoggle, Qslider, Qsocket, Qcairo, 
   Qwebkit_osr, QCplist;
 
 
@@ -274,100 +262,6 @@ void xwidget_slider_changed (GtkRange *range,
 
 }
 
-double osr_dbg_color=0;
-void webkit_osr_redraw_child (  struct xwidget* xw, GtkWidget *widget)
-{
-
-  //this stuff is different in gtk3
-#ifndef HAVE_GTK3  
-  cairo_t *cr;
-
-
-  GdkPixmap *src_pixmap;
-  src_pixmap = gtk_offscreen_window_get_pixmap(xw->widgetwindow_osr);
-
-  //g_object_ref(src_pixmap);//TODO needs to be unrefed eventually, if we are to use his method
-
-  
-  printf("webkit_osr_redraw_child xw.id:%d xw.type:%d window:%d\n", xw->id,xw->type, gtk_widget_get_window (widget));
-
-  cr = gdk_cairo_create (gtk_widget_get_window (widget));
-
-  cairo_rectangle(cr, 0,0, xw->width, xw->height);
-  cairo_clip(cr);
-
-  // debugging redraw:
-  //  - the bg colors always change, so theres no error in signal handling
-  //  - i get this error now and then:
-  //(emacs:7109): GLib-GObject-WARNING **: invalid cast from `GdkOffscreenWindow' to `GdkDrawableImplX11'
-  // seems to happen in webkit actually. see README
-  
-  if(1){ //redraw debug hack
-    cairo_set_source_rgb(cr, osr_dbg_color, 1.0, 0.2);
-    cairo_rectangle(cr, 0,0, xw->width, xw->height);
-    cairo_fill(cr);
-    osr_dbg_color+=0.1;
-    if(osr_dbg_color>1.0)
-      osr_dbg_color=0.0;
-    
-  }
-  
-  gdk_cairo_set_source_pixmap (cr, src_pixmap, 0,0); //deprecated. use gdk_cairo_set_source_window
-  //gdk_cairo_set_source_window(cr, src_pixmap, 0,0);
-  
-  cairo_set_operator (cr, CAIRO_OPERATOR_OVER);
-  cairo_paint_with_alpha (cr, 0.7);
-  //cairo_paint(cr);
-
-
-  cairo_destroy (cr);
-#elseif
-  cairo_t *cr;
-  cairo_surface_t * *src_pixmap;
-  src_pixmap =    gtk_offscreen_window_get_surface (xw->widgetwindow_osr);
-
-  printf("webkit_osr_redraw_child gtk3 xw.id:%d xw.type:%d window:%d\n", xw->id,xw->type, gtk_widget_get_window (widget));
-
-  cr = gdk_cairo_create (gtk_widget_get_window (widget));
-
-  cairo_rectangle(cr, 0,0, xw->width, xw->height);
-  cairo_clip(cr);
-
-  // debugging redraw:
-  //  - the bg colors always change, so theres no error in signal handling
-  //  - i get this error now and then:
-  //(emacs:7109): GLib-GObject-WARNING **: invalid cast from `GdkOffscreenWindow' to `GdkDrawableImplX11'
-  // seems to happen in webkit actually. see README
-  
-  if(1){ //redraw debug hack
-    cairo_set_source_rgb(cr, osr_dbg_color, 1.0, 0.2);
-    cairo_rectangle(cr, 0,0, xw->width, xw->height);
-    cairo_fill(cr);
-    osr_dbg_color+=0.1;
-    if(osr_dbg_color>1.0)
-      osr_dbg_color=0.0;
-    
-  }
-  
-  cairo_set_source_surface (cr, src_pixmap, 0,0); 
-
-  
-  cairo_set_operator (cr, CAIRO_OPERATOR_OVER);
-  cairo_paint_with_alpha (cr, 0.7);
-  //cairo_paint(cr);
-  cairo_destroy (cr);
-#endif
-}
-
-/* when the on-screen webkit peer view gets exposed this signal is called.
-   it copies the bitmap from the off-screen webkit instance to the onscreen view*/
-gboolean webkit_osr_expose_event_callback (GtkWidget *widget, GdkEventExpose *event, gpointer data) 
-{
-  //TODO optimize by cliping to damage region 
-  struct xwidget* xw = (struct xwidget*) g_object_get_data (G_OBJECT (widget), XG_XWIDGET);  
-  webkit_osr_redraw_child(xw, widget);
-  return FALSE;
-}                                                                               
 
 /* when the off-screen webkit master view changes this signal is called.
    it copies the bitmap from the off-screen webkit instance */
@@ -509,18 +403,10 @@ xwidget_init_view (
     /* Show the stage: */
     clutter_actor_show (stage);        
 #endif        
-        
-  } else if (EQ(xww->type, Qwebkit)) {
-#ifdef HAVE_WEBKIT
-    xv->widget = webkit_web_view_new();
-    webkit_web_view_load_uri(xv->widget, "http://www.fsf.org"); 
-#endif        
   } else if (EQ(xww->type, Qwebkit_osr)) {
 #ifdef HAVE_WEBKIT_OSR
     xv->widget = gtk_drawing_area_new();
     gtk_widget_set_app_paintable ( xv->widget, TRUE); //because expose event handling
-#endif        
-#ifdef HAVE_GTK3 //and webkit_osr
     gtk_widget_add_events(xv->widget,
                           GDK_BUTTON_PRESS_MASK
                           | GDK_BUTTON_RELEASE_MASK
@@ -533,9 +419,6 @@ xwidget_init_view (
                       G_CALLBACK (xwidget_osr_button_callback), NULL);
     g_signal_connect (G_OBJECT (    xv->widget), "motion-notify-event",                    
                       G_CALLBACK (xwidget_osr_button_callback), NULL);
-#else
-    g_signal_connect (G_OBJECT (    xv->widget), "expose_event",                    
-                      G_CALLBACK (webkit_osr_expose_event_callback), NULL);                  
 #endif
 
 
@@ -973,7 +856,6 @@ syms_of_xwidget (void)
   DEFSYM (Qslider, "slider");  
   DEFSYM (Qsocket, "socket");
   DEFSYM (Qcairo, "cairo");
-  DEFSYM (Qwebkit ,"webkit");
   DEFSYM (Qwebkit_osr ,"webkit-osr");    
   DEFSYM (QCplist, ":plist");  
 
@@ -1101,10 +983,9 @@ void                gtk_window_get_position             (GtkWindow *window,
 int
 lookup_xwidget (Lisp_Object  spec)
 {
-  /*when a xwidget lisp spec is found initialize the C struct that is used in the C code.
-    this is done by redisplay so values change if the spec changes.
-    so, take special care of one-shot events
-    xwidget_init
+  /* When a xwidget lisp spec is found initialize the C struct that is used in the C code.
+     This is done by redisplay so values change if the spec changes.
+     So, take special care of one-shot events
   */
   int found = 0, found1 = 0, found2 = 0;
   Lisp_Object value;
@@ -1112,56 +993,46 @@ lookup_xwidget (Lisp_Object  spec)
   struct xwidget *xw;
 
   value = xwidget_spec_value (spec, Qxwidget_id, &found1);
-  id = INTEGERP (value) ? XFASTINT (value) : 0;	//id 0 by default, but id must be unique so this is dumb
+  id = INTEGERP (value) ? XFASTINT (value) : 0;	//TODO id 0 by default, but id must be unique so this is dumb
 
   xw = &xwidgets[id];
   xw->id=id;
   value = xwidget_spec_value (spec, QCtype, &found);
   xw->type = SYMBOLP (value) ? value : Qbutton;	//default to button
   value = xwidget_spec_value (spec, Qtitle, &found2);
-  xw->title = STRINGP (value) ? (char *) SDATA (value) : "?";	//funky cast FIXME
+  xw->title = STRINGP (value) ? (char *) SDATA (value) : "?";	//funky cast FIXME TODO
 
   value = xwidget_spec_value (spec, QCheight, NULL);
-  xw->height = INTEGERP (value) ? XFASTINT (value) : 50;	//ok
+  xw->height = INTEGERP (value) ? XFASTINT (value) : 50; 
   value = xwidget_spec_value (spec, QCwidth, NULL);
-  xw->width = INTEGERP (value) ? XFASTINT (value) : 50;	//ok
+  xw->width = INTEGERP (value) ? XFASTINT (value) : 50;
 
   value = xwidget_spec_value (spec, QCplist, NULL);
   xw->plist = value;
   printf ("xwidget_id:%d type:%d found:%d %d %d title:%s (%d,%d)\n", id,
           xw->type, found, found1, found2, xw->title, xw->height, xw->width);
 
-
   assert_valid_xwidget_id (id, "lookup_xwidget");
 
 #ifdef HAVE_WEBKIT_OSR
-  //diy mvc. widget is rendered offscreen(or in an onscreen separate toplevel for testing), later blitted to the views
+  /* DIY mvc. widget is rendered offscreen,
+     later bitmap copied to the views.
+   */
   if (EQ(xw->type, Qwebkit_osr) && !xw->widgetwindow_osr){
     BLOCK_INPUT;
-    //xw->widgetwindow_osr = GTK_CONTAINER (gtk_window_new (  GTK_WINDOW_TOPLEVEL));
-    //xw->widgetwindow_osr = GTK_CONTAINER (gtk_dialog_new ());
     xw->widgetwindow_osr = GTK_CONTAINER (gtk_offscreen_window_new ());
     gtk_window_resize(    GTK_WINDOW(xw->widgetwindow_osr), xw->width, xw->height);
-    //xw->widgetwindow_osr = SELECTED_FRAME()->gwfixed;
     xw->widget_osr = webkit_web_view_new();
-    //xw->widget_osr = gtk_button_new();
-
-    //random debug hack
-    //gtk_widget_set_double_buffered (xw->widget_osr,FALSE);
-    //gtk_widget_set_double_buffered (xw->widgetwindow_osr,FALSE);  
 
     gtk_widget_set_size_request (GTK_WIDGET (xw->widget_osr), xw->width, xw->height);      
     gtk_container_add (xw->widgetwindow_osr, xw->widget_osr);
-    //gtk_fixed_put(GTK_FIXED(xw->widgetwindow_osr), xw->widget_osr, 0, 200);
     
     gtk_widget_show_all (GTK_WIDGET (xw->widgetwindow_osr));
 
-    //store some xwidget data in the gtk widgets
-    g_object_set_data (G_OBJECT (xw->widget_osr), XG_XWIDGET, (gpointer) (xw)); //the xwidget
-    g_object_set_data (G_OBJECT (xw->widgetwindow_osr), XG_XWIDGET, (gpointer) (xw)); //the xwidget  
-    
+    /* store some xwidget data in the gtk widgets for convenient retrieval in the event handlers. */
+    g_object_set_data (G_OBJECT (xw->widget_osr), XG_XWIDGET, (gpointer) (xw));
+    g_object_set_data (G_OBJECT (xw->widgetwindow_osr), XG_XWIDGET, (gpointer) (xw));
     g_signal_connect (G_OBJECT (    xw->widgetwindow_osr), "damage-event",    G_CALLBACK (webkit_osr_damage_event_callback), NULL);
-    //g_signal_connect (G_OBJECT (    xw->widget_osr), "draw",    G_CALLBACK (webkit_osr_damage_event_callback), NULL);                  
       
     webkit_web_view_load_uri(WEBKIT_WEB_VIEW(xw->widget_osr), "http://www.fsf.org");
     UNBLOCK_INPUT;
@@ -1170,13 +1041,6 @@ lookup_xwidget (Lisp_Object  spec)
 #endif          
   return id;
 }
-
-
-
-
-
-//////////////////////////////////
-int region_modified = 0;
 
 /*set up detection of touched xwidget*/
 void
@@ -1192,7 +1056,6 @@ xwidget_start_redisplay (void)
 void
 xwidget_touch (struct xwidget_view *xw)
 {
-  //printf("touch xwidget %d\n", xw->id);
   xw->redisplayed = 1;
 }
 
@@ -1203,7 +1066,6 @@ xwidget_touched (struct xwidget_view *xw)
 }
 
 /* redisplay has ended, now we should hide untouched xwidgets
-
 */
 void
 xwidget_end_redisplay (struct glyph_matrix *matrix)
@@ -1213,7 +1075,7 @@ xwidget_end_redisplay (struct glyph_matrix *matrix)
   struct xwidget *xw;
   int area;
 
-  region_modified = 0;
+
   xwidget_start_redisplay ();
   //iterate desired glyph matrix of "live" window here, hide gtk widgets
   //not in the desired matrix.
@@ -1279,10 +1141,4 @@ xwidget_end_redisplay (struct glyph_matrix *matrix)
     }
 }
 
-/* some type of modification was made to the buffers(unused)*/
-void
-xwidget_modify_region (void)
-{
-  region_modified = 1;
-}
 

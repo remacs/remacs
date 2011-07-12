@@ -22125,11 +22125,9 @@ produce_image_glyph (struct it *it)
 static void
 produce_xwidget_glyph (struct it *it)
 {
-  //  struct image *img;
+  struct xwidget* xw;
   struct face *face;
   int glyph_ascent, crop;
-  //  struct glyph_slice slice;
-
   printf("produce_xwidget_glyph:\n");
   xassert (it->what == IT_XWIDGET);
 
@@ -22138,30 +22136,11 @@ produce_xwidget_glyph (struct it *it)
   /* Make sure X resources of the face is loaded.  */
   PREPARE_FACE_FOR_DISPLAY (it->f, face);
 
-  /////////////////////////////////////////////
-  
-  //  img = IMAGE_FROM_ID (it->f, it->image_id);
-  //xassert (img);
-  /* Make sure X resources of the image is loaded.  */
-  //prepare_image_for_display (it->f, img);
-
-  struct xwidget* xw=xwidget_from_id(it->xwidget_id);
-  //xwidget_touch(xw);
-  
-  it->ascent = it->phys_ascent = glyph_ascent = xw->height/2;//image_ascent (img, face, &slice);
-  it->descent = xw->height/2;//slice.height - glyph_ascent;
-
-  //it->descent += img->vmargin;
-  //it->descent += img->vmargin;
+  xw = xwidget_from_id(it->xwidget_id);
+  it->ascent = it->phys_ascent = glyph_ascent = xw->height/2;
+  it->descent = xw->height/2;
   it->phys_descent = it->descent;
-
   it->pixel_width = xw->width;
-
-  //it->pixel_width += img->hmargin;
-  //it->pixel_width += img->hmargin;
-
-  /////////////////////////////////////////
-  
   /* It's quite possible for images to have an ascent greater than
      their height, so don't get confused in that case.  */
   if (it->descent < 0)
@@ -22206,7 +22185,6 @@ produce_xwidget_glyph (struct it *it)
 	  glyph->ascent = glyph_ascent;
 	  glyph->descent = it->descent;
 	  glyph->voffset = it->voffset;
-          //	  glyph->type = IMAGE_GLYPH;
 	  glyph->type = XWIDGET_GLYPH;          
           
 	  glyph->multibyte_p = it->multibyte_p;
@@ -22218,7 +22196,6 @@ produce_xwidget_glyph (struct it *it)
 	  glyph->face_id = it->face_id;
           glyph->u.xwidget_id = it->xwidget_id;
           assert_valid_xwidget_id(glyph->u.xwidget_id,"produce_xwidget_glyph");
-          //	  glyph->slice = slice;
 	  glyph->font_type = FONT_TYPE_UNKNOWN;
 	  ++it->glyph_row->used[area];
 	}
