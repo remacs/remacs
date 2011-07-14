@@ -36,42 +36,42 @@
      ,@body))
 
 (xwidget-demo "a-button" 
-              (xwidget-insert (point-min) 'button  "button" 40  50  1)
+              (xwidget-insert (point-min) 'button  "button" 40  50)
               (define-key (current-local-map) [xwidget-event] 'xwidget-handler-demo-basic))
 
 (xwidget-demo "a-big-button" 
-              (xwidget-insert (point-min)  'button "button" 400  500  1)
+              (xwidget-insert (point-min)  'button "button" 400  500)
               (define-key (current-local-map) [xwidget-event] 'xwidget-handler-demo-basic))
 
 (xwidget-demo "a-socket" 
-              (xwidget-insert (point-min)  'socket "socket" 500  500  5)
+              (xwidget-insert (point-min)  'socket "socket" 500  500)
               (define-key (current-local-map) [xwidget-event] 'xwidget-handler-demo-basic))
 
 
 (xwidget-demo "a-slider" 
-              (xwidget-insert (point-min)  'slider "slider" 500  100  5)
+              (xwidget-insert (point-min)  'slider "slider" 500  100)
               (define-key (current-local-map) [xwidget-event] 'xwidget-handler-demo-basic))
 
 (xwidget-demo "a-canvas" 
-              (xwidget-insert (point-min)  'cairo "canvas" 1000  1000  5)
+              (xwidget-insert (point-min)  'cairo "canvas" 1000  1000)
               (define-key (current-local-map) [xwidget-event] 'xwidget-handler-demo-basic))
 
 (xwidget-demo "a-webkit" 
-              (xwidget-insert (point-min)  'webkit "webkit" 1000  1000  5)
+              (xwidget-insert (point-min)  'webkit "webkit" 1000  1000)
               (define-key (current-local-map) [xwidget-event] 'xwidget-handler-demo-basic))
 
 (xwidget-demo "a-webkit-osr" 
-              (xwidget-insert (point-min)  'webkit-osr "webkit-osr" 1000  1000  5)
+              (xwidget-insert (point-min)  'webkit-osr "webkit-osr" 1000  1000)
               (define-key (current-local-map) [xwidget-event] 'xwidget-handler-demo-basic))
 
 
 
 (xwidget-demo "basic"
-  (xwidget-insert (point-min)  'button "button" 40  50  1)
-  (xwidget-insert          15  'toggle "toggle" 60  30  2)
-  (xwidget-insert          30  'socket "emacs"  400 200 3)
-  (xwidget-insert          20  'slider "slider" 100 50  4)
-  (xwidget-insert          40  'socket "uzbl-core"   400 400 5)
+  (xwidget-insert (point-min)  'button "button" 40  50 )
+  (xwidget-insert          15  'toggle "toggle" 60  30  )
+  (xwidget-insert          30  'socket "emacs"  400 200 )
+  (xwidget-insert          20  'slider "slider" 100 50  )
+  (xwidget-insert          40  'socket "uzbl-core"   400 400 )
   (define-key (current-local-map) [xwidget-event] 'xwidget-handler-demo-basic)
 )
 
@@ -82,7 +82,7 @@
 (defun xwidget-demo-grab ()
   (interactive)
   (insert "0 <<< grabbed appp will appear here\n")
-  (xwidget-insert          1 1 3 "1" 1000 1000)
+  (xwidget-insert          1 1 3 "1" 1000 )
   (define-key (current-local-map) [xwidget-event] 'xwidget-handler-demo-grab)  
   )
 

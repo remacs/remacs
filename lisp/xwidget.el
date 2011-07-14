@@ -4,22 +4,16 @@
 (require 'xwidget-internal)
 
 ;;TODO model after make-text-button instead!
-(defun xwidget-insert (pos type title width height  &optional id)
+(defun xwidget-insert (pos type title width height)
  "Insert an xwidget at POS, given ID, TYPE, TITLE WIDTH and HEIGHT.
 Return ID
-ID will be made optional, but it isnt implemented yet!
 
 see xwidget.c for types suitable for TYPE.
-
- :xwidget-id 1, MUST be unique and < 100 !
- if slightly wrong, emacs WILL CRASH
-
-These issues are of course fixable but I will continue to
-hand-wave issues like these until the hard parts are solved.
 "
   (goto-char pos)
-  (put-text-property (point) (+ 1 (point)) 'display (list 'xwidget ':xwidget-id id ':type type ':title title ':width width ':height height))
-  id)
+  (let ((id (make-xwidget (point) (point)  type  title  width  height nil)))
+    (put-text-property (point) (+ 1 (point)) 'display (list 'xwidget ':xwidget id))
+    id))
 
 
 (defun xwidget-resize-at (pos width height)
@@ -62,7 +56,7 @@ hand-wave issues like these until the hard parts are solved.
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; webkit support
-
+(require 'browse-url)
 ;;;###autoload
 (defun xwidget-webkit-browse-url (url &optional new-session)
   "Ask xwidget-webkit to browse URL.

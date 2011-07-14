@@ -435,7 +435,7 @@ struct glyph
     /* Image ID for image glyphs (type == IMAGE_GLYPH).  */
     int img_id;
 
-    unsigned xwidget_id;
+    struct xwidget* xwidget;
     
     /* Sub-structure for type == STRETCH_GLYPH.  */
     struct
@@ -1303,7 +1303,7 @@ struct glyph_string
   /* Image, if any.  */
   struct image *img;
 
-  int xwidget_id;
+  struct xwidget* xwidget;
 
   /* Slice */
   struct glyph_slice slice;
@@ -2245,7 +2245,7 @@ struct it
       /* method == GET_FROM_XWIDGET */
       struct {
 	Lisp_Object object;
-        int xwidget_id;
+        struct xwidget* xwidget;
       } xwidget;
 
     } u;
@@ -2368,7 +2368,7 @@ struct it
   int image_id;
 
   /* If what == IT_XWIDGET*/
-  int xwidget_id;
+  struct xwidget* xwidget;
 
   
   /* Values from `slice' property.  */

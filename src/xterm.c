@@ -5834,20 +5834,6 @@ handle_one_xevent (struct x_display_info *dpyinfo, XEvent *eventptr,
   inev.ie.kind = NO_EVENT;
   inev.ie.arg = Qnil;
 
-          /*try to let events escape to xwidgets  if xwidget_owns_kbd. not as easy as it sounds...  */
-          if(xwidget_owns_kbd){
-            printf("xwidgets own events now!\n");
-            //according to xembed spec it seems like the toolkit is responsible for forwarding of events, so
-            //try to let gtk have the event now
-            *finish = 0;
-            
-            /*FINISH is X_EVENT_GOTO_OUT if caller should stop reading events.
-             *FINISH is zero if caller should continue reading events.
-             *FINISH is X_EVENT_DROP if event should not be passed to the toolkit.*/
-            goto OTHER;
-          }
-
-  
   
   if (pending_event_wait.eventtype == event.type)
     pending_event_wait.eventtype = 0; /* Indicates we got it.  */

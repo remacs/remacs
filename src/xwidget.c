@@ -102,11 +102,26 @@
 //would need to be hashtables or something
 
 #define MAX_XWIDGETS 100
-struct xwidget xwidgets[MAX_XWIDGETS];
 struct xwidget_view xwidget_views[MAX_XWIDGETS]; 
 
+//TODO embryo of lisp allocators for xwidgets
+//TODO xwidget* should be Lisp_xwidget*
+struct xwidget*
+allocate_xwidget (void)
+{
+  return ALLOCATE_PSEUDOVECTOR (struct xwidget, height, PVEC_OTHER);
+}
+
+//TODO xwidget_view* should be Lisp_xwidget_view*
+struct xwidget_view*
+allocate_xwidget_view (void)
+{
+  return ALLOCATE_PSEUDOVECTOR (struct xwidget_view, redisplayed, PVEC_OTHER);
+}
+
+
 Lisp_Object Qxwidget;
-Lisp_Object Qxwidget_id;
+Lisp_Object Qcxwidget;
 Lisp_Object Qtitle;
 Lisp_Object Qxwidget_set_keyboard_grab;
 Lisp_Object Qxwidget_embed_steal_window;
@@ -123,6 +138,65 @@ extern Lisp_Object QCwidth, QCheight;
 
 struct xwidget_view* xwidget_view_lookup(struct xwidget* xw,     struct window *w);
 Lisp_Object xwidget_spec_value ( Lisp_Object spec, Lisp_Object  key,  int *found);
+gboolean webkit_osr_damage_event_callback (GtkWidget *widget, GdkEventExpose *event, gpointer data) ;
+
+DEFUN ("make-xwidget", Fmake_xwidget, Smake_xwidget, 7, 7, 0,
+         doc: /* xw */
+         )
+  (Lisp_Object beg, Lisp_Object end,
+     Lisp_Object type,
+     Lisp_Object title,     
+     Lisp_Object width, Lisp_Object height,
+     Lisp_Object data)
+{
+  //should work a bit like "make-button"(make-button BEG END &rest PROPERTIES)
+  // arg "type" and fwd should be keyword args eventually
+  //(make-xwidget 3 3 'button "oei" 31 31 nil)
+  //(xwidget-info (car xwidget-alist))
+  struct xwidget* xw = allocate_xwidget();
+  Lisp_Object val;
+  struct gcpro gcpro1;
+  GCPRO1(xw);
+  XSETSYMBOL(xw->type, type);
+  XSETSTRING(xw->title, title);  
+  XSETBUFFER(xw->buffer,  Fcurrent_buffer()); // conservatively gcpro xw since we call lisp
+  xw->height = XFASTINT(height);
+  xw->width = XFASTINT(width);
+  XSETPSEUDOVECTOR (val, xw, PVEC_OTHER); //?? dunno why i need this
+  Vxwidget_alist = Fcons ( val, Vxwidget_alist);
+
+
+
+#ifdef HAVE_WEBKIT_OSR
+  /* DIY mvc. widget is rendered offscreen,
+     later bitmap copied to the views.
+   */
+  if (EQ(xw->type, Qwebkit_osr) && !xw->widgetwindow_osr){
+    BLOCK_INPUT;
+    xw->widgetwindow_osr = GTK_CONTAINER (gtk_offscreen_window_new ());
+    gtk_window_resize(    GTK_WINDOW(xw->widgetwindow_osr), xw->width, xw->height);
+    xw->widget_osr = webkit_web_view_new();
+
+    gtk_widget_set_size_request (GTK_WIDGET (xw->widget_osr), xw->width, xw->height);      
+    gtk_container_add (xw->widgetwindow_osr, xw->widget_osr);
+    
+    gtk_widget_show_all (GTK_WIDGET (xw->widgetwindow_osr));
+
+    /* store some xwidget data in the gtk widgets for convenient retrieval in the event handlers. */
+    g_object_set_data (G_OBJECT (xw->widget_osr), XG_XWIDGET, (gpointer) (xw));
+    g_object_set_data (G_OBJECT (xw->widgetwindow_osr), XG_XWIDGET, (gpointer) (xw));
+    g_signal_connect (G_OBJECT (    xw->widgetwindow_osr), "damage-event",    G_CALLBACK (webkit_osr_damage_event_callback), NULL);
+      
+    webkit_web_view_load_uri(WEBKIT_WEB_VIEW(xw->widget_osr), "http://www.fsf.org");
+    UNBLOCK_INPUT;
+
+  }
+#endif          
+
+
+  UNGCPRO;
+  return val;
+}
 
 int
 xwidget_hidden(struct xwidget_view *xv)
@@ -138,7 +212,7 @@ buttonclick_handler (GtkWidget * widget, gpointer data)
   struct input_event event;
   Lisp_Object frame;
   FRAME_PTR f = NULL;//(FRAME_PTR) g_object_get_data (G_OBJECT (xw->widget), XG_FRAME_DATA); //TODO
-  printf ("button clicked xw:%d id:%d\n", xw, xw->id);
+  printf ("button clicked xw:%d '%s'\n", xw, xw->title);
 
   EVENT_INIT (event);
   event.kind = XWIDGET_EVENT;
@@ -149,7 +223,7 @@ buttonclick_handler (GtkWidget * widget, gpointer data)
 
 
   event.arg = Qnil;
-  event.arg = Fcons (make_number (xw->id), event.arg);
+  //event.arg = Fcons (make_number (xw->id), event.arg); //TODO send the actual xwidget object now instead
   event.arg = Fcons (intern ("buttonclick"), event.arg);
 
   kbd_buffer_store_event (&event);
@@ -159,7 +233,7 @@ buttonclick_handler (GtkWidget * widget, gpointer data)
 
 
 static void
-send_xembed_ready_event (int xwid, int xembedid)
+send_xembed_ready_event (struct xwidget* xw, int xembedid)
 {
   struct input_event event;
   EVENT_INIT (event);
@@ -169,7 +243,7 @@ send_xembed_ready_event (int xwid, int xembedid)
   event.arg = Qnil;
   event.arg = Fcons (make_number (xembedid), event.arg);
   event.arg = Fcons (intern ("xembed-ready"), event.arg);
-  event.arg = Fcons (make_number (xwid), event.arg);
+//  event.arg = Fcons (make_number (xwid), event.arg); //TODO 
 
 
   kbd_buffer_store_event (&event);
@@ -292,7 +366,7 @@ xwidget_osr_draw_callback (GtkWidget *widget, cairo_t *cr, gpointer data)
   struct xwidget_view* xv = (struct xwidget_view*) g_object_get_data (G_OBJECT (widget), XG_XWIDGET_VIEW);    
   
   printf("xwidget_osr_draw_callback gtk3 xw.id:%d xw.type:%d window:%d vis:%d\n",
-         xw->id,xw->type, gtk_widget_get_window (widget),  gtk_widget_get_visible (xw->widget_osr));
+         xw,xw->type, gtk_widget_get_window (widget),  gtk_widget_get_visible (xw->widget_osr));
 
   cairo_rectangle(cr, 0,0, xv->clip_right, xv->clip_bottom);//xw->width, xw->height);
   cairo_clip(cr);
@@ -485,10 +559,10 @@ xwidget_init_view (
   //widgettype specific initialization only possible after realization
   if (EQ(xww->type, Qsocket)) {
     printf ("xwid:%d socket id:%x %d\n",
-            xww->id,
+            xww,
             gtk_socket_get_id (GTK_SOCKET (xv->widget)),
             gtk_socket_get_id (GTK_SOCKET (xv->widget)));
-    send_xembed_ready_event (xww->id,
+    send_xembed_ready_event (xww,
                              gtk_socket_get_id (GTK_SOCKET (xv->widget)));
     //gtk_widget_realize(xw->widget);
   }
@@ -507,7 +581,7 @@ x_draw_xwidget_glyph_string (struct glyph_string *s)
   int box_line_hwidth = eabs (s->face->box_line_width);
   int box_line_vwidth = max (s->face->box_line_width, 0);
   int height = s->height;
-  struct xwidget *xww = &xwidgets[s->xwidget_id];
+  struct xwidget *xww = s->xwidget;
   struct xwidget_view *xv = xwidget_view_lookup(xww, (s->w));
   int clip_right; int clip_bottom; int clip_top; int clip_left;
 
@@ -520,7 +594,7 @@ x_draw_xwidget_glyph_string (struct glyph_string *s)
        We do it here in the display loop because there is no other time to know things like
        window placement etc.
     */
-    printf ("xv init for xw %d\n", xww->id);
+    printf ("xv init for xw %d\n", xww);
     xv = xwidget_init_view (xww, s, x, y); 
   }
 
@@ -571,46 +645,35 @@ x_draw_xwidget_glyph_string (struct glyph_string *s)
 }
 
 
-
-struct xwidget* xid2xw( Lisp_Object xwidget_id)
-{
-  //TODO refactor this crap to something sane
-  struct xwidget *xw;
-  int xid;
-
-  CHECK_NUMBER (xwidget_id);
-  xid = XFASTINT (xwidget_id);
-  xw = &xwidgets[xid];
-  return xw;
-}
-
-
 #ifdef HAVE_WEBKIT_OSR
 DEFUN ("xwidget-webkit-goto-uri", Fxwidget_webkit_goto_uri,  Sxwidget_webkit_goto_uri, 2, 2, 0,
        doc:	/* webkit goto uri.*/
        )
-  (Lisp_Object xwidget_id, Lisp_Object uri)
+  (Lisp_Object xwidget, Lisp_Object uri)
 {
-  webkit_web_view_load_uri ( WEBKIT_WEB_VIEW(xid2xw(xwidget_id)->widget_osr), SDATA(uri));
+  struct xwidget* xw = XXWIDGET(xwidget);
+  webkit_web_view_load_uri ( WEBKIT_WEB_VIEW(xw->widget_osr), SDATA(uri));
   return Qnil;
 }
 
 DEFUN ("xwidget-webkit-execute-script", Fxwidget_webkit_execute_script,  Sxwidget_webkit_execute_script, 2, 2, 0,
        doc:	/* webkit exec js.*/
        )
-  (Lisp_Object xwidget_id, Lisp_Object script)
+  (Lisp_Object xwidget, Lisp_Object script)
 {
-  webkit_web_view_execute_script( WEBKIT_WEB_VIEW(xid2xw(xwidget_id)->widget_osr), SDATA(script));
+  struct xwidget* xw = XXWIDGET(xwidget);
+  webkit_web_view_execute_script( WEBKIT_WEB_VIEW(xw->widget_osr), SDATA(script));
   return Qnil;
 }
 
 DEFUN ("xwidget-webkit-get-title", Fxwidget_webkit_get_title,  Sxwidget_webkit_get_title, 1, 1, 0,
        doc:	/* webkit get title. can be used to work around exec method lacks return val*/
        )
-  (Lisp_Object xwidget_id)
+  (Lisp_Object xwidget)
 {
   //TODO support multibyte strings
-  const gchar* str=webkit_web_view_get_title( WEBKIT_WEB_VIEW(xid2xw(xwidget_id)->widget_osr));
+  struct xwidget* xw = XXWIDGET(xwidget);
+  const gchar* str=webkit_web_view_get_title( WEBKIT_WEB_VIEW(xw->widget_osr));
   return make_string_from_bytes(str, wcslen((const wchar_t *)str), strlen(str));
 }
 
@@ -620,33 +683,13 @@ DEFUN ("xwidget-webkit-get-title", Fxwidget_webkit_get_title,  Sxwidget_webkit_g
 
 
 
-DEFUN ("xwidget-embed-steal-window", Fxwidget_embed_steal_window, Sxwidget_embed_steal_window, 2, 2, 0,
-       doc:	/* Tell existing embed xwidget to steal other window id. This is based on a deprecated method in GTK and doesnt work too well.*/
-       )
-  (Lisp_Object xwidget_id, Lisp_Object window_id)
-{
-  int iwindow_id;
-  struct xwidget* xw = xid2xw(xwidget_id);
-  
-  CHECK_NUMBER (window_id);
-  iwindow_id = XFASTINT (window_id);
-
-  //  gtk_socket_steal(GTK_SOCKET(xw->widget),iwindow_id);
-  //try adding proper gtk plugs instead, i never once had "steal" work
-  /////////  gtk_socket_add_id (GTK_SOCKET (xw->widget), iwindow_id); /////TODO MVC
-  //add_id annoyingly odesnt work either. the only working option
-  //seems to be clients that plug into the sockets, and so far only emacs and mplayer
-  //oenvrml
-  return Qnil;
-}
-
 
 
 DEFUN ("xwidget-resize-internal", Fxwidget_resize_internal, Sxwidget_resize_internal, 3, 3, 0, doc:
        /* resize xwidgets internal use only, because the lisp specs need to be updated also*/)
-  (Lisp_Object xwidget_id, Lisp_Object new_width, Lisp_Object new_height)
+  (Lisp_Object xwidget, Lisp_Object new_width, Lisp_Object new_height)
 {
-  struct xwidget *xw;
+  struct xwidget* xw = XXWIDGET(xwidget);
   struct xwidget_view *xv;
   int  w, h;
 
@@ -654,9 +697,9 @@ DEFUN ("xwidget-resize-internal", Fxwidget_resize_internal, Sxwidget_resize_inte
   CHECK_NUMBER (new_height);
   w = XFASTINT (new_width);
   h = XFASTINT (new_height);
-  xw = xid2xw(xwidget_id);
+  
 
-  printf("resize xwidget %d (%d,%d)->(%d,%d)",xw->id,xw->width,xw->height,w,h);
+  printf("resize xwidget %d (%d,%d)->(%d,%d)",xw, xw->width,xw->height,w,h);
   xw->width=w;
   xw->height=h;
   for (int i = 0; i < MAX_XWIDGETS; i++) //TODO MVC refactor lazy linear search
@@ -673,26 +716,28 @@ DEFUN ("xwidget-resize-internal", Fxwidget_resize_internal, Sxwidget_resize_inte
 
 
 
+
 DEFUN("xwidget-info", Fxwidget_info , Sxwidget_info, 1,1,0, doc: /* get xwidget props */)
-  (Lisp_Object xwidget_id)
+  (Lisp_Object xwidget)
 {
-  struct xwidget *xw = xid2xw(xwidget_id);
   Lisp_Object info;
+  struct xwidget* xw = XXWIDGET(xwidget);
 
   info = Fmake_vector (make_number (4), Qnil);
-  XVECTOR (info)->contents[0] = make_number(xw->id);
-  XVECTOR (info)->contents[1] = xw->type;
-  XVECTOR (info)->contents[2] = make_number(xw->width);
-  XVECTOR (info)->contents[3] = make_number(xw->height);
+  XSETSYMBOL (XVECTOR (info)->contents[0], xw->type);
+  XSETSTRING (XVECTOR (info)->contents[1], xw->title);
+  XSETINT    (XVECTOR (info)->contents[2], xw->width);
+  XSETINT    (XVECTOR (info)->contents[3], xw->height);
 
 
   return info;
 }
 
+ 
 DEFUN("xwidget-view-info", Fxwidget_view_info , Sxwidget_view_info, 2,2,0, doc: /* get xwidget view props */)
-  (Lisp_Object xwidget_id, Lisp_Object window)
+  (Lisp_Object xwidget, Lisp_Object window)
 {
-  struct xwidget *xw = xid2xw(xwidget_id);
+  struct xwidget* xw = XXWIDGET(xwidget);
   struct xwidget_view* xv = xwidget_view_lookup(xw, XWINDOW(window));
   
   Lisp_Object info;
@@ -708,139 +753,17 @@ DEFUN("xwidget-view-info", Fxwidget_view_info , Sxwidget_view_info, 2,2,0, doc: 
   return info;
 }
 
-
-
-//xterm.c listens to xwidget_owns_kbd  and tries to not eat events when its set
-int xwidget_owns_kbd = 0;
-DEFUN ("xwidget-set-keyboard-grab", Fxwidget_set_keyboard_grab, Sxwidget_set_keyboard_grab, 2, 2, 0, doc:	/* set unset kbd grab for xwidget. */
-       )
-  (Lisp_Object xwidget_id, Lisp_Object kbd_grab)
-{
-  struct xwidget *xw = xid2xw(xwidget_id);
-  int xid, kbd_flag;
-
-  CHECK_NUMBER (kbd_grab);
-  kbd_flag = XFASTINT (kbd_grab);
-
-
-  
-  printf ("kbd grab: %d %d\n", xid, kbd_flag);
-  if (kbd_flag)
-    {
-      //int rv=gtk_widget_activate(xw->widget); //ok, but how deactivate?
-      //printf("activation:%d\n",rv);
-      //      gtk_window_present(GTK_WINDOW(xw->widget));
-      //gtk_widget_grab_focus(xw->widget);
-      //      gtk_socket_windowing_update_active (xw->widget,1);
-      //      GDK_WINDOW_XWINDOW (GTK_WIDGET (socket)->window)
-      //FRAME_X_OUTPUT (f)->widget
-      //      gdk_keyboard_grab(xw->widget,TRUE,GDK_CURRENT_TIME);
-
-      /* GtkWidget *parent = gtk_widget_get_parent (xw->widget); */
-      /* GtkWidget *lastparent; */
-      /* for (lastparent = parent; parent = gtk_widget_get_parent (parent); */
-      /*      parent == NULL); */
-
-      /* gtk_container_set_focus_child (GTK_CONTAINER (lastparent), xw->widget); */
-
-      ////gtk_container_set_focus_child (GTK_CONTAINER (xw->widgetwindow), xw->widget); //TODO MVC
-
-      xwidget_owns_kbd = TRUE;
-    }
-  else
-    {
-      xwidget_owns_kbd = FALSE;
-    }
-  /*
-    gdk_keyboard_grab(xw->widget,TRUE,GDK_CURRENT_TIME);
-    else
-    gdk_keyboard_ungrab(GDK_CURRENT_TIME);
-  */
-  return Qnil;
-}
-
-
-//lowlevel fn mostly cloned from xembed_send_message()
-void
-xwidget_key_send_message (struct frame *f,
-                          Window destination_window,
-                          int keycode, int keypress, int modifiers)
-{
-
-  XKeyEvent event;
-  //segfaults:
-  /* xwidget_key_send_message (f=0x0, destination_window=0, keycode=65, keypress=1,  */
-  /*     modifiers=0) at xwidget.c:332 */
-  /* 332          event.display = FRAME_X_DISPLAY (f); */
-
-  event.display = FRAME_X_DISPLAY (f);
-  event.window = destination_window;
-  event.root = FRAME_X_WINDOW (f);
-  event.subwindow = None;
-  event.time = CurrentTime;
-  event.x = 1;
-  event.y = 1;
-  event.x_root = 1;
-  event.y_root = 1;
-  event.same_screen = TRUE;
-
-  event.type = keypress ? KeyPress : KeyRelease;
-  event.keycode = keycode;
-  event.state = modifiers;
-
-  XSendEvent (event.display, event.window, TRUE, KeyPressMask,
-              (XEvent *) & event);
-}
-
-//using "accessible" interfaces seems expensive
-//pkg-config --cflags cspi-1.0
-//#include <at-spi-1.0/cspi/spi.h>
-
-DEFUN ("xwidget-send-keyboard-event", Fxwidget_send_keyboard_event, Sxwidget_send_keyboard_event, 2, 2, 0, doc:/* synthesize a kbd event for a xwidget. */
-       )
-  (Lisp_Object  xwidget_id, Lisp_Object keydescriptor)
-{
-  int keyval;
-  char *keystring = "";
-  FRAME_PTR f;
-  struct xwidget *xw = xid2xw(xwidget_id);
-  GdkWindow *window;
-  XID xid;
-
-  /* TODO MVC
-     f = (FRAME_PTR) g_object_get_data (G_OBJECT (xw->widget), XG_FRAME_DATA);
-
-     //GdkWindow* window=gtk_widget_get_window(xw->widget); //event winds up in emacs
-
-     //TODO assert xw is a gtk_socket or THIS WILL FAIL GLORIOUSLY
-     window = gtk_socket_get_plug_window (GTK_SOCKET (xw->widget));
-     //the event gets eaten somewhere.
-     //i suspect you just cant send an event to a child window and not have emacs eat it.
-     //but if this were true the event should pop to emacs right?
-
-
-     xid = gdk_x11_drawable_get_xid (window);
-
-     printf ("xwidget-send-keyboard-event %d %d\n", window, xid);
-
-     xwidget_key_send_message (f, xid, 38, 1, 0);	//38 is 'a' HACK for now
-     xwidget_key_send_message (f, xid, 38, 0, 0);
-  */
-  return Qnil;
-}
-
 void
 syms_of_xwidget (void)
 {
   int i;
 
-  defsubr (&Sxwidget_set_keyboard_grab);
-  defsubr (&Sxwidget_send_keyboard_event);
-  defsubr (&Sxwidget_embed_steal_window);
+  defsubr (&Smake_xwidget);
+
   defsubr (&Sxwidget_info);
   defsubr (&Sxwidget_view_info);
   defsubr (&Sxwidget_resize_internal);
-  defsubr (&Sxwidget_embed_steal_window);
+
 
   defsubr (&Sxwidget_webkit_goto_uri);
   defsubr (&Sxwidget_webkit_execute_script);
@@ -848,7 +771,7 @@ syms_of_xwidget (void)
   
   DEFSYM (Qxwidget ,"xwidget");
 
-  DEFSYM (Qxwidget_id ,":xwidget-id");
+  DEFSYM (Qcxwidget ,":xwidget");
   DEFSYM (Qtitle ,":title");
 
   DEFSYM (Qbutton, "button");  
@@ -859,10 +782,15 @@ syms_of_xwidget (void)
   DEFSYM (Qwebkit_osr ,"webkit-osr");    
   DEFSYM (QCplist, ":plist");  
 
+   DEFVAR_LISP ("xwidget-alist", Vxwidget_alist, doc: /*xwidgets list*/);
+   Vxwidget_alist = Qnil;
+   DEFVAR_LISP ("xwidget-view-alist", Vxwidget_view_alist, doc: /*xwidget views list*/);
+   Vxwidget_alist = Qnil;
+ 
   Fprovide (intern ("xwidget-internal"), Qnil);
 
-  for (i = 0; i < MAX_XWIDGETS; i++)
-    xwidgets[i].initialized = 0;
+  //  for (i = 0; i < MAX_XWIDGETS; i++)
+  //xwidgets[i].initialized = 0;
 }
 
 
@@ -931,22 +859,6 @@ xwidget_spec_value ( Lisp_Object spec, Lisp_Object  key,
   return Qnil;
 }
 
-void
-assert_valid_xwidget_id (int id, char *str)
-{
-  if (id < 0 || id > MAX_XWIDGETS)
-    {
-      printf ("broken xwidgetid:%d %s\n", id, str);
-      abort ();
-    }
-}
-
-struct xwidget *
-xwidget_from_id (int id)
-{
-  assert_valid_xwidget_id (id, "xwidget_from_id");
-  return &xwidgets[id];
-}
 
 void      xwidget_view_delete_all_in_window(  struct window *w )
 {
@@ -980,7 +892,7 @@ void                gtk_window_get_position             (GtkWindow *window,
 
   
 
-int
+struct xwidget*
 lookup_xwidget (Lisp_Object  spec)
 {
   /* When a xwidget lisp spec is found initialize the C struct that is used in the C code.
@@ -992,57 +904,28 @@ lookup_xwidget (Lisp_Object  spec)
   */
   int found = 0, found1 = 0, found2 = 0;
   Lisp_Object value;
-  int id;
   struct xwidget *xw;
 
-  value = xwidget_spec_value (spec, Qxwidget_id, &found1);
-  id = INTEGERP (value) ? XFASTINT (value) : 0;	//TODO id 0 by default, but id must be unique so this is dumb
+  value = xwidget_spec_value (spec, Qcxwidget, &found1);
+  xw = XXWIDGET(value);
 
-  xw = &xwidgets[id];
-  xw->id=id;
-  value = xwidget_spec_value (spec, QCtype, &found);
-  xw->type = SYMBOLP (value) ? value : Qbutton;	//default to button
-  value = xwidget_spec_value (spec, Qtitle, &found2);
-  xw->title = STRINGP (value) ? (char *) SDATA (value) : "?";	//funky cast FIXME TODO
+  /* value = xwidget_spec_value (spec, QCtype, &found); */
+  /* xw->type = SYMBOLP (value) ? value : Qbutton;	//default to button */
+  /* value = xwidget_spec_value (spec, Qtitle, &found2); */
+  /* xw->title = STRINGP (value) ? (char *) SDATA (value) : "?";	//funky cast FIXME TODO */
 
-  value = xwidget_spec_value (spec, QCheight, NULL);
-  xw->height = INTEGERP (value) ? XFASTINT (value) : 50; 
-  value = xwidget_spec_value (spec, QCwidth, NULL);
-  xw->width = INTEGERP (value) ? XFASTINT (value) : 50;
+  /* value = xwidget_spec_value (spec, QCheight, NULL); */
+  /* xw->height = INTEGERP (value) ? XFASTINT (value) : 50;  */
+  /* value = xwidget_spec_value (spec, QCwidth, NULL); */
+  /* xw->width = INTEGERP (value) ? XFASTINT (value) : 50; */
 
-  value = xwidget_spec_value (spec, QCplist, NULL);
-  xw->plist = value;
-  printf ("xwidget_id:%d type:%d found:%d %d %d title:%s (%d,%d)\n", id,
+  /* value = xwidget_spec_value (spec, QCplist, NULL); */
+  /* xw->plist = value; */
+  printf ("xwidget_id:%d type:%d found:%d %d %d title:%s (%d,%d)\n", xw,
           xw->type, found, found1, found2, xw->title, xw->height, xw->width);
 
-  assert_valid_xwidget_id (id, "lookup_xwidget");
-
-#ifdef HAVE_WEBKIT_OSR
-  /* DIY mvc. widget is rendered offscreen,
-     later bitmap copied to the views.
-   */
-  if (EQ(xw->type, Qwebkit_osr) && !xw->widgetwindow_osr){
-    BLOCK_INPUT;
-    xw->widgetwindow_osr = GTK_CONTAINER (gtk_offscreen_window_new ());
-    gtk_window_resize(    GTK_WINDOW(xw->widgetwindow_osr), xw->width, xw->height);
-    xw->widget_osr = webkit_web_view_new();
-
-    gtk_widget_set_size_request (GTK_WIDGET (xw->widget_osr), xw->width, xw->height);      
-    gtk_container_add (xw->widgetwindow_osr, xw->widget_osr);
-    
-    gtk_widget_show_all (GTK_WIDGET (xw->widgetwindow_osr));
-
-    /* store some xwidget data in the gtk widgets for convenient retrieval in the event handlers. */
-    g_object_set_data (G_OBJECT (xw->widget_osr), XG_XWIDGET, (gpointer) (xw));
-    g_object_set_data (G_OBJECT (xw->widgetwindow_osr), XG_XWIDGET, (gpointer) (xw));
-    g_signal_connect (G_OBJECT (    xw->widgetwindow_osr), "damage-event",    G_CALLBACK (webkit_osr_damage_event_callback), NULL);
-      
-    webkit_web_view_load_uri(WEBKIT_WEB_VIEW(xw->widget_osr), "http://www.fsf.org");
-    UNBLOCK_INPUT;
-
-  }
-#endif          
-  return id;
+  //assert_valid_xwidget_id (id, "lookup_xwidget");
+  return xw;
 }
 
 /*set up detection of touched xwidget*/
@@ -1101,27 +984,12 @@ xwidget_end_redisplay (struct glyph_matrix *matrix)
                 {
                   if (glyph->type == XWIDGET_GLYPH)
                     {
-                      //printf("(%d)",glyph->u.xwidget_id);
-                      //here the id sometimes sucks, so maybe the desired glyph matrix isnt ready here?
-                      //also, it appears the desired matrix is not the entire window, but only the changed part. wtf?
-                      int id = glyph->u.xwidget_id;
-                      if (id < 0 || id > MAX_XWIDGETS)
-                        {
-                          printf
-                            ("glyph matrix contains crap, abort xwidget handling and wait for better times\n ");
-                          //dump_glyph_matrix(matrix, 2);
-                          return;
-                        }
-                      else
-                        {
-                          // printf("row %d not enabled\n", i);
-                        }
                       /*
                         the only call to xwidget_end_redisplay is in dispnew and looks like:
                         if ((XWINDOW(FRAME_SELECTED_WINDOW (SELECTED_FRAME()))) ==  (w))
                         xwidget_end_redisplay(w->current_matrix);
                       */
-                      xwidget_touch (xwidget_view_lookup(&xwidgets[glyph->u.xwidget_id],
+                      xwidget_touch (xwidget_view_lookup(glyph->u.xwidget,
                                                          (XWINDOW(FRAME_SELECTED_WINDOW (SELECTED_FRAME())))));
                     }
                 }

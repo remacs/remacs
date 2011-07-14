@@ -4371,8 +4371,7 @@ handle_single_display_spec (struct it *it, Lisp_Object spec, Lisp_Object object,
 	  it->object = NILP (object) ? it->w->buffer : object;
 	  *position = start_pos;
 
-          it->xwidget_id=lookup_xwidget(value);
-          assert_valid_xwidget_id(it->xwidget_id,"handle_single_display_spec");
+          it->xwidget = lookup_xwidget(value);
 	}      
 #ifdef HAVE_WINDOW_SYSTEM
       else //if nothing else, its an image
@@ -6612,9 +6611,9 @@ static int
 next_element_from_xwidget (struct it *it)
 {
   it->what = IT_XWIDGET;
-  assert_valid_xwidget_id(it->xwidget_id,"next_element_from_xwidget");
+  //assert_valid_xwidget_id(it->xwidget_id,"next_element_from_xwidget");
   //this is shaky because why do we set "what" if we dont set the other parts??
-  printf("xwidget_id %d: in next_element_from_xwidget: FIXME \n", it->xwidget_id);
+  //printf("xwidget_id %d: in next_element_from_xwidget: FIXME \n", it->xwidget_id);
   return 1;
 }
 
@@ -16449,7 +16448,7 @@ dump_glyph (struct glyph_row *row, struct glyph *glyph, int area)
 		   ? 'S'
 		   : '-')),
 	       glyph->pixel_width,
-	       glyph->u.xwidget_id,
+	       glyph->u.xwidget,
 	       '.',
 	       glyph->face_id,
 	       glyph->left_box_line_p,
@@ -21002,8 +21001,8 @@ fill_xwidget_glyph_string (struct glyph_string *s)
   s->font = s->face->font;
   s->width = s->first_glyph->pixel_width;
   s->ybase += s->first_glyph->voffset;
-  s->xwidget_id=s->first_glyph->u.xwidget_id;
-  assert_valid_xwidget_id(s->xwidget_id,"fill_xwidget_glyph_string");
+  s->xwidget = s->first_glyph->u.xwidget;
+  //assert_valid_xwidget_id ( s->xwidget, "fill_xwidget_glyph_string");
 }
 
 
@@ -22136,7 +22135,7 @@ produce_xwidget_glyph (struct it *it)
   /* Make sure X resources of the face is loaded.  */
   PREPARE_FACE_FOR_DISPLAY (it->f, face);
 
-  xw = xwidget_from_id(it->xwidget_id);
+  xw = it->xwidget;
   it->ascent = it->phys_ascent = glyph_ascent = xw->height/2;
   it->descent = xw->height/2;
   it->phys_descent = it->descent;
@@ -22194,8 +22193,8 @@ produce_xwidget_glyph (struct it *it)
           glyph->padding_p = 0;
 	  glyph->glyph_not_available_p = 0;
 	  glyph->face_id = it->face_id;
-          glyph->u.xwidget_id = it->xwidget_id;
-          assert_valid_xwidget_id(glyph->u.xwidget_id,"produce_xwidget_glyph");
+          glyph->u.xwidget = it->xwidget;
+          //assert_valid_xwidget_id(glyph->u.xwidget_id,"produce_xwidget_glyph");
 	  glyph->font_type = FONT_TYPE_UNKNOWN;
 	  ++it->glyph_row->used[area];
 	}
