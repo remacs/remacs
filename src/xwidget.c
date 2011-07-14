@@ -171,7 +171,8 @@ DEFUN ("make-xwidget", Fmake_xwidget, Smake_xwidget, 7, 7, 0,
   /* DIY mvc. widget is rendered offscreen,
      later bitmap copied to the views.
    */
-  if (EQ(xw->type, Qwebkit_osr) && !xw->widgetwindow_osr){
+  if (EQ(xw->type, Qwebkit_osr)){
+    printf("init webkit osr\n");
     BLOCK_INPUT;
     xw->widgetwindow_osr = GTK_CONTAINER (gtk_offscreen_window_new ());
     gtk_window_resize(    GTK_WINDOW(xw->widgetwindow_osr), xw->width, xw->height);
@@ -365,8 +366,8 @@ xwidget_osr_draw_callback (GtkWidget *widget, cairo_t *cr, gpointer data)
   struct xwidget* xw = (struct xwidget*) g_object_get_data (G_OBJECT (widget), XG_XWIDGET);
   struct xwidget_view* xv = (struct xwidget_view*) g_object_get_data (G_OBJECT (widget), XG_XWIDGET_VIEW);    
   
-  printf("xwidget_osr_draw_callback gtk3 xw.id:%d xw.type:%d window:%d vis:%d\n",
-         xw,xw->type, gtk_widget_get_window (widget),  gtk_widget_get_visible (xw->widget_osr));
+  //  printf("xwidget_osr_draw_callback gtk3 xw.id:%d xw.type:%d window:%d vis:%d\n",
+  //         xw,xw->type, gtk_widget_get_window (widget),  gtk_widget_get_visible (xw->widget_osr));
 
   cairo_rectangle(cr, 0,0, xv->clip_right, xv->clip_bottom);//xw->width, xw->height);
   cairo_clip(cr);
