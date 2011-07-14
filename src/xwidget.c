@@ -223,7 +223,7 @@ buttonclick_handler (GtkWidget * widget, gpointer data)
 
 
   event.arg = Qnil;
-  //event.arg = Fcons (make_number (xw->id), event.arg); //TODO send the actual xwidget object now instead
+  event.arg = Fcons (xw, event.arg); //TODO send the actual xwidget object now instead
   event.arg = Fcons (intern ("buttonclick"), event.arg);
 
   kbd_buffer_store_event (&event);
@@ -243,7 +243,7 @@ send_xembed_ready_event (struct xwidget* xw, int xembedid)
   event.arg = Qnil;
   event.arg = Fcons (make_number (xembedid), event.arg);
   event.arg = Fcons (intern ("xembed-ready"), event.arg);
-//  event.arg = Fcons (make_number (xwid), event.arg); //TODO 
+  event.arg = Fcons (xw, event.arg); //TODO 
 
 
   kbd_buffer_store_event (&event);
@@ -409,11 +409,11 @@ xwidget_init_view (
   //widget creation
   if(EQ(xww->type, Qbutton))
     {
-      xv->widget = gtk_button_new_with_label (xww->title);
+      xv->widget = gtk_button_new_with_label (XSTRING(xww->title)->data);
       g_signal_connect (G_OBJECT (xv->widget), "clicked",
                         G_CALLBACK (buttonclick_handler), xww); //the model rather than the view
     } else if (EQ(xww->type, Qtoggle)) {
-    xv->widget = gtk_toggle_button_new_with_label (xww->title);
+    xv->widget = gtk_toggle_button_new_with_label (XSTRING(xww->title)->data);
   } else if (EQ(xww->type, Qsocket)) {
     xv->widget = gtk_socket_new ();
     //gtk_widget_set_app_paintable (xw->widget, TRUE); //workaround for composited sockets

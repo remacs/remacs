@@ -21,6 +21,7 @@ struct xwidget{
   Lisp_Object plist;//auxilliary data
   Lisp_Object type;//the widget type
   Lisp_Object buffer; //buffer where xwidget lives
+  Lisp_Object title;//a title that is used for button labels for instance
   
   //here ends the lisp part.
   //"height" is the marker field
@@ -32,7 +33,7 @@ struct xwidget{
   GtkContainer* widgetwindow_osr;
 
   //TODO these are WIP
-  char* title;//a title that is used for button labels for instance
+
 
   
 };
