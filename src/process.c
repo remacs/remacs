@@ -102,9 +102,9 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "gnutls.h"
 #endif
 
-#if defined (USE_GTK) || defined (HAVE_GCONF)
+#if defined (USE_GTK) || defined (HAVE_GCONF) || defined (HAVE_GSETTINGS)
 #include "xgselect.h"
-#endif /* defined (USE_GTK) || defined (HAVE_GCONF) */
+#endif
 #ifdef HAVE_NS
 #include "nsterm.h"
 #endif
@@ -1652,7 +1652,7 @@ create_process (Lisp_Object process, char **new_argv, Lisp_Object current_dir)
   sigaddset (&blocked, SIGHUP );  sigaction (SIGHUP , 0, &sighup_action );
 #endif
 #endif /* HAVE_WORKING_VFORK */
-  sigprocmask (SIG_BLOCK, &blocked, &procmask);
+  pthread_sigmask (SIG_BLOCK, &blocked, &procmask);
 
   FD_SET (inchannel, &input_wait_mask);
   FD_SET (inchannel, &non_keyboard_wait_mask);
@@ -1808,7 +1808,7 @@ create_process (Lisp_Object process, char **new_argv, Lisp_Object current_dir)
 	signal (SIGPIPE, SIG_DFL);
 
 	/* Stop blocking signals in the child.  */
-	sigprocmask (SIG_SETMASK, &procmask, 0);
+	pthread_sigmask (SIG_SETMASK, &procmask, 0);
 
 	if (pty_flag)
 	  child_setup_tty (xforkout);
@@ -1900,7 +1900,7 @@ create_process (Lisp_Object process, char **new_argv, Lisp_Object current_dir)
 #endif
 #endif /* HAVE_WORKING_VFORK */
   /* Stop blocking signals in the parent.  */
-  sigprocmask (SIG_SETMASK, &procmask, 0);
+  pthread_sigmask (SIG_SETMASK, &procmask, 0);
 
   /* Now generate the error if vfork failed.  */
   if (pid < 0)
@@ -4527,7 +4527,7 @@ wait_reading_process_output (int time_limit, int microsecs, int read_kbd,
 	      process_output_skip = 0;
 	    }
 #endif
-#if defined (USE_GTK) || defined (HAVE_GCONF)
+#if defined (USE_GTK) || defined (HAVE_GCONF) || defined (HAVE_GSETTINGS)
           nfds = xg_select
 #elif defined (HAVE_NS)
 	  nfds = ns_select

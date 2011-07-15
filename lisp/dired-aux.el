@@ -56,9 +56,9 @@ into this list; they also should call `dired-log' to log the errors.")
   "Compare file at point with file FILE using `diff'.
 FILE defaults to the file at the mark.  (That's the mark set by
 \\[set-mark-command], not by Dired's \\[dired-mark] command.)
-The prompted-for file is the first file given to `diff'.
+The prompted-for FILE is the first file given to `diff'.
 With prefix arg, prompt for second argument SWITCHES,
-which is options for `diff'."
+which is the string of command switches for `diff'."
   (interactive
    (let* ((current (dired-get-filename t))
 	  ;; Get the file at the mark.
@@ -514,22 +514,25 @@ to the end of the list of defaults just after the default value."
 
 ;; This is an extra function so that you can redefine it, e.g., to use gmhist.
 (defun dired-read-shell-command (prompt arg files)
-  "Read a dired shell command prompting with PROMPT.
-Passes the prefix argument ARG to `dired-mark-prompt', so that it
-can be used in the prompt to indicate which FILES are affected.
-Normally reads the command with `read-shell-command', but if the
-`dired-x' packages is loaded, uses `dired-guess-shell-command' to offer
-a smarter default choice of shell command."
+  "Read a dired shell command.
+PROMPT should be a format string with one \"%s\" format sequence,
+which is replaced by the value returned by `dired-mark-prompt',
+with ARG and FILES as its arguments.  FILES should be a list of
+file names.  The result is used as the prompt.
+
+This normally reads using `read-shell-command', but if the
+`dired-x' package is loaded, use `dired-guess-shell-command' to
+offer a smarter default choice of shell command."
   (minibuffer-with-setup-hook
       (lambda ()
 	(set (make-local-variable 'minibuffer-default-add-function)
 	     'minibuffer-default-add-dired-shell-commands))
     (setq prompt (format prompt (dired-mark-prompt arg files)))
-    (if (featurep 'dired-x)
+    (if (functionp 'dired-guess-shell-command)
 	(dired-mark-pop-up nil 'shell files
-			   #'dired-guess-shell-command prompt files)
+			   'dired-guess-shell-command prompt files)
       (dired-mark-pop-up nil 'shell files
-			 #'read-shell-command prompt nil nil))))
+			 'read-shell-command prompt nil nil))))
 
 ;;;###autoload
 (defun dired-do-async-shell-command (command &optional arg file-list)
@@ -699,6 +702,9 @@ can be produced by `dired-get-marked-files', for example."
 ;; Commands that delete or redisplay part of the dired buffer.
 
 (defun dired-kill-line (&optional arg)
+  "Kill the current line (not the files).
+With a prefix argument, kill that many lines starting with the current line.
+\(A negative argument kills backward.)"
   (interactive "P")
   (setq arg (prefix-numeric-value arg))
   (let (buffer-read-only file)
@@ -1008,7 +1014,7 @@ See Info node `(emacs)Subdir switches' for more details."
     (dired-uncache
      (if (consp dired-directory) (car dired-directory) dired-directory))
     (dired-map-over-marks (let ((fname (dired-get-filename))
-				;; Postphone readin hook till we map
+				;; Postpone readin hook till we map
 				;; over all marked files (Bug#6810).
 				(dired-after-readin-hook nil))
 			    (message "Redisplaying... %s" fname)
@@ -2493,8 +2499,9 @@ with the command \\[tags-loop-continue]."
 ;;;###autoload
 (defun dired-show-file-type (file &optional deref-symlinks)
   "Print the type of FILE, according to the `file' command.
-If FILE is a symbolic link and the optional argument DEREF-SYMLINKS is
-true then the type of the file linked to by FILE is printed instead."
+If you give a prefix to this command, and FILE is a symbolic
+link, then the type of the file linked to by FILE is printed
+instead."
   (interactive (list (dired-get-filename t) current-prefix-arg))
   (let (process-file-side-effects)
     (with-temp-buffer

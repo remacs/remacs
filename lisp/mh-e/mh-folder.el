@@ -77,7 +77,7 @@ the MH mail system."
 ;;; Desktop Integration
 
 ;; desktop-buffer-mode-handlers appeared in Emacs 22.
-(if (fboundp 'desktop-buffer-mode-handlers)
+(if (boundp 'desktop-buffer-mode-handlers)
     (add-to-list 'desktop-buffer-mode-handlers
                  '(mh-folder-mode . mh-restore-desktop-buffer)))
 
@@ -526,7 +526,8 @@ font-lock is done highlighting.")
 ;; Shush compiler.
 (defvar desktop-save-buffer)
 (defvar font-lock-auto-fontify)
-(defvar font-lock-defaults)             ; XEmacs
+(mh-do-in-xemacs
+  (defvar font-lock-defaults))
 
 ;; Ensure new buffers won't get this mode if default major-mode is nil.
 (put 'mh-folder-mode 'mode-class 'special)
@@ -794,7 +795,7 @@ instead."
              (setq threading-needed-flag mh-show-threads-flag)
              (setq mh-previous-window-config config))
             ((not (eq (current-buffer) (get-buffer folder)))
-             (switch-to-buffer folder)
+             (mh-pop-to-buffer-same-window folder)
              (setq mh-previous-window-config config))))
     (mh-get-new-mail file)
     (when (and threading-needed-flag
@@ -854,7 +855,7 @@ From a program, edit MESSAGE; nil means edit current message."
 
     ;; Just show the edit buffer...
     (delete-other-windows)
-    (switch-to-buffer edit-buffer)))
+    (mh-pop-to-buffer-same-window edit-buffer)))
 
 ;;;###mh-autoload
 (defun mh-next-button (&optional backward-flag)
@@ -1704,7 +1705,7 @@ DONT-EXEC-PENDING is non-nil."
          (unless dont-exec-pending
            (mh-process-or-undo-commands folder)
            (mh-reset-threads-and-narrowing))
-         (switch-to-buffer folder)))
+         (mh-pop-to-buffer-same-window folder)))
   (mh-regenerate-headers range)
   (if (zerop (buffer-size))
       (if (equal range "all")
@@ -1785,7 +1786,7 @@ Also removes all content from the folder buffer."
 (defun mh-make-folder (name)
   "Create a new mail folder called NAME.
 Make it the current folder."
-  (switch-to-buffer name)
+  (mh-pop-to-buffer-same-window name)
   (setq buffer-read-only nil)
   (erase-buffer)
   (if mh-adaptive-cmd-note-flag

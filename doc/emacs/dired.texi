@@ -81,6 +81,13 @@ specified, the @code{ls} switches can include short options (that is,
 single characters) requiring no arguments, and long options (starting
 with @samp{--}) whose arguments are specified with @samp{=}.
 
+@vindex dired-use-ls-dired
+  Note that Dired automatically adds the option @samp{--dired}, if
+your @code{ls} program supports it, unless you explicitly set
+the variable @code{dired-use-ls-dired} to @code{nil}.  Without this
+option, Dired will have trouble parsing some @samp{unusual} file-names.
+See the documentation of @code{dired-use-ls-dired} for more details.
+
   On MS-Windows and MS-DOS systems, Emacs @emph{emulates} @code{ls};
 see @ref{ls in Lisp}, for options and peculiarities of that emulation.
 
@@ -984,8 +991,9 @@ to the parent directory in the same Dired buffer.
 
 Use the @kbd{l} command (@code{dired-do-redisplay}) to update the
 subdirectory's contents.  Use @kbd{C-u k} on the subdirectory header
-line to delete the subdirectory (@pxref{Dired Updating}).  You can also
-hide and show inserted subdirectories (@pxref{Hiding Subdirectories}).
+line to remove the subdirectory listing (@pxref{Dired Updating}).  You
+can also hide and show inserted subdirectories (@pxref{Hiding
+Subdirectories}).
 
 @ifnottex
 @include dired-xtra.texi
@@ -1145,9 +1153,9 @@ current file as a last resort.
 
   If you use @kbd{k} with a numeric prefix argument to kill the line
 for a file that is a directory, which you have inserted in the Dired
-buffer as a subdirectory, it deletes that subdirectory from the buffer
-as well.  Typing @kbd{C-u k} on the header line for a subdirectory
-also deletes the subdirectory from the Dired buffer.
+buffer as a subdirectory, it removed that subdirectory line from the
+buffer as well.  Typing @kbd{C-u k} on the header line for a
+subdirectory also removes the subdirectory line from the Dired buffer.
 
   The @kbd{g} command brings back any individual lines that you have
 killed in this way, but not subdirectories---you must use @kbd{i} to

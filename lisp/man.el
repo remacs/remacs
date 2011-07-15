@@ -276,7 +276,9 @@ This regexp should not start with a `^' character.")
 This regular expression should start with a `^' character.")
 
 (defvar Man-reference-regexp
-  (concat "\\(" Man-name-regexp "\\)[ \t]*(\\(" Man-section-regexp "\\))")
+  (concat "\\(" Man-name-regexp
+	  "\\(\n[ \t]+" Man-name-regexp "\\)*\\)[ \t]*(\\("
+	  Man-section-regexp "\\))")
   "Regular expression describing a reference to another manpage.")
 
 (defvar Man-apropos-regexp
@@ -597,8 +599,8 @@ and the `Man-section-translations-alist' variables)."
     (cond
      ;; "chmod(2V)" case ?
      ((string-match (concat "^" Man-reference-regexp "$") ref)
-      (setq name (match-string 1 ref)
-	    section (match-string 2 ref)))
+      (setq name (replace-regexp-in-string "[\n\t ]" "" (match-string 1 ref))
+	    section (match-string 3 ref)))
      ;; "2v chmod" case ?
      ((string-match (concat "^\\(" Man-section-regexp
 			    "\\) +\\(" Man-name-regexp "\\)$") ref)
@@ -1106,7 +1108,7 @@ Same for the ANSI bold and normal escape sequences."
       (put-text-property (match-beginning 0)
 			 (match-end 0)
 			 'face Man-overstrike-face)))
-  (message "%s man page formatted" Man-arguments))
+  (message "%s man page formatted" (Man-page-from-arguments Man-arguments)))
 
 (defun Man-highlight-references (&optional xref-man-type)
   "Highlight the references on mouse-over.
@@ -1255,12 +1257,11 @@ manpage command."
 	  (Man-mode)
 
 	  (if (not Man-page-list)
-	      (let ((args Man-arguments))
+ 	      (let ((args Man-arguments))
 		(kill-buffer (current-buffer))
-		(error "Can't find the %s manpage" args)))
-
-          (set-buffer-modified-p nil)
-          ))
+		(error "Can't find the %s manpage"
+		       (Man-page-from-arguments args)))
+	    (set-buffer-modified-p nil))))
 	;; Restore case-fold-search before calling
 	;; Man-notify-when-ready because it may switch buffers.
 
@@ -1270,6 +1271,18 @@ manpage command."
 	(if err-mess
 	    (error "%s" err-mess))
 	))))
+
+(defun Man-page-from-arguments (args)
+  ;; Skip arguments and only print the page name.
+  (mapconcat
+   'identity
+   (delete nil
+	   (mapcar
+	    (lambda (elem)
+	      (and (not (string-match "^-" elem))
+		   elem))
+	    (split-string args " ")))
+   " "))
 
 
 ;; ======================================================================

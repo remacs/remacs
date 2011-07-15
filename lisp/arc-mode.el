@@ -55,9 +55,9 @@
 ;;			--------------------------------------------
 ;; View listing		Intern	Intern	Intern	Intern	Y	Y
 ;; Extract member	Y	Y	Y	Y	Y	Y
-;; Save changed member	Y	Y	Y	Y	N	N
+;; Save changed member	Y	Y	Y	Y	N	Y
 ;; Add new member	N	N	N	N	N	N
-;; Delete member	Y	Y	Y	Y	N	N
+;; Delete member	Y	Y	Y	Y	N	Y
 ;; Rename member	Y	Y	N	N	N	N
 ;; Chmod		-	Y	Y	-	N	N
 ;; Chown		-	Y	-	-	N	N
@@ -216,10 +216,10 @@ Archive and member name will be added."
 ;; Zip archive configuration
 
 (defcustom archive-zip-extract
-  (cond ((executable-find "unzip") '("unzip" "-qq" "-c"))
-	((executable-find "7z") '("7z" "x" "-so"))
+  (cond ((executable-find "unzip")   '("unzip" "-qq" "-c"))
+	((executable-find "7z")      '("7z" "x" "-so"))
 	((executable-find "pkunzip") '("pkunzip" "-e" "-o-"))
-	(t '("unzip" "-qq" "-c")))
+	(t                           '("unzip" "-qq" "-c")))
   "Program and its options to run in order to extract a zip file member.
 Extraction should happen to standard output.  Archive and member name will
 be added."
@@ -235,44 +235,44 @@ be added."
 ;; names.
 
 (defcustom archive-zip-expunge
-  (if (and (not (executable-find "zip"))
-           (executable-find "pkzip"))
-      '("pkzip" "-d")
-    '("zip" "-d" "-q"))
+  (cond ((executable-find "zip")     '("zip" "-d" "-q"))
+	((executable-find "7z")      '("7z" "d"))
+	((executable-find "pkzip")   '("pkzip" "-d"))
+	(t                           '("zip" "-d" "-q")))
   "Program and its options to run in order to delete zip file members.
 Archive and member names will be added."
   :type '(list (string :tag "Program")
-		(repeat :tag "Options"
-			:inline t
-			(string :format "%v")))
+	       (repeat :tag "Options"
+		       :inline t
+		       (string :format "%v")))
   :group 'archive-zip)
 
 (defcustom archive-zip-update
-  (if (and (not (executable-find "zip"))
-           (executable-find "pkzip"))
-      '("pkzip" "-u" "-P")
-    '("zip" "-q"))
+  (cond ((executable-find "zip")     '("zip" "-q"))
+	((executable-find "7z")      '("7z" "u"))
+	((executable-find "pkzip")   '("pkzip" "-u" "-P"))
+	(t                           '("zip" "-q")))
   "Program and its options to run in order to update a zip file member.
 Options should ensure that specified directory will be put into the zip
 file.  Archive and member name will be added."
   :type '(list (string :tag "Program")
-		(repeat :tag "Options"
-			:inline t
-			(string :format "%v")))
+	       (repeat :tag "Options"
+		       :inline t
+		       (string :format "%v")))
   :group 'archive-zip)
 
 (defcustom archive-zip-update-case
-  (if (and (not (executable-find "zip"))
-           (executable-find "pkzip"))
-      '("pkzip" "-u" "-P")
-    '("zip" "-q" "-k"))
+  (cond ((executable-find "zip")     '("zip" "-q" "-k"))
+	((executable-find "7z")      '("7z" "u"))
+	((executable-find "pkzip")   '("pkzip" "-u" "-P"))
+	(t                           '("zip" "-q" "-k")))
   "Program and its options to run in order to update a case fiddled zip member.
 Options should ensure that specified directory will be put into the zip file.
 Archive and member name will be added."
   :type '(list (string :tag "Program")
-		(repeat :tag "Options"
-			:inline t
-			(string :format "%v")))
+	       (repeat :tag "Options"
+		       :inline t
+		       (string :format "%v")))
   :group 'archive-zip)
 
 (defcustom archive-zip-case-fiddle t
@@ -323,9 +323,30 @@ Archive and member name will be added."
 Extraction should happen to standard output.  Archive and member name will
 be added."
   :type '(list (string :tag "Program")
-		(repeat :tag "Options"
-			:inline t
-			(string :format "%v")))
+	       (repeat :tag "Options"
+		       :inline t
+		       (string :format "%v")))
+  :group 'archive-7z)
+
+(defcustom archive-7z-expunge
+  '("7z" "d")
+  "Program and its options to run in order to delete 7z file members.
+Archive and member names will be added."
+  :type '(list (string :tag "Program")
+	       (repeat :tag "Options"
+		       :inline t
+		       (string :format "%v")))
+  :group 'archive-7z)
+
+(defcustom archive-7z-update
+  '("7z" "u")
+  "Program and its options to run in order to update a 7z file member.
+Options should ensure that specified directory will be put into the 7z
+file.  Archive and member name will be added."
+  :type '(list (string :tag "Program")
+	       (repeat :tag "Options"
+		       :inline t
+		       (string :format "%v")))
   :group 'archive-7z)
 
 ;; -------------------------------------------------------------------------
@@ -1062,7 +1083,7 @@ using `make-temp-file', and the generated name is returned."
 	    (view-buffer buffer (and just-created 'kill-buffer-if-not-modified)))
            ((eq other-window-p 'display) (display-buffer buffer))
            (other-window-p (switch-to-buffer-other-window buffer))
-           (t (switch-to-buffer buffer))))))
+           (t (pop-to-buffer-same-window buffer))))))
 
 (defun archive-*-extract (archive name command)
   (let* ((default-directory (file-name-as-directory archive-tmpdir))
@@ -2037,7 +2058,9 @@ This doesn't recover lost files, it just undoes changes in the buffer itself."
     (with-temp-buffer
       (call-process "7z" nil t nil "l" "-slt" file)
       (goto-char (point-min))
-      (re-search-forward "^-+\n")
+      ;; Four dashes start the meta info section that should be skipped.
+      ;; Archive members start with more than four dashes.
+      (re-search-forward "^-----+\n")
       (while (re-search-forward "^Path = \\(.*\\)\n" nil t)
         (goto-char (match-end 0))
         (let ((name (match-string 1))
@@ -2083,6 +2106,12 @@ This doesn't recover lost files, it just undoes changes in the buffer itself."
 	(unless (search-forward "Everything is Ok" nil t)
 	  (message "%s" (buffer-string)))
 	(delete-file tmpfile)))))
+
+(defun archive-7z-write-file-member (archive descr)
+  (archive-*-write-file-member
+   archive
+   descr
+   archive-7z-update))
 
 ;; -------------------------------------------------------------------------
 ;;; Section `ar' archives.

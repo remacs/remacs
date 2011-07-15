@@ -213,7 +213,7 @@ Elements look like (HEADER . VALUE) where both HEADER and VALUE
 are strings.
 
 CONTINUE, SWITCH-FUNCTION, YANK-ACTION, SEND-ACTIONS, and
-RETURN-ACTION are ignored."
+RETURN-ACTION and any additional arguments are IGNORED."
   (mh-find-path)
   (let ((mh-error-if-no-draft t))
     (mh-send to "" subject)
@@ -223,7 +223,8 @@ RETURN-ACTION are ignored."
       (setq other-headers (cdr other-headers)))))
 
 ;; Shush compiler.
-(defvar sendmail-coding-system)         ; XEmacs
+(mh-do-in-xemacs
+  (defvar sendmail-coding-system))
 
 ;;;###autoload
 (defun mh-send-letter (&optional arg)

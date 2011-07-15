@@ -78,10 +78,22 @@ If nil, `dired-listing-switches' is used."
   :type 'file)
 
 (defcustom dired-use-ls-dired 'unspecified
-  "Non-nil means Dired should use \"ls --dired\".
+  "Non-nil means Dired should pass the \"--dired\" option to \"ls\".
 The special value of `unspecified' means to check explicitly, and
 save the result in this variable.  This is performed the first
-time `dired-insert-directory' is called."
+time `dired-insert-directory' is called.
+
+Note that if you set this option to nil, either through choice or
+because your \"ls\" program does not support \"--dired\", Dired
+will fail to parse some \"unusual\" file names, e.g. those with leading
+spaces.  You might want to install ls from GNU Coreutils, which does
+support this option.  Alternatively, you might want to use Emacs's
+own emulation of \"ls\", by using:
+  \(setq ls-lisp-use-insert-directory-program nil)
+  \(require 'ls-lisp)
+This is used by default on MS Windows, which does not have an \"ls\" program.
+Note that `ls-lisp' does not support as many options as GNU ls, though.
+For more details, see Info node `(emacs)ls in Lisp'."
   :group 'dired
   :type '(choice (const :tag "Check for --dired support" unspecified)
                  (const :tag "Do not use --dired" nil)
@@ -238,8 +250,6 @@ This is what the do-commands look for, and what the mark-commands store.")
 ;;  (> baud-rate search-slow-speed)
   "Non-nil means Dired shrinks the display buffer to fit the marked files.")
 
-(defvar dired-flagging-regexp nil);; Last regexp used to flag files.
-
 (defvar dired-file-version-alist)
 
 ;;;###autoload
@@ -341,11 +351,11 @@ Subexpression 2 must end right before the \\n or \\r.")
 
 (defface dired-flagged
   '((t (:inherit font-lock-warning-face)))
-  "Face used for flagged files."
+  "Face used for files flagged for deletion."
   :group 'dired-faces
   :version "22.1")
 (defvar dired-flagged-face 'dired-flagged
-  "Face name used for flagged files.")
+  "Face name used for files flagged for deletion.")
 
 (defface dired-warning
   ;; Inherit from font-lock-warning-face since with min-colors 8
@@ -485,7 +495,16 @@ Return value is the number of files marked, or nil if none were marked."
   `(let ((inhibit-read-only t) count)
     (save-excursion
       (setq count 0)
-      (if ,msg (message "Marking %ss..." ,msg))
+      (when ,msg
+	(message "%s %ss%s..."
+		 (cond ((eq dired-marker-char ?\040) "Unmarking")
+		       ((eq dired-del-marker dired-marker-char)
+			"Flagging")
+		       (t "Marking"))
+		 ,msg
+		 (if (eq dired-del-marker dired-marker-char)
+		     " for deletion"
+		   "")))
       (goto-char (point-min))
       (while (not (eobp))
         (if ,predicate
@@ -506,24 +525,31 @@ Return value is the number of files marked, or nil if none were marked."
 (defmacro dired-map-over-marks (body arg &optional show-progress
 				     distinguish-one-marked)
   "Eval BODY with point on each marked line.  Return a list of BODY's results.
-If no marked file could be found, execute BODY on the current line.
-ARG, if non-nil, specifies the files to use instead of the marked files.
-  If ARG is an integer, use the next ARG (or previous -ARG, if
-   ARG<0) files.  In that case, point is dragged along.  This is
-   so that commands on the next ARG (instead of the marked) files
-   can be chained easily.
-  For any other non-nil value of ARG, use the current file.
+If no marked file could be found, execute BODY on the current
+line.  ARG, if non-nil, specifies the files to use instead of the
+marked files.
+
+If ARG is an integer, use the next ARG (or previous -ARG, if
+ARG<0) files.  In that case, point is dragged along.  This is so
+that commands on the next ARG (instead of the marked) files can
+be chained easily.
+For any other non-nil value of ARG, use the current file.
+
 If optional third arg SHOW-PROGRESS evaluates to non-nil,
-  redisplay the dired buffer after each file is processed.
-No guarantee is made about the position on the marked line.
-  BODY must ensure this itself if it depends on this.
-Search starts at the beginning of the buffer, thus the car of the list
-  corresponds to the line nearest to the buffer's bottom.  This
-  is also true for (positive and negative) integer values of ARG.
+redisplay the dired buffer after each file is processed.
+
+No guarantee is made about the position on the marked line.  BODY
+must ensure this itself if it depends on this.
+
+Search starts at the beginning of the buffer, thus the car of the
+list corresponds to the line nearest to the buffer's bottom.
+This is also true for (positive and negative) integer values of
+ARG.
+
 BODY should not be too long as it is expanded four times.
 
-If DISTINGUISH-ONE-MARKED is non-nil, then if we find just one marked file,
-return (t FILENAME) instead of (FILENAME)."
+If DISTINGUISH-ONE-MARKED is non-nil, then if we find just one
+marked file, return (t FILENAME) instead of (FILENAME)."
   ;;
   ;;Warning: BODY must not add new lines before point - this may cause an
   ;;endless loop.
@@ -696,7 +722,6 @@ shell wildcards appended to select certain files).  If DIRNAME is a cons,
 its first element is taken as the directory name and the rest as an explicit
 list of files to make directory entries for.
 \\<dired-mode-map>\
-You can move around in it with the usual commands.
 You can flag files for deletion with \\[dired-flag-file-deletion] and then
 delete them by typing \\[dired-do-flagged-delete].
 Type \\[describe-mode] after entering Dired for more info.
@@ -1106,9 +1131,13 @@ If HDR is non-nil, insert a header line with the directory name."
 	 (or (if (eq dired-use-ls-dired 'unspecified)
 		 ;; Check whether "ls --dired" gives exit code 0, and
 		 ;; save the answer in `dired-use-ls-dired'.
-		 (setq dired-use-ls-dired
-		       (eq (call-process insert-directory-program nil nil nil "--dired")
-			   0))
+		 (or (setq dired-use-ls-dired
+			   (eq 0 (call-process insert-directory-program
+					     nil nil nil "--dired")))
+		     (progn
+		       (message "ls does not support --dired; \
+see `dired-use-ls-dired' for more details.")
+		       nil))
 	       dired-use-ls-dired)
 	     (file-remote-p dir)))
 	(setq switches (concat "--dired " switches)))
@@ -1162,7 +1191,7 @@ If HDR is non-nil, insert a header line with the directory name."
 	(insert "  wildcard " (file-name-nondirectory dir) "\n")))))
 
 (defun dired-insert-set-properties (beg end)
-  "Make the file names highlight when the mouse is on them."
+  "Add various text properties to the lines in the region."
   (save-excursion
     (goto-char beg)
     (while (< (point) end)
@@ -1789,8 +1818,8 @@ In Dired, you are \"editing\" a list of the files in a directory and
   files for later commands or \"flag\" them for deletion, either file
   by file or all files matching certain criteria.
 You can move using the usual cursor motion commands.\\<dired-mode-map>
-Letters no longer insert themselves.  Digits are prefix arguments.
-Instead, type \\[dired-flag-file-deletion] to flag a file for Deletion.
+The buffer is read-only.  Digits are prefix arguments.
+Type \\[dired-flag-file-deletion] to flag a file `D' for deletion.
 Type \\[dired-mark] to Mark a file or subdirectory for later commands.
   Most commands operate on the marked files and use the current file
   if no files are marked.  Use a numeric prefix argument to operate on
@@ -1798,9 +1827,9 @@ Type \\[dired-mark] to Mark a file or subdirectory for later commands.
   to operate on the current file only.  Prefix arguments override marks.
   Mark-using commands display a list of failures afterwards.  Type \\[dired-summary]
   to see why something went wrong.
-Type \\[dired-unmark] to Unmark a file or all files of a subdirectory.
-Type \\[dired-unmark-backward] to back up one line and unflag.
-Type \\[dired-do-flagged-delete] to eXecute the deletions requested.
+Type \\[dired-unmark] to Unmark a file or all files of an inserted subdirectory.
+Type \\[dired-unmark-backward] to back up one line and unmark or unflag.
+Type \\[dired-do-flagged-delete] to delete (eXecute) the files flagged `D'.
 Type \\[dired-find-file] to Find the current line's file
   (or dired it in another buffer, if it is a directory).
 Type \\[dired-find-file-other-window] to find file or dired directory in Other window.
@@ -1810,12 +1839,12 @@ Type \\[dired-do-copy] to Copy files.
 Type \\[dired-sort-toggle-or-edit] to toggle Sorting by name/date or change the `ls' switches.
 Type \\[revert-buffer] to read all currently expanded directories aGain.
   This retains all marks and hides subdirs again that were hidden before.
-SPC and DEL can be used to move down and up by lines.
+Use `SPC' and `DEL' to move down and up by lines.
 
 If Dired ever gets confused, you can either type \\[revert-buffer] \
 to read the
 directories again, type \\[dired-do-redisplay] \
-to relist a single or the marked files or a
+to relist the file at point or the marked files or a
 subdirectory, or type \\[dired-build-subdir-alist] to parse the buffer
 again for the directory tree.
 
@@ -2818,8 +2847,12 @@ also offers to kill buffers visiting deleted files and directories."
   (if (= 1 count) "" "s"))
 
 (defun dired-mark-prompt (arg files)
-  "Return a string for use in a prompt, either the current file
-name, or the marker and a count of marked files."
+  "Return a string suitable for use in a Dired prompt.
+ARG is normally the prefix argument for the calling command.
+FILES should be a list of file names.
+
+The return value has a form like \"foo.txt\", \"[next 3 files]\",
+or \"* [3 files]\"."
   ;; distinguish-one-marked can cause the first element to be just t.
   (if (eq (car files) t) (setq files (cdr files)))
   (let ((count (length files)))
@@ -3015,8 +3048,9 @@ If on a subdir headerline, mark all its files except `.' and `..'."
     (dired-mark arg)))
 
 (defun dired-unmark-backward (arg)
-  "In Dired, move up lines and remove deletion flag there.
-Optional prefix ARG says how many lines to unflag; default is one line."
+  "In Dired, move up lines and remove marks or deletion flags there.
+Optional prefix ARG says how many lines to unmark/unflag; default
+is one line."
   (interactive "p")
   (dired-unmark (- arg)))
 
@@ -3110,14 +3144,14 @@ The match is against the non-directory part of the filename.  Use `^'
 
 (defun dired-mark-symlinks (unflag-p)
   "Mark all symbolic links.
-With prefix argument, unflag all those files."
+With prefix argument, unmark or unflag all those files."
   (interactive "P")
   (let ((dired-marker-char (if unflag-p ?\040 dired-marker-char)))
     (dired-mark-if (looking-at dired-re-sym) "symbolic link")))
 
 (defun dired-mark-directories (unflag-p)
   "Mark all directory file lines except `.' and `..'.
-With prefix argument, unflag all those files."
+With prefix argument, unmark or unflag all those files."
   (interactive "P")
   (let ((dired-marker-char (if unflag-p ?\040 dired-marker-char)))
     (dired-mark-if (and (looking-at dired-re-dir)
@@ -3126,7 +3160,7 @@ With prefix argument, unflag all those files."
 
 (defun dired-mark-executables (unflag-p)
   "Mark all executable files.
-With prefix argument, unflag all those files."
+With prefix argument, unmark or unflag all those files."
   (interactive "P")
   (let ((dired-marker-char (if unflag-p ?\040 dired-marker-char)))
     (dired-mark-if (looking-at dired-re-exe) "executable file")))
@@ -3136,7 +3170,7 @@ With prefix argument, unflag all those files."
 
 (defun dired-flag-auto-save-files (&optional unflag-p)
   "Flag for deletion files whose names suggest they are auto save files.
-A prefix argument says to unflag those files instead."
+A prefix argument says to unmark or unflag those files instead."
   (interactive "P")
   (let ((dired-marker-char (if unflag-p ?\040 dired-del-marker)))
     (dired-mark-if
@@ -3176,7 +3210,7 @@ A prefix argument says to unflag those files instead."
 
 (defun dired-flag-backup-files (&optional unflag-p)
   "Flag all backup files (names ending with `~') for deletion.
-With prefix argument, unflag these files."
+With prefix argument, unmark or unflag these files."
   (interactive "P")
   (let ((dired-marker-char (if unflag-p ?\s dired-del-marker)))
     (dired-mark-if
@@ -3629,16 +3663,16 @@ Ask means pop up a menu for the user to select one of copy, move or link."
 ;;;;;;  dired-run-shell-command dired-do-shell-command dired-do-async-shell-command
 ;;;;;;  dired-clean-directory dired-do-print dired-do-touch dired-do-chown
 ;;;;;;  dired-do-chgrp dired-do-chmod dired-compare-directories dired-backup-diff
-;;;;;;  dired-diff) "dired-aux" "dired-aux.el" "7efcfe4f9e0913ae4a87be014010c27f")
+;;;;;;  dired-diff) "dired-aux" "dired-aux.el" "ab62f310329f404f96a29e4f0ab8df73")
 ;;; Generated autoloads from dired-aux.el
 
 (autoload 'dired-diff "dired-aux" "\
 Compare file at point with file FILE using `diff'.
 FILE defaults to the file at the mark.  (That's the mark set by
 \\[set-mark-command], not by Dired's \\[dired-mark] command.)
-The prompted-for file is the first file given to `diff'.
+The prompted-for FILE is the first file given to `diff'.
 With prefix arg, prompt for second argument SWITCHES,
-which is options for `diff'.
+which is the string of command switches for `diff'.
 
 \(fn FILE &optional SWITCHES)" t nil)
 
@@ -4081,15 +4115,16 @@ with the command \\[tags-loop-continue].
 
 (autoload 'dired-show-file-type "dired-aux" "\
 Print the type of FILE, according to the `file' command.
-If FILE is a symbolic link and the optional argument DEREF-SYMLINKS is
-true then the type of the file linked to by FILE is printed instead.
+If you give a prefix to this command, and FILE is a symbolic
+link, then the type of the file linked to by FILE is printed
+instead.
 
 \(fn FILE &optional DEREF-SYMLINKS)" t nil)
 
 ;;;***
 
 ;;;### (autoloads (dired-do-relsymlink dired-jump-other-window dired-jump)
-;;;;;;  "dired-x" "dired-x.el" "cdeb2935dc1d33819b12981ba5272073")
+;;;;;;  "dired-x" "dired-x.el" "219648338c42c7912fa336680b434db0")
 ;;; Generated autoloads from dired-x.el
 
 (autoload 'dired-jump "dired-x" "\

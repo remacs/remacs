@@ -2001,11 +2001,8 @@ xic_create_fontsetname (const char *base_fontname, int motif)
 
 #ifdef DEBUG_XIC_FONTSET
 static void
-print_fontset_result (xfs, name, missing_list, missing_count)
-     XFontSet xfs;
-     char *name;
-     char **missing_list;
-     int missing_count;
+print_fontset_result (XFontSet xfs, char *name, char **missing_list,
+		      int missing_count)
 {
   if (xfs)
     fprintf (stderr, "XIC Fontset created: %s\n", name);
@@ -5804,10 +5801,6 @@ syms_of_xfns (void)
   DEFSYM (Qcancel_timer, "cancel-timer");
   DEFSYM (Qfont_param, "font-parameter");
   /* This is the end of symbol initialization.  */
-
-  /* Text property `display' should be nonsticky by default.  */
-  Vtext_property_default_nonsticky
-    = Fcons (Fcons (Qdisplay, Qt), Vtext_property_default_nonsticky);
 
   Fput (Qundefined_color, Qerror_conditions,
 	pure_cons (Qundefined_color, pure_cons (Qerror, Qnil)));

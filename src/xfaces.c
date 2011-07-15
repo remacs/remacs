@@ -536,8 +536,7 @@ int color_count[256];
 /* Register color PIXEL as allocated.  */
 
 void
-register_color (pixel)
-     unsigned long pixel;
+register_color (unsigned long pixel)
 {
   xassert (pixel < 256);
   ++color_count[pixel];
@@ -547,8 +546,7 @@ register_color (pixel)
 /* Register color PIXEL as deallocated.  */
 
 void
-unregister_color (pixel)
-     unsigned long pixel;
+unregister_color (unsigned long pixel)
 {
   xassert (pixel < 256);
   if (color_count[pixel] > 0)
@@ -561,9 +559,7 @@ unregister_color (pixel)
 /* Register N colors from PIXELS as deallocated.  */
 
 void
-unregister_colors (pixels, n)
-     unsigned long *pixels;
-     int n;
+unregister_colors (unsigned long *pixels, int n)
 {
   int i;
   for (i = 0; i < n; ++i)
@@ -3813,6 +3809,18 @@ Default face attributes override any local face attributes.  */)
 	      Fmodify_frame_parameters (frame, Fcons (Fcons (Qfont, name),
 						      Qnil));
 	    }
+
+	  if (STRINGP (gvec[LFACE_FOREGROUND_INDEX]))
+	    Fmodify_frame_parameters (frame,
+				      Fcons (Fcons (Qforeground_color,
+						    gvec[LFACE_FOREGROUND_INDEX]),
+					     Qnil));
+
+	  if (STRINGP (gvec[LFACE_BACKGROUND_INDEX]))
+	    Fmodify_frame_parameters (frame,
+				      Fcons (Fcons (Qbackground_color,
+						    gvec[LFACE_BACKGROUND_INDEX]),
+					     Qnil));
 	}
     }
 

@@ -620,7 +620,7 @@
 ;;   buffer, if one is present, instead of adding to the ChangeLog.
 ;;
 ;; - When vc-next-action calls vc-checkin it could pre-fill the
-;;   *VC-log* buffer with some obvious items: the list of files that
+;;   *vc-log* buffer with some obvious items: the list of files that
 ;;   were added, the list of files that were removed.  If the diff is
 ;;   available, maybe it could even call something like
 ;;   `diff-add-change-log-entries-other-window' to create a detailed
@@ -1414,7 +1414,7 @@ Runs the normal hooks `vc-before-checkin-hook' and `vc-checkin-hook'."
    (vc-start-logentry
     files comment initial-contents
     "Enter a change comment."
-    "*VC-log*"
+    "*vc-log*"
     (lambda ()
       (vc-call-backend backend 'log-edit-mode))
     (lexical-let ((rev rev))
@@ -1605,10 +1605,13 @@ Return t if the buffer had changes, nil otherwise."
       ;; bindings are nicer for read only buffers. pcl-cvs does the
       ;; same thing.
       (setq buffer-read-only t)
-      (vc-exec-after `(vc-diff-finish ,(current-buffer) ',(when verbose
-                                                            messages)))
       ;; Display the buffer, but at the end because it can change point.
       (pop-to-buffer (current-buffer))
+      ;; The diff process may finish early, so call `vc-diff-finish'
+      ;; after `pop-to-buffer'; the former assumes the diff buffer is
+      ;; shown in some window.
+      (vc-exec-after `(vc-diff-finish ,(current-buffer)
+				      ',(when verbose messages)))
       ;; In the async case, we return t even if there are no differences
       ;; because we don't know that yet.
       t)))
@@ -1876,7 +1879,7 @@ The headers are reset to their non-expanded form."
     (vc-start-logentry
      files oldcomment t
      "Enter a replacement change comment."
-     "*VC-log*"
+     "*vc-log*"
      (lambda () (vc-call-backend backend 'log-edit-mode))
      (lexical-let ((rev rev))
        (lambda (files comment)
@@ -2425,7 +2428,7 @@ its name; otherwise return nil."
    (list file)
    (let ((backup-file (vc-version-backup-file file)))
      (when backup-file
-       (copy-file backup-file file 'ok-if-already-exists 'keep-date)
+       (copy-file backup-file file 'ok-if-already-exists)
        (vc-delete-automatic-version-backups file))
      (vc-call revert file backup-file))
    `((vc-state . up-to-date)

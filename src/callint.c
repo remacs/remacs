@@ -105,9 +105,10 @@ Z -- Coding system, nil if no prefix arg.
 
 In addition, if the string begins with `*', an error is signaled if
   the buffer is read-only.
-If the string begins with `@', Emacs searches the key sequence which
- invoked the command for its first mouse click (or any other event
- which specifies a window).
+If `@' appears at the beginning of the string, and if the key sequence
+ used to invoke the command includes any mouse events, then the window
+ associated with the first of those events is selected before the
+ command is run.
 If the string begins with `^' and `shift-select-mode' is non-nil,
  Emacs first calls the function `handle-shift-selection'.
 You may use `@', `*', and `^' together.  They are processed in the
@@ -233,7 +234,7 @@ fix_command (Lisp_Object input, Lisp_Object values)
 }
 
 DEFUN ("call-interactively", Fcall_interactively, Scall_interactively, 1, 3, 0,
-       doc: /* Call FUNCTION, reading args according to its interactive calling specs.
+       doc: /* Call FUNCTION, providing args according to its interactive calling specs.
 Return the value FUNCTION returns.
 The function contains a specification of how to do the argument reading.
 In the case of user-defined functions, this is specified by placing a call

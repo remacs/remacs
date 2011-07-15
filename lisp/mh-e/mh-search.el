@@ -321,7 +321,8 @@ folder containing the index search results."
                        count (> (hash-table-count msg-hash) 0)))))))
 
 ;; Shush compiler.
-(defvar pick-folder)                    ; XEmacs
+(mh-do-in-xemacs
+  (defvar pick-folder))
 
 (defun mh-search-folder (folder window-config)
   "Search FOLDER for messages matching a pattern.
@@ -401,8 +402,9 @@ or nothing to search all folders."
   (mh-index-sequenced-messages folders mh-tick-seq))
 
 ;; Shush compiler.
-(defvar mh-mairix-folder)               ; XEmacs
-(defvar mh-flists-search-folders)       ; XEmacs
+(mh-do-in-xemacs
+  (defvar mh-mairix-folder)
+  (defvar mh-flists-search-folders))
 
 ;;;###mh-autoload
 (defun mh-index-sequenced-messages (folders sequence)
@@ -452,12 +454,12 @@ search all folders."
 
 (defvar mh-flists-search-folders)
 
-(defun mh-flists-execute (&rest args)
+(defun mh-flists-execute (&rest ignored)
   "Execute flists.
 Search for messages belonging to `mh-flists-sequence' in the
 folders specified by `mh-flists-search-folders'. If
 `mh-recursive-folders-flag' is t, then the folders are searched
-recursively. All parameters ARGS are ignored."
+recursively. All arguments are IGNORED."
   (set-buffer (get-buffer-create mh-temp-index-buffer))
   (erase-buffer)
   (unless (executable-find "sh")
@@ -1442,7 +1444,8 @@ being the list of messages originally from that folder."
   mh-index-data)
 
 ;; Shush compiler
-(defvar mh-speed-flists-inhibit-flag)   ; XEmacs
+(mh-do-in-xemacs
+  (defvar mh-speed-flists-inhibit-flag))
 
 ;;;###mh-autoload
 (defun mh-index-execute-commands ()

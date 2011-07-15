@@ -4000,9 +4000,7 @@ defsubr (struct Lisp_Subr *sname)
 
 #ifdef NOTDEF /* use fset in subr.el now */
 void
-defalias (sname, string)
-     struct Lisp_Subr *sname;
-     char *string;
+defalias (struct Lisp_Subr *sname, char *string)
 {
   Lisp_Object sym;
   sym = intern (string);
@@ -4420,9 +4418,11 @@ The remaining ENTRIES in the alist element describe the functions and
 variables defined in that file, the features provided, and the
 features required.  Each entry has the form `(provide . FEATURE)',
 `(require . FEATURE)', `(defun . FUNCTION)', `(autoload . SYMBOL)',
-`(defface . SYMBOL)', or `(t . SYMBOL)'.  In addition, an entry `(t
-. SYMBOL)' may precede an entry `(defun . FUNCTION)', and means that
-SYMBOL was an autoload before this file redefined it as a function.
+`(defface . SYMBOL)', or `(t . SYMBOL)'.  Entries like `(t . SYMBOL)'
+may precede a `(defun . FUNCTION)' entry, and means that SYMBOL was an
+autoload before this file redefined it as a function.  In addition,
+entries may also be single symbols, which means that SYMBOL was
+defined by `defvar' or `defconst'.
 
 During preloading, the file name recorded is relative to the main Lisp
 directory.  These file names are converted to absolute at startup.  */);

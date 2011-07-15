@@ -194,8 +194,12 @@ DEFUN ("byte-to-string", Fbyte_to_string, Sbyte_to_string, 1, 1, 0,
 }
 
 DEFUN ("string-to-char", Fstring_to_char, Sstring_to_char, 1, 1, 0,
-       doc: /* Convert arg STRING to a character, the first character of that string.
-A multibyte character is handled correctly.  */)
+       doc: /* Return the first character in STRING.
+A multibyte character is handled correctly.
+The value returned is a Unicode codepoint if it is below #x110000 (in
+hex).  Codepoints beyond that are Emacs extensions of Unicode.  In
+particular, eight-bit characters are returned as codepoints in the
+range #x3FFF80 through #x3FFFFF, inclusive.  */)
   (register Lisp_Object string)
 {
   register Lisp_Object val;
@@ -1700,7 +1704,7 @@ For example, to produce full ISO 8601 format, use "%Y-%m-%dT%T%z".  */)
   (Lisp_Object format_string, Lisp_Object timeval, Lisp_Object universal)
 {
   time_t value;
-  int size;
+  ptrdiff_t size;
   int usec;
   int ns;
   struct tm *tm;
@@ -1717,7 +1721,9 @@ For example, to produce full ISO 8601 format, use "%Y-%m-%dT%T%z".  */)
 						Vlocale_coding_system, 1);
 
   /* This is probably enough.  */
-  size = SBYTES (format_string) * 6 + 50;
+  size = SBYTES (format_string);
+  if (size <= (STRING_BYTES_BOUND - 50) / 6)
+    size = size * 6 + 50;
 
   BLOCK_INPUT;
   tm = ut ? gmtime (&value) : localtime (&value);
@@ -1730,7 +1736,7 @@ For example, to produce full ISO 8601 format, use "%Y-%m-%dT%T%z".  */)
   while (1)
     {
       char *buf = (char *) alloca (size + 1);
-      int result;
+      size_t result;
 
       buf[0] = '\1';
       BLOCK_INPUT;
@@ -1749,6 +1755,8 @@ For example, to produce full ISO 8601 format, use "%Y-%m-%dT%T%z".  */)
 				SBYTES (format_string),
 				tm, ut, ns);
       UNBLOCK_INPUT;
+      if (STRING_BYTES_BOUND <= result)
+	string_overflow ();
       size = result + 1;
     }
 }
@@ -3152,10 +3160,9 @@ It returns the number of characters changed.  */)
 }
 
 DEFUN ("delete-region", Fdelete_region, Sdelete_region, 2, 2, "r",
-       doc: /* Delete the text between point and mark.
-
-When called from a program, expects two arguments,
-positions (integers or markers) specifying the stretch to be deleted.  */)
+       doc: /* Delete the text between START and END.
+If called interactively, delete the region between point and mark.
+This command deletes buffer text without modifying the kill ring.  */)
   (Lisp_Object start, Lisp_Object end)
 {
   validate_region (&start, &end);
@@ -3557,7 +3564,8 @@ The width specifier supplies a lower limit for the length of the
 printed representation.  The padding, if any, normally goes on the
 left, but it goes on the right if the - flag is present.  The padding
 character is normally a space, but it is 0 if the 0 flag is present.
-The - flag takes precedence over the 0 flag.
+The 0 flag is ignored if the - flag is present, or the format sequence
+is something other than %d, %e, %f, and %g.
 
 For %e, %f, and %g sequences, the number after the "." in the
 precision specifier says how many decimal places to show; if zero, the

@@ -596,7 +596,6 @@ Expects FOLDER to have already been normalized with
                   (setq name (substring name 0 (1- (length name)))))
                 (push
                  (cons name
-                       ;; FIXME: what is this used for?  --Stef
                        (search-forward "(others)" (mh-line-end-position) t))
                  results))))
           (forward-line 1))))
@@ -732,8 +731,9 @@ See Info node `(elisp) Programmed Completion' for details."
                    (t (file-directory-p path))))))))
 
 ;; Shush compiler.
-(defvar completion-root-regexp)          ; XEmacs
-(defvar minibuffer-completing-file-name) ; XEmacs
+(mh-do-in-xemacs
+  (defvar completion-root-regexp)
+  (defvar minibuffer-completing-file-name))
 
 (defun mh-folder-completing-read (prompt default allow-root-folder-flag)
   "Read folder name with PROMPT and default result DEFAULT.
