@@ -126,7 +126,7 @@ Lisp_Object Qtitle;
 Lisp_Object Qxwidget_set_keyboard_grab;
 Lisp_Object Qxwidget_embed_steal_window;
 Lisp_Object Qxwidget_info;
-Lisp_Object Qxwidget_resize_internal;
+Lisp_Object Qxwidget_resize;
 Lisp_Object Qxwidget_send_keyboard_event;
 
 Lisp_Object Qbutton, Qtoggle, Qslider, Qsocket, Qcairo, 
@@ -164,6 +164,8 @@ DEFUN ("make-xwidget", Fmake_xwidget, Smake_xwidget, 7, 7, 0,
   xw->width = XFASTINT(width);
   XSETPSEUDOVECTOR (val, xw, PVEC_OTHER); //?? dunno why i need this
   Vxwidget_alist = Fcons ( val, Vxwidget_alist);
+  xw->widgetwindow_osr = NULL;
+  xw->widget_osr = NULL;
 
 
 
@@ -401,13 +403,17 @@ xwidget_init_view (
                    int x, int y)
 {
   //TODO temp code replace with lisp list
-  if(xwidget_view_index < MAX_XWIDGETS)
-    xwidget_view_index++;
-  else
-    xwidget_view_index=0;
-  
-  struct xwidget_view *xv = &xwidget_views[xwidget_view_index];
+  struct xwidget_view *xv;
   GdkColor color;
+
+  do{
+    if(xwidget_view_index < MAX_XWIDGETS)
+      xwidget_view_index++;
+    else
+      xwidget_view_index=0;
+
+    xv = &xwidget_views[xwidget_view_index];
+  }while(  xv->initialized == 1); //TODO yeah this can infloop if there are MAX_WIDGETS on-screen
   
   xv->initialized = 1;
   xv->w = s->w;
@@ -692,8 +698,8 @@ DEFUN ("xwidget-webkit-get-title", Fxwidget_webkit_get_title,  Sxwidget_webkit_g
 
 
 
-DEFUN ("xwidget-resize-internal", Fxwidget_resize_internal, Sxwidget_resize_internal, 3, 3, 0, doc:
-       /* resize xwidgets internal use only, because the lisp specs need to be updated also*/)
+DEFUN ("xwidget-resize", Fxwidget_resize, Sxwidget_resize, 3, 3, 0, doc:
+       /* resize xwidgets*/)
   (Lisp_Object xwidget, Lisp_Object new_width, Lisp_Object new_height)
 {
   struct xwidget* xw = XXWIDGET(xwidget);
@@ -709,6 +715,12 @@ DEFUN ("xwidget-resize-internal", Fxwidget_resize_internal, Sxwidget_resize_inte
   printf("resize xwidget %d (%d,%d)->(%d,%d)",xw, xw->width,xw->height,w,h);
   xw->width=w;
   xw->height=h;
+  //if theres a osr resize it 1st
+  if(xw->widget_osr){
+    gtk_layout_set_size (GTK_LAYOUT (xw->widgetwindow_osr), xw->width, xw->height);
+    gtk_widget_set_size_request (GTK_WIDGET (xw->widget_osr), xw->width, xw->height);
+  }
+
   for (int i = 0; i < MAX_XWIDGETS; i++) //TODO MVC refactor lazy linear search
     {
       xv = &xwidget_views[i];
@@ -721,8 +733,19 @@ DEFUN ("xwidget-resize-internal", Fxwidget_resize_internal, Sxwidget_resize_inte
   return Qnil;
 }
 
+DEFUN ("xwidget-size-request", Fxwidget_size_request, Sxwidget_size_request, 1, 1, 0, doc:
+       /* desired size (TODO crashes if arg not osr widget)*/)
+  (Lisp_Object xwidget)
+{
+  GtkRequisition requisition;
+  Lisp_Object rv;
+  gtk_widget_size_request(XXWIDGET(xwidget)->widget_osr, &requisition);
+  rv = Qnil;
+  rv = Fcons (make_number(requisition.height), rv);
+  rv = Fcons (make_number(requisition.width), rv);
+  return rv;
 
-
+}
 
 DEFUN("xwidget-info", Fxwidget_info , Sxwidget_info, 1,1,0, doc: /* get xwidget props */)
   (Lisp_Object xwidget)
@@ -769,12 +792,13 @@ syms_of_xwidget (void)
 
   defsubr (&Sxwidget_info);
   defsubr (&Sxwidget_view_info);
-  defsubr (&Sxwidget_resize_internal);
+  defsubr (&Sxwidget_resize);
 
 
   defsubr (&Sxwidget_webkit_goto_uri);
   defsubr (&Sxwidget_webkit_execute_script);
   defsubr (&Sxwidget_webkit_get_title);
+  defsubr (&Sxwidget_size_request  );
   
   DEFSYM (Qxwidget ,"xwidget");
 
@@ -874,6 +898,7 @@ void      xwidget_view_delete_all_in_window(  struct window *w )
       xv =  &xwidget_views[i];
       if(xv->w == w){
         gtk_widget_destroy(GTK_WIDGET(xv->widgetwindow));
+        xv->initialized = 0;
       }
   }
 }

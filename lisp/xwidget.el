@@ -16,20 +16,6 @@ see xwidget.c for types suitable for TYPE.
     id))
 
 
-(defun xwidget-resize-at (pos width height)
-  "Resize xwidget at postion POS to WIDTH and HEIGHT."
-  (let*
-      ((xwidget-prop (cdr (get-text-property pos 'display)))
-       (id (plist-get  xwidget-prop ':xwidget-id)))
-    (setq xwidget-prop (plist-put xwidget-prop ':width width))
-    (setq xwidget-prop (plist-put xwidget-prop  ':height height))
-          
-    (put-text-property pos (+ 1 pos) 'display (cons 'xwidget xwidget-prop))
-    (message "prop %s" xwidget-prop)
-    (message "id %d w %d  h %d" id width height)
-    (xwidget-resize-internal id width height)
-  ))
-
 
 (defun xwidget-socket-handler ()
   "creates plug for socket. TODO"
