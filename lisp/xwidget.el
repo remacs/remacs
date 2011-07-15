@@ -75,21 +75,25 @@ defaults to the string looking like a url around the cursor position."
 ;; - support browse-url with xwidget-webkit
 ;; - check that the webkit support is compiled in
 (define-derived-mode xwidget-webkit-mode special-mode "xwidget-webkit" "xwidget webkit special mode" )
+(defvar xwidget-webkit-last-session nil)
 (defun xwidget-webkit-new-session (url)
   (save-excursion
     (let*
         ((bufname (generate-new-buffer-name "*xwidget-webkit*"))
-         (xwid 1))
+         )
       (set-buffer (get-buffer-create bufname))
       (insert " ")
-      (xwidget-insert 1 'webkit-osr  bufname 1000 1000 xwid)
+      (setq xwidget-webkit-last-session (xwidget-insert 1 'webkit-osr  bufname 1000 1000))
       (xwidget-webkit-mode)
-      (xwidget-webkit-goto-uri xwid url ))
+      (xwidget-webkit-goto-uri xwidget-webkit-last-session url ))
     )
 
   )
 
-(defun xwidget-webkit-goto-url (url))
+(defun xwidget-webkit-goto-url (url)
+  (if xwidget-webkit-last-session
+      (xwidget-webkit-goto-uri xwidget-webkit-last-session url)
+    ( xwidget-webkit-new-session url)))
 
 
 ;; use declare here?

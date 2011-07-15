@@ -400,7 +400,13 @@ xwidget_init_view (
                    struct glyph_string *s,
                    int x, int y)
 {
-  struct xwidget_view *xv = &xwidget_views[xwidget_view_index++];
+  //TODO temp code replace with lisp list
+  if(xwidget_view_index < MAX_XWIDGETS)
+    xwidget_view_index++;
+  else
+    xwidget_view_index=0;
+  
+  struct xwidget_view *xv = &xwidget_views[xwidget_view_index];
   GdkColor color;
   
   xv->initialized = 1;
