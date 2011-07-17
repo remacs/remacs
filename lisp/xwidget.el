@@ -15,8 +15,10 @@ see xwidget.c for types suitable for TYPE.
     (put-text-property (point) (+ 1 (point)) 'display (list 'xwidget ':xwidget id))
     id))
 
-
-
+(defun xwidget-at (pos)
+  (caddr  (get-text-property pos 'display)
+))
+         
 (defun xwidget-socket-handler ()
   "creates plug for socket. TODO"
   (interactive)
@@ -60,25 +62,34 @@ defaults to the string looking like a url around the cursor position."
 ;;todo.
 ;; - support browse-url with xwidget-webkit
 ;; - check that the webkit support is compiled in
-(define-derived-mode xwidget-webkit-mode special-mode "xwidget-webkit" "xwidget webkit special mode" )
-(defvar xwidget-webkit-last-session nil)
+(define-derived-mode xwidget-webkit-mode view-mode "xwidget-webkit" "xwidget webkit view mode" )
+
+(defvar xwidget-webkit-last-session-buffer nil)
+
+(defun  xwidget-webkit-last-session ()
+  (if (buffer-live-p xwidget-webkit-last-session-buffer)
+      (save-excursion
+        (switch-to-buffer xwidget-webkit-last-session-buffer)
+        (xwidget-at 1))
+    nil))
+
 (defun xwidget-webkit-new-session (url)
-  (save-excursion
-    (let*
-        ((bufname (generate-new-buffer-name "*xwidget-webkit*"))
-         )
-      (set-buffer (get-buffer-create bufname))
-      (insert " ")
-      (setq xwidget-webkit-last-session (xwidget-insert 1 'webkit-osr  bufname 1000 1000))
-      (xwidget-webkit-mode)
-      (xwidget-webkit-goto-uri xwidget-webkit-last-session url ))
-    )
+
+  (let*
+      ((bufname (generate-new-buffer-name "*xwidget-webkit*"))
+       )
+    (setq xwidget-webkit-last-session-buffer (switch-to-buffer (get-buffer-create bufname)))
+    (insert " ")
+    (xwidget-insert 1 'webkit-osr  bufname 1000 1000)
+    (xwidget-webkit-mode)
+    (xwidget-webkit-goto-uri ( xwidget-webkit-last-session) url ))
+    
 
   )
 
 (defun xwidget-webkit-goto-url (url)
-  (if xwidget-webkit-last-session
-      (xwidget-webkit-goto-uri xwidget-webkit-last-session url)
+  (if ( xwidget-webkit-last-session)
+      (xwidget-webkit-goto-uri ( xwidget-webkit-last-session) url)
     ( xwidget-webkit-new-session url)))
 
 

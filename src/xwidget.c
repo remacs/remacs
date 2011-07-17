@@ -783,6 +783,33 @@ DEFUN("xwidget-view-info", Fxwidget_view_info , Sxwidget_view_info, 2,2,0, doc: 
   return info;
 }
 
+
+DEFUN("xwidget-delete-zombies", Fxwidget_delete_zombies , Sxwidget_delete_zombies, 0,0,0, doc: /* */)
+  (void)
+{
+  /*
+    - remove all views with window gone
+
+    TODO
+    - remove all xwidgets with buffer gone
+    - remove all views with xw gone
+
+   */
+  struct xwidget_view* xv = NULL;
+  Lisp_Object w;
+  for (int i = 0; i < MAX_XWIDGETS; i++){
+      xv =  &xwidget_views[i];
+      XSETWINDOW(w,  xv->w);
+      if(xv->initialized && (! (WINDOW_LIVE_P(w)))){
+        
+        gtk_widget_destroy(GTK_WIDGET(xv->widgetwindow));
+        xv->initialized = 0;
+      }
+  }
+}
+
+
+
 void
 syms_of_xwidget (void)
 {
@@ -799,7 +826,7 @@ syms_of_xwidget (void)
   defsubr (&Sxwidget_webkit_execute_script);
   defsubr (&Sxwidget_webkit_get_title);
   defsubr (&Sxwidget_size_request  );
-  
+  defsubr (&Sxwidget_delete_zombies);
   DEFSYM (Qxwidget ,"xwidget");
 
   DEFSYM (Qcxwidget ,":xwidget");
@@ -902,6 +929,7 @@ void      xwidget_view_delete_all_in_window(  struct window *w )
       }
   }
 }
+
 
 
 struct xwidget_view* xwidget_view_lookup(struct xwidget* xw,     struct window *w){

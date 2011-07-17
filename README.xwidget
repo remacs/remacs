@@ -24,8 +24,10 @@ The xwidget code attempts to keep the visual appearance of the views
 in sync with through an Observer pattern implementation.
 
 ** building
-export CFLAGS="-g"
+export CFLAGS=" -g -DGLYPH_DEBUG=1"
+#export CFLAGS="-g"
 ./configure   --with-x-toolkit=gtk3 --with-xwidgets
+make -j4
 
 ** MVC and Xembedd
 The MVC approach appears to be at least in principle robust for plain gtk
@@ -137,6 +139,61 @@ this is aproach worked so-so.
 ;; make   all&&  src/emacs -q --eval "(progn (load \"`pwd`/lisp/xwidget-test.el\") (xwidget-demo-basic))"
 
 * ToDo:s
+
+** TODO annoying backtrace
+sadly happens a lot.
+- happens even with no initialized xwidgets
+- 		     + row->glyphs[area][i].face_id
+or similar code, so row is invalid for some reason.
+xwidgets currently disable some redisplay opimizations so it might be
+an actual emacs bug manifesting without optimizations.
+
+*** bt 1
+      /* Compute the width of this line.  */
+      row->pixel_width = row->x;
+      for (i = 0; i < row->used[TEXT_AREA]; ++i)
+	row->pixel_width += row->glyphs[TEXT_AREA][i].pixel_width;
+
+(gdb) bt
+#0  0x000000000045c340 in compute_line_metrics (it=0x7fffffff8a20)
+    at xdisp.c:17549
+#1  0x00000000004603da in display_line (it=0x7fffffff8a20) at xdisp.c:18792
+#2  0x0000000000457646 in try_window (window=23403045, pos=..., flags=1)
+    at xdisp.c:15399
+#3  0x00000000004559c9 in redisplay_window (window=23403045, just_this_one_p=0)
+    at xdisp.c:14944
+#4  0x0000000000450247 in redisplay_window_0 (window=23403045) at xdisp.c:13152
+#5  0x00000000005fdcd9 in internal_condition_case_1 (bfun=
+    0x450208 <redisplay_window_0>, arg=23403045, handlers=12691046, hfun=
+    0x4501d9 <redisplay_window_error>) at eval.c:1538
+#6  0x00000000004501ba in redisplay_windows (window=23403045) at xdisp.c:13132
+#7  0x000000000044f19c in redisplay_internal () at xdisp.c:12706
+#8  0x000000000044f9f2 in redisplay_preserve_echo_area (from_where=7)
+    at xdisp.c:12964
+#9  0x0000000000568525 in swallow_events (do_display=1) at keyboard.c:4197
+#10 0x0000000000422554 in sit_for (timeout=40, reading=1, do_display=1)
+    at dispnew.c:5963
+#11 0x000000000056512c in read_char (commandflag=1, nmaps=8, maps=
+    0x7fffffffd3f0, prev_event=12720514, used_mouse_menu=0x7fffffffd604, 
+    end_time=0x0) at keyboard.c:2689
+#12 0x0000000000572c59 in read_key_sequence (keybuf=0x7fffffffd850, bufsize=
+    30, prompt=12720514, dont_downcase_last=0, can_return_switch_frame=1, 
+---Type <return> to continue, or q <return> to quit---
+    fix_current_buffer=1) at keyboard.c:9291
+#13 0x0000000000562897 in command_loop_1 () at keyboard.c:1446
+#14 0x00000000005fdb52 in internal_condition_case (bfun=
+    0x5624b4 <command_loop_1>, handlers=12772898, hfun=0x561dab <cmd_error>)
+    at eval.c:1493
+#15 0x00000000005621ab in command_loop_2 (ignore=12720514) at keyboard.c:1157
+#16 0x00000000005fd4ce in internal_catch (tag=12768770, func=
+    0x562185 <command_loop_2>, arg=12720514) at eval.c:1247
+#17 0x000000000056215e in command_loop () at keyboard.c:1136
+#18 0x00000000005618f9 in recursive_edit_1 () at keyboard.c:757
+#19 0x0000000000561a95 in Frecursive_edit () at keyboard.c:821
+#20 0x000000000055fba2 in main (argc=1, argv=0x7fffffffe188) at emacs.c:1704
+
+
+*** bt 2
 
 ** DONE Examine using XComposite rather than GTK off-screen
   rendering. This would make xembed widgets work much better. This

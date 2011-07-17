@@ -12209,7 +12209,7 @@ redisplay_internal (void)
      frames.  Zero means, only selected_window is considered.  */
   int consider_all_windows_p;
 
-  printf(">>>>redisplay\n");
+  //printf(">>>>redisplay\n");
   //  xwidget_start_redisplay();
   
   TRACE ((stderr, "redisplay_internal %d\n", redisplaying_p));
@@ -12932,7 +12932,7 @@ redisplay_internal (void)
   RESUME_POLLING;
   //xwidget_end_redisplay();
     
-  printf("<<<<redisplay\n");
+  //printf("<<<<redisplay\n");
 }
 
 
@@ -15383,6 +15383,7 @@ try_window (Lisp_Object window, struct text_pos pos, int flags)
   struct glyph_row *last_text_row = NULL;
   struct frame *f = XFRAME (w->frame);
 
+  
   /* Make POS the new window start.  */
   set_marker_both (w->start, Qnil, CHARPOS (pos), BYTEPOS (pos));
 
@@ -15392,6 +15393,7 @@ try_window (Lisp_Object window, struct text_pos pos, int flags)
 
   /* Initialize iterator and info to start at POS.  */
   start_display (&it, w, pos);
+
 
   /* Display all lines of W.  */
   while (it.current_y < it.last_visible_y)
@@ -15489,10 +15491,11 @@ try_window_reusing_current_matrix (struct window *w)
   struct glyph_row *start_row;
   int start_vpos, min_y, max_y;
 
+#if HAVE_XWIDGETS_hhh
   return 0;
   //xwidgets doesnt like blit scrolling and stuff, try this for now
   //should be optimized, perhaps by just inhibiting optimizations of windows containing xwidgets.
-  
+#endif  
   
 #if GLYPH_DEBUG
   if (inhibit_try_window_reusing)
@@ -17476,7 +17479,11 @@ static void
 compute_line_metrics (struct it *it)
 {
   struct glyph_row *row = it->glyph_row;
-
+  if(row->used[TEXT_AREA] > 1000){
+  printf("compute_line_metrics %d %d %d\n", row->used[TEXT_AREA], it->f->text_cols, row->end.pos.charpos);
+    printf("row->used[TEXT_AREA] seems weirdly big! therefore dont compute_line_metrics\n");
+    return;
+  }
   if (FRAME_WINDOW_P (it->f))
     {
       int i, min_y, max_y;
