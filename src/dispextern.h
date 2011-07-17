@@ -23,6 +23,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #define DISPEXTERN_H_INCLUDED
 
 #ifdef HAVE_X_WINDOWS
+
 #include <X11/Xlib.h>
 #ifdef USE_X_TOOLKIT
 #include <X11/Intrinsic.h>
@@ -118,7 +119,7 @@ enum window_part
 
 /* If GLYPH_DEBUG is non-zero, additional checks are activated.  Turn
    it off by defining the macro GLYPH_DEBUG to zero.  */
-#define GLYPH_DEBUG 1
+
 #ifndef GLYPH_DEBUG
 #define GLYPH_DEBUG 0
 #endif
@@ -436,7 +437,7 @@ struct glyph
     int img_id;
 
     struct xwidget* xwidget;
-    
+
     /* Sub-structure for type == STRETCH_GLYPH.  */
     struct
     {
@@ -2396,7 +2397,6 @@ struct it
   /* If what == IT_XWIDGET*/
   struct xwidget* xwidget;
 
-  
   /* Values from `slice' property.  */
   struct it_slice slice;
 

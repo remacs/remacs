@@ -5906,8 +5906,6 @@ make_lispy_event (struct input_event *event)
 	return apply_modifiers (event->modifiers, event->arg);
       return event->arg;
 
-
-      
     case USER_SIGNAL_EVENT:
       /* A user signal.  */
       {
@@ -11548,8 +11546,6 @@ syms_of_keyboard (void)
   Qxwidget_event = intern ("xwidget-event");
   staticpro (&Qxwidget_event);
 
-  
-
   DEFSYM (QCenable, ":enable");
   DEFSYM (QCvisible, ":visible");
   DEFSYM (QChelp, ":help");
@@ -11566,7 +11562,6 @@ syms_of_keyboard (void)
   DEFSYM (Qvertical_line, "vertical-line");
   DEFSYM (Qvertical_scroll_bar, "vertical-scroll-bar");
   DEFSYM (Qmenu_bar, "menu-bar");
-
 
 #if defined (HAVE_MOUSE) || defined (HAVE_GPM)
   DEFSYM (Qmouse_fixup_help_message, "mouse-fixup-help-message");

@@ -295,7 +295,6 @@ static void add_frame_display_history (struct frame *, int);
    has been constructed.  PAUSED_P non-zero means that the update
    has been interrupted for pending input.  */
 
-
 static void
 add_window_display_history (struct window *w, const char *msg, int paused_p)
 {
@@ -305,7 +304,7 @@ add_window_display_history (struct window *w, const char *msg, int paused_p)
     history_idx = 0;
   buf = redisplay_history[history_idx].trace;
   ++history_idx;
-  /* glyph debug seems broken
+
   sprintf (buf, "%d: window %p (`%s')%s\n",
 	   history_tick++,
 	   w,
@@ -314,9 +313,8 @@ add_window_display_history (struct window *w, const char *msg, int paused_p)
 	    ? SSDATA (BVAR (XBUFFER (w->buffer), name))
 	    : "???"),
 	   paused_p ? " ***paused***" : "");
-  */
-  strcat (buf, msg);
 
+  strcat (buf, msg);
 }
 
 
@@ -3383,7 +3381,6 @@ update_single_window (struct window *w, int force_p)
 {
   if (w->must_be_updated_p)
     {
-      printf("window %d must be updated\n");
       struct frame *f = XFRAME (WINDOW_FRAME (w));
 
       /* Record that this is not a frame-based redisplay.  */
@@ -3740,10 +3737,9 @@ update_window (struct window *w, int force_p)
   add_window_display_history (w, w->current_matrix->method, paused_p);
 #endif
 
-  
-  if ((XWINDOW(FRAME_SELECTED_WINDOW (SELECTED_FRAME()))) ==  (w))
-    xwidget_end_redisplay(w->current_matrix);
-  
+  //  if ((XWINDOW(FRAME_SELECTED_WINDOW (SELECTED_FRAME()))) ==  (w))
+  xwidget_end_redisplay(w, w->current_matrix);
+
   clear_glyph_matrix (desired_matrix);
 
   return paused_p;

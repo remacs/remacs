@@ -97,4 +97,13 @@ defaults to the string looking like a url around the cursor position."
 ;; (declare-function xwidget-resize-internal "xwidget.c" )
 ;; check-declare-function?
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defun xwidget-cleanup ()
+  ;;its still pretty easy to trigger bugs with xwidgets.
+  ;;this function tries to implement a workaround
+  (interactive)
+  (xwidget-delete-zombies) ;;kill xviews who should have been deleted but stull linger
+  (redraw-display);;redraw display otherwise ghost of zombies  will remain to haunt the screen
+  )
+
 (provide 'xwidget)

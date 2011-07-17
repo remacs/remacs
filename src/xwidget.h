@@ -92,7 +92,7 @@ struct xwidget* xwidget_from_id(int id);
 //extern int xwidget_owns_kbd;
 
 void xwidget_start_redisplay();
-void xwidget_end_redisplay(struct glyph_matrix* matrix);
+void xwidget_end_redisplay (struct window *w, struct glyph_matrix *matrix);
 
 void xwidget_touch (struct xwidget_view *xw);
 

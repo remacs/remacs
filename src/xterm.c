@@ -2624,7 +2624,6 @@ x_draw_glyph_string (struct glyph_string *s)
 {
   int relief_drawn_p = 0;
 
-  //printf("x_draw_glyph_string: %d\n",s->first_glyph->type);
   /* If S draws into the background of its successors, draw the
      background of the successors first so that S can draw into it.
      This makes S->next use XDrawString instead of XDrawImageString.  */
@@ -2685,7 +2684,6 @@ x_draw_glyph_string (struct glyph_string *s)
     case XWIDGET_GLYPH:
       //erase xwidget background
       x_draw_glyph_string_background (s, 0);
-      //x_draw_xwidget_glyph_string draws phantom xwidgets only, live xwidgets are drawn in an expose handler
       x_draw_xwidget_glyph_string (s);
       break;
 
@@ -5834,7 +5832,6 @@ handle_one_xevent (struct x_display_info *dpyinfo, XEvent *eventptr,
   inev.ie.kind = NO_EVENT;
   inev.ie.arg = Qnil;
 
-  
   if (pending_event_wait.eventtype == event.type)
     pending_event_wait.eventtype = 0; /* Indicates we got it.  */
 
@@ -6321,15 +6318,11 @@ handle_one_xevent (struct x_display_info *dpyinfo, XEvent *eventptr,
 	  Lisp_Object c;
 
 #ifdef USE_GTK
-
           /* Don't pass keys to GTK.  A Tab will shift focus to the
              tool bar in GTK 2.4.  Keys will still go to menus and
              dialogs because in that case popup_activated is TRUE
-             (see above).
-          */
+             (see above).  */
           *finish = X_EVENT_DROP;
-          
-
 #endif
 
           event.xkey.state
@@ -7221,7 +7214,7 @@ x_draw_hollow_cursor (struct window *w, struct glyph_row *row)
   cursor_glyph = get_phys_cursor_glyph (w);
   if (cursor_glyph == NULL)
     return;
-  
+
   /* Compute frame-relative coordinates for phys cursor.  */
   get_phys_cursor_geometry (w, row, cursor_glyph, &x, &y, &h);
   wd = w->phys_cursor_width;
@@ -7266,7 +7259,6 @@ x_draw_bar_cursor (struct window *w, struct glyph_row *row, int width, enum text
     printf("tried avoiding xwidget cursor\n");
     return; //experimental avoidance of cursor on xwidget
   }
-  
   /* If on an image, draw like a normal cursor.  That's usually better
      visible than drawing a bar, esp. if the image is large so that
      the bar might not be in the window.  */
@@ -9899,9 +9891,9 @@ x_term_init (Lisp_Object display_name, char *xrm_option, char *resource_name)
                                   | G_LOG_FLAG_RECURSION, my_log_handler, NULL);
 #ifdef HAVE_CLUTTER
         gtk_clutter_init (&argc, &argv2);
-#else        
+#else
         gtk_init (&argc, &argv2);
-#endif        
+#endif
         g_log_remove_handler ("GLib", id);
 
         /* gtk_init does set_locale.  We must fix locale after calling it.  */
@@ -10507,7 +10499,7 @@ static struct redisplay_interface x_redisplay_interface =
     x_write_glyphs,
     x_insert_glyphs,
     x_clear_end_of_line,
-    x_scroll_run, //maybe xwidgets dont work too well with scrolling by blitting
+    x_scroll_run,
     x_after_update_window_line,
     x_update_window_begin,
     x_update_window_end,

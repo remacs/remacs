@@ -315,7 +315,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "font.h"
 
 #include "xwidget.h"
-
 #ifndef FRAME_X_OUTPUT
 #define FRAME_X_OUTPUT(f) ((f)->output_data.x)
 #endif
@@ -4083,7 +4082,7 @@ handle_display_spec (struct it *it, Lisp_Object spec, Lisp_Object object,
   if (CONSP (spec)
       /* Simple specerties.  */
       && !EQ (XCAR (spec), Qimage)
-      && !EQ (XCAR (spec), Qxwidget)      
+      && !EQ (XCAR (spec), Qxwidget)
       && !EQ (XCAR (spec), Qspace)
       && !EQ (XCAR (spec), Qwhen)
       && !EQ (XCAR (spec), Qslice)
@@ -4189,7 +4188,6 @@ handle_single_display_spec (struct it *it, Lisp_Object spec, Lisp_Object object,
   Lisp_Object location, value;
   struct text_pos start_pos = *position;
   int valid_p;
-  //printf("handle_single_display_spec:\n");
 
   /* If SPEC is a list of the form `(when FORM . VALUE)', evaluate FORM.
      If the result is non-nil, use VALUE instead of SPEC.  */
@@ -4497,22 +4495,13 @@ handle_single_display_spec (struct it *it, Lisp_Object spec, Lisp_Object object,
      LOCATION specifies where to display: `left-margin',
      `right-margin' or nil.  */
 
-  /*
-  printf("handle_single_display_spec xwidgetp:%d  imagep:%d spacep:%d display_replaced_before_p:%d stringp:%d\n",
-         XWIDGETP(value),
-         valid_image_p (value),
-         (CONSP (value) && EQ (XCAR (value), Qspace)),
-         display_replaced_before_p,
-         STRINGP (value));
-  */
   valid_p = (STRINGP (value)
 #ifdef HAVE_WINDOW_SYSTEM
              || ((it ? FRAME_WINDOW_P (it->f) : frame_window_p)
 		 && valid_image_p (value))
 #endif /* not HAVE_WINDOW_SYSTEM */
              || (CONSP (value) && EQ (XCAR (value), Qspace))
-             || XWIDGETP(value)
-             );
+             || XWIDGETP(value));
 
   if (valid_p && !display_replaced_p)
     {
@@ -4586,7 +4575,7 @@ handle_single_display_spec (struct it *it, Lisp_Object spec, Lisp_Object object,
 	  *position = start_pos;
 
           it->xwidget = lookup_xwidget(value);
-	}      
+	}
 #ifdef HAVE_WINDOW_SYSTEM
       else //if nothing else, its an image
 	{
@@ -4611,7 +4600,6 @@ handle_single_display_spec (struct it *it, Lisp_Object spec, Lisp_Object object,
   *position = start_pos;
   return 0;
 }
-
 
 /* Check if PROP is a display property value whose text should be
    treated as intangible.  OVERLAY is the overlay from which PROP
@@ -5306,7 +5294,6 @@ push_it (struct it *it, struct text_pos *position)
     case GET_FROM_XWIDGET:
       p->u.xwidget.object = it->object;
       break;
-      
     }
   p->position = position ? *position : it->position;
   p->current = it->current;
@@ -11846,7 +11833,7 @@ debug_method_add (struct window *w, char const *fmt, ...)
     }
 
   strncpy (method + len, buffer, remaining);
-  /* glyph debug broken
+
   if (trace_redisplay_p)
     fprintf (stderr, "%p (%s): %s\n",
 	     w,
@@ -11855,7 +11842,6 @@ debug_method_add (struct window *w, char const *fmt, ...)
 	      ? SSDATA (BVAR (XBUFFER (w->buffer), name))
 	      : "no buffer"),
 	     buffer);
-  */
 }
 
 #endif /* GLYPH_DEBUG */
@@ -12223,9 +12209,6 @@ redisplay_internal (void)
      frames.  Zero means, only selected_window is considered.  */
   int consider_all_windows_p;
 
-  //printf(">>>>redisplay\n");
-  //  xwidget_start_redisplay();
-  
   TRACE ((stderr, "redisplay_internal %d\n", redisplaying_p));
 
   /* No redisplay if running in batch mode or frame is not yet fully
@@ -12944,9 +12927,6 @@ redisplay_internal (void)
  end_of_redisplay:
   unbind_to (count, Qnil);
   RESUME_POLLING;
-  //xwidget_end_redisplay();
-    
-  //printf("<<<<redisplay\n");
 }
 
 
@@ -15397,7 +15377,6 @@ try_window (Lisp_Object window, struct text_pos pos, int flags)
   struct glyph_row *last_text_row = NULL;
   struct frame *f = XFRAME (w->frame);
 
-  
   /* Make POS the new window start.  */
   set_marker_both (w->start, Qnil, CHARPOS (pos), BYTEPOS (pos));
 
@@ -15407,7 +15386,6 @@ try_window (Lisp_Object window, struct text_pos pos, int flags)
 
   /* Initialize iterator and info to start at POS.  */
   start_display (&it, w, pos);
-
 
   /* Display all lines of W.  */
   while (it.current_y < it.last_visible_y)
@@ -17117,7 +17095,7 @@ dump_glyph (struct glyph_row *row, struct glyph *glyph, int area)
 	       glyph->face_id,
 	       glyph->left_box_line_p,
 	       glyph->right_box_line_p);
-      
+
       //      printf("dump xwidget glyph\n");
     }
 }
@@ -17495,8 +17473,7 @@ compute_line_metrics (struct it *it)
   struct glyph_row *row = it->glyph_row;
   if(row->used[TEXT_AREA] > 1000){
   printf("compute_line_metrics %d %d %d\n", row->used[TEXT_AREA], it->f->text_cols, row->end.pos.charpos);
-    printf("row->used[TEXT_AREA] seems weirdly big! therefore dont compute_line_metrics\n");
-    return;
+    printf("row->used[TEXT_AREA] seems weirdly big! emacs will crash soon\n");
   }
   if (FRAME_WINDOW_P (it->f))
     {
@@ -21227,8 +21204,7 @@ calc_pixel_width_or_height (double *res, struct it *it, Lisp_Object prop,
 	      return OK_PIXELS (width_p ? img->width : img->height);
 	    }
 
-	  if (FRAME_WINDOW_P (it->f)
-	      && valid_xwidget_p (prop))
+	  if (FRAME_WINDOW_P (it->f) && valid_xwidget_p (prop))
 	    {
               printf("calc_pixel_width_or_height: return dummy size FIXME\n");
               return OK_PIXELS (width_p ? 100 : 100);
@@ -21739,7 +21715,6 @@ fill_xwidget_glyph_string (struct glyph_string *s)
   s->xwidget = s->first_glyph->u.xwidget;
   //assert_valid_xwidget_id ( s->xwidget, "fill_xwidget_glyph_string");
 }
-
 
 /* Fill glyph string S from a sequence of stretch glyphs.
 
@@ -22919,8 +22894,8 @@ produce_xwidget_glyph (struct it *it)
 	  glyph->ascent = glyph_ascent;
 	  glyph->descent = it->descent;
 	  glyph->voffset = it->voffset;
-	  glyph->type = XWIDGET_GLYPH;          
-          
+	  glyph->type = XWIDGET_GLYPH;
+
 	  glyph->multibyte_p = it->multibyte_p;
 	  glyph->left_box_line_p = it->start_of_box_run_p;
 	  glyph->right_box_line_p = it->end_of_box_run_p;

@@ -42,8 +42,6 @@ static void emacs_fixed_get_preferred_height (GtkWidget *widget,
                                               gint      *natural);
 G_DEFINE_TYPE (EmacsFixed, emacs_fixed, GTK_TYPE_FIXED)
 
-
-
 void aloc_callback(GtkWidget* child, GtkWidget* fixed){
   GtkAllocation child_allocation;
   GtkRequisition child_requisition;
@@ -76,7 +74,7 @@ static void emacs_fixed_gtk_widget_size_allocate (GtkWidget *widget,
   parent_class = g_type_class_peek_parent (klass);
   parent_class->size_allocate (widget, allocation);
 
-  
+ 
   //then modify allocations
   gtk_container_foreach  (widget,
                           aloc_callback,
@@ -97,9 +95,7 @@ emacs_fixed_class_init (EmacsFixedClass *klass)
 
   widget_class->get_preferred_width = emacs_fixed_get_preferred_width;
   widget_class->get_preferred_height = emacs_fixed_get_preferred_height;
-
   widget_class->size_allocate =  emacs_fixed_gtk_widget_size_allocate;
-  
   g_type_class_add_private (klass, sizeof (EmacsFixedPrivate));
 }
 

@@ -49,7 +49,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "window.h"
 
 #include "xwidget.h"
-
 #include "systty.h"
 #include "blockinput.h"
 #include "syssignal.h"
