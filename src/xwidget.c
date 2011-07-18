@@ -93,6 +93,9 @@
 
 #ifdef HAVE_WEBKIT_OSR
 #include <webkit/webkitwebview.h>
+#include <webkit/webkitwebplugindatabase.h>
+#include <webkit/webkitwebplugin.h>
+#include <webkit/webkitglobals.h>
 #endif
 
 #include "xwidget.h"
@@ -808,7 +811,18 @@ DEFUN("xwidget-delete-zombies", Fxwidget_delete_zombies , Sxwidget_delete_zombie
   }
 }
 
-
+DEFUN("xwidget-disable-plugin-for-mime", Fxwidget_disable_plugin_for_mime , Sxwidget_disable_plugin_for_mime, 1,1,0, doc: /* */)
+  (Lisp_Object mime)
+{
+  WebKitWebPlugin *wp = webkit_web_plugin_database_get_plugin_for_mimetype
+    (webkit_get_web_plugin_database(),  SDATA(mime));
+  if(wp == NULL) return Qnil;
+  if(webkit_web_plugin_get_enabled (wp)){
+    webkit_web_plugin_set_enabled  (wp, FALSE);
+    return Qt;
+  }
+  return Qnil;
+}
 
 void
 syms_of_xwidget (void)
@@ -827,6 +841,7 @@ syms_of_xwidget (void)
   defsubr (&Sxwidget_webkit_get_title);
   defsubr (&Sxwidget_size_request  );
   defsubr (&Sxwidget_delete_zombies);
+  defsubr (&Sxwidget_disable_plugin_for_mime);
   DEFSYM (Qxwidget ,"xwidget");
 
   DEFSYM (Qcxwidget ,":xwidget");

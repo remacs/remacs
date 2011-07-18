@@ -24,7 +24,7 @@ The xwidget code attempts to keep the visual appearance of the views
 in sync with through an Observer pattern implementation.
 
 ** building
-bzr co bzr+ssh://jave@bzr.savannah.gnu.org/emacs/xwidget/
+bzr co bzr+ssh://bzr.savannah.gnu.org/emacs/xwidget/
 export CFLAGS=" -g -DGLYPH_DEBUG=1"
 #export CFLAGS="-g"
 ./configure   --with-x-toolkit=gtk3 --with-xwidgets

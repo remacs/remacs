@@ -12,12 +12,17 @@ see xwidget.c for types suitable for TYPE.
 "
   (goto-char pos)
   (let ((id (make-xwidget (point) (point)  type  title  width  height nil)))
-    (put-text-property (point) (+ 1 (point)) 'display (list 'xwidget ':xwidget id))
+    (put-text-property (point)
+                       (+ 1 (point)) 'display (list 'xwidget ':xwidget id))
+    
     id))
 
+
 (defun xwidget-at (pos)
-  (car (cdr (cdr  (get-text-property pos 'display)))
-))
+  (car (cdr (cdr  (get-text-property pos 'display)))))
+
+
+
          
 (defun xwidget-socket-handler ()
   "creates plug for socket. TODO"
@@ -37,9 +42,9 @@ see xwidget.c for types suitable for TYPE.
               ;;   (start-process "xembed" "*xembed*" (format "%ssrc/emacs" default-directory) "-q" "--parent-id" (number-to-string xembed-id) ) )
               ;;  ((eq 5 xwidget-id)
               ;;   (start-process "xembed2" "*xembed2*" "uzbl-core"  "-s" (number-to-string xembed-id)  "http://www.fsf.org" )  )
-               
-              )
-            ))))
+              )))))
+
+
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -59,19 +64,24 @@ defaults to the string looking like a url around the cursor position."
       (xwidget-webkit-goto-url url))))
 
 
+
 ;;todo.
 ;; - support browse-url with xwidget-webkit
 ;; - check that the webkit support is compiled in
-(define-derived-mode xwidget-webkit-mode
-  special-mode "xwidget-webkit" "xwidget webkit view mode"
-    (setq buffer-read-only t))
 (defvar xwidget-webkit-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map "g" 'xwidget-webkit-browse-url)
     (define-key map "a" 'xwidget-webkit-adjust-size-to-content)
     (define-key map "\C-m" 'xwidget-webkit-insert-string)
     map)
+  
   "Keymap for `xwidget-webkit-mode'.")
+
+
+
+(define-derived-mode xwidget-webkit-mode
+  special-mode "xwidget-webkit" "xwidget webkit view mode"
+    (setq buffer-read-only t))
 
 (defvar xwidget-webkit-last-session-buffer nil)
 
@@ -86,8 +96,8 @@ defaults to the string looking like a url around the cursor position."
   ;;xwidgets doesnt support widgets that have thoir own opinions about size well yet
   ;;this reads the size and sets it back
   (let ((size (xwidget-size-request xw)))
-    (xwidget-resize xw (car size) (cadr size)))
-  )
+    (xwidget-resize xw (car size) (cadr size))))
+
 
 (defun xwidget-webkit-insert-string (xw str)
   (interactive (list (xwidget-webkit-last-session)
@@ -96,8 +106,8 @@ defaults to the string looking like a url around the cursor position."
 
 (defun xwidget-webkit-adjust-size-to-content ()
   (interactive)
-  ( xwidget-adjust-size-to-content ( xwidget-webkit-last-session))
-  )
+  ( xwidget-adjust-size-to-content ( xwidget-webkit-last-session)))
+
 
 (defun xwidget-webkit-new-session (url)
 
@@ -108,10 +118,8 @@ defaults to the string looking like a url around the cursor position."
     (insert " ")
     (xwidget-insert 1 'webkit-osr  bufname 1000 1000)
     (xwidget-webkit-mode)
-    (xwidget-webkit-goto-uri ( xwidget-webkit-last-session) url ))
-    
+    (xwidget-webkit-goto-uri ( xwidget-webkit-last-session) url )))
 
-  )
 
 (defun xwidget-webkit-goto-url (url)
   (if ( xwidget-webkit-last-session)
@@ -132,7 +140,18 @@ defaults to the string looking like a url around the cursor position."
   (redraw-display);;redraw display otherwise ghost of zombies  will remain to haunt the screen
   )
 
+
+
 ;;this is a workaround because I cant find the right place to put it in C
 (add-hook 'window-configuration-change-hook 'xwidget-cleanup)
+
+(defvar xwidget-webkit-kill-flash-oneshot nil)
+(defun xwidget-webkit-kill-flash ()
+  ;;you can only call this once or webkit crashes and takes emacs with it. odd.
+  (unless xwidget-webkit-kill-flash-oneshot
+    (xwidget-disable-plugin-for-mime "application/x-shockwave-flash")
+    (setq xwidget-webkit-kill-flash-oneshot t)))
+
+(xwidget-webkit-kill-flash)
 
 (provide 'xwidget)
