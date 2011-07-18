@@ -62,7 +62,16 @@ defaults to the string looking like a url around the cursor position."
 ;;todo.
 ;; - support browse-url with xwidget-webkit
 ;; - check that the webkit support is compiled in
-(define-derived-mode xwidget-webkit-mode view-mode "xwidget-webkit" "xwidget webkit view mode" )
+(define-derived-mode xwidget-webkit-mode
+  special-mode "xwidget-webkit" "xwidget webkit view mode"
+    (setq buffer-read-only t))
+(defvar xwidget-webkit-mode-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map "g" 'xwidget-webkit-browse-url)
+    (define-key map "a" 'xwidget-webkit-adjust-size-to-content)
+    (define-key map "\C-m" 'xwidget-webkit-insert-string)
+    map)
+  "Keymap for `xwidget-webkit-mode'.")
 
 (defvar xwidget-webkit-last-session-buffer nil)
 
@@ -72,6 +81,23 @@ defaults to the string looking like a url around the cursor position."
         (switch-to-buffer xwidget-webkit-last-session-buffer)
         (xwidget-at 1))
     nil))
+
+(defun xwidget-adjust-size-to-content (xw)
+  ;;xwidgets doesnt support widgets that have thoir own opinions about size well yet
+  ;;this reads the size and sets it back
+  (let ((size (xwidget-size-request xw)))
+    (xwidget-resize xw (car size) (cadr size)))
+  )
+
+(defun xwidget-webkit-insert-string (xw str)
+  (interactive (list (xwidget-webkit-last-session)
+                     (read-string "string:")))
+  (xwidget-webkit-execute-script xw (format "document.activeElement.value='%s'" str)))
+
+(defun xwidget-webkit-adjust-size-to-content ()
+  (interactive)
+  ( xwidget-adjust-size-to-content ( xwidget-webkit-last-session))
+  )
 
 (defun xwidget-webkit-new-session (url)
 
@@ -105,5 +131,8 @@ defaults to the string looking like a url around the cursor position."
   (xwidget-delete-zombies) ;;kill xviews who should have been deleted but stull linger
   (redraw-display);;redraw display otherwise ghost of zombies  will remain to haunt the screen
   )
+
+;;this is a workaround because I cant find the right place to put it in C
+(add-hook 'window-configuration-change-hook 'xwidget-cleanup)
 
 (provide 'xwidget)
