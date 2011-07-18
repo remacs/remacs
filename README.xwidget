@@ -139,8 +139,25 @@ this is aproach worked so-so.
 ;; make   all&&  src/emacs -q --eval "(progn (load \"`pwd`/lisp/xwidget-test.el\") (xwidget-demo-basic))"
 
 * ToDo:s
+** TODO BUG xwidget view ghosts
+- xwidget-webkit-browse-url somewhere
+- split window.
+now theres 2 webkit views
+- c-x 1
+now theres 2 views but one is a ghost!
+one should have been deleted when its window died but that didnt work
+for some reason here.
 
-** TODO annoying backtrace
+- m-x xwidget-cleanup
+
+the ghost goes away because we killed explicitly but this is just a workaround.
+
+xwidget_view_delete_all_in_window(w); in delete-window-internal is not sufficient.
+delete-other-windows-internal
+delete_all_subwindows
+unshow_buffer
+
+** TODO BUG annoying backtrace
 sadly happens a lot.
 - happens even with no initialized xwidgets
 - 		     + row->glyphs[area][i].face_id
@@ -262,7 +279,8 @@ stuff that needs to work:
 - lookup xw-view for xwidget in emacs window(during redisplay)
 (- do something for all siblings of a xw-view. not atm)
 
-*** TODO xwidget creation interface
+*** DONE xwidget creation interface
+    CLOSED: [2011-07-18 Mon 01:59]
 xwidgets are a little bit like emacs processes but also a little bit
 like emacs images. Therefore its not perfectly obvious how to handle
 creation. Currently I just use hardcoded identifiers. the real scheme
@@ -309,7 +327,8 @@ generates an event if I cant set the id beforehand?
 so, therefore, the first two aproach is used. 
 
 
-*** TODO xwidget creation interface actually
+*** DONE xwidget creation interface actually
+    CLOSED: [2011-07-18 Mon 01:59]
 conclusion of above ramblings:
 - should be similar to make-text-button
 - don't init from display spec, instead during make-xwidget call
