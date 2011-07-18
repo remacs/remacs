@@ -69,6 +69,8 @@ struct xwidget_view{
 
 /* Test for xwidget (xwidget . spec)  (car must be the symbol xwidget)*/
 #define XWIDGETP(x) (CONSP (x) && EQ (XCAR (x), Qxwidget))
+/* Test for xwidget pseudovector*/
+#define XXWIDGETP(x) PSEUDOVECTORP (x, PVEC_XWIDGET)
 #define XXWIDGET(a) (eassert (XWIDGETP(a)),(struct xwidget *) XPNTR(a))
 
 

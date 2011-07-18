@@ -16,7 +16,7 @@ see xwidget.c for types suitable for TYPE.
     id))
 
 (defun xwidget-at (pos)
-  (caddr  (get-text-property pos 'display)
+  (car (cdr (cdr  (get-text-property pos 'display)))
 ))
          
 (defun xwidget-socket-handler ()

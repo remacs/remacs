@@ -109,14 +109,14 @@ struct xwidget_view xwidget_views[MAX_XWIDGETS];
 struct xwidget*
 allocate_xwidget (void)
 {
-  return ALLOCATE_PSEUDOVECTOR (struct xwidget, height, PVEC_OTHER);
+  return ALLOCATE_PSEUDOVECTOR (struct xwidget, height, PVEC_XWIDGET);
 }
 
 //TODO xwidget_view* should be Lisp_xwidget_view*
 struct xwidget_view*
 allocate_xwidget_view (void)
 {
-  return ALLOCATE_PSEUDOVECTOR (struct xwidget_view, redisplayed, PVEC_OTHER);
+  return ALLOCATE_PSEUDOVECTOR (struct xwidget_view, redisplayed, PVEC_XWIDGET_VIEW);
 }
 
 
@@ -162,7 +162,7 @@ DEFUN ("make-xwidget", Fmake_xwidget, Smake_xwidget, 7, 7, 0,
   XSETBUFFER(xw->buffer,  Fcurrent_buffer()); // conservatively gcpro xw since we call lisp
   xw->height = XFASTINT(height);
   xw->width = XFASTINT(width);
-  XSETPSEUDOVECTOR (val, xw, PVEC_OTHER); //?? dunno why i need this
+  XSETPSEUDOVECTOR (val, xw, PVEC_XWIDGET); //?? dunno why i need this
   Vxwidget_alist = Fcons ( val, Vxwidget_alist);
   xw->widgetwindow_osr = NULL;
   xw->widget_osr = NULL;
@@ -323,7 +323,7 @@ void xwidget_slider_changed (GtkRange *range,
   for (int i = 0; i < MAX_XWIDGETS; i++)
     {
       xv = &xwidget_views[i];
-      if(xvp->model == xv->model){
+      if(xv->initialized && xvp->model == xv->model){
         g_signal_handler_block( xv->widget,xv->handler_id);
       }
     }
@@ -331,7 +331,7 @@ void xwidget_slider_changed (GtkRange *range,
   for (int i = 0; i < MAX_XWIDGETS; i++)
     {
       xv = &xwidget_views[i];
-      if(xvp->model == xv->model){
+      if(xv->initialized && xvp->model == xv->model){
         gtk_range_set_value(GTK_RANGE(xv->widget), v);
         g_signal_handler_unblock( xv->widget,xv->handler_id);
       }
@@ -352,7 +352,7 @@ gboolean webkit_osr_damage_event_callback (GtkWidget *widget, GdkEventExpose *ev
   for (int i = 0; i < MAX_XWIDGETS; i++)//todo mvc refactor
     {
       xv = &xwidget_views[i];
-      if(xv->model == xw){
+      if(xv->initialized && xv->model == xw){
         gtk_widget_queue_draw (xv->widget); //redraw all views, the master has changed
       }
     }
@@ -724,7 +724,7 @@ DEFUN ("xwidget-resize", Fxwidget_resize, Sxwidget_resize, 3, 3, 0, doc:
   for (int i = 0; i < MAX_XWIDGETS; i++) //TODO MVC refactor lazy linear search
     {
       xv = &xwidget_views[i];
-      if(xv->model == xw){
+      if(xv->initialized && xv->model == xw){
         gtk_layout_set_size (GTK_LAYOUT (xv->widgetwindow), xw->width, xw->height);
         gtk_widget_set_size_request (GTK_WIDGET (xv->widget), xw->width, xw->height);
       }
@@ -923,7 +923,7 @@ void      xwidget_view_delete_all_in_window(  struct window *w )
   struct xwidget_view* xv = NULL;
   for (int i = 0; i < MAX_XWIDGETS; i++){
       xv =  &xwidget_views[i];
-      if(xv->w == w){
+      if(xv->initialized && xv->w == w){
         gtk_widget_destroy(GTK_WIDGET(xv->widgetwindow));
         xv->initialized = 0;
       }
@@ -934,14 +934,15 @@ void      xwidget_view_delete_all_in_window(  struct window *w )
 
 struct xwidget_view* xwidget_view_lookup(struct xwidget* xw,     struct window *w){
   struct xwidget_view* xv = NULL;
-  for (int i = 0; i < MAX_XWIDGETS; i++)
-    if ((xwidget_views[i].model == xw) && (xwidget_views[i].w == w))
-      xv =  &xwidget_views[i];
-
-  return xv;
+  for (int i = 0; i < MAX_XWIDGETS; i++){
+    xv = &xwidget_views[i];
+    if (xv->initialized && (xv->model == xw) && (xv->w == w))
+      return xv;
+  }
 }
 
 //attempting a workaround for a webkit offscreen bug
+//TODO verify its still needed
 void                gtk_window_get_position             (GtkWindow *window,
                                                          gint *root_x,
                                                          gint *root_y){
