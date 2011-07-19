@@ -140,7 +140,8 @@ this is aproach worked so-so.
 ;; make   all&&  src/emacs -q --eval "(progn (load \"`pwd`/lisp/xwidget-test.el\") (xwidget-demo-basic))"
 
 * ToDo:s
-** TODO webkit flashkiller by default
+** DONE webkit flashkiller by default
+   CLOSED: [2011-07-19 Tue 14:27]
 while its possible to support plugins in the webkit xwidget, flash has
 issues on 64 bit, and slows down emacs to a halt with off screen
 rendering, and of course is not free software. its in the way for real
@@ -153,7 +154,8 @@ http://stackoverflow.com/questions/4885513/prevent-flash-in-cocoa-webview
 simply use this api:
 http://webkitgtk.org/reference/WebKitWebPluginDatabase.html
 
-** TODO allow xwidgets to report thoir size
+** DONE allow xwidgets to report thoir size
+   CLOSED: [2011-07-19 Tue 14:26]
 now we just hard code sizes. but webkit widgets for instance can
 report sizes that suit the content. support that.
 ** TODO BUG xwidget view ghosts
@@ -174,7 +176,11 @@ delete-other-windows-internal
 delete_all_subwindows
 unshow_buffer
 
-** TODO BUG annoying backtrace
+** DONE BUG annoying backtrace
+   CLOSED: [2011-07-19 Tue 14:28]
+(this no longer seems to happen even under heavy usage. seems merging
+from trunk helped. lots were happening in redisplay at this time in trunk.)
+
 sadly happens a lot.
 - happens even with no initialized xwidgets
 - 		     + row->glyphs[area][i].face_id
@@ -463,11 +469,25 @@ seemingly only when compiling with optimizations.
 I have no idea why.
 
 Doesn't seem to happen after some code cleanups.
-** TODO xwidget-resize-at
-reimplement so display special is not involved
-** TODO display spec validation
+** DONE xwidget-resize-at
+   CLOSED: [2011-07-19 Tue 14:28]
+reimplement so display spec is not involved
+** DONE display spec validation
+   CLOSED: [2011-07-19 Tue 14:44]
 it is an error to reuse xwidgets in several buffers or in the same
-buffer. how do we catch these errors?
+buffer. how do we catch these errors? 
+- showing the same xwidget twice in a buffer is no more wrong than
+  showing in several emacs windows, just conceptually wrong, so ignore
+  this case for now
+- xwidgets now store a reference to the buffer they were created in,
+  so use that to invalidate xwidget references in oher buffers. but
+  thats not really an error either
+- xwidgets should now be proper lisp objects so you dont delete them
+  you await their garbage collection. so therefore there can never be
+  invalid disploy specs
+
+so turned out this got solved by using proper lisp objects for
+xwidgets. yay!
 
 
 ** TODO browser xwidget
@@ -795,6 +815,9 @@ removing xwidget views when an Emacs window closes is not reliable.
 this seems to work
 
 
+** TODO support webkit signals
+particularily document-load-finished
+http://webkitgtk.org/reference/webkitgtk-webkitwebview.html#WebKitWebView-document-load-finished
 ** notes from x_draw_xwidget_glyph_string
 
     BUG it seems this method for some reason is called with bad s->x and s->y sometimes.

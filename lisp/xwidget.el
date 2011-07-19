@@ -89,7 +89,7 @@ defaults to the string looking like a url around the cursor position."
 (defun  xwidget-webkit-last-session ()
   (if (buffer-live-p xwidget-webkit-last-session-buffer)
       (save-excursion
-        (switch-to-buffer xwidget-webkit-last-session-buffer)
+        (set-buffer xwidget-webkit-last-session-buffer)
         (xwidget-at 1))
     nil))
 
@@ -124,13 +124,23 @@ defaults to the string looking like a url around the cursor position."
 
 (defun xwidget-webkit-goto-url (url)
   (if ( xwidget-webkit-last-session)
-      (xwidget-webkit-goto-uri ( xwidget-webkit-last-session) url)
+      (progn
+        (xwidget-webkit-goto-uri ( xwidget-webkit-last-session) url)
+        (switch-to-buffer xwidget-webkit-last-session-buffer))
     ( xwidget-webkit-new-session url)))
 
 (defun xwidget-webkit-back ()
   (interactive)
   (xwidget-webkit-execute-script ( xwidget-webkit-last-session)  "history.go(-1);")
   )
+
+(defun xwidget-current-url ()
+  "get the webkit url"
+  ;;notice the fugly "title" hack. it is needed because the webkit api doesnt support returning values.
+  ;;TODO make a wrapper for the title hack so its easy to remove should webkit someday support JS return values
+  (xwidget-webkit-execute-script (xwidget-webkit-last-session) "document.title=document.URL;")
+  (xwidget-webkit-get-title (xwidget-webkit-last-session)))
+
 
 
 ;; use declare here?
