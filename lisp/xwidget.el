@@ -72,6 +72,7 @@ defaults to the string looking like a url around the cursor position."
   (let ((map (make-sparse-keymap)))
     (define-key map "g" 'xwidget-webkit-browse-url)
     (define-key map "a" 'xwidget-webkit-adjust-size-to-content)
+    (define-key map "b" 'xwidget-webkit-back )
     (define-key map "\C-m" 'xwidget-webkit-insert-string)
     map)
   
@@ -125,6 +126,11 @@ defaults to the string looking like a url around the cursor position."
   (if ( xwidget-webkit-last-session)
       (xwidget-webkit-goto-uri ( xwidget-webkit-last-session) url)
     ( xwidget-webkit-new-session url)))
+
+(defun xwidget-webkit-back ()
+  (interactive)
+  (xwidget-webkit-execute-script ( xwidget-webkit-last-session)  "history.go(-1);")
+  )
 
 
 ;; use declare here?
