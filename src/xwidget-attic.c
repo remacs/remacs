@@ -44,8 +44,7 @@ xwidget_composite_draw_phantom(struct xwidget* xw,
   /* get our child (in this case, the event box) */
   child = xw->widget; //gtk_bin_get_child (GTK_BIN (widget));
   /* create a cairo context to draw to the emacs window */
-  //  cr = gdk_cairo_create (gtk_widget_get_window (f->gwfixed));//GTK_WIDGET(xw->emacswindow));//xw->widgetwindow));//widget->window);
-  cr = gdk_cairo_create (gtk_widget_get_window (f->gwfixed));//GTK_WIDGET(xw->emacswindow));//));//widget->window);  
+  cr = gdk_cairo_create (gtk_widget_get_window (FRAME_GTK_WIDGET (s->f)));//GTK_WIDGET(xw->emacswindow));//));//widget->window);  
   /* the source data is the (composited) xwidget */
   //cairo_move_to(cr, xw->x, xw->y);
   

@@ -437,7 +437,6 @@ struct glyph
     int img_id;
 
     struct xwidget* xwidget;
-
     /* Sub-structure for type == STRETCH_GLYPH.  */
     struct
     {

@@ -74,7 +74,7 @@ static void emacs_fixed_gtk_widget_size_allocate (GtkWidget *widget,
   parent_class = g_type_class_peek_parent (klass);
   parent_class->size_allocate (widget, allocation);
 
- 
+
   //then modify allocations
   gtk_container_foreach  (widget,
                           aloc_callback,

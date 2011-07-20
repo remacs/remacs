@@ -1100,9 +1100,9 @@ xg_create_frame_widgets (FRAME_PTR f)
   whbox = gtk_hbox_new (FALSE, 0);
 
 #ifdef HAVE_GTK3
-  f->gwfixed =   wfixed = emacs_fixed_new (f);
+  wfixed = emacs_fixed_new (f);
 #else
-  f->gwfixed =   wfixed = gtk_fixed_new ();
+  wfixed = gtk_fixed_new ();
 #endif
 
   if (! wtop || ! wvbox || ! whbox || ! wfixed)

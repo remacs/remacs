@@ -447,7 +447,7 @@ xwidget_init_view (
   } else if (EQ(xww->type, Qcairo)) {
     //Cairo view
     //uhm cairo is differentish in gtk 3.
-    //gdk_cairo_create (gtk_widget_get_window (f->gwfixed));
+    //gdk_cairo_create (gtk_widget_get_window (FRAME_GTK_WIDGET (s->f)));
 #ifdef HAVE_GOOCANVAS
     xv->widget = goo_canvas_new();
     GooCanvasItem *root, *rect_item, *text_item;
@@ -518,7 +518,7 @@ xwidget_init_view (
   //make container widget 1st, and put the actual widget inside the container
   //later, drawing should crop container window if necessary to handle case where xwidget
   //is partially obscured by other emacs windows
-  xv->emacswindow = GTK_CONTAINER (s->f->gwfixed);
+  xv->emacswindow = GTK_CONTAINER (FRAME_GTK_WIDGET (s->f));
   //xw->widgetwindow = GTK_CONTAINER (gtk_layout_new (NULL, NULL));
   //xw->widgetwindow = GTK_CONTAINER (gtk_offscreen_window_new ());
 
@@ -555,7 +555,7 @@ xwidget_init_view (
 
   gtk_widget_set_size_request (GTK_WIDGET (xv->widget), xww->width, xww->height);
   gtk_widget_set_size_request (GTK_WIDGET (xv->widgetwindow), xww->width, xww->height);
-  gtk_fixed_put (GTK_FIXED (s->f->gwfixed), GTK_WIDGET (xv->widgetwindow), x, y);
+  gtk_fixed_put (GTK_FIXED (FRAME_GTK_WIDGET (s->f)), GTK_WIDGET (xv->widgetwindow), x, y);
   xv->x = x;  xv->y = y;
   gtk_widget_show_all (GTK_WIDGET (xv->widgetwindow));
 
@@ -634,7 +634,7 @@ x_draw_xwidget_glyph_string (struct glyph_string *s)
       if (!xwidget_hidden(xv))	//hidden equals not being seen during redisplay
         {
           //TODO should be possible to use xwidget_show_view here
-          gtk_fixed_move (GTK_FIXED (s->f->gwfixed),
+          gtk_fixed_move (GTK_FIXED (FRAME_GTK_WIDGET (s->f)),
                           GTK_WIDGET (xv->widgetwindow),
                           x + clip_left, y + clip_top);
         }

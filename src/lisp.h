@@ -389,7 +389,7 @@ enum pvec_type
   PVEC_FONT = 0x200000,
   PVEC_OTHER = 0x400000,
   PVEC_XWIDGET = 0x800000,
-  PVEC_XWIDGET_VIEW = 0x1000000,    
+  PVEC_XWIDGET_VIEW = 0x1000000,
   PVEC_TYPE_MASK = 0x3fffe00
 
 #if 0 /* This is used to make the value of PSEUDOVECTOR_FLAG available to

@@ -15483,12 +15483,6 @@ try_window_reusing_current_matrix (struct window *w)
   struct glyph_row *start_row;
   int start_vpos, min_y, max_y;
 
-#if HAVE_XWIDGETS_hhh
-  return 0;
-  //xwidgets doesnt like blit scrolling and stuff, try this for now
-  //should be optimized, perhaps by just inhibiting optimizations of windows containing xwidgets.
-#endif  
-  
 #if GLYPH_DEBUG
   if (inhibit_try_window_reusing)
     return 0;

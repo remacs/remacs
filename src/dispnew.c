@@ -313,9 +313,8 @@ add_window_display_history (struct window *w, const char *msg, int paused_p)
 	    ? SSDATA (BVAR (XBUFFER (w->buffer), name))
 	    : "???"),
 	   paused_p ? " ***paused***" : "");
-
   strcat (buf, msg);
-}
+
 
 
 /* Add to the redisplay history that frame F has been displayed.
