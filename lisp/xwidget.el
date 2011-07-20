@@ -131,8 +131,11 @@ defaults to the string looking like a url around the cursor position."
 
 (defun xwidget-webkit-back ()
   (interactive)
-  (xwidget-webkit-execute-script ( xwidget-webkit-last-session)  "history.go(-1);")
-  )
+  (xwidget-webkit-execute-script ( xwidget-webkit-last-session)  "history.go(-1);"))
+
+(defun xwidget-webkit-reload ()
+  (interactive)
+  (xwidget-webkit-execute-script ( xwidget-webkit-last-session)  "reload();"))
 
 (defun xwidget-current-url ()
   "get the webkit url"
