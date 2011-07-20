@@ -73,6 +73,7 @@ defaults to the string looking like a url around the cursor position."
     (define-key map "g" 'xwidget-webkit-browse-url)
     (define-key map "a" 'xwidget-webkit-adjust-size-to-content)
     (define-key map "b" 'xwidget-webkit-back )
+    (define-key map "r" 'xwidget-webkit-reload )    
     (define-key map "\C-m" 'xwidget-webkit-insert-string)
     map)
   
@@ -135,7 +136,7 @@ defaults to the string looking like a url around the cursor position."
 
 (defun xwidget-webkit-reload ()
   (interactive)
-  (xwidget-webkit-execute-script ( xwidget-webkit-last-session)  "reload();"))
+  (xwidget-webkit-execute-script ( xwidget-webkit-last-session)  "history.go(0);"))
 
 (defun xwidget-current-url ()
   "get the webkit url"
