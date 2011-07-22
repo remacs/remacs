@@ -7,10 +7,10 @@ for eXternal widget, and also in reference to the Xembed protocoll.
 There is a demo file called xwidget-test.el which shows some of the
 possibilities. There are some screnshots at the emacswiki.
 
-Currently its possible to insert buttons, sliders, and xembed widgets
-in the buffer. It works similar to the support for images in Emacs.
-Adding more types of widgets should be fairly straightforward, but
-will require adapter code for each type.
+Currently its possible to insert buttons, sliders, xembed widgets, and
+webkit in the buffer. It works similar to the support for images in
+Emacs.  Adding more types of widgets should be fairly straightforward,
+but will require adapter code for each type.
 
 A difference from images is that xwidgets live their own life. You
 create them with an api, get a reference, and tie them to a particular
@@ -21,42 +21,48 @@ model, and an xwidget-view is a view of the xwidget in a particular
 Emacs window.
 
 The xwidget code attempts to keep the visual appearance of the views
-in sync with through an Observer pattern implementation.
+in sync with through an Observer pattern implementation. This is
+necessary to support the Emacs window paradigm.
 
 ** building
 bzr co bzr+ssh://bzr.savannah.gnu.org/emacs/xwidget/
 export CFLAGS=" -g -DGLYPH_DEBUG=1"
-#export CFLAGS="-g"
 ./configure   --with-x-toolkit=gtk3 --with-xwidgets
 make -j4
 
-** MVC and Xembedd
-The MVC approach appears to be at least in principle robust for plain gtk
-widgets. For the interesting case of gtk sockets which implements an
-xembed host widget that allows for embedding other applications inside
-an Emacs window, the story gets more complex.
+** try it out
+If you have GTK3 and gtk-webkit installed, you should be able to
+started the embedded webkit browser now:
 
-The problem is that xembed is designed to plug an application window
-inside a a secket and thats it. You can't move a plug between
-sockets. I tried numerous hacks to get around this but there is
-nothing that works realy well.
+M-X xwidget-webkit-browse-url
 
-Therefore the Emacs part of the code will only expose well-defined
-interfaces. cooperating applications will be able to use the interface
-in a well defined manner. The problem is that there is no known xembeddable
-application that implement the needed type of functionality, which is
-allowing for creating new windows on the fly that plug into new
-sockets.
+If that didnt work out try the minimal demonstration instead:
 
-Therefore I will attempt to provide an external application that wraps
-another application and through hacks attempts to provide the needed
-multi view xembed function. That way Emacs is sane and the insanity
-contained.
+(load-library "xwidget-test")
+(xwidget-demo-a-button)
 
-This app will work by providing a socket that an app plugs into. The
-socket window is copied efficientlp by means of composition to a
-number of other windows, that then are plugged into the different
-Emacs sockets. 
+It looks unimpressive, but it's a gtk button inside an Emars buffer!
+
+** Stability
+Beginning with Summer 2011 I am now able to use Xwidget Emacs as my
+primary Emacs. That is good for the project and the stability of the
+code.
+
+At the time of writing I have 24 hour Emacs uptime with several
+embedded webkit browsers, Gnus, org-mode, tramp, etc. etc.
+
+That said, there are still many improvements that needs to be done,
+particularily in memory management. Expect xwidget emacs to leak
+heavily for now.
+
+** timeline for inclusion in trunk
+The Emacs 24 feature freeze is passed, so xwidgets won't probably be merged
+until Emacs 25. OTOH since I now use xwidget emacs as my primary
+emacs, I will merge from trunk much more often than in the past.
+
+** Thanks
+emacs-devel@gnu.org. There are very helpful people there. When I
+started the xwidget project I had no clue about the Emacs internals. 
 
 * Brief overview of how xwidgets work
 Xwidgets work in one way like images in Emacs. You bind a display spec very
@@ -139,6 +145,33 @@ this is aproach worked so-so.
 ;; cd /path/to/xwidgets-emacs-dir
 ;; make   all&&  src/emacs -q --eval "(progn (load \"`pwd`/lisp/xwidget-test.el\") (xwidget-demo-basic))"
 
+** MVC and Xembedd
+The MVC approach appears to be at least in principle robust for plain gtk
+widgets. For the interesting case of gtk sockets which implements an
+xembed host widget that allows for embedding other applications inside
+an Emacs window, the story gets more complex.
+
+The problem is that xembed is designed to plug an application window
+inside a a secket and thats it. You can't move a plug between
+sockets. I tried numerous hacks to get around this but there is
+nothing that works realy well.
+
+Therefore the Emacs part of the code will only expose well-defined
+interfaces. cooperating applications will be able to use the interface
+in a well defined manner. The problem is that there is no known xembeddable
+application that implement the needed type of functionality, which is
+allowing for creating new windows on the fly that plug into new
+sockets.
+
+Therefore I will attempt to provide an external application that wraps
+another application and through hacks attempts to provide the needed
+multi view xembed function. That way Emacs is sane and the insanity
+contained.
+
+This app will work by providing a socket that an app plugs into. The
+socket window is copied efficientlp by means of composition to a
+number of other windows, that then are plugged into the different
+Emacs sockets. 
 * ToDo:s
 ** DONE webkit flashkiller by default
    CLOSED: [2011-07-19 Tue 14:27]
@@ -407,7 +440,7 @@ Surprisingly, this just worked!
 I used gtk signals, the implementation for sliders works well!
 
 ** TODO canvas support
-heresy an interesting comparision of gtk canvases
+heres an interesting comparision of gtk canvases
 http://live.gnome.org/ProjectRidley/CanvasOverview
 *** goocanvas
 goocanvas is a gtk canvas implemented using cairo. investigate.
@@ -490,7 +523,8 @@ so turned out this got solved by using proper lisp objects for
 xwidgets. yay!
 
 
-** TODO browser xwidget
+** DONE browser xwidget
+   CLOSED: [2011-07-20 Wed 20:05]
 although embedding a browser is not my primary concern many are
 interested in this. some suitable browser component needs to be found
 supporting gtk.
@@ -586,7 +620,8 @@ offscreen rendering issues makes it interesting to see what ff brings
 to the table. turns out webkit has as good offscreen support as anyone.
 
 
-*** TODO text field support
+*** DONE text field support
+    CLOSED: [2011-07-20 Wed 20:05]
 Emacs captures all keyboard events so text field support isn't super
 straightforward. 
 
@@ -777,11 +812,13 @@ allocation hack and set_has_window it works. Idea prefer not to have
 the allocatien hack and it wasnt needed it gtk3 only gtk2. needs
 furthi investigation,
 
-** TODO various code cleanups
+** DONE various code cleanups
+   CLOSED: [2011-07-20 Wed 20:05]
 There are many cleanups necessary before any hope of inclusion in
 Emacs trunk. To begin with, the part of the patch that touches other
 parts of emacs must be very clean. 
-*** TODO use FRAME_GTK_WIDGET (f)
+*** DONE use FRAME_GTK_WIDGET (f)
+    CLOSED: [2011-07-20 Wed 20:02]
 rather than gwfixed.
 
 *** DONE support configure
@@ -816,9 +853,34 @@ this seems to work
 
 
 ** TODO support webkit signals
-particularily document-load-finished
+*** TODO particularily document-load-finished
 http://webkitgtk.org/reference/webkitgtk-webkitwebview.html#WebKitWebView-document-load-finished
-** notes from x_draw_xwidget_glyph_string
+*** TODO console messages
+http://webkitgtk.org/reference/webkitgtk-webkitwebview.html#WebKitWebView-console-message
+http://getfirebug.com/wiki/index.php/Console_API#console.count.28.5Btitle.5D.29
+because maybe we can make a simple JS REPL that way.
+  (xwidget-webkit-execute-script ( xwidget-webkit-last-session)
+  "console.log('hello')")
+prints hello to stdout but theres no way to catch stdout from webkit I
+think other than receiving the signal.
+
+
+
+** TODO webkit downloads
+when clicking a download link in Webkit Emacs should take over and handle it
+from there. Probably need signals.
+
+** TODO webkit alt-text not handled
+XKCD use image-title to display a cartoon comment. These mysteriously
+don't work ATM. Other mouseovers work though. Maybe webkit tries to
+open a new window or something, which wont work.
+
+** TODO isearch in webkit buffers
+have a look at how docview solves it
+webkit_web_view_search_text ()
+** TODO webkit relative references doesn't work
+probably because we handle scrolling in a non-standard way
+* old notes from x_draw_xwidget_glyph_string
 
     BUG it seems this method for some reason is called with bad s->x and s->y sometimes.
     When this happens the xwidget doesnt move on screen as it should.
