@@ -41,7 +41,36 @@ If that didnt work out try the minimal demonstration instead:
 (load-library "xwidget-test")
 (xwidget-demo-a-button)
 
-It looks unimpressive, but it's a gtk button inside an Emars buffer!
+It looks unimpressive, but it's a gtk button inside an Emacs buffer!
+*** webkit hints
+If you got webkit working, great! Please note, though, that the
+current support is far from a full fledged browser. My focus is on
+delivering a component that can be used to build a full emacs based
+browser on. Since I implement a browse-url function you can get quite
+far just by:
+
+(setq browse-url-browser-function 'xwidget-webkit-browse-url)
+
+then all Emacs browser interface systems work to a degree.
+heres stuff I use currenly
+
+- m-x anything-surfraw interfaces to search engines
+- C-o in org mode opens links inside org
+- m-x ffap opens links anywhere in a buffer
+- m-x gtk-lookup-symbol searches gtk docs
+- m-x bookmark-jump
+etc..
+
+I'll add more examples as I go along.
+
+However theres lots of support missing, see TODO list for
+information. Briefly:
+- download handling
+- keyboard field navigation
+- isearch
+- history
+- sites that use flash. I dont really care about this issue so its
+unlikely to be fixed. Just a heads up.
 
 ** Stability
 Beginning with Summer 2011 I am now able to use Xwidget Emacs as my
@@ -173,20 +202,6 @@ socket window is copied efficientlp by means of composition to a
 number of other windows, that then are plugged into the different
 Emacs sockets. 
 * ToDo:s
-** DONE webkit flashkiller by default
-   CLOSED: [2011-07-19 Tue 14:27]
-while its possible to support plugins in the webkit xwidget, flash has
-issues on 64 bit, and slows down emacs to a halt with off screen
-rendering, and of course is not free software. its in the way for real
-world usage even if its interesting to watch flash animations inside
-emacs. which should be achieved with Gnash or other free software
-instead.
-
-http://stackoverflow.com/questions/4885513/prevent-flash-in-cocoa-webview
-
-simply use this api:
-http://webkitgtk.org/reference/WebKitWebPluginDatabase.html
-
 ** DONE allow xwidgets to report thoir size
    CLOSED: [2011-07-19 Tue 14:26]
 now we just hard code sizes. but webkit widgets for instance can
@@ -522,171 +537,6 @@ buffer. how do we catch these errors?
 so turned out this got solved by using proper lisp objects for
 xwidgets. yay!
 
-
-** DONE browser xwidget
-   CLOSED: [2011-07-20 Wed 20:05]
-although embedding a browser is not my primary concern many are
-interested in this. some suitable browser component needs to be found
-supporting gtk.
-
-*** DONE webkit
-    CLOSED: [2011-07-03 Sun 22:13]
-there is a webkit gtk port. there is no obvious mvc support.
-http://live.gnome.org/WebKitGtk
-http://webkitgtk.org/
-
-it might be possible to keep a set of webxits in artificial
-synchronisation by recursive deep copy of the DOM from one webkit to
-another. This will be error prone at best though. Another way might be
-to just use bitmap copy of the "live"instance to the "phantom"
-instances. the problem of transfering the live view remains though.
-
-export CFLAGS="`pkg-config --cflags webkit-1.0` -DHAVE_WEBKIT -g"
-export LDFLAGS=`pkg-config --libs webkit-1.0`
-./configure
-make
-
-**** off screen rendering
-export CFLAGS="`pkg-config --cflags webkit-1.0` -DHAVE_WEBKIT_OSR -g"
-export LDFLAGS=`pkg-config --libs webkit-1.0`
-./configure
-make
-
-works a little bit  but i get errors like:
-
-(emacs:8362): GLib-GObject-WARNING **: invalid cast from `GdkOffscreenWindow' to `GdkDrawableImplX11'
-
-set a breakpoint in g_log, backtrace seems to indicate
-webkitViewportAttributesRecompute is the offender. 
-
-maybe try gtk3 variants?
-
-export CFLAGS="`pkg-config --cflags webkitgtk-3.0 ` -DHAVE_WEBKIT_OSR "
-export LDFLAGS=`pkg-config --libs webkitgtk-3.0 `
-./configure   --with-x-toolkit=gtk3
-make
-
-crash in gtk_window_get_size instead. great.
-
-http://gtkplus-p3.0.sourcearchive.com/documentation/2.91.5-0ubuntu1/testoffscreenwindow_8c-source.html
-
-after many atempts, the basic issue remains. for some reason the
-offscreen widget isnt ok when I want to snapshot it, so i simply get
-emptiness. the surface is only ok someimes. 
-
-here is a useful debugging snippets:
-  // debugging redraw:
-  //  - the bg colors always change, so theres no error in signal handling
-  //  - i get this error now and then:
-  //(emacs:7109): GLib-GObject-WARNING **: invalid cast from `GdkOffscreenWindow' to `GdkDrawableImplX11'
-  // seems to happen in webkit actually. see README
-  
-  if(0){ //redraw debug hack. helped a lot in fact. use the with alpha painter below also
-    cairo_set_source_rgb(cr, osr_dbg_color, 1.0, 0.2);
-    cairo_rectangle(cr, 0,0, xw->width, xw->height);
-    cairo_fill(cr);
-    osr_dbg_color+=0.1;
-    if(osr_dbg_color>1.0)
-      osr_dbg_color=0.0;
-    
-  }
-
-you need to terminate drawing like this:
-  
-  //cairo_set_source_surface (cr, src_pixmap, 0,0); 
-  //cairo_set_operator (cr, CAIRO_OPERATOR_OVER);
-
-  //cairo_paint_with_alpha (cr, 1.0);
-  //cairo_paint(cr);
-
-the snippets change background color on oach redraw. 
-
-**** on-screen rendering to separate window
-an alternative might be to open a separate window and snapshot it. the
-idea is that whatever oddness webkit does so that offscreen rendering
-doesnt work, doesnt happen on-screen. the window could be opened
-somewhere not in the way.
-
-*** CANCELLED firefox
-    CLOSED: [2011-07-03 Sun 22:13]
-http://www-archive.mozilla.org/unix/gtk-embedding.html
-seems to be severly bitrotted
-
-heres a newer aproach
-http://hg.mozilla.org/incubator/embedding/file/29ac0fe51754/gtk/tests/test.cpp
-
-while webkit clearly has the best traction as an embeddee, the
-offscreen rendering issues makes it interesting to see what ff brings
-to the table. turns out webkit has as good offscreen support as anyone.
-
-
-*** DONE text field support
-    CLOSED: [2011-07-20 Wed 20:05]
-Emacs captures all keyboard events so text field support isn't super
-straightforward. 
-
-**** propagate keyboard events
-I have some old hacks for this and they are not good.
-**** use the DOM model
-expose document.activeElement to lisp. This is potentially more
-interesting than just forwarding keyboard events.
-
-webkit_web_view_get_dom_document ()
-
-this is hard it seems. an idea might be to hack elisp support for swig
-to machine generate the bindings. 
-**** DONE inject javascript
-     CLOSED: [2011-07-03 Sun 22:50]
-webkit_web_view_execute_script ()
-
-this works now:
-(xwidget-webkit-execute-script 5 "document.activeElement.value='test'")
-
-so it should be possible to do some interesting stuff.
-execute-script does however not return anything at the interface level
-so satisfaction is not total:
-
-http://markmail.org/message/4yowmdgras73z3x5
-
-maybe
-https://launchpad.net/gnome-seed
-
-or this funny hack:
-<jave> im trying to understanh how to interact via javascript to an embedded
-       webkit gtk instance  [23:38]
-<jave> i use webkit_web_view_execute_script() which is nice but doesnt return
-       a value, by design aparently  [23:39]
-<jave> any hints?
-<lucian> jave: afaik, webkit still doesn't have full gobject bindings  [23:48]
-<lucian> jave: you can hack it up by making the JS modify the title, and read
-         the title from gtk-side
-<jave> lucian: that was a pretty cool idea!
-
-
-*** webkit_web_view_load_string ()
-I would like preview of html in a buffer rather than from uri.
-
-
-
-*** TODO simple xwidget-webkit wrapper
-so that it could be used for actual browsing :)
-I dont want to reinvent too many wheels so i'd like to use existing
-emacs facilities here possible. use bindings similar to w3m(or info)
-
-- m-x xwidget-webkit starts a session
-- 'g' goes to a url
-- use bookmark-jump i suppose. I mostly use org for bookmarks myself
-- browse-url support so webkit can be the default browser
-- some way of getting around the quirky keyboard interaction since
-  xwidgets dont receive keyboard events because I hawe no idea how to
-  do that in a sane way
-
-... and one can of course go on bikeshedding forever. lets keep it
-simple and extensible, and compatible with other Emacs packages.
-
-the really cool ideas would need Emacs DOM integration, which is not
-easy. 
-
 ** DONE clipping of controllers
    CLOSED: [2011-07-05 Tue 11:33]
 
@@ -840,7 +690,6 @@ support a chain of redirects, which seems unlikely. the benefit would
 be that I dont have to spend time optimizing redrawing.
 
 
-
 ** DONE remove xwidget_views when emacs window is deleted
    CLOSED: [2011-07-05 Tue 11:29]
 removing xwidget views when an Emacs window closes is not reliable.
@@ -850,6 +699,171 @@ removing xwidget views when an Emacs window closes is not reliable.
 
 -  patching delete-window-internal could be used to delete the xwidget-views
 this seems to work
+
+
+** browser xwidget
+although embedding a browser is not my primary concern many are
+interested in this. some suitable browser component needs to be found
+supporting gtk.
+
+*** DONE webkit
+    CLOSED: [2011-07-03 Sun 22:13]
+there is a webkit gtk port. there is no obvious mvc support.
+http://live.gnome.org/WebKitGtk
+http://webkitgtk.org/
+
+it might be possible to keep a set of webxits in artificial
+synchronisation by recursive deep copy of the DOM from one webkit to
+another. This will be error prone at best though. Another way might be
+to just use bitmap copy of the "live"instance to the "phantom"
+instances. the problem of transfering the live view remains though.
+
+export CFLAGS="`pkg-config --cflags webkit-1.0` -DHAVE_WEBKIT -g"
+export LDFLAGS=`pkg-config --libs webkit-1.0`
+./configure
+make
+
+**** off screen rendering
+export CFLAGS="`pkg-config --cflags webkit-1.0` -DHAVE_WEBKIT_OSR -g"
+export LDFLAGS=`pkg-config --libs webkit-1.0`
+./configure
+make
+
+works a little bit  but i get errors like:
+
+(emacs:8362): GLib-GObject-WARNING **: invalid cast from `GdkOffscreenWindow' to `GdkDrawableImplX11'
+
+set a breakpoint in g_log, backtrace seems to indicate
+webkitViewportAttributesRecompute is the offender. 
+
+maybe try gtk3 variants?
+
+export CFLAGS="`pkg-config --cflags webkitgtk-3.0 ` -DHAVE_WEBKIT_OSR "
+export LDFLAGS=`pkg-config --libs webkitgtk-3.0 `
+./configure   --with-x-toolkit=gtk3
+make
+
+crash in gtk_window_get_size instead. great.
+
+http://gtkplus-p3.0.sourcearchive.com/documentation/2.91.5-0ubuntu1/testoffscreenwindow_8c-source.html
+
+after many atempts, the basic issue remains. for some reason the
+offscreen widget isnt ok when I want to snapshot it, so i simply get
+emptiness. the surface is only ok someimes. 
+
+here is a useful debugging snippets:
+  // debugging redraw:
+  //  - the bg colors always change, so theres no error in signal handling
+  //  - i get this error now and then:
+  //(emacs:7109): GLib-GObject-WARNING **: invalid cast from `GdkOffscreenWindow' to `GdkDrawableImplX11'
+  // seems to happen in webkit actually. see README
+  
+  if(0){ //redraw debug hack. helped a lot in fact. use the with alpha painter below also
+    cairo_set_source_rgb(cr, osr_dbg_color, 1.0, 0.2);
+    cairo_rectangle(cr, 0,0, xw->width, xw->height);
+    cairo_fill(cr);
+    osr_dbg_color+=0.1;
+    if(osr_dbg_color>1.0)
+      osr_dbg_color=0.0;
+    
+  }
+
+you need to terminate drawing like this:
+  
+  //cairo_set_source_surface (cr, src_pixmap, 0,0); 
+  //cairo_set_operator (cr, CAIRO_OPERATOR_OVER);
+
+  //cairo_paint_with_alpha (cr, 1.0);
+  //cairo_paint(cr);
+
+the snippets change background color on oach redraw. 
+
+**** on-screen rendering to separate window
+an alternative might be to open a separate window and snapshot it. the
+idea is that whatever oddness webkit does so that offscreen rendering
+doesnt work, doesnt happen on-screen. the window could be opened
+somewhere not in the way.
+
+*** CANCELLED firefox
+    CLOSED: [2011-07-03 Sun 22:13]
+http://www-archive.mozilla.org/unix/gtk-embedding.html
+seems to be severly bitrotted
+
+heres a newer aproach
+http://hg.mozilla.org/incubator/embedding/file/29ac0fe51754/gtk/tests/test.cpp
+
+while webkit clearly has the best traction as an embeddee, the
+offscreen rendering issues makes it interesting to see what ff brings
+to the table. turns out webkit has as good offscreen support as anyone.
+
+
+*** DONE text field support
+    CLOSED: [2011-07-20 Wed 20:05]
+Emacs captures all keyboard events so text field support isn't super
+straightforward. 
+
+**** propagate keyboard events
+I have some old hacks for this and they are not good.
+**** use the DOM model
+expose document.activeElement to lisp. This is potentially more
+interesting than just forwarding keyboard events.
+
+webkit_web_view_get_dom_document ()
+
+this is hard it seems. an idea might be to hack elisp support for swig
+to machine generate the bindings. 
+**** DONE inject javascript
+     CLOSED: [2011-07-03 Sun 22:50]
+webkit_web_view_execute_script ()
+
+this works now:
+(xwidget-webkit-execute-script 5 "document.activeElement.value='test'")
+
+so it should be possible to do some interesting stuff.
+execute-script does however not return anything at the interface level
+so satisfaction is not total:
+
+http://markmail.org/message/4yowmdgras73z3x5
+
+maybe
+https://launchpad.net/gnome-seed
+
+or this funny hack:
+<jave> im trying to understanh how to interact via javascript to an embedded
+       webkit gtk instance  [23:38]
+<jave> i use webkit_web_view_execute_script() which is nice but doesnt return
+       a value, by design aparently  [23:39]
+<jave> any hints?
+<lucian> jave: afaik, webkit still doesn't have full gobject bindings  [23:48]
+<lucian> jave: you can hack it up by making the JS modify the title, and read
+         the title from gtk-side
+<jave> lucian: that was a pretty cool idea!
+
+
+*** webkit_web_view_load_string ()
+I would like preview of html in a buffer rather than from uri.
+
+
+
+*** DONE simple xwidget-webkit wrapper
+    CLOSED: [2011-07-22 Fri 11:01]
+so that it could be used for actual browsing :)
+I dont want to reinvent too many wheels so i'd like to use existing
+emacs facilities here possible. use bindings similar to w3m(or info)
+
+- m-x xwidget-webkit starts a session
+- 'g' goes to a url
+- use bookmark-jump i suppose. I mostly use org for bookmarks myself
+- browse-url support so webkit can be the default browser
+- some way of getting around the quirky keyboard interaction since
+  xwidgets dont receive keyboard events because I hawe no idea how to
+  do that in a sane way
+
+... and one can of course go on bikeshedding forever. lets keep it
+simple and extensible, and compatible with other Emacs packages.
+
+the really cool ideas would need Emacs DOM integration, which is not
+easy. 
 
 
 ** TODO support webkit signals
@@ -865,11 +879,26 @@ prints hello to stdout but theres no way to catch stdout from webkit I
 think other than receiving the signal.
 
 
+** DONE webkit flashkiller by default
+   CLOSED: [2011-07-19 Tue 14:27]
+while its possible to support plugins in the webkit xwidget, flash has
+issues on 64 bit, and slows down emacs to a halt with off screen
+rendering, and of course is not free software. its in the way for real
+world usage even if its interesting to watch flash animations inside
+emacs. which should be achieved with Gnash or other free software
+instead.
+
+http://stackoverflow.com/questions/4885513/prevent-flash-in-cocoa-webview
+
+simply use this api:
+http://webkitgtk.org/reference/WebKitWebPluginDatabase.html
+
 
 ** TODO webkit downloads
 when clicking a download link in Webkit Emacs should take over and handle it
-from there. Probably need signals.
-
+from there. Probably need signals. There are Emacs libraries to
+download things, with wget etc.
+"download-requested"
 ** TODO webkit alt-text not handled
 XKCD use image-title to display a cartoon comment. These mysteriously
 don't work ATM. Other mouseovers work though. Maybe webkit tries to
@@ -880,6 +909,36 @@ have a look at how docview solves it
 webkit_web_view_search_text ()
 ** TODO webkit relative references doesn't work
 probably because we handle scrolling in a non-standard way
+** TODO webkit width adjustment handling issue
+since there are so many levels of clipping and whatnot in xwidgets
+sizing issues are difficult.
+
+- an xwidget is told how large it can be by emacs. thats the end of
+  it. if the xwidget thinks otherwise it will be clipped.
+- but emacs can ask the xwudget how large it wants to be. it can then
+  resize the reserved area and inform the xwidget thusly. 
+
+That should have been enough. but webkit never reports less than what
+it already has. So currently a webkit view will only growth and not
+adjust to smaller sizes. 
+
+This is not a big problem in practice but is still annoying.
+
+to see the problem surface to http://www.slashdot.org
+- xwidget-webkit-adjust-size
+- xwidget-webkit-adjust-size-to-content
+
+and then try resizing Epiphany.
+
+
+** TODO synchronise emacs background with xwidget color
+fine-tuning to reduce flicker.
+
+** TODO xwidget allow loading from string from emacs
+
+
+** TODO xwidgets doesn't work during bootstrap all of a sudden
+
 * old notes from x_draw_xwidget_glyph_string
 
     BUG it seems this method for some reason is called with bad s->x and s->y sometimes.
@@ -922,3 +981,4 @@ probably because we handle scrolling in a non-standard way
    this means valid cases like xwidgets being displayed only once in
    non-selected windows, does not work well. they should also be visible
    in that case not phantomed.
+

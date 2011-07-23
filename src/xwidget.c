@@ -786,6 +786,28 @@ DEFUN("xwidget-view-info", Fxwidget_view_info , Sxwidget_view_info, 2,2,0, doc: 
   return info;
 }
 
+DEFUN ("xwidget-send-keyboard-event", Fxwidget_send_keyboard_event, Sxwidget_send_keyboard_event, 2, 2, 0, doc:/* synthesize a kbd event for a xwidget. */
+       )
+  (Lisp_Object  xwidget, Lisp_Object keydescriptor)
+{
+  int keyval = 0x058; //X
+  char *keystring = "";
+
+  struct xwidget *xw = XXWIDGET(xwidget);
+
+  GdkEventKey* ev = (GdkEventKey*)gdk_event_new(GDK_KEY_PRESS);
+  ev->window = gtk_widget_get_window(xw->widget_osr);
+  ev->keyval = keyval;
+  gdk_event_put((GdkEvent*)ev);
+  ev->type = GDK_KEY_RELEASE;
+  gdk_event_put((GdkEvent*)ev);
+  gtk_main_do_event(ev);
+  gdk_event_free((GdkEvent*)ev);
+
+  return Qnil;
+}
+
+
 
 DEFUN("xwidget-delete-zombies", Fxwidget_delete_zombies , Sxwidget_delete_zombies, 0,0,0, doc: /* */)
   (void)
@@ -842,6 +864,8 @@ syms_of_xwidget (void)
   defsubr (&Sxwidget_size_request  );
   defsubr (&Sxwidget_delete_zombies);
   defsubr (&Sxwidget_disable_plugin_for_mime);
+
+  defsubr (&Sxwidget_send_keyboard_event);
   DEFSYM (Qxwidget ,"xwidget");
 
   DEFSYM (Qcxwidget ,":xwidget");

@@ -110,6 +110,10 @@ defaults to the string looking like a url around the cursor position."
   (interactive)
   ( xwidget-adjust-size-to-content ( xwidget-webkit-last-session)))
 
+(defun xwidget-webkit-adjust-size (w h)
+  (interactive "nWidth:\nnHeight:\n")
+  ( xwidget-resize ( xwidget-webkit-last-session) w h))
+
 
 (defun xwidget-webkit-new-session (url)
 
