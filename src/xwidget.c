@@ -790,6 +790,7 @@ DEFUN ("xwidget-send-keyboard-event", Fxwidget_send_keyboard_event, Sxwidget_sen
        )
   (Lisp_Object  xwidget, Lisp_Object keydescriptor)
 {
+  //TODO this code crashes and ive tried many different strategies
   int keyval = 0x058; //X
   char *keystring = "";
 
@@ -798,11 +799,16 @@ DEFUN ("xwidget-send-keyboard-event", Fxwidget_send_keyboard_event, Sxwidget_sen
   GdkEventKey* ev = (GdkEventKey*)gdk_event_new(GDK_KEY_PRESS);
   ev->window = gtk_widget_get_window(xw->widget_osr);
   ev->keyval = keyval;
-  gdk_event_put((GdkEvent*)ev);
+  ev->time = 0;
+  GdkDeviceManager* manager = gdk_display_get_device_manager(gdk_window_get_display(ev->window));
+  gdk_event_set_device (ev,   gdk_device_manager_get_client_pointer(manager));
+  //gdk_event_put((GdkEvent*)ev);
+  g_signal_emit_by_name(ev->window,"key-press-event", ev);
   ev->type = GDK_KEY_RELEASE;
-  gdk_event_put((GdkEvent*)ev);
-  gtk_main_do_event(ev);
-  gdk_event_free((GdkEvent*)ev);
+  //gdk_event_put((GdkEvent*)ev);
+  g_signal_emit_by_name(ev->window,"key-release-event", ev);
+  //gtk_main_do_event(ev);
+  //gdk_event_free((GdkEvent*)ev);
 
   return Qnil;
 }

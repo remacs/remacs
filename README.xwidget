@@ -297,8 +297,18 @@ an actual emacs bug manifesting without optimizations.
 There is an attempt to provide an api to send keyboard events to an
 xwidget, but it doesnt currently work very well.
 
-try gtk event creation instead since that works fine in the webkit osr code.
+*** TODO try gtk event creation instead 
+since that works fine in the webkit osr code. 
+but, oh no, that didn't work for some reason.
+the event seems to receive the event but then the embedded widgets
+hangs.
 
+
+*** TODO examine some library to synthesise events
+xdotool
+xte xautomation
+crikey
+libxdo
 ** DONE remove the special-case for when the minibuffer is
   active.  I added some code to reduce the annoying problem display artefacts
   when making the minibuffer the selected window. This made xwidgets in the
@@ -794,7 +804,10 @@ http://hg.mozilla.org/incubator/embedding/file/29ac0fe51754/gtk/tests/test.cpp
 
 while webkit clearly has the best traction as an embeddee, the
 offscreen rendering issues makes it interesting to see what ff brings
-to the table. turns out webkit has as good offscreen support as anyone.
+to the table. 
+
+turned out webkit has as good offscreen support as anyone, see I went
+with that in the end.
 
 
 *** DONE text field support
@@ -865,8 +878,8 @@ simple and extensible, and compatible with other Emacs packages.
 the really cool ideas would need Emacs DOM integration, which is not
 easy. 
 
-
-** TODO support webkit signals
+** webkit related
+*** TODO webkit support webkit signals
 *** TODO particularily document-load-finished
 http://webkitgtk.org/reference/webkitgtk-webkitwebview.html#WebKitWebView-document-load-finished
 *** TODO console messages
@@ -878,8 +891,7 @@ because maybe we can make a simple JS REPL that way.
 prints hello to stdout but theres no way to catch stdout from webkit I
 think other than receiving the signal.
 
-
-** DONE webkit flashkiller by default
+*** DONE webkit flashkiller by default
    CLOSED: [2011-07-19 Tue 14:27]
 while its possible to support plugins in the webkit xwidget, flash has
 issues on 64 bit, and slows down emacs to a halt with off screen
@@ -893,23 +905,22 @@ http://stackoverflow.com/questions/4885513/prevent-flash-in-cocoa-webview
 simply use this api:
 http://webkitgtk.org/reference/WebKitWebPluginDatabase.html
 
-
-** TODO webkit downloads
+*** TODO webkit downloads
 when clicking a download link in Webkit Emacs should take over and handle it
 from there. Probably need signals. There are Emacs libraries to
 download things, with wget etc.
 "download-requested"
-** TODO webkit alt-text not handled
+*** TODO webkit alt-text not handled
 XKCD use image-title to display a cartoon comment. These mysteriously
 don't work ATM. Other mouseovers work though. Maybe webkit tries to
 open a new window or something, which wont work.
 
-** TODO isearch in webkit buffers
+*** TODO webkit isearch in webkit buffers
 have a look at how docview solves it
 webkit_web_view_search_text ()
-** TODO webkit relative references doesn't work
+*** TODO webkit relative references doesn't work
 probably because we handle scrolling in a non-standard way
-** TODO webkit width adjustment handling issue
+*** TODO webkit width adjustment handling issue
 since there are so many levels of clipping and whatnot in xwidgets
 sizing issues are difficult.
 
@@ -935,8 +946,6 @@ and then try resizing Epiphany.
 fine-tuning to reduce flicker.
 
 ** TODO xwidget allow loading from string from emacs
-
-
 ** TODO xwidgets doesn't work during bootstrap all of a sudden
 
 * old notes from x_draw_xwidget_glyph_string
