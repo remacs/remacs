@@ -256,19 +256,9 @@ send_xembed_ready_event (struct xwidget* xw, int xembedid)
 
 }
 
-int xwidget_query_composition_called = 0;
-int hasNamePixmap = 0;
-
-
-
-
-
-
-
 void
 xwidget_show_view (struct xwidget_view *xv)
 {
-  //printf("xwidget %d shown\n",xw->id);
   xv->hidden = 0;
   gtk_widget_show(GTK_WIDGET(xv->widgetwindow));
   gtk_fixed_move (GTK_FIXED (xv->emacswindow), GTK_WIDGET (xv->widgetwindow),  xv->x  + xv->clip_left, xv->y + xv->clip_top); //TODO refactor
@@ -279,7 +269,6 @@ xwidget_show_view (struct xwidget_view *xv)
 void
 xwidget_hide_view (struct xwidget_view *xv)
 {
-  //printf("xwidget %d hidden\n",xw->id);
   xv->hidden = 1;
   //gtk_widget_hide(GTK_WIDGET(xw->widgetwindow));
   gtk_fixed_move (GTK_FIXED (xv->emacswindow), GTK_WIDGET (xv->widgetwindow),
@@ -432,10 +421,6 @@ xwidget_init_view (
     xv->widget = gtk_toggle_button_new_with_label (XSTRING(xww->title)->data);
   } else if (EQ(xww->type, Qsocket)) {
     xv->widget = gtk_socket_new ();
-    //gtk_widget_set_app_paintable (xw->widget, TRUE); //workaround for composited sockets
-
-    //gdk_color_parse("blue",&color); //the blue color never seems to show up. something else draws a grey bg
-    //gtk_widget_modify_bg(xv->widget, GTK_STATE_NORMAL, &color);
     g_signal_connect_after(xv->widget, "plug-added", G_CALLBACK(xwidget_plug_added), "plug added");
     g_signal_connect_after(xv->widget, "plug-removed", G_CALLBACK(xwidget_plug_removed), "plug removed");
   } else if (EQ(xww->type, Qslider)) {
@@ -518,39 +503,18 @@ xwidget_init_view (
   //make container widget 1st, and put the actual widget inside the container
   //later, drawing should crop container window if necessary to handle case where xwidget
   //is partially obscured by other emacs windows
+  //other containers than gtk_fixed where explored, but gtk_fixed had the most predictable behaviour so far.
   xv->emacswindow = GTK_CONTAINER (FRAME_GTK_WIDGET (s->f));
-  //xw->widgetwindow = GTK_CONTAINER (gtk_layout_new (NULL, NULL));
-  //xw->widgetwindow = GTK_CONTAINER (gtk_offscreen_window_new ());
-
-  xv->widgetwindow = GTK_CONTAINER (gtk_fixed_new ()); //works well for clipping on gtk2 not gtk3
-  //xv->widgetwindow = GTK_CONTAINER (gtk_event_box_new ()); //doesnt help clipping gtk3
-  //xv->widgetwindow = GTK_CONTAINER (gtk_scrolled_window_new (NULL, NULL)); //clips in gtk3
-  //xv->widgetwindow = GTK_CONTAINER (gtk_viewport_new (NULL, NULL));
-
-
-  /* GtkAllocation a; */
-  /* a.x=0;  a.y=0;   a.width=xww->width;  a.height=xww->height; */
-  /* gtk_widget_set_allocation (GTK_WIDGET (xv->widget), &a); */
-
+  xv->widgetwindow = GTK_CONTAINER (gtk_fixed_new ()); 
   gtk_widget_set_has_window(GTK_WIDGET (  xv->widgetwindow), TRUE);
-  //on GTK2 if gtk_fixed doesnt have a window it will surprisingly not honor
-  //setsize so that children gets clipped later. the documentation is
-  //not consistent regarding if its legal to call this method.
-
-  //on GTK3 the call isnt necessary except for windowless widgets such as the drawarea used for the webkit views
-
-
-  //gtk_layout_set_size (GTK_LAYOUT (xw->widgetwindow), xw->width, xw->height);
   gtk_container_add (xv->widgetwindow, xv->widget);
-
-  //gtk_scrolled_window_add_with_viewport (xv->widgetwindow, xv->widget); // when using scrollw
 
   //store some xwidget data in the gtk widgets
   g_object_set_data (G_OBJECT (xv->widget), XG_FRAME_DATA, (gpointer) (s->f)); //the emacs frame
   g_object_set_data (G_OBJECT (xv->widget), XG_XWIDGET, (gpointer) (xww)); //the xwidget
   g_object_set_data (G_OBJECT (xv->widget), XG_XWIDGET_VIEW, (gpointer) (xv)); //the xwidget
-  g_object_set_data (G_OBJECT (xv->widgetwindow), XG_XWIDGET, (gpointer) (xww)); //the xwidget
-  g_object_set_data (G_OBJECT (xv->widgetwindow), XG_XWIDGET_VIEW, (gpointer) (xv)); //the xwidget
+  g_object_set_data (G_OBJECT (xv->widgetwindow), XG_XWIDGET, (gpointer) (xww)); //the xwidget window
+  g_object_set_data (G_OBJECT (xv->widgetwindow), XG_XWIDGET_VIEW, (gpointer) (xv)); //the xwidget window
 
 
   gtk_widget_set_size_request (GTK_WIDGET (xv->widget), xww->width, xww->height);
@@ -558,19 +522,6 @@ xwidget_init_view (
   gtk_fixed_put (GTK_FIXED (FRAME_GTK_WIDGET (s->f)), GTK_WIDGET (xv->widgetwindow), x, y);
   xv->x = x;  xv->y = y;
   gtk_widget_show_all (GTK_WIDGET (xv->widgetwindow));
-
-
-  //this seems to enable xcomposition. later we need to paint ourselves somehow,
-  //since the widget is no longer responsible for painting itself
-  //if(xw->type!=3)  //im having trouble with compositing and sockets. hmmm.
-  //gdk_window_set_composited (xw->widget->window, TRUE);
-  //gdk_window_set_composited (GTK_LAYOUT (xw->widgetwindow)->bin_window, TRUE);
-  // gtk_widget_set_double_buffered (xw->widget,FALSE);
-  // gtk_widget_set_double_buffered (xw->widgetwindow,FALSE);
-  //gdk_window_set_composited (xw->widgetwindow, TRUE);
-  //g_signal_connect_after(xw->widget, "expose-event", G_CALLBACK(xwidget_composite_draw), "widget exposed");
-  //g_signal_connect_after(xw->widgetwindow, "expose-event", G_CALLBACK(xwidget_composite_draw_widgetwindow), "widgetwindow exposed");
-  //  g_signal_connect_after(xw->widget, "damage-event", G_CALLBACK(xwidget_composite_draw), "damaged");
 
   //widgettype specific initialization only possible after realization
   if (EQ(xww->type, Qsocket)) {
@@ -692,8 +643,6 @@ DEFUN ("xwidget-webkit-get-title", Fxwidget_webkit_get_title,  Sxwidget_webkit_g
   const gchar* str=webkit_web_view_get_title( WEBKIT_WEB_VIEW(xw->widget_osr));
   return make_string_from_bytes(str, wcslen((const wchar_t *)str), strlen(str));
 }
-
-
 
 #endif
 

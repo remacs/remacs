@@ -26,6 +26,7 @@ necessary to support the Emacs window paradigm.
 
 ** building
 bzr co bzr+ssh://bzr.savannah.gnu.org/emacs/xwidget/
+#the below compiler flags shouldn't be strictly necessary
 export CFLAGS=" -g -DGLYPH_DEBUG=1"
 ./configure   --with-x-toolkit=gtk3 --with-xwidgets
 make -j4
