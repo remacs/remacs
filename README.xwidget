@@ -30,10 +30,11 @@ bzr co bzr+ssh://bzr.savannah.gnu.org/emacs/xwidget/
 export CFLAGS=" -g -DGLYPH_DEBUG=1"
 ./configure   --with-x-toolkit=gtk3 --with-xwidgets
 make -j4
+gdb -ex run src/emacs
 
 ** try it out
 If you have GTK3 and gtk-webkit installed, you should be able to
-started the embedded webkit browser now:
+start the embedded webkit browser now:
 
 M-X xwidget-webkit-browse-url
 
@@ -203,7 +204,7 @@ socket window is copied efficientlp by means of composition to a
 number of other windows, that then are plugged into the different
 Emacs sockets. 
 * ToDo:s
-** DONE allow xwidgets to report thoir size
+** DONE allow xwidgets to report their size
    CLOSED: [2011-07-19 Tue 14:26]
 now we just hard code sizes. but webkit widgets for instance can
 report sizes that suit the content. support that.
@@ -293,6 +294,8 @@ an actual emacs bug manifesting without optimizations.
 
   the attempt was further worked on, and the xlib calls replaced with
   gdk calls, this works better.
+
+  In the end I abandoned this aproach. Xwidget-osr is the new aproach.
 
 ** TODO  make the keyboard event code propagation code work. 
 There is an attempt to provide an api to send keyboard events to an
@@ -522,6 +525,8 @@ export LDFLAGS=`pkg-config --libs clutter-gtk-0.10`
 make
 
 
+*** webkit html 5
+expose the DOM to lisp or something
 ** DONE mvc code crashes after a while
    CLOSED: [2011-07-12 Tue 18:52]
 seemingly only when compiling with optimizations.
@@ -673,8 +678,7 @@ allocation hack and set_has_window it works. Idea prefer not to have
 the allocatien hack and it wasnt needed it gtk3 only gtk2. needs
 furthi investigation,
 
-** DONE various code cleanups
-   CLOSED: [2011-07-20 Wed 20:05]
+** various code cleanups
 There are many cleanups necessary before any hope of inclusion in
 Emacs trunk. To begin with, the part of the patch that touches other
 parts of emacs must be very clean. 
@@ -684,6 +688,8 @@ rather than gwfixed.
 
 *** DONE support configure
     CLOSED: [2011-07-12 Tue 18:48]
+*** TODO ifdef all xwidget code
+so you can reliably disable the code at compiletime
 ** DONE translate clicks 
    CLOSED: [2011-07-03 Sun 22:12]
 on onscreen webkit peer to offscreen
@@ -696,7 +702,7 @@ forwarded them offscreen!
 
 ** TODO investigate gdk_window_redirect_to_drawable
 http://developer.gnome.org/gdk/stable/gdk-Windows.html#gdk-offscreen-window-set-embedder
-maybe control be used in place of my own copy hacks? to work it must
+maybe could be used in place of my own copy hacks? to work it must
 support a chain of redirects, which seems unlikely. the benefit would
 be that I dont have to spend time optimizing redrawing.
 
@@ -942,13 +948,36 @@ to see the problem surface to http://www.slashdot.org
 
 and then try resizing Epiphany.
 
+*** TODO xwidget webkit allow loading from string from emacs
+** socket related
+*** TODO some flickering during redisplay of sockets
+with gtk3 an size allocation workaround is used.
+this seems maybe to result in flickering sizewize y-axis with the
+xwidget socket type. The webkit xwidget doesn't seem similarily
+afflicted.
+
+the size allocation workaround works by 1st running the ordinary
+allocation then modifying the results. its done this way to minimise
+the copy paste index from the base class. it might be that the
+original allocation has a brief time window to show itself.
+
+*** TODO xwidget view reaping too agressive
+hide an emacs window for a while and return to it. the xwidget might
+get reaped and a new socket thus created.
+*** DONE try out OSR for sockets
+    CLOSED: [2011-07-25 Mon 21:30]
+
+didn't work too well in the inkscape case. it might be that some other
+bitmap copy method works better though.
 
 ** TODO synchronise emacs background with xwidget color
 fine-tuning to reduce flicker.
 
-** TODO xwidget allow loading from string from emacs
-** TODO xwidgets doesn't work during bootstrap all of a sudden
 
+
+** TODO xwidgets doesn't work during bootstrap all of a sudden
+might be some annoying local issues with my install because it is not
+reliably reproducible.
 * old notes from x_draw_xwidget_glyph_string
 
     BUG it seems this method for some reason is called with bad s->x and s->y sometimes.

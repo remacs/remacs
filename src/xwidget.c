@@ -132,7 +132,7 @@ Lisp_Object Qxwidget_info;
 Lisp_Object Qxwidget_resize;
 Lisp_Object Qxwidget_send_keyboard_event;
 
-Lisp_Object Qbutton, Qtoggle, Qslider, Qsocket, Qcairo,
+Lisp_Object Qbutton, Qtoggle, Qslider, Qsocket, Qsocket_osr, Qcairo,
   Qwebkit_osr, QCplist;
 
 
@@ -198,7 +198,33 @@ DEFUN ("make-xwidget", Fmake_xwidget, Smake_xwidget, 7, 7, 0,
 
   }
 #endif
+  if (EQ(xw->type, Qsocket_osr)){
+    printf("init socket osr\n");
+    BLOCK_INPUT;
+    xw->widgetwindow_osr = GTK_CONTAINER (gtk_offscreen_window_new ());
+    gtk_window_resize(    GTK_WINDOW(xw->widgetwindow_osr), xw->width, xw->height);
 
+    ////////////////////
+    //xw->widget_osr = webkit_web_view_new();
+    xw->widget_osr = gtk_socket_new();
+    //g_signal_connect_after(xv->widget, "plug-added", G_CALLBACK(xwidget_plug_added), "plug added");
+    //g_signal_connect_after(xv->widget, "plug-removed", G_CALLBACK(xwidget_plug_removed), "plug removed");
+    ///////////////////
+    
+    gtk_widget_set_size_request (GTK_WIDGET (xw->widget_osr), xw->width, xw->height);
+    gtk_container_add (xw->widgetwindow_osr, xw->widget_osr);
+
+    gtk_widget_show_all (GTK_WIDGET (xw->widgetwindow_osr));
+
+    /* store some xwidget data in the gtk widgets for convenient retrieval in the event handlers. */
+    g_object_set_data (G_OBJECT (xw->widget_osr), XG_XWIDGET, (gpointer) (xw));
+    g_object_set_data (G_OBJECT (xw->widgetwindow_osr), XG_XWIDGET, (gpointer) (xw));
+    g_signal_connect (G_OBJECT (    xw->widgetwindow_osr), "damage-event",    G_CALLBACK (webkit_osr_damage_event_callback), NULL);
+
+    //webkit_web_view_load_uri(WEBKIT_WEB_VIEW(xw->widget_osr), "http://www.fsf.org");
+    UNBLOCK_INPUT;
+
+  }
 
   UNGCPRO;
   return val;
@@ -478,7 +504,7 @@ xwidget_init_view (
     /* Show the stage: */
     clutter_actor_show (stage);
 #endif
-  } else if (EQ(xww->type, Qwebkit_osr)) {
+  } else if (EQ(xww->type, Qwebkit_osr)||EQ(xww->type, Qsocket_osr)) {
 #ifdef HAVE_WEBKIT_OSR
     xv->widget = gtk_drawing_area_new();
     gtk_widget_set_app_paintable ( xv->widget, TRUE); //because expose event handling
@@ -830,6 +856,7 @@ syms_of_xwidget (void)
   DEFSYM (Qtoggle, "toggle");
   DEFSYM (Qslider, "slider");
   DEFSYM (Qsocket, "socket");
+  DEFSYM (Qsocket_osr, "socket-osr");
   DEFSYM (Qcairo, "cairo");
   DEFSYM (Qwebkit_osr ,"webkit-osr");
   DEFSYM (QCplist, ":plist");
@@ -1018,11 +1045,12 @@ xwidget_end_redisplay (struct window *w, struct glyph_matrix *matrix)
 
 
   xwidget_start_redisplay ();
-  //iterate desired glyph matrix of "live" window here, hide gtk widgets
+  //iterate desired glyph matrix of window here, hide gtk widgets
   //not in the desired matrix.
 
-  //the current scheme will fail on the case of several buffers showing xwidgets
-
+  //this only takes care of xwidgets in active windows.
+  //if a window goes away from screen xwidget views wust be deleted
+  
   //  dump_glyph_matrix(matrix, 2);
   for (i = 0; i < matrix->nrows; ++i)
     {
@@ -1055,7 +1083,7 @@ xwidget_end_redisplay (struct window *w, struct glyph_matrix *matrix)
     {
       struct xwidget_view* xv = &xwidget_views[i];
 
-      //"touched" is only meaningful for the "live" window, so disregard other views
+      //"touched" is only meaningful for the current window, so disregard other views
       if (xv->initialized && ( xv->w ==    w))
         {
           if (xwidget_touched(xv))
