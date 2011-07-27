@@ -603,7 +603,7 @@ x_draw_xwidget_glyph_string (struct glyph_string *s)
   //this happens when an emacs window border moves across a widget winow
   moved = (xv->x  + xv->clip_left != x+clip_left)
     || ((xv->y + xv->clip_top)!= (y+clip_top));
-  //if(moved)    printf ("live xwidget moved: id:%d (%d,%d)->(%d,%d) y+clip_top:%d\n", xww->id, xv->x, xv->y, x, y, y + clip_top);
+  if(moved)    printf ("lxwidget moved: id:%d (%d,%d)->(%d,%d) y+clip_top:%d\n", xww, xv->x, xv->y, x, y, y + clip_top);
   xv->x = x;
   xv->y = y;
   if (moved)	//has it moved?

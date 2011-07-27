@@ -949,6 +949,10 @@ to see the problem surface to http://www.slashdot.org
 and then try resizing Epiphany.
 
 *** TODO xwidget webkit allow loading from string from emacs
+*** TODO C-X b in other buffer from webkit
+bafflingly resets the webkit view to the top. Maybe the window
+reconfiguration hook code? further mystification is added because it
+only seems to happen with ido mode enabled.
 ** socket related
 *** TODO some flickering during redisplay of sockets
 with gtk3 an size allocation workaround is used.
@@ -960,6 +964,11 @@ the size allocation workaround works by 1st running the ordinary
 allocation then modifying the results. its done this way to minimise
 the copy paste index from the base class. it might be that the
 original allocation has a brief time window to show itself.
+
+tried to modify the allocation hack so it doesn't call allocate
+twice. this doesn't seem to help flicker at all aparently so the
+hypothesis falls. Maybe then a socket simply doesn't lke being clipped
+by gtkfixed. 
 
 *** TODO xwidget view reaping too agressive
 hide an emacs window for a while and return to it. the xwidget might

@@ -42,43 +42,115 @@ static void emacs_fixed_get_preferred_height (GtkWidget *widget,
                                               gint      *natural);
 G_DEFINE_TYPE (EmacsFixed, emacs_fixed, GTK_TYPE_FIXED)
 
-void aloc_callback(GtkWidget* child, GtkWidget* fixed){
-  GtkAllocation child_allocation;
-  GtkRequisition child_requisition;
+/* void aloc_callback(GtkWidget* child, GtkWidget* fixed){ */
+/*   GtkAllocation child_allocation; */
+/*   GtkRequisition child_requisition; */
 
-  //TODO
-  // if child is an xwidget, find its clipping area and modify allocation
+/*   //TODO */
+/*   // if child is an xwidget, find its clipping area and modify allocation */
 
-  struct xwidget_view* xv = (struct xwidget_viev*) g_object_get_data (G_OBJECT (child), XG_XWIDGET_VIEW);
-  printf("aloc callback %d %s\n", xv, gtk_widget_get_name(child));
-  if(xv){
-    printf(" allocation modification for xw\n");
-    gtk_widget_get_allocation(child, &child_allocation);
-    child_allocation.width = xv->clip_right;
-    child_allocation.height = xv->clip_bottom - xv->clip_top;
-    gtk_widget_size_allocate (child, &child_allocation);
-    //TODO find a way to remove this feeble workaround
-  }
+/*   struct xwidget_view* xv = (struct xwidget_viev*) g_object_get_data (G_OBJECT (child), XG_XWIDGET_VIEW); */
+/*   printf("aloc callback %d %s\n", xv, gtk_widget_get_name(child)); */
+/*   if(xv){ */
+/*     printf(" allocation modification for xw\n"); */
+/*     gtk_widget_get_allocation(child, &child_allocation); */
+/*     child_allocation.width = xv->clip_right; */
+/*     child_allocation.height = xv->clip_bottom - xv->clip_top; */
+/*     gtk_widget_size_allocate (child, &child_allocation); */
+/*     //TODO find a way to remove this feeble workaround */
+/*   } */
 
-}
+/* } */
+
+struct GtkFixedPrivateL
+{
+  GList *children;
+};
 
 static void emacs_fixed_gtk_widget_size_allocate (GtkWidget *widget,
                                            GtkAllocation *allocation){
   //for xwidgets
-  printf(" emacs_fixed_gtk_widget_size_allocate\n");
+
 
   //TODO 1st call base class method
   EmacsFixedClass *klass;
   GtkWidgetClass *parent_class;
+  struct GtkFixedPrivateL* priv;
+
+  printf(" emacs_fixed_gtk_widget_size_allocate\n");
   klass = EMACS_FIXED_GET_CLASS (widget);
   parent_class = g_type_class_peek_parent (klass);
   parent_class->size_allocate (widget, allocation);
 
-
+  priv = G_TYPE_INSTANCE_GET_PRIVATE (widget,
+                               GTK_TYPE_FIXED,
+                               struct GtkFixedPrivateL);
+  //fixed->priv = G_TYPE_INSTANCE_GET_PRIVATE (fixed, GTK_TYPE_FIXED, GtkFixedPrivate);
   //then modify allocations
-  gtk_container_foreach  (widget,
-                          aloc_callback,
-                          widget);
+  /* gtk_container_foreach  (widget, */
+  /*                         aloc_callback, */
+  /*                         widget); */
+
+  //begin copy paste extravaganza!!!
+
+  //GtkFixed *fixed = GTK_FIXED (widget);
+  //GtkFixedPrivate *priv = fixed->priv;
+  GtkFixedChild *child;
+  GtkAllocation child_allocation;
+  GtkRequisition child_requisition;
+  GList *children;
+
+  
+  gtk_widget_set_allocation (widget, allocation);
+
+  if (gtk_widget_get_has_window (widget))
+    {
+      if (gtk_widget_get_realized (widget))
+        gdk_window_move_resize (gtk_widget_get_window (widget),
+                                allocation->x,
+                                allocation->y,
+                                allocation->width,
+                                allocation->height);
+    }
+
+  for (children = priv->children;
+       children;
+       children = children->next)
+    {
+      child = children->data;
+
+      if (!gtk_widget_get_visible (child->widget))
+        continue;
+
+      gtk_widget_get_preferred_size (child->widget, &child_requisition, NULL);
+      child_allocation.x = child->x;
+      child_allocation.y = child->y;
+
+      if (!gtk_widget_get_has_window (widget))
+        {
+          child_allocation.x += allocation->x;
+          child_allocation.y += allocation->y;
+        }
+
+      child_allocation.width = child_requisition.width;
+      child_allocation.height = child_requisition.height;
+
+
+
+      struct xwidget_view* xv = (struct xwidget_viev*) g_object_get_data (G_OBJECT (child->widget), XG_XWIDGET_VIEW);
+      //printf("aloc callback %d %s\n", xv, gtk_widget_get_name(child));
+      if(xv){
+        //gtk_widget_get_allocation(child, &child_allocation);
+        child_allocation.width = xv->clip_right;
+        child_allocation.height = xv->clip_bottom - xv->clip_top;
+        //gtk_widget_size_allocate (child, &child_allocation);
+        //TODO find a way to remove this feeble workaround
+        printf(" allocation internal modification for xw %d  %d,%d\n",xv,        child_allocation.width,        child_allocation.height);
+
+      }
+      gtk_widget_size_allocate (child->widget, &child_allocation);
+
+    }
 
 }
 
