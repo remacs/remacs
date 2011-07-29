@@ -66,7 +66,6 @@ defaults to the string looking like a url around the cursor position."
 
 
 ;;todo.
-;; - support browse-url with xwidget-webkit
 ;; - check that the webkit support is compiled in
 (defvar xwidget-webkit-mode-map
   (let ((map (make-sparse-keymap)))

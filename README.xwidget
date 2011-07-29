@@ -949,6 +949,9 @@ to see the problem surface to http://www.slashdot.org
 and then try resizing Epiphany.
 
 *** TODO xwidget webkit allow loading from string from emacs
+*** TODO xwidget-webkit-last-session
+was rather hurried. end result is that the lisp layer only really
+allows for one webkit session.
 *** TODO C-X b in other buffer from webkit
 bafflingly resets the webkit view to the top. Maybe the window
 reconfiguration hook code? further mystification is added because it
@@ -987,6 +990,14 @@ fine-tuning to reduce flicker.
 ** TODO xwidgets doesn't work during bootstrap all of a sudden
 might be some annoying local issues with my install because it is not
 reliably reproducible.
+
+** TODO low impact xwidget based image viewer
+for instance to render SVG using webkit, or some other canvas.
+that way it would be possible to merge to trunk in stages.
+
+so, webkit could be used to display the SVG. the display spec for
+images would be used. multiple webkits would be used rather than
+offscreen rendering, so it would be GTK2 compatible. 
 * old notes from x_draw_xwidget_glyph_string
 
     BUG it seems this method for some reason is called with bad s->x and s->y sometimes.
