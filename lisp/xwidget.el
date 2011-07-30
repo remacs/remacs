@@ -87,11 +87,18 @@ defaults to the string looking like a url around the cursor position."
 (defvar xwidget-webkit-last-session-buffer nil)
 
 (defun  xwidget-webkit-last-session ()
+  "last active webkit, or a new one"
   (if (buffer-live-p xwidget-webkit-last-session-buffer)
       (save-excursion
         (set-buffer xwidget-webkit-last-session-buffer)
         (xwidget-at 1))
     nil))
+
+(defun xwidget-webkit-current-session ()
+  "either the webkit in the current buffer, or the last one used"
+  (if (xwidget-at 1)
+      (xwidget-at 1)
+    (xwidget-webkit-last-session)))
 
 (defun xwidget-adjust-size-to-content (xw)
   ;;xwidgets doesnt support widgets that have thoir own opinions about size well yet
@@ -101,17 +108,17 @@ defaults to the string looking like a url around the cursor position."
 
 
 (defun xwidget-webkit-insert-string (xw str)
-  (interactive (list (xwidget-webkit-last-session)
+  (interactive (list (xwidget-webkit-current-session)
                      (read-string "string:")))
   (xwidget-webkit-execute-script xw (format "document.activeElement.value='%s'" str)))
 
 (defun xwidget-webkit-adjust-size-to-content ()
   (interactive)
-  ( xwidget-adjust-size-to-content ( xwidget-webkit-last-session)))
+  ( xwidget-adjust-size-to-content ( xwidget-webkit-current-session)))
 
 (defun xwidget-webkit-adjust-size (w h)
   (interactive "nWidth:\nnHeight:\n")
-  ( xwidget-resize ( xwidget-webkit-last-session) w h))
+  ( xwidget-resize ( xwidget-webkit-current-session) w h))
 
 
 (defun xwidget-webkit-new-session (url)
@@ -127,26 +134,25 @@ defaults to the string looking like a url around the cursor position."
 
 
 (defun xwidget-webkit-goto-url (url)
-  (if ( xwidget-webkit-last-session)
+  (if ( xwidget-webkit-current-session)
       (progn
-        (xwidget-webkit-goto-uri ( xwidget-webkit-last-session) url)
-        (switch-to-buffer xwidget-webkit-last-session-buffer))
+        (xwidget-webkit-goto-uri ( xwidget-webkit-current-session) url))
     ( xwidget-webkit-new-session url)))
 
 (defun xwidget-webkit-back ()
   (interactive)
-  (xwidget-webkit-execute-script ( xwidget-webkit-last-session)  "history.go(-1);"))
+  (xwidget-webkit-execute-script ( xwidget-webkit-current-session)  "history.go(-1);"))
 
 (defun xwidget-webkit-reload ()
   (interactive)
-  (xwidget-webkit-execute-script ( xwidget-webkit-last-session)  "history.go(0);"))
+  (xwidget-webkit-execute-script ( xwidget-webkit-current-session)  "history.go(0);"))
 
 (defun xwidget-current-url ()
   "get the webkit url"
   ;;notice the fugly "title" hack. it is needed because the webkit api doesnt support returning values.
   ;;TODO make a wrapper for the title hack so its easy to remove should webkit someday support JS return values
-  (xwidget-webkit-execute-script (xwidget-webkit-last-session) "document.title=document.URL;")
-  (xwidget-webkit-get-title (xwidget-webkit-last-session)))
+  (xwidget-webkit-execute-script (xwidget-webkit-current-session) "document.title=document.URL;")
+  (xwidget-webkit-get-title (xwidget-webkit-current-session)))
 
 
 
