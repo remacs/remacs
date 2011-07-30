@@ -30,7 +30,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "window.h"
 #include "blockinput.h"
 #include "region-cache.h"
-#include "xwidget.h"
 
 #ifndef NULL
 #define NULL 0

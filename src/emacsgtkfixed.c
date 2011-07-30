@@ -27,7 +27,9 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "lisp.h"
 #include "frame.h"
 #include "xterm.h"
+#ifdef HAVE_XWIDGETS
 #include "xwidget.h"
+#endif
 struct _EmacsFixedPrivate
 {
   struct frame *f;
@@ -42,6 +44,7 @@ static void emacs_fixed_get_preferred_height (GtkWidget *widget,
                                               gint      *natural);
 G_DEFINE_TYPE (EmacsFixed, emacs_fixed, GTK_TYPE_FIXED)
 
+#ifdef HAVE_XWIDGETS
 /* void aloc_callback(GtkWidget* child, GtkWidget* fixed){ */
 /*   GtkAllocation child_allocation; */
 /*   GtkRequisition child_requisition; */
@@ -154,7 +157,7 @@ static void emacs_fixed_gtk_widget_size_allocate (GtkWidget *widget,
 
 }
 
-
+#endif
 
 static void
 emacs_fixed_class_init (EmacsFixedClass *klass)
@@ -167,7 +170,9 @@ emacs_fixed_class_init (EmacsFixedClass *klass)
 
   widget_class->get_preferred_width = emacs_fixed_get_preferred_width;
   widget_class->get_preferred_height = emacs_fixed_get_preferred_height;
+#ifdef HAVE_XWIDGETS
   widget_class->size_allocate =  emacs_fixed_gtk_widget_size_allocate;
+#endif
   g_type_class_add_private (klass, sizeof (EmacsFixedPrivate));
 }
 

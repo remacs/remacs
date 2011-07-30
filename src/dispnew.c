@@ -3702,9 +3702,9 @@ update_window (struct window *w, int force_p)
   add_window_display_history (w, w->current_matrix->method, paused_p);
 #endif
 
-  //  if ((XWINDOW(FRAME_SELECTED_WINDOW (SELECTED_FRAME()))) ==  (w))
+#ifdef HAVE_XWIDGETS
   xwidget_end_redisplay(w, w->current_matrix);
-
+#endif
   clear_glyph_matrix (desired_matrix);
 
   return paused_p;

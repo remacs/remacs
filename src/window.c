@@ -49,8 +49,9 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #ifdef HAVE_NS
 #include "nsterm.h"
 #endif
-
+#ifdef HAVE_XWIDGETS
 #include "xwidget.h"
+#endif
 Lisp_Object Qwindowp, Qwindow_live_p;
 static Lisp_Object Qwindow_configuration_p, Qrecord_window_buffer;
 static Lisp_Object Qwindow_deletable_p, Qdelete_window, Qdisplay_buffer;
@@ -3934,7 +3935,9 @@ when WINDOW is the only window on its frame.  */)
     {
       /* Block input.  */
       BLOCK_INPUT;
+#ifdef HAVE_XWIDGETS
       xwidget_view_delete_all_in_window(w);
+#endif
       window_resize_apply (p, horflag);
 
       windows_or_buffers_changed++;

@@ -36,8 +36,9 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "blockinput.h"
 #include "termhooks.h"		/* For struct terminal.  */
 #include "font.h"
+#ifdef HAVE_XWIDGETS
 #include "xwidget.h"
-
+#endif
 Lisp_Object Qstandard_output;
 
 static Lisp_Object Qtemp_buffer_setup_hook;
@@ -1759,11 +1760,13 @@ print_object (Lisp_Object obj, register Lisp_Object printcharfun, int escapeflag
 	  strout (XSUBR (obj)->symbol_name, -1, -1, printcharfun);
 	  PRINTCHAR ('>');
 	}
+#ifdef HAVE_XWIDGETS
       else if (XXWIDGETP (obj))
 	{
 	  strout ("#<xwidget ", -1, -1, printcharfun);
 	  PRINTCHAR ('>');
 	}
+#endif      
       else if (WINDOWP (obj))
 	{
 	  strout ("#<window ", -1, -1, printcharfun);

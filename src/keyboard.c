@@ -329,7 +329,9 @@ static Lisp_Object Qsave_session;
 #ifdef HAVE_DBUS
 static Lisp_Object Qdbus_event;
 #endif
+#ifdef HAVE_XWIDGETS
 Lisp_Object Qxwidget_event;
+#endif
 static Lisp_Object Qconfig_changed_event;
 
 /* Lisp_Object Qmouse_movement; - also an event header */
@@ -4029,7 +4031,14 @@ kbd_buffer_get_event (KBOARD **kbp,
 	  kbd_fetch_ptr = event + 1;
 	}
 #endif
-      else if (event->kind == CONFIG_CHANGED_EVENT || event->kind == XWIDGET_EVENT)
+#ifdef HAVE_XWIDGETS      
+      else if (event->kind == XWIDGET_EVENT)
+	{
+	  obj = make_lispy_event (event);
+	  kbd_fetch_ptr = event + 1;
+	}
+#endif
+      else if (event->kind == CONFIG_CHANGED_EVENT)
 	{
 	  obj = make_lispy_event (event);
 	  kbd_fetch_ptr = event + 1;
@@ -5924,12 +5933,13 @@ make_lispy_event (struct input_event *event)
 	return Fcons (Qdbus_event, event->arg);
       }
 #endif /* HAVE_DBUS */
+#ifdef HAVE_XWIDGETS
     case XWIDGET_EVENT:
       {
         printf("cool, an xwidget event arrived in make_lispy_event!\n");
         return  Fcons (Qxwidget_event,event->arg);
       }
-
+#endif
     case CONFIG_CHANGED_EVENT:
 	return Fcons (Qconfig_changed_event,
                       Fcons (event->arg,
@@ -11542,10 +11552,10 @@ syms_of_keyboard (void)
   DEFSYM (Qdbus_event, "dbus-event");
 #endif
 
-
+#ifdef HAVE_XWIDGETS
   Qxwidget_event = intern ("xwidget-event");
   staticpro (&Qxwidget_event);
-
+#endif
   DEFSYM (QCenable, ":enable");
   DEFSYM (QCvisible, ":visible");
   DEFSYM (QChelp, ":help");

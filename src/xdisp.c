@@ -313,8 +313,9 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #endif
 
 #include "font.h"
-
+#ifdef HAVE_XWIDGETS
 #include "xwidget.h"
+#endif
 #ifndef FRAME_X_OUTPUT
 #define FRAME_X_OUTPUT(f) ((f)->output_data.x)
 #endif
@@ -884,7 +885,9 @@ static int next_element_from_c_string (struct it *);
 static int next_element_from_buffer (struct it *);
 static int next_element_from_composition (struct it *);
 static int next_element_from_image (struct it *);
+#ifdef HAVE_XWIDGETS
 static int next_element_from_xwidget(struct it *);
+#endif
 static int next_element_from_stretch (struct it *);
 static void load_overlay_strings (struct it *, EMACS_INT);
 static int init_from_display_pos (struct it *, struct window *,
@@ -4129,7 +4132,9 @@ handle_display_spec (struct it *it, Lisp_Object spec, Lisp_Object object,
   if (CONSP (spec)
       /* Simple specerties.  */
       && !EQ (XCAR (spec), Qimage)
+#ifdef HAVE_XWIDGETS
       && !EQ (XCAR (spec), Qxwidget)
+#endif
       && !EQ (XCAR (spec), Qspace)
       && !EQ (XCAR (spec), Qwhen)
       && !EQ (XCAR (spec), Qslice)
@@ -4548,7 +4553,10 @@ handle_single_display_spec (struct it *it, Lisp_Object spec, Lisp_Object object,
 		 && valid_image_p (value))
 #endif /* not HAVE_WINDOW_SYSTEM */
              || (CONSP (value) && EQ (XCAR (value), Qspace))
-             || XWIDGETP(value));
+#ifdef HAVE_XWIDGETS
+             || XWIDGETP(value)
+#endif
+             );
 
   if (valid_p && !display_replaced_p)
     {
@@ -4612,6 +4620,7 @@ handle_single_display_spec (struct it *it, Lisp_Object spec, Lisp_Object object,
 	  it->object = value;
 	  *position = it->position = start_pos;
 	}
+#ifdef HAVE_XWIDGETS
       else if (XWIDGETP(value))
 	{
           //printf("handle_single_display_spec: im an xwidget!!\n");
@@ -4623,8 +4632,9 @@ handle_single_display_spec (struct it *it, Lisp_Object spec, Lisp_Object object,
 
           it->xwidget = lookup_xwidget(value);
 	}
+#endif      
 #ifdef HAVE_WINDOW_SYSTEM
-      else //if nothing else, its an image
+      else
 	{
 	  it->what = IT_IMAGE;
 	  it->image_id = lookup_image (it->f, value);
@@ -5338,9 +5348,11 @@ push_it (struct it *it, struct text_pos *position)
     case GET_FROM_STRETCH:
       p->u.stretch.object = it->object;
       break;
+#ifdef HAVE_XWIDGETS
     case GET_FROM_XWIDGET:
       p->u.xwidget.object = it->object;
       break;
+#endif      
     }
   p->position = position ? *position : it->position;
   p->current = it->current;
@@ -5433,9 +5445,11 @@ pop_it (struct it *it)
       it->object = p->u.image.object;
       it->slice = p->u.image.slice;
       break;
+#ifdef HAVE_XWIDGETS
     case GET_FROM_XWIDGET:
       it->object = p->u.xwidget.object;
       break;
+#endif
     case GET_FROM_STRETCH:
       it->object = p->u.stretch.object;
       break;
@@ -6031,8 +6045,10 @@ static int (* get_next_element[NUM_IT_METHODS]) (struct it *it) =
   next_element_from_string,
   next_element_from_c_string,
   next_element_from_image,
-  next_element_from_stretch,
-  next_element_from_xwidget
+  next_element_from_stretch
+#ifdef HAVE_XWIDGETS
+  ,next_element_from_xwidget
+#endif  
 };
 
 #define GET_NEXT_DISPLAY_ELEMENT(it) (*get_next_element[(it)->method]) (it)
@@ -6832,7 +6848,9 @@ set_iterator_to_next (struct it *it, int reseat_p)
 
     case GET_FROM_IMAGE:
     case GET_FROM_STRETCH:
+#ifdef HAVE_XWIDGETS
     case GET_FROM_XWIDGET:
+#endif
       /* The position etc with which we have to proceed are on
 	 the stack.  The position may be at the end of a string,
          if the `display' property takes up the whole string.  */
@@ -7259,6 +7277,7 @@ next_element_from_image (struct it *it)
   return 1;
 }
 
+#ifdef HAVE_XWIDGETS
 /* im not sure about this FIXME JAVE*/
 static int
 next_element_from_xwidget (struct it *it)
@@ -7269,7 +7288,7 @@ next_element_from_xwidget (struct it *it)
   //printf("xwidget_id %d: in next_element_from_xwidget: FIXME \n", it->xwidget_id);
   return 1;
 }
-
+#endif
 
 
 /* Fill iterator IT with next display element from a stretch glyph
@@ -17206,6 +17225,7 @@ dump_glyph (struct glyph_row *row, struct glyph *glyph, int area)
 	       glyph->left_box_line_p,
 	       glyph->right_box_line_p);
     }
+#ifdef HAVE_XWIDGETS  
   else if (glyph->type == XWIDGET_GLYPH)
     {
       fprintf (stderr,
@@ -17227,6 +17247,7 @@ dump_glyph (struct glyph_row *row, struct glyph *glyph, int area)
 
       //      printf("dump xwidget glyph\n");
     }
+#endif  
 }
 
 
@@ -17600,10 +17621,7 @@ static void
 compute_line_metrics (struct it *it)
 {
   struct glyph_row *row = it->glyph_row;
-  if(row->used[TEXT_AREA] > 1000){
-  printf("compute_line_metrics %d %d %d\n", row->used[TEXT_AREA], it->f->text_cols, row->end.pos.charpos);
-    printf("row->used[TEXT_AREA] seems weirdly big! emacs will crash soon\n");
-  }
+
   if (FRAME_WINDOW_P (it->f))
     {
       int i, min_y, max_y;
@@ -21332,12 +21350,13 @@ calc_pixel_width_or_height (double *res, struct it *it, Lisp_Object prop,
 
 	      return OK_PIXELS (width_p ? img->width : img->height);
 	    }
-
+#ifdef HAVE_XWIDGETS
 	  if (FRAME_WINDOW_P (it->f) && valid_xwidget_p (prop))
 	    {
               printf("calc_pixel_width_or_height: return dummy size FIXME\n");
               return OK_PIXELS (width_p ? 100 : 100);
             }
+#endif          
 #endif
 	  if (EQ (car, Qplus) || EQ (car, Qminus))
 	    {
@@ -21832,6 +21851,7 @@ fill_image_glyph_string (struct glyph_string *s)
   s->ybase += s->first_glyph->voffset;
 }
 
+#ifdef HAVE_XWIDGETS
 static void
 fill_xwidget_glyph_string (struct glyph_string *s)
 {
@@ -21844,7 +21864,7 @@ fill_xwidget_glyph_string (struct glyph_string *s)
   s->xwidget = s->first_glyph->u.xwidget;
   //assert_valid_xwidget_id ( s->xwidget, "fill_xwidget_glyph_string");
 }
-
+#endif
 /* Fill glyph string S from a sequence of stretch glyphs.
 
    START is the index of the first glyph to consider,
@@ -22176,6 +22196,7 @@ compute_overhangs_and_x (struct glyph_string *s, int x, int backward_p)
        }								\
      while (0)
 
+#ifdef HAVE_XWIDGETS
 #define BUILD_XWIDGET_GLYPH_STRING(START, END, HEAD, TAIL, HL, X, LAST_X) \
      do									\
        { \
@@ -22188,7 +22209,7 @@ compute_overhangs_and_x (struct glyph_string *s, int x, int backward_p)
          s->x = (X);							\
        }								\
      while (0)
-
+#endif
 
 
 /* Add a glyph string for a sequence of character glyphs to the list
@@ -22348,7 +22369,7 @@ compute_overhangs_and_x (struct glyph_string *s, int x, int backward_p)
               BUILD_XWIDGET_GLYPH_STRING (START, END, HEAD, TAIL,       \
                                           HL, X, LAST_X);               \
               break;                                                    \
-	      								\
+                                                                        \
 									\
 	    case GLYPHLESS_GLYPH:					\
 	      BUILD_GLYPHLESS_GLYPH_STRING (START, END, HEAD, TAIL,	\
@@ -22960,6 +22981,7 @@ produce_image_glyph (struct it *it)
     }
 }
 
+#ifdef HAVE_XWIDGETS
 static void
 produce_xwidget_glyph (struct it *it)
 {
@@ -23041,7 +23063,7 @@ produce_xwidget_glyph (struct it *it)
 	IT_EXPAND_MATRIX_WIDTH (it, area);
     }
 }
-
+#endif
 
 /* Append a stretch glyph to IT->glyph_row.  OBJECT is the source
    of the glyph, WIDTH and HEIGHT are the width and height of the
@@ -24215,9 +24237,10 @@ x_produce_glyphs (struct it *it)
     produce_image_glyph (it);
   else if (it->what == IT_STRETCH)
     produce_stretch_glyph (it);
+#ifdef HAVE_XWIDGETS
   else if (it->what == IT_XWIDGET)
     produce_xwidget_glyph (it);
-
+#endif
  done:
   /* Accumulate dimensions.  Note: can't assume that it->descent > 0
      because this isn't true for images with `:ascent 100'.  */
@@ -24579,10 +24602,12 @@ get_window_cursor_type (struct window *w, struct glyph *glyph, int *width,
   if (!w->cursor_off_p)
     {
 
+#ifdef HAVE_XWIDGETS      
       if (glyph != NULL && glyph->type == XWIDGET_GLYPH){
         printf("attempt xwidget cursor avoidance in get_window_cursor_type\n");
         return NO_CURSOR;
       }
+#endif      
       if (glyph != NULL && glyph->type == IMAGE_GLYPH)
 	{
 	  if (cursor_type == FILLED_BOX_CURSOR)
