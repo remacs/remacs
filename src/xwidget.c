@@ -142,6 +142,9 @@ extern Lisp_Object QCwidth, QCheight;
 struct xwidget_view* xwidget_view_lookup(struct xwidget* xw,     struct window *w);
 Lisp_Object xwidget_spec_value ( Lisp_Object spec, Lisp_Object  key,  int *found);
 gboolean webkit_osr_damage_event_callback (GtkWidget *widget, GdkEventExpose *event, gpointer data) ;
+void     webkit_osr_document_load_finished_callback (WebKitWebView  *webkitwebview,
+                                                     WebKitWebFrame *arg1,
+                                                     gpointer        user_data);
 
 DEFUN ("make-xwidget", Fmake_xwidget, Smake_xwidget, 7, 7, 0,
          doc: /* xw */
@@ -191,7 +194,12 @@ DEFUN ("make-xwidget", Fmake_xwidget, Smake_xwidget, 7, 7, 0,
     /* store some xwidget data in the gtk widgets for convenient retrieval in the event handlers. */
     g_object_set_data (G_OBJECT (xw->widget_osr), XG_XWIDGET, (gpointer) (xw));
     g_object_set_data (G_OBJECT (xw->widgetwindow_osr), XG_XWIDGET, (gpointer) (xw));
-    g_signal_connect (G_OBJECT (    xw->widgetwindow_osr), "damage-event",    G_CALLBACK (webkit_osr_damage_event_callback), NULL);
+    /* signals */
+    g_signal_connect (G_OBJECT ( xw->widgetwindow_osr), "damage-event",    G_CALLBACK (webkit_osr_damage_event_callback), NULL);
+    g_signal_connect (G_OBJECT ( xw->widget_osr),
+                      "document-load-finished",
+                      G_CALLBACK (webkit_osr_document_load_finished_callback),
+                      xw);    
 
     webkit_web_view_load_uri(WEBKIT_WEB_VIEW(xw->widget_osr), "http://www.fsf.org");
     UNBLOCK_INPUT;
@@ -378,6 +386,30 @@ gboolean webkit_osr_damage_event_callback (GtkWidget *widget, GdkEventExpose *ev
   return FALSE;
 }
 
+
+void     webkit_osr_document_load_finished_callback (WebKitWebView  *webkitwebview,
+                                                     WebKitWebFrame *arg1,
+                                                     gpointer        data)
+{
+  //TODO this event sending code should be refactored
+  struct input_event event;
+  //  struct xwidget *xw = (struct xwidget *) data;
+  struct xwidget* xw = (struct xwidget*) g_object_get_data (G_OBJECT (webkitwebview), XG_XWIDGET);  
+  printf("webkit finished loading\n");
+
+  EVENT_INIT (event);
+  event.kind = XWIDGET_EVENT;
+  event.frame_or_window = Qnil;	//frame; //how to get the frame here? //TODO i store it in the xwidget now
+
+  event.arg = Qnil;
+  //event.arg = Fcons (make_number (xembedid), event.arg);
+  event.arg = Fcons (xw, event.arg); //TODO
+  event.arg = Fcons (intern ("document-load-finished"), event.arg);
+
+
+  kbd_buffer_store_event (&event);
+
+}
 
 //for gtk3 webkit_osr
 gboolean

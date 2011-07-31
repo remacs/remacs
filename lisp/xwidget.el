@@ -74,15 +74,24 @@ defaults to the string looking like a url around the cursor position."
     (define-key map "b" 'xwidget-webkit-back )
     (define-key map "r" 'xwidget-webkit-reload )    
     (define-key map "\C-m" 'xwidget-webkit-insert-string)
+    (define-key map [xwidget-event] 'xwidget-webkit-event-handler)
     map)
   
   "Keymap for `xwidget-webkit-mode'.")
 
+(defun xwidget-webkit-event-handler ()
+  (interactive)
+  (message "stuff happened to webkit xwidget %S" last-input-event)
+  (let*
+      ((xwidget-event-type (nth 2 last-input-event))
+       (xwidget (nth 1 last-input-event)))
+    (cond ( (eq xwidget-event-type 'document-load-finished)
+            (message "webkit loaded %s" xwidget))
+          )))
 
-
-(define-derived-mode xwidget-webkit-mode
-  special-mode "xwidget-webkit" "xwidget webkit view mode"
-    (setq buffer-read-only t))
+    (define-derived-mode xwidget-webkit-mode
+      special-mode "xwidget-webkit" "xwidget webkit view mode"
+      (setq buffer-read-only t))))
 
 (defvar xwidget-webkit-last-session-buffer nil)
 
@@ -174,7 +183,7 @@ defaults to the string looking like a url around the cursor position."
 ;;this is a workaround because I cant find the right place to put it in C
 (add-hook 'window-configuration-change-hook 'xwidget-cleanup)
 
-(defvar xwidget-webkit-kill-flash-oneshot nil)
+(defvar xwidget-webkit-kill-flash-oneshot t)
 (defun xwidget-webkit-kill-flash ()
   ;;you can only call this once or webkit crashes and takes emacs with it. odd.
   (unless xwidget-webkit-kill-flash-oneshot
