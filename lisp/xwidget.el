@@ -89,9 +89,9 @@ defaults to the string looking like a url around the cursor position."
             (message "webkit loaded %s" xwidget))
           )))
 
-    (define-derived-mode xwidget-webkit-mode
-      special-mode "xwidget-webkit" "xwidget webkit view mode"
-      (setq buffer-read-only t))))
+(define-derived-mode xwidget-webkit-mode
+  special-mode "xwidget-webkit" "xwidget webkit view mode"
+  (setq buffer-read-only t))
 
 (defvar xwidget-webkit-last-session-buffer nil)
 
