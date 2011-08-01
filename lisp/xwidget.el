@@ -19,30 +19,31 @@ see xwidget.c for types suitable for TYPE.
 
 
 (defun xwidget-at (pos)
-  (car (cdr (cdr  (get-text-property pos 'display)))))
+  (let* ((xw (car (cdr (cdr  (get-text-property pos 'display))))))
+    (if ( xwidgetp  car) xw nil))
 
 
 
-         
-(defun xwidget-socket-handler ()
-  "creates plug for socket. TODO"
-  (interactive)
-  (message "socket handler xwidget %S" last-input-event)
-  (let*
-      ((xwidget-event-type (nth 2 last-input-event))
-       (xwidget-id (nth 1 last-input-event)))
-    (cond ( (eq xwidget-event-type 'xembed-ready)
-            (let*
-                ((xembed-id (nth 3 last-input-event)))
-              (message "xembed ready  event: %S xw-id:%s" xembed-id xwidget-id)
-              ;;TODO fetch process data from the xwidget. create it, store process info
-              ;;will start emacs/uzbl in a xembed socket when its ready
-              ;; (cond
-              ;;  ((eq 3 xwidget-id)
-              ;;   (start-process "xembed" "*xembed*" (format "%ssrc/emacs" default-directory) "-q" "--parent-id" (number-to-string xembed-id) ) )
-              ;;  ((eq 5 xwidget-id)
-              ;;   (start-process "xembed2" "*xembed2*" "uzbl-core"  "-s" (number-to-string xembed-id)  "http://www.fsf.org" )  )
-              )))))
+  
+  (defun xwidget-socket-handler ()
+    "creates plug for socket. TODO"
+    (interactive)
+    (message "socket handler xwidget %S" last-input-event)
+    (let*
+        ((xwidget-event-type (nth 2 last-input-event))
+         (xwidget-id (nth 1 last-input-event)))
+      (cond ( (eq xwidget-event-type 'xembed-ready)
+              (let*
+                  ((xembed-id (nth 3 last-input-event)))
+                (message "xembed ready  event: %S xw-id:%s" xembed-id xwidget-id)
+                ;;TODO fetch process data from the xwidget. create it, store process info
+                ;;will start emacs/uzbl in a xembed socket when its ready
+                ;; (cond
+                ;;  ((eq 3 xwidget-id)
+                ;;   (start-process "xembed" "*xembed*" (format "%ssrc/emacs" default-directory) "-q" "--parent-id" (number-to-string xembed-id) ) )
+                ;;  ((eq 5 xwidget-id)
+                ;;   (start-process "xembed2" "*xembed2*" "uzbl-core"  "-s" (number-to-string xembed-id)  "http://www.fsf.org" )  )
+                ))))))
 
 
 

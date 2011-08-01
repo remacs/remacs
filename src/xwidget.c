@@ -757,6 +757,13 @@ DEFUN ("xwidget-size-request", Fxwidget_size_request, Sxwidget_size_request, 1, 
 
 }
 
+DEFUN ("xwidgetp", Fxwidgetp, Sxwidgetp, 1, 1, 0,
+       doc: /* Return t if OBJECT is a xwidget.  */)
+  (Lisp_Object object)
+{
+  return XWIDGETP (object) ? Qt : Qnil;
+}
+
 DEFUN("xwidget-info", Fxwidget_info , Sxwidget_info, 1,1,0, doc: /* get xwidget props */)
   (Lisp_Object xwidget)
 {
@@ -865,7 +872,7 @@ syms_of_xwidget (void)
   int i;
 
   defsubr (&Smake_xwidget);
-
+  defsubr (&Sxwidgetp);
   defsubr (&Sxwidget_info);
   defsubr (&Sxwidget_view_info);
   defsubr (&Sxwidget_resize);
