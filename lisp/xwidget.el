@@ -56,6 +56,7 @@ see xwidget.c for types suitable for TYPE.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; webkit support
 (require 'browse-url)
+(require 'image-mode)
 ;;;###autoload
 (defun xwidget-webkit-browse-url (url &optional new-session)
   "Ask xwidget-webkit to browse URL.
@@ -81,9 +82,43 @@ defaults to the string looking like a url around the cursor position."
     (define-key map "r" 'xwidget-webkit-reload )    
     (define-key map "\C-m" 'xwidget-webkit-insert-string)
     (define-key map [xwidget-event] 'xwidget-webkit-event-handler)
+
+    ;;similar to image mode bindings
+    (define-key map (kbd "SPC")       'image-scroll-up)
+    (define-key map (kbd "DEL")       'image-scroll-down)
+    
+    (define-key map [remap forward-char]       (xwidget-image-mode-navigation-adaptor  'image-forward-hscroll))
+    (define-key map [remap backward-char]       (xwidget-image-mode-navigation-adaptor  'image-backward-hscroll))
+    (define-key map [remap right-char]       (xwidget-image-mode-navigation-adaptor  'image-forward-hscroll))
+    (define-key map [remap left-char]       (xwidget-image-mode-navigation-adaptor  'image-backward-hscroll))
+    (define-key map [remap previous-line]       (xwidget-image-mode-navigation-adaptor  'image-previous-line))
+    (define-key map [remap next-line]       (xwidget-image-mode-navigation-adaptor  'image-next-line))
+    (define-key map [remap scroll-up]          (xwidget-image-mode-navigation-adaptor 'image-scroll-up))
+    (define-key map [remap scroll-up-command]  (xwidget-image-mode-navigation-adaptor 'image-scroll-up))
+    
+    (define-key map [remap scroll-down]       (xwidget-image-mode-navigation-adaptor  'image-scroll-down))
+
+    (define-key map [remap scroll-down-command]       (xwidget-image-mode-navigation-adaptor  'image-scroll-down))
+    (define-key map [remap move-beginning-of-line]       (xwidget-image-mode-navigation-adaptor  'image-bol))
+    (define-key map [remap move-end-of-line]       (xwidget-image-mode-navigation-adaptor  'image-eol))
+    (define-key map [remap beginning-of-buffer]       (xwidget-image-mode-navigation-adaptor  'image-bob))
+    (define-key map [remap end-of-buffer]       (xwidget-image-mode-navigation-adaptor  'image-eob))
+
+    
     map)
   
   "Keymap for `xwidget-webkit-mode'.")
+
+(defun xwidget-image-display-size  (spec &optional pixels frame)
+  (let ((xwi (xwidget-info  (xwidget-at 1))))
+    (cons (aref xwi 2)
+          (aref xwi 3))))
+
+(defmacro xwidget-image-mode-navigation-adaptor (fn)
+  `(lambda () (interactive)
+     (flet ((image-display-size (spec &optional pixels frame) (xwidget-image-display-size spec)))
+       (funcall ,fn))))
+  )
 
 (defun xwidget-webkit-event-handler ()
   (interactive)
@@ -91,13 +126,18 @@ defaults to the string looking like a url around the cursor position."
   (let*
       ((xwidget-event-type (nth 2 last-input-event))
        (xwidget (nth 1 last-input-event)))
-    (cond ( (eq xwidget-event-type 'document-load-finished)
-            (message "webkit loaded %s" xwidget))
+    (cond ((eq xwidget-event-type 'document-load-finished)
+           (message "webkit loaded %s" xwidget)
+           (xwidget-webkit-adjust-size-to-content))
           )))
 
 (define-derived-mode xwidget-webkit-mode
   special-mode "xwidget-webkit" "xwidget webkit view mode"
-  (setq buffer-read-only t))
+  (setq buffer-read-only t)
+  ;; Keep track of [vh]scroll when switching buffers
+  (image-mode-setup-winprops)
+
+  )
 
 (defvar xwidget-webkit-last-session-buffer nil)
 
@@ -189,6 +229,7 @@ defaults to the string looking like a url around the cursor position."
 ;;this is a workaround because I cant find the right place to put it in C
 (add-hook 'window-configuration-change-hook 'xwidget-cleanup)
 
+;;killflash is sadly not reliable yet. 
 (defvar xwidget-webkit-kill-flash-oneshot t)
 (defun xwidget-webkit-kill-flash ()
   ;;you can only call this once or webkit crashes and takes emacs with it. odd.

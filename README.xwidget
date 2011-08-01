@@ -887,8 +887,16 @@ easy.
 
 ** webkit related
 *** TODO webkit support webkit signals
-*** TODO particularily document-load-finished
+
+**** DONE particularily document-load-finished
+     CLOSED: [2011-08-01 Mon 22:34]
 http://webkitgtk.org/reference/webkitgtk-webkitwebview.html#WebKitWebView-document-load-finished
+because one might need tell set a title and sizes and things when it loads.
+**** TODO event bug
+Debugger entered--Lisp error: (error "Two bases given in one event")
+
+for some reason hapens sometimes with xwidget events.
+
 *** TODO console messages
 http://webkitgtk.org/reference/webkitgtk-webkitwebview.html#WebKitWebView-console-message
 http://getfirebug.com/wiki/index.php/Console_API#console.count.28.5Btitle.5D.29
@@ -898,8 +906,7 @@ because maybe we can make a simple JS REPL that way.
 prints hello to stdout but theres no way to catch stdout from webkit I
 think other than receiving the signal.
 
-*** DONE webkit flashkiller by default
-   CLOSED: [2011-07-19 Tue 14:27]
+*** TODO webkit flashkiller by default
 while its possible to support plugins in the webkit xwidget, flash has
 issues on 64 bit, and slows down emacs to a halt with off screen
 rendering, and of course is not free software. its in the way for real
@@ -911,6 +918,9 @@ http://stackoverflow.com/questions/4885513/prevent-flash-in-cocoa-webview
 
 simply use this api:
 http://webkitgtk.org/reference/WebKitWebPluginDatabase.html
+
+theres an implementation now but it's not robust enough webkit often
+crashes taking emacs with it.
 
 *** TODO webkit downloads
 when clicking a download link in Webkit Emacs should take over and handle it
@@ -926,7 +936,8 @@ open a new window or something, which wont work.
 have a look at how docview solves it
 webkit_web_view_search_text ()
 *** TODO webkit relative references doesn't work
-probably because we handle scrolling in a non-standard way
+probably because we handle scrolling in a non-standard way. It does
+work sort of when theres a html frameset and webkit scrols by itself.
 *** TODO webkit width adjustment handling issue
 since there are so many levels of clipping and whatnot in xwidgets
 sizing issues are difficult.
@@ -946,16 +957,33 @@ to see the problem surface to http://www.slashdot.org
 - xwidget-webkit-adjust-size
 - xwidget-webkit-adjust-size-to-content
 
-and then try resizing Epiphany.
+and then compare by resizing in Epiphany, which is also webkit based.
 
 *** TODO xwidget webkit allow loading from string from emacs
-*** TODO xwidget-webkit-last-session
+*** DONE xwidget-webkit-last-session
+    CLOSED: [2011-08-01 Mon 22:38]
 was rather hurried. end result is that the lisp layer only really
 allows for one webkit session.
 *** TODO C-X b in other buffer from webkit
 bafflingly resets the webkit view to the top. Maybe the window
 reconfiguration hook code? further mystification is added because it
 only seems to happen with ido mode enabled.
+
+in comparison with image-mode which does the right thing, I discovered
+that image-mode has special code to handle scrolling. the browser mode
+and image mode has some similarities.
+
+** TODO xwidget image display  spec compatibility
+some history: the first version of the xwidget display spec was
+the same as an image spec. This turned out not to be fantastic because
+an xwidget is both like a process and like an image. it has a separate
+existence from display. So now the xwidget display spec is just a
+pointer to a xwidget. But then some useful functionality in Emacs
+can't be reused for xwidget, in particular image-mode.
+
+Maybe a new image type could be added that was a wraper on an
+xwidget. Then image mode could be reused for webkit mode. 
+
 ** socket related
 *** TODO some flickering during redisplay of sockets
 with gtk3 an size allocation workaround is used.
@@ -987,9 +1015,10 @@ fine-tuning to reduce flicker.
 
 
 
-** TODO xwidgets doesn't work during bootstrap all of a sudden
+** DONE xwidgets doesn't work during bootstrap all of a sudden
+   CLOSED: [2011-08-01 Mon 22:33]
 might be some annoying local issues with my install because it is not
-reliably reproducible.
+reliably reproducible. (went away during merges)
 
 ** TODO low impact xwidget based image viewer
 for instance to render SVG using webkit, or some other canvas.
@@ -998,6 +1027,7 @@ that way it would be possible to merge to trunk in stages.
 so, webkit could be used to display the SVG. the display spec for
 images would be used. multiple webkits would be used rather than
 offscreen rendering, so it would be GTK2 compatible. 
+** 
 * old notes from x_draw_xwidget_glyph_string
 
     BUG it seems this method for some reason is called with bad s->x and s->y sometimes.
