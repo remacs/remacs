@@ -1,3 +1,31 @@
+2011-08-02  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* mail/sendmail.el (sendmail-query-once): Restore the current
+	buffer after querying (bug#9074).
+
+	* dired.el (dired-flagged): Use different faces for marked and
+	flagged files (bug#6117).
+
+	* emacs-lisp/cl-macs.el (dolist): Mention that there's a nil block
+	(bug#4433).
+
+	* ido.el (ido-mode): Switch off the message if called
+	non-interactively.
+
+	* mail/smtpmail.el (smtpmail-query-smtp-server): Try port 25
+	before 587, since it appears that that's more likely to work for
+	more people.
+
+	* cus-edit.el (custom-file): When running under emacs -q, always
+	refuse to save the customisations, even if the .emacs file doesn't
+	exist.
+
+	* info.el: Remove the `Info-beginning-of-buffer' function
+	(bug#8325).
+
+	* net/network-stream.el (network-stream-open-starttls): Use
+	`starttls-available-p' to see whether starttls.el can be used.
+
 2011-08-01  Martin Rudalics  <rudalics@gmx.at>
 
 	* window.el (display-buffer-in-window): Don't set dedicated status
