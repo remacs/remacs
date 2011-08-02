@@ -5,7 +5,7 @@
 
 ;;TODO model after make-text-button instead!
 (defun xwidget-insert (pos type title width height)
- "Insert an xwidget at POS, given ID, TYPE, TITLE WIDTH and HEIGHT.
+  "Insert an xwidget at POS, given ID, TYPE, TITLE WIDTH and HEIGHT.
 Return ID
 
 see xwidget.c for types suitable for TYPE.
@@ -71,6 +71,17 @@ defaults to the string looking like a url around the cursor position."
       (xwidget-webkit-goto-url url))))
 
 
+;;shims for adapting image mode code to the webkit browser window
+(defun xwidget-image-display-size  (spec &optional pixels frame)
+  (let ((xwi (xwidget-info  (xwidget-at 1))))
+    (cons (aref xwi 2)
+          (aref xwi 3))))
+
+(defmacro xwidget-image-mode-navigation-adaptor (fn)
+  `(lambda () (interactive)
+     (flet ((image-display-size (spec &optional pixels frame) (xwidget-image-display-size spec)))
+       (funcall ,fn))))
+
 
 ;;todo.
 ;; - check that the webkit support is compiled in
@@ -84,8 +95,8 @@ defaults to the string looking like a url around the cursor position."
     (define-key map [xwidget-event] 'xwidget-webkit-event-handler)
 
     ;;similar to image mode bindings
-    (define-key map (kbd "SPC")       'image-scroll-up)
-    (define-key map (kbd "DEL")       'image-scroll-down)
+    (define-key map (kbd "SPC")       (xwidget-image-mode-navigation-adaptor   'image-scroll-up))
+    (define-key map (kbd "DEL")       (xwidget-image-mode-navigation-adaptor   'image-scroll-down))
     
     (define-key map [remap forward-char]       (xwidget-image-mode-navigation-adaptor  'image-forward-hscroll))
     (define-key map [remap backward-char]       (xwidget-image-mode-navigation-adaptor  'image-backward-hscroll))
@@ -109,16 +120,6 @@ defaults to the string looking like a url around the cursor position."
   
   "Keymap for `xwidget-webkit-mode'.")
 
-(defun xwidget-image-display-size  (spec &optional pixels frame)
-  (let ((xwi (xwidget-info  (xwidget-at 1))))
-    (cons (aref xwi 2)
-          (aref xwi 3))))
-
-(defmacro xwidget-image-mode-navigation-adaptor (fn)
-  `(lambda () (interactive)
-     (flet ((image-display-size (spec &optional pixels frame) (xwidget-image-display-size spec)))
-       (funcall ,fn))))
-  )
 
 (defun xwidget-webkit-event-handler ()
   (interactive)
