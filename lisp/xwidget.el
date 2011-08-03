@@ -79,7 +79,7 @@ defaults to the string looking like a url around the cursor position."
 
 (defmacro xwidget-image-mode-navigation-adaptor (fn)
   `(lambda () (interactive)
-     (flet ((image-display-size (spec &optional pixels frame) (xwidget-image-display-size spec)))
+     (flet ((image-display-size (spec) (xwidget-image-display-size spec)))
        (funcall ,fn))))
 
 

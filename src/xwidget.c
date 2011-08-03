@@ -614,7 +614,7 @@ x_draw_xwidget_glyph_string (struct glyph_string *s)
   int y = s->y + (s->height / 2) - (xww->height / 2);
   int moved=0;
 
-  if (xv == NULL){
+  if (xv == NULL || xv->initialized == 0){
     /* Views must be initialized once(only once).
        We do it here in the display loop because there is no other time to know things like
        window placement etc.
