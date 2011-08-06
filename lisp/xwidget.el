@@ -56,7 +56,9 @@ see xwidget.c for types suitable for TYPE.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; webkit support
 (require 'browse-url)
-(require 'image-mode)
+(require 'image-mode);;for some image-mode alike functinoality
+(require 'cl);;for flet
+
 ;;;###autoload
 (defun xwidget-webkit-browse-url (url &optional new-session)
   "Ask xwidget-webkit to browse URL.
@@ -90,11 +92,13 @@ defaults to the string looking like a url around the cursor position."
     (define-key map "g" 'xwidget-webkit-browse-url)
     (define-key map "a" 'xwidget-webkit-adjust-size-to-content)
     (define-key map "b" 'xwidget-webkit-back )
-    (define-key map "r" 'xwidget-webkit-reload )    
+    (define-key map "r" 'xwidget-webkit-reload )
+    (define-key map "t" (lambda () (interactive) (message "o")) )    
     (define-key map "\C-m" 'xwidget-webkit-insert-string)
     (define-key map [xwidget-event] 'xwidget-webkit-event-handler)
 
     ;;similar to image mode bindings
+    ;;TODO theres something wrong with the macro
     (define-key map (kbd "SPC")       (xwidget-image-mode-navigation-adaptor   'image-scroll-up))
     (define-key map (kbd "DEL")       (xwidget-image-mode-navigation-adaptor   'image-scroll-down))
     
