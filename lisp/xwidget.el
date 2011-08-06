@@ -101,6 +101,13 @@ defaults to the string looking like a url around the cursor position."
     ;;TODO theres something wrong with the macro
     (define-key map (kbd "SPC")       (xwidget-image-mode-navigation-adaptor   'image-scroll-up))
     (define-key map (kbd "DEL")       (xwidget-image-mode-navigation-adaptor   'image-scroll-down))
+
+    (define-key map [remap scroll-up]          (xwidget-image-mode-navigation-adaptor 'image-scroll-up))
+    (define-key map [remap scroll-up-command]  (xwidget-image-mode-navigation-adaptor 'image-scroll-up))
+    
+    (define-key map [remap scroll-down]       (xwidget-image-mode-navigation-adaptor  'image-scroll-down))
+    (define-key map [remap scroll-down-command]       (xwidget-image-mode-navigation-adaptor  'image-scroll-down))
+
     
     (define-key map [remap forward-char]       (xwidget-image-mode-navigation-adaptor  'image-forward-hscroll))
     (define-key map [remap backward-char]       (xwidget-image-mode-navigation-adaptor  'image-backward-hscroll))
@@ -108,12 +115,8 @@ defaults to the string looking like a url around the cursor position."
     (define-key map [remap left-char]       (xwidget-image-mode-navigation-adaptor  'image-backward-hscroll))
     (define-key map [remap previous-line]       (xwidget-image-mode-navigation-adaptor  'image-previous-line))
     (define-key map [remap next-line]       (xwidget-image-mode-navigation-adaptor  'image-next-line))
-    (define-key map [remap scroll-up]          (xwidget-image-mode-navigation-adaptor 'image-scroll-up))
-    (define-key map [remap scroll-up-command]  (xwidget-image-mode-navigation-adaptor 'image-scroll-up))
-    
-    (define-key map [remap scroll-down]       (xwidget-image-mode-navigation-adaptor  'image-scroll-down))
 
-    (define-key map [remap scroll-down-command]       (xwidget-image-mode-navigation-adaptor  'image-scroll-down))
+
     (define-key map [remap move-beginning-of-line]       (xwidget-image-mode-navigation-adaptor  'image-bol))
     (define-key map [remap move-end-of-line]       (xwidget-image-mode-navigation-adaptor  'image-eol))
     (define-key map [remap beginning-of-buffer]       (xwidget-image-mode-navigation-adaptor  'image-bob))
