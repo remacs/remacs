@@ -606,7 +606,7 @@ int current_mode_line_height, current_header_line_height;
 #define SAVE_IT(ITCOPY,ITORIG,CACHE)		\
   do {						\
     if (CACHE)					\
-      xfree (CACHE);				\
+      bidi_unshelve_cache (CACHE, 1);		\
     ITCOPY = ITORIG;				\
     CACHE = bidi_shelve_cache();		\
   } while (0)
@@ -615,7 +615,7 @@ int current_mode_line_height, current_header_line_height;
   do {						\
     if (pITORIG != pITCOPY)			\
       *(pITORIG) = *(pITCOPY);			\
-    bidi_unshelve_cache (CACHE);		\
+    bidi_unshelve_cache (CACHE, 0);		\
     CACHE = NULL;				\
   } while (0)
 
@@ -1346,9 +1346,9 @@ pos_visible_p (struct window *w, EMACS_INT charpos, int *x, int *y,
 	  *vpos = it2.vpos;
 	}
       else
-	xfree (it2data);
+	bidi_unshelve_cache (it2data, 1);
     }
-  bidi_unshelve_cache (itdata);
+  bidi_unshelve_cache (itdata, 0);
 
   if (old_buffer)
     set_buffer_internal_1 (old_buffer);
@@ -2632,7 +2632,7 @@ init_iterator (struct it *it, struct window *w,
 	    it->paragraph_embedding = R2L;
 	  else
 	    it->paragraph_embedding = NEUTRAL_DIR;
-	  bidi_unshelve_cache (NULL);
+	  bidi_unshelve_cache (NULL, 0);
 	  bidi_init_it (charpos, IT_BYTEPOS (*it), FRAME_WINDOW_P (it->f),
 			&it->bidi_it);
 	}
@@ -5653,7 +5653,7 @@ back_to_previous_visible_line_start (struct it *it)
 	pos = --IT_CHARPOS (it2);
 	--IT_BYTEPOS (it2);
 	it2.sp = 0;
-	bidi_unshelve_cache (NULL);
+	bidi_unshelve_cache (NULL, 0);
 	it2.string_from_display_prop_p = 0;
 	it2.from_disp_prop_p = 0;
 	if (handle_display_prop (&it2) == HANDLED_RETURN
@@ -5863,7 +5863,7 @@ reseat_1 (struct it *it, struct text_pos pos, int set_stop_p)
     {
       bidi_init_it (IT_CHARPOS (*it), IT_BYTEPOS (*it), FRAME_WINDOW_P (it->f),
 		    &it->bidi_it);
-      bidi_unshelve_cache (NULL);
+      bidi_unshelve_cache (NULL, 0);
       it->bidi_it.paragraph_dir = NEUTRAL_DIR;
       it->bidi_it.string.s = NULL;
       it->bidi_it.string.lstring = Qnil;
@@ -8063,13 +8063,19 @@ move_it_in_display_line_to (struct it *it,
 	     positions smaller than TO_CHARPOS, return
 	     MOVE_POS_MATCH_OR_ZV, like the unidirectional display
 	     did.  */
-	  if ((op & MOVE_TO_POS) != 0
-	      && !saw_smaller_pos
-	      && IT_CHARPOS (*it) > to_charpos)
+	  if (it->bidi_p && (op & MOVE_TO_POS) != 0)
 	    {
-	      result = MOVE_POS_MATCH_OR_ZV;
-	      if (it->bidi_p && IT_CHARPOS (ppos_it) < ZV)
-		RESTORE_IT (it, &ppos_it, ppos_data);
+	      if (!saw_smaller_pos && IT_CHARPOS (*it) > to_charpos)
+		{
+		  if (IT_CHARPOS (ppos_it) < ZV)
+		    RESTORE_IT (it, &ppos_it, ppos_data);
+		  goto buffer_pos_reached;
+		}
+	      else if (it->line_wrap == WORD_WRAP && atpos_it.sp >= 0
+		       && IT_CHARPOS (*it) > to_charpos)
+		goto buffer_pos_reached;
+	      else
+		result = MOVE_NEWLINE_OR_CR;
 	    }
 	  else
 	    result = MOVE_NEWLINE_OR_CR;
@@ -8108,14 +8114,13 @@ move_it_in_display_line_to (struct it *it,
 		     character positions smaller than TO_CHARPOS,
 		     return MOVE_POS_MATCH_OR_ZV, like the
 		     unidirectional display did.  */
-		  || ((op & MOVE_TO_POS) != 0
+		  || (it->bidi_p && (op & MOVE_TO_POS) != 0
 		      && !saw_smaller_pos
 		      && IT_CHARPOS (*it) > to_charpos))
 		{
-		  result = MOVE_POS_MATCH_OR_ZV;
-		  if (it->bidi_p && !at_eob_p && IT_CHARPOS (ppos_it) < ZV)
+		  if (!at_eob_p && IT_CHARPOS (ppos_it) < ZV)
 		    RESTORE_IT (it, &ppos_it, ppos_data);
-		  break;
+		  goto buffer_pos_reached;
 		}
 	      if (ITERATOR_AT_END_OF_LINE_P (it))
 		{
@@ -8123,14 +8128,13 @@ move_it_in_display_line_to (struct it *it,
 		  break;
 		}
 	    }
-	  else if ((op & MOVE_TO_POS) != 0
+	  else if (it->bidi_p && (op & MOVE_TO_POS) != 0
 		   && !saw_smaller_pos
 		   && IT_CHARPOS (*it) > to_charpos)
 	    {
-	      result = MOVE_POS_MATCH_OR_ZV;
-	      if (it->bidi_p && IT_CHARPOS (ppos_it) < ZV)
+	      if (IT_CHARPOS (ppos_it) < ZV)
 		RESTORE_IT (it, &ppos_it, ppos_data);
-	      break;
+	      goto buffer_pos_reached;
 	    }
 	  result = MOVE_LINE_TRUNCATED;
 	  break;
@@ -8150,13 +8154,13 @@ move_it_in_display_line_to (struct it *it,
  done:
 
   if (atpos_data)
-    xfree (atpos_data);
+    bidi_unshelve_cache (atpos_data, 1);
   if (atx_data)
-    xfree (atx_data);
+    bidi_unshelve_cache (atx_data, 1);
   if (wrap_data)
-    xfree (wrap_data);
+    bidi_unshelve_cache (wrap_data, 1);
   if (ppos_data)
-    xfree (ppos_data);
+    bidi_unshelve_cache (ppos_data, 1);
 
   /* Restore the iterator settings altered at the beginning of this
      function.  */
@@ -8191,7 +8195,7 @@ move_it_in_display_line (struct it *it,
 	    (it, -1, prev_x, MOVE_TO_X);
 	}
       else
-	xfree (save_data);
+	bidi_unshelve_cache (save_data, 1);
     }
   else
     move_it_in_display_line_to (it, to_charpos, to_x, op);
@@ -8450,7 +8454,7 @@ move_it_to (struct it *it, EMACS_INT to_charpos, int to_x, int to_y, int to_vpos
     }
 
   if (backup_data)
-    xfree (backup_data);
+    bidi_unshelve_cache (backup_data, 1);
 
   TRACE_MOVE ((stderr, "move_it_to: reached %d\n", reached));
 }
@@ -8529,7 +8533,7 @@ move_it_vertically_backward (struct it *it, int dy)
       RESTORE_IT (it, it, it2data);
       if (nlines > 0)
 	move_it_by_lines (it, nlines);
-      xfree (it3data);
+      bidi_unshelve_cache (it3data, 1);
     }
   else
     {
@@ -8725,7 +8729,7 @@ move_it_by_lines (struct it *it, int dvpos)
 	  if (IT_CHARPOS (*it) >= start_charpos)
 	    RESTORE_IT (it, &it2, it2data);
 	  else
-	    xfree (it2data);
+	    bidi_unshelve_cache (it2data, 1);
 	}
       else
 	RESTORE_IT (it, it, it2data);
@@ -13341,6 +13345,9 @@ set_cursor_from_row (struct window *w, struct glyph_row *row,
   /* Last buffer position covered by an overlay string with an integer
      `cursor' property.  */
   EMACS_INT bpos_covered = 0;
+  /* Non-zero means the display string on which to display the cursor
+     comes from a text property, not from an overlay.  */
+  int string_from_text_prop = 0;
 
   /* Skip over glyphs not having an object at the start and the end of
      the row.  These are special glyphs like truncation marks on
@@ -13659,9 +13666,14 @@ set_cursor_from_row (struct window *w, struct glyph_row *row,
 		{
 		  Lisp_Object str;
 		  EMACS_INT tem;
+		  /* If the display property covers the newline, we
+		     need to search for it one position farther.  */
+		  EMACS_INT lim = pos_after
+		    + (pos_after == MATRIX_ROW_END_CHARPOS (row) + delta);
 
+		  string_from_text_prop = 0;
 		  str = glyph->object;
-		  tem = string_buffer_position_lim (str, pos, pos_after, 0);
+		  tem = string_buffer_position_lim (str, pos, lim, 0);
 		  if (tem == 0	/* from overlay */
 		      || pos <= tem)
 		    {
@@ -13685,7 +13697,10 @@ set_cursor_from_row (struct window *w, struct glyph_row *row,
 			  EMACS_INT strpos = glyph->charpos;
 
 			  if (tem)
-			    cursor = glyph;
+			    {
+			      cursor = glyph;
+			      string_from_text_prop = 1;
+			    }
 			  for ( ;
 			       (row->reversed_p ? glyph > stop : glyph < stop)
 				 && EQ (glyph->object, str);
@@ -13760,14 +13775,12 @@ set_cursor_from_row (struct window *w, struct glyph_row *row,
       w->cursor.vpos >= 0
       /* that candidate is not the row we are processing */
       && MATRIX_ROW (matrix, w->cursor.vpos) != row
-      /* the row we are processing is part of a continued line */
-      && (row->continued_p || MATRIX_ROW_CONTINUATION_LINE_P (row))
       /* Make sure cursor.vpos specifies a row whose start and end
 	 charpos occlude point.  This is because some callers of this
 	 function leave cursor.vpos at the row where the cursor was
 	 displayed during the last redisplay cycle.  */
       && MATRIX_ROW_START_CHARPOS (MATRIX_ROW (matrix, w->cursor.vpos)) <= pt_old
-      && pt_old < MATRIX_ROW_END_CHARPOS (MATRIX_ROW (matrix, w->cursor.vpos)))
+      && pt_old <= MATRIX_ROW_END_CHARPOS (MATRIX_ROW (matrix, w->cursor.vpos)))
     {
       struct glyph *g1 =
 	MATRIX_ROW_GLYPH_START (matrix, w->cursor.vpos) + w->cursor.hpos;
@@ -13776,15 +13789,29 @@ set_cursor_from_row (struct window *w, struct glyph_row *row,
       if (!(row->reversed_p ? glyph > glyphs_end : glyph < glyphs_end))
 	return 0;
       /* Keep the candidate whose buffer position is the closest to
-	 point.  */
+	 point or has the `cursor' property.  */
       if (/* previous candidate is a glyph in TEXT_AREA of that row */
 	  w->cursor.hpos >= 0
 	  && w->cursor.hpos < MATRIX_ROW_USED (matrix, w->cursor.vpos)
-	  && BUFFERP (g1->object)
-	  && (g1->charpos == pt_old /* an exact match always wins */
-	      || (BUFFERP (glyph->object)
-		  && eabs (g1->charpos - pt_old)
-		   < eabs (glyph->charpos - pt_old))))
+	  && ((BUFFERP (g1->object)
+	       && (g1->charpos == pt_old /* an exact match always wins */
+		   || (BUFFERP (glyph->object)
+		       && eabs (g1->charpos - pt_old)
+		       < eabs (glyph->charpos - pt_old))))
+	      /* previous candidate is a glyph from a string that has
+		 a non-nil `cursor' property */
+	      || (STRINGP (g1->object)
+		  && (!NILP (Fget_char_property (make_number (g1->charpos),
+						Qcursor, g1->object))
+		      /* pevious candidate is from the same display
+			 string as this one, and the display string
+			 came from a text property */
+		      || (EQ (g1->object, glyph->object)
+			  && string_from_text_prop)
+		      /* this candidate is from newline and its
+			 position is not an exact match */
+		      || (INTEGERP (glyph->object)
+			  && glyph->charpos != pt_old)))))
 	return 0;
       /* If this candidate gives an exact match, use that.  */
       if (!(BUFFERP (glyph->object) && glyph->charpos == pt_old)
@@ -18852,6 +18879,9 @@ display_line (struct it *it)
 	  break;
 	}
     }
+
+  if (wrap_data)
+    bidi_unshelve_cache (wrap_data, 1);
 
   /* If line is not empty and hscrolled, maybe insert truncation glyphs
      at the left window margin.  */

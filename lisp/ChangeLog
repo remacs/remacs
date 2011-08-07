@@ -1,3 +1,35 @@
+2011-08-05  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* progmodes/js.el (js--regexp-literal): Accept regexps at the beginning
+	of statements and in a few more cases (bug#9183).
+
+	* emacs-lisp/cl-macs.el (cl--make-usage-var, cl--make-usage-args):
+	New functions.
+	(cl-transform-lambda): Use them (bug#9239).
+
+2011-08-05  Martin Rudalics  <rudalics@gmx.at>
+
+	* window.el (display-buffer-same-window)
+	(display-buffer-same-frame, display-buffer-other-window)
+	(pop-to-buffer-same-window, pop-to-buffer-same-frame)
+	(pop-to-buffer-other-window)
+	(pop-to-buffer-same-frame-other-window)
+	(pop-to-buffer-other-frame): Make them defuns.
+	(switch-to-buffer): Don't set LABEL argument of pop-to-buffer.
+
+2011-08-03  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* subr.el (make-composed-keymap): Move from C.  Change calling
+	convention, and improve docstring to bring attention to a subtle point.
+	* minibuffer.el (completing-read-default): Adjust accordingly.
+
+2011-08-03  Michael Albinus  <michael.albinus@gmx.de>
+
+	* net/tramp-sh.el (tramp-open-connection-setup-interactive-shell)
+	(tramp-open-shell): Use `tramp-shell-quote-argument'.
+
+	* net/trampver.el: Update release number.
+
 2011-08-03  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* progmodes/sh-script.el (sh-font-lock-paren): Don't mistake "main" for

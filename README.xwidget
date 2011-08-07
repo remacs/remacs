@@ -897,6 +897,9 @@ Debugger entered--Lisp error: (error "Two bases given in one event")
 
 for some reason hapens sometimes with xwidget events.
 
+maybe I need to set the originating window?
+  event.frame_or_window = Qnil;	//frame; //how to get the frame here? //TODO i store it in the xwidget now
+
 *** TODO console messages
 http://webkitgtk.org/reference/webkitgtk-webkitwebview.html#WebKitWebView-console-message
 http://getfirebug.com/wiki/index.php/Console_API#console.count.28.5Btitle.5D.29

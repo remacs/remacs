@@ -402,7 +402,6 @@ void     webkit_osr_document_load_finished_callback (WebKitWebView  *webkitwebvi
   event.frame_or_window = Qnil;	//frame; //how to get the frame here? //TODO i store it in the xwidget now
 
   event.arg = Qnil;
-  //event.arg = Fcons (make_number (xembedid), event.arg);
   event.arg = Fcons (xw, event.arg); //TODO
   event.arg = Fcons (intern ("document-load-finished"), event.arg);
 

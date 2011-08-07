@@ -82,7 +82,12 @@ defaults to the string looking like a url around the cursor position."
 (defmacro xwidget-image-mode-navigation-adaptor (fn)
   `(lambda () (interactive)
      (flet ((image-display-size (spec) (xwidget-image-display-size spec)))
-       (funcall ,fn))))
+       (funcall ,fn ))))
+
+(defmacro xwidget-image-mode-navigation-adaptor-p (fn)
+  `(lambda (n) (interactive "p")
+     (flet ((image-display-size (spec) (xwidget-image-display-size spec)))
+       (funcall ,fn n))))
 
 
 ;;todo.
@@ -109,12 +114,12 @@ defaults to the string looking like a url around the cursor position."
     (define-key map [remap scroll-down-command]       (xwidget-image-mode-navigation-adaptor  'image-scroll-down))
 
     
-    (define-key map [remap forward-char]       (xwidget-image-mode-navigation-adaptor  'image-forward-hscroll))
-    (define-key map [remap backward-char]       (xwidget-image-mode-navigation-adaptor  'image-backward-hscroll))
-    (define-key map [remap right-char]       (xwidget-image-mode-navigation-adaptor  'image-forward-hscroll))
-    (define-key map [remap left-char]       (xwidget-image-mode-navigation-adaptor  'image-backward-hscroll))
-    (define-key map [remap previous-line]       (xwidget-image-mode-navigation-adaptor  'image-previous-line))
-    (define-key map [remap next-line]       (xwidget-image-mode-navigation-adaptor  'image-next-line))
+    (define-key map [remap forward-char]       (xwidget-image-mode-navigation-adaptor-p  'image-forward-hscroll))
+    (define-key map [remap backward-char]       (xwidget-image-mode-navigation-adaptor-p  'image-backward-hscroll))
+    (define-key map [remap right-char]       (xwidget-image-mode-navigation-adaptor-p  'image-forward-hscroll))
+    (define-key map [remap left-char]       (xwidget-image-mode-navigation-adaptor-p  'image-backward-hscroll))
+    (define-key map [remap previous-line]       (xwidget-image-mode-navigation-adaptor-p  'image-previous-line))
+    (define-key map [remap next-line]       (xwidget-image-mode-navigation-adaptor-p  'image-next-line))
 
 
     (define-key map [remap move-beginning-of-line]       (xwidget-image-mode-navigation-adaptor  'image-bol))
