@@ -895,10 +895,26 @@ because one might need tell set a title and sizes and things when it loads.
 **** TODO event bug
 Debugger entered--Lisp error: (error "Two bases given in one event")
 
-for some reason hapens sometimes with xwidget events.
+hapens sometimes with xwidget events. appears to be when the
+originating xwidget is offscreen so that the event doesn't get caught
+by the correct emacs event map.
 
-maybe I need to set the originating window?
+maybe I need to set the originating window in the event structure.
   event.frame_or_window = Qnil;	//frame; //how to get the frame here? //TODO i store it in the xwidget now
+
+since its an offscreen xwidget the buffer local keymap isnt the right
+place for the handler. some global map should be used.
+
+onscreen widgets don't have the same issue.
+
+anyway, seems it'll turn out like this:
+- xwidget-osr stores a callback and user data
+- the event is an implementation detail only and get caught in the
+  topmost event map
+- the event map calls the callback in the xw with the right args.
+
+we need the event handler at some level because we can't call lisp
+asynchronously. 
 
 *** TODO console messages
 http://webkitgtk.org/reference/webkitgtk-webkitwebview.html#WebKitWebView-console-message

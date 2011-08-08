@@ -1,15 +1,20 @@
-;; xwidget.el - api functions for xwidgets
+;;; xwidget.el --- api functions for xwidgets
 ;;  see xwidget.c for more api functions
+
+
+;;; Commentary:
+;; 
 
 (require 'xwidget-internal)
 
 ;;TODO model after make-text-button instead!
+;;; Code:
+
 (defun xwidget-insert (pos type title width height)
   "Insert an xwidget at POS, given ID, TYPE, TITLE WIDTH and HEIGHT.
 Return ID
 
-see xwidget.c for types suitable for TYPE.
-"
+see xwidget.c for types suitable for TYPE."
   (goto-char pos)
   (let ((id (make-xwidget (point) (point)  type  title  width  height nil)))
     (put-text-property (point)
@@ -19,7 +24,8 @@ see xwidget.c for types suitable for TYPE.
 
 
 (defun xwidget-at (pos)
-  ;;this function is a bit tedious because the C layer isnt well protected yet and
+  "Return xwidget at POS."
+  ;;TODO this function is a bit tedious because the C layer isnt well protected yet and
   ;;xwidgetp aparently doesnt work yet
   (let* ((disp (get-text-property pos 'display))
          (xw (car (cdr (cdr  disp)))))
@@ -31,7 +37,7 @@ see xwidget.c for types suitable for TYPE.
 
 
 (defun xwidget-socket-handler ()
-  "creates plug for socket. TODO"
+  "Create plug for socket.  TODO."
   (interactive)
   (message "socket handler xwidget %S" last-input-event)
   (let*
@@ -75,16 +81,19 @@ defaults to the string looking like a url around the cursor position."
 
 ;;shims for adapting image mode code to the webkit browser window
 (defun xwidget-image-display-size  (spec &optional pixels frame)
+  "Image code adaptor.  SPEC PIXELS FRAME like the corresponding `image-mode' fn."
   (let ((xwi (xwidget-info  (xwidget-at 1))))
     (cons (aref xwi 2)
           (aref xwi 3))))
 
 (defmacro xwidget-image-mode-navigation-adaptor (fn)
+  "Image code adaptor.  `image-mode' FN is called."
   `(lambda () (interactive)
      (flet ((image-display-size (spec) (xwidget-image-display-size spec)))
        (funcall ,fn ))))
 
 (defmacro xwidget-image-mode-navigation-adaptor-p (fn)
+    "Image code adaptor.  `image-mode' FN is called with interactive arg."
   `(lambda (n) (interactive "p")
      (flet ((image-display-size (spec) (xwidget-image-display-size spec)))
        (funcall ,fn n))))
@@ -98,9 +107,9 @@ defaults to the string looking like a url around the cursor position."
     (define-key map "a" 'xwidget-webkit-adjust-size-to-content)
     (define-key map "b" 'xwidget-webkit-back )
     (define-key map "r" 'xwidget-webkit-reload )
-    (define-key map "t" (lambda () (interactive) (message "o")) )    
+    (define-key map "t" (lambda () (interactive) (message "o")) )
     (define-key map "\C-m" 'xwidget-webkit-insert-string)
-    (define-key map [xwidget-event] 'xwidget-webkit-event-handler)
+    (define-key map [xwidget-event] 'xwidget-webkit-event-handler);;TODO needs to go into a higher level handler
 
     ;;similar to image mode bindings
     ;;TODO theres something wrong with the macro
@@ -134,6 +143,7 @@ defaults to the string looking like a url around the cursor position."
 
 
 (defun xwidget-webkit-event-handler ()
+  "Receive webkit event."
   (interactive)
   (message "stuff happened to webkit xwidget %S" last-input-event)
   (let*
@@ -155,7 +165,7 @@ defaults to the string looking like a url around the cursor position."
 (defvar xwidget-webkit-last-session-buffer nil)
 
 (defun  xwidget-webkit-last-session ()
-  "last active webkit, or a new one"
+  "Last active webkit, or a new one."
   (if (buffer-live-p xwidget-webkit-last-session-buffer)
       (save-excursion
         (set-buffer xwidget-webkit-last-session-buffer)
@@ -163,34 +173,44 @@ defaults to the string looking like a url around the cursor position."
     nil))
 
 (defun xwidget-webkit-current-session ()
-  "either the webkit in the current buffer, or the last one used"
+  "Either the webkit in the current buffer, or the last one used, which might be nil."
   (if (xwidget-at 1)
       (xwidget-at 1)
     (xwidget-webkit-last-session)))
 
 (defun xwidget-adjust-size-to-content (xw)
-  ;;xwidgets doesnt support widgets that have thoir own opinions about size well yet
-  ;;this reads the size and sets it back
+  "Resize XW to content."
+  ;;xwidgets doesnt support widgets that have their own opinions about size well yet
+  ;;this reads the desired size and resizes the emacs allocated area accordingly
   (let ((size (xwidget-size-request xw)))
     (xwidget-resize xw (car size) (cadr size))))
 
 
 (defun xwidget-webkit-insert-string (xw str)
+  "Insert string in the active field in the webkit.
+Argument XW webkit.
+Argument STR string."
+  ;;TODO read out the string in the field first and provide for edit
   (interactive (list (xwidget-webkit-current-session)
                      (read-string "string:")))
   (xwidget-webkit-execute-script xw (format "document.activeElement.value='%s'" str)))
 
 (defun xwidget-webkit-adjust-size-to-content ()
+  "Adjust webkit to content size."
   (interactive)
   ( xwidget-adjust-size-to-content ( xwidget-webkit-current-session)))
 
 (defun xwidget-webkit-adjust-size (w h)
+  "Manualy set webkit size.
+Argument W width.
+Argument H height."
+  ;;TODO shouldnt be tied to the webkit xwidget
   (interactive "nWidth:\nnHeight:\n")
   ( xwidget-resize ( xwidget-webkit-current-session) w h))
 
 
 (defun xwidget-webkit-new-session (url)
-
+"Create a new webkit session buffer with URL."
   (let*
       ((bufname (generate-new-buffer-name "*xwidget-webkit*"))
        )
@@ -202,23 +222,27 @@ defaults to the string looking like a url around the cursor position."
 
 
 (defun xwidget-webkit-goto-url (url)
+  "Goto URL."
   (if ( xwidget-webkit-current-session)
       (progn
         (xwidget-webkit-goto-uri ( xwidget-webkit-current-session) url))
     ( xwidget-webkit-new-session url)))
 
 (defun xwidget-webkit-back ()
+  "Back in history."
   (interactive)
   (xwidget-webkit-execute-script ( xwidget-webkit-current-session)  "history.go(-1);"))
 
 (defun xwidget-webkit-reload ()
+  "Reload current url."
   (interactive)
   (xwidget-webkit-execute-script ( xwidget-webkit-current-session)  "history.go(0);"))
 
 (defun xwidget-current-url ()
-  "get the webkit url"
+  "Get the webkit url."
   ;;notice the fugly "title" hack. it is needed because the webkit api doesnt support returning values.
   ;;TODO make a wrapper for the title hack so its easy to remove should webkit someday support JS return values
+  ;;or we find some other way to access the DOM
   (xwidget-webkit-execute-script (xwidget-webkit-current-session) "document.title=document.URL;")
   (xwidget-webkit-get-title (xwidget-webkit-current-session)))
 
@@ -230,6 +254,7 @@ defaults to the string looking like a url around the cursor position."
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defun xwidget-cleanup ()
+  "Delete zombie xwidgets."
   ;;its still pretty easy to trigger bugs with xwidgets.
   ;;this function tries to implement a workaround
   (interactive)
@@ -240,11 +265,16 @@ defaults to the string looking like a url around the cursor position."
 
 
 ;;this is a workaround because I cant find the right place to put it in C
+;;seems to work well in practice though
 (add-hook 'window-configuration-change-hook 'xwidget-cleanup)
 
-;;killflash is sadly not reliable yet. 
+;;killflash is sadly not reliable yet.
 (defvar xwidget-webkit-kill-flash-oneshot t)
 (defun xwidget-webkit-kill-flash ()
+  "Disable the flash plugin in webkit.
+This is needed because Flash is non-free and doesnt work reliably
+on 64 bit systems and offscreen rendering.  Sadly not reliable
+yet, so deinstall Flash instead for now."
   ;;you can only call this once or webkit crashes and takes emacs with it. odd.
   (unless xwidget-webkit-kill-flash-oneshot
     (xwidget-disable-plugin-for-mime "application/x-shockwave-flash")
@@ -253,3 +283,7 @@ defaults to the string looking like a url around the cursor position."
 (xwidget-webkit-kill-flash)
 
 (provide 'xwidget)
+
+(provide 'xwidget)
+
+;;; xwidget.el ends here

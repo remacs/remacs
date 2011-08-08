@@ -701,6 +701,34 @@ DEFUN ("xwidget-webkit-get-title", Fxwidget_webkit_get_title,  Sxwidget_webkit_g
   return make_string_from_bytes(str, wcslen((const wchar_t *)str), strlen(str));
 }
 
+//TODO missnamed
+DEFUN("xwidget-disable-plugin-for-mime", Fxwidget_disable_plugin_for_mime , Sxwidget_disable_plugin_for_mime, 1,1,0, doc: /* */)
+  (Lisp_Object mime)
+{
+  WebKitWebPlugin *wp = webkit_web_plugin_database_get_plugin_for_mimetype
+    (webkit_get_web_plugin_database(),  SDATA(mime));
+  if(wp == NULL) return Qnil;
+  if(webkit_web_plugin_get_enabled (wp)){
+    webkit_web_plugin_set_enabled  (wp, FALSE);
+    return Qt;
+  }
+  return Qnil;
+}
+
+
+//attempting a workaround for a webkit offscreen bug
+//TODO verify its still needed
+void                gtk_window_get_position             (GtkWindow *window,
+                                                         gint *root_x,
+                                                         gint *root_y){
+  printf("my getsize\n");
+  *root_x = 0;
+  *root_y = 0;
+}
+
+
+
+
 #endif
 
 
@@ -852,18 +880,6 @@ DEFUN("xwidget-delete-zombies", Fxwidget_delete_zombies , Sxwidget_delete_zombie
   }
 }
 
-DEFUN("xwidget-disable-plugin-for-mime", Fxwidget_disable_plugin_for_mime , Sxwidget_disable_plugin_for_mime, 1,1,0, doc: /* */)
-  (Lisp_Object mime)
-{
-  WebKitWebPlugin *wp = webkit_web_plugin_database_get_plugin_for_mimetype
-    (webkit_get_web_plugin_database(),  SDATA(mime));
-  if(wp == NULL) return Qnil;
-  if(webkit_web_plugin_get_enabled (wp)){
-    webkit_web_plugin_set_enabled  (wp, FALSE);
-    return Qt;
-  }
-  return Qnil;
-}
 
 void
 syms_of_xwidget (void)
@@ -876,10 +892,13 @@ syms_of_xwidget (void)
   defsubr (&Sxwidget_view_info);
   defsubr (&Sxwidget_resize);
 
-
+#ifdef HAVE_WEBKIT_OSR
   defsubr (&Sxwidget_webkit_goto_uri);
   defsubr (&Sxwidget_webkit_execute_script);
   defsubr (&Sxwidget_webkit_get_title);
+  DEFSYM (Qwebkit_osr ,"webkit-osr");
+#endif
+  
   defsubr (&Sxwidget_size_request  );
   defsubr (&Sxwidget_delete_zombies);
   defsubr (&Sxwidget_disable_plugin_for_mime);
@@ -896,7 +915,7 @@ syms_of_xwidget (void)
   DEFSYM (Qsocket, "socket");
   DEFSYM (Qsocket_osr, "socket-osr");
   DEFSYM (Qcairo, "cairo");
-  DEFSYM (Qwebkit_osr ,"webkit-osr");
+
   DEFSYM (QCplist, ":plist");
 
    DEFVAR_LISP ("xwidget-alist", Vxwidget_alist, doc: /*xwidgets list*/);
@@ -999,18 +1018,6 @@ struct xwidget_view* xwidget_view_lookup(struct xwidget* xw,     struct window *
       return xv;
   }
 }
-
-//attempting a workaround for a webkit offscreen bug
-//TODO verify its still needed
-void                gtk_window_get_position             (GtkWindow *window,
-                                                         gint *root_x,
-                                                         gint *root_y){
-  printf("my getsize\n");
-  *root_x = 0;
-  *root_y = 0;
-}
-
-
 
 struct xwidget*
 lookup_xwidget (Lisp_Object  spec)
