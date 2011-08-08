@@ -6842,7 +6842,7 @@ set_iterator_to_next (struct it *it, int reseat_p)
     case GET_FROM_STRETCH:
 #ifdef HAVE_XWIDGETS
     case GET_FROM_XWIDGET:
-#endif
+
       /* The position etc with which we have to proceed are on
 	 the stack.  The position may be at the end of a string,
          if the `display' property takes up the whole string.  */
@@ -6851,7 +6851,7 @@ set_iterator_to_next (struct it *it, int reseat_p)
       if (it->method == GET_FROM_STRING)
 	goto consider_string_end;
       break;
-
+#endif
     default:
       /* There are no other methods defined, so this should be a bug.  */
       abort ();
@@ -12733,6 +12733,13 @@ redisplay_internal (void)
 	      *w->desired_matrix->method = 0;
 	      debug_method_add (w, "optimization 1");
 #endif
+#if HAVE_XWIDGETS
+              //debug optimization movement issue
+              w->desired_matrix->no_scrolling_p = 1;
+              //*w->desired_matrix->method = 0;
+              //debug_method_add (w, "optimization 1");
+#endif
+
 #ifdef HAVE_WINDOW_SYSTEM
 	      update_window_fringes (w, 0);
 #endif
@@ -15660,6 +15667,12 @@ try_window_reusing_current_matrix (struct window *w)
   if (inhibit_try_window_reusing)
     return 0;
 #endif
+
+#if HAVE_XWIDGETS
+ //currently this is needed to detect xwidget movement reliably. or probably not.
+    return 0;
+#endif
+
 
   if (/* This function doesn't handle terminal frames.  */
       !FRAME_WINDOW_P (f)
@@ -24626,7 +24639,7 @@ get_window_cursor_type (struct window *w, struct glyph *glyph, int *width,
 
 #ifdef HAVE_XWIDGETS      
       if (glyph != NULL && glyph->type == XWIDGET_GLYPH){
-        printf("attempt xwidget cursor avoidance in get_window_cursor_type\n");
+        //printf("attempt xwidget cursor avoidance in get_window_cursor_type\n");
         return NO_CURSOR;
       }
 #endif      

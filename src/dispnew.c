@@ -280,15 +280,14 @@ add_window_display_history (struct window *w, const char *msg, int paused_p)
 	    : "???"),
 	   paused_p ? " ***paused***" : "");
   strcat (buf, msg);
-
+}
 
 
 /* Add to the redisplay history that frame F has been displayed.
    PAUSED_P non-zero means that the update has been interrupted for
    pending input.  */
 
-static void
-add_frame_display_history (struct frame *f, int paused_p)
+static void add_frame_display_history (struct frame *f, int paused_p)
 {
   char *buf;
 

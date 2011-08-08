@@ -631,15 +631,20 @@ x_draw_xwidget_glyph_string (struct glyph_string *s)
   clip_top = max(0, WINDOW_TOP_EDGE_Y(s->w) -y );
 
   //we are conserned with movement of the onscreen area. the area might sit still when the widget actually moves
-  //this happens when an emacs window border moves across a widget winow
+  //this happens when an emacs window border moves across a widget window
+  //so, if any corner of the outer widget clippng window moves, that counts as movement here, even
+  //if it looks like no movement happens because the widget sits still inside the clipping area.
+  //the widget can also move inside the clipping area, which happens later
   moved = (xv->x  + xv->clip_left != x+clip_left)
     || ((xv->y + xv->clip_top)!= (y+clip_top));
   if(moved)    printf ("lxwidget moved: id:%d (%d,%d)->(%d,%d) y+clip_top:%d\n", xww, xv->x, xv->y, x, y, y + clip_top);
+  else
+    printf ("lxwidget DIDNT move: id:%d (%d,%d)->(%d,%d) y+clip_top:%d\n", xww, xv->x, xv->y, x, y, y + clip_top);
   xv->x = x;
   xv->y = y;
   if (moved)	//has it moved?
     {
-      if (!xwidget_hidden(xv))	//hidden equals not being seen during redisplay
+      if (1)//!xwidget_hidden(xv))	//hidden equals not being seen during redisplay
         {
           //TODO should be possible to use xwidget_show_view here
           gtk_fixed_move (GTK_FIXED (FRAME_GTK_WIDGET (s->f)),
@@ -662,6 +667,8 @@ x_draw_xwidget_glyph_string (struct glyph_string *s)
     xv->clip_right = clip_right; xv->clip_bottom = clip_bottom; xv->clip_top = clip_top;xv->clip_left = clip_left;
   }
   //if emacs wants to repaint the area where the widget lives, queue a redraw
+  //TODO it seems its possible to get out of sync with emacs redraws so emacs bg sometimes shows up instead of xwidget
+  //its just a visual glitch though
   if (!xwidget_hidden(xv)){
     gtk_widget_queue_draw (GTK_WIDGET(xv->widgetwindow));
     gtk_widget_queue_draw (xv->widget);

@@ -80,7 +80,7 @@ static void emacs_fixed_gtk_widget_size_allocate (GtkWidget *widget,
   GtkWidgetClass *parent_class;
   struct GtkFixedPrivateL* priv;
 
-  printf(" emacs_fixed_gtk_widget_size_allocate\n");
+  //  printf(" emacs_fixed_gtk_widget_size_allocate\n");
   klass = EMACS_FIXED_GET_CLASS (widget);
   parent_class = g_type_class_peek_parent (klass);
   parent_class->size_allocate (widget, allocation);
@@ -148,7 +148,7 @@ static void emacs_fixed_gtk_widget_size_allocate (GtkWidget *widget,
         child_allocation.height = xv->clip_bottom - xv->clip_top;
         //gtk_widget_size_allocate (child, &child_allocation);
         //TODO find a way to remove this feeble workaround
-        printf(" allocation internal modification for xw %d  %d,%d\n",xv,        child_allocation.width,        child_allocation.height);
+        //        printf(" allocation internal modification for xw %d  %d,%d\n",xv,        child_allocation.width,        child_allocation.height);
 
       }
       gtk_widget_size_allocate (child->widget, &child_allocation);

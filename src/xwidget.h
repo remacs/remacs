@@ -1,3 +1,6 @@
+#ifndef XWIDGET_H_INCLUDED
+#define XWIDGET_H_INCLUDED
+
 void x_draw_xwidget_glyph_string (struct glyph_string *s);
 void syms_of_xwidget ();
 
@@ -104,3 +107,4 @@ struct xwidget* lookup_xwidget (Lisp_Object  spec);
 #define XG_XWIDGET "emacs_xwidget"
 #define XG_XWIDGET_VIEW "emacs_xwidget_view"
 void      xwidget_view_delete_all_in_window(  struct window *w );
+#endif
