@@ -1,3 +1,25 @@
+2011-08-08  Daiki Ueno  <ueno@unixuser.org>
+
+	* epg.el (epg--status-KEYEXPIRED, epg--status-KEYREVOKED): Fix typo.
+	(epg-error-to-string, epg-errors-to-string): New function.
+	(epg-wait-for-completion): Reverse errors list.
+	(epg--check-error-for-decrypt, epg-sign-file, epg-sign-string)
+	(epg-encrypt-file, epg-encrypt-string, epg-export-keys-to-file)
+	(epg--import-keys-1, epg-receive-keys, epg-delete-keys)
+	(epg-sign-keys, epg-generate-key-from-file)
+	(epg-generate-key-from-string): Format errors by using
+	epg-errors-to-string (bug#9255).
+	(epg--status-INV_SGNR, epg--status-NO_SGNR): New status handler.
+
+2011-08-07  Juri Linkov  <juri@jurta.org>
+
+	* faces.el (list-faces-display): Remove extra angle bracket
+	from `help-mode-map'.
+
+	* info.el (Info-history-toc-nodes): Doc fix.
+
+	* longlines.el (longlines-mode): Doc fix.
+
 2011-08-05  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* progmodes/js.el (js--regexp-literal): Accept regexps at the beginning
@@ -345,9 +367,6 @@
 	operation.
 	(string-rectangle): Go to the point after the last operation
 	(bug#7522).
-
-	* simple.el (current-kill): Clarify what
-	`interprogram-paste-function' does (bug#7500).
 
 	* printing.el (pr-toggle-region): Clarify the documentation
 	slightly (bug#7493).
