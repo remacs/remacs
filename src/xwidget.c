@@ -1055,7 +1055,8 @@ lookup_xwidget (Lisp_Object  spec)
 
   /* value = xwidget_spec_value (spec, QCplist, NULL); */
   /* xw->plist = value; */
-  printf ("xwidget_id:%d type:%d found:%d %d %d title:%s (%d,%d)\n", xw,
+  /* coordinates are not known here */
+  printf ("lookup_xwidget xwidget_id:%d type:%d found:%d %d %d title:'%s' (%d,%d)\n", xw,
           xw->type, found, found1, found2, xw->title, xw->height, xw->width);
 
   //assert_valid_xwidget_id (id, "lookup_xwidget");

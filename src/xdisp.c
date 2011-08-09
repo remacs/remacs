@@ -12735,7 +12735,7 @@ redisplay_internal (void)
 #endif
 #if HAVE_XWIDGETS
               //debug optimization movement issue
-              w->desired_matrix->no_scrolling_p = 1;
+              //w->desired_matrix->no_scrolling_p = 1;
               //*w->desired_matrix->method = 0;
               //debug_method_add (w, "optimization 1");
 #endif
@@ -15567,6 +15567,8 @@ try_window (Lisp_Object window, struct text_pos pos, int flags)
   /* Initialize iterator and info to start at POS.  */
   start_display (&it, w, pos);
 
+
+  
   /* Display all lines of W.  */
   while (it.current_y < it.last_visible_y)
     {
@@ -15575,6 +15577,11 @@ try_window (Lisp_Object window, struct text_pos pos, int flags)
       if (fonts_changed_p && !(flags & TRY_WINDOW_IGNORE_FONTS_CHANGE))
 	return 0;
     }
+#ifdef HAVE_XWIDGETS_xxx
+ //currently this is needed to detect xwidget movement reliably. or probably not.
+  printf("try_window\n");
+    return 0;
+#endif
 
   /* Don't let the cursor end in the scroll margins.  */
   if ((flags & TRY_WINDOW_CHECK_MARGINS)
@@ -15668,8 +15675,9 @@ try_window_reusing_current_matrix (struct window *w)
     return 0;
 #endif
 
-#if HAVE_XWIDGETS
+#ifdef HAVE_XWIDGETS
  //currently this is needed to detect xwidget movement reliably. or probably not.
+  printf("try_window_reusing_current_matrix\n");
     return 0;
 #endif
 
@@ -16434,6 +16442,13 @@ try_window_id (struct window *w)
     return 0;
 #endif
 
+#ifdef HAVE_XWIDGETS
+  //maybe needed for proper xwidget movement
+    printf("try_window_id\n");
+    return -1;
+#endif
+
+  
   /* This is handy for debugging.  */
 #if 0
 #define GIVE_UP(X)						\

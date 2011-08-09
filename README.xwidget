@@ -1059,7 +1059,8 @@ suspects:
 - lookup_xwidget then produce_xwidget_glyph gets called always but not 
 x_draw_xwidget_glyph_string probably because of scroll optimization. 
 movement detection could possibly be moved to produce_xwidget_glyph
-** TODO GLYPH_DEBUG doesn't work
+** DONE GLYPH_DEBUG doesn't work
+   CLOSED: [2011-08-08 Mon 17:30]
 was stupid accidental line removal that was hard to spot
 * old notes from x_draw_xwidget_glyph_string
 
