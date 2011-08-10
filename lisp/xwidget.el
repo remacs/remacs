@@ -191,8 +191,14 @@ defaults to the string looking like a url around the cursor position."
 Argument XW webkit.
 Argument STR string."
   ;;TODO read out the string in the field first and provide for edit
-  (interactive (list (xwidget-webkit-current-session)
-                     (read-string "string:")))
+  (interactive
+   (let* ((xww (xwidget-webkit-current-session))
+          (field-value
+           (progn
+             (xwidget-webkit-execute-script xww "document.title=document.activeElement.value;")
+             (xwidget-webkit-get-title xww))))
+     (list xww
+           (read-string "string:" field-value))))
   (xwidget-webkit-execute-script xw (format "document.activeElement.value='%s'" str)))
 
 (defun xwidget-webkit-adjust-size-to-content ()

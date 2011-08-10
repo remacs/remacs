@@ -705,7 +705,8 @@ DEFUN ("xwidget-webkit-get-title", Fxwidget_webkit_get_title,  Sxwidget_webkit_g
   //TODO support multibyte strings
   struct xwidget* xw = XXWIDGET(xwidget);
   const gchar* str=webkit_web_view_get_title( WEBKIT_WEB_VIEW(xw->widget_osr));
-  return make_string_from_bytes(str, wcslen((const wchar_t *)str), strlen(str));
+  //return make_string_from_bytes(str, wcslen((const wchar_t *)str), strlen(str));
+  return build_string(str);
 }
 
 //TODO missnamed
