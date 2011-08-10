@@ -2719,7 +2719,7 @@ x_draw_glyph_string (struct glyph_string *s)
 #ifdef HAVE_XWIDGETS
     case XWIDGET_GLYPH:
       //erase xwidget background
-      x_draw_glyph_string_background (s, 0);
+      //x_draw_glyph_string_background (s, 0);
       x_draw_xwidget_glyph_string (s);
       break;
 #endif
