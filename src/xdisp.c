@@ -15698,7 +15698,7 @@ try_window_reusing_current_matrix (struct window *w)
     return 0;
 #endif
 
-#ifdef HAVE_XWIDGETS
+#ifdef HAVE_XWIDGETS_xxx
  //currently this is needed to detect xwidget movement reliably. or probably not.
   printf("try_window_reusing_current_matrix\n");
     return 0;
@@ -16465,7 +16465,7 @@ try_window_id (struct window *w)
     return 0;
 #endif
 
-#ifdef HAVE_XWIDGETS
+#ifdef HAVE_XWIDGETS_xxx
   //maybe needed for proper xwidget movement
     printf("try_window_id\n");
     return -1;
