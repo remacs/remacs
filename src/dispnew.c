@@ -4295,6 +4295,12 @@ scrolling_window (struct window *w, int header_line_p)
 	break;
     }
 
+#ifdef HAVE_XWIDGETS
+ //currently this is needed to detect xwidget movement reliably. or probably not.
+  printf("scrolling_window\n");
+    return 0;
+#endif
+  
   /* Give up if some rows in the desired matrix are not enabled.  */
   if (!MATRIX_ROW (desired_matrix, i)->enabled_p)
     return -1;

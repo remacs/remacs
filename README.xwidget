@@ -1052,13 +1052,29 @@ this used to work great. now it doesn't.
 suspects:
 - XCopyArea
   - x_shift_glyphs_for_insert
-  - x_scroll_run
+  - x_scroll_run. this is run by the try_window* functions, and
+    inhibiting them dösnt help. but also callid in scrolling_window.
+  
+
 - try_window_reusing_current_matrix
 - I used to enable GLYPH_DEBUG which I currently don't. it disables
-  many optimisations.
+  many optimisations. this was fixed.
 - lookup_xwidget then produce_xwidget_glyph gets called always but not 
 x_draw_xwidget_glyph_string probably because of scroll optimization. 
-movement detection could possibly be moved to produce_xwidget_glyph
+movement detection could possibly be moved to produce_xwidget_glyph(not)
+
+no longer helps:
+(setq inhibit-try-window-id t)
+(setq inhibit-try-window-reusing t)
+
+workaround:
+(run-with-timer 1 1 'redraw-display)
+
+seems to work:
+inhibiting scrolling_window(). and this seem to be enaugh to restore
+old behaviour, GLYPH_DEBUG doesn't seem needed.
+
+
 ** DONE GLYPH_DEBUG doesn't work
    CLOSED: [2011-08-08 Mon 17:30]
 was stupid accidental line removal that was hard to spot
