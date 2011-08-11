@@ -204,6 +204,39 @@ socket window is copied efficientlp by means of composition to a
 number of other windows, that then are plugged into the different
 Emacs sockets. 
 * ToDo:s
+** new annoying trace
+maybe related to scroll inhibiting or cursor inhibiting code.
+*** the trace
+Breakpoint 1, abort () at emacs.c:383
+383       kill (getpid (), SIGABRT);
+Missing separate debuginfos, use: debuginfo-install hunspell-1.2.15-2.fc15.x86_64 nss-mdns-0.10-9.fc15.x86_64
+(gdb) 
+(gdb) 
+(gdb) bt
+#0  abort () at emacs.c:383
+#1  0x0000000000418f01 in matrix_row (matrix=0xac29400, row=-1)
+    at dispnew.c:1477
+#2  0x000000000046e113 in draw_glyphs (w=0x18235c0, x=198, row=0xa3af100, area=
+    TEXT_AREA, start=17, end=18, hl=DRAW_CURSOR, overlaps=0) at xdisp.c:22550
+#3  0x000000000047869f in draw_phys_cursor_glyph (w=0x18235c0, row=0xa3af100, 
+    hl=DRAW_CURSOR) at xdisp.c:24882
+#4  0x00000000005083bb in x_draw_window_cursor (w=0x18235c0, glyph_row=
+    0xa3af100, x=180, y=361, cursor_type=0, cursor_width=1, on_p=1, active_p=1)
+    at xterm.c:7440
+#5  0x00000000004790cd in display_and_set_cursor (w=0x18235c0, on=1, hpos=17, 
+    vpos=19, x=180, y=361) at xdisp.c:25098
+#6  0x00000000004fa31f in x_update_window_end (w=0x18235c0, cursor_on_p=1, 
+    mouse_face_overwritten_p=0) at xterm.c:644
+#7  0x000000000041ccb9 in update_window (w=0x18235c0, force_p=0)
+    at dispnew.c:3694
+#8  0x000000000041c165 in update_window_tree (w=0x18235c0, force_p=0)
+    at dispnew.c:3331
+#9  0x000000000041beee in update_frame (f=0x1658460, force_p=0, 
+    inhibit_hairy_id_p=0) at dispnew.c:3258
+#10 0x0000000000450a2e in redisplay_internal () at xdisp.c:12983
+#11 0x000000000044e2a6 in redisplay () at xdisp.c:12099
+#12 0x000000000056a60d in read_char (commandflag=1, nmaps=6, maps=
+
 ** DONE allow xwidgets to report their size
    CLOSED: [2011-07-19 Tue 14:26]
 now we just hard code sizes. but webkit widgets for instance can
