@@ -226,6 +226,9 @@ delete-other-windows-internal
 delete_all_subwindows
 unshow_buffer
 
+Added cleanup those window configuration hook which works in practice
+but feels kludgy.
+
 ** DONE BUG annoying backtrace
    CLOSED: [2011-07-19 Tue 14:28]
 (this no longer seems to happen even under heavy usage. seems merging
@@ -304,7 +307,7 @@ xwidget, but it doesnt currently work very well.
 *** TODO try gtk event creation instead 
 since that works fine in the webkit osr code. 
 but, oh no, that didn't work for some reason.
-the event seems to receive the event but then the embedded widgets
+the widgets seems to receive the event but then the embedded widgets
 hangs.
 
 
@@ -444,7 +447,7 @@ with at the lisp level.
 ** DONE MVC mode for xwidgets
    CLOSED: [2011-06-27 Mon 12:53]
 It appears unfruitful to chase using the same display mode for all
-types of xwidgets. Composition is fun but not robust the way I'm
+types of xwidgets. Composition is fun but not robust the way I
 tried to do it.
 
 Instead there should be a set of MVC xwidgets. Each on-screen instance
@@ -526,7 +529,8 @@ make
 
 
 *** webkit html 5
-expose the DOM to lisp or something
+expose the DOM to lisp or something. The webkit xwidget works pretty
+well now, so this might be the way ahead.
 ** DONE mvc code crashes after a while
    CLOSED: [2011-07-12 Tue 18:52]
 seemingly only when compiling with optimizations.
@@ -944,7 +948,7 @@ crashes taking emacs with it.
 *** TODO webkit downloads
 when clicking a download link in Webkit Emacs should take over and handle it
 from there. Probably need signals. There are Emacs libraries to
-download things, with wget etc.
+download things, with wget etc. an url.el facility should be made.
 "download-requested"
 *** TODO webkit alt-text not handled
 XKCD use image-title to display a cartoon comment. These mysteriously
@@ -956,14 +960,15 @@ have a look at how docview solves it
 webkit_web_view_search_text ()
 *** TODO webkit relative references doesn't work
 probably because we handle scrolling in a non-standard way. It does
-work sort of when theres a html frameset and webkit scrols by itself.
+work sort of when theres a html frameset and webkit scrolls by itself.
+
 *** TODO webkit width adjustment handling issue
 since there are so many levels of clipping and whatnot in xwidgets
 sizing issues are difficult.
 
 - an xwidget is told how large it can be by emacs. thats the end of
   it. if the xwidget thinks otherwise it will be clipped.
-- but emacs can ask the xwudget how large it wants to be. it can then
+- but emacs can ask the xwidget how large it wants to be. it can then
   resize the reserved area and inform the xwidget thusly. 
 
 That should have been enough. but webkit never reports less than what
@@ -983,6 +988,9 @@ and then compare by resizing in Epiphany, which is also webkit based.
     CLOSED: [2011-08-01 Mon 22:38]
 was rather hurried. end result is that the lisp layer only really
 allows for one webkit session.
+*** TODO extract DOM so SHR can render it
+then the SHR html renderer from Gnus could render the DOM as created
+by Webkit.
 *** TODO C-X b in other buffer from webkit
 bafflingly resets the webkit view to the top. Maybe the window
 reconfiguration hook code? further mystification is added because it
@@ -1002,6 +1010,9 @@ can't be reused for xwidget, in particular image-mode.
 
 Maybe a new image type could be added that was a wraper on an
 xwidget. Then image mode could be reused for webkit mode. 
+
+I tried some adaptor code in xwidget.el so webkit mode now delegates
+to image mode buh its a kludge.
 
 ** socket related
 *** TODO some flickering during redisplay of sockets
@@ -1029,10 +1040,14 @@ get reaped and a new socket thus created.
 didn't work too well in the inkscape case. it might be that some other
 bitmap copy method works better though.
 
-** TODO synchronise emacs background with xwidget color
+basically sockets doesn't like to be offscreen because they want their
+own gdk window.
+
+** DONE synchronise emacs background with xwidget color
+   CLOSED: [2011-08-11 Thu 11:04]
 fine-tuning to reduce flicker.
 
-
+isn't needed if emacs bg erase disabled
 
 ** DONE xwidgets doesn't work during bootstrap all of a sudden
    CLOSED: [2011-08-01 Mon 22:33]
@@ -1046,7 +1061,8 @@ that way it would be possible to merge to trunk in stages.
 so, webkit could be used to display the SVG. the display spec for
 images would be used. multiple webkits would be used rather than
 offscreen rendering, so it would be GTK2 compatible. 
-** TODO xwidget movement doesn't work all of a sudden
+** DONE xwidget movement doesn't work all of a sudden
+   CLOSED: [2011-08-11 Thu 11:03]
 this used to work great. now it doesn't.
 
 suspects:
@@ -1078,6 +1094,26 @@ old behaviour, GLYPH_DEBUG doesn't seem needed.
 ** DONE GLYPH_DEBUG doesn't work
    CLOSED: [2011-08-08 Mon 17:30]
 was stupid accidental line removal that was hard to spot
+** TODO osc xwidget example  
+a couple of xwidget sliders that control a csound/supercollider song with osc.
+so, for that to work we need slider callbacks to work. when a slider
+changes send an osc message. use ocssend:
+
+ oscsend localhost 7777 /sample/address iTfs 1 3.14 hello
+
+or better:
+http://delysid.org/emacs/osc.el
+
+sliders could be defined in csound comments or something to illustrate
+the point. or if real fanciness is desired parse the csound source
+with Semantic and provide a control buffer corresponding to the
+defined controls.
+
+
+
+Added: [2011-08-11 Thu 10:53]
+
+
 * old notes from x_draw_xwidget_glyph_string
 
     BUG it seems this method for some reason is called with bad s->x and s->y sometimes.
