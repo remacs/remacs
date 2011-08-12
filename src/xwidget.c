@@ -734,7 +734,51 @@ void                gtk_window_get_position             (GtkWindow *window,
   *root_y = 0;
 }
 
+DEFUN ("xwidget-webkit-dom-dump", Fxwidget_webkit_dom_dump,  Sxwidget_webkit_dom_dump, 1, 1, 0,
+       doc:	/* webkit dom dump*/
+       )
+  (Lisp_Object xwidget)
+{
+  struct xwidget* xw = XXWIDGET(xwidget);
+  xwidget_webkit_dom_dump(webkit_web_view_get_dom_document(xw->widget_osr));
+  return Qnil;
+}
 
+void
+xwidget_webkit_dom_dump(WebKitDOMNode* parent){
+  WebKitDOMNodeList* list;
+  int i;
+  int length;
+  WebKitDOMNode* attribute;
+  WebKitDOMNamedNodeMap* attrs;
+  printf("node:%d type:%d name:%s content:%s\n",
+         parent,
+         webkit_dom_node_get_node_type(parent),//1 element 3 text 8 comment 2 attribute
+         webkit_dom_node_get_local_name(parent),
+         webkit_dom_node_get_text_content(parent));
+
+  if(webkit_dom_node_has_attributes(parent)){
+    attrs = webkit_dom_node_get_attributes(parent);
+
+    length = webkit_dom_named_node_map_get_length(attrs);
+    for (int i = 0; i < length; i++) {
+      attribute = webkit_dom_named_node_map_item(attrs,i);
+      printf(" attr node:%d type:%d name:%s content:%s\n",
+             attribute,
+             webkit_dom_node_get_node_type(attribute),//1 element 3 text 8 comment
+             webkit_dom_node_get_local_name(attribute),
+             webkit_dom_node_get_text_content(attribute));
+    }
+  }
+  list = webkit_dom_node_get_child_nodes(parent);
+  length = webkit_dom_node_list_get_length(list);
+  WebKitDOMNode* child;
+  for (int i = 0; i < length; i++) {
+    child = webkit_dom_node_list_item(list, i);
+    //if(webkit_dom_node_has_child_nodes(child))
+    xwidget_webkit_dom_dump(child);
+  }
+}
 
 
 #endif
@@ -912,6 +956,7 @@ syms_of_xwidget (void)
   defsubr (&Sxwidget_disable_plugin_for_mime);
 
   defsubr (&Sxwidget_send_keyboard_event);
+  defsubr (&Sxwidget_webkit_dom_dump);
   DEFSYM (Qxwidget ,"xwidget");
 
   DEFSYM (Qcxwidget ,":xwidget");
