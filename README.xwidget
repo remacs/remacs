@@ -27,7 +27,7 @@ necessary to support the Emacs window paradigm.
 ** building
 bzr co bzr+ssh://bzr.savannah.gnu.org/emacs/xwidget/
 #the below compiler flags shouldn't be strictly necessary
-export CFLAGS=" -g -DGLYPH_DEBUG=1"
+export CFLAGS=" -g"
 ./configure --with-xwidgets --enable-asserts --with-x-toolkit=gtk3
 make -j4
 gdb -ex run src/emacs
@@ -203,9 +203,55 @@ This app will work by providing a socket that an app plugs into. The
 socket window is copied efficientlp by means of composition to a
 number of other windows, that then are plugged into the different
 Emacs sockets. 
+** old notes from x_draw_xwidget_glyph_string
+
+    BUG it seems this method for some reason is called with bad s->x and s->y sometimes.
+    When this happens the xwidget doesnt move on screen as it should.
+    This mightbe because of x_scroll_run. Emacs decides to scroll the screen by blitting sometimes.
+    then emacs doesnt try to actualy call the paint routines, which means this here code will never
+    run so the xwidget wont know it has been moved.
+
+    Solved temporarily by never optimizing in try_window_reusing_current_matrix().
+
+    BUG the phantoming code doesnt work very well when the live xwidget is off screen.
+    you will get weirdo display artefacts. Composition ought to solve this, since that means the live window is
+    always available in an off-screen buffer. My current attempt at composition doesnt work properly however.
+
+    //allocation debugging. the correct values cant be expected to show upp immediately, but eventually they should get to be ok
+    // this is because we dont know when the container gets around to doing layout
+    //GtkAllocation galloc;
+    //gtk_widget_get_allocation(GTK_WIDGET (xv->widgetwindow), &galloc);
+    //printf("allocation %d %d , %d %d\n", galloc.x,galloc.y,galloc.width,galloc.height);
+
+
+*** old notes about the old live/phantom scheme
+
+   //TODO:
+   // 1) always draw live xwidget in slected window
+   // (2) if there were no live instances of the xwidget in selected window, also draw it live)
+   // 3) if there was a live xwidget previously, now phantom it.
+
+   else
+     {
+       //ok, we are painting the xwidgets in non-selected window, so draw a phantom
+       //printf("draw phantom xwidget at:%d %d\n",x,y);
+       //xwidget_composite_draw_phantom (xw, x, y, clipx, clipy); //TODO MVC there will be very few cases of phantoming
+     }
+
+
+   atm this works as follows: only check if xwidgets are displayed in the
+   "selected window". if not, hide them or phantom them.
+
+   this means valid cases like xwidgets being displayed only once in
+   non-selected windows, does not work well. they should also be visible
+   in that case not phantomed.
+
 * ToDo:s
-** new annoying trace
+** DONE new annoying trace
+   CLOSED: [2011-08-13 Sat 16:16]
 maybe related to scroll inhibiting or cursor inhibiting code.
+It appears actually to be related to GLYPH_DEBUG=1. this flag is no
+longer needed.
 *** the trace
 Breakpoint 1, abort () at emacs.c:383
 383       kill (getpid (), SIGABRT);
@@ -725,7 +771,8 @@ rather than gwfixed.
 
 *** DONE support configure
     CLOSED: [2011-07-12 Tue 18:48]
-*** TODO ifdef all xwidget code
+*** DONE ifdef all xwidget code
+    CLOSED: [2011-08-13 Sat 16:19]
 so you can reliably disable the code at compiletime
 ** DONE translate clicks 
    CLOSED: [2011-07-03 Sun 22:12]
@@ -1021,10 +1068,19 @@ and then compare by resizing in Epiphany, which is also webkit based.
     CLOSED: [2011-08-01 Mon 22:38]
 was rather hurried. end result is that the lisp layer only really
 allows for one webkit session.
-*** TODO extract DOM so SHR can render it
+*** TODO extract DOM to lisp
 then the SHR html renderer from Gnus could render the DOM as created
-by Webkit.
-*** TODO C-X b in other buffer from webkit
+by Webkit. 
+
+made a simple oxperimental DOM tree traverser. It can be expanded to
+return a lisp representation, LDOM.
+
+in order to bring lisp and DOM closer together the LDOM can include a
+mapping to the originating DOM node. so, find a node in LDOM, and the
+cell maps to the original DOM. but since the LDOM is a copy it can get
+out of sync. DOM events might help.
+*** DONE C-X b in other buffer from webkit
+    CLOSED: [2011-08-12 Fri 22:20]
 bafflingly resets the webkit view to the top. Maybe the window
 reconfiguration hook code? further mystification is added because it
 only seems to happen with ido mode enabled.
@@ -1033,6 +1089,7 @@ in comparison with image-mode which does the right thing, I discovered
 that image-mode has special code to handle scrolling. the browser mode
 and image mode has some similarities.
 
+I made some delegation code frrom webkit mode to image mode.
 ** TODO xwidget image display  spec compatibility
 some history: the first version of the xwidget display spec was
 the same as an image spec. This turned out not to be fantastic because
@@ -1147,46 +1204,6 @@ defined controls.
 Added: [2011-08-11 Thu 10:53]
 
 
-* old notes from x_draw_xwidget_glyph_string
-
-    BUG it seems this method for some reason is called with bad s->x and s->y sometimes.
-    When this happens the xwidget doesnt move on screen as it should.
-    This mightbe because of x_scroll_run. Emacs decides to scroll the screen by blitting sometimes.
-    then emacs doesnt try to actualy call the paint routines, which means this here code will never
-    run so the xwidget wont know it has been moved.
-
-    Solved temporarily by never optimizing in try_window_reusing_current_matrix().
-
-    BUG the phantoming code doesnt work very well when the live xwidget is off screen.
-    you will get weirdo display artefacts. Composition ought to solve this, since that means the live window is
-    always available in an off-screen buffer. My current attempt at composition doesnt work properly however.
-
-    //allocation debugging. the correct values cant be expected to show upp immediately, but eventually they should get to be ok
-    // this is because we dont know when the container gets around to doing layout
-    //GtkAllocation galloc;
-    //gtk_widget_get_allocation(GTK_WIDGET (xv->widgetwindow), &galloc);
-    //printf("allocation %d %d , %d %d\n", galloc.x,galloc.y,galloc.width,galloc.height);
-
-
-*** old notes about the old live/phantom scheme
-
-   //TODO:
-   // 1) always draw live xwidget in slected window
-   // (2) if there were no live instances of the xwidget in selected window, also draw it live)
-   // 3) if there was a live xwidget previously, now phantom it.
-
-   else
-     {
-       //ok, we are painting the xwidgets in non-selected window, so draw a phantom
-       //printf("draw phantom xwidget at:%d %d\n",x,y);
-       //xwidget_composite_draw_phantom (xw, x, y, clipx, clipy); //TODO MVC there will be very few cases of phantoming
-     }
-
-
-   atm this works as follows: only check if xwidgets are displayed in the
-   "selected window". if not, hide them or phantom them.
-
-   this means valid cases like xwidgets being displayed only once in
-   non-selected windows, does not work well. they should also be visible
-   in that case not phantomed.
+** TODO SEB
+the SEB site does something funny so I can't insert text in fields
 
