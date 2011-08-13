@@ -1,3 +1,24 @@
+2011-08-12  Juanma Barranquero  <lekktu@gmail.com>
+
+	* startup.el (argi): Declare as global variable (bug#9275).
+
+2011-08-12  Chong Yidong  <cyd@stupidchicken.com>
+
+	* subr.el (string-mark-left-to-right): Search the entire string
+	for RTL script, not just the terminating character.  Doc fix.
+
+2011-08-12  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* progmodes/js.el (js-syntax-propertize, js-syntax-propertize-regexp):
+	New function.
+	(js--regexp-literal, js-syntax-propertize-function): Remove.
+	(js-mode): Use js-syntax-propertize to handle multilines (bug#9183).
+	(js-mode-map): Don't rebind electric keys.
+	(js-insert-and-indent): Remove.
+	(js-mode): Setup electric-layout and electric-indent instead.
+
+	* epa-file.el (epa-file-select-keys): Revert to nil default (bug#9280).
+
 2011-08-12  Daiki Ueno  <ueno@unixuser.org>
 
 	* epa.el (epa-progress-callback-function): Fix the logic of
@@ -14,8 +35,8 @@
 	Use string-mark-left-to-right.
 	(list-buffers-noselect): Caller changed.
 
-	* emacs-lisp/tabulated-list.el (tabulated-list-print-entry): Use
-	string-mark-left-to-right.
+	* emacs-lisp/tabulated-list.el (tabulated-list-print-entry):
+	Use string-mark-left-to-right.
 	(tabulated-list-print): Recenter after moving point.
 
 2011-08-10  Juri Linkov  <juri@jurta.org>
