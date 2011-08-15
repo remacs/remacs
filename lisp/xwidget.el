@@ -36,25 +36,25 @@ see xwidget.c for types suitable for TYPE."
 
 
 
-(defun xwidget-socket-handler ()
-  "Create plug for socket.  TODO."
-  (interactive)
-  (message "socket handler xwidget %S" last-input-event)
-  (let*
-      ((xwidget-event-type (nth 2 last-input-event))
-       (xwidget-id (nth 1 last-input-event)))
-    (cond ( (eq xwidget-event-type 'xembed-ready)
-            (let*
-                ((xembed-id (nth 3 last-input-event)))
-              (message "xembed ready  event: %S xw-id:%s" xembed-id xwidget-id)
-              ;;TODO fetch process data from the xwidget. create it, store process info
-              ;;will start emacs/uzbl in a xembed socket when its ready
-              ;; (cond
-              ;;  ((eq 3 xwidget-id)
-              ;;   (start-process "xembed" "*xembed*" (format "%ssrc/emacs" default-directory) "-q" "--parent-id" (number-to-string xembed-id) ) )
-              ;;  ((eq 5 xwidget-id)
-              ;;   (start-process "xembed2" "*xembed2*" "uzbl-core"  "-s" (number-to-string xembed-id)  "http://www.fsf.org" )  )
-              )))))
+;; (defun xwidget-socket-handler ()
+;;   "Create plug for socket.  TODO."
+;;   (interactive)
+;;   (message "socket handler xwidget %S" last-input-event)
+;;   (let*
+;;       ((xwidget-event-type (nth 2 last-input-event))
+;;        (xwidget-id (nth 1 last-input-event)))
+;;     (cond ( (eq xwidget-event-type 'xembed-ready)
+;;             (let*
+;;                 ((xembed-id (nth 3 last-input-event)))
+;;               (message "xembed ready  event: %S xw-id:%s" xembed-id xwidget-id)
+;;               ;;TODO fetch process data from the xwidget. create it, store process info
+;;               ;;will start emacs/uzbl in a xembed socket when its ready
+;;               ;; (cond
+;;               ;;  ((eq 3 xwidget-id)
+;;               ;;   (start-process "xembed" "*xembed*" (format "%ssrc/emacs" default-directory) "-q" "--parent-id" (number-to-string xembed-id) ) )
+;;               ;;  ((eq 5 xwidget-id)
+;;               ;;   (start-process "xembed2" "*xembed2*" "uzbl-core"  "-s" (number-to-string xembed-id)  "http://www.fsf.org" )  )
+;;               )))))
 
 
 
@@ -109,10 +109,8 @@ defaults to the string looking like a url around the cursor position."
     (define-key map "r" 'xwidget-webkit-reload )
     (define-key map "t" (lambda () (interactive) (message "o")) )
     (define-key map "\C-m" 'xwidget-webkit-insert-string)
-    (define-key map [xwidget-event] 'xwidget-webkit-event-handler);;TODO needs to go into a higher level handler
 
     ;;similar to image mode bindings
-    ;;TODO theres something wrong with the macro
     (define-key map (kbd "SPC")       (xwidget-image-mode-navigation-adaptor   'image-scroll-up))
     (define-key map (kbd "DEL")       (xwidget-image-mode-navigation-adaptor   'image-scroll-down))
 
@@ -121,7 +119,6 @@ defaults to the string looking like a url around the cursor position."
     
     (define-key map [remap scroll-down]       (xwidget-image-mode-navigation-adaptor  'image-scroll-down))
     (define-key map [remap scroll-down-command]       (xwidget-image-mode-navigation-adaptor  'image-scroll-down))
-
     
     (define-key map [remap forward-char]       (xwidget-image-mode-navigation-adaptor-p  'image-forward-hscroll))
     (define-key map [remap backward-char]       (xwidget-image-mode-navigation-adaptor-p  'image-backward-hscroll))
@@ -130,29 +127,33 @@ defaults to the string looking like a url around the cursor position."
     (define-key map [remap previous-line]       (xwidget-image-mode-navigation-adaptor-p  'image-previous-line))
     (define-key map [remap next-line]       (xwidget-image-mode-navigation-adaptor-p  'image-next-line))
 
-
     (define-key map [remap move-beginning-of-line]       (xwidget-image-mode-navigation-adaptor  'image-bol))
     (define-key map [remap move-end-of-line]       (xwidget-image-mode-navigation-adaptor  'image-eol))
     (define-key map [remap beginning-of-buffer]       (xwidget-image-mode-navigation-adaptor  'image-bob))
     (define-key map [remap end-of-buffer]       (xwidget-image-mode-navigation-adaptor  'image-eob))
-
-    
     map)
-  
   "Keymap for `xwidget-webkit-mode'.")
 
+;;the xwidget event needs to go into a higher level handler
+;;since the xwidget can generate an event even if its offscreen
+;;TODO this needs to use callbacks and consider different xw ev types
+(define-key (current-global-map) [xwidget-event] 'xwidget-event-handler)
 
-(defun xwidget-webkit-event-handler ()
-  "Receive webkit event."
+(defun xwidget-event-handler ()
+  "Receive xwidget event."
   (interactive)
-  (message "stuff happened to webkit xwidget %S" last-input-event)
+  (message "stuff happened to xwidget %S" last-input-event)
   (let*
       ((xwidget-event-type (nth 2 last-input-event))
-       (xwidget (nth 1 last-input-event)))
-    (cond ((eq xwidget-event-type 'document-load-finished)
-           (message "webkit loaded %s" xwidget)
-           (xwidget-webkit-adjust-size-to-content))
-          )))
+       (xwidget (nth 1 last-input-event))
+       (xwidget-callback (xwidget-get xwidget 'callback)))
+    (funcall  xwidget-callback xwidget xwidget-event-type)))
+
+(defun xwdiget-webkit-callback (xwidget xwidget-event-type)
+  (cond ((eq xwidget-event-type 'document-load-finished)
+         (message "webkit loaded %s" xwidget)
+         (xwidget-adjust-size-to-content xwidget))
+        ))
 
 (define-derived-mode xwidget-webkit-mode
   special-mode "xwidget-webkit" "xwidget webkit view mode"
@@ -219,10 +220,11 @@ Argument H height."
 "Create a new webkit session buffer with URL."
   (let*
       ((bufname (generate-new-buffer-name "*xwidget-webkit*"))
-       )
+       xw)
     (setq xwidget-webkit-last-session-buffer (switch-to-buffer (get-buffer-create bufname)))
     (insert " ")
-    (xwidget-insert 1 'webkit-osr  bufname 1000 1000)
+    (setq xw (xwidget-insert 1 'webkit-osr  bufname 1000 1000))
+    (xwidget-put xw 'callback 'xwdiget-webkit-callback)
     (xwidget-webkit-mode)
     (xwidget-webkit-goto-uri ( xwidget-webkit-last-session) url )))
 
