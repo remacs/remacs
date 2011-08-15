@@ -172,7 +172,7 @@ DEFUN ("make-xwidget", Fmake_xwidget, Smake_xwidget, 7, 7, 0,
   Vxwidget_alist = Fcons ( val, Vxwidget_alist);
   xw->widgetwindow_osr = NULL;
   xw->widget_osr = NULL;
-
+  xw->plist = Qnil;
 
 
 #ifdef HAVE_WEBKIT_OSR
@@ -933,6 +933,29 @@ DEFUN("xwidget-delete-zombies", Fxwidget_delete_zombies , Sxwidget_delete_zombie
 }
 
 
+DEFUN ("xwidget-plist", Fxwidget_plist, Sxwidget_plist,
+       1, 1, 0,
+       doc: /* Return the plist of XWIDGET.  */)
+  (register Lisp_Object xwidget)
+{
+  //CHECK_XWIDGET (xwidget); //todo
+  return XXWIDGET (xwidget)->plist;
+}
+
+DEFUN ("set-xwidget-plist", Fset_xwidget_plist, Sset_xwidget_plist,
+       2, 2, 0,
+       doc: /* Replace the plist of XWIDGET with PLIST.  Returns PLIST.  */)
+  (register Lisp_Object xwidget, Lisp_Object plist)
+{
+  //CHECK_XWIDGET (xwidget); //todo
+  CHECK_LIST (plist);
+
+  XXWIDGET (xwidget)->plist = plist;
+  return plist;
+}
+
+
+
 void
 syms_of_xwidget (void)
 {
@@ -957,6 +980,9 @@ syms_of_xwidget (void)
 
   defsubr (&Sxwidget_send_keyboard_event);
   defsubr (&Sxwidget_webkit_dom_dump);
+  defsubr (&Sxwidget_plist);
+  defsubr (&Sset_xwidget_plist);
+  
   DEFSYM (Qxwidget ,"xwidget");
 
   DEFSYM (Qcxwidget ,":xwidget");
@@ -1019,7 +1045,6 @@ valid_xwidget_p (Lisp_Object object)
 
   return valid_p;
 }
-
 
 
 

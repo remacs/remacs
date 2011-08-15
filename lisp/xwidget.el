@@ -259,6 +259,21 @@ Argument H height."
 ;; check-declare-function?
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; xwidget plist management(similar to the process plist functions)
+
+(defun xwidget-get (xwidget propname)
+  "Return the value of XWIDGET' PROPNAME property.
+This is the last value stored with `(xwidget-put XWIDGET PROPNAME VALUE)'."
+  (plist-get (xwidget-plist xwidget) propname))
+
+(defun xwidget-put (xwidget propname value)
+  "Change XWIDGET' PROPNAME property to VALUE.
+It can be retrieved with `(xwidget-get XWIDGET PROPNAME)'."
+  (set-xwidget-plist xwidget
+		     (plist-put (xwidget-plist xwidget) propname value)))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defun xwidget-cleanup ()
   "Delete zombie xwidgets."
   ;;its still pretty easy to trigger bugs with xwidgets.
