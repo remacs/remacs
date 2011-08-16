@@ -712,10 +712,10 @@ allocation to clipping if its an xwidget asking for allocation.
 **** DONE subclass gtkfixed
      CLOSED: [2011-07-04 Mon 16:56]
 possibly i need to subclass gtkfixed and override
-
-void                gtk_widget_size_allocate            (GtkWidget *widget,
-                                                         GtkAllocation *allocation);
-
+#+begin_src C
+  void                gtk_widget_size_allocate            (GtkWidget *widget,
+                                                           GtkAllocation *allocation);
+#+end_src
 http://developer.gnome.org/gobject/stable/howto-gobject.html
 
 turns out emacs already does this for gtk3 according to jan D:
@@ -838,12 +838,12 @@ set a breakpoint in g_log, backtrace seems to indicate
 webkitViewportAttributesRecompute is the offender. 
 
 maybe try gtk3 variants?
-
-export CFLAGS="`pkg-config --cflags webkitgtk-3.0 ` -DHAVE_WEBKIT_OSR "
-export LDFLAGS=`pkg-config --libs webkitgtk-3.0 `
-./configure   --with-x-toolkit=gtk3
-make
-
+#+begin_src sh
+  export CFLAGS="`pkg-config --cflags webkitgtk-3.0 ` -DHAVE_WEBKIT_OSR "
+  export LDFLAGS=`pkg-config --libs webkitgtk-3.0 `
+  ./configure   --with-x-toolkit=gtk3
+  make
+#+end_src
 crash in gtk_window_get_size instead. great.
 
 http://gtkplus-p3.0.sourcearchive.com/documentation/2.91.5-0ubuntu1/testoffscreenwindow_8c-source.html
@@ -853,6 +853,7 @@ offscreen widget isnt ok when I want to snapshot it, so i simply get
 emptiness. the surface is only ok someimes. 
 
 here is a useful debugging snippets:
+#+begin_src C
   // debugging redraw:
   //  - the bg colors always change, so theres no error in signal handling
   //  - i get this error now and then:
@@ -868,14 +869,15 @@ here is a useful debugging snippets:
       osr_dbg_color=0.0;
     
   }
-
+#+end_src
 you need to terminate drawing like this:
-  
+#+begin_src C  
   //cairo_set_source_surface (cr, src_pixmap, 0,0); 
   //cairo_set_operator (cr, CAIRO_OPERATOR_OVER);
 
   //cairo_paint_with_alpha (cr, 1.0);
   //cairo_paint(cr);
+#+end_src
 
 the snippets change background color on oach redraw. 
 
