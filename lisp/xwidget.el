@@ -144,14 +144,14 @@ defaults to the string looking like a url around the cursor position."
   (interactive)
   (message "stuff happened to xwidget %S" last-input-event)
   (let*
-      ((xwidget-event-type (nth 2 last-input-event))
-       (xwidget (nth 1 last-input-event))
+      ((xwidget-event-type (nth 1 last-input-event))
+       (xwidget (nth 2 last-input-event))
        (xwidget-callback (xwidget-get xwidget 'callback)))
     (funcall  xwidget-callback xwidget xwidget-event-type)))
 
-(defun xwdiget-webkit-callback (xwidget xwidget-event-type)
+(defun xwidget-webkit-callback (xwidget xwidget-event-type)
   (cond ((eq xwidget-event-type 'document-load-finished)
-         (message "webkit loaded %s" xwidget)
+         (message "webkit finished loading %s" xwidget)
          (xwidget-adjust-size-to-content xwidget))
         ))
 
@@ -224,7 +224,7 @@ Argument H height."
     (setq xwidget-webkit-last-session-buffer (switch-to-buffer (get-buffer-create bufname)))
     (insert " ")
     (setq xw (xwidget-insert 1 'webkit-osr  bufname 1000 1000))
-    (xwidget-put xw 'callback 'xwdiget-webkit-callback)
+    (xwidget-put xw 'callback 'xwidget-webkit-callback)
     (xwidget-webkit-mode)
     (xwidget-webkit-goto-uri ( xwidget-webkit-last-session) url )))
 
