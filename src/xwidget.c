@@ -199,8 +199,8 @@ DEFUN ("make-xwidget", Fmake_xwidget, Smake_xwidget, 7, 7, 0,
     /* signals */
     g_signal_connect (G_OBJECT ( xw->widgetwindow_osr), "damage-event",    G_CALLBACK (webkit_osr_damage_event_callback), NULL);
 
-    g_signal_connect (G_OBJECT ( xw->widgetwindow_osr), "key-press-event",    G_CALLBACK (webkit_osr_key_event_callback), NULL);
-    g_signal_connect (G_OBJECT ( xw->widgetwindow_osr), "key-release-event",    G_CALLBACK (webkit_osr_key_event_callback), NULL);    
+    g_signal_connect (G_OBJECT ( xw->widget_osr), "key-press-event",    G_CALLBACK (webkit_osr_key_event_callback), NULL);
+    g_signal_connect (G_OBJECT ( xw->widget_osr), "key-release-event",    G_CALLBACK (webkit_osr_key_event_callback), NULL);    
 
     g_signal_connect (G_OBJECT ( xw->widget_osr),
                       "document-load-finished",
@@ -397,7 +397,9 @@ gboolean webkit_osr_damage_event_callback (GtkWidget *widget, GdkEventExpose *ev
 gboolean webkit_osr_key_event_callback (GtkWidget *widget, GdkEventKey *event, gpointer data)
 {
   printf("terminating a webkit osr keypress\n");
-  return FALSE;
+  //TRUE terminate the event here. no paren handlers will be called. but webkit then doesng get the event and it still crashes
+  //FALSE paren handlers will be called. webkit then gets the event and it still crashes
+  return TRUE; 
 }
 
 
