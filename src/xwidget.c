@@ -142,6 +142,7 @@ extern Lisp_Object QCwidth, QCheight;
 struct xwidget_view* xwidget_view_lookup(struct xwidget* xw,     struct window *w);
 Lisp_Object xwidget_spec_value ( Lisp_Object spec, Lisp_Object  key,  int *found);
 gboolean webkit_osr_damage_event_callback (GtkWidget *widget, GdkEventExpose *event, gpointer data) ;
+gboolean webkit_osr_key_event_callback (GtkWidget *widget, GdkEventKey *event, gpointer data) ;
 void     webkit_osr_document_load_finished_callback (WebKitWebView  *webkitwebview,
                                                      WebKitWebFrame *arg1,
                                                      gpointer        user_data);
@@ -197,6 +198,10 @@ DEFUN ("make-xwidget", Fmake_xwidget, Smake_xwidget, 7, 7, 0,
     g_object_set_data (G_OBJECT (xw->widgetwindow_osr), XG_XWIDGET, (gpointer) (xw));
     /* signals */
     g_signal_connect (G_OBJECT ( xw->widgetwindow_osr), "damage-event",    G_CALLBACK (webkit_osr_damage_event_callback), NULL);
+
+    g_signal_connect (G_OBJECT ( xw->widgetwindow_osr), "key-press-event",    G_CALLBACK (webkit_osr_key_event_callback), NULL);
+    g_signal_connect (G_OBJECT ( xw->widgetwindow_osr), "key-release-event",    G_CALLBACK (webkit_osr_key_event_callback), NULL);    
+
     g_signal_connect (G_OBJECT ( xw->widget_osr),
                       "document-load-finished",
                       G_CALLBACK (webkit_osr_document_load_finished_callback),
@@ -388,6 +393,14 @@ gboolean webkit_osr_damage_event_callback (GtkWidget *widget, GdkEventExpose *ev
 }
 
 
+
+gboolean webkit_osr_key_event_callback (GtkWidget *widget, GdkEventKey *event, gpointer data)
+{
+  printf("terminating a webkit osr keypress\n");
+  return FALSE;
+}
+
+
 void     webkit_osr_document_load_finished_callback (WebKitWebView  *webkitwebview,
                                                      WebKitWebFrame *arg1,
                                                      gpointer        data)
@@ -441,6 +454,7 @@ xwidget_osr_button_callback ( GtkWidget *widget,
 
   ((GdkEventButton*)eventcopy)->window = gtk_widget_get_window(xw->widget_osr);
   gtk_main_do_event(eventcopy); //TODO this will leak events. they should be deallocated later
+  return TRUE; //dont propagate this event furter
 }
 
 int xwidget_view_index=0;
@@ -481,6 +495,9 @@ xwidget_init_view (
     xv->widget = gtk_socket_new ();
     g_signal_connect_after(xv->widget, "plug-added", G_CALLBACK(xwidget_plug_added), "plug added");
     g_signal_connect_after(xv->widget, "plug-removed", G_CALLBACK(xwidget_plug_removed), "plug removed");
+    //TODO these doesnt help
+    gtk_widget_add_events(xv->widget, GDK_KEY_PRESS);
+    gtk_widget_add_events(xv->widget, GDK_KEY_RELEASE);
   } else if (EQ(xww->type, Qslider)) {
     xv->widget =
       //gtk_hscale_new (GTK_ADJUSTMENT(gtk_adjustment_new (0.0, 0.0, 100.0, 1.0, 10.0, 10.0)));
@@ -552,6 +569,11 @@ xwidget_init_view (
                       G_CALLBACK (xwidget_osr_button_callback), NULL);
     g_signal_connect (G_OBJECT (    xv->widget), "motion-notify-event",
                       G_CALLBACK (xwidget_osr_button_callback), NULL);
+    g_signal_connect (G_OBJECT (    xv->widget), "key-press-event",
+                      G_CALLBACK (xwidget_osr_button_callback), NULL);
+    g_signal_connect (G_OBJECT (    xv->widget), "key-release-event",
+                      G_CALLBACK (xwidget_osr_button_callback), NULL);
+    
 #endif
 
 
