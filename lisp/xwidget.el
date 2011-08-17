@@ -150,10 +150,14 @@ defaults to the string looking like a url around the cursor position."
     (funcall  xwidget-callback xwidget xwidget-event-type)))
 
 (defun xwidget-webkit-callback (xwidget xwidget-event-type)
-  (cond ((eq xwidget-event-type 'document-load-finished)
-         (message "webkit finished loading %s" xwidget)
-         (xwidget-adjust-size-to-content xwidget))
-        ))
+  (save-excursion
+    (set-buffer (xwidget-buffer xwidget))
+    (cond ((eq xwidget-event-type 'document-load-finished)
+           (message "webkit finished loading %s" xwidget)
+           (xwidget-adjust-size-to-content xwidget)
+           (rename-buffer (format "*xwidget webkit: %s *" (xwidget-webkit-get-title xwidget)))
+           )
+          )))
 
 (define-derived-mode xwidget-webkit-mode
   special-mode "xwidget-webkit" "xwidget webkit view mode"

@@ -165,6 +165,7 @@ DEFUN ("make-xwidget", Fmake_xwidget, Smake_xwidget, 7, 7, 0,
   GCPRO1(xw);
   XSETSYMBOL(xw->type, type);
   XSETSTRING(xw->title, title);
+  //TODO buffer should be an optional argument not just assumed to be the current buffer
   XSETBUFFER(xw->buffer,  Fcurrent_buffer()); // conservatively gcpro xw since we call lisp
   xw->height = XFASTINT(height);
   xw->width = XFASTINT(width);
@@ -883,25 +884,49 @@ DEFUN ("xwidget-send-keyboard-event", Fxwidget_send_keyboard_event, Sxwidget_sen
        )
   (Lisp_Object  xwidget, Lisp_Object keydescriptor)
 {
-  //TODO this code crashes and ive tried many different strategies
+  //TODO this code crashes for offscreen widgets and ive tried many different strategies
   int keyval = 0x058; //X
   char *keystring = "";
-
+  GdkKeymapKey* keys;
+  gint n_keys;
+  gdk_keymap_get_entries_for_keyval(gdk_keymap_get_default(), keyval, &keys, &n_keys);
+  
   struct xwidget *xw = XXWIDGET(xwidget);
 
   GdkEventKey* ev = (GdkEventKey*)gdk_event_new(GDK_KEY_PRESS);
-  ev->window = gtk_widget_get_window(xw->widget_osr);
+
+
+  //todo what about windowless widgets?
+  Lisp_Object window;
+  window = FRAME_SELECTED_WINDOW (SELECTED_FRAME ());
+  GtkWidget* widget;
+
+  if(xw->widget_osr)
+    widget = xw->widget_osr;
+  else
+    widget = xwidget_view_lookup(xw, XWINDOW(window))->widget;
+  
+  ev->window = gtk_widget_get_window(widget);
+  gtk_widget_grab_focus(widget); 
+  ev->send_event = FALSE;
+
+  ev->hardware_keycode = keys[0].keycode;
+  ev->group = keys[0].group;
+  
   ev->keyval = keyval;
-  ev->time = 0;
+  ev->time = GDK_CURRENT_TIME;
+
+  //ev->device = gdk_device_get_core_pointer();
   GdkDeviceManager* manager = gdk_display_get_device_manager(gdk_window_get_display(ev->window));
-  gdk_event_set_device (ev,   gdk_device_manager_get_client_pointer(manager));
-  //gdk_event_put((GdkEvent*)ev);
-  g_signal_emit_by_name(ev->window,"key-press-event", ev);
+  gdk_event_set_device ((GdkEvent*)ev,   gdk_device_manager_get_client_pointer(manager));
+  gdk_event_put((GdkEvent*)ev);
+  //g_signal_emit_by_name(ev->window,"key-press-event", ev);
+  
   ev->type = GDK_KEY_RELEASE;
-  //gdk_event_put((GdkEvent*)ev);
-  g_signal_emit_by_name(ev->window,"key-release-event", ev);
+  gdk_event_put((GdkEvent*)ev);
+  //g_signal_emit_by_name(ev->window,"key-release-event", ev);
   //gtk_main_do_event(ev);
-  //gdk_event_free((GdkEvent*)ev);
+  gdk_event_free((GdkEvent*)ev);
 
   return Qnil;
 }
@@ -940,6 +965,15 @@ DEFUN ("xwidget-plist", Fxwidget_plist, Sxwidget_plist,
 {
   //CHECK_XWIDGET (xwidget); //todo
   return XXWIDGET (xwidget)->plist;
+}
+
+DEFUN ("xwidget-buffer", Fxwidget_buffer, Sxwidget_buffer,
+       1, 1, 0,
+       doc: /* Return the buffer of XWIDGET.  */)
+  (register Lisp_Object xwidget)
+{
+  //CHECK_XWIDGET (xwidget); //todo
+  return XXWIDGET (xwidget)->buffer;
 }
 
 DEFUN ("set-xwidget-plist", Fset_xwidget_plist, Sset_xwidget_plist,
@@ -981,6 +1015,7 @@ syms_of_xwidget (void)
   defsubr (&Sxwidget_send_keyboard_event);
   defsubr (&Sxwidget_webkit_dom_dump);
   defsubr (&Sxwidget_plist);
+  defsubr (&Sxwidget_buffer);
   defsubr (&Sset_xwidget_plist);
   
   DEFSYM (Qxwidget ,"xwidget");

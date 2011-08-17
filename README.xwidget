@@ -389,6 +389,7 @@ but, oh no, that didn't work for some reason.
 the widgets seems to receive the event but then the embedded widgets
 hangs.
 
+http://kegel.com/gtk/button.c
 
 *** TODO examine some library to synthesise events
 xdotool
