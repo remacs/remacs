@@ -199,8 +199,9 @@ DEFUN ("make-xwidget", Fmake_xwidget, Smake_xwidget, 7, 7, 0,
     /* signals */
     g_signal_connect (G_OBJECT ( xw->widgetwindow_osr), "damage-event",    G_CALLBACK (webkit_osr_damage_event_callback), NULL);
 
-    g_signal_connect (G_OBJECT ( xw->widget_osr), "key-press-event",    G_CALLBACK (webkit_osr_key_event_callback), NULL);
-    g_signal_connect (G_OBJECT ( xw->widget_osr), "key-release-event",    G_CALLBACK (webkit_osr_key_event_callback), NULL);    
+    //TODO these were just a test hack
+    /* g_signal_connect (G_OBJECT ( xw->widget_osr), "key-press-event",    G_CALLBACK (webkit_osr_key_event_callback), NULL); */
+    /* g_signal_connect (G_OBJECT ( xw->widget_osr), "key-release-event",    G_CALLBACK (webkit_osr_key_event_callback), NULL);     */
 
     g_signal_connect (G_OBJECT ( xw->widget_osr),
                       "document-load-finished",
@@ -492,7 +493,8 @@ xwidget_init_view (
       g_signal_connect (G_OBJECT (xv->widget), "clicked",
                         G_CALLBACK (buttonclick_handler), xww); //the model rather than the view
     } else if (EQ(xww->type, Qtoggle)) {
-    xv->widget = gtk_toggle_button_new_with_label (XSTRING(xww->title)->data);
+    //xv->widget = gtk_toggle_button_new_with_label (XSTRING(xww->title)->data);
+    xv->widget = gtk_entry_new ();//temp hack to experiment with key propagation
   } else if (EQ(xww->type, Qsocket)) {
     xv->widget = gtk_socket_new ();
     g_signal_connect_after(xv->widget, "plug-added", G_CALLBACK(xwidget_plug_added), "plug added");
@@ -571,10 +573,10 @@ xwidget_init_view (
                       G_CALLBACK (xwidget_osr_button_callback), NULL);
     g_signal_connect (G_OBJECT (    xv->widget), "motion-notify-event",
                       G_CALLBACK (xwidget_osr_button_callback), NULL);
-    g_signal_connect (G_OBJECT (    xv->widget), "key-press-event",
-                      G_CALLBACK (xwidget_osr_button_callback), NULL);
-    g_signal_connect (G_OBJECT (    xv->widget), "key-release-event",
-                      G_CALLBACK (xwidget_osr_button_callback), NULL);
+    /* g_signal_connect (G_OBJECT (    xv->widget), "key-press-event", */
+    /*                   G_CALLBACK (xwidget_osr_button_callback), NULL); */
+    /* g_signal_connect (G_OBJECT (    xv->widget), "key-release-event", */
+    /*                   G_CALLBACK (xwidget_osr_button_callback), NULL); */
     
 #endif
 
@@ -909,10 +911,12 @@ DEFUN ("xwidget-send-keyboard-event", Fxwidget_send_keyboard_event, Sxwidget_sen
   (Lisp_Object  xwidget, Lisp_Object keydescriptor)
 {
   //TODO this code crashes for offscreen widgets and ive tried many different strategies
-  int keyval = 0x058; //X
+  //int keyval = 0x058; //X
+  int keyval = XFASTINT(keydescriptor); //X
   char *keystring = "";
   GdkKeymapKey* keys;
   gint n_keys;
+  //popup_activated_flag = 1; //TODO just a hack
   gdk_keymap_get_entries_for_keyval(gdk_keymap_get_default(), keyval, &keys, &n_keys);
   
   struct xwidget *xw = XXWIDGET(xwidget);
@@ -950,7 +954,7 @@ DEFUN ("xwidget-send-keyboard-event", Fxwidget_send_keyboard_event, Sxwidget_sen
   gdk_event_put((GdkEvent*)ev);
   //g_signal_emit_by_name(ev->window,"key-release-event", ev);
   //gtk_main_do_event(ev);
-  gdk_event_free((GdkEvent*)ev);
+  //gdk_event_free((GdkEvent*)ev);
 
   return Qnil;
 }
