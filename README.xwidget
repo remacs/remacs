@@ -1208,5 +1208,13 @@ Added: [2011-08-11 Thu 10:53]
 
 
 ** TODO SEB
-the SEB site does something funny so I can't insert text in fields
+the SEB site does something funny so I can't insert text in
+fields. aparently document.activeElement.value doesn't work with framesets.
+
+maybe:
+for (var i=0; i<frames.length; i++)
+  {
+     frames[i].document.activeElement.value
+  }
+
 

@@ -493,8 +493,8 @@ xwidget_init_view (
       g_signal_connect (G_OBJECT (xv->widget), "clicked",
                         G_CALLBACK (buttonclick_handler), xww); //the model rather than the view
     } else if (EQ(xww->type, Qtoggle)) {
-    //xv->widget = gtk_toggle_button_new_with_label (XSTRING(xww->title)->data);
-    xv->widget = gtk_entry_new ();//temp hack to experiment with key propagation
+    xv->widget = gtk_toggle_button_new_with_label (XSTRING(xww->title)->data);
+    //xv->widget = gtk_entry_new ();//temp hack to experiment with key propagation TODO entry widget is useful for testing
   } else if (EQ(xww->type, Qsocket)) {
     xv->widget = gtk_socket_new ();
     g_signal_connect_after(xv->widget, "plug-added", G_CALLBACK(xwidget_plug_added), "plug added");
@@ -929,6 +929,7 @@ DEFUN ("xwidget-send-keyboard-event", Fxwidget_send_keyboard_event, Sxwidget_sen
   window = FRAME_SELECTED_WINDOW (SELECTED_FRAME ());
   GtkWidget* widget;
 
+  //TODO maybe we also need to special case sockets by picking up the plug rather than the socket
   if(xw->widget_osr)
     widget = xw->widget_osr;
   else
@@ -954,6 +955,11 @@ DEFUN ("xwidget-send-keyboard-event", Fxwidget_send_keyboard_event, Sxwidget_sen
   gdk_event_put((GdkEvent*)ev);
   //g_signal_emit_by_name(ev->window,"key-release-event", ev);
   //gtk_main_do_event(ev);
+
+  //TODO
+  //if I delete the event the receiving component eventually crashes.
+  //it ough TDTRT since event_put is supposed to copy the event
+  //so probably this leaks events now
   //gdk_event_free((GdkEvent*)ev);
 
   return Qnil;
