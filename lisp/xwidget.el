@@ -191,20 +191,51 @@ defaults to the string looking like a url around the cursor position."
     (xwidget-resize xw (car size) (cadr size))))
 
 
+(defvar xwidget-webkit-activeelement-js
+"
+function findactiveelement(myframes){
+if(document.activeElement.value != undefined)
+      return document.activeElement;
+  for(i=0;i<myframes.length;i++){
+    if(myframes[i].document.activeElement.value != undefined)
+      return myframes[i].document.activeElement;
+    else{
+      if(myframes[i].frames.length > 0)
+        findactiveelement(myframes[i].frames);
+      else
+        return;
+    }
+  }
+}
+
+"
+
+"javascript that finds the active element."
+;;yes its ugly. because:
+;; - there is aparently no way to find the active frame other than recursion
+;; - the js "for each" construct missbehaved on the "frames" collection
+;; - a window with no frameset still has frames.length == 1, but frames[0].document.activeElement != document.activeElement
+
+)
+
 (defun xwidget-webkit-insert-string (xw str)
   "Insert string in the active field in the webkit.
 Argument XW webkit.
 Argument STR string."
-  ;;TODO read out the string in the field first and provide for edit
+  ;;read out the string in the field first and provide for edit
   (interactive
    (let* ((xww (xwidget-webkit-current-session))
           (field-value
            (progn
-             (xwidget-webkit-execute-script xww "document.title=document.activeElement.value;")
+             (xwidget-webkit-execute-script xww xwidget-webkit-activeelement-js)
+             (xwidget-webkit-execute-script xww "document.title=findactiveelement(frames).value")
              (xwidget-webkit-get-title xww))))
      (list xww
            (read-string "string:" field-value))))
-  (xwidget-webkit-execute-script xw (format "document.activeElement.value='%s'" str)))
+  (xwidget-webkit-execute-script xw (format "findactiveelement(frames).value='%s'" str)))
+
+
+
 
 (defun xwidget-webkit-adjust-size-to-content ()
   "Adjust webkit to content size."
