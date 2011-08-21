@@ -1,3 +1,24 @@
+2011-08-21  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* mail/smtpmail.el (smtpmail-smtp-user): New variable.
+	(smtpmail-try-auth-methods): Use it.
+
+2011-08-21  Chong Yidong  <cyd@stupidchicken.com>
+
+	* font-lock.el (font-lock-fontify-region)
+	(font-lock-unfontify-region, font-lock-default-fontify-buffer)
+	(font-lock-default-unfontify-buffer)
+	(font-lock-default-fontify-region)
+	(font-lock-default-unfontify-region): Add docstrings (Bug#8624).
+
+	* progmodes/compile.el (compilation-error-properties): Fix
+	confusion between file struct and message struct (Bug#9319).
+	(compilation-error-regexp-alist-alist): Fix 2011-05-09 change to
+	`ant' regexp.
+
+	* net/browse-url.el (browse-url-firefox): Don't call
+	browse-url-firefox-sentinel unless using -remote (Bug#9328).
+
 2011-08-20  Glenn Morris  <rgm@gnu.org>
 
 	* tutorial.el (help-with-tutorial): Avoid an error on short screens.
