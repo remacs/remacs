@@ -733,6 +733,11 @@ DEFUN ("xwidget-webkit-get-title", Fxwidget_webkit_get_title,  Sxwidget_webkit_g
   struct xwidget* xw = XXWIDGET(xwidget);
   const gchar* str=webkit_web_view_get_title( WEBKIT_WEB_VIEW(xw->widget_osr));
   //return make_string_from_bytes(str, wcslen((const wchar_t *)str), strlen(str));
+  if(str == 0){
+    //TODO maybe return Qnil instead. I suppose webkit returns nullpointer when doc is not properly loaded or something
+    printf("xwidget-webkit-get-title null webkit title\n");
+    return build_string("");
+  }
   return build_string(str);
 }
 
