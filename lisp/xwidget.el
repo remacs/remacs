@@ -153,7 +153,7 @@ defaults to the string looking like a url around the cursor position."
   (save-excursion
     (set-buffer (xwidget-buffer xwidget))
     (cond ((eq xwidget-event-type 'document-load-finished)
-           (message "webkit finished loading %s" xwidget)
+           (message "webkit finished loading: '%s'" (xwidget-webkit-get-title xwidget))
            (xwidget-adjust-size-to-content xwidget)
            (rename-buffer (format "*xwidget webkit: %s *" (xwidget-webkit-get-title xwidget)))
            )
