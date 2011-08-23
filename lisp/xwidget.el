@@ -109,6 +109,7 @@ defaults to the string looking like a url around the cursor position."
     (define-key map "r" 'xwidget-webkit-reload )
     (define-key map "t" (lambda () (interactive) (message "o")) )
     (define-key map "\C-m" 'xwidget-webkit-insert-string)
+    (define-key map "w" 'xwidget-webkit-current-url)
 
     ;;similar to image mode bindings
     (define-key map (kbd "SPC")       (xwidget-image-mode-navigation-adaptor   'image-scroll-up))
@@ -281,13 +282,14 @@ Argument H height."
   (interactive)
   (xwidget-webkit-execute-script ( xwidget-webkit-current-session)  "history.go(0);"))
 
-(defun xwidget-current-url ()
-  "Get the webkit url."
+(defun xwidget-webit-current-url ()
+  "Get the webkit url. place it on kill ring."
+  (interactive)
   ;;notice the fugly "title" hack. it is needed because the webkit api doesnt support returning values.
   ;;TODO make a wrapper for the title hack so its easy to remove should webkit someday support JS return values
   ;;or we find some other way to access the DOM
   (xwidget-webkit-execute-script (xwidget-webkit-current-session) "document.title=document.URL;")
-  (xwidget-webkit-get-title (xwidget-webkit-current-session)))
+  (kill-new (xwidget-webkit-get-title (xwidget-webkit-current-session))))
 
 
 
