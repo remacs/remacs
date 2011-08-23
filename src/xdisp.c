@@ -24292,6 +24292,8 @@ x_produce_glyphs (struct it *it)
       Lisp_Object gstring;
       struct font_metrics metrics;
 
+      it->nglyphs = 1;
+
       gstring = composition_gstring_from_id (it->cmp_it.id);
       it->pixel_width
 	= composition_gstring_width (gstring, it->cmp_it.from, it->cmp_it.to,
