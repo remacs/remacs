@@ -247,6 +247,102 @@ Emacs sockets.
    in that case not phantomed.
 
 * ToDo:s
+** TODO again a trace
+[2011-08-23 Tue]
+the hunch is that since I still hand-wave the view storage the array
+can get out of synchronous. so maybe switching to a lisp structure
+will help as it did for the model. Anyway, doesnt happen at all often.
+*** the trace
+(gdb) bt
+#0  0x0000000000685304 in xwidget_touch (xv=0x0) at xwidget.c:1225
+#1  0x00000000006853e7 in xwidget_end_redisplay (w=0x11b42ca0, matrix=
+    0xff9bf40) at xwidget.c:1272
+#2  0x000000000041cc31 in update_window (w=0x11b42ca0, force_p=0)
+    at dispnew.c:3705
+#3  0x000000000041c0e5 in update_window_tree (w=0x11b42ca0, force_p=0)
+    at dispnew.c:3331
+#4  0x000000000041be8b in update_frame (f=0x1682a50, force_p=0, 
+    inhibit_hairy_id_p=0) at dispnew.c:3258
+#5  0x000000000045066f in redisplay_internal () at xdisp.c:12931
+#6  0x000000000044e210 in redisplay () at xdisp.c:12110
+#7  0x0000000000567e65 in read_char (commandflag=1, nmaps=7, maps=
+    0x7fffffffc040, prev_event=12708226, used_mouse_menu=0x7fffffffc254, 
+    end_time=0x0) at keyboard.c:2447
+#8  0x000000000057613c in read_key_sequence (keybuf=0x7fffffffc4a0, bufsize=
+    30, prompt=12708226, dont_downcase_last=0, can_return_switch_frame=1, 
+    fix_current_buffer=1) at keyboard.c:9299
+#9  0x0000000000565d45 in command_loop_1 () at keyboard.c:1448
+#10 0x0000000000601008 in internal_condition_case (bfun=
+    0x565962 <command_loop_1>, handlers=12760466, hfun=0x565259 <cmd_error>)
+    at eval.c:1490
+#11 0x0000000000565659 in command_loop_2 (ignore=12708226) at keyboard.c:1159
+#12 0x0000000000600992 in internal_catch (tag=12873826, func=
+---Type <return> to continue, or q <return> to quit---
+    0x565633 <command_loop_2>, arg=12708226) at eval.c:1247
+#13 0x00000000005655bd in command_loop () at keyboard.c:1124
+#14 0x0000000000564da7 in recursive_edit_1 () at keyboard.c:759
+#15 0x0000000000564f43 in Frecursive_edit () at keyboard.c:823
+#16 0x000000000060444f in Ffuncall (nargs=1, args=0x7fffffffca20)
+    at eval.c:2986
+#17 0x00000000006507f8 in exec_byte_code (bytestr=145172929, vector=145179445, 
+    maxdepth=116, args_template=12708226, nargs=0, args=0x0) at bytecode.c:785
+#18 0x0000000000604eec in funcall_lambda (fun=140575909, nargs=2, arg_vector=
+    0x7fffffffcfe8) at eval.c:3220
+#19 0x000000000060467e in Ffuncall (nargs=3, args=0x7fffffffcfe0)
+    at eval.c:3038
+#20 0x00000000006035fc in Fapply (nargs=2, args=0x7fffffffd0b0) at eval.c:2494
+#21 0x0000000000603b43 in apply1 (fn=12874242, arg=301666310) at eval.c:2732
+#22 0x00000000005feb25 in call_debugger (arg=301666310) at eval.c:220
+#23 0x0000000000601ca9 in maybe_call_debugger (conditions=9431542, sig=
+    12761282, data=301666742) at eval.c:1893
+#24 0x0000000000601785 in Fsignal (error_symbol=12761282, data=301666742)
+    at eval.c:1714
+#25 0x0000000000601898 in xsignal (error_symbol=12761282, data=301666742)
+    at eval.c:1749
+#26 0x0000000000601926 in xsignal2 (error_symbol=12761282, arg1=102756373, 
+    arg2=0) at eval.c:1770
+---Type <return> to continue, or q <return> to quit---
+#27 0x0000000000604d6e in funcall_lambda (fun=102756373, nargs=0, arg_vector=
+    0x7fffffffd398) at eval.c:3189
+#28 0x000000000060467e in Ffuncall (nargs=1, args=0x7fffffffd390)
+    at eval.c:3038
+#29 0x00000000006507f8 in exec_byte_code (bytestr=54783137, vector=109656229, 
+    maxdepth=12, args_template=12708226, nargs=0, args=0x0) at bytecode.c:785
+#30 0x0000000000604eec in funcall_lambda (fun=109656517, nargs=0, arg_vector=
+    0x7fffffffd890) at eval.c:3220
+#31 0x000000000060467e in Ffuncall (nargs=1, args=0x7fffffffd888)
+    at eval.c:3038
+#32 0x0000000000603b08 in apply1 (fn=109656517, arg=12708226) at eval.c:2725
+#33 0x00000000005fc8c9 in Fcall_interactively (function=109656517, record_flag=
+    12708226, keys=12754549) at callint.c:379
+#34 0x00000000006044c2 in Ffuncall (nargs=4, args=0x7fffffffdc60)
+    at eval.c:2996
+#35 0x0000000000603c57 in call3 (fn=12893554, arg1=109656517, arg2=12708226, 
+    arg3=12708226) at eval.c:2789
+#36 0x00000000005784cd in Fcommand_execute (cmd=109656517, record_flag=
+    12708226, keys=12708226, special=12708226) at keyboard.c:10290
+#37 0x00000000005661fb in command_loop_1 () at keyboard.c:1575
+#38 0x0000000000601008 in internal_condition_case (bfun=
+    0x565962 <command_loop_1>, handlers=12760466, hfun=0x565259 <cmd_error>)
+    at eval.c:1490
+---Type <return> to continue, or q <return> to quit---
+#39 0x0000000000565659 in command_loop_2 (ignore=12708226) at keyboard.c:1159
+#40 0x0000000000600992 in internal_catch (tag=12756258, func=
+    0x565633 <command_loop_2>, arg=12708226) at eval.c:1247
+#41 0x000000000056560c in command_loop () at keyboard.c:1138
+#42 0x0000000000564da7 in recursive_edit_1 () at keyboard.c:759
+#43 0x0000000000564f43 in Frecursive_edit () at keyboard.c:823
+#44 0x0000000000563052 in main (argc=1, argv=0x7fffffffe678) at emacs.c:1711
+
+Lisp Backtrace:
+"recursive-edit" (0xffffca28)
+"debug" (0xffffcfe8)
+"image-bol" (0xffffd398)
+0x68939c0 PVEC_COMPILED
+"call-interactively" (0xffffdc68)
+(gdb) 
+
+
 ** DONE new annoying trace
    CLOSED: [2011-08-13 Sat 16:16]
 maybe related to scroll inhibiting or cursor inhibiting code.

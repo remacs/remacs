@@ -282,7 +282,7 @@ Argument H height."
   (interactive)
   (xwidget-webkit-execute-script ( xwidget-webkit-current-session)  "history.go(0);"))
 
-(defun xwidget-webit-current-url ()
+(defun xwidget-webkit-current-url ()
   "Get the webkit url. place it on kill ring."
   (interactive)
   ;;notice the fugly "title" hack. it is needed because the webkit api doesnt support returning values.
