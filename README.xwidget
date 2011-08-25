@@ -247,6 +247,11 @@ Emacs sockets.
    in that case not phantomed.
 
 * ToDo:s
+** TODO optimize drawing off large offscreen widgets
+Currently I just allocate as large an area as the offscreen widget
+desires. This works well most of the time. But a HTML page might in
+principle be of infinite height so there will probably be cases where
+this doesn't work too well.
 ** TODO again a trace
 [2011-08-23 Tue]
 the hunch is that since I still hand-wave the view storage the array
@@ -1313,4 +1318,7 @@ for (var i=0; i<frames.length; i++)
      frames[i].document.activeElement.value
   }
 
+
+** TODO support downstreams
+http://aur.archlinux.org/packages.php?ID=48230
 

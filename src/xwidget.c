@@ -289,8 +289,8 @@ send_xembed_ready_event (struct xwidget* xw, int xembedid)
 
   event.arg = Qnil;
   event.arg = Fcons (make_number (xembedid), event.arg);
-  event.arg = Fcons (intern ("xembed-ready"), event.arg);
   event.arg = Fcons (xw, event.arg); //TODO
+  event.arg = Fcons (intern ("xembed-ready"), event.arg);
 
 
   kbd_buffer_store_event (&event);
