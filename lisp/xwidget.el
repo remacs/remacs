@@ -157,6 +157,7 @@ defaults to the string looking like a url around the cursor position."
            (message "webkit finished loading: '%s'" (xwidget-webkit-get-title xwidget))
            (xwidget-adjust-size-to-content xwidget)
            (rename-buffer (format "*xwidget webkit: %s *" (xwidget-webkit-get-title xwidget)))
+           (pop-to-buffer (current-buffer))
            )
           )))
 
@@ -289,7 +290,7 @@ Argument H height."
   ;;TODO make a wrapper for the title hack so its easy to remove should webkit someday support JS return values
   ;;or we find some other way to access the DOM
   (xwidget-webkit-execute-script (xwidget-webkit-current-session) "document.title=document.URL;")
-  (kill-new (xwidget-webkit-get-title (xwidget-webkit-current-session))))
+  (message "url: %s" (kill-new (xwidget-webkit-get-title (xwidget-webkit-current-session)))))
 
 
 
