@@ -1,3 +1,45 @@
+2011-08-25  Chong Yidong  <cyd@stupidchicken.com>
+
+	* buffer.c (Fbury_buffer_internal): Rename from Funrecord_buffer.
+	Change return value to nil.
+	(Frecord_buffer): Delete unused function.
+
+2011-08-24  Eli Zaretskii  <eliz@gnu.org>
+
+	* xdisp.c (Fcurrent_bidi_paragraph_direction): For unibyte
+	buffers, return left-to-right.
+	(set_cursor_from_row): Consider candidate row a win if its glyph
+	represents a newline and point is on that newline.  Fixes cursor
+	positioning on the newline at EOL of R2L text within L2R
+	paragraph, and vice versa.
+	(try_cursor_movement): Check continued rows, in addition to
+	continuation rows.  Fixes unwarranted scroll when point enters a
+	continued line of R2L text within an L2R paragraph, or vice versa.
+	(cursor_row_p): Consider the case of point being equal to
+	MATRIX_ROW_END_CHARPOS.  Prevents cursor being stuck when moving
+	from the end of a short line to the beginning of a continued line
+	of R2L text within L2R paragraph.
+	(RECORD_MAX_MIN_POS): For max_pos, use IT_CHARPOS even for
+	composed characters.
+
+	* bidi.c (bidi_check_type): Use xassert.
+	(bidi_cache_iterator_state): Update the disp_pos and disp_prop_p
+	members.
+
+2011-08-23  Eli Zaretskii  <eliz@gnu.org>
+
+	* bidi.c (bidi_get_type): Abort if we get zero as the bidi type of
+	a character.
+
+2011-08-23  Chong Yidong  <cyd@stupidchicken.com>
+
+	* nsfont.m (ns_otf_to_script): Fix typo.
+
+2011-08-22  Kenichi Handa  <handa@m17n.org>
+
+	* chartab.c (Fset_char_table_extra_slot): Do not inhibit setting a
+	extra slot even if the purpose is char-code-property-table.
+
 2011-08-23  Eli Zaretskii  <eliz@gnu.org>
 
 	* xdisp.c (redisplay_window): When computing centering_position,

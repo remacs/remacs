@@ -1,3 +1,91 @@
+2011-08-25  Chong Yidong  <cyd@stupidchicken.com>
+
+	* window.el (bury-buffer, quit-window): Use bury-buffer-internal.
+
+2011-08-25  Glenn Morris  <rgm@gnu.org>
+
+	* mail/smtpmail.el (smtpmail-smtp-user): Add version: tag.
+	(smtpmail-via-smtp): Handle nil response from smtp.
+
+2011-08-24  Juri Linkov  <juri@jurta.org>
+
+	* proced.el (proced-marked): Inherit from `error' instead of
+	`font-lock-warning-face'.
+
+	* ibuffer.el (ibuffer-marked-face): Change default face from
+	`font-lock-warning-face' to `warning'.
+	(ibuffer-deletion-face): Change default face from
+	`font-lock-type-face' to `error'.
+
+	* battery.el (battery-update): Use the face `error' instead of
+	`font-lock-warning-face' (bug#6117).
+
+2011-08-24  Juri Linkov  <juri@jurta.org>
+
+	* faces.el (success): Change face color from "Green3" to
+	"ForestGreen" on light background (bug#9353).
+
+2011-08-24  Chong Yidong  <cyd@stupidchicken.com>
+
+	* window.el (quit-window): Renamed from quit-restore-window.  Use
+	same arglist as old quit-window.
+	(frame-auto-delete): Doc fix.
+
+	* view.el (view-mode-exit): Use quit-window.
+
+2011-08-24  Juri Linkov  <juri@jurta.org>
+
+	* isearch.el (isearch-ring-adjust1): Start visiting previous
+	search strings from the index 0 (-1 + 1) instead of 1 (0 + 1).
+	(isearch-repeat, isearch-edit-string): Call `isearch-ring-adjust1'
+	for empty search string (when the last search string is reused
+	automatically) to adjust the isearch ring to the last element and
+	prepare the correct index for further M-p commands (bug#9185).
+
+2011-08-24  Kenichi Handa  <handa@m17n.org>
+
+	* international/ucs-normalize.el: If decomposition property of
+	CHAR is the default one (i.e. a list of CHAR itself), treat it as
+	nil.
+	(nfd, nfkd): Likewise.
+
+2011-08-24  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* mpc.el (mpc--proc-filter): Don't signal mpc-proc-error since signals
+	from process filters aren't reliably transmitted to the surrounding
+	accept-process-output.
+	(mpc-proc-check): New function.
+	(mpc-proc-sync): Use it (bug#8293)
+
+2011-08-23  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* emacs-lisp/eieio.el (eieio-defmethod, eieio-defgeneric):
+	Add compatibility functions (bug#9313).
+
+2011-08-23  Eli Zaretskii  <eliz@gnu.org>
+
+	* cus-start.el (all): Add entry for bidi-paragraph-direction.
+
+	* international/uni-bidi.el: Regenerated.
+
+2011-08-23  Kenichi Handa  <handa@m17n.org>
+
+	* international/charprop.el:
+	* international/uni-bidi.el:
+	* international/uni-category.el:
+	* international/uni-combining.el:
+	* international/uni-comment.el:
+	* international/uni-decimal.el:
+	* international/uni-decomposition.el:
+	* international/uni-digit.el:
+	* international/uni-lowercase.el:
+	* international/uni-mirrored.el:
+	* international/uni-name.el:
+	* international/uni-numeric.el:
+	* international/uni-old-name.el:
+	* international/uni-titlecase.el:
+	* international/uni-uppercase.el: Regenerate.
+
 2011-08-23  Martin Rudalics  <rudalics@gmx.at>
 
 	* help.el (help-window-setup): Fix message displayed when other
