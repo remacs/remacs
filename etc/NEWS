@@ -43,10 +43,12 @@ to configure.  Note that other libraries used by Emacs, RSVG and GConf,
 also depend on Gtk+.  You can disable them with --without-rsvg and
 --without-gconf.
 
+---
 ** There is a new configure option --enable-use-lisp-union-type.
 This is only useful for Emacs developers to debug certain types of bugs.
 This is not a new feature; only the configure flag is new.
 
+---
 ** There is a new configure option --with-wide-int.
 With it, Emacs integers typically have 62 bits, even on 32-bit machines.
 
@@ -55,11 +57,12 @@ With it, Emacs integers typically have 62 bits, even on 32-bit machines.
 Type `C-u C-h t' to choose it in case your language setup doesn't
 automatically select it.
 
-** Emacs can be compiled with support for the ImageMagick library.
+** Emacs can be compiled with ImageMagick support.
 Emacs links to ImageMagick if version 6.2.8 or newer of the library is
-present at build time.  To disable ImageMagick support, use the
-`--without-imagemagick' configure option.
+present at build time.  To inhibit ImageMagick, use the configure
+option `--without-imagemagick' .
 
+---
 ** The standalone programs digest-doc and sorted-doc are removed.
 Emacs now uses Lisp commands `doc-file-to-man' and `doc-file-to-info'.
 
@@ -86,6 +89,7 @@ and also when HOME is set to C:\ by default.
 
 * Changes in Emacs 24.1
 
++++
 ** auto-mode-case-fold is now enabled by default.
 
 ** Completion
@@ -153,7 +157,7 @@ If you had that set, then then you need to put
 in your ~/.authinfo file instead.
 
 ** Emacs server and client changes
-
++++
 *** New option `server-port' specifies the port on which the Emacs
 server should listen.
 +++
@@ -212,6 +216,7 @@ the variable `glyphless-char-display-control'.
 On character terminals, these methods are used for characters that
 cannot be encoded by the `terminal-coding-system'.
 
+---
 *** New input methods for Farsi: farsi and farsi-translit.
 
 ** Improved GTK integration
@@ -245,9 +250,6 @@ Emacs.pane.menubar.font:  Courier-12
 Also, the first dash (which does not indicate anything) is just
 displayed as a space.
 
-** On Nextstep/OSX, the menu bar can be hidden by customizing
-ns-auto-hide-menu-bar.
-
 ** Basic SELinux support has been added.
 This requires Emacs to be linked with libselinux at build time.
 
@@ -267,10 +269,10 @@ for remote machines which support SELinux.
 higher-resolution time stamps.
 
 ** Changes for exiting Emacs
-
++++
 *** The function kill-emacs is now run upon receipt of the signals
 SIGTERM and SIGHUP, and upon SIGINT in batch mode.
-
++++
 *** kill-emacs-hook is now also run in batch mode.
 If you have code that adds something to kill-emacs-hook, you should
 consider if it is still appropriate to add it in the noninteractive case.
@@ -303,10 +305,10 @@ scrolls the window so as to avoid positioning point inside the scroll
 margin.
 
 ** Trash changes
-
++++
 *** `delete-by-moving-to-trash' now only affects commands that specify
 trashing.  This avoids inadvertently trashing temporary files.
-
++++
 *** Calling `delete-file' or `delete-directory' with a prefix argument
 now forces true deletion, regardless of `delete-by-moving-to-trash'.
 
@@ -315,15 +317,12 @@ for `list-colors-display'.
 
 ** An Emacs Lisp package manager is now included.
 This is a convenient way to download and install additional packages,
-from a package repository at elpa.gnu.org.
-
+from a package repository at http://elpa.gnu.org.
 +++
 *** `M-x list-packages' shows a list of packages, which can be
 selected for installation.
-
 +++
 *** New command `describe-package', bound to `C-h P'.
-
 +++
 *** By default, all installed packages are loaded and activated
 automatically when Emacs starts up.  To disable this, set
@@ -385,15 +384,12 @@ pops up *Messages*" feature, which can now easily be changed.
 * Editing Changes in Emacs 24.1
 
 ** Search changes
-
 +++
 *** C-y in Isearch is now bound to isearch-yank-kill, instead of
 isearch-yank-line.
-
 ---
 *** M-y in Isearch is now bound to isearch-yank-pop, instead of
 isearch-yank-kill.
-
 +++
 *** M-s C-e in Isearch is now bound to isearch-yank-line.
 
@@ -410,9 +406,9 @@ also deletes newlines around point.
 ** Deletion changes
 
 *** New option `delete-active-region'.
-If non-nil, C-d, [delete], and DEL delete the region if it is active
-and no prefix argument is given.  If set to `kill', these commands
-kill instead.
+If non-nil, [delete] and DEL delete the region if it is active and no
+prefix argument is given.  If set to `kill', these commands kill
+instead.
 
 *** New command `delete-forward-char', bound to [delete].
 This is meant for interactive use, and obeys `delete-active-region'.
@@ -422,7 +418,7 @@ The command `delete-char' does not obey `delete-active-region'.
 Apart from obeying `delete-active-region', its behavior is unchanged.
 However, the byte compiler now warns if it is called from Lisp; you
 should use delete-char with a negative argument instead.
-
+---
 *** The option `mouse-region-delete-keys' has been deleted.
 
 ** Selection changes.
@@ -483,10 +479,8 @@ between applications.
 +++
 *** Support for X cut buffers has been removed.
 
-*** Support for X clipboard managers has been added.
-
-**** To inhibit use of the clipboard manager, set
-`x-select-enable-clipboard-manager' to nil.
+*** X clipboard managers are now supported.
+To inhibit this, change `x-select-enable-clipboard-manager' to nil.
 
 ** New command `rectangle-number-lines', bound to `C-x r N', numbers
 the lines in the current rectangle.  With an prefix argument, this
@@ -669,6 +663,7 @@ in the Rmail incoming message.
 ** shell-mode can track your cwd by reading it from your prompt.
 Just set shell-dir-cookie-re to an appropriate regexp.
 
+---
 ** SQL Mode enhancements.
 
 *** `sql-dialect' is an alias for `sql-product'.
@@ -850,6 +845,7 @@ bidirectional editing introduced in Emacs 24.  If you need the
 bidirectional properties of a character, use `get-char-code-property'
 with the last argument `bidi-class'.
 
++++
 ** `copy-directory' now copies the source directory as a subdirectory
 of the target directory, if the latter is an existing directory.  The
 new optional arg COPY-CONTENTS, if non-nil, makes the function copy
@@ -865,7 +861,7 @@ coordinate in the POSITION list now counts from the top of the text
 area, excluding any header line.  Previously, it counted from the top
 of the header line.
 
-** Remove obsolete name `e' (use `float-e' instead).
+** Removed obsolete name `e' (use `float-e' instead).
 
 ** A backquote not followed by a space is now always treated as new-style.
 
@@ -876,6 +872,7 @@ programmer-visible consequences.
 ** Passing a nil argument to a minor mode function now turns the mode
 ON unconditionally.
 
++++
 ** During startup, Emacs no longer adds entries for `menu-bar-lines'
 and `tool-bar-lines' to `default-frame-alist' and `initial-frame-alist'.
 With these alist entries omitted, `make-frame' checks the value of the
@@ -990,6 +987,7 @@ connection, directly or via STARTTLS.  To do STARTTLS, additional
 parameters (`:end-of-command', `:success', `:capabilities-command')
 must also be supplied.
 
++++
 ** pre/post-command-hook are not reset to nil upon error.
 Instead, the offending function is removed.
 
@@ -1001,7 +999,8 @@ Emacs server instances.
 ** `call-process' allows a `(:file "file")' spec to redirect STDOUT to
 a file.
 
-** Removed the stack-trace-on-error variable.
+---
+** Variable `stack-trace-on-error' removed.
 Also the debugger can now "continue" from an error, which means it will jump
 to the error handler as if the debugger had not been invoked instead of
 jumping all the way to the top-level.
@@ -1014,8 +1013,8 @@ The variable is now used to load all kind of supported dynamic libraries,
 not just image libraries.  The previous name is still available as an
 obsolete alias.
 
-** New variable syntax-propertize-function to set syntax-table properties.
-Replaces font-lock-syntactic-keywords which are now obsolete.
+** New variable `syntax-propertize-function'.
+This replaces `font-lock-syntactic-keywords' which is now obsolete.
 This allows syntax-table properties to be set independently from font-lock:
 just call syntax-propertize to make sure the text is propertized.
 Together with this new variable come a new hook
@@ -1031,6 +1030,7 @@ syntactic rules.
 
 ** frame-local variables cannot be let-bound any more.
 
++++
 ** prog-mode is a new major-mode meant to be the parent of programming mode.
 The prog-mode-hook it defines can be used to enable features for
 programming modes.  For example:
@@ -1040,6 +1040,7 @@ programming modes.
 
 ** define-minor-mode accepts a new keyword :variable.
 
++++
 ** `delete-file' and `delete-directory' now accept optional arg TRASH.
 Trashing is performed if TRASH and `delete-by-moving-to-trash' are
 both non-nil.  Interactively, TRASH defaults to t, unless a prefix
@@ -1105,6 +1106,7 @@ the GnuTLS logging conventions.  The output is in *Messages*.
 
 *** New hook `isearch-update-post-hook' that runs in `isearch-update'.
 
++++
 ** Progress reporters can now "spin".
 The MIN-VALUE and MAX-VALUE arguments of `make-progress-reporter' can
 now be nil, or omitted.  This makes a "non-numeric" reporter.  Each
@@ -1127,6 +1129,7 @@ as well as those in the -*- line.
 
 ** keymaps can inherit from multiple parents.
 
++++
 ** New reader macro ## which stands for the empty symbol.
 This means that the empty symbol can now be read back.  Also, #: by itself
 (when not immediately followed by a possible symbol character) stands for
@@ -1157,6 +1160,9 @@ GnuTLS detection.
 with the USER_LIBS build variable.
 
 ** New make target `dist' to create binary distribution for MS Windows.
+
+** On Nextstep/OSX, the menu bar can be hidden by customizing
+ns-auto-hide-menu-bar.
 
 
 ----------------------------------------------------------------------
