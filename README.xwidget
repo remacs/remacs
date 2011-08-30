@@ -1322,3 +1322,6 @@ for (var i=0; i<frames.length; i++)
 ** TODO support downstreams
 http://aur.archlinux.org/packages.php?ID=48230
 
+** TODO advi
+active dvi viewer. investigate if it could be xwidgetified.
+advi supports embedding inside presentations.
