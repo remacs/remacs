@@ -1,3 +1,22 @@
+2011-08-31  Michael Albinus  <michael.albinus@gmx.de>
+
+	* net/tramp.el (tramp-root-regexp): Remove.
+	(tramp-completion-file-name-regexp-unified)
+	(tramp-completion-file-name-regexp-separate)
+	(tramp-completion-file-name-regexp-url): Don't use leading volume
+	letter on win32 systems.  (Bug#5303, Bug#9311)
+	(tramp-drop-volume-letter): Simplify definition.  Suggested by
+	Stefan Monnier <monnier@iro.umontreal.ca>.
+
+2011-08-30  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* subr.el (event-modifiers): Fix "missing modifier" part of docstring
+	(bug#9356).
+
+2011-08-30  Reuben Thomas  <rrt@sc3d.org>  (tiny change)
+
+	* vc/pcvs-defs.el (cvs-find-file-and-jump): Docstring typo (bug#9369).
+
 2011-08-29  Juri Linkov  <juri@jurta.org>
 
 	* isearch.el (isearch-done): Don't display message "Mark saved"
@@ -134,8 +153,8 @@
 
 2011-08-24  Chong Yidong  <cyd@stupidchicken.com>
 
-	* window.el (quit-window): Renamed from quit-restore-window.  Use
-	same arglist as old quit-window.
+	* window.el (quit-window): Rename from quit-restore-window.
+	Use same arglist as old quit-window.
 	(frame-auto-delete): Doc fix.
 
 	* view.el (view-mode-exit): Use quit-window.
