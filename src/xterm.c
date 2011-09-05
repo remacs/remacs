@@ -7914,7 +7914,8 @@ x_io_error_quitter (Display *display)
 {
   char buf[256];
 
-  sprintf (buf, "Connection lost to X server `%s'", DisplayString (display));
+  snprintf (buf, sizeof buf, "Connection lost to X server `%s'",
+	    DisplayString (display));
   x_connection_closed (display, buf);
   return 0;
 }
