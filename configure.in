@@ -1994,16 +1994,18 @@ if test "${with_xwidgets}" != "no"; then
         AC_DEFINE(HAVE_WEBKIT_OSR, 1, [Define to 1 if you have webkit_osr support.])     
     fi
   fi
-  
-  CLUTTER_REQUIRED=1.0.0
+
+  if test "${with_xwdemo}"  = "yes"; then
+#clutter and goocanvas are just proof of concept so disable for now  
+  CLUTTER_REQUIRED=1.0.0   
   CLUTTER_MODULES="clutter-gtk-1.0 >= $CLUTTER_REQUIRED"
 
   PKG_CHECK_MODULES(CLUTTER, $CLUTTER_MODULES, HAVE_CLUTTER=yes, HAVE_CLUTTER=no)
-  if test $HAVE_CLUTTER = yes; then
+  if test $HAVE_CLUTTER = yes;  then
      AC_DEFINE(HAVE_CLUTTER, 1, [Define to 1 if you have clutter support.])
   fi
 
-#TODO  
+
   GOOCANVAS_REQUIRED=1.4.0
   GOOCANVAS_MODULES="goocanvasgtk-3.0 >= $GOOCANVAS_REQUIRED"
 
@@ -2011,7 +2013,7 @@ if test "${with_xwidgets}" != "no"; then
   if test $HAVE_GOOCANVAS = yes; then
      AC_DEFINE(HAVE_GOOCANVAS, 1, [Define to 1 if you have goocanvas support.])
   fi
-
+  fi
 fi
 
 
