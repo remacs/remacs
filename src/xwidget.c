@@ -78,13 +78,14 @@
 #include "emacsgtkfixed.h"
 #endif
 
-#include <librsvg/rsvg.h>
+
 
 #ifdef HAVE_GOOCANVAS
 #include <goocanvas.h>
 #endif
 
 #ifdef HAVE_CLUTTER
+#include <librsvg/rsvg.h>
 #include <clutter/clutter.h>
 #include <clutter-gtk/clutter-gtk.h>
 #endif

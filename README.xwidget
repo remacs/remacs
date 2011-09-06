@@ -1325,3 +1325,6 @@ http://aur.archlinux.org/packages.php?ID=48230
 ** TODO advi
 active dvi viewer. investigate if it could be xwidgetified.
 advi supports embedding inside presentations.
+** cairo configuration support
+gtk3 brings in cairo on Fedora, but apparently not on all plattforms.
+pkg-config --cflags cairo
