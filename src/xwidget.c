@@ -271,7 +271,7 @@ buttonclick_handler (GtkWidget * widget, gpointer data)
 
 
   event.arg = Qnil;
-  event.arg = Fcons (xw, event.arg); //TODO send the actual xwidget object now instead
+  event.arg = Fcons ((Lisp_Object)xw, event.arg); //TODO send the actual xwidget object now instead
   event.arg = Fcons (intern ("buttonclick"), event.arg);
 
   kbd_buffer_store_event (&event);
@@ -290,7 +290,7 @@ send_xembed_ready_event (struct xwidget* xw, int xembedid)
 
   event.arg = Qnil;
   event.arg = Fcons (make_number (xembedid), event.arg);
-  event.arg = Fcons (xw, event.arg); //TODO
+  event.arg = Fcons ((Lisp_Object)xw, event.arg); //TODO
   event.arg = Fcons (intern ("xembed-ready"), event.arg);
 
 
@@ -420,7 +420,7 @@ void     webkit_osr_document_load_finished_callback (WebKitWebView  *webkitwebvi
   event.frame_or_window = Qnil;	//frame; //how to get the frame here? //TODO i store it in the xwidget now
 
   event.arg = Qnil;
-  event.arg = Fcons (xw, event.arg); //TODO
+  event.arg = Fcons ((Lisp_Object)xw, event.arg); //TODO
   event.arg = Fcons (intern ("document-load-finished"), event.arg);
 
 
