@@ -767,16 +767,6 @@ void                gtk_window_get_position             (GtkWindow *window,
   *root_y = 0;
 }
 
-DEFUN ("xwidget-webkit-dom-dump", Fxwidget_webkit_dom_dump,  Sxwidget_webkit_dom_dump, 1, 1, 0,
-       doc:	/* webkit dom dump*/
-       )
-  (Lisp_Object xwidget)
-{
-  struct xwidget* xw = XXWIDGET(xwidget);
-  xwidget_webkit_dom_dump(webkit_web_view_get_dom_document(xw->widget_osr));
-  return Qnil;
-}
-
 void
 xwidget_webkit_dom_dump(WebKitDOMNode* parent){
   WebKitDOMNodeList* list;
@@ -784,6 +774,7 @@ xwidget_webkit_dom_dump(WebKitDOMNode* parent){
   int length;
   WebKitDOMNode* attribute;
   WebKitDOMNamedNodeMap* attrs;
+  WebKitDOMNode* child;
   printf("node:%d type:%d name:%s content:%s\n",
          parent,
          webkit_dom_node_get_node_type(parent),//1 element 3 text 8 comment 2 attribute
@@ -805,13 +796,25 @@ xwidget_webkit_dom_dump(WebKitDOMNode* parent){
   }
   list = webkit_dom_node_get_child_nodes(parent);
   length = webkit_dom_node_list_get_length(list);
-  WebKitDOMNode* child;
+  
   for (int i = 0; i < length; i++) {
     child = webkit_dom_node_list_item(list, i);
     //if(webkit_dom_node_has_child_nodes(child))
     xwidget_webkit_dom_dump(child);
   }
 }
+
+
+DEFUN ("xwidget-webkit-dom-dump", Fxwidget_webkit_dom_dump,  Sxwidget_webkit_dom_dump, 1, 1, 0,
+       doc:	/* webkit dom dump*/
+       )
+  (Lisp_Object xwidget)
+{
+  struct xwidget* xw = XXWIDGET(xwidget);
+  xwidget_webkit_dom_dump(WEBKIT_DOM_NODE(webkit_web_view_get_dom_document( WEBKIT_WEB_VIEW(xw->widget_osr))));
+  return Qnil;
+}
+
 
 
 #endif
@@ -922,18 +925,23 @@ DEFUN ("xwidget-send-keyboard-event", Fxwidget_send_keyboard_event, Sxwidget_sen
   char *keystring = "";
   GdkKeymapKey* keys;
   gint n_keys;
+  GdkDeviceManager* manager;
+  struct xwidget *xw;
+  GtkWidget* widget;
+  GdkEventKey* ev;
+  Lisp_Object window;
   //popup_activated_flag = 1; //TODO just a hack
   gdk_keymap_get_entries_for_keyval(gdk_keymap_get_default(), keyval, &keys, &n_keys);
   
-  struct xwidget *xw = XXWIDGET(xwidget);
+  xw = XXWIDGET(xwidget);
 
-  GdkEventKey* ev = (GdkEventKey*)gdk_event_new(GDK_KEY_PRESS);
+  ev = (GdkEventKey*)gdk_event_new(GDK_KEY_PRESS);
 
 
   //todo what about windowless widgets?
-  Lisp_Object window;
+
   window = FRAME_SELECTED_WINDOW (SELECTED_FRAME ());
-  GtkWidget* widget;
+
 
   //TODO maybe we also need to special case sockets by picking up the plug rather than the socket
   if(xw->widget_osr)
@@ -952,7 +960,7 @@ DEFUN ("xwidget-send-keyboard-event", Fxwidget_send_keyboard_event, Sxwidget_sen
   ev->time = GDK_CURRENT_TIME;
 
   //ev->device = gdk_device_get_core_pointer();
-  GdkDeviceManager* manager = gdk_display_get_device_manager(gdk_window_get_display(ev->window));
+  manager = gdk_display_get_device_manager(gdk_window_get_display(ev->window));
   gdk_event_set_device ((GdkEvent*)ev,   gdk_device_manager_get_client_pointer(manager));
   gdk_event_put((GdkEvent*)ev);
   //g_signal_emit_by_name(ev->window,"key-press-event", ev);
