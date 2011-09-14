@@ -777,7 +777,7 @@ of just the text area, use `window-inside-pixel-edges'.  */)
 }
 
 static void
-calc_absolute_offset(struct window *w, int *add_x, int *add_y)
+calc_absolute_offset (struct window *w, int *add_x, int *add_y)
 {
   struct frame *f = XFRAME (w->frame);
   *add_y = f->top_pos;
@@ -1684,7 +1684,7 @@ PREV-BUFFERS should be either nil or a list of <buffer, window-start,
 window-point> triples where buffer was previously shown in WINDOW.  */)
      (Lisp_Object window, Lisp_Object prev_buffers)
 {
-  return decode_any_window (window)->prev_buffers = prev_buffers;
+  return decode_window (window)->prev_buffers = prev_buffers;
 }
 
 DEFUN ("window-next-buffers", Fwindow_next_buffers, Swindow_next_buffers,
@@ -1706,7 +1706,7 @@ NEXT-BUFFERS should be either nil or a list of buffers that have been
 recently re-shown in WINDOW.  */)
      (Lisp_Object window, Lisp_Object next_buffers)
 {
-  return decode_any_window (window)->next_buffers = next_buffers;
+  return decode_window (window)->next_buffers = next_buffers;
 }
 
 DEFUN ("window-parameters", Fwindow_parameters, Swindow_parameters,

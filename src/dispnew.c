@@ -92,7 +92,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #endif
 #endif /* not __GNU_LIBRARY__ */
 
-#if defined(HAVE_TERM_H) && defined (GNU_LINUX) && defined (HAVE_LIBNCURSES)
+#if defined (HAVE_TERM_H) && defined (GNU_LINUX) && defined (HAVE_LIBNCURSES)
 #include <term.h>		/* for tgetent */
 #endif
 
@@ -4925,7 +4925,7 @@ count_match (struct glyph *str1, struct glyph *end1, struct glyph *str2, struct 
 
 /* Char insertion/deletion cost vector, from term.c */
 
-#define char_ins_del_cost(f) (&char_ins_del_vector[FRAME_TOTAL_COLS((f))])
+#define char_ins_del_cost(f) (&char_ins_del_vector[FRAME_TOTAL_COLS ((f))])
 
 
 /* Perform a frame-based update on line VPOS in frame FRAME.  */
@@ -5377,7 +5377,7 @@ buffer_posn_from_coords (struct window *w, int *x, int *y, struct display_pos *p
     }
 
   /* Add extra (default width) columns if clicked after EOL. */
-  x1 = max(0, it.current_x + it.pixel_width - it.first_visible_x);
+  x1 = max (0, it.current_x + it.pixel_width - it.first_visible_x);
   if (x0 > x1)
     it.hpos += (x0 - x1) / WINDOW_FRAME_COLUMN_WIDTH (w);
 
@@ -6241,7 +6241,7 @@ init_display (void)
       )
     {
       Vinitial_window_system = Qns;
-      Vwindow_system_version = make_number(10);
+      Vwindow_system_version = make_number (10);
       adjust_frame_glyphs_initially ();
       return;
     }
@@ -6340,7 +6340,7 @@ init_display (void)
     {
       /* For the initial frame, we don't have any way of knowing what
 	 are the foreground and background colors of the terminal.  */
-      struct frame *sf = SELECTED_FRAME();
+      struct frame *sf = SELECTED_FRAME ();
 
       FRAME_FOREGROUND_PIXEL (sf) = FACE_TTY_DEFAULT_FG_COLOR;
       FRAME_BACKGROUND_PIXEL (sf) = FACE_TTY_DEFAULT_BG_COLOR;

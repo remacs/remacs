@@ -1290,10 +1290,10 @@ struct glyph_string
   unsigned padding_p : 1;
 
   /* The GC to use for drawing this glyph string.  */
-#if defined(HAVE_X_WINDOWS)
+#if defined (HAVE_X_WINDOWS)
   GC gc;
 #endif
-#if defined(HAVE_NTGUI)
+#if defined (HAVE_NTGUI)
   XGCValues *gc;
   HDC hdc;
 #endif
