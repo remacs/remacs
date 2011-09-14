@@ -327,7 +327,8 @@ It can be retrieved with `(xwidget-get XWIDGET PROPNAME)'."
 
 ;;this is a workaround because I cant find the right place to put it in C
 ;;seems to work well in practice though
-(add-hook 'window-configuration-change-hook 'xwidget-cleanup)
+;;(add-hook 'window-configuration-change-hook 'xwidget-cleanup)
+(add-hook 'window-configuration-change-hook 'xwidget-delete-zombies)
 
 ;;killflash is sadly not reliable yet.
 (defvar xwidget-webkit-kill-flash-oneshot t)

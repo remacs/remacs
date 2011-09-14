@@ -409,6 +409,30 @@ unshow_buffer
 Added cleanup those window configuration hook which works in practice
 but feels kludgy.
 
+*** code looks like this
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defun xwidget-cleanup ()
+  "Delete zombie xwidgets."
+  ;;its still pretty easy to trigger bugs with xwidgets.
+  ;;this function tries to implement a workaround
+  (interactive)
+  (xwidget-delete-zombies) ;;kill xviews who should have been deleted but stull linger
+  (redraw-display);;redraw display otherwise ghost of zombies  will remain to haunt the screen
+  )
+
+
+
+;;this is a workaround because I cant find the right place to put it in C
+;;seems to work well in practice though
+(add-hook 'window-configuration-change-hook 'xwidget-cleanup)
+
+*** but it ought rather to work like this
+xwidget-delete-zombies should be called from C after window
+configuration has changed but before redisplay. redisplay should not
+be called.
+
+
 ** DONE BUG annoying backtrace
    CLOSED: [2011-07-19 Tue 14:28]
 (this no longer seems to happen even under heavy usage. seems merging
