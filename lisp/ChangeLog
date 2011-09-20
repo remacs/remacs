@@ -1,3 +1,39 @@
+2011-09-20  Lawrence Mitchell  <wence@gmx.li>
+
+	* progmodes/f90.el (f90-break-line): If breaking inside comment delete
+	all whitespace around breakpoint.  (Bug#9553)
+	(f90-find-breakpoint): Only break at whitespace inside a comment.
+
+2011-09-20  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* minibuffer.el (completion-file-name-table): Keep track of errors.
+	(completion-table-with-predicate): Handle the case where pred1 is nil.
+	* pcomplete.el (pcomplete-completions-at-point): Simplify.
+
+2011-09-19  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* emacs-lisp/debug.el (debugger-args): Give it a docstring.
+	(debugger-return-value): Signal an error if the debugging context does
+	not await any return value.
+
+	* ps-mule.el (ps-mule-plot-string): Don't inf-loop (bug#5108).
+	* image-mode.el (image-toggle-display-text)
+	(image-toggle-display-image): Stay away from evil `intangible'.
+
+2011-09-19  Leo Liu  <sdl.web@gmail.com>
+
+	* replace.el (occur-revert-arguments): Make it permanent-local.
+	(occur-mode): Don't call font-lock-defontify.
+
+2011-09-19  Chong Yidong  <cyd@stupidchicken.com>
+
+	* net/ldap.el (ldap-search-internal): Don't push empty search
+	result (Bug#9508).
+
+2011-09-19  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* whitespace.el (whitespace-newline-mode): Disable it right (bug#9550).
+
 2011-09-19  Michael Albinus  <michael.albinus@gmx.de>
 
 	* net/tramp-sh.el (tramp-inline-compress-commands): Add "xz".
