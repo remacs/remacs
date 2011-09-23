@@ -1999,6 +1999,7 @@ all of which are called before Emacs is actually killed.  */)
 {
   struct gcpro gcpro1;
   Lisp_Object hook;
+  int exit_code;
 
   GCPRO1 (arg);
 
@@ -2023,7 +2024,10 @@ all of which are called before Emacs is actually killed.  */)
   if (STRINGP (Vauto_save_list_file_name))
     unlink (SSDATA (Vauto_save_list_file_name));
 
-  exit (INTEGERP (arg) ? XINT (arg) : EXIT_SUCCESS);
+  exit_code = EXIT_SUCCESS;
+  if (noninteractive && fflush (stdout))
+    exit_code = EXIT_FAILURE;
+  exit (INTEGERP (arg) ? XINT (arg) : exit_code);
 }
 
 
