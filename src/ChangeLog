@@ -1,3 +1,77 @@
+2011-10-02  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* dired.c (file_name_completion): Don't expand file name.
+	(Ffile_name_completion, Ffile_name_all_completions): Expand file name
+	before checking file name handler.
+
+	* minibuf.c (Finternal_complete_buffer): Only show internal buffers if
+	they've been requested explicitly (bug#9591).
+
+2011-10-01  Andreas Schwab  <schwab@linux-m68k.org>
+
+	* keymap.c (Fsingle_key_description): Use make_specified_string
+	instead of build_string to build string from push_key_description.
+	(Bug#5193)
+
+2011-09-30  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* buffer.h (struct buffer): Use time_t, not int, for a time stamp.
+	This fixes a Y2038 bug on 64-bit hosts.
+	* buffer.c (reset_buffer):
+	* fileio.c (Fdo_auto_save, Fset_buffer_auto_saved)
+	(Fclear_buffer_auto_save_failure):
+	Use 0, not -1, to represent an unset failure time, since time_t
+	might not be signed.
+
+	Remove dependency on glibc malloc internals.
+	* alloc.c (XMALLOC_OVERRUN_CHECK_OVERHEAD, XMALLOC_OVERRUN_CHECK_SIZE):
+	Move back here from lisp.h, but with their new implementations.
+	(XMALLOC_BASE_ALIGNMENT, COMMON_MULTIPLE, XMALLOC_HEADER_ALIGNMENT)
+	(XMALLOC_OVERRUN_SIZE_SIZE): Move these new lisp.h macros here.
+	* charset.c (charset_table_init): New static var.
+	(syms_of_charset): Use it instead of xmalloc.  This removes a
+	dependency on glibc malloc internals.  See Eli Zaretskii's comment in
+	<http://lists.gnu.org/archive/html/emacs-devel/2011-09/msg00815.html>.
+	* lisp.h (XMALLOC_OVERRUN_CHECK_OVERHEAD, XMALLOC_OVERRUN_CHECK_SIZE):
+	Move back to alloc.c.
+	(XMALLOC_BASE_ALIGNMENT, COMMON_MULTIPLE, XMALLOC_HEADER_ALIGNMENT)
+	(XMALLOC_OVERRUN_SIZE_SIZE): Move to alloc.c.
+
+2011-09-30  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* nsterm.m (windowDidResize): Call x_set_window_size only when
+	ns_in_resize is true.  Otherwise set pixelwidth/height and
+	call change_frame_size (Bug#9628).
+
+2011-09-30  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Port --enable-checking=all to Fedora 14 x86-64.
+	* charset.c (syms_of_charset): Also account for glibc malloc's
+	internal overhead when calculating the initial malloc maximum.
+
+	Port --enable-checking=all to Fedora 14 x86.
+	* alloc.c (XMALLOC_OVERRUN_CHECK_OVERHEAD, XMALLOC_OVERRUN_CHECK_SIZE):
+	Move to lisp.h.
+	(xmalloc_put_size, xmalloc_get_size, overrun_check_malloc)
+	(overrun_check_realloc, overrun_check_free):
+	Use XMALLOC_OVERRUN_SIZE_SIZE, not sizeof (size_t).
+	That way, xmalloc returns a properly-aligned pointer even if
+	XMALLOC_OVERRUN_CHECK is defined.  The old debugging code happened
+	to align OK on typical 64-bit hosts, but not on Fedora 14 x86.
+	* charset.c (syms_of_charset): Take XMALLOC_OVERRUN_CHECK_OVERHEAD
+	into account when calculating the initial malloc maximum.
+	* lisp.h (XMALLOC_OVERRUN_CHECK_OVERHEAD, XMALLOC_OVERRUN_CHECK_SIZE):
+	Move here from alloc.c, so that charset.c can use it too.
+	Properly align; the old code wasn't right for common 32-bit hosts
+	when configured with --enable-checking=all.
+	(XMALLOC_BASE_ALIGNMENT, COMMON_MULTIPLE, XMALLOC_HEADER_ALIGNMENT)
+	(XMALLOC_OVERRUN_SIZE_SIZE): New macros.
+
+2011-09-29  Eli Zaretskii  <eliz@gnu.org>
+
+	* sysdep.c (snprintf) [!EOVERFLOW]: If EOVERFLOW is not defined,
+	use EDOM.
+
 2011-09-28  Eli Zaretskii  <eliz@gnu.org>
 
 	* xdisp.c (compute_display_string_end): If there's no display
