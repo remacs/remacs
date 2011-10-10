@@ -1,3 +1,19 @@
+2011-10-07  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Merge from gnulib, fixing some 'configure' typos (Bug#9696).
+	* lib/signal.in.h, lib/sigprocmask.c, m4/gl-comp.m4:
+	* m4/gnulib-common.m4: Merge from gnulib.
+	Without this, 'configure' would say "func_gl_gnulib_m4code_pathmax:
+	command not found" on powerpc-apple-darwin9.8.0.
+
+	* configure.in (GC_LISP_OBJECT_ALIGNMENT): Remove.
+	This is now done by src/alloc.c.
+
+2011-10-02  Richard Stallman  <rms@gnu.org>
+
+	* configure.in: Rename xlinux_first_failure to xgnu_linux_first_failure
+	and xlinux_second_failure to xgnu_linux_second_failure.
+
 2011-09-29  Eli Zaretskii  <eliz@gnu.org>
 
 	* .bzrignore: Add ./GNUmakefile.unix, lib/SYS, lib/alloca.in-h,
