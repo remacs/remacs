@@ -1345,7 +1345,8 @@ for (var i=0; i<frames.length; i++)
 
 ** support downstreams
 http://aur.archlinux.org/packages.php?ID=48230
-** TODO the proof of concept canvas code should be disabled by default.
+** DONE the proof of concept canvas code should be disabled by default.
+   CLOSED: [2011-10-12 Wed 23:03]
 ** TODO advi
 active dvi viewer. investigate if it could be xwidgetified.
 advi supports embedding inside presentations.
@@ -1354,3 +1355,8 @@ gtk3 brings in cairo on Fedora, but apparently not on all plattforms.
 pkg-config --cflags cairo
 ** TODO splint
 splint   -Demacs -DHAVE_CONFIG_H  -I. -I/home/joakim/build_myprojs/emacsnew/emacs.bzr/xwidget.mint/src -I../lib -I/home/joakim/build_myprojs/emacsnew/emacs.bzr/xwidget.mint/src/../lib   -DGSEAL_ENABLE  -I/usr/include/gtk-3.0 -I/usr/include/atk-1.0 -I/usr/include/cairo -I/usr/include/gdk-pixbuf-2.0 -I/usr/include/pango-1.0 -I/usr/include/glib-2.0 -I/usr/lib64/glib-2.0/include -I/usr/include/pixman-1 -I/usr/include/freetype2 -I/usr/include/libpng12   -I/usr/include/freetype2    -I/usr/include/alsa    -I/usr/include/librsvg-2.0 -I/usr/include/glib-2.0 -I/usr/lib64/glib-2.0/include -I/usr/include/gdk-pixbuf-2.0 -I/usr/include/cairo -I/usr/include/libpng12 -I/usr/include/pixman-1 -I/usr/include/freetype2    -I/usr/include/ImageMagick   -I/usr/include/libxml2   -I/usr/include/dbus-1.0 -I/usr/lib64/dbus-1.0/include   -DGSEAL_ENABLE  -I/usr/include/webkit-3.0 -I/usr/include/glib-2.0 -I/usr/lib64/glib-2.0/include -I/usr/include/gtk-3.0 -I/usr/include/libsoup-2.4 -I/usr/include/atk-1.0 -I/usr/include/cairo -I/usr/include/gdk-pixbuf-2.0 -I/usr/include/pango-1.0 -I/usr/include/pixman-1 -I/usr/include/freetype2 -I/usr/include/libpng12 -I/usr/include/libxml2  -I/usr/include/glib-2.0 -I/usr/lib64/glib-2.0/include   -DORBIT2=1  -I/usr/include/gconf/2 -I/usr/include/orbit-2.0 -I/usr/include/glib-2.0 -I/usr/lib64/glib-2.0/include   -I/usr/include/freetype2   xwidget.c
+
+** TODO 32 bit bug
+user reports that xwidgets segfaults  on the 32 bit Mint distribution
+but not the 64 bit. Mint is an Ubuntu derivative. I got some
+VirtualBox images to test with.
