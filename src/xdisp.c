@@ -7189,7 +7189,6 @@ get_visually_first_element (struct it *it)
     }
   else if (it->bidi_it.charpos == bob
 	   || (!string_p
-	       /* FIXME: Should support all Unicode line separators.  */
 	       && (FETCH_CHAR (it->bidi_it.bytepos - 1) == '\n'
 		   || FETCH_CHAR (it->bidi_it.bytepos) == '\n')))
     {
@@ -13935,27 +13934,9 @@ set_cursor_from_row (struct window *w, struct glyph_row *row,
 	      glyph--;
 	    }
 	}
-      else if (match_with_avoid_cursor
-	       /* A truncated row may not include PT among its
-		  character positions.  Setting the cursor inside the
-		  scroll margin will trigger recalculation of hscroll
-		  in hscroll_window_tree.  But if a display string
-		  covers point, defer to the string-handling code
-		  below to figure this out.  */
-	       || (!string_seen
-		   && ((row->truncated_on_left_p && pt_old < bpos_min)
-		       || (row->truncated_on_right_p && pt_old > bpos_max)
-		       /* Zero-width characters produce no glyphs.  */
-		       || (!empty_line_p
-			   && (row->reversed_p
-			       ? glyph_after > glyphs_end
-			       : glyph_after < glyphs_end)))))
+      else if (match_with_avoid_cursor)
 	{
-	  if (!match_with_avoid_cursor
-	      && row->truncated_on_left_p && pt_old < bpos_min)
-	    cursor = glyph_before;
-	  else
-	    cursor = glyph_after;
+	  cursor = glyph_after;
 	  x = -1;
 	}
       else if (string_seen)
@@ -14093,6 +14074,26 @@ set_cursor_from_row (struct window *w, struct glyph_row *row,
 	      && STRINGP (end->object)
 	      && row->continued_p)
 	    return 0;
+	}
+      /* A truncated row may not include PT among its character positions.
+	 Setting the cursor inside the scroll margin will trigger
+	 recalculation of hscroll in hscroll_window_tree.  But if a
+	 display string covers point, defer to the string-handling
+	 code below to figure this out.  */
+      else if (row->truncated_on_left_p && pt_old < bpos_min)
+	{
+	  cursor = glyph_before;
+	  x = -1;
+	}
+      else if ((row->truncated_on_right_p && pt_old > bpos_max)
+	       /* Zero-width characters produce no glyphs.  */
+	       || (!empty_line_p
+		   && (row->reversed_p
+		       ? glyph_after > glyphs_end
+		       : glyph_after < glyphs_end)))
+	{
+	  cursor = glyph_after;
+	  x = -1;
 	}
     }
 
@@ -18750,7 +18751,12 @@ find_row_edges (struct it *it, struct glyph_row *row,
 		    seen_this_string = 1;
 		}
 	      else
-		abort ();
+		/* If all the glyphs of the previous row were inserted
+		   by redisplay, it means the previous row was
+		   produced from a single newline, which is only
+		   possible if that newline came from the same string
+		   as the one which produced this ROW.  */
+		seen_this_string = 1;
 	    }
 	  else
 	    {
@@ -18766,7 +18772,7 @@ find_row_edges (struct it *it, struct glyph_row *row,
 		    seen_this_string = 1;
 		}
 	      else
-		abort ();
+		seen_this_string = 1;
 	    }
 	}
       /* Take note of each display string that covers a newline only
@@ -19583,6 +19589,7 @@ See also `bidi-paragraph-direction'.  */)
 	    bytepos--;
 	}
       bidi_init_it (pos, bytepos, FRAME_WINDOW_P (SELECTED_FRAME ()), &itb);
+      itb.paragraph_dir = NEUTRAL_DIR;
       itb.string.s = NULL;
       itb.string.lstring = Qnil;
       itb.string.bufpos = 0;

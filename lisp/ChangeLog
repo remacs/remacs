@@ -1,8 +1,78 @@
+2011-10-13  Eli Zaretskii  <eliz@gnu.org>
+
+	* simple.el (what-cursor-position): Fix the display of the
+	character info for LRE, LRO, RLE, and RLO characters by appending
+	an invisible PDF.
+
+2011-10-13  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* emacs-lisp/timer.el (with-timeout): Make sure we cancel the timer
+	even in case of error; add debug spec; simplify data flow.
+	(with-timeout-handler): Remove.
+
+2011-10-12  Michael Albinus  <michael.albinus@gmx.de>
+
+	Fix Bug#6019, Bug#9315.
+
+	* files.el (set-auto-mode): Call `file-name-sans-versions' for the
+	complete `buffer-file-name', the local file name part could look
+	remotely (for example on VMS).
+
+	* net/ange-ftp.el (ange-ftp-run-real-handler): Make it an alias of
+	`tramp-run-real-handler'.
+	(ange-ftp-fix-name-for-vms): Handle the case, where `name' is
+	already quoted by '"'.
+
+	* net/tramp.el (tramp-rfn-eshadow-update-overlay): Ignore errors.
+	Let `file-name-handler-alist' be nil, the local file name part
+	could look remotely (for example on VMS).
+
+2011-10-12  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* textmodes/flyspell.el (flyspell-word): Move with-local-quit
+	from here...
+	(flyspell-post-command-hook): ...to here.
+
+2011-10-11  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* mail/sendmail.el (send-mail-function): Don't use sendmail-query-once
+	if not needed.
+	(sendmail-query-once): Remove OS dependencies.  Make it a 3-way choice
+	using completion.  Protect against "slow" callers.
+	Remove the "message hack".
+
+2011-10-11  Juri Linkov  <juri@jurta.org>
+
+	* isearch.el (isearch-lazy-highlight-word): New variable.
+	(isearch-lazy-highlight-new-loop, isearch-lazy-highlight-search):
+	Use it.  (Bug#9727)
+
+2011-10-11  Glenn Morris  <rgm@gnu.org>
+
+	* progmodes/f90.el (f90-next-statement): Ignore preprocessor lines,
+	like f90-previous-statement does.
+
+2011-10-11  Thierry Volpiatto  <thierry.volpiatto@gmail.com>
+
+	* eshell/eshell.el (eshell-command): History should be saved
+	only in interactive use, to avoid error.
+
+2011-10-11  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* minibuffer.el (completion-file-name-table): Fix last change,
+	i.e. ignore normal errors but not the other ones.
+
 2011-10-10  Martin Rudalics  <rudalics@gmx.at>
 
 	* window.el (special-display-buffer-names)
 	(special-display-regexps): Remove some remnants of earlier
 	changes from doc-strings.
+	(quit-windows-on): New function.
+
+	* vc/vc.el (vc-revert, vc-rollback):
+	* vc/vc-dispatcher.el (vc-finish-logentry): Call quit-windows-on
+	instead of deleting windows.  (Bug#4557) (Bug#5310) (Bug#5556)
+	(Bug#6183) (Bug#7074) (Bug#7447)
 
 2011-10-09  Martin Rudalics  <rudalics@gmx.at>
 
