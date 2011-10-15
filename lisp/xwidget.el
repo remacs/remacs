@@ -128,8 +128,8 @@ defaults to the string looking like a url around the cursor position."
     (define-key map [remap previous-line]       (xwidget-image-mode-navigation-adaptor-p  'image-previous-line))
     (define-key map [remap next-line]       (xwidget-image-mode-navigation-adaptor-p  'image-next-line))
 
-    (define-key map [remap move-beginning-of-line]       (xwidget-image-mode-navigation-adaptor  'image-bol))
-    (define-key map [remap move-end-of-line]       (xwidget-image-mode-navigation-adaptor  'image-eol))
+    (define-key map [remap move-beginning-of-line]       (xwidget-image-mode-navigation-adaptor-p  'image-bol))
+    (define-key map [remap move-end-of-line]       (xwidget-image-mode-navigation-adaptor-p  'image-eol))
     (define-key map [remap beginning-of-buffer]       (xwidget-image-mode-navigation-adaptor  'image-bob))
     (define-key map [remap end-of-buffer]       (xwidget-image-mode-navigation-adaptor  'image-eob))
     map)

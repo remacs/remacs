@@ -1416,6 +1416,8 @@ Indeed, this would require better DOM integration.
 - pressing 'home' and 'end' puts nonsense into minibuffer
 
 Probably because the Image mode derivative is mostly a hack.
+fixed now I think.
+
 
 - internal links (page.html#section) do not work
 
