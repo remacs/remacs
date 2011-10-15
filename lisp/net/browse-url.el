@@ -780,6 +780,13 @@ narrowed."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Browser-independent commands
 
+(defun url-tidy (url)
+  "Tidy up URL as much as possible."
+  (if (equal 0 (string-match ".*://" url))
+      url
+    (concat "http://" url) ;;TODO guess more url forms, like mailto
+    ))
+
 ;; A generic command to call the current browse-url-browser-function
 
 ;;;###autoload
@@ -792,6 +799,7 @@ first, if that exists."
   (interactive (browse-url-interactive-arg "URL: "))
   (unless (called-interactively-p 'interactive)
     (setq args (or args (list browse-url-new-window-flag))))
+  (setq url (url-tidy url))
   (let ((process-environment (copy-sequence process-environment))
 	(function (or (and (string-match "\\`mailto:" url)
 			   browse-url-mailto-function)
