@@ -217,7 +217,7 @@ if(document.activeElement.value != undefined)
 ;; - there is aparently no way to find the active frame other than recursion
 ;; - the js "for each" construct missbehaved on the "frames" collection
 ;; - a window with no frameset still has frames.length == 1, but frames[0].document.activeElement != document.activeElement
-
+;;TODO the activeelement type needs to be examined, for iframe, etc. sucks.
 )
 
 (defun xwidget-webkit-insert-string (xw str)
@@ -230,14 +230,23 @@ Argument STR string."
           (field-value
            (progn
              (xwidget-webkit-execute-script xww xwidget-webkit-activeelement-js)
-             (xwidget-webkit-execute-script xww "document.title=findactiveelement(frames).value")
-             (xwidget-webkit-get-title xww))))
+             (xwidget-webkit-execute-script-rv xww "findactiveelement(frames).value" ""))))
      (list xww
            (read-string "string:" field-value))))
   (xwidget-webkit-execute-script xw (format "findactiveelement(frames).value='%s'" str)))
 
 
-
+(defun xwidget-webkit-show-named-element (xw element-name)
+  "make named-element show. for instance an anchor."
+  ;;TODO
+  ;;this part figures out the Y coordinate of the element
+  (let ((y 
+         (string-to-number (xwidget-webkit-execute-script-rv xw (format "document.getElementsByName('%s')[0].getBoundingClientRect().top" element-name) 0))))
+    ;;now we need to tell emacs to scroll it into view. 
+    ;;hmm. the "y" seems not to be in screen coords?
+    (message "scroll: %d" y)
+    (set-window-vscroll (selected-window) y t))
+  )
 
 (defun xwidget-webkit-adjust-size-to-content ()
   "Adjust webkit to content size."
@@ -286,12 +295,17 @@ Argument H height."
 (defun xwidget-webkit-current-url ()
   "Get the webkit url. place it on kill ring."
   (interactive)
-  ;;notice the fugly "title" hack. it is needed because the webkit api doesnt support returning values.
-  ;;TODO make a wrapper for the title hack so its easy to remove should webkit someday support JS return values
-  ;;or we find some other way to access the DOM
-  (xwidget-webkit-execute-script (xwidget-webkit-current-session) "document.title=document.URL;")
-  (message "url: %s" (kill-new (xwidget-webkit-get-title (xwidget-webkit-current-session)))))
+  (message "url: %s" (kill-new   (xwidget-webkit-execute-script-rv (xwidget-webkit-current-session) "document.URL"))))
 
+(defun xwidget-webkit-execute-script-rv (xw script &optional default)
+  "same as xwidget-webkit-execute-script but also wraps an ugly hack to return a value"
+  ;;notice the fugly "title" hack. it is needed because the webkit api doesnt support returning values.
+  ;;this is a wrapper for the title hack so its easy to remove should webkit someday support JS return values
+  ;;or we find some other way to access the DOM
+
+  (xwidget-webkit-execute-script xw (format "document.title='%s';" (if default default "")))
+  (xwidget-webkit-execute-script xw (format "document.title=%s;" script))
+  (xwidget-webkit-get-title xw))
 
 
 ;; use declare here?

@@ -8822,7 +8822,10 @@ move_it_vertically_backward (struct it *it, int dy)
 	 reordering.  We want to get to the character position
 	 that is immediately after the newline of the previous
 	 line.  */
-      if (it->bidi_p && IT_CHARPOS (*it) > BEGV
+      if (it->bidi_p
+	  && !it->continuation_lines_width
+	  && !STRINGP (it->string)
+	  && IT_CHARPOS (*it) > BEGV
 	  && FETCH_BYTE (IT_BYTEPOS (*it) - 1) != '\n')
 	{
 	  EMACS_INT nl_pos =
@@ -18532,9 +18535,10 @@ static int
 push_display_prop (struct it *it, Lisp_Object prop)
 {
   struct text_pos pos =
-    (it->method == GET_FROM_STRING) ? it->current.string_pos : it->current.pos;
+    STRINGP (it->string) ? it->current.string_pos : it->current.pos;
 
   xassert (it->method == GET_FROM_BUFFER
+	   || it->method == GET_FROM_DISPLAY_VECTOR
 	   || it->method == GET_FROM_STRING);
 
   /* We need to save the current buffer/string position, so it will be
