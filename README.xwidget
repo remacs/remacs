@@ -1403,8 +1403,12 @@ we can add an option for it.
 - string entering is incorrect - by default it enters the title of the
   page, while it should be empty
 
-The cause is the lack of return value in the webkit evaluation API.
+The cause is the lack of return value in the webkit evaluation
+API. Ive made some fixes.
 
+- internal links (page.html#section) do not work
+
+ ive added a rudimentary function "xwidget-webkit-show-named-element" for this
 
 - maybe it's a good idea to implement Conkeror or some other
   keybindings, where you press 'f' then select the exact <input
