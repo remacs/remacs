@@ -281,7 +281,7 @@ Completion
 
 * Completion Example::  Examples of using completion.
 * Completion Commands:: A list of completion commands.
-* Strict Completion::   Different types of completion.
+* Completion Exit::     Completion and minibuffer text submission.
 * Completion Styles::   How completion matches are chosen.
 * Completion Options::  Options for completion.
 
@@ -342,6 +342,7 @@ Registers
 Controlling the Display
 
 * Scrolling::              Commands to move text up and down in a window.
+* Recentering::            A scrolling command that centers the current line.
 * Auto Scrolling::         Redisplay scrolls text automatically when needed.
 * Horizontal Scrolling::   Moving text left and right in a window.
 * Narrowing::              Restricting display and editing to a portion
@@ -388,7 +389,6 @@ Incremental Search
                           or else edit the search string.
 * Isearch Scroll::      Scrolling during an incremental search.
 * Isearch Minibuffer::  Incremental search of the minibuffer history.
-* Slow Isearch::        Incremental search features for slow terminals.
 
 Replacement Commands
 

@@ -1,3 +1,237 @@
+2011-10-24  Juri Linkov  <juri@jurta.org>
+
+	* isearch.el (isearch-occur): Let-bind `search-spaces-regexp' to
+	`search-whitespace-regexp' only when `isearch-regexp' is non-nil.
+	(Bug#9364)
+
+2011-10-24  Juri Linkov  <juri@jurta.org>
+
+	* info.el (Info-following-node-name-re): Add newline to the list
+	of allowed characters for leading space.  (Bug#9824)
+
+2011-10-24  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* progmodes/octave-inf.el (inferior-octave-mode-map): Fix C-c C-h binding.
+	* progmodes/octave-mod.el (octave-help): Remove.
+
+2011-10-23  Michael Albinus  <michael.albinus@gmx.de>
+
+	Sync with Tramp 2.2.3.
+
+	* net/tramp-cache.el (top): Pacify byte-compiler using
+	`init-file-user' and `site-run-file'.
+
+	* net/trampver.el: Update release number.
+
+2011-10-23  Chong Yidong  <cyd@gnu.org>
+
+	* files.el (toggle-read-only): Remove obsolete comment about
+	version control.
+
+	* vc/vc-hooks.el (vc-toggle-read-only): Make it an obsolete alias
+	for toggle-read-only.  Note that this hasn't called vc-next-action
+	since 2008-05-02, though it wasn't documented at the time.
+
+	* vc/ediff-init.el (ediff-toggle-read-only-function):
+	Use toggle-read-only.
+
+2011-10-22  Alan Mackenzie  <bug-cc-mode@gnu.org>
+
+	Fix bug #9560, sporadic wrong indentation; improve instrumentation
+	of c-parse-state.
+
+	* cc-engine.el (c-append-lower-brace-pair-to-state-cache):
+	correct faulty logical expression.
+	(c-parse-state-state, c-record-parse-state-state):
+	(c-replay-parse-state-state): New defvar/defuns.
+	(c-debug-parse-state): Use new functions.
+
+2011-10-22  Martin Rudalics  <rudalics@gmx.at>
+
+	* mouse.el (mouse-drag-line): Fix minibuffer resizing broken by
+	last fix.  Use window-in-direction correctly.
+
+2011-10-21  Chong Yidong  <cyd@gnu.org>
+
+	* progmodes/idlwave.el (idlwave-mode):
+	* progmodes/vera-mode.el (vera-mode): No need to set
+	require-final-newline; that's done in prog-mode.
+	Suggested by Stefan Monnier.
+
+2011-10-21  Martin Rudalics  <rudalics@gmx.at>
+
+	* mouse.el (mouse-drag-window-above)
+	(mouse-drag-move-window-bottom, mouse-drag-move-window-top)
+	(mouse-drag-mode-line-1, mouse-drag-header-line)
+	(mouse-drag-vertical-line-rightward-window): Remove.
+	(mouse-drag-line): New function.
+	(mouse-drag-mode-line, mouse-drag-header-line)
+	(mouse-drag-vertical-line): Call mouse-drag-line.
+	* window.el (window-at-side-p, windows-at-side): New functions.
+
+2011-10-21  Ulrich Mueller  <ulm@gentoo.org>
+
+	* tar-mode.el (tar-grind-file-mode):
+	Fix handling of setuid/setgid, handle sticky bit.  (Bug#9817)
+
+2011-10-21  Chong Yidong  <cyd@gnu.org>
+
+	* progmodes/idlwave.el (idlwave-mode):
+	* progmodes/vera-mode.el (vera-mode):
+	Use mode-require-final-newline.
+
+2011-10-20  Glenn Morris  <rgm@gnu.org>
+
+	* vc/vc.el (vc-next-action): Handle removed directories. (Bug#9781)
+
+2011-10-20  Christoph Scholtes  <cschol2112@googlemail.com>
+
+	* emulation/cua-base.el (cua-set-mark): Fix case of string.
+
+2011-10-20  Chong Yidong  <cyd@gnu.org>
+
+	* emulation/cua-base.el (cua-mode):
+	* mail/footnote.el (footnote-mode):
+	* mail/mailabbrev.el (mail-abbrevs-mode):
+	* net/xesam.el (xesam-minor-mode):
+	* progmodes/bug-reference.el (bug-reference-mode):
+	* progmodes/cap-words.el (capitalized-words-mode):
+	* progmodes/compile.el (compilation-minor-mode)
+	(compilation-shell-minor-mode):
+	* progmodes/gud.el (gud-tooltip-mode):
+	* progmodes/hideif.el (hide-ifdef-mode):
+	* progmodes/idlw-shell.el (idlwave-shell-electric-debug-mode):
+	* progmodes/subword.el (subword-mode):
+	* progmodes/vhdl-mode.el (vhdl-electric-mode, vhdl-stutter-mode):
+	* progmodes/which-func.el (which-function-mode):
+	* term/tvi970.el (tvi970-set-keypad-mode):
+	* term/vt100.el (vt100-wide-mode):
+	* textmodes/flyspell.el (flyspell-mode):
+	* textmodes/ispell.el (ispell-minor-mode):
+	* textmodes/nroff-mode.el (nroff-electric-mode):
+	* textmodes/paragraphs.el (use-hard-newlines):
+	* textmodes/refill.el (refill-mode):
+	* textmodes/reftex.el (reftex-mode):
+	* textmodes/rst.el (rst-minor-mode):
+	* textmodes/sgml-mode.el (html-autoview-mode)
+	(sgml-electric-tag-pair-mode):
+	* textmodes/tex-mode.el (latex-electric-env-pair-mode):
+	* vc/diff-mode.el (diff-auto-refine-mode, diff-minor-mode):
+	* emulation/crisp.el (crisp-mode):
+	* emacs-lisp/eldoc.el (eldoc-mode):
+	* emacs-lisp/checkdoc.el (checkdoc-minor-mode): Doc fixes for new
+	minor mode behavior.
+
+2011-10-19  Juri Linkov  <juri@jurta.org>
+
+	* descr-text.el (describe-char): Add #x2010 and #x2011 to
+	the list of hard-coded chars with escape-glyph face.
+
+2011-10-19  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* vc/log-edit.el (log-edit-empty-buffer-p): Ignore empty headers.
+
+2011-10-19  Michael Albinus  <michael.albinus@gmx.de>
+
+	* net/tramp.el (tramp-connectable-p): Make a stronger check on a
+	running process.
+
+2011-10-19  Glenn Morris  <rgm@gnu.org>
+
+	* vc/vc-bzr.el (vc-bzr-after-dir-status):
+	Ignore ignored files.  (Bug#9726)
+
+2011-10-19  Chong Yidong  <cyd@gnu.org>
+
+	Doc fix for minor modes, stating that an omitted argument enables
+	the mode unconditionally when called from Lisp.
+
+	* abbrev.el (abbrev-mode):
+	* allout.el (allout-mode):
+	* autoinsert.el (auto-insert-mode):
+	* autoarg.el (autoarg-mode, autoarg-kp-mode):
+	* autorevert.el (auto-revert-mode, auto-revert-tail-mode)
+	(global-auto-revert-mode):
+	* battery.el (display-battery-mode):
+	* composite.el (global-auto-composition-mode)
+	(auto-composition-mode):
+	* delsel.el (delete-selection-mode):
+	* desktop.el (desktop-save-mode):
+	* dired-x.el (dired-omit-mode):
+	* dirtrack.el (dirtrack-mode):
+	* doc-view.el (doc-view-minor-mode):
+	* double.el (double-mode):
+	* electric.el (electric-indent-mode, electric-pair-mode):
+	* emacs-lock.el (emacs-lock-mode):
+	* epa-hook.el (auto-encryption-mode):
+	* follow.el (follow-mode):
+	* font-core.el (font-lock-mode):
+	* frame.el (auto-raise-mode, auto-lower-mode, blink-cursor-mode):
+	* help.el (temp-buffer-resize-mode):
+	* hilit-chg.el (highlight-changes-mode)
+	(highlight-changes-visible-mode):
+	* hi-lock.el (hi-lock-mode):
+	* hl-line.el (hl-line-mode, global-hl-line-mode):
+	* icomplete.el (icomplete-mode):
+	* ido.el (ido-everywhere):
+	* image-file.el (auto-image-file-mode):
+	* image-mode.el (image-minor-mode):
+	* iswitchb.el (iswitchb-mode):
+	* jka-cmpr-hook.el (auto-compression-mode):
+	* linum.el (linum-mode):
+	* longlines.el (longlines-mode):
+	* master.el (master-mode):
+	* mb-depth.el (minibuffer-depth-indicate-mode):
+	* menu-bar.el (menu-bar-mode):
+	* minibuf-eldef.el (minibuffer-electric-default-mode):
+	* mouse-sel.el (mouse-sel-mode):
+	* msb.el (msb-mode):
+	* mwheel.el (mouse-wheel-mode):
+	* outline.el (outline-minor-mode):
+	* paren.el (show-paren-mode):
+	* recentf.el (recentf-mode):
+	* reveal.el (reveal-mode, global-reveal-mode):
+	* rfn-eshadow.el (file-name-shadow-mode):
+	* ruler-mode.el (ruler-mode):
+	* savehist.el (savehist-mode):
+	* scroll-all.el (scroll-all-mode):
+	* scroll-bar.el (scroll-bar-mode):
+	* server.el (server-mode):
+	* shell.el (shell-dirtrack-mode):
+	* simple.el (auto-fill-mode, transient-mark-mode)
+	(visual-line-mode, overwrite-mode, binary-overwrite-mode)
+	(line-number-mode, column-number-mode, size-indication-mode)
+	(auto-save-mode, normal-erase-is-backspace-mode, visible-mode):
+	* strokes.el (strokes-mode):
+	* time.el (display-time-mode):
+	* t-mouse.el (gpm-mouse-mode):
+	* tool-bar.el (tool-bar-mode):
+	* tooltip.el (tooltip-mode):
+	* type-break.el (type-break-mode-line-message-mode)
+	(type-break-query-mode):
+	* view.el (view-mode):
+	* whitespace.el (whitespace-mode, whitespace-newline-mode)
+	(global-whitespace-mode, global-whitespace-newline-mode):
+	* xt-mouse.el (xterm-mouse-mode): Doc fix.
+
+	* emacs-lisp/easy-mmode.el (define-globalized-minor-mode):
+	Fix autogenerated docstring.
+
+2011-10-19  Juri Linkov  <juri@jurta.org>
+
+	* net/browse-url.el (browse-url-can-use-xdg-open): Support LXDE
+	by checking environment variables "DESKTOP_SESSION" and
+	"XDG_CURRENT_DESKTOP".  (Bug#9779)
+
+2011-10-19  Juri Linkov  <juri@jurta.org>
+
+	* net/browse-url.el (browse-url-browser-function): Add "Chromium".
+	(browse-url-chromium-program, browse-url-chromium-arguments):
+	New defcustoms.
+	(browse-url-default-browser): Check for `browse-url-chromium' and
+	call `browse-url-chromium-program'.
+	(browse-url-chromium): New command.  (Bug#9779)
+
 2011-10-18  Juanma Barranquero  <lekktu@gmail.com>
 
 	* facemenu.el (list-colors-duplicates): On Windows, detect more

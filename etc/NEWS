@@ -109,9 +109,9 @@ and pops down the *Completions* buffer accordingly.
 *** Completion can cycle, depending on completion-cycle-threshold.
 +++
 *** New completion style `substring'.
-
++++
 *** Completion style can be set per-category `completion-category-overrides'.
-
++++
 *** Completion of buffers now uses substring completion by default.
 
 ** Mail changes
@@ -225,15 +225,19 @@ cannot be encoded by the `terminal-coding-system'.
 ---
 *** New input methods for Farsi: farsi and farsi-translit.
 
-** Improved GTK integration
++++
+*** `nobreak-char-display' now also highlights Unicode hyphen chars
+(U+2010 and U+2011).
 
+** Improved GTK integration
++++
 *** GTK scroll-bars are now placed on the right by default.
 Use `set-scroll-bar-mode' to change this.
-
++++
 *** GTK tool bars can have just text, just images or images and text.
 Customize `tool-bar-style' to choose style.  On a Gnome desktop, the default
 is taken from the desktop settings.
-
+---
 *** GTK tool bars can be placed on the left/right or top/bottom of the frame.
 The frame-parameter tool-bar-position controls this.  It takes the values
 top, left, right or bottom.  The Options => Show/Hide menu has entries
@@ -268,13 +272,9 @@ context in their return values.
 
 *** The new functions file-selinux-context and set-file-selinux-context
 get and set the SELinux context of a file.
-
+---
 *** Tramp offers handlers for file-selinux-context and set-file-selinux-context
 for remote machines which support SELinux.
-
-+++
-** The function format-time-string now supports the %N directive, for
-higher-resolution time stamps.
 
 ** Changes for exiting Emacs
 +++
@@ -291,24 +291,20 @@ consider if it is still appropriate to add it in the noninteractive case.
 (bound to C-v/[next] and M-v/[prior]) do not signal errors at top/bottom
 of buffer at first key-press (instead move to top/bottom of buffer)
 when `scroll-error-top-bottom' is non-nil.
-
 +++
 *** New variable `scroll-error-top-bottom' (see above).
-
++++
 *** New scrolling commands `scroll-up-line' and `scroll-down-line'
 scroll a line instead of full screen.
-
 +++
 *** New property `scroll-command' should be set on a command's symbol to
 define it as a scroll command affected by `scroll-preserve-screen-position'.
-
 +++
 *** If you customize `scroll-conservatively' to a value greater than 100,
 Emacs will never recenter point in the window when it scrolls due to
 cursor motion commands or commands that move point (e.f., `M-g M-g').
 Previously, you needed to use `most-positive-fixnum' as the value of
 `scroll-conservatively' to achieve the same effect.
-
 ---
 *** ``Aggressive'' scrolling now honors the scroll margins.
 If you customize `scroll-up-aggressively' or
@@ -370,7 +366,6 @@ Affected modes include dired, vc-dir, and log-edit.  For example,
 adding "(diff-mode . ((mode . whitespace)))" to .dir-locals.el will
 turn on `whitespace-mode' for *vc-diff* buffers.  Modes should call
 `hack-dir-local-variables-non-file-buffer' to support this.
-
 +++
 *** Using "mode: MINOR-MODE" to enable a minor mode is deprecated.
 Instead, use "eval: (minor-mode 1)".
@@ -444,7 +439,7 @@ pops up *Messages*" feature, which can now easily be changed.
 +++
 *** C-y in Isearch is now bound to isearch-yank-kill, instead of
 isearch-yank-line.
----
++++
 *** M-y in Isearch is now bound to isearch-yank-pop, instead of
 isearch-yank-kill.
 +++
@@ -456,6 +451,7 @@ isearch-yank-kill.
 *** `count-lines-region' is now an alias for `count-words-region',
 bound to M-=, which shows the number of lines, words, and characters.
 
++++
 ** The default value of `backup-by-copying-when-mismatch' is now t.
 
 +++
@@ -556,6 +552,7 @@ updates later on, and Emacs appears to be unable to keep up.
 
 * Changes in Specialized Modes and Packages in Emacs 24.1
 
++++
 ** Archive Mode has basic support for browsing and updating 7z archives.
 
 ** browse-url has a new variable `browse-url-mailto-function'
@@ -800,12 +797,12 @@ additional details about each column.
 *** latex-electric-env-pair-mode keeps \begin..\end matched on the fly.
 
 ** Tramp
-
+---
 *** There exists a new inline access method "ksu" (kerberized su).
-
+---
 *** The following access methods are discontinued: "ssh1_old",
 "ssh2_old", "scp1_old", "scp2_old", "imap", "imaps" and "fish".
-
+---
 *** The option `ange-ftp-binary-file-name-regexp' has changed its
 default value to "".
 
@@ -847,7 +844,12 @@ binding `log-view-expanded-log-entry-function' to a suitable function.
 of a file similar to `vc-diff', but using ediff backend.
 
 +++
-*** The option vc-initial-comment was removed in Emacs 23.2, but
+*** The option `vc-initial-comment' was removed in Emacs 23.2, but
+this was not advertised at the time.
+
++++
+*** `vc-toggle-read-only' is an obsolete alias for `toggle-read-only'.
+Since Emacs 23, it has done the same thing as `toggle-read-only', but
 this was not advertised at the time.
 
 ** FIXME: xdg-open for browse-url and reportbug, 2010/08.
@@ -879,6 +881,7 @@ They are superseded by shift-select-mode enabled by default in 23.1.
 
 * New Modes and Packages in Emacs 24.1
 
++++
 ** Occur Edit mode applies edits made in *Occur* buffers to the
 original buffers.  It is bound to "e" in Occur mode.
 
@@ -1179,6 +1182,10 @@ a file.
 Also the debugger can now "continue" from an error, which means it will jump
 to the error handler as if the debugger had not been invoked instead of
 jumping all the way to the top-level.
+
++++
+** The function format-time-string now supports the %N directive, for
+higher-resolution time stamps.
 
 ** New function `read-char-choice' reads a restricted set of characters,
 discarding any inputs not inside the set.
