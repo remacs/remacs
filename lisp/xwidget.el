@@ -74,6 +74,7 @@ defaults to the string looking like a url around the cursor position."
 		 (require 'browse-url)
 		 (browse-url-interactive-arg "xwidget-webkit URL: ")))
   (when (stringp url)
+    (setq url (url-tidy url))
     (if new-session
 	(xwidget-webkit-new-session url)
       (xwidget-webkit-goto-url url))))
