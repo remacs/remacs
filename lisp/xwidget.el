@@ -194,22 +194,26 @@ defaults to the string looking like a url around the cursor position."
     (xwidget-resize xw (car size) (cadr size))))
 
 
-(defvar xwidget-webkit-activeelement-js
-"
-function findactiveelement(myframes){
-if(document.activeElement.value != undefined)
-      return document.activeElement;
-  for(i=0;i<myframes.length;i++){
-    if(myframes[i].document.activeElement.value != undefined)
-      return myframes[i].document.activeElement;
-    else{
-      if(myframes[i].frames.length > 0)
-        findactiveelement(myframes[i].frames);
-      else
-        return;
+(defvar xwidget-webkit-activeelement-js"
+function findactiveelement(doc){
+//alert(doc.activeElement.value);
+   if(doc.activeElement.value != undefined){
+      return doc.activeElement;
+   }else{
+        // recurse over the child documents:
+        var frames = doc.getElementsByTagName('frame');
+        for (var i = 0; i < frames.length; i++)
+        {
+                var d = frames[i].contentDocument;
+                 var rv = findactiveelement(d);
+                 if(rv != undefined){
+                    return rv;
+                 }
+        }
     }
-  }
-}
+    return undefined;
+};
+
 
 "
 
@@ -232,10 +236,10 @@ Argument STR string."
           (field-value
            (progn
              (xwidget-webkit-execute-script xww xwidget-webkit-activeelement-js)
-             (xwidget-webkit-execute-script-rv xww "findactiveelement(frames).value"))))
+             (xwidget-webkit-execute-script-rv xww "findactiveelement(document).value;" ))))
      (list xww
            (read-string "string:" field-value))))
-  (xwidget-webkit-execute-script xw (format "findactiveelement(frames).value='%s'" str)))
+  (xwidget-webkit-execute-script xw (format "findactiveelement(document).value='%s'" str)))
 
 
 (defun xwidget-webkit-show-named-element (xw element-name)
