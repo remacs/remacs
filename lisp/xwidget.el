@@ -227,10 +227,11 @@ Argument STR string."
   ;;read out the string in the field first and provide for edit
   (interactive
    (let* ((xww (xwidget-webkit-current-session))
+
           (field-value
            (progn
              (xwidget-webkit-execute-script xww xwidget-webkit-activeelement-js)
-             (xwidget-webkit-execute-script-rv xww "findactiveelement(frames).value" ""))))
+             (xwidget-webkit-execute-script-rv xww "findactiveelement(frames).value"))))
      (list xww
            (read-string "string:" field-value))))
   (xwidget-webkit-execute-script xw (format "findactiveelement(frames).value='%s'" str)))
@@ -238,12 +239,20 @@ Argument STR string."
 
 (defun xwidget-webkit-show-named-element (xw element-name)
   "make named-element show. for instance an anchor."
+  (interactive (list (xwidget-webkit-current-session) (read-string "element name:")))
   ;;TODO
+  ;; since an xwidget is an Emacs object, it is not trivial to do some things that are taken for granted in a normal browser.
+  ;; scrolling an anchor/named-element into view is one such thing.
+  ;; this function implements a proof-of-concept for this.
+  ;; problems remaining:
+  ;; - the selected window is scrolled but this is not always correct
+  ;; - this needs to be interfaced into browse-url somehow. the tricky part is that we need to do this in two steps:
+  ;;   A: load the base url, wait for load signal to arrive B: navigate to the anchor when the base url is finished rendering
+  
   ;;this part figures out the Y coordinate of the element
   (let ((y 
          (string-to-number (xwidget-webkit-execute-script-rv xw (format "document.getElementsByName('%s')[0].getBoundingClientRect().top" element-name) 0))))
-    ;;now we need to tell emacs to scroll it into view. 
-    ;;hmm. the "y" seems not to be in screen coords?
+    ;;now we need to tell emacs to scroll the element into view. 
     (message "scroll: %d" y)
     (set-window-vscroll (selected-window) y t))
   )
@@ -303,9 +312,14 @@ Argument H height."
   ;;this is a wrapper for the title hack so its easy to remove should webkit someday support JS return values
   ;;or we find some other way to access the DOM
 
-  (xwidget-webkit-execute-script xw (format "document.title='%s';" (if default default "")))
-  (xwidget-webkit-execute-script xw (format "document.title=%s;" script))
-  (xwidget-webkit-get-title xw))
+  ;;reset webkit title. fugly.
+  (let* (          (emptytag "titlecantbewhitespaceohthehorror")
+                   title)
+    (xwidget-webkit-execute-script xw (format "document.title=\"%s\";" (if default default emptytag)))
+    (xwidget-webkit-execute-script xw (format "document.title=%s;" script))
+    (setq title (xwidget-webkit-get-title xw))
+    (if (equal emptytag title) (setq title ""))
+    title))
 
 
 ;; use declare here?
