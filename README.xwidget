@@ -1,3 +1,4 @@
+-*-org-*-
 * Xwidgets
 
 This is an experimental branch to enable embedding of GTK widgets
@@ -91,6 +92,17 @@ The Emacs 24 feature freeze is passed, so xwidgets won't probably be merged
 until Emacs 25. OTOH since I now use xwidget emacs as my primary
 emacs, I will merge from trunk much more often than in the past.
 
+** reporting bugs
+emacs xwidgets uses the same tracker as mainline emacs, but a
+different package.
+
+m-x report-emacs-bug
+
+Change the address to:
+submit@debbugs.gnu.org
+
+Include this line early in the body:
+Package: emacs-xwidgets
 ** Thanks
 emacs-devel@gnu.org. There are very helpful people there. When I
 started the xwidget project I had no clue about the Emacs internals. 
@@ -1332,16 +1344,13 @@ defined controls.
 Added: [2011-08-11 Thu 10:53]
 
 
-** TODO SEB
+** DONE SEB
+   CLOSED: [2011-10-26 Wed 15:36]
 the SEB site does something funny so I can't insert text in
 fields. aparently document.activeElement.value doesn't work with framesets.
 
-maybe:
-for (var i=0; i<frames.length; i++)
-  {
-     frames[i].document.activeElement.value
-  }
-
+seems to work using the ugly javascript in 
+xwidget-webkit-activeelement-js
 
 ** support downstreams
 http://aur.archlinux.org/packages.php?ID=48230
@@ -1423,7 +1432,7 @@ Probably because the Image mode derivative is mostly a hack.
 fixed now I think.
 
 
-- internal links (page.html#section) do not work
+
 
 
 
@@ -1438,3 +1447,7 @@ better to expose the DOM and search that.
   implemented too
 
 Keyboard integration is the unloved step-child of xwidgets, unfortunately.
+
+
+* TODO - internal links (page.html#section) do not work
+see xwidget-webkit-show-named-element
