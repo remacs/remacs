@@ -837,13 +837,22 @@ DEFUN ("xwidget-resize", Fxwidget_resize, Sxwidget_resize, 3, 3, 0, doc:
   h = XFASTINT (new_height);
 
 
-  printf("resize xwidget %d (%d,%d)->(%d,%d)",xw, xw->width,xw->height,w,h);
+  printf("resize xwidget %d (%d,%d)->(%d,%d)\n",xw, xw->width,xw->height,w,h);
   xw->width=w;
   xw->height=h;
   //if theres a osr resize it 1st
   if(xw->widget_osr){
-    gtk_layout_set_size (GTK_LAYOUT (xw->widgetwindow_osr), xw->width, xw->height);
-    gtk_widget_set_size_request (GTK_WIDGET (xw->widget_osr), xw->width, xw->height);
+    printf("resize xwidget_osr\n");
+    //gtk_container_set_resize_mode ( GTK_WINDOW(xw->widgetwindow_osr), GTK_RESIZE_QUEUE);
+    //gtk_container_set_resize_mode ( GTK_WINDOW(xw->widget_osr), GTK_RESIZE_QUEUE);
+
+
+    //gtk_layout_set_size (GTK_LAYOUT (xw->widgetwindow_osr), xw->width, xw->height);
+    gtk_widget_set_size_request (GTK_WIDGET (xw->widget_osr), xw->width, xw->height); //minimum size
+    //gtk_window_resize(    GTK_WINDOW(xw->widget_osr), xw->width, xw->height);
+    gtk_window_resize(    GTK_WINDOW(xw->widgetwindow_osr), xw->width, xw->height);
+    gtk_container_resize_children ( GTK_WINDOW(xw->widgetwindow_osr));
+    
   }
 
   for (int i = 0; i < MAX_XWIDGETS; i++) //TODO MVC refactor lazy linear search

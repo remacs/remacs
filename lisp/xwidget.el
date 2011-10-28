@@ -275,6 +275,11 @@ Argument H height."
   (interactive "nWidth:\nnHeight:\n")
   ( xwidget-resize ( xwidget-webkit-current-session) w h))
 
+(defun xwidget-webkit-fit-width ()
+  (interactive)
+  (xwidget-webkit-adjust-size
+   (- (caddr (window-inside-pixel-edges)) (car (window-inside-pixel-edges)))
+   1000))
 
 (defun xwidget-webkit-new-session (url)
 "Create a new webkit session buffer with URL."

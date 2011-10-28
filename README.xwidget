@@ -264,7 +264,8 @@ Currently I just allocate as large an area as the offscreen widget
 desires. This works well most of the time. But a HTML page might in
 principle be of infinite height so there will probably be cases where
 this doesn't work too well.
-** TODO again a trace
+** DONE again a trace
+   CLOSED: [2011-10-28 Fri 13:48]
 [2011-08-23 Tue]
 the hunch is that since I still hand-wave the view storage the array
 can get out of synchronous. so maybe switching to a lisp structure
@@ -533,6 +534,9 @@ xdotool
 xte xautomation
 crikey
 libxdo
+
+*** TODO webkit raw keyboard event escape
+c-c tab could send a raw tab to the webkit instance.
 ** DONE remove the special-case for when the minibuffer is
   active.  I added some code to reduce the annoying problem display artefacts
   when making the minibuffer the selected window. This made xwidgets in the
@@ -1203,6 +1207,10 @@ to see the problem surface to http://www.slashdot.org
 
 and then compare by resizing in Epiphany, which is also webkit based.
 
+**** TODO try putting webkit osr inside a scrolling window
+it seems webkit is supposed to behave differently while embedded in a
+scrolling window. This is a bit cumbersome because the container stack
+is already deep.
 *** TODO xwidget webkit allow loading from string from emacs
 *** DONE xwidget-webkit-last-session
     CLOSED: [2011-08-01 Mon 22:38]
@@ -1230,6 +1238,90 @@ that image-mode has special code to handle scrolling. the browser mode
 and image mode has some similarities.
 
 I made some delegation code frrom webkit mode to image mode.
+*** TODO internal links (page.html#section) do not work
+see xwidget-webkit-show-named-element
+
+*** TODO sindicat notes
+Here are some comments from user "sindikat" and my replies
+
+- site.com and http://site.com should be equivalent (simple site.com
+  throws error)
+
+Yes, but its unclear at what level in Emacs to do this
+properly. I added a url-tidy function as a start.
+
+- http://ya.ru renders inadequatly (compare with any other browser) -
+  the search text-input is way below
+
+The problem is the size communication between Emacs and Webkit. 
+
+- doing PageDown is endless; so if you do 100 PageDowns, you have to
+  do 100 PageUps to retun to the header of the page
+
+True, I hadn't noticed. Thanks.
+
+- http://linux.org.ru (just an example) renders incorrectly too - it
+  should stretch horizontally
+
+Size communication.
+
+- obviously, pointing of mouse over some link should change it to
+  pointing hand cursor
+
+Need to verify with some other webkit browser.
+
+- when you are somewhere on the middle of a long page, than go to some
+  other page, you are still in the middle, instead of being again on
+  the top
+
+This is because I inherit from Image view mode. I kind of like it so
+we can add an option for it.
+
+
+- changing dropdown menus cause flickering
+
+
+- string entering is incorrect - by default it enters the title of the
+  page, while it should be empty
+
+The cause is the lack of return value in the webkit evaluation
+API. Ive made some fixes.
+
+- internal links (page.html#section) do not work
+
+ ive added a rudimentary function "xwidget-webkit-show-named-element" for this
+
+- maybe it's a good idea to implement Conkeror or some other
+  keybindings, where you press 'f' then select the exact <input
+  type="text"> where you want to enter text, without using mouse,
+  etc.;
+
+Indeed, this would require better DOM integration.
+
+- pressing 'home' and 'end' puts nonsense into minibuffer
+
+Probably because the Image mode derivative is mostly a hack.
+fixed now I think.
+
+
+
+
+
+
+- implement search (emacs internal isearch obviously doesn't work)
+
+Either use the webkit search but that doesn't feel right. It would be
+better to expose the DOM and search that.
+
+- some sites intercept with keyboard; example -
+  http://www.artlebedev.ru/kovodstvo/business-lynch/2011/10/03/ uses
+  Ctrl+left/right/up/down to navigate between pages - this should be
+  implemented too
+
+Keyboard integration is the unloved step-child of xwidgets, unfortunately.
+
+
+
 ** TODO xwidget image display  spec compatibility
 some history: the first version of the xwidget display spec was
 the same as an image spec. This turned out not to be fantastic because
@@ -1369,85 +1461,3 @@ splint   -Demacs -DHAVE_CONFIG_H  -I. -I/home/joakim/build_myprojs/emacsnew/emac
 user reports that xwidgets segfaults  on the 32 bit Mint distribution
 but not the 64 bit. Mint is an Ubuntu derivative. I got some
 VirtualBox images to test with.
-** TODO sindicat notes
-Here are some comments from user "sindikat" and my replies
-
-- site.com and http://site.com should be equivalent (simple site.com
-  throws error)
-
-Yes, but its unclear at what level in Emacs to do this
-properly. I added a url-tidy function as a start.
-
-- http://ya.ru renders inadequatly (compare with any other browser) -
-  the search text-input is way below
-
-The problem is the size communication between Emacs and Webkit. 
-
-- doing PageDown is endless; so if you do 100 PageDowns, you have to
-  do 100 PageUps to retun to the header of the page
-
-True, I hadn't noticed. Thanks.
-
-- http://linux.org.ru (just an example) renders incorrectly too - it
-  should stretch horizontally
-
-Size communication.
-
-- obviously, pointing of mouse over some link should change it to
-  pointing hand cursor
-
-Need to verify with some other webkit browser.
-
-- when you are somewhere on the middle of a long page, than go to some
-  other page, you are still in the middle, instead of being again on
-  the top
-
-This is because I inherit from Image view mode. I kind of like it so
-we can add an option for it.
-
-
-- changing dropdown menus cause flickering
-
-
-- string entering is incorrect - by default it enters the title of the
-  page, while it should be empty
-
-The cause is the lack of return value in the webkit evaluation
-API. Ive made some fixes.
-
-- internal links (page.html#section) do not work
-
- ive added a rudimentary function "xwidget-webkit-show-named-element" for this
-
-- maybe it's a good idea to implement Conkeror or some other
-  keybindings, where you press 'f' then select the exact <input
-  type="text"> where you want to enter text, without using mouse,
-  etc.;
-
-Indeed, this would require better DOM integration.
-
-- pressing 'home' and 'end' puts nonsense into minibuffer
-
-Probably because the Image mode derivative is mostly a hack.
-fixed now I think.
-
-
-
-
-
-
-- implement search (emacs internal isearch obviously doesn't work)
-
-Either use the webkit search but that doesn't feel right. It would be
-better to expose the DOM and search that.
-
-- some sites intercept with keyboard; example -
-  http://www.artlebedev.ru/kovodstvo/business-lynch/2011/10/03/ uses
-  Ctrl+left/right/up/down to navigate between pages - this should be
-  implemented too
-
-Keyboard integration is the unloved step-child of xwidgets, unfortunately.
-
-
-* TODO - internal links (page.html#section) do not work
-see xwidget-webkit-show-named-element
