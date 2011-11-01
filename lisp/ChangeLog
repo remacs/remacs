@@ -1,3 +1,107 @@
+2011-10-31  Andreas Schwab  <schwab@linux-m68k.org>
+
+	* subr.el (keymap--menu-item-with-binding): Ignore item if not a
+	menu-item.
+
+2011-10-30  Vinicius Jose Latorre  <viniciusjl@ig.com.br>
+
+	* whitespace.el: New version 13.2.2.
+	(whitespace-newline-mode): Disable properly.  Reported by Sarah
+	<EmacsWiki>.
+
+2011-10-30  Ulf Jasper  <ulf.jasper@web.de>
+
+	* net/newst-treeview.el: Remove "Time-stamp".
+	(newsticker--group-manage-orphan-feeds): Do not call
+	newsticker--treeview-tree-update.
+	(newsticker-treeview-update, newsticker-treeview): Call
+	newsticker--treeview-tree-update if necessary.
+
+2011-10-30  Martin Rudalics  <rudalics@gmx.at>
+
+	* window.el (window-iso-combination-p, window-iso-combined-p)
+	(window-iso-combinations): Remove "iso-" infix.  Suggested by
+	Chong Yidong.
+	(window-min-size-1, window-size-fixed-1, window-min-delta-1)
+	(window-max-delta-1, window-resize, window--resize-siblings)
+	(window--resize-this-window, adjust-window-trailing-edge)
+	(split-window, balance-windows-1)
+	(shrink-window-if-larger-than-buffer):
+	* calendar/calendar.el (calendar-generate-window):
+	* help.el (resize-temp-buffer-window): Adjust callers
+	accordingly.
+
+2011-10-30  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* eshell/esh-cmd.el (eshell-rewrite-for-command): Don't modify the list
+	in place (bug#9907).
+	(eshell-subcommand-arg-values, eshell-rewrite-named-command)
+	(eshell-rewrite-if-command, eshell-rewrite-for-command)
+	(eshell-structure-basic-command, eshell-rewrite-while-command)
+	(eshell-invokify-arg, eshell-parse-pipeline, eshell-parse-command)
+	(eshell-parse-subcommand-argument, eshell-parse-lisp-argument)
+	(eshell-trap-errors, eshell-do-pipelines, eshell-do-eval)
+	(eshell-do-pipelines-synchronously, eshell-eval-command):
+	Use backquotes and prefer setq to set.
+	(eshell-lookup-function, function-p-func, eshell-functionp): Remove.
+	(eshell-macrop): Use functionp.
+	(eshell-do-eval): Handle multiple expressions in `while' body.
+
+2011-10-30  Chong Yidong  <cyd@gnu.org>
+
+	* emulation/viper-cmd.el (viper-exec-change): Use push-mark
+	instead of set-mark (Bug#9810).
+
+2011-10-30  Chong Yidong  <cyd@gnu.org>
+
+	* window.el (split-window-below, split-window-right): Rename from
+	split-window-above-each-other and split-window-side-by-side
+	respectively.  All callers changed.
+	(split-window-sensibly, split-window-sensibly): Use them.
+	(split-window-keep-point): Doc fix.
+
+	* isearch.el: Add isearch-scroll property to split-window-below
+	and split-window-right.
+
+	* follow.el (follow-mode):
+	* vc/pcvs-util.el (cvs-pop-to-buffer-same-frame):
+	* progmodes/ada-xref.el (ada-gdb-application):
+	* emulation/vip.el (vip-buffer-in-two-windows):
+	* image-dired.el (image-dired-dired-with-window-configuration):
+	* dired-x.el (dired-do-find-marked-files):
+	* dired.el (dired-pop-to-buffer):
+	* bs.el (bs--show-with-configuration):
+	* vc/emerge.el (emerge-setup-windows):
+	* textmodes/two-column.el (2C-two-columns):
+	* textmodes/reftex-toc.el (reftex-toc):
+	* progmodes/gdb-mi.el (gdb-setup-windows):
+	* progmodes/fortran.el (fortran-window-create):
+	* net/newst-treeview.el (newsticker--treeview-window-init):
+	* emulation/ws-mode.el (wordstar-C-o-map, wordstar-mode):
+	* emulation/tpu-edt.el (tpu-gold-map):
+	* emulation/crisp.el (crisp-mode-map):
+	* calendar/calendar.el (calendar-basic-setup): Callers changed.
+
+2011-10-29  Chong Yidong  <cyd@gnu.org>
+
+	* subr.el (y-or-n-p): Add code for batch mode (Bug#9818).
+
+	* mouse.el (mouse-yank-primary): Push the mark (Bug#9894).
+
+	* textmodes/flyspell.el (flyspell-word): Fix char offset for
+	forged Ispell output (Bug#7904).
+
+	* emacs-lisp/package.el (package-refresh-contents): Add autoload.
+
+2011-10-28  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* doc-view.el: Avoid ugly errors about not finding nil.
+	(doc-view-ghostscript-program, doc-view-dvipdfm-program)
+	(doc-view-dvipdf-program, doc-view-unoconv-program)
+	(doc-view-ps2pdf-program, doc-view-pdftotext-program):
+	Avoid nil or absolute file name as default value.
+	(doc-view-pdf->txt, doc-view-ps->pdf): Use executable-find here.
+
 2011-10-28  Alan Mackenzie  <acm@muc.de>
 
 	* progmodes/cc-defs.el (c-version).  -> 5.32.2.
@@ -14,8 +118,8 @@
 	cc-vars.el.
 	(c-nonlabel-token-2-key): New variable for change in cc-engine.el.
 
-	* progmodes/cc-engine.el (c-beginning-of-statement-1): Prevent
-	"class foo : bar" being spuriously recognized as a label.
+	* progmodes/cc-engine.el (c-beginning-of-statement-1):
+	Prevent "class foo : bar" being spuriously recognized as a label.
 
 	* progmodes/cc-cmds.el (c-narrow-to-most-enclosing-decl-block):
 	Add parameter `inclusive' (to include enclosing braces in the
@@ -39,8 +143,8 @@
 
 	* progmodes/cc-defs.el: Update "virtual semicolon" comments.
 
-	* progmodes/cc-engine.el (c-crosses-statement-barrier-p): Recoded
-	to scan one line at at time rather than having \n and \r
+	* progmodes/cc-engine.el (c-crosses-statement-barrier-p):
+	Recoded to scan one line at at time rather than having \n and \r
 	explicitly in c-stmt-delim-chars
 	(for some modes, e.g. AWK).
 	(c-forward-label): Amend for virtual semicolons.
@@ -56,8 +160,8 @@
 	(c-stmt-delim-chars, c-stmt-delim-chars-with-comma): Special value for
 	AWK Mode (including \n, \r) removed, no longer needed.
 
-	* progmodes/cc-mode.el (c-mode, c++-mode, objc-mode): Invoke
-	c-make-macro-with-semi-re.
+	* progmodes/cc-mode.el (c-mode, c++-mode, objc-mode):
+	Invoke c-make-macro-with-semi-re.
 
 	* progmodes/cc-vars.el (c-macro-with-semi-re):
 	(c-macro-names-with-semicolon): New variables.
