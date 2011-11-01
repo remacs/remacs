@@ -4297,7 +4297,7 @@ scrolling_window (struct window *w, int header_line_p)
 
 #ifdef HAVE_XWIDGETS
  //currently this is needed to detect xwidget movement reliably. or probably not.
-  printf("scrolling_window\n");
+  //printf("scrolling_window\n");
     return 0;
 #endif
   

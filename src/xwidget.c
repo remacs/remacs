@@ -97,6 +97,7 @@
 #include <webkit/webkitwebplugindatabase.h>
 #include <webkit/webkitwebplugin.h>
 #include <webkit/webkitglobals.h>
+#include <webkit/webkitwebnavigationaction.h>
 #endif
 
 #include "xwidget.h"
@@ -157,6 +158,23 @@ gboolean  webkit_osr_mime_type_policy_typedecision_requested_callback(WebKitWebV
                                                                       gchar                   *mimetype,
                                                                       WebKitWebPolicyDecision *policy_decision,
                                                                       gpointer                 user_data);
+
+gboolean webkit_osr_new_window_policy_decision_requested_callback(WebKitWebView             *webView,
+                                                                  WebKitWebFrame            *frame,
+                                                                  WebKitNetworkRequest      *request,
+                                                                  WebKitWebNavigationAction *navigation_action,
+                                                                  WebKitWebPolicyDecision   *policy_decision,
+                                                                  gpointer                   user_data);
+
+
+gboolean webkit_osr_navigation_policy_decision_requested_callback(WebKitWebView             *webView,
+                                                        WebKitWebFrame            *frame,
+                                                        WebKitNetworkRequest      *request,
+                                                        WebKitWebNavigationAction *navigation_action,
+                                                        WebKitWebPolicyDecision   *policy_decision,
+                                                                  gpointer                   user_data);
+
+  
 DEFUN ("make-xwidget", Fmake_xwidget, Smake_xwidget, 7, 7, 0,
          doc: /* xw */
          )
@@ -228,12 +246,23 @@ DEFUN ("make-xwidget", Fmake_xwidget, Smake_xwidget, 7, 7, 0,
                       G_CALLBACK (webkit_osr_mime_type_policy_typedecision_requested_callback),
                       xw);    
 
-    
+    g_signal_connect (G_OBJECT ( xw->widget_osr),
+                      "new-window-policy-decision-requested",
+                      G_CALLBACK (webkit_osr_new_window_policy_decision_requested_callback),
+                      xw);    
+
+    g_signal_connect (G_OBJECT ( xw->widget_osr),
+                      "navigation-policy-decision-requested",
+                      G_CALLBACK (webkit_osr_navigation_policy_decision_requested_callback),
+                      xw);    
+
+
     webkit_web_view_load_uri(WEBKIT_WEB_VIEW(xw->widget_osr), "http://www.fsf.org");
     UNBLOCK_INPUT;
 
   }
 #endif
+
   if (EQ(xw->type, Qsocket_osr)){
     printf("init socket osr\n");
     BLOCK_INPUT;
@@ -491,6 +520,30 @@ gboolean  webkit_osr_mime_type_policy_typedecision_requested_callback(WebKitWebV
   }
 }
 
+
+gboolean webkit_osr_new_window_policy_decision_requested_callback(WebKitWebView             *webView,
+                                                                  WebKitWebFrame            *frame,
+                                                                  WebKitNetworkRequest      *request,
+                                                                  WebKitWebNavigationAction *navigation_action,
+                                                                  WebKitWebPolicyDecision   *policy_decision,
+                                                                  gpointer                   user_data)
+{
+  printf("webkit_osr_new_window_policy_decision_requested_callback %s\n",
+         webkit_web_navigation_action_get_original_uri (navigation_action));
+  
+  return FALSE;
+}
+
+gboolean webkit_osr_navigation_policy_decision_requested_callback(WebKitWebView             *webView,
+                                                        WebKitWebFrame            *frame,
+                                                        WebKitNetworkRequest      *request,
+                                                        WebKitWebNavigationAction *navigation_action,
+                                                        WebKitWebPolicyDecision   *policy_decision,
+                                                        gpointer                   user_data)
+{
+  printf("webkit_osr_navigation_policy_decision_requested_callback\n");
+  return FALSE;
+}
 
 //for gtk3 webkit_osr
 gboolean
