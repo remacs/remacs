@@ -1461,3 +1461,7 @@ splint   -Demacs -DHAVE_CONFIG_H  -I. -I/home/joakim/build_myprojs/emacsnew/emac
 user reports that xwidgets segfaults  on the 32 bit Mint distribution
 but not the 64 bit. Mint is an Ubuntu derivative. I got some
 VirtualBox images to test with.
+** DONE youtube 
+   CLOSED: [2011-11-01 Tue 11:19]
+http://www.youtube.com/watch?v=DZdUgjEx_dQ&html5=1
+html5 makes it work without stupid flash plugins!

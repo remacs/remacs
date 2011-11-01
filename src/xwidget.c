@@ -147,7 +147,16 @@ gboolean webkit_osr_key_event_callback (GtkWidget *widget, GdkEventKey *event, g
 void     webkit_osr_document_load_finished_callback (WebKitWebView  *webkitwebview,
                                                      WebKitWebFrame *arg1,
                                                      gpointer        user_data);
+void     webkit_osr_download_callback (WebKitWebView  *webkitwebview,
+                                       WebKitDownload *arg1,
+                                       gpointer        data);
 
+gboolean  webkit_osr_mime_type_policy_typedecision_requested_callback(WebKitWebView           *webView,
+                                                                      WebKitWebFrame          *frame,
+                                                                      WebKitNetworkRequest    *request,
+                                                                      gchar                   *mimetype,
+                                                                      WebKitWebPolicyDecision *policy_decision,
+                                                                      gpointer                 user_data);
 DEFUN ("make-xwidget", Fmake_xwidget, Smake_xwidget, 7, 7, 0,
          doc: /* xw */
          )
@@ -209,6 +218,17 @@ DEFUN ("make-xwidget", Fmake_xwidget, Smake_xwidget, 7, 7, 0,
                       G_CALLBACK (webkit_osr_document_load_finished_callback),
                       xw);    
 
+    g_signal_connect (G_OBJECT ( xw->widget_osr),
+                      "download-requested",
+                      G_CALLBACK (webkit_osr_download_callback),
+                      xw);    
+
+    g_signal_connect (G_OBJECT ( xw->widget_osr),
+                      "mime-type-policy-decision-requested",
+                      G_CALLBACK (webkit_osr_mime_type_policy_typedecision_requested_callback),
+                      xw);    
+
+    
     webkit_web_view_load_uri(WEBKIT_WEB_VIEW(xw->widget_osr), "http://www.fsf.org");
     UNBLOCK_INPUT;
 
@@ -427,6 +447,31 @@ void     webkit_osr_document_load_finished_callback (WebKitWebView  *webkitwebvi
   kbd_buffer_store_event (&event);
 
 }
+
+void     webkit_osr_download_callback (WebKitWebView  *webkitwebview,
+                                       WebKitDownload *arg1,
+                                       gpointer        data)
+{
+  printf("download requested %s\n", webkit_download_get_uri (arg1));
+  return FALSE;
+}
+
+gboolean  webkit_osr_mime_type_policy_typedecision_requested_callback(WebKitWebView           *webView,
+                                                                      WebKitWebFrame          *frame,
+                                                                      WebKitNetworkRequest    *request,
+                                                                      gchar                   *mimetype,
+                                                                      WebKitWebPolicyDecision *policy_decision,
+                                                                      gpointer                 user_data)
+{
+  printf("mime policy requested\n");
+  if(!webkit_web_view_can_show_mime_type(webView, mimetype)){
+    webkit_web_policy_decision_download (policy_decision);
+    return TRUE;
+  }else{
+    return FALSE;
+  }
+}
+
 
 //for gtk3 webkit_osr
 gboolean
