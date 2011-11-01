@@ -147,7 +147,7 @@ gboolean webkit_osr_key_event_callback (GtkWidget *widget, GdkEventKey *event, g
 void     webkit_osr_document_load_finished_callback (WebKitWebView  *webkitwebview,
                                                      WebKitWebFrame *arg1,
                                                      gpointer        user_data);
-void     webkit_osr_download_callback (WebKitWebView  *webkitwebview,
+gboolean     webkit_osr_download_callback (WebKitWebView  *webkitwebview,
                                        WebKitDownload *arg1,
                                        gpointer        data);
 
@@ -424,7 +424,7 @@ gboolean webkit_osr_key_event_callback (GtkWidget *widget, GdkEventKey *event, g
   return TRUE; 
 }
 
-
+//TODO deprecated, use load-status
 void     webkit_osr_document_load_finished_callback (WebKitWebView  *webkitwebview,
                                                      WebKitWebFrame *arg1,
                                                      gpointer        data)
@@ -448,11 +448,30 @@ void     webkit_osr_document_load_finished_callback (WebKitWebView  *webkitwebvi
 
 }
 
-void     webkit_osr_download_callback (WebKitWebView  *webkitwebview,
+gboolean     webkit_osr_download_callback (WebKitWebView  *webkitwebview,
                                        WebKitDownload *arg1,
                                        gpointer        data)
 {
   printf("download requested %s\n", webkit_download_get_uri (arg1));
+  //TODO this event sending code should be refactored
+  struct input_event event;
+  //  struct xwidget *xw = (struct xwidget *) data;
+  struct xwidget* xw = (struct xwidget*) g_object_get_data (G_OBJECT (webkitwebview), XG_XWIDGET);  
+  printf("webkit finished loading\n");
+
+  EVENT_INIT (event);
+  event.kind = XWIDGET_EVENT;
+  event.frame_or_window = Qnil;	//frame; //how to get the frame here? //TODO i store it in the xwidget now
+
+  event.arg = Qnil;
+  event.arg = Fcons (intern (webkit_download_get_uri (arg1)), event.arg);  
+  event.arg = Fcons ((Lisp_Object)xw, event.arg); //TODO
+  event.arg = Fcons (intern ("download-requested"), event.arg);
+
+
+  kbd_buffer_store_event (&event);
+
+
   return FALSE;
 }
 
