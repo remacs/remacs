@@ -541,7 +541,8 @@ gboolean webkit_osr_navigation_policy_decision_requested_callback(WebKitWebView 
                                                         WebKitWebPolicyDecision   *policy_decision,
                                                         gpointer                   user_data)
 {
-  printf("webkit_osr_navigation_policy_decision_requested_callback\n");
+  printf("webkit_osr_navigation_policy_decision_requested_callback %s\n",
+         webkit_web_navigation_action_get_original_uri (navigation_action));
   return FALSE;
 }
 
