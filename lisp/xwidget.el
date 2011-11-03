@@ -166,10 +166,10 @@ defaults to the string looking like a url around the cursor position."
              )
             
             ((eq xwidget-event-type 'navigation-policy-decision-requested)
-	     (let ((elmname (progn 		   (string-match ".*#\\(.*\\)" strarg)(match-string 1 strarg))))
-		   (message "navigation-policy-decision-requested: '%s' %s"  strarg  elmname       )
+	     (let ((elmid (progn 		   (string-match ".*#\\(.*\\)" strarg)(match-string 1 strarg))))
+		   (message "navigation-policy-decision-requested: '%s' %s"  strarg  elmid       )
 
-		   (xwidget-webkit-show-named-element xwidget elmname)
+		   (xwidget-webkit-show-id-element xwidget elmid)
 		   )
 
              )
@@ -270,6 +270,16 @@ Argument STR string."
   ;;this part figures out the Y coordinate of the element
   (let ((y 
          (string-to-number (xwidget-webkit-execute-script-rv xw (format "document.getElementsByName('%s')[0].getBoundingClientRect().top" element-name) 0))))
+    ;;now we need to tell emacs to scroll the element into view. 
+    (message "scroll: %d" y)
+    (set-window-vscroll (selected-window) y t))
+  )
+
+(defun xwidget-webkit-show-id-element (xw element-id)
+  "make id-element show. for instance an anchor."
+  (interactive (list (xwidget-webkit-current-session) (read-string "element id:")))
+  (let ((y 
+         (string-to-number (xwidget-webkit-execute-script-rv xw (format "document.getElementById('%s').getBoundingClientRect().top" element-id) 0))))
     ;;now we need to tell emacs to scroll the element into view. 
     (message "scroll: %d" y)
     (set-window-vscroll (selected-window) y t))
