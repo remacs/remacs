@@ -1476,3 +1476,11 @@ VirtualBox images to test with.
    CLOSED: [2011-11-01 Tue 11:19]
 http://www.youtube.com/watch?v=DZdUgjEx_dQ&html5=1
 html5 makes it work without stupid flash plugins!
+** TODO clicking on an webkit xwidgets
+doesn't make the window active. this leads to problems.
+** DONE "g" should default to current url
+   CLOSED: [2011-11-03 Thu 22:25]
+"g" runs xwidget-webkit-browse-url which gets its interactive argument
+from browse-url-interactive-arg. this might need a new optional argument.
+
+http://test

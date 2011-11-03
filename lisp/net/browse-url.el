@@ -669,7 +669,7 @@ regarding its parameter treatment."
 ;; functions allows them to be stand-alone commands, making it easier
 ;; to switch between browsers.
 
-(defun browse-url-interactive-arg (prompt)
+(defun browse-url-interactive-arg (prompt &optional default-url)
   "Read a URL from the minibuffer, prompting with PROMPT.
 If `transient-mark-mode' is non-nil and the mark is active,
 it defaults to the current region, else to the URL at or before
@@ -686,7 +686,8 @@ for use in `interactive'."
 				      "[\t\r\f\n ]+" ""
 				      (buffer-substring-no-properties
 				       (region-beginning) (region-end))))
-				(browse-url-url-at-point)))
+				(browse-url-url-at-point)
+                                default-url))
 	(not (eq (null browse-url-new-window-flag)
 		 (null current-prefix-arg)))))
 

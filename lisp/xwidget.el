@@ -72,7 +72,7 @@ NEW-SESSION specifies whether to create a new xwidget-webkit session.  URL
 defaults to the string looking like a url around the cursor position."
   (interactive (progn
 		 (require 'browse-url)
-		 (browse-url-interactive-arg "xwidget-webkit URL: ")))
+		 (browse-url-interactive-arg "xwidget-webkit URL: " ( xwidget-webkit-current-url))))
   (when (stringp url)
     (setq url (url-tidy url))
     (if new-session
@@ -337,7 +337,9 @@ Argument H height."
 (defun xwidget-webkit-current-url ()
   "Get the webkit url. place it on kill ring."
   (interactive)
-  (message "url: %s" (kill-new   (xwidget-webkit-execute-script-rv (xwidget-webkit-current-session) "document.URL"))))
+  (let ((url (kill-new   (xwidget-webkit-execute-script-rv (xwidget-webkit-current-session) "document.URL"))))
+    (message "url: %s" url )
+    url))
 
 (defun xwidget-webkit-execute-script-rv (xw script &optional default)
   "same as xwidget-webkit-execute-script but also wraps an ugly hack to return a value"
