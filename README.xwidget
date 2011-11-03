@@ -1185,8 +1185,19 @@ open a new window or something, which wont work.
 have a look at how docview solves it
 webkit_web_view_search_text ()
 *** TODO webkit relative references doesn't work
-probably because we handle scrolling in a non-standard way. It does
+because we handle scrolling in a non-standard way. It does
 work sort of when theres a html frameset and webkit scrolls by itself.
+
+internal links (page.html#section) do not work
+see xwidget-webkit-show-named-element
+
+also did some  webkit signal work for this.
+
+now it actually works! except for I need to know the Y coordinate of
+the element to navigate to, and that can either be by "name" or "id"
+attribute, currently "id"  works.
+
+
 
 *** TODO webkit width adjustment handling issue
 since there are so many levels of clipping and whatnot in xwidgets
@@ -1240,10 +1251,6 @@ that image-mode has special code to handle scrolling. the browser mode
 and image mode has some similarities.
 
 I made some delegation code frrom webkit mode to image mode.
-*** TODO internal links (page.html#section) do not work
-see xwidget-webkit-show-named-element
-
-also did some preliminary webkit signal work for this
 *** TODO url-browse improvement
 sindikat: site.com and http://site.com should be equivalent (simple site.com
   throws error)

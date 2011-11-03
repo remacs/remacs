@@ -169,7 +169,7 @@ defaults to the string looking like a url around the cursor position."
 	     (let ((elmid (progn 		   (string-match ".*#\\(.*\\)" strarg)(match-string 1 strarg))))
 		   (message "navigation-policy-decision-requested: '%s' %s"  strarg  elmid       )
 
-		   (if elmid (xwidget-webkit-show-id-element xwidget elmid))
+		   (if elmid (xwidget-webkit-show-id-or-named-element xwidget elmid))
 		   )
 
              )
@@ -283,6 +283,19 @@ Argument STR string."
     ;;now we need to tell emacs to scroll the element into view. 
     (message "scroll: %d" y)
     (set-window-vscroll (selected-window) y t))
+  )
+
+(defun xwidget-webkit-show-id-or-named-element (xw element-id)
+  "make id-element show. for instance an anchor."
+  (interactive (list (xwidget-webkit-current-session) (read-string "element id:")))
+  (let* ((y1 
+         (string-to-number (xwidget-webkit-execute-script-rv xw (format "document.getElementsByName('%s')[0].getBoundingClientRect().top" element-id) 0)))
+        (y2 
+         (string-to-number (xwidget-webkit-execute-script-rv xw (format "document.getElementById('%s').getBoundingClientRect().top" element-id) 0)))
+        (y3 (max y1 y2)))
+    ;;now we need to tell emacs to scroll the element into view. 
+    (message "scroll: %d" y3)
+    (set-window-vscroll (selected-window) y3 t))
   )
 
 (defun xwidget-webkit-adjust-size-to-content ()
