@@ -453,28 +453,34 @@ gboolean webkit_osr_key_event_callback (GtkWidget *widget, GdkEventKey *event, g
   return TRUE; 
 }
 
+
+void store_xwidget_event_string(struct xwidget* xw, char* eventname,char* eventstr){
+  //refactor attempt
+  struct input_event event;
+  EVENT_INIT (event);
+  event.kind = XWIDGET_EVENT;
+  event.frame_or_window = Qnil;	//frame; //how to get the frame here? //TODO i store it in the xwidget now
+
+  event.arg = Qnil;
+  event.arg = Fcons (intern (eventstr), event.arg);  //intern?
+  event.arg = Fcons ((Lisp_Object)xw, event.arg); //TODO
+  event.arg = Fcons (intern (eventname), event.arg);//interning should be ok
+  kbd_buffer_store_event (&event);
+
+}
+
 //TODO deprecated, use load-status
 void     webkit_osr_document_load_finished_callback (WebKitWebView  *webkitwebview,
                                                      WebKitWebFrame *arg1,
                                                      gpointer        data)
 {
   //TODO this event sending code should be refactored
-  struct input_event event;
   //  struct xwidget *xw = (struct xwidget *) data;
   struct xwidget* xw = (struct xwidget*) g_object_get_data (G_OBJECT (webkitwebview), XG_XWIDGET);  
   printf("webkit finished loading\n");
 
-  EVENT_INIT (event);
-  event.kind = XWIDGET_EVENT;
-  event.frame_or_window = Qnil;	//frame; //how to get the frame here? //TODO i store it in the xwidget now
-
-  event.arg = Qnil;
-  event.arg = Fcons ((Lisp_Object)xw, event.arg); //TODO
-  event.arg = Fcons (intern ("document-load-finished"), event.arg);
-
-
-  kbd_buffer_store_event (&event);
-
+  store_xwidget_event_string(xw, "",
+                             "document-load-finished");
 }
 
 gboolean     webkit_osr_download_callback (WebKitWebView  *webkitwebview,
@@ -488,18 +494,7 @@ gboolean     webkit_osr_download_callback (WebKitWebView  *webkitwebview,
   struct xwidget* xw = (struct xwidget*) g_object_get_data (G_OBJECT (webkitwebview), XG_XWIDGET);  
   printf("webkit finished loading\n");
 
-  EVENT_INIT (event);
-  event.kind = XWIDGET_EVENT;
-  event.frame_or_window = Qnil;	//frame; //how to get the frame here? //TODO i store it in the xwidget now
-
-  event.arg = Qnil;
-  event.arg = Fcons (intern (webkit_download_get_uri (arg1)), event.arg);  
-  event.arg = Fcons ((Lisp_Object)xw, event.arg); //TODO
-  event.arg = Fcons (intern ("download-requested"), event.arg);
-
-
-  kbd_buffer_store_event (&event);
-
+  store_xwidget_event_string(xw, webkit_download_get_uri (arg1), "download-requested");
 
   return FALSE;
 }
@@ -512,6 +507,8 @@ gboolean  webkit_osr_mime_type_policy_typedecision_requested_callback(WebKitWebV
                                                                       gpointer                 user_data)
 {
   printf("mime policy requested\n");
+  // this function makes webkit send a download signal for all unknown mime types
+  // TODO defer the decision to lisp, so that its possible to make Emacs handle text mime for instance
   if(!webkit_web_view_can_show_mime_type(webView, mimetype)){
     webkit_web_policy_decision_download (policy_decision);
     return TRUE;
@@ -528,9 +525,12 @@ gboolean webkit_osr_new_window_policy_decision_requested_callback(WebKitWebView 
                                                                   WebKitWebPolicyDecision   *policy_decision,
                                                                   gpointer                   user_data)
 {
+  struct xwidget* xw = (struct xwidget*) g_object_get_data (G_OBJECT (webView), XG_XWIDGET);  
   printf("webkit_osr_new_window_policy_decision_requested_callback %s\n",
          webkit_web_navigation_action_get_original_uri (navigation_action));
   
+  store_xwidget_event_string(xw, webkit_web_navigation_action_get_original_uri (navigation_action),
+                             "new-window-policy-decision-requested");
   return FALSE;
 }
 
@@ -541,8 +541,11 @@ gboolean webkit_osr_navigation_policy_decision_requested_callback(WebKitWebView 
                                                         WebKitWebPolicyDecision   *policy_decision,
                                                         gpointer                   user_data)
 {
+  struct xwidget* xw = (struct xwidget*) g_object_get_data (G_OBJECT (webView), XG_XWIDGET);  
   printf("webkit_osr_navigation_policy_decision_requested_callback %s\n",
          webkit_web_navigation_action_get_original_uri (navigation_action));
+  store_xwidget_event_string(xw, webkit_web_navigation_action_get_original_uri (navigation_action),
+                             "navigation-policy-decision-requested");
   return FALSE;
 }
 
