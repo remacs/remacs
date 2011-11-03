@@ -169,7 +169,7 @@ defaults to the string looking like a url around the cursor position."
 	     (let ((elmid (progn 		   (string-match ".*#\\(.*\\)" strarg)(match-string 1 strarg))))
 		   (message "navigation-policy-decision-requested: '%s' %s"  strarg  elmid       )
 
-		   (xwidget-webkit-show-id-element xwidget elmid)
+		   (if elmid (xwidget-webkit-show-id-element xwidget elmid))
 		   )
 
              )
