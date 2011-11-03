@@ -462,7 +462,7 @@ void store_xwidget_event_string(struct xwidget* xw, char* eventname,char* events
   event.frame_or_window = Qnil;	//frame; //how to get the frame here? //TODO i store it in the xwidget now
 
   event.arg = Qnil;
-  event.arg = Fcons (intern (eventstr), event.arg);  //intern?
+  event.arg = Fcons (build_string(eventstr), event.arg);  //string so dont intern
   event.arg = Fcons ((Lisp_Object)xw, event.arg); //TODO
   event.arg = Fcons (intern (eventname), event.arg);//interning should be ok
   kbd_buffer_store_event (&event);
@@ -479,8 +479,8 @@ void     webkit_osr_document_load_finished_callback (WebKitWebView  *webkitwebvi
   struct xwidget* xw = (struct xwidget*) g_object_get_data (G_OBJECT (webkitwebview), XG_XWIDGET);  
   printf("webkit finished loading\n");
 
-  store_xwidget_event_string(xw, "",
-                             "document-load-finished");
+  store_xwidget_event_string(xw, 
+                             "document-load-finished", "");
 }
 
 gboolean     webkit_osr_download_callback (WebKitWebView  *webkitwebview,
@@ -494,7 +494,7 @@ gboolean     webkit_osr_download_callback (WebKitWebView  *webkitwebview,
   struct xwidget* xw = (struct xwidget*) g_object_get_data (G_OBJECT (webkitwebview), XG_XWIDGET);  
   printf("webkit finished loading\n");
 
-  store_xwidget_event_string(xw, webkit_download_get_uri (arg1), "download-requested");
+  store_xwidget_event_string(xw, "download-requested", webkit_download_get_uri (arg1));
 
   return FALSE;
 }
@@ -529,8 +529,8 @@ gboolean webkit_osr_new_window_policy_decision_requested_callback(WebKitWebView 
   printf("webkit_osr_new_window_policy_decision_requested_callback %s\n",
          webkit_web_navigation_action_get_original_uri (navigation_action));
   
-  store_xwidget_event_string(xw, webkit_web_navigation_action_get_original_uri (navigation_action),
-                             "new-window-policy-decision-requested");
+  store_xwidget_event_string(xw,  "new-window-policy-decision-requested", webkit_web_navigation_action_get_original_uri (navigation_action)
+                            );
   return FALSE;
 }
 
@@ -544,8 +544,8 @@ gboolean webkit_osr_navigation_policy_decision_requested_callback(WebKitWebView 
   struct xwidget* xw = (struct xwidget*) g_object_get_data (G_OBJECT (webView), XG_XWIDGET);  
   printf("webkit_osr_navigation_policy_decision_requested_callback %s\n",
          webkit_web_navigation_action_get_original_uri (navigation_action));
-  store_xwidget_event_string(xw, webkit_web_navigation_action_get_original_uri (navigation_action),
-                             "navigation-policy-decision-requested");
+  store_xwidget_event_string(xw,  "navigation-policy-decision-requested", webkit_web_navigation_action_get_original_uri (navigation_action)
+                            );
   return FALSE;
 }
 

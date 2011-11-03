@@ -148,19 +148,32 @@ defaults to the string looking like a url around the cursor position."
   (let*
       ((xwidget-event-type (nth 1 last-input-event))
        (xwidget (nth 2 last-input-event))
-       (xwidget-callback (xwidget-get xwidget 'callback)))
-    (funcall  xwidget-callback xwidget xwidget-event-type)))
+       ;(xwidget-callback (xwidget-get xwidget 'callback));;TODO stopped working for some reason
+       )
+    ;(funcall  xwidget-callback xwidget xwidget-event-type)
+    (funcall  'xwidget-webkit-callback xwidget xwidget-event-type)
+    ))
 
 (defun xwidget-webkit-callback (xwidget xwidget-event-type)
   (save-excursion
     (set-buffer (xwidget-buffer xwidget))
-    (cond ((eq xwidget-event-type 'document-load-finished)
-           (message "webkit finished loading: '%s'" (xwidget-webkit-get-title xwidget))
-           (xwidget-adjust-size-to-content xwidget)
-           (rename-buffer (format "*xwidget webkit: %s *" (xwidget-webkit-get-title xwidget)))
-           (pop-to-buffer (current-buffer))
-           )
-          )))
+    (let* ( (strarg  (nth 3 last-input-event)))
+      (cond ((eq xwidget-event-type 'document-load-finished)
+             (message "webkit finished loading: '%s'" (xwidget-webkit-get-title xwidget))
+             (xwidget-adjust-size-to-content xwidget)
+             (rename-buffer (format "*xwidget webkit: %s *" (xwidget-webkit-get-title xwidget)))
+             (pop-to-buffer (current-buffer))
+             )
+            
+            ((eq xwidget-event-type 'navigation-policy-decision-requested)
+	     (let ((elmname (progn 		   (string-match ".*#\\(.*\\)" strarg)(match-string 1 strarg))))
+		   (message "navigation-policy-decision-requested: '%s' %s"  strarg  elmname       )
+
+		   (xwidget-webkit-show-named-element xwidget elmname)
+		   )
+
+             )
+            ))))
 
 (define-derived-mode xwidget-webkit-mode
   special-mode "xwidget-webkit" "xwidget webkit view mode"
