@@ -249,9 +249,13 @@ Argument STR string."
           (field-value
            (progn
              (xwidget-webkit-execute-script xww xwidget-webkit-activeelement-js)
-             (xwidget-webkit-execute-script-rv xww "findactiveelement(document).value;" ))))
+             (xwidget-webkit-execute-script-rv xww "findactiveelement(document).value;" )))
+          (field-type              (xwidget-webkit-execute-script-rv xww "findactiveelement(document).type;" )))
      (list xww
-           (read-string "string:" field-value))))
+           (cond ( (equal "text" field-type) (read-string "text:" field-value))
+                 ( (equal "password" field-type) (read-passwd "password:" nil field-value))
+                 ( (equal "textarea" field-type) (read-textarea "textarea:" field-value))
+                 ))))
   (xwidget-webkit-execute-script xw (format "findactiveelement(document).value='%s'" str)))
 
 

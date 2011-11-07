@@ -1495,3 +1495,7 @@ http://test
 hook so anything can filter browser history.
 ** TODO new relative url code sometimes fail
 http://www.dilbert.com
+** TODO input field enhancements
+- password field
+- textarea 
+
