@@ -166,14 +166,8 @@ defaults to the string looking like a url around the cursor position."
              )
             
             ((eq xwidget-event-type 'navigation-policy-decision-requested)
-	     (let ((elmid (progn 		   (string-match ".*#\\(.*\\)" strarg)(match-string 1 strarg))))
-		   (message "navigation-policy-decision-requested: '%s' %s"  strarg  elmid       )
-
-		   (if elmid (xwidget-webkit-show-id-or-named-element xwidget elmid))
-		   )
-
-             )
-            ))))
+             (if (string-match ".*#\\(.*\\)" strarg)
+                 (xwidget-webkit-show-id-or-named-element xwidget (match-string 1 strarg))))))))
 
 (define-derived-mode xwidget-webkit-mode
   special-mode "xwidget-webkit" "xwidget webkit view mode"
@@ -254,7 +248,7 @@ Argument STR string."
      (list xww
            (cond ( (equal "text" field-type) (read-string "text:" field-value))
                  ( (equal "password" field-type) (read-passwd "password:" nil field-value))
-                 ( (equal "textarea" field-type) (read-textarea "textarea:" field-value))
+                 ( (equal "textarea" field-type) (read-string "textarea:" field-value))
                  ))))
   (xwidget-webkit-execute-script xw (format "findactiveelement(document).value='%s'" str)))
 

@@ -1496,6 +1496,27 @@ hook so anything can filter browser history.
 ** TODO new relative url code sometimes fail
 http://www.dilbert.com
 ** TODO input field enhancements
-- password field
-- textarea 
+*** password field. 
+was straightforward
 
+*** textarea 
+less straightforward. I would like it to work like emacs-w3m, where a
+new editing buffer is opened. on c-c, the buffer is closed and the
+browser field updated. however, it's not immediately obvious how to
+store the reference to the field reliably.
+
+furthermore the current code doesn't seem to propagate linefeed
+properly to text areas.
+
+** DONE bug in current navigation handler
+   CLOSED: [2011-11-09 Wed 10:04]
+on www.dn.se
+Debugger entered--Lisp error: (args-out-of-range "http://platform.twitter.com/widgets/hub.html" 54 357)
+  match-string(1 "http://platform.twitter.com/widgets/hub.html")
+  xwidget-webkit-callback(48890368 navigation-policy-decision-requested)
+  xwidget-event-handler()
+  call-interactively(xwidget-event-handler nil nil)
+** TODO how to set the name of a webkit buffer?
+not obvious because, the buffer isn't created immediately and there is
+a callback that sets the buffer name automatically
+** TODO how to find next field in tab order?a
