@@ -1519,4 +1519,7 @@ Debugger entered--Lisp error: (args-out-of-range "http://platform.twitter.com/wi
 ** TODO how to set the name of a webkit buffer?
 not obvious because, the buffer isn't created immediately and there is
 a callback that sets the buffer name automatically
-** TODO how to find next field in tab order?a
+** TODO how to find next field in tab order?
+** TODO unique buffer names
+the webkit xwidgets renames the buffer after load but not uniquely so
+it sometimes fails.
