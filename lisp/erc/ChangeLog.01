@@ -160,9 +160,9 @@
 
 	* debian/control: integrated erc-speak back into erc
 
-	* debian/maint/conffiles, debian/maint/conffiles.in, debian/maint/postinst, 
-	  debian/maint/postinst.in, debian/maint/prerm, debian/maint/prerm.in, 
-	  debian/scripts/install, debian/scripts/install.in, debian/scripts/remove, 
+	* debian/maint/conffiles, debian/maint/conffiles.in, debian/maint/postinst,
+	  debian/maint/postinst.in, debian/maint/prerm, debian/maint/prerm.in,
+	  debian/scripts/install, debian/scripts/install.in, debian/scripts/remove,
 	  debian/scripts/remove.in, debian/scripts/startup.erc-speak:
 	since erc-speak is gone, resurrect the static files, and update them to support the latest erc
 
@@ -220,7 +220,7 @@
 	* erc.el:
 	* Applied antifuchs/mhp patches, the latest on erc-help, unmodified
 	* New variable: erc-reuse-buffers default to t.
-	* Modified erc-generate-new-buffer-name to use it. it checks if server and port are the same, 
+	* Modified erc-generate-new-buffer-name to use it. it checks if server and port are the same,
 	  then one can assume thats the same channel/query target again.
 
 2001-11-23  Mario Lang  <mlang@delysid.org>
@@ -238,7 +238,7 @@
 
 	* erc.el: * New local variable, erc-announced-server-name
 	* erc-mode-line-format supports a new symbol, target-and/or-server
-	* The mode-line displays the announced server name now (for autojoin later..., 
+	* The mode-line displays the announced server name now (for autojoin later...,
 	  greets Adam)
 	* New macro, erc-server-hook-list for a nice way to define the defcustoms of the erc-server-*-hook's
 	  Thanks go to the guy from #emacs who helped with that
@@ -457,7 +457,7 @@
 	* erc.el: * Reduction patch 2
 	  This time, we move the input ring handling into erc-ring.el
 	  Remember that you need (require 'erc-ring) in your .emacs to get the input handling as a feature
-	  And remeber, that you don't need it if you don't use input ring :-)
+	  And remember, that you don't need it if you don't use input ring :-)
 
 	* erc-ring.el: * Initial checkin
 
@@ -603,11 +603,11 @@
 
 	* debian/control: added the new erc-speak package
 
-	* debian/README.erc-speak, debian/maint/postinst.in, debian/maint/prerm.in, 
+	* debian/README.erc-speak, debian/maint/postinst.in, debian/maint/prerm.in,
 	  debian/scripts/install.in, debian/scripts/remove.in:
 	new file
 
-	* debian/maint/postinst, debian/maint/prerm, debian/scripts/install, 
+	* debian/maint/postinst, debian/maint/prerm, debian/scripts/install,
 	  debian/scripts/remove:
 	removed, superseded by its .in counterpart
 
@@ -625,7 +625,7 @@
 2001-10-23  Mario Lang  <mlang@delysid.org>
 
 	* erc-speak.el:
-	* Added a new personality for channel name announcement, This makes streams of flooded channels much easier to listen to, 
+	* Added a new personality for channel name announcement, This makes streams of flooded channels much easier to listen to,
 	  especially if you are on more than one channel simultaneously.
 
 	* erc.el:
@@ -643,7 +643,7 @@
 	* Removed now really obsolete code. Package size reduced by 50%
 
 	* erc-speak.el:
-	* Very important fix! Now erc-speak is really complete. Messages don't get cut anymore. Be sure to use auditory icons, 
+	* Very important fix! Now erc-speak is really complete. Messages don't get cut anymore. Be sure to use auditory icons,
 	  it's reallllly cool now!!!
 
 	* erc-speak.el: *** empty log message ***
@@ -655,9 +655,9 @@
 
 	* debian/changelog: oops, silly typo
 
-	* debian/changelog, debian/control, debian/copyright, 
-	  debian/maint/conffiles, debian/maint/postinst, debian/maint/prerm, 
-	  debian/rules, debian/scripts/install, debian/scripts/remove, 
+	* debian/changelog, debian/control, debian/copyright,
+	  debian/maint/conffiles, debian/maint/postinst, debian/maint/prerm,
+	  debian/rules, debian/scripts/install, debian/scripts/remove,
 	  debian/scripts/startup:
 	initial check-in
 
@@ -666,7 +666,7 @@
 	* erc.el:
 	* Changed erc-insert-hook to get two arguments, START and END of the region
 	  which got inserted. CAREFUL! This could break stuff, but it makes the hook
-	  much more useable.
+	  much more usable.
 
 	* erc.el:
 	* Made erc-smiley a new option, currently set to t to showoff this feature. :)
@@ -826,11 +826,11 @@
 	* (erc-complete-nick): Add ": " only if one completes directly after the erc-prompt, otherwise, add just one space
 
 	* erc.el:
-	* Changed menu-definition to use easymenu (hopefully this now works under Xemacs)
+	* Changed menu-definition to use easymenu (hopefully this now works under XEmacs)
 	* Fix for custom problem with :must-match on XEmacs (thanks shapr)
 	* Added /COUNTRY command using (what-domain) from package mail-extr (shapr)
 	* Fix for case-sensitivity problem with pals (they are now all downcased)
-	* Different (erc-version) function which now can take prefix argument to insert the version information into the current buffer, 
+	* Different (erc-version) function which now can take prefix argument to insert the version information into the current buffer,
 	  instead of just displaying it in the minibuffer.
 
 2001-09-10  Mario Lang  <mlang@delysid.org>
@@ -1055,4 +1055,3 @@
 ;; Local Variables:
 ;; coding: utf-8
 ;; End:
-
