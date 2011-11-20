@@ -912,7 +912,7 @@
 	fixed one occurrence of a setq with only one argument (XEmacs didn't like that)
 
 	* erc.el:
-	Added erc-next-line-add-newlines customisation possibility.
+	Added erc-next-line-add-newlines customization possibility.
 
 	* erc.el:
 	added erc-fill-prefix for defining your own way of filling and fixed filling somehow
@@ -940,8 +940,7 @@
 
 	* erc.el: typo
 
-	* erc.el: ommit
-	:wq
+	* erc.el: omit
 
 2001-07-06  Alex Schroeder  <alex@gnu.org>
 
