@@ -2088,7 +2088,7 @@ w32_key_to_modifier (int key)
       key_mapping = Qnil;
     }
 
-  /* NB. This code runs in the input thread, asychronously to the lisp
+  /* NB. This code runs in the input thread, asynchronously to the lisp
      thread, so we must be careful to ensure access to lisp data is
      thread-safe.  The following code is safe because the modifier
      variable values are updated atomically from lisp and symbols are
@@ -3986,7 +3986,7 @@ unwind_create_frame (Lisp_Object frame)
   struct frame *f = XFRAME (frame);
 
   /* If frame is ``official'', nothing to do.  */
-  if (!CONSP (Vframe_list) || !EQ (XCAR (Vframe_list), frame))
+  if (NILP (Fmemq (frame, Vframe_list)))
     {
 #if GLYPH_DEBUG
       struct w32_display_info *dpyinfo = FRAME_W32_DISPLAY_INFO (f);
@@ -6709,7 +6709,7 @@ DEFUN ("default-printer-name", Fdefault_printer_name, Sdefault_printer_name,
       ClosePrinter (hPrn);
       return Qnil;
     }
-  /* Call GetPrinter again with big enouth memory block */
+  /* Call GetPrinter again with big enough memory block.  */
   err = GetPrinter (hPrn, 2, (LPBYTE)ppi2, dwNeeded, &dwReturned);
   ClosePrinter (hPrn);
   if (!err)

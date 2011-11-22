@@ -421,7 +421,7 @@ Optional argument POINT is where to look for the environment."
   texinfo-mode (context)
   "List smart completions at point.
 Since texinfo is not a programming language the default version is not
-useful.  Insted, look at the current symbol.  If it is a command
+useful.  Instead, look at the current symbol.  If it is a command
 do primitive texinfo built ins.  If not, use ispell to lookup words
 that start with that symbol."
   (let ((prefix (car (oref context :prefix)))
@@ -579,7 +579,7 @@ Note: TYPE not yet implemented."
 ;; 	    (setq doctag (if docstring sourcetag nil))))
 ;; 	  (setq tags (cdr tags)))))
 ;;     ;; If we found a prototype of the function that has some doc, but not the
-;;     ;; actual function, lets make due with that.
+;;     ;; actual function, let's make due with that.
 ;;     (if (not docstring)
 ;; 	(cond ((stringp docstringvar)
 ;; 	       (setq docstring docstringvar
@@ -597,7 +597,7 @@ Note: TYPE not yet implemented."
 ;;     ;; If we have a string, do the replacement.
 ;;     (delete-region (semantic-tag-start tag)
 ;; 		   (semantic-tag-end tag))
-;;     ;; Use useful functions from the docaument library.
+;;     ;; Use useful functions from the document library.
 ;;    (srecode-texi-insert-tag-as-doc doctag)
 ;;    ;(semantic-insert-foreign-tag doctag)
 ;;     ))

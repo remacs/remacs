@@ -130,7 +130,7 @@
 ;; - a 2 dimensional precedence table (key word "prec2"), is a 2D
 ;;   table recording the precedence relation (can be `<', `=', `>', or
 ;;   nil) between each pair of tokens.
-;; - a precedence-level table (key word "grammar"), which is a alist
+;; - a precedence-level table (key word "grammar"), which is an alist
 ;;   giving for each token its left and right precedence level (a
 ;;   number or nil).  This is used in `smie-grammar'.
 ;; The prec2 tables are only intermediate data structures: the source
@@ -759,7 +759,7 @@ Possible return values:
    (indirect-function 'smie-op-left)
    halfsexp))
 
-;;; Miscellanous commands using the precedence parser.
+;;; Miscellaneous commands using the precedence parser.
 
 (defun smie-backward-sexp-command (&optional n)
   "Move backward through N logical elements."
@@ -1579,8 +1579,9 @@ KEYWORDS are additional arguments, which can use the following keywords:
                      (while (setq closer (pop closers))
                        (unless (and closers
                                     ;; FIXME: this eliminates prefixes of other
-                                    ;; closers, but we should probably elimnate
-                                    ;; prefixes of other keywords as well.
+                                    ;; closers, but we should probably
+                                    ;; eliminate prefixes of other keywords
+                                    ;; as well.
                                     (string-prefix-p closer (car closers)))
                          (push (aref closer (1- (length closer))) triggers)))
                      (delete-dups triggers)))))))

@@ -433,6 +433,25 @@ margin_glyphs_to_reserve (struct window *w, int total_glyphs, Lisp_Object margin
   return n;
 }
 
+#if XASSERTS
+/* Return non-zero if ROW's hash value is correct, zero if not.  */
+int
+verify_row_hash (struct glyph_row *row)
+{
+  int area, k;
+  unsigned row_hash = 0;
+
+  for (area = LEFT_MARGIN_AREA; area < LAST_AREA; ++area)
+    for (k = 0; k < row->used[area]; ++k)
+      row_hash = ((((row_hash << 4) + (row_hash >> 24)) & 0x0fffffff)
+		  + row->glyphs[area][k].u.val
+		  + row->glyphs[area][k].face_id
+		  + row->glyphs[area][k].padding_p
+		  + (row->glyphs[area][k].type << 2));
+
+  return row_hash == row->hash;
+}
+#endif
 
 /* Adjust glyph matrix MATRIX on window W or on a frame to changed
    window sizes.
@@ -604,6 +623,7 @@ adjust_glyph_matrix (struct window *w, struct glyph_matrix *matrix, int x, int y
 		  row->glyphs[LAST_AREA]
 		    = row->glyphs[LEFT_MARGIN_AREA] + dim.width;
 		}
+	      xassert (!row->enabled_p || verify_row_hash (row));
 	      ++row;
 	    }
 	}
@@ -1275,6 +1295,9 @@ line_draw_cost (struct glyph_matrix *matrix, int vpos)
 static inline int
 row_equal_p (struct glyph_row *a, struct glyph_row *b, int mouse_face_p)
 {
+  xassert (verify_row_hash (a));
+  xassert (verify_row_hash (b));
+
   if (a == b)
     return 1;
   else if (a->hash != b->hash)
@@ -3472,7 +3495,7 @@ redraw_overlapping_rows (struct window *w, int yb)
 	      if (row->used[RIGHT_MARGIN_AREA])
 		rif->fix_overlapping_area (w, row, RIGHT_MARGIN_AREA, overlaps);
 
-	      /* Record in neighbour rows that ROW overwrites part of
+	      /* Record in neighbor rows that ROW overwrites part of
 		 their display.  */
 	      if (overlaps & OVERLAPS_PRED)
 		MATRIX_ROW (w->current_matrix, i - 1)->overlapped_p = 1;
@@ -4347,10 +4370,10 @@ scrolling_window (struct window *w, int header_line_p)
   j = last_old;
   while (i - 1 > first_new
          && j - 1 > first_old
-         && MATRIX_ROW (current_matrix, i - 1)->enabled_p
-	 && (MATRIX_ROW (current_matrix, i - 1)->y
-	     == MATRIX_ROW (desired_matrix, j - 1)->y)
-	 && !MATRIX_ROW (desired_matrix, j - 1)->redraw_fringe_bitmaps_p
+         && MATRIX_ROW (current_matrix, j - 1)->enabled_p
+	 && (MATRIX_ROW (current_matrix, j - 1)->y
+	     == MATRIX_ROW (desired_matrix, i - 1)->y)
+	 && !MATRIX_ROW (desired_matrix, i - 1)->redraw_fringe_bitmaps_p
          && row_equal_p (MATRIX_ROW (desired_matrix, i - 1),
                          MATRIX_ROW (current_matrix, j - 1), 1))
     --i, --j;

@@ -1,8 +1,273 @@
+2011-11-17  Glenn Morris  <rgm@gnu.org>
+
+	* emacs-lisp/autoload.el (autoload-generate-file-autoloads):
+	Ignore buffer-local generated-autoload-file if it is the same
+	as the global value.  (Bug#10049)
+
+2011-11-17  Juanma Barranquero  <lekktu@gmail.com>
+
+	* textmodes/reftex-toc.el (reftex-toc-return-marker, reftex-toc-help)
+	(reftex-toc, reftex-toc, reftex-toc-dframe-p, reftex-toc-next-heading)
+	(reftex-toc-previous-heading, reftex-toc-max-level)
+	(reftex-toc-goto-line-and-hide, reftex-toc-show-calling-point)
+	(reftex-toc-quit, reftex-toc-revert, reftex-toc-jump)
+	(reftex-toc-do-promote, reftex-toc-promote-prepare)
+	(reftex-toc-promote-action, reftex-toc-extract-section-number)
+	(reftex-toc-load-all-files-for-promotion, reftex-toc-rename-label)
+	(reftex-toc-rename-label, reftex-toc-visit-location)
+	(reftex-toc-visit-location, reftex-toggle-auto-toc-recenter)
+	(reftex-toggle-auto-toc-recenter, reftex-toggle-auto-toc-recenter)
+	(reftex-make-separate-toc-frame): Fix typos, and use TOC consistently,
+	leaving "*toc*" only for references to the buffer.
+
+2011-11-17  Martin Rudalics  <rudalics@gmx.at>
+
+	* window.el (window-resize, delete-window, split-window):
+	Replace window-splits by window-combination-resize.
+	* cus-start.el (window-splits): Replace by
+	window-combination-resize.
+
+2011-11-17  Glenn Morris  <rgm@gnu.org>
+
+	* progmodes/sh-script.el (sh-font-lock-keywords-var):
+	Make bash entry derive from sh entry, not shell entry.
+
+2011-11-16  Michael Albinus  <michael.albinus@gmx.de>
+
+	* net/tramp.el (tramp-handle-file-truename): Cache only the local
+	file name.
+
+	* net/tramp-cache.el (tramp-flush-file-property): Flush also
+	properties of linked files.  (Bug#9879)
+
+2011-11-16  Juanma Barranquero  <lekktu@gmail.com>
+
+	* menu-bar.el (menu-bar-file-menu):
+	* printing.el (pr-ps-utility):
+	* calendar/icalendar.el (icalendar, icalendar--convert-tz-offset)
+	(icalendar--convert-to-ical, icalendar--convert-ordinary-to-ical)
+	(icalendar--convert-weekly-to-ical, icalendar--convert-yearly-to-ical)
+	(icalendar--convert-sexp-to-ical, icalendar--convert-block-to-ical)
+	(icalendar--convert-float-to-ical, icalendar--convert-date-to-ical)
+	(icalendar--convert-cyclic-to-ical)
+	(icalendar--convert-anniversary-to-ical, icalendar-import-buffer)
+	(icalendar--convert-ical-to-diary)
+	(icalendar--convert-recurring-to-diary)
+	(icalendar--convert-non-recurring-all-day-to-diary)
+	(icalendar-import-format-sample):
+	* progmodes/idlw-shell.el (idlwave-shell-mode):
+	* progmodes/vhdl-mode.el (vhdl-mode, vhdl-print-two-column)
+	(vhdl-print-customize-faces, vhdl-mode, vhdl-ps-print-settings)
+	(vhdl-ps-print-init): Fix typos.
+
+2011-11-16  Ken Manheimer  <ken.manheimer@gmail.com>
+
+	* allout.el, allout-widgets.el (file metadata): Attribute copyright to
+	FSF and collapse date sequence, obscure author/maintainer email address
+	better, remove extra version line, track relocation of author's webpage.
+
+	* progmodes/python.el (python-pdbtrack-input-prompt)
+	(python-pdbtrack-track-stack-file): Adjust to recognize ipdb as well as
+	regular python pdb prompts.  Adjustments shamelessly taken exactly as
+	suggested in EmacsWiki page (tiny change):
+	http://www.emacswiki.org/PythonProgrammingInEmacs#toc14
+
+2011-11-16  Juanma Barranquero  <lekktu@gmail.com>
+
+	* expand.el (expand-pos, expand-index, expand-point):
+	Remove redundant info from docstring.
+	(expand-add-abbrevs): Doc fix.
+	(expand-c-sample-expand-list, expand-sample-lisp-mode-expand-list)
+	(expand-sample-perl-mode-expand-list): Fix typos.
+
+	* net/dbus.el (dbus-event-member-name):
+	* play/5x5.el (5x5-solve-rotate-left, 5x5-solver-output):
+	* term/pc-win.el (msdos-create-frame-with-faces):
+	* textmodes/texinfmt.el (texinfo-format-image): Fix typos.
+
+2011-11-16  Martin Rudalics  <rudalics@gmx.at>
+
+	* window.el (split-window, window-state-get-1)
+	(window-state-put-1, window-state-put-2): Rename occurrences of
+	window-nest to window-combination-limit.
+	* cus-start.el (window-nest): Rename to
+	window-combination-limit.
+
+2011-11-16  Chong Yidong  <cyd@gnu.org>
+
+	* progmodes/autoconf.el (autoconf-mode): Fix comment-start-skip
+	regexp (Bug#10033).
+
+2011-11-16  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* tmm.el (tmm-prompt): Use minibuffer-with-setup-hook (bug#10053).
+	`completing-read' will remove *Completions* and will preserve
+	current-buffer for us.
+	(tmm-add-prompt): Users of *Completions* will always (re)set its
+	major mode.
+	(tmm-old-comp-map): Remove.
+
+2011-11-16  Glenn Morris  <rgm@gnu.org>
+
+	* mail/rmailedit.el: Require rmailmm when compiling.
+	(rmail-old-mime-state): New declaration.
+	(rmail-edit-current-message): If editing a mime message,
+	edit the "raw" message from the mbox buffer.
+	(rmail-cease-edit): Handle mime messages.  (Bug#9840)
+
+2011-11-15  Glenn Morris  <rgm@gnu.org>
+
+	* mail/rmailmm.el (rmail-mime-toggle-raw): Remove entity arg,
+	which wasn't being used.  Add optional arg to force given state.
+	(rmail-mime): Add optional arg to force given state.
+
+2011-11-15  Juanma Barranquero  <lekktu@gmail.com>
+
+	* allout.el (allout-encryption-plaintext-sanitization-regexps):
+	* frame.el (display-mm-dimensions-alist):
+	* outline.el (outline-mode-menu-bar-map, outline-move-subtree-up)
+	(outline-move-subtree-down):
+	* net/newst-treeview.el (newsticker--treeview-do-get-node-of-feed)
+	(newsticker--treeview-do-get-node):
+	* net/quickurl.el (quickurl-list-buffer-name):
+	* progmodes/dcl-mode.el (dcl-mode):
+	* progmodes/gdb-mi.el (gdb-mapcar*):
+	* progmodes/sql.el (sql-mode-oracle-font-lock-keywords): Fix typos.
+
+2011-11-15  Glenn Morris  <rgm@gnu.org>
+
+	* mail/rmail.el (rmail-file-coding-system): It's only ever used
+	in a boolean sense, so just make it a boolean, and fix the doc.
+	(rmail-show-mime-function, rmail-mime-feature)
+	(rmail-require-mime-maybe): Doc fixes.
+	(rmail-show-message-1): Check rmail-show-mime-function is non-nil.
+
+	* mail/rmailmm.el (rmail-show-mime): Doc fix.
+
+2011-11-15  Juanma Barranquero  <lekktu@gmail.com>
+
+	* epg.el (epg-start-decrypt, epg-start-verify, epg-start-sign)
+	(epg-start-encrypt, epg-start-export-keys, epg-start-import-keys)
+	(epg-start-receive-keys, epg-start-delete-keys, epg-start-sign-keys)
+	(epg-start-generate-key, epg-context-set-progress-callback): Fix typos.
+
+2011-11-15  Glenn Morris  <rgm@gnu.org>
+
+	* mail/rmailmm.el (rmail-mime-entity, rmail-mime-entity-segment)
+	(rmail-mime-shown-mode, rmail-mime-hidden-mode, rmail-mime-raw-mode)
+	(rmail-mime-toggle-hidden, rmail-mime-insert-tagline)
+	(rmail-mime-insert-header, rmail-mime-handle, rmail-mime-parse)
+	(rmail-mime, rmail-show-mime): Doc fixes.
+
+	* term/ns-win.el (mode-line-frame-identification):
+	Leave it alone.  (Bug#10051)
+
+	* simple.el (mark-whole-buffer): Doc fix.  (Bug#10023)
+
+	* mail/rmailout.el (rmail-output-to-rmail-buffer):
+	Handle empty buffers.  (Bug#9978)
+
+2011-11-14  Juanma Barranquero  <lekktu@gmail.com>
+
+	* international/mule.el (define-charset):
+	* mail/rmailmm.el (rmail-mime-find-header-encoding):
+	* progmodes/prolog.el (prolog-mode-hook, prolog-inferior-mode-hook):
+	* progmodes/verilog-mode.el (verilog-backward-token):
+	* textmodes/ispell.el (lookup-words):
+	* textmodes/sgml-mode.el (sgml-guess-indent): Fix typos.
+
+2011-11-14  Glenn Morris  <rgm@gnu.org>
+
+	* progmodes/executable.el
+	(executable-make-buffer-file-executable-if-script-p):
+	Handle file-modes returning nil.
+
+	* mail/rmailsum.el (rmail-summary): Remove movement to beginning of
+	message - not necessary, and causes problems.  (Bug#9831)
+
+	* mail/rmailsum.el (rmail-new-summary): Preserve message number.
+
+	* mail/rmail.el (rmail-no-mail-p): Remove mode-line N/M indicator.
+
+	* mail/rmailsum.el (rmail-summary, rmail-new-summary)
+	(rmail-new-summary-1): Allow empty summaries.  (Bug#9964)
+	(rmail-new-summary): Remember that rmail-summary-buffer is buffer-local.
+
+2011-11-12  Martin Rudalics  <rudalics@gmx.at>
+
+	* window.el (window-resize, delete-window): Use window-splits
+	variable instead of function.
+	(window-state-get-1, window-state-put-2, window-state-put):
+	Don't deal with windows' splits status.
+
+2011-11-12  Glenn Morris  <rgm@gnu.org>
+
+	* apropos.el (apropos-do-all, apropos-library, apropos-value)
+	(apropos-documentation): Doc fixes.
+
+2011-11-11  Juanma Barranquero  <lekktu@gmail.com>
+
+	* progmodes/idlw-shell.el (idlwave-shell-make-new-bp-overlay):
+	* textmodes/sgml-mode.el (html-tag-help): Fix typos.
+
+2011-11-11  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* electric.el (electric-indent-post-self-insert-function): Make it
+	possible for a char to only indent in some circumstances.
+	(electric-indent-mode): Simplify.
+
+2011-11-11  Martin Rudalics  <rudalics@gmx.at>
+
+	* window.el (windows-with-parameter): Remove unused function.
+	(windows-at-side): Rename to window-at-side-list.
+	(window-check, window-atom-check, window-atom-check-1)
+	(window-side-check, window-size-ignore, window-size-fixed-1)
+	(window-in-direction-2): Prefix with "window--".
+	(window-tree-1): Rename to window--subtree, fix doc-string.
+
+2011-11-11  Glenn Morris  <rgm@gnu.org>
+
+	* subr.el (eval-after-load): If FILE is already loaded,
+	evaluate FORM before it gets wrapped in more stuff.  (Bug#10009)
+
+2011-11-10  Glenn Morris  <rgm@gnu.org>
+
+	* vc/vc-svn.el (vc-svn-create-repo, vc-svn-modify-change-comment):
+	Call svn via vc-svn-command rather than vc-do-command.
+	(vc-svn-command): Add --non-interactive.  (Bug#9993)
+	(vc-svn-update, vc-svn-merge-news): No need for --non-interactive.
+
+	* emacs-lisp/bytecomp.el (byte-compile-interactive-only-functions):
+	Add toggle-read-only.  (Bug#7292)
+	* files.el (toggle-read-only): Mention that it should only
+	be used interactively.  (Bug#10006)
+
+2011-11-09  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* progmodes/compile.el (compilation-error-regexp-alist-alist):
+	Adjust regexp for OCaml warnings.
+
+	* electric.el (electric-pair-post-self-insert-function): Let user
+	turn it off buffer-locally (bug#9932).
+
+	* progmodes/python.el (python-beginning-of-statement):
+	Rewrite (bug#2703).
+
+	* progmodes/compile.el: Better handle TABs (bug#9749).
+	(compilation-internal-error-properties)
+	(compilation-next-error-function): Obey the target buffer's
+	compilation-error-screen-columns.
+
+2011-11-09  Juanma Barranquero  <lekktu@gmail.com>
+
+	* progmodes/meta-mode.el: Remove obsolete comments.
+	(meta-right-comment-regexp, meta-ignore-comment-regexp):
+	Fix typos in docstrings.
+
 2011-11-09  Martin Rudalics  <rudalics@gmx.at>
 
 	* window.el (window-size-fixed-p): Rewrite doc-string.
-	(window-resizable-p): Rename to window--resizable-p.  Update
-	callers.
+	(window-resizable-p): Rename to window--resizable-p.  Update callers.
 	(window--resizable): New function.  Make all callers of
 	window-resizable call window--resizable instead.
 	(window-resizable): Rewrite in terms of window--resizable.
@@ -90,7 +355,7 @@
 	(window-size-ignore, window-state-get): Callers changed.
 	(window-normalize-window): Rename from window-normalize-any-window.
 	New arg LIVE-ONLY, replacing window-normalize-live-window.
-	(window-normalize-live-window): Deleted.
+	(window-normalize-live-window): Delete.
 	(window-combination-p, window-combined-p, window-combinations)
 	(walk-window-subtree, window-atom-root, window-min-size)
 	(window-sizable, window-sizable-p, window-size-fixed-p)
@@ -286,11 +551,10 @@
 	* progmodes/cc-defs.el: Update "virtual semicolon" comments.
 
 	* progmodes/cc-engine.el (c-crosses-statement-barrier-p):
-	Recode to scan one line at at time rather than having \n and \r
-	explicitly in c-stmt-delim-chars
-	(for some modes, e.g. AWK).
+	Recode to scan one line at a time rather than having \n and \r
+	explicitly in c-stmt-delim-chars (for some modes, e.g. AWK).
 	(c-forward-label): Amend for virtual semicolons.
-	(c-at-macro-vsemi-p, c-macro-vsemi-status-unknown-p): New functions
+	(c-at-macro-vsemi-p, c-macro-vsemi-status-unknown-p): New functions.
 
 	* progmodes/cc-fonts.el (c-font-lock-declarations): Take account
 	of the new C macros.
@@ -307,7 +571,7 @@
 
 	* progmodes/cc-vars.el (c-macro-with-semi-re):
 	(c-macro-names-with-semicolon): New variables.
-	(c-make-macro-with-semi-re): New function
+	(c-make-macro-with-semi-re): New function.
 
 2011-10-28  Stefan Monnier  <monnier@iro.umontreal.ca>
 
@@ -362,7 +626,7 @@
 2011-10-26  Michael Albinus  <michael.albinus@gmx.de>
 
 	* ido.el (ido-file-name-all-completions-1): Do not require
-	tramp.el explicitely.  (Bug#7583)
+	tramp.el explicitly.  (Bug#7583)
 
 2011-10-26  Stefan Monnier  <monnier@iro.umontreal.ca>
 
@@ -2380,13 +2644,13 @@
 
 2011-08-20  Alan Mackenzie  <acm@muc.de>
 
-	* Fontify CPP expressions correctly when starting in the middle of
+	Fontify CPP expressions correctly when starting in the middle of
 	such a construct.  Mainly for when jit-lock etc. starts a chunk
 	here.
 
-	* progmodes/cc-fonts.el (c-font-lock-context): new buffer local
+	* progmodes/cc-fonts.el (c-font-lock-context): New buffer local
 	variable.
-	(c-make-font-lock-search-form): new function, extracted from
+	(c-make-font-lock-search-form): New function, extracted from
 	c-make-font-lock-search-function.
 	(c-make-font-lock-search-function): Use the above function.
 	(c-make-font-lock-context-search-function): New function.
@@ -2717,7 +2981,7 @@
 
 	* progmodes/cc-fonts.el (c-font-lock-declarations): Jump over the
 	QT keyword "more" to prevent "more slots: ...." being spuriously
-	parsed as a bitfield declaraion.
+	parsed as a bitfield declaration.
 
 	* progmodes/cc-engine.el (c-beginning-of-statement-1):
 	Refactor and enhance to handle bitfield declarations.
@@ -3416,7 +3680,7 @@
 	Also clean up the code slightly.
 
 	* progmodes/grep.el (rgrep): Don't bind `process-connection-type',
-	because that makes the colours go away.
+	because that makes the colors go away.
 
 	* mail/sendmail.el (send-mail-function): Change the default to
 	`sendmail-query-once'.
@@ -3789,7 +4053,7 @@
 	for list)" (bug#6475).
 
 	* files.el (file-expand-wildcards): Ignore non-readable
-	sub-directories while trying to find matches instead of signalling
+	sub-directories while trying to find matches instead of signaling
 	an error (bug#6297).
 
 	* man.el (Man-reference-regexp): Allow matching possible
@@ -5462,7 +5726,7 @@
 
 	* image-mode.el (image-toggle-display-image): Ensure that the
 	image spec passed to the animate timer is the same object as in
-	the the buffer's display property (Bug#6981).
+	the buffer's display property (Bug#6981).
 	(image-transform-properties): Doc fix.
 
 	* image.el (image-animate-max-time): Default to nil.
@@ -5544,7 +5808,7 @@
 2011-05-28  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* minibuffer.el (completion--capf-wrapper): Check applicability before
-	retuning non-nil for non-exclusive completion data.
+	returning non-nil for non-exclusive completion data.
 	* progmodes/etags.el (tags-completion-at-point-function):
 	* info-look.el (info-lookup-completions-at-point): Mark as
 	non-exclusive.

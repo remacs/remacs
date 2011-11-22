@@ -19487,8 +19487,17 @@ display_line (struct it *it)
       overlay_arrow_seen = 1;
     }
 
+  /* Highlight trailing whitespace.  */
+  if (!NILP (Vshow_trailing_whitespace))
+    highlight_trailing_whitespace (it->f, it->glyph_row);
+
   /* Compute pixel dimensions of this line.  */
   compute_line_metrics (it);
+
+  /* Implementation note: No changes in the glyphs of ROW or in their
+     faces can be done past this point, because compute_line_metrics
+     computes ROW's hash value and stores it within the glyph_row
+     structure.  */
 
   /* Record whether this row ends inside an ellipsis.  */
   row->ends_in_ellipsis_p
@@ -19523,10 +19532,6 @@ display_line (struct it *it)
       && PT <= MATRIX_ROW_END_CHARPOS (row)
       && cursor_row_p (row))
     set_cursor_from_row (it->w, row, it->w->desired_matrix, 0, 0, 0, 0);
-
-  /* Highlight trailing whitespace.  */
-  if (!NILP (Vshow_trailing_whitespace))
-    highlight_trailing_whitespace (it->f, it->glyph_row);
 
   /* Prepare for the next line.  This line starts horizontally at (X
      HPOS) = (0 0).  Vertical positions are incremented.  As a
@@ -22161,7 +22166,7 @@ get_glyph_face_and_encoding (struct frame *f, struct glyph *glyph,
 
 
 /* Get glyph code of character C in FONT in the two-byte form CHAR2B.
-   Retunr 1 if FONT has a glyph for C, otherwise return 0.  */
+   Return 1 if FONT has a glyph for C, otherwise return 0.  */
 
 static inline int
 get_char_glyph_code (int c, struct font *font, XChar2b *char2b)
@@ -22232,6 +22237,12 @@ fill_composite_glyph_string (struct glyph_string *s, struct face *base_face,
       ++s->nchars;
     }
   s->cmp_to = i;
+
+  if (s->face == NULL)
+    {
+      s->face = base_face->ascii_face;
+      s->font = s->face->font;
+    }
 
   /* All glyph strings for the same composition has the same width,
      i.e. the width set for the first component of the composition.  */
@@ -23844,7 +23855,7 @@ produce_stretch_glyph (struct it *it)
     {
       width = it->last_visible_x - it->current_x;
 #ifdef HAVE_WINDOW_SYSTEM
-      /* Subtact one more pixel from the stretch width, but only on
+      /* Subtract one more pixel from the stretch width, but only on
 	 GUI frames, since on a TTY each glyph is one "pixel" wide.  */
       width -= FRAME_WINDOW_P (it->f);
 #endif
@@ -28206,7 +28217,6 @@ syms_of_xdisp (void)
   DEFSYM (Qhollow, "hollow");
   DEFSYM (Qhand, "hand");
   DEFSYM (Qarrow, "arrow");
-  DEFSYM (Qtext, "text");
   DEFSYM (Qinhibit_free_realized_faces, "inhibit-free-realized-faces");
 
   list_of_error = Fcons (Fcons (intern_c_string ("error"),
@@ -28675,7 +28685,7 @@ To add a prefix to continuation lines, use `wrap-prefix'.  */);
   DEFVAR_INT ("overline-margin", overline_margin,
 	       doc: /* *Space between overline and text, in pixels.
 The default value is 2: the height of the overline (1 pixel) plus 1 pixel
-margin to the caracter height.  */);
+margin to the character height.  */);
   overline_margin = 2;
 
   DEFVAR_INT ("underline-minimum-offset",
