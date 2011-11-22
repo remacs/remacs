@@ -7754,7 +7754,7 @@ imagemagick_load_image (struct frame *f, struct image *img,
     }
 
   /* Finally we are done manipulating the image.  Figure out the
-     resulting width/height and transfer ownerwship to Emacs.  */
+     resulting width/height and transfer ownership to Emacs.  */
   height = MagickGetImageHeight (image_wand);
   width = MagickGetImageWidth (image_wand);
 
@@ -7786,7 +7786,7 @@ imagemagick_load_image (struct frame *f, struct image *img,
           goto imagemagick_error;
         }
 
-      /* Copy imagegmagick image to x with primitive yet robust pixel
+      /* Copy imagemagick image to x with primitive yet robust pixel
          pusher loop.  This has been tested a lot with many different
          images.  */
 

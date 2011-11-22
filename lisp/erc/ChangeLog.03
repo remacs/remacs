@@ -838,7 +838,7 @@
 	* erc.el:
 	erc-log-channels: removed; set the directory to start logging
 	(erc-directory-writeable-p): create directory if it doesn't exist, check if
-	    it's writeable
+	    it's writable
 	(erc-logging-enabled): don't reference erc-log-channels
 
 2003-04-07  Damien Elmes  <erc@repose.cx>
@@ -1425,7 +1425,7 @@
 	reference argument directly - no string matching
 
 	* erc.el(erc-extract-command-from-line):
-	hmm, thinko in the canonicalisation. should
+	hmm, thinko in the canonicalization. should
 	    be fixed
 
 2003-01-16  Francis Litterio  <franl@users.sourceforge.net>
@@ -1556,7 +1556,7 @@
 
 	* erc.el: This is the "everything is suddenly broken!" release
 	You know, this is CVS, you can still go back, and wait until the transition
-	is finished, but here is patch one, which basicly breaks every command
+	is finished, but here is patch one, which basically breaks every command
 	which is typed on the prompt.
 	Hit me, we can still revert, but something needs to be done about this.
 	* (erc-extract-command-from-line): intern-soft the function here.

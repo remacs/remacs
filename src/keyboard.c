@@ -4823,7 +4823,7 @@ const char *const lispy_function_keys[] =
     "ico-00",        /* VK_ICO_00         0xE4 */
     0,               /* VK_PROCESSKEY     0xE5 - used by IME */
     "ico-clear",     /* VK_ICO_CLEAR      0xE6 */
-    0,               /* VK_PACKET         0xE7  - used to pass unicode chars */
+    0,               /* VK_PACKET         0xE7  - used to pass Unicode chars */
     0,               /*                   0xE8 */
     "reset",         /* VK_OEM_RESET      0xE9 */
     "jump",          /* VK_OEM_JUMP       0xEA */
@@ -10153,7 +10153,7 @@ will read just one key sequence.  */)
 			 ! NILP (can_return_switch_frame), 0);
 
 #if 0  /* The following is fine for code reading a key sequence and
-	  then proceeding with a lenghty computation, but it's not good
+	  then proceeding with a lengthy computation, but it's not good
 	  for code reading keys in a loop, like an input method.  */
 #ifdef HAVE_WINDOW_SYSTEM
   if (display_hourglass_p)
@@ -12120,7 +12120,7 @@ This variable is keyboard-local.  */);
 Function key definitions that apply to all terminal devices should go
 here.  If a mapping is defined in both the current
 `local-function-key-map' binding and this variable, then the local
-definition will take precendence.  */);
+definition will take precedence.  */);
   Vfunction_key_map = Fmake_sparse_keymap (Qnil);
 
   DEFVAR_LISP ("key-translation-map", Vkey_translation_map,

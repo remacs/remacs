@@ -2790,13 +2790,13 @@
 	* net/tramp-gw.el:
 	* net/tramp-imap.el:
 	* net/tramp-sh.el:
-	* net/tramp-smb.el: Add tramp-autoload cookie for initialisation
+	* net/tramp-smb.el: Add tramp-autoload cookie for initialization
 	code of `tramp-default-method-alist' and `tramp-default-user-alist'.
 
 2010-12-29  Karl Fogel  <kfogel@red-bean.com>
 
 	* saveplace.el (save-place-alist-to-file): Save list sorted and
-	pretty-printed, so that it is mergeable by line-based text merging,
+	pretty-printed, so that it is mergable by line-based text merging,
 	as suggested by Iain Dalton <iain.dalton {_AT_} gmail.com>.
 
 2010-12-28  Ken Manheimer  <ken.manheimer@gmail.com>
@@ -5376,7 +5376,7 @@
 
 2010-10-21  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
-	* newcomment.el (comment-dwim): Fix the intentation in the doc string.
+	* newcomment.el (comment-dwim): Fix the indentation in the doc string.
 
 2010-10-21  Michael Albinus  <michael.albinus@gmx.de>
 
@@ -7632,7 +7632,7 @@
 	(post-self-insert-hook): Use it.
 
 	* emacs-lisp/pcase.el (pcase-split-memq):
-	Fix overenthusiastic optimisation.
+	Fix overenthusiastic optimization.
 	(pcase-u1): Handle the case of a lambda pred.
 
 2010-08-31  Kenichi Handa  <handa@m17n.org>
@@ -9381,7 +9381,7 @@
 
 	Fix an indentation bug:
 
-	* progmodes/cc-mode.el (c-common-init): Initialise c-new-BEG/END.
+	* progmodes/cc-mode.el (c-common-init): Initialize c-new-BEG/END.
 	(c-neutralize-syntax-in-and-mark-CPP): c-new-BEG/END: Take account
 	of existing values.
 
@@ -13225,7 +13225,7 @@
 2010-02-04  Michael Albinus  <michael.albinus@gmx.de>
 
 	* dired.el (dired-revert): If DIRED-DIRECTORY is a cons cell, call
-	`dired-uncache' for every elemnt which is an absolute file name.
+	`dired-uncache' for every element which is an absolute file name.
 
 	* net/tramp.el (tramp-handle-dired-uncache): When DIR is not a
 	directory, handle its directory component.
@@ -14596,7 +14596,7 @@
 2009-12-05  Kevin Ryde  <user42@zip.com.au>
 
 	* textmodes/sgml-mode.el (sgml-lexical-context):
-	Recognise comment-start-skip to comment-end-skip as comment (Bug#4781).
+	Recognize comment-start-skip to comment-end-skip as comment (Bug#4781).
 
 2009-12-05  Juri Linkov  <juri@jurta.org>
 

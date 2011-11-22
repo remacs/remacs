@@ -87,7 +87,7 @@
 ;;   to turn it off.
 
 
-;; The command `follow-delete-other-windows-and-split' maximises the
+;; The command `follow-delete-other-windows-and-split' maximizes the
 ;; visible area of the current buffer.
 ;;
 ;; I recommend adding it, and `follow-mode', to hotkeys in the global
@@ -154,7 +154,7 @@
 ;;	follow-delete-other-windows-and-split	 C-c . 1
 ;;		Maximize the visible area of the current buffer,
 ;;		and enter Follow mode. 	This is a very convenient
-;;		way to start Follow mode, hence we recomend that
+;;		way to start Follow mode, hence we recommend that
 ;;		this command be added to the global keymap.
 ;;
 ;;	follow-recenter				 C-c . C-l
@@ -562,7 +562,7 @@ Keys specific to Follow mode:
 ;;
 ;; Almost like the real thing, except when the cursor ends up outside
 ;; the top or bottom...  In our case however, we end up outside the
-;; window and hence we are recenterd.  Should we let `recenter' handle
+;; window and hence we are recentered.  Should we let `recenter' handle
 ;; the point position we would never leave the selected window.  To do
 ;; it ourselves we would need to do our own redisplay, which is easier
 ;; said than done.  (Why didn't I do a real display abstraction from

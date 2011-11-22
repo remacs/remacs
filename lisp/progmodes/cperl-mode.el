@@ -839,7 +839,7 @@ voice);
         b) Can lineup vertically \"middles\" of rows, like `=' in
                 a  = b;
                 cc = d;
-        c) Can insert spaces where this impoves readability (in one
+        c) Can insert spaces where this improves readability (in one
                 interactive sweep over the buffer);
         d) Has support for imenu, including:
                 1) Separate unordered list of \"interesting places\";
@@ -927,7 +927,7 @@ syntax-parsing routines, and marks them up so that either
 
     A1) CPerl may work around these deficiencies (for big chunks, mostly
         PODs and HERE-documents), or
-    A2) On capable Emaxen CPerl will use improved syntax-handlings
+    A2) On capable Emaxen CPerl will use improved syntax-handling
 	which reads mark-up hints directly.
 
     The scan in case A2 is much more comprehensive, thus may be slower.
@@ -1277,7 +1277,7 @@ versions of Emacs."
 	  "----"
 	  ["Ispell PODs" cperl-pod-spell
 	   ;; Better not to update syntaxification here:
-	   ;; debugging syntaxificatio can be broken by this???
+	   ;; debugging syntaxification can be broken by this???
 	   (or
 	    (get-text-property (point-min) 'in-pod)
 	    (< (progn
@@ -2801,7 +2801,7 @@ Will not look before LIM."
 				 (skip-chars-forward " \t")
 				 (if (memq (char-after (point))
 					   (append "#\n" nil))
-				     nil ; Can't use intentation of this line...
+				     nil ; Can't use indentation of this line...
 				   (point)))
 			     (skip-chars-forward " \t")
 			     (point)))
@@ -4540,7 +4540,7 @@ the sections using `cperl-pod-head-face', `cperl-pod-face',
 				       (forward-char 2))
 				(and (eq (following-char) ?\] )
 				     (forward-char 1)))
-			      (setq REx-subgr-end qtag)	;EndOf smart-highlighed
+			      (setq REx-subgr-end qtag)	;End smart-highlighted
 			      ;; Apparently, I can't put \] into a charclass
 			      ;; in m]]: m][\\\]\]] produces [\\]]
 ;;; POSIX?  [:word:] [:^word:] only inside []

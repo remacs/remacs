@@ -905,7 +905,7 @@ face_suitable_for_char_p (struct face *face, int c)
 
 
 /* Return ID of face suitable for displaying character C on frame F.
-   FACE must be reazlied for ASCII characters in advance.  Called from
+   FACE must be realized for ASCII characters in advance.  Called from
    the macro FACE_FOR_CHAR.  */
 
 int
@@ -1346,7 +1346,7 @@ accumulate_script_ranges (Lisp_Object arg, Lisp_Object range, Lisp_Object val)
 
    In FONTSET, set FONT_DEF in a fashion specified by ADD for
    characters in RANGE and ranges in SCRIPT_RANGE_LIST before RANGE.
-   The consumed ranges are poped up from SCRIPT_RANGE_LIST, and the
+   The consumed ranges are popped up from SCRIPT_RANGE_LIST, and the
    new SCRIPT_RANGE_LIST is stored in ARG.
 
    If ASCII is nil, don't set FONT_DEF for ASCII characters.  It is

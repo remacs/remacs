@@ -344,7 +344,7 @@ Uses known macro tables in SPP to determine what block to skip."
 		 (string= sym "0"))
 	    (and ifdef (not (semantic-lex-spp-symbol-p sym)))
 	    (and ifndef (semantic-lex-spp-symbol-p sym)))
-	;; The if indecates to skip this preprocessor section
+	;; The if indicates to skip this preprocessor section.
 	(let ((pt nil))
 	  ;; (message "%s %s yes" ift sym)
 	  (beginning-of-line)
@@ -650,7 +650,7 @@ as for the parent."
 		(setq depth 0)
 
 		;; This is a copy of semantic-parse-region-default where we
-		;; are doing something special with the lexication of the
+		;; are doing something special with the lexing of the
 		;; contents of the semantic-list token.  Stuff not used by C
 		;; removed.
 		(let ((tokstream
@@ -954,7 +954,7 @@ now.
 			     (nth 1 (car names)) ; name
 			     "typedef"
 			     (semantic-tag-type-members tag)
-			     ;; parent is just tbe name of what
+			     ;; parent is just the name of what
 			     ;; is passed down as a tag.
 			     (list
 			      (semantic-tag-name
@@ -1591,7 +1591,7 @@ DO NOT return the list of tags encompassing point."
 	(setq tagreturn (cons (semantic-tag-type (car (semanticdb-find-result-nth tmp idx))) tagreturn))
 	(setq idx (1+ idx)))
       )
-    ;; Use the encompased types around point to also look for using statements.
+    ;; Use the encompassed types around point to also look for using statements.
     ;;(setq tagreturn (cons "bread_name" tagreturn))
     (while (cdr tagsaroundpoint)  ; don't search the last one
       (setq tmp (semantic-find-tags-by-class 'using (semantic-tag-components (car tagsaroundpoint))))

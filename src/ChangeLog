@@ -1,3 +1,115 @@
+2011-11-21  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* process.c (wait_reading_process_output): Fix asynchrounous
+	GnuTLS socket handling on some versions of the GnuTLS library.
+	(wait_reading_process_output): Add comment and URL.
+
+2011-11-21  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* xterm.c (x_clear_frame): Reinstate the XClearWindow call.
+
+2011-11-21  Chong Yidong  <cyd@gnu.org>
+
+	* window.c (Fnext_window, Fprevious_window): Doc fix.
+
+2011-11-20  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* window.c (get_phys_cursor_glyph): Fix Lisp_Object/int mixup.
+
+2011-11-20  Juanma Barranquero  <lekktu@gmail.com>
+
+	* nsfont.m (syms_of_nsfont) <ns-reg-to-script>: Fix typo.
+
+2011-11-20  Martin Rudalics  <rudalics@gmx.at>
+
+	* window.c (Fset_window_combination_limit): Rename argument
+	STATUS to LIMIT.
+	(Vwindow_combination_limit): Remove "status" from doc-string.
+
+2011-11-20  Andreas Schwab  <schwab@linux-m68k.org>
+
+	* m/ibms390.h: Remove.
+	* m/ibms390x.h: Don't include "ibms390.h".
+
+2011-11-20  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* fileio.c (Finsert_file_contents): Add missing gcpro1 variable.
+	Suggested by Dmitry Antipov <dmantipov@yandex.ru>.
+
+2011-11-20  Juanma Barranquero  <lekktu@gmail.com>
+
+	* casetab.c (Fset_case_table):
+	* charset.c (Fcharset_after): Fix typos.
+
+2011-11-20  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Standardize on VIRT_ADDR_VARIES behavior (Bug#10042).
+	Otherwise, valgrind does not work on some platforms.
+	Problem reported by Andreas Schwab in
+	<http://lists.gnu.org/archive/html/emacs-devel/2011-11/msg00081.html>.
+	* puresize.h (pure, PURE_P): Always behave as if VIRT_ADDR_VARIES
+	is set, removing the need for VIRT_ADDRESS_VARIES.
+	(PURE_P): Use a more-efficient implementation that needs just one
+	comparison, not two: on x86-64 with GCC 4.6.2, this cut down the
+	number of instructions from 6 (xorl, cmpq, jge, xorl, cmpq, setge)
+	to 4 (xorl, subq, cmpq, setbe).
+	* alloc.c (pure): Always extern now, since that's the
+	VIRT_ADDR_VARIES behavior.
+	(PURE_POINTER_P): Use a single comparison, not two, for
+	consistency with the new puresize.h.
+	* lisp.h (PNTR_COMPARISON_TYPE): Remove; no longer needed.
+	* m/ibms390.h, m/intel386.h, m/template.h, s/cygwin.h, s/hpux10-20.h:
+	Remove VIRT_ADDR_VARIES no longer needed.
+
+2011-11-19  Eli Zaretskii  <eliz@gnu.org>
+
+	* xdisp.c (x_write_glyphs, draw_phys_cursor_glyph)
+	(erase_phys_cursor, update_window_cursor, show_mouse_face)
+	(cursor_in_mouse_face_p): If the cursor position is out of bounds,
+	behave as if the cursor position were at the window margin.
+
+	* window.c (get_phys_cursor_glyph): If the window is hscrolled,
+	and the cursor position is out of bounds, behave as if the cursor
+	position were at the window margin.  (Bug#10075)
+
+2011-11-18  Chong Yidong  <cyd@gnu.org>
+
+	* window.c (Fwindow_combination_limit): Make first argument
+	non-optional, since it is meaningless for live windows like the
+	selected window.
+
+2011-11-18  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	* keymap.c (Fwhere_is_internal): Add missing RETURN_UNGCPROs.
+
+2011-11-18  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* intervals.c: Fix grafting over the whole buffer (bug#10071).
+	(graft_intervals_into_buffer): Simplify.
+
+2011-11-18  Eli Zaretskii  <eliz@gnu.org>
+
+	* dispnew.c (swap_glyph_pointers): Swap the used[] arrays and the
+	hash values of the two rows.
+	(copy_row_except_pointers): Preserve the used[] arrays and the
+	hash values of the two rows.  (Bug#10035)
+	(add_row_entry): Add xassert to verify that ROW's hash code is valid.
+
+	* xdisp.c (row_hash): New function, body extracted from
+	compute_line_metrics.
+	(compute_line_metrics): Call row_hash, instead of computing the
+	hash code inline.
+
+	* dispnew.c (verify_row_hash): Call row_hash for computing the
+	hash code of a row, instead of duplicating code from xdisp.c.
+
+	* dispextern.h (row_hash): Add prototype.
+
+2011-11-18  Tassilo Horn  <tassilo@member.fsf.org>
+
+	* frame.c (delete_frame): Don't delete the terminal when the last
+	X frame is closed if emacs is built with GTK toolkit.
+
 2011-11-17  Juanma Barranquero  <lekktu@gmail.com>
 
 	* window.c (syms_of_window) <window-combination-resize>: Fix typo.
@@ -371,7 +483,7 @@
 
 	Fix the `xbytecode' command.
 	* .gdbinit (xprintbytestr): New command.
-	(xwhichsymbols): Renamed from `which'; all callers changed.
+	(xwhichsymbols): Rename from `which'; all callers changed.
 	(xbytecode): Print the byte-code string as well.
 
 2011-10-29  Kim Storm  <storm@cua.dk>

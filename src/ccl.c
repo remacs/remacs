@@ -47,7 +47,7 @@ static Lisp_Object Qcode_conversion_map;
 static Lisp_Object Qcode_conversion_map_id;
 
 /* Symbols of ccl program have this property, a value of the property
-   is an index for Vccl_protram_table. */
+   is an index for Vccl_program_table. */
 static Lisp_Object Qccl_program_idx;
 
 /* Table of registered CCL programs.  Each element is a vector of
@@ -826,7 +826,7 @@ while (0)
    : (charset = CHARSET_FROM_ID ((id)), DECODE_CHAR (charset, (code))))
 
 /* Encode character C by some of charsets in CHARSET_LIST.  Set ID to
-   the id of the used charset, ENCODED to the resulf of encoding.
+   the id of the used charset, ENCODED to the result of encoding.
    Assume that we can use the variable `charset'.  */
 
 #define CCL_ENCODE_CHAR(c, charset_list, id, encoded)		\

@@ -2972,9 +2972,7 @@ x_clear_frame (struct frame *f)
      follow an explicit cursor_to.  */
   BLOCK_INPUT;
 
-  /* The following call is commented out because it does not seem to accomplish
-     anything, apart from causing flickering during window resize.  */
-  /* XClearWindow (FRAME_X_DISPLAY (f), FRAME_X_WINDOW (f)); */
+  XClearWindow (FRAME_X_DISPLAY (f), FRAME_X_WINDOW (f));
 
   /* We have to clear the scroll bars.  If we have changed colors or
      something like that, then they should be notified.  */
@@ -4193,7 +4191,7 @@ static Boolean xaw3d_arrow_scroll;
 
 /* Whether the drag scrolling maintains the mouse at the top of the
    thumb.  If not, resizing the thumb needs to be done more carefully
-   to avoid jerkyness.  */
+   to avoid jerkiness.  */
 
 static Boolean xaw3d_pick_top;
 
@@ -8779,7 +8777,7 @@ x_wait_for_event (struct frame *f, int eventtype)
   pending_event_wait.f = f;
   pending_event_wait.eventtype = eventtype;
 
-  /* Set timeout to 0.1 second.  Hopefully not noticable.
+  /* Set timeout to 0.1 second.  Hopefully not noticeable.
      Maybe it should be configurable.  */
   EMACS_SET_SECS_USECS (tmo, 0, 100000);
   EMACS_GET_TIME (tmo_at);

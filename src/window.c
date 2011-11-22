@@ -467,10 +467,8 @@ Return nil if WINDOW has no previous sibling.  */)
   return decode_any_window (window)->prev;
 }
 
-DEFUN ("window-combination-limit", Fwindow_combination_limit, Swindow_combination_limit, 0, 1, 0,
+DEFUN ("window-combination-limit", Fwindow_combination_limit, Swindow_combination_limit, 1, 1, 0,
        doc: /* Return combination limit of window WINDOW.
-If WINDOW is omitted or nil, it defaults to the selected window.
-
 If the return value is nil, child windows of WINDOW can be recombined with
 WINDOW's siblings.  A return value of t means that child windows of
 WINDOW are never \(re-)combined with WINDOW's siblings.  */)
@@ -480,18 +478,16 @@ WINDOW are never \(re-)combined with WINDOW's siblings.  */)
 }
 
 DEFUN ("set-window-combination-limit", Fset_window_combination_limit, Sset_window_combination_limit, 2, 2, 0,
-       doc: /* Set combination limit of window WINDOW to STATUS; return STATUS.
-If WINDOW is omitted or nil, it defaults to the selected window.
-
-If STATUS is nil, child windows of WINDOW can be recombined with
-WINDOW's siblings.  STATUS t means that child windows of WINDOW are
+       doc: /* Set combination limit of window WINDOW to LIMIT; return LIMIT.
+If LIMIT is nil, child windows of WINDOW can be recombined with
+WINDOW's siblings.  LIMIT t means that child windows of WINDOW are
 never \(re-)combined with WINDOW's siblings.  Other values are reserved
 for future use.  */)
-  (Lisp_Object window, Lisp_Object status)
+  (Lisp_Object window, Lisp_Object limit)
 {
   register struct window *w = decode_any_window (window);
 
-  w->combination_limit = status;
+  w->combination_limit = limit;
 
   return w->combination_limit;
 }
@@ -2187,7 +2183,7 @@ next_window (Lisp_Object window, Lisp_Object minibuf, Lisp_Object all_frames, in
 
 
 DEFUN ("next-window", Fnext_window, Snext_window, 0, 3, 0,
-       doc: /* Return window following WINDOW in cyclic ordering of windows.
+       doc: /* Return live window after WINDOW in the cyclic ordering of windows.
 WINDOW must be a live window and defaults to the selected one.  The
 optional arguments MINIBUF and ALL-FRAMES specify the set of windows to
 consider.
@@ -2226,7 +2222,7 @@ windows, eventually ending up back at the window you started with.
 
 
 DEFUN ("previous-window", Fprevious_window, Sprevious_window, 0, 3, 0,
-       doc: /* Return window preceding WINDOW in cyclic ordering of windows.
+       doc: /* Return live window before WINDOW in the cyclic ordering of windows.
 WINDOW must be a live window and defaults to the selected one.  The
 optional arguments MINIBUF and ALL-FRAMES specify the set of windows to
 consider.
@@ -5782,13 +5778,30 @@ get_phys_cursor_glyph (struct window *w)
 {
   struct glyph_row *row;
   struct glyph *glyph;
+  int hpos = w->phys_cursor.hpos;
 
-  if (w->phys_cursor.vpos >= 0
-      && w->phys_cursor.vpos < w->current_matrix->nrows
-      && (row = MATRIX_ROW (w->current_matrix, w->phys_cursor.vpos),
-	  row->enabled_p)
-      && row->used[TEXT_AREA] > w->phys_cursor.hpos)
-    glyph = row->glyphs[TEXT_AREA] + w->phys_cursor.hpos;
+  if (!(w->phys_cursor.vpos >= 0
+	&& w->phys_cursor.vpos < w->current_matrix->nrows))
+    return NULL;
+
+  row = MATRIX_ROW (w->current_matrix, w->phys_cursor.vpos);
+  if (!row->enabled_p)
+    return NULL;
+
+  if (XINT (w->hscroll))
+    {
+      /* When the window is hscrolled, cursor hpos can legitimately be
+	 out of bounds, but we draw the cursor at the corresponding
+	 window margin in that case.  */
+      if (!row->reversed_p && hpos < 0)
+	hpos = 0;
+      if (row->reversed_p && hpos >= row->used[TEXT_AREA])
+	hpos = row->used[TEXT_AREA] - 1;
+    }
+
+  if (row->used[TEXT_AREA] > hpos
+      && 0 <= hpos)
+    glyph = row->glyphs[TEXT_AREA] + hpos;
   else
     glyph = NULL;
 
@@ -6524,10 +6537,10 @@ sibling.
 
 Other values are reserved for future use.
 
-The value of this variable is also assigned to the combination-limit
-status of the new parent window.  The combination-limit status of a
-window can be retrieved via the function `window-combination-limit' and
-altered by the function `set-window-combination-limit'.  */);
+The value of this variable is also assigned to the combination limit of
+the new parent window.  The combination limit of a window can be
+retrieved via the function `window-combination-limit' and altered by the
+function `set-window-combination-limit'.  */);
   Vwindow_combination_limit = Qnil;
 
   defsubr (&Sselected_window);

@@ -170,7 +170,7 @@ respective allout-mode keybinding variables, `allout-command-prefix',
   ;; the function value keymap of allout-mode-map is used in
   ;; minor-mode-map-alist - update it:
   (fset allout-mode-map allout-mode-map-value))
-;;;_  * intialize the mode map:
+;;;_  * initialize the mode map:
 ;; ensure that allout-mode-map has some setting even if allout-mode hasn't
 ;; been invoked:
 (allout-compose-and-institute-keymap)
@@ -612,7 +612,7 @@ headers look like comments in the programming language.  It will also use
 the comment-start string, with an '_' appended, for `allout-primary-bullet'.
 
 String values are used as literals, not regular expressions, so
-do not escape any regulare-expression characters.
+do not escape any regular-expression characters.
 
 Value t means to first check for assoc value in `allout-mode-leaders'
 alist, then use comment-start string, if any, then use default (`.').
@@ -825,7 +825,7 @@ formatted copy."
 (defcustom allout-encrypt-unencrypted-on-saves t
   "If non-nil, topics pending encryption are encrypted during buffer saves.
 
-This provents file-system exposure of un-encrypted contents of
+This prevents file-system exposure of un-encrypted contents of
 items marked for encryption.
 
 When non-nil, if the topic currently being edited is decrypted,
@@ -2283,7 +2283,7 @@ If topic has no offspring, then the next sibling with offspring will
 determine whether or not this one is determined to be aberrant.
 
 If true, then the allout-recent-* settings are calibrated on the
-offspring that qaulifies it as aberrant, ie with depth that
+offspring that qualifies it as aberrant, ie with depth that
 exceeds the topic by more than one."
 
   ;; This is most clearly understood when considering standard-prefix-leader

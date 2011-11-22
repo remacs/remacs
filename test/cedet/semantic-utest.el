@@ -170,7 +170,7 @@ def fun2(a,b,c): #1
 
 
 )
-;  "pyhon test case. notice that python is indentation sensitive
+;  "python test case. notice that python is indentation sensitive
 
 
 (defvar semantic-utest-Python-name-contents
@@ -622,7 +622,7 @@ INSERTME is the text to be inserted after the deletion."
   )
 
 ;look at http://mfgames.com/linux/csharp-mode
-(defun semantic-utest-Csharp() ;; hmm i dont even know how to edit a scharp file. need a csharp mode implementation i suppose
+(defun semantic-utest-Csharp() ;; hmm i don't even know how to edit a scharp file. need a csharp mode implementation i suppose
   (interactive)
   (if (fboundp 'csharp-mode)
       (semantic-utest-generic "C#" (semantic-utest-fname "csharptest.cs") semantic-utest-Csharp-buffer-contents  semantic-utest-Csharp-name-contents   '("fun2") "//1" "//deleted line")

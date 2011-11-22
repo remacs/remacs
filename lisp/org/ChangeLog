@@ -1,3 +1,15 @@
+2011-11-20  Juanma Barranquero  <lekktu@gmail.com>
+
+	* org.el (org-link-unescape, org-link-unescape-compound): Fix typos.
+
+2011-11-20  Andreas Schwab  <schwab@linux-m68k.org>
+
+	* org-list.el (org-list-send-item): Use sort instead of sort*.
+
+2011-11-20  Juanma Barranquero  <lekktu@gmail.com>
+
+	* org-table.el (org-table-line-to-dline): Fix typo.
+
 2011-11-16  Juanma Barranquero  <lekktu@gmail.com>
 
 	* org-agenda.el (org-agenda-add-entry-text-descriptive-links)
@@ -4165,7 +4177,7 @@
 
 2011-07-28  David Maus  <dmaus@ictsoc.de>
 
-	* org.el (org-link-escape): New unicode aware percent encoding
+	* org.el (org-link-escape): New Unicode aware percent encoding
 	algorithm.
 
 2011-07-28  Sebastian Rose  <sebastian_rose@gmx.de>
@@ -4173,7 +4185,7 @@
 	* org-protocol.el (org-protocol-unhex-single-byte-sequence): New
 	function.  Decode hex-encoded singly byte sequences.
 	(org-protocol-unhex-compound): Use new function if decoding sequence
-	as unicode character failed.
+	as Unicode character failed.
 
 2011-07-28  Bastien Guerry  <bzg@gnu.org>
 
@@ -6185,8 +6197,8 @@
 2010-11-11  Carsten Dominik  <carsten.dominik@gmail.com>
 
 	* org-indent.el (org-indent-add-properties):
-	Use `with-silent-modificatons'.
-	(org-indent-remove-properties): Use `with-silent-modificatons'.
+	Use `with-silent-modifications'.
+	(org-indent-remove-properties): Use `with-silent-modifications'.
 
 2010-11-11  Carsten Dominik  <carsten.dominik@gmail.com>
 
@@ -13637,7 +13649,7 @@
 2009-08-06  Carsten Dominik  <carsten.dominik@gmail.com>
 
 	* org.el (org-remove-empty-overlays-at)
-	(org-clean-visibility-after-subtree-move): New functons.
+	(org-clean-visibility-after-subtree-move): New functions.
 	(org-move-subtree-down): Simplify cleanup of display.
 
 2009-08-06  Carsten Dominik  <carsten.dominik@gmail.com>
@@ -14386,7 +14398,7 @@
 2009-08-06  Carsten Dominik  <carsten.dominik@gmail.com>
 
 	* org.el (org-edit-src-code, org-edit-fixed-width-region): Use a
-	better bufer-generating mechanism.
+	better buffer-generating mechanism.
 	(org-edit-src-find-buffer): New function.
 
 	* org-icalendar.el (org-print-icalendar-entries): Don't check for
@@ -14739,7 +14751,7 @@
 
 2009-08-06  Carsten Dominik  <carsten.dominik@gmail.com>
 
-	* org.el (org-sort-entries-or-items): Match TODO keywrds
+	* org.el (org-sort-entries-or-items): Match TODO keywords
 	case-sensitively, when sorting.
 	(org-priority): Do not match TODO keywords with wrong case.
 
@@ -15201,7 +15213,7 @@
 
 	* org-exp.el (org-export-as-html): Use IDs in the correct way.
 
-	* org.el (org-uuidgen-p): New funtion.
+	* org.el (org-uuidgen-p): New function.
 
 	* org-agenda.el (org-agenda-fontify-priorities): New default value
 	`cookies'.
@@ -17067,7 +17079,7 @@
 	(org-file-apps-defaults-macosx): Let PostScript files be opened by
 	preview.
 	(org-time-stamp-inactive): Call `org-time-stamp'.
-	(org-time-stamp): New argument `inactive'.  Also edit inacive
+	(org-time-stamp): New argument `inactive'.  Also edit inactive
 	stamps.  Convert time stamp type.
 	(org-open-file): Interpret the `default' value for the `command'
 	in `org-file-apps'.

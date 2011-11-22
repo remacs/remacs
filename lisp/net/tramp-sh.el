@@ -4905,7 +4905,7 @@ If no corresponding command is found, nil is returned."
 
 (defun tramp-get-inline-coding (vec prop size)
   "Return the coding command related to PROP.
-PROP is either `remote-encoding', `remode-decoding',
+PROP is either `remote-encoding', `remote-decoding',
 `local-encoding' or `local-decoding'.
 
 SIZE is the length of the file to be coded.  Depending on SIZE,
@@ -5033,11 +5033,11 @@ function cell is returned to be applied on a buffer."
 ;;   until the last but one hop via `start-file-process'.  Apply it
 ;;   also for ftp and smb.
 ;; * WIBNI if we had a command "trampclient"?  If I was editing in
-;;   some shell with root priviledges, it would be nice if I could
+;;   some shell with root privileges, it would be nice if I could
 ;;   just call
 ;;     trampclient filename.c
 ;;   as an editor, and the _current_ shell would connect to an Emacs
-;;   server and would be used in an existing non-priviledged Emacs
+;;   server and would be used in an existing non-privileged Emacs
 ;;   session for doing the editing in question.
 ;;   That way, I need not tell Emacs my password again and be afraid
 ;;   that it makes it into core dumps or other ugly stuff (I had Emacs
