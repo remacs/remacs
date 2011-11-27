@@ -979,7 +979,7 @@
 
 2002-11-16  Alex Schroeder  <alex@gnu.org>
 
-	* erc-autoaway.el, erc-button.el, erc-fill.el, erc-match.el, 
+	* erc-autoaway.el, erc-button.el, erc-fill.el, erc-match.el,
 	  erc-menu.el, erc-ring.el, erc-track.el:
 	Cleanup of file headers: copyright years, GPL mumbo-jumbo, commentaries.
 
@@ -1447,7 +1447,7 @@
 	* erc-match.el: fixed spelling error
 
 	* erc-track.el, erc-match.el: * erc-match.el:
-	  highlight current nickname in its own face (deactivated by default):
+	  highlight current nickname in its own face (inactive by default):
 	  - added erc-current-nick-highlight-type, erc-current-nick-face,
 	    erc-current-nick-p
 
@@ -1564,7 +1564,7 @@
 	  (require 'erc-nickserv) is now necessary for this to work
 
 	* erc.el:
-	* results of /COUNTRY now formatted as notice; errors are ignored, 
+	* results of /COUNTRY now formatted as notice; errors are ignored,
 	  fixing
 	  bug which made prompt disappear
 
@@ -1959,9 +1959,9 @@
 
 	* erc.el: remove trailing \n from any sent text
 
-	* servers.pl, erc-bbdb.el, erc-button.el, erc-chess.el, 
-	  erc-complete.el, erc-fill.el, erc-ibuffer.el, erc-list.el, 
-	  erc-match.el, erc-menu.el, erc-nets.el, erc-replace.el, 
+	* servers.pl, erc-bbdb.el, erc-button.el, erc-chess.el,
+	  erc-complete.el, erc-fill.el, erc-ibuffer.el, erc-list.el,
+	  erc-match.el, erc-menu.el, erc-nets.el, erc-replace.el,
 	  erc-speak.el, erc-speedbar.el, erc-track.el, erc.el:
 	clean whitespace
 
