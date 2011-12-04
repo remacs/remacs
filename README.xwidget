@@ -101,8 +101,11 @@ m-x report-emacs-bug
 Change the address to:
 submit@debbugs.gnu.org
 
-Include this line early in the body:
+Include this line first in the body:
 Package: emacs-xwidgets
+
+browse bugs:
+http://debbugs.gnu.org/cgi/pkgreport.cgi?package=emacs-xwidgets
 ** Thanks
 emacs-devel@gnu.org. There are very helpful people there. When I
 started the xwidget project I had no clue about the Emacs internals. 
@@ -1463,7 +1466,8 @@ seems to work using the ugly javascript in
 xwidget-webkit-activeelement-js
 
 ** support downstreams
-http://aur.archlinux.org/packages.php?ID=48230
+http://aur.archlinux.org/packages.php?ID=53902
+http://gpo.zugaina.org/app-editors/emacs-xwidget/ChangeLog
 ** DONE the proof of concept canvas code should be disabled by default.
    CLOSED: [2011-10-12 Wed 23:03]
 ** TODO advi
