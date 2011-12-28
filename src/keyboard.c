@@ -3001,7 +3001,7 @@ read_char (int commandflag, ptrdiff_t nmaps, Lisp_Object *maps,
     {
       Lisp_Object keys;
       int key_count, key_count_reset;
-      struct gcpro inner_gcpro1;
+      struct gcpro gcpro1;
       int count = SPECPDL_INDEX ();
 
       /* Save the echo status.  */
@@ -3029,7 +3029,7 @@ read_char (int commandflag, ptrdiff_t nmaps, Lisp_Object *maps,
 	keys = Fcopy_sequence (this_command_keys);
       else
 	keys = Qnil;
-      GCPRO1_VAR (keys, inner_gcpro);
+      GCPRO1 (keys);
 
       /* Clear out this_command_keys.  */
       this_command_key_count = 0;
@@ -3067,7 +3067,7 @@ read_char (int commandflag, ptrdiff_t nmaps, Lisp_Object *maps,
       if (saved_immediate_echo)
 	echo_now ();
 
-      UNGCPRO_VAR (inner_gcpro);
+      UNGCPRO;
 
       /* The input method can return no events.  */
       if (! CONSP (tem))
@@ -9069,9 +9069,9 @@ read_key_sequence (Lisp_Object *keybuf, int bufsize, Lisp_Object prompt,
   int junk;
 #endif
 
-  struct gcpro outer_gcpro1;
+  struct gcpro gcpro1;
 
-  GCPRO1_VAR (fake_prefixed_keys, outer_gcpro);
+  GCPRO1 (fake_prefixed_keys);
   raw_keybuf_count = 0;
 
   last_nonmenu_event = Qnil;
@@ -9367,7 +9367,7 @@ read_key_sequence (Lisp_Object *keybuf, int bufsize, Lisp_Object prompt,
 	  if (EQ (key, Qt))
 	    {
 	      unbind_to (count, Qnil);
-	      UNGCPRO_VAR (outer_gcpro);
+	      UNGCPRO;
 	      return -1;
 	    }
 
@@ -10065,7 +10065,7 @@ read_key_sequence (Lisp_Object *keybuf, int bufsize, Lisp_Object prompt,
       add_command_key (keybuf[t]);
     }
 
-  UNGCPRO_VAR (outer_gcpro);
+  UNGCPRO;
   return t;
 }
 
@@ -10874,7 +10874,7 @@ interrupt_signal (int signalnum)	/* If we don't have an argument, some */
       /* If there are no frames there, let's pretend that we are a
          well-behaving UN*X program and quit.  We cannot do that while
          GC is in progress, though.  */
-      if (!gc_in_progress)
+      if (!gc_in_progress && !waiting_for_input)
 	Fkill_emacs (Qnil);
       else
 	Vquit_flag = Qt;

@@ -164,7 +164,7 @@
 ;;     with the original form).  My code on the matter was improved
 ;;     considerably by Markus Triska.
 ;;  o  Fixed `prolog-insert-spaces-after-paren' (which used an
-;;     unitialized variable).
+;;     uninitialized variable).
 ;;  o  Minor changes to clean up the code and avoid some implicit
 ;;     package requirements.
 ;; Version 1.13:
@@ -691,7 +691,7 @@ nil means send actual operating system end of file."
 (defcustom prolog-use-standard-consult-compile-method-flag t
   "*Non-nil means use the standard compilation method.
 Otherwise the new compilation method will be used.  This
-utilises a special compilation buffer with the associated
+utilizes a special compilation buffer with the associated
 features such as parsing of error messages and automatically
 jumping to the source code responsible for the error.
 
@@ -868,8 +868,9 @@ VERSION is of the format (Major . Minor)"
 (defun prolog-find-value-by-system (alist)
   "Get value from ALIST according to `prolog-system'."
   (let ((system (or prolog-system
-                    (buffer-local-value 'prolog-system
-                                        (prolog-inferior-buffer 'dont-run)))))
+                    (let ((infbuf (prolog-inferior-buffer 'dont-run)))
+                      (when infbuf
+                        (buffer-local-value 'prolog-system infbuf))))))
     (if (listp alist)
         (let (result
               id)
@@ -1522,7 +1523,7 @@ This function must be called from the source code buffer."
           ;; Emacs-20).
             (set (make-local-variable 'compilation-parse-errors-function)
                'prolog-parse-sicstus-compilation-errors))
-      (toggle-read-only 0)
+      (setq buffer-read-only nil)
       (insert command-string "\n"))
     (save-selected-window
       (pop-to-buffer buffer))
@@ -1569,7 +1570,7 @@ For use with the `compilation-parse-errors-function' variable."
          limit t)
         (setq filepath (match-string 2)))
 
-      ;; ###### Does this work with SICStus under Windows (i.e. backslahes and stuff?)
+      ;; ###### Does this work with SICStus under Windows (i.e. backslashes and stuff?)
       (if (string-match "\\(.*/\\)\\([^/]*\\)$" filepath)
           (progn
             (setq dir (match-string 1 filepath))

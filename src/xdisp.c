@@ -2851,8 +2851,14 @@ start_display (struct it *it, struct window *w, struct text_pos pos)
 		  || (new_x == it->last_visible_x
 		      && FRAME_WINDOW_P (it->f))))
 	    {
-	      if (it->current.dpvec_index >= 0
-		  || it->current.overlay_string_index >= 0)
+	      if ((it->current.dpvec_index >= 0
+		   || it->current.overlay_string_index >= 0)
+		  /* If we are on a newline from a display vector or
+		     overlay string, then we are already at the end of
+		     a screen line; no need to go to the next line in
+		     that case, as this line is not really continued.
+		     (If we do go to the next line, C-e will not DTRT.)  */
+		  && it->c != '\n')
 		{
 		  set_iterator_to_next (it, 1);
 		  move_it_in_display_line_to (it, -1, -1, 0);
@@ -3171,13 +3177,11 @@ compute_stop_pos (struct it *it)
   Lisp_Object object, limit, position;
   EMACS_INT charpos, bytepos;
 
-  /* If nowhere else, stop at the end.  */
-  it->stop_charpos = it->end_charpos;
-
   if (STRINGP (it->string))
     {
       /* Strings are usually short, so don't limit the search for
 	 properties.  */
+      it->stop_charpos = it->end_charpos;
       object = it->string;
       limit = Qnil;
       charpos = IT_STRING_CHARPOS (*it);
@@ -3186,6 +3190,12 @@ compute_stop_pos (struct it *it)
   else
     {
       EMACS_INT pos;
+
+      /* If end_charpos is out of range for some reason, such as a
+	 misbehaving display function, rationalize it (Bug#5984).  */
+      if (it->end_charpos > ZV)
+	it->end_charpos = ZV;
+      it->stop_charpos = it->end_charpos;
 
       /* If next overlay change is in front of the current stop pos
 	 (which is IT->end_charpos), stop there.  Note: value of
@@ -4088,26 +4098,37 @@ handle_invisible_prop (struct it *it)
 	  if (it->bidi_p && newpos < ZV)
 	    {
 	      EMACS_INT bpos = CHAR_TO_BYTE (newpos);
+	      int on_newline = FETCH_BYTE (bpos) == '\n';
+	      int after_newline =
+		newpos <= BEGV || FETCH_BYTE (bpos - 1) == '\n';
 
-	      if (FETCH_BYTE (bpos) == '\n'
-		  || (newpos > BEGV && FETCH_BYTE (bpos - 1) == '\n'))
+	      /* If the invisible text ends on a newline or on a
+		 character after a newline, we can avoid the costly,
+		 character by character, bidi iteration to NEWPOS, and
+		 instead simply reseat the iterator there.  That's
+		 because all bidi reordering information is tossed at
+		 the newline.  This is a big win for modes that hide
+		 complete lines, like Outline, Org, etc.  */
+	      if (on_newline || after_newline)
 		{
-		  /* If the invisible text ends on a newline or the
-		     character after a newline, we can avoid the
-		     costly, character by character, bidi iteration to
-		     newpos, and instead simply reseat the iterator
-		     there.  That's because all bidi reordering
-		     information is tossed at the newline.  This is a
-		     big win for modes that hide complete lines, like
-		     Outline, Org, etc.  (Implementation note: the
-		     call to reseat_1 is necessary, because it signals
-		     to the bidi iterator that it needs to reinit its
-		     internal information when the next element for
-		     display is requested.  */
 		  struct text_pos tpos;
+		  bidi_dir_t pdir = it->bidi_it.paragraph_dir;
 
 		  SET_TEXT_POS (tpos, newpos, bpos);
 		  reseat_1 (it, tpos, 0);
+		  /* If we reseat on a newline, we need to prep the
+		     bidi iterator for advancing to the next character
+		     after the newline, keeping the current paragraph
+		     direction (so that PRODUCE_GLYPHS does TRT wrt
+		     prepending/appending glyphs to a glyph row).  */
+		  if (on_newline)
+		    {
+		      it->bidi_it.first_elt = 0;
+		      it->bidi_it.paragraph_dir = pdir;
+		      it->bidi_it.ch = '\n';
+		      it->bidi_it.nchars = 1;
+		      it->bidi_it.ch_len = 1;
+		    }
 		}
 	      else	/* Must use the slow method.  */
 		{
@@ -4116,11 +4137,11 @@ handle_invisible_prop (struct it *it)
 		     non-base embedding level.  Therefore, we need to
 		     skip invisible text using the bidi iterator,
 		     starting at IT's current position, until we find
-		     ourselves outside the invisible text.  Skipping
-		     invisible text _after_ bidi iteration avoids
-		     affecting the visual order of the displayed text
-		     when invisible properties are added or
-		     removed.  */
+		     ourselves outside of the invisible text.
+		     Skipping invisible text _after_ bidi iteration
+		     avoids affecting the visual order of the
+		     displayed text when invisible properties are
+		     added or removed.  */
 		  if (it->bidi_it.first_elt && it->bidi_it.charpos < ZV)
 		    {
 		      /* If we were `reseat'ed to a new paragraph,
@@ -15614,8 +15635,8 @@ redisplay_window (Lisp_Object window, int just_this_one_p)
 	? min (scroll_margin, WINDOW_TOTAL_LINES (w) / 4)
 	: 0;
       EMACS_INT margin_pos = CHARPOS (startp);
-      int scrolling_up;
       Lisp_Object aggressive;
+      int scrolling_up;
 
       /* If there is a scroll margin at the top of the window, find
 	 its character position.  */
@@ -15657,7 +15678,7 @@ redisplay_window (Lisp_Object window, int just_this_one_p)
 	      pt_offset = float_amount * WINDOW_BOX_TEXT_HEIGHT (w);
 	      if (pt_offset == 0 && float_amount > 0)
 		pt_offset = 1;
-	      if (pt_offset)
+	      if (pt_offset && margin > 0)
 		margin -= 1;
 	    }
 	  /* Compute how much to move the window start backward from
@@ -15775,6 +15796,25 @@ redisplay_window (Lisp_Object window, int just_this_one_p)
 	  w->vscroll = 0;
 	  clear_glyph_matrix (w->desired_matrix);
 	  goto recenter;
+	}
+
+      /* Users who set scroll-conservatively to a large number want
+	 point just above/below the scroll margin.  If we ended up
+	 with point's row partially visible, move the window start to
+	 make that row fully visible and out of the margin.  */
+      if (scroll_conservatively > SCROLL_LIMIT)
+	{
+	  int margin =
+	    scroll_margin > 0
+	    ? min (scroll_margin, WINDOW_TOTAL_LINES (w) / 4)
+	    : 0;
+	  int move_down = w->cursor.vpos >= WINDOW_TOTAL_LINES (w) / 2;
+
+	  move_it_by_lines (&it, move_down ? margin + 1 : -(margin + 1));
+	  clear_glyph_matrix (w->desired_matrix);
+	  if (1 == try_window (window, it.current.pos,
+			       TRY_WINDOW_CHECK_MARGINS))
+	    goto done;
 	}
 
       /* If centering point failed to make the whole line visible,
@@ -28871,7 +28911,8 @@ init_xdisp (void)
 
 /* Platform-independent portion of hourglass implementation. */
 
-/* Return non-zero if houglass timer has been started or hourglass is shown.  */
+/* Return non-zero if hourglass timer has been started or hourglass is
+   shown.  */
 int
 hourglass_started (void)
 {

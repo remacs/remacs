@@ -1,3 +1,26 @@
+2011-12-03  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* INSTALL.BZR: Mention configure -C, --disable-maintainer-mode.
+
+	Propagate configure flags to sub-configures.
+	* Makefile.in (cache_file, MAINTAINER_MODE_FLAG, CONFIGUREFLAGS):
+	New macros.
+	(config.status, bootstrap): Use them to propagate configure flags
+	to sub-configures.
+	* configure.in (cache_file): AC_SUBST this, for Makefile.in.
+
+2011-12-03  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* .bzrignore: Add config.cache.
+
+2011-11-27  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* configure.in: Check for gtk_window_set_has_resize_grip.
+
+2011-11-24  Juanma Barranquero  <lekktu@gmail.com>
+
+	* configure.in (HAVE_XPM): Fix typo.
+
 2011-11-22  Glenn Morris  <rgm@gnu.org>
 
 	* configure.in (EMACSDATA, EMACSDOC): If set, print, since they can
@@ -1434,7 +1457,7 @@
 
 2010-10-24  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
-	* configure.in: Remove the BROKEN annotation from gnutls.
+	* configure.in: Remove the BROKEN annotation from GnuTLS.
 
 2010-10-22  Glenn Morris  <rgm@gnu.org>
 
@@ -1517,7 +1540,7 @@
 2010-09-26  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
 	* configure.in (HAVE_GNUTLS): Don't break if we don't have the
-	gnutls libraries.
+	GnuTLS libraries.
 
 2010-09-26  Teodor Zlatanov  <tzz@lifelogs.com>
 

@@ -3474,7 +3474,7 @@ usage: (make-network-process &rest ARGS)  */)
 
   {
     /* Setup coding systems for communicating with the network stream.  */
-    struct gcpro inner_gcpro1;
+    struct gcpro gcpro1;
     /* Qt denotes we have not yet called Ffind_operation_coding_system.  */
     Lisp_Object coding_systems = Qt;
     Lisp_Object fargs[5], val;
@@ -3502,9 +3502,9 @@ usage: (make-network-process &rest ARGS)  */)
 	  {
 	    fargs[0] = Qopen_network_stream, fargs[1] = name,
 	      fargs[2] = buffer, fargs[3] = host, fargs[4] = service;
-	    GCPRO1_VAR (proc, inner_gcpro);
+	    GCPRO1 (proc);
 	    coding_systems = Ffind_operation_coding_system (5, fargs);
-	    UNGCPRO_VAR (inner_gcpro);
+	    UNGCPRO;
 	  }
 	if (CONSP (coding_systems))
 	  val = XCAR (coding_systems);
@@ -3535,9 +3535,9 @@ usage: (make-network-process &rest ARGS)  */)
 	      {
 		fargs[0] = Qopen_network_stream, fargs[1] = name,
 		  fargs[2] = buffer, fargs[3] = host, fargs[4] = service;
-		GCPRO1_VAR (proc, inner_gcpro);
+		GCPRO1 (proc);
 		coding_systems = Ffind_operation_coding_system (5, fargs);
-		UNGCPRO_VAR (inner_gcpro);
+		UNGCPRO;
 	      }
 	  }
 	if (CONSP (coding_systems))
@@ -3717,7 +3717,7 @@ DEFUN ("network-interface-info", Fnetwork_interface_info, Snetwork_interface_inf
        doc: /* Return information about network interface named IFNAME.
 The return value is a list (ADDR BCAST NETMASK HWADDR FLAGS),
 where ADDR is the layer 3 address, BCAST is the layer 3 broadcast address,
-NETMASK is the layer 3 network mask, HWADDR is the layer 2 addres, and
+NETMASK is the layer 3 network mask, HWADDR is the layer 2 address, and
 FLAGS is the current flags of the interface.  */)
   (Lisp_Object ifname)
 {
@@ -4630,26 +4630,29 @@ wait_reading_process_output (int time_limit, int microsecs, int read_kbd,
 		     the gnutls library -- 2.12.14 has been confirmed
 		     to need it.  See
 		     http://comments.gmane.org/gmane.emacs.devel/145074 */
-		  struct Lisp_Process *proc;
 		  for (channel = 0; channel < MAXDESC; ++channel)
-		    {
-		      if (! NILP (chan_process[channel]) &&
-			  (proc = XPROCESS (chan_process[channel])) != NULL &&
-			  proc->gnutls_p &&
-			  proc->infd &&
-			  emacs_gnutls_record_check_pending (proc->gnutls_state) > 0)
-			{
-			  nfds++;
-			  FD_SET (proc->infd, &Available);
-			}
-		    }
+		    if (! NILP (chan_process[channel]))
+		      {
+			struct Lisp_Process *p =
+			  XPROCESS (chan_process[channel]);
+			if (p && p->gnutls_p && p->infd
+			    && ((emacs_gnutls_record_check_pending
+				 (p->gnutls_state))
+				> 0))
+			  {
+			    nfds++;
+			    FD_SET (p->infd, &Available);
+			  }
+		      }
 		}
 	      else
 		{
 		  /* Check this specific channel. */
-		  if (wait_proc->gnutls_p && /* Check for valid process.  */
+		  if (wait_proc->gnutls_p /* Check for valid process.  */
 		      /* Do we have pending data?  */
-		      emacs_gnutls_record_check_pending (wait_proc->gnutls_state) > 0)
+		      && ((emacs_gnutls_record_check_pending
+			   (wait_proc->gnutls_state))
+			  > 0))
 		    {
 		      nfds = 1;
 		      /* Set to Available.  */

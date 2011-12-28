@@ -22,7 +22,7 @@ dnl  You should have received a copy of the GNU General Public License
 dnl  along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
 
 AC_PREREQ(2.65)
-AC_INIT(emacs, 24.0.91)
+AC_INIT(emacs, 24.0.92)
 AC_CONFIG_HEADER(src/config.h:src/config.in)
 AC_CONFIG_SRCDIR(src/lisp.h)
 AC_CONFIG_AUX_DIR(build-aux)
@@ -183,6 +183,9 @@ OPTION_DEFAULT_OFF([xwidgets],[enable use of some gtk widgets it Emacs buffers])
 ## a suitable makeinfo, and can live without the manuals.
 dnl http://lists.gnu.org/archive/html/emacs-devel/2008-04/msg01844.html
 OPTION_DEFAULT_ON([makeinfo],[don't require makeinfo for building manuals])
+
+## Makefile.in needs the cache file name.
+AC_SUBST(cache_file)
 
 ## This is an option because I do not know if all info/man support
 ## compressed files, nor how to test if they do so.
@@ -1992,8 +1995,8 @@ if test "${HAVE_GTK}" = "yes"; then
   AC_CHECK_FUNCS(gtk_widget_get_window gtk_widget_set_has_window \
                  gtk_dialog_get_action_area gtk_widget_get_sensitive \
                  gtk_widget_get_mapped gtk_adjustment_get_page_size \
-                 gtk_orientable_set_orientation)
-
+                 gtk_orientable_set_orientation \
+		 gtk_window_set_has_resize_grip)
 fi
 
 
@@ -2486,7 +2489,7 @@ no_return_alloc_pixels
   fi
 
   if test "${HAVE_XPM}" = "yes"; then
-    AC_DEFINE(HAVE_XPM, 1, [Define to 1 if you have the Xpm libary (-lXpm).])
+    AC_DEFINE(HAVE_XPM, 1, [Define to 1 if you have the Xpm library (-lXpm).])
     LIBXPM=-lXpm
   fi
 fi
