@@ -1,3 +1,16 @@
+2011-12-25  Andreas Schwab  <schwab@linux-m68k.org>
+
+	* etags.c (C_entries): Properly skip over string and character
+	constants and comments inside brackets.  (Bug#10357)
+
+2011-12-04  Juanma Barranquero  <lekktu@gmail.com>
+
+	* emacsclient.c (decode_options) [WINDOWSNT]: Don't force tty = 0;
+	instead, treat both -c and -t as always requesting a new "tty" frame,
+	and let server.el decide which kind is actually required.
+	Reported by Uwe Siart <usenet@siart.de> in this thread:
+	http://lists.gnu.org/archive/html/emacs-devel/2011-11/msg00303.html
+
 2011-11-30  Chong Yidong  <cyd@gnu.org>
 
 	* emacsclient.c (main): Condition last change on WINDOWSNT
@@ -3129,7 +3142,7 @@
 	(main): Call put_entries here even in CTAGS mode.
 	(main, process_file): Check the return values of fclose and pclose.
 	(process_file): Do not call put_entries after parsing each file.
-	(process_file): Canonicalise file names even for ctags.
+	(process_file): Canonicalize file names even for ctags.
 	(process_file): Set curfile here...
 	(find_entries): ... not here any more.
 	(add_node): In etags mode, build a linked list of entries (on

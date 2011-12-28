@@ -353,7 +353,7 @@ all.  This may very well take some time.")
   ;; List of NNDiary headers that specify the time spec. Each header name is
   ;; followed by either two integers (specifying a range of possible values
   ;; for this header) or one list (specifying all the possible values for this
-  ;; header). In the latter case, the list does NOT include the unspecifyed
+  ;; header). In the latter case, the list does NOT include the unspecified
   ;; spec (*).
   ;; For time zone values, we have symbolic time zone names associated with
   ;; the (relative) number of seconds ahead GMT.
@@ -1161,11 +1161,11 @@ all.  This may very well take some time.")
 
 (defun nndiary-parse-schedule-value (str min-or-values max)
   ;; Parse the schedule string STR, or signal an error.
-  ;; Signals are caught by `nndary-schedule'.
+  ;; Signals are caught by `nndiary-schedule'.
   (if (string-match "[ \t]*\\*[ \t]*" str)
-      ;; unspecifyed
+      ;; unspecified
       nil
-    ;; specifyed
+    ;; specified
     (if (listp min-or-values)
 	;; min-or-values is values
 	;; #### NOTE: this is actually only a hack for time zones.
@@ -1204,7 +1204,7 @@ all.  This may very well take some time.")
   ;; - Returns nil if `*'
   ;; - Otherwise returns a list of integers and/or ranges (BEG . END)
   ;; The exception is the Timze-Zone value which is always of the form (STR).
-  ;; Signals are caught by `nndary-schedule'.
+  ;; Signals are caught by `nndiary-schedule'.
   (let ((header (format "^X-Diary-%s: \\(.*\\)$" head)))
     (goto-char (point-min))
     (if (not (re-search-forward header nil t))

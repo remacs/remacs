@@ -210,8 +210,8 @@ static Lisp_Object Vccl_program_table;
 #define CCL_WriteArrayReadJump	0x0B /* Write an array element, read, and jump:
 					1:A--D--D--R--E--S--S-rrrXXXXX
 					2:LENGTH
-					3:ELEMENET[0]
-					4:ELEMENET[1]
+					3:ELEMENT[0]
+					4:ELEMENT[1]
 					...
 					N:A--D--D--R--E--S--S-rrrYYYYY
 					------------------------------
@@ -552,7 +552,7 @@ static Lisp_Object Vccl_program_table;
    But, when VALm is mapped to VALn and VALn is not a number, the
    mapping proceed as below:
 
-   If VALn is nil, the lastest map is ignored and the mapping of VALm
+   If VALn is nil, the last map is ignored and the mapping of VALm
    proceed to the next map.
 
    In VALn is t, VALm is reverted to reg[rrr] and the mapping of VALm

@@ -3326,7 +3326,7 @@ x_scroll_run (struct window *w, struct run *run)
     }
   else
     {
-      /* Scolling down.  Make sure we don't copy over the mode line.
+      /* Scrolling down.  Make sure we don't copy over the mode line.
 	 at the bottom.  */
       if (to_y + run->height > bottom_y)
 	height = bottom_y - to_y;
@@ -5160,7 +5160,7 @@ x_scroll_bar_remove (struct scroll_bar *bar)
   XDestroyWindow (FRAME_X_DISPLAY (f), bar->x_window);
 #endif
 
-  /* Disassociate this scroll bar from its window.  */
+  /* Dissociate this scroll bar from its window.  */
   XWINDOW (bar->window)->vertical_scroll_bar = Qnil;
 
   UNBLOCK_INPUT;
@@ -9978,6 +9978,11 @@ x_term_init (Lisp_Object display_name, char *xrm_option, char *resource_name)
 #ifdef HAVE_CLUTTER
         gtk_clutter_init (&argc, &argv2);
 #else
+
+        /* NULL window -> events for all windows go to our function.
+           Call before gtk_init so Gtk+ event filters comes after our.  */
+        gdk_window_add_filter (NULL, event_handler_gdk, NULL);
+
         gtk_init (&argc, &argv2);
 #endif
         g_log_remove_handler ("GLib", id);
@@ -9987,9 +9992,6 @@ x_term_init (Lisp_Object display_name, char *xrm_option, char *resource_name)
         xg_initialize ();
 
         dpy = DEFAULT_GDK_DISPLAY ();
-
-        /* NULL window -> events for all windows go to our function */
-        gdk_window_add_filter (NULL, event_handler_gdk, NULL);
 
 #if GTK_MAJOR_VERSION <= 2 && GTK_MINOR_VERSION <= 90
         /* Load our own gtkrc if it exists.  */

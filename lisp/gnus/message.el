@@ -906,7 +906,7 @@ The function `message-setup' runs this hook."
   :type 'hook)
 
 (defcustom message-cancel-hook nil
-  "Hook run when cancelling articles."
+  "Hook run when canceling articles."
   :group 'message-various
   :link '(custom-manual "(message)Various Message Variables")
   :type 'hook)
@@ -1893,14 +1893,14 @@ You must have the \"hashcash\" binary installed, see `hashcash-path'."
   (concat "[a-z0-9][-.a-z0-9]+\\." ;; [hostname.subdomain.]domain.
 	  ;; valid TLDs:
 	  "\\([a-z][a-z]\\|" ;; two letter country TDLs
-	  "aero\\|arpa\\|bitnet\\|biz\\|bofh\\|"
+	  "aero\\|arpa\\|asia\\|bitnet\\|biz\\|bofh\\|"
 	  "cat\\|com\\|coop\\|edu\\|gov\\|"
 	  "info\\|int\\|jobs\\|"
 	  "mil\\|mobi\\|museum\\|name\\|net\\|"
-	  "org\\|pro\\|travel\\|uucp\\)")
+	  "org\\|pro\\|tel\\|travel\\|uucp\\)")
   ;; http://en.wikipedia.org/wiki/List_of_Internet_top-level_domains
   ;; http://en.wikipedia.org/wiki/GTLD
-  ;; `in the process of being approved': .asia .post .tel .sex
+  ;; `approved, but not yet in operation': .xxx
   ;; "dead" nato bitnet uucp
   "Regular expression that matches a valid FQDN."
   ;; see also: gnus-button-valid-fqdn-regexp
@@ -4409,7 +4409,7 @@ This function could be useful in `message-setup-hook'."
        ;; A simple function.
        ((functionp action)
 	(funcall action))
-       ;; Something to be evaled.
+       ;; Something to be evalled.
        (t
 	(eval action))))))
 
@@ -4840,7 +4840,7 @@ Otherwise, generate and save a value for `canlock-password' first."
 			   (message-fetch-field "Followup-To")))
 	 ;; BUG: We really need to get the charset for each name in the
 	 ;; Newsgroups and Followup-To lines to allow crossposting
-	 ;; between group namess with incompatible character sets.
+	 ;; between group names with incompatible character sets.
 	 ;; -- Per Abrahamsen <abraham@dina.kvl.dk> 2001-10-08.
 	 (group-field-charset
 	  (gnus-group-name-charset method newsgroups-field))
@@ -6327,7 +6327,6 @@ between beginning of field and beginning of line."
 
 (defun message-pop-to-buffer (name &optional switch-function)
   "Pop to buffer NAME, and warn if it already exists and is modified."
-  (unless switch-function (setq switch-function #'pop-to-buffer))
   (let ((buffer (get-buffer name)))
     (if (and buffer
 	     (buffer-name buffer))
@@ -6337,7 +6336,7 @@ between beginning of field and beginning of line."
 	      (progn
 		(gnus-select-frame-set-input-focus (window-frame window))
 		(select-window window))
-	    (funcall switch-function buffer)
+	    (funcall (or switch-function #'pop-to-buffer) buffer)
 	    (set-buffer buffer))
 	  (when (and (buffer-modified-p)
 		     (not (prog1
@@ -6345,7 +6344,11 @@ between beginning of field and beginning of line."
 			       "Message already being composed; erase? ")
 			    (message nil))))
 	    (error "Message being composed")))
-      (funcall switch-function name)
+      (funcall (or switch-function
+		   (if (fboundp #'pop-to-buffer-same-window)
+		       #'pop-to-buffer-same-window
+		     #'pop-to-buffer))
+	       name)
       (set-buffer name))
     (erase-buffer)
     (message-mode)))
@@ -7735,7 +7738,7 @@ Setter function for custom variables."
 			      'message-tool-bar-retro)
   "Specifies the message mode tool bar.
 
-It can be either a list or a symbol refering to a list.  See
+It can be either a list or a symbol referring to a list.  See
 `gmm-tool-bar-from-list' for the format of the list.  The
 default key map is `message-mode-map'.
 

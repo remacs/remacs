@@ -2464,7 +2464,7 @@ If prefix ARG < 0 then move forward to enclosing block end."
 (defun idlwave-down-block (&optional arg)
   "Go down a block.
 With ARG: ARG >= 0 go forwards, ARG < 0 go backwards.
-Returns non-nil if successfull."
+Returns non-nil if successful."
   (interactive "p")
   (let (status)
     (if (< arg 0)
@@ -7866,7 +7866,7 @@ itself."
   "Display online help about the completion at point."
   (interactive "eP")
   ;; Restore last-command for next command, to make
-  ;; scrolling/cancelling of completions work.
+  ;; scrolling/canceling of completions work.
   (setq this-command last-command)
   (idlwave-do-mouse-completion-help ev))
 

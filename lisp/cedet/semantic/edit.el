@@ -470,6 +470,7 @@ a 'semantic-parse-changes-failed exception with value t."
 	     (buffer-name (current-buffer))))
   (run-hooks 'semantic-edits-incremental-reparse-failed-hook))
 
+;;;###autoload
 (defun semantic-edits-incremental-parser ()
   "Incrementally reparse the current buffer.
 Incremental parser allows semantic to only reparse those sections of
@@ -859,7 +860,7 @@ pre-positioned to a convenient location."
 	  (setq cacheend chil)
 	  (while (and cacheend (not (eq last (car cacheend))))
 	    (setq cacheend (cdr cacheend)))
-	  ;; The splicable part is after cacheend.. so move cacheend
+	  ;; The spliceable part is after cacheend.. so move cacheend
 	  ;; one more tag.
 	  (setq cacheend (cdr cacheend))
 	  ;; Splice the found end tag into the cons cell

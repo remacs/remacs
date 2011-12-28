@@ -1673,7 +1673,7 @@
 	(url-dav-process-DAV:activelock)
 	(url-dav-process-DAV:lockdiscovery): Can now correctly parse
 	DAV:lockdiscovery nodes, so that we can find out who has a
-	resource locked and properly parse the reponse to a LOCK request.
+	resource locked and properly parse the response to a LOCK request.
 	(url-dav-process-DAV:status): Now parses out the numeric status
 	from the HTTP response line.
 	(url-dav-process-response): New function to handle all the
@@ -2448,7 +2448,7 @@
 	* lisp/url-nfs.el (url-nfs-create-wrapper): New function to create
 	wrappers onto the appropriate file-based URLs for file-name-handlers.
 
-	* lisp/url-ftp.el: Moved the FTP stuff into it's own file - it
+	* lisp/url-ftp.el: Moved the FTP stuff into its own file - it
 	might get messy with file-name-handlers and things.
 
 	* lisp/url-http.el (url-http-clean-headers): Fix problem when

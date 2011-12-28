@@ -345,7 +345,7 @@
 ;; Above code is well known ~/.emacs idiom for customizing a mode
 ;; specific keymap however it does not work for this package.  This is
 ;; because there is no table mode in effect.  This package does not
-;; use a local map therefor you must modify `table-cell-map'
+;; use a local map therefore you must modify `table-cell-map'
 ;; explicitly.  The correct way of achieving above task is:
 ;;
 ;;   (add-hook 'table-cell-map-hook
@@ -2155,7 +2155,7 @@ specified."
 (defun table-shorten-cell (n)
   "Shorten the current cell by N lines by shrinking the cell vertically.
 Shortening is done by removing blank lines from the bottom of the cell
-and possibly from the top of the cell as well.  Therefor, the cell
+and possibly from the top of the cell as well.  Therefore, the cell
 must have some bottom/top blank lines to be shorten effectively.  This
 is applicable to all the cells aligned horizontally with the current
 one because they are also shortened in order to keep the rectangular
@@ -4293,7 +4293,7 @@ cache buffer into the designated cell in the table buffer."
     (car (table--get-coordinate (cdr (table--horizontal-cell-list nil t))))
     (1+ (cdr (table--get-coordinate (cdr (table--vertical-cell-list nil t))))))))
 
-(defun table-call-interactively (function &optional recoard-flag keys)
+(defun table-call-interactively (function &optional record-flag keys)
   "Call FUNCTION, or a table version of it if applicable.
 See `call-interactively' for full description of the arguments."
   (let ((table-func (intern-soft (format "*table--cell-%s" function))))
@@ -4301,7 +4301,7 @@ See `call-interactively' for full description of the arguments."
      (if (and table-func
 	      (table--point-in-cell-p))
 	 table-func
-       function) recoard-flag keys)))
+       function) record-flag keys)))
 
 (defun table-funcall (function &rest arguments)
   "Call FUNCTION, or a table version of it if applicable.

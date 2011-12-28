@@ -2416,15 +2416,27 @@ check_writable (const char *filename)
   return (st.st_mode & S_IWRITE || S_ISDIR (st.st_mode));
 #else /* not MSDOS */
 #ifdef HAVE_EUIDACCESS
-  return (euidaccess (filename, 2) >= 0);
-#else
+  int res = (euidaccess (filename, 2) >= 0);
+#ifdef CYGWIN
+  /* euidaccess may have returned failure because Cygwin couldn't
+     determine the file's UID or GID; if so, we return success. */
+  if (!res)
+    {
+      struct stat st;
+      if (stat (filename, &st) < 0)
+        return 0;
+      res = (st.st_uid == -1 || st.st_gid == -1);
+    }
+#endif /* CYGWIN */
+  return res;
+#else /* not HAVE_EUIDACCESS */
   /* Access isn't quite right because it uses the real uid
      and we really want to test with the effective uid.
      But Unix doesn't give us a right way to do it.
      Opening with O_WRONLY could work for an ordinary file,
      but would lose for directories.  */
   return (access (filename, 2) >= 0);
-#endif
+#endif /* not HAVE_EUIDACCESS */
 #endif /* not MSDOS */
 }
 
@@ -4186,7 +4198,7 @@ variable `last-coding-system-used' to the coding system actually used.  */)
 	  /* If REPLACE is non-nil and we succeeded in not replacing the
 	     beginning or end of the buffer text with the file's contents,
 	     call format-decode with `point' positioned at the beginning
-	     of the buffer and `inserted' equalling the number of
+	     of the buffer and `inserted' equaling the number of
 	     characters in the buffer.  Otherwise, format-decode might
 	     fail to correctly analyze the beginning or end of the buffer.
 	     Hence we temporarily save `point' and `inserted' here and

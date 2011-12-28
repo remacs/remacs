@@ -1360,7 +1360,7 @@ No indentation or other \"electric\" behavior is performed."
   ;; Determine where we are with respect to functions (or other brace
   ;; constructs, included in the term "function" in the rest of this comment).
   ;; Point is assumed to be outside any macro or literal.
-  ;; This is used by c-\(begining\|end\)-of-defun.
+  ;; This is used by c-\(beginning\|end\)-of-defun.
   ;;
   ;; Return one of these symbols:
   ;; at-header       : we're at the start of a function's header.
@@ -2051,7 +2051,7 @@ function does not require the declaration to contain a brace block."
 	(c-narrow-to-comment-innards range) ; This may move point back.
 	(let* ((here (point))
 	       last
-	       (here-filler	   ; matches WS and comment-prefices at point.
+	       (here-filler	   ; matches WS and comment-prefixes at point.
 		(concat "\\=\\(^[ \t]*\\(" c-current-comment-prefix "\\)"
 			"\\|[ \t\n\r\f]\\)*"))
 	       (prefix-at-bol-here ; matches WS and prefix at BOL, just before point
@@ -2071,7 +2071,7 @@ function does not require the declaration to contain a brace block."
 
 	  ;; Now seek successively earlier sentence ends between PAR-BEG and
 	  ;; HERE, until the "start of sentence" following it is earlier than
-	  ;; HERE, or we hit PAR-BEG.  Beware of comment prefices!
+	  ;; HERE, or we hit PAR-BEG.  Beware of comment prefixes!
 	  (while (and (re-search-backward (c-sentence-end) par-beg 'limit)
 		      (setq last (point))
 		      (goto-char (match-end 0))	; tentative beginning of sentence

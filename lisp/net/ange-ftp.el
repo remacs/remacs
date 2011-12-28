@@ -1664,7 +1664,7 @@ good, skip, fatal, or unknown."
           (if (not (and seen-prompt ange-ftp-pending-error-line))
               (ange-ftp-process-handle-line line proc)
             ;; If we've seen a potential error message and it
-            ;; hasn't been cancelled by a good message before
+            ;; hasn't been canceled by a good message before
             ;; seeing a prompt, then the error was real.
             (delete-process proc)
             (setq ange-ftp-process-busy nil
@@ -2854,7 +2854,7 @@ NO-ERROR, if a listing for DIRECTORY cannot be obtained."
 ;; that a wasted listing is not done:
 ;; 1. When looking for a .dired file in dired-x.el.
 ;; 2. The syntax of FILE and DIR make it impossible that FILE could be a valid
-;;     subdirectory. This is of course an OS dependent judgement.
+;;     subdirectory. This is of course an OS dependent judgment.
 
 (defvar dired-local-variables-file)
 (defmacro ange-ftp-allow-child-lookup (dir file)
@@ -3636,6 +3636,10 @@ so return the size on the remote host exactly. See RFC 3659."
 					     keep-date &optional msg cont nowait)
   (setq filename (expand-file-name filename)
 	newname (expand-file-name newname))
+
+  (or (file-exists-p filename)
+      (signal 'file-error
+	      (list "Copy file" "no such file or directory" filename)))
 
   ;; canonicalize newname if a directory.
   (if (file-directory-p newname)

@@ -166,7 +166,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
    These structures are hidden from the other codes than this file.
    The other codes handle fontsets only by their ID numbers.  They
    usually use the variable name `fontset' for IDs.  But, in this
-   file, we always use varialbe name `id' for IDs, and name `fontset'
+   file, we always use variable name `id' for IDs, and name `fontset'
    for an actual fontset object, i.e., char-table.
 
 */
@@ -643,7 +643,7 @@ fontset_find_font (Lisp_Object fontset, int c, struct face *face, int id, int fa
       if (font_has_char (f, font_object, c))
 	goto found;
 
-      /* Find a font already opened, maching with the current spec,
+      /* Find a font already opened, matching with the current spec,
 	 and supporting C. */
       font_def = RFONT_DEF_FONT_DEF (rfont_def);
       for (; found_index + 1 < ASIZE (vec); found_index++)

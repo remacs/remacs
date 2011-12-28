@@ -1052,16 +1052,23 @@ In addition, with prefix argument, show details about that character
 in *Help* buffer.  See also the command `describe-char'."
   (interactive "P")
   (let* ((char (following-char))
-	 ;; If the character is one of LRE, LRO, RLE, RLO, it will
-	 ;; start a directional embedding, which could completely
-	 ;; disrupt the rest of the line (e.g., RLO will display the
-	 ;; rest of the line right-to-left).  So we put an invisible
-	 ;; PDF character after these characters, to end the
-	 ;; embedding, which eliminates any effects on the rest of the
-	 ;; line.
-	 (pdf (if (memq char '(?\x202a ?\x202b ?\x202d ?\x202e))
-		  (propertize (string ?\x202c) 'invisible t)
-		""))
+	 (bidi-fixer
+	  (cond ((memq char '(?\x202a ?\x202b ?\x202d ?\x202e))
+		 ;; If the character is one of LRE, LRO, RLE, RLO, it
+		 ;; will start a directional embedding, which could
+		 ;; completely disrupt the rest of the line (e.g., RLO
+		 ;; will display the rest of the line right-to-left).
+		 ;; So we put an invisible PDF character after these
+		 ;; characters, to end the embedding, which eliminates
+		 ;; any effects on the rest of the line.
+		 (propertize (string ?\x202c) 'invisible t))
+		;; Strong right-to-left characters cause reordering of
+		;; the following numerical characters which show the
+		;; codepoint, so append LRM to countermand that.
+		((memq (get-char-code-property char 'bidi-class) '(R AL))
+		 (propertize (string ?\x200e) 'invisible t))
+		(t
+		 "")))
 	 (beg (point-min))
 	 (end (point-max))
          (pos (point))
@@ -1125,14 +1132,15 @@ in *Help* buffer.  See also the command `describe-char'."
 		     (if (< char 256)
 			 (single-key-description char)
 		       (buffer-substring-no-properties (point) (1+ (point))))
-		     pdf encoding-msg pos total percent beg end col hscroll)
+		     bidi-fixer
+		     encoding-msg pos total percent beg end col hscroll)
 	  (message "Char: %s%s %s point=%d of %d (%d%%) column=%d%s"
 		   (if enable-multibyte-characters
 		       (if (< char 128)
 			   (single-key-description char)
 			 (buffer-substring-no-properties (point) (1+ (point))))
 		     (single-key-description char))
-		   pdf encoding-msg pos total percent col hscroll))))))
+		   bidi-fixer encoding-msg pos total percent col hscroll))))))
 
 ;; Initialize read-expression-map.  It is defined at C level.
 (let ((m (make-sparse-keymap)))
@@ -1217,11 +1225,11 @@ this command arranges for all errors to enter the debugger."
       (push (eval eval-expression-arg lexical-binding) values)
     (let ((old-value (make-symbol "t")) new-value)
       ;; Bind debug-on-error to something unique so that we can
-      ;; detect when evaled code changes it.
+      ;; detect when evalled code changes it.
       (let ((debug-on-error old-value))
 	(push (eval eval-expression-arg lexical-binding) values)
 	(setq new-value debug-on-error))
-      ;; If evaled code has changed the value of debug-on-error,
+      ;; If evalled code has changed the value of debug-on-error,
       ;; propagate that change to the global binding.
       (unless (eq old-value new-value)
 	(setq debug-on-error new-value))))
@@ -1582,7 +1590,7 @@ by the new completion."
      n)
     ;; next-matching-history-element always puts us at (point-min).
     ;; Move to the position we were at before changing the buffer contents.
-    ;; This is still sensical, because the text before point has not changed.
+    ;; This is still sensible, because the text before point has not changed.
     (goto-char point-at-start)))
 
 (defun previous-complete-history-element (n)
@@ -2907,11 +2915,11 @@ These commands include \\[set-mark-command] and \\[start-kbd-macro]."
 
 (defvar filter-buffer-substring-functions nil
   "Wrapper hook around `filter-buffer-substring'.
-The functions on this special hook are called with 4 arguments:
+The functions on this special hook are called with four arguments:
   NEXT-FUN BEG END DELETE
-NEXT-FUN is a function of 3 arguments (BEG END DELETE)
-that performs the default operation.  The other 3 arguments are like
-the ones passed to `filter-buffer-substring'.")
+NEXT-FUN is a function of three arguments (BEG END DELETE)
+that performs the default operation.  The other three arguments
+are like the ones passed to `filter-buffer-substring'.")
 
 (defvar buffer-substring-filters nil
   "List of filter functions for `filter-buffer-substring'.
@@ -4721,7 +4729,7 @@ To ignore intangibility, bind `inhibit-point-motion-hooks' to t."
 	(let ((line-move-visual nil))
 	  (line-move (1- arg) t)))
 
-    ;; Move to beginning-of-line, ignoring fields and invisibles.
+    ;; Move to beginning-of-line, ignoring fields and invisible text.
     (skip-chars-backward "^\n")
     (while (and (not (bobp)) (invisible-p (1- (point))))
       (goto-char (previous-char-property-change (point)))
@@ -5704,7 +5712,7 @@ At top-level, as an editor command, this simply beeps."
 (defvar buffer-quit-function nil
   "Function to call to \"quit\" the current buffer, or nil if none.
 \\[keyboard-escape-quit] calls this function when its more local actions
-\(such as cancelling a prefix argument, minibuffer or region) do not apply.")
+\(such as canceling a prefix argument, minibuffer or region) do not apply.")
 
 (defun keyboard-escape-quit ()
   "Exit the current \"mode\" (in a generalized sense of the word).
@@ -6015,7 +6023,7 @@ of the text to replace.  If END is nil, point is used instead.")
 
 (defvar completion-list-insert-choice-function #'completion--replace
   "Function to use to insert the text chosen in *Completions*.
-Called with 3 arguments (BEG END TEXT), it should replace the text
+Called with three arguments (BEG END TEXT), it should replace the text
 between BEG and END with TEXT.  Expected to be set buffer-locally
 in the *Completions* buffer.")
 
@@ -6209,7 +6217,7 @@ BASE-POSITION, says where to insert the completion."
 	       choice buffer base-position nil)
         ;; This remove-text-properties should be unnecessary since `choice'
         ;; comes from buffer-substring-no-properties.
-        ;;(remove-text-properties 0 (lenth choice) '(mouse-face nil) choice)
+        ;;(remove-text-properties 0 (length choice) '(mouse-face nil) choice)
 	;; Insert the completion into the buffer where it was requested.
         (funcall (or insert-function completion-list-insert-choice-function)
                  (or (car base-position) (point))

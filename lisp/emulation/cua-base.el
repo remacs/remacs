@@ -368,7 +368,7 @@ interpreted as a register number."
 
 (defcustom cua-check-pending-input t
   "If non-nil, don't override prefix key if input pending.
-It is rumoured that `input-pending-p' is unreliable under some window
+It is rumored that `input-pending-p' is unreliable under some window
 managers, so try setting this to nil, if prefix override doesn't work."
   :type 'boolean
   :group 'cua)
@@ -1242,7 +1242,7 @@ If ARG is the atom `-', scroll upward by nearly full screen."
 
    ;; Handle shifted cursor keys and other movement commands.
    ;; If region is not active, region is activated if key is shifted.
-   ;; If region is active, region is cancelled if key is unshifted
+   ;; If region is active, region is canceled if key is unshifted
    ;;   (and region not started with C-SPC).
    ;; If rectangle is active, expand rectangle in specified direction and
    ;;   ignore the movement.

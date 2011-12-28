@@ -516,7 +516,7 @@ static struct selection_data *converted_selections;
 static Atom conversion_fail_tag;
 
 /* Used as an unwind-protect clause so that, if a selection-converter signals
-   an error, we tell the requester that we were unable to do what they wanted
+   an error, we tell the requestor that we were unable to do what they wanted
    before we throw to top-level or go into the debugger or whatever.  */
 
 static Lisp_Object
@@ -693,7 +693,7 @@ x_reply_selection_request (struct input_event *event,
 	bytes_remaining = cs->size;
 	bytes_remaining *= format_bytes;
 
-	/* Wait for the requester to ack by deleting the property.
+	/* Wait for the requestor to ack by deleting the property.
 	   This can run Lisp code (process handlers) or signal.  */
 	if (! had_errors)
 	  {
@@ -732,7 +732,7 @@ x_reply_selection_request (struct input_event *event,
 
 	    if (had_errors) break;
 
-	    /* Wait for the requester to ack this chunk by deleting
+	    /* Wait for the requestor to ack this chunk by deleting
 	       the property.  This can run Lisp code or signal.  */
 	    TRACE1 ("Waiting for increment ACK (deletion of %s)",
 		    XGetAtomName (display, cs->property));
@@ -740,7 +740,7 @@ x_reply_selection_request (struct input_event *event,
 	  }
 
 	/* Now write a zero-length chunk to the property to tell the
-	   requester that we're done.  */
+	   requestor that we're done.  */
 	BLOCK_INPUT;
 	if (! waiting_for_other_props_on_window (display, window))
 	  XSelectInput (display, window, 0L);
@@ -757,7 +757,7 @@ x_reply_selection_request (struct input_event *event,
   /* The window we're communicating with may have been deleted
      in the meantime (that's a real situation from a bug report).
      In this case, there may be events in the event queue still
-     refering to the deleted window, and we'll get a BadWindow error
+     referring to the deleted window, and we'll get a BadWindow error
      in XTread_socket when processing the events.  I don't have
      an idea how to fix that.  gerd, 2001-01-98.   */
   /* 2004-09-10: XSync and UNBLOCK so that possible protocol errors are

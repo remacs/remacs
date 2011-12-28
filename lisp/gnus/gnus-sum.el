@@ -2835,7 +2835,7 @@ Setter function for custom variables."
 				   'gnus-summary-tool-bar-retro)
   "Specifies the Gnus summary tool bar.
 
-It can be either a list or a symbol refering to a list.  See
+It can be either a list or a symbol referring to a list.  See
 `gmm-tool-bar-from-list' for the format of the list.  The
 default key map is `gnus-summary-mode-map'.
 
@@ -2969,7 +2969,7 @@ When FORCE, rebuild the tool bar."
 					'gnus-summary-mode-map)))
       (when map
 	;; Need to set `gnus-summary-tool-bar-map' because `gnus-article-mode'
-	;; uses it's value.
+	;; uses its value.
 	(setq gnus-summary-tool-bar-map map))))
   (set (make-local-variable 'tool-bar-map) gnus-summary-tool-bar-map))
 
@@ -7087,7 +7087,7 @@ With ARG, turn line truncation on if ARG is positive."
 (defun gnus-summary-find-for-reselect ()
   "Return the number of an article to stay on across a reselect.
 The current article is considered, then following articles, then previous
-articles.  An article is sought which is not cancelled and isn't a temporary
+articles.  An article is sought which is not canceled and isn't a temporary
 insertion from another group.  If there's no such then return a dummy 0."
   (let (found)
     (dolist (rev '(nil t))
@@ -9611,9 +9611,12 @@ C-u g', show the raw article."
 	(when (gnus-summary-goto-subject (cdr gnus-article-current) nil t)
 	  (gnus-summary-update-secondary-mark (cdr gnus-article-current))))))
    ((not arg)
-    (require 'shr)
-    (let ((shr-ignore-cache t))
-      ;; Select the article the normal way.
+    ;; Select the article the normal way.
+    (if (eq mm-text-html-renderer 'shr)
+	(progn
+	  (require 'shr)
+	  (let ((shr-ignore-cache t))
+	    (gnus-summary-select-article nil 'force)))
       (gnus-summary-select-article nil 'force)))
    ((equal arg '(16))
     ;; C-u C-u g

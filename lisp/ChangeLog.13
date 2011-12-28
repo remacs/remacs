@@ -7261,7 +7261,7 @@
 	* progmodes/gdb-ui.el (gdb-parent-bptno-enabled): New variable.
 	(gdb-breakpoint-regexp, gdb-mouse-toggle-breakpoint-margin)
 	(gdb-mouse-toggle-breakpoint-fringe, gdb-delete-breakpoint)
-	(gdb-goto-breakpoint): Generalise for breakpoints with multiple
+	(gdb-goto-breakpoint): Generalize for breakpoints with multiple
 	locations.
 	(gdb-info-breakpoints-custom, gdb-assembler-custom)
 	(gdb-toggle-breakpoint): Update for new gdb-breakpoint-regexp.
@@ -8010,7 +8010,7 @@
 2007-10-31  Juanma Barranquero  <lekktu@gmail.com>
 
 	* help-at-pt.el (help-at-pt-unload-hook): Remove.
-	Timers are automatically cancelled by `unload-feature'.
+	Timers are automatically canceled by `unload-feature'.
 
 	* delsel.el (delsel-unload-hook): Remove function and variable.
 	(delsel-unload-function): New-style unload function, adapted
@@ -10869,7 +10869,7 @@
 
 2007-09-23  Glenn Morris  <rgm@gnu.org>
 
-	* ses.el (ses-calculate-cell): Don't evaluate unsafe formulae.
+	* ses.el (ses-calculate-cell): Don't evaluate unsafe formulas.
 
 2007-09-23  Dan Nicolaescu  <dann@ics.uci.edu>
 

@@ -190,7 +190,7 @@ developing GNU and promoting software freedom.''
 @titlepage
 @sp 10
 
-@center @titlefont{CC Mode 5.31}
+@center @titlefont{CC Mode 5.32}
 @sp 2
 @center @subtitlefont{A GNU Emacs mode for editing C and C-like languages}
 @sp 2
@@ -378,7 +378,7 @@ was added in version 5.30.
 
 This manual describes @ccmode{}
 @comment The following line must appear on its own, so that the
-version 5.31.
+version 5.32.
 @comment Release.py script can update the version number automatically
 
 @ccmode{} supports the editing of K&R and ANSI C, C++, Objective-C,
@@ -2160,7 +2160,7 @@ A space between the function name and opening parenthesis when calling
 a user function.  The last character of the function name and the
 opening parenthesis are highlighted.  This font-locking rule will
 spuriously highlight a valid concatenation expression where an
-identifier precedes a parenthesised expression.  Unfortunately.
+identifier precedes a parenthesized expression.  Unfortunately.
 
 @item
 Whitespace following the @samp{\} in what otherwise looks like an

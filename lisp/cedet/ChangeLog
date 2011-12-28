@@ -1,3 +1,12 @@
+2011-12-19  Sam Steingold  <sds@gnu.org>
+
+	* semantic/edit.el (semantic-edits-incremental-parser): Add the
+	autoload cookie, necessary for JDEE.
+
+2011-12-06  Juanma Barranquero  <lekktu@gmail.com>
+
+	* semantic/bovine/c.el (semantic-tag-abstract-p): Fix typo.
+
 2011-11-26  Chong Yidong  <cyd@gnu.org>
 
 	* semantic/wisent/python-wy.el:

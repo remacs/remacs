@@ -687,7 +687,7 @@ POS defaults to `point'."
 	  ;; Otherwise record the current column and look backwards.
 	  (setq column (current-column))
 	  (skip-chars-backward ",; \t")
-	  ;; Record the distance travelled.
+	  ;; Record the distance traveled.
 	  (setq distance (- column (current-column)))
 	  (when (looking-back
 		 (concat "([ \t]*\\(?:" Man-section-regexp "\\)[ \t]*)"))
@@ -933,7 +933,8 @@ Return the buffer in which the manpage will appear."
 	;;               minal (using an ioctl(2) if available, the value of
 	;;               $COLUMNS,  or falling back to 80 characters if nei-
 	;;               ther is available).
-	(unless (or (getenv "MANWIDTH") (getenv "COLUMNS"))
+	(when (or window-system
+                  (not (or (getenv "MANWIDTH") (getenv "COLUMNS"))))
 	  ;; This isn't strictly correct, since we don't know how
 	  ;; the page will actually be displayed, but it seems
 	  ;; reasonable.

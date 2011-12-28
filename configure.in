@@ -1176,9 +1176,9 @@ if test "${with_sound}" != "no"; then
   PKG_CHECK_MODULES(ALSA, $ALSA_MODULES, HAVE_ALSA=yes, HAVE_ALSA=no)
   if test $HAVE_ALSA = yes; then
     SAVE_CFLAGS="$CFLAGS"
-    SAVE_LDFLAGS="$LDFLAGS"
+    SAVE_LIBS="$LIBS"
     CFLAGS="$ALSA_CFLAGS $CFLAGS"
-    LDFLAGS="$ALSA_LIBS $LDFLAGS"
+    LIBS="$ALSA_LIBS $LIBS"
     AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <asoundlib.h>]], [[snd_lib_error_set_handler (0);]])],
                     emacs_alsa_normal=yes,
 	            emacs_alsa_normal=no)
@@ -1194,7 +1194,7 @@ if test "${with_sound}" != "no"; then
     fi
 
     CFLAGS="$SAVE_CFLAGS"
-    LDFLAGS="$SAVE_LDFLAGS"
+    LIBS="$SAVE_LIBS"
     LIBSOUND="$LIBSOUND $ALSA_LIBS"
     CFLAGS_SOUND="$CFLAGS_SOUND $ALSA_CFLAGS"
     AC_DEFINE(HAVE_ALSA, 1, [Define to 1 if ALSA is available.])
@@ -1685,7 +1685,7 @@ if test "$doug_lea_malloc" = "yes" ; then
   ## Use mmap directly for allocating larger buffers.
   ## FIXME this comes from src/s/{gnu,gnu-linux}.h:
   ## #ifdef DOUG_LEA_MALLOC; #undef REL_ALLOC; #endif
-  ## Does the AC_FUNC_MMAP test below make this check unecessary?
+  ## Does the AC_FUNC_MMAP test below make this check unnecessary?
   case "$opsys" in
     gnu*) REL_ALLOC=no ;;
   esac
@@ -1722,7 +1722,15 @@ dnl Check if pthreads is available.
 LIB_PTHREAD=
 AC_CHECK_HEADERS(pthread.h)
 if test "$ac_cv_header_pthread_h"; then
-  AC_CHECK_LIB(pthread, pthread_self, HAVE_PTHREAD=yes)
+  dnl gmalloc.c uses pthread_atfork, which is not available on older-style
+  dnl hosts such as MirBSD 10, so test for pthread_atfork instead of merely
+  dnl testing for pthread_self if Emacs uses gmalloc.c.
+  if test "$GMALLOC_OBJ" = gmalloc.o; then
+    emacs_pthread_function=pthread_atfork
+  else
+    emacs_pthread_function=pthread_self
+  fi
+  AC_CHECK_LIB(pthread, $emacs_pthread_function, HAVE_PTHREAD=yes)
 fi
 if test "$HAVE_PTHREAD" = yes; then
   case "${canonical}" in
@@ -2089,12 +2097,12 @@ fi
 
 if test "$HAVE_GSETTINGS" = "yes" || test "$HAVE_GCONF" = "yes"; then
     SAVE_CFLAGS="$CFLAGS"
-    SAVE_LDFLAGS="$LDFLAGS"
+    SAVE_LIBS="$LIBS"
     CFLAGS="$SETTINGS_CFLAGS $CFLAGS"
-    LDFLAGS="$SETTINGS_LIBS $LDFLAGS"
+    LIBS="$SETTINGS_LIBS $LIBS"
     AC_CHECK_FUNCS([g_type_init])
     CFLAGS="$SAVE_CFLAGS"
-    LDFLAGS="$SAVE_LDFLAGS"
+    LIBS="$SAVE_LIBS"
 fi
 AC_SUBST(SETTINGS_CFLAGS)
 AC_SUBST(SETTINGS_LIBS)

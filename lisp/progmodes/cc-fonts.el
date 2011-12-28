@@ -194,9 +194,13 @@
 	 (unless (face-property-instance oldface 'reverse)
 	   (invert-face newface)))))
 
-(defvar c-annotation-face (make-face 'c-annotation-face)
-  "Face used to highlight annotations in java-mode and other modes that may wish to use it.")
-(set-face-foreground 'c-annotation-face "blue")
+(defvar c-annotation-face 'c-annotation-face)
+
+(defface c-annotation-face
+  '((default :inherit font-lock-constant-face))
+  "Face for highlighting annotations in Java mode and similar modes."
+  :version "24.1"
+  :group 'c)
 
 (eval-and-compile
   ;; We need the following definitions during compilation since they're
@@ -1207,7 +1211,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	  ;; o - '<> if the arglist is of angle bracket type;
 	  ;; o - 'arglist if it's some other arglist;
 	  ;; o - nil, if not in an arglist at all.  This includes the
-	  ;;   parenthesised condition which follows "if", "while", etc.
+	  ;;   parenthesized condition which follows "if", "while", etc.
 	  context
 	  ;; The position of the next token after the closing paren of
 	  ;; the last detected cast.
@@ -1534,24 +1538,8 @@ casts and declarations are fontified.  Used on level 2 and higher."
   ;; prevent a repeat invocation.  See elisp/lispref page "Search-based
   ;; Fontification".
   (let* ((paren-state (c-parse-state))
-	 (start (point))
-	 decl-context bo-decl in-typedef type-type ps-elt)
-
-    ;; First, are we actually in a "local" declaration?
-    (setq decl-context (c-beginning-of-decl-1)
-	  bo-decl (point)
-	  in-typedef (looking-at c-typedef-key))
-    (if in-typedef (c-forward-token-2))
-    (when (and (eq (car decl-context) 'same)
-	       (< bo-decl start))
-      ;; Are we genuinely at a type?
-      (setq type-type (c-forward-type t))
-      (if (and type-type
-	       (or (not (eq type-type 'maybe))
-		   (looking-at c-symbol-key)))
-	  (c-font-lock-declarators limit t in-typedef)))
-
-    ;; Secondly, are we in any nested struct/union/class/etc. braces?
+	 decl-context in-typedef ps-elt)
+    ;; Are we in any nested struct/union/class/etc. braces?
     (while paren-state
       (setq ps-elt (car paren-state)
 	    paren-state (cdr paren-state))

@@ -426,7 +426,7 @@ directory, like `default-directory'."
       '(menu-item "Save current filter groups permanently..."
         ibuffer-save-filter-groups
         :enable (and (featurep 'ibuf-ext) ibuffer-filter-groups)
-        :help "Use a mnemnonic name to store current filter groups"))
+        :help "Use a mnemonic name to store current filter groups"))
     (define-key-after groups-map [switch-to-saved-filter-groups]
       '(menu-item "Restore permanently saved filters..."
         ibuffer-switch-to-saved-filter-groups
@@ -676,7 +676,7 @@ directory, like `default-directory'."
     (define-key-after map [menu-bar view filter save-filters]
       '(menu-item "Save current filters permanently..." ibuffer-save-filters
         :enable (and (featurep 'ibuf-ext) ibuffer-filtering-qualifiers)
-        :help "Use a mnemnonic name to store current filter stack"))
+        :help "Use a mnemonic name to store current filter stack"))
     (define-key-after map [menu-bar view filter switch-to-saved-filters]
       '(menu-item "Restore permanently saved filters..."
         ibuffer-switch-to-saved-filters
@@ -2648,7 +2648,7 @@ will be inserted before the group at point."
 ;;;;;;  ibuffer-backward-filter-group ibuffer-forward-filter-group
 ;;;;;;  ibuffer-toggle-filter-group ibuffer-mouse-toggle-filter-group
 ;;;;;;  ibuffer-interactive-filter-by-mode ibuffer-mouse-filter-by-mode
-;;;;;;  ibuffer-auto-mode) "ibuf-ext" "ibuf-ext.el" "25e69a1e030791b3a3e7d91d4377173a")
+;;;;;;  ibuffer-auto-mode) "ibuf-ext" "ibuf-ext.el" "897e64e4465af94b89e21fa84ae61290")
 ;;; Generated autoloads from ibuf-ext.el
 
 (autoload 'ibuffer-auto-mode "ibuf-ext" "\

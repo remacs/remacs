@@ -1,3 +1,8 @@
+2011-12-15  Kenichi Handa  <handa@m17n.org>
+
+	* quail/ethiopic.el ("ethiopic"): Do not refer to
+	ethio-prefer-ascii-punctuation.
+
 2011-11-20  Juanma Barranquero  <lekktu@gmail.com>
 
 	* quail/hangul.el (hangul-character): Fix typo.
@@ -1801,7 +1806,7 @@
 1998-07-21  Kenichi Handa  <handa@etl.go.jp>
 
 	* quail/japanese.el (quail-japanese-kanji-kkc): Handle the case
-	that conversion is cancelled in kkc-region.
+	that conversion is canceled in kkc-region.
 	(quail-japanese-switch-package): Fix previous change.
 
 1998-07-19  Kenichi Handa  <handa@etl.go.jp>
@@ -1890,7 +1895,7 @@
 	* Makefile.in (${TIT}): To byte-compile quail packages, use just
 	built quail.
 
-1997-12-09  Koaunghi Un  <koanughi.un@zdv.uni-tuebingen.de>
+1997-12-09  Koaunghi Un  <koaunghi.un@zdv.uni-tuebingen.de>
 
 	* quail/hanja3.el: New file.
 
@@ -1998,7 +2003,7 @@
 	(quail-mode-map): Change binding for ethio-insert-ethio-space.
 	(quail-mode-hook): Check the current Quail package name.
 
-	* quail/latin-post.el: Add rules for cancelling accents by typing
+	* quail/latin-post.el: Add rules for canceling accents by typing
 	two accent keys (e.g. a~ => a-tilde, a~~ => a~) to all Quail
 	packages.
 

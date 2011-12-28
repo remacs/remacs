@@ -106,7 +106,7 @@ Each element has the form (WINDOW . OVERLAY).")
           (let ((inv (overlay-get ol 'invisible)) open)
             (when (and inv
                        ;; There's an `invisible' property.  Make sure it's
-                       ;; actually invisible, and ellipsised.
+                       ;; actually invisible, and ellipsized.
                        (and (consp buffer-invisibility-spec)
                             (cdr (assq inv buffer-invisibility-spec)))
                        (or (setq open
@@ -189,12 +189,12 @@ Each element has the form (WINDOW . OVERLAY).")
 
 ;;;###autoload
 (define-minor-mode reveal-mode
-  "Toggle decloaking of invisible text near point (Reveal mode).
+  "Toggle uncloaking of invisible text near point (Reveal mode).
 With a prefix argument ARG, enable Reveal mode if ARG is
 positive, and disable it otherwise.  If called from Lisp, enable
 Reveal mode if ARG is omitted or nil.
 
-Reveral mode is a buffer-local minor mode.  When enabled, it
+Reveal mode is a buffer-local minor mode.  When enabled, it
 reveals invisible text around point."
   :group 'reveal
   :lighter (global-reveal-mode nil " Reveal")

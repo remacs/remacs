@@ -413,7 +413,7 @@ start of the region and set the face with which to start.  Set
 	  (setq ansi-color-context-region nil))))))
 
 ;; This function helps you look for overlapping overlays.  This is
-;; usefull in comint-buffers.  Overlapping overlays should not happen!
+;; useful in comint-buffers.  Overlapping overlays should not happen!
 ;; A possible cause for bugs are the markers.  If you create an overlay
 ;; up to the end of the region, then that end might coincide with the
 ;; process-mark.  As text is added BEFORE the process-mark, the overlay
@@ -585,7 +585,7 @@ ANSI-CODE is used as an index into the vector."
   "Create a new face by applying all the parameters in ESCAPE-SEQ.
 
 Should any of the parameters result in the default face (usually this is
-the parameter 0), then the effect of all previous parameters is cancelled.
+the parameter 0), then the effect of all previous parameters is canceled.
 
 ESCAPE-SEQ is a SGR control sequences such as \\033[34m.  The parameter
 34 is used by `ansi-color-get-face-1' to return a face definition."

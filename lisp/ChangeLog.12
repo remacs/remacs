@@ -6278,7 +6278,7 @@
 	Register changes using allout-exposure-change-hook.
 	Disregard aberrant topics.
 	(allout-shift-in): With universal-argument, make topic a peer of
-	it's former offspring.  Simplify the code by separating out
+	its former offspring.  Simplify the code by separating out
 	allout-shift-out functionality.
 	(allout-shift-out): With universal-argument, make offspring peers
 	of their former container, and its siblings.  Implement the
@@ -7177,7 +7177,7 @@
 2006-08-20  Chong Yidong  <cyd@stupidchicken.com>
 
 	* frame.el (blink-cursor-start): Set timer first.
-	(blink-cursor-end): Ignore timer cancelling errors.
+	(blink-cursor-end): Ignore timer canceling errors.
 	Suggested by Ken Manheimer.
 
 2006-08-20  Juanma Barranquero  <lekktu@gmail.com>
@@ -15842,7 +15842,7 @@
 	interactive spec from "p" to "P".
 
 	* progmodes/cc-styles.el: Amend the doc-string of c-set-style, in
-	reponse to a report from Joseph Kiniry <kiniry@acm.org> that it
+	response to a report from Joseph Kiniry <kiniry@acm.org> that it
 	was difficult to understand.
 
 2005-12-08  Martin Stjernholm  <bug-cc-mode@gnu.org>
@@ -18459,7 +18459,7 @@
 	reveal-open-spots, so as to be more reliable.  There were several
 	tricky corner cases where an open spot might be lost, or where
 	a closed spot might end up on the list of open spots.
-	Only reveal text that's ellipsised.
+	Only reveal text that's ellipsized.
 
 2005-11-07  Carsten Dominik  <dominik@science.uva.nl>
 
@@ -27413,7 +27413,7 @@
 	which has been added in Emacs 21.1.
 	(c-mode, c++-mode, objc-mode, java-mode, idl-mode, pike-mode)
 	(awk-mode): Use it.
-	(make-local-hook): Suppress warning about obsoleteness.
+	(make-local-hook): Suppress warning about obsolescence.
 
 	* progmodes/cc-engine.el, cc-align.el, cc-cmds.el
 	(c-append-backslashes-forward, c-delete-backslashes-forward)

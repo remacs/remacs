@@ -157,6 +157,8 @@ Lisp_Object Qfile_name_handler_alist;
 
 Lisp_Object Qrisky_local_variable;
 
+Lisp_Object Qkill_emacs;
+
 /* If non-zero, Emacs should not attempt to use a window-specific code,
    but instead should use the virtual terminal under which it was started.  */
 int inhibit_window_system;
@@ -322,6 +324,12 @@ static void (*fatal_error_signal_hook) (void);
 pthread_t main_thread;
 #endif
 
+#ifdef HAVE_NS
+/* NS autrelease pool, for memory management.  */
+static void *ns_pool;
+#endif  
+
+ 
 
 /* Handle bus errors, invalid instruction, etc.  */
 #ifndef FLOAT_CATCH_SIGILL
@@ -952,7 +960,7 @@ main (int argc, char **argv)
     }
 
   /* Command line option --no-windows is deprecated and thus not mentioned
-     in the manual and usage informations.  */
+     in the manual and usage information.  */
   if (argmatch (argv, argc, "-nw", "--no-window-system", 6, NULL, &skip_args)
       || argmatch (argv, argc, "-nw", "--no-windows", 6, NULL, &skip_args))
     inhibit_window_system = 1;
@@ -1319,7 +1327,7 @@ Using an Emacs configured with --with-x-toolkit=lucid does not have this problem
     = argmatch (argv, argc, "-nsl", "--no-site-lisp", 11, NULL, &skip_args);
 
 #ifdef HAVE_NS
-  ns_alloc_autorelease_pool ();
+  ns_pool = ns_alloc_autorelease_pool ();
   if (!noninteractive)
     {
 #ifdef NS_IMPL_COCOA
@@ -2019,6 +2027,10 @@ all of which are called before Emacs is actually killed.  */)
 
   shut_down_emacs (0, 0, STRINGP (arg) ? arg : Qnil);
 
+#ifdef HAVE_NS
+  ns_release_autorelease_pool (ns_pool);
+#endif
+
   /* If we have an auto-save list file,
      kill it because we are exiting Emacs deliberately (not crashing).
      Do it after shut_down_emacs, which does an auto-save.  */
@@ -2400,6 +2412,7 @@ syms_of_emacs (void)
 {
   DEFSYM (Qfile_name_handler_alist, "file-name-handler-alist");
   DEFSYM (Qrisky_local_variable, "risky-local-variable");
+  DEFSYM (Qkill_emacs, "kill-emacs");
 
 #ifndef CANNOT_DUMP
   defsubr (&Sdump_emacs);

@@ -1433,7 +1433,7 @@ REG := r0 | r1 | r2 | r3 | r4 | r5 | r6 | r7
 ARG := REG | integer
 
 OPERATOR :=
-	;; Normal arithmethic operators (same meaning as C code).
+	;; Normal arithmetic operators (same meaning as C code).
 	+ | - | * | / | %
 
 	;; Bitwise operators (same meaning as C code)
@@ -1469,7 +1469,7 @@ OPERATOR :=
 	| de-sjis
 
 	;; If ARG_0 and ARG_1 are the first and second code point of
-	;; JISX0208 character CHAR, and SJIS is the correponding
+	;; JISX0208 character CHAR, and SJIS is the corresponding
 	;; Shift-JIS code,
 	;; (REG = ARG_0 en-sjis ARG_1) means:
 	;;	((REG = HIGH)

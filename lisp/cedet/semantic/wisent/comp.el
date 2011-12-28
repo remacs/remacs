@@ -51,7 +51,7 @@
 ;; name space.  Elisp dynamic binding allows that ;-)
 
 ;; Here are simple macros to easily define and use set of variables
-;; binded locally, without all these "reference to free variable"
+;; bound locally, without all these "reference to free variable"
 ;; compiler warnings!
 
 (defmacro wisent-context-name (name)
@@ -2640,7 +2640,7 @@ there are any reduce/reduce conflicts.")
 
 (defun wisent-print-results ()
   "Print information on generated parser.
-Report detailed informations if `wisent-verbose-flag' or
+Report detailed information if `wisent-verbose-flag' or
 `wisent-debug-flag' are non-nil."
   (when (or wisent-verbose-flag wisent-debug-flag)
     (wisent-print-useless))

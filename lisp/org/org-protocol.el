@@ -145,8 +145,8 @@
 (defgroup org-protocol nil
   "Intercept calls from emacsclient to trigger custom actions.
 
-This is done by advising `server-visit-files' to scann the list of filenames
-for `org-protocol-the-protocol' and sub-procols defined in
+This is done by advising `server-visit-files' to scan the list of filenames
+for `org-protocol-the-protocol' and sub-protocols defined in
 `org-protocol-protocol-alist' and `org-protocol-protocol-alist-default'."
   :version "22.1"
   :group 'convenience
@@ -546,8 +546,8 @@ as filename."
               (when (string-match proto fname)
                 (let* ((func (plist-get (cdr prolist) :function))
                        (greedy (plist-get (cdr prolist) :greedy))
-                       (splitted (split-string fname proto))
-                       (result (if greedy restoffiles (cadr splitted))))
+                       (split (split-string fname proto))
+                       (result (if greedy restoffiles (cadr split))))
                   (when (plist-get (cdr prolist) :kill-client)
 		    (message "Greedy org-protocol handler. Killing client.")
 		    (server-edit))

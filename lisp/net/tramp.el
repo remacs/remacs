@@ -298,8 +298,8 @@ shouldn't return t when it isn't."
       (search-forward-regexp "Missing ControlMaster argument" nil t))))
 
 (defcustom tramp-default-method
-  ;; An external copy method seems to be preferred, because it is much
-  ;; more performant for large files, and it hasn't too serious delays
+  ;; An external copy method seems to be preferred, because it performs
+  ;; much better for large files, and it hasn't too serious delays
   ;; for small files.  But it must be ensured that there aren't
   ;; permanent password queries.  Either a password agent like
   ;; "ssh-agent" or "Pageant" shall run, or the optional
@@ -3506,7 +3506,7 @@ If the `tramp-methods' entry does not exist, return nil."
        (cond
          ((char-equal other-write ?w) (tramp-compat-octal-to-decimal "00002"))
 	 ((char-equal other-write ?-) 0)
-         (t (error "Nineth char `%c' must be one of `w-'" other-write)))
+         (t (error "Ninth char `%c' must be one of `w-'" other-write)))
        (cond
 	((char-equal other-execute-or-sticky ?x)
 	 (tramp-compat-octal-to-decimal "00001"))

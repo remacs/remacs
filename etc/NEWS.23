@@ -903,7 +903,7 @@ mode-line information (e.g. waiting for a VC command to finish).
 
 *** The mode-line tooltips have been improved to provide more details.
 
-*** The VC, line/colum number and minor mode indicators on the mode
+*** The VC, line/column number and minor mode indicators on the mode
 line are now interactive: mouse-1 can be used on them to pop up a menu.
 
 ** File deletion can make use of the Recycle Bin or system Trash folder.
@@ -1677,7 +1677,7 @@ Running processes on a remote host can be controlled by settings in
 When the variable `file-precious-flag' is set, the success of a remote
 file copy is checked via the file's checksum.
 
-*** Passwords can be read from an authentification file.
+*** Passwords can be read from an authentication file.
 Tramp uses the package `auth-source' to read passwords from a file, if
 necessary.
 

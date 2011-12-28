@@ -2822,7 +2822,7 @@ read1 (register Lisp_Object readcharfun, int *pch, int first_in_list)
 	   So we now use the same heuristic as for backquote: old-style
 	   unquotes are only recognized when first on a list, and when
 	   followed by a space.
-	   Because it's more difficult to peak 2 chars ahead, a new-style
+	   Because it's more difficult to peek 2 chars ahead, a new-style
 	   ,@ can still not be used outside of a `, unless it's in the middle
 	   of a list.  */
 	if (new_backquote_flag
@@ -4180,13 +4180,16 @@ init_lread (void)
 		}
 
 	      /* Add site-lisp under the installation dir, if it exists.  */
-	      tem = Fexpand_file_name (build_string ("site-lisp"),
-				       Vinstallation_directory);
-	      tem1 = Ffile_exists_p (tem);
-	      if (!NILP (tem1))
+	      if (!no_site_lisp)
 		{
-		  if (NILP (Fmember (tem, Vload_path)))
-		    Vload_path = Fcons (tem, Vload_path);
+		  tem = Fexpand_file_name (build_string ("site-lisp"),
+					   Vinstallation_directory);
+		  tem1 = Ffile_exists_p (tem);
+		  if (!NILP (tem1))
+		    {
+		      if (NILP (Fmember (tem, Vload_path)))
+			Vload_path = Fcons (tem, Vload_path);
+		    }
 		}
 
 	      /* If Emacs was not built in the source directory,
@@ -4222,11 +4225,14 @@ init_lread (void)
 		      if (NILP (Fmember (tem, Vload_path)))
 			Vload_path = Fcons (tem, Vload_path);
 
-		      tem = Fexpand_file_name (build_string ("site-lisp"),
-					       Vsource_directory);
+		      if (!no_site_lisp)
+			{
+			  tem = Fexpand_file_name (build_string ("site-lisp"),
+						   Vsource_directory);
 
-		      if (NILP (Fmember (tem, Vload_path)))
-			Vload_path = Fcons (tem, Vload_path);
+			  if (NILP (Fmember (tem, Vload_path)))
+			    Vload_path = Fcons (tem, Vload_path);
+			}
 		    }
 		}
 	      if (!NILP (sitelisp) && !no_site_lisp)

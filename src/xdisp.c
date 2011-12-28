@@ -1920,7 +1920,7 @@ get_glyph_string_clip_rects (struct glyph_string *s, NativeRectangle *rects, int
 	 environments with anti-aliased text: if the same text is
 	 drawn onto the same place multiple times, it gets thicker.
 	 If the overlap we are processing is for the erased cursor, we
-	 take the intersection with the rectagle of the cursor.  */
+	 take the intersection with the rectangle of the cursor.  */
       if (s->for_overlaps & OVERLAPS_ERASED_CURSOR)
 	{
 	  XRectangle rc, r_save = r;
@@ -4095,10 +4095,11 @@ handle_invisible_prop (struct it *it)
 	  while (invis_p);
 
 	  /* The position newpos is now either ZV or on visible text.  */
-	  if (it->bidi_p && newpos < ZV)
+	  if (it->bidi_p)
 	    {
 	      EMACS_INT bpos = CHAR_TO_BYTE (newpos);
-	      int on_newline = FETCH_BYTE (bpos) == '\n';
+	      int on_newline =
+		bpos == ZV_BYTE || FETCH_BYTE (bpos) == '\n';
 	      int after_newline =
 		newpos <= BEGV || FETCH_BYTE (bpos - 1) == '\n';
 
@@ -4116,16 +4117,16 @@ handle_invisible_prop (struct it *it)
 
 		  SET_TEXT_POS (tpos, newpos, bpos);
 		  reseat_1 (it, tpos, 0);
-		  /* If we reseat on a newline, we need to prep the
+		  /* If we reseat on a newline/ZV, we need to prep the
 		     bidi iterator for advancing to the next character
-		     after the newline, keeping the current paragraph
+		     after the newline/EOB, keeping the current paragraph
 		     direction (so that PRODUCE_GLYPHS does TRT wrt
 		     prepending/appending glyphs to a glyph row).  */
 		  if (on_newline)
 		    {
 		      it->bidi_it.first_elt = 0;
 		      it->bidi_it.paragraph_dir = pdir;
-		      it->bidi_it.ch = '\n';
+		      it->bidi_it.ch = (bpos == ZV_BYTE) ? -1 : '\n';
 		      it->bidi_it.nchars = 1;
 		      it->bidi_it.ch_len = 1;
 		    }
@@ -10288,7 +10289,7 @@ current_message_1 (EMACS_INT a1, Lisp_Object a2, EMACS_INT a3, EMACS_INT a4)
 }
 
 
-/* Push the current message on Vmessage_stack for later restauration
+/* Push the current message on Vmessage_stack for later restoration
    by restore_message.  Value is non-zero if the current message isn't
    empty.  This is a relatively infrequent operation, so it's not
    worth optimizing.  */
@@ -14421,7 +14422,7 @@ try_scrolling (Lisp_Object window, int just_this_one_p,
     {
       int scroll_margin_y;
 
-      /* Compute the pixel ypos of the scroll margin, then move it to
+      /* Compute the pixel ypos of the scroll margin, then move IT to
 	 either that ypos or PT, whichever comes first.  */
       start_display (&it, w, startp);
       scroll_margin_y = it.last_visible_y - this_scroll_margin
@@ -14451,7 +14452,8 @@ try_scrolling (Lisp_Object window, int just_this_one_p,
 	  if (dy > scroll_max)
 	    return SCROLLING_FAILED;
 
-	  scroll_down_p = 1;
+	  if (dy > 0)
+	    scroll_down_p = 1;
 	}
     }
 
@@ -18991,7 +18993,8 @@ display_line (struct it *it)
 #define RECORD_MAX_MIN_POS(IT)					\
   do								\
     {								\
-      int composition_p = (IT)->what == IT_COMPOSITION;		\
+      int composition_p = !STRINGP ((IT)->string)		\
+	&& ((IT)->what == IT_COMPOSITION);			\
       EMACS_INT current_pos =					\
 	composition_p ? (IT)->cmp_it.charpos			\
 		      : IT_CHARPOS (*(IT));			\
