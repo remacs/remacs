@@ -1,6 +1,6 @@
 ;;; cc-fonts.el --- font lock support for CC Mode
 
-;; Copyright (C) 2002-2011 Free Software Foundation, Inc.
+;; Copyright (C) 2002-2012 Free Software Foundation, Inc.
 
 ;; Authors:    2003- Alan Mackenzie
 ;;             2002- Martin Stjernholm
@@ -1427,6 +1427,21 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	      ;; fontification of types and refs that've been recorded.
 	      (c-fontify-recorded-types-and-refs)
 	      nil)
+
+	     ((and (not c-enums-contain-decls)
+		   ;; An optimisation quickly to eliminate scans of long enum
+		   ;; declarations in the next cond arm.
+		   (let ((paren-state (c-parse-state)))
+		     (and
+		      (numberp (car paren-state))
+		      (save-excursion
+			(goto-char (car paren-state))
+			(c-backward-token-2)
+			(or (looking-at c-brace-list-key)
+			    (progn
+			      (c-backward-token-2)
+			      (looking-at c-brace-list-key)))))))
+	      t)
 
 	     (t
 	      ;; Are we at a declarator?  Try to go back to the declaration
