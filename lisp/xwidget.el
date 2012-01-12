@@ -72,7 +72,9 @@ NEW-SESSION specifies whether to create a new xwidget-webkit session.  URL
 defaults to the string looking like a url around the cursor position."
   (interactive (progn
 		 (require 'browse-url)
-		 (browse-url-interactive-arg "xwidget-webkit URL: " ( xwidget-webkit-current-url))))
+		 (browse-url-interactive-arg "xwidget-webkit URL: "
+                                             ;;( xwidget-webkit-current-url)
+                                             )))
   (when (stringp url)
     (setq url (url-tidy url))
     (if new-session
@@ -167,7 +169,8 @@ defaults to the string looking like a url around the cursor position."
             
             ((eq xwidget-event-type 'navigation-policy-decision-requested)
              (if (string-match ".*#\\(.*\\)" strarg)
-                 (xwidget-webkit-show-id-or-named-element xwidget (match-string 1 strarg))))))))
+                 (xwidget-webkit-show-id-or-named-element xwidget (match-string 1 strarg))))
+            (t (message "unhandled event:%s" xwidget-event-type))))))
 
 (define-derived-mode xwidget-webkit-mode
   special-mode "xwidget-webkit" "xwidget webkit view mode"
@@ -180,7 +183,7 @@ defaults to the string looking like a url around the cursor position."
 (defvar xwidget-webkit-last-session-buffer nil)
 
 (defun  xwidget-webkit-last-session ()
-  "Last active webkit, or a new one."
+  "Last active webkit, or nil."
   (if (buffer-live-p xwidget-webkit-last-session-buffer)
       (save-excursion
         (set-buffer xwidget-webkit-last-session-buffer)
@@ -348,7 +351,8 @@ Argument H height."
 (defun xwidget-webkit-current-url ()
   "Get the webkit url. place it on kill ring."
   (interactive)
-  (let ((url (kill-new   (xwidget-webkit-execute-script-rv (xwidget-webkit-current-session) "document.URL"))))
+  (let* ((rv (xwidget-webkit-execute-script-rv (xwidget-webkit-current-session) "document.URL"))
+         (url (kill-new   (if rv rv ""))))
     (message "url: %s" url )
     url))
 

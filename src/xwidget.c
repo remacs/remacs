@@ -826,22 +826,37 @@ x_draw_xwidget_glyph_string (struct glyph_string *s)
 
 
 #ifdef HAVE_WEBKIT_OSR
+
+//FUGLY macro that checks WEBKIT_IS_WEB_VIEW(xw->widget_osr) first 
+#define WEBKIT_FN_INIT()                        \
+  struct xwidget* xw;\  
+if(!XXWIDGETP(xwidget)) {printf("ERROR not an xwidget\n"); return Qnil;}; \
+if(Qnil == xwidget) {printf("ERROR xwidget nil\n");   return Qnil;};    \
+  xw = XXWIDGET(xwidget);                                                    \
+  if(NULL == xw) printf("ERROR xw is 0\n");                               \
+  if((NULL == xw->widget_osr) || !WEBKIT_IS_WEB_VIEW(xw->widget_osr)){  \
+    printf("ERROR xw->widget_osr does not hold a webkit instance\n");\
+    return Qnil;\
+  };
+
+
 DEFUN ("xwidget-webkit-goto-uri", Fxwidget_webkit_goto_uri,  Sxwidget_webkit_goto_uri, 2, 2, 0,
        doc:	/* webkit goto uri.*/
        )
   (Lisp_Object xwidget, Lisp_Object uri)
 {
-  struct xwidget* xw = XXWIDGET(xwidget);
+  WEBKIT_FN_INIT();
   webkit_web_view_load_uri ( WEBKIT_WEB_VIEW(xw->widget_osr), SDATA(uri));
   return Qnil;
 }
+
 
 DEFUN ("xwidget-webkit-execute-script", Fxwidget_webkit_execute_script,  Sxwidget_webkit_execute_script, 2, 2, 0,
        doc:	/* webkit exec js.*/
        )
   (Lisp_Object xwidget, Lisp_Object script)
 {
-  struct xwidget* xw = XXWIDGET(xwidget);
+  WEBKIT_FN_INIT();
   webkit_web_view_execute_script( WEBKIT_WEB_VIEW(xw->widget_osr), SDATA(script));
   return Qnil;
 }
@@ -852,7 +867,7 @@ DEFUN ("xwidget-webkit-get-title", Fxwidget_webkit_get_title,  Sxwidget_webkit_g
   (Lisp_Object xwidget)
 {
   //TODO support multibyte strings
-  struct xwidget* xw = XXWIDGET(xwidget);
+  WEBKIT_FN_INIT();
   const gchar* str=webkit_web_view_get_title( WEBKIT_WEB_VIEW(xw->widget_osr));
   //return make_string_from_bytes(str, wcslen((const wchar_t *)str), strlen(str));
   if(str == 0){
@@ -931,7 +946,7 @@ DEFUN ("xwidget-webkit-dom-dump", Fxwidget_webkit_dom_dump,  Sxwidget_webkit_dom
        )
   (Lisp_Object xwidget)
 {
-  struct xwidget* xw = XXWIDGET(xwidget);
+  WEBKIT_FN_INIT();
   xwidget_webkit_dom_dump(WEBKIT_DOM_NODE(webkit_web_view_get_dom_document( WEBKIT_WEB_VIEW(xw->widget_osr))));
   return Qnil;
 }
