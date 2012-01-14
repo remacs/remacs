@@ -51,7 +51,7 @@
               (xwidget-insert (point-min)  'socket "socket" 500  500)
               (define-key (current-local-map) [xwidget-event] 'xwidget-handler-demo-basic))
 
-(xwidget-demo "a-socket-osr" 
+(xwidget-demo "a-socket-osr-broken" 
               (xwidget-insert (point-min)  'socket-osr "socket-osr" 500  500)
               (define-key (current-local-map) [xwidget-event] 'xwidget-handler-demo-basic))
 
@@ -64,7 +64,7 @@
               (xwidget-insert (point-min)  'cairo "canvas" 1000  1000)
               (define-key (current-local-map) [xwidget-event] 'xwidget-handler-demo-basic))
 
-(xwidget-demo "a-webkit" 
+(xwidget-demo "a-webkit-broken" 
               (xwidget-insert (point-min)  'webkit "webkit" 1000  1000)
               (define-key (current-local-map) [xwidget-event] 'xwidget-handler-demo-basic))
 
