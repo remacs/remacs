@@ -1,3 +1,8 @@
+2012-01-14  Eli Zaretskii  <eliz@gnu.org>
+
+	* tutorials/TUTORIAL.he: Update to follow changes to TUTORIAL in
+	2012-01-10T08:27:22Z!cyd@gnu.org.
+
 2012-01-10  Chong Yidong  <cyd@gnu.org>
 
 	* tutorials/TUTORIAL: Don't give instructions for old-style X
