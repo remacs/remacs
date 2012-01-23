@@ -142,35 +142,44 @@ defaults to the string looking like a url around the cursor position."
 ;;since the xwidget can generate an event even if its offscreen
 ;;TODO this needs to use callbacks and consider different xw ev types
 (define-key (current-global-map) [xwidget-event] 'xwidget-event-handler)
+(defun xwidget-log ( &rest msg)
+  (let ( (buf  (get-buffer-create "*xwidget-log*")))
+    (save-excursion
+      (buffer-disable-undo buf)
+      (set-buffer buf)
+      (insert (apply  'format msg))
+      (insert "\n"))))
 
 (defun xwidget-event-handler ()
   "Receive xwidget event."
   (interactive)
-  (message "stuff happened to xwidget %S" last-input-event)
+  (xwidget-log "stuff happened to xwidget %S" last-input-event)
   (let*
       ((xwidget-event-type (nth 1 last-input-event))
        (xwidget (nth 2 last-input-event))
-       ;(xwidget-callback (xwidget-get xwidget 'callback));;TODO stopped working for some reason
+                                        ;(xwidget-callback (xwidget-get xwidget 'callback));;TODO stopped working for some reason
        )
-    ;(funcall  xwidget-callback xwidget xwidget-event-type)
+                                        ;(funcall  xwidget-callback xwidget xwidget-event-type)
     (funcall  'xwidget-webkit-callback xwidget xwidget-event-type)
     ))
 
 (defun xwidget-webkit-callback (xwidget xwidget-event-type)
   (save-excursion
-    (set-buffer (xwidget-buffer xwidget))
-    (let* ( (strarg  (nth 3 last-input-event)))
-      (cond ((eq xwidget-event-type 'document-load-finished)
-             (message "webkit finished loading: '%s'" (xwidget-webkit-get-title xwidget))
-             (xwidget-adjust-size-to-content xwidget)
-             (rename-buffer (format "*xwidget webkit: %s *" (xwidget-webkit-get-title xwidget)))
-             (pop-to-buffer (current-buffer))
-             )
-            
-            ((eq xwidget-event-type 'navigation-policy-decision-requested)
-             (if (string-match ".*#\\(.*\\)" strarg)
-                 (xwidget-webkit-show-id-or-named-element xwidget (match-string 1 strarg))))
-            (t (message "unhandled event:%s" xwidget-event-type))))))
+    (cond ( (buffer-live-p (xwidget-buffer xwidget))
+            (set-buffer (xwidget-buffer xwidget))
+            (let* ( (strarg  (nth 3 last-input-event)))
+              (cond ((eq xwidget-event-type 'document-load-finished)
+                     (xwidget-log "webkit finished loading: '%s'" (xwidget-webkit-get-title xwidget))
+                     (xwidget-adjust-size-to-content xwidget)
+                     (rename-buffer (format "*xwidget webkit: %s *" (xwidget-webkit-get-title xwidget)))
+                     (pop-to-buffer (current-buffer))
+                     )
+                    
+                    ((eq xwidget-event-type 'navigation-policy-decision-requested)
+                     (if (string-match ".*#\\(.*\\)" strarg)
+                         (xwidget-webkit-show-id-or-named-element xwidget (match-string 1 strarg))))
+                    (t (xwidget-log "unhandled event:%s" xwidget-event-type)))))
+          (t (xwidget-log "error: callback called for xwidget with dead buffer")))))
 
 (define-derived-mode xwidget-webkit-mode
   special-mode "xwidget-webkit" "xwidget webkit view mode"
@@ -272,7 +281,7 @@ Argument STR string."
   (let ((y 
          (string-to-number (xwidget-webkit-execute-script-rv xw (format "document.getElementsByName('%s')[0].getBoundingClientRect().top" element-name) 0))))
     ;;now we need to tell emacs to scroll the element into view. 
-    (message "scroll: %d" y)
+    (xwidget-log "scroll: %d" y)
     (set-window-vscroll (selected-window) y t))
   )
 
@@ -282,7 +291,7 @@ Argument STR string."
   (let ((y 
          (string-to-number (xwidget-webkit-execute-script-rv xw (format "document.getElementById('%s').getBoundingClientRect().top" element-id) 0))))
     ;;now we need to tell emacs to scroll the element into view. 
-    (message "scroll: %d" y)
+    (xwidget-log "scroll: %d" y)
     (set-window-vscroll (selected-window) y t))
   )
 
@@ -295,7 +304,7 @@ Argument STR string."
          (string-to-number (xwidget-webkit-execute-script-rv xw (format "document.getElementById('%s').getBoundingClientRect().top" element-id) 0)))
         (y3 (max y1 y2)))
     ;;now we need to tell emacs to scroll the element into view. 
-    (message "scroll: %d" y3)
+    (xwidget-log "scroll: %d" y3)
     (set-window-vscroll (selected-window) y3 t))
   )
 

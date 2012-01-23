@@ -776,7 +776,7 @@ buffer. how do we catch these errors?
   thats not really an error either
 - xwidgets should now be proper lisp objects so you dont delete them
   you await their garbage collection. so therefore there can never be
-  invalid disploy specs
+  invalid display specs
 
 so turned out this got solved by using proper lisp objects for
 xwidgets. yay!
@@ -1527,3 +1527,34 @@ a callback that sets the buffer name automatically
 ** TODO unique buffer names
 the webkit xwidgets renames the buffer after load but not uniquely so
 it sometimes fails.
+** TODO kill the offscreen webkit xwidgets when last view killed
+The offscreen xwidgets is currently kept around even if the xwidgets
+views are all gone. this is a general problem and it requires actions
+on the behalf of the application to resolve.
+
+In the case of webkit it is currently possible to get errors like these:
+
+Debugger entered--Lisp error: (error "Selecting deleted buffer")
+  xwidget-webkit-callback(60925380 navigation-policy-decision-requested)
+  xwidget-event-handler()
+  call-interactively(xwidget-event-handler nil nil)
+
+
+because the last view is gone and the offscreen widgets is still
+generating events. 
+
+In the case of webkit it is okay to kill the offscreen widgets
+completely when the user kills the last view window because it would
+be unexpected by the user to see it pop up again. This is not true in
+the general case.
+
+** DONE xwidgets debugging log
+   CLOSED: [2012-01-23 Mon 14:32]
+currently theres a lot of debugging traces using "message" which is
+annoying. Instead put them in a separate trace buffer.
+(see xwidget-log)
+** TODO make garbage collect work for xwidgets
+when an xwidget is removed from xwidget-alist, and there are no other
+references(mostly views) the xwidget should be garbage collected.
+
+special finalization would go into gc_sweep()
