@@ -1552,9 +1552,14 @@ the general case.
    CLOSED: [2012-01-23 Mon 14:32]
 currently theres a lot of debugging traces using "message" which is
 annoying. Instead put them in a separate trace buffer.
-(see xwidget-log)
+(see xwidgetbuffer)
 ** TODO make garbage collect work for xwidgets
 when an xwidget is removed from xwidget-alist, and there are no other
 references(mostly views) the xwidget should be garbage collected.
 
 special finalization would go into gc_sweep()
+** TODO embedding evince
+http://developer.gnome.org/libevview/3.2/libevview-ev-view.html
+would be useful for reading PDF:s and other document types.
+
+it would work the same way webkit embedding works.
