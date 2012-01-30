@@ -1213,7 +1213,8 @@ textual parts.")
       t)))
 
 (deffoo nnimap-retrieve-group-data-early (server infos)
-  (when (nnimap-possibly-change-group nil server)
+  (when (and (nnimap-possibly-change-group nil server)
+	     infos)
     (with-current-buffer (nnimap-buffer)
       (erase-buffer)
       (setf (nnimap-group nnimap-object) nil)
@@ -1609,6 +1610,8 @@ textual parts.")
 
 (declare-function gnus-fetch-headers "gnus-sum"
 		  (articles &optional limit force-new dependencies))
+
+(autoload 'nnir-search-thread "nnir")
 
 (deffoo nnimap-request-thread (header &optional group server)
   (when group
