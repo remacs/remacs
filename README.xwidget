@@ -1558,3 +1558,5 @@ when an xwidget is removed from xwidget-alist, and there are no other
 references(mostly views) the xwidget should be garbage collected.
 
 special finalization would go into gc_sweep()
+
+test
