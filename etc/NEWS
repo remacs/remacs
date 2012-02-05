@@ -340,6 +340,7 @@ trashing.  This avoids inadvertently trashing temporary files.
 *** Calling `delete-file' or `delete-directory' with a prefix argument
 now forces true deletion, regardless of `delete-by-moving-to-trash'.
 
++++
 ** New option `list-colors-sort' defines the color sort order
 for `list-colors-display'.
 
@@ -454,10 +455,6 @@ been shown in a specific window.
 ** The inactive minibuffer has its own major mode `minibuffer-inactive-mode'.
 This is handy for minibuffer-only frames, and is also used for the "mouse-1
 pops up *Messages*" feature, which can now easily be changed.
-
----
-** `tooltip-use-echo-area' is obsolete.
-Rather than setting this to t, disable Tooltip mode instead.
 
 
 * Editing Changes in Emacs 24.1
@@ -714,26 +711,22 @@ utf-8, and do the normal `undecided' decoding for the rest.
 
 ** Eshell changes
 
-*** The default value of eshell-directory-name is a directory named
-"eshell" in `user-emacs-directory'.  If the old "~/.eshell/" directory
-exists, that is used instead.
+---
+*** The default value of `eshell-directory-name' has changed
+to be an "eshell" directory in `user-emacs-directory'.
+The old "~/.eshell/" directory is still used if it exists, though.
 
 ** gdb-mi
 +++
-*** GDB User Interface migrated to GDB Machine Interface and now
-supports multithread non-stop debugging and debugging of several
-threads simultaneously.
-
-** In ido-mode, C-v is no longer bound to ido-toggle-vc.
-The reason is that this interferes with cua-mode.
+*** The GDB User Interface has been migrated to GDB Machine Interface.
+It now supports multithread non-stop debugging and simultaneous
+debugging of several threads.
 
 ** Image mode
 
-*** RET (`image-toggle-animation') toggles animation, if the displayed
-image can be animated.
-
-*** Option `image-animate-loop', if non-nil, loops the animation.
-If nil, `image-toggle-animation' plays the animation once.
++++
+*** RET (`image-toggle-animation') toggles animation, if applicable.
+Animation plays once, unless the option `image-animate-loop' is non-nil.
 
 ** Info
 
@@ -752,8 +745,6 @@ and also because `Info-edit' is a rarely used command that is disabled
 by default.
 
 +++
-** The Landmark game is now invoked with `landmark', not `lm'.
-
 ** MH-E has been upgraded to MH-E version 8.3.1.
 See MH-E-NEWS for details.
 
@@ -927,6 +918,13 @@ They are superseded by shift-select-mode enabled by default in 23.1.
 ** Miscellaneous
 
 +++
+*** The Landmark game is now invoked with `landmark', not `lm'.
+
+---
+*** In `ido-file-completion-map', C-v is no longer bound to ido-toggle-vc.
+(This interfered with cua-mode.)
+
++++
 *** f90.el has some support for Fortran 2008 syntax.
 
 ---
@@ -999,6 +997,7 @@ of the header line.
 
 ** A backquote not followed by a space is now always treated as new-style.
 
+---
 ** view-buffer now treats special mode-class in the same way that
 view-file has since Emacs 22 (ie, it won't enable View mode if the
 major-mode is special).
@@ -1019,6 +1018,11 @@ they override the value of `menu-bar-mode'/`tool-bar-mode'.
 similar to the ones created by shift-selection.  In previous Emacs
 versions, these regions were delineated by `mouse-drag-overlay', which
 has now been removed.
+
++++
+** The fourth argument of filter-buffer-substring, which says to remove
+text properties from the final result, has been removed.
+Eg simply pass the result through substring-no-properties if you need this.
 
 ---
 ** cl.el no longer provides `cl-19'.
@@ -1050,22 +1054,24 @@ sc.el, x-menu.el, rnews.el, rnewspost.el
 
 * Lisp changes in Emacs 24.1
 
++++
 ** Code can now use lexical scoping by default instead of dynamic scoping.
 The `lexical-binding' variable lets code use lexical scoping for local
 variables.  It is typically set via a file-local variable in the first
 line of the file, in which case it applies to all the code in that file.
-
++++
 *** `eval' takes a new optional argument `lexical' to choose the new lexical
 binding instead of the old dynamic binding mode.
-
++++
 *** Lexically scoped interpreted functions are represented with a new form
 of function value which looks like (closure ENV ARGS &rest BODY).
 
 *** New macro `letrec' to define recursive local functions.
-
++++
 *** New function `special-variable-p' to check whether a variable is
 declared as dynamically bound.
 
++++
 ** An Emacs Lisp testing tool is now included.
 Emacs Lisp developers can use this tool to write automated tests for
 their code.  See the ERT info manual for details.
@@ -1235,12 +1241,18 @@ passing the hook functions as arguments to a "wrapping" function.
 +++
 *** New macro `with-wrapper-hook' for running an abnormal hook as a
 set of "wrapping" filters, similar to around advice.
+(A version of this macro was actually added in Emacs 23.2 but was not
+advertised at the time.)
 
-** `server-eval-at' is provided to allow evaluating forms on different
-Emacs server instances.
+** Macro `with-demoted-errors' was added in Emacs 23.1 but not advertised.
 
-** `call-process' allows a `(:file "file")' spec to redirect STDOUT to
-a file.
++++
+** The new function `server-eval-at' allows evaluation of Lisp forms on
+named Emacs server instances, using TCP sockets.
+
++++
+** `call-process' and `call-process-region' allow a `(:file "file")' spec
+to redirect STDOUT to a file.
 
 ---
 ** Variable `stack-trace-on-error' removed.
@@ -1252,9 +1264,11 @@ jumping all the way to the top-level.
 ** The function format-time-string now supports the %N directive, for
 higher-resolution time stamps.
 
++++
 ** New function `read-char-choice' reads a restricted set of characters,
 discarding any inputs not inside the set.
 
++++
 ** `image-library-alist' is renamed to `dynamic-library-alist'.
 The variable is now used to load all kind of supported dynamic libraries,
 not just image libraries.  The previous name is still available as an
@@ -1270,11 +1284,13 @@ syntax-propertize-via-font-lock to reuse old font-lock-syntactic-keywords
 as-is; and syntax-propertize-rules which provides a new way to specify
 syntactic rules.
 
++++
 ** New hook post-self-insert-hook run at the end of self-insert-command.
 
 +++
 ** Syntax tables support a new "comment style c" additionally to style b.
 
+---
 ** frame-local variables cannot be let-bound any more.
 
 ** Major and minor mode changes
@@ -1282,16 +1298,21 @@ syntactic rules.
 *** `prog-mode' is a new major mode from which programming modes
 should be derived.
 
++++
 **** `prog-mode-hook' can be used to enable features for programming
 modes, e.g. (add-hook 'prog-mode-hook 'flyspell-prog-mode) to enable
 on-the-fly spell checking for comments and strings.
 
++++
 *** New hook `change-major-mode-after-body-hook', run by
 `run-mode-hooks' just before any other mode hooks.
 
-*** Enabled globalized minor modes can be disabled in specific modes,
-by running (FOO-mode-hook 0) via a mode hook.
++++
+*** Enabled globalized minor modes can be disabled in specific major modes.
+If the global mode is global-FOO-mode, then run (FOO-mode -1) in the
+major mode's hook, where FOO-mode toggles the mode on a per-buffer basis.
 
++++
 *** `define-minor-mode' accepts a new keyword :variable.
 
 +++
@@ -1300,10 +1321,13 @@ Trashing is performed if TRASH and `delete-by-moving-to-trash' are
 both non-nil.  Interactively, TRASH defaults to t, unless a prefix
 argument is supplied (see Trash changes, above).
 
+---
 ** `facemenu-read-color' is now an alias for `read-color'.
-The command `read-color' now requires a match for a color name or RGB
-triplet, instead of signaling an error if the user provides a invalid
-input.
+
++++
+** The command `read-color' now requires a match for a color name
+or RGB triplet, instead of signaling an error if the user provides
+invalid input.
 
 ** Tool-bars can display separators.
 Tool-bar separators are handled like menu separators in menu-bar maps,
@@ -1311,16 +1335,22 @@ i.e. via menu entries of the form `(menu-item "--")'.
 
 ** Image API
 
++++
 *** Animated images support (currently animated gifs only).
 
++++
 **** `image-animated-p' returns non-nil if an image can be animated.
 
++++
 **** `image-animate' animates a supplied image spec.
 
++++
 **** `image-animate-timer' returns the timer object for an image that
 is being animated.
 
-*** `image-extension-data' is renamed to `image-metadata'.
+---
+*** `image-extension-data' has been renamed to `image-metadata'.
+The old name is an obsolete alias to the new one.
 
 *** Emacs can be compiled with ImageMagick support.
 Then the function `imagemagick-types' returns a list of image file
@@ -1350,6 +1380,7 @@ or use plain SSL, depending on your needs.  For debugging, set
 
 ** Isearch
 
+---
 *** New hook `isearch-update-post-hook' that runs in `isearch-update'.
 
 +++
@@ -1360,6 +1391,7 @@ time you call `progress-reporter-update' on that progress reporter,
 with a nil or omitted VALUE argument, the reporter message is
 displayed with a "spinning bar".
 
++++
 ** New variable `revert-buffer-in-progress-p' is true while a buffer is
 being reverted, even if the buffer has a local `revert-buffer-function'.
 
@@ -1375,10 +1407,12 @@ as well as those in the -*- line.
 
 ** keymaps can inherit from multiple parents.
 
-** `debug-on-event' lets you debug Emacs when stuck because of inhibit-quit.
++++
+** Set `debug-on-event' to make Emacs enter the debugger e.g. on receipt
+of SIGUSR1.  This can be useful when `inhibit-quit' is set.
 
 +++
-** New reader macro ## which stands for the empty symbol.
+** New reader macro ## that stands for the empty symbol.
 This means that the empty symbol can now be read back.  Also, #: by itself
 (when not immediately followed by a possible symbol character) stands for
 an empty uninterned symbol.
@@ -1388,12 +1422,21 @@ an empty uninterned symbol.
 
 ** Obsolete functions and variables
 
+---
+*** `tooltip-use-echo-area' is obsolete.
+Rather than setting this to t, disable Tooltip mode instead.
+
++++
 *** buffer-substring-filters is obsolete.
 Use `filter-buffer-substring-functions' instead.
 
+---
 *** `byte-compile-disable-print-circle' is obsolete.
 
+---
 *** `deferred-action-list' and `deferred-action-function' are obsolete.
+Use `post-command-hook' instead.
+
 +++
 *** `font-lock-maximum-size' is obsolete.
 
@@ -1406,21 +1449,28 @@ and also when HOME is set to C:\ by default.
 
 ** New configure.bat options
 
++++
 *** --enable-checking builds Emacs with extra runtime checks.
 
++++
 *** --distfiles specifies files to be included in binary distribution.
 
++++
 *** --without-gnutls disables automatic GnuTLS detection.
 
-*** --lib for general library linkage, works with the USER_LIBS build
-variable.
++++
+*** --lib for general library linkage, works with the USER_LIBS build variable.
 
++++
 ** New make target `dist' to create binary distribution for MS Windows.
 
-** Function `w32-default-color-map' is now obsolete.
+---
+** The Lisp function `w32-default-color-map' is now obsolete.
+(It is only used internally in the Emacs C code.)
 
-** On Nextstep/OSX, the menu bar can be hidden by customizing
-ns-auto-hide-menu-bar.
++++
+** Customize ns-auto-hide-menu-bar to have the menu-bar hidden, but
+reappear on mouse-over.  (Requires OS X 10.6 or later.)
 
 
 ----------------------------------------------------------------------

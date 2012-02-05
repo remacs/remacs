@@ -1,11 +1,16 @@
+2012-02-04  Eli Zaretskii  <eliz@gnu.org>
+
+	* inc/sys/stat.h (_STAT_DEFINED): Define, to prevent redefinitions
+	by other headers.
+
 2011-11-27  Fabrice Popineau  <fabrice.popineau@supelec.fr>  (tiny change)
 
 	* inc/stdint.h (uint32_t, uint64_t) [_WIN64]: New typedefs.
 	(UINT64_MAX) [_WIN64]: Fix definition.
 	(uintmax_t, intmax_t): Fix definitions.
 
-	* inc/inttypes.h (strtoumax, strtoimax) [!__MINGW32__]: Provide
-	correct definitions.
+	* inc/inttypes.h (strtoumax, strtoimax) [!__MINGW32__]:
+	Provide correct definitions.
 
 	* config.nt (HAVE_DECL_STRTOLL): Define.
 	(va_copy) [_WIN64]: Provide a better definition.

@@ -329,6 +329,10 @@ Optional DATA-P non-nil means SOURCE is a string containing image data."
   type)
 
 
+(if (fboundp 'image-metadata)           ; eg not --without-x
+    (define-obsolete-function-alias 'image-extension-data
+      'image-metadata' "24.1"))
+
 (define-obsolete-variable-alias
     'image-library-alist
     'dynamic-library-alist "24.1")
@@ -595,13 +599,15 @@ Example:
   "List of supported animated image types.")
 
 (defun image-animated-p (image)
-  "Return non-nil if image can be animated.
-Actually, the return value is a cons (NIMAGES . DELAY), where
-NIMAGES is the number of sub-images in the animated image and
-DELAY is the delay in second until the next sub-image shall be
-displayed."
+  "Return non-nil if IMAGE can be animated.
+To be capable of being animated, an image must be of a type
+listed in `image-animated-types', and contain more than one
+sub-image, with a specified animation delay.  The actual return
+value is a cons (NIMAGES . DELAY), where NIMAGES is the number
+of sub-images in the animated image and DELAY is the delay in
+seconds until the next sub-image should be displayed."
   (cond
-   ((eq (plist-get (cdr image) :type) 'gif)
+   ((memq (plist-get (cdr image) :type) image-animated-types)
     (let* ((metadata (image-metadata image))
 	   (images (plist-get metadata 'count))
 	   (delay (plist-get metadata 'delay)))
@@ -609,6 +615,7 @@ displayed."
 	(if (< delay 0) (setq delay 0.1))
 	(cons images delay))))))
 
+;; "Destructively"?
 (defun image-animate (image &optional index limit)
   "Start animating IMAGE.
 Animation occurs by destructively altering the IMAGE spec list.
@@ -639,16 +646,20 @@ number, play until that number of seconds has elapsed."
 	(setq timer nil)))
     timer))
 
+;; FIXME? The delay may not be the same for different sub-images,
+;; hence we need to call image-animated-p to return it.
+;; But it also returns count, so why do we bother passing that as an
+;; argument?
 (defun image-animate-timeout (image n count time-elapsed limit)
   "Display animation frame N of IMAGE.
 N=0 refers to the initial animation frame.
 COUNT is the total number of frames in the animation.
-DELAY is the time between animation frames, in seconds.
 TIME-ELAPSED is the total time that has elapsed since
 `image-animate-start' was called.
 LIMIT determines when to stop.  If t, loop forever.  If nil, stop
  after displaying the last animation frame.  Otherwise, stop
- after LIMIT seconds have elapsed."
+ after LIMIT seconds have elapsed.
+The minimum delay between successive frames is 0.01s."
   (plist-put (cdr image) :index n)
   (force-window-update)
   (setq n (1+ n))
