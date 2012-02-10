@@ -1,3 +1,22 @@
+2012-02-07  Chong Yidong  <cyd@gnu.org>
+
+	* buffer.c (Fbuffer_local_variables)
+	(buffer_lisp_local_variables): Handle unbound vars correctly;
+	don't let Qunbound leak into Lisp.
+
+2012-02-07  Glenn Morris  <rgm@gnu.org>
+
+	* image.c (Fimagemagick_types): Doc fix.
+
+	* image.c (imagemagick-render-type): Change it from a lisp object
+	to an integer.  Move the doc here from the lisp manual.
+	Treat all values not equal to 0 the same.
+
+2012-02-06  Chong Yidong  <cyd@gnu.org>
+
+	* doc.c (store_function_docstring): Avoid applying docstring of
+	alias to base function (Bug#2603).
+
 2012-02-04  Andreas Schwab  <schwab@linux-m68k.org>
 
 	* .gdbinit (pp1, pv1): Remove redundant defines.

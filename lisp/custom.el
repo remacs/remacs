@@ -198,12 +198,16 @@ set to nil, as the value is no longer rogue."
   (run-hooks 'custom-define-hook)
   symbol)
 
-(defmacro defcustom (symbol value doc &rest args)
-  "Declare SYMBOL as a customizable variable that defaults to VALUE.
+(defmacro defcustom (symbol standard doc &rest args)
+  "Declare SYMBOL as a customizable variable.
+SYMBOL is the variable name; it should not be quoted.
+STANDARD is an expression specifying the variable's standard
+value.  It should not be quoted.  It is evaluated once by
+`defcustom', and the value is assigned to SYMBOL if the variable
+is unbound.  The expression itself is also stored, so that
+Customize can re-evaluate it later to get the standard value.
 DOC is the variable documentation.
 
-Neither SYMBOL nor VALUE need to be quoted.
-If SYMBOL is not already bound, initialize it to VALUE.
 The remaining arguments should have the form
 
    [KEYWORD VALUE]...
@@ -320,14 +324,15 @@ for more information."
   `(custom-declare-variable
     ',symbol
     ,(if lexical-binding    ;FIXME: This is not reliable, but is all we have.
-         ;; The `default' arg should be an expression that evaluates to
-         ;; the value to use.  The use of `eval' for it is spread over
-         ;; many different places and hence difficult to eliminate, yet
-         ;; we want to make sure that the `value' expression is checked by the
-         ;; byte-compiler, and that lexical-binding is obeyed, so quote the
-         ;; expression with `lambda' rather than with `quote'.
-         `(list (lambda () ,value))
-       `',value)
+         ;; The STANDARD arg should be an expression that evaluates to
+         ;; the standard value.  The use of `eval' for it is spread
+         ;; over many different places and hence difficult to
+         ;; eliminate, yet we want to make sure that the `standard'
+         ;; expression is checked by the byte-compiler, and that
+         ;; lexical-binding is obeyed, so quote the expression with
+         ;; `lambda' rather than with `quote'.
+         `(list (lambda () ,standard))
+       `',standard)
     ,doc
     ,@args))
 

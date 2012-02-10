@@ -47,6 +47,7 @@ found at build time.  To prevent this, use the configure option
 This happens by default if a suitably recent version of the library is
 found at build time.  To prevent this, use the configure option
 `--without-imagemagick'.  See below for ImageMagick features.
+This feature is not available for the Nextstep or MS ports.
 
 ---
 ** Emacs can be compiled with libxml2 support.
@@ -995,15 +996,27 @@ coordinate in the POSITION list now counts from the top of the text
 area, excluding any header line.  Previously, it counted from the top
 of the header line.
 
-** A backquote not followed by a space is now always treated as new-style.
+---
+** Support for "old-style" backquotes, which have been obsolete for
+more than 10 years, has been further reduced.  Now a backquote not
+followed by a space is always treated as a "new-style" backquote.
+Please consider completely removing all "old-style" backquotes from
+your code as a matter of some urgency.  If your code uses backquotes
+as documented in the Elisp manual, and compiles without warning, then
+you have nothing to do in this regard.  Code not following the
+appropriate conventions may fail to compile.  The most common cause of
+trouble seems to be an old-style backquote followed by a newline.
 
 ---
 ** view-buffer now treats special mode-class in the same way that
 view-file has since Emacs 22 (ie, it won't enable View mode if the
 major-mode is special).
 
-** Passing a nil argument to a minor mode function now turns the mode
-ON unconditionally.
+** Passing a nil argument to a minor mode defined by define-minor-mode
+now turns the mode ON unconditionally.  This is so that you can write, e.g.
+  (add-hook 'text-mode-hook 'foo-minor-mode)
+to enable foo-minor-mode in Text mode buffers, thus removing the need
+for `turn-on-foo-minor-mode' style functions.
 
 +++
 ** During startup, Emacs no longer adds entries for `menu-bar-lines'
@@ -1030,20 +1043,32 @@ Eg simply pass the result through substring-no-properties if you need this.
 ** The menu bar bindings's caches are not used any more.
 Use (where-is-internal <def> nil t) instead.
 
-** The following obsolete functions and aliases were removed:
-comint-kill-output, decompose-composite-char, outline-visible,
-internal-find-face, internal-get-face, frame-update-faces,
-frame-update-face-colors, x-frob-font-weight, x-frob-font-slant,
-x-make-font-bold, x-make-font-demibold, x-make-font-unbold
-x-make-font-italic, x-make-font-oblique, x-make-font-unitalic
-x-make-font-bold-italic, mldrag-drag-mode-line, mldrag-drag-vertical-line,
-iswitchb-default-keybindings, char-bytes, isearch-return-char,
-make-local-hook
++++
+** The following obsolete (mostly since at least 21.1) functions and aliases
+have been removed (the appropriate new function is given in parentheses):
+comint-kill-output (comint-delete-output),
+decompose-composite-char (char-to-string),
+outline-visible (outline-invisible-p),
+internal-find-face (facep), internal-get-face (facep and check-face),
+frame-update-faces (not needed),
+frame-update-face-colors (frame-set-background-mode),
+x-frob-font-weight and x-frob-font-slant (appropriate make-face-* function),
+x-make-font-bold and x-make-font-demibold (make-face-bold),
+x-make-font-italic and x-make-font-oblique (make-face-italic),
+x-make-font-bold-italic (make-face-bold-italic),
+x-make-font-unbold (make-face-unbold),
+x-make-font-unitalic (make-face-unitalic),
+mldrag-drag-mode-line (mouse-drag-mode-line),
+mldrag-drag-vertical-line (mouse-drag-vertical-line),
+iswitchb-default-keybindings (iswitchb-mode), char-bytes (== 1),
+isearch-return-char (isearch-printing-char), make-local-hook (not needed)
 
 +++
-** The following obsolete variables and varaliases were removed:
-checkdoc-minor-keymap, vc-header-alist, directory-sep-char,
-font-lock-defaults-alist, and e (use float-e).
+** The following obsolete (mostly since at least 21.1) variables and varaliases
+have been removed (the appropriate new variable is given in parentheses):
+checkdoc-minor-keymap (checkdoc-minor-mode-map),
+vc-header-alist (vc-BACKEND-header), directory-sep-char (== ?/)
+font-lock-defaults-alist (font-lock-defaults), and e (float-e).
 
 ---
 ** The following obsolete files were removed:
@@ -1236,15 +1261,21 @@ Instead, the offending function is removed.
 
 ** New hook types
 
++++
 *** New function `run-hook-wrapped' for running an abnormal hook by
 passing the hook functions as arguments to a "wrapping" function.
+Like `run-hook-with-args-until-success', it stops at the first
+non-nil return value.
+
 +++
 *** New macro `with-wrapper-hook' for running an abnormal hook as a
 set of "wrapping" filters, similar to around advice.
 (A version of this macro was actually added in Emacs 23.2 but was not
 advertised at the time.)
 
-** Macro `with-demoted-errors' was added in Emacs 23.1 but not advertised.
++++
+** The macros `condition-case-no-debug' and `with-demoted-errors' were
+added in Emacs 23.1, but not advertised.
 
 +++
 ** The new function `server-eval-at' allows evaluation of Lisp forms on
@@ -1329,6 +1360,7 @@ argument is supplied (see Trash changes, above).
 or RGB triplet, instead of signaling an error if the user provides
 invalid input.
 
++++
 ** Tool-bars can display separators.
 Tool-bar separators are handled like menu separators in menu-bar maps,
 i.e. via menu entries of the form `(menu-item "--")'.
@@ -1352,13 +1384,14 @@ is being animated.
 *** `image-extension-data' has been renamed to `image-metadata'.
 The old name is an obsolete alias to the new one.
 
++++
 *** Emacs can be compiled with ImageMagick support.
+This feature is not available for the Nextstep or MS ports.
 Then the function `imagemagick-types' returns a list of image file
 extensions that your installation of ImageMagick supports.  The
 function `imagemagick-register-types' enables ImageMagick support for
 these image types, minus those listed in `imagemagick-types-inhibit'.
-
-See the Emacs Lisp Reference Manual for more information.
+Visiting one of these file types will then use Image mode.
 
 ** XML and HTML parsing
 If Emacs is compiled with libxml2 support, there are two new functions:
@@ -1405,7 +1438,11 @@ as well as those in the -*- line.
 ---
 ** rx.el has a new `group-n' construct for explicitly numbered groups.
 
-** keymaps can inherit from multiple parents.
++++
+** New function `make-composed-keymap' that constructs a new keymap
+from multiple input maps.  You can use this to make a keymap that
+inherits from multiple maps, eg:
+ (set-keymap-parent newmap (make-composed-keymap othermap parent))
 
 +++
 ** Set `debug-on-event' to make Emacs enter the debugger e.g. on receipt
