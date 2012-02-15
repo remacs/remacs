@@ -286,7 +286,7 @@ This also does some trivial optimizations to make the form prettier.
 ;;;;;;  flet progv psetq do-all-symbols do-symbols dotimes dolist
 ;;;;;;  do* do loop return-from return block etypecase typecase ecase
 ;;;;;;  case load-time-value eval-when destructuring-bind function*
-;;;;;;  defmacro* defun* gentemp gensym) "cl-macs" "cl-macs.el" "d823fe159b79b4f85f49a3fbe463d848")
+;;;;;;  defmacro* defun* gentemp gensym) "cl-macs" "cl-macs.el" "045f9588e561616741b5f9aef96ce7df")
 ;;; Generated autoloads from cl-macs.el
 
 (autoload 'gensym "cl-macs" "\

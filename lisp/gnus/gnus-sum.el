@@ -122,6 +122,7 @@ If t, fetch all the available old headers."
   "*Use nnir to search an entire server when referring threads. A
 nil value will only search for thread-related articles in the
 current group."
+  :version "24.1"
   :group 'gnus-thread
   :type 'boolean)
 
@@ -7318,6 +7319,7 @@ If FORCE (the prefix), also save the .newsrc file(s)."
       (when (gnus-buffer-live-p gnus-article-buffer)
 	(with-current-buffer gnus-article-buffer
 	  (gnus-article-stop-animations)
+	  (gnus-stop-downloads)
 	  (mm-destroy-parts gnus-article-mime-handles)
 	  ;; Set it to nil for safety reason.
 	  (setq gnus-article-mime-handle-alist nil)
@@ -9655,6 +9657,7 @@ C-u g', show the raw article."
       (when (gnus-buffer-live-p gnus-article-buffer)
 	(with-current-buffer gnus-article-buffer
 	  (gnus-article-stop-animations)
+	  (gnus-stop-downloads)
 	  (mm-destroy-parts gnus-article-mime-handles)
 	  ;; Set it to nil for safety reason.
 	  (setq gnus-article-mime-handle-alist nil)

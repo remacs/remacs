@@ -35,6 +35,7 @@
 
 (defgroup shr nil
   "Simple HTML Renderer"
+  :version "24.1"
   :group 'mail)
 
 (defcustom shr-max-image-proportion 0.9
@@ -556,7 +557,8 @@ the URL of the image to the kill buffer instead."
     (insert alt)))
 
 (defun shr-rescale-image (data)
-  (let ((image (create-image data nil t :ascent 100)))
+  (let* ((max-image-size nil)
+	 (image (create-image data nil t :ascent 100)))
     (if (or (not (fboundp 'imagemagick-types))
 	    (not (get-buffer-window (current-buffer))))
 	image

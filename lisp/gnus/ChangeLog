@@ -1,3 +1,51 @@
+2012-02-13  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	* nnimap.el (nnimap-record-commands): New variable.
+	(nnimap-log-command): Use it.
+	(nnimap-make-process-buffer): Add a space to the process buffer.
+	(nnimap-transform-headers): Don't bug out on header lines containing
+	stuff that look like IMAP length encodings.
+
+	* shr.el (shr-rescale-image): Allow viewing large images.
+
+2012-02-12  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	* nnml.el (nnml-request-compact-group): Delete the marks file after
+	compaction (bug#10800).
+
+	* gnus-art.el (gnus-stop-downloads): Stop `url-queue' downloads on
+	group exit.
+
+	* nnimap.el (nnimap-parse-flags): Parse correctly when we have mixed
+	QRESYNC/FETCH output.
+
+2012-02-11  Glenn Morris  <rgm@gnu.org>
+
+	* sieve-manage.el (sieve-manage-default-stream):
+	* shr.el (shr):
+	* nnir.el (nnir-ignored-newsgroups, nnir-summary-line-format)
+	(nnir-retrieve-headers-override-function)
+	(nnir-imap-default-search-key, nnir-notmuch-program)
+	(nnir-notmuch-additional-switches, nnir-notmuch-remove-prefix)
+	(nnir-method-default-engines):
+	* message.el (message-cite-reply-position):
+	* gssapi.el (gssapi-program):
+	* gravatar.el (gravatar):
+	* gnus-sum.el (gnus-refer-thread-use-nnir):
+	* gnus-registry.el (gnus-registry-unfollowed-addresses)
+	(gnus-registry-max-pruned-entries):
+	* gnus-picon.el (gnus-picon-inhibit-top-level-domains):
+	* gnus-int.el (gnus-after-set-mark-hook)
+	(gnus-before-update-mark-hook):
+	* gnus-async.el (gnus-async-post-fetch-function):
+	* auth-source.el (auth-source-cache-expiry):
+	Add missing :version tags to new defcustoms and defgroups.
+
+2012-02-10  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	* message.el (message-default-send-mail-function): Made into own
+	function for reuse by emacsbug.el.
+
 2012-02-09  Juanma Barranquero  <lekktu@gmail.com>
 
 	* gnus.el (gnus-method-ephemeral-p): Move after declaration of defsubst
@@ -39,7 +87,7 @@
 	have newlines within the strings, and where the UID comes after the
 	BODYSTRUCTURE element (bug#10537).
 
-	* shr-color.el (shr-color-set-minimum-interval): Renamed to add prefix
+	* shr-color.el (shr-color-set-minimum-interval): Rename to add prefix
 	(bug#10732).
 
 	* shr.el (shr-insert-document): Add doc string.
