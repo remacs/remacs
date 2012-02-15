@@ -1,3 +1,34 @@
+2012-02-15  Glenn Morris  <rgm@gnu.org>
+
+	* shell.el (shell-delimiter-argument-list):
+	Revert 2011-02-17 change.  (Bug#8027)
+
+2012-02-15  Chong Yidong  <cyd@gnu.org>
+
+	* minibuffer.el (completion-at-point-functions): Doc fix.
+
+	* custom.el (defcustom): Doc fix; note use of defvar.
+
+2012-02-15  Glenn Morris  <rgm@gnu.org>
+
+	* mail/smtpmail.el (smtpmail-smtp-user, smtpmail-stream-type):
+	Doc fixes.
+
+2012-02-14  Glenn Morris  <rgm@gnu.org>
+
+	* mail/smtpmail.el (smtpmail-query-smtp-server): Give it a doc.
+
+2012-02-14  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	* mail/smtpmail.el (smtpmail-query-smtp-server): Fix typo in the
+	way the ports list is computed.
+	(smtpmail-query-smtp-server): Prompt the user for a port number if
+	we can't connect to any of the standard ports (bug#10810).
+
+2012-02-14  Teodor Zlatanov  <tzz@lifelogs.com>
+
+	* net/gnutls.el (gnutls-trustfiles): Add Cygwin location.
+
 2012-02-13  Glenn Morris  <rgm@gnu.org>
 
 	* minibuffer.el (read-file-name): Doc fix.  (Bug#10798)
