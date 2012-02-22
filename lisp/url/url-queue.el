@@ -108,6 +108,7 @@ The variable `url-queue-timeout' sets a timeout."
       (url-queue-start-retrieve waiting))))
 
 (defun url-queue-callback-function (status job)
+  (setq url-queue (delq job url-queue))
   (when (and (eq (car status) :error)
 	     (eq (cadr (cadr status)) 'connection-failed))
     ;; If we get a connection error, then flush all other jobs from
@@ -116,7 +117,6 @@ The variable `url-queue-timeout' sets a timeout."
     ;; synchronously and totally halts Emacs.
     (url-queue-remove-jobs-from-host
      (plist-get (nthcdr 3 (cadr status)) :host)))
-  (setq url-queue (delq job url-queue))
   (url-queue-run-queue)
   (apply (url-queue-callback job) (cons status (url-queue-cbargs job))))
 
@@ -152,9 +152,11 @@ The variable `url-queue-timeout' sets a timeout."
 
 (defun url-queue-kill-job (job)
   (when (bufferp (url-queue-buffer job))
-    (while (get-buffer-process (url-queue-buffer job))
-      (ignore-errors
-	(delete-process (get-buffer-process (url-queue-buffer job)))))
+    (let (process)
+      (while (setq process (get-buffer-process (url-queue-buffer job)))
+	(set-process-sentinel process 'ignore)
+	(ignore-errors
+	  (delete-process process))))
     (ignore-errors
       (kill-buffer (url-queue-buffer job)))))
 
