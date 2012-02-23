@@ -1,3 +1,52 @@
+2012-02-23  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* minibuffer.el: Make sure cycling is reset upon edit with icomplete.el.
+	(completion--cache-all-sorted-completions): New function.
+	(completion-all-sorted-completions): Use it.
+	(completion--do-completion, minibuffer-force-complete):
+	Use it to re-instate the flush hook.
+
+	* icomplete.el (icomplete-completions): Replace last fix with a better
+	one (bug#10850).
+
+2012-02-23  Dmitry Gutov  <dgutov@yandex.ru>
+
+	* emacs-lisp/lisp.el (beginning-of-defun-raw): Don't call end-of-defun
+	when it might call us back infinitely (bug#10797).
+
+2012-02-23  Glenn Morris  <rgm@gnu.org>
+
+	* minibuffer.el (completion-category-overrides): Doc fix.
+
+2012-02-23  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* minibuffer.el (completion-table-with-context): Fix inf-loop.
+	Reported by Aaron S. Hawley <aaron.s.hawley@gmail.com>.
+
+2012-02-23  Glenn Morris  <rgm@gnu.org>
+
+	* emacs-lisp/authors.el (authors-aliases, authors-fixed-case)
+	(authors-obsolete-files-regexps, authors-ignored-files)
+	(authors-ambiguous-files, authors-renamed-files-alist):
+	Add more entries.
+
+2012-02-23  Juri Linkov  <juri@jurta.org>
+
+	* isearch.el (isearch-occur): Sync interactive spec with occur's
+	new feature in `occur-read-primary-args'.  Doc fix.  (Bug#10705)
+
+	* replace.el (occur-menu-map): Add menu item for `occur-edit-mode'.
+
+2012-02-22  Juri Linkov  <juri@jurta.org>
+
+	* international/mule-cmds.el (read-char-by-name): Use \` and \'.
+	(ucs-insert): Doc fix.  Check for hex digits in the string.
+	Don't display `nil' in the error message.  (Bug#10857)
+
+2012-02-22  Alan Mackenzie  <acm@muc.de>
+
+	* progmodes/cc-mode.el: Revert change #2012-02-06T22:08:41Z!larsi@gnus.org from 2012-02-06.
+
 2012-02-22  Glenn Morris  <rgm@gnu.org>
 
 	* ffap.el (ffap-c-path):
@@ -172,7 +221,7 @@
 
 	Fix a loop in c-set-fl-decl-start.
 
-	* progmodes/cc-engine (c-set-fl-decl-start): Add a check that
+	* progmodes/cc-engine.el (c-set-fl-decl-start): Add a check that
 	c-backward-syntactic-ws actually moves backwards.
 
 2012-02-13  Leo Liu  <sdl.web@gmail.com>
@@ -1362,10 +1411,10 @@
 
 	Add the switch statement to AWK Mode.
 
-	* progmodes/cc-awk (awk-font-lock-keywords): Add "switch", "case",
+	* progmodes/cc-awk.el (awk-font-lock-keywords): Add "switch", "case",
 	"default" to the keywords regexp.
 
-	* progmodes/cc-langs (c-label-kwds): Let AWK take the same
+	* progmodes/cc-langs.el (c-label-kwds): Let AWK take the same
 	expression as the rest.
 	(c-nonlabel-token-key): Allow string literals for AWK.
 	Refactor for the other modes.
@@ -6384,7 +6433,7 @@
 	* comint.el (comint-password-prompt-regexp): Accept "Response" as
 	a password-like phrase.
 
-2011-06-30  Mastake YAMATO  <yamato@redhat.com>
+2011-06-30  Masatake YAMATO  <yamato@redhat.com>
 
 	* progmodes/cc-guess.el: New file.
 
@@ -10692,7 +10741,8 @@
 	(calc-lu-field-reference): Rename from
 	`calc-logunits-field-reference'.
 
-	* calc/calc-help (calc-l-prefix-help): Mention musical note functions.
+	* calc/calc-help.el (calc-l-prefix-help):
+	Mention musical note functions.
 
 2011-03-17  Stefan Monnier  <monnier@iro.umontreal.ca>
 
@@ -10868,7 +10918,7 @@
 
 2011-03-09  Ken Manheimer  <ken.manheimer@gmail.com>
 
-	* allout.el Summary: Change so yank of distinctive-bullet items
+	* allout.el: Change so yank of distinctive-bullet items
 	preserves the existing header prefix, rebulleting it if necessary,
 	rather than replacing it.  This is necessary for proper operation
 	of cooperative addons like allout-widgets.
