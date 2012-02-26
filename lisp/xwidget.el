@@ -160,6 +160,7 @@ defaults to the string looking like a url around the cursor position."
                                         ;(xwidget-callback (xwidget-get xwidget 'callback));;TODO stopped working for some reason
        )
                                         ;(funcall  xwidget-callback xwidget xwidget-event-type)
+    (message "xw callback %s" xwidget)
     (funcall  'xwidget-webkit-callback xwidget xwidget-event-type)
     ))
 
@@ -299,9 +300,9 @@ Argument STR string."
   "make id-element show. for instance an anchor."
   (interactive (list (xwidget-webkit-current-session) (read-string "element id:")))
   (let* ((y1 
-         (string-to-number (xwidget-webkit-execute-script-rv xw (format "document.getElementsByName('%s')[0].getBoundingClientRect().top" element-id) 0)))
+         (string-to-number (xwidget-webkit-execute-script-rv xw (format "document.getElementsByName('%s')[0].getBoundingClientRect().top" element-id) "0")))
         (y2 
-         (string-to-number (xwidget-webkit-execute-script-rv xw (format "document.getElementById('%s').getBoundingClientRect().top" element-id) 0)))
+         (string-to-number (xwidget-webkit-execute-script-rv xw (format "document.getElementById('%s').getBoundingClientRect().top" element-id) "0")))
         (y3 (max y1 y2)))
     ;;now we need to tell emacs to scroll the element into view. 
     (xwidget-log "scroll: %d" y3)
@@ -378,6 +379,7 @@ Argument H height."
     (xwidget-webkit-execute-script xw (format "document.title=%s;" script))
     (setq title (xwidget-webkit-get-title xw))
     (if (equal emptytag title) (setq title ""))
+    (unless title (setq title default))
     title))
 
 

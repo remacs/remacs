@@ -98,6 +98,7 @@
 #include <webkit/webkitwebplugin.h>
 #include <webkit/webkitglobals.h>
 #include <webkit/webkitwebnavigationaction.h>
+#include <webkit/webkitdownload.h>
 #endif
 
 #include "xwidget.h"
@@ -123,7 +124,8 @@ allocate_xwidget_view (void)
 {
   return ALLOCATE_PSEUDOVECTOR (struct xwidget_view, redisplayed, PVEC_XWIDGET_VIEW);
 }
-
+#define XSETXWIDGET(a, b) (XSETPSEUDOVECTOR (a, b, PVEC_XWIDGET))
+#define XSETXWIDGET_VIEW(a, b) (XSETPSEUDOVECTOR (a, b, PVEC_XWIDGET_VIEW))
 
 Lisp_Object Qxwidget;
 Lisp_Object Qcxwidget;
@@ -457,13 +459,15 @@ gboolean webkit_osr_key_event_callback (GtkWidget *widget, GdkEventKey *event, g
 void store_xwidget_event_string(struct xwidget* xw, char* eventname,char* eventstr){
   //refactor attempt
   struct input_event event;
+  Lisp_Object xwl;
+  XSETXWIDGET(xwl,xw);
   EVENT_INIT (event);
   event.kind = XWIDGET_EVENT;
   event.frame_or_window = Qnil;	//frame; //how to get the frame here? //TODO i store it in the xwidget now
 
   event.arg = Qnil;
   event.arg = Fcons (build_string(eventstr), event.arg);  //string so dont intern
-  event.arg = Fcons ((Lisp_Object)xw, event.arg); //TODO
+  event.arg = Fcons (xwl, event.arg); //TODO
   event.arg = Fcons (intern (eventname), event.arg);//interning should be ok
   kbd_buffer_store_event (&event);
 
@@ -487,11 +491,13 @@ gboolean     webkit_osr_download_callback (WebKitWebView  *webkitwebview,
                                        WebKitDownload *arg1,
                                        gpointer        data)
 {
-  printf("download requested %s\n", webkit_download_get_uri (arg1));
   //TODO this event sending code should be refactored
   struct input_event event;
   //  struct xwidget *xw = (struct xwidget *) data;
   struct xwidget* xw = (struct xwidget*) g_object_get_data (G_OBJECT (webkitwebview), XG_XWIDGET);  
+  printf("download requested %s\n", webkit_download_get_uri (arg1));
+
+
   printf("webkit finished loading\n");
 
   store_xwidget_event_string(xw, "download-requested", webkit_download_get_uri (arg1));
@@ -829,7 +835,7 @@ x_draw_xwidget_glyph_string (struct glyph_string *s)
 
 //FUGLY macro that checks WEBKIT_IS_WEB_VIEW(xw->widget_osr) first 
 #define WEBKIT_FN_INIT()                        \
-  struct xwidget* xw;\  
+  struct xwidget* xw; \
 if(!XXWIDGETP(xwidget)) {printf("ERROR not an xwidget\n"); return Qnil;}; \
 if(Qnil == xwidget) {printf("ERROR xwidget nil\n");   return Qnil;};    \
   xw = XXWIDGET(xwidget);                                                    \
