@@ -1,6 +1,7 @@
 /* Storage allocation and gc for GNU Emacs Lisp interpreter.
-   Copyright (C) 1985-1986, 1988, 1993-1995, 1997-2012
-      Free Software Foundation, Inc.
+
+Copyright (C) 1985-1986, 1988, 1993-1995, 1997-2012
+  Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -1581,6 +1582,21 @@ make_number (EMACS_INT n)
   return obj;
 }
 #endif
+
+/* Convert the pointer-sized word P to EMACS_INT while preserving its
+   type and ptr fields.  */
+static Lisp_Object
+widen_to_Lisp_Object (void *p)
+{
+  intptr_t i = (intptr_t) p;
+#ifdef USE_LISP_UNION_TYPE
+  Lisp_Object obj;
+  obj.i = i;
+  return obj;
+#else
+  return i;
+#endif
+}
 
 /***********************************************************************
 			  String Allocation
@@ -4293,7 +4309,19 @@ mark_memory (void *start, void *end)
 
   for (pp = start; (void *) pp < end; pp++)
     for (i = 0; i < sizeof *pp; i += GC_POINTER_ALIGNMENT)
-      mark_maybe_pointer (*(void **) ((char *) pp + i));
+      {
+	void *w = *(void **) ((char *) pp + i);
+	mark_maybe_pointer (w);
+
+#ifdef USE_LSB_TAG
+	/* A host where a Lisp_Object is wider than a pointer might
+	   allocate a Lisp_Object in non-adjacent halves.  If
+	   USE_LSB_TAG, the bottom half is not a valid pointer, so
+	   widen it to to a Lisp_Object and check it that way.  */
+	if (sizeof w < sizeof (Lisp_Object))
+	  mark_maybe_object (widen_to_Lisp_Object (w));
+#endif
+      }
 }
 
 /* setjmp will work with GCC unless NON_SAVING_SETJMP is defined in
@@ -4983,11 +5011,12 @@ Garbage collection happens automatically if you cons more than
 `gc-cons-threshold' bytes of Lisp data since previous garbage collection.
 `garbage-collect' normally returns a list with info on amount of space in use:
  ((USED-CONSES . FREE-CONSES) (USED-SYMS . FREE-SYMS)
-  (USED-MARKERS . FREE-MARKERS) USED-STRING-CHARS USED-VECTOR-SLOTS
+  (USED-MISCS . FREE-MISCS) USED-STRING-CHARS USED-VECTOR-SLOTS
   (USED-FLOATS . FREE-FLOATS) (USED-INTERVALS . FREE-INTERVALS)
   (USED-STRINGS . FREE-STRINGS))
 However, if there was overflow in pure space, `garbage-collect'
-returns nil, because real GC can't be done.  */)
+returns nil, because real GC can't be done.
+See Info node `(elisp)Garbage Collection'.  */)
   (void)
 {
   register struct specbinding *bind;
@@ -6417,7 +6446,9 @@ If this portion is smaller than `gc-cons-threshold', this is ignored.  */);
 	      doc: /* Number of string characters that have been consed so far.  */);
 
   DEFVAR_INT ("misc-objects-consed", misc_objects_consed,
-	      doc: /* Number of miscellaneous objects that have been consed so far.  */);
+	      doc: /* Number of miscellaneous objects that have been consed so far.
+These include markers and overlays, plus certain objects not visible
+to users.  */);
 
   DEFVAR_INT ("intervals-consed", intervals_consed,
 	      doc: /* Number of intervals that have been consed so far.  */);

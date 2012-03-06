@@ -22,7 +22,7 @@
 
 ;;; Commentary:
 
-;; Defines most of Emacs's file- and directory-handling functions,
+;; Defines most of Emacs'ss file- and directory-handling functions,
 ;; including basic file visiting, backup generation, link handling,
 ;; ITS-id version control, load- and write-hook handling, and the like.
 
@@ -880,7 +880,10 @@ or mount points potentially requiring authentication as a different user.")
 (defun locate-dominating-file (file name)
   "Look up the directory hierarchy from FILE for a file named NAME.
 Stop at the first parent directory containing a file NAME,
-and return the directory.  Return nil if not found."
+and return the directory.  Return nil if not found.
+
+This function only tests if FILE exists.  If you care about whether
+it is readable, regular, etc., you should test the result."
   ;; We used to use the above locate-dominating-files code, but the
   ;; directory-files call is very costly, so we're much better off doing
   ;; multiple calls using the code in here.
@@ -907,6 +910,10 @@ and return the directory.  Return nil if not found."
                     ;;   (setq user (nth 2 (file-attributes file)))
                     ;;   (and prev-user (not (equal user prev-user))))
                     (string-match locate-dominating-stop-dir-regexp file)))
+      ;; FIXME? maybe this function should (optionally?)
+      ;; use file-readable-p instead.  In many cases, an unreadable
+      ;; FILE is no better than a non-existent one.
+      ;; See eg dir-locals-find-file.
       (setq try (file-exists-p (expand-file-name name file)))
       (cond (try (setq root file))
             ((equal file (setq file (file-name-directory
@@ -3566,8 +3573,14 @@ of no valid cache entry."
 	 (locals-file (locate-dominating-file file dir-locals-file-name))
 	 (dir-elt nil))
     ;; `locate-dominating-file' may have abbreviated the name.
-    (if locals-file
-	(setq locals-file (expand-file-name dir-locals-file-name locals-file)))
+    (and locals-file
+	 (setq locals-file (expand-file-name dir-locals-file-name locals-file))
+	 ;; FIXME? is it right to silently ignore an unreadable file?
+	 ;; Maybe we'd want to keep searching in that case.
+	 ;; That is a locate-dominating-file issue.
+	 (or (not (file-readable-p locals-file))
+	     (not (file-regular-p locals-file)))
+	 (setq locals-file nil))
     ;; Find the best cached value in `dir-locals-directory-cache'.
     (dolist (elt dir-locals-directory-cache)
       (when (and (eq t (compare-strings file nil (length (car elt))
@@ -4985,6 +4998,42 @@ given.  With a prefix argument, TRASH is nil."
 		 directory 'full directory-files-no-dot-files-regexp)))
       (delete-directory-internal directory)))))
 
+(defun file-equal-p (file1 file2)
+  "Return non-nil if files FILE1 and FILE2 name the same file.
+If FILE1 or FILE2 does not exist, the return value is unspecified."
+  (let ((handler (or (find-file-name-handler file1 'file-equal-p)
+                     (find-file-name-handler file2 'file-equal-p))))
+    (if handler
+        (funcall handler 'file-equal-p file1 file2)
+      (let (f1-attr f2-attr)
+        (and (setq f1-attr (file-attributes (file-truename file1)))
+	     (setq f2-attr (file-attributes (file-truename file2)))
+	     (equal f1-attr f2-attr))))))
+
+(defun file-subdir-of-p (dir1 dir2)
+  "Return non-nil if DIR1 is a subdirectory of DIR2.
+A directory is considered to be a subdirectory of itself.
+Return nil if top directory DIR2 is not an existing directory."
+  (let ((handler (or (find-file-name-handler dir1 'file-subdir-of-p)
+                     (find-file-name-handler dir2 'file-subdir-of-p))))
+    (if handler
+        (funcall handler 'file-subdir-of-p dir1 dir2)
+      (when (file-directory-p dir2) ; Top dir must exist.
+	(setq dir1 (file-truename dir1)
+	      dir2 (file-truename dir2))
+	(let ((ls1  (or (split-string dir1 "/" t) '("/")))
+	      (ls2  (or (split-string dir2 "/" t) '("/")))
+	      (root (if (string-match "\\`/" dir1) "/" ""))
+	      (mismatch nil))
+	  (while (and ls1 ls2 (not mismatch))
+	    (if (string-equal (car ls1) (car ls2))
+		(setq root (concat root (car ls1) "/"))
+	      (setq mismatch t))
+	    (setq ls1 (cdr ls1)
+		  ls2 (cdr ls2)))
+	  (unless mismatch
+	    (file-equal-p root dir2)))))))
+
 (defun copy-directory (directory newname &optional keep-time parents copy-contents)
   "Copy DIRECTORY to NEWNAME.  Both args must be strings.
 This function always sets the file modes of the output files to match
@@ -5011,12 +5060,16 @@ directly into NEWNAME instead."
 	    (format "Copy directory %s to: " dir)
 	    default-directory default-directory nil nil)
 	   current-prefix-arg t nil)))
+  (when (file-subdir-of-p newname directory)
+    (error "Cannot copy `%s' into its subdirectory `%s'"
+           directory newname))
   ;; If default-directory is a remote directory, make sure we find its
   ;; copy-directory handler.
   (let ((handler (or (find-file-name-handler directory 'copy-directory)
 		     (find-file-name-handler newname 'copy-directory))))
     (if handler
-	(funcall handler 'copy-directory directory newname keep-time parents)
+	(funcall handler 'copy-directory directory
+                 newname keep-time parents copy-contents)
 
       ;; Compute target name.
       (setq directory (directory-file-name (expand-file-name directory))
@@ -5214,7 +5267,7 @@ non-nil, it is called instead of rereading visited file contents."
 			 (unlock-buffer)))
 		   (widen)
 		   (let ((coding-system-for-read
-			  ;; Auto-saved file should be read by Emacs'
+			  ;; Auto-saved file should be read by Emacs's
 			  ;; internal coding.
 			  (if auto-save-p 'auto-save-coding
 			    (or coding-system-for-read

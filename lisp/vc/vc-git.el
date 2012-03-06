@@ -109,6 +109,11 @@
   (require 'vc-dir)
   (require 'grep))
 
+(defgroup vc-git nil
+  "VC Git backend."
+  :version "24.1"
+  :group 'vc)
+
 (defcustom vc-git-diff-switches t
   "String or list of strings specifying switches for Git diff under VC.
 If nil, use the value of `vc-diff-switches'.  If t, use no switches."
@@ -117,13 +122,13 @@ If nil, use the value of `vc-diff-switches'.  If t, use no switches."
 		 (string :tag "Argument String")
 		 (repeat :tag "Argument List" :value ("") string))
   :version "23.1"
-  :group 'vc)
+  :group 'vc-git)
 
 (defcustom vc-git-program "git"
   "Name of the Git executable (excluding any arguments)."
   :version "24.1"
   :type 'string
-  :group 'vc)
+  :group 'vc-git)
 
 (defcustom vc-git-root-log-format
   '("%d%h..: %an %ad %s"
@@ -143,7 +148,7 @@ format string (which is passed to \"git log\" via the argument
 matching the resulting Git log output, and KEYWORDS is a list of
 `font-lock-keywords' for highlighting the Log View buffer."
   :type '(list string string (repeat sexp))
-  :group 'vc
+  :group 'vc-git
   :version "24.1")
 
 (defvar vc-git-commits-coding-system 'utf-8
@@ -1103,8 +1108,11 @@ The difference to vc-do-command is that this function always invokes
 (defun vc-git--call (buffer command &rest args)
   ;; We don't need to care the arguments.  If there is a file name, it
   ;; is always a relative one.  This works also for remote
-  ;; directories.
-  (apply 'process-file vc-git-program nil buffer nil command args))
+  ;; directories.  We enable `inhibit-null-byte-detection', otherwise
+  ;; Tramp's eol conversion might be confused.
+  (let ((inhibit-null-byte-detection t)
+	(process-environment (cons "PAGER=" process-environment)))
+    (apply 'process-file vc-git-program nil buffer nil command args)))
 
 (defun vc-git--out-ok (command &rest args)
   (zerop (apply 'vc-git--call '(t nil) command args)))

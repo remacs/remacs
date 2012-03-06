@@ -5181,6 +5181,12 @@ next_overlay_string (struct it *it)
       it->current.overlay_string_index = -1;
       it->n_overlay_strings = 0;
       it->overlay_strings_charpos = -1;
+      /* If there's an empty display string on the stack, pop the
+	 stack, to resync the bidi iterator with IT's position.  Such
+	 empty strings are pushed onto the stack in
+	 get_overlay_strings_1.  */
+      if (it->sp > 0 && STRINGP (it->string) && !SCHARS (it->string))
+	pop_it (it);
 
       /* If we're at the end of the buffer, record that we have
 	 processed the overlay strings there already, so that
@@ -5478,8 +5484,15 @@ get_overlay_strings_1 (struct it *it, EMACS_INT charpos, int compute_stop_p)
       xassert (!compute_stop_p || it->sp == 0);
 
       /* When called from handle_stop, there might be an empty display
-         string loaded.  In that case, don't bother saving it.  */
-      if (!STRINGP (it->string) || SCHARS (it->string))
+         string loaded.  In that case, don't bother saving it.  But
+         don't use this optimization with the bidi iterator, since we
+         need the corresponding pop_it call to resync the bidi
+         iterator's position with IT's position, after we are done
+         with the overlay strings.  (The corresponding call to pop_it
+         in case of an empty display string is in
+         next_overlay_string.)  */
+      if (!(!it->bidi_p
+	    && STRINGP (it->string) && !SCHARS (it->string)))
 	push_it (it, NULL);
 
       /* Set up IT to deliver display elements from the first overlay
@@ -7390,7 +7403,7 @@ next_element_from_string (struct it *it)
   if (it->current.overlay_string_index >= 0)
     {
       /* Get the next character from an overlay string.  In overlay
-	 strings, There is no field width or padding with spaces to
+	 strings, there is no field width or padding with spaces to
 	 do.  */
       if (IT_STRING_CHARPOS (*it) >= SCHARS (it->string))
 	{
@@ -15650,7 +15663,7 @@ redisplay_window (Lisp_Object window, int just_this_one_p)
 	     accessible region of the buffer.  This can happen when we
 	     have just switched to a different buffer and/or changed
 	     its restriction.  In that case, startp is initialized to
-	     the character position 1 (BEG) because we did not yet
+	     the character position 1 (BEGV) because we did not yet
 	     have chance to display the buffer even once.  */
 	  && BEGV <= CHARPOS (startp) && CHARPOS (startp) <= ZV)
 	{
@@ -15659,7 +15672,7 @@ redisplay_window (Lisp_Object window, int just_this_one_p)
 
 	  SAVE_IT (it1, it, it1data);
 	  start_display (&it1, w, startp);
-	  move_it_vertically (&it1, margin);
+	  move_it_vertically (&it1, margin * FRAME_LINE_HEIGHT (f));
 	  margin_pos = IT_CHARPOS (it1);
 	  RESTORE_IT (&it, &it, it1data);
 	}
@@ -16384,7 +16397,10 @@ try_window_reusing_current_matrix (struct window *w)
 	   ++first_row_to_display)
 	{
 	  if (PT >= MATRIX_ROW_START_CHARPOS (first_row_to_display)
-	      && PT < MATRIX_ROW_END_CHARPOS (first_row_to_display))
+	      && (PT < MATRIX_ROW_END_CHARPOS (first_row_to_display)
+		  || (PT == MATRIX_ROW_END_CHARPOS (first_row_to_display)
+		      && first_row_to_display->ends_at_zv_p
+		      && pt_row == NULL)))
 	    pt_row = first_row_to_display;
 	}
 
@@ -16476,7 +16492,9 @@ try_window_reusing_current_matrix (struct window *w)
       if (pt_row)
 	{
 	  for (row = MATRIX_ROW (w->current_matrix, w->cursor.vpos);
-	       row < bottom_row && PT >= MATRIX_ROW_END_CHARPOS (row);
+	       row < bottom_row
+		 && PT >= MATRIX_ROW_END_CHARPOS (row)
+		 && !row->ends_at_zv_p;
 	       row++)
 	    {
 	      w->cursor.vpos++;

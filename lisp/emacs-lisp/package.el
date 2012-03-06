@@ -4,7 +4,7 @@
 
 ;; Author: Tom Tromey <tromey@redhat.com>
 ;; Created: 10 Mar 2007
-;; Version: 0.9
+;; Version: 1.0
 ;; Keywords: tools
 
 ;; This file is part of GNU Emacs.
@@ -750,7 +750,8 @@ not included in this list."
 	      hold)
 	  (when (setq hold (assq next-pkg package-load-list))
 	    (setq hold (cadr hold))
-	    (cond ((eq hold nil)
+	    (cond ((eq hold t))
+		  ((eq hold nil)
 		   (error "Required package '%s' is disabled"
 			  (symbol-name next-pkg)))
 		  ((null (stringp hold))

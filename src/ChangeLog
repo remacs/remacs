@@ -1,3 +1,48 @@
+2012-03-03  Glenn Morris  <rgm@gnu.org>
+
+	* alloc.c (Fgarbage_collect, misc-objects-consed): Doc fixes.
+
+2012-03-02  Eli Zaretskii  <eliz@gnu.org>
+
+	* xdisp.c (try_window_reusing_current_matrix): Don't move cursor
+	position past the first glyph_row that ends at ZV.  (Bug#10902)
+	(redisplay_window, next_element_from_string): Fix typos in
+	comments.
+	(redisplay_window): Pass to move_it_vertically the margin in
+	pixels, not in screen lines.
+
+2012-03-02  Glenn Morris  <rgm@gnu.org>
+
+	* buffer.c (buffer-list-update-hook): Doc fix.
+
+2012-02-29  Eli Zaretskii  <eliz@gnu.org>
+
+	* xdisp.c (get_overlay_strings_1): Under bidi redisplay, call
+	push_it before setting up the iterator for the first overlay
+	string, even if we have an empty string loaded.
+	(next_overlay_string): If there's an empty string on the iterator
+	stack, pop the stack.  (Bug#10903)
+
+2012-02-25  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Generalize fix for crash due to non-contiguous EMACS_INT (Bug#10780).
+	Suggested by Stefan Monnier in
+	<http://lists.gnu.org/archive/html/emacs-devel/2012-02/msg00692.html>.
+	* alloc.c (widen_to_Lisp_Object): New static function.
+	(mark_memory): Also mark Lisp_Objects by fetching pointer words
+	and widening them to Lisp_Objects.  This would work even if
+	USE_LSB_TAG is defined and wide integers are used, which might
+	happen in a future version of Emacs.
+
+2012-02-25  Chong Yidong  <cyd@gnu.org>
+
+	* fileio.c (Ffile_selinux_context, Fset_file_selinux_context):
+	Doc fix.
+
+	* xselect.c (Fx_selection_exists_p): Doc fix.
+	(x_clipboard_manager_save_all): Print an informative message
+	before saving to clipboard manager.
+
 2012-02-24  Chong Yidong  <cyd@gnu.org>
 
 	* keyboard.c (process_special_events): Handle all X selection
@@ -6764,7 +6809,7 @@
 	conversion specifiers.  For example, use "...%"pI"d..." rather
 	than "...%"pEd"...".
 	(pEd): Remove.  All uses replaced with similar uses of pI.
-	* src/m/amdx86-64.h, src/m/ia64.h, src/m/ibms390x.h: Likewise.
+	* m/amdx86-64.h, m/ia64.h, m/ibms390x.h: Likewise.
 	* alloc.c (check_pure_size): Don't overflow by converting size to int.
 	* bidi.c (bidi_dump_cached_states): Use pI to avoid cast.
 	* data.c (Fnumber_to_string): Use pI instead of if-then-else-abort.
@@ -7746,8 +7791,7 @@
 	Without this change, on typical 64-bit hosts error ("...%d...", N)
 	was used to print both 32- and 64-bit integers N, which relied on
 	undefined behavior.
-	* lisp.h, src/m/amdx86-64.h, src/m/ia64.h, src/m/ibms390x.h (pEd):
-	New macro.
+	* lisp.h, m/amdx86-64.h, m/ia64.h, m/ibms390x.h (pEd): New macro.
 	* lisp.h (error, verror): Mark as printf-like functions.
 	* eval.c (verror): Use vsnprintf, not doprnt, to do the real work.
 	Report overflow in size calculations when allocating printf buffer.
