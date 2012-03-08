@@ -387,6 +387,16 @@ Argument H height."
 ;; (declare-function xwidget-resize-internal "xwidget.c" )
 ;; check-declare-function?
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defun xwidget-webkit-get-selection ()
+  (xwidget-webkit-execute-script-rv (xwidget-webkit-current-session)
+                                    "window.getSelection().toString();"))
+
+(defun xwidget-webkit-copy-selection-as-kill ()
+  (interactive)
+  (kill-new (xwidget-webkit-get-selection)))
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; xwidget plist management(similar to the process plist functions)
 
