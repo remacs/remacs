@@ -893,16 +893,23 @@ that uses or sets the mark."
 ;; Counting lines, one way or another.
 
 (defun goto-line (line &optional buffer)
-  "Goto LINE, counting from line 1 at beginning of buffer.
-Normally, move point in the current buffer, and leave mark at the
-previous position.  With just \\[universal-argument] as argument,
-move point in the most recently selected other buffer, and switch to it.
+  "Go to LINE, counting from line 1 at beginning of buffer.
+If called interactively, a numeric prefix argument specifies
+LINE; without a numeric prefix argument, read LINE from the
+minibuffer.
 
-If there's a number in the buffer at point, it is the default for LINE.
+If optional argument BUFFER is non-nil, switch to that buffer and
+move to line LINE there.  If called interactively with \\[universal-argument]
+as argument, BUFFER is the most recently selected other buffer.
+
+Prior to moving point, this function sets the mark (without
+activating it), unless Transient Mark mode is enabled and the
+mark is already active.
 
 This function is usually the wrong thing to use in a Lisp program.
 What you probably want instead is something like:
-  (goto-char (point-min)) (forward-line (1- N))
+  (goto-char (point-min))
+  (forward-line (1- N))
 If at all possible, an even better solution is to use char counts
 rather than line counts."
   (interactive
@@ -3062,7 +3069,8 @@ before the Emacs kill and one can still paste it using \\[yank] \\[yank-pop]."
   :version "23.2")
 
 (defcustom kill-do-not-save-duplicates nil
-  "Do not add a new string to `kill-ring' when it is the same as the last one."
+  "Do not add a new string to `kill-ring' if it duplicates the last one.
+The comparison is done using `equal-including-properties'."
   :type 'boolean
   :group 'killing
   :version "23.2")
@@ -3090,7 +3098,10 @@ argument should still be a \"useful\" string for such uses."
 	(signal 'args-out-of-range
 		(list string "yank-handler specified for empty string"))))
   (unless (and kill-do-not-save-duplicates
-	       (equal string (car kill-ring)))
+	       ;; Due to text properties such as 'yank-handler that
+	       ;; can alter the contents to yank, comparison using
+	       ;; `equal' is unsafe.
+	       (equal-including-properties string (car kill-ring)))
     (if (fboundp 'menu-bar-update-yank-menu)
 	(menu-bar-update-yank-menu string (and replace (car kill-ring)))))
   (when save-interprogram-paste-before-kill
@@ -3101,10 +3112,10 @@ argument should still be a \"useful\" string for such uses."
 		       (nreverse interprogram-paste)
 		     (list interprogram-paste)))
 	  (unless (and kill-do-not-save-duplicates
-		       (equal s (car kill-ring)))
+		       (equal-including-properties s (car kill-ring)))
 	    (push s kill-ring))))))
   (unless (and kill-do-not-save-duplicates
-	       (equal string (car kill-ring)))
+	       (equal-including-properties string (car kill-ring)))
     (if (and replace kill-ring)
 	(setcar kill-ring string)
       (push string kill-ring)

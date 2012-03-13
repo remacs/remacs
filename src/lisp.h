@@ -2941,6 +2941,7 @@ extern Lisp_Object Qinhibit_quit, Qclosure;
 extern Lisp_Object Qand_rest;
 extern Lisp_Object Vautoload_queue;
 extern Lisp_Object Vsignaling_function;
+extern Lisp_Object inhibit_lisp_code;
 extern int handling_signal;
 #if BYTE_MARK_STACK
 extern struct catchtag *catchlist;
