@@ -261,10 +261,27 @@ Argument STR string."
      (list xww
            (cond ( (equal "text" field-type) (read-string "text:" field-value))
                  ( (equal "password" field-type) (read-passwd "password:" nil field-value))
-                 ( (equal "textarea" field-type) (read-string "textarea:" field-value))
+                 ( (equal "textarea" field-type) (xwidget-webkit-begin-edit-textarea xww field-value))
                  ))))
   (xwidget-webkit-execute-script xw (format "findactiveelement(document).value='%s'" str)))
 
+
+(defun xwidget-webkit-begin-edit-textarea (xw text)
+  (switch-to-buffer 
+   (generate-new-buffer "textarea"))
+  
+  (set (make-local-variable 'xwbl) xw)
+  (insert text)
+  )
+
+(defun xwidget-webkit-end-edit-textarea ()
+  (interactive)
+  (goto-char (point-min))
+  (replace-string "\n" "\\n")
+  (xwidget-webkit-execute-script xwbl (format "findactiveelement(document).value='%s'"
+                                              (buffer-substring (point-min) (point-max))))
+  ;;TODO convert linefeed to \n
+  )
 
 (defun xwidget-webkit-show-named-element (xw element-name)
   "make named-element show. for instance an anchor."
