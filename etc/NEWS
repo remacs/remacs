@@ -123,6 +123,8 @@ and pops down the *Completions* buffer accordingly.
 *** Completion style can be set per-category `completion-category-overrides'.
 +++
 *** Completion of buffers now uses substring completion by default.
+---
+*** The `widget-complete-field' option has been removed.
 
 ** Mail changes
 
@@ -1544,6 +1546,10 @@ display-delayed-warnings and collapse-delayed-warnings.
 from multiple input maps.  You can use this to make a keymap that
 inherits from multiple maps, eg:
  (set-keymap-parent newmap (make-composed-keymap othermap parent))
+
++++
+** New function `string-prefix-p'.
+(This was actually added in Emacs 23.2 but was not advertised at the time.)
 
 +++
 ** New reader macro ## that stands for the empty symbol.

@@ -1,3 +1,35 @@
+2012-03-25  Chong Yidong  <cyd@gnu.org>
+
+	* display.texi (Fringes): Note that fringes are shown on graphical
+	displays only.
+	(Fringe Size/Pos, Fringe Bitmaps, Making Buttons): Clarifications.
+	(Replacing Specs): Clarify example.
+	(Manipulating Buttons): Note that button-at can return a marker.
+	(Buttons): Minor rewrite.
+	(Character Display): New node.  Consolidate all character display
+	related nodes into its subsections.
+	(Usual Display): Character 127 is also affected by ctl-arrow.
+	(Display Tables): Improve example.
+
+2012-03-22  Glenn Morris  <rgm@gnu.org>
+
+	* strings.texi (Text Comparison): Mention string-prefix-p.
+
+2012-03-21  Chong Yidong  <cyd@gnu.org>
+
+	* display.texi (The Echo Area): Add xref to Output Streams.
+	(Displaying Messages): Improve doc of message.
+	(Echo Area Customization, Invisible Text): Copyedits.
+	(Invisible Text): Mention that spec comparison is done with eq.
+	(Width): Improve doc of char-width.
+	(Faces): Recommend using symbol instead of string for face name.
+	Minor clarifications.
+	(Defining Faces): Copyedits.  Update face example.
+	(Attribute Functions): Mark set-face-foreground etc as commands.
+	(Face Remapping): Mention text-scale-adjust.  Clarify
+	face-remapping-alist and related docs.
+	(Face Functions): Don't document make-face or copy-face.
+
 2012-03-20  Chong Yidong  <cyd@gnu.org>
 
 	* display.texi (Forcing Redisplay): Various rewrites to reflect

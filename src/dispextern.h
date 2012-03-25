@@ -461,7 +461,7 @@ struct glyph
       /* Length of acronym or hexadecimal code string (at most 8).  */
       unsigned len : 4;
       /* Character to display.  Actually we need only 22 bits.  */
-      unsigned ch : 26;
+      unsigned ch : 22;
     } glyphless;
 
     /* Used to compare all bit-fields above in one step.  */
@@ -2169,6 +2169,10 @@ struct it
      Don't handle some `display' properties in these strings.  */
   unsigned string_from_display_prop_p : 1;
 
+  /* 1 means `string' comes from a `line-prefix' or `wrap-prefix'
+     property.  */
+  unsigned string_from_prefix_prop_p : 1;
+
   /* 1 means we are iterating an object that came from a value of a
      `display' property.  */
   unsigned from_disp_prop_p : 1;
@@ -2296,6 +2300,7 @@ struct it
     bidi_dir_t paragraph_embedding;
     unsigned multibyte_p : 1;
     unsigned string_from_display_prop_p : 1;
+    unsigned string_from_prefix_prop_p : 1;
     unsigned display_ellipsis_p : 1;
     unsigned avoid_cursor_p : 1;
     unsigned bidi_p:1;
