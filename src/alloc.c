@@ -4251,15 +4251,31 @@ mark_maybe_pointer (void *p)
 }
 
 
-/* Alignment of Lisp_Object and pointer values.  Use offsetof, as it
-   sometimes returns a smaller alignment than GCC's __alignof__ and
-   mark_memory might miss objects if __alignof__ were used.  For
-   example, on x86 with WIDE_EMACS_INT, __alignof__ (Lisp_Object) is 8
-   but GC_LISP_OBJECT_ALIGNMENT should be 4.  */
-#ifndef GC_LISP_OBJECT_ALIGNMENT
-# define GC_LISP_OBJECT_ALIGNMENT offsetof (struct {char a; Lisp_Object b;}, b)
-#endif
+/* Alignment of pointer values.  Use offsetof, as it sometimes returns
+   a smaller alignment than GCC's __alignof__ and mark_memory might
+   miss objects if __alignof__ were used.  */
 #define GC_POINTER_ALIGNMENT offsetof (struct {char a; void *b;}, b)
+
+/* Define POINTERS_MIGHT_HIDE_IN_OBJECTS to 1 if marking via C pointers does
+   not suffice, which is the typical case.  A host where a Lisp_Object is
+   wider than a pointer might allocate a Lisp_Object in non-adjacent halves.
+   If USE_LSB_TAG, the bottom half is not a valid pointer, but it should
+   suffice to widen it to to a Lisp_Object and check it that way.  */
+#if defined USE_LSB_TAG || UINTPTR_MAX >> VALBITS != 0
+# if !defined USE_LSB_TAG && UINTPTR_MAX >> VALBITS >> GCTYPEBITS != 0
+  /* If tag bits straddle pointer-word boundaries, neither mark_maybe_pointer
+     nor mark_maybe_object can follow the pointers.  This should not occur on
+     any practical porting target.  */
+#  error "MSB type bits straddle pointer-word boundaries"
+# endif
+  /* Marking via C pointers does not suffice, because Lisp_Objects contain
+     pointer words that hold pointers ORed with type bits.  */
+# define POINTERS_MIGHT_HIDE_IN_OBJECTS 1
+#else
+  /* Marking via C pointers suffices, because Lisp_Objects contain pointer
+     words that hold unmodified pointers.  */
+# define POINTERS_MIGHT_HIDE_IN_OBJECTS 0
+#endif
 
 /* Mark Lisp objects referenced from the address range START+OFFSET..END
    or END+OFFSET..START. */
@@ -4267,7 +4283,6 @@ mark_maybe_pointer (void *p)
 static void
 mark_memory (void *start, void *end)
 {
-  Lisp_Object *p;
   void **pp;
   int i;
 
@@ -4283,11 +4298,6 @@ mark_memory (void *start, void *end)
       start = end;
       end = tem;
     }
-
-  /* Mark Lisp_Objects.  */
-  for (p = start; (void *) p < end; p++)
-    for (i = 0; i < sizeof *p; i += GC_LISP_OBJECT_ALIGNMENT)
-      mark_maybe_object (*(Lisp_Object *) ((char *) p + i));
 
   /* Mark Lisp data pointed to.  This is necessary because, in some
      situations, the C compiler optimizes Lisp objects away, so that
@@ -4310,17 +4320,10 @@ mark_memory (void *start, void *end)
   for (pp = start; (void *) pp < end; pp++)
     for (i = 0; i < sizeof *pp; i += GC_POINTER_ALIGNMENT)
       {
-	void *w = *(void **) ((char *) pp + i);
-	mark_maybe_pointer (w);
-
-#ifdef USE_LSB_TAG
-	/* A host where a Lisp_Object is wider than a pointer might
-	   allocate a Lisp_Object in non-adjacent halves.  If
-	   USE_LSB_TAG, the bottom half is not a valid pointer, so
-	   widen it to to a Lisp_Object and check it that way.  */
-	if (sizeof w < sizeof (Lisp_Object))
-	  mark_maybe_object (widen_to_Lisp_Object (w));
-#endif
+	void *p = *(void **) ((char *) pp + i);
+	mark_maybe_pointer (p);
+	if (POINTERS_MIGHT_HIDE_IN_OBJECTS)
+	  mark_maybe_object (widen_to_Lisp_Object (p));
       }
 }
 
@@ -6410,7 +6413,7 @@ void
 syms_of_alloc (void)
 {
   DEFVAR_INT ("gc-cons-threshold", gc_cons_threshold,
-	      doc: /* *Number of bytes of consing between garbage collections.
+	      doc: /* Number of bytes of consing between garbage collections.
 Garbage collection can happen automatically once this many bytes have been
 allocated since the last garbage collection.  All data types count.
 
@@ -6421,7 +6424,7 @@ prevent garbage collection during a part of the program.
 See also `gc-cons-percentage'.  */);
 
   DEFVAR_LISP ("gc-cons-percentage", Vgc_cons_percentage,
-	       doc: /* *Portion of the heap used for allocation.
+	       doc: /* Portion of the heap used for allocation.
 Garbage collection can happen automatically once this portion of the heap
 has been allocated since the last garbage collection.
 If this portion is smaller than `gc-cons-threshold', this is ignored.  */);

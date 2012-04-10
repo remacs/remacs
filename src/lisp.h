@@ -1138,6 +1138,8 @@ struct Lisp_Symbol
      special (with `defvar' etc), and shouldn't be lexically bound.  */
   unsigned declared_special : 1;
 
+  unsigned spacer : 23;
+
   /* The symbol's name, as a Lisp string.
      The name "xname" is used to intentionally break code referring to
      the old field "name" of type pointer to struct Lisp_String.  */
@@ -3553,6 +3555,7 @@ EXFUN (Fmsdos_downcase_filename, 1);
 #ifdef HAVE_LIBXML2
 /* Defined in xml.c */
 extern void syms_of_xml (void);
+extern void xml_cleanup_parser (void);
 #endif
 
 #ifdef HAVE_MENUS

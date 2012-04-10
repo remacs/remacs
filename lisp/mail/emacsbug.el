@@ -182,7 +182,9 @@ Prompts for bug subject.  Leaves you in a mail buffer."
       (set (make-local-variable 'message-strip-special-text-properties) nil))
     (rfc822-goto-eoh)
     (forward-line 1)
-    (let ((signature (buffer-substring (point) (point-max))))
+    ;; Move the mail signature to the proper place.
+    (let ((signature (buffer-substring (point) (point-max)))
+	  (inhibit-read-only t))
       (delete-region (point) (point-max))
       (insert signature)
       (backward-char (length signature)))
@@ -237,6 +239,8 @@ usually do not have translators for other languages.\n\n")))
     (add-text-properties (1+ user-point) (point) prompt-properties)
 
     (insert "\n\nIn " (emacs-version) "\n")
+    (if (stringp emacs-bzr-version)
+	(insert "Bzr revision: " emacs-bzr-version "\n"))
     (if (fboundp 'x-server-vendor)
 	(condition-case nil
             ;; This is used not only for X11 but also W32 and others.

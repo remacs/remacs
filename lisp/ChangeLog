@@ -1,8 +1,244 @@
+2012-04-10  Nathan Weizenbaum  <nweiz@google.com>
+
+	* progmodes/python.el (python-fill-paragraph): Make
+	python-fill-region in a multiline string work when font-lock is
+	disabled (bug#7018).
+
+2012-04-10  Laimonas Vėbra  <laimonas.vebra@gmail.com>  (tiny change)
+
+	* language/european.el (cp775): Added oem/legacy (en)coding on
+	DOS/MS Windows for the Baltic languages. There are still plenty of
+	texts written in this encoding/codepage (bug#6519).
+
+2012-04-10  Glenn Morris  <rgm@gnu.org>
+
+	* cus-start.el (eol-mnemonic-unix, eol-mnemonic-dos, eol-mnemonic-mac):
+	Add :standard values, reducing "rogue" customs in emacs -Q a bit more.
+
+2012-04-10  Florian Adamsky  <florian@adamsky.it>  (tiny change)
+
+	* recentf.el (recentf-dialog-mode-map): Added two keybindings for
+	next-line "n" and previous-line "p" in order to make recentf more
+	consistent with ibuffer, dired or org-mode (bug#9387).
+
+2012-04-10  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* image.el (put-image): Return the overlay created instead of the
+	optional input string (bug#7834).  Note that this may break code
+	that is (for some reason or other) depending on `put-image'
+	returning the string.
+
+	* mouse-sel.el (mouse-sel-mode): Mark as obsolete (bug#6174).
+
+	* simple.el (zap-to-char): Allow zapping using input methods
+	(bug#1580).
+
+	* textmodes/fill.el (fill-region): Leave point and mark where they
+	were before filling (bug#5399).
+
+2012-04-09  Glenn Morris  <rgm@gnu.org>
+
+	* version.el (emacs-bzr-get-version):
+	Handle lightweight checkouts of local branches.
+
+2012-04-09  Andreas Schwab  <schwab@linux-m68k.org>
+
+	* international/characters.el: Recover lost case pairs.  (Bug#11209)
+
+2012-04-09  Chong Yidong  <cyd@gnu.org>
+
+	* custom.el (custom-variable-p): Return nil for non-symbol
+	arguments instead of signaling an error.
+	(user-variable-p): Obsolete alias for custom-variable-p.
+
+	* apropos.el (apropos-variable):
+	* files-x.el (read-file-local-variable):
+	* simple.el (set-variable):
+	* woman.el (woman-mini-help):
+	* emacs-lisp/byte-opt.el (side-effect-free-fns): Callers changed.
+
+2012-04-09  Glenn Morris  <rgm@gnu.org>
+
+	* startup.el (normal-top-level): Don't look for leim-list.el
+	in places where it will not be found.  (Bug#910)
+
+	* international/mule-cmds.el (set-default-coding-systems):
+	* files.el (normal-mode):
+	Remove guarded calls to ucs-set-table-for-input.  (Bug#9821)
+	This function was removed with ucs-tables.el in 2008.
+
+2012-04-08  Eli Zaretskii  <eliz@gnu.org>
+
+	* textmodes/ispell.el (ispell-check-version): For hunspell, set
+	ispell-encoding8-command to "-i", without a trailing space.
+	(ispell-start-process): For hunspell, use '("-i" ENCODING), in 2
+	separate command-line arguments, to specify the encoding, since
+	that's how hunspell expects it.
+
+2012-04-08  Glenn Morris  <rgm@gnu.org>
+
+	* loadup.el: Load bindings before cus-start.
+	This reduces somewhat the number of "rogue" settings in emacs -Q.
+
+2012-04-07  Glenn Morris  <rgm@gnu.org>
+
+	* version.el (emacs-bzr-get-version): New function.
+	(emacs-bzr-version): New variable.
+	* loadup.el (emacs-bzr-version): Set it.  (Bug#8054)
+	* mail/emacsbug.el (report-emacs-bug): Include bzr version.
+
+2012-04-07  Eli Zaretskii  <eliz@gnu.org>
+
+	* international/uni-bidi.el, international/uni-category.el:
+	* international/uni-combining.el, international/uni-decimal.el:
+	* international/uni-decomposition.el, international/uni-digit.el:
+	* international/uni-lowercase.el, international/uni-mirrored.el:
+	* international/uni-name.el, international/uni-numeric.el:
+	* international/uni-titlecase.el, international/uni-uppercase.el:
+	Update for Unicode 6.1.
+
+2012-04-07  Eli Zaretskii  <eliz@gnu.org>
+
+	* term/w32-win.el (dynamic-library-alist): Add libxml2 DLLs.
+
+2012-04-05  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* window.el (shrink-window): Mention the `window-min-height'
+	variable in the doc string.
+
+2012-04-05  Bastien Guerry  <bzg@altern.org>
+
+	* color.el (color-lighten-name): Fix typo.
+
+2012-04-04  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* server.el (server--on-display-p): New function.
+	(server--on-display-p): Use it.
+
+2012-04-04  Gabor Vida  <vidagabor@gmail.com>  (tiny change)
+
+	* ido.el (ido-wide-find-dirs-or-files): Use file-name-absolute-p
+	(bug#11145).
+
+2012-04-04  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* comint.el (comint--common-quoted-suffix): Check string boundary
+	before comparing (bug#11158).
+	* pcomplete.el (pcomplete--common-quoted-suffix): Idem.
+
+2012-04-04  Chong Yidong  <cyd@gnu.org>
+
+	* minibuffer.el (completion-extra-properties): Doc fix.
+
+	* subr.el (delayed-warnings-hook): Doc fix.
+
+2012-04-04  Daiki Ueno  <ueno@unixuser.org>
+
+	* epa.el (epa--select-keys): Bind C-c C-c to finish the key
+	selection (Bug#11159).
+	(epa-insert-keys): Inform that the default public key will be
+	exported if no key is selected.
+
+2012-04-04  Richard Stallman  <rms@gnu.org>
+
+	* mail/emacsbug.el (report-emacs-bug): Bind inhibit-read-only.
+
+2012-04-03  Chong Yidong  <cyd@gnu.org>
+
+	* mail/sendmail.el (mail-mode-map): Bind C-c C-i to
+	mail-insert-file, not its obsolete alias mail-attach-file.
+
+2012-04-03  Michael Albinus  <michael.albinus@gmx.de>
+
+	* notifications.el (notifications-notify): Fix docstring.
+
+2012-04-02  Glenn Morris  <rgm@gnu.org>
+
+	* emacs-lisp/authors.el (authors-aliases): Another addition.
+
+2012-04-02  Michael Albinus  <michael.albinus@gmx.de>
+
+	* net/tramp-gvfs.el (tramp-gvfs-send-command): Apply
+	`tramp-compat-call-process' instead of `tramp-local-call-process'.
+	Reported by Magnus Henoch <magnus.henoch@gmail.com>.
+
+2012-04-01  Chong Yidong  <cyd@gnu.org>
+
+	* files.el (file-in-directory-p): Rename from file-subdir-of-p.
+	Handle root directory properly.
+	(copy-directory): Caller changed.
+
+	* dired-aux.el (dired-copy-file-recursive, dired-create-files):
+	* net/tramp.el (tramp-file-name-for-operation): Callers changed.
+
+2012-03-31  Glenn Morris  <rgm@gnu.org>
+
+	* term/xterm.el (xterm-extra-capabilities): Doc fix.
+
+	* language/indian.el ("Devanagari"): Fix typo.  (Bug#11103)
+
+	* calendar/calendar.el (calendar-window-list)
+	(calendar-hide-window): Restore.  (Bug#11140)
+	(calendar-exit): Use calendar-window-list, calendar-hide-window again.
+
+	* emacs-lisp/edebug.el (edebug-unwrap-results): Doc fix.
+
+2012-03-30  Thierry Volpiatto  <thierry.volpiatto@gmail.com>
+
+	* dired-aux.el (dired-copy-file-recursive, dired-create-files):
+	Check if file is a symlink (Bug#10489).
+
+	* files.el (copy-directory): Likewise.
+
+2012-03-30  Chong Yidong  <cyd@gnu.org>
+
+	* image.el (imagemagick-types-inhibit)
+	(imagemagick-register-types): Doc fix.
+
+2012-03-30  Agustín Martín Domingo  <agustin.martin@hispalinux.es>
+
+	* ispell.el (ispell-get-extended-character-mode): Disable
+	extended-char-mode for hunspell. hunspell does not support it and
+	treats ~word as ordinary words in pipe mode.
+
+2012-03-30  Glenn Morris  <rgm@gnu.org>
+
+	* tutorial.el (help-with-tutorial): Ensure local variables don't
+	happen to make the buffer read-only.  (Bug#11127)
+
+2012-03-30  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* progmodes/perl-mode.el (perl-indent-line): Use `noindent' in strings.
+	(perl-calculate-indent): Return `noindent' in strings.
+
+2012-03-28  Sam Steingold  <sds@gnu.org>
+
+	* calendar/calendar.el (calendar-exit): Use `quit-windows-on'
+	instead of the broken adhockery which does not prevent calendar
+	buffers from being displayed at random after exit.
+	(calendar-window-list, calendar-hide-window): Remove the broken
+	adhockery.
+
+2012-03-28  Glenn Morris  <rgm@gnu.org>
+
+	* replace.el (query-replace-map): Doc fix.
+
+2012-03-28  Andreas Schwab  <schwab@linux-m68k.org>
+
+	* vc/vc-git.el (vc-git-state): Don't try to match all of the diff
+	contents.  (Bug#11109)
+
+2012-03-27  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* emacs-lisp/avl-tree.el (avl-tree--enter-balance): Fix paren typo
+	(bug#11077).
+	(avl-tree--check, avl-tree--check-node): New funs.
+
 2012-03-27  Martin Rudalics  <rudalics@gmx.at>
 
 	* window.el (switch-to-visible-buffer): New option.
-	(switch-to-prev-buffer, switch-to-next-buffer): Observe
-	switch-to-visible-buffer.  Make sure that checking for a window
+	(switch-to-prev-buffer, switch-to-next-buffer):
+	Observe switch-to-visible-buffer.  Make sure that checking for a window
 	showing a buffer already is done on the same frame.
 
 2012-03-27  Glenn Morris  <rgm@gnu.org>
@@ -28,8 +264,7 @@
 2012-03-25  Eli Zaretskii  <eliz@gnu.org>
 
 	* makefile.w32-in (install): Use $(DIRNAME)_same-dir.tst instead
-	of same-dir.tst, to avoid stepping on other (parallel) Make job's
-	toes.
+	of same-dir.tst, to avoid stepping on other (parallel) Make job's toes.
 
 2012-03-25  Chong Yidong  <cyd@gnu.org>
 

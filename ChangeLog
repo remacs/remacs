@@ -1,3 +1,36 @@
+2012-04-10  Glenn Morris  <rgm@gnu.org>
+
+	* configure.in: Conditionally generate admin/unidata/Makefile.
+
+2012-04-09  Teodor Zlatanov  <tzz@lifelogs.com>
+
+	* info/dir, Makefile.in (INFO_FILES): Add emacs-gnutls manual.
+
+2012-04-09  Glenn Morris  <rgm@gnu.org>
+
+	* Makefile.in (leim): Check cd return value.  Pass fewer variables.
+	(install-leim): Check cd return value.  Pass $MFLAGS.
+	(install-strip): Pass $MFLAGS.
+
+	* configure.in: Require makeinfo >= 4.7.  (Bug#10910)
+	Eg org.texi has been using 4.7 functions for some time.
+
+2012-04-07  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Check pkg-config exit status when configuring (Bug#10626).
+	* configure.in (PKG_CHECK_MODULES): Do not assume that pkg-config
+	works; check its exit status.  Problem reported by Jordi Gutiérrez
+	Hermoso in
+	<http://lists.gnu.org/archive/html/emacs-devel/2012-01/msg00787.html>.
+
+2012-04-07  Glenn Morris  <rgm@gnu.org>
+
+	* README, configure.in (AC_INIT): Bump version to 24.1.50.
+
+2012-04-07  Eli Zaretskii  <eliz@gnu.org>
+
+	* lib/makefile.w32-in (gnulib, all): Don't depend on stamp_BLD.
+
 2012-03-04  Paul Eggert  <eggert@cs.ucla.edu>
 
 	configure: fix ncurses 'configure' issue on Solaris 10 (Bug#10677)

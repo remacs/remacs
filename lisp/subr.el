@@ -1893,9 +1893,10 @@ Used from `delayed-warnings-hook' (which see)."
 ;; Ref http://lists.gnu.org/archive/html/emacs-devel/2012-02/msg00085.html
 (defvar delayed-warnings-hook '(collapse-delayed-warnings
                                 display-delayed-warnings)
-  "Normal hook run to process delayed warnings.
-Functions in this hook should access the `delayed-warnings-list'
-variable (which see) and remove from it the warnings they process.")
+  "Normal hook run to process and display delayed warnings.
+By default, this hook contains functions to consolidate the
+warnings listed in `delayed-warnings-list', display them, and set
+`delayed-warnings-list' back to nil.")
 
 
 ;;;; Process stuff.
@@ -1967,7 +1968,7 @@ It can be retrieved with `(process-get PROCESS PROPNAME)'."
 ;;;; Input and display facilities.
 
 (defvar read-quoted-char-radix 8
-  "*Radix for \\[quoted-insert] and other uses of `read-quoted-char'.
+  "Radix for \\[quoted-insert] and other uses of `read-quoted-char'.
 Legitimate radix values are 8, 10 and 16.")
 
 (custom-declare-variable-early
