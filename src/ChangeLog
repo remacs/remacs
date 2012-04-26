@@ -1,3 +1,55 @@
+2012-04-14  Atsuo Ohki  <ohki@gssm.otsuka.tsukuba.ac.jp>  (tiny change)
+
+	* lread.c (lisp_file_lexically_bound_p):
+	Fix hang at ";-*-\n" (bug#11238).
+
+2012-04-14  Eli Zaretskii  <eliz@gnu.org>
+
+	* xdisp.c (find_last_unchanged_at_beg_row): Don't consider a row
+	"unchanged" if its end.pos is beyond ZV.  (Bug#11199)
+
+2012-04-14  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* nsterm.m (constrainFrameRect): Always constrain when there is only
+	one screen (Bug#10962).
+
+2012-04-13  Ken Brown  <kbrown@cornell.edu>
+
+	* s/cygwin.h (PTY_OPEN): Don't try to close a bogus file descriptor.
+
+2012-04-13  Reuben Thomas  <rrt@sc3d.org>
+
+	* indent.c (Fmove_to_column): Change interactive spec (Bug#739).
+
+2012-04-11  Daniel Colascione  <dancol@dancol.org>
+
+	* s/cygwin.h: The vfork the #define in cygwin.h was protecting
+	against is gone.  It's better to use vfork now so that when Cygwin
+	gains a new, working vfork, we use it automatically (bug#10398).
+
+2012-04-11  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* window.c (save_window_save): Obey window-point-insertion-type.
+
+2012-04-11  Glenn Morris  <rgm@gnu.org>
+
+	* Makefile.in (GNUSTEP_CFLAGS): Rename from C_SWITCH_X_SYSTEM.
+
+2012-04-11  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* alloc.c (lisp_align_malloc): Remove unneeded prototype.
+
+2012-04-10  "Jason S. Cornez"  <jcornez@ravenpack.com>  (tiny change)
+
+	* keyboard.c: Override inhibit-quit after the third C-g (bug#6585).
+	(force_quit_count): New var.
+	(handle_interrupt): Use it.
+
+2012-04-10  Juanma Barranquero  <lekktu@gmail.com>
+
+	* w32.c (w32_delayed_load): Record the full path of the library
+	being loaded (bug#10424).
+
 2012-04-09  Glenn Morris  <rgm@gnu.org>
 
 	* doc.c (Fsnarf_documentation): Check variables, functions are bound,
@@ -12,8 +64,8 @@
 	* process.h: Add integer `gnutls_handshakes_tried' member to
 	process struct.
 
-	* gnutls.h: Add `GNUTLS_EMACS_HANDSHAKES_LIMIT' upper limit.  Add
-	convenience `GNUTLS_LOG2i' macro.
+	* gnutls.h: Add `GNUTLS_EMACS_HANDSHAKES_LIMIT' upper limit.
+	Add convenience `GNUTLS_LOG2i' macro.
 
 	* gnutls.c (gnutls_log_function2i): Convenience log function.
 	(emacs_gnutls_read): Use new log functions,
@@ -99,8 +151,8 @@
 	(xml_cleanup_parser): New function, export for fn_xmlCleanupParser.
 	Calls xmlCleanupParser only if libxml2 was loaded (or statically
 	linked in).
-	(Flibxml_parse_html_region, Flibxml_parse_xml_region): Call
-	init_libxml2_functions before calling libxml2 functions.
+	(Flibxml_parse_html_region, Flibxml_parse_xml_region):
+	Call init_libxml2_functions before calling libxml2 functions.
 	(syms_of_xml) <Qlibxml2_dll>: DEFSYM it.
 
 	* emacs.c: Don't include libxml/parser.h.
@@ -9723,7 +9775,7 @@ See ChangeLog.11 for earlier changes.
 ;; coding: utf-8
 ;; End:
 
-  Copyright (C) 2011-2012  Free Software Foundation, Inc.
+  Copyright (C) 2011-2012 Free Software Foundation, Inc.
 
   This file is part of GNU Emacs.
 

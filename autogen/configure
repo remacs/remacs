@@ -1083,6 +1083,58 @@ ALLOCA_H
 ALLOCA
 GL_COND_LIBTOOL_FALSE
 GL_COND_LIBTOOL_TRUE
+<<<<<<< TREE
+=======
+POST_ALLOC_OBJ
+PRE_ALLOC_OBJ
+CYGWIN_OBJ
+RALLOC_OBJ
+OLDXMENU_DEPS
+LIBX_OTHER
+LIBXMENU
+OLDXMENU
+OLDXMENU_TARGET
+LIBXT_OTHER
+TOOLKIT_LIBW
+WIDGET_OBJ
+XOBJ
+XMENU_OBJ
+FONT_OBJ
+OTHER_FILES
+GNU_OBJC_CFLAGS
+ns_appsrc
+ns_appresdir
+ns_appbindir
+ns_appdir
+S_FILE
+M_FILE
+X_TOOLKIT_TYPE
+GNUSTEP_CFLAGS
+C_SWITCH_X_SITE
+LD_SWITCH_X_SITE
+gameuser
+gamedir
+bitmapdir
+archlibdir
+etcdir
+x_default_search_path
+lisppath
+locallisppath
+lispdir
+srcdir
+canonical
+configuration
+version
+KRB4LIB
+DESLIB
+KRB5LIB
+CRYPTOLIB
+COM_ERRLIB
+LIBRESOLV
+LIBHESIOD
+TERMCAP_OBJ
+LIBS_TERMCAP
+>>>>>>> MERGE-SOURCE
 BLESSMAIL_TARGET
 LIBS_MAIL
 liblockfile
@@ -13544,7 +13596,7 @@ fi
 
 
 
-C_SWITCH_X_SYSTEM=
+GNUSTEP_CFLAGS=
 ### Use NeXTstep API to implement GUI.
 if test "${HAVE_NS}" = "yes"; then
 
@@ -13561,7 +13613,7 @@ $as_echo "#define NS_IMPL_GNUSTEP 1" >>confdefs.h
 
     # See also .m.o rule in Makefile.in */
     # FIXME: are all these flags really needed?  Document here why.  */
-            C_SWITCH_X_SYSTEM="-D_REENTRANT -fPIC -fno-strict-aliasing -I${GNUSTEP_SYSTEM_HEADERS} ${GNUSTEP_LOCAL_HEADERS}"
+    GNUSTEP_CFLAGS="-D_REENTRANT -fPIC -fno-strict-aliasing -I${GNUSTEP_SYSTEM_HEADERS} ${GNUSTEP_LOCAL_HEADERS}"
     ## Extra CFLAGS applied to src/*.m files.
     GNU_OBJC_CFLAGS="$GNU_OBJC_CFLAGS -fgnu-runtime -Wno-import -fconstant-string-class=NSConstantString -DGNUSTEP_BASE_LIBRARY=1 -DGNU_GUI_LIBRARY=1 -DGNU_RUNTIME=1 -DGSWARN -DGSDIAGNOSE"
   fi
@@ -24282,6 +24334,14 @@ to run if these resources are not installed."
    echo
 fi
 
+if test "${opsys}" = "cygwin"; then
+  case `uname -r` in
+    1.5.*) { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: building Emacs on Cygwin 1.5 is not supported." >&5
+$as_echo "$as_me: WARNING: building Emacs on Cygwin 1.5 is not supported." >&2;}
+           echo
+	   ;;
+  esac
+fi
 
 # Remove any trailing slashes in these variables.
 test "${prefix}" != NONE &&
