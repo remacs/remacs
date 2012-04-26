@@ -1,3 +1,15 @@
+2012-04-14  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Make GC_MAKE_GCPROS_NOOPS the default (Bug#9926).
+	* lisp.h (GC_MARK_STACK): Default to GC_MAKE_GCPROS_NOOPS.
+	* s/cygwin.h, s/darwin.h, s/freebsd.h, s/gnu.h, s/irix6-5.h, s/msdos.h:
+	* s/netbsd.h, s/sol2-6.h:
+	Remove definition of GC_MARK_STACK, since the default now works.
+	* s/aix4-2.h, s/hpux10-20.h, s/unixware.h:
+	Define GC_MARK_STACK to GC_USE_GCPROS_AS_BEFORE, since that's
+	no longer the default.
+	* s/gnu-linux.h (GC_MARK_STACK): Adjust to change in default.
+
 2012-04-14  Atsuo Ohki  <ohki@gssm.otsuka.tsukuba.ac.jp>  (tiny change)
 
 	* lread.c (lisp_file_lexically_bound_p):
@@ -39,7 +51,7 @@
 
 	* alloc.c (lisp_align_malloc): Remove unneeded prototype.
 
-2012-04-10  "Jason S. Cornez"  <jcornez@ravenpack.com>  (tiny change)
+2012-04-10  Jason S. Cornez  <jcornez@ravenpack.com>  (tiny change)
 
 	* keyboard.c: Override inhibit-quit after the third C-g (bug#6585).
 	(force_quit_count): New var.
@@ -1538,7 +1550,7 @@
 	* xfns.c (unwind_create_frame): Fix comment.
 	(Fx_create_frame, x_create_tip_frame):
 	Move terminal->reference_count++ just before making the frame
-	official. Move initialization of image_cache_refcount and
+	official.  Move initialization of image_cache_refcount and
 	dpyinfo_refcount before calling init_frame_faces (Bug#9943).
 
 2011-11-05  Eli Zaretskii  <eliz@gnu.org>
@@ -7311,7 +7323,7 @@
 	* xfaces.c <Qunspecified>: Make extern again.
 
 	* syntax.c: Include sys/types.h before including regex.h, as
-	required by Posix.
+	required by POSIX.
 
 	* doc.c (get_doc_string): Improve the format passed to `error'.
 
