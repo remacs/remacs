@@ -1,3 +1,29 @@
+2012-04-16  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Improve ralloc.c interface checking.
+	See http://lists.gnu.org/archive/html/emacs-devel/2011-12/msg00720.html
+	* buffer.c (ralloc_reset_variable, r_alloc, r_re_alloc)
+	(r_alloc_free) [REL_ALLOC]: Move decls from here ...
+	* lisp.h (r_alloc, r_alloc_free, r_re_alloc, r_alloc_reset_variable)
+	[REL_ALLOC]: ... to here, to check interface.
+	* m/ia64.h (r_alloc, r_alloc_free) [REL_ALLOC && !_MALLOC_INTERNAL]:
+	Remove decls.  This fixes an "It stinks!".
+
+	* alloc.c (which_symbols): Fix alignment issue / type clash.
+
+2012-04-15  Andreas Schwab  <schwab@linux-m68k.org>
+
+	* lisp.h (struct Lisp_Symbol): Remove explicit padding.
+	(struct Lisp_Misc_Any): Likewise.
+	(struct Lisp_Free): Likewise.
+	* alloc.c (union aligned_Lisp_Symbol): Define.
+	(SYMBOL_BLOCK_SIZE, struct symbol_block): Use union
+	aligned_Lisp_Symbol instead of struct Lisp_Symbol.
+	(union aligned_Lisp_Misc): Define.
+	(MARKER_BLOCK_SIZE, struct marker_block): Use union
+	aligned_Lisp_Misc instead of union Lisp_Misc.
+	(Fmake_symbol, allocate_misc, gc_sweep): Adjust
+
 2012-04-14  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Make GC_MAKE_GCPROS_NOOPS the default (Bug#9926).
