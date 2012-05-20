@@ -1,6 +1,6 @@
 ;;; mpc.el --- A client for the Music Player Daemon   -*- coding: utf-8; lexical-binding: t -*-
 
-;; Copyright (C) 2006-2012  Free Software Foundation, Inc.
+;; Copyright (C) 2006-2012 Free Software Foundation, Inc.
 
 ;; Author: Stefan Monnier <monnier@iro.umontreal.ca>
 ;; Keywords: multimedia
@@ -95,7 +95,7 @@
 (eval-when-compile (require 'cl))
 
 (defgroup mpc ()
-  "A Client for the Music Player Daemon."
+  "Client for the Music Player Daemon (mpd)."
   :prefix "mpc-"
   :group 'multimedia
   :group 'applications)
@@ -184,10 +184,7 @@ numerically rather than lexicographically."
                     (abs res))
                 res))))))))
 
-(defun mpc-string-prefix-p (str1 str2)
-  ;; FIXME: copied from pcvs-util.el.
-  "Tell whether STR1 is a prefix of STR2."
-  (eq t (compare-strings str2 nil (length str1) str1 nil nil)))
+(define-obsolete-function-alias 'mpc-string-prefix-p 'string-prefix-p "24.2")
 
 ;; This can speed up mpc--song-search significantly.  The table may grow
 ;; very large, tho.  It's only bounded by the fact that it gets flushed
@@ -409,7 +406,7 @@ which will be concatenated with proper quoting before passing them to MPD."
                             (funcall callback (prog1 (mpc-proc-buf-to-alist
                                                       (current-buffer))
                                                 (set-buffer buf))))))
-    ;; (lexical-let ((res nil))
+    ;; (let ((res nil))
     ;;   (mpc-proc-cmd-to-alist cmd (lambda (alist) (setq res alist)))
     ;;   (mpc-proc-sync)
     ;;   res)
@@ -1690,7 +1687,7 @@ Return non-nil if a selection was deactivated."
         (process-put (mpc-proc) prop
                      (delq nil
                            (mapcar (lambda (x)
-                                     (if (mpc-string-prefix-p name x)
+                                     (if (string-prefix-p name x)
                                          nil x))
                                    new)))))
     (mpc-tagbrowser-refresh)))

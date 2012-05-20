@@ -95,14 +95,14 @@ static void print_interval (INTERVAL interval, Lisp_Object printcharfun);
 int print_output_debug_flag EXTERNALLY_VISIBLE = 1;
 
 
-/* Low level output routines for characters and strings */
+/* Low level output routines for characters and strings.  */
 
 /* Lisp functions to do output using a stream
    must have the stream in a variable called printcharfun
    and must start with PRINTPREPARE, end with PRINTFINISH,
    and use PRINTDECLARE to declare common variables.
    Use PRINTCHAR to output one character,
-   or call strout to output a block of characters. */
+   or call strout to output a block of characters.  */
 
 #define PRINTDECLARE							\
    struct buffer *old = current_buffer;					\
@@ -867,7 +867,6 @@ print_error_message (Lisp_Object data, Lisp_Object stream, const char *context,
 {
   Lisp_Object errname, errmsg, file_error, tail;
   struct gcpro gcpro1;
-  int i;
 
   if (context != 0)
     write_string_1 (context, -1, stream);
@@ -895,9 +894,8 @@ print_error_message (Lisp_Object data, Lisp_Object stream, const char *context,
     }
   else
     {
-      Lisp_Object error_conditions;
+      Lisp_Object error_conditions = Fget (errname, Qerror_conditions);
       errmsg = Fget (errname, Qerror_message);
-      error_conditions = Fget (errname, Qerror_conditions);
       file_error = Fmemq (Qfile_error, error_conditions);
     }
 
@@ -911,22 +909,30 @@ print_error_message (Lisp_Object data, Lisp_Object stream, const char *context,
   if (!NILP (file_error) && CONSP (tail))
     errmsg = XCAR (tail), tail = XCDR (tail);
 
-  if (STRINGP (errmsg))
-    Fprinc (errmsg, stream);
-  else
-    write_string_1 ("peculiar error", -1, stream);
+  {
+    const char *sep = ": ";
 
-  for (i = 0; CONSP (tail); tail = XCDR (tail), i = 1)
-    {
-      Lisp_Object obj;
+    if (!STRINGP (errmsg))
+      write_string_1 ("peculiar error", -1, stream);
+    else if (SCHARS (errmsg))
+      Fprinc (errmsg, stream);
+    else
+      sep = NULL;
 
-      write_string_1 (i ? ", " : ": ", 2, stream);
-      obj = XCAR (tail);
-      if (!NILP (file_error) || EQ (errname, Qend_of_file))
-	Fprinc (obj, stream);
-      else
-	Fprin1 (obj, stream);
-    }
+    for (; CONSP (tail); tail = XCDR (tail), sep = ", ")
+      {
+	Lisp_Object obj;
+	
+	if (sep)
+	  write_string_1 (sep, 2, stream);
+	obj = XCAR (tail);
+	if (!NILP (file_error)
+	    || EQ (errname, Qend_of_file) || EQ (errname, Quser_error))
+	  Fprinc (obj, stream);
+	else
+	  Fprin1 (obj, stream);
+      }
+  }
 
   UNGCPRO;
 }
@@ -1132,15 +1138,15 @@ print_preprocess (Lisp_Object obj)
   int loop_count = 0;
   Lisp_Object halftail;
 
-  /* Give up if we go so deep that print_object will get an error.  */
-  /* See similar code in print_object.  */
-  if (print_depth >= PRINT_CIRCLE)
-    error ("Apparently circular structure being printed");
-
   /* Avoid infinite recursion for circular nested structure
      in the case where Vprint_circle is nil.  */
   if (NILP (Vprint_circle))
     {
+      /* Give up if we go so deep that print_object will get an error.  */
+      /* See similar code in print_object.  */
+      if (print_depth >= PRINT_CIRCLE)
+	error ("Apparently circular structure being printed");
+
       for (i = 0; i < print_depth; i++)
 	if (EQ (obj, being_printed[i]))
 	  return;
@@ -1242,7 +1248,7 @@ static void print_check_string_charset_prop (INTERVAL interval, Lisp_Object stri
 #define PRINT_STRING_NON_CHARSET_FOUND 1
 #define PRINT_STRING_UNSAFE_CHARSET_FOUND 2
 
-/* Bitwise or of the above macros. */
+/* Bitwise or of the above macros.  */
 static int print_check_string_result;
 
 static void
@@ -1325,48 +1331,46 @@ print_object (Lisp_Object obj, register Lisp_Object printcharfun, int escapeflag
 
   QUIT;
 
-  /* See similar code in print_preprocess.  */
-  if (print_depth >= PRINT_CIRCLE)
-    error ("Apparently circular structure being printed");
-
   /* Detect circularities and truncate them.  */
-  if (PRINT_CIRCLE_CANDIDATE_P (obj))
+  if (NILP (Vprint_circle))
     {
-      if (NILP (Vprint_circle) && NILP (Vprint_gensym))
+      /* Simple but incomplete way.  */
+      int i;
+
+      /* See similar code in print_preprocess.  */
+      if (print_depth >= PRINT_CIRCLE)
+	error ("Apparently circular structure being printed");
+
+      for (i = 0; i < print_depth; i++)
+	if (EQ (obj, being_printed[i]))
+	  {
+	    sprintf (buf, "#%d", i);
+	    strout (buf, -1, -1, printcharfun);
+	    return;
+	  }
+      being_printed[print_depth] = obj;
+    }
+  else if (PRINT_CIRCLE_CANDIDATE_P (obj))
+    {
+      /* With the print-circle feature.  */
+      Lisp_Object num = Fgethash (obj, Vprint_number_table, Qnil);
+      if (INTEGERP (num))
 	{
-	  /* Simple but incomplete way.  */
-	  int i;
-	  for (i = 0; i < print_depth; i++)
-	    if (EQ (obj, being_printed[i]))
-	      {
-		sprintf (buf, "#%d", i);
-		strout (buf, -1, -1, printcharfun);
-		return;
-	      }
-	  being_printed[print_depth] = obj;
-	}
-      else
-	{
-	  /* With the print-circle feature.  */
-	  Lisp_Object num = Fgethash (obj, Vprint_number_table, Qnil);
-	  if (INTEGERP (num))
+	  EMACS_INT n = XINT (num);
+	  if (n < 0)
+	    { /* Add a prefix #n= if OBJ has not yet been printed;
+		 that is, its status field is nil.  */
+	      sprintf (buf, "#%"pI"d=", -n);
+	      strout (buf, -1, -1, printcharfun);
+	      /* OBJ is going to be printed.  Remember that fact.  */
+	      Fputhash (obj, make_number (- n), Vprint_number_table);
+	    }
+	  else
 	    {
-	      EMACS_INT n = XINT (num);
-	      if (n < 0)
-		{ /* Add a prefix #n= if OBJ has not yet been printed;
-		     that is, its status field is nil.  */
-		  sprintf (buf, "#%"pI"d=", -n);
-		  strout (buf, -1, -1, printcharfun);
-		  /* OBJ is going to be printed.  Remember that fact.  */
-		  Fputhash (obj, make_number (- n), Vprint_number_table);
-		}
-	      else
-		{
-		  /* Just print #n# if OBJ has already been printed.  */
-		  sprintf (buf, "#%"pI"d#", n);
-		  strout (buf, -1, -1, printcharfun);
-		  return;
-		}
+	      /* Just print #n# if OBJ has already been printed.  */
+	      sprintf (buf, "#%"pI"d#", n);
+	      strout (buf, -1, -1, printcharfun);
+	      return;
 	    }
 	}
     }

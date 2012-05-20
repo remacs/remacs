@@ -122,7 +122,6 @@ struct sigaction {
 
 #define HAVE_GETTIMEOFDAY 1
 #define HAVE_GETHOSTNAME 1
-#undef  HAVE_GETDOMAINNAME
 #define HAVE_DUP2 1
 #define HAVE_RENAME 1
 #define HAVE_CLOSEDIR 1
@@ -147,7 +146,6 @@ struct sigaction {
 #define HAVE_FMOD 1
 #undef  HAVE_RINT
 #undef  HAVE_CBRT
-#define HAVE_FTIME 1
 #undef  HAVE_RES_INIT /* For -lresolv on Suns.  */
 #undef  HAVE_SETSID
 #undef  HAVE_FPATHCONF

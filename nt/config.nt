@@ -1,6 +1,6 @@
 /* GNU Emacs site configuration template file.  -*- C -*-
 
-Copyright (C) 1988, 1993-1994, 2001-2012  Free Software Foundation, Inc.
+Copyright (C) 1988, 1993-1994, 2001-2012 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -138,7 +138,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #undef HAVE_LIBPTHREADS
 #undef HAVE_LIBRESOLV
 #undef HAVE_LIBXMU
-#undef HAVE_LIBNCURSES
 #undef HAVE_LIBINTL
 
 /* movemail Kerberos support */
@@ -180,7 +179,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #undef GETTIMEOFDAY_ONE_ARGUMENT
 #endif
 #undef HAVE_GETHOSTNAME
-#undef HAVE_GETDOMAINNAME
 #undef HAVE_DUP2
 #undef HAVE_RENAME
 #undef HAVE_CLOSEDIR
@@ -206,7 +204,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #undef HAVE_XRMSETDATABASE
 #undef HAVE_XSCREENRESOURCESTRING
 #undef HAVE_XSCREENNUMBEROFSCREEN
-#undef HAVE_XSETWMPROTOCOLS
 
 #undef HAVE_MKDIR
 #undef HAVE_RMDIR
@@ -222,7 +219,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #undef HAVE_FMOD
 #undef HAVE_RINT
 #undef HAVE_CBRT
-#undef HAVE_FTIME
 #undef HAVE_RES_INIT /* For -lresolv on Suns.  */
 #undef HAVE_SETSID
 #undef HAVE_FPATHCONF
@@ -246,8 +242,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #define HAVE_SENDTO 1
 #define HAVE_RECVFROM 1
-#define HAVE_GETSOCKOPT 1
-#define HAVE_SETSOCKOPT 1
 #define HAVE_GETSOCKNAME 1
 #define HAVE_GETPEERNAME 1
 #define HAVE_SNPRINTF 1

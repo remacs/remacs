@@ -670,31 +670,31 @@ Don't use that together with FILTER."
 ;;         (dolist (ext completion-ignored-extensions)
 ;;           (if (eq ?/ (aref ext (1- (length ext)))) (push ext cie)))
 ;;         (setq cie (concat (regexp-opt cie "\\(?:") "\\'"))
-;;         (lexical-let* ((default (and buffer-file-name
-;;                                      (abbreviate-file-name buffer-file-name)))
-;;                        (cie cie)
-;;                        (completion-table
-;;                         ;; We need a mix of read-file-name and
-;;                         ;; read-directory-name so that completion to directories
-;;                         ;; is preferred, but if the user wants to enter a global
-;;                         ;; pattern, he can still use completion on filenames to
-;;                         ;; help him write the pattern.
-;;                         ;; Essentially, we want to use
-;;                         ;; (completion-table-with-predicate
-;;                         ;;  'read-file-name-internal 'file-directory-p nil)
-;;                         ;; but that doesn't work because read-file-name-internal
-;;                         ;; does not obey its `predicate' argument.
-;;                         (completion-table-in-turn
-;;                          (lambda (str pred action)
-;;                            (let ((read-file-name-predicate
-;;                                   (lambda (f)
-;;                                     (and (not (member f '("./" "../")))
-;;                                          ;; Hack! Faster than file-directory-p!
-;;                                          (eq (aref f (1- (length f))) ?/)
-;;                                          (not (string-match cie f))))))
-;;                              (complete-with-action
-;;                               action 'read-file-name-internal str nil)))
-;;                          'read-file-name-internal)))
+;;         (let* ((default (and buffer-file-name
+;;                              (abbreviate-file-name buffer-file-name)))
+;;                (cie cie)
+;;                (completion-table
+;;                 ;; We need a mix of read-file-name and
+;;                 ;; read-directory-name so that completion to directories
+;;                 ;; is preferred, but if the user wants to enter a global
+;;                 ;; pattern, he can still use completion on filenames to
+;;                 ;; help him write the pattern.
+;;                 ;; Essentially, we want to use
+;;                 ;; (completion-table-with-predicate
+;;                 ;;  'read-file-name-internal 'file-directory-p nil)
+;;                 ;; but that doesn't work because read-file-name-internal
+;;                 ;; does not obey its `predicate' argument.
+;;                 (completion-table-in-turn
+;;                  (lambda (str pred action)
+;;                    (let ((read-file-name-predicate
+;;                           (lambda (f)
+;;                             (and (not (member f '("./" "../")))
+;;                                  ;; Hack! Faster than file-directory-p!
+;;                                  (eq (aref f (1- (length f))) ?/)
+;;                                  (not (string-match cie f))))))
+;;                      (complete-with-action
+;;                       action 'read-file-name-internal str nil)))
+;;                  'read-file-name-internal)))
 ;;           (minibuffer-with-setup-hook
 ;;               (lambda ()
 ;;                 (setq minibuffer-default default)
@@ -3736,7 +3736,7 @@ Ask means pop up a menu for the user to select one of copy, move or link."
 ;;;;;;  dired-run-shell-command dired-do-shell-command dired-do-async-shell-command
 ;;;;;;  dired-clean-directory dired-do-print dired-do-touch dired-do-chown
 ;;;;;;  dired-do-chgrp dired-do-chmod dired-compare-directories dired-backup-diff
-;;;;;;  dired-diff) "dired-aux" "dired-aux.el" "58d623eb8e68e472e6164a1bcae83360")
+;;;;;;  dired-diff) "dired-aux" "dired-aux.el" "de7e4c64718c8ba8438a6397a460bf23")
 ;;; Generated autoloads from dired-aux.el
 
 (autoload 'dired-diff "dired-aux" "\
@@ -4200,7 +4200,7 @@ instead.
 ;;;***
 
 ;;;### (autoloads (dired-do-relsymlink dired-jump-other-window dired-jump)
-;;;;;;  "dired-x" "dired-x.el" "2a39a8306a5541c304bc4ab602876f92")
+;;;;;;  "dired-x" "dired-x.el" "d09d49d54080e60ad6ecee5573b4e517")
 ;;; Generated autoloads from dired-x.el
 
 (autoload 'dired-jump "dired-x" "\

@@ -27,6 +27,7 @@ along with GNU Emacs.  If not, see <http§://www.gnu.org/licenses/>.  */
 #include <glib.h>
 #include <errno.h>
 #include <setjmp.h>
+#include "xterm.h"
 
 static GPollFD *gfds;
 static ptrdiff_t gfds_size;
@@ -38,10 +39,13 @@ xg_select (int max_fds, SELECT_TYPE *rfds, SELECT_TYPE *wfds, SELECT_TYPE *efds,
   SELECT_TYPE all_rfds, all_wfds;
   EMACS_TIME tmo, *tmop = timeout;
 
-  GMainContext *context = g_main_context_default ();
+  GMainContext *context;
   int have_wfds = wfds != NULL;
   int n_gfds = 0, our_tmo = 0, retval = 0, our_fds = 0;
-  int i, nfds, tmo_in_millisec;
+  int i, nfds, fds_lim, tmo_in_millisec;
+
+  if (!x_in_use)
+    return select (max_fds, rfds, wfds, efds, timeout);
 
   if (rfds) memcpy (&all_rfds, rfds, sizeof (all_rfds));
   else FD_ZERO (&all_rfds);
@@ -49,6 +53,7 @@ xg_select (int max_fds, SELECT_TYPE *rfds, SELECT_TYPE *wfds, SELECT_TYPE *efds,
   else FD_ZERO (&all_wfds);
 
   /* Update event sources in GLib. */
+  context = g_main_context_default ();
   g_main_context_pending (context);
 
   do {
@@ -97,14 +102,14 @@ xg_select (int max_fds, SELECT_TYPE *rfds, SELECT_TYPE *wfds, SELECT_TYPE *efds,
       if (our_tmo) tmop = &tmo;
     }
 
-  nfds = select (max_fds+1, &all_rfds, have_wfds ? &all_wfds : NULL,
-                 efds, tmop);
+  fds_lim = max_fds + 1;
+  nfds = select (fds_lim, &all_rfds, have_wfds ? &all_wfds : NULL, efds, tmop);
 
   if (nfds < 0)
     retval = nfds;
   else if (nfds > 0)
     {
-      for (i = 0; i < max_fds+1; ++i)
+      for (i = 0; i < fds_lim; ++i)
         {
           if (FD_ISSET (i, &all_rfds))
             {

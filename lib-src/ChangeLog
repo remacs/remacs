@@ -1,3 +1,56 @@
+2012-05-18  Glenn Morris  <rgm@gnu.org>
+
+	* Makefile.in (install): Ensure $bindir exists.
+
+2012-05-17  Glenn Morris  <rgm@gnu.org>
+
+	* Makefile.in (ns_appbindir): New, set by configure.
+
+2012-05-12  Glenn Morris  <rgm@gnu.org>
+
+	* Makefile.in (MKDIR_P): New, set by configure.
+	($(DESTDIR)${archlibdir}): Use $MKDIR_P.
+
+2012-05-10  Paul Eggert  <eggert@cs.ucla.edu>
+
+	etags: pacify gcc -Wstack-protector on Ubuntu 12.04 x86
+	* etags.c: Include <stdarg.h>.
+	(error): Declare as printf-style, as that's what it really is.
+	All uses changed.
+	(add_regex): Use single char rather than array-of-one char.
+
+2012-05-05  Jim Meyering  <meyering@redhat.com>
+
+	* lib-src/pop.c (pop_stat, pop_list, pop_multi_first, pop_last):
+	NUL-terminate the error buffer (Bug#11372).
+
+2012-05-02  Juanma Barranquero  <lekktu@gmail.com>
+
+	* emacsclient.c (min): Undef before redefining it.
+
+2012-05-02  Jim Meyering  <jim@meyering.net>
+
+	* emacsclient.c (send_to_emacs): Avoid invalid strcpy upon partial
+	send (Bug#11374).
+
+2012-04-29  Andreas Schwab  <schwab@linux-m68k.org>
+
+	* make-docfile.c (scan_lisp_file) [DEBUG]: Also skip if and
+	byte-code forms.  (Bug#11380)
+
+2012-04-20  Chong Yidong  <cyd@gnu.org>
+
+	* emacsclient.c (decode_options): Move -t -n corner case handling
+	into server.el (Bug#11102).
+	(main): Send -tty to Emacs under more circumstances (Bug#8314).
+
+2012-04-18  Paul Eggert  <eggert@cs.ucla.edu>
+
+	configure: new option --enable-gcc-warnings (Bug#11207)
+	* Makefile.in (C_WARNINGS_SWITCH): Remove.
+	(WARN_CFLAGS, WERROR_CFLAGS): New macros.
+	(BASE_CFLAGS): Use new macros rather than old.
+
 2012-04-16  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Assume less-ancient POSIX support.

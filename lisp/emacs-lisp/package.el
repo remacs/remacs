@@ -469,8 +469,11 @@ NAME and VERSION are both strings."
 Optional arg MIN-VERSION, if non-nil, should be a version list
 specifying the minimum acceptable version."
   (require 'finder-inf nil t) ; For `package--builtins'.
-  (let ((elt (assq package package--builtins)))
-    (and elt (version-list-<= min-version (package-desc-vers (cdr elt))))))
+  (if (eq package 'emacs)
+      (version-list-<= min-version (version-to-list emacs-version))
+    (let ((elt (assq package package--builtins)))
+      (and elt (version-list-<= min-version
+				(package-desc-vers (cdr elt)))))))
 
 ;; This function goes ahead and activates a newer version of a package
 ;; if an older one was already activated.  This is not ideal; we'd at
@@ -524,7 +527,7 @@ Required package `%s-%s' is unavailable"
 
 (defun define-package (name-string version-string
 				&optional docstring requirements
-				&rest extra-properties)
+				&rest _extra-properties)
   "Define a new package.
 NAME-STRING is the name of the package, as a string.
 VERSION-STRING is the version of the package, as a string.
@@ -584,7 +587,7 @@ EXTRA-PROPERTIES is currently unused."
 (defun package-generate-autoloads (name pkg-dir)
   (require 'autoload)         ;Load before we let-bind generated-autoload-file!
   (let* ((auto-name (concat name "-autoloads.el"))
-	 (ignore-name (concat name "-pkg.el"))
+	 ;;(ignore-name (concat name "-pkg.el"))
 	 (generated-autoload-file (expand-file-name auto-name pkg-dir))
 	 (version-control 'never))
     (unless (fboundp 'autoload-ensure-default-file)
@@ -943,7 +946,7 @@ If the buffer does not contain a conforming package, signal an
 error.  If there is a package, narrow the buffer to the file's
 boundaries."
   (goto-char (point-min))
-  (unless (re-search-forward "^;;; \\([^ ]*\\)\\.el --- \\(.*\\)$" nil t)
+  (unless (re-search-forward "^;;; \\([^ ]*\\)\\.el ---[ \t]*\\(.*?\\)[ \t]*\\(-\\*-.*-\\*-[ \t]*\\)?$" nil t)
     (error "Packages lacks a file header"))
   (let ((file-name (match-string-no-properties 1))
 	(desc      (match-string-no-properties 2))
@@ -1389,7 +1392,7 @@ If REMEMBER-POS is non-nil, keep point on the same entry.
 PACKAGES should be t, which means to display all known packages,
 or a list of package names (symbols) to display."
   ;; Construct list of ((PACKAGE . VERSION) STATUS DESCRIPTION).
-  (let (info-list name builtin)
+  (let (info-list name)
     ;; Installed packages:
     (dolist (elt package-alist)
       (setq name (car elt))
@@ -1474,21 +1477,21 @@ If optional arg BUTTON is non-nil, describe its associated package."
 	(describe-package package))))
 
 ;; fixme numeric argument
-(defun package-menu-mark-delete (&optional num)
+(defun package-menu-mark-delete (&optional _num)
   "Mark a package for deletion and move to the next line."
   (interactive "p")
   (if (member (package-menu-get-status) '("installed" "obsolete"))
       (tabulated-list-put-tag "D" t)
     (forward-line)))
 
-(defun package-menu-mark-install (&optional num)
+(defun package-menu-mark-install (&optional _num)
   "Mark a package for installation and move to the next line."
   (interactive "p")
   (if (string-equal (package-menu-get-status) "available")
       (tabulated-list-put-tag "I" t)
     (forward-line)))
 
-(defun package-menu-mark-unmark (&optional num)
+(defun package-menu-mark-unmark (&optional _num)
   "Clear any marks on a package and move to the next line."
   (interactive "p")
   (tabulated-list-put-tag " " t))
@@ -1530,8 +1533,7 @@ If optional arg BUTTON is non-nil, describe its associated package."
     (dolist (entry tabulated-list-entries)
       ;; ENTRY is ((NAME . VERSION) [NAME VERSION STATUS DOC])
       (let ((pkg (car entry))
-	    (status (aref (cadr entry) 2))
-	    old)
+	    (status (aref (cadr entry) 2)))
 	(cond ((equal status "installed")
 	       (push pkg installed))
 	      ((equal status "available")

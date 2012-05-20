@@ -102,30 +102,35 @@ Comments might be indented to a different value in order not to go beyond
   :type 'integer
   :group 'comment)
 (make-variable-buffer-local 'comment-column)
-;;;###autoload(put 'comment-column 'safe-local-variable 'integerp)
+;;;###autoload
+(put 'comment-column 'safe-local-variable 'integerp)
 
 ;;;###autoload
 (defvar comment-start nil
   "String to insert to start a new comment, or nil if no comment syntax.")
-;;;###autoload(put 'comment-start 'safe-local-variable 'string-or-null-p)
+;;;###autoload
+(put 'comment-start 'safe-local-variable 'string-or-null-p)
 
 ;;;###autoload
 (defvar comment-start-skip nil
   "Regexp to match the start of a comment plus everything up to its body.
 If there are any \\(...\\) pairs, the comment delimiter text is held to begin
 at the place matched by the close of the first pair.")
-;;;###autoload(put 'comment-start-skip 'safe-local-variable 'string-or-null-p)
+;;;###autoload
+(put 'comment-start-skip 'safe-local-variable 'string-or-null-p)
 
 ;;;###autoload
 (defvar comment-end-skip nil
   "Regexp to match the end of a comment plus everything back to its body.")
-;;;###autoload(put 'comment-end-skip 'safe-local-variable 'string-or-null-p)
+;;;###autoload
+(put 'comment-end-skip 'safe-local-variable 'string-or-null-p)
 
 ;;;###autoload
 (defvar comment-end (purecopy "")
   "String to insert to end a new comment.
 Should be an empty string if comments are terminated by end-of-line.")
-;;;###autoload(put 'comment-end 'safe-local-variable 'string-or-null-p)
+;;;###autoload
+(put 'comment-end 'safe-local-variable 'string-or-null-p)
 
 ;;;###autoload
 (defvar comment-indent-function 'comment-indent-default
@@ -267,6 +272,19 @@ of the corresponding number of spaces.
 Extra spacing between the comment characters and the comment text
 makes the comment easier to read.  Default is 1.  nil means 0."
   :type '(choice string integer (const nil))
+  :group 'comment)
+
+(defcustom comment-inline-offset 1
+  "Inline comments have to be preceded by at least this many spaces.
+This is useful when style-conventions require a certain minimal offset.
+Python's PEP8 for example recommends two spaces, so you could do:
+
+\(add-hook 'python-mode-hook
+   (lambda () (set (make-local-variable 'comment-inline-offset) 2)))
+
+See `comment-padding' for whole-line comments."
+  :version "24.2"
+  :type 'integer
   :group 'comment)
 
 ;;;###autoload
@@ -587,7 +605,7 @@ Point is expected to be at the start of the comment."
                    (save-excursion (end-of-line) (current-column)))))
         (other nil)
         (min (save-excursion (skip-chars-backward " \t")
-                             (if (bolp) 0 (1+ (current-column))))))
+                             (if (bolp) 0 (+ comment-inline-offset (current-column))))))
     ;; Fix up the range.
     (if (< max min) (setq max min))
     ;; Don't move past the fill column.
@@ -687,7 +705,8 @@ If CONTINUE is non-nil, use the `comment-continue' markers if any."
 	  (save-excursion
 	    (skip-chars-backward " \t")
 	    (unless (bolp)
-	      (setq indent (max indent (1+ (current-column))))))
+	      (setq indent (max indent
+                                (+ (current-column) comment-inline-offset)))))
 	  ;; If that's different from comment's current position, change it.
 	  (unless (= (current-column) indent)
 	    (delete-region (point) (progn (skip-chars-backward " \t") (point)))

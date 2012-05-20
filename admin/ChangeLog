@@ -1,3 +1,13 @@
+2012-05-19  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* CPP-DEFINES (HAVE_GETDOMAINNAME): Remove.
+
+	* CPP-DEFINES (HAVE_FTIME): Remove.
+
+2012-05-02  Glenn Morris  <rgm@gnu.org>
+
+	* bzrmerge.el (bzrmerge-skip-regexp): Add "Auto-commit".
+
 2012-04-10  Glenn Morris  <rgm@gnu.org>
 
 	* bzrmerge.el (bzrmerge-skip-regexp): Add "from trunk".
@@ -1262,7 +1272,7 @@
 ;; coding: utf-8
 ;; End:
 
-  Copyright (C) 2001-2012  Free Software Foundation, Inc.
+  Copyright (C) 2001-2012 Free Software Foundation, Inc.
 
   This file is part of GNU Emacs.
 

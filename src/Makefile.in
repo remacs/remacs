@@ -40,6 +40,7 @@ version = @version@
 # Substitute an assignment for the MAKE variable, because
 # BSD doesn't have it as a default.
 @SET_MAKE@
+MKDIR_P = @MKDIR_P@
 # Don't use LIBS.  configure puts stuff in it that either shouldn't be
 # linked with Emacs or is duplicated by the other stuff below.
 # LIBS = @LIBS@
@@ -68,7 +69,8 @@ OTHER_FILES = @OTHER_FILES@
 PROFILING_CFLAGS = @PROFILING_CFLAGS@
 
 ## Flags to pass to the compiler to enable build warnings
-C_WARNINGS_SWITCH = @C_WARNINGS_SWITCH@
+WARN_CFLAGS = @WARN_CFLAGS@
+WERROR_CFLAGS = @WERROR_CFLAGS@
 
 ## Machine-specific CFLAGS.
 C_SWITCH_MACHINE=@C_SWITCH_MACHINE@
@@ -93,11 +95,9 @@ C_SWITCH_X_SITE=@C_SWITCH_X_SITE@
 ## substituted in this or any other Makefile. Cf C_SWITCH_X_SITE.
 LD_SWITCH_X_SITE=
 
-## Next two must come before LD_SWITCH_SYSTEM.
-## If needed, a -R option that says where to find X windows at run time.
-LD_SWITCH_X_SITE_AUX=@LD_SWITCH_X_SITE_AUX@
-## As above, but using -rpath instead.
-LD_SWITCH_X_SITE_AUX_RPATH=@LD_SWITCH_X_SITE_AUX_RPATH@
+## This must come before LD_SWITCH_SYSTEM.
+## If needed, a -rpath option that says where to find X windows at run time.
+LD_SWITCH_X_SITE_RPATH=@LD_SWITCH_X_SITE_RPATH@
 
 ## System-specific LDFLAGS.
 LD_SWITCH_SYSTEM=@LD_SWITCH_SYSTEM@
@@ -291,7 +291,7 @@ CANNOT_DUMP=@CANNOT_DUMP@
 DEPDIR=deps
 ## -MMD -MF $(DEPDIR)/$*.d if AUTO_DEPEND; else empty.
 DEPFLAGS=@DEPFLAGS@
-## test -d $(DEPDIR) || mkdir $(DEPDIR) (if AUTO_DEPEND); else ':'.
+## ${MKDIR_P} ${DEPDIR} (if AUTO_DEPEND); else ':'.
 MKDEPDIR=@MKDEPDIR@
 
 ## DO NOT use -R.  There is a special hack described in lastfile.c
@@ -315,7 +315,7 @@ ALL_CFLAGS=-Demacs -DHAVE_CONFIG_H $(MYCPPFLAGS) -I. -I$(srcdir) \
   $(SETTINGS_CFLAGS) $(FREETYPE_CFLAGS) $(FONTCONFIG_CFLAGS) \
   $(LIBOTF_CFLAGS) $(M17N_FLT_CFLAGS) $(DEPFLAGS) $(PROFILING_CFLAGS) \
   $(LIBGNUTLS_CFLAGS) \
-  $(C_WARNINGS_SWITCH) $(CFLAGS)
+  $(WARN_CFLAGS) $(WERROR_CFLAGS) $(CFLAGS)
 ALL_OBJC_CFLAGS=$(ALL_CFLAGS) $(GNU_OBJC_CFLAGS)
 
 .SUFFIXES: .m

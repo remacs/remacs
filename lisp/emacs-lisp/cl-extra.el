@@ -1,6 +1,6 @@
 ;;; cl-extra.el --- Common Lisp features, part 2
 
-;; Copyright (C) 1993, 2000-2012  Free Software Foundation, Inc.
+;; Copyright (C) 1993, 2000-2012 Free Software Foundation, Inc.
 
 ;; Author: Dave Gillespie <daveg@synaptics.com>
 ;; Keywords: extensions
@@ -430,12 +430,11 @@ With two arguments, return rounding and remainder of their quotient."
 
 ;; Random numbers.
 
-(defvar *random-state*)
 ;;;###autoload
 (defun random* (lim &optional state)
   "Return a random nonnegative number less than LIM, an integer or float.
 Optional second arg STATE is a random-state object."
-  (or state (setq state *random-state*))
+  (or state (setq state cl--random-state))
   ;; Inspired by "ran3" from Numerical Recipes.  Additive congruential method.
   (let ((vec (aref state 3)))
     (if (integerp vec)
@@ -458,9 +457,9 @@ Optional second arg STATE is a random-state object."
 
 ;;;###autoload
 (defun make-random-state (&optional state)
-  "Return a copy of random-state STATE, or of `*random-state*' if omitted.
+  "Return a copy of random-state STATE, or of the internal state if omitted.
 If STATE is t, return a new state object seeded from the time of day."
-  (cond ((null state) (make-random-state *random-state*))
+  (cond ((null state) (make-random-state cl--random-state))
 	((vectorp state) (cl-copy-tree state t))
 	((integerp state) (vector 'cl-random-state-tag -1 30 state))
 	(t (make-random-state (cl-random-time)))))

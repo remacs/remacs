@@ -49,10 +49,18 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <setjmp.h>
 #include <verify.h>
 
-/* GC_MALLOC_CHECK defined means perform validity checks of malloc'd
-   memory.  Can do this only if using gmalloc.c.  */
+/* GC_CHECK_MARKED_OBJECTS means do sanity checks on allocated objects.
+   Doable only if GC_MARK_STACK.  */
+#if ! GC_MARK_STACK
+# undef GC_CHECK_MARKED_OBJECTS
+#endif
 
-#if defined SYSTEM_MALLOC || defined DOUG_LEA_MALLOC
+/* GC_MALLOC_CHECK defined means perform validity checks of malloc'd
+   memory.  Can do this only if using gmalloc.c and if not checking
+   marked objects.  */
+
+#if (defined SYSTEM_MALLOC || defined DOUG_LEA_MALLOC \
+     || defined GC_CHECK_MARKED_OBJECTS)
 #undef GC_MALLOC_CHECK
 #endif
 
@@ -82,6 +90,8 @@ extern POINTER_TYPE *sbrk ();
 
 extern size_t _bytes_used;
 extern size_t __malloc_extra_blocks;
+extern void *_malloc_internal (size_t);
+extern void _free_internal (void *);
 
 #endif /* not DOUG_LEA_MALLOC */
 
@@ -314,7 +324,6 @@ static Lisp_Object Vdead;
 #ifdef GC_MALLOC_CHECK
 
 enum mem_type allocated_mem_type;
-static int dont_register_blocks;
 
 #endif /* GC_MALLOC_CHECK */
 
@@ -390,9 +399,11 @@ static int live_float_p (struct mem_node *, void *);
 static int live_misc_p (struct mem_node *, void *);
 static void mark_maybe_object (Lisp_Object);
 static void mark_memory (void *, void *);
+#if GC_MARK_STACK || defined GC_MALLOC_CHECK
 static void mem_init (void);
 static struct mem_node *mem_insert (void *, void *, enum mem_type);
 static void mem_insert_fixup (struct mem_node *);
+#endif
 static void mem_rotate_left (struct mem_node *);
 static void mem_rotate_right (struct mem_node *);
 static void mem_delete (struct mem_node *);
@@ -942,9 +953,6 @@ lisp_free (POINTER_TYPE *block)
 /* The entry point is lisp_align_malloc which returns blocks of at most
    BLOCK_BYTES and guarantees they are aligned on a BLOCK_ALIGN boundary.  */
 
-/* Use posix_memalloc if the system has it and we're using the system's
-   malloc (because our gmalloc.c routines don't have posix_memalign although
-   its memalloc could be used).  */
 #if defined (HAVE_POSIX_MEMALIGN) && defined (SYSTEM_MALLOC)
 #define USE_POSIX_MEMALIGN 1
 #endif
@@ -1001,7 +1009,7 @@ struct ablocks
   struct ablock blocks[ABLOCKS_SIZE];
 };
 
-/* Size of the block requested from malloc or memalign.  */
+/* Size of the block requested from malloc or posix_memalign.  */
 #define ABLOCKS_BYTES (sizeof (struct ablocks) - BLOCK_PADDING)
 
 #define ABLOCK_ABASE(block) \
@@ -1223,6 +1231,10 @@ static void (*old_free_hook) (void*, const void*);
 #  define BYTES_USED _bytes_used
 #endif
 
+#ifdef GC_MALLOC_CHECK
+static int dont_register_blocks;
+#endif
+
 static size_t bytes_used_when_reconsidered;
 
 /* Value of _bytes_used, when spare_memory was freed.  */
@@ -1302,7 +1314,7 @@ emacs_blocked_malloc (size_t size, const void *ptr)
       {
 	fprintf (stderr, "Malloc returned %p which is already in use\n",
 		 value);
-	fprintf (stderr, "Region in use is %p...%p, %u bytes, type %d\n",
+	fprintf (stderr, "Region in use is %p...%p, %td bytes, type %d\n",
 		 m->start, m->end, (char *) m->end - (char *) m->start,
 		 m->type);
 	abort ();
@@ -5826,7 +5838,7 @@ mark_buffer (Lisp_Object buf)
 }
 
 /* Mark the Lisp pointers in the terminal objects.
-   Called by the Fgarbage_collector.  */
+   Called by Fgarbage_collect.  */
 
 static void
 mark_terminals (void)

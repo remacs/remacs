@@ -1,3 +1,43 @@
+2012-05-04  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Fix minor Y10k bug.
+	* nnweb.el (nnweb-google-parse-1): Don't assume years have 4 digits.
+
+2012-05-01  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* nnimap.el (nnimap-open-connection-1): Don't leave an "opening..."
+	message once it's actually open.
+
+2012-04-28  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* auth-source.el (auth-source--aput-1, auth-source--aput)
+	(auth-source--aget): New functions and macros.
+	Use them instead of aput/aget.
+
+2012-04-27  Andreas Schwab  <schwab@linux-m68k.org>
+
+	* gnus.el (debbugs-gnu): Don't override existing autoload definition.
+
+2012-04-26  Daiki Ueno  <ueno@unixuser.org>
+
+	* plstore.el (plstore-called-interactively-p): New compat macro copied
+	from message.el.
+	(plstore-mode): Use it.
+
+2012-04-26  Daiki Ueno  <ueno@unixuser.org>
+
+	* plstore.el: Revive the editing feature.
+	(plstore-mode): New mode to edit plstore file.
+	(plstore-mode-toggle-display, plstore-mode-original)
+	(plstore-mode-decoded): New command.
+	(plstore--encode, plstore--decode, plstore--write-contents-functions)
+	(plstore--insert-buffer, plstore--make): New function.
+	(plstore-open, plstore-save): Simplify by using them.
+
+2012-04-16  Glenn Morris  <rgm@gnu.org>
+
+	* nndraft.el (nndraft-request-list): Fix declaration.
+
 2012-04-14  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
 	* gnus-msg.el (gnus-inews-insert-gcc): Don't do the alist stuff when we

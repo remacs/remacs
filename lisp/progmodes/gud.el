@@ -58,18 +58,19 @@
 ;; GUD commands must be visible in C buffers visited by GUD
 
 (defgroup gud nil
-  "Grand Unified Debugger mode for gdb and other debuggers under Emacs.
-Supported debuggers include gdb, sdb, dbx, xdb, perldb, pdb (Python) and jdb."
+  "The \"Grand Unified Debugger\" interface.
+Supported debuggers include gdb, sdb, dbx, xdb, perldb,
+pdb (Python), and jdb."
   :group 'processes
   :group 'tools)
 
 
 (defcustom gud-key-prefix "\C-x\C-a"
   "Prefix of all GUD commands valid in C buffers."
-  :type 'string
+  :type 'key-sequence
   :group 'gud)
 
-(global-set-key (concat gud-key-prefix "\C-l") 'gud-refresh)
+(global-set-key (vconcat gud-key-prefix "\C-l") 'gud-refresh)
 (define-key ctl-x-map " " 'gud-break)	;; backward compatibility hack
 
 (defvar gud-marker-filter nil)

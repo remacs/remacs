@@ -1,6 +1,6 @@
 /* File IO for GNU Emacs.
 
-Copyright (C) 1985-1988, 1993-2012  Free Software Foundation, Inc.
+Copyright (C) 1985-1988, 1993-2012 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -87,17 +87,17 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #define FILE_SYSTEM_CASE(filename)  (filename)
 #endif
 
-/* Nonzero during writing of auto-save files */
+/* Nonzero during writing of auto-save files.  */
 static int auto_saving;
 
-/* Nonzero umask during creation of auto-save directories */
+/* Nonzero umask during creation of auto-save directories.  */
 static int auto_saving_dir_umask;
 
 /* Set by auto_save_1 to mode of original file so Fwrite_region will create
-   a new file with the same mode as the original */
+   a new file with the same mode as the original.  */
 static int auto_save_mode_bits;
 
-/* Set by auto_save_1 if an error occurred during the last auto-save. */
+/* Set by auto_save_1 if an error occurred during the last auto-save.  */
 static int auto_save_error_occurred;
 
 /* The symbol bound to coding-system-for-read when
@@ -111,7 +111,7 @@ static Lisp_Object Qauto_save_coding;
    which gives a list of operations it handles..  */
 static Lisp_Object Qoperations;
 
-/* Lisp functions for translating file formats */
+/* Lisp functions for translating file formats.  */
 static Lisp_Object Qformat_decode, Qformat_annotate_function;
 
 /* Lisp function for setting buffer-file-coding-system and the
@@ -2044,9 +2044,10 @@ on the system, we copy the SELinux context of FILE to NEWNAME.  */)
 #if HAVE_LIBSELINUX
   if (conlength > 0)
     {
-      /* Set the modified context back to the file. */
+      /* Set the modified context back to the file.  */
       fail = fsetfilecon (ofd, con);
-      if (fail)
+      /* See http://debbugs.gnu.org/11245 for ENOTSUP.  */
+      if (fail && errno != ENOTSUP)
 	report_file_error ("Doing fsetfilecon", Fcons (newname, Qnil));
 
       freecon (con);
@@ -2917,10 +2918,11 @@ compiled with SELinux support.  */)
 		error ("Doing context_range_set");
 	    }
 
-	  /* Set the modified context back to the file. */
+	  /* Set the modified context back to the file.  */
 	  fail = lsetfilecon (SSDATA (encoded_absname),
 			      context_str (parsed_con));
-	  if (fail)
+          /* See http://debbugs.gnu.org/11245 for ENOTSUP.  */
+	  if (fail && errno != ENOTSUP)
 	    report_file_error ("Doing lsetfilecon", Fcons (absname, Qnil));
 
 	  context_free (parsed_con);

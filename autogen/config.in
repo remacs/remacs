@@ -95,6 +95,9 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 /* Define to make the limit macros in <stdint.h> visible. */
 #undef GL_TRIGGER_STDC_LIMIT_MACROS
 
+/* enable some gnulib portability checks */
+#undef GNULIB_PORTCHECK
+
 /* Define to 1 if you want to use the GNU memory allocator. */
 #undef GNU_MALLOC
 
@@ -144,6 +147,18 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 /* Define to 1 if using D-Bus. */
 #undef HAVE_DBUS
+
+/* Define to 1 if you have the `dbus_validate_bus_name' function. */
+#undef HAVE_DBUS_VALIDATE_BUS_NAME
+
+/* Define to 1 if you have the `dbus_validate_interface' function. */
+#undef HAVE_DBUS_VALIDATE_INTERFACE
+
+/* Define to 1 if you have the `dbus_validate_member' function. */
+#undef HAVE_DBUS_VALIDATE_MEMBER
+
+/* Define to 1 if you have the `dbus_validate_path' function. */
+#undef HAVE_DBUS_VALIDATE_PATH
 
 /* Define to 1 if you have the `dbus_watch_get_unix_fd' function. */
 #undef HAVE_DBUS_WATCH_GET_UNIX_FD
@@ -203,6 +218,12 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 /* Define to 1 if you have the 'dup2' function. */
 #undef HAVE_DUP2
 
+/* Define to 1 if you have the `endgrent' function. */
+#undef HAVE_ENDGRENT
+
+/* Define to 1 if you have the `endpwent' function. */
+#undef HAVE_ENDPWENT
+
 /* Define to 1 if you have the `euidaccess' function. */
 #undef HAVE_EUIDACCESS
 
@@ -233,9 +254,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 /* Define to 1 if you have the `fsync' function. */
 #undef HAVE_FSYNC
 
-/* Define to 1 if you have the `ftime' function. */
-#undef HAVE_FTIME
-
 /* Define to 1 if you have the `gai_strerror' function. */
 #undef HAVE_GAI_STRERROR
 
@@ -251,8 +269,8 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 /* Define to 1 if you have the `getdelim' function. */
 #undef HAVE_GETDELIM
 
-/* Define to 1 if you have the `getdomainname' function. */
-#undef HAVE_GETDOMAINNAME
+/* Define to 1 if you have the `getgrent' function. */
+#undef HAVE_GETGRENT
 
 /* Define to 1 if you have the `gethostname' function. */
 #undef HAVE_GETHOSTNAME
@@ -278,6 +296,9 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 /* Define to 1 if you have the `getpt' function. */
 #undef HAVE_GETPT
 
+/* Define to 1 if you have the `getpwent' function. */
+#undef HAVE_GETPWENT
+
 /* Define to 1 if you have the `getrlimit' function. */
 #undef HAVE_GETRLIMIT
 
@@ -286,9 +307,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 /* Define to 1 if you have the `getsockname' function. */
 #undef HAVE_GETSOCKNAME
-
-/* Define to 1 if you have the `getsockopt' function. */
-#undef HAVE_GETSOCKOPT
 
 /* Define to 1 if you have the `gettimeofday' function. */
 #undef HAVE_GETTIMEOFDAY
@@ -447,9 +465,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 /* Define to 1 if you have the `mail' library (-lmail). */
 #undef HAVE_LIBMAIL
 
-/* Define to 1 if you have the `ncurses' library (-lncurses). */
-#undef HAVE_LIBNCURSES
-
 /* Define to 1 if using libotf. */
 #undef HAVE_LIBOTF
 
@@ -519,23 +534,11 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 /* Define to 1 if you have the <malloc/malloc.h> header file. */
 #undef HAVE_MALLOC_MALLOC_H
 
-/* Define to 1 if you have the `mblen' function. */
-#undef HAVE_MBLEN
-
-/* Define to 1 if you have the `mbrlen' function. */
-#undef HAVE_MBRLEN
-
-/* Define to 1 if you have the `mbsinit' function. */
-#undef HAVE_MBSINIT
-
 /* Define to 1 if <wchar.h> declares mbstate_t. */
 #undef HAVE_MBSTATE_T
 
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
-
-/* Define to 1 if you have the `mempcpy' function. */
-#undef HAVE_MEMPCPY
 
 /* Define to 1 if you have mouse menus. (This is automatic if you use X, but
    the option to specify it remains.) It is also defined with other window
@@ -553,9 +556,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 /* Define if you have mouse support. */
 #undef HAVE_MOUSE
-
-/* Define to 1 if you have the `mremap' function. */
-#undef HAVE_MREMAP
 
 /* Define to 1 if you have the <net/if_dl.h> header file. */
 #undef HAVE_NET_IF_DL_H
@@ -650,9 +650,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 /* Define to 1 if you have the `setsid' function. */
 #undef HAVE_SETSID
-
-/* Define to 1 if you have the `setsockopt' function. */
-#undef HAVE_SETSOCKOPT
 
 /* Define to 1 if you have the `shutdown' function. */
 #undef HAVE_SHUTDOWN
@@ -833,9 +830,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 /* Define to 1 if you have the `tzset' function. */
 #undef HAVE_TZSET
 
-/* Define to 1 if you have the `ualarm' function. */
-#undef HAVE_UALARM
-
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
 
@@ -914,9 +908,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 /* Define to 1 if you have the `XScreenResourceString' function. */
 #undef HAVE_XSCREENRESOURCESTRING
-
-/* Define to 1 if you have the `XSetWMProtocols' function. */
-#undef HAVE_XSETWMPROTOCOLS
 
 /* Define if you have usable i18n support. */
 #undef HAVE_X_I18N
@@ -1163,6 +1154,9 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 /* Number of bits in a file offset, on hosts where this is settable. */
 #undef _FILE_OFFSET_BITS
 
+/* enable compile-time and run-time bounds-checking, and some warnings */
+#undef _FORTIFY_SOURCE
+
 /* Define to 1 to make fseeko visible on some hosts (e.g. glibc 2.2). */
 #undef _LARGEFILE_SOURCE
 
@@ -1269,6 +1263,9 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #if defined __APPLE__ && defined __MACH__ && __APPLE_CC__ >= 5465 && !defined __cplusplus && __STDC_VERSION__ >= 199901L && !defined __GNUC_STDC_INLINE__
 # define __GNUC_STDC_INLINE__ 1
 #endif
+
+/* Define to 1 if the compiler is checking for lint. */
+#undef lint
 
 /* Define to a type if <wchar.h> does not define. */
 #undef mbstate_t

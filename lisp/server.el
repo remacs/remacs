@@ -520,31 +520,27 @@ Creates the directory if necessary and makes sure:
     ;; Check that it's safe for use.
     (let* ((uid (nth 2 attrs))
 	   (w32 (eq system-type 'windows-nt))
-	   (safe (catch :safe
-		   (unless (eq t (car attrs))   ; is a dir?
-		     (throw :safe nil))
-		   (when (and w32 (zerop uid))  ; on FAT32?
-		     (display-warning
-		      'server
-		      (format "Using `%s' to store Emacs-server authentication files.
+	   (safe (cond
+		  ((not (eq t (car attrs))) nil)  ; is a dir?
+		  ((and w32 (zerop uid))	  ; on FAT32?
+		   (display-warning
+		    'server
+		    (format "Using `%s' to store Emacs-server authentication files.
 Directories on FAT32 filesystems are NOT secure against tampering.
 See variable `server-auth-dir' for details."
-			      (file-name-as-directory dir))
-		      :warning)
-		     (throw :safe t))
-		   (unless (or (= uid (user-uid)) ; is the dir ours?
-			       (and w32
-				    ;; Files created on Windows by
-				    ;; Administrator (RID=500) have
-				    ;; the Administrators (RID=544)
-				    ;; group recorded as the owner.
-				    (= uid 544) (= (user-uid) 500)))
-		     (throw :safe nil))
-		   (when w32                    ; on NTFS?
-		     (throw :safe t))
-		   (unless (zerop (logand ?\077 (file-modes dir)))
-		     (throw :safe nil))
-		   t)))
+			    (file-name-as-directory dir))
+		    :warning)
+		   t)
+		  ((and (/= uid (user-uid))	  ; is the dir ours?
+			(or (not w32)
+			    ;; Files created on Windows by Administrator
+			    ;; (RID=500) have the Administrators (RID=544)
+			    ;; group recorded as the owner.
+			    (/= uid 544) (/= (user-uid) 500)))
+		   nil)
+		  (w32 t)			  ; on NTFS?
+		  (t				  ; else, check permissions
+		   (zerop (logand ?\077 (file-modes dir)))))))
       (unless safe
 	(error "The directory `%s' is unsafe" dir)))))
 
@@ -825,10 +821,6 @@ This handles splitting the command if it would be bigger than
     (select-frame frame)
     (process-put proc 'frame frame)
     (process-put proc 'terminal (frame-terminal frame))
-
-    ;; Display *scratch* by default.
-    (switch-to-buffer (get-buffer-create "*scratch*") 'norecord)
-
     frame))
 
 (defun server-create-window-system-frame (display nowait proc parent-id
@@ -861,9 +853,6 @@ This handles splitting the command if it would be bigger than
       (select-frame frame)
       (process-put proc 'frame frame)
       (process-put proc 'terminal (frame-terminal frame))
-
-      ;; Display *scratch* by default.
-      (switch-to-buffer (get-buffer-create "*scratch*") 'norecord)
       frame)))
 
 (defun server-goto-toplevel (proc)
@@ -1087,8 +1076,9 @@ The following commands are accepted by the client:
 
                 ;; -window-system:  Open a new X frame.
                 (`"-window-system"
-                 (setq dontkill t)
-                 (setq tty-name 'window-system))
+		 (if (fboundp 'x-create-frame)
+		     (setq dontkill t
+			   tty-name 'window-system)))
 
                 ;; -resume:  Resume a suspended tty frame.
                 (`"-resume"
@@ -1116,7 +1106,8 @@ The following commands are accepted by the client:
                  (setq dontkill t)
                  (pop args-left))
 
-                ;; -tty DEVICE-NAME TYPE:  Open a new tty frame at the client.
+		;; -tty DEVICE-NAME TYPE:  Open a new tty frame.
+		;; (But if we see -window-system later, use that.)
                 (`"-tty"
                  (setq tty-name (pop args-left)
                        tty-type (pop args-left)
@@ -1178,6 +1169,13 @@ The following commands are accepted by the client:
                 ;; Unknown command.
                 (arg (error "Unknown command: %s" arg))))
 
+	    ;; If both -no-wait and -tty are given with file or sexp
+	    ;; arguments, use an existing frame.
+	    (and nowait
+		 (not (eq tty-name 'window-system))
+		 (or files commands)
+		 (setq use-current-frame t))
+
 	    (setq frame
 		  (cond
 		   ((and use-current-frame
@@ -1227,11 +1225,16 @@ The following commands are accepted by the client:
   ;; including code that needs to wait.
   (with-local-quit
     (condition-case err
-        (let* ((buffers
-                (when files
-                  (server-visit-files files proc nowait))))
-
+        (let ((buffers (server-visit-files files proc nowait)))
           (mapc 'funcall (nreverse commands))
+
+	  ;; If we were told only to open a new client, obey
+	  ;; `initial-buffer-choice' if it specifies a file.
+	  (unless (or files commands)
+	    (if (stringp initial-buffer-choice)
+		(find-file initial-buffer-choice)
+	      (switch-to-buffer (get-buffer-create "*scratch*")
+				'norecord)))
 
           ;; Delete the client if necessary.
           (cond

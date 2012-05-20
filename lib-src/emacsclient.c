@@ -119,6 +119,11 @@ char *(getcwd) (char *, size_t);
 # define IF_LINT(Code) /* empty */
 #endif
 
+#ifdef min
+#undef min
+#endif
+#define min(x, y) (((x) < (y)) ? (x) : (y))
+
 
 /* Name used to invoke this program.  */
 const char *progname;
@@ -638,32 +643,23 @@ decode_options (int argc, char **argv)
   if (display && strlen (display) == 0)
     display = NULL;
 
-#ifdef WINDOWSNT
-  /* Emacs on Windows does not support GUI and console frames in the same
-     instance.  So, it makes sense to treat the -t and -c options as
-     equivalent, and open a new frame regardless of whether the running
-     instance is GUI or console.  Ideally, we would only set tty = 1 when
-     the instance is running in a console, but alas we don't know that.
-     The simplest workaround is to always ask for a tty frame, and let
-     server.el check whether it makes sense.  */
-  if (tty || !current_frame)
-    {
-      display = (const char *) ttyname (0);  /* Arg is ignored.  */
-      current_frame = 0;
-      tty = 1;
-    }
-#endif
-
   /* If no display is available, new frames are tty frames.  */
   if (!current_frame && !display)
     tty = 1;
 
-  /* --no-wait implies --current-frame on ttys when there are file
-     arguments or expressions given.  */
-  if (nowait && tty && argc - optind > 0)
-    current_frame = 1;
-
 #ifdef WINDOWSNT
+  /* Emacs on Windows does not support graphical and text terminal
+     frames in the same instance.  So, treat the -t and -c options as
+     equivalent, and open a new frame on the server's terminal.
+     Ideally, we would only set tty = 1 when the serve is running in a
+     console, but alas we don't know that.  As a workaround, always
+     ask for a tty frame, and let server.el figure it out.  */
+  if (!current_frame)
+    {
+      display = NULL;
+      tty = 1;
+    }
+
   if (alternate_editor && alternate_editor[0] == '\0')
     {
       message (TRUE, "--alternate-editor argument or ALTERNATE_EDITOR variable cannot be\n\
@@ -792,33 +788,35 @@ sock_err_message (const char *function_name)
 static void
 send_to_emacs (HSOCKET s, const char *data)
 {
-  while (data)
+  size_t dlen;
+
+  if (!data)
+    return;
+
+  dlen = strlen (data);
+  while (*data)
     {
-      size_t dlen = strlen (data);
-      if (dlen + sblen >= SEND_BUFFER_SIZE)
-	{
-	  int part = SEND_BUFFER_SIZE - sblen;
-	  strncpy (&send_buffer[sblen], data, part);
-	  data += part;
-	  sblen = SEND_BUFFER_SIZE;
-	}
-      else if (dlen)
-	{
-	  strcpy (&send_buffer[sblen], data);
-	  data = NULL;
-	  sblen += dlen;
-	}
-      else
-	break;
+      size_t part = min (dlen, SEND_BUFFER_SIZE - sblen);
+      memcpy (&send_buffer[sblen], data, part);
+      data += part;
+      sblen += part;
 
       if (sblen == SEND_BUFFER_SIZE
 	  || (sblen > 0 && send_buffer[sblen-1] == '\n'))
 	{
 	  int sent = send (s, send_buffer, sblen, 0);
+	  if (sent < 0)
+	    {
+	      message (TRUE, "%s: failed to send %d bytes to socket: %s\n",
+		       progname, sblen, strerror (errno));
+	      fail ();
+	    }
 	  if (sent != sblen)
-	    strcpy (send_buffer, &send_buffer[sent]);
+	    memmove (send_buffer, &send_buffer[sent], sblen - sent);
 	  sblen -= sent;
 	}
+
+      dlen -= part;
     }
 }
 
@@ -1667,10 +1665,10 @@ main (int argc, char **argv)
       send_to_emacs (emacs_socket, " ");
     }
 
-  /* If using the current frame, send tty information to Emacs anyway.
-     In daemon mode, Emacs may need to occupy this tty if no other
-     frame is available.  */
-  if (tty || (current_frame && !eval))
+  /* Unless we are certain we don't want to occupy the tty, send our
+     tty information to Emacs.  For example, in daemon mode Emacs may
+     need to occupy this tty if no other frame is available.  */
+  if (!current_frame || !eval)
     {
       const char *tty_type, *tty_name;
 
