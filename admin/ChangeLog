@@ -1,5 +1,11 @@
 2012-05-21  Paul Eggert  <eggert@cs.ucla.edu>
 
+	Use full name for m4/gnulib-comp.m4.  (Bug#11529)
+	* merge-gnulib: Leave m4/gnulib-comp.m4's name alone.
+
+	Assume C89 or later.
+	* CPP-DEFINES: Remove NULL, const.
+
 	Make merging from gnulib a script, not a makefile action.
 	* merge-gnulib: New script, with actions moved here from
 	../Makefile.in.

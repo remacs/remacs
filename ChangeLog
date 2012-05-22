@@ -1,9 +1,41 @@
+2012-05-22  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* Makefile.in (ACLOCAL_INPUTS): Fix up gnulib-comp.m4 name.  (Bug#11529)
+	Without this further fix, aclocal was being invoked unnecessarily.
+
+2012-05-22  Glenn Morris  <rgm@gnu.org>
+
+	* Makefile.in (blessmail, install-arch-dep, uninstall):
+	Check cd lib-src works.
+	(install-arch-dep, uninstall): Remove unneeded subshells.
+
 2012-05-21  Glenn Morris  <rgm@gnu.org>
 
-	* configure.in (LEIM_INSTALLDIR):
-	Rename to leimdir, treat like lispdir.
+	* update-subdirs: Move to build-aux/.
+	* make-dist, Makefile.in (install-arch-indep): Update for this change.
+
+	* Makefile.in (leimdir): New, set by configure.
+	(COPYDIR, COPYDESTS): Add leim directories.
+	(install-leim): Remove.
+	(install-arch-indep): Handle leim installation directly.
+
+	* vpath.sed: Remove unused file.
+	* make-dist: No more vpath.sed.
 
 2012-05-21  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Use full name for m4/gnulib-comp.m4.  (Bug#11529)
+	Previously the file was named m4/gl-comp.m4 due to DOS 8+3 restrictions,
+	even though the file's name in gnulib is m4/gnulib-comp.m4.
+	This had a problem when merging from gnulib, as the code temporarily
+	renamed it to the full name, causing problems when interrupted.
+	Now the file has its full name, with the idea that we will find
+	a solution for MS-DOS that does not affect the rest of Emacs.
+	* m4/gnulib-comp.m4: Rename from m4/gl-comp.m4.
+
+	Assume C89 or later.
+	* configure.in (AC_C_PROTOTYPES, AC_C_VOLATILE, AC_C_CONST)
+	(POINTER_TYPE, PROTOTYPES): Remove.
 
 	Make merging from gnulib a script, not a makefile action.
 	Putting it in a makefile has some problems with reflection, as
@@ -12,6 +44,11 @@
 	* Makefile.in (gnulib_srcdir, $(gnulib_srcdir), DOS_gnulib_comp.m4)
 	(GNULIB_MODULES, GNULIB_TOOL_FLAGS, sync-from-gnulib):
 	Remove, moving the actions to the script admin/merge-gnulib.
+
+2012-05-21  Glenn Morris  <rgm@gnu.org>
+
+	* configure.in (LEIM_INSTALLDIR):
+	Rename to leimdir, treat like lispdir.
 
 2012-05-21  Glenn Morris  <rgm@gnu.org>
 

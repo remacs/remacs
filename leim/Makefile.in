@@ -27,21 +27,7 @@
 SHELL = /bin/sh
 
 # Here are the things that we expect ../configure to edit.
-version=@version@
-prefix=@prefix@
-datarootdir=@datarootdir@
-datadir=@datadir@
 srcdir=@srcdir@
-ns_appresdir=@ns_appresdir@
-
-# Where to install LEIM files.
-# For most builds, this is ${datadir}/emacs/${version}/leim.
-# For self-contained ns builds, it is ${ns_appresdir}/leim.
-leimdir=@leimdir@
-
-MKDIR_P = @MKDIR_P@
-
-GZIP_PROG = @GZIP_PROG@
 
 # Which Emacs to use to convert TIT files to Emacs Lisp files,
 # byte-compile Emacs Lisp files, and generate the file leim-list.el.
@@ -53,9 +39,7 @@ buildlisppath=${srcdir}/../lisp
 RUN_EMACS = EMACSLOADPATH=$(buildlisppath) LC_ALL=C \
 	${EMACS} -batch --no-site-file --no-site-lisp
 
-# Subdirectories to be made if ${srcdir} is different from the current
-# directory.
-SUBDIRS=quail
+MKDIR_P = @MKDIR_P@
 
 # Files generated from TIT dictionaries for Chinese GB character set.
 TIT_GB=\
@@ -97,11 +81,7 @@ TIT_MISC=${CHINESE_TIT} ${MISC}
 	@echo Compiling $<
 	@${RUN_EMACS} -l ${buildlisppath}/international/quail -f batch-byte-compile $<
 
-all: ${SUBDIRS} leim-list.el compile-main
-
-${SUBDIRS}:
-	mkdir $@
-	touch stamp-subdir
+all: leim-list.el compile-main
 
 TIT_SOURCES= \
 	${srcdir}/CXTERM-DIC/4Corner.tit \
@@ -121,9 +101,6 @@ TIT_SOURCES= \
 ${CHINESE_TIT}: changed.tit
 	@true
 
-## FIXME remove subdirs if possible - time-stamping.
-## Emacs should make the directory if it does not exist.
-
 ## The changed.* files act to serialize this part of the build.
 ## A single Emacs invocation creates all the CHINESE_TIT files.
 ## Otherwise in a parallel build multiple Emacs instances could
@@ -132,7 +109,8 @@ ${CHINESE_TIT}: changed.tit
 ## file.  Something like the pattern rule:
 ## quail/%.el: CXTERM-DIC/%.tit
 ## It doesn't seem possible to do this with VPATH and suffix rules.
-changed.tit: ${SUBDIRS} ${TIT_SOURCES}
+changed.tit: ${TIT_SOURCES}
+	@${MKDIR_P} quail
 	${RUN_EMACS} -l ${buildlisppath}/international/titdic-cnv \
 	  -f batch-titdic-convert -dir quail ${srcdir}/CXTERM-DIC; \
 	  echo "changed" > $@
@@ -148,12 +126,13 @@ MISC_SOURCES= \
 ${MISC}: changed.misc
 	@true
 
-changed.misc: ${SUBDIRS} ${MISC_SOURCES}
+changed.misc: ${MISC_SOURCES}
+	@${MKDIR_P} quail
 	${RUN_EMACS} -l ${buildlisppath}/international/titdic-cnv \
 	  -f batch-miscdic-convert -dir quail ${srcdir}/MISC-DIC; \
 	  echo "changed" > $@
 
-leim-list.el: ${SUBDIRS} ${TIT_MISC} ${srcdir}/leim-ext.el
+leim-list.el: ${TIT_MISC} ${srcdir}/leim-ext.el
 	rm -f leim-list.el
 	if [ x`cd ${srcdir} && /bin/pwd` = x`/bin/pwd` ] ; then \
 	  ${RUN_EMACS} -l ${buildlisppath}/international/quail \
@@ -187,44 +166,6 @@ compile-main: ${TIT_MISC}
 	  $(MAKE) $(MFLAGS) compile-targets EMACS="$(EMACS)" TARGETS="$$chunk"; \
 	done
 
-install: all
-	umask 022; ${MKDIR_P} $(DESTDIR)${leimdir}
-	if [ x`cd $(DESTDIR)${leimdir} && /bin/pwd` != x`/bin/pwd` ] ; then \
-	  rm -f $(DESTDIR)${leimdir}/leim-list.el; \
-	  rm -rf $(DESTDIR)${leimdir}/quail $(DESTDIR)${leimdir}/ja-dic ; \
-	  echo "Copying leim files to $(DESTDIR)${leimdir} ..." ; \
-	  if [ x`cd ${srcdir} && /bin/pwd` = x`/bin/pwd` ] ; then \
-	    tar -chf - leim-list.el quail ja-dic \
-		| (cd $(DESTDIR)${leimdir}; umask 0; tar -xvf - && cat > /dev/null) ;\
-	  else \
-	    tar -chf - leim-list.el quail \
-		| (cd $(DESTDIR)${leimdir}; umask 0; tar -xvf - && cat > /dev/null) ;\
-	    cd ${srcdir}; \
-	    tar -chf - quail/* ja-dic \
-		| (cd $(DESTDIR)${leimdir}; umask 0; tar -xvf - && cat > /dev/null) ;\
-	  fi; \
-	  rm -f  $(DESTDIR)${leimdir}/.gitignore $(DESTDIR)${leimdir}/*/.gitignore; \
-	  rm -f  $(DESTDIR)${leimdir}/.arch-inventory $(DESTDIR)${leimdir}/*/.arch-inventory; \
-	  rm -f  $(DESTDIR)${leimdir}/\#*        $(DESTDIR)${leimdir}/*/\#* ; \
-	  rm -f  $(DESTDIR)${leimdir}/.\#*       $(DESTDIR)${leimdir}/*/.\#* ; \
-	  rm -f  $(DESTDIR)${leimdir}/*~         $(DESTDIR)${leimdir}/*/*~ ; \
-	  rm -f  $(DESTDIR)${leimdir}/*.orig     $(DESTDIR)${leimdir}/*/*.orig ; \
-	else true; fi
-	-unset CDPATH; \
-	if [ -n "${GZIP_PROG}" ]; \
-	then \
-	   echo "Compressing *.el ..." ; \
-	   (cd $(DESTDIR)${leimdir}; for f in `find . -name "*.elc" -print`; do \
-		${GZIP_PROG} -9n `echo $$f|sed 's/.elc$$/.el/'` ; \
-	    done) \
-	else true; fi
-	-chmod -R a+r $(DESTDIR)${leimdir}
-	for installuser in $${LOGNAME} $${USERNAME} $${USER} \
-	  `id -un 2> /dev/null`; do \
-	  [ -n "$${installuser}" ] && break ; \
-	done ; \
-	find $(DESTDIR)${leimdir} -exec chown $${installuser} '{}' ';'
-
 clean mostlyclean:
 	rm -f ${TIT_MISC} ${TIT_MISC:.el=.elc} \
 		leim-list.el changed.tit changed.misc
@@ -236,7 +177,7 @@ bootstrap-clean: clean
 	$(setwins); for w in $$wins; do rm -f $$w/*.elc; done
 
 distclean: clean
-	if test -f stamp-subdir; then rm -rf ${SUBDIRS} stamp-subdir; fi
+	-[ `cd ${srcdir} && /bin/pwd` != `/bin/pwd` ] && rm -rf quail
 	rm -f Makefile
 
 maintainer-clean: distclean bootstrap-clean
