@@ -1,3 +1,28 @@
+2012-05-24  Glenn Morris  <rgm@gnu.org>
+
+	* paths.el (term-file-prefix): Move to faces.el (the only user).
+	* faces.el (term-file-prefix): Move here, make it a defcustom.
+
+	* paths.el (news-directory, news-path, news-inews-program):
+	Move to gnus/nnspool.el.
+
+	* paths.el (gnus-default-nntp-server): Remove (gnus.el defines it).
+
+	* paths.el (rmail-file-name, rmail-spool-directory): Move from here...
+	* mail/rmail.el (rmail-file-name, rmail-spool-directory): ... to here.
+	Make the latter a defcustom, with a delayed initialization.
+
+	* paths.el (gnus-nntp-service, gnus-local-organization): Remove.
+	These were deleted from Gnus itself late 2010.
+
+2012-05-22  Juanma Barranquero  <lekktu@gmail.com>
+
+	* progmodes/which-func.el (which-func-ff-hook):
+	Check against user-error, not error.
+
+	* emacs-lisp/edebug.el (top): Do not load or set up loading of
+	cl-specs.el, which no longer exists.
+
 2012-05-22  Glenn Morris  <rgm@gnu.org>
 
 	* info.el (info-emacs-bug): New command.
@@ -58,7 +83,7 @@
 
 	* calc/calc-lang.el (math-C-parse-bess, math-C-parse-fma):
 	New functions.
-	(math-function-table):  Add support for more C functions.
+	(math-function-table): Add support for more C functions.
 
 2012-05-18  Agustín Martín Domingo  <agustin.martin@hispalinux.es>
 

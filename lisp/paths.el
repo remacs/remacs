@@ -1,6 +1,6 @@
 ;;; paths.el --- define pathnames for use by various Emacs commands -*- no-byte-compile: t -*-
 
-;; Copyright (C) 1986, 1988, 1994, 1999-2012  Free Software Foundation, Inc.
+;; Copyright (C) 1986, 1988, 1994, 1999-2012 Free Software Foundation, Inc.
 
 ;; Maintainer: FSF
 ;; Keywords: internal
@@ -101,59 +101,6 @@ This variable `Info-default-directory-list' is used as the default
 for initializing `Info-directory-list' when Info is started, unless
 the environment variable INFOPATH is set.")
 
-(defvar news-directory
-  (purecopy (if (file-exists-p "/usr/spool/news/")
-      "/usr/spool/news/"
-    "/var/spool/news/"))
-  "The root directory below which all news files are stored.")
-(defvaralias 'news-path 'news-directory)
-
-(defvar news-inews-program
-  (purecopy
-  (cond ((file-exists-p "/usr/bin/inews") "/usr/bin/inews")
-	((file-exists-p "/usr/local/inews") "/usr/local/inews")
-	((file-exists-p "/usr/local/bin/inews") "/usr/local/bin/inews")
-	((file-exists-p "/usr/contrib/lib/news/inews") "/usr/contrib/lib/news/inews")
-	((file-exists-p "/usr/lib/news/inews") "/usr/lib/news/inews")
-	(t "inews")))
-  "Program to post news.")
-
-;; set this to your local server
-(defvar gnus-default-nntp-server (purecopy "") "\
-The name of the host running an NNTP server.
-The null string means use the local host as the server site.")
-
-(defvar gnus-nntp-service (purecopy "nntp") "\
-NNTP service name, usually \"nntp\" or 119.
-Go to a local news spool if its value is nil, in which case `gnus-nntp-server'
-should be set to `(system-name)'.")
-
-(defvar gnus-local-organization nil "\
-*The name of your organization, as a string.
-The `ORGANIZATION' environment variable is used instead if defined.")
-
-(defcustom rmail-file-name (purecopy "~/RMAIL") "\
-Name of user's primary mail file."
-  :type 'string
-  :group 'rmail
-  :version "21.1")
-
-(defvar rmail-spool-directory
-  (purecopy
-  (cond ((file-exists-p "/var/mail")
-	 ;; SVR4 and recent BSD are said to use this.
-	 ;; Rather than trying to know precisely which systems use it,
-	 ;; let's assume this dir is never used for anything else.
-	 "/var/mail/")
-	;; Many GNU/Linux systems use this name.
-	((file-exists-p "/var/spool/mail")
-	 "/var/spool/mail/")
-	((memq system-type '(hpux usg-unix-v irix))
-	 "/usr/mail/")
-	(t "/usr/spool/mail/")))
-  "Name of directory used by system mailer for delivering new mail.
-Its name should end with a slash.")
-
 (defcustom remote-shell-program
   (purecopy
   (cond
@@ -179,10 +126,5 @@ Its name should end with a slash.")
   "File name for remote-shell program (often rsh or remsh)."
   :group 'environment
   :type 'file)
-
-(defvar term-file-prefix (purecopy "term/") "\
-If non-nil, Emacs startup does (load (concat term-file-prefix (getenv \"TERM\")))
-You may set this variable to nil in your `.emacs' file if you do not wish
-the terminal-initialization file to be loaded.")
 
 ;;; paths.el ends here

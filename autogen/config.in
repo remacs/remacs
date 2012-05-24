@@ -1006,13 +1006,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
 
-/* Define as `void' if your compiler accepts `void *'; otherwise define as
-   `char'. */
-#undef POINTER_TYPE
-
-/* Define to 1 if the C compiler supports function prototypes. */
-#undef PROTOTYPES
-
 /* Define to 1 if pthread_sigmask(), when it fails, returns -1 and sets errno.
    */
 #undef PTHREAD_SIGMASK_FAILS_WITH_ERRNO
@@ -1222,9 +1215,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
    used. */
 #undef __GETOPT_PREFIX
 
-/* Define like PROTOTYPES; this can be used by system headers. */
-#undef __PROTOTYPES
-
 /* Ensure that <stdint.h> defines the limit macros, since gnulib's
    <inttypes.h> relies on them.  */
 #if defined __cplusplus && !defined __STDC_LIMIT_MACROS && GL_TRIGGER_STDC_LIMIT_MACROS
@@ -1236,14 +1226,8 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
    declarations. Define as empty for no equivalent. */
 #undef __restrict_arr
 
-/* Define to the used machine dependent file. */
-#undef config_machfile
-
 /* Define to the used os dependent file. */
 #undef config_opsysfile
-
-/* Define to empty if `const' does not conform to ANSI C. */
-#undef const
 
 /* A replacement for va_copy, if needed.  */
 #define gl_va_copy(a,b) ((a) = (b))
@@ -1338,10 +1322,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 /* Define as `fork' if `vfork' does not work. */
 #undef vfork
 
-/* Define to empty if the keyword `volatile' does not work. Warning: valid
-   code using `volatile' can become incorrect without. Disable with care. */
-#undef volatile
-
 
 /* On AIX 3 this must be included before any other include file.  */
 #include <alloca.h>
@@ -1362,11 +1342,8 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #define subprocesses
 
-/* Include the os and machine dependent files.  */
+/* Include the os dependent file.  */
 #include config_opsysfile
-#ifdef config_machfile
-# include config_machfile
-#endif
 
 /* GNUstep needs a bit more pure memory.  Of the existing knobs,
    SYSTEM_PURESIZE_EXTRA seems like the least likely to cause problems.
@@ -1389,38 +1366,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #define RE_TRANSLATE_P(TBL) (!(INTEGERP (TBL) && XINT (TBL) == 0))
 #endif
 #endif
-
-/* These default definitions are good for almost all machines.
-   Any exceptions should override them in m/MACHINE.h.
-   They must be usable in preprocessor conditionals.  */
-
-#ifndef BITS_PER_CHAR
-#define BITS_PER_CHAR 8
-#endif
-
-#ifndef BITS_PER_SHORT
-#define BITS_PER_SHORT 16
-#endif
-
-#ifndef BITS_PER_INT
-#define BITS_PER_INT 32
-#endif
-
-#ifndef BITS_PER_LONG
-#ifdef _LP64
-#define BITS_PER_LONG 64
-#else
-#define BITS_PER_LONG 32
-#endif
-#endif
-
-#if !defined BITS_PER_LONG_LONG && HAVE_LONG_LONG_INT
-#define BITS_PER_LONG_LONG 64
-#endif
-
-/* Define if the compiler supports function prototypes.  It may do so but
-   not define __STDC__ (e.g. DEC C by default) or may define it as zero.  */
-#undef PROTOTYPES
 
 #include <string.h>
 #include <stdlib.h>
