@@ -1,3 +1,15 @@
+2012-05-28  Eli Zaretskii  <eliz@gnu.org>
+
+	* config.nt (HAVE_SYSINFO): Remove; unused.
+
+2012-05-27  Eli Zaretskii  <eliz@gnu.org>
+
+	* inc/stdalign.h: New file.
+
+	* configure.bat: Ensure a space between %var% expansion and
+	redirection symbol '>', which breaks when %var% ends in a digit,
+	such as 1.
+
 2012-05-22  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Remove src/m/*.

@@ -1,4 +1,296 @@
+2012-05-30  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* emacs-lisp/byte-run.el (defmacro, defun): Move from C.
+	(macro-declaration-function): Move var from C code.
+	(macro-declaration-function): Define function with defalias.
+	* emacs-lisp/macroexp.el (macroexpand-all-1):
+	* emacs-lisp/cconv.el (cconv-convert, cconv-analyse-form):
+	* emacs-lisp/byte-opt.el (byte-optimize-form-code-walker): Don't handle
+	defun/defmacro any more.
+	* emacs-lisp/bytecomp.el (byte-compile-arglist-signature):
+	Provide fallback for unknown arglist.
+	(byte-compile-arglist-warn): Change calling convention.
+	(byte-compile-output-file-form): Move print-vars binding.
+	(byte-compile-output-docform): Simplify accordingly.
+	(byte-compile-file-form-defun, byte-compile-file-form-defmacro)
+	(byte-compile-defmacro-declaration): Remove.
+	(byte-compile-file-form-defmumble): Generalize to defalias.
+	(byte-compile-output-as-comment): Return byte-positions.
+	Simplify callers accordingly.
+	(byte-compile-lambda): Use `assert'.
+	(byte-compile-defun, byte-compile-defmacro): Remove.
+	(byte-compile-file-form-defalias):
+	Use byte-compile-file-form-defmumble.
+	(byte-compile-defalias-warn): Remove.
+
+2012-05-29  Stefan Merten  <smerten@oekonux.de>
+
+	* textmodes/rst.el: Silence `checkdoc-ispell' errors where
+	possible.  Fix authors.  Improve comments.  Improve loading of `cl'.
+
+	(rst-mode-abbrev-table): Merge definition.
+	(rst-mode): Make sure `font-lock-defaults' is buffer local.
+	(rst-define-key, rst-deprecated-keys, rst-call-deprecated): Refactor.
+
+2012-05-29  Ulf Jasper  <ulf.jasper@web.de>
+
+	* calendar/icalendar.el
+	(icalendar-export-region): Export UID properly.
+
+2012-05-29 Leo <sdl.web@gmail.com>
+	* calendar/icalendar.el (icalendar-import-format):
+	Add `icalendar-import-format-uid' (Bug#11525).
+	(icalendar-import-format-uid): New.
+	(icalendar--parse-summary-and-rest, icalendar--format-ical-event):
+	Export UID.
+
+2012-05-29  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* emacs-lisp/pcase.el (pcase--expand): Accept different sets of vars in
+	different alternative patterns.
+	(pcase-codegen): Be more careful to preserve identity.
+	(pcase--u1): Don't forget to mark vars as used.
+
+	* emacs-lisp/bytecomp.el (byte-compile-constp): Treat #'v as a constant.
+	(byte-compile-close-variables): Bind byte-compile--outbuffer here...
+	(byte-compile-from-buffer): ...rather than here.
+
+	* emacs-lisp/byte-opt.el (byte-compile-inline-expand): Don't re-preprocess
+	functions from byte-compile-function-environment.
+
+2012-05-29  Troels Nielsen  <bn.troels@gmail.com>
+
+	* window.el (window-deletable-p): Avoid deleting the root window
+	of a frame with an active minibuffer.
+
+2012-05-29  Martin Rudalics  <rudalics@gmx.at>
+
+	* simple.el (choose-completion): Use quit-window (Bug#11567).
+
+2012-05-29  Chong Yidong  <cyd@gnu.org>
+
+	* whitespace.el (whitespace-cleanup): Fix usage of
+	whitespace-empty-at-bob-regexp (Bug#11492).
+
+2012-05-29  Aaron S. Hawley  <aaron.s.hawley@gmail.com>
+
+	* vc/vc.el (vc-revert, vc-rollback): Dont kill vc-diff buffer on
+	revert (Bug#11488).
+
+2012-05-29  Juri Linkov  <juri@jurta.org>
+
+	* isearch.el (isearch-mode-map): Bind `M-s _' to
+	`isearch-toggle-symbol'.  Bind `M-s c' to
+	`isearch-toggle-case-fold'.
+	(search-map): Bind `M-s _' to `isearch-forward-symbol'.
+	(isearch-forward): Add `M-s _' to the docstring.
+	(isearch-forward-symbol, isearch-toggle-case-fold)
+	(isearch-symbol-regexp): New functions.  (Bug#11381)
+
+2012-05-29  Juri Linkov  <juri@jurta.org>
+
+	* isearch.el (isearch-word): Add docstring.  (Bug#11381)
+	(isearch-occur, isearch-search-and-update): If `isearch-word' is
+	a function, call it to get the regexp.
+	(isearch-message-prefix): If `isearch-word' holds a symbol, use its
+	property `isearch-message-prefix' instead of the string "word ".
+	(isearch-search-fun-default): For the case of `isearch-word',
+	return a lambda that calls re-search-forward/re-search-backward
+	with a regexp returned by `word-search-regexp' or by the function
+	in `isearch-word'.
+
+2012-05-29  Juri Linkov  <juri@jurta.org>
+
+	* isearch.el (isearch-search-fun-default): New function.
+	(isearch-search-fun): Move default part to the new function
+	`isearch-search-fun-default'.
+	(isearch-search-fun-function): Set the default value to
+	`isearch-search-fun-default'.  (Bug#11381)
+
+	* comint.el (comint-history-isearch-end):
+	Use `isearch-search-fun-default'.
+	(comint-history-isearch-search): Use `isearch-search-fun-default'
+	and remove spacial case for `isearch-word'.
+	(comint-history-isearch-wrap): Remove spacial case for
+	`isearch-word'.
+
+	* hexl.el (hexl-isearch-search-function):
+	Use `isearch-search-fun-default'.
+
+	* info.el (Info-isearch-search): Use `isearch-search-fun-default'.
+	Use `word-search-regexp' for `isearch-word'.
+
+	* misearch.el (multi-isearch-search-fun):
+	Use `isearch-search-fun-default'.
+
+	* simple.el (minibuffer-history-isearch-search):
+	Use `isearch-search-fun-default' and remove spacial case for
+	`isearch-word'.
+	(minibuffer-history-isearch-wrap): Remove spacial case for
+	`isearch-word'.
+
+	* textmodes/reftex-global.el (reftex-isearch-wrap-function):
+	Remove spacial case for `isearch-word'.
+	(reftex-isearch-isearch-search): Use `isearch-search-fun-default'.
+
+2012-05-28  Agustín Martín Domingo  <agustin.martin@hispalinux.es>
+
+	Decrease XEmacs incompatibilities.
+	* textmodes/flyspell.el (flyspell-check-pre-word-p):
+	Use `string-match'.
+	(flyspell-delete-region-overlays): Use alternative definition for
+	XEmacs.
+	(flyspell-delete-all-overlays): Use `flyspell-delete-region-overlays'.
+	(flyspell-word): Use `process-kill-without-query' if XEmacs.
+	(flyspell-mode-on): Use `interactive-p' if XEmacs.
+	(flyspell-incorrect-face, flyspell-duplicate-face): Do not use
+	`define-obsolete-face-alias' under XEmacs, but old method.
+
+	* textmodes/ispell.el (ispell-with-no-warnings): XEmacs alternative
+	`with-no-warnings' definition or Emacs alias.
+	(ispell-command-loop, ispell-message): Use `ispell-with-no-warnings'.
+	(ispell-word): Do not use `region-p' if XEmacs.
+
+2012-05-28  Agustín Martín Domingo  <agustin.martin@hispalinux.es>
+
+	* textmodes/ispell.el (ispell-find-aspell-dictionaries):
+	Check for `ispell-dictionary-base-alist' instead of full
+	`ispell-dictionary-alist'.
+	(ispell-init-process): Show spellchecker when starting new Ispell
+	process.
+
+2012-05-28  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* progmodes/vhdl-mode.el: Sync with upstream 3.33.28.
+	http://www.iis.ee.ethz.ch/~zimmi/emacs/vhdl-mode.html#release-notes-3.33
+
+2012-05-27  Juanma Barranquero  <lekktu@gmail.com>
+
+	* version.el (motif-version-string, gtk-version-string)
+	(ns-version-string): Declare.
+
+2012-05-27  Juri Linkov  <juri@jurta.org>
+
+	* emacs-lisp/lisp-mode.el (eval-defun-2): Use `eval-sexp-add-defvars'
+	after the `eval-defun-1' specialcaseing
+	like in `edebug-eval-defun' (bug#10181).
+
+	* emacs-lisp/edebug.el (edebug-eval-defun): Set `face-documentation'
+	like in `eval-defun-1'.
+
+2012-05-27  Eli Zaretskii  <eliz@gnu.org>
+
+	* mail/sendmail.el (mail-yank-region):
+	Recognize rmail-yank-current-message in addition to insert-buffer.
+	Fixes mail-mode's "C-c C-r" that otherwise does nothing when invoked in
+	a *mail* buffer created through rmail-start-mail with sendmail as
+	mail-user-agent.
+
+2012-05-27  Chong Yidong  <cyd@gnu.org>
+
+	* net/gnutls.el (gnutls-min-prime-bits): Improve docstring.
+	Default to 256 (Bug#11267).
+
+	* help.el (describe-mode): Doc fix.
+
+2012-05-26  Glenn Morris  <rgm@gnu.org>
+
+	* w32-fns.el (w32-init-info): Remove.
+	* paths.el (Info-default-directory-list): Add w32-init-info equivalent.
+
+	* info.el (info-initialize): For self-contained NS builds, put the
+	included info/ directory at the front.  (Bug#2791)
+
+	* paths.el (Info-default-directory-list): Make it a defcustom,
+	mainly so that we can use custom-initialize-delay.
+
+2012-05-26  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* subr.el (buffer-has-markers-at): Mark obsolete.
+
+	* subr.el (lambda): Use declare.
+
+	* emacs-lisp/lisp-mode.el (lambda):
+	* emacs-lisp/edebug.el (lambda): Move properties to its definition.
+
+2012-05-26  Aaron S. Hawley  <aaron.s.hawley@gmail.com>
+
+	* thingatpt.el (forward-same-syntax): Handle no ARG case.  (Bug#11560)
+
+2012-05-26  Glenn Morris  <rgm@gnu.org>
+
+	* progmodes/cc-mode.el (auto-mode-alist): Fix typo.
+
+2012-05-25  Glenn Morris  <rgm@gnu.org>
+
+	* paths.el: Remove no-byte-compile.
+	* loadup.el: No need to load paths.el uncompiled.
+
+	* image.el (imagemagick-types-inhibit): Doc fix.
+
+	* version.el: Remove no-byte-compile and associated formatting.
+	* loadup.el: No need to load version.el uncompiled.  AFAICS, this
+	is ancient code from when there was an "inc-vers.el".
+
+2012-05-25  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* progmodes/gdb-mi.el: Minor style changes.
+	(gdb-enable-debug, gdb-speedbar-auto-raise, gdb-many-windows):
+	Turn into minor modes.
+	(gdb--if-arrow): Rename from gdb-if-arrow, make it hygienic.
+	(gdb-mouse-until, gdb-mouse-jump): Adjust uses accordingly.
+	(gdb-shell): Remove unneeded let-binding.
+	(gdb-get-many-fields): Eliminate O(n²) behavior.
+
+2012-05-25  Eli Zaretskii  <eliz@gnu.org>
+
+	* cus-start.el <vertical-centering-font-regexp>: Avoid warning on
+	platforms that don't link in fontset.c.
+
+2012-05-25  Juri Linkov  <juri@jurta.org>
+
+	Use the same diff color scheme as in modern VCSes (bug#10181).
+
+	* vc/diff-mode.el (diff-header, diff-file-header): Remove "green"
+	to avoid confusion with `diff-added' that now uses green colors.
+	(diff-removed): Use shades of red.
+	(diff-added): Use shades of green.
+	(diff-changed): Leave just the yellow color.
+	(diff-use-changed-face): New variable.
+	(diff-font-lock-keywords): Use `diff-use-changed-face' to decide
+	how to highlight context diff changes.
+	(diff-refine-change): Use shades of yellow.
+	(diff-refine-removed): New face that uses shades of red.
+	(diff-refine-added): New face that uses shades of green.
+	(diff-refine-hunk): Use `diff-refine-change', `diff-refine-added',
+	`diff-refine-removed' in the call to `smerge-refine-subst'
+	depending on the value of `diff-use-changed-face'.
+
+	* vc/smerge-mode.el (smerge-mine): Use shades of red.
+	(smerge-other): Use shades of green.
+	(smerge-base): Use shades of yellow.
+	(smerge-refined-change): Empty face.
+	(smerge-refined-removed): New face that uses shades of red.
+	(smerge-refined-added): New face that uses shades of green.
+	(smerge-refine-subst): Rename arg `props' to `props-c'.  Add new
+	args `props-r' and `props-a', and use them.  Doc fix.
+	(smerge-refine): Evaluate `smerge-use-changed-face' and depending
+	on its value use different faces `smerge-refined-change',
+	`smerge-refined-removed', `smerge-refined-added' in the call to
+	`smerge-refine-subst'.
+
+	* vc/ediff-init.el (ediff-current-diff-A, ediff-fine-diff-A):
+	Add face condition `min-colors 88' with shades of red.
+	(ediff-current-diff-B, ediff-fine-diff-B): Add face condition
+	`min-colors 88' with shades of green.
+	(ediff-current-diff-C, ediff-fine-diff-C): Add face condition
+	`min-colors 88' with shades of yellow.
+
 2012-05-24  Glenn Morris  <rgm@gnu.org>
+
+	* paths.el (prune-directory-list, remote-shell-program): Move to...
+	* files.el (prune-directory-list, remote-shell-program): ...here.
+	For the latter, delay initialization, prefer ssh, just search PATH.
 
 	* paths.el (term-file-prefix): Move to faces.el (the only user).
 	* faces.el (term-file-prefix): Move here, make it a defcustom.
@@ -533,6 +825,109 @@
 	* man.el (Man-unindent): Use text-property-default-nonsticky to
 	prevent untabify from inheriting face properties (Bug#11408).
 
+2012-05-05  Stefan Merten  <smerten@oekonux.de>
+
+	* textmodes/rst.el: Major merge with upstream development up to
+	Docutils SVN r7399 / rst.el V1.2.1.
+
+	Clarify maintainership and authors.
+
+	(rst-extract-version, rst-cvs-header, rst-cvs-rev)
+	(rst-cvs-timestamp, rst-svn-rev, rst-svn-timestamp)
+	(rst-official-version, rst-official-cvs-rev, rst-version)
+	(rst-package-emacs-version-alist): New functions and variables
+	for version information.
+
+	(rst-bullets, rst-uri-schemes, rst-adornment-chars)
+	(rst-max-inline-length, rst-re-alist-def, rst-re-alist)
+	(rst-mode-syntax-table, rst-mode): New and corrected functions
+	and variables representing reStructuredText features.
+
+	(rst-re): New function for reStructuredText regexes.  Use in
+	many places.
+
+	(rst-deprecated-keys, rst-call-deprecated, rst-define-key)
+	(rst-mode-map): Rebind keys.
+
+	(rst-mode-lazy, rst-font-lock-keywords)
+	(rst-font-lock-extend-region)
+	(rst-font-lock-extend-region-internal)
+	(rst-font-lock-extend-region-extend)
+	(rst-font-lock-find-unindented-line-limit)
+	(rst-font-lock-find-unindented-line-match)
+	(rst-adornment-level, rst-font-lock-adornment-level)
+	(rst-font-lock-adornment-match)
+	(rst-font-lock-handle-adornment-pre-match-form)
+	(rst-font-lock-handle-adornment-matcher): Major revision of
+	font-locking.  Integrate with other code.  Use `jit-lock-mode'.
+
+	(rst-preferred-adornments, rst-adjust-hook)
+	(rst-new-adornment-down, rst-preferred-bullets)
+	(rst-preferred-bullets, rst-indent, rst-indent-width)
+	(rst-indent-field, rst-indent-literal-normal)
+	(rst-indent-literal-minimized, rst-indent-comment): Change,
+	extend and improve customization.
+
+	(rst-line-homogeneous-p, rst-line-homogeneous-nodent-p)
+	(rst-normalize-cursor-position, rst-get-decoration)
+	(rst-straighten-deco-spacing, rst-re-bullets, rst-re-items)
+	(rst-rstrip, rst-toc-insert-find-delete-contents)
+	(rst-shift-fill-region, rst-compute-bullet-tabs)
+	(rst-debug-print-tabs, rst-debug-mark-found)
+	(rst-shift-region-guts, rst-shift-region-right)
+	(rst-shift-region-left, rst-use-char-classes)
+	(rst-font-lock-keywords-function)
+	(rst-font-lock-indentation-point)
+	(rst-font-lock-find-unindented-line-begin)
+	(rst-font-lock-find-unindented-line-end)
+	(rst-font-lock-find-unindented-line)
+	(rst-font-lock-adornment-point, rst-font-lock-level)
+	(rst-adornment-level-alist): Remove functions and variables.
+
+	(rst-compare-adornments, rst-get-adornment-match)
+	(rst-suggest-new-adornment, rst-get-adornments-around)
+	(rst-adornment-complete-p, rst-get-next-adornment)
+	(rst-adjust-adornment, rst-display-adornments-hierarchy)
+	(rst-straighten-adornments): Standardize function names to
+	use "adornment" instead of "decoration".  Correct callers.
+	Similar standardizing in many places.
+
+	(rst-update-section, rst-adjust, rst-promote-region)
+	(rst-enumerate-region, rst-bullet-list-region)
+	(rst-repeat-last-character): Correct use of `interactive'.
+
+	(rst-classify-adornment, rst-find-all-adornments)
+	(rst-get-hierarchy, rst-adjust-adornment, rst-toc-update)
+	(rst-find-leftmost-column, rst-repeat-last-character):
+	Refactor functions.
+
+	(rst-find-title-line, rst-reset-section-caches)
+	(rst-get-adornments-around, rst-adjust-adornment-work)
+	(rst-arabic-to-roman, rst-roman-to-arabic)
+	(rst-insert-list-pos, rst-insert-list-new-item)
+	(rst-insert-list-continue, rst-insert-list, rst-forward-line):
+	New functions.
+
+	(rst-all-sections, rst-section-hierarchy)
+	(rst-arabic-to-roman, rst-initial-enums, rst-initial-items):
+	New variables.
+
+	(rst-toc-return-wincfg, rst-toc-quit-window): Use window
+	configuration instead of only buffer.  Change where necessary.
+
+	(rst-line-tabs, rst-compute-tabs, rst-indent-line)
+	(rst-shift-region, rst-adaptive-fill): New functions for
+	indentation and filling.
+
+	(rst-comment-line-break, rst-comment-indent)
+	(rst-comment-insert-comment, rst-comment-region)
+	(rst-uncomment-region): New functions for handling comments.
+
+	(rst-compile): Quote shell arguments.
+
+	(rst-compile-pdf-preview, rst-compile-slides-preview):
+	Delete temporary files after use.
+
 2012-05-05  Glenn Morris  <rgm@gnu.org>
 
 	* calendar/cal-html.el: Optionally include holidays in the output.
@@ -749,7 +1144,7 @@
 2012-05-03  Kenichi Handa  <handa@m17n.org>
 
 	* mail/rmailmm.el (rmail-show-mime): Catch an error caused by text
-	decoding, and show a warning message without signalling an error
+	decoding, and show a warning message without signaling an error
 	(Bug#11282).
 
 2012-05-03  Stefan Monnier  <monnier@iro.umontreal.ca>
