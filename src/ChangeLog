@@ -1,3 +1,53 @@
+2012-05-31  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Pacify gcc -Wdouble-precision when using Xaw.
+	* xterm.c (xaw_jump_callback, x_set_toolkit_scroll_bar_thumb)
+	[HAVE_X_WINDOWS && USE_TOOLKIT_SCROLL_BARS && !USE_MOTIF && !USE_GTK]:
+	Use 'float' consistently, rather than 'float' in most places
+	and 'double' in a couple of places.
+
+2012-05-31  Eli Zaretskii  <eliz@gnu.org>
+
+	* xdisp.c (handle_stop): Detect whether we have overlay strings
+	loaded by testing it->current.overlay_string_index to be
+	non-negative, instead of checking whether n_overlay_strings is
+	positive.  (Bug#11587)
+
+2012-05-31  Chong Yidong  <cyd@gnu.org>
+
+	* keymap.c (describe_map_tree): Revert 2011-07-07 change (Bug#1169).
+
+	* doc.c (Fsubstitute_command_keys): Doc fix.
+
+2012-05-31  Eli Zaretskii  <eliz@gnu.org>
+
+	* search.c (search_buffer): Remove calls to
+	r_alloc_inhibit_buffer_relocation, as it is now called by
+	maybe_unify_char, which was the cause of relocation of buffer text
+	in bug#11519.
+
+2012-05-31  Eli Zaretskii  <eliz@gnu.org>
+
+	* charset.c (maybe_unify_char): Inhibit relocation of buffer text
+	for the duration of call to load_charset, to avoid problems with
+	callers of maybe_unify_char that access buffer text through C
+	pointers.
+
+	* ralloc.c (r_alloc_inhibit_buffer_relocation): Increment and
+	decrement the inhibition flag, instead of just setting or
+	resetting it.
+
+2012-05-31  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Remove obsolete '#define static' cruft.
+	* s/hpux10-20.h (_FILE_OFFSET_BITS): Don't #undef.
+	This #undef was "temporary" in 2000; it is no longer needed
+	now that '#define static' has gone away.
+	* xfns.c, xterm.h (gray_bitmap_width, gray_bitmap_height)
+	(gray_bitmap_bits): Remove; no longer needed.
+	All uses replaced with definiens.
+	* xterm.c: Include "bitmaps/gray.xbm".
+
 2012-05-30  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Clean up __executable_start, monstartup when --enable-profiling.
@@ -12,6 +62,10 @@
 	Cast pointers to uintptr_t, since standard libraries want integers
 	and not pointers.
 	* lisp.h (__executable_start): New decl.
+
+2012-05-31  Glenn Morris  <rgm@gnu.org>
+
+	* image.c (Fimagemagick_types): Doc fix.
 
 2012-05-30  Jim Meyering  <meyering@redhat.com>
 

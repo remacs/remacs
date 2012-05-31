@@ -142,6 +142,8 @@ extern void _XEditResCheckMessages (Widget, XtPointer, XEvent *, Boolean *);
 #endif
 #endif
 
+#include "bitmaps/gray.xbm"
+
 /* Default to using XIM if available.  */
 #ifdef USE_XIM
 int use_xim = 1;
@@ -4536,7 +4538,7 @@ xaw_jump_callback (Widget widget, XtPointer client_data, XtPointer call_data)
   whole = 10000000;
   portion = shown < 1 ? top * whole : 0;
 
-  if (shown < 1 && (eabs (top + shown - 1) < 1.0/height))
+  if (shown < 1 && (eabs (top + shown - 1) < 1.0f / height))
     /* Some derivatives of Xaw refuse to shrink the thumb when you reach
        the bottom, so we force the scrolling whenever we see that we're
        too close to the bottom (in x_set_toolkit_scroll_bar_thumb
@@ -4901,7 +4903,7 @@ x_set_toolkit_scroll_bar_thumb (struct scroll_bar *bar, int portion, int positio
     else
       top = old_top;
     /* Keep two pixels available for moving the thumb down.  */
-    shown = max (0, min (1 - top - (2.0 / height), shown));
+    shown = max (0, min (1 - top - (2.0f / height), shown));
 
     /* If the call to XawScrollbarSetThumb below doesn't seem to work,
        check that your system's configuration file contains a define
@@ -10401,8 +10403,7 @@ x_term_init (Lisp_Object display_name, char *xrm_option, char *resource_name)
   {
     dpyinfo->gray
       = XCreatePixmapFromBitmapData (dpyinfo->display, dpyinfo->root_window,
-				     gray_bitmap_bits,
-				     gray_bitmap_width, gray_bitmap_height,
+				     gray_bits, gray_width, gray_height,
 				     1, 0, 1);
   }
 

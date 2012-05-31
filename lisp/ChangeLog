@@ -1,9 +1,50 @@
+2012-05-31  Glenn Morris  <rgm@gnu.org>
+
+	* image.el: For clarity, call imagemagick-register-types at
+	top-level, rather than relying on a custom :initialize.
+	(imagemagick-types-enable): New option.  (Bug#11557)
+	(imagemagick-register-types): Respect imagemagick-types-inhibit.
+	If disabling support, remove elements altogether rather
+	than using an impossible regexp.
+	(imagemagick-types-inhibit): Give it the default init function.
+
+2012-05-31  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* emacs-lisp/bytecomp.el (byte-compile-fix-header): Handle
+	arbitrary file name lengths (Bug#11585).
+
+2012-05-31  Martin Rudalics  <rudalics@gmx.at>
+
+	* desktop.el (desktop-read): Clear previous and next buffers for
+	all windows and bury *Messages* buffer (bug#11556).
+
+2012-05-31  Eli Zaretskii  <eliz@gnu.org>
+
+	* mail/sendmail.el (mail-yank-region): Recognize
+	rmail-yank-current-message in addition to insert-buffer.  Fixes
+	mail-mode's "C-c C-r" that otherwise does nothing when invoked in
+
+2012-05-31  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	Add `declare' for `defun'.  Align `defmacro's with it.
+	* emacs-lisp/easy-mmode.el (define-minor-mode)
+	(define-globalized-minor-mode): Don't autoload the var definitions.
+	* emacs-lisp/byte-run.el: Use lexical-binding.
+	(defun-declarations-alist, macro-declarations-alist): New vars.
+	(defmacro, defun): Use them.
+	(make-obsolete, define-obsolete-function-alias)
+	(make-obsolete-variable, define-obsolete-variable-alias):
+	Use `declare'.
+	(macro-declaration-function): Mark obsolete.
+	* emacs-lisp/autoload.el: Use lexical-binding.
+	(make-autoload): Add `expansion' arg.  Rely more on macro expansion.
+
 2012-05-30  Agustín Martín Domingo  <agustin.martin@hispalinux.es>
 
 	* textmodes/ispell.el (ispell-with-no-warnings):
 	Define as a macro.
-	(ispell-kill-ispell, ispell-change-dictionary): Use
-	`called-interactively-p' for Emacs instead of obsolete
+	(ispell-kill-ispell, ispell-change-dictionary):
+	Use `called-interactively-p' for Emacs instead of obsolete
 	`interactive-p'.
 
 2012-05-30  Stefan Monnier  <monnier@iro.umontreal.ca>
