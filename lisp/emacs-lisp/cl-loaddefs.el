@@ -254,18 +254,6 @@ Remove from SYMBOL's plist the property PROPNAME and its value.
 
 ;;;***
 
-<<<<<<< TREE
-;;;### (autoloads (defsubst* compiler-macroexpand define-compiler-macro
-;;;;;;  assert check-type typep deftype cl-struct-setf-expander defstruct
-;;;;;;  define-modify-macro callf2 callf letf* letf rotatef shiftf
-;;;;;;  remf cl-do-pop psetf setf get-setf-method defsetf define-setf-method
-;;;;;;  declare the locally multiple-value-setq multiple-value-bind
-;;;;;;  lexical-let* lexical-let symbol-macrolet macrolet labels
-;;;;;;  flet progv psetq do-all-symbols do-symbols dotimes dolist
-;;;;;;  do* do loop return-from return block etypecase typecase ecase
-;;;;;;  case load-time-value eval-when destructuring-bind function*
-;;;;;;  defmacro* defun* gentemp gensym) "cl-macs" "cl-macs.el" "d19555cbac873fe90a312b8977a8ebff")
-=======
 ;;;### (autoloads (cl--compiler-macro-cXXr cl--compiler-macro-list*
 ;;;;;;  cl--compiler-macro-adjoin cl-defsubst cl-compiler-macroexpand
 ;;;;;;  cl-define-compiler-macro cl-assert cl-check-type cl-typep
@@ -279,8 +267,7 @@ Remove from SYMBOL's plist the property PROPNAME and its value.
 ;;;;;;  cl-return cl-block cl-etypecase cl-typecase cl-ecase cl-case
 ;;;;;;  cl-load-time-value cl-eval-when cl-destructuring-bind cl-function
 ;;;;;;  cl-defmacro cl-defun cl-gentemp cl-gensym) "cl-macs" "cl-macs.el"
-;;;;;;  "32abce1bd6f38339285a6071e1be5e59")
->>>>>>> MERGE-SOURCE
+;;;;;;  "4a758f183747246fe042bf42b6ddd85c")
 ;;; Generated autoloads from cl-macs.el
 
 (autoload 'cl-gensym "cl-macs" "\
