@@ -1253,6 +1253,7 @@ CANNOT_DUMP
 INFO_OPTS
 INFO_EXT
 HAVE_MAKEINFO
+PAXCTL
 GZIP_PROG
 INSTALL_INFO
 GNULIB_WARN_CFLAGS
@@ -1289,7 +1290,6 @@ build_vendor
 build_cpu
 build
 PROFILING_CFLAGS
-MAINT
 GZIP_INFO
 am__untar
 am__tar
@@ -1396,7 +1396,6 @@ with_gameuser
 with_gnustep_conf
 enable_ns_self_contained
 enable_asserts
-enable_maintainer_mode
 enable_locallisppath
 enable_checking
 enable_use_lisp_union_type
@@ -2043,9 +2042,12 @@ Optional Features:
   --disable-ns-self-contained
                           disable self contained build under NeXTstep
   --enable-asserts        compile code with asserts enabled
+<<<<<<< TREE
   --enable-maintainer-mode
                           enable make rules and dependencies not useful (and
                           sometimes confusing) to the casual installer
+=======
+>>>>>>> MERGE-SOURCE
   --enable-locallisppath=PATH
                           directories Emacs should search for lisp files
                           specific to this site
@@ -2683,6 +2685,7 @@ $as_echo "$ac_res" >&6; }
 } # ac_fn_c_check_func
 
 <<<<<<< TREE
+<<<<<<< TREE
 =======
 # ac_fn_c_check_member LINENO AGGR MEMBER VAR INCLUDES
 # ----------------------------------------------------
@@ -2741,6 +2744,8 @@ $as_echo "$ac_res" >&6; }
 
 } # ac_fn_c_check_member
 
+=======
+>>>>>>> MERGE-SOURCE
 # ac_fn_c_check_type LINENO TYPE VAR INCLUDES
 # -------------------------------------------
 # Tests whether TYPE exists after having included INCLUDES, setting cache
@@ -3333,8 +3338,66 @@ as_fn_append ac_header_list " sys/param.h"
 as_fn_append ac_header_list " pthread.h"
 as_fn_append ac_header_list " malloc/malloc.h"
 as_fn_append ac_header_list " maillock.h"
+as_fn_append ac_func_list " gethostname"
+as_fn_append ac_func_list " rename"
+as_fn_append ac_func_list " closedir"
+as_fn_append ac_func_list " mkdir"
+as_fn_append ac_func_list " rmdir"
+as_fn_append ac_func_list " getrusage"
+as_fn_append ac_func_list " get_current_dir_name"
+as_fn_append ac_func_list " random"
+as_fn_append ac_func_list " lrand48"
+as_fn_append ac_func_list " logb"
+as_fn_append ac_func_list " frexp"
+as_fn_append ac_func_list " fmod"
+as_fn_append ac_func_list " rint"
+as_fn_append ac_func_list " cbrt"
+as_fn_append ac_func_list " setsid"
+as_fn_append ac_func_list " strerror"
+as_fn_append ac_func_list " fpathconf"
+as_fn_append ac_func_list " select"
+as_fn_append ac_func_list " euidaccess"
+as_fn_append ac_func_list " getpagesize"
+as_fn_append ac_func_list " setlocale"
+as_fn_append ac_func_list " utimes"
+as_fn_append ac_func_list " getrlimit"
+as_fn_append ac_func_list " setrlimit"
+as_fn_append ac_func_list " setpgid"
+as_fn_append ac_func_list " getcwd"
+as_fn_append ac_func_list " getwd"
+as_fn_append ac_func_list " shutdown"
+as_fn_append ac_func_list " getaddrinfo"
+as_fn_append ac_func_list " __fpending"
+as_fn_append ac_func_list " strsignal"
+as_fn_append ac_func_list " setitimer"
+as_fn_append ac_func_list " sendto"
+as_fn_append ac_func_list " recvfrom"
+as_fn_append ac_func_list " getsockname"
+as_fn_append ac_func_list " getpeername"
+as_fn_append ac_func_list " getifaddrs"
+as_fn_append ac_func_list " freeifaddrs"
+as_fn_append ac_func_list " gai_strerror"
+as_fn_append ac_func_list " mkstemp"
+as_fn_append ac_func_list " getline"
+as_fn_append ac_func_list " getdelim"
+as_fn_append ac_func_list " fsync"
+as_fn_append ac_func_list " sync"
+as_fn_append ac_func_list " difftime"
+as_fn_append ac_func_list " posix_memalign"
+as_fn_append ac_func_list " getpwent"
+as_fn_append ac_func_list " endpwent"
+as_fn_append ac_func_list " getgrent"
+as_fn_append ac_func_list " endgrent"
+as_fn_append ac_func_list " touchlock"
+as_fn_append ac_func_list " cfmakeraw"
+as_fn_append ac_func_list " cfsetspeed"
+as_fn_append ac_func_list " copysign"
+as_fn_append ac_func_list " __executable_start"
 as_fn_append ac_header_list " sys/un.h"
+as_fn_append ac_func_list " grantpt"
+as_fn_append ac_func_list " getpt"
 as_fn_append ac_func_list " tzset"
+as_fn_append ac_func_list " snprintf"
 as_fn_append ac_func_list " readlinkat"
 gl_getopt_required=GNU
 as_fn_append ac_header_list " getopt.h"
@@ -4341,20 +4404,6 @@ if test "${enable_asserts+set}" = set; then :
   enableval=$enable_asserts; USE_XASSERTS=$enableval
 else
   USE_XASSERTS=no
-fi
-
-
-# Check whether --enable-maintainer-mode was given.
-if test "${enable_maintainer_mode+set}" = set; then :
-  enableval=$enable_maintainer_mode; USE_MAINTAINER_MODE=$enableval
-else
-  USE_MAINTAINER_MODE=yes
-fi
-
-if test $USE_MAINTAINER_MODE = yes; then
-  MAINT=
-else
-  MAINT=#
 fi
 
 
@@ -7914,6 +7963,46 @@ $as_echo "no" >&6; }
 fi
 
 
+# Extract the first word of "paxctl", so it can be a program name with args.
+set dummy paxctl; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if test "${ac_cv_path_PAXCTL+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  case $PAXCTL in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_PAXCTL="$PAXCTL" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH$PATH_SEPARATOR/sbin$PATH_SEPARATOR/usr/sbin
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_test_x "$as_dir/$ac_word$ac_exec_ext"; }; then
+    ac_cv_path_PAXCTL="$as_dir/$ac_word$ac_exec_ext"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  ;;
+esac
+fi
+PAXCTL=$ac_cv_path_PAXCTL
+if test -n "$PAXCTL"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PAXCTL" >&5
+$as_echo "$PAXCTL" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
 
 
 ## Need makeinfo >= 4.7 (?) to build the manuals.
@@ -8268,6 +8357,7 @@ fi
 LIB_MATH=-lm
 LIB_STANDARD=
 START_FILES=
+SYSTEM_TYPE=`echo $opsys | sed -e 's/[0-9].*//' -e 's|-|/|'`
 
 case $opsys in
   cygwin )
@@ -8282,6 +8372,7 @@ case $opsys in
   freebsd )
     LIB_STANDARD='-lgcc -lc -lgcc $(CRT_DIR)/crtend.o $(CRT_DIR)/crtn.o'
     START_FILES='pre-crt0.o $(CRT_DIR)/crt1.o $(CRT_DIR)/crti.o $(CRT_DIR)/crtbegin.o'
+    SYSTEM_TYPE=berkeley-unix
     ;;
   gnu-linux | gnu-kfreebsd )
     LIB_STANDARD='-lgcc -lc -lgcc $(CRT_DIR)/crtn.o'
@@ -8294,14 +8385,28 @@ case $opsys in
     netbsd | openbsd )
     LIB_STANDARD='-lgcc -lc -lgcc $(CRT_DIR)/crtend.o'
     START_FILES='pre-crt0.o $(CRT_DIR)/crt0.o $(CRT_DIR)/crtbegin.o'
+    SYSTEM_TYPE=berkeley-unix
     ;;
+
+  sol2* | unixware )
+    SYSTEM_TYPE=usg-unix-v
+    ;;
+
 esac
 
 
 
 
 <<<<<<< TREE
+<<<<<<< TREE
 =======
+=======
+cat >>confdefs.h <<_ACEOF
+#define SYSTEM_TYPE "$SYSTEM_TYPE"
+_ACEOF
+
+
+>>>>>>> MERGE-SOURCE
 crt_files=
 
 for file in x $LIB_STANDARD $START_FILES; do
@@ -9054,6 +9159,7 @@ fi
 
 done
 
+<<<<<<< TREE
 for ac_func in getifaddrs freeifaddrs
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
@@ -9067,6 +9173,8 @@ _ACEOF
 fi
 done
 
+>>>>>>> MERGE-SOURCE
+=======
 >>>>>>> MERGE-SOURCE
 
 ac_fn_c_check_member "$LINENO" "struct ifreq" "ifr_flags" "ac_cv_member_struct_ifreq_ifr_flags" "$ac_includes_default
@@ -10628,12 +10736,14 @@ $as_echo "#define HAVE_IMAGEMAGICK 1" >>confdefs.h
 
       CFLAGS="$CFLAGS $IMAGEMAGICK_CFLAGS"
       LIBS="$IMAGEMAGICK_LIBS $LIBS"
-      for ac_func in MagickExportImagePixels
+      for ac_func in MagickExportImagePixels MagickMergeImageLayers
 do :
-  ac_fn_c_check_func "$LINENO" "MagickExportImagePixels" "ac_cv_func_MagickExportImagePixels"
-if test "x$ac_cv_func_MagickExportImagePixels" = x""yes; then :
+  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
+ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
+eval as_val=\$$as_ac_var
+   if test "x$as_val" = x""yes; then :
   cat >>confdefs.h <<_ACEOF
-#define HAVE_MAGICKEXPORTIMAGEPIXELS 1
+#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
 _ACEOF
 
 fi
@@ -10930,7 +11040,8 @@ $as_echo "no" >&6; }
 
 $as_echo "#define HAVE_DBUS 1" >>confdefs.h
 
-               for ac_func in dbus_watch_get_unix_fd \
+                    for ac_func in dbus_watch_get_unix_fd \
+		    dbus_type_is_valid \
 		    dbus_validate_bus_name \
                     dbus_validate_path \
 		    dbus_validate_interface \
@@ -13156,17 +13267,6 @@ This probably means that movemail could lose mail.
 There may be a \`development' package to install containing liblockfile." "$LINENO" 5
   fi
 fi
-for ac_func in touchlock
-do :
-  ac_fn_c_check_func "$LINENO" "touchlock" "ac_cv_func_touchlock"
-if test "x$ac_cv_func_touchlock" = x""yes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_TOUCHLOCK 1
-_ACEOF
-
-fi
-done
-
 
 
 
@@ -13218,17 +13318,10 @@ esac
 
 
 
-for ac_func in gethostname \
-rename closedir mkdir rmdir getrusage get_current_dir_name \
-random lrand48 logb frexp fmod rint cbrt setsid \
-strerror fpathconf select euidaccess getpagesize setlocale \
-utimes getrlimit setrlimit setpgid getcwd getwd shutdown getaddrinfo \
-__fpending strsignal setitimer \
-sendto recvfrom getsockname getpeername \
-gai_strerror mkstemp getline getdelim fsync sync \
-difftime posix_memalign \
-getpwent endpwent getgrent endgrent \
-cfmakeraw cfsetspeed copysign __executable_start
+
+
+
+  for ac_func in $ac_func_list
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
 ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
@@ -13240,6 +13333,117 @@ _ACEOF
 
 fi
 done
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for __builtin_unwind_init" >&5
@@ -13385,29 +13589,13 @@ fi
 # Configure gnulib.
 =======
 # UNIX98 PTYs.
-for ac_func in grantpt
-do :
-  ac_fn_c_check_func "$LINENO" "grantpt" "ac_cv_func_grantpt"
-if test "x$ac_cv_func_grantpt" = x""yes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_GRANTPT 1
-_ACEOF
 
-fi
-done
+
 
 
 # PTY-related GNU extensions.
-for ac_func in getpt
-do :
-  ac_fn_c_check_func "$LINENO" "getpt" "ac_cv_func_getpt"
-if test "x$ac_cv_func_getpt" = x""yes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_GETPT 1
-_ACEOF
 
-fi
-done
+
 
 
 # Check this now, so that we will NOT find the above functions in ncurses.
@@ -14350,22 +14538,6 @@ fi
 
 
 
-  for ac_func in $ac_func_list
-do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-eval as_val=\$$as_ac_var
-   if test "x$as_val" = x""yes; then :
-  cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
-_ACEOF
-
-fi
-done
-
-
-
-
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether localtime caches TZ" >&5
 $as_echo_n "checking whether localtime caches TZ... " >&6; }
 if test "${emacs_cv_localtime_cache+set}" = set; then :
@@ -14759,16 +14931,8 @@ $as_echo "#define HAVE_WORKING_FORK 1" >>confdefs.h
 fi
 
 
-for ac_func in snprintf
-do :
-  ac_fn_c_check_func "$LINENO" "snprintf" "ac_cv_func_snprintf"
-if test "x$ac_cv_func_snprintf" = x""yes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_SNPRINTF 1
-_ACEOF
 
-fi
-done
+
 
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for nl_langinfo and CODESET" >&5
@@ -14872,6 +15036,54 @@ $as_echo "#define __restrict_arr __restrict" >>confdefs.h
 fi
 
 
+case $opsys in
+  darwin | gnu | hpux* | *bsd )
+
+$as_echo "#define NO_TERMIO 1" >>confdefs.h
+
+  ;;
+esac
+
+case $opsys in
+  hpux* | irix6-5 | openbsd | sol2* | unixware )
+
+$as_echo "#define BROKEN_SIGIO 1" >>confdefs.h
+
+  ;;
+esac
+
+case $opsys in
+  gnu-* | sol2-10 )
+
+$as_echo "#define HAVE_PROCFS 1" >>confdefs.h
+
+  ;;
+esac
+
+case $opsys in
+   gnu-kfreebsd) opsysfile="s/gnu-linux.h" ;;
+
+   hpux11)
+
+$as_echo "#define BROKEN_SA_RESTART 1" >>confdefs.h
+
+
+$as_echo "#define USG_SUBTTY_WORKS 1" >>confdefs.h
+
+
+     opsysfile="s/hpux10-20.h"
+   ;;
+
+   openbsd) opsysfile="s/netbsd.h" ;;
+
+   sol2-10)
+
+$as_echo "#define _STRUCTURED_PROC 1" >>confdefs.h
+
+     opsysfile="s/sol2-6.h"
+   ;;
+esac
+
 # Set up the CFLAGS for real compilation, so we can substitute it.
 CFLAGS="$REAL_CFLAGS"
 CPPFLAGS="$REAL_CPPFLAGS"
@@ -14921,7 +15133,11 @@ version=$PACKAGE_VERSION
 
 ## Used in lwlib/Makefile.in.
 
-S_FILE="\$(srcdir)/${opsysfile}"
+if test -n "${opsysfile}"; then
+  S_FILE="\$(srcdir)/${opsysfile}"
+else
+  S_FILE=
+fi
 
 
 
@@ -14940,11 +15156,13 @@ cat >>confdefs.h <<_ACEOF
 #define EMACS_CONFIG_OPTIONS "${ac_configure_args}"
 _ACEOF
 
+if test -n "$opsysfile"; then
 
 cat >>confdefs.h <<_ACEOF
 #define config_opsysfile "${opsysfile}"
 _ACEOF
 
+fi
 
 XMENU_OBJ=
 XOBJ=
@@ -23767,8 +23985,7 @@ echo "
 Configured for \`${canonical}'.
 
   Where should the build process find the source code?    ${srcdir}
-  What operating system file should Emacs use?
-        \`${opsysfile}'
+  What operating system file should Emacs use?            ${opsysfile-none}
   What compiler should emacs be built with?               ${CC} ${CFLAGS}
   Should Emacs use the GNU version of malloc?             ${GNU_MALLOC}${GNU_MALLOC_reason}
   Should Emacs use a relocating allocator for buffers?    ${REL_ALLOC}

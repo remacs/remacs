@@ -25,10 +25,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #define USG
 #define GNU_LINUX
 
-/* SYSTEM_TYPE should indicate the kind of system you are using.
-   It sets the Lisp variable system-type.  */
-#define SYSTEM_TYPE "gnu/linux"		/* All the best software is free. */
-
 #ifdef emacs
 #ifdef HAVE_LINUX_VERSION_H
 #include <linux/version.h>
@@ -84,9 +80,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #define HAVE_PTYS
 
 #define HAVE_SOCKETS
-
-/* This is used in list_system_processes.  */
-#define HAVE_PROCFS 1
 
 /* Define CLASH_DETECTION if you want lock files to be written
    so that Emacs can tell instantly when you try to modify

@@ -237,19 +237,6 @@ AC_ARG_ENABLE(asserts,
       USE_XASSERTS=$enableval,
       USE_XASSERTS=no)
 
-AC_ARG_ENABLE(maintainer-mode,
-[AS_HELP_STRING([--disable-maintainer-mode],
-                [disable make rules and dependencies not useful (and sometimes
-		 confusing) to the casual installer])],
-      USE_MAINTAINER_MODE=$enableval,
-      USE_MAINTAINER_MODE=yes)
-if test $USE_MAINTAINER_MODE = yes; then
-  MAINT=
-else
-  MAINT=#
-fi
-AC_SUBST(MAINT)
-
 AC_ARG_ENABLE(locallisppath,
 [AS_HELP_STRING([--enable-locallisppath=PATH],
                 [directories Emacs should search for lisp files specific
@@ -324,13 +311,13 @@ if test x$ac_gc_check_cons_list != x ; then
 [Define this to check for errors in cons list.])
 fi
 
-AC_ARG_ENABLE(use-lisp-union-type,
-[AS_HELP_STRING([--enable-use-lisp-union-type],
-                [use a union for the Lisp_Object data type.
-		This is only useful for development for catching certain types of bugs.])],
+AC_ARG_ENABLE(check-lisp-object-type,
+[AS_HELP_STRING([--enable-check-lisp-object-type],
+                [enable compile time checks for the Lisp_Object data type.
+		This is useful for development for catching certain types of bugs.])],
 if test "${enableval}" != "no"; then
-   AC_DEFINE(USE_LISP_UNION_TYPE, 1,
-   [Define this to use a lisp union for the Lisp_Object data type.])
+   AC_DEFINE(CHECK_LISP_OBJECT_TYPE, 1,
+   [Define this to enable compile time checks for the Lisp_Object data type.])
 fi)
 
 
@@ -714,6 +701,8 @@ AC_PATH_PROG(INSTALL_INFO, install-info, :,
   $PATH$PATH_SEPARATOR/usr/sbin$PATH_SEPARATOR/sbin)
 dnl Don't use GZIP, which is used by gzip for additional parameters.
 AC_PATH_PROG(GZIP_PROG, gzip)
+AC_PATH_PROG(PAXCTL, paxctl,,
+  [$PATH$PATH_SEPARATOR/sbin$PATH_SEPARATOR/usr/sbin])
 
 
 ## Need makeinfo >= 4.7 (?) to build the manuals.
@@ -947,6 +936,11 @@ AC_DEFUN([AC_TYPE_UID_T])
 LIB_MATH=-lm
 LIB_STANDARD=
 START_FILES=
+dnl Current possibilities handled by sed (aix4-2 -> aix,
+dnl gnu-linux -> gnu/linux, etc.):
+dnl gnu, gnu/linux, gnu/kfreebsd, aix, cygwin, darwin, hpux, irix.
+dnl And special cases: berkeley-unix, usg-unix-v, ms-dos, windows-nt.
+SYSTEM_TYPE=`echo $opsys | sed -e 's/[[0-9]].*//' -e 's|-|/|'`
 
 dnl NB do not use CRT_DIR unquoted here, since it might not be set yet.
 case $opsys in
@@ -962,6 +956,7 @@ case $opsys in
   freebsd )
     LIB_STANDARD='-lgcc -lc -lgcc $(CRT_DIR)/crtend.o $(CRT_DIR)/crtn.o'
     START_FILES='pre-crt0.o $(CRT_DIR)/crt1.o $(CRT_DIR)/crti.o $(CRT_DIR)/crtbegin.o'
+    SYSTEM_TYPE=berkeley-unix
     ;;
   gnu-linux | gnu-kfreebsd )
     LIB_STANDARD='-lgcc -lc -lgcc $(CRT_DIR)/crtn.o'
@@ -975,11 +970,19 @@ case $opsys in
   netbsd | openbsd )
     LIB_STANDARD='-lgcc -lc -lgcc $(CRT_DIR)/crtend.o'
     START_FILES='pre-crt0.o $(CRT_DIR)/crt0.o $(CRT_DIR)/crtbegin.o'
+    SYSTEM_TYPE=berkeley-unix
     ;;
+
+  sol2* | unixware )
+    SYSTEM_TYPE=usg-unix-v
+    ;;
+
 esac
 
 AC_SUBST(LIB_MATH)
 AC_SUBST(START_FILES)
+AC_DEFINE_UNQUOTED(SYSTEM_TYPE, "$SYSTEM_TYPE",
+  [The type of system you are compiling for; sets `system-type'.])
 
 dnl Not all platforms use crtn.o files.  Check if the current one does.
 crt_files=
@@ -1278,7 +1281,6 @@ AC_CHECK_HEADERS(net/if_dl.h, , , [AC_INCLUDES_DEFAULT
 #if HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
 #endif])
-AC_CHECK_FUNCS(getifaddrs freeifaddrs)
 
 dnl checks for structure members
 AC_CHECK_MEMBERS([struct ifreq.ifr_flags, struct ifreq.ifr_hwaddr,
@@ -1853,7 +1855,7 @@ if test "${HAVE_X11}" = "yes"; then
       AC_DEFINE(HAVE_IMAGEMAGICK, 1, [Define to 1 if using imagemagick.])
       CFLAGS="$CFLAGS $IMAGEMAGICK_CFLAGS"
       LIBS="$IMAGEMAGICK_LIBS $LIBS"
-      AC_CHECK_FUNCS(MagickExportImagePixels)
+      AC_CHECK_FUNCS(MagickExportImagePixels MagickMergeImageLayers)
     fi
   fi
 fi
@@ -2011,8 +2013,10 @@ if test "${with_dbus}" = "yes"; then
      LIBS="$LIBS $DBUS_LIBS"
      AC_DEFINE(HAVE_DBUS, 1, [Define to 1 if using D-Bus.])
      dnl dbus_watch_get_unix_fd has been introduced in D-Bus 1.1.1.
-     dnl dbus_validate_* have been introduced in D-Bus 1.5.12.
+     dnl dbus_type_is_valid and dbus_validate_* have been introduced in
+     dnl D-Bus 1.5.12.
      AC_CHECK_FUNCS(dbus_watch_get_unix_fd \
+		    dbus_type_is_valid \
 		    dbus_validate_bus_name \
                     dbus_validate_path \
 		    dbus_validate_interface \
@@ -2691,7 +2695,6 @@ This probably means that movemail could lose mail.
 There may be a `development' package to install containing liblockfile.])
   fi
 fi
-AC_CHECK_FUNCS(touchlock)
 AC_CHECK_HEADERS_ONCE(maillock.h)
 AC_SUBST(LIBS_MAIL)
 
@@ -2737,16 +2740,17 @@ esac
 AC_SUBST(BLESSMAIL_TARGET)
 
 
-AC_CHECK_FUNCS(gethostname \
+AC_CHECK_FUNCS_ONCE(gethostname \
 rename closedir mkdir rmdir getrusage get_current_dir_name \
 random lrand48 logb frexp fmod rint cbrt setsid \
 strerror fpathconf select euidaccess getpagesize setlocale \
 utimes getrlimit setrlimit setpgid getcwd getwd shutdown getaddrinfo \
 __fpending strsignal setitimer \
-sendto recvfrom getsockname getpeername \
+sendto recvfrom getsockname getpeername getifaddrs freeifaddrs \
 gai_strerror mkstemp getline getdelim fsync sync \
 difftime posix_memalign \
 getpwent endpwent getgrent endgrent \
+touchlock \
 cfmakeraw cfsetspeed copysign __executable_start)
 
 dnl Cannot use AC_CHECK_FUNCS
@@ -2767,10 +2771,10 @@ AC_FUNC_FSEEKO
 AC_FUNC_GETPGRP
 
 # UNIX98 PTYs.
-AC_CHECK_FUNCS(grantpt)
+AC_CHECK_FUNCS_ONCE(grantpt)
 
 # PTY-related GNU extensions.
-AC_CHECK_FUNCS(getpt)
+AC_CHECK_FUNCS_ONCE(getpt)
 
 # Check this now, so that we will NOT find the above functions in ncurses.
 # That is because we have not set up to link ncurses in lib-src.
@@ -3121,7 +3125,7 @@ fi
 
 AC_FUNC_FORK
 
-AC_CHECK_FUNCS(snprintf)
+AC_CHECK_FUNCS_ONCE(snprintf)
 
 dnl Adapted from Haible's version.
 AC_CACHE_CHECK([for nl_langinfo and CODESET], emacs_cv_langinfo_codeset,
@@ -3156,6 +3160,52 @@ dnl    AC_DEFINE(HAVE_TERMIOS, 1, [Define to 1 if you have POSIX-style functions
 dnl                                and macros for terminal control.])
 dnl    AC_DEFINE(HAVE_TCATTR, 1, [Define to 1 if you have tcgetattr and tcsetattr.])
 dnl fi
+
+case $opsys in
+  darwin | gnu | hpux* | *bsd )
+    AC_DEFINE(NO_TERMIO, 1, [Define if termio.h should not be included.])
+  ;;
+esac
+
+dnl SIGIO exists, but the feature doesn't work in the way Emacs needs.
+dnl See eg <http://article.gmane.org/gmane.os.openbsd.ports/46831>. 
+case $opsys in
+  hpux* | irix6-5 | openbsd | sol2* | unixware )
+    AC_DEFINE(BROKEN_SIGIO, 1, [Define if SIGIO should not be used.])
+  ;;
+esac
+
+case $opsys in
+  gnu-* | sol2-10 )
+    dnl FIXME Can't we test if this exists (eg /proc/$$)?
+    AC_DEFINE(HAVE_PROCFS, 1, [Define if you have the /proc filesystem.])
+  ;;
+esac
+
+case $opsys in
+   gnu-kfreebsd) opsysfile="s/gnu-linux.h" ;;
+
+   hpux11)
+     dnl SA_RESTART resets the timeout of `select', so don't use it.
+     AC_DEFINE(BROKEN_SA_RESTART, 1, [Define if SA_RESTART should not
+       be used.])
+     dnl It works to open the pty's tty in the parent (Emacs), then
+     dnl close and reopen it in the child.
+     AC_DEFINE(USG_SUBTTY_WORKS, 1, [Define for USG systems where it
+       works to open a pty's tty in the parent process, then close and
+       reopen it in the child.])
+
+     opsysfile="s/hpux10-20.h"
+   ;;
+
+   openbsd) opsysfile="s/netbsd.h" ;;
+
+   sol2-10)
+     AC_DEFINE(_STRUCTURED_PROC, 1, [Needed for system_process_attributes
+       on Solaris.])
+     opsysfile="s/sol2-6.h"
+   ;;
+esac
 
 # Set up the CFLAGS for real compilation, so we can substitute it.
 CFLAGS="$REAL_CFLAGS"
@@ -3206,7 +3256,11 @@ AC_SUBST(GNUSTEP_CFLAGS)
 AC_SUBST(CFLAGS)
 ## Used in lwlib/Makefile.in.
 AC_SUBST(X_TOOLKIT_TYPE)
-S_FILE="\$(srcdir)/${opsysfile}"
+if test -n "${opsysfile}"; then
+  S_FILE="\$(srcdir)/${opsysfile}"
+else
+  S_FILE=
+fi
 AC_SUBST(S_FILE)
 AC_SUBST(ns_appdir)
 AC_SUBST(ns_appbindir)
@@ -3219,8 +3273,10 @@ AC_DEFINE_UNQUOTED(EMACS_CONFIGURATION,  "${canonical}",
 		   [Define to the canonical Emacs configuration name.])
 AC_DEFINE_UNQUOTED(EMACS_CONFIG_OPTIONS, "${ac_configure_args}",
 		   [Define to the options passed to configure.])
-AC_DEFINE_UNQUOTED(config_opsysfile, "${opsysfile}",
-		   [Define to the used os dependent file.])
+if test -n "$opsysfile"; then
+  AC_DEFINE_UNQUOTED(config_opsysfile, "${opsysfile}",
+		     [Define to the used os dependent file.])
+fi
 
 XMENU_OBJ=
 XOBJ=
@@ -3563,7 +3619,9 @@ AH_BOTTOM([
 #define subprocesses
 
 /* Include the os dependent file.  */
-#include config_opsysfile
+#ifdef config_opsysfile
+# include config_opsysfile
+#endif
 
 /* GNUstep needs a bit more pure memory.  Of the existing knobs,
    SYSTEM_PURESIZE_EXTRA seems like the least likely to cause problems.
@@ -3658,8 +3716,7 @@ echo "
 Configured for \`${canonical}'.
 
   Where should the build process find the source code?    ${srcdir}
-  What operating system file should Emacs use?
-        \`${opsysfile}'
+  What operating system file should Emacs use?            ${opsysfile-none}
   What compiler should emacs be built with?               ${CC} ${CFLAGS}
   Should Emacs use the GNU version of malloc?             ${GNU_MALLOC}${GNU_MALLOC_reason}
   Should Emacs use a relocating allocator for buffers?    ${REL_ALLOC}

@@ -51,6 +51,8 @@
 
 ;;; Code:
 
+(require 'macroexp)
+
 ;;; Bug reporting
 
 (defalias 'edebug-submit-bug-report 'report-emacs-bug)
@@ -1251,10 +1253,7 @@ expressions; a `progn' form will be returned enclosing these forms."
        ((eq 'edebug-after (car sexp))
 	(nth 3 sexp))
        ((eq 'edebug-enter (car sexp))
-	(let ((forms (nthcdr 2 (nth 1 (nth 3 sexp)))))
-	  (if (> (length forms) 1)
-	      (cons 'progn forms)  ;; could return (values forms) instead.
-	    (car forms))))
+        (macroexp-progn (nthcdr 2 (nth 1 (nth 3 sexp)))))
        (t sexp);; otherwise it is not wrapped, so just return it.
        )
     sexp))
@@ -3056,7 +3055,6 @@ Otherwise, toggle for all windows."
       (edebug-toggle-save-selected-window)
     (edebug-toggle-save-all-windows)))
 
-
 (defun edebug-where ()
   "Show the debug windows and where we stopped in the program."
   (interactive)
@@ -3736,12 +3734,16 @@ This prints the value into current buffer."
 
 ;;; Edebug Minor Mode
 
-;; FIXME eh?
-(defvar gud-inhibit-global-bindings
-  "Non-nil means don't do global rebindings of C-x C-a subcommands.")
+(defvar edebug-inhibit-emacs-lisp-mode-bindings nil
+  "If non-nil, inhibit Edebug bindings on the C-x C-a key.
+By default, loading the `edebug' library causes these bindings to
+be installed in `emacs-lisp-mode-map'.")
+
+(define-obsolete-variable-alias 'gud-inhibit-global-bindings
+  'edebug-inhibit-emacs-lisp-mode-bindings "24.2")
 
 ;; Global GUD bindings for all emacs-lisp-mode buffers.
-(unless gud-inhibit-global-bindings
+(unless edebug-inhibit-emacs-lisp-mode-bindings
   (define-key emacs-lisp-mode-map "\C-x\C-a\C-s" 'edebug-step-mode)
   (define-key emacs-lisp-mode-map "\C-x\C-a\C-n" 'edebug-next-mode)
   (define-key emacs-lisp-mode-map "\C-x\C-a\C-c" 'edebug-go-mode)

@@ -3106,9 +3106,10 @@ system_process_attributes (Lisp_Object pid)
 	  attrs = Fcons (Fcons (Qvsize, make_fixnum_or_float (pinfo.pr_size)), attrs);
 	  attrs = Fcons (Fcons (Qrss, make_fixnum_or_float (pinfo.pr_rssize)), attrs);
 
-	  /* pr_pctcpu and pr_pctmem are encoded as a fixed point 16 bit number in  [0 ... 1].  */
-	  attrs = Fcons (Fcons (Qpcpu, (pinfo.pr_pctcpu * 100.0) / (double)0x8000), attrs);
-	  attrs = Fcons (Fcons (Qpmem, (pinfo.pr_pctmem * 100.0) / (double)0x8000), attrs);
+	  /* pr_pctcpu and pr_pctmem are unsigned integers in the
+	     range 0 .. 2**15, representing 0.0 .. 1.0.  */
+	  attrs = Fcons (Fcons (Qpcpu, make_float (100.0 / 0x8000 * pinfo.pr_pctcpu)), attrs);
+	  attrs = Fcons (Fcons (Qpmem, make_float (100.0 / 0x8000 * pinfo.pr_pctmem)), attrs);
 
 	  decoded_cmd
 	    =  code_convert_string_norecord (make_unibyte_string (pinfo.pr_fname,

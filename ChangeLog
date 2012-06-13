@@ -1,3 +1,66 @@
+2012-06-13  Andreas Schwab  <schwab@linux-m68k.org>
+
+	* configure.in: Rename --enable-use-lisp-union-type to
+	--enable-check-lisp-object-type and define CHECK_LISP_OBJECT_TYPE
+	instead of USE_LISP_UNION_TYPE.
+
+2012-06-12  Glenn Morris  <rgm@gnu.org>
+
+	* configure.in (HAVE_PROCFS, _STRUCTURED_PROC): New AC_DEFINEs.
+	(opsysfile): Set specially for sol2-10.
+
+	* configure.in (BROKEN_SA_RESTART, USG_SUBTTY_WORKS):
+	New AC_DEFINEs, for hpux11.
+	(opsysfile): Set specially for hpux11.
+
+2012-06-12  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* configure.in: Coalesce some function checking.
+	This makes 'configure' a bit smaller.
+	Prefer AC_CHECK_FUNCS_ONCE for functions that we always check for.
+
+2012-06-12  Glenn Morris  <rgm@gnu.org>
+
+	* configure.in (opsysfile): Set specially for gnu-kfreebsd, openbsd.
+
+	* configure.in (NO_TERMIO, BROKEN_SIGIO): Move here from src/s.
+
+	* configure.in: Anticipate platforms with no src/s file.
+
+2012-06-12  Chong Yidong  <cyd@gnu.org>
+
+	* configure.in: Check for MagickMergeImageLayers (Bug#11678).
+
+2012-06-11  Glenn Morris  <rgm@gnu.org>
+
+	* configure.in (SYSTEM_TYPE): New AC_DEFINE.
+
+2012-06-09  Michael Albinus  <michael.albinus@gmx.de>
+
+	* configure.in (dbus_type_is_valid): Check for library function.
+
+2012-06-06  Glenn Morris  <rgm@gnu.org>
+
+	* INSTALL, make-dist: Remove vcdiff.
+
+2012-06-03  Glenn Morris  <rgm@gnu.org>
+
+	* INSTALL, make-dist: Remove rcs-checkin.
+
+2012-06-03  Ulrich Müller  <ulm@gentoo.org>
+
+	* configure.in (PAXCTL): Check for paxctl. (Bug#11398)
+
+2012-06-01  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Remove --disable-maintainer-mode option from 'configure'.  (Bug#11555)
+	It is confusingly named and rarely useful.  See, for example,
+	<http://lists.gnu.org/archive/html/emacs-devel/2011-12/msg00089.html>.
+	* INSTALL.BZR: Don't mention --disable-maintainer-mode.
+	* Makefile.in (MAINTAINER_MODE_FLAG): Remove; all uses removed.
+	* configure.in: Remove --disable-maintainer-mode.
+	(USE_MAINTAINER_MODE, MAINT): Remove.
+
 2012-05-28  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Make 'configure' a bit smaller and faster.
@@ -387,7 +450,7 @@
 
 	* configure.in (dbus_validate_bus_name, dbus_validate_path)
 	(dbus_validate_interface, dbus_validate_member): Check also for
-	these library functions
+	these library functions.
 
 2012-04-22  Paul Eggert  <eggert@cs.ucla.edu>
 

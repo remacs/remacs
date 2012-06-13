@@ -1,3 +1,31 @@
+2012-06-08  Andreas Schwab  <schwab@linux-m68k.org>
+
+	* make-docfile.c (search_lisp_doc_at_eol): Unget last read
+	character.
+
+2012-06-06  Glenn Morris  <rgm@gnu.org>
+
+	* Makefile.in (STAMP_INST_SCRIPTS, STAMP_SCRIPTS, insrcdir)
+	(stamp-rcs2log, stamp-grep-changelog): Remove.
+	(all, clean): Remove references to stamps.
+
+	* vcdiff: Remove file.
+	* Makefile.in (SCRIPTS, STAMP_SCRIPTS): Remove vcdiff.
+	(stamp-vcdiff): Remove.
+
+2012-06-05  Glenn Morris  <rgm@gnu.org>
+
+	* makefile.w32-in ($(BLD)/getdate.$(O), $(BLD)/leditcfns.$(O)):
+	($(BLD)/make-path.$(O), $(BLD)/qsort.$(O)):
+	($(BLD)/timer.$(O)): Remove cruft.
+
+2012-06-03  Glenn Morris  <rgm@gnu.org>
+
+	* rcs-checkin: Remove file.
+	* Makefile.in (INSTALLABLE_SCRIPTS, STAMP_INST_SCRIPTS):
+	Remove rcs-checkin.
+	(stamp-rcs-checkin): Remove.
+
 2012-05-31  Eli Zaretskii  <eliz@gnu.org>
 
 	* makefile.w32-in ($(BLD)/emacsclientw.exe): Use $(MWINDOWS)

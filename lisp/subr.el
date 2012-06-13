@@ -525,7 +525,13 @@ side-effects, and the argument LIST is not modified."
 
 ;;;; Keymap support.
 
-(defalias 'kbd 'read-kbd-macro)
+(defun kbd (keys)
+  "Convert KEYS to the internal Emacs key representation.
+KEYS should be a string constant in the format used for
+saving keyboard macros (see `edmacro-mode')."
+  ;; Don't use a defalias, since the `pure' property is only true for
+  ;; the calling convention of `kbd'.
+  (read-kbd-macro keys))
 (put 'kbd 'pure t)
 
 (defun undefined ()
@@ -2466,7 +2472,8 @@ This finishes the change group by reverting all of its changes."
 ;;;; Display-related functions.
 
 ;; For compatibility.
-(defalias 'redraw-modeline 'force-mode-line-update)
+(define-obsolete-function-alias 'redraw-modeline
+  'force-mode-line-update "24.2")
 
 (defun force-mode-line-update (&optional all)
   "Force redisplay of the current buffer's mode line and header line.

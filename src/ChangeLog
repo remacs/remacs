@@ -1,3 +1,276 @@
+2012-06-13  Andreas Schwab  <schwab@linux-m68k.org>
+
+	* lisp.h (Lisp_Object) [CHECK_LISP_OBJECT_TYPE]: Define as struct
+	instead of union.
+	(XLI, XIL): Define.
+	(XHASH, XTYPE, XINT, XUINT, make_number, XSET, XPNTR, XUNTAG): Use
+	them.
+	* emacs.c (gdb_use_struct): Renamed from gdb_use_union.
+	* .gdbinit: Check gdb_use_struct instead of gdb_use_union.
+	* alloc.c (widen_to_Lisp_Object): Removed.
+	(mark_memory): Use XIL instead of widen_to_Lisp_Object.
+	* frame.c (delete_frame): Remove outdated comment.
+	* w32fns.c (Fw32_register_hot_key): Use XLI instead of checking
+	USE_LISP_UNION_TYPE.
+	(Fw32_unregister_hot_key): Likewise.
+	(Fw32_toggle_lock_key): Likewise.
+	* w32menu.c (add_menu_item): Likewise.
+	(w32_menu_display_help): Use XIL instead of checking
+	USE_LISP_UNION_TYPE.
+	* w32heap.c (allocate_heap): Don't check USE_LISP_UNION_TYPE.
+	(init_heap): Likewise.
+	* w32term.c (w32_read_socket): Update comment.
+
+2012-06-13  Glenn Morris  <rgm@gnu.org>
+
+	* s/usg5-4-common.h, src/s/unixware.h:
+	Remove define/undef of HAVE_SYSV_SIGPAUSE (not used since 2010-05-04).
+
+	* s/gnu.h (POSIX_SIGNALS): Remove (not used since 2010-05-04).
+
+2012-06-13  Paul Eggert  <eggert@cs.ucla.edu>
+
+	USE_LISP_UNION_TYPE + USE_LSB_TAG cleanup (Bug#11604)
+	* alloc.c (make_number) [!defined make_number]:
+	Remove, as lisp.h always defines this now.
+	(mark_maybe_pointer): Simplify since USE_LSB_TAG is always defined now.
+	(roundup_size): Verify that it is a power of 2.
+	* data.c (Fmake_variable_buffer_local, Fmake_local_variable):
+	* ftfont.c (ftfont_driver): Use LISP_INITIALLY_ZERO.
+	* lisp.h (USE_LSB_TAG): Allow the builder to compile with
+	-DUSE_LSB_TAG=0, to override the automatically-selected default.
+	USE_LSB_TAG now is always defined to be either 0 or 1.
+	All uses changed.
+	(union Lisp_Object): Don't worry about WORDS_BIGENDIAN; the
+	code works fine either way, and efficiency is not a concern here,
+	as the union type is for debugging, not for production.
+	(LISP_MAKE_RVALUE, make_number) [USE_LISP_UNION_TYPE]:
+	Use an inline function on all platforms when using the union type,
+	since this is simpler and 'static inline' can be used portably
+	within Emacs now.
+	(LISP_INITIALLY_ZERO): New macro.
+	(XFASTINT, XSETFASTINT) [USE_LISP_UNION_TYPE]: Remove.
+	(XSET) [USE_LISP_UNION_TYPE]: Don't overparenthesize.
+
+2012-06-12  Glenn Morris  <rgm@gnu.org>
+
+	* s/gnu-kfreebsd.h, s/hpux11.h, s/openbsd.h, s/sol2-10.h: Remove files.
+
+	* s/gnu-linux.h (HAVE_PROCFS): Move to configure.
+
+	* s/hpux10-20.h, s/openbsd.h, s/usg5-4-common.h:
+	Move BROKEN_SIGIO to configure.
+
+	* s/bsd-common.h, s/darwin.h, s/gnu-kfreebsd.h, s/hpux10-20.h:
+	Move NO_TERMIO to configure.
+
+2012-06-12  Chong Yidong  <cyd@gnu.org>
+
+	* image.c (imagemagick_load_image): Use MagickFlattenImage if
+	MagickMergeImageLayers is undefined.  Use pixel pusher loop if
+	MagickExportImagePixels is undefined.
+
+2012-06-12  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* image.c (imagemagick_load_image): Remove unused label.
+
+2012-06-11  Glenn Morris  <rgm@gnu.org>
+
+	* s/aix4-2.h, s/bsd-common.h, s/cygwin.h, s/darwin.h:
+	* s/gnu-kfreebsd.h, s/gnu-linux.h, s/gnu.h, s/hpux10-20.h:
+	* s/irix6-5.h, s/ms-w32.h, s/msdos.h, s/template.h:
+	* s/usg5-4-common.h: Move SYSTEM_TYPE to configure.
+
+2012-06-11  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* alloc.c (make_byte_code): New function.
+	(Fmake_byte_code): Use it.  Don't purify here.
+	* lread.c (read1): Use it as well to avoid extra allocation.
+
+2012-06-11  Chong Yidong  <cyd@gnu.org>
+
+	* image.c (imagemagick_load_image): Implement transparency.
+
+2012-06-10  Andreas Schwab  <schwab@linux-m68k.org>
+
+	* regex.c (at_begline_loc_p): Also recognize `(?N:' and correctly
+	account for preceding backslashes.  (Bug#11663)
+
+2012-06-09  Chong Yidong  <cyd@gnu.org>
+
+	* term.c: Support italics in capable terminals (Bug#9652).
+	(no_color_bit): Replace unused NC_BLINK with NC_ITALIC.
+	(turn_on_face): Output using TS_enter_italic_mode if available.
+	Don't handle unused blinking and alt-charset cases.
+	(turn_off_face): Handle italic case; discard unused tty_blinking_p
+	and tty_alt_charset_p cases.
+	(tty_capable_p, init_tty): Support italics.
+
+	* termchar.h (struct tty_display_info): Add field for italics.
+	Remove unused blink field.
+
+	* xfaces.c (tty_supports_face_attributes_p, realize_tty_face):
+	Handle slant.
+
+	* dispextern.h: Replace unused TTY_CAP_BLINK with TTY_CAP_ITALIC.
+	(struct face): Remove unused fields tty_dim_p, tty_blinking_p, and
+	tty_alt_charset_p.  Add tty_italic_p.
+
+2012-06-09  Michael Albinus  <michael.albinus@gmx.de>
+
+	* dbusbind.c (XD_BASIC_DBUS_TYPE): Use dbus_type_is_valid and
+	dbus_type_is_basic if available.
+	(xd_extract_signed, xd_extract_unsigned): Rename from
+	extract_signed and extract_unsigned, respectively.  Adapt callers.
+
+2012-06-09  Chong Yidong  <cyd@gnu.org>
+
+	* xfaces.c (face_for_overlay_string): Handle face remapping (Bug#2066).
+
+	* fringe.c (Fset_fringe_bitmap_face): Handle the noninteractive
+	case (Bug#9752).
+
+2012-06-08  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* xdisp.c (vmessage): Treat frame message as multibyte.
+	Without this change, (let ((§ 1)) (make-variable-buffer-local '§))
+	would generate the diagnostic "Making \302\247 buffer-local while
+	let-bound!".
+
+2012-06-08  Eli Zaretskii  <eliz@gnu.org>
+
+	* dispnew.c (showing_window_margins_p): Undo last change, which
+	was done due to an inadvertent commit.
+	(adjust_frame_glyphs_for_frame_redisplay): Do call
+	showing_window_margins_p.
+
+2012-06-08  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* eval.c (Fmake_var_non_special): New primitive.
+	(syms_of_eval): Defsubr it.
+	* lread.c (syms_of_lread): Mark `values' as lexically scoped.
+
+2012-06-08  Juanma Barranquero  <lekktu@gmail.com>
+
+	* dispnew.c (showing_window_margins_p): Wrap in #if 0 to prevent unused
+	function warning (the only call is inside #if 0 since 2012-06-08T08:44:45Z!eliz@gnu.org).
+
+2012-06-08  Eli Zaretskii  <eliz@gnu.org>
+
+	* alloc.c (allocate_vectorlike): Fix last change.
+
+2012-06-08  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	Block-based vector allocation of small vectors.
+	* lisp.h (struct vectorlike_header): New field `nbytes',
+	adjust comment accordingly.
+	* alloc.c (enum mem_type): New type `MEM_TYPE_VECTOR_BLOCK'
+	to denote vector blocks. Adjust users (live_vector_p,
+	mark_maybe_pointer, valid_lisp_object_p) accordingly.
+	(COMMON_MULTIPLE): Move outside #if USE_LSB_TAG.
+	(VECTOR_BLOCK_SIZE, vroundup, VECTOR_BLOCK_BYTES),
+	(VBLOCK_BYTES_MIN, VBLOCK_BYTES_MAX, VECTOR_MAX_FREE_LIST_INDEX),
+	(VECTOR_FREE_LIST_FLAG, ADVANCE, VINDEX, SETUP_ON_FREE_LIST),
+	(VECTOR_SIZE, VECTOR_IN_BLOCK): New macros.
+	(roundup_size): New constant.
+	(struct vector_block): New data type.
+	(vector_blocks, vector_free_lists, zero_vector): New variables.
+	(all_vectors): Rename to `large_vectors'.
+	(allocate_vector_from_block, init_vectors, allocate_vector_from_block)
+	(sweep_vectors): New functions.
+	(allocate_vectorlike): Return `zero_vector' as the only vector of
+	0 items. Allocate new vector from block if vector size is less than
+	or equal to VBLOCK_BYTES_MAX.
+	(Fgarbage_collect): Move all vector sweeping code to sweep_vectors.
+	(init_alloc_once): Add call to init_vectors.
+
+2012-06-08  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* eval.c (Fmacroexpand): Stop if the macro returns the same form.
+
+2012-06-07  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* doprnt.c (doprnt): Truncate multibyte char correctly.
+	Without this change, doprnt (buf, 2, "%s", FORMAT_END, AP)
+	would mishandle a string argument "Xc" if X was a multibyte
+	character of length 2: it would truncate after X's first byte
+	rather than including all of X.
+
+2012-06-06  Chong Yidong  <cyd@gnu.org>
+
+	* buffer.c (word_wrap): Doc fix.
+
+2012-06-04  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* xdisp.c (note_mode_line_or_margin_highlight): Pacify gcc -Wall.
+
+2012-06-03  Glenn Morris  <rgm@gnu.org>
+
+	* xdisp.c (tool-bar-style): Doc fix.
+
+2012-06-03  Ulrich Müller  <ulm@gentoo.org>
+
+	* Makefile.in (PAXCTL): Define.
+	(temacs$(EXEEXT)): Disable memory randomization for the temacs
+	binary via PaX flags if the paxctl utility is available.
+	(emacs$(EXEEXT), bootstrap-emacs$(EXEEXT)):
+	Restore PaX flags to their default.  (Bug#11398)
+
+2012-06-03  Chong Yidong  <cyd@gnu.org>
+
+	* xdisp.c (decode_mode_spec_coding): Display a space for a unibyte
+	buffer (Bug#11226).
+
+2012-06-03  Chong Yidong  <cyd@gnu.org>
+
+	* xdisp.c (calc_pixel_width_or_height): Use Fbuffer_local_value.
+	(note_mode_line_or_margin_highlight): If there is no help echo,
+	use mode-line-default-help-echo.  Handle the case where the mouse
+	position is past the end of the mode line string.
+
+	* buffer.c (buffer_local_value_1): New function, split from
+	Fbuffer_local_value; can return Qunbound.
+	(Fbuffer_local_value): Use it.
+	(Vmode_line_format): Docstring tweaks.
+
+2012-06-02  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* sysdep.c (system_process_attributes): Improve comment.
+
+2012-06-02  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* keyboard.c: Export real-this-command to Elisp.
+	(syms_of_keyboard): Rename real_this_command to Vreal_this_command
+	and DEFVAR it.  Update all users.
+
+2012-06-02  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* minibuf.c (Fassoc_string): Remove duplicate declaration.
+
+	* sysdep.c (system_process_attributes) [SOLARIS2 && HAVE_PROCFS]:
+	Convert pctcpu and pctmem to Lisp float properly.
+	Let the compiler fold better, as 100.0/0x8000 is exact.
+
+2012-06-02  Andreas Schwab  <schwab@linux-m68k.org>
+
+	* alloc.c (CONS_BLOCK_SIZE): Account for padding at the end of
+	cons_block.
+
+2012-06-01  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* xfns.c (x_set_tool_bar_lines) [USE_GTK]: Adjust to bitfield change.
+
+2012-06-01  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	For a 'struct window', replace some Lisp_Object fields to
+	bitfields where appropriate, remove unused fields.
+	* window.h (struct window): Remove unused 'last_mark_x' and
+	'last_mark_y' fields.  Rename 'mini_p' field to 'mini',
+	change it's type from Lisp_Object to bitfield.
+	Change type of 'force_start', 'optional_new_start',
+	'last_had_star', 'update_mode_line' and 'start_at_line_beg'
+	fields from Lisp_Object to bitfield. Adjust users accordingly.
+
 2012-05-31  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Pacify gcc -Wdouble-precision when using Xaw.

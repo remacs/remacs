@@ -1,6 +1,6 @@
 /* Display generation from window structure and buffer text.
 
-Copyright (C) 1985-1988, 1993-1995, 1997-2012  Free Software Foundation, Inc.
+Copyright (C) 1985-1988, 1993-1995, 1997-2012 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -753,6 +753,7 @@ static struct glyph_slice null_glyph_slice = { 0, 0, 0, 0 };
 int redisplaying_p;
 
 static Lisp_Object Qinhibit_free_realized_faces;
+static Lisp_Object Qmode_line_default_help_echo;
 
 /* If a string, XTread_socket generates an event to display that string.
    (The display is done in read_char.)  */
@@ -9818,7 +9819,7 @@ vmessage (const char *m, va_list ap)
 	      len = doprnt (FRAME_MESSAGE_BUF (f),
 			    FRAME_MESSAGE_BUF_SIZE (f), m, (char *)0, ap);
 
-	      message2 (FRAME_MESSAGE_BUF (f), len, 0);
+	      message2 (FRAME_MESSAGE_BUF (f), len, 1);
 	    }
 	  else
 	    message1 (0);
@@ -11223,7 +11224,7 @@ update_menu_bar (struct frame *f, int save_match_data, int hooks_run)
 	  || update_mode_lines
 	  || ((BUF_SAVE_MODIFF (XBUFFER (w->buffer))
 	       < BUF_MODIFF (XBUFFER (w->buffer)))
-	      != !NILP (w->last_had_star))
+	      != w->last_had_star)
 	  || ((!NILP (Vtransient_mark_mode)
 	       && !NILP (BVAR (XBUFFER (w->buffer), mark_active)))
 	      != !NILP (w->region_showing)))
@@ -11275,11 +11276,11 @@ update_menu_bar (struct frame *f, int save_match_data, int hooks_run)
 	  else
 	    /* On a terminal screen, the menu bar is an ordinary screen
 	       line, and this makes it get updated.  */
-	    w->update_mode_line = Qt;
+	    w->update_mode_line = 1;
 #else /* ! (USE_X_TOOLKIT || HAVE_NTGUI || HAVE_NS || USE_GTK) */
 	  /* In the non-toolkit version, the menu bar is an ordinary screen
 	     line, and this makes it get updated.  */
-	  w->update_mode_line = Qt;
+	  w->update_mode_line = 1;
 #endif /* ! (USE_X_TOOLKIT || HAVE_NTGUI || HAVE_NS || USE_GTK) */
 
 	  unbind_to (count, Qnil);
@@ -11417,11 +11418,11 @@ update_tool_bar (struct frame *f, int save_match_data)
 	 the rest of the redisplay algorithm is about the same as
 	 windows_or_buffers_changed anyway.  */
       if (windows_or_buffers_changed
-	  || !NILP (w->update_mode_line)
+	  || w->update_mode_line
 	  || update_mode_lines
 	  || ((BUF_SAVE_MODIFF (XBUFFER (w->buffer))
 	       < BUF_MODIFF (XBUFFER (w->buffer)))
-	      != !NILP (w->last_had_star))
+	      != w->last_had_star)
 	  || ((!NILP (Vtransient_mark_mode)
 	       && !NILP (BVAR (XBUFFER (w->buffer), mark_active)))
 	      != !NILP (w->region_showing)))
@@ -11472,7 +11473,7 @@ update_tool_bar (struct frame *f, int save_match_data)
               BLOCK_INPUT;
               f->tool_bar_items = new_tool_bar;
               f->n_tool_bar_items = new_n_tool_bar;
-              w->update_mode_line = Qt;
+              w->update_mode_line = 1;
               UNBLOCK_INPUT;
             }
 
@@ -13021,9 +13022,9 @@ redisplay_internal (void)
     update_mode_lines++;
 
   /* Detect case that we need to write or remove a star in the mode line.  */
-  if ((SAVE_MODIFF < MODIFF) != !NILP (w->last_had_star))
+  if ((SAVE_MODIFF < MODIFF) != w->last_had_star)
     {
-      w->update_mode_line = Qt;
+      w->update_mode_line = 1;
       if (buffer_shared > 1)
 	update_mode_lines++;
     }
@@ -13040,7 +13041,7 @@ redisplay_internal (void)
 	   && XFASTINT (w->last_modified) >= MODIFF
 	   && XFASTINT (w->last_overlay_modified) >= OVERLAY_MODIFF)
       && (XFASTINT (w->column_number_displayed) != current_column ()))
-    w->update_mode_line = Qt;
+    w->update_mode_line = 1;
 
   unbind_to (count1, Qnil);
 
@@ -13143,7 +13144,7 @@ redisplay_internal (void)
   tlendpos = this_line_end_pos;
   if (!consider_all_windows_p
       && CHARPOS (tlbufpos) > 0
-      && NILP (w->update_mode_line)
+      && !w->update_mode_line
       && !current_buffer->clip_changed
       && !current_buffer->prevent_redisplay_optimizations_p
       && FRAME_VISIBLE_P (XFRAME (w->frame))
@@ -13151,8 +13152,8 @@ redisplay_internal (void)
       /* Make sure recorded data applies to current buffer, etc.  */
       && this_line_buffer == current_buffer
       && current_buffer == XBUFFER (w->buffer)
-      && NILP (w->force_start)
-      && NILP (w->optional_new_start)
+      && !w->force_start
+      && !w->optional_new_start
       /* Point must be on the line that we have info recorded about.  */
       && PT >= CHARPOS (tlbufpos)
       && PT <= Z - CHARPOS (tlendpos)
@@ -13694,7 +13695,7 @@ mark_window_display_accurate_1 (struct window *w, int accurate_p)
       w->last_overlay_modified
 	= make_number (accurate_p ? BUF_OVERLAY_MODIFF (b) : 0);
       w->last_had_star
-	= BUF_MODIFF (b) > BUF_SAVE_MODIFF (b) ? Qt : Qnil;
+	= BUF_MODIFF (b) > BUF_SAVE_MODIFF (b);
 
       if (accurate_p)
 	{
@@ -13723,7 +13724,7 @@ mark_window_display_accurate_1 (struct window *w, int accurate_p)
   if (accurate_p)
     {
       w->window_end_valid = w->buffer;
-      w->update_mode_line = Qnil;
+      w->update_mode_line = 0;
     }
 }
 
@@ -15352,7 +15353,7 @@ redisplay_window (Lisp_Object window, int just_this_one_p)
   reconsider_clip_changes (w, buffer);
 
   /* Has the mode line to be updated?  */
-  update_mode_line = (!NILP (w->update_mode_line)
+  update_mode_line = (w->update_mode_line
 		      || update_mode_lines
 		      || buffer->clip_changed
 		      || buffer->prevent_redisplay_optimizations_p);
@@ -15524,32 +15525,31 @@ redisplay_window (Lisp_Object window, int just_this_one_p)
 
   /* If someone specified a new starting point but did not insist,
      check whether it can be used.  */
-  if (!NILP (w->optional_new_start)
+  if (w->optional_new_start
       && CHARPOS (startp) >= BEGV
       && CHARPOS (startp) <= ZV)
     {
-      w->optional_new_start = Qnil;
+      w->optional_new_start = 0;
       start_display (&it, w, startp);
       move_it_to (&it, PT, 0, it.last_visible_y, -1,
 		  MOVE_TO_POS | MOVE_TO_X | MOVE_TO_Y);
       if (IT_CHARPOS (it) == PT)
-	w->force_start = Qt;
+	w->force_start = 1;
       /* IT may overshoot PT if text at PT is invisible.  */
       else if (IT_CHARPOS (it) > PT && CHARPOS (startp) <= PT)
-	w->force_start = Qt;
+	w->force_start = 1;
     }
 
  force_start:
 
   /* Handle case where place to start displaying has been specified,
      unless the specified location is outside the accessible range.  */
-  if (!NILP (w->force_start)
-      || w->frozen_window_start_p)
+  if (w->force_start || w->frozen_window_start_p)
     {
       /* We set this later on if we have to adjust point.  */
       int new_vpos = -1;
 
-      w->force_start = Qnil;
+      w->force_start = 0;
       w->vscroll = 0;
       w->window_end_valid = Qnil;
 
@@ -15568,7 +15568,7 @@ redisplay_window (Lisp_Object window, int just_this_one_p)
 	  || ! NILP (Vwindow_scroll_functions))
 	{
 	  update_mode_line = 1;
-	  w->update_mode_line = Qt;
+	  w->update_mode_line = 1;
 	  startp = run_window_scroll_functions (window, startp);
 	}
 
@@ -15586,7 +15586,7 @@ redisplay_window (Lisp_Object window, int just_this_one_p)
 	 the scroll margin (bug#148) -- cyd  */
       if (!try_window (window, startp, 0))
 	{
-	  w->force_start = Qt;
+	  w->force_start = 1;
 	  clear_glyph_matrix (w->desired_matrix);
 	  goto need_larger_matrices;
 	}
@@ -15665,7 +15665,7 @@ redisplay_window (Lisp_Object window, int just_this_one_p)
     }
   /* If current starting point was originally the beginning of a line
      but no longer is, find a new starting point.  */
-  else if (!NILP (w->start_at_line_beg)
+  else if (w->start_at_line_beg
 	   && !(CHARPOS (startp) <= BEGV
 		|| FETCH_BYTE (BYTEPOS (startp) - 1) == '\n'))
     {
@@ -15712,7 +15712,7 @@ redisplay_window (Lisp_Object window, int just_this_one_p)
 	 new window start, since that would change the position under
 	 the mouse, resulting in an unwanted mouse-movement rather
 	 than a simple mouse-click.  */
-      if (NILP (w->start_at_line_beg)
+      if (!w->start_at_line_beg
 	  && NILP (do_mouse_tracking)
       	  && CHARPOS (startp) > BEGV
 	  && CHARPOS (startp) > BEG + beg_unchanged
@@ -15732,7 +15732,7 @@ redisplay_window (Lisp_Object window, int just_this_one_p)
 	     See bug#9324.  */
 	  && pos_visible_p (w, PT, &d1, &d2, &d3, &d4, &d5, &d6))
 	{
-	  w->force_start = Qt;
+	  w->force_start = 1;
 	  SET_TEXT_POS_FROM_MARKER (startp, w->start);
 	  goto force_start;
       	}
@@ -15793,7 +15793,7 @@ redisplay_window (Lisp_Object window, int just_this_one_p)
   if (!update_mode_line)
     {
       update_mode_line = 1;
-      w->update_mode_line = Qt;
+      w->update_mode_line = 1;
     }
 
   /* Try to scroll by specified few lines.  */
@@ -16048,9 +16048,8 @@ redisplay_window (Lisp_Object window, int just_this_one_p)
  done:
 
   SET_TEXT_POS_FROM_MARKER (startp, w->start);
-  w->start_at_line_beg = ((CHARPOS (startp) == BEGV
-			   || FETCH_BYTE (BYTEPOS (startp) - 1) == '\n')
-			  ? Qt : Qnil);
+  w->start_at_line_beg = (CHARPOS (startp) == BEGV
+			    || FETCH_BYTE (BYTEPOS (startp) - 1) == '\n');
 
   /* Display the mode line, if we must.  */
   if ((update_mode_line
@@ -16274,7 +16273,7 @@ try_window (Lisp_Object window, struct text_pos pos, int flags)
   /* If bottom moved off end of frame, change mode line percentage.  */
   if (XFASTINT (w->window_end_pos) <= 0
       && Z != IT_CHARPOS (it))
-    w->update_mode_line = Qt;
+    w->update_mode_line = 1;
 
   /* Set window_end_pos to the offset of the last character displayed
      on the window from the end of current_buffer.  Set
@@ -21118,8 +21117,7 @@ decode_mode_spec_coding (Lisp_Object coding_system, register char *buf, int eol_
 
   if (!VECTORP (val))		/* Not yet decided.  */
     {
-      if (multibyte)
-	*buf++ = '-';
+      *buf++ = multibyte ? '-' : ' ';
       if (eol_flag)
 	eoltype = eol_mnemonic_undecided;
       /* Don't mention EOL conversion if it isn't decided.  */
@@ -21132,8 +21130,9 @@ decode_mode_spec_coding (Lisp_Object coding_system, register char *buf, int eol_
       attrs = AREF (val, 0);
       eolvalue = AREF (val, 2);
 
-      if (multibyte)
-	*buf++ = XFASTINT (CODING_ATTR_MNEMONIC (attrs));
+      *buf++ = multibyte
+	? XFASTINT (CODING_ATTR_MNEMONIC (attrs))
+	: ' ';
 
       if (eol_flag)
 	{
@@ -22198,7 +22197,9 @@ calc_pixel_width_or_height (double *res, struct it *it, Lisp_Object prop,
 	    return OK_PIXELS (WINDOW_SCROLL_BAR_AREA_WIDTH (it->w));
 	}
 
-      prop = Fbuffer_local_value (prop, it->w->buffer);
+      prop = buffer_local_value_1 (prop, it->w->buffer);
+      if (EQ (prop, Qunbound))
+	prop = Qnil;
     }
 
   if (INTEGERP (prop) || FLOATP (prop))
@@ -22255,7 +22256,9 @@ calc_pixel_width_or_height (double *res, struct it *it, Lisp_Object prop,
 	      return OK_PIXELS (pixels);
 	    }
 
-	  car = Fbuffer_local_value (car, it->w->buffer);
+	  car = buffer_local_value_1 (car, it->w->buffer);
+	  if (EQ (car, Qunbound))
+	    car = Qnil;
 	}
 
       if (INTEGERP (car) || FLOATP (car))
@@ -27202,12 +27205,12 @@ note_mode_line_or_margin_highlight (Lisp_Object window, int x, int y,
   int dx, dy, width, height;
   ptrdiff_t charpos;
   Lisp_Object string, object = Qnil;
-  Lisp_Object pos, help;
+  Lisp_Object pos IF_LINT (= Qnil), help;
 
   Lisp_Object mouse_face;
   int original_x_pixel = x;
   struct glyph * glyph = NULL, * row_start_glyph = NULL;
-  struct glyph_row *row;
+  struct glyph_row *row IF_LINT (= 0);
 
   if (area == ON_MODE_LINE || area == ON_HEADER_LINE)
     {
@@ -27275,7 +27278,6 @@ note_mode_line_or_margin_highlight (Lisp_Object window, int x, int y,
 	      if (!NILP (help))
 		{
 		  help_echo_string = help;
-		  /* Is this correct?  ++kfs */
 		  XSETWINDOW (help_echo_window, w);
 		  help_echo_object = w->buffer;
 		  help_echo_pos = charpos;
@@ -27288,14 +27290,20 @@ note_mode_line_or_margin_highlight (Lisp_Object window, int x, int y,
 #endif	/* HAVE_WINDOW_SYSTEM */
 
   if (STRINGP (string))
+    pos = make_number (charpos);
+
+  /* Set the help text and mouse pointer.  If the mouse is on a part
+     of the mode line without any text (e.g. past the right edge of
+     the mode line text), use the default help text and pointer.  */
+  if (STRINGP (string) || area == ON_MODE_LINE)
     {
-      pos = make_number (charpos);
-      /* If we're on a string with `help-echo' text property, arrange
-	 for the help to be displayed.  This is done by setting the
-	 global variable help_echo_string to the help string.  */
+      /* Arrange to display the help by setting the global variables
+	 help_echo_string, help_echo_object, and help_echo_pos.  */
       if (NILP (help))
 	{
-	  help = Fget_text_property (pos, Qhelp_echo, string);
+	  if (STRINGP (string))
+	    help = Fget_text_property (pos, Qhelp_echo, string);
+
 	  if (!NILP (help))
 	    {
 	      help_echo_string = help;
@@ -27303,31 +27311,56 @@ note_mode_line_or_margin_highlight (Lisp_Object window, int x, int y,
 	      help_echo_object = string;
 	      help_echo_pos = charpos;
 	    }
+	  else if (area == ON_MODE_LINE)
+	    {
+	      Lisp_Object default_help
+		= buffer_local_value_1 (Qmode_line_default_help_echo,
+					w->buffer);
+
+	      if (STRINGP (default_help))
+		{
+		  help_echo_string = default_help;
+		  XSETWINDOW (help_echo_window, w);
+		  help_echo_object = Qnil;
+		  help_echo_pos = -1;
+		}
+	    }
 	}
 
 #ifdef HAVE_WINDOW_SYSTEM
+      /* Change the mouse pointer according to what is under it.  */
       if (FRAME_WINDOW_P (f))
 	{
 	  dpyinfo = FRAME_X_DISPLAY_INFO (f);
-	  cursor  = FRAME_X_OUTPUT (f)->nontext_cursor;
-	  if (NILP (pointer))
-	    pointer = Fget_text_property (pos, Qpointer, string);
-
-	  /* Change the mouse pointer according to what is under X/Y.  */
-	  if (NILP (pointer)
-	      && ((area == ON_MODE_LINE) || (area == ON_HEADER_LINE)))
+	  if (STRINGP (string))
 	    {
-	      Lisp_Object map;
-	      map = Fget_text_property (pos, Qlocal_map, string);
-	      if (!KEYMAPP (map))
-		map = Fget_text_property (pos, Qkeymap, string);
-	      if (!KEYMAPP (map))
-		cursor = dpyinfo->vertical_scroll_bar_cursor;
+	      cursor = FRAME_X_OUTPUT (f)->nontext_cursor;
+
+	      if (NILP (pointer))
+		pointer = Fget_text_property (pos, Qpointer, string);
+
+	      /* Change the mouse pointer according to what is under X/Y.  */
+	      if (NILP (pointer)
+		  && ((area == ON_MODE_LINE) || (area == ON_HEADER_LINE)))
+		{
+		  Lisp_Object map;
+		  map = Fget_text_property (pos, Qlocal_map, string);
+		  if (!KEYMAPP (map))
+		    map = Fget_text_property (pos, Qkeymap, string);
+		  if (!KEYMAPP (map))
+		    cursor = dpyinfo->vertical_scroll_bar_cursor;
+		}
 	    }
+	  else
+	    /* Default mode-line pointer.  */
+	    cursor = FRAME_X_DISPLAY_INFO (f)->vertical_scroll_bar_cursor;
 	}
 #endif
+    }
 
-     /* Change the mouse face according to what is under X/Y.  */
+  /* Change the mouse face according to what is under X/Y.  */
+  if (STRINGP (string))
+    {
       mouse_face = Fget_text_property (pos, Qmouse_face, string);
       if (!NILP (mouse_face)
 	  && ((area == ON_MODE_LINE) || (area == ON_HEADER_LINE))
@@ -28668,6 +28701,8 @@ syms_of_xdisp (void)
   Vmode_line_unwind_vector = Qnil;
   staticpro (&Vmode_line_unwind_vector);
 
+  DEFSYM (Qmode_line_default_help_echo, "mode-line-default-help-echo");
+
   help_echo_string = Qnil;
   staticpro (&help_echo_string);
   help_echo_object = Qnil;
@@ -28948,7 +28983,9 @@ It can be one of
  both             - show both, text below image
  both-horiz       - show text to the right of the image
  text-image-horiz - show text to the left of the image
- any other        - use system default or image if no system default.  */);
+ any other        - use system default or image if no system default.
+
+This variable only affects the GTK+ toolkit version of Emacs.  */);
   Vtool_bar_style = Qnil;
 
   DEFVAR_INT ("tool-bar-max-label-size", tool_bar_max_label_size,

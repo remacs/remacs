@@ -304,7 +304,9 @@ enum mem_type
      process, hash_table, frame, terminal, and window, but we never made
      use of the distinction, so it only caused source-code complexity
      and runtime slowdown.  Minor but pointless.  */
-  MEM_TYPE_VECTORLIKE
+  MEM_TYPE_VECTORLIKE,
+  /* Special type to denote vector blocks.  */
+  MEM_TYPE_VECTOR_BLOCK
 };
 
 static void *lisp_malloc (size_t, enum mem_type);
@@ -494,6 +496,11 @@ buffer_memory_full (ptrdiff_t nbytes)
   xsignal (Qnil, Vmemory_signal_data);
 }
 
+/* A common multiple of the positive integers A and B.  Ideally this
+   would be the least common multiple, but there's no way to do that
+   as a constant expression in C, so do the best that we can easily do.  */
+#define COMMON_MULTIPLE(a, b) \
+  ((a) % (b) == 0 ? (a) : (b) % (a) == 0 ? (b) : (a) * (b))
 
 #ifndef XMALLOC_OVERRUN_CHECK
 #define XMALLOC_OVERRUN_CHECK_OVERHEAD 0
@@ -525,12 +532,8 @@ buffer_memory_full (ptrdiff_t nbytes)
       char c;						\
     },							\
     c)
-#ifdef USE_LSB_TAG
-/* A common multiple of the positive integers A and B.  Ideally this
-   would be the least common multiple, but there's no way to do that
-   as a constant expression in C, so do the best that we can easily do.  */
-# define COMMON_MULTIPLE(a, b) \
-    ((a) % (b) == 0 ? (a) : (b) % (a) == 0 ? (b) : (a) * (b))
+
+#if USE_LSB_TAG
 # define XMALLOC_HEADER_ALIGNMENT \
     COMMON_MULTIPLE (1 << GCTYPEBITS, XMALLOC_BASE_ALIGNMENT)
 #else
@@ -890,8 +893,8 @@ safe_alloca_unwind (Lisp_Object arg)
    number of bytes to allocate, TYPE describes the intended use of the
    allocated memory block (for strings, for conses, ...).  */
 
-#ifndef USE_LSB_TAG
-static void *lisp_malloc_loser;
+#if ! USE_LSB_TAG
+void *lisp_malloc_loser EXTERNALLY_VISIBLE;
 #endif
 
 static void *
@@ -907,7 +910,7 @@ lisp_malloc (size_t nbytes, enum mem_type type)
 
   val = (void *) malloc (nbytes);
 
-#ifndef USE_LSB_TAG
+#if ! USE_LSB_TAG
   /* If the memory just allocated cannot be addressed thru a Lisp
      object's pointer, and it needs to be,
      that's equivalent to running out of memory.  */
@@ -1088,7 +1091,7 @@ lisp_align_malloc (size_t nbytes, enum mem_type type)
       mallopt (M_MMAP_MAX, MMAP_MAX_AREAS);
 #endif
 
-#ifndef USE_LSB_TAG
+#if ! USE_LSB_TAG
       /* If the memory just allocated cannot be addressed thru a Lisp
 	 object's pointer, and it needs to be, that's equivalent to
 	 running out of memory.  */
@@ -1581,35 +1584,6 @@ mark_interval_tree (register INTERVAL tree)
    if (! NULL_INTERVAL_P (i))				\
      (i) = balance_intervals (i);			\
   } while (0)
-
-
-/* Number support.  If USE_LISP_UNION_TYPE is in effect, we
-   can't create number objects in macros.  */
-#ifndef make_number
-Lisp_Object
-make_number (EMACS_INT n)
-{
-  Lisp_Object obj;
-  obj.s.val = n;
-  obj.s.type = Lisp_Int;
-  return obj;
-}
-#endif
-
-/* Convert the pointer-sized word P to EMACS_INT while preserving its
-   type and ptr fields.  */
-static Lisp_Object
-widen_to_Lisp_Object (void *p)
-{
-  intptr_t i = (intptr_t) p;
-#ifdef USE_LISP_UNION_TYPE
-  Lisp_Object obj;
-  obj.i = i;
-  return obj;
-#else
-  return i;
-#endif
-}
 
 /***********************************************************************
 			  String Allocation
@@ -2701,8 +2675,10 @@ make_float (double float_value)
    GC are put on a free list to be reallocated before allocating
    any new cons cells from the latest cons_block.  */
 
-#define CONS_BLOCK_SIZE \
-  (((BLOCK_BYTES - sizeof (struct cons_block *)) * CHAR_BIT) \
+#define CONS_BLOCK_SIZE						\
+  (((BLOCK_BYTES - sizeof (struct cons_block *)			\
+     /* The compiler might add padding at the end.  */		\
+     - (sizeof (struct Lisp_Cons) - sizeof (int))) * CHAR_BIT)	\
    / (sizeof (struct Lisp_Cons) * CHAR_BIT + 1))
 
 #define CONS_BLOCK(fptr) \
@@ -2926,16 +2902,301 @@ DEFUN ("make-list", Fmake_list, Smake_list, 2, 2, 0,
 			   Vector Allocation
  ***********************************************************************/
 
-/* Singly-linked list of all vectors.  */
+/* This value is balanced well enough to avoid too much internal overhead
+   for the most common cases; it's not required to be a power of two, but
+   it's expected to be a mult-of-ROUNDUP_SIZE (see below).  */
 
-static struct Lisp_Vector *all_vectors;
+#define VECTOR_BLOCK_SIZE 4096
 
 /* Handy constants for vectorlike objects.  */
 enum
   {
     header_size = offsetof (struct Lisp_Vector, contents),
-    word_size = sizeof (Lisp_Object)
+    word_size = sizeof (Lisp_Object),
+    roundup_size = COMMON_MULTIPLE (sizeof (Lisp_Object),
+				    USE_LSB_TAG ? 1 << GCTYPEBITS : 1)
   };
+
+/* ROUNDUP_SIZE must be a power of 2.  */
+verify ((roundup_size & (roundup_size - 1)) == 0);
+
+/* Round up X to nearest mult-of-ROUNDUP_SIZE.  */
+
+#define vroundup(x) (((x) + (roundup_size - 1)) & ~(roundup_size - 1))
+
+/* Rounding helps to maintain alignment constraints if USE_LSB_TAG.  */
+
+#define VECTOR_BLOCK_BYTES (VECTOR_BLOCK_SIZE - vroundup (sizeof (void *)))
+
+/* Size of the minimal vector allocated from block.  */
+
+#define VBLOCK_BYTES_MIN vroundup (sizeof (struct Lisp_Vector))
+
+/* Size of the largest vector allocated from block.  */
+
+#define VBLOCK_BYTES_MAX					\
+  vroundup ((VECTOR_BLOCK_BYTES / 2) - sizeof (Lisp_Object))
+
+/* We maintain one free list for each possible block-allocated
+   vector size, and this is the number of free lists we have.  */
+
+#define VECTOR_MAX_FREE_LIST_INDEX				\
+  ((VECTOR_BLOCK_BYTES - VBLOCK_BYTES_MIN) / roundup_size + 1)
+
+/* When the vector is on a free list, vectorlike_header.SIZE is set to
+   this special value ORed with vector's memory footprint size.  */
+
+#define VECTOR_FREE_LIST_FLAG (~(ARRAY_MARK_FLAG | PSEUDOVECTOR_FLAG	\
+				 | (VECTOR_BLOCK_SIZE - 1)))
+
+/* Common shortcut to advance vector pointer over a block data.  */
+
+#define ADVANCE(v, nbytes) ((struct Lisp_Vector *) ((char *) (v) + (nbytes)))
+
+/* Common shortcut to calculate NBYTES-vector index in VECTOR_FREE_LISTS.  */
+
+#define VINDEX(nbytes) (((nbytes) - VBLOCK_BYTES_MIN) / roundup_size)
+
+/* Common shortcut to setup vector on a free list.  */
+
+#define SETUP_ON_FREE_LIST(v, nbytes, index)			\
+  do {								\
+    (v)->header.size = VECTOR_FREE_LIST_FLAG | (nbytes);	\
+    eassert ((nbytes) % roundup_size == 0);			\
+    (index) = VINDEX (nbytes);					\
+    eassert ((index) < VECTOR_MAX_FREE_LIST_INDEX);		\
+    (v)->header.next.vector = vector_free_lists[index];		\
+    vector_free_lists[index] = (v);				\
+  } while (0)
+
+struct vector_block
+{
+  char data[VECTOR_BLOCK_BYTES];
+  struct vector_block *next;
+};
+
+/* Chain of vector blocks.  */
+
+static struct vector_block *vector_blocks;
+
+/* Vector free lists, where NTH item points to a chain of free
+   vectors of the same NBYTES size, so NTH == VINDEX (NBYTES).  */
+
+static struct Lisp_Vector *vector_free_lists[VECTOR_MAX_FREE_LIST_INDEX];
+
+/* Singly-linked list of large vectors.  */
+
+static struct Lisp_Vector *large_vectors;
+
+/* The only vector with 0 slots, allocated from pure space.  */
+
+static struct Lisp_Vector *zero_vector;
+
+/* Get a new vector block.  */
+
+static struct vector_block *
+allocate_vector_block (void)
+{
+  struct vector_block *block;
+
+#ifdef DOUG_LEA_MALLOC
+  mallopt (M_MMAP_MAX, 0);
+#endif
+
+  block = xmalloc (sizeof (struct vector_block));
+
+#ifdef DOUG_LEA_MALLOC
+  mallopt (M_MMAP_MAX, MMAP_MAX_AREAS);
+#endif
+
+#if GC_MARK_STACK && !defined GC_MALLOC_CHECK
+  mem_insert (block->data, block->data + VECTOR_BLOCK_BYTES,
+	      MEM_TYPE_VECTOR_BLOCK);
+#endif
+
+  block->next = vector_blocks;
+  vector_blocks = block;
+  return block;
+}
+
+/* Called once to initialize vector allocation.  */
+
+static void
+init_vectors (void)
+{
+  zero_vector = pure_alloc (header_size, Lisp_Vectorlike);
+  zero_vector->header.size = 0;
+}
+
+/* Allocate vector from a vector block.  */
+
+static struct Lisp_Vector *
+allocate_vector_from_block (size_t nbytes)
+{
+  struct Lisp_Vector *vector, *rest;
+  struct vector_block *block;
+  size_t index, restbytes;
+
+  eassert (VBLOCK_BYTES_MIN <= nbytes && nbytes <= VBLOCK_BYTES_MAX);
+  eassert (nbytes % roundup_size == 0);
+
+  /* First, try to allocate from a free list
+     containing vectors of the requested size.  */
+  index = VINDEX (nbytes);
+  if (vector_free_lists[index])
+    {
+      vector = vector_free_lists[index];
+      vector_free_lists[index] = vector->header.next.vector;
+      vector->header.next.nbytes = nbytes;
+      return vector;
+    }
+
+  /* Next, check free lists containing larger vectors.  Since
+     we will split the result, we should have remaining space
+     large enough to use for one-slot vector at least.  */
+  for (index = VINDEX (nbytes + VBLOCK_BYTES_MIN);
+       index < VECTOR_MAX_FREE_LIST_INDEX; index++)
+    if (vector_free_lists[index])
+      {
+	/* This vector is larger than requested.  */
+	vector = vector_free_lists[index];
+	vector_free_lists[index] = vector->header.next.vector;
+	vector->header.next.nbytes = nbytes;
+
+	/* Excess bytes are used for the smaller vector,
+	   which should be set on an appropriate free list.  */
+	restbytes = index * roundup_size + VBLOCK_BYTES_MIN - nbytes;
+	eassert (restbytes % roundup_size == 0);
+	rest = ADVANCE (vector, nbytes);
+	SETUP_ON_FREE_LIST (rest, restbytes, index);
+	return vector;
+      }
+
+  /* Finally, need a new vector block.  */
+  block = allocate_vector_block ();
+
+  /* New vector will be at the beginning of this block.  */
+  vector = (struct Lisp_Vector *) block->data;
+  vector->header.next.nbytes = nbytes;
+
+  /* If the rest of space from this block is large enough
+     for one-slot vector at least, set up it on a free list.  */
+  restbytes = VECTOR_BLOCK_BYTES - nbytes;
+  if (restbytes >= VBLOCK_BYTES_MIN)
+    {
+      eassert (restbytes % roundup_size == 0);
+      rest = ADVANCE (vector, nbytes);
+      SETUP_ON_FREE_LIST (rest, restbytes, index);
+    }
+  return vector;
+ }
+
+/* Return how many Lisp_Objects can be stored in V.  */
+
+#define VECTOR_SIZE(v) ((v)->header.size & PSEUDOVECTOR_FLAG ?		\
+			(PSEUDOVECTOR_SIZE_MASK & (v)->header.size) :	\
+			(v)->header.size)
+
+/* Nonzero if VECTOR pointer is valid pointer inside BLOCK.  */
+
+#define VECTOR_IN_BLOCK(vector, block)		\
+  ((char *) (vector) <= (block)->data		\
+   + VECTOR_BLOCK_BYTES - VBLOCK_BYTES_MIN)
+
+/* Reclaim space used by unmarked vectors.  */
+
+static void
+sweep_vectors (void)
+{
+  struct vector_block *block = vector_blocks, **bprev = &vector_blocks;
+  struct Lisp_Vector *vector, *next, **vprev = &large_vectors;
+
+  total_vector_size = 0;
+  memset (vector_free_lists, 0, sizeof (vector_free_lists));
+
+  /* Looking through vector blocks.  */
+
+  for (block = vector_blocks; block; block = *bprev)
+    {
+      int free_this_block = 0;
+
+      for (vector = (struct Lisp_Vector *) block->data;
+	   VECTOR_IN_BLOCK (vector, block); vector = next)
+	{
+	  if (VECTOR_MARKED_P (vector))
+	    {
+	      VECTOR_UNMARK (vector);
+	      total_vector_size += VECTOR_SIZE (vector);
+	      next = ADVANCE (vector, vector->header.next.nbytes);
+	    }
+	  else
+	    {
+	      ptrdiff_t nbytes;
+
+	      if ((vector->header.size & VECTOR_FREE_LIST_FLAG)
+		  == VECTOR_FREE_LIST_FLAG)
+		vector->header.next.nbytes =
+		  vector->header.size & (VECTOR_BLOCK_SIZE - 1);
+
+	      next = ADVANCE (vector, vector->header.next.nbytes);
+
+	      /* While NEXT is not marked, try to coalesce with VECTOR,
+		 thus making VECTOR of the largest possible size.  */
+
+	      while (VECTOR_IN_BLOCK (next, block))
+		{
+		  if (VECTOR_MARKED_P (next))
+		    break;
+		  if ((next->header.size & VECTOR_FREE_LIST_FLAG)
+		      == VECTOR_FREE_LIST_FLAG)
+		    nbytes = next->header.size & (VECTOR_BLOCK_SIZE - 1);
+		  else
+		    nbytes = next->header.next.nbytes;
+		  vector->header.next.nbytes += nbytes;
+		  next = ADVANCE (next, nbytes);
+		}
+
+	      eassert (vector->header.next.nbytes % roundup_size == 0);
+
+	      if (vector == (struct Lisp_Vector *) block->data
+		  && !VECTOR_IN_BLOCK (next, block))
+		/* This block should be freed because all of it's
+		   space was coalesced into the only free vector.  */
+		free_this_block = 1;
+	      else
+		SETUP_ON_FREE_LIST (vector, vector->header.next.nbytes, nbytes);
+	    }
+	}
+
+      if (free_this_block)
+	{
+	  *bprev = block->next;
+#if GC_MARK_STACK && !defined GC_MALLOC_CHECK
+	  mem_delete (mem_find (block->data));
+#endif
+	  xfree (block);
+	}
+      else
+	bprev = &block->next;
+    }
+
+  /* Sweep large vectors.  */
+
+  for (vector = large_vectors; vector; vector = *vprev)
+    {
+      if (VECTOR_MARKED_P (vector))
+	{
+	  VECTOR_UNMARK (vector);
+	  total_vector_size += VECTOR_SIZE (vector);
+	  vprev = &vector->header.next.vector;
+	}
+      else
+	{
+	  *vprev = vector->header.next.vector;
+	  lisp_free (vector);
+	}
+    }
+}
 
 /* Value is a pointer to a newly allocated Lisp_Vector structure
    with room for LEN Lisp_Objects.  */
@@ -2958,8 +3219,22 @@ allocate_vectorlike (ptrdiff_t len)
   /* This gets triggered by code which I haven't bothered to fix.  --Stef  */
   /* eassert (!handling_signal); */
 
+  if (len == 0)
+    {
+      MALLOC_UNBLOCK_INPUT;
+      return zero_vector;
+    }
+
   nbytes = header_size + len * word_size;
-  p = (struct Lisp_Vector *) lisp_malloc (nbytes, MEM_TYPE_VECTORLIKE);
+
+  if (nbytes <= VBLOCK_BYTES_MAX)
+    p = allocate_vector_from_block (vroundup (nbytes));
+  else
+    {
+      p = (struct Lisp_Vector *) lisp_malloc (nbytes, MEM_TYPE_VECTORLIKE);
+      p->header.next.vector = large_vectors;
+      large_vectors = p;
+    }
 
 #ifdef DOUG_LEA_MALLOC
   /* Back to a reasonable maximum of mmap'ed areas.  */
@@ -2968,9 +3243,6 @@ allocate_vectorlike (ptrdiff_t len)
 
   consing_since_gc += nbytes;
   vector_cells_consed += len;
-
-  p->header.next.vector = all_vectors;
-  all_vectors = p;
 
   MALLOC_UNBLOCK_INPUT;
 
@@ -3095,6 +3367,19 @@ usage: (vector &rest OBJECTS)  */)
   return val;
 }
 
+void
+make_byte_code (struct Lisp_Vector *v)
+{
+  if (v->header.size > 1 && STRINGP (v->contents[1])
+      && STRING_MULTIBYTE (v->contents[1]))
+    /* BYTECODE-STRING must have been produced by Emacs 20.2 or the
+       earlier because they produced a raw 8-bit string for byte-code
+       and now such a byte-code string is loaded as multibyte while
+       raw 8-bit characters converted to multibyte form.  Thus, now we
+       must convert them back to the original unibyte form.  */
+    v->contents[1] = Fstring_as_unibyte (v->contents[1]);
+  XSETPVECTYPE (v, PVEC_COMPILED);
+}
 
 DEFUN ("make-byte-code", Fmake_byte_code, Smake_byte_code, 4, MANY, 0,
        doc: /* Create a byte-code object with specified arguments as elements.
@@ -3118,28 +3403,21 @@ usage: (make-byte-code ARGLIST BYTE-CODE CONSTANTS DEPTH &optional DOCSTRING INT
   ptrdiff_t i;
   register struct Lisp_Vector *p;
 
-  XSETFASTINT (len, nargs);
-  if (!NILP (Vpurify_flag))
-    val = make_pure_vector (nargs);
-  else
-    val = Fmake_vector (len, Qnil);
+  /* We used to purecopy everything here, if purify-flga was set.  This worked
+     OK for Emacs-23, but with Emacs-24's lexical binding code, it can be
+     dangerous, since make-byte-code is used during execution to build
+     closures, so any closure built during the preload phase would end up
+     copied into pure space, including its free variables, which is sometimes
+     just wasteful and other times plainly wrong (e.g. those free vars may want
+     to be setcar'd).  */
 
-  if (nargs > 1 && STRINGP (args[1]) && STRING_MULTIBYTE (args[1]))
-    /* BYTECODE-STRING must have been produced by Emacs 20.2 or the
-       earlier because they produced a raw 8-bit string for byte-code
-       and now such a byte-code string is loaded as multibyte while
-       raw 8-bit characters converted to multibyte form.  Thus, now we
-       must convert them back to the original unibyte form.  */
-    args[1] = Fstring_as_unibyte (args[1]);
+  XSETFASTINT (len, nargs);
+  val = Fmake_vector (len, Qnil);
 
   p = XVECTOR (val);
   for (i = 0; i < nargs; i++)
-    {
-      if (!NILP (Vpurify_flag))
-	args[i] = Fpurecopy (args[i]);
-      p->contents[i] = args[i];
-    }
-  XSETPVECTYPE (p, PVEC_COMPILED);
+    p->contents[i] = args[i];
+  make_byte_code (p);
   XSETCOMPILED (val, p);
   return val;
 }
@@ -3156,7 +3434,7 @@ usage: (make-byte-code ARGLIST BYTE-CODE CONSTANTS DEPTH &optional DOCSTRING INT
 union aligned_Lisp_Symbol
 {
   struct Lisp_Symbol s;
-#ifdef USE_LSB_TAG
+#if USE_LSB_TAG
   unsigned char c[(sizeof (struct Lisp_Symbol) + (1 << GCTYPEBITS) - 1)
 		  & -(1 << GCTYPEBITS)];
 #endif
@@ -3164,7 +3442,7 @@ union aligned_Lisp_Symbol
 
 /* Each symbol_block is just under 1020 bytes long, since malloc
    really allocates in units of powers of two and uses 4 bytes for its
-   own overhead. */
+   own overhead.  */
 
 #define SYMBOL_BLOCK_SIZE \
   ((1020 - sizeof (struct symbol_block *)) / sizeof (union aligned_Lisp_Symbol))
@@ -3262,7 +3540,7 @@ Its value and function definition are void, and its property list is nil.  */)
 union aligned_Lisp_Misc
 {
   union Lisp_Misc m;
-#ifdef USE_LSB_TAG
+#if USE_LSB_TAG
   unsigned char c[(sizeof (union Lisp_Misc) + (1 << GCTYPEBITS) - 1)
 		  & -(1 << GCTYPEBITS)];
 #endif
@@ -4070,7 +4348,34 @@ live_misc_p (struct mem_node *m, void *p)
 static inline int
 live_vector_p (struct mem_node *m, void *p)
 {
-  return (p == m->start && m->type == MEM_TYPE_VECTORLIKE);
+  if (m->type == MEM_TYPE_VECTOR_BLOCK)
+    {
+      /* This memory node corresponds to a vector block.  */
+      struct vector_block *block = (struct vector_block *) m->start;
+      struct Lisp_Vector *vector = (struct Lisp_Vector *) block->data;
+
+      /* P is in the block's allocation range.  Scan the block
+	 up to P and see whether P points to the start of some
+	 vector which is not on a free list.  FIXME: check whether
+	 some allocation patterns (probably a lot of short vectors)
+	 may cause a substantial overhead of this loop.  */
+      while (VECTOR_IN_BLOCK (vector, block)
+	     && vector <= (struct Lisp_Vector *) p)
+	{
+	  if ((vector->header.size & VECTOR_FREE_LIST_FLAG)
+	      == VECTOR_FREE_LIST_FLAG)
+	    vector = ADVANCE (vector, (vector->header.size
+				       & (VECTOR_BLOCK_SIZE - 1)));
+	  else if (vector == p)
+	    return 1;
+	  else
+	    vector = ADVANCE (vector, vector->header.next.nbytes);
+	}
+    }
+  else if (m->type == MEM_TYPE_VECTORLIKE && p == m->start)
+    /* This memory node corresponds to a large vector.  */
+    return 1;
+  return 0;
 }
 
 
@@ -4217,14 +4522,10 @@ mark_maybe_pointer (void *p)
 {
   struct mem_node *m;
 
-  /* Quickly rule out some values which can't point to Lisp data.  */
-  if ((intptr_t) p %
-#ifdef USE_LSB_TAG
-      8 /* USE_LSB_TAG needs Lisp data to be aligned on multiples of 8.  */
-#else
-      2 /* We assume that Lisp data is aligned on even addresses.  */
-#endif
-      )
+  /* Quickly rule out some values which can't point to Lisp data.
+     USE_LSB_TAG needs Lisp data to be aligned on multiples of 1 << GCTYPEBITS.
+     Otherwise, assume that Lisp data is aligned on even addresses.  */
+  if ((intptr_t) p % (USE_LSB_TAG ? 1 << GCTYPEBITS : 2))
     return;
 
   m = mem_find (p);
@@ -4270,6 +4571,7 @@ mark_maybe_pointer (void *p)
 	  break;
 
 	case MEM_TYPE_VECTORLIKE:
+	case MEM_TYPE_VECTOR_BLOCK:
 	  if (live_vector_p (m, p))
 	    {
 	      Lisp_Object tem;
@@ -4299,8 +4601,8 @@ mark_maybe_pointer (void *p)
    wider than a pointer might allocate a Lisp_Object in non-adjacent halves.
    If USE_LSB_TAG, the bottom half is not a valid pointer, but it should
    suffice to widen it to to a Lisp_Object and check it that way.  */
-#if defined USE_LSB_TAG || VAL_MAX < UINTPTR_MAX
-# if !defined USE_LSB_TAG && VAL_MAX < UINTPTR_MAX >> GCTYPEBITS
+#if USE_LSB_TAG || VAL_MAX < UINTPTR_MAX
+# if !USE_LSB_TAG && VAL_MAX < UINTPTR_MAX >> GCTYPEBITS
   /* If tag bits straddle pointer-word boundaries, neither mark_maybe_pointer
      nor mark_maybe_object can follow the pointers.  This should not occur on
      any practical porting target.  */
@@ -4361,7 +4663,7 @@ mark_memory (void *start, void *end)
 	void *p = *(void **) ((char *) pp + i);
 	mark_maybe_pointer (p);
 	if (POINTERS_MIGHT_HIDE_IN_OBJECTS)
-	  mark_maybe_object (widen_to_Lisp_Object (p));
+	  mark_maybe_object (XIL ((intptr_t) p));
       }
 }
 
@@ -4703,6 +5005,7 @@ valid_lisp_object_p (Lisp_Object obj)
       return live_float_p (m, p);
 
     case MEM_TYPE_VECTORLIKE:
+    case MEM_TYPE_VECTOR_BLOCK:
       return live_vector_p (m, p);
 
     default:
@@ -4728,7 +5031,7 @@ static void *
 pure_alloc (size_t size, int type)
 {
   void *result;
-#ifdef USE_LSB_TAG
+#if USE_LSB_TAG
   size_t alignment = (1 << GCTYPEBITS);
 #else
   size_t alignment = sizeof (EMACS_INT);
@@ -6239,33 +6542,7 @@ gc_sweep (void)
 	}
   }
 
-  /* Free all unmarked vectors */
-  {
-    register struct Lisp_Vector *vector = all_vectors, *prev = 0, *next;
-    total_vector_size = 0;
-
-    while (vector)
-      if (!VECTOR_MARKED_P (vector))
-	{
-	  if (prev)
-	    prev->header.next = vector->header.next;
-	  else
-	    all_vectors = vector->header.next.vector;
-	  next = vector->header.next.vector;
-	  lisp_free (vector);
-	  vector = next;
-
-	}
-      else
-	{
-	  VECTOR_UNMARK (vector);
-	  if (vector->header.size & PSEUDOVECTOR_FLAG)
-	    total_vector_size += PSEUDOVECTOR_SIZE_MASK & vector->header.size;
-	  else
-	    total_vector_size += vector->header.size;
-	  prev = vector, vector = vector->header.next.vector;
-	}
-  }
+  sweep_vectors ();
 
 #ifdef GC_CHECK_STRING_BYTES
   if (!noninteractive)
@@ -6402,7 +6679,6 @@ init_alloc_once (void)
   Vdead = make_pure_string ("DEAD", 4, 4, 0);
 #endif
 
-  all_vectors = 0;
   ignore_warnings = 1;
 #ifdef DOUG_LEA_MALLOC
   mallopt (M_TRIM_THRESHOLD, 128*1024); /* trim threshold */
@@ -6415,6 +6691,7 @@ init_alloc_once (void)
   init_marker ();
   init_float ();
   init_intervals ();
+  init_vectors ();
   init_weak_hash_tables ();
 
 #ifdef REL_ALLOC

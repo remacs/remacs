@@ -1619,15 +1619,12 @@ struct face
   unsigned strike_through_color_defaulted_p : 1;
   unsigned box_color_defaulted_p : 1;
 
-  /* TTY appearances.  Blinking is not yet implemented.  Colors are
-     found in `lface' with empty color string meaning the default
-     color of the TTY.  */
+  /* TTY appearances.  Colors are found in `lface' with empty color
+     string meaning the default color of the TTY.  */
   unsigned tty_bold_p : 1;
-  unsigned tty_dim_p : 1;
+  unsigned tty_italic_p : 1;
   unsigned tty_underline_p : 1;
-  unsigned tty_alt_charset_p : 1;
   unsigned tty_reverse_p : 1;
-  unsigned tty_blinking_p : 1;
 
   /* 1 means that colors of this face may not be freed because they
      have been copied bitwise from a base face (see
@@ -2225,7 +2222,11 @@ struct it
   struct display_pos current;
 
   /* Total number of overlay strings to process.  This can be >
-     OVERLAY_STRING_CHUNK_SIZE.  */
+     OVERLAY_STRING_CHUNK_SIZE.  Value is dependable only when
+     current.overlay_string_index >= 0.  Use the latter to determine
+     whether an overlay string is being iterated over, because
+     n_overlay_strings can be positive even when we are not rendering
+     an overlay string.  */
   ptrdiff_t n_overlay_strings;
 
   /* The charpos where n_overlay_strings was calculated.  This should
@@ -2244,7 +2245,8 @@ struct it
 
   /* If non-nil, a Lisp string being processed.  If
      current.overlay_string_index >= 0, this is an overlay string from
-     pos.  */
+     pos.  Use STRINGP (it.string) to test whether we are rendering a
+     string or something else; do NOT use BUFFERP (it.object).  */
   Lisp_Object string;
 
   /* If non-nil, we are processing a string that came
@@ -2443,6 +2445,9 @@ struct it
      producing special glyphs for display purposes, like truncation
      and continuation glyphs, or blanks that extend each line to the
      edge of the window on a TTY.
+
+     Do NOT use !BUFFERP (it.object) as a test whether we are
+     iterating over a string; use STRINGP (it.string) instead.
 
      Position is the current iterator position in object.  */
   Lisp_Object object;
@@ -3007,8 +3012,7 @@ enum tool_bar_item_image
 #define TTY_CAP_UNDERLINE	0x02
 #define TTY_CAP_BOLD		0x04
 #define TTY_CAP_DIM		0x08
-#define TTY_CAP_BLINK		0x10
-#define TTY_CAP_ALT_CHARSET	0x20
+#define TTY_CAP_ITALIC  	0x10
 
 
 /***********************************************************************

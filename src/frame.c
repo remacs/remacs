@@ -331,7 +331,7 @@ make_frame (int mini_p)
       mini_window = make_window ();
       XWINDOW (root_window)->next = mini_window;
       XWINDOW (mini_window)->prev = root_window;
-      XWINDOW (mini_window)->mini_p = Qt;
+      XWINDOW (mini_window)->mini = 1;
       XWINDOW (mini_window)->frame = frame;
       f->minibuffer_window = mini_window;
     }
@@ -480,7 +480,7 @@ make_minibuffer_frame (void)
      as nil. */
 
   mini_window = f->minibuffer_window = f->root_window;
-  XWINDOW (mini_window)->mini_p = Qt;
+  XWINDOW (mini_window)->mini = 1;
   XWINDOW (mini_window)->next = Qnil;
   XWINDOW (mini_window)->prev = Qnil;
   XWINDOW (mini_window)->frame = frame;
@@ -1152,10 +1152,6 @@ other_visible_frames (FRAME_PTR f)
   described for Fdelete_frame.  */
 Lisp_Object
 delete_frame (Lisp_Object frame, Lisp_Object force)
-     /* If we use `register' here, gcc-4.0.2 on amd64 using
-	-DUSE_LISP_UNION_TYPE complains further down that we're getting the
-	address of `force'.  Go figure.  */
-
 {
   struct frame *f;
   struct frame *sf = SELECTED_FRAME ();
