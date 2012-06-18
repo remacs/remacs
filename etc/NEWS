@@ -88,6 +88,9 @@ treated as images.
 *** Images displayed via ImageMagick now support transparency and the
 :background image spec property.
 
+** Face underlining can now use a wave.
+See the "Face Attributes" section of the Elisp manual.
+
 ** String values for `initial-buffer-choice' also apply to emacsclient
 frames, if emacsclient is only told to open a new frame without
 specifying any file to visit or expression to evaluate.
@@ -149,6 +152,60 @@ which have not been renamed to `cl-foo*' but just `cl-foo'.
 
 The old `cl' is now deprecated and is nothing more than a bunch of aliases that
 provide the old non-prefixed names.
+
+** A new mode for Python.
+This provides several new features, including:
+per-buffer shells, better indentation, Python 3 support, and improved
+shell-interaction compatible with iPython (and virtually any other
+text based shell).
+
+*** Some user options have been replaced/renamed:
+Old defcustom:                | New defcustom:
+python-indent                 | python-indent-offset
+python-guess-indent           | python-indent-guess-indent-offset
+python-pdbtrack-do-tracking-p | python-pdbtrack-activate
+python-use-skeletons          | python-skeleton-autoinsert
+
+*** Some user options have been removed:
+
+**** `python-indent-string-contents': Strings are never indented.
+
+**** `python-honour-comment-indentation':
+Comments are never considered as indentation markers themselves.
+
+**** `python-continuation-offset': Indentation is automatically
+calculated in a pep8 compliant way depending on the context.
+
+**** `python-shell-prompt-alist', `python-shell-continuation-prompt-alist':
+Have no direct mapping as the shell interaction is completely different.
+
+**** `python-python-command', `python-jython-command':
+Replaced by `python-shell-interpreter'.
+
+**** `inferior-python-filter-regexp', `python-remove-cwd-from-path',
+`python-pdbtrack-minor-mode-string', `python-source-modes':
+No longer relevant.
+
+*** Some commands have been replaced:
+Old command               | New command
+python-insert-class       | python-skeleton-class
+python-insert-def         | python-skeleton-def
+python-insert-for         | python-skeleton-for
+python-insert-if          | python-skeleton-if
+python-insert-try/except  | python-skeleton-try
+python-insert-try/finally | python-skeleton-try
+python-insert-while       | python-skeleton-while
+python-find-function      | python-nav-jump-to-defun
+python-next-statement     | python-nav-forward-sentence
+python-previous-statement | python-nav-backward-sentence
+python-send-buffer        | python-shell-send-buffer
+python-send-defun         | python-shell-send-defun
+python-send-region        | python-shell-send-region
+python-send-region-and-go | Emulate with python-shell-send-region and
+                            python-shell-switch-to-shell
+python-send-string        | python-shell-send-string
+python-switch-to-python   | python-shell-switch-to-shell
+python-describe-symbol    | python-eldoc-at-point
 
 ** VHDL-mode
 - Support for ghdl (free vhdl compiler).  Now default.
@@ -384,7 +441,7 @@ The interpretation of the DECLS is determined by `defun-declarations-alist'.
 ** New error type and new function `user-error'.  Doesn't trigger the debugger.
 
 ** The functions get-lru-window, get-mru-window and get-largest-window
-now accept a third argument to avoid chosing the selected window.
+now accept a third argument to avoid choosing the selected window.
 
 ** Completion
 
@@ -560,7 +617,8 @@ terminal coding system.  The new option `glyphless-char-display-control'
 specifies how to display them: as a hexadecimal code in a box, a thin
 1-pixel space, an empty box, etc.
 
-*** New input methods: farsi, farsi-translit, bulgarian-alt-phonetic.
+*** New input methods for Farsi and Bulgarian
+(farsi-isiri-9147, farsi-transliterate-banan, bulgarian-alt-phonetic).
 
 *** `nobreak-char-display' now also highlights Unicode hyphen chars
 (U+2010 and U+2011).

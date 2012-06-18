@@ -1368,7 +1368,7 @@ The messages are visible anyway, because an error is raised.")
 
 (defvar tramp-message-show-progress-reporter-message t
   "Show Tramp progress reporter message in the minibuffer.
-This variable is used to disable recurive progress reporter messages.")
+This variable is used to disable recursive progress reporter messages.")
 
 (defsubst tramp-message (vec-or-proc level fmt-string &rest args)
   "Emit a message depending on verbosity level.
@@ -1928,22 +1928,32 @@ Falls back to normal file name handler if no Tramp file name handler exists."
 			(let ((default-directory
 				(tramp-compat-temporary-file-directory)))
 			  (load (cadr sf) 'noerror 'nomessage)))
+		      ;; If `non-essential' is non-nil, Tramp shall
+		      ;; not open a new connection.
 		      ;; If Tramp detects that it shouldn't continue
-		      ;; to work, it throws the `suppress' event.  We
-		      ;; try the default handler then.
+		      ;; to work, it throws the `suppress' event.
 		      ;; This could happen for example, when Tramp
 		      ;; tries to open the same connection twice in a
 		      ;; short time frame.
+		      ;; In both cases, we try the default handler then.
 		      (setq result
-			    (catch 'suppress (apply foreign operation args)))
-		      (if (eq result 'suppress)
-			  (let (tramp-message-show-message)
-			    (tramp-message
-			     v 1 "Suppress received in operation %s"
-			     (append (list operation) args))
-			    (tramp-cleanup v)
-			    (tramp-run-real-handler operation args))
-			result))
+			    (catch 'non-essential
+			      (catch 'suppress
+				(apply foreign operation args))))
+		      (cond
+		       ((eq result 'non-essential)
+			(tramp-message
+			 v 5 "Non-essential received in operation %s"
+			 (append (list operation) args))
+			(tramp-run-real-handler operation args))
+		       ((eq result 'suppress)
+			(let (tramp-message-show-message)
+			  (tramp-message
+			   v 1 "Suppress received in operation %s"
+			   (append (list operation) args))
+			  (tramp-cleanup v)
+			  (tramp-run-real-handler operation args)))
+		       (t result)))
 
 		  ;; Trace that somebody has interrupted the operation.
 		  ((debug quit)

@@ -281,8 +281,8 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "window.h"
 #include "termchar.h"
 #include "dispextern.h"
-#include "buffer.h"
 #include "character.h"
+#include "buffer.h"
 #include "charset.h"
 #include "indent.h"
 #include "commands.h"
@@ -3696,7 +3696,8 @@ handle_face_prop (struct it *it)
       int i;
       Lisp_Object from_overlay
 	= (it->current.overlay_string_index >= 0
-	   ? it->string_overlays[it->current.overlay_string_index]
+	   ? it->string_overlays[it->current.overlay_string_index
+				 % OVERLAY_STRING_CHUNK_SIZE]
 	   : Qnil);
 
       /* See if we got to this string directly or indirectly from
@@ -3710,7 +3711,8 @@ handle_face_prop (struct it *it)
 	  {
 	    if (it->stack[i].current.overlay_string_index >= 0)
 	      from_overlay
-		= it->string_overlays[it->stack[i].current.overlay_string_index];
+		= it->string_overlays[it->stack[i].current.overlay_string_index
+				      % OVERLAY_STRING_CHUNK_SIZE];
 	    else if (! NILP (it->stack[i].from_overlay))
 	      from_overlay = it->stack[i].from_overlay;
 
@@ -13376,6 +13378,12 @@ redisplay_internal (void)
 	{
 	  struct frame *f = XFRAME (frame);
 
+	  /* We don't have to do anything for unselected terminal
+	     frames.  */
+	  if ((FRAME_TERMCAP_P (f) || FRAME_MSDOS_P (f))
+	      && !EQ (FRAME_TTY (f)->top_frame, frame))
+	    continue;
+
 	  if (FRAME_WINDOW_P (f) || FRAME_TERMCAP_P (f) || f == sf)
 	    {
 	      if (! EQ (frame, selected_frame))
@@ -13996,16 +14004,13 @@ set_cursor_from_row (struct window *w, struct glyph_row *row,
 		    break;
 		  }
 		/* See if we've found a better approximation to
-		   POS_BEFORE or to POS_AFTER.  Note that we want the
-		   first (leftmost) glyph of all those that are the
-		   closest from below, and the last (rightmost) of all
-		   those from above.  */
+		   POS_BEFORE or to POS_AFTER.  */
 		if (0 > dpos && dpos > pos_before - pt_old)
 		  {
 		    pos_before = glyph->charpos;
 		    glyph_before = glyph;
 		  }
-		else if (0 < dpos && dpos <= pos_after - pt_old)
+		else if (0 < dpos && dpos < pos_after - pt_old)
 		  {
 		    pos_after = glyph->charpos;
 		    glyph_after = glyph;
@@ -14089,7 +14094,7 @@ set_cursor_from_row (struct window *w, struct glyph_row *row,
 		    pos_before = glyph->charpos;
 		    glyph_before = glyph;
 		  }
-		else if (0 < dpos && dpos <= pos_after - pt_old)
+		else if (0 < dpos && dpos < pos_after - pt_old)
 		  {
 		    pos_after = glyph->charpos;
 		    glyph_after = glyph;
@@ -14321,6 +14326,7 @@ set_cursor_from_row (struct window *w, struct glyph_row *row,
 	     the cursor is not on this line.  */
 	  if (cursor == NULL
 	      && (row->reversed_p ? glyph <= end : glyph >= end)
+	      && (row->reversed_p ? end > glyphs_end : end < glyphs_end)
 	      && STRINGP (end->object)
 	      && row->continued_p)
 	    return 0;
@@ -14350,6 +14356,21 @@ set_cursor_from_row (struct window *w, struct glyph_row *row,
  compute_x:
   if (cursor != NULL)
     glyph = cursor;
+  else if (glyph == glyphs_end
+	   && pos_before == pos_after
+	   && STRINGP ((row->reversed_p
+			? row->glyphs[TEXT_AREA] + row->used[TEXT_AREA] - 1
+			: row->glyphs[TEXT_AREA])->object))
+    {
+      /* If all the glyphs of this row came from strings, put the
+	 cursor on the first glyph of the row.  This avoids having the
+	 cursor outside of the text area in this very rare and hard
+	 use case.  */
+      glyph =
+	row->reversed_p
+	? row->glyphs[TEXT_AREA] + row->used[TEXT_AREA] - 1
+	: row->glyphs[TEXT_AREA];
+    }
   if (x < 0)
     {
       struct glyph *g;

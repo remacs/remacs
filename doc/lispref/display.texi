@@ -790,8 +790,8 @@ Its default value is a list of two functions:
 @findex collapse-delayed-warnings
 @findex display-delayed-warnings
 @noindent
-The function @code{collapse-delayed-warnings} iterates through
-@code{delayed-warnings-list}, removing repeated entries.  The function
+The function @code{collapse-delayed-warnings} removes repeated entries
+from @code{delayed-warnings-list}.  The function
 @code{display-delayed-warnings} calls @code{display-warning} on each
 of the entries in @code{delayed-warnings-list}, in turn, and then sets
 @code{delayed-warnings-list} to @code{nil}.
@@ -2081,11 +2081,10 @@ the @code{:family} attribute (a string).  @xref{Fonts,,, emacs, The
 GNU Emacs Manual}.
 
 @item :width
-Relative proportionate character width, also known as the character
-set width.  This should be one of the symbols @code{ultra-condensed},
-@code{extra-condensed}, @code{condensed}, @code{semi-condensed},
-@code{normal}, @code{semi-expanded}, @code{expanded},
-@code{extra-expanded}, or @code{ultra-expanded}.
+Relative character width.  This should be one of the symbols
+@code{ultra-condensed}, @code{extra-condensed}, @code{condensed},
+@code{semi-condensed}, @code{normal}, @code{semi-expanded},
+@code{expanded}, @code{extra-expanded}, or @code{ultra-expanded}.
 
 @item :height
 The height of the font.  In the simplest case, this is an integer in
@@ -2113,6 +2112,7 @@ variable-brightness text, any weight greater than normal is displayed
 as extra bright, and any weight less than normal is displayed as
 half-bright.
 
+@cindex italic text
 @item :slant
 Font slant---one of the symbols @code{italic}, @code{oblique},
 @code{normal}, @code{reverse-italic}, or @code{reverse-oblique}.  On
@@ -2129,19 +2129,42 @@ stipple patterns.
 Background color, a string.  The value can be a system-defined color
 name, or a hexadecimal color specification.  @xref{Color Names}.
 
+@cindex underlined text
 @item :underline
-Whether or not characters should be underlined, and in what color.  If
-the value is @code{t}, underlining uses the foreground color of the
-face.  If the value is a string, underlining uses that color.  The
-value @code{nil} means do not underline.
+Whether or not characters should be underlined, and in what
+way.  The possible values of the @code{:underline} attribute are:
 
+@table @asis
+@item @code{nil}
+Don't underline.
+
+@item @code{t}
+Underline with the foreground color of the face.
+
+@item @var{color}
+Underline in color @var{color}; which should be either a string
+specifying a color, or the symbol @code{foreground-color}, meaning the
+foreground color of the face.
+
+@item @code{(:color @var{color} :style @var{style})}
+@var{color} is as described above.  Omitting the attribute
+@code{:color} means to use the foreground color of the face.
+@var{style} should be a symbol @code{line} or @code{wave}, meaning to
+use a straight or wavy line.  Omitting the attribute @code{:style}
+means to use a straight line.
+@end table
+
+@cindex overlined text
 @item :overline
 Whether or not characters should be overlined, and in what color.
-The value is used like that of @code{:underline}.
+If the value is @code{t}, overlining uses the foreground color of the
+face.  If the value is a string, overlining uses that color.  The
+value @code{nil} means do not overline.
 
+@cindex strike-through text
 @item :strike-through
 Whether or not characters should be strike-through, and in what
-color.  The value is used like that of @code{:underline}.
+color.  The value is used like that of @code{:overline}.
 
 @item :box
 Whether or not a box should be drawn around characters, its color, the

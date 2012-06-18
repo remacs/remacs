@@ -103,6 +103,9 @@
 
 ;;; Code:
 
+;; FIXME: When 24.1 is common place remove use of `lexical-let' and put "-*-
+;;        lexical-binding: t -*-" in the first line.
+
 ;; Only use of macros is allowed - may be replaced by `cl-lib' some time.
 (eval-when-compile
   (require 'cl))
@@ -150,10 +153,7 @@ Comparison done with `equal'."
 				 (equal elem e)))
 		     seq)))
 
-;; FIXME: Check whether complicated `defconst's can be embedded in
-;;        `eval-when-compile'.
-
-;; FIXME: Check whether `lambda's can be embedded in `function'.
+;; FIXME: Embed complicated `defconst's in `eval-when-compile'.
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Versions
@@ -171,7 +171,7 @@ and before TAIL-RE and DELIM-RE in VAR or DEFAULT for no match."
 ;; Use CVSHeader to really get information from CVS and not other version
 ;; control systems.
 (defconst rst-cvs-header
-  "$CVSHeader: sm/rst_el/rst.el,v 1.282 2012-06-06 19:16:55 stefan Exp $")
+  "$CVSHeader: sm/rst_el/rst.el,v 1.287 2012-06-16 09:41:47 stefan Exp $")
 (defconst rst-cvs-rev
   (rst-extract-version "\\$" "CVSHeader: \\S + " "[0-9]+\\(?:\\.[0-9]+\\)+"
 		       " .*" rst-cvs-header "0.0")
@@ -185,25 +185,24 @@ and before TAIL-RE and DELIM-RE in VAR or DEFAULT for no match."
 ;; Use LastChanged... to really get information from SVN.
 (defconst rst-svn-rev
   (rst-extract-version "\\$" "LastChangedRevision: " "[0-9]+" " "
-		       "$LastChangedRevision: 7399 $")
+		       "$LastChangedRevision: 7444 $")
   "The SVN revision of this file.
 SVN revision is the upstream (docutils) revision.")
 (defconst rst-svn-timestamp
   (rst-extract-version "\\$" "LastChangedDate: " ".+?+" " "
-		       "$LastChangedDate: 2012-04-29 17:01:05 +0200 (Sun, 29 Apr 2012) $")
+		       "$LastChangedDate: 2012-06-16 11:41:40 +0200 (Sat, 16 Jun 2012) $")
   "The SVN time stamp of this file.")
 
 ;; Maintained by the release process.
 (defconst rst-official-version
   (rst-extract-version "%" "OfficialVersion: " "[0-9]+\\(?:\\.[0-9]+\\)+" " "
-		       "%OfficialVersion: 1.2.1 %")
+		       "%OfficialVersion: 1.3.0 %")
   "Official version of the package.")
 (defconst rst-official-cvs-rev
   (rst-extract-version "[%$]" "Revision: " "[0-9]+\\(?:\\.[0-9]+\\)+" " "
-		       "%Revision: 1.256 %")
+		       "%Revision: 1.287 %")
   "CVS revision of this file in the official version.")
 
-;; FIXME: Version differences due to SVN checkin must not change this.
 (defconst rst-version
   (if (equal rst-official-cvs-rev rst-cvs-rev)
       rst-official-version
@@ -412,7 +411,8 @@ in parentheses follows the development revision and the time stamp.")
 				       ; tag.
 
     ;; Symbol (`sym')
-    (sym-tag (:shy "\\sw+" (:shy "\\s_\\sw+") "*"))
+    (sym-prt "[-+.:_]") ; Non-word part of a symbol.
+    (sym-tag (:shy "\\sw+" (:shy sym-prt "\\sw+") "*"))
 
     ;; URIs (`uri')
     (uri-tag (:alt ,@rst-uri-schemes))
@@ -599,6 +599,7 @@ well but give an additional message."
 		    ;; Same as mark-defun sgml-mark-current-element.
 		    [?\C-c ?\C-m])
     ;; Move backward/forward between section titles.
+    ;; FIXME: Also bind similar to outline mode.
     (rst-define-key map [?\C-\M-a] 'rst-backward-section
 		    ;; Same as beginning-of-defun.
 		    [?\C-c ?\C-n])
@@ -696,23 +697,20 @@ This inherits from Text mode.")
 ;; Syntax table.
 (defvar rst-mode-syntax-table
   (let ((st (copy-syntax-table text-mode-syntax-table)))
-    ;; FIXME: This must be rethought; at the very least ?. should not be a
-    ;;        symbol for `dabbrev' to work properly.
     (modify-syntax-entry ?$ "." st)
     (modify-syntax-entry ?% "." st)
     (modify-syntax-entry ?& "." st)
     (modify-syntax-entry ?' "." st)
     (modify-syntax-entry ?* "." st)
-    (modify-syntax-entry ?+ "_" st)
-    (modify-syntax-entry ?. "_" st)
+    (modify-syntax-entry ?+ "." st)
+    (modify-syntax-entry ?- "." st)
     (modify-syntax-entry ?/ "." st)
-    (modify-syntax-entry ?: "_" st)
     (modify-syntax-entry ?< "." st)
     (modify-syntax-entry ?= "." st)
     (modify-syntax-entry ?> "." st)
     (modify-syntax-entry ?\\ "\\" st)
+    (modify-syntax-entry ?_ "." st)
     (modify-syntax-entry ?| "." st)
-    (modify-syntax-entry ?_ "_" st)
     (modify-syntax-entry ?\u00ab "." st)
     (modify-syntax-entry ?\u00bb "." st)
     (modify-syntax-entry ?\u2018 "." st)
@@ -1816,7 +1814,7 @@ in order to adapt it to our preferred style."
 	;; Apply the new style.
 	(apply 'rst-update-section (nth (car lm) rst-preferred-adornments))
 
-	;; Reset the market to avoid slowing down editing until it gets GC'ed.
+	;; Reset the marker to avoid slowing down editing until it gets GC'ed.
 	(set-marker (cdr lm) nil)
 	)
     )))
@@ -2849,7 +2847,7 @@ and not from inner alignment points."
     (save-match-data
       (unless (looking-at (rst-re 'lin-end))
 	(back-to-indentation)
-	;; Current indendation is always the least likely tab.
+	;; Current indentation is always the least likely tab.
 	(let ((tabs (list (list (point) 0 nil)))) ; (POINT OFFSET INNER)
 	  ;; Push inner tabs more likely to continue writing.
 	  (cond
