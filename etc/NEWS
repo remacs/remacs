@@ -429,6 +429,8 @@ still be supported for Emacs 24.x.
 
 * Lisp changes in Emacs 24.2
 
+** The return value of `defalias' has changed and is now undefined.
+
 ** `defun' also accepts a (declare DECLS) form, like `defmacro'.
 The interpretation of the DECLS is determined by `defun-declarations-alist'.
 
@@ -470,6 +472,8 @@ is detected.
 ** When invoked with the -nw switch to run on the Windows text-mode terminal,
 Emacs now supports mouse highlight, help-echo (in the echo area), and
 mouse-autoselect-window.
+
+** New function `tty-top-frame' returns the topmost frame of a text terminal.
 
 
 * Installation Changes in Emacs 24.1

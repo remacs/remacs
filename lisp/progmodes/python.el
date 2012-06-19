@@ -1,4 +1,4 @@
-;;; python.el --- Python's flying circus support for Emacs
+;;; python.el --- Python's flying circus support for Emacs -*- coding: utf-8 -*-
 
 ;; Copyright (C) 2003-2012  Free Software Foundation, Inc.
 
@@ -308,29 +308,31 @@
 
 (eval-when-compile
   (defconst python-rx-constituents
-    (list
-     `(block-start          . ,(rx symbol-start
+    `((block-start          . ,(rx symbol-start
                                    (or "def" "class" "if" "elif" "else" "try"
                                        "except" "finally" "for" "while" "with")
                                    symbol-end))
-     `(decorator            . ,(rx line-start (* space) ?@ (any letter ?_)
+      (decorator            . ,(rx line-start (* space) ?@ (any letter ?_)
                                    (* (any word ?_))))
-     `(defun                . ,(rx symbol-start (or "def" "class") symbol-end))
-     `(if-name-main         . ,(rx line-start "if" (+ space) "__name__"
+      (defun                . ,(rx symbol-start (or "def" "class") symbol-end))
+      (if-name-main         . ,(rx line-start "if" (+ space) "__name__"
                                    (+ space) "==" (+ space)
                                    (any ?' ?\") "__main__" (any ?' ?\")
                                    (* space) ?:))
-     `(symbol-name          . ,(rx (any letter ?_) (* (any word ?_))))
-     `(open-paren           . ,(rx (or "{" "[" "(")))
-     `(close-paren          . ,(rx (or "}" "]" ")")))
-     `(simple-operator      . ,(rx (any ?+ ?- ?/ ?& ?^ ?~ ?| ?* ?< ?> ?= ?%)))
-     `(not-simple-operator  . ,(rx
+      (symbol-name          . ,(rx (any letter ?_) (* (any word ?_))))
+      (open-paren           . ,(rx (or "{" "[" "(")))
+      (close-paren          . ,(rx (or "}" "]" ")")))
+      (simple-operator      . ,(rx (any ?+ ?- ?/ ?& ?^ ?~ ?| ?* ?< ?> ?= ?%)))
+      ;; FIXME: rx should support (not simple-operator).
+      (not-simple-operator  . ,(rx
                                 (not
                                  (any ?+ ?- ?/ ?& ?^ ?~ ?| ?* ?< ?> ?= ?%))))
-     `(operator             . ,(rx (or "+" "-" "/" "&" "^" "~" "|" "*" "<" ">"
+      ;; FIXME: Use regexp-opt.
+      (operator             . ,(rx (or "+" "-" "/" "&" "^" "~" "|" "*" "<" ">"
                                        "=" "%" "**" "//" "<<" ">>" "<=" "!="
                                        "==" ">=" "is" "not")))
-     `(assignment-operator  . ,(rx (or "=" "+=" "-=" "*=" "/=" "//=" "%=" "**="
+      ;; FIXME: Use regexp-opt.
+      (assignment-operator  . ,(rx (or "=" "+=" "-=" "*=" "/=" "//=" "%=" "**="
                                        ">>=" "<<=" "&=" "^=" "|="))))
     "Additional Python specific sexps for `python-rx'"))
 
@@ -1569,10 +1571,10 @@ there for compatibility with CEDET.")
     (get-buffer-process proc-buffer-name)))
 
 (define-obsolete-function-alias
-  'python-proc 'python-shell-internal-get-or-create-process "23.3")
+  'python-proc 'python-shell-internal-get-or-create-process "24.2")
 
 (define-obsolete-variable-alias
-  'python-buffer 'python-shell-internal-buffer "23.3")
+  'python-buffer 'python-shell-internal-buffer "24.2")
 
 (defun python-shell-send-string (string &optional process msg)
   "Send STRING to inferior Python PROCESS.
@@ -1627,10 +1629,10 @@ Returns the output.  See `python-shell-send-string-no-output'."
    (python-shell-internal-get-or-create-process) nil))
 
 (define-obsolete-function-alias
-  'python-send-receive 'python-shell-internal-send-string "23.3")
+  'python-send-receive 'python-shell-internal-send-string "24.2")
 
 (define-obsolete-function-alias
-  'python-send-string 'python-shell-internal-send-string "23.3")
+  'python-send-string 'python-shell-internal-send-string "24.2")
 
 (defun python-shell-send-region (start end)
   "Send the region delimited by START and END to inferior Python process."
@@ -2146,6 +2148,7 @@ the if condition."
   "Define a `python-mode' skeleton using NAME DOC and SKEL.
 The skeleton will be bound to python-skeleton-NAME and will
 be added to `python-mode-abbrev-table'."
+  (declare (indent 2))
   (let* ((name (symbol-name name))
          (function-name (intern (concat "python-skeleton-" name))))
     `(progn
@@ -2156,11 +2159,11 @@ be added to `python-mode-abbrev-table'."
          ,(or doc
               (format "Insert %s statement." name))
          ,@skel))))
-(put 'python-skeleton-define 'lisp-indent-function 2)
 
 (defmacro python-define-auxiliary-skeleton (name doc &optional &rest skel)
   "Define a `python-mode' auxiliary skeleton using NAME DOC and SKEL.
 The skeleton will be bound to python-skeleton-NAME."
+  (declare (indent 2))
   (let* ((name (symbol-name name))
          (function-name (intern (concat "python-skeleton--" name)))
          (msg (format
@@ -2176,7 +2179,6 @@ The skeleton will be bound to python-skeleton-NAME."
        (unless (y-or-n-p ,msg)
          (signal 'quit t))
        ,@skel)))
-(put 'python-define-auxiliary-skeleton 'lisp-indent-function 2)
 
 (python-define-auxiliary-skeleton else nil)
 
@@ -2800,7 +2802,7 @@ Optional argument DIRECTION defines the direction to move to."
 
 
 ;;;###autoload
-(define-derived-mode python-mode fundamental-mode "Python"
+(define-derived-mode python-mode prog-mode "Python"
   "Major mode for editing Python files.
 
 \\{python-mode-map}
