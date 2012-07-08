@@ -23264,7 +23264,7 @@ compute_overhangs_and_x (struct glyph_string *s, int x, int backward_p)
    to allocate glyph strings (because draw_glyphs can be called
    asynchronously).  */
 
-#define BUILD_GLYPH_STRINGS(START, END, HEAD, TAIL, HL, X, LAST_X)	\
+#define BUILD_GLYPH_STRINGS_1(START, END, HEAD, TAIL, HL, X, LAST_X)	\
   do									\
     {									\
       HEAD = TAIL = NULL;						\
@@ -23295,13 +23295,15 @@ compute_overhangs_and_x (struct glyph_string *s, int x, int backward_p)
 	    case IMAGE_GLYPH:						\
 	      BUILD_IMAGE_GLYPH_STRING (START, END, HEAD, TAIL,		\
 					HL, X, LAST_X);			\
-	      break;							\
+	      break;
+              
+#define BUILD_GLYPH_STRINGS_XW(START, END, HEAD, TAIL, HL, X, LAST_X)	\
             case XWIDGET_GLYPH:                                         \
               BUILD_XWIDGET_GLYPH_STRING (START, END, HEAD, TAIL,       \
                                           HL, X, LAST_X);               \
-              break;                                                    \
-                                                                        \
-									\
+              break;
+
+#define BUILD_GLYPH_STRINGS_2(START, END, HEAD, TAIL, HL, X, LAST_X)	\
 	    case GLYPHLESS_GLYPH:					\
 	      BUILD_GLYPHLESS_GLYPH_STRING (START, END, HEAD, TAIL,	\
 					    HL, X, LAST_X);		\
@@ -23320,6 +23322,18 @@ compute_overhangs_and_x (struct glyph_string *s, int x, int backward_p)
     } while (0)
 
 
+#ifdef HAVE_XWIDGETS
+#define BUILD_GLYPH_STRINGS(START, END, HEAD, TAIL, HL, X, LAST_X)	\
+BUILD_GLYPH_STRINGS_1(START, END, HEAD, TAIL, HL, X, LAST_X)	\
+BUILD_GLYPH_STRINGS_XW(START, END, HEAD, TAIL, HL, X, LAST_X)	\
+BUILD_GLYPH_STRINGS_2(START, END, HEAD, TAIL, HL, X, LAST_X)
+#else
+#define BUILD_GLYPH_STRINGS(START, END, HEAD, TAIL, HL, X, LAST_X)	\
+BUILD_GLYPH_STRINGS_1(START, END, HEAD, TAIL, HL, X, LAST_X)	\
+BUILD_GLYPH_STRINGS_2(START, END, HEAD, TAIL, HL, X, LAST_X)
+#endif 
+
+        
 /* Draw glyphs between START and END in AREA of ROW on window W,
    starting at x-position X.  X is relative to AREA in W.  HL is a
    face-override with the following meaning:

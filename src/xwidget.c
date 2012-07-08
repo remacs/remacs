@@ -1,3 +1,4 @@
+#ifdef HAVE_XWIDGETS
 #include <config.h>
 
 #include <signal.h>
@@ -1451,3 +1452,4 @@ xwidget_end_redisplay (struct window *w, struct glyph_matrix *matrix)
         }
     }
 }
+#endif

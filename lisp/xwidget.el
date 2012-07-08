@@ -5,7 +5,8 @@
 ;;; Commentary:
 ;; 
 
-(require 'xwidget-internal)
+;;TODO this breaks compilation when we dont have xwidgets
+;;(require 'xwidget-internal)
 
 ;;TODO model after make-text-button instead!
 ;;; Code:
