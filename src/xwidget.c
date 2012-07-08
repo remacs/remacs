@@ -1,5 +1,5 @@
-#ifdef HAVE_XWIDGETS
 #include <config.h>
+#ifdef HAVE_XWIDGETS
 
 #include <signal.h>
 

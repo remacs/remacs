@@ -1495,8 +1495,8 @@ doesn't make the window active. this leads to problems.
 from browse-url-interactive-arg. this might need a new optional argument.
 
 http://test
-** TODO anything support
-hook so anything can filter browser history.
+** TODO anything/helm support
+hook so anything/helm can filter browser history.
 ** TODO new relative url code sometimes fail
 http://www.dilbert.com
 ** TODO input field enhancements
