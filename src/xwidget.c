@@ -370,23 +370,26 @@ xwidget_hide_view (struct xwidget_view *xv)
 }
 
 
-void xwidget_plug_added(GtkSocket *socket,
-                        gpointer   user_data)
+void
+xwidget_plug_added(GtkSocket *socket,
+                   gpointer   user_data)
 {
   //hmm this doesnt seem to get called for foreign windows
   printf("xwidget_plug_added\n");
 }
 
-gboolean xwidget_plug_removed(GtkSocket *socket,
-                              gpointer   user_data)
+gboolean
+xwidget_plug_removed(GtkSocket *socket,
+                     gpointer   user_data)
 {
   printf("xwidget_plug_removed\n");
   return TRUE; /* dont run the default handler because that kills the socket and we want to reuse it*/
 }
 
 
-void xwidget_slider_changed (GtkRange *range,
-                             gpointer  user_data)
+void
+xwidget_slider_changed (GtkRange *range,
+                        gpointer  user_data)
 {
   //slider value changed. change value of siblings
   //correspondingly. but remember that changing value will again
@@ -428,7 +431,8 @@ void xwidget_slider_changed (GtkRange *range,
 
 /* when the off-screen webkit master view changes this signal is called.
    it copies the bitmap from the off-screen webkit instance */
-gboolean webkit_osr_damage_event_callback (GtkWidget *widget, GdkEventExpose *event, gpointer data)
+gboolean
+webkit_osr_damage_event_callback (GtkWidget *widget, GdkEventExpose *event, gpointer data)
 {
   //TODO this is wrong! should just oueu a redraw of onscreen widget
   struct xwidget* xw = (struct xwidget*) g_object_get_data (G_OBJECT (widget), XG_XWIDGET);
@@ -448,7 +452,8 @@ gboolean webkit_osr_damage_event_callback (GtkWidget *widget, GdkEventExpose *ev
 
 
 
-gboolean webkit_osr_key_event_callback (GtkWidget *widget, GdkEventKey *event, gpointer data)
+gboolean
+webkit_osr_key_event_callback (GtkWidget *widget, GdkEventKey *event, gpointer data)
 {
   printf("terminating a webkit osr keypress\n");
   //TRUE terminate the event here. no paren handlers will be called. but webkit then doesng get the event and it still crashes
@@ -457,7 +462,9 @@ gboolean webkit_osr_key_event_callback (GtkWidget *widget, GdkEventKey *event, g
 }
 
 
-void store_xwidget_event_string(struct xwidget* xw, char* eventname,char* eventstr){
+void
+store_xwidget_event_string(struct xwidget* xw, char* eventname,char* eventstr)
+{
   //refactor attempt
   struct input_event event;
   Lisp_Object xwl;
@@ -475,7 +482,8 @@ void store_xwidget_event_string(struct xwidget* xw, char* eventname,char* events
 }
 
 //TODO deprecated, use load-status
-void     webkit_osr_document_load_finished_callback (WebKitWebView  *webkitwebview,
+void
+webkit_osr_document_load_finished_callback (WebKitWebView  *webkitwebview,
                                                      WebKitWebFrame *arg1,
                                                      gpointer        data)
 {
@@ -488,7 +496,8 @@ void     webkit_osr_document_load_finished_callback (WebKitWebView  *webkitwebvi
                              "document-load-finished", "");
 }
 
-gboolean     webkit_osr_download_callback (WebKitWebView  *webkitwebview,
+gboolean
+webkit_osr_download_callback (WebKitWebView  *webkitwebview,
                                        WebKitDownload *arg1,
                                        gpointer        data)
 {
@@ -506,12 +515,13 @@ gboolean     webkit_osr_download_callback (WebKitWebView  *webkitwebview,
   return FALSE;
 }
 
-gboolean  webkit_osr_mime_type_policy_typedecision_requested_callback(WebKitWebView           *webView,
-                                                                      WebKitWebFrame          *frame,
-                                                                      WebKitNetworkRequest    *request,
-                                                                      gchar                   *mimetype,
-                                                                      WebKitWebPolicyDecision *policy_decision,
-                                                                      gpointer                 user_data)
+gboolean
+webkit_osr_mime_type_policy_typedecision_requested_callback(WebKitWebView           *webView,
+                                                            WebKitWebFrame          *frame,
+                                                            WebKitNetworkRequest    *request,
+                                                            gchar                   *mimetype,
+                                                            WebKitWebPolicyDecision *policy_decision,
+                                                            gpointer                 user_data)
 {
   printf("mime policy requested\n");
   // this function makes webkit send a download signal for all unknown mime types
@@ -525,12 +535,13 @@ gboolean  webkit_osr_mime_type_policy_typedecision_requested_callback(WebKitWebV
 }
 
 
-gboolean webkit_osr_new_window_policy_decision_requested_callback(WebKitWebView             *webView,
-                                                                  WebKitWebFrame            *frame,
-                                                                  WebKitNetworkRequest      *request,
-                                                                  WebKitWebNavigationAction *navigation_action,
-                                                                  WebKitWebPolicyDecision   *policy_decision,
-                                                                  gpointer                   user_data)
+gboolean
+webkit_osr_new_window_policy_decision_requested_callback(WebKitWebView             *webView,
+                                                         WebKitWebFrame            *frame,
+                                                         WebKitNetworkRequest      *request,
+                                                         WebKitWebNavigationAction *navigation_action,
+                                                         WebKitWebPolicyDecision   *policy_decision,
+                                                         gpointer                   user_data)
 {
   struct xwidget* xw = (struct xwidget*) g_object_get_data (G_OBJECT (webView), XG_XWIDGET);  
   printf("webkit_osr_new_window_policy_decision_requested_callback %s\n",
@@ -541,12 +552,13 @@ gboolean webkit_osr_new_window_policy_decision_requested_callback(WebKitWebView 
   return FALSE;
 }
 
-gboolean webkit_osr_navigation_policy_decision_requested_callback(WebKitWebView             *webView,
-                                                        WebKitWebFrame            *frame,
-                                                        WebKitNetworkRequest      *request,
-                                                        WebKitWebNavigationAction *navigation_action,
-                                                        WebKitWebPolicyDecision   *policy_decision,
-                                                        gpointer                   user_data)
+gboolean
+webkit_osr_navigation_policy_decision_requested_callback(WebKitWebView             *webView,
+                                                         WebKitWebFrame            *frame,
+                                                         WebKitNetworkRequest      *request,
+                                                         WebKitWebNavigationAction *navigation_action,
+                                                         WebKitWebPolicyDecision   *policy_decision,
+                                                         gpointer                   user_data)
 {
   struct xwidget* xw = (struct xwidget*) g_object_get_data (G_OBJECT (webView), XG_XWIDGET);  
   printf("webkit_osr_navigation_policy_decision_requested_callback %s\n",
@@ -577,9 +589,9 @@ xwidget_osr_draw_callback (GtkWidget *widget, cairo_t *cr, gpointer data)
 
 
 gboolean
-xwidget_osr_button_callback ( GtkWidget *widget,
-                              GdkEvent  *event,
-                              gpointer   user_data)
+xwidget_osr_button_callback (GtkWidget *widget,
+                             GdkEvent  *event,
+                             gpointer   user_data)
 {
   struct xwidget* xw = (struct xwidget*) g_object_get_data (G_OBJECT (widget), XG_XWIDGET);
   GdkEvent* eventcopy =  gdk_event_copy(event);
@@ -593,8 +605,7 @@ int xwidget_view_index=0;
 
 /* initializes and does initial placement of an xwidget view on screen */
 struct xwidget_view*
-xwidget_init_view (
-                   struct xwidget *xww,
+xwidget_init_view (struct xwidget *xww,
                    struct glyph_string *s,
                    int x, int y)
 {
@@ -847,9 +858,9 @@ if(Qnil == xwidget) {printf("ERROR xwidget nil\n");   return Qnil;};    \
   };
 
 
-DEFUN ("xwidget-webkit-goto-uri", Fxwidget_webkit_goto_uri,  Sxwidget_webkit_goto_uri, 2, 2, 0,
-       doc:	/* webkit goto uri.*/
-       )
+DEFUN ("xwidget-webkit-goto-uri", Fxwidget_webkit_goto_uri,  Sxwidget_webkit_goto_uri,
+       2, 2, 0,
+       doc:	/* webkit goto uri.*/)
   (Lisp_Object xwidget, Lisp_Object uri)
 {
   WEBKIT_FN_INIT();
@@ -858,9 +869,9 @@ DEFUN ("xwidget-webkit-goto-uri", Fxwidget_webkit_goto_uri,  Sxwidget_webkit_got
 }
 
 
-DEFUN ("xwidget-webkit-execute-script", Fxwidget_webkit_execute_script,  Sxwidget_webkit_execute_script, 2, 2, 0,
-       doc:	/* webkit exec js.*/
-       )
+DEFUN ("xwidget-webkit-execute-script", Fxwidget_webkit_execute_script,  Sxwidget_webkit_execute_script,
+       2, 2, 0,
+       doc:	/* webkit exec js.*/)
   (Lisp_Object xwidget, Lisp_Object script)
 {
   WEBKIT_FN_INIT();
@@ -868,9 +879,9 @@ DEFUN ("xwidget-webkit-execute-script", Fxwidget_webkit_execute_script,  Sxwidge
   return Qnil;
 }
 
-DEFUN ("xwidget-webkit-get-title", Fxwidget_webkit_get_title,  Sxwidget_webkit_get_title, 1, 1, 0,
-       doc:	/* webkit get title. can be used to work around exec method lacks return val*/
-       )
+DEFUN ("xwidget-webkit-get-title", Fxwidget_webkit_get_title,  Sxwidget_webkit_get_title,
+       1, 1, 0,
+       doc:	/* webkit get title. can be used to work around exec method lacks return val*/)
   (Lisp_Object xwidget)
 {
   //TODO support multibyte strings
@@ -886,7 +897,8 @@ DEFUN ("xwidget-webkit-get-title", Fxwidget_webkit_get_title,  Sxwidget_webkit_g
 }
 
 //TODO missnamed
-DEFUN("xwidget-disable-plugin-for-mime", Fxwidget_disable_plugin_for_mime , Sxwidget_disable_plugin_for_mime, 1,1,0, doc: /* */)
+DEFUN("xwidget-disable-plugin-for-mime", Fxwidget_disable_plugin_for_mime , Sxwidget_disable_plugin_for_mime,
+      1,1,0, doc: /* */)
   (Lisp_Object mime)
 {
   WebKitWebPlugin *wp = webkit_web_plugin_database_get_plugin_for_mimetype
@@ -902,16 +914,19 @@ DEFUN("xwidget-disable-plugin-for-mime", Fxwidget_disable_plugin_for_mime , Sxwi
 
 //attempting a workaround for a webkit offscreen bug
 //TODO verify its still needed
-void                gtk_window_get_position             (GtkWindow *window,
-                                                         gint *root_x,
-                                                         gint *root_y){
+void
+gtk_window_get_position (GtkWindow *window,
+                         gint *root_x,
+                         gint *root_y)
+{
   printf("my getsize\n");
   *root_x = 0;
   *root_y = 0;
 }
 
 void
-xwidget_webkit_dom_dump(WebKitDOMNode* parent){
+xwidget_webkit_dom_dump(WebKitDOMNode* parent)
+{
   WebKitDOMNodeList* list;
   int i;
   int length;
@@ -948,9 +963,9 @@ xwidget_webkit_dom_dump(WebKitDOMNode* parent){
 }
 
 
-DEFUN ("xwidget-webkit-dom-dump", Fxwidget_webkit_dom_dump,  Sxwidget_webkit_dom_dump, 1, 1, 0,
-       doc:	/* webkit dom dump*/
-       )
+DEFUN ("xwidget-webkit-dom-dump", Fxwidget_webkit_dom_dump,  Sxwidget_webkit_dom_dump,
+       1, 1, 0,
+       doc:	/* webkit dom dump*/)
   (Lisp_Object xwidget)
 {
   WEBKIT_FN_INIT();
@@ -1309,7 +1324,8 @@ xwidget_spec_value ( Lisp_Object spec, Lisp_Object  key,
 }
 
 
-void      xwidget_view_delete_all_in_window(  struct window *w )
+void
+xwidget_view_delete_all_in_window (struct window *w)
 {
   struct xwidget_view* xv = NULL;
   for (int i = 0; i < MAX_XWIDGETS; i++){
@@ -1323,7 +1339,9 @@ void      xwidget_view_delete_all_in_window(  struct window *w )
 
 
 
-struct xwidget_view* xwidget_view_lookup(struct xwidget* xw,     struct window *w){
+struct xwidget_view*
+xwidget_view_lookup (struct xwidget* xw, struct window *w)
+{
   struct xwidget_view* xv = NULL;
   for (int i = 0; i < MAX_XWIDGETS; i++){
     xv = &xwidget_views[i];
