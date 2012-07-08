@@ -1348,6 +1348,7 @@ xwidget_view_lookup (struct xwidget* xw, struct window *w)
     if (xv->initialized && (xv->model == xw) && (xv->w == w))
       return xv;
   }
+  return NULL; /* we didnt find a matching view */
 }
 
 struct xwidget*
