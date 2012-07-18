@@ -1563,3 +1563,16 @@ special finalization would go into gc_sweep()
 http://developer.gnome.org/libevview/3.2/libevview-ev-view.html
 would be useful for reading PDF:s and other document types.
 it would work the same way webkit embedding works.
+
+** TODO support gobject introspection
+https://live.gnome.org/GObjectIntrospection/
+supporting gobject introspection would mean that more gtk widgets
+could be tried out with less effort, and also that the build process
+and runtime support would be easier. The drawbacks are small: somewhat
+slower execution, and difficulty in providing elisp bindings for
+introspection. 
+
+https://live.gnome.org/GObjectIntrospection/HowToWriteALanguageBinding
+
+http://developer.gnome.org/gi/unstable/gi-girepository.html
+http://developer.gnome.org/gi/unstable/gi-overview.html

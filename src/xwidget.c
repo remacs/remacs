@@ -102,6 +102,9 @@
 #include <webkit/webkitdownload.h>
 #endif
 
+//for GIR
+#include <girepository.h>
+
 #include "xwidget.h"
 
 //TODO should of course not be a hardcoded array but I can't be bothered atm
@@ -137,7 +140,7 @@ Lisp_Object Qxwidget_info;
 Lisp_Object Qxwidget_resize;
 Lisp_Object Qxwidget_send_keyboard_event;
 
-Lisp_Object Qbutton, Qtoggle, Qslider, Qsocket, Qsocket_osr, Qcairo,
+Lisp_Object Qbutton, Qtoggle, Qslider, Qsocket, Qsocket_osr, Qcairo, Qxwgir,
   Qwebkit_osr, QCplist;
 
 
@@ -601,6 +604,46 @@ xwidget_osr_button_callback (GtkWidget *widget,
   return TRUE; //dont propagate this event furter
 }
 
+
+GtkWidget* xwgir_create(char* class){
+  //create a gtk widget, given its name
+  //find the constructor
+  //call it
+  //also figure out how to pass args
+  /* gboolean            g_function_info_invoke              (GIFunctionInfo *info, */
+  /*                                                        const GIArgument *in_args, */
+  /*                                                        int n_in_args, */
+  /*                                                        const GIArgument *out_args, */
+  /*                                                        int n_out_args, */
+  /*                                                        GIArgument *return_value, */
+  /*                                                        GError **error); */
+  char* namespace = "Gtk";
+  char* namespace_version = "3.0";
+  GError *error = NULL;
+  GIRepository *repository;
+  GIArgument return_value;
+    /* GtkWidget* rv; */
+  repository = g_irepository_get_default();
+  g_irepository_require(repository, namespace, namespace_version, 0, &error);
+  if (error) {
+    g_error("ERROR: %s\n", error->message);
+    return NULL;
+  }
+
+  GIObjectInfo* obj_info = g_irepository_find_by_name(repository, namespace, class);
+  GIFunctionInfo* f_info = g_object_info_find_method (obj_info, "new");
+  g_function_info_invoke(f_info,
+                         0, NULL,
+                         0, NULL,
+                         &return_value,
+                         NULL);
+  return return_value.v_pointer;
+  
+}
+
+
+
+ 
 int xwidget_view_index=0;
 
 /* initializes and does initial placement of an xwidget view on screen */
@@ -635,6 +678,9 @@ xwidget_init_view (struct xwidget *xww,
     } else if (EQ(xww->type, Qtoggle)) {
     xv->widget = gtk_toggle_button_new_with_label (XSTRING(xww->title)->data);
     //xv->widget = gtk_entry_new ();//temp hack to experiment with key propagation TODO entry widget is useful for testing
+  } else if (EQ(xww->type, Qxwgir)) {
+    //this is just a test for xwgir
+    xv->widget = xwgir_create ("Button");
   } else if (EQ(xww->type, Qsocket)) {
     xv->widget = gtk_socket_new ();
     g_signal_connect_after(xv->widget, "plug-added", G_CALLBACK(xwidget_plug_added), "plug added");
@@ -721,7 +767,21 @@ xwidget_init_view (struct xwidget *xww,
 #endif
 
 
-  } else return NULL;
+  } else {
+    //here we have run out of hard coded symbols, we will now attempt to create
+    //a widget dynamically
+    //TODO
+    // - support OSR
+    // - support constructor args
+    // - support signals
+    // - check that the argument widget type actually exists
+    printf("xwgir symbol %s:\n",SDATA(SYMBOL_NAME(xww->type)));
+    //xv->widget = xwgir_create ("Button");
+    xv->widget = xwgir_create(SDATA(SYMBOL_NAME(xww->type)));
+
+  }
+
+    //else return NULL;
 
   //widget realization
   //make container widget 1st, and put the actual widget inside the container
@@ -1245,6 +1305,8 @@ syms_of_xwidget (void)
   DEFSYM (Qsocket_osr, "socket-osr");
   DEFSYM (Qcairo, "cairo");
 
+  DEFSYM (Qxwgir, "xwgir");
+
   DEFSYM (QCplist, ":plist");
 
    DEFVAR_LISP ("xwidget-alist", Vxwidget_alist, doc: /*xwidgets list*/);
@@ -1471,4 +1533,6 @@ xwidget_end_redisplay (struct window *w, struct glyph_matrix *matrix)
         }
     }
 }
+
+      
 #endif

@@ -72,6 +72,14 @@
               (xwidget-insert (point-min)  'webkit-osr "webkit-osr" 1000  1000)
               (define-key (current-local-map) [xwidget-event] 'xwidget-handler-demo-basic))
 
+(xwidget-demo "a-xwgir" 
+              (xwidget-insert (point-min)  'xwgir "xwgir" 1000  1000)
+              (define-key (current-local-map) [xwidget-event] 'xwidget-handler-demo-basic))
+
+(xwidget-demo "a-xwgir-button" 
+              (xwidget-insert (point-min)  'ColorButton "xwgir-button" 1000  1000)
+              (define-key (current-local-map) [xwidget-event] 'xwidget-handler-demo-basic))
+
 
 
 (xwidget-demo "basic"

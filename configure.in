@@ -1960,6 +1960,8 @@ HAVE_XWIDGETS=no
 HAVE_WEBKIT=no
 HAVE_GOOCANVAS=no
 HAVE_CLUTTER=no
+HAVE_GIR=no
+
 if test "${with_xwidgets}" != "no"; then
    echo "xwidgets enabled, checking webkit, and others"
    HAVE_XWIDGETS=yes
@@ -2000,6 +2002,15 @@ if test "${with_xwidgets}" != "no"; then
      AC_DEFINE(HAVE_GOOCANVAS, 1, [Define to 1 if you have goocanvas support.])
   fi
   fi
+
+  GIR_REQUIRED=1.32.1
+  GIR_MODULES="gobject-introspection-1.0 >= $GIR_REQUIRED"
+  PKG_CHECK_MODULES(GIR, $GIR_MODULES, HAVE_GIR=yes, HAVE_GIR=no)
+  if test $HAVE_GIR = yes; then
+     AC_DEFINE(HAVE_GIR, 1, [Define to 1 if you have GIR support.])
+  fi
+
+  
 fi
 
 
@@ -3761,6 +3772,7 @@ echo "  Does Emacs use toolkit scroll bars?                     ${USE_TOOLKIT_SC
 
 echo "  Does Emacs support Xwidgets?                            ${HAVE_XWIDGETS}"
 echo "       Does xwidgets support webkit(requires gtk3)?       ${HAVE_WEBKIT}"
+echo "       Does xwidgets support gobject introspection?       ${HAVE_GIR}"
 echo "       Does xwidgets support clutter(demo code)?          ${HAVE_CLUTTER}"
 echo "       Does xwidgets support goocanvas(demo code)?        ${HAVE_GOOCANVAS}"
 echo
