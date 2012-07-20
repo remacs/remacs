@@ -36,15 +36,15 @@
      ,@body))
 
 (xwidget-demo "a-button" 
-              (xwidget-insert (point-min) 'button  "button" 60  50)
+              (xwidget-insert (point-min) 'Button  "button" 60  50)
               (define-key (current-local-map) [xwidget-event] 'xwidget-handler-demo-basic))
 
 (xwidget-demo "a-toggle-button" 
-              (xwidget-insert (point-min) 'toggle  "teggle" 60  50)
+              (xwidget-insert (point-min) 'ToggleButton  "toggle" 60  50)
               (define-key (current-local-map) [xwidget-event] 'xwidget-handler-demo-basic))
 
 (xwidget-demo "a-big-button" 
-              (xwidget-insert (point-min)  'button "button" 400  500)
+              (xwidget-insert (point-min)  'Button "button" 400  500)
               (define-key (current-local-map) [xwidget-event] 'xwidget-handler-demo-basic))
 
 (xwidget-demo "a-socket" 
@@ -76,11 +76,20 @@
               (xwidget-insert (point-min)  'xwgir "xwgir" 1000  1000)
               (define-key (current-local-map) [xwidget-event] 'xwidget-handler-demo-basic))
 
+(xwidget-demo "a-xwgir-color-button" 
+              (xwidget-insert (point-min)  'ColorButton "xwgir-color-button" 1000  1000)
+              (define-key (current-local-map) [xwidget-event] 'xwidget-handler-demo-basic))
+
 (xwidget-demo "a-xwgir-button" 
-              (xwidget-insert (point-min)  'ColorButton "xwgir-button" 1000  1000)
+              (xwidget-insert (point-min)  'Button "xwgir-button" 100  100)
               (define-key (current-local-map) [xwidget-event] 'xwidget-handler-demo-basic))
 
 
+(defun xwgir-test ()
+  (interactive)
+  (xwgir-demo-a-xwgir-button)
+  (xwgir-call-method (xwidget-at 1) "set_label" '( "xwgir set label!"))
+  )
 
 (xwidget-demo "basic"
   (xwidget-insert (point-min)  'button "button" 40  50 )

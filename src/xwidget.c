@@ -633,12 +633,147 @@ GtkWidget* xwgir_create(char* class){
   GIObjectInfo* obj_info = g_irepository_find_by_name(repository, namespace, class);
   GIFunctionInfo* f_info = g_object_info_find_method (obj_info, "new");
   g_function_info_invoke(f_info,
-                         0, NULL,
-                         0, NULL,
+                         NULL, 0,
+                         NULL, 0,
                          &return_value,
                          NULL);
   return return_value.v_pointer;
   
+}
+
+int
+xwgir_convert_lisp_to_gir_arg(GIArgument* giarg,
+                              GIArgInfo* arginfo,
+                              Lisp_Object lisparg )
+{
+
+  GITypeTag   tag;
+  gboolean    is_pointer;
+  gboolean    is_enum;
+  tag =  g_type_info_get_tag (g_arg_info_get_type (arginfo));
+  
+  switch (tag)
+    {
+    case GI_TYPE_TAG_BOOLEAN:
+      giarg->v_boolean = XFASTINT(lisparg);
+      break;
+    case GI_TYPE_TAG_INT8:
+      giarg->v_int8 = XFASTINT(lisparg);
+      break;
+    case GI_TYPE_TAG_UINT8:
+      giarg->v_uint8 = XFASTINT(lisparg);
+      break;
+    case GI_TYPE_TAG_INT16:
+      giarg->v_int16 = XFASTINT(lisparg);
+      break;
+    case GI_TYPE_TAG_UINT16:
+      giarg->v_uint16 = XFASTINT(lisparg);
+      break;
+    case GI_TYPE_TAG_INT32:
+      giarg->v_int32 = XFASTINT(lisparg);
+      break;
+    case GI_TYPE_TAG_UINT32:
+      giarg->v_uint32 = XFASTINT(lisparg);
+      break;
+
+    case GI_TYPE_TAG_INT64:
+      giarg->v_int64 = XFASTINT(lisparg);
+      break;
+    case GI_TYPE_TAG_UINT64:
+      giarg->v_uint64 = XFASTINT(lisparg);
+      break;
+
+
+    case GI_TYPE_TAG_FLOAT:
+      giarg->v_float = XFLOAT_DATA(lisparg);
+      break;
+
+    case GI_TYPE_TAG_DOUBLE:
+      giarg->v_double = XFLOAT_DATA(lisparg);
+      break;
+
+    case GI_TYPE_TAG_UTF8:
+    case GI_TYPE_TAG_FILENAME:
+      //giarg->v_string = SDATA(lisparg);
+      giarg->v_pointer = SDATA(lisparg);
+      break;
+      
+    case GI_TYPE_TAG_ARRAY:
+    case GI_TYPE_TAG_GLIST:
+    case GI_TYPE_TAG_GSLIST:
+    case GI_TYPE_TAG_GHASH:
+    case GI_TYPE_TAG_ERROR:
+    case GI_TYPE_TAG_INTERFACE:
+    case GI_TYPE_TAG_VOID:
+    case GI_TYPE_TAG_UNICHAR:
+    case GI_TYPE_TAG_GTYPE:
+      //?? i dont know how to handle these yet TODO
+      printf("failed in my lisp to gir arg conversion duties. sob!\n");
+      return -1;
+      break;
+    }
+  return 0;
+}
+
+DEFUN ("xwgir-call-method", Fxwgir_call_method,  Sxwgir_call_method,       3, 3, 0,
+       doc:	/* call xwidget object method.*/)
+  (Lisp_Object xwidget, Lisp_Object method, Lisp_Object arguments)
+{
+  char* namespace = "Gtk";
+  char* namespace_version = "3.0";
+  GError *error = NULL;
+  GIRepository *repository;
+  GIArgument return_value;
+  GIArgument in_args[20];
+    /* GtkWidget* rv; */
+  repository = g_irepository_get_default();
+  g_irepository_require(repository, namespace, namespace_version, 0, &error);
+  if (error) {
+    printf("repo init error\n");
+    //for some reason the error struct is mysteriously corrupt TODO figure out
+    //g_error("ERROR: %s\n", error->message);
+    return Qnil;
+  }
+  struct xwidget* xw; 
+  if(!XXWIDGETP(xwidget)) {printf("ERROR not an xwidget\n"); return Qnil;}; 
+  if(Qnil == xwidget) {printf("ERROR xwidget nil\n");   return Qnil;};  
+  xw = XXWIDGET(xwidget);                                               
+  if(NULL == xw) printf("ERROR xw is 0\n");                               
+
+  //we need the concrete widget, which happens in 2 ways depending on OSR or not TODO
+  GtkWidget* widget = (xwidget_view_lookup (xw, XWINDOW(FRAME_SELECTED_WINDOW (SELECTED_FRAME ()))) -> widget); //non osr case
+  
+  //char* class = SDATA(SYMBOL_NAME(xw->type)); //this works but is unflexible
+  //figure out the class from the widget instead
+  char* class = G_OBJECT_TYPE_NAME(widget); //gives "GtkButton"(I want "Button")
+  class += strlen(namespace);  //TODO check for corresponding api method
+  GIObjectInfo* obj_info = g_irepository_find_by_name(repository, namespace, class);
+  GIFunctionInfo* f_info = g_object_info_find_method (obj_info, SDATA(method));
+
+  //loop over args, convert from lisp to primitive type, given arg introspection data
+  //TODO g_callable_info_get_n_args(f_info) should match
+  int argscount = XFASTINT(Flength(arguments));
+  if(argscount !=  g_callable_info_get_n_args(f_info)){
+    printf("xwgir call method arg count doesn match! \n");
+    return Qnil;
+  }
+  int i;
+  for (i = 1; i < argscount + 1; ++i)
+    {
+      xwgir_convert_lisp_to_gir_arg(&in_args[i], g_callable_info_get_arg(f_info, i - 1), Fnth(i - 1, arguments));
+    }
+
+  in_args[0].v_pointer = widget;
+  if(g_function_info_invoke(f_info,
+                            in_args, argscount + 1,
+                            NULL, 0,
+                            &return_value,
+                            &error)) { 
+    //g_error("ERROR: %s\n", error->message);
+    printf("invokation error\n");
+     return Qnil; 
+   }   
+  return Qt;
 }
 
 
@@ -678,9 +813,6 @@ xwidget_init_view (struct xwidget *xww,
     } else if (EQ(xww->type, Qtoggle)) {
     xv->widget = gtk_toggle_button_new_with_label (XSTRING(xww->title)->data);
     //xv->widget = gtk_entry_new ();//temp hack to experiment with key propagation TODO entry widget is useful for testing
-  } else if (EQ(xww->type, Qxwgir)) {
-    //this is just a test for xwgir
-    xv->widget = xwgir_create ("Button");
   } else if (EQ(xww->type, Qsocket)) {
     xv->widget = gtk_socket_new ();
     g_signal_connect_after(xv->widget, "plug-added", G_CALLBACK(xwidget_plug_added), "plug added");
@@ -1282,6 +1414,8 @@ syms_of_xwidget (void)
   defsubr (&Sxwidget_webkit_get_title);
   DEFSYM (Qwebkit_osr ,"webkit-osr");
 #endif
+
+  defsubr (&Sxwgir_call_method  );
   
   defsubr (&Sxwidget_size_request  );
   defsubr (&Sxwidget_delete_zombies);
@@ -1298,14 +1432,12 @@ syms_of_xwidget (void)
   DEFSYM (Qcxwidget ,":xwidget");
   DEFSYM (Qtitle ,":title");
 
-  DEFSYM (Qbutton, "button");
-  DEFSYM (Qtoggle, "toggle");
+  DEFSYM (Qbutton, "Button"); //changed to match the gtk class because xwgir(experimental and not really needed)
+  DEFSYM (Qtoggle, "ToggleButton");
   DEFSYM (Qslider, "slider");
   DEFSYM (Qsocket, "socket");
   DEFSYM (Qsocket_osr, "socket-osr");
   DEFSYM (Qcairo, "cairo");
-
-  DEFSYM (Qxwgir, "xwgir");
 
   DEFSYM (QCplist, ":plist");
 
