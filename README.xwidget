@@ -1576,3 +1576,9 @@ https://live.gnome.org/GObjectIntrospection/HowToWriteALanguageBinding
 
 http://developer.gnome.org/gi/unstable/gi-girepository.html
 http://developer.gnome.org/gi/unstable/gi-overview.html
+
+tentative testcase:
+(xwgir-require-namespace "WebKit" "3.0")
+
+(put 'webkit-osr :xwgir-class '("WebKit" "WebView"))
+(xwgir-call-method (xwidget-at 1) "set_zoom_level" '(3.0))

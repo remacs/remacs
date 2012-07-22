@@ -139,7 +139,7 @@ Lisp_Object Qxwidget_embed_steal_window;
 Lisp_Object Qxwidget_info;
 Lisp_Object Qxwidget_resize;
 Lisp_Object Qxwidget_send_keyboard_event;
-
+Lisp_Object Qcxwgir_class;
 Lisp_Object Qbutton, Qtoggle, Qslider, Qsocket, Qsocket_osr, Qcairo, Qxwgir,
   Qwebkit_osr, QCplist;
 
@@ -605,32 +605,35 @@ xwidget_osr_button_callback (GtkWidget *widget,
 }
 
 
-GtkWidget* xwgir_create(char* class){
+GIRepository *girepository ;
+DEFUN( "xwgir-require-namespace",Fxwgir_require_namespace, Sxwgir_require_namespace, 2,2,0,
+       doc: /*require a namespace. must be done for all namespaces we want to use, before using other xwgir functions.*/)
+  (Lisp_Object lnamespace, Lisp_Object lnamespace_version)  
+{
+  char* namespace = SDATA(lnamespace);
+  char* namespace_version = SDATA(lnamespace_version);
+  GError *error = NULL;
+
+  girepository = g_irepository_get_default();
+  g_irepository_require(girepository, namespace, namespace_version, 0, &error);
+  if (error) {
+    g_error("ERROR: %s\n", error->message);
+    return Qnil;
+  }
+  return Qt;
+}
+
+GtkWidget* xwgir_create(char* class, char* namespace){
+  //TODO this is more or less the same as xwgir-call-method, so should be refactored
   //create a gtk widget, given its name
   //find the constructor
   //call it
   //also figure out how to pass args
-  /* gboolean            g_function_info_invoke              (GIFunctionInfo *info, */
-  /*                                                        const GIArgument *in_args, */
-  /*                                                        int n_in_args, */
-  /*                                                        const GIArgument *out_args, */
-  /*                                                        int n_out_args, */
-  /*                                                        GIArgument *return_value, */
-  /*                                                        GError **error); */
-  char* namespace = "Gtk";
-  char* namespace_version = "3.0";
-  GError *error = NULL;
-  GIRepository *repository;
-  GIArgument return_value;
-    /* GtkWidget* rv; */
-  repository = g_irepository_get_default();
-  g_irepository_require(repository, namespace, namespace_version, 0, &error);
-  if (error) {
-    g_error("ERROR: %s\n", error->message);
-    return NULL;
-  }
 
-  GIObjectInfo* obj_info = g_irepository_find_by_name(repository, namespace, class);
+  GError *error = NULL;
+  GIArgument return_value;
+
+  GIObjectInfo* obj_info = g_irepository_find_by_name(girepository, namespace, class);
   GIFunctionInfo* f_info = g_object_info_find_method (obj_info, "new");
   g_function_info_invoke(f_info,
                          NULL, 0,
@@ -719,35 +722,34 @@ DEFUN ("xwgir-call-method", Fxwgir_call_method,  Sxwgir_call_method,       3, 3,
        doc:	/* call xwidget object method.*/)
   (Lisp_Object xwidget, Lisp_Object method, Lisp_Object arguments)
 {
-  char* namespace = "Gtk";
-  char* namespace_version = "3.0";
   GError *error = NULL;
-  GIRepository *repository;
   GIArgument return_value;
   GIArgument in_args[20];
-    /* GtkWidget* rv; */
-  repository = g_irepository_get_default();
-  g_irepository_require(repository, namespace, namespace_version, 0, &error);
-  if (error) {
-    printf("repo init error\n");
-    //for some reason the error struct is mysteriously corrupt TODO figure out
-    //g_error("ERROR: %s\n", error->message);
-    return Qnil;
-  }
+
+
   struct xwidget* xw; 
   if(!XXWIDGETP(xwidget)) {printf("ERROR not an xwidget\n"); return Qnil;}; 
   if(Qnil == xwidget) {printf("ERROR xwidget nil\n");   return Qnil;};  
   xw = XXWIDGET(xwidget);                                               
   if(NULL == xw) printf("ERROR xw is 0\n");                               
-
+  char* namespace = SDATA(Fcar(Fget(xw->type, Qcxwgir_class)));
   //we need the concrete widget, which happens in 2 ways depending on OSR or not TODO
-  GtkWidget* widget = (xwidget_view_lookup (xw, XWINDOW(FRAME_SELECTED_WINDOW (SELECTED_FRAME ()))) -> widget); //non osr case
-  
+  GtkWidget* widget = NULL;
+  if(NULL == xw->widget_osr) {
+    widget = xwidget_view_lookup (xw, XWINDOW(FRAME_SELECTED_WINDOW (SELECTED_FRAME ()))) -> widget; 
+  } else {
+    widget = xw->widget_osr;
+  }
+       
   //char* class = SDATA(SYMBOL_NAME(xw->type)); //this works but is unflexible
   //figure out the class from the widget instead
-  char* class = G_OBJECT_TYPE_NAME(widget); //gives "GtkButton"(I want "Button")
-  class += strlen(namespace);  //TODO check for corresponding api method
-  GIObjectInfo* obj_info = g_irepository_find_by_name(repository, namespace, class);
+  /* printf("type class: %s %s\n", G_OBJECT_TYPE_NAME(widget), G_OBJECT_CLASS_NAME(G_OBJECT_GET_CLASS(widget))); */
+  /* char* class = G_OBJECT_TYPE_NAME(widget); //gives "GtkButton"(I want "Button") */
+  /* class += strlen(namespace);  //TODO check for corresponding api method. but this seems to work. */
+
+  char* class = SDATA(Fcar(Fcdr(Fget(xw->type, Qcxwgir_class))));
+
+  GIObjectInfo* obj_info = g_irepository_find_by_name(girepository, namespace, class);
   GIFunctionInfo* f_info = g_object_info_find_method (obj_info, SDATA(method));
 
   //loop over args, convert from lisp to primitive type, given arg introspection data
@@ -907,9 +909,11 @@ xwidget_init_view (struct xwidget *xww,
     // - support constructor args
     // - support signals
     // - check that the argument widget type actually exists
-    printf("xwgir symbol %s:\n",SDATA(SYMBOL_NAME(xww->type)));
+    printf("xwgir symbol %s %s %s:\n",SDATA(SYMBOL_NAME(xww->type)),     SDATA(Fcar(Fcdr(Fget(xww->type, Qcxwgir_class)))), SDATA(Fcar(Fget(xww->type, Qcxwgir_class))));
     //xv->widget = xwgir_create ("Button");
-    xv->widget = xwgir_create(SDATA(SYMBOL_NAME(xww->type)));
+    Fcar(Fget(xww->type, Qcxwgir_class));
+    xv->widget = xwgir_create(    SDATA(Fcar(Fcdr(Fget(xww->type, Qcxwgir_class)))),
+                                  SDATA(Fcar(Fget(xww->type, Qcxwgir_class))));
 
   }
 
@@ -1416,7 +1420,7 @@ syms_of_xwidget (void)
 #endif
 
   defsubr (&Sxwgir_call_method  );
-  
+  defsubr (&Sxwgir_require_namespace);
   defsubr (&Sxwidget_size_request  );
   defsubr (&Sxwidget_delete_zombies);
   defsubr (&Sxwidget_disable_plugin_for_mime);
@@ -1430,6 +1434,7 @@ syms_of_xwidget (void)
   DEFSYM (Qxwidget ,"xwidget");
 
   DEFSYM (Qcxwidget ,":xwidget");
+  DEFSYM (Qcxwgir_class ,":xwgir-class");
   DEFSYM (Qtitle ,":title");
 
   DEFSYM (Qbutton, "Button"); //changed to match the gtk class because xwgir(experimental and not really needed)
