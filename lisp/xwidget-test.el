@@ -87,9 +87,23 @@
 
 (defun xwgir-test ()
   (interactive)
+  (xwgir-require-namespace "Gtk" "3.0")
+  (put 'color-selection :xwgir-class '("Gtk" "ColorSelection"))
+  
   (xwgir-demo-a-xwgir-button)
   (xwgir-call-method (xwidget-at 1) "set_label" '( "xwgir set label!"))
   )
+
+
+;; tentative testcase:
+;; (xwgir-require-namespace "WebKit" "3.0")
+
+;; (put 'webkit-osr :xwgir-class '("WebKit" "WebView"))
+;; (xwgir-call-method (xwidget-at 1) "set_zoom_level" '(3.0))
+
+;; (xwgir-require-namespace "Gtk" "3.0")
+;; (put 'color-selection :xwgir-class '("Gtk" "ColorSelection"))
+
 
 (xwidget-demo "basic"
   (xwidget-insert (point-min)  'button "button" 40  50 )
