@@ -1577,8 +1577,38 @@ https://live.gnome.org/GObjectIntrospection/HowToWriteALanguageBinding
 http://developer.gnome.org/gi/unstable/gi-girepository.html
 http://developer.gnome.org/gi/unstable/gi-overview.html
 
-tentative testcase:
-(xwgir-require-namespace "WebKit" "3.0")
 
+In order for GIR to work, it needs the namespace and class of a
+  widget. This is used to access the typelib file, which contains the
+  introspection data. The namespace and class is stored as a property
+  on the lisp symbol handle used by xwidgets to identify the widget
+  class.
+
+This snippet sets the needed :xwgir-class property, and calls the
+set_zoom_level method:
+
+M-x xwidget-webkit-browse-url RET www.emacswiki.org RET
+
+Then eval the following:
+
+;;load the webkit typelib
+(xwgir-require-namespace "WebKit" "2.0")
+
+;;provide the metadata needed so xwgir can work with the webkit-osr xwidget
 (put 'webkit-osr :xwgir-class '("WebKit" "WebView"))
+;;call the method
 (xwgir-call-method (xwidget-at 1) "set_zoom_level" '(3.0))
+
+It's also possible to create widgets dynamically, by using
+introspection to call a widget constructor(from xwidget-test.el):
+
+
+(defun xwgir-test ()
+  (interactive)
+  (xwgir-require-namespace "Gtk" "3.0")
+  (put 'color-selection :xwgir-class '("Gtk" "ColorSelection"))
+  
+  (xwgir-demo-a-xwgir-button)
+  (xwgir-call-method (xwidget-at 1) "set_label" '( "xwgir set label!"))
+  )
+
