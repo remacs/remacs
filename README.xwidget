@@ -1612,3 +1612,14 @@ introspection to call a widget constructor(from xwidget-test.el):
   (xwgir-call-method (xwidget-at 1) "set_label" '( "xwgir set label!"))
   )
 
+Current limitation:
+- Only 0 arg constructors are supported at the moment. Since xwidgets
+  defer construction, the args needs to be stored with the xwidget.
+
+- xwgir-call-method does indeed lisp to gobject conversion for the
+  arguments, but only some primitive types are supported atm.
+
+- next to no argument checking. If wrong type args are used with the
+  xwgir methods, emacs crashes.
+
+
