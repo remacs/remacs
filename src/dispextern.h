@@ -46,6 +46,13 @@ typedef struct {
 #include "msdos.h"
 #endif
 
+#include <c-strcase.h>
+static inline int
+xstrcasecmp (char const *a, char const *b)
+{
+  return c_strcasecmp (a, b);
+}
+
 #ifdef HAVE_X_WINDOWS
 typedef struct x_display_info Display_Info;
 typedef XImage * XImagePtr;
@@ -66,6 +73,10 @@ typedef HDC XImagePtr_or_DC;
 typedef struct ns_display_info Display_Info;
 typedef Pixmap XImagePtr;
 typedef XImagePtr XImagePtr_or_DC;
+#endif
+
+#ifdef HAVE_WINDOW_SYSTEM
+# include "systime.h"
 #endif
 
 #ifndef HAVE_WINDOW_SYSTEM
@@ -117,39 +128,21 @@ enum window_part
 			      Debugging
  ***********************************************************************/
 
-/* If GLYPH_DEBUG is non-zero, additional checks are activated.  Turn
-   it off by defining the macro GLYPH_DEBUG to zero.  */
+/* If GLYPH_DEBUG is defined, additional checks are activated.  */
 
-#ifndef GLYPH_DEBUG
-#define GLYPH_DEBUG 0
-#endif
+/* Macros to include code only if GLYPH_DEBUG is defined.  */
 
-/* If XASSERTS is non-zero, additional consistency checks are activated.
-   Turn it off by defining the macro XASSERTS to zero.  */
-
-#ifndef XASSERTS
-#define XASSERTS 0
-#endif
-
-/* Macros to include code only if GLYPH_DEBUG != 0.  */
-
-#if GLYPH_DEBUG
+#ifdef GLYPH_DEBUG
 #define IF_DEBUG(X)	X
 #else
 #define IF_DEBUG(X)	(void) 0
 #endif
 
-#if XASSERTS
-#define xassert(X)	do {if (!(X)) abort ();} while (0)
-#else
-#define xassert(X)	(void) 0
-#endif
-
 /* Macro for displaying traces of redisplay.  If Emacs was compiled
-   with GLYPH_DEBUG != 0, the variable trace_redisplay_p can be set to
+   with GLYPH_DEBUG defined, the variable trace_redisplay_p can be set to
    a non-zero value in debugging sessions to activate traces.  */
 
-#if GLYPH_DEBUG
+#ifdef GLYPH_DEBUG
 
 extern int trace_redisplay_p EXTERNALLY_VISIBLE;
 #include <stdio.h>
@@ -160,11 +153,11 @@ extern int trace_redisplay_p EXTERNALLY_VISIBLE;
      else					\
        (void) 0
 
-#else /* GLYPH_DEBUG == 0 */
+#else /* not GLYPH_DEBUG */
 
 #define TRACE(X)	(void) 0
 
-#endif /* GLYPH_DEBUG == 0 */
+#endif /* GLYPH_DEBUG */
 
 
 
@@ -669,7 +662,7 @@ struct glyph_matrix
      line.  */
   unsigned header_line_p : 1;
 
-#if GLYPH_DEBUG
+#ifdef GLYPH_DEBUG
   /* A string identifying the method used to display the matrix.  */
   char method[512];
 #endif
@@ -687,7 +680,7 @@ struct glyph_matrix
 /* Check that glyph pointers stored in glyph rows of MATRIX are okay.
    This aborts if any pointer is found twice.  */
 
-#if GLYPH_DEBUG
+#ifdef GLYPH_DEBUG
 void check_matrix_pointer_lossage (struct glyph_matrix *);
 #define CHECK_MATRIX(MATRIX) check_matrix_pointer_lossage ((MATRIX))
 #else
@@ -966,10 +959,10 @@ struct glyph_row
 
 
 /* Get a pointer to row number ROW in matrix MATRIX.  If GLYPH_DEBUG
-   is defined to a non-zero value, the function matrix_row checks that
-   we don't try to access rows that are out of bounds.  */
+   is defined, the function matrix_row checks that we don't try to
+   access rows that are out of bounds.  */
 
-#if GLYPH_DEBUG
+#ifdef GLYPH_DEBUG
 struct glyph_row *matrix_row (struct glyph_matrix *, int);
 #define MATRIX_ROW(MATRIX, ROW)   matrix_row ((MATRIX), (ROW))
 #else
@@ -2808,7 +2801,7 @@ struct image
 {
   /* The time in seconds at which the image was last displayed.  Set
      in prepare_image_for_display.  */
-  time_t timestamp;
+  EMACS_TIME timestamp;
 
   /* Pixmaps of the image.  */
   Pixmap pixmap, mask;
@@ -3101,10 +3094,9 @@ extern ptrdiff_t compute_display_string_end (ptrdiff_t,
 					     struct bidi_string_data *);
 extern void produce_stretch_glyph (struct it *);
 
-
 #ifdef HAVE_WINDOW_SYSTEM
 
-#if GLYPH_DEBUG
+#ifdef GLYPH_DEBUG
 extern void dump_glyph_string (struct glyph_string *) EXTERNALLY_VISIBLE;
 #endif
 
@@ -3240,7 +3232,6 @@ void unload_color (struct frame *, unsigned long);
 char *choose_face_font (struct frame *, Lisp_Object *, Lisp_Object,
                         int *);
 void prepare_face_for_display (struct frame *, struct face *);
-int xstrcasecmp (const char *, const char *);
 int lookup_named_face (struct frame *, Lisp_Object, int);
 int lookup_basic_face (struct frame *, int);
 int smaller_face (struct frame *, int, int);
@@ -3282,7 +3273,6 @@ void x_implicitly_set_name (struct frame *, Lisp_Object, Lisp_Object);
 
 extern Lisp_Object tip_frame;
 extern Window tip_window;
-EXFUN (Fx_hide_tip, 0);
 extern void start_hourglass (void);
 extern void cancel_hourglass (void);
 extern int hourglass_shown_p;
@@ -3390,12 +3380,9 @@ extern int string_cost (const char *);
 extern int per_line_cost (const char *);
 extern void calculate_costs (struct frame *);
 extern void produce_glyphs (struct it *);
-extern void produce_special_glyphs (struct it *, enum display_element_type);
 extern int tty_capable_p (struct tty_display_info *, unsigned, unsigned long, unsigned long);
 extern void set_tty_color_mode (struct tty_display_info *, struct frame *);
 extern struct terminal *get_named_tty (const char *);
-EXFUN (Ftty_type, 1);
-EXFUN (Fcontrolling_tty_p, 1);
 extern void create_tty_output (struct frame *);
 extern struct terminal *init_tty (const char *, const char *, int);
 extern void tty_append_glyph (struct it *);

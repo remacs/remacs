@@ -305,32 +305,13 @@ If so, return the true (non-nil) value returned by PREDICATE.
 	  (setq cl-ovl (cdr cl-ovl))))
       (set-marker cl-mark nil) (if cl-mark2 (set-marker cl-mark2 nil)))))
 
-;;; Support for `cl-setf'.
+;;; Support for `setf'.
 ;;;###autoload
 (defun cl--set-frame-visible-p (frame val)
   (cond ((null val) (make-frame-invisible frame))
 	((eq val 'icon) (iconify-frame frame))
 	(t (make-frame-visible frame)))
   val)
-
-;;; Support for `cl-progv'.
-(defvar cl--progv-save)
-;;;###autoload
-(defun cl--progv-before (syms values)
-  (while syms
-    (push (if (boundp (car syms))
-		 (cons (car syms) (symbol-value (car syms)))
-	       (car syms)) cl--progv-save)
-    (if values
-	(set (pop syms) (pop values))
-      (makunbound (pop syms)))))
-
-(defun cl--progv-after ()
-  (while cl--progv-save
-    (if (consp (car cl--progv-save))
-	(set (car (car cl--progv-save)) (cdr (car cl--progv-save)))
-      (makunbound (car cl--progv-save)))
-    (pop cl--progv-save)))
 
 
 ;;; Numbers.
@@ -523,6 +504,10 @@ This sets the values of: `cl-most-positive-float', `cl-most-negative-float',
   "Return the subsequence of SEQ from START to END.
 If END is omitted, it defaults to the length of the sequence.
 If START or END is negative, it counts from the end."
+  (declare (gv-setter
+            (lambda (new)
+              `(progn (cl-replace ,seq ,new :start1 ,start :end1 ,end)
+                      ,new))))
   (if (stringp seq) (substring seq start end)
     (let (len)
       (and end (< end 0) (setq end (+ end (setq len (length seq)))))
@@ -587,9 +572,11 @@ If START or END is negative, it counts from the end."
 (defun cl-get (sym tag &optional def)
   "Return the value of SYMBOL's PROPNAME property, or DEFAULT if none.
 \n(fn SYMBOL PROPNAME &optional DEFAULT)"
-  (declare (compiler-macro cl--compiler-macro-get))
+  (declare (compiler-macro cl--compiler-macro-get)
+           (gv-setter (lambda (store) `(put ,sym ,tag ,store))))
   (or (get sym tag)
       (and def
+           ;; Make sure `def' is really absent as opposed to set to nil.
 	   (let ((plist (symbol-plist sym)))
 	     (while (and plist (not (eq (car plist) tag)))
 	       (setq plist (cdr (cdr plist))))
@@ -601,12 +588,22 @@ If START or END is negative, it counts from the end."
   "Search PROPLIST for property PROPNAME; return its value or DEFAULT.
 PROPLIST is a list of the sort returned by `symbol-plist'.
 \n(fn PROPLIST PROPNAME &optional DEFAULT)"
+  (declare (gv-expander
+            (lambda (do)
+              (gv-letplace (getter setter) plist
+                (macroexp-let2 nil k tag
+                  (macroexp-let2 nil d def
+                    (funcall do `(cl-getf ,getter ,k ,d)
+                             (lambda (v)
+                               (funcall setter
+                                        `(cl--set-getf ,getter ,k ,v))))))))))
   (setplist '--cl-getf-symbol-- plist)
   (or (get '--cl-getf-symbol-- tag)
       ;; Originally we called cl-get here,
       ;; but that fails, because cl-get has a compiler macro
       ;; definition that uses getf!
       (when def
+        ;; Make sure `def' is really absent as opposed to set to nil.
 	(while (and plist (not (eq (car plist) tag)))
 	  (setq plist (cdr (cdr plist))))
 	(if plist (car (cdr plist)) def))))

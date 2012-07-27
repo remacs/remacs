@@ -131,16 +131,14 @@ int handling_signal;
 Lisp_Object inhibit_lisp_code;
 
 static Lisp_Object funcall_lambda (Lisp_Object, ptrdiff_t, Lisp_Object *);
-static void unwind_to_catch (struct catchtag *, Lisp_Object) NO_RETURN;
 static int interactive_p (int);
 static Lisp_Object apply_lambda (Lisp_Object fun, Lisp_Object args);
-static Lisp_Object Ffetch_bytecode (Lisp_Object);
 
 void
 init_eval_once (void)
 {
   enum { size = 50 };
-  specpdl = (struct specbinding *) xmalloc (size * sizeof (struct specbinding));
+  specpdl = xmalloc (size * sizeof *specpdl);
   specpdl_size = size;
   specpdl_ptr = specpdl;
   /* Don't forget to update docs (lispref node "Local Variables").  */
@@ -693,18 +691,6 @@ usage: (defvar SYMBOL &optional INITVALUE DOCSTRING)  */)
       /* Do it before evaluating the initial value, for self-references.  */
       XSYMBOL (sym)->declared_special = 1;
 
-      if (SYMBOL_CONSTANT_P (sym))
-	{
-	  /* For upward compatibility, allow (defvar :foo (quote :foo)).  */
-	  Lisp_Object tem1 = Fcar (tail);
-	  if (! (CONSP (tem1)
-		 && EQ (XCAR (tem1), Qquote)
-		 && CONSP (XCDR (tem1))
-		 && EQ (XCAR (XCDR (tem1)), sym)))
-	    error ("Constant symbol `%s' specified in defvar",
-		   SDATA (SYMBOL_NAME (sym)));
-	}
-
       if (NILP (tem))
 	Fset_default (sym, eval_sub (Fcar (tail)));
       else
@@ -1002,26 +988,14 @@ definitions to shadow the loaded ones for use in file byte-compilation.  */)
 	{
 	  /* SYM is not mentioned in ENVIRONMENT.
 	     Look at its function definition.  */
+	  struct gcpro gcpro1;
+	  GCPRO1 (form);
+	  def = Fautoload_do_load (def, sym, Qmacro);
+	  UNGCPRO;
 	  if (EQ (def, Qunbound) || !CONSP (def))
 	    /* Not defined or definition not suitable.  */
 	    break;
-	  if (EQ (XCAR (def), Qautoload))
-	    {
-	      /* Autoloading function: will it be a macro when loaded?  */
-	      tem = Fnth (make_number (4), def);
-	      if (EQ (tem, Qt) || EQ (tem, Qmacro))
-		/* Yes, load it and try again.  */
-		{
-		  struct gcpro gcpro1;
-		  GCPRO1 (form);
-		  do_autoload (def, sym);
-		  UNGCPRO;
-		  continue;
-		}
-	      else
-		break;
-	    }
-	  else if (!EQ (XCAR (def), Qmacro))
+	  if (!EQ (XCAR (def), Qmacro))
 	    break;
 	  else expander = XCDR (def);
 	}
@@ -1111,10 +1085,10 @@ internal_catch (Lisp_Object tag, Lisp_Object (*func) (Lisp_Object), Lisp_Object 
 
    This is used for correct unwinding in Fthrow and Fsignal.  */
 
-static void
+static _Noreturn void
 unwind_to_catch (struct catchtag *catch, Lisp_Object value)
 {
-  register int last_time;
+  int last_time;
 
   /* Save the value in the tag.  */
   catch->val = value;
@@ -1966,12 +1940,26 @@ un_autoload (Lisp_Object oldqueue)
    FUNNAME is the symbol which is the function's name.
    FUNDEF is the autoload definition (a list).  */
 
-void
-do_autoload (Lisp_Object fundef, Lisp_Object funname)
+DEFUN ("autoload-do-load", Fautoload_do_load, Sautoload_do_load, 1, 3, 0,
+       doc: /* Load FUNDEF which should be an autoload.
+If non-nil, FUNNAME should be the symbol whose function value is FUNDEF,
+in which case the function returns the new autoloaded function value.
+If equal to `macro', MACRO-ONLY specifies that FUNDEF should only be loaded if
+it is defines a macro.  */)
+  (Lisp_Object fundef, Lisp_Object funname, Lisp_Object macro_only)
 {
   ptrdiff_t count = SPECPDL_INDEX ();
-  Lisp_Object fun;
   struct gcpro gcpro1, gcpro2, gcpro3;
+
+  if (!CONSP (fundef) || !EQ (Qautoload, XCAR (fundef)))
+    return fundef;
+
+  if (EQ (macro_only, Qmacro))
+    {
+      Lisp_Object kind = Fnth (make_number (4), fundef);
+      if (! (EQ (kind, Qt) || EQ (kind, Qmacro)))
+	return fundef;
+    }
 
   /* This is to make sure that loadup.el gives a clear picture
      of what files are preloaded and when.  */
@@ -1979,9 +1967,8 @@ do_autoload (Lisp_Object fundef, Lisp_Object funname)
     error ("Attempt to autoload %s while preparing to dump",
 	   SDATA (SYMBOL_NAME (funname)));
 
-  fun = funname;
   CHECK_SYMBOL (funname);
-  GCPRO3 (fun, funname, fundef);
+  GCPRO3 (funname, fundef, macro_only);
 
   /* Preserve the match data.  */
   record_unwind_save_match_data ();
@@ -1996,18 +1983,28 @@ do_autoload (Lisp_Object fundef, Lisp_Object funname)
      The value saved here is to be restored into Vautoload_queue.  */
   record_unwind_protect (un_autoload, Vautoload_queue);
   Vautoload_queue = Qt;
-  Fload (Fcar (Fcdr (fundef)), Qnil, Qt, Qnil, Qt);
+  /* If `macro_only', assume this autoload to be a "best-effort",
+     so don't signal an error if autoloading fails.  */
+  Fload (Fcar (Fcdr (fundef)), macro_only, Qt, Qnil, Qt);
 
   /* Once loading finishes, don't undo it.  */
   Vautoload_queue = Qt;
   unbind_to (count, Qnil);
 
-  fun = Findirect_function (fun, Qnil);
-
-  if (!NILP (Fequal (fun, fundef)))
-    error ("Autoloading failed to define function %s",
-	   SDATA (SYMBOL_NAME (funname)));
   UNGCPRO;
+
+  if (NILP (funname))
+    return Qnil;
+  else
+    {
+      Lisp_Object fun = Findirect_function (funname, Qnil);
+
+      if (!NILP (Fequal (fun, fundef)))
+	error ("Autoloading failed to define function %s",
+	       SDATA (SYMBOL_NAME (funname)));
+      else
+	return fun;
+    }
 }
 
 
@@ -2054,15 +2051,7 @@ eval_sub (Lisp_Object form)
     return form;
 
   QUIT;
-  if ((consing_since_gc > gc_cons_threshold
-       && consing_since_gc > gc_relative_threshold)
-      ||
-      (!NILP (Vmemory_full) && consing_since_gc > memory_full_cons_threshold))
-    {
-      GCPRO1 (form);
-      Fgarbage_collect ();
-      UNGCPRO;
-    }
+  maybe_gc ();
 
   if (++lisp_eval_depth > max_lisp_eval_depth)
     {
@@ -2072,8 +2061,8 @@ eval_sub (Lisp_Object form)
 	error ("Lisp nesting exceeds `max-lisp-eval-depth'");
     }
 
-  original_fun = Fcar (form);
-  original_args = Fcdr (form);
+  original_fun = XCAR (form);
+  original_args = XCDR (form);
 
   backtrace.next = backtrace_list;
   backtrace_list = &backtrace;
@@ -2222,7 +2211,7 @@ eval_sub (Lisp_Object form)
 	xsignal1 (Qinvalid_function, original_fun);
       if (EQ (funcar, Qautoload))
 	{
-	  do_autoload (fun, original_fun);
+	  Fautoload_do_load (fun, original_fun, Qnil);
 	  goto retry;
 	}
       if (EQ (funcar, Qmacro))
@@ -2243,7 +2232,7 @@ eval_sub (Lisp_Object form)
   return val;
 }
 
-DEFUN ("apply", Fapply, Sapply, 2, MANY, 0,
+DEFUN ("apply", Fapply, Sapply, 1, MANY, 0,
        doc: /* Call FUNCTION with our remaining args, using our last arg as list of args.
 Then return the value FUNCTION returns.
 Thus, (apply '+ 1 2 '(3 4)) returns 10.
@@ -2751,11 +2740,6 @@ usage: (funcall FUNCTION &rest ARGUMENTS)  */)
   ptrdiff_t i;
 
   QUIT;
-  if ((consing_since_gc > gc_cons_threshold
-       && consing_since_gc > gc_relative_threshold)
-      ||
-      (!NILP (Vmemory_full) && consing_since_gc > memory_full_cons_threshold))
-    Fgarbage_collect ();
 
   if (++lisp_eval_depth > max_lisp_eval_depth)
     {
@@ -2768,9 +2752,12 @@ usage: (funcall FUNCTION &rest ARGUMENTS)  */)
   backtrace.next = backtrace_list;
   backtrace_list = &backtrace;
   backtrace.function = &args[0];
-  backtrace.args = &args[1];
+  backtrace.args = &args[1];	/* This also GCPROs them.  */
   backtrace.nargs = nargs - 1;
   backtrace.debug_on_exit = 0;
+
+  /* Call GC after setting up the backtrace, so the latter GCPROs the args.  */
+  maybe_gc ();
 
   if (debug_on_next_call)
     do_debug_on_call (Qlambda);
@@ -2805,7 +2792,8 @@ usage: (funcall FUNCTION &rest ARGUMENTS)  */)
 	{
 	  if (XSUBR (fun)->max_args > numargs)
 	    {
-	      internal_args = (Lisp_Object *) alloca (XSUBR (fun)->max_args * sizeof (Lisp_Object));
+	      internal_args = alloca (XSUBR (fun)->max_args
+				      * sizeof *internal_args);
 	      memcpy (internal_args, args + 1, numargs * sizeof (Lisp_Object));
 	      for (i = numargs; i < XSUBR (fun)->max_args; i++)
 		internal_args[i] = Qnil;
@@ -2882,7 +2870,7 @@ usage: (funcall FUNCTION &rest ARGUMENTS)  */)
 	val = funcall_lambda (fun, numargs, args + 1);
       else if (EQ (funcar, Qautoload))
 	{
-	  do_autoload (fun, original_fun);
+	  Fautoload_do_load (fun, original_fun, Qnil);
 	  CHECK_CONS_LIST ();
 	  goto retry;
 	}
@@ -3607,6 +3595,7 @@ alist of active lexical bindings.  */);
   defsubr (&Scalled_interactively_p);
   defsubr (&Scommandp);
   defsubr (&Sautoload);
+  defsubr (&Sautoload_do_load);
   defsubr (&Seval);
   defsubr (&Sapply);
   defsubr (&Sfuncall);

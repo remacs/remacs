@@ -111,7 +111,7 @@
 ;;; Code:
 
 (eval-when-compile
-  (require 'cl)
+  (require 'cl-lib)
   (require 'vc)
   (require 'vc-dir))
 
@@ -485,7 +485,7 @@ REV is the revision to check out into WORKFILE."
 
 (defvar log-view-vc-backend)
 
-(defstruct (vc-hg-extra-fileinfo
+(cl-defstruct (vc-hg-extra-fileinfo
             (:copier nil)
             (:constructor vc-hg-create-extra-fileinfo (rename-state extra-name))
             (:conc-name vc-hg-extra-fileinfo->))
@@ -501,10 +501,10 @@ REV is the revision to check out into WORKFILE."
     (when extra
       (insert (propertize
                (format "   (%s %s)"
-                       (case (vc-hg-extra-fileinfo->rename-state extra)
-                         (copied "copied from")
-                         (renamed-from "renamed from")
-                         (renamed-to "renamed to"))
+                       (pcase (vc-hg-extra-fileinfo->rename-state extra)
+                         (`copied "copied from")
+                         (`renamed-from "renamed from")
+                         (`renamed-to "renamed to"))
                        (vc-hg-extra-fileinfo->extra-name extra))
                'face 'font-lock-comment-face)))))
 
@@ -611,6 +611,14 @@ REV is the revision to check out into WORKFILE."
                       (mapcar (lambda (arg) (list "-r" arg)) marked-list)))
       (error "No log entries selected for push"))))
 
+(defvar vc-hg-error-regexp-alist nil
+  ;; 'hg pull' does not list modified files, so, for now, the only
+  ;; benefit of `vc-compilation-mode' is that one can get rid of
+  ;; *vc-hg* buffer with 'q' or 'z'.
+  ;; TODO: call 'hg incoming' before pull/merge to get the list of
+  ;;       modified files
+  "Value of `compilation-error-regexp-alist' in *vc-hg* buffers.")
+
 (defun vc-hg-pull (prompt)
   "Issue a Mercurial pull command.
 If called interactively with a set of marked Log View buffers,
@@ -651,6 +659,7 @@ then attempts to update the working directory."
 		args       (cddr args)))
 	(apply 'vc-do-async-command buffer root hg-program
 	       command args)
+        (with-current-buffer buffer (vc-exec-after '(vc-compilation-mode 'hg)))
 	(vc-set-async-update buffer)))))
 
 (defun vc-hg-merge-branch ()
@@ -659,6 +668,7 @@ This runs the command \"hg merge\"."
   (let* ((root (vc-hg-root default-directory))
 	 (buffer (format "*vc-hg : %s*" (expand-file-name root))))
     (apply 'vc-do-async-command buffer root vc-hg-program '("merge"))
+    (with-current-buffer buffer (vc-exec-after '(vc-compilation-mode 'hg)))
     (vc-set-async-update buffer)))
 
 ;;; Internal functions

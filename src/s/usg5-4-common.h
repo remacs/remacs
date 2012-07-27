@@ -20,13 +20,6 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
-/* Use the SysVr3 file for at least base configuration.  */
-#define USG				/* System III, System V, etc */
-
-#define USG5
-/* Nothing in Emacs use this any more.  */
-/* #define USG5_4 */
-
 /* setjmp and longjmp can safely replace _setjmp and _longjmp,
    but they will run slower.  */
 #define _setjmp setjmp
@@ -46,17 +39,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <sys/termios.h>
 #endif
 
-/* Some SVr4s don't define NSIG in sys/signal.h for ANSI environments;
-   instead, there's a system variable _sys_nsig.  Unfortunately, we need the
-   constant to dimension an array.  So wire in the appropriate value here.  */
-#define NSIG_MINIMUM 32
-
-/* We can support this.  */
-#define CLASH_DETECTION
-
-/* Define HAVE_PTYS if the system supports pty devices.  */
-#define HAVE_PTYS
-
 /* It is possible to receive SIGCHLD when there are no children
    waiting, because a previous waitsys(2) cleaned up the carcass of child
    without clearing the SIGCHLD pending info.  So, use a non-blocking
@@ -70,21 +52,3 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
    this is all we need.  */
 #define TIOCSIGSEND TIOCSIGNAL
 
-/* This change means that we don't loop through allocate_pty too many
-   times in the (rare) event of a failure.  */
-#define FIRST_PTY_LETTER 'z'
-
-/* This sets the name of the master side of the PTY.  */
-#define PTY_NAME_SPRINTF strcpy (pty_name, "/dev/ptmx");
-
-/* Push various streams modules onto a PTY channel.  */
-#define SETUP_SLAVE_PTY \
-  if (ioctl (xforkin, I_PUSH, "ptem") == -1)	\
-    fatal ("ioctl I_PUSH ptem");		\
-  if (ioctl (xforkin, I_PUSH, "ldterm") == -1)	\
-    fatal ("ioctl I_PUSH ldterm");	\
-  if (ioctl (xforkin, I_PUSH, "ttcompat") == -1) \
-    fatal ("ioctl I_PUSH ttcompat");
-
-/* This definition was suggested for next release.  So give it a try.  */
-#define HAVE_SOCKETS

@@ -101,8 +101,11 @@ point at the click position."
   "Popup the given menu and call the selected option.
 MENU can be a keymap, an easymenu-style menu or a list of keymaps as for
 `x-popup-menu'.
-POSITION can be a click event or ((XOFFSET YOFFSET) WINDOW) and defaults to
-  the current mouse position.
+
+POSITION can be a click event or ((XOFFSET YOFFSET) WINDOW) and
+defaults to the current mouse position.  If POSITION is the
+symbol `point', the current point position is used.
+
 PREFIX is the prefix argument (if any) to pass to the command."
   (let* ((map (cond
 	       ((keymapp menu) menu)
@@ -112,9 +115,17 @@ PREFIX is the prefix argument (if any) to pass to the command."
 				   (plist-get (get map 'menu-prop) :filter))))
 		    (if filter (funcall filter (symbol-function map)) map)))))
 	 event cmd)
-    (unless position
-      (let ((mp (mouse-pixel-position)))
-	(setq position (list (list (cadr mp) (cddr mp)) (car mp)))))
+    (setq position
+	  (cond
+	   ((eq position 'point)
+	    (let* ((pp (posn-at-point))
+		   (xy (posn-x-y pp)))
+	      (list (list (car xy) (cdr xy)) (posn-window pp))))
+	   ((not position)
+	    (let ((mp (mouse-pixel-position)))
+	      (list (list (cadr mp) (cddr mp)) (car mp))))
+	   (t
+	    position)))
     ;; The looping behavior was taken from lmenu's popup-menu-popup
     (while (and map (setq event
 			  ;; map could be a prefix key, in which case
@@ -132,7 +143,7 @@ PREFIX is the prefix argument (if any) to pass to the command."
 		      binding)
 		  (while (and map (null binding))
 		    (setq binding (lookup-key (car map) mouse-click))
-		    (if (numberp binding) ; `too long'
+		    (if (numberp binding)	; `too long'
 			(setq binding nil))
 		    (setq map (cdr map)))
 		  binding)
@@ -388,10 +399,11 @@ This command must be bound to a mouse click."
 
 ;; Note that `window-in-direction' replaces `mouse-drag-window-above'
 ;; and `mouse-drag-vertical-line-rightward-window' with Emacs 24.1.
+
 (defun mouse-drag-line (start-event line)
-  "Drag some line with the mouse.
+  "Drag a mode line, header line, or vertical line with the mouse.
 START-EVENT is the starting mouse-event of the drag action.  LINE
-must be one of the symbols header, mode, or vertical."
+must be one of the symbols `header', `mode', or `vertical'."
   ;; Give temporary modes such as isearch a chance to turn off.
   (run-hooks 'mouse-leave-buffer-hook)
   (let* ((echo-keystrokes 0)
@@ -400,66 +412,60 @@ must be one of the symbols header, mode, or vertical."
 	 (frame (window-frame window))
 	 (minibuffer-window (minibuffer-window frame))
          (on-link (and mouse-1-click-follows-link
-		       (or mouse-1-click-in-non-selected-windows
-			   (eq window (selected-window)))
 		       (mouse-on-link-p start)))
-	 (resize-minibuffer
-	  ;; Resize the minibuffer window if it's on the same frame as
-	  ;; and immediately below the position window and it's either
-	  ;; active or `resize-mini-windows' is nil.
-	  (and (eq line 'mode)
-	       (eq (window-frame minibuffer-window) frame)
-	       (= (nth 1 (window-edges minibuffer-window))
-		  (nth 3 (window-edges window)))
-	       (or (not resize-mini-windows)
-		   (eq minibuffer-window (active-minibuffer-window)))))
-	 (which-side
-	  (and (eq line 'vertical)
-	       (or (cdr (assq 'vertical-scroll-bars (frame-parameters frame)))
-		   'right)))
-	 done event mouse growth dragged)
+	 (side (and (eq line 'vertical)
+		    (or (cdr (assq 'vertical-scroll-bars
+				   (frame-parameters frame)))
+			'right)))
+	 (draggable t)
+	 event position growth dragged)
     (cond
      ((eq line 'header)
       ;; Check whether header-line can be dragged at all.
       (if (window-at-side-p window 'top)
-	  (setq done t)
+	  (setq draggable nil)
 	(setq window (window-in-direction 'above window t))))
      ((eq line 'mode)
       ;; Check whether mode-line can be dragged at all.
-      (when (and (window-at-side-p window 'bottom)
-		 (not resize-minibuffer))
-	(setq done t)))
+      (and (window-at-side-p window 'bottom)
+	   ;; Allow resizing the minibuffer window if it's on the same
+	   ;; frame as and immediately below the clicked window, and
+	   ;; it's active or `resize-mini-windows' is nil.
+	   (not (and (eq (window-frame minibuffer-window) frame)
+		     (= (nth 1 (window-edges minibuffer-window))
+			(nth 3 (window-edges window)))
+		     (or (not resize-mini-windows)
+			 (eq minibuffer-window
+			     (active-minibuffer-window)))))
+	   (setq draggable nil)))
      ((eq line 'vertical)
-      ;; Get the window to adjust for the vertical case.
-      (setq window
-	    (if (eq which-side 'right)
-		;; If the scroll bar is on the window's right or there's
-		;; no scroll bar at all, adjust the window where the
-		;; start-event occurred.
-		window
-	      ;; If the scroll bar is on the start-event window's left,
-	      ;; adjust the window on the left of it.
-	      (window-in-direction 'left window t)))))
+      ;; Get the window to adjust for the vertical case.  If the
+      ;; scroll bar is on the window's right or there's no scroll bar
+      ;; at all, adjust the window where the start-event occurred.  If
+      ;; the scroll bar is on the start-event window's left, adjust
+      ;; the window on the left of it.
+      (unless (eq side 'right)
+	(setq window (window-in-direction 'left window t)))))
 
     ;; Start tracking.
     (track-mouse
       ;; Loop reading events and sampling the position of the mouse.
-      (while (not done)
+      (while draggable
 	(setq event (read-event))
-	(setq mouse (mouse-position))
+	(setq position (mouse-position))
 	;; Do nothing if
 	;;   - there is a switch-frame event.
 	;;   - the mouse isn't in the frame that we started in
 	;;   - the mouse isn't in any Emacs frame
 	;; Drag if
 	;;   - there is a mouse-movement event
-	;;   - there is a scroll-bar-movement event (??)
+	;;   - there is a scroll-bar-movement event (Why? -- cyd)
 	;;     (same as mouse movement for our purposes)
 	;; Quit if
 	;;   - there is a keyboard event or some other unknown event.
 	(cond
 	 ((not (consp event))
-	  (setq done t))
+	  (setq draggable nil))
 	 ((memq (car event) '(switch-frame select-window))
 	  nil)
 	 ((not (memq (car event) '(mouse-movement scroll-bar-movement)))
@@ -473,49 +479,39 @@ must be one of the symbols header, mode, or vertical."
 			     (memq (car event) '(drag-mouse-1 mouse-1))
 			   (eq (car event) 'drag-mouse-1)))
 	      (push event unread-command-events)))
-	  (setq done t))
-	 ((or (not (eq (car mouse) frame)) (null (car (cdr mouse))))
+	  (setq draggable nil))
+	 ((or (not (eq (car position) frame))
+	      (null (car (cdr position))))
 	  nil)
 	 ((eq line 'vertical)
-	  ;; Drag vertical divider (the calculations below are those
-	  ;; from Emacs 23).
-	  (setq growth
-		(- (- (cadr mouse)
-		      (if (eq which-side 'right) 0 2))
-		   (nth 2 (window-edges window))
-		   -1))
+	  ;; Drag vertical divider.
+	  (setq growth (- (cadr position)
+			  (if (eq side 'right) 0 2)
+			  (nth 2 (window-edges window))
+			  -1))
 	  (unless (zerop growth)
-	    ;; Remember that we dragged.
 	    (setq dragged t))
 	  (adjust-window-trailing-edge window growth t))
-	 (t
-	  ;; Drag horizontal divider (the calculations below are those
-	  ;; from Emacs 23).
+	 (draggable
+	  ;; Drag horizontal divider.
 	  (setq growth
 		(if (eq line 'mode)
-		    (- (cddr mouse) (nth 3 (window-edges window)) -1)
+		    (- (cddr position) (nth 3 (window-edges window)) -1)
 		  ;; The window's top includes the header line!
-		  (- (nth 3 (window-edges window)) (cddr mouse))))
-
+		  (- (nth 3 (window-edges window)) (cddr position))))
 	  (unless (zerop growth)
-	    ;; Remember that we dragged.
 	    (setq dragged t))
-
-	  (if (eq line 'mode)
-	      (adjust-window-trailing-edge window growth)
-	    (adjust-window-trailing-edge window (- growth))))))
-
-      ;; Presumably, if this was just a click, the last event should be
-      ;; `mouse-1', whereas if this did move the mouse, it should be a
-      ;; `drag-mouse-1'.  `dragged' nil tells us that we never dragged
-      ;; and `on-link' tells us that there is a link to follow.
-      (when (and on-link (not dragged)
-		 (eq 'mouse-1 (car-safe (car unread-command-events))))
-	;; If mouse-2 has never been done by the user, it doesn't
-	;; have the necessary property to be interpreted correctly.
-	(put 'mouse-2 'event-kind 'mouse-click)
-	(setcar unread-command-events
-		(cons 'mouse-2 (cdar unread-command-events)))))))
+	  (adjust-window-trailing-edge window (if (eq line 'mode)
+						  growth
+						(- growth)))))))
+    ;; Process the terminating event.
+    (when (and (mouse-event-p event) on-link (not dragged)
+	       (mouse--remap-link-click-p start-event event))
+      ;; If mouse-2 has never been done by the user, it doesn't have
+      ;; the necessary property to be interpreted correctly.
+      (put 'mouse-2 'event-kind 'mouse-click)
+      (setcar event 'mouse-2))
+    (push event unread-command-events)))
 
 (defun mouse-drag-mode-line (start-event)
   "Change the height of a window by dragging on the mode line."
@@ -791,10 +787,8 @@ DO-MOUSE-DRAG-REGION-POST-PROCESS should only be used by
 		   ;; Don't count the mode line.
 		   (1- (nth 3 bounds))))
 	 (on-link (and mouse-1-click-follows-link
-		       (or mouse-1-click-in-non-selected-windows
-			   (eq start-window original-window))
                        ;; Use start-point before the intangibility
-                       ;; treatment, in case we click on a link inside an
+                       ;; treatment, in case we click on a link inside
                        ;; intangible text.
                        (mouse-on-link-p start-posn)))
 	 (click-count (1- (event-click-count start-event)))
@@ -884,10 +878,12 @@ DO-MOUSE-DRAG-REGION-POST-PROCESS should only be used by
 		     (copy-region-as-kill (mark) (point)))))
 
 	  ;; Otherwise, run binding of terminating up-event.
-	  (cond
-	   (do-multi-click (goto-char start-point))
-	   (moved-off-start (deactivate-mark))
-	   (t (pop-mark)))
+	  (if do-multi-click
+	      (goto-char start-point)
+	    (deactivate-mark)
+	    (unless moved-off-start
+	      (pop-mark)))
+
 	  (when (and (functionp fun)
 		     (= start-hscroll (window-hscroll start-window))
 		     ;; Don't run the up-event handler if the window

@@ -46,7 +46,7 @@
 ;;; Code:
 
 (eval-when-compile
-  (require 'cl)
+  (require 'cl-lib)
   (require 'vc)  ;; for vc-exec-after
   (require 'vc-dir))
 
@@ -102,9 +102,9 @@ Invoke the bzr command adding `BZR_PROGRESS_BAR=none' and
 `LC_MESSAGES=C' to the environment.  If BZR-COMMAND is \"status\",
 prepends `vc-bzr-status-switches' to ARGS."
   (let ((process-environment
-         (list* "BZR_PROGRESS_BAR=none" ; Suppress progress output (bzr >=0.9)
-                "LC_MESSAGES=C"         ; Force English output
-                process-environment)))
+         `("BZR_PROGRESS_BAR=none" ; Suppress progress output (bzr >=0.9)
+           "LC_MESSAGES=C"         ; Force English output
+           ,@process-environment)))
     (apply 'vc-do-command (or buffer "*vc*") okstatus vc-bzr-program
            file-or-list bzr-command
            (if (and (string-equal "status" bzr-command)
@@ -123,8 +123,8 @@ Use the current Bzr root directory as the ROOT argument to
 `vc-do-async-command', and specify an output buffer named
 \"*vc-bzr : ROOT*\".  Return this buffer."
   (let* ((process-environment
-	  (list* "BZR_PROGRESS_BAR=none" "LC_MESSAGES=C"
-		 process-environment))
+	  `("BZR_PROGRESS_BAR=none" "LC_MESSAGES=C"
+            ,@process-environment))
 	 (root (vc-bzr-root default-directory))
 	 (buffer (format "*vc-bzr : %s*" (expand-file-name root))))
     (apply 'vc-do-async-command buffer root
@@ -311,7 +311,7 @@ in the repository root directory of FILE."
     (when rootdir
          (file-relative-name filename* rootdir))))
 
-(defvar vc-bzr-error-regex-alist
+(defvar vc-bzr-error-regexp-alist
   '(("^\\( M[* ]\\|+N \\|-D \\|\\|  \\*\\|R[M ] \\) \\(.+\\)" 2 nil nil 1)
     ("^C  \\(.+\\)" 2)
     ("^Text conflict in \\(.+\\)" 1 nil nil 2)
@@ -347,14 +347,7 @@ prompt for the Bzr command to run."
 	    command        (cadr args)
 	    args           (cddr args)))
     (let ((buf (apply 'vc-bzr-async-command command args)))
-      (with-current-buffer buf
-	(vc-exec-after
-	 `(progn
-	    (let ((compilation-error-regexp-alist
-		   vc-bzr-error-regex-alist))
-	      (compilation-mode))
-	    (set (make-local-variable 'compilation-error-regexp-alist)
-		 vc-bzr-error-regex-alist))))
+      (with-current-buffer buf (vc-exec-after '(vc-compilation-mode 'bzr)))
       (vc-set-async-update buf))))
 
 (defun vc-bzr-merge-branch ()
@@ -385,14 +378,7 @@ default if it is available."
 	 (command        (cadr cmd))
 	 (args           (cddr cmd)))
     (let ((buf (apply 'vc-bzr-async-command command args)))
-      (with-current-buffer buf
-	(vc-exec-after
-	 `(progn
-	    (let ((compilation-error-regexp-alist
-		   vc-bzr-error-regex-alist))
-	      (compilation-mode))
-	    (set (make-local-variable 'compilation-error-regexp-alist)
-		 vc-bzr-error-regex-alist))))
+      (with-current-buffer buf (vc-exec-after '(vc-compilation-mode 'bzr)))
       (vc-set-async-update buf))))
 
 (defun vc-bzr-status (file)
@@ -861,7 +847,7 @@ stream.  Standard error output is discarded."
      (apply #'process-file command nil (list (current-buffer) nil) nil args)
      (buffer-substring (point-min) (point-max)))))
 
-(defstruct (vc-bzr-extra-fileinfo
+(cl-defstruct (vc-bzr-extra-fileinfo
             (:copier nil)
             (:constructor vc-bzr-create-extra-fileinfo (extra-name))
             (:conc-name vc-bzr-extra-fileinfo->))

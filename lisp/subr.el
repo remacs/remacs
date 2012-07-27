@@ -26,6 +26,9 @@
 
 ;;; Code:
 
+;; Beware: while this file has tag `utf-8', before it's compiled, it gets
+;; loaded as "raw-text", so non-ASCII chars won't work right during bootstrap.
+
 (defvar custom-declare-variable-list nil
   "Record `defcustom' calls made before `custom.el' is loaded to handle them.
 Each element of this list holds the arguments to one call to `defcustom'.")
@@ -144,29 +147,33 @@ was called."
   `(closure (t) (&rest args)
             (apply ',fun ,@(mapcar (lambda (arg) `',arg) args) args)))
 
-(if (null (featurep 'cl))
-    (progn
-  ;; If we reload subr.el after having loaded CL, be careful not to
-  ;; overwrite CL's extended definition of `dolist', `dotimes',
-  ;; `declare', `push' and `pop'.
-(defmacro push (newelt listname)
-  "Add NEWELT to the list stored in the symbol LISTNAME.
-This is equivalent to (setq LISTNAME (cons NEWELT LISTNAME)).
-LISTNAME must be a symbol."
-  (declare (debug (form sexp)))
-  (list 'setq listname
-        (list 'cons newelt listname)))
+(defmacro push (newelt place)
+  "Add NEWELT to the list stored in the generalized variable PLACE.
+This is morally equivalent to (setf PLACE (cons NEWELT PLACE)),
+except that PLACE is only evaluated once (after NEWELT)."
+  (declare (debug (form gv-place)))
+  (if (symbolp place)
+      ;; Important special case, to avoid triggering GV too early in
+      ;; the bootstrap.
+      (list 'setq place
+            (list 'cons newelt place))
+    (require 'macroexp)
+    (macroexp-let2 macroexp-copyable-p v newelt
+      (gv-letplace (getter setter) place
+        (funcall setter `(cons ,v ,getter))))))
 
-(defmacro pop (listname)
-  "Return the first element of LISTNAME's value, and remove it from the list.
-LISTNAME must be a symbol whose value is a list.
+(defmacro pop (place)
+  "Return the first element of PLACE's value, and remove it from the list.
+PLACE must be a generalized variable whose value is a list.
 If the value is nil, `pop' returns nil but does not actually
 change the list."
-  (declare (debug (sexp)))
+  (declare (debug (gv-place)))
   (list 'car
-        (list 'prog1 listname
-              (list 'setq listname (list 'cdr listname)))))
-))
+        (if (symbolp place)
+            ;; So we can use `pop' in the bootstrap before `gv' can be used.
+            (list 'prog1 place (list 'setq place (list 'cdr place)))
+          (gv-letplace (getter setter) place
+            `(prog1 ,getter ,(funcall setter `(cdr ,getter)))))))
 
 (defmacro when (cond &rest body)
   "If COND yields non-nil, do BODY, else return nil.
@@ -189,8 +196,7 @@ value of last one, or nil if there are none.
 (if (null (featurep 'cl))
     (progn
   ;; If we reload subr.el after having loaded CL, be careful not to
-  ;; overwrite CL's extended definition of `dolist', `dotimes',
-  ;; `declare', `push' and `pop'.
+  ;; overwrite CL's extended definition of `dolist', `dotimes', `declare'.
 
 (defmacro dolist (spec &rest body)
   "Loop over a list.
@@ -266,6 +272,7 @@ the return value (nil if RESULT is omitted).
   "Do not evaluate any arguments and return nil.
 Treated as a declaration when used at the right place in a
 `defmacro' form.  \(See Info anchor `(elisp)Definition of declare'.)"
+  ;; FIXME: edebug spec should pay attention to defun-declarations-alist.
   nil)
 ))
 
@@ -725,7 +732,7 @@ Subkeymaps may be modified but are not canonicalized."
 (put 'keyboard-translate-table 'char-table-extra-slots 0)
 
 (defun keyboard-translate (from to)
-  "Translate character FROM to TO at a low level.
+  "Translate character FROM to TO on the current terminal.
 This function creates a `keyboard-translate-table' if necessary
 and then modifies one entry in it."
   (or (char-table-p keyboard-translate-table)
@@ -902,17 +909,9 @@ The normal global definition of the character C-x indirects to this keymap.")
 
 (defsubst eventp (obj)
   "True if the argument is an event object."
-  (or (and (integerp obj)
-           ;; FIXME: Why bother?
-	   ;; Filter out integers too large to be events.
-	   ;; M is the biggest modifier.
-	   (zerop (logand obj (lognot (1- (lsh ?\M-\^@ 1)))))
-	   (characterp (event-basic-type obj)))
-      (and (symbolp obj)
-	   (get obj 'event-symbol-elements))
-      (and (consp obj)
-	   (symbolp (car obj))
-	   (get (car obj) 'event-symbol-elements))))
+  (or (integerp obj)
+      (and (symbolp obj) obj (not (keywordp obj)))
+      (and (consp obj) (symbolp (car obj)))))
 
 (defun event-modifiers (event)
   "Return a list of symbols representing the modifier keys in event EVENT.
@@ -1185,6 +1184,7 @@ is converted into a string by expressing it in decimal."
 (set-advertised-calling-convention
  'all-completions '(string collection &optional predicate) "23.1")
 (set-advertised-calling-convention 'unintern '(name obarray) "23.3")
+(set-advertised-calling-convention 'redirect-frame-focus '(frame focus-frame) "24.2")
 
 ;;;; Obsolescence declarations for variables, and aliases.
 
@@ -1264,16 +1264,6 @@ to reread, so it now uses nil to mean `no event', instead of -1."
 (make-obsolete-variable 'translation-table-for-input nil "23.1")
 
 (defvaralias 'messages-buffer-max-lines 'message-log-max)
-
-;; These aliases exist in Emacs 19.34, and probably before, but were
-;; only marked as obsolete in 23.1.
-;; The lisp manual (since at least Emacs 21) describes them as
-;; existing "for compatibility with Emacs version 18".
-(define-obsolete-variable-alias 'last-input-char 'last-input-event
-  "at least 19.34")
-(define-obsolete-variable-alias 'last-command-char 'last-command-event
-  "at least 19.34")
-
 
 ;;;; Alternate names for functions - these are not being phased out.
 
@@ -1701,6 +1691,23 @@ If TOGGLE has a `:menu-tag', that is used for the menu item's label."
 
 ;;; Load history
 
+(defsubst autoloadp (object)
+  "Non-nil if OBJECT is an autoload."
+  (eq 'autoload (car-safe object)))
+
+;; (defun autoload-type (object)
+;;   "Returns the type of OBJECT or `function' or `command' if the type is nil.
+;; OBJECT should be an autoload object."
+;;   (when (autoloadp object)
+;;     (let ((type (nth 3 object)))
+;;       (cond ((null type) (if (nth 2 object) 'command 'function))
+;;             ((eq 'keymap t) 'macro)
+;;             (type)))))
+
+;; (defalias 'autoload-file #'cadr
+;;   "Return the name of the file from which AUTOLOAD will be loaded.
+;; \n\(fn AUTOLOAD)")
+
 (defun symbol-file (symbol &optional type)
   "Return the name of the file that defined SYMBOL.
 The value is normally an absolute file name.  It can also be nil,
@@ -1713,7 +1720,7 @@ TYPE is `defun', `defvar', or `defface', that specifies function
 definition, variable definition, or face definition only."
   (if (and (or (null type) (eq type 'defun))
 	   (symbolp symbol) (fboundp symbol)
-	   (eq 'autoload (car-safe (symbol-function symbol))))
+	   (autoloadp (symbol-function symbol)))
       (nth 1 (symbol-function symbol))
     (let ((files load-history)
 	  file)
@@ -2165,11 +2172,7 @@ by doing (clear-string STRING)."
             (set (make-local-variable 'post-self-insert-hook) nil)
             (add-hook 'after-change-functions hide-chars-fun nil 'local))
         (unwind-protect
-            (read-string prompt nil
-                         (let ((sym (make-symbol "forget-history")))
-                           (set sym nil)
-                           sym)
-                         default)
+            (read-string prompt nil t default) ; t = "no history"
           (when (buffer-live-p minibuf)
             (with-current-buffer minibuf
               ;; Not sure why but it seems that there might be cases where the
@@ -2766,6 +2769,20 @@ computing the hash.  If BINARY is non-nil, return a string in binary
 form."
   (secure-hash 'sha1 object start end binary))
 
+(defun function-get (f prop &optional autoload)
+  "Return the value of property PROP of function F.
+If AUTOLOAD is non-nil and F is an autoloaded macro, try to autoload
+the macro in the hope that it will set PROP."
+  (let ((val nil))
+    (while (and (symbolp f)
+                (null (setq val (get f prop)))
+                (fboundp f))
+      (let ((fundef (symbol-function f)))
+        (if (and autoload (autoloadp fundef)
+                 (not (equal fundef (autoload-do-load fundef f 'macro))))
+            nil                         ;Re-try `get' on the same `f'.
+          (setq f fundef))))
+    val))
 
 ;;;; Support for yanking and text properties.
 

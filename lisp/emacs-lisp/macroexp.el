@@ -185,12 +185,7 @@ Assumes the caller has bound `macroexpand-all-environment'."
        ;; Macro expand compiler macros.  This cannot be delayed to
        ;; byte-optimize-form because the output of the compiler-macro can
        ;; use macros.
-       (let ((handler nil))
-         (while (and (symbolp func)
-                     (not (setq handler (get func 'compiler-macro)))
-                     (fboundp func))
-           ;; Follow the sequence of aliases.
-           (setq func (symbol-function func)))
+       (let ((handler (function-get func 'compiler-macro)))
          (if (null handler)
              ;; No compiler macro.  We just expand each argument (for
              ;; setq/setq-default this works alright because the variable names
@@ -198,12 +193,9 @@ Assumes the caller has bound `macroexpand-all-environment'."
              (macroexp--all-forms form 1)
            ;; If the handler is not loaded yet, try (auto)loading the
            ;; function itself, which may in turn load the handler.
-           (when (and (not (functionp handler))
-                      (fboundp func) (eq (car-safe (symbol-function func))
-                                         'autoload))
+           (unless (functionp handler)
              (ignore-errors
-               (load (nth 1 (symbol-function func))
-                     'noerror 'nomsg)))
+               (autoload-do-load (indirect-function func) func)))
            (let ((newform (macroexp--compiler-macro handler form)))
              (if (eq form newform)
                  ;; The compiler macro did not find anything to do.
@@ -263,22 +255,43 @@ definitions to shadow the loaded ones for use in file byte-compilation."
    ((memq (car-safe then) '(if cond)) (macroexp-if `(not ,test) else then))
    (t `(if ,test ,then ,else))))
 
-(defmacro macroexp-let² (test var exp &rest exps)
+(defmacro macroexp-let2 (test var exp &rest exps)
   "Bind VAR to a copyable expression that returns the value of EXP.
 This is like `(let ((v ,EXP)) ,EXPS) except that `v' is a new generated
 symbol which EXPS can find in VAR.
 TEST should be the name of a predicate on EXP checking whether the `let' can
 be skipped; if nil, as is usual, `macroexp-const-p' is used."
-  (declare (indent 3) (debug (sexp form sexp body)))
+  (declare (indent 3) (debug (sexp sexp form body)))
   (let ((bodysym (make-symbol "body"))
         (expsym (make-symbol "exp")))
     `(let* ((,expsym ,exp)
-            (,var (if (,(or test #'macroexp-const-p) ,expsym)
-                      ,expsym (make-symbol "x")))
+            (,var (if (funcall #',(or test #'macroexp-const-p) ,expsym)
+                      ,expsym (make-symbol ,(symbol-name var))))
             (,bodysym ,(macroexp-progn exps)))
        (if (eq ,var ,expsym) ,bodysym
          (macroexp-let* (list (list ,var ,expsym))
                         ,bodysym)))))
+
+(defun macroexp--maxsize (exp size)
+  (cond ((< size 0) size)
+        ((symbolp exp) (1- size))
+        ((stringp exp) (- size (/ (length exp) 16)))
+        ((vectorp exp)
+         (dotimes (i (length exp))
+           (setq size (macroexp--maxsize (aref exp i) size)))
+         (1- size))
+        ((consp exp)
+         ;; We could try to be more clever with quote&function,
+         ;; but it is difficult to do so correctly, and it's not obvious that
+         ;; it would be worth the effort.
+         (dolist (e exp)
+           (setq size (macroexp--maxsize e size)))
+         (1- size))
+        (t -1)))
+
+(defun macroexp-small-p (exp)
+  "Return non-nil if EXP can be considered small."
+  (> (macroexp--maxsize exp 10) 0))
 
 (defsubst macroexp--const-symbol-p (symbol &optional any-value)
   "Non-nil if SYMBOL is constant.

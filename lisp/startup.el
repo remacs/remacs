@@ -123,8 +123,8 @@ altering `command-line-args-left' to remove them.")
   "Default directory to use for command line arguments.
 This is normally copied from `default-directory' when Emacs starts.")
 
-;;; This is here, rather than in x-win.el, so that we can ignore these
-;;; options when we are not using X.
+;; This is here, rather than in x-win.el, so that we can ignore these
+;; options when we are not using X.
 (defconst command-line-x-option-alist
   '(("-bw" 1 x-handle-numeric-switch border-width)
     ("-d" 1 x-handle-display)
@@ -1001,7 +1001,9 @@ Amongst another things, it parses the command-line arguments."
 	    nil
 	  (display-warning 'initialization
 			   (format "User %s has no home directory"
-				   init-file-user)
+				   (if (equal init-file-user "")
+				       (user-real-login-name)
+				     init-file-user))
 			   :error))))
 
     ;; Load that user's init file, or the default one, or none.
@@ -1311,7 +1313,15 @@ If this is nil, no message will be displayed."
 	      (title (with-temp-buffer
 		       (insert-file-contents
 			(expand-file-name tut tutorial-directory)
-			nil 0 256)
+			;; We used to read only the first 256 bytes of
+			;; the tutorial, but that prevents the coding:
+			;; setting, if any, in file-local variables
+			;; section to be seen by insert-file-contents,
+			;; and results in gibberish when the language
+			;; environment's preferred encoding is
+			;; different from what the file-local variable
+			;; says.  One case in point is Hebrew.
+			nil)
 		       (search-forward ".")
 		       (buffer-substring (point-min) (1- (point))))))
 	 ;; If there is a specific tutorial for the current language

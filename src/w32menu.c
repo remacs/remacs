@@ -162,13 +162,12 @@ otherwise it is "Question". */)
     }
   else if (CONSP (position))
     {
-      Lisp_Object tem;
-      tem = Fcar (position);
+      Lisp_Object tem = XCAR (position);
       if (CONSP (tem))
-	window = Fcar (Fcdr (position));
+	window = Fcar (XCDR (position));
       else
 	{
-	  tem = Fcar (Fcdr (position));  /* EVENT_START (position) */
+	  tem = Fcar (XCDR (position));  /* EVENT_START (position) */
 	  window = Fcar (tem);	     /* POSN_WINDOW (tem) */
 	}
     }
@@ -1534,7 +1533,14 @@ add_menu_item (HMENU menu, widget_value *wv, HMENU item)
 	     until it is ready to be displayed, since GC can happen while
 	     menus are active.  */
 	  if (!NILP (wv->help))
-	    info.dwItemData = (DWORD) XLI (wv->help);
+	    {
+	      /* As of Jul-2012, w32api headers say that dwItemData
+		 has DWORD type, but that's a bug: it should actually
+		 be ULONG_PTR, which is correct for 32-bit and 64-bit
+		 Windows alike.  MSVC headers get it right; hopefully,
+		 MinGW headers will, too.  */
+	      info.dwItemData = (ULONG_PTR) XLI (wv->help);
+	    }
 	  if (wv->button_type == BUTTON_TYPE_RADIO)
 	    {
 	      /* CheckMenuRadioItem allows us to differentiate TOGGLE and

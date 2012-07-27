@@ -1504,7 +1504,7 @@ xwidget_spec_value ( Lisp_Object spec, Lisp_Object  key,
 {
   Lisp_Object tail;
 
-  xassert (valid_xwidget_p (spec));
+  eassert (valid_xwidget_p (spec));
 
   for (tail = XCDR (spec);
        CONSP (tail) && CONSP (XCDR (tail)); tail = XCDR (XCDR (tail)))

@@ -395,16 +395,15 @@ Return the user input (a string).
 
 INITIAL, if non-nil, is the initial minibuffer input.
 OP-SYMBOL is an operation symbol (see `dired-no-confirm').
-ARG is normally the prefix argument for the calling command.
-FILES should be a list of file names.
+ARG is normally the prefix argument for the calling command;
+it is passed as the first argument to `dired-mark-prompt'.
+FILES should be a list of marked files' names.
 
-DEFAULT-VALUE, if non-nil, should be a \"standard\" value or list
-of such values, available via history commands.  Note that if the
-user enters empty input, this function returns the empty string,
-not DEFAULT-VALUE.
+Optional arg DEFAULT-VALUE is a default value or list of default
+values, passed as the seventh arg to `completing-read'.
 
-Optional argument COLLECTION is a collection of possible completions,
-suitable for use by `completing-read'."
+Optional arg COLLECTION is a collection of possible completions,
+passed as the second arg to `completing-read'."
   (dired-mark-pop-up nil op-symbol files
 		     'completing-read
 		     (format prompt (dired-mark-prompt arg files))
@@ -546,8 +545,17 @@ offer a smarter default choice of shell command."
 (defun dired-do-async-shell-command (command &optional arg file-list)
   "Run a shell command COMMAND on the marked files asynchronously.
 
-Like `dired-do-shell-command' but if COMMAND doesn't end in ampersand,
-adds `* &' surrounded by whitespace and executes the command asynchronously.
+Like `dired-do-shell-command', but adds `&' at the end of COMMAND
+to execute it asynchronously.
+
+When operating on multiple files, asynchronous commands
+are executed in the background on each file in parallel.
+In shell syntax this means separating the individual commands
+with `&'.  However, when COMMAND ends in `;' or `;&' then commands
+are executed in the background on each file sequentially waiting
+for each command to terminate before running the next command.
+In shell syntax this means separating the individual commands with `;'.
+
 The output appears in the buffer `*Async Shell Command*'."
   (interactive
    (let ((files (dired-get-marked-files t current-prefix-arg)))
@@ -556,18 +564,14 @@ The output appears in the buffer `*Async Shell Command*'."
       (dired-read-shell-command "& on %s: " current-prefix-arg files)
       current-prefix-arg
       files)))
-  (unless (string-match "[*?][ \t]*\\'" command)
-    (setq command (concat command " *")))
   (unless (string-match "&[ \t]*\\'" command)
     (setq command (concat command " &")))
   (dired-do-shell-command command arg file-list))
 
-;; The in-background argument is only needed in Emacs 18 where
-;; shell-command doesn't understand an appended ampersand `&'.
 ;;;###autoload
 (defun dired-do-shell-command (command &optional arg file-list)
   "Run a shell command COMMAND on the marked files.
-If no files are marked or a specific numeric prefix arg is given,
+If no files are marked or a numeric prefix arg is given,
 the next ARG files are used.  Just \\[universal-argument] means the current file.
 The prompt mentions the file(s) or the marker, as appropriate.
 
@@ -589,7 +593,17 @@ If you want to use `*' as a shell wildcard with whitespace around
 it, write `*\"\"' in place of just `*'.  This is equivalent to just
 `*' in the shell, but avoids Dired's special handling.
 
-If COMMAND produces output, it goes to a separate buffer.
+If COMMAND ends in `&', `;', or `;&', it is executed in the
+background asynchronously, and the output appears in the buffer
+`*Async Shell Command*'.  When operating on multiple files and COMMAND
+ends in `&', the shell command is executed on each file in parallel.
+However, when COMMAND ends in `;' or `;&' then commands are executed
+in the background on each file sequentially waiting for each command
+to terminate before running the next command.  You can also use
+`dired-do-async-shell-command' that automatically adds `&'.
+
+Otherwise, COMMAND is executed synchronously, and the output
+appears in the buffer `*Shell Command Output*'.
 
 This feature does not try to redisplay Dired buffers afterward, as
 there's no telling what files COMMAND may have changed.
@@ -608,10 +622,7 @@ can be produced by `dired-get-marked-files', for example."
    (let ((files (dired-get-marked-files t current-prefix-arg)))
      (list
       ;; Want to give feedback whether this file or marked files are used:
-      (dired-read-shell-command (concat "! on "
-					"%s: ")
-				current-prefix-arg
-				files)
+      (dired-read-shell-command "! on %s: " current-prefix-arg files)
       current-prefix-arg
       files)))
   (let* ((on-each (not (string-match dired-star-subst-regexp command)))
@@ -655,23 +666,34 @@ can be produced by `dired-get-marked-files', for example."
 ;; Might be redefined for smarter things and could then use RAW-ARG
 ;; (coming from interactive P and currently ignored) to decide what to do.
 ;; Smart would be a way to access basename or extension of file names.
-  (let ((stuff-it
-	 (if (or (string-match dired-star-subst-regexp command)
-		 (string-match dired-quark-subst-regexp command))
-	     (lambda (x)
-	       (let ((retval command))
-		 (while (string-match
-			 "\\(^\\|[ \t]\\)\\([*?]\\)\\([ \t]\\|$\\)" retval)
-		   (setq retval (replace-match x t t retval 2)))
-		 retval))
-	   (lambda (x) (concat command dired-mark-separator x)))))
-    (if on-each
-	(mapconcat stuff-it (mapcar 'shell-quote-argument file-list) ";")
-      (let ((files (mapconcat 'shell-quote-argument
-			      file-list dired-mark-separator)))
-	(if (> (length file-list) 1)
-	    (setq files (concat dired-mark-prefix files dired-mark-postfix)))
-	(funcall stuff-it files)))))
+  (let* ((in-background (string-match "[ \t]*&[ \t]*\\'" command))
+	 (command (if in-background
+		      (substring command 0 (match-beginning 0))
+		    command))
+	 (sequentially (string-match "[ \t]*;[ \t]*\\'" command))
+	 (command (if sequentially
+		      (substring command 0 (match-beginning 0))
+		    command))
+	 (stuff-it
+	  (if (or (string-match dired-star-subst-regexp command)
+		  (string-match dired-quark-subst-regexp command))
+	      (lambda (x)
+		(let ((retval command))
+		  (while (string-match
+			  "\\(^\\|[ \t]\\)\\([*?]\\)\\([ \t]\\|$\\)" retval)
+		    (setq retval (replace-match x t t retval 2)))
+		  retval))
+	    (lambda (x) (concat command dired-mark-separator x)))))
+    (concat
+     (if on-each
+	 (mapconcat stuff-it (mapcar 'shell-quote-argument file-list)
+		    (if (and in-background (not sequentially)) "&" ";"))
+       (let ((files (mapconcat 'shell-quote-argument
+			       file-list dired-mark-separator)))
+	 (if (> (length file-list) 1)
+	     (setq files (concat dired-mark-prefix files dired-mark-postfix)))
+	 (funcall stuff-it files)))
+     (if in-background "&" ""))))
 
 ;; This is an extra function so that it can be redefined by ange-ftp.
 ;;;###autoload
@@ -1408,9 +1430,9 @@ NAME-CONSTRUCTOR should be a function accepting a single
 argument, the name of an old file, and returning either the
 corresponding new file name or nil to skip.
 
-Optional MARKER-CHAR is a character with which to mark every
-newfile's entry, or t to use the current marker character if the
-old file was marked."
+If optional argument MARKER-CHAR is non-nil, mark each
+newly-created file's Dired entry with the character MARKER-CHAR,
+or with the current marker character if MARKER-CHAR is t."
   (let (dired-create-files-failures failures
 	skipped (success-count 0) (total (length fn-list)))
     (let (to overwrite-query
@@ -1513,10 +1535,11 @@ ESC or `q' to not overwrite any of the remaining files,
 					&optional marker-char op1
 					how-to)
   "Create a new file for each marked file.
-Prompts user for target, which is a directory in which to create
-  the new files.  Target may also be a plain file if only one marked
-  file exists.  The way the default for the target directory is
-  computed depends on the value of `dired-dwim-target-directory'.
+Prompt user for a target directory in which to create the new
+  files.  The target may also be a non-directory file, if only
+  one file is marked.  The initial suggestion for target is the
+  Dired buffer's current directory (or, if `dired-dwim-target' is
+  non-nil, the current directory of a neighboring Dired window).
 OP-SYMBOL is the symbol for the operation.  Function `dired-mark-pop-up'
   will determine whether pop-ups are appropriate for this OP-SYMBOL.
 FILE-CREATOR and OPERATION as in `dired-create-files'.
@@ -1721,16 +1744,21 @@ See HOW-TO argument for `dired-do-create-files'.")
 ;;;###autoload
 (defun dired-do-copy (&optional arg)
   "Copy all marked (or next ARG) files, or copy the current file.
-This normally preserves the last-modified date when copying.
-When operating on just the current file, you specify the new name.
-When operating on multiple or marked files, you specify a directory,
-and new copies of these files are made in that directory
-with the same names that the files currently have.  The default
-suggested for the target directory depends on the value of
-`dired-dwim-target', which see.
+When operating on just the current file, prompt for the new name.
 
-This command copies symbolic links by creating new ones,
-like `cp -d'."
+When operating on multiple or marked files, prompt for a target
+directory, and make the new copies in that directory, with the
+same names as the original files.  The initial suggestion for the
+target directory is the Dired buffer's current directory (or, if
+`dired-dwim-target' is non-nil, the current directory of a
+neighboring Dired window).
+
+If `dired-copy-preserve-time' is non-nil, this command preserves
+the modification time of each old file in the copy, similar to
+the \"-p\" option for the \"cp\" shell command.
+
+This command copies symbolic links by creating new ones, similar
+to the \"-d\" option for the \"cp\" shell command."
   (interactive "P")
   (let ((dired-recursive-copies dired-recursive-copies))
     (dired-do-create-files 'copy (function dired-copy-file)
@@ -1996,9 +2024,10 @@ See Info node `(emacs)Subdir switches' for more details."
 
 ;;;###autoload
 (defun dired-insert-subdir (dirname &optional switches no-error-if-not-dir-p)
-  "Insert this subdirectory into the same dired buffer.
-If it is already present, overwrites previous entry,
-  else inserts it at its natural place (as `ls -lR' would have done).
+  "Insert this subdirectory into the same Dired buffer.
+If it is already present, overwrite the previous entry;
+  otherwise, insert it at its natural place (as `ls -lR' would
+  have done).
 With a prefix arg, you may edit the `ls' switches used for this listing.
   You can add `R' to the switches to expand the whole tree starting at
   this subdirectory.

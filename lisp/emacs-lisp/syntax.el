@@ -511,10 +511,8 @@ Point is at POS when this function returns."
 		  (setq ppss (parse-partial-sexp
 			      pt-min (setq pt-min (/ (+ pt-min pos) 2))
 			      nil nil ppss))
-		  (let ((pair (cons pt-min ppss)))
-		    (if cache-pred
-			(cl-push pair (cdr cache-pred))
-		      (push pair syntax-ppss-cache))))
+                  (push (cons pt-min ppss)
+                        (if cache-pred (cdr cache-pred) syntax-ppss-cache)))
 
 		;; Compute the actual return value.
 		(setq ppss (parse-partial-sexp pt-min pos nil nil ppss))
@@ -533,7 +531,7 @@ Point is at POS when this function returns."
 		(let ((pair (cons pos ppss)))
 		  (if cache-pred
 		      (if (> (- (caar cache-pred) pos) syntax-ppss-max-span)
-			  (cl-push pair (cdr cache-pred))
+			  (push pair (cdr cache-pred))
 			(setcar cache-pred pair))
 		    (if (or (null syntax-ppss-cache)
 			    (> (- (caar syntax-ppss-cache) pos)

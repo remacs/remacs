@@ -254,7 +254,7 @@ Introduction
 * Lisp History::            Emacs Lisp is descended from Maclisp.
 * Conventions::             How the manual is formatted.
 * Version Info::            Which Emacs version is running?
-* Acknowledgements::        The authors, editors, and sponsors of this manual.
+* Acknowledgments::         The authors, editors, and sponsors of this manual.
 
 Conventions
 
@@ -1123,9 +1123,9 @@ Text
 * Case Changes::            Case conversion of parts of the buffer.
 * Text Properties::         Assigning Lisp property lists to text characters.
 * Substitution::            Replacing a given character wherever it appears.
-* Transposition::           Swapping two portions of a buffer.
 * Registers::               How registers are implemented.  Accessing
                               the text or position stored in a register.
+* Transposition::           Swapping two portions of a buffer.
 * Base 64::                 Conversion to or from base 64 encoding.
 * Checksum/Hash::           Computing cryptographic hashes.
 * Parsing HTML/XML::        Parsing HTML and XML.

@@ -1,4 +1,4 @@
-;;; cl.el --- Compatibility aliases for the old CL library.
+;;; cl.el --- Compatibility aliases for the old CL library.  -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2012  Free Software Foundation, Inc.
 
@@ -82,6 +82,9 @@
 ;;         (while (re-search-forward re nil t)
 ;;           (delete-region (1- (point)) (point)))
 ;;         (save-buffer)))))
+
+;;; Aliases to cl-lib's features.
+
 (dolist (var '(
                ;; loop-result-var
                ;; loop-result
@@ -103,6 +106,14 @@
                ;; custom-print-functions
                ))
   (defvaralias var (intern (format "cl-%s" var))))
+
+;; Before overwriting subr.el's `dotimes' and `dolist', let's remember
+;; them under a different name, so we can use them in our implementation
+;; of `dotimes' and `dolist'.
+(unless (fboundp 'cl--dotimes)
+  (defalias 'cl--dotimes (symbol-function 'dotimes) "The non-CL `dotimes'."))
+(unless (fboundp 'cl--dolist)
+  (defalias 'cl--dolist (symbol-function 'dolist) "The non-CL `dolist'."))
 
 (dolist (fun '(
                (get* . cl-get)
@@ -208,20 +219,15 @@
                typep
                deftype
                defstruct
-               define-modify-macro
                callf2
                callf
                letf*
-               letf
+               ;; letf
                rotatef
                shiftf
                remf
                psetf
-               setf
-               get-setf-method
-               defsetf
-               (define-setf-method . cl-define-setf-expander)
-               define-setf-expander
+               (define-setf-method . define-setf-expander)
                declare
                the
                locally
@@ -229,7 +235,6 @@
                multiple-value-bind
                symbol-macrolet
                macrolet
-               flet
                progv
                psetq
                do-all-symbols
@@ -310,23 +315,17 @@
                values-list
                values
                pushnew
-               push
-               pop
                decf
                incf
                ))
   (let ((new (if (consp fun) (prog1 (cdr fun) (setq fun (car fun)))
                (intern (format "cl-%s" fun)))))
-    (defalias fun new)
-    ;; If `cl-foo' is declare inline, then make `foo' inline as well, and
-    ;; similarly.  Same for edebug specifications, indent rules and
-    ;; doc-string position.
-    ;; FIXME: For most of them, we should instead follow aliases
-    ;; where applicable.
-    (dolist (prop '(byte-optimizer doc-string-elt edebug-form-spec
-                    lisp-indent-function))
-      (if (get new prop)
-        (put fun prop (get new prop))))))
+    (defalias fun new)))
+
+;;; Features provided a bit differently in Elisp.
+
+;; First, the old lexical-let is now better served by `lexical-binding', tho
+;; it's not 100% compatible.
 
 (defvar cl-closure-vars nil)
 (defvar cl--function-convert-cache nil)
@@ -421,7 +420,7 @@ lexical closures as in Common Lisp.
                        (list (cl-caddr x)
                              `(make-symbol ,(format "--%s--" (car x)))))
                      vars)
-         (cl-setf ,@(apply #'append
+         (setf ,@(apply #'append
                         (mapcar (lambda (x)
                                   (list `(symbol-value ,(cl-caddr x)) (cadr x)))
                                 vars)))
@@ -442,46 +441,46 @@ Common Lisp.
     (car body)))
 
 ;; This should really have some way to shadow 'byte-compile properties, etc.
-;;;###autoload
 (defmacro flet (bindings &rest body)
-  "Make temporary function definitions.
-This is an analogue of `let' that operates on the function cell of FUNC
-rather than its value cell.  The FORMs are evaluated with the specified
-function definitions in place, then the definitions are undone (the FUNCs
-go back to their previous definitions, or lack thereof).
+  "Make temporary overriding function definitions.
+This is an analogue of a dynamically scoped `let' that operates on the function
+cell of FUNCs rather than their value cell.
+If you want the Common-Lisp style of `flet', you should use `cl-flet'.
+The FORMs are evaluated with the specified function definitions in place,
+then the definitions are undone (the FUNCs go back to their previous
+definitions, or lack thereof).
 
 \(fn ((FUNC ARGLIST BODY...) ...) FORM...)"
-  (declare (indent 1) (debug cl-flet))
-  `(cl-letf* ,(mapcar
-            (lambda (x)
-              (if (or (and (fboundp (car x))
-                           (eq (car-safe (symbol-function (car x))) 'macro))
-                      (cdr (assq (car x) macroexpand-all-environment)))
-                  (error "Use `labels', not `flet', to rebind macro names"))
-              (let ((func `(cl-function
-                            (lambda ,(cadr x)
-                              (cl-block ,(car x) ,@(cddr x))))))
-                (when (cl--compiling-file)
-                  ;; Bug#411.  It would be nice to fix this.
-                  (and (get (car x) 'byte-compile)
-                       (error "Byte-compiling a redefinition of `%s' \
+  (declare (indent 1) (debug cl-flet)
+           (obsolete "Use either `cl-flet' or `cl-letf'."  "24.2"))
+  `(letf ,(mapcar
+           (lambda (x)
+             (if (or (and (fboundp (car x))
+                          (eq (car-safe (symbol-function (car x))) 'macro))
+                     (cdr (assq (car x) macroexpand-all-environment)))
+                 (error "Use `labels', not `flet', to rebind macro names"))
+             (let ((func `(cl-function
+                           (lambda ,(cadr x)
+                             (cl-block ,(car x) ,@(cddr x))))))
+               (when (cl--compiling-file)
+                 ;; Bug#411.  It would be nice to fix this.
+                 (and (get (car x) 'byte-compile)
+                      (error "Byte-compiling a redefinition of `%s' \
 will not work - use `labels' instead" (symbol-name (car x))))
-                  ;; FIXME This affects the rest of the file, when it
-                  ;; should be restricted to the flet body.
-                  (and (boundp 'byte-compile-function-environment)
-                       (push (cons (car x) (eval func))
-                             byte-compile-function-environment)))
-                (list `(symbol-function ',(car x)) func)))
-            bindings)
+                 ;; FIXME This affects the rest of the file, when it
+                 ;; should be restricted to the flet body.
+                 (and (boundp 'byte-compile-function-environment)
+                      (push (cons (car x) (eval func))
+                            byte-compile-function-environment)))
+               (list `(symbol-function ',(car x)) func)))
+           bindings)
      ,@body))
 
 (defmacro labels (bindings &rest body)
   "Make temporary function bindings.
-This is like `flet', except the bindings are lexical instead of dynamic.
-Unlike `flet', this macro is fully compliant with the Common Lisp standard.
-
-\(fn ((FUNC ARGLIST BODY...) ...) FORM...)"
-  (declare (indent 1) (debug cl-flet))
+Like `cl-labels' except that the lexical scoping is handled via `lexical-let'
+rather than relying on `lexical-binding'."
+  (declare (indent 1) (debug cl-flet) (obsolete cl-labels "24.2"))
   (let ((vars nil) (sets nil) (newenv macroexpand-all-environment))
     (dolist (binding bindings)
       ;; It's important that (not (eq (symbol-name var1) (symbol-name var2)))
@@ -497,7 +496,161 @@ Unlike `flet', this macro is fully compliant with the Common Lisp standard.
               newenv)))
     (macroexpand-all `(lexical-let ,vars (setq ,@sets) ,@body) newenv)))
 
-;;; Additional compatibility code
+;; Generalized variables are provided by gv.el, but some details are
+;; not 100% compatible: not worth the trouble to add them to cl-lib.el, but we
+;; still need to support old users of cl.el.
+
+(defmacro cl--symbol-function (symbol)
+  "Like `symbol-function' but return `cl--unbound' if not bound."
+  ;; (declare (gv-setter (lambda (store)
+  ;;                       `(if (eq ,store 'cl--unbound)
+  ;;                            (fmakunbound ,symbol) (fset ,symbol ,store)))))
+  `(if (fboundp ,symbol) (symbol-function ,symbol) 'cl--unbound))
+(gv-define-setter cl--symbol-function (store symbol)
+  `(if (eq ,store 'cl--unbound) (fmakunbound ,symbol) (fset ,symbol ,store)))
+
+(defmacro letf (bindings &rest body)
+  "Dynamically scoped let-style bindings for places.
+Like `cl-letf', but with some extra backward compatibility."
+  ;; Like cl-letf, but with special handling of symbol-function.
+  `(cl-letf ,(mapcar (lambda (x) (if (eq (car-safe (car x)) 'symbol-function)
+                                `((cl--symbol-function ,@(cdar x)) ,@(cdr x))
+                              x))
+                     bindings)
+            ,@body))
+
+(defun cl--gv-adapt (cl-gv do)
+  ;; This function is used by all .elc files that use define-setf-expander and
+  ;; were compiled with Emacs>=24.2.
+  (let ((vars (nth 0 cl-gv))
+        (vals (nth 1 cl-gv))
+        (binds ())
+        (substs ()))
+    ;; Use cl-sublis as was done in cl-setf-do-modify.
+    (while vars
+      (if (macroexp-copyable-p (car vals))
+          (push (cons (pop vars) (pop vals)) substs)
+        (push (list (pop vars) (pop vals)) binds)))
+    (macroexp-let*
+     binds
+     (funcall do (cl-sublis substs (nth 4 cl-gv))
+              ;; We'd like to do something like
+              ;; (lambda ,(nth 2 cl-gv) ,(nth 3 cl-gv)).
+              (lambda (exp)
+                (macroexp-let2 macroexp-copyable-p v exp
+                  (cl-sublis (cons (cons (car (nth 2 cl-gv)) v)
+                                   substs)
+                             (nth 3 cl-gv))))))))
+
+(defmacro define-setf-expander (name arglist &rest body)
+  "Define a `setf' method.
+This method shows how to handle `setf's to places of the form (NAME ARGS...).
+The argument forms ARGS are bound according to ARGLIST, as if NAME were
+going to be expanded as a macro, then the BODY forms are executed and must
+return a list of five elements: a temporary-variables list, a value-forms
+list, a store-variables list (of length one), a store-form, and an access-
+form.  See `gv-define-expander', `gv-define-setter', and `gv-define-expander'
+for a better and simpler ways to define setf-methods."
+  (declare (debug
+            (&define name cl-lambda-list cl-declarations-or-string def-body)))
+  `(progn
+     ,@(if (stringp (car body))
+           (list `(put ',name 'setf-documentation ,(pop body))))
+     (gv-define-expander ,name
+       (cl-function
+        (lambda (do ,@arglist)
+          (cl--gv-adapt (progn ,@body) do))))))
+
+(defmacro defsetf (name arg1 &rest args)
+  "Define a `setf' method.
+This macro is an easy-to-use substitute for `define-setf-expander' that works
+well for simple place forms.  In the simple `defsetf' form, `setf's of
+the form (setf (NAME ARGS...) VAL) are transformed to function or macro
+calls of the form (FUNC ARGS... VAL).  Example:
+
+  (cl-defsetf aref aset)
+
+Alternate form: (cl-defsetf NAME ARGLIST (STORE) BODY...).
+Here, the above `setf' call is expanded by binding the argument forms ARGS
+according to ARGLIST, binding the value form VAL to STORE, then executing
+BODY, which must return a Lisp form that does the necessary `setf' operation.
+Actually, ARGLIST and STORE may be bound to temporary variables which are
+introduced automatically to preserve proper execution order of the arguments.
+Example:
+
+  (cl-defsetf nth (n x) (v) `(setcar (nthcdr ,n ,x) ,v))
+
+\(fn NAME [FUNC | ARGLIST (STORE) BODY...])"
+  (declare (debug
+            (&define name
+                     [&or [symbolp &optional stringp]
+                          [cl-lambda-list (symbolp)]]
+                     cl-declarations-or-string def-body)))
+  (if (and (listp arg1) (consp args))
+      ;; Like `gv-define-setter' but with `cl-function'.
+      `(gv-define-expander ,name
+         (lambda (do &rest args)
+           (gv--defsetter ',name
+                          (cl-function
+                           (lambda (,@(car args) ,@arg1) ,@(cdr args)))
+			  do args)))
+    `(gv-define-simple-setter ,name ,arg1)))
+
+;; FIXME: CL used to provide a setf method for `apply', but I haven't been able
+;; to find a case where it worked.  The code below tries to handle it as well.
+;; (defun cl--setf-apply (form last-witness last)
+;;   (cond
+;;    ((not (consp form)) form)
+;;    ((eq (ignore-errors (car (last form))) last-witness)
+;;     `(apply #',(car form) ,@(butlast (cdr form)) ,last))
+;;    ((and (memq (car form) '(let let*))
+;;          (rassoc (list last-witness) (cadr form)))
+;;     (let ((rebind (rassoc (list last-witness) (cadr form))))
+;;     `(,(car form) ,(remq rebind (cadr form))
+;;       ,@(mapcar (lambda (form) (cl--setf-apply form (car rebind) last))
+;;                 (cddr form)))))
+;;    (t (mapcar (lambda (form) (cl--setf-apply form last-witness last)) form))))
+;; (gv-define-setter apply (val fun &rest args)
+;;   (pcase fun (`#',(and (pred symbolp) f) (setq fun f))
+;;          (_ (error "First arg to apply in setf is not #'SYM: %S" fun)))
+;;   (let* ((butlast (butlast args))
+;;          (last (car (last args)))
+;;          (last-witness (make-symbol "--cl-tailarg--"))
+;;          (setter (macroexpand `(setf (,fun ,@butlast ,last-witness) ,val)
+;;                               macroexpand-all-environment)))
+;;     (cl--setf-apply setter last-witness last)))
+
+
+;; FIXME: CL used to provide get-setf-method, which was used by some
+;; setf-expanders, but now that we use gv.el, it is a lot more difficult
+;; and in general impossible to provide get-setf-method.  Hopefully, it
+;; won't be needed.  If needed, we'll have to do something nasty along the
+;; lines of
+;; (defun get-setf-method (place &optional env)
+;;   (let* ((witness (list 'cl-gsm))
+;;          (expansion (gv-letplace (getter setter) place
+;;                      `(,witness ,getter ,(funcall setter witness)))))
+;;     ...find "let prefix" of expansion, extract getter and setter from
+;;     ...the rest, and build the 5-tuple))
+(make-obsolete 'get-setf-method 'gv-letplace "24.2")
+
+(defmacro define-modify-macro (name arglist func &optional doc)
+  "Define a `setf'-like modify macro.
+If NAME is called, it combines its PLACE argument with the other arguments
+from ARGLIST using FUNC: (define-modify-macro incf (&optional (n 1)) +)"
+  (declare (debug
+            (&define name cl-lambda-list ;; should exclude &key
+                     symbolp &optional stringp)))
+  (if (memq '&key arglist)
+      (error "&key not allowed in define-modify-macro"))
+  (let ((place (make-symbol "--cl-place--")))
+    `(cl-defmacro ,name (,place ,@arglist)
+       ,doc
+       (,(if (memq '&rest arglist) #'cl-list* #'list)
+        #'cl-callf ',func ,place
+        ,@(cl--arglist-args arglist)))))
+
+;;; Additional compatibility code.
 ;; For names that were clean but really aren't needed any more.
 
 (define-obsolete-function-alias 'cl-macroexpand 'macroexpand "24.2")
@@ -509,9 +662,9 @@ Unlike `flet', this macro is fully compliant with the Common Lisp standard.
 ;; This is just kept for compatibility with code byte-compiled by Emacs-20.
 
 ;; No idea if this might still be needed.
-(defun cl-not-hash-table (x &optional y &rest z)
+(defun cl-not-hash-table (x &optional y &rest _z)
+  (declare (obsolete nil "24.2"))
   (signal 'wrong-type-argument (list 'cl-hash-table-p (or y x))))
-(make-obsolete 'cl-not-hash-table nil "24.2")
 
 (defvar cl-builtin-gethash (symbol-function 'gethash))
 (make-obsolete-variable 'cl-builtin-gethash nil "24.2")
@@ -538,7 +691,28 @@ Unlike `flet', this macro is fully compliant with the Common Lisp standard.
   (while (and list (not (equal item (car list)))) (setq list (cdr list)))
   list)
 
-;; FIXME: More candidates: define-modify-macro, define-setf-expander.
+;; Used in the expansion of the old `defstruct'.
+(defun cl-struct-setf-expander (x name accessor pred-form pos)
+  (declare (obsolete nil "24.2"))
+  (let* ((temp (make-symbol "--cl-x--")) (store (make-symbol "--cl-store--")))
+    (list (list temp) (list x) (list store)
+	  `(progn
+             ,@(and pred-form
+                    (list `(or ,(cl-subst temp 'cl-x pred-form)
+                               (error ,(format
+                                        "%s storing a non-%s"
+                                        accessor name)))))
+             ,(if (eq (car (get name 'cl-struct-type)) 'vector)
+                  `(aset ,temp ,pos ,store)
+                `(setcar
+                  ,(if (<= pos 5)
+                       (let ((xx temp))
+                         (while (>= (setq pos (1- pos)) 0)
+                           (setq xx `(cdr ,xx)))
+                         xx)
+                     `(nthcdr ,pos ,temp))
+                  ,store)))
+	  (list accessor temp))))
 
 (provide 'cl)
 ;;; cl.el ends here

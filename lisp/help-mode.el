@@ -30,7 +30,6 @@
 ;;; Code:
 
 (require 'button)
-(require 'view)
 (eval-when-compile (require 'easymenu))
 
 (defvar help-mode-map
@@ -288,10 +287,7 @@ Commands:
 ;;;###autoload
 (defun help-mode-finish ()
   (when (eq major-mode 'help-mode)
-    ;; View mode's read-only status of existing *Help* buffer is lost
-    ;; by with-output-to-temp-buffer.
-    (toggle-read-only 1)
-
+    (setq buffer-read-only t)
     (save-excursion
       (goto-char (point-min))
       (let ((inhibit-read-only t))
@@ -500,14 +496,14 @@ that."
                            ((and
                              (or (boundp sym)
                                  (get sym 'variable-documentation))
-                             (or
-                              (documentation-property
-                               sym 'variable-documentation)
-                              (condition-case nil
+                             (condition-case err
+                                 (or
+                                  (documentation-property
+                                   sym 'variable-documentation)
                                   (documentation-property
                                    (indirect-variable sym)
-                                   'variable-documentation)
-                                (cyclic-variable-indirection nil))))
+                                   'variable-documentation))
+                               (error (message "No doc found: %S" err) nil)))
                             (help-xref-button 8 'help-variable sym))
                            ((fboundp sym)
                             (help-xref-button 8 'help-function sym)))))))

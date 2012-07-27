@@ -56,12 +56,7 @@ struct interval
   unsigned int front_sticky : 1;    /* Non-zero means text inserted just
 				       before this interval goes into it.  */
   unsigned int rear_sticky : 1;	    /* Likewise for just after it.  */
-
-  /* Properties of this interval.
-     The mark bit on this field says whether this particular interval
-     tree node has been visited.  Since intervals should never be
-     shared, GC aborts if it seems to have visited an interval twice.  */
-  Lisp_Object plist;
+  Lisp_Object plist;		    /* Other properties.  */
 };
 
 /* These are macros for dealing with the interval tree.  */
@@ -308,16 +303,6 @@ extern Lisp_Object Qinvisible, Qintangible;
 /* Sticky properties.  */
 extern Lisp_Object Qfront_sticky, Qrear_nonsticky;
 
-EXFUN (Fget_char_property, 3);
-EXFUN (Fget_text_property, 3);
-EXFUN (Ftext_properties_at, 2);
-EXFUN (Fnext_property_change, 3);
-EXFUN (Fadd_text_properties, 4);
-EXFUN (Fset_text_properties, 4);
-EXFUN (Fremove_text_properties, 4);
-EXFUN (Fremove_list_of_text_properties, 4);
-EXFUN (Ftext_property_any, 5);
-EXFUN (Fprevious_single_char_property_change, 4);
 extern Lisp_Object copy_text_properties (Lisp_Object, Lisp_Object,
                                          Lisp_Object, Lisp_Object,
                                          Lisp_Object, Lisp_Object);

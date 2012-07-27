@@ -198,7 +198,7 @@
 
 (eval-when-compile
   (require 'skeleton)
-  (require 'cl)
+  (require 'cl-lib)
   (require 'comint))
 (require 'executable)
 
@@ -327,8 +327,15 @@ shell it really is."
 (defcustom sh-imenu-generic-expression
   `((sh
      . ((nil
-         "^\\s-*\\(function\\s-+\\)?\\([[:alpha:]_][[:alnum:]_]+\\)\\s-*()"
-         2))))
+	 ;; function FOO
+	 ;; function FOO()
+         "^\\s-*function\\s-+\\\([[:alpha:]_][[:alnum:]_]+\\)\\s-*\\(?:()\\)?"
+         1)
+	;; FOO()
+	(nil
+	 "^\\s-*\\([[:alpha:]_][[:alnum:]_]+\\)\\s-*()"
+	 1)
+	)))
   "Alist of regular expressions for recognizing shell function definitions.
 See `sh-feature' and `imenu-generic-expression'."
   :type '(alist :key-type (symbol :tag "Shell")
@@ -987,31 +994,31 @@ subshells can nest."
       (while (and state (progn (skip-chars-forward "^'\\\\\"`$()" limit)
                                (< (point) limit)))
         ;; unescape " inside a $( ... ) construct.
-        (case (char-after)
-          (?\' (case state
-                 (double-quote nil)
-                 (t (forward-char 1) (skip-chars-forward "^'" limit))))
+        (pcase (char-after)
+          (?\' (pcase state
+                 (`double-quote nil)
+                 (_ (forward-char 1) (skip-chars-forward "^'" limit))))
           (?\\ (forward-char 1))
-          (?\" (case state
-                 (double-quote (setq state (pop states)))
-                 (t (push state states) (setq state 'double-quote)))
+          (?\" (pcase state
+                 (`double-quote (setq state (pop states)))
+                 (_ (push state states) (setq state 'double-quote)))
                (if state (put-text-property (point) (1+ (point))
                                             'syntax-table '(1))))
-          (?\` (case state
-                 (backquote (setq state (pop states)))
-                 (t (push state states) (setq state 'backquote))))
+          (?\` (pcase state
+                 (`backquote (setq state (pop states)))
+                 (_ (push state states) (setq state 'backquote))))
           (?\$ (if (not (eq (char-after (1+ (point))) ?\())
                    nil
                  (forward-char 1)
-                 (case state
-                   (t (push state states) (setq state 'code)))))
-          (?\( (case state
-                 (double-quote nil)
-                 (t (push state states) (setq state 'code))))
-          (?\) (case state
-                 (double-quote nil)
-                 (t (setq state (pop states)))))
-          (t (error "Internal error in sh-font-lock-quoted-subshell")))
+                 (pcase state
+                   (_ (push state states) (setq state 'code)))))
+          (?\( (pcase state
+                 (`double-quote nil)
+                 (_ (push state states) (setq state 'code))))
+          (?\) (pcase state
+                 (`double-quote nil)
+                 (_ (setq state (pop states)))))
+          (_ (error "Internal error in sh-font-lock-quoted-subshell")))
         (forward-char 1)))))
 
 
@@ -1087,7 +1094,7 @@ subshells can nest."
     ;; metacharacters.  The list of special chars is taken from
     ;; the single-unix spec of the shell command language (under
     ;; `quoting') but with `$' removed.
-    ("[^|&;<>()`\\\"' \t\n]\\(#+\\)" (1 "_"))
+    ("\\(?:[^|&;<>()`\\\"' \t\n]\\|\\${\\)\\(#+\\)" (1 "_"))
     ;; In a '...' the backslash is not escaping.
     ("\\(\\\\\\)'" (1 (sh-font-lock-backslash-quote)))
     ;; Make sure $@ and $? are correctly recognized as sexps.
@@ -1096,16 +1103,15 @@ subshells can nest."
     (")" (0 (sh-font-lock-paren (match-beginning 0))))
     ;; Highlight (possibly nested) subshells inside "" quoted
     ;; regions correctly.
-    ("\"\\(?:\\(?:[^\\\"]\\|\\)*?[^\\]\\(?:\\\\\\\\\\)*\\)??\\(\\$(\\|`\\)"
+    ("\"\\(?:\\(?:[^\\\"]\\|\\\\.\\)*?\\)??\\(\\$(\\|`\\)"
      (1 (ignore
-         ;; Save excursion because we want to also apply other
-         ;; syntax-propertize rules within the affected region.
-         (if (nth 8 (syntax-ppss))
+         (if (nth 8 (save-excursion (syntax-ppss (match-beginning 0))))
              (goto-char (1+ (match-beginning 0)))
+           ;; Save excursion because we want to also apply other
+           ;; syntax-propertize rules within the affected region.
            (save-excursion
              (sh-font-lock-quoted-subshell end)))))))
    (point) end))
-
 (defun sh-font-lock-syntactic-face-function (state)
   (let ((q (nth 3 state)))
     (if q
@@ -1649,7 +1655,7 @@ Does not preserve point."
       (cond
        ((zerop (length prev))
         (if newline
-            (progn (assert words) (setq res 'word))
+            (progn (cl-assert words) (setq res 'word))
           (setq words t)
           (condition-case nil
               (forward-sexp -1)
@@ -1661,7 +1667,7 @@ Does not preserve point."
        ((assoc prev smie-grammar) (setq res 'word))
        (t
         (if newline
-            (progn (assert words) (setq res 'word))
+            (progn (cl-assert words) (setq res 'word))
           (setq words t)))))
     (eq res 'keyword)))
 

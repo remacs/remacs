@@ -61,8 +61,30 @@ check that this option enables.
 lisp/ directory.  There should not be any there anyway.  If you have
 been adding them there, put them somewhere else, eg site-lisp.
 
+---
+** The `--no-site-lisp' command line option now works for Nextstep builds.
+
 
 * Changes in Emacs 24.2
+
+** Help changes
+
+*** `C-h f' (describe-function) can now perform autoloading.
+When this command is called for an autoloaded function whose docstring
+contains a key substitution construct, that function's library is
+automatically loaded, so that the documentation can be shown
+correctly.  To disable this, set `help-enable-auto-load' to nil.
+
+*** `C-h f' now reports previously-autoloaded functions as "autoloaded",
+even after their associated libraries have been loaded (and the
+autoloads have been redefined as functions).
+
+** The function `current-time' now returns extended-format time stamps
+(HIGH LOW USEC PSEC) that use picosecond resolution; the PSEC
+component is new.  PSEC is typically a multiple of 1000 on current
+machines.  Other functions that use this format, such as
+file-attributes and format-time-string, have been changed accordingly.
+Old-format time stamps are still accepted.
 
 ** New functions `system-users', `system-groups' return lists of the user
 name, group names known to the system (where possible).
@@ -91,6 +113,8 @@ treated as images.
 ** Face underlining can now use a wave.
 See the "Face Attributes" section of the Elisp manual.
 
+** New fringe bitmap exclamation-mark.
+
 ** String values for `initial-buffer-choice' also apply to emacsclient
 frames, if emacsclient is only told to open a new frame without
 specifying any file to visit or expression to evaluate.
@@ -116,6 +140,10 @@ invokes `set-buffer-file-coding-system'.
 ** Setting `enable-remote-dir-locals' to non-nil allows directory
 local variables on remote hosts.
 
++++
+** `insert-char' is now a command, and `ucs-insert' an obsolete alias
+for it.
+
 
 * Editing Changes in Emacs 24.2
 
@@ -131,15 +159,29 @@ prompts for a column number.
 ** `mouse-avoidance-banish-position' can now be used to customize
 `mouse-avoidance-mode' further.
 
+** `M-=' is now bound to `count-words', not `count-words-region'.
+
 ** `C-M-f' and `C-M-b' will now move to the path name separator
 character when doing minibuffer filename prompts.
 
 ** `goto-char' is now bound to `M-g c'.
 
+** New command `C-x r M-w' (copy-rectangle-as-kill).
+It copies the region-rectangle as the last rectangle kill.
+
 ** New input method `vietnamese-vni'.
 
 
 * Changes in Specialized Modes and Packages in Emacs 24.2
+
+** Term changes
+
+The variables `term-default-fg-color' and `term-default-bg-color' are
+now deprecated in favor of the `term-face' face, that you can
+customize.  Also, it is now possible to customize how are displayed the
+ANSI terminal colors and styles by customizing the corresponding
+`term-color-<COLOR>', `term-color-underline' and `term-color-bold'
+faces.
 
 ** CL's main entry is now (require 'cl-lib).
 `cl-lib' is like the old `cl' except that it uses the namespace cleanly,
@@ -153,8 +195,14 @@ which have not been renamed to `cl-foo*' but just `cl-foo'.
 The old `cl' is now deprecated and is nothing more than a bunch of aliases that
 provide the old non-prefixed names.
 
-** A new mode for Python.
-This provides several new features, including:
+** Desktop
+
+*** `desktop-path' no longer includes the "." directory.  Desktop
+files are now located in ~/.emacs.d by default.
+
+** Python mode
+
+A new version of python.el, which provides several new features, including:
 per-buffer shells, better indentation, Python 3 support, and improved
 shell-interaction compatible with iPython (and virtually any other
 text based shell).
@@ -207,11 +255,15 @@ python-send-string        | python-shell-send-string
 python-switch-to-python   | python-shell-switch-to-shell
 python-describe-symbol    | python-eldoc-at-point
 
-** VHDL-mode
-- Support for ghdl (free vhdl compiler).  Now default.
-- Add/update support for VHDL-AMS packages.
-- Update to VHDL'02 standard.
-- Accept \r and \f as whitespace.
+** VHDL mode
+
+*** The free software compiler GHDL is supported (and now the default).
+
+*** Support for the VHDL-AMS packages has been added/updated.
+
+*** Updated to the 2002 revision of the VHDL standard.
+
+*** Accepts \r and \f as whitespace.
 
 ** Diff mode
 
@@ -226,6 +278,10 @@ to highlight changes in context diffs.
 
 ** Ediff now uses the same color scheme as Diff mode
 on high color displays.
+
+** Flymake uses fringe bitmaps to indicate errors and warnings.
+See flymake-fringe-indicator-position, flymake-error-bitmap and
+flymake-warning-bitmap.
 
 ** `sh-script'
 *** Pairing of parens/quotes uses electric-pair-mode instead of skeleton-pair.
@@ -293,6 +349,12 @@ these commands now).
 
 ** erc will look up server/channel names via auth-source and use the
 channel keys found, if any.
+
+** Dired
+
+*** `dired-do-async-shell-command' executes each file sequentially
+if the command ends in `;' (when operating on multiple files).
+Otherwise, it executes the command on each file in parallel.
 
 ** FFAP
 
@@ -413,6 +475,12 @@ Only variables defined using `defcustom' are considered user options.
 The function `user-variable-p' is now an obsolete alias for
 `custom-variable-p'.
 
++++
+** The return values of `defalias', `defun' and `defmacro' have changed,
+and are now undefined.  For backwards compatibility, defun and
+defmacro currently return the name of the newly defined function/macro
+but this should not be relied upon.
+
 ** `face-spec-set' no longer sets frame-specific attributes when the
 third argument is a frame (that usage was obsolete since Emacs 22.2).
 
@@ -425,11 +493,20 @@ still be supported for Emacs 24.x.
 
 *** `facemenu-unlisted-faces'
 *** `rmail-decode-mime-charset'
+*** `last-input-char' and `last-command-char'
 
 
 * Lisp changes in Emacs 24.2
 
-** The return value of `defalias' has changed and is now undefined.
+** New functions `autoloadp' and `autoload-do-load'.
+
+** `function-get' fetches the property of a function, following aliases.
+
+** `toggle-read-only' accepts a second argument specifying whether to
+print a message, if called from Lisp.
+
+** CL-style generalized variables are now in core Elisp.
+`setf' is autoloaded and `push' and `pop' accept generalized variables.
 
 ** `defun' also accepts a (declare DECLS) form, like `defmacro'.
 The interpretation of the DECLS is determined by `defun-declarations-alist'.
@@ -459,6 +536,10 @@ table, but with a different prefix.
 must be in the range 1000..9999.  It now works with any year supported
 by the underlying C implementation.
 
+** New function file-name-base.
+
+** New function `tty-top-frame' returns the topmost frame of a text terminal.
+
 ** `automount-dir-prefix' is obsolete.
 ** `buffer-has-markers-at' is obsolete.
 
@@ -472,8 +553,6 @@ is detected.
 ** When invoked with the -nw switch to run on the Windows text-mode terminal,
 Emacs now supports mouse highlight, help-echo (in the echo area), and
 mouse-autoselect-window.
-
-** New function `tty-top-frame' returns the topmost frame of a text terminal.
 
 
 * Installation Changes in Emacs 24.1

@@ -28,8 +28,6 @@
 
 ;;; Code:
 
-(eval-when-compile (require 'cl))
-
 (defmacro save-selected-window (&rest body)
   "Execute BODY, then select the previously selected window.
 The value returned is the value of the last form in BODY.
@@ -2557,7 +2555,7 @@ This may be a useful alternative binding for \\[delete-other-windows]
     (while (not (eq (setq w (next-window w 1)) window))
       (let ((e (window-edges w)))
         (when (and (= (car e) (car edges))
-                   (= (caddr e) (caddr edges)))
+                   (= (nth 2 e) (nth 2 edges)))
           (push w delenda))))
     (mapc 'delete-window delenda)))
 
@@ -3071,9 +3069,8 @@ one.  If non-nil, reset `quit-restore' parameter to nil."
 	   (buffer-live-p (car quad))
 	   (eq (nth 3 quit-restore) buffer))
       ;; Show another buffer stored in quit-restore parameter.
-      (setq resize (with-current-buffer buffer
-		     (and temp-buffer-resize-mode
-			  (/= (nth 3 quad) (window-total-size window)))))
+      (setq resize (and (integerp (nth 3 quad))
+                        (/= (nth 3 quad) (window-total-size window))))
       (set-window-dedicated-p window nil)
       (when resize
 	;; Try to resize WINDOW to its old height but don't signal an
@@ -4478,8 +4475,9 @@ hold:
 		      (* 2 (max window-min-height
 				(if mode-line-format 2 1))))))))))
 
-(defun split-window-sensibly (window)
+(defun split-window-sensibly (&optional window)
   "Split WINDOW in a way suitable for `display-buffer'.
+WINDOW defaults to the currently selected window.
 If `split-height-threshold' specifies an integer, WINDOW is at
 least `split-height-threshold' lines tall and can be split
 vertically, split WINDOW into two windows one above the other and
@@ -4509,23 +4507,24 @@ more likely to occur.
 Have a look at the function `window-splittable-p' if you want to
 know how `split-window-sensibly' determines whether WINDOW can be
 split."
-  (or (and (window-splittable-p window)
-	   ;; Split window vertically.
-	   (with-selected-window window
-	     (split-window-below)))
-      (and (window-splittable-p window t)
-	   ;; Split window horizontally.
-	   (with-selected-window window
-	     (split-window-right)))
-      (and (eq window (frame-root-window (window-frame window)))
-	   (not (window-minibuffer-p window))
-	   ;; If WINDOW is the only window on its frame and is not the
-	   ;; minibuffer window, try to split it vertically disregarding
-	   ;; the value of `split-height-threshold'.
-	   (let ((split-height-threshold 0))
-	     (when (window-splittable-p window)
-	       (with-selected-window window
-		 (split-window-below)))))))
+  (let ((window (or window (selected-window))))
+    (or (and (window-splittable-p window)
+	     ;; Split window vertically.
+	     (with-selected-window window
+	       (split-window-below)))
+	(and (window-splittable-p window t)
+	     ;; Split window horizontally.
+	     (with-selected-window window
+	       (split-window-right)))
+	(and (eq window (frame-root-window (window-frame window)))
+	     (not (window-minibuffer-p window))
+	     ;; If WINDOW is the only window on its frame and is not the
+	     ;; minibuffer window, try to split it vertically disregarding
+	     ;; the value of `split-height-threshold'.
+	     (let ((split-height-threshold 0))
+	       (when (window-splittable-p window)
+		 (with-selected-window window
+		   (split-window-below))))))))
 
 (defun window--try-to-split-window (window)
   "Try to split WINDOW.

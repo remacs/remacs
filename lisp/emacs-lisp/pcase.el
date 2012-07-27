@@ -64,7 +64,7 @@
 ;; (defconst pcase--memoize-1 (make-hash-table :test 'eq))
 ;; (defconst pcase--memoize-2 (make-hash-table :weakness 'key :test 'equal))
 
-(defconst pcase--dontcare-upats '(t _ dontcare))
+(defconst pcase--dontcare-upats '(t _ pcase--dontcare))
 
 (def-edebug-spec
   pcase-UPAT
@@ -94,6 +94,7 @@ CASES is a list of elements of the form (UPATTERN CODE...).
 
 UPatterns can take the following forms:
   _		matches anything.
+  SELFQUOTING	matches itself.  This includes keywords, numbers, and strings.
   SYMBOL	matches anything and binds it to SYMBOL.
   (or UPAT...)	matches if any of the patterns matches.
   (and UPAT...)	matches if all the patterns match.
@@ -113,7 +114,8 @@ QPatterns for vectors are not implemented yet.
 
 PRED can take the form
   FUNCTION	     in which case it gets called with one argument.
-  (FUN ARG1 .. ARGN) in which case it gets called with N+1 arguments.
+  (FUN ARG1 .. ARGN) in which case it gets called with an N+1'th argument
+                        which is the value being matched.
 A PRED of the form FUNCTION is equivalent to one of the form (FUNCTION).
 PRED patterns can refer to variables bound earlier in the pattern.
 E.g. you can match pairs where the cdr is larger than the car with a pattern
@@ -153,11 +155,12 @@ like `(,a . ,(pred (< a))) or, with more checks:
       (pcase--expand
        (cadr binding)
        `((,(car binding) ,(pcase--let* bindings body))
-         ;; We can either signal an error here, or just use `dontcare' which
-         ;; generates more efficient code.  In practice, if we use `dontcare'
-         ;; we will still often get an error and the few cases where we don't
-         ;; do not matter that much, so it's a better choice.
-         (dontcare nil)))))))
+         ;; We can either signal an error here, or just use `pcase--dontcare'
+         ;; which generates more efficient code.  In practice, if we use
+         ;; `pcase--dontcare' we will still often get an error and the few
+         ;; cases where we don't do not matter that much, so
+         ;; it's a better choice.
+         (pcase--dontcare nil)))))))
 
 ;;;###autoload
 (defmacro pcase-let* (bindings &rest body)
@@ -210,7 +213,7 @@ of the form (UPAT EXP)."
 (defun pcase--expand (exp cases)
   ;; (message "pid=%S (pcase--expand %S ...hash=%S)"
   ;;          (emacs-pid) exp (sxhash cases))
-  (macroexp-let² macroexp-copyable-p val exp
+  (macroexp-let2 macroexp-copyable-p val exp
     (let* ((defs ())
            (seen '())
            (codegen
@@ -274,7 +277,7 @@ of the form (UPAT EXP)."
                              vars))))
                      cases))))
       (dolist (case cases)
-        (unless (or (memq case used-cases) (eq (car case) 'dontcare))
+        (unless (or (memq case used-cases) (eq (car case) 'pcase--dontcare))
           (message "Redundant pcase pattern: %S" (car case))))
       (macroexp-let* defs main))))
 
@@ -509,6 +512,9 @@ MATCH is the pattern that needs to be matched, of the form:
     (and (memq sexp vars) (not (memq sexp res)) (push sexp res))
     res))
 
+(defun pcase--self-quoting-p (upat)
+  (or (keywordp upat) (numberp upat) (stringp upat)))
+
 ;; It's very tempting to use `pcase' below, tho obviously, it'd create
 ;; bootstrapping problems.
 (defun pcase--u1 (matches code vars rest)
@@ -571,7 +577,7 @@ Otherwise, it defers to REST which is a list of branches of the form
            (upat (cdr cdrpopmatches)))
       (cond
        ((memq upat '(t _)) (pcase--u1 matches code vars rest))
-       ((eq upat 'dontcare) :pcase--dontcare)
+       ((eq upat 'pcase--dontcare) :pcase--dontcare)
        ((memq (car-safe upat) '(guard pred))
         (if (eq (car upat) 'pred) (put sym 'pcase-used t))
         (let* ((splitrest
@@ -605,6 +611,9 @@ Otherwise, it defers to REST which is a list of branches of the form
                            `(let* ,env ,call))))
                      (pcase--u1 matches code vars then-rest)
                      (pcase--u else-rest))))
+       ((pcase--self-quoting-p upat)
+        (put sym 'pcase-used t)
+        (pcase--q1 sym upat matches code vars rest))
        ((symbolp upat)
         (put sym 'pcase-used t)
         (if (not (assq upat vars))
@@ -617,7 +626,7 @@ Otherwise, it defers to REST which is a list of branches of the form
         ;; A upat of the form (let VAR EXP).
         ;; (pcase--u1 matches code
         ;;            (cons (cons (nth 1 upat) (nth 2 upat)) vars) rest)
-        (macroexp-let²
+        (macroexp-let2
             macroexp-copyable-p sym
             (let* ((exp (nth 2 upat))
                    (found (assq exp vars)))
@@ -636,14 +645,16 @@ Otherwise, it defers to REST which is a list of branches of the form
               (memq-fine t))
           (when all
             (dolist (alt (cdr upat))
-              (unless (and (eq (car-safe alt) '\`)
-                           (or (symbolp (cadr alt)) (integerp (cadr alt))
-                               (setq memq-fine nil)
-                               (stringp (cadr alt))))
+              (unless (or (pcase--self-quoting-p alt)
+                          (and (eq (car-safe alt) '\`)
+                               (or (symbolp (cadr alt)) (integerp (cadr alt))
+                                   (setq memq-fine nil)
+                                   (stringp (cadr alt)))))
                 (setq all nil))))
           (if all
               ;; Use memq for (or `a `b `c `d) rather than a big tree.
-              (let* ((elems (mapcar 'cadr (cdr upat)))
+              (let* ((elems (mapcar (lambda (x) (if (consp x) (cadr x) x))
+                                    (cdr upat)))
                      (splitrest
                       (pcase--split-rest
                        sym (lambda (pat) (pcase--split-member elems pat)) rest))

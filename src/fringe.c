@@ -107,6 +107,22 @@ struct fringe_bitmap
 static unsigned short question_mark_bits[] = {
   0x3c, 0x7e, 0x7e, 0x0c, 0x18, 0x18, 0x00, 0x18, 0x18};
 
+/* An exclamation mark.  */
+/*
+  ...XX...
+  ...XX...
+  ...XX...
+  ...XX...
+  ...XX...
+  ...XX...
+  ...XX...
+  ........
+  ...XX...
+  ...XX...
+*/
+static unsigned short exclamation_mark_bits[] = {
+  0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x00, 0x18};
+
 /* An arrow like this: `<-'.  */
 /*
   ...xx...
@@ -432,6 +448,7 @@ static struct fringe_bitmap standard_bitmaps[] =
 {
   { NULL, 0, 0, 0, 0, 0 }, /* NO_FRINGE_BITMAP */
   { FRBITS (question_mark_bits),      8, 0, ALIGN_BITMAP_CENTER, 0 },
+  { FRBITS (exclamation_mark_bits),   8, 0, ALIGN_BITMAP_CENTER, 0 },
   { FRBITS (left_arrow_bits),         8, 0, ALIGN_BITMAP_CENTER, 0 },
   { FRBITS (right_arrow_bits),        8, 0, ALIGN_BITMAP_CENTER, 0 },
   { FRBITS (up_arrow_bits),           8, 0, ALIGN_BITMAP_TOP,    0 },
@@ -849,7 +866,7 @@ draw_fringe_bitmap (struct window *w, struct glyph_row *row, int left_p)
 void
 draw_row_fringe_bitmaps (struct window *w, struct glyph_row *row)
 {
-  xassert (interrupt_input_blocked);
+  eassert (interrupt_input_blocked);
 
   /* If row is completely invisible, because of vscrolling, we
      don't have to draw anything.  */
@@ -1616,12 +1633,10 @@ If BITMAP already exists, the existing definition is replaced.  */)
 		error ("No free fringe bitmap slots");
 
 	      i = max_fringe_bitmaps;
-	      fringe_bitmaps
-		= ((struct fringe_bitmap **)
-		   xrealloc (fringe_bitmaps, bitmaps * sizeof *fringe_bitmaps));
-	      fringe_faces
-		= (Lisp_Object *) xrealloc (fringe_faces,
-					    bitmaps * sizeof *fringe_faces);
+	      fringe_bitmaps = xrealloc (fringe_bitmaps,
+					 bitmaps * sizeof *fringe_bitmaps);
+	      fringe_faces = xrealloc (fringe_faces,
+				       bitmaps * sizeof *fringe_faces);
 
 	      for (i = max_fringe_bitmaps; i < bitmaps; i++)
 		{
@@ -1639,8 +1654,7 @@ If BITMAP already exists, the existing definition is replaced.  */)
 
   fb.dynamic = 1;
 
-  xfb = (struct fringe_bitmap *) xmalloc (sizeof fb
-					  + fb.height * BYTES_PER_BITMAP_ROW);
+  xfb = xmalloc (sizeof fb + fb.height * BYTES_PER_BITMAP_ROW);
   fb.bits = b = (unsigned short *) (xfb + 1);
   memset (b, 0, fb.height);
 
@@ -1804,16 +1818,11 @@ init_fringe (void)
 
   max_fringe_bitmaps = MAX_STANDARD_FRINGE_BITMAPS + 20;
 
-  fringe_bitmaps
-    = (struct fringe_bitmap **) xmalloc (max_fringe_bitmaps * sizeof (struct fringe_bitmap *));
-  fringe_faces
-    = (Lisp_Object *) xmalloc (max_fringe_bitmaps * sizeof (Lisp_Object));
+  fringe_bitmaps = xzalloc (max_fringe_bitmaps * sizeof *fringe_bitmaps);
+  fringe_faces = xmalloc (max_fringe_bitmaps * sizeof *fringe_faces);
 
   for (i = 0; i < max_fringe_bitmaps; i++)
-    {
-      fringe_bitmaps[i] = NULL;
-      fringe_faces[i] = Qnil;
-    }
+    fringe_faces[i] = Qnil;
 }
 
 #ifdef HAVE_NTGUI

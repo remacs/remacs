@@ -307,7 +307,7 @@ be either:
             (dolist (op (cdr (assoc first-nt first-ops-table)))
               (unless (member op first-ops)
                 (setq again t)
-                (cl-push op (cdr first-ops))))))))
+                (push op (cdr first-ops))))))))
     ;; Same thing for last-ops.
     (setq again t)
     (while (prog1 again (setq again nil))
@@ -318,7 +318,7 @@ be either:
             (dolist (op (cdr (assoc last-nt last-ops-table)))
               (unless (member op last-ops)
                 (setq again t)
-                (cl-push op (cdr last-ops))))))))
+                (push op (cdr last-ops))))))))
     ;; Now generate the 2D precedence table.
     (dolist (rules bnf)
       (dolist (rhs (cdr rules))
@@ -601,10 +601,10 @@ PREC2 is a table as returned by `smie-precs->prec2' or
       ;; left side of any < constraint).
       (dolist (x table)
         (unless (nth 1 x)
-          (cl-setf (nth 1 x) i)
+          (setf (nth 1 x) i)
           (cl-incf i))                  ;See other (cl-incf i) above.
         (unless (nth 2 x)
-          (cl-setf (nth 2 x) i)
+          (setf (nth 2 x) i)
           (cl-incf i))))                ;See other (cl-incf i) above.
     ;; Mark closers and openers.
     (dolist (x (gethash :smie-open/close-alist prec2))
@@ -613,7 +613,7 @@ PREC2 is a table as returned by `smie-precs->prec2' or
                      (`closer (cddr (assoc token table)))
                      (`opener (cdr (assoc token table))))))
         (cl-assert (numberp (car cons)))
-        (cl-setf (car cons) (list (car cons)))))
+        (setf (car cons) (list (car cons)))))
     (let ((ca (gethash :smie-closer-alist prec2)))
       (when ca (push (cons :smie-closer-alist ca) table)))
     ;; (smie-check-grammar table prec2 'step3)
@@ -708,13 +708,12 @@ Possible return values:
               (when (zerop (length token))
                 (condition-case err
                     (progn (goto-char pos) (funcall next-sexp 1) nil)
-                  (scan-error (throw 'return
-                                     (list t (cl-caddr err)
-                                           (buffer-substring-no-properties
-                                            (cl-caddr err)
-                                            (+ (cl-caddr err)
-                                               (if (< (point) (cl-caddr err))
-                                                   -1 1)))))))
+                  (scan-error
+                   (let ((pos (nth 2 err)))
+                     (throw 'return
+                            (list t pos
+                                  (buffer-substring-no-properties
+                                   pos (+ pos (if (< (point) pos) -1 1))))))))
                 (if (eq pos (point))
                     ;; We did not move, so let's abort the loop.
                     (throw 'return (list t (point))))))

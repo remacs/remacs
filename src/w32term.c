@@ -231,7 +231,7 @@ static void my_set_focus (struct frame *, HWND);
 static void my_set_foreground_window (HWND);
 static void my_destroy_window (struct frame *, HWND);
 
-#if GLYPH_DEBUG
+#ifdef GLYPH_DEBUG
 static void x_check_font (struct frame *, struct font *);
 #endif
 
@@ -285,8 +285,7 @@ XChangeGC (void *ignore, XGCValues *gc, unsigned long mask,
 XGCValues *
 XCreateGC (void *ignore, Window window, unsigned long mask, XGCValues *xgcv)
 {
-  XGCValues *gc = (XGCValues *) xmalloc (sizeof (XGCValues));
-  memset (gc, 0, sizeof (XGCValues));
+  XGCValues *gc = xzalloc (sizeof (XGCValues));
 
   XChangeGC (ignore, gc, mask, xgcv);
 
@@ -742,7 +741,7 @@ x_after_update_window_line (struct glyph_row *desired_row)
   struct frame *f;
   int width, height;
 
-  xassert (w);
+  eassert (w);
 
   if (!desired_row->mode_line_p && !w->pseudo_window_p)
     desired_row->redraw_fringe_bitmaps_p = 1;
@@ -1086,7 +1085,7 @@ x_set_mouse_face_gc (struct glyph_string *s)
       s->gc = FRAME_W32_DISPLAY_INFO (s->f)->scratch_cursor_gc;
     }
 
-  xassert (s->gc != 0);
+  eassert (s->gc != 0);
 }
 
 
@@ -1143,7 +1142,7 @@ x_set_glyph_string_gc (struct glyph_string *s)
     }
 
   /* GC must have been set.  */
-  xassert (s->gc != 0);
+  eassert (s->gc != 0);
 }
 
 
@@ -1560,7 +1559,7 @@ w32_alloc_lighter_color (struct frame *f, COLORREF *color,
   delta /= 256;
 
   /* Change RGB values by specified FACTOR.  Avoid overflow!  */
-  xassert (factor >= 0);
+  eassert (factor >= 0);
   new = PALETTERGB (min (0xff, factor * GetRValue (*color)),
                     min (0xff, factor * GetGValue (*color)),
                     min (0xff, factor * GetBValue (*color)));
@@ -2237,7 +2236,7 @@ x_draw_image_glyph_string (struct glyph_string *s)
 static void
 x_draw_stretch_glyph_string (struct glyph_string *s)
 {
-  xassert (s->first_glyph->type == STRETCH_GLYPH);
+  eassert (s->first_glyph->type == STRETCH_GLYPH);
 
   if (s->hl == DRAW_CURSOR
       && !x_stretch_cursor_p)
@@ -4234,8 +4233,8 @@ w32_read_socket (struct terminal *terminal, int expected,
 	  /* Generate a language change event.  */
 	  f = x_window_to_frame (dpyinfo, msg.msg.hwnd);
 
-	  /* lParam contains the input lang ID.  Use it to update our
-	     record of the keyboard codepage.  */
+	  /* lParam contains the input language ID in its low 16 bits.
+	     Use it to update our record of the keyboard codepage.  */
 	  keyboard_codepage = codepage_for_locale ((LCID)(msg.msg.lParam
 							  & 0xffff));
 
@@ -4243,7 +4242,7 @@ w32_read_socket (struct terminal *terminal, int expected,
 	    {
 	      inev.kind = LANGUAGE_CHANGE_EVENT;
 	      XSETFRAME (inev.frame_or_window, f);
-	      inev.code = msg.msg.wParam;
+	      inev.code = keyboard_codepage;
 	      inev.modifiers = msg.msg.lParam & 0xffff;
 	    }
 	  break;
@@ -6024,7 +6023,7 @@ x_wm_set_icon_position (struct frame *f, int icon_x, int icon_y)
 				Fonts
  ***********************************************************************/
 
-#if GLYPH_DEBUG
+#ifdef GLYPH_DEBUG
 
 /* Check that FONT is valid on frame F.  It is if it can be found in F's
    font table.  */
@@ -6032,12 +6031,12 @@ x_wm_set_icon_position (struct frame *f, int icon_x, int icon_y)
 static void
 x_check_font (struct frame *f, struct font *font)
 {
-  xassert (font != NULL && ! NILP (font->props[FONT_TYPE_INDEX]));
+  eassert (font != NULL && ! NILP (font->props[FONT_TYPE_INDEX]));
   if (font->driver->check)
-    xassert (font->driver->check (f, font) == 0);
+    eassert (font->driver->check (f, font) == 0);
 }
 
-#endif /* GLYPH_DEBUG != 0 */
+#endif /* GLYPH_DEBUG */
 
 
 
@@ -6060,10 +6059,8 @@ w32_initialize_display_info (Lisp_Object display_name)
                                  w32_display_name_list);
   dpyinfo->name_list_element = XCAR (w32_display_name_list);
 
-  dpyinfo->w32_id_name
-    = (char *) xmalloc (SCHARS (Vinvocation_name)
-			+ SCHARS (Vsystem_name)
-			+ 2);
+  dpyinfo->w32_id_name = xmalloc (SCHARS (Vinvocation_name)
+				  + SCHARS (Vsystem_name) + 2);
   sprintf (dpyinfo->w32_id_name, "%s@%s",
 	   SDATA (Vinvocation_name), SDATA (Vsystem_name));
 
@@ -6228,7 +6225,7 @@ w32_create_terminal (struct w32_display_info *dpyinfo)
   /* We don't yet support separate terminals on W32, so don't try to share
      keyboards between virtual terminals that are on the same physical
      terminal like X does.  */
-  terminal->kboard = (KBOARD *) xmalloc (sizeof (KBOARD));
+  terminal->kboard = xmalloc (sizeof (KBOARD));
   init_kboard (terminal->kboard);
   KVAR (terminal->kboard, Vwindow_system) = intern ("w32");
   terminal->kboard->next_kboard = all_kboards;
@@ -6280,7 +6277,7 @@ w32_term_init (Lisp_Object display_name, char *xrm_option, char *resource_name)
   terminal = w32_create_terminal (dpyinfo);
 
   /* Set the name of the terminal. */
-  terminal->name = (char *) xmalloc (SBYTES (display_name) + 1);
+  terminal->name = xmalloc (SBYTES (display_name) + 1);
   strncpy (terminal->name, SDATA (display_name), SBYTES (display_name));
   terminal->name[SBYTES (display_name)] = 0;
 

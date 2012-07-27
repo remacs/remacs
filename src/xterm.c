@@ -88,10 +88,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <X11/Shell.h>
 #endif
 
-#ifdef HAVE_SYS_TIME_H
-#include <sys/time.h>
-#endif
-
 #include <unistd.h>
 
 #ifdef USE_GTK
@@ -323,7 +319,7 @@ static void XTframe_up_to_date (struct frame *);
 static void XTset_terminal_modes (struct terminal *);
 static void XTreset_terminal_modes (struct terminal *);
 static void x_clear_frame (struct frame *);
-static void x_ins_del_lines (struct frame *, int, int) NO_RETURN;
+static _Noreturn void x_ins_del_lines (struct frame *, int, int);
 static void frame_highlight (struct frame *);
 static void frame_unhighlight (struct frame *);
 static void x_new_focus_frame (struct x_display_info *, struct frame *);
@@ -356,7 +352,7 @@ static int handle_one_xevent (struct x_display_info *, XEvent *,
 #ifdef USE_GTK
 static int x_dispatch_event (XEvent *, Display *);
 #endif
-/* Don't declare this NO_RETURN because we want no
+/* Don't declare this _Noreturn because we want no
    interference with debugging failing X calls.  */
 static void x_connection_closed (Display *, const char *);
 static void x_wm_set_window_state (struct frame *, int);
@@ -722,7 +718,7 @@ x_after_update_window_line (struct glyph_row *desired_row)
   struct frame *f;
   int width, height;
 
-  xassert (w);
+  eassert (w);
 
   if (!desired_row->mode_line_p && !w->pseudo_window_p)
     desired_row->redraw_fringe_bitmaps_p = 1;
@@ -915,7 +911,7 @@ static void x_draw_glyph_string_foreground (struct glyph_string *);
 static void x_draw_composite_glyph_string_foreground (struct glyph_string *);
 static void x_draw_glyph_string_box (struct glyph_string *);
 static void x_draw_glyph_string  (struct glyph_string *);
-static void x_delete_glyphs (struct frame *, int) NO_RETURN;
+static _Noreturn void x_delete_glyphs (struct frame *, int);
 static void x_compute_glyph_string_overhangs (struct glyph_string *);
 static void x_set_cursor_gc (struct glyph_string *);
 static void x_set_mode_line_face_gc (struct glyph_string *);
@@ -938,7 +934,7 @@ static void x_draw_box_rect (struct glyph_string *, int, int, int, int,
                              int, int, int, XRectangle *);
 static void x_scroll_bar_clear (struct frame *);
 
-#if GLYPH_DEBUG
+#ifdef GLYPH_DEBUG
 static void x_check_font (struct frame *, struct font *);
 #endif
 
@@ -1040,7 +1036,7 @@ x_set_mouse_face_gc (struct glyph_string *s)
       s->gc = FRAME_X_DISPLAY_INFO (s->f)->scratch_cursor_gc;
 
     }
-  xassert (s->gc != 0);
+  eassert (s->gc != 0);
 }
 
 
@@ -1097,7 +1093,7 @@ x_set_glyph_string_gc (struct glyph_string *s)
     }
 
   /* GC must have been set.  */
-  xassert (s->gc != 0);
+  eassert (s->gc != 0);
 }
 
 
@@ -1698,8 +1694,8 @@ x_query_colors (struct frame *f, XColor *colors, int ncolors)
       for (i = 0; i < ncolors; ++i)
 	{
 	  unsigned long pixel = colors[i].pixel;
-	  xassert (pixel < dpyinfo->ncolor_cells);
-	  xassert (dpyinfo->color_cells[pixel].pixel == pixel);
+	  eassert (pixel < dpyinfo->ncolor_cells);
+	  eassert (dpyinfo->color_cells[pixel].pixel == pixel);
 	  colors[i] = dpyinfo->color_cells[pixel];
 	}
     }
@@ -1857,7 +1853,7 @@ x_alloc_lighter_color (struct frame *f, Display *display, Colormap cmap, long un
   x_query_color (f, &color);
 
   /* Change RGB values by specified FACTOR.  Avoid overflow!  */
-  xassert (factor >= 0);
+  eassert (factor >= 0);
   new.red = min (0xffff, factor * color.red);
   new.green = min (0xffff, factor * color.green);
   new.blue = min (0xffff, factor * color.blue);
@@ -2569,7 +2565,7 @@ x_draw_image_glyph_string (struct glyph_string *s)
 static void
 x_draw_stretch_glyph_string (struct glyph_string *s)
 {
-  xassert (s->first_glyph->type == STRETCH_GLYPH);
+  eassert (s->first_glyph->type == STRETCH_GLYPH);
 
   if (s->hl == DRAW_CURSOR
       && !x_stretch_cursor_p)
@@ -3039,7 +3035,7 @@ x_delete_glyphs (struct frame *f, register int n)
 void
 x_clear_area (Display *dpy, Window window, int x, int y, int width, int height, int exposures)
 {
-  xassert (width > 0 && height > 0);
+  eassert (width > 0 && height > 0);
   XClearArea (dpy, window, x, y, width, height, exposures);
 }
 
@@ -3080,44 +3076,6 @@ x_clear_frame (struct frame *f)
 
 
 /* Invert the middle quarter of the frame for .15 sec.  */
-
-/* We use the select system call to do the waiting, so we have to make
-   sure it's available.  If it isn't, we just won't do visual bells.  */
-
-#if defined (HAVE_TIMEVAL) && defined (HAVE_SELECT)
-
-
-/* Subtract the `struct timeval' values X and Y, storing the result in
-   *RESULT.  Return 1 if the difference is negative, otherwise 0.  */
-
-static int
-timeval_subtract (struct timeval *result, struct timeval x, struct timeval y)
-{
-  /* Perform the carry for the later subtraction by updating y.  This
-     is safer because on some systems the tv_sec member is unsigned.  */
-  if (x.tv_usec < y.tv_usec)
-    {
-      int nsec = (y.tv_usec - x.tv_usec) / 1000000 + 1;
-      y.tv_usec -= 1000000 * nsec;
-      y.tv_sec += nsec;
-    }
-
-  if (x.tv_usec - y.tv_usec > 1000000)
-    {
-      int nsec = (y.tv_usec - x.tv_usec) / 1000000;
-      y.tv_usec += 1000000 * nsec;
-      y.tv_sec -= nsec;
-    }
-
-  /* Compute the time remaining to wait.  tv_usec is certainly
-     positive.  */
-  result->tv_sec = x.tv_sec - y.tv_sec;
-  result->tv_usec = x.tv_usec - y.tv_usec;
-
-  /* Return indication of whether the result should be considered
-     negative.  */
-  return x.tv_sec < y.tv_sec;
-}
 
 static void
 XTflash (struct frame *f)
@@ -3219,34 +3177,25 @@ XTflash (struct frame *f)
       x_flush (f);
 
       {
-	struct timeval wakeup;
-
-	EMACS_GET_TIME (wakeup);
-
-	/* Compute time to wait until, propagating carry from usecs.  */
-	wakeup.tv_usec += 150000;
-	wakeup.tv_sec += (wakeup.tv_usec / 1000000);
-	wakeup.tv_usec %= 1000000;
+	EMACS_TIME delay = make_emacs_time (0, 150 * 1000 * 1000);
+	EMACS_TIME wakeup = add_emacs_time (current_emacs_time (), delay);
 
 	/* Keep waiting until past the time wakeup or any input gets
 	   available.  */
 	while (! detect_input_pending ())
 	  {
-	    struct timeval current;
-	    struct timeval timeout;
+	    EMACS_TIME current = current_emacs_time ();
+	    EMACS_TIME timeout;
 
-	    EMACS_GET_TIME (current);
-
-	    /* Break if result would be negative.  */
-	    if (timeval_subtract (&current, wakeup, current))
+	    /* Break if result would not be positive.  */
+	    if (EMACS_TIME_LE (wakeup, current))
 	      break;
 
 	    /* How long `select' should wait.  */
-	    timeout.tv_sec = 0;
-	    timeout.tv_usec = 10000;
+	    timeout = make_emacs_time (0, 10 * 1000 * 1000);
 
 	    /* Try to wait that long--but we might wake up sooner.  */
-	    select (0, NULL, NULL, NULL, &timeout);
+	    pselect (0, NULL, NULL, NULL, &timeout, NULL);
 	  }
       }
 
@@ -3287,8 +3236,6 @@ XTflash (struct frame *f)
   UNBLOCK_INPUT;
 }
 
-#endif /* defined (HAVE_TIMEVAL) && defined (HAVE_SELECT) */
-
 
 static void
 XTtoggle_invisible_pointer (FRAME_PTR f, int invisible)
@@ -3315,11 +3262,9 @@ XTring_bell (struct frame *f)
 {
   if (FRAME_X_DISPLAY (f))
     {
-#if defined (HAVE_TIMEVAL) && defined (HAVE_SELECT)
       if (visible_bell)
 	XTflash (f);
       else
-#endif
 	{
 	  BLOCK_INPUT;
 	  XBell (FRAME_X_DISPLAY (f), 0);
@@ -5837,9 +5782,9 @@ static struct x_display_info *next_noop_dpyinfo;
      do									\
        {								\
 	 if (f->output_data.x->saved_menu_event == 0)			\
-           f->output_data.x->saved_menu_event				\
-	     = (XEvent *) xmalloc (sizeof (XEvent));			\
-         *f->output_data.x->saved_menu_event = event;                   \
+           f->output_data.x->saved_menu_event =				\
+	     xmalloc (sizeof (XEvent));					\
+         *f->output_data.x->saved_menu_event = event;			\
 	 inev.ie.kind = MENU_BAR_ACTIVATE_EVENT;			\
 	 XSETFRAME (inev.ie.frame_or_window, f);			\
        }								\
@@ -6510,7 +6455,7 @@ handle_one_xevent (struct x_display_info *dpyinfo, XEvent *eventptr,
               if (status_return == XBufferOverflow)
                 {
                   copy_bufsiz = nbytes + 1;
-                  copy_bufptr = (unsigned char *) alloca (copy_bufsiz);
+                  copy_bufptr = alloca (copy_bufsiz);
                   nbytes = XmbLookupString (FRAME_XIC (f),
                                             &event.xkey, (char *) copy_bufptr,
                                             copy_bufsiz, &keysym,
@@ -7735,7 +7680,7 @@ x_error_catcher (Display *display, XErrorEvent *event)
 void
 x_catch_errors (Display *dpy)
 {
-  struct x_error_message_stack *data = xmalloc (sizeof (*data));
+  struct x_error_message_stack *data = xmalloc (sizeof *data);
 
   /* Make sure any errors from previous requests have been dealt with.  */
   XSync (dpy, False);
@@ -7863,7 +7808,7 @@ x_connection_closed (Display *dpy, const char *error_message)
   Lisp_Object frame, tail;
   ptrdiff_t idx = SPECPDL_INDEX ();
 
-  error_msg = (char *) alloca (strlen (error_message) + 1);
+  error_msg = alloca (strlen (error_message) + 1);
   strcpy (error_msg, error_message);
   handling_signal = 0;
 
@@ -8252,14 +8197,13 @@ xim_initialize (struct x_display_info *dpyinfo, char *resource_name)
   if (use_xim)
     {
 #ifdef HAVE_X11R6_XIM
-      struct xim_inst_t *xim_inst;
+      struct xim_inst_t *xim_inst = xmalloc (sizeof *xim_inst);
       ptrdiff_t len;
 
-      xim_inst = (struct xim_inst_t *) xmalloc (sizeof (struct xim_inst_t));
       dpyinfo->xim_callback_data = xim_inst;
       xim_inst->dpyinfo = dpyinfo;
       len = strlen (resource_name);
-      xim_inst->resource_name = (char *) xmalloc (len + 1);
+      xim_inst->resource_name = xmalloc (len + 1);
       memcpy (xim_inst->resource_name, resource_name, len + 1);
       XRegisterIMInstantiateCallback (dpyinfo->display, dpyinfo->xrdb,
 				      resource_name, emacs_class,
@@ -8876,9 +8820,8 @@ x_wait_for_event (struct frame *f, int eventtype)
 
   /* Set timeout to 0.1 second.  Hopefully not noticeable.
      Maybe it should be configurable.  */
-  EMACS_SET_SECS_USECS (tmo, 0, 100000);
-  EMACS_GET_TIME (tmo_at);
-  EMACS_ADD_TIME (tmo_at, tmo_at, tmo);
+  tmo = make_emacs_time (0, 100 * 1000 * 1000);
+  tmo_at = add_emacs_time (current_emacs_time (), tmo);
 
   while (pending_event_wait.eventtype)
     {
@@ -8891,10 +8834,12 @@ x_wait_for_event (struct frame *f, int eventtype)
       FD_ZERO (&fds);
       FD_SET (fd, &fds);
 
-      EMACS_GET_TIME (time_now);
-      EMACS_SUB_TIME (tmo, tmo_at, time_now);
+      time_now = current_emacs_time ();
+      if (EMACS_TIME_LT (tmo_at, time_now))
+	break;
 
-      if (EMACS_TIME_NEG_P (tmo) || select (fd+1, &fds, NULL, NULL, &tmo) == 0)
+      tmo = sub_emacs_time (tmo_at, time_now);
+      if (pselect (fd + 1, &fds, NULL, NULL, &tmo, NULL) == 0)
         break; /* Timeout */
     }
   pending_event_wait.f = 0;
@@ -9864,7 +9809,7 @@ x_wm_set_icon_position (struct frame *f, int icon_x, int icon_y)
 				Fonts
  ***********************************************************************/
 
-#if GLYPH_DEBUG
+#ifdef GLYPH_DEBUG
 
 /* Check that FONT is valid on frame F.  It is if it can be found in F's
    font table.  */
@@ -9872,12 +9817,12 @@ x_wm_set_icon_position (struct frame *f, int icon_x, int icon_y)
 static void
 x_check_font (struct frame *f, struct font *font)
 {
-  xassert (font != NULL && ! NILP (font->props[FONT_TYPE_INDEX]));
+  eassert (font != NULL && ! NILP (font->props[FONT_TYPE_INDEX]));
   if (font->driver->check)
-    xassert (font->driver->check (f, font) == 0);
+    eassert (font->driver->check (f, font) == 0);
 }
 
-#endif /* GLYPH_DEBUG != 0 */
+#endif /* GLYPH_DEBUG */
 
 
 /***********************************************************************
@@ -10103,7 +10048,7 @@ x_term_init (Lisp_Object display_name, char *xrm_option, char *resource_name)
           const char *file = "~/.emacs.d/gtkrc";
           Lisp_Object s, abs_file;
 
-          s = make_string (file, strlen (file));
+          s = build_string (file);
           abs_file = Fexpand_file_name (s, Qnil);
 
           if (! NILP (abs_file) && !NILP (Ffile_readable_p (abs_file)))
@@ -10165,8 +10110,7 @@ x_term_init (Lisp_Object display_name, char *xrm_option, char *resource_name)
 
   /* We have definitely succeeded.  Record the new connection.  */
 
-  dpyinfo = (struct x_display_info *) xmalloc (sizeof (struct x_display_info));
-  memset (dpyinfo, 0, sizeof *dpyinfo);
+  dpyinfo = xzalloc (sizeof *dpyinfo);
   hlinfo = &dpyinfo->mouse_highlight;
 
   terminal = x_create_terminal (dpyinfo);
@@ -10184,7 +10128,7 @@ x_term_init (Lisp_Object display_name, char *xrm_option, char *resource_name)
       terminal->kboard = share->terminal->kboard;
     else
       {
-	terminal->kboard = (KBOARD *) xmalloc (sizeof (KBOARD));
+	terminal->kboard = xmalloc (sizeof *terminal->kboard);
 	init_kboard (terminal->kboard);
 	KVAR (terminal->kboard, Vwindow_system) = Qx;
 
@@ -10238,7 +10182,7 @@ x_term_init (Lisp_Object display_name, char *xrm_option, char *resource_name)
   dpyinfo->display = dpy;
 
   /* Set the name of the terminal. */
-  terminal->name = (char *) xmalloc (SBYTES (display_name) + 1);
+  terminal->name = xmalloc (SBYTES (display_name) + 1);
   memcpy (terminal->name, SSDATA (display_name), SBYTES (display_name));
   terminal->name[SBYTES (display_name)] = 0;
 
@@ -10249,10 +10193,8 @@ x_term_init (Lisp_Object display_name, char *xrm_option, char *resource_name)
   lim = min (PTRDIFF_MAX, SIZE_MAX) - sizeof "@";
   if (lim - SBYTES (Vinvocation_name) < SBYTES (Vsystem_name))
     memory_full (SIZE_MAX);
-  dpyinfo->x_id_name
-    = (char *) xmalloc (SBYTES (Vinvocation_name)
-			+ SBYTES (Vsystem_name)
-			+ 2);
+  dpyinfo->x_id_name = xmalloc (SBYTES (Vinvocation_name)
+				+ SBYTES (Vsystem_name) + 2);
   strcat (strcat (strcpy (dpyinfo->x_id_name, SSDATA (Vinvocation_name)), "@"),
 	  SSDATA (Vsystem_name));
 
@@ -10440,16 +10382,18 @@ x_term_init (Lisp_Object display_name, char *xrm_option, char *resource_name)
     const int atom_count = sizeof (atom_refs) / sizeof (atom_refs[0]);
     /* 1 for _XSETTINGS_SN  */
     const int total_atom_count = 1 + atom_count;
-    Atom *atoms_return = xmalloc (sizeof (Atom) * total_atom_count);
-    char **atom_names = xmalloc (sizeof (char *) * total_atom_count);
-    char xsettings_atom_name[64];
+    Atom *atoms_return = xmalloc (total_atom_count * sizeof *atoms_return);
+    char **atom_names = xmalloc (total_atom_count * sizeof *atom_names);
+    static char const xsettings_fmt[] = "_XSETTINGS_S%d";
+    char xsettings_atom_name[sizeof xsettings_fmt - 2
+			     + INT_STRLEN_BOUND (int)];
 
     for (i = 0; i < atom_count; i++)
       atom_names[i] = (char *) atom_refs[i].name;
 
     /* Build _XSETTINGS_SN atom name */
-    snprintf (xsettings_atom_name, sizeof (xsettings_atom_name),
-              "_XSETTINGS_S%d", XScreenNumberOfScreen (dpyinfo->screen));
+    sprintf (xsettings_atom_name, xsettings_fmt,
+	     XScreenNumberOfScreen (dpyinfo->screen));
     atom_names[i] = xsettings_atom_name;
 
     XInternAtoms (dpyinfo->display, atom_names, total_atom_count,
@@ -10467,7 +10411,7 @@ x_term_init (Lisp_Object display_name, char *xrm_option, char *resource_name)
 
   dpyinfo->x_dnd_atoms_size = 8;
   dpyinfo->x_dnd_atoms_length = 0;
-  dpyinfo->x_dnd_atoms = xmalloc (sizeof (*dpyinfo->x_dnd_atoms)
+  dpyinfo->x_dnd_atoms = xmalloc (sizeof *dpyinfo->x_dnd_atoms
                                   * dpyinfo->x_dnd_atoms_size);
 
   dpyinfo->net_supported_atoms = NULL;
@@ -10671,9 +10615,7 @@ x_activate_timeout_atimer (void)
   BLOCK_INPUT;
   if (!x_timeout_atimer_activated_flag)
     {
-      EMACS_TIME interval;
-
-      EMACS_SET_SECS_USECS (interval, 0, 100000);
+      EMACS_TIME interval = make_emacs_time (0, 100 * 1000 * 1000);
       start_atimer (ATIMER_RELATIVE, interval, x_process_timeouts, 0);
       x_timeout_atimer_activated_flag = 1;
     }
@@ -10914,7 +10856,7 @@ syms_of_xterm (void)
   last_mouse_press_frame = Qnil;
 
 #ifdef USE_GTK
-  xg_default_icon_file = make_pure_c_string ("icons/hicolor/scalable/apps/emacs.svg");
+  xg_default_icon_file = build_pure_c_string ("icons/hicolor/scalable/apps/emacs.svg");
   staticpro (&xg_default_icon_file);
 
   DEFSYM (Qx_gtk_map_stock, "x-gtk-map-stock");

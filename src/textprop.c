@@ -72,15 +72,11 @@ Lisp_Object Qfront_sticky, Qrear_nonsticky;
 static Lisp_Object interval_insert_behind_hooks;
 static Lisp_Object interval_insert_in_front_hooks;
 
-static void text_read_only (Lisp_Object) NO_RETURN;
-static Lisp_Object Fprevious_property_change (Lisp_Object, Lisp_Object,
-					      Lisp_Object);
-
 
 /* Signal a `text-read-only' error.  This function makes it easier
    to capture that error in GDB by putting a breakpoint on it.  */
 
-static void
+static _Noreturn void
 text_read_only (Lisp_Object propval)
 {
   if (STRINGP (propval))
@@ -275,7 +271,7 @@ interval_has_some_properties_list (Lisp_Object list, INTERVAL i)
   /* Go through each element of LIST.  */
   for (tail1 = list; CONSP (tail1); tail1 = XCDR (tail1))
     {
-      sym = Fcar (tail1);
+      sym = XCAR (tail1);
 
       /* Go through i's plist, looking for tail1 */
       for (tail2 = i->plist; CONSP (tail2); tail2 = XCDR (XCDR (tail2)))
@@ -491,21 +487,6 @@ remove_properties (Lisp_Object plist, Lisp_Object list, INTERVAL i, Lisp_Object 
     i->plist = current_plist;
   return changed;
 }
-
-#if 0
-/* Remove all properties from interval I.  Return non-zero
-   if this changes the interval.  */
-
-static inline int
-erase_properties (INTERVAL i)
-{
-  if (NILP (i->plist))
-    return 0;
-
-  i->plist = Qnil;
-  return 1;
-}
-#endif
 
 /* Returns the interval of POSITION in OBJECT.
    POSITION is BEG-based.  */
@@ -1187,8 +1168,7 @@ Return t if any property value actually changed, nil otherwise.  */)
   /* We are at the beginning of interval I, with LEN chars to scan.  */
   for (;;)
     {
-      if (i == 0)
-	abort ();
+      eassert (i != 0);
 
       if (LENGTH (i) >= len)
 	{
@@ -1387,8 +1367,7 @@ set_text_properties_1 (Lisp_Object start, Lisp_Object end, Lisp_Object propertie
   /* We are starting at the beginning of an interval I.  LEN is positive.  */
   do
     {
-      if (i == 0)
-	abort ();
+      eassert (i != 0);
 
       if (LENGTH (i) >= len)
 	{
@@ -1476,8 +1455,7 @@ Use `set-text-properties' if you want to remove all text properties.  */)
   /* We are at the beginning of an interval, with len to scan */
   for (;;)
     {
-      if (i == 0)
-	abort ();
+      eassert (i != 0);
 
       if (LENGTH (i) >= len)
 	{
@@ -1566,8 +1544,7 @@ Return t if any property was actually removed, nil otherwise.  */)
      and we call signal_after_change before returning if modified != 0. */
   for (;;)
     {
-      if (i == 0)
-	abort ();
+      eassert (i != 0);
 
       if (LENGTH (i) >= len)
 	{

@@ -1,4 +1,4 @@
-;;; python.el --- Python's flying circus support for Emacs -*- coding: utf-8 -*-
+;;; python.el --- Python's flying circus support for Emacs
 
 ;; Copyright (C) 2003-2012  Free Software Foundation, Inc.
 
@@ -46,13 +46,16 @@
 
 ;; Movement: `beginning-of-defun' and `end-of-defun' functions are
 ;; properly implemented.  There are also specialized
-;; `forward-sentence' and `backward-sentence' replacements
-;; (`python-nav-forward-sentence', `python-nav-backward-sentence'
-;; respectively).  Extra functions `python-nav-sentence-start' and
-;; `python-nav-sentence-end' are included to move to the beginning and
-;; to the end of a sentence while taking care of multiline definitions.
-;; `python-nav-jump-to-defun' is provided and allows jumping to a
-;; function or class definition quickly in the current buffer.
+;; `forward-sentence' and `backward-sentence' replacements called
+;; `python-nav-forward-block', `python-nav-backward-block'
+;; respectively which navigate between beginning of blocks of code.
+;; Extra functions `python-nav-forward-statement',
+;; `python-nav-backward-statement',
+;; `python-nav-beginning-of-statement', `python-nav-end-of-statement',
+;; `python-nav-beginning-of-block' and `python-nav-end-of-block' are
+;; included but no bound to any key.  At last but not least the
+;; specialized `python-nav-forward-sexp-function' allows easy
+;; navigation between code blocks.
 
 ;; Shell interaction: is provided and allows you to execute easily any
 ;; block of code of your current buffer in an inferior Python process.
@@ -166,10 +169,10 @@
 ;; might guessed you should run `python-shell-send-buffer' from time
 ;; to time to get better results too.
 
-;; imenu: This mode supports imenu.  It builds a plain or tree menu
-;; depending on the value of `python-imenu-make-tree'.  Also you can
-;; customize if menu items should include its type using
-;; `python-imenu-include-defun-type'.
+;; imenu: This mode supports imenu in its most basic form, letting it
+;; build the necessary alist via `imenu-default-create-index-function'
+;; by having set `imenu-extract-index-name-function' to
+;; `python-info-current-defun'.
 
 ;; If you used python-mode.el you probably will miss auto-indentation
 ;; when inserting newlines.  To achieve the same behavior you have
@@ -227,12 +230,12 @@
   (let ((map (make-sparse-keymap)))
     ;; Movement
     (substitute-key-definition 'backward-sentence
-                               'python-nav-backward-sentence
+                               'python-nav-backward-block
                                map global-map)
     (substitute-key-definition 'forward-sentence
-                               'python-nav-forward-sentence
+                               'python-nav-forward-block
                                map global-map)
-    (define-key map "\C-c\C-j" 'python-nav-jump-to-defun)
+    (define-key map "\C-c\C-j" 'imenu)
     ;; Indent specific
     (define-key map "\177" 'python-indent-dedent-line-backspace)
     (define-key map (kbd "<backtab>") 'python-indent-dedent-line)
@@ -273,7 +276,7 @@
          :help "Go to end of definition around point"]
         ["Mark def/class" mark-defun
          :help "Mark outermost definition around point"]
-        ["Jump to def/class" python-nav-jump-to-defun
+        ["Jump to def/class" imenu
          :help "Jump to a class or function definition"]
         "--"
         ("Skeletons")
@@ -653,9 +656,7 @@ START is the buffer position where the sexp starts."
                          (while (and (re-search-backward
                                       (python-rx block-start) nil t)
                                      (or
-                                      (python-info-ppss-context 'string)
-                                      (python-info-ppss-context 'comment)
-                                      (python-info-ppss-context 'paren)
+                                      (python-info-ppss-context-type)
                                       (python-info-continuation-line-p))))
                          (when (looking-at (python-rx block-start))
                            (point-marker)))))
@@ -664,7 +665,7 @@ START is the buffer position where the sexp starts."
         ((setq start (save-excursion
                        (back-to-indentation)
                        (python-util-forward-comment -1)
-                       (python-nav-sentence-start)
+                       (python-nav-beginning-of-statement)
                        (point-marker)))
          'after-line)
         ;; Do not indent
@@ -723,13 +724,9 @@ START is the buffer position where the sexp starts."
                  (goto-char (line-end-position))
                  (while (and (re-search-backward
                               "\\." (line-beginning-position) t)
-                             (or (python-info-ppss-context 'comment)
-                                 (python-info-ppss-context 'string)
-                                 (python-info-ppss-context 'paren))))
+                             (python-info-ppss-context-type)))
                  (if (and (looking-at "\\.")
-                          (not (or (python-info-ppss-context 'comment)
-                                   (python-info-ppss-context 'string)
-                                   (python-info-ppss-context 'paren))))
+                          (not (python-info-ppss-context-type)))
                      ;; The indentation is the same column of the
                      ;; first matching dot that's not inside a
                      ;; comment, a string or a paren
@@ -885,8 +882,7 @@ See `python-indent-line' for details."
 (defun python-indent-dedent-line ()
   "De-indent current line."
   (interactive "*")
-  (when (and (not (or (python-info-ppss-context 'string)
-                      (python-info-ppss-context 'comment)))
+  (when (and (not (python-info-ppss-comment-or-string-p))
              (<= (point-marker) (save-excursion
                                   (back-to-indentation)
                                   (point-marker)))
@@ -977,8 +973,7 @@ With numeric ARG, just insert that many colons.  With
   (when (and (not arg)
              (eolp)
              (not (equal ?: (char-after (- (point-marker) 2))))
-             (not (or (python-info-ppss-context 'string)
-                      (python-info-ppss-context 'comment))))
+             (not (python-info-ppss-comment-or-string-p)))
     (let ((indentation (current-indentation))
           (calculated-indentation (python-indent-calculate-indentation)))
       (python-info-closing-block-message)
@@ -1097,10 +1092,10 @@ Returns nil if point is not in a def or class."
                       (python-info-ppss-context-type))
             (forward-line 1)))))))
 
-(defun python-nav-sentence-start ()
-  "Move to start of current sentence."
+(defun python-nav-beginning-of-statement ()
+  "Move to start of current statement."
   (interactive "^")
-  (while (and (not (back-to-indentation))
+  (while (and (or (back-to-indentation) t)
               (not (bobp))
               (when (or
                      (save-excursion
@@ -1110,8 +1105,8 @@ Returns nil if point is not in a def or class."
                      (python-info-ppss-context 'paren))
                 (forward-line -1)))))
 
-(defun python-nav-sentence-end ()
-  "Move to end of current sentence."
+(defun python-nav-end-of-statement ()
+  "Move to end of current statement."
   (interactive "^")
   (while (and (goto-char (line-end-position))
               (not (eobp))
@@ -1121,85 +1116,182 @@ Returns nil if point is not in a def or class."
                      (python-info-ppss-context 'paren))
                 (forward-line 1)))))
 
-(defun python-nav-backward-sentence (&optional arg)
-  "Move backward to start of sentence.  With ARG, do it arg times.
-See `python-nav-forward-sentence' for more information."
+(defun python-nav-backward-statement (&optional arg)
+  "Move backward to previous statement.
+With ARG, repeat.  See `python-nav-forward-statement'."
   (interactive "^p")
   (or arg (setq arg 1))
-  (python-nav-forward-sentence (- arg)))
+  (python-nav-forward-statement (- arg)))
 
-(defun python-nav-forward-sentence (&optional arg)
-  "Move forward to next end of sentence.  With ARG, repeat.
-With negative argument, move backward repeatedly to start of sentence."
+(defun python-nav-forward-statement (&optional arg)
+  "Move forward to next statement.
+With ARG, repeat.  With negative argument, move ARG times
+backward to previous statement."
   (interactive "^p")
   (or arg (setq arg 1))
   (while (> arg 0)
+    (python-nav-end-of-statement)
     (python-util-forward-comment)
-    (python-nav-sentence-end)
-    (forward-line 1)
+    (python-nav-beginning-of-statement)
     (setq arg (1- arg)))
   (while (< arg 0)
-    (python-nav-sentence-end)
+    (python-nav-beginning-of-statement)
     (python-util-forward-comment -1)
-    (python-nav-sentence-start)
-    (forward-line -1)
+    (python-nav-beginning-of-statement)
     (setq arg (1+ arg))))
 
-(defvar python-nav-list-defun-positions-cache nil)
-(make-variable-buffer-local 'python-nav-list-defun-positions-cache)
+(defun python-nav-beginning-of-block ()
+  "Move to start of current block."
+  (interactive "^")
+  (let ((starting-pos (point))
+        (block-regexp (python-rx
+                       line-start (* whitespace) block-start)))
+    (if (progn
+          (python-nav-beginning-of-statement)
+          (looking-at (python-rx block-start)))
+        (point-marker)
+      ;; Go to first line beginning a statement
+      (while (and (not (bobp))
+                  (or (and (python-nav-beginning-of-statement) nil)
+                      (python-info-current-line-comment-p)
+                      (python-info-current-line-empty-p)))
+        (forward-line -1))
+      (let ((block-matching-indent
+             (- (current-indentation) python-indent-offset)))
+        (while
+            (and (python-nav-backward-block)
+                 (> (current-indentation) block-matching-indent)))
+        (if (and (looking-at (python-rx block-start))
+                 (= (current-indentation) block-matching-indent))
+            (point-marker)
+          (and (goto-char starting-pos) nil))))))
 
-(defun python-nav-list-defun-positions (&optional include-type rescan)
-  "Make an Alist of defun names and point markers for current buffer.
-When optional argument INCLUDE-TYPE is non-nil the type is
-included the defun name.  With optional argument RESCAN the
-`python-nav-list-defun-positions-cache' is invalidated and the
-list of defun is regenerated again."
-  (if (and python-nav-list-defun-positions-cache (not rescan))
-      python-nav-list-defun-positions-cache
-    (let ((defs))
-      (save-restriction
-        (widen)
-        (save-excursion
-          (goto-char (point-max))
-          (while (re-search-backward python-nav-beginning-of-defun-regexp nil t)
-            (when (and (not (python-info-ppss-context 'string))
-                       (not (python-info-ppss-context 'comment))
-                       (not (python-info-ppss-context 'parent)))
-              (add-to-list
-               'defs (cons
-                      (python-info-current-defun include-type)
-                      (point-marker)))))
-          (setq python-nav-list-defun-positions-cache defs))))))
+(defun python-nav-end-of-block ()
+  "Move to end of current block."
+  (interactive "^")
+  (when (python-nav-beginning-of-block)
+    (let ((block-indentation (current-indentation)))
+      (python-nav-end-of-statement)
+      (while (and (forward-line 1)
+                  (not (eobp))
+                  (or (and (> (current-indentation) block-indentation)
+                           (or (python-nav-end-of-statement) t))
+                      (python-info-current-line-comment-p)
+                      (python-info-current-line-empty-p))))
+      (python-util-forward-comment -1)
+      (point-marker))))
 
-(defun python-nav-read-defun (&optional rescan)
-  "Read a defun name of current buffer and return its point marker.
-A cons cell with the form (DEFUN-NAME . POINT-MARKER) is returned
-when defun is completed, else nil.  With optional argument RESCAN
-forces `python-nav-list-defun-positions' to invalidate its
-cache."
-  (let ((defs (python-nav-list-defun-positions nil rescan)))
-    (minibuffer-with-setup-hook
-        (lambda ()
-          (setq minibuffer-completion-table (mapcar 'car defs)))
-      (let ((stringdef
-             (read-from-minibuffer
-              "Jump to definition: " nil
-              minibuffer-local-must-match-map)))
-        (when (not (string= stringdef ""))
-          (assoc-string stringdef defs))))))
+(defun python-nav-backward-block (&optional arg)
+  "Move backward to previous block of code.
+With ARG, repeat.  See `python-nav-forward-block'."
+  (interactive "^p")
+  (or arg (setq arg 1))
+  (python-nav-forward-block (- arg)))
 
-(defun python-nav-jump-to-defun (def)
-  "Jump to the definition of DEF in current file.
-Locations are cached; use a `C-u' prefix argument to force a
-rescan."
-  (interactive
-   (list (python-nav-read-defun current-prefix-arg)))
-  (when (not (called-interactively-p 'interactive))
-    (setq def (assoc-string def (python-nav-list-defun-positions))))
-  (let ((def-marker (cdr def)))
-    (when (markerp def-marker)
-      (goto-char (marker-position def-marker))
-      (back-to-indentation))))
+(defun python-nav-forward-block (&optional arg)
+  "Move forward to next block of code.
+With ARG, repeat.  With negative argument, move ARG times
+backward to previous block."
+  (interactive "^p")
+  (or arg (setq arg 1))
+  (let ((block-start-regexp
+         (python-rx line-start (* whitespace) block-start))
+        (starting-pos (point)))
+    (while (> arg 0)
+      (python-nav-end-of-statement)
+      (while (and
+              (re-search-forward block-start-regexp nil t)
+              (python-info-ppss-context-type)))
+      (setq arg (1- arg)))
+    (while (< arg 0)
+      (python-nav-beginning-of-statement)
+      (while (and
+              (re-search-backward block-start-regexp nil t)
+              (python-info-ppss-context-type)))
+      (setq arg (1+ arg)))
+    (python-nav-beginning-of-statement)
+    (if (not (looking-at (python-rx block-start)))
+        (and (goto-char starting-pos) nil)
+      (and (not (= (point) starting-pos)) (point-marker)))))
+
+(defun python-nav-forward-sexp-function (&optional arg)
+  "Move forward across one block of code.
+With ARG, do it that many times.  Negative arg -N means
+move backward N times."
+  (interactive "^p")
+  (or arg (setq arg 1))
+  (while (> arg 0)
+    (let ((block-starting-pos
+           (save-excursion (python-nav-beginning-of-block)))
+          (block-ending-pos
+           (save-excursion (python-nav-end-of-block)))
+          (next-block-starting-pos
+           (save-excursion (python-nav-forward-block))))
+      (cond ((not block-starting-pos)
+             (python-nav-forward-block))
+            ((= (point) block-starting-pos)
+             (if (or (not next-block-starting-pos)
+                     (< block-ending-pos next-block-starting-pos))
+                 (python-nav-end-of-block)
+               (python-nav-forward-block)))
+            ((= block-ending-pos (point))
+             (let ((parent-block-end-pos
+                    (save-excursion
+                      (python-util-forward-comment)
+                      (python-nav-beginning-of-block)
+                      (python-nav-end-of-block))))
+               (if (and parent-block-end-pos
+                        (or (not next-block-starting-pos)
+                            (> next-block-starting-pos parent-block-end-pos)))
+                   (goto-char parent-block-end-pos)
+                 (python-nav-forward-block))))
+            (t (python-nav-end-of-block))))
+      (setq arg (1- arg)))
+  (while (< arg 0)
+    (let* ((block-starting-pos
+            (save-excursion (python-nav-beginning-of-block)))
+           (block-ending-pos
+            (save-excursion (python-nav-end-of-block)))
+           (prev-block-ending-pos
+            (save-excursion (when (python-nav-backward-block)
+                              (python-nav-end-of-block))))
+           (prev-block-parent-ending-pos
+            (save-excursion
+              (when prev-block-ending-pos
+                (goto-char prev-block-ending-pos)
+                (python-util-forward-comment)
+                (python-nav-beginning-of-block)
+                (python-nav-end-of-block)))))
+      (cond ((not block-ending-pos)
+             (and (python-nav-backward-block)
+                  (python-nav-end-of-block)))
+            ((= (point) block-ending-pos)
+             (let ((candidates))
+               (dolist (name
+                        '(prev-block-parent-ending-pos
+                          prev-block-ending-pos
+                          block-ending-pos
+                          block-starting-pos))
+                 (when (and (symbol-value name)
+                            (< (symbol-value name) (point)))
+                   (add-to-list 'candidates (symbol-value name))))
+               (goto-char (apply 'max candidates))))
+            ((> (point) block-ending-pos)
+             (python-nav-end-of-block))
+            ((= (point) block-starting-pos)
+             (if (not (> (point) (or prev-block-ending-pos (point))))
+                 (python-nav-backward-block)
+               (goto-char prev-block-ending-pos)
+               (let ((parent-block-ending-pos
+                      (save-excursion
+                        (python-nav-forward-sexp-function)
+                        (and (not (looking-at (python-rx block-start)))
+                             (point)))))
+                 (when (and parent-block-ending-pos
+                            (> parent-block-ending-pos prev-block-ending-pos))
+                   (goto-char parent-block-ending-pos)))))
+            (t (python-nav-beginning-of-block))))
+    (setq arg (1+ arg))))
 
 
 ;;; Shell integration
@@ -1600,24 +1692,29 @@ When MSG is non-nil messages the first line of STRING."
   "Send STRING to PROCESS and inhibit output.
 When MSG is non-nil messages the first line of STRING.  Return
 the output."
-  (let* ((output-buffer)
+  (let* ((output-buffer "")
          (process (or process (python-shell-get-or-create-process)))
          (comint-preoutput-filter-functions
           (append comint-preoutput-filter-functions
                   '(ansi-color-filter-apply
                     (lambda (string)
                       (setq output-buffer (concat output-buffer string))
-                      "")))))
-    (python-shell-send-string string process msg)
-    (accept-process-output process)
-    (replace-regexp-in-string
-     (if (> (length python-shell-prompt-output-regexp) 0)
-         (format "\n*%s$\\|^%s\\|\n$"
-                 python-shell-prompt-regexp
-                 (or python-shell-prompt-output-regexp ""))
-       (format "\n*$\\|^%s\\|\n$"
-               python-shell-prompt-regexp))
-     "" output-buffer)))
+                      ""))))
+         (inhibit-quit t))
+    (or
+     (with-local-quit
+       (python-shell-send-string string process msg)
+       (accept-process-output process)
+       (replace-regexp-in-string
+        (if (> (length python-shell-prompt-output-regexp) 0)
+            (format "\n*%s$\\|^%s\\|\n$"
+                    python-shell-prompt-regexp
+                    (or python-shell-prompt-output-regexp ""))
+          (format "\n*$\\|^%s\\|\n$"
+                  python-shell-prompt-regexp))
+        "" output-buffer))
+     (with-current-buffer (process-buffer process)
+       (comint-interrupt-subjob)))))
 
 (defun python-shell-internal-send-string (string)
   "Send STRING to the Internal Python interpreter.
@@ -2140,8 +2237,7 @@ the if condition."
   ;; Only expand in code.
   :enable-function (lambda ()
                      (and
-                      (not (or (python-info-ppss-context 'string)
-                               (python-info-ppss-context 'comment)))
+                      (not (python-info-ppss-comment-or-string-p))
                       python-skeleton-autoinsert)))
 
 (defmacro python-skeleton-define (name doc &rest skel)
@@ -2152,7 +2248,8 @@ be added to `python-mode-abbrev-table'."
   (let* ((name (symbol-name name))
          (function-name (intern (concat "python-skeleton-" name))))
     `(progn
-       (define-abbrev python-mode-abbrev-table ,name "" ',function-name)
+       (define-abbrev python-mode-abbrev-table ,name "" ',function-name
+         :system t)
        (setq python-skeleton-available
              (cons ',function-name python-skeleton-available))
        (define-skeleton ,function-name
@@ -2377,46 +2474,19 @@ Runs COMMAND, a shell command, as if by `compile'.  See
 
 (defun python-eldoc--get-doc-at-point (&optional force-input force-process)
   "Internal implementation to get documentation at point.
-If not FORCE-INPUT is passed then what `current-word' returns
-will be used.  If not FORCE-PROCESS is passed what
-`python-shell-get-process' returns is used."
+If not FORCE-INPUT is passed then what
+`python-info-current-symbol' returns will be used.  If not
+FORCE-PROCESS is passed what `python-shell-get-process' returns
+is used."
   (let ((process (or force-process (python-shell-get-process))))
     (if (not process)
-        "Eldoc needs an inferior Python process running."
-      (let* ((current-defun (python-info-current-defun))
-             (input (or force-input
-                        (with-syntax-table python-dotty-syntax-table
-                          (if (not current-defun)
-                              (current-word)
-                            (concat current-defun "." (current-word))))))
-             (ppss (syntax-ppss))
-             (help (when (and
-                          input
-                          (not (string= input (concat current-defun ".")))
-                          (not (or (python-info-ppss-context 'string ppss)
-                                   (python-info-ppss-context 'comment ppss))))
-                     (when (string-match
-                            (concat
-                             (regexp-quote (concat current-defun "."))
-                             "self\\.") input)
-                       (with-temp-buffer
-                         (insert input)
-                         (goto-char (point-min))
-                         (forward-word)
-                         (forward-char)
-                         (delete-region
-                          (point-marker) (search-forward "self."))
-                         (setq input (buffer-substring
-                                      (point-min) (point-max)))))
-                     (python-shell-send-string-no-output
-                      (format python-eldoc-string-code input) process))))
-        (with-current-buffer (process-buffer process)
-          (when comint-last-prompt-overlay
-            (delete-region comint-last-input-end
-                           (overlay-start comint-last-prompt-overlay))))
-        (when (and help
-                   (not (string= help "\n")))
-          help)))))
+        (error "Eldoc needs an inferior Python process running")
+      (let ((input (or force-input
+                       (python-info-current-symbol t))))
+        (and input
+             (python-shell-send-string-no-output
+              (format python-eldoc-string-code input)
+              process))))))
 
 (defun python-eldoc-function ()
   "`eldoc-documentation-function' for Python.
@@ -2429,130 +2499,16 @@ inferior python process is updated properly."
   "Get help on SYMBOL using `help'.
 Interactively, prompt for symbol."
   (interactive
-   (let ((symbol (with-syntax-table python-dotty-syntax-table
-                   (current-word)))
+   (let ((symbol (python-info-current-symbol t))
          (enable-recursive-minibuffers t))
      (list (read-string (if symbol
                             (format "Describe symbol (default %s): " symbol)
                           "Describe symbol: ")
                         nil nil symbol))))
-  (let ((process (python-shell-get-process)))
-    (if (not process)
-        (message "Eldoc needs an inferior Python process running.")
-      (message (python-eldoc--get-doc-at-point symbol process)))))
+  (message (python-eldoc--get-doc-at-point symbol)))
 
-
-;;; Imenu
-
-(defcustom python-imenu-include-defun-type t
-  "Non-nil make imenu items to include its type."
-  :type 'boolean
-  :group 'python
-  :safe 'booleanp)
-
-(defcustom python-imenu-make-tree t
-  "Non-nil make imenu to build a tree menu.
-Set to nil for speed."
-  :type 'boolean
-  :group 'python
-  :safe 'booleanp)
-
-(defcustom python-imenu-subtree-root-label "<Jump to %s>"
-  "Label displayed to navigate to root from a subtree.
-It can contain a \"%s\" which will be replaced with the root name."
-  :type 'string
-  :group 'python
-  :safe 'stringp)
-
-(defvar python-imenu-index-alist nil
-  "Calculated index tree for imenu.")
-
-(defun python-imenu-tree-assoc (keylist tree)
-  "Using KEYLIST traverse TREE."
-  (if keylist
-      (python-imenu-tree-assoc (cdr keylist)
-                               (ignore-errors (assoc (car keylist) tree)))
-    tree))
-
-(defun python-imenu-make-element-tree (element-list full-element plain-index)
-  "Make a tree from plain alist of module names.
-ELEMENT-LIST is the defun name split by \".\" and FULL-ELEMENT
-is the same thing, the difference is that FULL-ELEMENT remains
-untouched in all recursive calls.
-Argument PLAIN-INDEX is the calculated plain index used to build the tree."
-  (when (not (python-imenu-tree-assoc full-element python-imenu-index-alist))
-    (when element-list
-      (let* ((subelement-point (cdr (assoc
-                                     (mapconcat #'identity full-element ".")
-                                     plain-index)))
-             (subelement-name (car element-list))
-             (subelement-position (python-util-position
-                                   subelement-name full-element))
-             (subelement-path (when subelement-position
-                                (butlast
-                                 full-element
-                                 (- (length full-element)
-                                    subelement-position)))))
-        (let ((path-ref (python-imenu-tree-assoc subelement-path
-                                                 python-imenu-index-alist)))
-          (if (not path-ref)
-              (push (cons subelement-name subelement-point)
-                    python-imenu-index-alist)
-            (when (not (listp (cdr path-ref)))
-              ;; Modify root cdr to be a list.
-              (setcdr path-ref
-                      (list (cons (format python-imenu-subtree-root-label
-                                          (car path-ref))
-                                  (cdr (assoc
-                                        (mapconcat #'identity
-                                                   subelement-path ".")
-                                        plain-index))))))
-            (when (not (assoc subelement-name path-ref))
-              (push (cons subelement-name subelement-point) (cdr path-ref))))))
-      (python-imenu-make-element-tree (cdr element-list)
-                                      full-element plain-index))))
-
-(defun python-imenu-make-tree (index)
-  "Build the imenu alist tree from plain INDEX.
-
-The idea of this function is that given the alist:
-
- '((\"Test\" . 100)
-   (\"Test.__init__\" . 200)
-   (\"Test.some_method\" . 300)
-   (\"Test.some_method.another\" . 400)
-   (\"Test.something_else\" . 500)
-   (\"test\" . 600)
-   (\"test.reprint\" . 700)
-   (\"test.reprint\" . 800))
-
-This tree gets built:
-
- '((\"Test\" . ((\"jump to...\" . 100)
-                (\"__init__\" . 200)
-                (\"some_method\" . ((\"jump to...\" . 300)
-                                    (\"another\" . 400)))
-                (\"something_else\" . 500)))
-   (\"test\" . ((\"jump to...\" . 600)
-                (\"reprint\" . 700)
-                (\"reprint\" . 800))))
-
-Internally it uses `python-imenu-make-element-tree' to create all
-branches for each element."
-  (setq python-imenu-index-alist nil)
-  (mapc (lambda (element)
-          (python-imenu-make-element-tree element element index))
-        (mapcar (lambda (element)
-                  (split-string (car element) "\\." t)) index))
-  python-imenu-index-alist)
-
-(defun python-imenu-create-index ()
-  "`imenu-create-index-function' for Python."
-  (let ((index
-         (python-nav-list-defun-positions python-imenu-include-defun-type)))
-    (if python-imenu-make-tree
-        (python-imenu-make-tree index)
-      index)))
+(add-to-list 'debug-ignored-errors
+             "^Eldoc needs an inferior Python process running.")
 
 
 ;;; Misc helpers
@@ -2564,18 +2520,27 @@ This function is compatible to be used as
 `add-log-current-defun-function' since it returns nil if point is
 not inside a defun."
   (let ((names '())
-        (min-indent)
+        (starting-indentation)
+        (starting-point)
         (first-run t))
     (save-restriction
       (widen)
       (save-excursion
+        (setq starting-point (point-marker))
+        (setq starting-indentation (save-excursion
+                                     (python-nav-beginning-of-statement)
+                                     (current-indentation)))
         (end-of-line 1)
-        (setq min-indent (current-indentation))
         (while (python-beginning-of-defun-function 1)
-          (when (or (< (current-indentation) min-indent)
-                    first-run)
+          (when (or (< (current-indentation) starting-indentation)
+                    (and first-run
+                         (<
+                          starting-point
+                          (save-excursion
+                            (python-end-of-defun-function)
+                            (point-marker)))))
             (setq first-run nil)
-            (setq min-indent (current-indentation))
+            (setq starting-indentation (current-indentation))
             (looking-at python-nav-beginning-of-defun-regexp)
             (setq names (cons
                          (if (not include-type)
@@ -2586,6 +2551,36 @@ not inside a defun."
                          names))))))
     (when names
       (mapconcat (lambda (string) string) names "."))))
+
+(defun python-info-current-symbol (&optional replace-self)
+  "Return current symbol using dotty syntax.
+With optional argument REPLACE-SELF convert \"self\" to current
+parent defun name."
+  (let ((name
+         (and (not (python-info-ppss-comment-or-string-p))
+              (with-syntax-table python-dotty-syntax-table
+                (let ((sym (symbol-at-point)))
+                  (and sym
+                       (substring-no-properties (symbol-name sym))))))))
+    (when name
+      (if (not replace-self)
+          name
+        (let ((current-defun (python-info-current-defun)))
+          (if (not current-defun)
+              name
+            (replace-regexp-in-string
+             (python-rx line-start word-start "self" word-end ?.)
+             (concat
+              (mapconcat 'identity
+                         (butlast (split-string current-defun "\\."))
+                         ".") ".")
+             name)))))))
+
+(defsubst python-info-beginning-of-block-statement-p ()
+  "Return non-nil if current statement opens a block."
+  (save-excursion
+    (python-nav-beginning-of-statement)
+    (looking-at (python-rx block-start))))
 
 (defun python-info-closing-block ()
   "Return the point of the block the current line closes."
@@ -2678,23 +2673,19 @@ where the continued line ends."
         (cond ((equal context-type 'paren)
                ;; Lines inside a paren are always a continuation line
                ;; (except the first one).
-               (when (equal (python-info-ppss-context-type) 'paren)
-                 (python-util-forward-comment -1)
-                 (python-util-forward-comment -1)
-                 (point-marker)))
-              ((or (equal context-type 'comment)
-                   (equal context-type 'string))
+               (python-util-forward-comment -1)
+               (point-marker))
+              ((member context-type '(string comment))
                ;; move forward an roll again
                (goto-char context-start)
                (python-util-forward-comment)
                (python-info-continuation-line-p))
               (t
-               ;; Not within a paren, string or comment, the only way we are
-               ;; dealing with a continuation line is that previous line
-               ;; contains a backslash, and this can only be the previous line
-               ;; from current
+               ;; Not within a paren, string or comment, the only way
+               ;; we are dealing with a continuation line is that
+               ;; previous line contains a backslash, and this can
+               ;; only be the previous line from current
                (back-to-indentation)
-               (python-util-forward-comment -1)
                (python-util-forward-comment -1)
                (when (and (equal (1- line-start) (line-number-at-pos))
                           (python-info-line-ends-backslash-p))
@@ -2723,40 +2714,37 @@ operator."
                                                     assignment-operator
                                                     not-simple-operator)
                                          (line-end-position) t)
-                      (not (or (python-info-ppss-context 'string)
-                               (python-info-ppss-context 'paren)
-                               (python-info-ppss-context 'comment)))))
+                      (not (python-info-ppss-context-type))))
         (skip-syntax-forward "\s")
         (point-marker)))))
 
 (defun python-info-ppss-context (type &optional syntax-ppss)
   "Return non-nil if point is on TYPE using SYNTAX-PPSS.
-TYPE can be 'comment, 'string or 'paren.  It returns the start
+TYPE can be `comment', `string' or `paren'.  It returns the start
 character address of the specified TYPE."
   (let ((ppss (or syntax-ppss (syntax-ppss))))
     (case type
-      ('comment
+      (comment
        (and (nth 4 ppss)
             (nth 8 ppss)))
-      ('string
-       (nth 8 ppss))
-      ('paren
+      (string
+       (and (not (nth 4 ppss))
+            (nth 8 ppss)))
+      (paren
        (nth 1 ppss))
       (t nil))))
 
 (defun python-info-ppss-context-type (&optional syntax-ppss)
   "Return the context type using SYNTAX-PPSS.
-The type returned can be 'comment, 'string or 'paren."
+The type returned can be `comment', `string' or `paren'."
   (let ((ppss (or syntax-ppss (syntax-ppss))))
     (cond
-     ((and (nth 4 ppss)
-           (nth 8 ppss))
-      'comment)
-     ((nth 8 ppss)
-      'string)
-     ((nth 1 ppss)
-      'paren)
-     (t nil))))
+     ((nth 8 ppss) (if (nth 4 ppss) 'comment 'string))
+     ((nth 1 ppss) 'paren))))
+
+(defsubst python-info-ppss-comment-or-string-p ()
+  "Return non-nil if point is inside 'comment or 'string."
+  (nth 8 (syntax-ppss)))
 
 (defun python-info-looking-at-beginning-of-defun (&optional syntax-ppss)
   "Check if point is at `beginning-of-defun' using SYNTAX-PPSS."
@@ -2764,6 +2752,20 @@ The type returned can be 'comment, 'string or 'paren."
        (save-excursion
          (beginning-of-line 1)
          (looking-at python-nav-beginning-of-defun-regexp))))
+
+(defun python-info-current-line-comment-p ()
+  "Check if current line is a comment line."
+  (char-equal (or (char-after (+ (point) (current-indentation))) ?_) ?#))
+
+(defun python-info-current-line-empty-p ()
+  "Check if current line is empty, ignoring whitespace."
+  (save-excursion
+    (beginning-of-line 1)
+    (looking-at
+     (python-rx line-start (* whitespace)
+                (group (* not-newline))
+                (* whitespace) line-end))
+    (string-equal "" (match-string-no-properties 1))))
 
 
 ;;; Utility functions
@@ -2817,6 +2819,9 @@ if that value is non-nil."
   (set (make-local-variable 'parse-sexp-lookup-properties) t)
   (set (make-local-variable 'parse-sexp-ignore-comments) t)
 
+  (set (make-local-variable 'forward-sexp-function)
+       'python-nav-forward-sexp-function)
+
   (set (make-local-variable 'font-lock-defaults)
        '(python-font-lock-keywords nil nil nil nil))
 
@@ -2842,7 +2847,8 @@ if that value is non-nil."
   (add-hook 'post-self-insert-hook
             'python-indent-post-self-insert-function nil 'local)
 
-  (setq imenu-create-index-function #'python-imenu-create-index)
+  (set (make-local-variable 'imenu-extract-index-name-function)
+       #'python-info-current-defun)
 
   (set (make-local-variable 'add-log-current-defun-function)
        #'python-info-current-defun)
@@ -2880,4 +2886,10 @@ if that value is non-nil."
 
 
 (provide 'python)
+
+;; Local Variables:
+;; coding: utf-8
+;; indent-tabs-mode: nil
+;; End:
+
 ;;; python.el ends here

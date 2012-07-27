@@ -405,6 +405,18 @@ interpreted as a regular expression which always matches."
   :group 'tramp
   :type 'boolean)
 
+(defcustom tramp-restricted-shell-hosts-alist
+  (when (memq system-type '(windows-nt))
+    (list (concat "\\`" (regexp-quote (system-name)) "\\'")))
+  "List of hosts, which run a restricted shell.
+This is a list of regular expressions, which denote hosts running
+a registered shell like \"rbash\".  Those hosts can be used as
+proxies only, see `tramp-default-proxies-alist'.  If the local
+host runs a registered shell, it shall be added to this list, too."
+  :version "24.2"
+  :group 'tramp
+  :type '(repeat (regexp :tag "Host regexp")))
+
 ;;;###tramp-autoload
 (defconst tramp-local-host-regexp
   (concat
@@ -1530,6 +1542,9 @@ letter into the file name.  This function removes it."
 	    name)))
 
     'identity))
+
+(if (featurep 'xemacs)
+    (defalias 'tramp-drop-volume-letter 'identity))
 
 (defun tramp-cleanup (vec)
   "Cleanup connection VEC, but keep the debug buffer."

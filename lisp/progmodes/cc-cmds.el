@@ -1826,6 +1826,17 @@ with a brace block."
 	    ;; DEFFLAGSET(syslog_opt_flags,LOG_PID ...) ==> syslog_opt_flags
 	    (match-string-no-properties 1))
 
+	   ;; Objc selectors.
+	   ((assq 'objc-method-intro (c-guess-basic-syntax))
+	    (let ((bound (save-excursion (c-end-of-statement) (point)))
+		  (kw-re (concat "\\(?:" c-symbol-key "\\)?:"))
+		  (stretches))
+	      (when (c-syntactic-re-search-forward c-symbol-key bound t t t)
+		(push (match-string-no-properties 0) stretches)
+		(while (c-syntactic-re-search-forward kw-re bound t t t)
+		  (push (match-string-no-properties 0) stretches)))
+	      (apply 'concat (nreverse stretches))))
+
 	   (t
 	    ;; Normal function or initializer.
 	    (when (c-syntactic-re-search-forward "[{(]" nil t)

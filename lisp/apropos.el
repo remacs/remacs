@@ -36,12 +36,12 @@
 ;; Fixed bug, current-local-map can return nil.
 ;; Change, doesn't calculate key-bindings unless needed.
 ;; Added super-apropos capability, changed print functions.
-;;; Made fast-apropos and super-apropos share code.
-;;; Sped up fast-apropos again.
+;; Made fast-apropos and super-apropos share code.
+;; Sped up fast-apropos again.
 ;; Added apropos-do-all option.
-;;; Added fast-command-apropos.
+;; Added fast-command-apropos.
 ;; Changed doc strings to comments for helping functions.
-;;; Made doc file buffer read-only, buried it.
+;; Made doc file buffer read-only, buried it.
 ;; Only call substitute-command-keys if do-all set.
 
 ;; Optionally use configurable faces to make the output more legible.
@@ -57,7 +57,6 @@
 ;;; Code:
 
 (require 'button)
-(eval-when-compile (require 'cl))
 
 (defgroup apropos nil
   "Apropos commands for users and programmers."
@@ -640,11 +639,11 @@ the output includes key-bindings of commands."
             (setq lh (cdr lh)))))
       (unless lh-entry (error "Unknown library `%s'" file)))
     (dolist (x (cdr lh-entry))
-      (case (car-safe x)
+      (pcase (car-safe x)
 	;; (autoload (push (cdr x) autoloads))
-	(require (push (cdr x) requires))
-	(provide (push (cdr x) provides))
-	(t (push (or (cdr-safe x) x) symbols))))
+	(`require (push (cdr x) requires))
+	(`provide (push (cdr x) provides))
+	(_ (push (or (cdr-safe x) x) symbols))))
     (let ((apropos-pattern "")) ;Dummy binding for apropos-symbols-internal.
       (apropos-symbols-internal
        symbols apropos-do-all
@@ -981,7 +980,7 @@ Will return nil instead."
   (setq function (if (byte-code-function-p function)
 		     (if (> (length function) 4)
 			 (aref function 4))
-		   (if (eq (car-safe function) 'autoload)
+		   (if (autoloadp function)
 		       (nth 2 function)
 		     (if (eq (car-safe function) 'lambda)
 			 (if (stringp (nth 2 function))
@@ -1115,7 +1114,7 @@ If non-nil TEXT is a string that will be printed as a heading."
        (consp (setq symbol
 		    (symbol-function symbol)))
        (or (eq (car symbol) 'macro)
-	   (if (eq (car symbol) 'autoload)
+	   (if (autoloadp symbol)
 	       (memq (nth 4 symbol)
 		     '(macro t))))))
 

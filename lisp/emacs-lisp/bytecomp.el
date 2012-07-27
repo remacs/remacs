@@ -355,7 +355,7 @@ else the global value will be modified."
 (defvar byte-compile-interactive-only-functions
   '(beginning-of-buffer end-of-buffer replace-string replace-regexp
     insert-file insert-buffer insert-file-literally previous-line next-line
-    goto-line comint-run delete-backward-char toggle-read-only)
+    goto-line comint-run delete-backward-char)
   "List of commands that are not meant to be called from Lisp.")
 
 (defvar byte-compile-not-obsolete-vars nil
@@ -1355,7 +1355,7 @@ extra args."
 	    nums sig min max)
 	(when calls
           (when (and (symbolp name)
-                     (eq (get name 'byte-optimizer)
+                     (eq (function-get name 'byte-optimizer)
                          'byte-compile-inline-expand))
             (byte-compile-warn "defsubst `%s' was used before it was defined"
 		       name))
@@ -1591,10 +1591,11 @@ that already has a `.elc' file."
                         (not (auto-save-file-name-p source))
                         (not (string-equal dir-locals-file
                                            (file-name-nondirectory source))))
-                   (progn (cl-case (byte-recompile-file source force arg)
-                            (no-byte-compile (setq skip-count (1+ skip-count)))
-                            ((t) (setq file-count (1+ file-count)))
-                            ((nil) (setq fail-count (1+ fail-count))))
+                   (progn (cl-incf
+                           (pcase (byte-recompile-file source force arg)
+                             (`no-byte-compile skip-count)
+                             (`t file-count)
+                             (_ fail-count)))
                           (or noninteractive
                               (message "Checking %s..." directory))
                           (if (not (eq last-dir directory))
@@ -1725,14 +1726,18 @@ The value is non-nil if there were no errors, nil if errors."
 	(set-buffer-multibyte nil))
       ;; Run hooks including the uncompression hook.
       ;; If they change the file name, then change it for the output also.
-      (cl-letf ((buffer-file-name filename)
-                ((default-value 'major-mode) 'emacs-lisp-mode)
-                ;; Ignore unsafe local variables.
-                ;; We only care about a few of them for our purposes.
-                (enable-local-variables :safe)
-                (enable-local-eval nil))
-	;; Arg of t means don't alter enable-local-variables.
-        (normal-mode t)
+      (let ((buffer-file-name filename)
+            (dmm (default-value 'major-mode))
+            ;; Ignore unsafe local variables.
+            ;; We only care about a few of them for our purposes.
+            (enable-local-variables :safe)
+            (enable-local-eval nil))
+        (unwind-protect
+            (progn
+              (setq-default major-mode 'emacs-lisp-mode)
+              ;; Arg of t means don't alter enable-local-variables.
+              (normal-mode t))
+          (setq-default major-mode dmm))
         ;; There may be a file local variable setting (bug#10419).
         (setq buffer-read-only nil
               filename buffer-file-name))
@@ -2363,7 +2368,7 @@ not to take responsibility for the actual compilation of the code."
       ;;(byte-compile-set-symbol-position name)
       (byte-compile-warn "probable `\"' without `\\' in doc string of %s"
                          name))
-    
+
     (if (not (listp body))
         ;; The precise definition requires evaluation to find out, so it
         ;; will only be known at runtime.
@@ -2447,7 +2452,26 @@ If QUOTED is non-nil, print with quoting; otherwise, print without quoting."
           (- (position-bytes (point)) (point-min) -1)
         (goto-char (point-max))))))
 
-
+(defun byte-compile--reify-function (fun)
+  "Return an expression which will evaluate to a function value FUN.
+FUN should be either a `lambda' value or a `closure' value."
+  (pcase-let* (((or (and `(lambda ,args . ,body) (let env nil))
+                    `(closure ,env ,args . ,body)) fun)
+               (renv ()))
+    ;; Turn the function's closed vars (if any) into local let bindings.
+    (dolist (binding env)
+      (cond
+       ((consp binding)
+        ;; We check shadowing by the args, so that the `let' can be moved
+        ;; within the lambda, which can then be unfolded.  FIXME: Some of those
+        ;; bindings might be unused in `body'.
+        (unless (memq (car binding) args) ;Shadowed.
+          (push `(,(car binding) ',(cdr binding)) renv)))
+       ((eq binding t))
+       (t (push `(defvar ,binding) body))))
+    (if (null renv)
+        `(lambda ,args ,@body)
+      `(lambda ,args (let ,(nreverse renv) ,@body)))))
 
 ;;;###autoload
 (defun byte-compile (form)
@@ -2455,23 +2479,39 @@ If QUOTED is non-nil, print with quoting; otherwise, print without quoting."
 If FORM is a lambda or a macro, byte-compile it as a function."
   (displaying-byte-compile-warnings
    (byte-compile-close-variables
-    (let* ((fun (if (symbolp form)
+    (let* ((lexical-binding lexical-binding)
+           (fun (if (symbolp form)
 		    (and (fboundp form) (symbol-function form))
 		  form))
 	   (macro (eq (car-safe fun) 'macro)))
       (if macro
 	  (setq fun (cdr fun)))
-      (cond ((eq (car-safe fun) 'lambda)
-	     ;; Expand macros.
-             (setq fun (byte-compile-preprocess fun))
-	     ;; Get rid of the `function' quote added by the `lambda' macro.
-	     (if (eq (car-safe fun) 'function) (setq fun (cadr fun)))
-	     (setq fun (if macro
-			   (cons 'macro (byte-compile-lambda fun))
-			 (byte-compile-lambda fun)))
-	     (if (symbolp form)
-		 (defalias form fun)
-	       fun)))))))
+      (cond
+       ;; Up until Emacs-24.1, byte-compile silently did nothing when asked to
+       ;; compile something invalid.  So let's tune down the complaint from an
+       ;; error to a simple message for the known case where signaling an error
+       ;; causes problems.
+       ((byte-code-function-p fun)
+        (message "Function %s is already compiled"
+                 (if (symbolp form) form "provided"))
+        fun)
+       (t
+        (when (symbolp form)
+          (unless (memq (car-safe fun) '(closure lambda))
+            (error "Don't know how to compile %S" fun))
+          (setq fun (byte-compile--reify-function fun))
+          (setq lexical-binding (eq (car fun) 'closure)))
+        (unless (eq (car-safe fun) 'lambda)
+          (error "Don't know how to compile %S" fun))
+        ;; Expand macros.
+        (setq fun (byte-compile-preprocess fun))
+        ;; Get rid of the `function' quote added by the `lambda' macro.
+        (if (eq (car-safe fun) 'function) (setq fun (cadr fun)))
+        (setq fun (byte-compile-lambda fun))
+        (if macro (push 'macro fun))
+        (if (symbolp form)
+            (fset form fun)
+          fun)))))))
 
 (defun byte-compile-sexp (sexp)
   "Compile and return SEXP."
@@ -2935,12 +2975,12 @@ That command is designed for interactive use only" fn))
       ;; Old-style byte-code.
       (cl-assert (listp fargs))
       (while fargs
-        (cl-case (car fargs)
-          (&optional (setq fargs (cdr fargs)))
-          (&rest (setq fmax2 (+ (* 2 (length dynbinds)) 1))
+        (pcase (car fargs)
+          (`&optional (setq fargs (cdr fargs)))
+          (`&rest (setq fmax2 (+ (* 2 (length dynbinds)) 1))
                  (push (cadr fargs) dynbinds)
                  (setq fargs nil))
-          (t (push (pop fargs) dynbinds))))
+          (_ (push (pop fargs) dynbinds))))
       (unless fmax2 (setq fmax2 (* 2 (length dynbinds)))))
     (cond
      ((<= (+ alen alen) fmax2)
@@ -2985,10 +3025,10 @@ That command is designed for interactive use only" fn))
            (and od
                 (not (memq var byte-compile-not-obsolete-vars))
                 (not (memq var byte-compile-global-not-obsolete-vars))
-                (or (cl-case (nth 1 od)
-                      (set (not (eq access-type 'reference)))
-                      (get (eq access-type 'reference))
-                      (t t)))))
+                (or (pcase (nth 1 od)
+                      (`set (not (eq access-type 'reference)))
+                      (`get (eq access-type 'reference))
+                      (_ t)))))
 	 (byte-compile-warn-obsolete var))))
 
 (defsubst byte-compile-dynamic-variable-op (base-op var)
@@ -4312,21 +4352,21 @@ invoked interactively."
     (if byte-compile-call-tree-sort
 	(setq byte-compile-call-tree
 	      (sort byte-compile-call-tree
-		    (cl-case byte-compile-call-tree-sort
-                      (callers
+		    (pcase byte-compile-call-tree-sort
+                      (`callers
                        (lambda (x y) (< (length (nth 1 x))
                                    (length (nth 1 y)))))
-                      (calls
+                      (`calls
                        (lambda (x y) (< (length (nth 2 x))
                                    (length (nth 2 y)))))
-                      (calls+callers
+                      (`calls+callers
                        (lambda (x y) (< (+ (length (nth 1 x))
                                       (length (nth 2 x)))
                                    (+ (length (nth 1 y))
                                       (length (nth 2 y))))))
-                      (name
+                      (`name
                        (lambda (x y) (string< (car x) (car y))))
-                      (t (error "`byte-compile-call-tree-sort': `%s' - unknown sort mode"
+                      (_ (error "`byte-compile-call-tree-sort': `%s' - unknown sort mode"
                                 byte-compile-call-tree-sort))))))
     (message "Generating call tree...")
     (let ((rest byte-compile-call-tree)

@@ -36,6 +36,8 @@ GNUstep port and post-20 update by Adrian Robert (arobert@cogsci.ucsd.edu)
 #include <signal.h>
 #include <unistd.h>
 #include <setjmp.h>
+#include <c-strcase.h>
+#include <ftoastr.h>
 
 #include "lisp.h"
 #include "blockinput.h"
@@ -53,7 +55,7 @@ GNUstep port and post-20 update by Adrian Robert (arobert@cogsci.ucsd.edu)
 
 #include "window.h"
 #include "keyboard.h"
-
+#include "buffer.h"
 #include "font.h"
 
 /* call tracing */
@@ -167,7 +169,9 @@ static EmacsScroller *last_mouse_scroll_bar = nil;
 static struct frame *ns_updating_frame;
 static NSView *focus_view = NULL;
 static int ns_window_num = 0;
+#ifdef NS_IMPL_GNUSTEP
 static NSRect uRect;
+#endif
 static BOOL gsaved = NO;
 BOOL ns_in_resize = NO;
 static BOOL ns_fake_keydown = NO;
@@ -183,7 +187,6 @@ static NSTimer *timed_entry = 0;
 static NSTimer *fd_entry = nil;
 static NSTimer *scroll_repeat_entry = nil;
 static fd_set select_readfds, t_readfds;
-static struct timeval select_timeout;
 static int select_nfds;
 static NSAutoreleasePool *outerpool;
 static struct input_event *emacs_event = NULL;
@@ -286,24 +289,52 @@ append2 (Lisp_Object list, Lisp_Object item)
 }
 
 
-void
-ns_init_paths (void)
-/* --------------------------------------------------------------------------
-   Used to allow emacs to find its resources under Emacs.app
-   Called from emacs.c at startup.
-   -------------------------------------------------------------------------- */
+const char *
+ns_etc_directory (void)
+/* If running as a self-contained app bundle, return as a string the
+   filename of the etc directory, if present; else nil.  */
 {
   NSBundle *bundle = [NSBundle mainBundle];
-  NSString *binDir = [bundle bundlePath], *resourceDir = [bundle resourcePath];
-  NSString *resourcePath, *resourcePaths;
-  NSRange range;
-  BOOL onWindows = NO; /* how do I determine this? */
-  NSString *pathSeparator = onWindows ? @";" : @":";
+  NSString *resourceDir = [bundle resourcePath];
+  NSString *resourcePath;
   NSFileManager *fileManager = [NSFileManager defaultManager];
   BOOL isDir;
-/*NSLog (@"ns_init_paths: '%@'\n%@\n", [[NSBundle mainBundle] bundlePath], [[NSBundle mainBundle] resourcePath]); */
 
-  /* get bindir from base */
+  resourcePath = [resourceDir stringByAppendingPathComponent: @"etc"];
+  if ([fileManager fileExistsAtPath: resourcePath isDirectory: &isDir])
+    {
+      if (isDir) return [resourcePath UTF8String];
+    }
+  return NULL;
+}
+
+
+const char *
+ns_exec_path (void)
+/* If running as a self-contained app bundle, return as a path string
+   the filenames of the libexec and bin directories, ie libexec:bin.
+   Otherwise, return nil.
+   Normally, Emacs does not add its own bin/ directory to the PATH.
+   However, a self-contained NS build has a different layout, with
+   bin/ and libexec/ subdirectories in the directory that contains
+   Emacs.app itself.
+   We put libexec first, because init_callproc_1 uses the first
+   element to initialize exec-directory.  An alternative would be
+   for init_callproc to check for invocation-directory/libexec.
+*/
+{
+  NSBundle *bundle = [NSBundle mainBundle];
+  NSString *resourceDir = [bundle resourcePath];
+  NSString *binDir = [bundle bundlePath];
+  NSString *resourcePath, *resourcePaths;
+  NSRange range;
+  BOOL onWindows = NO;       /* FIXME determine this somehow  */
+  NSString *pathSeparator = onWindows ? @";" : @":";
+  NSFileManager *fileManager = [NSFileManager defaultManager];
+  NSArray *paths;
+  NSEnumerator *pathEnum;
+  BOOL isDir;
+
   range = [resourceDir rangeOfString: @"Contents"];
   if (range.location != NSNotFound)
     {
@@ -313,104 +344,66 @@ ns_init_paths (void)
 #endif
     }
 
-  /* the following based on Andrew Choi's init_mac_osx_environment () */
-  if (!getenv ("EMACSLOADPATH"))
-    {
-      NSArray *paths = [resourceDir stringsByAppendingPaths:
-                                  [NSArray arrayWithObjects:
-                                         @"site-lisp", @"lisp", @"leim", nil]];
-      NSEnumerator *pathEnum = [paths objectEnumerator];
-      resourcePaths = @"";
-      while (resourcePath = [pathEnum nextObject])
-        {
-          if ([fileManager fileExistsAtPath: resourcePath isDirectory: &isDir])
-            if (isDir)
-              {
-                if ([resourcePaths length] > 0)
-                  resourcePaths
-		    = [resourcePaths stringByAppendingString: pathSeparator];
-                resourcePaths
-		  = [resourcePaths stringByAppendingString: resourcePath];
-              }
-        }
-      if ([resourcePaths length] > 0)
-        setenv ("EMACSLOADPATH", [resourcePaths UTF8String], 1);
-/*NSLog (@"loadPath: '%@'\n", resourcePaths); */
-    }
+  paths = [binDir stringsByAppendingPaths:
+                [NSArray arrayWithObjects: @"libexec", @"bin", nil]];
+  pathEnum = [paths objectEnumerator];
+  resourcePaths = @"";
 
-  /* Normally, Emacs does not add its own bin/ directory to the PATH.
-     However, a self-contained NS build has a different layout, with
-     bin/ and libexec/ subdirectories in the directory that contains
-     Emacs.app itself.
-     We put libexec first, because init_callproc_1 uses the first
-     element to initialize exec-directory.  An alternative would be
-     for init_callproc to check for invocation-directory/libexec.  */
-  if (!getenv ("EMACSPATH"))
+  while ((resourcePath = [pathEnum nextObject]))
     {
-      NSArray *paths = [binDir stringsByAppendingPaths:
-                                  [NSArray arrayWithObjects: @"libexec",
-                                                             @"bin", nil]];
-      NSEnumerator *pathEnum = [paths objectEnumerator];
-      resourcePaths = @"";
-      while (resourcePath = [pathEnum nextObject])
-        {
-          if ([fileManager fileExistsAtPath: resourcePath isDirectory: &isDir])
-            if (isDir)
-              {
-                if ([resourcePaths length] > 0)
-                  resourcePaths
-		    = [resourcePaths stringByAppendingString: pathSeparator];
-                resourcePaths
-		  = [resourcePaths stringByAppendingString: resourcePath];
-              }
-        }
-      if ([resourcePaths length] > 0)
-        setenv ("EMACSPATH", [resourcePaths UTF8String], 1);
+      if ([fileManager fileExistsAtPath: resourcePath isDirectory: &isDir])
+        if (isDir)
+          {
+            if ([resourcePaths length] > 0)
+              resourcePaths
+                = [resourcePaths stringByAppendingString: pathSeparator];
+            resourcePaths
+              = [resourcePaths stringByAppendingString: resourcePath];
+          }
     }
+  if ([resourcePaths length] > 0) return [resourcePaths UTF8String];
 
-  resourcePath = [resourceDir stringByAppendingPathComponent: @"etc"];
-  if ([fileManager fileExistsAtPath: resourcePath isDirectory: &isDir])
-    {
-      if (isDir)
-        {
-          if (!getenv ("EMACSDATA"))
-            setenv ("EMACSDATA", [resourcePath UTF8String], 1);
-          if (!getenv ("EMACSDOC"))
-            setenv ("EMACSDOC", [resourcePath UTF8String], 1);
-        }
-    }
+  return NULL;
 }
 
 
-static int
-timeval_subtract (struct timeval *result, struct timeval x, struct timeval y)
-/* --------------------------------------------------------------------------
-   Subtract the `struct timeval' values X and Y, storing the result in RESULT.
-   Return 1 if the difference is negative, otherwise 0.
-   -------------------------------------------------------------------------- */
+const char *
+ns_load_path (void)
+/* If running as a self-contained app bundle, return as a path string
+   the filenames of the site-lisp, lisp and leim directories.
+   Ie, site-lisp:lisp:leim.  Otherwise, return nil.  */
 {
-  /* Perform the carry for the later subtraction by updating y.
-     This is safer because on some systems
-     the tv_sec member is unsigned.  */
-  if (x.tv_usec < y.tv_usec)
-    {
-      int nsec = (y.tv_usec - x.tv_usec) / 1000000 + 1;
-      y.tv_usec -= 1000000 * nsec;
-      y.tv_sec += nsec;
-    }
-  if (x.tv_usec - y.tv_usec > 1000000)
-    {
-      int nsec = (y.tv_usec - x.tv_usec) / 1000000;
-      y.tv_usec += 1000000 * nsec;
-      y.tv_sec -= nsec;
-    }
+  NSBundle *bundle = [NSBundle mainBundle];
+  NSString *resourceDir = [bundle resourcePath];
+  NSString *resourcePath, *resourcePaths;
+  BOOL onWindows = NO;          /* FIXME determine this somehow */
+  NSString *pathSeparator = onWindows ? @";" : @":";
+  NSFileManager *fileManager = [NSFileManager defaultManager];
+  BOOL isDir;
+  NSArray *paths = [resourceDir stringsByAppendingPaths:
+                              [NSArray arrayWithObjects:
+                                         @"site-lisp", @"lisp", @"leim", nil]];
+  NSEnumerator *pathEnum = [paths objectEnumerator];
+  resourcePaths = @"";
 
-  /* Compute the time remaining to wait.  tv_usec is certainly positive.  */
-  result->tv_sec = x.tv_sec - y.tv_sec;
-  result->tv_usec = x.tv_usec - y.tv_usec;
+  /* Hack to skip site-lisp.  */
+  if (no_site_lisp) resourcePath = [pathEnum nextObject];
 
-  /* Return indication of whether the result should be considered negative.  */
-  return x.tv_sec < y.tv_sec;
+  while ((resourcePath = [pathEnum nextObject]))
+    {
+      if ([fileManager fileExistsAtPath: resourcePath isDirectory: &isDir])
+        if (isDir)
+          {
+            if ([resourcePaths length] > 0)
+              resourcePaths
+                = [resourcePaths stringByAppendingString: pathSeparator];
+            resourcePaths
+              = [resourcePaths stringByAppendingString: resourcePath];
+          }
+    }
+  if ([resourcePaths length] > 0) return [resourcePaths UTF8String];
+
+  return NULL;
 }
 
 static void
@@ -419,29 +412,19 @@ ns_timeout (int usecs)
      Blocking timer utility used by ns_ring_bell
    -------------------------------------------------------------------------- */
 {
-  struct timeval wakeup;
-
-  EMACS_GET_TIME (wakeup);
-
-  /* Compute time to wait until, propagating carry from usecs.  */
-  wakeup.tv_usec += usecs;
-  wakeup.tv_sec += (wakeup.tv_usec / 1000000);
-  wakeup.tv_usec %= 1000000;
+  EMACS_TIME wakeup = add_emacs_time (current_emacs_time (),
+				      make_emacs_time (0, usecs * 1000));
 
   /* Keep waiting until past the time wakeup.  */
   while (1)
     {
-      struct timeval timeout;
-
-      EMACS_GET_TIME (timeout);
-
-      /* In effect, timeout = wakeup - timeout.
-	 Break if result would be negative.  */
-      if (timeval_subtract (&timeout, wakeup, timeout))
+      EMACS_TIME timeout, now = current_emacs_time ();
+      if (EMACS_TIME_LE (wakeup, now))
 	break;
+      timeout = sub_emacs_time (wakeup, now);
 
       /* Try to wait that long--but we might wake up sooner.  */
-      select (0, NULL, NULL, NULL, &timeout);
+      pselect (0, NULL, NULL, NULL, &timeout, NULL);
     }
 }
 
@@ -1130,7 +1113,7 @@ x_free_frame_resources (struct frame *f)
   NSView *view = FRAME_NS_VIEW (f);
   struct ns_display_info *dpyinfo = FRAME_NS_DISPLAY_INFO (f);
   Mouse_HLInfo *hlinfo = MOUSE_HL_INFO (f);
-  NSTRACE (x_destroy_window);
+  NSTRACE (x_free_frame_resources);
   check_ns ();
 
   [(EmacsView *)view setWindowClosing: YES]; /* may not have been informed */
@@ -1237,7 +1220,6 @@ x_set_window_size (struct frame *f, int change_grav, int cols, int rows)
    -------------------------------------------------------------------------- */
 {
   EmacsView *view = FRAME_NS_VIEW (f);
-  EmacsToolbar *toolbar = [view toolbar];
   NSWindow *window = [view window];
   NSRect wr = [window frame];
   int tb = FRAME_EXTERNAL_TOOL_BAR (f);
@@ -1359,8 +1341,7 @@ ns_index_color (NSColor *color, struct frame *f)
     {
       color_table->size = NS_COLOR_CAPACITY;
       color_table->avail = 1; /* skip idx=0 as marker */
-      color_table->colors
-	= (NSColor **)xmalloc (color_table->size * sizeof (NSColor *));
+      color_table->colors = xmalloc (color_table->size * sizeof (NSColor *));
       color_table->colors[0] = nil;
       color_table->empty_indices = [[NSMutableSet alloc] init];
     }
@@ -1458,21 +1439,16 @@ ns_get_color (const char *name, NSColor **col)
       [scanner scanFloat: &b];
     }
   else if (!strncmp(name, "rgb:", 4))  /* A newer X11 format -- rgb:r/g/b */
-    {
-      strncpy (hex, name + 4, 19);
-      hex[19] = '\0';
-      scaling = (strlen(hex) - 2) / 3;
-    }
+    scaling = (snprintf (hex, sizeof hex, "%s", name + 4) - 2) / 3;
   else if (name[0] == '#')        /* An old X11 format; convert to newer */
     {
       int len = (strlen(name) - 1);
       int start = (len % 3 == 0) ? 1 : len / 4 + 1;
       int i;
       scaling = strlen(name+start) / 3;
-      for (i=0; i<3; i++) {
-        strncpy(hex + i * (scaling + 1), name + start + i * scaling, scaling);
-        hex[(i+1) * (scaling + 1) - 1] = '/';
-      }
+      for (i = 0; i < 3; i++)
+	sprintf (hex + i * (scaling + 1), "%.*s/", scaling,
+		 name + start + i * scaling);
       hex[3 * (scaling + 1) - 1] = '\0';
     }
 
@@ -1528,21 +1504,6 @@ ns_get_color (const char *name, NSColor **col)
 }
 
 
-static NSColor *
-ns_get_color_default (const char *name, NSColor *dflt)
-/* --------------------------------------------------------------------------
-     Parse a color or use a default value
-   -------------------------------------------------------------------------- */
-{
-  NSColor * col;
-
-  if (ns_get_color (name, &col))
-    return dflt;
-  else
-    return col;
-}
-
-
 int
 ns_lisp_to_color (Lisp_Object color, NSColor **col)
 /* --------------------------------------------------------------------------
@@ -1551,9 +1512,9 @@ ns_lisp_to_color (Lisp_Object color, NSColor **col)
 {
   NSTRACE (ns_lisp_to_color);
   if (STRINGP (color))
-    return ns_get_color (SDATA (color), col);
+    return ns_get_color (SSDATA (color), col);
   else if (SYMBOLP (color))
-    return ns_get_color (SDATA (SYMBOL_NAME (color)), col);
+    return ns_get_color (SSDATA (SYMBOL_NAME (color)), col);
   return 1;
 }
 
@@ -1798,7 +1759,6 @@ ns_mouse_position (struct frame **fp, int insist, Lisp_Object *bar_window,
 {
   id view;
   NSPoint position;
-  int xchar, ychar;
   Lisp_Object frame, tail;
   struct frame *f;
   struct ns_display_info *dpyinfo;
@@ -1892,7 +1852,7 @@ ns_frame_up_to_date (struct frame *f)
 }
 
 
-void
+static void
 ns_define_frame_cursor (struct frame *f, Cursor cursor)
 /* --------------------------------------------------------------------------
     External (RIF): set frame mouse pointer type.
@@ -2017,7 +1977,7 @@ ns_clear_frame (struct frame *f)
 }
 
 
-void
+static void
 ns_clear_frame_area (struct frame *f, int x, int y, int width, int height)
 /* --------------------------------------------------------------------------
     External (RIF):  Clear section of frame
@@ -2146,7 +2106,7 @@ ns_after_update_window_line (struct glyph_row *desired_row)
   NSTRACE (ns_after_update_window_line);
 
   /* begin copy from other terms */
-  xassert (w);
+  eassert (w);
 
   if (!desired_row->mode_line_p && !w->pseudo_window_p)
     desired_row->redraw_fringe_bitmaps_p = 1;
@@ -2220,8 +2180,7 @@ ns_compute_glyph_string_overhangs (struct glyph_string *s)
      External (RIF); compute left/right overhang of whole string and set in s
    -------------------------------------------------------------------------- */
 {
-  struct face *face = FACE_FROM_ID (s->f, s->first_glyph->face_id);
-  struct font *font = s->font; /*face->font; */
+  struct font *font = s->font;
 
   if (s->char2b)
     {
@@ -2281,17 +2240,9 @@ ns_draw_fringe_bitmap (struct window *w, struct glyph_row *row,
   /* grow bimgs if needed */
   if (nBimgs < max_used_fringe_bitmap)
     {
-      EmacsImage **newBimgs
-	= xmalloc (max_used_fringe_bitmap * sizeof (EmacsImage *));
-      memset (newBimgs, 0, max_used_fringe_bitmap * sizeof (EmacsImage *));
-
-      if (nBimgs)
-        {
-          memcpy (newBimgs, bimgs, nBimgs * sizeof (EmacsImage *));
-          xfree (bimgs);
-        }
-
-      bimgs = newBimgs;
+      bimgs = xrealloc (bimgs, max_used_fringe_bitmap * sizeof *bimgs);
+      memset (bimgs + nBimgs, 0,
+	      (max_used_fringe_bitmap - nBimgs) * sizeof *bimgs);
       nBimgs = max_used_fringe_bitmap;
     }
 
@@ -2346,7 +2297,7 @@ ns_draw_fringe_bitmap (struct window *w, struct glyph_row *row,
 }
 
 
-void
+static void
 ns_draw_window_cursor (struct window *w, struct glyph_row *glyph_row,
                        int x, int y, int cursor_type, int cursor_width,
                        int on_p, int active_p)
@@ -3460,6 +3411,9 @@ ns_read_socket (struct terminal *terminal, int expected,
 
 /* NSTRACE (ns_read_socket); */
 
+  if ([NSApp modalWindow] != nil)
+    return -1;
+
   if (interrupt_input_blocked)
     {
       interrupt_input_pending = 1;
@@ -3537,7 +3491,7 @@ ns_read_socket (struct terminal *terminal, int expected,
 
 int
 ns_select (int nfds, fd_set *readfds, fd_set *writefds,
-           fd_set *exceptfds, struct timeval *timeout)
+           fd_set *exceptfds, EMACS_TIME *timeout, sigset_t *sigmask)
 /* --------------------------------------------------------------------------
      Replacement for select, checking for events
    -------------------------------------------------------------------------- */
@@ -3545,12 +3499,14 @@ ns_select (int nfds, fd_set *readfds, fd_set *writefds,
   int result;
   double time;
   NSEvent *ev;
+  struct timespec select_timeout;
+
 /*  NSTRACE (ns_select); */
 
   if (NSApp == nil || inNsSelect == 1 /* || ([NSApp isActive] == NO &&
                       [NSApp nextEventMatchingMask:NSAnyEventMask untilDate:nil
  inMode:NSDefaultRunLoopMode dequeue:NO] == nil) */)
-    return select (nfds, readfds, writefds, exceptfds, timeout);
+    return pselect (nfds, readfds, writefds, exceptfds, timeout, sigmask);
 
   /* Save file descriptor set, which gets overwritten in calls to select ()
      Note, this is called from process.c, and only readfds is ever set */
@@ -3563,8 +3519,9 @@ ns_select (int nfds, fd_set *readfds, fd_set *writefds,
     select_nfds = 0;
 
     /* Try an initial select for pending data on input files */
-  select_timeout.tv_sec = select_timeout.tv_usec = 0;
-  result = select (nfds, readfds, writefds, exceptfds, &select_timeout);
+  select_timeout.tv_sec = select_timeout.tv_nsec = 0;
+  result = pselect (nfds, readfds, writefds, exceptfds,
+		    &select_timeout, sigmask);
   if (result)
     return result;
 
@@ -3573,7 +3530,7 @@ ns_select (int nfds, fd_set *readfds, fd_set *writefds,
 
     /* set a timeout and run the main AppKit event loop while continuing
        to monitor the files */
-  time = ((double) timeout->tv_sec) + ((double) timeout->tv_usec)/1000000.0;
+  time = EMACS_TIME_TO_DOUBLE (*timeout);
   timed_entry = [[NSTimer scheduledTimerWithTimeInterval: time
                                            target: NSApp
                                          selector: @selector (timeout_handler:)
@@ -3581,7 +3538,7 @@ ns_select (int nfds, fd_set *readfds, fd_set *writefds,
                                           repeats: YES] /* for safe removal */
                                                          retain];
 
-  /* set a periodic task to try the select () again */
+  /* set a periodic task to try the pselect () again */
   fd_entry = [[NSTimer scheduledTimerWithTimeInterval: 0.1
                                                target: NSApp
                                              selector: @selector (fd_handler:)
@@ -3623,7 +3580,7 @@ ns_select (int nfds, fd_set *readfds, fd_set *writefds,
         }
       else
         {
-          /* Received back from select () in fd_handler; copy the results */
+          /* Received back from pselect () in fd_handler; copy the results */
           if (readfds)
             memcpy (readfds, &select_readfds, sizeof (fd_set));
           return t;
@@ -3657,7 +3614,6 @@ ns_set_vertical_scroll_bar (struct window *window,
   BOOL barOnVeryLeft, barOnVeryRight;
   int top, left, height, width, sb_width, sb_left;
   EmacsScroller *bar;
-static int count = 0;
 
   /* optimization; display engine sends WAY too many of these.. */
   if (!NILP (window->vertical_scroll_bar))
@@ -3839,40 +3795,20 @@ static Lisp_Object ns_string_to_lispmod (const char *s)
      Convert modifier name to lisp symbol
    -------------------------------------------------------------------------- */
 {
-  if (!strncmp (SDATA (SYMBOL_NAME (Qmeta)), s, 10))
+  if (!strncmp (SSDATA (SYMBOL_NAME (Qmeta)), s, 10))
     return Qmeta;
-  else if (!strncmp (SDATA (SYMBOL_NAME (Qsuper)), s, 10))
+  else if (!strncmp (SSDATA (SYMBOL_NAME (Qsuper)), s, 10))
     return Qsuper;
-  else if (!strncmp (SDATA (SYMBOL_NAME (Qcontrol)), s, 10))
+  else if (!strncmp (SSDATA (SYMBOL_NAME (Qcontrol)), s, 10))
     return Qcontrol;
-  else if (!strncmp (SDATA (SYMBOL_NAME (Qalt)), s, 10))
+  else if (!strncmp (SSDATA (SYMBOL_NAME (Qalt)), s, 10))
     return Qalt;
-  else if (!strncmp (SDATA (SYMBOL_NAME (Qhyper)), s, 10))
+  else if (!strncmp (SSDATA (SYMBOL_NAME (Qhyper)), s, 10))
     return Qhyper;
-  else if (!strncmp (SDATA (SYMBOL_NAME (Qnone)), s, 10))
+  else if (!strncmp (SSDATA (SYMBOL_NAME (Qnone)), s, 10))
     return Qnone;
   else
     return Qnil;
-}
-
-
-static Lisp_Object ns_mod_to_lisp (int m)
-/* --------------------------------------------------------------------------
-     Convert modifier code (see lisp.h) to lisp symbol
-   -------------------------------------------------------------------------- */
-{
-  if (m == CHAR_META)
-    return Qmeta;
-  else if (m == CHAR_SUPER)
-    return Qsuper;
-  else if (m == CHAR_CTL)
-    return Qcontrol;
-  else if (m == CHAR_ALT)
-    return Qalt;
-  else if (m == CHAR_HYPER)
-    return Qhyper;
-  else /* if (m == 0) */
-    return Qnone;
 }
 
 
@@ -3890,9 +3826,9 @@ ns_default (const char *parameter, Lisp_Object *result,
     {
       double f;
       char *pos;
-      if (strcasecmp (value, "YES") == 0)
+      if (c_strcasecmp (value, "YES") == 0)
         *result = yesval;
-      else if (strcasecmp (value, "NO") == 0)
+      else if (c_strcasecmp (value, "NO") == 0)
         *result = noval;
       else if (is_float && (f = strtod (value, &pos), pos != value))
         *result = make_float (f);
@@ -3904,7 +3840,7 @@ ns_default (const char *parameter, Lisp_Object *result,
 }
 
 
-void
+static void
 ns_initialize_display_info (struct ns_display_info *dpyinfo)
 /* --------------------------------------------------------------------------
       Initialize global info and storage for display.
@@ -3922,8 +3858,7 @@ ns_initialize_display_info (struct ns_display_info *dpyinfo)
                                                  NSColorSpaceFromDepth (depth)];
     dpyinfo->n_planes = NSBitsPerPixelFromDepth (depth);
     dpyinfo->image_cache = make_image_cache ();
-    dpyinfo->color_table
-      = (struct ns_color_table *)xmalloc (sizeof (struct ns_color_table));
+    dpyinfo->color_table = xmalloc (sizeof *dpyinfo->color_table);
     dpyinfo->color_table->colors = NULL;
     dpyinfo->root_window = 42; /* a placeholder.. */
 
@@ -3994,7 +3929,6 @@ static void
 ns_delete_terminal (struct terminal *terminal)
 {
   struct ns_display_info *dpyinfo = terminal->display_info.ns;
-  int i;
 
   /* Protect against recursive calls.  delete_frame in
      delete_terminal calls us back when it deletes our last frame.  */
@@ -4104,13 +4038,12 @@ ns_term_init (Lisp_Object display_name)
                                          selector: @selector (logNotification:)
                                              name: nil object: nil]; */
 
-  dpyinfo = (struct ns_display_info *)xmalloc (sizeof (struct ns_display_info));
-  memset (dpyinfo, 0, sizeof (struct ns_display_info));
+  dpyinfo = xzalloc (sizeof *dpyinfo);
 
   ns_initialize_display_info (dpyinfo);
   terminal = ns_create_terminal (dpyinfo);
 
-  terminal->kboard = (KBOARD *) xmalloc (sizeof (KBOARD));
+  terminal->kboard = xmalloc (sizeof *terminal->kboard);
   init_kboard (terminal->kboard);
   KVAR (terminal->kboard, Vwindow_system) = Qns;
   terminal->kboard->next_kboard = all_kboards;
@@ -4130,10 +4063,7 @@ ns_term_init (Lisp_Object display_name)
                                 ns_display_name_list);
   dpyinfo->name_list_element = XCAR (ns_display_name_list);
 
-  /* Set the name of the terminal. */
-  terminal->name = (char *) xmalloc (SBYTES (display_name) + 1);
-  strncpy (terminal->name, SDATA (display_name), SBYTES (display_name));
-  terminal->name[SBYTES (display_name)] = 0;
+  terminal->name = xstrdup (SSDATA (display_name));
 
   UNBLOCK_INPUT;
 
@@ -4159,7 +4089,6 @@ ns_term_init (Lisp_Object display_name)
     if ( cl == nil )
       {
         Lisp_Object color_file, color_map, color;
-        int r,g,b;
         unsigned long c;
         char *name;
 
@@ -4176,7 +4105,7 @@ ns_term_init (Lisp_Object display_name)
         for ( ; CONSP (color_map); color_map = XCDR (color_map))
           {
             color = XCAR (color_map);
-            name = SDATA (XCAR (color));
+            name = SSDATA (XCAR (color));
             c = XINT (XCDR (color));
             [cl setColor:
                   [NSColor colorWithCalibratedRed: RED_FROM_ULONG (c) / 255.0
@@ -4190,14 +4119,14 @@ ns_term_init (Lisp_Object display_name)
   }
 
   {
-    char c[128];
 #ifdef NS_IMPL_GNUSTEP
-    strncpy (c, gnustep_base_version, sizeof (c));
+    Vwindow_system_version = build_string (gnustep_base_version);
 #else
     /*PSnextrelease (128, c); */
-    snprintf (c, sizeof (c), "%g", NSAppKitVersionNumber);
+    char c[DBL_BUFSIZE_BOUND];
+    int len = dtoastr (c, sizeof c, 0, 0, NSAppKitVersionNumber);
+    Vwindow_system_version = make_unibyte_string (c, len);
 #endif
-    Vwindow_system_version = build_string (c);
   }
 
   delete_keyboard_wait_descriptor (0);
@@ -4288,7 +4217,7 @@ ns_term_shutdown (int sig)
 
   /* code not reached in emacs.c after this is called by shut_down_emacs: */
   if (STRINGP (Vauto_save_list_file_name))
-    unlink (SDATA (Vauto_save_list_file_name));
+    unlink (SSDATA (Vauto_save_list_file_name));
 
   if (sig == 0 || sig == SIGTERM)
     {
@@ -4603,6 +4532,7 @@ ns_term_shutdown (int sig)
    -------------------------------------------------------------------------- */
 {
   int result;
+  struct timespec select_timeout;
   /* NSTRACE (fd_handler); */
 
   if (select_nfds == 0)
@@ -4610,9 +4540,8 @@ ns_term_shutdown (int sig)
 
   memcpy (&t_readfds, &select_readfds, sizeof (fd_set));
 
-  select_timeout.tv_sec = select_timeout.tv_usec = 0;
-  result = select (select_nfds, &t_readfds, (SELECT_TYPE *)0, (SELECT_TYPE *)0,
-                  &select_timeout);
+  select_timeout.tv_sec = select_timeout.tv_nsec = 0;
+  result = pselect (select_nfds, &t_readfds, NULL, NULL, &select_timeout, NULL);
   if (result)
     {
       memcpy (&select_readfds, &t_readfds, sizeof (fd_set));
@@ -4635,7 +4564,7 @@ ns_term_shutdown (int sig)
 {
   [ns_pending_service_names addObject: userData];
   [ns_pending_service_args addObject: [NSString stringWithUTF8String:
-      SDATA (ns_string_from_pasteboard (pboard))]];
+      SSDATA (ns_string_from_pasteboard (pboard))]];
 }
 
 
@@ -4699,8 +4628,8 @@ ns_term_shutdown (int sig)
   if (!emacs_event)
     return;
 
-  if (newFont = [sender convertFont:
-                           ((struct nsfont_info *)face->font)->nsfont])
+  if ((newFont = [sender convertFont:
+                           ((struct nsfont_info *)face->font)->nsfont]))
     {
       SET_FRAME_GARBAGED (emacsframe); /* now needed as of 2008/10 */
 
@@ -4794,8 +4723,13 @@ ns_term_shutdown (int sig)
 
   if (!processingCompose)
     {
+      /* When using screen sharing, no left or right information is sent,
+         so use Left key in those cases.  */
+      int is_left_key, is_right_key;
+
       code = ([[theEvent charactersIgnoringModifiers] length] == 0) ?
         0 : [[theEvent charactersIgnoringModifiers] characterAtIndex: 0];
+
       /* (Carbon way: [theEvent keyCode]) */
 
       /* is it a "function key"? */
@@ -4820,13 +4754,17 @@ ns_term_shutdown (int sig)
       if (flags & NSShiftKeyMask)
         emacs_event->modifiers |= shift_modifier;
 
-      if ((flags & NSRightCommandKeyMask) == NSRightCommandKeyMask)
+      is_right_key = (flags & NSRightCommandKeyMask) == NSRightCommandKeyMask;
+      is_left_key = (flags & NSLeftCommandKeyMask) == NSLeftCommandKeyMask
+        || (! is_right_key && (flags & NSCommandKeyMask) == NSCommandKeyMask);
+      
+      if (is_right_key)
         emacs_event->modifiers |= parse_solitary_modifier
           (EQ (ns_right_command_modifier, Qleft)
            ? ns_command_modifier
            : ns_right_command_modifier);
 
-      if ((flags & NSLeftCommandKeyMask) == NSLeftCommandKeyMask)
+      if (is_left_key)
         {
           emacs_event->modifiers |= parse_solitary_modifier
             (ns_command_modifier);
@@ -4863,13 +4801,17 @@ ns_term_shutdown (int sig)
             }
         }
 
-      if ((flags & NSRightControlKeyMask) == NSRightControlKeyMask)
+      is_right_key = (flags & NSRightControlKeyMask) == NSRightControlKeyMask;
+      is_left_key = (flags & NSLeftControlKeyMask) == NSLeftControlKeyMask
+        || (! is_right_key && (flags & NSControlKeyMask) == NSControlKeyMask);
+
+      if (is_right_key)
           emacs_event->modifiers |= parse_solitary_modifier
               (EQ (ns_right_control_modifier, Qleft)
                ? ns_control_modifier
                : ns_right_control_modifier);
 
-      if ((flags & NSLeftControlKeyMask) == NSLeftControlKeyMask)
+      if (is_left_key)
         emacs_event->modifiers |= parse_solitary_modifier
           (ns_control_modifier);
 
@@ -4880,7 +4822,13 @@ ns_term_shutdown (int sig)
       left_is_none = NILP (ns_alternate_modifier)
         || EQ (ns_alternate_modifier, Qnone);
 
-      if ((flags & NSRightAlternateKeyMask) == NSRightAlternateKeyMask)
+      is_right_key = (flags & NSRightAlternateKeyMask)
+        == NSRightAlternateKeyMask;
+      is_left_key = (flags & NSLeftAlternateKeyMask) == NSLeftAlternateKeyMask
+        || (! is_right_key
+            && (flags & NSAlternateKeyMask) == NSAlternateKeyMask);
+
+      if (is_right_key)
         {
           if ((NILP (ns_right_alternate_modifier)
                || EQ (ns_right_alternate_modifier, Qnone)
@@ -4900,7 +4848,7 @@ ns_term_shutdown (int sig)
                : ns_right_alternate_modifier);
         }
 
-      if ((flags & NSLeftAlternateKeyMask) == NSLeftAlternateKeyMask) /* default = meta */
+      if (is_left_key) /* default = meta */
         {
           if (left_is_none && !fnKeysym)
             {   /* accept pre-interp alt comb */
@@ -5114,9 +5062,9 @@ ns_term_shutdown (int sig)
 }
 
 
-- (long)conversationIdentifier
+- (NSInteger)conversationIdentifier
 {
-  return (long)self;
+  return (NSInteger)self;
 }
 
 
@@ -5176,7 +5124,6 @@ ns_term_shutdown (int sig)
 - (void)mouseDown: (NSEvent *)theEvent
 {
   NSPoint p = [self convertPoint: [theEvent locationInWindow] fromView: nil];
-  Lisp_Object window;
 
   NSTRACE (mouseDown);
 
@@ -5388,8 +5335,7 @@ ns_term_shutdown (int sig)
             char *pos = strstr (t, "  —  ");
             if (pos)
               *pos = '\0';
-            old_title = (char *) xmalloc (strlen (t) + 1);
-            strcpy (old_title, t);
+            old_title = xstrdup (t);
           }
         size_title = xmalloc (strlen (old_title) + 40);
 	esprintf (size_title, "%s  —  (%d x %d)", old_title, cols, rows);
@@ -5407,9 +5353,9 @@ ns_term_shutdown (int sig)
 
 - (void)windowDidResize: (NSNotification *)notification
 {
+#ifdef NS_IMPL_GNUSTEP
   NSWindow *theWindow = [notification object];
 
-#ifdef NS_IMPL_GNUSTEP
    /* in GNUstep, at least currently, it's possible to get a didResize
       without getting a willResize.. therefore we need to act as if we got
       the willResize now */
@@ -5529,7 +5475,6 @@ ns_term_shutdown (int sig)
   Lisp_Object tem;
   NSWindow *win;
   NSButton *toggleButton;
-  int vbextra = NS_SCROLL_BAR_WIDTH (f);
   NSSize sz;
   NSColor *col;
   NSString *name;
@@ -5582,7 +5527,7 @@ ns_term_shutdown (int sig)
 
   tem = f->name;
   name = [NSString stringWithUTF8String:
-                   NILP (tem) ? (unsigned char *)"Emacs" : SDATA (tem)];
+                   NILP (tem) ? "Emacs" : SSDATA (tem)];
   [win setTitle: name];
 
   /* toolbar support */
@@ -5601,7 +5546,7 @@ ns_term_shutdown (int sig)
   tem = f->icon_name;
   if (!NILP (tem))
     [win setMiniwindowTitle:
-           [NSString stringWithUTF8String: SDATA (tem)]];
+           [NSString stringWithUTF8String: SSDATA (tem)]];
 
   {
     NSScreen *screen = [win screen];
@@ -5746,18 +5691,13 @@ ns_term_shutdown (int sig)
 
 - (void)mouseEntered: (NSEvent *)theEvent
 {
-  NSPoint p = [self convertPoint: [theEvent locationInWindow] fromView: nil];
-  struct ns_display_info *dpyinfo = FRAME_NS_DISPLAY_INFO (emacsframe);
   NSTRACE (mouseEntered);
-
   last_mouse_movement_time = EV_TIMESTAMP (theEvent);
 }
 
 
 - (void)mouseExited: (NSEvent *)theEvent
 {
-  NSPoint p = [self convertPoint: [theEvent locationInWindow] fromView: nil];
-  NSRect r;
   Mouse_HLInfo *hlinfo = emacsframe ? MOUSE_HL_INFO (emacsframe) : NULL;
 
   NSTRACE (mouseExited);
@@ -5780,10 +5720,14 @@ ns_term_shutdown (int sig)
   NSTRACE (menuDown);
   if (context_menu_value == -1)
     context_menu_value = [sender tag];
-  else
-    find_and_call_menu_selection (emacsframe, emacsframe->menu_bar_items_used,
-                                  emacsframe->menu_bar_vector,
-                                  (void *)[sender tag]);
+  else 
+    {
+      NSInteger tag = [sender tag];
+      find_and_call_menu_selection (emacsframe, emacsframe->menu_bar_items_used,
+                                    emacsframe->menu_bar_vector,
+                                    (void *)tag);
+    }
+
   ns_send_appdefined (-1);
   return self;
 }
@@ -6097,6 +6041,63 @@ ns_term_shutdown (int sig)
 
 @implementation EmacsWindow
 
+#ifdef NS_IMPL_COCOA
+- (id)accessibilityAttributeValue:(NSString *)attribute
+{
+  Lisp_Object str = Qnil;
+  struct frame *f = SELECTED_FRAME ();
+  struct buffer *curbuf = XBUFFER (XWINDOW (f->selected_window)->buffer);
+ 
+  if ([attribute isEqualToString:NSAccessibilityRoleAttribute])
+    return NSAccessibilityTextFieldRole;
+
+  if ([attribute isEqualToString:NSAccessibilitySelectedTextAttribute]
+      && curbuf && ! NILP (BVAR (curbuf, mark_active)))
+    {
+      str = ns_get_local_selection (QPRIMARY, QUTF8_STRING);
+    }
+  else if (curbuf && [attribute isEqualToString:NSAccessibilityValueAttribute])
+    {
+      if (! NILP (BVAR (curbuf, mark_active)))
+          str = ns_get_local_selection (QPRIMARY, QUTF8_STRING);
+      
+      if (NILP (str))
+        {
+          ptrdiff_t start_byte = BUF_BEGV_BYTE (curbuf);
+          ptrdiff_t byte_range = BUF_ZV_BYTE (curbuf) - start_byte;
+          ptrdiff_t range = BUF_ZV (curbuf) - BUF_BEGV (curbuf);
+          
+          if (! NILP (BVAR (curbuf, enable_multibyte_characters)))
+            str = make_uninit_multibyte_string (range, byte_range);
+          else
+            str = make_uninit_string (range);
+          /* To check: This returns emacs-utf-8, which is a superset of utf-8.
+             Is this a problem?  */
+          memcpy (SDATA (str), BYTE_POS_ADDR (start_byte), byte_range);
+        }
+    }
+  
+  
+  if (! NILP (str)) 
+    {
+      if (CONSP (str) && SYMBOLP (XCAR (str)))
+        {
+          str = XCDR (str);
+          if (CONSP (str) && NILP (XCDR (str)))
+            str = XCAR (str);
+        }
+      if (STRINGP (str))
+        {
+          const char *utfStr = SSDATA (str);
+          NSString *nsStr = [NSString stringWithUTF8String: utfStr];
+          return nsStr;
+        }
+    }
+  
+  return [super accessibilityAttributeValue:attribute];
+}
+#endif /* NS_IMPL_COCOA */
+
 /* If we have multiple monitors, one above the other, we don't want to
    restrict the height to just one monitor.  So we override this.  */
 - (NSRect)constrainFrameRect:(NSRect)frameRect toScreen:(NSScreen *)screen
@@ -6109,7 +6110,7 @@ ns_term_shutdown (int sig)
 
   if (nr_screens == 1)
     return [super constrainFrameRect:frameRect toScreen:screen];
-  
+
   if (f->output_data.ns->dont_constrain
       || ns_menu_bar_should_be_hidden ())
     return frameRect;

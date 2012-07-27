@@ -867,8 +867,7 @@ string_escape_byte8 (Lisp_Object string)
 	  {
 	    c = STRING_CHAR_ADVANCE (src);
 	    c = CHAR_TO_BYTE8 (c);
-	    sprintf ((char *) dst, "\\%03o", c);
-	    dst += 4;
+	    dst += sprintf ((char *) dst, "\\%03o", c);
 	  }
 	else
 	  while (len--) *dst++ = *src++;
@@ -878,10 +877,7 @@ string_escape_byte8 (Lisp_Object string)
       {
 	c = *src++;
 	if (c >= 0x80)
-	  {
-	    sprintf ((char *) dst, "\\%03o", c);
-	    dst += 4;
-	  }
+	  dst += sprintf ((char *) dst, "\\%03o", c);
 	else
 	  *dst++ = c;
       }
@@ -931,7 +927,7 @@ usage: (unibyte-string &rest BYTES)  */)
 
   for (i = 0; i < n; i++)
     {
-      CHECK_RANGED_INTEGER (0, args[i], 255);
+      CHECK_RANGED_INTEGER (args[i], 0, 255);
       *p++ = XINT (args[i]);
     }
 
@@ -1012,12 +1008,6 @@ character is not ASCII nor 8-bit character, an error is signaled.  */)
   else if (! ASCII_CHAR_P (c))
     error ("Not an ASCII nor an 8-bit character: %d", c);
   return make_number (c);
-}
-
-
-void
-init_character_once (void)
-{
 }
 
 #ifdef emacs

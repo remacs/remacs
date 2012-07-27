@@ -83,12 +83,12 @@ Lisp_Object Qoverflow_error, Qunderflow_error;
 Lisp_Object Qfloatp;
 Lisp_Object Qnumberp, Qnumber_or_marker_p;
 
-Lisp_Object Qinteger;
-static Lisp_Object Qsymbol, Qstring, Qcons, Qmarker, Qoverlay;
+Lisp_Object Qinteger, Qinterval, Qfloat, Qvector;
+Lisp_Object Qsymbol, Qstring, Qcons, Qmisc;
 Lisp_Object Qwindow;
-static Lisp_Object Qfloat, Qwindow_configuration;
-static Lisp_Object Qprocess;
-static Lisp_Object Qcompiled_function, Qframe, Qvector;
+static Lisp_Object Qoverlay, Qwindow_configuration;
+static Lisp_Object Qprocess, Qmarker;
+static Lisp_Object Qcompiled_function, Qframe;
 Lisp_Object Qbuffer;
 static Lisp_Object Qchar_table, Qbool_vector, Qhash_table;
 static Lisp_Object Qsubrp, Qmany, Qunevalled;
@@ -517,7 +517,7 @@ DEFUN ("setcdr", Fsetcdr, Ssetcdr, 2, 2, 0,
   return newcdr;
 }
 
-/* Extract and set components of symbols */
+/* Extract and set components of symbols.  */
 
 DEFUN ("boundp", Fboundp, Sboundp, 1, 1, 0,
        doc: /* Return t if SYMBOL's value is not void.  */)
@@ -761,7 +761,7 @@ Value, if non-nil, is a list \(interactive SPEC).  */)
 	{
 	  struct gcpro gcpro1;
 	  GCPRO1 (cmd);
-	  do_autoload (fun, cmd);
+	  Fautoload_do_load (fun, cmd, Qnil);
 	  UNGCPRO;
 	  return Finteractive_form (cmd);
 	}
@@ -1401,7 +1401,7 @@ for this variable.  */)
 	      {
 		struct buffer *b;
 
-		for (b = all_buffers; b; b = b->header.next.buffer)
+		FOR_EACH_BUFFER (b)
 		  if (!PER_BUFFER_VALUE_P (b, idx))
 		    PER_BUFFER_VALUE (b, offset) = value;
 	      }
@@ -1463,8 +1463,7 @@ union Lisp_Val_Fwd
 static struct Lisp_Buffer_Local_Value *
 make_blv (struct Lisp_Symbol *sym, int forwarded, union Lisp_Val_Fwd valcontents)
 {
-  struct Lisp_Buffer_Local_Value *blv
-    = xmalloc (sizeof (struct Lisp_Buffer_Local_Value));
+  struct Lisp_Buffer_Local_Value *blv = xmalloc (sizeof *blv);
   Lisp_Object symbol;
   Lisp_Object tem;
 
@@ -2060,7 +2059,7 @@ function chain of symbols.  */)
   return Qnil;
 }
 
-/* Extract and set vector and string elements */
+/* Extract and set vector and string elements.  */
 
 DEFUN ("aref", Faref, Saref, 2, 2, 0,
        doc: /* Return the element of ARRAY at index IDX.
@@ -2134,7 +2133,7 @@ bool-vector.  IDX starts at 0.  */)
     {
       if (idxval < 0 || idxval >= ASIZE (array))
 	args_out_of_range (array, idx);
-      XVECTOR (array)->contents[idxval] = newelt;
+      ASET (array, idxval, newelt);
     }
   else if (BOOL_VECTOR_P (array))
     {
@@ -2449,20 +2448,17 @@ Uses a minus sign if negative.
 NUMBER may be an integer or a floating point number.  */)
   (Lisp_Object number)
 {
-  char buffer[VALBITS];
+  char buffer[max (FLOAT_TO_STRING_BUFSIZE, INT_BUFSIZE_BOUND (EMACS_INT))];
+  int len;
 
   CHECK_NUMBER_OR_FLOAT (number);
 
   if (FLOATP (number))
-    {
-      char pigbuf[FLOAT_TO_STRING_BUFSIZE];
+    len = float_to_string (buffer, XFLOAT_DATA (number));
+  else
+    len = sprintf (buffer, "%"pI"d", XINT (number));
 
-      float_to_string (pigbuf, XFLOAT_DATA (number));
-      return build_string (pigbuf);
-    }
-
-  sprintf (buffer, "%"pI"d", XINT (number));
-  return build_string (buffer);
+  return make_unibyte_string (buffer, len);
 }
 
 DEFUN ("string-to-number", Fstring_to_number, Sstring_to_number, 1, 2, 0,
@@ -3015,11 +3011,11 @@ syms_of_data (void)
   Fput (Qerror, Qerror_conditions,
 	error_tail);
   Fput (Qerror, Qerror_message,
-	make_pure_c_string ("error"));
+	build_pure_c_string ("error"));
 
 #define PUT_ERROR(sym, tail, msg)			\
   Fput (sym, Qerror_conditions, pure_cons (sym, tail)); \
-  Fput (sym, Qerror_message, make_pure_c_string (msg))
+  Fput (sym, Qerror_message, build_pure_c_string (msg))
 
   PUT_ERROR (Qquit, Qnil, "Quit");
 
@@ -3046,7 +3042,7 @@ syms_of_data (void)
 
   arith_tail = pure_cons (Qarith_error, error_tail);
   Fput (Qarith_error, Qerror_conditions, arith_tail);
-  Fput (Qarith_error, Qerror_message, make_pure_c_string ("Arithmetic error"));
+  Fput (Qarith_error, Qerror_message, build_pure_c_string ("Arithmetic error"));
 
   PUT_ERROR (Qbeginning_of_buffer, error_tail, "Beginning of buffer");
   PUT_ERROR (Qend_of_buffer, error_tail, "End of buffer");
@@ -3087,7 +3083,6 @@ syms_of_data (void)
   DEFSYM (Qwindow_configuration, "window-configuration");
   DEFSYM (Qprocess, "process");
   DEFSYM (Qwindow, "window");
-  /* DEFSYM (Qsubr, "subr"); */
   DEFSYM (Qcompiled_function, "compiled-function");
   DEFSYM (Qbuffer, "buffer");
   DEFSYM (Qframe, "frame");
@@ -3095,6 +3090,9 @@ syms_of_data (void)
   DEFSYM (Qchar_table, "char-table");
   DEFSYM (Qbool_vector, "bool-vector");
   DEFSYM (Qhash_table, "hash-table");
+  /* Used by Fgarbage_collect.  */
+  DEFSYM (Qinterval, "interval");
+  DEFSYM (Qmisc, "misc");
 
   DEFSYM (Qdefun, "defun");
 
@@ -3213,9 +3211,8 @@ syms_of_data (void)
 }
 
 #ifndef FORWARD_SIGNAL_TO_MAIN_THREAD
-static void arith_error (int) NO_RETURN;
+_Noreturn
 #endif
-
 static void
 arith_error (int signo)
 {

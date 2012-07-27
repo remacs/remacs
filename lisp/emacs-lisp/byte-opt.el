@@ -249,8 +249,8 @@
   (let* ((name (car form))
          (localfn (cdr (assq name byte-compile-function-environment)))
 	 (fn (or localfn (and (fboundp name) (symbol-function name)))))
-    (when (and (consp fn) (eq (car fn) 'autoload))
-      (load (nth 1 fn))
+    (when (autoloadp fn)
+      (autoload-do-load fn)
       (setq fn (or (and (fboundp name) (symbol-function name))
                    (cdr (assq name byte-compile-function-environment)))))
     (pcase fn
@@ -266,42 +266,30 @@
        ;; (message "Inlining byte-code for %S!" name)
        ;; The byte-code will be really inlined in byte-compile-unfold-bcf.
        `(,fn ,@(cdr form)))
-      ((or (and `(lambda ,args . ,body) (let env nil))
-           `(closure ,env ,args . ,body))
+      ((or `(lambda . ,_) `(closure . ,_))
        (if (not (or (eq fn localfn)     ;From the same file => same mode.
-                    (eq (not lexical-binding) (not env)))) ;Same mode.
+                    (eq (car fn)        ;Same mode.
+                        (if lexical-binding 'closure 'lambda))))
            ;; While byte-compile-unfold-bcf can inline dynbind byte-code into
            ;; letbind byte-code (or any other combination for that matter), we
            ;; can only inline dynbind source into dynbind source or letbind
            ;; source into letbind source.
-           ;; FIXME: we could of course byte-compile the inlined function
-           ;; first, and then inline its byte-code.
-           form
-         (let ((renv ()))
-           ;; Turn the function's closed vars (if any) into local let bindings.
-           (dolist (binding env)
-             (cond
-              ((consp binding)
-               ;; We check shadowing by the args, so that the `let' can be
-               ;; moved within the lambda, which can then be unfolded.
-               ;; FIXME: Some of those bindings might be unused in `body'.
-               (unless (memq (car binding) args) ;Shadowed.
-                 (push `(,(car binding) ',(cdr binding)) renv)))
-              ((eq binding t))
-              (t (push `(defvar ,binding) body))))
-           (let ((newfn (if (eq fn localfn)
-                            ;; If `fn' is from the same file, it has already
-                            ;; been preprocessed!
-                            `(function ,fn)
-                          (byte-compile-preprocess
-                           (if (null renv)
-                               `(lambda ,args ,@body)
-                             `(lambda ,args (let ,(nreverse renv) ,@body)))))))
-             (if (eq (car-safe newfn) 'function)
-                 (byte-compile-unfold-lambda `(,(cadr newfn) ,@(cdr form)))
-               (byte-compile-log-warning
-                (format "Inlining closure %S failed" name))
-               form)))))
+           (progn
+             ;; We can of course byte-compile the inlined function
+             ;; first, and then inline its byte-code.
+             (byte-compile name)
+             `(,(symbol-function name) ,@(cdr form)))
+         (let ((newfn (if (eq fn localfn)
+                          ;; If `fn' is from the same file, it has already
+                          ;; been preprocessed!
+                          `(function ,fn)
+                        (byte-compile-preprocess
+                         (byte-compile--reify-function fn)))))
+           (if (eq (car-safe newfn) 'function)
+               (byte-compile-unfold-lambda `(,(cadr newfn) ,@(cdr form)))
+             (byte-compile-log-warning
+              (format "Inlining closure %S failed" name))
+             form))))
 
       (t ;; Give up on inlining.
        form))))
@@ -598,10 +586,11 @@
   (let (opt new)
     (if (and (consp form)
 	     (symbolp (car form))
-	     (or (and for-effect
-		      ;; we don't have any of these yet, but we might.
-		      (setq opt (get (car form) 'byte-for-effect-optimizer)))
-		 (setq opt (get (car form) 'byte-optimizer)))
+	     (or ;; (and for-effect
+		 ;;      ;; We don't have any of these yet, but we might.
+		 ;;      (setq opt (get (car form)
+                 ;;                     'byte-for-effect-optimizer)))
+		 (setq opt (function-get (car form) 'byte-optimizer)))
 	     (not (eq form (setq new (funcall opt form)))))
 	(progn
 ;;	  (if (equal form new) (error "bogus optimizer -- %s" opt))
@@ -642,10 +631,10 @@
   (while (eq (car-safe form) 'progn)
     (setq form (car (last (cdr form)))))
   (cond ((consp form)
-         (cl-case (car form)
-           (quote (cadr form))
+         (pcase (car form)
+           (`quote (cadr form))
            ;; Can't use recursion in a defsubst.
-           ;; (progn (byte-compile-trueconstp (car (last (cdr form)))))
+           ;; (`progn (byte-compile-trueconstp (car (last (cdr form)))))
            ))
         ((not (symbolp form)))
         ((eq form t))
@@ -656,10 +645,10 @@
   (while (eq (car-safe form) 'progn)
     (setq form (car (last (cdr form)))))
   (cond ((consp form)
-         (cl-case (car form)
-           (quote (null (cadr form)))
+         (pcase (car form)
+           (`quote (null (cadr form)))
            ;; Can't use recursion in a defsubst.
-           ;; (progn (byte-compile-nilconstp (car (last (cdr form)))))
+           ;; (`progn (byte-compile-nilconstp (car (last (cdr form)))))
            ))
         ((not (symbolp form)) nil)
         ((null form))))

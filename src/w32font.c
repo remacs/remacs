@@ -75,7 +75,7 @@ static Lisp_Object Qgurmukhi, Qgujarati, Qoriya, Qtamil, Qtelugu;
 static Lisp_Object Qkannada, Qmalayalam, Qsinhala, Qthai, Qlao;
 static Lisp_Object Qtibetan, Qmyanmar, Qgeorgian, Qhangul, Qethiopic;
 static Lisp_Object Qcherokee, Qcanadian_aboriginal, Qogham, Qrunic;
-static Lisp_Object Qkhmer, Qmongolian, Qsymbol, Qbraille, Qhan;
+static Lisp_Object Qkhmer, Qmongolian, Qbraille, Qhan;
 static Lisp_Object Qideographic_description, Qcjk_misc, Qkana, Qbopomofo;
 static Lisp_Object Qkanbun, Qyi, Qbyzantine_musical_symbol;
 static Lisp_Object Qmusical_symbol, Qmathematical, Qcham, Qphonetic;
@@ -289,20 +289,12 @@ memq_no_quit (Lisp_Object elt, Lisp_Object list)
 Lisp_Object
 intern_font_name (char * string)
 {
-  Lisp_Object obarray, tem, str;
-  int len;
-
-  str = DECODE_SYSTEM (build_string (string));
-  len = SCHARS (str);
-
-  /* The following code is copied from the function intern (in lread.c).  */
-  obarray = Vobarray;
-  if (!VECTORP (obarray) || ASIZE (obarray) == 0)
-    obarray = check_obarray (obarray);
-  tem = oblookup (obarray, SDATA (str), len, len);
-  if (SYMBOLP (tem))
-    return tem;
-  return Fintern (str, obarray);
+  Lisp_Object str = DECODE_SYSTEM (build_string (string));
+  int len = SCHARS (str);
+  Lisp_Object obarray = check_obarray (Vobarray);
+  Lisp_Object tem = oblookup (obarray, SDATA (str), len, len);  
+  /* This code is similar to intern function from lread.c.  */
+  return SYMBOLP (tem) ? tem : Fintern (str, obarray);
 }
 
 /* w32 implementation of get_cache for font backend.
@@ -529,9 +521,7 @@ w32font_text_extents (struct font *font, unsigned *code,
 	  if (!w32_font->cached_metrics[block])
 	    {
 	      w32_font->cached_metrics[block]
-		= xmalloc (CACHE_BLOCKSIZE * sizeof (struct w32_metric_cache));
-	      memset (w32_font->cached_metrics[block], 0,
-		      CACHE_BLOCKSIZE * sizeof (struct w32_metric_cache));
+		= xzalloc (CACHE_BLOCKSIZE * sizeof (struct w32_metric_cache));
 	    }
 
 	  char_metric = w32_font->cached_metrics[block] + pos_in_block;
@@ -2644,7 +2634,6 @@ syms_of_w32font (void)
   DEFSYM (Qrunic, "runic");
   DEFSYM (Qkhmer, "khmer");
   DEFSYM (Qmongolian, "mongolian");
-  DEFSYM (Qsymbol, "symbol");
   DEFSYM (Qbraille, "braille");
   DEFSYM (Qhan, "han");
   DEFSYM (Qideographic_description, "ideographic-description");

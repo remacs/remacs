@@ -30,6 +30,8 @@
 ;; Two minor modes are provided.  One works on any text in the buffer;
 ;; the other operates only on comments and strings.
 
+;;; Code:
+
 (defvar bug-reference-map
   (let ((map (make-sparse-keymap)))
     (define-key map [mouse-2] 'bug-reference-push-button)
@@ -62,7 +64,7 @@ so that it is considered safe, see `enable-local-variables'.")
                 (get s 'bug-reference-url-format)))))
 
 (defconst bug-reference-bug-regexp
-  "\\([Bb]ug ?#\\|[Pp]atch ?#\\|RFE ?#\\|PR [a-z-+]+/\\)\\([0-9]+\\)"
+  "\\([Bb]ug ?#\\|[Pp]atch ?#\\|RFE ?#\\|PR [a-z-+]+/\\)\\([0-9]+\\(?:#[0-9]+\\)?\\)"
   "Regular expression which matches bug references.")
 
 (defun bug-reference-set-overlay-properties ()
@@ -154,4 +156,5 @@ the mode if ARG is omitted or nil."
       (widen)
       (bug-reference-unfontify (point-min) (point-max)))))
 
+(provide 'bug-reference)
 ;;; bug-reference.el ends here

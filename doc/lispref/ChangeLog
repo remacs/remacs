@@ -1,3 +1,82 @@
+2012-07-25  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Prefer typical American spelling for "acknowledgment".
+	* intro.texi (Acknowledgments): Rename from Acknowledgements.
+
+2012-07-21  Eli Zaretskii  <eliz@gnu.org>
+
+	* commands.texi (Special Events): Mention language-change event.
+	(Input Events, Interactive Codes):
+	* keymaps.texi (Key Sequences): Mention events that are
+	non-keyboard but also non-mouse events.
+
+2012-07-17  Chong Yidong  <cyd@gnu.org>
+
+	* text.texi (Insertion): Document insert-char changes.
+
+2012-07-15  Leo Liu  <sdl.web@gmail.com>
+
+	* display.texi (Fringe Bitmaps): Add exclamation-mark.
+
+2012-07-13  Chong Yidong  <cyd@gnu.org>
+
+	* buffers.texi (Read Only Buffers): Document toggle-read-only
+	changes.  Reword to account for the fact that read-only is
+	currently not supported in overlay properties.
+
+2012-07-07  Chong Yidong  <cyd@gnu.org>
+
+	* loading.texi (Library Search): Index site-lisp directories.
+
+2012-07-06  Chong Yidong  <cyd@gnu.org>
+
+	* intro.texi (A Sample Function Description): Fix incorrect
+	markup, undoing previous change.
+	(A Sample Variable Description): Minor clarifications and markup
+	improvements.
+
+	* elisp.texi (Top):
+	* text.texi (Text): Fix menu order.
+
+2012-07-06  Richard Stallman  <rms@gnu.org>
+
+	* intro.texi (Evaluation Notation, A Sample Function Description):
+	(A Sample Variable Description): Improve/undo previous changes.
+
+2012-07-05  Glenn Morris  <rgm@gnu.org>
+
+	* intro.texi (A Sample Function Description): Fix cross-refs.
+
+2012-07-05  Michael Witten  <mfwitten@gmail.com>  (tiny change)
+
+	* intro.texi (Evaluation Notation, A Sample Function Description)
+	(A Sample Variable Description, Version Info): Copy edits (bug#11862).
+
+2012-06-27  Chong Yidong  <cyd@gnu.org>
+
+	* processes.texi (Asynchronous Processes, Input to Processes):
+	* internals.texi (Process Internals): Don't capitalize "pty".
+
+2012-06-24  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	* processes.texi (Asynchronous Processes): Make the pty vs pipe
+	discussion more prominent.
+
+2012-06-23  Eli Zaretskii  <eliz@gnu.org>
+
+	* commands.texi (Misc Events): Document the language-change event.
+
+2012-06-22  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Support higher-resolution time stamps (Bug#9000).
+	* os.texi (Time of Day, Time Parsing, Processor Run Time, Idle Timers):
+	* processes.texi (System Processes):
+	Time stamp resolution is now picosecond, not microsecond.
+
+2012-06-21  Glenn Morris  <rgm@gnu.org>
+
+	* Makefile.in: Rename infodir to buildinfodir throughout.  (Bug#11737)
+
 2012-06-18  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* functions.texi (Defining Functions):
@@ -10857,8 +10936,8 @@
 	(Recording Input): Document that clear-this-command-keys clears
 	the vector to be returned by recent-keys.
 
-	* keymaps.texi (Scanning Keymaps) <where-is-internal>: The
-	argument keymap can be a list.
+	* keymaps.texi (Scanning Keymaps) <where-is-internal>:
+	The argument keymap can be a list.
 
 	* nonascii.texi (User-Chosen Coding Systems)
 	<select-safe-coding-system>: Document the new argument
@@ -11103,7 +11182,7 @@
 	* Makefile (dist): Don't bother excluding autosave files; they'll
 	never make it into the temp directory anyway, and the hash marks
 	in the name are problematic for make and the Bourne shell.
-	(srcs):
+	(srcs): ???
 
 1993-02-12  Jim Blandy  (jimb@wookumz.gnu.ai.mit.edu)
 
