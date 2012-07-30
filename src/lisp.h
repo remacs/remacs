@@ -20,6 +20,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #ifndef EMACS_LISP_H
 #define EMACS_LISP_H
 
+#include <stdalign.h>
 #include <stdarg.h>
 #include <stddef.h>
 #include <inttypes.h>
@@ -27,19 +28,11 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include <intprops.h>
 
-/* Use the configure flag --enable-checking[=LIST] to enable various
-   types of run time checks for Lisp objects.  */
-
-#ifdef GC_CHECK_CONS_LIST
-extern void check_cons_list (void);
-#define CHECK_CONS_LIST() check_cons_list ()
-#else
-#define CHECK_CONS_LIST() ((void) 0)
-#endif
-
-/* Temporarily disable wider-than-pointer integers until they're tested more.
-   Build with CFLAGS='-DWIDE_EMACS_INT' to try them out.  */
-/* #undef WIDE_EMACS_INT */
+/* The ubiquitous max and min macros.  */
+#undef min
+#undef max
+#define max(a, b) ((a) > (b) ? (a) : (b))
+#define min(a, b) ((a) < (b) ? (a) : (b))
 
 /* EMACS_INT - signed integer wide enough to hold an Emacs value
    EMACS_INT_MAX - maximum value of EMACS_INT; can be used in #if
@@ -63,12 +56,6 @@ typedef unsigned int EMACS_UINT;
 #  define pI ""
 # endif
 #endif
-
-/* If an enum type is not used, the enum symbols are not put into the
-   executable so the debugger cannot see them on many systems, e.g.,
-   GCC 4.7.1 + GDB 7.4.1 + GNU/Linux.  Work around this problem by
-   explicitly using the names in the integer constant expression EXPR.  */
-#define PUBLISH_TO_GDB(expr) extern int (*gdb_dummy (int))[(expr) || 1]
 
 /* Number of bits in some machine integer types.  */
 enum
@@ -157,41 +144,38 @@ extern int suppress_checking EXTERNALLY_VISIBLE;
    on the few static Lisp_Objects used: all the defsubr as well
    as the two special buffers buffer_defaults and buffer_local_symbols.  */
 
-/* First, try and define DECL_ALIGN(type,var) which declares a static
-   variable VAR of type TYPE with the added requirement that it be
-   TYPEBITS-aligned.  */
-
-/* Number of bits in a Lisp_Object tag.  This can be used in #if,
-   and for GDB's sake also as a regular symbol.  */
-enum { GCTYPEBITS = 3 };
-PUBLISH_TO_GDB (GCTYPEBITS);
+enum Lisp_Bits
+  {
+    /* Number of bits in a Lisp_Object tag.  This can be used in #if,
+       and for GDB's sake also as a regular symbol.  */
+    GCTYPEBITS =
 #define GCTYPEBITS 3
+	GCTYPEBITS,
 
-/* Number of bits in a Lisp_Object value, not counting the tag.  */
-enum { VALBITS = BITS_PER_EMACS_INT - GCTYPEBITS };
+    /* 2**GCTYPEBITS.  This must also be a macro that expands to a
+       literal integer constant, for MSVC.  */
+    GCALIGNMENT =
+#define GCALIGNMENT 8
+	GCALIGNMENT,
+
+    /* Number of bits in a Lisp_Object value, not counting the tag.  */
+    VALBITS = BITS_PER_EMACS_INT - GCTYPEBITS,
+
+    /* Number of bits in a Lisp fixnum tag.  */
+    INTTYPEBITS = GCTYPEBITS - 1,
+
+    /* Number of bits in a Lisp fixnum value, not counting the tag.  */
+    FIXNUM_BITS = VALBITS + 1
+  };
+
+#if GCALIGNMENT != 1 << GCTYPEBITS
+# error "GCALIGNMENT and GCTYPEBITS are inconsistent"
+#endif
 
 /* The maximum value that can be stored in a EMACS_INT, assuming all
    bits other than the type bits contribute to a nonnegative signed value.
    This can be used in #if, e.g., '#if VAL_MAX < UINTPTR_MAX' below.  */
 #define VAL_MAX (EMACS_INT_MAX >> (GCTYPEBITS - 1))
-
-#ifndef NO_DECL_ALIGN
-# ifndef DECL_ALIGN
-#  if HAVE_ATTRIBUTE_ALIGNED
-#   define DECL_ALIGN(type, var) \
-     type __attribute__ ((__aligned__ (1 << GCTYPEBITS))) var
-#  elif defined(_MSC_VER)
-#   define ALIGN_GCTYPEBITS 8
-#   if (1 << GCTYPEBITS) != ALIGN_GCTYPEBITS
-#    error ALIGN_GCTYPEBITS is wrong!
-#   endif
-#   define DECL_ALIGN(type, var) \
-     type __declspec(align(ALIGN_GCTYPEBITS)) var
-#  else
-     /* What directives do other compilers use?  */
-#  endif
-# endif
-#endif
 
 /* Unless otherwise specified, use USE_LSB_TAG on systems where:  */
 #ifndef USE_LSB_TAG
@@ -199,7 +183,7 @@ enum { VALBITS = BITS_PER_EMACS_INT - GCTYPEBITS };
 # if (defined GNU_MALLOC || defined DOUG_LEA_MALLOC || defined __GLIBC__ \
       || defined DARWIN_OS || defined __sun)
 /* 2.  We can specify multiple-of-8 alignment on static variables.  */
-#  ifdef DECL_ALIGN
+#  ifdef alignas
 /* 3.  Pointers-as-ints exceed VAL_MAX.
    On hosts where pointers-as-ints do not exceed VAL_MAX, USE_LSB_TAG is:
     a. unnecessary, because the top bits of an EMACS_INT are unused, and
@@ -211,25 +195,20 @@ enum { VALBITS = BITS_PER_EMACS_INT - GCTYPEBITS };
 #  endif
 # endif
 #endif
-/* USE_LSB_TAG can be used in #if; default it to 0 and make it visible
-   to GDB.  */
 #ifdef USE_LSB_TAG
 # undef USE_LSB_TAG
-enum { USE_LSB_TAG = 1 };
-PUBLISH_TO_GDB (USE_LSB_TAG);
+enum enum_USE_LSB_TAG { USE_LSB_TAG = 1 };
 # define USE_LSB_TAG 1
 #else
-enum { USE_LSB_TAG = 0 };
-PUBLISH_TO_GDB (USE_LSB_TAG);
+enum enum_USE_LSB_TAG { USE_LSB_TAG = 0 };
 # define USE_LSB_TAG 0
 #endif
 
-/* If we cannot use 8-byte alignment, make DECL_ALIGN a no-op.  */
-#ifndef DECL_ALIGN
+#ifndef alignas
+# define alignas(alignment) /* empty */
 # if USE_LSB_TAG
-#  error "USE_LSB_TAG used without defining DECL_ALIGN"
+#  error "USE_LSB_TAG requires alignas"
 # endif
-# define DECL_ALIGN(type, var) type var
 #endif
 
 
@@ -239,14 +218,9 @@ PUBLISH_TO_GDB (USE_LSB_TAG);
 
 /* Lisp integers use 2 tags, to give them one extra bit, thus
    extending their range from, e.g., -2^28..2^28-1 to -2^29..2^29-1.  */
-enum { INTTYPEBITS = GCTYPEBITS - 1 };
-enum { FIXNUM_BITS = VALBITS + 1 };
-#define INTMASK (EMACS_INT_MAX >> (INTTYPEBITS - 1))
-#define LISP_INT_TAG Lisp_Int0
+static EMACS_INT const INTMASK = EMACS_INT_MAX >> (INTTYPEBITS - 1);
 #define case_Lisp_Int case Lisp_Int0: case Lisp_Int1
-#define LISP_INT1_TAG (USE_LSB_TAG ? 1 << INTTYPEBITS : 1)
-#define LISP_STRING_TAG (5 - LISP_INT1_TAG)
-#define LISP_INT_TAG_P(x) (((x) & ~LISP_INT1_TAG) == 0)
+#define LISP_INT_TAG_P(x) (((x) & ~Lisp_Int1) == 0)
 
 /* Stolen from GDB.  The only known compiler that doesn't support
    enums in bitfields is MSVC.  */
@@ -261,7 +235,7 @@ enum Lisp_Type
   {
     /* Integer.  XINT (obj) is the integer value.  */
     Lisp_Int0 = 0,
-    Lisp_Int1 = LISP_INT1_TAG,
+    Lisp_Int1 = USE_LSB_TAG ? 1 << INTTYPEBITS : 1,
 
     /* Symbol.  XSYMBOL (object) points to a struct Lisp_Symbol.  */
     Lisp_Symbol = 2,
@@ -272,7 +246,7 @@ enum Lisp_Type
 
     /* String.  XSTRING (object) points to a struct Lisp_String.
        The length of the string, and its contents, are stored therein.  */
-    Lisp_String = LISP_STRING_TAG,
+    Lisp_String = USE_LSB_TAG ? 1 : 1 << INTTYPEBITS,
 
     /* Vector of Lisp objects, or something resembling it.
        XVECTOR (object) points to a struct Lisp_Vector, which contains
@@ -335,9 +309,9 @@ LISP_MAKE_RVALUE (Lisp_Object o)
 }
 
 #define LISP_INITIALLY_ZERO {0}
-#undef CHECK_LISP_OBJECT_TYPE
-enum { CHECK_LISP_OBJECT_TYPE = 1 };
 
+#undef CHECK_LISP_OBJECT_TYPE
+enum CHECK_LISP_OBJECT_TYPE { CHECK_LISP_OBJECT_TYPE = 1 };
 #else /* CHECK_LISP_OBJECT_TYPE */
 
 /* If a struct type is not wanted, define Lisp_Object as just a number.  */
@@ -347,17 +321,16 @@ typedef EMACS_INT Lisp_Object;
 #define XIL(i) (i)
 #define LISP_MAKE_RVALUE(o) (0+(o))
 #define LISP_INITIALLY_ZERO 0
-enum { CHECK_LISP_OBJECT_TYPE = 0 };
+enum CHECK_LISP_OBJECT_TYPE { CHECK_LISP_OBJECT_TYPE = 0 };
 #endif /* CHECK_LISP_OBJECT_TYPE */
-PUBLISH_TO_GDB (CHECK_LISP_OBJECT_TYPE);
 
 /* In the size word of a vector, this bit means the vector has been marked.  */
 
-#define ARRAY_MARK_FLAG PTRDIFF_MIN
+static ptrdiff_t const ARRAY_MARK_FLAG = PTRDIFF_MIN;
 
 /* In the size word of a struct Lisp_Vector, this bit means it's really
    some other vector-like object.  */
-#define PSEUDOVECTOR_FLAG (PTRDIFF_MAX - PTRDIFF_MAX / 2)
+static ptrdiff_t const PSEUDOVECTOR_FLAG = PTRDIFF_MAX - PTRDIFF_MAX / 2;
 
 /* In a pseudovector, the size field actually contains a word with one
    PSEUDOVECTOR_FLAG bit set, and exactly one of the following bits to
@@ -394,35 +367,32 @@ enum pvec_type
   PVEC_SUB_CHAR_TABLE		= 0x30,
   PVEC_FONT			= 0x40
 };
-PUBLISH_TO_GDB ((enum pvec_type) 0);  /* This also publishes PVEC_*.  */
-
-/* For convenience, we also store the number of elements in these bits.
-   Note that this size is not necessarily the memory-footprint size, but
-   only the number of Lisp_Object fields (that need to be traced by the GC).
-   The distinction is used e.g. by Lisp_Process which places extra
-   non-Lisp_Object fields at the end of the structure.  */
-enum
-  {
-    PSEUDOVECTOR_SIZE_BITS = 16,
-    PSEUDOVECTOR_SIZE_MASK = (1 << PSEUDOVECTOR_SIZE_BITS) - 1,
-    PVEC_TYPE_MASK = 0x0fff << PSEUDOVECTOR_SIZE_BITS
-  };
-
-/* Number of bits to put in each character in the internal representation
-   of bool vectors.  This should not vary across implementations.  */
-enum { BOOL_VECTOR_BITS_PER_CHAR = 8 };
 
 /* DATA_SEG_BITS forces extra bits to be or'd in with any pointers
-   which were stored in a Lisp_Object.  It is not needed in #if, so
-   for GDB's sake change it from a macro to a regular symbol.  */
-#ifdef DATA_SEG_BITS
-enum { gdb_DATA_SEG_BITS = DATA_SEG_BITS };
-# undef DATA_SEG_BITS
-enum { DATA_SEG_BITS = gdb_DATA_SEG_BITS };
-#else
-enum { DATA_SEG_BITS = 0 };
+   which were stored in a Lisp_Object.  */
+#ifndef DATA_SEG_BITS
+# define DATA_SEG_BITS 0
 #endif
-PUBLISH_TO_GDB (DATA_SEG_BITS);
+enum { gdb_DATA_SEG_BITS = DATA_SEG_BITS };
+#undef DATA_SEG_BITS
+
+enum More_Lisp_Bits
+  {
+    DATA_SEG_BITS = gdb_DATA_SEG_BITS,
+
+    /* For convenience, we also store the number of elements in these bits.
+       Note that this size is not necessarily the memory-footprint size, but
+       only the number of Lisp_Object fields (that need to be traced by GC).
+       The distinction is used, e.g., by Lisp_Process, which places extra
+       non-Lisp_Object fields at the end of the structure.  */
+    PSEUDOVECTOR_SIZE_BITS = 16,
+    PSEUDOVECTOR_SIZE_MASK = (1 << PSEUDOVECTOR_SIZE_BITS) - 1,
+    PVEC_TYPE_MASK = 0x0fff << PSEUDOVECTOR_SIZE_BITS,
+
+    /* Number of bits to put in each character in the internal representation
+       of bool vectors.  This should not vary across implementations.  */
+    BOOL_VECTOR_BITS_PER_CHAR = 8
+  };
 
 /* These macros extract various sorts of values from a Lisp_Object.
  For example, if tem is a Lisp_Object whose type is Lisp_Cons,
@@ -433,8 +403,11 @@ PUBLISH_TO_GDB (DATA_SEG_BITS);
 
 #if USE_LSB_TAG
 
-#define VALMASK (-1 << GCTYPEBITS)
-#define TYPEMASK ((1 << GCTYPEBITS) - 1)
+enum lsb_bits
+  {
+    TYPEMASK = (1 << GCTYPEBITS) - 1,
+    VALMASK = ~ TYPEMASK
+  };
 #define XTYPE(a) ((enum Lisp_Type) (XLI (a) & TYPEMASK))
 #define XINT(a) (XLI (a) >> INTTYPEBITS)
 #define XUINT(a) ((EMACS_UINT) XLI (a) >> INTTYPEBITS)
@@ -448,7 +421,7 @@ PUBLISH_TO_GDB (DATA_SEG_BITS);
 
 #else  /* not USE_LSB_TAG */
 
-#define VALMASK VAL_MAX
+static EMACS_INT const VALMASK = VAL_MAX;
 
 #define XTYPE(a) ((enum Lisp_Type) ((EMACS_UINT) XLI (a) >> VALBITS))
 
@@ -496,9 +469,14 @@ PUBLISH_TO_GDB (DATA_SEG_BITS);
 #define EQ(x, y) (XHASH (x) == XHASH (y))
 
 /* Largest and smallest representable fixnum values.  These are the C
-   values.  */
+   values.  They are macros for use in static initializers, and
+   constants for visibility to GDB.  */
+static EMACS_INT const MOST_POSITIVE_FIXNUM =
 #define MOST_POSITIVE_FIXNUM (EMACS_INT_MAX >> INTTYPEBITS)
+	MOST_POSITIVE_FIXNUM;
+static EMACS_INT const MOST_NEGATIVE_FIXNUM =
 #define MOST_NEGATIVE_FIXNUM (-1 - MOST_POSITIVE_FIXNUM)
+	MOST_NEGATIVE_FIXNUM;
 
 /* Value is non-zero if I doesn't fit into a Lisp fixnum.  It is
    written this way so that it also works if I is of unsigned
@@ -666,21 +644,12 @@ struct Lisp_Cons
   {
     /* Please do not use the names of these elements in code other
        than the core lisp implementation.  Use XCAR and XCDR below.  */
-#ifdef HIDE_LISP_IMPLEMENTATION
-    Lisp_Object car_;
-    union
-    {
-      Lisp_Object cdr_;
-      struct Lisp_Cons *chain;
-    } u;
-#else
     Lisp_Object car;
     union
     {
       Lisp_Object cdr;
       struct Lisp_Cons *chain;
     } u;
-#endif
   };
 
 /* Take the car or cdr of something known to be a cons cell.  */
@@ -690,13 +659,8 @@ struct Lisp_Cons
    fields are not accessible as lvalues.  (What if we want to switch to
    a copying collector someday?  Cached cons cell field addresses may be
    invalidated at arbitrary points.)  */
-#ifdef HIDE_LISP_IMPLEMENTATION
-#define XCAR_AS_LVALUE(c) (XCONS ((c))->car_)
-#define XCDR_AS_LVALUE(c) (XCONS ((c))->u.cdr_)
-#else
 #define XCAR_AS_LVALUE(c) (XCONS ((c))->car)
 #define XCDR_AS_LVALUE(c) (XCONS ((c))->u.cdr)
-#endif
 
 /* Use these from normal code.  */
 #define XCAR(c)	LISP_MAKE_RVALUE (XCAR_AS_LVALUE (c))
@@ -757,10 +721,15 @@ extern ptrdiff_t string_bytes (struct Lisp_String *);
    Although the actual size limit (see STRING_BYTES_MAX in alloc.c)
    may be a bit smaller than STRING_BYTES_BOUND, calculating it here
    would expose alloc.c internal details that we'd rather keep
-   private.  The cast to ptrdiff_t ensures that STRING_BYTES_BOUND is
-   signed.  */
+   private.
+
+   This is a macro for use in static initializers, and a constant for
+   visibility to GDB.  The cast to ptrdiff_t ensures that
+   the macro is signed.  */
+static ptrdiff_t const STRING_BYTES_BOUND =
 #define STRING_BYTES_BOUND  \
-  min (MOST_POSITIVE_FIXNUM, (ptrdiff_t) min (SIZE_MAX, PTRDIFF_MAX) - 1)
+  ((ptrdiff_t) min (MOST_POSITIVE_FIXNUM, min (SIZE_MAX, PTRDIFF_MAX) - 1))
+	STRING_BYTES_BOUND;
 
 /* Mark STR as a unibyte string.  */
 #define STRING_SET_UNIBYTE(STR)  \
@@ -869,16 +838,6 @@ struct Lisp_Vector
    of a char-table, and there's no way to access it directly from
    Emacs Lisp program.  */
 
-/* This is the number of slots that every char table must have.  This
-   counts the ordinary slots and the top, defalt, parent, and purpose
-   slots.  */
-#define CHAR_TABLE_STANDARD_SLOTS (VECSIZE (struct Lisp_Char_Table) - 1)
-
-/* Return the number of "extra" slots in the char table CT.  */
-
-#define CHAR_TABLE_EXTRA_SLOTS(CT)	\
-  (((CT)->header.size & PSEUDOVECTOR_SIZE_MASK) - CHAR_TABLE_STANDARD_SLOTS)
-
 #ifdef __GNUC__
 
 #define CHAR_TABLE_REF_ASCII(CT, IDX)					\
@@ -940,10 +899,13 @@ struct Lisp_Vector
    ? XSUB_CHAR_TABLE (XCHAR_TABLE (CT)->ascii)->contents[IDX] = VAL	\
    : char_table_set (CT, IDX, VAL))
 
-#define CHARTAB_SIZE_BITS_0 6
-#define CHARTAB_SIZE_BITS_1 4
-#define CHARTAB_SIZE_BITS_2 5
-#define CHARTAB_SIZE_BITS_3 7
+enum CHARTAB_SIZE_BITS
+  {
+    CHARTAB_SIZE_BITS_0 = 6,
+    CHARTAB_SIZE_BITS_1 = 4,
+    CHARTAB_SIZE_BITS_2 = 5,
+    CHARTAB_SIZE_BITS_3 = 7
+  };
 
 extern const int chartab_size[4];
 
@@ -1041,6 +1003,19 @@ struct Lisp_Subr
     const char *intspec;
     const char *doc;
   };
+
+/* This is the number of slots that every char table must have.  This
+   counts the ordinary slots and the top, defalt, parent, and purpose
+   slots.  */
+enum CHAR_TABLE_STANDARD_SLOTS
+  {
+    CHAR_TABLE_STANDARD_SLOTS = VECSIZE (struct Lisp_Char_Table) - 1
+  };
+
+/* Return the number of "extra" slots in the char table CT.  */
+
+#define CHAR_TABLE_EXTRA_SLOTS(CT)	\
+  (((CT)->header.size & PSEUDOVECTOR_SIZE_MASK) - CHAR_TABLE_STANDARD_SLOTS)
 
 
 /***********************************************************************
@@ -1269,7 +1244,7 @@ struct Lisp_Hash_Table
 
 /* Default size for hash tables if not specified.  */
 
-#define DEFAULT_HASH_SIZE 65
+enum DEFAULT_HASH_SIZE { DEFAULT_HASH_SIZE = 65 };
 
 /* Default threshold specifying when to resize a hash table.  The
    value gives the ratio of current entries in the hash table and the
@@ -1509,23 +1484,13 @@ struct Lisp_Float
   {
     union
     {
-#ifdef HIDE_LISP_IMPLEMENTATION
-      double data_;
-#else
       double data;
-#endif
       struct Lisp_Float *chain;
     } u;
   };
 
-#ifdef HIDE_LISP_IMPLEMENTATION
-#define XFLOAT_DATA(f)	(0 ? XFLOAT (f)->u.data_ : XFLOAT (f)->u.data_)
-#else
-#define XFLOAT_DATA(f)	(0 ? XFLOAT (f)->u.data :  XFLOAT (f)->u.data)
-/* This should be used only in alloc.c, which always disables
-   HIDE_LISP_IMPLEMENTATION.  */
-#define XFLOAT_INIT(f,n) (XFLOAT (f)->u.data = (n))
-#endif
+#define XFLOAT_DATA(f) (0 ? XFLOAT (f)->u.data :  XFLOAT (f)->u.data)
+#define XFLOAT_INIT(f, n) (XFLOAT (f)->u.data = (n))
 
 /* A character, declared with the following typedef, is a member
    of some character set associated with the current buffer.  */
@@ -1536,31 +1501,38 @@ typedef unsigned char UCHAR;
 
 /* Meanings of slots in a Lisp_Compiled:  */
 
-#define COMPILED_ARGLIST 0
-#define COMPILED_BYTECODE 1
-#define COMPILED_CONSTANTS 2
-#define COMPILED_STACK_DEPTH 3
-#define COMPILED_DOC_STRING 4
-#define COMPILED_INTERACTIVE 5
+enum Lisp_Compiled
+  {
+    COMPILED_ARGLIST = 0,
+    COMPILED_BYTECODE = 1,
+    COMPILED_CONSTANTS = 2,
+    COMPILED_STACK_DEPTH = 3,
+    COMPILED_DOC_STRING = 4,
+    COMPILED_INTERACTIVE = 5
+  };
 
 /* Flag bits in a character.  These also get used in termhooks.h.
    Richard Stallman <rms@gnu.ai.mit.edu> thinks that MULE
    (MUlti-Lingual Emacs) might need 22 bits for the character value
    itself, so we probably shouldn't use any bits lower than 0x0400000.  */
-#define CHAR_ALT   (0x0400000)
-#define CHAR_SUPER (0x0800000)
-#define CHAR_HYPER (0x1000000)
-#define CHAR_SHIFT (0x2000000)
-#define CHAR_CTL   (0x4000000)
-#define CHAR_META  (0x8000000)
+enum char_bits
+  {
+    CHAR_ALT = 0x0400000,
+    CHAR_SUPER = 0x0800000,
+    CHAR_HYPER = 0x1000000,
+    CHAR_SHIFT = 0x2000000,
+    CHAR_CTL = 0x4000000,
+    CHAR_META = 0x8000000,
 
-#define CHAR_MODIFIER_MASK \
-  (CHAR_ALT | CHAR_SUPER | CHAR_HYPER  | CHAR_SHIFT | CHAR_CTL | CHAR_META)
+    CHAR_MODIFIER_MASK =
+      CHAR_ALT | CHAR_SUPER | CHAR_HYPER | CHAR_SHIFT | CHAR_CTL | CHAR_META,
+
+    /* Actually, the current Emacs uses 22 bits for the character value
+       itself.  */
+    CHARACTERBITS = 22
+  };
 
 
-/* Actually, the current Emacs uses 22 bits for the character value
-   itself.  */
-#define CHARACTERBITS 22
 
 
 /* The glyph datatype, used to represent characters on the display.
@@ -1617,9 +1589,6 @@ typedef struct {
 		   (XINT (gc) >> CHARACTERBITS));			\
     }									\
   while (0)
-
-/* The ID of the mode line highlighting face.  */
-#define GLYPH_MODE_LINE_FACE 1
 
 /* Structure to hold mouse highlight data.  This is here because other
    header files need it for defining struct x_output etc.  */
@@ -1894,7 +1863,7 @@ typedef struct {
 #ifdef _MSC_VER
 #define DEFUN(lname, fnname, sname, minargs, maxargs, intspec, doc)	\
    Lisp_Object fnname DEFUN_ARGS_ ## maxargs ;				\
-   static DECL_ALIGN (struct Lisp_Subr, sname) =			\
+   static struct Lisp_Subr alignas (GCALIGNMENT) sname =		\
    { (PVEC_SUBR << PSEUDOVECTOR_SIZE_BITS)				\
      | (sizeof (struct Lisp_Subr) / sizeof (EMACS_INT)),		\
       { (Lisp_Object (__cdecl *)(void))fnname },                        \
@@ -1903,7 +1872,7 @@ typedef struct {
 #else  /* not _MSC_VER */
 #define DEFUN(lname, fnname, sname, minargs, maxargs, intspec, doc)	\
    Lisp_Object fnname DEFUN_ARGS_ ## maxargs ;				\
-   static DECL_ALIGN (struct Lisp_Subr, sname) =			\
+   static struct Lisp_Subr alignas (GCALIGNMENT) sname =		\
      { PVEC_SUBR << PSEUDOVECTOR_SIZE_BITS,				\
       { .a ## maxargs = fnname },					\
        minargs, maxargs, lname, intspec, 0};				\
@@ -1939,8 +1908,11 @@ typedef struct {
    is how we define the symbol for function `name' at start-up time.  */
 extern void defsubr (struct Lisp_Subr *);
 
-#define MANY -2
-#define UNEVALLED -1
+enum maxargs
+  {
+    MANY = -2,
+    UNEVALLED = -1
+  };
 
 extern void defvar_lisp (struct Lisp_Objfwd *, const char *, Lisp_Object *);
 extern void defvar_lisp_nopro (struct Lisp_Objfwd *, const char *, Lisp_Object *);
@@ -2655,6 +2627,8 @@ extern Lisp_Object list3 (Lisp_Object, Lisp_Object, Lisp_Object);
 extern Lisp_Object list4 (Lisp_Object, Lisp_Object, Lisp_Object, Lisp_Object);
 extern Lisp_Object list5 (Lisp_Object, Lisp_Object, Lisp_Object, Lisp_Object,
 			  Lisp_Object);
+enum constype {CONSTYPE_HEAP, CONSTYPE_PURE};
+extern Lisp_Object listn (enum constype, ptrdiff_t, Lisp_Object, ...);
 extern _Noreturn void string_overflow (void);
 extern Lisp_Object make_string (const char *, ptrdiff_t);
 extern Lisp_Object make_formatted_string (char *, const char *, ...)
@@ -2724,6 +2698,11 @@ extern void init_alloc (void);
 extern void syms_of_alloc (void);
 extern struct buffer * allocate_buffer (void);
 extern int valid_lisp_object_p (Lisp_Object);
+#ifdef GC_CHECK_CONS_LIST
+extern void check_cons_list (void);
+#else
+#define check_cons_list() ((void) 0)
+#endif
 
 #ifdef REL_ALLOC
 /* Defined in ralloc.c */
@@ -2766,7 +2745,7 @@ extern void print_error_message (Lisp_Object, Lisp_Object, const char *,
 				 Lisp_Object);
 extern Lisp_Object internal_with_output_to_temp_buffer
         (const char *, Lisp_Object (*) (Lisp_Object), Lisp_Object);
-#define FLOAT_TO_STRING_BUFSIZE 350
+enum FLOAT_TO_STRING_BUFSIZE { FLOAT_TO_STRING_BUFSIZE = 350 };
 extern int float_to_string (char *, double);
 extern void syms_of_print (void);
 
@@ -2871,7 +2850,7 @@ extern _Noreturn void verror (const char *, va_list)
   ATTRIBUTE_FORMAT_PRINTF (1, 0);
 extern Lisp_Object un_autoload (Lisp_Object);
 extern void init_eval_once (void);
-extern Lisp_Object safe_call (ptrdiff_t, Lisp_Object *);
+extern Lisp_Object safe_call (ptrdiff_t, Lisp_Object, ...);
 extern Lisp_Object safe_call1 (Lisp_Object, Lisp_Object);
 extern Lisp_Object safe_call2 (Lisp_Object, Lisp_Object, Lisp_Object);
 extern void init_eval (void);
@@ -3330,7 +3309,7 @@ extern void init_system_name (void);
    in addition to a device separator.  Set the path separator
    to '/', and don't test for a device separator in IS_ANY_SEP.  */
 
-#define DIRECTORY_SEP '/'
+static char const DIRECTORY_SEP = '/';
 #ifndef IS_DIRECTORY_SEP
 #define IS_DIRECTORY_SEP(_c_) ((_c_) == DIRECTORY_SEP)
 #endif
@@ -3344,8 +3323,6 @@ extern void init_system_name (void);
 #ifndef IS_ANY_SEP
 #define IS_ANY_SEP(_c_) (IS_DIRECTORY_SEP (_c_))
 #endif
-
-#define SWITCH_ENUM_CAST(x) (x)
 
 /* Use this to suppress gcc's warnings.  */
 #ifdef lint
@@ -3361,15 +3338,6 @@ extern void init_system_name (void);
 # define IF_LINT(Code) /* empty */
 # define lint_assume(cond) ((void) (0 && (cond)))
 #endif
-
-/* The ubiquitous min and max macros.  */
-
-#ifdef max
-#undef max
-#undef min
-#endif
-#define min(a, b)	((a) < (b) ? (a) : (b))
-#define max(a, b)	((a) > (b) ? (a) : (b))
 
 /* We used to use `abs', but that clashes with system headers on some
    platforms, and using a name reserved by Standard C is a bad idea
@@ -3413,7 +3381,7 @@ extern void init_system_name (void);
 /* SAFE_ALLOCA normally allocates memory on the stack, but if size is
    larger than MAX_ALLOCA, use xmalloc to avoid overflowing the stack.  */
 
-#define MAX_ALLOCA 16*1024
+enum MAX_ALLOCA { MAX_ALLOCA = 16*1024 };
 
 extern Lisp_Object safe_alloca_unwind (Lisp_Object);
 

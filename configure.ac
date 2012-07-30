@@ -1300,19 +1300,6 @@ AC_CHECK_MEMBERS([struct ifreq.ifr_flags, struct ifreq.ifr_hwaddr,
 dnl Check for endianness.
 dnl AC_C_BIGENDIAN is done by gnulib.
 
-AC_CACHE_CHECK([for  __attribute__ ((__aligned__ (expr)))],
-  [emacs_cv_attribute_aligned],
-  [AC_COMPILE_IFELSE(
-     [AC_LANG_PROGRAM(
-	[[char __attribute__ ((__aligned__ (1 << 3))) c;]],
-	[[]])],
-     [emacs_cv_attribute_aligned=yes],
-     [emacs_cv_attribute_aligned=no])])
-if test $emacs_cv_attribute_aligned = yes; then
-  AC_DEFINE([HAVE_ATTRIBUTE_ALIGNED], 1,
-    [Define to 1 if GCC-style __attribute__ ((__aligned__ (expr))) works.])
-fi
-
 dnl check for Make feature
 dnl AC_PROG_MAKE_SET is done by Automake.
 
@@ -3706,11 +3693,32 @@ else
 fi                              dnl GCC?
 
 
-dnl Used in xfaces.c.
+case $opsys in
+  sol2* | unixware )
+    dnl setjmp and longjmp can safely replace _setjmp and _longjmp,
+    dnl but they will run more slowly.
+    AC_DEFINE(_setjmp, setjmp, [Some platforms redefine this.])
+    AC_DEFINE(_longjmp, longjmp, [Some platforms redefine this.])
+    dnl TIOCGPGRP is broken in SysVr4, so we can't send signals to PTY
+    dnl subprocesses the usual way.  But TIOCSIGNAL does work for PTYs,
+    dnl and this is all we need.
+    AC_DEFINE(TIOCSIGSEND, TIOCSIGNAL, [Some platforms redefine this.])
+    ;;
+esac
+
+
 case $opsys in
   hpux* | sol2* )
+    dnl Used in xfaces.c.
     AC_DEFINE(XOS_NEEDS_TIME_H, 1, [Compensate for a bug in Xos.h on
       some systems, where it requires time.h.])
+    ;;
+
+  netbsd | openbsd )
+    dnl Greg A. Woods <woods@weird.com> says we must include signal.h
+    dnl before syssignal.h is included, to work around interface conflicts
+    dnl that are handled with CPP __RENAME() macro in signal.h.
+    AC_DEFINE(SIGNAL_H_AHB, 1, [Define if AH_BOTTOM should include signal.h.])
     ;;
 esac
 
@@ -3724,6 +3732,7 @@ AH_TEMPLATE(USG5, [Define if the system is compatible with System V.])
 
 case $opsys in
   aix4-2)
+    opsysfile=
     AC_DEFINE(USG, [])
     AC_DEFINE(USG5, [])
     dnl This symbol should be defined on AIX Version 3  ???????
@@ -3751,6 +3760,7 @@ case $opsys in
     ;;
 
   freebsd)
+    opsysfile=
     AC_DEFINE(BSD4_2, [])
     dnl Hack to avoid calling AC_PREPROC_IFELSE multiple times.
     dnl Would not be needed with autoconf >= 2.67, where the
@@ -3768,6 +3778,7 @@ case $opsys in
     ;;
 
   gnu-linux | gnu-kfreebsd )
+    opsysfile=
     AC_DEFINE(USG, [])
     AC_DEFINE(GNU_LINUX, [], [Define if ths system is compatible with GNU/Linux.])
     ;;
@@ -3785,12 +3796,14 @@ case $opsys in
     ;;
 
   sol2*)
+    opsysfile="s/usg5-4-common.h"
     AC_DEFINE(USG, [])
     AC_DEFINE(USG5, [])
     AC_DEFINE(SOLARIS2, [], [Define if the system is Solaris.])
     ;;
 
   unixware)
+    opsysfile="s/usg5-4-common.h"
     AC_DEFINE(USG, [])
     AC_DEFINE(USG5, [])
     ;;
@@ -3809,8 +3822,6 @@ case $opsys in
     ;;
 
   gnu) opsysfile= ;;
-
-  gnu-kfreebsd) opsysfile="s/gnu-linux.h" ;;
 
   hpux11)
     dnl See comments in sysdep.c:sys_signal.
@@ -3834,7 +3845,7 @@ case $opsys in
       should not call setpgrp.])
     ;;
 
-  openbsd) opsysfile="s/netbsd.h" ;;
+  netbsd | openbsd ) opsysfile= ;;
 
   sol2-10)
     AC_DEFINE(_STRUCTURED_PROC, 1, [Needed for system_process_attributes
@@ -4248,102 +4259,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #define EMACS_CONFIG_H
 ])dnl
 
-AH_BOTTOM([
-/* On AIX 3 this must be included before any other include file.  */
-#include <alloca.h>
-#if ! HAVE_ALLOCA
-# error "alloca not available on this machine"
-#endif
-
-/* This silences a few compilation warnings on FreeBSD.  */
-#ifdef BSD_SYSTEM_AHB
-#undef BSD_SYSTEM_AHB
-#undef BSD_SYSTEM
-#if __FreeBSD__ == 1
-#define BSD_SYSTEM 199103
-#elif __FreeBSD__ == 2
-#define BSD_SYSTEM 199306
-#elif __FreeBSD__ >= 3
-#define BSD_SYSTEM 199506
-#endif
-#endif
-
-/* Define AMPERSAND_FULL_NAME if you use the convention
-   that & in the full name stands for the login id.  */
-/* Turned on June 1996 supposing nobody will mind it.  */
-#define AMPERSAND_FULL_NAME
-
-/* `subprocesses' should be defined if you want to
-   have code for asynchronous subprocesses
-   (as used in M-x compile and M-x shell).
-   Only MSDOS does not support this (it overrides
-   this in its config_opsysfile below).  */
-
-#define subprocesses
-
-/* Include the os dependent file.  */
-#ifdef config_opsysfile
-# include config_opsysfile
-#endif
-
-/* Mac OS X / GNUstep need a bit more pure memory.  Of the existing knobs,
-   SYSTEM_PURESIZE_EXTRA seems like the least likely to cause problems.  */
-#ifdef HAVE_NS
-#if defined NS_IMPL_GNUSTEP
-#  define SYSTEM_PURESIZE_EXTRA 30000
-#elif defined DARWIN_OS
-#  define SYSTEM_PURESIZE_EXTRA 200000
-#endif
-#endif
-
-#ifdef emacs /* Don't do this for lib-src.  */
-/* Tell regex.c to use a type compatible with Emacs.  */
-#define RE_TRANSLATE_TYPE Lisp_Object
-#define RE_TRANSLATE(TBL, C) CHAR_TABLE_TRANSLATE (TBL, C)
-#ifdef make_number
-/* If make_number is a macro, use it.  */
-#define RE_TRANSLATE_P(TBL) (!EQ (TBL, make_number (0)))
-#else
-/* If make_number is a function, avoid it.  */
-#define RE_TRANSLATE_P(TBL) (!(INTEGERP (TBL) && XINT (TBL) == 0))
-#endif
-#endif
-
-#include <string.h>
-#include <stdlib.h>
-
-#if __GNUC__ >= 3  /* On GCC 3.0 we might get a warning.  */
-#define NO_INLINE __attribute__((noinline))
-#else
-#define NO_INLINE
-#endif
-
-#if (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 1))
-#define EXTERNALLY_VISIBLE __attribute__((externally_visible))
-#else
-#define EXTERNALLY_VISIBLE
-#endif
-
-#if __GNUC__ > 2 || (__GNUC__ == 2 && __GNUC_MINOR__ >= 7)
-# define ATTRIBUTE_FORMAT(spec) __attribute__ ((__format__ spec))
-#else
-# define ATTRIBUTE_FORMAT(spec) /* empty */
-#endif
-
-#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 4)
-# define ATTRIBUTE_FORMAT_PRINTF(formatstring_parameter, first_argument) \
-   ATTRIBUTE_FORMAT ((__gnu_printf__, formatstring_parameter, first_argument))
-#else
-# define ATTRIBUTE_FORMAT_PRINTF(formatstring_parameter, first_argument) \
-   ATTRIBUTE_FORMAT ((__printf__, formatstring_parameter, first_argument))
-#endif
-
-#define ATTRIBUTE_CONST _GL_ATTRIBUTE_CONST
-
-/* Some versions of GNU/Linux define noinline in their headers.  */
-#ifdef noinline
-#undef noinline
-#endif
+AH_BOTTOM([#include <conf_post.h>
 
 #endif /* EMACS_CONFIG_H */
 
@@ -4370,7 +4286,7 @@ echo "
 Configured for \`${canonical}'.
 
   Where should the build process find the source code?    ${srcdir}
-  What operating system file should Emacs use?            ${opsysfile-none}
+  What operating system file should Emacs use?            ${opsysfile:-none}
   What compiler should emacs be built with?               ${CC} ${CFLAGS}
   Should Emacs use the GNU version of malloc?             ${GNU_MALLOC}${GNU_MALLOC_reason}
   Should Emacs use a relocating allocator for buffers?    ${REL_ALLOC}
@@ -4514,7 +4430,7 @@ dnl by configure.  This also explains the `move-if-change' test and
 dnl the use of force in the `epaths-force' rule in Makefile.in.
 AC_CONFIG_COMMANDS([epaths], [
 echo creating src/epaths.h
-${MAKE-make} epaths-force
+${MAKE-make} MAKEFILE_NAME=do-not-make-Makefile epaths-force
 ], [GCC="$GCC" CPPFLAGS="$CPPFLAGS"])
 
 AC_CONFIG_COMMANDS([gdbinit], [

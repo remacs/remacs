@@ -928,7 +928,7 @@ store_symval_forwarding (union Lisp_Fwd *valcontents, register Lisp_Object newva
 	Lisp_Object type = XBUFFER_OBJFWD (valcontents)->slottype;
 
 	if (!(NILP (type) || NILP (newval)
-	      || (XINT (type) == LISP_INT_TAG
+	      || (XINT (type) == Lisp_Int0
 		  ? INTEGERP (newval)
 		  : XTYPE (newval) == XINT (type))))
 	  buffer_slot_type_mismatch (newval, XINT (type));
@@ -2522,7 +2522,7 @@ arith_driver (enum arithop code, ptrdiff_t nargs, Lisp_Object *args)
   ptrdiff_t ok_args;
   EMACS_INT ok_accum;
 
-  switch (SWITCH_ENUM_CAST (code))
+  switch (code)
     {
     case Alogior:
     case Alogxor:
@@ -2557,7 +2557,7 @@ arith_driver (enum arithop code, ptrdiff_t nargs, Lisp_Object *args)
 				   nargs, args);
       args[argnum] = val;
       next = XINT (args[argnum]);
-      switch (SWITCH_ENUM_CAST (code))
+      switch (code)
 	{
 	case Aadd:
 	  if (INT_ADD_OVERFLOW (accum, next))
@@ -2643,7 +2643,7 @@ float_arith_driver (double accum, ptrdiff_t argnum, enum arithop code,
 	  args[argnum] = val;    /* runs into a compiler bug. */
 	  next = XINT (args[argnum]);
 	}
-      switch (SWITCH_ENUM_CAST (code))
+      switch (code)
 	{
 	case Aadd:
 	  accum += next;

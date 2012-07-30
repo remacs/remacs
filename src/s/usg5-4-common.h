@@ -20,11 +20,6 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
-/* setjmp and longjmp can safely replace _setjmp and _longjmp,
-   but they will run slower.  */
-#define _setjmp setjmp
-#define _longjmp longjmp
-
 /* Get FIONREAD from <sys/filio.h>.  Get <sys/ttold.h> to get struct tchars.
    But get <termio.h> first to make sure ttold.h doesn't interfere.  */
 #include <sys/wait.h>
@@ -46,9 +41,4 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #define wait3(status, options, rusage) \
   waitpid ((pid_t) -1, (status), (options))
 #define WRETCODE(w) (w >> 8)
-
-/* TIOCGPGRP is broken in SysVr4, so we can't send signals to PTY
-   subprocesses the usual way.  But TIOCSIGNAL does work for PTYs, and
-   this is all we need.  */
-#define TIOCSIGSEND TIOCSIGNAL
 

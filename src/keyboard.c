@@ -2188,14 +2188,7 @@ show_help_echo (Lisp_Object help, Lisp_Object window, Lisp_Object object,
   if (!NILP (help) && !STRINGP (help))
     {
       if (FUNCTIONP (help))
-	{
-	  Lisp_Object args[4];
-	  args[0] = help;
-	  args[1] = window;
-	  args[2] = object;
-	  args[3] = pos;
-	  help = safe_call (4, args);
-	}
+	help = safe_call (4, help, window, object, pos);
       else
 	help = safe_eval (help);
 
@@ -5336,7 +5329,7 @@ make_lispy_event (struct input_event *event)
 {
   int i;
 
-  switch (SWITCH_ENUM_CAST (event->kind))
+  switch (event->kind)
     {
       /* A simple keystroke.  */
     case ASCII_KEYSTROKE_EVENT:

@@ -1933,9 +1933,12 @@ You must have the \"hashcash\" binary installed, see `hashcash-path'."
 (autoload 'nndraft-request-associate-buffer "nndraft")
 (autoload 'nndraft-request-expire-articles "nndraft")
 (autoload 'nnvirtual-find-group-art "nnvirtual")
-(autoload 'mail-dont-reply-to "mail-utils")
 (autoload 'rmail-msg-is-pruned "rmail")
 (autoload 'rmail-output "rmailout")
+
+;; Emacs < 24.1 do not have mail-dont-reply-to
+(unless (fboundp 'mail-dont-reply-to)
+  (defalias 'mail-dont-reply-to 'rmail-dont-reply-to))
 
 
 
@@ -2603,7 +2606,7 @@ Point is left at the beginning of the narrowed-to region."
   (interactive)
   (let ((start (point)))
     (message-skip-to-next-address)
-    (kill-region start (point))))
+    (kill-region start (if (bolp) (1- (point)) (point)))))
 
 
 (autoload 'Info-goto-node "info")
@@ -6099,7 +6102,7 @@ Headers already prepared in the buffer are not modified."
     (while (and (not (= (point) end))
 		(or (not (eq char ?,))
 		    quoted))
-      (skip-chars-forward "^,\"" (point-max))
+      (skip-chars-forward "^,\"" end)
       (when (eq (setq char (following-char)) ?\")
 	(setq quoted (not quoted)))
       (unless (= (point) end)
@@ -6136,17 +6139,22 @@ If the current line has `message-yank-prefix', insert it on the new line."
       (point-max))))
 
 (defun message-fill-field-address ()
-  (while (not (eobp))
-    (message-skip-to-next-address)
-    (let (last)
-      (if (and (> (current-column) 78)
-	       last)
-	  (progn
-	    (save-excursion
-	      (goto-char last)
-	      (insert "\n\t"))
-	    (setq last (1+ (point))))
-	(setq last (1+ (point)))))))
+  (let (end last)
+    (while (not end)
+      (message-skip-to-next-address)
+      (cond ((bolp)
+	     (end-of-line 0)
+	     (setq end 1))
+	    ((eobp)
+	     (setq end 0)))
+      (when (and (> (current-column) 78)
+		 last)
+	(save-excursion
+	  (goto-char last)
+	  (delete-char (- (skip-chars-backward " \t")))
+	  (insert "\n\t")))
+      (setq last (point)))
+    (forward-line end)))
 
 (defun message-fill-field-general ()
   (let ((begin (point))

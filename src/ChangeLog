@@ -1,3 +1,312 @@
+2012-07-30  Glenn Morris  <rgm@gnu.org>
+
+	* conf_post.h: New, split from configure.ac's AH_BOTTOM.
+	* Makefile.in (config_h): Add conf_post.h.
+	* makefile.w32-in (CONFIG_H): Add conf_post.h.
+
+2012-07-30  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* nsterm.m (ns_do_open_file): New variable.
+	(ns_term_init): Set ns_do_open_file to NO after run returns.
+	(openFile, openTempFile, openFileWithoutUI, openFiles): Open
+	files only if ns_do_open_file.
+
+2012-07-30  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* lisp.h (SWITCH_ENUM_CAST): Remove.  All uses removed.
+	This no-op macro hasn't been needed for many years.
+	* src/regex.c (SWITCH_ENUM_CAST) [!emacs]: Likewise.
+
+	Export DIRECTORY_SEP, TYPEMASK, VALMASK to GDB.
+	* alloc.c (gdb_make_enums_visible) [USE_LSB_TAG]: Add lsb_bits.
+	* lisp.h (enum lsb_bits) [USE_LSB_TAG]: New enum, for
+	gdb_make_enums_visible.
+	(TYPEMASK, VALMASK) [USE_LSB_TAGS]: Now enum constants, not macros.
+	(DIRECTORY_SEP): Now a constant, not a macro.
+
+2012-07-30  Eli Zaretskii  <eliz@gnu.org>
+
+	* w32fns.c (w32_wnd_proc): Pass w32_keyboard_codepage to
+	w32_kbd_patch_key as the 2nd arg.  (Bug#12082)
+
+	* w32term.c <w32_keyboard_codepage>: Renamed from
+	keyboard_codepage and now external.  All users changed.
+
+	* w32term.h: Add declaration of w32_keyboard_codepage.
+
+	* w32inevt.c (w32_kbd_patch_key): Accept an additional argument --
+	the codepage to translate keys to Unicode.  If this argument is
+	-1, use the value returned by GetConsoleCP.  All callers changed.
+
+2012-07-30  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Update .PHONY listings in makefiles.
+	* Makefile.in (.PHONY): Add all, mostlyclean, clean,
+	bootstrap-clean, distclean, maintainer-clean, versioclean,
+	extraclean, frc.
+
+	* lisp.h (STRING_BYTES_BOUND): Cast entire result to ptrdiff_t.
+	This is a bit clearer.  Fix some commentary typos.
+
+2012-07-30  Glenn Morris  <rgm@gnu.org>
+
+	* s/netbsd.h: Let configure include signal.h if needed.
+	Remove file, which is now empty.
+
+	* s/usg5-4-common.h (_longjmp, _setjmp, TIOCSIGSEND):
+	Let configure set them.
+	* s/irix6-5.h (_longjmp, _setjmp, TIOCSIGSEND):
+	No more need to undefine.
+
+2012-07-30  Andreas Schwab  <schwab@linux-m68k.org>
+
+	* keymap.c (Fkey_description): Don't remove 0x80 bit from
+	non-single-byte char when adding meta modifier.  (Bug#12090)
+
+2012-07-30  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	Convert safe_call to use variable number of arguments.
+	* xdisp.c (safe_call): Convert to use varargs.  Adjust users.
+	(safe_call2): Fix comment.
+	* lisp.h (safe_call): Adjust prototype.
+	* coding.c (encode_coding_object): Change to use safe_call2.
+	* xfaces.c (merge_face_heights): Change to use safe_call1.
+
+2012-07-30  Glenn Morris  <rgm@gnu.org>
+
+	* s/aix4-2.h (sigmask): No need to undefine it, since syssignal.h
+	does that unconditionally.  Remove file, which is now empty.
+
+	* s/freebsd.h, s/gnu-linux.h, s/sol2-6.h, s/unixware.h:
+	Remove empty files.
+
+2012-07-30  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Export to GDB most of lisp.h's remaining object-like macros.
+	* lisp.h (min, max): Move earlier, because they're used earlier now.
+	(INTMASK, ARRAY_MARK_FLAG, PSEUDOVECTOR_FLAG, VALMASK)
+	(CHAR_TABLE_STANDARD_SLOTS, CHARTAB_SIZE_BITS_0)
+	(CHARTAB_SIZE_BITS_1, CHARTAB_SIZE_BITS_2, CHARTAB_SIZE_BITS_3)
+	(DEFAULT_HASH_SIZE, COMPILED_ARGLIST, COMPILED_BYTECODE)
+	(COMPILED_CONSTANTS, COMPILED_STACK_DEPTH, COMPILED_DOC_STRING)
+	(COMPILED_INTERACTIVE, CHAR_ALT, CHAR_SUPER, CHAR_HYPER, CHAR_SHIFT)
+	(CHAR_CTL, CHAR_META, CHAR_MODIFIER_MASK, CHARACTERBITS)
+	(MANY, UNEVALLED, FLOAT_TO_STRING_BUFSIZE, MAX_ALLOCA):
+	Now constants, for GDB.  They need not be macros.
+	(MOST_POSITIVE_FIXNUM, MOST_NEGATIVE_FIXNUM, STRING_BYTES_BOUND):
+	Now constants, for GDB, as well as macros, for static initializers.
+	(CHAR_TABLE_STANDARD_SLOTS, CHAR_TABLE_EXTRA_SLOTS):
+	Move to after the definition of struct Lisp_Char_Table,
+	since the former now needs that type defined.
+	(enum CHARTAB_SIZE_BITS, enum CHAR_TABLE_STANDARD_SLOTS)
+	(enum DEFAULT_HASH_SIZE, enum Lisp_Compiled, enum char_bits)
+	(enum maxargs, enum FLOAT_TO_STRING_BUFSIZE, enum MAX_ALLOCA):
+	New enums, for gdb_make_enums_visible.
+	(GLYPH_MODE_LINE_FACE): Remove; unused.
+	* alloc.c (STRING_BYTES_MAX): Now a constant, not a macro.
+	(gdb_make_enums_visible): Add enum CHARTAB_SIZE_BITS, enum
+	CHAR_TABLE_STANDARD_SLOTS, enum char_bits, enum DEFAULT_HASH_SIZE,
+	enum FLOAT_TO_STRING_BUFSIZE, enum Lisp_Bits, enum Lisp_Compiled,
+	enum maxargs, enum MAX_ALLOCA.
+	(ARRAY_MARK_FLAG_VAL, PSEUDOVECTOR_FLAG_VAL, VALMASK_VAL): Remove.
+	(ARRAY_MARK_FLAG, PSEUDOVECTOR_FLAG, VALMASK): Remove;
+	no longer needed, now that they are done in lisp.h.
+
+2012-07-30  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	Cleanup string bytes checking.
+	* alloc.c (GC_STRING_BYTES, CHECK_STRING_BYTES): Remove.  Convert
+	all users to STRING_BYTES or string_bytes if GC_CHECK_STRING_BYTES.
+	(check_string_bytes): Define to empty if not GC_CHECK_STRING_BYTES.
+	(check_sblock, compact_small_strings): Simplify.
+
+2012-07-29  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* lisp.h (LISP_INT_TAG, LISP_INT1_TAG, LISP_STRING_TAG): Remove.
+	These macros are confusing and no longer need to be defined, as
+	the enum values now suffice.  All uses replaced with definiens.
+	(Lisp_Int1, Lisp_String): Define directly; this is clearer.
+
+2012-07-29  Juanma Barranquero  <lekktu@gmail.com>
+
+	* makefile.w32-in (LISP_H, $(BLD)/emacs.$(O), $(BLD)/w32inevt.$(O))
+	($(BLD)/w32console.$(O)): Update dependencies.
+
+2012-07-29  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	Remove HIDE_LISP_IMPLEMENTATION and cleanup cons free list check.
+	* lisp.h (HIDE_LISP_IMPLEMENTATION): Remove as useless for a long
+	time.  Adjust users.
+	(CHECK_CONS_LIST): Remove.  Convert all users to check_cons_list.
+
+2012-07-29  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* lread.c (init_lread): Remove if-statement in ifdef HAVE_NS before
+	setting sitelisp (Bug#12010).
+
+2012-07-29  Eli Zaretskii  <eliz@gnu.org>
+
+	* w32heap.h (OS_9X): Renamed from OS_WINDOWS_95.
+
+	* w32heap.c (cache_system_info):
+	* w32.c (sys_rename):
+	* w32proc.c (find_child_console, sys_kill): All users changed.
+
+2012-07-29  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* alloc.c (Fgarbage_collect): Indent as per usual Emacs style.
+
+2012-07-29  Eli Zaretskii  <eliz@gnu.org>
+
+	* makefile.w32-in (LISP_H): Add $(NT_INC)/stdalign.h.
+
+2012-07-29  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	Cleanup statistics calculation in Fgarbage_collect.
+	* alloc.c (Fgarbage_collect): Rename t1 to meaningful start.  Fix
+	zombies percentage calculation.  Simplify elapsed time calculation.
+
+2012-07-29  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	Generalize marker debugging code under MARKER_DEBUG and use eassert.
+	* insdel.c (CHECK_MARKERS, check_markers_debug_flag): Remove.
+	(gap_left, gap_right, adjust_markers_for_delete, insert_1_both)
+	(insert_from_string_1, insert_from_gap, insert_from_buffer_1)
+	(replace_range, replace_range_2, del_range_2): Change to eassert.
+	* marker.c (byte_char_debug_check): Adjust style.
+
+2012-07-29  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Don't use the abbreviation "win" to refer to Windows (Bug#10421).
+	* regex.c (MAX_BUF_SIZE): Remove some incorrect and
+	long-ago-commented-out code that talks about "WIN32".
+	* w32heap.h (OS_WINDOWS_95): Rename from OS_WIN95.
+	All uses changed.
+
+2012-07-28  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Use Gnulib stdalign module (Bug#9772, Bug#9960).
+	* alloc.c (XMALLOC_BASE_ALIGNMENT, GC_POINTER_ALIGNMENT, pure_alloc):
+	Simplify by using alignof.
+	(pure_alloc) [! USE_LSB_TAG]: Don't over-align EMACS_INT values.
+	* lisp.h: Include <stdalign.h>.
+	(GCALIGNMENT): New macro and constant.
+	(DECL_ALIGN): Remove.  All uses replaced by alignas (GCALIGNMENT).
+	(USE_LSB_TAG): ifdef on alignas, not on DECL_ALIGN.
+	(stdalign): New macro, if not already defined.
+
+2012-07-28  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix non-ASCII input in non-GUI frames on MS-Windows.  (Bug#12055)
+	* w32inevt.c: Include w32inevt.h.
+	(w32_read_console_input): New inline function, calls either
+	ReadConsoleInputA or ReadConsoleInputW, depending on the value of
+	w32_console_unicode_input.
+	(fill_queue): Call w32_read_console_input instead of ReadConsoleInput.
+	(w32_kbd_patch_key, key_event): Use the codepage returned by
+	GetConsoleCP, rather than the ANSI codepage returned by GetLocaleInfo.
+	(key_event): use uChar.UnicodeChar only if
+	w32_console_unicode_input is non-zero.
+
+	* w32console.c: Include w32heap.h.
+	<w32_console_unicode_input>: New global variable.
+	(initialize_w32_display): Set w32_console_unicode_input to 1 on NT
+	family of Windows, zero otherwise.
+
+	* w32inevt.h: Declare w32_console_unicode_input.
+
+	* xdisp.c (init_iterator): Don't reference tip_frame in a build
+	--without-x.  (Bug#11742)
+
+2012-07-27  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Adjust GDB to reflect pvec_type changes (Bug#12036).
+	* .gdbinit (xvectype, xpr, xbacktrace): Adjust to reflect the
+	2012-07-04 changes to pseudovector representation.  Problem
+	reported by Eli Zaretskii in <http://bugs.gnu.org/12036#30>.
+
+2012-07-27  Michael Albinus  <michael.albinus@gmx.de>
+
+	* dbusbind.c (XD_DBUS_VALIDATE_BUS_ADDRESS): Canonicalize session
+	bus address.
+	(xd_close_bus, Fdbus_init_bus): Handle reference counter properly.
+
+2012-07-27  Eli Zaretskii  <eliz@gnu.org>
+
+	* alloc.c (listn): Fix the order the arguments are consed onto the
+	list.
+
+	* lisp.h (enum constype): Use CONSTYPE_HEAP and CONSTYPE_PURE for
+	enumeration constants, as PURE and HEAP are too general, and clash
+	with other headers and sources, such as gmalloc.c and the
+	MS-Windows system headers.  All users changed.
+
+2012-07-27  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	Revert last save_excursion_save and save_excursion_restore changes.
+	* alloc.c, editfns.c, marker.c, lisp.h: Revert.
+	Lots of crashes reported by Chong Yidong <cyd@gnu.org>.
+
+2012-07-27  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	Fix recently-introduced typos in Windows port.
+	Reported by Martin Rudalics <rudalics@gmx.at>.
+	* w32.c (init_environment): Replace comma with semicolon.
+	* w32fns.c (syms_of_w32fns): Add missing parenthesis.
+
+2012-07-27  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Improve GDB symbol export (Bug#12036).
+	* .gdbinit (xgetptr, xgetint, xgettype): Set $bugfix in different
+	arms of an 'if', not using conditional expressions; otherwise GDB
+	complains about the types in the unevaluated arm when the argument
+	is an integer literal.
+	(xgetint): Simplify expression.
+	* alloc.c (gdb_make_enums_visible): New constant.  This ports to
+	GCC 3.4.2 the export of symbols to GDB.  Problem reported by Eli
+	Zaretskii in <http://bugs.gnu.org/12036#13>.
+	* lisp.h (PUBLISH_TO_GDB): Remove.  All uses removed.  No longer
+	needed now that we have gdb_make_enums_visible.
+	(enum CHECK_LISP_OBJECT_TYPE, enum Lisp_Bits, enum More_Lisp_Bits)
+	(enum enum_USE_LSB_TAG):
+	New enum types, packaging up enums that need to be exported to GDB.
+
+2012-07-27  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	Utility function to make a list from specified amount of objects.
+	* lisp.h (enum constype): New datatype.
+	(listn): New prototype.
+	* alloc.c (listn): New function.
+	(Fmemory_use_count, syms_of_alloc): Use it.
+	* buffer.c (syms_of_buffer): Likewise.
+	* callint.c (syms_of_callint): Likewise.
+	* charset.c (define_charset_internal): Likewise.
+	* coding.c (syms_of_coding): Likewise.
+	* keymap.c (syms_of_keymap): Likewise.
+	* search.c (syms_of_search): Likewise.
+	* syntax.c (syms_of_syntax): Likewise.
+	* w32.c (init_environment): Likewise.
+	* w32fns.c (Fw32_battery_status, syms_of_w32fns): Likewise.
+	* xdisp.c (syms_of_xdisp): Likewise.
+	* xfns.c (syms_of_xfns): Likewise.
+
+2012-07-27  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	Fast save_excursion_save and save_excursion_restore.
+	* lisp.h (struct Lisp_Excursion): New data type.
+	(PVEC_EXCURSION): New pseudovector type.
+	(XEXCURSION, XSETEXCURSION, EXCURSIONP): Convenient macros
+	to deal with it.  Adjust comments.
+	(init_marker, attach_marker): New prototype.
+	(unchain_marker): Adjust prototype.
+	* marker.c (attach_marker): Change to global.
+	(init_marker): New function.
+	* alloc.c (Fmake_marker, build_marker): Use it.
+	(build_marker): More easserts.
+	(mark_object): Handle struct Lisp_Excursion.
+	* editfns.c (save_excursion_save, save_excursion_restore):
+	Reimplement to use struct Lisp_Excursion.  Add comments.
+
 2012-07-26  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Fix export of symbols to GDB (Bug#12036).

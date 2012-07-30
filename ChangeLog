@@ -1,3 +1,67 @@
+2012-07-30  Glenn Morris  <rgm@gnu.org>
+
+	* configure.ac (AH_BOTTOM): Use an include file, so that the
+	contents do not get processed by autoheader.
+
+2012-07-30  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Do not overwrite config.status while executing it (Bug#11214).
+	* Makefile.in (MAKEFILE_NAME): New macro.
+	($(MAKEFILE_NAME)): Rename rule from Makefile.
+	* configure.ac (epaths): Set MAKEFILE_NAME to a bogus value,
+	so that GNU 'make' isn't tempted to make the Makefile and then
+	regenerate config.status while config.status is running.
+
+	Update .PHONY listings in makefiles.
+	* Makefile.in (.PHONY): Add all, ${SUBDIR}, blessmail, epath-force,
+	FRC, install-arch-dep, install-arch-indep, install-doc,
+	install-info, install-man, install-etc, install-strip, uninstall,
+	bootstrap-clean, TAGS, tags, info-real, force-info, check-info-dir.
+	(.RECURSIVE): Remove; hasn't been needed for years.
+
+2012-07-30  Glenn Morris  <rgm@gnu.org>
+
+	* configure.ac (SIGNAL_H_AHB): New hack macro.
+	(opsysfile): Set to empty on netbsd, openbsd.
+	(AH_BOTTOM): Include signal.h if SIGNAL_H_AHB is defined.
+
+	* configure.ac (_longjmp, _setjmp, TIOCSIGSEND): Move here from src/s.
+
+2012-07-30  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* Makefile.in (install-arch-indep): Remove sh -x.
+
+2012-07-30  Glenn Morris  <rgm@gnu.org>
+
+	* configure.ac (opsysfile): Tweak message for null case.
+
+	* configure.ac (opsysfile): Set to empty on aix4-2, freebsd,
+	gnu-linux, gnu-kfreebsd; and to usg5-4-common.h on sol2*, unixware.
+
+2012-07-30  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Merge from gnulib, incorporating:
+	* doc/misc/texinfo.tex: Update to 2012-07-29.17 version.
+
+2012-07-29  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* Makefile.in (install-arch-indep): Handle space in locallisppath.
+
+2012-07-28  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Use Gnulib environ module (Bug#9772).
+	* m4/environ.m4: New file, from gnulib.
+	* lib/gnulib.mk, m4/gnulib-comp.m4: Regenerate.
+
+	Use Gnulib stdalign module (Bug#9772, Bug#9960).
+	This should improve portability of macros like alignof and DECL_ALIGN.
+	* lib/stdalign.in.h, m4/stdalign.m4: New files, from gnulib.
+	* .bzrignore: Add lib/stdalign.h.
+	* config.bat: Do not set NO_DECL_ALIGN; no longer needed.
+	Copy lib/stdalign.in.h to lib/stdalign.in-h as needed.
+	* configure.ac (HAVE_ATTRIBUTE_ALIGNED): Remove the code that
+	fiddles with this, as gnulib now does this for us.
+
 2012-07-17  Dmitry Antipov  <dmantipov@yandex.ru>
 
 	Fix toolkit configuration report.

@@ -564,13 +564,28 @@ On nonblank line, delete any immediately following blank lines."
     (if (looking-at "^[ \t]*\n\\'")
 	(delete-region (point) (point-max)))))
 
+(defcustom delete-trailing-lines t
+  "If non-nil, \\[delete-trailing-whitespace] deletes trailing lines.
+Trailing lines are deleted only if `delete-trailing-whitespace'
+is called on the entire buffer (rather than an active region)."
+  :type 'boolean
+  :group 'editing
+  :version "24.2")
+
 (defun delete-trailing-whitespace (&optional start end)
-  "Delete all the trailing whitespace across the current buffer.
-All whitespace after the last non-whitespace character in a line is deleted.
-This respects narrowing, created by \\[narrow-to-region] and friends.
-A formfeed is not considered whitespace by this function.
-If END is nil, also delete all trailing lines at the end of the buffer.
-If the region is active, only delete whitespace within the region."
+  "Delete trailing whitespace between START and END.
+If called interactively, START and END are the start/end of the
+region if the mark is active, or of the buffer's accessible
+portion if the mark is inactive.
+
+This command deletes whitespace characters after the last
+non-whitespace character in each line between START and END.  It
+does not consider formfeed characters to be whitespace.
+
+If this command acts on the entire buffer (i.e. if called
+interactively with the mark inactive, or called from Lisp with
+END nil), it also deletes all trailing lines at the end of the
+buffer if the variable `delete-trailing-lines' is non-nil."
   (interactive (progn
                  (barf-if-buffer-read-only)
                  (if (use-region-p)
@@ -590,6 +605,7 @@ If the region is active, only delete whitespace within the region."
         ;; Delete trailing empty lines.
         (goto-char end-marker)
         (when (and (not end)
+		   delete-trailing-lines
                    ;; Really the end of buffer.
                    (save-restriction (widen) (eobp))
                    (<= (skip-chars-backward "\n") -2))
@@ -932,11 +948,8 @@ rather than line counts."
 		 (concat " in " (buffer-name buffer))
 	       "")))
        ;; Read the argument, offering that number (if any) as default.
-       (list (read-number (format (if default "Goto line%s (%s): "
-                                    "Goto line%s: ")
-                                  buffer-prompt
-                                  default)
-                          default)
+       (list (read-number (format "Goto line%s: " buffer-prompt)
+                          (list default (line-number-at-pos)))
 	     buffer))))
   ;; Switch to the desired buffer, one way or another.
   (if buffer
@@ -2248,6 +2261,33 @@ to `shell-command-history'."
 	   (or hist 'shell-command-history)
 	   args)))
 
+(defcustom async-shell-command-buffer 'confirm-new-buffer
+  "What to do when the output buffer is used by another shell command.
+This option specifies how to resolve the conflict where a new command
+wants to direct its output to the buffer `*Async Shell Command*',
+but this buffer is already taken by another running shell command.
+
+The value `confirm-kill-process' is used to ask for confirmation before
+killing the already running process and running a new process
+in the same buffer, `confirm-new-buffer' for confirmation before running
+the command in a new buffer with a name other than the default buffer name,
+`new-buffer' for doing the same without confirmation,
+`confirm-rename-buffer' for confirmation before renaming the existing
+output buffer and running a new command in the default buffer,
+`rename-buffer' for doing the same without confirmation."
+  :type '(choice (const :tag "Confirm killing of running command"
+			confirm-kill-process)
+		 (const :tag "Confirm creation of a new buffer"
+			confirm-new-buffer)
+		 (const :tag "Create a new buffer"
+			new-buffer)
+		 (const :tag "Confirm renaming of existing buffer"
+			confirm-rename-buffer)
+		 (const :tag "Rename the existing buffer"
+			rename-buffer))
+  :group 'shell
+  :version "24.2")
+
 (defun async-shell-command (command &optional output-buffer error-buffer)
   "Execute string COMMAND asynchronously in background.
 
@@ -2402,12 +2442,40 @@ the use of a shell (with its need to quote arguments)."
 		    proc)
 		;; Remove the ampersand.
 		(setq command (substring command 0 (match-beginning 0)))
-		;; If will kill a process, query first.
+		;; Ask the user what to do with already running process.
 		(setq proc (get-buffer-process buffer))
-		(if proc
-		    (if (yes-or-no-p "A command is running.  Kill it? ")
+		(when proc
+		  (cond
+		   ((eq async-shell-command-buffer 'confirm-kill-process)
+		    ;; If will kill a process, query first.
+		    (if (yes-or-no-p "A command is running in the default buffer.  Kill it? ")
 			(kill-process proc)
 		      (error "Shell command in progress")))
+		   ((eq async-shell-command-buffer 'confirm-new-buffer)
+		    ;; If will create a new buffer, query first.
+		    (if (yes-or-no-p "A command is running in the default buffer.  Use a new buffer? ")
+			(setq buffer (generate-new-buffer
+				      (or output-buffer "*Async Shell Command*")))
+		      (error "Shell command in progress")))
+		   ((eq async-shell-command-buffer 'new-buffer)
+		    ;; It will create a new buffer.
+		    (setq buffer (generate-new-buffer
+				  (or output-buffer "*Async Shell Command*"))))
+		   ((eq async-shell-command-buffer 'confirm-rename-buffer)
+		    ;; If will rename the buffer, query first.
+		    (if (yes-or-no-p "A command is running in the default buffer.  Rename it? ")
+			(progn
+			  (with-current-buffer buffer
+			    (rename-uniquely))
+			  (setq buffer (get-buffer-create
+					(or output-buffer "*Async Shell Command*"))))
+		      (error "Shell command in progress")))
+		   ((eq async-shell-command-buffer 'rename-buffer)
+		    ;; It will rename the buffer.
+		    (with-current-buffer buffer
+		      (rename-uniquely))
+		    (setq buffer (get-buffer-create
+				  (or output-buffer "*Async Shell Command*"))))))
 		(with-current-buffer buffer
 		  (setq buffer-read-only nil)
 		  ;; Setting buffer-read-only to nil doesn't suffice
@@ -3337,38 +3405,50 @@ This command is similar to `copy-region-as-kill', except that it gives
 visual feedback indicating the extent of the region being copied."
   (interactive "r")
   (copy-region-as-kill beg end)
-  ;; This use of called-interactively-p is correct
-  ;; because the code it controls just gives the user visual feedback.
+  ;; This use of called-interactively-p is correct because the code it
+  ;; controls just gives the user visual feedback.
   (if (called-interactively-p 'interactive)
-      (let ((other-end (if (= (point) beg) end beg))
-	    (opoint (point))
-	    ;; Inhibit quitting so we can make a quit here
-	    ;; look like a C-g typed as a command.
-	    (inhibit-quit t))
-	(if (pos-visible-in-window-p other-end (selected-window))
-            ;; Swap point-and-mark quickly so as to show the region that
-            ;; was selected.  Don't do it if the region is highlighted.
-	    (unless (and (region-active-p)
-			 (face-background 'region))
-	      ;; Swap point and mark.
-	      (set-marker (mark-marker) (point) (current-buffer))
-	      (goto-char other-end)
-	      (sit-for blink-matching-delay)
-	      ;; Swap back.
-	      (set-marker (mark-marker) other-end (current-buffer))
-	      (goto-char opoint)
-	      ;; If user quit, deactivate the mark
-	      ;; as C-g would as a command.
-	      (and quit-flag mark-active
-		   (deactivate-mark)))
-	  (let* ((killed-text (current-kill 0))
-		 (message-len (min (length killed-text) 40)))
-	    (if (= (point) beg)
-		;; Don't say "killed"; that is misleading.
-		(message "Saved text until \"%s\""
-			(substring killed-text (- message-len)))
-	      (message "Saved text from \"%s\""
-		      (substring killed-text 0 message-len))))))))
+      (indicate-copied-region)))
+
+(defun indicate-copied-region (&optional message-len)
+  "Indicate that the region text has been copied interactively.
+If the mark is visible in the selected window, blink the cursor
+between point and mark if there is currently no active region
+highlighting.
+
+If the mark lies outside the selected window, display an
+informative message containing a sample of the copied text.  The
+optional argument MESSAGE-LEN, if non-nil, specifies the length
+of this sample text; it defaults to 40."
+  (let ((mark (mark t))
+	(point (point))
+	;; Inhibit quitting so we can make a quit here
+	;; look like a C-g typed as a command.
+	(inhibit-quit t))
+    (if (pos-visible-in-window-p mark (selected-window))
+	;; Swap point-and-mark quickly so as to show the region that
+	;; was selected.  Don't do it if the region is highlighted.
+	(unless (and (region-active-p)
+		     (face-background 'region))
+	  ;; Swap point and mark.
+	  (set-marker (mark-marker) (point) (current-buffer))
+	  (goto-char mark)
+	  (sit-for blink-matching-delay)
+	  ;; Swap back.
+	  (set-marker (mark-marker) mark (current-buffer))
+	  (goto-char point)
+	  ;; If user quit, deactivate the mark
+	  ;; as C-g would as a command.
+	  (and quit-flag mark-active
+	       (deactivate-mark)))
+      (let ((len (min (abs (- mark point))
+		      (or message-len 40))))
+	(if (< point mark)
+	    ;; Don't say "killed"; that is misleading.
+	    (message "Saved text until \"%s\""
+		     (buffer-substring-no-properties (- mark len) mark))
+	  (message "Saved text from \"%s\""
+		   (buffer-substring-no-properties mark (+ mark len))))))))
 
 (defun append-next-kill (&optional interactive)
   "Cause following command, if it kills, to append to previous kill.

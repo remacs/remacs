@@ -2408,16 +2408,12 @@ safe_eval_handler (Lisp_Object arg)
   return Qnil;
 }
 
-
-/* Evaluate SEXPR and return the result, or nil if something went
+/* Call function FUNC with the rest of NARGS - 1 arguments
+   following.  Return the result, or nil if something went
    wrong.  Prevent redisplay during the evaluation.  */
 
-/* Call function ARGS[0] with arguments ARGS[1] to ARGS[NARGS - 1].
-   Return the result, or nil if something went wrong.  Prevent
-   redisplay during the evaluation.  */
-
 Lisp_Object
-safe_call (ptrdiff_t nargs, Lisp_Object *args)
+safe_call (ptrdiff_t nargs, Lisp_Object func, ...)
 {
   Lisp_Object val;
 
@@ -2425,8 +2421,17 @@ safe_call (ptrdiff_t nargs, Lisp_Object *args)
     val = Qnil;
   else
     {
+      va_list ap;
+      ptrdiff_t i;
       ptrdiff_t count = SPECPDL_INDEX ();
       struct gcpro gcpro1;
+      Lisp_Object *args = alloca (nargs * sizeof (Lisp_Object));
+
+      args[0] = func;
+      va_start (ap, func);
+      for (i = 1; i < nargs; i++)
+	args[i] = va_arg (ap, Lisp_Object);
+      va_end (ap);
 
       GCPRO1 (args[0]);
       gcpro1.nvars = nargs;
@@ -2449,10 +2454,7 @@ safe_call (ptrdiff_t nargs, Lisp_Object *args)
 Lisp_Object
 safe_call1 (Lisp_Object fn, Lisp_Object arg)
 {
-  Lisp_Object args[2];
-  args[0] = fn;
-  args[1] = arg;
-  return safe_call (2, args);
+  return safe_call (2, fn, arg);
 }
 
 static Lisp_Object Qeval;
@@ -2463,17 +2465,13 @@ safe_eval (Lisp_Object sexpr)
   return safe_call1 (Qeval, sexpr);
 }
 
-/* Call function FN with one argument ARG.
+/* Call function FN with two arguments ARG1 and ARG2.
    Return the result, or nil if something went wrong.  */
 
 Lisp_Object
 safe_call2 (Lisp_Object fn, Lisp_Object arg1, Lisp_Object arg2)
 {
-  Lisp_Object args[3];
-  args[0] = fn;
-  args[1] = arg1;
-  args[2] = arg2;
-  return safe_call (3, args);
+  return safe_call (3, fn, arg1, arg2);
 }
 
 
@@ -2741,7 +2739,11 @@ init_iterator (struct it *it, struct window *w,
      frames when the fringes are turned off.  But leave the dimensions
      zero for tooltip frames, as these glyphs look ugly there and also
      sabotage calculations of tooltip dimensions in x-show-tip.  */
-  if (!(FRAMEP (tip_frame) && it->f == XFRAME (tip_frame)))
+#ifdef HAVE_WINDOW_SYSTEM
+  if (!(FRAME_WINDOW_P (it->f)
+	&& FRAMEP (tip_frame)
+	&& it->f == XFRAME (tip_frame)))
+#endif
     {
       if (it->line_wrap == TRUNCATE)
 	{
@@ -20517,7 +20519,7 @@ display_mode_element (struct it *it, int depth, int field_width, int precision,
 
   depth++;
 
-  switch (SWITCH_ENUM_CAST (XTYPE (elt)))
+  switch (XTYPE (elt))
     {
     case Lisp_String:
       {
@@ -29184,14 +29186,14 @@ and is used only on frames for which no explicit name has been set
 \(see `modify-frame-parameters').  */);
   Vicon_title_format
     = Vframe_title_format
-    = pure_cons (intern_c_string ("multiple-frames"),
-		 pure_cons (build_pure_c_string ("%b"),
-			    pure_cons (pure_cons (empty_unibyte_string,
-						  pure_cons (intern_c_string ("invocation-name"),
-							     pure_cons (build_pure_c_string ("@"),
-									pure_cons (intern_c_string ("system-name"),
-										   Qnil)))),
-				       Qnil)));
+    = listn (CONSTYPE_PURE, 3,
+	     intern_c_string ("multiple-frames"),
+	     build_pure_c_string ("%b"),
+	     listn (CONSTYPE_PURE, 4,
+		    empty_unibyte_string,
+		    intern_c_string ("invocation-name"),
+		    build_pure_c_string ("@"),
+		    intern_c_string ("system-name")));
 
   DEFVAR_LISP ("message-log-max", Vmessage_log_max,
     doc: /* Maximum number of lines to keep in the message log buffer.

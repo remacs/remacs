@@ -7128,6 +7128,7 @@ esac
   # Code from module dosname:
   # Code from module dtoastr:
   # Code from module dup2:
+  # Code from module environ:
   # Code from module extensions:
 
   # Code from module filemode:
@@ -9278,37 +9279,6 @@ fi
 >>>>>>> MERGE-SOURCE
 
 
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for  __attribute__ ((__aligned__ (expr)))" >&5
-$as_echo_n "checking for  __attribute__ ((__aligned__ (expr)))... " >&6; }
-if test "${emacs_cv_attribute_aligned+set}" = set; then :
-  $as_echo_n "(cached) " >&6
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-char __attribute__ ((__aligned__ (1 << 3))) c;
-int
-main ()
-{
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  emacs_cv_attribute_aligned=yes
-else
-  emacs_cv_attribute_aligned=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $emacs_cv_attribute_aligned" >&5
-$as_echo "$emacs_cv_attribute_aligned" >&6; }
-if test $emacs_cv_attribute_aligned = yes; then
-
-$as_echo "#define HAVE_ATTRIBUTE_ALIGNED 1" >>confdefs.h
-
-fi
 
 
 DEPFLAGS=
@@ -15061,9 +15031,611 @@ $as_echo "#define HAVE_PROCFS 1" >>confdefs.h
 esac
 
 case $opsys in
+<<<<<<< TREE
    gnu-kfreebsd) opsysfile="s/gnu-linux.h" ;;
 
    hpux11)
+=======
+  darwin | freebsd | netbsd | openbsd )
+
+$as_echo "#define DONT_REOPEN_PTY 1" >>confdefs.h
+
+  ;;
+esac
+
+case $opsys in
+  netbsd | openbsd) sound_device="/dev/audio" ;;
+  *) sound_device="/dev/dsp" ;;
+esac
+
+
+cat >>confdefs.h <<_ACEOF
+#define DEFAULT_SOUND_DEVICE "$sound_device"
+_ACEOF
+
+
+
+case $opsys in
+  darwin | gnu-linux | gnu-kfreebsd )
+
+$as_echo "#define INTERRUPT_INPUT 1" >>confdefs.h
+
+  ;;
+esac
+
+
+case $opsys in
+  cygwin|gnu|gnu-linux|gnu-kfreebsd|irix6-5|freebsd|netbsd|openbsd)
+
+$as_echo "#define NARROWPROTO 1" >>confdefs.h
+
+  ;;
+esac
+
+
+
+
+
+
+
+
+case $opsys in
+  aix4-2 )
+    $as_echo "#define PTY_ITERATION int c; for (c = 0; !c ; c++) " >>confdefs.h
+
+            $as_echo "#define PTY_NAME_SPRINTF strcpy (pty_name, \"/dev/ptc\"); " >>confdefs.h
+
+    $as_echo "#define PTY_TTY_NAME_SPRINTF strcpy (pty_name, ttyname (fd)); " >>confdefs.h
+
+    ;;
+
+  cygwin )
+    $as_echo "#define PTY_ITERATION int i; for (i = 0; i < 1; i++) " >>confdefs.h
+
+        $as_echo "#define PTY_OPEN  do { int dummy; SIGMASKTYPE mask; mask = sigblock (sigmask (SIGCHLD)); if (-1 == openpty (&fd, &dummy, pty_name, 0, 0)) fd = -1; sigsetmask (mask); if (fd >= 0) emacs_close (dummy); } while (0) " >>confdefs.h
+
+    $as_echo "#define PTY_NAME_SPRINTF  " >>confdefs.h
+
+    $as_echo "#define PTY_TTY_NAME_SPRINTF  " >>confdefs.h
+
+    ;;
+
+  darwin )
+    $as_echo "#define PTY_ITERATION int i; for (i = 0; i < 1; i++) " >>confdefs.h
+
+        $as_echo "#define FIRST_PTY_LETTER 'p'" >>confdefs.h
+
+                $as_echo "#define PTY_OPEN  do { int slave; if (openpty (&fd, &slave, pty_name, NULL, NULL) == -1) fd = -1; else emacs_close (slave); } while (0) " >>confdefs.h
+
+    $as_echo "#define PTY_NAME_SPRINTF  " >>confdefs.h
+
+    $as_echo "#define PTY_TTY_NAME_SPRINTF  " >>confdefs.h
+
+    ;;
+
+  gnu | freebsd | netbsd | openbsd )
+    $as_echo "#define FIRST_PTY_LETTER 'p'" >>confdefs.h
+
+    ;;
+
+  gnu-linux | gnu-kfreebsd )
+        if test "x$ac_cv_func_grantpt" = xyes; then
+
+$as_echo "#define UNIX98_PTYS 1" >>confdefs.h
+
+      $as_echo "#define PTY_ITERATION int i; for (i = 0; i < 1; i++) " >>confdefs.h
+
+                  $as_echo "#define PTY_TTY_NAME_SPRINTF { char *ptyname; sigblock (sigmask (SIGCHLD)); if (grantpt (fd) == -1 || unlockpt (fd) == -1 || !(ptyname = ptsname(fd))) { sigunblock (sigmask (SIGCHLD)); close (fd); return -1; } snprintf (pty_name, sizeof pty_name, \"%s\", ptyname); sigunblock (sigmask (SIGCHLD)); } " >>confdefs.h
+
+            if test "x$ac_cv_func_getpt" = xyes; then
+        $as_echo "#define PTY_OPEN fd = getpt ()" >>confdefs.h
+
+        $as_echo "#define PTY_NAME_SPRINTF  " >>confdefs.h
+
+      else
+        $as_echo "#define PTY_NAME_SPRINTF strcpy (pty_name, \"/dev/ptmx\"); " >>confdefs.h
+
+      fi
+    else
+      $as_echo "#define FIRST_PTY_LETTER 'p'" >>confdefs.h
+
+    fi
+    ;;
+
+  hpux*)
+    $as_echo "#define FIRST_PTY_LETTER 'p'" >>confdefs.h
+
+    $as_echo "#define PTY_NAME_SPRINTF sprintf (pty_name, \"/dev/ptym/pty%c%x\", c, i); " >>confdefs.h
+
+    $as_echo "#define PTY_TTY_NAME_SPRINTF sprintf (pty_name, \"/dev/pty/tty%c%x\", c, i); " >>confdefs.h
+
+    ;;
+
+  irix6-5 )
+                                            $as_echo "#define PTY_ITERATION /**/" >>confdefs.h
+
+        $as_echo "#define FIRST_PTY_LETTER 'q'" >>confdefs.h
+
+    $as_echo "#define PTY_OPEN  { struct sigaction ocstat, cstat; struct stat stb; char * name; sigemptyset(&cstat.sa_mask); cstat.sa_handler = SIG_DFL; cstat.sa_flags = 0; sigaction(SIGCLD, &cstat, &ocstat); name = _getpty (&fd, O_RDWR | O_NDELAY, 0600, 0); sigaction(SIGCLD, &ocstat, (struct sigaction *)0); if (name == 0) return -1; if (fd < 0) return -1; if (fstat (fd, &stb) < 0) return -1; strcpy (pty_name, name); } " >>confdefs.h
+
+        $as_echo "#define PTY_NAME_SPRINTF  " >>confdefs.h
+
+        $as_echo "#define PTY_TTY_NAME_SPRINTF  " >>confdefs.h
+
+    ;;
+
+  sol2* )
+                            $as_echo "#define PTY_TTY_NAME_SPRINTF { char *ptsname (int), *ptyname; sigblock (sigmask (SIGCLD)); if (grantpt (fd) == -1) { emacs_close (fd); return -1; } sigunblock (sigmask (SIGCLD)); if (unlockpt (fd) == -1) { emacs_close (fd); return -1; } if (!(ptyname = ptsname (fd))) { emacs_close (fd); return -1; } snprintf (pty_name, sizeof pty_name, \"%s\", ptyname); } " >>confdefs.h
+
+    ;;
+
+  unixware )
+        $as_echo "#define PTY_TTY_NAME_SPRINTF { char *ptsname (int), *ptyname; sigblock(sigmask(SIGCLD)); if (grantpt(fd) == -1) fatal(\"could not grant slave pty\"); sigunblock(sigmask(SIGCLD)); if (unlockpt(fd) == -1) fatal(\"could not unlock slave pty\"); if (!(ptyname = ptsname(fd))) fatal (\"could not enable slave pty\"); snprintf (pty_name, sizeof pty_name, \"%s\", ptyname); } " >>confdefs.h
+
+    ;;
+esac
+
+
+case $opsys in
+  sol2* | unixware )
+            $as_echo "#define FIRST_PTY_LETTER 'z'" >>confdefs.h
+
+    $as_echo "#define PTY_NAME_SPRINTF strcpy (pty_name, \"/dev/ptmx\"); " >>confdefs.h
+
+
+$as_echo "#define SETUP_SLAVE_PTY if (ioctl (xforkin, I_PUSH, \"ptem\") == -1) fatal (\"ioctl I_PUSH ptem\"); if (ioctl (xforkin, I_PUSH, \"ldterm\") == -1) fatal (\"ioctl I_PUSH ldterm\"); if (ioctl (xforkin, I_PUSH, \"ttcompat\") == -1) fatal (\"ioctl I_PUSH ttcompat\");" >>confdefs.h
+
+    ;;
+esac
+
+
+
+
+case $opsys in
+      aix4-2 | cygwin | gnu | irix6-5 | freebsd | netbsd | openbsd )
+    $as_echo "#define SIGNALS_VIA_CHARACTERS 1" >>confdefs.h
+
+    ;;
+
+      gnu-linux | gnu-kfreebsd )
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for signals via characters" >&5
+$as_echo_n "checking for signals via characters... " >&6; }
+    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+#include <linux/version.h>
+#if LINUX_VERSION_CODE < 0x20400
+# error "Linux version too old"
+#endif
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_cpp "$LINENO"; then :
+  emacs_signals_via_chars=yes
+else
+  emacs_signals_via_chars=no
+fi
+rm -f conftest.err conftest.$ac_ext
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: $emacs_signals_via_chars" >&5
+$as_echo "$emacs_signals_via_chars" >&6; }
+    test $emacs_signals_via_chars = yes && $as_echo "#define SIGNALS_VIA_CHARACTERS 1" >>confdefs.h
+
+    ;;
+esac
+
+
+
+
+
+
+case $opsys in
+  cygwin | darwin | freebsd | netbsd | openbsd )
+    $as_echo "#define PENDING_OUTPUT_COUNT(FILE) ((FILE)->_p - (FILE)->_bf._base)" >>confdefs.h
+
+    ;;
+
+  unixware)
+    $as_echo "#define PENDING_OUTPUT_COUNT(FILE) ((FILE)->__ptr - (FILE)->__base)" >>confdefs.h
+
+    ;;
+
+  gnu | gnu-linux | gnu-kfreebsd )
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for style of pending output formalism" >&5
+$as_echo_n "checking for style of pending output formalism... " >&6; }
+            cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+#include <stdio.h>
+#if !defined (_IO_STDIO_H) && !defined (_STDIO_USES_IOSTREAM)
+# error "stdio definitions not found"
+#endif
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_cpp "$LINENO"; then :
+  emacs_pending_output=new
+else
+  emacs_pending_output=unknown
+fi
+rm -f conftest.err conftest.$ac_ext
+
+      if test $emacs_pending_output = unknown; then
+        case $opsys in
+          gnu-linux | gnu-kfreebsd)
+            cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+#include <stdio.h>
+#ifndef __UCLIBC__
+# error "not using uclibc"
+#endif
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_cpp "$LINENO"; then :
+  emacs_pending_output=uclibc
+else
+  emacs_pending_output=old
+fi
+rm -f conftest.err conftest.$ac_ext
+            ;;
+        esac
+      fi
+
+      { $as_echo "$as_me:${as_lineno-$LINENO}: result: $emacs_pending_output" >&5
+$as_echo "$emacs_pending_output" >&6; }
+
+      case $emacs_pending_output in
+        new)
+                    $as_echo "#define GNU_LIBRARY_PENDING_OUTPUT_COUNT(FILE) ((FILE)->_IO_write_ptr - (FILE)->_IO_write_base)" >>confdefs.h
+
+          ;;
+        uclibc)
+                    $as_echo "#define GNU_LIBRARY_PENDING_OUTPUT_COUNT(FILE) ((FILE)->__bufpos - (FILE)->__bufstart)" >>confdefs.h
+
+          ;;
+        old)
+                    $as_echo "#define GNU_LIBRARY_PENDING_OUTPUT_COUNT(FILE) ((FILE)->_pptr - (FILE)->_pbase)" >>confdefs.h
+
+          ;;
+      esac
+    ;;
+esac
+
+
+
+
+
+case $opsys in
+  gnu)
+        $as_echo "#define DATA_START ({ extern int data_start; (char *) &data_start; })" >>confdefs.h
+
+    ;;
+
+  hpux*)
+        $as_echo "#define DATA_START 0x40000000" >>confdefs.h
+
+    $as_echo "#define DATA_SEG_BITS 0x40000000" >>confdefs.h
+
+    ;;
+  irix6-5)
+    $as_echo "#define DATA_START 0x10000000" >>confdefs.h
+
+    $as_echo "#define DATA_SEG_BITS 0x10000000" >>confdefs.h
+
+    ;;
+esac
+
+
+
+
+
+case $opsys in
+  darwin) $as_echo "#define TAB3 OXTABS" >>confdefs.h
+ ;;
+
+  gnu | freebsd | netbsd | openbsd )
+
+$as_echo "#define TABDLY OXTABS" >>confdefs.h
+
+    $as_echo "#define TAB3 OXTABS" >>confdefs.h
+
+    ;;
+
+  gnu-linux | gnu-kfreebsd )
+            cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+#ifndef __i386__
+# error "not i386"
+#endif
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_cpp "$LINENO"; then :
+  $as_echo "#define ULIMIT_BREAK_VALUE (32*1024*1024)" >>confdefs.h
+
+fi
+rm -f conftest.err conftest.$ac_ext
+
+    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+#ifndef __ia64__
+# error "not ia64"
+#endif
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_cpp "$LINENO"; then :
+
+$as_echo "#define GC_MARK_SECONDARY_STACK() do { extern void *__libc_ia64_register_backing_store_base; __builtin_ia64_flushrs (); mark_memory (__libc_ia64_register_backing_store_base, __builtin_ia64_bsp ());} while (0)" >>confdefs.h
+
+fi
+rm -f conftest.err conftest.$ac_ext
+    ;;
+
+  hpux*)
+
+$as_echo "#define RUN_TIME_REMAP 1" >>confdefs.h
+
+    ;;
+
+  irix6-5)
+        $as_echo "#define ULIMIT_BREAK_VALUE 0x14000000" >>confdefs.h
+
+    ;;
+esac
+
+
+
+
+
+
+
+case $opsys in
+  aix4-2 | hpux* | unixware)
+            $as_echo "#define GC_MARK_STACK GC_USE_GCPROS_AS_BEFORE" >>confdefs.h
+
+    ;;
+
+          gnu-linux | gnu-kfreebsd )
+    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+#if defined __i386__ || defined __sparc__ || defined __mc68000__ \
+  || defined __alpha__ || defined __mips__ || defined __s390__ \
+  || defined __arm__ || defined __powerpc__ || defined __amd64__ \
+  || defined __ia64__ || defined __sh__
+/* ok */
+#else
+# error "setjmp not known to work on this arch"
+#endif
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_cpp "$LINENO"; then :
+  $as_echo "#define GC_SETJMP_WORKS 1" >>confdefs.h
+
+else
+  $as_echo "#define GC_MARK_STACK GC_USE_GCPROS_AS_BEFORE" >>confdefs.h
+
+fi
+rm -f conftest.err conftest.$ac_ext
+    ;;
+esac
+
+
+if test x$GCC = xyes; then
+      $as_echo "#define GC_SETJMP_WORKS 1" >>confdefs.h
+
+else
+  case $opsys in
+        freebsd | netbsd | openbsd | irix6-5 | sol2* )
+      $as_echo "#define GC_SETJMP_WORKS 1" >>confdefs.h
+
+      ;;
+  esac
+fi
+
+case $opsys in
+  hpux* | sol2* )
+
+$as_echo "#define XOS_NEEDS_TIME_H 1" >>confdefs.h
+
+    ;;
+esac
+
+
+
+
+
+
+
+case $opsys in
+  aix4-2)
+    opsysfile=
+    $as_echo "#define USG /**/" >>confdefs.h
+
+    $as_echo "#define USG5 /**/" >>confdefs.h
+
+        cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+#ifndef _AIX
+# error "_AIX not defined"
+#endif
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_cpp "$LINENO"; then :
+
+else
+
+$as_echo "#define _AIX /**/" >>confdefs.h
+
+fi
+rm -f conftest.err conftest.$ac_ext
+    ;;
+
+  cygwin)
+    opsysfile=
+
+$as_echo "#define CYGWIN 1" >>confdefs.h
+
+    ;;
+
+  darwin)
+        $as_echo "#define BSD4_2 /**/" >>confdefs.h
+
+    $as_echo "#define BSD_SYSTEM /**/" >>confdefs.h
+
+
+$as_echo "#define DARWIN_OS /**/" >>confdefs.h
+
+    ;;
+
+  freebsd)
+    opsysfile=
+    $as_echo "#define BSD4_2 /**/" >>confdefs.h
+
+
+$as_echo "#define BSD_SYSTEM_AHB 1" >>confdefs.h
+
+    ;;
+
+  gnu | netbsd | openbsd )
+    $as_echo "#define BSD4_2 /**/" >>confdefs.h
+
+    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+#ifndef BSD_SYSTEM
+# error "BSD_SYSTEM not defined"
+#endif
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_cpp "$LINENO"; then :
+
+else
+  $as_echo "#define BSD_SYSTEM 43" >>confdefs.h
+
+fi
+rm -f conftest.err conftest.$ac_ext
+    ;;
+
+  gnu-linux | gnu-kfreebsd )
+    opsysfile=
+    $as_echo "#define USG /**/" >>confdefs.h
+
+
+$as_echo "#define GNU_LINUX /**/" >>confdefs.h
+
+    ;;
+
+  hpux*)
+    $as_echo "#define USG /**/" >>confdefs.h
+
+    $as_echo "#define USG5 /**/" >>confdefs.h
+
+
+$as_echo "#define HPUX /**/" >>confdefs.h
+
+    ;;
+
+  irix6-5)
+    $as_echo "#define USG /**/" >>confdefs.h
+
+    $as_echo "#define USG5 /**/" >>confdefs.h
+
+
+$as_echo "#define IRIX6_5 /**/" >>confdefs.h
+
+    ;;
+
+  sol2*)
+    opsysfile="s/usg5-4-common.h"
+    $as_echo "#define USG /**/" >>confdefs.h
+
+    $as_echo "#define USG5 /**/" >>confdefs.h
+
+
+$as_echo "#define SOLARIS2 /**/" >>confdefs.h
+
+    ;;
+
+  unixware)
+    opsysfile="s/usg5-4-common.h"
+    $as_echo "#define USG /**/" >>confdefs.h
+
+    $as_echo "#define USG5 /**/" >>confdefs.h
+
+    ;;
+esac
+
+
+case $opsys in
+          cygwin)
+
+$as_echo "#define G_SLICE_ALWAYS_MALLOC 1" >>confdefs.h
+
+    ;;
+
+  gnu) opsysfile= ;;
+
+  hpux11)
+>>>>>>> MERGE-SOURCE
 
 $as_echo "#define BROKEN_SA_RESTART 1" >>confdefs.h
 
@@ -15957,6 +16529,57 @@ $as_echo "#define HAVE_C99_STRTOLD 1" >>confdefs.h
   UNISTD_H_HAVE_WINSOCK2_H=0;
   UNISTD_H_HAVE_WINSOCK2_H_AND_USE_SOCKETS=0;
 
+
+
+
+
+
+
+
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking if environ is properly declared" >&5
+$as_echo_n "checking if environ is properly declared... " >&6; }
+  if test "${gt_cv_var_environ_declaration+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+
+    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#if HAVE_UNISTD_H
+     #include <unistd.h>
+     #endif
+     /* mingw, BeOS, Haiku declare environ in <stdlib.h>, not in <unistd.h>.  */
+     #include <stdlib.h>
+
+           extern struct { int foo; } environ;
+int
+main ()
+{
+environ.foo = 1;
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  gt_cv_var_environ_declaration=no
+else
+  gt_cv_var_environ_declaration=yes
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $gt_cv_var_environ_declaration" >&5
+$as_echo "$gt_cv_var_environ_declaration" >&6; }
+  if test $gt_cv_var_environ_declaration = yes; then
+
+$as_echo "#define HAVE_ENVIRON_DECL 1" >>confdefs.h
+
+  fi
+
+
+  if test $gt_cv_var_environ_declaration != yes; then
+    HAVE_DECL_ENVIRON=0
+  fi
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for st_dm_mode in struct stat" >&5
 $as_echo_n "checking for st_dm_mode in struct stat... " >&6; }
@@ -18853,6 +19476,18 @@ fi
 
 
           GNULIB_DUP2=1
+
+
+
+
+
+
+
+
+
+
+
+          GNULIB_ENVIRON=1
 
 
 
@@ -23985,7 +24620,7 @@ echo "
 Configured for \`${canonical}'.
 
   Where should the build process find the source code?    ${srcdir}
-  What operating system file should Emacs use?            ${opsysfile-none}
+  What operating system file should Emacs use?            ${opsysfile:-none}
   What compiler should emacs be built with?               ${CC} ${CFLAGS}
   Should Emacs use the GNU version of malloc?             ${GNU_MALLOC}${GNU_MALLOC_reason}
   Should Emacs use a relocating allocator for buffers?    ${REL_ALLOC}

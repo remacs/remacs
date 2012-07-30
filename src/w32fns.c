@@ -1,4 +1,4 @@
-/* Graphical user interface functions for the Microsoft W32 API.
+/* Graphical user interface functions for the Microsoft Windows API.
 
 Copyright (C) 1989, 1992-2012  Free Software Foundation, Inc.
 
@@ -2882,7 +2882,7 @@ w32_wnd_proc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		      key.uChar.AsciiChar = 0;
 		      key.dwControlKeyState = modifiers;
 
-		      add = w32_kbd_patch_key (&key);
+		      add = w32_kbd_patch_key (&key, w32_keyboard_codepage);
 		      /* 0 means an unrecognized keycode, negative means
 			 dead key.  Ignore both.  */
 		      while (--add >= 0)
@@ -2892,7 +2892,7 @@ w32_wnd_proc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			    (hwnd, WM_CHAR,
                              (unsigned char) key.uChar.AsciiChar, lParam,
 			     w32_get_key_modifiers (wParam, lParam));
-			  w32_kbd_patch_key (&key);
+			  w32_kbd_patch_key (&key, w32_keyboard_codepage);
 			}
 		      return 0;
 		    }
@@ -6470,7 +6470,6 @@ The following %-sequences are provided:
     {
       Lisp_Object line_status, battery_status, battery_status_symbol;
       Lisp_Object load_percentage, seconds, minutes, hours, remain;
-      Lisp_Object sequences[8];
 
       long seconds_left = (long) system_status.BatteryLifeTime;
 
@@ -6544,16 +6543,16 @@ The following %-sequences are provided:
 	  _snprintf (buffer, 16, "%ld:%02ld", m / 60, m % 60);
 	  remain = build_string (buffer);
 	}
-      sequences[0] = Fcons (make_number ('L'), line_status);
-      sequences[1] = Fcons (make_number ('B'), battery_status);
-      sequences[2] = Fcons (make_number ('b'), battery_status_symbol);
-      sequences[3] = Fcons (make_number ('p'), load_percentage);
-      sequences[4] = Fcons (make_number ('s'), seconds);
-      sequences[5] = Fcons (make_number ('m'), minutes);
-      sequences[6] = Fcons (make_number ('h'), hours);
-      sequences[7] = Fcons (make_number ('t'), remain);
 
-      status = Flist (8, sequences);
+      status = listn (CONSTYPE_HEAP, 8,
+		      Fcons (make_number ('L'), line_status),
+		      Fcons (make_number ('B'), battery_status),
+		      Fcons (make_number ('b'), battery_status_symbol),
+		      Fcons (make_number ('p'), load_percentage),
+		      Fcons (make_number ('s'), seconds),
+		      Fcons (make_number ('m'), minutes),
+		      Fcons (make_number ('h'), hours),
+		      Fcons (make_number ('t'), remain));
     }
   return status;
 }
@@ -6576,7 +6575,7 @@ If the underlying system call fails, value is nil.  */)
   value = Qnil;
 
   /* Determining the required information on Windows turns out, sadly,
-     to be more involved than one would hope.  The original Win32 api
+     to be more involved than one would hope.  The original Windows API
      call for this will return bogus information on some systems, but we
      must dynamically probe for the replacement api, since that was
      added rather late on.  */
@@ -6795,7 +6794,7 @@ syms_of_w32fns (void)
 
 
   Fput (Qundefined_color, Qerror_conditions,
-	pure_cons (Qundefined_color, pure_cons (Qerror, Qnil)));
+	listn (CONSTYPE_PURE, 2, Qundefined_color, Qerror));
   Fput (Qundefined_color, Qerror_message,
 	build_pure_c_string ("Undefined color"));
 

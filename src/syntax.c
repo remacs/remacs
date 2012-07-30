@@ -1152,7 +1152,7 @@ DEFUN ("internal-describe-syntax-value", Finternal_describe_syntax_value,
 
   insert_string ("\twhich means: ");
 
-  switch (SWITCH_ENUM_CAST (code))
+  switch (code)
     {
     case Swhitespace:
       insert_string ("whitespace"); break;
@@ -2525,7 +2525,7 @@ scan_lists (register EMACS_INT from, EMACS_INT count, EMACS_INT depth, int sexpf
 	  if (prefix)
 	    continue;
 
-	  switch (SWITCH_ENUM_CAST (code))
+	  switch (code)
 	    {
 	    case Sescape:
 	    case Scharquote:
@@ -2702,7 +2702,7 @@ scan_lists (register EMACS_INT from, EMACS_INT count, EMACS_INT depth, int sexpf
 	  else if (SYNTAX_FLAGS_PREFIX (syntax))
 	    continue;
 
-	  switch (SWITCH_ENUM_CAST (code))
+	  switch (code)
 	    {
 	    case Sword:
 	    case Ssymbol:
@@ -3123,7 +3123,7 @@ do { prev_from = from;				\
 
       if (SYNTAX_FLAGS_PREFIX (prev_from_syntax))
 	continue;
-      switch (SWITCH_ENUM_CAST (code))
+      switch (code)
 	{
 	case Sescape:
 	case Scharquote:
@@ -3473,7 +3473,7 @@ syms_of_syntax (void)
 
   DEFSYM (Qscan_error, "scan-error");
   Fput (Qscan_error, Qerror_conditions,
-	pure_cons (Qscan_error, pure_cons (Qerror, Qnil)));
+	listn (CONSTYPE_PURE, 2, Qscan_error, Qerror));
   Fput (Qscan_error, Qerror_message,
 	build_pure_c_string ("Scan error"));
 

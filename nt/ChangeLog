@@ -1,3 +1,17 @@
+2012-07-29  Juanma Barranquero  <lekktu@gmail.com>
+
+	* config.nt: Sync with autogen/config.in.
+	(HAVE_ENVIRON_DECL): New macro.
+
+2012-07-29  Eli Zaretskii  <eliz@gnu.org>
+
+	* inc/stdalign.h (_Alignas, alignas): Define.
+
+2012-07-28  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Use Gnulib stdalign module (Bug#9772, Bug#9960).
+	* config.nt (HAVE_ATTRIBUTE_ALIGNED): Remove.
+
 2012-07-14  Juanma Barranquero  <lekktu@gmail.com>
 
 	* config.nt: Sync with autogen/config.in.
@@ -900,7 +914,7 @@
 
 2008-04-04  Jason Rumney  <jasonr@gnu.org>
 
-	* INSTALL: Update W32 API requirements.
+	* INSTALL: Update Windows API requirements.
 
 2008-04-03  Jason Rumney  <jasonr@gnu.org>
 
@@ -2317,7 +2331,7 @@
 	* makefile.def (CP_DIR): Use platform independent switches for xcopy.
 
 	* makefile.nt (install, fast_install, real_install, clean):
-	Don't use switches to del not supported by Win95.
+	Don't use switches to del not supported by Windows 95.
 
 1995-11-07  Kevin Gallo  <kgallo@microsoft.com>
 
@@ -2371,7 +2385,7 @@
 1995-05-27  Geoff Voelker  <voelker@cs.washington.edu>
 
 	* ebuild.bat, emacs.bat, fast-install.bat, install.bat:
-	Add carriage returns; necessary for batch files on Win95.
+	Add carriage returns; necessary for batch files on Windows 95.
 
 1995-05-25  Geoff Voelker  <voelker@cs.washington.edu>
 

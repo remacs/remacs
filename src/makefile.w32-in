@@ -1,4 +1,4 @@
-# -*- Makefile -*- for GNU Emacs on the Microsoft W32 API.
+# -*- Makefile -*- for GNU Emacs on the Microsoft Windows API.
 # Copyright (C) 2000-2012  Free Software Foundation, Inc.
 
 # This file is part of GNU Emacs.
@@ -406,6 +406,7 @@ CODING_H       = $(SRC)/coding.h \
 MS_W32_H       = $(SRC)/s/ms-w32.h \
 		 $(NT_INC)/sys/stat.h
 CONFIG_H       = $(SRC)/config.h \
+		 $(SRC)/conf_post.h \
 		 $(MS_W32_H)
 DIR_H          = $(NT_INC)/sys/dir.h \
 		 $(SRC)/ndir.h
@@ -438,7 +439,8 @@ LANGINFO_H     = $(NT_INC)/langinfo.h \
 LISP_H         = $(SRC)/lisp.h \
 		 $(SRC)/globals.h \
 		 $(GNU_LIB)/intprops.h \
-		 $(INTTYPES_H)
+		 $(INTTYPES_H) \
+		 $(NT_INC)/stdalign.h
 MD5_H          = $(GNU_LIB)/md5.h \
 		 $(NT_INC)/stdint.h
 MENU_H         = $(SRC)/menu.h \
@@ -783,7 +785,6 @@ $(BLD)/emacs.$(O) : \
 	$(SRC)/w32heap.h \
 	$(NT_INC)/sys/file.h \
 	$(NT_INC)/unistd.h \
-	$(GNU_LIB)/verify.h \
 	$(BLOCKINPUT_H) \
 	$(BUFFER_H) \
 	$(CHARACTER_H) \
@@ -1164,6 +1165,7 @@ $(BLD)/w32inevt.$(O) : \
 	$(SRC)/w32inevt.c \
 	$(SRC)/termchar.h \
 	$(SRC)/w32heap.h \
+	$(SRC)/w32inevt.h \
 	$(BLOCKINPUT_H) \
 	$(CONFIG_H) \
 	$(DISPEXTERN_H) \
@@ -1195,6 +1197,7 @@ $(BLD)/w32console.$(O) : \
 	$(SRC)/w32console.c \
 	$(SRC)/disptab.h \
 	$(SRC)/termchar.h \
+	$(SRC)/w32heap.h \
 	$(SRC)/w32inevt.h \
 	$(CHARACTER_H) \
 	$(CODING_H) \

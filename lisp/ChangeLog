@@ -1,3 +1,193 @@
+2012-07-30  Stefan Merten  <smerten@oekonux.de>
+
+	* rst.el: Silence `checkdoc-ispell'.
+	(rst-cvs-header, rst-svn-rev, rst-svn-timestamp)
+	(rst-official-version, rst-official-cvs-rev)
+	(rst-package-emacs-version-alist): Update to upstream V1.3.1.
+	(rst-mode-map): New key binding.
+
+2012-07-30  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Update .PHONY listings in makefiles.
+	* Makefile.in (.PHONY): Add all, doit, custom-deps, finder-data,
+	autoloads, update-subdirs, updates, bzr-update, update-authors,
+	compile-onefile, compile-calc, backup-compiled-files,
+	compile-after-backup, compile-one-process, mh-autoloads,
+	bootstrap-clean, distclean, maintainer-clean.
+
+2012-07-29  Jay Belanger  <jay.p.belanger@gmail.com>
+
+	* calc/calc.el (calc-simplify-mode): Make 'alg the default value.
+	(calc-set-mode-line): Don't display "AlgSimp ".
+
+	* calc/calc-mode.el (calc-alg-simplify-mode): Remove function.
+	(calc-lim-simplify-mode): New function.
+	(calc-set-simplify-mode): Default to 'alg.
+	(calc-default-simplify-mode): Make algebraic simplifications
+	the default.
+
+	* calc/calc-ext.el (calc-init-extensions): Remove binding for
+	`calc-alg-simplify-mode'.  Add binding for `calc-lim-simplify-mode'.
+
+	* calc/calc-help (calc-m-prefix-help): Change messages to
+	indicate new simplification modes.
+
+	* calc/README: Mention new default simplification mode.
+
+	* calc/calc.el (math-normalize-error): New variable.
+	(math-normalize): Set `math-normalize-error' to t
+	when there's an error.
+
+	* calc/calc-alg.el (math-simplify): Don't simplify when
+	`math-normalize' returns an error.
+
+2012-07-29  Eli Zaretskii  <eliz@gnu.org>
+
+	* international/mule-cmds.el (set-locale-environment): Revert last
+	change, since display-graphic-p returns nil when this function is
+	called during startup.  Instead...
+
+	* term/w32console.el (terminal-init-w32console): ...setup the
+	keyboard and terminal encoding for TTY sessions here.  (Bug#12082)
+
+2012-07-29  Juri Linkov  <juri@jurta.org>
+
+	* simple.el (goto-line): Don't display default line number in the
+	prompt because it should be displayed by `read-number' (bug#9952).
+	Add the current line number to the defaults of `goto-line' to
+	allow its easier modification by users with `M-n' (bug#9201).
+
+	* subr.el (read-number): Support multiple default values like in
+	other minibuffer reading functions.  Replace `read' with
+	`string-to-number' for consistency with `number-to-string'.
+
+2012-07-29  Paul Eggert  <eggert@cs.ucla.edu>
+
+	deactive->inactive, inactivate->deactivate spelling fixes (Bug#10150)
+	* emulation/viper-init.el (viper-deactivate-input-method-action):
+	Rename from viper-inactivate-input-method-action.
+	(viper-deactivate-input-method):
+	Rename from viper-inactivate-input-method.
+	* follow.el (follow-inactive-menu): Rename from follow-deactive-menu.
+	* international/mule-cmds.el (deactivate-input-method):
+	Rename from inactivate-input-method.
+	Also run input-method-deactivate-hook.
+	(deactivate-current-input-method-function):
+	Rename from inactivate-current-input-method-function.
+	(input-method-deactivate-hook): New hook.
+	(input-method-inactivate-hook): Mark obsolete.
+	(inactivate-input-method): Mark obsolete.
+
+	* international/quail.el (quail-activate):
+	Also run quail-deactivate-hook.
+	(quail-deactivate): Rename from quail-inactivate.
+	* international/robin.el (robin-activate):
+	Also run robin-deactivate-hook.
+	(robin-deactivate): Rename from robin-inactivate.
+
+2012-07-29  Chong Yidong  <cyd@gnu.org>
+
+	* simple.el (indicate-copied-region): New function.
+	(kill-ring-save): Split off from here.
+
+	* rect.el (copy-rectangle-as-kill): Call indicate-copied-region.
+	(kill-rectangle): Set deactivate-mark to t on read-only error.
+
+	* register.el (copy-to-register, copy-rectangle-to-register):
+	Deactivate the mark, and use indicate-copied-region (Bug#10056).
+	(append-to-register, prepend-to-register): Call
+
+2012-07-29  Juri Linkov  <juri@jurta.org>
+
+	* simple.el (async-shell-command-buffer): New defcustom.
+	(shell-command): Use it.  (Bug#4719)
+
+2012-07-28  Eli Zaretskii  <eliz@gnu.org>
+
+	* international/mule-cmds.el (set-locale-environment): In a
+	console session on MS-Windows, set up keyboard and terminal
+	encoding from the OEM codepage, not the ANSI codepage.
+	(Bug#12055)
+
+2012-07-28  Chong Yidong  <cyd@gnu.org>
+
+	* progmodes/gdb-mi.el (gdb-place-breakpoints): Fix the call to
+	gdb-get-location.
+
+2012-07-25  Leo Liu  <sdl.web@gmail.com>
+
+	* progmodes/cc-menus.el (cc-imenu-objc-function): Avoid leaving nil in
+	the alist (bug#12029).
+
+2012-07-28  Eli Zaretskii  <eliz@gnu.org>
+
+	* makefile.w32-in (custom-deps, finder-data, updates, compile)
+	(compile-always, compile-first)
+	($(lisp)/calendar/cal-loaddefs.el)
+	($(lisp)/calendar/diary-loaddefs.el)
+	($(lisp)/calendar/hol-loaddefs.el, $(lisp)/mh-e/mh-loaddefs.el)
+	($(lisp)/net/tramp-loaddefs.el, bootstrap)
+	($(lisp)/progmodes/cc-mode.elc): Depend on $(lisp)subdirs.el,
+	instead of on update-subdirs.
+	(bootstrap-clean): Delete $(lisp)/subdirs.el.
+
+2012-07-28  Chong Yidong  <cyd@gnu.org>
+
+	* vc/vc.el (vc-root-diff, vc-print-root-log): Prompt for a
+	directory if vc-deduce-backend returns nil (Bug#7350).
+
+	* simple.el (delete-trailing-lines): New option.
+	(delete-trailing-whitespace): Obey it (Bug#11879).
+
+2012-07-28  David Engster  <deng@randomsample.de>
+
+	* xml.el (xml-node-name, xml-parse-file, xml-parse-region):
+	Explanation of new 'symbol-qnames feature in doc-strings.
+	(xml-maybe-do-ns): Return expanded names as plain symbols if
+	'symbol-qnames was provided in XML-NS argument (Bug#11916).
+	(xml-parse-tag-1): Deal with new definition of PARSE-NS argument.
+
+2012-07-27  Fabián Ezequiel Gallina  <fgallina@cuca>
+
+	Consistent completion in inferior python with emacs -nw.
+	* progmodes/python.el (inferior-python-mode): replace "<tab>"
+	binding in inferior-python-mode-map with "\t".
+	(python-shell-completion-complete-at-point)
+	(python-completion-complete-at-point): Remove interactive spec.
+
+2012-07-27  Jay Belanger  <jay.p.belanger@gmail.com>
+
+	* calc/calccomp.el (math-compose-expr): Undo previous change.
+
+2012-07-27  Fabián Ezequiel Gallina  <fgallina@cuca>
+
+	* progmodes/python.el (python-mode-map): Added keybinding for
+	run-python.
+	(python-shell-make-comint): Fix pop-to-buffer call.
+	(run-python): Autoload.  New arg SHOW.
+	(python-shell-get-or-create-process): Do not pop python process
+	buffer.
+
+2012-07-27  Michael Albinus  <michael.albinus@gmx.de>
+
+	* notifications.el (notifications-on-action-signal)
+	(notifications-on-closed-signal): Use also the bus address for the map.
+	(notifications-notify, notifications-close-notification)
+	(notifications-get-capabilities):  Add optional argument BUS.
+
+2012-07-27  Tassilo Horn  <tsdh@gnu.org>
+
+	* textmodes/reftex-vars.el (reftex-label-alist-builtin): Add
+	support for the lstlisting and minted environments, and for the
+	ctable macro.
+	* textmodes/reftex.el (reftex-compile-variables): Also recognize
+	labels written in keyvals syntax.
+
+2012-07-27  Jay Belanger  <jay.p.belanger@gmail.com>
+
+	* calc/calccomp.el (math-compose-expr): Use parentheses when
+	there is a product in the denominator of a fraction.
+
 2012-07-26  Eli Zaretskii  <eliz@gnu.org>
 
 	* makefile.w32-in ($(lisp)/calendar/cal-loaddefs.el)
@@ -10309,7 +10499,7 @@
 	(tramp-completion-file-name-regexp-unified)
 	(tramp-completion-file-name-regexp-separate)
 	(tramp-completion-file-name-regexp-url): Don't use leading volume
-	letter on win32 systems.  (Bug#5303, Bug#9311)
+	letter on w32 systems.  (Bug#5303, Bug#9311)
 	(tramp-drop-volume-letter): Simplify definition.
 	Suggested by Stefan Monnier <monnier@iro.umontreal.ca>.
 

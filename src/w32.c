@@ -1,4 +1,4 @@
-/* Utility and Unix shadow routines for GNU Emacs on the Microsoft W32 API.
+/* Utility and Unix shadow routines for GNU Emacs on the Microsoft Windows API.
    Copyright (C) 1994-1995, 2000-2012  Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
@@ -1722,13 +1722,11 @@ init_environment (char ** argv)
 		dwType = REG_EXPAND_SZ;
 		dont_free = 1;
 		if (!strcmp (env_vars[i].name, "HOME") && !appdata)
-		  {
-		    Lisp_Object warning[2];
-		    warning[0] = intern ("initialization");
-		    warning[1] = build_string ("Setting HOME to C:\\ by default is deprecated");
-		    Vdelayed_warnings_list = Fcons (Flist (2, warning),
-						    Vdelayed_warnings_list);
-		  }
+		  Vdelayed_warnings_list
+		    = Fcons (listn (CONSTYPE_HEAP, 2,
+				    intern ("initialization"),
+				    build_string ("Setting HOME to C:\\ by default is deprecated")),
+			     Vdelayed_warnings_list);
 	      }
 
 	    if (lpval)
@@ -2013,7 +2011,7 @@ fdutimens (int fd, char const *file, struct timespec const timespec[2])
 
 
 /* ------------------------------------------------------------------------- */
-/* IO support and wrapper functions for W32 API. */
+/* IO support and wrapper functions for the Windows API. */
 /* ------------------------------------------------------------------------- */
 
 /* Place a wrapper around the MSVC version of ctime.  It returns NULL
@@ -2931,7 +2929,7 @@ sys_rename (const char * oldname, const char * newname)
   /* volume_info is set indirectly by map_w32_filename.  */
   oldname_dev = volume_info.serialnum;
 
-  if (os_subtype == OS_WIN95)
+  if (os_subtype == OS_9X)
     {
       char * o;
       char * p;

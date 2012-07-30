@@ -56,7 +56,7 @@ struct buffer *all_buffers;
    Setting the default value also goes through the alist of buffers
    and stores into each buffer that does not say it has a local value.  */
 
-DECL_ALIGN (struct buffer, buffer_defaults);
+struct buffer alignas (GCALIGNMENT) buffer_defaults;
 
 /* A Lisp_Object pointer to the above, used for staticpro */
 
@@ -83,7 +83,7 @@ struct buffer buffer_local_flags;
 /* This structure holds the names of symbols whose values may be
    buffer-local.  It is indexed and accessed in the same way as the above. */
 
-DECL_ALIGN (struct buffer, buffer_local_symbols);
+struct buffer alignas (GCALIGNMENT) buffer_local_symbols;
 
 /* A Lisp_Object pointer to the above, used for staticpro */
 static Lisp_Object Vbuffer_local_symbols;
@@ -5212,7 +5212,7 @@ syms_of_buffer (void)
   DEFSYM (Qkill_buffer_query_functions, "kill-buffer-query-functions");
 
   Fput (Qprotected_field, Qerror_conditions,
-	pure_cons (Qprotected_field, pure_cons (Qerror, Qnil)));
+	listn (CONSTYPE_PURE, 2, Qprotected_field, Qerror));
   Fput (Qprotected_field, Qerror_message,
 	build_pure_c_string ("Attempt to modify a protected field"));
 
@@ -5457,17 +5457,17 @@ Use the command `abbrev-mode' to change this variable.  */);
 		     doc: /* Non-nil if searches and matches should ignore case.  */);
 
   DEFVAR_PER_BUFFER ("fill-column", &BVAR (current_buffer, fill_column),
-		     make_number (LISP_INT_TAG),
+		     make_number (Lisp_Int0),
 		     doc: /* Column beyond which automatic line-wrapping should happen.
 Interactively, you can set the buffer local value using \\[set-fill-column].  */);
 
   DEFVAR_PER_BUFFER ("left-margin", &BVAR (current_buffer, left_margin),
-		     make_number (LISP_INT_TAG),
+		     make_number (Lisp_Int0),
 		     doc: /* Column for the default `indent-line-function' to indent to.
 Linefeed indents to this column in Fundamental mode.  */);
 
   DEFVAR_PER_BUFFER ("tab-width", &BVAR (current_buffer, tab_width),
-		     make_number (LISP_INT_TAG),
+		     make_number (Lisp_Int0),
 		     doc: /* Distance between tab stops (for display of tab characters), in columns.
 This should be an integer greater than zero.  */);
 
@@ -5588,7 +5588,7 @@ If it is nil, that means don't auto-save this buffer.  */);
 Backing up is done before the first time the file is saved.  */);
 
   DEFVAR_PER_BUFFER ("buffer-saved-size", &BVAR (current_buffer, save_length),
-		     make_number (LISP_INT_TAG),
+		     make_number (Lisp_Int0),
 		     doc: /* Length of current buffer when last read in, saved or auto-saved.
 0 initially.
 -1 means auto-saving turned off until next real save.

@@ -7931,15 +7931,12 @@ encode_coding_object (struct coding_system *coding,
 	}
 
       {
-	Lisp_Object args[3];
 	struct gcpro gcpro1, gcpro2, gcpro3, gcpro4, gcpro5;
 
 	GCPRO5 (coding->src_object, coding->dst_object, src_object, dst_object,
 		old_deactivate_mark);
-	args[0] = CODING_ATTR_PRE_WRITE (attrs);
-	args[1] = make_number (BEG);
-	args[2] = make_number (Z);
-	safe_call (3, args);
+	safe_call2 (CODING_ATTR_PRE_WRITE (attrs),
+		    make_number (BEG), make_number (Z));
 	UNGCPRO;
       }
       if (XBUFFER (coding->src_object) != current_buffer)
@@ -10411,7 +10408,7 @@ syms_of_coding (void)
 
   DEFSYM (Qcoding_system_error, "coding-system-error");
   Fput (Qcoding_system_error, Qerror_conditions,
-	pure_cons (Qcoding_system_error, pure_cons (Qerror, Qnil)));
+	listn (CONSTYPE_PURE, 2, Qcoding_system_error, Qerror));
   Fput (Qcoding_system_error, Qerror_message,
 	build_pure_c_string ("Invalid coding system"));
 
