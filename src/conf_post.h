@@ -27,10 +27,17 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 /* Code: */
 
+/* Include any platform specific configuration file.  */
+#ifdef config_opsysfile
+# include config_opsysfile
+#endif
+
+#ifndef WINDOWSNT
 /* On AIX 3 this must be included before any other include file.  */
 #include <alloca.h>
 #if ! HAVE_ALLOCA
 # error "alloca not available on this machine"
+#endif
 #endif
 
 #ifdef SIGNAL_H_AHB
@@ -51,23 +58,61 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #endif
 #endif
 
-/* Define AMPERSAND_FULL_NAME if you use the convention
-   that & in the full name stands for the login id.  */
-/* Turned on June 1996 supposing nobody will mind it.  */
-#define AMPERSAND_FULL_NAME
-
-/* `subprocesses' should be defined if you want to
-   have code for asynchronous subprocesses
-   (as used in M-x compile and M-x shell).
-   Only MSDOS does not support this (it overrides
-   this in its config_opsysfile below).  */
-
-#define subprocesses
-
-/* Include the os dependent file.  */
-#ifdef config_opsysfile
-# include config_opsysfile
+#ifdef DARWIN_OS
+#ifdef emacs
+#define malloc unexec_malloc
+#define realloc unexec_realloc
+#define free unexec_free
+/* Don't use posix_memalign because it is not compatible with unexmacosx.c.  */
+#undef HAVE_POSIX_MEMALIGN
 #endif
+/* The following solves the problem that Emacs hangs when evaluating
+   (make-comint "test0" "/nodir/nofile" nil "") when /nodir/nofile
+   does not exist.  Also, setsid is not allowed in the vfork child's
+   context as of Darwin 9/Mac OS X 10.5.  */
+#undef HAVE_WORKING_VFORK
+#define vfork fork
+#endif  /* DARWIN_OS */
+
+/* We have to go this route, rather than the old hpux9 approach of
+   renaming the functions via macros.  The system's stdlib.h has fully
+   prototyped declarations, which yields a conflicting definition of
+   srand48; it tries to redeclare what was once srandom to be srand48.
+   So we go with HAVE_LRAND48 being defined.  */
+#ifdef HPUX
+#undef srandom
+#undef random
+/* We try to avoid checking for random and rint on hpux in
+   configure.ac, but some other configure test might check for them as
+   a dependency, so to be safe we also undefine them here.
+ */
+#undef HAVE_RANDOM
+#undef HAVE_RINT
+#endif
+
+#ifdef IRIX6_5
+#ifdef emacs
+char *_getpty();
+#endif
+
+#undef SA_RESTART     /* not the same as defining BROKEN_SA_RESTART */
+#endif /* IRIX6_5 */
+
+#ifdef USG5_4
+/* Get FIONREAD from <sys/filio.h>.  Get <sys/ttold.h> to get struct tchars.
+   But get <termio.h> first to make sure ttold.h doesn't interfere.  */
+#include <sys/wait.h>
+
+#ifdef emacs
+#include <sys/filio.h>
+#include <termio.h>
+#include <sys/ttold.h>
+#include <signal.h>
+#include <sys/stream.h>
+#include <sys/stropts.h>
+#include <sys/termios.h>
+#endif
+#endif  /* USG5_4 */
 
 /* Mac OS X / GNUstep need a bit more pure memory.  Of the existing knobs,
    SYSTEM_PURESIZE_EXTRA seems like the least likely to cause problems.  */

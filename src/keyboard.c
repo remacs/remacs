@@ -803,7 +803,7 @@ This function is called by the editor initialization to begin editing.  */)
   update_mode_lines = 1;
 
   if (command_loop_level
-      && current_buffer != XBUFFER (XWINDOW (selected_window)->buffer))
+      && current_buffer != XBUFFER (WVAR (XWINDOW (selected_window), buffer)))
     buffer = Fcurrent_buffer ();
   else
     buffer = Qnil;
@@ -1385,8 +1385,8 @@ command_loop_1 (void)
 	Fkill_emacs (Qnil);
 
       /* Make sure the current window's buffer is selected.  */
-      if (XBUFFER (XWINDOW (selected_window)->buffer) != current_buffer)
-	set_buffer_internal (XBUFFER (XWINDOW (selected_window)->buffer));
+      if (XBUFFER (WVAR (XWINDOW (selected_window), buffer)) != current_buffer)
+	set_buffer_internal (XBUFFER (WVAR (XWINDOW (selected_window), buffer)));
 
       /* Display any malloc warning that just came out.  Use while because
 	 displaying one warning can cause another.  */
@@ -1455,8 +1455,8 @@ command_loop_1 (void)
       /* A filter may have run while we were reading the input.  */
       if (! FRAME_LIVE_P (XFRAME (selected_frame)))
 	Fkill_emacs (Qnil);
-      if (XBUFFER (XWINDOW (selected_window)->buffer) != current_buffer)
-	set_buffer_internal (XBUFFER (XWINDOW (selected_window)->buffer));
+      if (XBUFFER (WVAR (XWINDOW (selected_window), buffer)) != current_buffer)
+	set_buffer_internal (XBUFFER (WVAR (XWINDOW (selected_window), buffer)));
 
       ++num_input_keys;
 
@@ -1487,7 +1487,7 @@ command_loop_1 (void)
 	{
 	  struct buffer *b;
 	  XWINDOW (selected_window)->force_start = 0;
-	  b = XBUFFER (XWINDOW (selected_window)->buffer);
+	  b = XBUFFER (WVAR (XWINDOW (selected_window), buffer));
 	  BUF_BEG_UNCHANGED (b) = BUF_END_UNCHANGED (b) = 0;
 	}
 
@@ -5184,8 +5184,8 @@ make_lispy_position (struct frame *f, Lisp_Object x, Lisp_Object y,
 	  if (STRINGP (string))
 	    string_info = Fcons (string, make_number (charpos));
 	  textpos = (w == XWINDOW (selected_window)
-		     && current_buffer == XBUFFER (w->buffer))
-	    ? PT : XMARKER (w->pointm)->charpos;
+		     && current_buffer == XBUFFER (WVAR (w, buffer)))
+	    ? PT : XMARKER (WVAR (w, pointm))->charpos;
 
 	  xret = wx;
 	  yret = wy;
@@ -5573,7 +5573,7 @@ make_lispy_event (struct input_event *event)
 	  int fuzz;
 
 	  if (WINDOWP (event->frame_or_window))
-	    f = XFRAME (XWINDOW (event->frame_or_window)->frame);
+	    f = XFRAME (WVAR (XWINDOW (event->frame_or_window), frame));
 	  else if (FRAMEP (event->frame_or_window))
 	    f = XFRAME (event->frame_or_window);
 	  else
@@ -5741,7 +5741,7 @@ make_lispy_event (struct input_event *event)
 	  int is_double;
 
 	  if (WINDOWP (event->frame_or_window))
-	    fr = XFRAME (XWINDOW (event->frame_or_window)->frame);
+	    fr = XFRAME (WVAR (XWINDOW (event->frame_or_window), frame));
 	  else if (FRAMEP (event->frame_or_window))
 	    fr = XFRAME (event->frame_or_window);
 	  else
@@ -7910,7 +7910,8 @@ parse_menu_item (Lisp_Object item, int inmenubar)
 		    /* If the command is an alias for another
 		       (such as lmenu.el set it up), check if the
 		       original command matches the cached command.  */
-		    && !(SYMBOLP (def) && EQ (tem, XSYMBOL (def)->function))))
+		    && !(SYMBOLP (def)
+			 && EQ (tem, SVAR (XSYMBOL (def), function)))))
 	      keys = Qnil;
 	  }
 
@@ -8839,9 +8840,9 @@ access_keymap_keyremap (Lisp_Object map, Lisp_Object key, Lisp_Object prompt,
   /* Handle a symbol whose function definition is a keymap
      or an array.  */
   if (SYMBOLP (next) && !NILP (Ffboundp (next))
-      && (ARRAYP (XSYMBOL (next)->function)
-	  || KEYMAPP (XSYMBOL (next)->function)))
-    next = Fautoload_do_load (XSYMBOL (next)->function, next, Qnil);
+      && (ARRAYP (SVAR (XSYMBOL (next), function))
+	  || KEYMAPP (SVAR (XSYMBOL (next), function))))
+    next = Fautoload_do_load (SVAR (XSYMBOL (next), function), next, Qnil);
 
   /* If the keymap gives a function, not an
      array, then call the function with one arg and use
@@ -9411,8 +9412,8 @@ read_key_sequence (Lisp_Object *keybuf, int bufsize, Lisp_Object prompt,
 		{
 		  if (! FRAME_LIVE_P (XFRAME (selected_frame)))
 		    Fkill_emacs (Qnil);
-		  if (XBUFFER (XWINDOW (selected_window)->buffer) != current_buffer)
-		    Fset_buffer (XWINDOW (selected_window)->buffer);
+		  if (XBUFFER (WVAR (XWINDOW (selected_window), buffer)) != current_buffer)
+		    Fset_buffer (WVAR (XWINDOW (selected_window), buffer));
 		}
 
 	      orig_local_map = get_local_map (PT, current_buffer, Qlocal_map);
@@ -9504,8 +9505,8 @@ read_key_sequence (Lisp_Object *keybuf, int bufsize, Lisp_Object prompt,
 		     not the current buffer.  If we're at the
 		     beginning of a key sequence, switch buffers.  */
 		  if (WINDOWP (window)
-		      && BUFFERP (XWINDOW (window)->buffer)
-		      && XBUFFER (XWINDOW (window)->buffer) != current_buffer)
+		      && BUFFERP (WVAR (XWINDOW (window), buffer))
+		      && XBUFFER (WVAR (XWINDOW (window), buffer)) != current_buffer)
 		    {
 		      ASET (raw_keybuf, raw_keybuf_count, key);
 		      raw_keybuf_count++;
@@ -9526,7 +9527,7 @@ read_key_sequence (Lisp_Object *keybuf, int bufsize, Lisp_Object prompt,
 
 		      if (! FRAME_LIVE_P (XFRAME (selected_frame)))
 			Fkill_emacs (Qnil);
-		      set_buffer_internal (XBUFFER (XWINDOW (window)->buffer));
+		      set_buffer_internal (XBUFFER (WVAR (XWINDOW (window), buffer)));
 		      orig_local_map = get_local_map (PT, current_buffer,
 						      Qlocal_map);
 		      orig_keymap = get_local_map (PT, current_buffer,
@@ -11210,7 +11211,7 @@ The `posn-' functions access elements of such lists.  */)
 		      ? window_box_left_offset (w, TEXT_AREA)
 		      : 0)));
       XSETINT (y, WINDOW_TO_FRAME_PIXEL_Y (w, XINT (y)));
-      frame_or_window = w->frame;
+      frame_or_window = WVAR (w, frame);
     }
 
   CHECK_LIVE_FRAME (frame_or_window);

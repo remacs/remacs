@@ -627,8 +627,13 @@ clip_to_bounds (ptrdiff_t lower, EMACS_INT num, ptrdiff_t upper)
 #define CHECK_TYPE(ok, Qxxxp, x) \
   do { if (!(ok)) wrong_type_argument (Qxxxp, (x)); } while (0)
 
+/* Lisp fields are usually hidden from most code and accessed
+   via special macros.  Only select pieces of code, like the GC,
+   are allowed to use INTERNAL_FIELD directly.  Objects which
+   aren't using this convention should be fixed.  */
 
-
+#define INTERNAL_FIELD(field) field ## _
+
 /* See the macros in intervals.h.  */
 
 typedef struct interval *INTERVAL;
@@ -637,17 +642,22 @@ typedef struct interval *INTERVAL;
 #define CHECK_STRING_OR_BUFFER(x) \
   CHECK_TYPE (STRINGP (x) || BUFFERP (x), Qbuffer_or_string_p, x)
 
-
-/* In a cons, the markbit of the car is the gc mark bit */
+/* Most code should use this macro to
+   access Lisp fields in struct Lisp_Cons.  */
+
+#define CVAR(cons, field) ((cons)->INTERNAL_FIELD (field))
 
 struct Lisp_Cons
   {
-    /* Please do not use the names of these elements in code other
-       than the core lisp implementation.  Use XCAR and XCDR below.  */
-    Lisp_Object car;
+    /* Car of this cons cell.  */
+    Lisp_Object INTERNAL_FIELD (car);
+
     union
     {
-      Lisp_Object cdr;
+      /* Cdr of this cons cell.  */
+      Lisp_Object INTERNAL_FIELD (cdr);
+
+      /* Used to chain conses on a free list.  */
       struct Lisp_Cons *chain;
     } u;
   };
@@ -659,8 +669,8 @@ struct Lisp_Cons
    fields are not accessible as lvalues.  (What if we want to switch to
    a copying collector someday?  Cached cons cell field addresses may be
    invalidated at arbitrary points.)  */
-#define XCAR_AS_LVALUE(c) (XCONS ((c))->car)
-#define XCDR_AS_LVALUE(c) (XCONS ((c))->u.cdr)
+#define XCAR_AS_LVALUE(c) (CVAR (XCONS (c), car))
+#define XCDR_AS_LVALUE(c) (CVAR (XCONS (c), u.cdr))
 
 /* Use these from normal code.  */
 #define XCAR(c)	LISP_MAKE_RVALUE (XCAR_AS_LVALUE (c))
@@ -1039,6 +1049,11 @@ enum symbol_redirect
   SYMBOL_FORWARDED = 3
 };
 
+/* Most code should use this macro to access
+   Lisp fields in struct Lisp_Symbol.  */
+
+#define SVAR(sym, field) ((sym)->INTERNAL_FIELD (field))
+
 struct Lisp_Symbol
 {
   unsigned gcmarkbit : 1;
@@ -1066,22 +1081,22 @@ struct Lisp_Symbol
   /* The symbol's name, as a Lisp string.
      The name "xname" is used to intentionally break code referring to
      the old field "name" of type pointer to struct Lisp_String.  */
-  Lisp_Object xname;
+  Lisp_Object INTERNAL_FIELD (xname);
 
   /* Value of the symbol or Qunbound if unbound.  Which alternative of the
      union is used depends on the `redirect' field above.  */
   union {
-    Lisp_Object value;
+    Lisp_Object INTERNAL_FIELD (value);
     struct Lisp_Symbol *alias;
     struct Lisp_Buffer_Local_Value *blv;
     union Lisp_Fwd *fwd;
   } val;
 
   /* Function value of the symbol or Qunbound if not fboundp.  */
-  Lisp_Object function;
+  Lisp_Object INTERNAL_FIELD (function);
 
   /* The symbol's property list.  */
-  Lisp_Object plist;
+  Lisp_Object INTERNAL_FIELD (plist);
 
   /* Next symbol in obarray bucket, if the symbol is interned.  */
   struct Lisp_Symbol *next;
@@ -1090,7 +1105,7 @@ struct Lisp_Symbol
 /* Value is name of symbol.  */
 
 #define SYMBOL_VAL(sym)   \
-  (eassert ((sym)->redirect == SYMBOL_PLAINVAL),  (sym)->val.value)
+  (eassert ((sym)->redirect == SYMBOL_PLAINVAL),  SVAR (sym, val.value))
 #define SYMBOL_ALIAS(sym) \
   (eassert ((sym)->redirect == SYMBOL_VARALIAS),  (sym)->val.alias)
 #define SYMBOL_BLV(sym)   \
@@ -1098,7 +1113,7 @@ struct Lisp_Symbol
 #define SYMBOL_FWD(sym)   \
   (eassert ((sym)->redirect == SYMBOL_FORWARDED), (sym)->val.fwd)
 #define SET_SYMBOL_VAL(sym, v)     \
-  (eassert ((sym)->redirect == SYMBOL_PLAINVAL),  (sym)->val.value = (v))
+  (eassert ((sym)->redirect == SYMBOL_PLAINVAL),  SVAR (sym, val.value) = (v))
 #define SET_SYMBOL_ALIAS(sym, v)   \
   (eassert ((sym)->redirect == SYMBOL_VARALIAS),  (sym)->val.alias = (v))
 #define SET_SYMBOL_BLV(sym, v)     \
@@ -1107,7 +1122,7 @@ struct Lisp_Symbol
   (eassert ((sym)->redirect == SYMBOL_FORWARDED), (sym)->val.fwd = (v))
 
 #define SYMBOL_NAME(sym)  \
-     LISP_MAKE_RVALUE (XSYMBOL (sym)->xname)
+     LISP_MAKE_RVALUE (SVAR (XSYMBOL (sym), xname))
 
 /* Value is non-zero if SYM is an interned symbol.  */
 
@@ -1256,7 +1271,11 @@ enum DEFAULT_HASH_SIZE { DEFAULT_HASH_SIZE = 65 };
 
 #define DEFAULT_REHASH_SIZE 1.5
 
-
+/* Most code should use this macro to access
+   Lisp fields in a different misc objects.  */
+
+#define MVAR(misc, field) ((misc)->INTERNAL_FIELD (field))
+
 /* These structures are used for various misc types.  */
 
 struct Lisp_Misc_Any		/* Supertype of all Misc types.  */
@@ -1326,7 +1345,9 @@ struct Lisp_Overlay
     unsigned gcmarkbit : 1;
     int spacer : 15;
     struct Lisp_Overlay *next;
-    Lisp_Object start, end, plist;
+    Lisp_Object INTERNAL_FIELD (start);
+    Lisp_Object INTERNAL_FIELD (end);
+    Lisp_Object INTERNAL_FIELD (plist);
   };
 
 /* Hold a C pointer for later use.
@@ -1748,7 +1769,8 @@ typedef struct {
    vchild, and hchild members are all nil.  */
 
 #define CHECK_LIVE_WINDOW(x) \
-  CHECK_TYPE (WINDOWP (x) && !NILP (XWINDOW (x)->buffer), Qwindow_live_p, x)
+  CHECK_TYPE (WINDOWP (x) && !NILP (WVAR (XWINDOW (x), buffer)), \
+	      Qwindow_live_p, x)
 
 #define CHECK_PROCESS(x) \
   CHECK_TYPE (PROCESSP (x), Qprocessp, x)
@@ -3305,24 +3327,7 @@ extern char *egetenv (const char *);
 /* Set up the name of the machine we're running on.  */
 extern void init_system_name (void);
 
-/* Some systems (e.g., NT) use a different path separator than Unix,
-   in addition to a device separator.  Set the path separator
-   to '/', and don't test for a device separator in IS_ANY_SEP.  */
-
 static char const DIRECTORY_SEP = '/';
-#ifndef IS_DIRECTORY_SEP
-#define IS_DIRECTORY_SEP(_c_) ((_c_) == DIRECTORY_SEP)
-#endif
-#ifndef IS_DEVICE_SEP
-#ifndef DEVICE_SEP
-#define IS_DEVICE_SEP(_c_) 0
-#else
-#define IS_DEVICE_SEP(_c_) ((_c_) == DEVICE_SEP)
-#endif
-#endif
-#ifndef IS_ANY_SEP
-#define IS_ANY_SEP(_c_) (IS_DIRECTORY_SEP (_c_))
-#endif
 
 /* Use this to suppress gcc's warnings.  */
 #ifdef lint

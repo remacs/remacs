@@ -669,7 +669,7 @@ ns_update_window_end (struct window *w, int cursor_on_p,
    external (RIF) call; for one window called before update_end
    -------------------------------------------------------------------------- */
 {
-  Mouse_HLInfo *hlinfo = MOUSE_HL_INFO (XFRAME (w->frame));
+  Mouse_HLInfo *hlinfo = MOUSE_HL_INFO (XFRAME (WVAR (w, frame)));
 
   /* note: this fn is nearly identical in all terms */
   if (!w->pseudo_window_p)
@@ -1306,7 +1306,7 @@ x_set_window_size (struct frame *f, int change_grav, int cols, int rows)
   FRAME_PIXEL_HEIGHT (f) = pixelheight;
 /*  SET_FRAME_GARBAGED (f); // this short-circuits expose call in drawRect */
 
-  mark_window_cursors_off (XWINDOW (f->root_window));
+  mark_window_cursors_off (XWINDOW (FVAR (f, root_window)));
   cancel_mouse_face (f);
 
   UNBLOCK_INPUT;
@@ -2037,7 +2037,7 @@ ns_scroll_run (struct window *w, struct run *run)
     External (RIF):  Insert or delete n lines at line vpos
    -------------------------------------------------------------------------- */
 {
-  struct frame *f = XFRAME (w->frame);
+  struct frame *f = XFRAME (WVAR (w, frame));
   int x, y, width, height, from_y, to_y, bottom_y;
 
   NSTRACE (ns_scroll_run);
@@ -2116,7 +2116,7 @@ ns_after_update_window_line (struct glyph_row *desired_row)
      full-width rows stays visible in the internal border.
      Under NS this is drawn inside the fringes. */
   if (windows_or_buffers_changed
-      && (f = XFRAME (w->frame),
+      && (f = XFRAME (WVAR (w, frame)),
 	  width = FRAME_INTERNAL_BORDER_WIDTH (f),
 	  width != 0)
       && (height = desired_row->visible_height,
@@ -2125,8 +2125,8 @@ ns_after_update_window_line (struct glyph_row *desired_row)
       int y = WINDOW_TO_FRAME_PIXEL_Y (w, max (0, desired_row->y));
 
       /* Internal border is drawn below the tool bar.  */
-      if (WINDOWP (f->tool_bar_window)
-	  && w == XWINDOW (f->tool_bar_window))
+      if (WINDOWP (FVAR (f, tool_bar_window))
+	  && w == XWINDOW (FVAR (f, tool_bar_window)))
 	y -= width;
       /* end copy from other terms */
 
@@ -2267,7 +2267,6 @@ ns_draw_fringe_bitmap (struct window *w, struct glyph_row *row,
   if (p->which)
     {
       NSRect r = NSMakeRect (p->x+xAdjust, p->y, p->wd, p->h);
-      NSPoint pt = r.origin;
       EmacsImage *img = bimgs[p->which - 1];
 
       if (!img)
@@ -2290,9 +2289,13 @@ ns_draw_fringe_bitmap (struct window *w, struct glyph_row *row,
          to erase the whole background. */
       [ns_lookup_indexed_color(face->background, f) set];
       NSRectFill (r);
-      pt.y += p->h;
       [img setXBMColor: ns_lookup_indexed_color(face->foreground, f)];
-      [img compositeToPoint: pt operation: NSCompositeSourceOver];
+      [img drawInRect: r
+              fromRect: NSZeroRect
+             operation: NSCompositeSourceOver
+              fraction: 1.0
+           respectFlipped: YES
+                hints: nil];
     }
   ns_unfocus (f);
 }
@@ -3035,8 +3038,12 @@ ns_dumpglyphs_image (struct glyph_string *s, NSRect r)
 
   /* Draw the image.. do we need to draw placeholder if img ==nil? */
   if (img != nil)
-    [img compositeToPoint: NSMakePoint (x, y + s->slice.height)
-                operation: NSCompositeSourceOver];
+      [img drawInRect: br
+              fromRect: NSZeroRect
+             operation: NSCompositeSourceOver
+              fraction: 1.0
+           respectFlipped: YES
+                hints: nil];
 
   if (s->hl == DRAW_CURSOR)
     {
@@ -4433,7 +4440,7 @@ ns_term_shutdown (int sig)
     return NSTerminateNow;
 
     ret = NSRunAlertPanel(ns_app_name,
-                          [NSString stringWithUTF8String:"Exit requested.  Would you like to Save Buffers and Exit, or Cancel the request?"],
+                          @"Exit requested.  Would you like to Save Buffers and Exit, or Cancel the request?",
                           @"Save Buffers and Exit", @"Cancel", nil);
 
     if (ret == NSAlertDefaultReturn)
@@ -4477,7 +4484,7 @@ ns_term_shutdown (int sig)
   /* Don't open files from the command line, Cocoa parses the command line
      wrong anyway, --option value tries to open value if --option is the last
      option.  */
-  if (ns_ignore_open_file)
+  if (ns_do_open_file)
     {
       NSEnumerator *files = [fileList objectEnumerator];
       NSString *file;
@@ -5535,7 +5542,7 @@ ns_term_shutdown (int sig)
   if (ns_drag_types)
     [self registerForDraggedTypes: ns_drag_types];
 
-  tem = f->name;
+  tem = FVAR (f, name);
   name = [NSString stringWithUTF8String:
                    NILP (tem) ? "Emacs" : SSDATA (tem)];
   [win setTitle: name];
@@ -5553,7 +5560,7 @@ ns_term_shutdown (int sig)
 #endif
   FRAME_TOOLBAR_HEIGHT (f) = 0;
 
-  tem = f->icon_name;
+  tem = FVAR (f, icon_name);
   if (!NILP (tem))
     [win setMiniwindowTitle:
            [NSString stringWithUTF8String: SSDATA (tem)]];
@@ -5734,7 +5741,7 @@ ns_term_shutdown (int sig)
     {
       NSInteger tag = [sender tag];
       find_and_call_menu_selection (emacsframe, emacsframe->menu_bar_items_used,
-                                    emacsframe->menu_bar_vector,
+                                    FVAR (emacsframe, menu_bar_vector),
                                     (void *)tag);
     }
 
@@ -5768,7 +5775,7 @@ ns_term_shutdown (int sig)
 
   emacs_event->kind = TOOL_BAR_EVENT;
 /*   XSETINT (emacs_event->code, 0); */
-  emacs_event->arg = AREF (emacsframe->tool_bar_items,
+  emacs_event->arg = AREF (FVAR (emacsframe, tool_bar_items),
                           idx + TOOL_BAR_ITEM_KEY);
   emacs_event->modifiers = EV_MODIFIERS (theEvent);
   EV_TRAILER (theEvent);
@@ -6056,7 +6063,8 @@ ns_term_shutdown (int sig)
 {
   Lisp_Object str = Qnil;
   struct frame *f = SELECTED_FRAME ();
-  struct buffer *curbuf = XBUFFER (XWINDOW (f->selected_window)->buffer);
+  struct buffer *curbuf
+    = XBUFFER (XWINDOW (FVAR (f, selected_window))->buffer);
  
   if ([attribute isEqualToString:NSAccessibilityRoleAttribute])
     return NSAccessibilityTextFieldRole;

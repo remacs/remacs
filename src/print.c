@@ -1701,11 +1701,11 @@ print_object (Lisp_Object obj, register Lisp_Object printcharfun, int escapeflag
 	  if (escapeflag)
 	    {
 	      strout ("#<process ", -1, -1, printcharfun);
-	      print_string (XPROCESS (obj)->name, printcharfun);
+	      print_string (PVAR (XPROCESS (obj), name), printcharfun);
 	      PRINTCHAR ('>');
 	    }
 	  else
-	    print_string (XPROCESS (obj)->name, printcharfun);
+	    print_string (PVAR (XPROCESS (obj), name), printcharfun);
 	}
       else if (BOOL_VECTOR_P (obj))
 	{
@@ -1784,10 +1784,11 @@ print_object (Lisp_Object obj, register Lisp_Object printcharfun, int escapeflag
 	  strout ("#<window ", -1, -1, printcharfun);
 	  len = sprintf (buf, "%d", XWINDOW (obj)->sequence_number);
 	  strout (buf, len, len, printcharfun);
-	  if (!NILP (XWINDOW (obj)->buffer))
+	  if (!NILP (WVAR (XWINDOW (obj), buffer)))
 	    {
 	      strout (" on ", -1, -1, printcharfun);
-	      print_string (BVAR (XBUFFER (XWINDOW (obj)->buffer), name), printcharfun);
+	      print_string (BVAR (XBUFFER (WVAR (XWINDOW (obj), buffer)), name),
+			    printcharfun);
 	    }
 	  PRINTCHAR ('>');
 	}
@@ -1906,7 +1907,7 @@ print_object (Lisp_Object obj, register Lisp_Object printcharfun, int escapeflag
       else if (FRAMEP (obj))
 	{
 	  int len;
-	  Lisp_Object frame_name = XFRAME (obj)->name;
+	  Lisp_Object frame_name = FVAR (XFRAME (obj), name);
 
 	  strout ((FRAME_LIVE_P (XFRAME (obj))
 		   ? "#<frame " : "#<dead frame "),

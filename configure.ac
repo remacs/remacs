@@ -367,9 +367,6 @@ case "${srcdir}" in
   *  ) srcdir="`(cd ${srcdir}; pwd)`" ;;
 esac
 
-#### Given the configuration name, set opsysfile to the
-#### name of s/*.h file we should use.
-
 ### Canonicalize the configuration name.
 
 AC_CANONICAL_HOST
@@ -556,8 +553,6 @@ if test $unported = yes; then
   AC_MSG_ERROR([Emacs hasn't been ported to `${canonical}' systems.
 Check `etc/MACHINES' for recognized configuration names.])
 fi
-
-opsysfile="s/${opsys}.h"
 
 
 #### Choose a compiler.
@@ -989,8 +984,8 @@ case $opsys in
     START_FILES='pre-crt0.o'
     ;;
   freebsd )
-    LIB_STANDARD='-lgcc -lc -lgcc $(CRT_DIR)/crtend.o $(CRT_DIR)/crtn.o'
-    START_FILES='pre-crt0.o $(CRT_DIR)/crt1.o $(CRT_DIR)/crti.o $(CRT_DIR)/crtbegin.o'
+    LIB_STANDARD='-lgcc -lc -lgcc $(CRT_DIR)/crtn.o'
+    START_FILES='pre-crt0.o $(CRT_DIR)/crt1.o $(CRT_DIR)/crti.o'
     SYSTEM_TYPE=berkeley-unix
     ;;
   gnu-linux | gnu-kfreebsd )
@@ -2205,7 +2200,21 @@ fi
 
 LIBXP=
 if test "${USE_X_TOOLKIT}" = "MOTIF"; then
-  AC_CACHE_CHECK(for Motif version 2.1, emacs_cv_motif_version_2_1,
+  # OpenMotif may be installed in such a way on some GNU/Linux systems.
+  if test -d /usr/include/openmotif; then
+    CPPFLAGS="-I/usr/include/openmotif $CPPFLAGS"
+    emacs_cv_openmotif=yes
+    case "$canonical" in
+      x86_64-*-linux-gnu* | powerpc64-*-linux-gnu* | sparc64-*-linux-gnu*)
+      test -d /usr/lib64/openmotif && LDFLAGS="-L/usr/lib64/openmotif $LDFLAGS"
+      ;;
+      *)
+      test -d /usr/lib/openmotif && LDFLAGS="-L/usr/lib/openmotif $LDFLAGS"
+    esac
+  else
+    emacs_cv_openmotif=no
+  fi
+  AC_CACHE_CHECK(for (Open)Motif version 2.1, emacs_cv_motif_version_2_1,
   [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <Xm/Xm.h>]],
     [[#if XmVERSION > 2 || (XmVERSION == 2 && XmREVISION >= 1)
 int x = 5;
@@ -2215,6 +2224,9 @@ Motif version prior to 2.1.
     emacs_cv_motif_version_2_1=yes, emacs_cv_motif_version_2_1=no)])
   if test $emacs_cv_motif_version_2_1 = yes; then
     AC_CHECK_LIB(Xp, XpCreateContext, LIBXP=-lXp)
+    if test x$emacs_cv_openmotif = xyes; then
+      REAL_CPPFLAGS="-I/usr/include/openmotif $REAL_CPPFLAGS"
+    fi
   else
     AC_CACHE_CHECK(for LessTif where some systems put it, emacs_cv_lesstif,
     # We put this in CFLAGS temporarily to precede other -I options
@@ -2774,13 +2786,12 @@ if test $opsys != unixware; then
   AC_CHECK_FUNCS(getwd)
 fi
 
-dnl FIXME Fragile: see above.
 ## Eric Backus <ericb@lsid.hp.com> says, HP-UX 9.x on HP 700 machines
 ## has a broken `rint' in some library versions including math library
 ## version number A.09.05.
 ## You can fix the math library by installing patch number PHSS_4630.
 ## But we can fix it more reliably for Emacs by just not using rint.
-## We also skip HAVE_RANDOM - see comments in src/s/hpux10-20.h.
+## We also skip HAVE_RANDOM - see comments in src/conf_post.h.
 case $opsys in
    hpux*) : ;;
    *) AC_CHECK_FUNCS(random rint) ;;
@@ -3174,6 +3185,10 @@ dnl                                and macros for terminal control.])
 dnl    AC_DEFINE(HAVE_TCATTR, 1, [Define to 1 if you have tcgetattr and tcsetattr.])
 dnl fi
 
+dnl Turned on June 1996 supposing nobody will mind it.
+AC_DEFINE(AMPERSAND_FULL_NAME, 1, [Define to use the convention that &
+  in the full name stands for the login id.])
+
 dnl Every platform that uses configure (ie every non-MS platform)
 dnl supports this.  There is a create-lockfiles option you can
 dnl customize if you do not want the lock files to be written.
@@ -3181,6 +3196,12 @@ dnl So it is not clear that this #define still needs to exist.
 AC_DEFINE(CLASH_DETECTION, 1, [Define if you want lock files to be written,
   so that Emacs can tell instantly when you try to modify a file that
   someone else has modified in his/her Emacs.])
+
+AH_TEMPLATE(FLOAT_CHECK_DOMAIN, [Define if the float library doesn't
+  handle errors by either setting errno, or signaling SIGFPE/SIGILL.])
+
+AH_TEMPLATE(HAVE_INVERSE_HYPERBOLIC, [Define if you have the functions
+  acosh, asinh, and atanh.])
 
 dnl Everybody supports this, except MS.
 dnl Seems like the kind of thing we should be testing for, though.
@@ -3192,6 +3213,32 @@ dnl Seems like the kind of thing we should be testing for, though.
 dnl Compare with HAVE_INET_SOCKETS (which is unused...) above.
 AC_DEFINE(HAVE_SOCKETS, 1, [Define if the system supports
   4.2-compatible sockets.])
+
+AH_TEMPLATE(INTERNAL_TERMINAL, [This is substituted when $TERM is "internal".])
+
+AC_DEFINE(NULL_DEVICE, ["/dev/null"], [Name of the file to open to get
+  a null file, or a data sink.])
+
+AC_DEFINE(SEPCHAR, [':'], [Character that separates PATH elements.])
+
+dnl Everybody supports this, except MS-DOS.
+AC_DEFINE(subprocesses, 1, [Define to enable asynchronous subprocesses.])
+
+AC_DEFINE(USER_FULL_NAME, [pw->pw_gecos], [How to get a user's full name.])
+
+
+dnl Only used on MS platforms.
+AH_TEMPLATE(DEVICE_SEP, [Character that separates a device in a file name.])
+
+AC_DEFINE(IS_DEVICE_SEP(_c_), 0,
+  [Returns true if character is a device separator.])
+
+AC_DEFINE(IS_DIRECTORY_SEP(_c_), [((_c_) == DIRECTORY_SEP)],
+  [Returns true if character is a directory separator.])
+
+dnl On MS, this also accepts IS_DEVICE_SEP.
+AC_DEFINE(IS_ANY_SEP(_c_), [(IS_DIRECTORY_SEP (_c_))],
+  [Returns true if character is any form of separator.])
 
 
 AH_TEMPLATE(NO_EDITRES, [Define if XEditRes should not be used.])
@@ -3706,6 +3753,23 @@ case $opsys in
     ;;
 esac
 
+dnl Used in process.c.
+case $opsys in
+  irix6-5 | sol2* | unixware )
+    dnl It is possible to receive SIGCHLD when there are no children
+    dnl waiting, because a previous waitsys(2) cleaned up the carcass
+    dnl of child without clearing the SIGCHLD pending info.  So, use a
+    dnl non-blocking wait3 instead, which maps to waitpid(2) in SysVr4.
+    AC_DEFINE(wait3(status, options, rusage),
+      [waitpid ((pid_t) -1, (status), (options))],
+      [Some platforms redefine this.])
+    dnl FIXME this makes no sense, because WRETCODE is only used in
+    dnl process.c, which includes syswait.h aftet config.h, and the
+    dnl former unconditionally redefines WRETCODE.
+    AC_DEFINE(WRETCODE(w), [(w >> 8)], [Some platforms redefine this.])
+    ;;
+esac
+
 
 case $opsys in
   hpux* | sol2* )
@@ -3729,10 +3793,10 @@ AH_TEMPLATE(BSD4_2, [Define if the system is compatible with BSD 4.2.])
 AH_TEMPLATE(BSD_SYSTEM, [Define if the system is compatible with BSD 4.2.])
 AH_TEMPLATE(USG, [Define if the system is compatible with System III.])
 AH_TEMPLATE(USG5, [Define if the system is compatible with System V.])
+AH_TEMPLATE(USG5_4, [Define if the system is compatible with System V Release 4.])
 
 case $opsys in
   aix4-2)
-    opsysfile=
     AC_DEFINE(USG, [])
     AC_DEFINE(USG5, [])
     dnl This symbol should be defined on AIX Version 3  ???????
@@ -3744,7 +3808,6 @@ case $opsys in
     ;;
 
   cygwin)
-    opsysfile=
     AC_DEFINE(CYGWIN, 1, [Define if the system is Cygwin.])
     ;;
 
@@ -3760,7 +3823,6 @@ case $opsys in
     ;;
 
   freebsd)
-    opsysfile=
     AC_DEFINE(BSD4_2, [])
     dnl Hack to avoid calling AC_PREPROC_IFELSE multiple times.
     dnl Would not be needed with autoconf >= 2.67, where the
@@ -3778,7 +3840,6 @@ case $opsys in
     ;;
 
   gnu-linux | gnu-kfreebsd )
-    opsysfile=
     AC_DEFINE(USG, [])
     AC_DEFINE(GNU_LINUX, [], [Define if ths system is compatible with GNU/Linux.])
     ;;
@@ -3792,20 +3853,21 @@ case $opsys in
   irix6-5)
     AC_DEFINE(USG, [])
     AC_DEFINE(USG5, [])
+    AC_DEFINE(USG5_4, [])
     AC_DEFINE(IRIX6_5, [], [Define if the system is IRIX.])
     ;;
 
   sol2*)
-    opsysfile="s/usg5-4-common.h"
     AC_DEFINE(USG, [])
     AC_DEFINE(USG5, [])
+    AC_DEFINE(USG5_4, [])
     AC_DEFINE(SOLARIS2, [], [Define if the system is Solaris.])
     ;;
 
   unixware)
-    opsysfile="s/usg5-4-common.h"
     AC_DEFINE(USG, [])
     AC_DEFINE(USG5, [])
+    AC_DEFINE(USG5_4, [])
     ;;
 esac
 
@@ -3821,8 +3883,6 @@ case $opsys in
       using GTK.])
     ;;
 
-  gnu) opsysfile= ;;
-
   hpux11)
     dnl See comments in sysdep.c:sys_signal.
     dnl SA_RESTART resets the timeout of `select' on hpux11.
@@ -3834,8 +3894,6 @@ case $opsys in
     AC_DEFINE(USG_SUBTTY_WORKS, 1, [Define for USG systems where it
       works to open a pty's tty in the parent process, then close and
       reopen it in the child.])
-
-    opsysfile="s/hpux10-20.h"
     ;;
 
   irix6-5)
@@ -3845,12 +3903,9 @@ case $opsys in
       should not call setpgrp.])
     ;;
 
-  netbsd | openbsd ) opsysfile= ;;
-
   sol2-10)
     AC_DEFINE(_STRUCTURED_PROC, 1, [Needed for system_process_attributes
       on Solaris.])
-    opsysfile="s/sol2-6.h"
     ;;
 esac
 
@@ -3904,12 +3959,6 @@ AC_SUBST(GNUSTEP_CFLAGS)
 AC_SUBST(CFLAGS)
 ## Used in lwlib/Makefile.in.
 AC_SUBST(X_TOOLKIT_TYPE)
-if test -n "${opsysfile}"; then
-  S_FILE="\$(srcdir)/${opsysfile}"
-else
-  S_FILE=
-fi
-AC_SUBST(S_FILE)
 AC_SUBST(ns_appdir)
 AC_SUBST(ns_appbindir)
 AC_SUBST(ns_appresdir)
@@ -3921,10 +3970,8 @@ AC_DEFINE_UNQUOTED(EMACS_CONFIGURATION,  "${canonical}",
 		   [Define to the canonical Emacs configuration name.])
 AC_DEFINE_UNQUOTED(EMACS_CONFIG_OPTIONS, "${ac_configure_args}",
 		   [Define to the options passed to configure.])
-if test -n "$opsysfile"; then
-  AC_DEFINE_UNQUOTED(config_opsysfile, "${opsysfile}",
-		     [Define to the used os dependent file.])
-fi
+AH_TEMPLATE(config_opsysfile, [Some platforms that do not use configure
+  define this to include extra configuration information.])
 
 XMENU_OBJ=
 XOBJ=
@@ -4286,7 +4333,6 @@ echo "
 Configured for \`${canonical}'.
 
   Where should the build process find the source code?    ${srcdir}
-  What operating system file should Emacs use?            ${opsysfile:-none}
   What compiler should emacs be built with?               ${CC} ${CFLAGS}
   Should Emacs use the GNU version of malloc?             ${GNU_MALLOC}${GNU_MALLOC_reason}
   Should Emacs use a relocating allocator for buffers?    ${REL_ALLOC}

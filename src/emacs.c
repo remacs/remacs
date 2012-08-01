@@ -2228,9 +2228,6 @@ synchronize_system_messages_locale (void)
 }
 #endif /* HAVE_SETLOCALE */
 
-#ifndef SEPCHAR
-#define SEPCHAR ':'
-#endif
 
 Lisp_Object
 decode_env_path (const char *evarname, const char *defalt)

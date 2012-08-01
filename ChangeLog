@@ -1,3 +1,58 @@
+2012-08-01  Ulrich Müller  <ulm@gentoo.org>
+
+	* configure.ac (LIB_STANDARD, START_FILES) [FreeBSD]:
+	Don't include crtbegin.o and crtend.o.  (Bug#12047)
+
+2012-08-01  Glenn Morris  <rgm@gnu.org>
+
+	* configure.ac (FLOAT_CHECK_DOMAIN, HAVE_INVERSE_HYPERBOLIC)
+	(INTERNAL_TERMINAL): New.
+
+	* configure.ac (DEVICE_SEP, IS_DEVICE_SEP, IS_DIRECTORY_SEP)
+	(IS_ANY_SEP): Move here from src/lisp.h.
+
+2012-08-01  Juanma Barranquero  <lekktu@gmail.com>
+
+	* lib/makefile.w32-in (CONFIG_H): Update dependencies.
+	(CONF_POST_H): New macro.
+
+2012-07-31  Glenn Morris  <rgm@gnu.org>
+
+	* configure.ac (S_FILE): Remove output variable.
+
+	* configure.ac (opsysfile): Use AH_TEMPLATE.  Doc fix.
+
+	* configure.ac (NULL_DEVICE, SEPCHAR, USER_FULL_NAME):
+	Move here from src.
+
+	* configure.ac (AMPERSAND_FULL_NAME, subprocesses):
+	Move here from conf_post.h.
+
+2012-07-31  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	Improve OpenMotif detection on GNU/Linux systems.
+	* configure.ac (MOTIF): Check for /usr/include/openmotif
+	and /usr/(lib|lib64)/openmotif if --with-x-toolkit=motif.
+
+2012-07-31  Andreas Schwab  <schwab@linux-m68k.org>
+
+	* Makefile.in (install-arch-indep): Avoid eval.
+
+2012-07-31  Glenn Morris  <rgm@gnu.org>
+
+	* configure.ac (opsysfile, S_FILE): Now they are always empty.
+
+	* configure.ac (opsysfile): Forgot to set it to empty on sol2-10
+	when removing src/s/sol2-6.h yesterday.
+
+	* configure.ac (USG5_4): Reintroduce this.
+	(opsysfile): Set to empty on irix6-5, sol2*, and unixware.
+
+	* configure.ac (wait3, WRETCODE): Move here from src/s/usg5-4-common.h.
+
+	* configure.ac (opsysfile): Set to empty on hpux*, darwin;
+	and to s/usg5-4-common.h on irix6-5.
+
 2012-07-30  Glenn Morris  <rgm@gnu.org>
 
 	* configure.ac (AH_BOTTOM): Use an include file, so that the

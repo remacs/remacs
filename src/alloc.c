@@ -2686,7 +2686,7 @@ free_cons (struct Lisp_Cons *ptr)
 {
   ptr->u.chain = cons_free_list;
 #if GC_MARK_STACK
-  ptr->car = Vdead;
+  CVAR (ptr, car) = Vdead;
 #endif
   cons_free_list = ptr;
   consing_since_gc -= sizeof *ptr;
@@ -3518,11 +3518,11 @@ Its value and function definition are void, and its property list is nil.  */)
   MALLOC_UNBLOCK_INPUT;
 
   p = XSYMBOL (val);
-  p->xname = name;
-  p->plist = Qnil;
+  SVAR (p, xname) = name;
+  SVAR (p, plist) = Qnil;
   p->redirect = SYMBOL_PLAINVAL;
   SET_SYMBOL_VAL (p, Qunbound);
-  p->function = Qunbound;
+  SVAR (p, function) = Qunbound;
   p->next = NULL;
   p->gcmarkbit = 0;
   p->interned = SYMBOL_UNINTERNED;
@@ -4295,7 +4295,7 @@ live_cons_p (struct mem_node *m, void *p)
 	      && offset < (CONS_BLOCK_SIZE * sizeof b->conses[0])
 	      && (b != cons_block
 		  || offset / sizeof b->conses[0] < cons_block_index)
-	      && !EQ (((struct Lisp_Cons *) p)->car, Vdead));
+	      && !EQ (CVAR ((struct Lisp_Cons *) p, car), Vdead));
     }
   else
     return 0;
@@ -4321,7 +4321,7 @@ live_symbol_p (struct mem_node *m, void *p)
 	      && offset < (SYMBOL_BLOCK_SIZE * sizeof b->symbols[0])
 	      && (b != symbol_block
 		  || offset / sizeof b->symbols[0] < symbol_block_index)
-	      && !EQ (((struct Lisp_Symbol *) p)->function, Vdead));
+	      && !EQ (SVAR (((struct Lisp_Symbol *)p), function), Vdead));
     }
   else
     return 0;
@@ -4424,7 +4424,7 @@ live_buffer_p (struct mem_node *m, void *p)
      must not have been killed.  */
   return (m->type == MEM_TYPE_BUFFER
 	  && p == m->start
-	  && !NILP (((struct buffer *) p)->BUFFER_INTERNAL_FIELD (name)));
+	  && !NILP (((struct buffer *) p)->INTERNAL_FIELD (name)));
 }
 
 #endif /* GC_MARK_STACK || defined GC_MALLOC_CHECK */
@@ -5549,10 +5549,10 @@ See Info node `(elisp)Garbage Collection'.  */)
 	 turned off in that buffer.  Calling truncate_undo_list on
 	 Qt tends to return NULL, which effectively turns undo back on.
 	 So don't call truncate_undo_list if undo_list is Qt.  */
-      if (! EQ (nextb->BUFFER_INTERNAL_FIELD (undo_list), Qt))
+      if (! EQ (nextb->INTERNAL_FIELD (undo_list), Qt))
 	{
 	  Lisp_Object tail, prev;
-	  tail = nextb->BUFFER_INTERNAL_FIELD (undo_list);
+	  tail = nextb->INTERNAL_FIELD (undo_list);
 	  prev = Qnil;
 	  while (CONSP (tail))
 	    {
@@ -5561,7 +5561,7 @@ See Info node `(elisp)Garbage Collection'.  */)
 		  && !XMARKER (XCAR (XCAR (tail)))->gcmarkbit)
 		{
 		  if (NILP (prev))
-		    nextb->BUFFER_INTERNAL_FIELD (undo_list) = tail = XCDR (tail);
+		    nextb->INTERNAL_FIELD (undo_list) = tail = XCDR (tail);
 		  else
 		    {
 		      tail = XCDR (tail);
@@ -5577,7 +5577,7 @@ See Info node `(elisp)Garbage Collection'.  */)
 	}
       /* Now that we have stripped the elements that need not be in the
 	 undo_list any more, we can finally mark the list.  */
-      mark_object (nextb->BUFFER_INTERNAL_FIELD (undo_list));
+      mark_object (nextb->INTERNAL_FIELD (undo_list));
     }
 
   gc_sweep ();
@@ -5837,9 +5837,9 @@ mark_overlay (struct Lisp_Overlay *ptr)
   for (; ptr && !ptr->gcmarkbit; ptr = ptr->next)
     {
       ptr->gcmarkbit = 1;
-      mark_object (ptr->start);
-      mark_object (ptr->end);
-      mark_object (ptr->plist);
+      mark_object (MVAR (ptr, start));
+      mark_object (MVAR (ptr, end));
+      mark_object (MVAR (ptr, plist));
     }
 }
 
@@ -6020,7 +6020,8 @@ mark_object (Lisp_Object arg)
 	      /* Mark glyphs for leaf windows.  Marking window
 		 matrices is sufficient because frame matrices
 		 use the same glyph memory.  */
-	      if (NILP (w->hchild) && NILP (w->vchild) && w->current_matrix)
+	      if (NILP (WVAR (w, hchild)) && NILP (WVAR (w, vchild))
+		  && w->current_matrix)
 		{
 		  mark_glyph_matrix (w->current_matrix);
 		  mark_glyph_matrix (w->desired_matrix);
@@ -6072,8 +6073,8 @@ mark_object (Lisp_Object arg)
 	  break;
 	CHECK_ALLOCATED_AND_LIVE (live_symbol_p);
 	ptr->gcmarkbit = 1;
-	mark_object (ptr->function);
-	mark_object (ptr->plist);
+	mark_object (SVAR (ptr, function));
+	mark_object (SVAR (ptr, plist));
 	switch (ptr->redirect)
 	  {
 	  case SYMBOL_PLAINVAL: mark_object (SYMBOL_VAL (ptr)); break;
@@ -6104,9 +6105,9 @@ mark_object (Lisp_Object arg)
 	    break;
 	  default: abort ();
 	  }
-	if (!PURE_POINTER_P (XSTRING (ptr->xname)))
-	  MARK_STRING (XSTRING (ptr->xname));
-	MARK_INTERVAL_TREE (STRING_INTERVALS (ptr->xname));
+	if (!PURE_POINTER_P (XSTRING (SVAR (ptr, xname))))
+	  MARK_STRING (XSTRING (SVAR (ptr, xname)));
+	MARK_INTERVAL_TREE (STRING_INTERVALS (SVAR (ptr, xname)));
 
 	ptr = ptr->next;
 	if (ptr)
@@ -6168,14 +6169,14 @@ mark_object (Lisp_Object arg)
 	CHECK_ALLOCATED_AND_LIVE (live_cons_p);
 	CONS_MARK (ptr);
 	/* If the cdr is nil, avoid recursion for the car.  */
-	if (EQ (ptr->u.cdr, Qnil))
+	if (EQ (CVAR (ptr, u.cdr), Qnil))
 	  {
-	    obj = ptr->car;
+	    obj = CVAR (ptr, car);
 	    cdr_count = 0;
 	    goto loop;
 	  }
-	mark_object (ptr->car);
-	obj = ptr->u.cdr;
+	mark_object (CVAR (ptr, car));
+	obj = CVAR (ptr, u.cdr);
 	cdr_count++;
 	if (cdr_count == mark_object_loop_halt)
 	  abort ();
@@ -6324,7 +6325,7 @@ gc_sweep (void)
 			cblk->conses[pos].u.chain = cons_free_list;
 			cons_free_list = &cblk->conses[pos];
 #if GC_MARK_STACK
-			cons_free_list->car = Vdead;
+			CVAR (cons_free_list, car) = Vdead;
 #endif
 		      }
 		    else
@@ -6472,7 +6473,7 @@ gc_sweep (void)
 	    /* Check if the symbol was created during loadup.  In such a case
 	       it might be pointed to by pure bytecode which we don't trace,
 	       so we conservatively assume that it is live.  */
-	    int pure_p = PURE_POINTER_P (XSTRING (sym->s.xname));
+	    int pure_p = PURE_POINTER_P (XSTRING (sym->s.INTERNAL_FIELD (xname)));
 
 	    if (!sym->s.gcmarkbit && !pure_p)
 	      {
@@ -6481,7 +6482,7 @@ gc_sweep (void)
 		sym->s.next = symbol_free_list;
 		symbol_free_list = &sym->s;
 #if GC_MARK_STACK
-		symbol_free_list->function = Vdead;
+		SVAR (symbol_free_list, function) = Vdead;
 #endif
 		++this_free;
 	      }
@@ -6489,7 +6490,7 @@ gc_sweep (void)
 	      {
 		++num_used;
 		if (!pure_p)
-		  UNMARK_STRING (XSTRING (sym->s.xname));
+		  UNMARK_STRING (XSTRING (sym->s.INTERNAL_FIELD (xname)));
 		sym->s.gcmarkbit = 0;
 	      }
 	  }
@@ -6674,10 +6675,10 @@ which_symbols (Lisp_Object obj, EMACS_INT find_max)
 	       XSETSYMBOL (tem, sym);
 	       val = find_symbol_value (tem);
 	       if (EQ (val, obj)
-		   || EQ (sym->function, obj)
-		   || (!NILP (sym->function)
-		       && COMPILEDP (sym->function)
-		       && EQ (AREF (sym->function, COMPILED_BYTECODE), obj))
+		   || EQ (SVAR (sym, function), obj)
+		   || (!NILP (SVAR (sym, function))
+		       && COMPILEDP (SVAR (sym, function))
+		       && EQ (AREF (SVAR (sym, function), COMPILED_BYTECODE), obj))
 		   || (!NILP (val)
 		       && COMPILEDP (val)
 		       && EQ (AREF (val, COMPILED_BYTECODE), obj)))

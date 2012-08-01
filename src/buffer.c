@@ -191,9 +191,9 @@ followed by the rest of the buffers.  */)
       Lisp_Object args[3];
 
       CHECK_FRAME (frame);
-      framelist = Fcopy_sequence (XFRAME (frame)->buffer_list);
+      framelist = Fcopy_sequence (FVAR (XFRAME (frame), buffer_list));
       prevlist = Fnreverse (Fcopy_sequence
-			    (XFRAME (frame)->buried_buffer_list));
+			    (FVAR (XFRAME (frame), buried_buffer_list)));
 
       /* Remove from GENERAL any buffer that duplicates one in
          FRAMELIST or PREVLIST.  */
@@ -417,17 +417,17 @@ copy_overlays (struct buffer *b, struct Lisp_Overlay *list)
       Lisp_Object overlay, start, end;
       struct Lisp_Marker *m;
 
-      eassert (MARKERP (list->start));
-      m = XMARKER (list->start);
+      eassert (MARKERP (MVAR (list, start)));
+      m = XMARKER (MVAR (list, start));
       start = build_marker (b, m->charpos, m->bytepos);
       XMARKER (start)->insertion_type = m->insertion_type;
 
-      eassert (MARKERP (list->end));
-      m = XMARKER (list->end);
+      eassert (MARKERP (MVAR (list, end)));
+      m = XMARKER (MVAR (list, end));
       end = build_marker (b, m->charpos, m->bytepos);
       XMARKER (end)->insertion_type = m->insertion_type;
 
-      overlay = build_overlay (start, end, Fcopy_sequence (list->plist));
+      overlay = build_overlay (start, end, Fcopy_sequence (MVAR (list, plist)));
       if (tail)
 	tail = tail->next = XOVERLAY (overlay);
       else
@@ -657,10 +657,11 @@ CLONE nil means the indirect buffer's state is reset to default values.  */)
 static void
 drop_overlay (struct buffer *b, struct Lisp_Overlay *ov)
 {
-  eassert (b == XBUFFER (Fmarker_buffer (ov->start)));
-  modify_overlay (b, marker_position (ov->start), marker_position (ov->end));
-  Fset_marker (ov->start, Qnil, Qnil);
-  Fset_marker (ov->end, Qnil, Qnil);
+  eassert (b == XBUFFER (Fmarker_buffer (MVAR (ov, start))));
+  modify_overlay (b, marker_position (MVAR (ov, start)),
+		  marker_position (MVAR (ov, end)));
+  Fset_marker (MVAR (ov, start), Qnil, Qnil);
+  Fset_marker (MVAR (ov, end), Qnil, Qnil);
 
 }
 
@@ -1324,7 +1325,7 @@ exists, return the buffer `*scratch*' (creating it if necessary).  */)
 
   pred = frame_buffer_predicate (frame);
   /* Consider buffers that have been seen in the frame first.  */
-  tail = XFRAME (frame)->buffer_list;
+  tail = FVAR (XFRAME (frame), buffer_list);
   for (; CONSP (tail); tail = XCDR (tail))
     {
       buf = XCAR (tail);
@@ -1446,7 +1447,7 @@ compact_buffer (struct buffer *buffer)
 
   /* Skip dead buffers, indirect buffers and buffers
      which aren't changed since last compaction.  */
-  if (!NILP (buffer->BUFFER_INTERNAL_FIELD (name))
+  if (!NILP (buffer->INTERNAL_FIELD (name))
       && (buffer->base_buffer == NULL)
       && (buffer->text->compact != buffer->text->modiff))
     {
@@ -1454,7 +1455,7 @@ compact_buffer (struct buffer *buffer)
 	 turned off in that buffer.  Calling truncate_undo_list on
 	 Qt tends to return NULL, which effectively turns undo back on.
 	 So don't call truncate_undo_list if undo_list is Qt.  */
-      if (!EQ (buffer->BUFFER_INTERNAL_FIELD (undo_list), Qt))
+      if (!EQ (buffer->INTERNAL_FIELD (undo_list), Qt))
 	truncate_undo_list (buffer);
 
       /* Shrink buffer gaps.  */
@@ -1557,7 +1558,7 @@ cleaning up all windows currently displaying the buffer to be killed. */)
      since anything can happen within do_yes_or_no_p.  */
 
   /* Don't kill the minibuffer now current.  */
-  if (EQ (buffer, XWINDOW (minibuf_window)->buffer))
+  if (EQ (buffer, WVAR (XWINDOW (minibuf_window), buffer)))
     return Qnil;
 
   /* When we kill an ordinary buffer which shares it's buffer text
@@ -1608,7 +1609,7 @@ cleaning up all windows currently displaying the buffer to be killed. */)
   /* If the buffer now current is shown in the minibuffer and our buffer
      is the sole other buffer give up.  */
   XSETBUFFER (tem, current_buffer);
-  if (EQ (tem, XWINDOW (minibuf_window)->buffer)
+  if (EQ (tem, WVAR (XWINDOW (minibuf_window), buffer))
       && EQ (buffer, Fother_buffer (buffer, Qnil, Qnil)))
     return Qnil;
 
@@ -1764,8 +1765,8 @@ record_buffer (Lisp_Object buffer)
   Vinhibit_quit = tem;
 
   /* Update buffer list of selected frame.  */
-  f->buffer_list = Fcons (buffer, Fdelq (buffer, f->buffer_list));
-  f->buried_buffer_list = Fdelq (buffer, f->buried_buffer_list);
+  FVAR (f, buffer_list) = Fcons (buffer, Fdelq (buffer, FVAR (f, buffer_list)));
+  FVAR (f, buried_buffer_list) = Fdelq (buffer, FVAR (f, buried_buffer_list));
 
   /* Run buffer-list-update-hook.  */
   if (!NILP (Vrun_hooks))
@@ -1802,8 +1803,9 @@ DEFUN ("bury-buffer-internal", Fbury_buffer_internal, Sbury_buffer_internal,
   Vinhibit_quit = tem;
 
   /* Update buffer lists of selected frame.  */
-  f->buffer_list = Fdelq (buffer, f->buffer_list);
-  f->buried_buffer_list = Fcons (buffer, Fdelq (buffer, f->buried_buffer_list));
+  FVAR (f, buffer_list) = Fdelq (buffer, FVAR (f, buffer_list));
+  FVAR (f, buried_buffer_list)
+    = Fcons (buffer, Fdelq (buffer, FVAR (f, buried_buffer_list)));
 
   /* Run buffer-list-update-hook.  */
   if (!NILP (Vrun_hooks))
@@ -2189,12 +2191,13 @@ DEFUN ("buffer-swap-text", Fbuffer_swap_text, Sbuffer_swap_text,
     while (NILP (Fmemq (w, ws)))
       {
 	ws = Fcons (w, ws);
-	if (MARKERP (XWINDOW (w)->pointm)
-	    && (EQ (XWINDOW (w)->buffer, buf1)
-		|| EQ (XWINDOW (w)->buffer, buf2)))
-	  Fset_marker (XWINDOW (w)->pointm,
-		       make_number (BUF_BEGV (XBUFFER (XWINDOW (w)->buffer))),
-		       XWINDOW (w)->buffer);
+	if (MARKERP (WVAR (XWINDOW (w), pointm))
+	    && (EQ (WVAR (XWINDOW (w), buffer), buf1)
+		|| EQ (WVAR (XWINDOW (w), buffer), buf2)))
+	  Fset_marker (WVAR (XWINDOW (w), pointm),
+		       make_number
+		       (BUF_BEGV (XBUFFER (WVAR (XWINDOW (w), buffer)))),
+		       WVAR (XWINDOW (w), buffer));
 	w = Fnext_window (w, Qt, Qt);
       }
   }
@@ -3670,7 +3673,7 @@ modify_overlay (struct buffer *buf, ptrdiff_t start, ptrdiff_t end)
 
   /* If this is a buffer not in the selected window,
      we must do other windows.  */
-  if (buf != XBUFFER (XWINDOW (selected_window)->buffer))
+  if (buf != XBUFFER (WVAR (XWINDOW (selected_window), buffer)))
     windows_or_buffers_changed = 1;
   /* If multiple windows show this buffer, we must do other windows.  */
   else if (buffer_shared > 1)
@@ -3884,7 +3887,7 @@ OVERLAY.  */)
 {
   CHECK_OVERLAY (overlay);
 
-  return Fcopy_sequence (XOVERLAY (overlay)->plist);
+  return Fcopy_sequence (MVAR (XOVERLAY (overlay), plist));
 }
 
 
@@ -4060,7 +4063,7 @@ DEFUN ("overlay-get", Foverlay_get, Soverlay_get, 2, 2, 0,
   (Lisp_Object overlay, Lisp_Object prop)
 {
   CHECK_OVERLAY (overlay);
-  return lookup_char_property (XOVERLAY (overlay)->plist, prop, 0);
+  return lookup_char_property (MVAR (XOVERLAY (overlay), plist), prop, 0);
 }
 
 DEFUN ("overlay-put", Foverlay_put, Soverlay_put, 3, 3, 0,
@@ -4075,7 +4078,7 @@ VALUE will be returned.*/)
 
   buffer = Fmarker_buffer (OVERLAY_START (overlay));
 
-  for (tail = XOVERLAY (overlay)->plist;
+  for (tail = MVAR (XOVERLAY (overlay), plist);
        CONSP (tail) && CONSP (XCDR (tail));
        tail = XCDR (XCDR (tail)))
     if (EQ (XCAR (tail), prop))
@@ -4086,8 +4089,8 @@ VALUE will be returned.*/)
       }
   /* It wasn't in the list, so add it to the front.  */
   changed = !NILP (value);
-  XOVERLAY (overlay)->plist
-    = Fcons (prop, Fcons (value, XOVERLAY (overlay)->plist));
+  MVAR (XOVERLAY (overlay), plist)
+    = Fcons (prop, Fcons (value, MVAR (XOVERLAY (overlay), plist)));
  found:
   if (! NILP (buffer))
     {

@@ -665,7 +665,7 @@ x_set_tool_bar_position (struct frame *f,
 
 #ifdef USE_GTK
   if (xg_change_toolbar_position (f, new_value))
-    f->tool_bar_position = new_value;
+    FVAR (f, tool_bar_position) = new_value;
 #endif
 }
 
@@ -1123,9 +1123,9 @@ x_set_icon_type (struct frame *f, Lisp_Object arg, Lisp_Object oldval)
   BLOCK_INPUT;
   if (NILP (arg))
     result = x_text_icon (f,
-			  SSDATA ((!NILP (f->icon_name)
-				   ? f->icon_name
-				   : f->name)));
+			  SSDATA ((!NILP (FVAR (f, icon_name))
+				   ? FVAR (f, icon_name)
+				   : FVAR (f, name))));
   else
     result = x_bitmap_icon (f, arg);
 
@@ -1152,7 +1152,7 @@ x_set_icon_name (struct frame *f, Lisp_Object arg, Lisp_Object oldval)
   else if (!NILP (arg) || NILP (oldval))
     return;
 
-  f->icon_name = arg;
+  FVAR (f, icon_name) = arg;
 
   if (f->output_data.x->icon_bitmap != 0)
     return;
@@ -1160,11 +1160,11 @@ x_set_icon_name (struct frame *f, Lisp_Object arg, Lisp_Object oldval)
   BLOCK_INPUT;
 
   result = x_text_icon (f,
-			SSDATA ((!NILP (f->icon_name)
-				 ? f->icon_name
-				 : !NILP (f->title)
-				 ? f->title
-				 : f->name)));
+			SSDATA ((!NILP (FVAR (f, icon_name))
+				 ? FVAR (f, icon_name)
+				 : !NILP (FVAR (f, title))
+				 ? FVAR (f, title)
+				 : FVAR (f, name))));
 
   if (result)
     {
@@ -1352,8 +1352,8 @@ x_set_tool_bar_lines (struct frame *f, Lisp_Object value, Lisp_Object oldval)
           UNBLOCK_INPUT;
         }
 
-      if (WINDOWP (f->tool_bar_window))
-	clear_glyph_matrix (XWINDOW (f->tool_bar_window)->current_matrix);
+      if (WINDOWP (FVAR (f, tool_bar_window)))
+	clear_glyph_matrix (XWINDOW (FVAR (f, tool_bar_window))->current_matrix);
     }
 
     run_window_configuration_change_hook (f);
@@ -1548,7 +1548,7 @@ x_set_name_internal (FRAME_PTR f, Lisp_Object name)
 	if (text.nitems != bytes)
 	  error ("Window name too large");
 
-	if (!STRINGP (f->icon_name))
+	if (!STRINGP (FVAR (f, icon_name)))
 	  {
 	    icon = text;
 	    encoded_icon_name = encoded_name;
@@ -1556,7 +1556,7 @@ x_set_name_internal (FRAME_PTR f, Lisp_Object name)
 	else
 	  {
 	    /* See the above comment "Note: Encoding strategy".  */
-	    icon.value = x_encode_text (f->icon_name, coding_system, 0,
+	    icon.value = x_encode_text (FVAR (f, icon_name), coding_system, 0,
 					&bytes, &stringp, &do_free_icon_value);
 	    icon.encoding = (stringp ? XA_STRING
 			     : FRAME_X_DISPLAY_INFO (f)->Xatom_COMPOUND_TEXT);
@@ -1565,7 +1565,7 @@ x_set_name_internal (FRAME_PTR f, Lisp_Object name)
 	    if (icon.nitems != bytes)
 	      error ("Icon name too large");
 
-	    encoded_icon_name = ENCODE_UTF_8 (f->icon_name);
+	    encoded_icon_name = ENCODE_UTF_8 (FVAR (f, icon_name));
 	  }
 
 #ifdef USE_GTK
@@ -1632,7 +1632,7 @@ x_set_name (struct frame *f, Lisp_Object name, int explicit)
       /* Check for no change needed in this very common case
 	 before we do any consing.  */
       if (!strcmp (FRAME_X_DISPLAY_INFO (f)->x_id_name,
-		   SSDATA (f->name)))
+		   SSDATA (FVAR (f, name))))
 	return;
       name = build_string (FRAME_X_DISPLAY_INFO (f)->x_id_name);
     }
@@ -1640,15 +1640,15 @@ x_set_name (struct frame *f, Lisp_Object name, int explicit)
     CHECK_STRING (name);
 
   /* Don't change the name if it's already NAME.  */
-  if (! NILP (Fstring_equal (name, f->name)))
+  if (! NILP (Fstring_equal (name, FVAR (f, name))))
     return;
 
-  f->name = name;
+  FVAR (f, name) = name;
 
   /* For setting the frame title, the title parameter should override
      the name parameter.  */
-  if (! NILP (f->title))
-    name = f->title;
+  if (! NILP (FVAR (f, title)))
+    name = FVAR (f, title);
 
   x_set_name_internal (f, name);
 }
@@ -1678,15 +1678,15 @@ static void
 x_set_title (struct frame *f, Lisp_Object name, Lisp_Object old_name)
 {
   /* Don't change the title if it's already NAME.  */
-  if (EQ (name, f->title))
+  if (EQ (name, FVAR (f, title)))
     return;
 
   update_mode_lines = 1;
 
-  f->title = name;
+  FVAR (f, title) = name;
 
   if (NILP (name))
-    name = f->name;
+    name = FVAR (f, name);
   else
     CHECK_STRING (name);
 
@@ -2260,7 +2260,7 @@ free_frame_xic (struct frame *f)
 void
 xic_set_preeditarea (struct window *w, int x, int y)
 {
-  struct frame *f = XFRAME (w->frame);
+  struct frame *f = XFRAME (WVAR (w, frame));
   XVaNestedList attr;
   XPoint spot;
 
@@ -2571,8 +2571,8 @@ x_window (struct frame *f, long window_prompting, int minibuffer_only)
     int explicit = f->explicit_name;
 
     f->explicit_name = 0;
-    name = f->name;
-    f->name = Qnil;
+    name = FVAR (f, name);
+    FVAR (f, name) = Qnil;
     x_set_name (f, name, explicit);
   }
 
@@ -2714,8 +2714,8 @@ x_window (struct frame *f)
     int explicit = f->explicit_name;
 
     f->explicit_name = 0;
-    name = f->name;
-    f->name = Qnil;
+    name = FVAR (f, name);
+    FVAR (f, name) = Qnil;
     x_set_name (f, name, explicit);
   }
 
@@ -2791,9 +2791,9 @@ x_icon (struct frame *f, Lisp_Object parms)
 	 : NormalState));
 #endif
 
-  x_text_icon (f, SSDATA ((!NILP (f->icon_name)
-			   ? f->icon_name
-			   : f->name)));
+  x_text_icon (f, SSDATA ((!NILP (FVAR (f, icon_name))
+			   ? FVAR (f, icon_name)
+			   : FVAR (f, name))));
 
   UNBLOCK_INPUT;
 }
@@ -3135,11 +3135,11 @@ This function is an internal primitive--use `make-frame' instead.  */)
   f->output_data.x->scroll_bar_bottom_shadow_pixel = -1;
 #endif /* USE_TOOLKIT_SCROLL_BARS */
 
-  f->icon_name
+  FVAR (f, icon_name)
     = x_get_arg (dpyinfo, parms, Qicon_name, "iconName", "Title",
 		 RES_TYPE_STRING);
-  if (! STRINGP (f->icon_name))
-    f->icon_name = Qnil;
+  if (! STRINGP (FVAR (f, icon_name)))
+    FVAR (f, icon_name) = Qnil;
 
   FRAME_X_DISPLAY_INFO (f) = dpyinfo;
 
@@ -3196,12 +3196,12 @@ This function is an internal primitive--use `make-frame' instead.  */)
      be set.  */
   if (EQ (name, Qunbound) || NILP (name))
     {
-      f->name = build_string (dpyinfo->x_id_name);
+      FVAR (f, name) = build_string (dpyinfo->x_id_name);
       f->explicit_name = 0;
     }
   else
     {
-      f->name = name;
+      FVAR (f, name) = name;
       f->explicit_name = 1;
       /* use the frame's title when getting resources for this frame.  */
       specbind (Qx_resource_name, name);
@@ -3340,7 +3340,7 @@ This function is an internal primitive--use `make-frame' instead.  */)
   x_default_parameter (f, parms, Qfullscreen, Qnil,
                        "fullscreen", "Fullscreen", RES_TYPE_SYMBOL);
   x_default_parameter (f, parms, Qtool_bar_position,
-                       f->tool_bar_position, 0, 0, RES_TYPE_SYMBOL);
+                       FVAR (f, tool_bar_position), 0, 0, RES_TYPE_SYMBOL);
 
   /* Compute the size of the X window.  */
   window_prompting = x_figure_window_size (f, parms, 1);
@@ -3468,7 +3468,7 @@ This function is an internal primitive--use `make-frame' instead.  */)
      by x_get_arg and friends, now go in the misc. alist of the frame.  */
   for (tem = parms; CONSP (tem); tem = XCDR (tem))
     if (CONSP (XCAR (tem)) && !NILP (XCAR (XCAR (tem))))
-      f->param_alist = Fcons (XCAR (tem), f->param_alist);
+      FVAR (f, param_alist) = Fcons (XCAR (tem), FVAR (f, param_alist));
 
   UNGCPRO;
 
@@ -4621,7 +4621,7 @@ x_create_tip_frame (struct x_display_info *dpyinfo,
   f->output_data.x->scroll_bar_top_shadow_pixel = -1;
   f->output_data.x->scroll_bar_bottom_shadow_pixel = -1;
 #endif /* USE_TOOLKIT_SCROLL_BARS */
-  f->icon_name = Qnil;
+  FVAR (f, icon_name) = Qnil;
   FRAME_X_DISPLAY_INFO (f) = dpyinfo;
   f->output_data.x->parent_desc = FRAME_X_DISPLAY_INFO (f)->root_window;
   f->output_data.x->explicit_parent = 0;
@@ -4663,12 +4663,12 @@ x_create_tip_frame (struct x_display_info *dpyinfo,
      be set.  */
   if (EQ (name, Qunbound) || NILP (name))
     {
-      f->name = build_string (dpyinfo->x_id_name);
+      FVAR (f, name) = build_string (dpyinfo->x_id_name);
       f->explicit_name = 0;
     }
   else
     {
-      f->name = name;
+      FVAR (f, name) = name;
       f->explicit_name = 1;
       /* use the frame's title when getting resources for this frame.  */
       specbind (Qx_resource_name, name);
@@ -5069,28 +5069,28 @@ Text larger than the specified size is clipped.  */)
 
   /* Set up the frame's root window.  */
   w = XWINDOW (FRAME_ROOT_WINDOW (f));
-  w->left_col = w->top_line = make_number (0);
+  WVAR (w, left_col) = WVAR (w, top_line) = make_number (0);
 
   if (CONSP (Vx_max_tooltip_size)
       && RANGED_INTEGERP (1, XCAR (Vx_max_tooltip_size), INT_MAX)
       && RANGED_INTEGERP (1, XCDR (Vx_max_tooltip_size), INT_MAX))
     {
-      w->total_cols = XCAR (Vx_max_tooltip_size);
-      w->total_lines = XCDR (Vx_max_tooltip_size);
+      WVAR (w, total_cols) = XCAR (Vx_max_tooltip_size);
+      WVAR (w, total_lines) = XCDR (Vx_max_tooltip_size);
     }
   else
     {
-      w->total_cols = make_number (80);
-      w->total_lines = make_number (40);
+      WVAR (w, total_cols) = make_number (80);
+      WVAR (w, total_lines) = make_number (40);
     }
 
-  FRAME_TOTAL_COLS (f) = XINT (w->total_cols);
+  FRAME_TOTAL_COLS (f) = XINT (WVAR (w, total_cols));
   adjust_glyphs (f);
   w->pseudo_window_p = 1;
 
   /* Display the tooltip text in a temporary buffer.  */
   old_buffer = current_buffer;
-  set_buffer_internal_1 (XBUFFER (XWINDOW (FRAME_ROOT_WINDOW (f))->buffer));
+  set_buffer_internal_1 (XBUFFER (WVAR (XWINDOW (FRAME_ROOT_WINDOW (f)), buffer)));
   BVAR (current_buffer, truncate_lines) = Qnil;
   clear_glyph_matrix (w->desired_matrix);
   clear_glyph_matrix (w->current_matrix);
@@ -5151,7 +5151,7 @@ Text larger than the specified size is clipped.  */)
       /* w->total_cols and FRAME_TOTAL_COLS want the width in columns,
 	 not in pixels.  */
       width /= WINDOW_FRAME_COLUMN_WIDTH (w);
-      w->total_cols = make_number (width);
+      WVAR (w, total_cols) = make_number (width);
       FRAME_TOTAL_COLS (f) = width;
       adjust_glyphs (f);
       clear_glyph_matrix (w->desired_matrix);
@@ -5382,7 +5382,7 @@ Otherwise, if ONLY-DIR-P is non-nil, the user can only select directories.  */)
   /* Create the dialog with PROMPT as title, using DIR as initial
      directory and using "*" as pattern.  */
   dir = Fexpand_file_name (dir, Qnil);
-  dir_xmstring = XmStringCreateLocalized (SDATA (dir));
+  dir_xmstring = XmStringCreateLocalized (SSDATA (dir));
   pattern_xmstring = XmStringCreateLocalized ("*");
 
   XtSetArg (al[ac], XmNtitle, SDATA (prompt)); ++ac;
@@ -5435,12 +5435,12 @@ Otherwise, if ONLY-DIR-P is non-nil, the user can only select directories.  */)
 
       XmTextPosition last_pos = XmTextFieldGetLastPosition (wtext);
       XmTextFieldReplace (wtext, 0, last_pos,
-                          (SDATA (Ffile_name_nondirectory (default_filename))));
+                          (SSDATA (Ffile_name_nondirectory (default_filename))));
 
       /* Select DEFAULT_FILENAME in the files list box.  DEFAULT_FILENAME
          must include the path for this to work.  */
 
-      default_xmstring = XmStringCreateLocalized (SDATA (default_filename));
+      default_xmstring = XmStringCreateLocalized (SSDATA (default_filename));
 
       if (XmListItemExists (list, default_xmstring))
         {
