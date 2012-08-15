@@ -94,7 +94,7 @@ static Lisp_Object Qchar_table, Qbool_vector, Qhash_table;
 static Lisp_Object Qsubrp, Qmany, Qunevalled;
 Lisp_Object Qfont_spec, Qfont_entity, Qfont_object;
 static Lisp_Object Qdefun;
-Lisp_Object Qthread;
+Lisp_Object Qthread, Qmutex;
 
 Lisp_Object Qinteractive_form;
 
@@ -214,6 +214,8 @@ for example, (type-of 1) returns `integer'.  */)
 	return Qfont_object;
       if (THREADP (object))
 	return Qthread;
+      if (MUTEXP (object))
+	return Qmutex;
       return Qvector;
 
     case Lisp_Float:
@@ -471,6 +473,15 @@ DEFUN ("threadp", Fthreadp, Sthreadp, 1, 1, 0,
     return Qnil;
 }
 
+DEFUN ("mutexp", Fmutexp, Smutexp, 1, 1, 0,
+       doc: /* Return t if OBJECT is a mutex.  */)
+  (Lisp_Object object)
+{
+  if (MUTEXP (object))
+    return Qt;
+  else
+    return Qnil;
+}
 
 /* Extract and set components of lists */
 
@@ -3105,6 +3116,7 @@ syms_of_data (void)
   DEFSYM (Qbool_vector, "bool-vector");
   DEFSYM (Qhash_table, "hash-table");
   DEFSYM (Qthread, "thread");
+  DEFSYM (Qmutex, "mutex");
   /* Used by Fgarbage_collect.  */
   DEFSYM (Qinterval, "interval");
   DEFSYM (Qmisc, "misc");
@@ -3148,6 +3160,7 @@ syms_of_data (void)
   defsubr (&Sbyte_code_function_p);
   defsubr (&Schar_or_string_p);
   defsubr (&Sthreadp);
+  defsubr (&Smutexp);
   defsubr (&Scar);
   defsubr (&Scdr);
   defsubr (&Scar_safe);

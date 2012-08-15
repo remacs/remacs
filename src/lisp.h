@@ -366,6 +366,7 @@ enum pvec_type
   PVEC_SUBR,
   PVEC_OTHER,
   PVEC_THREAD,
+  PVEC_MUTEX,
   /* These last 4 are special because we OR them in fns.c:internal_equal,
      so they have to use a disjoint bit pattern:
      if (!(size & (PVEC_COMPILED | PVEC_CHAR_TABLE
@@ -555,6 +556,7 @@ clip_to_bounds (ptrdiff_t lower, EMACS_INT num, ptrdiff_t upper)
 			 ((struct Lisp_Bool_Vector *) \
 			  XUNTAG (a, Lisp_Vectorlike)))
 #define XTHREAD(a) (eassert (THREADP (a)), (struct thread_state *) XPNTR(a))
+#define XMUTEX(a) (eassert (MUTEXP (a)), (struct Lisp_Mutex *) XPNTR(a))
 
 /* Construct a Lisp_Object from a value or address.  */
 
@@ -606,6 +608,7 @@ clip_to_bounds (ptrdiff_t lower, EMACS_INT num, ptrdiff_t upper)
 #define XSETBOOL_VECTOR(a, b) (XSETPSEUDOVECTOR (a, b, PVEC_BOOL_VECTOR))
 #define XSETSUB_CHAR_TABLE(a, b) (XSETPSEUDOVECTOR (a, b, PVEC_SUB_CHAR_TABLE))
 #define XSETTHREAD(a, b) (XSETPSEUDOVECTOR (a, b, PVEC_THREAD))
+#define XSETMUTEX(a, b) (XSETPSEUDOVECTOR (a, b, PVEC_MUTEX))
 
 /* Convenience macros for dealing with Lisp arrays.  */
 
@@ -1705,6 +1708,7 @@ typedef struct {
 #define BOOL_VECTOR_P(x) PSEUDOVECTORP (x, PVEC_BOOL_VECTOR)
 #define FRAMEP(x) PSEUDOVECTORP (x, PVEC_FRAME)
 #define THREADP(x) PSEUDOVECTORP (x, PVEC_THREAD)
+#define MUTEXP(x) PSEUDOVECTORP (x, PVEC_MUTEX)
 
 /* Test for image (image . spec)  */
 #define IMAGEP(x) (CONSP (x) && EQ (XCAR (x), Qimage))
@@ -1825,6 +1829,9 @@ typedef struct {
 
 #define CHECK_THREAD(x) \
   CHECK_TYPE (THREADP (x), Qthreadp, x)
+
+#define CHECK_MUTEX(x) \
+  CHECK_TYPE (MUTEXP (x), Qmutexp, x)
 
 /* Since we can't assign directly to the CAR or CDR fields of a cons
    cell, use these when checking that those fields contain numbers.  */
@@ -2448,7 +2455,7 @@ extern Lisp_Object Qchar_or_string_p, Qmarkerp, Qinteger_or_marker_p, Qvectorp;
 extern Lisp_Object Qbuffer_or_string_p;
 extern Lisp_Object Qfboundp;
 extern Lisp_Object Qchar_table_p, Qvector_or_char_table_p;
-extern Lisp_Object Qthreadp;
+extern Lisp_Object Qthreadp, Qmutexp;
 
 extern Lisp_Object Qcdr;
 

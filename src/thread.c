@@ -35,7 +35,83 @@ static struct thread_state *all_threads = &primary_thread;
 
 sys_mutex_t global_lock;
 
-Lisp_Object Qthreadp;
+Lisp_Object Qthreadp, Qmutexp;
+
+
+
+struct Lisp_Mutex
+{
+  struct vectorlike_header header;
+
+  lisp_mutex_t mutex;
+};
+
+DEFUN ("make-mutex", Fmake_mutex, Smake_mutex, 0, 0, 0,
+       doc: /* FIXME */)
+  (void)
+{
+  struct Lisp_Mutex *mutex;
+  Lisp_Object result;
+
+  mutex = ALLOCATE_PSEUDOVECTOR (struct Lisp_Mutex, mutex, PVEC_MUTEX);
+  memset ((char *) mutex + offsetof (struct Lisp_Mutex, mutex),
+	  0, sizeof (struct Lisp_Mutex) - offsetof (struct Lisp_Mutex,
+						    mutex));
+  lisp_mutex_init (&mutex->mutex);
+
+  XSETMUTEX (result, mutex);
+  return result;
+}
+
+static void
+mutex_lock_callback (void *arg)
+{
+  struct Lisp_Mutex *mutex = arg;
+
+  /* This calls post_acquire_global_lock.  */
+  lisp_mutex_lock (&mutex->mutex);
+}
+
+DEFUN ("mutex-lock", Fmutex_lock, Smutex_lock, 1, 1, 0,
+       doc: /* FIXME */)
+  (Lisp_Object obj)
+{
+  struct Lisp_Mutex *mutex;
+
+  CHECK_MUTEX (obj);
+  mutex = XMUTEX (obj);
+
+  flush_stack_call_func (mutex_lock_callback, mutex);
+  return Qnil;
+}
+
+static void
+mutex_unlock_callback (void *arg)
+{
+  struct Lisp_Mutex *mutex = arg;
+
+  /* This calls post_acquire_global_lock.  */
+  lisp_mutex_unlock (&mutex->mutex);
+}
+
+DEFUN ("mutex-unlock", Fmutex_unlock, Smutex_unlock, 1, 1, 0,
+       doc: /* FIXME */)
+  (Lisp_Object obj)
+{
+  struct Lisp_Mutex *mutex;
+
+  CHECK_MUTEX (obj);
+  mutex = XMUTEX (obj);
+
+  flush_stack_call_func (mutex_unlock_callback, mutex);
+  return Qnil;
+}
+
+void
+finalize_one_mutex (struct Lisp_Mutex *mutex)
+{
+  lisp_mutex_destroy (&mutex->mutex);
+}
 
 
 
@@ -463,7 +539,12 @@ syms_of_threads (void)
   defsubr (&Sthread_alive_p);
   defsubr (&Sthread_join);
   defsubr (&Sall_threads);
+  defsubr (&Smake_mutex);
+  defsubr (&Smutex_lock);
+  defsubr (&Smutex_unlock);
 
   Qthreadp = intern_c_string ("threadp");
   staticpro (&Qthreadp);
+  Qmutexp = intern_c_string ("mutexp");
+  staticpro (&Qmutexp);
 }

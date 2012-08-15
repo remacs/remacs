@@ -168,6 +168,8 @@ struct thread_state
   struct thread_state *next_thread;
 };
 
+struct Lisp_Mutex;
+
 extern struct thread_state *current_thread;
 
 extern sys_mutex_t global_lock;
@@ -175,6 +177,7 @@ extern void post_acquire_global_lock (struct thread_state *);
 
 extern void unmark_threads (void);
 extern void finalize_one_thread (struct thread_state *state);
+extern void finalize_one_mutex (struct Lisp_Mutex *);
 
 extern void init_threads_once (void);
 extern void init_threads (void);

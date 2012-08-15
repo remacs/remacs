@@ -1955,6 +1955,14 @@ print_object (Lisp_Object obj, register Lisp_Object printcharfun, int escapeflag
 	    }
 	  PRINTCHAR ('>');
 	}
+      else if (MUTEXP (obj))
+	{
+	  int len;
+	  strout ("#<mutex ", -1, -1, printcharfun);
+	  len = sprintf (buf, "%p", XMUTEX (obj));
+	  strout (buf, len, len, printcharfun);
+	  PRINTCHAR ('>');
+	}
       else
 	{
 	  ptrdiff_t size = ASIZE (obj);
