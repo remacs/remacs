@@ -27,6 +27,8 @@ struct thread_state *current_thread = &the_only_thread;
 
 struct thread_state *all_threads = &the_only_thread;
 
+sys_mutex_t global_lock;
+
 static void
 mark_one_thread (struct thread_state *thread)
 {
@@ -102,4 +104,11 @@ unmark_threads (void)
   for (iter = all_threads; iter; iter = iter->next_thread)
     if (iter->m_byte_stack_list)
       unmark_byte_stack (iter->m_byte_stack_list);
+}
+
+void
+init_threads (void)
+{
+  sys_mutex_init (&global_lock);
+  sys_mutex_lock (&global_lock);
 }

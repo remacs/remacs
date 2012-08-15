@@ -140,6 +140,10 @@ struct thread_state
 
 extern struct thread_state *current_thread;
 
+extern sys_mutex_t global_lock;
+
 extern void unmark_threads (void);
+
+extern void init_threads (void);
 
 #endif /* THREAD_H */
