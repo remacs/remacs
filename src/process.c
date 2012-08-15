@@ -335,6 +335,13 @@ static struct fd_callback_data
   void *data;
   /* Flags from enum fd_bits.  */
   int flags;
+  /* If this fd is locked to a certain thread, this points to it.
+     Otherwise, this is NULL.  If an fd is locked to a thread, then
+     only that thread is permitted to wait on it.  */
+  struct thread_state *thread;
+  /* If this fd is currently being selected on by a thread, this
+     points to the thread.  Otherwise it is NULL.  */
+  struct thread_state *waiting_thread;
 } fd_callback_info[MAXDESC];
 
 
@@ -451,8 +458,17 @@ compute_input_wait_mask (SELECT_TYPE *mask)
   FD_ZERO (mask);
   for (fd = 0; fd < max (max_process_desc, max_input_desc); ++fd)
     {
+      if (fd_callback_info[fd].thread != NULL
+	  && fd_callback_info[fd].thread != current_thread)
+	continue;
+      if (fd_callback_info[fd].waiting_thread != NULL
+	  && fd_callback_info[fd].waiting_thread != current_thread)
+	continue;
       if ((fd_callback_info[fd].flags & FOR_READ) != 0)
-	FD_SET (fd, mask);
+	{
+	  FD_SET (fd, mask);
+	  fd_callback_info[fd].waiting_thread = current_thread;
+	}
     }
 }
 
@@ -464,9 +480,18 @@ compute_non_process_wait_mask (SELECT_TYPE *mask)
   FD_ZERO (mask);
   for (fd = 0; fd < max (max_process_desc, max_input_desc); ++fd)
     {
+      if (fd_callback_info[fd].thread != NULL
+	  && fd_callback_info[fd].thread != current_thread)
+	continue;
+      if (fd_callback_info[fd].waiting_thread != NULL
+	  && fd_callback_info[fd].waiting_thread != current_thread)
+	continue;
       if ((fd_callback_info[fd].flags & FOR_READ) != 0
 	  && (fd_callback_info[fd].flags & PROCESS_FD) == 0)
-	FD_SET (fd, mask);
+	{
+	  FD_SET (fd, mask);
+	  fd_callback_info[fd].waiting_thread = current_thread;
+	}
     }
 }
 
@@ -478,9 +503,18 @@ compute_non_keyboard_wait_mask (SELECT_TYPE *mask)
   FD_ZERO (mask);
   for (fd = 0; fd < max (max_process_desc, max_input_desc); ++fd)
     {
+      if (fd_callback_info[fd].thread != NULL
+	  && fd_callback_info[fd].thread != current_thread)
+	continue;
+      if (fd_callback_info[fd].waiting_thread != NULL
+	  && fd_callback_info[fd].waiting_thread != current_thread)
+	continue;
       if ((fd_callback_info[fd].flags & FOR_READ) != 0
 	  && (fd_callback_info[fd].flags & KEYBOARD_FD) == 0)
-	FD_SET (fd, mask);
+	{
+	  FD_SET (fd, mask);
+	  fd_callback_info[fd].waiting_thread = current_thread;
+	}
     }
 }
 
@@ -492,12 +526,31 @@ compute_write_mask (SELECT_TYPE *mask)
   FD_ZERO (mask);
   for (fd = 0; fd < max (max_process_desc, max_input_desc); ++fd)
     {
+      if (fd_callback_info[fd].thread != NULL
+	  && fd_callback_info[fd].thread != current_thread)
+	continue;
+      if (fd_callback_info[fd].waiting_thread != NULL
+	  && fd_callback_info[fd].waiting_thread != current_thread)
+	continue;
       if ((fd_callback_info[fd].flags & FOR_WRITE) != 0)
-	FD_SET (fd, mask);
+	{
+	  FD_SET (fd, mask);
+	  fd_callback_info[fd].waiting_thread = current_thread;
+	}
     }
 }
 
+static void
+clear_waiting_thread_info (void)
+{
+  int fd;
 
+  for (fd = 0; fd < max (max_process_desc, max_input_desc); ++fd)
+    {
+      if (fd_callback_info[fd].waiting_thread == current_thread)
+	fd_callback_info[fd].waiting_thread = NULL;
+    }
+}
 
 
 /* Compute the Lisp form of the process status, p->status, from
@@ -709,6 +762,7 @@ make_process (Lisp_Object name)
      Lisp data to nil, so do it only for slots which should not be nil.  */
   PSET (p, status, Qrun);
   PSET (p, mark, Fmake_marker ());
+  PSET (p, thread, Fcurrent_thread ());
 
   /* Initialize non-Lisp data.  Note that allocate_process zeroes out all
      non-Lisp data, so do it only for slots which should not be zero.  */
@@ -744,6 +798,27 @@ remove_process (register Lisp_Object proc)
   Vprocess_alist = Fdelq (pair, Vprocess_alist);
 
   deactivate_process (proc);
+}
+
+void
+update_processes_for_thread_death (Lisp_Object dying_thread)
+{
+  Lisp_Object pair;
+
+  for (pair = Vprocess_alist; !NILP (pair); pair = XCDR (pair))
+    {
+      Lisp_Object process = XCDR (XCAR (pair));
+      if (EQ (XPROCESS (process)->thread, dying_thread))
+	{
+	  struct Lisp_Process *proc = XPROCESS (process);
+
+	  proc->thread = Qnil;
+	  if (proc->infd >= 0)
+	    fd_callback_info[proc->infd].thread = NULL;
+	  if (proc->outfd >= 0)
+	    fd_callback_info[proc->outfd].thread = NULL;
+	}
+    }
 }
 
 
@@ -1092,6 +1167,42 @@ See `set-process-sentinel' for more info on sentinels.  */)
 {
   CHECK_PROCESS (process);
   return XPROCESS (process)->sentinel;
+}
+
+DEFUN ("set-process-thread", Fset_process_thread, Sset_process_thread,
+       2, 2, 0,
+       doc: /* FIXME */)
+  (Lisp_Object process, Lisp_Object thread)
+{
+  struct Lisp_Process *proc;
+  struct thread_state *tstate;
+
+  CHECK_PROCESS (process);
+  if (NILP (thread))
+    tstate = NULL;
+  else
+    {
+      CHECK_THREAD (thread);
+      tstate = XTHREAD (thread);
+    }
+
+  proc = XPROCESS (process);
+  proc->thread = thread;
+  if (proc->infd >= 0)
+    fd_callback_info[proc->infd].thread = tstate;
+  if (proc->outfd >= 0)
+    fd_callback_info[proc->outfd].thread = tstate;
+
+  return thread;
+}
+
+DEFUN ("process-thread", Fprocess_thread, Sprocess_thread,
+       1, 1, 0,
+       doc: /* FIXME */)
+  (Lisp_Object process)
+{
+  CHECK_PROCESS (process);
+  return XPROCESS (process)->thread;
 }
 
 DEFUN ("set-process-window-size", Fset_process_window_size,
@@ -3993,7 +4104,17 @@ Return non-nil if we received any output before the timeout expired.  */)
   int nsecs;
 
   if (! NILP (process))
-    CHECK_PROCESS (process);
+    {
+      struct Lisp_Process *procp;
+
+      CHECK_PROCESS (process);
+      procp = XPROCESS (process);
+
+      /* Can't wait for a process that is dedicated to a different
+	 thread.  */
+      if (!EQ (procp->thread, Qnil) && !EQ (procp->thread, Fcurrent_thread ()))
+	error ("FIXME");
+    }
   else
     just_this_one = Qnil;
 
@@ -4249,20 +4370,10 @@ server_accept_connection (Lisp_Object server, int channel)
 			    build_string ("\n")));
 }
 
-/* This variable is different from waiting_for_input in keyboard.c.
-   It is used to communicate to a lisp process-filter/sentinel (via the
-   function Fwaiting_for_user_input_p below) whether Emacs was waiting
-   for user-input when that process-filter was called.
-   waiting_for_input cannot be used as that is by definition 0 when
-   lisp code is being evalled.
-   This is also used in record_asynch_buffer_change.
-   For that purpose, this must be 0
-   when not inside wait_reading_process_output.  */
-static int waiting_for_user_input_p;
-
 static Lisp_Object
 wait_reading_process_output_unwind (Lisp_Object data)
 {
+  clear_waiting_thread_info ();
   waiting_for_user_input_p = XINT (data);
   return Qnil;
 }
@@ -4328,6 +4439,10 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
   int wait_channel = -1;
   int got_some_input = 0;
   ptrdiff_t count = SPECPDL_INDEX ();
+
+  eassert (wait_proc == NULL
+	   || EQ (wait_proc->thread, Qnil)
+	   || XTHREAD (wait_proc->thread) == current_thread);
 
   FD_ZERO (&Available);
   FD_ZERO (&Writeok);
@@ -4484,14 +4599,15 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 	  compute_write_mask (&Ctemp);
 
 	  timeout = make_emacs_time (0, 0);
-	  if ((pselect (max (max_process_desc, max_input_desc) + 1,
-			&Atemp,
+	  if ((thread_select (pselect,
+			      max (max_process_desc, max_input_desc) + 1,
+			      &Atemp,
 #ifdef NON_BLOCKING_CONNECT
-			(num_pending_connects > 0 ? &Ctemp : NULL),
+			      (num_pending_connects > 0 ? &Ctemp : NULL),
 #else
-			NULL,
+			      NULL,
 #endif
-			NULL, &timeout, NULL)
+			      NULL, &timeout, NULL)
 	       <= 0))
 	    {
 	      /* It's okay for us to do this and then continue with
@@ -4639,17 +4755,18 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 	      process_output_skip = 0;
 	    }
 #endif
+	  nfds = thread_select (
 #if defined (USE_GTK) || defined (HAVE_GCONF) || defined (HAVE_GSETTINGS)
-          nfds = xg_select
+				xg_select
 #elif defined (HAVE_NS)
-	  nfds = ns_select
+				ns_select
 #else
-	  nfds = pselect
+				pselect
 #endif
-            (max (max_process_desc, max_input_desc) + 1,
-             &Available,
-             (check_write ? &Writeok : (SELECT_TYPE *)0),
-             NULL, &timeout, NULL);
+				, max (max_process_desc, max_input_desc) + 1,
+				&Available,
+				(check_write ? &Writeok : (SELECT_TYPE *)0),
+				NULL, &timeout, NULL);
 
 #ifdef HAVE_GNUTLS
           /* GnuTLS buffers data internally.  In lowat mode it leaves
@@ -7597,6 +7714,8 @@ The variable takes effect when `start-process' is called.  */);
   defsubr (&Sprocess_filter);
   defsubr (&Sset_process_sentinel);
   defsubr (&Sprocess_sentinel);
+  defsubr (&Sset_process_thread);
+  defsubr (&Sprocess_thread);
   defsubr (&Sset_process_window_size);
   defsubr (&Sset_process_inherit_coding_system_flag);
   defsubr (&Sset_process_query_on_exit_flag);

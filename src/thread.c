@@ -22,6 +22,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "lisp.h"
 #include "character.h"
 #include "buffer.h"
+#include "process.h"
 
 /* FIXME */
 extern void unbind_for_thread_switch (void);
@@ -176,6 +177,50 @@ acquire_global_lock (struct thread_state *self)
 
 
 
+struct select_args
+{
+  select_func *func;
+  int max_fds;
+  SELECT_TYPE *rfds;
+  SELECT_TYPE *wfds;
+  SELECT_TYPE *efds;
+  EMACS_TIME *timeout;
+  sigset_t *sigmask;
+  int result;
+};
+
+static void
+really_call_select (void *arg)
+{
+  struct select_args *sa = arg;
+  struct thread_state *self = current_thread;
+
+  release_global_lock ();
+  sa->result = (sa->func) (sa->max_fds, sa->rfds, sa->wfds, sa->efds,
+			   sa->timeout, sa->sigmask);
+  acquire_global_lock (self);
+}
+
+int
+thread_select (select_func *func, int max_fds, SELECT_TYPE *rfds,
+	       SELECT_TYPE *wfds, SELECT_TYPE *efds, EMACS_TIME *timeout,
+	       sigset_t *sigmask)
+{
+  struct select_args sa;
+
+  sa.func = func;
+  sa.max_fds = max_fds;
+  sa.rfds = rfds;
+  sa.wfds = wfds;
+  sa.efds = efds;
+  sa.timeout = timeout;
+  sa.sigmask = sigmask;
+  flush_stack_call_func (really_call_select, &sa);
+  return sa.result;
+}
+
+
+
 static void
 mark_one_thread (struct thread_state *thread)
 {
@@ -314,6 +359,8 @@ run_thread (void *state)
   internal_condition_case (invoke_thread_function, Qt, do_nothing);
 
   unbind_for_thread_switch ();
+
+  update_processes_for_thread_death (Fcurrent_thread ());
 
   /* Unlink this thread from the list of all threads.  */
   for (iter = &all_threads; *iter != self; iter = &(*iter)->next_thread)

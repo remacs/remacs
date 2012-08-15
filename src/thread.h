@@ -21,6 +21,9 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "regex.h"
 
+#include "sysselect.h"		/* FIXME */
+#include "systime.h"		/* FIXME */
+
 struct thread_state
 {
   struct vectorlike_header header;
@@ -156,6 +159,18 @@ struct thread_state
   /*re_char*/ unsigned char *m_whitespace_regexp;
 #define whitespace_regexp (current_thread->m_whitespace_regexp)
 
+  /* This variable is different from waiting_for_input in keyboard.c.
+     It is used to communicate to a lisp process-filter/sentinel (via the
+     function Fwaiting_for_user_input_p) whether Emacs was waiting
+     for user-input when that process-filter was called.
+     waiting_for_input cannot be used as that is by definition 0 when
+     lisp code is being evalled.
+     This is also used in record_asynch_buffer_change.
+     For that purpose, this must be 0
+     when not inside wait_reading_process_output.  */
+  int m_waiting_for_user_input_p;
+#define waiting_for_user_input_p (current_thread->m_waiting_for_user_input_p)
+
   /* The OS identifier for this thread.  */
   sys_thread_t thread_id;
 
@@ -193,5 +208,12 @@ extern void finalize_one_mutex (struct Lisp_Mutex *);
 extern void init_threads_once (void);
 extern void init_threads (void);
 extern void syms_of_threads (void);
+
+typedef int select_func (int, SELECT_TYPE *, SELECT_TYPE *, SELECT_TYPE *,
+			 EMACS_TIME *, sigset_t *);
+
+int thread_select  (select_func *func, int max_fds, SELECT_TYPE *rfds,
+		    SELECT_TYPE *wfds, SELECT_TYPE *efds, EMACS_TIME *timeout,
+		    sigset_t *sigmask);
 
 #endif /* THREAD_H */

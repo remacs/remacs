@@ -103,6 +103,9 @@ struct Lisp_Process
     Lisp_Object gnutls_cred_type;
 #endif
 
+    /* The thread a process is linked to, or nil for any thread.  */
+    Lisp_Object thread;
+
     /* After this point, there are no Lisp_Objects any more.  */
     /* alloc.c assumes that `pid' is the first such non-Lisp slot.  */
 
@@ -208,3 +211,5 @@ extern void add_read_fd (int fd, fd_callback func, void *data);
 extern void delete_read_fd (int fd);
 extern void add_write_fd (int fd, fd_callback func, void *data);
 extern void delete_write_fd (int fd);
+
+extern void update_processes_for_thread_death (Lisp_Object);
