@@ -554,6 +554,7 @@ clip_to_bounds (ptrdiff_t lower, EMACS_INT num, ptrdiff_t upper)
 #define XBOOL_VECTOR(a) (eassert (BOOL_VECTOR_P (a)), \
 			 ((struct Lisp_Bool_Vector *) \
 			  XUNTAG (a, Lisp_Vectorlike)))
+#define XTHREAD(a) (eassert (THREADP (a)), (struct thread_state *) XPNTR(a))
 
 /* Construct a Lisp_Object from a value or address.  */
 
@@ -1822,6 +1823,9 @@ typedef struct {
 #define CHECK_OVERLAY(x) \
   CHECK_TYPE (OVERLAYP (x), Qoverlayp, x)
 
+#define CHECK_THREAD(x) \
+  CHECK_TYPE (THREADP (x), Qthreadp, x)
+
 /* Since we can't assign directly to the CAR or CDR fields of a cons
    cell, use these when checking that those fields contain numbers.  */
 #define CHECK_NUMBER_CAR(x) \
@@ -2444,6 +2448,7 @@ extern Lisp_Object Qchar_or_string_p, Qmarkerp, Qinteger_or_marker_p, Qvectorp;
 extern Lisp_Object Qbuffer_or_string_p;
 extern Lisp_Object Qfboundp;
 extern Lisp_Object Qchar_table_p, Qvector_or_char_table_p;
+extern Lisp_Object Qthreadp;
 
 extern Lisp_Object Qcdr;
 

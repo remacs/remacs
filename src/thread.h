@@ -34,6 +34,16 @@ struct thread_state
   Lisp_Object m_saved_last_thing_searched;
 #define saved_last_thing_searched (current_thread->m_saved_last_thing_searched)
 
+  /* The thread's name.  */
+  Lisp_Object name;
+
+  /* The thread's function.  */
+  Lisp_Object function;
+
+  /* If non-nil, this thread has been signalled.  */
+  Lisp_Object error_symbol;
+  Lisp_Object error_data;
+
   /* m_gcprolist must be the first non-lisp field.  */
   /* Recording what needs to be marked for gc.  */
   struct gcpro *m_gcprolist;
@@ -142,6 +152,18 @@ struct thread_state
   /*re_char*/ unsigned char *m_whitespace_regexp;
 #define whitespace_regexp (current_thread->m_whitespace_regexp)
 
+  /* The OS identifier for this thread.  */
+  sys_thread_t thread_id;
+
+  /* The condition variable for this thread.  This is associated with
+     the global lock.  This thread broadcasts to it when it exits.  */
+  sys_cond_t thread_condvar;
+
+  /* This thread might be waiting for some condition.  If so, this
+     points to the condition.  If the thread is interrupted, the
+     interrupter should broadcast to this condition.  */
+  sys_cond_t *wait_condvar;
+
   /* Threads are kept on a linked list.  */
   struct thread_state *next_thread;
 };
@@ -149,10 +171,13 @@ struct thread_state
 extern struct thread_state *current_thread;
 
 extern sys_mutex_t global_lock;
+extern void post_acquire_global_lock (struct thread_state *);
 
 extern void unmark_threads (void);
+extern void finalize_one_thread (struct thread_state *state);
 
 extern void init_threads_once (void);
 extern void init_threads (void);
+extern void syms_of_threads (void);
 
 #endif /* THREAD_H */

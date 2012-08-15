@@ -105,19 +105,12 @@ lisp_mutex_lock (lisp_mutex_t *mutex)
     }
 
   self = current_thread;
-  while (mutex->owner != NULL /* && EQ (self->error_symbol, Qnil) */)
+  self->wait_condvar = &mutex->condition;
+  while (mutex->owner != NULL && EQ (self->error_symbol, Qnil))
     pthread_cond_wait (&mutex->condition, &global_lock);
+  self->wait_condvar = NULL;
 
-#if 0
-  if (!EQ (self->error_symbol, Qnil))
-    {
-      Lisp_Object error_symbol = self->error_symbol;
-      Lisp_Object data = self->error_data;
-      self->error_symbol = Qnil;
-      self->error_data = Qnil;
-      Fsignal (error_symbol, error_data);
-    }
-#endif
+  post_acquire_global_lock (self);
 
   mutex->owner = self;
   mutex->count = 1;

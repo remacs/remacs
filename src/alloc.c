@@ -3102,6 +3102,9 @@ sweep_vectors (void)
 	      ptrdiff_t nbytes = PSEUDOVECTOR_NBYTES (vector);
 	      ptrdiff_t total_bytes = nbytes;
 
+	      if (PSEUDOVECTOR_TYPEP (&vector->header, PVEC_THREAD))
+		finalize_one_thread ((struct thread_state *) vector);
+
 	      next = ADVANCE (vector, nbytes);
 
 	      /* While NEXT is not marked, try to coalesce with VECTOR,
