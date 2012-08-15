@@ -4792,7 +4792,7 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
               && d->func != 0
               && (d->condition & FOR_READ) != 0)
             d->func (channel, d->data, 1);
-          if (FD_ISSET (channel, &write_mask)
+          if (FD_ISSET (channel, &Writeok)
               && d->func != 0
               && (d->condition & FOR_WRITE) != 0)
             d->func (channel, d->data, 0);
