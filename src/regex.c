@@ -1235,12 +1235,14 @@ print_double_string (where, string1, size1, string2, size2)
 # define IF_LINT(Code) /* empty */
 #endif
 
+#ifndef emacs
 /* Set by `re_set_syntax' to the current regexp syntax to recognize.  Can
    also be assigned to arbitrarily: each pattern buffer stores its own
    syntax, so it can be changed between regex compilations.  */
 /* This has no initializer because initialized variables in Emacs
    become read-only after dumping.  */
 reg_syntax_t re_syntax_options;
+#endif
 
 
 /* Specify the precise syntax of regexps for compilation.  This provides
@@ -1260,8 +1262,10 @@ re_set_syntax (reg_syntax_t syntax)
 }
 WEAK_ALIAS (__re_set_syntax, re_set_syntax)
 
+#ifndef emacs
 /* Regexp to use to replace spaces, or NULL meaning don't.  */
 static re_char *whitespace_regexp;
+#endif
 
 void
 re_set_whitespace_regexp (const char *regexp)
@@ -4899,12 +4903,6 @@ re_match (struct re_pattern_buffer *bufp, const char *string,
 }
 WEAK_ALIAS (__re_match, re_match)
 #endif /* not emacs */
-
-#ifdef emacs
-/* In Emacs, this is the string or buffer in which we
-   are matching.  It is used for looking up syntax properties.  */
-Lisp_Object re_match_object;
-#endif
 
 /* re_match_2 matches the compiled pattern in BUFP against the
    the (virtual) concatenation of STRING1 and STRING2 (of length SIZE1

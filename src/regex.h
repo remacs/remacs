@@ -166,12 +166,12 @@ typedef unsigned long int reg_syntax_t;
    some interfaces).  When a regexp is compiled, the syntax used is
    stored in the pattern buffer, so changing this does not affect
    already-compiled regexps.  */
-extern reg_syntax_t re_syntax_options;
+/* extern reg_syntax_t re_syntax_options; */
 
 #ifdef emacs
 /* In Emacs, this is the string or buffer in which we
    are matching.  It is used for looking up syntax properties.  */
-extern Lisp_Object re_match_object;
+/* extern Lisp_Object re_match_object; */
 #endif
 
 

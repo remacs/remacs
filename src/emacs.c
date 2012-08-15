@@ -140,10 +140,6 @@ int running_asynch_code;
 int display_arg;
 #endif
 
-/* An address near the bottom of the stack.
-   Tells GC how to save a copy of the stack.  */
-char *stack_bottom;
-
 #if defined (DOUG_LEA_MALLOC) || defined (GNU_LINUX)
 /* The address where the heap starts (from the first sbrk (0) call).  */
 static void *my_heap_start;
@@ -687,9 +683,6 @@ void (*__malloc_initialize_hook) (void) EXTERNALLY_VISIBLE = malloc_initialize_h
 int
 main (int argc, char **argv)
 {
-#if GC_MARK_STACK
-  Lisp_Object dummy;
-#endif
   char stack_bottom_variable;
   int do_initial_setlocale;
   int skip_args = 0;
@@ -704,9 +697,8 @@ main (int argc, char **argv)
 #endif
   char *ch_to_dir;
 
-#if GC_MARK_STACK
-  stack_base = &dummy;
-#endif
+  /* Record (approximately) where the stack begins.  */
+  stack_bottom = &stack_bottom_variable;
 
 #if defined (USE_GTK) && defined (G_SLICE_ALWAYS_MALLOC)
   /* This is used by the Cygwin build.  */
@@ -851,9 +843,6 @@ main (int argc, char **argv)
       setrlimit (RLIMIT_STACK, &rlim);
     }
 #endif /* HAVE_SETRLIMIT and RLIMIT_STACK */
-
-  /* Record (approximately) where the stack begins.  */
-  stack_bottom = &stack_bottom_variable;
 
   clearerr (stdin);
 

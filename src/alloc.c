@@ -372,10 +372,6 @@ struct mem_node
   enum mem_type type;
 };
 
-/* Base address of stack.  Set in main.  */
-
-Lisp_Object *stack_base;
-
 /* Root of the tree describing allocated Lisp memory.  */
 
 static struct mem_node *mem_root;
@@ -422,10 +418,6 @@ static void check_gcpros (void);
 #ifndef DEADP
 # define DEADP(x) 0
 #endif
-
-/* Recording what needs to be marked for gc.  */
-
-struct gcpro *gcprolist;
 
 /* Addresses of staticpro'd variables.  Initialize it to a nonzero
    value; otherwise some compilers put it into BSS.  */
@@ -4891,7 +4883,7 @@ mark_stack (void)
     Lisp_Object o;
     jmp_buf j;
   } j;
-  volatile int stack_grows_down_p = (char *) &j > (char *) stack_base;
+  volatile int stack_grows_down_p = (char *) &j > (char *) stack_bottom;
 #endif
   /* This trick flushes the register windows so that all the state of
      the process is contained in the stack.  */
@@ -4933,7 +4925,7 @@ mark_stack (void)
   /* This assumes that the stack is a contiguous region in memory.  If
      that's not the case, something has to be done here to iterate
      over the stack segments.  */
-  mark_memory (stack_base, end);
+  mark_memory (stack_bottom, end);
 
   /* Allow for marking a secondary stack, like the register stack on the
      ia64.  */

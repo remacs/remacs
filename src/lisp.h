@@ -2015,10 +2015,6 @@ struct specbinding
     Lisp_Object unused;		/* Dividing by 16 is faster than by 12 */
   };
 
-extern struct specbinding *specpdl;
-extern struct specbinding *specpdl_ptr;
-extern ptrdiff_t specpdl_size;
-
 #define SPECPDL_INDEX()	(specpdl_ptr - specpdl)
 
 /* Everything needed to describe an active condition case.  */
@@ -2071,8 +2067,8 @@ struct catchtag
   struct gcpro *gcpro;
   jmp_buf jmp;
   struct backtrace *backlist;
-  struct handler *handlerlist;
-  EMACS_INT lisp_eval_depth;
+  struct handler *f_handlerlist;
+  EMACS_INT f_lisp_eval_depth;
   ptrdiff_t pdlcount;
   int poll_suppress_count;
   int interrupt_input_blocked;
@@ -2080,10 +2076,6 @@ struct catchtag
 };
 
 extern Lisp_Object memory_signal_data;
-
-/* An address near the bottom of the stack.
-   Tells GC how to save a copy of the stack.  */
-extern char *stack_bottom;
 
 /* Check quit-flag and quit if it is non-nil.
    Typing C-g does not directly cause a quit; it only sets Vquit_flag.
@@ -2139,8 +2131,6 @@ extern Lisp_Object Vascii_canon_table;
 
    Every function that can call Feval must protect in this fashion all
    Lisp_Object variables whose contents will be used again.  */
-
-extern struct gcpro *gcprolist;
 
 struct gcpro
 {
@@ -2245,8 +2235,6 @@ struct gcpro
 #define UNGCPRO (gcprolist = gcpro1.next)
 
 #else
-
-extern int gcpro_level;
 
 #define GCPRO1(varname) \
  {gcpro1.next = gcprolist; gcpro1.var = &varname; gcpro1.nvars = 1; \
@@ -2729,7 +2717,6 @@ extern void refill_memory_reserve (void);
 #endif
 extern const char *pending_malloc_warning;
 extern Lisp_Object zero_vector;
-extern Lisp_Object *stack_base;
 extern EMACS_INT consing_since_gc;
 extern EMACS_INT gc_relative_threshold;
 extern EMACS_INT memory_full_cons_threshold;
@@ -2915,10 +2902,6 @@ extern Lisp_Object Vautoload_queue;
 extern Lisp_Object Vsignaling_function;
 extern Lisp_Object inhibit_lisp_code;
 extern int handling_signal;
-#if BYTE_MARK_STACK
-extern struct catchtag *catchlist;
-extern struct handler *handlerlist;
-#endif
 /* To run a normal hook, use the appropriate function from the list below.
    The calling convention:
 
@@ -3227,7 +3210,6 @@ extern int read_bytecode_char (int);
 /* Defined in bytecode.c */
 extern Lisp_Object Qbytecode;
 extern void syms_of_bytecode (void);
-extern struct byte_stack *byte_stack_list;
 #if BYTE_MARK_STACK
 extern void mark_byte_stack (void);
 #endif
@@ -3524,6 +3506,7 @@ extern void *record_xmalloc (size_t);
 
 
 #include "globals.h"
+#include "thread.h"
 
 /* Check whether it's time for GC, and run it if so.  */
 

@@ -328,7 +328,7 @@ struct byte_stack
    done.  Signaling an error truncates the list analogous to
    gcprolist.  */
 
-struct byte_stack *byte_stack_list;
+/* struct byte_stack *byte_stack_list; */
 
 
 /* Mark objects on byte_stack_list.  Called during GC.  */

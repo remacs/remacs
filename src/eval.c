@@ -42,12 +42,12 @@ struct backtrace
   unsigned int debug_on_exit : 1;
 };
 
-static struct backtrace *backtrace_list;
+/* static struct backtrace *backtrace_list; */
 
-#if !BYTE_MARK_STACK
-static
-#endif
-struct catchtag *catchlist;
+/* #if !BYTE_MARK_STACK */
+/* static */
+/* #endif */
+/* struct catchtag *catchlist; */
 
 /* Chain of condition handlers currently in effect.
    The elements of this chain are contained in the stack frames
@@ -55,10 +55,10 @@ struct catchtag *catchlist;
    When an error is signaled (by calling Fsignal, below),
    this chain is searched for an element that applies.  */
 
-#if !BYTE_MARK_STACK
-static
-#endif
-struct handler *handlerlist;
+/* #if !BYTE_MARK_STACK */
+/* static */
+/* #endif */
+/* struct handler *handlerlist; */
 
 #ifdef DEBUG_GCPRO
 /* Count levels of GCPRO to detect failure to UNGCPRO.  */
@@ -90,19 +90,19 @@ Lisp_Object Vautoload_queue;
 
 /* Current number of specbindings allocated in specpdl.  */
 
-ptrdiff_t specpdl_size;
+/* ptrdiff_t specpdl_size; */
 
 /* Pointer to beginning of specpdl.  */
 
-struct specbinding *specpdl;
+/* struct specbinding *specpdl; */
 
 /* Pointer to first unused element in specpdl.  */
 
-struct specbinding *specpdl_ptr;
+/* struct specbinding *specpdl_ptr; */
 
 /* Depth in Lisp evaluations and function calls.  */
 
-static EMACS_INT lisp_eval_depth;
+/* static EMACS_INT lisp_eval_depth; */
 
 /* The value of num_nonmacro_input_events as of the last time we
    started to enter the debugger.  If we decide to enter the debugger
@@ -1051,8 +1051,8 @@ internal_catch (Lisp_Object tag, Lisp_Object (*func) (Lisp_Object), Lisp_Object 
   c.tag = tag;
   c.val = Qnil;
   c.backlist = backtrace_list;
-  c.handlerlist = handlerlist;
-  c.lisp_eval_depth = lisp_eval_depth;
+  c.f_handlerlist = handlerlist;
+  c.f_lisp_eval_depth = lisp_eval_depth;
   c.pdlcount = SPECPDL_INDEX ();
   c.poll_suppress_count = poll_suppress_count;
   c.interrupt_input_blocked = interrupt_input_blocked;
@@ -1106,7 +1106,7 @@ unwind_to_catch (struct catchtag *catch, Lisp_Object value)
       /* Unwind the specpdl stack, and then restore the proper set of
 	 handlers.  */
       unbind_to (catchlist->pdlcount, Qnil);
-      handlerlist = catchlist->handlerlist;
+      handlerlist = catchlist->f_handlerlist;
       catchlist = catchlist->next;
     }
   while (! last_time);
@@ -1127,7 +1127,7 @@ unwind_to_catch (struct catchtag *catch, Lisp_Object value)
   gcpro_level = gcprolist ? gcprolist->level + 1 : 0;
 #endif
   backtrace_list = catch->backlist;
-  lisp_eval_depth = catch->lisp_eval_depth;
+  lisp_eval_depth = catch->f_lisp_eval_depth;
 
   _longjmp (catch->jmp, 1);
 }
@@ -1231,8 +1231,8 @@ internal_lisp_condition_case (volatile Lisp_Object var, Lisp_Object bodyform,
   c.tag = Qnil;
   c.val = Qnil;
   c.backlist = backtrace_list;
-  c.handlerlist = handlerlist;
-  c.lisp_eval_depth = lisp_eval_depth;
+  c.f_handlerlist = handlerlist;
+  c.f_lisp_eval_depth = lisp_eval_depth;
   c.pdlcount = SPECPDL_INDEX ();
   c.poll_suppress_count = poll_suppress_count;
   c.interrupt_input_blocked = interrupt_input_blocked;
@@ -1286,8 +1286,8 @@ internal_condition_case (Lisp_Object (*bfun) (void), Lisp_Object handlers,
   c.tag = Qnil;
   c.val = Qnil;
   c.backlist = backtrace_list;
-  c.handlerlist = handlerlist;
-  c.lisp_eval_depth = lisp_eval_depth;
+  c.f_handlerlist = handlerlist;
+  c.f_lisp_eval_depth = lisp_eval_depth;
   c.pdlcount = SPECPDL_INDEX ();
   c.poll_suppress_count = poll_suppress_count;
   c.interrupt_input_blocked = interrupt_input_blocked;
@@ -1324,8 +1324,8 @@ internal_condition_case_1 (Lisp_Object (*bfun) (Lisp_Object), Lisp_Object arg,
   c.tag = Qnil;
   c.val = Qnil;
   c.backlist = backtrace_list;
-  c.handlerlist = handlerlist;
-  c.lisp_eval_depth = lisp_eval_depth;
+  c.f_handlerlist = handlerlist;
+  c.f_lisp_eval_depth = lisp_eval_depth;
   c.pdlcount = SPECPDL_INDEX ();
   c.poll_suppress_count = poll_suppress_count;
   c.interrupt_input_blocked = interrupt_input_blocked;
@@ -1366,8 +1366,8 @@ internal_condition_case_2 (Lisp_Object (*bfun) (Lisp_Object, Lisp_Object),
   c.tag = Qnil;
   c.val = Qnil;
   c.backlist = backtrace_list;
-  c.handlerlist = handlerlist;
-  c.lisp_eval_depth = lisp_eval_depth;
+  c.f_handlerlist = handlerlist;
+  c.f_lisp_eval_depth = lisp_eval_depth;
   c.pdlcount = SPECPDL_INDEX ();
   c.poll_suppress_count = poll_suppress_count;
   c.interrupt_input_blocked = interrupt_input_blocked;
@@ -1410,8 +1410,8 @@ internal_condition_case_n (Lisp_Object (*bfun) (ptrdiff_t, Lisp_Object *),
   c.tag = Qnil;
   c.val = Qnil;
   c.backlist = backtrace_list;
-  c.handlerlist = handlerlist;
-  c.lisp_eval_depth = lisp_eval_depth;
+  c.f_handlerlist = handlerlist;
+  c.f_lisp_eval_depth = lisp_eval_depth;
   c.pdlcount = SPECPDL_INDEX ();
   c.poll_suppress_count = poll_suppress_count;
   c.interrupt_input_blocked = interrupt_input_blocked;
