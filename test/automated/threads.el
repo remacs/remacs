@@ -162,4 +162,17 @@
        (thread-join thr))
      t)))
 
+(defun threads-test-io-switch ()
+  (setq threads-test-global 23))
+
+(ert-deftest threads-io-switch ()
+  "test that accept-process-output causes thread switch"
+  (should
+   (progn
+     (setq threads-test-global nil)
+     (make-thread #'threads-test-io-switch)
+     (while (not threads-test-global)
+       (accept-process-output nil 1))
+     threads-test-global)))
+
 ;;; threads.el ends here
