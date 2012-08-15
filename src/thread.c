@@ -66,17 +66,27 @@ mutex_lock_callback (void *arg)
   lisp_mutex_lock (&mutex->mutex);
 }
 
+static Lisp_Object
+do_unwind_mutex_lock (Lisp_Object ignore)
+{
+  current_thread->event_object = Qnil;
+  return Qnil;
+}
+
 DEFUN ("mutex-lock", Fmutex_lock, Smutex_lock, 1, 1, 0,
        doc: /* FIXME */)
   (Lisp_Object obj)
 {
   struct Lisp_Mutex *mutex;
+  ptrdiff_t count = SPECPDL_INDEX ();
 
   CHECK_MUTEX (obj);
   mutex = XMUTEX (obj);
 
+  current_thread->event_object = obj;
+  record_unwind_protect (do_unwind_mutex_lock, Qnil);
   flush_stack_call_func (mutex_lock_callback, mutex);
-  return Qnil;
+  return unbind_to (count, Qnil);
 }
 
 static void
@@ -361,6 +371,7 @@ If NAME is given, it names the new thread.  */)
   new_thread->m_current_buffer = current_thread->m_current_buffer;
   new_thread->error_symbol = Qnil;
   new_thread->error_data = Qnil;
+  new_thread->event_object = Qnil;
 
   new_thread->m_specpdl_size = 50;
   new_thread->m_specpdl = xmalloc (new_thread->m_specpdl_size
@@ -454,17 +465,33 @@ DEFUN ("thread-alive-p", Fthread_alive_p, Sthread_alive_p, 1, 1, 0,
   return tstate->m_specpdl == NULL ? Qnil : Qt;
 }
 
+DEFUN ("thread-blocker", Fthread_blocker, Sthread_blocker, 1, 1, 0,
+       doc: /* FIXME */)
+  (Lisp_Object thread)
+{
+  struct thread_state *tstate;
+
+  CHECK_THREAD (thread);
+  tstate = XTHREAD (thread);
+
+  return tstate->event_object;
+}
+
 static void
 thread_join_callback (void *arg)
 {
   struct thread_state *tstate = arg;
   struct thread_state *self = current_thread;
+  Lisp_Object thread;
 
+  XSETTHREAD (thread, tstate);
+  self->event_object = thread;
   self->wait_condvar = &tstate->thread_condvar;
   while (tstate->m_specpdl != NULL && EQ (self->error_symbol, Qnil))
     sys_cond_wait (self->wait_condvar, &global_lock);
 
   self->wait_condvar = NULL;
+  self->event_object = Qnil;
   post_acquire_global_lock (self);
 }
 
@@ -515,6 +542,7 @@ init_primary_thread (void)
   primary_thread.function = Qnil;
   primary_thread.error_symbol = Qnil;
   primary_thread.error_data = Qnil;
+  primary_thread.event_object = Qnil;
 
   sys_cond_init (&primary_thread.thread_condvar);
 }
@@ -544,6 +572,7 @@ syms_of_threads (void)
   defsubr (&Sthread_signal);
   defsubr (&Sthread_alive_p);
   defsubr (&Sthread_join);
+  defsubr (&Sthread_blocker);
   defsubr (&Sall_threads);
   defsubr (&Smake_mutex);
   defsubr (&Smutex_lock);

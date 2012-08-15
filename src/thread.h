@@ -44,6 +44,10 @@ struct thread_state
   Lisp_Object error_symbol;
   Lisp_Object error_data;
 
+  /* If we are waiting for some event, this holds the object we are
+     waiting on.  */
+  Lisp_Object event_object;
+
   /* m_gcprolist must be the first non-lisp field.  */
   /* Recording what needs to be marked for gc.  */
   struct gcpro *m_gcprolist;
