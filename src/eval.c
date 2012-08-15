@@ -3102,6 +3102,52 @@ grow_specpdl (void)
   specpdl_ptr = specpdl + count;
 }
 
+static Lisp_Object
+binding_symbol (const struct specbinding *bind)
+{
+  if (!CONSP (bind->symbol))
+    return bind->symbol;
+  return XCAR (bind->symbol);
+}
+
+void
+do_specbind (struct Lisp_Symbol *sym, struct specbinding *bind,
+	     Lisp_Object value)
+{
+  switch (sym->redirect)
+    {
+    case SYMBOL_PLAINVAL:
+      if (!sym->constant)
+	SET_SYMBOL_VAL (sym, value);
+      else
+	set_internal (bind->symbol, value, Qnil, 1);
+      break;
+
+    case SYMBOL_LOCALIZED:
+    case SYMBOL_FORWARDED:
+      if ((sym->redirect == SYMBOL_LOCALIZED
+	   || BUFFER_OBJFWDP (SYMBOL_FWD (sym)))
+	  && CONSP (bind->symbol))
+	{
+	  Lisp_Object where;
+
+	  where = XCAR (XCDR (bind->symbol));
+	  if (NILP (where)
+	      && sym->redirect == SYMBOL_FORWARDED)
+	    {
+	      Fset_default (XCAR (bind->symbol), value);
+	      return;
+	    }
+	}
+
+      set_internal (binding_symbol (bind), value, Qnil, 1);
+      break;
+
+    default:
+      abort ();
+    }
+}
+
 /* `specpdl_ptr->symbol' is a field which describes which variable is
    let-bound, so it can be properly undone when we unbind_to.
    It can have the following two shapes:
@@ -3140,11 +3186,9 @@ specbind (Lisp_Object symbol, Lisp_Object value)
       specpdl_ptr->symbol = symbol;
       specpdl_ptr->old_value = SYMBOL_VAL (sym);
       specpdl_ptr->func = NULL;
+      specpdl_ptr->saved_value = Qnil;
       ++specpdl_ptr;
-      if (!sym->constant)
-	SET_SYMBOL_VAL (sym, value);
-      else
-	set_internal (symbol, value, Qnil, 1);
+      do_specbind (sym, specpdl_ptr - 1, value);
       break;
     case SYMBOL_LOCALIZED:
       if (SYMBOL_BLV (sym)->frame_local)
@@ -3199,7 +3243,7 @@ specbind (Lisp_Object symbol, Lisp_Object value)
 	      {
 		eassert (BUFFER_OBJFWDP (SYMBOL_FWD (sym)));
 		++specpdl_ptr;
-		Fset_default (symbol, value);
+		do_specbind (sym, specpdl_ptr - 1, value);
 		return;
 	      }
 	  }
@@ -3207,7 +3251,7 @@ specbind (Lisp_Object symbol, Lisp_Object value)
 	  specpdl_ptr->symbol = symbol;
 
 	specpdl_ptr++;
-	set_internal (symbol, value, Qnil, 1);
+	do_specbind (sym, specpdl_ptr - 1, value);
 	break;
       }
     default: abort ();
@@ -3224,7 +3268,65 @@ record_unwind_protect (Lisp_Object (*function) (Lisp_Object), Lisp_Object arg)
   specpdl_ptr->func = function;
   specpdl_ptr->symbol = Qnil;
   specpdl_ptr->old_value = arg;
+  specpdl_ptr->saved_value = Qnil;
   specpdl_ptr++;
+}
+
+void
+rebind_for_thread_switch (void)
+{
+  struct specbinding *bind;
+
+  for (bind = specpdl; bind != specpdl_ptr; ++bind)
+    {
+      if (bind->func == NULL)
+	{
+	  Lisp_Object value = bind->saved_value;
+
+	  bind->saved_value = Qnil;
+	  do_specbind (XSYMBOL (binding_symbol (bind)), bind, value);
+	}
+    }
+}
+
+static void
+do_one_unbind (const struct specbinding *this_binding, int unwinding)
+{
+  if (this_binding->func != 0)
+    (*this_binding->func) (this_binding->old_value);
+  /* If the symbol is a list, it is really (SYMBOL WHERE
+     . CURRENT-BUFFER) where WHERE is either nil, a buffer, or a
+     frame.  If WHERE is a buffer or frame, this indicates we
+     bound a variable that had a buffer-local or frame-local
+     binding.  WHERE nil means that the variable had the default
+     value when it was bound.  CURRENT-BUFFER is the buffer that
+     was current when the variable was bound.  */
+  else if (CONSP (this_binding->symbol))
+    {
+      Lisp_Object symbol, where;
+
+      symbol = XCAR (this_binding->symbol);
+      where = XCAR (XCDR (this_binding->symbol));
+
+      if (NILP (where))
+	Fset_default (symbol, this_binding->old_value);
+      /* If `where' is non-nil, reset the value in the appropriate
+	 local binding, but only if that binding still exists.  */
+      else if (BUFFERP (where)
+	       ? !NILP (Flocal_variable_p (symbol, where))
+	       : !NILP (Fassq (symbol, XFRAME (where)->param_alist)))
+	set_internal (symbol, this_binding->old_value, where, 1);
+    }
+  /* If variable has a trivial value (no forwarding), we can
+     just set it.  No need to check for constant symbols here,
+     since that was already done by specbind.  */
+  else if (XSYMBOL (this_binding->symbol)->redirect == SYMBOL_PLAINVAL)
+    SET_SYMBOL_VAL (XSYMBOL (this_binding->symbol),
+		    this_binding->old_value);
+  else
+    /* NOTE: we only ever come here if make_local_foo was used for
+       the first time on this var within this let.  */
+    Fset_default (this_binding->symbol, this_binding->old_value);
 }
 
 Lisp_Object
@@ -3247,41 +3349,7 @@ unbind_to (ptrdiff_t count, Lisp_Object value)
       struct specbinding this_binding;
       this_binding = *--specpdl_ptr;
 
-      if (this_binding.func != 0)
-	(*this_binding.func) (this_binding.old_value);
-      /* If the symbol is a list, it is really (SYMBOL WHERE
-	 . CURRENT-BUFFER) where WHERE is either nil, a buffer, or a
-	 frame.  If WHERE is a buffer or frame, this indicates we
-	 bound a variable that had a buffer-local or frame-local
-	 binding.  WHERE nil means that the variable had the default
-	 value when it was bound.  CURRENT-BUFFER is the buffer that
-	 was current when the variable was bound.  */
-      else if (CONSP (this_binding.symbol))
-	{
-	  Lisp_Object symbol, where;
-
-	  symbol = XCAR (this_binding.symbol);
-	  where = XCAR (XCDR (this_binding.symbol));
-
-	  if (NILP (where))
-	    Fset_default (symbol, this_binding.old_value);
-	  /* If `where' is non-nil, reset the value in the appropriate
-	     local binding, but only if that binding still exists.  */
-	  else if (BUFFERP (where)
-		   ? !NILP (Flocal_variable_p (symbol, where))
-		   : !NILP (Fassq (symbol, XFRAME (where)->param_alist)))
-	    set_internal (symbol, this_binding.old_value, where, 1);
-	}
-      /* If variable has a trivial value (no forwarding), we can
-	 just set it.  No need to check for constant symbols here,
-	 since that was already done by specbind.  */
-      else if (XSYMBOL (this_binding.symbol)->redirect == SYMBOL_PLAINVAL)
-	SET_SYMBOL_VAL (XSYMBOL (this_binding.symbol),
-			this_binding.old_value);
-      else
-	/* NOTE: we only ever come here if make_local_foo was used for
-	   the first time on this var within this let.  */
-	Fset_default (this_binding.symbol, this_binding.old_value);
+      do_one_unbind (&this_binding, 1);
     }
 
   if (NILP (Vquit_flag) && !NILP (quitf))
@@ -3289,6 +3357,21 @@ unbind_to (ptrdiff_t count, Lisp_Object value)
 
   UNGCPRO;
   return value;
+}
+
+void
+unbind_for_thread_switch (void)
+{
+  struct specbinding *bind;
+
+  for (bind = specpdl_ptr; bind != specpdl; --bind)
+    {
+      if (bind->func == NULL)
+	{
+	  bind->saved_value = find_symbol_value (binding_symbol (bind));
+	  do_one_unbind (bind, 0);
+	}
+    }
 }
 
 DEFUN ("special-variable-p", Fspecial_variable_p, Sspecial_variable_p, 1, 1, 0,

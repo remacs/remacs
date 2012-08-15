@@ -40,6 +40,7 @@ mark_one_thread (struct thread_state *thread)
     {
       mark_object (bind->symbol);
       mark_object (bind->old_value);
+      mark_object (bind->saved_value);
     }
 
 #if (GC_MARK_STACK == GC_MAKE_GCPROS_NOOPS \

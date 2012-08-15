@@ -2014,7 +2014,9 @@ struct specbinding
   {
     Lisp_Object symbol, old_value;
     specbinding_func func;
-    Lisp_Object unused;		/* Dividing by 16 is faster than by 12 */
+    /* Normally this is unused; but it is to the symbol's current
+       value when a thread is swapped out.  */
+    Lisp_Object saved_value;
   };
 
 #define SPECPDL_INDEX()	(specpdl_ptr - specpdl)
