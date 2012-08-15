@@ -168,7 +168,14 @@ struct thread_state
   struct thread_state *next_thread;
 };
 
-struct Lisp_Mutex;
+struct Lisp_Mutex
+{
+  struct vectorlike_header header;
+
+  Lisp_Object name;
+
+  lisp_mutex_t mutex;
+};
 
 extern struct thread_state *current_thread;
 

@@ -1957,10 +1957,14 @@ print_object (Lisp_Object obj, register Lisp_Object printcharfun, int escapeflag
 	}
       else if (MUTEXP (obj))
 	{
-	  int len;
 	  strout ("#<mutex ", -1, -1, printcharfun);
-	  len = sprintf (buf, "%p", XMUTEX (obj));
-	  strout (buf, len, len, printcharfun);
+	  if (STRINGP (XMUTEX (obj)->name))
+	    print_string (XMUTEX (obj)->name, printcharfun);
+	  else
+	    {
+	      int len = sprintf (buf, "%p", XMUTEX (obj));
+	      strout (buf, len, len, printcharfun);
+	    }
 	  PRINTCHAR ('>');
 	}
       else

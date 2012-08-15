@@ -39,16 +39,9 @@ Lisp_Object Qthreadp, Qmutexp;
 
 
 
-struct Lisp_Mutex
-{
-  struct vectorlike_header header;
-
-  lisp_mutex_t mutex;
-};
-
-DEFUN ("make-mutex", Fmake_mutex, Smake_mutex, 0, 0, 0,
+DEFUN ("make-mutex", Fmake_mutex, Smake_mutex, 0, 1, 0,
        doc: /* FIXME */)
-  (void)
+  (Lisp_Object name)
 {
   struct Lisp_Mutex *mutex;
   Lisp_Object result;
@@ -57,6 +50,7 @@ DEFUN ("make-mutex", Fmake_mutex, Smake_mutex, 0, 0, 0,
   memset ((char *) mutex + offsetof (struct Lisp_Mutex, mutex),
 	  0, sizeof (struct Lisp_Mutex) - offsetof (struct Lisp_Mutex,
 						    mutex));
+  mutex->name = name;
   lisp_mutex_init (&mutex->mutex);
 
   XSETMUTEX (result, mutex);
@@ -105,6 +99,18 @@ DEFUN ("mutex-unlock", Fmutex_unlock, Smutex_unlock, 1, 1, 0,
 
   flush_stack_call_func (mutex_unlock_callback, mutex);
   return Qnil;
+}
+
+DEFUN ("mutex-name", Fmutex_name, Smutex_name, 1, 1, 0,
+       doc: /* FIXME */)
+  (Lisp_Object obj)
+{
+  struct Lisp_Mutex *mutex;
+
+  CHECK_MUTEX (obj);
+  mutex = XMUTEX (obj);
+
+  return mutex->name;
 }
 
 void
@@ -542,6 +548,7 @@ syms_of_threads (void)
   defsubr (&Smake_mutex);
   defsubr (&Smutex_lock);
   defsubr (&Smutex_unlock);
+  defsubr (&Smutex_name);
 
   Qthreadp = intern_c_string ("threadp");
   staticpro (&Qthreadp);
