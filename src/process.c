@@ -267,29 +267,7 @@ static void create_pty (Lisp_Object);
 static Lisp_Object get_process (register Lisp_Object name);
 static void exec_sentinel (Lisp_Object proc, Lisp_Object reason);
 
-/* Mask of bits indicating the descriptors that we wait for input on.  */
-
-static SELECT_TYPE input_wait_mask;
-
-/* Mask that excludes keyboard input descriptor(s).  */
-
-static SELECT_TYPE non_keyboard_wait_mask;
-
-/* Mask that excludes process input descriptor(s).  */
-
-static SELECT_TYPE non_process_wait_mask;
-
-/* Mask for selecting for write.  */
-
-static SELECT_TYPE write_mask;
-
 #ifdef NON_BLOCKING_CONNECT
-/* Mask of bits indicating the descriptors that we wait for connect to
-   complete on.  Once they complete, they are removed from this mask
-   and added to the input_wait_mask and non_keyboard_wait_mask.  */
-
-static SELECT_TYPE connect_wait_mask;
-
 /* Number of bits set in connect_wait_mask.  */
 static int num_pending_connects;
 #endif	/* NON_BLOCKING_CONNECT */
@@ -336,13 +314,27 @@ static int pty_max_bytes;
 
 
 
+enum fd_bits
+{
+  /* Read from file descriptor.  */
+  FOR_READ = 1,
+  /* Write to file descriptor.  */
+  FOR_WRITE = 2,
+  /* This descriptor refers to a keyboard.  Only valid if FOR_READ is
+     set.  */
+  KEYBOARD_FD = 4,
+  /* This descriptor refers to a process.  */
+  PROCESS_FD = 8,
+  /* A non-blocking connect.  Only valid if FOR_WRITE is set.  */
+  NON_BLOCKING_CONNECT_FD = 16
+};
+
 static struct fd_callback_data
 {
   fd_callback func;
   void *data;
-#define FOR_READ  1
-#define FOR_WRITE 2
-  int condition; /* mask of the defines above.  */
+  /* Flags from enum fd_bits.  */
+  int flags;
 } fd_callback_info[MAXDESC];
 
 
@@ -357,7 +349,23 @@ add_read_fd (int fd, fd_callback func, void *data)
 
   fd_callback_info[fd].func = func;
   fd_callback_info[fd].data = data;
-  fd_callback_info[fd].condition |= FOR_READ;
+}
+
+void
+add_non_keyboard_read_fd (int fd)
+{
+  eassert (fd >= 0 && fd < MAXDESC);
+  eassert (fd_callback_info[fd].func == NULL);
+  fd_callback_info[fd].flags |= FOR_READ;
+  if (fd > max_input_desc)
+    max_input_desc = fd;
+}
+
+void
+add_process_read_fd (int fd)
+{
+  add_non_keyboard_read_fd (fd);
+  fd_callback_info[fd].flags |= PROCESS_FD;
 }
 
 /* Stop monitoring file descriptor FD for when read is possible.  */
@@ -368,8 +376,7 @@ delete_read_fd (int fd)
   eassert (fd < MAXDESC);
   delete_keyboard_wait_descriptor (fd);
 
-  fd_callback_info[fd].condition &= ~FOR_READ;
-  if (fd_callback_info[fd].condition == 0)
+  if (fd_callback_info[fd].flags == 0)
     {
       fd_callback_info[fd].func = 0;
       fd_callback_info[fd].data = 0;
@@ -383,13 +390,24 @@ void
 add_write_fd (int fd, fd_callback func, void *data)
 {
   eassert (fd < MAXDESC);
-  FD_SET (fd, &write_mask);
   if (fd > max_input_desc)
     max_input_desc = fd;
 
   fd_callback_info[fd].func = func;
   fd_callback_info[fd].data = data;
-  fd_callback_info[fd].condition |= FOR_WRITE;
+  fd_callback_info[fd].flags |= FOR_WRITE;
+}
+
+void
+add_non_blocking_write_fd (int fd)
+{
+  eassert (fd >= 0 && fd < MAXDESC);
+  eassert (fd_callback_info[fd].func == NULL);
+
+  fd_callback_info[fd].flags |= FOR_WRITE | NON_BLOCKING_CONNECT_FD;
+  if (fd > max_input_desc)
+    max_input_desc = fd;
+  ++num_pending_connects;
 }
 
 /* Stop monitoring file descriptor FD for when write is possible.  */
@@ -400,23 +418,86 @@ delete_write_fd (int fd)
   int lim = max_input_desc;
 
   eassert (fd < MAXDESC);
-  FD_CLR (fd, &write_mask);
-  fd_callback_info[fd].condition &= ~FOR_WRITE;
-  if (fd_callback_info[fd].condition == 0)
+  if ((fd_callback_info[fd].flags & NON_BLOCKING_CONNECT_FD) != 0)
+    {
+      if (--num_pending_connects < 0)
+	abort ();
+    }
+  fd_callback_info[fd].flags &= ~(FOR_WRITE | NON_BLOCKING_CONNECT_FD);
+  if (fd_callback_info[fd].flags == 0)
     {
       fd_callback_info[fd].func = 0;
       fd_callback_info[fd].data = 0;
 
       if (fd == max_input_desc)
-        for (fd = lim; fd >= 0; fd--)
-          if (FD_ISSET (fd, &input_wait_mask) || FD_ISSET (fd, &write_mask))
-            {
-              max_input_desc = fd;
-              break;
-            }
-
+	{
+	  for (fd = max_input_desc; fd >= 0; --fd)
+	    {
+	      if (fd_callback_info[fd].flags != 0)
+		{
+		  max_input_desc = fd;
+		  break;
+		}
+	    }
+	}
     }
 }
+
+static void
+compute_input_wait_mask (SELECT_TYPE *mask)
+{
+  int fd;
+
+  FD_ZERO (mask);
+  for (fd = 0; fd < max (max_process_desc, max_input_desc); ++fd)
+    {
+      if ((fd_callback_info[fd].flags & FOR_READ) != 0)
+	FD_SET (fd, mask);
+    }
+}
+
+static void
+compute_non_process_wait_mask (SELECT_TYPE *mask)
+{
+  int fd;
+
+  FD_ZERO (mask);
+  for (fd = 0; fd < max (max_process_desc, max_input_desc); ++fd)
+    {
+      if ((fd_callback_info[fd].flags & FOR_READ) != 0
+	  && (fd_callback_info[fd].flags & PROCESS_FD) == 0)
+	FD_SET (fd, mask);
+    }
+}
+
+static void
+compute_non_keyboard_wait_mask (SELECT_TYPE *mask)
+{
+  int fd;
+
+  FD_ZERO (mask);
+  for (fd = 0; fd < max (max_process_desc, max_input_desc); ++fd)
+    {
+      if ((fd_callback_info[fd].flags & FOR_READ) != 0
+	  && (fd_callback_info[fd].flags & KEYBOARD_FD) == 0)
+	FD_SET (fd, mask);
+    }
+}
+
+static void
+compute_write_mask (SELECT_TYPE *mask)
+{
+  int fd;
+
+  FD_ZERO (mask);
+  for (fd = 0; fd < max (max_process_desc, max_input_desc); ++fd)
+    {
+      if ((fd_callback_info[fd].flags & FOR_WRITE) != 0)
+	FD_SET (fd, mask);
+    }
+}
+
+
 
 
 /* Compute the Lisp form of the process status, p->status, from
@@ -961,17 +1042,11 @@ The string argument is normally a multibyte string, except:
   if (p->infd >= 0)
     {
       if (EQ (filter, Qt) && !EQ (p->status, Qlisten))
-	{
-	  FD_CLR (p->infd, &input_wait_mask);
-	  FD_CLR (p->infd, &non_keyboard_wait_mask);
-	}
+	delete_read_fd (p->infd);
       else if (EQ (p->filter, Qt)
 	       /* Network or serial process not stopped:  */
 	       && !EQ (p->command, Qt))
-	{
-	  FD_SET (p->infd, &input_wait_mask);
-	  FD_SET (p->infd, &non_keyboard_wait_mask);
-	}
+	delete_read_fd (p->infd);
     }
 
   PSET (p, filter, filter);
@@ -1650,10 +1725,7 @@ create_process (Lisp_Object process, char **new_argv, Lisp_Object current_dir)
 #endif /* HAVE_WORKING_VFORK */
   pthread_sigmask (SIG_BLOCK, &blocked, &procmask);
 
-  FD_SET (inchannel, &input_wait_mask);
-  FD_SET (inchannel, &non_keyboard_wait_mask);
-  if (inchannel > max_process_desc)
-    max_process_desc = inchannel;
+  add_non_keyboard_read_fd (inchannel);
 
   /* Until we store the proper pid, enable sigchld_handler
      to recognize an unknown pid as standing for this process.
@@ -1968,10 +2040,7 @@ create_pty (Lisp_Object process)
   PSET (XPROCESS (process), status, Qrun);
   setup_process_coding_systems (process);
 
-  FD_SET (inchannel, &input_wait_mask);
-  FD_SET (inchannel, &non_keyboard_wait_mask);
-  if (inchannel > max_process_desc)
-    max_process_desc = inchannel;
+  add_non_keyboard_read_fd (inchannel);
 
   XPROCESS (process)->pid = -2;
 #ifdef HAVE_PTYS
@@ -2616,10 +2685,7 @@ usage:  (make-serial-process &rest ARGS)  */)
   p->pty_flag = 0;
 
   if (!EQ (p->command, Qt))
-    {
-      FD_SET (fd, &input_wait_mask);
-      FD_SET (fd, &non_keyboard_wait_mask);
-    }
+    add_non_keyboard_read_fd (fd);
 
   if (BUFFERP (buffer))
     {
@@ -3431,12 +3497,8 @@ usage: (make-network-process &rest ARGS)  */)
 	 in that case, we still need to signal this like a non-blocking
 	 connection.  */
       PSET (p, status, Qconnect);
-      if (!FD_ISSET (inch, &connect_wait_mask))
-	{
-	  FD_SET (inch, &connect_wait_mask);
-	  FD_SET (inch, &write_mask);
-	  num_pending_connects++;
-	}
+      if ((fd_callback_info[inch].flags & NON_BLOCKING_CONNECT_FD) == 0)
+	add_non_blocking_write_fd (inch);
     }
   else
 #endif
@@ -3444,10 +3506,7 @@ usage: (make-network-process &rest ARGS)  */)
        still listen for incoming connects unless it is stopped.  */
     if ((!EQ (p->filter, Qt) && !EQ (p->command, Qt))
 	|| (EQ (p->status, Qlisten) && NILP (p->command)))
-      {
-	FD_SET (inch, &input_wait_mask);
-	FD_SET (inch, &non_keyboard_wait_mask);
-      }
+      add_non_keyboard_read_fd (inch);
 
   if (inch > max_process_desc)
     max_process_desc = inch;
@@ -3892,16 +3951,10 @@ deactivate_process (Lisp_Object proc)
 	}
 #endif
       chan_process[inchannel] = Qnil;
-      FD_CLR (inchannel, &input_wait_mask);
-      FD_CLR (inchannel, &non_keyboard_wait_mask);
+      delete_read_fd (inchannel);
 #ifdef NON_BLOCKING_CONNECT
-      if (FD_ISSET (inchannel, &connect_wait_mask))
-	{
-	  FD_CLR (inchannel, &connect_wait_mask);
-	  FD_CLR (inchannel, &write_mask);
-	  if (--num_pending_connects < 0)
-	    abort ();
-	}
+      if ((fd_callback_info[inchannel].flags & NON_BLOCKING_CONNECT_FD) != 0)
+	delete_write_fd (inchannel);
 #endif
       if (inchannel == max_process_desc)
 	{
@@ -4165,13 +4218,7 @@ server_accept_connection (Lisp_Object server, int channel)
 
   /* Client processes for accepted connections are not stopped initially.  */
   if (!EQ (p->filter, Qt))
-    {
-      FD_SET (s, &input_wait_mask);
-      FD_SET (s, &non_keyboard_wait_mask);
-    }
-
-  if (s > max_process_desc)
-    max_process_desc = s;
+    add_non_keyboard_read_fd (s);
 
   /* Setup coding system for new process based on server process.
      This seems to be the proper thing to do, as the coding system
@@ -4433,8 +4480,8 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
           if (kbd_on_hold_p ())
             FD_ZERO (&Atemp);
           else
-            Atemp = input_wait_mask;
-	  Ctemp = write_mask;
+            compute_input_wait_mask (&Atemp);
+	  compute_write_mask (&Ctemp);
 
 	  timeout = make_emacs_time (0, 0);
 	  if ((pselect (max (max_process_desc, max_input_desc) + 1,
@@ -4512,17 +4559,17 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 	}
       else if (!NILP (wait_for_cell))
 	{
-	  Available = non_process_wait_mask;
+	  compute_non_process_wait_mask (&Available);
 	  check_delay = 0;
 	  check_write = 0;
 	}
       else
 	{
 	  if (! read_kbd)
-	    Available = non_keyboard_wait_mask;
+	    compute_non_keyboard_wait_mask (&Available);
 	  else
-	    Available = input_wait_mask;
-          Writeok = write_mask;
+	    compute_input_wait_mask (&Available);
+	  compute_write_mask (&Writeok);
 #ifdef SELECT_CANT_DO_WRITE_MASK
           check_write = 0;
 #else
@@ -4790,19 +4837,19 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
           struct fd_callback_data *d = &fd_callback_info[channel];
           if (FD_ISSET (channel, &Available)
               && d->func != 0
-              && (d->condition & FOR_READ) != 0)
+              && (d->flags & FOR_READ) != 0)
             d->func (channel, d->data, 1);
           if (FD_ISSET (channel, &Writeok)
               && d->func != 0
-              && (d->condition & FOR_WRITE) != 0)
+              && (d->flags & FOR_WRITE) != 0)
             d->func (channel, d->data, 0);
           }
 
       for (channel = 0; channel <= max_process_desc; channel++)
 	{
 	  if (FD_ISSET (channel, &Available)
-	      && FD_ISSET (channel, &non_keyboard_wait_mask)
-              && !FD_ISSET (channel, &non_process_wait_mask))
+	      && ((fd_callback_info[channel].flags & (KEYBOARD_FD | PROCESS_FD))
+		  == PROCESS_FD))
 	    {
 	      int nread;
 
@@ -4880,8 +4927,7 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 
 		  /* Clear the descriptor now, so we only raise the
 		     signal once.  */
-		  FD_CLR (channel, &input_wait_mask);
-		  FD_CLR (channel, &non_keyboard_wait_mask);
+		  delete_read_fd (channel);
 
 		  if (p->pid == -2)
 		    {
@@ -4915,14 +4961,12 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 	    }
 #ifdef NON_BLOCKING_CONNECT
 	  if (FD_ISSET (channel, &Writeok)
-	      && FD_ISSET (channel, &connect_wait_mask))
+	      && (fd_callback_info[channel].flags
+		  & NON_BLOCKING_CONNECT_FD) != 0)
 	    {
 	      struct Lisp_Process *p;
 
-	      FD_CLR (channel, &connect_wait_mask);
-              FD_CLR (channel, &write_mask);
-	      if (--num_pending_connects < 0)
-		abort ();
+	      delete_write_fd (channel);
 
 	      proc = chan_process[channel];
 	      if (NILP (proc))
@@ -4970,10 +5014,7 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 		     from the process before calling the sentinel.  */
 		  exec_sentinel (proc, build_string ("open\n"));
 		  if (!EQ (p->filter, Qt) && !EQ (p->command, Qt))
-		    {
-		      FD_SET (p->infd, &input_wait_mask);
-		      FD_SET (p->infd, &non_keyboard_wait_mask);
-		    }
+		    delete_read_fd (p->infd);
 		}
 	    }
 #endif /* NON_BLOCKING_CONNECT */
@@ -6014,10 +6055,7 @@ traffic.  */)
       p = XPROCESS (process);
       if (NILP (p->command)
 	  && p->infd >= 0)
-	{
-	  FD_CLR (p->infd, &input_wait_mask);
-	  FD_CLR (p->infd, &non_keyboard_wait_mask);
-	}
+	delete_read_fd (p->infd);
       PSET (p, command, Qt);
       return process;
     }
@@ -6045,8 +6083,7 @@ traffic.  */)
 	  && p->infd >= 0
 	  && (!EQ (p->filter, Qt) || EQ (p->status, Qlisten)))
 	{
-	  FD_SET (p->infd, &input_wait_mask);
-	  FD_SET (p->infd, &non_keyboard_wait_mask);
+	  add_non_keyboard_read_fd (p->infd);
 #ifdef WINDOWSNT
 	  if (fd_info[ p->infd ].flags & FILE_SERIAL)
 	    PurgeComm (fd_info[ p->infd ].hnd, PURGE_RXABORT | PURGE_RXCLEAR);
@@ -6419,10 +6456,7 @@ sigchld_handler (int signo)
 
 	  /* We use clear_desc_flag to avoid a compiler bug in Microsoft C.  */
 	  if (clear_desc_flag)
-	    {
-	      FD_CLR (p->infd, &input_wait_mask);
-	      FD_CLR (p->infd, &non_keyboard_wait_mask);
-	    }
+	    delete_read_fd (p->infd);
 
 	  /* Tell wait_reading_process_output that it needs to wake up and
 	     look around.  */
@@ -6796,8 +6830,8 @@ keyboard_bit_set (fd_set *mask)
   int fd;
 
   for (fd = 0; fd <= max_input_desc; fd++)
-    if (FD_ISSET (fd, mask) && FD_ISSET (fd, &input_wait_mask)
-	&& !FD_ISSET (fd, &non_keyboard_wait_mask))
+    if (FD_ISSET (fd, mask)
+	&& ((fd_callback_info[fd].flags & KEYBOARD_FD) != 0))
       return 1;
 
   return 0;
@@ -7042,8 +7076,8 @@ void
 add_keyboard_wait_descriptor (int desc)
 {
 #ifdef subprocesses /* actually means "not MSDOS" */
-  FD_SET (desc, &input_wait_mask);
-  FD_SET (desc, &non_process_wait_mask);
+  eassert (desc >= 0 && desc < MAXDESC);
+  fd_callback_info[desc].flags |= FOR_READ | KEYBOARD_FD;
   if (desc > max_input_desc)
     max_input_desc = desc;
 #endif
@@ -7058,13 +7092,19 @@ delete_keyboard_wait_descriptor (int desc)
   int fd;
   int lim = max_input_desc;
 
-  FD_CLR (desc, &input_wait_mask);
-  FD_CLR (desc, &non_process_wait_mask);
+  fd_callback_info[desc].flags &= ~(FOR_READ | KEYBOARD_FD | PROCESS_FD);
 
   if (desc == max_input_desc)
-    for (fd = 0; fd < lim; fd++)
-      if (FD_ISSET (fd, &input_wait_mask) || FD_ISSET (fd, &write_mask))
-        max_input_desc = fd;
+    {
+      for (fd = max_input_desc; fd >= 0; --fd)
+	{
+	  if (fd_callback_info[desc].flags != 0)
+	    {
+	      max_input_desc = fd;
+	      break;
+	    }
+	}
+    }
 #endif
 }
 
@@ -7320,15 +7360,10 @@ init_process_emacs (void)
     signal (SIGCHLD, sigchld_handler);
 #endif
 
-  FD_ZERO (&input_wait_mask);
-  FD_ZERO (&non_keyboard_wait_mask);
-  FD_ZERO (&non_process_wait_mask);
-  FD_ZERO (&write_mask);
   max_process_desc = 0;
   memset (fd_callback_info, 0, sizeof (fd_callback_info));
 
 #ifdef NON_BLOCKING_CONNECT
-  FD_ZERO (&connect_wait_mask);
   num_pending_connects = 0;
 #endif
 
