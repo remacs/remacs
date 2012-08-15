@@ -117,10 +117,15 @@ It has `lisp-mode-abbrev-table' as its parent."
 	 (purecopy (concat "^\\s-*("
 			   (eval-when-compile
 			     (regexp-opt
-			      '("defvar" "defconst" "defconstant" "defcustom"
+			      '("defconst" "defconstant" "defcustom"
 				"defparameter" "define-symbol-macro") t))
 			   "\\s-+\\(\\(\\sw\\|\\s_\\)+\\)"))
 	 2)
+   ;; For `defvar', we ignore (defvar FOO) constructs.
+   (list (purecopy "Variables")
+	 (purecopy (concat "^\\s-*(defvar\\s-+\\(\\(\\sw\\|\\s_\\)+\\)"
+			   "[[:space:]\n]+[^)]"))
+	 1)
    (list (purecopy "Types")
 	 (purecopy (concat "^\\s-*("
 			   (eval-when-compile
@@ -771,7 +776,12 @@ Reinitialize the face according to the `defface' specification."
 	      (default-boundp (eval (nth 1 form) lexical-binding)))
 	 ;; Force variable to be bound.
 	 (set-default (eval (nth 1 form) lexical-binding)
-                      (eval (nth 1 (nth 2 form)) lexical-binding))
+		      ;; The second arg is an expression that evaluates to
+		      ;; an expression.  The second evaluation is the one
+		      ;; normally performed not be normal execution but by
+		      ;; custom-initialize-set (for example), which does not
+		      ;; use lexical-binding.
+		      (eval (eval (nth 2 form) lexical-binding)))
 	 form)
 	;; `defface' is macroexpanded to `custom-declare-face'.
 	((eq (car form) 'custom-declare-face)

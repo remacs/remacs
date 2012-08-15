@@ -1,3 +1,29 @@
+2012-08-06  Eli Zaretskii  <eliz@gnu.org>
+
+	* functions.texi (Closures): Put the main index entry for
+	"closures" here.  (Bug#12138)
+
+	* variables.texi (Lexical Binding): Disambiguate the index entry
+	for "closures".
+
+2012-08-05  Chong Yidong  <cyd@gnu.org>
+
+	* display.texi (Defining Faces): Move documentation of
+	frame-background-mode to the Emacs manual (Bug#7774).
+
+2012-08-04  Chong Yidong  <cyd@gnu.org>
+
+	* syntax.texi (Syntax Basics): Rearrange the text for clarity.
+	Fix description of syntax table inheritance.
+	(Syntax Table Functions): Don't refer to internal contents of
+	syntax table, since that is not explained yet.  Copyedits.
+	(Standard Syntax Tables): Node deleted.
+	(Syntax Table Internals): Misc clarifications.  Improve table
+	formatting.
+
+	* keymaps.texi (Inheritance and Keymaps):
+	* text.texi (Sticky Properties): Tweak index entry.
+
 2012-07-28  Eli Zaretskii  <eliz@gnu.org>
 
 	* nonascii.texi (Character Sets): Fix a typo.  (Bug#12062)
@@ -4029,7 +4055,7 @@
 
 	* functions.texi (Function Safety): Texinfo usage fix.
 
-2009-01-04  Eduard Wiebe  <usenet@pusto.de>  (tiny patch)
+2009-01-04  Eduard Wiebe  <usenet@pusto.de>  (tiny change)
 
 	* objects.texi (General Escape Syntax): Fix typo.
 

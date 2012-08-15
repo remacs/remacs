@@ -1,3 +1,66 @@
+2012-08-14  Juanma Barranquero  <lekktu@gmail.com>
+
+	* config.nt: Sync with autogen/config.in.
+	(_GL_INLINE_HEADER_BEGIN): Update.
+
+2012-08-10  Glenn Morris  <rgm@gnu.org>
+
+	* config.nt (DIRECTORY_SEP): Move here from src/lisp.h.
+
+2012-08-07  Juanma Barranquero  <lekktu@gmail.com>
+
+	* config.nt: Sync with autogen/config.in.
+	(BROKEN_GETWD, DISPNEW_NEEDS_STDIO_EXT): New macros.
+	(PENDING_OUTPUT_COUNT): Move definition to inc/ms-w32.h.
+
+	* inc/ms-w32.h (PENDING_OUTPUT_COUNT): Define.
+
+2012-08-06  Glenn Morris  <rgm@gnu.org>
+
+	* config.nt (GNU_LIBRARY_PENDING_OUTPUT_COUNT): Remove.
+	(PENDING_OUTPUT_COUNT): Define it as dispnew.c used to.
+
+2012-08-04  Eli Zaretskii  <eliz@gnu.org>
+
+	* paths.h (PATH_LOADSEARCH, PATH_SITELOADSEARCH, PATH_EXEC)
+	(PATH_DATA, PATH_DOC): Replace dummy directory names with
+	directories relative to %emacs_dir%.
+	(PATH_EXEC): Add lib-src/oo-spd/i386 and lib-src/oo/i386, to cater
+	to the use case of running un-installed Emacs.
+
+2012-08-03  Juanma Barranquero  <lekktu@gmail.com>
+
+	* config.nt: Sync with autogen/config.in.
+	(DOS_NT, MSDOS): New macros.
+	(WRETCODE, wait3): Remove.
+
+	* inc/ms-w32.h (DOS_NT): Remove; defined in config.nt.
+
+2012-08-03  Eli Zaretskii  <eliz@gnu.org>
+
+	* inc/sys/stat.h (S_IFLNK): Define.
+	(S_ISLNK): A non-trivial definition.
+	(lstat): Prototype instead of a macro that redirects to 'stat'.
+
+2012-08-02  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Use C99-style 'extern inline' if available.
+	* config.nt: Sync with autogen/config.in.
+	(_GL_INLINE, _GL_EXTERN_INLINE, _GL_INLINE_HEADER_BEGIN)
+	(_GL_INLINE_HEADER_END): New macros.
+
+2012-08-02  Glenn Morris  <rgm@gnu.org>
+
+	* inc/ms-w32.h: Move here from ../src/s.
+	* config.nt (config_opsysfile): Change to <ms-w32.h>.
+
+2012-08-01  Juanma Barranquero  <lekktu@gmail.com>
+
+	* config.nt: Sync with autogen/config.in.
+	(DEVICE_SEP, FLOAT_CHECK_DOMAIN, HAVE_INVERSE_HYPERBOLIC)
+	(INTERNAL_TERMINAL, IS_ANY_SEP, IS_DEVICE_SEP, IS_DIRECTORY_SEP):
+	New macros.
+
 2012-08-01  Juanma Barranquero  <lekktu@gmail.com>
 
 	* config.nt: Sync with autogen/config.in.

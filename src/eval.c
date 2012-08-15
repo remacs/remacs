@@ -976,7 +976,7 @@ definitions to shadow the loaded ones for use in file byte-compilation.  */)
 	  tem = Fassq (sym, environment);
 	  if (NILP (tem))
 	    {
-	      def = SVAR (XSYMBOL (sym), function);
+	      def = XSYMBOL (sym)->function;
 	      if (!EQ (def, Qunbound))
 		continue;
 	    }
@@ -1399,7 +1399,9 @@ internal_condition_case_n (Lisp_Object (*bfun) (ptrdiff_t, Lisp_Object *),
 			   ptrdiff_t nargs,
 			   Lisp_Object *args,
 			   Lisp_Object handlers,
-			   Lisp_Object (*hfun) (Lisp_Object))
+			   Lisp_Object (*hfun) (Lisp_Object err,
+						ptrdiff_t nargs,
+						Lisp_Object *args))
 {
   Lisp_Object val;
   struct catchtag c;
@@ -1417,7 +1419,7 @@ internal_condition_case_n (Lisp_Object (*bfun) (ptrdiff_t, Lisp_Object *),
   c.byte_stack = byte_stack_list;
   if (_setjmp (c.jmp))
     {
-      return (*hfun) (c.val);
+      return (*hfun) (c.val, nargs, args);
     }
   c.next = catchlist;
   catchlist = &c;
@@ -1893,9 +1895,9 @@ this does nothing and returns nil.  */)
   CHECK_STRING (file);
 
   /* If function is defined and not as an autoload, don't override.  */
-  if (!EQ (SVAR (XSYMBOL (function), function), Qunbound)
-      && !(CONSP (SVAR (XSYMBOL (function), function))
-	   && EQ (XCAR (SVAR (XSYMBOL (function), function)), Qautoload)))
+  if (!EQ (XSYMBOL (function)->function, Qunbound)
+      && !(CONSP (XSYMBOL (function)->function)
+	   && EQ (XCAR (XSYMBOL (function)->function), Qautoload)))
     return Qnil;
 
   if (NILP (Vpurify_flag))
@@ -2081,7 +2083,7 @@ eval_sub (Lisp_Object form)
   /* Optimize for no indirection.  */
   fun = original_fun;
   if (SYMBOLP (fun) && !EQ (fun, Qunbound)
-      && (fun = SVAR (XSYMBOL (fun), function), SYMBOLP (fun)))
+      && (fun = XSYMBOL (fun)->function, SYMBOLP (fun)))
     fun = indirect_function (fun);
 
   if (SUBRP (fun))
@@ -2266,7 +2268,7 @@ usage: (apply FUNCTION &rest ARGUMENTS)  */)
 
   /* Optimize for no indirection.  */
   if (SYMBOLP (fun) && !EQ (fun, Qunbound)
-      && (fun = SVAR (XSYMBOL (fun), function), SYMBOLP (fun)))
+      && (fun = XSYMBOL (fun)->function, SYMBOLP (fun)))
     fun = indirect_function (fun);
   if (EQ (fun, Qunbound))
     {
@@ -2301,7 +2303,7 @@ usage: (apply FUNCTION &rest ARGUMENTS)  */)
       gcpro1.nvars = 1 + numargs;
     }
 
-  memcpy (funcall_args, args, nargs * sizeof (Lisp_Object));
+  memcpy (funcall_args, args, nargs * word_size);
   /* Spread the last arg we got.  Its first element goes in
      the slot that it used to occupy, hence this value of I.  */
   i = nargs - 1;
@@ -2771,7 +2773,7 @@ usage: (funcall FUNCTION &rest ARGUMENTS)  */)
   /* Optimize for no indirection.  */
   fun = original_fun;
   if (SYMBOLP (fun) && !EQ (fun, Qunbound)
-      && (fun = SVAR (XSYMBOL (fun), function), SYMBOLP (fun)))
+      && (fun = XSYMBOL (fun)->function, SYMBOLP (fun)))
     fun = indirect_function (fun);
 
   if (SUBRP (fun))
@@ -2794,7 +2796,7 @@ usage: (funcall FUNCTION &rest ARGUMENTS)  */)
 	    {
 	      internal_args = alloca (XSUBR (fun)->max_args
 				      * sizeof *internal_args);
-	      memcpy (internal_args, args + 1, numargs * sizeof (Lisp_Object));
+	      memcpy (internal_args, args + 1, numargs * word_size);
 	      for (i = numargs; i < XSUBR (fun)->max_args; i++)
 		internal_args[i] = Qnil;
 	    }
@@ -3254,7 +3256,7 @@ unbind_to (ptrdiff_t count, Lisp_Object value)
 	     local binding, but only if that binding still exists.  */
 	  else if (BUFFERP (where)
 		   ? !NILP (Flocal_variable_p (symbol, where))
-		   : !NILP (Fassq (symbol, FVAR (XFRAME (where), param_alist))))
+		   : !NILP (Fassq (symbol, XFRAME (where)->param_alist)))
 	    set_internal (symbol, this_binding.old_value, where, 1);
 	}
       /* If variable has a trivial value (no forwarding), we can

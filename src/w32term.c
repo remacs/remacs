@@ -649,7 +649,7 @@ static void
 x_update_window_end (struct window *w, int cursor_on_p,
 		     int mouse_face_overwritten_p)
 {
-  Mouse_HLInfo *hlinfo = MOUSE_HL_INFO (XFRAME (WVAR (w, frame)));
+  Mouse_HLInfo *hlinfo = MOUSE_HL_INFO (XFRAME (w->frame));
 
   if (!w->pseudo_window_p)
     {
@@ -754,7 +754,7 @@ x_after_update_window_line (struct glyph_row *desired_row)
      overhead is very small.  */
   if (windows_or_buffers_changed
       && desired_row->full_width_p
-      && (f = XFRAME (WVAR (w, frame)),
+      && (f = XFRAME (w->frame),
 	  width = FRAME_INTERNAL_BORDER_WIDTH (f),
 	  width != 0)
       && (height = desired_row->visible_height,
@@ -2718,7 +2718,7 @@ x_ins_del_lines (struct frame *f, int vpos, int n)
 static void
 x_scroll_run (struct window *w, struct run *run)
 {
-  struct frame *f = XFRAME (WVAR (w, frame));
+  struct frame *f = XFRAME (w->frame);
   int x, y, width, height, from_y, to_y, bottom_y;
   HWND hwnd = FRAME_W32_WINDOW (f);
   HRGN expect_dirty;
@@ -2972,7 +2972,7 @@ x_frame_rehighlight (struct w32_display_info *dpyinfo)
 	   : dpyinfo->w32_focus_frame);
       if (! FRAME_LIVE_P (dpyinfo->x_highlight_frame))
 	{
-	  FRAME_FOCUS_FRAME (dpyinfo->w32_focus_frame) = Qnil;
+	  FSET (dpyinfo->w32_focus_frame, focus_frame, Qnil);
 	  dpyinfo->x_highlight_frame = dpyinfo->w32_focus_frame;
 	}
     }
@@ -3612,6 +3612,7 @@ x_scroll_bar_create (struct window *w, int top, int left, int width, int height)
   SCROLLINFO si;
   struct scroll_bar *bar
     = XSCROLL_BAR (Fmake_vector (make_number (SCROLL_BAR_VEC_SIZE), Qnil));
+  Lisp_Object barobj;
 
   BLOCK_INPUT;
 
@@ -3644,7 +3645,8 @@ x_scroll_bar_create (struct window *w, int top, int left, int width, int height)
   /* Add bar to its frame's list of scroll bars.  */
   bar->next = FRAME_SCROLL_BARS (f);
   bar->prev = Qnil;
-  XSETVECTOR (FRAME_SCROLL_BARS (f), bar);
+  XSETVECTOR (barobj, bar);
+  FSET (f, scroll_bars, barobj);
   if (! NILP (bar->next))
     XSETVECTOR (XSCROLL_BAR (bar->next)->prev, bar);
 
@@ -3668,7 +3670,7 @@ x_scroll_bar_remove (struct scroll_bar *bar)
   my_destroy_window (f, SCROLL_BAR_W32_WINDOW (bar));
 
   /* Dissociate this scroll bar from its window.  */
-  WVAR (XWINDOW (bar->window), vertical_scroll_bar) = Qnil;
+  WSET (XWINDOW (bar->window), vertical_scroll_bar, Qnil);
 
   UNBLOCK_INPUT;
 }
@@ -3681,7 +3683,8 @@ static void
 w32_set_vertical_scroll_bar (struct window *w,
 			     int portion, int whole, int position)
 {
-  struct frame *f = XFRAME (WVAR (w, frame));
+  struct frame *f = XFRAME (w->frame);
+  Lisp_Object barobj;
   struct scroll_bar *bar;
   int top, height, left, sb_left, width, sb_width;
   int window_y, window_height;
@@ -3721,7 +3724,7 @@ w32_set_vertical_scroll_bar (struct window *w,
 			     || WINDOW_RIGHT_MARGIN_COLS (w) == 0));
 
   /* Does the scroll bar exist yet?  */
-  if (NILP (WVAR (w, vertical_scroll_bar)))
+  if (NILP (w->vertical_scroll_bar))
     {
       HDC hdc;
       BLOCK_INPUT;
@@ -3743,7 +3746,7 @@ w32_set_vertical_scroll_bar (struct window *w,
       /* It may just need to be moved and resized.  */
       HWND hwnd;
 
-      bar = XSCROLL_BAR (WVAR (w, vertical_scroll_bar));
+      bar = XSCROLL_BAR (w->vertical_scroll_bar);
       hwnd = SCROLL_BAR_W32_WINDOW (bar);
 
       /* If already correctly positioned, do nothing.  */
@@ -3804,8 +3807,8 @@ w32_set_vertical_scroll_bar (struct window *w,
   bar->fringe_extended_p = fringe_extended_p ? Qt : Qnil;
 
   w32_set_scroll_bar_thumb (bar, portion, position, whole);
-
-  XSETVECTOR (WVAR (w, vertical_scroll_bar), bar);
+  XSETVECTOR (barobj, bar);
+  WSET (w, vertical_scroll_bar, barobj);
 }
 
 
@@ -3829,12 +3832,12 @@ w32_condemn_scroll_bars (FRAME_PTR frame)
     {
       Lisp_Object bar;
       bar = FRAME_SCROLL_BARS (frame);
-      FRAME_SCROLL_BARS (frame) = XSCROLL_BAR (bar)->next;
+      FSET (frame, scroll_bars, XSCROLL_BAR (bar)->next);
       XSCROLL_BAR (bar)->next = FRAME_CONDEMNED_SCROLL_BARS (frame);
       XSCROLL_BAR (bar)->prev = Qnil;
       if (! NILP (FRAME_CONDEMNED_SCROLL_BARS (frame)))
 	XSCROLL_BAR (FRAME_CONDEMNED_SCROLL_BARS (frame))->prev = bar;
-      FRAME_CONDEMNED_SCROLL_BARS (frame) = bar;
+      FSET (frame, condemned_scroll_bars, bar);
     }
 }
 
@@ -3846,13 +3849,14 @@ static void
 w32_redeem_scroll_bar (struct window *window)
 {
   struct scroll_bar *bar;
+  Lisp_Object barobj;
   struct frame *f;
 
   /* We can't redeem this window's scroll bar if it doesn't have one.  */
-  if (NILP (WVAR (window, vertical_scroll_bar)))
+  if (NILP (window->vertical_scroll_bar))
     abort ();
 
-  bar = XSCROLL_BAR (WVAR (window, vertical_scroll_bar));
+  bar = XSCROLL_BAR (window->vertical_scroll_bar);
 
   /* Unlink it from the condemned list.  */
   f = XFRAME (WINDOW_FRAME (window));
@@ -3860,12 +3864,12 @@ w32_redeem_scroll_bar (struct window *window)
     {
       /* If the prev pointer is nil, it must be the first in one of
          the lists.  */
-      if (EQ (FRAME_SCROLL_BARS (f), WVAR (window, vertical_scroll_bar)))
+      if (EQ (FRAME_SCROLL_BARS (f), window->vertical_scroll_bar))
         /* It's not condemned.  Everything's fine.  */
         return;
       else if (EQ (FRAME_CONDEMNED_SCROLL_BARS (f),
-                   WVAR (window, vertical_scroll_bar)))
-        FRAME_CONDEMNED_SCROLL_BARS (f) = bar->next;
+                   window->vertical_scroll_bar))
+        FSET (f, condemned_scroll_bars, bar->next);
       else
         /* If its prev pointer is nil, it must be at the front of
            one or the other!  */
@@ -3879,7 +3883,8 @@ w32_redeem_scroll_bar (struct window *window)
 
   bar->next = FRAME_SCROLL_BARS (f);
   bar->prev = Qnil;
-  XSETVECTOR (FRAME_SCROLL_BARS (f), bar);
+  XSETVECTOR (barobj, bar);
+  FSET (f, scroll_bars, barobj);
   if (! NILP (bar->next))
     XSETVECTOR (XSCROLL_BAR (bar->next)->prev, bar);
 }
@@ -3896,7 +3901,7 @@ w32_judge_scroll_bars (FRAME_PTR f)
 
   /* Clear out the condemned list now so we won't try to process any
      more events on the hapless scroll bars.  */
-  FRAME_CONDEMNED_SCROLL_BARS (f) = Qnil;
+  FSET (f, condemned_scroll_bars, Qnil);
 
   for (; ! NILP (bar); bar = next)
     {
@@ -4189,7 +4194,7 @@ w32_read_socket (struct terminal *terminal, int expected,
 		  /* We may get paint messages even though the client
 		     area is clipped - these are not expose events. */
 		  DebPrint (("clipped frame %p (%s) got WM_PAINT - ignored\n", f,
-			     SDATA (FVAR (f, name))));
+			     SDATA (f->name)));
 		}
 	      else if (f->async_visible != 1)
 		{
@@ -4198,7 +4203,7 @@ w32_read_socket (struct terminal *terminal, int expected,
 		  f->async_iconified = 0;
 		  SET_FRAME_GARBAGED (f);
 		  DebPrint (("frame %p (%s) reexposed by WM_PAINT\n", f,
-			     SDATA (FVAR (f, name))));
+			     SDATA (f->name)));
 
 		  /* WM_PAINT serves as MapNotify as well, so report
 		     visibility changes properly.  */
@@ -4254,7 +4259,7 @@ w32_read_socket (struct terminal *terminal, int expected,
 	  if (f && !f->iconified)
 	    {
 	      if (!hlinfo->mouse_face_hidden && INTEGERP (Vmouse_highlight)
-		  && !EQ (FVAR (f, tool_bar_window), hlinfo->mouse_face_window))
+		  && !EQ (f->tool_bar_window, hlinfo->mouse_face_window))
 		{
 		  clear_mouse_face (hlinfo);
 		  hlinfo->mouse_face_hidden = 1;
@@ -4279,7 +4284,7 @@ w32_read_socket (struct terminal *terminal, int expected,
 	  if (f && !f->iconified)
 	    {
 	      if (!hlinfo->mouse_face_hidden && INTEGERP (Vmouse_highlight)
-		  && !EQ (FVAR (f, tool_bar_window), hlinfo->mouse_face_window))
+		  && !EQ (f->tool_bar_window, hlinfo->mouse_face_window))
 		{
 		  clear_mouse_face (hlinfo);
 		  hlinfo->mouse_face_hidden = 1;
@@ -4357,7 +4362,7 @@ w32_read_socket (struct terminal *terminal, int expected,
 	  if (f && !f->iconified)
 	    {
 	      if (!hlinfo->mouse_face_hidden && INTEGERP (Vmouse_highlight)
-		  && !EQ (FVAR (f, tool_bar_window), hlinfo->mouse_face_window))
+		  && !EQ (f->tool_bar_window, hlinfo->mouse_face_window))
 		{
 		  clear_mouse_face (hlinfo);
 		  hlinfo->mouse_face_hidden = 1;
@@ -4422,8 +4427,8 @@ w32_read_socket (struct terminal *terminal, int expected,
 			 create event iff we don't leave the
 			 selected frame.  */
 		      && (focus_follows_mouse
-			  || (EQ (WVAR (XWINDOW (window), frame),
-				  WVAR (XWINDOW (selected_window), frame)))))
+			  || (EQ (XWINDOW (window)->frame,
+				  XWINDOW (selected_window)->frame))))
 		    {
 		      inev.kind = SELECT_WINDOW_EVENT;
 		      inev.frame_or_window = window;
@@ -4481,8 +4486,8 @@ w32_read_socket (struct terminal *terminal, int expected,
                 construct_mouse_click (&inev, &msg, f);
 
                 /* Is this in the tool-bar?  */
-                if (WINDOWP (FVAR (f, tool_bar_window))
-                    && WINDOW_TOTAL_LINES (XWINDOW (FVAR (f, tool_bar_window))))
+                if (WINDOWP (f->tool_bar_window)
+                    && WINDOW_TOTAL_LINES (XWINDOW (f->tool_bar_window)))
                   {
                     Lisp_Object window;
 		    int x = XFASTINT (inev.x);
@@ -4490,7 +4495,7 @@ w32_read_socket (struct terminal *terminal, int expected,
 
                     window = window_from_coordinates (f, x, y, 0, 1);
 
-                    if (EQ (window, FVAR (f, tool_bar_window)))
+                    if (EQ (window, f->tool_bar_window))
                       {
                         w32_handle_tool_bar_click (f, &inev);
                         tool_bar_p = 1;
@@ -4935,7 +4940,7 @@ w32_read_socket (struct terminal *terminal, int expected,
 		if (!FRAME_OBSCURED_P (f))
 		  {
 		    DebPrint (("frame %p (%s) obscured\n", f,
-			       SDATA (FVAR (f, name))));
+			       SDATA (f->name)));
 		  }
 	      }
 	    else
@@ -4947,7 +4952,7 @@ w32_read_socket (struct terminal *terminal, int expected,
 		  {
 		    SET_FRAME_GARBAGED (f);
 		    DebPrint (("obscured frame %p (%s) found to be visible\n", f,
-			       SDATA (FVAR (f, name))));
+			       SDATA (f->name)));
 
 		    /* Force a redisplay sooner or later.  */
 		    record_asynch_buffer_change ();
@@ -5038,7 +5043,7 @@ static void
 x_draw_bar_cursor (struct window *w, struct glyph_row *row,
 		   int width, enum text_cursor_kinds kind)
 {
-  struct frame *f = XFRAME (WVAR (w, frame));
+  struct frame *f = XFRAME (w->frame);
   struct glyph *cursor_glyph;
 
   /* If cursor is out of bounds, don't draw garbage.  This can happen
@@ -5488,7 +5493,7 @@ x_set_offset (struct frame *f, register int xoff, register int yoff,
 
 
 /* Check if we need to resize the frame due to a fullscreen request.
-   If so needed, resize the frame. */
+   If so needed, resize the frame.  */
 static void
 x_check_fullscreen (struct frame *f)
 {
@@ -5508,7 +5513,7 @@ x_check_fullscreen (struct frame *f)
           SET_FRAME_GARBAGED (f);
           cancel_mouse_face (f);
 
-          /* Wait for the change of frame size to occur */
+          /* Wait for the change of frame size to occur.  */
           f->want_fullscreen |= FULLSCREEN_WAIT;
         }
     }
@@ -5595,7 +5600,7 @@ x_set_window_size (struct frame *f, int change_gravity, int cols, int rows)
   SET_FRAME_GARBAGED (f);
 
   /* If cursor was outside the new size, mark it as off.  */
-  mark_window_cursors_off (XWINDOW (FVAR (f, root_window)));
+  mark_window_cursors_off (XWINDOW (f->root_window));
 
   /* Clear out any recollection of where the mouse highlighting was,
      since it might be in a place that's outside the new frame size.
@@ -6227,7 +6232,7 @@ w32_create_terminal (struct w32_display_info *dpyinfo)
      terminal like X does.  */
   terminal->kboard = xmalloc (sizeof (KBOARD));
   init_kboard (terminal->kboard);
-  KVAR (terminal->kboard, Vwindow_system) = intern ("w32");
+  KSET (terminal->kboard, Vwindow_system, intern ("w32"));
   terminal->kboard->next_kboard = all_kboards;
   all_kboards = terminal->kboard;
   /* Don't let the initial kboard remain current longer than necessary.

@@ -229,7 +229,7 @@ Note: The search is conducted only within 10%, at the beginning of the file."
   :version "21.1"
   :group 'change-log)
 (define-obsolete-face-alias 'change-log-acknowledgement
-  'change-log-acknowledgment "24.2")
+  'change-log-acknowledgment "24.3")
 (define-obsolete-face-alias 'change-log-acknowledgement-face
   'change-log-acknowledgment "22.1")
 
@@ -1049,6 +1049,7 @@ Runs `change-log-mode-hook'.
 	show-trailing-whitespace t)
   (set (make-local-variable 'fill-forward-paragraph-function)
        'change-log-fill-forward-paragraph)
+  (set (make-local-variable 'comment-start) nil)
   ;; Make sure we call `change-log-indent' when filling.
   (set (make-local-variable 'fill-indent-according-to-mode) t)
   ;; Avoid that filling leaves behind a single "*" on a line.

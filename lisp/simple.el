@@ -570,7 +570,7 @@ Trailing lines are deleted only if `delete-trailing-whitespace'
 is called on the entire buffer (rather than an active region)."
   :type 'boolean
   :group 'editing
-  :version "24.2")
+  :version "24.3")
 
 (defun delete-trailing-whitespace (&optional start end)
   "Delete trailing whitespace between START and END.
@@ -966,16 +966,22 @@ rather than line counts."
 	(re-search-forward "[\n\C-m]" nil 'end (1- line))
       (forward-line (1- line)))))
 
-(defun count-words-region (start end)
+(defun count-words-region (start end &optional arg)
   "Count the number of words in the region.
 If called interactively, print a message reporting the number of
-lines, words, and chars in the region.
+lines, words, and characters in the region (whether or not the
+region is active); with prefix ARG, report for the entire buffer
+rather than the region.
+
 If called from Lisp, return the number of words between positions
 START and END."
-  (interactive "r")
-  (if (called-interactively-p 'any)
-      (count-words--message "Region" start end)
-    (count-words start end)))
+  (interactive "r\nP")
+  (cond ((not (called-interactively-p 'any))
+	 (count-words start end))
+	(arg
+	 (count-words--buffer-message))
+	(t
+	 (count-words--message "Region" start end))))
 
 (defun count-words (start end)
   "Count words between START and END.
@@ -999,11 +1005,14 @@ END, without printing any message."
 	((use-region-p)
 	 (call-interactively 'count-words-region))
 	(t
-	 (count-words--message
-	  (if (= (point-max) (1+ (buffer-size)))
-	      "Buffer"
-	    "Narrowed part of buffer")
-	  (point-min) (point-max)))))
+	 (count-words--buffer-message))))
+
+(defun count-words--buffer-message ()
+  (count-words--message
+   (if (= (point-max) (1+ (buffer-size)))
+       "Buffer"
+     "Narrowed part of buffer")
+   (point-min) (point-max)))
 
 (defun count-words--message (str start end)
   (let ((lines (count-lines start end))
@@ -2286,7 +2295,7 @@ output buffer and running a new command in the default buffer,
 		 (const :tag "Rename the existing buffer"
 			rename-buffer))
   :group 'shell
-  :version "24.2")
+  :version "24.3")
 
 (defun async-shell-command (command &optional output-buffer error-buffer)
   "Execute string COMMAND asynchronously in background.
@@ -2881,7 +2890,9 @@ Also, delete any process that is exited or signaled."
 				       "network")
 				     (if (plist-get contact :server)
 					 (format "server on %s"
-						 (plist-get contact :server))
+						 (or
+						  (plist-get contact :host)
+						  (plist-get contact :local)))
 				       (format "connection to %s"
 					       (plist-get contact :host))))
 			   (format "(serial port %s%s)"
@@ -2904,7 +2915,7 @@ the query-on-exit flag set are listed.
 Any process listed as exited or signaled is actually eliminated
 after the listing is made.
 Optional argument BUFFER specifies a buffer to use, instead of
-\"*Process List\".
+\"*Process List*\".
 The return value is always nil."
   (interactive)
   (or (fboundp 'process-list)
@@ -3958,9 +3969,8 @@ run `deactivate-mark-hook'."
 		  (or (x-selection-owner-p 'PRIMARY)
 		      (null (x-selection-exists-p 'PRIMARY))))
 	     (x-set-selection 'PRIMARY
-			      (buffer-substring-no-properties
-			       (region-beginning)
-			       (region-end))))))
+			      (buffer-substring (region-beginning)
+						(region-end))))))
     (if (and (null force)
 	     (or (eq transient-mark-mode 'lambda)
 		 (and (eq (car-safe transient-mark-mode) 'only)

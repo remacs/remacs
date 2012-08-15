@@ -1286,7 +1286,8 @@ inserts \" characters."
 	      (delete-char (length tex-open-quote))
 	      t)))
       (self-insert-command (prefix-numeric-value arg))
-    (insert (if (memq (char-syntax (preceding-char)) '(?\( ?> ?\s))
+    (insert (if (or (memq (char-syntax (preceding-char)) '(?\( ?> ?\s))
+                    (memq (preceding-char) '(?~)))
 		tex-open-quote tex-close-quote))))
 
 (defun tex-validate-buffer ()
@@ -1498,7 +1499,7 @@ Puts point on a blank line between them."
 (defvar latex-complete-bibtex-cache nil)
 
 (define-obsolete-function-alias 'latex-string-prefix-p
-  'string-prefix-p "24.2")
+  'string-prefix-p "24.3")
 
 (defvar bibtex-reference-key)
 (declare-function reftex-get-bibfile-list "reftex-cite.el" ())
@@ -1722,9 +1723,12 @@ Mark is left at original location."
   "Like `forward-sexp' but aware of multi-char elements and escaped parens."
   (interactive "P")
   (unless arg (setq arg 1))
-  (let ((pos (point)))
+  (let ((pos (point))
+	(opoint 0))
     (condition-case err
-	(while (/= arg 0)
+	(while (and (/= (point) opoint)
+		    (/= arg 0))
+	  (setq opoint (point))
 	  (setq arg
 		(if (> arg 0)
 		    (progn (latex-forward-sexp-1) (1- arg))
@@ -2055,7 +2059,7 @@ IN can be either a string (with the same % escapes in it) indicating
 OUT describes the output file and is either a %-escaped string
   or nil to indicate that there is no output file.")
 
-(define-obsolete-function-alias 'tex-string-prefix-p 'string-prefix-p "24.2")
+(define-obsolete-function-alias 'tex-string-prefix-p 'string-prefix-p "24.3")
 
 (defun tex-guess-main-file (&optional all)
   "Find a likely `tex-main-file'.

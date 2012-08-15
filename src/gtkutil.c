@@ -24,6 +24,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <signal.h>
 #include <stdio.h>
 #include <setjmp.h>
+#include <ctype.h>
 #include "lisp.h"
 #include "xterm.h"
 #include "blockinput.h"
@@ -75,6 +76,18 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #define remove_submenu(w) gtk_menu_item_remove_submenu ((w))
 #endif
 
+#if GTK_MAJOR_VERSION > 3 || (GTK_MAJOR_VERSION == 3 && GTK_MINOR_VERSION >= 2)
+#define USE_NEW_GTK_FONT_CHOOSER 1
+#else
+#define USE_NEW_GTK_FONT_CHOOSER 0
+#define gtk_font_chooser_dialog_new(x, y) \
+  gtk_font_selection_dialog_new (x)
+#undef GTK_FONT_CHOOSER
+#define GTK_FONT_CHOOSER(x) GTK_FONT_SELECTION_DIALOG (x)
+#define  gtk_font_chooser_set_font(x, y) \
+  gtk_font_selection_dialog_set_font_name (x, y)
+#endif
+
 #ifndef HAVE_GTK3
 #ifdef USE_GTK_TOOLTIP
 #define gdk_window_get_screen(w) gdk_drawable_get_screen (w)
@@ -97,6 +110,16 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #define XG_BIN_CHILD(x) gtk_bin_get_child (GTK_BIN (x))
 
 static void update_theme_scrollbar_width (void);
+
+#define TB_INFO_KEY "xg_frame_tb_info"
+struct xg_frame_tb_info
+{
+  Lisp_Object last_tool_bar;
+  Lisp_Object style;
+  int n_last_items;
+  int hmargin, vmargin;
+  GtkTextDirection dir;
+};
 
 
 /***********************************************************************
@@ -1148,10 +1171,10 @@ xg_create_frame_widgets (FRAME_PTR f)
   gtk_widget_set_name (wfixed, SSDATA (Vx_resource_name));
 
   /* If this frame has a title or name, set it in the title bar.  */
-  if (! NILP (FVAR (f, title)))
-    title = SSDATA (ENCODE_UTF_8 (FVAR (f, title)));
-  else if (! NILP (FVAR (f, name)))
-    title = SSDATA (ENCODE_UTF_8 (FVAR (f, name)));
+  if (! NILP (f->title))
+    title = SSDATA (ENCODE_UTF_8 (f->title));
+  else if (! NILP (f->name))
+    title = SSDATA (ENCODE_UTF_8 (f->name));
 
   if (title) gtk_window_set_title (GTK_WINDOW (wtop), title);
 
@@ -1265,6 +1288,12 @@ xg_free_frame_widgets (FRAME_PTR f)
 #ifdef USE_GTK_TOOLTIP
       struct x_output *x = f->output_data.x;
 #endif
+      struct xg_frame_tb_info *tbinfo
+        = g_object_get_data (G_OBJECT (FRAME_GTK_OUTER_WIDGET (f)),
+                             TB_INFO_KEY);
+      if (tbinfo)
+        xfree (tbinfo);
+
       gtk_widget_destroy (FRAME_GTK_OUTER_WIDGET (f));
       FRAME_X_WINDOW (f) = 0; /* Set to avoid XDestroyWindow in xterm.c */
       FRAME_GTK_OUTER_WIDGET (f) = 0;
@@ -1979,7 +2008,39 @@ xg_get_file_name (FRAME_PTR f,
   return fn;
 }
 
+/***********************************************************************
+                      GTK font chooser
+ ***********************************************************************/
+
 #ifdef HAVE_FREETYPE
+
+#if USE_NEW_GTK_FONT_CHOOSER
+
+extern Lisp_Object Qnormal;
+extern Lisp_Object Qextra_light, Qlight, Qsemi_light, Qsemi_bold;
+extern Lisp_Object Qbold, Qextra_bold, Qultra_bold;
+extern Lisp_Object Qoblique, Qitalic;
+
+#define XG_WEIGHT_TO_SYMBOL(w)			\
+  (w <= PANGO_WEIGHT_THIN ? Qextra_light	\
+   : w <= PANGO_WEIGHT_ULTRALIGHT ? Qlight	\
+   : w <= PANGO_WEIGHT_LIGHT ? Qsemi_light	\
+   : w < PANGO_WEIGHT_MEDIUM ? Qnormal		\
+   : w <= PANGO_WEIGHT_SEMIBOLD ? Qsemi_bold	\
+   : w <= PANGO_WEIGHT_BOLD ? Qbold		\
+   : w <= PANGO_WEIGHT_HEAVY ? Qextra_bold	\
+   : Qultra_bold)
+
+#define XG_STYLE_TO_SYMBOL(s)			\
+  (s == PANGO_STYLE_OBLIQUE ? Qoblique		\
+   : s == PANGO_STYLE_ITALIC ? Qitalic		\
+   : Qnormal)
+
+#endif /* USE_NEW_GTK_FONT_CHOOSER */
+
+
+static char *x_last_font_name;
+
 /* Pop up a GTK font selector and return the name of the font the user
    selects, as a C string.  The returned font name follows GTK's own
    format:
@@ -1989,25 +2050,40 @@ xg_get_file_name (FRAME_PTR f,
    This can be parsed using font_parse_fcname in font.c.
    DEFAULT_NAME, if non-zero, is the default font name.  */
 
-char *
-xg_get_font_name (FRAME_PTR f, const char *default_name)
+Lisp_Object
+xg_get_font (FRAME_PTR f, const char *default_name)
 {
   GtkWidget *w;
-  char *fontname = NULL;
   int done = 0;
+  Lisp_Object font = Qnil;
 
 #if defined (HAVE_PTHREAD) && defined (__SIGRTMIN)
   sigblock (sigmask (__SIGRTMIN));
 #endif /* HAVE_PTHREAD */
 
-  w = gtk_font_selection_dialog_new ("Pick a font");
-  if (!default_name)
-    default_name = "Monospace 10";
-  gtk_font_selection_dialog_set_font_name (GTK_FONT_SELECTION_DIALOG (w),
-                                           default_name);
+  w = gtk_font_chooser_dialog_new
+    ("Pick a font", GTK_WINDOW (FRAME_GTK_OUTER_WIDGET (f)));
+
+  if (default_name)
+    {
+      /* Convert fontconfig names to Gtk names, i.e. remove - before
+	 number */
+      char *p = strrchr (default_name, '-');
+      if (p)
+        {
+          char *ep = p+1;
+          while (isdigit (*ep))
+            ++ep;
+          if (*ep == '\0') *p = ' ';
+        }
+    }
+  else if (x_last_font_name)
+    default_name = x_last_font_name;
+
+  if (default_name)
+    gtk_font_chooser_set_font (GTK_FONT_CHOOSER (w), default_name);
 
   gtk_widget_set_name (w, "emacs-fontdialog");
-
   done = xg_dialog_run (f, w);
 
 #if defined (HAVE_PTHREAD) && defined (__SIGRTMIN)
@@ -2015,11 +2091,55 @@ xg_get_font_name (FRAME_PTR f, const char *default_name)
 #endif
 
   if (done == GTK_RESPONSE_OK)
-    fontname = gtk_font_selection_dialog_get_font_name
-      (GTK_FONT_SELECTION_DIALOG (w));
+    {
+#if USE_NEW_GTK_FONT_CHOOSER
+      /* Use the GTK3 font chooser.  */
+      PangoFontDescription *desc
+	= gtk_font_chooser_get_font_desc (GTK_FONT_CHOOSER (w));
+
+      if (desc)
+	{
+	  Lisp_Object args[8];
+	  const char *name   = pango_font_description_get_family (desc);
+	  gint        size   = pango_font_description_get_size (desc);
+	  PangoWeight weight = pango_font_description_get_weight (desc);
+	  PangoStyle  style  = pango_font_description_get_style (desc);
+
+	  args[0] = QCname;
+	  args[1] = build_string (name);
+
+	  args[2] = QCsize;
+	  args[3] = make_float (pango_units_to_double (size));
+
+	  args[4] = QCweight;
+	  args[5] = XG_WEIGHT_TO_SYMBOL (weight);
+
+	  args[6] = QCslant;
+	  args[7] = XG_STYLE_TO_SYMBOL (style);
+
+	  font = Ffont_spec (8, args);
+
+	  pango_font_description_free (desc);
+	  xfree (x_last_font_name);
+	  x_last_font_name = xstrdup (name);
+	}
+
+#else /* Use old font selector, which just returns the font name.  */
+
+      char *font_name
+	= gtk_font_selection_dialog_get_font_name (GTK_FONT_CHOOSER (w));
+
+      if (font_name)
+	{
+	  font = build_string (font_name);
+	  g_free (x_last_font_name);
+	  x_last_font_name = font_name;
+	}
+#endif /* USE_NEW_GTK_FONT_CHOOSER */
+    }
 
   gtk_widget_destroy (w);
-  return fontname;
+  return font;
 }
 #endif /* HAVE_FREETYPE */
 
@@ -2061,7 +2181,7 @@ make_cl_data (xg_menu_cb_data *cl_data, FRAME_PTR f, GCallback highlight_cb)
     {
       cl_data = xmalloc (sizeof *cl_data);
       cl_data->f = f;
-      cl_data->menu_bar_vector = FVAR (f, menu_bar_vector);
+      cl_data->menu_bar_vector = f->menu_bar_vector;
       cl_data->menu_bar_items_used = f->menu_bar_items_used;
       cl_data->highlight_cb = highlight_cb;
       cl_data->ref_count = 0;
@@ -2093,7 +2213,7 @@ update_cl_data (xg_menu_cb_data *cl_data,
   if (cl_data)
     {
       cl_data->f = f;
-      cl_data->menu_bar_vector = FVAR (f, menu_bar_vector);
+      cl_data->menu_bar_vector = f->menu_bar_vector;
       cl_data->menu_bar_items_used = f->menu_bar_items_used;
       cl_data->highlight_cb = highlight_cb;
     }
@@ -2122,6 +2242,7 @@ void
 xg_mark_data (void)
 {
   xg_list_node *iter;
+  Lisp_Object rest, frame;
 
   for (iter = xg_menu_cb_list.next; iter; iter = iter->next)
     mark_object (((xg_menu_cb_data *) iter)->menu_bar_vector);
@@ -2132,6 +2253,23 @@ xg_mark_data (void)
 
       if (! NILP (cb_data->help))
         mark_object (cb_data->help);
+    }
+
+  FOR_EACH_FRAME (rest, frame)
+    {
+      FRAME_PTR f = XFRAME (frame);
+
+      if (FRAME_X_P (f) && FRAME_GTK_OUTER_WIDGET (f))
+        {
+          struct xg_frame_tb_info *tbinfo
+            = g_object_get_data (G_OBJECT (FRAME_GTK_OUTER_WIDGET (f)),
+                                 TB_INFO_KEY);
+          if (tbinfo)
+            {
+              mark_object (tbinfo->last_tool_bar);
+              mark_object (tbinfo->style);
+            }
+        }
     }
 }
 
@@ -3810,12 +3948,12 @@ xg_tool_bar_callback (GtkWidget *w, gpointer client_data)
   struct input_event event;
   EVENT_INIT (event);
 
-  if (! f || ! f->n_tool_bar_items || NILP (FVAR (f, tool_bar_items)))
+  if (! f || ! f->n_tool_bar_items || NILP (f->tool_bar_items))
     return;
 
   idx *= TOOL_BAR_ITEM_NSLOTS;
 
-  key = AREF (FVAR (f, tool_bar_items), idx + TOOL_BAR_ITEM_KEY);
+  key = AREF (f->tool_bar_items, idx + TOOL_BAR_ITEM_KEY);
   XSETFRAME (frame, f);
 
   /* We generate two events here.  The first one is to set the prefix
@@ -4086,16 +4224,16 @@ xg_tool_bar_help_callback (GtkWidget *w,
   FRAME_PTR f = (FRAME_PTR) g_object_get_data (G_OBJECT (w), XG_FRAME_DATA);
   Lisp_Object help, frame;
 
-  if (! f || ! f->n_tool_bar_items || NILP (FVAR (f, tool_bar_items)))
+  if (! f || ! f->n_tool_bar_items || NILP (f->tool_bar_items))
     return FALSE;
 
   if (event->type == GDK_ENTER_NOTIFY)
     {
       idx *= TOOL_BAR_ITEM_NSLOTS;
-      help = AREF (FVAR (f, tool_bar_items), idx + TOOL_BAR_ITEM_HELP);
+      help = AREF (f->tool_bar_items, idx + TOOL_BAR_ITEM_HELP);
 
       if (NILP (help))
-        help = AREF (FVAR (f, tool_bar_items), idx + TOOL_BAR_ITEM_CAPTION);
+        help = AREF (f->tool_bar_items, idx + TOOL_BAR_ITEM_CAPTION);
     }
   else
     help = Qnil;
@@ -4208,6 +4346,21 @@ xg_create_tool_bar (FRAME_PTR f)
 #if GTK_CHECK_VERSION (3, 3, 6)
   GtkStyleContext *gsty;
 #endif
+  struct xg_frame_tb_info *tbinfo
+    = g_object_get_data (G_OBJECT (FRAME_GTK_OUTER_WIDGET (f)),
+                         TB_INFO_KEY);
+  if (! tbinfo)
+    {
+      tbinfo = xmalloc (sizeof (*tbinfo));
+      tbinfo->last_tool_bar = Qnil;
+      tbinfo->style = Qnil;
+      tbinfo->hmargin = tbinfo->vmargin = 0;
+      tbinfo->dir = GTK_TEXT_DIR_NONE;
+      tbinfo->n_last_items = 0;
+      g_object_set_data (G_OBJECT (FRAME_GTK_OUTER_WIDGET (f)),
+                         TB_INFO_KEY,
+                         tbinfo);
+    }
 
   x->toolbar_widget = gtk_toolbar_new ();
   x->toolbar_detached = 0;
@@ -4223,7 +4376,7 @@ xg_create_tool_bar (FRAME_PTR f)
 }
 
 
-#define PROP(IDX) AREF (FVAR (f, tool_bar_items), i * TOOL_BAR_ITEM_NSLOTS + (IDX))
+#define PROP(IDX) AREF (f->tool_bar_items, i * TOOL_BAR_ITEM_NSLOTS + (IDX))
 
 /* Find the right-to-left image named by RTL in the tool bar images for F.
    Returns IMAGE if RTL is not found.  */
@@ -4245,7 +4398,7 @@ find_rtl_image (FRAME_PTR f, Lisp_Object image, Lisp_Object rtl)
         {
           file = call1 (intern ("file-name-sans-extension"),
                        Ffile_name_nondirectory (file));
-          if (EQ (Fequal (file, rtl_name), Qt))
+          if (! NILP (Fequal (file, rtl_name)))
             {
               image = rtl_image;
               break;
@@ -4478,6 +4631,7 @@ update_frame_tool_bar (FRAME_PTR f)
   int pack_tool_bar = x->handlebox_widget == NULL;
   Lisp_Object style;
   int text_image, horiz;
+  struct xg_frame_tb_info *tbinfo;
 
   if (! FRAME_GTK_WIDGET (f))
     return;
@@ -4512,6 +4666,29 @@ update_frame_tool_bar (FRAME_PTR f)
   dir = gtk_widget_get_direction (GTK_WIDGET (wtoolbar));
 
   style = Ftool_bar_get_system_style ();
+
+  /* Are we up to date? */
+  tbinfo = g_object_get_data (G_OBJECT (FRAME_GTK_OUTER_WIDGET (f)),
+                              TB_INFO_KEY);
+
+  if (! NILP (tbinfo->last_tool_bar) && ! NILP (f->tool_bar_items)
+      && tbinfo->n_last_items == f->n_tool_bar_items
+      && tbinfo->hmargin == hmargin && tbinfo->vmargin == vmargin
+      && tbinfo->dir == dir
+      && ! NILP (Fequal (tbinfo->style, style))
+      && ! NILP (Fequal (tbinfo->last_tool_bar, f->tool_bar_items)))
+    {
+      UNBLOCK_INPUT;
+      return;
+    }
+
+  tbinfo->last_tool_bar = f->tool_bar_items;
+  tbinfo->n_last_items = f->n_tool_bar_items;
+  tbinfo->style = style;
+  tbinfo->hmargin = hmargin;
+  tbinfo->vmargin = vmargin;
+  tbinfo->dir = dir;
+
   text_image = EQ (style, Qtext_image_horiz);
   horiz = EQ (style, Qboth_horiz) || text_image;
 
@@ -4706,7 +4883,7 @@ update_frame_tool_bar (FRAME_PTR f)
   if (f->n_tool_bar_items != 0)
     {
       if (pack_tool_bar)
-        xg_pack_tool_bar (f, FVAR (f, tool_bar_position));
+        xg_pack_tool_bar (f, f->tool_bar_position);
       gtk_widget_show_all (GTK_WIDGET (x->handlebox_widget));
       if (xg_update_tool_bar_sizes (f))
         xg_height_or_width_changed (f);
@@ -4725,6 +4902,7 @@ free_frame_tool_bar (FRAME_PTR f)
 
   if (x->toolbar_widget)
     {
+      struct xg_frame_tb_info *tbinfo;
       int is_packed = x->handlebox_widget != 0;
       BLOCK_INPUT;
       /* We may have created the toolbar_widget in xg_create_tool_bar, but
@@ -4745,6 +4923,16 @@ free_frame_tool_bar (FRAME_PTR f)
       x->handlebox_widget = 0;
       FRAME_TOOLBAR_TOP_HEIGHT (f) = FRAME_TOOLBAR_BOTTOM_HEIGHT (f) = 0;
       FRAME_TOOLBAR_LEFT_WIDTH (f) = FRAME_TOOLBAR_RIGHT_WIDTH (f) = 0;
+
+      tbinfo = g_object_get_data (G_OBJECT (FRAME_GTK_OUTER_WIDGET (f)),
+                                  TB_INFO_KEY);
+      if (tbinfo)
+        {
+          xfree (tbinfo);
+          g_object_set_data (G_OBJECT (FRAME_GTK_OUTER_WIDGET (f)),
+                             TB_INFO_KEY,
+                             NULL);
+        }
 
       xg_height_or_width_changed (f);
 
@@ -4832,6 +5020,8 @@ xg_initialize (void)
   gtk_binding_entry_add_signal (binding_set, GDK_KEY_g, GDK_CONTROL_MASK,
                                 "cancel", 0);
   update_theme_scrollbar_width ();
+
+  x_last_font_name = NULL;
 }
 
 #endif /* USE_GTK */

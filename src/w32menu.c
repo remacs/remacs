@@ -276,8 +276,8 @@ menubar_selection_callback (FRAME_PTR f, void * client_data)
   if (!f)
     return;
   entry = Qnil;
-  subprefix_stack = (Lisp_Object *) alloca (f->menu_bar_items_used * sizeof (Lisp_Object));
-  vector = FVAR (f, menu_bar_vector);
+  subprefix_stack = (Lisp_Object *) alloca (f->menu_bar_items_used * word_size);
+  vector = f->menu_bar_vector;
   prefix = Qnil;
   i = 0;
   while (i < f->menu_bar_items_used)
@@ -387,14 +387,14 @@ set_frame_menubar (FRAME_PTR f, int first_time, int deep_p)
       int previous_menu_items_used = f->menu_bar_items_used;
       Lisp_Object *previous_items
 	= (Lisp_Object *) alloca (previous_menu_items_used
-				  * sizeof (Lisp_Object));
+				  * word_size);
 
       /* If we are making a new widget, its contents are empty,
 	 do always reinitialize them.  */
       if (! menubar_widget)
 	previous_menu_items_used = 0;
 
-      buffer = WVAR (XWINDOW (FRAME_SELECTED_WINDOW (f)), buffer);
+      buffer = XWINDOW (FRAME_SELECTED_WINDOW (f))->buffer;
       specbind (Qinhibit_quit, Qt);
       /* Don't let the debugger step into this code
 	 because it is not reentrant.  */
@@ -413,20 +413,20 @@ set_frame_menubar (FRAME_PTR f, int first_time, int deep_p)
       /* Run the hooks.  */
       safe_run_hooks (Qactivate_menubar_hook);
       safe_run_hooks (Qmenu_bar_update_hook);
-      FRAME_MENU_BAR_ITEMS (f) = menu_bar_items (FRAME_MENU_BAR_ITEMS (f));
+      FSET (f, menu_bar_items, menu_bar_items (FRAME_MENU_BAR_ITEMS (f)));
 
       items = FRAME_MENU_BAR_ITEMS (f);
 
       /* Save the frame's previous menu bar contents data.  */
       if (previous_menu_items_used)
-	memcpy (previous_items, XVECTOR (FVAR (f, menu_bar_vector))->contents,
-		previous_menu_items_used * sizeof (Lisp_Object));
+	memcpy (previous_items, XVECTOR (f->menu_bar_vector)->contents,
+		previous_menu_items_used * word_size);
 
       /* Fill in menu_items with the current menu bar contents.
 	 This can evaluate Lisp code.  */
       save_menu_items ();
 
-      menu_items = FVAR (f, menu_bar_vector);
+      menu_items = f->menu_bar_vector;
       menu_items_allocated = VECTORP (menu_items) ? ASIZE (menu_items) : 0;
       submenu_start = (int *) alloca (ASIZE (items) * sizeof (int));
       submenu_end = (int *) alloca (ASIZE (items) * sizeof (int));
@@ -500,7 +500,7 @@ set_frame_menubar (FRAME_PTR f, int first_time, int deep_p)
 	  return;
 	}
 
-      FVAR (f, menu_bar_vector) = menu_items;
+      FSET (f, menu_bar_vector, menu_items);
       f->menu_bar_items_used = menu_items_used;
 
       /* This undoes save_menu_items.  */
@@ -615,7 +615,7 @@ initialize_frame_menubar (FRAME_PTR f)
 {
   /* This function is called before the first chance to redisplay
      the frame.  It has to be, so the frame will have the right size.  */
-  FRAME_MENU_BAR_ITEMS (f) = menu_bar_items (FRAME_MENU_BAR_ITEMS (f));
+  FSET (f, menu_bar_items, menu_bar_items (FRAME_MENU_BAR_ITEMS (f)));
   set_frame_menubar (f, 1, 1);
 }
 
@@ -665,7 +665,7 @@ w32_menu_show (FRAME_PTR f, int x, int y, int for_click, int keymaps,
   widget_value **submenu_stack
     = (widget_value **) alloca (menu_items_used * sizeof (widget_value *));
   Lisp_Object *subprefix_stack
-    = (Lisp_Object *) alloca (menu_items_used * sizeof (Lisp_Object));
+    = (Lisp_Object *) alloca (menu_items_used * word_size);
   int submenu_depth = 0;
   int first_pane;
 
@@ -1062,7 +1062,7 @@ w32_dialog_show (FRAME_PTR f, int keymaps,
 	if (!NILP (descrip))
 	  wv->key = SSDATA (descrip);
 	wv->value = SSDATA (item_name);
-	wv->call_data = (void *) &AREF (menu_items, i);
+	wv->call_data = aref_addr (menu_items, i);
 	wv->enabled = !NILP (enable);
 	wv->help = Qnil;
 	prev_wv = wv;
@@ -1243,7 +1243,7 @@ simple_dialog_show (FRAME_PTR f, Lisp_Object contents, Lisp_Object header)
 	     one utf16 word, so we cannot simply use the character
 	     length of temp.  */
 	  int utf8_len = strlen (utf8_text);
-	  SAFE_ALLOCA (text, WCHAR *, (utf8_len + 1) * sizeof (WCHAR));
+	  text = SAFE_ALLOCA ((utf8_len + 1) * sizeof (WCHAR));
 	  utf8to16 (utf8_text, utf8_len, text);
 	}
       else
@@ -1386,8 +1386,7 @@ add_menu_item (HMENU menu, widget_value *wv, HMENU item)
 
       if (wv->key != NULL)
 	{
-	  SAFE_ALLOCA (out_string, char *,
-		       strlen (wv->name) + strlen (wv->key) + 2);
+	  out_string = SAFE_ALLOCA (strlen (wv->name) + strlen (wv->key) + 2);
 	  strcpy (out_string, wv->name);
 	  strcat (out_string, "\t");
 	  strcat (out_string, wv->key);
@@ -1421,7 +1420,7 @@ add_menu_item (HMENU menu, widget_value *wv, HMENU item)
       if (nlen > orig_len)
         {
           p = out_string;
-          SAFE_ALLOCA (out_string, char *, nlen + 1);
+          out_string = SAFE_ALLOCA (nlen + 1);
           q = out_string;
           while (*p)
             {
@@ -1481,7 +1480,7 @@ add_menu_item (HMENU menu, widget_value *wv, HMENU item)
       if (fuFlags & MF_OWNERDRAW)
 	utf16_string = local_alloc ((utf8_len + 1) * sizeof (WCHAR));
       else
-	SAFE_ALLOCA (utf16_string, WCHAR *, (utf8_len + 1) * sizeof (WCHAR));
+	utf16_string = SAFE_ALLOCA ((utf8_len + 1) * sizeof (WCHAR));
 
       utf8to16 (out_string, utf8_len, utf16_string);
       return_value = unicode_append_menu (menu, fuFlags,

@@ -23,6 +23,9 @@ You should have received a copy of the GNU General Public License
 along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include <config.h>
+
+#define COMPOSITE_INLINE EXTERN_INLINE
+
 #include <setjmp.h>
 #include "lisp.h"
 #include "character.h"
@@ -762,7 +765,7 @@ composition_gstring_width (Lisp_Object gstring, ptrdiff_t from, ptrdiff_t to,
 	}
       metrics->width = metrics->lbearing = metrics->rbearing = 0;
     }
-  for (glyph = &LGSTRING_GLYPH (gstring, from); from < to; from++, glyph++)
+  for (glyph = lgstring_glyph_addr (gstring, from); from < to; from++, glyph++)
     {
       int x;
 
@@ -906,7 +909,7 @@ static Lisp_Object
 autocmp_chars (Lisp_Object rule, ptrdiff_t charpos, ptrdiff_t bytepos, ptrdiff_t limit, struct window *win, struct face *face, Lisp_Object string)
 {
   ptrdiff_t count = SPECPDL_INDEX ();
-  FRAME_PTR f = XFRAME (WVAR (win, frame));
+  FRAME_PTR f = XFRAME (win->frame);
   Lisp_Object pos = make_number (charpos);
   ptrdiff_t to;
   ptrdiff_t pt = PT, pt_byte = PT_BYTE;
@@ -942,7 +945,7 @@ autocmp_chars (Lisp_Object rule, ptrdiff_t charpos, ptrdiff_t bytepos, ptrdiff_t
     }
   else
 #endif	/* not HAVE_WINDOW_SYSTEM */
-    font_object = WVAR (win, frame);
+    font_object = win->frame;
   lgstring = Fcomposition_get_gstring (pos, make_number (to), font_object,
 				       string);
   if (NILP (LGSTRING_ID (lgstring)))

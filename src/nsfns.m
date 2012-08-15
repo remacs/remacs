@@ -82,7 +82,6 @@ extern Lisp_Object Qface_set_after_frame_default;
 extern Lisp_Object Qunderline, Qundefined;
 extern Lisp_Object Qheight, Qminibuffer, Qname, Qonly, Qwidth;
 extern Lisp_Object Qunsplittable, Qmenu_bar_lines, Qbuffer_predicate, Qtitle;
-extern Lisp_Object Qnone;
 
 
 Lisp_Object Qbuffered;
@@ -448,16 +447,16 @@ x_set_icon_name (struct frame *f, Lisp_Object arg, Lisp_Object oldval)
   else if (!STRINGP (oldval) && EQ (oldval, Qnil) == EQ (arg, Qnil))
     return;
 
-  FVAR (f, icon_name) = arg;
+  FSET (f, icon_name, arg);
 
   if (NILP (arg))
     {
-      if (!NILP (FVAR (f, title)))
-        arg = FVAR (f, title);
+      if (!NILP (f->title))
+        arg = f->title;
       else
         /* explicit name and no icon-name -> explicit_name */
         if (f->explicit_name)
-          arg = FVAR (f, name);
+          arg = f->name;
         else
           {
             /* no explicit name and no icon-name ->
@@ -496,10 +495,10 @@ ns_set_name_internal (FRAME_PTR f, Lisp_Object name)
   if (! [[[view window] title] isEqualToString: str])
     [[view window] setTitle: str];
 
-  if (!STRINGP (FVAR (f, icon_name)))
+  if (!STRINGP (f->icon_name))
     encoded_icon_name = encoded_name;
   else
-    encoded_icon_name = ENCODE_UTF_8 (FVAR (f, icon_name));
+    encoded_icon_name = ENCODE_UTF_8 (f->icon_name);
 
   str = [NSString stringWithUTF8String: SSDATA (encoded_icon_name)];
 
@@ -537,14 +536,14 @@ ns_set_name (struct frame *f, Lisp_Object name, int explicit)
     CHECK_STRING (name);
 
   /* Don't change the name if it's already NAME.  */
-  if (! NILP (Fstring_equal (name, FVAR (f, name))))
+  if (! NILP (Fstring_equal (name, f->name)))
     return;
 
-  FVAR (f, name) = name;
+  FSET (f, name, name);
 
   /* title overrides explicit name */
-  if (! NILP (FVAR (f, title)))
-    name = FVAR (f, title);
+  if (! NILP (f->title))
+    name = f->title;
 
   ns_set_name_internal (f, name);
 }
@@ -586,15 +585,15 @@ x_set_title (struct frame *f, Lisp_Object name, Lisp_Object old_name)
 {
   NSTRACE (x_set_title);
   /* Don't change the title if it's already NAME.  */
-  if (EQ (name, FVAR (f, title)))
+  if (EQ (name, f->title))
     return;
 
   update_mode_lines = 1;
 
-  FVAR (f, title) = name;
+  FSET (f, title, name);
 
   if (NILP (name))
-    name = FVAR (f, name);
+    name = f->name;
   else
     CHECK_STRING (name);
 
@@ -607,7 +606,7 @@ ns_set_name_as_filename (struct frame *f)
 {
   NSView *view;
   Lisp_Object name, filename;
-  Lisp_Object buf = XWINDOW (FVAR (f, selected_window))->buffer;
+  Lisp_Object buf = XWINDOW (f->selected_window)->buffer;
   const char *title;
   NSAutoreleasePool *pool;
   struct gcpro gcpro1;
@@ -615,7 +614,7 @@ ns_set_name_as_filename (struct frame *f)
   NSString *str;
   NSTRACE (ns_set_name_as_filename);
 
-  if (f->explicit_name || ! NILP (FVAR (f, title)) || ns_in_resize)
+  if (f->explicit_name || ! NILP (f->title) || ns_in_resize)
     return;
 
   BLOCK_INPUT;
@@ -677,7 +676,7 @@ ns_set_name_as_filename (struct frame *f)
 
       [[view window] setRepresentedFilename: fstr];
       [[view window] setTitle: str];
-      FVAR (f, name) = name;
+      FSET (f, name, name);
     }
 
   [pool release];
@@ -690,7 +689,7 @@ ns_set_doc_edited (struct frame *f, Lisp_Object arg)
 {
   NSView *view = FRAME_NS_VIEW (f);
   NSAutoreleasePool *pool;
-  if (!MINI_WINDOW_P (XWINDOW (FVAR (f, selected_window))))
+  if (!MINI_WINDOW_P (XWINDOW (f->selected_window)))
     {
       BLOCK_INPUT;
       pool = [[NSAutoreleasePool alloc] init];
@@ -777,7 +776,7 @@ ns_implicitly_set_icon_type (struct frame *f)
   BLOCK_INPUT;
   pool = [[NSAutoreleasePool alloc] init];
   if (f->output_data.ns->miniimage
-      && [[NSString stringWithUTF8String: SSDATA (FVAR (f, name))]
+      && [[NSString stringWithUTF8String: SSDATA (f->name)]
                isEqualToString: [(NSImage *)f->output_data.ns->miniimage name]])
     {
       [pool release];
@@ -785,7 +784,7 @@ ns_implicitly_set_icon_type (struct frame *f)
       return;
     }
 
-  tem = assq_no_quit (Qicon_type, FVAR (f, param_alist));
+  tem = assq_no_quit (Qicon_type, f->param_alist);
   if (CONSP (tem) && ! NILP (XCDR (tem)))
     {
       [pool release];
@@ -799,17 +798,17 @@ ns_implicitly_set_icon_type (struct frame *f)
     {
       elt = XCAR (chain);
       /* special case: 't' means go by file type */
-      if (SYMBOLP (elt) && EQ (elt, Qt) && SSDATA (FVAR (f, name))[0] == '/')
+      if (SYMBOLP (elt) && EQ (elt, Qt) && SSDATA (f->name)[0] == '/')
         {
           NSString *str
-	     = [NSString stringWithUTF8String: SSDATA (FVAR (f, name))];
+	     = [NSString stringWithUTF8String: SSDATA (f->name)];
           if ([[NSFileManager defaultManager] fileExistsAtPath: str])
             image = [[[NSWorkspace sharedWorkspace] iconForFile: str] retain];
         }
       else if (CONSP (elt) &&
                STRINGP (XCAR (elt)) &&
                STRINGP (XCDR (elt)) &&
-               fast_string_match (XCAR (elt), FVAR (f, name)) >= 0)
+               fast_string_match (XCAR (elt), f->name) >= 0)
         {
           image = [EmacsImage allocInitFromFile: XCDR (elt)];
           if (image == nil)
@@ -1205,11 +1204,11 @@ This function is an internal primitive--use `make-frame' instead.  */)
 
   FRAME_FONTSET (f) = -1;
 
-  FVAR (f, icon_name) = x_get_arg (dpyinfo, parms, Qicon_name,
-                                   "iconName", "Title",
-                            RES_TYPE_STRING);
-  if (! STRINGP (FVAR (f, icon_name)))
-    FVAR (f, icon_name) = Qnil;
+  FSET (f, icon_name, x_get_arg (dpyinfo, parms, Qicon_name,
+				 "iconName", "Title",
+				 RES_TYPE_STRING));
+  if (! STRINGP (f->icon_name))
+    FSET (f, icon_name, Qnil);
 
   FRAME_NS_DISPLAY_INFO (f) = dpyinfo;
 
@@ -1232,12 +1231,12 @@ This function is an internal primitive--use `make-frame' instead.  */)
      be set.  */
   if (EQ (name, Qunbound) || NILP (name) || ! STRINGP (name))
     {
-      FVAR (f, name) = build_string ([ns_app_name UTF8String]);
+      FSET (f, name, build_string ([ns_app_name UTF8String]));
       f->explicit_name = 0;
     }
   else
     {
-      FVAR (f, name) = name;
+      FSET (f, name, name);
       f->explicit_name = 1;
       specbind (Qx_resource_name, name);
     }
@@ -1392,13 +1391,13 @@ This function is an internal primitive--use `make-frame' instead.  */)
   if (FRAME_HAS_MINIBUF_P (f)
       && (!FRAMEP (KVAR (kb, Vdefault_minibuffer_frame))
           || !FRAME_LIVE_P (XFRAME (KVAR (kb, Vdefault_minibuffer_frame)))))
-    KVAR (kb, Vdefault_minibuffer_frame) = frame;
+    KSET (kb, Vdefault_minibuffer_frame, frame);
 
   /* All remaining specified parameters, which have not been "used"
      by x_get_arg and friends, now go in the misc. alist of the frame.  */
   for (tem = parms; CONSP (tem); tem = XCDR (tem))
     if (CONSP (XCAR (tem)) && !NILP (XCAR (XCAR (tem))))
-      FVAR (f, param_alist) = Fcons (XCAR (tem), FVAR (f, param_alist));
+      FSET (f, param_alist, Fcons (XCAR (tem), f->param_alist));
 
   UNGCPRO;
 

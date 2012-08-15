@@ -1961,9 +1961,9 @@ If the current buffer can be edited with Wdired, (i.e. the major
 mode is `dired-mode'), call `wdired-change-to-wdired-mode'.
 Otherwise, call `toggle-read-only'."
   (interactive)
-  (if (eq major-mode 'dired-mode)
+  (if (derived-mode-p 'dired-mode)
       (wdired-change-to-wdired-mode)
-    (toggle-read-only nil t)))
+    (call-interactively 'toggle-read-only)))
 
 (defun dired-next-line (arg)
   "Move down lines then position at filename.
@@ -3476,7 +3476,7 @@ The idea is to set this buffer-locally in special dired buffers.")
     (force-mode-line-update)))
 
 (define-obsolete-function-alias 'dired-sort-set-modeline
-  'dired-sort-set-mode-line "24.2")
+  'dired-sort-set-mode-line "24.3")
 
 (defun dired-sort-toggle-or-edit (&optional arg)
   "Toggle sorting by date, and refresh the Dired buffer.

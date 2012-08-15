@@ -88,7 +88,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
  */
 #undef HAVE_RANDOM
 #undef HAVE_RINT
-#endif
+#endif  /* HPUX */
 
 #ifdef IRIX6_5
 #ifdef emacs
@@ -97,6 +97,46 @@ char *_getpty();
 
 #undef SA_RESTART     /* not the same as defining BROKEN_SA_RESTART */
 #endif /* IRIX6_5 */
+
+#ifdef MSDOS
+#ifndef __DJGPP__
+You lose; /* Emacs for DOS must be compiled with DJGPP */
+#endif
+#define _NAIVE_DOS_REGS
+
+/* Start of gnulib-related stuff  */
+
+/* lib/ftoastr.c wants strtold, but DJGPP only has _strtold.  DJGPP >
+   2.03 has it, but it also has _strtold as a stub that jumps to
+   strtold, so use _strtold in all versions.  */
+#define strtold _strtold
+
+#if __DJGPP__ > 2 || __DJGPP_MINOR__ > 3
+# define HAVE_LSTAT 1
+#else
+# define lstat stat
+#endif
+/* End of gnulib-related stuff.  */
+
+/* Define one of these for easier conditionals.  */
+#ifdef HAVE_X_WINDOWS
+/* We need a little extra space, see ../../lisp/loadup.el and the
+   commentary below, in the non-X branch.  The 140KB number was
+   measured on GNU/Linux and on MS-Windows.  */
+#define SYSTEM_PURESIZE_EXTRA (-170000+140000)
+#else
+/* We need a little extra space, see ../../lisp/loadup.el.
+   As of 20091024, DOS-specific files use up 62KB of pure space.  But
+   overall, we end up wasting 130KB of pure space, because
+   BASE_PURESIZE starts at 1.47MB, while we need only 1.3MB (including
+   non-DOS specific files and load history; the latter is about 55K,
+   but depends on the depth of the top-level Emacs directory in the
+   directory tree).  Given the unknown policy of different DPMI
+   hosts regarding loading of untouched pages, I'm not going to risk
+   enlarging Emacs footprint by another 100+ KBytes.  */
+#define SYSTEM_PURESIZE_EXTRA (-170000+65000)
+#endif
+#endif  /* MSDOS */
 
 #ifdef USG5_4
 /* Get FIONREAD from <sys/filio.h>.  Get <sys/ttold.h> to get struct tchars.
@@ -171,6 +211,23 @@ char *_getpty();
 /* Some versions of GNU/Linux define noinline in their headers.  */
 #ifdef noinline
 #undef noinline
+#endif
+
+#define INLINE _GL_INLINE
+#define EXTERN_INLINE _GL_EXTERN_INLINE
+#define INLINE_HEADER_BEGIN _GL_INLINE_HEADER_BEGIN
+#define INLINE_HEADER_END _GL_INLINE_HEADER_END
+
+/* Use this to suppress gcc's `...may be used before initialized' warnings. */
+#ifdef lint
+/* Use CODE only if lint checking is in effect.  */
+# define IF_LINT(Code) Code
+/* Assume that the expression COND is true.  This differs in intent
+   from 'assert', as it is a message from the programmer to the compiler.  */
+# define lint_assume(cond) ((cond) ? (void) 0 : abort ())
+#else
+# define IF_LINT(Code) /* empty */
+# define lint_assume(cond) ((void) (0 && (cond)))
 #endif
 
 /* conf_post.h ends here */

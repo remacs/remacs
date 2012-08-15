@@ -29,6 +29,9 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
    table.  Read comments in the file category.h to understand them.  */
 
 #include <config.h>
+
+#define CATEGORY_INLINE EXTERN_INLINE
+
 #include <ctype.h>
 #include <setjmp.h>
 #include "lisp.h"
@@ -282,7 +285,7 @@ Return TABLE.  */)
 {
   int idx;
   table = check_category_table (table);
-  BVAR (current_buffer, category_table) = table;
+  BSET (current_buffer, category_table, table);
   /* Indicate that this buffer now has a specified category table.  */
   idx = PER_BUFFER_VAR_IDX (category_table);
   SET_PER_BUFFER_VALUE_P (current_buffer, idx, 1);

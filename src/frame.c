@@ -65,7 +65,7 @@ Lisp_Object Qns_parse_geometry;
 
 Lisp_Object Qframep, Qframe_live_p;
 Lisp_Object Qicon, Qmodeline;
-Lisp_Object Qonly;
+Lisp_Object Qonly, Qnone;
 Lisp_Object Qx, Qw32, Qmac, Qpc, Qns;
 Lisp_Object Qvisible;
 Lisp_Object Qdisplay_type;
@@ -132,15 +132,15 @@ set_menu_bar_lines_1 (Lisp_Object window, int n)
   struct window *w = XWINDOW (window);
 
   w->last_modified = 0;
-  XSETFASTINT (WVAR (w, top_line), XFASTINT (WVAR (w, top_line)) + n);
-  XSETFASTINT (WVAR (w, total_lines), XFASTINT (WVAR (w, total_lines)) - n);
+  WSET (w, top_line, make_number (XFASTINT (w->top_line) + n));
+  WSET (w, total_lines, make_number (XFASTINT (w->total_lines) - n));
 
   /* Handle just the top child in a vertical split.  */
-  if (!NILP (WVAR (w, vchild)))
-    set_menu_bar_lines_1 (WVAR (w, vchild), n);
+  if (!NILP (w->vchild))
+    set_menu_bar_lines_1 (w->vchild, n);
 
   /* Adjust all children in a horizontal split.  */
-  for (window = WVAR (w, hchild); !NILP (window); window = WVAR (w, next))
+  for (window = w->hchild; !NILP (window); window = w->next)
     {
       w = XWINDOW (window);
       set_menu_bar_lines_1 (window, n);
@@ -170,7 +170,7 @@ set_menu_bar_lines (struct frame *f, Lisp_Object value, Lisp_Object oldval)
       windows_or_buffers_changed++;
       FRAME_WINDOW_SIZES_CHANGED (f) = 1;
       FRAME_MENU_BAR_LINES (f) = nlines;
-      set_menu_bar_lines_1 (FVAR (f, root_window), nlines - olines);
+      set_menu_bar_lines_1 (f->root_window, nlines - olines);
       adjust_glyphs (f);
     }
 }
@@ -269,7 +269,7 @@ make_frame (int mini_p)
 
   /* Initialize Lisp data.  Note that allocate_frame initializes all
      Lisp data to nil, so do it only for slots which should not be nil.  */
-  FVAR (f, tool_bar_position) = Qtop;
+  FSET (f, tool_bar_position, Qtop);
 
   /* Initialize non-Lisp data.  Note that allocate_frame zeroes out all
      non-Lisp data, so do it only for slots which should not be zero.
@@ -289,20 +289,20 @@ make_frame (int mini_p)
   if (mini_p)
     {
       mini_window = make_window ();
-      WVAR (XWINDOW (root_window), next) = mini_window;
-      WVAR (XWINDOW (mini_window), prev) = root_window;
+      WSET (XWINDOW (root_window), next, mini_window);
+      WSET (XWINDOW (mini_window), prev, root_window);
       XWINDOW (mini_window)->mini = 1;
-      WVAR (XWINDOW (mini_window), frame) = frame;
-      FVAR (f, minibuffer_window) = mini_window;
+      WSET (XWINDOW (mini_window), frame, frame);
+      FSET (f, minibuffer_window, mini_window);
     }
   else
     {
       mini_window = Qnil;
-      WVAR (XWINDOW (root_window), next) = Qnil;
-      FVAR (f, minibuffer_window) = Qnil;
+      WSET (XWINDOW (root_window), next, Qnil);
+      FSET (f, minibuffer_window, Qnil);
     }
 
-  WVAR (XWINDOW (root_window), frame) = frame;
+  WSET (XWINDOW (root_window), frame, frame);
 
   /* 10 is arbitrary,
      just so that there is "something there."
@@ -311,21 +311,21 @@ make_frame (int mini_p)
   SET_FRAME_COLS (f, 10);
   FRAME_LINES (f) = 10;
 
-  XSETFASTINT (WVAR (XWINDOW (root_window), total_cols), 10);
-  XSETFASTINT (WVAR (XWINDOW (root_window), total_lines), (mini_p ? 9 : 10));
+  WSET (XWINDOW (root_window), total_cols, make_number (10));
+  WSET (XWINDOW (root_window), total_lines, make_number (mini_p ? 9 : 10));
 
   if (mini_p)
     {
-      XSETFASTINT (WVAR (XWINDOW (mini_window), total_cols), 10);
-      XSETFASTINT (WVAR (XWINDOW (mini_window), top_line), 9);
-      XSETFASTINT (WVAR (XWINDOW (mini_window), total_lines), 1);
+      WSET (XWINDOW (mini_window), total_cols, make_number (10));
+      WSET (XWINDOW (mini_window), top_line, make_number (9));
+      WSET (XWINDOW (mini_window), total_lines, make_number (1));
     }
 
   /* Choose a buffer for the frame's root window.  */
   {
     Lisp_Object buf;
 
-    WVAR (XWINDOW (root_window), buffer) = Qt;
+    WSET (XWINDOW (root_window), buffer, Qt);
     buf = Fcurrent_buffer ();
     /* If buf is a 'hidden' buffer (i.e. one whose name starts with
        a space), try to find another one.  */
@@ -339,12 +339,12 @@ make_frame (int mini_p)
        etc.  Running Lisp functions at this point surely ends in a
        SEGV.  */
     set_window_buffer (root_window, buf, 0, 0);
-    FVAR (f, buffer_list) = Fcons (buf, Qnil);
+    FSET (f, buffer_list, Fcons (buf, Qnil));
   }
 
   if (mini_p)
     {
-      WVAR (XWINDOW (mini_window), buffer) = Qt;
+      WSET (XWINDOW (mini_window), buffer, Qt);
       set_window_buffer (mini_window,
 			 (NILP (Vminibuffer_list)
 			  ? get_minibuffer (0)
@@ -352,11 +352,11 @@ make_frame (int mini_p)
 			 0, 0);
     }
 
-  FVAR (f, root_window) = root_window;
-  FVAR (f, selected_window) = root_window;
+  FSET (f, root_window, root_window);
+  FSET (f, selected_window, root_window);
   /* Make sure this window seems more recently used than
      a newly-created, never-selected window.  */
-  XWINDOW (FVAR (f, selected_window))->use_time = ++window_select_count;
+  XWINDOW (f->selected_window)->use_time = ++window_select_count;
 
   return f;
 }
@@ -376,7 +376,7 @@ make_frame_without_minibuffer (register Lisp_Object mini_window, KBOARD *kb, Lis
     CHECK_LIVE_WINDOW (mini_window);
 
   if (!NILP (mini_window)
-      && FRAME_KBOARD (XFRAME (WVAR (XWINDOW (mini_window), frame))) != kb)
+      && FRAME_KBOARD (XFRAME (XWINDOW (mini_window)->frame)) != kb)
     error ("Frame and minibuffer must be on the same terminal");
 
   /* Make a frame containing just a root window.  */
@@ -393,24 +393,26 @@ make_frame_without_minibuffer (register Lisp_Object mini_window, KBOARD *kb, Lis
           XSETFRAME (frame_dummy, f);
           GCPRO1 (frame_dummy);
 	  /* If there's no minibuffer frame to use, create one.  */
-	  KVAR (kb, Vdefault_minibuffer_frame) =
-	    call1 (intern ("make-initial-minibuffer-frame"), display);
+	  KSET (kb, Vdefault_minibuffer_frame,
+		call1 (intern ("make-initial-minibuffer-frame"), display));
           UNGCPRO;
 	}
 
-      mini_window = FVAR (XFRAME (KVAR (kb, Vdefault_minibuffer_frame)),
-			  minibuffer_window);
+      mini_window
+	= XFRAME (KVAR (kb, Vdefault_minibuffer_frame))->minibuffer_window;
     }
 
-  FVAR (f, minibuffer_window) = mini_window;
+  FSET (f, minibuffer_window, mini_window);
 
   /* Make the chosen minibuffer window display the proper minibuffer,
      unless it is already showing a minibuffer.  */
-  if (NILP (Fmemq (WVAR (XWINDOW (mini_window), buffer), Vminibuffer_list)))
-    Fset_window_buffer (mini_window,
-			(NILP (Vminibuffer_list)
-			 ? get_minibuffer (0)
-			 : Fcar (Vminibuffer_list)), Qnil);
+  if (NILP (Fmemq (XWINDOW (mini_window)->buffer, Vminibuffer_list)))
+    /* Use set_window_buffer instead of Fset_window_buffer (see
+       discussion of bug#11984, bug#12025, bug#12026).  */
+    set_window_buffer (mini_window,
+		       (NILP (Vminibuffer_list)
+			? get_minibuffer (0)
+			: Fcar (Vminibuffer_list)), 0, 0);
   return f;
 }
 
@@ -437,18 +439,20 @@ make_minibuffer_frame (void)
      Avoid infinite looping on the window chain by marking next pointer
      as nil. */
 
-  mini_window = FVAR (f, minibuffer_window) = FVAR (f, root_window);
+  mini_window = FSET (f, minibuffer_window, f->root_window);
   XWINDOW (mini_window)->mini = 1;
-  WVAR (XWINDOW (mini_window), next) = Qnil;
-  WVAR (XWINDOW (mini_window), prev) = Qnil;
-  WVAR (XWINDOW (mini_window), frame) = frame;
+  WSET (XWINDOW (mini_window), next, Qnil);
+  WSET (XWINDOW (mini_window), prev, Qnil);
+  WSET (XWINDOW (mini_window), frame, frame);
 
   /* Put the proper buffer in that window.  */
 
-  Fset_window_buffer (mini_window,
-		      (NILP (Vminibuffer_list)
-		       ? get_minibuffer (0)
-		       : Fcar (Vminibuffer_list)), Qnil);
+  /* Use set_window_buffer instead of Fset_window_buffer (see
+     discussion of bug#11984, bug#12025, bug#12026).  */
+  set_window_buffer (mini_window,
+		     (NILP (Vminibuffer_list)
+		      ? get_minibuffer (0)
+		      : Fcar (Vminibuffer_list)), 0, 0);
   return f;
 }
 #endif /* HAVE_WINDOW_SYSTEM */
@@ -478,7 +482,7 @@ make_initial_frame (void)
   Vframe_list = Fcons (frame, Vframe_list);
 
   tty_frame_count = 1;
-  FVAR (f, name) = build_pure_c_string ("F1");
+  FSET (f, name, build_pure_c_string ("F1"));
 
   f->visible = 1;
   f->async_visible = 1;
@@ -519,7 +523,7 @@ make_terminal_frame (struct terminal *terminal)
   XSETFRAME (frame, f);
   Vframe_list = Fcons (frame, Vframe_list);
 
-  FVAR (f, name) = make_formatted_string (name, "F%"pMd, ++tty_frame_count);
+  FSET (f, name, make_formatted_string (name, "F%"pMd, ++tty_frame_count));
 
   f->visible = 1;		/* FRAME_SET_VISIBLE wd set frame_garbaged. */
   f->async_visible = 1;		/* Don't let visible be cleared later. */
@@ -570,7 +574,7 @@ get_future_frame_param (Lisp_Object parameter,
 
   result = Fassq (parameter, supplied_parms);
   if (NILP (result))
-    result = Fassq (parameter, FVAR (XFRAME (selected_frame), param_alist));
+    result = Fassq (parameter, XFRAME (selected_frame)->param_alist);
   if (NILP (result) && current_value != NULL)
     result = build_string (current_value);
   if (!NILP (result) && !STRINGP (result))
@@ -689,11 +693,11 @@ affects all frames on the same terminal device.  */)
 
   /* Make the frame face alist be frame-specific, so that each
      frame could change its face definitions independently.  */
-  FVAR (f, face_alist) = Fcopy_alist (FVAR (sf, face_alist));
+  FSET (f, face_alist, Fcopy_alist (sf->face_alist));
   /* Simple Fcopy_alist isn't enough, because we need the contents of
      the vectors which are the CDRs of associations in face_alist to
      be copied as well.  */
-  for (tem = FVAR (f, face_alist); CONSP (tem); tem = XCDR (tem))
+  for (tem = f->face_alist; CONSP (tem); tem = XCDR (tem))
     XSETCDR (XCAR (tem), Fcopy_sequence (XCDR (XCAR (tem))));
   return frame;
 }
@@ -797,7 +801,7 @@ do_switch_frame (Lisp_Object frame, int track, int for_deletion, Lisp_Object nor
   if (! FRAME_MINIBUF_ONLY_P (XFRAME (selected_frame)))
     last_nonminibuf_frame = XFRAME (selected_frame);
 
-  Fselect_window (FVAR (XFRAME (frame), selected_window), norecord);
+  Fselect_window (XFRAME (frame)->selected_window, norecord);
 
   /* We want to make sure that the next event generates a frame-switch
      event to the appropriate frame.  This seems kludgy to me, but
@@ -843,7 +847,7 @@ to that frame.  */)
   (Lisp_Object event)
 {
   /* Preserve prefix arg that the command loop just cleared.  */
-  KVAR (current_kboard, Vprefix_arg) = Vcurrent_prefix_arg;
+  KSET (current_kboard, Vprefix_arg, Vcurrent_prefix_arg);
   Frun_hooks (1, &Qmouse_leave_buffer_hook);
   return do_switch_frame (event, 0, 0, Qnil);
 }
@@ -1238,11 +1242,13 @@ delete_frame (Lisp_Object frame, Lisp_Object force)
     }
 
   /* Don't allow minibuf_window to remain on a deleted frame.  */
-  if (EQ (FVAR (f, minibuffer_window), minibuf_window))
+  if (EQ (f->minibuffer_window, minibuf_window))
     {
-      Fset_window_buffer (FVAR (sf, minibuffer_window),
-			  WVAR (XWINDOW (minibuf_window), buffer), Qnil);
-      minibuf_window = FVAR (sf, minibuffer_window);
+      /* Use set_window_buffer instead of Fset_window_buffer (see
+	 discussion of bug#11984, bug#12025, bug#12026).  */
+      set_window_buffer (sf->minibuffer_window,
+			 XWINDOW (minibuf_window)->buffer, 0, 0);
+      minibuf_window = sf->minibuffer_window;
 
       /* If the dying minibuffer window was selected,
 	 select the new one.  */
@@ -1251,8 +1257,8 @@ delete_frame (Lisp_Object frame, Lisp_Object force)
     }
 
   /* Don't let echo_area_window to remain on a deleted frame.  */
-  if (EQ (FVAR (f, minibuffer_window), echo_area_window))
-    echo_area_window = FVAR (sf, minibuffer_window);
+  if (EQ (f->minibuffer_window, echo_area_window))
+    echo_area_window = sf->minibuffer_window;
 
   /* Clear any X selections for this frame.  */
 #ifdef HAVE_X_WINDOWS
@@ -1273,8 +1279,8 @@ delete_frame (Lisp_Object frame, Lisp_Object force)
 
   /* Mark all the windows that used to be on FRAME as deleted, and then
      remove the reference to them.  */
-  delete_all_child_windows (FVAR (f, root_window));
-  FVAR (f, root_window) = Qnil;
+  delete_all_child_windows (f->root_window);
+  FSET (f, root_window, Qnil);
 
   Vframe_list = Fdelq (frame, Vframe_list);
   FRAME_SET_VISIBLE (f, 0);
@@ -1283,7 +1289,7 @@ delete_frame (Lisp_Object frame, Lisp_Object force)
      garbage collection.  The frame object itself may not be garbage
      collected until much later, because recent_keys and other data
      structures can still refer to it.  */
-  FVAR (f, menu_bar_vector) = Qnil;
+  FSET (f, menu_bar_vector, Qnil);
 
   free_font_driver_list (f);
   xfree (f->namebuf);
@@ -1435,11 +1441,11 @@ delete_frame (Lisp_Object frame, Lisp_Object force)
 	  if (NILP (frame_with_minibuf))
 	    abort ();
 
-	  KVAR (kb, Vdefault_minibuffer_frame) = frame_with_minibuf;
+	  KSET (kb, Vdefault_minibuffer_frame, frame_with_minibuf);
 	}
       else
 	/* No frames left on this kboard--say no minibuffer either.  */
-	KVAR (kb, Vdefault_minibuffer_frame) = Qnil;
+	KSET (kb, Vdefault_minibuffer_frame, Qnil);
     }
 
   /* Cause frame titles to update--necessary if we now have just one frame.  */
@@ -1656,7 +1662,7 @@ If omitted, FRAME defaults to the currently selected frame.  */)
     }
 #endif
 
-  make_frame_visible_1 (FVAR (XFRAME (frame), root_window));
+  make_frame_visible_1 (XFRAME (frame)->root_window);
 
   /* Make menu bar update for the Buffers and Frames menus.  */
   windows_or_buffers_changed++;
@@ -1672,17 +1678,17 @@ make_frame_visible_1 (Lisp_Object window)
 {
   struct window *w;
 
-  for (;!NILP (window); window = WVAR (w, next))
+  for (;!NILP (window); window = w->next)
     {
       w = XWINDOW (window);
 
-      if (!NILP (WVAR (w, buffer)))
-	BVAR (XBUFFER (WVAR (w, buffer)), display_time) = Fcurrent_time ();
+      if (!NILP (w->buffer))
+	BSET (XBUFFER (w->buffer), display_time, Fcurrent_time ());
 
-      if (!NILP (WVAR (w, vchild)))
-	make_frame_visible_1 (WVAR (w, vchild));
-      if (!NILP (WVAR (w, hchild)))
-	make_frame_visible_1 (WVAR (w, hchild));
+      if (!NILP (w->vchild))
+	make_frame_visible_1 (w->vchild);
+      if (!NILP (w->hchild))
+	make_frame_visible_1 (w->hchild);
     }
 }
 
@@ -1710,12 +1716,14 @@ displayed in the terminal.  */)
     error ("Attempt to make invisible the sole visible or iconified frame");
 
   /* Don't allow minibuf_window to remain on a deleted frame.  */
-  if (EQ (FVAR (XFRAME (frame), minibuffer_window), minibuf_window))
+  if (EQ (XFRAME (frame)->minibuffer_window, minibuf_window))
     {
       struct frame *sf = XFRAME (selected_frame);
-      Fset_window_buffer (FVAR (sf, minibuffer_window),
-			  WVAR (XWINDOW (minibuf_window), buffer), Qnil);
-      minibuf_window = FVAR (sf, minibuffer_window);
+      /* Use set_window_buffer instead of Fset_window_buffer (see
+	 discussion of bug#11984, bug#12025, bug#12026).  */
+      set_window_buffer (sf->minibuffer_window,
+			 XWINDOW (minibuf_window)->buffer, 0, 0);
+      minibuf_window = sf->minibuffer_window;
     }
 
   /* I think this should be done with a hook.  */
@@ -1747,13 +1755,15 @@ If omitted, FRAME defaults to the currently selected frame.  */)
     Fhandle_switch_frame (next_frame (frame, Qt));
 #endif
 
-  /* Don't allow minibuf_window to remain on a deleted frame.  */
-  if (EQ (FVAR (XFRAME (frame), minibuffer_window), minibuf_window))
+  /* Don't allow minibuf_window to remain on an iconified frame.  */
+  if (EQ (XFRAME (frame)->minibuffer_window, minibuf_window))
     {
       struct frame *sf = XFRAME (selected_frame);
-      Fset_window_buffer (FVAR (sf, minibuffer_window),
-			  WVAR (XWINDOW (minibuf_window), buffer), Qnil);
-      minibuf_window = FVAR (sf, minibuffer_window);
+      /* Use set_window_buffer instead of Fset_window_buffer (see
+	 discussion of bug#11984, bug#12025, bug#12026).  */
+      set_window_buffer (sf->minibuffer_window,
+			 XWINDOW (minibuf_window)->buffer, 0, 0);
+      minibuf_window = sf->minibuffer_window;
     }
 
   /* I think this should be done with a hook.  */
@@ -1907,7 +1917,7 @@ The redirection lasts until `redirect-frame-focus' is called to change it.  */)
 
   f = XFRAME (frame);
 
-  FVAR (f, focus_frame) = focus_frame;
+  FSET (f, focus_frame, focus_frame);
 
   if (FRAME_TERMINAL (f)->frame_rehighlight_hook)
     (*FRAME_TERMINAL (f)->frame_rehighlight_hook) (f);
@@ -1940,7 +1950,7 @@ get_frame_param (register struct frame *frame, Lisp_Object prop)
 {
   register Lisp_Object tem;
 
-  tem = Fassq (prop, FVAR (frame, param_alist));
+  tem = Fassq (prop, frame->param_alist);
   if (EQ (tem, Qnil))
     return tem;
   return Fcdr (tem);
@@ -1952,7 +1962,7 @@ get_frame_param (register struct frame *frame, Lisp_Object prop)
 Lisp_Object
 frame_buffer_predicate (Lisp_Object frame)
 {
-  return FVAR (XFRAME (frame), buffer_predicate);
+  return XFRAME (frame)->buffer_predicate;
 }
 
 /* Return the buffer-list of the selected frame.  */
@@ -1960,7 +1970,7 @@ frame_buffer_predicate (Lisp_Object frame)
 static Lisp_Object
 frame_buffer_list (Lisp_Object frame)
 {
-  return FVAR (XFRAME (frame), buffer_list);
+  return XFRAME (frame)->buffer_list;
 }
 
 /* Discard BUFFER from the buffer-list and buried-buffer-list of each frame.  */
@@ -1972,10 +1982,10 @@ frames_discard_buffer (Lisp_Object buffer)
 
   FOR_EACH_FRAME (tail, frame)
     {
-      FVAR (XFRAME (frame), buffer_list)
-	= Fdelq (buffer, FVAR (XFRAME (frame), buffer_list));
-      FVAR (XFRAME (frame), buried_buffer_list)
-        = Fdelq (buffer, FVAR (XFRAME (frame), buried_buffer_list));
+      FSET (XFRAME (frame), buffer_list,
+	    Fdelq (buffer, XFRAME (frame)->buffer_list));
+      FSET (XFRAME (frame), buried_buffer_list,
+	    Fdelq (buffer, XFRAME (frame)->buried_buffer_list));
     }
 }
 
@@ -2023,8 +2033,7 @@ set_term_frame_name (struct frame *f, Lisp_Object name)
 
       /* Check for no change needed in this very common case
 	 before we do any consing.  */
-      if (frame_name_fnn_p (SSDATA (FVAR (f, name)),
-			    SBYTES (FVAR (f, name))))
+      if (frame_name_fnn_p (SSDATA (f->name), SBYTES (f->name)))
 	return;
 
       name = make_formatted_string (namebuf, "F%"pMd, ++tty_frame_count);
@@ -2034,7 +2043,7 @@ set_term_frame_name (struct frame *f, Lisp_Object name)
       CHECK_STRING (name);
 
       /* Don't change the name if it's already NAME.  */
-      if (! NILP (Fstring_equal (name, FVAR (f, name))))
+      if (! NILP (Fstring_equal (name, f->name)))
 	return;
 
       /* Don't allow the user to set the frame name to F<num>, so it
@@ -2043,7 +2052,7 @@ set_term_frame_name (struct frame *f, Lisp_Object name)
 	error ("Frame names of the form F<num> are usurped by Emacs");
     }
 
-  FVAR (f, name) = name;
+  FSET (f, name, name);
   update_mode_lines = 1;
 }
 
@@ -2060,7 +2069,7 @@ store_frame_param (struct frame *f, Lisp_Object prop, Lisp_Object val)
       for (; CONSP (val); val = XCDR (val))
 	if (!NILP (Fbuffer_live_p (XCAR (val))))
 	  list = Fcons (XCAR (val), list);
-      FVAR (f, buffer_list) = Fnreverse (list);
+      FSET (f, buffer_list, Fnreverse (list));
       return;
     }
   if (EQ (prop, Qburied_buffer_list))
@@ -2069,7 +2078,7 @@ store_frame_param (struct frame *f, Lisp_Object prop, Lisp_Object val)
       for (; CONSP (val); val = XCDR (val))
 	if (!NILP (Fbuffer_live_p (XCAR (val))))
 	  list = Fcons (XCAR (val), list);
-      FVAR (f, buried_buffer_list) = Fnreverse (list);
+      FSET (f, buried_buffer_list, Fnreverse (list));
       return;
     }
 
@@ -2104,9 +2113,9 @@ store_frame_param (struct frame *f, Lisp_Object prop, Lisp_Object val)
     FRAME_TTY (f)->previous_frame = NULL;
 
   /* Update the frame parameter alist.  */
-  old_alist_elt = Fassq (prop, FVAR (f, param_alist));
+  old_alist_elt = Fassq (prop, f->param_alist);
   if (EQ (old_alist_elt, Qnil))
-    FVAR (f, param_alist) = Fcons (Fcons (prop, val), FVAR (f, param_alist));
+    FSET (f, param_alist, Fcons (Fcons (prop, val), f->param_alist));
   else
     Fsetcdr (old_alist_elt, val);
 
@@ -2114,7 +2123,7 @@ store_frame_param (struct frame *f, Lisp_Object prop, Lisp_Object val)
      in addition to the alist.  */
 
   if (EQ (prop, Qbuffer_predicate))
-    FVAR (f, buffer_predicate) = val;
+    FSET (f, buffer_predicate, val);
 
   if (! FRAME_WINDOW_P (f))
     {
@@ -2130,11 +2139,11 @@ store_frame_param (struct frame *f, Lisp_Object prop, Lisp_Object val)
 	error ("Surrogate minibuffer windows must be minibuffer windows");
 
       if ((FRAME_HAS_MINIBUF_P (f) || FRAME_MINIBUF_ONLY_P (f))
-	  && !EQ (val, FVAR (f, minibuffer_window)))
+	  && !EQ (val, f->minibuffer_window))
 	error ("Can't change the surrogate minibuffer of a frame with its own minibuffer");
 
       /* Install the chosen minibuffer window, with proper buffer.  */
-      FVAR (f, minibuffer_window) = val;
+      FSET (f, minibuffer_window, val);
     }
 }
 
@@ -2159,7 +2168,7 @@ If FRAME is omitted, return information on the currently selected frame.  */)
   if (!FRAME_LIVE_P (f))
     return Qnil;
 
-  alist = Fcopy_alist (FVAR (f, param_alist));
+  alist = Fcopy_alist (f->param_alist);
   GCPRO1 (alist);
 
   if (!FRAME_WINDOW_P (f))
@@ -2205,7 +2214,7 @@ If FRAME is omitted, return information on the currently selected frame.  */)
 				    : FRAME_W32_P (f) ? "w32term"
 				    :"tty"));
     }
-  store_in_alist (&alist, Qname, FVAR (f, name));
+  store_in_alist (&alist, Qname, f->name);
   height = (f->new_text_lines ? f->new_text_lines : FRAME_LINES (f));
   store_in_alist (&alist, Qheight, make_number (height));
   width = (f->new_text_cols ? f->new_text_cols : FRAME_COLS (f));
@@ -2218,7 +2227,7 @@ If FRAME is omitted, return information on the currently selected frame.  */)
   store_in_alist (&alist, Qunsplittable, (FRAME_NO_SPLIT_P (f) ? Qt : Qnil));
   store_in_alist (&alist, Qbuffer_list, frame_buffer_list (frame));
   store_in_alist (&alist, Qburied_buffer_list,
-		  FVAR (XFRAME (frame), buried_buffer_list));
+		  XFRAME (frame)->buried_buffer_list);
 
   /* I think this should be done with a hook.  */
 #ifdef HAVE_WINDOW_SYSTEM
@@ -2259,7 +2268,7 @@ If FRAME is nil, describe the currently selected frame.  */)
     {
       /* Avoid consing in frequent cases.  */
       if (EQ (parameter, Qname))
-	value = FVAR (f, name);
+	value = f->name;
 #ifdef HAVE_X_WINDOWS
       else if (EQ (parameter, Qdisplay) && FRAME_X_P (f))
 	value = XCAR (FRAME_X_DISPLAY_INFO (f)->name_list_element);
@@ -2267,7 +2276,7 @@ If FRAME is nil, describe the currently selected frame.  */)
       else if (EQ (parameter, Qbackground_color)
 	       || EQ (parameter, Qforeground_color))
 	{
-	  value = Fassq (parameter, FVAR (f, param_alist));
+	  value = Fassq (parameter, f->param_alist);
 	  if (CONSP (value))
 	    {
 	      value = XCDR (value);
@@ -2305,7 +2314,7 @@ If FRAME is nil, describe the currently selected frame.  */)
 	}
       else if (EQ (parameter, Qdisplay_type)
 	       || EQ (parameter, Qbackground_mode))
-	value = Fcdr (Fassq (parameter, FVAR (f, param_alist)));
+	value = Fcdr (Fassq (parameter, f->param_alist));
       else
 	/* FIXME: Avoid this code path at all (as well as code duplication)
 	   by sharing more code with Fframe_parameters.  */
@@ -2891,14 +2900,14 @@ x_set_frame_parameters (FRAME_PTR f, Lisp_Object alist)
   if (! TYPE_RANGED_INTEGERP (int, icon_left))
     {
       icon_left_no_change = 1;
-      icon_left = Fcdr (Fassq (Qicon_left, FVAR (f, param_alist)));
+      icon_left = Fcdr (Fassq (Qicon_left, f->param_alist));
       if (NILP (icon_left))
 	XSETINT (icon_left, 0);
     }
   if (! TYPE_RANGED_INTEGERP (int, icon_top))
     {
       icon_top_no_change = 1;
-      icon_top = Fcdr (Fassq (Qicon_top, FVAR (f, param_alist)));
+      icon_top = Fcdr (Fassq (Qicon_top, f->param_alist));
       if (NILP (icon_top))
 	XSETINT (icon_top, 0);
     }
@@ -3058,7 +3067,7 @@ x_report_frame_params (struct frame *f, Lisp_Object *alistptr)
   store_in_alist (alistptr, Qouter_window_id,
 		  make_formatted_string (buf, "%lu", w));
 #endif
-  store_in_alist (alistptr, Qicon_name, FVAR (f, icon_name));
+  store_in_alist (alistptr, Qicon_name, f->icon_name);
   FRAME_SAMPLE_VISIBILITY (f);
   store_in_alist (alistptr, Qvisibility,
 		  (FRAME_VISIBLE_P (f) ? Qt
@@ -3072,7 +3081,7 @@ x_report_frame_params (struct frame *f, Lisp_Object *alistptr)
     XSETFASTINT (tem, FRAME_X_OUTPUT (f)->parent_desc);
   store_in_alist (alistptr, Qexplicit_name, (f->explicit_name ? Qt : Qnil));
   store_in_alist (alistptr, Qparent_id, tem);
-  store_in_alist (alistptr, Qtool_bar_position, FVAR (f, tool_bar_position));
+  store_in_alist (alistptr, Qtool_bar_position, f->tool_bar_position);
 }
 
 
@@ -3132,7 +3141,7 @@ x_set_screen_gamma (struct frame *f, Lisp_Object new_value, Lisp_Object old_valu
     signal_error ("Invalid screen-gamma", new_value);
 
   /* Apply the new gamma value to the frame background.  */
-  bgcolor = Fassq (Qbackground_color, FVAR (f, param_alist));
+  bgcolor = Fassq (Qbackground_color, f->param_alist);
   if (CONSP (bgcolor) && (bgcolor = XCDR (bgcolor), STRINGP (bgcolor)))
     {
       Lisp_Object parm_index = Fget (Qbackground_color, Qx_frame_parameter);
@@ -3461,7 +3470,7 @@ x_icon_type (FRAME_PTR f)
 {
   Lisp_Object tem;
 
-  tem = assq_no_quit (Qicon_type, FVAR (f, param_alist));
+  tem = assq_no_quit (Qicon_type, f->param_alist);
   if (CONSP (tem))
     return XCDR (tem);
   else
@@ -3697,8 +3706,6 @@ display_x_get_resource (Display_Info *dpyinfo, Lisp_Object attribute, Lisp_Objec
 char *
 x_get_resource_string (const char *attribute, const char *class)
 {
-  char *name_key;
-  char *class_key;
   char *result;
   struct frame *sf = SELECTED_FRAME ();
   ptrdiff_t invocation_namelen = SBYTES (Vinvocation_name);
@@ -3706,8 +3713,8 @@ x_get_resource_string (const char *attribute, const char *class)
 
   /* Allocate space for the components, the dots which separate them,
      and the final '\0'.  */
-  SAFE_ALLOCA (name_key, char *, invocation_namelen + strlen (attribute) + 2);
-  class_key = alloca ((sizeof (EMACS_CLASS) - 1) + strlen (class) + 2);
+  char *name_key = SAFE_ALLOCA (invocation_namelen + strlen (attribute) + 2);
+  char *class_key = alloca ((sizeof (EMACS_CLASS) - 1) + strlen (class) + 2);
 
   esprintf (name_key, "%s.%s", SSDATA (Vinvocation_name), attribute);
   sprintf (class_key, "%s.%s", EMACS_CLASS, class);
@@ -4205,6 +4212,7 @@ syms_of_frame (void)
   DEFSYM (Qminibuffer, "minibuffer");
   DEFSYM (Qmodeline, "modeline");
   DEFSYM (Qonly, "only");
+  DEFSYM (Qnone, "none");
   DEFSYM (Qwidth, "width");
   DEFSYM (Qgeometry, "geometry");
   DEFSYM (Qicon_left, "icon-left");
@@ -4353,7 +4361,7 @@ The pointer becomes visible again when the mouse is moved.  */);
   Vmake_pointer_invisible = Qt;
 
   DEFVAR_LISP ("delete-frame-functions", Vdelete_frame_functions,
-	       doc: /* Functions to be run before deleting a frame.
+	       doc: /* Functions run before deleting a frame.
 The functions are run with one arg, the frame to be deleted.
 See `delete-frame'.
 

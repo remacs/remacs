@@ -523,7 +523,7 @@ x_set_frame_alpha (struct frame *f)
     if (rc == Success && actual != None)
       {
         unsigned long value = *(unsigned long *)data;
-	XFree ((void *) data);
+	XFree (data);
 	if (value == opac)
 	  {
 	    x_uncatch_errors ();
@@ -631,7 +631,7 @@ x_draw_vertical_window_border (struct window *w, int x, int y0, int y1)
 static void
 x_update_window_end (struct window *w, int cursor_on_p, int mouse_face_overwritten_p)
 {
-  Mouse_HLInfo *hlinfo = MOUSE_HL_INFO (XFRAME (WVAR (w, frame)));
+  Mouse_HLInfo *hlinfo = MOUSE_HL_INFO (XFRAME (w->frame));
 
   if (!w->pseudo_window_p)
     {
@@ -731,7 +731,7 @@ x_after_update_window_line (struct glyph_row *desired_row)
      overhead is very small.  */
   if (windows_or_buffers_changed
       && desired_row->full_width_p
-      && (f = XFRAME (WVAR (w, frame)),
+      && (f = XFRAME (w->frame),
 	  width = FRAME_INTERNAL_BORDER_WIDTH (f),
 	  width != 0)
       && (height = desired_row->visible_height,
@@ -3304,7 +3304,7 @@ x_ins_del_lines (struct frame *f, int vpos, int n)
 static void
 x_scroll_run (struct window *w, struct run *run)
 {
-  struct frame *f = XFRAME (WVAR (w, frame));
+  struct frame *f = XFRAME (w->frame);
   int x, y, width, height, from_y, to_y, bottom_y;
 
   /* Get frame-relative bounding box of the text display area of W,
@@ -3594,7 +3594,7 @@ x_frame_rehighlight (struct x_display_info *dpyinfo)
 	   : dpyinfo->x_focus_frame);
       if (! FRAME_LIVE_P (dpyinfo->x_highlight_frame))
 	{
-	  FRAME_FOCUS_FRAME (dpyinfo->x_focus_frame) = Qnil;
+	  FSET (dpyinfo->x_focus_frame, focus_frame, Qnil);
 	  dpyinfo->x_highlight_frame = dpyinfo->x_focus_frame;
 	}
     }
@@ -3719,7 +3719,7 @@ x_find_modifier_meanings (struct x_display_info *dpyinfo)
       dpyinfo->alt_mod_mask &= ~dpyinfo->meta_mod_mask;
     }
 
-  XFree ((char *) syms);
+  XFree (syms);
   XFreeModifiermap (mods);
 }
 
@@ -4253,9 +4253,9 @@ xt_action_hook (Widget widget, XtPointer client_data, String action_name,
 			       scroll_bar_end_scroll, 0, 0);
       w = XWINDOW (window_being_scrolled);
 
-      if (!NILP (XSCROLL_BAR (WVAR (w, vertical_scroll_bar))->dragging))
+      if (!NILP (XSCROLL_BAR (w->vertical_scroll_bar)->dragging))
 	{
-	  XSCROLL_BAR (WVAR (w, vertical_scroll_bar))->dragging = Qnil;
+	  XSCROLL_BAR (w->vertical_scroll_bar)->dragging = Qnil;
 	  /* The thumb size is incorrect while dragging: fix it.  */
 	  set_vertical_scroll_bar (w);
 	}
@@ -4286,7 +4286,7 @@ x_send_scroll_bar_event (Lisp_Object window, int part, int portion, int whole)
   XEvent event;
   XClientMessageEvent *ev = (XClientMessageEvent *) &event;
   struct window *w = XWINDOW (window);
-  struct frame *f = XFRAME (WVAR (w, frame));
+  struct frame *f = XFRAME (w->frame);
   ptrdiff_t i;
 
   BLOCK_INPUT;
@@ -4362,7 +4362,7 @@ x_scroll_bar_to_input_event (XEvent *event, struct input_event *ievent)
   ievent->timestamp = CurrentTime;
 #else
   ievent->timestamp =
-    XtLastTimestampProcessed (FRAME_X_DISPLAY (XFRAME (WVAR (w, frame))));
+    XtLastTimestampProcessed (FRAME_X_DISPLAY (XFRAME (w->frame)));
 #endif
   ievent->part = ev->data.l[1];
   ievent->code = ev->data.l[2];
@@ -4963,9 +4963,10 @@ x_set_toolkit_scroll_bar_thumb (struct scroll_bar *bar, int portion, int positio
 static struct scroll_bar *
 x_scroll_bar_create (struct window *w, int top, int left, int width, int height)
 {
-  struct frame *f = XFRAME (WVAR (w, frame));
+  struct frame *f = XFRAME (w->frame);
   struct scroll_bar *bar
     = ALLOCATE_PSEUDOVECTOR (struct scroll_bar, x_window, PVEC_OTHER);
+  Lisp_Object barobj;
 
   BLOCK_INPUT;
 
@@ -5026,7 +5027,8 @@ x_scroll_bar_create (struct window *w, int top, int left, int width, int height)
   /* Add bar to its frame's list of scroll bars.  */
   bar->next = FRAME_SCROLL_BARS (f);
   bar->prev = Qnil;
-  XSETVECTOR (FRAME_SCROLL_BARS (f), bar);
+  XSETVECTOR (barobj, bar);
+  FSET (f, scroll_bars, barobj);
   if (!NILP (bar->next))
     XSETVECTOR (XSCROLL_BAR (bar->next)->prev, bar);
 
@@ -5189,7 +5191,7 @@ x_scroll_bar_remove (struct scroll_bar *bar)
 #endif
 
   /* Dissociate this scroll bar from its window.  */
-  WVAR (XWINDOW (bar->window), vertical_scroll_bar) = Qnil;
+  WSET (XWINDOW (bar->window), vertical_scroll_bar, Qnil);
 
   UNBLOCK_INPUT;
 }
@@ -5203,7 +5205,8 @@ x_scroll_bar_remove (struct scroll_bar *bar)
 static void
 XTset_vertical_scroll_bar (struct window *w, int portion, int whole, int position)
 {
-  struct frame *f = XFRAME (WVAR (w, frame));
+  struct frame *f = XFRAME (w->frame);
+  Lisp_Object barobj;
   struct scroll_bar *bar;
   int top, height, left, sb_left, width, sb_width;
   int window_y, window_height;
@@ -5254,7 +5257,7 @@ XTset_vertical_scroll_bar (struct window *w, int portion, int whole, int positio
 #endif
 
   /* Does the scroll bar exist yet?  */
-  if (NILP (WVAR (w, vertical_scroll_bar)))
+  if (NILP (w->vertical_scroll_bar))
     {
       if (width > 0 && height > 0)
 	{
@@ -5277,7 +5280,7 @@ XTset_vertical_scroll_bar (struct window *w, int portion, int whole, int positio
       /* It may just need to be moved and resized.  */
       unsigned int mask = 0;
 
-      bar = XSCROLL_BAR (WVAR (w, vertical_scroll_bar));
+      bar = XSCROLL_BAR (w->vertical_scroll_bar);
 
       BLOCK_INPUT;
 
@@ -5401,7 +5404,8 @@ XTset_vertical_scroll_bar (struct window *w, int portion, int whole, int positio
     }
 #endif /* not USE_TOOLKIT_SCROLL_BARS */
 
-  XSETVECTOR (WVAR (w, vertical_scroll_bar), bar);
+  XSETVECTOR (barobj, bar);
+  WSET (w, vertical_scroll_bar, barobj);
 }
 
 
@@ -5425,12 +5429,12 @@ XTcondemn_scroll_bars (FRAME_PTR frame)
     {
       Lisp_Object bar;
       bar = FRAME_SCROLL_BARS (frame);
-      FRAME_SCROLL_BARS (frame) = XSCROLL_BAR (bar)->next;
+      FSET (frame, scroll_bars, XSCROLL_BAR (bar)->next);
       XSCROLL_BAR (bar)->next = FRAME_CONDEMNED_SCROLL_BARS (frame);
       XSCROLL_BAR (bar)->prev = Qnil;
       if (! NILP (FRAME_CONDEMNED_SCROLL_BARS (frame)))
 	XSCROLL_BAR (FRAME_CONDEMNED_SCROLL_BARS (frame))->prev = bar;
-      FRAME_CONDEMNED_SCROLL_BARS (frame) = bar;
+      FSET (frame, condemned_scroll_bars, bar);
     }
 }
 
@@ -5443,12 +5447,13 @@ XTredeem_scroll_bar (struct window *window)
 {
   struct scroll_bar *bar;
   struct frame *f;
+  Lisp_Object barobj;
 
   /* We can't redeem this window's scroll bar if it doesn't have one.  */
-  if (NILP (WVAR (window, vertical_scroll_bar)))
+  if (NILP (window->vertical_scroll_bar))
     abort ();
 
-  bar = XSCROLL_BAR (WVAR (window, vertical_scroll_bar));
+  bar = XSCROLL_BAR (window->vertical_scroll_bar);
 
   /* Unlink it from the condemned list.  */
   f = XFRAME (WINDOW_FRAME (window));
@@ -5456,12 +5461,12 @@ XTredeem_scroll_bar (struct window *window)
     {
       /* If the prev pointer is nil, it must be the first in one of
 	 the lists.  */
-      if (EQ (FRAME_SCROLL_BARS (f), WVAR (window, vertical_scroll_bar)))
+      if (EQ (FRAME_SCROLL_BARS (f), window->vertical_scroll_bar))
 	/* It's not condemned.  Everything's fine.  */
 	return;
       else if (EQ (FRAME_CONDEMNED_SCROLL_BARS (f),
-		   WVAR (window, vertical_scroll_bar)))
-	FRAME_CONDEMNED_SCROLL_BARS (f) = bar->next;
+		   window->vertical_scroll_bar))
+	FSET (f, condemned_scroll_bars, bar->next);
       else
 	/* If its prev pointer is nil, it must be at the front of
 	   one or the other!  */
@@ -5475,7 +5480,8 @@ XTredeem_scroll_bar (struct window *window)
 
   bar->next = FRAME_SCROLL_BARS (f);
   bar->prev = Qnil;
-  XSETVECTOR (FRAME_SCROLL_BARS (f), bar);
+  XSETVECTOR (barobj, bar);
+  FSET (f, scroll_bars, barobj);
   if (! NILP (bar->next))
     XSETVECTOR (XSCROLL_BAR (bar->next)->prev, bar);
 }
@@ -5492,7 +5498,7 @@ XTjudge_scroll_bars (FRAME_PTR f)
 
   /* Clear out the condemned list now so we won't try to process any
      more events on the hapless scroll bars.  */
-  FRAME_CONDEMNED_SCROLL_BARS (f) = Qnil;
+  FSET (f, condemned_scroll_bars, Qnil);
 
   for (; ! NILP (bar); bar = next)
     {
@@ -5619,7 +5625,7 @@ x_scroll_bar_handle_click (struct scroll_bar *bar, XEvent *event, struct input_e
 static void
 x_scroll_bar_note_movement (struct scroll_bar *bar, XEvent *event)
 {
-  FRAME_PTR f = XFRAME (WVAR (XWINDOW (bar->window), frame));
+  FRAME_PTR f = XFRAME (XWINDOW (bar->window)->frame);
 
   last_mouse_movement_time = event->xmotion.time;
 
@@ -6366,7 +6372,7 @@ handle_one_xevent (struct x_display_info *dpyinfo, XEvent *eventptr,
 	 mouse highlighting.  */
       if (!hlinfo->mouse_face_hidden && INTEGERP (Vmouse_highlight)
 	  && (f == 0
-	      || !EQ (FVAR (f, tool_bar_window), hlinfo->mouse_face_window)))
+	      || !EQ (f->tool_bar_window, hlinfo->mouse_face_window)))
         {
           clear_mouse_face (hlinfo);
           hlinfo->mouse_face_hidden = 1;
@@ -6793,8 +6799,8 @@ handle_one_xevent (struct x_display_info *dpyinfo, XEvent *eventptr,
 		       create event iff we don't leave the
 		       selected frame.  */
 		    && (focus_follows_mouse
-			|| (EQ (WVAR (XWINDOW (window), frame),
-				WVAR (XWINDOW (selected_window), frame)))))
+			|| (EQ (XWINDOW (window)->frame,
+				XWINDOW (selected_window)->frame))))
                   {
                     inev.ie.kind = SELECT_WINDOW_EVENT;
                     inev.ie.frame_or_window = window;
@@ -6913,15 +6919,15 @@ handle_one_xevent (struct x_display_info *dpyinfo, XEvent *eventptr,
         if (f)
           {
             /* Is this in the tool-bar?  */
-            if (WINDOWP (FVAR (f, tool_bar_window))
-                && WINDOW_TOTAL_LINES (XWINDOW (FVAR (f, tool_bar_window))))
+            if (WINDOWP (f->tool_bar_window)
+                && WINDOW_TOTAL_LINES (XWINDOW (f->tool_bar_window)))
               {
                 Lisp_Object window;
                 int x = event.xbutton.x;
                 int y = event.xbutton.y;
 
                 window = window_from_coordinates (f, x, y, 0, 1);
-                tool_bar_p = EQ (window, FVAR (f, tool_bar_window));
+                tool_bar_p = EQ (window, f->tool_bar_window);
 
                 if (tool_bar_p && event.xbutton.button < 4)
                   {
@@ -7343,7 +7349,7 @@ x_draw_hollow_cursor (struct window *w, struct glyph_row *row)
 static void
 x_draw_bar_cursor (struct window *w, struct glyph_row *row, int width, enum text_cursor_kinds kind)
 {
-  struct frame *f = XFRAME (WVAR (w, frame));
+  struct frame *f = XFRAME (w->frame);
   struct glyph *cursor_glyph;
 
   /* If cursor is out of bounds, don't draw garbage.  This can happen
@@ -7517,7 +7523,7 @@ x_draw_window_cursor (struct window *w, struct glyph_row *glyph_row, int x, int 
 	}
 
 #ifdef HAVE_X_I18N
-      if (w == XWINDOW (FVAR (f, selected_window)))
+      if (w == XWINDOW (f->selected_window))
 	if (FRAME_XIC (f) && (FRAME_XIC_STYLE (f) & XIMPreeditPosition))
 	  xic_set_preeditarea (w, x, y);
 #endif
@@ -7843,7 +7849,7 @@ x_connection_closed (Display *dpy, const char *error_message)
       {
 	/* Set this to t so that delete_frame won't get confused
 	   trying to find a replacement.  */
-	KVAR (FRAME_KBOARD (XFRAME (frame)), Vdefault_minibuffer_frame) = Qt;
+	KSET (FRAME_KBOARD (XFRAME (frame)), Vdefault_minibuffer_frame, Qt);
 	delete_frame (frame, Qnoelisp);
       }
 
@@ -8168,7 +8174,7 @@ xim_instantiate_callback (Display *display, XPointer client_data, XPointer call_
 		  xic_set_statusarea (f);
 		if (FRAME_XIC_STYLE (f) & XIMPreeditPosition)
 		  {
-		    struct window *w = XWINDOW (FVAR (f, selected_window));
+		    struct window *w = XWINDOW (f->selected_window);
 		    xic_set_preeditarea (w, w->cursor.x, w->cursor.y);
 		  }
 	      }
@@ -8956,7 +8962,7 @@ x_set_window_size (struct frame *f, int change_gravity, int cols, int rows)
 #endif /* not USE_GTK */
 
   /* If cursor was outside the new size, mark it as off.  */
-  mark_window_cursors_off (XWINDOW (FVAR (f, root_window)));
+  mark_window_cursors_off (XWINDOW (f->root_window));
 
   /* Clear out any recollection of where the mouse highlighting was,
      since it might be in a place that's outside the new frame size.
@@ -10127,7 +10133,7 @@ x_term_init (Lisp_Object display_name, char *xrm_option, char *resource_name)
       {
 	terminal->kboard = xmalloc (sizeof *terminal->kboard);
 	init_kboard (terminal->kboard);
-	KVAR (terminal->kboard, Vwindow_system) = Qx;
+	KSET (terminal->kboard, Vwindow_system, Qx);
 
 	/* Add the keyboard to the list before running Lisp code (via
            Qvendor_specific_keysyms below), since these are not traced
@@ -10135,7 +10141,7 @@ x_term_init (Lisp_Object display_name, char *xrm_option, char *resource_name)
 	terminal->kboard->next_kboard = all_kboards;
 	all_kboards = terminal->kboard;
 
-	if (!EQ (SVAR (XSYMBOL (Qvendor_specific_keysyms), function), Qunbound))
+	if (!EQ (XSYMBOL (Qvendor_specific_keysyms)->function, Qunbound))
 	  {
 	    char *vendor = ServerVendor (dpy);
 
@@ -10149,9 +10155,9 @@ x_term_init (Lisp_Object display_name, char *xrm_option, char *resource_name)
 	    /* Temporarily hide the partially initialized terminal.  */
 	    terminal_list = terminal->next_terminal;
 	    UNBLOCK_INPUT;
-	    KVAR (terminal->kboard, Vsystem_key_alist)
-	      = call1 (Qvendor_specific_keysyms,
-		       vendor ? build_string (vendor) : empty_unibyte_string);
+	    KSET (terminal->kboard, Vsystem_key_alist,
+		  call1 (Qvendor_specific_keysyms,
+			 vendor ? build_string (vendor) : empty_unibyte_string));
 	    BLOCK_INPUT;
 	    terminal->next_terminal = terminal_list;
  	    terminal_list = terminal;

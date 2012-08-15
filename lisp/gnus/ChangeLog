@@ -1,3 +1,28 @@
+2012-08-14  Chong Yidong  <cyd@gnu.org>
+
+	* gnus-art.el (article-display-face): Handle failure in
+	gnus-create-image (Bug#11802).
+
+2012-08-10  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* gnus-agent.el (gnus-agent-cat-defaccessor, gnus-agent-cat-groups):
+	Use defsetf.
+
+2012-08-10  Daiki Ueno  <ueno@unixuser.org>
+
+	* auth-source.el: (auth-source-plstore-search)
+	(auth-source-secrets-search): Ignore :require and :type in search spec.
+
+2012-08-06  Julien Danjou  <julien@danjou.info>
+
+	* gnus-demon.el (gnus-demon-add-handler, gnus-demon-remove-handler):
+	Remove autoload, already handled by gnus.el.
+
+2012-08-05  Julien Danjou  <julien@danjou.info>
+
+	* gnus-demon.el (gnus-demon-add-handler, gnus-demon-remove-handler):
+	Add autoload.
+
 2012-07-31  Katsumi Yamaoka  <yamaoka@jpl.org>
 
 	* gnus.el (gnus-valid-select-methods): Fix custom type.

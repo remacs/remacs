@@ -907,11 +907,12 @@ The normal global definition of the character C-x indirects to this keymap.")
 			  c)))
 	    key)))
 
-(defsubst eventp (obj)
+(defun eventp (obj)
   "True if the argument is an event object."
-  (or (integerp obj)
-      (and (symbolp obj) obj (not (keywordp obj)))
-      (and (consp obj) (symbolp (car obj)))))
+  (when obj
+    (or (integerp obj)
+        (and (symbolp obj) obj (not (keywordp obj)))
+        (and (consp obj) (symbolp (car obj))))))
 
 (defun event-modifiers (event)
   "Return a list of symbols representing the modifier keys in event EVENT.
@@ -975,7 +976,7 @@ in the current Emacs session, then this function may return nil."
   ;; is this really correct? maybe remove mouse-movement?
   (memq (event-basic-type object) '(mouse-1 mouse-2 mouse-3 mouse-movement)))
 
-(defsubst event-start (event)
+(defun event-start (event)
   "Return the starting position of EVENT.
 EVENT should be a click, drag, or key press event.
 If it is a key press event, the return value has the form
@@ -990,9 +991,10 @@ If EVENT is a mouse or key press or a mouse click, this is the
 position of the event.  If EVENT is a drag, this is the starting
 position of the drag."
   (if (consp event) (nth 1 event)
-    (list (selected-window) (point) '(0 . 0) 0)))
+    (or (posn-at-point)
+        (list (selected-window) (point) '(0 . 0) 0))))
 
-(defsubst event-end (event)
+(defun event-end (event)
   "Return the ending location of EVENT.
 EVENT should be a click, drag, or key press event.
 If EVENT is a key press event, the return value has the form
@@ -1009,7 +1011,8 @@ If EVENT is a mouse or key press or a mouse click, this is the
 position of the event.  If EVENT is a drag, this is the starting
 position of the drag."
   (if (consp event) (nth (if (consp (nth 2 event)) 2 1) event)
-    (list (selected-window) (point) '(0 . 0) 0)))
+    (or (posn-at-point)
+        (list (selected-window) (point) '(0 . 0) 0))))
 
 (defsubst event-click-count (event)
   "Return the multi-click count of EVENT, a click or drag event.
@@ -1017,6 +1020,13 @@ The return value is a positive integer."
   (if (and (consp event) (integerp (nth 2 event))) (nth 2 event) 1))
 
 ;;;; Extracting fields of the positions in an event.
+
+(defun posnp (obj)
+  "Return non-nil if OBJ appears to be a valid `posn' object."
+  (and (windowp (car-safe obj))
+       (atom (car-safe (setq obj (cdr obj))))                ;AREA-OR-POS.
+       (integerp (car-safe (car-safe (setq obj (cdr obj))))) ;XOFFSET.
+       (integerp (car-safe (cdr obj)))))                     ;TIMESTAMP.
 
 (defsubst posn-window (position)
   "Return the window in POSITION.
@@ -1159,7 +1169,7 @@ be a list of the form returned by `event-start' and `event-end'."
 (define-obsolete-function-alias 'string-to-int 'string-to-number "22.1")
 
 (make-obsolete 'forward-point "use (+ (point) N) instead." "23.1")
-(make-obsolete 'buffer-has-markers-at nil "24.2")
+(make-obsolete 'buffer-has-markers-at nil "24.3")
 
 (defun insert-string (&rest args)
   "Mocklisp-compatibility insert function.
@@ -1184,7 +1194,7 @@ is converted into a string by expressing it in decimal."
 (set-advertised-calling-convention
  'all-completions '(string collection &optional predicate) "23.1")
 (set-advertised-calling-convention 'unintern '(name obarray) "23.3")
-(set-advertised-calling-convention 'redirect-frame-focus '(frame focus-frame) "24.2")
+(set-advertised-calling-convention 'redirect-frame-focus '(frame focus-frame) "24.3")
 
 ;;;; Obsolescence declarations for variables, and aliases.
 
@@ -2172,7 +2182,8 @@ by doing (clear-string STRING)."
             (set (make-local-variable 'post-self-insert-hook) nil)
             (add-hook 'after-change-functions hide-chars-fun nil 'local))
         (unwind-protect
-            (read-string prompt nil t default) ; t = "no history"
+            (let ((enable-recursive-minibuffers t))
+              (read-string prompt nil t default)) ; t = "no history"
           (when (buffer-live-p minibuf)
             (with-current-buffer minibuf
               ;; Not sure why but it seems that there might be cases where the
@@ -2480,7 +2491,7 @@ This finishes the change group by reverting all of its changes."
 
 ;; For compatibility.
 (define-obsolete-function-alias 'redraw-modeline
-  'force-mode-line-update "24.2")
+  'force-mode-line-update "24.3")
 
 (defun force-mode-line-update (&optional all)
   "Force redisplay of the current buffer's mode line and header line.
@@ -2775,15 +2786,19 @@ form."
 
 (defun function-get (f prop &optional autoload)
   "Return the value of property PROP of function F.
-If AUTOLOAD is non-nil and F is an autoloaded macro, try to autoload
-the macro in the hope that it will set PROP."
+If AUTOLOAD is non-nil and F is autoloaded, try to autoload it
+in the hope that it will set PROP.  If AUTOLOAD is `macro', only do it
+if it's an autoloaded macro."
   (let ((val nil))
     (while (and (symbolp f)
                 (null (setq val (get f prop)))
                 (fboundp f))
       (let ((fundef (symbol-function f)))
         (if (and autoload (autoloadp fundef)
-                 (not (equal fundef (autoload-do-load fundef f 'macro))))
+                 (not (equal fundef
+                             (autoload-do-load fundef f
+                                               (if (eq autoload 'macro)
+                                                   'macro)))))
             nil                         ;Re-try `get' on the same `f'.
           (setq f fundef))))
     val))
@@ -3013,6 +3028,30 @@ also `with-temp-buffer'."
      (set-buffer ,buffer-or-name)
      ,@body))
 
+(defun internal--before-with-selected-window (window)
+  (let ((other-frame (window-frame window)))
+    (list window (selected-window)
+          ;; Selecting a window on another frame also changes that
+          ;; frame's frame-selected-window.  We must save&restore it.
+          (unless (eq (selected-frame) other-frame)
+            (frame-selected-window other-frame))
+          ;; Also remember the top-frame if on ttys.
+          (unless (eq (selected-frame) other-frame)
+            (tty-top-frame other-frame)))))
+
+(defun internal--after-with-selected-window (state)
+  ;; First reset frame-selected-window.
+  (when (window-live-p (nth 2 state))
+    ;; We don't use set-frame-selected-window because it does not
+    ;; pass the `norecord' argument to Fselect_window.
+    (select-window (nth 2 state) 'norecord)
+    (and (frame-live-p (nth 3 state))
+         (not (eq (tty-top-frame) (nth 3 state)))
+         (select-frame (nth 3 state) 'norecord)))
+  ;; Then reset the actual selected-window.
+  (when (window-live-p (nth 1 state))
+    (select-window (nth 1 state) 'norecord)))
+
 (defmacro with-selected-window (window &rest body)
   "Execute the forms in BODY with WINDOW as the selected window.
 The value returned is the value of the last form in BODY.
@@ -3030,34 +3069,13 @@ current buffer, since otherwise its normal operation could
 potentially make a different buffer current.  It does not alter
 the buffer list ordering."
   (declare (indent 1) (debug t))
-  ;; Most of this code is a copy of save-selected-window.
-  `(let* ((save-selected-window-destination ,window)
-	  (save-selected-window-frame
-	   (window-frame save-selected-window-destination))
-          (save-selected-window-window (selected-window))
-          ;; Selecting a window on another frame also changes that
-          ;; frame's frame-selected-window.  We must save&restore it.
-          (save-selected-window-other-frame
-           (unless (eq (selected-frame) save-selected-window-frame)
-             (frame-selected-window save-selected-window-frame)))
-	  (save-selected-window-top-frame
-           (unless (eq (selected-frame) save-selected-window-frame)
-	     (tty-top-frame save-selected-window-frame))))
+  `(let ((save-selected-window--state
+          (internal--before-with-selected-window ,window)))
      (save-current-buffer
        (unwind-protect
-           (progn (select-window save-selected-window-destination 'norecord)
+           (progn (select-window (car save-selected-window--state) 'norecord)
 		  ,@body)
-         ;; First reset frame-selected-window.
-         (when (window-live-p save-selected-window-other-frame)
-	   ;; We don't use set-frame-selected-window because it does not
-	   ;; pass the `norecord' argument to Fselect_window.
-	   (select-window save-selected-window-other-frame 'norecord)
-	   (and (frame-live-p save-selected-window-top-frame)
-		(not (eq (tty-top-frame) save-selected-window-top-frame))
-		(select-frame save-selected-window-top-frame 'norecord)))
-         ;; Then reset the actual selected-window.
-	 (when (window-live-p save-selected-window-window)
-	   (select-window save-selected-window-window 'norecord))))))
+         (internal--after-with-selected-window save-selected-window--state)))))
 
 (defmacro with-selected-frame (frame &rest body)
   "Execute the forms in BODY with FRAME as the selected frame.

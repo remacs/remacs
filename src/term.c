@@ -1333,7 +1333,7 @@ term_get_fkeys_1 (void)
 
   /* This can happen if CANNOT_DUMP or with strange options.  */
   if (!KEYMAPP (KVAR (kboard, Vinput_decode_map)))
-    KVAR (kboard, Vinput_decode_map) = Fmake_sparse_keymap (Qnil);
+    KSET (kboard, Vinput_decode_map, Fmake_sparse_keymap (Qnil));
 
   for (i = 0; i < (sizeof (keys)/sizeof (keys[0])); i++)
     {
@@ -2192,7 +2192,7 @@ set_tty_color_mode (struct tty_display_info *tty, struct frame *f)
   Lisp_Object tty_color_mode_alist
     = Fintern_soft (build_string ("tty-color-mode-alist"), Qnil);
 
-  tem = assq_no_quit (Qtty_color_mode, FVAR (f, param_alist));
+  tem = assq_no_quit (Qtty_color_mode, f->param_alist);
   val = CONSP (tem) ? XCDR (tem) : Qnil;
 
   if (INTEGERP (val))
@@ -3281,7 +3281,7 @@ use the Bourne shell command `TERM=... export TERM' (C-shell:\n\
 
   terminal->kboard = xmalloc (sizeof *terminal->kboard);
   init_kboard (terminal->kboard);
-  KVAR (terminal->kboard, Vwindow_system) = Qnil;
+  KSET (terminal->kboard, Vwindow_system, Qnil);
   terminal->kboard->next_kboard = all_kboards;
   all_kboards = terminal->kboard;
   terminal->kboard->reference_count++;
@@ -3571,14 +3571,14 @@ This variable can be used by terminal emulator packages.  */);
 #endif
 
   DEFVAR_LISP ("suspend-tty-functions", Vsuspend_tty_functions,
-    doc: /* Functions to be run after suspending a tty.
+    doc: /* Functions run after suspending a tty.
 The functions are run with one argument, the terminal object to be suspended.
 See `suspend-tty'.  */);
   Vsuspend_tty_functions = Qnil;
 
 
   DEFVAR_LISP ("resume-tty-functions", Vresume_tty_functions,
-    doc: /* Functions to be run after resuming a tty.
+    doc: /* Functions run after resuming a tty.
 The functions are run with one argument, the terminal object that was revived.
 See `resume-tty'.  */);
   Vresume_tty_functions = Qnil;

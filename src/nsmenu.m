@@ -73,7 +73,6 @@ EmacsMenu *mainMenu, *svcsMenu, *dockMenu;
 
 /* Nonzero means a menu is currently active.  */
 static int popup_activated_flag;
-static NSModalSession popupSession;
 
 /* Nonzero means we are tracking and updating menus.  */
 static int trackingMenu;
@@ -215,20 +214,20 @@ ns_update_menubar (struct frame *f, int deep_p, EmacsMenu *submenu)
       if (! NILP (Vlucid_menu_bar_dirty_flag))
 	call0 (Qrecompute_lucid_menubar);
       safe_run_hooks (Qmenu_bar_update_hook);
-      FRAME_MENU_BAR_ITEMS (f) = menu_bar_items (FRAME_MENU_BAR_ITEMS (f));
+      FSET (f, menu_bar_items, menu_bar_items (FRAME_MENU_BAR_ITEMS (f)));
 
       /* Now ready to go */
       items = FRAME_MENU_BAR_ITEMS (f);
 
       /* Save the frame's previous menu bar contents data */
       if (previous_menu_items_used)
-	memcpy (previous_items, &AREF (FVAR (f, menu_bar_vector), 0),
+	memcpy (previous_items, aref_addr (f->menu_bar_vector, 0),
 		previous_menu_items_used * sizeof (Lisp_Object));
 
       /* parse stage 1: extract from lisp */
       save_menu_items ();
 
-      menu_items = FVAR (f, menu_bar_vector);
+      menu_items = f->menu_bar_vector;
       menu_items_allocated = VECTORP (menu_items) ? ASIZE (menu_items) : 0;
       submenu_start = alloca (ASIZE (items) * sizeof *submenu_start);
       submenu_end = alloca (ASIZE (items) * sizeof *submenu_end);
@@ -341,7 +340,7 @@ ns_update_menubar (struct frame *f, int deep_p, EmacsMenu *submenu)
         }
       /* The menu items are different, so store them in the frame */
       /* FIXME: this is not correct for single-submenu case */
-      FVAR (f, menu_bar_vector) = menu_items;
+      FSET (f, menu_bar_vector, menu_items);
       f->menu_bar_items_used = menu_items_used;
 
       /* Calls restore_menu_items, etc., as they were outside */
@@ -939,8 +938,7 @@ ns_menu_show (FRAME_PTR f, int x, int y, int for_click, int keymaps,
 	  /* If this item has a null value,
 	     make the call_data null so that it won't display a box
 	     when the mouse is on it.  */
-	  wv->call_data
-	      = !NILP (def) ? (void *) &AREF (menu_items, i) : 0;
+	  wv->call_data = !NILP (def) ? aref_addr (menu_items, i) : 0;
 	  wv->enabled = !NILP (enable);
 
 	  if (NILP (type))
@@ -1041,7 +1039,7 @@ update_frame_tool_bar (FRAME_PTR f)
   /* update EmacsToolbar as in GtkUtils, build items list */
   for (i = 0; i < f->n_tool_bar_items; ++i)
     {
-#define TOOLPROP(IDX) AREF (FVAR (f, tool_bar_items), \
+#define TOOLPROP(IDX) AREF (f->tool_bar_items, \
                             i * TOOL_BAR_ITEM_NSLOTS + (IDX))
 
       BOOL enabled_p = !NILP (TOOLPROP (TOOL_BAR_ITEM_ENABLED_P));
@@ -1366,8 +1364,6 @@ pop_down_menu (Lisp_Object arg)
     {
       EmacsDialogPanel *panel = unwind_data->dialog;
       popup_activated_flag = 0;
-      [NSApp endModalSession: popupSession];
-
       [panel close];
       [unwind_data->pool release];
       [[FRAME_NS_VIEW (SELECTED_FRAME ()) window] makeKeyWindow];
@@ -1453,7 +1449,7 @@ ns_popup_dialog (Lisp_Object position, Lisp_Object contents, Lisp_Object header)
 
     unwind_data->pool = pool;
     unwind_data->dialog = dialog;
-    
+
     record_unwind_protect (pop_down_menu, make_save_value (unwind_data, 0));
     popup_activated_flag = 1;
     tem = [dialog runDialogAt: p];
@@ -1757,20 +1753,40 @@ void process_dialog (id window, Lisp_Object list)
 }
 
 
+ 
+- (void)timeout_handler: (NSTimer *)timedEntry
+{
+  timer_fired = 1;
+  [NSApp abortModal];
+}
+
 - (Lisp_Object)runDialogAt: (NSPoint)p
 {
-  NSInteger ret;
+  NSInteger ret = 0;
 
-  /* initiate a session that will be ended by pop_down_menu */
-  popupSession = [NSApp beginModalSessionForWindow: self];
-  while (popup_activated_flag
-         && (ret = [NSApp runModalSession: popupSession])
-              == NSRunContinuesResponse)
+  while (popup_activated_flag)
     {
-      /* Run this for timers.el, indep of atimers; might not return.
-         TODO: use return value to avoid calling every iteration. */
-      timer_check ();
-      [NSThread sleepUntilDate: [NSDate dateWithTimeIntervalSinceNow: 0.1]];
+      NSTimer *tmo = nil;
+      EMACS_TIME next_time = timer_check ();
+
+      if (EMACS_TIME_VALID_P (next_time))
+        {
+          double time = EMACS_TIME_TO_DOUBLE (next_time);
+          tmo = [NSTimer timerWithTimeInterval: time
+                                        target: self
+                                      selector: @selector (timeout_handler:)
+                                      userInfo: 0
+                                       repeats: NO];
+          [[NSRunLoop currentRunLoop] addTimer: tmo
+                                       forMode: NSModalPanelRunLoopMode];
+        }
+      timer_fired = 0;
+      ret = [NSApp runModalForWindow: self];
+      if (! timer_fired)
+        {
+          if (tmo != nil) [tmo invalidate]; /* Cancels timer */
+          break;
+        }
     }
 
   {				/* FIXME: BIG UGLY HACK!!! */

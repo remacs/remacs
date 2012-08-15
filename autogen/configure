@@ -1356,6 +1356,7 @@ lisp_frag
 ns_frag'
 ac_user_opts='
 enable_option_checking
+with_all
 with_pop
 with_kerberos
 with_kerberos5
@@ -2072,6 +2073,8 @@ Optional Features:
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
+  --without-all           omit almost all features and build small executable
+                          with minimal dependencies
   --without-pop           don't support POP mail retrieval with movemail
   --with-kerberos         support Kerberos-authenticated POP
   --with-kerberos5        support Kerberos version 5 authenticated POP
@@ -3998,13 +4001,22 @@ docdir='${datadir}/emacs/${version}/etc'
 gamedir='${localstatedir}/games/emacs'
 
 
+# Check whether --with-all was given.
+if test "${with_all+set}" = set; then :
+  withval=$with_all; with_features=$withval
+else
+  with_features=yes
+fi
+
+
+
 
 
 # Check whether --with-pop was given.
 if test "${with_pop+set}" = set; then :
   withval=$with_pop;
 else
-     with_pop=yes
+     with_pop=$with_features
 fi
 
 if test "$with_pop" = yes; then
@@ -4102,7 +4114,7 @@ fi
 if test "${with_sound+set}" = set; then :
   withval=$with_sound;
 else
-     with_sound=yes
+     with_sound=$with_features
 fi
 
 
@@ -4111,7 +4123,7 @@ fi
 if test "${with_sync_input+set}" = set; then :
   withval=$with_sync_input;
 else
-     with_sync_input=yes
+     with_sync_input=$with_features
 fi
 
 if test "$with_sync_input" = yes; then
@@ -4161,7 +4173,7 @@ fi
 if test "${with_xpm+set}" = set; then :
   withval=$with_xpm;
 else
-     with_xpm=yes
+     with_xpm=$with_features
 fi
 
 
@@ -4169,7 +4181,7 @@ fi
 if test "${with_jpeg+set}" = set; then :
   withval=$with_jpeg;
 else
-     with_jpeg=yes
+     with_jpeg=$with_features
 fi
 
 
@@ -4177,7 +4189,7 @@ fi
 if test "${with_tiff+set}" = set; then :
   withval=$with_tiff;
 else
-     with_tiff=yes
+     with_tiff=$with_features
 fi
 
 
@@ -4185,7 +4197,7 @@ fi
 if test "${with_gif+set}" = set; then :
   withval=$with_gif;
 else
-     with_gif=yes
+     with_gif=$with_features
 fi
 
 
@@ -4193,7 +4205,7 @@ fi
 if test "${with_png+set}" = set; then :
   withval=$with_png;
 else
-     with_png=yes
+     with_png=$with_features
 fi
 
 
@@ -4201,7 +4213,7 @@ fi
 if test "${with_rsvg+set}" = set; then :
   withval=$with_rsvg;
 else
-     with_rsvg=yes
+     with_rsvg=$with_features
 fi
 
 
@@ -4209,7 +4221,7 @@ fi
 if test "${with_xml2+set}" = set; then :
   withval=$with_xml2;
 else
-     with_xml2=yes
+     with_xml2=$with_features
 fi
 
 
@@ -4217,7 +4229,7 @@ fi
 if test "${with_imagemagick+set}" = set; then :
   withval=$with_imagemagick;
 else
-     with_imagemagick=yes
+     with_imagemagick=$with_features
 fi
 
 
@@ -4226,7 +4238,7 @@ fi
 if test "${with_xft+set}" = set; then :
   withval=$with_xft;
 else
-     with_xft=yes
+     with_xft=$with_features
 fi
 
 
@@ -4234,7 +4246,7 @@ fi
 if test "${with_libotf+set}" = set; then :
   withval=$with_libotf;
 else
-     with_libotf=yes
+     with_libotf=$with_features
 fi
 
 
@@ -4242,7 +4254,7 @@ fi
 if test "${with_m17n_flt+set}" = set; then :
   withval=$with_m17n_flt;
 else
-     with_m17n_flt=yes
+     with_m17n_flt=$with_features
 fi
 
 
@@ -4251,7 +4263,7 @@ fi
 if test "${with_toolkit_scroll_bars+set}" = set; then :
   withval=$with_toolkit_scroll_bars;
 else
-     with_toolkit_scroll_bars=yes
+     with_toolkit_scroll_bars=$with_features
 fi
 
 
@@ -4259,7 +4271,7 @@ fi
 if test "${with_xaw3d+set}" = set; then :
   withval=$with_xaw3d;
 else
-     with_xaw3d=yes
+     with_xaw3d=$with_features
 fi
 
 
@@ -4267,7 +4279,7 @@ fi
 if test "${with_xim+set}" = set; then :
   withval=$with_xim;
 else
-     with_xim=yes
+     with_xim=$with_features
 fi
 
 
@@ -4284,7 +4296,7 @@ fi
 if test "${with_gpm+set}" = set; then :
   withval=$with_gpm;
 else
-     with_gpm=yes
+     with_gpm=$with_features
 fi
 
 
@@ -4292,7 +4304,7 @@ fi
 if test "${with_dbus+set}" = set; then :
   withval=$with_dbus;
 else
-     with_dbus=yes
+     with_dbus=$with_features
 fi
 
 
@@ -4300,15 +4312,26 @@ fi
 if test "${with_gconf+set}" = set; then :
   withval=$with_gconf;
 else
-     with_gconf=yes
+     with_gconf=$with_features
 fi
 
 
+<<<<<<< TREE
+=======
+# Check whether --with-gsettings was given.
+if test "${with_gsettings+set}" = set; then :
+  withval=$with_gsettings;
+else
+     with_gsettings=$with_features
+fi
+
+
+>>>>>>> MERGE-SOURCE
 # Check whether --with-selinux was given.
 if test "${with_selinux+set}" = set; then :
   withval=$with_selinux;
 else
-     with_selinux=yes
+     with_selinux=$with_features
 fi
 
 
@@ -4316,7 +4339,7 @@ fi
 if test "${with_gnutls+set}" = set; then :
   withval=$with_gnutls;
 else
-     with_gnutls=yes
+     with_gnutls=$with_features
 fi
 
 
@@ -4327,7 +4350,7 @@ fi
 if test "${with_makeinfo+set}" = set; then :
   withval=$with_makeinfo;
 else
-     with_makeinfo=yes
+     with_makeinfo=$with_features
 fi
 
 
@@ -4338,7 +4361,7 @@ fi
 if test "${with_compress_info+set}" = set; then :
   withval=$with_compress_info;
 else
-     with_compress_info=yes
+     with_compress_info=$with_features
 fi
 
 if test $with_compress_info = yes; then
@@ -7125,6 +7148,7 @@ esac
   # Code from module environ:
   # Code from module extensions:
 
+  # Code from module extern-inline:
   # Code from module filemode:
   # Code from module getloadavg:
   # Code from module getopt-gnu:
@@ -7998,7 +8022,34 @@ $as_echo "no" >&6; }
 fi
 
 
+<<<<<<< TREE
 
+=======
+  if test "X$PAXCTL" != X; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether binaries have a PT_PAX_FLAGS header" >&5
+$as_echo_n "checking whether binaries have a PT_PAX_FLAGS header... " >&6; }
+    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  if $PAXCTL -v conftest$EXEEXT >/dev/null 2>&1; then { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+      else { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }; PAXCTL=""; fi
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+  fi
+fi
+>>>>>>> MERGE-SOURCE
 
 ## Need makeinfo >= 4.7 (?) to build the manuals.
 # Extract the first word of "makeinfo", so it can be a program name with args.
@@ -13453,7 +13504,11 @@ fi
 done
 
 
-if test $opsys != unixware; then
+if test $opsys = unixware; then
+
+$as_echo "#define BROKEN_GETWD 1" >>confdefs.h
+
+else
   for ac_func in getwd
 do :
   ac_fn_c_check_func "$LINENO" "getwd" "ac_cv_func_getwd"
@@ -15124,6 +15179,10 @@ $as_echo "#define USER_FULL_NAME pw->pw_gecos" >>confdefs.h
 
 
 
+$as_echo "#define DIRECTORY_SEP '/'" >>confdefs.h
+
+
+
 
 
 $as_echo "#define IS_DEVICE_SEP(_c_) 0" >>confdefs.h
@@ -15231,35 +15290,35 @@ esac
 
 case $opsys in
   aix4-2 )
-    $as_echo "#define PTY_ITERATION int c; for (c = 0; !c ; c++) " >>confdefs.h
+    $as_echo "#define PTY_ITERATION int c; for (c = 0; !c ; c++)" >>confdefs.h
 
-            $as_echo "#define PTY_NAME_SPRINTF strcpy (pty_name, \"/dev/ptc\"); " >>confdefs.h
+            $as_echo "#define PTY_NAME_SPRINTF strcpy (pty_name, \"/dev/ptc\");" >>confdefs.h
 
-    $as_echo "#define PTY_TTY_NAME_SPRINTF strcpy (pty_name, ttyname (fd)); " >>confdefs.h
+    $as_echo "#define PTY_TTY_NAME_SPRINTF strcpy (pty_name, ttyname (fd));" >>confdefs.h
 
     ;;
 
   cygwin )
-    $as_echo "#define PTY_ITERATION int i; for (i = 0; i < 1; i++) " >>confdefs.h
+    $as_echo "#define PTY_ITERATION int i; for (i = 0; i < 1; i++)" >>confdefs.h
 
-        $as_echo "#define PTY_OPEN  do { int dummy; SIGMASKTYPE mask; mask = sigblock (sigmask (SIGCHLD)); if (-1 == openpty (&fd, &dummy, pty_name, 0, 0)) fd = -1; sigsetmask (mask); if (fd >= 0) emacs_close (dummy); } while (0) " >>confdefs.h
+        $as_echo "#define PTY_OPEN  do { int dummy; SIGMASKTYPE mask; mask = sigblock (sigmask (SIGCHLD)); if (-1 == openpty (&fd, &dummy, pty_name, 0, 0)) fd = -1; sigsetmask (mask); if (fd >= 0) emacs_close (dummy); } while (0)" >>confdefs.h
 
-    $as_echo "#define PTY_NAME_SPRINTF  " >>confdefs.h
+    $as_echo "#define PTY_NAME_SPRINTF /**/" >>confdefs.h
 
-    $as_echo "#define PTY_TTY_NAME_SPRINTF  " >>confdefs.h
+    $as_echo "#define PTY_TTY_NAME_SPRINTF /**/" >>confdefs.h
 
     ;;
 
   darwin )
-    $as_echo "#define PTY_ITERATION int i; for (i = 0; i < 1; i++) " >>confdefs.h
+    $as_echo "#define PTY_ITERATION int i; for (i = 0; i < 1; i++)" >>confdefs.h
 
         $as_echo "#define FIRST_PTY_LETTER 'p'" >>confdefs.h
 
-                $as_echo "#define PTY_OPEN  do { int slave; if (openpty (&fd, &slave, pty_name, NULL, NULL) == -1) fd = -1; else emacs_close (slave); } while (0) " >>confdefs.h
+                $as_echo "#define PTY_OPEN  do { int slave; if (openpty (&fd, &slave, pty_name, NULL, NULL) == -1) fd = -1; else emacs_close (slave); } while (0)" >>confdefs.h
 
-    $as_echo "#define PTY_NAME_SPRINTF  " >>confdefs.h
+    $as_echo "#define PTY_NAME_SPRINTF /**/" >>confdefs.h
 
-    $as_echo "#define PTY_TTY_NAME_SPRINTF  " >>confdefs.h
+    $as_echo "#define PTY_TTY_NAME_SPRINTF /**/" >>confdefs.h
 
     ;;
 
@@ -15273,17 +15332,17 @@ case $opsys in
 
 $as_echo "#define UNIX98_PTYS 1" >>confdefs.h
 
-      $as_echo "#define PTY_ITERATION int i; for (i = 0; i < 1; i++) " >>confdefs.h
+      $as_echo "#define PTY_ITERATION int i; for (i = 0; i < 1; i++)" >>confdefs.h
 
-                  $as_echo "#define PTY_TTY_NAME_SPRINTF { char *ptyname; sigblock (sigmask (SIGCHLD)); if (grantpt (fd) == -1 || unlockpt (fd) == -1 || !(ptyname = ptsname(fd))) { sigunblock (sigmask (SIGCHLD)); close (fd); return -1; } snprintf (pty_name, sizeof pty_name, \"%s\", ptyname); sigunblock (sigmask (SIGCHLD)); } " >>confdefs.h
+                  $as_echo "#define PTY_TTY_NAME_SPRINTF { char *ptyname; sigblock (sigmask (SIGCHLD)); if (grantpt (fd) == -1 || unlockpt (fd) == -1 || !(ptyname = ptsname(fd))) { sigunblock (sigmask (SIGCHLD)); close (fd); return -1; } snprintf (pty_name, sizeof pty_name, \"%s\", ptyname); sigunblock (sigmask (SIGCHLD)); }" >>confdefs.h
 
             if test "x$ac_cv_func_getpt" = xyes; then
         $as_echo "#define PTY_OPEN fd = getpt ()" >>confdefs.h
 
-        $as_echo "#define PTY_NAME_SPRINTF  " >>confdefs.h
+        $as_echo "#define PTY_NAME_SPRINTF /**/" >>confdefs.h
 
       else
-        $as_echo "#define PTY_NAME_SPRINTF strcpy (pty_name, \"/dev/ptmx\"); " >>confdefs.h
+        $as_echo "#define PTY_NAME_SPRINTF strcpy (pty_name, \"/dev/ptmx\");" >>confdefs.h
 
       fi
     else
@@ -15295,9 +15354,9 @@ $as_echo "#define UNIX98_PTYS 1" >>confdefs.h
   hpux*)
     $as_echo "#define FIRST_PTY_LETTER 'p'" >>confdefs.h
 
-    $as_echo "#define PTY_NAME_SPRINTF sprintf (pty_name, \"/dev/ptym/pty%c%x\", c, i); " >>confdefs.h
+    $as_echo "#define PTY_NAME_SPRINTF sprintf (pty_name, \"/dev/ptym/pty%c%x\", c, i);" >>confdefs.h
 
-    $as_echo "#define PTY_TTY_NAME_SPRINTF sprintf (pty_name, \"/dev/pty/tty%c%x\", c, i); " >>confdefs.h
+    $as_echo "#define PTY_TTY_NAME_SPRINTF sprintf (pty_name, \"/dev/pty/tty%c%x\", c, i);" >>confdefs.h
 
     ;;
 
@@ -15306,21 +15365,21 @@ $as_echo "#define UNIX98_PTYS 1" >>confdefs.h
 
         $as_echo "#define FIRST_PTY_LETTER 'q'" >>confdefs.h
 
-    $as_echo "#define PTY_OPEN  { struct sigaction ocstat, cstat; struct stat stb; char * name; sigemptyset(&cstat.sa_mask); cstat.sa_handler = SIG_DFL; cstat.sa_flags = 0; sigaction(SIGCLD, &cstat, &ocstat); name = _getpty (&fd, O_RDWR | O_NDELAY, 0600, 0); sigaction(SIGCLD, &ocstat, (struct sigaction *)0); if (name == 0) return -1; if (fd < 0) return -1; if (fstat (fd, &stb) < 0) return -1; strcpy (pty_name, name); } " >>confdefs.h
+    $as_echo "#define PTY_OPEN  { struct sigaction ocstat, cstat; struct stat stb; char * name; sigemptyset(&cstat.sa_mask); cstat.sa_handler = SIG_DFL; cstat.sa_flags = 0; sigaction(SIGCLD, &cstat, &ocstat); name = _getpty (&fd, O_RDWR | O_NDELAY, 0600, 0); sigaction(SIGCLD, &ocstat, (struct sigaction *)0); if (name == 0) return -1; if (fd < 0) return -1; if (fstat (fd, &stb) < 0) return -1; strcpy (pty_name, name); }" >>confdefs.h
 
-        $as_echo "#define PTY_NAME_SPRINTF  " >>confdefs.h
+        $as_echo "#define PTY_NAME_SPRINTF /**/" >>confdefs.h
 
-        $as_echo "#define PTY_TTY_NAME_SPRINTF  " >>confdefs.h
+        $as_echo "#define PTY_TTY_NAME_SPRINTF /**/" >>confdefs.h
 
     ;;
 
   sol2* )
-                            $as_echo "#define PTY_TTY_NAME_SPRINTF { char *ptsname (int), *ptyname; sigblock (sigmask (SIGCLD)); if (grantpt (fd) == -1) { emacs_close (fd); return -1; } sigunblock (sigmask (SIGCLD)); if (unlockpt (fd) == -1) { emacs_close (fd); return -1; } if (!(ptyname = ptsname (fd))) { emacs_close (fd); return -1; } snprintf (pty_name, sizeof pty_name, \"%s\", ptyname); } " >>confdefs.h
+                            $as_echo "#define PTY_TTY_NAME_SPRINTF { char *ptsname (int), *ptyname; sigblock (sigmask (SIGCLD)); if (grantpt (fd) == -1) { emacs_close (fd); return -1; } sigunblock (sigmask (SIGCLD)); if (unlockpt (fd) == -1) { emacs_close (fd); return -1; } if (!(ptyname = ptsname (fd))) { emacs_close (fd); return -1; } snprintf (pty_name, sizeof pty_name, \"%s\", ptyname); }" >>confdefs.h
 
     ;;
 
   unixware )
-        $as_echo "#define PTY_TTY_NAME_SPRINTF { char *ptsname (int), *ptyname; sigblock(sigmask(SIGCLD)); if (grantpt(fd) == -1) fatal(\"could not grant slave pty\"); sigunblock(sigmask(SIGCLD)); if (unlockpt(fd) == -1) fatal(\"could not unlock slave pty\"); if (!(ptyname = ptsname(fd))) fatal (\"could not enable slave pty\"); snprintf (pty_name, sizeof pty_name, \"%s\", ptyname); } " >>confdefs.h
+        $as_echo "#define PTY_TTY_NAME_SPRINTF { char *ptsname (int), *ptyname; sigblock(sigmask(SIGCLD)); if (grantpt(fd) == -1) fatal(\"could not grant slave pty\"); sigunblock(sigmask(SIGCLD)); if (unlockpt(fd) == -1) fatal(\"could not unlock slave pty\"); if (!(ptyname = ptsname(fd))) fatal (\"could not enable slave pty\"); snprintf (pty_name, sizeof pty_name, \"%s\", ptyname); }" >>confdefs.h
 
     ;;
 esac
@@ -15330,7 +15389,7 @@ case $opsys in
   sol2* | unixware )
             $as_echo "#define FIRST_PTY_LETTER 'z'" >>confdefs.h
 
-    $as_echo "#define PTY_NAME_SPRINTF strcpy (pty_name, \"/dev/ptmx\"); " >>confdefs.h
+    $as_echo "#define PTY_NAME_SPRINTF strcpy (pty_name, \"/dev/ptmx\");" >>confdefs.h
 
 
 $as_echo "#define SETUP_SLAVE_PTY if (ioctl (xforkin, I_PUSH, \"ptem\") == -1) fatal (\"ioctl I_PUSH ptem\"); if (ioctl (xforkin, I_PUSH, \"ldterm\") == -1) fatal (\"ioctl I_PUSH ldterm\"); if (ioctl (xforkin, I_PUSH, \"ttcompat\") == -1) fatal (\"ioctl I_PUSH ttcompat\");" >>confdefs.h
@@ -15384,23 +15443,42 @@ esac
 
 
 
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether we are using the GNU C library" >&5
+$as_echo_n "checking whether we are using the GNU C library... " >&6; }
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
 
+#include <features.h>
+#ifndef __GNU_LIBRARY__
+# error "this is not the GNU C library"
+#endif
 
-case $opsys in
-  cygwin | darwin | freebsd | netbsd | openbsd )
-    $as_echo "#define PENDING_OUTPUT_COUNT(FILE) ((FILE)->_p - (FILE)->_bf._base)" >>confdefs.h
+int
+main ()
+{
 
-    ;;
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_cpp "$LINENO"; then :
+  emacs_glibc=yes
+else
+  emacs_glibc=no
+fi
+rm -f conftest.err conftest.$ac_ext
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $emacs_glibc" >&5
+$as_echo "$emacs_glibc" >&6; }
 
-  unixware)
-    $as_echo "#define PENDING_OUTPUT_COUNT(FILE) ((FILE)->__ptr - (FILE)->__base)" >>confdefs.h
+if test $emacs_glibc = yes; then
 
-    ;;
+  emacs_pending_output=unknown
 
-  gnu | gnu-linux | gnu-kfreebsd )
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for style of pending output formalism" >&5
+  case $opsys in
+    gnu | gnu-linux | gnu-kfreebsd )
+      { $as_echo "$as_me:${as_lineno-$LINENO}: checking for style of pending output formalism" >&5
 $as_echo_n "checking for style of pending output formalism... " >&6; }
-            cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+                  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
 #include <stdio.h>
@@ -15418,8 +15496,6 @@ main ()
 _ACEOF
 if ac_fn_c_try_cpp "$LINENO"; then :
   emacs_pending_output=new
-else
-  emacs_pending_output=unknown
 fi
 rm -f conftest.err conftest.$ac_ext
 
@@ -15457,21 +15533,52 @@ $as_echo "$emacs_pending_output" >&6; }
 
       case $emacs_pending_output in
         new)
-                    $as_echo "#define GNU_LIBRARY_PENDING_OUTPUT_COUNT(FILE) ((FILE)->_IO_write_ptr - (FILE)->_IO_write_base)" >>confdefs.h
+                    $as_echo "#define PENDING_OUTPUT_COUNT(FILE) ((FILE)->_IO_write_ptr - (FILE)->_IO_write_base)" >>confdefs.h
 
           ;;
         uclibc)
-                    $as_echo "#define GNU_LIBRARY_PENDING_OUTPUT_COUNT(FILE) ((FILE)->__bufpos - (FILE)->__bufstart)" >>confdefs.h
+                    $as_echo "#define PENDING_OUTPUT_COUNT(FILE) ((FILE)->__bufpos - (FILE)->__bufstart)" >>confdefs.h
 
           ;;
         old)
-                    $as_echo "#define GNU_LIBRARY_PENDING_OUTPUT_COUNT(FILE) ((FILE)->_pptr - (FILE)->_pbase)" >>confdefs.h
+                    $as_echo "#define PENDING_OUTPUT_COUNT(FILE) ((FILE)->_pptr - (FILE)->_pbase)" >>confdefs.h
 
           ;;
       esac
     ;;
-esac
+  esac
+  if test $emacs_pending_output = unknown; then
+    $as_echo "#define PENDING_OUTPUT_COUNT(FILE) ((FILE)->__bufp - (FILE)->__buffer)" >>confdefs.h
 
+  fi
+
+else
+  case $opsys in
+    cygwin | darwin | freebsd | netbsd | openbsd )
+      $as_echo "#define PENDING_OUTPUT_COUNT(FILE) ((FILE)->_p - (FILE)->_bf._base)" >>confdefs.h
+
+      ;;
+
+    unixware)
+      $as_echo "#define PENDING_OUTPUT_COUNT(FILE) ((FILE)->__ptr - (FILE)->__base)" >>confdefs.h
+
+      ;;
+
+    *)
+            if test x$ac_cv_header_stdio_ext_h = xyes && \
+        test x$ac_cv_func___fpending = xyes; then
+        $as_echo "#define PENDING_OUTPUT_COUNT(FILE) __fpending (FILE)" >>confdefs.h
+
+
+$as_echo "#define DISPNEW_NEEDS_STDIO_EXT 1" >>confdefs.h
+
+      else
+        $as_echo "#define PENDING_OUTPUT_COUNT(FILE) ((FILE)->_ptr - (FILE)->_base)" >>confdefs.h
+
+      fi
+      ;;
+  esac
+fi
 
 
 
@@ -15640,17 +15747,6 @@ $as_echo "#define TIOCSIGSEND TIOCSIGNAL" >>confdefs.h
     ;;
 esac
 
-case $opsys in
-  irix6-5 | sol2* | unixware )
-
-$as_echo "#define wait3(status, options, rusage) waitpid ((pid_t) -1, (status), (options))" >>confdefs.h
-
-
-$as_echo "#define WRETCODE(w) (w >> 8)" >>confdefs.h
-
-    ;;
-esac
-
 
 case $opsys in
   hpux* | sol2* )
@@ -15665,6 +15761,8 @@ $as_echo "#define SIGNAL_H_AHB 1" >>confdefs.h
 
     ;;
 esac
+
+
 
 
 
@@ -16768,6 +16866,10 @@ $as_echo "#define HAVE_ENVIRON_DECL 1" >>confdefs.h
   if test $gt_cv_var_environ_declaration != yes; then
     HAVE_DECL_ENVIRON=0
   fi
+
+
+
+
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for st_dm_mode in struct stat" >&5
 $as_echo_n "checking for st_dm_mode in struct stat... " >&6; }
@@ -19687,6 +19789,7 @@ fi
 
 
 
+
 # Persuade glibc <stdlib.h> to declare getloadavg().
 
 
@@ -22317,6 +22420,11 @@ fi
 
 
 
+<<<<<<< TREE
+=======
+
+
+>>>>>>> MERGE-SOURCE
      if test $gl_cv_have_include_next = yes; then
        gl_cv_next_unistd_h='<'unistd.h'>'
      else

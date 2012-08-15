@@ -1,3 +1,102 @@
+2012-08-14  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Merge from gnulib, incorporating:
+	2012-08-05 extern-inline: also ignore -Wmissing-declarations
+
+2012-08-10  Juanma Barranquero  <lekktu@gmail.com>
+
+	* lib/makefile.w32-in (STAT_TIME_H): New macro.
+	(FTOASTR_C, $(BLD)/stat-time.$(O), $(BLD)/timespec.$(O))
+	($(BLD)/u64.$(O)): Update dependencies.
+
+2012-08-10  Glenn Morris  <rgm@gnu.org>
+
+	* configure.ac (DIRECTORY_SEP): Move here from src/lisp.h.
+
+2012-08-08  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	* configure.ac (--disable-features): Rename to --without-all.
+	(OPTION_DEFAULT_ON): Change to use with_features.
+	* INSTALL: Fix description.
+
+2012-08-07  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	* configure.ac: New option --disable-features.
+	(OPTION_DEFAULT_ON): Change to use enable_features.
+	* INSTALL: Explain --disable-features.
+
+2012-08-07  Glenn Morris  <rgm@gnu.org>
+
+	* configure.ac: Require automake 1.11 (fairly arbitrarily).
+	* autogen.sh (automake_min): Get it from configure.ac.
+
+2012-08-06  Glenn Morris  <rgm@gnu.org>
+
+	* configure.ac (BROKEN_GETWD) [unixware]: New define.
+
+	* configure.ac (GNU_LIBRARY_PENDING_OUTPUT_COUNT): Remove.
+	(PENDING_OUTPUT_COUNT): Absorb GNU_LIBRARY_PENDING_OUTPUT_COUNT.
+	(DISPNEW_NEEDS_STDIO_EXT): New define.
+
+2012-08-05  Michael Albinus  <michael.albinus@gmx.de>
+
+	* INSTALL: Explain how to completely disable D-Bus.  (Bug#12112)
+
+2012-08-05  Ulrich Müller  <ulm@gentoo.org>
+
+	* configure.ac: Disable paxctl if binaries don't have a
+	PT_PAX_FLAGS program header.  (Bug#11979)
+
+2012-08-03  Eli Zaretskii  <eliz@gnu.org>
+
+	* lib/makefile.w32-in (GNULIBOBJS): Add $(BLD)/stat-time.$(O),
+	$(BLD)/timespec.$(O), and $(BLD)/u64.$(O).
+	(SHA512_H): Don't mention u64.h twice.
+	($(BLD)/stat-time.$(O), ($(BLD)/timespec.$(O), ($(BLD)/u64.$(O)):
+	New targets.
+
+2012-08-03  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Merge from gnulib, incorporating:
+	2012-08-02 stat-time, timespec, u64: support naive out-of-dir builds
+
+2012-08-02  YAMAMOTO Mitsuharu  <mituharu@math.s.chiba-u.ac.jp>
+
+	* lib/Makefile.am (DEFAULT_INCLUDES): Add -I$(top_srcdir)/lib for
+	out-of-tree build.
+
+2012-08-02  Glenn Morris  <rgm@gnu.org>
+
+	* make-dist: Remove src/s.
+
+	* lib/makefile.w32-in (MS_W32_H): Update for new ms-w32.h location.
+
+2012-08-02  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Merge from gnulib (Bug#12116), incorporating:
+	2012-08-01 extern-inline: new module
+	2012-08-01 stat-time, timespec, u64, utimens: use extern-inline
+	* lib/stat-time.c, lib/timespec.c, lib/u64.c, m4/extern-inline.m4:
+	New files.  The new .c files are for instantiating extern inline
+	functions.
+
+	Port to Solaris 8.
+	Without this change, 'configure' fails because the recently-added
+	wait3 prototype in config.h messes up later 'configure' tests.
+	Fix this problem by droping wait3 and WRETCODE, as they're
+	no longer needed on hosts that are current porting targets.
+	* configure.ac (wait3, WRETCODE): Remove, fixing a FIXME.
+	All uses changed to waitpid and WEXITSTATUS.
+
+	Avoid needless autoheader after autogen.sh.
+	* src/stamp-h.in: Remove from bzr repository; no longer needed there.
+	* .bzrignore: Add it.
+	* autogen.sh: Create it.
+
+2012-08-01  Glenn Morris  <rgm@gnu.org>
+
+	* configure.ac (DOS_NT, MSDOS): New system type templates.
+
 2012-08-01  Ulrich Müller  <ulm@gentoo.org>
 
 	* configure.ac (LIB_STANDARD, START_FILES) [FreeBSD]:

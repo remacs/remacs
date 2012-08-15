@@ -301,7 +301,7 @@ At the end, it runs `post-self-insert-hook'.  */)
 	 added be explicit calls to undo-boundary.  */
       && EQ (BVAR (current_buffer, undo_list), last_undo_boundary))
     /* Remove the undo_boundary that was just pushed.  */
-    BVAR (current_buffer, undo_list) = XCDR (BVAR (current_buffer, undo_list));
+    BSET (current_buffer, undo_list, XCDR (BVAR (current_buffer, undo_list)));
 
   /* Barf if the key that invoked this was not a character.  */
   if (!CHARACTERP (last_command_event))
@@ -447,12 +447,11 @@ internal_self_insert (int c, EMACS_INT n)
 	 and the hook has a non-nil `no-self-insert' property,
 	 return right away--don't really self-insert.  */
       if (SYMBOLP (sym) && ! NILP (sym)
-	  && ! NILP (SVAR (XSYMBOL (sym), function))
-	  && SYMBOLP (SVAR (XSYMBOL (sym), function)))
+	  && ! NILP (XSYMBOL (sym)->function)
+	  && SYMBOLP (XSYMBOL (sym)->function))
 	{
 	  Lisp_Object prop;
-	  prop = Fget (SVAR (XSYMBOL (sym), function),
-		       intern ("no-self-insert"));
+	  prop = Fget (XSYMBOL (sym)->function, intern ("no-self-insert"));
 	  if (! NILP (prop))
 	    return 1;
 	}

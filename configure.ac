@@ -22,11 +22,12 @@ dnl  You should have received a copy of the GNU General Public License
 dnl  along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
 
 AC_PREREQ(2.65)
-AC_INIT(emacs, 24.1.50)
+AC_INIT(emacs, 24.2.50)
 AC_CONFIG_HEADER(src/config.h:src/config.in)
 AC_CONFIG_SRCDIR(src/lisp.h)
 AC_CONFIG_AUX_DIR(build-aux)
-AM_INIT_AUTOMAKE
+dnl Fairly arbitrary, older versions might work too.
+AM_INIT_AUTOMAKE(1.11)
 
 dnl Support for --program-prefix, --program-suffix and
 dnl --program-transform-name options
@@ -47,6 +48,14 @@ archlibdir='${libexecdir}/emacs/${version}/${configuration}'
 docdir='${datadir}/emacs/${version}/etc'
 gamedir='${localstatedir}/games/emacs'
 
+dnl Special option to disable the most of other options.
+AC_ARG_WITH(all,
+[AS_HELP_STRING([--without-all],
+		[omit almost all features and build
+		small executable with minimal dependencies])],
+  with_features=$withval,
+  with_features=yes)
+
 dnl OPTION_DEFAULT_OFF(NAME, HELP-STRING)
 dnl Create a new --with option that defaults to being disabled.
 dnl NAME is the base name of the option.  The shell variable with_NAME
@@ -62,8 +71,8 @@ AC_DEFUN([OPTION_DEFAULT_OFF], [dnl
 ])dnl
 
 dnl OPTION_DEFAULT_ON(NAME, HELP-STRING)
-dnl Create a new --with option that defaults to being enabled.  NAME
-dnl   is the base name of the option.  The shell variable with_NAME
+dnl Create a new --with option that defaults to $enable_features.
+dnl NAME is the base name of the option.  The shell variable with_NAME
 dnl   will be set either to 'no' (for a plain --without-NAME) or to
 dnl   'yes' (if the option is not specified).  Note that the shell
 dnl   variable name is constructed as autoconf does, by replacing
@@ -71,7 +80,7 @@ dnl   non-alphanumeric characters with "_".
 dnl HELP-STRING is the help text for the option.
 AC_DEFUN([OPTION_DEFAULT_ON], [dnl
   AC_ARG_WITH([$1],[AS_HELP_STRING([--without-$1],[$2])],[],[dnl
-   m4_bpatsubst([with_$1], [[^0-9a-z]], [_])=yes])dnl
+   m4_bpatsubst([with_$1], [[^0-9a-z]], [_])=$with_features])dnl
 ])dnl
 
 OPTION_DEFAULT_ON([pop],[don't support POP mail retrieval with movemail])
@@ -733,6 +742,12 @@ AC_PATH_PROG(GZIP_PROG, gzip)
 if test $opsys = gnu-linux; then
   AC_PATH_PROG(PAXCTL, paxctl,,
     [$PATH$PATH_SEPARATOR/sbin$PATH_SEPARATOR/usr/sbin])
+  if test "X$PAXCTL" != X; then
+    AC_MSG_CHECKING([whether binaries have a PT_PAX_FLAGS header])
+    AC_LINK_IFELSE([AC_LANG_PROGRAM([], [])],
+      [if $PAXCTL -v conftest$EXEEXT >/dev/null 2>&1; then AC_MSG_RESULT(yes)
+      else AC_MSG_RESULT(no); PAXCTL=""; fi])
+  fi
 fi
 
 ## Need makeinfo >= 4.7 (?) to build the manuals.
@@ -2779,10 +2794,11 @@ getpwent endpwent getgrent endgrent \
 touchlock \
 cfmakeraw cfsetspeed copysign __executable_start)
 
-dnl FIXME Fragile: something else may test for getwd as a dependency.
-dnl Change to defining BROKEN_xxx ?
 dnl getwd appears to be buggy on SVR4.2, so we don't use it.
-if test $opsys != unixware; then
+if test $opsys = unixware; then
+  dnl In case some other test ends up checking for getwd.
+  AC_DEFINE(BROKEN_GETWD, 1, [Define if getwd should not be used.])
+else
   AC_CHECK_FUNCS(getwd)
 fi
 
@@ -3227,6 +3243,9 @@ AC_DEFINE(subprocesses, 1, [Define to enable asynchronous subprocesses.])
 AC_DEFINE(USER_FULL_NAME, [pw->pw_gecos], [How to get a user's full name.])
 
 
+AC_DEFINE(DIRECTORY_SEP, ['/'],
+  [Character that separates directories in a file name.])
+
 dnl Only used on MS platforms.
 AH_TEMPLATE(DEVICE_SEP, [Character that separates a device in a file name.])
 
@@ -3424,31 +3443,31 @@ AH_TEMPLATE(PTY_TTY_NAME_SPRINTF, [How to get device name of the tty
 
 case $opsys in
   aix4-2 )
-    AC_DEFINE(PTY_ITERATION, [int c; for (c = 0; !c ; c++)] )
+    AC_DEFINE(PTY_ITERATION, [int c; for (c = 0; !c ; c++)])
     dnl You allocate a pty by opening /dev/ptc to get the master side.
     dnl To get the name of the slave side, you just ttyname() the master side.
-    AC_DEFINE(PTY_NAME_SPRINTF, [strcpy (pty_name, "/dev/ptc");] )
-    AC_DEFINE(PTY_TTY_NAME_SPRINTF, [strcpy (pty_name, ttyname (fd));] )
+    AC_DEFINE(PTY_NAME_SPRINTF, [strcpy (pty_name, "/dev/ptc");])
+    AC_DEFINE(PTY_TTY_NAME_SPRINTF, [strcpy (pty_name, ttyname (fd));])
     ;;
 
   cygwin )
-    AC_DEFINE(PTY_ITERATION, [int i; for (i = 0; i < 1; i++)] )
+    AC_DEFINE(PTY_ITERATION, [int i; for (i = 0; i < 1; i++)])
     dnl multi-line AC_DEFINEs are hard. :(
-    AC_DEFINE(PTY_OPEN, [ do { int dummy; SIGMASKTYPE mask; mask = sigblock (sigmask (SIGCHLD)); if (-1 == openpty (&fd, &dummy, pty_name, 0, 0)) fd = -1; sigsetmask (mask); if (fd >= 0) emacs_close (dummy); } while (0)] )
-    AC_DEFINE(PTY_NAME_SPRINTF, [] )
-    AC_DEFINE(PTY_TTY_NAME_SPRINTF, [] )
+    AC_DEFINE(PTY_OPEN, [ do { int dummy; SIGMASKTYPE mask; mask = sigblock (sigmask (SIGCHLD)); if (-1 == openpty (&fd, &dummy, pty_name, 0, 0)) fd = -1; sigsetmask (mask); if (fd >= 0) emacs_close (dummy); } while (0)])
+    AC_DEFINE(PTY_NAME_SPRINTF, [])
+    AC_DEFINE(PTY_TTY_NAME_SPRINTF, [])
     ;;
 
   darwin )
-    AC_DEFINE(PTY_ITERATION, [int i; for (i = 0; i < 1; i++)] )
+    AC_DEFINE(PTY_ITERATION, [int i; for (i = 0; i < 1; i++)])
     dnl Not used, because PTY_ITERATION is defined.
     AC_DEFINE(FIRST_PTY_LETTER, ['p'])
     dnl Note that openpty may fork via grantpt on Mac OS X 10.4/Darwin 8.
     dnl But we don't have to block SIGCHLD because it is blocked in the
     dnl implementation of grantpt.
-    AC_DEFINE(PTY_OPEN, [ do { int slave; if (openpty (&fd, &slave, pty_name, NULL, NULL) == -1) fd = -1; else emacs_close (slave); } while (0)] )
-    AC_DEFINE(PTY_NAME_SPRINTF, [] )
-    AC_DEFINE(PTY_TTY_NAME_SPRINTF, [] )
+    AC_DEFINE(PTY_OPEN, [ do { int slave; if (openpty (&fd, &slave, pty_name, NULL, NULL) == -1) fd = -1; else emacs_close (slave); } while (0)])
+    AC_DEFINE(PTY_NAME_SPRINTF, [])
+    AC_DEFINE(PTY_TTY_NAME_SPRINTF, [])
     ;;
 
   gnu | freebsd | netbsd | openbsd )
@@ -3459,16 +3478,16 @@ case $opsys in
     dnl if HAVE_GRANTPT
     if test "x$ac_cv_func_grantpt" = xyes; then
       AC_DEFINE(UNIX98_PTYS, 1, [Define if the system has Unix98 PTYs.])
-      AC_DEFINE(PTY_ITERATION, [int i; for (i = 0; i < 1; i++)] )
+      AC_DEFINE(PTY_ITERATION, [int i; for (i = 0; i < 1; i++)])
       dnl Note that grantpt and unlockpt may fork.  We must block SIGCHLD
       dnl to prevent sigchld_handler from intercepting the child's death.
-      AC_DEFINE(PTY_TTY_NAME_SPRINTF, [{ char *ptyname; sigblock (sigmask (SIGCHLD)); if (grantpt (fd) == -1 || unlockpt (fd) == -1 || !(ptyname = ptsname(fd))) { sigunblock (sigmask (SIGCHLD)); close (fd); return -1; } snprintf (pty_name, sizeof pty_name, "%s", ptyname); sigunblock (sigmask (SIGCHLD)); }] )
+      AC_DEFINE(PTY_TTY_NAME_SPRINTF, [{ char *ptyname; sigblock (sigmask (SIGCHLD)); if (grantpt (fd) == -1 || unlockpt (fd) == -1 || !(ptyname = ptsname(fd))) { sigunblock (sigmask (SIGCHLD)); close (fd); return -1; } snprintf (pty_name, sizeof pty_name, "%s", ptyname); sigunblock (sigmask (SIGCHLD)); }])
       dnl if HAVE_GETPT
       if test "x$ac_cv_func_getpt" = xyes; then
         AC_DEFINE(PTY_OPEN, [fd = getpt ()])
-        AC_DEFINE(PTY_NAME_SPRINTF, [] )
+        AC_DEFINE(PTY_NAME_SPRINTF, [])
       else
-        AC_DEFINE(PTY_NAME_SPRINTF, [strcpy (pty_name, "/dev/ptmx");] )
+        AC_DEFINE(PTY_NAME_SPRINTF, [strcpy (pty_name, "/dev/ptmx");])
       fi
     else
       AC_DEFINE(FIRST_PTY_LETTER, ['p'])
@@ -3477,8 +3496,8 @@ case $opsys in
 
   hpux*)
     AC_DEFINE(FIRST_PTY_LETTER, ['p'])
-    AC_DEFINE(PTY_NAME_SPRINTF, [sprintf (pty_name, "/dev/ptym/pty%c%x", c, i);] )
-    AC_DEFINE(PTY_TTY_NAME_SPRINTF, [sprintf (pty_name, "/dev/pty/tty%c%x", c, i);] )
+    AC_DEFINE(PTY_NAME_SPRINTF, [sprintf (pty_name, "/dev/ptym/pty%c%x", c, i);])
+    AC_DEFINE(PTY_TTY_NAME_SPRINTF, [sprintf (pty_name, "/dev/pty/tty%c%x", c, i);])
     ;;
 
   irix6-5 )
@@ -3495,11 +3514,11 @@ case $opsys in
     AC_DEFINE(PTY_ITERATION, [])
     dnl Not used, because PTY_ITERATION is defined.
     AC_DEFINE(FIRST_PTY_LETTER, ['q'])
-    AC_DEFINE(PTY_OPEN, [ { struct sigaction ocstat, cstat; struct stat stb; char * name; sigemptyset(&cstat.sa_mask); cstat.sa_handler = SIG_DFL; cstat.sa_flags = 0; sigaction(SIGCLD, &cstat, &ocstat); name = _getpty (&fd, O_RDWR | O_NDELAY, 0600, 0); sigaction(SIGCLD, &ocstat, (struct sigaction *)0); if (name == 0) return -1; if (fd < 0) return -1; if (fstat (fd, &stb) < 0) return -1; strcpy (pty_name, name); }] )
+    AC_DEFINE(PTY_OPEN, [ { struct sigaction ocstat, cstat; struct stat stb; char * name; sigemptyset(&cstat.sa_mask); cstat.sa_handler = SIG_DFL; cstat.sa_flags = 0; sigaction(SIGCLD, &cstat, &ocstat); name = _getpty (&fd, O_RDWR | O_NDELAY, 0600, 0); sigaction(SIGCLD, &ocstat, (struct sigaction *)0); if (name == 0) return -1; if (fd < 0) return -1; if (fstat (fd, &stb) < 0) return -1; strcpy (pty_name, name); }])
     dnl No need to get the pty name at all.
-    AC_DEFINE(PTY_NAME_SPRINTF, [] )
+    AC_DEFINE(PTY_NAME_SPRINTF, [])
     dnl No need to use sprintf to get the tty name--we get that from _getpty.
-    AC_DEFINE(PTY_TTY_NAME_SPRINTF, [] )
+    AC_DEFINE(PTY_TTY_NAME_SPRINTF, [])
     ;;
 
   sol2* )
@@ -3509,12 +3528,12 @@ case $opsys in
     dnl On SysVr4, grantpt(3) forks a subprocess, so keep sigchld_handler()
     dnl from intercepting that death.  If any child but grantpt's should die
     dnl within, it should be caught after sigrelse(2).
-    AC_DEFINE(PTY_TTY_NAME_SPRINTF, [{ char *ptsname (int), *ptyname; sigblock (sigmask (SIGCLD)); if (grantpt (fd) == -1) { emacs_close (fd); return -1; } sigunblock (sigmask (SIGCLD)); if (unlockpt (fd) == -1) { emacs_close (fd); return -1; } if (!(ptyname = ptsname (fd))) { emacs_close (fd); return -1; } snprintf (pty_name, sizeof pty_name, "%s", ptyname); }] )
+    AC_DEFINE(PTY_TTY_NAME_SPRINTF, [{ char *ptsname (int), *ptyname; sigblock (sigmask (SIGCLD)); if (grantpt (fd) == -1) { emacs_close (fd); return -1; } sigunblock (sigmask (SIGCLD)); if (unlockpt (fd) == -1) { emacs_close (fd); return -1; } if (!(ptyname = ptsname (fd))) { emacs_close (fd); return -1; } snprintf (pty_name, sizeof pty_name, "%s", ptyname); }])
     ;;
 
   unixware )
     dnl Comments are as per sol2*.
-    AC_DEFINE(PTY_TTY_NAME_SPRINTF, [{ char *ptsname (int), *ptyname; sigblock(sigmask(SIGCLD)); if (grantpt(fd) == -1) fatal("could not grant slave pty"); sigunblock(sigmask(SIGCLD)); if (unlockpt(fd) == -1) fatal("could not unlock slave pty"); if (!(ptyname = ptsname(fd))) fatal ("could not enable slave pty"); snprintf (pty_name, sizeof pty_name, "%s", ptyname); }] )
+    AC_DEFINE(PTY_TTY_NAME_SPRINTF, [{ char *ptsname (int), *ptyname; sigblock(sigmask(SIGCLD)); if (grantpt(fd) == -1) fatal("could not grant slave pty"); sigunblock(sigmask(SIGCLD)); if (unlockpt(fd) == -1) fatal("could not unlock slave pty"); if (!(ptyname = ptsname(fd))) fatal ("could not enable slave pty"); snprintf (pty_name, sizeof pty_name, "%s", ptyname); }])
     ;;
 esac
 
@@ -3524,7 +3543,7 @@ case $opsys in
     dnl This change means that we don't loop through allocate_pty too
     dnl many times in the (rare) event of a failure.
     AC_DEFINE(FIRST_PTY_LETTER, ['z'])
-    AC_DEFINE(PTY_NAME_SPRINTF, [strcpy (pty_name, "/dev/ptmx");] )
+    AC_DEFINE(PTY_NAME_SPRINTF, [strcpy (pty_name, "/dev/ptmx");])
     dnl Push various streams modules onto a PTY channel.  Used in process.c.
     AC_DEFINE(SETUP_SLAVE_PTY, [if (ioctl (xforkin, I_PUSH, "ptem") == -1) fatal ("ioctl I_PUSH ptem"); if (ioctl (xforkin, I_PUSH, "ldterm") == -1) fatal ("ioctl I_PUSH ldterm"); if (ioctl (xforkin, I_PUSH, "ttcompat") == -1) fatal ("ioctl I_PUSH ttcompat");], [How to set up a slave PTY, if needed.])
     ;;
@@ -3561,31 +3580,32 @@ esac
 
 dnl Used in dispnew.c
 AH_TEMPLATE(PENDING_OUTPUT_COUNT, [Number of chars of output in the
-buffer of a stdio stream.])
+  buffer of a stdio stream.])
 
-dnl FIXME just PENDING_OUTPUT_COUNT should suffice.
-AH_TEMPLATE(GNU_LIBRARY_PENDING_OUTPUT_COUNT, [Value of
-PENDING_OUTPUT_COUNT if using the GNU C library.])
+AC_MSG_CHECKING([whether we are using the GNU C library])
+AC_PREPROC_IFELSE([AC_LANG_PROGRAM([[
+#include <features.h>
+#ifndef __GNU_LIBRARY__
+# error "this is not the GNU C library"
+#endif
+  ]], [[]])], emacs_glibc=yes, emacs_glibc=no)
+AC_MSG_RESULT([$emacs_glibc])
 
-case $opsys in
-  cygwin | darwin | freebsd | netbsd | openbsd )
-    AC_DEFINE(PENDING_OUTPUT_COUNT(FILE), [((FILE)->_p - (FILE)->_bf._base)])
-    ;;
+if test $emacs_glibc = yes; then
 
-  unixware)
-    AC_DEFINE(PENDING_OUTPUT_COUNT(FILE), [((FILE)->__ptr - (FILE)->__base)])
-    ;;
+  emacs_pending_output=unknown
 
-  gnu | gnu-linux | gnu-kfreebsd )
-    AC_MSG_CHECKING([for style of pending output formalism])
-    dnl In autoconf 2.67 and later, we could use a single test
-    dnl since the preprocessed output is accessible in "conftest.i".
-    AC_PREPROC_IFELSE([AC_LANG_PROGRAM([[
+  case $opsys in
+    gnu | gnu-linux | gnu-kfreebsd )
+      AC_MSG_CHECKING([for style of pending output formalism])
+      dnl In autoconf 2.67 and later, we could use a single test
+      dnl since the preprocessed output is accessible in "conftest.i".
+      AC_PREPROC_IFELSE([AC_LANG_PROGRAM([[
 #include <stdio.h>
 #if !defined (_IO_STDIO_H) && !defined (_STDIO_USES_IOSTREAM)
 # error "stdio definitions not found"
 #endif
-      ]], [[]])], emacs_pending_output=new, emacs_pending_output=unknown)
+        ]], [[]])], emacs_pending_output=new, [])
 
       if test $emacs_pending_output = unknown; then
         case $opsys in
@@ -3605,22 +3625,51 @@ case $opsys in
       case $emacs_pending_output in
         new)
           dnl New C libio names.
-          AC_DEFINE(GNU_LIBRARY_PENDING_OUTPUT_COUNT(FILE),
+          AC_DEFINE(PENDING_OUTPUT_COUNT(FILE),
             [((FILE)->_IO_write_ptr - (FILE)->_IO_write_base)])
           ;;
         uclibc)
           dnl Using the uClibc library.
-          AC_DEFINE(GNU_LIBRARY_PENDING_OUTPUT_COUNT(FILE),
+          AC_DEFINE(PENDING_OUTPUT_COUNT(FILE),
             [((FILE)->__bufpos - (FILE)->__bufstart)])
           ;;
         old)
           dnl Old C++ iostream names.
-          AC_DEFINE(GNU_LIBRARY_PENDING_OUTPUT_COUNT(FILE),
+          AC_DEFINE(PENDING_OUTPUT_COUNT(FILE),
             [((FILE)->_pptr - (FILE)->_pbase)])
           ;;
       esac
     ;;
-esac
+  esac                          dnl opsys
+
+  if test $emacs_pending_output = unknown; then
+    AC_DEFINE(PENDING_OUTPUT_COUNT(FILE), [((FILE)->__bufp - (FILE)->__buffer)])
+  fi
+
+else                            dnl !emacs_glibc
+
+  case $opsys in
+    cygwin | darwin | freebsd | netbsd | openbsd )
+      AC_DEFINE(PENDING_OUTPUT_COUNT(FILE), [((FILE)->_p - (FILE)->_bf._base)])
+      ;;
+
+    unixware)
+      AC_DEFINE(PENDING_OUTPUT_COUNT(FILE), [((FILE)->__ptr - (FILE)->__base)])
+      ;;
+
+    *)
+      dnl HAVE_STDIO_EXT_H && HAVE___FPENDING
+      if test x$ac_cv_header_stdio_ext_h = xyes && \
+        test x$ac_cv_func___fpending = xyes; then
+        AC_DEFINE(PENDING_OUTPUT_COUNT(FILE), [__fpending (FILE)])
+        AC_DEFINE(DISPNEW_NEEDS_STDIO_EXT, 1,
+          [Define if dispnew.c should include stdio_ext.h.])
+      else
+        AC_DEFINE(PENDING_OUTPUT_COUNT(FILE), [((FILE)->_ptr - (FILE)->_base)])
+      fi
+      ;;
+  esac
+fi                              dnl emacs_glibc
 
 
 dnl Used in vm-limit.c
@@ -3657,7 +3706,7 @@ case $opsys in
   darwin) AC_DEFINE(TAB3, OXTABS) ;;
 
   gnu | freebsd | netbsd | openbsd )
-    AC_DEFINE(TABDLY, OXTABS, [Undocumented.] )
+    AC_DEFINE(TABDLY, OXTABS, [Undocumented.])
     AC_DEFINE(TAB3, OXTABS)
     ;;
 
@@ -3753,23 +3802,6 @@ case $opsys in
     ;;
 esac
 
-dnl Used in process.c.
-case $opsys in
-  irix6-5 | sol2* | unixware )
-    dnl It is possible to receive SIGCHLD when there are no children
-    dnl waiting, because a previous waitsys(2) cleaned up the carcass
-    dnl of child without clearing the SIGCHLD pending info.  So, use a
-    dnl non-blocking wait3 instead, which maps to waitpid(2) in SysVr4.
-    AC_DEFINE(wait3(status, options, rusage),
-      [waitpid ((pid_t) -1, (status), (options))],
-      [Some platforms redefine this.])
-    dnl FIXME this makes no sense, because WRETCODE is only used in
-    dnl process.c, which includes syswait.h aftet config.h, and the
-    dnl former unconditionally redefines WRETCODE.
-    AC_DEFINE(WRETCODE(w), [(w >> 8)], [Some platforms redefine this.])
-    ;;
-esac
-
 
 case $opsys in
   hpux* | sol2* )
@@ -3791,6 +3823,8 @@ dnl Define symbols to identify the version of Unix this is.
 dnl Define all the symbols that apply correctly.
 AH_TEMPLATE(BSD4_2, [Define if the system is compatible with BSD 4.2.])
 AH_TEMPLATE(BSD_SYSTEM, [Define if the system is compatible with BSD 4.2.])
+AH_TEMPLATE(DOS_NT, [Define if the system is MS DOS or MS Windows.])
+AH_TEMPLATE(MSDOS, [Define if the system is MS DOS.])
 AH_TEMPLATE(USG, [Define if the system is compatible with System III.])
 AH_TEMPLATE(USG5, [Define if the system is compatible with System V.])
 AH_TEMPLATE(USG5_4, [Define if the system is compatible with System V Release 4.])

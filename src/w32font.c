@@ -62,7 +62,6 @@ static Lisp_Object Qserif, Qscript, Qdecorative;
 static Lisp_Object Qraster, Qoutline, Qunknown;
 
 /* antialiasing  */
-extern Lisp_Object Qnone; /* reuse from w32fns.c  */
 static Lisp_Object Qstandard, Qsubpixel, Qnatural;
 
 /* languages */
@@ -235,8 +234,7 @@ get_outline_metrics_w(HDC hdc, UINT cbData, LPOUTLINETEXTMETRICW lpotmw)
 	s_pfn_Get_Outline_Text_MetricsW = (GetOutlineTextMetricsW_Proc)
 	  GetProcAddress (hm_unicows, "GetOutlineTextMetricsW");
     }
-  if (s_pfn_Get_Outline_Text_MetricsW == NULL)
-    abort ();	/* cannot happen */
+  eassert (s_pfn_Get_Outline_Text_MetricsW != NULL);
   return s_pfn_Get_Outline_Text_MetricsW (hdc, cbData, lpotmw);
 }
 
@@ -253,8 +251,7 @@ get_text_metrics_w(HDC hdc, LPTEXTMETRICW lptmw)
 	s_pfn_Get_Text_MetricsW = (GetTextMetricsW_Proc)
 	  GetProcAddress (hm_unicows, "GetTextMetricsW");
     }
-  if (s_pfn_Get_Text_MetricsW == NULL)
-    abort ();	/* cannot happen */
+  eassert (s_pfn_Get_Text_MetricsW != NULL);
   return s_pfn_Get_Text_MetricsW (hdc, lptmw);
 }
 
@@ -272,8 +269,7 @@ get_glyph_outline_w (HDC hdc, UINT uChar, UINT uFormat, LPGLYPHMETRICS lpgm,
 	s_pfn_Get_Glyph_OutlineW = (GetGlyphOutlineW_Proc)
 	  GetProcAddress (hm_unicows, "GetGlyphOutlineW");
     }
-  if (s_pfn_Get_Glyph_OutlineW == NULL)
-    abort ();	/* cannot happen */
+  eassert (s_pfn_Get_Glyph_OutlineW != NULL);
   return s_pfn_Get_Glyph_OutlineW (hdc, uChar, uFormat, lpgm, cbBuffer,
 				   lpvBuffer, lpmat2);
 }

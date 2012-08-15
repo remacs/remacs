@@ -102,23 +102,25 @@ choose_minibuf_frame (void)
 {
   if (FRAMEP (selected_frame)
       && FRAME_LIVE_P (XFRAME (selected_frame))
-      && !EQ (minibuf_window, FVAR (XFRAME (selected_frame), minibuffer_window)))
+      && !EQ (minibuf_window, XFRAME (selected_frame)->minibuffer_window))
     {
       struct frame *sf = XFRAME (selected_frame);
       Lisp_Object buffer;
 
       /* I don't think that any frames may validly have a null minibuffer
 	 window anymore.  */
-      if (NILP (FVAR (sf, minibuffer_window)))
+      if (NILP (sf->minibuffer_window))
 	abort ();
 
       /* Under X, we come here with minibuf_window being the
 	 minibuffer window of the unused termcap window created in
 	 init_window_once.  That window doesn't have a buffer.  */
-      buffer = WVAR (XWINDOW (minibuf_window), buffer);
+      buffer = XWINDOW (minibuf_window)->buffer;
       if (BUFFERP (buffer))
-	Fset_window_buffer (FVAR (sf, minibuffer_window), buffer, Qnil);
-      minibuf_window = FVAR (sf, minibuffer_window);
+	/* Use set_window_buffer instead of Fset_window_buffer (see
+	   discussion of bug#11984, bug#12025, bug#12026).  */
+	set_window_buffer (sf->minibuffer_window, buffer, 0, 0);
+      minibuf_window = sf->minibuffer_window;
     }
 
   /* Make sure no other frame has a minibuffer as its selected window,
@@ -264,7 +266,7 @@ read_minibuf_noninteractive (Lisp_Object map, Lisp_Object initial,
 	      if (STRING_BYTES_BOUND / 2 < size)
 		memory_full (SIZE_MAX);
 	      size *= 2;
-	      line = (char *) xrealloc (line, size);
+	      line = xrealloc (line, size);
 	    }
 	  line[len++] = c;
 	}
@@ -406,6 +408,7 @@ read_minibuf (Lisp_Object map, Lisp_Object initial, Lisp_Object prompt,
   Lisp_Object dummy, frame;
 
   specbind (Qminibuffer_default, defalt);
+  specbind (intern ("inhibit-read-only"), Qnil);
 
   /* If Vminibuffer_completing_file_name is `lambda' on entry, it was t
      in previous recursive minibuffer, but was not set explicitly
@@ -562,11 +565,11 @@ read_minibuf (Lisp_Object map, Lisp_Object initial, Lisp_Object prompt,
 
   /* Defeat (setq-default truncate-lines t), since truncated lines do
      not work correctly in minibuffers.  (Bug#5715, etc)  */
-  BVAR (current_buffer, truncate_lines) = Qnil;
+  BSET (current_buffer, truncate_lines, Qnil);
 
   /* If appropriate, copy enable-multibyte-characters into the minibuffer.  */
   if (inherit_input_method)
-    BVAR (current_buffer, enable_multibyte_characters) = enable_multibyte;
+    BSET (current_buffer, enable_multibyte_characters, enable_multibyte);
 
   /* The current buffer's default directory is usually the right thing
      for our minibuffer here.  However, if you're typing a command at
@@ -577,7 +580,7 @@ read_minibuf (Lisp_Object map, Lisp_Object initial, Lisp_Object prompt,
      you think of something better to do?  Find another buffer with a
      better directory, and use that one instead.  */
   if (STRINGP (ambient_dir))
-    BVAR (current_buffer, directory) = ambient_dir;
+    BSET (current_buffer, directory, ambient_dir);
   else
     {
       Lisp_Object buf_list;
@@ -591,7 +594,8 @@ read_minibuf (Lisp_Object map, Lisp_Object initial, Lisp_Object prompt,
 	  other_buf = XCDR (XCAR (buf_list));
 	  if (STRINGP (BVAR (XBUFFER (other_buf), directory)))
 	    {
-	      BVAR (current_buffer, directory) = BVAR (XBUFFER (other_buf), directory);
+	      BSET (current_buffer, directory,
+                   BVAR (XBUFFER (other_buf), directory));
 	      break;
 	    }
 	}
@@ -612,15 +616,19 @@ read_minibuf (Lisp_Object map, Lisp_Object initial, Lisp_Object prompt,
   FOR_EACH_FRAME (dummy, frame)
     {
       Lisp_Object root_window = Fframe_root_window (frame);
-      Lisp_Object mini_window = WVAR (XWINDOW (root_window), next);
+      Lisp_Object mini_window = XWINDOW (root_window)->next;
 
       if (! NILP (mini_window) && ! EQ (mini_window, minibuf_window)
 	  && !NILP (Fwindow_minibuffer_p (mini_window)))
-	Fset_window_buffer (mini_window, empty_minibuf, Qnil);
+	/* Use set_window_buffer instead of Fset_window_buffer (see
+	   discussion of bug#11984, bug#12025, bug#12026).  */
+	set_window_buffer (mini_window, empty_minibuf, 0, 0);
     }
 
   /* Display this minibuffer in the proper window.  */
-  Fset_window_buffer (minibuf_window, Fcurrent_buffer (), Qnil);
+  /* Use set_window_buffer instead of Fset_window_buffer (see
+     discussion of bug#11984, bug#12025, bug#12026).  */
+  set_window_buffer (minibuf_window, Fcurrent_buffer (), 0, 0);
   Fselect_window (minibuf_window, Qnil);
   XWINDOW (minibuf_window)->hscroll = 0;
 
@@ -664,7 +672,7 @@ read_minibuf (Lisp_Object map, Lisp_Object initial, Lisp_Object prompt,
     }
 
   clear_message (1, 1);
-  BVAR (current_buffer, keymap) = map;
+  BSET (current_buffer, keymap, map);
 
   /* Turn on an input method stored in INPUT_METHOD if any.  */
   if (STRINGP (input_method) && !NILP (Ffboundp (Qactivate_input_method)))
@@ -673,7 +681,7 @@ read_minibuf (Lisp_Object map, Lisp_Object initial, Lisp_Object prompt,
   Frun_hooks (1, &Qminibuffer_setup_hook);
 
   /* Don't allow the user to undo past this point.  */
-  BVAR (current_buffer, undo_list) = Qnil;
+  BSET (current_buffer, undo_list, Qnil);
 
   recursive_edit_1 ();
 
@@ -687,7 +695,7 @@ read_minibuf (Lisp_Object map, Lisp_Object initial, Lisp_Object prompt,
       XWINDOW (minibuf_window)->must_be_updated_p = 1;
       update_frame (XFRAME (selected_frame), 1, 1);
       {
-        struct frame *f = XFRAME (WVAR (XWINDOW (minibuf_window), frame));
+        struct frame *f = XFRAME (XWINDOW (minibuf_window)->frame);
         struct redisplay_interface *rif = FRAME_RIF (f);
         if (rif && rif->flush_display)
           rif->flush_display (f);
@@ -844,7 +852,7 @@ read_minibuf_unwind (Lisp_Object data)
   window = minibuf_window;
   /* To keep things predictable, in case it matters, let's be in the
      minibuffer when we reset the relevant variables.  */
-  Fset_buffer (WVAR (XWINDOW (window), buffer));
+  Fset_buffer (XWINDOW (window)->buffer);
 
   /* Restore prompt, etc, from outer minibuffer level.  */
   minibuf_prompt = Fcar (minibuf_save_list);

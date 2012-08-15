@@ -372,7 +372,7 @@ invoke it.  If KEYS is omitted or nil, the return value of
       Vthis_command = save_this_command;
       Vthis_original_command = save_this_original_command;
       Vreal_this_command = save_real_this_command;
-      KVAR (current_kboard, Vlast_command) = save_last_command;
+      KSET (current_kboard, Vlast_command, save_last_command);
 
       temporarily_switch_to_single_kboard (NULL);
       return unbind_to (speccount, apply1 (function, specs));
@@ -465,7 +465,7 @@ invoke it.  If KEYS is omitted or nil, the return value of
     }
 
   if (min (MOST_POSITIVE_FIXNUM,
-	   min (PTRDIFF_MAX, SIZE_MAX) / sizeof (Lisp_Object))
+	   min (PTRDIFF_MAX, SIZE_MAX) / word_size)
       < nargs)
     memory_full (SIZE_MAX);
 
@@ -843,7 +843,7 @@ invoke it.  If KEYS is omitted or nil, the return value of
   Vthis_command = save_this_command;
   Vthis_original_command = save_this_original_command;
   Vreal_this_command = save_real_this_command;
-  KVAR (current_kboard, Vlast_command) = save_last_command;
+  KSET (current_kboard, Vlast_command, save_last_command);
 
   {
     Lisp_Object val;

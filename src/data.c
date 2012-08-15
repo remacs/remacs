@@ -562,7 +562,7 @@ DEFUN ("fboundp", Ffboundp, Sfboundp, 1, 1, 0,
   (register Lisp_Object symbol)
 {
   CHECK_SYMBOL (symbol);
-  return (EQ (SVAR (XSYMBOL (symbol), function), Qunbound) ? Qnil : Qt);
+  return EQ (XSYMBOL (symbol)->function, Qunbound) ? Qnil : Qt;
 }
 
 DEFUN ("makunbound", Fmakunbound, Smakunbound, 1, 1, 0,
@@ -585,7 +585,7 @@ Return SYMBOL.  */)
   CHECK_SYMBOL (symbol);
   if (NILP (symbol) || EQ (symbol, Qt))
     xsignal1 (Qsetting_constant, symbol);
-  SVAR (XSYMBOL (symbol), function) = Qunbound;
+  set_symbol_function (symbol, Qunbound);
   return symbol;
 }
 
@@ -594,8 +594,8 @@ DEFUN ("symbol-function", Fsymbol_function, Ssymbol_function, 1, 1, 0,
   (register Lisp_Object symbol)
 {
   CHECK_SYMBOL (symbol);
-  if (!EQ (SVAR (XSYMBOL (symbol), function), Qunbound))
-    return SVAR (XSYMBOL (symbol), function);
+  if (!EQ (XSYMBOL (symbol)->function, Qunbound))
+    return XSYMBOL (symbol)->function;
   xsignal1 (Qvoid_function, symbol);
 }
 
@@ -604,7 +604,7 @@ DEFUN ("symbol-plist", Fsymbol_plist, Ssymbol_plist, 1, 1, 0,
   (register Lisp_Object symbol)
 {
   CHECK_SYMBOL (symbol);
-  return SVAR (XSYMBOL (symbol), plist);
+  return XSYMBOL (symbol)->plist;
 }
 
 DEFUN ("symbol-name", Fsymbol_name, Ssymbol_name, 1, 1, 0,
@@ -628,7 +628,7 @@ DEFUN ("fset", Ffset, Sfset, 2, 2, 0,
   if (NILP (symbol) || EQ (symbol, Qt))
     xsignal1 (Qsetting_constant, symbol);
 
-  function = SVAR (XSYMBOL (symbol), function);
+  function = XSYMBOL (symbol)->function;
 
   if (!NILP (Vautoload_queue) && !EQ (function, Qunbound))
     Vautoload_queue = Fcons (Fcons (symbol, function), Vautoload_queue);
@@ -636,13 +636,13 @@ DEFUN ("fset", Ffset, Sfset, 2, 2, 0,
   if (CONSP (function) && EQ (XCAR (function), Qautoload))
     Fput (symbol, Qautoload, XCDR (function));
 
-  SVAR (XSYMBOL (symbol), function) = definition;
+  set_symbol_function (symbol, definition);
   /* Handle automatic advice activation.  */
-  if (CONSP (SVAR (XSYMBOL (symbol), plist))
+  if (CONSP (XSYMBOL (symbol)->plist)
       && !NILP (Fget (symbol, Qad_advice_info)))
     {
       call2 (Qad_activate_internal, symbol, Qnil);
-      definition = SVAR (XSYMBOL (symbol), function);
+      definition = XSYMBOL (symbol)->function;
     }
   return definition;
 }
@@ -657,8 +657,8 @@ The return value is undefined.  */)
   (register Lisp_Object symbol, Lisp_Object definition, Lisp_Object docstring)
 {
   CHECK_SYMBOL (symbol);
-  if (CONSP (SVAR (XSYMBOL (symbol), function))
-      && EQ (XCAR (SVAR (XSYMBOL (symbol), function)), Qautoload))
+  if (CONSP (XSYMBOL (symbol)->function)
+      && EQ (XCAR (XSYMBOL (symbol)->function), Qautoload))
     LOADHIST_ATTACH (Fcons (Qt, symbol));
   if (!NILP (Vpurify_flag)
       /* If `definition' is a keymap, immutable (and copying) is wrong.  */
@@ -679,7 +679,7 @@ DEFUN ("setplist", Fsetplist, Ssetplist, 2, 2, 0,
   (register Lisp_Object symbol, Lisp_Object newplist)
 {
   CHECK_SYMBOL (symbol);
-  SVAR (XSYMBOL (symbol), plist) = newplist;
+  set_symbol_plist (symbol, newplist);
   return newplist;
 }
 
@@ -808,10 +808,12 @@ indirect_variable (struct Lisp_Symbol *symbol)
 
 DEFUN ("indirect-variable", Findirect_variable, Sindirect_variable, 1, 1, 0,
        doc: /* Return the variable at the end of OBJECT's variable chain.
-If OBJECT is a symbol, follow all variable indirections and return the final
-variable.  If OBJECT is not a symbol, just return it.
-Signal a cyclic-variable-indirection error if there is a loop in the
-variable chain of symbols.  */)
+If OBJECT is a symbol, follow its variable indirections (if any), and
+return the variable at the end of the chain of aliases.  See Info node
+`(elisp)Variable Aliases'.
+
+If OBJECT is not a symbol, just return it.  If there is a loop in the
+chain of aliases, signal a `cyclic-variable-indirection' error.  */)
   (Lisp_Object object)
 {
   if (SYMBOLP (object))
@@ -1006,7 +1008,7 @@ swap_in_symval_forwarding (struct Lisp_Symbol *symbol, struct Lisp_Buffer_Local_
 	XSETSYMBOL (var, symbol);
 	if (blv->frame_local)
 	  {
-	    tem1 = assq_no_quit (var, FVAR (XFRAME (selected_frame), param_alist));
+	    tem1 = assq_no_quit (var, XFRAME (selected_frame)->param_alist);
 	    blv->where = selected_frame;
 	  }
 	else
@@ -1179,7 +1181,7 @@ set_internal (register Lisp_Object symbol, register Lisp_Object newval, register
 	    XSETSYMBOL (symbol, sym); /* May have changed via aliasing.  */
 	    tem1 = Fassq (symbol,
 			  (blv->frame_local
-			   ? FVAR (XFRAME (where), param_alist)
+			   ? XFRAME (where)->param_alist
 			   : BVAR (XBUFFER (where), local_var_alist)));
 	    blv->where = where;
 	    blv->found = 1;
@@ -1211,8 +1213,8 @@ set_internal (register Lisp_Object symbol, register Lisp_Object newval, register
 		       bindings, not for frame-local bindings.  */
 		    eassert (!blv->frame_local);
 		    tem1 = Fcons (symbol, XCDR (blv->defcell));
-		    BVAR (XBUFFER (where), local_var_alist)
-		      = Fcons (tem1, BVAR (XBUFFER (where), local_var_alist));
+		    BSET (XBUFFER (where), local_var_alist,
+			  Fcons (tem1, BVAR (XBUFFER (where), local_var_alist)));
 		  }
 	      }
 
@@ -1651,9 +1653,9 @@ Instead, use `add-hook' and specify t for the LOCAL argument.  */)
 	 default value.  */
       find_symbol_value (variable);
 
-      BVAR (current_buffer, local_var_alist)
-        = Fcons (Fcons (variable, XCDR (blv->defcell)),
-		 BVAR (current_buffer, local_var_alist));
+      BSET (current_buffer, local_var_alist,
+	    Fcons (Fcons (variable, XCDR (blv->defcell)),
+		   BVAR (current_buffer, local_var_alist)));
 
       /* Make sure symbol does not think it is set up for this buffer;
 	 force it to look once again for this buffer's value.  */
@@ -1721,8 +1723,8 @@ From now on the default value will apply in this buffer.  Return VARIABLE.  */)
   XSETSYMBOL (variable, sym);	/* Propagate variable indirection.  */
   tem = Fassq (variable, BVAR (current_buffer, local_var_alist));
   if (!NILP (tem))
-    BVAR (current_buffer, local_var_alist)
-      = Fdelq (tem, BVAR (current_buffer, local_var_alist));
+    BSET (current_buffer, local_var_alist,
+	  Fdelq (tem, BVAR (current_buffer, local_var_alist)));
 
   /* If the symbol is set up with the current buffer's binding
      loaded, recompute its value.  We have to do it now, or else
@@ -2019,12 +2021,12 @@ indirect_function (register Lisp_Object object)
     {
       if (!SYMBOLP (hare) || EQ (hare, Qunbound))
 	break;
-      hare = SVAR (XSYMBOL (hare), function);
+      hare = XSYMBOL (hare)->function;
       if (!SYMBOLP (hare) || EQ (hare, Qunbound))
 	break;
-      hare = SVAR (XSYMBOL (hare), function);
+      hare = XSYMBOL (hare)->function;
 
-      tortoise = SVAR (XSYMBOL (tortoise), function);
+      tortoise = XSYMBOL (tortoise)->function;
 
       if (EQ (hare, tortoise))
 	xsignal1 (Qcyclic_function_indirection, object);
@@ -2048,7 +2050,7 @@ function chain of symbols.  */)
   /* Optimize for no indirection.  */
   result = object;
   if (SYMBOLP (result) && !EQ (result, Qunbound)
-      && (result = SVAR (XSYMBOL (result), function), SYMBOLP (result)))
+      && (result = XSYMBOL (result)->function, SYMBOLP (result)))
     result = indirect_function (result);
   if (!EQ (result, Qunbound))
     return result;
@@ -2179,10 +2181,9 @@ bool-vector.  IDX starts at 0.  */)
 	    {
 	      /* We must relocate the string data.  */
 	      ptrdiff_t nchars = SCHARS (array);
-	      unsigned char *str;
 	      USE_SAFE_ALLOCA;
+	      unsigned char *str = SAFE_ALLOCA (nbytes);
 
-	      SAFE_ALLOCA (str, unsigned char *, nbytes);
 	      memcpy (str, SDATA (array), nbytes);
 	      allocate_string_data (XSTRING (array), nchars,
 				    nbytes + new_bytes - prev_bytes);
@@ -3197,7 +3198,7 @@ syms_of_data (void)
   defsubr (&Ssubr_arity);
   defsubr (&Ssubr_name);
 
-  SVAR (XSYMBOL (Qwholenump), function) = SVAR (XSYMBOL (Qnatnump), function);
+  set_symbol_function (Qwholenump, XSYMBOL (Qnatnump)->function);
 
   DEFVAR_LISP ("most-positive-fixnum", Vmost_positive_fixnum,
 	       doc: /* The largest value that is representable in a Lisp integer.  */);

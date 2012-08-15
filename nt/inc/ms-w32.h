@@ -23,11 +23,15 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #ifndef WINDOWSNT
 #define WINDOWSNT
 #endif
-#ifndef DOS_NT
-#define DOS_NT 	/* MSDOS or WINDOWSNT */
-#endif
 
 /* #undef const */
+
+/* Number of chars of output in the buffer of a stdio stream. */
+#ifdef __GNU_LIBRARY__
+#define PENDING_OUTPUT_COUNT(FILE) ((FILE)->__bufp - (FILE)->__buffer)
+#else
+#define PENDING_OUTPUT_COUNT(FILE) ((FILE)->_ptr - (FILE)->_base)
+#endif
 
 /* If you are compiling with a non-C calling convention but need to
    declare vararg routines differently, put it here.  */
@@ -73,13 +77,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
    that don't exist on your system, or that do different things on
    your system and must be used only through an encapsulation (which
    you should place, by convention, in sysdep.c).  */
-
-/* Define this to be the separator between devices and paths.  */
-#define DEVICE_SEP ':'
-
-/* We'll support either convention on NT.  */
-#define IS_DIRECTORY_SEP(_c_) ((_c_) == '/' || (_c_) == '\\')
-#define IS_ANY_SEP(_c_) (IS_DIRECTORY_SEP (_c_) || IS_DEVICE_SEP (_c_))
 
 #ifdef __GNUC__
 #ifndef __cplusplus

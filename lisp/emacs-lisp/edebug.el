@@ -248,7 +248,7 @@ If the result is non-nil, then break.  Errors are ignored."
         (progn
           (and (symbolp indirect)
                (setq indirect
-                     (function-get indirect 'edebug-form-spec 'autoload))))
+                     (function-get indirect 'edebug-form-spec 'macro))))
       ;; (edebug-trace "indirection: %s" edebug-form-spec)
       (setq edebug-form-spec indirect))
     edebug-form-spec
@@ -3742,7 +3742,7 @@ By default, loading the `edebug' library causes these bindings to
 be installed in `emacs-lisp-mode-map'.")
 
 (define-obsolete-variable-alias 'gud-inhibit-global-bindings
-  'edebug-inhibit-emacs-lisp-mode-bindings "24.2")
+  'edebug-inhibit-emacs-lisp-mode-bindings "24.3")
 
 ;; Global GUD bindings for all emacs-lisp-mode buffers.
 (unless edebug-inhibit-emacs-lisp-mode-bindings

@@ -1560,8 +1560,8 @@ like in the respective argument of `key-binding'. */)
       window = POSN_WINDOW (position);
 
       if (WINDOWP (window)
-	  && BUFFERP (WVAR (XWINDOW (window), buffer))
-	  && XBUFFER (WVAR (XWINDOW (window), buffer)) != current_buffer)
+	  && BUFFERP (XWINDOW (window)->buffer)
+	  && XBUFFER (XWINDOW (window)->buffer) != current_buffer)
 	{
 	  /* Arrange to go back to the original buffer once we're done
 	     processing the key sequence.  We don't use
@@ -1573,7 +1573,7 @@ like in the respective argument of `key-binding'. */)
 
 	  record_unwind_protect (Fset_buffer, Fcurrent_buffer ());
 
-	  set_buffer_internal (XBUFFER (WVAR (XWINDOW (window), buffer)));
+	  set_buffer_internal (XBUFFER (XWINDOW (window)->buffer));
 	}
     }
 
@@ -1854,7 +1854,7 @@ If KEYMAP is nil, that means no local keymap.  */)
   if (!NILP (keymap))
     keymap = get_keymap (keymap, 1, 1);
 
-  BVAR (current_buffer, keymap) = keymap;
+  BSET (current_buffer, keymap, keymap);
 
   return Qnil;
 }
@@ -2069,7 +2069,7 @@ The `kbd' macro is an approximate inverse of this.  */)
     size += XINT (Flength (prefix));
 
   /* This has one extra element at the end that we don't pass to Fconcat.  */
-  if (min (PTRDIFF_MAX, SIZE_MAX) / sizeof (Lisp_Object) / 4 < size)
+  if (min (PTRDIFF_MAX, SIZE_MAX) / word_size / 4 < size)
     memory_full (SIZE_MAX);
   SAFE_ALLOCA_LISP (args, size * 4);
 
@@ -2304,11 +2304,10 @@ around function keys and event symbols.  */)
     {
       if (NILP (no_angles))
 	{
-	  char *buffer;
 	  Lisp_Object result;
 	  USE_SAFE_ALLOCA;
-	  SAFE_ALLOCA (buffer, char *,
-		       sizeof "<>" + SBYTES (SYMBOL_NAME (key)));
+	  char *buffer = SAFE_ALLOCA (sizeof "<>"
+				      + SBYTES (SYMBOL_NAME (key)));
 	  esprintf (buffer, "<%s>", SDATA (SYMBOL_NAME (key)));
 	  result = build_string (buffer);
 	  SAFE_FREE ();
