@@ -387,7 +387,6 @@ static struct mem_node mem_z;
 
 static struct Lisp_Vector *allocate_vectorlike (ptrdiff_t);
 static void lisp_free (void *);
-static void mark_stack (void);
 static int live_vector_p (struct mem_node *, void *);
 static int live_buffer_p (struct mem_node *, void *);
 static int live_string_p (struct mem_node *, void *);
@@ -4865,8 +4864,27 @@ dump_zombies (void)
    would be necessary, each one starting with one byte more offset
    from the stack start.  */
 
-static void
-mark_stack (void)
+void
+mark_stack (char *bottom, char *end)
+{
+  /* This assumes that the stack is a contiguous region in memory.  If
+     that's not the case, something has to be done here to iterate
+     over the stack segments.  */
+  mark_memory (bottom, end);
+
+  /* Allow for marking a secondary stack, like the register stack on the
+     ia64.  */
+#ifdef GC_MARK_SECONDARY_STACK
+  GC_MARK_SECONDARY_STACK ();
+#endif
+
+#if GC_MARK_STACK == GC_MARK_STACK_CHECK_GCPROS
+  check_gcpros ();
+#endif
+}
+
+void
+flush_stack_call_func (void (*func) (void *arg), void *arg)
 {
   void *end;
 
@@ -4922,20 +4940,8 @@ mark_stack (void)
 #endif /* not GC_SAVE_REGISTERS_ON_STACK */
 #endif /* not HAVE___BUILTIN_UNWIND_INIT */
 
-  /* This assumes that the stack is a contiguous region in memory.  If
-     that's not the case, something has to be done here to iterate
-     over the stack segments.  */
-  mark_memory (stack_bottom, end);
-
-  /* Allow for marking a secondary stack, like the register stack on the
-     ia64.  */
-#ifdef GC_MARK_SECONDARY_STACK
-  GC_MARK_SECONDARY_STACK ();
-#endif
-
-#if GC_MARK_STACK == GC_MARK_STACK_CHECK_GCPROS
-  check_gcpros ();
-#endif
+  current_thread->stack_top = end;
+  (*func) (arg);
 }
 
 #endif /* GC_MARK_STACK != 0 */
@@ -5457,11 +5463,7 @@ See Info node `(elisp)Garbage Collection'.  */)
   for (i = 0; i < staticidx; i++)
     mark_object (*staticvec[i]);
 
-  for (bind = specpdl; bind != specpdl_ptr; bind++)
-    {
-      mark_object (bind->symbol);
-      mark_object (bind->old_value);
-    }
+  mark_threads ();
   mark_terminals ();
   mark_kboards ();
   mark_ttys ();
@@ -5473,40 +5475,12 @@ See Info node `(elisp)Garbage Collection'.  */)
   }
 #endif
 
-#if (GC_MARK_STACK == GC_MAKE_GCPROS_NOOPS \
-     || GC_MARK_STACK == GC_MARK_STACK_CHECK_GCPROS)
-  mark_stack ();
-#else
-  {
-    register struct gcpro *tail;
-    for (tail = gcprolist; tail; tail = tail->next)
-      for (i = 0; i < tail->nvars; i++)
-	mark_object (tail->var[i]);
-  }
-  mark_byte_stack ();
-  {
-    struct catchtag *catch;
-    struct handler *handler;
-
-  for (catch = catchlist; catch; catch = catch->next)
-    {
-      mark_object (catch->tag);
-      mark_object (catch->val);
-    }
-  for (handler = handlerlist; handler; handler = handler->next)
-    {
-      mark_object (handler->handler);
-      mark_object (handler->var);
-    }
-  }
-  mark_backtrace ();
-#endif
-
 #ifdef HAVE_WINDOW_SYSTEM
   mark_fringe_data ();
 #endif
 
 #if GC_MARK_STACK == GC_USE_GCPROS_CHECK_ZOMBIES
+  FIXME;
   mark_stack ();
 #endif
 
@@ -5556,7 +5530,7 @@ See Info node `(elisp)Garbage Collection'.  */)
 
   /* Clear the mark bits that we set in certain root slots.  */
 
-  unmark_byte_stack ();
+  unmark_threads ();
   VECTOR_UNMARK (&buffer_defaults);
   VECTOR_UNMARK (&buffer_local_symbols);
 

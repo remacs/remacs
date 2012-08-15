@@ -335,12 +335,11 @@ struct byte_stack
 
 #if BYTE_MARK_STACK
 void
-mark_byte_stack (void)
+mark_byte_stack (struct byte_stack *stack)
 {
-  struct byte_stack *stack;
   Lisp_Object *obj;
 
-  for (stack = byte_stack_list; stack; stack = stack->next)
+  for (; stack; stack = stack->next)
     {
       /* If STACK->top is null here, this means there's an opcode in
 	 Fbyte_code that wasn't expected to GC, but did.  To find out
@@ -364,11 +363,9 @@ mark_byte_stack (void)
    counters.  Called when GC has completed.  */
 
 void
-unmark_byte_stack (void)
+unmark_byte_stack (struct byte_stack *stack)
 {
-  struct byte_stack *stack;
-
-  for (stack = byte_stack_list; stack; stack = stack->next)
+  for (; stack; stack = stack->next)
     {
       if (stack->byte_string_start != SDATA (stack->byte_string))
 	{

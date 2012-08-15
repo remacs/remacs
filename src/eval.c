@@ -165,6 +165,19 @@ init_eval (void)
   when_entered_debugger = -1;
 }
 
+#if (GC_MARK_STACK == GC_MAKE_GCPROS_NOOPS \
+     || GC_MARK_STACK == GC_MARK_STACK_CHECK_GCPROS)
+void
+mark_catchlist (struct catchtag *catch)
+{
+  for (; catch; catch = catch->next)
+    {
+      mark_object (catch->tag);
+      mark_object (catch->val);
+    }
+}
+#endif
+
 /* Unwind-protect function used by call_debugger.  */
 
 static Lisp_Object

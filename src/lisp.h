@@ -2715,6 +2715,10 @@ extern void mark_object (Lisp_Object);
 #if defined REL_ALLOC && !defined SYSTEM_MALLOC
 extern void refill_memory_reserve (void);
 #endif
+#if GC_MARK_STACK
+extern void mark_stack (char *, char *);
+#endif
+extern void flush_stack_call_func (void (*func) (void *arg), void *arg);
 extern const char *pending_malloc_warning;
 extern Lisp_Object zero_vector;
 extern EMACS_INT consing_since_gc;
@@ -2902,6 +2906,10 @@ extern Lisp_Object Vautoload_queue;
 extern Lisp_Object Vsignaling_function;
 extern Lisp_Object inhibit_lisp_code;
 extern int handling_signal;
+#if (GC_MARK_STACK == GC_MAKE_GCPROS_NOOPS \
+     || GC_MARK_STACK == GC_MARK_STACK_CHECK_GCPROS)
+extern void mark_catchlist (struct catchtag *);
+#endif
 /* To run a normal hook, use the appropriate function from the list below.
    The calling convention:
 
@@ -2951,10 +2959,10 @@ extern Lisp_Object safe_call (ptrdiff_t, Lisp_Object, ...);
 extern Lisp_Object safe_call1 (Lisp_Object, Lisp_Object);
 extern Lisp_Object safe_call2 (Lisp_Object, Lisp_Object, Lisp_Object);
 extern void init_eval (void);
-#if BYTE_MARK_STACK
-extern void mark_backtrace (void);
-#endif
 extern void syms_of_eval (void);
+
+/* Defined in thread.c.  */
+extern void mark_threads (void);
 
 /* Defined in editfns.c.  */
 extern Lisp_Object Qfield;
@@ -3211,9 +3219,9 @@ extern int read_bytecode_char (int);
 extern Lisp_Object Qbytecode;
 extern void syms_of_bytecode (void);
 #if BYTE_MARK_STACK
-extern void mark_byte_stack (void);
+extern void mark_byte_stack (struct byte_stack *);
 #endif
-extern void unmark_byte_stack (void);
+extern void unmark_byte_stack (struct byte_stack *);
 extern Lisp_Object exec_byte_code (Lisp_Object, Lisp_Object, Lisp_Object,
 				   Lisp_Object, ptrdiff_t, Lisp_Object *);
 

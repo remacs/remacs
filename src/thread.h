@@ -133,8 +133,13 @@ struct thread_state
   /* Regexp to use to replace spaces, or NULL meaning don't.  */
   /*re_char*/ unsigned char *m_whitespace_regexp;
 #define whitespace_regexp (current_thread->m_whitespace_regexp)
+
+  /* Threads are kept on a linked list.  */
+  struct thread_state *next_thread;
 };
 
 extern struct thread_state *current_thread;
+
+extern void unmark_threads (void);
 
 #endif /* THREAD_H */
