@@ -32,7 +32,7 @@ sys_mutex_t global_lock;
 static void
 mark_one_thread (struct thread_state *thread)
 {
-  register struct specbinding *bind;
+  struct specbinding *bind;
   struct handler *handler;
   Lisp_Object tem;
 
@@ -48,7 +48,7 @@ mark_one_thread (struct thread_state *thread)
   mark_stack (thread->m_stack_bottom, thread->stack_top);
 #else
   {
-    register struct gcpro *tail;
+    struct gcpro *tail;
     for (tail = thread->m_gcprolist; tail; tail = tail->next)
       for (i = 0; i < tail->nvars; i++)
 	mark_object (tail->var[i]);
@@ -88,7 +88,13 @@ mark_threads_callback (void *ignore)
   struct thread_state *iter;
 
   for (iter = all_threads; iter; iter = iter->next_thread)
-    mark_one_thread (iter);
+    {
+      Lisp_Object thread_obj;
+
+      XSETTHREAD (thread_obj, iter);
+      mark_object (thread_obj);
+      mark_one_thread (iter);
+    }
 }
 
 void
@@ -105,6 +111,16 @@ unmark_threads (void)
   for (iter = all_threads; iter; iter = iter->next_thread)
     if (iter->m_byte_stack_list)
       unmark_byte_stack (iter->m_byte_stack_list);
+}
+
+void
+init_threads_once (void)
+{
+  the_only_thread.header.size
+    = PSEUDOVECSIZE (struct thread_state, m_gcprolist);
+  XSETPVECTYPE (&the_only_thread, PVEC_THREAD);
+  the_only_thread.m_last_thing_searched = Qnil;
+  the_only_thread.m_saved_last_thing_searched = Qnil;
 }
 
 void

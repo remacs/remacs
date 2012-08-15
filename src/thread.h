@@ -23,6 +23,8 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 struct thread_state
 {
+  struct vectorlike_header header;
+
   /* The buffer in which the last search was performed, or
      Qt if the last search was done in a string;
      Qnil if no searching has been done yet.  */
@@ -150,6 +152,7 @@ extern sys_mutex_t global_lock;
 
 extern void unmark_threads (void);
 
+extern void init_threads_once (void);
 extern void init_threads (void);
 
 #endif /* THREAD_H */

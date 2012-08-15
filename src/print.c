@@ -1943,6 +1943,18 @@ print_object (Lisp_Object obj, register Lisp_Object printcharfun, int escapeflag
 	    }
 	  PRINTCHAR ('>');
 	}
+      else if (THREADP (obj))
+	{
+	  strout ("#<thread ", -1, -1, printcharfun);
+	  if (STRINGP (XTHREAD (obj)->name))
+	    print_string (XTHREAD (obj)->name, printcharfun);
+	  else
+	    {
+	      int len = sprintf (buf, "%p", XTHREAD (obj));
+	      strout (buf, len, len, printcharfun);
+	    }
+	  PRINTCHAR ('>');
+	}
       else
 	{
 	  ptrdiff_t size = ASIZE (obj);

@@ -365,6 +365,7 @@ enum pvec_type
   PVEC_WINDOW_CONFIGURATION,
   PVEC_SUBR,
   PVEC_OTHER,
+  PVEC_THREAD,
   /* These last 4 are special because we OR them in fns.c:internal_equal,
      so they have to use a disjoint bit pattern:
      if (!(size & (PVEC_COMPILED | PVEC_CHAR_TABLE
@@ -603,6 +604,7 @@ clip_to_bounds (ptrdiff_t lower, EMACS_INT num, ptrdiff_t upper)
 #define XSETCHAR_TABLE(a, b) (XSETPSEUDOVECTOR (a, b, PVEC_CHAR_TABLE))
 #define XSETBOOL_VECTOR(a, b) (XSETPSEUDOVECTOR (a, b, PVEC_BOOL_VECTOR))
 #define XSETSUB_CHAR_TABLE(a, b) (XSETPSEUDOVECTOR (a, b, PVEC_SUB_CHAR_TABLE))
+#define XSETTHREAD(a, b) (XSETPSEUDOVECTOR (a, b, PVEC_THREAD))
 
 /* Convenience macros for dealing with Lisp arrays.  */
 
@@ -1701,6 +1703,7 @@ typedef struct {
 #define SUB_CHAR_TABLE_P(x) PSEUDOVECTORP (x, PVEC_SUB_CHAR_TABLE)
 #define BOOL_VECTOR_P(x) PSEUDOVECTORP (x, PVEC_BOOL_VECTOR)
 #define FRAMEP(x) PSEUDOVECTORP (x, PVEC_FRAME)
+#define THREADP(x) PSEUDOVECTORP (x, PVEC_THREAD)
 
 /* Test for image (image . spec)  */
 #define IMAGEP(x) (CONSP (x) && EQ (XCAR (x), Qimage))
