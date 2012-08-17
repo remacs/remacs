@@ -37,7 +37,15 @@ Lisp_Object Qthreadp, Qmutexp;
 
 
 DEFUN ("make-mutex", Fmake_mutex, Smake_mutex, 0, 1, 0,
-       doc: /* FIXME */)
+       doc: /* Create a mutex.
+A mutex provides a synchronization point for threads.
+Only one thread at a time can hold a mutex.  Other threads attempting
+to acquire it will block until the mutex is available.
+
+A thread can acquire a mutex any number of times.
+
+NAME, if given, is used as the name of the mutex.  The name is
+informational only.  */)
   (Lisp_Object name)
 {
   struct Lisp_Mutex *mutex;
@@ -71,18 +79,24 @@ do_unwind_mutex_lock (Lisp_Object ignore)
 }
 
 DEFUN ("mutex-lock", Fmutex_lock, Smutex_lock, 1, 1, 0,
-       doc: /* FIXME */)
-  (Lisp_Object obj)
+       doc: /* Acquire a mutex.
+If the current thread already owns MUTEX, increment the count and
+return.
+Otherwise, if no thread owns MUTEX, make the current thread own it.
+Otherwise, block until MUTEX is available, or until the current thread
+is signalled using `thread-signal'.
+Note that calls to `mutex-lock' and `mutex-unlock' must be paired.  */)
+  (Lisp_Object mutex)
 {
-  struct Lisp_Mutex *mutex;
+  struct Lisp_Mutex *lmutex;
   ptrdiff_t count = SPECPDL_INDEX ();
 
-  CHECK_MUTEX (obj);
-  mutex = XMUTEX (obj);
+  CHECK_MUTEX (mutex);
+  lmutex = XMUTEX (mutex);
 
-  current_thread->event_object = obj;
+  current_thread->event_object = mutex;
   record_unwind_protect (do_unwind_mutex_lock, Qnil);
-  flush_stack_call_func (mutex_lock_callback, mutex);
+  flush_stack_call_func (mutex_lock_callback, lmutex);
   return unbind_to (count, Qnil);
 }
 
@@ -96,28 +110,32 @@ mutex_unlock_callback (void *arg)
 }
 
 DEFUN ("mutex-unlock", Fmutex_unlock, Smutex_unlock, 1, 1, 0,
-       doc: /* FIXME */)
-  (Lisp_Object obj)
+       doc: /* Release the mutex.
+If this thread does not own MUTEX, signal an error.	       
+Otherwise, decrement the mutex's count.  If the count is zero,
+release MUTEX.   */)
+  (Lisp_Object mutex)
 {
-  struct Lisp_Mutex *mutex;
+  struct Lisp_Mutex *lmutex;
 
-  CHECK_MUTEX (obj);
-  mutex = XMUTEX (obj);
+  CHECK_MUTEX (mutex);
+  lmutex = XMUTEX (mutex);
 
-  flush_stack_call_func (mutex_unlock_callback, mutex);
+  flush_stack_call_func (mutex_unlock_callback, lmutex);
   return Qnil;
 }
 
 DEFUN ("mutex-name", Fmutex_name, Smutex_name, 1, 1, 0,
-       doc: /* FIXME */)
-  (Lisp_Object obj)
+       doc: /* Return the name of MUTEX.
+If no name was given when MUTEX was created, return nil.  */)
+  (Lisp_Object mutex)
 {
-  struct Lisp_Mutex *mutex;
+  struct Lisp_Mutex *lmutex;
 
-  CHECK_MUTEX (obj);
-  mutex = XMUTEX (obj);
+  CHECK_MUTEX (mutex);
+  lmutex = XMUTEX (mutex);
 
-  return mutex->name;
+  return lmutex->name;
 }
 
 void
@@ -472,7 +490,11 @@ thread_signal_callback (void *arg)
 }
 
 DEFUN ("thread-signal", Fthread_signal, Sthread_signal, 3, 3, 0,
-       doc: /* FIXME */)
+       doc: /* Signal an error in a thread.
+This acts like `signal', but arranges for the signal to be raised
+in THREAD.  If THREAD is the current thread, acts just like `signal'.
+This will interrupt a blocked call to `mutex-lock' or`thread-join' in
+the target thread.  */)
   (Lisp_Object thread, Lisp_Object error_symbol, Lisp_Object data)
 {
   struct thread_state *tstate;
@@ -495,7 +517,7 @@ DEFUN ("thread-signal", Fthread_signal, Sthread_signal, 3, 3, 0,
 }
 
 DEFUN ("thread-alive-p", Fthread_alive_p, Sthread_alive_p, 1, 1, 0,
-       doc: /* FIXME */)
+       doc: /* Return t if THREAD is alive, or nil if it has exited.  */)
   (Lisp_Object thread)
 {
   struct thread_state *tstate;
@@ -509,7 +531,11 @@ DEFUN ("thread-alive-p", Fthread_alive_p, Sthread_alive_p, 1, 1, 0,
 }
 
 DEFUN ("thread-blocker", Fthread_blocker, Sthread_blocker, 1, 1, 0,
-       doc: /* FIXME */)
+       doc: /* Return the object that THREAD is blocking on.
+If THREAD is blocked in `thread-join' on a second thread, return that
+thread.
+If THREAD is blocked in `mutex-lock', return the mutex.
+Otherwise, if THREAD is not blocked, return nil.  */)
   (Lisp_Object thread)
 {
   struct thread_state *tstate;
@@ -539,7 +565,9 @@ thread_join_callback (void *arg)
 }
 
 DEFUN ("thread-join", Fthread_join, Sthread_join, 1, 1, 0,
-       doc: /* FIXME */)
+       doc: /* Wait for a thread to exit.
+This blocks the current thread until THREAD exits.
+It is an error for a thread to try to join itself.  */)
   (Lisp_Object thread)
 {
   struct thread_state *tstate;
@@ -555,7 +583,7 @@ DEFUN ("thread-join", Fthread_join, Sthread_join, 1, 1, 0,
 
 DEFUN ("all-threads", Fall_threads, Sall_threads, 0, 0, 0,
        doc: /* Return a list of all threads.  */)
-     (void)
+  (void)
 {
   Lisp_Object result = Qnil;
   struct thread_state *iter;
