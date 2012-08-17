@@ -2969,6 +2969,8 @@ extern Lisp_Object internal_condition_case_n
 extern void specbind (Lisp_Object, Lisp_Object);
 extern void record_unwind_protect (Lisp_Object (*) (Lisp_Object), Lisp_Object);
 extern Lisp_Object unbind_to (ptrdiff_t, Lisp_Object);
+extern void rebind_for_thread_switch (void);
+extern void unbind_for_thread_switch (void);
 extern _Noreturn void error (const char *, ...) ATTRIBUTE_FORMAT_PRINTF (1, 2);
 extern _Noreturn void verror (const char *, va_list)
   ATTRIBUTE_FORMAT_PRINTF (1, 0);

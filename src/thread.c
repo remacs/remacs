@@ -24,10 +24,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "buffer.h"
 #include "process.h"
 
-/* FIXME */
-extern void unbind_for_thread_switch (void);
-extern void rebind_for_thread_switch (void);
-
 static struct thread_state primary_thread;
 
 struct thread_state *current_thread = &primary_thread;
