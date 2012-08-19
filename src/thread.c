@@ -30,9 +30,116 @@ struct thread_state *current_thread = &primary_thread;
 
 static struct thread_state *all_threads = &primary_thread;
 
-sys_mutex_t global_lock;
+static sys_mutex_t global_lock;
 
 Lisp_Object Qthreadp, Qmutexp;
+
+
+
+static void
+release_global_lock (void)
+{
+  sys_mutex_unlock (&global_lock);
+}
+
+/* You must call this after acquiring the global lock.
+   acquire_global_lock does it for you.  */
+static void
+post_acquire_global_lock (struct thread_state *self)
+{
+  Lisp_Object buffer;
+
+  if (self != current_thread)
+    {
+      unbind_for_thread_switch ();
+      current_thread = self;
+      rebind_for_thread_switch ();
+    }
+
+  /* We need special handling to re-set the buffer.  */
+  XSETBUFFER (buffer, self->m_current_buffer);
+  self->m_current_buffer = 0;
+  set_buffer_internal (XBUFFER (buffer));
+
+  if (!EQ (current_thread->error_symbol, Qnil))
+    {
+      Lisp_Object sym = current_thread->error_symbol;
+      Lisp_Object data = current_thread->error_data;
+
+      current_thread->error_symbol = Qnil;
+      current_thread->error_data = Qnil;
+      Fsignal (sym, data);
+    }
+}
+
+static void
+acquire_global_lock (struct thread_state *self)
+{
+  sys_mutex_lock (&global_lock);
+  post_acquire_global_lock (self);
+}
+
+
+
+static void
+lisp_mutex_init (lisp_mutex_t *mutex)
+{
+  mutex->owner = NULL;
+  mutex->count = 0;
+  sys_cond_init (&mutex->condition);
+}
+
+static void
+lisp_mutex_lock (lisp_mutex_t *mutex)
+{
+  struct thread_state *self;
+
+  if (mutex->owner == NULL)
+    {
+      mutex->owner = current_thread;
+      mutex->count = 1;
+      return;
+    }
+  if (mutex->owner == current_thread)
+    {
+      ++mutex->count;
+      return;
+    }
+
+  self = current_thread;
+  self->wait_condvar = &mutex->condition;
+  while (mutex->owner != NULL && EQ (self->error_symbol, Qnil))
+    sys_cond_wait (&mutex->condition, &global_lock);
+  self->wait_condvar = NULL;
+
+  post_acquire_global_lock (self);
+
+  mutex->owner = self;
+  mutex->count = 1;
+}
+
+static void
+lisp_mutex_unlock (lisp_mutex_t *mutex)
+{
+  struct thread_state *self = current_thread;
+
+  if (mutex->owner != current_thread)
+    error ("blah");
+
+  if (--mutex->count > 0)
+    return;
+
+  mutex->owner = NULL;
+  sys_cond_broadcast (&mutex->condition);
+
+  post_acquire_global_lock (self);
+}
+
+static void
+lisp_mutex_destroy (lisp_mutex_t *mutex)
+{
+  sys_cond_destroy (&mutex->condition);
+}
 
 
 
@@ -142,51 +249,6 @@ void
 finalize_one_mutex (struct Lisp_Mutex *mutex)
 {
   lisp_mutex_destroy (&mutex->mutex);
-}
-
-
-
-static void
-release_global_lock (void)
-{
-  sys_mutex_unlock (&global_lock);
-}
-
-/* You must call this after acquiring the global lock.
-   acquire_global_lock does it for you.  */
-void
-post_acquire_global_lock (struct thread_state *self)
-{
-  Lisp_Object buffer;
-
-  if (self != current_thread)
-    {
-      unbind_for_thread_switch ();
-      current_thread = self;
-      rebind_for_thread_switch ();
-    }
-
-  /* We need special handling to re-set the buffer.  */
-  XSETBUFFER (buffer, self->m_current_buffer);
-  self->m_current_buffer = 0;
-  set_buffer_internal (XBUFFER (buffer));
-
-  if (!EQ (current_thread->error_symbol, Qnil))
-    {
-      Lisp_Object sym = current_thread->error_symbol;
-      Lisp_Object data = current_thread->error_data;
-
-      current_thread->error_symbol = Qnil;
-      current_thread->error_data = Qnil;
-      Fsignal (sym, data);
-    }
-}
-
-static void
-acquire_global_lock (struct thread_state *self)
-{
-  sys_mutex_lock (&global_lock);
-  post_acquire_global_lock (self);
 }
 
 

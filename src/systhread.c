@@ -78,67 +78,6 @@ sys_cond_destroy (sys_cond_t *cond)
   pthread_cond_destroy (cond);
 }
 
-void
-lisp_mutex_init (lisp_mutex_t *mutex)
-{
-  mutex->owner = NULL;
-  mutex->count = 0;
-  /* A lisp "mutex" is really a condition variable.  */
-  pthread_cond_init (&mutex->condition, NULL);
-}
-
-void
-lisp_mutex_lock (lisp_mutex_t *mutex)
-{
-  struct thread_state *self;
-
-  if (mutex->owner == NULL)
-    {
-      mutex->owner = current_thread;
-      mutex->count = 1;
-      return;
-    }
-  if (mutex->owner == current_thread)
-    {
-      ++mutex->count;
-      return;
-    }
-
-  self = current_thread;
-  self->wait_condvar = &mutex->condition;
-  while (mutex->owner != NULL && EQ (self->error_symbol, Qnil))
-    pthread_cond_wait (&mutex->condition, &global_lock);
-  self->wait_condvar = NULL;
-
-  post_acquire_global_lock (self);
-
-  mutex->owner = self;
-  mutex->count = 1;
-}
-
-void
-lisp_mutex_unlock (lisp_mutex_t *mutex)
-{
-  struct thread_state *self = current_thread;
-
-  if (mutex->owner != current_thread)
-    error ("blah");
-
-  if (--mutex->count > 0)
-    return;
-
-  mutex->owner = NULL;
-  pthread_cond_broadcast (&mutex->condition);
-
-  post_acquire_global_lock (self);
-}
-
-void
-lisp_mutex_destroy (lisp_mutex_t *mutex)
-{
-  sys_cond_destroy (&mutex->condition);
-}
-
 sys_thread_t
 sys_thread_self (void)
 {

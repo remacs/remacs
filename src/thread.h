@@ -187,6 +187,19 @@ struct thread_state
   struct thread_state *next_thread;
 };
 
+/* A mutex in lisp is represented by a pthread condition variable.
+   The system mutex associated with this condition variable is the
+   global lock.
+
+   Using a condition variable lets us implement interruptibility for
+   lisp mutexes.  */
+typedef struct
+{
+  struct thread_state *owner;
+  unsigned int count;
+  sys_cond_t condition;
+} lisp_mutex_t;
+
 struct Lisp_Mutex
 {
   struct vectorlike_header header;
@@ -197,9 +210,6 @@ struct Lisp_Mutex
 };
 
 extern struct thread_state *current_thread;
-
-extern sys_mutex_t global_lock;
-extern void post_acquire_global_lock (struct thread_state *);
 
 extern void unmark_threads (void);
 extern void finalize_one_thread (struct thread_state *state);

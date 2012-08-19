@@ -23,19 +23,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include <pthread.h>
 
-/* A mutex in lisp is represented by a pthread condition variable.
-   The pthread mutex associated with this condition variable is the
-   global lock.
-
-   Using a condition variable lets us implement interruptibility for
-   lisp mutexes.  */
-typedef struct
-{
-  struct thread_state *owner;
-  unsigned int count;
-  pthread_cond_t condition;
-} lisp_mutex_t;
-
 /* A system mutex is just a pthread mutex.  This is only used for the
    GIL.  */
 typedef pthread_mutex_t sys_mutex_t;
@@ -63,11 +50,6 @@ extern void sys_cond_wait (sys_cond_t *, sys_mutex_t *);
 extern void sys_cond_signal (sys_cond_t *);
 extern void sys_cond_broadcast (sys_cond_t *);
 extern void sys_cond_destroy (sys_cond_t *);
-
-extern void lisp_mutex_init (lisp_mutex_t *);
-extern void lisp_mutex_lock (lisp_mutex_t *);
-extern void lisp_mutex_unlock (lisp_mutex_t *);
-extern void lisp_mutex_destroy (lisp_mutex_t *);
 
 extern sys_thread_t sys_thread_self (void);
 extern int sys_thread_equal (sys_thread_t, sys_thread_t);
