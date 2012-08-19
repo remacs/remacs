@@ -187,7 +187,7 @@ struct thread_state
   struct thread_state *next_thread;
 };
 
-/* A mutex in lisp is represented by a pthread condition variable.
+/* A mutex in lisp is represented by a system condition variable.
    The system mutex associated with this condition variable is the
    global lock.
 
@@ -195,17 +195,23 @@ struct thread_state
    lisp mutexes.  */
 typedef struct
 {
+  /* The owning thread, or NULL if unlocked.  */
   struct thread_state *owner;
+  /* The lock count.  */
   unsigned int count;
+  /* The underlying system condition variable.  */
   sys_cond_t condition;
 } lisp_mutex_t;
 
+/* A mutex as a lisp object.  */
 struct Lisp_Mutex
 {
   struct vectorlike_header header;
 
+  /* The name of the mutex, or nil.  */
   Lisp_Object name;
 
+  /* The lower-level mutex object.  */
   lisp_mutex_t mutex;
 };
 
