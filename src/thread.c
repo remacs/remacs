@@ -348,9 +348,9 @@ CONDITION is the condition variable to wait on.
 The mutex associated with CONDITION must be held when this is called.
 It is an error if it is not held.
 
-This atomically releases the mutex and waits for CONDITION to be
-notified.  When `condition-wait' returns, the mutex will again be
-locked by this thread.  */)
+This releases the mutex and waits for CONDITION to be notified.  When
+`condition-wait' returns, the mutex will again be locked by this
+thread.  */)
   (Lisp_Object condition)
 {
   struct Lisp_CondVar *cvar;
@@ -402,7 +402,7 @@ If ALL is non-nil, all waiting threads are awoken.
 The mutex associated with CONDITION must be held when this is called.
 It is an error if it is not held.
 
-This atomically releases the mutex when notifying CONDITION.  When
+This releases the mutex when notifying CONDITION.  When
 `condition-notify' returns, the mutex will again be locked by this
 thread.  */)
   (Lisp_Object condition, Lisp_Object all)
