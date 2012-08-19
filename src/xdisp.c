@@ -4975,7 +4975,7 @@ handle_single_display_spec (struct it *it, Lisp_Object spec, Lisp_Object object,
           it->what = IT_XWIDGET;
           it->method = GET_FROM_XWIDGET;
           it->position = start_pos;
-	  it->object = NILP (object) ? WVAR (it->w, buffer) : object;
+	  it->object = NILP (object) ? it->w->buffer : object;
 	  *position = start_pos;
 
           it->xwidget = lookup_xwidget(value);
