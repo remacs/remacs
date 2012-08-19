@@ -2217,7 +2217,19 @@ eval_sub (Lisp_Object form)
 	  goto retry;
 	}
       if (EQ (funcar, Qmacro))
-	val = eval_sub (apply1 (Fcdr (fun), original_args));
+	{
+	  ptrdiff_t count = SPECPDL_INDEX ();
+	  extern Lisp_Object Qlexical_binding;
+	  Lisp_Object exp;
+	  /* Bind lexical-binding during expansion of the macro, so the
+	     macro can know reliably if the code it outputs will be
+	     interpreted using lexical-binding or not.  */
+	  specbind (Qlexical_binding,
+		    NILP (Vinternal_interpreter_environment) ? Qnil : Qt);
+	  exp = apply1 (Fcdr (fun), original_args);
+	  unbind_to (count, Qnil);
+	  val = eval_sub (exp);
+	}
       else if (EQ (funcar, Qlambda)
 	       || EQ (funcar, Qclosure))
 	val = apply_lambda (fun, original_args);
@@ -3157,12 +3169,12 @@ specbind (Lisp_Object symbol, Lisp_Object value)
 	    if (!NILP (Flocal_variable_p (symbol, Qnil)))
 	      {
 		eassert (sym->redirect != SYMBOL_LOCALIZED
-			 || (BLV_FOUND (SYMBOL_BLV (sym))
+			 || (blv_found (SYMBOL_BLV (sym))
 			     && EQ (cur_buf, SYMBOL_BLV (sym)->where)));
 		where = cur_buf;
 	      }
 	    else if (sym->redirect == SYMBOL_LOCALIZED
-		     && BLV_FOUND (SYMBOL_BLV (sym)))
+		     && blv_found (SYMBOL_BLV (sym)))
 	      where = SYMBOL_BLV (sym)->where;
 	    else
 	      where = Qnil;

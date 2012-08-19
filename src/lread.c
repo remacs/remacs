@@ -80,7 +80,7 @@ static Lisp_Object Qascii_character, Qload, Qload_file_name;
 Lisp_Object Qbackquote, Qcomma, Qcomma_at, Qcomma_dot, Qfunction;
 static Lisp_Object Qinhibit_file_name_operation;
 static Lisp_Object Qeval_buffer_list;
-static Lisp_Object Qlexical_binding;
+Lisp_Object Qlexical_binding;
 static Lisp_Object Qfile_truename, Qdo_after_load_evaluation; /* ACM 2006/5/16 */
 
 /* Used instead of Qget_file_char while loading *.elc files compiled
@@ -3189,8 +3189,8 @@ substitute_object_recurse (Lisp_Object object, Lisp_Object placeholder, Lisp_Obj
 	/* Check for text properties in each interval.
 	   substitute_in_interval contains part of the logic.  */
 
-	INTERVAL    root_interval = string_get_intervals (subtree);
-	Lisp_Object arg           = Fcons (object, placeholder);
+	INTERVAL root_interval = string_intervals (subtree);
+	Lisp_Object arg = Fcons (object, placeholder);
 
 	traverse_intervals_noorder (root_interval,
 				    &substitute_in_interval, arg);
@@ -3211,7 +3211,7 @@ substitute_in_interval (INTERVAL interval, Lisp_Object arg)
   Lisp_Object object      = Fcar (arg);
   Lisp_Object placeholder = Fcdr (arg);
 
-  SUBSTITUTE (interval->plist, interval_set_plist (interval, true_value));
+  SUBSTITUTE (interval->plist, set_interval_plist (interval, true_value));
 }
 
 

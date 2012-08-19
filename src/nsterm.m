@@ -36,6 +36,8 @@ GNUstep port and post-20 update by Adrian Robert (arobert@cogsci.ucsd.edu)
 #include <signal.h>
 #include <unistd.h>
 #include <setjmp.h>
+
+#include <c-ctype.h>
 #include <c-strcase.h>
 #include <ftoastr.h>
 
@@ -1030,7 +1032,7 @@ ns_frame_rehighlight (struct frame *frame)
            : dpyinfo->x_focus_frame);
       if (!FRAME_LIVE_P (dpyinfo->x_highlight_frame))
         {
-          FSET (dpyinfo->x_focus_frame, focus_frame, Qnil);
+          fset_focus_frame (dpyinfo->x_focus_frame, Qnil);
           dpyinfo->x_highlight_frame = dpyinfo->x_focus_frame;
         }
     }
@@ -3696,7 +3698,7 @@ ns_set_vertical_scroll_bar (struct window *window,
         {
           bar = XNS_SCROLL_BAR (window->vertical_scroll_bar);
           [bar removeFromSuperview];
-          WSET (window, vertical_scroll_bar, Qnil);
+          wset_vertical_scroll_bar (window, Qnil);
         }
       ns_clear_frame_area (f, sb_left, top, width, height);
       UNBLOCK_INPUT;
@@ -3707,7 +3709,7 @@ ns_set_vertical_scroll_bar (struct window *window,
     {
       ns_clear_frame_area (f, sb_left, top, width, height);
       bar = [[EmacsScroller alloc] initFrame: r window: win];
-      WSET (window, vertical_scroll_bar, make_save_value (bar, 0));
+      wset_vertical_scroll_bar (window, make_save_value (bar, 0));
     }
   else
     {
@@ -4091,7 +4093,7 @@ ns_term_init (Lisp_Object display_name)
 
   terminal->kboard = xmalloc (sizeof *terminal->kboard);
   init_kboard (terminal->kboard);
-  KSET (terminal->kboard, Vwindow_system, Qns);
+  kset_window_system (terminal->kboard, Qns);
   terminal->kboard->next_kboard = all_kboards;
   all_kboards = terminal->kboard;
   /* Don't let the initial kboard remain current longer than necessary.
@@ -6386,7 +6388,7 @@ not_in_argv (NSString *arg)
 {
   NSTRACE (EmacsScroller_dealloc);
   if (!NILP (win))
-    WSET (XWINDOW (win), vertical_scroll_bar, Qnil);
+    wset_vertical_scroll_bar (XWINDOW (win), Qnil);
   [super dealloc];
 }
 
@@ -6785,20 +6787,20 @@ ns_xlfd_to_fontname (const char *xlfd)
 
   /* undo hack in ns_fontname_to_xlfd, converting '$' to '-', '_' to ' '
      also uppercase after '-' or ' ' */
-  name[0] = toupper (name[0]);
+  name[0] = c_toupper (name[0]);
   for (len =strlen (name), i =0; i<len; i++)
     {
       if (name[i] == '$')
         {
           name[i] = '-';
           if (i+1<len)
-            name[i+1] = toupper (name[i+1]);
+            name[i+1] = c_toupper (name[i+1]);
         }
       else if (name[i] == '_')
         {
           name[i] = ' ';
           if (i+1<len)
-            name[i+1] = toupper (name[i+1]);
+            name[i+1] = c_toupper (name[i+1]);
         }
     }
 /*fprintf (stderr, "converted '%s' to '%s'\n",xlfd,name);  */

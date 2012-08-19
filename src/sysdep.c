@@ -21,7 +21,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #define SYSTIME_INLINE EXTERN_INLINE
 
-#include <ctype.h>
 #include <signal.h>
 #include <stdio.h>
 #include <setjmp.h>
@@ -33,6 +32,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <unistd.h>
 
 #include <allocator.h>
+#include <c-ctype.h>
 #include <careadlinkat.h>
 #include <ignore-value.h>
 #include <utimens.h>
@@ -2307,8 +2307,7 @@ serial_configure (struct Lisp_Process *p,
     error ("tcsetattr() failed: %s", emacs_strerror (errno));
 
   childp2 = Fplist_put (childp2, QCsummary, build_string (summary));
-  PSET (p, childp, childp2);
-
+  pset_childp (p, childp2);
 }
 #endif /* not DOS_NT  */
 
@@ -2733,7 +2732,7 @@ system_process_attributes (Lisp_Object pid)
 	  if (emacs_read (fd, &ch, 1) != 1)
 	    break;
 	  c = ch;
-	  if (isspace (c) || c == '\\')
+	  if (c_isspace (c) || c == '\\')
 	    cmdline_size++;	/* for later quoting, see below */
 	}
       if (cmdline_size)
@@ -2757,7 +2756,7 @@ system_process_attributes (Lisp_Object pid)
 	  for (p = cmdline; p < cmdline + nread; p++)
 	    {
 	      /* Escape-quote whitespace and backslashes.  */
-	      if (isspace (*p) || *p == '\\')
+	      if (c_isspace (*p) || *p == '\\')
 		{
 		  memmove (p + 1, p, nread - (p - cmdline));
 		  nread++;

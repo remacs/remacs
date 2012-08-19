@@ -50,7 +50,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "systime.h"
 
 #include <fcntl.h>
-#include <ctype.h>
 #include <errno.h>
 #include <setjmp.h>
 #include <sys/stat.h>
@@ -3594,7 +3593,7 @@ x_frame_rehighlight (struct x_display_info *dpyinfo)
 	   : dpyinfo->x_focus_frame);
       if (! FRAME_LIVE_P (dpyinfo->x_highlight_frame))
 	{
-	  FSET (dpyinfo->x_focus_frame, focus_frame, Qnil);
+	  fset_focus_frame (dpyinfo->x_focus_frame, Qnil);
 	  dpyinfo->x_highlight_frame = dpyinfo->x_focus_frame;
 	}
     }
@@ -5028,7 +5027,7 @@ x_scroll_bar_create (struct window *w, int top, int left, int width, int height)
   bar->next = FRAME_SCROLL_BARS (f);
   bar->prev = Qnil;
   XSETVECTOR (barobj, bar);
-  FSET (f, scroll_bars, barobj);
+  fset_scroll_bars (f, barobj);
   if (!NILP (bar->next))
     XSETVECTOR (XSCROLL_BAR (bar->next)->prev, bar);
 
@@ -5191,7 +5190,7 @@ x_scroll_bar_remove (struct scroll_bar *bar)
 #endif
 
   /* Dissociate this scroll bar from its window.  */
-  WSET (XWINDOW (bar->window), vertical_scroll_bar, Qnil);
+  wset_vertical_scroll_bar (XWINDOW (bar->window), Qnil);
 
   UNBLOCK_INPUT;
 }
@@ -5405,7 +5404,7 @@ XTset_vertical_scroll_bar (struct window *w, int portion, int whole, int positio
 #endif /* not USE_TOOLKIT_SCROLL_BARS */
 
   XSETVECTOR (barobj, bar);
-  WSET (w, vertical_scroll_bar, barobj);
+  wset_vertical_scroll_bar (w, barobj);
 }
 
 
@@ -5429,12 +5428,12 @@ XTcondemn_scroll_bars (FRAME_PTR frame)
     {
       Lisp_Object bar;
       bar = FRAME_SCROLL_BARS (frame);
-      FSET (frame, scroll_bars, XSCROLL_BAR (bar)->next);
+      fset_scroll_bars (frame, XSCROLL_BAR (bar)->next);
       XSCROLL_BAR (bar)->next = FRAME_CONDEMNED_SCROLL_BARS (frame);
       XSCROLL_BAR (bar)->prev = Qnil;
       if (! NILP (FRAME_CONDEMNED_SCROLL_BARS (frame)))
 	XSCROLL_BAR (FRAME_CONDEMNED_SCROLL_BARS (frame))->prev = bar;
-      FSET (frame, condemned_scroll_bars, bar);
+      fset_condemned_scroll_bars (frame, bar);
     }
 }
 
@@ -5466,7 +5465,7 @@ XTredeem_scroll_bar (struct window *window)
 	return;
       else if (EQ (FRAME_CONDEMNED_SCROLL_BARS (f),
 		   window->vertical_scroll_bar))
-	FSET (f, condemned_scroll_bars, bar->next);
+	fset_condemned_scroll_bars (f, bar->next);
       else
 	/* If its prev pointer is nil, it must be at the front of
 	   one or the other!  */
@@ -5481,7 +5480,7 @@ XTredeem_scroll_bar (struct window *window)
   bar->next = FRAME_SCROLL_BARS (f);
   bar->prev = Qnil;
   XSETVECTOR (barobj, bar);
-  FSET (f, scroll_bars, barobj);
+  fset_scroll_bars (f, barobj);
   if (! NILP (bar->next))
     XSETVECTOR (XSCROLL_BAR (bar->next)->prev, bar);
 }
@@ -5498,7 +5497,7 @@ XTjudge_scroll_bars (FRAME_PTR f)
 
   /* Clear out the condemned list now so we won't try to process any
      more events on the hapless scroll bars.  */
-  FSET (f, condemned_scroll_bars, Qnil);
+  fset_condemned_scroll_bars (f, Qnil);
 
   for (; ! NILP (bar); bar = next)
     {
@@ -7849,7 +7848,7 @@ x_connection_closed (Display *dpy, const char *error_message)
       {
 	/* Set this to t so that delete_frame won't get confused
 	   trying to find a replacement.  */
-	KSET (FRAME_KBOARD (XFRAME (frame)), Vdefault_minibuffer_frame, Qt);
+	kset_default_minibuffer_frame (FRAME_KBOARD (XFRAME (frame)), Qt);
 	delete_frame (frame, Qnoelisp);
       }
 
@@ -10133,7 +10132,7 @@ x_term_init (Lisp_Object display_name, char *xrm_option, char *resource_name)
       {
 	terminal->kboard = xmalloc (sizeof *terminal->kboard);
 	init_kboard (terminal->kboard);
-	KSET (terminal->kboard, Vwindow_system, Qx);
+	kset_window_system (terminal->kboard, Qx);
 
 	/* Add the keyboard to the list before running Lisp code (via
            Qvendor_specific_keysyms below), since these are not traced
@@ -10155,9 +10154,10 @@ x_term_init (Lisp_Object display_name, char *xrm_option, char *resource_name)
 	    /* Temporarily hide the partially initialized terminal.  */
 	    terminal_list = terminal->next_terminal;
 	    UNBLOCK_INPUT;
-	    KSET (terminal->kboard, Vsystem_key_alist,
-		  call1 (Qvendor_specific_keysyms,
-			 vendor ? build_string (vendor) : empty_unibyte_string));
+	    kset_system_key_alist
+	      (terminal->kboard,
+	       call1 (Qvendor_specific_keysyms,
+		      vendor ? build_string (vendor) : empty_unibyte_string));
 	    BLOCK_INPUT;
 	    terminal->next_terminal = terminal_list;
  	    terminal_list = terminal;

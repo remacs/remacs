@@ -496,14 +496,14 @@ temp_output_buffer_setup (const char *bufname)
 
   Fkill_all_local_variables ();
   delete_all_overlays (current_buffer);
-  BSET (current_buffer, directory, BVAR (old, directory));
-  BSET (current_buffer, read_only, Qnil);
-  BSET (current_buffer, filename, Qnil);
-  BSET (current_buffer, undo_list, Qt);
+  bset_directory (current_buffer, BVAR (old, directory));
+  bset_read_only (current_buffer, Qnil);
+  bset_filename (current_buffer, Qnil);
+  bset_undo_list (current_buffer, Qt);
   eassert (current_buffer->overlays_before == NULL);
   eassert (current_buffer->overlays_after == NULL);
-  BSET (current_buffer, enable_multibyte_characters,
-	BVAR (&buffer_defaults, enable_multibyte_characters));
+  bset_enable_multibyte_characters
+    (current_buffer, BVAR (&buffer_defaults, enable_multibyte_characters));
   specbind (Qinhibit_read_only, Qt);
   specbind (Qinhibit_modification_hooks, Qt);
   Ferase_buffer ();
@@ -1196,7 +1196,7 @@ print_preprocess (Lisp_Object obj)
 	{
 	case Lisp_String:
 	  /* A string may have text properties, which can be circular.  */
-	  traverse_intervals_noorder (string_get_intervals (obj),
+	  traverse_intervals_noorder (string_intervals (obj),
 				      print_preprocess_string, Qnil);
 	  break;
 
@@ -1299,7 +1299,7 @@ static Lisp_Object
 print_prune_string_charset (Lisp_Object string)
 {
   print_check_string_result = 0;
-  traverse_intervals (string_get_intervals (string), 0,
+  traverse_intervals (string_intervals (string), 0,
 		      print_check_string_charset_prop, string);
   if (! (print_check_string_result & PRINT_STRING_UNSAFE_CHARSET_FOUND))
     {
@@ -1410,7 +1410,7 @@ print_object (Lisp_Object obj, register Lisp_Object printcharfun, int escapeflag
 	  if (! EQ (Vprint_charset_text_property, Qt))
 	    obj = print_prune_string_charset (obj);
 
-	  if (string_get_intervals (obj))
+	  if (string_intervals (obj))
 	    {
 	      PRINTCHAR ('#');
 	      PRINTCHAR ('(');
@@ -1501,9 +1501,9 @@ print_object (Lisp_Object obj, register Lisp_Object printcharfun, int escapeflag
 	    }
 	  PRINTCHAR ('\"');
 
-	  if (string_get_intervals (obj))
+	  if (string_intervals (obj))
 	    {
-	      traverse_intervals (string_get_intervals (obj),
+	      traverse_intervals (string_intervals (obj),
 				  0, print_interval, printcharfun);
 	      PRINTCHAR (')');
 	    }

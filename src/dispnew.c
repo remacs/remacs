@@ -22,7 +22,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include <signal.h>
 #include <stdio.h>
-#include <ctype.h>
 #include <setjmp.h>
 #include <unistd.h>
 
@@ -626,7 +625,7 @@ adjust_glyph_matrix (struct window *w, struct glyph_matrix *matrix, int x, int y
 		 are invalidated below.  */
 	      if (INTEGERP (w->window_end_vpos)
 		  && XFASTINT (w->window_end_vpos) >= i)
-		WSET (w, window_end_valid, Qnil);
+		wset_window_end_valid (w, Qnil);
 
 	      while (i < matrix->nrows)
 		matrix->rows[i++].enabled_p = 0;
@@ -883,7 +882,7 @@ clear_window_matrices (struct window *w, int desired_p)
 	  else
 	    {
 	      clear_glyph_matrix (w->current_matrix);
-	      WSET (w, window_end_valid, Qnil);
+	      wset_window_end_valid (w, Qnil);
 	    }
 	}
 
@@ -1892,14 +1891,14 @@ adjust_frame_glyphs_initially (void)
   int top_margin = FRAME_TOP_MARGIN (sf);
 
   /* Do it for the root window.  */
-  WSET (root, top_line, make_number (top_margin));
-  WSET (root, total_lines, make_number (frame_lines - 1 - top_margin));
-  WSET (root, total_cols, make_number (frame_cols));
+  wset_top_line (root, make_number (top_margin));
+  wset_total_lines (root, make_number (frame_lines - 1 - top_margin));
+  wset_total_cols (root, make_number (frame_cols));
 
   /* Do it for the mini-buffer window.  */
-  WSET (mini, top_line, make_number (frame_lines - 1));
-  WSET (mini, total_lines, make_number (1));
-  WSET (mini, total_cols, make_number (frame_cols));
+  wset_top_line (mini, make_number (frame_lines - 1));
+  wset_total_lines (mini, make_number (1));
+  wset_total_cols (mini, make_number (frame_cols));
 
   adjust_frame_glyphs (sf);
   glyphs_initialized_initially_p = 1;
@@ -2171,10 +2170,10 @@ adjust_frame_glyphs_for_window_redisplay (struct frame *f)
     if (NILP (f->menu_bar_window))
       {
 	Lisp_Object frame;
-	FSET (f, menu_bar_window, make_window ());
+	fset_menu_bar_window (f, make_window ());
 	w = XWINDOW (f->menu_bar_window);
 	XSETFRAME (frame, f);
-	WSET (w, frame, frame);
+	wset_frame (w, frame);
 	w->pseudo_window_p = 1;
       }
     else
@@ -2182,10 +2181,10 @@ adjust_frame_glyphs_for_window_redisplay (struct frame *f)
 
     /* Set window dimensions to frame dimensions and allocate or
        adjust glyph matrices of W.  */
-    WSET (w, top_line, make_number (0));
-    WSET (w, left_col, make_number (0));
-    WSET (w, total_lines, make_number (FRAME_MENU_BAR_LINES (f)));
-    WSET (w, total_cols, make_number (FRAME_TOTAL_COLS (f)));
+    wset_top_line (w, make_number (0));
+    wset_left_col (w, make_number (0));
+    wset_total_lines (w, make_number (FRAME_MENU_BAR_LINES (f)));
+    wset_total_cols (w, make_number (FRAME_TOTAL_COLS (f)));
     allocate_matrices_for_window_redisplay (w);
   }
 #endif /* not USE_X_TOOLKIT && not USE_GTK */
@@ -2199,19 +2198,19 @@ adjust_frame_glyphs_for_window_redisplay (struct frame *f)
     if (NILP (f->tool_bar_window))
       {
 	Lisp_Object frame;
-	FSET (f, tool_bar_window, make_window ());
+	fset_tool_bar_window (f, make_window ());
 	w = XWINDOW (f->tool_bar_window);
 	XSETFRAME (frame, f);
-	WSET (w, frame, frame);
+	wset_frame (w, frame);
 	w->pseudo_window_p = 1;
       }
     else
       w = XWINDOW (f->tool_bar_window);
 
-    WSET (w, top_line, make_number (FRAME_MENU_BAR_LINES (f)));
-    WSET (w, left_col, make_number (0));
-    WSET (w, total_lines, make_number (FRAME_TOOL_BAR_LINES (f)));
-    WSET (w, total_cols, make_number (FRAME_TOTAL_COLS (f)));
+    wset_top_line (w, make_number (FRAME_MENU_BAR_LINES (f)));
+    wset_left_col (w, make_number (0));
+    wset_total_lines (w, make_number (FRAME_TOOL_BAR_LINES (f)));
+    wset_total_cols (w, make_number (FRAME_TOTAL_COLS (f)));
     allocate_matrices_for_window_redisplay (w);
   }
 #endif
@@ -2277,7 +2276,7 @@ free_glyphs (struct frame *f)
 	  free_glyph_matrix (w->desired_matrix);
 	  free_glyph_matrix (w->current_matrix);
 	  w->desired_matrix = w->current_matrix = NULL;
-	  FSET (f, menu_bar_window, Qnil);
+	  fset_menu_bar_window (f, Qnil);
 	}
 
       /* Free the tool bar window and its glyph matrices.  */
@@ -2287,7 +2286,7 @@ free_glyphs (struct frame *f)
 	  free_glyph_matrix (w->desired_matrix);
 	  free_glyph_matrix (w->current_matrix);
 	  w->desired_matrix = w->current_matrix = NULL;
-	  FSET (f, tool_bar_window, Qnil);
+	  fset_tool_bar_window (f, Qnil);
 	}
 
       /* Release frame glyph matrices.  Reset fields to zero in
@@ -3225,8 +3224,8 @@ update_frame (struct frame *f, int force_p, int inhibit_hairy_id_p)
 	      /* Swap tool-bar strings.  We swap because we want to
 		 reuse strings.  */
 	      tem = f->current_tool_bar_string;
-	      FSET (f, current_tool_bar_string, f->desired_tool_bar_string);
-	      FSET (f, desired_tool_bar_string, tem);
+	      fset_current_tool_bar_string (f, f->desired_tool_bar_string);
+	      fset_desired_tool_bar_string (f, tem);
 	    }
 	}
 
@@ -5758,7 +5757,7 @@ change_frame_size_1 (register struct frame *f, int newheight, int newwidth, int 
 	FrameCols (FRAME_TTY (f)) = newwidth;
 
       if (WINDOWP (f->tool_bar_window))
-	WSET (XWINDOW (f->tool_bar_window), total_cols, make_number (newwidth));
+	wset_total_cols (XWINDOW (f->tool_bar_window), make_number (newwidth));
     }
 
   FRAME_LINES (f) = newheight;

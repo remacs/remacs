@@ -1,3 +1,65 @@
+2012-08-18  Chong Yidong  <cyd@gnu.org>
+
+	* simple.el (yank-handled-properties): New defcustom.
+	(yank-excluded-properties): Add font-lock-face and category.
+	(yank): Doc fix.
+
+	* subr.el (remove-yank-excluded-properties): Obey
+	yank-handled-properties.  The special handling of font-lock-face
+	and category is now done this way, instead of being hard-coded.
+	(insert-for-yank-1): Remove font-lock-face handling.
+	(yank-handle-font-lock-face-property)
+	(yank-handle-category-property): New function.
+
+2012-08-17  Glenn Morris  <rgm@gnu.org>
+
+	* mail/rmailout.el (rmail-output-read-file-name):
+	Check rmail-output-file-alist against the full message body
+	in the correct rmail buffer.  (Bug#12214)
+
+2012-08-17  Michael Albinus  <michael.albinus@gmx.de>
+
+	* net/tramp-sh.el (tramp-sh-handle-start-file-process): Eliminate
+	superfluous prompt.  (Bug#12203)
+
+2012-08-17  Chong Yidong  <cyd@gnu.org>
+
+	* mouse.el (mouse-appearance-menu): If x-select-font returns a
+	font spec, set the font directly (Bug#3228).
+
+2012-08-17  Martin Rudalics  <rudalics@gmx.at>
+
+	* window.el (delete-window): Fix last fix.
+
+2012-08-16  Martin Rudalics  <rudalics@gmx.at>
+
+	* window.el (window-valid-p): Move to window.c.
+	(window-child, window-child-count, window-last-child)
+	(window-normalize-window, window-combined-p)
+	(window-combinations, window-atom-root, window-min-size)
+	(window-sizable, window-sizable-p, window-size-fixed-p)
+	(window-min-delta, window-max-delta, window--resizable)
+	(window--resizable-p, window-resizable, window-total-size)
+	(window-full-height-p, window-full-width-p, window-body-size)
+	(window-at-side-p, adjust-window-trailing-edge, maximize-window)
+	(minimize-window, window-deletable-p, delete-window)
+	(delete-other-windows, set-window-buffer-start-and-point)
+	(next-buffer, previous-buffer, split-window, balance-windows-2)
+	(set-window-text-height, window-buffer-height)
+	(fit-window-to-buffer, shrink-window-if-larger-than-buffer)
+	(truncated-partial-width-window-p): Minor code adjustments.  In
+	doc-strings state whether the argument window has to denote a
+	live, valid or any window.
+
+2012-08-16  Phil Sainty  <psainty@orcon.net.nz>  (tiny change)
+
+	* progmodes/subword.el (subword-forward-function)
+	(subword-backward-function, subword-forward-regexp)
+	(subword-backward-regexp): New variables.
+	(subword-forward, subword-forward-internal, subword-backward-internal):
+	Use new variables, eg so that different "word" definitions
+	can be easily used.  (Bug#11411)
+
 2012-08-15  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* vc/vc-mtn.el (vc-mtn-revision-completion-table): Handle completion

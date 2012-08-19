@@ -477,7 +477,6 @@ struct buffer_text
 /* Most code should use this macro to access Lisp fields in struct buffer.  */
 
 #define BVAR(buf, field) ((buf)->INTERNAL_FIELD (field))
-#define BSET(buf, field, value) ((buf)->INTERNAL_FIELD (field) = (value))
 
 /* This is the structure that the buffer Lisp object points to.  */
 
@@ -862,6 +861,104 @@ struct buffer
   Lisp_Object INTERNAL_FIELD (undo_list);
 };
 
+/* Most code should use these functions to set Lisp fields in struct
+   buffer.  */
+BUFFER_INLINE void
+bset_bidi_paragraph_direction (struct buffer *b, Lisp_Object val)
+{
+  b->INTERNAL_FIELD (bidi_paragraph_direction) = val;
+}
+BUFFER_INLINE void
+bset_case_canon_table (struct buffer *b, Lisp_Object val)
+{
+  b->INTERNAL_FIELD (case_canon_table) = val;
+}
+BUFFER_INLINE void
+bset_case_eqv_table (struct buffer *b, Lisp_Object val)
+{
+  b->INTERNAL_FIELD (case_eqv_table) = val;
+}
+BUFFER_INLINE void
+bset_directory (struct buffer *b, Lisp_Object val)
+{
+  b->INTERNAL_FIELD (directory) = val;
+}
+BUFFER_INLINE void
+bset_display_count (struct buffer *b, Lisp_Object val)
+{
+  b->INTERNAL_FIELD (display_count) = val;
+}
+BUFFER_INLINE void
+bset_display_time (struct buffer *b, Lisp_Object val)
+{
+  b->INTERNAL_FIELD (display_time) = val;
+}
+BUFFER_INLINE void
+bset_downcase_table (struct buffer *b, Lisp_Object val)
+{
+  b->INTERNAL_FIELD (downcase_table) = val;
+}
+BUFFER_INLINE void
+bset_enable_multibyte_characters (struct buffer *b, Lisp_Object val)
+{
+  b->INTERNAL_FIELD (enable_multibyte_characters) = val;
+}
+BUFFER_INLINE void
+bset_filename (struct buffer *b, Lisp_Object val)
+{
+  b->INTERNAL_FIELD (filename) = val;
+}
+BUFFER_INLINE void
+bset_keymap (struct buffer *b, Lisp_Object val)
+{
+  b->INTERNAL_FIELD (keymap) = val;
+}
+BUFFER_INLINE void
+bset_last_selected_window (struct buffer *b, Lisp_Object val)
+{
+  b->INTERNAL_FIELD (last_selected_window) = val;
+}
+BUFFER_INLINE void
+bset_local_var_alist (struct buffer *b, Lisp_Object val)
+{
+  b->INTERNAL_FIELD (local_var_alist) = val;
+}
+BUFFER_INLINE void
+bset_mark_active (struct buffer *b, Lisp_Object val)
+{
+  b->INTERNAL_FIELD (mark_active) = val;
+}
+BUFFER_INLINE void
+bset_point_before_scroll (struct buffer *b, Lisp_Object val)
+{
+  b->INTERNAL_FIELD (point_before_scroll) = val;
+}
+BUFFER_INLINE void
+bset_read_only (struct buffer *b, Lisp_Object val)
+{
+  b->INTERNAL_FIELD (read_only) = val;
+}
+BUFFER_INLINE void
+bset_truncate_lines (struct buffer *b, Lisp_Object val)
+{
+  b->INTERNAL_FIELD (truncate_lines) = val;
+}
+BUFFER_INLINE void
+bset_undo_list (struct buffer *b, Lisp_Object val)
+{
+  b->INTERNAL_FIELD (undo_list) = val;
+}
+BUFFER_INLINE void
+bset_upcase_table (struct buffer *b, Lisp_Object val)
+{
+  b->INTERNAL_FIELD (upcase_table) = val;
+}
+BUFFER_INLINE void
+bset_width_table (struct buffer *b, Lisp_Object val)
+{
+  b->INTERNAL_FIELD (width_table) = val;
+}
+
 
 /* Chain of all buffers, including killed ones.  */
 
@@ -953,7 +1050,7 @@ extern Lisp_Object Qfirst_change_hook;
 /* Get text properties of B.  */
 
 BUFFER_INLINE INTERVAL
-buffer_get_intervals (struct buffer *b)
+buffer_intervals (struct buffer *b)
 {
   eassert (b->text != NULL);
   return b->text->intervals;
@@ -962,24 +1059,10 @@ buffer_get_intervals (struct buffer *b)
 /* Set text properties of B to I.  */
 
 BUFFER_INLINE void
-buffer_set_intervals (struct buffer *b, INTERVAL i)
+set_buffer_intervals (struct buffer *b, INTERVAL i)
 {
   eassert (b->text != NULL);
   b->text->intervals = i;
-}
-
-/* Set an appropriate overlay of B.  */
-
-BUFFER_INLINE void
-buffer_set_overlays_before (struct buffer *b, struct Lisp_Overlay *o)
-{
-  b->overlays_before = o;
-}
-
-BUFFER_INLINE void
-buffer_set_overlays_after (struct buffer *b, struct Lisp_Overlay *o)
-{
-  b->overlays_after = o;
 }
 
 /* Non-zero if current buffer has overlays.  */

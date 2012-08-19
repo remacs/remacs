@@ -24,7 +24,9 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <signal.h>
 #include <stdio.h>
 #include <setjmp.h>
-#include <ctype.h>
+
+#include <c-ctype.h>
+
 #include "lisp.h"
 #include "xterm.h"
 #include "blockinput.h"
@@ -2016,7 +2018,7 @@ xg_get_file_name (FRAME_PTR f,
 
 #if USE_NEW_GTK_FONT_CHOOSER
 
-extern Lisp_Object Qnormal;
+extern Lisp_Object Qxft, Qnormal;
 extern Lisp_Object Qextra_light, Qlight, Qsemi_light, Qsemi_bold;
 extern Lisp_Object Qbold, Qextra_bold, Qultra_bold;
 extern Lisp_Object Qoblique, Qitalic;
@@ -2072,7 +2074,7 @@ xg_get_font (FRAME_PTR f, const char *default_name)
       if (p)
         {
           char *ep = p+1;
-          while (isdigit (*ep))
+          while (c_isdigit (*ep))
             ++ep;
           if (*ep == '\0') *p = ' ';
         }
@@ -2099,7 +2101,7 @@ xg_get_font (FRAME_PTR f, const char *default_name)
 
       if (desc)
 	{
-	  Lisp_Object args[8];
+	  Lisp_Object args[10];
 	  const char *name   = pango_font_description_get_family (desc);
 	  gint        size   = pango_font_description_get_size (desc);
 	  PangoWeight weight = pango_font_description_get_weight (desc);
@@ -2116,6 +2118,9 @@ xg_get_font (FRAME_PTR f, const char *default_name)
 
 	  args[6] = QCslant;
 	  args[7] = XG_STYLE_TO_SYMBOL (style);
+
+	  args[8] = QCtype;
+	  args[9] = Qxft;
 
 	  font = Ffont_spec (8, args);
 

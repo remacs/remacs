@@ -928,7 +928,7 @@ enum
    8-bit European characters.  Do not check validity of CT.  */
 #define CHAR_TABLE_SET(CT, IDX, VAL)					\
   (ASCII_CHAR_P (IDX) && SUB_CHAR_TABLE_P (XCHAR_TABLE (CT)->ascii)	\
-   ? XSUB_CHAR_TABLE (XCHAR_TABLE (CT)->ascii)->contents[IDX] = VAL	\
+   ? set_sub_char_table_contents (XCHAR_TABLE (CT)->ascii, IDX, VAL)	\
    : char_table_set (CT, IDX, VAL))
 
 enum CHARTAB_SIZE_BITS
@@ -940,8 +940,6 @@ enum CHARTAB_SIZE_BITS
   };
 
 extern const int chartab_size[4];
-
-struct Lisp_Sub_Char_Table;
 
 struct Lisp_Char_Table
   {
@@ -991,6 +989,7 @@ struct Lisp_Sub_Char_Table
     /* Minimum character covered by the sub char-table.  */
     Lisp_Object min_char;
 
+    /* Use set_sub_char_table_contents to set this.  */
     Lisp_Object contents[1];
   };
 
@@ -1472,14 +1471,6 @@ struct Lisp_Buffer_Local_Value
     Lisp_Object valcell;
   };
 
-#define BLV_FOUND(blv) \
-  (eassert ((blv)->found == !EQ ((blv)->defcell, (blv)->valcell)), (blv)->found)
-#define SET_BLV_FOUND(blv, v) \
-  (eassert ((v) == !EQ ((blv)->defcell, (blv)->valcell)), (blv)->found = (v))
-
-#define BLV_VALUE(blv) (XCDR ((blv)->valcell))
-#define SET_BLV_VALUE(blv, v) (XSETCDR ((blv)->valcell, v))
-
 /* Like Lisp_Objfwd except that value lives in a slot in the
    current kboard.  */
 struct Lisp_Kboard_Objfwd
@@ -1758,15 +1749,18 @@ typedef struct {
 #define CHECK_WINDOW_CONFIGURATION(x) \
   CHECK_TYPE (WINDOW_CONFIGURATIONP (x), Qwindow_configuration_p, x)
 
-/* This macro rejects windows on the interior of the window tree as
-   "dead", which is what we want; this is an argument-checking macro, and
-   the user should never get access to interior windows.
+/* A window of any sort, leaf or interior, is "valid" if one of its
+   buffer, vchild, or hchild members is non-nil.  */
+#define CHECK_VALID_WINDOW(x)				\
+  CHECK_TYPE (WINDOWP (x)				\
+	      && (!NILP (XWINDOW (x)->buffer)		\
+		  || !NILP (XWINDOW (x)->vchild)	\
+		  || !NILP (XWINDOW (x)->hchild)),	\
+	      Qwindow_valid_p, x)
 
-   A window of any sort, leaf or interior, is dead if the buffer,
-   vchild, and hchild members are all nil.  */
-
-#define CHECK_LIVE_WINDOW(x) \
-  CHECK_TYPE (WINDOWP (x) && !NILP (XWINDOW (x)->buffer), \
+/* A window is "live" if and only if it shows a buffer.  */
+#define CHECK_LIVE_WINDOW(x)						\
+  CHECK_TYPE (WINDOWP (x) && !NILP (XWINDOW (x)->buffer),		\
 	      Qwindow_live_p, x)
 
 #define CHECK_PROCESS(x) \
@@ -2412,6 +2406,52 @@ set_symbol_next (Lisp_Object sym, struct Lisp_Symbol *next)
   XSYMBOL (sym)->next = next;
 }
 
+/* Buffer-local (also frame-local) variable access functions.  */
+
+LISP_INLINE int
+blv_found (struct Lisp_Buffer_Local_Value *blv)
+{
+  eassert (blv->found == !EQ (blv->defcell, blv->valcell));
+  return blv->found;
+}
+
+LISP_INLINE void
+set_blv_found (struct Lisp_Buffer_Local_Value *blv, int found)
+{
+  eassert (found == !EQ (blv->defcell, blv->valcell));
+  blv->found = found;
+}
+
+LISP_INLINE Lisp_Object
+blv_value (struct Lisp_Buffer_Local_Value *blv)
+{
+  return XCDR (blv->valcell);
+}
+
+LISP_INLINE void
+set_blv_value (struct Lisp_Buffer_Local_Value *blv, Lisp_Object val)
+{
+  XSETCDR (blv->valcell, val);
+}
+
+LISP_INLINE void
+set_blv_where (struct Lisp_Buffer_Local_Value *blv, Lisp_Object val)
+{
+  blv->where = val;
+}
+
+LISP_INLINE void
+set_blv_defcell (struct Lisp_Buffer_Local_Value *blv, Lisp_Object val)
+{
+  blv->defcell = val;
+}
+
+LISP_INLINE void
+set_blv_valcell (struct Lisp_Buffer_Local_Value *blv, Lisp_Object val)
+{
+  blv->valcell = val;
+}
+
 /* Set overlay's property list.  */
 
 LISP_INLINE void
@@ -2423,7 +2463,7 @@ set_overlay_plist (Lisp_Object overlay, Lisp_Object plist)
 /* Get text properties of S.  */
 
 LISP_INLINE INTERVAL
-string_get_intervals (Lisp_Object s)
+string_intervals (Lisp_Object s)
 {
   return XSTRING (s)->intervals;
 }
@@ -2431,9 +2471,55 @@ string_get_intervals (Lisp_Object s)
 /* Set text properties of S to I.  */
 
 LISP_INLINE void
-string_set_intervals (Lisp_Object s, INTERVAL i)
+set_string_intervals (Lisp_Object s, INTERVAL i)
 {
   XSTRING (s)->intervals = i;
+}
+
+/* Set a Lisp slot in TABLE to VAL.  Most code should use this instead
+   of setting slots directly.  */
+
+LISP_INLINE void
+set_char_table_ascii (Lisp_Object table, Lisp_Object val)
+{
+  XCHAR_TABLE (table)->ascii = val;
+}
+LISP_INLINE void
+set_char_table_defalt (Lisp_Object table, Lisp_Object val)
+{
+  XCHAR_TABLE (table)->defalt = val;
+}
+LISP_INLINE void
+set_char_table_parent (Lisp_Object table, Lisp_Object val)
+{
+  XCHAR_TABLE (table)->parent = val;
+}
+LISP_INLINE void
+set_char_table_purpose (Lisp_Object table, Lisp_Object val)
+{
+  XCHAR_TABLE (table)->purpose = val;
+}
+
+/* Set different slots in (sub)character tables.  */
+
+LISP_INLINE void
+set_char_table_extras (Lisp_Object table, ptrdiff_t idx, Lisp_Object val)
+{
+  eassert (0 <= idx && idx < CHAR_TABLE_EXTRA_SLOTS (XCHAR_TABLE (table)));
+  XCHAR_TABLE (table)->extras[idx] = val;
+}
+
+LISP_INLINE void
+set_char_table_contents (Lisp_Object table, ptrdiff_t idx, Lisp_Object val)
+{
+  eassert (0 <= idx && idx < (1 << CHARTAB_SIZE_BITS_0));
+  XCHAR_TABLE (table)->contents[idx] = val;
+}
+
+LISP_INLINE void
+set_sub_char_table_contents (Lisp_Object table, ptrdiff_t idx, Lisp_Object val)
+{
+  XSUB_CHAR_TABLE (table)->contents[idx] = val;
 }
 
 /* Defined in data.c.  */
@@ -2657,7 +2743,6 @@ _Noreturn void __executable_start (void);
 #endif
 extern Lisp_Object selected_frame;
 extern Lisp_Object Vwindow_system;
-void duration_to_sec_usec (double, int *, int *);
 extern Lisp_Object sit_for (Lisp_Object, int, int);
 extern void init_display (void);
 extern void syms_of_display (void);
@@ -2835,9 +2920,8 @@ extern Lisp_Object copy_char_table (Lisp_Object);
 extern Lisp_Object char_table_ref (Lisp_Object, int);
 extern Lisp_Object char_table_ref_and_range (Lisp_Object, int,
                                              int *, int *);
-extern Lisp_Object char_table_set (Lisp_Object, int, Lisp_Object);
-extern Lisp_Object char_table_set_range (Lisp_Object, int, int,
-                                         Lisp_Object);
+extern void char_table_set (Lisp_Object, int, Lisp_Object);
+extern void char_table_set_range (Lisp_Object, int, int, Lisp_Object);
 extern int char_table_translate (Lisp_Object, int);
 extern void map_char_table (void (*) (Lisp_Object, Lisp_Object,
                             Lisp_Object),
