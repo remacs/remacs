@@ -215,11 +215,27 @@ struct Lisp_Mutex
   lisp_mutex_t mutex;
 };
 
+/* A condition variable as a lisp object.  */
+struct Lisp_CondVar
+{
+  struct vectorlike_header header;
+
+  /* The associated mutex.  */
+  Lisp_Object mutex;
+
+  /* The name of the condition variable, or nil.  */
+  Lisp_Object name;
+
+  /* The lower-level condition variable object.  */
+  sys_cond_t cond;
+};
+
 extern struct thread_state *current_thread;
 
 extern void unmark_threads (void);
 extern void finalize_one_thread (struct thread_state *state);
 extern void finalize_one_mutex (struct Lisp_Mutex *);
+extern void finalize_one_condvar (struct Lisp_CondVar *);
 
 extern void init_threads_once (void);
 extern void init_threads (void);

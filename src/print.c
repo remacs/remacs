@@ -1967,6 +1967,18 @@ print_object (Lisp_Object obj, register Lisp_Object printcharfun, int escapeflag
 	    }
 	  PRINTCHAR ('>');
 	}
+      else if (CONDVARP (obj))
+	{
+	  strout ("#<condvar ", -1, -1, printcharfun);
+	  if (STRINGP (XCONDVAR (obj)->name))
+	    print_string (XCONDVAR (obj)->name, printcharfun);
+	  else
+	    {
+	      int len = sprintf (buf, "%p", XCONDVAR (obj));
+	      strout (buf, len, len, printcharfun);
+	    }
+	  PRINTCHAR ('>');
+	}
       else
 	{
 	  ptrdiff_t size = ASIZE (obj);

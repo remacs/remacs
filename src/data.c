@@ -94,7 +94,7 @@ static Lisp_Object Qchar_table, Qbool_vector, Qhash_table;
 static Lisp_Object Qsubrp, Qmany, Qunevalled;
 Lisp_Object Qfont_spec, Qfont_entity, Qfont_object;
 static Lisp_Object Qdefun;
-Lisp_Object Qthread, Qmutex;
+Lisp_Object Qthread, Qmutex, Qcondition_variable;
 
 Lisp_Object Qinteractive_form;
 
@@ -216,6 +216,8 @@ for example, (type-of 1) returns `integer'.  */)
 	return Qthread;
       if (MUTEXP (object))
 	return Qmutex;
+      if (CONDVARP (object))
+	return Qcondition_variable;
       return Qvector;
 
     case Lisp_Float:
@@ -478,6 +480,17 @@ DEFUN ("mutexp", Fmutexp, Smutexp, 1, 1, 0,
   (Lisp_Object object)
 {
   if (MUTEXP (object))
+    return Qt;
+  else
+    return Qnil;
+}
+
+DEFUN ("condition-variablep", Fcondition_variablep, Scondition_variablep,
+       1, 1, 0,
+       doc: /* Return t if OBJECT is a condition variable.  */)
+  (Lisp_Object object)
+{
+  if (CONDVARP (object))
     return Qt;
   else
     return Qnil;
@@ -3117,6 +3130,7 @@ syms_of_data (void)
   DEFSYM (Qhash_table, "hash-table");
   DEFSYM (Qthread, "thread");
   DEFSYM (Qmutex, "mutex");
+  DEFSYM (Qcondition_variable, "condition-variable");
   /* Used by Fgarbage_collect.  */
   DEFSYM (Qinterval, "interval");
   DEFSYM (Qmisc, "misc");
@@ -3161,6 +3175,7 @@ syms_of_data (void)
   defsubr (&Schar_or_string_p);
   defsubr (&Sthreadp);
   defsubr (&Smutexp);
+  defsubr (&Scondition_variablep);
   defsubr (&Scar);
   defsubr (&Scdr);
   defsubr (&Scar_safe);

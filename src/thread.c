@@ -32,7 +32,7 @@ static struct thread_state *all_threads = &primary_thread;
 
 static sys_mutex_t global_lock;
 
-Lisp_Object Qthreadp, Qmutexp;
+Lisp_Object Qthreadp, Qmutexp, Qcondition_variablep;
 
 
 
@@ -89,36 +89,41 @@ lisp_mutex_init (lisp_mutex_t *mutex)
   sys_cond_init (&mutex->condition);
 }
 
-static void
-lisp_mutex_lock (lisp_mutex_t *mutex)
+static int
+lisp_mutex_lock (lisp_mutex_t *mutex, int new_count)
 {
   struct thread_state *self;
 
   if (mutex->owner == NULL)
     {
       mutex->owner = current_thread;
-      mutex->count = 1;
-      return;
+      mutex->count = new_count == 0 ? 1 : new_count;
+      return 0;
     }
   if (mutex->owner == current_thread)
     {
+      eassert (new_count == 0);
       ++mutex->count;
-      return;
+      return 0;
     }
 
   self = current_thread;
   self->wait_condvar = &mutex->condition;
-  while (mutex->owner != NULL && EQ (self->error_symbol, Qnil))
+  while (mutex->owner != NULL && (new_count != 0
+				  || EQ (self->error_symbol, Qnil)))
     sys_cond_wait (&mutex->condition, &global_lock);
   self->wait_condvar = NULL;
 
-  post_acquire_global_lock (self);
+  if (new_count == 0 && !NILP (self->error_symbol))
+    return 1;
 
   mutex->owner = self;
-  mutex->count = 1;
+  mutex->count = new_count == 0 ? 1 : new_count;
+
+  return 1;
 }
 
-static void
+static int
 lisp_mutex_unlock (lisp_mutex_t *mutex)
 {
   struct thread_state *self = current_thread;
@@ -127,18 +132,40 @@ lisp_mutex_unlock (lisp_mutex_t *mutex)
     error ("blah");
 
   if (--mutex->count > 0)
-    return;
+    return 0;
 
   mutex->owner = NULL;
   sys_cond_broadcast (&mutex->condition);
 
-  post_acquire_global_lock (self);
+  return 1;
+}
+
+static unsigned int
+lisp_mutex_unlock_for_wait (lisp_mutex_t *mutex)
+{
+  struct thread_state *self = current_thread;
+  unsigned int result = mutex->count;
+
+  /* Ensured by condvar code.  */
+  eassert (mutex->owner == current_thread);
+
+  mutex->count = 0;
+  mutex->owner = NULL;
+  sys_cond_broadcast (&mutex->condition);
+
+  return result;
 }
 
 static void
 lisp_mutex_destroy (lisp_mutex_t *mutex)
 {
   sys_cond_destroy (&mutex->condition);
+}
+
+static int
+lisp_mutex_owned_p (lisp_mutex_t *mutex)
+{
+  return mutex->owner == current_thread;
 }
 
 
@@ -173,9 +200,10 @@ static void
 mutex_lock_callback (void *arg)
 {
   struct Lisp_Mutex *mutex = arg;
+  struct thread_state *self = current_thread;
 
-  /* This calls post_acquire_global_lock.  */
-  lisp_mutex_lock (&mutex->mutex);
+  if (lisp_mutex_lock (&mutex->mutex, 0))
+    post_acquire_global_lock (self);
 }
 
 static Lisp_Object
@@ -211,9 +239,10 @@ static void
 mutex_unlock_callback (void *arg)
 {
   struct Lisp_Mutex *mutex = arg;
+  struct thread_state *self = current_thread;
 
-  /* This calls post_acquire_global_lock.  */
-  lisp_mutex_unlock (&mutex->mutex);
+  if (lisp_mutex_unlock (&mutex->mutex))
+    post_acquire_global_lock (self);
 }
 
 DEFUN ("mutex-unlock", Fmutex_unlock, Smutex_unlock, 1, 1, 0,
@@ -249,6 +278,154 @@ void
 finalize_one_mutex (struct Lisp_Mutex *mutex)
 {
   lisp_mutex_destroy (&mutex->mutex);
+}
+
+
+
+DEFUN ("make-condition-variable",
+       Fmake_condition_variable, Smake_condition_variable,
+       1, 2, 0,
+       doc: /* Make a condition variable.
+A condition variable provides a way for a thread to sleep while
+waiting for a state change.
+
+MUTEX is the mutex associated with this condition variable.
+NAME, if given, is the name of this condition variable.  The name is
+informational only.  */)
+  (Lisp_Object mutex, Lisp_Object name)
+{
+  struct Lisp_CondVar *condvar;
+  Lisp_Object result;
+
+  CHECK_MUTEX (mutex);
+  if (!NILP (name))
+    CHECK_STRING (name);
+
+  condvar = ALLOCATE_PSEUDOVECTOR (struct Lisp_CondVar, cond, PVEC_CONDVAR);
+  memset ((char *) condvar + offsetof (struct Lisp_CondVar, cond),
+	  0, sizeof (struct Lisp_CondVar) - offsetof (struct Lisp_CondVar,
+						      cond));
+  condvar->mutex = mutex;
+  condvar->name = name;
+  sys_cond_init (&condvar->cond);
+
+  XSETCONDVAR (result, condvar);
+  return result;
+}
+
+static void
+condition_wait_callback (void *arg)
+{
+  struct Lisp_CondVar *cvar = arg;
+  struct Lisp_Mutex *mutex = XMUTEX (cvar->mutex);
+  struct thread_state *self = current_thread;
+  unsigned int saved_count;
+  Lisp_Object cond;
+
+  XSETCONDVAR (cond, cvar);
+  current_thread->event_object = cond;
+  saved_count = lisp_mutex_unlock_for_wait (&mutex->mutex);
+  /* If we were signalled while unlocking, we skip the wait, but we
+     still must reacquire our lock.  */
+  if (NILP (self->error_symbol))
+    {
+      self->wait_condvar = &cvar->cond;
+      sys_cond_wait (&cvar->cond, &global_lock);
+      self->wait_condvar = NULL;
+    }
+  lisp_mutex_lock (&mutex->mutex, saved_count);
+  current_thread->event_object = Qnil;
+  post_acquire_global_lock (self);
+}
+
+DEFUN ("condition-wait", Fcondition_wait, Scondition_wait, 1, 1, 0,
+       doc: /* Wait for the condition variable to be notified.
+CONDITION is the condition variable to wait on.
+
+The mutex associated with CONDITION must be held when this is called.
+It is an error if it is not held.
+
+This atomically releases the mutex and waits for CONDITION to be
+notified.  When `condition-wait' returns, the mutex will again be
+locked by this thread.  */)
+  (Lisp_Object condition)
+{
+  struct Lisp_CondVar *cvar;
+  struct Lisp_Mutex *mutex;
+
+  CHECK_CONDVAR (condition);
+  cvar = XCONDVAR (condition);
+
+  mutex = XMUTEX (cvar->mutex);
+  if (!lisp_mutex_owned_p (&mutex->mutex))
+    error ("fixme");
+
+  flush_stack_call_func (condition_wait_callback, cvar);
+
+  return Qnil;
+}
+
+/* Used to communicate argumnets to condition_notify_callback.  */
+struct notify_args
+{
+  struct Lisp_CondVar *cvar;
+  int all;
+};
+
+static void
+condition_notify_callback (void *arg)
+{
+  struct notify_args *na = arg;
+  struct Lisp_Mutex *mutex = XMUTEX (na->cvar->mutex);
+  struct thread_state *self = current_thread;
+  unsigned int saved_count;
+  Lisp_Object cond;
+
+  XSETCONDVAR (cond, na->cvar);
+  saved_count = lisp_mutex_unlock_for_wait (&mutex->mutex);
+  if (na->all)
+    sys_cond_broadcast (&na->cvar->cond);
+  else
+    sys_cond_signal (&na->cvar->cond);
+  lisp_mutex_lock (&mutex->mutex, saved_count);
+  post_acquire_global_lock (self);
+}
+
+DEFUN ("condition-notify", Fcondition_notify, Scondition_notify, 1, 2, 0,
+       doc: /* Notify a condition variable.
+This wakes a thread waiting on CONDITION.
+If ALL is non-nil, all waiting threads are awoken.
+
+The mutex associated with CONDITION must be held when this is called.
+It is an error if it is not held.
+
+This atomically releases the mutex when notifying CONDITION.  When
+`condition-notify' returns, the mutex will again be locked by this
+thread.  */)
+  (Lisp_Object condition, Lisp_Object all)
+{
+  struct Lisp_CondVar *cvar;
+  struct Lisp_Mutex *mutex;
+  struct notify_args args;
+
+  CHECK_CONDVAR (condition);
+  cvar = XCONDVAR (condition);
+
+  mutex = XMUTEX (cvar->mutex);
+  if (!lisp_mutex_owned_p (&mutex->mutex))
+    error ("fixme");
+
+  args.cvar = cvar;
+  args.all = !NILP (all);
+  flush_stack_call_func (condition_notify_callback, &args);
+
+  return Qnil;
+}
+
+void
+finalize_one_condvar (struct Lisp_CondVar *condvar)
+{
+  sys_cond_destroy (&condvar->cond);
 }
 
 
@@ -555,8 +732,8 @@ DEFUN ("thread-signal", Fthread_signal, Sthread_signal, 3, 3, 0,
        doc: /* Signal an error in a thread.
 This acts like `signal', but arranges for the signal to be raised
 in THREAD.  If THREAD is the current thread, acts just like `signal'.
-This will interrupt a blocked call to `mutex-lock' or`thread-join' in
-the target thread.  */)
+This will interrupt a blocked call to `mutex-lock', `condition-wait',
+or `thread-join' in the target thread.  */)
   (Lisp_Object thread, Lisp_Object error_symbol, Lisp_Object data)
 {
   struct thread_state *tstate;
@@ -597,6 +774,7 @@ DEFUN ("thread-blocker", Fthread_blocker, Sthread_blocker, 1, 1, 0,
 If THREAD is blocked in `thread-join' on a second thread, return that
 thread.
 If THREAD is blocked in `mutex-lock', return the mutex.
+If THREAD is blocked in `condition-wait', return the condition variable.
 Otherwise, if THREAD is not blocked, return nil.  */)
   (Lisp_Object thread)
 {
@@ -711,9 +889,14 @@ syms_of_threads (void)
   defsubr (&Smutex_lock);
   defsubr (&Smutex_unlock);
   defsubr (&Smutex_name);
+  defsubr (&Smake_condition_variable);
+  defsubr (&Scondition_wait);
+  defsubr (&Scondition_notify);
 
   Qthreadp = intern_c_string ("threadp");
   staticpro (&Qthreadp);
   Qmutexp = intern_c_string ("mutexp");
   staticpro (&Qmutexp);
+  Qcondition_variablep = intern_c_string ("condition-variablep");
+  staticpro (&Qcondition_variablep);
 }

@@ -175,4 +175,17 @@
        (accept-process-output nil 1))
      threads-test-global)))
 
+(ert-deftest threads-condvarp ()
+  "simple test of condition-variablep"
+  (should-not (condition-variablep 'hi)))
+
+(ert-deftest threads-condvarp-2 ()
+  "another simple test of condition-variablep"
+  (should (condition-variablep (make-condition-variable (make-mutex)))))
+
+(ert-deftest threads-condvar-type ()
+  "type-of condvar"
+  (should (eq (type-of (make-condition-variable (make-mutex)))
+	      'condition-variable)))
+
 ;;; threads.el ends here

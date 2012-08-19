@@ -3106,6 +3106,8 @@ sweep_vectors (void)
 		finalize_one_thread ((struct thread_state *) vector);
 	      else if (PSEUDOVECTOR_TYPEP (&vector->header, PVEC_MUTEX))
 		finalize_one_mutex ((struct Lisp_Mutex *) vector);
+	      else if (PSEUDOVECTOR_TYPEP (&vector->header, PVEC_CONDVAR))
+		finalize_one_condvar ((struct Lisp_CondVar *) vector);
 
 	      next = ADVANCE (vector, nbytes);
 
