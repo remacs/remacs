@@ -348,7 +348,8 @@ CONDITION is the condition variable to wait on.
 The mutex associated with CONDITION must be held when this is called.
 It is an error if it is not held.
 
-This releases the mutex and waits for CONDITION to be notified.  When
+This releases the mutex and waits for CONDITION to be notified or for
+this thread to be signalled with `thread-signal'.  When
 `condition-wait' returns, the mutex will again be locked by this
 thread.  */)
   (Lisp_Object condition)
