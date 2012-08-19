@@ -61,7 +61,7 @@ post_acquire_global_lock (struct thread_state *self)
   self->m_current_buffer = 0;
   set_buffer_internal (XBUFFER (buffer));
 
-  if (!EQ (current_thread->error_symbol, Qnil))
+  if (!NILP (current_thread->error_symbol))
     {
       Lisp_Object sym = current_thread->error_symbol;
       Lisp_Object data = current_thread->error_data;
@@ -110,7 +110,7 @@ lisp_mutex_lock (lisp_mutex_t *mutex, int new_count)
   self = current_thread;
   self->wait_condvar = &mutex->condition;
   while (mutex->owner != NULL && (new_count != 0
-				  || EQ (self->error_symbol, Qnil)))
+				  || NILP (self->error_symbol)))
     sys_cond_wait (&mutex->condition, &global_lock);
   self->wait_condvar = NULL;
 
@@ -796,7 +796,7 @@ thread_join_callback (void *arg)
   XSETTHREAD (thread, tstate);
   self->event_object = thread;
   self->wait_condvar = &tstate->thread_condvar;
-  while (tstate->m_specpdl != NULL && EQ (self->error_symbol, Qnil))
+  while (tstate->m_specpdl != NULL && NILP (self->error_symbol))
     sys_cond_wait (self->wait_condvar, &global_lock);
 
   self->wait_condvar = NULL;
