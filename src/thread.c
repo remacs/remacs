@@ -185,6 +185,9 @@ informational only.  */)
   struct Lisp_Mutex *mutex;
   Lisp_Object result;
 
+  if (!NILP (name))
+    CHECK_STRING (name);
+
   mutex = ALLOCATE_PSEUDOVECTOR (struct Lisp_Mutex, mutex, PVEC_MUTEX);
   memset ((char *) mutex + offsetof (struct Lisp_Mutex, mutex),
 	  0, sizeof (struct Lisp_Mutex) - offsetof (struct Lisp_Mutex,
