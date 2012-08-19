@@ -661,6 +661,9 @@ If NAME is given, it names the new thread.  */)
   if (!initialized)
     abort ();
 
+  if (!NILP (name))
+    CHECK_STRING (name);
+
   new_thread = ALLOCATE_PSEUDOVECTOR (struct thread_state, m_gcprolist,
 				      PVEC_THREAD);
   memset ((char *) new_thread + offsetof (struct thread_state, m_gcprolist),
