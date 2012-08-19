@@ -425,6 +425,31 @@ thread.  */)
   return Qnil;
 }
 
+DEFUN ("condition-mutex", Fcondition_mutex, Scondition_mutex, 1, 1, 0,
+       doc: /* Return the mutex associated with CONDITION.  */)
+  (Lisp_Object condition)
+{
+  struct Lisp_CondVar *cvar;
+
+  CHECK_CONDVAR (condition);
+  cvar = XCONDVAR (condition);
+
+  return cvar->mutex;
+}
+
+DEFUN ("condition-name", Fcondition_name, Scondition_name, 1, 1, 0,
+       doc: /* Return the name of CONDITION.
+If no name was given when CONDITION was created, return nil.  */)
+  (Lisp_Object condition)
+{
+  struct Lisp_CondVar *cvar;
+
+  CHECK_CONDVAR (condition);
+  cvar = XCONDVAR (condition);
+
+  return cvar->name;
+}
+
 void
 finalize_one_condvar (struct Lisp_CondVar *condvar)
 {
@@ -898,6 +923,8 @@ syms_of_threads (void)
   defsubr (&Smake_condition_variable);
   defsubr (&Scondition_wait);
   defsubr (&Scondition_notify);
+  defsubr (&Scondition_mutex);
+  defsubr (&Scondition_name);
 
   Qthreadp = intern_c_string ("threadp");
   staticpro (&Qthreadp);

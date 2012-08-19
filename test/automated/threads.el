@@ -188,4 +188,22 @@
   (should (eq (type-of (make-condition-variable (make-mutex)))
 	      'condition-variable)))
 
+(ert-deftest threads-condvar-mutex ()
+  "simple test of condition-mutex"
+  (should
+   (let ((m (make-mutex)))
+     (eq m (condition-mutex (make-condition-variable m))))))
+
+(ert-deftest threads-condvar-name ()
+  "simple test of condition-name"
+  (should
+     (eq nil (condition-name (make-condition-variable (make-mutex))))))
+
+(ert-deftest threads-condvar-name-2 ()
+  "another simple test of condition-name"
+  (should
+     (string= "hi bob"
+	      (condition-name (make-condition-variable (make-mutex)
+						       "hi bob")))))
+
 ;;; threads.el ends here
