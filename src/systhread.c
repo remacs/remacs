@@ -24,6 +24,10 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include <sched.h>
 
+#ifdef HAVE_SYS_PRCTL_H
+#include <sys/prctl.h>
+#endif
+
 void
 sys_mutex_init (sys_mutex_t *mutex)
 {
@@ -91,8 +95,8 @@ sys_thread_equal (sys_thread_t one, sys_thread_t two)
 }
 
 int
-sys_thread_create (sys_thread_t *thread_ptr, thread_creation_function *func,
-		   void *arg)
+sys_thread_create (sys_thread_t *thread_ptr, const char *name,
+		   thread_creation_function *func, void *arg)
 {
   pthread_attr_t attr;
   int result = 0;
@@ -101,7 +105,13 @@ sys_thread_create (sys_thread_t *thread_ptr, thread_creation_function *func,
     return 0;
 
   if (!pthread_attr_setdetachstate (&attr, PTHREAD_CREATE_DETACHED))
-    result = pthread_create (thread_ptr, &attr, func, arg) == 0;
+    {
+      result = pthread_create (thread_ptr, &attr, func, arg) == 0;
+#if defined (HAVE_SYS_PRCTL_H) && defined (HAVE_PRCTL) && defined (PR_SET_NAME)
+      if (result && name != NULL)
+	prctl (PR_SET_NAME, name);
+#endif
+    }
 
   pthread_attr_destroy (&attr);
 

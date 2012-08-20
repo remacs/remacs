@@ -23,6 +23,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "character.h"
 #include "buffer.h"
 #include "process.h"
+#include "coding.h"
 
 static struct thread_state primary_thread;
 
@@ -682,6 +683,7 @@ If NAME is given, it names the new thread.  */)
   sys_thread_t thr;
   struct thread_state *new_thread;
   Lisp_Object result;
+  const char *c_name = NULL;
 
   /* Can't start a thread in temacs.  */
   if (!initialized)
@@ -716,7 +718,10 @@ If NAME is given, it names the new thread.  */)
   new_thread->next_thread = all_threads;
   all_threads = new_thread;
 
-  if (! sys_thread_create (&thr, run_thread, new_thread))
+  if (!NILP (name))
+    c_name = SSDATA (ENCODE_UTF_8 (name));
+
+  if (! sys_thread_create (&thr, c_name, run_thread, new_thread))
     {
       /* Restore the previous situation.  */
       all_threads = all_threads->next_thread;

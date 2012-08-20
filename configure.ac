@@ -1230,7 +1230,7 @@ AC_CHECK_HEADERS_ONCE(
   linux/version.h sys/systeminfo.h
   stdio_ext.h fcntl.h coff.h pty.h
   sys/vlimit.h sys/resource.h
-  sys/utsname.h pwd.h utmp.h dirent.h util.h)
+  sys/utsname.h pwd.h utmp.h dirent.h util.h sys/prctl.h)
 
 AC_MSG_CHECKING(if personality LINUX32 can be set)
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <sys/personality.h>]], [[personality (PER_LINUX32)]])],
@@ -2731,7 +2731,7 @@ gai_strerror mkstemp getline getdelim fsync sync \
 difftime posix_memalign \
 getpwent endpwent getgrent endgrent \
 touchlock \
-cfmakeraw cfsetspeed copysign __executable_start)
+cfmakeraw cfsetspeed copysign __executable_start prctl)
 
 dnl getwd appears to be buggy on SVR4.2, so we don't use it.
 if test $opsys = unixware; then
