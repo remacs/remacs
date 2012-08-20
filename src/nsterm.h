@@ -56,7 +56,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 - (void)sendEvent: (NSEvent *)theEvent;
 - (void)showPreferencesWindow: (id)sender;
 - (BOOL) openFile: (NSString *)fileName;
-- (void)fd_handler: (NSTimer *) fdEntry;
+- (void)fd_handler: (id)unused;
 - (void)timeout_handler: (NSTimer *)timedEntry;
 - (BOOL)fulfillService: (NSString *)name withArg: (NSString *)arg;
 @end
@@ -195,12 +195,14 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
    NSTextField *title;
    NSMatrix *matrix;
    int rows, cols;
+   int timer_fired;
    }
 - initFromContents: (Lisp_Object)menu isQuestion: (BOOL)isQ;
 - addButton: (char *)str value: (Lisp_Object)val row: (int)row;
 - addString: (char *)str row: (int)row;
 - addSplit;
 - (Lisp_Object)runDialogAt: (NSPoint)p;
+- (void)timeout_handler: (NSTimer *)timedEntry;
 @end
 
 #if defined (NS_IMPL_COCOA) && MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_6
@@ -448,7 +450,10 @@ struct nsfont_info
   struct font font;
 
   char *name;  /* PostScript name, uniquely identifies on NS systems */
-  float width;  /* this and following metrics stored as float rather than int */
+
+  /* The following metrics are stored as float rather than int. */
+
+  float width;  /* Maximum advance for the font.  */
   float height;
   float underpos;
   float underwidth;
