@@ -4304,6 +4304,34 @@ as alpha versions."
   (version-list-= (version-to-list v1) (version-to-list v2)))
 
 
+;;; Thread support.
+
+(defmacro with-mutex (mutex &rest body)
+  "Invoke BODY with MUTEX held, releasing MUTEX when done.
+This is the simplest safe way to acquire and release a mutex."
+  (declare (indent 1) (debug t))
+  (let ((sym (make-symbol "mutex")))
+    `(let ((,sym ,mutex))
+       (mutex-lock ,sym)
+       (unwind-protect
+	   (progn ,@body)
+	 (mutex-unlock ,sym)))))
+
+(defmacro until-condition (test condition)
+  "Wait for the condition variable CONDITION, checking TEST.
+Acquire CONDITION's mutex, then check TEST.
+If TEST evaluates to nil, repeatedly invoke `condition-wait' on CONDITION.
+When CONDITION is signalled, check TEST again.
+
+This is the simplest safe way to invoke `condition-wait'."
+  (let ((cond-sym (make-symbol "condition")))
+    `(let ((,cond-sym ,condition))
+       (with-mutex (condition-mutex ,cond-sym)
+         (while (not ,test)
+	   (condition-wait ,cond-sym))))))
+
+
+
 ;;; Misc.
 (defconst menu-bar-separator '("--")
   "Separator for menus.")
