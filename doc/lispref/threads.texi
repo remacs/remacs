@@ -236,3 +236,9 @@ Return the name of @var{cond}, as passed to
 Return the mutex associated with @var{cond}.  Note that the associated
 mutex cannot be changed.
 @end defun
+
+@defmac until-condition test cond
+Acquire the mutex associated with @var{cond}, and then loop, invoking
+the form @var{test}.  If @var{test} evaluates to @code{nil}, invoke
+@code{condition-wait} on @var{cond}.
+@end defmac
