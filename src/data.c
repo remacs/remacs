@@ -485,7 +485,7 @@ DEFUN ("mutexp", Fmutexp, Smutexp, 1, 1, 0,
     return Qnil;
 }
 
-DEFUN ("condition-variablep", Fcondition_variablep, Scondition_variablep,
+DEFUN ("condition-variable-p", Fcondition_variable_p, Scondition_variable_p,
        1, 1, 0,
        doc: /* Return t if OBJECT is a condition variable.  */)
   (Lisp_Object object)
@@ -3174,7 +3174,7 @@ syms_of_data (void)
   defsubr (&Schar_or_string_p);
   defsubr (&Sthreadp);
   defsubr (&Smutexp);
-  defsubr (&Scondition_variablep);
+  defsubr (&Scondition_variable_p);
   defsubr (&Scar);
   defsubr (&Scdr);
   defsubr (&Scar_safe);
