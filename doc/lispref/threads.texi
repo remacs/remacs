@@ -27,7 +27,8 @@ also to create and control mutexes and condition variables, useful for
 thread synchronization.
 
   While global variables are shared among all Emacs Lisp threads,
-local variables are not---a dynamic @code{let} binding is local.
+local variables are not---a dynamic @code{let} binding is local.  Each
+thread also has its own current buffer (@pxref{Current Buffer}).
 
   In the case of lexical bindings (@pxref{Variable Scoping}), a
 closure is an object like any other in Emacs Lisp, and bindings in a
@@ -49,6 +50,9 @@ threads can be signaled.
 @defun make-thread function &optional name
 Create a new thread of execution which invokes @var{function}.  When
 @var{function} returns, the thread exits.
+
+The new thread is created with no local variable bindings in effect.
+The new thread's current buffer is inherited from the current thread.
 
 @var{name} can be supplied to give a name to the thread.  The name is
 used for debugging and informational purposes only; it has no meaning
