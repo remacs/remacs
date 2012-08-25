@@ -67,7 +67,9 @@ thread, @code{nil} otherwise.
 @end defun
 
 @defun thread-join thread
-Block until @var{thread} exits, or until the current thread is signaled.
+Block until @var{thread} exits, or until the current thread is
+signaled.  If @var{thread} has already exited, this returns
+immediately.
 @end defun
 
 @defun thread-signal thread error-symbol data
