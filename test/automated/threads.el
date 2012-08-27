@@ -70,6 +70,10 @@
        (and threads-test-global
 	    (not (thread-alive-p thread)))))))
 
+(ert-deftest threads-join-self ()
+  "cannot thread-join the current thread"
+  (should-error (thread-join (current-thread))))
+
 (defvar threads-test-binding nil)
 
 (defun threads-test-thread2 ()

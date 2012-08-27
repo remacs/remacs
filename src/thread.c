@@ -852,6 +852,9 @@ It is an error for a thread to try to join itself.  */)
   CHECK_THREAD (thread);
   tstate = XTHREAD (thread);
 
+  if (tstate == current_thread)
+    error ("cannot join current thread");
+
   if (tstate->m_specpdl != NULL)
     flush_stack_call_func (thread_join_callback, tstate);
 
