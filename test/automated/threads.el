@@ -176,12 +176,12 @@
      threads-test-global)))
 
 (ert-deftest threads-condvarp ()
-  "simple test of condition-variablep"
-  (should-not (condition-variablep 'hi)))
+  "simple test of condition-variable-p"
+  (should-not (condition-variable-p 'hi)))
 
 (ert-deftest threads-condvarp-2 ()
-  "another simple test of condition-variablep"
-  (should (condition-variablep (make-condition-variable (make-mutex)))))
+  "another simple test of condition-variable-p"
+  (should (condition-variable-p (make-condition-variable (make-mutex)))))
 
 (ert-deftest threads-condvar-type ()
   "type-of condvar"
