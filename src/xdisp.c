@@ -770,9 +770,9 @@ static int clear_image_cache_count;
 static struct glyph_slice null_glyph_slice = { 0, 0, 0, 0 };
 #endif
 
-/* Non-zero while redisplay_internal is in progress.  */
+/* True while redisplay_internal is in progress.  */
 
-int redisplaying_p;
+bool redisplaying_p;
 
 static Lisp_Object Qinhibit_free_realized_faces;
 static Lisp_Object Qmode_line_default_help_echo;
@@ -2425,7 +2425,7 @@ remember_mouse_glyph (struct frame *f, int gx, int gy, NativeRectangle *rect)
 static Lisp_Object
 safe_eval_handler (Lisp_Object arg, ptrdiff_t nargs, Lisp_Object *args)
 {
-  add_to_log ("Error during redisplay: %S signalled %S",
+  add_to_log ("Error during redisplay: %S signaled %S",
 	      Flist (nargs, args), arg);
   return Qnil;
 }
@@ -4093,35 +4093,33 @@ handle_invisible_prop (struct it *it)
 	  /* Record whether we have to display an ellipsis for the
 	     invisible text.  */
 	  int display_ellipsis_p = (invis_p == 2);
-	  ptrdiff_t endpos;
+	  ptrdiff_t len, endpos;
 
 	  handled = HANDLED_RECOMPUTE_PROPS;
 
 	  /* Get the position at which the next visible text can be
 	     found in IT->string, if any.  */
-	  XSETINT (limit, SCHARS (it->string));
+	  endpos = len = SCHARS (it->string);
+	  XSETINT (limit, len);
 	  do
 	    {
 	      end_charpos = Fnext_single_property_change (charpos, Qinvisible,
 							  it->string, limit);
-	      if (!NILP (end_charpos))
+	      if (INTEGERP (end_charpos))
 		{
+		  endpos = XFASTINT (end_charpos);
 		  prop = Fget_text_property (end_charpos, Qinvisible, it->string);
 		  invis_p = TEXT_PROP_MEANS_INVISIBLE (prop);
 		  if (invis_p == 2)
 		    display_ellipsis_p = 1;
 		}
 	    }
-	  while (!NILP (end_charpos) && invis_p);
+	  while (invis_p && endpos < len);
 
 	  if (display_ellipsis_p)
-	    {
-	      it->ellipsis_p = 1;
-	      handled = HANDLED_RETURN;
-	    }
+	    it->ellipsis_p = 1;
 
-	  if (INTEGERP (end_charpos)
-	      && (endpos = XFASTINT (end_charpos)) < XFASTINT (limit))
+	  if (endpos < len)
 	    {
 	      /* Text at END_CHARPOS is visible.  Move IT there.  */
 	      struct text_pos old;
@@ -4159,7 +4157,8 @@ handle_invisible_prop (struct it *it)
 	      /* The rest of the string is invisible.  If this is an
 		 overlay string, proceed with the next overlay string
 		 or whatever comes and return a character from there.  */
-	      if (it->current.overlay_string_index >= 0)
+	      if (it->current.overlay_string_index >= 0
+		  && !display_ellipsis_p)
 		{
 		  next_overlay_string (it);
 		  /* Don't check for overlay strings when we just
@@ -10535,11 +10534,10 @@ current_message_1 (ptrdiff_t a1, Lisp_Object a2, ptrdiff_t a3, ptrdiff_t a4)
    empty.  This is a relatively infrequent operation, so it's not
    worth optimizing.  */
 
-int
+bool
 push_message (void)
 {
-  Lisp_Object msg;
-  msg = current_message ();
+  Lisp_Object msg = current_message ();
   Vmessage_stack = Fcons (msg, Vmessage_stack);
   return STRINGP (msg);
 }
@@ -13022,12 +13020,11 @@ redisplay_internal (void)
   if (redisplaying_p)
     return;
 
-  /* Record a function that resets redisplaying_p to its old value
+  /* Record a function that clears redisplaying_p
      when we leave this function.  */
   count = SPECPDL_INDEX ();
-  record_unwind_protect (unwind_redisplay,
-			 Fcons (make_number (redisplaying_p), selected_frame));
-  ++redisplaying_p;
+  record_unwind_protect (unwind_redisplay, selected_frame);
+  redisplaying_p = 1;
   specbind (Qinhibit_free_realized_faces, Qnil);
 
   {
@@ -13575,9 +13572,10 @@ redisplay_internal (void)
     }
   else if (FRAME_VISIBLE_P (sf) && !FRAME_OBSCURED_P (sf))
     {
-      Lisp_Object mini_window = FRAME_MINIBUF_WINDOW (sf);
+      Lisp_Object mini_window;
       struct frame *mini_frame;
 
+      mini_window = FRAME_MINIBUF_WINDOW (sf);
       displayed_buffer = XBUFFER (XWINDOW (selected_window)->buffer);
       /* Use list_of_error, not Qerror, so that
 	 we catch only errors and don't run the debugger.  */
@@ -13772,21 +13770,15 @@ redisplay_preserve_echo_area (int from_where)
 }
 
 
-/* Function registered with record_unwind_protect in
-   redisplay_internal.  Reset redisplaying_p to the value it had
-   before redisplay_internal was called, and clear
-   prevent_freeing_realized_faces_p.  It also selects the previously
+/* Function registered with record_unwind_protect in redisplay_internal.
+   Clear redisplaying_p.  Also, select the previously
    selected frame, unless it has been deleted (by an X connection
    failure during redisplay, for example).  */
 
 static Lisp_Object
-unwind_redisplay (Lisp_Object val)
+unwind_redisplay (Lisp_Object old_frame)
 {
-  Lisp_Object old_redisplaying_p, old_frame;
-
-  old_redisplaying_p = XCAR (val);
-  redisplaying_p = XFASTINT (old_redisplaying_p);
-  old_frame = XCDR (val);
+  redisplaying_p = 0;
   if (! EQ (old_frame, selected_frame)
       && FRAME_LIVE_P (XFRAME (old_frame)))
     select_frame_for_redisplay (old_frame);
@@ -14614,8 +14606,7 @@ run_window_scroll_functions (Lisp_Object window, struct text_pos startp)
 			    make_number (CHARPOS (startp)));
       SET_TEXT_POS_FROM_MARKER (startp, w->start);
       /* In case the hook functions switch buffers.  */
-      if (current_buffer != XBUFFER (w->buffer))
-	set_buffer_internal_1 (XBUFFER (w->buffer));
+      set_buffer_internal (XBUFFER (w->buffer));
     }
 
   return startp;
@@ -15443,7 +15434,7 @@ set_vertical_scroll_bar (struct window *w)
    selected_window is redisplayed.
 
    We can return without actually redisplaying the window if
-   fonts_changed_p is nonzero.  In that case, redisplay_internal will
+   fonts_changed_p.  In that case, redisplay_internal will
    retry.  */
 
 static void
@@ -16287,7 +16278,7 @@ redisplay_window (Lisp_Object window, int just_this_one_p)
     }
 #endif /* HAVE_WINDOW_SYSTEM */
 
-  /* We go to this label, with fonts_changed_p nonzero,
+  /* We go to this label, with fonts_changed_p set,
      if it is necessary to try again using larger glyph matrices.
      We have to redeem the scroll bar even in this case,
      because the loop in redisplay_internal expects that.  */
@@ -17789,15 +17780,15 @@ try_window_id (struct window *w)
     {
       rotate_matrix (current_matrix, first_unchanged_at_end_vpos + dvpos,
 		     bottom_vpos, dvpos);
-      enable_glyph_matrix_rows (current_matrix, bottom_vpos + dvpos,
-				bottom_vpos, 0);
+      clear_glyph_matrix_rows (current_matrix, bottom_vpos + dvpos,
+			       bottom_vpos);
     }
   else if (dvpos > 0)
     {
       rotate_matrix (current_matrix, first_unchanged_at_end_vpos,
 		     bottom_vpos, dvpos);
-      enable_glyph_matrix_rows (current_matrix, first_unchanged_at_end_vpos,
-				first_unchanged_at_end_vpos + dvpos, 0);
+      clear_glyph_matrix_rows (current_matrix, first_unchanged_at_end_vpos,
+			       first_unchanged_at_end_vpos + dvpos);
     }
 
   /* For frame-based redisplay, make sure that current frame and window

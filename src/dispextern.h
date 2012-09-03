@@ -678,7 +678,7 @@ struct glyph_matrix
 
   /* Values of BEGV and ZV as of last redisplay.  Set in
      mark_window_display_accurate_1.  */
-  int begv, zv;
+  ptrdiff_t begv, zv;
 };
 
 
@@ -1133,11 +1133,11 @@ struct glyph_row *matrix_row (struct glyph_matrix *, int);
       ((ROW)->phys_height - (ROW)->phys_ascent	\
        > (ROW)->height - (ROW)->ascent)
 
-/* Non-zero means that fonts have been loaded since the last glyph
+/* True means that fonts have been loaded since the last glyph
    matrix adjustments.  The function redisplay_internal adjusts glyph
-   matrices when this flag is non-zero.  */
+   matrices when this flag is true.  */
 
-extern int fonts_changed_p;
+extern bool fonts_changed_p;
 
 /* A glyph for a space.  */
 
@@ -1156,7 +1156,7 @@ extern int updated_area;
 /* Non-zero means last display completed.  Zero means it was
    preempted.  */
 
-extern int display_completed;
+extern bool display_completed;
 
 
 
@@ -1425,7 +1425,7 @@ struct glyph_string
       && !NILP (BVAR (XBUFFER (W->buffer), mode_line_format))	\
       && WINDOW_TOTAL_LINES (W) > 1)
 
-/* Value is non-zero if window W wants a header line.  */
+/* Value is true if window W wants a header line.  */
 
 #define WINDOW_WANTS_HEADER_LINE_P(W)					\
      (!MINI_WINDOW_P ((W))						\
@@ -1866,7 +1866,6 @@ struct bidi_it {
   int resolved_level;		/* final resolved level of this character */
   int invalid_levels;		/* how many PDFs to ignore */
   int invalid_rl_levels;	/* how many PDFs from RLE/RLO to ignore */
-  int prev_was_pdf;		/* if non-zero, previous char was PDF */
   struct bidi_saved_info prev;	/* info about previous character */
   struct bidi_saved_info last_strong; /* last-seen strong directional char */
   struct bidi_saved_info next_for_neutral; /* surrounding characters for... */
@@ -1889,6 +1888,7 @@ struct bidi_it {
   struct bidi_string_data string;	/* string to reorder */
   bidi_dir_t paragraph_dir;	/* current paragraph direction */
   ptrdiff_t separator_limit;	/* where paragraph separator should end */
+  unsigned prev_was_pdf : 1;	/* if non-zero, previous char was PDF */
   unsigned first_elt : 1;	/* if non-zero, examine current char first */
   unsigned new_paragraph : 1;	/* if non-zero, we expect a new paragraph */
   unsigned frame_window_p : 1;	/* non-zero if displaying on a GUI frame */
@@ -2102,10 +2102,10 @@ struct composition_it
   ptrdiff_t lookback;
   /* If non-negative, number of glyphs of the glyph-string.  */
   int nglyphs;
-  /* Nonzero iff the composition is created while buffer is scanned in
+  /* True iff the composition is created while buffer is scanned in
      reverse order, and thus the grapheme clusters must be rendered
      from the last to the first.  */
-  int reversed_p;
+  bool reversed_p;
 
   /** The following members contain information about the current
       grapheme cluster.  */
@@ -3030,14 +3030,14 @@ enum tool_bar_item_image
 
 /* Defined in bidi.c */
 
-extern void bidi_init_it (ptrdiff_t, ptrdiff_t, int, struct bidi_it *);
+extern void bidi_init_it (ptrdiff_t, ptrdiff_t, bool, struct bidi_it *);
 extern void bidi_move_to_visually_next (struct bidi_it *);
-extern void bidi_paragraph_init (bidi_dir_t, struct bidi_it *, int);
+extern void bidi_paragraph_init (bidi_dir_t, struct bidi_it *, bool);
 extern int  bidi_mirror_char (int);
 extern void bidi_push_it (struct bidi_it *);
 extern void bidi_pop_it (struct bidi_it *);
 extern void *bidi_shelve_cache (void);
-extern void bidi_unshelve_cache (void *, int);
+extern void bidi_unshelve_cache (void *, bool);
 
 /* Defined in xdisp.c */
 
@@ -3083,7 +3083,7 @@ void move_it_in_display_line (struct it *it,
 int in_display_vector_p (struct it *);
 int frame_mode_line_height (struct frame *);
 extern Lisp_Object Qtool_bar;
-extern int redisplaying_p;
+extern bool redisplaying_p;
 extern int help_echo_showing_p;
 extern int current_mode_line_height, current_header_line_height;
 extern Lisp_Object help_echo_string, help_echo_window;
@@ -3279,9 +3279,12 @@ void x_implicitly_set_name (struct frame *, Lisp_Object, Lisp_Object);
 
 extern Lisp_Object tip_frame;
 extern Window tip_window;
+extern frame_parm_handler x_frame_parm_handlers[];
+
 extern void start_hourglass (void);
 extern void cancel_hourglass (void);
 extern int hourglass_shown_p;
+
 struct atimer;			/* Defined in atimer.h.  */
 /* If non-null, an asynchronous timer that, when it expires, displays
    an hourglass cursor on all frames.  */
@@ -3332,7 +3335,7 @@ extern Lisp_Object marginal_area_string (struct window *, enum window_part,
 extern void redraw_frame (struct frame *);
 extern void cancel_line (int, struct frame *);
 extern void init_desired_glyphs (struct frame *);
-extern int update_frame (struct frame *, int, int);
+extern bool update_frame (struct frame *, bool, bool);
 extern void bitch_at_user (void);
 void adjust_glyphs (struct frame *);
 void free_glyphs (struct frame *);
@@ -3348,13 +3351,13 @@ void rotate_matrix (struct glyph_matrix *, int, int, int);
 void increment_matrix_positions (struct glyph_matrix *,
                                  int, int, ptrdiff_t, ptrdiff_t);
 void blank_row (struct window *, struct glyph_row *, int);
-void enable_glyph_matrix_rows (struct glyph_matrix *, int, int, int);
+void clear_glyph_matrix_rows (struct glyph_matrix *, int, int);
 void clear_glyph_row (struct glyph_row *);
 void prepare_desired_row (struct glyph_row *);
-void set_window_update_flags (struct window *, int);
-void update_single_window (struct window *, int);
-void do_pending_window_change (int);
-void change_frame_size (struct frame *, int, int, int, int, int);
+void set_window_update_flags (struct window *, bool);
+void update_single_window (struct window *, bool);
+void do_pending_window_change (bool);
+void change_frame_size (struct frame *, int, int, bool, bool, bool);
 void init_display (void);
 void syms_of_display (void);
 extern Lisp_Object Qredisplay_dont_pause;

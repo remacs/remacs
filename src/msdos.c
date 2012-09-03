@@ -1029,7 +1029,6 @@ IT_clear_end_of_line (struct frame *f, int first_unused)
 {
   char *spaces, *sp;
   int i, j, offset = 2 * (new_pos_X + screen_size_X * new_pos_Y);
-  extern int fatal_error_in_progress;
   struct tty_display_info *tty = FRAME_TTY (f);
 
   if (new_pos_X >= first_unused || fatal_error_in_progress)
@@ -2434,10 +2433,10 @@ and then the scan code.  */)
   else
     {
       val = Fvector (NUM_RECENT_DOSKEYS, keys);
-      memcpy (XVECTOR (val)->contents, keys + recent_doskeys_index,
-	      (NUM_RECENT_DOSKEYS - recent_doskeys_index) * word_size);
-      memcpy (XVECTOR (val)->contents + NUM_RECENT_DOSKEYS - recent_doskeys_index,
-	      keys, recent_doskeys_index * word_size);
+      vcopy (val, 0, keys + recent_doskeys_index,
+	     NUM_RECENT_DOSKEYS - recent_doskeys_index);
+      vcopy (val, NUM_RECENT_DOSKEYS - recent_doskeys_index,
+	     keys, recent_doskeys_index);
       return val;
     }
 }

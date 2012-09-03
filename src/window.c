@@ -63,7 +63,7 @@ static Lisp_Object Qreplace_buffer_in_windows, Qget_mru_window;
 static Lisp_Object Qwindow_resize_root_window, Qwindow_resize_root_window_vertically;
 static Lisp_Object Qscroll_up, Qscroll_down, Qscroll_command;
 static Lisp_Object Qsafe, Qabove, Qbelow;
-static Lisp_Object Qauto_buffer_name, Qclone_of;
+static Lisp_Object Qclone_of;
 
 static int displayed_window_lines (struct window *);
 static int count_windows (struct window *);
@@ -270,7 +270,7 @@ decode_any_window (register Lisp_Object window)
   return w;
 }
 
-struct window *
+static struct window *
 decode_valid_window (register Lisp_Object window)
 {
   struct window *w;
@@ -479,6 +479,9 @@ select_window (Lisp_Object window, Lisp_Object norecord, int inhibit_point_swap)
       record_buffer (w->buffer);
     }
 
+  /* Make the selected window's buffer current.  */
+  Fset_buffer (w->buffer);
+
   if (EQ (window, selected_window) && !inhibit_point_swap)
     return window;
 
@@ -498,9 +501,9 @@ select_window (Lisp_Object window, Lisp_Object norecord, int inhibit_point_swap)
   else
     fset_selected_window (sf, window);
 
-  /* Store the current buffer's actual point into the
-     old selected window.  It belongs to that window,
-     and when the window is not selected, must be in the window.  */
+  /* Store the old selected window's buffer's point in pointm of the old
+     selected window.  It belongs to that window, and when the window is
+     not selected, must be in the window.  */
   if (!inhibit_point_swap)
     {
       ow = XWINDOW (selected_window);
@@ -511,9 +514,6 @@ select_window (Lisp_Object window, Lisp_Object norecord, int inhibit_point_swap)
     }
 
   selected_window = window;
-
-  Fset_buffer (w->buffer);
-
   bset_last_selected_window (XBUFFER (w->buffer), window);
 
   /* Go to the point recorded in the window.
@@ -1409,22 +1409,21 @@ DEFUN ("window-point", Fwindow_point, Swindow_point, 0, 1, 0,
        doc: /* Return current value of point in WINDOW.
 WINDOW must be a live window and defaults to the selected one.
 
-For a nonselected window, this is the value point would have
-if that window were selected.
+For a nonselected window, this is the value point would have if that
+window were selected.
 
-Note that, when WINDOW is the selected window and its buffer
-is also currently selected, the value returned is the same as (point).
-It would be more strictly correct to return the `top-level' value
-of point, outside of any save-excursion forms.
-But that is hard to define.  */)
+Note that, when WINDOW is selected, the value returned is the same as
+that returned by `point' for WINDOW's buffer.  It would be more strictly
+correct to return the `top-level' value of `point', outside of any
+`save-excursion' forms.  But that is hard to define.  */)
   (Lisp_Object window)
 {
   register struct window *w = decode_live_window (window);
 
-  if (w == XWINDOW (selected_window)
-      && current_buffer == XBUFFER (w->buffer))
-    return Fpoint ();
-  return Fmarker_position (w->pointm);
+  if (w == XWINDOW (selected_window))
+    return make_number (BUF_PT (XBUFFER (w->buffer)));
+  else
+    return Fmarker_position (w->pointm);
 }
 
 DEFUN ("window-start", Fwindow_start, Swindow_start, 0, 1, 0,
@@ -1534,16 +1533,27 @@ Return POS.  */)
   register struct window *w = decode_live_window (window);
 
   CHECK_NUMBER_COERCE_MARKER (pos);
-  if (w == XWINDOW (selected_window)
-      && XBUFFER (w->buffer) == current_buffer)
-    Fgoto_char (pos);
-  else
-    set_marker_restricted (w->pointm, pos, w->buffer);
 
-  /* We have to make sure that redisplay updates the window to show
-     the new value of point.  */
-  if (!EQ (window, selected_window))
-    ++windows_or_buffers_changed;
+  if (w == XWINDOW (selected_window))
+    {
+      if (XBUFFER (w->buffer) == current_buffer)
+	Fgoto_char (pos);
+      else
+	{
+	  struct buffer *old_buffer = current_buffer;
+
+	  set_buffer_internal (XBUFFER (w->buffer));
+	  Fgoto_char (pos);
+	  set_buffer_internal (old_buffer);
+	}
+    }
+  else
+    {
+      set_marker_restricted (w->pointm, pos, w->buffer);
+      /* We have to make sure that redisplay updates the window to show
+	 the new value of point.  */
+      ++windows_or_buffers_changed;
+    }
 
   return pos;
 }
@@ -1960,6 +1970,9 @@ unshow_buffer (register struct window *w)
      is actually stored in that buffer, and the window's pointm isn't used.
      So don't clobber point in that buffer.  */
   if (! EQ (buf, XWINDOW (selected_window)->buffer)
+      /* Don't clobber point in current buffer either (this could be
+	 useful in connection with bug#12208).
+      && XBUFFER (buf) != current_buffer  */
       /* This line helps to fix Horsley's testbug.el bug.  */
       && !(WINDOWP (BVAR (b, last_selected_window))
 	   && w != XWINDOW (BVAR (b, last_selected_window))
@@ -3089,7 +3102,7 @@ run_window_configuration_change_hook (struct frame *f)
   /* Use the right buffer.  Matters when running the local hooks.  */
   if (current_buffer != XBUFFER (Fwindow_buffer (Qnil)))
     {
-      record_unwind_protect (Fset_buffer, Fcurrent_buffer ());
+      record_unwind_current_buffer ();
       Fset_buffer (Fwindow_buffer (Qnil));
     }
 
@@ -3126,7 +3139,7 @@ run_window_configuration_change_hook (struct frame *f)
 DEFUN ("run-window-configuration-change-hook", Frun_window_configuration_change_hook,
        Srun_window_configuration_change_hook, 1, 1, 0,
        doc: /* Run `window-configuration-change-hook' for FRAME.  */)
-     (Lisp_Object frame)
+  (Lisp_Object frame)
 {
   CHECK_LIVE_FRAME (frame);
   run_window_configuration_change_hook (XFRAME (frame));
@@ -3193,7 +3206,7 @@ set_window_buffer (Lisp_Object window, Lisp_Object buffer, int run_hooks_p, int 
      because that might itself be a local variable.  */
   if (window_initialized)
     {
-      record_unwind_protect (Fset_buffer, Fcurrent_buffer ());
+      record_unwind_current_buffer ();
       Fset_buffer (buffer);
     }
 
@@ -5531,7 +5544,6 @@ the return value is nil.  Otherwise the value is t.  */)
   struct Lisp_Vector *saved_windows;
   Lisp_Object new_current_buffer;
   Lisp_Object frame;
-  Lisp_Object auto_buffer_name;
   FRAME_PTR f;
   ptrdiff_t old_point = -1;
 
@@ -5606,6 +5618,21 @@ the return value is nil.  Otherwise the value is t.  */)
       int previous_frame_cols =  FRAME_COLS  (f);
       int previous_frame_menu_bar_lines = FRAME_MENU_BAR_LINES (f);
       int previous_frame_tool_bar_lines = FRAME_TOOL_BAR_LINES (f);
+
+      /* Don't do this within the main loop below: This may call Lisp
+	 code and is thus potentially unsafe while input is blocked.  */
+      for (k = 0; k < saved_windows->header.size; k++)
+	{
+	  p = SAVED_WINDOW_N (saved_windows, k);
+	  window = p->window;
+	  w = XWINDOW (window);
+	  if (!NILP (w->buffer)
+	      && !EQ (w->buffer, p->buffer)
+	      && !NILP (BVAR (XBUFFER (p->buffer), name)))
+	    /* If a window we restore gets another buffer, record the
+	       window's old buffer.  */
+	    call1 (Qrecord_window_buffer, window);
+	}
 
       /* The mouse highlighting code could get screwed up
 	 if it runs during this.  */
@@ -5785,18 +5812,6 @@ the return value is nil.  Otherwise the value is t.  */)
 		    BUF_PT_BYTE (XBUFFER (w->buffer)));
 	       w->start_at_line_beg = 1;
 	     }
-	   else if (STRINGP (auto_buffer_name =
-			     Fwindow_parameter (window, Qauto_buffer_name))
-		    && SCHARS (auto_buffer_name) != 0
-		    && (wset_buffer (w, Fget_buffer_create (auto_buffer_name)),
-			!NILP (w->buffer)))
-	    {
-	      set_marker_restricted (w->start,
-				     make_number (0), w->buffer);
-	      set_marker_restricted (w->pointm,
-				     make_number (0), w->buffer);
-	      w->start_at_line_beg = 1;
-	    }
 	  else
 	    /* Window has no live buffer, get one.  */
 	    {
@@ -5894,7 +5909,13 @@ the return value is nil.  Otherwise the value is t.  */)
     }
 
   if (!NILP (new_current_buffer))
-    Fset_buffer (new_current_buffer);
+    {
+      Fset_buffer (new_current_buffer);
+      /* If the new current buffer doesn't appear in the selected
+	 window, go to its old point (see bug#12208).  */
+      if (!EQ (XWINDOW (data->current_window)->buffer, new_current_buffer))
+	Fgoto_char (make_number (old_point));
+    }
 
   Vminibuf_scroll_window = data->minibuf_scroll_window;
   minibuf_selected_window = data->minibuf_selected_window;
@@ -6696,7 +6717,6 @@ syms_of_window (void)
   DEFSYM (Qtemp_buffer_show_hook, "temp-buffer-show-hook");
   DEFSYM (Qabove, "above");
   DEFSYM (Qbelow, "below");
-  DEFSYM (Qauto_buffer_name, "auto-buffer-name");
   DEFSYM (Qclone_of, "clone-of");
 
   staticpro (&Vwindow_list);

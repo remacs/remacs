@@ -199,8 +199,7 @@ int print_output_debug_flag EXTERNALLY_VISIBLE = 1;
 			       ? PT - start_point : 0),			\
 		  old_point_byte + (old_point_byte >= start_point_byte	\
 				    ? PT_BYTE - start_point_byte : 0));	\
-   if (old != current_buffer)						\
-     set_buffer_internal (old);
+   set_buffer_internal (old);
 
 #define PRINTCHAR(ch) printchar (ch, printcharfun)
 
@@ -490,7 +489,7 @@ temp_output_buffer_setup (const char *bufname)
   register struct buffer *old = current_buffer;
   register Lisp_Object buf;
 
-  record_unwind_protect (set_buffer_if_live, Fcurrent_buffer ());
+  record_unwind_current_buffer ();
 
   Fset_buffer (Fget_buffer_create (build_string (bufname)));
 
@@ -588,6 +587,7 @@ A printed representation of an object is text which describes that object.  */)
   (Lisp_Object object, Lisp_Object noescape)
 {
   Lisp_Object printcharfun;
+  bool prev_abort_on_gc;
   /* struct gcpro gcpro1, gcpro2; */
   Lisp_Object save_deactivate_mark;
   ptrdiff_t count = SPECPDL_INDEX ();
@@ -603,7 +603,8 @@ A printed representation of an object is text which describes that object.  */)
        No need for specbind, since errors deactivate the mark.  */
     save_deactivate_mark = Vdeactivate_mark;
     /* GCPRO2 (object, save_deactivate_mark); */
-    abort_on_gc++;
+    prev_abort_on_gc = abort_on_gc;
+    abort_on_gc = 1;
 
     printcharfun = Vprin1_to_string_buffer;
     PRINTPREPARE;
@@ -627,7 +628,7 @@ A printed representation of an object is text which describes that object.  */)
   Vdeactivate_mark = save_deactivate_mark;
   /* UNGCPRO; */
 
-  abort_on_gc--;
+  abort_on_gc = prev_abort_on_gc;
   return unbind_to (count, object);
 }
 

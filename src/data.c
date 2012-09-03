@@ -83,8 +83,8 @@ Lisp_Object Qoverflow_error, Qunderflow_error;
 Lisp_Object Qfloatp;
 Lisp_Object Qnumberp, Qnumber_or_marker_p;
 
-Lisp_Object Qinteger, Qinterval, Qfloat, Qvector;
-Lisp_Object Qsymbol, Qstring, Qcons, Qmisc;
+Lisp_Object Qinteger, Qsymbol;
+static Lisp_Object Qcons, Qfloat, Qmisc, Qstring, Qvector;
 Lisp_Object Qwindow;
 static Lisp_Object Qoverlay, Qwindow_configuration;
 static Lisp_Object Qprocess, Qmarker;
@@ -847,7 +847,7 @@ do_symval_forwarding (register union Lisp_Fwd *valcontents)
       return *XOBJFWD (valcontents)->objvar;
 
     case Lisp_Fwd_Buffer_Obj:
-      return PER_BUFFER_VALUE (current_buffer,
+      return per_buffer_value (current_buffer,
 			       XBUFFER_OBJFWD (valcontents)->offset);
 
     case Lisp_Fwd_Kboard_Obj:
@@ -919,7 +919,7 @@ store_symval_forwarding (union Lisp_Fwd *valcontents, register Lisp_Object newva
 	      b = XBUFFER (lbuf);
 
 	      if (! PER_BUFFER_VALUE_P (b, idx))
-		PER_BUFFER_VALUE (b, offset) = newval;
+		set_per_buffer_value (b, offset, newval);
 	    }
 	}
       break;
@@ -937,7 +937,7 @@ store_symval_forwarding (union Lisp_Fwd *valcontents, register Lisp_Object newva
 
 	if (buf == NULL)
 	  buf = current_buffer;
-	PER_BUFFER_VALUE (buf, offset) = newval;
+	set_per_buffer_value (buf, offset, newval);
       }
       break;
 
@@ -1080,10 +1080,10 @@ DEFUN ("set", Fset, Sset, 2, 2, 0,
   return newval;
 }
 
-/* Return 1 if SYMBOL currently has a let-binding
+/* Return true if SYMBOL currently has a let-binding
    which was made in the buffer that is now current.  */
 
-static int
+static bool
 let_shadows_buffer_binding_p (struct Lisp_Symbol *symbol)
 {
   struct specbinding *p;
@@ -1102,7 +1102,7 @@ let_shadows_buffer_binding_p (struct Lisp_Symbol *symbol)
   return 0;
 }
 
-static int
+static bool
 let_shadows_global_binding_p (Lisp_Object symbol)
 {
   struct specbinding *p;
@@ -1118,14 +1118,15 @@ let_shadows_global_binding_p (Lisp_Object symbol)
    If buffer/frame-locality is an issue, WHERE specifies which context to use.
    (nil stands for the current buffer/frame).
 
-   If BINDFLAG is zero, then if this symbol is supposed to become
+   If BINDFLAG is false, then if this symbol is supposed to become
    local in every buffer where it is set, then we make it local.
-   If BINDFLAG is nonzero, we don't do that.  */
+   If BINDFLAG is true, we don't do that.  */
 
 void
-set_internal (register Lisp_Object symbol, register Lisp_Object newval, register Lisp_Object where, int bindflag)
+set_internal (Lisp_Object symbol, Lisp_Object newval, Lisp_Object where,
+	      bool bindflag)
 {
-  int voide = EQ (newval, Qunbound);
+  bool voide = EQ (newval, Qunbound);
   struct Lisp_Symbol *sym;
   Lisp_Object tem1;
 
@@ -1184,7 +1185,7 @@ set_internal (register Lisp_Object symbol, register Lisp_Object newval, register
 			   ? XFRAME (where)->param_alist
 			   : BVAR (XBUFFER (where), local_var_alist)));
 	    set_blv_where (blv, where);
-	    set_blv_found (blv, 1);
+	    blv->found = 1;
 
 	    if (NILP (tem1))
 	      {
@@ -1199,7 +1200,7 @@ set_internal (register Lisp_Object symbol, register Lisp_Object newval, register
 		if (bindflag || !blv->local_if_set
 		    || let_shadows_buffer_binding_p (sym))
 		  {
-		    set_blv_found (blv, 0);
+		    blv->found = 0;
 		    tem1 = blv->defcell;
 		  }
 		/* If it's a local_if_set, being set not bound,
@@ -1309,7 +1310,7 @@ default_value (Lisp_Object symbol)
 	  {
 	    int offset = XBUFFER_OBJFWD (valcontents)->offset;
 	    if (PER_BUFFER_IDX (offset) != 0)
-	      return PER_BUFFER_DEFAULT (offset);
+	      return per_buffer_default (offset);
 	  }
 
 	/* For other variables, get the current value.  */
@@ -1396,7 +1397,7 @@ for this variable.  */)
 	    int offset = XBUFFER_OBJFWD (valcontents)->offset;
 	    int idx = PER_BUFFER_IDX (offset);
 
-	    PER_BUFFER_DEFAULT (offset) = value;
+	    set_per_buffer_default (offset, value);
 
 	    /* If this variable is not always local in all buffers,
 	       set it in the buffers that don't nominally have a local value.  */
@@ -1406,7 +1407,7 @@ for this variable.  */)
 
 		FOR_EACH_BUFFER (b)
 		  if (!PER_BUFFER_VALUE_P (b, idx))
-		    PER_BUFFER_VALUE (b, offset) = value;
+		    set_per_buffer_value (b, offset, value);
 	      }
 	    return value;
 	  }
@@ -1464,7 +1465,8 @@ union Lisp_Val_Fwd
   };
 
 static struct Lisp_Buffer_Local_Value *
-make_blv (struct Lisp_Symbol *sym, int forwarded, union Lisp_Val_Fwd valcontents)
+make_blv (struct Lisp_Symbol *sym, bool forwarded,
+	  union Lisp_Val_Fwd valcontents)
 {
   struct Lisp_Buffer_Local_Value *blv = xmalloc (sizeof *blv);
   Lisp_Object symbol;
@@ -1508,7 +1510,7 @@ The function `default-value' gets the default value and `set-default' sets it.  
   struct Lisp_Symbol *sym;
   struct Lisp_Buffer_Local_Value *blv = NULL;
   union Lisp_Val_Fwd valcontents IF_LINT (= {LISP_INITIALLY_ZERO});
-  int forwarded IF_LINT (= 0);
+  bool forwarded IF_LINT (= 0);
 
   CHECK_SYMBOL (variable);
   sym = XSYMBOL (variable);
@@ -1580,10 +1582,10 @@ See also `make-variable-buffer-local'.
 
 Do not use `make-local-variable' to make a hook variable buffer-local.
 Instead, use `add-hook' and specify t for the LOCAL argument.  */)
-  (register Lisp_Object variable)
+  (Lisp_Object variable)
 {
-  register Lisp_Object tem;
-  int forwarded IF_LINT (= 0);
+  Lisp_Object tem;
+  bool forwarded IF_LINT (= 0);
   union Lisp_Val_Fwd valcontents IF_LINT (= {LISP_INITIALLY_ZERO});
   struct Lisp_Symbol *sym;
   struct Lisp_Buffer_Local_Value *blv = NULL;
@@ -1705,8 +1707,8 @@ From now on the default value will apply in this buffer.  Return VARIABLE.  */)
 	    if (idx > 0)
 	      {
 		SET_PER_BUFFER_VALUE_P (current_buffer, idx, 0);
-		PER_BUFFER_VALUE (current_buffer, offset)
-		  = PER_BUFFER_DEFAULT (offset);
+		set_per_buffer_value (current_buffer, offset,
+				      per_buffer_default (offset));
 	      }
 	  }
 	return variable;
@@ -1735,7 +1737,7 @@ From now on the default value will apply in this buffer.  Return VARIABLE.  */)
     if (EQ (buf, blv->where))
       {
 	set_blv_where (blv, Qnil);
-	set_blv_found (blv, 0);
+	blv->found = 0;
 	find_symbol_value (variable);
       }
   }
@@ -1767,9 +1769,9 @@ is to set the VARIABLE frame parameter of that frame.  See
 Note that since Emacs 23.1, variables cannot be both buffer-local and
 frame-local any more (buffer-local bindings used to take precedence over
 frame-local bindings).  */)
-  (register Lisp_Object variable)
+  (Lisp_Object variable)
 {
-  int forwarded;
+  bool forwarded;
   union Lisp_Val_Fwd valcontents;
   struct Lisp_Symbol *sym;
   struct Lisp_Buffer_Local_Value *blv = NULL;
@@ -2225,7 +2227,7 @@ static Lisp_Object
 arithcompare (Lisp_Object num1, Lisp_Object num2, enum comparison comparison)
 {
   double f1 = 0, f2 = 0;
-  int floatp = 0;
+  bool floatp = 0;
 
   CHECK_NUMBER_OR_FLOAT_COERCE_MARKER (num1);
   CHECK_NUMBER_OR_FLOAT_COERCE_MARKER (num2);
@@ -2342,7 +2344,7 @@ DEFUN ("zerop", Fzerop, Szerop, 1, 1, 0,
 uintmax_t
 cons_to_unsigned (Lisp_Object c, uintmax_t max)
 {
-  int valid = 0;
+  bool valid = 0;
   uintmax_t val IF_LINT (= 0);
   if (INTEGERP (c))
     {
@@ -2395,7 +2397,7 @@ cons_to_unsigned (Lisp_Object c, uintmax_t max)
 intmax_t
 cons_to_signed (Lisp_Object c, intmax_t min, intmax_t max)
 {
-  int valid = 0;
+  bool valid = 0;
   intmax_t val IF_LINT (= 0);
   if (INTEGERP (c))
     {
@@ -2513,14 +2515,11 @@ static Lisp_Object float_arith_driver (double, ptrdiff_t, enum arithop,
 static Lisp_Object
 arith_driver (enum arithop code, ptrdiff_t nargs, Lisp_Object *args)
 {
-  register Lisp_Object val;
-  ptrdiff_t argnum;
-  register EMACS_INT accum = 0;
-  register EMACS_INT next;
-
-  int overflow = 0;
-  ptrdiff_t ok_args;
-  EMACS_INT ok_accum;
+  Lisp_Object val;
+  ptrdiff_t argnum, ok_args;
+  EMACS_INT accum = 0;
+  EMACS_INT next, ok_accum;
+  bool overflow = 0;
 
   switch (code)
     {
@@ -3090,8 +3089,6 @@ syms_of_data (void)
   DEFSYM (Qchar_table, "char-table");
   DEFSYM (Qbool_vector, "bool-vector");
   DEFSYM (Qhash_table, "hash-table");
-  /* Used by Fgarbage_collect.  */
-  DEFSYM (Qinterval, "interval");
   DEFSYM (Qmisc, "misc");
 
   DEFSYM (Qdefun, "defun");

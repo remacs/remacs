@@ -124,7 +124,7 @@ extern _Noreturn void die (const char *, const char *, int);
    eassert macro altogether, e.g., if XSTRING (x) uses eassert to test
    STRINGP (x), but a particular use of XSTRING is invoked only after
    testing that STRINGP (x) is true, making the test redundant.  */
-extern int suppress_checking EXTERNALLY_VISIBLE;
+extern bool suppress_checking EXTERNALLY_VISIBLE;
 
 # define eassert(cond)						\
    ((cond) || suppress_checking					\
@@ -611,10 +611,8 @@ clip_to_bounds (ptrdiff_t lower, EMACS_INT num, ptrdiff_t upper)
 
 #define AREF(ARRAY, IDX)	XVECTOR ((ARRAY))->contents[IDX]
 #define ASIZE(ARRAY)		XVECTOR ((ARRAY))->header.size
-/* The IDX==IDX tries to detect when the macro argument is side-effecting.  */
 #define ASET(ARRAY, IDX, VAL)	\
-  (eassert ((IDX) == (IDX)),				\
-   eassert ((IDX) >= 0 && (IDX) < ASIZE (ARRAY)),	\
+  (eassert (0 <= (IDX) && (IDX) < ASIZE (ARRAY)),	\
    XVECTOR (ARRAY)->contents[IDX] = (VAL))
 
 /* Convenience macros for dealing with Lisp strings.  */
@@ -707,7 +705,7 @@ struct Lisp_Cons
 #define CDR_SAFE(c)				\
   (CONSP ((c)) ? XCDR ((c)) : Qnil)
 
-/* Nonzero if STR is a multibyte string.  */
+/* True if STR is a multibyte string.  */
 #define STRING_MULTIBYTE(STR)  \
   (XSTRING (STR)->size_byte >= 0)
 
@@ -1911,11 +1909,7 @@ typedef struct {
 			 Lisp_Object, Lisp_Object, Lisp_Object, Lisp_Object)
 
 /* Non-zero if OBJ is a Lisp function.  */
-#define FUNCTIONP(OBJ)					\
-     ((CONSP (OBJ) && EQ (XCAR (OBJ), Qlambda))		\
-      || (SYMBOLP (OBJ) && !NILP (Ffboundp (OBJ)))	\
-      || COMPILEDP (OBJ)				\
-      || SUBRP (OBJ))
+#define FUNCTIONP(OBJ) functionp(OBJ)
 
 /* defsubr (Sname);
    is how we define the symbol for function `name' at start-up time.  */
@@ -2349,32 +2343,67 @@ gc_aset (Lisp_Object array, ptrdiff_t idx, Lisp_Object val)
   XVECTOR (array)->contents[idx] = val;
 }
 
+/* Copy COUNT Lisp_Objects from ARGS to contents of V starting from OFFSET.  */
+
 LISP_INLINE void
-set_hash_key (struct Lisp_Hash_Table *h, ptrdiff_t idx, Lisp_Object val)
+vcopy (Lisp_Object v, ptrdiff_t offset, Lisp_Object *args, ptrdiff_t count)
+{
+  eassert (0 <= offset && 0 <= count && offset + count <= ASIZE (v));
+  memcpy (XVECTOR (v)->contents + offset, args, count * sizeof *args);
+}
+
+/* Functions to modify hash tables.  */
+
+LISP_INLINE void
+set_hash_key_and_value (struct Lisp_Hash_Table *h, Lisp_Object key_and_value)
+{
+  h->key_and_value = key_and_value;
+}
+
+LISP_INLINE void
+set_hash_key_slot (struct Lisp_Hash_Table *h, ptrdiff_t idx, Lisp_Object val)
 {
   gc_aset (h->key_and_value, 2 * idx, val);
 }
 
 LISP_INLINE void
-set_hash_value (struct Lisp_Hash_Table *h, ptrdiff_t idx, Lisp_Object val)
+set_hash_value_slot (struct Lisp_Hash_Table *h, ptrdiff_t idx, Lisp_Object val)
 {
   gc_aset (h->key_and_value, 2 * idx + 1, val);
 }
 
 LISP_INLINE void
-set_hash_next (struct Lisp_Hash_Table *h, ptrdiff_t idx, Lisp_Object val)
+set_hash_next (struct Lisp_Hash_Table *h, Lisp_Object next)
+{
+  h->next = next;
+}
+
+LISP_INLINE void
+set_hash_next_slot (struct Lisp_Hash_Table *h, ptrdiff_t idx, Lisp_Object val)
 {
   gc_aset (h->next, idx, val);
 }
 
 LISP_INLINE void
-set_hash_hash (struct Lisp_Hash_Table *h, ptrdiff_t idx, Lisp_Object val)
+set_hash_hash (struct Lisp_Hash_Table *h, Lisp_Object hash)
+{
+  h->hash = hash;
+}
+
+LISP_INLINE void
+set_hash_hash_slot (struct Lisp_Hash_Table *h, ptrdiff_t idx, Lisp_Object val)
 {
   gc_aset (h->hash, idx, val);
 }
 
 LISP_INLINE void
-set_hash_index (struct Lisp_Hash_Table *h, ptrdiff_t idx, Lisp_Object val)
+set_hash_index (struct Lisp_Hash_Table *h, Lisp_Object index)
+{
+  h->index = index;
+}
+
+LISP_INLINE void
+set_hash_index_slot (struct Lisp_Hash_Table *h, ptrdiff_t idx, Lisp_Object val)
 {
   gc_aset (h->index, idx, val);
 }
@@ -2549,8 +2578,7 @@ extern Lisp_Object Qoverflow_error, Qunderflow_error;
 extern Lisp_Object Qfloatp;
 extern Lisp_Object Qnumberp, Qnumber_or_marker_p;
 
-extern Lisp_Object Qinteger, Qinterval, Qsymbol, Qstring;
-extern Lisp_Object Qmisc, Qvector, Qfloat, Qcons, Qbuffer;
+extern Lisp_Object Qbuffer, Qinteger, Qsymbol;
 
 extern Lisp_Object Qfont_spec, Qfont_entity, Qfont_object;
 
@@ -2597,7 +2625,7 @@ extern _Noreturn void args_out_of_range_3 (Lisp_Object, Lisp_Object,
 					   Lisp_Object);
 extern _Noreturn Lisp_Object wrong_type_argument (Lisp_Object, Lisp_Object);
 extern Lisp_Object do_symval_forwarding (union Lisp_Fwd *);
-extern void set_internal (Lisp_Object, Lisp_Object, Lisp_Object, int);
+extern void set_internal (Lisp_Object, Lisp_Object, Lisp_Object, bool);
 extern void syms_of_data (void);
 extern void init_data (void);
 extern void swap_in_global_binding (struct Lisp_Symbol *);
@@ -2609,7 +2637,7 @@ extern void keys_of_cmds (void);
 /* Defined in coding.c */
 extern Lisp_Object Qcharset;
 extern Lisp_Object detect_coding_system (const unsigned char *, ptrdiff_t,
-                                         ptrdiff_t, int, int, Lisp_Object);
+                                         ptrdiff_t, bool, bool, Lisp_Object);
 extern void init_coding (void);
 extern void init_coding_once (void);
 extern void syms_of_coding (void);
@@ -2697,43 +2725,43 @@ extern void move_gap_both (ptrdiff_t, ptrdiff_t);
 extern _Noreturn void buffer_overflow (void);
 extern void make_gap (ptrdiff_t);
 extern ptrdiff_t copy_text (const unsigned char *, unsigned char *,
-			    ptrdiff_t, int, int);
+			    ptrdiff_t, bool, bool);
 extern int count_combining_before (const unsigned char *,
 				   ptrdiff_t, ptrdiff_t, ptrdiff_t);
 extern int count_combining_after (const unsigned char *,
 				  ptrdiff_t, ptrdiff_t, ptrdiff_t);
 extern void insert (const char *, ptrdiff_t);
 extern void insert_and_inherit (const char *, ptrdiff_t);
-extern void insert_1 (const char *, ptrdiff_t, int, int, int);
+extern void insert_1 (const char *, ptrdiff_t, bool, bool, bool);
 extern void insert_1_both (const char *, ptrdiff_t, ptrdiff_t,
-			   int, int, int);
+			   bool, bool, bool);
 extern void insert_from_gap (ptrdiff_t, ptrdiff_t);
 extern void insert_from_string (Lisp_Object, ptrdiff_t, ptrdiff_t,
-				ptrdiff_t, ptrdiff_t, int);
-extern void insert_from_buffer (struct buffer *, ptrdiff_t, ptrdiff_t, int);
+				ptrdiff_t, ptrdiff_t, bool);
+extern void insert_from_buffer (struct buffer *, ptrdiff_t, ptrdiff_t, bool);
 extern void insert_char (int);
 extern void insert_string (const char *);
 extern void insert_before_markers (const char *, ptrdiff_t);
 extern void insert_before_markers_and_inherit (const char *, ptrdiff_t);
 extern void insert_from_string_before_markers (Lisp_Object, ptrdiff_t,
 					       ptrdiff_t, ptrdiff_t,
-					       ptrdiff_t, int);
+					       ptrdiff_t, bool);
 extern void del_range (ptrdiff_t, ptrdiff_t);
-extern Lisp_Object del_range_1 (ptrdiff_t, ptrdiff_t, int, int);
-extern void del_range_byte (ptrdiff_t, ptrdiff_t, int);
-extern void del_range_both (ptrdiff_t, ptrdiff_t, ptrdiff_t, ptrdiff_t, int);
+extern Lisp_Object del_range_1 (ptrdiff_t, ptrdiff_t, bool, bool);
+extern void del_range_byte (ptrdiff_t, ptrdiff_t, bool);
+extern void del_range_both (ptrdiff_t, ptrdiff_t, ptrdiff_t, ptrdiff_t, bool);
 extern Lisp_Object del_range_2 (ptrdiff_t, ptrdiff_t,
-				ptrdiff_t, ptrdiff_t, int);
-extern void modify_region (struct buffer *, ptrdiff_t, ptrdiff_t, int);
+				ptrdiff_t, ptrdiff_t, bool);
+extern void modify_region (struct buffer *, ptrdiff_t, ptrdiff_t, bool);
 extern void prepare_to_modify_buffer (ptrdiff_t, ptrdiff_t, ptrdiff_t *);
 extern void signal_after_change (ptrdiff_t, ptrdiff_t, ptrdiff_t);
 extern void adjust_after_insert (ptrdiff_t, ptrdiff_t, ptrdiff_t,
 				 ptrdiff_t, ptrdiff_t);
 extern void adjust_markers_for_delete (ptrdiff_t, ptrdiff_t,
 				       ptrdiff_t, ptrdiff_t);
-extern void replace_range (ptrdiff_t, ptrdiff_t, Lisp_Object, int, int, int);
+extern void replace_range (ptrdiff_t, ptrdiff_t, Lisp_Object, bool, bool, bool);
 extern void replace_range_2 (ptrdiff_t, ptrdiff_t, ptrdiff_t, ptrdiff_t,
-			     const char *, ptrdiff_t, ptrdiff_t, int);
+			     const char *, ptrdiff_t, ptrdiff_t, bool);
 extern void syms_of_insdel (void);
 
 /* Defined in dispnew.c */
@@ -2743,7 +2771,7 @@ _Noreturn void __executable_start (void);
 #endif
 extern Lisp_Object selected_frame;
 extern Lisp_Object Vwindow_system;
-extern Lisp_Object sit_for (Lisp_Object, int, int);
+extern Lisp_Object sit_for (Lisp_Object, bool, int);
 extern void init_display (void);
 extern void syms_of_display (void);
 
@@ -2769,7 +2797,7 @@ extern Lisp_Object echo_area_buffer[2];
 extern void add_to_log (const char *, Lisp_Object, Lisp_Object);
 extern void check_message_stack (void);
 extern void setup_echo_area_for_printing (int);
-extern int push_message (void);
+extern bool push_message (void);
 extern Lisp_Object pop_message_unwind (Lisp_Object);
 extern Lisp_Object restore_message_unwind (Lisp_Object);
 extern void restore_message (void);
@@ -2812,7 +2840,7 @@ extern void uninterrupt_malloc (void);
 extern void malloc_warning (const char *);
 extern _Noreturn void memory_full (size_t);
 extern _Noreturn void buffer_memory_full (ptrdiff_t);
-extern int survives_gc_p (Lisp_Object);
+extern bool survives_gc_p (Lisp_Object);
 extern void mark_object (Lisp_Object);
 #if defined REL_ALLOC && !defined SYSTEM_MALLOC
 extern void refill_memory_reserve (void);
@@ -2851,8 +2879,8 @@ extern Lisp_Object make_uninit_string (EMACS_INT);
 extern Lisp_Object make_uninit_multibyte_string (EMACS_INT, EMACS_INT);
 extern Lisp_Object make_string_from_bytes (const char *, ptrdiff_t, ptrdiff_t);
 extern Lisp_Object make_specified_string (const char *,
-					  ptrdiff_t, ptrdiff_t, int);
-extern Lisp_Object make_pure_string (const char *, ptrdiff_t, ptrdiff_t, int);
+					  ptrdiff_t, ptrdiff_t, bool);
+extern Lisp_Object make_pure_string (const char *, ptrdiff_t, ptrdiff_t, bool);
 extern Lisp_Object make_pure_c_string (const char *, ptrdiff_t);
 
 /* Make a string allocated in pure space, use STR as string data.  */
@@ -2886,8 +2914,8 @@ extern struct window *allocate_window (void);
 extern struct frame *allocate_frame (void);
 extern struct Lisp_Process *allocate_process (void);
 extern struct terminal *allocate_terminal (void);
-extern int gc_in_progress;
-extern int abort_on_gc;
+extern bool gc_in_progress;
+extern bool abort_on_gc;
 extern Lisp_Object make_float (double);
 extern void display_malloc_warning (void);
 extern ptrdiff_t inhibit_garbage_collection (void);
@@ -2965,6 +2993,7 @@ extern ptrdiff_t evxprintf (char **, ptrdiff_t *, char const *, ptrdiff_t,
 /* Defined in lread.c.  */
 extern Lisp_Object Qvariable_documentation, Qstandard_input;
 extern Lisp_Object Qbackquote, Qcomma, Qcomma_at, Qcomma_dot, Qfunction;
+extern Lisp_Object Qlexical_binding;
 extern Lisp_Object check_obarray (Lisp_Object);
 extern Lisp_Object intern_1 (const char *, ptrdiff_t);
 extern Lisp_Object intern_c_string_1 (const char *, ptrdiff_t);
@@ -2998,7 +3027,7 @@ intern_c_string (const char *str)
 
 /* Defined in eval.c.  */
 extern Lisp_Object Qautoload, Qexit, Qinteractive, Qcommandp, Qmacro;
-extern Lisp_Object Qinhibit_quit, Qclosure;
+extern Lisp_Object Qinhibit_quit, Qinternal_interpreter_environment, Qclosure;
 extern Lisp_Object Qand_rest;
 extern Lisp_Object Vautoload_queue;
 extern Lisp_Object Vsignaling_function;
@@ -3071,23 +3100,23 @@ extern Lisp_Object save_restriction_save (void);
 extern Lisp_Object save_excursion_restore (Lisp_Object);
 extern Lisp_Object save_restriction_restore (Lisp_Object);
 extern _Noreturn void time_overflow (void);
-extern Lisp_Object make_buffer_string (ptrdiff_t, ptrdiff_t, int);
+extern Lisp_Object make_buffer_string (ptrdiff_t, ptrdiff_t, bool);
 extern Lisp_Object make_buffer_string_both (ptrdiff_t, ptrdiff_t, ptrdiff_t,
-					    ptrdiff_t, int);
+					    ptrdiff_t, bool);
 extern void init_editfns (void);
 const char *get_system_name (void);
 extern void syms_of_editfns (void);
 extern void set_time_zone_rule (const char *);
 
 /* Defined in buffer.c.  */
-extern int mouse_face_overlay_overlaps (Lisp_Object);
+extern bool mouse_face_overlay_overlaps (Lisp_Object);
 extern _Noreturn void nsberror (Lisp_Object);
 extern void adjust_overlays_for_insert (ptrdiff_t, ptrdiff_t);
 extern void adjust_overlays_for_delete (ptrdiff_t, ptrdiff_t);
 extern void fix_start_end_in_overlays (ptrdiff_t, ptrdiff_t);
-extern void report_overlay_modification (Lisp_Object, Lisp_Object, int,
+extern void report_overlay_modification (Lisp_Object, Lisp_Object, bool,
                                          Lisp_Object, Lisp_Object, Lisp_Object);
-extern int overlay_touches_p (ptrdiff_t);
+extern bool overlay_touches_p (ptrdiff_t);
 extern Lisp_Object Vbuffer_alist;
 extern Lisp_Object set_buffer_if_live (Lisp_Object);
 extern Lisp_Object other_buffer_safely (Lisp_Object);
@@ -3234,7 +3263,7 @@ extern void syms_of_frame (void);
 extern char **initial_argv;
 extern int initial_argc;
 #if defined (HAVE_X_WINDOWS) || defined (HAVE_NS)
-extern int display_arg;
+extern bool display_arg;
 #endif
 extern Lisp_Object decode_env_path (const char *, const char *);
 extern Lisp_Object empty_unibyte_string, empty_multibyte_string;
@@ -3253,22 +3282,26 @@ void synchronize_system_time_locale (void);
 #define synchronize_system_messages_locale()
 #define synchronize_system_time_locale()
 #endif
-void shut_down_emacs (int, int, Lisp_Object);
-/* Nonzero means don't do interactive redisplay and don't change tty modes.  */
-extern int noninteractive;
+extern void shut_down_emacs (int, Lisp_Object);
 
-/* Nonzero means remove site-lisp directories from load-path.  */
-extern int no_site_lisp;
+/* True means don't do interactive redisplay and don't change tty modes.  */
+extern bool noninteractive;
+
+/* True means remove site-lisp directories from load-path.  */
+extern bool no_site_lisp;
 
 /* Pipe used to send exit notification to the daemon parent at
    startup.  */
 extern int daemon_pipe[2];
 #define IS_DAEMON (daemon_pipe[1] != 0)
 
-/* Nonzero means don't do use window-system-specific display code.  */
-extern int inhibit_window_system;
-/* Nonzero means that a filter or a sentinel is running.  */
-extern int running_asynch_code;
+/* True if handling a fatal error already.  */
+extern bool fatal_error_in_progress;
+
+/* True means don't do use window-system-specific display code.  */
+extern bool inhibit_window_system;
+/* True means that a filter or a sentinel is running.  */
+extern bool running_asynch_code;
 
 /* Defined in process.c.  */
 extern Lisp_Object QCtype, Qlocal;
@@ -3300,7 +3333,7 @@ extern void setup_process_coding_systems (Lisp_Object);
 #ifndef DOS_NT
  _Noreturn
 #endif
-extern int child_setup (int, int, int, char **, int, Lisp_Object);
+extern int child_setup (int, int, int, char **, bool, Lisp_Object);
 extern void init_callproc_1 (void);
 extern void init_callproc (void);
 extern void set_initial_environment (void);
@@ -3309,9 +3342,9 @@ extern void syms_of_callproc (void);
 /* Defined in doc.c */
 extern Lisp_Object Qfunction_documentation;
 extern Lisp_Object read_doc_string (Lisp_Object);
-extern Lisp_Object get_doc_string (Lisp_Object, int, int);
+extern Lisp_Object get_doc_string (Lisp_Object, bool, bool);
 extern void syms_of_doc (void);
-extern int read_bytecode_char (int);
+extern int read_bytecode_char (bool);
 
 /* Defined in bytecode.c */
 extern Lisp_Object Qbytecode;
@@ -3382,7 +3415,8 @@ extern void child_setup_tty (int);
 extern void setup_pty (int);
 extern int set_window_size (int, int, int);
 extern EMACS_INT get_random (void);
-extern void seed_random (long);
+extern void seed_random (void *, ptrdiff_t);
+extern void init_random (void);
 extern int emacs_open (const char *, int, int);
 extern int emacs_close (int);
 extern ptrdiff_t emacs_read (int, char *, ptrdiff_t);
@@ -3411,11 +3445,10 @@ extern void syms_of_ccl (void);
 extern void syms_of_dired (void);
 extern Lisp_Object directory_files_internal (Lisp_Object, Lisp_Object,
                                              Lisp_Object, Lisp_Object,
-                                             int, Lisp_Object);
+                                             bool, Lisp_Object);
 
 /* Defined in term.c */
 extern int *char_ins_del_vector;
-extern void mark_ttys (void);
 extern void syms_of_term (void);
 extern _Noreturn void fatal (const char *msgid, ...)
   ATTRIBUTE_FORMAT_PRINTF (1, 2);
@@ -3443,6 +3476,9 @@ extern Lisp_Object Qface;
 extern Lisp_Object Qnormal;
 extern Lisp_Object QCfamily, QCweight, QCslant;
 extern Lisp_Object QCheight, QCname, QCwidth, QCforeground, QCbackground;
+extern Lisp_Object Qextra_light, Qlight, Qsemi_light, Qsemi_bold;
+extern Lisp_Object Qbold, Qextra_bold, Qultra_bold;
+extern Lisp_Object Qoblique, Qitalic;
 extern Lisp_Object Vface_alternative_font_family_alist;
 extern Lisp_Object Vface_alternative_font_registry_alist;
 extern void syms_of_xfaces (void);
@@ -3487,9 +3523,9 @@ void syms_of_dbusbind (void);
 extern char *emacs_root_dir (void);
 #endif /* DOS_NT */
 
-/* Nonzero means Emacs has already been initialized.
+/* True means Emacs has already been initialized.
    Used during startup to detect startup of dumped Emacs.  */
-extern int initialized;
+extern bool initialized;
 
 extern int immediate_quit;	    /* Nonzero means ^G can quit instantly */
 
@@ -3556,7 +3592,7 @@ extern Lisp_Object safe_alloca_unwind (Lisp_Object);
 extern void *record_xmalloc (size_t);
 
 #define USE_SAFE_ALLOCA			\
-  ptrdiff_t sa_count = SPECPDL_INDEX (); int sa_must_free = 0
+  ptrdiff_t sa_count = SPECPDL_INDEX (); bool sa_must_free = 0
 
 /* SAFE_ALLOCA allocates a simple buffer.  */
 
@@ -3624,6 +3660,38 @@ maybe_gc (void)
       || (!NILP (Vmemory_full)
 	  && consing_since_gc > memory_full_cons_threshold))
     Fgarbage_collect ();
+}
+
+LISP_INLINE int
+functionp (Lisp_Object object)
+{
+  if (SYMBOLP (object) && !NILP (Ffboundp (object)))
+    {
+      object = Findirect_function (object, Qt);
+
+      if (CONSP (object) && EQ (XCAR (object), Qautoload))
+	{
+	  /* Autoloaded symbols are functions, except if they load
+	     macros or keymaps.  */
+	  int i;
+	  for (i = 0; i < 4 && CONSP (object); i++)
+	    object = XCDR (object);
+
+	  return ! (CONSP (object) && !NILP (XCAR (object)));
+	}
+    }
+
+  if (SUBRP (object))
+    return XSUBR (object)->max_args != UNEVALLED;
+  else if (COMPILEDP (object))
+    return 1;
+  else if (CONSP (object))
+    {
+      Lisp_Object car = XCAR (object);
+      return EQ (car, Qlambda) || EQ (car, Qclosure);
+    }
+  else
+    return 0;
 }
 
 INLINE_HEADER_END

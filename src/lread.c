@@ -89,8 +89,6 @@ static Lisp_Object Qget_emacs_mule_file_char;
 
 static Lisp_Object Qload_force_doc_strings;
 
-extern Lisp_Object Qinternal_interpreter_environment;
-
 static Lisp_Object Qload_in_progress;
 
 /* The association list of objects read with the #n=object form.
@@ -189,7 +187,7 @@ static int readbyte_from_string (int, Lisp_Object);
 static int unread_char;
 
 static int
-readchar (Lisp_Object readcharfun, int *multibyte)
+readchar (Lisp_Object readcharfun, bool *multibyte)
 {
   Lisp_Object tem;
   register int c;
@@ -2354,9 +2352,9 @@ read_integer (Lisp_Object readcharfun, EMACS_INT radix)
 static Lisp_Object
 read1 (register Lisp_Object readcharfun, int *pch, int first_in_list)
 {
-  register int c;
-  unsigned uninterned_symbol = 0;
-  int multibyte;
+  int c;
+  bool uninterned_symbol = 0;
+  bool multibyte;
 
   *pch = 0;
   load_each_byte = 0;
@@ -3406,7 +3404,7 @@ read_vector (Lisp_Object readcharfun, int bytecodeflag)
 	      /* Delay handling the bytecode slot until we know whether
 		 it is lazily-loaded (we can tell by whether the
 		 constants slot is nil).  */
-	      ptr[COMPILED_CONSTANTS] = item;
+	      ASET (vector, COMPILED_CONSTANTS, item);
 	      item = Qnil;
 	    }
 	  else if (i == COMPILED_CONSTANTS)
@@ -3432,7 +3430,7 @@ read_vector (Lisp_Object readcharfun, int bytecodeflag)
 		}
 
 	      /* Now handle the bytecode slot.  */
-	      ptr[COMPILED_BYTECODE] = bytestr;
+	      ASET (vector, COMPILED_BYTECODE, bytestr);
 	    }
 	  else if (i == COMPILED_DOC_STRING
 		   && STRINGP (item)
@@ -3444,7 +3442,7 @@ read_vector (Lisp_Object readcharfun, int bytecodeflag)
 		item = Fstring_as_multibyte (item);
 	    }
 	}
-      ptr[i] = item;
+      ASET (vector, i, item);
       otem = XCONS (tem);
       tem = Fcdr (tem);
       free_cons (otem);
@@ -4253,9 +4251,12 @@ init_lread (void)
                         {
                           tem = Fexpand_file_name (build_string ("site-lisp"),
                                                    Vsource_directory);
-
-                          if (NILP (Fmember (tem, Vload_path)))
-                            Vload_path = Fcons (tem, Vload_path);
+                          tem1 = Ffile_exists_p (tem);
+                          if (!NILP (tem1))
+                            {
+                              if (NILP (Fmember (tem, Vload_path)))
+                                Vload_path = Fcons (tem, Vload_path);
+                            }
                         }
                     }
                 } /* Vinstallation_directory != Vsource_directory */

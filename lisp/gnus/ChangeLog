@@ -1,3 +1,73 @@
+2012-09-01  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Better seeds for (random).
+	* gnus-sync.el (gnus-sync-lesync-setup):
+	* message.el (message-canlock-generate, message-unique-id):
+	Change (random t) to (random), now that the latter is more random.
+
+2012-08-31  Dave Abrahams  <dave@boostpro.com>
+
+	* auth-source.el (auth-sources): Fix macos keychain access.
+
+	* gnus-int.el (gnus-request-head): When gnus-override-method is set,
+	allow the backend `request-head' function to determine the group
+	name on its own.
+	(gnus-request-expire-articles): Filter out negative article numbers
+	during expiry (Bug#11980).
+
+	* gnus-range.el (gnus-set-difference): Change gnus-set-difference from
+	O(N^2) to O(N).  This makes warping into huge groups tolerable.
+
+	* gnus-registry.el (gnus-try-warping-via-registry): Don't act as though
+	you've found the article when you haven't.
+
+2012-08-31  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* gnus-notifications.el (gnus-notifications-action): Avoid CL-ism.
+
+2012-08-30  Julien Danjou  <julien@danjou.info>
+
+	* gnus-notifications.el (gnus-notifications-notify): Use timeout from
+	`gnus-notifications-timeout'.
+	(gnus-notifications-timeout): Add.
+	(gnus-notifications-action): New function.
+	(gnus-notifications-notify): Add :action using
+	`gnus-notifications-action'.
+	(gnus-notifications-id-to-msg): New variable.
+	(gnus-notifications): Use `gnus-notifications-id-to-msg' to map
+	notifications id to messages.
+
+2012-08-30  Kenichi Handa  <handa@gnu.org>
+
+	* qp.el (quoted-printable-decode-region): Decode multiple bytes at
+	once.
+
+2012-08-29  Julien Danjou  <julien@danjou.info>
+
+	* gnus-notifications.el: New file.
+	(gnus-notifications-notify): New function.
+	(gnus-notifications): Use `gnus-notifications-notify'.
+
+2012-08-28  Katsumi Yamaoka  <yamaoka@jpl.org>
+
+	* gnus-sum.el (gnus-summary-enter-digest-group): Decode content
+	transfer encoding first; bind gnus-newsgroup-charset to the charset
+	that the article specifies (Bug#12209).
+
+2012-08-22  Katsumi Yamaoka  <yamaoka@jpl.org>
+
+	* gnus-cus.el (gnus-group-customize): Decode values posting-style holds.
+	(gnus-group-customize-done): Encode values posting-style holds.
+
+	* gnus-msg.el (gnus-summary-resend-message)
+	(gnus-configure-posting-styles): Decode values posting-style group
+	parameter holds.
+
+2012-08-21  Katsumi Yamaoka  <yamaoka@jpl.org>
+
+	* gnus-msg.el (gnus-summary-resend-message): Honor posting-style for
+	`name' and `address' in Resent-From header.
+
 2012-08-14  Chong Yidong  <cyd@gnu.org>
 
 	* gnus-art.el (article-display-face): Handle failure in

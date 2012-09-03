@@ -30,15 +30,11 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "lisp.h"
 #include "character.h"
-#ifdef HAVE_X_WINDOWS
-#include "xterm.h"
-#endif
-#ifdef WINDOWSNT
-#include "w32term.h"
-#endif
-#ifdef HAVE_NS
-#include "nsterm.h"
-#endif
+
+#ifdef HAVE_WINDOW_SYSTEM
+#include TERM_HEADER
+#endif /* HAVE_WINDOW_SYSTEM */
+
 #include "buffer.h"
 /* These help us bind and responding to switch-frame events.  */
 #include "commands.h"
@@ -56,11 +52,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #ifdef MSDOS
 #include "msdos.h"
 #include "dosfns.h"
-#endif
-
-
-#ifdef HAVE_WINDOW_SYSTEM
-
 #endif
 
 #ifdef HAVE_NS
@@ -4247,7 +4238,6 @@ syms_of_frame (void)
   DEFSYM (Qx, "x");
   DEFSYM (Qw32, "w32");
   DEFSYM (Qpc, "pc");
-  DEFSYM (Qmac, "mac");
   DEFSYM (Qns, "ns");
   DEFSYM (Qvisible, "visible");
   DEFSYM (Qbuffer_predicate, "buffer-predicate");

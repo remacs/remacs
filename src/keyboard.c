@@ -63,20 +63,11 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <unistd.h>
 #include <fcntl.h>
 
-/* This is to get the definitions of the XK_ symbols.  */
-#ifdef HAVE_X_WINDOWS
-#include "xterm.h"
-#endif
+#ifdef HAVE_WINDOW_SYSTEM
+#include TERM_HEADER
+#endif /* HAVE_WINDOW_SYSTEM */
 
-#ifdef HAVE_NTGUI
-#include "w32term.h"
-#endif /* HAVE_NTGUI */
-
-#ifdef HAVE_NS
-#include "nsterm.h"
-#endif
-
-/* Variables for blockinput.h:  */
+/* Variables for blockinput.h: */
 
 /* Non-zero if interrupt input is blocked right now.  */
 volatile int interrupt_input_blocked;
@@ -1437,8 +1428,7 @@ command_loop_1 (void)
 	Fkill_emacs (Qnil);
 
       /* Make sure the current window's buffer is selected.  */
-      if (XBUFFER (XWINDOW (selected_window)->buffer) != current_buffer)
-	set_buffer_internal (XBUFFER (XWINDOW (selected_window)->buffer));
+      set_buffer_internal (XBUFFER (XWINDOW (selected_window)->buffer));
 
       /* Display any malloc warning that just came out.  Use while because
 	 displaying one warning can cause another.  */
@@ -1516,8 +1506,7 @@ command_loop_1 (void)
       /* A filter may have run while we were reading the input.  */
       if (! FRAME_LIVE_P (XFRAME (selected_frame)))
 	Fkill_emacs (Qnil);
-      if (XBUFFER (XWINDOW (selected_window)->buffer) != current_buffer)
-	set_buffer_internal (XBUFFER (XWINDOW (selected_window)->buffer));
+      set_buffer_internal (XBUFFER (XWINDOW (selected_window)->buffer));
 
       ++num_input_keys;
 
@@ -4360,9 +4349,8 @@ struct input_event last_timer_event EXTERNALLY_VISIBLE;
    ...).  Each element has the form (FUN . ARGS).  */
 Lisp_Object pending_funcalls;
 
-/* If TIMER is a valid timer, return nonzero and place its value into
-   *RESULT.  Otherwise return zero.  */
-static int
+/* Return true if TIMER is a valid timer, placing its value into *RESULT.  */
+static bool
 decode_timer (Lisp_Object timer, EMACS_TIME *result)
 {
   Lisp_Object *vector;
@@ -4429,7 +4417,6 @@ timer_check_2 (void)
 
   while (CONSP (timers) || CONSP (idle_timers))
     {
-      Lisp_Object *vector;
       Lisp_Object timer = Qnil, idle_timer = Qnil;
       EMACS_TIME timer_time, idle_timer_time;
       EMACS_TIME difference;
@@ -4505,15 +4492,14 @@ timer_check_2 (void)
       /* If timer is ripe, run it if it hasn't been run.  */
       if (ripe)
 	{
-	  vector = XVECTOR (chosen_timer)->contents;
-	  if (NILP (vector[0]))
+	  if (NILP (AREF (chosen_timer, 0)))
 	    {
 	      ptrdiff_t count = SPECPDL_INDEX ();
 	      Lisp_Object old_deactivate_mark = Vdeactivate_mark;
 
 	      /* Mark the timer as triggered to prevent problems if the lisp
 		 code fails to reschedule it right.  */
-	      vector[0] = Qt;
+	      ASET (chosen_timer, 0, Qt);
 
 	      specbind (Qinhibit_quit, Qt);
 
@@ -8463,7 +8449,6 @@ init_tool_bar_items (Lisp_Object reuse)
 static void
 append_tool_bar_item (void)
 {
-  Lisp_Object *to, *from;
   ptrdiff_t incr =
     (ntool_bar_items
      - (ASIZE (tool_bar_items_vector) - TOOL_BAR_ITEM_NSLOTS));
@@ -8475,9 +8460,8 @@ append_tool_bar_item (void)
 
   /* Append entries from tool_bar_item_properties to the end of
      tool_bar_items_vector.  */
-  to = XVECTOR (tool_bar_items_vector)->contents + ntool_bar_items;
-  from = XVECTOR (tool_bar_item_properties)->contents;
-  memcpy (to, from, TOOL_BAR_ITEM_NSLOTS * sizeof *to);
+  vcopy (tool_bar_items_vector, ntool_bar_items,
+	 XVECTOR (tool_bar_item_properties)->contents, TOOL_BAR_ITEM_NSLOTS);
   ntool_bar_items += TOOL_BAR_ITEM_NSLOTS;
 }
 
@@ -9594,7 +9578,7 @@ read_key_sequence (Lisp_Object *keybuf, int bufsize, Lisp_Object prompt,
 			 because we may get input from a subprocess which
 			 wants to change the selected window and stuff (say,
 			 emacsclient).  */
-		      record_unwind_protect (Fset_buffer, Fcurrent_buffer ());
+		      record_unwind_current_buffer ();
 
 		      if (! FRAME_LIVE_P (XFRAME (selected_frame)))
 			Fkill_emacs (Qnil);
@@ -10506,10 +10490,10 @@ DEFUN ("recent-keys", Frecent_keys, Srecent_keys, 0, 0, 0,
   else
     {
       val = Fvector (NUM_RECENT_KEYS, keys);
-      memcpy (XVECTOR (val)->contents, keys + recent_keys_index,
-	      (NUM_RECENT_KEYS - recent_keys_index) * word_size);
-      memcpy (XVECTOR (val)->contents + NUM_RECENT_KEYS - recent_keys_index,
-	      keys, recent_keys_index * word_size);
+      vcopy (val, 0, keys + recent_keys_index,
+	     NUM_RECENT_KEYS - recent_keys_index);
+      vcopy (val, NUM_RECENT_KEYS - recent_keys_index,
+	     keys, recent_keys_index);
       return val;
     }
 }
@@ -11271,7 +11255,7 @@ The `posn-' functions access elements of such lists.  */)
 
   if (WINDOWP (frame_or_window))
     {
-      struct window *w = decode_valid_window (frame_or_window);
+      struct window *w = decode_live_window (frame_or_window);
 
       XSETINT (x, (XINT (x)
 		   + WINDOW_LEFT_EDGE_X (w)

@@ -131,9 +131,23 @@ int handling_signal;
 Lisp_Object inhibit_lisp_code;
 
 static Lisp_Object funcall_lambda (Lisp_Object, ptrdiff_t, Lisp_Object *);
-static int interactive_p (int);
+static bool interactive_p (void);
 static Lisp_Object apply_lambda (Lisp_Object fun, Lisp_Object args);
-
+
+/* Functions to set Lisp_Object slots of struct specbinding.  */
+
+static inline void
+set_specpdl_symbol (Lisp_Object symbol)
+{
+  specpdl_ptr->symbol = symbol;
+}
+
+static inline void
+set_specpdl_old_value (Lisp_Object oldval)
+{
+  specpdl_ptr->old_value = oldval;
+}
+
 void
 init_eval_once (void)
 {
@@ -180,7 +194,7 @@ restore_stack_limits (Lisp_Object data)
 static Lisp_Object
 call_debugger (Lisp_Object arg)
 {
-  int debug_while_redisplaying;
+  bool debug_while_redisplaying;
   ptrdiff_t count = SPECPDL_INDEX ();
   Lisp_Object val;
   EMACS_INT old_max = max_specpdl_size;
@@ -511,7 +525,7 @@ spec that specifies non-nil unconditionally (such as \"p\"); or (ii)
 use `called-interactively-p'.  */)
   (void)
 {
-  return interactive_p (1) ? Qt : Qnil;
+  return interactive_p () ? Qt : Qnil;
 }
 
 
@@ -530,26 +544,23 @@ thinking of using it for any other purpose, it is quite likely that
 you're making a mistake.  Think: what do you want to do when the
 command is called from a keyboard macro?
 
-This function is meant for implementing advice and other
-function-modifying features.  Instead of using this, it is sometimes
-cleaner to give your function an extra optional argument whose
-`interactive' spec specifies non-nil unconditionally (\"p\" is a good
-way to do this), or via (not (or executing-kbd-macro noninteractive)).  */)
+Instead of using this function, it is sometimes cleaner to give your
+function an extra optional argument whose `interactive' spec specifies
+non-nil unconditionally (\"p\" is a good way to do this), or via
+\(not (or executing-kbd-macro noninteractive)).  */)
   (Lisp_Object kind)
 {
-  return ((INTERACTIVE || !EQ (kind, intern ("interactive")))
-	  && interactive_p (1)) ? Qt : Qnil;
+  return (((INTERACTIVE || !EQ (kind, intern ("interactive")))
+	   && interactive_p ())
+	  ? Qt : Qnil);
 }
 
 
-/*  Return 1 if function in which this appears was called using
-    call-interactively.
+/* Return true if function in which this appears was called using
+   call-interactively and is not a built-in.  */
 
-    EXCLUDE_SUBRS_P non-zero means always return 0 if the function
-    called is a built-in.  */
-
-static int
-interactive_p (int exclude_subrs_p)
+static bool
+interactive_p (void)
 {
   struct backtrace *btp;
   Lisp_Object fun;
@@ -578,9 +589,9 @@ interactive_p (int exclude_subrs_p)
   /* `btp' now points at the frame of the innermost function that isn't
      a special form, ignoring frames for Finteractive_p and/or
      Fbytecode at the top.  If this frame is for a built-in function
-     (such as load or eval-region) return nil.  */
+     (such as load or eval-region) return false.  */
   fun = Findirect_function (*btp->function, Qnil);
-  if (exclude_subrs_p && SUBRP (fun))
+  if (SUBRP (fun))
     return 0;
 
   /* `btp' points to the frame of a Lisp function that called interactive-p.
@@ -1088,7 +1099,7 @@ internal_catch (Lisp_Object tag, Lisp_Object (*func) (Lisp_Object), Lisp_Object 
 static _Noreturn void
 unwind_to_catch (struct catchtag *catch, Lisp_Object value)
 {
-  int last_time;
+  bool last_time;
 
   /* Save the value in the tag.  */
   catch->val = value;
@@ -1437,8 +1448,8 @@ internal_condition_case_n (Lisp_Object (*bfun) (ptrdiff_t, Lisp_Object *),
 
 
 static Lisp_Object find_handler_clause (Lisp_Object, Lisp_Object);
-static int maybe_call_debugger (Lisp_Object conditions, Lisp_Object sig,
-				Lisp_Object data);
+static bool maybe_call_debugger (Lisp_Object conditions, Lisp_Object sig,
+				 Lisp_Object data);
 
 void
 process_quit_flag (void)
@@ -1543,7 +1554,7 @@ See also the function `condition-case'.  */)
 	     if requested".  */
 	  || EQ (h->handler, Qerror)))
     {
-      int debugger_called
+      bool debugger_called
 	= maybe_call_debugger (conditions, error_symbol, data);
       /* We can't return values to code which signaled an error, but we
 	 can continue code which has signaled a quit.  */
@@ -1637,10 +1648,10 @@ signal_error (const char *s, Lisp_Object arg)
 }
 
 
-/* Return nonzero if LIST is a non-nil atom or
+/* Return true if LIST is a non-nil atom or
    a list containing one of CONDITIONS.  */
 
-static int
+static bool
 wants_debugger (Lisp_Object list, Lisp_Object conditions)
 {
   if (NILP (list))
@@ -1660,15 +1671,15 @@ wants_debugger (Lisp_Object list, Lisp_Object conditions)
   return 0;
 }
 
-/* Return 1 if an error with condition-symbols CONDITIONS,
+/* Return true if an error with condition-symbols CONDITIONS,
    and described by SIGNAL-DATA, should skip the debugger
    according to debugger-ignored-errors.  */
 
-static int
+static bool
 skip_debugger (Lisp_Object conditions, Lisp_Object data)
 {
   Lisp_Object tail;
-  int first_string = 1;
+  bool first_string = 1;
   Lisp_Object error_message;
 
   error_message = Qnil;
@@ -1703,7 +1714,7 @@ skip_debugger (Lisp_Object conditions, Lisp_Object data)
     = SIG is the error symbol, and DATA is the rest of the data.
     = SIG is nil, and DATA is (SYMBOL . REST-OF-DATA).
       This is for memory-full errors only.  */
-static int
+static bool
 maybe_call_debugger (Lisp_Object conditions, Lisp_Object sig, Lisp_Object data)
 {
   Lisp_Object combined_data;
@@ -2219,7 +2230,6 @@ eval_sub (Lisp_Object form)
       if (EQ (funcar, Qmacro))
 	{
 	  ptrdiff_t count = SPECPDL_INDEX ();
-	  extern Lisp_Object Qlexical_binding;
 	  Lisp_Object exp;
 	  /* Bind lexical-binding during expansion of the macro, so the
 	     macro can know reliably if the code it outputs will be
@@ -2708,33 +2718,9 @@ DEFUN ("functionp", Ffunctionp, Sfunctionp, 1, 1, 0,
        doc: /* Non-nil if OBJECT is a function.  */)
      (Lisp_Object object)
 {
-  if (SYMBOLP (object) && !NILP (Ffboundp (object)))
-    {
-      object = Findirect_function (object, Qt);
-
-      if (CONSP (object) && EQ (XCAR (object), Qautoload))
-	{
-	  /* Autoloaded symbols are functions, except if they load
-	     macros or keymaps.  */
-	  int i;
-	  for (i = 0; i < 4 && CONSP (object); i++)
-	    object = XCDR (object);
-
-	  return (CONSP (object) && !NILP (XCAR (object))) ? Qnil : Qt;
-	}
-    }
-
-  if (SUBRP (object))
-    return (XSUBR (object)->max_args != UNEVALLED) ? Qt : Qnil;
-  else if (COMPILEDP (object))
+  if (FUNCTIONP (object))
     return Qt;
-  else if (CONSP (object))
-    {
-      Lisp_Object car = XCAR (object);
-      return (EQ (car, Qlambda) || EQ (car, Qclosure)) ? Qt : Qnil;
-    }
-  else
-    return Qnil;
+  return Qnil;
 }
 
 DEFUN ("funcall", Ffuncall, Sfuncall, 1, MANY, 0,
@@ -2951,7 +2937,7 @@ funcall_lambda (Lisp_Object fun, ptrdiff_t nargs,
   Lisp_Object val, syms_left, next, lexenv;
   ptrdiff_t count = SPECPDL_INDEX ();
   ptrdiff_t i;
-  int optional, rest;
+  bool optional, rest;
 
   if (CONSP (fun))
     {
@@ -3136,8 +3122,8 @@ specbind (Lisp_Object symbol, Lisp_Object value)
     case SYMBOL_PLAINVAL:
       /* The most common case is that of a non-constant symbol with a
 	 trivial value.  Make that as fast as we can.  */
-      specpdl_ptr->symbol = symbol;
-      specpdl_ptr->old_value = SYMBOL_VAL (sym);
+      set_specpdl_symbol (symbol);
+      set_specpdl_old_value (SYMBOL_VAL (sym));
       specpdl_ptr->func = NULL;
       ++specpdl_ptr;
       if (!sym->constant)
@@ -3152,7 +3138,7 @@ specbind (Lisp_Object symbol, Lisp_Object value)
       {
 	Lisp_Object ovalue = find_symbol_value (symbol);
 	specpdl_ptr->func = 0;
-	specpdl_ptr->old_value = ovalue;
+	set_specpdl_old_value (ovalue);
 
 	eassert (sym->redirect != SYMBOL_LOCALIZED
 		 || (EQ (SYMBOL_BLV (sym)->where,
@@ -3186,7 +3172,7 @@ specbind (Lisp_Object symbol, Lisp_Object value)
 	       let_shadows_buffer_binding_p which is itself only used
 	       in set_internal for local_if_set.  */
 	    eassert (NILP (where) || EQ (where, cur_buf));
-	    specpdl_ptr->symbol = Fcons (symbol, Fcons (where, cur_buf));
+	    set_specpdl_symbol (Fcons (symbol, Fcons (where, cur_buf)));
 
 	    /* If SYMBOL is a per-buffer variable which doesn't have a
 	       buffer-local value here, make the `let' change the global
@@ -3203,7 +3189,7 @@ specbind (Lisp_Object symbol, Lisp_Object value)
 	      }
 	  }
 	else
-	  specpdl_ptr->symbol = symbol;
+	  set_specpdl_symbol (symbol);
 
 	specpdl_ptr++;
 	set_internal (symbol, value, Qnil, 1);
@@ -3221,8 +3207,8 @@ record_unwind_protect (Lisp_Object (*function) (Lisp_Object), Lisp_Object arg)
   if (specpdl_ptr == specpdl + specpdl_size)
     grow_specpdl ();
   specpdl_ptr->func = function;
-  specpdl_ptr->symbol = Qnil;
-  specpdl_ptr->old_value = arg;
+  set_specpdl_symbol (Qnil);
+  set_specpdl_old_value (arg);
   specpdl_ptr++;
 }
 
@@ -3354,13 +3340,13 @@ Output stream used is value of `standard-output'.  */)
 	  write_string ("(", -1);
 	  if (backlist->nargs == MANY)
 	    {			/* FIXME: Can this happen?  */
-	      int i;
-	      for (tail = *backlist->args, i = 0;
-		   !NILP (tail);
-		   tail = Fcdr (tail), i = 1)
+	      bool later_arg = 0;
+	      for (tail = *backlist->args; !NILP (tail); tail = Fcdr (tail))
 		{
-		  if (i) write_string (" ", -1);
+		  if (later_arg)
+		    write_string (" ", -1);
 		  Fprin1 (Fcar (tail), Qnil);
+		  later_arg = 1;
 		}
 	    }
 	  else

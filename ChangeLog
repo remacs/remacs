@@ -1,3 +1,75 @@
+2012-09-03  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Merge from gnulib, incorporating:
+	2012-08-29 stdbool: be more compatible with mixed C/C++ compiles
+	2011-11-30 manywarnings: update the list of "all" warnings
+
+2012-09-02  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* configure.ac (HAVE_GOBJECT): Check for gobject-2.0 (Bug#12332).
+
+2012-09-01  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* configure.ac (_FORTIFY_SOURCE): Define only when optimizing.
+	This ports to glibc 2.15 or later, when configured with
+	--enable-gcc-warnings.  See Eric Blake in
+	<http://lists.gnu.org/archive/html/bug-grep/2012-09/msg00000.html>.
+
+2012-09-01  Daniel Colascione  <dan.colascione@gmail.com>
+
+	* configure.ac: Introduce term_header variable, which holds the
+	value which will become TERM_HEADER in code.  We effect our choice
+	of window system by setting term_header and WINDOW_SYSTEM_OBJ
+	instead of using ad-hoc variables and flags for each window
+	system.
+
+2012-08-26  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* configure.ac (CFLAGS): Prefer -g3 to -g if -g3 works
+	and if the user has not specified CFLAGS.  -g3 simplifies
+	debugging, since it makes macros visible to the debugger.
+
+2012-08-25  Juanma Barranquero  <lekktu@gmail.com>
+
+	* lib/makefile.w32-in ($(BLD)/execinfo.$(O)): Update dependencies.
+
+2012-08-25  Eli Zaretskii  <eliz@gnu.org>
+
+	* lib/makefile.w32-in ($(BLD)/execinfo.$(O), execinfo.h): New targets.
+	(GNULIBOBJS): Add $(BLD)/execinfo.$(O).
+
+2012-08-24  Paul Eggert  <eggert@cs.ucla.edu>
+
+	On assertion failure, print backtrace if available.
+	Merge from gnulib, incorporating:
+	2012-08-24 execinfo: port to FreeBSD
+	2012-08-22 execinfo: new module
+	* lib/gnulib.mk, m4/gnulib-comp.m4: Regenerate.
+	* lib/execinfo.c, lib/execinfo.in.h, m4/execinfo.m4: New files.
+
+2012-08-22  Glenn Morris  <rgm@gnu.org>
+
+	* Makefile.in (install-arch-dep): If NO_BIN_LINK is non-null,
+	do not create the bin/emacs link.  (Bug#12011)
+
+2012-08-21  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Merge from gnulib, incorporating:
+	2012-08-20 extern-inline: support old GCC 'inline'
+
+2012-08-20  Glenn Morris  <rgm@gnu.org>
+
+	* configure.ac (AC_PROG_LN_S): Test for ln.
+	* Makefile.in (LN_S): New, set by configure.
+	(install-arch-dep): Use $LN_S.
+
+2012-08-19  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Merge from gnulib, incorporating:
+	2012-08-19 ignore-value, stat-time, timespec: omit AC_C_INLINE
+	2012-08-19 mktime, sys_select: avoid 'static inline'
+	2012-08-19 gnulib-tool: Fix indentation.
+
 2012-08-18  Paul Eggert  <eggert@cs.ucla.edu>
 
 	* lib/sigprocmask.c, m4/signalblocking.m4: Remove.

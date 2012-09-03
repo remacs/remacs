@@ -168,13 +168,6 @@ struct x_display_info *x_display_list;
 
 Lisp_Object x_display_name_list;
 
-/* Frame being updated by update_frame.  This is declared in term.c.
-   This is set by update_begin and looked at by all the XT functions.
-   It is zero while not inside an update.  In that case, the XT
-   functions assume that `selected_frame' is the frame to apply to.  */
-
-extern struct frame *updating_frame;
-
 /* This is a frame waiting to be auto-raised, within XTread_socket.  */
 
 static struct frame *pending_autoraise_frame;
@@ -7864,7 +7857,7 @@ x_connection_closed (Display *dpy, const char *error_message)
 	 (https://bugzilla.gnome.org/show_bug.cgi?id=85715).  Once,
 	 the resulting Glib error message loop filled a user's disk.
 	 To avoid this, kill Emacs unconditionally on disconnect.  */
-      shut_down_emacs (0, 0, Qnil);
+      shut_down_emacs (0, Qnil);
       fprintf (stderr, "%s\n\
 When compiled with GTK, Emacs cannot recover from X disconnects.\n\
 This is a GTK bug: https://bugzilla.gnome.org/show_bug.cgi?id=85715\n\
@@ -10627,8 +10620,6 @@ x_activate_timeout_atimer (void)
 
 /* Set up use of X before we make the first connection.  */
 
-extern frame_parm_handler x_frame_parm_handlers[];
-
 static struct redisplay_interface x_redisplay_interface =
   {
     x_frame_parm_handlers,
@@ -10833,8 +10824,6 @@ x_initialize (void)
   XSetIOErrorHandler (x_io_error_quitter);
 
   signal (SIGPIPE, x_connection_signal);
-
-  xgselect_initialize ();
 }
 
 

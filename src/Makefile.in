@@ -159,6 +159,8 @@ DBUS_LIBS = @DBUS_LIBS@
 ## dbusbind.o if HAVE_DBUS, else empty.
 DBUS_OBJ = @DBUS_OBJ@
 
+LIB_EXECINFO=@LIB_EXECINFO@
+
 SETTINGS_CFLAGS = @SETTINGS_CFLAGS@
 SETTINGS_LIBS = @SETTINGS_LIBS@
 
@@ -209,8 +211,8 @@ LIBXMENU=@LIBXMENU@
 
 ## xmenu.o if HAVE_X_WINDOWS, else empty.
 XMENU_OBJ=@XMENU_OBJ@
-## xterm.o xfns.o xselect.o xrdb.o fontset.o xsmfns.o fringe.o image.o
-## xsettings.o xgselect.o if HAVE_X_WINDOWS, else empty.
+## xterm.o xfns.o xselect.o xrdb.o xsmfns.o xsettings.o xgselect.o if
+## HAVE_X_WINDOWS, else empty.
 XOBJ=@XOBJ@
 
 TOOLKIT_LIBW=@TOOLKIT_LIBW@
@@ -254,6 +256,9 @@ WIDGET_OBJ=@WIDGET_OBJ@
 ## sheap.o if CYGWIN, otherwise empty.
 CYGWIN_OBJ=@CYGWIN_OBJ@
 
+## fontset.o fringe.o image.o if we have any window system
+WINDOW_SYSTEM_OBJ=@WINDOW_SYSTEM_OBJ@
+
 ## dosfns.o msdos.o w16select.o if MSDOS.
 MSDOS_OBJ =
 ## w16select.o termcap.o if MSDOS && HAVE_X_WINDOWS.
@@ -262,7 +267,6 @@ MSDOS_X_OBJ =
 ns_appdir=@ns_appdir@
 ns_appbindir=@ns_appbindir@
 ns_appsrc=@ns_appsrc@
-## fontset.o fringe.o image.o if HAVE_NS, else empty.
 NS_OBJ=@NS_OBJ@
 ## nsterm.o nsfns.o nsmenu.o nsselect.o nsimage.o nsfont.o if HAVE_NS.
 NS_OBJC_OBJ=@NS_OBJC_OBJ@
@@ -349,7 +353,8 @@ base_obj = dispnew.o frame.o scroll.o xdisp.o menu.o $(XMENU_OBJ) window.o \
 	region-cache.o sound.o atimer.o \
 	doprnt.o intervals.o textprop.o composite.o xml.o \
 	xwidget.o \
-	$(MSDOS_OBJ) $(MSDOS_X_OBJ) $(NS_OBJ) $(CYGWIN_OBJ) $(FONT_OBJ)
+	$(MSDOS_OBJ) $(MSDOS_X_OBJ) $(NS_OBJ) $(CYGWIN_OBJ) $(FONT_OBJ) \
+	$(WINDOW_SYSTEM_OBJ)
 obj = $(base_obj) $(NS_OBJC_OBJ)
 
 xwidget.o: xwidget.c xwidget.h
@@ -394,8 +399,9 @@ otherobj= $(TERMCAP_OBJ) $(PRE_ALLOC_OBJ) $(GMALLOC_OBJ) $(RALLOC_OBJ) \
 ## duplicated symbols.  If the standard libraries were compiled
 ## with GCC, we might need LIB_GCC again after them.
 LIBES = $(LIBS) $(LIBX_BASE) $(LIBX_OTHER) $(LIBSOUND) \
-   $(RSVG_LIBS) $(IMAGEMAGICK_LIBS) $(DBUS_LIBS) \
+   $(RSVG_LIBS) $(IMAGEMAGICK_LIBS) $(LIB_CLOCK_GETTIME) $(DBUS_LIBS) \
    $(WEBKIT_LIBS) $(CLUTTER_LIBS) $(GIR_LIBS) \
+   $(LIB_EXECINFO) \
    $(LIBXML2_LIBS) $(LIBGPM) $(LIBRESOLV) $(LIBS_SYSTEM) \
    $(LIBS_TERMCAP) $(GETLOADAVG_LIBS) $(SETTINGS_LIBS) $(LIBSELINUX_LIBS) \
    $(FREETYPE_LIBS) $(FONTCONFIG_LIBS) $(LIBOTF_LIBS) $(M17N_FLT_LIBS) \
@@ -415,11 +421,13 @@ $(leimdir)/leim-list.el: bootstrap-emacs$(EXEEXT)
 ## on all of $lisp, and emacs depends on DOC, so it is ok to use $lisp here.
 emacs$(EXEEXT): temacs$(EXEEXT) $(etc)/DOC $(lisp) $(leimdir)/leim-list.el
 	if test "$(CANNOT_DUMP)" = "yes"; then \
-	  ln -f temacs$(EXEEXT) emacs$(EXEEXT); \
+	  rm -f emacs$(EXEEXT); \
+	  ln temacs$(EXEEXT) emacs$(EXEEXT); \
 	else \
 	  LC_ALL=C $(RUN_TEMACS) -batch -l loadup dump || exit 1; \
 	  test "X$(PAXCTL)" = X || $(PAXCTL) -zex emacs$(EXEEXT); \
-	  ln -f emacs$(EXEEXT) bootstrap-emacs$(EXEEXT); \
+	  rm -f bootstrap-emacs$(EXEEXT); \
+	  ln emacs$(EXEEXT) bootstrap-emacs$(EXEEXT); \
 	fi
 
 ## We run make-docfile twice because the command line may get too long
@@ -453,7 +461,7 @@ GLOBAL_SOURCES = $(base_obj:.o=.c) $(NS_OBJC_OBJ:.o=.m)
 
 gl-stamp: $(libsrc)/make-docfile$(EXEEXT) $(GLOBAL_SOURCES)
 	@rm -f gl-tmp
-	$(libsrc)/make-docfile -d $(srcdir) -g $(SOME_MACHINE_OBJECTS) $(obj) > gl-tmp
+	$(libsrc)/make-docfile -d $(srcdir) -g $(obj) > gl-tmp
 	$(srcdir)/../build-aux/move-if-change gl-tmp globals.h
 	echo timestamp > $@
 
@@ -510,7 +518,7 @@ doc.o: buildobj.h
 @ns_frag@
 
 .PHONY: mostlyclean clean bootstrap-clean distclean maintainer-clean
-.PHONY: versioclean extraclean frc
+.PHONY: versionclean extraclean frc
 
 mostlyclean:
 	rm -f temacs$(EXEEXT) core *.core \#* *.o libXMenu11.a liblw.a
@@ -613,7 +621,8 @@ $(lispsource)/loaddefs.el: $(BOOTSTRAPEMACS) $(VCSWITNESS)
 bootstrap-emacs$(EXEEXT): temacs$(EXEEXT)
 	cd ../lisp; $(MAKE) $(MFLAGS) update-subdirs
 	if test "$(CANNOT_DUMP)" = "yes"; then \
-	  ln -f temacs$(EXEEXT) bootstrap-emacs$(EXEEXT); \
+	  rm -f bootstrap-emacs$(EXEEXT); \
+	  ln temacs$(EXEEXT) bootstrap-emacs$(EXEEXT); \
 	else \
 	  $(RUN_TEMACS) --batch --load loadup bootstrap || exit 1; \
 	  test "X$(PAXCTL)" = X || $(PAXCTL) -zex emacs$(EXEEXT); \

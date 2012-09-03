@@ -365,7 +365,6 @@ Other major modes are defined by comparison with this one."
     (define-key map ">" 'end-of-buffer)
     (define-key map "<" 'beginning-of-buffer)
     (define-key map "g" 'revert-buffer)
-    (define-key map "z" 'kill-this-buffer)
     map))
 
 (put 'special-mode 'mode-class 'special)
@@ -1887,9 +1886,10 @@ as an argument limits undo to changes within the current region."
     ;; so, ask the user whether she wants to skip the redo/undo pair.
     (let ((equiv (gethash pending-undo-list undo-equiv-table)))
       (or (eq (selected-window) (minibuffer-window))
-	  (setq message (if undo-in-region
-			    (if equiv "Redo in region!" "Undo in region!")
-			  (if equiv "Redo!" "Undo!"))))
+	  (setq message (format "%s%s!"
+                                (if (or undo-no-redo (not equiv))
+                                    "Undo" "Redo")
+                                (if undo-in-region " in region" ""))))
       (when (and (consp equiv) undo-no-redo)
 	;; The equiv entry might point to another redo record if we have done
 	;; undo-redo-undo-redo-... so skip to the very last equiv.
@@ -6960,6 +6960,32 @@ See also `normal-erase-is-backspace'."
 
 (defvar vis-mode-saved-buffer-invisibility-spec nil
   "Saved value of `buffer-invisibility-spec' when Visible mode is on.")
+
+(define-minor-mode read-only-mode
+  "Change whether the current buffer is read-only.
+With prefix argument ARG, make the buffer read-only if ARG is
+positive, otherwise make it writable.  If buffer is read-only
+and `view-read-only' is non-nil, enter view mode.
+
+Do not call this from a Lisp program unless you really intend to
+do the same thing as the \\[toggle-read-only] command, including
+possibly enabling or disabling View mode.  Also, note that this
+command works by setting the variable `buffer-read-only', which
+does not affect read-only regions caused by text properties.  To
+ignore read-only status in a Lisp program (whether due to text
+properties or buffer state), bind `inhibit-read-only' temporarily
+to a non-nil value."
+  :variable buffer-read-only
+  (cond
+   ((and (not buffer-read-only) view-mode)
+    (View-exit-and-edit)
+    (make-local-variable 'view-read-only)
+    (setq view-read-only t))		; Must leave view mode.
+   ((and buffer-read-only view-read-only
+         ;; If view-mode is already active, `view-mode-enter' is a nop.
+         (not view-mode)
+         (not (eq (get major-mode 'mode-class) 'special)))
+    (view-mode-enter))))
 
 (define-minor-mode visible-mode
   "Toggle making all invisible text temporarily visible (Visible mode).
