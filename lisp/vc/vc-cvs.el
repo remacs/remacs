@@ -394,7 +394,7 @@ REV is the revision to check out."
              (if vc-cvs-use-edit
                  (vc-cvs-command nil 0 file "edit")
                (set-file-modes file (logior (file-modes file) 128))
-               (if (equal file buffer-file-name) (toggle-read-only -1))))
+               (if (equal file buffer-file-name) (read-only-mode -1))))
       ;; Check out a particular revision (or recreate the file).
       (vc-file-setprop file 'vc-working-revision nil)
       (apply 'vc-cvs-command nil 0 file
@@ -1178,7 +1178,11 @@ is non-nil."
                                (parse-time-string (concat time " +0000")))))
       (cond ((and (not (string-match "\\+" time))
                   (car parsed-time)
-                  (equal mtime (apply 'encode-time parsed-time)))
+                  ;; Compare just the seconds part of the file time,
+                  ;; since CVS file time stamp resolution is just 1 second.
+                  (let ((ptime (apply 'encode-time parsed-time)))
+                    (and (eq (car mtime) (car ptime))
+                         (eq (cadr mtime) (cadr ptime)))))
              (vc-file-setprop file 'vc-checkout-time mtime)
              (if set-state (vc-file-setprop file 'vc-state 'up-to-date)))
             (t

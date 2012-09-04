@@ -817,7 +817,7 @@ get_minibuffer (EMACS_INT depth)
 	 while the buffer doesn't know about them any more.  */
       delete_all_overlays (XBUFFER (buf));
       reset_buffer (XBUFFER (buf));
-      record_unwind_protect (Fset_buffer, Fcurrent_buffer ());
+      record_unwind_current_buffer ();
       Fset_buffer (buf);
       if (!NILP (Ffboundp (intern ("minibuffer-inactive-mode"))))
 	call0 (intern ("minibuffer-inactive-mode"));
@@ -1860,7 +1860,6 @@ the values STRING, PREDICATE and `lambda'.  */)
 }
 
 static Lisp_Object Qmetadata;
-extern Lisp_Object Qbuffer;
 
 DEFUN ("internal-complete-buffer", Finternal_complete_buffer, Sinternal_complete_buffer, 3, 3, 0,
        doc: /* Perform completion on buffer names.

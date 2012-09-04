@@ -52,10 +52,6 @@ static Lisp_Object Qcodeset, Qdays, Qmonths, Qpaper;
 static Lisp_Object Qmd5, Qsha1, Qsha224, Qsha256, Qsha384, Qsha512;
 
 static int internal_equal (Lisp_Object , Lisp_Object, int, int);
-
-#ifndef HAVE_UNISTD_H
-extern long time ();
-#endif
 
 DEFUN ("identity", Fidentity, Sidentity, 1, 1, 0,
        doc: /* Return the argument unchanged.  */)
@@ -74,32 +70,16 @@ Other values of LIMIT are ignored.  */)
   (Lisp_Object limit)
 {
   EMACS_INT val;
-  Lisp_Object lispy_val;
 
   if (EQ (limit, Qt))
-    {
-      EMACS_TIME t = current_emacs_time ();
-      seed_random (getpid () ^ EMACS_SECS (t) ^ EMACS_NSECS (t));
-    }
+    init_random ();
+  else if (STRINGP (limit))
+    seed_random (SSDATA (limit), SBYTES (limit));
 
+  val = get_random ();
   if (NATNUMP (limit) && XFASTINT (limit) != 0)
-    {
-      /* Try to take our random number from the higher bits of VAL,
-	 not the lower, since (says Gentzel) the low bits of `random'
-	 are less random than the higher ones.  We do this by using the
-	 quotient rather than the remainder.  At the high end of the RNG
-	 it's possible to get a quotient larger than n; discarding
-	 these values eliminates the bias that would otherwise appear
-	 when using a large n.  */
-      EMACS_INT denominator = (INTMASK + 1) / XFASTINT (limit);
-      do
-	val = get_random () / denominator;
-      while (val >= XFASTINT (limit));
-    }
-  else
-    val = get_random ();
-  XSETINT (lispy_val, val);
-  return lispy_val;
+    val %= XFASTINT (limit);
+  return make_number (val);
 }
 
 /* Heuristic on how many iterations of a tight loop can be safely done
@@ -1100,7 +1080,7 @@ an error is signaled.  */)
     {
       ptrdiff_t chars = SCHARS (string);
       unsigned char *str = xmalloc (chars);
-      ptrdiff_t converted = str_to_unibyte (SDATA (string), str, chars, 0);
+      ptrdiff_t converted = str_to_unibyte (SDATA (string), str, chars);
 
       if (converted < chars)
 	error ("Can't convert the %"pD"dth character to unibyte", converted);
@@ -2139,12 +2119,8 @@ ARRAY is a vector, string, char-table, or bool-vector.  */)
   register ptrdiff_t size, idx;
 
   if (VECTORP (array))
-    {
-      register Lisp_Object *p = XVECTOR (array)->contents;
-      size = ASIZE (array);
-      for (idx = 0; idx < size; idx++)
-	p[idx] = item;
-    }
+    for (idx = 0, size = ASIZE (array); idx < size; idx++)
+      ASET (array, idx, item);
   else if (CHAR_TABLE_P (array))
     {
       int i;
@@ -3971,8 +3947,8 @@ sweep_weak_table (struct Lisp_Hash_Table *h, int remove_entries_p)
       for (idx = HASH_INDEX (h, bucket); !NILP (idx); idx = next)
 	{
 	  ptrdiff_t i = XFASTINT (idx);
-	  int key_known_to_survive_p = survives_gc_p (HASH_KEY (h, i));
-	  int value_known_to_survive_p = survives_gc_p (HASH_VALUE (h, i));
+	  bool key_known_to_survive_p = survives_gc_p (HASH_KEY (h, i));
+	  bool value_known_to_survive_p = survives_gc_p (HASH_VALUE (h, i));
 	  int remove_p;
 
 	  if (EQ (h->weak, Qkey))
@@ -4660,13 +4636,12 @@ secure_hash (Lisp_Object algorithm, Lisp_Object object, Lisp_Object start, Lisp_
     {
       struct buffer *prev = current_buffer;
 
-      record_unwind_protect (Fset_buffer, Fcurrent_buffer ());
+      record_unwind_current_buffer ();
 
       CHECK_BUFFER (object);
 
       bp = XBUFFER (object);
-      if (bp != current_buffer)
-	set_buffer_internal (bp);
+      set_buffer_internal (bp);
 
       if (NILP (start))
 	b = BEGV;
@@ -4753,8 +4728,7 @@ secure_hash (Lisp_Object algorithm, Lisp_Object object, Lisp_Object start, Lisp_
 	}
 
       object = make_buffer_string (b, e, 0);
-      if (prev != current_buffer)
-	set_buffer_internal (prev);
+      set_buffer_internal (prev);
       /* Discard the unwind protect for recovering the current
 	 buffer.  */
       specpdl_ptr--;

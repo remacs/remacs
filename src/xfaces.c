@@ -225,11 +225,10 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "dosfns.h"
 #endif
 
-#ifdef WINDOWSNT
-#include "w32term.h"
+#ifdef HAVE_WINDOW_SYSTEM
+#include TERM_HEADER
 #include "fontset.h"
-/* Redefine X specifics to W32 equivalents to avoid cluttering the
-   code with #ifdef blocks. */
+#ifdef WINDOWSNT
 #undef FRAME_X_DISPLAY_INFO
 #define FRAME_X_DISPLAY_INFO FRAME_W32_DISPLAY_INFO
 #define x_display_info w32_display_info
@@ -238,13 +237,13 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #endif /* WINDOWSNT */
 
 #ifdef HAVE_NS
-#include "nsterm.h"
 #undef FRAME_X_DISPLAY_INFO
 #define FRAME_X_DISPLAY_INFO FRAME_NS_DISPLAY_INFO
 #define x_display_info ns_display_info
 #define check_x check_ns
 #define GCGraphicsExposures 0
 #endif /* HAVE_NS */
+#endif /* HAVE_WINDOW_SYSTEM */
 
 #include "buffer.h"
 #include "dispextern.h"
@@ -254,9 +253,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "termchar.h"
 
 #include "font.h"
-#ifdef HAVE_WINDOW_SYSTEM
-#include "fontset.h"
-#endif /* HAVE_WINDOW_SYSTEM */
 
 #ifdef HAVE_X_WINDOWS
 
@@ -319,9 +315,10 @@ static Lisp_Object QCfontset;
 Lisp_Object Qnormal;
 Lisp_Object Qbold;
 static Lisp_Object Qline, Qwave;
-Lisp_Object Qultra_light, Qextra_light, Qlight;
+static Lisp_Object Qultra_light, Qreverse_oblique, Qreverse_italic;
+Lisp_Object Qextra_light, Qlight;
 Lisp_Object Qsemi_light, Qsemi_bold, Qextra_bold, Qultra_bold;
-Lisp_Object Qoblique, Qreverse_oblique, Qreverse_italic;
+Lisp_Object Qoblique;
 Lisp_Object Qitalic;
 static Lisp_Object Qultra_condensed, Qextra_condensed;
 Lisp_Object Qcondensed;
@@ -456,18 +453,7 @@ static int menu_face_changed_default;
 struct table_entry;
 struct named_merge_point;
 
-static void map_tty_color (struct frame *, struct face *,
-			   enum lface_attribute_index, int *);
-static Lisp_Object resolve_face_name (Lisp_Object, int);
 static void set_font_frame_param (Lisp_Object, Lisp_Object);
-static int get_lface_attributes (struct frame *, Lisp_Object, Lisp_Object *,
-				 int, struct named_merge_point *);
-static ptrdiff_t load_pixmap (struct frame *, Lisp_Object,
-			      unsigned *, unsigned *);
-static struct frame *frame_or_selected_frame (Lisp_Object, int);
-static void load_face_colors (struct frame *, struct face *, Lisp_Object *);
-static void free_face_colors (struct frame *, struct face *);
-static int face_color_gray_p (struct frame *, const char *);
 static struct face *realize_face (struct face_cache *, Lisp_Object *,
 				  int);
 static struct face *realize_non_ascii_face (struct frame *, Lisp_Object,
@@ -477,38 +463,11 @@ static struct face *realize_tty_face (struct face_cache *, Lisp_Object *);
 static int realize_basic_faces (struct frame *);
 static int realize_default_face (struct frame *);
 static void realize_named_face (struct frame *, Lisp_Object, int);
-static int lface_fully_specified_p (Lisp_Object *);
-static int lface_equal_p (Lisp_Object *, Lisp_Object *);
-static unsigned hash_string_case_insensitive (Lisp_Object);
-static unsigned lface_hash (Lisp_Object *);
-static int lface_same_font_attributes_p (Lisp_Object *, Lisp_Object *);
 static struct face_cache *make_face_cache (struct frame *);
 static void clear_face_gcs (struct face_cache *);
 static void free_face_cache (struct face_cache *);
-static int face_fontset (Lisp_Object *);
-static void merge_face_vectors (struct frame *, Lisp_Object *, Lisp_Object*,
-				struct named_merge_point *);
 static int merge_face_ref (struct frame *, Lisp_Object, Lisp_Object *,
 			   int, struct named_merge_point *);
-static int set_lface_from_font (struct frame *, Lisp_Object, Lisp_Object,
-				int);
-static Lisp_Object lface_from_face_name (struct frame *, Lisp_Object, int);
-static struct face *make_realized_face (Lisp_Object *);
-static void cache_face (struct face_cache *, struct face *, unsigned);
-static void uncache_face (struct face_cache *, struct face *);
-
-#ifdef HAVE_WINDOW_SYSTEM
-
-static GC x_create_gc (struct frame *, unsigned long, XGCValues *);
-static void x_free_gc (struct frame *, GC);
-
-#ifdef USE_X_TOOLKIT
-static void x_update_menu_appearance (struct frame *);
-
-extern void free_frame_menubar (struct frame *);
-#endif /* USE_X_TOOLKIT */
-
-#endif /* HAVE_WINDOW_SYSTEM */
 
 
 /***********************************************************************
@@ -2565,13 +2524,13 @@ merge_face_ref (struct frame *f, Lisp_Object face_ref, Lisp_Object *to,
 		}
 	      else if (EQ (keyword, QCstipple))
 		{
-#if defined (HAVE_X_WINDOWS) || defined (HAVE_NS)
+#if defined (HAVE_WINDOW_SYSTEM)
 		  Lisp_Object pixmap_p = Fbitmap_spec_p (value);
 		  if (!NILP (pixmap_p))
 		    to[LFACE_STIPPLE_INDEX] = value;
 		  else
 		    err = 1;
-#endif
+#endif /* HAVE_WINDOW_SYSTEM */
 		}
 	      else if (EQ (keyword, QCwidth))
 		{
@@ -2781,8 +2740,7 @@ The value is TO.  */)
       copy = Finternal_make_lisp_face (to, new_frame);
     }
 
-  memcpy (XVECTOR (copy)->contents, XVECTOR (lface)->contents,
-	  LFACE_VECTOR_SIZE * word_size);
+  vcopy (copy, 0, XVECTOR (lface)->contents, LFACE_VECTOR_SIZE);
 
   /* Changing a named face means that all realized faces depending on
      that face are invalid.  Since we cannot tell which realized faces
@@ -3126,14 +3084,14 @@ FRAME 0 means change the face on all frames, and change the default
     }
   else if (EQ (attr, QCstipple))
     {
-#if defined (HAVE_X_WINDOWS) || defined (HAVE_NS)
+#if defined (HAVE_WINDOW_SYSTEM)
       if (!UNSPECIFIEDP (value) && !IGNORE_DEFFACE_P (value)
 	  && !NILP (value)
 	  && NILP (Fbitmap_spec_p (value)))
 	signal_error ("Invalid stipple attribute", value);
       old_value = LFACE_STIPPLE (lface);
       ASET (lface, LFACE_STIPPLE_INDEX, value);
-#endif /* HAVE_X_WINDOWS || HAVE_NS */
+#endif /* HAVE_WINDOW_SYSTEM */
     }
   else if (EQ (attr, QCwidth))
     {
@@ -3831,9 +3789,9 @@ Default face attributes override any local face attributes.  */)
   gvec = XVECTOR (global_lface)->contents;
   for (i = 1; i < LFACE_VECTOR_SIZE; ++i)
     if (IGNORE_DEFFACE_P (gvec[i]))
-      lvec[i] = Qunspecified;
+      ASET (local_lface, i, Qunspecified);
     else if (! UNSPECIFIEDP (gvec[i]))
-      lvec[i] = gvec[i];
+      ASET (local_lface, i, AREF (global_lface, i));
 
   /* If the default face was changed, update the face cache and the
      `font' frame parameter.  */
@@ -3850,7 +3808,7 @@ Default face attributes override any local face attributes.  */)
 	     the previously-cached vector.  */
 	  memcpy (attrs, oldface->lface, sizeof attrs);
 	  merge_face_vectors (f, lvec, attrs, 0);
-	  memcpy (lvec, attrs, sizeof attrs);
+	  vcopy (local_lface, 0, attrs, LFACE_VECTOR_SIZE);
 	  newface = realize_face (c, lvec, DEFAULT_FACE_ID);
 
 	  if ((! UNSPECIFIEDP (gvec[LFACE_FAMILY_INDEX])

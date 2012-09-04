@@ -116,11 +116,12 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "gnutls.h"
 #endif
 
+#ifdef HAVE_WINDOW_SYSTEM
+#include TERM_HEADER
+#endif /* HAVE_WINDOW_SYSTEM */
+
 #if defined (USE_GTK) || defined (HAVE_GCONF) || defined (HAVE_GSETTINGS)
 #include "xgselect.h"
-#endif
-#ifdef HAVE_NS
-#include "nsterm.h"
 #endif
 
 /* Work around GCC 4.7.0 bug with strict overflow checking; see
@@ -164,16 +165,6 @@ static Lisp_Object QClocal, QCremote, QCcoding;
 static Lisp_Object QCserver, QCnowait, QCnoquery, QCstop;
 static Lisp_Object QCsentinel, QClog, QCoptions, QCplist;
 static Lisp_Object Qlast_nonmenu_event;
-/* QCfamily is declared and initialized in xfaces.c,
-   QCfilter in keyboard.c.  */
-extern Lisp_Object QCfamily, QCfilter;
-
-/* Qexit is declared and initialized in eval.c.  */
-
-/* QCfamily is defined in xfaces.c.  */
-extern Lisp_Object QCfamily;
-/* QCfilter is defined in keyboard.c.  */
-extern Lisp_Object QCfilter;
 
 #define NETCONN_P(p) (EQ (XPROCESS (p)->type, Qnetwork))
 #define NETCONN1_P(p) (EQ (p->type, Qnetwork))
@@ -5039,15 +5030,13 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
       for (channel = 0; channel <= max_input_desc; ++channel)
         {
           struct fd_callback_data *d = &fd_callback_info[channel];
-          if (FD_ISSET (channel, &Available)
-              && d->func != 0
-              && (d->flags & FOR_READ) != 0)
-            d->func (channel, d->data, 1);
-          if (FD_ISSET (channel, &Writeok)
-              && d->func != 0
-              && (d->flags & FOR_WRITE) != 0)
-            d->func (channel, d->data, 0);
-          }
+          if (d->func
+	      && ((d->flags & FOR_READ
+		   && FD_ISSET (channel, &Available))
+		  || (d->flags & FOR_WRITE
+		      && FD_ISSET (channel, &Writeok))))
+            d->func (channel, d->data);
+	}
 
       for (channel = 0; channel <= max_process_desc; channel++)
 	{
@@ -5361,14 +5350,14 @@ read_process_output (Lisp_Object proc, register int channel)
   /* There's no good reason to let process filters change the current
      buffer, and many callers of accept-process-output, sit-for, and
      friends don't expect current-buffer to be changed from under them.  */
-  record_unwind_protect (set_buffer_if_live, Fcurrent_buffer ());
+  record_unwind_current_buffer ();
 
   /* Read and dispose of the process output.  */
   outstream = p->filter;
   if (!NILP (outstream))
     {
       Lisp_Object text;
-      int outer_running_asynch_code = running_asynch_code;
+      bool outer_running_asynch_code = running_asynch_code;
       int waiting = waiting_for_user_input_p;
 
       /* No need to gcpro these, because all we do with them later
@@ -5605,7 +5594,7 @@ send_process_trap (int ignore)
 {
   SIGNAL_THREAD_CHECK (SIGPIPE);
   sigunblock (sigmask (SIGPIPE));
-  longjmp (send_process_frame, 1);
+  _longjmp (send_process_frame, 1);
 }
 
 /* In send_process, when a write fails temporarily,
@@ -5808,7 +5797,7 @@ send_process (volatile Lisp_Object proc, const char *volatile buf,
   /* 2000-09-21: Emacs 20.7, sparc-sun-solaris-2.6, GCC 2.95.2,
      CFLAGS="-g -O": The value of the parameter `proc' is clobbered
      when returning with longjmp despite being declared volatile.  */
-  if (!setjmp (send_process_frame))
+  if (!_setjmp (send_process_frame))
     {
       p = XPROCESS (proc);  /* Repair any setjmp clobbering.  */
       process_sent_to = proc;
@@ -6725,9 +6714,9 @@ static void
 exec_sentinel (Lisp_Object proc, Lisp_Object reason)
 {
   Lisp_Object sentinel, odeactivate;
-  register struct Lisp_Process *p = XPROCESS (proc);
+  struct Lisp_Process *p = XPROCESS (proc);
   ptrdiff_t count = SPECPDL_INDEX ();
-  int outer_running_asynch_code = running_asynch_code;
+  bool outer_running_asynch_code = running_asynch_code;
   int waiting = waiting_for_user_input_p;
 
   if (inhibit_sentinels)
@@ -6745,7 +6734,7 @@ exec_sentinel (Lisp_Object proc, Lisp_Object reason)
   /* There's no good reason to let sentinels change the current
      buffer, and many callers of accept-process-output, sit-for, and
      friends don't expect current-buffer to be changed from under them.  */
-  record_unwind_protect (set_buffer_if_live, Fcurrent_buffer ());
+  record_unwind_current_buffer ();
 
   sentinel = p->sentinel;
   if (NILP (sentinel))

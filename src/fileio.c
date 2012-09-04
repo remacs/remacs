@@ -766,7 +766,7 @@ filesystem tree, not (expand-file-name ".."  dirname).  */)
 #endif /* DOS_NT */
   ptrdiff_t length;
   Lisp_Object handler, result, handled_name;
-  int multibyte;
+  bool multibyte;
   Lisp_Object hdir;
 
   CHECK_STRING (name);
@@ -1566,7 +1566,7 @@ those `/' is discarded.  */)
   char *target = NULL;
   int total = 0;
   int substituted = 0;
-  int multibyte;
+  bool multibyte;
   char *xnm;
   Lisp_Object handler;
 
@@ -3142,8 +3142,7 @@ decide_coding_unwind (Lisp_Object unwind_data)
   undo_list = XCAR (unwind_data);
   buffer = XCDR (unwind_data);
 
-  if (current_buffer != XBUFFER (buffer))
-    set_buffer_internal (XBUFFER (buffer));
+  set_buffer_internal (XBUFFER (buffer));
   adjust_markers_for_delete (BEG, BEG_BYTE, Z, Z_BYTE);
   adjust_overlays_for_delete (BEG, Z - BEG);
   set_buffer_intervals (current_buffer, NULL);
@@ -3481,7 +3480,7 @@ variable `last-coding-system-used' to the coding system actually used.  */)
 		  Lisp_Object workbuf;
 		  struct buffer *buf;
 
-		  record_unwind_protect (Fset_buffer, Fcurrent_buffer ());
+		  record_unwind_current_buffer ();
 
 		  workbuf = Fget_buffer_create (build_string (" *code-converting-work*"));
 		  buf = XBUFFER (workbuf);
@@ -3760,7 +3759,8 @@ variable `last-coding-system-used' to the coding system actually used.  */)
       ptrdiff_t temp;
       ptrdiff_t this = 0;
       ptrdiff_t this_count = SPECPDL_INDEX ();
-      int multibyte = ! NILP (BVAR (current_buffer, enable_multibyte_characters));
+      bool multibyte
+	= ! NILP (BVAR (current_buffer, enable_multibyte_characters));
       Lisp_Object conversion_buffer;
       struct gcpro gcpro1;
 
@@ -5306,7 +5306,7 @@ A non-nil CURRENT-ONLY argument means save only current buffer.  */)
   FILE *stream = NULL;
   ptrdiff_t count = SPECPDL_INDEX ();
   int orig_minibuffer_auto_raise = minibuffer_auto_raise;
-  int old_message_p = 0;
+  bool old_message_p = 0;
   struct gcpro gcpro1, gcpro2;
 
   if (max_specpdl_size < specpdl_size + 40)
