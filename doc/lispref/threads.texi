@@ -28,7 +28,8 @@ thread synchronization.
 
   While global variables are shared among all Emacs Lisp threads,
 local variables are not---a dynamic @code{let} binding is local.  Each
-thread also has its own current buffer (@pxref{Current Buffer}).
+thread also has its own current buffer (@pxref{Current Buffer}) and
+its own match data (@pxref{Match Data}).
 
   In the case of lexical bindings (@pxref{Variable Scoping}), a
 closure is an object like any other in Emacs Lisp, and bindings in a
