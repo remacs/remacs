@@ -585,6 +585,8 @@ temporarily enables it to allow getting help on disabled items and buttons."
 	     (setq saved-yank-menu (copy-sequence yank-menu))
 	     (menu-bar-update-yank-menu "(any string)" nil))
 	   (setq key (read-key-sequence "Describe key (or click or menu item): "))
+	   ;; Clear the echo area message (Bug#7014).
+	   (message nil)
 	   ;; If KEY is a down-event, read and discard the
 	   ;; corresponding up-event.  Note that there are also
 	   ;; down-events on scroll bars and mode lines: the actual
@@ -962,7 +964,11 @@ is currently activated with completion."
     result))
 
 ;;; Automatic resizing of temporary buffers.
-(defcustom temp-buffer-max-height (lambda (buffer) (/ (- (frame-height) 2) 2))
+(defcustom temp-buffer-max-height
+  (lambda (buffer)
+    (if (eq (selected-window) (frame-root-window))
+	(/ (x-display-pixel-height) (frame-char-height) 2)
+      (/ (- (frame-height) 2) 2)))
   "Maximum height of a window displaying a temporary buffer.
 This is effective only when Temp Buffer Resize mode is enabled.
 The value is the maximum height (in lines) which
@@ -973,7 +979,16 @@ buffer, and should return a positive integer.  At the time the
 function is called, the window to be resized is selected."
   :type '(choice integer function)
   :group 'help
-  :version "20.4")
+  :version "24.2")
+
+(defcustom temp-buffer-resize-frames nil
+  "Non-nil means `temp-buffer-resize-mode' can resize frames.
+A frame can be resized if and only if its root window is a live
+window.  The height of the root window is subject to the values of
+`temp-buffer-max-height' and `window-min-height'."
+  :type 'boolean
+  :version "24.2"
+  :group 'help)
 
 (define-minor-mode temp-buffer-resize-mode
   "Toggle auto-resizing temporary buffer windows (Temp Buffer Resize Mode).
@@ -1008,9 +1023,21 @@ view."
 		    (with-selected-window window
 		      (funcall temp-buffer-max-height (window-buffer)))
 		  temp-buffer-max-height)))
-    (when (and (pos-visible-in-window-p (point-min) window)
-	       (window-combined-p window))
-      (fit-window-to-buffer window height))))
+    (cond
+     ((and (pos-visible-in-window-p (point-min) window)
+	   (window-combined-p window))
+      (fit-window-to-buffer window height))
+     ((and temp-buffer-resize-frames
+	   (eq window (frame-root-window window))
+	   (memq (car (window-parameter window 'quit-restore))
+		 ;; If 'same is too strong, we might additionally check
+		 ;; whether the second element is 'frame.
+		 '(same frame)))
+      (let ((frame (window-frame window)))
+	(fit-frame-to-buffer
+	 frame (+ (frame-height frame)
+		  (- (window-total-size window))
+		  height)))))))
 
 ;;; Help windows.
 (defcustom help-window-select 'other

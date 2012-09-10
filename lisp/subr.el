@@ -1548,7 +1548,7 @@ if it is empty or a duplicate."
 	       (or keep-all
 		   (not (equal (car history) newelt))))
       (if history-delete-duplicates
-	  (delete newelt history))
+	  (setq history (delete newelt history)))
       (setq history (cons newelt history))
       (when (integerp maxelt)
 	(if (= 0 maxelt)
@@ -2237,7 +2237,8 @@ keyboard-quit events while waiting for a valid input."
     (error "Called `read-char-choice' without valid char choices"))
   (let (char done show-help (helpbuf " *Char Help*"))
     (let ((cursor-in-echo-area t)
-          (executing-kbd-macro executing-kbd-macro))
+          (executing-kbd-macro executing-kbd-macro)
+	  (esc-flag nil))
       (save-window-excursion	      ; in case we call help-form-show
 	(while (not done)
 	  (unless (get-text-property 0 'face prompt)
@@ -2261,8 +2262,12 @@ keyboard-quit events while waiting for a valid input."
 	    ;; there are no more events in the macro.  Attempt to
 	    ;; get an event interactively.
 	    (setq executing-kbd-macro nil))
-	   ((and (not inhibit-keyboard-quit) (eq char ?\C-g))
-	    (keyboard-quit))))))
+	   ((not inhibit-keyboard-quit)
+	    (cond
+	     ((and (null esc-flag) (eq char ?\e))
+	      (setq esc-flag t))
+	     ((memq char '(?\C-g ?\e))
+	      (keyboard-quit))))))))
     ;; Display the question with the answer.  But without cursor-in-echo-area.
     (message "%s%s" prompt (char-to-string char))
     char))
@@ -2314,11 +2319,19 @@ floating point support."
 PROMPT is the string to display to ask the question.  It should
 end in a space; `y-or-n-p' adds \"(y or n) \" to it.
 
-No confirmation of the answer is requested; a single character is enough.
-Also accepts Space to mean yes, or Delete to mean no.  \(Actually, it uses
-the bindings in `query-replace-map'; see the documentation of that variable
-for more information.  In this case, the useful bindings are `act', `skip',
-`recenter', and `quit'.\)
+No confirmation of the answer is requested; a single character is
+enough.  SPC also means yes, and DEL means no.
+
+To be precise, this function translates user input into responses
+by consulting the bindings in `query-replace-map'; see the
+documentation of that variable for more information.  In this
+case, the useful bindings are `act', `skip', `recenter',
+`scroll-up', `scroll-down', and `quit'.
+An `act' response means yes, and a `skip' response means no.
+A `quit' response means to invoke `keyboard-quit'.
+If the user enters `recenter', `scroll-up', or `scroll-down'
+responses, perform the requested window recentering or scrolling
+and ask again.
 
 Under a windowing system a dialog box will be used if `last-nonmenu-event'
 is nil and `use-dialog-box' is non-nil."
@@ -2350,21 +2363,33 @@ is nil and `use-dialog-box' is non-nil."
                                "" " ")
                            "(y or n) "))
       (while
-          (let* ((key
+          (let* ((scroll-actions '(recenter scroll-up scroll-down
+				   scroll-other-window scroll-other-window-down))
+		 (key
                   (let ((cursor-in-echo-area t))
                     (when minibuffer-auto-raise
                       (raise-frame (window-frame (minibuffer-window))))
-                    (read-key (propertize (if (eq answer 'recenter)
+                    (read-key (propertize (if (memq answer scroll-actions)
                                               prompt
                                             (concat "Please answer y or n.  "
                                                     prompt))
                                           'face 'minibuffer-prompt)))))
             (setq answer (lookup-key query-replace-map (vector key) t))
             (cond
-             ((memq answer '(skip act)) nil)
-             ((eq answer 'recenter) (recenter) t)
-             ((memq answer '(exit-prefix quit)) (signal 'quit nil) t)
-             (t t)))
+	     ((memq answer '(skip act)) nil)
+	     ((eq answer 'recenter)
+	      (recenter) t)
+	     ((eq answer 'scroll-up)
+	      (ignore-errors (scroll-up-command)) t)
+	     ((eq answer 'scroll-down)
+	      (ignore-errors (scroll-down-command)) t)
+	     ((eq answer 'scroll-other-window)
+	      (ignore-errors (scroll-other-window)) t)
+	     ((eq answer 'scroll-other-window-down)
+	      (ignore-errors (scroll-other-window-down)) t)
+	     ((or (memq answer '(exit-prefix quit)) (eq key ?\e))
+	      (signal 'quit nil) t)
+	     (t t)))
         (ding)
         (discard-input))))
     (let ((ret (eq answer 'act)))
@@ -2646,6 +2671,10 @@ directory if it does not exist."
         (expand-file-name new-name user-emacs-directory))))))
 
 ;;;; Misc. useful functions.
+
+(defsubst buffer-narrowed-p ()
+  "Return non-nil if the current buffer is narrowed."
+  (/= (- (point-max) (point-min)) (buffer-size)))
 
 (defun find-tag-default ()
   "Determine default tag to search for, based on text at point.
@@ -3728,7 +3757,7 @@ from `standard-syntax-table' otherwise."
     table))
 
 (defun syntax-after (pos)
-  "Return the raw syntax of the char after POS.
+  "Return the raw syntax descriptor for the char after POS.
 If POS is outside the buffer's accessible portion, return nil."
   (unless (or (< pos (point-min)) (>= pos (point-max)))
     (let ((st (if parse-sexp-lookup-properties
@@ -3737,7 +3766,12 @@ If POS is outside the buffer's accessible portion, return nil."
 	(aref (or st (syntax-table)) (char-after pos))))))
 
 (defun syntax-class (syntax)
-  "Return the syntax class part of the syntax descriptor SYNTAX.
+  "Return the code for the syntax class described by SYNTAX.
+
+SYNTAX should be a raw syntax descriptor; the return value is a
+integer which encodes the corresponding syntax class.  See Info
+node `(elisp)Syntax Table Internals' for a list of codes.
+
 If SYNTAX is nil, return nil."
   (and syntax (logand (car syntax) 65535)))
 

@@ -707,6 +707,7 @@ else
   nw="$nw -Wswitch-default"         # Too many warnings for now
   nw="$nw -Wfloat-equal"            # warns about high-quality code
   nw="$nw -Winline"                 # OK to ignore 'inline'
+  nw="$nw -Wjump-misses-init"       # We sometimes safely jump over init.
   nw="$nw -Wsync-nand"              # irrelevant here, and provokes ObjC warning
   nw="$nw -Wunsafe-loop-optimizations" # OK to suppress unsafe optimizations
 
@@ -1301,17 +1302,6 @@ AC_CACHE_CHECK(for speed_t, emacs_cv_speed_t,
 if test $emacs_cv_speed_t = yes; then
   AC_DEFINE(HAVE_SPEED_T, 1,
   	   [Define to 1 if `speed_t' is declared by <termios.h>.])
-fi
-
-AC_CACHE_CHECK(for struct exception, emacs_cv_struct_exception,
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <math.h>]],
-[[static struct exception x; x.arg1 = x.arg2 = x.retval; x.name = ""; x.type = 1;]])],
-  emacs_cv_struct_exception=yes, emacs_cv_struct_exception=no))
-HAVE_EXCEPTION=$emacs_cv_struct_exception
-dnl Define on Darwin so emacs symbols will not conflict with those
-dnl in the System framework.  Otherwise -prebind will not work.
-if test $emacs_cv_struct_exception != yes || test $opsys = darwin; then
-  AC_DEFINE(NO_MATHERR, 1, [Define to 1 if you don't have struct exception in math.h.])
 fi
 
 AC_CHECK_HEADERS_ONCE(sys/socket.h)
@@ -2841,7 +2831,7 @@ AC_SUBST(BLESSMAIL_TARGET)
 
 AC_CHECK_FUNCS(gethostname \
 closedir getrusage get_current_dir_name \
-lrand48 logb frexp fmod cbrt setsid \
+lrand48 logb cbrt setsid \
 fpathconf select euidaccess getpagesize setlocale \
 utimes getrlimit setrlimit setpgid getcwd shutdown getaddrinfo \
 __fpending strsignal setitimer \
@@ -3271,12 +3261,6 @@ AC_DEFINE(CLASH_DETECTION, 1, [Define if you want lock files to be written,
   so that Emacs can tell instantly when you try to modify a file that
   someone else has modified in his/her Emacs.])
 
-AH_TEMPLATE(FLOAT_CHECK_DOMAIN, [Define if the float library doesn't
-  handle errors by either setting errno, or signaling SIGFPE/SIGILL.])
-
-AH_TEMPLATE(HAVE_INVERSE_HYPERBOLIC, [Define if you have the functions
-  acosh, asinh, and atanh.])
-
 dnl Everybody supports this, except MS.
 dnl Seems like the kind of thing we should be testing for, though.
 ## Note: PTYs are broken on darwin <6.  Use at your own risk.
@@ -3411,12 +3395,6 @@ case $opsys in
     AC_DEFINE(BROKEN_PTY_READ_AFTER_EAGAIN, 1, [Define on FreeBSD to
       work around an issue when reading from a PTY.])
     ;;
-
-  dnl Define the following so emacs symbols will not conflict with those
-  dnl in the System framework.  Otherwise -prebind will not work.
-  darwin)
-    AC_DEFINE(NO_ABORT, 1, [Do not define abort in emacs.c.])
-    ;;
 esac
 
 case $opsys in
@@ -3511,7 +3489,7 @@ case $opsys in
   cygwin )
     AC_DEFINE(PTY_ITERATION, [int i; for (i = 0; i < 1; i++)])
     dnl multi-line AC_DEFINEs are hard. :(
-    AC_DEFINE(PTY_OPEN, [ do { int dummy; SIGMASKTYPE mask; mask = sigblock (sigmask (SIGCHLD)); if (-1 == openpty (&fd, &dummy, pty_name, 0, 0)) fd = -1; sigsetmask (mask); if (fd >= 0) emacs_close (dummy); } while (0)])
+    AC_DEFINE(PTY_OPEN, [ do { int dummy; sigset_t blocked, procmask; sigemptyset (&blocked); sigaddset (&blocked, SIGCHLD); pthread_sigmask (SIG_BLOCK, &blocked, &procmask); if (-1 == openpty (&fd, &dummy, pty_name, 0, 0)) fd = -1; pthread_sigmask (SIG_SETMASK, &procmask, 0); if (fd >= 0) emacs_close (dummy); } while (0)])
     AC_DEFINE(PTY_NAME_SPRINTF, [])
     AC_DEFINE(PTY_TTY_NAME_SPRINTF, [])
     ;;
@@ -3540,7 +3518,7 @@ case $opsys in
       AC_DEFINE(PTY_ITERATION, [int i; for (i = 0; i < 1; i++)])
       dnl Note that grantpt and unlockpt may fork.  We must block SIGCHLD
       dnl to prevent sigchld_handler from intercepting the child's death.
-      AC_DEFINE(PTY_TTY_NAME_SPRINTF, [{ char *ptyname; sigblock (sigmask (SIGCHLD)); if (grantpt (fd) == -1 || unlockpt (fd) == -1 || !(ptyname = ptsname(fd))) { sigunblock (sigmask (SIGCHLD)); close (fd); return -1; } snprintf (pty_name, sizeof pty_name, "%s", ptyname); sigunblock (sigmask (SIGCHLD)); }])
+      AC_DEFINE(PTY_TTY_NAME_SPRINTF, [{ char *ptyname = 0; sigset_t blocked; sigemptyset (&blocked); sigaddset (&blocked, SIGCHLD); pthread_sigmask (SIG_BLOCK, &blocked, 0); if (grantpt (fd) != -1 && unlockpt (fd) != -1) ptyname = ptsname(fd); pthread_sigmask (SIG_UNBLOCK, &blocked, 0); if (!ptyname) { close (fd); return -1; } snprintf (pty_name, sizeof pty_name, "%s", ptyname); }])
       dnl if HAVE_POSIX_OPENPT
       if test "x$ac_cv_func_posix_openpt" = xyes; then
         AC_DEFINE(PTY_OPEN, [fd = posix_openpt (O_RDWR | O_NOCTTY)])
@@ -3585,18 +3563,15 @@ case $opsys in
     ;;
 
   sol2* )
-    dnl Uses sigblock/sigunblock rather than sighold/sigrelse,
-    dnl which appear to be BSD4.1 specific.  It may also be appropriate
-    dnl for SVR4.x (x<2) but I'm not sure.   fnf@cygnus.com
     dnl On SysVr4, grantpt(3) forks a subprocess, so keep sigchld_handler()
     dnl from intercepting that death.  If any child but grantpt's should die
     dnl within, it should be caught after sigrelse(2).
-    AC_DEFINE(PTY_TTY_NAME_SPRINTF, [{ char *ptsname (int), *ptyname; sigblock (sigmask (SIGCLD)); if (grantpt (fd) == -1) { emacs_close (fd); return -1; } sigunblock (sigmask (SIGCLD)); if (unlockpt (fd) == -1) { emacs_close (fd); return -1; } if (!(ptyname = ptsname (fd))) { emacs_close (fd); return -1; } snprintf (pty_name, sizeof pty_name, "%s", ptyname); }])
+    AC_DEFINE(PTY_TTY_NAME_SPRINTF, [{ char *ptsname (int), *ptyname; int grantpt_result; sigset_t blocked; sigemptyset (&blocked); sigaddset (&blocked, SIGCLD); pthread_sigmask (SIG_BLOCK, &blocked, 0); grantpt_result = grantpt (fd); pthread_sigmask (SIG_UNBLOCK, &blocked, 0); if (grantpt_result == -1 || unlockpt (fd) == -1 || !(ptyname = ptsname (fd))) { emacs_close (fd); return -1; } snprintf (pty_name, sizeof pty_name, "%s", ptyname); }])
     ;;
 
   unixware )
     dnl Comments are as per sol2*.
-    AC_DEFINE(PTY_TTY_NAME_SPRINTF, [{ char *ptsname (int), *ptyname; sigblock(sigmask(SIGCLD)); if (grantpt(fd) == -1) fatal("could not grant slave pty"); sigunblock(sigmask(SIGCLD)); if (unlockpt(fd) == -1) fatal("could not unlock slave pty"); if (!(ptyname = ptsname(fd))) fatal ("could not enable slave pty"); snprintf (pty_name, sizeof pty_name, "%s", ptyname); }])
+    AC_DEFINE(PTY_TTY_NAME_SPRINTF, [{ char *ptsname (int), *ptyname; int grantpt_result; sigset_t blocked; sigemptyset (&blocked); sigaddset (&blocked, SIGCLD); pthread_sigmask (SIG_BLOCK, &blocked, 0); grantpt_result = grantpt (fd); pthread_sigmask (SIG_UNBLOCK, &blocked, 0); if (grantpt_result == -1) fatal("could not grant slave pty"); if (unlockpt(fd) == -1) fatal("could not unlock slave pty"); if (!(ptyname = ptsname(fd))) fatal ("could not enable slave pty"); snprintf (pty_name, sizeof pty_name, "%s", ptyname); }])
     ;;
 esac
 
@@ -3851,13 +3826,27 @@ else
   esac
 fi                              dnl GCC?
 
+AC_CACHE_CHECK([for _setjmp], [emacs_cv_func__setjmp],
+  [AC_LINK_IFELSE(
+     [AC_LANG_PROGRAM(
+       [[#include <setjmp.h>
+       ]],
+       [[jmp_buf j;
+	 if (! _setjmp (j))
+	   _longjmp (j, 1);]])],
+     [emacs_cv_func__setjmp=yes],
+     [emacs_cv_func__setjmp=no])])
+if test $emacs_cv_func__setjmp = no; then
+  AC_DEFINE([_setjmp], [setjmp],
+    [Define to setjmp if _setjmp and _longjmp do not work.  See _longjmp.])
+  AC_DEFINE([_longjmp], [longjmp],
+    [Define to longjmp if _setjmp and _longjmp do not work.
+     Because longjmp may alter signal masks, callers of _longjmp
+     should not assume that it leaves signal masks alone.])
+fi
 
 case $opsys in
   sol2* | unixware )
-    dnl setjmp and longjmp can safely replace _setjmp and _longjmp,
-    dnl but they will run more slowly.
-    AC_DEFINE(_setjmp, setjmp, [Some platforms redefine this.])
-    AC_DEFINE(_longjmp, longjmp, [Some platforms redefine this.])
     dnl TIOCGPGRP is broken in SysVr4, so we can't send signals to PTY
     dnl subprocesses the usual way.  But TIOCSIGNAL does work for PTYs,
     dnl and this is all we need.
@@ -3871,13 +3860,6 @@ case $opsys in
     dnl Used in xfaces.c.
     AC_DEFINE(XOS_NEEDS_TIME_H, 1, [Compensate for a bug in Xos.h on
       some systems, where it requires time.h.])
-    ;;
-
-  netbsd | openbsd )
-    dnl Greg A. Woods <woods@weird.com> says we must include signal.h
-    dnl before syssignal.h is included, to work around interface conflicts
-    dnl that are handled with CPP __RENAME() macro in signal.h.
-    AC_DEFINE(SIGNAL_H_AHB, 1, [Define if AH_BOTTOM should include signal.h.])
     ;;
 esac
 

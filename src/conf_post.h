@@ -40,11 +40,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #endif
 #endif
 
-#ifdef SIGNAL_H_AHB
-#undef SIGNAL_H_AHB
-#include <signal.h>
-#endif
-
 /* This silences a few compilation warnings on FreeBSD.  */
 #ifdef BSD_SYSTEM_AHB
 #undef BSD_SYSTEM_AHB
@@ -167,7 +162,7 @@ You lose; /* Emacs for DOS must be compiled with DJGPP */
 #ifdef emacs /* Don't do this for lib-src.  */
 /* Tell regex.c to use a type compatible with Emacs.  */
 #define RE_TRANSLATE_TYPE Lisp_Object
-#define RE_TRANSLATE(TBL, C) CHAR_TABLE_TRANSLATE (TBL, C)
+#define RE_TRANSLATE(TBL, C) char_table_translate (TBL, C)
 #ifdef make_number
 /* If make_number is a macro, use it.  */
 #define RE_TRANSLATE_P(TBL) (!EQ (TBL, make_number (0)))
@@ -178,9 +173,6 @@ You lose; /* Emacs for DOS must be compiled with DJGPP */
 #endif
 
 #include <string.h>
-/* If you think about removing the line below, note that the
-   MS-Windows build relies on it for declaration of 'environ' needed
-   by a few source files.  */
 #include <stdlib.h>
 
 #if __GNUC__ >= 3  /* On GCC 3.0 we might get a warning.  */

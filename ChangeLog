@@ -1,4 +1,54 @@
+2012-09-10  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Improve robustness of 'make bootstrap' (Bug#12376).
+	Run autogen.sh after bootstrap-clean, to avoid bzr pull issues.
+	* INSTALL, README: Document autogen.sh.
+	* Makefile.in (Makefile): Mark it as precious, since it's updated
+	atomically.
+	(MAKE_CONFIG_STATUS): New macro.
+	(config.status, bootstrap): Use it.  This causes 'make bootstrap'
+	to run config.status with the --recheck option, which is more
+	appropriate for a bootstrap.
+	(bootstrap): Run autogen.sh right after cleaning.  Don't worry
+	about failures due to missing tools.
+	* autogen.sh: Exit with status 101 when failing due to missing tools.
+	* make-dist: Distribute autogen.sh.
+
+2012-09-09  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Assume C89 or later for math functions (Bug#12381).
+	* configure.ac (frexp, fmod): Remove checks for these functions,
+	as we now assume them.
+	(FLOAT_CHECK_DOMAIN, HAVE_INVERSE_HYPERBOLIC, NO_MATHERR)
+	(HAVE_EXCEPTION):
+	Remove; no longer needed.
+
+2012-09-07  Paul Eggert  <eggert@cs.ucla.edu>
+
+	More signal-handler cleanup (Bug#12327).
+	* configure.ac (FLOAT_CHECK_DOMAIN): Comment fix (Bug#12327).
+
+2012-09-06  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Signal-handler cleanup (Bug#12327).
+	* configure.ac (PTY_OPEN, PTY_TTY_NAME_SPRINTF):
+	Adjust to syssignal.h changes.
+	(SIGNAL_H_AB): Remove; no longer needed.
+
+2012-09-04  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Simplify redefinition of 'abort' (Bug#12316).
+	* configure.ac (NO_ABRT): Remove.
+
+	* configure.ac (_setjmp, _longjmp): Check by compiling
+	instead of by guessing.  The guesses were wrong for
+	recent versions of Solaris, such as Solaris 11.
+
 2012-09-03  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* configure.ac (WARN_CFLAGS): Omit -Wjump-misses-init.
+	It generates false alarms in doc.c, regex.c, xdisp.c.  See
+	<http://lists.gnu.org/archive/html/emacs-devel/2012-09/msg00040.html>.
 
 	Merge from gnulib, incorporating:
 	2012-08-29 stdbool: be more compatible with mixed C/C++ compiles

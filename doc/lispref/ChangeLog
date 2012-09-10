@@ -1,3 +1,43 @@
+2012-09-09  Chong Yidong  <cyd@gnu.org>
+
+	* lists.texi (Sets And Lists): Explain that the return value for
+	delete should be used, like for delq.
+
+	* minibuf.texi (Yes-or-No Queries): Document recentering and
+	scrolling in y-or-n-p.  Remove gratuitous example.
+
+	* searching.texi (Search and Replace): Document window scrolling
+	entries in query-replace-map.
+
+2012-09-08  Chong Yidong  <cyd@gnu.org>
+
+	* syntax.texi (Syntax Table Internals): Define "raw syntax
+	descriptor" terminology (Bug#12383).
+	(Syntax Descriptors): Mention raw syntax descriptors.
+
+2012-09-07  Chong Yidong  <cyd@gnu.org>
+
+	* variables.texi (Creating Buffer-Local): Fix description of
+	local-variable-if-set-p (Bug#10713).
+
+	* eval.texi (Intro Eval): Add index entry for sexp (Bug#12233).
+
+	* windows.texi (Display Action Functions)
+	(Choosing Window Options): Remove obsolete variable
+	display-buffer-reuse-frames.
+	(Switching Buffers): Minor doc tweak for switch-to-buffer.
+
+	* positions.texi (Narrowing): Document buffer-narrowed-p.
+
+	* markers.texi (Moving Markers): Add xref to Point (Bug#7151).
+
+	* syntax.texi (Low-Level Parsing): Add xref to Parser State
+	(Bug#12269).
+
+2012-09-04  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	* debugging.texi (Explicit Debug): Document `debug-on-message'.
+
 2012-09-02  Chong Yidong  <cyd@gnu.org>
 
 	* windows.texi (Window Configurations): Recommend against using

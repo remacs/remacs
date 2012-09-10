@@ -21,7 +21,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #define SYSTIME_INLINE EXTERN_INLINE
 
-#include <signal.h>
+#include <execinfo.h>
 #include <stdio.h>
 #include <setjmp.h>
 #ifdef HAVE_PWD_H
@@ -302,27 +302,34 @@ wait_for_termination_1 (pid_t pid, int interruptible)
 	 termination of subprocesses, perhaps involving a kernel bug too,
 	 but no idea what it is.  Just as a hunch we signal SIGCHLD to see
 	 if that causes the problem to go away or get worse.  */
-      sigsetmask (sigmask (SIGCHLD));
+      sigset_t sigchild_mask;
+      sigemptyset (&sigchild_mask);
+      sigaddset (&sigchild_mask, SIGCHLD);
+      pthread_sigmask (SIG_SETMASK, &sigchild_mask, 0);
+
       if (0 > kill (pid, 0))
 	{
-	  sigsetmask (SIGEMPTYMASK);
+	  pthread_sigmask (SIG_SETMASK, &empty_mask, 0);
 	  kill (getpid (), SIGCHLD);
 	  break;
 	}
       if (wait_debugging)
 	sleep (1);
       else
-	sigpause (SIGEMPTYMASK);
+	sigsuspend (&empty_mask);
 #else /* not BSD_SYSTEM, and not HPUX version >= 6 */
 #ifdef WINDOWSNT
       wait (0);
       break;
 #else /* not WINDOWSNT */
-      sigblock (sigmask (SIGCHLD));
+      sigset_t blocked;
+      sigemptyset (&blocked);
+      sigaddset (&blocked, SIGCHLD);
+      pthread_sigmask (SIG_BLOCK, &blocked, 0);
       errno = 0;
       if (kill (pid, 0) == -1 && errno == ESRCH)
 	{
-	  sigunblock (sigmask (SIGCHLD));
+	  pthread_sigmask (SIG_UNBLOCK, &blocked, 0);
 	  break;
 	}
 
@@ -456,11 +463,11 @@ child_setup_tty (int out)
 #endif	/* not MSDOS */
 
 
-/* Record a signal code and the handler for it.  */
+/* Record a signal code and the action for it.  */
 struct save_signal
 {
   int code;
-  void (*handler) (int);
+  struct sigaction action;
 };
 
 static void save_signal_handlers (struct save_signal *);
@@ -618,8 +625,9 @@ save_signal_handlers (struct save_signal *saved_handlers)
 {
   while (saved_handlers->code)
     {
-      saved_handlers->handler
-        = (void (*) (int)) signal (saved_handlers->code, SIG_IGN);
+      struct sigaction action;
+      emacs_sigaction_init (&action, SIG_IGN);
+      sigaction (saved_handlers->code, &action, &saved_handlers->action);
       saved_handlers++;
     }
 }
@@ -629,7 +637,7 @@ restore_signal_handlers (struct save_signal *saved_handlers)
 {
   while (saved_handlers->code)
     {
-      signal (saved_handlers->code, saved_handlers->handler);
+      sigaction (saved_handlers->code, &saved_handlers->action, 0);
       saved_handlers++;
     }
 }
@@ -686,13 +694,17 @@ reset_sigio (int fd)
 void
 request_sigio (void)
 {
+  sigset_t unblocked;
+
   if (noninteractive)
     return;
 
+  sigemptyset (&unblocked);
 #ifdef SIGWINCH
-  sigunblock (sigmask (SIGWINCH));
+  sigaddset (&unblocked, SIGWINCH);
 #endif
-  sigunblock (sigmask (SIGIO));
+  sigaddset (&unblocked, SIGIO);
+  pthread_sigmask (SIG_UNBLOCK, &unblocked, 0);
 
   interrupts_deferred = 0;
 }
@@ -700,6 +712,8 @@ request_sigio (void)
 void
 unrequest_sigio (void)
 {
+  sigset_t blocked;
+
   if (noninteractive)
     return;
 
@@ -708,10 +722,12 @@ unrequest_sigio (void)
     return;
 #endif
 
+  sigemptyset (&blocked);
 #ifdef SIGWINCH
-  sigblock (sigmask (SIGWINCH));
+  sigaddset (&blocked, SIGWINCH);
 #endif
-  sigblock (sigmask (SIGIO));
+  sigaddset (&blocked, SIGIO);
+  pthread_sigmask (SIG_BLOCK, &blocked, 0);
   interrupts_deferred = 1;
 }
 
@@ -1470,20 +1486,16 @@ init_system_name (void)
   }
 }
 
-/* POSIX signals support - DJB */
-/* Anyone with POSIX signals should have ANSI C declarations */
-
 sigset_t empty_mask;
 
-#ifndef WINDOWSNT
-
-signal_handler_t
-sys_signal (int signal_number, signal_handler_t action)
+/* Store into *ACTION a signal action suitable for Emacs, with handler
+   HANDLER.  */
+void
+emacs_sigaction_init (struct sigaction *action, signal_handler_t handler)
 {
-  struct sigaction new_action, old_action;
-  sigemptyset (&new_action.sa_mask);
-  new_action.sa_handler = action;
-  new_action.sa_flags = 0;
+  sigemptyset (&action->sa_mask);
+  action->sa_handler = handler;
+  action->sa_flags = 0;
 #if defined (SA_RESTART)
   /* Emacs mostly works better with restartable system services. If this
      flag exists, we probably want to turn it on here.
@@ -1500,56 +1512,44 @@ sys_signal (int signal_number, signal_handler_t action)
 # if defined (BROKEN_SA_RESTART) || defined (SYNC_INPUT)
   if (noninteractive)
 # endif
-    new_action.sa_flags = SA_RESTART;
+    action->sa_flags = SA_RESTART;
 #endif
-  sigaction (signal_number, &new_action, &old_action);
-  return (old_action.sa_handler);
 }
 
-#endif	/* WINDOWSNT */
-
-#ifndef __GNUC__
-/* If we're compiling with GCC, we don't need this function, since it
-   can be written as a macro.  */
-sigset_t
-sys_sigmask (int sig)
-{
-  sigset_t mask;
-  sigemptyset (&mask);
-  sigaddset (&mask, sig);
-  return mask;
-}
+#ifdef FORWARD_SIGNAL_TO_MAIN_THREAD
+pthread_t main_thread;
 #endif
 
-/* I'd like to have these guys return pointers to the mask storage in here,
-   but there'd be trouble if the code was saving multiple masks.  I'll be
-   safe and pass the structure.  It normally won't be more than 2 bytes
-   anyhow. - DJB */
-
-sigset_t
-sys_sigblock (sigset_t new_mask)
+/* If we are on the main thread, handle the signal SIG with HANDLER.
+   Otherwise, redirect the signal to the main thread, blocking it from
+   this thread.  POSIX says any thread can receive a signal that is
+   associated with a process, process group, or asynchronous event.
+   On GNU/Linux that is not true, but for other systems (FreeBSD at
+   least) it is.  */
+void
+handle_on_main_thread (int sig, signal_handler_t handler)
 {
-  sigset_t old_mask;
-  pthread_sigmask (SIG_BLOCK, &new_mask, &old_mask);
-  return (old_mask);
-}
+  /* Preserve errno, to avoid race conditions with signal handlers that
+     might change errno.  Races can occur even in single-threaded hosts.  */
+  int old_errno = errno;
 
-sigset_t
-sys_sigunblock (sigset_t new_mask)
-{
-  sigset_t old_mask;
-  pthread_sigmask (SIG_UNBLOCK, &new_mask, &old_mask);
-  return (old_mask);
-}
+  bool on_main_thread = true;
+#ifdef FORWARD_SIGNAL_TO_MAIN_THREAD
+  if (! pthread_equal (pthread_self (), main_thread))
+    {
+      sigset_t blocked;
+      sigemptyset (&blocked);
+      sigaddset (&blocked, sig);
+      pthread_sigmask (SIG_BLOCK, &blocked, 0);
+      pthread_kill (main_thread, sig);
+      on_main_thread = false;
+    }
+#endif
+  if (on_main_thread)
+    handler (sig);
 
-sigset_t
-sys_sigsetmask (sigset_t new_mask)
-{
-  sigset_t old_mask;
-  pthread_sigmask (SIG_SETMASK, &new_mask, &old_mask);
-  return (old_mask);
+  errno = old_errno;
 }
-
 
 #if !defined HAVE_STRSIGNAL && !HAVE_DECL_SYS_SIGLIST
 static char *my_sys_siglist[NSIG];
@@ -1563,6 +1563,10 @@ void
 init_signals (void)
 {
   sigemptyset (&empty_mask);
+
+#ifdef FORWARD_SIGNAL_TO_MAIN_THREAD
+  main_thread = pthread_self ();
+#endif
 
 #if !defined HAVE_STRSIGNAL && !HAVE_DECL_SYS_SIGLIST
   if (! initialized)
@@ -1856,6 +1860,33 @@ snprintf (char *buf, size_t bufsize, char const *format, ...)
 }
 #endif
 
+/* If a backtrace is available, output the top lines of it to stderr.
+   Do not output more than BACKTRACE_LIMIT or BACKTRACE_LIMIT_MAX lines.
+   This function may be called from a signal handler, so it should
+   not invoke async-unsafe functions like malloc.  */
+void
+emacs_backtrace (int backtrace_limit)
+{
+  enum { BACKTRACE_LIMIT_MAX = 500 };
+  void *buffer[BACKTRACE_LIMIT_MAX + 1];
+  int bounded_limit = min (backtrace_limit, BACKTRACE_LIMIT_MAX);
+  int npointers = backtrace (buffer, bounded_limit + 1);
+  if (npointers)
+    ignore_value (write (STDERR_FILENO, "\nBacktrace:\n", 12));
+  backtrace_symbols_fd (buffer, bounded_limit, STDERR_FILENO);
+  if (bounded_limit < npointers)
+    ignore_value (write (STDERR_FILENO, "...\n", 4));
+}
+
+#ifndef HAVE_NTGUI
+/* Using emacs_abort lets GDB return from a breakpoint here.  */
+void
+emacs_abort (void)
+{
+  fatal_error_backtrace (SIGABRT, 10);
+}
+#endif
+
 int
 emacs_open (const char *path, int oflag, int mode)
 {

@@ -20,7 +20,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #define DISPEXTERN_INLINE EXTERN_INLINE
 
-#include <signal.h>
 #include <stdio.h>
 #include <setjmp.h>
 #include <unistd.h>
@@ -299,7 +298,7 @@ DEFUN ("dump-redisplay-history", Fdump_redisplay_history,
 void
 __executable_start (void)
 {
-  abort ();
+  emacs_abort ();
 }
 #endif
 
@@ -349,7 +348,7 @@ free_glyph_matrix (struct glyph_matrix *matrix)
       /* Detect the case that more matrices are freed than were
 	 allocated.  */
       if (--glyph_matrix_count < 0)
-	abort ();
+	emacs_abort ();
 
       /* Free glyph memory if MATRIX owns it.  */
       if (matrix->pool == NULL)
@@ -2341,9 +2340,9 @@ check_glyph_memory (void)
 
   /* Check that nothing is left allocated.  */
   if (glyph_matrix_count)
-    abort ();
+    emacs_abort ();
   if (glyph_pool_count)
-    abort ();
+    emacs_abort ();
 }
 
 
@@ -3026,7 +3025,7 @@ check_matrix_pointers (struct glyph_matrix *window_matrix,
     {
       if (!glyph_row_slice_p (window_matrix->rows + i,
 			      frame_matrix->rows + j))
-        abort ();
+        emacs_abort ();
       ++i, ++j;
     }
 }
@@ -3455,7 +3454,7 @@ check_current_matrix_flags (struct window *w)
       if (!last_seen_p && MATRIX_ROW_BOTTOM_Y (row) >= yb)
 	last_seen_p = 1;
       else if (last_seen_p && row->enabled_p)
-	abort ();
+	emacs_abort ();
     }
 }
 
@@ -3957,6 +3956,11 @@ update_window_line (struct window *w, int vpos, bool *mouse_face_overwritten_p)
 	{
 	  changed_p = 1;
 	  update_marginal_area (w, LEFT_MARGIN_AREA, vpos);
+	  /* Setting this flag will ensure the vertical border, if
+	     any, between this window and the one on its left will be
+	     redrawn.  This is necessary because updating the left
+	     margin area can potentially draw over the border.  */
+	  current_row->redraw_fringe_bitmaps_p = 1;
 	}
 
       /* Update the display of the text area.  */
@@ -4820,7 +4824,7 @@ scrolling (struct frame *frame)
   struct glyph_matrix *desired_matrix = frame->desired_matrix;
 
   if (!current_matrix)
-    abort ();
+    emacs_abort ();
 
   /* Compute hash codes of all the lines.  Also calculate number of
      changed lines, number of unchanged lines at the beginning, and
@@ -5488,7 +5492,7 @@ marginal_area_string (struct window *w, enum window_part part,
   else if (part == ON_RIGHT_MARGIN)
     area = RIGHT_MARGIN_AREA;
   else
-    abort ();
+    emacs_abort ();
 
   for (i = 0; row->enabled_p && i < w->current_matrix->nrows; ++i, ++row)
     if (wy >= row->y && wy < MATRIX_ROW_BOTTOM_Y (row))
@@ -5563,17 +5567,17 @@ marginal_area_string (struct window *w, enum window_part part,
 
 #ifdef SIGWINCH
 
+static void deliver_window_change_signal (int);
+
 static void
-window_change_signal (int signalnum) /* If we don't have an argument, */
-                   		/* some compilers complain in signal calls.  */
+handle_window_change_signal (int sig)
 {
   int width, height;
-  int old_errno = errno;
-
   struct tty_display_info *tty;
 
-  signal (SIGWINCH, window_change_signal);
-  SIGNAL_THREAD_CHECK (signalnum);
+  struct sigaction action;
+  emacs_sigaction_init (&action, deliver_window_change_signal);
+  sigaction (SIGWINCH, &action, 0);
 
   /* The frame size change obviously applies to a single
      termcap-controlled terminal, but we can't decide which.
@@ -5602,8 +5606,12 @@ window_change_signal (int signalnum) /* If we don't have an argument, */
           change_frame_size (XFRAME (frame), height, width, 0, 1, 0);
     }
   }
+}
 
-  errno = old_errno;
+static void
+deliver_window_change_signal (int sig)
+{
+  handle_on_main_thread (sig, handle_window_change_signal);
 }
 #endif /* SIGWINCH */
 
@@ -5615,7 +5623,7 @@ window_change_signal (int signalnum) /* If we don't have an argument, */
 void
 do_pending_window_change (bool safe)
 {
-  /* If window_change_signal should have run before, run it now.  */
+  /* If window change signal handler should have run before, run it now.  */
   if (redisplaying_p && !safe)
     return;
 
@@ -6184,7 +6192,11 @@ init_display (void)
 #ifndef CANNOT_DUMP
   if (initialized)
 #endif /* CANNOT_DUMP */
-    signal (SIGWINCH, window_change_signal);
+    {
+      struct sigaction action;
+      emacs_sigaction_init (&action, deliver_window_change_signal);
+      sigaction (SIGWINCH, &action, 0);
+    }
 #endif /* SIGWINCH */
 
   /* If running as a daemon, no need to initialize any frames/terminal. */
@@ -6288,7 +6300,7 @@ init_display (void)
 
     /* Convert the initial frame to use the new display. */
     if (f->output_method != output_initial)
-      abort ();
+      emacs_abort ();
     f->output_method = t->type;
     f->terminal = t;
 

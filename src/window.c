@@ -387,7 +387,7 @@ the first window of that frame.  */)
       else if (! NILP (XWINDOW (window)->vchild))
 	window = XWINDOW (window)->vchild;
       else
-	abort ();
+	emacs_abort ();
     }
 
   return window;
@@ -1290,7 +1290,7 @@ If they are in the windows's left or right marginal areas, `left-margin'\n\
       return Qnil;
 
     default:
-      abort ();
+      emacs_abort ();
     }
 }
 
@@ -1949,7 +1949,7 @@ unshow_buffer (register struct window *w)
   buf = w->buffer;
   b = XBUFFER (buf);
   if (b != XMARKER (w->pointm)->buffer)
-    abort ();
+    emacs_abort ();
 
 #if 0
   if (w == XWINDOW (selected_window)
@@ -2670,7 +2670,7 @@ window_loop (enum window_loop type, Lisp_Object obj, int mini, Lisp_Object frame
 	  case CHECK_ALL_WINDOWS:
 	    if (! NILP (w->buffer)
 		&& NILP (BVAR (XBUFFER (w->buffer), name)))
-	      abort ();
+	      emacs_abort ();
 	    break;
 
 	  case WINDOW_LOOP_UNUSED:
@@ -6580,15 +6580,17 @@ freeze_window_starts (struct frame *f, int freeze_p)
 /* Return 1 if window configurations CONFIGURATION1 and CONFIGURATION2
    describe the same state of affairs.  This is used by Fequal.
 
-   ignore_positions non-zero means ignore non-matching scroll positions
+   IGNORE_POSITIONS means ignore non-matching scroll positions
    and the like.
 
    This ignores a couple of things like the dedication status of
    window, combination_limit and the like.  This might have to be
    fixed.  */
 
-int
-compare_window_configurations (Lisp_Object configuration1, Lisp_Object configuration2, int ignore_positions)
+bool
+compare_window_configurations (Lisp_Object configuration1,
+			       Lisp_Object configuration2,
+			       bool ignore_positions)
 {
   register struct save_window_data *d1, *d2;
   struct Lisp_Vector *sws1, *sws2;

@@ -44,7 +44,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "keymap.h"
 #include "frame.h"
 
-struct buffer *current_buffer;		/* the current buffer */
+struct buffer *current_buffer;		/* The current buffer.  */
 
 /* First buffer in chain of all buffers (in reverse order of creation).
    Threaded through ->header.next.buffer.  */
@@ -60,10 +60,6 @@ struct buffer *all_buffers;
 
 struct buffer alignas (GCALIGNMENT) buffer_defaults;
 
-/* A Lisp_Object pointer to the above, used for staticpro */
-
-static Lisp_Object Vbuffer_defaults;
-
 /* This structure marks which slots in a buffer have corresponding
    default values in buffer_defaults.
    Each such slot has a nonzero value in this structure.
@@ -78,17 +74,14 @@ static Lisp_Object Vbuffer_defaults;
    and the corresponding slot in buffer_defaults is not used.
 
    If a slot in this structure corresponding to a DEFVAR_PER_BUFFER is
-   zero, that is a bug */
+   zero, that is a bug.  */
 
 struct buffer buffer_local_flags;
 
 /* This structure holds the names of symbols whose values may be
-   buffer-local.  It is indexed and accessed in the same way as the above. */
+   buffer-local.  It is indexed and accessed in the same way as the above.  */
 
 struct buffer alignas (GCALIGNMENT) buffer_local_symbols;
-
-/* A Lisp_Object pointer to the above, used for staticpro */
-static Lisp_Object Vbuffer_local_symbols;
 
 /* Return the symbol of the per-buffer variable at offset OFFSET in
    the buffer structure.  */
@@ -115,7 +108,7 @@ static void call_overlay_mod_hooks (Lisp_Object list, Lisp_Object overlay,
 static void swap_out_buffer_local_variables (struct buffer *b);
 static void reset_buffer_local_variables (struct buffer *, bool);
 
-/* Alist of all buffer names vs the buffers. */
+/* Alist of all buffer names vs the buffers.  */
 /* This used to be a variable, but is no longer,
  to prevent lossage due to user rplac'ing this alist or its elements.  */
 Lisp_Object Vbuffer_alist;
@@ -134,7 +127,7 @@ static Lisp_Object Qpermanent_local_hook;
 
 static Lisp_Object Qprotected_field;
 
-static Lisp_Object QSFundamental;	/* A string "Fundamental" */
+static Lisp_Object QSFundamental;	/* A string "Fundamental".  */
 
 static Lisp_Object Qkill_buffer_hook;
 static Lisp_Object Qbuffer_list_update_hook;
@@ -595,10 +588,6 @@ even if it is dead.  The return value is never nil.  */)
   bset_width_table (b, Qnil);
   b->prevent_redisplay_optimizations_p = 1;
 
-  /* Put this on the chain of all buffers including killed ones.  */
-  b->header.next.buffer = all_buffers;
-  all_buffers = b;
-
   /* An ordinary buffer normally doesn't need markers
      to handle BEGV and ZV.  */
   bset_pt_marker (b, Qnil);
@@ -818,10 +807,6 @@ CLONE nil means the indirect buffer's state is reset to default values.  */)
   b->newline_cache = 0;
   b->width_run_cache = 0;
   bset_width_table (b, Qnil);
-
-  /* Put this on the chain of all buffers including killed ones.  */
-  b->header.next.buffer = all_buffers;
-  all_buffers = b;
 
   name = Fcopy_sequence (name);
   set_string_intervals (name, NULL);
@@ -1242,7 +1227,7 @@ buffer_local_value_1 (Lisp_Object variable, Lisp_Object buffer)
 	  result = Fdefault_value (variable);
 	break;
       }
-    default: abort ();
+    default: emacs_abort ();
     }
 
   return result;
@@ -2671,7 +2656,7 @@ current buffer is cleared.  */)
       /* Make sure no markers were put on the chain
 	 while the chain value was incorrect.  */
       if (BUF_MARKERS (current_buffer))
-	abort ();
+	emacs_abort ();
 
       BUF_MARKERS (current_buffer) = markers;
 
@@ -3413,7 +3398,7 @@ overlay_strings (ptrdiff_t pos, struct window *w, unsigned char **pstr)
 	    }
 	}
       if (p != overlay_str_buf + total)
-	abort ();
+	emacs_abort ();
       if (pstr)
 	*pstr = overlay_str_buf;
       return total;
@@ -4596,7 +4581,7 @@ buffer_slot_type_mismatch (Lisp_Object newval, int type)
     case_Lisp_Int:    predicate = Qintegerp; break;
     case Lisp_String: predicate = Qstringp;  break;
     case Lisp_Symbol: predicate = Qsymbolp;  break;
-    default: abort ();
+    default: emacs_abort ();
     }
 
   wrong_type_argument (predicate, newval);
@@ -5145,10 +5130,11 @@ init_buffer_once (void)
   buffer_local_symbols.indirections = 0;
   set_buffer_intervals (&buffer_defaults, NULL);
   set_buffer_intervals (&buffer_local_symbols, NULL);
+  /* This is not strictly necessary, but let's make them initialized.  */
+  bset_name (&buffer_defaults, build_pure_c_string (" *buffer-defaults*"));
+  bset_name (&buffer_local_symbols, build_pure_c_string (" *buffer-local-symbols*"));
   XSETPVECTYPESIZE (&buffer_defaults, PVEC_BUFFER, pvecsize);
-  XSETBUFFER (Vbuffer_defaults, &buffer_defaults);
   XSETPVECTYPESIZE (&buffer_local_symbols, PVEC_BUFFER, pvecsize);
-  XSETBUFFER (Vbuffer_local_symbols, &buffer_local_symbols);
 
   /* Set up the default values of various buffer slots.  */
   /* Must do these before making the first buffer! */
@@ -5277,7 +5263,7 @@ init_buffer_once (void)
 
   /* Need more room? */
   if (idx >= MAX_PER_BUFFER_VARS)
-    abort ();
+    emacs_abort ();
   last_per_buffer_idx = idx;
 
   Vbuffer_alist = Qnil;
@@ -5418,7 +5404,7 @@ defvar_per_buffer (struct Lisp_Buffer_Objfwd *bo_fwd, const char *namestring,
   if (PER_BUFFER_IDX (offset) == 0)
     /* Did a DEFVAR_PER_BUFFER without initializing the corresponding
        slot of buffer_local_flags */
-    abort ();
+    emacs_abort ();
 }
 
 
@@ -5430,8 +5416,6 @@ syms_of_buffer (void)
   last_overlay_modification_hooks
     = Fmake_vector (make_number (10), Qnil);
 
-  staticpro (&Vbuffer_defaults);
-  staticpro (&Vbuffer_local_symbols);
   staticpro (&Qfundamental_mode);
   staticpro (&Qmode_class);
   staticpro (&QSFundamental);

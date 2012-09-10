@@ -1,3 +1,26 @@
+2012-09-08  Eli Zaretskii  <eliz@gnu.org>
+
+	* configure.bat <use_extensions>: Don't leave it set in the
+	environment when the script exits.
+
+2012-09-07  Juanma Barranquero  <lekktu@gmail.com>
+
+	* config.nt: Sync with autogen/config.in.
+	(NO_ABORT, SIGNAL_H_AHB): Remove.
+
+2012-09-07  Eli Zaretskii  <eliz@gnu.org>
+
+	* inc/ms-w32.h (struct sigaction): Declare sa_handler __cdecl.
+
+2012-09-05  Juanma Barranquero  <lekktu@gmail.com>
+
+	* config.nt: Sync with autogen/config.in.
+
+2012-09-04  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Simplify redefinition of 'abort' (Bug#12316).
+	* inc/ms-w32.h (w32_abort) [HAVE_NTGUI]: Remove.
+
 2012-09-02  Juanma Barranquero  <lekktu@gmail.com>
 
 	* config.nt: Sync with autogen/config.in.

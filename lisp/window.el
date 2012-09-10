@@ -5521,6 +5521,62 @@ the selected one."
 	     (window--display-buffer
 	      buffer window 'reuse display-buffer-mark-dedicated)))))
 
+(defun display-buffer-in-previous-window (buffer alist)
+  "Display BUFFER in a window previously showing it.
+If ALIST has a non-nil `inhibit-same-window' entry, the selected
+window is not eligible for reuse.
+
+If ALIST contains a `reusable-frames' entry, its value determines
+which frames to search for a reusable window:
+  nil -- the selected frame (actually the last non-minibuffer frame)
+  A frame   -- just that frame
+  `visible' -- all visible frames
+  0   -- all frames on the current terminal
+  t   -- all frames.
+
+If ALIST contains no `reusable-frames' entry, search just the
+selected frame if `display-buffer-reuse-frames' and
+`pop-up-frames' are both nil; search all frames on the current
+terminal if either of those variables is non-nil.
+
+If ALIST has a `previous-window' entry, the window specified by
+that entry will override any other window found by the methods
+above, even if that window never showed BUFFER before."
+  (let* ((alist-entry (assq 'reusable-frames alist))
+	 (inhibit-same-window
+	  (cdr (assq 'inhibit-same-window alist)))
+	 (frames (cond
+		  (alist-entry (cdr alist-entry))
+		  ((if (eq pop-up-frames 'graphic-only)
+		       (display-graphic-p)
+		     pop-up-frames)
+		   0)
+		  (display-buffer-reuse-frames 0)
+		  (t (last-nonminibuffer-frame))))
+	 entry best-window second-best-window window)
+    ;; Scan windows whether they have shown the buffer recently.
+    (catch 'best
+      (dolist (window (window-list-1 (frame-first-window) 'nomini frames))
+	(when (and (assq buffer (window-prev-buffers window))
+		   (not (window-dedicated-p window)))
+	  (if (eq window (selected-window))
+	      (unless inhibit-same-window
+		(setq second-best-window window))
+	    (setq best-window window)
+	    (throw 'best t)))))
+    ;; When ALIST has a `previous-window' entry, that entry may override
+    ;; anything we found so far.
+    (when (and (setq window (cdr (assq 'previous-window alist)))
+	       (window-live-p window)
+	       (not (window-dedicated-p window)))
+      (if (eq window (selected-window))
+	  (unless inhibit-same-window
+	    (setq second-best-window window))
+	(setq best-window window)))
+    ;; Return best or second best window found.
+    (when (setq window (or best-window second-best-window))
+      (window--display-buffer buffer window 'reuse))))
+
 (defun display-buffer-use-some-window (buffer alist)
   "Display BUFFER in an existing window.
 Search for a usable window, set that window to the buffer, and
@@ -5642,26 +5698,28 @@ buffer with the name BUFFER-OR-NAME and return that buffer."
 
 (defun switch-to-buffer (buffer-or-name &optional norecord force-same-window)
   "Switch to buffer BUFFER-OR-NAME in the selected window.
-If called interactively, prompt for the buffer name using the
+If the selected window cannot display the specified
+buffer (e.g. if it is a minibuffer window or strongly dedicated
+to another buffer), call `pop-to-buffer' to select the buffer in
+another window.
+
+If called interactively, read the buffer name using the
 minibuffer.  The variable `confirm-nonexistent-file-or-buffer'
 determines whether to request confirmation before creating a new
 buffer.
 
-BUFFER-OR-NAME may be a buffer, a string (a buffer name), or
-nil.  If BUFFER-OR-NAME is a string that does not identify an
-existing buffer, create a buffer with that name.  If
-BUFFER-OR-NAME is nil, switch to the buffer returned by
-`other-buffer'.
+BUFFER-OR-NAME may be a buffer, a string (a buffer name), or nil.
+If BUFFER-OR-NAME is a string that does not identify an existing
+buffer, create a buffer with that name.  If BUFFER-OR-NAME is
+nil, switch to the buffer returned by `other-buffer'.
 
-Optional argument NORECORD non-nil means do not put the buffer
-specified by BUFFER-OR-NAME at the front of the buffer list and
-do not make the window displaying it the most recently selected
-one.
+If optional argument NORECORD is non-nil, do not put the buffer
+at the front of the buffer list, and do not make the window
+displaying it the most recently selected one.
 
-If FORCE-SAME-WINDOW is non-nil, BUFFER-OR-NAME must be displayed
-in the selected window; signal an error if that is
-impossible (e.g. if the selected window is minibuffer-only).  If
-nil, BUFFER-OR-NAME may be displayed in another window.
+If optional argument FORCE-SAME-WINDOW is non-nil, the buffer
+must be displayed in the selected window; if that is impossible,
+signal an error rather than calling `pop-to-buffer'.
 
 Return the buffer switched to."
   (interactive
@@ -5918,6 +5976,88 @@ WINDOW was scrolled."
 	  (error (setq delta nil)))
 	delta))))
 
+(defcustom fit-frame-to-buffer-bottom-margin 4
+  "Bottom margin for `fit-frame-to-buffer'.
+This is the number of lines `fit-frame-to-buffer' leaves free at the
+bottom of the display in order to not obscure the system task bar."
+  :type 'integer
+  :version "24.2"
+  :group 'windows)
+
+(defun fit-frame-to-buffer (&optional frame max-height min-height)
+  "Adjust height of FRAME to display its buffer's contents exactly.
+FRAME can be any live frame and defaults to the selected one.
+
+Optional argument MAX-HEIGHT specifies the maximum height of
+FRAME and defaults to the height of the display below the current
+top line of FRAME minus FIT-FRAME-TO-BUFFER-BOTTOM-MARGIN.
+Optional argument MIN-HEIGHT specifies the minimum height of
+FRAME."
+  (interactive)
+  (setq frame (window-normalize-frame frame))
+  (let* ((root (frame-root-window frame))
+	 (frame-min-height
+	  (+ (- (frame-height frame) (window-total-size root))
+	     window-min-height))
+	 (frame-top (frame-parameter frame 'top))
+	 (top (if (consp frame-top)
+		  (funcall (car frame-top) (cadr frame-top))
+		frame-top))
+	 (frame-max-height
+	  (- (/ (- (x-display-pixel-height frame) top)
+		(frame-char-height frame))
+	     fit-frame-to-buffer-bottom-margin))
+	 (compensate 0)
+	 delta)
+    (when (and (window-live-p root) (not (window-size-fixed-p root)))
+      (with-selected-window root
+	(cond
+	 ((not max-height)
+	  (setq max-height frame-max-height))
+	 ((numberp max-height)
+	  (setq max-height (min max-height frame-max-height)))
+	 (t
+	  (error "%s is an invalid maximum height" max-height)))
+	(cond
+	 ((not min-height)
+	  (setq min-height frame-min-height))
+	 ((numberp min-height)
+	  (setq min-height (min min-height frame-min-height)))
+	 (t
+	  (error "%s is an invalid minimum height" min-height)))
+	;; When tool-bar-mode is enabled and we have just created a new
+	;; frame, reserve lines for toolbar resizing.  This is needed
+	;; because for reasons unknown to me Emacs (1) reserves one line
+	;; for the toolbar when making the initial frame and toolbars
+	;; are enabled, and (2) later adds the remaining lines needed.
+	;; Our code runs IN BETWEEN (1) and (2).  YMMV when you're on a
+	;; system that behaves differently.
+	(let ((quit-restore (window-parameter root 'quit-restore))
+	      (lines (tool-bar-lines-needed frame)))
+	  (when (and quit-restore (eq (car quit-restore) 'frame)
+		     (not (zerop lines)))
+	    (setq compensate (1- lines))))
+	(message "%s" compensate)
+	(setq delta
+	      ;; Always count a final newline - we don't do any
+	      ;; post-processing, so let's play safe.
+	      (+ (count-screen-lines nil nil t)
+		 (- (window-body-size))
+		 compensate)))
+      ;; Move away from final newline.
+      (when (and (eobp) (bolp) (not (bobp)))
+	(set-window-point root (line-beginning-position 0)))
+      (set-window-start root (point-min))
+      (set-window-vscroll root 0)
+      (condition-case nil
+	  (set-frame-height
+	   frame
+	   (min (max (+ (frame-height frame) delta)
+		     min-height)
+		max-height))
+	(error (setq delta nil))))
+    delta))
+
 (defun window-safely-shrinkable-p (&optional window)
   "Return t if WINDOW can be shrunk without shrinking other windows.
 WINDOW defaults to the selected window."
@@ -6161,7 +6301,7 @@ This is different from `scroll-down-command' that scrolls a full screen."
 (put 'scroll-down-line 'scroll-command t)
 
 
-(defun scroll-other-window-down (lines)
+(defun scroll-other-window-down (&optional lines)
   "Scroll the \"other window\" down.
 For more details, see the documentation for `scroll-other-window'."
   (interactive "P")
