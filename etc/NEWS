@@ -344,6 +344,14 @@ python-describe-symbol    | python-eldoc-at-point
 
 *** Accepts \r and \f as whitespace.
 
+** SQL Mode
+
+*** DB2 added `sql-db2-escape-newlines'
+
+If non-nil, newlines sent to the command interpreter will be escaped
+by a backslash.  The default does not escape the newlines and assumes
+that the sql statement will be terminated by a semicolon.
+
 ** Diff mode
 
 Faces for changes now use the same diff color scheme as in modern VCSes
@@ -354,6 +362,9 @@ insertions in green (new faces `diff-refine-added' and
 The variable `diff-use-changed-face' defines whether to use
 the face `diff-changed', or `diff-removed' and `diff-added'
 to highlight changes in context diffs.
+
+*** The new command `diff-remove-trailing-whitespace' fixes trailing
+whitespace problems introduced by the diff.
 
 ** Ediff now uses the same color scheme as Diff mode
 on high color displays.
@@ -717,6 +728,14 @@ table, but with a different prefix.
 *** `current-time-string' no longer requires that its argument's year
 must be in the range 1000..9999.  It now works with any year supported
 by the underlying C implementation.
+
+** Floating point
+
+*** When floating point functions such as `log' are given invalid
+arguments, e.g., (log -1.0), they now uniformly return special values
+such as NaNs instead of signaling errors.  Previously, these functions
+returned NaNs on some platforms but signaled errors on others.  The affected
+functions are acos, asin, tan, exp, expt, log, log10, sqrt, and mod.
 
 ** New function file-name-base.
 
