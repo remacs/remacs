@@ -593,7 +593,7 @@ define_image_type (struct image_type *type, int loaded)
       /* Make a copy of TYPE to avoid a bus error in a dumped Emacs.
          The initialized data segment is read-only.  */
       struct image_type *p = xmalloc (sizeof *p);
-      memcpy (p, type, sizeof *p);
+      *p = *type;
       p->next = image_types;
       image_types = p;
       success = Qt;
@@ -6181,7 +6181,7 @@ our_memory_skip_input_data (j_decompress_ptr cinfo, long int num_bytes)
    reading the image.  */
 
 static void
-jpeg_memory_src (j_decompress_ptr cinfo, JOCTET *data, unsigned int len)
+jpeg_memory_src (j_decompress_ptr cinfo, JOCTET *data, ptrdiff_t len)
 {
   struct jpeg_source_mgr *src;
 

@@ -2369,15 +2369,6 @@ read_char (int commandflag, ptrdiff_t nmaps, Lisp_Object *maps,
       goto reread_first;
     }
 
-  if (unread_command_char != -1)
-    {
-      XSETINT (c, unread_command_char);
-      unread_command_char = -1;
-
-      reread = 1;
-      goto reread_first;
-    }
-
   if (CONSP (Vunread_command_events))
     {
       int was_disabled = 0;
@@ -2562,7 +2553,6 @@ read_char (int commandflag, ptrdiff_t nmaps, Lisp_Object *maps,
       && !NILP (prev_event) && ! EVENT_HAS_PARAMETERS (prev_event)
       /* Don't bring up a menu if we already have another event.  */
       && NILP (Vunread_command_events)
-      && unread_command_char < 0
       && !detect_input_pending_run_timers (0))
     {
       c = read_char_minibuf_menu_prompt (commandflag, nmaps, maps);
@@ -2698,8 +2688,7 @@ read_char (int commandflag, ptrdiff_t nmaps, Lisp_Object *maps,
       && !EQ (XCAR (prev_event), Qmenu_bar)
       && !EQ (XCAR (prev_event), Qtool_bar)
       /* Don't bring up a menu if we already have another event.  */
-      && NILP (Vunread_command_events)
-      && unread_command_char < 0)
+      && NILP (Vunread_command_events))
     {
       c = read_char_x_menu_prompt (nmaps, maps, prev_event, used_mouse_menu);
 
@@ -3605,7 +3594,7 @@ kbd_buffer_store_event_hold (register struct input_event *event,
 
 	  if (hold_quit)
 	    {
-	      memcpy (hold_quit, event, sizeof (*event));
+	      *hold_quit = *event;
 	      return;
 	    }
 
@@ -4143,7 +4132,7 @@ kbd_buffer_get_event (KBOARD **kbp,
 		*used_mouse_menu = 1;
 #endif
 #ifdef HAVE_NS
-	      /* certain system events are non-key events */
+	      /* Certain system events are non-key events.  */
 	      if (used_mouse_menu
                   && event->kind == NS_NONKEY_EVENT)
 		*used_mouse_menu = 1;
@@ -4171,7 +4160,7 @@ kbd_buffer_get_event (KBOARD **kbp,
 	 so x remains nil.  */
       x = Qnil;
 
-      /* XXX Can f or mouse_position_hook be NULL here? */
+      /* XXX Can f or mouse_position_hook be NULL here?  */
       if (f && FRAME_TERMINAL (f)->mouse_position_hook)
         (*FRAME_TERMINAL (f)->mouse_position_hook) (&f, 0, &bar_window,
                                                     &part, &x, &y, &t);
@@ -10469,7 +10458,7 @@ clear_input_pending (void)
 int
 requeued_events_pending_p (void)
 {
-  return (!NILP (Vunread_command_events) || unread_command_char != -1);
+  return (!NILP (Vunread_command_events));
 }
 
 
@@ -10479,7 +10468,7 @@ Actually, the value is nil only if we can be sure that no input is available;
 if there is a doubt, the value is t.  */)
   (void)
 {
-  if (!NILP (Vunread_command_events) || unread_command_char != -1
+  if (!NILP (Vunread_command_events)
       || !NILP (Vunread_post_input_method_events)
       || !NILP (Vunread_input_method_events))
     return (Qt);
@@ -10667,7 +10656,6 @@ Also end any kbd macro being defined.  */)
   update_mode_lines++;
 
   Vunread_command_events = Qnil;
-  unread_command_char = -1;
 
   discard_tty_input ();
 
@@ -11007,7 +10995,6 @@ quit_throw_to_read_char (int from_signal)
   input_pending = 0;
 
   Vunread_command_events = Qnil;
-  unread_command_char = -1;
 
 #if 0 /* Currently, sit_for is called from read_char without turning
 	 off polling.  And that can call set_waiting_for_input.
@@ -11394,12 +11381,11 @@ delete_kboard (KBOARD *kb)
 void
 init_keyboard (void)
 {
-  /* This is correct before outermost invocation of the editor loop */
+  /* This is correct before outermost invocation of the editor loop.  */
   command_loop_level = -1;
   immediate_quit = 0;
   quit_char = Ctl ('g');
   Vunread_command_events = Qnil;
-  unread_command_char = -1;
   timer_idleness_start_time = invalid_emacs_time ();
   total_keys = 0;
   recent_keys_index = 0;
@@ -11735,9 +11721,6 @@ Events read from this list are not normally added to `this-command-keys',
 as they will already have been added once as they were read for the first time.
 An element of the form (t . EVENT) forces EVENT to be added to that list.  */);
   Vunread_command_events = Qnil;
-
-  DEFVAR_INT ("unread-command-char", unread_command_char,
-	      doc: /* If not -1, an object to be read as next command input event.  */);
 
   DEFVAR_LISP ("unread-post-input-method-events", Vunread_post_input_method_events,
 	       doc: /* List of events to be processed as input by input methods.

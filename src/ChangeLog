@@ -1,3 +1,125 @@
+2012-09-12  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* keyboard.c (read_char, requeued_events_pending_p, Finput_pending_p)
+	(Fdiscard_input, quit_throw_to_read_char, init_keyboard)
+	(syms_of_keyboard): Remove support for unread-command-char.
+
+2012-09-12  Eli Zaretskii  <eliz@gnu.org>
+
+	* w32proc.c (sys_kill): If PID is our process ID and the signal is
+	SIGABRT, call emacs_abort.  Avoids silently exiting upon assertion
+	violation.  (Bug#12426)
+
+2012-09-12  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* image.c (jpeg_memory_src): Don't assume string len fits in unsigned.
+
+2012-09-12  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* eval.c: Add `inhibit-debugger'.
+	(Qinhibit_debugger): New symbol.
+	(call_debugger): Bind it instead of Qdebug_on_error.
+	(maybe_call_debugger): Test Vinhibit_debugger.
+	(syms_of_eval): Define inhibit-debugger.
+	* xdisp.c (set_message): Don't bind Qinhibit_debug_on_message.
+	(syms_of_xdisp): Remove inhibit-debug-on-message.
+
+2012-09-11  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Avoid _setjmp/_longjmp problems with local nonvolatile variables.
+	If a nonvolatile local variable is written before a _longjmp to
+	the frame containing the variable, and is read after the _longjmp,
+	the value read is indeterminate.  Some local variables of type
+	'struct handler' and 'struct catchtag' are used in this way, so
+	mark each of their slots as volatile if the slot can be set before
+	_longjmp and read afterwards.
+	* lisp.h (struct handler): var and chosen_clause are now volatile.
+	(struct catchtag): val, next, and pdlcount are now volatile.
+
+	* bidi.c (bidi_push_it, bidi_pop_it):
+	* fns.c (copy_hash_table):
+	* image.c (define_image_type):
+	* keyboard.c (kbd_buffer_store_event_hold):
+	* process.c (Fprocess_send_eof):
+	* xfaces.c (x_create_gc) [HAVE_NS]:
+	* xgselect.c (xg_select):
+	Prefer assignment to memcpy when either will do.
+
+	* alloc.c (discard_killed_buffers): Tune and simplify a bit.
+	Use pointer-to-a-pointer to simplify and avoid a NILP check each
+	time an item is removed.  No need to mark this function 'inline';
+	the compiler knows better than we do.
+
+2012-09-11  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* nsterm.m (ns_judge_scroll_bars): Pass NO to updateFrameSize.
+	(updateFrameSize:): Add delay parameter to updateFrameSize, send it
+	to change_frame_size (Bug#12388).
+	(windowDidResize:): Pass YES to updateFrameSize.
+
+	* nsterm.h: Add delay parameter to updateFrameSize.
+
+2012-09-11  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	Discard killed buffers from deleted window and frame objects.
+	This reduces an amount of references to killed buffers and
+	helps GC to reclaim them faster.
+	* alloc.c (discard_killed_buffers): New function.
+	(mark_object): Use it for deleted windows and frames.
+	(mark_object): If symbol's value is set up for a killed buffer
+	or deleted frame, restore it's global binding.
+	* data.c (swap_in_global_binding): Add GC notice.
+	(swap_in_symval_forwarding): Use convenient set_blv_where.
+	* window.c (wset_next_buffers, wset_prev_buffers): Move ...
+	* window.h: ... to here.
+
+2012-09-11  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	Convenient macro to check whether the buffer is live.
+	* buffer.h (BUFFER_LIVE_P): New macro.
+	* alloc.c, buffer.c, editfns.c, insdel.c, lread.c, marker.c:
+	* minibuf.c, print.c, process.c, window.c, xdisp.c: Use it.
+
+2012-09-11  YAMAMOTO Mitsuharu  <mituharu@math.s.chiba-u.ac.jp>
+
+	* xdisp.c (right_overwritten, right_overwriting): Also handle gstring
+	composition cases (Bug#12364).
+
+	* xterm.c (x_draw_glyph_string): Avoid overwriting inverted left
+	overhang of succeeding glyphs overlapping box cursor.
+
+	* w32term.c (x_draw_glyph_string): Likewise.
+
+2012-09-11  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Simplify, document, and port floating-point (Bug#12381).
+	The porting part of this patch fixes bugs on non-IEEE platforms
+	with frexp, ldexp, logb.
+	* data.c, lisp.h (Qdomain_error, Qsingularity_error, Qunderflow_error):
+	Now static.
+	* floatfns.c: Simplify discussion of functions that Emacs doesn't
+	support, by removing commented-out code and briefly listing the
+	C89 functions excluded.  The commented-out stuff was confusing
+	maintenance, e.g., we thought we needed cbrt but it was commented out.
+	(logb): Remove decl; no longer needed.
+	(isfinite): New macro, if not already supplied.
+	(isnan): Don't replace any existing macro.
+	(Ffrexp, Fldexp): Define even if !HAVE_COPYSIGN, as frexp and ldexp
+	are present on all C89 platforms.
+	(Ffrexp): Do not special-case zero, as frexp does the right thing
+	for that case.
+	(Flogb): Do not use logb, as it doesn't have the desired meaning
+	on hosts that use non-base-2 floating point.  Instead, stick with
+	frexp, which is C89 anyway.  Do not pass an infinity or a NaN to
+	frexp, to avoid getting an unspecified result.
+
+	* xdisp.c (Qinhibit_debug_on_message): Now static.
+
+2012-09-10  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* nsterm.m (ns_update_begin): Set clip path to whole view by using
+	NSBezierPath (Bug#12131).
+
 2012-09-10  Chong Yidong  <cyd@gnu.org>
 
 	* fns.c (Fdelq, Fdelete): Doc fix.

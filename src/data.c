@@ -948,8 +948,10 @@ store_symval_forwarding (union Lisp_Fwd *valcontents, register Lisp_Object newva
     }
 }
 
-/* Set up SYMBOL to refer to its global binding.
-   This makes it safe to alter the status of other bindings.  */
+/* Set up SYMBOL to refer to its global binding.  This makes it safe
+   to alter the status of other bindings.  BEWARE: this may be called
+   during the mark phase of GC, where we assume that Lisp_Object slots
+   of BLV are marked after this function has changed them.  */
 
 void
 swap_in_global_binding (struct Lisp_Symbol *symbol)
@@ -1008,7 +1010,7 @@ swap_in_symval_forwarding (struct Lisp_Symbol *symbol, struct Lisp_Buffer_Local_
 	else
 	  {
 	    tem1 = assq_no_quit (var, BVAR (current_buffer, local_var_alist));
-	    XSETBUFFER (blv->where, current_buffer);
+	    set_blv_where (blv, Fcurrent_buffer ());
 	  }
       }
       if (!(blv->found = !NILP (tem1)))
@@ -1162,7 +1164,7 @@ set_internal (Lisp_Object symbol, Lisp_Object newval, Lisp_Object where,
 	   the default binding is loaded, the loaded binding may be the
 	   wrong one.  */
 	if (!EQ (blv->where, where)
-	    /* Also unload a global binding (if the var is local_if_set). */
+	    /* Also unload a global binding (if the var is local_if_set).  */
 	    || (EQ (blv->valcell, blv->defcell)))
 	  {
 	    /* The currently loaded binding is not necessarily valid.

@@ -1250,11 +1250,6 @@ is converted into a string by expressing it in decimal."
  'mode-line-inverse-video
  "use the appropriate faces instead."
  "21.1")
-(make-obsolete-variable
- 'unread-command-char
- "use `unread-command-events' instead.  That variable is a list of events
-to reread, so it now uses nil to mean `no event', instead of -1."
- "before 19.15")
 
 ;; Lisp manual only updated in 22.1.
 (define-obsolete-variable-alias 'executing-macro 'executing-kbd-macro
@@ -3911,6 +3906,11 @@ The properties used on SYMBOL are `composefunc', `sendfunc',
   (put symbol 'hookvar (or hookvar 'mail-send-hook)))
 
 (defun set-temporary-overlay-map (map &optional keep-pred)
+  "Set MAP as a temporary overlay map.
+When KEEP-PRED is `t', using a key from the temporary keymap
+leaves this keymap activated.  KEEP-PRED can also be a function,
+which will have the same effect when it returns `t'.
+When KEEP-PRED is nil, the temporary keymap is used only once."
   (let* ((clearfunsym (make-symbol "clear-temporary-overlay-map"))
          (overlaysym (make-symbol "t"))
          (alist (list (cons overlaysym map)))
@@ -3923,6 +3923,7 @@ The properties used on SYMBOL are `composefunc', `sendfunc',
                                   (lookup-key ',map
                                               (this-command-keys-vector))))
                             (t `(funcall ',keep-pred)))
+               (set ',overlaysym nil)   ;Just in case.
                (remove-hook 'pre-command-hook ',clearfunsym)
                (setq emulation-mode-map-alists
                      (delq ',alist emulation-mode-map-alists))))))

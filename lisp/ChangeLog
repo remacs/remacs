@@ -1,3 +1,75 @@
+2012-09-12  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* emacs-lisp/debug.el (debugger-outer-unread-command-char, debug)
+	(debugger-env-macro): Remove support for unread-command-char.
+
+	* subr.el (set-temporary-overlay-map): Minimize slightly the impact of
+	the temporary map re-appearing on emulation-mode-map-alists.
+
+	* emacs-lisp/edebug.el (def-edebug-form-spec): Remove, it's been broken
+	since 22.1.
+
+	* ehelp.el (with-electric-help): Accept functions in
+	electric-help-form-to-execute.
+	(electric-help-execute-extended, electric-help-ctrl-x-prefix): Use it.
+	And replace unread-command-char -> unread-command-events.
+
+2012-09-12  Michael Albinus  <michael.albinus@gmx.de>
+
+	Sync with Tramp 2.2.6.
+
+	* net/tramp.el (tramp-accept-process-output): Don't use
+	JUST-THIS-ONE in the XEmacs case.
+
+	* net/trampver.el: Update release number.
+
+2012-09-12  Martin Rudalics  <rudalics@gmx.at>
+
+	* emacs-lisp/debug.el (debugger-previous-window-height):
+	New variable.
+	(debug): When debugger-jumping-flag is non-nil try to restore
+	height of debugger window.  (Bug#8789)
+
+2012-09-12  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* emacs-lisp/edebug.el (edebug-enter): Don't mess with
+	overriding-local-map and pre/post-command-hook here.
+	(edebug-recursive-edit): Do it here instead (bug#12345).
+	(edebug-outside-unread-command-char): Remove all uses of
+	unread-command-char.
+
+	* emacs-lisp/debug.el (debug): Don't bind debug-on-error since
+	inhibit-debugger is bound instead.
+
+2012-09-11  Bastien Guerry  <bzg@gnu.org>
+
+	* subr.el (set-temporary-overlay-map): Add a docstring.
+	(bug#12346)
+
+2012-09-11  Bastien Guerry  <bzg@gnu.org>
+
+	* minibuffer.el (completion-table-subvert): Fix docstring.
+	(bug#12347)
+
+2012-09-11  Bastien Guerry  <bzg@gnu.org>
+
+	* help-fns.el (describe-variable): Fix typo. (bug#12346)
+
+2012-09-10  Michael R. Mauger  <mmaug@yahoo.com>
+
+	* progmodes/sql.el: Version 3.1
+	(sql-db2-escape-newlines): New variable.
+	(sql-escape-newlines-filter): Use it.
+
+2012-09-10  Juanma Barranquero  <lekktu@gmail.com>
+
+	* custom.el (custom-theme-load-confirm): Remove unneeded assignment.
+
+2012-09-10  Dan Nicolaescu  <dann@gnu.org>
+
+	* vc/diff-mode.el (diff-mode-menu):
+	Bind diff-remove-trailing-whitespace.
+
 2012-09-10  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* emacs-lisp/lisp-mode.el (emacs-list-byte-code-comment-re): New var.

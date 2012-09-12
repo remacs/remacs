@@ -96,6 +96,9 @@ The value used here is passed to `quit-restore-window'."
 (defvar debugger-previous-window nil
   "This is the window last showing the debugger buffer.")
 
+(defvar debugger-previous-window-height nil
+  "The last recorded height of `debugger-previous-window'.")
+
 (defvar debugger-previous-backtrace nil
   "The contents of the previous backtrace (including text properties).
 This is to optimize `debugger-make-xrefs'.")
@@ -107,10 +110,6 @@ This is to optimize `debugger-make-xrefs'.")
 (defvar debugger-outer-track-mouse)
 (defvar debugger-outer-last-command)
 (defvar debugger-outer-this-command)
-;; unread-command-char is obsolete,
-;; but we still save and restore it
-;; in case some user program still tries to set it.
-(defvar debugger-outer-unread-command-char)
 (defvar debugger-outer-unread-command-events)
 (defvar debugger-outer-unread-post-input-method-events)
 (defvar debugger-outer-last-input-event)
@@ -162,8 +161,6 @@ first will be printed into the backtrace buffer."
     (unless noninteractive
       (message "Entering debugger..."))
     (let (debugger-value
-	  (debug-on-error nil)
-	  (debug-on-quit nil)
 	  (debugger-previous-state
            (if (get-buffer "*Backtrace*")
                (with-current-buffer (get-buffer "*Backtrace*")
@@ -184,8 +181,6 @@ first will be printed into the backtrace buffer."
 	  (debugger-outer-track-mouse track-mouse)
 	  (debugger-outer-last-command last-command)
 	  (debugger-outer-this-command this-command)
-	  (debugger-outer-unread-command-char
-	   (with-no-warnings unread-command-char))
 	  (debugger-outer-unread-command-events unread-command-events)
 	  (debugger-outer-unread-post-input-method-events
 	   unread-post-input-method-events)
@@ -220,8 +215,6 @@ first will be printed into the backtrace buffer."
 	    (cursor-in-echo-area nil))
 	(unwind-protect
 	    (save-excursion
-	      (with-no-warnings
-		(setq unread-command-char -1))
 	      (when (eq (car debugger-args) 'debug)
 		;; Skip the frames for backtrace-debug, byte-code,
 		;; and implement-debug-on-entry.
@@ -236,7 +229,17 @@ first will be printed into the backtrace buffer."
 		  . (,(when debugger-previous-window
 			`(previous-window . ,debugger-previous-window)))))
 	      (setq debugger-window (selected-window))
-	      (setq debugger-previous-window debugger-window)
+	      (if (eq debugger-previous-window debugger-window)
+		  (when debugger-jumping-flag
+		    ;; Try to restore previous height of debugger
+		    ;; window.
+		    (condition-case nil
+			(window-resize
+			 debugger-window
+			 (- debugger-previous-window-height
+			    (window-total-size debugger-window)))
+		      (error nil)))
+		(setq debugger-previous-window debugger-window))
 	      (debugger-mode)
 	      (debugger-setup-buffer debugger-args)
 	      (when noninteractive
@@ -264,6 +267,9 @@ first will be printed into the backtrace buffer."
 		  (recursive-edit))))
 	  (when (and (window-live-p debugger-window)
 		     (eq (window-buffer debugger-window) debugger-buffer))
+	    ;; Record height of debugger window.
+	    (setq debugger-previous-window-height
+		  (window-total-size debugger-window))
 	    ;; Unshow debugger-buffer.
 	    (quit-restore-window debugger-window debugger-bury-or-kill))
           ;; Restore previous state of debugger-buffer in case we were
@@ -288,8 +294,6 @@ first will be printed into the backtrace buffer."
       (setq track-mouse debugger-outer-track-mouse)
       (setq last-command debugger-outer-last-command)
       (setq this-command debugger-outer-this-command)
-      (with-no-warnings
-	(setq unread-command-char debugger-outer-unread-command-char))
       (setq unread-command-events debugger-outer-unread-command-events)
       (setq unread-post-input-method-events
 	    debugger-outer-unread-post-input-method-events)
@@ -591,16 +595,7 @@ Applies to the frame whose line point is on in the backtrace."
           (cursor-in-echo-area debugger-outer-cursor-in-echo-area))
       (set-match-data debugger-outer-match-data)
       (prog1
-	  (let ((save-ucc (with-no-warnings unread-command-char)))
-	    (unwind-protect
-		(progn
-		  (with-no-warnings
-		    (setq unread-command-char debugger-outer-unread-command-char))
-		  (prog1 (progn ,@body)
-		    (with-no-warnings
-		      (setq debugger-outer-unread-command-char unread-command-char))))
-	      (with-no-warnings
-		(setq unread-command-char save-ucc))))
+          (progn ,@body)
         (setq debugger-outer-match-data (match-data))
         (setq debugger-outer-load-read-function load-read-function)
         (setq debugger-outer-overriding-terminal-local-map
