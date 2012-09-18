@@ -20,7 +20,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <config.h>
 #include <signal.h>
 #include <stdio.h>
-#include <setjmp.h>
 #include "lisp.h"
 #include "blockinput.h"
 #include "w32term.h"
@@ -4163,6 +4162,7 @@ w32_read_socket (struct terminal *terminal, int expected,
   if (interrupt_input_blocked)
     {
       interrupt_input_pending = 1;
+      pending_signals = 1;
       return -1;
     }
 

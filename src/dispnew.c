@@ -21,7 +21,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #define DISPEXTERN_INLINE EXTERN_INLINE
 
 #include <stdio.h>
-#include <setjmp.h>
 #include <unistd.h>
 
 #include "lisp.h"
@@ -5982,7 +5981,7 @@ sit_for (Lisp_Object timeout, bool reading, int do_display)
     wrong_type_argument (Qnumberp, timeout);
 
 
-#ifdef SIGIO
+#ifdef USABLE_SIGIO
   gobble_input (0);
 #endif
 

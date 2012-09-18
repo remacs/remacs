@@ -25,12 +25,9 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include <stdio.h>
 #include <errno.h>
-#include <setjmp.h>
 #include <sys/types.h>		/* Some typedefs are used in sys/file.h.  */
 #include <sys/file.h>
 #include <sys/stat.h>
-#include <setjmp.h>
-
 #include <unistd.h>
 #include <fcntl.h>
 
@@ -73,6 +70,11 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #ifdef NEED_BSDTTY
 #include <bsdtty.h>
+#endif
+
+#ifdef USG5_4
+# include <sys/stream.h>
+# include <sys/stropts.h>
 #endif
 
 #ifdef HAVE_RES_INIT
@@ -212,17 +214,13 @@ static EMACS_INT update_tick;
    "non-destructive" select.  So we require either native select,
    or emulation of select using FIONREAD.  */
 
-#ifdef BROKEN_DATAGRAM_SOCKETS
-#undef DATAGRAM_SOCKETS
-#else
-#ifndef DATAGRAM_SOCKETS
-#if defined (HAVE_SELECT) || defined (FIONREAD)
-#if defined (HAVE_SENDTO) && defined (HAVE_RECVFROM) && defined (EMSGSIZE)
-#define DATAGRAM_SOCKETS
-#endif /* HAVE_SENDTO && HAVE_RECVFROM && EMSGSIZE */
-#endif /* HAVE_SELECT || FIONREAD */
-#endif /* DATAGRAM_SOCKETS */
-#endif /* BROKEN_DATAGRAM_SOCKETS */
+#ifndef BROKEN_DATAGRAM_SOCKETS
+# if defined HAVE_SELECT || defined USABLE_FIONREAD
+#  if defined HAVE_SENDTO && defined HAVE_RECVFROM && defined EMSGSIZE
+#   define DATAGRAM_SOCKETS
+#  endif
+# endif
+#endif
 
 #if defined HAVE_LOCAL_SOCKETS && defined DATAGRAM_SOCKETS
 # define HAVE_SEQPACKET
@@ -251,7 +249,7 @@ static int process_output_skip;
 #endif
 
 static void create_process (Lisp_Object, char **, Lisp_Object);
-#ifdef SIGIO
+#ifdef USABLE_SIGIO
 static int keyboard_bit_set (SELECT_TYPE *);
 #endif
 static void deactivate_process (Lisp_Object);
@@ -1611,14 +1609,10 @@ create_process (Lisp_Object process, char **new_argv, Lisp_Object current_dir)
 #if !defined (WINDOWSNT) && defined (FD_CLOEXEC)
   int wait_child_setup[2];
 #endif
+#ifdef SIGCHLD
   sigset_t blocked, procmask;
-  struct sigaction sigint_action;
-  struct sigaction sigquit_action;
-  struct sigaction sigpipe_action;
-#ifdef AIX
-  struct sigaction sighup_action;
 #endif
-  /* Use volatile to protect variables from being clobbered by longjmp.  */
+  /* Use volatile to protect variables from being clobbered by vfork.  */
   volatile int forkin, forkout;
   volatile int pty_flag = 0;
 
@@ -1710,25 +1704,13 @@ create_process (Lisp_Object process, char **new_argv, Lisp_Object current_dir)
   XPROCESS (process)->pty_flag = pty_flag;
   pset_status (XPROCESS (process), Qrun);
 
+#ifdef SIGCHLD
   /* Delay interrupts until we have a chance to store
      the new fork's pid in its process structure */
   sigemptyset (&blocked);
-#ifdef SIGCHLD
   sigaddset (&blocked, SIGCHLD);
-#endif
-#ifdef HAVE_WORKING_VFORK
-  /* On many hosts (e.g. Solaris 2.4), if a vforked child calls `signal',
-     this sets the parent's signal handlers as well as the child's.
-     So delay all interrupts whose handlers the child might munge,
-     and record the current handlers so they can be restored later.  */
-  sigaddset (&blocked, SIGINT );  sigaction (SIGINT , 0, &sigint_action );
-  sigaddset (&blocked, SIGQUIT);  sigaction (SIGQUIT, 0, &sigquit_action);
-  sigaddset (&blocked, SIGPIPE);  sigaction (SIGPIPE, 0, &sigpipe_action);
-#ifdef AIX
-  sigaddset (&blocked, SIGHUP );  sigaction (SIGHUP , 0, &sighup_action );
-#endif
-#endif /* HAVE_WORKING_VFORK */
   pthread_sigmask (SIG_BLOCK, &blocked, &procmask);
+#endif
 
   FD_SET (inchannel, &input_wait_mask);
   FD_SET (inchannel, &non_keyboard_wait_mask);
@@ -1881,8 +1863,10 @@ create_process (Lisp_Object process, char **new_argv, Lisp_Object current_dir)
 	   in the child.  */
 	signal (SIGPIPE, SIG_DFL);
 
+#ifdef SIGCHLD
 	/* Stop blocking signals in the child.  */
 	pthread_sigmask (SIG_SETMASK, &procmask, 0);
+#endif
 
 	if (pty_flag)
 	  child_setup_tty (xforkout);
@@ -1961,19 +1945,10 @@ create_process (Lisp_Object process, char **new_argv, Lisp_Object current_dir)
 #endif
     }
 
-  /* Restore the signal state whether vfork succeeded or not.
-     (We will signal an error, below, if it failed.)  */
-#ifdef HAVE_WORKING_VFORK
-  /* Restore the parent's signal handlers.  */
-  sigaction (SIGINT, &sigint_action, 0);
-  sigaction (SIGQUIT, &sigquit_action, 0);
-  sigaction (SIGPIPE, &sigpipe_action, 0);
-#ifdef AIX
-  sigaction (SIGHUP, &sighup_action, 0);
-#endif
-#endif /* HAVE_WORKING_VFORK */
+#ifdef SIGCHLD
   /* Stop blocking signals in the parent.  */
   pthread_sigmask (SIG_SETMASK, &procmask, 0);
+#endif
 
   /* Now generate the error if vfork failed.  */
   if (pid < 0)
@@ -4397,10 +4372,8 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 	 Otherwise, do pending quit if requested.  */
       if (read_kbd >= 0)
 	QUIT;
-#ifdef SYNC_INPUT
       else
 	process_pending_signals ();
-#endif
 
       /* Exit now if the cell we're waiting for became non-nil.  */
       if (! NILP (wait_for_cell) && ! NILP (XCAR (wait_for_cell)))
@@ -4836,7 +4809,7 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
       if (! NILP (wait_for_cell) && ! NILP (XCAR (wait_for_cell)))
 	break;
 
-#ifdef SIGIO
+#ifdef USABLE_SIGIO
       /* If we think we have keyboard input waiting, but didn't get SIGIO,
 	 go read it.  This can happen with X on BSD after logging out.
 	 In that case, there really is no input and no SIGIO,
@@ -5420,7 +5393,7 @@ read_process_output (Lisp_Object proc, register int channel)
 
 /* Sending data to subprocess */
 
-static jmp_buf send_process_frame;
+static sys_jmp_buf send_process_frame;
 static Lisp_Object process_sent_to;
 
 static _Noreturn void
@@ -5430,7 +5403,7 @@ handle_pipe_signal (int sig)
   sigemptyset (&unblocked);
   sigaddset (&unblocked, SIGPIPE);
   pthread_sigmask (SIG_UNBLOCK, &unblocked, 0);
-  _longjmp (send_process_frame, 1);
+  sys_longjmp (send_process_frame, 1);
 }
 
 static void
@@ -5639,7 +5612,7 @@ send_process (volatile Lisp_Object proc, const char *volatile buf,
   /* 2000-09-21: Emacs 20.7, sparc-sun-solaris-2.6, GCC 2.95.2,
      CFLAGS="-g -O": The value of the parameter `proc' is clobbered
      when returning with longjmp despite being declared volatile.  */
-  if (!_setjmp (send_process_frame))
+  if (!sys_setjmp (send_process_frame))
     {
       p = XPROCESS (proc);  /* Repair any setjmp clobbering.  */
       process_sent_to = proc;
@@ -6853,7 +6826,7 @@ delete_gpm_wait_descriptor (int desc)
 
 # endif
 
-# ifdef SIGIO
+# ifdef USABLE_SIGIO
 
 /* Return nonzero if *MASK has a bit set
    that corresponds to one of the keyboard input descriptors.  */

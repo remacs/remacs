@@ -1,3 +1,108 @@
+2012-09-17  Andreas Schwab  <schwab@linux-m68k.org>
+
+	* Makefile.in (bootstrap): Revert last change.  Run config.status
+	after config.status --recheck, run configure from $(srcdir).
+	(config.status): Run configure from $(srcdir).
+
+2012-09-17  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* Makefile.in: Fix build error on FreeBSD.
+	($(MAKEFILE_NAME)): Pass MAKE='$(MAKE)' to config.status's env.
+	Suggested by Wolfgang Jenker in
+	<http://lists.gnu.org/archive/html/emacs-devel/2012-09/msg00430.html>.
+	(MAKE_CONFIG_STATUS): Remove.  Remaining use expanded.
+	This undoes part of the 2012-09-10 patch.
+	(bootstrap): Run ./configure, rather than trying to run config.status
+	if it exists.  That builds src/epaths.h more reliably.
+	Run autogen/copy_autogen if autogen.sh fails,
+	to create 'configure'; problem reported by Andreas Schwab in
+	<http://lists.gnu.org/archive/html/emacs-devel/2012-09/msg00438.html>.
+	* autogen.sh: Exit with status 1 when failing due to missing tools,
+	reverting the 2012-09-10 change to this file.
+	* autogen/copy_autogen: Fail if one of the subsidiary actions fail.
+	Use 'cp -f' for the build-aux files, since the destinations are
+	typically read-only.
+
+	Remove no-longer-needed Solaris 2.4 vfork bug workaround.
+	* configure.ac (ac_cv_func_vfork_works): Default to 'no' on
+	Solaris 2.4, so that AC_FUNC_VFORK doesn't think vfork works.
+
+2012-09-17  Glenn Morris  <rgm@gnu.org>
+
+	* configure.ac (copyright): New output variable.
+	(COPYRIGHT): New AC_DEFINE.
+
+2012-09-16  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Remove configure's --without-sync-input option (Bug#12450).
+	* configure.ac (SYNC_INPUT, BROKEN_SA_RESTART): Remove.
+
+2012-09-16  Glenn Morris  <rgm@gnu.org>
+
+	Increase compartmentalization of Nextstep builds rules,
+	and store Emacs version number in fewer versioned files.
+	* configure.ac (ns_appsrc): Use relative names.
+	(ns_frag): Remove.
+	(Info-gnustep.plist, Emacs.desktop, Info.plist, InfoPlist.strings)
+	(nextstep/Makefile): Generate these nextstep files.
+	(SUBDIR_MAKEFILES): Add nextstep.
+	* Makefile.in (clean, distclean, bootstrap-clean): Add nextstep.
+	* make-dist (nextstep/templates): Add directory.
+	(nextstep/Cocoa/Emacs.base/Contents/Resources/English.lproj): Remove.
+	(nextstep/Cocoa/Emacs.base/Contents)
+	(nextstep, nextstep/GNUstep/Emacs.base/Resources): Update contents.
+
+2012-09-15  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Port better to POSIX hosts lacking _setjmp (Bug#12446).
+	* configure.ac (HAVE__SETJMP, HAVE_SIGSETJMP): New symbols.
+	(_setjmp, _longjmp): Remove.
+
+2012-09-14  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* configure.ac (--without-sync-input): Fix typo in usage message.
+
+	* configure.ac: Port to hosts lacking gtk.
+	(PKG_CHECK_MODULES): Capture pkg-config diagnostics
+	better, in particular, problems in invoking pkg-config itself.
+	This is useful on hosts that don't have pkg-config.
+	(GTK_MODULES): Do not exit 'configure' simply because gtk3
+	and gtk2 are both missing.  Problem found on Solaris 8.
+
+2012-09-13  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* configure.ac: Reorder Xaw3d messages.
+	Report Gtk+ 3 as GTK.
+
+2012-09-13  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Simplify SIGIO usage (Bug#12408).
+	* configure.ac (NO_TERMIO, BROKEN_FIONREAD, BROKEN_SIGAIO)
+	(BROKEN_SIGPOLL, BROKEN_SIGPTY): Remove.
+	(USABLE_FIONREAD, USABLE_SIGIO): New symbols.  All uses of
+	'defined SIGIO' replaced with 'defined USABLE_SIGIO', with no need
+	to #undef SIGIO now (which was error-prone).  Likewise, all uses
+	of 'defined FIONREAD' replaced with 'defined USABLE_FIONREAD'.
+
+2012-09-12  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* configure.ac: No --with-x-toolkit given: Try gtk3 toolkit first
+	and then gtk2 if not found.
+	--with-x-toolkit=gtk|yes: As above, but fail if gtk2 or gt3 not found.
+	--with-x-toolkit=gtk2: Only try gtk2, fail if not found.
+	--with-x-toolkit=gtk3: Only try gtk3, fail if not found.
+
+2012-09-11  Glenn Morris  <rgm@gnu.org>
+
+	* Makefile.in (install-arch-dep, install-arch-indep, install-doc):
+	Be more explicit about dependencies, for parallel `make install'.
+
+2012-09-11  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Simplify, document, and port floating-point (Bug#12381).
+	* configure.ac (logb, cbrt): Do not check for these functions,
+	as they are not being used.
+
 2012-09-10  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Improve robustness of 'make bootstrap' (Bug#12376).

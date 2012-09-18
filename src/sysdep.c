@@ -23,7 +23,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include <execinfo.h>
 #include <stdio.h>
-#include <setjmp.h>
 #ifdef HAVE_PWD_H
 #include <pwd.h>
 #include <grp.h>
@@ -107,9 +106,6 @@ extern char *getwd (char *);
 
 static int emacs_get_tty (int, struct emacs_tty *);
 static int emacs_set_tty (int, struct emacs_tty *, int);
-#if defined TIOCNOTTY || defined USG5 || defined CYGWIN
-static _Noreturn void croak (char *);
-#endif
 
 /* ULLONG_MAX is missing on Red Hat Linux 7.3; see Bug#11781.  */
 #ifndef ULLONG_MAX
@@ -513,7 +509,7 @@ sys_subshell (void)
   saved_handlers[0].code = SIGINT;
   saved_handlers[1].code = SIGQUIT;
   saved_handlers[2].code = SIGTERM;
-#ifdef SIGIO
+#ifdef USABLE_SIGIO
   saved_handlers[3].code = SIGIO;
   saved_handlers[4].code = 0;
 #else
@@ -642,120 +638,74 @@ restore_signal_handlers (struct save_signal *saved_handlers)
     }
 }
 
-#ifndef SIGIO
-/* If SIGIO is broken, don't do anything. */
-void
-init_sigio (int fd)
-{
-}
-
-static void
-reset_sigio (int fd)
-{
-}
-
-void
-request_sigio (void)
-{
-}
-
-void
-unrequest_sigio (void)
-{
-}
-
-#else
-#ifdef F_SETFL
-
+#ifdef USABLE_SIGIO
 static int old_fcntl_flags[MAXDESC];
+#endif
 
 void
 init_sigio (int fd)
 {
-#ifdef FASYNC
+#ifdef USABLE_SIGIO
   old_fcntl_flags[fd] = fcntl (fd, F_GETFL, 0) & ~FASYNC;
   fcntl (fd, F_SETFL, old_fcntl_flags[fd] | FASYNC);
-#endif
   interrupts_deferred = 0;
+#endif
 }
 
 static void
 reset_sigio (int fd)
 {
-#ifdef FASYNC
+#ifdef USABLE_SIGIO
   fcntl (fd, F_SETFL, old_fcntl_flags[fd]);
 #endif
 }
 
-#ifdef FASYNC		/* F_SETFL does not imply existence of FASYNC */
-/* XXX Uhm, FASYNC is not used anymore here. */
-/* XXX Yeah, but you need it for SIGIO, don't you? */
-
 void
 request_sigio (void)
 {
+#ifdef USABLE_SIGIO
   sigset_t unblocked;
 
   if (noninteractive)
     return;
 
   sigemptyset (&unblocked);
-#ifdef SIGWINCH
+# ifdef SIGWINCH
   sigaddset (&unblocked, SIGWINCH);
-#endif
+# endif
   sigaddset (&unblocked, SIGIO);
   pthread_sigmask (SIG_UNBLOCK, &unblocked, 0);
 
   interrupts_deferred = 0;
+#endif
 }
 
 void
 unrequest_sigio (void)
 {
+#ifdef USABLE_SIGIO
   sigset_t blocked;
 
   if (noninteractive)
     return;
 
-#if 0 /* XXX What's wrong with blocking SIGIO under X?  */
-  if (x_display_list)
-    return;
-#endif
-
   sigemptyset (&blocked);
-#ifdef SIGWINCH
+# ifdef SIGWINCH
   sigaddset (&blocked, SIGWINCH);
-#endif
+# endif
   sigaddset (&blocked, SIGIO);
   pthread_sigmask (SIG_BLOCK, &blocked, 0);
   interrupts_deferred = 1;
-}
-
-#else /* no FASYNC */
-#ifndef MSDOS
-
-void
-request_sigio (void)
-{
-  if (noninteractive || read_socket_hook)
-    return;
-
-  croak ("request_sigio");
+#endif
 }
 
 void
-unrequest_sigio (void)
+ignore_sigio (void)
 {
-  if (noninteractive || read_socket_hook)
-    return;
-
-  croak ("unrequest_sigio");
+#ifdef USABLE_SIGIO
+  signal (SIGIO, SIG_IGN);
+#endif
 }
-
-#endif /* MSDOS */
-#endif /* FASYNC */
-#endif /* F_SETFL */
-#endif /* SIGIO */
 
 
 /* Getting and setting emacs_tty structures.  */
@@ -1497,27 +1447,21 @@ emacs_sigaction_init (struct sigaction *action, signal_handler_t handler)
   action->sa_handler = handler;
   action->sa_flags = 0;
 #if defined (SA_RESTART)
-  /* Emacs mostly works better with restartable system services. If this
-     flag exists, we probably want to turn it on here.
-     However, on some systems (only hpux11 at present) this resets the
-     timeout of `select' which means that `select' never finishes if
-     it keeps getting signals.
-     We define BROKEN_SA_RESTART on those systems.  */
-  /* It's not clear why the comment above says "mostly works better".  --Stef
-     When SYNC_INPUT is set, we don't want SA_RESTART because we need to poll
+  /* SA_RESTART causes interruptible functions with timeouts (e.g.,
+     'select') to reset their timeout on some platforms (e.g.,
+     HP-UX 11), which is not what we want.  Also, when Emacs is
+     interactive, we don't want SA_RESTART because we need to poll
      for pending input so we need long-running syscalls to be interrupted
      after a signal that sets the interrupt_input_pending flag.  */
   /* Non-interactive keyboard input goes through stdio, where we always
      want restartable system calls.  */
-# if defined (BROKEN_SA_RESTART) || defined (SYNC_INPUT)
   if (noninteractive)
-# endif
     action->sa_flags = SA_RESTART;
 #endif
 }
 
 #ifdef FORWARD_SIGNAL_TO_MAIN_THREAD
-pthread_t main_thread;
+static pthread_t main_thread;
 #endif
 
 /* If we are on the main thread, handle the signal SIG with HANDLER.
@@ -1964,11 +1908,9 @@ emacs_write (int fildes, const char *buf, ptrdiff_t nbyte)
 	{
 	  if (errno == EINTR)
 	    {
-#ifdef SYNC_INPUT
 	      /* I originally used `QUIT' but that might causes files to
 		 be truncated if you hit C-g in the middle of it.  --Stef  */
 	      process_pending_signals ();
-#endif
 	      continue;
 	    }
 	  else
@@ -2051,19 +1993,6 @@ getwd (char *pathname)
 }
 
 #endif /* !defined (HAVE_GETWD) || defined (BROKEN_GETWD) */
-
-/*
- *	This function will go away as soon as all the stubs fixed. (fnf)
- */
-
-void
-croak (char *badfunc)
-{
-  printf ("%s not yet implemented\r\n", badfunc);
-  reset_all_sys_modes ();
-  exit (1);
-}
-
 #endif /* USG */
 
 /* Directory routines for systems that don't have them. */

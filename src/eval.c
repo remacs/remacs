@@ -19,7 +19,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include <config.h>
 #include <limits.h>
-#include <setjmp.h>
 #include <stdio.h>
 #include "lisp.h"
 #include "blockinput.h"
@@ -117,12 +116,6 @@ static EMACS_INT when_entered_debugger;
    Fsignal.  */
 
 Lisp_Object Vsignaling_function;
-
-/* Set to non-zero while processing X events.  Checked in Feval to
-   make sure the Lisp interpreter isn't called from a signal handler,
-   which is unsafe because the interpreter isn't reentrant.  */
-
-int handling_signal;
 
 /* If non-nil, Lisp code must not be run since some part of Emacs is
    in an inconsistent state.  Currently, x-create-frame uses this to
@@ -707,7 +700,7 @@ usage: (defvar SYMBOL &optional INITVALUE DOCSTRING)  */)
       else
 	{ /* Check if there is really a global binding rather than just a let
 	     binding that shadows the global unboundness of the var.  */
-	  volatile struct specbinding *pdl = specpdl_ptr;
+	  struct specbinding *pdl = specpdl_ptr;
 	  while (pdl > specpdl)
 	    {
 	      if (EQ ((--pdl)->symbol, sym) && !pdl->func
@@ -1072,7 +1065,7 @@ internal_catch (Lisp_Object tag, Lisp_Object (*func) (Lisp_Object), Lisp_Object 
   catchlist = &c;
 
   /* Call FUNC.  */
-  if (! _setjmp (c.jmp))
+  if (! sys_setjmp (c.jmp))
     c.val = (*func) (arg);
 
   /* Throw works by a longjmp that comes right here.  */
@@ -1107,7 +1100,6 @@ unwind_to_catch (struct catchtag *catch, Lisp_Object value)
   /* Restore certain special C variables.  */
   set_poll_suppress_count (catch->poll_suppress_count);
   UNBLOCK_INPUT_TO (catch->interrupt_input_blocked);
-  handling_signal = 0;
   immediate_quit = 0;
 
   do
@@ -1140,7 +1132,7 @@ unwind_to_catch (struct catchtag *catch, Lisp_Object value)
   backtrace_list = catch->backlist;
   lisp_eval_depth = catch->lisp_eval_depth;
 
-  _longjmp (catch->jmp, 1);
+  sys_longjmp (catch->jmp, 1);
 }
 
 DEFUN ("throw", Fthrow, Sthrow, 2, 2, 0,
@@ -1204,12 +1196,9 @@ See also the function `signal' for more info.
 usage: (condition-case VAR BODYFORM &rest HANDLERS)  */)
   (Lisp_Object args)
 {
-  register Lisp_Object bodyform, handlers;
-  volatile Lisp_Object var;
-
-  var      = Fcar (args);
-  bodyform = Fcar (Fcdr (args));
-  handlers = Fcdr (Fcdr (args));
+  Lisp_Object var = Fcar (args);
+  Lisp_Object bodyform = Fcar (Fcdr (args));
+  Lisp_Object handlers = Fcdr (Fcdr (args));
 
   return internal_lisp_condition_case (var, bodyform, handlers);
 }
@@ -1249,7 +1238,7 @@ internal_lisp_condition_case (volatile Lisp_Object var, Lisp_Object bodyform,
   c.interrupt_input_blocked = interrupt_input_blocked;
   c.gcpro = gcprolist;
   c.byte_stack = byte_stack_list;
-  if (_setjmp (c.jmp))
+  if (sys_setjmp (c.jmp))
     {
       if (!NILP (h.var))
 	specbind (h.var, c.val);
@@ -1304,7 +1293,7 @@ internal_condition_case (Lisp_Object (*bfun) (void), Lisp_Object handlers,
   c.interrupt_input_blocked = interrupt_input_blocked;
   c.gcpro = gcprolist;
   c.byte_stack = byte_stack_list;
-  if (_setjmp (c.jmp))
+  if (sys_setjmp (c.jmp))
     {
       return (*hfun) (c.val);
     }
@@ -1342,7 +1331,7 @@ internal_condition_case_1 (Lisp_Object (*bfun) (Lisp_Object), Lisp_Object arg,
   c.interrupt_input_blocked = interrupt_input_blocked;
   c.gcpro = gcprolist;
   c.byte_stack = byte_stack_list;
-  if (_setjmp (c.jmp))
+  if (sys_setjmp (c.jmp))
     {
       return (*hfun) (c.val);
     }
@@ -1384,7 +1373,7 @@ internal_condition_case_2 (Lisp_Object (*bfun) (Lisp_Object, Lisp_Object),
   c.interrupt_input_blocked = interrupt_input_blocked;
   c.gcpro = gcprolist;
   c.byte_stack = byte_stack_list;
-  if (_setjmp (c.jmp))
+  if (sys_setjmp (c.jmp))
     {
       return (*hfun) (c.val);
     }
@@ -1428,7 +1417,7 @@ internal_condition_case_n (Lisp_Object (*bfun) (ptrdiff_t, Lisp_Object *),
   c.interrupt_input_blocked = interrupt_input_blocked;
   c.gcpro = gcprolist;
   c.byte_stack = byte_stack_list;
-  if (_setjmp (c.jmp))
+  if (sys_setjmp (c.jmp))
     {
       return (*hfun) (c.val, nargs, args);
     }
@@ -1490,7 +1479,7 @@ See also the function `condition-case'.  */)
   struct handler *h;
   struct backtrace *bp;
 
-  immediate_quit = handling_signal = 0;
+  immediate_quit = 0;
   abort_on_gc = 0;
   if (gc_in_progress || waiting_for_input)
     emacs_abort ();
@@ -2042,9 +2031,6 @@ eval_sub (Lisp_Object form)
   Lisp_Object funcar;
   struct backtrace backtrace;
   struct gcpro gcpro1, gcpro2, gcpro3;
-
-  if (handling_signal)
-    emacs_abort ();
 
   if (SYMBOLP (form))
     {
@@ -3108,8 +3094,6 @@ specbind (Lisp_Object symbol, Lisp_Object value)
 {
   struct Lisp_Symbol *sym;
 
-  eassert (!handling_signal);
-
   CHECK_SYMBOL (symbol);
   sym = XSYMBOL (symbol);
   if (specpdl_ptr == specpdl + specpdl_size)
@@ -3203,8 +3187,6 @@ specbind (Lisp_Object symbol, Lisp_Object value)
 void
 record_unwind_protect (Lisp_Object (*function) (Lisp_Object), Lisp_Object arg)
 {
-  eassert (!handling_signal);
-
   if (specpdl_ptr == specpdl + specpdl_size)
     grow_specpdl ();
   specpdl_ptr->func = function;

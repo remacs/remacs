@@ -3221,6 +3221,7 @@ void unrequest_sigio (void);
 int tabs_safe_p (int);
 void init_baud_rate (int);
 void init_sigio (int);
+void ignore_sigio (void);
 
 /* Defined in xfaces.c */
 

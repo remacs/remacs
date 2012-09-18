@@ -22,7 +22,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include <config.h>
 #include <stdio.h>
-#include <setjmp.h>
 
 #ifdef HAVE_X_WINDOWS
 
@@ -47,7 +46,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include <fcntl.h>
 #include <errno.h>
-#include <setjmp.h>
 #include <sys/stat.h>
 /* Caused redefinition of DBL_DIG on Netbsd; seems not to be needed.  */
 /* #include <sys/param.h>  */
@@ -7140,24 +7138,16 @@ XTread_socket (struct terminal *terminal, int expected, struct input_event *hold
   if (interrupt_input_blocked)
     {
       interrupt_input_pending = 1;
-#ifdef SYNC_INPUT
       pending_signals = 1;
-#endif
       return -1;
     }
 
   interrupt_input_pending = 0;
-#ifdef SYNC_INPUT
   pending_signals = pending_atimers;
-#endif
   BLOCK_INPUT;
 
   /* So people can tell when we have read the available input.  */
   input_signal_count++;
-
-#ifndef SYNC_INPUT
-  ++handling_signal;
-#endif
 
   /* For debugging, this gives a way to fake an I/O error.  */
   if (terminal->display_info.x == XTread_socket_fake_io_error)
@@ -7247,9 +7237,6 @@ XTread_socket (struct terminal *terminal, int expected, struct input_event *hold
       pending_autoraise_frame = 0;
     }
 
-#ifndef SYNC_INPUT
-  --handling_signal;
-#endif
   UNBLOCK_INPUT;
 
   return count;
@@ -7804,7 +7791,6 @@ x_connection_closed (Display *dpy, const char *error_message)
 
   error_msg = alloca (strlen (error_message) + 1);
   strcpy (error_msg, error_message);
-  handling_signal = 0;
 
   /* Inhibit redisplay while frames are being deleted. */
   specbind (Qinhibit_redisplay, Qt);
@@ -7892,7 +7878,7 @@ For details, see etc/PROBLEMS.\n",
   {
     sigset_t unblocked;
     sigemptyset (&unblocked);
-#ifdef SIGIO
+#ifdef USABLE_SIGIO
     sigaddset (&unblocked, SIGIO);
 #endif
     sigaddset (&unblocked, SIGALRM);
@@ -10439,10 +10425,8 @@ x_term_init (Lisp_Object display_name, char *xrm_option, char *resource_name)
   fcntl (connection, F_SETOWN, getpid ());
 #endif /* ! defined (F_SETOWN) */
 
-#ifdef SIGIO
   if (interrupt_input)
     init_sigio (connection);
-#endif /* ! defined (SIGIO) */
 
 #ifdef USE_LUCID
   {

@@ -244,7 +244,10 @@ List has a form of (file-name full-file-name (attribute-list))."
 			     (function dired-check-process)
 			     (append
 			      (list operation program)
-			      (unless (string-equal new-attribute "")
+			      (unless (or (string-equal new-attribute "")
+					  ;; Use `eq' instead of `equal'
+					  ;; to detect empty input (bug#12399).
+					  (eq new-attribute default))
 				(if (eq op-symbol 'touch)
 				    (list "-t" new-attribute)
 				  (list new-attribute)))
@@ -278,7 +281,10 @@ Symbolic modes like `g+w' are allowed."
 		 "Change mode of %s to: "
 		 nil 'chmod arg files default))
 	 num-modes)
-    (cond ((equal modes "")
+    (cond ((or (equal modes "")
+	       ;; Use `eq' instead of `equal'
+	       ;; to detect empty input (bug#12399).
+	       (eq modes default))
 	   ;; We used to treat empty input as DEFAULT, but that is not
 	   ;; such a good idea (Bug#9361).
 	   (error "No file mode specified"))

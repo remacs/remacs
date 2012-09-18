@@ -65,6 +65,14 @@ renamed to '--enable-check-lisp-object-type', as the resulting
 Lisp_Object type no longer uses a union to implement the compile time
 check that this option enables.
 
+---
+** The default toolkit has been changed to Gtk+ version 3.
+If you don't pass --with-x-toolkit to configure or if you pass
+--with-x-toolkit=gtk or --with-x-toolkit=yes, configure will try to build
+with Gtk+ version 3, and if that fails, try Gtk+ version 2.
+You can explicitly require a specific version by passing
+--with-x-toolkit=gtk2 or --with-x-toolkit=gtk3 to configure.
+
 
 * Startup Changes in Emacs 24.3
 
@@ -100,6 +108,11 @@ component is new.  PSEC is typically a multiple of 1000 on current
 machines.  Other functions that use this format, such as
 file-attributes and format-time-string, have been changed accordingly.
 Old-format time stamps are still accepted.
+
+** The format of timers in timer-list and timer-idle-list is now
+[TRIGGERED-P HI-SECS LO-SECS USECS REPEAT-DELAY FUNCTION ARGS IDLE-DELAY PSECS].
+The PSECS slot is new, and uses picosecond resolution.  It can be
+accessed via the new timer--psecs accessor.
 
 ** Emacs now generates backtraces on fatal errors.
 On encountering a fatal error, Emacs now outputs a textual description
@@ -722,6 +735,7 @@ in Emacs 24.1:
 **** `special-display-frame-alist'
 **** `special-display-buffer-names'
 **** `special-display-function'
+**** `display-buffer-function'
 
 ** Completion
 

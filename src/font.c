@@ -23,7 +23,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <config.h>
 #include <float.h>
 #include <stdio.h>
-#include <setjmp.h>
 
 #include <c-ctype.h>
 
@@ -4296,12 +4295,15 @@ to get the correct visual image of character sequences set in the
 header of the glyph-string.
 
 If the shaping was successful, the value is GSTRING itself or a newly
-created glyph-string.  Otherwise, the value is nil.  */)
+created glyph-string.  Otherwise, the value is nil.
+
+See the documentation of `composition-get-gstring' for the format of
+GSTRING.  */)
   (Lisp_Object gstring)
 {
   struct font *font;
   Lisp_Object font_object, n, glyph;
-  ptrdiff_t i, j, from, to;
+  ptrdiff_t i, from, to;
 
   if (! composition_gstring_p (gstring))
     signal_error ("Invalid glyph-string: ", gstring);
@@ -4327,44 +4329,42 @@ created glyph-string.  Otherwise, the value is nil.  */)
   if (XINT (n) < LGSTRING_GLYPH_LEN (gstring))
     LGSTRING_SET_GLYPH (gstring, XINT (n), Qnil);
 
+  /* Check FROM_IDX and TO_IDX of each GLYPH in GSTRING to assure that
+     GLYPHS covers all characters (except for the last few ones) in
+     GSTRING.  More formally, provided that NCHARS is the number of
+     characters in GSTRING and GLYPHS[i] is the ith glyph, FROM_IDX
+     and TO_IDX of each glyph must satisfy these conditions:
+
+       GLYPHS[0].FROM_IDX == 0
+       GLYPHS[i].FROM_IDX <= GLYPHS[i].TO_IDX
+       if (GLYPHS[i].FROM_IDX == GLYPHS[i-1].FROM_IDX)
+         ;; GLYPHS[i] and GLYPHS[i-1] belongs to the same grapheme cluster
+         GLYPHS[i].TO_IDX == GLYPHS[i-1].TO_IDX
+       else
+         ;; Be sure to cover all characters.
+         GLYPHS[i].FROM_IDX == GLYPHS[i-1].TO_IDX + 1 */
   glyph = LGSTRING_GLYPH (gstring, 0);
   from = LGLYPH_FROM (glyph);
   to = LGLYPH_TO (glyph);
-  for (i = 1, j = 0; i < LGSTRING_GLYPH_LEN (gstring); i++)
+  if (from != 0 || to < from)
+    goto shaper_error;
+  for (i = 1; i < LGSTRING_GLYPH_LEN (gstring); i++)
     {
-      Lisp_Object this = LGSTRING_GLYPH (gstring, i);
-
-      if (NILP (this))
+      glyph = LGSTRING_GLYPH (gstring, i);
+      if (NILP (glyph))
 	break;
-      if (NILP (LGLYPH_ADJUSTMENT (this)))
-	{
-	  if (j < i - 1)
-	    for (; j < i; j++)
-	      {
-		glyph = LGSTRING_GLYPH (gstring, j);
-		LGLYPH_SET_FROM (glyph, from);
-		LGLYPH_SET_TO (glyph, to);
-	      }
-	  from = LGLYPH_FROM (this);
-	  to = LGLYPH_TO (this);
-	  j = i;
-	}
-      else
-	{
-	  if (from > LGLYPH_FROM (this))
-	    from = LGLYPH_FROM (this);
-	  if (to < LGLYPH_TO (this))
-	    to = LGLYPH_TO (this);
-	}
+      if (! (LGLYPH_FROM (glyph) <= LGLYPH_TO (glyph)
+	     && (LGLYPH_FROM (glyph) == from
+		 ? LGLYPH_TO (glyph) == to
+		 : LGLYPH_FROM (glyph) == to + 1)))
+	goto shaper_error;
+      from = LGLYPH_FROM (glyph);
+      to = LGLYPH_TO (glyph);
     }
-  if (j < i - 1)
-    for (; j < i; j++)
-      {
-	glyph = LGSTRING_GLYPH (gstring, j);
-	LGLYPH_SET_FROM (glyph, from);
-	LGLYPH_SET_TO (glyph, to);
-      }
   return composition_gstring_put_cache (gstring, XINT (n));
+
+ shaper_error:
+  return Qnil;
 }
 
 DEFUN ("font-variation-glyphs", Ffont_variation_glyphs, Sfont_variation_glyphs,

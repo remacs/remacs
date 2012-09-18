@@ -273,7 +273,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <config.h>
 #include <stdio.h>
 #include <limits.h>
-#include <setjmp.h>
 
 #include "lisp.h"
 #include "keyboard.h"
@@ -3671,7 +3670,7 @@ handle_fontified_prop (struct it *it)
       	}
       /* There isn't much we can reasonably do to protect against
       	 misbehaving fontification, but here's a fig leaf.  */
-      else if (!NILP (BVAR (obuf, name)))
+      else if (BUFFER_LIVE_P (obuf))
       	set_buffer_internal_1 (obuf);
 
       /* The fontification code may have added/removed text.
@@ -9345,12 +9344,6 @@ add_to_log (const char *format, Lisp_Object arg1, Lisp_Object arg2)
   struct gcpro gcpro1, gcpro2, gcpro3, gcpro4;
   USE_SAFE_ALLOCA;
 
-  /* Do nothing if called asynchronously.  Inserting text into
-     a buffer may call after-change-functions and alike and
-     that would means running Lisp asynchronously.  */
-  if (handling_signal)
-    return;
-
   fmt = msg = Qnil;
   GCPRO4 (fmt, msg, arg1, arg2);
 
@@ -9963,7 +9956,7 @@ ensure_echo_area_buffers (void)
 
   for (i = 0; i < 2; ++i)
     if (!BUFFERP (echo_buffer[i])
-	|| NILP (BVAR (XBUFFER (echo_buffer[i]), name)))
+	|| !BUFFER_LIVE_P (XBUFFER (echo_buffer[i])))
       {
 	char name[30];
 	Lisp_Object old_buffer;
@@ -21144,8 +21137,7 @@ are the selected window and the WINDOW's buffer).  */)
     : EQ (face, Qtool_bar) ? TOOL_BAR_FACE_ID
     : DEFAULT_FACE_ID;
 
-  if (XBUFFER (buffer) != current_buffer)
-    old_buffer = current_buffer;
+  old_buffer = current_buffer;
 
   /* Save things including mode_line_proptrans_alist,
      and set that to nil so that we don't alter the outer value.  */
@@ -21156,8 +21148,7 @@ are the selected window and the WINDOW's buffer).  */)
   mode_line_proptrans_alist = Qnil;
 
   Fselect_window (window, Qt);
-  if (old_buffer)
-    set_buffer_internal_1 (XBUFFER (buffer));
+  set_buffer_internal_1 (XBUFFER (buffer));
 
   init_iterator (&it, w, -1, -1, NULL, face_id);
 
@@ -23167,7 +23158,8 @@ right_overwritten (struct glyph_string *s)
     {
       int x = 0, i;
       struct glyph *glyphs = s->row->glyphs[s->area];
-      int first = (s->first_glyph - glyphs) + (s->cmp ? 1 : s->nchars);
+      int first = (s->first_glyph - glyphs
+		   + (s->first_glyph->type == COMPOSITE_GLYPH ? 1 : s->nchars));
       int end = s->row->used[s->area];
 
       for (i = first; i < end && s->right_overhang > x; ++i)
@@ -23190,7 +23182,8 @@ right_overwriting (struct glyph_string *s)
   int i, k, x;
   int end = s->row->used[s->area];
   struct glyph *glyphs = s->row->glyphs[s->area];
-  int first = (s->first_glyph - glyphs) + (s->cmp ? 1 : s->nchars);
+  int first = (s->first_glyph - glyphs
+	       + (s->first_glyph->type == COMPOSITE_GLYPH ? 1 : s->nchars));
 
   k = -1;
   x = 0;

@@ -24,7 +24,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <stdio.h>
 #include <errno.h>
 #include <limits.h>
-#include <setjmp.h>
 
 #include <c-ctype.h>
 
@@ -1298,6 +1297,11 @@ delete_frame (Lisp_Object frame, Lisp_Object force)
      collected until much later, because recent_keys and other data
      structures can still refer to it.  */
   fset_menu_bar_vector (f, Qnil);
+
+  /* If FRAME's buffer lists contains killed
+     buffers, this helps GC to reclaim them.  */
+  fset_buffer_list (f, Qnil);
+  fset_buried_buffer_list (f, Qnil);
 
   free_font_driver_list (f);
   xfree (f->namebuf);

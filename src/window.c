@@ -23,7 +23,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #define WINDOW_INLINE EXTERN_INLINE
 
 #include <stdio.h>
-#include <setjmp.h>
 
 #include "lisp.h"
 #include "character.h"
@@ -1857,23 +1856,23 @@ return value is a list of elements of the form (PARAMETER . VALUE).  */)
 DEFUN ("window-parameter", Fwindow_parameter, Swindow_parameter,
        2, 2, 0,
        doc:  /* Return WINDOW's value for PARAMETER.
-WINDOW must be a valid window and defaults to the selected one.  */)
+WINDOW can be any window and defaults to the selected one.  */)
   (Lisp_Object window, Lisp_Object parameter)
 {
   Lisp_Object result;
 
-  result = Fassq (parameter, decode_valid_window (window)->window_parameters);
+  result = Fassq (parameter, decode_any_window (window)->window_parameters);
   return CDR_SAFE (result);
 }
 
 DEFUN ("set-window-parameter", Fset_window_parameter,
        Sset_window_parameter, 3, 3, 0,
        doc: /* Set WINDOW's value of PARAMETER to VALUE.
-WINDOW must be a valid window and defaults to the selected one.
+WINDOW can be any window and defaults to the selected one.
 Return VALUE.  */)
   (Lisp_Object window, Lisp_Object parameter, Lisp_Object value)
 {
-  register struct window *w = decode_valid_window (window);
+  register struct window *w = decode_any_window (window);
   Lisp_Object old_alist_elt;
 
   old_alist_elt = Fassq (parameter, w->window_parameters);
@@ -2659,7 +2658,7 @@ window_loop (enum window_loop type, Lisp_Object obj, int mini, Lisp_Object frame
 	    /* Check for a window that has a killed buffer.  */
 	  case CHECK_ALL_WINDOWS:
 	    if (! NILP (w->buffer)
-		&& NILP (BVAR (XBUFFER (w->buffer), name)))
+		&& !BUFFER_LIVE_P (XBUFFER (w->buffer)))
 	      emacs_abort ();
 	    break;
 
@@ -3264,7 +3263,7 @@ This function runs `window-scroll-functions' before running
   XSETWINDOW (window, w);
   buffer = Fget_buffer (buffer_or_name);
   CHECK_BUFFER (buffer);
-  if (NILP (BVAR (XBUFFER (buffer), name)))
+  if (!BUFFER_LIVE_P (XBUFFER (buffer)))
     error ("Attempt to display deleted buffer");
 
   tem = w->buffer;
@@ -3329,7 +3328,7 @@ displaying that buffer.  */)
 
   if (STRINGP (object))
     object = Fget_buffer (object);
-  if (BUFFERP (object) && !NILP (BVAR (XBUFFER (object), name)))
+  if (BUFFERP (object) && BUFFER_LIVE_P (XBUFFER (object)))
     {
       /* Walk all windows looking for buffer, and force update
 	 of each of those windows.  */
@@ -5543,7 +5542,7 @@ the return value is nil.  Otherwise the value is t.  */)
   saved_windows = XVECTOR (data->saved_windows);
 
   new_current_buffer = data->current_buffer;
-  if (NILP (BVAR (XBUFFER (new_current_buffer), name)))
+  if (!BUFFER_LIVE_P (XBUFFER (new_current_buffer)))
     new_current_buffer = Qnil;
   else
     {
@@ -5618,7 +5617,7 @@ the return value is nil.  Otherwise the value is t.  */)
 	  w = XWINDOW (window);
 	  if (!NILP (w->buffer)
 	      && !EQ (w->buffer, p->buffer)
-	      && !NILP (BVAR (XBUFFER (p->buffer), name)))
+	      && BUFFER_LIVE_P (XBUFFER (p->buffer)))
 	    /* If a window we restore gets another buffer, record the
 	       window's old buffer.  */
 	    call1 (Qrecord_window_buffer, window);
@@ -5768,7 +5767,7 @@ the return value is nil.  Otherwise the value is t.  */)
 	  if (NILP (p->buffer))
 	    /* An internal window.  */
 	    wset_buffer (w, p->buffer);
-	  else if (!NILP (BVAR (XBUFFER (p->buffer), name)))
+	  else if (BUFFER_LIVE_P (XBUFFER (p->buffer)))
 	    /* If saved buffer is alive, install it.  */
 	    {
 	      wset_buffer (w, p->buffer);
@@ -5787,7 +5786,7 @@ the return value is nil.  Otherwise the value is t.  */)
 		Fgoto_char (w->pointm);
 	     }
 	   else if (!NILP (w->buffer)
-		    && !NILP (BVAR (XBUFFER (w->buffer), name)))
+		    && BUFFER_LIVE_P (XBUFFER (w->buffer)))
 	     /* Keep window's old buffer; make sure the markers are
 		real.  */
 	     {

@@ -25,7 +25,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <sys/file.h>
 #include <sys/time.h>
 #include <unistd.h>
-#include <setjmp.h>
 
 #include "lisp.h"
 #include "termchar.h"
@@ -2944,8 +2943,7 @@ dissociate_if_controlling_tty (int fd)
         emacs_close (fd);
       pthread_sigmask (SIG_UNBLOCK, &blocked, 0);
 #else
-      /* Unknown system. */
-      croak ();
+# error "Unknown system."
 #endif  /* ! TIOCNOTTY */
 #endif  /* ! USG */
     }

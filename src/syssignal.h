@@ -34,27 +34,6 @@ typedef void (*signal_handler_t) (int);
 
 extern void emacs_sigaction_init (struct sigaction *, signal_handler_t);
 
-#if ! (defined TIOCNOTTY || defined USG5 || defined CYGWIN)
-_Noreturn void croak (char *);
-#endif
-
-/* Interrupt input is not used if there is no FIONREAD.  */
-#include <sys/ioctl.h>
-#if defined BROKEN_SIGIO || ! defined FIONREAD || defined BROKEN_FIONREAD
-# undef SIGIO
-#endif
-
-/* These are only used by AIX  */
-#if defined (SIGPOLL) && defined (BROKEN_SIGPOLL)
-#undef SIGPOLL
-#endif
-#if defined (SIGAIO) && defined (BROKEN_SIGAIO)
-#undef SIGAIO
-#endif
-#if defined (SIGPTY) && defined (BROKEN_SIGPTY)
-#undef SIGPTY
-#endif
-
 #if NSIG < NSIG_MINIMUM
 # undef NSIG
 # define NSIG NSIG_MINIMUM
@@ -83,10 +62,6 @@ _Noreturn void croak (char *);
 #ifndef HAVE_STRSIGNAL
 /* strsignal is in sysdep.c */
 char *strsignal (int);
-#endif
-
-#ifdef FORWARD_SIGNAL_TO_MAIN_THREAD
-extern pthread_t main_thread;
 #endif
 
 void handle_on_main_thread (int, signal_handler_t);

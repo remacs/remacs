@@ -41,7 +41,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #define INTERVALS_INLINE EXTERN_INLINE
 
-#include <setjmp.h>
 #include <intprops.h>
 #include "lisp.h"
 #include "intervals.h"
@@ -674,8 +673,7 @@ find_interval (register INTERVAL tree, register ptrdiff_t position)
 
   eassert (relative_position <= TOTAL_LENGTH (tree));
 
-  if (!handling_signal)
-    tree = balance_possible_root_interval (tree);
+  tree = balance_possible_root_interval (tree);
 
   while (1)
     {

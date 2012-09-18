@@ -22,13 +22,40 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "emacsgtkfixed.h"
 #include <stdio.h>
-#include <setjmp.h>
+
 #include "lisp.h"
 #include "frame.h"
 #include "xterm.h"
 #ifdef HAVE_XWIDGETS
 #include "xwidget.h"
 #endif
+/* Silence a bogus diagnostic; see GNOME bug 683906.  */
+#if (__GNUC__ == 4 && 6 <= __GNUC_MINOR__) || 4 < __GNUC__
+# pragma GCC diagnostic push
+# pragma GCC diagnostic ignored "-Wunused-local-typedefs"
+#endif
+
+#define EMACS_TYPE_FIXED emacs_fixed_get_type ()
+#define EMACS_FIXED(obj) \
+  G_TYPE_CHECK_INSTANCE_CAST (obj, EMACS_TYPE_FIXED, EmacsFixed)
+
+typedef struct _EmacsFixed EmacsFixed;
+typedef struct _EmacsFixedPrivate EmacsFixedPrivate;
+typedef struct _EmacsFixedClass EmacsFixedClass;
+
+struct _EmacsFixed
+{
+  GtkFixed container;
+
+  /*< private >*/
+  EmacsFixedPrivate *priv;
+};
+
+struct _EmacsFixedClass
+{
+  GtkFixedClass parent_class;
+};
+
 struct _EmacsFixedPrivate
 {
   struct frame *f;

@@ -22,7 +22,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #define KEYBOARD_INLINE EXTERN_INLINE
 
 #include <stdio.h>
-#include <setjmp.h>
+
 #include "lisp.h"
 #include "termchar.h"
 #include "termopts.h"
@@ -56,6 +56,10 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <sys/ioctl.h>
 #endif /* not MSDOS */
 
+#if defined USABLE_FIONREAD && defined USG5_4
+# include <sys/filio.h>
+#endif
+
 #include "syssignal.h"
 
 #include <sys/types.h>
@@ -80,9 +84,7 @@ int interrupt_input_pending;
    pending_atimers separately, to reduce code size.  So, any code that
    changes interrupt_input_pending or pending_atimers should update
    this too.  */
-#ifdef SYNC_INPUT
 int pending_signals;
-#endif
 
 #define KBD_BUFFER_SIZE 4096
 
@@ -141,7 +143,7 @@ static ptrdiff_t before_command_echo_length;
 
 /* For longjmp to where kbd input is being done.  */
 
-static jmp_buf getcjmp;
+static sys_jmp_buf getcjmp;
 
 /* True while doing kbd input.  */
 int waiting_for_input;
@@ -388,19 +390,6 @@ int interrupt_input;
 /* Nonzero while interrupts are temporarily deferred during redisplay.  */
 int interrupts_deferred;
 
-/* Allow configure to inhibit use of FIONREAD.  */
-#ifdef BROKEN_FIONREAD
-#undef FIONREAD
-#endif
-
-/* We are unable to use interrupts if FIONREAD is not available,
-   so flush SIGIO so we won't try.  */
-#if !defined (FIONREAD)
-#ifdef SIGIO
-#undef SIGIO
-#endif
-#endif
-
 /* If we support a window system, turn on the code to poll periodically
    to detect C-g.  It isn't actually used when doing interrupt input.  */
 #if defined (HAVE_WINDOW_SYSTEM) && !defined (USE_ASYNC_EVENTS)
@@ -446,12 +435,12 @@ static Lisp_Object modify_event_symbol (ptrdiff_t, int, Lisp_Object,
                                         Lisp_Object *, ptrdiff_t);
 static Lisp_Object make_lispy_switch_frame (Lisp_Object);
 static int help_char_p (Lisp_Object);
-static void save_getcjmp (jmp_buf);
-static void restore_getcjmp (jmp_buf);
+static void save_getcjmp (sys_jmp_buf);
+static void restore_getcjmp (sys_jmp_buf);
 static Lisp_Object apply_modifiers (int, Lisp_Object);
 static void clear_event (struct input_event *);
 static Lisp_Object restore_kboard_configuration (Lisp_Object);
-#ifdef SIGIO
+#ifdef USABLE_SIGIO
 static void deliver_input_available_signal (int signo);
 #endif
 static void handle_interrupt (void);
@@ -2022,17 +2011,9 @@ static struct atimer *poll_timer;
 void
 poll_for_input_1 (void)
 {
-/* Tell ns_read_socket() it is being called asynchronously so it can avoid
-   doing anything dangerous.  */
-#ifdef HAVE_NS
-  ++handling_signal;
-#endif
   if (interrupt_input_blocked == 0
       && !waiting_for_input)
     read_avail_input (0);
-#ifdef HAVE_NS
-  --handling_signal;
-#endif
 }
 
 /* Timer callback function for poll_timer.  TIMER is equal to
@@ -2043,12 +2024,8 @@ poll_for_input (struct atimer *timer)
 {
   if (poll_suppress_count == 0)
     {
-#ifdef SYNC_INPUT
       interrupt_input_pending = 1;
       pending_signals = 1;
-#else
-      poll_for_input_1 ();
-#endif
     }
 }
 
@@ -2327,8 +2304,8 @@ read_char (int commandflag, ptrdiff_t nmaps, Lisp_Object *maps,
 {
   volatile Lisp_Object c;
   ptrdiff_t jmpcount;
-  jmp_buf local_getcjmp;
-  jmp_buf save_jump;
+  sys_jmp_buf local_getcjmp;
+  sys_jmp_buf save_jump;
   volatile int key_already_recorded = 0;
   Lisp_Object tem, save;
   volatile Lisp_Object previous_echo_area_message;
@@ -2574,7 +2551,7 @@ read_char (int commandflag, ptrdiff_t nmaps, Lisp_Object *maps,
      it *must not* be in effect when we call redisplay.  */
 
   jmpcount = SPECPDL_INDEX ();
-  if (_setjmp (local_getcjmp))
+  if (sys_setjmp (local_getcjmp))
     {
       /* Handle quits while reading the keyboard.  */
       /* We must have saved the outer value of getcjmp here,
@@ -3406,13 +3383,13 @@ record_char (Lisp_Object c)
    See read_process_output.  */
 
 static void
-save_getcjmp (jmp_buf temp)
+save_getcjmp (sys_jmp_buf temp)
 {
   memcpy (temp, getcjmp, sizeof getcjmp);
 }
 
 static void
-restore_getcjmp (jmp_buf temp)
+restore_getcjmp (sys_jmp_buf temp)
 {
   memcpy (getcjmp, temp, sizeof getcjmp);
 }
@@ -3649,10 +3626,8 @@ kbd_buffer_store_event_hold (register struct input_event *event,
           /* Don't read keyboard input until we have processed kbd_buffer.
              This happens when pasting text longer than KBD_BUFFER_SIZE/2.  */
           hold_keyboard_input ();
-#ifdef SIGIO
           if (!noninteractive)
-            signal (SIGIO, SIG_IGN);
-#endif
+            ignore_sigio ();
           stop_polling ();
         }
 #endif	/* subprocesses */
@@ -3821,14 +3796,14 @@ kbd_buffer_get_event (KBOARD **kbp,
       /* Start reading input again, we have processed enough so we can
          accept new events again.  */
       unhold_keyboard_input ();
-#ifdef SIGIO
+#ifdef USABLE_SIGIO
       if (!noninteractive)
 	{
 	  struct sigaction action;
 	  emacs_sigaction_init (&action, deliver_input_available_signal);
 	  sigaction (SIGIO, &action, 0);
 	}
-#endif /* SIGIO */
+#endif
       start_polling ();
     }
 #endif	/* subprocesses */
@@ -3870,10 +3845,9 @@ kbd_buffer_get_event (KBOARD **kbp,
       /* One way or another, wait until input is available; then, if
 	 interrupt handlers have not read it, read it now.  */
 
-/* Note SIGIO has been undef'd if FIONREAD is missing.  */
-#ifdef SIGIO
+#ifdef USABLE_SIGIO
       gobble_input (0);
-#endif /* SIGIO */
+#endif
       if (kbd_fetch_ptr != kbd_store_ptr)
 	break;
 #if defined (HAVE_MOUSE) || defined (HAVE_GPM)
@@ -4352,7 +4326,7 @@ decode_timer (Lisp_Object timer, EMACS_TIME *result)
   if (! NILP (vector[0]))
     return 0;
 
-  return decode_time_components (vector[1], vector[2], vector[3], vector[4],
+  return decode_time_components (vector[1], vector[2], vector[3], vector[8],
 				 result, 0);
 }
 
@@ -4554,7 +4528,7 @@ in the same style as (current-time).
 
 The value when Emacs is not idle is nil.
 
-NSEC is a multiple of the system clock resolution.  */)
+PSEC is a multiple of the system clock resolution.  */)
   (void)
 {
   if (EMACS_TIME_VALID_P (timer_idleness_start_time))
@@ -6785,7 +6759,7 @@ get_input_pending (int *addr, int flags)
 void
 gobble_input (int expected)
 {
-#ifdef SIGIO
+#ifdef USABLE_SIGIO
   if (interrupt_input)
     {
       sigset_t blocked, procmask;
@@ -6840,7 +6814,7 @@ record_asynch_buffer_change (void)
     return;
 
   /* Make sure no interrupt happens while storing the event.  */
-#ifdef SIGIO
+#ifdef USABLE_SIGIO
   if (interrupt_input)
     {
       sigset_t blocked, procmask;
@@ -7066,7 +7040,7 @@ tty_read_avail_input (struct terminal *terminal,
 #endif /* HAVE_GPM */
 
 /* Determine how many characters we should *try* to read.  */
-#ifdef FIONREAD
+#ifdef USABLE_FIONREAD
   /* Find out how much input is available.  */
   if (ioctl (fileno (tty->input), FIONREAD, &n_to_read) < 0)
     {
@@ -7079,14 +7053,12 @@ tty_read_avail_input (struct terminal *terminal,
     return 0;
   if (n_to_read > sizeof cbuf)
     n_to_read = sizeof cbuf;
-#else /* no FIONREAD */
-#if defined (USG) || defined (CYGWIN)
+#elif defined USG || defined CYGWIN
   /* Read some input if available, but don't wait.  */
   n_to_read = sizeof cbuf;
   fcntl (fileno (tty->input), F_SETFL, O_NDELAY);
 #else
-  you lose;
-#endif
+# error "Cannot read without possibly delaying"
 #endif
 
 #ifdef subprocesses
@@ -7135,7 +7107,7 @@ tty_read_avail_input (struct terminal *terminal,
 #endif
          );
 
-#ifndef FIONREAD
+#ifndef USABLE_FIONREAD
 #if defined (USG) || defined (CYGWIN)
   fcntl (fileno (tty->input), F_SETFL, 0);
 #endif /* USG or CYGWIN */
@@ -7206,19 +7178,12 @@ tty_read_avail_input (struct terminal *terminal,
   return nread;
 }
 
-#if defined SYNC_INPUT || defined SIGIO
 static void
 handle_async_input (void)
 {
   interrupt_input_pending = 0;
-#ifdef SYNC_INPUT
   pending_signals = pending_atimers;
-#endif
-/* Tell ns_read_socket() it is being called asynchronously so it can avoid
-   doing anything dangerous.  */
-#ifdef HAVE_NS
-  ++handling_signal;
-#endif
+
   while (1)
     {
       int nread;
@@ -7229,13 +7194,8 @@ handle_async_input (void)
       if (nread <= 0)
 	break;
     }
-#ifdef HAVE_NS
-  --handling_signal;
-#endif
 }
-#endif /* SYNC_INPUT || SIGIO */
 
-#ifdef SYNC_INPUT
 void
 process_pending_signals (void)
 {
@@ -7243,25 +7203,17 @@ process_pending_signals (void)
     handle_async_input ();
   do_pending_atimers ();
 }
-#endif
 
-#ifdef SIGIO   /* for entire page */
-/* Note SIGIO has been undef'd if FIONREAD is missing.  */
+#ifdef USABLE_SIGIO
 
 static void
 handle_input_available_signal (int sig)
 {
-#ifdef SYNC_INPUT
   interrupt_input_pending = 1;
   pending_signals = 1;
-#endif
 
   if (input_available_clear_time)
     *input_available_clear_time = make_emacs_time (0, 0);
-
-#ifndef SYNC_INPUT
-  handle_async_input ();
-#endif
 }
 
 static void
@@ -7269,7 +7221,7 @@ deliver_input_available_signal (int sig)
 {
   handle_on_main_thread (sig, handle_input_available_signal);
 }
-#endif /* SIGIO */
+#endif /* USABLE_SIGIO */
 
 /* Send ourselves a SIGIO.
 
@@ -7280,7 +7232,7 @@ deliver_input_available_signal (int sig)
 void
 reinvoke_input_signal (void)
 {
-#ifdef SIGIO
+#ifdef USABLE_SIGIO
   handle_async_input ();
 #endif
 }
@@ -7354,7 +7306,7 @@ handle_user_signal (int sig)
           }
 
 	p->npending++;
-#ifdef SIGIO
+#ifdef USABLE_SIGIO
 	if (interrupt_input)
 	  kill (getpid (), SIGIO);
 	else
@@ -11010,7 +10962,7 @@ quit_throw_to_read_char (int from_signal)
     do_switch_frame (make_lispy_switch_frame (internal_last_event_frame),
 		     0, 0, Qnil);
 
-  _longjmp (getcjmp, 1);
+  sys_longjmp (getcjmp, 1);
 }
 
 DEFUN ("set-input-interrupt-mode", Fset_input_interrupt_mode,
@@ -11023,8 +10975,7 @@ See also `current-input-mode'.  */)
   (Lisp_Object interrupt)
 {
   int new_interrupt_input;
-#ifdef SIGIO
-/* Note SIGIO has been undef'd if FIONREAD is missing.  */
+#ifdef USABLE_SIGIO
 #ifdef HAVE_X_WINDOWS
   if (x_display_list != NULL)
     {
@@ -11035,9 +10986,9 @@ See also `current-input-mode'.  */)
   else
 #endif /* HAVE_X_WINDOWS */
     new_interrupt_input = !NILP (interrupt);
-#else /* not SIGIO */
+#else /* not USABLE_SIGIO */
   new_interrupt_input = 0;
-#endif /* not SIGIO */
+#endif /* not USABLE_SIGIO */
 
   if (new_interrupt_input != interrupt_input)
     {
@@ -11397,9 +11348,7 @@ init_keyboard (void)
   input_pending = 0;
   interrupt_input_blocked = 0;
   interrupt_input_pending = 0;
-#ifdef SYNC_INPUT
   pending_signals = 0;
-#endif
 
   /* This means that command_loop_1 won't try to select anything the first
      time through.  */
@@ -11431,15 +11380,14 @@ init_keyboard (void)
       sigaction (SIGQUIT, &action, 0);
 #endif /* not DOS_NT */
     }
-/* Note SIGIO has been undef'd if FIONREAD is missing.  */
-#ifdef SIGIO
+#ifdef USABLE_SIGIO
   if (!noninteractive)
     {
       struct sigaction action;
       emacs_sigaction_init (&action, deliver_input_available_signal);
       sigaction (SIGIO, &action, 0);
     }
-#endif /* SIGIO */
+#endif
 
 /* Use interrupt input by default, if it works and noninterrupt input
    has deficiencies.  */

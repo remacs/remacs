@@ -20,6 +20,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #ifndef EMACS_LISP_H
 #define EMACS_LISP_H
 
+#include <setjmp.h>
 #include <stdalign.h>
 #include <stdarg.h>
 #include <stdbool.h>
@@ -1968,7 +1969,25 @@ extern void defvar_kboard (struct Lisp_Kboard_Objfwd *, const char *, int);
     static struct Lisp_Kboard_Objfwd ko_fwd;			\
     defvar_kboard (&ko_fwd, lname, offsetof (KBOARD, vname ## _)); \
   } while (0)
+
+/* Save and restore the instruction and environment pointers,
+   without affecting the signal mask.  */
 
+#ifdef HAVE__SETJMP
+typedef jmp_buf sys_jmp_buf;
+# define sys_setjmp(j) _setjmp (j)
+# define sys_longjmp(j, v) _longjmp (j, v)
+#elif defined HAVE_SIGSETJMP
+typedef sigjmp_buf sys_jmp_buf;
+# define sys_setjmp(j) sigsetjmp (j, 0)
+# define sys_longjmp(j, v) siglongjmp (j, v)
+#else
+/* A platform that uses neither _longjmp nor siglongjmp; assume
+   longjmp does not affect the sigmask.  */
+typedef jmp_buf sys_jmp_buf;
+# define sys_setjmp(j) setjmp (j)
+# define sys_longjmp(j, v) longjmp (j, v)
+#endif
 
 
 /* Structure for recording Lisp call stack for backtrace purposes.  */
@@ -2061,7 +2080,7 @@ struct catchtag
   Lisp_Object volatile val;
   struct catchtag *volatile next;
   struct gcpro *gcpro;
-  jmp_buf jmp;
+  sys_jmp_buf jmp;
   struct backtrace *backlist;
   struct handler *handlerlist;
   EMACS_INT lisp_eval_depth;
@@ -2093,22 +2112,16 @@ extern char *stack_bottom;
    If quit-flag is set to `kill-emacs' the SIGINT handler has received
    a request to exit Emacs when it is safe to do.  */
 
-#ifdef SYNC_INPUT
 extern void process_pending_signals (void);
 extern int pending_signals;
-#define ELSE_PENDING_SIGNALS				\
-  else if (pending_signals)				\
-    process_pending_signals ();
-#else  /* not SYNC_INPUT */
-#define ELSE_PENDING_SIGNALS
-#endif	/* not SYNC_INPUT */
 
 extern void process_quit_flag (void);
 #define QUIT						\
   do {							\
     if (!NILP (Vquit_flag) && NILP (Vinhibit_quit))	\
       process_quit_flag ();				\
-    ELSE_PENDING_SIGNALS				\
+    else if (pending_signals)				\
+      process_pending_signals ();			\
   } while (0)
 
 
@@ -2832,8 +2845,6 @@ extern void memory_warnings (void *, void (*warnfun) (const char *));
 /* Defined in alloc.c.  */
 extern void check_pure_size (void);
 extern void allocate_string_data (struct Lisp_String *, EMACS_INT, EMACS_INT);
-extern void reset_malloc_hooks (void);
-extern void uninterrupt_malloc (void);
 extern void malloc_warning (const char *);
 extern _Noreturn void memory_full (size_t);
 extern _Noreturn void buffer_memory_full (ptrdiff_t);
@@ -3029,7 +3040,6 @@ extern Lisp_Object Qand_rest;
 extern Lisp_Object Vautoload_queue;
 extern Lisp_Object Vsignaling_function;
 extern Lisp_Object inhibit_lisp_code;
-extern int handling_signal;
 #if BYTE_MARK_STACK
 extern struct catchtag *catchlist;
 extern struct handler *handlerlist;
