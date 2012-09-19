@@ -34,7 +34,7 @@ struct frame;
 #define EMACS_IS_FIXED_CLASS(klass)       (G_TYPE_CHECK_CLASS_TYPE ((klass), EMACS_TYPE_FIXED))
 #define EMACS_FIXED_GET_CLASS(obj)        (G_TYPE_INSTANCE_GET_CLASS ((obj), EMACS_TYPE_FIXED, EmacsFixedClass))
 
-typedef struct _EmacsFixed              EmacsFixed;
+//typedef struct _EmacsFixed              EmacsFixed;
 typedef struct _EmacsFixedPrivate       EmacsFixedPrivate;
 typedef struct _EmacsFixedClass         EmacsFixedClass;
 

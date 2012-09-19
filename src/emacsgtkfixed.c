@@ -35,26 +35,26 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 # pragma GCC diagnostic ignored "-Wunused-local-typedefs"
 #endif
 
-#define EMACS_TYPE_FIXED emacs_fixed_get_type ()
-#define EMACS_FIXED(obj) \
-  G_TYPE_CHECK_INSTANCE_CAST (obj, EMACS_TYPE_FIXED, EmacsFixed)
+//#define EMACS_TYPE_FIXED emacs_fixed_get_type ()
+/* #define EMACS_FIXED(obj) \ */
+/*   G_TYPE_CHECK_INSTANCE_CAST (obj, EMACS_TYPE_FIXED, EmacsFixed) */
 
 typedef struct _EmacsFixed EmacsFixed;
 typedef struct _EmacsFixedPrivate EmacsFixedPrivate;
 typedef struct _EmacsFixedClass EmacsFixedClass;
 
-struct _EmacsFixed
-{
-  GtkFixed container;
+/* struct _EmacsFixed */
+/* { */
+/*   GtkFixed container; */
 
-  /*< private >*/
-  EmacsFixedPrivate *priv;
-};
+/*   /\*< private >*\/ */
+/*   EmacsFixedPrivate *priv; */
+/* }; */
 
-struct _EmacsFixedClass
-{
-  GtkFixedClass parent_class;
-};
+/* struct _EmacsFixedClass */
+/* { */
+/*   GtkFixedClass parent_class; */
+/* }; */
 
 struct _EmacsFixedPrivate
 {
