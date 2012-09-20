@@ -1,3 +1,47 @@
+2012-09-19  Juri Linkov  <juri@jurta.org>
+
+	* dired-aux.el (dired-diff): Add (require 'diff) because
+	`diff-latest-backup-file' is not autoloaded.
+	(dired-do-chxxx, dired-do-chmod): Set `no-error-if-not-filep' arg
+	of `dired-get-filename' to t to not report error when there is
+	no default file on the current line.
+
+2012-09-19  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* emacs-lisp/macroexp.el (macroexp--funcall-if-compiled): Rename from
+	macroexp--eval-if-compile.
+	(macroexp--funcall-and-return, macroexp--warn-and-return): New funs.
+	(macroexp--expand-all): Use them (bug#12371).
+
+	* doc-view.el (doc-view-guess-paper-size)
+	(doc-view-scale-bounding-box): Fix unbound `caddr'.
+
+2012-09-19  Tassilo Horn  <tsdh@gnu.org>
+
+	New feature: set optimal slice from BoundingBox information.
+	* doc-view.el (doc-view-mode-map): Add keybinding.
+	(doc-view-menu): Add menu entry.
+	(doc-view-set-slice): Adapt docstring.
+	(doc-view-get-bounding-box, doc-view-guess-paper-size)
+	(doc-view-scale-bounding-box)
+	(doc-view-set-slice-from-bounding-box): New functions.
+	(doc-view-paper-sizes): New defvar.
+
+2012-09-19  Glenn Morris  <rgm@gnu.org>
+
+	* emacs-lisp/macroexp.el (byte-compile-warn-obsolete)
+	(byte-compile-log-warning): Autoload.  (Bug#12371)
+
+	* calendar/calendar.el (calendar-american-month-header)
+	(calendar-european-month-header, calendar-iso-month-header)
+	(calendar-month-header): New options.
+	(calendar-set-date-style): Set calendar-month-header.  Redraw calendar.
+	(calendar-generate-month): Use calendar-month-header.  (Bug#9510)
+
+2012-09-19  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* startup.el (command-line-ns-option-alist): Add -g and --geometry.
+
 2012-09-18  Juri Linkov  <juri@jurta.org>
 
 	* dired-aux.el (dired-diff): Restore original functionality of
@@ -143,8 +187,8 @@
 	(display-buffer-function): Mark as obsolete.
 
 	* progmodes/compile.el (compilation-parse-errors): Accept list
-	values similar to font-lock-keywords (Bug#12136).  Suggested by
-	Oleksandr Manzyuk.
+	values similar to font-lock-keywords (Bug#12136).
+	Suggested by Oleksandr Manzyuk.
 	(compilation-error-regexp-alist): Doc fix.
 
 2012-09-15  Glenn Morris  <rgm@gnu.org>

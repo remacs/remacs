@@ -1,3 +1,294 @@
+2012-09-19  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* w32inevt.c (w32_console_read_socket): Return -1 on failure, not 0.
+	Ignore 'expected'. See Eli Zaretskii in
+	<http://bugs.gnu.org/12471#8> (last line).
+
+	* frame.c (read_integer): Remove.  All uses replaced by strtol/strtoul.
+	(XParseGeometry): Now static.  Substitute extremal values for
+	values that are out of range.
+
+2012-09-19  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* w32xfns.c (read_integer, XParseGeometry): Move to frame.c.
+
+	* nsfns.m (XParseGeometry): Remove.
+	(Fx_create_frame): Call x_set_offset to correctly interpret
+	top_pos in geometry.
+
+	* frame.c (read_integer, XParseGeometry): Moved from w32xfns.c.
+	(Fx_parse_geometry): If there is a space in string, call
+	Qns_parse_geometry, otherwise do as on other terms (Bug#12368).
+
+2012-09-17  Eli Zaretskii  <eliz@gnu.org>
+
+	* search.c (scan_buffer): Use character positions in calls to
+	region_cache_forward and region_cache_backward, not byte
+	positions.  (Bug#12196)
+
+	* w32term.c (w32_read_socket): Set pending_signals to 1, like
+	xterm.c does.  Reported by Daniel Colascione <dancol@dancol.org>.
+
+	* ralloc.c (r_alloc_init) [!SYSTEM_MALLOC]: Initialize
+	__malloc_extra_blocks to 32 instead of 64, like alloc.c did in
+	emacs_blocked_malloc, now deleted.
+
+2012-09-17  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Remove no-longer-needed Solaris 2.4 vfork bug workaround.
+	The workaround was for improving performance on Solaris 2.4, but
+	is getting in the way now.  Emacs will still work if someone is
+	still running Solaris 2.4 in a museum somewhere; Sun dropped
+	support for Solaris 2.4 in 2003.
+	* callproc.c (Fcall_process) [HAVE_WORKING_VFORK]:
+	* process.c (create_process) [HAVE_WORKING_VFORK]:
+	Omit now-unnecessary workaround for the Solaris 2.4 vfork bug,
+	since Emacs no longer uses vfork on that platform.
+
+2012-09-17  Glenn Morris  <rgm@gnu.org>
+
+	* emacs.c: Use COPYRIGHT.
+
+2012-09-16  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Remove configure's --without-sync-input option (Bug#12450).
+	When auditing signal-handling in preparation for cleaning it up,
+	I found that SYNC_INPUT has race conditions and would be a real
+	pain to fix.  Since it's an undocumented and deprecated
+	configure-time option, now seems like a good time to remove it.
+	Also see <http://bugs.gnu.org/11080#16>.
+	* alloc.c (_bytes_used, __malloc_extra_blocks, _malloc_internal)
+	(_free_internal) [!DOUG_LEA_MALLOC]: Remove decls.
+	(alloc_mutex) [!SYSTEM_MALLOC && !SYNC_INPUT && HAVE_PTHREAD]:
+	(malloc_hysteresis):
+	(check_depth) [XMALLOC_OVERRUN_CHECK]:
+	(MALLOC_BLOCK_INPUT, MALLOC_UNBLOCK_INPUT):
+	(__malloc_hook, __realloc_hook, __free_hook, BYTES_USED)
+	(dont_register_blocks, bytes_used_when_reconsidered)
+	(bytes_used_when_full, emacs_blocked_free, emacs_blocked_malloc)
+	(emacs_blocked_realloc, reset_malloc_hooks, uninterrupt_malloc):
+	[!SYSTEM_MALLOC && !SYNC_INPUT]:
+	Remove. All uses removed.
+	(MALLOC_BLOCK_INPUT, MALLOC_UNBLOCK_INPUT): Use a different
+	implementation, one that depends on whether the new macro
+	XMALLOC_BLOCK_INPUT_CHECK is defined, not on whether SYNC_INPUT
+	is defined.
+	* atimer.c (run_timers, handle_alarm_signal):
+	* keyboard.c (pending_signal, poll_for_input_1, poll_for_input)
+	(handle_async_input, process_pending_signals)
+	(handle_input_available_signal, init_keyboard):
+	* nsterm.m (ns_read_socket):
+	* process.c (wait_reading_process_output):
+	* regex.c (immediate_quit, IMMEDIATE_QUIT_CHECK):
+	* sysdep.c (emacs_sigaction_init) [SA_RESTART]:
+	(emacs_write):
+	* xterm.c (XTread_socket):
+	Assume SYNC_INPUT.
+	* conf_post.h (SA_RESTART) [IRIX6_5]: Do not #undef.
+	* eval.c (handling_signal): Remove.  All uses removed.
+	* lisp.h (ELSE_PENDING_SIGNALS): Remove.
+	All uses replaced with the SYNC_INPUT version.
+	(reset_malloc_hooks, uninterrupt_malloc, handling_signal):
+	Remove decls.
+	* sysdep.c, syssignal.h (main_thread) [FORWARD_SIGNAL_TO_MAIN_THREAD]:
+	Now static.
+
+	* font.c (Ffont_shape_gstring): Remove unused local.
+
+2012-09-16  Glenn Morris  <rgm@gnu.org>
+
+	* Makefile.in (clean): No longer run nextstep's clean.
+
+	* Makefile.in (ns_appdir, ns_appbindir, ns_appsrc): Remove variables.
+	(ns_frag): Remove.
+	(ns-app): Move here from ns.mk, and simplify.
+	(clean): Simplify nextstep entry.
+	* ns.mk: Remove file.
+
+2012-09-16  Kenichi Handa  <handa@gnu.org>
+
+	* font.c (Ffont_shape_gstring): Fix previous change; GLYPHs may
+	not covert the last few charactes.
+
+2012-09-16  Kenichi Handa  <handa@gnu.org>
+
+	* font.c (Ffont_shape_gstring): Don't adjust grapheme cluster
+	here, but just check the validity of glyphs in the glyph-string.
+
+2012-09-16  Martin Rudalics  <rudalics@gmx.at>
+
+	* window.c (Fwindow_parameter, Fset_window_parameter): Accept
+	any window as argument (Bug#12452).
+
+2012-09-16  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* nsfns.m (Fx_open_connection): Move initialization of ns_*_types
+	to ns_term_init to avoid memory leak.
+
+	* nsterm.m (ns_update_begin): Initialize bp after lcokFocus, use
+	explicit retain/release.
+	(ns_term_init): Only allow one display.  Initialize outerpool and
+	ns_*_types.
+
+2012-09-15  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Port _setjmp fix to POSIXish hosts as well as Microsoft.
+	* image.c (_setjmp) [!HAVE__SETJMP]: Restore definition, as
+	it's needed on POSIXish hosts that lack _setjmp.  Attempt to solve
+	the Microsoft problem in a different way, by altering ../nt/config.nt.
+
+2012-09-15  Eli Zaretskii  <eliz@gnu.org>
+
+	* w32xfns.c:
+	* w32uniscribe.c:
+	* w32term.c:
+	* w32select.c:
+	* w32reg.c:
+	* w32proc.c:
+	* w32menu.c:
+	* w32inevt.c:
+	* w32heap.c:
+	* w32font.c:
+	* w32fns.c:
+	* w32console.c:
+	* w32.c:
+	* w16select.c: Remove inclusion of setjmp.h, as it is now included
+	by lisp.h.  This completes removal of setjmp.h inclusion
+	erroneously announced in the previous commit.  (Bug#12446)
+
+	* lisp.h [!HAVE__SETJMP, !HAVE_SIGSETJMP]: Make the commentary
+	more accurate.
+
+	* image.c (_setjmp) [!HAVE__SETJMP]: Define only if 'setjmp' is
+	not defined as a macro.  The latter happens on MS-Windows.
+	(Bug#12446)
+
+2012-09-15  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Port better to POSIX hosts lacking _setjmp (Bug#12446).
+	* lisp.h: Include <setjmp.h> here, since we use its symbols here.
+	Some instances of '#include <setjmp.h>' removed, if the
+	only reason for the instance was because "lisp.h" was included.
+	(sys_jmp_buf, sys_setjmp, sys_longjmp): New symbols.
+	Unless otherwise specified, replace all uses of jmp_buf, _setjmp,
+	and _longjmp with the new symbols.  Emacs already uses _setjmp if
+	available, so this change affects only POSIXish hosts that have
+	sigsetjmp but not _setjmp, such as some versions of Solaris and
+	Unixware.  (Also, POSIX-2008 marks _setjmp as obsolescent.)
+	* image.c (_setjmp, _longjmp) [HAVE_PNG && !HAVE__SETJMP]: New macros.
+	(png_load_body) [HAVE_PNG]:
+	(PNG_LONGJMP) [HAVE_PNG && PNG_LIBPNG_VER < 10500]:
+	(PNG_JMPBUF) [HAVE_PNG && PNG_LIBPNG_VER >= 10500]:
+	Use _setjmp and _longjmp rather than sys_setjmp and sys_longjmp,
+	since PNG requires jmp_buf.  This is the only exception to the
+	general rule that we now use sys_setjmp and sys_longjmp.
+	This exception is OK since this code does not change the signal
+	mask or longjmp out of a signal handler.
+
+2012-09-14  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* alloc.c [!SYSTEM_MALLOC && !SYNC_INPUT && HAVE_PTHREAD]:
+	Include "syssignal.h", for 'main_thread'.
+
+2012-09-14  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	Avoid out-of-range marker position (Bug#12426).
+	* insdel.c (replace_range, replace_range_2): Adjust
+	markers before overlays, as suggested by comments.
+	(insert_1_both, insert_from_buffer_1, adjust_after_replace):
+	Remove redundant check before calling offset_intervals.
+
+2012-09-14  Martin Rudalics  <rudalics@gmx.at>
+
+	* xdisp.c (Fformat_mode_line): Unconditionally save/restore
+	current buffer (Bug#12387).
+
+2012-09-14  Juanma Barranquero  <lekktu@gmail.com>
+
+	* makefile.w32-in ($(BLD)/alloc.$(O)): Update dependencies.
+
+2012-09-13  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Use a more backwards-compatible timer format (Bug#12430).
+	* keyboard.c (decode_timer): Get PSECS from the 8th (origin-0)
+	vector element, not from the 4th, since PSECS is now at the end.
+	(Fcurrent_idle_time): Doc fix.
+
+2012-09-13  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	Function to mark objects and remove killed buffers at once.
+	* alloc.c (discard_killed_buffers): Rename to ...
+	(mark_discard_killed buffers) ... new name.  Add marking
+	of remaining objects.  Fix comment.  Adjust users.
+	(mark_object): Do not touch frame buffer lists here.
+	* frame.c (delete_frame): Reset frame buffer lists here.
+
+2012-09-13  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Better workaround for GNOME bug when --enable-gcc-warnings.
+	* emacsgtkfixed.c (G_STATIC_ASSERT): Remove, undoing last change.
+	Instead, disable -Wunused-local-typedefs.  See Dmitry Antipov in
+	<http://lists.gnu.org/archive/html/emacs-devel/2012-09/msg00335.html>.
+
+	Simplify SIGIO usage (Bug#12408).
+	The code that dealt with SIGIO was crufty and confusing, e.g., it
+	played tricks like "#undef SIGIO" but these tricks were not used
+	consistently.  Simplify mostly by not #undeffing standard symbols,
+	e.g., use "defined USABLE_SIGIO" (our symbol, which we can define
+	or not as we please) rather than "defined SIGIO" (standard symbol
+	that we probably shouldn't #undef).
+	* conf_post.h [USG5_4]: Do not include <sys/wait.h> here.
+	Modules that need it can include it.
+	[USG5_4 && emacs]: Likewise, do not include the streams stuff here.
+	* dispextern.h (ignore_sigio): New decl.
+	* emacs.c (shut_down_emacs): Invoke unrequest_sigio
+	unconditionally, since it's now a no-op if !USABLE_SIGIO.
+	* emacs.c (shut_down_emacs):
+	* keyboard.c (kbd_buffer_store_event_hold):
+	Use ignore_sigio rather than invoking 'signal' directly.
+	* keyboard.c (USABLE_FIONREAD && USG5_4): Include <sys/filio.h>,
+	for FIONREAD.
+	(FIONREAD, SIGIO): Do not #undef.
+	(tty_read_avail_input): Use #error rather than a syntax error.
+	* process.c [USG5_4]: Include <sys/stream.h> and <sys/stropts.h>,
+	for I_PIPE, used by SETUP_SLAVE_PTY.
+	(DATAGRAM_SOCKETS): Simplify defn, based on USABLE_FIONREAD.
+	* sysdep.c (croak): Remove; no longer needed.  This bit of
+	temporary code, with Fred N. Fish's comment that it's temporary,
+	has been in Emacs since at least 1992!
+	(init_sigio, reset_sigio, request_sigio, unrequest_sigio):
+	Arrange for them to be no-ops in all cases when ! USABLE_SIGIO.
+	* syssignal.h (croak): Remove decl.
+	(SIGIO, SIGPOO, SIGAIO, SIGPTY): Do not #undef; that's too fragile.
+	* systty.h [!NO_TERMIO]: Do not include <termio.h>; no longer needed
+	now that we're termios-only.
+	(FIONREAD, ASYNC) [BROKEN_FIONREAD]: Do not #undef.
+	* term.c (dissociate_if_controlling_tty): Use #error rather than
+	a run-time error.
+
+	Work around GCC and GNOME bugs when --enable-gcc-warnings.
+	* emacsgtkfixed.c (G_STATIC_ASSERT): Redefine to use 'verify',
+	to work around GNOME bug 683906.
+	* image.c (jpeg_load_body) [HAVE_JPEG && lint]: Pacify gcc -Wclobber.
+	(struct my_jpeg_error_mgr) [HAVE_JPEG && lint]: New member fp.
+	This works around GCC bug 54561.
+
+2012-09-12  Paul Eggert  <eggert@cs.ucla.edu>
+
+	More fixes for 'volatile' and setjmp/longjmp.
+	* eval.c (Fdefvar, Fcondition_case): Remove unnecessary 'volatile's.
+	* image.c (struct png_load_context) [HAVE_PNG]: New type.
+	(png_load_body) [HAVE_PNG]:
+	(jpeg_load_body) [HAVE_JPEG]:
+	New function, with most of the old parent function's body.
+	(png_load) [HAVE_PNG]:
+	(jpeg_load) [HAVE_JPEG]:
+	Invoke the new function, to avoid longjmp munging our locals.
+	(struct my_jpeg_error_mgr) [HAVE_JPEG]: New members cinfo, failure_code.
+	(my_error_exit) [HAVE_JPEG]: Don't trust 'setjmp' to return 2 when
+	longjmp is passed 2, as the C standard doesn't guarantee this.
+	Instead, store the failure code into mgr->failure_code.
+
 2012-09-12  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* keyboard.c (read_char, requeued_events_pending_p, Finput_pending_p)
@@ -212,7 +503,7 @@
 	(ns_maybe_dumpglyphs_background): Remove fringe/internal border
 	adjustment.
 	(ns_dumpglyphs_image): Ditto.
-	(ns_dumpglyphs_stretch): Fix coding style. Remove fringe/internal
+	(ns_dumpglyphs_stretch): Fix coding style.  Remove fringe/internal
 	border adjustment.
 	(ns_set_vertical_scroll_bar): Remove variables barOnVeryLeft/Right and
 	their usage.  Add fringe_extended_p and its use as in other terms.
@@ -293,7 +584,7 @@
 	* conf_post.h [SIGNAL_H_AHB]: Do not include <signal.h>;
 	no longer needed here.
 	* emacs.c (main): Inspect existing signal handler with sigaction,
-	so that there's	no need to block and unblock SIGHUP.
+	so that there's no need to block and unblock SIGHUP.
 	* sysdep.c (struct save_signal): New member 'action', replacing
 	old member 'handler'.
 	(save_signal_handlers, restore_signal_handlers):
@@ -820,18 +1111,18 @@
 2012-08-28  Jan Djärv  <jan.h.d@swipnet.se>
 
 	* nsmenu.m (initWithContentRect:styleMask:backing:defer:): Initialize
-	button_values to NULL. Call setStykeMask so dialogs get a close button.
+	button_values to NULL.  Call setStykeMask so dialogs get a close button.
 	(windowShouldClose:): Set window_closed.
 	(dealloc): New member, free button_values.
-	(process_dialog:): Make member function. Remove window argument,
-	replace window with self. Count buttons and allocate and store values
+	(process_dialog:): Make member function.  Remove window argument,
+	replace window with self.  Count buttons and allocate and store values
 	in button_values.
 	(addButton:value:row:): value is int with the name tag.  Call setTag
-	with tag. Remove return self, declare return value as void.
+	with tag.  Remove return self, declare return value as void.
 	(addString:row:): Remove return self, declare return value as void.
 	(addSplit): Remove return self, declare return value as void.
 	(clicked:): Remove return self, declare return value as void.
-	Set dialog_return to button_values[seltag]. Code formatting change.
+	Set dialog_return to button_values[seltag].  Code formatting change.
 	(initFromContents:isQuestion:): Adjust call to process_dialog.
 	Code formatting change.
 	(timeout_handler:): Set timer_fired to YES.
@@ -1166,7 +1457,7 @@
 
 	* fontset.c (FONTSET_ADD): Return void, not Lisp_Object.
 	Otherwise, the compiler complains about (A?B:C) where B is void
-	and C is Lisp_Object.  This fixes an incompatibility with Sun C	5.12.
+	and C is Lisp_Object.  This fixes an incompatibility with Sun C 5.12.
 	(fontset_add): Return void, for FONTSET_ADD.
 
 2012-08-21  Paul Eggert  <eggert@cs.ucla.edu>
@@ -1682,7 +1973,7 @@
 	Start main loop and wait for application defined event.
 	Inform select thread to stop selecting after main loop is exited.
 	(ns_term_init): Create selfds pipe and set non-blocking.
-	Initialize select_mutex. Start the select thread (fd_handler).
+	Initialize select_mutex.  Start the select thread (fd_handler).
 	(fd_handler:): Loop forever, wait for info from the main thread
 	to either start or stop selecting.  When select returns, send
 	and appdefined event.
@@ -1814,7 +2105,7 @@
 	(xg_create_tool_bar): Allocate and initialize a xg_frame_tb_info
 	if not present.
 	(update_frame_tool_bar): Return early if data in xg_frame_tb_info
-	is up to date. Otherwise store new data.
+	is up to date.  Otherwise store new data.
 	(free_frame_tool_bar): Free xg_frame_tb_info if present.
 
 2012-08-13  Dmitry Antipov  <dmantipov@yandex.ru>
@@ -1841,7 +2132,7 @@
 2012-08-11  Jan Djärv  <jan.h.d@swipnet.se>
 
 	* nsterm.m (not_in_argv): New function.
-	(application:openFile,	application:openTempFile:):
+	(application:openFile, application:openTempFile:):
 	(application:openFileWithoutUI:, application:openFiles:): Open file
 	if not_in_argv returns non-zero (bug#12171).
 
@@ -3028,7 +3319,7 @@
 
 2012-07-21  Jan Djärv  <jan.h.d@swipnet.se>
 
-	* nsterm.m (accessibilityAttributeValue): New function. (Bug#11134).
+	* nsterm.m (accessibilityAttributeValue): New function.  (Bug#11134).
 	(conversationIdentifier): Return value is NSInteger.
 	* nsterm.m (accessibilityAttributeValue): Surround with NS_IMPL_COCOA.
 
@@ -5538,7 +5829,7 @@
 	* lisp.h (struct vectorlike_header): New field `nbytes',
 	adjust comment accordingly.
 	* alloc.c (enum mem_type): New type `MEM_TYPE_VECTOR_BLOCK'
-	to denote vector blocks. Adjust users (live_vector_p,
+	to denote vector blocks.  Adjust users (live_vector_p,
 	mark_maybe_pointer, valid_lisp_object_p) accordingly.
 	(COMMON_MULTIPLE): Move outside #if USE_LSB_TAG.
 	(VECTOR_BLOCK_SIZE, vroundup, VECTOR_BLOCK_BYTES),
@@ -5552,7 +5843,7 @@
 	(allocate_vector_from_block, init_vectors, allocate_vector_from_block)
 	(sweep_vectors): New functions.
 	(allocate_vectorlike): Return `zero_vector' as the only vector of
-	0 items. Allocate new vector from block if vector size is less than
+	0 items.  Allocate new vector from block if vector size is less than
 	or equal to VBLOCK_BYTES_MAX.
 	(Fgarbage_collect): Move all vector sweeping code to sweep_vectors.
 	(init_alloc_once): Add call to init_vectors.
@@ -5642,7 +5933,7 @@
 	change it's type from Lisp_Object to bitfield.
 	Change type of 'force_start', 'optional_new_start',
 	'last_had_star', 'update_mode_line' and 'start_at_line_beg'
-	fields from Lisp_Object to bitfield. Adjust users accordingly.
+	fields from Lisp_Object to bitfield.  Adjust users accordingly.
 
 2012-05-31  Paul Eggert  <eggert@cs.ucla.edu>
 
