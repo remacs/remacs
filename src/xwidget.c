@@ -217,7 +217,7 @@ DEFUN ("make-xwidget", Fmake_xwidget, Smake_xwidget, 7, 7, 0,
    */
   if (EQ(xw->type, Qwebkit_osr)){
     printf("init webkit osr\n");
-    BLOCK_INPUT;
+    block_input();
     xw->widgetwindow_osr = GTK_CONTAINER (gtk_offscreen_window_new ());
     gtk_window_resize(    GTK_WINDOW(xw->widgetwindow_osr), xw->width, xw->height);
     xw->widget_osr = webkit_web_view_new();
@@ -264,14 +264,14 @@ DEFUN ("make-xwidget", Fmake_xwidget, Smake_xwidget, 7, 7, 0,
 
 
     webkit_web_view_load_uri(WEBKIT_WEB_VIEW(xw->widget_osr), "http://www.fsf.org");
-    UNBLOCK_INPUT;
+    unblock_input();
 
   }
 #endif
 
   if (EQ(xw->type, Qsocket_osr)){
     printf("init socket osr\n");
-    BLOCK_INPUT;
+    block_input();
     xw->widgetwindow_osr = GTK_CONTAINER (gtk_offscreen_window_new ());
     gtk_window_resize(    GTK_WINDOW(xw->widgetwindow_osr), xw->width, xw->height);
 
@@ -293,7 +293,7 @@ DEFUN ("make-xwidget", Fmake_xwidget, Smake_xwidget, 7, 7, 0,
     g_signal_connect (G_OBJECT (    xw->widgetwindow_osr), "damage-event",    G_CALLBACK (webkit_osr_damage_event_callback), NULL);
 
     //webkit_web_view_load_uri(WEBKIT_WEB_VIEW(xw->widget_osr), "http://www.fsf.org");
-    UNBLOCK_INPUT;
+    unblock_input();
 
   }
 

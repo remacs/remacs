@@ -821,10 +821,10 @@ one or more of those symbols."
 (defun locate-file-completion (string path-and-suffixes action)
   "Do completion for file names passed to `locate-file'.
 PATH-AND-SUFFIXES is a pair of lists, (DIRECTORIES . SUFFIXES)."
+  (declare (obsolete locate-file-completion-table "23.1"))
   (locate-file-completion-table (car path-and-suffixes)
                                 (cdr path-and-suffixes)
                                 string nil action))
-(make-obsolete 'locate-file-completion 'locate-file-completion-table "23.1")
 
 (defvar locate-dominating-stop-dir-regexp
   (purecopy "\\`\\(?:[\\/][\\/][^\\/]+[\\/]\\|/\\(?:net\\|afs\\|\\.\\.\\.\\)/\\)\\'")
@@ -6714,7 +6714,7 @@ Otherwise, trash FILENAME using the freedesktop.org conventions,
 (define-key esc-map "~" 'not-modified)
 (define-key ctl-x-map "\C-d" 'list-directory)
 (define-key ctl-x-map "\C-c" 'save-buffers-kill-terminal)
-(define-key ctl-x-map "\C-q" 'toggle-read-only)
+(define-key ctl-x-map "\C-q" 'read-only-mode)
 
 (define-key ctl-x-4-map "f" 'find-file-other-window)
 (define-key ctl-x-4-map "r" 'find-file-read-only-other-window)

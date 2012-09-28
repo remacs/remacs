@@ -112,10 +112,14 @@
 
 ;; FIXME: Use `testcover'.
 
+;; FIXME: The adornment classification often called `ado' should be a
+;;        `defstruct'.
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Support for `testcover'
 
-(when (boundp 'testcover-1value-functions)
+(when (and (boundp 'testcover-1value-functions)
+	   (boundp 'testcover-compose-functions))
   ;; Below `lambda' is used in a loop with varying parameters and is thus not
   ;; 1valued.
   (setq testcover-1value-functions
@@ -214,7 +218,7 @@ and before TAIL-RE and DELIM-RE in VAR or DEFAULT for no match."
 ;; Use CVSHeader to really get information from CVS and not other version
 ;; control systems.
 (defconst rst-cvs-header
-  "$CVSHeader: sm/rst_el/rst.el,v 1.309.2.1 2012-09-17 17:30:49 stefan Exp $")
+  "$CVSHeader: sm/rst_el/rst.el,v 1.327.2.2 2012-09-23 14:44:25 stefan Exp $")
 (defconst rst-cvs-rev
   (rst-extract-version "\\$" "CVSHeader: \\S + " "[0-9]+\\(?:\\.[0-9]+\\)+"
 		       " .*" rst-cvs-header "0.0")
@@ -228,22 +232,22 @@ and before TAIL-RE and DELIM-RE in VAR or DEFAULT for no match."
 ;; Use LastChanged... to really get information from SVN.
 (defconst rst-svn-rev
   (rst-extract-version "\\$" "LastChangedRevision: " "[0-9]+" " "
-		       "$LastChangedRevision: 7490 $")
+		       "$LastChangedRevision: 7515 $")
   "The SVN revision of this file.
 SVN revision is the upstream (docutils) revision.")
 (defconst rst-svn-timestamp
   (rst-extract-version "\\$" "LastChangedDate: " ".+?+" " "
-		       "$LastChangedDate: 2012-07-30 21:29:33 +0200 (Mon, 30 Jul 2012) $")
+		       "$LastChangedDate: 2012-09-20 23:28:53 +0200 (Thu, 20 Sep 2012) $")
   "The SVN time stamp of this file.")
 
 ;; Maintained by the release process.
 (defconst rst-official-version
   (rst-extract-version "%" "OfficialVersion: " "[0-9]+\\(?:\\.[0-9]+\\)+" " "
-		       "%OfficialVersion: 1.3.1 %")
+		       "%OfficialVersion: 1.4.0 %")
   "Official version of the package.")
 (defconst rst-official-cvs-rev
   (rst-extract-version "[%$]" "Revision: " "[0-9]+\\(?:\\.[0-9]+\\)+" " "
-		       "%Revision: 1.301 %")
+		       "$Revision: 1.327.2.2 $")
   "CVS revision of this file in the official version.")
 
 (defconst rst-version
@@ -262,6 +266,7 @@ in parentheses follows the development revision and the time stamp.")
     ("1.2.1" . "24.3")
     ("1.3.0" . "24.3")
     ("1.3.1" . "24.3")
+    ("1.4.0" . "24.3")
     ))
 
 (unless (assoc rst-official-version rst-package-emacs-version-alist)
@@ -843,6 +848,12 @@ highlighting.
        'rst-comment-region)
   (set (make-local-variable 'uncomment-region-function)
        'rst-uncomment-region)
+
+  ;; Imenu and which function.
+  ;; FIXME: Check documentation of `which-function' for alternative ways to
+  ;;        determine the current function name.
+  (set (make-local-variable 'imenu-create-index-function)
+       'rst-imenu-create-index)
 
   ;; Font lock.
   (set (make-local-variable 'font-lock-defaults)
@@ -2170,126 +2181,112 @@ adjust.  If bullets are found on levels beyond the
 ;; Table of contents
 ;; =================
 
-(defun rst-get-stripped-line ()
-  "Return the line at cursor, stripped from whitespace."
-  (re-search-forward (rst-re "\\S .*\\S ") (line-end-position))
-  (buffer-substring-no-properties (match-beginning 0)
-                                  (match-end 0)) )
-
+;; FIXME: Return value should be a `defstruct'.
 (defun rst-section-tree ()
-  "Get the hierarchical tree of section titles.
-
-Returns a hierarchical tree of the sections titles in the
-document.  This can be used to generate a table of contents for
-the document.  The top node will always be a nil node, with the
-top level titles as children (there may potentially be more than
-one).
-
-Each section title consists in a cons of the stripped title
-string and a marker to the section in the original text document.
-
-If there are missing section levels, the section titles are
-inserted automatically, and the title string is set to nil, and
-the marker set to the first non-nil child of itself.
-Conceptually, the nil nodes--i.e.\ those which have no title--are
-to be considered as being the same line as their first non-nil
-child.  This has advantages later in processing the graph."
-
+  "Return the hierarchical tree of section titles.
+A tree entry looks like ((TITLE MARKER) CHILD...).  TITLE is the
+stripped text of the section title.  MARKER is a marker for the
+beginning of the title text.  For the top node or a missing
+section level node TITLE is nil and MARKER points to the title
+text of the first child.  Each CHILD is another tree entry.  The
+CHILD list may be empty."
   (let ((hier (rst-get-hierarchy))
-	(levels (make-hash-table :test 'equal :size 10))
-	lines)
+	(ch-sty2level (make-hash-table :test 'equal :size 10))
+	lev-ttl-mrk-l)
 
     (let ((lev 0))
       (dolist (ado hier)
 	;; Compare just the character and indent in the hash table.
-        (puthash (cons (car ado) (cadr ado)) lev levels)
+        (puthash (cons (car ado) (cadr ado)) lev ch-sty2level)
         (incf lev)))
 
-    ;; Create a list of lines that contains (text, level, marker) for each
-    ;; adornment.
+    ;; Create a list that contains (LEVEL TITLE MARKER) for each adornment.
     (save-excursion
-      (setq lines
+      (setq lev-ttl-mrk-l
             (mapcar (lambda (ado)
                       (goto-char (point-min))
-                      (forward-line (1- (car ado)))
-                      (list (gethash (cons (cadr ado) (caddr ado)) levels)
-                            (rst-get-stripped-line)
-                            (progn
-                              (beginning-of-line 1)
-                              (point-marker))))
+                      (1value ;; This should really succeed.
+		       (forward-line (1- (car ado))))
+                      (list (gethash (cons (cadr ado) (caddr ado)) ch-sty2level)
+			    ;; Get title.
+			    (save-excursion
+			      (if (re-search-forward
+				   (rst-re "\\S .*\\S ") (line-end-position) t)
+				  (buffer-substring-no-properties
+				   (match-beginning 0) (match-end 0))
+				""))
+			    (point-marker)))
                     (rst-find-all-adornments))))
-    (let ((lcontnr (cons nil lines)))
-      (rst-section-tree-rec lcontnr -1))))
+    (cdr (rst-section-tree-rec lev-ttl-mrk-l -1))))
 
+;; FIXME: Return value should be a `defstruct'.
+(defun rst-section-tree-rec (remaining lev)
+  "Process the first entry of REMAINING expected to be on level LEV.
+REMAINING is the remaining list of adornments consisting
+of (LEVEL TITLE MARKER) entries.
 
-(defun rst-section-tree-rec (ados lev)
-  "Recursive guts of the section tree construction.
-ADOS is a cons cell whose cdr is the remaining list of
-adornments, and we change it as we consume them.  LEV is
-the current level of that node.  This function returns a
-pair of the subtree that was built.  This treats the ADOS
-list destructively."
+Return (UNPROCESSED (TITLE MARKER) CHILD...) for the first entry
+of REMAINING where TITLE is nil if the expected level is not
+matched.  UNPROCESSED is the list of still unprocessed entries.
+Each CHILD is a child of this entry in the same format but
+without UNPROCESSED."
+  (let ((cur (car remaining))
+	(unprocessed remaining)
+        ttl-mrk children)
+    ;; If the current adornment matches expected level.
+    (when (and cur (= (car cur) lev))
+      ;; Consume the current entry and create the current node with it.
+      (setq unprocessed (cdr remaining))
+      (setq ttl-mrk (cdr cur)))
 
-  (let ((nado (cadr ados))
-        node
-        children)
-
-    ;; If the next adornment matches our level.
-    (when (and nado (= (car nado) lev))
-      ;; Pop the next adornment and create the current node with it.
-      (setcdr ados (cddr ados))
-      (setq node (cdr nado)) )
-    ;; Else we let the node title/marker be unset.
-
-    ;; Build the child nodes.
-    (while (and (cdr ados) (> (caadr ados) lev))
-      (setq children
-            (cons (rst-section-tree-rec ados (1+ lev))
-                  children)))
+    ;; Build the child nodes as long as they have deeper level.
+    (while (and unprocessed (> (caar unprocessed) lev))
+      (let ((rem-children (rst-section-tree-rec unprocessed (1+ lev))))
+	(setq children (cons (cdr rem-children) children))
+	(setq unprocessed (car rem-children))))
     (setq children (reverse children))
 
-    ;; If node is still unset, we use the marker of the first child.
-    (when (eq node nil)
-      (setq node (cons nil (cdaar children))))
+    (cons unprocessed
+	  (cons (or ttl-mrk
+		    ;; Node on this level missing - use nil as text and the
+		    ;; marker of the first child.
+		    (cons nil (cdaar children)))
+		children))))
 
-    ;; Return this node with its children.
-    (cons node children)))
+(defun rst-section-tree-point (tree &optional point)
+  "Return section containing POINT by returning the closest node in TREE.
+TREE is a section tree as returned by `rst-section-tree'
+consisting of (NODE CHILD...) entries.  POINT defaults to the
+current point.  A NODE must have the structure (IGNORED MARKER
+...).
 
-
-(defun rst-section-tree-point (node &optional point)
-  "Find tree node at point.
-Given a computed and valid section tree in NODE and a point
-POINT (default being the current point in the current buffer),
-find and return the node within the section tree where the cursor
-lives.
-
-Return values: a pair of (parent path, container subtree).
-The parent path is simply a list of the nodes above the
-container subtree node that we're returning."
-
-  (let (path outtree)
-
-    (let* ((curpoint (or point (point))))
-
-      ;; Check if we are before the current node.
-      (if (and (cadar node) (>= curpoint (cadar node)))
-
-	  ;; Iterate all the children, looking for one that might contain the
-	  ;; current section.
-	  (let ((curnode (cdr node))
-		last)
-
-	    (while (and curnode (>= curpoint (cadaar curnode)))
-	      (setq last curnode
-		    curnode (cdr curnode)))
-
-	    (if last
-		(let ((sub (rst-section-tree-point (car last) curpoint)))
-		  (setq path (car sub)
-			outtree (cdr sub)))
-	      (setq outtree node)))))
-    (cons (cons (car node) path) outtree)))
-
+Return (PATH NODE CHILD...).  NODE is the node where POINT is in
+if any.  PATH is a list of nodes from the top of the tree down to
+and including NODE.  List of CHILD are the children of NODE if
+any."
+  (setq point (or point (point)))
+  (let ((cur (car tree))
+	(children (cdr tree)))
+    ;; Point behind current node?
+    (if (and (cadr cur) (>= point (cadr cur)))
+	;; Iterate all the children, looking for one that might contain the
+	;; current section.
+	(let (found)
+	  (while (and children (>= point (cadaar children)))
+	    (setq found children
+		  children (cdr children)))
+	  (if found
+	      ;; Found section containing point in children.
+	      (let ((sub (rst-section-tree-point (car found) point)))
+		;; Extend path with current node and return NODE CHILD... from
+		;; sub.
+		(cons (cons cur (car sub)) (cdr sub)))
+	    ;; Point in this section: Start a new path with current node and
+	    ;; return current NODE CHILD...
+	    (cons (list cur) tree)))
+      ;; Current node behind point: start a new path with current node and
+      ;; no NODE CHILD...
+      (list (list cur)))))
 
 (defgroup rst-toc nil
   "Settings for reStructuredText table of contents."
@@ -3364,118 +3361,64 @@ Region is from RBEG to REND.  With PFXARG set the empty lines too."
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; FIXME LEVEL-FACE: May be this complicated mechanism should be replaced
-;;                   simply by a number of customizable faces `rst-header-%d'
-;;                   which by default are set properly for dark and light
-;;                   background.  Initialization should come from the old
-;;                   variables if they exist.  A maximum level of 6 should
-;;                   suffice - after that the last level should be repeated.
-;;                   Only `rst-adornment-faces-alist' is needed outside this
-;;                   block.  Would also fix docutils-Bugs-3479594.
+(dolist (var '(rst-level-face-max rst-level-face-base-color
+				  rst-level-face-base-light
+				  rst-level-face-format-light
+				  rst-level-face-step-light
+				  rst-level-1-face
+				  rst-level-2-face
+				  rst-level-3-face
+				  rst-level-4-face
+				  rst-level-5-face
+				  rst-level-6-face))
+  (make-obsolete-variable var "customize the faces `rst-level-*' instead."
+			  "24.3"))
 
-(defgroup rst-faces-defaults nil
-  "Values used to generate default faces for section titles on all levels.
-Tweak these if you are content with how section title faces are built in
-general but you do not like the details."
-  :group 'rst-faces
-  :version "21.1")
+;; Define faces for the first 6 levels. More levels are possible, however.
+(defface rst-level-1 '((((background light)) (:background "grey85"))
+		       (((background dark)) (:background "grey15")))
+  "Default face for section title text at level 1."
+  :package-version '(rst . "1.4.0"))
 
-(defun rst-set-level-default (sym val)
-  "Set custom variable SYM affecting section title text face.
-Recompute the faces.  VAL is the value to set."
-  (custom-set-default sym val)
-  ;; Also defines the faces initially when all values are available.
-  (and (boundp 'rst-level-face-max)
-       (boundp 'rst-level-face-format-light)
-       (boundp 'rst-level-face-base-color)
-       (boundp 'rst-level-face-step-light)
-       (boundp 'rst-level-face-base-light)
-       (fboundp 'rst-define-level-faces)
-       (rst-define-level-faces)))
+(defface rst-level-2 '((((background light)) (:background "grey78"))
+		       (((background dark)) (:background "grey22")))
+  "Default face for section title text at level 2."
+  :package-version '(rst . "1.4.0"))
 
-;; Faces for displaying items on several levels.  These definitions define
-;; different shades of gray where the lightest one (i.e. least contrasting on a
-;; light background) is used for level 1.
-(defcustom rst-level-face-max 6
-  "Maximum depth of levels for which section title faces are defined."
-  :group 'rst-faces-defaults
-  :type '(integer)
-  :set 'rst-set-level-default)
-(rst-testcover-defcustom)
-;; FIXME: It should be possible to give "#RRGGBB" type of color values.
-;;        Together with a `rst-level-face-end-light' this could be used for
-;;        computing steps.
-;; FIXME: This variable should be combined with `rst-level-face-format-light'
-;;        to a single string.
-(defcustom rst-level-face-base-color "grey"
-  "Base name of the color for creating background colors in section title faces."
-  :group 'rst-faces-defaults
-  :type '(string)
-  :set 'rst-set-level-default)
-(rst-testcover-defcustom)
-;; FIXME LEVEL-FACE: This needs to be done differently: The faces must specify
-;;                   how they behave for dark and light background using the
-;;                   relevant options explained in `defface'.
-(defcustom rst-level-face-base-light
-  (if (eq frame-background-mode 'dark)
-      15
-    85)
-  "The lightness factor for the base color.  This value is used for level 1.
-The default depends on whether the value of `frame-background-mode' is
-`dark' or not."
-  :group 'rst-faces-defaults
-  :type '(integer)
-  :set 'rst-set-level-default)
-(rst-testcover-defcustom)
-(defcustom rst-level-face-format-light "%2d"
-  "The format for the lightness factor appended to the base name of the color.
-This value is expanded by `format' with an integer."
-  :group 'rst-faces-defaults
-  :type '(string)
-  :set 'rst-set-level-default)
-(rst-testcover-defcustom)
-;; FIXME LEVEL-FACE: This needs to be done differently: The faces must specify
-;;                   how they behave for dark and light background using the
-;;                   relevant options explained in `defface'.
-;; FIXME: Alternatively there could be a customizable variable
-;;        `rst-level-face-end-light' which defines the end value and steps are
-;;        computed
-(defcustom rst-level-face-step-light
-  (if (eq frame-background-mode 'dark)
-      7
-    -7)
-  "The step width to use for the next color.
-The formula
+(defface rst-level-3 '((((background light)) (:background "grey71"))
+		       (((background dark)) (:background "grey29")))
+  "Default face for section title text at level 3."
+  :package-version '(rst . "1.4.0"))
 
-    `rst-level-face-base-light'
-    + (`rst-level-face-max' - 1) * `rst-level-face-step-light'
+(defface rst-level-4 '((((background light)) (:background "grey64"))
+		       (((background dark)) (:background "grey36")))
+  "Default face for section title text at level 4."
+  :package-version '(rst . "1.4.0"))
 
-must result in a color level which appended to `rst-level-face-base-color'
-using `rst-level-face-format-light' results in a valid color such as `grey50'.
-This color is used as background for section title text on level
-`rst-level-face-max'."
-  :group 'rst-faces-defaults
-  :type '(integer)
-  :set 'rst-set-level-default)
-(rst-testcover-defcustom)
+(defface rst-level-5 '((((background light)) (:background "grey57"))
+		       (((background dark)) (:background "grey43")))
+  "Default face for section title text at level 5."
+  :package-version '(rst . "1.4.0"))
+
+(defface rst-level-6 '((((background light)) (:background "grey50"))
+		       (((background dark)) (:background "grey50")))
+  "Default face for section title text at level 6."
+  :package-version '(rst . "1.4.0"))
 
 (defcustom rst-adornment-faces-alist
-  ;; FIXME LEVEL-FACE: Must be redone if `rst-level-face-max' is changed
-  (let ((alist (copy-sequence '((t . rst-transition)
-                                (nil . rst-adornment))))
-	(i 1))
-    (while (<= i rst-level-face-max)
-      ;; FIXME: why not `push'?
-      (nconc alist (list (cons i (intern (format "rst-level-%d-face" i)))))
-      (setq i (1+ i)))
-    alist)
-  "Faces for the various adornment types.
+  '((t . rst-transition)
+    (nil . rst-adornment)
+    (1 . rst-level-1)
+    (2 . rst-level-2)
+    (3 . rst-level-3)
+    (4 . rst-level-4)
+    (5 . rst-level-5)
+    (6 . rst-level-6))
+    "Faces for the various adornment types.
 Key is a number (for the section title text of that level
 starting with 1), t (for transitions) or nil (for section title
-adornment).  If you generally do not like how section title text
-faces are set up tweak here.  If the general idea is ok for you
-but you do not like the details check the Rst Faces Defaults
-group."
+adornment).  If you need levels beyond 6 you have to define faces
+of your own."
   :group 'rst-faces
   :type '(alist
 	  :key-type
@@ -3483,33 +3426,8 @@ group."
 	   (integer :tag "Section level")
 	   (const :tag "transitions" t)
 	   (const :tag "section title adornment" nil))
-	  :value-type (face))
-  :set-after '(rst-level-face-max))
+	  :value-type (face)))
 (rst-testcover-defcustom)
-
-(defun rst-define-level-faces ()
-  "Define the faces for the section title text faces from the values."
-  ;; All variables used here must be checked in `rst-set-level-default'.
-  (let ((i 1))
-    (while (<= i rst-level-face-max)
-      (let ((sym (intern (format "rst-level-%d-face" i)))
-	    (doc (format "Default face for showing section title text at level %d.
-This symbol is *not* meant for customization but modified if a
-variable of the `rst-faces-defaults' group is customized. Use
-`rst-adornment-faces-alist' for customization instead." i))
-	    (col (format (concat "%s" rst-level-face-format-light)
-			 rst-level-face-base-color
-			 (+ (* (1- i) rst-level-face-step-light)
-			    rst-level-face-base-light))))
-	(make-empty-face sym)
-	(set-face-doc-string sym doc)
-	(set-face-background sym col)
-	(set sym sym)
-	(setq i (1+ i))))))
-
-;; FIXME LEVEL-FACE: This is probably superfluous since it is done by the
-;;                   customization / `rst-set-level-default'.
-(rst-define-level-faces)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -4130,6 +4048,79 @@ buffer, if the region is not selected."
     ;; Note: you could also use (compile command) to view the compilation
     ;; output.
     ))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Imenu support.
+
+;; FIXME: Integrate this properly. Consider a key binding.
+
+;; Based on code from Masatake YAMATO <yamato@redhat.com>.
+
+(defun rst-imenu-find-adornments-for-position (adornments pos)
+  "Find adornments cell in ADORNMENTS for position POS."
+  (let ((a nil))
+    (while adornments
+      (if (and (car adornments)
+	       (eq (car (car adornments)) pos))
+	  (setq a adornments
+		adornments nil)
+	(setq adornments (cdr adornments))))
+    a))
+
+(defun rst-imenu-convert-cell (elt adornments)
+  "Convert a cell ELT in a tree returned from `rst-section-tree' to imenu index.
+ADORNMENTS is used as hint information for conversion."
+  (let* ((kar (car elt))
+	 (kdr (cdr elt))
+	 (title (car kar)))
+    (if kar
+	(let* ((p (marker-position (cadr kar)))
+	       (adornments
+		(rst-imenu-find-adornments-for-position adornments p))
+	       (a (car adornments))
+	       (adornments (cdr adornments))
+	       ;; FIXME: Overline adornment characters need to be in front so
+	       ;;        they become visible even for long title lines. May be
+	       ;;        an additional level number is also useful.
+	       (title (format "%s%s%s"
+			      (make-string (1+ (nth 3 a)) (nth 1 a))
+			      title
+			      (if (eq (nth 2 a) 'simple)
+				  ""
+				(char-to-string (nth 1 a))))))
+	  (cons title
+		(if (null kdr)
+		    p
+		  (cons
+		   ;; A bit ugly but this make which-func happy.
+		   (cons title p)
+		   (mapcar (lambda (elt0)
+			     (rst-imenu-convert-cell elt0 adornments))
+			   kdr)))))
+      nil)))
+
+;; FIXME: Document title and subtitle need to be handled properly. They should
+;;        get an own "Document" top level entry.
+(defun rst-imenu-create-index ()
+  "Create index for imenu.
+Return as described for `imenu--index-alist'."
+  (rst-reset-section-caches)
+  (let ((tree (rst-section-tree))
+	;; Translate line notation to point notation.
+	(adornments (save-excursion
+		      (mapcar (lambda (ln-ado)
+				(cons (progn
+					(goto-char (point-min))
+					(forward-line (1- (car ln-ado)))
+					;; FIXME: Need to consider
+					;;        `imenu-use-markers' here?
+					(point))
+				      (cdr ln-ado)))
+			      (rst-find-all-adornments)))))
+    (delete nil (mapcar (lambda (elt)
+			  (rst-imenu-convert-cell elt adornments))
+			tree))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

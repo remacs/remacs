@@ -1493,6 +1493,8 @@ Do so according to the former subdir alist OLD-SUBDIR-ALIST."
     (define-key map (kbd "M-s f C-s")   'dired-isearch-filenames)
     (define-key map (kbd "M-s f M-C-s") 'dired-isearch-filenames-regexp)
     ;; misc
+    (define-key map [remap read-only-mode] 'dired-toggle-read-only)
+    ;; `toggle-read-only' is an obsolete alias for `read-only-mode'
     (define-key map [remap toggle-read-only] 'dired-toggle-read-only)
     (define-key map "?" 'dired-summary)
     (define-key map "\177" 'dired-unmark-backward)
@@ -1962,7 +1964,7 @@ Otherwise, call `toggle-read-only'."
   (interactive)
   (if (derived-mode-p 'dired-mode)
       (wdired-change-to-wdired-mode)
-    (call-interactively 'toggle-read-only)))
+    (read-only-mode 'toggle)))
 
 (defun dired-next-line (arg)
   "Move down lines then position at filename.
@@ -3178,8 +3180,8 @@ As always, hidden subdirs are not affected."
 (defvar dired-regexp-history nil
   "History list of regular expressions used in Dired commands.")
 
-(defun dired-read-regexp (prompt)
-  (read-from-minibuffer prompt nil nil nil 'dired-regexp-history))
+(defun dired-read-regexp (prompt &optional default history)
+  (read-regexp prompt default (or history 'dired-regexp-history)))
 
 (defun dired-mark-files-regexp (regexp &optional marker-char)
   "Mark all files matching REGEXP for use in later commands.
@@ -3763,7 +3765,7 @@ Ask means pop up a menu for the user to select one of copy, move or link."
 ;;;;;;  dired-run-shell-command dired-do-shell-command dired-do-async-shell-command
 ;;;;;;  dired-clean-directory dired-do-print dired-do-touch dired-do-chown
 ;;;;;;  dired-do-chgrp dired-do-chmod dired-compare-directories dired-backup-diff
-;;;;;;  dired-diff) "dired-aux" "dired-aux.el" "cab4c9952dac1073157ff3fa23cd93b8")
+;;;;;;  dired-diff) "dired-aux" "dired-aux.el" "244227ae609852d3dc10ab3fc40ba9ab")
 ;;; Generated autoloads from dired-aux.el
 
 (autoload 'dired-diff "dired-aux" "\
@@ -4266,7 +4268,7 @@ instead.
 ;;;***
 
 ;;;### (autoloads (dired-do-relsymlink dired-jump-other-window dired-jump)
-;;;;;;  "dired-x" "dired-x.el" "d2461aa6efb8c1d7de8f245728ab448e")
+;;;;;;  "dired-x" "dired-x.el" "a4e6844421c2c5e6fde90e959fbcc26f")
 ;;; Generated autoloads from dired-x.el
 
 (autoload 'dired-jump "dired-x" "\

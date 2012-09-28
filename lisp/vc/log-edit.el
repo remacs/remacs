@@ -104,13 +104,7 @@ If 'changed, only request confirmation if the list of files has
   :group 'log-edit
   :type 'boolean)
 
-(defvar cvs-commit-buffer-require-final-newline t)
-(make-obsolete-variable 'cvs-commit-buffer-require-final-newline
-                        'log-edit-require-final-newline
-			"21.1")
-
-(defcustom log-edit-require-final-newline
-  cvs-commit-buffer-require-final-newline
+(defcustom log-edit-require-final-newline t
   "Enforce a newline at the end of commit log messages.
 Enforce it silently if t, query if non-nil and don't do anything if nil."
   :group 'log-edit
@@ -154,12 +148,7 @@ can be obtained from `log-edit-files'."
   :group 'log-edit
   :version "24.1")
 
-(defvar cvs-changelog-full-paragraphs t)
-(make-obsolete-variable 'cvs-changelog-full-paragraphs
-                        'log-edit-changelog-full-paragraphs
-			"21.1")
-
-(defvar log-edit-changelog-full-paragraphs cvs-changelog-full-paragraphs
+(defvar log-edit-changelog-full-paragraphs t
   "If non-nil, include full ChangeLog paragraphs in the log.
 This may be set in the ``local variables'' section of a ChangeLog, to
 indicate the policy for that ChangeLog.

@@ -31,17 +31,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "xterm.h"
 #endif
 
-struct backtrace
-{
-  struct backtrace *next;
-  Lisp_Object *function;
-  Lisp_Object *args;	/* Points to vector of args.  */
-  ptrdiff_t nargs;	/* Length of vector.  */
-  /* Nonzero means call value of debugger when done with this operation.  */
-  unsigned int debug_on_exit : 1;
-};
-
-static struct backtrace *backtrace_list;
+struct backtrace *backtrace_list;
 
 #if !BYTE_MARK_STACK
 static
@@ -1076,7 +1066,7 @@ internal_catch (Lisp_Object tag, Lisp_Object (*func) (Lisp_Object), Lisp_Object 
 /* Unwind the specbind, catch, and handler stacks back to CATCH, and
    jump to that CATCH, returning VALUE as the value of that catch.
 
-   This is the guts Fthrow and Fsignal; they differ only in the way
+   This is the guts of Fthrow and Fsignal; they differ only in the way
    they choose the catch tag to throw to.  A catch tag for a
    condition-case form has a TAG of Qnil.
 
@@ -1085,7 +1075,7 @@ internal_catch (Lisp_Object tag, Lisp_Object (*func) (Lisp_Object), Lisp_Object 
    the handler stack as we go, so that the proper handlers are in
    effect for each unwind-protect clause we run.  At the end, restore
    some static info saved in CATCH, and longjmp to the location
-   specified in the
+   specified there.
 
    This is used for correct unwinding in Fthrow and Fsignal.  */
 
@@ -1099,7 +1089,7 @@ unwind_to_catch (struct catchtag *catch, Lisp_Object value)
 
   /* Restore certain special C variables.  */
   set_poll_suppress_count (catch->poll_suppress_count);
-  UNBLOCK_INPUT_TO (catch->interrupt_input_blocked);
+  unblock_input_to (catch->interrupt_input_blocked);
   immediate_quit = 0;
 
   do
@@ -1113,16 +1103,6 @@ unwind_to_catch (struct catchtag *catch, Lisp_Object value)
       catchlist = catchlist->next;
     }
   while (! last_time);
-
-#if HAVE_X_WINDOWS
-  /* If x_catch_errors was done, turn it off now.
-     (First we give unbind_to a chance to do that.)  */
-#if 0 /* This would disable x_catch_errors after x_connection_closed.
-	 The catch must remain in effect during that delicate
-	 state. --lorentey  */
-  x_fully_uncatch_errors ();
-#endif
-#endif
 
   byte_stack_list = catch->byte_stack;
   gcprolist = catch->gcpro;
@@ -1713,7 +1693,7 @@ maybe_call_debugger (Lisp_Object conditions, Lisp_Object sig, Lisp_Object data)
   if (
       /* Don't try to run the debugger with interrupts blocked.
 	 The editing loop would return anyway.  */
-      ! INPUT_BLOCKED_P
+      ! input_blocked_p ()
       && NILP (Vinhibit_debugger)
       /* Does user want to enter debugger for this kind of error?  */
       && (EQ (sig, Qquit)
@@ -2065,11 +2045,11 @@ eval_sub (Lisp_Object form)
   original_args = XCDR (form);
 
   backtrace.next = backtrace_list;
-  backtrace_list = &backtrace;
   backtrace.function = &original_fun; /* This also protects them from gc.  */
   backtrace.args = &original_args;
   backtrace.nargs = UNEVALLED;
   backtrace.debug_on_exit = 0;
+  backtrace_list = &backtrace;
 
   if (debug_on_next_call)
     do_debug_on_call (Qt);
@@ -2399,6 +2379,7 @@ If it is a list of functions, those functions are called, in order,
 with the given arguments ARGS, until one of them
 returns a non-nil value.  Then we return that value.
 However, if they all return nil, we return nil.
+If the value of HOOK is nil, this function returns nil.
 
 Do not use `make-local-variable' to make a hook variable buffer-local.
 Instead, use `add-hook' and specify t for the LOCAL argument.
@@ -2420,10 +2401,12 @@ DEFUN ("run-hook-with-args-until-failure", Frun_hook_with_args_until_failure,
 HOOK should be a symbol, a hook variable.  If HOOK has a non-nil
 value, that value may be a function or a list of functions to be
 called to run the hook.  If the value is a function, it is called with
-the given arguments and its return value is returned.
+the given arguments.  Then we return nil if the function returns nil,
+and t if it returns non-nil.
 If it is a list of functions, those functions are called, in order,
 with the given arguments ARGS, until one of them returns nil.
-Then we return nil.  However, if they all return non-nil, we return non-nil.
+Then we return nil.  However, if they all return non-nil, we return t.
+If the value of HOOK is nil, this function returns t.
 
 Do not use `make-local-variable' to make a hook variable buffer-local.
 Instead, use `add-hook' and specify t for the LOCAL argument.
@@ -2737,11 +2720,11 @@ usage: (funcall FUNCTION &rest ARGUMENTS)  */)
     }
 
   backtrace.next = backtrace_list;
-  backtrace_list = &backtrace;
   backtrace.function = &args[0];
   backtrace.args = &args[1];	/* This also GCPROs them.  */
   backtrace.nargs = nargs - 1;
   backtrace.debug_on_exit = 0;
+  backtrace_list = &backtrace;
 
   /* Call GC after setting up the backtrace, so the latter GCPROs the args.  */
   maybe_gc ();

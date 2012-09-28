@@ -550,11 +550,11 @@ even if it is dead.  The return value is never nil.  */)
   b->indirections = 0;
 
   BUF_GAP_SIZE (b) = 20;
-  BLOCK_INPUT;
+  block_input ();
   /* We allocate extra 1-byte at the tail and keep it always '\0' for
      anchoring a search.  */
   alloc_buffer_text (b, BUF_GAP_SIZE (b) + 1);
-  UNBLOCK_INPUT;
+  unblock_input ();
   if (! BUF_BEG_ADDR (b))
     buffer_memory_full (BUF_GAP_SIZE (b) + 1);
 
@@ -1341,9 +1341,13 @@ A non-nil FLAG means mark the buffer modified.  */)
   /* If buffer becoming modified, lock the file.
      If buffer becoming unmodified, unlock the file.  */
 
-  fn = BVAR (current_buffer, file_truename);
+  struct buffer *b = current_buffer->base_buffer
+    ? current_buffer->base_buffer
+    : current_buffer;
+
+  fn = BVAR (b, file_truename);
   /* Test buffer-file-name so that binding it to nil is effective.  */
-  if (!NILP (fn) && ! NILP (BVAR (current_buffer, filename)))
+  if (!NILP (fn) && ! NILP (BVAR (b, filename)))
     {
       bool already = SAVE_MODIFF < MODIFF;
       if (!already && !NILP (flag))
@@ -1919,7 +1923,7 @@ cleaning up all windows currently displaying the buffer to be killed. */)
 
   bset_name (b, Qnil);
 
-  BLOCK_INPUT;
+  block_input ();
   if (b->base_buffer)
     {
       /* Notify our base buffer that we don't share the text anymore.  */
@@ -1942,7 +1946,7 @@ cleaning up all windows currently displaying the buffer to be killed. */)
       b->width_run_cache = 0;
     }
   bset_width_table (b, Qnil);
-  UNBLOCK_INPUT;
+  unblock_input ();
   bset_undo_list (b, Qnil);
 
   /* Run buffer-list-update-hook.  */
@@ -5028,7 +5032,7 @@ alloc_buffer_text (struct buffer *b, ptrdiff_t nbytes)
 {
   void *p;
 
-  BLOCK_INPUT;
+  block_input ();
 #if defined USE_MMAP_FOR_BUFFERS
   p = mmap_alloc ((void **) &b->text->beg, nbytes);
 #elif defined REL_ALLOC
@@ -5039,12 +5043,12 @@ alloc_buffer_text (struct buffer *b, ptrdiff_t nbytes)
 
   if (p == NULL)
     {
-      UNBLOCK_INPUT;
+      unblock_input ();
       memory_full (nbytes);
     }
 
   b->text->beg = (unsigned char *) p;
-  UNBLOCK_INPUT;
+  unblock_input ();
 }
 
 /* Enlarge buffer B's text buffer by DELTA bytes.  DELTA < 0 means
@@ -5056,7 +5060,7 @@ enlarge_buffer_text (struct buffer *b, ptrdiff_t delta)
   void *p;
   ptrdiff_t nbytes = (BUF_Z_BYTE (b) - BUF_BEG_BYTE (b) + BUF_GAP_SIZE (b) + 1
 		      + delta);
-  BLOCK_INPUT;
+  block_input ();
 #if defined USE_MMAP_FOR_BUFFERS
   p = mmap_realloc ((void **) &b->text->beg, nbytes);
 #elif defined REL_ALLOC
@@ -5067,12 +5071,12 @@ enlarge_buffer_text (struct buffer *b, ptrdiff_t delta)
 
   if (p == NULL)
     {
-      UNBLOCK_INPUT;
+      unblock_input ();
       memory_full (nbytes);
     }
 
   BUF_BEG_ADDR (b) = (unsigned char *) p;
-  UNBLOCK_INPUT;
+  unblock_input ();
 }
 
 
@@ -5081,7 +5085,7 @@ enlarge_buffer_text (struct buffer *b, ptrdiff_t delta)
 static void
 free_buffer_text (struct buffer *b)
 {
-  BLOCK_INPUT;
+  block_input ();
 
 #if defined USE_MMAP_FOR_BUFFERS
   mmap_free ((void **) &b->text->beg);
@@ -5092,7 +5096,7 @@ free_buffer_text (struct buffer *b)
 #endif
 
   BUF_BEG_ADDR (b) = NULL;
-  UNBLOCK_INPUT;
+  unblock_input ();
 }
 
 
