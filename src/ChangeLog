@@ -1,3 +1,29 @@
+2012-09-20  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* alloc.c (mark_object) <PVEC_WINDOW>: Mark prev/next_buffers *after*
+	calling mark_vectorlike since that's the one that marks the window.
+	(mark_discard_killed_buffers): Mark the final cdr.
+	* window.h (struct window): Move prev/next_buffers to the
+	non-standard fields.
+	* window.c (make_window): Initialize prev/next_buffers manually.
+
+2012-09-20  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Omit unused arg EXPECTED from socket hooks.
+	* keyboard.c (gobble_input, read_avail_input, tty_read_avail_input):
+	* nsterm.m (ns_term_init):
+	* termhooks.h (struct terminal.read_socket_hook):
+	* w32inevt.c (w32_console_read_socket):
+	* w32term.c (w32_read_socket):
+	* xterm.c (XTread_socket):
+	Omit unused arg EXPECTED.  All callers changed.
+	(store_user_signal_events): Return void, not int, since callers no
+	longer care about the return value.  All uses changed.
+
+2012-09-20  Juanma Barranquero  <lekktu@gmail.com>
+
+	* w32gui.h (XParseGeometry): Do not declare.
+
 2012-09-19  Paul Eggert  <eggert@cs.ucla.edu>
 
 	* w32inevt.c (w32_console_read_socket): Return -1 on failure, not 0.

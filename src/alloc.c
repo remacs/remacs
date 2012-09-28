@@ -24,7 +24,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include <stdio.h>
 #include <limits.h>		/* For CHAR_BIT.  */
-#include <setjmp.h>
 
 #ifdef ENABLE_CHECKING
 #include <signal.h>		/* For SIGABRT. */
@@ -45,7 +44,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "frame.h"
 #include "blockinput.h"
 #include "termhooks.h"		/* For struct terminal.  */
-#include <setjmp.h>
+
 #include <verify.h>
 
 /* GC_CHECK_MARKED_OBJECTS means do sanity checks on allocated objects.
@@ -86,65 +85,7 @@ extern void *sbrk ();
 
 #define MMAP_MAX_AREAS 100000000
 
-#else /* not DOUG_LEA_MALLOC */
-
-/* The following come from gmalloc.c.  */
-
-extern size_t _bytes_used;
-extern size_t __malloc_extra_blocks;
-extern void *_malloc_internal (size_t);
-extern void _free_internal (void *);
-
 #endif /* not DOUG_LEA_MALLOC */
-
-#if ! defined SYSTEM_MALLOC && ! defined SYNC_INPUT
-#ifdef HAVE_PTHREAD
-
-/* When GTK uses the file chooser dialog, different backends can be loaded
-   dynamically.  One such a backend is the Gnome VFS backend that gets loaded
-   if you run Gnome.  That backend creates several threads and also allocates
-   memory with malloc.
-
-   Also, gconf and gsettings may create several threads.
-
-   If Emacs sets malloc hooks (! SYSTEM_MALLOC) and the emacs_blocked_*
-   functions below are called from malloc, there is a chance that one
-   of these threads preempts the Emacs main thread and the hook variables
-   end up in an inconsistent state.  So we have a mutex to prevent that (note
-   that the backend handles concurrent access to malloc within its own threads
-   but Emacs code running in the main thread is not included in that control).
-
-   When UNBLOCK_INPUT is called, reinvoke_input_signal may be called.  If this
-   happens in one of the backend threads we will have two threads that tries
-   to run Emacs code at once, and the code is not prepared for that.
-   To prevent that, we only call BLOCK/UNBLOCK from the main thread.  */
-
-static pthread_mutex_t alloc_mutex;
-
-#define BLOCK_INPUT_ALLOC                               \
-  do                                                    \
-    {                                                   \
-      if (pthread_equal (pthread_self (), main_thread)) \
-        BLOCK_INPUT;					\
-      pthread_mutex_lock (&alloc_mutex);                \
-    }                                                   \
-  while (0)
-#define UNBLOCK_INPUT_ALLOC                             \
-  do                                                    \
-    {                                                   \
-      pthread_mutex_unlock (&alloc_mutex);              \
-      if (pthread_equal (pthread_self (), main_thread)) \
-        UNBLOCK_INPUT;					\
-    }                                                   \
-  while (0)
-
-#else /* ! defined HAVE_PTHREAD */
-
-#define BLOCK_INPUT_ALLOC BLOCK_INPUT
-#define UNBLOCK_INPUT_ALLOC UNBLOCK_INPUT
-
-#endif /* ! defined HAVE_PTHREAD */
-#endif /* ! defined SYSTEM_MALLOC && ! defined SYNC_INPUT */
 
 /* Mark, unmark, query mark bit of a Lisp string.  S must be a pointer
    to a struct Lisp_String.  */
@@ -203,10 +144,6 @@ static char *spare_memory[7];
    whether this much is available when malloc fails on a larger request.  */
 
 #define SPARE_MEMORY (1 << 14)
-
-/* Number of extra blocks malloc should get when it needs more core.  */
-
-static int malloc_hysteresis;
 
 /* Initialize it to a nonzero value to force it into data space
    (rather than bss space).  That way unexec will remap it into text
@@ -412,12 +349,12 @@ static void mark_memory (void *, void *);
 static void mem_init (void);
 static struct mem_node *mem_insert (void *, void *, enum mem_type);
 static void mem_insert_fixup (struct mem_node *);
-#endif
 static void mem_rotate_left (struct mem_node *);
 static void mem_rotate_right (struct mem_node *);
 static void mem_delete (struct mem_node *);
 static void mem_delete_fixup (struct mem_node *);
 static inline struct mem_node *mem_find (void *);
+#endif
 
 
 #if GC_MARK_STACK == GC_MARK_STACK_CHECK_GCPROS
@@ -586,39 +523,17 @@ xmalloc_get_size (unsigned char *ptr)
 }
 
 
-/* The call depth in overrun_check functions.  For example, this might happen:
-   xmalloc()
-     overrun_check_malloc()
-       -> malloc -> (via hook)_-> emacs_blocked_malloc
-          -> overrun_check_malloc
-             call malloc  (hooks are NULL, so real malloc is called).
-             malloc returns 10000.
-             add overhead, return 10016.
-      <- (back in overrun_check_malloc)
-      add overhead again, return 10032
-   xmalloc returns 10032.
-
-   (time passes).
-
-   xfree(10032)
-     overrun_check_free(10032)
-       decrease overhead
-       free(10016)  <-  crash, because 10000 is the original pointer.  */
-
-static ptrdiff_t check_depth;
-
 /* Like malloc, but wraps allocated block with header and trailer.  */
 
 static void *
 overrun_check_malloc (size_t size)
 {
   register unsigned char *val;
-  int overhead = ++check_depth == 1 ? XMALLOC_OVERRUN_CHECK_OVERHEAD : 0;
-  if (SIZE_MAX - overhead < size)
+  if (SIZE_MAX - XMALLOC_OVERRUN_CHECK_OVERHEAD < size)
     emacs_abort ();
 
-  val = malloc (size + overhead);
-  if (val && check_depth == 1)
+  val = malloc (size + XMALLOC_OVERRUN_CHECK_OVERHEAD);
+  if (val)
     {
       memcpy (val, xmalloc_overrun_check_header, XMALLOC_OVERRUN_CHECK_SIZE);
       val += XMALLOC_OVERRUN_CHECK_SIZE + XMALLOC_OVERRUN_SIZE_SIZE;
@@ -626,7 +541,6 @@ overrun_check_malloc (size_t size)
       memcpy (val + size, xmalloc_overrun_check_trailer,
 	      XMALLOC_OVERRUN_CHECK_SIZE);
     }
-  --check_depth;
   return val;
 }
 
@@ -638,12 +552,10 @@ static void *
 overrun_check_realloc (void *block, size_t size)
 {
   register unsigned char *val = (unsigned char *) block;
-  int overhead = ++check_depth == 1 ? XMALLOC_OVERRUN_CHECK_OVERHEAD : 0;
-  if (SIZE_MAX - overhead < size)
+  if (SIZE_MAX - XMALLOC_OVERRUN_CHECK_OVERHEAD < size)
     emacs_abort ();
 
   if (val
-      && check_depth == 1
       && memcmp (xmalloc_overrun_check_header,
 		 val - XMALLOC_OVERRUN_CHECK_SIZE - XMALLOC_OVERRUN_SIZE_SIZE,
 		 XMALLOC_OVERRUN_CHECK_SIZE) == 0)
@@ -657,9 +569,9 @@ overrun_check_realloc (void *block, size_t size)
       memset (val, 0, XMALLOC_OVERRUN_CHECK_SIZE + XMALLOC_OVERRUN_SIZE_SIZE);
     }
 
-  val = realloc (val, size + overhead);
+  val = realloc (val, size + XMALLOC_OVERRUN_CHECK_OVERHEAD);
 
-  if (val && check_depth == 1)
+  if (val)
     {
       memcpy (val, xmalloc_overrun_check_header, XMALLOC_OVERRUN_CHECK_SIZE);
       val += XMALLOC_OVERRUN_CHECK_SIZE + XMALLOC_OVERRUN_SIZE_SIZE;
@@ -667,7 +579,6 @@ overrun_check_realloc (void *block, size_t size)
       memcpy (val + size, xmalloc_overrun_check_trailer,
 	      XMALLOC_OVERRUN_CHECK_SIZE);
     }
-  --check_depth;
   return val;
 }
 
@@ -678,9 +589,7 @@ overrun_check_free (void *block)
 {
   unsigned char *val = (unsigned char *) block;
 
-  ++check_depth;
   if (val
-      && check_depth == 1
       && memcmp (xmalloc_overrun_check_header,
 		 val - XMALLOC_OVERRUN_CHECK_SIZE - XMALLOC_OVERRUN_SIZE_SIZE,
 		 XMALLOC_OVERRUN_CHECK_SIZE) == 0)
@@ -700,7 +609,6 @@ overrun_check_free (void *block)
     }
 
   free (val);
-  --check_depth;
 }
 
 #undef malloc
@@ -711,14 +619,33 @@ overrun_check_free (void *block)
 #define free overrun_check_free
 #endif
 
-#ifdef SYNC_INPUT
-/* When using SYNC_INPUT, we don't call malloc from a signal handler, so
-   there's no need to block input around malloc.  */
-#define MALLOC_BLOCK_INPUT   ((void)0)
-#define MALLOC_UNBLOCK_INPUT ((void)0)
+/* If compiled with XMALLOC_BLOCK_INPUT_CHECK, define a symbol
+   BLOCK_INPUT_IN_MEMORY_ALLOCATORS that is visible to the debugger.
+   If that variable is set, block input while in one of Emacs's memory
+   allocation functions.  There should be no need for this debugging
+   option, since signal handlers do not allocate memory, but Emacs
+   formerly allocated memory in signal handlers and this compile-time
+   option remains as a way to help debug the issue should it rear its
+   ugly head again.  */
+#ifdef XMALLOC_BLOCK_INPUT_CHECK
+bool block_input_in_memory_allocators EXTERNALLY_VISIBLE;
+static void
+malloc_block_input (void)
+{
+  if (block_input_in_memory_allocators)
+    BLOCK_INPUT;
+}
+static void
+malloc_unblock_input (void)
+{
+  if (block_input_in_memory_allocators)
+    UNBLOCK_INPUT;
+}
+# define MALLOC_BLOCK_INPUT malloc_block_input ()
+# define MALLOC_UNBLOCK_INPUT malloc_unblock_input ()
 #else
-#define MALLOC_BLOCK_INPUT   BLOCK_INPUT
-#define MALLOC_UNBLOCK_INPUT UNBLOCK_INPUT
+# define MALLOC_BLOCK_INPUT ((void) 0)
+# define MALLOC_UNBLOCK_INPUT ((void) 0)
 #endif
 
 /* Like malloc but check for no memory and block interrupt input..  */
@@ -787,8 +714,7 @@ xfree (void *block)
   free (block);
   MALLOC_UNBLOCK_INPUT;
   /* We don't call refill_memory_reserve here
-     because that duplicates doing so in emacs_blocked_free
-     and the criterion should go there.  */
+     because in practice the call in r_alloc_free seems to suffice.  */
 }
 
 
@@ -1215,256 +1141,6 @@ lisp_align_free (void *block)
 }
 
 
-#ifndef SYSTEM_MALLOC
-
-/* Arranging to disable input signals while we're in malloc.
-
-   This only works with GNU malloc.  To help out systems which can't
-   use GNU malloc, all the calls to malloc, realloc, and free
-   elsewhere in the code should be inside a BLOCK_INPUT/UNBLOCK_INPUT
-   pair; unfortunately, we have no idea what C library functions
-   might call malloc, so we can't really protect them unless you're
-   using GNU malloc.  Fortunately, most of the major operating systems
-   can use GNU malloc.  */
-
-#ifndef SYNC_INPUT
-/* When using SYNC_INPUT, we don't call malloc from a signal handler, so
-   there's no need to block input around malloc.  */
-
-#ifndef DOUG_LEA_MALLOC
-extern void * (*__malloc_hook) (size_t, const void *);
-extern void * (*__realloc_hook) (void *, size_t, const void *);
-extern void (*__free_hook) (void *, const void *);
-/* Else declared in malloc.h, perhaps with an extra arg.  */
-#endif /* DOUG_LEA_MALLOC */
-static void * (*old_malloc_hook) (size_t, const void *);
-static void * (*old_realloc_hook) (void *,  size_t, const void*);
-static void (*old_free_hook) (void*, const void*);
-
-#ifdef DOUG_LEA_MALLOC
-#  define BYTES_USED (mallinfo ().uordblks)
-#else
-#  define BYTES_USED _bytes_used
-#endif
-
-#ifdef GC_MALLOC_CHECK
-static bool dont_register_blocks;
-#endif
-
-static size_t bytes_used_when_reconsidered;
-
-/* Value of _bytes_used, when spare_memory was freed.  */
-
-static size_t bytes_used_when_full;
-
-/* This function is used as the hook for free to call.  */
-
-static void
-emacs_blocked_free (void *ptr, const void *ptr2)
-{
-  BLOCK_INPUT_ALLOC;
-
-#ifdef GC_MALLOC_CHECK
-  if (ptr)
-    {
-      struct mem_node *m;
-
-      m = mem_find (ptr);
-      if (m == MEM_NIL || m->start != ptr)
-	{
-	  fprintf (stderr,
-		   "Freeing `%p' which wasn't allocated with malloc\n", ptr);
-	  emacs_abort ();
-	}
-      else
-	{
-	  /* fprintf (stderr, "free %p...%p (%p)\n", m->start, m->end, ptr); */
-	  mem_delete (m);
-	}
-    }
-#endif /* GC_MALLOC_CHECK */
-
-  __free_hook = old_free_hook;
-  free (ptr);
-
-  /* If we released our reserve (due to running out of memory),
-     and we have a fair amount free once again,
-     try to set aside another reserve in case we run out once more.  */
-  if (! NILP (Vmemory_full)
-      /* Verify there is enough space that even with the malloc
-	 hysteresis this call won't run out again.
-	 The code here is correct as long as SPARE_MEMORY
-	 is substantially larger than the block size malloc uses.  */
-      && (bytes_used_when_full
-	  > ((bytes_used_when_reconsidered = BYTES_USED)
-	     + max (malloc_hysteresis, 4) * SPARE_MEMORY)))
-    refill_memory_reserve ();
-
-  __free_hook = emacs_blocked_free;
-  UNBLOCK_INPUT_ALLOC;
-}
-
-
-/* This function is the malloc hook that Emacs uses.  */
-
-static void *
-emacs_blocked_malloc (size_t size, const void *ptr)
-{
-  void *value;
-
-  BLOCK_INPUT_ALLOC;
-  __malloc_hook = old_malloc_hook;
-#ifdef DOUG_LEA_MALLOC
-  /* Segfaults on my system.  --lorentey */
-  /* mallopt (M_TOP_PAD, malloc_hysteresis * 4096); */
-#else
-    __malloc_extra_blocks = malloc_hysteresis;
-#endif
-
-  value = malloc (size);
-
-#ifdef GC_MALLOC_CHECK
-  {
-    struct mem_node *m = mem_find (value);
-    if (m != MEM_NIL)
-      {
-	fprintf (stderr, "Malloc returned %p which is already in use\n",
-		 value);
-	fprintf (stderr, "Region in use is %p...%p, %td bytes, type %d\n",
-		 m->start, m->end, (char *) m->end - (char *) m->start,
-		 m->type);
-	emacs_abort ();
-      }
-
-    if (!dont_register_blocks)
-      {
-	mem_insert (value, (char *) value + max (1, size), allocated_mem_type);
-	allocated_mem_type = MEM_TYPE_NON_LISP;
-      }
-  }
-#endif /* GC_MALLOC_CHECK */
-
-  __malloc_hook = emacs_blocked_malloc;
-  UNBLOCK_INPUT_ALLOC;
-
-  /* fprintf (stderr, "%p malloc\n", value); */
-  return value;
-}
-
-
-/* This function is the realloc hook that Emacs uses.  */
-
-static void *
-emacs_blocked_realloc (void *ptr, size_t size, const void *ptr2)
-{
-  void *value;
-
-  BLOCK_INPUT_ALLOC;
-  __realloc_hook = old_realloc_hook;
-
-#ifdef GC_MALLOC_CHECK
-  if (ptr)
-    {
-      struct mem_node *m = mem_find (ptr);
-      if (m == MEM_NIL || m->start != ptr)
-	{
-	  fprintf (stderr,
-		   "Realloc of %p which wasn't allocated with malloc\n",
-		   ptr);
-	  emacs_abort ();
-	}
-
-      mem_delete (m);
-    }
-
-  /* fprintf (stderr, "%p -> realloc\n", ptr); */
-
-  /* Prevent malloc from registering blocks.  */
-  dont_register_blocks = 1;
-#endif /* GC_MALLOC_CHECK */
-
-  value = realloc (ptr, size);
-
-#ifdef GC_MALLOC_CHECK
-  dont_register_blocks = 0;
-
-  {
-    struct mem_node *m = mem_find (value);
-    if (m != MEM_NIL)
-      {
-	fprintf (stderr, "Realloc returns memory that is already in use\n");
-	emacs_abort ();
-      }
-
-    /* Can't handle zero size regions in the red-black tree.  */
-    mem_insert (value, (char *) value + max (size, 1), MEM_TYPE_NON_LISP);
-  }
-
-  /* fprintf (stderr, "%p <- realloc\n", value); */
-#endif /* GC_MALLOC_CHECK */
-
-  __realloc_hook = emacs_blocked_realloc;
-  UNBLOCK_INPUT_ALLOC;
-
-  return value;
-}
-
-
-#ifdef HAVE_PTHREAD
-/* Called from Fdump_emacs so that when the dumped Emacs starts, it has a
-   normal malloc.  Some thread implementations need this as they call
-   malloc before main.  The pthread_self call in BLOCK_INPUT_ALLOC then
-   calls malloc because it is the first call, and we have an endless loop.  */
-
-void
-reset_malloc_hooks (void)
-{
-  __free_hook = old_free_hook;
-  __malloc_hook = old_malloc_hook;
-  __realloc_hook = old_realloc_hook;
-}
-#endif /* HAVE_PTHREAD */
-
-
-/* Called from main to set up malloc to use our hooks.  */
-
-void
-uninterrupt_malloc (void)
-{
-#ifdef HAVE_PTHREAD
-#ifdef DOUG_LEA_MALLOC
-  pthread_mutexattr_t attr;
-
-  /*  GLIBC has a faster way to do this, but let's keep it portable.
-      This is according to the Single UNIX Specification.  */
-  pthread_mutexattr_init (&attr);
-  pthread_mutexattr_settype (&attr, PTHREAD_MUTEX_RECURSIVE);
-  pthread_mutex_init (&alloc_mutex, &attr);
-#else  /* !DOUG_LEA_MALLOC */
-  /* Some systems such as Solaris 2.6 don't have a recursive mutex,
-     and the bundled gmalloc.c doesn't require it.  */
-  pthread_mutex_init (&alloc_mutex, NULL);
-#endif /* !DOUG_LEA_MALLOC */
-#endif /* HAVE_PTHREAD */
-
-  if (__free_hook != emacs_blocked_free)
-    old_free_hook = __free_hook;
-  __free_hook = emacs_blocked_free;
-
-  if (__malloc_hook != emacs_blocked_malloc)
-    old_malloc_hook = __malloc_hook;
-  __malloc_hook = emacs_blocked_malloc;
-
-  if (__realloc_hook != emacs_blocked_realloc)
-    old_realloc_hook = __realloc_hook;
-  __realloc_hook = emacs_blocked_realloc;
-}
-
-#endif /* not SYNC_INPUT */
-#endif /* not SYSTEM_MALLOC */
-
-
-
 /***********************************************************************
 			 Interval Allocation
  ***********************************************************************/
@@ -1509,8 +1185,6 @@ INTERVAL
 make_interval (void)
 {
   INTERVAL val;
-
-  /* eassert (!handling_signal); */
 
   MALLOC_BLOCK_INPUT;
 
@@ -1894,8 +1568,6 @@ static struct Lisp_String *
 allocate_string (void)
 {
   struct Lisp_String *s;
-
-  /* eassert (!handling_signal); */
 
   MALLOC_BLOCK_INPUT;
 
@@ -2588,8 +2260,6 @@ make_float (double float_value)
 {
   register Lisp_Object val;
 
-  /* eassert (!handling_signal); */
-
   MALLOC_BLOCK_INPUT;
 
   if (float_free_list)
@@ -2696,8 +2366,6 @@ DEFUN ("cons", Fcons, Scons, 2, 2, 0,
   (Lisp_Object car, Lisp_Object cdr)
 {
   register Lisp_Object val;
-
-  /* eassert (!handling_signal); */
 
   MALLOC_BLOCK_INPUT;
 
@@ -3204,9 +2872,6 @@ allocate_vectorlike (ptrdiff_t len)
 
   MALLOC_BLOCK_INPUT;
 
-  /* This gets triggered by code which I haven't bothered to fix.  --Stef  */
-  /* eassert (!handling_signal); */
-
   if (len == 0)
     p = XVECTOR (zero_vector);
   else
@@ -3491,8 +3156,6 @@ Its value and function definition are void, and its property list is nil.  */)
 
   CHECK_STRING (name);
 
-  /* eassert (!handling_signal); */
-
   MALLOC_BLOCK_INPUT;
 
   if (symbol_free_list)
@@ -3576,8 +3239,6 @@ static Lisp_Object
 allocate_misc (enum Lisp_Misc_Type type)
 {
   Lisp_Object val;
-
-  /* eassert (!handling_signal); */
 
   MALLOC_BLOCK_INPUT;
 
@@ -3798,12 +3459,6 @@ memory_full (size_t nbytes)
 	      lisp_free (spare_memory[i]);
 	    spare_memory[i] = 0;
 	  }
-
-      /* Record the space now used.  When it decreases substantially,
-	 we can refill the memory reserve.  */
-#if !defined SYSTEM_MALLOC && !defined SYNC_INPUT
-      bytes_used_when_full = BYTES_USED;
-#endif
     }
 
   /* This used to call error, but if we've run out of memory, we could
@@ -3941,7 +3596,7 @@ mem_insert (void *start, void *end, enum mem_type type)
 
   /* Create a new node.  */
 #ifdef GC_MALLOC_CHECK
-  x = _malloc_internal (sizeof *x);
+  x = malloc (sizeof *x);
   if (x == NULL)
     emacs_abort ();
 #else
@@ -4165,7 +3820,7 @@ mem_delete (struct mem_node *z)
     mem_delete_fixup (x);
 
 #ifdef GC_MALLOC_CHECK
-  _free_internal (y);
+  free (y);
 #else
   xfree (y);
 #endif
@@ -4762,14 +4417,14 @@ test_setjmp (void)
 {
   char buf[10];
   register int x;
-  jmp_buf jbuf;
+  sys_jmp_buf jbuf;
 
   /* Arrange for X to be put in a register.  */
   sprintf (buf, "1");
   x = strlen (buf);
   x = 2 * x - 1;
 
-  _setjmp (jbuf);
+  sys_setjmp (jbuf);
   if (longjmps_done == 1)
     {
       /* Came here after the longjmp at the end of the function.
@@ -4794,7 +4449,7 @@ test_setjmp (void)
   ++longjmps_done;
   x = 2;
   if (longjmps_done == 1)
-    _longjmp (jbuf, 1);
+    sys_longjmp (jbuf, 1);
 }
 
 #endif /* not GC_SAVE_REGISTERS_ON_STACK && not GC_SETJMP_WORKS */
@@ -4900,7 +4555,7 @@ mark_stack (void)
   /* jmp_buf may not be aligned enough on darwin-ppc64 */
   union aligned_jmpbuf {
     Lisp_Object o;
-    jmp_buf j;
+    sys_jmp_buf j;
   } j;
   volatile bool stack_grows_down_p = (char *) &j > (char *) stack_base;
 #endif
@@ -4936,7 +4591,7 @@ mark_stack (void)
     }
 #endif /* GC_SETJMP_WORKS */
 
-  _setjmp (j.j);
+  sys_setjmp (j.j);
   end = stack_grows_down_p ? (char *) &j + sizeof j : (char *) &j;
 #endif /* not GC_SAVE_REGISTERS_ON_STACK */
 #endif /* not HAVE___BUILTIN_UNWIND_INIT */
@@ -5865,16 +5520,16 @@ mark_buffer (struct buffer *buffer)
     mark_buffer (buffer->base_buffer);
 }
 
-/* Remove killed buffers or items whose car is a killed buffer
-   from LIST and return changed LIST.  Called during GC.  */
+/* Remove killed buffers or items whose car is a killed buffer from
+   LIST, and mark other items.  Return changed LIST, which is marked.  */
 
 static Lisp_Object
-discard_killed_buffers (Lisp_Object list)
+mark_discard_killed_buffers (Lisp_Object list)
 {
-  Lisp_Object *prev = &list;
-  Lisp_Object tail;
+  Lisp_Object tail, *prev = &list;
 
-  for (tail = list; CONSP (tail); tail = XCDR (tail))
+  for (tail = list; CONSP (tail) && !CONS_MARKED_P (XCONS (tail));
+       tail = XCDR (tail))
     {
       Lisp_Object tem = XCAR (tail);
       if (CONSP (tem))
@@ -5882,8 +5537,13 @@ discard_killed_buffers (Lisp_Object list)
       if (BUFFERP (tem) && !BUFFER_LIVE_P (XBUFFER (tem)))
 	*prev = XCDR (tail);
       else
-	prev = &XCDR_AS_LVALUE (tail);
+	{
+	  CONS_MARK (XCONS (tail));
+	  mark_object (XCAR (tail));
+	  prev = &XCDR_AS_LVALUE (tail);
+	}
     }
+  mark_object (tail);
   return list;
 }
 
@@ -6023,18 +5683,8 @@ mark_object (Lisp_Object arg)
 	    break;
 
 	  case PVEC_FRAME:
-	    {
-	      struct frame *f = (struct frame *) ptr;
-
-	      /* For live frames, killed buffers are filtered out by
-		 store_frame_param.  For dead frames, we do it here in
-		 attempt to help GC to reclaim killed buffers faster.  */
-	      if (!FRAME_LIVE_P (f))
-		fset_buffer_list (f, discard_killed_buffers (f->buffer_list));
-
-	      mark_vectorlike (ptr);
-	      mark_face_cache (f->face_cache);
-	    }
+	    mark_vectorlike (ptr);
+	    mark_face_cache (((struct frame *) ptr)->face_cache);
 	    break;
 
 	  case PVEC_WINDOW:
@@ -6042,18 +5692,8 @@ mark_object (Lisp_Object arg)
 	      struct window *w = (struct window *) ptr;
 	      bool leaf = NILP (w->hchild) && NILP (w->vchild);
 
-	      /* For live windows, Lisp code filters out killed buffers
-		 from both buffer lists.  For dead windows, we do it here
-		 in attempt to help GC to reclaim killed buffers faster.  */
-	      if (leaf && NILP (w->buffer))
-		{
-		  wset_prev_buffers
-		    (w, discard_killed_buffers (w->prev_buffers));
-		  wset_next_buffers
-		    (w, discard_killed_buffers (w->next_buffers));
-		}
-
 	      mark_vectorlike (ptr);
+
 	      /* Mark glyphs for leaf windows.  Marking window
 		 matrices is sufficient because frame matrices
 		 use the same glyph memory.  */
@@ -6062,6 +5702,15 @@ mark_object (Lisp_Object arg)
 		  mark_glyph_matrix (w->current_matrix);
 		  mark_glyph_matrix (w->desired_matrix);
 		}
+
+	      /* Filter out killed buffers from both buffer lists
+		 in attempt to help GC to reclaim killed buffers faster.
+		 We can do it elsewhere for live windows, but this is the
+		 best place to do it for dead windows.  */
+	      wset_prev_buffers
+		(w, mark_discard_killed_buffers (w->prev_buffers));
+	      wset_next_buffers
+		(w, mark_discard_killed_buffers (w->next_buffers));
 	    }
 	    break;
 
@@ -6771,12 +6420,6 @@ init_alloc_once (void)
 #endif
   init_strings ();
   init_vectors ();
-
-#ifdef REL_ALLOC
-  malloc_hysteresis = 32;
-#else
-  malloc_hysteresis = 0;
-#endif
 
   refill_memory_reserve ();
   gc_cons_threshold = GC_DEFAULT_THRESHOLD;
