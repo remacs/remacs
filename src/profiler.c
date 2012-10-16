@@ -18,12 +18,18 @@ You should have received a copy of the GNU General Public License
 along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include <config.h>
-#include <stdio.h>
-#include <limits.h>
-#include <sys/time.h>
-#include <signal.h>
-#include <setjmp.h>
 #include "lisp.h"
+#include "syssignal.h"
+#include "systime.h"
+
+/* Return A + B, but return the maximum fixnum if the result would overflow.
+   Assume A and B are nonnegative and in fixnum range.  */
+
+static EMACS_INT
+saturated_add (EMACS_INT a, EMACS_INT b)
+{
+  return min (a + b, MOST_POSITIVE_FIXNUM);
+}
 
 /* Logs.  */
 
@@ -121,14 +127,12 @@ static void evict_lower_half (log_t *log)
       }
 }
 
-/* Record the current backtrace in LOG. BASE is a special name for
-   describing which the backtrace come from. BASE can be nil. COUNT is
-   a number how many times the profiler sees the backtrace at the
-   time.  ELAPSED is a elapsed time in millisecond that the backtrace
-   took.  */
+/* Record the current backtrace in LOG.  COUNT is the weight of this
+   current backtrace: interrupt counts for CPU, and the allocation
+   size for memory.  */
 
 static void
-record_backtrace (log_t *log, size_t count)
+record_backtrace (log_t *log, EMACS_INT count)
 {
   struct backtrace *backlist = backtrace_list;
   Lisp_Object backtrace;
@@ -148,7 +152,7 @@ record_backtrace (log_t *log, size_t count)
   /* Copy the backtrace contents into working memory.  */
   for (; i < asize && backlist; i++, backlist = backlist->next)
     /* FIXME: For closures we should ignore the environment.  */
-    ASET (backtrace, i, *backlist->function);
+    ASET (backtrace, i, backlist->function);
 
   /* Make sure that unused space of working memory is filled with nil.  */
   for (; i < asize; i++)
@@ -161,8 +165,11 @@ record_backtrace (log_t *log, size_t count)
     EMACS_UINT hash;
     ptrdiff_t j = hash_lookup (log, backtrace, &hash);
     if (j >= 0)
-      set_hash_value_slot (log, j,
-			   make_number (count + XINT (HASH_VALUE (log, j))));
+      {
+	EMACS_INT old_val = XINT (HASH_VALUE (log, j));
+	EMACS_INT new_val = saturated_add (old_val, count);
+	set_hash_value_slot (log, j, make_number (new_val));
+      }
     else
       { /* BEWARE!  hash_put in general can allocate memory.
 	   But currently it only does that if log->next_free is nil.  */
@@ -191,56 +198,153 @@ record_backtrace (log_t *log, size_t count)
   }
 }
 
-/* Sample profiler.  */
+/* Sampling profiler.  */
 
-/* FIXME: Add support for the CPU profiler in W32.  */
-/* FIXME: the sigprof_handler suffers from race-conditions if the signal
-   is delivered to a thread other than the main Emacs thread.  */
+#ifdef PROFILER_CPU_SUPPORT
 
-#if defined SIGPROF && defined HAVE_SETITIMER
-#define PROFILER_CPU_SUPPORT
+/* The profiler timer and whether it was properly initialized, if
+   POSIX timers are available.  */
+#ifdef HAVE_ITIMERSPEC
+static timer_t profiler_timer;
+static bool profiler_timer_ok;
+#endif
 
-/* True if sampling profiler is running.  */
-static bool profiler_cpu_running;
+/* Status of sampling profiler.  */
+static enum profiler_cpu_running
+  { NOT_RUNNING, TIMER_SETTIME_RUNNING, SETITIMER_RUNNING }
+  profiler_cpu_running;
 
+/* Hash-table log of CPU profiler.  */
 static Lisp_Object cpu_log;
+
 /* Separate counter for the time spent in the GC.  */
 static EMACS_INT cpu_gc_count;
 
-/* The current sample interval in millisecond.  */
+/* The current sampling interval in nanoseconds.  */
+static EMACS_INT current_sampling_interval;
 
-static int current_sample_interval;
-
-/* Signal handler for sample profiler.  */
+/* Signal handler for sampling profiler.  */
 
 static void
-sigprof_handler (int signal)
+handle_profiler_signal (int signal)
 {
-  eassert (HASH_TABLE_P (cpu_log));
-  if (backtrace_list && EQ (*backtrace_list->function, Qautomatic_gc))
+  if (backtrace_list && EQ (backtrace_list->function, Qautomatic_gc))
     /* Special case the time-count inside GC because the hash-table
        code is not prepared to be used while the GC is running.
        More specifically it uses ASIZE at many places where it does
        not expect the ARRAY_MARK_FLAG to be set.  We could try and
        harden the hash-table code, but it doesn't seem worth the
        effort.  */
-    cpu_gc_count += current_sample_interval;
+    cpu_gc_count = saturated_add (cpu_gc_count, 1);
   else
-    record_backtrace (XHASH_TABLE (cpu_log), current_sample_interval);
+    {
+      Lisp_Object oquit;
+      EMACS_INT count = 1;
+#ifdef HAVE_ITIMERSPEC
+      if (profiler_timer_ok)
+	{
+	  int overruns = timer_getoverrun (profiler_timer);
+	  eassert (0 <= overruns);
+	  count += overruns;
+	}
+#endif
+      /* record_backtrace uses hash functions that call Fequal, which
+	 uses QUIT, which can call malloc, which can cause disaster in
+	 a signal handler.  So inhibit QUIT.  */
+      oquit = Vinhibit_quit;
+      Vinhibit_quit = Qt;
+
+      eassert (HASH_TABLE_P (cpu_log));
+      record_backtrace (XHASH_TABLE (cpu_log), count);
+
+      Vinhibit_quit = oquit;
+    }
+}
+
+static void
+deliver_profiler_signal (int signal)
+{
+  deliver_process_signal (signal, handle_profiler_signal);
+}
+
+static enum profiler_cpu_running
+setup_cpu_timer (Lisp_Object sampling_interval)
+{
+  struct sigaction action;
+  struct itimerval timer;
+  struct timespec interval;
+  int billion = 1000000000;
+
+  if (! RANGED_INTEGERP (1, sampling_interval,
+			 (TYPE_MAXIMUM (time_t) < EMACS_INT_MAX / billion
+			  ? ((EMACS_INT) TYPE_MAXIMUM (time_t) * billion
+			     + (billion - 1))
+			  : EMACS_INT_MAX)))
+    return NOT_RUNNING;
+
+  current_sampling_interval = XINT (sampling_interval);
+  interval = make_emacs_time (current_sampling_interval / billion,
+			      current_sampling_interval % billion);
+  emacs_sigaction_init (&action, deliver_profiler_signal);
+  sigaction (SIGPROF, &action, 0);
+
+#ifdef HAVE_ITIMERSPEC
+  if (! profiler_timer_ok)
+    {
+      /* System clocks to try, in decreasing order of desirability.  */
+      static clockid_t const system_clock[] = {
+#ifdef CLOCK_THREAD_CPUTIME_ID
+	CLOCK_THREAD_CPUTIME_ID,
+#endif
+#ifdef CLOCK_PROCESS_CPUTIME_ID
+	CLOCK_PROCESS_CPUTIME_ID,
+#endif
+#ifdef CLOCK_MONOTONIC
+	CLOCK_MONOTONIC,
+#endif
+	CLOCK_REALTIME
+      };
+      int i;
+      struct sigevent sigev;
+      sigev.sigev_value.sival_ptr = &profiler_timer;
+      sigev.sigev_signo = SIGPROF;
+      sigev.sigev_notify = SIGEV_SIGNAL;
+
+      for (i = 0; i < sizeof system_clock / sizeof *system_clock; i++)
+	if (timer_create (system_clock[i], &sigev, &profiler_timer) == 0)
+	  {
+	    profiler_timer_ok = 1;
+	    break;
+	  }
+    }
+
+  if (profiler_timer_ok)
+    {
+      struct itimerspec ispec;
+      ispec.it_value = ispec.it_interval = interval;
+      if (timer_settime (profiler_timer, 0, &ispec, 0) == 0)
+	return TIMER_SETTIME_RUNNING;
+    }
+#endif
+
+#ifdef HAVE_SETITIMER
+  timer.it_value = timer.it_interval = make_timeval (interval);
+  if (setitimer (ITIMER_PROF, &timer, 0) == 0)
+    return SETITIMER_RUNNING;
+#endif
+
+  return NOT_RUNNING;
 }
 
 DEFUN ("profiler-cpu-start", Fprofiler_cpu_start, Sprofiler_cpu_start,
        1, 1, 0,
        doc: /* Start or restart the cpu profiler.
-The cpu profiler will take call-stack samples each SAMPLE-INTERVAL (expressed in milliseconds).
+It takes call-stack samples each SAMPLING-INTERVAL nanoseconds, approximately.
 See also `profiler-log-size' and `profiler-max-stack-depth'.  */)
-  (Lisp_Object sample_interval)
+  (Lisp_Object sampling_interval)
 {
-  struct sigaction sa;
-  struct itimerval timer;
-
   if (profiler_cpu_running)
-    error ("Sample profiler is already running");
+    error ("CPU profiler is already running");
 
   if (NILP (cpu_log))
     {
@@ -249,19 +353,9 @@ See also `profiler-log-size' and `profiler-max-stack-depth'.  */)
 			  profiler_max_stack_depth);
     }
 
-  current_sample_interval = XINT (sample_interval);
-
-  sa.sa_handler = sigprof_handler;
-  sa.sa_flags = SA_RESTART;
-  sigemptyset (&sa.sa_mask);
-  sigaction (SIGPROF, &sa, 0);
-
-  timer.it_interval.tv_sec = 0;
-  timer.it_interval.tv_usec = current_sample_interval * 1000;
-  timer.it_value = timer.it_interval;
-  setitimer (ITIMER_PROF, &timer, 0);
-
-  profiler_cpu_running = true;
+  profiler_cpu_running = setup_cpu_timer (sampling_interval);
+  if (! profiler_cpu_running)
+    error ("Invalid sampling interval");
 
   return Qt;
 }
@@ -272,12 +366,34 @@ DEFUN ("profiler-cpu-stop", Fprofiler_cpu_stop, Sprofiler_cpu_stop,
 Return non-nil if the profiler was running.  */)
   (void)
 {
-  if (!profiler_cpu_running)
-    return Qnil;
-  profiler_cpu_running = false;
+  switch (profiler_cpu_running)
+    {
+    case NOT_RUNNING:
+      return Qnil;
 
-  setitimer (ITIMER_PROF, 0, 0);
+#ifdef HAVE_ITIMERSPEC
+    case TIMER_SETTIME_RUNNING:
+      {
+	struct itimerspec disable;
+	memset (&disable, 0, sizeof disable);
+	timer_settime (profiler_timer, 0, &disable, 0);
+      }
+      break;
+#endif
 
+#ifdef HAVE_SETITIMER
+    case SETITIMER_RUNNING:
+      {
+	struct itimerval disable;
+	memset (&disable, 0, sizeof disable);
+	setitimer (ITIMER_PROF, &disable, 0);
+      }
+      break;
+#endif
+    }
+
+  signal (SIGPROF, SIG_IGN);
+  profiler_cpu_running = NOT_RUNNING;
   return Qt;
 }
 
@@ -300,7 +416,7 @@ Before returning, a new log is allocated for future samples.  */)
   (void)
 {
   Lisp_Object result = cpu_log;
-  /* Here we're making the log visible to Elisp , so it's not safe any
+  /* Here we're making the log visible to Elisp, so it's not safe any
      more for our use afterwards since we can't rely on its special
      pre-allocated keys anymore.  So we have to allocate a new one.  */
   cpu_log = (profiler_cpu_running
@@ -312,7 +428,7 @@ Before returning, a new log is allocated for future samples.  */)
   cpu_gc_count = 0;
   return result;
 }
-#endif	/* not defined PROFILER_CPU_SUPPORT */
+#endif /* PROFILER_CPU_SUPPORT */
 
 /* Memory profiler.  */
 
@@ -392,7 +508,7 @@ void
 malloc_probe (size_t size)
 {
   eassert (HASH_TABLE_P (memory_log));
-  record_backtrace (XHASH_TABLE (memory_log), size);
+  record_backtrace (XHASH_TABLE (memory_log), min (size, MOST_POSITIVE_FIXNUM));
 }
 
 void
@@ -408,7 +524,7 @@ to make room for new entries.  */);
   profiler_log_size = 10000;
 
 #ifdef PROFILER_CPU_SUPPORT
-  profiler_cpu_running = false;
+  profiler_cpu_running = NOT_RUNNING;
   cpu_log = Qnil;
   staticpro (&cpu_log);
   defsubr (&Sprofiler_cpu_start);

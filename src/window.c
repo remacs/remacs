@@ -61,7 +61,7 @@ static Lisp_Object Qwindow_deletable_p, Qdelete_window, Qdisplay_buffer;
 static Lisp_Object Qreplace_buffer_in_windows, Qget_mru_window;
 static Lisp_Object Qwindow_resize_root_window, Qwindow_resize_root_window_vertically;
 static Lisp_Object Qscroll_up, Qscroll_down, Qscroll_command;
-static Lisp_Object Qsafe, Qabove, Qbelow, Qtemp_buffer_resize, Qclone_of;
+static Lisp_Object Qsafe, Qabove, Qbelow, Qwindow_size, Qclone_of;
 
 static int displayed_window_lines (struct window *);
 static int count_windows (struct window *);
@@ -134,102 +134,102 @@ static EMACS_INT window_scroll_preserve_hpos;
 static EMACS_INT window_scroll_preserve_vpos;
 
 /* These setters are used only in this file, so they can be private.  */
-static inline void
+static void
 wset_combination_limit (struct window *w, Lisp_Object val)
 {
   w->combination_limit = val;
 }
-static inline void
+static void
 wset_dedicated (struct window *w, Lisp_Object val)
 {
   w->dedicated = val;
 }
-static inline void
+static void
 wset_display_table (struct window *w, Lisp_Object val)
 {
   w->display_table = val;
 }
-static inline void
+static void
 wset_hchild (struct window *w, Lisp_Object val)
 {
   w->hchild = val;
 }
-static inline void
+static void
 wset_left_fringe_width (struct window *w, Lisp_Object val)
 {
   w->left_fringe_width = val;
 }
-static inline void
+static void
 wset_left_margin_cols (struct window *w, Lisp_Object val)
 {
   w->left_margin_cols = val;
 }
-static inline void
+static void
 wset_new_normal (struct window *w, Lisp_Object val)
 {
   w->new_normal = val;
 }
-static inline void
+static void
 wset_new_total (struct window *w, Lisp_Object val)
 {
   w->new_total = val;
 }
-static inline void
+static void
 wset_normal_cols (struct window *w, Lisp_Object val)
 {
   w->normal_cols = val;
 }
-static inline void
+static void
 wset_normal_lines (struct window *w, Lisp_Object val)
 {
   w->normal_lines = val;
 }
-static inline void
+static void
 wset_parent (struct window *w, Lisp_Object val)
 {
   w->parent = val;
 }
-static inline void
+static void
 wset_pointm (struct window *w, Lisp_Object val)
 {
   w->pointm = val;
 }
-static inline void
+static void
 wset_right_fringe_width (struct window *w, Lisp_Object val)
 {
   w->right_fringe_width = val;
 }
-static inline void
+static void
 wset_right_margin_cols (struct window *w, Lisp_Object val)
 {
   w->right_margin_cols = val;
 }
-static inline void
+static void
 wset_scroll_bar_width (struct window *w, Lisp_Object val)
 {
   w->scroll_bar_width = val;
 }
-static inline void
+static void
 wset_start (struct window *w, Lisp_Object val)
 {
   w->start = val;
 }
-static inline void
+static void
 wset_temslot (struct window *w, Lisp_Object val)
 {
   w->temslot = val;
 }
-static inline void
+static void
 wset_vchild (struct window *w, Lisp_Object val)
 {
   w->vchild = val;
 }
-static inline void
+static void
 wset_vertical_scroll_bar_type (struct window *w, Lisp_Object val)
 {
   w->vertical_scroll_bar_type = val;
 }
-static inline void
+static void
 wset_window_parameters (struct window *w, Lisp_Object val)
 {
   w->window_parameters = val;
@@ -6708,7 +6708,7 @@ syms_of_window (void)
   DEFSYM (Qreplace_buffer_in_windows, "replace-buffer-in-windows");
   DEFSYM (Qrecord_window_buffer, "record-window-buffer");
   DEFSYM (Qget_mru_window, "get-mru-window");
-  DEFSYM (Qtemp_buffer_resize, "temp-buffer-resize");
+  DEFSYM (Qwindow_size, "window-size");
   DEFSYM (Qtemp_buffer_show_hook, "temp-buffer-show-hook");
   DEFSYM (Qabove, "above");
   DEFSYM (Qbelow, "below");
@@ -6808,18 +6808,18 @@ This variable takes no effect if `window-combination-limit' is non-nil.  */);
 The following values are recognized:
 
 nil means splitting a window will create a new parent window only if the
-    window has no parent window or the window shall become a combination
-    orthogonal to the one it is part of.
+    window has no parent window or the window shall become part of a
+    combination orthogonal to the one it is part of.
 
-`temp-buffer-resize' means that splitting a window for displaying a
-    temporary buffer makes a new parent window provided
-    `temp-buffer-resize-mode' is enabled.  Otherwise, this value is
-    handled like nil.
+`window-size' means that splitting a window for displaying a buffer
+    makes a new parent window provided `display-buffer' is supposed to
+    explicitly set the window's size due to the presence of a
+    `window-height' or `window-width' entry in the alist used by
+    `display-buffer'.  Otherwise, this value is handled like nil.
 
 `temp-buffer' means that splitting a window for displaying a temporary
     buffer always makes a new parent window.  Otherwise, this value is
     handled like nil.
-
 
 `display-buffer' means that splitting a window for displaying a buffer
     always makes a new parent window.  Since temporary buffers are
@@ -6833,7 +6833,7 @@ t means that splitting a window always creates a new parent window.  If
     sibling.
 
 Other values are reserved for future use.  */);
-  Vwindow_combination_limit = Qtemp_buffer_resize;
+  Vwindow_combination_limit = Qwindow_size;
 
   DEFVAR_LISP ("window-persistent-parameters", Vwindow_persistent_parameters,
 	       doc: /* Alist of persistent window parameters.

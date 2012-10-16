@@ -764,13 +764,30 @@ DEFUN ("get-file-char", Fget_file_char, Sget_file_char, 0, 0, 0,
 
 /* Return true if the lisp code read using READCHARFUN defines a non-nil
    `lexical-binding' file variable.  After returning, the stream is
-   positioned following the first line, if it is a comment, otherwise
-   nothing is read.  */
+   positioned following the first line, if it is a comment or #! line,
+   otherwise nothing is read.  */
 
 static int
 lisp_file_lexically_bound_p (Lisp_Object readcharfun)
 {
   int ch = READCHAR;
+
+  if (ch == '#')
+    {
+      ch = READCHAR;
+      if (ch != '!')
+        {
+          UNREAD (ch);
+          UNREAD ('#');
+          return 0;
+        }
+      while (ch != '\n' && ch != EOF)
+        ch = READCHAR;
+      if (ch == '\n') ch = READCHAR;
+      /* It is OK to leave the position after a #! line, since
+         that is what read1 does.  */
+    }
+
   if (ch != ';')
     /* The first line isn't a comment, just give up.  */
     {
@@ -2266,7 +2283,7 @@ read_escape (Lisp_Object readcharfun, int stringp)
 /* Return the digit that CHARACTER stands for in the given BASE.
    Return -1 if CHARACTER is out of range for BASE,
    and -2 if CHARACTER is not valid for any supported BASE.  */
-static inline int
+static int
 digit_to_number (int character, int base)
 {
   int digit;
