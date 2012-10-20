@@ -1,3 +1,65 @@
+2012-10-14  David Engster  <deng@randomsample.de>
+
+	* semantic.el (semantic-error-if-unparsed): New function.  Raise
+	error if buffer was not parsed by Semantic (bug #12045).
+	(navigate-menu, edit-menu, cedet-menu-map): Enable Semantic items
+	only if buffer was parsed.  Also, replace ':active' with ':enable'
+	where necessary.
+
+	* semantic/wisent/python.el
+	(semantic-python-get-system-include-path): Use
+	`python-shell-internal-send-string' if available to query Python
+	for system paths.
+
+	* semantic/senator.el (senator-next-tag, senator-previous-tag)
+	(senator-go-to-up-reference): Use `semantic-error-if-unparsed'.
+
+	* semantic/complete.el (semantic-complete-jump-local)
+	(semantic-complete-jump, semantic-complete-jump-local-members)
+	(semantic-complete-self-insert): Use `semantic-error-if-unparsed'.
+	(semantic-complete-inline-project): Fix autoload cookie.
+
+	* semantic/analyze/complete.el
+	(semantic-analyze-possible-completions): Check if buffer was
+	parsed.  Only raise an error if function was called interactively,
+	otherwise silently return nil.
+
+	* cedet.el (cedet-menu-map): Fix copy&paste typo in menu creation.
+
+2012-10-08  David Engster  <deng@randomsample.de>
+
+	* semantic/bovine/el.el: Add `semantic-default-elisp-setup' to
+	`emacs-lisp-mode-hook'.  This was accidentally removed during the
+	CEDET update (2012-10-01T18:10:29Z!cyd@gnu.org).
+
+2012-10-07  David Engster  <deng@randomsample.de>
+
+	* semantic/wisent/python.el (semantic-ctxt-current-function)
+	(semantic-ctxt-current-assignment): New overrides, simply
+	returning nil.  The defaults do not work correctly and can send
+	the parser in an infinite loop (bug#12458).
+
+	* semantic/ede-grammar.el (project-compile-target): Fix grammar
+	compilation after introduction of %provide statement.
+
+	* semantic.el (semantic-new-buffer-setup-functions): Remove setup
+	function for `f90-mode', since the parser only exists upstream.
+
+2012-10-06  Glenn Morris  <rgm@gnu.org>
+
+	* semantic/complete.el (semantic-displayor-tooltip-max-tags): Doc fix.
+
+	* semantic/complete.el (semantic-displayor-tooltip-mode)
+	(semantic-displayor-tooltip-initial-max-tags)
+	(semantic-displayor-tooltip-max-tags): Add missing custom :version tags.
+	* ede/linux.el (project-linux): Add missing group :version tag.
+
+2012-10-06  Chong Yidong  <cyd@gnu.org>
+
+	* semantic/bovine/grammar.el:
+	* semantic/wisent/grammar.el: Move from admin/grammars.  Add
+	autoloads for bovine-grammar-mode and wisent-grammar-mode.
+
 2012-10-02  Chong Yidong  <cyd@gnu.org>
 
 	* srecode.el, ede.el: Restore Version header.

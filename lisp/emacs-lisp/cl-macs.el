@@ -2154,8 +2154,9 @@ copier, a `NAME-p' predicate, and slot accessors named `NAME-SLOT'.
 You can use the accessors to set the corresponding slots, via `setf'.
 
 NAME may instead take the form (NAME OPTIONS...), where each
-OPTION is either a single keyword or (KEYWORD VALUE).
-See Info node `(cl)Structures' for a list of valid keywords.
+OPTION is either a single keyword or (KEYWORD VALUE) where
+KEYWORD can be one of :conc-name, :constructor, :copier, :predicate,
+:type, :named, :initial-offset, :print-function, or :include.
 
 Each SLOT may instead take the form (SLOT SLOT-OPTS...), where
 SLOT-OPTS are keyword-value pairs for that slot.  Currently, only
@@ -2323,26 +2324,29 @@ value, that slot cannot be set via `setf'.
                           (if (= pos 0) '(car cl-x)
                             `(nth ,pos cl-x)))) forms)
 	      (push (cons accessor t) side-eff)
-              ;; Don't bother defining a setf-expander, since gv-get can use
-              ;; the compiler macro to get the same result.
-              ;;(push `(gv-define-setter ,accessor (cl-val cl-x)
-              ;;         ,(if (cadr (memq :read-only (cddr desc)))
-              ;;              `(progn (ignore cl-x cl-val)
-              ;;                      (error "%s is a read-only slot"
-              ;;                             ',accessor))
-              ;;            ;; If cl is loaded only for compilation,
-              ;;            ;; the call to cl--struct-setf-expander would
-              ;;            ;; cause a warning because it may not be
-              ;;            ;; defined at run time.  Suppress that warning.
-              ;;            `(progn
-              ;;               (declare-function
-              ;;                cl--struct-setf-expander "cl-macs"
-              ;;                (x name accessor pred-form pos))
-              ;;               (cl--struct-setf-expander
-              ;;                cl-val cl-x ',name ',accessor
-              ;;                ,(and pred-check `',pred-check)
-              ;;                ,pos))))
-              ;;      forms)
+              (if (cadr (memq :read-only (cddr desc)))
+                  (push `(gv-define-expander ,accessor
+                           (lambda (_cl-do _cl-x)
+                             (error "%s is a read-only slot" ',accessor)))
+                        forms)
+                ;; For normal slots, we don't need to define a setf-expander,
+                ;; since gv-get can use the compiler macro to get the
+                ;; same result.
+                ;; (push `(gv-define-setter ,accessor (cl-val cl-x)
+                ;;          ;; If cl is loaded only for compilation,
+                ;;          ;; the call to cl--struct-setf-expander would
+                ;;          ;; cause a warning because it may not be
+                ;;          ;; defined at run time.  Suppress that warning.
+                ;;          (progn
+                ;;            (declare-function
+                ;;             cl--struct-setf-expander "cl-macs"
+                ;;             (x name accessor pred-form pos))
+                ;;            (cl--struct-setf-expander
+                ;;             cl-val cl-x ',name ',accessor
+                ;;             ,(and pred-check `',pred-check)
+                ;;             ,pos)))
+                ;;       forms)
+                )
 	      (if print-auto
 		  (nconc print-func
 			 (list `(princ ,(format " %s" slot) cl-s)

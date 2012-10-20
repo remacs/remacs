@@ -1,3 +1,29 @@
+2012-10-14  Kenichi Handa  <handa@gnu.org>
+
+	* charsets/JISC6226.map: Re-generated.
+
+2012-10-14  Eli Zaretskii  <eliz@gnu.org>
+
+	* compilation.txt (msft): Add error messages in new Studio 2010
+	format.
+
+2012-10-11  Kenichi Handa  <handa@gnu.org>
+
+	* charsets/CNS-2.map, charsets/CNS-3.map, charsets/CNS-4.map,
+	charsets/CNS-5.map, charsets/CNS-6.map, charsets/CNS-7.map,
+	charsets/CP932-2BYTE.map, charsets/GB180302.map,
+	charsets/GB180304.map, charsets/JISC6226.map,
+	charsets/JISX2131.map, charsets/MIK.map, charsets/PTCP154.map,
+	charsets/stdenc.map, charsets/symbol.map: Re-generated.
+
+2012-10-07  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* NEWS (NextStep/OSX port changes): OSX 10.4 or newer is required.
+
+2012-10-05  Douglas Lewan  <d_lewan2000@yahoo.com>  (tiny change)
+
+	* tutorials/TUTORIAL.pt_BR: Fix typo.  (Bug#12557)
+
 2012-10-01  Eric Ludlam  <zappo@gnu.org>
 
 	* srecode/cc.srt, srecode/ede-autoconf.srt: New files.

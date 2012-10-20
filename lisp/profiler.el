@@ -29,6 +29,7 @@
 (defgroup profiler nil
   "Emacs profiler."
   :group 'lisp
+  :version "24.3"
   :prefix "profiler-")
 
 (defconst profiler-version "24.3")
@@ -495,7 +496,7 @@ return it."
 	    t))))))
 
 (defun profiler-report-collapse-entry ()
-  "Collpase entry at point."
+  "Collapse entry at point."
   (interactive)
   (save-excursion
     (beginning-of-line)

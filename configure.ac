@@ -177,6 +177,7 @@ OPTION_DEFAULT_ON([toolkit-scroll-bars],[don't use Motif or Xaw3d scroll bars])
 OPTION_DEFAULT_ON([xaw3d],[don't use Xaw3d])
 OPTION_DEFAULT_ON([xim],[don't use X11 XIM])
 OPTION_DEFAULT_OFF([ns],[use NeXTstep (Cocoa or GNUstep) windowing system])
+OPTION_DEFAULT_OFF([w32], [use native MS Windows GUI])
 
 OPTION_DEFAULT_ON([gpm],[don't use -lgpm for mouse support on a GNU/Linux console])
 OPTION_DEFAULT_ON([dbus],[don't compile with D-Bus support])
@@ -577,6 +578,7 @@ fi
 AC_DEFUN([gl_THREADLIB])
 
 # Initialize gnulib right after choosing the compiler.
+dnl Amongst other things, this sets AR and ARFLAGS.
 gl_EARLY
 
 # It's helpful to have C macros available to GDB, so prefer -g3 to -g
@@ -1285,10 +1287,12 @@ dnl On Solaris 8 there's a compilation warning for term.h because
 dnl it doesn't define `bool'.
 AC_CHECK_HEADERS(term.h, , , -)
 AC_HEADER_TIME
-AC_CHECK_DECLS([sys_siglist])
+AC_CHECK_DECLS([sys_siglist], [], [], [[#include <signal.h>
+			              ]])
 if test $ac_cv_have_decl_sys_siglist != yes; then
   # For Tru64, at least:
-  AC_CHECK_DECLS([__sys_siglist])
+  AC_CHECK_DECLS([__sys_siglist], [], [], [[#include <signal.h>
+			                  ]])
   if test $ac_cv_have_decl___sys_siglist = yes; then
     AC_DEFINE(sys_siglist, __sys_siglist,
               [Define to any substitute for sys_siglist.])
@@ -1509,14 +1513,31 @@ fail;
   AC_CHECK_HEADER([AppKit/AppKit.h], [HAVE_NS=yes],
   		  [AC_MSG_ERROR([`--with-ns' was specified, but the include
   files are missing or cannot be compiled.])])
+
+  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([#include <AppKit/AppKit.h>],
+                                     [
+#ifdef MAC_OS_X_VERSION_MAX_ALLOWED
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1040
+ ; /* OK */
+#else
+#error "OSX 10.4 or newer required"
+#endif
+#endif
+		    ])],
+		    ns_osx_have_104=yes,
+		    ns_osx_have_104=no)
   AC_COMPILE_IFELSE([AC_LANG_PROGRAM([#include <Foundation/NSObjCRuntime.h>],
                                      [NSInteger i;])],
 		    ns_have_nsinteger=yes,
 		    ns_have_nsinteger=no)
+  if test $ns_osx_have_104 = no; then
+     AC_MSG_ERROR([`OSX 10.4 or newer is required']);
+  fi
   if test $ns_have_nsinteger = yes; then
     AC_DEFINE(NS_HAVE_NSINTEGER, 1, [Define to 1 if `NSInteger' is defined.])
   fi
 fi
+
 AC_SUBST(TEMACS_LDFLAGS2)
 
 INSTALL_ARCH_INDEP_EXTRA=install-etc
@@ -1557,6 +1578,30 @@ AC_SUBST(NS_OBJ)
 AC_SUBST(NS_OBJC_OBJ)
 AC_SUBST(LIB_STANDARD)
 
+HAVE_W32=no
+W32_OBJ=
+W32_LIBS=
+if test "${with_w32}" != no; then
+  if test "${opsys}" != "cygwin"; then
+    AC_MSG_ERROR([Using w32 with an autotools build is only supported for Cygwin.])
+  fi
+  AC_CHECK_HEADER([windows.h], [HAVE_W32=yes],
+                  [AC_MSG_ERROR([`--with-w32' was specified, but windows.h
+                  cannot be found.])])
+  AC_DEFINE(HAVE_NTGUI, 1, [Define to use native MS Windows GUI.])
+  W32_OBJ="w32fns.o w32menu.o w32reg.o w32font.o w32term.o"
+  W32_OBJ="$W32_OBJ w32xfns.o w32select.o w32uniscribe.o"
+  W32_LIBS="$W32_LIBS -lkernel32 -luser32 -lgdi32 -lole32 -lcomdlg32"
+  W32_LIBS="$W32_LIBS -lusp10 -lcomctl32 -lwinspool"
+fi
+AC_SUBST(W32_OBJ)
+AC_SUBST(W32_LIBS)
+
+if test "${HAVE_W32}" = "yes"; then
+  window_system=w32
+  with_xft=no
+fi
+
 ## $window_system is now set to the window system we will
 ## ultimately use.
 
@@ -1592,6 +1637,9 @@ dnl use the toolkit if we have gtk, or X11R5 or newer.
   ;;
   nextstep )
     term_header=nsterm.h
+  ;;
+  w32 )
+    term_header=w32term.h
   ;;
 esac
 
@@ -2352,6 +2400,9 @@ if test "${with_toolkit_scroll_bars}" != "no"; then
   elif test "${HAVE_NS}" = "yes"; then
     AC_DEFINE(USE_TOOLKIT_SCROLL_BARS)
     USE_TOOLKIT_SCROLL_BARS=yes
+  elif test "${HAVE_W32}" = "yes"; then
+    AC_DEFINE(USE_TOOLKIT_SCROLL_BARS)
+    USE_TOOLKIT_SCROLL_BARS=yes
   fi
 fi
 
@@ -2518,6 +2569,41 @@ AC_SUBST(M17N_FLT_LIBS)
 ### Use -lXpm if available, unless `--with-xpm=no'.
 HAVE_XPM=no
 LIBXPM=
+
+if test "${HAVE_W32}" = "yes"; then
+  if test "${with_xpm}" != "no"; then
+    SAVE_CPPFLAGS="$CPPFLAGS"
+    SAVE_LDFLAGS="$LDFLAGS"
+    CPPFLAGS="$CPPFLAGS -I/usr/include/noX"
+    LDFLAGS="$LDFLAGS -L/usr/lib/noX"
+    AC_CHECK_HEADER(X11/xpm.h,
+      [AC_CHECK_LIB(Xpm, XpmReadFileToImage, HAVE_XPM=yes)])
+    if test "${HAVE_XPM}" = "yes"; then
+      AC_MSG_CHECKING(for XpmReturnAllocPixels preprocessor define)
+      AC_EGREP_CPP(no_return_alloc_pixels,
+      [#include "X11/xpm.h"
+#ifndef XpmReturnAllocPixels
+no_return_alloc_pixels
+#endif
+      ], HAVE_XPM=no, HAVE_XPM=yes)
+
+      if test "${HAVE_XPM}" = "yes"; then
+        REAL_CPPFLAGS="$REAL_CPPFLAGS -I/usr/include/noX"
+	AC_MSG_RESULT(yes)
+      else
+	AC_MSG_RESULT(no)
+        CPPFLAGS="$SAVE_CPPFLAGS"
+        LDFLAGS="$SAVE_LDFLAGS"
+      fi
+    fi
+  fi
+
+  if test "${HAVE_XPM}" = "yes"; then
+    AC_DEFINE(HAVE_XPM, 1, [Define to 1 if you have the Xpm libary (-lXpm).])
+    LIBXPM=-lXpm
+  fi
+fi
+
 if test "${HAVE_X11}" = "yes"; then
   if test "${with_xpm}" != "no"; then
     AC_CHECK_HEADER(X11/xpm.h,
@@ -2544,12 +2630,13 @@ no_return_alloc_pixels
     LIBXPM=-lXpm
   fi
 fi
+
 AC_SUBST(LIBXPM)
 
 ### Use -ljpeg if available, unless `--with-jpeg=no'.
 HAVE_JPEG=no
 LIBJPEG=
-if test "${HAVE_X11}" = "yes"; then
+if test "${HAVE_X11}" = "yes" || test "${HAVE_W32}" = "yes"; then
   if test "${with_jpeg}" != "no"; then
     dnl Checking for jpeglib.h can lose because of a redefinition of
     dnl  HAVE_STDLIB_H.
@@ -2577,7 +2664,7 @@ AC_SUBST(LIBJPEG)
 ### Use -lpng if available, unless `--with-png=no'.
 HAVE_PNG=no
 LIBPNG=
-if test "${HAVE_X11}" = "yes"; then
+if test "${HAVE_X11}" = "yes" || test "${HAVE_W32}" = "yes"; then
   if test "${with_png}" != "no"; then
     # Debian unstable as of July 2003 has multiple libpngs, and puts png.h
     # in /usr/include/libpng.
@@ -2610,7 +2697,7 @@ AC_SUBST(LIBPNG)
 ### Use -ltiff if available, unless `--with-tiff=no'.
 HAVE_TIFF=no
 LIBTIFF=
-if test "${HAVE_X11}" = "yes"; then
+if test "${HAVE_X11}" = "yes" || test "${HAVE_W32}" = "yes"; then
   if test "${with_tiff}" != "no"; then
     AC_CHECK_HEADER(tiffio.h,
       [tifflibs="-lz -lm"
@@ -2630,7 +2717,8 @@ AC_SUBST(LIBTIFF)
 ### Use -lgif or -lungif if available, unless `--with-gif=no'.
 HAVE_GIF=no
 LIBGIF=
-if test "${HAVE_X11}" = "yes" && test "${with_gif}" != "no"; then
+if test "${HAVE_X11}" = "yes" && test "${with_gif}" != "no" \
+        || test "${HAVE_W32}" = "yes"; then
   AC_CHECK_HEADER(gif_lib.h,
 # EGifPutExtensionLast only exists from version libungif-4.1.0b1.
 # Earlier versions can crash Emacs.
@@ -2712,6 +2800,9 @@ if test "${HAVE_NS}" = "yes"; then
   OTHER_FILES=ns-app
 fi
 
+if test "${HAVE_W32}" = "yes"; then
+  HAVE_MENUS=yes
+fi
 
 ### Use session management (-lSM -lICE) if available
 HAVE_X_SM=no
@@ -4247,7 +4338,7 @@ fi
 AC_SUBST(RALLOC_OBJ)
 
 if test "$opsys" = "cygwin"; then
-  CYGWIN_OBJ="sheap.o"
+  CYGWIN_OBJ="sheap.o cygw32.o"
   ## Cygwin differs because of its unexec().
   PRE_ALLOC_OBJ=
   POST_ALLOC_OBJ=lastfile.o

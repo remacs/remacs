@@ -1159,6 +1159,7 @@ See the \\[verilog-faq] for examples on using this."
   "Non-nil means report warning if an AUTO_TEMPLATE line is not used.
 This feature is not supported before Emacs 21.1 or XEmacs 21.4."
   :group 'verilog-mode-auto
+  :version "24.3"
   :type 'boolean)
 (put 'verilog-auto-template-warn-unused 'safe-local-variable 'verilog-booleanp)
 
@@ -1230,11 +1231,13 @@ For example, \"_t$\" matches typedefs named with _t, as in the C language."
 (defcustom verilog-before-save-font-hook nil
   "Hook run before `verilog-save-font-mods' removes highlighting."
   :group 'verilog-mode-auto
+  :version "24.3"
   :type 'hook)
 
 (defcustom verilog-after-save-font-hook nil
   "Hook run after `verilog-save-font-mods' restores highlighting."
   :group 'verilog-mode-auto
+  :version "24.3"
   :type 'hook)
 
 (defvar verilog-imenu-generic-expression
@@ -5148,7 +5151,7 @@ This sets up the appropriate Verilog mode environment, removes
 whitespace with \\[verilog-delete-trailing-whitespace] on all
 command-line files, and saves the buffers."
   (unless noninteractive
-    (error "Use verilog-batch-delete-trailing-whitepace only with --batch"))  ;; Otherwise we'd mess up buffer modes
+    (error "Use verilog-batch-delete-trailing-whitespace only with --batch"))  ;; Otherwise we'd mess up buffer modes
   (verilog-batch-execute-func `verilog-delete-trailing-whitespace))
 
 (defun verilog-batch-diff-auto ()
@@ -12161,7 +12164,7 @@ Limitations:
   Interface names must be resolvable to filenames.  See `verilog-auto-inst'.
 
 As with other autos, any inputs/outputs declared in the module
-will suppress the AUTO from redeclarating an inputs/outputs by
+will suppress the AUTO from redeclaring an input/output by
 the same name.
 
 An example:

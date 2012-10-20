@@ -375,7 +375,7 @@ Return the result of the last expression in BODY."
 	 ((edebug-get-buffer-window buffer))
 	 ((one-window-p 'nomini)
 	  ;; When there's one window only, split it.
-	  (split-window))
+	  (split-window (minibuffer-selected-window)))
 	 ((let ((trace-window (get-buffer-window edebug-trace-buffer)))
 	    (catch 'found
 	      (dolist (elt (window-list nil 'nomini))
@@ -386,13 +386,10 @@ Return the result of the last expression in BODY."
 		  (throw 'found elt))))))
 	 ;; All windows are dedicated or show `edebug-trace-buffer', split
 	 ;; selected one.
-	 (t (split-window))))
-  (select-window window)
+	 (t (split-window (minibuffer-selected-window)))))
   (set-window-buffer window buffer)
-  (set-window-hscroll window 0);; should this be??
-  ;; Selecting the window does not set the buffer until command loop.
-  ;;(set-buffer buffer)
-  )
+  (select-window window)
+  (set-window-hscroll window 0)) ;; should this be??
 
 (defun edebug-get-displayed-buffer-points ()
   ;; Return a list of buffer point pairs, for all displayed buffers.

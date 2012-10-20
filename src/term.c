@@ -28,7 +28,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "lisp.h"
 #include "termchar.h"
-#include "termopts.h"
 #include "tparam.h"
 #include "character.h"
 #include "buffer.h"
@@ -67,6 +66,7 @@ static int been_here = -1;
 /* The name of the default console device.  */
 #ifdef WINDOWSNT
 #define DEV_TTY  "CONOUT$"
+#include "w32term.h"
 #else
 #define DEV_TTY  "/dev/tty"
 #endif

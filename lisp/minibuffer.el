@@ -632,6 +632,7 @@ That is what completion commands operate on."
 (defun delete-minibuffer-contents ()
   "Delete all user input in a minibuffer.
 If the current buffer is not a minibuffer, erase its entire contents."
+  (interactive)
   ;; We used to do `delete-field' here, but when file name shadowing
   ;; is on, the field doesn't cover the entire minibuffer contents.
   (delete-region (minibuffer-prompt-end) (point-max)))
@@ -858,8 +859,8 @@ Depending on this setting `minibuffer-complete' may use cycling,
 like `minibuffer-force-complete'.
 If nil, cycling is never used.
 If t, cycling is always used.
-If an integer, cycling is used as soon as there are fewer completion
-candidates than this number."
+If an integer, cycling is used so long as there are not more
+completion candidates than this number."
   :version "24.1"
   :type completion--cycling-threshold-type)
 
@@ -976,7 +977,7 @@ when the buffer's text is already an exact match."
                           ;; This signal an (intended) error if comps is too
                           ;; short or if completion-cycle-threshold is t.
                           (consp (nthcdr threshold comps)))))
-              ;; Fewer than completion-cycle-threshold remaining
+              ;; Not more than completion-cycle-threshold remaining
               ;; completions: let's cycle.
               (setq completed t exact t)
               (completion--cache-all-sorted-completions comps)
@@ -1133,7 +1134,23 @@ Repeated uses step through the possible completions."
       ;; through the previous possible completions.
       (let ((last (last all)))
         (setcdr last (cons (car all) (cdr last)))
-        (completion--cache-all-sorted-completions (cdr all)))))))
+        (completion--cache-all-sorted-completions (cdr all)))
+      ;; Make sure repeated uses cycle, even though completion--done might
+      ;; have added a space or something that moved us outside of the field.
+      ;; (bug#12221).
+      (let* ((table minibuffer-completion-table)
+             (pred minibuffer-completion-predicate)
+             (extra-prop completion-extra-properties)
+             (cmd
+              (lambda () "Cycle through the possible completions."
+                (interactive)
+                (let ((completion-extra-properties extra-prop))
+                  (completion-in-region start (point) table pred)))))
+        (set-temporary-overlay-map
+         (let ((map (make-sparse-keymap)))
+           (define-key map [remap completion-at-point] cmd)
+           (define-key map (vector last-command-event) cmd)
+           map)))))))
 
 (defvar minibuffer-confirm-exit-commands
   '(completion-at-point minibuffer-complete
@@ -1556,7 +1573,6 @@ variables.")
   (let* ((exit-fun (plist-get completion-extra-properties :exit-function))
          (pre-msg (and exit-fun (current-message))))
     (cl-assert (memq finished '(exact sole finished unknown)))
-    ;; FIXME: exit-fun should receive `finished' as a parameter.
     (when exit-fun
       (when (eq finished 'unknown)
         (setq finished

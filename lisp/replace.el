@@ -62,6 +62,10 @@ no default value.")
 (defvar query-replace-interactive nil
   "Non-nil means `query-replace' uses the last search string.
 That becomes the \"string to replace\".")
+(make-obsolete-variable 'query-replace-interactive
+			"use `M-n' to pull the last incremental search string
+to the minibuffer that reads the string to replace, or invoke replacements
+from Isearch by using a key sequence like `C-s C-s M-%'." "24.3")
 
 (defcustom query-replace-from-history-variable 'query-replace-history
   "History list to use for the FROM argument of `query-replace' commands.
@@ -142,7 +146,8 @@ wants to replace FROM with TO."
 	      (if regexp-flag
 		  (read-regexp prompt nil query-replace-from-history-variable)
 		(read-from-minibuffer
-		 prompt nil nil nil query-replace-from-history-variable nil t)))))
+		 prompt nil nil nil query-replace-from-history-variable
+		 (car (if regexp-flag regexp-search-ring search-ring)) t)))))
       (if (and (zerop (length from)) query-replace-defaults)
 	  (cons (car query-replace-defaults)
 		(query-replace-compile-replacement
@@ -231,9 +236,11 @@ what to do with it.  For directions, type \\[help-command] at that time.
 In Transient Mark mode, if the mark is active, operate on the contents
 of the region.  Otherwise, operate from point to the end of the buffer.
 
-If `query-replace-interactive' is non-nil, the last incremental search
-string is used as FROM-STRING--you don't have to specify it with the
-minibuffer.
+Use \\<minibuffer-local-map>\\[next-history-element] \
+to pull the last incremental search string to the minibuffer
+that reads FROM-STRING, or invoke replacements from
+incremental search with a key sequence like `C-s C-s M-%'
+to use its current search string as the string to replace.
 
 Matching is independent of case if `case-fold-search' is non-nil and
 FROM-STRING has no uppercase letters.  Replacement transfers the case
@@ -279,9 +286,11 @@ what to do with it.  For directions, type \\[help-command] at that time.
 In Transient Mark mode, if the mark is active, operate on the contents
 of the region.  Otherwise, operate from point to the end of the buffer.
 
-If `query-replace-interactive' is non-nil, the last incremental search
-regexp is used as REGEXP--you don't have to specify it with the
-minibuffer.
+Use \\<minibuffer-local-map>\\[next-history-element] \
+to pull the last incremental search regexp to the minibuffer
+that reads REGEXP, or invoke replacements from
+incremental search with a key sequence like `C-M-s C-M-s C-M-%'
+to use its current search regexp as the regexp to replace.
 
 Matching is independent of case if `case-fold-search' is non-nil and
 REGEXP has no uppercase letters.  Replacement transfers the case
@@ -364,9 +373,9 @@ In interactive use, `\\#' in itself stands for `replace-count'.
 In Transient Mark mode, if the mark is active, operate on the contents
 of the region.  Otherwise, operate from point to the end of the buffer.
 
-If `query-replace-interactive' is non-nil, the last incremental search
-regexp is used as REGEXP--you don't have to specify it with the
-minibuffer.
+Use \\<minibuffer-local-map>\\[next-history-element] \
+to pull the last incremental search regexp to the minibuffer
+that reads REGEXP.
 
 Preserves case in each replacement if `case-replace' and `case-fold-search'
 are non-nil and REGEXP has no uppercase letters.
@@ -417,19 +426,16 @@ of the region.  Otherwise, operate from point to the end of the buffer.
 
 Non-interactively, TO-STRINGS may be a list of replacement strings.
 
-If `query-replace-interactive' is non-nil, the last incremental search
-regexp is used as REGEXP--you don't have to specify it with the minibuffer.
+Use \\<minibuffer-local-map>\\[next-history-element] \
+to pull the last incremental search regexp to the minibuffer
+that reads REGEXP.
 
 A prefix argument N says to use each replacement string N times
 before rotating to the next.
 Fourth and fifth arg START and END specify the region to operate on."
   (interactive
-   (let* ((from (if query-replace-interactive
-		    (car regexp-search-ring)
-		  (read-from-minibuffer "Map query replace (regexp): "
-					nil nil nil
-					query-replace-from-history-variable
-					nil t)))
+   (let* ((from (read-regexp "Map query replace (regexp): " nil
+			     query-replace-from-history-variable))
 	  (to (read-from-minibuffer
 	       (format "Query replace %s with (space-separated strings): "
 		       (query-replace-descr from))
@@ -475,9 +481,9 @@ Third arg DELIMITED (prefix arg if interactive), if non-nil, means replace
 only matches surrounded by word boundaries.
 Fourth and fifth arg START and END specify the region to operate on.
 
-If `query-replace-interactive' is non-nil, the last incremental search
-string is used as FROM-STRING--you don't have to specify it with the
-minibuffer.
+Use \\<minibuffer-local-map>\\[next-history-element] \
+to pull the last incremental search string to the minibuffer
+that reads FROM-STRING.
 
 This function is usually the wrong thing to use in a Lisp program.
 What you probably want is a loop like this:
@@ -540,8 +546,9 @@ When using those Lisp features interactively in the replacement
 text, TO-STRING is actually made a list instead of a string.
 Use \\[repeat-complex-command] after this command for details.
 
-If `query-replace-interactive' is non-nil, the last incremental search
-regexp is used as REGEXP--you don't have to specify it with the minibuffer.
+Use \\<minibuffer-local-map>\\[next-history-element] \
+to pull the last incremental search regexp to the minibuffer
+that reads REGEXP.
 
 This function is usually the wrong thing to use in a Lisp program.
 What you probably want is a loop like this:
@@ -1596,9 +1603,13 @@ Comma to replace but not move point immediately,
 C-r to enter recursive edit (\\[exit-recursive-edit] to get out again),
 C-w to delete match and recursive edit,
 C-l to clear the screen, redisplay, and offer same replacement again,
-! to replace all remaining matches with no more questions,
+! to replace all remaining matches in this buffer with no more questions,
 ^ to move point back to previous match,
-E to edit the replacement string"
+E to edit the replacement string.
+In multi-buffer replacements type `Y' to replace all remaining
+matches in all remaining buffers with no more questions,
+`N' to skip to the next buffer without replacing remaining matches
+in the current buffer."
   "Help message while in `query-replace'.")
 
 (defvar query-replace-map

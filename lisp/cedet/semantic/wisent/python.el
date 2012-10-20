@@ -48,24 +48,15 @@
 
 (defun semantic-python-get-system-include-path ()
   "Evaluate some Python code that determines the system include path."
-  (python-proc)
-  (if python-buffer
-      (with-current-buffer python-buffer
-	(set (make-local-variable 'python-preoutput-result) nil)
-	(python-send-string
-	 "import sys; print '_emacs_out ' + '\\0'.join(sys.path)")
-	(accept-process-output (python-proc) 2)
-	(if python-preoutput-result
-	    (split-string python-preoutput-result "[\0\n]" t)
-	  ;; Try a second, Python3k compatible shot
-	  (python-send-string
-	   "import sys; print('_emacs_out ' + '\\0'.join(sys.path))")
-	  (accept-process-output (python-proc) 2)
-	  (if python-preoutput-result
-	      (split-string python-preoutput-result "[\0\n]" t)
-	    (message "Timeout while querying Python for system include path.")
-	    nil)))
-    (message "Python seems to be unavailable on this system.")))
+  (delq nil
+	(mapcar
+	 (lambda (dir)
+	   (when (file-directory-p dir)
+	     dir))
+	 (split-string
+	  (python-shell-internal-send-string
+	   "import sys;print ('\\n'.join(sys.path))")
+	  "\n" t))))
 
 (defcustom-mode-local-semantic-dependency-system-include-path
   python-mode semantic-python-dependency-system-include-path
@@ -477,6 +468,22 @@ To be implemented for Python!  For now just return nil."
   "Return a suitable path for (some) Python imports."
   (let ((name (semantic-tag-name tag)))
     (concat (mapconcat 'identity (split-string name "\\.") "/") ".py")))
+
+;; Override ctxt-current-function/assignment defaults, since they do
+;; not work properly with Python code, even leading to endless loops
+;; (see bug #xxxxx).
+(define-mode-local-override semantic-ctxt-current-function python-mode (&optional point)
+  "Return the current function call the cursor is in at POINT.
+The function returned is the one accepting the arguments that
+the cursor is currently in.  It will not return function symbol if the
+cursor is on the text representing that function."
+  nil)
+
+(define-mode-local-override semantic-ctxt-current-assignment python-mode (&optional point)
+  "Return the current assignment near the cursor at POINT.
+Return a list as per `semantic-ctxt-current-symbol'.
+Return nil if there is nothing relevant."
+  nil)
 
 ;;; Enable Semantic in `python-mode'.
 ;;

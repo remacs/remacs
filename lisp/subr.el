@@ -2143,6 +2143,15 @@ any other non-digit terminates the character code and is then used as input."))
       (setq first nil))
     code))
 
+(defvar read-passwd-map
+  ;; BEWARE: `defconst' would purecopy it, breaking the sharing with
+  ;; minibuffer-local-map along the way!
+  (let ((map (make-sparse-keymap)))
+    (set-keymap-parent map minibuffer-local-map)
+    (define-key map "\C-u" #'delete-minibuffer-contents) ;bug#12570
+    map)
+  "Keymap used while reading passwords.")
+
 (defun read-passwd (prompt &optional confirm default)
   "Read a password, prompting with PROMPT, and return it.
 If optional CONFIRM is non-nil, read the password twice to make sure.
@@ -2179,7 +2188,10 @@ by doing (clear-string STRING)."
           (lambda ()
             (setq minibuf (current-buffer))
             ;; Turn off electricity.
-            (set (make-local-variable 'post-self-insert-hook) nil)
+            (setq-local post-self-insert-hook nil)
+            (setq-local buffer-undo-list t)
+            (setq-local select-active-regions nil)
+            (use-local-map read-passwd-map)
             (add-hook 'after-change-functions hide-chars-fun nil 'local))
         (unwind-protect
             (let ((enable-recursive-minibuffers t))
@@ -3170,7 +3182,7 @@ in which case `save-window-excursion' cannot help."
 	  (set-window-hscroll window 0)
 	  ;; Don't try this with NOFORCE non-nil!
 	  (set-window-start window (point-min) t)
-	  ;; This hould not be necessary.
+	  ;; This should not be necessary.
 	  (set-window-point window (point-min))
 	  ;; Run `temp-buffer-show-hook', with the chosen window selected.
 	  (with-selected-window window

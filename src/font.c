@@ -4775,7 +4775,7 @@ the current buffer.  It defaults to the currently selected window.  */)
     {
       CHECK_NUMBER (position);
       CHECK_STRING (string);
-      if (! (0 < XINT (position) && XINT (position) < SCHARS (string)))
+      if (! (0 <= XINT (position) && XINT (position) < SCHARS (string)))
 	args_out_of_range (string, position);
       pos = XINT (position);
     }
@@ -5208,9 +5208,9 @@ EMACS_FONT_LOG is set.  Otherwise, it is set to t.  */);
 #ifdef HAVE_BDFFONT
   syms_of_bdffont ();
 #endif	/* HAVE_BDFFONT */
-#ifdef WINDOWSNT
+#ifdef HAVE_NTGUI
   syms_of_w32font ();
-#endif	/* WINDOWSNT */
+#endif	/* HAVE_NTGUI */
 #ifdef HAVE_NS
   syms_of_nsfont ();
 #endif	/* HAVE_NS */

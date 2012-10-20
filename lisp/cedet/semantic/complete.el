@@ -1555,7 +1555,7 @@ number of completions initially.  Pressing TAB will show the
 extended set.
 
 Quiet: Only show completions when we have narrowed all
-posibilities down to a maximum of
+possibilities down to a maximum of
 `semantic-displayor-tooltip-initial-max-tags' tags.  Pressing TAB
 multiple times will also show completions.
 
@@ -1564,6 +1564,7 @@ Verbose: Always show all completions available.
 The absolute maximum number of completions for all mode is
 determined through `semantic-displayor-tooltip-max-tags'."
   :group 'semantic
+  :version "24.3"
   :type '(choice (const :tag "Standard" standard)
 		 (const :tag "Quiet" quiet)
 		 (const :tag "Verbose" verbose)))
@@ -1573,24 +1574,25 @@ determined through `semantic-displayor-tooltip-max-tags'."
   "Maximum number of tags to be displayed initially.
 See doc-string of `semantic-displayor-tooltip-mode' for details."
   :group 'semantic
+  :version "24.3"
   :type 'integer)
 
 (defcustom semantic-displayor-tooltip-max-tags 25
- "The maximum number of tags to be displayed.
+  "The maximum number of tags to be displayed.
 Maximum number of completions where we have activated the
 extended completion list through typing TAB or SPACE multiple
 times.  This limit needs to fit on your screen!
 
 Note: If available, customizing this variable increases
-'x-max-tooltip-size' to force over-sized tooltips when necessary.
-This will not happen if you directly set this variable via
-`setq'."
- :group 'semantic
- :type 'integer
- :set '(lambda (sym var)
-	 (set-default sym var)
-	 (when (boundp 'x-max-tooltip-size)
-	   (setcdr x-max-tooltip-size (max (1+ var) (cdr x-max-tooltip-size))))))
+`x-max-tooltip-size' to force over-sized tooltips when necessary.
+This will not happen if you directly set this variable via `setq'."
+  :group 'semantic
+  :version "24.3"
+  :type 'integer
+  :set '(lambda (sym var)
+	  (set-default sym var)
+	  (when (boundp 'x-max-tooltip-size)
+	    (setcdr x-max-tooltip-size (max (1+ var) (cdr x-max-tooltip-size))))))
 
 
 (defclass semantic-displayor-tooltip (semantic-displayor-traditional)
@@ -2086,6 +2088,7 @@ completion works."
 (defun semantic-complete-jump-local ()
   "Jump to a local semantic symbol."
   (interactive)
+  (semantic-error-if-unparsed)
   (let ((tag (semantic-complete-read-tag-buffer-deep "Jump to symbol: ")))
     (when (semantic-tag-p tag)
       (push-mark)
@@ -2099,6 +2102,7 @@ completion works."
 (defun semantic-complete-jump ()
   "Jump to a semantic symbol."
   (interactive)
+  (semantic-error-if-unparsed)
   (let* ((tag (semantic-complete-read-tag-project "Jump to symbol: ")))
     (when (semantic-tag-p tag)
       (push-mark)
@@ -2113,6 +2117,7 @@ completion works."
 (defun semantic-complete-jump-local-members ()
   "Jump to a semantic symbol."
   (interactive)
+  (semantic-error-if-unparsed)
   (let* ((tag (semantic-complete-read-tag-local-members "Jump to symbol: ")))
     (when (semantic-tag-p tag)
       (let ((start (condition-case nil (semantic-tag-start tag)
@@ -2214,7 +2219,7 @@ use `semantic-complete-analyze-inline' to complete."
       (error nil))
     ))
 
-;;;;###autoload
+;;;###autoload
 (defun semantic-complete-inline-project ()
   "Perform inline completion for any symbol in the current project.
 `semantic-analyze-possible-completions' is used to determine the
@@ -2239,4 +2244,3 @@ will perform the completion."
 ;; End:
 
 ;;; semantic/complete.el ends here
-

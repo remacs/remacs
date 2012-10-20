@@ -909,6 +909,7 @@ REPLACE_REALLOC
 REPLACE_RANDOM_R
 REPLACE_PUTENV
 REPLACE_PTSNAME_R
+REPLACE_PTSNAME
 REPLACE_MKSTEMP
 REPLACE_MBTOWC
 REPLACE_MALLOC
@@ -1203,6 +1204,8 @@ LIB_PTHREAD
 VMLIMIT_OBJ
 GMALLOC_OBJ
 HAVE_XSERVER
+W32_LIBS
+W32_OBJ
 LIB_STANDARD
 NS_OBJC_OBJ
 NS_OBJ
@@ -1361,6 +1364,7 @@ with_toolkit_scroll_bars
 with_xaw3d
 with_xim
 with_ns
+with_w32
 with_gpm
 with_dbus
 with_gconf
@@ -2080,6 +2084,7 @@ Optional Packages:
   --without-xaw3d         don't use Xaw3d
   --without-xim           don't use X11 XIM
   --with-ns               use NeXTstep (Cocoa or GNUstep) windowing system
+  --with-w32              use native MS Windows GUI
   --without-gpm           don't use -lgpm for mouse support on a GNU/Linux
                           console
   --without-dbus          don't compile with D-Bus support
@@ -4089,6 +4094,14 @@ if test "${with_ns+set}" = set; then :
   withval=$with_ns;
 else
       with_ns=no
+fi
+
+
+# Check whether --with-w32 was given.
+if test "${with_w32+set}" = set; then :
+  withval=$with_w32;
+else
+      with_w32=no
 fi
 
 
@@ -7295,8 +7308,41 @@ fi
       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $gl_cv_cc_nomfi_needed" >&5
 $as_echo "$gl_cv_cc_nomfi_needed" >&6; }
     fi
+
+                { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether -Wuninitialized is supported" >&5
+$as_echo_n "checking whether -Wuninitialized is supported... " >&6; }
+    if test "${gl_cv_cc_uninitialized_supported+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+
+      gl_save_CFLAGS="$CFLAGS"
+      CFLAGS="$CFLAGS -Werror -Wuninitialized"
+      cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  gl_cv_cc_uninitialized_supported=yes
+else
+  gl_cv_cc_uninitialized_supported=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+      CFLAGS="$gl_save_CFLAGS"
+fi
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: $gl_cv_cc_uninitialized_supported" >&5
+$as_echo "$gl_cv_cc_uninitialized_supported" >&6; }
+
   fi
 
+  # List all gcc warning categories.
   gl_manywarn_set=
   for gl_manywarn_item in \
     -W \
@@ -7415,9 +7461,13 @@ $as_echo "$gl_cv_cc_nomfi_needed" >&6; }
     gl_manywarn_set="$gl_manywarn_set $gl_manywarn_item"
   done
 
-  # Disable the missing-field-initializers warning if needed
+  # Disable specific options as needed.
   if test "$gl_cv_cc_nomfi_needed" = yes; then
     gl_manywarn_set="$gl_manywarn_set -Wno-missing-field-initializers"
+  fi
+
+  if test "$gl_cv_cc_uninitialized_supported" = no; then
+    gl_manywarn_set="$gl_manywarn_set -Wno-uninitialized"
   fi
 
   ws=$gl_manywarn_set
@@ -8776,7 +8826,9 @@ $as_echo "#define TIME_WITH_SYS_TIME 1" >>confdefs.h
 
 fi
 
-ac_fn_c_check_decl "$LINENO" "sys_siglist" "ac_cv_have_decl_sys_siglist" "$ac_includes_default"
+ac_fn_c_check_decl "$LINENO" "sys_siglist" "ac_cv_have_decl_sys_siglist" "#include <signal.h>
+
+"
 if test "x$ac_cv_have_decl_sys_siglist" = x""yes; then :
   ac_have_decl=1
 else
@@ -8789,7 +8841,9 @@ _ACEOF
 
 if test $ac_cv_have_decl_sys_siglist != yes; then
   # For Tru64, at least:
-  ac_fn_c_check_decl "$LINENO" "__sys_siglist" "ac_cv_have_decl___sys_siglist" "$ac_includes_default"
+  ac_fn_c_check_decl "$LINENO" "__sys_siglist" "ac_cv_have_decl___sys_siglist" "#include <signal.h>
+
+"
 if test "x$ac_cv_have_decl___sys_siglist" = x""yes; then :
   ac_have_decl=1
 else
@@ -9472,6 +9526,32 @@ else
 fi
 
 
+
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <AppKit/AppKit.h>
+int
+main ()
+{
+
+#ifdef MAC_OS_X_VERSION_MAX_ALLOWED
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1040
+ ; /* OK */
+#else
+#error "OSX 10.4 or newer required"
+#endif
+#endif
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  ns_osx_have_104=yes
+else
+  ns_osx_have_104=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 #include <Foundation/NSObjCRuntime.h>
@@ -9489,12 +9569,16 @@ else
   ns_have_nsinteger=no
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+  if test $ns_osx_have_104 = no; then
+     as_fn_error "\`OSX 10.4 or newer is required'" "$LINENO" 5;
+  fi
   if test $ns_have_nsinteger = yes; then
 
 $as_echo "#define NS_HAVE_NSINTEGER 1" >>confdefs.h
 
   fi
 fi
+
 
 
 INSTALL_ARCH_INDEP_EXTRA=install-etc
@@ -9532,6 +9616,38 @@ CPPFLAGS="$tmp_CPPFLAGS"
 
 
 
+HAVE_W32=no
+W32_OBJ=
+W32_LIBS=
+if test "${with_w32}" != no; then
+  if test "${opsys}" != "cygwin"; then
+    as_fn_error "Using w32 with an autotools build is only supported for Cygwin." "$LINENO" 5
+  fi
+  ac_fn_c_check_header_mongrel "$LINENO" "windows.h" "ac_cv_header_windows_h" "$ac_includes_default"
+if test "x$ac_cv_header_windows_h" = x""yes; then :
+  HAVE_W32=yes
+else
+  as_fn_error "\`--with-w32' was specified, but windows.h
+                  cannot be found." "$LINENO" 5
+fi
+
+
+
+$as_echo "#define HAVE_NTGUI 1" >>confdefs.h
+
+  W32_OBJ="w32fns.o w32menu.o w32reg.o w32font.o w32term.o"
+  W32_OBJ="$W32_OBJ w32xfns.o w32select.o w32uniscribe.o"
+  W32_LIBS="$W32_LIBS -lkernel32 -luser32 -lgdi32 -lole32 -lcomdlg32"
+  W32_LIBS="$W32_LIBS -lusp10 -lcomctl32 -lwinspool"
+fi
+
+
+
+if test "${HAVE_W32}" = "yes"; then
+  window_system=w32
+  with_xft=no
+fi
+
 ## $window_system is now set to the window system we will
 ## ultimately use.
 
@@ -9563,6 +9679,9 @@ case "${window_system}" in
   ;;
   nextstep )
     term_header=nsterm.h
+  ;;
+  w32 )
+    term_header=w32term.h
   ;;
 esac
 
@@ -11630,6 +11749,10 @@ if test "${with_toolkit_scroll_bars}" != "no"; then
     $as_echo "#define USE_TOOLKIT_SCROLL_BARS 1" >>confdefs.h
 
     USE_TOOLKIT_SCROLL_BARS=yes
+  elif test "${HAVE_W32}" = "yes"; then
+    $as_echo "#define USE_TOOLKIT_SCROLL_BARS 1" >>confdefs.h
+
+    USE_TOOLKIT_SCROLL_BARS=yes
   fi
 fi
 
@@ -12191,6 +12314,99 @@ fi
 ### Use -lXpm if available, unless `--with-xpm=no'.
 HAVE_XPM=no
 LIBXPM=
+
+if test "${HAVE_W32}" = "yes"; then
+  if test "${with_xpm}" != "no"; then
+    SAVE_CPPFLAGS="$CPPFLAGS"
+    SAVE_LDFLAGS="$LDFLAGS"
+    CPPFLAGS="$CPPFLAGS -I/usr/include/noX"
+    LDFLAGS="$LDFLAGS -L/usr/lib/noX"
+    ac_fn_c_check_header_mongrel "$LINENO" "X11/xpm.h" "ac_cv_header_X11_xpm_h" "$ac_includes_default"
+if test "x$ac_cv_header_X11_xpm_h" = x""yes; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for XpmReadFileToImage in -lXpm" >&5
+$as_echo_n "checking for XpmReadFileToImage in -lXpm... " >&6; }
+if test "${ac_cv_lib_Xpm_XpmReadFileToImage+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lXpm  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char XpmReadFileToImage ();
+int
+main ()
+{
+return XpmReadFileToImage ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_Xpm_XpmReadFileToImage=yes
+else
+  ac_cv_lib_Xpm_XpmReadFileToImage=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_Xpm_XpmReadFileToImage" >&5
+$as_echo "$ac_cv_lib_Xpm_XpmReadFileToImage" >&6; }
+if test "x$ac_cv_lib_Xpm_XpmReadFileToImage" = x""yes; then :
+  HAVE_XPM=yes
+fi
+
+fi
+
+
+    if test "${HAVE_XPM}" = "yes"; then
+      { $as_echo "$as_me:${as_lineno-$LINENO}: checking for XpmReturnAllocPixels preprocessor define" >&5
+$as_echo_n "checking for XpmReturnAllocPixels preprocessor define... " >&6; }
+      cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include "X11/xpm.h"
+#ifndef XpmReturnAllocPixels
+no_return_alloc_pixels
+#endif
+
+_ACEOF
+if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
+  $EGREP "no_return_alloc_pixels" >/dev/null 2>&1; then :
+  HAVE_XPM=no
+else
+  HAVE_XPM=yes
+fi
+rm -f conftest*
+
+
+      if test "${HAVE_XPM}" = "yes"; then
+        REAL_CPPFLAGS="$REAL_CPPFLAGS -I/usr/include/noX"
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+      else
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+        CPPFLAGS="$SAVE_CPPFLAGS"
+        LDFLAGS="$SAVE_LDFLAGS"
+      fi
+    fi
+  fi
+
+  if test "${HAVE_XPM}" = "yes"; then
+
+$as_echo "#define HAVE_XPM 1" >>confdefs.h
+
+    LIBXPM=-lXpm
+  fi
+fi
+
 if test "${HAVE_X11}" = "yes"; then
   if test "${with_xpm}" != "no"; then
     ac_fn_c_check_header_mongrel "$LINENO" "X11/xpm.h" "ac_cv_header_X11_xpm_h" "$ac_includes_default"
@@ -12277,10 +12493,11 @@ $as_echo "#define HAVE_XPM 1" >>confdefs.h
 fi
 
 
+
 ### Use -ljpeg if available, unless `--with-jpeg=no'.
 HAVE_JPEG=no
 LIBJPEG=
-if test "${HAVE_X11}" = "yes"; then
+if test "${HAVE_X11}" = "yes" || test "${HAVE_W32}" = "yes"; then
   if test "${with_jpeg}" != "no"; then
             ac_fn_c_check_header_mongrel "$LINENO" "jerror.h" "ac_cv_header_jerror_h" "$ac_includes_default"
 if test "x$ac_cv_header_jerror_h" = x""yes; then :
@@ -12359,7 +12576,7 @@ fi
 ### Use -lpng if available, unless `--with-png=no'.
 HAVE_PNG=no
 LIBPNG=
-if test "${HAVE_X11}" = "yes"; then
+if test "${HAVE_X11}" = "yes" || test "${HAVE_W32}" = "yes"; then
   if test "${with_png}" != "no"; then
     # Debian unstable as of July 2003 has multiple libpngs, and puts png.h
     # in /usr/include/libpng.
@@ -12449,7 +12666,7 @@ fi
 ### Use -ltiff if available, unless `--with-tiff=no'.
 HAVE_TIFF=no
 LIBTIFF=
-if test "${HAVE_X11}" = "yes"; then
+if test "${HAVE_X11}" = "yes" || test "${HAVE_W32}" = "yes"; then
   if test "${with_tiff}" != "no"; then
     ac_fn_c_check_header_mongrel "$LINENO" "tiffio.h" "ac_cv_header_tiffio_h" "$ac_includes_default"
 if test "x$ac_cv_header_tiffio_h" = x""yes; then :
@@ -12513,7 +12730,8 @@ fi
 ### Use -lgif or -lungif if available, unless `--with-gif=no'.
 HAVE_GIF=no
 LIBGIF=
-if test "${HAVE_X11}" = "yes" && test "${with_gif}" != "no"; then
+if test "${HAVE_X11}" = "yes" && test "${with_gif}" != "no" \
+        || test "${HAVE_W32}" = "yes"; then
   ac_fn_c_check_header_mongrel "$LINENO" "gif_lib.h" "ac_cv_header_gif_lib_h" "$ac_includes_default"
 if test "x$ac_cv_header_gif_lib_h" = x""yes; then :
   # EGifPutExtensionLast only exists from version libungif-4.1.0b1.
@@ -12734,6 +12952,9 @@ $as_echo "#define NS_IMPL_GNUSTEP 1" >>confdefs.h
   OTHER_FILES=ns-app
 fi
 
+if test "${HAVE_W32}" = "yes"; then
+  HAVE_MENUS=yes
+fi
 
 ### Use session management (-lSM -lICE) if available
 HAVE_X_SM=no
@@ -16007,7 +16228,7 @@ fi
 
 
 if test "$opsys" = "cygwin"; then
-  CYGWIN_OBJ="sheap.o"
+  CYGWIN_OBJ="sheap.o cygw32.o"
   ## Cygwin differs because of its unexec().
   PRE_ALLOC_OBJ=
   POST_ALLOC_OBJ=lastfile.o
@@ -16842,6 +17063,7 @@ _ACEOF
   REPLACE_MALLOC=0;
   REPLACE_MBTOWC=0;
   REPLACE_MKSTEMP=0;
+  REPLACE_PTSNAME=0;
   REPLACE_PTSNAME_R=0;
   REPLACE_PUTENV=0;
   REPLACE_RANDOM_R=0;
@@ -21625,6 +21847,69 @@ rm -f core conftest.err conftest.$ac_objext \
 fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $gl_cv_sig_pselect" >&5
 $as_echo "$gl_cv_sig_pselect" >&6; }
+
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether pselect detects invalid fds" >&5
+$as_echo_n "checking whether pselect detects invalid fds... " >&6; }
+if test "${gl_cv_func_pselect_detects_ebadf+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+
+        if test "$cross_compiling" = yes; then :
+
+           case "$host_os" in
+                    # Guess yes on glibc systems.
+            *-gnu*) gl_cv_func_pselect_detects_ebadf="guessing yes" ;;
+                    # If we don't know, assume the worst.
+            *)      gl_cv_func_pselect_detects_ebadf="guessing no" ;;
+           esac
+
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+#include <sys/types.h>
+#include <sys/time.h>
+#if HAVE_SYS_SELECT_H
+# include <sys/select.h>
+#endif
+#include <unistd.h>
+#include <errno.h>
+
+int
+main ()
+{
+
+  fd_set set;
+  dup2(0, 16);
+  FD_ZERO(&set);
+  FD_SET(16, &set);
+  close(16);
+  struct timespec timeout;
+  timeout.tv_sec = 0;
+  timeout.tv_nsec = 5000;
+  return pselect (17, &set, NULL, NULL, &timeout, NULL) != -1 || errno != EBADF;
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_run "$LINENO"; then :
+  gl_cv_func_pselect_detects_ebadf=yes
+else
+  gl_cv_func_pselect_detects_ebadf=no
+fi
+rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
+  conftest.$ac_objext conftest.beam conftest.$ac_ext
+fi
+
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $gl_cv_func_pselect_detects_ebadf" >&5
+$as_echo "$gl_cv_func_pselect_detects_ebadf" >&6; }
+    case $gl_cv_func_pselect_detects_ebadf in
+      *yes) ;;
+      *) REPLACE_PSELECT=1 ;;
+    esac
   fi
 
   if test $ac_cv_func_pselect = no || test $gl_cv_sig_pselect = no; then
@@ -23418,6 +23703,8 @@ done
   else
     HAVE_WINSOCK2_H=0
   fi
+
+
 
 
 

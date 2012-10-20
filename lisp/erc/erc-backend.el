@@ -4,6 +4,7 @@
 
 ;; Filename: erc-backend.el
 ;; Author: Lawrence Mitchell <wence@gmx.li>
+;; Maintainer: FSF
 ;; Created: 2004-05-7
 ;; Keywords: IRC chat client internet
 
@@ -98,8 +99,11 @@
 
 (require 'erc-compat)
 (eval-when-compile (require 'cl))
-(autoload 'erc-with-buffer "erc" nil nil 'macro)
-(autoload 'erc-log "erc" nil nil 'macro)
+;; There's a fairly strong mutual dependency between erc.el and erc-backend.el.
+;; Luckily, erc.el does not need erc-backend.el for macroexpansion whereas the
+;; reverse is true:
+(provide 'erc-backend)
+(require 'erc)
 
 ;;;; Variables and options
 
@@ -1315,7 +1319,7 @@ add things to `%s' instead."
          (when (equal (erc-default-target) nick)
            (setq erc-default-recipients
                  (cons nn (cdr erc-default-recipients)))
-           (rename-buffer nn)
+           (rename-buffer nn t)         ; bug#12002
            (erc-update-mode-line)
            (add-to-list 'bufs (current-buffer)))))
       (erc-update-user-nick nick nn host nil nil login)

@@ -442,8 +442,10 @@ If optional OLD is non-nil, also include defvars."
 				     ))
 		 "{}" "+"))
 
-;; TODO if a defgroup with a version tag, apply to all customs in that
-;; group (eg for new files).
+(defvar cusver-new-version (format "%s.%s" emacs-major-version
+				   (1+ emacs-minor-version))
+  "Version number that new defcustoms should have.")
+
 (defun cusver-scan (file &optional old)
   "Scan FILE for `defcustom' calls.
 Return a list with elements of the form (VAR . VER),
@@ -452,8 +454,8 @@ a :version tag having value VER (may be nil).
 If optional argument OLD is non-nil, also scan for defvars."
   (let ((m (format "Scanning %s..." file))
 	(re (format "^[ \t]*\\((def%s\\)[ \t\n]"
-		    (if old "\\(?:custom\\|var\\)" "custom")))
-        alist var ver form)
+		    (if old "\\(custom\\|var\\)" "\\(custom\\|group\\)")))
+        alist var ver form glist grp)
     (message "%s" m)
     (with-temp-buffer
       (insert-file-contents file)
@@ -461,14 +463,41 @@ If optional argument OLD is non-nil, also scan for defvars."
       (while (re-search-forward re nil t)
         (goto-char (match-beginning 1))
         (if (and (setq form (ignore-errors (read (current-buffer))))
-                 (setq var (car-safe (cdr-safe form)))
+		 (setq var (car-safe (cdr-safe form)))
 		 ;; Exclude macros, eg (defcustom ,varname ...).
 		 (symbolp var))
-            (setq ver (car (cdr-safe (memq :version form)))
-                  alist (cons (cons var ver) alist))
+	    (progn
+	      (setq ver (car (cdr-safe (memq :version form))))
+	      (if (equal "group" (match-string 2))
+		  ;; Group :version could be old.
+		  (if (equal ver cusver-new-version)
+		      (setq glist (cons (cons var ver) glist)))
+		;; If it specifies a group and the whole group has a
+		;; version. use that.
+		(unless ver
+		  (setq grp (car (cdr-safe (memq :group form))))
+		  (and grp
+		       (setq grp (car (cdr-safe grp))) ; (quote foo) -> foo
+		       (setq ver (assq grp glist))))
+		(setq alist (cons (cons var ver) alist))))
           (if form (message "Malformed defcustom: `%s'" form)))))
     (message "%sdone" m)
     alist))
+
+(defun cusver-scan-cus-start (file)
+  "Scan cus-start.el and return an alist with elements (VAR . VER)."
+  (if (file-readable-p file)
+      (with-temp-buffer
+	(insert-file-contents file)
+	(when (search-forward "(let ((all '(" nil t)
+	  (backward-char 1)
+	  (let (var ver alist)
+	    (dolist (elem (ignore-errors (read (current-buffer))))
+	      (when (symbolp (setq var (car-safe elem)))
+		(or (stringp (setq ver (nth 3 elem)))
+		    (setq ver nil))
+		(setq alist (cons (cons var ver) alist))))
+	    alist)))))
 
 (define-button-type 'cusver-xref 'action #'cusver-goto-xref)
 
@@ -485,12 +514,10 @@ If optional argument OLD is non-nil, also scan for defvars."
 	(pop-to-buffer (current-buffer))))))
 
 ;; You should probably at least do a grep over the old directory
-;; to check the results of this look sensible.  Eg cus-start if
-;; something moved from C to Lisp.
-;; TODO handle renamed things with aliases to the old names.
-;; What to do about new files?  Does everything in there need a :version,
-;; or eg just the defgroup?
-(defun cusver-check (newdir olddir)
+;; to check the results of this look sensible.
+;; TODO Check cus-start if something moved from C to Lisp.
+;; TODO Handle renamed things with aliases to the old names.
+(defun cusver-check (newdir olddir version)
   "Check that defcustoms have :version tags where needed.
 NEWDIR is the current lisp/ directory, OLDDIR is that from the previous
 release.  A defcustom that is only in NEWDIR should have a :version
@@ -499,11 +526,16 @@ just converting a defvar to a defcustom does not require a :version bump.
 
 Note that a :version tag should also be added if the value of a defcustom
 changes (in a non-trivial way).  This function does not check for that."
-  (interactive "DNew Lisp directory: \nDOld Lisp directory: ")
+  (interactive (list (read-directory-name "New Lisp directory: ")
+		     (read-directory-name "Old Lisp directory: ")
+		     (number-to-string
+		      (read-number "New version number: "
+				   (string-to-number cusver-new-version)))))
   (or (file-directory-p (setq newdir (expand-file-name newdir)))
       (error "Directory `%s' not found" newdir))
   (or (file-directory-p (setq olddir (expand-file-name olddir)))
       (error "Directory `%s' not found" olddir))
+  (setq cusver-new-version version)
   (let* ((newfiles (progn (message "Finding new files with defcustoms...")
 			  (cusver-find-files newdir)))
 	 (oldfiles (progn (message "Finding old files with defcustoms...")
@@ -516,6 +548,8 @@ changes (in a non-trivial way).  This function does not check for that."
     (message "Reading old defcustoms...")
     (dolist (file oldfiles)
       (setq oldcus (append oldcus (cusver-scan file t))))
+    (setq oldcus (append oldcus (cusver-scan-cus-start
+				 (expand-file-name "cus-start.el" olddir))))
     ;; newcus has elements (FILE (VAR VER) ... ).
     ;; oldcus just (VAR . VER).
     (message "Checking for version tags...")
