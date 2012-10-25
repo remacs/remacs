@@ -1,4 +1,24 @@
+2012-10-25  Glenn Morris  <rgm@gnu.org>
+
+	* emacs-lisp/cl-macs.el (cl-progv): Doc fix.
+
+2012-10-24  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* minibuffer.el (minibuffer-force-complete): Use one more marker
+	for the temporary-overlay-map command (bug#12619).
+
 2012-10-24  Chong Yidong  <cyd@gnu.org>
+
+	* time.el (display-time-world-mode): Derive from special-mode.
+	(display-time-world): Use display-buffer (Bug#12708).
+	(display-time-world-mode-map): Variable deleted.
+	(display-time-world-display): Wrap the final delete-char inside
+	inhibit-read-only.
+
+2012-10-24  Chong Yidong  <cyd@gnu.org>
+
+	* dired.el (dired-mark, dired-unmark, dired-flag-file-deletion):
+	Doc fix.
 
 	* emacs-lisp/easymenu.el (easy-menu-define): Doc fix (Bug#12628).
 

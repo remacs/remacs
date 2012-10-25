@@ -622,7 +622,7 @@ install-man:
 	thisdir=`/bin/pwd`; \
 	cd ${mansrcdir}; \
 	for page in *.1; do \
-	  dest=`echo "$${page}" | sed '$(TRANSFORM)'`; \
+	  dest=`echo "$${page}" | sed -e 's/\.1$$//' -e '$(TRANSFORM)'`.1; \
 	  (cd $${thisdir}; \
 	   ${INSTALL_DATA} ${mansrcdir}/$${page} $(DESTDIR)${man1dir}/$${dest}); \
 	  ( [ -n "${GZIP_INFO}" ] && [ -n "${GZIP_PROG}" ] ) || continue ; \
@@ -647,7 +647,8 @@ install-etc:
 	  ( cd $${thisdir}; ${MKDIR_P} $(DESTDIR)${icondir}/$${dir} ) ; \
 	  for icon in $${dir}/emacs[.-]*; do \
 	    [ -r $${icon} ] || continue ; \
-	    dest=`echo "$${icon}" | sed -e 's|.*/||' -e '$(TRANSFORM)'` ; \
+	    ext=`echo "$${icon}" | sed -e 's|.*\.||'`; \
+	    dest=`echo "$${icon}" | sed -e 's|.*/||' -e "s|\.$${ext}$$||" -e '$(TRANSFORM)'`.$${ext} ; \
 	    ( cd $${thisdir}; \
 	      ${INSTALL_DATA} ${iconsrcdir}/$${icon} $(DESTDIR)${icondir}/$${dir}/$${dest} ) \
 	    || exit 1; \
