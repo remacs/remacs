@@ -1,3 +1,105 @@
+2012-11-03  Chong Yidong  <cyd@gnu.org>
+
+	* objects.texi (General Escape Syntax): Clarify the explanation of
+	escape sequences.
+	(Non-ASCII in Strings): Clarify when a string is unibyte vs
+	multibyte.  Hex escapes do not automatically make a string
+	multibyte.
+
+2012-11-03  Martin Rudalics  <rudalics@gmx.at>
+
+	* windows.texi (Switching Buffers): Document option
+	switch-to-buffer-preserve-window-point.
+	(Display Action Functions): Document window-height and
+	window-width alist entries.
+	(Display Action Functions): Document
+	display-buffer-below-selected and
+	display-buffer-in-previous-window.
+	(Quitting Windows): Document quit-restore-window.  Rewrite
+	section.
+	(Window Configurations): In window-state-get mention that
+	argument window must be valid.
+	(Window Parameters): Document quit-restore window parameter
+	(Bug#12158).
+
+2012-10-31  Glenn Morris  <rgm@gnu.org>
+
+	* control.texi (Catch and Throw): Add xref to cl.texi.
+
+	* lists.texi (Sets And Lists): Point xref to better location.
+
+	* errors.texi (Standard Errors):
+	* loading.texi (Autoload): Update for cl-lib namespace changes.
+
+	* modes.texi (Defining Minor Modes): "Generalized Variables"
+	section is now in this manual rather than cl.texi.
+
+	* eval.texi (Special Forms): No longer special forms: defmacro,
+	defun, save-window-excursion, with-output-to-temp-buffer.
+	* functions.texi (Defining Functions): Defun is now a macro.
+	Defalias is a function.
+
+2012-10-30  Glenn Morris  <rgm@gnu.org>
+
+	* variables.texi (Generalized Variables): Fix typo.
+
+2012-10-30  Chong Yidong  <cyd@gnu.org>
+
+	* symbols.texi (Symbol Plists): Document function-get.
+
+	* loading.texi (Autoload): Document autoloadp, autoload-do-load.
+
+	* frames.texi (Visibility of Frames): Document tty-top-frame.
+
+2012-10-28  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* keymaps.texi (Format of Keymaps): Document the multiple
+	inheritance format.
+
+2012-10-28  Martin Rudalics  <rudalics@gmx.at>
+
+	* windows.texi (Basic Windows): Reformulate description of live,
+	internal and valid windows.
+	(Cyclic Window Ordering): Describe new argument of
+	get-lru-window and get-largest-window.  Add description of
+	window-in-direction.
+
+2012-10-27  Glenn Morris  <rgm@gnu.org>
+
+	* variables.texi (Generalized Variables): New section,
+	adapted from misc/cl.texi.
+	* elisp.texi (Top): Add Generalized Variables to menu.
+	* lists.texi (List Elements, List Variables):
+	Mention generalized variables.
+
+	* lists.texi (List Elements): Typo fix.
+
+2012-10-27  Chong Yidong  <cyd@gnu.org>
+
+	* minibuf.texi (High-Level Completion): Don't mention removed
+	function iswitchb-read-buffer.
+
+	* commands.texi (Event Input Misc): Remove last-input-char.
+	(Command Loop Info): Remove last-command-char.
+
+	* frames.texi (Initial Parameters): Don't mention the obsolete
+	special-display feature.
+
+	* windows.texi (Choosing Window): Don't mention the obsolete
+	special display feature.
+	(Choosing Window Options): Remove obsolete special-display
+	variables, and the functions special-display-p and
+	special-display-popup-frame.
+
+	* display.texi (Fringe Bitmaps): Add exclamation-mark bitmap.
+
+	* hooks.texi (Standard Hooks): Remove obsolete hooks.
+
+	* markers.texi (Information from Markers): Remove obsolete
+	function buffer-has-markers-at.
+
+	* text.texi (Yanking): Document yank-handled-properties.
+
 2012-10-24  Paul Eggert  <eggert@penguin.cs.ucla.edu>
 
 	Update manual for new time stamp format (Bug#12706).

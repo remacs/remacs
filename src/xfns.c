@@ -164,12 +164,8 @@ have_menus_p (void)
 FRAME_PTR
 check_x_frame (Lisp_Object frame)
 {
-  FRAME_PTR f;
+  struct frame *f = decode_live_frame (frame);
 
-  if (NILP (frame))
-    frame = selected_frame;
-  CHECK_LIVE_FRAME (frame);
-  f = XFRAME (frame);
   if (! FRAME_X_P (f))
     error ("Non-X frame used");
   return f;
@@ -3111,9 +3107,6 @@ This function is an internal primitive--use `make-frame' instead.  */)
 
   XSETFRAME (frame, f);
 
-  /* Note that X Windows does support scroll bars.  */
-  FRAME_CAN_HAVE_SCROLL_BARS (f) = 1;
-
   f->terminal = dpyinfo->terminal;
 
   f->output_method = output_x_window;
@@ -4596,7 +4589,6 @@ x_create_tip_frame (struct x_display_info *dpyinfo,
   Finsert (1, &text);
   set_buffer_internal_1 (old_buffer);
 
-  FRAME_CAN_HAVE_SCROLL_BARS (f) = 0;
   record_unwind_protect (unwind_create_tip_frame, frame);
 
   f->terminal = dpyinfo->terminal;

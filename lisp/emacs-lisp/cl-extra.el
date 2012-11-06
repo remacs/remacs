@@ -149,8 +149,9 @@ the elements themselves.
 	(setq cl-list (cdr cl-list)))
       (nreverse cl-res))))
 
+;;;###autoload
 (defun cl-mapc (cl-func cl-seq &rest cl-rest)
-  "Like `mapcar', but does not accumulate values returned by the function.
+  "Like `cl-mapcar', but does not accumulate values returned by the function.
 \n(fn FUNCTION SEQUENCE...)"
   (if cl-rest
       (progn (apply 'cl-map nil cl-func cl-seq cl-rest)
@@ -439,7 +440,7 @@ If STATE is t, return a new state object seeded from the time of day."
   (cond ((null state) (cl-make-random-state cl--random-state))
 	((vectorp state) (copy-tree state t))
 	((integerp state) (vector 'cl-random-state-tag -1 30 state))
-	(t (cl-make-random-state (cl-random-time)))))
+	(t (cl-make-random-state (cl--random-time)))))
 
 ;;;###autoload
 (defun cl-random-state-p (object)

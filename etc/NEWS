@@ -21,6 +21,17 @@ When you add a new item, please add it without either +++ or ---
 so we will look at it and add it to the manual.
 
 
+* Installation Changes in Emacs 24.4
+* Startup Changes in Emacs 24.4
+* Changes in Emacs 24.4
+* Editing Changes in Emacs 24.4
+* Changes in Specialized Modes and Packages in Emacs 24.4
+* New Modes and Packages in Emacs 24.4
+* Incompatible Lisp Changes in Emacs 24.4
+* Lisp changes in Emacs 24.4
+* Changes in Emacs 24.4 on non-free operating systems
+
+
 * Installation Changes in Emacs 24.3
 
 ---
@@ -157,6 +168,7 @@ or expression to evaluate.
 ---
 *** New option `server-auth-key' specifies a shared server key.
 
++++
 ** In the Package Menu, newly-available packages are listed as "new",
 and sorted above the other "available" packages by default.
 
@@ -229,7 +241,7 @@ This applies to both ordinary and regexp Isearch.
 *** New option `replace-lax-whitespace'.
 If non-nil, `query-replace' uses flexible whitespace matching too.
 The default is nil.
-
++++
 *** Global `M-s _' starts a symbol (identifier) incremental search,
 and `M-s _' in Isearch toggles symbol search mode.
 `M-s c' in Isearch toggles search case-sensitivity.
@@ -263,6 +275,7 @@ append-to-register and M-x prepend-to-register.
 ** New command `C-x r M-w' (copy-rectangle-as-kill).
 It copies the region-rectangle as the last rectangle kill.
 
++++
 ** New option `yank-handled-properties' allows processing of text
 properties on yanked text, in more ways that are more general than
 just removing them, as done by `yank-excluded-properties'.
@@ -300,6 +313,7 @@ Customize `cal-html-holidays' to change this.
 
 ** CL
 
++++
 *** CL's main entry is now (require 'cl-lib).
 `cl-lib' is like the old `cl' except that it uses the namespace cleanly,
 i.e. all its definitions have the "cl-" prefix (and internal definitions use
@@ -310,24 +324,35 @@ under the name `cl-foo' instead, with the exceptions of the few definitions
 that had to use `foo*' to avoid conflicts with pre-existing Elisp entities,
 which have not been renamed to `cl-foo*' but just `cl-foo'.
 
-The old `cl' is now deprecated and is just a bunch of aliases that
-provide the old non-prefixed names.
+The old `cl' is now deprecated and is mainly just a bunch of aliases that
+provide the old non-prefixed names.  Some exceptions are listed below.
 
++++
 *** `cl-flet' is not like `flet' (which is deprecated).
 Instead it obeys the behavior of Common-Lisp's `flet'.
 
++++
 *** `cl-labels' is slightly different from `labels'.
 The difference is that it relies on the `lexical-binding' machinery (as opposed
 to the `lexical-let' machinery used previously) to capture definitions in
 closures, so such closures will only work if `lexical-binding' is in use.
 
 +++
+*** `cl-letf' is not exactly like `letf'.
+The only difference is in details that relate to some deprecated usage
+of `symbol-function' in place forms.
+
++++
 *** `progv' was rewritten to use the `let' machinery.
 A side effect is that vars without corresponding value are bound to nil
 rather than making them unbound.
 
-** Compilation mode
+*** The following methods of extending `setf' are obsolete.
+Use gv.el instead (FIXME; details).
+`define-setf-expander', `defsetf', `define-modify-macro'
 
+** Compilation mode
++++
 *** New option `compilation-always-kill'.
 
 ** Customize
@@ -389,7 +414,7 @@ changes in context diffs.
 whitespace problems introduced by the diff.
 
 ** Dired
-
++++
 *** `dired-do-async-shell-command' executes each file sequentially
 if the command ends in `;' (when operating on multiple files).
 Otherwise, it executes the command on each file in parallel.
@@ -441,9 +466,9 @@ the FFAP prompt.  The default is now '("ftp").
 The old binding for `/ M' (filter by used-mode) is now bound to `/ m'.
 
 ** Mouse Avoidance mode
-
-The new variable `mouse-avoidance-banish-position' can now be used to
-customize Mouse Avoidance mode further.
++++
+*** New variable `mouse-avoidance-banish-position' specifies where the
+`banish' mouse avoidance setting moves the mouse.
 
 +++
 ** notifications.el supports now version 1.2 of the Notifications API.
@@ -595,6 +620,7 @@ and the `attributes' slot is always nil.
 The `url-retrieve' function now uses this to encode its URL argument,
 in case that is not properly encoded.
 
+---
 ** VHDL mode
 
 *** The free software compiler GHDL is supported (and now the default).
@@ -605,7 +631,10 @@ in case that is not properly encoded.
 
 *** Accepts \r and \f as whitespace.
 
-** which-function-mode now applies to all applicable major modes by default.
+** Which Function mode
++++
+*** `which-func-modes' now defaults to t, so Which Function mode, when
+enabled, applies to all applicable major modes.
 
 ---
 ** winner-mode-hook now runs when the mode is disabled, as well as when it is
@@ -708,6 +737,7 @@ still be supported for Emacs 24.x.
 Some Lisp symbols have been renamed to avoid problems with spelling
 that is incorrect or inconsistent with how Emacs normally spells a word.
 
+---
 *** Renamed functions
 
 **** hangul-input-method-inactivate -> hangul-input-method-deactivate
@@ -719,22 +749,22 @@ that is incorrect or inconsistent with how Emacs normally spells a word.
      viper-deactivate-input-method-action
 **** ucs-input-inactivate -> ucs-input-deactivate
 
+---
 *** Renamed hooks
 The old hooks are still supported for backward compatibility, but they
 are deprecated and will be removed eventually.
-
 **** input-method-inactivate-hook -> input-method-deactivate-hook
 **** robin-inactivate-hook -> robin-deactivate-hook
 **** quail-inactivate-hook -> quail-deactivate-hook
 
+---
 *** Renamed Lisp variables
-
 **** follow-deactive-menu -> follow-inactive-menu
 **** inactivate-current-input-method-function ->
      deactivate-current-input-method-function
 
++++
 ** Some obsolete functions, variables, and faces were removed:
-
 *** `facemenu-unlisted-faces'
 *** `rmail-decode-mime-charset'
 *** `last-input-char', `last-command-char', `unread-command-char'.
@@ -800,7 +830,7 @@ to work out which code is doing something.
 recursive invocations.
 
 ** Window changes
-
++++
 *** The functions get-lru-window, get-mru-window and get-largest-window
 now accept a third argument to avoid choosing the selected window.
 
@@ -813,9 +843,12 @@ reused.
 
 *** New function `fit-frame-to-buffer' and new options
 `fit-frame-to-buffer' and `fit-frame-to-buffer-bottom-margin'.
-
++++
+*** New option switch-to-buffer-preserve-window-point to restore a
+window's point when switching buffers.
++++
 *** New display action functions `display-buffer-below-selected',
-`display-buffer-at-bottom' and `display-buffer-in-previous-window'.
+and `display-buffer-in-previous-window'.
 
 *** New display action alist entry `inhibit-switch-frame', if non-nil,
 tells display action functions to avoid changing which frame is
@@ -823,10 +856,10 @@ selected.
 
 *** New display action alist entry `pop-up-frame-parameters', if
 non-nil, specifies frame parameters to give any newly-created frame.
-
++++
 *** New display action alist entry `previous-window', if non-nil,
 specifies window to reuse in `display-buffer-in-previous-window'.
-
++++
 *** New display action alist entries `window-height' and `window-width'
 to specify size of new window created by `display-buffer'.
 
@@ -835,11 +868,17 @@ appropriate entries in the `display-buffer-alist' function introduced
 in Emacs 24.1:
 +++
 **** `display-buffer-reuse-frames'
++++
 **** `special-display-regexps'
++++
 **** `special-display-frame-alist'
++++
 **** `special-display-buffer-names'
++++
 **** `special-display-function'
++++
 **** `display-buffer-function'
+---
 **** `dired-shrink-to-fit'
 
 ** Time
@@ -879,12 +918,15 @@ result in a warning ("Eager macro-expansion skipped due to cycle")
 describing the cycle.
 
 ** Miscellaneous new functions:
-
++++
 *** `autoloadp'
++++
 *** `autoload-do-load'
 +++
 *** `buffer-narrowed-p' tests if the buffer is narrowed.
++++
 *** `file-name-base' returns a file name sans directory and extension.
++++
 *** `function-get' fetches a function property, following aliases.
 +++
 *** `posnp' tests if an object is a `posn'.
@@ -893,23 +935,31 @@ describing the cycle.
 *** `system-users' returns the user names on the system.
 +++
 *** `system-groups' returns the group names on the system.
++++
 *** `tty-top-frame' returns the topmost frame of a text terminal.
 
 ** New macros `setq-local' and `defvar-local'.
 
++++
 ** New fringe bitmap `exclamation-mark'.
 
 ** Face underlining can now use a wave.
 See the "Face Attributes" section of the Elisp manual.
 
 ** The following functions and variables are obsolete:
-
+---
 *** `automount-dir-prefix'
++++
 *** `buffer-has-markers-at'
+---
 *** `macro-declaration-function' (use `macro-declarations-alist')
+---
 *** `window-system-version'
+---
 *** `dired-pop-to-buffer' (use `dired-mark-pop-up')
+---
 *** `query-replace-interactive'
+---
 *** `font-list-limit' (has had no effect since Emacs < 23)
 
 
@@ -928,6 +978,7 @@ machinery to convert between Cygwin and Windows-native file names.
 Emacs now supports mouse highlight, help-echo (in the echo area), and
 `mouse-autoselect-window'.
 
++++
 ** On MS Windows Vista and later Emacs now supports symbolic links.
 
 +++

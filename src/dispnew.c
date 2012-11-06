@@ -56,9 +56,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "systime.h"
 #include <errno.h>
 
-#ifdef DISPNEW_NEEDS_STDIO_EXT
-#include <stdio_ext.h>
-#endif
+#include <fpending.h>
 
 #if defined (HAVE_TERM_H) && defined (GNU_LINUX)
 #include <term.h>		/* for tgetent */
@@ -3075,14 +3073,12 @@ window_to_frame_hpos (struct window *w, int hpos)
 			    Redrawing Frames
  **********************************************************************/
 
-DEFUN ("redraw-frame", Fredraw_frame, Sredraw_frame, 1, 1, 0,
-       doc: /* Clear frame FRAME and output again what is supposed to appear on it.  */)
+DEFUN ("redraw-frame", Fredraw_frame, Sredraw_frame, 0, 1, 0,
+       doc: /* Clear frame FRAME and output again what is supposed to appear on it.
+If FRAME is omitted or nil, the selected frame is used.  */)
   (Lisp_Object frame)
 {
-  struct frame *f;
-
-  CHECK_LIVE_FRAME (frame);
-  f = XFRAME (frame);
+  struct frame *f = decode_live_frame (frame);
 
   /* Ignore redraw requests, if frame has no glyphs yet.
      (Implementation note: It still has to be checked why we are
@@ -4658,24 +4654,10 @@ update_frame_1 (struct frame *f, bool force_p, bool inhibit_id_p)
 	      FILE *display_output = FRAME_TTY (f)->output;
 	      if (display_output)
 		{
-		  int outq = PENDING_OUTPUT_COUNT (display_output);
+		  ptrdiff_t outq = __fpending (display_output);
 		  if (outq > 900
 		      || (outq > 20 && ((i - 1) % preempt_count == 0)))
-		    {
-		      fflush (display_output);
-		      if (preempt_count == 1)
-			{
-#ifdef EMACS_OUTQSIZE
-			  if (EMACS_OUTQSIZE (0, &outq) < 0)
-			    /* Probably not a tty.  Ignore the error and reset
-			       the outq count.  */
-			    outq = PENDING_OUTPUT_COUNT (FRAME_TTY (f->output));
-#endif
-			  outq *= 10;
-			  if (baud_rate <= outq && baud_rate > 0)
-			    sleep (outq / baud_rate);
-			}
-		    }
+		    fflush (display_output);
 		}
 	    }
 
@@ -6294,6 +6276,8 @@ init_display (void)
     struct terminal *t;
     struct frame *f = XFRAME (selected_frame);
 
+    init_foreground_group ();
+
     /* Open a display on the controlling tty. */
     t = init_tty (0, terminal_type, 1); /* Errors are fatal. */
 
@@ -6384,15 +6368,7 @@ don't show a cursor.  */)
   /* Don't change cursor state while redisplaying.  This could confuse
      output routines.  */
   if (!redisplaying_p)
-    {
-      if (NILP (window))
-	window = selected_window;
-      else
-	CHECK_WINDOW (window);
-
-      XWINDOW (window)->cursor_off_p = NILP (show);
-    }
-
+    decode_any_window (window)->cursor_off_p = NILP (show);
   return Qnil;
 }
 
@@ -6403,15 +6379,7 @@ DEFUN ("internal-show-cursor-p", Finternal_show_cursor_p,
 WINDOW nil or omitted means report on the selected window.  */)
   (Lisp_Object window)
 {
-  struct window *w;
-
-  if (NILP (window))
-    window = selected_window;
-  else
-    CHECK_WINDOW (window);
-
-  w = XWINDOW (window);
-  return w->cursor_off_p ? Qnil : Qt;
+  return decode_any_window (window)->cursor_off_p ? Qnil : Qt;
 }
 
 DEFUN ("last-nonminibuffer-frame", Flast_nonminibuf_frame,

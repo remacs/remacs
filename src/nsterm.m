@@ -100,6 +100,7 @@ static unsigned convert_ns_to_X_keysym[] =
   NSBeginFunctionKey,           0x58,
   NSSelectFunctionKey,          0x60,
   NSPrintFunctionKey,           0x61,
+  NSClearLineFunctionKey,       0x0B,
   NSExecuteFunctionKey,         0x62,
   NSInsertFunctionKey,          0x63,
   NSUndoFunctionKey,            0x65,
@@ -143,6 +144,23 @@ static unsigned convert_ns_to_X_keysym[] =
   NSCarriageReturnCharacter,	0x0D,
   NSNewlineCharacter,		0x0D,
   NSEnterCharacter,		0x8D,
+
+  0x41|NSNumericPadKeyMask,	0xAE,  /* KP_Decimal */
+  0x43|NSNumericPadKeyMask,	0xAA,  /* KP_Multiply */
+  0x45|NSNumericPadKeyMask,	0xAB,  /* KP_Add */
+  0x4B|NSNumericPadKeyMask,	0xAF,  /* KP_Divide */
+  0x4E|NSNumericPadKeyMask,	0xAD,  /* KP_Subtract */
+  0x51|NSNumericPadKeyMask,	0xBD,  /* KP_Equal */
+  0x52|NSNumericPadKeyMask,	0xB0,  /* KP_0 */
+  0x53|NSNumericPadKeyMask,	0xB1,  /* KP_1 */
+  0x54|NSNumericPadKeyMask,	0xB2,  /* KP_2 */
+  0x55|NSNumericPadKeyMask,	0xB3,  /* KP_3 */
+  0x56|NSNumericPadKeyMask,	0xB4,  /* KP_4 */
+  0x57|NSNumericPadKeyMask,	0xB5,  /* KP_5 */
+  0x58|NSNumericPadKeyMask,	0xB6,  /* KP_6 */
+  0x59|NSNumericPadKeyMask,	0xB7,  /* KP_7 */
+  0x5B|NSNumericPadKeyMask,	0xB8,  /* KP_8 */
+  0x5C|NSNumericPadKeyMask,	0xB9,  /* KP_9 */
 
   0x1B,				0x1B   /* escape */
 };
@@ -190,7 +208,8 @@ static BOOL ns_menu_bar_is_hidden = NO;
 
 /* event loop */
 static BOOL send_appdefined = YES;
-static NSEvent *last_appdefined_event = 0;
+#define NO_APPDEFINED_DATA (-8)
+static int last_appdefined_event_data = NO_APPDEFINED_DATA;
 static NSTimer *timed_entry = 0;
 static NSTimer *scroll_repeat_entry = nil;
 static fd_set select_readfds, select_writefds;
@@ -3436,8 +3455,7 @@ ns_select (int nfds, fd_set *readfds, fd_set *writefds,
    -------------------------------------------------------------------------- */
 {
   int result;
-  NSEvent *ev;
-  int k, nr = 0;
+  int t, k, nr = 0;
   struct input_event event;
   char c;
 
@@ -3521,16 +3539,11 @@ ns_select (int nfds, fd_set *readfds, fd_set *writefds,
     }
   unblock_input ();
 
-  ev = last_appdefined_event;
+  t = last_appdefined_event_data;
 
-  if (ev)
+  if (t != NO_APPDEFINED_DATA)
     {
-      int t;
-      if ([ev type] != NSApplicationDefined)
-        emacs_abort ();
-
-      t = [ev data1];
-      last_appdefined_event = 0;
+      last_appdefined_event_data = NO_APPDEFINED_DATA;
 
       if (t == -2)
         {
@@ -4307,7 +4320,7 @@ ns_term_shutdown (int sig)
          modal loop. Just defer it until later. */
       if ([NSApp modalWindow] == nil)
         {
-          last_appdefined_event = theEvent;
+          last_appdefined_event_data = [theEvent data1];
           [self stop: self];
         }
       else
@@ -4759,12 +4772,12 @@ not_in_argv (NSString *arg)
   Mouse_HLInfo *hlinfo = MOUSE_HL_INFO (emacsframe);
   int code;
   unsigned fnKeysym = 0;
-  int flags;
   static NSMutableArray *nsEvArray;
 #if !defined (NS_IMPL_COCOA) || MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_X_VERSION_10_6
   static BOOL firstTime = YES;
 #endif
   int left_is_none;
+  unsigned int flags = [theEvent modifierFlags];
 
   NSTRACE (keyDown);
 
@@ -4815,7 +4828,10 @@ not_in_argv (NSString *arg)
       /* (Carbon way: [theEvent keyCode]) */
 
       /* is it a "function key"? */
-      fnKeysym = ns_convert_key (code);
+      fnKeysym = (code < 0x00ff && (flags&NSNumericPadKeyMask))
+	? ns_convert_key ([theEvent keyCode] | NSNumericPadKeyMask)
+	: ns_convert_key (code);
+
       if (fnKeysym)
         {
           /* COUNTERHACK: map 'Delete' on upper-right main KB to 'Backspace',
@@ -4828,7 +4844,6 @@ not_in_argv (NSString *arg)
 
       /* are there modifiers? */
       emacs_event->modifiers = 0;
-      flags = [theEvent modifierFlags];
 
       if (flags & NSHelpKeyMask)
           emacs_event->modifiers |= hyper_modifier;

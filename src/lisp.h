@@ -160,11 +160,9 @@ enum Lisp_Bits
 #define GCTYPEBITS 3
 	GCTYPEBITS,
 
-    /* 2**GCTYPEBITS.  This must also be a macro that expands to a
-       literal integer constant, for MSVC.  */
-    GCALIGNMENT =
+    /* 2**GCTYPEBITS.  This must be a macro that expands to a literal
+       integer constant, for MSVC.  */
 #define GCALIGNMENT 8
-	GCALIGNMENT,
 
     /* Number of bits in a Lisp_Object value, not counting the tag.  */
     VALBITS = BITS_PER_EMACS_INT - GCTYPEBITS,
@@ -528,14 +526,9 @@ static EMACS_INT const VALMASK
 #define EQ(x, y) (XHASH (x) == XHASH (y))
 
 /* Largest and smallest representable fixnum values.  These are the C
-   values.  They are macros for use in static initializers, and
-   constants for visibility to GDB.  */
-static EMACS_INT const MOST_POSITIVE_FIXNUM =
+   values.  They are macros for use in static initializers.  */
 #define MOST_POSITIVE_FIXNUM (EMACS_INT_MAX >> INTTYPEBITS)
-	MOST_POSITIVE_FIXNUM;
-static EMACS_INT const MOST_NEGATIVE_FIXNUM =
 #define MOST_NEGATIVE_FIXNUM (-1 - MOST_POSITIVE_FIXNUM)
-	MOST_NEGATIVE_FIXNUM;
 
 /* Value is non-zero if I doesn't fit into a Lisp fixnum.  It is
    written this way so that it also works if I is of unsigned
@@ -1796,20 +1789,6 @@ typedef struct {
 #define CHECK_WINDOW_CONFIGURATION(x) \
   CHECK_TYPE (WINDOW_CONFIGURATIONP (x), Qwindow_configuration_p, x)
 
-/* A window of any sort, leaf or interior, is "valid" if one of its
-   buffer, vchild, or hchild members is non-nil.  */
-#define CHECK_VALID_WINDOW(x)				\
-  CHECK_TYPE (WINDOWP (x)				\
-	      && (!NILP (XWINDOW (x)->buffer)		\
-		  || !NILP (XWINDOW (x)->vchild)	\
-		  || !NILP (XWINDOW (x)->hchild)),	\
-	      Qwindow_valid_p, x)
-
-/* A window is "live" if and only if it shows a buffer.  */
-#define CHECK_LIVE_WINDOW(x)						\
-  CHECK_TYPE (WINDOWP (x) && !NILP (XWINDOW (x)->buffer),		\
-	      Qwindow_live_p, x)
-
 #define CHECK_PROCESS(x) \
   CHECK_TYPE (PROCESSP (x), Qprocessp, x)
 
@@ -2663,9 +2642,6 @@ extern Lisp_Object Qfont_spec, Qfont_entity, Qfont_object;
 
 EXFUN (Fbyteorder, 0) ATTRIBUTE_CONST;
 
-/* Defined in frame.c.  */
-extern Lisp_Object Qframep;
-
 /* Defined in data.c.  */
 extern Lisp_Object indirect_function (Lisp_Object);
 extern Lisp_Object find_symbol_value (Lisp_Object);
@@ -3333,7 +3309,6 @@ extern Lisp_Object do_switch_frame (Lisp_Object, int, int, Lisp_Object);
 #if HAVE_NS
 extern Lisp_Object get_frame_param (struct frame *, Lisp_Object);
 #endif
-extern Lisp_Object frame_buffer_predicate (Lisp_Object);
 extern void frames_discard_buffer (Lisp_Object);
 extern void syms_of_frame (void);
 
@@ -3479,6 +3454,7 @@ struct terminal;
 extern char *get_current_dir_name (void);
 #endif
 extern void stuff_char (char c);
+extern void init_foreground_group (void);
 extern void init_sigio (int);
 extern void sys_subshell (void);
 extern void sys_suspend (void);

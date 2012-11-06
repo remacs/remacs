@@ -406,7 +406,6 @@ followed by the rest of the buffers.  */)
       Lisp_Object framelist, prevlist, tail;
       Lisp_Object args[3];
 
-      CHECK_FRAME (frame);
       framelist = Fcopy_sequence (XFRAME (frame)->buffer_list);
       prevlist = Fnreverse (Fcopy_sequence
 			    (XFRAME (frame)->buried_buffer_list));
@@ -1543,17 +1542,11 @@ list first, followed by the list of all buffers.  If no other buffer
 exists, return the buffer `*scratch*' (creating it if necessary).  */)
   (register Lisp_Object buffer, Lisp_Object visible_ok, Lisp_Object frame)
 {
-  Lisp_Object tail, buf, pred;
-  Lisp_Object notsogood = Qnil;
+  struct frame *f = decode_any_frame (frame);
+  Lisp_Object tail = f->buffer_list, pred = f->buffer_predicate;
+  Lisp_Object buf, notsogood = Qnil;
 
-  if (NILP (frame))
-    frame = selected_frame;
-
-  CHECK_FRAME (frame);
-
-  pred = frame_buffer_predicate (frame);
   /* Consider buffers that have been seen in the frame first.  */
-  tail = XFRAME (frame)->buffer_list;
   for (; CONSP (tail); tail = XCDR (tail))
     {
       buf = XCAR (tail);
@@ -2109,7 +2102,7 @@ set_buffer_internal_1 (register struct buffer *b)
     return;
 
   BUFFER_CHECK_INDIRECTION (b);
-  
+
   old_buf = current_buffer;
   current_buffer = b;
   last_known_column_point = -1;   /* invalidate indentation cache */
@@ -6210,15 +6203,15 @@ is a member of the list.  */);
 		     doc: /* Cursor to use when this buffer is in the selected window.
 Values are interpreted as follows:
 
-  t 		  use the cursor specified for the frame
-  nil		  don't display a cursor
-  box		  display a filled box cursor
-  hollow	  display a hollow box cursor
-  bar		  display a vertical bar cursor with default width
-  (bar . WIDTH)	  display a vertical bar cursor with width WIDTH
-  hbar		  display a horizontal bar cursor with default height
+  t               use the cursor specified for the frame
+  nil             don't display a cursor
+  box             display a filled box cursor
+  hollow          display a hollow box cursor
+  bar             display a vertical bar cursor with default width
+  (bar . WIDTH)   display a vertical bar cursor with width WIDTH
+  hbar            display a horizontal bar cursor with default height
   (hbar . HEIGHT) display a horizontal bar cursor with height HEIGHT
-  ANYTHING ELSE	  display a hollow box cursor
+  ANYTHING ELSE   display a hollow box cursor
 
 When the buffer is displayed in a non-selected window, the
 cursor's appearance is instead controlled by the variable

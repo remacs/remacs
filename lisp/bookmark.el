@@ -433,7 +433,11 @@ the empty string."
                                     ": ")))
 	   (str
 	    (completing-read prompt
-			     bookmark-alist
+			     (lambda (string pred action)
+                               (if (eq action 'metadata)
+                                   '(metadata (category . bookmark))
+                                 (complete-with-action
+                                  action bookmark-alist string pred)))
 			     nil
 			     0
 			     nil
@@ -1869,10 +1873,8 @@ With a prefix arg, prompts for a file to save them in."
 The current window remains selected."
   (interactive)
   (let ((bookmark (bookmark-bmenu-bookmark))
-        (pop-up-windows t)
-        same-window-buffer-names
-        same-window-regexps)
-    (bookmark--jump-via bookmark 'display-buffer)))
+	(fun (lambda (b) (display-buffer b t))))
+    (bookmark--jump-via bookmark fun)))
 
 (defun bookmark-bmenu-other-window-with-mouse (event)
   "Select bookmark at the mouse pointer in other window, leaving bookmark menu visible."

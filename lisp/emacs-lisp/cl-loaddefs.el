@@ -10,8 +10,8 @@
 ;;;;;;  cl-truncate cl-ceiling cl-floor cl-isqrt cl-lcm cl-gcd cl--set-frame-visible-p
 ;;;;;;  cl--map-overlays cl--map-intervals cl--map-keymap-recursively
 ;;;;;;  cl-notevery cl-notany cl-every cl-some cl-mapcon cl-mapcan
-;;;;;;  cl-mapl cl-maplist cl-map cl--mapcar-many cl-equalp cl-coerce)
-;;;;;;  "cl-extra" "cl-extra.el" "1572ae52fa4fbd9c4bf89b49a068a865")
+;;;;;;  cl-mapl cl-mapc cl-maplist cl-map cl--mapcar-many cl-equalp
+;;;;;;  cl-coerce) "cl-extra" "cl-extra.el" "0e9284b6492cc98eee7c85ae4e5322ee")
 ;;; Generated autoloads from cl-extra.el
 
 (autoload 'cl-coerce "cl-extra" "\
@@ -45,6 +45,11 @@ Like `mapcar', except applies to lists and their cdr's rather than to
 the elements themselves.
 
 \(fn FUNCTION LIST...)" nil nil)
+
+(autoload 'cl-mapc "cl-extra" "\
+Like `cl-mapcar', but does not accumulate values returned by the function.
+
+\(fn FUNCTION SEQUENCE...)" nil nil)
 
 (autoload 'cl-mapl "cl-extra" "\
 Like `cl-maplist', but does not accumulate values returned by the function.
@@ -260,7 +265,7 @@ Remove from SYMBOL's plist the property PROPNAME and its value.
 ;;;;;;  cl-typecase cl-ecase cl-case cl-load-time-value cl-eval-when
 ;;;;;;  cl-destructuring-bind cl-function cl-defmacro cl-defun cl-gentemp
 ;;;;;;  cl-gensym cl--compiler-macro-cXXr cl--compiler-macro-list*)
-;;;;;;  "cl-macs" "cl-macs.el" "bdc107ab6064c577d393152665c74ddd")
+;;;;;;  "cl-macs" "cl-macs.el" "57cf89149db1e8ea6bc1582713980cf8")
 ;;; Generated autoloads from cl-macs.el
 
 (autoload 'cl--compiler-macro-list* "cl-macs" "\
@@ -468,9 +473,9 @@ from OBARRAY.
 (put 'cl-do-symbols 'lisp-indent-function '1)
 
 (autoload 'cl-do-all-symbols "cl-macs" "\
+Like `cl-do-symbols', but use the default obarray.
 
-
-\(fn SPEC &rest BODY)" nil t)
+\(fn (VAR [RESULT]) BODY...)" nil t)
 
 (put 'cl-do-all-symbols 'lisp-indent-function '1)
 

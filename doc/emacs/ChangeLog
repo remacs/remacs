@@ -1,3 +1,42 @@
+2012-10-30  Michael Albinus  <michael.albinus@gmx.de>
+
+	* trouble.texi (Known Problems): Mention command `debbugs-gnu-usertags'.
+
+2012-10-29  Chong Yidong  <cyd@gnu.org>
+
+	* dired.texi (Shell Commands in Dired): Document changes to the
+	dired-do-async-shell-command.
+
+2012-10-28  Glenn Morris  <rgm@gnu.org>
+
+	* ack.texi (Acknowledgments): Mention gv.el.
+
+2012-10-27  Bastien Guerry  <bzg@gnu.org>
+
+	* screen.texi (Menu Bar): Fix typo.
+
+2012-10-27  Chong Yidong  <cyd@gnu.org>
+
+	* frames.texi (Mouse Avoidance): Mention new variable
+	mouse-avoidance-banish-position.
+
+	* programs.texi (Which Function): Which Function mode now works in
+	all major modes by default.
+
+	* mule.texi (Recognize Coding): Remove an unreferenced vindex.
+
+	* files.texi (Misc File Ops): Symbolic links on Windows only work
+	on Vista and later.
+
+	* building.texi (Compilation): Document compilation-always-kill.
+
+	* search.texi (Symbol Search): New node.
+
+	* package.texi (Package Menu): Document the "new" status.
+
+	* windows.texi (Window Choice): Don't refer to the obsolete
+	special-display feature.
+
 2012-10-24  Chong Yidong  <cyd@gnu.org>
 
 	* mule.texi (Text Coding): set-buffer-file-coding-system can now

@@ -26,6 +26,8 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <limits.h>
 #include <errno.h>
 #include <math.h>
+#include <fcntl.h>
+#include <unistd.h>
 
 #include "lisp.h"
 #include "w32term.h"
@@ -262,12 +264,8 @@ have_menus_p (void)
 FRAME_PTR
 check_x_frame (Lisp_Object frame)
 {
-  FRAME_PTR f;
+  struct frame *f = decode_live_frame (frame);
 
-  if (NILP (frame))
-    frame = selected_frame;
-  CHECK_LIVE_FRAME (frame);
-  f = XFRAME (frame);
   if (! FRAME_W32_P (f))
     error ("Non-W32 frame used");
   return f;
@@ -3331,7 +3329,19 @@ w32_wnd_proc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	 versions, there is no way of telling when the mouse leaves the
 	 frame, so we just have to put up with help-echo and mouse
 	 highlighting remaining while the frame is not active.  */
-      if (track_mouse_event_fn && !track_mouse_window)
+      if (track_mouse_event_fn && !track_mouse_window
+	  /* If the menu bar is active, turning on tracking of mouse
+	     movement events might send these events to the tooltip
+	     frame, if the user happens to move the mouse pointer over
+	     the tooltip.  But since we don't process events for
+	     tooltip frames, this causes Windows to present a
+	     hourglass cursor, which is ugly and unexpected.  So don't
+	     enable tracking mouse events in this case; they will be
+	     restarted when the menu pops down.  (Confusingly, the
+	     menubar_active member of f->output_data.w32, tested
+	     above, is only set when a menu was popped up _not_ from
+	     the frame's menu bar, but via x-popup-menu.)  */
+	  && !menubar_in_use)
 	{
 	  TRACKMOUSEEVENT tme;
 	  tme.cbSize = sizeof (tme);
@@ -4270,9 +4280,6 @@ This function is an internal primitive--use `make-frame' instead.  */)
     f = make_frame (1);
 
   XSETFRAME (frame, f);
-
-  /* Note that Windows does support scroll bars.  */
-  FRAME_CAN_HAVE_SCROLL_BARS (f) = 1;
 
   /* By default, make scrollbars the system standard width. */
   FRAME_CONFIG_SCROLL_BAR_WIDTH (f) = GetSystemMetrics (SM_CXVSCROLL);
@@ -5374,7 +5381,6 @@ x_create_tip_frame (struct w32_display_info *dpyinfo,
   Finsert (1, &text);
   set_buffer_internal_1 (old_buffer);
 
-  FRAME_CAN_HAVE_SCROLL_BARS (f) = 0;
   record_unwind_protect (unwind_create_tip_frame, frame);
 
   /* By setting the output method, we're essentially saying that
@@ -7685,6 +7691,30 @@ globals_of_w32fns (void)
   syms_of_w32uniscribe ();
 }
 
+typedef USHORT (WINAPI * CaptureStackBackTrace_proc) (ULONG, ULONG, PVOID *,
+						      PULONG);
+
+#define BACKTRACE_LIMIT_MAX 62
+
+int
+w32_backtrace (void **buffer, int limit)
+{
+  static CaptureStackBackTrace_proc s_pfn_CaptureStackBackTrace = NULL;
+  HMODULE hm_kernel32 = NULL;
+
+  if (!s_pfn_CaptureStackBackTrace)
+    {
+      hm_kernel32 = LoadLibrary ("Kernel32.dll");
+      s_pfn_CaptureStackBackTrace =
+	(CaptureStackBackTrace_proc) GetProcAddress (hm_kernel32,
+						     "RtlCaptureStackBackTrace");
+    }
+  if (s_pfn_CaptureStackBackTrace)
+    return s_pfn_CaptureStackBackTrace (0, min (BACKTRACE_LIMIT_MAX, limit),
+					buffer, NULL);
+  return 0;
+}
+
 void
 emacs_abort (void)
 {
@@ -7692,7 +7722,10 @@ emacs_abort (void)
   button = MessageBox (NULL,
 		       "A fatal error has occurred!\n\n"
 		       "Would you like to attach a debugger?\n\n"
-		       "Select YES to debug, NO to abort Emacs"
+		       "Select:\n"
+		       "YES -- to debug Emacs, or\n"
+		       "NO  -- to abort Emacs and produce a backtrace\n"
+		       "       (emacs_backtrace.txt in current directory)."
 #if __GNUC__
 		       "\n\n(type \"gdb -p <emacs-PID>\" and\n"
 		       "\"continue\" inside GDB before clicking YES.)"
@@ -7707,7 +7740,59 @@ emacs_abort (void)
       exit (2);	/* tell the compiler we will never return */
     case IDNO:
     default:
-      abort ();
-      break;
+      {
+	void *stack[BACKTRACE_LIMIT_MAX + 1];
+	int i = w32_backtrace (stack, BACKTRACE_LIMIT_MAX + 1);
+
+	if (i)
+	  {
+#ifdef CYGWIN
+	    int stderr_fd = 2;
+#else
+	    HANDLE errout = GetStdHandle (STD_ERROR_HANDLE);
+	    int stderr_fd = -1;
+#endif
+	    int errfile_fd = -1;
+	    int j;
+
+#ifndef CYGWIN
+	    if (errout && errout != INVALID_HANDLE_VALUE)
+	      stderr_fd = _open_osfhandle ((intptr_t)errout, O_APPEND | O_BINARY);
+#endif
+	    if (stderr_fd >= 0)
+	      write (stderr_fd, "\r\nBacktrace:\r\n", 14);
+	    errfile_fd = _open ("emacs_backtrace.txt", O_RDWR | O_CREAT | O_BINARY, S_IREAD | S_IWRITE);
+	    if (errfile_fd >= 0)
+	      {
+		lseek (errfile_fd, 0L, SEEK_END);
+		write (errfile_fd, "\r\nBacktrace:\r\n", 14);
+	      }
+
+	    for (j = 0; j < i; j++)
+	      {
+		char buf[INT_BUFSIZE_BOUND (void *)];
+
+		/* stack[] gives the return addresses, whereas we want
+		   the address of the call, so decrease each address
+		   by approximate size of 1 CALL instruction.  */
+		sprintf (buf, "0x%p\r\n", stack[j] - sizeof(void *));
+		if (stderr_fd >= 0)
+		  write (stderr_fd, buf, strlen (buf));
+		if (errfile_fd >= 0)
+		  write (errfile_fd, buf, strlen (buf));
+	      }
+	    if (i == BACKTRACE_LIMIT_MAX)
+	      {
+		if (stderr_fd >= 0)
+		  write (stderr_fd, "...\r\n", 5);
+		if (errfile_fd >= 0)
+		  write (errfile_fd, "...\r\n", 5);
+	      }
+	    if (errfile_fd >= 0)
+	      close (errfile_fd);
+	  }
+	abort ();
+	break;
+      }
     }
 }
