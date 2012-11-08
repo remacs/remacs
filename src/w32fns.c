@@ -2085,8 +2085,21 @@ sync_modifiers (void)
 static int
 modifier_set (int vkey)
 {
-  if (vkey == VK_CAPITAL || vkey == VK_SCROLL)
-    return (GetKeyState (vkey) & 0x1);
+  if (vkey == VK_CAPITAL)
+    {
+      if (NILP (Vw32_enable_caps_lock))
+	return 0;
+      else
+	return (GetKeyState (vkey) & 0x1);
+    }
+  if (vkey == VK_SCROLL)
+    {
+      if (NILP (Vw32_scroll_lock_modifier))
+	return 0;
+      else
+	return (GetKeyState (vkey) & 0x1);
+    }
+
   if (!modifiers_recorded)
     return (GetKeyState (vkey) & 0x8000);
 
