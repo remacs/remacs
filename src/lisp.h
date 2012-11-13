@@ -413,14 +413,11 @@ enum pvec_type
   PVEC_XWIDGET_VIEW,
 #endif
 
-  /* These last 4 are special because we OR them in fns.c:internal_equal,
-     so they have to use a disjoint bit pattern:
-     if (!(size & (PVEC_COMPILED | PVEC_CHAR_TABLE
-                   | PVEC_SUB_CHAR_TABLE | PVEC_FONT))) */
-  PVEC_COMPILED			= 0x10,
-  PVEC_CHAR_TABLE		= 0x20,
-  PVEC_SUB_CHAR_TABLE		= 0x30,
-  PVEC_FONT			= 0x40
+  /* These should be last, check internal_equal to see why.  */
+  PVEC_COMPILED,
+  PVEC_CHAR_TABLE,
+  PVEC_SUB_CHAR_TABLE,
+  PVEC_FONT /* Should be last because it's used for range checking.  */
 };
 
 /* DATA_SEG_BITS forces extra bits to be or'd in with any pointers
@@ -440,9 +437,18 @@ enum More_Lisp_Bits
        only the number of Lisp_Object fields (that need to be traced by GC).
        The distinction is used, e.g., by Lisp_Process, which places extra
        non-Lisp_Object fields at the end of the structure.  */
-    PSEUDOVECTOR_SIZE_BITS = 16,
+    PSEUDOVECTOR_SIZE_BITS = 12,
     PSEUDOVECTOR_SIZE_MASK = (1 << PSEUDOVECTOR_SIZE_BITS) - 1,
-    PVEC_TYPE_MASK = 0x0fff << PSEUDOVECTOR_SIZE_BITS,
+
+    /* To calculate the memory footprint of the pseudovector, it's useful
+       to store the size of non-Lisp area in word_size units here.  */
+    PSEUDOVECTOR_REST_BITS = 12,
+    PSEUDOVECTOR_REST_MASK = (((1 << PSEUDOVECTOR_REST_BITS) - 1)
+			      << PSEUDOVECTOR_SIZE_BITS),
+
+    /* Used to extract pseudovector subtype information.  */
+    PSEUDOVECTOR_AREA_BITS = PSEUDOVECTOR_SIZE_BITS + PSEUDOVECTOR_REST_BITS,
+    PVEC_TYPE_MASK = 0x3f << PSEUDOVECTOR_AREA_BITS,
 
     /* Number of bits to put in each character in the internal representation
        of bool vectors.  This should not vary across implementations.  */
@@ -452,9 +458,6 @@ enum More_Lisp_Bits
 /* These macros extract various sorts of values from a Lisp_Object.
  For example, if tem is a Lisp_Object whose type is Lisp_Cons,
  XCONS (tem) is the struct Lisp_Cons * pointing to the memory for that cons.  */
-
-/* Return a perfect hash of the Lisp_Object representation.  */
-#define XHASH(a) XLI (a)
 
 #if USE_LSB_TAG
 
@@ -508,6 +511,11 @@ static EMACS_INT const VALMASK
 
 #endif /* not USE_LSB_TAG */
 
+/* Return a (Lisp-integer sized) hash of the Lisp_Object value.  Happens to be
+   like XUINT right now, but XUINT should only be applied to objects we know
+   are integers.  */
+#define XHASH(a) XUINT (a)
+
 /* For integers known to be positive, XFASTINT sometimes provides
    faster retrieval and XSETFASTINT provides faster storage.
    If not, fallback on the non-accelerated path.  */
@@ -523,7 +531,7 @@ static EMACS_INT const VALMASK
 # define XUNTAG(a, type) XPNTR (a)
 #endif
 
-#define EQ(x, y) (XHASH (x) == XHASH (y))
+#define EQ(x, y) (XLI (x) == XLI (y))
 
 /* Largest and smallest representable fixnum values.  These are the C
    values.  They are macros for use in static initializers.  */
@@ -613,13 +621,13 @@ clip_to_bounds (ptrdiff_t lower, EMACS_INT num, ptrdiff_t upper)
 
 /* Pseudovector types.  */
 
-#define XSETPVECTYPE(v, code) XSETTYPED_PVECTYPE (v, header.size, code)
-#define XSETTYPED_PVECTYPE(v, size_member, code) \
-  ((v)->size_member |= PSEUDOVECTOR_FLAG | ((code) << PSEUDOVECTOR_SIZE_BITS))
-#define XSETPVECTYPESIZE(v, code, sizeval) \
+#define XSETPVECTYPE(v, code)						\
+  ((v)->header.size |= PSEUDOVECTOR_FLAG | ((code) << PSEUDOVECTOR_AREA_BITS))
+#define XSETPVECTYPESIZE(v, code, lispsize, restsize)		\
   ((v)->header.size = (PSEUDOVECTOR_FLAG			\
-		       | ((code) << PSEUDOVECTOR_SIZE_BITS)	\
-		       | (sizeval)))
+		       | ((code) << PSEUDOVECTOR_AREA_BITS)	\
+		       | ((restsize) << PSEUDOVECTOR_SIZE_BITS) \
+		       | (lispsize)))
 
 /* The cast to struct vectorlike_header * avoids aliasing issues.  */
 #define XSETPSEUDOVECTOR(a, b, code) \
@@ -631,16 +639,14 @@ clip_to_bounds (ptrdiff_t lower, EMACS_INT num, ptrdiff_t upper)
 #define XSETTYPED_PSEUDOVECTOR(a, b, size, code)			\
   (XSETVECTOR (a, b),							\
    eassert ((size & (PSEUDOVECTOR_FLAG | PVEC_TYPE_MASK))		\
-	    == (PSEUDOVECTOR_FLAG | (code << PSEUDOVECTOR_SIZE_BITS))))
+	    == (PSEUDOVECTOR_FLAG | (code << PSEUDOVECTOR_AREA_BITS))))
 
 #define XSETWINDOW_CONFIGURATION(a, b) \
   (XSETPSEUDOVECTOR (a, b, PVEC_WINDOW_CONFIGURATION))
 #define XSETPROCESS(a, b) (XSETPSEUDOVECTOR (a, b, PVEC_PROCESS))
 #define XSETWINDOW(a, b) (XSETPSEUDOVECTOR (a, b, PVEC_WINDOW))
 #define XSETTERMINAL(a, b) (XSETPSEUDOVECTOR (a, b, PVEC_TERMINAL))
-/* XSETSUBR is special since Lisp_Subr lacks struct vectorlike_header.  */
-#define XSETSUBR(a, b) \
-  XSETTYPED_PSEUDOVECTOR (a, b, XSUBR (a)->size, PVEC_SUBR)
+#define XSETSUBR(a, b) (XSETPSEUDOVECTOR (a, b, PVEC_SUBR))
 #define XSETCOMPILED(a, b) (XSETPSEUDOVECTOR (a, b, PVEC_COMPILED))
 #define XSETBUFFER(a, b) (XSETPSEUDOVECTOR (a, b, PVEC_BUFFER))
 #define XSETCHAR_TABLE(a, b) (XSETPSEUDOVECTOR (a, b, PVEC_CHAR_TABLE))
@@ -807,7 +813,7 @@ struct Lisp_String
   };
 
 /* Header of vector-like objects.  This documents the layout constraints on
-   vectors and pseudovectors other than struct Lisp_Subr.  It also prevents
+   vectors and pseudovectors (objects of PVEC_xxx subtype).  It also prevents
    compilers from being fooled by Emacs's type punning: the XSETPSEUDOVECTOR
    and PSEUDOVECTORP macros cast their pointers to struct vectorlike_header *,
    because when two such pointers potentially alias, a compiler won't
@@ -815,43 +821,26 @@ struct Lisp_String
    <http://debbugs.gnu.org/cgi/bugreport.cgi?bug=8546>.  */
 struct vectorlike_header
   {
-    /* This field contains various pieces of information:
+    /* The only field contains various pieces of information:
        - The MSB (ARRAY_MARK_FLAG) holds the gcmarkbit.
        - The next bit (PSEUDOVECTOR_FLAG) indicates whether this is a plain
          vector (0) or a pseudovector (1).
        - If PSEUDOVECTOR_FLAG is 0, the rest holds the size (number
          of slots) of the vector.
-       - If PSEUDOVECTOR_FLAG is 1, the rest is subdivided into
-         a "pvec type" tag held in PVEC_TYPE_MASK and a size held in the lowest
-         PSEUDOVECTOR_SIZE_BITS.  That size normally indicates the number of
-         Lisp_Object slots at the beginning of the object that need to be
-         traced by the GC, tho some types use it slightly differently.
-       - E.g. if the pvec type is PVEC_FREE it means this is an unallocated
-         vector on a free-list and PSEUDOVECTOR_SIZE_BITS indicates its size
-         in bytes.  */
+       - If PSEUDOVECTOR_FLAG is 1, the rest is subdivided into three fields:
+	 - a) pseudovector subtype held in PVEC_TYPE_MASK field;
+	 - b) number of Lisp_Objects slots at the beginning of the object
+	   held in PSEUDOVECTOR_SIZE_MASK field.  These objects are always
+	   traced by the GC;
+	 - c) size of the rest fields held in PSEUDOVECTOR_REST_MASK and
+	   measured in word_size units.  Rest fields may also include
+	   Lisp_Objects, but these objects usually needs some special treatment
+	   during GC.
+	 There are some exceptions.  For PVEC_FREE, b) is always zero.  For
+	 PVEC_BOOL_VECTOR and PVEC_SUBR, both b) and c) are always zero.
+	 Current layout limits the pseudovectors to 63 PVEC_xxx subtypes,
+	 4095 Lisp_Objects in GC-ed area and 4095 word-sized other slots.  */
     ptrdiff_t size;
-
-    /* When the vector is allocated from a vector block, NBYTES is used
-       if the vector is not on a free list, and VECTOR is used otherwise.
-       For large vector-like objects, BUFFER or VECTOR is used as a pointer
-       to the next vector-like object.  It is generally a buffer or a
-       Lisp_Vector alias, so for convenience it is a union instead of a
-       pointer: this way, one can write P->next.vector instead of ((struct
-       Lisp_Vector *) P->next).  */
-    union {
-      /* This is only needed for small vectors that are not free because the
-	 `size' field only gives us the number of Lisp_Object slots, whereas we
-	 need to know the total size, including non-Lisp_Object data.
-	 FIXME: figure out a way to store this info elsewhere so we can
-	 finally get rid of this extra word of overhead.  */
-      ptrdiff_t nbytes;
-      struct buffer *buffer;
-      /* FIXME: This can be removed: For large vectors, this field could be
-	 placed *before* the vector itself.  And for small vectors on a free
-	 list, this field could be stored in the vector's bytes, since the
-	 empty vector is handled specially anyway.  */
-      struct Lisp_Vector *vector;
-    } next;
   };
 
 /* Regular vector is just a header plus array of Lisp_Objects.  */
@@ -1025,15 +1014,11 @@ struct Lisp_Sub_Char_Table
 
 /* This structure describes a built-in function.
    It is generated by the DEFUN macro only.
-   defsubr makes it into a Lisp object.
-
-   This type is treated in most respects as a pseudovector,
-   but since we never dynamically allocate or free them,
-   we don't need a struct vectorlike_header and its 'next' field.  */
+   defsubr makes it into a Lisp object.  */
 
 struct Lisp_Subr
   {
-    ptrdiff_t size;
+    struct vectorlike_header header;
     union {
       Lisp_Object (*a0) (void);
       Lisp_Object (*a1) (Lisp_Object);
@@ -1181,13 +1166,28 @@ struct Lisp_Symbol
 
 /* The structure of a Lisp hash table.  */
 
+struct hash_table_test
+{
+  /* Name of the function used to compare keys.  */
+  Lisp_Object name;
+
+  /* User-supplied hash function, or nil.  */
+  Lisp_Object user_hash_function;
+
+  /* User-supplied key comparison function, or nil.  */
+  Lisp_Object user_cmp_function;
+
+  /* C function to compare two keys.  */
+  bool (*cmpfn) (struct hash_table_test *t, Lisp_Object, Lisp_Object);
+
+  /* C function to compute hash code.  */
+  EMACS_UINT (*hashfn) (struct hash_table_test *t, Lisp_Object);
+};
+
 struct Lisp_Hash_Table
 {
   /* This is for Lisp; the hash table code does not refer to it.  */
   struct vectorlike_header header;
-
-  /* Function used to compare keys.  */
-  Lisp_Object test;
 
   /* Nil if table is non-weak.  Otherwise a symbol describing the
      weakness of the table.  */
@@ -1219,12 +1219,6 @@ struct Lisp_Hash_Table
      hash table size to reduce collisions.  */
   Lisp_Object index;
 
-  /* User-supplied hash function, or nil.  */
-  Lisp_Object user_hash_function;
-
-  /* User-supplied key comparison function, or nil.  */
-  Lisp_Object user_cmp_function;
-
   /* Only the fields above are traced normally by the GC.  The ones below
      `count' are special and are either ignored by the GC or traced in
      a special way (e.g. because of weakness).  */
@@ -1237,17 +1231,12 @@ struct Lisp_Hash_Table
      This is gc_marked specially if the table is weak.  */
   Lisp_Object key_and_value;
 
+  /* The comparison and hash functions.  */
+  struct hash_table_test test;
+
   /* Next weak hash table if this is a weak hash table.  The head
      of the list is in weak_hash_tables.  */
   struct Lisp_Hash_Table *next_weak;
-
-  /* C function to compare two keys.  */
-  bool (*cmpfn) (struct Lisp_Hash_Table *,
-		 Lisp_Object, EMACS_UINT,
-		 Lisp_Object, EMACS_UINT);
-
-  /* C function to compute hash code.  */
-  EMACS_UINT (*hashfn) (struct Lisp_Hash_Table *, Lisp_Object);
 };
 
 
@@ -1301,6 +1290,15 @@ static double const DEFAULT_REHASH_THRESHOLD = 0.8;
 /* Default factor by which to increase the size of a hash table.  */
 
 static double const DEFAULT_REHASH_SIZE = 1.5;
+
+/* Combine two integers X and Y for hashing.  The result might not fit
+   into a Lisp integer.  */
+
+LISP_INLINE EMACS_UINT
+sxhash_combine (EMACS_UINT x, EMACS_UINT y)
+{
+  return (x << 4) + (x >> (BITS_PER_EMACS_INT - 4)) + y;
+}
 
 /* These structures are used for various misc types.  */
 
@@ -1701,6 +1699,8 @@ typedef struct {
 #define MARKERP(x) (MISCP (x) && XMISCTYPE (x) == Lisp_Misc_Marker)
 #define SAVE_VALUEP(x) (MISCP (x) && XMISCTYPE (x) == Lisp_Misc_Save_Value)
 
+#define AUTOLOADP(x) (CONSP (x) && EQ (Qautoload, XCAR (x)))
+
 #define INTFWDP(x) (XFWDTYPE (x) == Lisp_Fwd_Int)
 #define BOOLFWDP(x) (XFWDTYPE (x) == Lisp_Fwd_Bool)
 #define OBJFWDP(x) (XFWDTYPE (x) == Lisp_Fwd_Obj)
@@ -1714,7 +1714,7 @@ typedef struct {
 
 #define PSEUDOVECTOR_TYPEP(v, code)					\
   (((v)->size & (PSEUDOVECTOR_FLAG | PVEC_TYPE_MASK))			\
-   == (PSEUDOVECTOR_FLAG | ((code) << PSEUDOVECTOR_SIZE_BITS)))
+   == (PSEUDOVECTOR_FLAG | ((code) << PSEUDOVECTOR_AREA_BITS)))
 
 /* True if object X, with internal type struct T *, is a pseudovector whose
    code is CODE.  */
@@ -1727,8 +1727,7 @@ typedef struct {
 #define PROCESSP(x) PSEUDOVECTORP (x, PVEC_PROCESS)
 #define WINDOWP(x) PSEUDOVECTORP (x, PVEC_WINDOW)
 #define TERMINALP(x) PSEUDOVECTORP (x, PVEC_TERMINAL)
-/* SUBRP is special since Lisp_Subr lacks struct vectorlike_header.  */
-#define SUBRP(x) TYPED_PSEUDOVECTORP (x, Lisp_Subr, PVEC_SUBR)
+#define SUBRP(x) PSEUDOVECTORP (x, PVEC_SUBR)
 #define COMPILEDP(x) PSEUDOVECTORP (x, PVEC_COMPILED)
 #define BUFFERP(x) PSEUDOVECTORP (x, PVEC_BUFFER)
 #define CHAR_TABLE_P(x) PSEUDOVECTORP (x, PVEC_CHAR_TABLE)
@@ -1903,8 +1902,8 @@ typedef struct {
 #define DEFUN(lname, fnname, sname, minargs, maxargs, intspec, doc)	\
    Lisp_Object fnname DEFUN_ARGS_ ## maxargs ;				\
    static struct Lisp_Subr alignas (GCALIGNMENT) sname =		\
-   { (PVEC_SUBR << PSEUDOVECTOR_SIZE_BITS)				\
-     | (sizeof (struct Lisp_Subr) / sizeof (EMACS_INT)),		\
+   { { (PVEC_SUBR << PSEUDOVECTOR_AREA_BITS)				\
+       | (sizeof (struct Lisp_Subr) / sizeof (EMACS_INT)) },		\
       { (Lisp_Object (__cdecl *)(void))fnname },                        \
        minargs, maxargs, lname, intspec, 0};				\
    Lisp_Object fnname
@@ -1912,8 +1911,8 @@ typedef struct {
 #define DEFUN(lname, fnname, sname, minargs, maxargs, intspec, doc)	\
    Lisp_Object fnname DEFUN_ARGS_ ## maxargs ;				\
    static struct Lisp_Subr alignas (GCALIGNMENT) sname =		\
-     { PVEC_SUBR << PSEUDOVECTOR_SIZE_BITS,				\
-      { .a ## maxargs = fnname },					\
+     { { PVEC_SUBR << PSEUDOVECTOR_AREA_BITS },				\
+       { .a ## maxargs = fnname },					\
        minargs, maxargs, lname, intspec, 0};				\
    Lisp_Object fnname
 #endif
@@ -2727,15 +2726,15 @@ extern Lisp_Object larger_vector (Lisp_Object, ptrdiff_t, ptrdiff_t);
 extern void sweep_weak_hash_tables (void);
 extern Lisp_Object Qcursor_in_echo_area;
 extern Lisp_Object Qstring_lessp;
-extern Lisp_Object QCsize, QCtest, QCweakness, Qequal, Qeq, Qeql;
+extern Lisp_Object QCsize, QCtest, QCweakness, Qequal, Qeq;
 EMACS_UINT hash_string (char const *, ptrdiff_t);
 EMACS_UINT sxhash (Lisp_Object, int);
-Lisp_Object make_hash_table (Lisp_Object, Lisp_Object, Lisp_Object,
-                             Lisp_Object, Lisp_Object, Lisp_Object,
-                             Lisp_Object);
+Lisp_Object make_hash_table (struct hash_table_test, Lisp_Object, Lisp_Object,
+                             Lisp_Object, Lisp_Object);
 ptrdiff_t hash_lookup (struct Lisp_Hash_Table *, Lisp_Object, EMACS_UINT *);
 ptrdiff_t hash_put (struct Lisp_Hash_Table *, Lisp_Object, Lisp_Object,
 		    EMACS_UINT);
+extern struct hash_table_test hashtest_eql, hashtest_equal;
 
 extern Lisp_Object substring_both (Lisp_Object, ptrdiff_t, ptrdiff_t,
 				   ptrdiff_t, ptrdiff_t);
@@ -2957,7 +2956,7 @@ extern void make_byte_code (struct Lisp_Vector *);
 extern Lisp_Object Qautomatic_gc;
 extern Lisp_Object Qchar_table_extra_slots;
 extern struct Lisp_Vector *allocate_vector (EMACS_INT);
-extern struct Lisp_Vector *allocate_pseudovector (int memlen, int lisplen, int tag);
+extern struct Lisp_Vector *allocate_pseudovector (int, int, enum pvec_type);
 #define ALLOCATE_PSEUDOVECTOR(typ,field,tag)				\
   ((typ*)								\
    allocate_pseudovector						\

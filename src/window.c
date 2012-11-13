@@ -274,7 +274,7 @@ decode_valid_window (register Lisp_Object window)
 /* Build a frequently used 4-integer (X Y W H) list.  */
 
 static Lisp_Object
-quad (EMACS_INT x, EMACS_INT y, EMACS_INT w, EMACS_INT h)
+list4i (EMACS_INT x, EMACS_INT y, EMACS_INT w, EMACS_INT h)
 {
   return list4 (make_number (x), make_number (y),
 		make_number (w), make_number (h));
@@ -619,11 +619,13 @@ internal windows only.  */)
 
 DEFUN ("set-window-combination-limit", Fset_window_combination_limit, Sset_window_combination_limit, 2, 2, 0,
        doc: /* Set combination limit of window WINDOW to LIMIT; return LIMIT.
-WINDOW must be a valid window and defaults to the selected one.
 If LIMIT is nil, child windows of WINDOW can be recombined with WINDOW's
 siblings.  LIMIT t means that child windows of WINDOW are never
 \(re-)combined with WINDOW's siblings.  Other values are reserved for
-future use.  */)
+future use.
+
+WINDOW must be a valid window.  Setting the combination limit is
+meaningful for internal windows only.  */)
   (Lisp_Object window, Lisp_Object limit)
 {
   wset_combination_limit (decode_valid_window (window), limit);
@@ -883,8 +885,8 @@ header line, and/or mode line.  For the edges of just the text area, use
 {
   register struct window *w = decode_valid_window (window);
 
-  return quad (WINDOW_LEFT_EDGE_COL (w), WINDOW_TOP_EDGE_LINE (w),
-	       WINDOW_RIGHT_EDGE_COL (w), WINDOW_BOTTOM_EDGE_LINE (w));
+  return list4i (WINDOW_LEFT_EDGE_COL (w), WINDOW_TOP_EDGE_LINE (w),
+		 WINDOW_RIGHT_EDGE_COL (w), WINDOW_BOTTOM_EDGE_LINE (w));
 }
 
 DEFUN ("window-pixel-edges", Fwindow_pixel_edges, Swindow_pixel_edges, 0, 1, 0,
@@ -903,8 +905,8 @@ of just the text area, use `window-inside-pixel-edges'.  */)
 {
   register struct window *w = decode_valid_window (window);
 
-  return quad (WINDOW_LEFT_EDGE_X (w), WINDOW_TOP_EDGE_Y (w),
-	       WINDOW_RIGHT_EDGE_X (w), WINDOW_BOTTOM_EDGE_Y (w));
+  return list4i (WINDOW_LEFT_EDGE_X (w), WINDOW_TOP_EDGE_Y (w),
+		 WINDOW_RIGHT_EDGE_X (w), WINDOW_BOTTOM_EDGE_Y (w));
 }
 
 static void
@@ -949,10 +951,10 @@ of just the text area, use `window-inside-absolute-pixel-edges'.  */)
 
   calc_absolute_offset (w, &add_x, &add_y);
 
-  return quad (WINDOW_LEFT_EDGE_X (w) + add_x,
-	       WINDOW_TOP_EDGE_Y (w) + add_y,
-	       WINDOW_RIGHT_EDGE_X (w) + add_x,
-	       WINDOW_BOTTOM_EDGE_Y (w) + add_y);
+  return list4i (WINDOW_LEFT_EDGE_X (w) + add_x,
+		 WINDOW_TOP_EDGE_Y (w) + add_y,
+		 WINDOW_RIGHT_EDGE_X (w) + add_x,
+		 WINDOW_BOTTOM_EDGE_Y (w) + add_y);
 }
 
 DEFUN ("window-inside-edges", Fwindow_inside_edges, Swindow_inside_edges, 0, 1, 0,
@@ -971,16 +973,16 @@ display margins, fringes, header line, and/or mode line.  */)
 {
   register struct window *w = decode_live_window (window);
 
-  return quad (WINDOW_BOX_LEFT_EDGE_COL (w)
-	       + WINDOW_LEFT_MARGIN_COLS (w)
-	       + WINDOW_LEFT_FRINGE_COLS (w),
-	       WINDOW_TOP_EDGE_LINE (w)
-	       + WINDOW_HEADER_LINE_LINES (w),
-	       WINDOW_BOX_RIGHT_EDGE_COL (w)
-	       - WINDOW_RIGHT_MARGIN_COLS (w)
-	       - WINDOW_RIGHT_FRINGE_COLS (w),
-	       WINDOW_BOTTOM_EDGE_LINE (w)
-	       - WINDOW_MODE_LINE_LINES (w));
+  return list4i ((WINDOW_BOX_LEFT_EDGE_COL (w)
+		  + WINDOW_LEFT_MARGIN_COLS (w)
+		  + WINDOW_LEFT_FRINGE_COLS (w)),
+		 (WINDOW_TOP_EDGE_LINE (w)
+		  + WINDOW_HEADER_LINE_LINES (w)),
+		 (WINDOW_BOX_RIGHT_EDGE_COL (w)
+		  - WINDOW_RIGHT_MARGIN_COLS (w)
+		  - WINDOW_RIGHT_FRINGE_COLS (w)),
+		 (WINDOW_BOTTOM_EDGE_LINE (w)
+		  - WINDOW_MODE_LINE_LINES (w)));
 }
 
 DEFUN ("window-inside-pixel-edges", Fwindow_inside_pixel_edges, Swindow_inside_pixel_edges, 0, 1, 0,
@@ -998,16 +1000,16 @@ display margins, fringes, header line, and/or mode line.  */)
 {
   register struct window *w = decode_live_window (window);
 
-  return quad (WINDOW_BOX_LEFT_EDGE_X (w)
-	       + WINDOW_LEFT_MARGIN_WIDTH (w)
-	       + WINDOW_LEFT_FRINGE_WIDTH (w),
-	       WINDOW_TOP_EDGE_Y (w)
-	       + WINDOW_HEADER_LINE_HEIGHT (w),
-	       WINDOW_BOX_RIGHT_EDGE_X (w)
-	       - WINDOW_RIGHT_MARGIN_WIDTH (w)
-	       - WINDOW_RIGHT_FRINGE_WIDTH (w),
-	       WINDOW_BOTTOM_EDGE_Y (w)
-	       - WINDOW_MODE_LINE_HEIGHT (w));
+  return list4i ((WINDOW_BOX_LEFT_EDGE_X (w)
+		  + WINDOW_LEFT_MARGIN_WIDTH (w)
+		  + WINDOW_LEFT_FRINGE_WIDTH (w)),
+		 (WINDOW_TOP_EDGE_Y (w)
+		  + WINDOW_HEADER_LINE_HEIGHT (w)),
+		 (WINDOW_BOX_RIGHT_EDGE_X (w)
+		  - WINDOW_RIGHT_MARGIN_WIDTH (w)
+		  - WINDOW_RIGHT_FRINGE_WIDTH (w)),
+		 (WINDOW_BOTTOM_EDGE_Y (w)
+		  - WINDOW_MODE_LINE_HEIGHT (w)));
 }
 
 DEFUN ("window-inside-absolute-pixel-edges",
@@ -1030,16 +1032,16 @@ display margins, fringes, header line, and/or mode line.  */)
 
   calc_absolute_offset (w, &add_x, &add_y);
 
-  return quad (WINDOW_BOX_LEFT_EDGE_X (w)
-	       + WINDOW_LEFT_MARGIN_WIDTH (w)
-	       + WINDOW_LEFT_FRINGE_WIDTH (w) + add_x,
-	       WINDOW_TOP_EDGE_Y (w)
-	       + WINDOW_HEADER_LINE_HEIGHT (w) + add_y,
-	       WINDOW_BOX_RIGHT_EDGE_X (w)
-	       - WINDOW_RIGHT_MARGIN_WIDTH (w)
-	       - WINDOW_RIGHT_FRINGE_WIDTH (w) + add_x,
-	       WINDOW_BOTTOM_EDGE_Y (w)
-	       - WINDOW_MODE_LINE_HEIGHT (w) + add_y);
+  return list4i ((WINDOW_BOX_LEFT_EDGE_X (w)
+		  + WINDOW_LEFT_MARGIN_WIDTH (w)
+		  + WINDOW_LEFT_FRINGE_WIDTH (w) + add_x),
+		 (WINDOW_TOP_EDGE_Y (w)
+		  + WINDOW_HEADER_LINE_HEIGHT (w) + add_y),
+		 (WINDOW_BOX_RIGHT_EDGE_X (w)
+		  - WINDOW_RIGHT_MARGIN_WIDTH (w)
+		  - WINDOW_RIGHT_FRINGE_WIDTH (w) + add_x),
+		 (WINDOW_BOTTOM_EDGE_Y (w)
+		  - WINDOW_MODE_LINE_HEIGHT (w) + add_y));
 }
 
 /* Test if the character at column X, row Y is within window W.
@@ -1620,7 +1622,7 @@ display row, and VPOS is the row number (0-based) containing POS.  */)
     {
       Lisp_Object part = Qnil;
       if (!fully_p)
-	part = quad (rtop, rbot, rowh, vpos);
+	part = list4i (rtop, rbot, rowh, vpos);
       in_window = Fcons (make_number (x),
 			 Fcons (make_number (y), part));
     }
@@ -1686,17 +1688,18 @@ Return nil if window display is not up-to-date.  In that case, use
       if (!WINDOW_WANTS_HEADER_LINE_P (w))
 	return Qnil;
       row = MATRIX_HEADER_LINE_ROW (w->current_matrix);
-      return row->enabled_p ? quad (row->height, 0, 0, 0) : Qnil;
+      return row->enabled_p ? list4i (row->height, 0, 0, 0) : Qnil;
     }
 
   if (EQ (line, Qmode_line))
     {
       row = MATRIX_MODE_LINE_ROW (w->current_matrix);
       return (row->enabled_p ?
-	      quad (row->height,
-		    0, /* not accurate */
-		    WINDOW_HEADER_LINE_HEIGHT (w)
-		    + window_text_bottom_y (w), 0)
+	      list4i (row->height,
+		      0, /* not accurate */
+		      (WINDOW_HEADER_LINE_HEIGHT (w)
+		       + window_text_bottom_y (w)),
+		      0)
 	      : Qnil);
     }
 
@@ -1726,7 +1729,7 @@ Return nil if window display is not up-to-date.  In that case, use
 
  found_row:
   crop = max (0, (row->y + row->height) - max_y);
-  return quad (row->height + min (0, row->y) - crop, i, row->y, crop);
+  return list4i (row->height + min (0, row->y) - crop, i, row->y, crop);
 }
 
 DEFUN ("window-dedicated-p", Fwindow_dedicated_p, Swindow_dedicated_p,
@@ -2131,10 +2134,10 @@ window_list (void)
 {
   if (!CONSP (Vwindow_list))
     {
-      Lisp_Object tail;
+      Lisp_Object tail, frame;
 
       Vwindow_list = Qnil;
-      for (tail = Vframe_list; CONSP (tail); tail = XCDR (tail))
+      FOR_EACH_FRAME (tail, frame)
 	{
 	  Lisp_Object args[2];
 
@@ -2142,7 +2145,7 @@ window_list (void)
 	     new windows at the front of args[1], which means we
 	     have to reverse this list at the end.  */
 	  args[1] = Qnil;
-	  foreach_window (XFRAME (XCAR (tail)), add_window_to_list, &args[1]);
+	  foreach_window (XFRAME (frame), add_window_to_list, &args[1]);
 	  args[0] = Vwindow_list;
 	  args[1] = Fnreverse (args[1]);
 	  Vwindow_list = Fnconc (2, args);
@@ -3870,9 +3873,10 @@ set correctly.  See the code of `split-window' for how this is done.  */)
 
       make_parent_window (old, horflag);
       p = XWINDOW (o->parent);
-      /* Store t in the new parent's combination_limit slot to avoid
-	that its children get merged into another window.  */
-      wset_combination_limit (p, Qt);
+      if (EQ (Vwindow_combination_limit, Qt))
+	/* Store t in the new parent's combination_limit slot to avoid
+	   that its children get merged into another window.  */
+	wset_combination_limit (p, Qt);
       /* These get applied below.  */
       wset_new_total (p, horflag ? o->total_cols : o->total_lines);
       wset_new_normal (p, new_normal);

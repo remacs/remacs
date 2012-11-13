@@ -3132,8 +3132,8 @@ compare_overlays (const void *v1, const void *v2)
      between "equal" overlays.  The result can still change between
      invocations of Emacs, but it won't change in the middle of
      `find_field' (bug#6830).  */
-  if (XHASH (s1->overlay) != XHASH (s2->overlay))
-    return XHASH (s1->overlay) < XHASH (s2->overlay) ? -1 : 1;
+  if (!EQ (s1->overlay, s2->overlay))
+    return XLI (s1->overlay) < XLI (s2->overlay) ? -1 : 1;
   return 0;
 }
 
@@ -5105,11 +5105,6 @@ void
 init_buffer_once (void)
 {
   int idx;
-  /* If you add, remove, or reorder Lisp_Objects in a struct buffer, make
-     sure that this is still correct.  Otherwise, mark_vectorlike may not
-     trace all Lisp_Objects in buffer_defaults and buffer_local_symbols.  */
-  const int pvecsize
-    = (offsetof (struct buffer, own_text) - header_size) / word_size;
 
   memset (buffer_permanent_local_flags, 0, sizeof buffer_permanent_local_flags);
 
@@ -5132,8 +5127,8 @@ init_buffer_once (void)
   /* This is not strictly necessary, but let's make them initialized.  */
   bset_name (&buffer_defaults, build_pure_c_string (" *buffer-defaults*"));
   bset_name (&buffer_local_symbols, build_pure_c_string (" *buffer-local-symbols*"));
-  XSETPVECTYPESIZE (&buffer_defaults, PVEC_BUFFER, pvecsize);
-  XSETPVECTYPESIZE (&buffer_local_symbols, PVEC_BUFFER, pvecsize);
+  BUFFER_PVEC_INIT (&buffer_defaults);
+  BUFFER_PVEC_INIT (&buffer_local_symbols);
 
   /* Set up the default values of various buffer slots.  */
   /* Must do these before making the first buffer! */

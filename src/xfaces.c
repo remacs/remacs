@@ -314,16 +314,10 @@ static Lisp_Object QCfontset;
 Lisp_Object Qnormal;
 Lisp_Object Qbold;
 static Lisp_Object Qline, Qwave;
-static Lisp_Object Qultra_light, Qreverse_oblique, Qreverse_italic;
 Lisp_Object Qextra_light, Qlight;
 Lisp_Object Qsemi_light, Qsemi_bold, Qextra_bold, Qultra_bold;
 Lisp_Object Qoblique;
 Lisp_Object Qitalic;
-static Lisp_Object Qultra_condensed, Qextra_condensed;
-Lisp_Object Qcondensed;
-static Lisp_Object Qsemi_condensed, Qsemi_expanded, Qextra_expanded;
-Lisp_Object Qexpanded;
-static Lisp_Object Qultra_expanded;
 static Lisp_Object Qreleased_button, Qpressed_button;
 static Lisp_Object QCstyle, QCcolor, QCline_width;
 Lisp_Object Qunspecified;	/* used in dosfns.c */
@@ -5018,17 +5012,14 @@ face for italic.  */)
   else
     {
       /* Find any frame on DISPLAY.  */
-      Lisp_Object fl_tail;
+      Lisp_Object tail;
 
       frame = Qnil;
-      for (fl_tail = Vframe_list; CONSP (fl_tail); fl_tail = XCDR (fl_tail))
-	{
-	  frame = XCAR (fl_tail);
-	  if (!NILP (Fequal (Fcdr (Fassq (Qdisplay,
-					  XFRAME (frame)->param_alist)),
-			     display)))
-	    break;
-	}
+      FOR_EACH_FRAME (tail, frame)
+	if (!NILP (Fequal (Fcdr (Fassq (Qdisplay,
+					XFRAME (frame)->param_alist)),
+			   display)))
+	  break;
     }
 
   CHECK_LIVE_FRAME (frame);
@@ -6451,7 +6442,6 @@ syms_of_xfaces (void)
   DEFSYM (Qreleased_button, "released-button");
   DEFSYM (Qpressed_button, "pressed-button");
   DEFSYM (Qnormal, "normal");
-  DEFSYM (Qultra_light, "ultra-light");
   DEFSYM (Qextra_light, "extra-light");
   DEFSYM (Qlight, "light");
   DEFSYM (Qsemi_light, "semi-light");
@@ -6461,16 +6451,6 @@ syms_of_xfaces (void)
   DEFSYM (Qultra_bold, "ultra-bold");
   DEFSYM (Qoblique, "oblique");
   DEFSYM (Qitalic, "italic");
-  DEFSYM (Qreverse_oblique, "reverse-oblique");
-  DEFSYM (Qreverse_italic, "reverse-italic");
-  DEFSYM (Qultra_condensed, "ultra-condensed");
-  DEFSYM (Qextra_condensed, "extra-condensed");
-  DEFSYM (Qcondensed, "condensed");
-  DEFSYM (Qsemi_condensed, "semi-condensed");
-  DEFSYM (Qsemi_expanded, "semi-expanded");
-  DEFSYM (Qexpanded, "expanded");
-  DEFSYM (Qextra_expanded, "extra-expanded");
-  DEFSYM (Qultra_expanded, "ultra-expanded");
   DEFSYM (Qbackground_color, "background-color");
   DEFSYM (Qforeground_color, "foreground-color");
   DEFSYM (Qunspecified, "unspecified");
