@@ -195,11 +195,6 @@ value of last one, or nil if there are none.
   (declare (indent 1) (debug t))
   (cons 'if (cons cond (cons nil body))))
 
-(if (null (featurep 'cl))
-    (progn
-  ;; If we reload subr.el after having loaded CL, be careful not to
-  ;; overwrite CL's extended definition of `dolist', `dotimes', `declare'.
-
 (defmacro dolist (spec &rest body)
   "Loop over a list.
 Evaluate BODY with VAR bound to each car from LIST, in turn.
@@ -279,7 +274,6 @@ The possible values of SPECS are specified by
 `defun-declarations-alist' and `macro-declarations-alist'."
   ;; FIXME: edebug spec should pay attention to defun-declarations-alist.
   nil)
-))
 
 (defmacro ignore-errors (&rest body)
   "Execute BODY; if an error occurs, return nil.
@@ -3195,6 +3189,7 @@ in which case `save-window-excursion' cannot help."
   ;; Return nil.
   nil)
 
+;; Doc is very similar to with-temp-buffer-window.
 (defmacro with-output-to-temp-buffer (bufname &rest body)
   "Bind `standard-output' to buffer BUFNAME, eval BODY, then show that buffer.
 
@@ -3220,7 +3215,9 @@ with the buffer BUFNAME temporarily current.  It runs the hook
 `temp-buffer-show-hook' after displaying buffer BUFNAME, with that
 buffer temporarily current, and the window that was used to display it
 temporarily selected.  But it doesn't run `temp-buffer-show-hook'
-if it uses `temp-buffer-show-function'."
+if it uses `temp-buffer-show-function'.
+
+See the related form `with-temp-buffer-window'."
   (declare (debug t))
   (let ((old-dir (make-symbol "old-dir"))
         (buf (make-symbol "buf")))
@@ -3967,11 +3964,16 @@ The properties used on SYMBOL are `composefunc', `sendfunc',
   (put symbol 'hookvar (or hookvar 'mail-send-hook)))
 
 (defun set-temporary-overlay-map (map &optional keep-pred)
-  "Set MAP as a temporary overlay map.
-When KEEP-PRED is `t', using a key from the temporary keymap
-leaves this keymap activated.  KEEP-PRED can also be a function,
-which will have the same effect when it returns `t'.
-When KEEP-PRED is nil, the temporary keymap is used only once."
+  "Set MAP as a temporary keymap taking precedence over most other keymaps.
+Note that this does NOT take precedence over the \"overriding\" maps
+`overriding-terminal-local-map' and `overriding-local-map' (or the
+`keymap' text property).  Unlike those maps, if no match for a key is
+found in MAP, the normal key lookup sequence then continues.
+
+Normally, MAP is used only once.  If the optional argument
+KEEP-PRED is t, MAP stays active if a key from MAP is used.
+KEEP-PRED can also be a function of no arguments: if it returns
+non-nil then MAP stays active."
   (let* ((clearfunsym (make-symbol "clear-temporary-overlay-map"))
          (overlaysym (make-symbol "t"))
          (alist (list (cons overlaysym map)))

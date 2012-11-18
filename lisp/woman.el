@@ -1303,12 +1303,12 @@ cache to be re-read."
        ((null (cdr files)) (car (car files))) ; only 1 file for topic.
        (t
 	;; Multiple files for topic, so must select 1.
-	;; Unread the command event (TAB = ?\t = 9) that runs the command
-	;; `minibuffer-complete' in order to automatically complete the
-	;; minibuffer contents as far as possible.
-	(setq unread-command-events '(9)) ; and delete any type-ahead!
-	(completing-read "Manual file: " files nil 1
-			 (try-completion "" files) 'woman-file-history))))))
+	;; Run the command `minibuffer-complete' in order to automatically
+	;; complete the minibuffer contents as far as possible.
+        (minibuffer-with-setup-hook
+            (lambda () (let ((this-command this-command)) (minibuffer-complete)))
+          (completing-read "Manual file: " files nil 1
+                           (try-completion "" files) 'woman-file-history)))))))
 
 (defun woman-select (predicate list)
   "Select unique elements for which PREDICATE is true in LIST.
@@ -1550,11 +1550,13 @@ Also make each path-info component into a list.
     (woman-dired-define-keys)
   (add-hook 'dired-mode-hook 'woman-dired-define-keys))
 
+(declare-function dired-get-filename "dired"
+                  (&optional localp no-error-if-not-filep))
+
 ;;;###autoload
 (defun woman-dired-find-file ()
   "In dired, run the WoMan man-page browser on this file."
   (interactive)
-  ;; dired-get-filename is defined in dired.el
   (woman-find-file (dired-get-filename)))
 
 
@@ -1947,6 +1949,9 @@ Optional argument REDRAW, if non-nil, forces mode line to be updated."
   (message "Woman fill column set to %s."
 	   (if woman-fill-frame "frame width" woman-fill-column)))
 
+(declare-function apropos-print "apropos"
+                  (do-keys spacing &optional text nosubst))
+
 (defun woman-mini-help ()
   "Display WoMan commands and user options in an `apropos' buffer."
   ;; Based on apropos-command in apropos.el
@@ -2191,7 +2196,7 @@ To be called on original buffer and any .so insertions."
 		 (face-underline-p face))
 	    (let ((face-no-ul (intern (concat face-name "-no-ul"))))
 	      (copy-face face face-no-ul)
-	      (set-face-underline-p face-no-ul nil)))))))
+	      (set-face-underline face-no-ul nil)))))))
 
 ;; Preprocessors
 ;; =============

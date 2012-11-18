@@ -1317,16 +1317,7 @@ relocate_fd (int fd, int minfd)
     return fd;
   else
     {
-      int new;
-#ifdef F_DUPFD
-      new = fcntl (fd, F_DUPFD, minfd);
-#else
-      new = dup (fd);
-      if (new != -1)
-	/* Note that we hold the original FD open while we recurse,
-	   to guarantee we'll get a new FD if we need it.  */
-	new = relocate_fd (new, minfd);
-#endif
+      int new = fcntl (fd, F_DUPFD, minfd);
       if (new == -1)
 	{
 	  const char *message_1 = "Error while setting up child: ";
@@ -1576,15 +1567,13 @@ init_callproc (void)
 #endif
     {
       tempdir = Fdirectory_file_name (Vexec_directory);
-      if (access (SSDATA (tempdir), 0) < 0)
-	dir_warning ("Warning: arch-dependent data dir (%s) does not exist.\n",
-		     Vexec_directory);
+      if (! file_accessible_directory_p (SSDATA (tempdir)))
+	dir_warning ("arch-dependent data dir", Vexec_directory);
     }
 
   tempdir = Fdirectory_file_name (Vdata_directory);
-  if (access (SSDATA (tempdir), 0) < 0)
-    dir_warning ("Warning: arch-independent data dir (%s) does not exist.\n",
-		 Vdata_directory);
+  if (! file_accessible_directory_p (SSDATA (tempdir)))
+    dir_warning ("arch-independent data dir", Vdata_directory);
 
   sh = (char *) getenv ("SHELL");
   Vshell_file_name = build_string (sh ? sh : "/bin/sh");
@@ -1593,7 +1582,7 @@ init_callproc (void)
   Vshared_game_score_directory = Qnil;
 #else
   Vshared_game_score_directory = build_string (PATH_GAME);
-  if (NILP (Ffile_directory_p (Vshared_game_score_directory)))
+  if (NILP (Ffile_accessible_directory_p (Vshared_game_score_directory)))
     Vshared_game_score_directory = Qnil;
 #endif
 }
