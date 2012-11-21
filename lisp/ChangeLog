@@ -1,3 +1,76 @@
+2012-11-20  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* uniquify.el (uniquify-managed): Use defvar-local.
+	(rename-buffer, create-file-buffer): Advise with advice-add.
+	(uniquify-unload-function): Unadvise accordingly.
+
+	* emacs-lisp/trace.el: Rewrite, use nadvice and lexical-binding.
+	(trace-buffer): Don't purecopy.
+	(trace-entry-message, trace-exit-message): Add `context' arg.
+	(trace--timer): New var.
+	(trace-make-advice): Adjust for use in nadvice.
+	Add `context' argument.  Delay `display-buffer' via a timer.
+	(trace-function-internal): Use advice-add.
+	(trace--read-args): New function.
+	(trace-function-foreground, trace-function-background): Use it.
+	(trace-function): Rename to trace-function-foreground and redefine as
+	an alias to that new name.
+	(untrace-function, untrace-all): Adjust to the use of nadvice.
+
+	* emacs-lisp/bytecomp.el (byte-compile): Fix handling of closures.
+
+	* emacs-lisp/byte-run.el (defun-declarations-alist): Fix last change.
+
+	* subr.el (called-interactively-p-functions): New var.
+	(internal--called-interactively-p--get-frame): New macro.
+	(called-interactively-p, interactive-p): Rewrite in Lisp.
+	* emacs-lisp/nadvice.el (advice--called-interactively-skip): New fun.
+	(called-interactively-p-functions): Use it.
+	* emacs-lisp/edebug.el (edebug--called-interactively-skip): New fun.
+	(called-interactively-p-functions): Use it.
+	* allout.el (allout-called-interactively-p): Don't assume
+	called-interactively-p is a subr.
+
+2012-11-20  Glenn Morris  <rgm@gnu.org>
+
+	* profiler.el (profiler-report-mode-map): Add a menu.
+	No need to bind `q' because we derive from special-mode.
+	(profiler-report-find-entry): Handle calls from the menu-bar.
+
+2012-11-19  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* emacs-lisp/byte-run.el (defun-declarations-alist):
+	Allow a compiler-macro to be a lambda expression.
+
+	* progmodes/python.el: Use cl-lib.  Move var declarations outside of
+	eval-when-compile.
+	(python-syntax-context): Add compiler-macro.
+	(python-font-lock-keywords): Simplify with De Morgan.
+
+	* vc/diff-mode.el (diff-hunk): Don't make useless timers.
+
+	* files.el (load-file): Require match in minibuffer selection, as was
+	the case in Emacs-20 before we changed the spec to allow .elc files
+	(bug#12935).
+
+	* json.el: Don't require cl since we don't use it.
+	* color.el: Don't require cl.
+	(color-complement): `caddr' -> `nth 2'.
+
+	* calendar/time-date.el (time-to-seconds): De-obsolete.
+
+2012-11-19  Jay Belanger  <jay.p.belanger@gmail.com>
+
+	* calc/calc-forms.el (math-leap-year-p):  Fix formula for negative
+	year numbers.
+	(math-date-to-julian-dt): Adjust the initial approximation for the
+	year to deal with the new definition of the DATE.
+
+2012-11-19  Daniel Colascione  <dancol@dancol.org>
+
+	* term/w32-win.el (cygwin-convert-path-from-windows):
+	Accomodate rename of cygwin_convert_path* to cygwin_convert_file_name*.
+
 2012-11-18  Chong Yidong  <cyd@gnu.org>
 
 	* filecache.el (file-cache--read-list): New function.
