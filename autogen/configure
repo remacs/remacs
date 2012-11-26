@@ -2058,8 +2058,9 @@ Optional Features:
                           enable compile time checks for the Lisp_Object data
                           type. This is useful for development for catching
                           certain types of bugs.
-  --enable-profiling      build emacs with profiling support. This might not
-                          work on all platforms
+  --enable-profiling      build emacs with low-level, gprof profiling support.
+                          Mainly useful for debugging Emacs itself. May not
+                          work on all platforms. Stops profiler.el working.
   --enable-autodepend     automatically generate dependencies to .h-files.
                           Requires GNU Make and Gcc. Enabled if GNU Make and
                           Gcc is found
@@ -3213,7 +3214,6 @@ as_fn_append ac_header_list " sys/resource.h"
 as_fn_append ac_header_list " sys/utsname.h"
 as_fn_append ac_header_list " pwd.h"
 as_fn_append ac_header_list " utmp.h"
-as_fn_append ac_header_list " dirent.h"
 as_fn_append ac_header_list " util.h"
 as_fn_append ac_header_list " sys/socket.h"
 as_fn_append ac_header_list " stdlib.h"
@@ -8808,8 +8808,6 @@ done
 
 
 
-
-
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking if personality LINUX32 can be set" >&5
 $as_echo_n "checking if personality LINUX32 can be set... " >&6; }
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
@@ -13473,10 +13471,10 @@ esac
 
 
 for ac_func in gethostname \
-closedir getrusage get_current_dir_name \
+getrusage get_current_dir_name \
 lrand48 \
 select getpagesize setlocale \
-utimes getrlimit setrlimit getcwd shutdown getaddrinfo \
+utimes getrlimit setrlimit shutdown getaddrinfo \
 strsignal setitimer \
 sendto recvfrom getsockname getpeername getifaddrs freeifaddrs \
 gai_strerror mkstemp getline getdelim fsync sync \
@@ -13496,24 +13494,6 @@ _ACEOF
 fi
 done
 
-
-if test $opsys = unixware; then
-
-$as_echo "#define BROKEN_GETWD 1" >>confdefs.h
-
-else
-  for ac_func in getwd
-do :
-  ac_fn_c_check_func "$LINENO" "getwd" "ac_cv_func_getwd"
-if test "x$ac_cv_func_getwd" = x""yes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_GETWD 1
-_ACEOF
-
-fi
-done
-
-fi
 
 ## Eric Backus <ericb@lsid.hp.com> says, HP-UX 9.x on HP 700 machines
 ## has a broken `rint' in some library versions including math library
@@ -25513,9 +25493,6 @@ fi
 if test "$window_system" != "none"; then
 
 $as_echo "#define HAVE_WINDOW_SYSTEM 1" >>confdefs.h
-
-
-$as_echo "#define HAVE_MOUSE 1" >>confdefs.h
 
   WINDOW_SYSTEM_OBJ="fontset.o fringe.o image.o"
 fi

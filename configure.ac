@@ -331,10 +331,15 @@ if test "${enableval}" != "no"; then
 fi)
 
 
+dnl The name of this option is unfortunate.  It predates, and has no
+dnl relation to, the "sampling-based elisp profiler" added in 24.3.
+dnl Actually, it stops it working.
+dnl http://lists.gnu.org/archive/html/emacs-devel/2012-11/msg00393.html
 AC_ARG_ENABLE(profiling,
 [AS_HELP_STRING([--enable-profiling],
-		[build emacs with profiling support.
-		 This might not work on all platforms])],
+		[build emacs with low-level, gprof profiling support.
+                Mainly useful for debugging Emacs itself.  May not work on
+                all platforms.  Stops profiler.el working.])],
 [ac_enable_profiling="${enableval}"],[])
 if test x$ac_enable_profiling != x ; then
    PROFILING_CFLAGS="-DPROFILING=1 -pg"
@@ -1286,7 +1291,7 @@ AC_CHECK_HEADERS_ONCE(
   linux/version.h sys/systeminfo.h
   coff.h pty.h
   sys/vlimit.h sys/resource.h
-  sys/utsname.h pwd.h utmp.h dirent.h util.h)
+  sys/utsname.h pwd.h utmp.h util.h)
 
 AC_MSG_CHECKING(if personality LINUX32 can be set)
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <sys/personality.h>]], [[personality (PER_LINUX32)]])],
@@ -2947,10 +2952,10 @@ AC_SUBST(BLESSMAIL_TARGET)
 
 
 AC_CHECK_FUNCS(gethostname \
-closedir getrusage get_current_dir_name \
+getrusage get_current_dir_name \
 lrand48 \
 select getpagesize setlocale \
-utimes getrlimit setrlimit getcwd shutdown getaddrinfo \
+utimes getrlimit setrlimit shutdown getaddrinfo \
 strsignal setitimer \
 sendto recvfrom getsockname getpeername getifaddrs freeifaddrs \
 gai_strerror mkstemp getline getdelim fsync sync \
@@ -2958,14 +2963,6 @@ difftime posix_memalign \
 getpwent endpwent getgrent endgrent \
 touchlock \
 cfmakeraw cfsetspeed copysign __executable_start)
-
-dnl getwd appears to be buggy on SVR4.2, so we don't use it.
-if test $opsys = unixware; then
-  dnl In case some other test ends up checking for getwd.
-  AC_DEFINE(BROKEN_GETWD, 1, [Define if getwd should not be used.])
-else
-  AC_CHECK_FUNCS(getwd)
-fi
 
 ## Eric Backus <ericb@lsid.hp.com> says, HP-UX 9.x on HP 700 machines
 ## has a broken `rint' in some library versions including math library
@@ -4421,7 +4418,6 @@ AC_SUBST(LIB_GCC)
 ## Common for all window systems
 if test "$window_system" != "none"; then
   AC_DEFINE(HAVE_WINDOW_SYSTEM, 1, [Define if you have a window system.])
-  AC_DEFINE(HAVE_MOUSE, 1, [Define if you have mouse support.])
   WINDOW_SYSTEM_OBJ="fontset.o fringe.o image.o"
 fi
 

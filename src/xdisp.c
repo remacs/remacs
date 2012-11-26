@@ -9696,7 +9696,7 @@ message2_nolog (const char *m, ptrdiff_t nbytes, int multibyte)
       do_pending_window_change (0);
       echo_area_display (1);
       do_pending_window_change (0);
-      if (FRAME_TERMINAL (f)->frame_up_to_date_hook != 0 && ! gc_in_progress)
+      if (FRAME_TERMINAL (f)->frame_up_to_date_hook)
 	(*FRAME_TERMINAL (f)->frame_up_to_date_hook) (f);
     }
 }
@@ -9793,7 +9793,7 @@ message3_nolog (Lisp_Object m, ptrdiff_t nbytes, int multibyte)
       do_pending_window_change (0);
       echo_area_display (1);
       do_pending_window_change (0);
-      if (FRAME_TERMINAL (f)->frame_up_to_date_hook != 0 && ! gc_in_progress)
+      if (FRAME_TERMINAL (f)->frame_up_to_date_hook)
 	(*FRAME_TERMINAL (f)->frame_up_to_date_hook) (f);
     }
 }
@@ -10962,6 +10962,21 @@ window_outdated (struct window *w)
 	  || w->last_overlay_modified < OVERLAY_MODIFF);
 }
 
+/* Nonzero if W's buffer was changed but not saved or Transient Mark mode
+   is enabled and mark of W's buffer was changed since last W's update.  */
+
+static int
+window_buffer_changed (struct window *w)
+{
+  struct buffer *b = XBUFFER (w->buffer);
+
+  eassert (BUFFER_LIVE_P (b));
+
+  return (((BUF_SAVE_MODIFF (b) < BUF_MODIFF (b)) != w->last_had_star)
+	  || ((!NILP (Vtransient_mark_mode) && !NILP (BVAR (b, mark_active)))
+	      != !NILP (w->region_showing)));
+}
+
 /***********************************************************************
 		     Mode Lines and Frame Titles
  ***********************************************************************/
@@ -11381,12 +11396,7 @@ update_menu_bar (struct frame *f, int save_match_data, int hooks_run)
 	  /* This used to test w->update_mode_line, but we believe
 	     there is no need to recompute the menu in that case.  */
 	  || update_mode_lines
-	  || ((BUF_SAVE_MODIFF (XBUFFER (w->buffer))
-	       < BUF_MODIFF (XBUFFER (w->buffer)))
-	      != w->last_had_star)
-	  || ((!NILP (Vtransient_mark_mode)
-	       && !NILP (BVAR (XBUFFER (w->buffer), mark_active)))
-	      != !NILP (w->region_showing)))
+	  || window_buffer_changed (w))
 	{
 	  struct buffer *prev = current_buffer;
 	  ptrdiff_t count = SPECPDL_INDEX ();
@@ -11538,11 +11548,18 @@ FRAME_PTR last_mouse_frame;
 
 int last_tool_bar_item;
 
-
+/* Select `frame' temporarily without running all the code in
+   do_switch_frame.
+   FIXME: Maybe do_switch_frame should be trimmed down similarly
+   when `norecord' is set.  */
 static Lisp_Object
-update_tool_bar_unwind (Lisp_Object frame)
+fast_set_selected_frame (Lisp_Object frame)
 {
-  selected_frame = frame;
+  if (!EQ (selected_frame, frame))
+    {
+      selected_frame = frame;
+      selected_window = XFRAME (frame)->selected_window;
+    }
   return Qnil;
 }
 
@@ -11579,12 +11596,7 @@ update_tool_bar (struct frame *f, int save_match_data)
       if (windows_or_buffers_changed
 	  || w->update_mode_line
 	  || update_mode_lines
-	  || ((BUF_SAVE_MODIFF (XBUFFER (w->buffer))
-	       < BUF_MODIFF (XBUFFER (w->buffer)))
-	      != w->last_had_star)
-	  || ((!NILP (Vtransient_mark_mode)
-	       && !NILP (BVAR (XBUFFER (w->buffer), mark_active)))
-	      != !NILP (w->region_showing)))
+	  || window_buffer_changed (w))
 	{
 	  struct buffer *prev = current_buffer;
 	  ptrdiff_t count = SPECPDL_INDEX ();
@@ -11614,9 +11626,13 @@ update_tool_bar (struct frame *f, int save_match_data)
 	     before calling tool_bar_items, because the calculation of
 	     the tool-bar keymap uses the selected frame (see
 	     `tool-bar-make-keymap' in tool-bar.el).  */
-	  record_unwind_protect (update_tool_bar_unwind, selected_frame);
+	  eassert (EQ (selected_window,
+		       /* Since we only explicitly preserve selected_frame,
+			  check that selected_window would be redundant.  */
+		       XFRAME (selected_frame)->selected_window));
+	  record_unwind_protect (fast_set_selected_frame, selected_frame);
 	  XSETFRAME (frame, f);
-	  selected_frame = frame;
+	  fast_set_selected_frame (frame);
 
 	  /* Build desired tool-bar items from keymaps.  */
           new_tool_bar
@@ -13031,7 +13047,7 @@ redisplay_internal (void)
   ptrdiff_t count, count1;
   struct frame *sf;
   int polling_stopped_here = 0;
-  Lisp_Object old_frame = selected_frame;
+  Lisp_Object tail, frame, old_frame = selected_frame;
   struct backtrace backtrace;
 
   /* Non-zero means redisplay has to consider all windows on all
@@ -13083,15 +13099,8 @@ redisplay_internal (void)
   backtrace.debug_on_exit = 0;
   backtrace_list = &backtrace;
 
-  {
-    Lisp_Object tail, frame;
-
-    FOR_EACH_FRAME (tail, frame)
-      {
-	struct frame *f = XFRAME (frame);
-	f->already_hscrolled_p = 0;
-      }
-  }
+  FOR_EACH_FRAME (tail, frame)
+    XFRAME (frame)->already_hscrolled_p = 0;
 
  retry:
   /* Remember the currently selected window.  */
@@ -13141,25 +13150,20 @@ redisplay_internal (void)
       FRAME_TTY (sf)->previous_frame = sf;
     }
 
-  /* Set the visible flags for all frames.  Do this before checking
-     for resized or garbaged frames; they want to know if their frames
-     are visible.  See the comment in frame.h for
-     FRAME_SAMPLE_VISIBILITY.  */
-  {
-    Lisp_Object tail, frame;
+  /* Set the visible flags for all frames.  Do this before checking for
+     resized or garbaged frames; they want to know if their frames are
+     visible.  See the comment in frame.h for FRAME_SAMPLE_VISIBILITY.  */
+  number_of_visible_frames = 0;
 
-    number_of_visible_frames = 0;
+  FOR_EACH_FRAME (tail, frame)
+    {
+      struct frame *f = XFRAME (frame);
 
-    FOR_EACH_FRAME (tail, frame)
-      {
-	struct frame *f = XFRAME (frame);
-
-	FRAME_SAMPLE_VISIBILITY (f);
-	if (FRAME_VISIBLE_P (f))
-	  ++number_of_visible_frames;
-	clear_desired_matrices (f);
-      }
-  }
+      FRAME_SAMPLE_VISIBILITY (f);
+      if (FRAME_VISIBLE_P (f))
+	++number_of_visible_frames;
+      clear_desired_matrices (f);
+    }
 
   /* Notice any pending interrupt request to change frame size.  */
   do_pending_window_change (1);
@@ -13517,8 +13521,6 @@ redisplay_internal (void)
 
   if (consider_all_windows_p)
     {
-      Lisp_Object tail, frame;
-
       FOR_EACH_FRAME (tail, frame)
 	XFRAME (frame)->updated_p = 0;
 
@@ -13728,7 +13730,6 @@ redisplay_internal (void)
      frames here explicitly.  */
   if (!pending)
     {
-      Lisp_Object tail, frame;
       int new_count = 0;
 
       FOR_EACH_FRAME (tail, frame)
@@ -14293,7 +14294,7 @@ set_cursor_from_row (struct window *w, struct glyph_row *row,
      GLYPH_BEFORE and GLYPH_AFTER.  */
   if (!((row->reversed_p ? glyph > glyphs_end : glyph < glyphs_end)
 	&& BUFFERP (glyph->object) && glyph->charpos == pt_old)
-      && bpos_covered < pt_old)
+      && !(bpos_max < pt_old && pt_old <= bpos_covered))
     {
       /* An empty line has a single glyph whose OBJECT is zero and
 	 whose CHARPOS is the position of a newline on that line.
@@ -27935,12 +27936,6 @@ note_mouse_highlight (struct frame *f, int x, int y)
 
   if (hlinfo->mouse_face_defer)
     return;
-
-  if (gc_in_progress)
-    {
-      hlinfo->mouse_face_deferred_gc = 1;
-      return;
-    }
 
   /* Which window is that in?  */
   window = window_from_coordinates (f, x, y, &part, 1);

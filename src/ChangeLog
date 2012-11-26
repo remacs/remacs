@@ -1,3 +1,135 @@
+2012-11-25  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* sysdep.c (sys_subshell): Don't assume pid_t fits in int.
+
+2012-11-24  Ken Brown  <kbrown@cornell.edu>
+
+	* keyboard.c (HAVE_MOUSE):
+	* frame.c (HAVE_MOUSE): Remove, and rewrite code as if HAVE_MOUSE
+	were always defined.
+
+2012-11-24  Eli Zaretskii  <eliz@gnu.org>
+
+	* xdisp.c (set_cursor_from_row): Skip step 2 only if point is not
+	between bpos_covered and bpos_max.  This fixes cursor display when
+	several display strings follow each other.
+
+	* .gdbinit (pgx): If the glyph's object is a string, display the
+	pointer to string data, rather than the value of the string object
+	itself (which barfs under CHECK_LISP_OBJECT_TYPE).
+
+	* indent.c (Fvertical_motion): If the starting position is covered
+	by a display string, return to one position before that, to avoid
+	overshooting it inside move_it_to.  (Bug#12930)
+
+2012-11-23  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	* frame.h (struct frame): Remove display_preempted member
+	since all users are dead long ago.
+	* nsterm.h (struct x_output): Use the only dummy member.
+	* w32menu.c (pending_menu_activation): Remove since not
+	really used.
+	(set_frame_menubar): Adjust user.
+	* w32term.h (struct x_output): Drop outdated #if 0 code.
+	(struct w32_output): Use bitfields for explicit_parent,
+	asked_for_visible and menubar_active members.  Drop
+	unused pending_menu_activation member.
+	* xterm.h (struct x_output): Drop outdated #if 0 code.
+	Use bitfields for explicit_parent, asked_for_visible,
+	has_been_visible and net_wm_state_hidden_seen members.
+
+2012-11-23  Eli Zaretskii  <eliz@gnu.org>
+
+	* makefile.w32-in (globals.h, gl-stamp): Use $(SWITCHCHAR) instead
+	of a literal "/".  (Bug#12955)
+	(gl-stamp): Invoke fc.exe directly, not through cmd.
+
+2012-11-23  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Assume POSIX 1003.1-1988 or later for dirent.h (Bug#12958).
+	* dired.c: Assume HAVE_DIRENT_H.
+	(NAMLEN): Remove, replacing with ...
+	(dirent_namelen): New function.  All uses changed.  Use the GNU macro
+	_D_EXACT_NAMELEN if available, as it's faster than strlen.
+	(DIRENTRY): Remove, replacing all uses with 'struct dirent'.
+	(DIRENTRY_NONEMPTY): Remove.  All callers now assume it's nonzero.
+	* makefile.w32-in (DIR_H): Remove.  All uses replaced with
+	$(NT_INC)/dirent.h.
+	($(BLD)/w32.$(O)): Do not depend on $(SRC)/ndir.h.
+	* ndir.h: Rename to ../nt/inc/dirent.h.
+	* sysdep.h (closedir) [!HAVE_CLOSEDIR]: Remove.
+	Do not include <dirent.h>; no longer needed.
+	* w32.c: Include <dirent.h> rather than "ndir.h".
+
+2012-11-23  Chong Yidong  <cyd@gnu.org>
+
+	* xftfont.c (xftfont_open): Remove duplicate assignment.
+
+2012-11-22  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	* alloc.c (Fgarbage_collect): Unblock input after clearing
+	gc_in_progress to avoid note_mouse_highlight glitch with GC.
+	* frame.h (FRAME_MOUSE_UPDATE): New macro.
+	* msdos.c (IT_frame_up_to_date): Use it here...
+	* w32term.c (w32_frame_up_to_date): ...here...
+	* xterm.c (XTframe_up_to_date): ...and here...
+	* nsterm.m (ns_frame_up_to_date): ...but not here.
+	* lisp.h (Mouse_HLInfo): Remove mouse_face_deferred_gc member.
+	Adjust users.
+	* xdisp.c (message2_nolog, message3_nolog, note_mouse_highlight):
+	Do not check whether GC is in progress.
+
+2012-11-22  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	* xdisp.c (window_buffer_changed): New function.
+	(update_menu_bar, update_tool_bar): Use it to
+	simplify large 'if' statements.
+	(redisplay_internal): Generalize commonly used
+	'tail' and 'frame' local variables.
+
+2012-11-22  Eli Zaretskii  <eliz@gnu.org>
+
+	* w32.c (getcwd): Fix the 2nd argument type, to prevent conflicts
+	with Windows system header.
+
+2012-11-21  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Assume POSIX 1003.1-1988 or later for unistd.h (Bug#12945).
+	* alloc.c: Assume unistd.h exists.
+	* fileio.c (Fexpand_file_name) [DOS_NT]: Use getcwd, not getwd.
+	* sysdep.c (get_current_dir_name): Assume getcwd exists.
+	(getwd) [USG]: Remove; no longer needed.
+	(sys_subshell) [DOS_NT]: Use getcwd, not getwd.
+	* w32.c (getcwd): Rename from getwd, and switch to getcwd's API.
+	* w32.h (getcwd): Remove decl.
+
+2012-11-21  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* xdisp.c (fast_set_selected_frame): Rename from update_tool_bar_unwind.
+	Make it set selected_window as well.
+	(update_tool_bar): Use it.
+
+2012-11-21  Ken Brown  <kbrown@cornell.edu>
+
+	* emacs.c (main): Set the G_SLICE environment variable for all
+	Cygwin builds, not just GTK builds.  See
+	https://lists.gnu.org/archive/html/emacs-devel/2012-11/msg00368.html.
+
+2012-11-21  Eli Zaretskii  <eliz@gnu.org>
+
+	* w32.c (FILE_DEVICE_FILE_SYSTEM, METHOD_BUFFERED)
+	(FILE_ANY_ACCESS, CTL_CODE, FSCTL_GET_REPARSE_POINT) [_MSC_VER]:
+	Define for the MSVC compiler.
+
+	* w32term.h (EnumSystemLocalesW) [_MSC_VER]: Add a missing semi-colon.
+
+	* fileio.c (Fsubstitute_in_file_name, Ffile_name_directory)
+	(Fexpand_file_name) [DOS_NT]: Pass encoded file name to
+	dostounix_filename.  Prevents crashes down the road, because
+	dostounix_filename assumes it gets a unibyte string.  Reported by
+	Michel de Ruiter <michel@sentient.nl>, see
+	http://lists.gnu.org/archive/html/help-emacs-windows/2012-11/msg00017.html
+
 2012-11-20  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	Conflate Qnil and Qunbound for `symbol-function'.

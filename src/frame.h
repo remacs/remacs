@@ -357,9 +357,6 @@ struct frame
   unsigned int external_menu_bar : 1;
 #endif
 
-  /* Nonzero if last attempt at redisplay on this frame was preempted.  */
-  unsigned display_preempted : 1;
-
   /* visible is nonzero if the frame is currently displayed; we check
      it to see if we should bother updating the frame's contents.
      DON'T SET IT DIRECTLY; instead, use FRAME_SET_VISIBLE.
@@ -933,6 +930,21 @@ typedef struct frame *FRAME_PTR;
 	&& (frame_var = XCAR (list_var), 1));	\
        list_var = XCDR (list_var))
 
+/* Reflect mouse movement when a complete frame update is performed.  */
+
+#define FRAME_MOUSE_UPDATE(frame)				\
+  do {								\
+    Mouse_HLInfo *hlinfo = MOUSE_HL_INFO (frame);		\
+    if (frame == hlinfo->mouse_face_mouse_frame)		\
+      {								\
+	block_input ();						\
+	if (hlinfo->mouse_face_mouse_frame)			\
+	  note_mouse_highlight (hlinfo->mouse_face_mouse_frame,	\
+				hlinfo->mouse_face_mouse_x,     \
+				hlinfo->mouse_face_mouse_y);    \
+	unblock_input ();					\
+      }								\
+  } while (0)
 
 extern Lisp_Object Qframep, Qframe_live_p;
 extern Lisp_Object Qtty, Qtty_type;
