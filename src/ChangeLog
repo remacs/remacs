@@ -1,3 +1,67 @@
+2012-11-29  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	* xdisp.c (window_outdated): Remove eassert since it hits
+	some suspicious corner cases (see Bug#13007 and Bug#13012).
+	(mode_line_update_needed): New function.
+	(redisplay_internal, redisplay_window): Use it.
+	(ensure_selected_frame): New function.
+	(redisplay_internal, unwind_redisplay): Use it.
+	(redisplay_internal): Move comment about buffer_shared...
+	(buffer_shared_and_changed): ...near to its real use.
+
+2012-11-29  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* callproc.c (Fcall_process): Don't misreport vfork failure.
+
+2012-11-28  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* callproc.c (Fcall_process): Fix vfork portability problems.
+	Do not assume that fd[0], count, filefd, and save_environ survive
+	vfork.  Fix bug whereby wrong errno value could be reported for
+	pipe failure.  Some minor cleanups, too, as follows.  Move buf and
+	bufsize to the context where they're needed.  Change new_argv to
+	be of type char **, as this is more convenient and avoids casts.
+	(CALLPROC_BUFFER_SIZE_MIN, CALLPROC_BUFFER_SIZE_MAX):
+	Now local constants, not macros.
+
+2012-11-18  Kenichi Handa  <handa@gnu.org>
+
+	* font.c (font_unparse_xlfd): Fix previous change.  Keep "const"
+	for the variable "f".
+
+2012-11-13  Kenichi Handa  <handa@gnu.org>
+
+	* font.c (font_unparse_xlfd): Exclude special characters from the
+	generating XLFD name.
+
+2012-11-27  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Assume POSIX 1003.1-1988 or later for grp.h, pwd.h.
+	* dired.c (stat_uname, stat_gname):
+	* fileio.c (Fexpand_file_name): Remove no-longer-needed casts.
+
+	Assume POSIX 1003.1-1988 or later for errno.h (Bug#12968).
+	* dired.c (directory_files_internal, file_name_completion):
+	Assume EAGAIN and EINTR are defined.
+
+	* fileio.c (Fcopy_file): Assume EISDIR is defined.
+	* gmalloc.c (ENOMEM, EINVAL): Assume they're defined.
+	* gnutls.c (emacs_gnutls_write): Assume EAGAIN is defined.
+	* lread.c (readbyte_from_file): Assume EINTR is defined.
+	* process.c (wait_reading_process_output, send_process) [subprocesses]:
+	Assume EIO and EAGAIN are defined.
+	* unexcoff.c (write_segment): Assume EFAULT is defined.
+
+2012-11-27  Eli Zaretskii  <eliz@gnu.org>
+
+	* fontset.c (Finternal_char_font): Return nil on non-GUI frames.
+	(Bug#11964)
+
+	* xdisp.c (draw_glyphs): Don't draw in mouse face if mouse
+	highlighting on the frame was cleared.  Prevents assertion
+	violations when repeatedly clicking on the "Top" link of the
+	"bread-crumbs" in Info buffers.
+
 2012-11-25  Paul Eggert  <eggert@cs.ucla.edu>
 
 	* sysdep.c (sys_subshell): Don't assume pid_t fits in int.

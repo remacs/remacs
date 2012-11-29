@@ -1,3 +1,101 @@
+2012-11-29  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* progmodes/etags.el (visit-tags-table-buffer): Give a more precise
+	error message when the file doesn't exist (bug#12974).
+
+2012-11-29  Kelly Dean  <kellydeanch@yahoo.com>  (tiny change)
+
+	* simple.el (activate-mark): Run activate-mark-hook (bug#13027).
+
+2012-11-29  Glenn Morris  <rgm@gnu.org>
+
+	* files.el (hack-dir-local-variables): Warn if try to set
+	coding via dir-locals, since it doesn't work.  (Bug#7169)
+
+	Add desktop support for restoring vc-dir buffers.  (Bug#10606)
+	* vc/vc-dir.el (vc-dir-mode): Autoload it (for desktop restore).
+	Set buffer-local value of desktop-save-buffer.
+	(vc-dir-desktop-buffer-misc-data, vc-dir-restore-desktop-buffer):
+	New functions.
+	(desktop-buffer-mode-handlers): Add vc-dir-mode entry.
+	* desktop.el (desktop-save-buffer-p): Treat vc-dir like dired.
+
+	* files.el (inhibit-local-variables-ignore-case): New.  (Bug#10610)
+	(inhibit-local-variables-p): Use inhibit-local-variables-ignore-case.
+	Doc fix.
+	(inhibit-local-variables-regexps, inhibit-local-variables-suffixes):
+	Doc fixes.
+
+2012-11-28  Jay Belanger  <jay.p.belanger@gmail.com>
+
+	* calc/calc-forms.el (calc-date-notation): Fix regexp
+	used to find time codes.  Fix symbol for seconds.
+
+2012-11-27  Glenn Morris  <rgm@gnu.org>
+
+	* emacs-lisp/derived.el (derived-mode-make-docstring):
+	Don't mention "abbrev" or "syntax" if nil.  (Bug#11277)
+
+2012-11-27  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* textmodes/table.el (table-insert): Don't use `symbol-name' on
+	lexically scoped variables (bug#13005).
+
+2012-11-27  Glenn Morris  <rgm@gnu.org>
+
+	* vc/vc-hooks.el (vc-mistrust-permissions):
+	Default to t, to avoid data-loss.  (Bug#11490)
+
+2012-11-27  Fabián Ezequiel Gallina  <fgallina@cuca>
+
+	* progmodes/python.el (python-indent-guess-indent-offset):
+	If indentation is guessed make python-indent-offset buffer-local.
+
+	Fix Imenu regression.
+	* progmodes/python.el (python-nav-beginning-of-defun):
+	Fix forward movement when statement(s) separates point from defun.
+	(python-imenu-prev-index-position): New function.
+
+2012-11-27  Eli Zaretskii  <eliz@gnu.org>
+
+	* subr.el (buffer-file-type): Declare with defvar-local.  Doc fix.
+
+	* dos-w32.el (find-file-not-found-set-buffer-file-coding-system):
+	Don't set buffer-file-type.  Return nil.  (Bug#12989)
+
+2012-11-27  Glenn Morris  <rgm@gnu.org>
+
+	* hippie-exp.el (hippie-expand-try-functions-list):
+	Re-autoload it.  (Bug#12982)
+
+2012-11-27  Eli Zaretskii  <eliz@gnu.org>
+
+	* descr-text.el (describe-char-padded-string):
+	Call internal-char-font only on GUI frames.  (Bug#11964)
+
+2012-11-27  Andreas Schwab  <schwab@linux-m68k.org>
+
+	* buff-menu.el (Buffer-menu-buffer+size-width): Fix customize type
+	and obsoletion message.
+
+2012-11-27  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* emacs-lisp/cl-macs.el (cl--transform-lambda): Add back `declare' in
+	the constructs to keep outside of the `cl-block' (bug#12977).
+
+2012-11-27  Chong Yidong  <cyd@gnu.org>
+
+	* mouse.el (mouse-drag-line): Even if the line is not draggable,
+	keep reading until we get the up-event anyway, in order to process
+	the up-event for mouse-1-click-follows-link (Bug#12971).
+
+2012-11-26  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* emacs-lisp/advice.el (ad-should-compile): Don't compile advice if the
+	base function is not yet defined (bug#12965).
+	(ad-activate-advised-definition): Use ad-compile-function.
+	(ad-activate): Use cond.
+
 2012-11-25  Leo Liu  <sdl.web@gmail.com>
 
 	* textmodes/sgml-mode.el (sgml-tag): Fix indentation for closing tag.
@@ -10,14 +108,14 @@
 	Texinfo integration.
 
 	* textmodes/reftex.el (reftex-section-pre-regexp)
-	(reftex-section-post-regexp, reftex-section-info-function): New
-	variable.
-	(reftex-compile-variables): Use variables
-	reftex-section-pre-regexp, reftex-section-post-regexp, and
-	reftex-section-info-function in order to be compatible with Texinfo integration.
+	(reftex-section-post-regexp, reftex-section-info-function):
+	New variable.
+	(reftex-compile-variables): Use variables reftex-section-pre-regexp,
+	reftex-section-post-regexp, and reftex-section-info-function in order
+	to be compatible with Texinfo integration.
 
-	* textmodes/reftex-toc.el (reftex-toc-promote-action): use
-	reftex-section-pre-regexp variable in order to be compatible with
+	* textmodes/reftex-toc.el (reftex-toc-promote-action):
+	use reftex-section-pre-regexp variable in order to be compatible with
 	Texinfo integration.
 
 2012-11-25  Chong Yidong  <cyd@gnu.org>
