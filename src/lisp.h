@@ -2801,7 +2801,7 @@ extern void del_range_byte (ptrdiff_t, ptrdiff_t, bool);
 extern void del_range_both (ptrdiff_t, ptrdiff_t, ptrdiff_t, ptrdiff_t, bool);
 extern Lisp_Object del_range_2 (ptrdiff_t, ptrdiff_t,
 				ptrdiff_t, ptrdiff_t, bool);
-extern void modify_region (struct buffer *, ptrdiff_t, ptrdiff_t, bool);
+extern void modify_region_1 (ptrdiff_t, ptrdiff_t, bool);
 extern void prepare_to_modify_buffer (ptrdiff_t, ptrdiff_t, ptrdiff_t *);
 extern void signal_after_change (ptrdiff_t, ptrdiff_t, ptrdiff_t);
 extern void adjust_after_insert (ptrdiff_t, ptrdiff_t, ptrdiff_t,
@@ -2968,6 +2968,7 @@ extern Lisp_Object make_float (double);
 extern void display_malloc_warning (void);
 extern ptrdiff_t inhibit_garbage_collection (void);
 extern Lisp_Object make_save_value (void *, ptrdiff_t);
+extern void free_save_value (Lisp_Object);
 extern Lisp_Object build_overlay (Lisp_Object, Lisp_Object, Lisp_Object);
 extern void free_marker (Lisp_Object);
 extern void free_cons (struct Lisp_Cons *);
@@ -3398,7 +3399,6 @@ extern void syms_of_doc (void);
 extern int read_bytecode_char (bool);
 
 /* Defined in bytecode.c.  */
-extern Lisp_Object Qbytecode;
 extern void syms_of_bytecode (void);
 extern struct byte_stack *byte_stack_list;
 #if BYTE_MARK_STACK

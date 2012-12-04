@@ -1,3 +1,11 @@
+2012-12-03  Chong Yidong  <cyd@gnu.org>
+
+	* custom.texi (Init Rebinding): kbd is now a function (Bug#13052).
+
+2012-12-02  Kevin Ryde  <user42@zip.com.au>
+
+	* maintaining.texi (Tag Syntax): Mention (defvar foo) handling.
+
 2012-12-01  Kevin Ryde  <user42@zip.com.au>
 
 	* maintaining.texi (Tag Syntax): Mention Perl's "use constant".
