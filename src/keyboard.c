@@ -3988,6 +3988,7 @@ kbd_buffer_get_event (KBOARD **kbp,
 	  obj = make_lispy_event (event);
 	  kbd_fetch_ptr = event + 1;
 	}
+#endif      
 #ifdef HAVE_INOTIFY
       else if (event->kind == FILE_NOTIFY_EVENT)
         {
