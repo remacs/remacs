@@ -41,6 +41,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #if defined WINDOWSNT || defined HAVE_NTGUI
 #include "w32select.h"
 #include "w32font.h"
+#include "w32common.h"
 #endif
 
 #if defined HAVE_NTGUI && defined CYGWIN
@@ -736,6 +737,13 @@ main (int argc, char **argv)
     }
 #endif
 
+#if defined WINDOWSNT || defined HAVE_NTGUI
+  /* Set global variables used to detect Windows version.  Do this as
+     early as possible.  (unexw32.c calls this function as well, but
+     the additional call here is harmless.) */
+  cache_system_info ();
+#endif
+
 #ifdef RUN_TIME_REMAP
   if (initialized)
     run_time_remap (argv[0]);
@@ -1290,6 +1298,7 @@ Using an Emacs configured with --with-x-toolkit=lucid does not have this problem
 
 #ifdef WINDOWSNT
   globals_of_w32 ();
+  globals_of_w32notify ();
   /* Initialize environment from registry settings.  */
   init_environment (argv);
   init_ntproc (dumping); /* must precede init_editfns.  */
@@ -1448,12 +1457,17 @@ Using an Emacs configured with --with-x-toolkit=lucid does not have this problem
       syms_of_gnutls ();
 #endif
 
+#ifdef HAVE_INOTIFY
+      syms_of_inotify ();
+#endif /* HAVE_INOTIFY */
+
 #ifdef HAVE_DBUS
       syms_of_dbusbind ();
 #endif /* HAVE_DBUS */
 
 #ifdef WINDOWSNT
       syms_of_ntterm ();
+      syms_of_w32notify ();
 #endif /* WINDOWSNT */
 
       syms_of_profiler ();

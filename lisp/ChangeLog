@@ -1,11 +1,59 @@
+2012-12-11  Eli Zaretskii  <eliz@gnu.org>
+
+	* makefile.w32-in (compile4-SH): Fix a typo that caused term
+	subdirectory be skipped.
+
+2012-12-11  Glenn Morris  <rgm@gnu.org>
+
+	* net/rcirc.el (rcirc-urls, rcirc-condition-filter): Doc fixes.
+
+	* progmodes/f90.el (f90-line-continued, f90-indent-region):
+	Treat preprocessor lines embedded in continuations like comments.
+	(f90-indent-line): Special-case preprocessor lines.  (Bug#13138)
+
+2012-12-11  Jay Belanger  <jay.p.belanger@gmail.com>
+
+	* calc/calc.el (calc-standard-date-formats):  Add more date
+	formats.
+	* calc/calc-forms.el (math-parse-iso-date): New function.
+	(math-parse-date): Use `math-parse-iso-date' when appropriate.
+	(math-parse-iso-date-validate): Add extra error checking.
+	(calc-date-notation): Add ability to access new date formats.
+
+2012-12-10  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* hi-lock.el (hi-lock--regexps-at-point): Fix boundary case for
+	font-lock as well as when there's no text-property.
+
+2012-12-10  Jambunathan K  <kjambunathan@gmail.com>
+
+	* hi-lock.el: Refine the choice of default face.
+	(hi-lock-keyword->face): New function.  Use it wherever we used
+	cadadadr instead.
+	(hi-lock--regexps-at-point): Ignore faces that can't come from hi-lock.
+	(hi-lock--last-face): Remove var.
+	(hi-lock--unused-faces): New var to replace it.
+	(hi-lock-read-face-name): Use/maintain it.
+	(hi-lock-unface-buffer): Maintain it.  Fix error for the C-u case.
+	(hi-lock-set-pattern): Ignore new rule if it has the same regexp even
+	if it has another face.
+
+2012-12-10  Eli Zaretskii  <eliz@gnu.org>
+
+	* subr.el (w32notify-handle-event): New function.
+	(inotify-handle-event): Doc fix.
+
+2012-12-10  Rüdiger Sonderfeld  <ruediger@c-plusplus.de>
+
+	* subr.el (inotify-event-p, inotify-handle-event): New functions.
+
 2012-12-10  Dani Moncayo <dmoncayo@gmail.com>
 
 	* simple.el (just-one-space): Doc fix.
 
 2012-12-10  Eli Zaretskii  <eliz@gnu.org>
 
-	* textmodes/texinfo.el (texinfo-enable-quote-envs): Add
-	"smallexample".
+	* textmodes/texinfo.el (texinfo-enable-quote-envs): Add "smallexample".
 
 2012-12-10  Le Wang  <l26wang@gmail.com>
 

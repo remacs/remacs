@@ -1821,7 +1821,6 @@ static LRESULT CALLBACK w32_wnd_proc (HWND, UINT, WPARAM, LPARAM);
 static BOOL
 w32_init_class (HINSTANCE hinst)
 {
-
   if (w32_unicode_gui)
     {
       WNDCLASSW  uwc;
@@ -3957,6 +3956,9 @@ w32_wnd_proc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 	return retval;
       }
+    case WM_EMACS_FILENOTIFY:
+      my_post_msg (&wmsg, hwnd, msg, wParam, lParam);
+      return 1;
 
     default:
       /* Check for messages registered at runtime. */
@@ -7023,6 +7025,9 @@ cache_system_info (void)
 	} info;
       DWORD data;
     } version;
+
+  /* Cache the module handle of Emacs itself.  */
+  hinst = GetModuleHandle (NULL);
 
   /* Cache the version of the operating system.  */
   version.data = GetVersion ();

@@ -1,3 +1,163 @@
+2012-12-11  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	* buffer.c (Fset_buffer_multibyte): Do not force redisplay
+	if changed buffer is not shown in a window.
+	* insdel.c (prepare_to_modify_buffer): Likewise.
+	* window.c (replace_buffer_in_windows_safely): Do nothing
+	if buffer is not shown in a window.
+	(Fforce_window_update): Likewise if string or buffer argument
+	is passed.
+
+2012-12-11  Eli Zaretskii  <eliz@gnu.org>
+
+	* inotify.c (Finotify_add_watch): Rename decoded_file_name to
+	encoded_file_name, which is what it is.
+
+2012-12-11  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	Consistently use marker_position and marker_byte_position.
+	* fringe.c (Ffringe_bitmaps_at_pos):
+	* indent.c (Fvertical_motion):
+	* insdel.c (prepare_to_modify_buffer):
+	* keyboard.c (make_lispy_position):
+	* window.c (Fwindow_end, Fpos_visible_in_window_p, unshow_buffer)
+	(window_scroll_pixel_based, displayed_window_lines)
+	(Fset_window_configuration):
+	* xdisp.c (message_dolog, with_echo_area_buffer_unwind_data)
+	(mark_window_display_accurate_1, redisplay_window, decode_mode_spec):
+	Replace direct access to marker fields with calls
+	to marker_position and/or marker_byte_position.
+
+2012-12-11  Juanma Barranquero  <lekktu@gmail.com>
+
+	* makefile.w32-in (SIG2STR_H): New macro.
+	(SYSWAIT_H, $(BLD)/emacs.$(O), $(BLD)/process.$(O))
+	($(BLD)/w32notify.$(O)): Update dependencies.
+
+2012-12-10  Daniel Colascione  <dancol@dancol.org>
+
+	* w32term.c, keyboard.c: Fix build break in cygw32 by omitting
+	Windows file notification functionality unless WINDOWSNT.
+
+	* w32gui.h (hprevinst, lpCmdLine, nCmdShow): Remove unused
+	declarations.
+
+	* w32fns.c (cache_system_info): Initialize the global hinst
+	variable here so various initialization calls DTRT.
+
+	* unexw32.c (hprevinst, lpCmdLine, nCmdShow): Remove unused
+	variables.
+	(hinst): Remove unneeded extern declaration.
+	(_start): Remove initialization of above variables; remove
+	initialization of hinst, as cache_system_info now does that.
+
+	* emacs.c (main): Call cache_system_info early in startup; we
+	previously weren't calling it in Cygwin builds.
+
+	* Makefile.in (ntsource, WINDRES, W32_RES, W#@_RES_LINK): Teach
+	the autoconf build system how to compile a Windows resource file
+	and link it to Emacs.
+
+2012-12-10  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	Per-buffer window counters.
+	* buffer.h (struct buffer): New member window_count.
+	(buffer_window_count): New function.
+	* buffer.c (Fget_buffer_create, Fmake_indirect_buffer):
+	Initialize window_count.
+	(Fkill_buffer): Verify window_count for the buffer being killed.
+	(modify_overlay): Do not force redisplay if buffer is not shown
+	in any window.
+	(init_buffer_once): Initialize window_count for buffer_defaults
+	and buffer_local_symbols.
+	* window.h (buffer_shared): Remove declaration.
+	(wset_buffer): Convert from inline ...
+	* window.c (wset_buffer): ... to an ordinary function.
+	(adjust_window_count): New function.
+	(make_parent_window): Use it.
+	* xdisp.c (buffer_shared): Remove.
+	(redisplay_internal, redisplay_window): Adjust users.
+	(buffer_shared_and_changed): Use per-buffer window counter.
+
+2012-12-10  Eli Zaretskii  <eliz@gnu.org>
+
+	Support for filesystem notifications on MS-Windows.
+	* w32proc.c (sys_select): If drain_message_queue returns non-zero,
+	and this is a TTY frame, signal the caller that keyboard input is
+	available.
+
+	* w32xfns.c (drain_message_queue): Now returns an int: an
+	indication whether any WM_EMACS_FILENOTIFY messages were found in
+	the queue.
+
+	* w32inevt.c (handle_file_notifications): New function.
+	(w32_console_read_socket): Call it to process file notifications.
+
+	* w32console.c (initialize_w32_display): Record the main thread ID
+	in dwMainThreadId.
+
+	* deps.mk (inotify.o): New dependency list.
+
+	* Makefile.in (SOME_MACHINE_OBJECTS): Add w32notify.o.
+
+	* w32term.h (WM_EMACS_FILENOTIFY): New custom message.
+	(WM_EMACS_END): Bump value by 1.
+	(notification_buffer_in_use, file_notifications)
+	(notifications_size, notifications_desc): Declare.
+	(w32_get_watch_object, lispy_file_action, globals_of_w32notify):
+	Add prototypes.
+
+	* w32term.c (lispy_file_action, queue_notifications): New functions.
+	(syms_of_w32term) <Qadded, Qremoved, Qmodified, Qrenamed_from>
+	<Qrenamed_to>: New symbols.
+	(w32_read_socket): Handle the WM_EMACS_FILENOTIFY message.
+
+	* w32notify.c: New file, implements file event notifications for
+	MS-Windows.
+
+	* w32fns.c (w32_wnd_proc): Handle the WM_EMACS_FILENOTIFY message
+	by posting it to the w32_read_socket queue.
+
+	* termhooks.h (enum event_kind) [HAVE_NTGUI]: Support
+	FILE_NOTIFY_EVENT.
+
+	* makefile.w32-in (OBJ2): Add $(BLD)/w32notify.$(O).
+	(GLOBAL_SOURCES): Add w32notify.c
+	($(BLD)/w32notify.$(O)): New set of dependencies.
+
+	* lisp.h (syms_of_w32notify) [WINDOWSNT]: Add prototype.
+
+	* keyboard.c (kbd_buffer_get_event) [WINDOWSNT]: Handle
+	FILE_NOTIFY_EVENT.
+	(syms_of_keyboard) [HAVE_NTGUI] <Qfile_notify>: New symbol.
+	(keys_of_keyboard) [WINDOWSNT]: Bind file-notify to
+	w32notify-handle-event by default.
+
+	* emacs.c (main) [WINDOWSNT]: Call globals_of_w32notify and
+	syms_of_w32notify.
+
+2012-12-10  Rüdiger Sonderfeld  <ruediger@c-plusplus.de>
+
+	Support for filesystem notifications on GNU/Linux via inotify.
+	* termhooks.h (enum event_kind) [HAVE_INOTIFY]: Add
+	FILE_NOTIFY_EVENT.
+
+	* lisp.h (syms_of_inotify) [HAVE_INOTIFY]: Add prototype.
+
+	* keyboard.c (Qfile_inotify) [HAVE_INOTIFY]: New variable.
+	(syms_of_keyboard): DEFSYM it.
+	(kbd_buffer_get_event) [HAVE_INOTIFY]: Generate FILE_NOTIFY_EVENT.
+	(make_lispy_event): Support FILE_NOTIFY_EVENT by generating
+	Qfile_inotify events.
+	(keys_of_keyboard) [HAVE_INOTIFY]: Bind file-inotify events in
+	special-event-map to inotify-handle-event.
+
+	* emacs.c (main) [HAVE_INOTIFY]: Call syms_of_inotify.
+
+	* Makefile.in (base_obj): Add inotify.o.
+
+	* inotify.c: New file.
+
 2012-12-10  Jan Djärv  <jan.h.d@swipnet.se>
 
 	* nsterm.m (fd_handler:): FD_ZERO fds (Bug#13103).

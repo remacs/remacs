@@ -185,6 +185,7 @@ OPTION_DEFAULT_ON([gconf],[don't compile with GConf support])
 OPTION_DEFAULT_ON([gsettings],[don't compile with GSettings support])
 OPTION_DEFAULT_ON([selinux],[don't compile with SELinux support])
 OPTION_DEFAULT_ON([gnutls],[don't use -lgnutls for SSL/TLS support])
+OPTION_DEFAULT_ON([inotify],[don't compile with inotify (file-watch) support])
 
 OPTION_DEFAULT_OFF([xwidgets],[enable use of some gtk widgets it Emacs buffers])
 
@@ -1607,6 +1608,8 @@ AC_SUBST(LIB_STANDARD)
 HAVE_W32=no
 W32_OBJ=
 W32_LIBS=
+W32_RES=
+W32_RES_LINK=
 if test "${with_w32}" != no; then
   if test "${opsys}" != "cygwin"; then
     AC_MSG_ERROR([Using w32 with an autotools build is only supported for Cygwin.])
@@ -1615,13 +1618,21 @@ if test "${with_w32}" != no; then
                   [AC_MSG_ERROR([`--with-w32' was specified, but windows.h
                   cannot be found.])])
   AC_DEFINE(HAVE_NTGUI, 1, [Define to use native MS Windows GUI.])
+  AC_CHECK_TOOL(WINDRES, [windres],
+                [AC_MSG_ERROR([No resource compiler found.])])
   W32_OBJ="w32fns.o w32menu.o w32reg.o w32font.o w32term.o"
   W32_OBJ="$W32_OBJ w32xfns.o w32select.o w32uniscribe.o"
   W32_LIBS="$W32_LIBS -lkernel32 -luser32 -lgdi32 -lole32 -lcomdlg32"
   W32_LIBS="$W32_LIBS -lusp10 -lcomctl32 -lwinspool"
+  W32_RES="emacs.res"
+  # Tell the linker that emacs.res is an object (which we compile from
+  # the rc file), not a linker script.
+  W32_RES_LINK="-Wl,-bpe-i386 -Wl,emacs.res"
 fi
 AC_SUBST(W32_OBJ)
 AC_SUBST(W32_LIBS)
+AC_SUBST(W32_RES)
+AC_SUBST(W32_RES_LINK)
 
 if test "${HAVE_W32}" = "yes"; then
   window_system=w32
@@ -2235,6 +2246,17 @@ fi
 
 AC_SUBST(LIBGNUTLS_LIBS)
 AC_SUBST(LIBGNUTLS_CFLAGS)
+
+dnl inotify is only available on GNU/Linux.
+if test "${with_inotify}" = "yes"; then
+   AC_CHECK_HEADERS(sys/inotify.h)
+   if test "$ac_cv_header_sys_inotify_h" = yes ; then
+     AC_CHECK_FUNC(inotify_init1)
+   fi
+fi
+if test "$ac_cv_func_inotify_init1" = yes; then
+  AC_DEFINE(HAVE_INOTIFY, 1, [Define to 1 to use inotify.])
+fi
 
 dnl Do not put whitespace before the #include statements below.
 dnl Older compilers (eg sunos4 cc) choke on it.

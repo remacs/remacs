@@ -517,11 +517,6 @@ Lisp_Object Qmenu_bar_update_hook;
 
 static int overlay_arrow_seen;
 
-/* Number of windows showing the buffer of the selected
-   window (or another buffer with the same base buffer).  */
-
-int buffer_shared;
-
 /* Vector containing glyphs for an ellipsis `...'.  */
 
 static Lisp_Object default_invis_vector[3];
@@ -9554,7 +9549,7 @@ message_dolog (const char *m, ptrdiff_t nbytes, int nlflag, int multibyte)
 	      del_range_both (BEG, BEG_BYTE, PT, PT_BYTE, 0);
 	    }
 	}
-      BEGV = XMARKER (oldbegv)->charpos;
+      BEGV = marker_position (oldbegv);
       BEGV_BYTE = marker_byte_position (oldbegv);
 
       if (zv_at_end)
@@ -9564,7 +9559,7 @@ message_dolog (const char *m, ptrdiff_t nbytes, int nlflag, int multibyte)
 	}
       else
 	{
-	  ZV = XMARKER (oldzv)->charpos;
+	  ZV = marker_position (oldzv);
 	  ZV_BYTE = marker_byte_position (oldzv);
 	}
 
@@ -9573,8 +9568,8 @@ message_dolog (const char *m, ptrdiff_t nbytes, int nlflag, int multibyte)
       else
 	/* We can't do Fgoto_char (oldpoint) because it will run some
            Lisp code.  */
-	TEMP_SET_PT_BOTH (XMARKER (oldpoint)->charpos,
-			  XMARKER (oldpoint)->bytepos);
+	TEMP_SET_PT_BOTH (marker_position (oldpoint),
+			  marker_byte_position (oldpoint));
 
       UNGCPRO;
       unchain_marker (XMARKER (oldpoint));
@@ -10146,8 +10141,8 @@ with_echo_area_buffer_unwind_data (struct window *w)
     {
       XSETWINDOW (tmp, w); ASET (vector, i, tmp); ++i;
       ASET (vector, i, w->buffer); ++i;
-      ASET (vector, i, make_number (XMARKER (w->pointm)->charpos)); ++i;
-      ASET (vector, i, make_number (XMARKER (w->pointm)->bytepos)); ++i;
+      ASET (vector, i, make_number (marker_position (w->pointm))); ++i;
+      ASET (vector, i, make_number (marker_byte_position (w->pointm))); ++i;
     }
   else
     {
@@ -10948,9 +10943,8 @@ echo_area_display (int update_frame_p)
 static int
 buffer_shared_and_changed (void)
 {
-  /* The variable buffer_shared is set in redisplay_window and
-     indicates that we redisplay a buffer in different windows. */
-  return (buffer_shared > 1 && UNCHANGED_MODIFIED < MODIFF);
+  return (buffer_window_count (current_buffer) > 1
+	  && UNCHANGED_MODIFIED < MODIFF);
 }
 
 /* Nonzero if W doesn't reflect the actual state of current buffer due
@@ -13531,10 +13525,6 @@ redisplay_internal (void)
       FOR_EACH_FRAME (tail, frame)
 	XFRAME (frame)->updated_p = 0;
 
-      /* Recompute # windows showing selected buffer.  This will be
-	 incremented each time such a window is displayed.  */
-      buffer_shared = 0;
-
       FOR_EACH_FRAME (tail, frame)
 	{
 	  struct frame *f = XFRAME (frame);
@@ -13872,7 +13862,7 @@ mark_window_display_accurate_1 (struct window *w, int accurate_p)
 	  if (w == XWINDOW (selected_window))
 	    w->last_point = BUF_PT (b);
 	  else
-	    w->last_point = XMARKER (w->pointm)->charpos;
+	    w->last_point = marker_position (w->pointm);
 	}
     }
 
@@ -15629,26 +15619,11 @@ redisplay_window (Lisp_Object window, int just_this_one_p)
   if (mode_line_update_needed (w))
     update_mode_line = 1;
 
-  /* Count number of windows showing the selected buffer.  An indirect
-     buffer counts as its base buffer.  */
-  if (!just_this_one_p)
-    {
-      struct buffer *current_base, *window_base;
-      current_base = current_buffer;
-      window_base = XBUFFER (XWINDOW (selected_window)->buffer);
-      if (current_base->base_buffer)
-	current_base = current_base->base_buffer;
-      if (window_base->base_buffer)
-	window_base = window_base->base_buffer;
-      if (current_base == window_base)
-	buffer_shared++;
-    }
-
   /* Point refers normally to the selected window.  For any other
      window, set up appropriate value.  */
   if (!EQ (window, selected_window))
     {
-      ptrdiff_t new_pt = XMARKER (w->pointm)->charpos;
+      ptrdiff_t new_pt = marker_position (w->pointm);
       ptrdiff_t new_pt_byte = marker_byte_position (w->pointm);
       if (new_pt < BEGV)
 	{
@@ -21656,7 +21631,7 @@ decode_mode_spec (struct window *w, register int c, int field_width,
 	if (mode_line_target == MODE_LINE_TITLE)
 	  return "";
 
-	startpos = XMARKER (w->start)->charpos;
+	startpos = marker_position (w->start);
 	startpos_byte = marker_byte_position (w->start);
 	height = WINDOW_TOTAL_LINES (w);
 

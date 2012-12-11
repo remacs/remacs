@@ -271,6 +271,35 @@ decode_valid_window (register Lisp_Object window)
   return w;
 }
 
+/* Called when W's buffer slot is changed.  ARG -1 means that W is about to
+   cease its buffer, and 1 means that W is about to set up the new one.  */
+
+static void
+adjust_window_count (struct window *w, int arg)
+{
+  eassert (eabs (arg) == 1);
+  if (BUFFERP (w->buffer))
+    {
+      struct buffer *b = XBUFFER (w->buffer);
+      
+      if (b->base_buffer)
+	b = b->base_buffer;
+      b->window_count += arg;
+      eassert (b->window_count >= 0);
+    }
+}
+
+/* Set W's buffer slot to VAL and recompute number
+   of windows showing VAL if it is a buffer.  */
+
+void
+wset_buffer (struct window *w, Lisp_Object val)
+{
+  adjust_window_count (w, -1);
+  w->buffer = val;
+  adjust_window_count (w, 1);
+}
+
 /* Build a frequently used 4-integer (X Y W H) list.  */
 
 static Lisp_Object
@@ -1464,6 +1493,7 @@ if it isn't already recorded.  */)
       && !noninteractive)
     {
       struct text_pos startp;
+      ptrdiff_t charpos = marker_position (w->start);
       struct it it;
       struct buffer *old_buffer = NULL;
       void *itdata = NULL;
@@ -1481,9 +1511,9 @@ if it isn't already recorded.  */)
          `-l' containing a call to `rmail' with subsequent other
          commands.  At the end, W->start happened to be BEG, while
          rmail had already narrowed the buffer.  */
-      if (XMARKER (w->start)->charpos < BEGV)
+      if (charpos < BEGV)
 	SET_TEXT_POS (startp, BEGV, BEGV_BYTE);
-      else if (XMARKER (w->start)->charpos > ZV)
+      else if (charpos > ZV)
 	SET_TEXT_POS (startp, ZV, ZV_BYTE);
       else
 	SET_TEXT_POS_FROM_MARKER (startp, w->start);
@@ -1606,7 +1636,7 @@ display row, and VPOS is the row number (0-based) containing POS.  */)
   else if (w == XWINDOW (selected_window))
     posint = PT;
   else
-    posint = XMARKER (w->pointm)->charpos;
+    posint = marker_position (w->pointm);
 
   /* If position is above window start or outside buffer boundaries,
      or if window start is out of range, position is not visible.  */
@@ -1952,7 +1982,7 @@ unshow_buffer (register struct window *w)
 	   && EQ (buf, XWINDOW (BVAR (b, last_selected_window))->buffer)))
     temp_set_point_both (b,
 			 clip_to_bounds (BUF_BEGV (b),
-					 XMARKER (w->pointm)->charpos,
+					 marker_position (w->pointm),
 					 BUF_ZV (b)),
 			 clip_to_bounds (BUF_BEGV_BYTE (b),
 					 marker_byte_position (w->pointm),
@@ -2959,22 +2989,24 @@ replace_buffer_in_windows (Lisp_Object buffer)
   call1 (Qreplace_buffer_in_windows, buffer);
 }
 
-
-/* Safely replace BUFFER with some other buffer in all windows of all
-   frames, even those on other keyboards.  */
+/* If BUFFER is shown in a window, safely replace it with some other
+   buffer in all windows of all frames, even those on other keyboards.  */
 
 void
 replace_buffer_in_windows_safely (Lisp_Object buffer)
 {
-  Lisp_Object tail, frame;
+  if (buffer_window_count (XBUFFER (buffer)))
+    {
+      Lisp_Object tail, frame;
 
-  /* A single call to window_loop won't do the job because it only
-     considers frames on the current keyboard.  So loop manually over
-     frames, and handle each one.  */
-  FOR_EACH_FRAME (tail, frame)
-    window_loop (REPLACE_BUFFER_IN_WINDOWS_SAFELY, buffer, 1, frame);
+      /* A single call to window_loop won't do the job because it only
+	 considers frames on the current keyboard.  So loop manually over
+	 frames, and handle each one.  */
+      FOR_EACH_FRAME (tail, frame)
+	window_loop (REPLACE_BUFFER_IN_WINDOWS_SAFELY, buffer, 1, frame);
+    }
 }
-
+
 /* If *ROWS or *COLS are too small a size for FRAME, set them to the
    minimum allowable size.  */
 
@@ -3309,11 +3341,11 @@ displaying that buffer.  */)
 
   if (STRINGP (object))
     object = Fget_buffer (object);
-  if (BUFFERP (object) && BUFFER_LIVE_P (XBUFFER (object)))
+  if (BUFFERP (object) && BUFFER_LIVE_P (XBUFFER (object))
+      && buffer_window_count (XBUFFER (object)))
     {
-      /* Walk all windows looking for buffer, and force update
-	 of each of those windows.  */
-
+      /* If buffer is live and shown in at least one window, find
+	 all windows showing this buffer and force update of them.  */
       object = window_loop (REDISPLAY_BUFFER_WINDOWS, object, 0, Qvisible);
       return NILP (object) ? Qnil : Qt;
     }
@@ -3392,6 +3424,8 @@ make_parent_window (Lisp_Object window, int horflag)
   memcpy ((char *) p + sizeof (struct vectorlike_header),
 	  (char *) o + sizeof (struct vectorlike_header),
 	  word_size * VECSIZE (struct window));
+  /* P's buffer slot may change from nil to a buffer.  */
+  adjust_window_count (p, 1);
   XSETWINDOW (parent, p);
 
   p->sequence_number = ++sequence_number;
@@ -4589,7 +4623,7 @@ window_scroll_pixel_based (Lisp_Object window, int n, int whole, int noerror)
       /* Set the window start, and set up the window for redisplay.  */
       set_marker_restricted (w->start, make_number (pos),
 			     w->buffer);
-      bytepos = XMARKER (w->start)->bytepos;
+      bytepos = marker_byte_position (w->start);
       w->start_at_line_beg = (pos == BEGV || FETCH_BYTE (bytepos - 1) == '\n');
       w->update_mode_line = 1;
       w->last_modified = 0;
@@ -5089,6 +5123,7 @@ displayed_window_lines (struct window *w)
 {
   struct it it;
   struct text_pos start;
+  ptrdiff_t charpos = marker_position (w->start);
   int height = window_box_height (w);
   struct buffer *old_buffer;
   int bottom_y;
@@ -5105,9 +5140,9 @@ displayed_window_lines (struct window *w)
   /* In case W->start is out of the accessible range, do something
      reasonable.  This happens in Info mode when Info-scroll-down
      calls (recenter -1) while W->start is 1.  */
-  if (XMARKER (w->start)->charpos < BEGV)
+  if (charpos < BEGV)
     SET_TEXT_POS (start, BEGV, BEGV_BYTE);
-  else if (XMARKER (w->start)->charpos > ZV)
+  else if (charpos > ZV)
     SET_TEXT_POS (start, ZV, ZV_BYTE);
   else
     SET_TEXT_POS_FROM_MARKER (start, w->start);
@@ -5535,7 +5570,7 @@ the return value is nil.  Otherwise the value is t.  */)
 	    && WINDOWP (selected_window)
 	    && EQ (XWINDOW (selected_window)->buffer, new_current_buffer)
 	    && !EQ (selected_window, data->current_window))
-	  old_point = XMARKER (XWINDOW (data->current_window)->pointm)->charpos;
+	  old_point = marker_position (XWINDOW (data->current_window)->pointm);
 	else
 	  old_point = PT;
       else
@@ -5550,7 +5585,7 @@ the return value is nil.  Otherwise the value is t.  */)
 	if (EQ (XWINDOW (data->current_window)->buffer, new_current_buffer)
 	    /* If current_window = selected_window, its point is in BUF_PT.  */
 	    && !EQ (selected_window, data->current_window))
-	  old_point = XMARKER (XWINDOW (data->current_window)->pointm)->charpos;
+	  old_point = marker_position (XWINDOW (data->current_window)->pointm);
 	else
 	  old_point = BUF_PT (XBUFFER (new_current_buffer));
     }
