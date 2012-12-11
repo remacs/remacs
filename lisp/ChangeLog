@@ -1,3 +1,17 @@
+2012-12-11  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* mail/emacsbug.el (report-emacs-bug): Move the intangible text to
+	a display text-property.
+	(report-emacs-bug-hook): Don't bother deleting it any more.
+
+	* hilit-chg.el (highlight-save-buffer-state): Delete.
+	Use with-silent-modifications instead.
+	(hilit-chg-set-face-on-change): Only fixup the text that's modified.
+
+	* button.el: Handle buttons in display text-properties.
+	(button--area-button-p, button--area-button-string):
+	Use (STRING . STRING-POS) representation instead of just STRING.
+
 2012-12-11  Eli Zaretskii  <eliz@gnu.org>
 
 	* makefile.w32-in (compile4-SH): Fix a typo that caused term
