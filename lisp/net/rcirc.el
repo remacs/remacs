@@ -45,6 +45,8 @@
 (require 'ring)
 (require 'time-date)
 
+(defconst rcirc-id-string (concat "rcirc on GNU Emacs " emacs-version))
+
 (defgroup rcirc nil
   "Simple IRC client."
   :version "22.1"
@@ -135,6 +137,16 @@ display purposes. If absent, the real server name will be displayed instead."
 (defcustom rcirc-default-full-name "unknown"
   "The full name sent to the server when connecting."
   :version "24.1"                       ; changed default
+  :type 'string)
+
+(defcustom rcirc-default-part-reason rcirc-id-string
+  "The default reason to send when parting from a channel.
+Used when no reason is explicitly given."
+  :type 'string)
+
+(defcustom rcirc-default-quit-reason rcirc-id-string
+  "The default reason to send when quitting a server.
+Used when no reason is explicitly given."
   :type 'string)
 
 (defcustom rcirc-fill-flag t
@@ -413,7 +425,6 @@ will be killed."
 (defvar rcirc-timeout-seconds 600
   "Kill connection after this many seconds if there is no activity.")
 
-(defconst rcirc-id-string (concat "rcirc on GNU Emacs " emacs-version))
 
 (defvar rcirc-startup-channels nil)
 
@@ -2189,10 +2200,10 @@ CHANNELS is a comma- or space-separated string of channel names."
   "Part CHANNEL.
 CHANNEL should be a string of the form \"#CHANNEL-NAME REASON\".
 If omitted, CHANNEL-NAME defaults to TARGET, and REASON defaults
-to `rcirc-id-string'."
+to `rcirc-default-part-reason'."
   (interactive "sPart channel: ")
   (let ((channel (if (> (length channel) 0) channel target))
-        (msg rcirc-id-string))
+        (msg rcirc-default-part-reason))
     (when (string-match "\\`\\([&#+!]\\S-+\\)?\\s-*\\(.+\\)?\\'" channel)
       (when (match-beginning 2)
         (setq msg (match-string 2 channel)))
@@ -2207,7 +2218,7 @@ to `rcirc-id-string'."
   (rcirc-send-string process (concat "QUIT :"
 				     (if (not (zerop (length reason)))
 					 reason
-				       rcirc-id-string))))
+                                       rcirc-default-quit-reason))))
 
 (defun-rcirc-command reconnect (_)
   "Reconnect to current server."
