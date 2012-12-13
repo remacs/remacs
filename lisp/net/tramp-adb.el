@@ -112,7 +112,7 @@
   "Alist of handler functions for Tramp ADB method.")
 
 ;;;###tramp-autoload
-(defun tramp-adb-file-name-p (filename)
+(defsubst tramp-adb-file-name-p (filename)
   "Check if it's a filename for ADB."
   (let ((v (tramp-dissect-file-name filename)))
     (string= (tramp-file-name-method v) tramp-adb-method)))
@@ -933,10 +933,15 @@ COMMAND is nil, just sends `echo $?'.  Returns the exit status found."
     (if (tramp-wait-for-regexp proc timeout tramp-adb-prompt)
 	(let (buffer-read-only)
 	  (goto-char (point-min))
-	  (when (re-search-forward tramp-adb-prompt (point-at-eol) t)
+	  ;; ADB terminal sends "^H" sequences.
+	  (when (re-search-forward "<\b+" (point-at-eol) t)
 	    (forward-line 1)
 	    (delete-region (point-min) (point)))
 	  ;; Delete the prompt.
+         (goto-char (point-min))
+         (when (re-search-forward tramp-adb-prompt (point-at-eol) t)
+           (forward-line 1)
+           (delete-region (point-min) (point)))
 	  (goto-char (point-max))
 	  (re-search-backward tramp-adb-prompt nil t)
 	  (delete-region (point) (point-max)))
