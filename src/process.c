@@ -6337,10 +6337,6 @@ handle_child_signal (int sig)
 	      /* clear_desc_flag avoids a compiler bug in Microsoft C.  */
 	      if (clear_desc_flag)
 		delete_read_fd (p->infd);
-		{
-		  FD_CLR (p->infd, &input_wait_mask);
-		  FD_CLR (p->infd, &non_keyboard_wait_mask);
-		}
 	    }
 	}
     }
