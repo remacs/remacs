@@ -379,6 +379,7 @@ Lists
 * Modifying Lists::         Storing new pieces into an existing list.
 * Sets And Lists::          A list can represent a finite mathematical set.
 * Association Lists::       A list can represent a finite relation or mapping.
+* Property Lists::          A list of paired elements.
 
 Modifying Existing List Structure
 
@@ -386,6 +387,12 @@ Modifying Existing List Structure
 * Setcdr::                  Replacing part of the list backbone.
                               This can be used to remove or add elements.
 * Rearrangement::           Reordering the elements in a list; combining lists.
+
+Property Lists
+
+* Plists and Alists::       Comparison of the advantages of property
+                              lists and association lists.
+* Plist Access::            Accessing property lists stored elsewhere.
 
 Sequences, Arrays, and Vectors
 
@@ -411,15 +418,13 @@ Symbols
                               and property lists.
 * Definitions::             A definition says how a symbol will be used.
 * Creating Symbols::        How symbols are kept unique.
-* Property Lists::          Each symbol has a property list
+* Symbol Properties::       Each symbol has a property list
                               for recording miscellaneous information.
 
-Property Lists
+Symbol Properties
 
-* Plists and Alists::       Comparison of the advantages of property
-                              lists and association lists.
-* Symbol Plists::           Functions to access symbols' property lists.
-* Other Plists::            Accessing property lists stored elsewhere.
+* Symbol Plists::           Accessing symbol properties.
+* Standard Properties::     Standard meanings of symbol properties.
 
 Evaluation
 
@@ -487,6 +492,7 @@ Variables
 * Variable Aliases::        Variables that are aliases for other variables.
 * Variables with Restricted Values::  Non-constant variables whose value can
                                         @emph{not} be an arbitrary Lisp object.
+* Generalized Variables::   Extending the concept of variables.
 
 Scoping Rules for Variable Bindings
 
@@ -501,6 +507,11 @@ Buffer-Local Variables
 * Creating Buffer-Local::   Creating and destroying buffer-local bindings.
 * Default Value::           The default value is seen in buffers
                               that don't have their own buffer-local values.
+
+Generalized Variables
+
+* Setting Generalized Variables::   The @code{setf} macro.
+* Adding Generalized Variables::    Defining new @code{setf} forms.
 
 Functions
 
@@ -517,6 +528,7 @@ Functions
 * Obsolete Functions::      Declaring functions obsolete.
 * Inline Functions::        Defining functions that the compiler
                               will expand inline.
+* Declare Form::          Adding additional information about a function.
 * Declaring Functions::     Telling the compiler that a function is defined.
 * Function Safety::         Determining whether a function is safe to call.
 * Related Topics::          Cross-references to specific Lisp primitives
@@ -611,6 +623,7 @@ Debugging Lisp Programs
 * Edebug::                  A source-level Emacs Lisp debugger.
 * Syntax Errors::           How to find syntax errors.
 * Test Coverage::           Ensuring you have tested all branches in your code.
+* Profiling::               Measuring the resources that your code uses.
 
 The Lisp Debugger
 
@@ -800,17 +813,14 @@ Menu Keymaps
 * Menu Bar::                How to customize the menu bar.
 * Tool Bar::                A tool bar is a row of images.
 * Modifying Menus::         How to add new items to a menu.
+* Easy Menu::               A convenience macro for defining menus.
 
 Defining Menus
 
-* Simple Menu Items::       A simple kind of menu key binding,
-                              limited in capabilities.
-* Extended Menu Items::     More powerful menu item definitions
-                              let you specify keywords to enable
-                              various features.
+* Simple Menu Items::       A simple kind of menu key binding.
+* Extended Menu Items::     More complex menu item definitions.
 * Menu Separators::         Drawing a horizontal line through a menu.
 * Alias Menu Items::        Using command aliases in menu items.
-* Toolkit Differences::     Not all toolkits provide the same features.
 
 Major and Minor Modes
 
@@ -998,6 +1008,8 @@ Windows
 * Resizing Windows::        Changing the sizes of windows.
 * Splitting Windows::       Splitting one window into two windows.
 * Deleting Windows::        Deleting a window gives its space to other windows.
+* Recombining Windows::     Preserving the frame layout when splitting and
+                              deleting windows.
 * Selecting Windows::       The selected window is the one that you edit in.
 * Cyclic Window Ordering::  Moving around the existing windows.
 * Buffers and Windows::     Each window displays the contents of a buffer.
@@ -1373,8 +1385,8 @@ Overlays
 
 Faces
 
-* Defining Faces::          How to define a face.
 * Face Attributes::         What is in a face?
+* Defining Faces::          How to define a face.
 * Attribute Functions::     Functions to examine and set face attributes.
 * Displaying Faces::        How Emacs combines the faces specified for
                               a character.
@@ -1589,7 +1601,11 @@ Object Internals
 @c appendices
 
 @include anti.texi
+@node GNU Free Documentation License
+@appendix GNU Free Documentation License
 @include doclicense.texi
+@node GPL
+@appendix GNU General Public License
 @include gpl.texi
 @include tips.texi
 @include internals.texi

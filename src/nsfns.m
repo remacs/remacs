@@ -30,9 +30,7 @@ GNUstep port and post-20 update by Adrian Robert (arobert@cogsci.ucsd.edu)
    interpretation of even the system includes. */
 #include <config.h>
 
-#include <signal.h>
 #include <math.h>
-#include <setjmp.h>
 #include <c-strcase.h>
 
 #include "lisp.h"
@@ -94,8 +92,6 @@ EmacsTooltip *ns_tooltip;
 
 /* Need forward declaration here to preserve organizational integrity of file */
 Lisp_Object Fx_open_connection (Lisp_Object, Lisp_Object, Lisp_Object);
-
-extern BOOL ns_in_resize;
 
 /* Static variables to handle applescript execution.  */
 static Lisp_Object as_script, *as_result;
@@ -435,9 +431,6 @@ x_set_icon_name (struct frame *f, Lisp_Object arg, Lisp_Object oldval)
   NSView *view = FRAME_NS_VIEW (f);
   NSTRACE (x_set_icon_name);
 
-  if (ns_in_resize)
-    return;
-
   /* see if it's changed */
   if (STRINGP (arg))
     {
@@ -512,9 +505,6 @@ static void
 ns_set_name (struct frame *f, Lisp_Object name, int explicit)
 {
   NSTRACE (ns_set_name);
-
-  if (ns_in_resize)
-    return;
 
   /* Make sure that requests from lisp code override requests from
      Emacs redisplay code.  */
@@ -614,10 +604,10 @@ ns_set_name_as_filename (struct frame *f)
   NSString *str;
   NSTRACE (ns_set_name_as_filename);
 
-  if (f->explicit_name || ! NILP (f->title) || ns_in_resize)
+  if (f->explicit_name || ! NILP (f->title))
     return;
 
-  BLOCK_INPUT;
+  block_input ();
   pool = [[NSAutoreleasePool alloc] init];
   filename = BVAR (XBUFFER (buf), filename);
   name = BVAR (XBUFFER (buf), name);
@@ -642,7 +632,7 @@ ns_set_name_as_filename (struct frame *f)
   if (title && (! strcmp (title, SSDATA (encoded_name))))
     {
       [pool release];
-      UNBLOCK_INPUT;
+      unblock_input ();
       return;
     }
 
@@ -680,7 +670,7 @@ ns_set_name_as_filename (struct frame *f)
     }
 
   [pool release];
-  UNBLOCK_INPUT;
+  unblock_input ();
 }
 
 
@@ -691,11 +681,11 @@ ns_set_doc_edited (struct frame *f, Lisp_Object arg)
   NSAutoreleasePool *pool;
   if (!MINI_WINDOW_P (XWINDOW (f->selected_window)))
     {
-      BLOCK_INPUT;
+      block_input ();
       pool = [[NSAutoreleasePool alloc] init];
       [[view window] setDocumentEdited: !NILP (arg)];
       [pool release];
-      UNBLOCK_INPUT;
+      unblock_input ();
     }
 }
 
@@ -773,14 +763,14 @@ ns_implicitly_set_icon_type (struct frame *f)
 
   NSTRACE (ns_implicitly_set_icon_type);
 
-  BLOCK_INPUT;
+  block_input ();
   pool = [[NSAutoreleasePool alloc] init];
   if (f->output_data.ns->miniimage
       && [[NSString stringWithUTF8String: SSDATA (f->name)]
                isEqualToString: [(NSImage *)f->output_data.ns->miniimage name]])
     {
       [pool release];
-      UNBLOCK_INPUT;
+      unblock_input ();
       return;
     }
 
@@ -788,7 +778,7 @@ ns_implicitly_set_icon_type (struct frame *f)
   if (CONSP (tem) && ! NILP (XCDR (tem)))
     {
       [pool release];
-      UNBLOCK_INPUT;
+      unblock_input ();
       return;
     }
 
@@ -828,7 +818,7 @@ ns_implicitly_set_icon_type (struct frame *f)
   f->output_data.ns->miniimage = image;
   [view setMiniwindowImage: setMini];
   [pool release];
-  UNBLOCK_INPUT;
+  unblock_input ();
 }
 
 
@@ -869,16 +859,6 @@ x_set_icon_type (struct frame *f, Lisp_Object arg, Lisp_Object oldval)
 
   f->output_data.ns->miniimage = image;
   [view setMiniwindowImage: setMini];
-}
-
-
-/* Xism; we stub out (we do implement this in ns-win.el) */
-int
-XParseGeometry (char *string, int *x, int *y,
-                unsigned int *width, unsigned int *height)
-{
-  message1 ("Warning: XParseGeometry not supported under NS.\n");
-  return 0;
 }
 
 
@@ -1030,7 +1010,7 @@ frame_parm_handler ns_frame_parm_handlers[] =
   x_set_fringe_width, /* generic OK */
   x_set_fringe_width, /* generic OK */
   0, /* x_set_wait_for_wm, will ignore */
-  0,  /* x_set_fullscreen will ignore */
+  x_set_fullscreen, /* generic OK */
   x_set_font_backend, /* generic OK */
   x_set_alpha,
   0, /* x_set_sticky */
@@ -1195,7 +1175,6 @@ This function is an internal primitive--use `make-frame' instead.  */)
       f = make_frame (1);
 
   XSETFRAME (frame, f);
-  FRAME_CAN_HAVE_SCROLL_BARS (f) = 1;
 
   f->terminal = dpyinfo->terminal;
 
@@ -1244,7 +1223,7 @@ This function is an internal primitive--use `make-frame' instead.  */)
   f->resx = dpyinfo->resx;
   f->resy = dpyinfo->resy;
 
-  BLOCK_INPUT;
+  block_input ();
   register_font_driver (&nsfont_driver, f);
   x_default_parameter (f, parms, Qfont_backend, Qnil,
 			"fontBackend", "FontBackend", RES_TYPE_STRING);
@@ -1259,7 +1238,7 @@ This function is an internal primitive--use `make-frame' instead.  */)
                                  build_string ([[font fontName] UTF8String]),
                                  "font", "Font", RES_TYPE_STRING);
   }
-  UNBLOCK_INPUT;
+  unblock_input ();
 
   x_default_parameter (f, parms, Qborder_width, make_number (0),
 		       "borderwidth", "BorderWidth", RES_TYPE_NUMBER);
@@ -1358,6 +1337,8 @@ This function is an internal primitive--use `make-frame' instead.  */)
                        RES_TYPE_NUMBER);
   x_default_parameter (f, parms, Qalpha, Qnil,
                        "alpha", "Alpha", RES_TYPE_NUMBER);
+  x_default_parameter (f, parms, Qfullscreen, Qnil,
+                       "fullscreen", "Fullscreen", RES_TYPE_SYMBOL);
 
   width = FRAME_COLS (f);
   height = FRAME_LINES (f);
@@ -1401,6 +1382,9 @@ This function is an internal primitive--use `make-frame' instead.  */)
 
   UNGCPRO;
 
+  if (window_prompting & USPosition)
+    x_set_offset (f, f->left_pos, f->top_pos, 1);
+
   /* Make sure windows on this frame appear in calls to next-window
      and similar functions.  */
   Vwindow_list = Qnil;
@@ -1420,10 +1404,10 @@ FRAME nil means use the selected frame.  */)
   if (dpyinfo->x_focus_frame != f)
     {
       EmacsView *view = FRAME_NS_VIEW (f);
-      BLOCK_INPUT;
+      block_input ();
       [NSApp activateIgnoringOtherApps: YES];
       [[view window] makeKeyAndOrderFront: view];
-      UNBLOCK_INPUT;
+      unblock_input ();
     }
 
   return Qnil;
@@ -1476,13 +1460,15 @@ DEFUN ("ns-popup-color-panel", Fns_popup_color_panel, Sns_popup_color_panel,
 }
 
 
-DEFUN ("ns-read-file-name", Fns_read_file_name, Sns_read_file_name, 1, 4, 0,
+DEFUN ("ns-read-file-name", Fns_read_file_name, Sns_read_file_name, 1, 5, 0,
        doc: /* Use a graphical panel to read a file name, using prompt PROMPT.
 Optional arg DIR, if non-nil, supplies a default directory.
 Optional arg MUSTMATCH, if non-nil, means the returned file or
 directory must exist.
-Optional arg INIT, if non-nil, provides a default file name to use.  */)
-     (Lisp_Object prompt, Lisp_Object dir, Lisp_Object mustmatch, Lisp_Object init)
+Optional arg INIT, if non-nil, provides a default file name to use.
+Optional arg DIR_ONLY_P, if non-nil, means choose only directories.  */)
+  (Lisp_Object prompt, Lisp_Object dir, Lisp_Object mustmatch,
+   Lisp_Object init, Lisp_Object dir_only_p)
 {
   static id fileDelegate = nil;
   int ret;
@@ -1507,21 +1493,36 @@ Optional arg INIT, if non-nil, provides a default file name to use.  */)
   if ([dirS characterAtIndex: 0] == '~')
     dirS = [dirS stringByExpandingTildeInPath];
 
-  panel = NILP (mustmatch) ?
+  panel = NILP (mustmatch) && NILP (dir_only_p) ?
     (id)[EmacsSavePanel savePanel] : (id)[EmacsOpenPanel openPanel];
 
   [panel setTitle: promptS];
 
-  /* Puma (10.1) does not have */
-  if ([panel respondsToSelector: @selector (setAllowsOtherFileTypes:)])
-    [panel setAllowsOtherFileTypes: YES];
-
+  [panel setAllowsOtherFileTypes: YES];
   [panel setTreatsFilePackagesAsDirectories: YES];
   [panel setDelegate: fileDelegate];
 
   panelOK = 0;
-  BLOCK_INPUT;
-  if (NILP (mustmatch))
+  if (! NILP (dir_only_p)) 
+    {
+      [panel setCanChooseDirectories: YES];
+      [panel setCanChooseFiles: NO];
+    }
+  
+  block_input ();
+#if defined (NS_IMPL_COCOA) && \
+  MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_6
+  if (! NILP (mustmatch) || ! NILP (dir_only_p))
+    [panel setAllowedFileTypes: nil];
+  if (dirS) [panel setDirectoryURL: [NSURL fileURLWithPath: dirS]];
+  if (initS && NILP (Ffile_directory_p (init)))
+    [panel setNameFieldStringValue: [initS lastPathComponent]];
+  else
+    [panel setNameFieldStringValue: @""];
+    
+  ret = [panel runModal];
+#else
+  if (NILP (mustmatch) && NILP (dir_only_p))
     {
       ret = [panel runModalForDirectory: dirS file: initS];
     }
@@ -1530,6 +1531,7 @@ Optional arg INIT, if non-nil, provides a default file name to use.  */)
       [panel setCanChooseDirectories: YES];
       ret = [panel runModalForDirectory: dirS file: initS types: nil];
     }
+#endif
 
   ret = (ret == NSOKButton) || panelOK;
 
@@ -1537,7 +1539,7 @@ Optional arg INIT, if non-nil, provides a default file name to use.  */)
     fname = build_string ([[panel filename] UTF8String]);
 
   [[FRAME_NS_VIEW (SELECTED_FRAME ()) window] makeKeyWindow];
-  UNBLOCK_INPUT;
+  unblock_input ();
 
   return ret ? fname : Qnil;
 }
@@ -1798,19 +1800,6 @@ terminate Emacs if we can't open the connection.
                SSDATA (display));
     }
 
-  /* Register our external input/output types, used for determining
-     applicable services and also drag/drop eligibility. */
-  ns_send_types = [[NSArray arrayWithObjects: NSStringPboardType, nil] retain];
-  ns_return_types = [[NSArray arrayWithObjects: NSStringPboardType, nil]
-                      retain];
-  ns_drag_types = [[NSArray arrayWithObjects:
-                            NSStringPboardType,
-                            NSTabularTextPboardType,
-                            NSFilenamesPboardType,
-                            NSURLPboardType,
-                            NSColorPboardType,
-                            NSFontPboardType, nil] retain];
-
   return Qnil;
 }
 
@@ -1921,7 +1910,7 @@ The optional argument FRAME is currently ignored.  */)
         error ("non-Nextstep frame used in `ns-list-colors'");
     }
 
-  BLOCK_INPUT;
+  block_input ();
 
   colorlists = [[NSColorList availableColorLists] objectEnumerator];
   while ((clist = [colorlists nextObject]))
@@ -1939,7 +1928,7 @@ The optional argument FRAME is currently ignored.  */)
         }
     }
 
-  UNBLOCK_INPUT;
+  unblock_input ();
 
   return list;
 }
@@ -1959,32 +1948,29 @@ DEFUN ("ns-list-services", Fns_list_services, Sns_list_services, 0, 0, 0,
 
   check_ns ();
   svcs = [[NSMenu alloc] initWithTitle: @"Services"];
-  [NSApp setServicesMenu: svcs];  /* this and next rebuild on <10.4 */
+  [NSApp setServicesMenu: svcs];
   [NSApp registerServicesMenuSendTypes: ns_send_types
                            returnTypes: ns_return_types];
 
 /* On Tiger, services menu updating was made lazier (waits for user to
    actually click on the menu), so we have to force things along: */
 #ifdef NS_IMPL_COCOA
-  if (NSAppKitVersionNumber >= 744.0)
+  delegate = [svcs delegate];
+  if (delegate != nil)
     {
-      delegate = [svcs delegate];
-      if (delegate != nil)
+      if ([delegate respondsToSelector: @selector (menuNeedsUpdate:)])
+        [delegate menuNeedsUpdate: svcs];
+      if ([delegate respondsToSelector:
+                       @selector (menu:updateItem:atIndex:shouldCancel:)])
         {
-          if ([delegate respondsToSelector: @selector (menuNeedsUpdate:)])
-              [delegate menuNeedsUpdate: svcs];
-          if ([delegate respondsToSelector:
-                            @selector (menu:updateItem:atIndex:shouldCancel:)])
-            {
-              int i, len = [delegate numberOfItemsInMenu: svcs];
-              for (i =0; i<len; i++)
-                  [svcs addItemWithTitle: @"" action: NULL keyEquivalent: @""];
-              for (i =0; i<len; i++)
-                  if (![delegate menu: svcs
-                           updateItem: (NSMenuItem *)[svcs itemAtIndex: i]
-                              atIndex: i shouldCancel: NO])
-                    break;
-            }
+          int i, len = [delegate numberOfItemsInMenu: svcs];
+          for (i =0; i<len; i++)
+            [svcs addItemWithTitle: @"" action: NULL keyEquivalent: @""];
+          for (i =0; i<len; i++)
+            if (![delegate menu: svcs
+                     updateItem: (NSMenuItem *)[svcs itemAtIndex: i]
+                        atIndex: i shouldCancel: NO])
+              break;
         }
     }
 #endif
@@ -2085,7 +2071,7 @@ ns_do_applescript (Lisp_Object script, Lisp_Object *result)
 	  *result = Qt;
 	  // script returned an AppleScript result
 	  if ((typeUnicodeText == [returnDescriptor descriptorType]) ||
-#if defined (NS_IMPL_COCOA) && MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_4
+#if defined (NS_IMPL_COCOA)
 	      (typeUTF16ExternalRepresentation
 	       == [returnDescriptor descriptorType]) ||
 #endif
@@ -2137,7 +2123,7 @@ In case the execution fails, an error is signaled. */)
   CHECK_STRING (script);
   check_ns ();
 
-  BLOCK_INPUT;
+  block_input ();
 
   as_script = script;
   as_result = &result;
@@ -2163,7 +2149,7 @@ In case the execution fails, an error is signaled. */)
   as_status = 0;
   as_script = Qnil;
   as_result = 0;
-  UNBLOCK_INPUT;
+  unblock_input ();
   if (status == 0)
     return result;
   else if (!STRINGP (result))
@@ -2253,20 +2239,6 @@ int
 x_pixel_height (struct frame *f)
 {
   return FRAME_PIXEL_HEIGHT (f);
-}
-
-
-int
-x_char_width (struct frame *f)
-{
-  return FRAME_COLUMN_WIDTH (f);
-}
-
-
-int
-x_char_height (struct frame *f)
-{
-  return FRAME_LINE_HEIGHT (f);
 }
 
 
@@ -2570,7 +2542,7 @@ Text larger than the specified size is clipped.  */)
   else
     CHECK_NUMBER (dy);
 
-  BLOCK_INPUT;
+  block_input ();
   if (ns_tooltip == nil)
     ns_tooltip = [[EmacsTooltip alloc] init];
   else
@@ -2585,7 +2557,7 @@ Text larger than the specified size is clipped.  */)
 		  &root_x, &root_y);
 
   [ns_tooltip showAtX: root_x Y: root_y for: XINT (timeout)];
-  UNBLOCK_INPUT;
+  unblock_input ();
 
   UNGCPRO;
   return unbind_to (count, Qnil);

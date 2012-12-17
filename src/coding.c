@@ -285,7 +285,6 @@ encode_coding_XXX (struct coding_system *coding)
 
 #include <config.h>
 #include <stdio.h>
-#include <setjmp.h>
 
 #include "lisp.h"
 #include "character.h"
@@ -343,6 +342,10 @@ Lisp_Object Qcoding_system_p, Qcoding_system_error;
    end-of-line format.  */
 Lisp_Object Qemacs_mule, Qraw_text;
 Lisp_Object Qutf_8_emacs;
+
+#if defined (WINDOWSNT) || defined (CYGWIN)
+static Lisp_Object Qutf_16le;
+#endif
 
 /* Coding-systems are handed between Emacs Lisp programs and C internal
    routines by the following three variables.  */
@@ -416,7 +419,7 @@ enum iso_code_class_type
     ISO_shift_out,		/* ISO_CODE_SO (0x0E) */
     ISO_shift_in,		/* ISO_CODE_SI (0x0F) */
     ISO_single_shift_2_7,	/* ISO_CODE_SS2_7 (0x19) */
-    ISO_escape,			/* ISO_CODE_SO (0x1B) */
+    ISO_escape,			/* ISO_CODE_ESC (0x1B) */
     ISO_control_1,		/* Control codes in the range
 				   0x80..0x9F, except for the
 				   following 3 codes.  */
@@ -921,65 +924,18 @@ record_conversion_result (struct coding_system *coding,
 
 
 /* Store multibyte form of the character C in P, and advance P to the
-   end of the multibyte form.  This is like CHAR_STRING_ADVANCE but it
-   never calls MAYBE_UNIFY_CHAR.  */
+   end of the multibyte form.  This used to be like CHAR_STRING_ADVANCE
+   without ever calling MAYBE_UNIFY_CHAR, but nowadays we don't call
+   MAYBE_UNIFY_CHAR in CHAR_STRING_ADVANCE.  */
 
-#define CHAR_STRING_ADVANCE_NO_UNIFY(c, p)	\
-  do {						\
-    if ((c) <= MAX_1_BYTE_CHAR)			\
-      *(p)++ = (c);				\
-    else if ((c) <= MAX_2_BYTE_CHAR)		\
-      *(p)++ = (0xC0 | ((c) >> 6)),		\
-	*(p)++ = (0x80 | ((c) & 0x3F));		\
-    else if ((c) <= MAX_3_BYTE_CHAR)		\
-      *(p)++ = (0xE0 | ((c) >> 12)),		\
-	*(p)++ = (0x80 | (((c) >> 6) & 0x3F)),	\
-	*(p)++ = (0x80 | ((c) & 0x3F));		\
-    else if ((c) <= MAX_4_BYTE_CHAR)		\
-      *(p)++ = (0xF0 | (c >> 18)),		\
-	*(p)++ = (0x80 | ((c >> 12) & 0x3F)),	\
-	*(p)++ = (0x80 | ((c >> 6) & 0x3F)),	\
-	*(p)++ = (0x80 | (c & 0x3F));		\
-    else if ((c) <= MAX_5_BYTE_CHAR)		\
-      *(p)++ = 0xF8,				\
-	*(p)++ = (0x80 | ((c >> 18) & 0x0F)),	\
-	*(p)++ = (0x80 | ((c >> 12) & 0x3F)),	\
-	*(p)++ = (0x80 | ((c >> 6) & 0x3F)),	\
-	*(p)++ = (0x80 | (c & 0x3F));		\
-    else					\
-      (p) += BYTE8_STRING ((c) - 0x3FFF80, p);	\
-  } while (0)
-
+#define CHAR_STRING_ADVANCE_NO_UNIFY(c, p)  CHAR_STRING_ADVANCE(c, p)
 
 /* Return the character code of character whose multibyte form is at
-   P, and advance P to the end of the multibyte form.  This is like
-   STRING_CHAR_ADVANCE, but it never calls MAYBE_UNIFY_CHAR.  */
+   P, and advance P to the end of the multibyte form.  This used to be
+   like STRING_CHAR_ADVANCE without ever calling MAYBE_UNIFY_CHAR, but
+   nowadays STRING_CHAR_ADVANCE doesn't call MAYBE_UNIFY_CHAR.  */
 
-#define STRING_CHAR_ADVANCE_NO_UNIFY(p)				\
-  (!((p)[0] & 0x80)						\
-   ? *(p)++							\
-   : ! ((p)[0] & 0x20)						\
-   ? ((p) += 2,							\
-      ((((p)[-2] & 0x1F) << 6)					\
-       | ((p)[-1] & 0x3F)					\
-       | ((unsigned char) ((p)[-2]) < 0xC2 ? 0x3FFF80 : 0)))	\
-   : ! ((p)[0] & 0x10)						\
-   ? ((p) += 3,							\
-      ((((p)[-3] & 0x0F) << 12)					\
-       | (((p)[-2] & 0x3F) << 6)				\
-       | ((p)[-1] & 0x3F)))					\
-   : ! ((p)[0] & 0x08)						\
-   ? ((p) += 4,							\
-      ((((p)[-4] & 0xF) << 18)					\
-       | (((p)[-3] & 0x3F) << 12)				\
-       | (((p)[-2] & 0x3F) << 6)				\
-       | ((p)[-1] & 0x3F)))					\
-   : ((p) += 5,							\
-      ((((p)[-4] & 0x3F) << 18)					\
-       | (((p)[-3] & 0x3F) << 12)				\
-       | (((p)[-2] & 0x3F) << 6)				\
-       | ((p)[-1] & 0x3F))))
-
+#define STRING_CHAR_ADVANCE_NO_UNIFY(p) STRING_CHAR_ADVANCE(p)
 
 /* Set coding->source from coding->src_object.  */
 
@@ -2051,7 +2007,7 @@ emacs_mule_char (struct coding_system *coding, const unsigned char *src,
 	  break;
 
 	default:
-	  abort ();
+	  emacs_abort ();
 	}
       CODING_DECODE_CHAR (coding, src, src_base, src_end,
 			  CHARSET_FROM_ID (charset_ID), code, c);
@@ -2345,7 +2301,7 @@ decode_coding_emacs_mule (struct coding_system *coding)
       int i;
 
       if (charbuf_end - charbuf < cmp_status->length)
-	abort ();
+	emacs_abort ();
       for (i = 0; i < cmp_status->length; i++)
 	*charbuf++ = cmp_status->carryover[i];
       coding->annotated = 1;
@@ -2619,7 +2575,7 @@ encode_coding_emacs_mule (struct coding_system *coding)
 		preferred_charset_id = -1;
 	      break;
 	    default:
-	      abort ();
+	      emacs_abort ();
 	    }
 	  charbuf += -c - 1;
 	  continue;
@@ -3482,7 +3438,7 @@ decode_coding_iso_2022 (struct coding_system *coding)
   if (cmp_status->state != COMPOSING_NO)
     {
       if (charbuf_end - charbuf < cmp_status->length)
-	abort ();
+	emacs_abort ();
       for (i = 0; i < cmp_status->length; i++)
 	*charbuf++ = cmp_status->carryover[i];
       coding->annotated = 1;
@@ -3864,7 +3820,7 @@ decode_coding_iso_2022 (struct coding_system *coding)
 	  break;
 
 	default:
-	  abort ();
+	  emacs_abort ();
 	}
 
       if (cmp_status->state == COMPOSING_NO
@@ -4419,7 +4375,7 @@ encode_coding_iso_2022 (struct coding_system *coding)
 		preferred_charset_id = -1;
 	      break;
 	    default:
-	      abort ();
+	      emacs_abort ();
 	    }
 	  charbuf += -c - 1;
 	  continue;
@@ -4933,7 +4889,7 @@ encode_coding_sjis (struct coding_system *coding)
 		}
 	    }
 	  if (code == CHARSET_INVALID_CODE (charset))
-	    abort ();
+	    emacs_abort ();
 	  if (charset == charset_kanji)
 	    {
 	      int c1, c2;
@@ -5023,7 +4979,7 @@ encode_coding_big5 (struct coding_system *coding)
 		}
 	    }
 	  if (code == CHARSET_INVALID_CODE (charset))
-	    abort ();
+	    emacs_abort ();
 	  if (charset == charset_big5)
 	    {
 	      int c1, c2;
@@ -5107,6 +5063,7 @@ decode_coding_ccl (struct coding_system *coding)
   while (1)
     {
       const unsigned char *p = src;
+      ptrdiff_t offset;
       int i = 0;
 
       if (multibytep)
@@ -5124,8 +5081,17 @@ decode_coding_ccl (struct coding_system *coding)
 
       if (p == src_end && coding->mode & CODING_MODE_LAST_BLOCK)
 	ccl->last_block = 1;
+      /* As ccl_driver calls DECODE_CHAR, buffer may be relocated.  */
+      charset_map_loaded = 0;
       ccl_driver (ccl, source_charbuf, charbuf, i, charbuf_end - charbuf,
 		  charset_list);
+      if (charset_map_loaded
+	  && (offset = coding_change_source (coding)))
+	{
+	  p += offset;
+	  src += offset;
+	  src_end += offset;
+	}
       charbuf += ccl->produced;
       if (multibytep)
 	src += source_byteidx[ccl->consumed];
@@ -5178,8 +5144,15 @@ encode_coding_ccl (struct coding_system *coding)
 
   do
     {
+      ptrdiff_t offset;
+
+      /* As ccl_driver calls DECODE_CHAR, buffer may be relocated.  */
+      charset_map_loaded = 0;
       ccl_driver (ccl, charbuf, destination_charbuf,
 		  charbuf_end - charbuf, 1024, charset_list);
+      if (charset_map_loaded
+	  && (offset = coding_change_destination (coding)))
+	dst += offset;
       if (multibytep)
 	{
 	  ASSURE_DESTINATION (ccl->produced * 2);
@@ -6332,6 +6305,9 @@ detect_coding (struct coding_system *coding)
 		{
 		  category = coding_priorities[i];
 		  this = coding_categories + category;
+		  /* Some of this->detector (e.g. detect_coding_sjis)
+		     require this information.  */
+		  coding->id = this->id;
 		  if (this->id < 0)
 		    {
 		      /* No coding system of this category is defined.  */
@@ -6853,7 +6829,7 @@ produce_chars (struct coding_system *coding, Lisp_Object translation_table,
      [ -LENGTH ANNOTATION_MASK NCHARS NBYTES METHOD [ COMPONENTS... ] ]
  */
 
-static inline void
+static void
 produce_composition (struct coding_system *coding, int *charbuf, ptrdiff_t pos)
 {
   int len;
@@ -6897,7 +6873,7 @@ produce_composition (struct coding_system *coding, int *charbuf, ptrdiff_t pos)
      [ -LENGTH ANNOTATION_MASK NCHARS CHARSET-ID ]
  */
 
-static inline void
+static void
 produce_charset (struct coding_system *coding, int *charbuf, ptrdiff_t pos)
 {
   ptrdiff_t from = pos - charbuf[2];
@@ -7132,7 +7108,7 @@ decode_coding (struct coding_system *coding)
    position of a composition after POS (if any) or to LIMIT, and
    return BUF.  */
 
-static inline int *
+static int *
 handle_composition_annotation (ptrdiff_t pos, ptrdiff_t limit,
 			       struct coding_system *coding, int *buf,
 			       ptrdiff_t *stop)
@@ -7190,7 +7166,7 @@ handle_composition_annotation (ptrdiff_t pos, ptrdiff_t limit,
 		    *buf++ = XINT (XCAR (components));
 		}
 	      else
-		abort ();
+		emacs_abort ();
 	      *head -= len;
 	    }
 	}
@@ -7215,7 +7191,7 @@ handle_composition_annotation (ptrdiff_t pos, ptrdiff_t limit,
    If the property value is nil, set *STOP to the position where the
    property value is non-nil (limiting by LIMIT), and return BUF.  */
 
-static inline int *
+static int *
 handle_charset_annotation (ptrdiff_t pos, ptrdiff_t limit,
 			   struct coding_system *coding, int *buf,
 			   ptrdiff_t *stop)
@@ -7999,6 +7975,40 @@ preferred_coding_system (void)
   return CODING_ID_NAME (id);
 }
 
+#if defined (WINDOWSNT) || defined (CYGWIN)
+
+Lisp_Object
+from_unicode (Lisp_Object str)
+{
+  CHECK_STRING (str);
+  if (!STRING_MULTIBYTE (str) &&
+      SBYTES (str) & 1)
+    {
+      str = Fsubstring (str, make_number (0), make_number (-1));
+    }
+
+  return code_convert_string_norecord (str, Qutf_16le, 0);
+}
+
+wchar_t *
+to_unicode (Lisp_Object str, Lisp_Object *buf)
+{
+  *buf = code_convert_string_norecord (str, Qutf_16le, 1);
+  /* We need to make a another copy (in addition to the one made by
+     code_convert_string_norecord) to ensure that the final string is
+     _doubly_ zero terminated --- that is, that the string is
+     terminated by two zero bytes and one utf-16le null character.
+     Because strings are already terminated with a single zero byte,
+     we just add one additional zero. */
+  str = make_uninit_string (SBYTES (*buf) + 1);
+  memcpy (SDATA (str), SDATA (*buf), SBYTES (*buf));
+  SDATA (str) [SBYTES (*buf)] = '\0';
+  *buf = str;
+  return WCSDATA (*buf);
+}
+
+#endif /* WINDOWSNT || CYGWIN */
+
 
 #ifdef emacs
 /*** 8. Emacs Lisp library functions ***/
@@ -8460,7 +8470,7 @@ highest priority.  */)
 }
 
 
-static inline bool
+static bool
 char_encodable_p (int c, Lisp_Object attrs)
 {
   Lisp_Object tail;
@@ -9428,7 +9438,7 @@ usage: (set-coding-system-priority &rest coding-systems)  */)
 	     && changed[coding_priorities[j]])
 	j++;
       if (j == coding_category_max)
-	abort ();
+	emacs_abort ();
       priorities[i] = coding_priorities[j];
     }
 
@@ -10311,6 +10321,11 @@ syms_of_coding (void)
 
   DEFSYM (Qutf_8, "utf-8");
   DEFSYM (Qutf_8_emacs, "utf-8-emacs");
+
+#if defined (WINDOWSNT) || defined (CYGWIN)
+  /* No, not utf-16-le: that one has a BOM.  */
+  DEFSYM (Qutf_16le, "utf-16le");
+#endif
 
   DEFSYM (Qutf_16, "utf-16");
   DEFSYM (Qbig, "big");

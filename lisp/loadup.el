@@ -38,7 +38,8 @@
 ;; doc strings in the dumped Emacs.)  Because of this:
 
 ;; ii) If the file is loaded uncompiled, it should (where possible)
-;; obey the doc-string conventions expected by make-docfile.
+;; obey the doc-string conventions expected by make-docfile.  It
+;; should also be added to the uncompiled[] list in make-docfile.c.
 
 ;;; Code:
 
@@ -101,6 +102,19 @@
 (load "window")  ; Needed here for `replace-buffer-in-windows'.
 (setq load-source-file-function 'load-with-code-conversion)
 (load "files")
+
+;; Load-time macro-expansion can only take effect after setting
+;; load-source-file-function because of where it is called in lread.c.
+(load "emacs-lisp/macroexp")
+(if (byte-code-function-p (symbol-function 'macroexpand-all))
+    nil
+  ;; Since loaddefs is not yet loaded, macroexp's uses of pcase will simply
+  ;; fail until pcase is explicitly loaded.  This also means that we have to
+  ;; disable eager macro-expansion while loading pcase.
+  (let ((macroexp--pending-eager-loads '(skip)))
+    (load "emacs-lisp/pcase"))
+  ;; Re-load macroexp so as to eagerly macro-expand its uses of pcase.
+  (load "emacs-lisp/macroexp"))
 
 (load "cus-face")
 (load "faces")  ; after here, `defface' may be used.
@@ -224,15 +238,18 @@
       (load "term/common-win")
       (load "term/x-win")))
 
-(if (eq system-type 'windows-nt)
+(if (or (eq system-type 'windows-nt)
+        (featurep 'w32))
     (progn
-      (load "w32-vars")
       (load "term/common-win")
+      (load "w32-vars")
       (load "term/w32-win")
-      (load "ls-lisp")
       (load "disp-table")
-      (load "dos-w32")
-      (load "w32-fns")))
+      (load "w32-common-fns")
+      (when (eq system-type 'windows-nt)
+        (load "w32-fns")
+        (load "ls-lisp")
+        (load "dos-w32"))))
 (if (eq system-type 'ms-dos)
     (progn
       (load "dos-w32")
@@ -240,6 +257,7 @@
       (load "dos-vars")
       ;; Don't load term/common-win: it isn't appropriate for the `pc'
       ;; ``window system'', which generally behaves like a terminal.
+      (load "term/internal")
       (load "term/pc-win")
       (load "ls-lisp")
       (load "disp-table"))) ; needed to setup ibm-pc char set, see internal.el
@@ -265,21 +283,6 @@
 ;is generated.
 ;For other systems, you must edit ../src/Makefile.in.
 (load "site-load" t)
-
-;; ¡¡¡ Big Ugly Hack !!!
-;; src/bootstrap-emacs is mostly used to compile .el files, so it needs
-;; macroexp, bytecomp, cconv, and byte-opt to be fast.  Generally this is done
-;; by compiling those files first, but this only makes a difference if those
-;; files are not preloaded.  As it so happens, macroexp.el tends to be
-;; accidentally preloaded in src/bootstrap-emacs because cl.el and cl-macs.el
-;; require it.  So let's unload it here, if needed, to make sure the
-;; byte-compiled version is used.
-(if (or (not (fboundp 'macroexpand-all))
-        (byte-code-function-p (symbol-function 'macroexpand-all)))
-    nil
-  (fmakunbound 'macroexpand-all)
-  (setq features (delq 'macroexp features))
-  (autoload 'macroexpand-all "macroexp"))
 
 ;; Determine which last version number to use
 ;; based on the executables that now exist.

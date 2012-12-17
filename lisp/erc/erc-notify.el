@@ -3,6 +3,7 @@
 ;; Copyright (C) 2002-2004, 2006-2012 Free Software Foundation, Inc.
 
 ;; Author: Mario Lang <mlang@lexx.delysid.org>
+;; Maintainer: FSF
 ;; Keywords: comm
 
 ;; This file is part of GNU Emacs.
@@ -29,9 +30,7 @@
 
 (require 'erc)
 (require 'erc-networks)
-(eval-when-compile
- (require 'cl)
- (require 'pcomplete))
+(eval-when-compile (require 'pcomplete))
 
 ;;;; Customizable variables
 

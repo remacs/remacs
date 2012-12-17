@@ -26,6 +26,8 @@
 
 ;;; Code:
 
+(defvar add-log-time-format)		; in add-log
+
 (defun add-release-logs (root version)
   "Add \"Version VERSION released.\" change log entries in ROOT.
 Root must be the root of an Emacs source tree."
@@ -126,39 +128,20 @@ Root must be the root of an Emacs source tree."
     (set-version-in-file root "nt/emacsclient.rc" comma-space-version
 			 (rx (and "\"ProductVersion\"" (0+ space) ?,
 				  (0+ space) ?\" (submatch (1+ (in "0-9, ")))
-				  "\\0\""))))
-  ;; nextstep.
-  (set-version-in-file
-   root "nextstep/Cocoa/Emacs.base/Contents/Info.plist"
-   version (rx (and "CFBundleGetInfoString" (1+ anything) "Emacs" (1+ space)
-                    (submatch (1+ (in "0-9."))))))
-  (set-version-in-file
-   root "nextstep/Cocoa/Emacs.base/Contents/Info.plist"
-   version (rx (and "CFBundleShortVersionString" (1+ not-newline) ?\n
-                    (0+ not-newline) "<string>" (0+ space)
-                    (submatch (1+ (in "0-9."))))))
-  (set-version-in-file
-   root "nextstep/Cocoa/Emacs.base/Contents/Resources/English.lproj/InfoPlist.strings"
-   version (rx (and "CFBundleShortVersionString" (0+ space) ?= (0+ space)
-                    ?\" (0+ space) "Version" (1+ space)
-                    (submatch (1+ (in "0-9."))))))
-  (set-version-in-file
-   root "nextstep/Cocoa/Emacs.base/Contents/Resources/English.lproj/InfoPlist.strings"
-   version (rx (and "CFBundleGetInfoString" (0+ space) ?= (0+ space)
-                    ?\" (0+ space) "Emacs version" (1+ space)
-                    (submatch (1+ (in "0-9."))))))
-  (set-version-in-file
-   root "nextstep/GNUstep/Emacs.base/Resources/Info-gnustep.plist"
-   version (rx (and "ApplicationRelease" (0+ space) ?= (0+ space)
-                    ?\" (0+ space) (submatch (1+ (in "0-9."))))))
-  (set-version-in-file
-   root "nextstep/GNUstep/Emacs.base/Resources/Info-gnustep.plist"
-   version (rx (and "FullVersionID" (0+ space) ?= (0+ space)
-                    ?\" (0+ space) "Emacs" (1+ space)
-                    (submatch (1+ (in "0-9."))))))
-  (set-version-in-file
-   root "nextstep/GNUstep/Emacs.base/Resources/Emacs.desktop"
-   version (rx (and "Version=" (submatch (1+ (in "0-9.")))))))
+				  "\\0\"")))
+    ;; Major version only.
+    (when (string-match "\\([0-9]\\{2,\\}\\)" version)
+      (setq version (match-string 1 version))
+      (set-version-in-file root "src/msdos.c" version
+			   (rx (and "Vwindow_system_version" (1+ not-newline)
+				    ?\( (submatch (1+ (in "0-9"))) ?\))))
+      (set-version-in-file root "etc/refcards/ru-refcard.tex" version
+			   "\\\\newcommand{\\\\versionemacs}\\[0\\]\
+{\\([0-9]\\{2,\\}\\)}.+%.+version of Emacs")
+      (set-version-in-file root "etc/refcards/emacsver.tex" version
+			   "\\\\def\\\\versionemacs\
+{\\([0-9]\\{2,\\}\\)}.+%.+version of Emacs"))))
+
 
 ;; Note this makes some assumptions about form of short copyright.
 (defun set-copyright (root copyright)
@@ -172,45 +155,28 @@ Root must be the root of an Emacs source tree."
                          (format-time-string "%Y")))))
   (unless (file-exists-p (expand-file-name "src/emacs.c" root))
     (error "%s doesn't seem to be the root of an Emacs source tree" root))
-  (set-version-in-file root "src/emacs.c" copyright
-		       (rx (and "emacs_copyright" (0+ (not (in ?\")))
+  (set-version-in-file root "configure.ac" copyright
+		       (rx (and bol "copyright" (0+ (not (in ?\")))
         			?\" (submatch (1+ (not (in ?\")))) ?\")))
-  (set-version-in-file root "lib-src/ebrowse.c" copyright
-                       (rx (and "emacs_copyright" (0+ (not (in ?\")))
-        			?\" (submatch (1+ (not (in ?\")))) ?\")))
-  (set-version-in-file root "lib-src/etags.c" copyright
-                       (rx (and "emacs_copyright" (0+ (not (in ?\")))
-        			?\" (submatch (1+ (not (in ?\")))) ?\")))
+  (set-version-in-file root "msdos/sed2v2.inp" copyright
+		       (rx (and bol "/^#undef " (1+ not-newline)
+				"define COPYRIGHT" (1+ space)
+				?\" (submatch (1+ (not (in ?\")))) ?\")))
+  (set-version-in-file root "nt/config.nt" copyright
+		       (rx (and bol "#" (0+ blank) "define" (1+ blank)
+				"COPYRIGHT" (1+ blank)
+				?\" (submatch (1+ (not (in ?\")))) ?\")))
   (set-version-in-file root "lib-src/rcs2log" copyright
         	       (rx (and "Copyright" (0+ space) ?= (0+ space)
         			?\' (submatch (1+ nonl)))))
-  ;; This one is a nuisance, as it needs to be split over two lines.
-  (string-match "\\(.*[0-9]\\{4\\} *\\)\\(.*\\)" copyright)
-  ;; nextstep.
-  (set-version-in-file
-   root "nextstep/Cocoa/Emacs.base/Contents/Info.plist"
-   copyright (rx (and "CFBundleGetInfoString" (1+ anything) "Emacs" (1+ space)
-                    (1+ (in "0-9.")) (1+ space)
-                    (submatch (1+ (not (in ?\<)))))))
-  (set-version-in-file
-   root "nextstep/Cocoa/Emacs.base/Contents/Resources/English.lproj/InfoPlist.strings"
-   copyright (rx (and "NSHumanReadableCopyright" (0+ space) ?\= (0+ space)
-                    ?\" (submatch (1+ (not (in ?\")))))))
-  (set-version-in-file
-   root "nextstep/GNUstep/Emacs.base/Resources/Info-gnustep.plist"
-   copyright (rx (and "Copyright" (0+ space) ?\= (0+ space)
-                      ?\" (submatch (1+ (not (in ?\")))))))
   (when (string-match "\\([0-9]\\{4\\}\\)" copyright)
     (setq copyright (match-string 1 copyright))
-    (dolist (file (directory-files (expand-file-name "etc/refcards" root)
-                                   t "\\.tex\\'"))
-      (unless (string-match "gnus-refcard\\.tex" file)
-        (set-version-in-file
-         root file copyright
-         (concat (if (string-match "ru-refcard\\.tex" file)
-                     "\\\\newcommand{\\\\cyear}\\[0\\]{"
-                   "\\\\def\\\\year{")
-                 "\\([0-9]\\{4\\}\\)}.+%.+copyright year"))))))
+    (set-version-in-file root "etc/refcards/ru-refcard.tex" copyright
+			 "\\\\newcommand{\\\\cyear}\\[0\\]\
+{\\([0-9]\\{4\\}\\)}.+%.+copyright year")
+    (set-version-in-file root "etc/refcards/emacsver.tex" copyright
+			 "\\\\def\\\\year\
+{\\([0-9]\\{4\\}\\)}.+%.+copyright year")))
 
 ;;; Various bits of magic for generating the web manuals
 
@@ -459,7 +425,7 @@ Also generate PostScript output in PS-DEST."
 	(setq done t))
        (t
 	(if (eobp)
-	    (error "Parse error in %s" f))
+	    (error "Parse error in %s" f)) ; f is bound in manual-html-node
 	(unless open-td
 	  (setq done t))))
       (forward-line 1))))
@@ -480,8 +446,10 @@ If optional OLD is non-nil, also include defvars."
 				     ))
 		 "{}" "+"))
 
-;; TODO if a defgroup with a version tag, apply to all customs in that
-;; group (eg for new files).
+(defvar cusver-new-version (format "%s.%s" emacs-major-version
+				   (1+ emacs-minor-version))
+  "Version number that new defcustoms should have.")
+
 (defun cusver-scan (file &optional old)
   "Scan FILE for `defcustom' calls.
 Return a list with elements of the form (VAR . VER),
@@ -490,8 +458,8 @@ a :version tag having value VER (may be nil).
 If optional argument OLD is non-nil, also scan for defvars."
   (let ((m (format "Scanning %s..." file))
 	(re (format "^[ \t]*\\((def%s\\)[ \t\n]"
-		    (if old "\\(?:custom\\|var\\)" "custom")))
-        alist var ver)
+		    (if old "\\(custom\\|var\\)" "\\(custom\\|group\\)")))
+        alist var ver form glist grp)
     (message "%s" m)
     (with-temp-buffer
       (insert-file-contents file)
@@ -499,14 +467,41 @@ If optional argument OLD is non-nil, also scan for defvars."
       (while (re-search-forward re nil t)
         (goto-char (match-beginning 1))
         (if (and (setq form (ignore-errors (read (current-buffer))))
-                 (setq var (car-safe (cdr-safe form)))
+		 (setq var (car-safe (cdr-safe form)))
 		 ;; Exclude macros, eg (defcustom ,varname ...).
 		 (symbolp var))
-            (setq ver (car (cdr-safe (memq :version form)))
-                  alist (cons (cons var ver) alist))
+	    (progn
+	      (setq ver (car (cdr-safe (memq :version form))))
+	      (if (equal "group" (match-string 2))
+		  ;; Group :version could be old.
+		  (if (equal ver cusver-new-version)
+		      (setq glist (cons (cons var ver) glist)))
+		;; If it specifies a group and the whole group has a
+		;; version. use that.
+		(unless ver
+		  (setq grp (car (cdr-safe (memq :group form))))
+		  (and grp
+		       (setq grp (car (cdr-safe grp))) ; (quote foo) -> foo
+		       (setq ver (assq grp glist))))
+		(setq alist (cons (cons var ver) alist))))
           (if form (message "Malformed defcustom: `%s'" form)))))
     (message "%sdone" m)
     alist))
+
+(defun cusver-scan-cus-start (file)
+  "Scan cus-start.el and return an alist with elements (VAR . VER)."
+  (if (file-readable-p file)
+      (with-temp-buffer
+	(insert-file-contents file)
+	(when (search-forward "(let ((all '(" nil t)
+	  (backward-char 1)
+	  (let (var ver alist)
+	    (dolist (elem (ignore-errors (read (current-buffer))))
+	      (when (symbolp (setq var (car-safe elem)))
+		(or (stringp (setq ver (nth 3 elem)))
+		    (setq ver nil))
+		(setq alist (cons (cons var ver) alist))))
+	    alist)))))
 
 (define-button-type 'cusver-xref 'action #'cusver-goto-xref)
 
@@ -523,12 +518,10 @@ If optional argument OLD is non-nil, also scan for defvars."
 	(pop-to-buffer (current-buffer))))))
 
 ;; You should probably at least do a grep over the old directory
-;; to check the results of this look sensible.  Eg cus-start if
-;; something moved from C to Lisp.
-;; TODO handle renamed things with aliases to the old names.
-;; What to do about new files?  Does everything in there need a :version,
-;; or eg just the defgroup?
-(defun cusver-check (newdir olddir)
+;; to check the results of this look sensible.
+;; TODO Check cus-start if something moved from C to Lisp.
+;; TODO Handle renamed things with aliases to the old names.
+(defun cusver-check (newdir olddir version)
   "Check that defcustoms have :version tags where needed.
 NEWDIR is the current lisp/ directory, OLDDIR is that from the previous
 release.  A defcustom that is only in NEWDIR should have a :version
@@ -537,11 +530,16 @@ just converting a defvar to a defcustom does not require a :version bump.
 
 Note that a :version tag should also be added if the value of a defcustom
 changes (in a non-trivial way).  This function does not check for that."
-  (interactive "DNew Lisp directory: \nDOld Lisp directory: ")
+  (interactive (list (read-directory-name "New Lisp directory: ")
+		     (read-directory-name "Old Lisp directory: ")
+		     (number-to-string
+		      (read-number "New version number: "
+				   (string-to-number cusver-new-version)))))
   (or (file-directory-p (setq newdir (expand-file-name newdir)))
       (error "Directory `%s' not found" newdir))
   (or (file-directory-p (setq olddir (expand-file-name olddir)))
       (error "Directory `%s' not found" olddir))
+  (setq cusver-new-version version)
   (let* ((newfiles (progn (message "Finding new files with defcustoms...")
 			  (cusver-find-files newdir)))
 	 (oldfiles (progn (message "Finding old files with defcustoms...")
@@ -550,10 +548,12 @@ changes (in a non-trivial way).  This function does not check for that."
 			(mapcar
 			 (lambda (file)
 			   (cons file (cusver-scan file))) newfiles)))
-	 oldcus result thisfile)
+	 oldcus result thisfile file)
     (message "Reading old defcustoms...")
     (dolist (file oldfiles)
       (setq oldcus (append oldcus (cusver-scan file t))))
+    (setq oldcus (append oldcus (cusver-scan-cus-start
+				 (expand-file-name "cus-start.el" olddir))))
     ;; newcus has elements (FILE (VAR VER) ... ).
     ;; oldcus just (VAR . VER).
     (message "Checking for version tags...")

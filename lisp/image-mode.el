@@ -1,4 +1,4 @@
-;;; image-mode.el --- support for visiting image files
+;;; image-mode.el --- support for visiting image files  -*- lexical-binding: t -*-
 ;;
 ;; Copyright (C) 2005-2012 Free Software Foundation, Inc.
 ;;
@@ -31,6 +31,11 @@
 ;; resulting buffer file is saved to another name it will correctly save
 ;; the image data to the new file.
 
+;; Todo:
+
+;; Consolidate with doc-view to make them work on directories of images or on
+;; image files containing various "pages".
+
 ;;; Code:
 
 (require 'image)
@@ -38,8 +43,7 @@
 
 ;;; Image mode window-info management.
 
-(defvar image-mode-winprops-alist t)
-(make-variable-buffer-local 'image-mode-winprops-alist)
+(defvar-local image-mode-winprops-alist t)
 
 (defvar image-mode-new-window-functions nil
   "Special hook run when image data is requested in a new window.
@@ -47,9 +51,13 @@ It is called with one argument, the initial WINPROPS.")
 
 (defun image-mode-winprops (&optional window cleanup)
   "Return winprops of WINDOW.
-A winprops object has the shape (WINDOW . ALIST)."
+A winprops object has the shape (WINDOW . ALIST).
+WINDOW defaults to `selected-window' if it displays the current buffer, and
+otherwise it defaults to t, used for times when the buffer is not displayed."
   (cond ((null window)
-	 (setq window (selected-window)))
+         (setq window
+               (if (eq (current-buffer) (window-buffer)) (selected-window) t)))
+        ((eq window t))
 	((not (windowp window))
 	 (error "Not a window: %s" window)))
   (when cleanup
@@ -738,8 +746,14 @@ close to a multiple of 90, see `image-transform-right-angle-fudge'."
 	    h)))))
 
 (defun image-transform-check-size ()
-  "Check that the image exactly fits the width/height of the window."
-  (unless (numberp image-transform-resize)
+  "Check that the image exactly fits the width/height of the window.
+
+Do this for an image of type `imagemagick' to make sure that the
+elisp code matches the way ImageMagick computes the bounding box
+of a rotated image."
+  (when (and (not (numberp image-transform-resize))
+	     (boundp 'image-type)
+	     (eq image-type 'imagemagick))
     (let ((size (image-display-size (image-get-display-property) t)))
       (cond ((eq image-transform-resize 'fit-width)
 	     (cl-assert (= (car size)

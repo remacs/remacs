@@ -18,10 +18,10 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include <config.h>
 #include <windows.h>
+#include <stdio.h>
 #include <math.h>
 #include <ctype.h>
 #include <commdlg.h>
-#include <setjmp.h>
 
 #include "lisp.h"
 #include "w32term.h"
@@ -635,9 +635,9 @@ w32font_text_extents (struct font *font, unsigned *code,
 /* w32 implementation of draw for font backend.
    Optional.
    Draw glyphs between FROM and TO of S->char2b at (X Y) pixel
-   position of frame F with S->FACE and S->GC.  If WITH_BACKGROUND
-   is nonzero, fill the background in advance.  It is assured that
-   WITH_BACKGROUND is zero when (FROM > 0 || TO < S->nchars).
+   position of frame F with S->FACE and S->GC.  If WITH_BACKGROUND,
+   fill the background in advance.  It is assured that WITH_BACKGROUND
+   is false when (FROM > 0 || TO < S->nchars).
 
    TODO: Currently this assumes that the colors and fonts are already
    set in the DC. This seems to be true now, but maybe only due to
@@ -647,7 +647,7 @@ w32font_text_extents (struct font *font, unsigned *code,
 
 int
 w32font_draw (struct glyph_string *s, int from, int to,
-	      int x, int y, int with_background)
+	      int x, int y, bool with_background)
 {
   UINT options;
   HRGN orig_clip = NULL;
@@ -804,7 +804,7 @@ static int
 w32font_otf_drive (struct font *font, Lisp_Object features,
                    Lisp_Object gstring_in, int from, int to,
                    Lisp_Object gstring_out, int idx,
-                   int alternate_subst);
+                   bool alternate_subst);
   */
 
 /* Internal implementation of w32font_list.
@@ -987,7 +987,6 @@ w32font_open_internal (FRAME_PTR f, Lisp_Object font_entity,
   font->space_width = font->average_width = w32_font->metrics.tmAveCharWidth;
 
   font->vertical_centering = 0;
-  font->encoding_type = 0;
   font->baseline_offset = 0;
   font->relative_compose = 0;
   font->default_ascent = w32_font->metrics.tmAscent;
@@ -1436,6 +1435,9 @@ w32font_coverage_ok (FONTSIGNATURE * coverage, BYTE charset)
   return 1;
 }
 
+#ifndef WINDOWSNT
+#define _strlwr strlwr
+#endif /* !WINDOWSNT */
 
 static int
 check_face_name (LOGFONT *font, char *full_name)

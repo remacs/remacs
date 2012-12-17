@@ -149,6 +149,7 @@ Emacs.
 * Screen Garbled::        Garbage on the screen.
 * Text Garbled::          Garbage in the text.
 * Memory Full::           How to cope when you run out of memory.
+* Crashing::              What Emacs does when it crashes.
 * After a Crash::         Recovering editing in an Emacs session that crashed.
 * Emergency Escape::      What to do if Emacs stops responding.
 @end menu
@@ -274,8 +275,74 @@ will disappear from the mode line.  That means you can safely go on
 editing in the same Emacs session.
 
   Do not use @kbd{M-x buffer-menu} to save or kill buffers when you run
-out of memory, because the buffer menu needs a fair amount of memory
+out of memory, because the Buffer Menu needs a fair amount of memory
 itself, and the reserve supply may not be enough.
+
+@node Crashing
+@subsection When Emacs Crashes
+
+@cindex crash report
+@cindex backtrace
+@cindex @file{emacs_backtrace.txt} file, MS-Windows
+  Emacs is not supposed to crash, but if it does, it produces a
+@dfn{crash report} prior to exiting.  The crash report is printed to
+the standard error stream.  If Emacs was started from a graphical
+desktop on a GNU or Unix system, the standard error stream is commonly
+redirected to a file such as @file{~/.xsession-errors}, so you can
+look for the crash report there.  On MS-Windows, the crash report is
+written to a file named @file{emacs_backtrace.txt} in the current
+directory of the Emacs process, in addition to the standard error
+stream.
+
+  The format of the crash report depends on the platform.  On some
+platforms, such as those using the GNU C Library, the crash report
+includes a @dfn{backtrace} describing the execution state prior to
+crashing, which can be used to help debug the crash.  Here is an
+example for a GNU system:
+
+@example
+Fatal error 11: Segmentation fault
+Backtrace:
+emacs[0x5094e4]
+emacs[0x4ed3e6]
+emacs[0x4ed504]
+/lib64/libpthread.so.0[0x375220efe0]
+/lib64/libpthread.so.0(read+0xe)[0x375220e08e]
+emacs[0x509af6]
+emacs[0x5acc26]
+@dots{}
+@end example
+
+@noindent
+The number @samp{11} is the system signal number corresponding to the
+crash---in this case a segmentation fault.  The hexadecimal numbers
+are program addresses, which can be associated with source code lines
+using a debugging tool.  For example, the GDB command
+@samp{list *0x509af6} prints the source-code lines corresponding to
+the @samp{emacs[0x509af6]} entry.  If your system has the
+@command{addr2line} utility, the following shell command outputs a
+backtrace with source-code line numbers:
+
+@example
+sed -n 's/.*\[\(.*\)]$/\1/p' @var{backtrace} |
+  addr2line -Cfip -e @var{bindir}/@var{emacs-binary}
+@end example
+
+@noindent
+Here, @var{backtrace} is the name of a text file containing a copy of
+the backtrace, @var{bindir} is the name of the directory that
+contains the Emacs executable, and @var{emacs-binary} is the name of
+the Emacs executable file, normally @file{emacs} on GNU and Unix
+systems and @file{emacs.exe} on MS-Windows and MS-DOS.
+
+@cindex core dump
+  Optionally, Emacs can generate a @dfn{core dump} when it crashes, on
+systems that support core files.  A core dump is a file containing
+voluminous data about the state of the program prior to the crash,
+usually examined by loading it into a debugger such as GDB@.  On many
+platforms, core dumps are disabled by default, and you must explicitly
+enable them by running the shell command @samp{ulimit -c unlimited}
+(e.g., in your shell startup script).
 
 @node After a Crash
 @subsection Recovery After a Crash
@@ -313,7 +380,7 @@ symbols.
 @file{core.emacs}, so that another crash won't overwrite it.
 
   To use this script, run @code{gdb} with the file name of your Emacs
-executable and the file name of the core dump, e.g. @samp{gdb
+executable and the file name of the core dump, e.g., @samp{gdb
 /usr/bin/emacs core.emacs}.  At the @code{(gdb)} prompt, load the
 recovery script: @samp{source /usr/src/emacs/etc/emacs-buffer.gdb}.
 Then type the command @code{ybuffer-list} to see which buffers are
@@ -424,7 +491,8 @@ Instead of browsing the bug tracker as a webpage, you can browse it
 from Emacs using the @code{debbugs} package, which can be downloaded
 via the Package Menu (@pxref{Packages}).  This package provides the
 command @kbd{M-x debbugs-gnu} to list bugs, and @kbd{M-x
-debbugs-gnu-search} to search for a specific bug.
+debbugs-gnu-search} to search for a specific bug.  User tags, applied
+by the Emacs maintainers, are shown by @kbd{M-x debbugs-gnu-usertags}.
 
 @item
 The @samp{bug-gnu-emacs} mailing list (also available as the newsgroup

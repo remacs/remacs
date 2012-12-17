@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include <config.h>
-#include <setjmp.h>
+
 #include "lisp.h"
 #include "intervals.h"
 #include "character.h"
@@ -85,8 +85,18 @@ text_read_only (Lisp_Object propval)
   xsignal0 (Qtext_read_only);
 }
 
+/* Prepare to modify the region of BUFFER from START to END.  */
 
-
+static void
+modify_region (Lisp_Object buffer, Lisp_Object start, Lisp_Object end)
+{
+  struct buffer *buf = XBUFFER (buffer), *old = current_buffer;
+
+  set_buffer_internal (buf);
+  modify_region_1 (XINT (start), XINT (end), true);
+  set_buffer_internal (old);
+}
+
 /* Extract the interval at the position pointed to by BEGIN from
    OBJECT, a string or buffer.  Additionally, check that the positions
    pointed to by BEGIN and END are within the bounds of OBJECT, and
@@ -241,7 +251,7 @@ interval_has_all_properties (Lisp_Object plist, INTERVAL i)
 /* Return nonzero if the plist of interval I has any of the
    properties of PLIST, regardless of their values.  */
 
-static inline int
+static int
 interval_has_some_properties (Lisp_Object plist, INTERVAL i)
 {
   register Lisp_Object tail1, tail2, sym;
@@ -263,7 +273,7 @@ interval_has_some_properties (Lisp_Object plist, INTERVAL i)
 /* Return nonzero if the plist of interval I has any of the
    property names in LIST, regardless of their values.  */
 
-static inline int
+static int
 interval_has_some_properties_list (Lisp_Object list, INTERVAL i)
 {
   register Lisp_Object tail1, tail2, sym;
@@ -556,7 +566,8 @@ If POSITION is at the end of OBJECT, the value is nil.  */)
 
 DEFUN ("get-text-property", Fget_text_property, Sget_text_property, 2, 3, 0,
        doc: /* Return the value of POSITION's property PROP, in OBJECT.
-OBJECT is optional and defaults to the current buffer.
+OBJECT should be a buffer or a string; if omitted or nil, it defaults
+to the current buffer.
 If POSITION is at the end of OBJECT, the value is nil.  */)
   (Lisp_Object position, Lisp_Object prop, Lisp_Object object)
 {
@@ -1163,7 +1174,7 @@ Return t if any property value actually changed, nil otherwise.  */)
     }
 
   if (BUFFERP (object))
-    modify_region (XBUFFER (object), XINT (start), XINT (end), 1);
+    modify_region (object, start, end);
 
   /* We are at the beginning of interval I, with LEN chars to scan.  */
   for (;;)
@@ -1301,7 +1312,7 @@ set_text_properties (Lisp_Object start, Lisp_Object end, Lisp_Object properties,
     }
 
   if (BUFFERP (object) && !NILP (coherent_change_p))
-    modify_region (XBUFFER (object), XINT (start), XINT (end), 1);
+    modify_region (object, start, end);
 
   set_text_properties_1 (start, end, properties, object, i);
 
@@ -1450,7 +1461,7 @@ Use `set-text-properties' if you want to remove all text properties.  */)
     }
 
   if (BUFFERP (object))
-    modify_region (XBUFFER (object), XINT (start), XINT (end), 1);
+    modify_region (object, start, end);
 
   /* We are at the beginning of an interval, with len to scan */
   for (;;)
@@ -1564,7 +1575,7 @@ Return t if any property was actually removed, nil otherwise.  */)
 	  else if (LENGTH (i) == len)
 	    {
 	      if (!modified && BUFFERP (object))
-		modify_region (XBUFFER (object), XINT (start), XINT (end), 1);
+		modify_region (object, start, end);
 	      remove_properties (Qnil, properties, i, object);
 	      if (BUFFERP (object))
 		signal_after_change (XINT (start), XINT (end) - XINT (start),
@@ -1577,7 +1588,7 @@ Return t if any property was actually removed, nil otherwise.  */)
 	      i = split_interval_left (i, len);
 	      copy_properties (unchanged, i);
 	      if (!modified && BUFFERP (object))
-		modify_region (XBUFFER (object), XINT (start), XINT (end), 1);
+		modify_region (object, start, end);
 	      remove_properties (Qnil, properties, i, object);
 	      if (BUFFERP (object))
 		signal_after_change (XINT (start), XINT (end) - XINT (start),
@@ -1588,7 +1599,7 @@ Return t if any property was actually removed, nil otherwise.  */)
       if (interval_has_some_properties_list (properties, i))
 	{
 	  if (!modified && BUFFERP (object))
-	    modify_region (XBUFFER (object), XINT (start), XINT (end), 1);
+	    modify_region (object, start, end);
 	  remove_properties (Qnil, properties, i, object);
 	  modified = 1;
 	}

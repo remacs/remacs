@@ -432,6 +432,8 @@ Every entry is a list (NAME ADDRESS).")
   "Alist of handler functions for Tramp GVFS method.
 Operations not mentioned here will be handled by the default Emacs primitives.")
 
+;; It must be a `defsubst' in order to push the whole code into
+;; tramp-loaddefs.el.  Otherwise, there would be recursive autoloading.
 ;;;###tramp-autoload
 (defsubst tramp-gvfs-file-name-p (filename)
   "Check if it's a filename handled by the GVFS daemon."
@@ -521,12 +523,16 @@ It is needed when D-Bus signals or errors arrive, because there
 is no information where to trace the message.")
 
 (defun tramp-gvfs-dbus-event-error (event err)
-  "Called when a D-Bus error message arrives, see `dbus-event-error-hooks'."
+  "Called when a D-Bus error message arrives, see `dbus-event-error-functions'."
   (when tramp-gvfs-dbus-event-vector
     (tramp-message tramp-gvfs-dbus-event-vector 10 "%S" event)
     (tramp-error tramp-gvfs-dbus-event-vector 'file-error "%s" (cadr err))))
 
-(add-hook 'dbus-event-error-hooks 'tramp-gvfs-dbus-event-error)
+;; `dbus-event-error-hooks' has been renamed to `dbus-event-error-functions'.
+(add-hook
+ (if (boundp 'dbus-event-error-functions)
+     'dbus-event-error-functions 'dbus-event-error-hooks)
+ 'tramp-gvfs-dbus-event-error)
 
 
 ;; File name primitives.
@@ -537,7 +543,7 @@ is no information where to trace the message.")
   "Like `copy-file' for Tramp files."
   (with-parsed-tramp-file-name
       (if (tramp-tramp-file-p filename) filename newname) nil
-    (tramp-with-progress-reporter
+    (with-tramp-progress-reporter
 	v 0 (format "Copying %s to %s" filename newname)
       (condition-case err
 	  (let ((args
@@ -741,7 +747,7 @@ is no information where to trace the message.")
   "Like `rename-file' for Tramp files."
   (with-parsed-tramp-file-name
       (if (tramp-tramp-file-p filename) filename newname) nil
-    (tramp-with-progress-reporter
+    (with-tramp-progress-reporter
 	v 0 (format "Renaming %s to %s" filename newname)
       (condition-case err
 	  (rename-file
@@ -1056,7 +1062,7 @@ ADDRESS can have the form \"xx:xx:xx:xx:xx:xx\" or \"[xx:xx:xx:xx:xx:xx]\"."
    (catch 'mounted
      (dolist
 	 (elt
-	  (with-file-property vec "/" "list-mounts"
+	  (with-tramp-file-property vec "/" "list-mounts"
 	    (with-tramp-dbus-call-method vec t
 	      :session tramp-gvfs-service-daemon tramp-gvfs-path-mounttracker
 	      tramp-gvfs-interface-mounttracker "listMounts"))
@@ -1199,7 +1205,7 @@ connection if a previous connection has died for some reason."
 	    (tramp-gvfs-object-path
 	     (tramp-make-tramp-file-name method user host ""))))
 
-      (tramp-with-progress-reporter
+      (with-tramp-progress-reporter
 	  vec 3
 	  (if (zerop (length user))
 	      (format "Opening connection for %s using %s" host method)

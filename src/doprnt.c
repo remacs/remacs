@@ -102,7 +102,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include <config.h>
 #include <stdio.h>
-#include <setjmp.h>
 #include <float.h>
 #include <unistd.h>
 #include <limits.h>
@@ -113,10 +112,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
    don't have to include others because CHAR_HEAD_P does not contains
    another macro.  */
 #include "character.h"
-
-#ifndef DBL_MAX_10_EXP
-#define DBL_MAX_10_EXP 308 /* IEEE double */
-#endif
 
 /* Generate output from a format-spec FORMAT,
    terminated at position FORMAT_END.
@@ -526,7 +521,10 @@ evxprintf (char **buf, ptrdiff_t *bufsize,
       if (nbytes < *bufsize - 1)
 	return nbytes;
       if (*buf != nonheapbuf)
-	xfree (*buf);
+	{
+	  xfree (*buf);
+	  *buf = NULL;
+	}
       *buf = xpalloc (NULL, bufsize, 1, bufsize_max, 1);
     }
 }

@@ -79,9 +79,6 @@ typedef struct _XImage
 #define FACE_DEFAULT (~0)
 
 extern HINSTANCE hinst;
-extern HINSTANCE hprevinst;
-extern LPSTR lpCmdLine;
-extern int nCmdShow;
 
 /* Bit Gravity */
 
@@ -117,9 +114,6 @@ extern int nCmdShow;
 #define PAspect		(1L << 7) /* program specified min and max aspect ratios */
 #define PBaseSize	(1L << 8) /* program specified base for incrementing */
 #define PWinGravity	(1L << 9) /* program specified window gravity */
-
-extern int XParseGeometry (char *, int *, int *, unsigned *, unsigned *);
-
 
 typedef struct {
     int x, y;

@@ -238,7 +238,7 @@ GNU Press,               @hfill @uref{http://www.fsf.org/campaigns/gnu-press/}@*
 a division of the               @hfill email: @email{sales@@fsf.org}@*
 Free Software Foundation, Inc.  @hfill Tel: +1 (617) 542-5942@*
 51 Franklin Street, Fifth Floor @hfill Fax: +1 (617) 542-2652@*
-Boston, MA 02110-1301 USA       
+Boston, MA 02110-1301 USA
 @end iftex
 
 @ifnottex
@@ -249,7 +249,7 @@ GNU Press,                        http://www.fsf.org/campaigns/gnu-press/
 a division of the                 email: sales@@fsf.org
 Free Software Foundation, Inc.    Tel: +1 (617) 542-5942
 51 Franklin Street, Fifth Floor   Fax: +1 (617) 542-2652
-Boston, MA 02110-1301 USA          
+Boston, MA 02110-1301 USA
 @end example
 @end ifnottex
 
@@ -1053,7 +1053,7 @@ of Emacs Lisp, I am referring to GNU Emacs Lisp in particular.
 
 My thanks to all who helped me with this book.  My especial thanks to
 @r{Jim Blandy}, @r{Noah Friedman}, @w{Jim Kingdon}, @r{Roland
-McGrath}, @w{Frank Ritter}, @w{Randy Smith}, @w{Richard M.@:
+McGrath}, @w{Frank Ritter}, @w{Randy Smith}, @w{Richard M.
 Stallman}, and @w{Melissa Weisshaus}.  My thanks also go to both
 @w{Philip Johnson} and @w{David Stampe} for their patient
 encouragement.  My mistakes are my own.
@@ -1085,7 +1085,7 @@ Robert J. Chassell
 @c   has been already used, duplicate ignored
 @c I guess that is harmless (what happens if a later part of the text
 @c makes a link to something in the first 4 pages though?).
-@c Note that eg the Emacs manual has a preface, but does not bother
+@c E.g., note that the Emacs manual has a preface, but does not bother
 @c resetting the page numbers back to 1 after that.
 @iftex
 @headings off
@@ -3072,7 +3072,7 @@ All functions are defined in terms of other functions, except for a few
 language.  When you write functions' definitions, you will write them in
 Emacs Lisp and use other functions as your building blocks.  Some of the
 functions you will use will themselves be written in Emacs Lisp (perhaps
-by you) and some will be primitives written in C.  The primitive
+by you) and some will be primitives written in C@.  The primitive
 functions are used exactly like those written in Emacs Lisp and behave
 like them.  They are written in C so we can easily run GNU Emacs on any
 computer that has sufficient power and can run C.
@@ -6600,8 +6600,8 @@ buffer; or conversely, an Emacs Lisp function needs to work on all of a
 buffer that has been narrowed.  The @code{what-line} function, for
 example, removes the narrowing from a buffer, if it has any narrowing
 and when it has finished its job, restores the narrowing to what it was.
-On the other hand, the @code{count-lines} function, which is called by
-@code{what-line}, uses narrowing to restrict itself to just that portion
+On the other hand, the @code{count-lines} function
+uses narrowing to restrict itself to just that portion
 of the buffer in which it is interested and then restores the previous
 situation.
 
@@ -9029,7 +9029,7 @@ The last expression in the @code{kill-new} function adds the newly
 copied string to whatever facility exists for copying and pasting
 among different programs running in a windowing system.  In the X
 Windowing system, for example, the @code{x-select-text} function takes
-the string and stores it in memory operated by X.  You can paste the
+the string and stores it in memory operated by X@.  You can paste the
 string in another program, such as an Xterm.
 
 @need 1200
@@ -9657,7 +9657,7 @@ This sounds more complicated than it is and is easier seen in a diagram:
 @noindent
 In the diagram, each box represents a word of computer memory that
 holds a Lisp object, usually in the form of a memory address.  The boxes,
-i.e.@: the addresses, are in pairs.  Each arrow points to what the address
+i.e., the addresses, are in pairs.  Each arrow points to what the address
 is the address of, either an atom or another pair of addresses.  The
 first box is the electronic address of @samp{rose} and the arrow points
 to @samp{rose}; the second box is the address of the next pair of boxes,
@@ -15680,14 +15680,14 @@ nil
 100
 @end group
 @group
-(17733 259)
-(17491 28834)
-(17596 62124)
-13157
-"-rw-rw-r--"
+(20615 27034 579989 697000)
+(17905 55681 0 0)
+(20615 26327 734791 805000)
+13188
+"-rw-r--r--"
 @end group
 @group
-nil
+t
 2971624
 773)
 @end group
@@ -17612,7 +17612,7 @@ For example:
 (load "~/emacs/slowsplit")
 @end smallexample
 
-This evaluates, i.e.@: loads, the @file{slowsplit.el} file or if it
+This evaluates, i.e., loads, the @file{slowsplit.el} file or if it
 exists, the faster, byte compiled @file{slowsplit.elc} file from the
 @file{emacs} sub-directory of your home directory.  The file contains
 the function @code{split-window-quietly}, which John Robinson wrote in
@@ -17909,10 +17909,10 @@ file that set values:
 @group
 ;; Set calendar highlighting colors
 (setq calendar-load-hook
-      '(lambda ()
-         (set-face-foreground 'diary-face   "skyblue")
-         (set-face-background 'holiday-face "slate blue")
-         (set-face-foreground 'holiday-face "white")))
+      (lambda ()
+        (set-face-foreground 'diary-face   "skyblue")
+        (set-face-background 'holiday-face "slate blue")
+        (set-face-foreground 'holiday-face "white")))
 @end group
 @end smallexample
 
@@ -18781,7 +18781,7 @@ completes without problems.
 
 @item
 While running Edebug, type @kbd{?} to see a list of all the Edebug commands.
-(The @code{global-edebug-prefix} is usually @kbd{C-x X}, i.e.@:
+(The @code{global-edebug-prefix} is usually @kbd{C-x X}, i.e.,
 @kbd{@key{CTRL}-x} followed by an upper case @kbd{X}; use this prefix
 for commands made outside of the Edebug debugging buffer.)
 
@@ -20947,7 +20947,7 @@ not yet seen, @code{mapcar} and @code{lambda}.
 @group
 (defun one-fiftieth (full-range)
   "Return list, each number one-fiftieth of previous."
- (mapcar '(lambda (arg) (/ arg 50)) full-range))
+ (mapcar (lambda (arg) (/ arg 50)) full-range))
 @end group
 @end smallexample
 
@@ -21168,7 +21168,7 @@ and the second argument is @code{full-range}, which will be bound to
 The whole expression looks like this:
 
 @smallexample
-(mapcar '(lambda (arg) (/ arg 50)) full-range))
+(mapcar (lambda (arg) (/ arg 50)) full-range))
 @end smallexample
 
 @xref{Mapping Functions, , Mapping Functions, elisp, The GNU Emacs
@@ -21840,7 +21840,7 @@ each column."
 @group
 (defun one-fiftieth (full-range)
   "Return list, each number of which is 1/50th previous."
- (mapcar '(lambda (arg) (/ arg 50)) full-range))
+ (mapcar (lambda (arg) (/ arg 50)) full-range))
 @end group
 @end smallexample
 

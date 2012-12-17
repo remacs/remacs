@@ -26,7 +26,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include <config.h>
 #include <stdio.h>
-#include <setjmp.h>
 
 #include "lisp.h"
 #include "blockinput.h"
@@ -43,7 +42,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #ifdef HAVE_X_WINDOWS
 #include "xterm.h"
 #endif
-#ifdef WINDOWSNT
+#ifdef HAVE_NTGUI
 #include "w32term.h"
 #endif
 #ifdef HAVE_NS
@@ -185,21 +184,12 @@ void (*check_window_system_func) (void);
 
 
 /* Prototype declarations for static functions.  */
-static void fontset_add (Lisp_Object, Lisp_Object, Lisp_Object, Lisp_Object);
-static Lisp_Object fontset_find_font (Lisp_Object, int, struct face *,
-                                      int, int);
-static void reorder_font_vector (Lisp_Object, struct font *);
-static Lisp_Object fontset_font (Lisp_Object, int, struct face *, int);
 static Lisp_Object make_fontset (Lisp_Object, Lisp_Object, Lisp_Object);
-static Lisp_Object fontset_pattern_regexp (Lisp_Object);
-static void accumulate_script_ranges (Lisp_Object, Lisp_Object,
-                                      Lisp_Object);
-static void set_fontset_font (Lisp_Object, Lisp_Object);
 
-/* Return 1 if ID is a valid fontset id, else return 0.
+/* Return true if ID is a valid fontset id.
    Optimized away if ENABLE_CHECKING is not defined.  */
 
-static int
+static bool
 fontset_id_valid_p (int id)
 {
   return (id >= 0 && id < ASIZE (Vfontset_table) - 1);
@@ -413,7 +403,7 @@ reorder_font_vector (Lisp_Object font_group, struct font *font)
   Lisp_Object vec, font_object;
   int size;
   int i;
-  int score_changed = 0;
+  bool score_changed = 0;
 
   if (font)
     XSETFONT (font_object, font);
@@ -544,10 +534,11 @@ fontset_get_font_group (Lisp_Object fontset, int c)
    ID is a charset-id that must be preferred, or -1 meaning no
    preference.
 
-   If FALLBACK is nonzero, search only fallback fonts.  */
+   If FALLBACK, search only fallback fonts.  */
 
 static Lisp_Object
-fontset_find_font (Lisp_Object fontset, int c, struct face *face, int id, int fallback)
+fontset_find_font (Lisp_Object fontset, int c, struct face *face, int id,
+                   bool fallback)
 {
   Lisp_Object vec, font_group;
   int i, charset_matched = 0, found_index;
@@ -919,11 +910,11 @@ free_face_fontset (FRAME_PTR f, struct face *face)
 
 
 #if 0
-/* Return 1 if FACE is suitable for displaying character C.
-   Otherwise return 0.  Called from the macro FACE_SUITABLE_FOR_CHAR_P
+/* Return true if FACE is suitable for displaying character C.
+   Called from the macro FACE_SUITABLE_FOR_CHAR_P
    when C is not an ASCII character.  */
 
-int
+bool
 face_suitable_for_char_p (struct face *face, int c)
 {
   Lisp_Object fontset, rfont_def;
@@ -1284,7 +1275,7 @@ free_realized_fontsets (Lisp_Object base)
      doesn't remove FACE from a cache.  Until we find a solution, we
      suppress this code, and simply use Fclear_face_cache even though
      that is not efficient.  */
-  BLOCK_INPUT;
+  block_input ();
   for (id = 0; id < ASIZE (Vfontset_table); id++)
     {
       Lisp_Object this = AREF (Vfontset_table, id);
@@ -1305,7 +1296,7 @@ free_realized_fontsets (Lisp_Object base)
 	    }
 	}
     }
-  UNBLOCK_INPUT;
+  unblock_input ();
 #else  /* not 0 */
   /* But, we don't have to call Fclear_face_cache if no fontset has
      been realized from BASE.  */
@@ -1335,17 +1326,14 @@ static Lisp_Object
 check_fontset_name (Lisp_Object name, Lisp_Object *frame)
 {
   int id;
+  struct frame *f = decode_live_frame (*frame);
 
-  if (NILP (*frame))
-    *frame = selected_frame;
-  CHECK_LIVE_FRAME (*frame);
+  XSETFRAME (*frame, f);
 
   if (EQ (name, Qt))
     return Vdefault_fontset;
   if (NILP (name))
-    {
-      id = FRAME_FONTSET (XFRAME (*frame));
-    }
+    id = FRAME_FONTSET (f);
   else
     {
       CHECK_STRING (name);
@@ -1470,7 +1458,7 @@ appended.  By default, FONT-SPEC overrides the previous settings.  */)
   Lisp_Object range_list;
   struct charset *charset = NULL;
   Lisp_Object fontname;
-  int ascii_changed = 0;
+  bool ascii_changed = 0;
 
   fontset = check_fontset_name (name, &frame);
 
@@ -1887,6 +1875,8 @@ DEFUN ("internal-char-font", Finternal_char_font, Sinternal_char_font, 1, 2, 0,
 					 pos + 100, 0, -1);
     }
   if (! CHAR_VALID_P (c))
+    return Qnil;
+  if (!FRAME_WINDOW_P (f))
     return Qnil;
   face_id = FACE_FOR_CHAR (f, FACE_FROM_ID (f, face_id), c, pos, Qnil);
   face = FACE_FROM_ID (f, face_id);

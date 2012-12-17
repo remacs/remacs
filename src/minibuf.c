@@ -21,7 +21,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <config.h>
 #include <errno.h>
 #include <stdio.h>
-#include <setjmp.h>
 
 #include "lisp.h"
 #include "commands.h"
@@ -110,7 +109,7 @@ choose_minibuf_frame (void)
       /* I don't think that any frames may validly have a null minibuffer
 	 window anymore.  */
       if (NILP (sf->minibuffer_window))
-	abort ();
+	emacs_abort ();
 
       /* Under X, we come here with minibuf_window being the
 	 minibuffer window of the unused termcap window created in
@@ -174,17 +173,6 @@ without invoking the usual minibuffer commands.  */)
 
 static Lisp_Object read_minibuf_unwind (Lisp_Object);
 static Lisp_Object run_exit_minibuf_hook (Lisp_Object);
-static Lisp_Object read_minibuf (Lisp_Object, Lisp_Object,
-                                 Lisp_Object,
-                                 int, Lisp_Object,
-                                 Lisp_Object, Lisp_Object,
-                                 int, int);
-static Lisp_Object read_minibuf_noninteractive (Lisp_Object, Lisp_Object,
-                                                Lisp_Object, Lisp_Object,
-                                                int, Lisp_Object,
-                                                Lisp_Object, Lisp_Object,
-                                                int, int);
-static Lisp_Object string_to_object (Lisp_Object, Lisp_Object);
 
 
 /* Read a Lisp object from VAL and return it.  If VAL is an empty
@@ -234,10 +222,10 @@ string_to_object (Lisp_Object val, Lisp_Object defalt)
 static Lisp_Object
 read_minibuf_noninteractive (Lisp_Object map, Lisp_Object initial,
 			     Lisp_Object prompt, Lisp_Object backup_n,
-			     int expflag,
+			     bool expflag,
 			     Lisp_Object histvar, Lisp_Object histpos,
 			     Lisp_Object defalt,
-			     int allow_props, int inherit_input_method)
+			     bool allow_props, bool inherit_input_method)
 {
   ptrdiff_t size, len;
   char *line;
@@ -377,23 +365,23 @@ If the current buffer is not a minibuffer, return its entire contents.  */)
    beginning of INITIAL if N <= 0.
 
    Normally return the result as a string (the text that was read),
-   but if EXPFLAG is nonzero, read it and return the object read.
+   but if EXPFLAG, read it and return the object read.
    If HISTVAR is given, save the value read on that history only if it doesn't
    match the front of that history list exactly.  The value is pushed onto
    the list as the string that was read.
 
    DEFALT specifies the default value for the sake of history commands.
 
-   If ALLOW_PROPS is nonzero, we do not throw away text properties.
+   If ALLOW_PROPS, do not throw away text properties.
 
-   if INHERIT_INPUT_METHOD is nonzero, the minibuffer inherits the
+   if INHERIT_INPUT_METHOD, the minibuffer inherits the
    current input method.  */
 
 static Lisp_Object
 read_minibuf (Lisp_Object map, Lisp_Object initial, Lisp_Object prompt,
-	      int expflag,
+	      bool expflag,
 	      Lisp_Object histvar, Lisp_Object histpos, Lisp_Object defalt,
-	      int allow_props, int inherit_input_method)
+	      bool allow_props, bool inherit_input_method)
 {
   Lisp_Object val;
   ptrdiff_t count = SPECPDL_INDEX ();
@@ -483,6 +471,10 @@ read_minibuf (Lisp_Object map, Lisp_Object initial, Lisp_Object prompt,
     }
 
   /* Choose the minibuffer window and frame, and take action on them.  */
+
+  /* Prepare for restoring the current buffer since choose_minibuf_frame
+     calling Fset_frame_selected_window may change it (Bug#12766).  */
+  record_unwind_protect (Fset_buffer, Fcurrent_buffer ());
 
   choose_minibuf_frame ();
 
@@ -798,7 +790,7 @@ get_minibuffer (EMACS_INT depth)
       Vminibuffer_list = nconc2 (Vminibuffer_list, tail);
     }
   buf = Fcar (tail);
-  if (NILP (buf) || NILP (BVAR (XBUFFER (buf), name)))
+  if (NILP (buf) || !BUFFER_LIVE_P (XBUFFER (buf)))
     {
       buf = Fget_buffer_create
 	(make_formatted_string (name, " *Minibuf-%"pI"d*", depth));
@@ -1448,7 +1440,7 @@ is used to further constrain the set of candidates.  */)
 	      if (bestmatchsize != SCHARS (eltstring)
 		  || bestmatchsize != matchsize)
 		/* Don't count the same string multiple times.  */
-		matchcount++;
+		matchcount += matchcount <= 1;
 	      bestmatchsize = matchsize;
 	      if (matchsize <= SCHARS (string)
 		  /* If completion-ignore-case is non-nil, don't
@@ -1704,7 +1696,7 @@ If INITIAL-INPUT is non-nil, insert it in the minibuffer initially,
   functions, which use one-indexing for POSITION.)  This feature is
   deprecated--it is best to pass nil for INITIAL-INPUT and supply the
   default value DEF instead.  The user can yank the default value into
-  the minibuffer easily using \\[next-history-element].
+  the minibuffer easily using \\<minibuffer-local-map>\\[next-history-element].
 
 HIST, if non-nil, specifies a history list and optionally the initial
   position in the list.  It can be a symbol, which is the history list
@@ -1863,11 +1855,11 @@ static Lisp_Object Qmetadata;
 
 DEFUN ("internal-complete-buffer", Finternal_complete_buffer, Sinternal_complete_buffer, 3, 3, 0,
        doc: /* Perform completion on buffer names.
-If the argument FLAG is nil, invoke `try-completion', if it's t, invoke
-`all-completions', otherwise invoke `test-completion'.
+STRING and PREDICATE have the same meanings as in `try-completion',
+`all-completions', and `test-completion'.
 
-The arguments STRING and PREDICATE are as in `try-completion',
-`all-completions', and `test-completion'.  */)
+If FLAG is nil, invoke `try-completion'; if it is t, invoke
+`all-completions'; otherwise invoke `test-completion'.  */)
   (Lisp_Object string, Lisp_Object predicate, Lisp_Object flag)
 {
   if (NILP (flag))

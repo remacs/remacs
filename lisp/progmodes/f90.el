@@ -102,10 +102,9 @@
 ;;       (abbrev-mode 1)             ; turn on abbreviation mode
 ;;       (f90-add-imenu-menu)        ; extra menu with functions etc.
 ;;       (if f90-auto-keyword-case   ; change case of all keywords on startup
-;;           (f90-change-keywords f90-auto-keyword-case))
-;;       ))
+;;           (f90-change-keywords f90-auto-keyword-case))))
 ;;
-;; in your .emacs file. You can also customize the lists
+;; in your init file. You can also customize the lists
 ;; f90-font-lock-keywords, etc.
 ;;
 ;; The auto-fill and abbreviation minor modes are accessible from the F90 menu,
@@ -1179,11 +1178,11 @@ and lies before point."
 
 (defsubst f90-line-continued ()
   "Return t if the current line is a continued one.
-This includes comment lines embedded in continued lines, but
-not the last line of a continued statement."
+This includes comment or preprocessor lines embedded in continued lines,
+but not the last line of a continued statement."
   (save-excursion
     (beginning-of-line)
-    (while (and (looking-at "[ \t]*\\(!\\|$\\)") (zerop (forward-line -1))))
+    (while (and (looking-at "[ \t]*\\([!#]\\|$\\)") (zerop (forward-line -1))))
     (end-of-line)
     (while (f90-in-comment)
       (search-backward "!" (line-beginning-position))
@@ -1833,11 +1832,15 @@ after indenting."
         (f90-indent-line-no)
       (setq no-line-number t)
       (skip-chars-forward " \t"))
-    (if (looking-at "!")
-        (setq indent (f90-comment-indent))
-      (and f90-smart-end (looking-at "end")
-           (f90-match-end))
-      (setq indent (f90-calculate-indent)))
+    ;; FIXME This means f90-calculate-indent gives different answers
+    ;; for comments and preprocessor lines to this function.
+    ;; Better to make f90-calculate-indent return the correct answer?
+    (cond ((looking-at "!") (setq indent (f90-comment-indent)))
+          ((looking-at "#") (setq indent 0))
+          (t
+           (and f90-smart-end (looking-at "end")
+                (f90-match-end))
+           (setq indent (f90-calculate-indent))))
     (or (= indent (current-column))
         (f90-indent-to indent no-line-number))
     ;; If initial point was within line's indentation,
@@ -1974,12 +1977,13 @@ If run in the middle of a line, the line is not broken."
           (f90-indent-to ind-curr))
       (while (and (f90-line-continued) (zerop (forward-line 1))
                   (< (point) end-region-mark))
-        (if (looking-at "[ \t]*!")
-            (f90-indent-to (f90-comment-indent))
-          (or (= (current-indentation)
-                 (+ ind-curr f90-continuation-indent))
-              (f90-indent-to
-               (+ ind-curr f90-continuation-indent) 'no-line-no)))))
+        (cond ((looking-at "[ \t]*#") (f90-indent-to 0))
+              ((looking-at "[ \t]*!") (f90-indent-to (f90-comment-indent)))
+              (t
+               (or (= (current-indentation)
+                      (+ ind-curr f90-continuation-indent))
+                   (f90-indent-to
+                    (+ ind-curr f90-continuation-indent) 'no-line-no))))))
     ;; Restore point, etc.
     (setq f90-cache-position nil)
     (goto-char save-point)

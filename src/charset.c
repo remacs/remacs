@@ -32,7 +32,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <unistd.h>
 #include <limits.h>
 #include <sys/types.h>
-#include <setjmp.h>
 #include <c-ctype.h>
 #include "lisp.h"
 #include "character.h"
@@ -422,7 +421,7 @@ load_charset_map (struct charset *charset, struct charset_map_entries *entries, 
 /* Read a hexadecimal number (preceded by "0x") from the file FP while
    paying attention to comment character '#'.  */
 
-static inline unsigned
+static unsigned
 read_hex (FILE *fp, bool *eof, bool *overflow)
 {
   int c;
@@ -636,7 +635,7 @@ load_charset (struct charset *charset, int control_flag)
   else
     {
       if (! CHARSET_UNIFIED_P (charset))
-	abort ();
+	emacs_abort ();
       map = CHARSET_UNIFY_MAP (charset);
     }
   if (STRINGP (map))
@@ -1143,12 +1142,14 @@ usage: (define-charset-internal ...)  */)
 	     example, the IDs are stuffed into struct
 	     coding_system.charbuf[i] entries, which are 'int'.  */
 	  int old_size = charset_table_size;
+	  ptrdiff_t new_size = old_size;
 	  struct charset *new_table =
-	    xpalloc (0, &charset_table_size, 1,
+	    xpalloc (0, &new_size, 1,
 		     min (INT_MAX, MOST_POSITIVE_FIXNUM),
 		     sizeof *charset_table);
 	  memcpy (new_table, charset_table, old_size * sizeof *new_table);
 	  charset_table = new_table;
+	  charset_table_size = new_size;
 	  /* FIXME: This leaks memory, as the old charset_table becomes
 	     unreachable.  If the old charset table is charset_table_init
 	     then this leak is intentional; otherwise, it's unclear.
@@ -1618,7 +1619,7 @@ only `ascii', `eight-bit-control', and `eight-bit-graphic'. */)
 /* Return a unified character code for C (>= 0x110000).  VAL is a
    value of Vchar_unify_table for C; i.e. it is nil, an integer, or a
    charset symbol.  */
-int
+static int
 maybe_unify_char (int c, Lisp_Object val)
 {
   struct charset *charset;
@@ -1724,8 +1725,12 @@ decode_char (struct charset *charset, unsigned int code)
 	{
 	  c = char_index + CHARSET_CODE_OFFSET (charset);
 	  if (CHARSET_UNIFIED_P (charset)
-	      && c > MAX_UNICODE_CHAR)
-	    MAYBE_UNIFY_CHAR (c);
+	      && MAX_UNICODE_CHAR < c && c <= MAX_5_BYTE_CHAR)
+	    {
+	      /* Unify C with a Unicode character if possible.  */
+	      Lisp_Object val = CHAR_TABLE_REF (Vchar_unify_table, c);
+	      c = maybe_unify_char (c, val);
+	    }
 	}
     }
 
@@ -2025,10 +2030,10 @@ CH in the charset.  */)
   c = XFASTINT (ch);
   charset = CHAR_CHARSET (c);
   if (! charset)
-    abort ();
+    emacs_abort ();
   code = ENCODE_CHAR (charset, c);
   if (code == CHARSET_INVALID_CODE (charset))
-    abort ();
+    emacs_abort ();
   dimension = CHARSET_DIMENSION (charset);
   for (val = Qnil; dimension > 0; dimension--)
     {
@@ -2290,7 +2295,7 @@ init_charset (void)
 {
   Lisp_Object tempdir;
   tempdir = Fexpand_file_name (build_string ("charsets"), Vdata_directory);
-  if (access (SSDATA (tempdir), 0) < 0)
+  if (! file_accessible_directory_p (SSDATA (tempdir)))
     {
       /* This used to be non-fatal (dir_warning), but it should not
          happen, and if it does sooner or later it will cause some

@@ -506,12 +506,6 @@ struct x_output
      value contains an ID of the fontset, else -1.  */
   int fontset;
 
-  /* Pixel values used for various purposes.
-     border_pixel may be -1 meaning use a gray tile.  */
-#if 0 /* These are also defined in struct frame.  Use that instead.  */
-  unsigned long background_pixel;
-  unsigned long foreground_pixel;
-#endif
   unsigned long cursor_pixel;
   unsigned long border_pixel;
   unsigned long mouse_pixel;
@@ -574,13 +568,13 @@ struct x_output
 
   /* Nonzero means our parent is another application's window
      and was explicitly specified.  */
-  char explicit_parent;
+  unsigned explicit_parent : 1;
 
   /* Nonzero means tried already to make this frame visible.  */
-  char asked_for_visible;
+  unsigned asked_for_visible : 1;
 
   /* Nonzero if this frame was ever previously visible.  */
-  char has_been_visible;
+  unsigned has_been_visible : 1;
 
 #ifdef HAVE_X_I18N
   /* Input context (currently, this means Compose key handler setup).  */
@@ -634,7 +628,7 @@ struct x_output
   int top_before_move;
 
   /* Non-zero if _NET_WM_STATE_HIDDEN is set for this frame.  */
-  int net_wm_state_hidden_seen;
+  unsigned net_wm_state_hidden_seen : 1;
 };
 
 #define No_Cursor (None)
@@ -890,10 +884,8 @@ struct scroll_bar
    by this structure.  */
 
 /* For an event of kind SELECTION_REQUEST_EVENT,
-   this structure really describes the contents.
-   **Don't make this struct longer!**
-   If it overlaps the frame_or_window field of struct input_event,
-   that will cause GC to crash.  */
+   this structure really describes the contents.  */
+
 struct selection_input_event
 {
   int kind;
@@ -962,11 +954,11 @@ extern XtAppContext Xt_app_con;
 extern void x_activate_timeout_atimer (void);
 #endif
 #ifdef USE_LUCID
-extern int x_alloc_lighter_color_for_widget (Widget, Display *, Colormap,
-                                             unsigned long *,
-                                             double, int);
+extern bool x_alloc_lighter_color_for_widget (Widget, Display *, Colormap,
+					      unsigned long *,
+					      double, int);
 #endif
-extern int x_alloc_nearest_color (struct frame *, Colormap, XColor *);
+extern bool x_alloc_nearest_color (struct frame *, Colormap, XColor *);
 extern void x_query_color (struct frame *f, XColor *);
 extern void x_clear_area (Display *, Window, int, int, int, int, int);
 #if defined HAVE_MENUS && !defined USE_X_TOOLKIT && !defined USE_GTK
@@ -1034,7 +1026,7 @@ extern void xic_set_statusarea (struct frame *);
 extern void xic_set_xfontset (struct frame *, const char *);
 extern int x_pixel_width (struct frame *);
 extern int x_pixel_height (struct frame *);
-extern int x_defined_color (struct frame *, const char *, XColor *, int);
+extern bool x_defined_color (struct frame *, const char *, XColor *, bool);
 #ifdef HAVE_X_I18N
 extern void free_frame_xic (struct frame *);
 # if defined HAVE_X_WINDOWS && defined USE_X_TOOLKIT

@@ -764,24 +764,41 @@ line number outside the file being compiled."
   (and (overlayp ov) (overlay-get ov 'flymake-overlay)))
 
 (defcustom flymake-error-bitmap '(exclamation-mark error)
-  "Bitmap used in the fringe for indicating errors.
+  "Bitmap (a symbol) used in the fringe for indicating errors.
 The value may also be a list of two elements where the second
-element specifies the face for the bitmap."
+element specifies the face for the bitmap.  For possible bitmap
+symbols, see `fringe-bitmaps'.  See also `flymake-warning-bitmap'.
+
+The option `flymake-fringe-indicator-position' controls how and where
+this is used."
   :group 'flymake
-  :type 'symbol)
+  :version "24.3"
+  :type '(choice (symbol :tag "Bitmap")
+                 (list :tag "Bitmap and face"
+                       (symbol :tag "Bitmap")
+                       (face :tag "Face"))))
 
 (defcustom flymake-warning-bitmap 'question-mark
-  "Bitmap used in the fringe for indicating warnings.
+  "Bitmap (a symbol) used in the fringe for indicating warnings.
 The value may also be a list of two elements where the second
-element specifies the face for the bitmap."
+element specifies the face for the bitmap.  For possible bitmap
+symbols, see `fringe-bitmaps'.  See also `flymake-error-bitmap'.
+
+The option `flymake-fringe-indicator-position' controls how and where
+this is used."
   :group 'flymake
-  :type 'symbol)
+  :version "24.3"
+  :type '(choice (symbol :tag "Bitmap")
+                 (list :tag "Bitmap and face"
+                       (symbol :tag "Bitmap")
+                       (face :tag "Face"))))
 
 (defcustom flymake-fringe-indicator-position 'left-fringe
   "The position to put flymake fringe indicator.
-The value can be nil, left-fringe or right-fringe.
-Fringe indicators are disabled if nil."
+The value can be nil (do not use indicators), `left-fringe' or `right-fringe'.
+See `flymake-error-bitmap' and `flymake-warning-bitmap'."
   :group 'flymake
+  :version "24.3"
   :type '(choice (const left-fringe)
 		 (const right-fringe)
 		 (const :tag "No fringe indicators" nil)))
@@ -977,6 +994,9 @@ from compile.el")
 ;;   :type '(repeat (string number number number))
 ;;)
 
+(defvar flymake-warning-re "^[wW]arning"
+  "Regexp matching against err-text to detect a warning.")
+
 (defun flymake-parse-line (line)
   "Parse LINE to see if it is an error or warning.
 Return its components if so, nil otherwise."
@@ -997,7 +1017,7 @@ Return its components if so, nil otherwise."
 				  (match-string (nth 4 (car patterns)) line)
 				(flymake-patch-err-text (substring line (match-end 0)))))
 	  (or err-text (setq err-text "<no error text>"))
-	  (if (and err-text (string-match "^[wW]arning" err-text))
+	  (if (and err-text (string-match flymake-warning-re err-text))
 	      (setq err-type "w")
 	    )
 	  (flymake-log 3 "parse line: file-idx=%s line-idx=%s file=%s line=%s text=%s" file-idx line-idx
@@ -1529,10 +1549,11 @@ if ARG is omitted or nil."
     (error "Invalid file-name"))
   (or prefix
       (setq prefix "flymake"))
-  (let* ((temp-name   (concat (file-name-sans-extension file-name)
-			      "_" prefix
-			      (and (file-name-extension file-name)
-				   (concat "." (file-name-extension file-name))))))
+  (let* ((ext (file-name-extension file-name))
+	 (temp-name (file-truename
+		     (concat (file-name-sans-extension file-name)
+			     "_" prefix
+			     (and ext (concat "." ext))))))
     (flymake-log 3 "create-temp-inplace: file=%s temp=%s" file-name temp-name)
     temp-name))
 

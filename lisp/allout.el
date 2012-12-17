@@ -1522,8 +1522,8 @@ The verifier string is retained as an Emacs file variable, as well as in
 the Emacs buffer state, if file variable adjustments are enabled.  See
 `allout-enable-file-variable-adjustment' for details about that.")
 (make-variable-buffer-local 'allout-passphrase-verifier-string)
-(make-obsolete 'allout-passphrase-verifier-string
-               'allout-passphrase-verifier-string "23.3")
+(make-obsolete-variable 'allout-passphrase-verifier-string
+			'allout-passphrase-verifier-string "23.3")
 ;;;###autoload
 (put 'allout-passphrase-verifier-string 'safe-local-variable 'stringp)
 ;;;_   = allout-passphrase-hint-string
@@ -1538,8 +1538,8 @@ state, if file variable adjustments are enabled.  See
 `allout-enable-file-variable-adjustment' for details about that.")
 (make-variable-buffer-local 'allout-passphrase-hint-string)
 (setq-default allout-passphrase-hint-string "")
-(make-obsolete 'allout-passphrase-hint-string
-               'allout-passphrase-hint-string "23.3")
+(make-obsolete-variable 'allout-passphrase-hint-string
+			'allout-passphrase-hint-string "23.3")
 ;;;###autoload
 (put 'allout-passphrase-hint-string 'safe-local-variable 'stringp)
 ;;;_   = allout-after-save-decrypt
@@ -1657,10 +1657,9 @@ and the place for the cursor after the decryption is done."
 (defmacro allout-called-interactively-p ()
   "A version of `called-interactively-p' independent of Emacs version."
   ;; ... to ease maintenance of allout without betraying deprecation.
-  (if (equal (subr-arity (symbol-function 'called-interactively-p))
-             '(0 . 0))
-      '(called-interactively-p)
-    '(called-interactively-p 'interactive)))
+  (if (ignore-errors (called-interactively-p 'interactive) t)
+      '(called-interactively-p 'interactive)
+    '(called-interactively-p)))
 ;;;_   = allout-inhibit-aberrance-doublecheck nil
 ;; In some exceptional moments, disparate topic depths need to be allowed
 ;; momentarily, eg when one topic is being yanked into another and they're
@@ -1688,11 +1687,10 @@ from what it did before, for backwards compatibility.
 
 MODE is the activation mode - see `allout-auto-activation' for
 valid values."
-
+  (declare (obsolete allout-auto-activation "23.3"))
   (custom-set-variables (list 'allout-auto-activation (format "%s" mode)))
   (format "%s" mode))
-(make-obsolete 'allout-init
-               "customize 'allout-auto-activation' instead." "23.3")
+
 ;;;_  > allout-setup-menubar ()
 (defun allout-setup-menubar ()
   "Populate the current buffer's menubar with `allout-mode' stuff."

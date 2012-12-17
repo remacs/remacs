@@ -28,7 +28,7 @@
      rather than at run-time, so that re_match can be reentrant.
 */
 
-/* AIX requires this to be the first thing in the file. */
+/* AIX requires this to be the first thing in the file.  */
 #if defined _AIX && !defined REGEX_MALLOC
   #pragma alloca
 #endif
@@ -126,7 +126,6 @@
    that make sense only in Emacs. */
 #ifdef emacs
 
-# include <setjmp.h>
 # include "lisp.h"
 # include "character.h"
 # include "buffer.h"
@@ -1836,10 +1835,9 @@ typedef struct
 /* The next available element.  */
 #define COMPILE_STACK_TOP (compile_stack.stack[compile_stack.avail])
 
-/* Explicit quit checking is only used on NTemacs and whenever we
-   use polling to process input events.  */
-#if defined emacs && (defined WINDOWSNT || defined SYNC_INPUT) && defined QUIT
-extern int immediate_quit;
+/* Explicit quit checking is needed for Emacs, which uses polling to
+   process input events.  */
+#ifdef emacs
 # define IMMEDIATE_QUIT_CHECK			\
     do {					\
       if (immediate_quit) QUIT;			\

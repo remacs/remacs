@@ -2058,9 +2058,9 @@ See `set-language-info-alist' for use in programs."
 
 (defun princ-list (&rest args)
   "Print all arguments with `princ', then print \"\\n\"."
+  (declare (obsolete "use mapc and princ instead." "23.3"))
   (mapc #'princ args)
   (princ "\n"))
-(make-obsolete 'princ-list "use mapc and princ instead" "23.3")
 
 (put 'describe-specified-language-support 'apropos-inhibit t)
 
@@ -2670,7 +2670,8 @@ See also `locale-charset-language-names', `locale-language-names',
     ;; On Windows, override locale-coding-system,
     ;; default-file-name-coding-system, keyboard-coding-system,
     ;; terminal-coding-system with system codepage.
-    (when (boundp 'w32-ansi-code-page)
+    (when (and (eq system-type 'windows-nt)
+               (boundp 'w32-ansi-code-page))
       (let ((code-page-coding (intern (format "cp%d" w32-ansi-code-page))))
 	(when (coding-system-p code-page-coding)
 	  (unless frame (setq locale-coding-system code-page-coding))
@@ -2944,13 +2945,15 @@ at the beginning of the name.
 This function also accepts a hexadecimal number of Unicode code
 point or a number in hash notation, e.g. #o21430 for octal,
 #x2318 for hex, or #10r8984 for decimal."
-  (let* ((completion-ignore-case t)
-	 (input (completing-read
-                 prompt
-                 (lambda (string pred action)
-                   (if (eq action 'metadata)
-                       '(metadata (category . unicode-name))
-                     (complete-with-action action (ucs-names) string pred))))))
+  (let* ((enable-recursive-minibuffers t)
+	 (input
+	  (completing-read
+	   prompt
+	   (lambda (string pred action)
+	     (let ((completion-ignore-case t))
+	       (if (eq action 'metadata)
+		   '(metadata (category . unicode-name))
+		 (complete-with-action action (ucs-names) string pred)))))))
     (cond
      ((string-match-p "\\`[0-9a-fA-F]+\\'" input)
       (string-to-number input 16))

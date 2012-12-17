@@ -51,6 +51,19 @@
 	     (gc-cons-percentage alloc float)
 	     (garbage-collection-messages alloc boolean)
 	     ;; buffer.c
+	     (cursor-type
+	      display
+	      (choice
+	       (const :tag "Frame default" t)
+	       (const :tag "Filled box" box)
+	       (const :tag "Hollow cursor" hollow)
+	       (const :tag "Vertical bar" bar)
+	       (cons  :tag "Vertical bar with specified width"
+		      (const bar) integer)
+	       (const :tag "Horizontal bar" hbar)
+	       (cons  :tag "Horizontal bar with specified width"
+		      (const hbar) integer)
+	       (const :tag "None "nil)))
 	     (mode-line-format mode-line sexp) ;Hard to do right.
 	     (major-mode internal function)
 	     (case-fold-search matching boolean)
@@ -422,7 +435,17 @@ since it could result in memory overflow and make Emacs crash."
 		       (const :tag "Only on ttys" :value tty)
 		       (other :tag "Always" t)) "23.1")
 	     (window-combination-resize windows boolean "24.1")
-	     (window-combination-limit windows boolean "24.1")
+	     (window-combination-limit
+	      windows (choice
+		       (const :tag "Never (nil)" :value nil)
+		       (const :tag "For Temp Buffer Resize mode (temp-buffer-resize)"
+			      :value temp-buffer-resize)
+		       (const :tag "For temporary buffers (temp-buffer)"
+			      :value temp-buffer)
+		       (const :tag "For buffer display (display-buffer)"
+			      :value display-buffer)
+		       (other :tag "Always (t)" :value t))
+	      "24.3")
 	     ;; xdisp.c
 	     (show-trailing-whitespace whitespace-faces boolean nil
 				       :safe booleanp)
@@ -433,7 +456,6 @@ since it could result in memory overflow and make Emacs crash."
 	     (hscroll-step windows number "22.1")
 	     (truncate-partial-width-windows display boolean "23.1")
 	     (make-cursor-line-fully-visible windows boolean)
-	     (mode-line-inverse-video mode-line boolean)
 	     (mode-line-in-non-selected-windows mode-line boolean "22.1")
 	     (line-number-display-limit display
 					(choice integer
@@ -443,7 +465,8 @@ since it could result in memory overflow and make Emacs crash."
 	     (message-log-max debug (choice (const :tag "Disable" nil)
 					    (integer :menu-tag "lines"
 						     :format "%v")
-					    (other :tag "Unlimited" t)))
+					    (other :tag "Unlimited" t))
+			      "24.3")
 	     (unibyte-display-via-language-environment mule boolean)
 	     (blink-cursor-alist cursor alist "22.1")
 	     (overline-margin display integer "22.1")
@@ -477,7 +500,6 @@ since it could result in memory overflow and make Emacs crash."
 	     (hourglass-delay cursor number)
 
 	     ;; xfaces.c
-	     (font-list-limit display integer)
 	     (scalable-fonts-allowed display boolean "22.1")
 	     ;; xfns.c
 	     (x-bitmap-file-path installation

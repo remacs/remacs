@@ -3,6 +3,7 @@
 ;; Copyright (C) 2002-2012 Free Software Foundation, Inc.
 
 ;; Author: Andreas Fuchs <asf@void.at>
+;; Maintainer: FSF
 ;; Keywords: comm, faces
 ;; URL: http://www.emacswiki.org/cgi-bin/wiki.pl?ErcMatch
 
@@ -29,12 +30,11 @@
 ;; customizable variables.
 
 ;; Usage:
-;; Put (erc-match-mode 1) into your ~/.emacs file.
+;; Put (erc-match-mode 1) into your init file.
 
 ;;; Code:
 
 (require 'erc)
-(eval-when-compile (require 'cl))
 
 ;; Customization:
 

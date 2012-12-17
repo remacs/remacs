@@ -43,7 +43,10 @@
 If the value is nil and `inhibit-startup-screen' is nil, show the
 startup screen.  If the value is a string, visit the specified file
 or directory using `find-file'.  If t, open the `*scratch*'
-buffer."
+buffer.
+
+A string value also causes emacsclient to open the specified file
+or directory when no target file is specified."
   :type '(choice
 	  (const     :tag "Startup screen" nil)
 	  (directory :tag "Directory" :value "~/")
@@ -71,12 +74,13 @@ once you are familiar with the contents of the startup screen."
   "Non-nil inhibits the initial startup echo area message.
 Setting this variable takes effect
 only if you do it with the customization buffer
-or if your `.emacs' file contains a line of this form:
+or if your init file contains a line of this form:
  (setq inhibit-startup-echo-area-message \"YOUR-USER-NAME\")
-If your `.emacs' file is byte-compiled, use the following form instead:
+If your init file is byte-compiled, use the following form
+instead:
  (eval '(setq inhibit-startup-echo-area-message \"YOUR-USER-NAME\"))
-Thus, someone else using a copy of your `.emacs' file will see
-the startup message unless he personally acts to inhibit it."
+Thus, someone else using a copy of your init file will see the
+startup message unless he personally acts to inhibit it."
   :type '(choice (const :tag "Don't inhibit")
 		 (string :tag "Enter your user name, to inhibit"))
   :group 'initialization)
@@ -215,8 +219,8 @@ and VALUE is the value which is given to that frame parameter
     ("-fn" 1 x-handle-switch font)
     ("-font" 1 x-handle-switch font)
     ("-ib" 1 x-handle-numeric-switch internal-border-width)
-    ;;("-g" .               x-handle-geometry)
-    ;;("-geometry" .        x-handle-geometry)
+    ("-g" 1 x-handle-geometry)
+    ("-geometry" 1 x-handle-geometry)
     ("-fg" 1 x-handle-switch foreground-color)
     ("-foreground" 1 x-handle-switch foreground-color)
     ("-bg" 1 x-handle-switch background-color)
@@ -261,10 +265,14 @@ and VALUE is the value which is given to that frame parameter
   "Normal hook run after handling urgent options but before loading init files.")
 
 (defvar after-init-hook nil
-  "Normal hook run after loading the init files, `~/.emacs' and `default.el'.
-There is no `condition-case' around the running of these functions;
-therefore, if you set `debug-on-error' non-nil in `.emacs',
-an error in one of these functions will invoke the debugger.")
+  "Normal hook run after initializing the Emacs session.
+It is run after Emacs loads the init file, `default' library, the
+abbrevs file, and additional Lisp packages (if any), and setting
+the value of `after-init-time'.
+
+There is no `condition-case' around the running of this hook;
+therefore, if `debug-on-error' is non-nil, an error in one of
+these functions will invoke the debugger.")
 
 (defvar emacs-startup-hook nil
   "Normal hook run after loading init files and handling the command line.")
@@ -296,7 +304,7 @@ the user's init file.")
   :group 'initialization)
 
 (defvar init-file-user nil
-  "Identity of user whose `.emacs' file is or was read.
+  "Identity of user whose init file is or was read.
 The value is nil if `-q' or `--no-init-file' was specified,
 meaning do not load any init file.
 
@@ -306,7 +314,7 @@ or it may be a string containing a user's name meaning
 use that person's init file.
 
 In either of the latter cases, `(concat \"~\" init-file-user \"/\")'
-evaluates to the name of the directory where the `.emacs' file was
+evaluates to the name of the directory where the init file was
 looked for.
 
 Setting `init-file-user' does not prevent Emacs from loading
@@ -365,7 +373,7 @@ init file is read, in case it sets `mail-host-address'."
 	(t
 	 (concat user-emacs-directory "auto-save-list/.saves-")))
   "Prefix for generating `auto-save-list-file-name'.
-This is used after reading your `.emacs' file to initialize
+This is used after reading your init file to initialize
 `auto-save-list-file-name', by appending Emacs's pid and the system name,
 if you have not already set `auto-save-list-file-name' yourself.
 Directories in the prefix will be created if necessary.
@@ -882,7 +890,8 @@ Amongst another things, it parses the command-line arguments."
       ;; Initialize the window system. (Open connection, etc.)
       (funcall
        (or (cdr (assq initial-window-system window-system-initialization-alist))
-	   (error "Unsupported window system `%s'" initial-window-system))))
+	   (error "Unsupported window system `%s'" initial-window-system)))
+      (put initial-window-system 'window-system-initialized t))
     ;; If there was an error, print the error message and exit.
     (error
      (princ
@@ -962,7 +971,6 @@ Amongst another things, it parses the command-line arguments."
                  (not (eq 0 (cdr tool-bar-lines)))))))
 
   (let ((old-scalable-fonts-allowed scalable-fonts-allowed)
-	(old-font-list-limit font-list-limit)
 	(old-face-ignored-fonts face-ignored-fonts))
 
     ;; Run the site-start library if it exists.  The point of this file is
@@ -1153,7 +1161,6 @@ the `--debug-init' option to view a complete error backtrace."
     ;; face realization, clear the face cache so that new faces will
     ;; be realized.
     (unless (and (eq scalable-fonts-allowed old-scalable-fonts-allowed)
-		 (eq font-list-limit old-font-list-limit)
 		 (eq face-ignored-fonts old-face-ignored-fonts))
       (clear-face-cache)))
 
@@ -1562,27 +1569,24 @@ a face or button specification."
 		       :face '(variable-pitch (:height 0.8))
 		       emacs-copyright
 		       "\n")
-  (and auto-save-list-file-prefix
-       ;; Don't signal an error if the
-       ;; directory for auto-save-list files
-       ;; does not yet exist.
-       (file-directory-p (file-name-directory
-			  auto-save-list-file-prefix))
-       (directory-files
-	(file-name-directory auto-save-list-file-prefix)
-	nil
-	(concat "\\`"
-		(regexp-quote (file-name-nondirectory
-			       auto-save-list-file-prefix)))
-	t)
-       (fancy-splash-insert :face '(variable-pitch font-lock-comment-face)
-			    "\nIf an Emacs session crashed recently, "
-			    "type "
-			    :face '(fixed-pitch font-lock-comment-face)
-			    "Meta-x recover-session RET"
-			    :face '(variable-pitch font-lock-comment-face)
-			    "\nto recover"
-			    " the files you were editing."))
+  (when auto-save-list-file-prefix
+    (let ((dir  (file-name-directory auto-save-list-file-prefix))
+	  (name (file-name-nondirectory auto-save-list-file-prefix))
+	  files)
+      ;; Don't warn if the directory for auto-save-list files does not
+      ;; yet exist.
+      (and (file-directory-p dir)
+	   (setq files (directory-files dir nil (concat "\\`" name) t))
+	   (fancy-splash-insert :face '(variable-pitch font-lock-comment-face)
+				(if (= (length files) 1)
+				    "\nAn auto-save file list was found.  "
+				  "\nAuto-save file lists were found.  ")
+				"If an Emacs session crashed recently,\ntype "
+				:link `("M-x recover-session RET"
+					,(lambda (_button)
+					   (call-interactively
+					    'recover-session)))
+				" to recover the files you were editing."))))
 
   (when concise
     (fancy-splash-insert
@@ -1686,7 +1690,6 @@ splash screen in another window."
 	(force-mode-line-update))
       (use-local-map splash-screen-keymap)
       (setq tab-width 22)
-      (message "%s" (startup-echo-area-message))
       (setq buffer-read-only t)
       (goto-char (point-min))
       (forward-line 3))))

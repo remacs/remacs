@@ -33,7 +33,7 @@ by Hallvard:
  */
 
 #include <config.h>
-#include <setjmp.h>
+
 #include "lisp.h"
 #include "character.h"
 #include "buffer.h"
@@ -86,8 +86,6 @@ Lisp_Object Qbyte_code_meter;
 
 #endif /* BYTE_CODE_METER */
 
-
-Lisp_Object Qbytecode;
 
 /*  Byte codes: */
 
@@ -432,7 +430,7 @@ unmark_byte_stack (struct byte_stack *stack)
 #ifdef BYTE_CODE_SAFE
 
 #define CHECK_RANGE(ARG) \
-  if (ARG >= bytestr_length) abort ()
+  if (ARG >= bytestr_length) emacs_abort ()
 
 #else /* not BYTE_CODE_SAFE */
 
@@ -455,7 +453,8 @@ unmark_byte_stack (struct byte_stack *stack)
 	Fsignal (Qquit, Qnil);				\
 	AFTER_POTENTIAL_GC ();				\
       }							\
-    ELSE_PENDING_SIGNALS				\
+    else if (pending_signals)				\
+      process_pending_signals ();			\
   } while (0)
 
 
@@ -505,7 +504,7 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
    if (FRAME_X_P (f)
        && FRAME_FONT (f)->direction != 0
        && FRAME_FONT (f)->direction != 1)
-     abort ();
+     emacs_abort ();
  }
 #endif
 
@@ -597,9 +596,9 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
     {
 #ifdef BYTE_CODE_SAFE
       if (top > stacke)
-	abort ();
+	emacs_abort ();
       else if (top < stack.bottom - 1)
-	abort ();
+	emacs_abort ();
 #endif
 
 #ifdef BYTE_CODE_METER
@@ -1575,7 +1574,9 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	  NEXT;
 
 	CASE (Binteractive_p):	/* Obsolete since 24.1.  */
-	  PUSH (Finteractive_p ());
+	  BEFORE_POTENTIAL_GC ();
+	  PUSH (call0 (intern ("interactive-p")));
+	  AFTER_POTENTIAL_GC ();
 	  NEXT;
 
 	CASE (Bforward_char):
@@ -1872,7 +1873,7 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	  /* Actually this is Bstack_ref with offset 0, but we use Bdup
 	     for that instead.  */
 	  /* CASE (Bstack_ref): */
-	  abort ();
+	  error ("Invalid byte opcode");
 
 	  /* Handy byte-codes for lexical binding.  */
 	CASE (Bstack_ref1):
@@ -1925,11 +1926,11 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 #ifdef BYTE_CODE_SAFE
 	  if (op < Bconstant)
 	    {
-	      abort ();
+	      emacs_abort ();
 	    }
 	  if ((op -= Bconstant) >= const_length)
 	    {
-	      abort ();
+	      emacs_abort ();
 	    }
 	  PUSH (vectorp[op]);
 #else
@@ -1948,7 +1949,7 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 #ifdef BYTE_CODE_SAFE
     error ("binding stack not balanced (serious byte compiler bug)");
 #else
-    abort ();
+    emacs_abort ();
 #endif
 
   return result;
@@ -1957,8 +1958,6 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 void
 syms_of_bytecode (void)
 {
-  DEFSYM (Qbytecode, "byte-code");
-
   defsubr (&Sbyte_code);
 
 #ifdef BYTE_CODE_METER

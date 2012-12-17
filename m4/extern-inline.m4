@@ -7,7 +7,6 @@ dnl with or without modifications, as long as this notice is preserved.
 
 AC_DEFUN([gl_EXTERN_INLINE],
 [
-  AC_REQUIRE([AC_C_INLINE])
   AH_VERBATIM([extern_inline],
 [/* _GL_INLINE is a portable alternative to ISO C99 plain 'inline'.
    _GL_EXTERN_INLINE is a portable alternative to 'extern inline'.
@@ -17,11 +16,19 @@ AC_DEFUN([gl_EXTERN_INLINE],
      when FOO is an inline function in the header; see
      <http://gcc.gnu.org/bugzilla/show_bug.cgi?id=54113>.
    _GL_INLINE_HEADER_END contains useful stuff to put
-     in the same include file, after uses of _GL_INLINE.  */
-#if __GNUC__ ? __GNUC_STDC_INLINE__ : 199901L <= __STDC_VERSION__
+     in the same include file, after uses of _GL_INLINE.
+
+   Suppress the use of extern inline on Apple's platforms,
+   as Libc-825.25 (2012-09-19) is incompatible with it; see
+   <http://lists.gnu.org/archive/html/bug-gnulib/2012-12/msg00023.html>.
+   Perhaps Apple will fix this some day.  */
+#if ((__GNUC__ \
+      ? defined __GNUC_STDC_INLINE__ && __GNUC_STDC_INLINE__ \
+      : 199901L <= __STDC_VERSION__) \
+     && !defined __APPLE__)
 # define _GL_INLINE inline
 # define _GL_EXTERN_INLINE extern inline
-#elif 2 < __GNUC__ + (7 <= __GNUC_MINOR__)
+#elif 2 < __GNUC__ + (7 <= __GNUC_MINOR__) && !defined __APPLE__
 # if __GNUC_GNU_INLINE__
    /* __gnu_inline__ suppresses a GCC 4.2 diagnostic.  */
 #  define _GL_INLINE extern inline __attribute__ ((__gnu_inline__))
@@ -30,12 +37,12 @@ AC_DEFUN([gl_EXTERN_INLINE],
 # endif
 # define _GL_EXTERN_INLINE extern
 #else
-# define _GL_INLINE static inline
-# define _GL_EXTERN_INLINE static inline
+# define _GL_INLINE static _GL_UNUSED
+# define _GL_EXTERN_INLINE static _GL_UNUSED
 #endif
 
 #if 4 < __GNUC__ + (6 <= __GNUC_MINOR__)
-# if __GNUC_STDC_INLINE__
+# if defined __GNUC_STDC_INLINE__ && __GNUC_STDC_INLINE__
 #  define _GL_INLINE_HEADER_CONST_PRAGMA
 # else
 #  define _GL_INLINE_HEADER_CONST_PRAGMA \

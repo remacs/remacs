@@ -488,13 +488,16 @@ suitable file is found, return nil."
       (insert "'.\n"))))
 
 (defun help-fns--obsolete (function)
-  (let* ((obsolete (and
-                    ;; `function' might be a lambda construct.
-                    (symbolp function)
-                    (get function 'byte-obsolete-info)))
+  ;; Ignore lambda constructs, keyboard macros, etc.
+  (let* ((obsolete (and (symbolp function)
+			(get function 'byte-obsolete-info)))
          (use (car obsolete)))
     (when obsolete
-      (insert "\nThis function is obsolete")
+      (insert "\nThis "
+	      (if (eq (car-safe (symbol-function function)) 'macro)
+		  "macro"
+		"function")
+	      " is obsolete")
       (when (nth 2 obsolete)
         (insert (format " since %s" (nth 2 obsolete))))
       (insert (cond ((stringp use) (concat ";\n" use))
@@ -611,14 +614,12 @@ FILE is the file where FUNCTION was probably defined."
 	(fill-region-as-paragraph (save-excursion (goto-char pt1) (forward-line 0) (point))
 				  (point)))
       (terpri)(terpri)
-      
-      (let* ((doc-raw (condition-case err
-			  (documentation function t)
-			(error (format "No Doc! %S" err))))
+
+      (let* ((doc-raw (documentation function t))
 	     ;; If the function is autoloaded, and its docstring has
 	     ;; key substitution constructs, load the library.
 	     (doc (progn
-		    (and (autoloadp real-def)
+		    (and (autoloadp real-def) doc-raw
 			 help-enable-auto-load
 			 (string-match "\\([^\\]=\\|[^=]\\|\\`\\)\\\\[[{<]"
 				       doc-raw)
@@ -846,12 +847,10 @@ it is displayed along with the global value."
                    (obsolete (get variable 'byte-obsolete-variable))
 		   (use (car obsolete))
 		   (safe-var (get variable 'safe-local-variable))
-                   (doc (condition-case err
-                            (or (documentation-property
-                                 variable 'variable-documentation)
-                                (documentation-property
-                                 alias 'variable-documentation))
-                          (error (format "Doc not found: %S" err))))
+                   (doc (or (documentation-property
+                             variable 'variable-documentation)
+                            (documentation-property
+                             alias 'variable-documentation)))
                    (extra-line nil))
 
 	      ;; Mention if it's a local variable.
@@ -936,7 +935,7 @@ file-local variable.\n")
 		(princ "  This variable is safe as a file local variable ")
 		(princ "if its value\n  satisfies the predicate ")
 		(princ (if (byte-code-function-p safe-var)
-			   "which is byte-compiled expression.\n"
+			   "which is a byte-compiled expression.\n"
 			 (format "`%s'.\n" safe-var))))
 
               (if extra-line (terpri))

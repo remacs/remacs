@@ -56,7 +56,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include <config.h>
 #include <stdio.h>
-#include <setjmp.h>
 
 #include "lisp.h"
 #include "character.h"
@@ -97,7 +96,7 @@ static Lisp_Object Qparagraph_start, Qparagraph_separate;
 
 /* Return the bidi type of a character CH, subject to the current
    directional OVERRIDE.  */
-static inline bidi_type_t
+static bidi_type_t
 bidi_get_type (int ch, bidi_dir_t override)
 {
   bidi_type_t default_type;
@@ -105,7 +104,7 @@ bidi_get_type (int ch, bidi_dir_t override)
   if (ch == BIDI_EOB)
     return NEUTRAL_B;
   if (ch < 0 || ch > MAX_CHAR)
-    abort ();
+    emacs_abort ();
 
   default_type = (bidi_type_t) XINT (CHAR_TABLE_REF (bidi_type_table, ch));
   /* Every valid character code, even those that are unassigned by the
@@ -113,7 +112,7 @@ bidi_get_type (int ch, bidi_dir_t override)
      DerivedBidiClass.txt file.  Therefore, if we ever get UNKNOWN_BT
      (= zero) code from CHAR_TABLE_REF, that's a bug.  */
   if (default_type == UNKNOWN_BT)
-    abort ();
+    emacs_abort ();
 
   if (override == NEUTRAL_DIR)
     return default_type;
@@ -141,19 +140,19 @@ bidi_get_type (int ch, bidi_dir_t override)
 	      else if (override == R2L)
 		return STRONG_R;
 	      else
-		abort ();	/* can't happen: handled above */
+		emacs_abort ();	/* can't happen: handled above */
 	  }
     }
 }
 
-static inline void
+static void
 bidi_check_type (bidi_type_t type)
 {
   eassert (UNKNOWN_BT <= type && type <= NEUTRAL_ON);
 }
 
 /* Given a bidi TYPE of a character, return its category.  */
-static inline bidi_category_t
+static bidi_category_t
 bidi_get_category (bidi_type_t type)
 {
   switch (type)
@@ -183,7 +182,7 @@ bidi_get_category (bidi_type_t type)
       case NEUTRAL_ON:
 	return NEUTRAL;
       default:
-	abort ();
+	emacs_abort ();
     }
 }
 
@@ -199,7 +198,7 @@ bidi_mirror_char (int c)
   if (c == BIDI_EOB)
     return c;
   if (c < 0 || c > MAX_CHAR)
-    abort ();
+    emacs_abort ();
 
   val = CHAR_TABLE_REF (bidi_mirror_table, c);
   if (INTEGERP (val))
@@ -215,7 +214,7 @@ bidi_mirror_char (int c)
       /* Minimal test we must do in optimized builds, to prevent weird
 	 crashes further down the road.  */
       if (v < 0 || v > MAX_CHAR)
-	abort ();
+	emacs_abort ();
 
       return v;
     }
@@ -227,7 +226,7 @@ bidi_mirror_char (int c)
    embedding levels on either side of the run boundary.  Also, update
    the saved info about previously seen characters, since that info is
    generally valid for a single level run.  */
-static inline void
+static void
 bidi_set_sor_type (struct bidi_it *bidi_it, int level_before, int level_after)
 {
   int higher_level = (level_before > level_after ? level_before : level_after);
@@ -258,7 +257,7 @@ bidi_set_sor_type (struct bidi_it *bidi_it, int level_before, int level_after)
 
 /* Push the current embedding level and override status; reset the
    current level to LEVEL and the current override status to OVERRIDE.  */
-static inline void
+static void
 bidi_push_embedding_level (struct bidi_it *bidi_it,
 			   int level, bidi_dir_t override)
 {
@@ -270,7 +269,7 @@ bidi_push_embedding_level (struct bidi_it *bidi_it,
 
 /* Pop the embedding level and directional override status from the
    stack, and return the new level.  */
-static inline int
+static int
 bidi_pop_embedding_level (struct bidi_it *bidi_it)
 {
   /* UAX#9 says to ignore invalid PDFs.  */
@@ -280,7 +279,7 @@ bidi_pop_embedding_level (struct bidi_it *bidi_it)
 }
 
 /* Record in SAVED_INFO the information about the current character.  */
-static inline void
+static void
 bidi_remember_char (struct bidi_saved_info *saved_info,
 		    struct bidi_it *bidi_it)
 {
@@ -296,18 +295,14 @@ bidi_remember_char (struct bidi_saved_info *saved_info,
 
 /* Copy the bidi iterator from FROM to TO.  To save cycles, this only
    copies the part of the level stack that is actually in use.  */
-static inline void
+static void
 bidi_copy_it (struct bidi_it *to, struct bidi_it *from)
 {
-  int i;
-
-  /* Copy everything except the level stack and beyond.  */
-  memcpy (to, from, offsetof (struct bidi_it, level_stack[0]));
-
-  /* Copy the active part of the level stack.  */
-  to->level_stack[0] = from->level_stack[0]; /* level zero is always in use */
-  for (i = 1; i <= from->stack_idx; i++)
-    to->level_stack[i] = from->level_stack[i];
+  /* Copy everything from the start through the active part of
+     the level stack.  */
+  memcpy (to, from,
+	  (offsetof (struct bidi_it, level_stack[1])
+	   + from->stack_idx * sizeof from->level_stack[0]));
 }
 
 
@@ -345,7 +340,7 @@ enum
    intact.  This is called when the cached information is no more
    useful for the current iteration, e.g. when we were reseated to a
    new position on the same object.  */
-static inline void
+static void
 bidi_cache_reset (void)
 {
   bidi_cache_idx = bidi_cache_start;
@@ -356,7 +351,7 @@ bidi_cache_reset (void)
    iterator for reordering a buffer or a string that does not come
    from display properties, because that means all the previously
    cached info is of no further use.  */
-static inline void
+static void
 bidi_cache_shrink (void)
 {
   if (bidi_cache_size > BIDI_CACHE_CHUNK)
@@ -367,13 +362,13 @@ bidi_cache_shrink (void)
   bidi_cache_reset ();
 }
 
-static inline void
+static void
 bidi_cache_fetch_state (ptrdiff_t idx, struct bidi_it *bidi_it)
 {
   int current_scan_dir = bidi_it->scan_dir;
 
   if (idx < bidi_cache_start || idx >= bidi_cache_idx)
-    abort ();
+    emacs_abort ();
 
   bidi_copy_it (bidi_it, &bidi_cache[idx]);
   bidi_it->scan_dir = current_scan_dir;
@@ -384,7 +379,7 @@ bidi_cache_fetch_state (ptrdiff_t idx, struct bidi_it *bidi_it)
    level less or equal to LEVEL.  if LEVEL is -1, disregard the
    resolved levels in cached states.  DIR, if non-zero, means search
    in that direction from the last cache hit.  */
-static inline ptrdiff_t
+static ptrdiff_t
 bidi_cache_search (ptrdiff_t charpos, int level, int dir)
 {
   ptrdiff_t i, i_start;
@@ -489,7 +484,7 @@ bidi_cache_find_level_change (int level, int dir, bool before)
   return -1;
 }
 
-static inline void
+static void
 bidi_cache_ensure_space (ptrdiff_t idx)
 {
   /* Enlarge the cache as needed.  */
@@ -511,14 +506,14 @@ bidi_cache_ensure_space (ptrdiff_t idx)
     }
 }
 
-static inline void
+static void
 bidi_cache_iterator_state (struct bidi_it *bidi_it, bool resolved)
 {
   ptrdiff_t idx;
 
   /* We should never cache on backward scans.  */
   if (bidi_it->scan_dir == -1)
-    abort ();
+    emacs_abort ();
   idx = bidi_cache_search (bidi_it->charpos, -1, 1);
 
   if (idx < 0)
@@ -537,7 +532,7 @@ bidi_cache_iterator_state (struct bidi_it *bidi_it, bool resolved)
 	  idx = bidi_cache_start;
 	}
       if (bidi_it->nchars <= 0)
-	abort ();
+	emacs_abort ();
       bidi_copy_it (&bidi_cache[idx], bidi_it);
       if (!resolved)
 	bidi_cache[idx].resolved_level = -1;
@@ -568,7 +563,7 @@ bidi_cache_iterator_state (struct bidi_it *bidi_it, bool resolved)
     bidi_cache_idx = idx + 1;
 }
 
-static inline bidi_type_t
+static bidi_type_t
 bidi_cache_find (ptrdiff_t charpos, int level, struct bidi_it *bidi_it)
 {
   ptrdiff_t i = bidi_cache_search (charpos, level, bidi_it->scan_dir);
@@ -588,11 +583,11 @@ bidi_cache_find (ptrdiff_t charpos, int level, struct bidi_it *bidi_it)
   return UNKNOWN_BT;
 }
 
-static inline int
+static int
 bidi_peek_at_next_level (struct bidi_it *bidi_it)
 {
   if (bidi_cache_idx == bidi_cache_start || bidi_cache_last_idx == -1)
-    abort ();
+    emacs_abort ();
   return bidi_cache[bidi_cache_last_idx + bidi_it->scan_dir].resolved_level;
 }
 
@@ -612,7 +607,7 @@ bidi_push_it (struct bidi_it *bidi_it)
   /* Save the current iterator state in its entirety after the last
      used cache slot.  */
   bidi_cache_ensure_space (bidi_cache_idx);
-  memcpy (&bidi_cache[bidi_cache_idx++], bidi_it, sizeof (struct bidi_it));
+  bidi_cache[bidi_cache_idx++] = *bidi_it;
 
   /* Push the current cache start onto the stack.  */
   eassert (bidi_cache_sp < IT_STACK_SIZE);
@@ -629,18 +624,18 @@ void
 bidi_pop_it (struct bidi_it *bidi_it)
 {
   if (bidi_cache_start <= 0)
-    abort ();
+    emacs_abort ();
 
   /* Reset the next free cache slot index to what it was before the
      call to bidi_push_it.  */
   bidi_cache_idx = bidi_cache_start - 1;
 
   /* Restore the bidi iterator state saved in the cache.  */
-  memcpy (bidi_it, &bidi_cache[bidi_cache_idx], sizeof (struct bidi_it));
+  *bidi_it = bidi_cache[bidi_cache_idx];
 
   /* Pop the previous cache start from the stack.  */
   if (bidi_cache_sp <= 0)
-    abort ();
+    emacs_abort ();
   bidi_cache_start = bidi_cache_start_stack[--bidi_cache_sp];
 
   /* Invalidate the last-used cache slot data.  */
@@ -762,12 +757,12 @@ bidi_initialize (void)
 {
   bidi_type_table = uniprop_table (intern ("bidi-class"));
   if (NILP (bidi_type_table))
-    abort ();
+    emacs_abort ();
   staticpro (&bidi_type_table);
 
   bidi_mirror_table = uniprop_table (intern ("mirroring"));
   if (NILP (bidi_mirror_table))
-    abort ();
+    emacs_abort ();
   staticpro (&bidi_mirror_table);
 
   Qparagraph_start = intern ("paragraph-start");
@@ -791,7 +786,7 @@ bidi_initialize (void)
 
 /* Do whatever UAX#9 clause X8 says should be done at paragraph's
    end.  */
-static inline void
+static void
 bidi_set_paragraph_end (struct bidi_it *bidi_it)
 {
   bidi_it->invalid_levels = 0;
@@ -873,7 +868,7 @@ bidi_line_init (struct bidi_it *bidi_it)
 /* Count bytes in string S between BEG/BEGBYTE and END.  BEG and END
    are zero-based character positions in S, BEGBYTE is byte position
    corresponding to BEG.  UNIBYTE means S is a unibyte string.  */
-static inline ptrdiff_t
+static ptrdiff_t
 bidi_count_bytes (const unsigned char *s, const ptrdiff_t beg,
 		  const ptrdiff_t begbyte, const ptrdiff_t end, bool unibyte)
 {
@@ -885,7 +880,7 @@ bidi_count_bytes (const unsigned char *s, const ptrdiff_t beg,
   else
     {
       if (!CHAR_HEAD_P (*p))
-	abort ();
+	emacs_abort ();
 
       while (pos < end)
 	{
@@ -897,22 +892,22 @@ bidi_count_bytes (const unsigned char *s, const ptrdiff_t beg,
   return p - start;
 }
 
-/* Fetch and returns the character at byte position BYTEPOS.  If S is
+/* Fetch and return the character at byte position BYTEPOS.  If S is
    non-NULL, fetch the character from string S; otherwise fetch the
    character from the current buffer.  UNIBYTE means S is a
    unibyte string.  */
-static inline int
+static int
 bidi_char_at_pos (ptrdiff_t bytepos, const unsigned char *s, bool unibyte)
 {
   if (s)
     {
+      s += bytepos;
       if (unibyte)
-	return s[bytepos];
-      else
-	return STRING_CHAR (s + bytepos);
+	return *s;
     }
   else
-    return FETCH_MULTIBYTE_CHAR (bytepos);
+    s = BYTE_POS_ADDR (bytepos);
+  return STRING_CHAR (s);
 }
 
 /* Fetch and return the character at BYTEPOS/CHARPOS.  If that
@@ -929,7 +924,7 @@ bidi_char_at_pos (ptrdiff_t bytepos, const unsigned char *s, bool unibyte)
    u+2029 to handle it as a paragraph separator.  STRING->s is the C
    string to iterate, or NULL if iterating over a buffer or a Lisp
    string; in the latter case, STRING->lstring is the Lisp string.  */
-static inline int
+static int
 bidi_fetch_char (ptrdiff_t bytepos, ptrdiff_t charpos, ptrdiff_t *disp_pos,
 		 int *disp_prop, struct bidi_string_data *string,
 		 bool frame_window_p, ptrdiff_t *ch_len, ptrdiff_t *nchars)
@@ -965,7 +960,7 @@ bidi_fetch_char (ptrdiff_t bytepos, ptrdiff_t charpos, ptrdiff_t *disp_pos,
       /* We don't expect to find ourselves in the middle of a display
 	 property.  Hopefully, it will never be needed.  */
       if (charpos > *disp_pos)
-	abort ();
+	emacs_abort ();
       /* Text covered by `display' properties and overlays with
 	 display properties or display strings is handled as a single
 	 character that represents the entire run of characters
@@ -995,7 +990,7 @@ bidi_fetch_char (ptrdiff_t bytepos, ptrdiff_t charpos, ptrdiff_t *disp_pos,
 	}
       *nchars = disp_end_pos - *disp_pos;
       if (*nchars <= 0)
-	abort ();
+	emacs_abort ();
       if (string->s)
 	*ch_len = bidi_count_bytes (string->s, *disp_pos, bytepos,
 				    disp_end_pos, string->unibyte);
@@ -1160,7 +1155,7 @@ bidi_paragraph_init (bidi_dir_t dir, struct bidi_it *bidi_it, bool no_default_p)
     dir = L2R;
   /* We should never be called at EOB or before BEGV.  */
   else if (bidi_it->charpos >= end || bytepos < begbyte)
-    abort ();
+    emacs_abort ();
 
   if (dir == L2R)
     {
@@ -1298,7 +1293,7 @@ bidi_paragraph_init (bidi_dir_t dir, struct bidi_it *bidi_it, bool no_default_p)
 	       && no_default_p && bidi_it->paragraph_dir == NEUTRAL_DIR);
     }
   else
-    abort ();
+    emacs_abort ();
 
   /* Contrary to UAX#9 clause P3, we only default the paragraph
      direction to L2R if we have no previous usable paragraph
@@ -1319,13 +1314,13 @@ bidi_paragraph_init (bidi_dir_t dir, struct bidi_it *bidi_it, bool no_default_p)
   The rest of this file constitutes the core of the UBA implementation.
  ***********************************************************************/
 
-static inline bool
+static bool
 bidi_explicit_dir_char (int ch)
 {
   bidi_type_t ch_type;
 
   if (!bidi_initialized)
-    abort ();
+    emacs_abort ();
   ch_type = (bidi_type_t) XINT (CHAR_TABLE_REF (bidi_type_table, ch));
   return (ch_type == LRE || ch_type == LRO
 	  || ch_type == RLE || ch_type == RLO
@@ -1378,10 +1373,10 @@ bidi_resolve_explicit_1 (struct bidi_it *bidi_it)
       /* Advance to the next character, skipping characters covered by
 	 display strings (nchars > 1).  */
       if (bidi_it->nchars <= 0)
-	abort ();
+	emacs_abort ();
       bidi_it->charpos += bidi_it->nchars;
       if (bidi_it->ch_len == 0)
-	abort ();
+	emacs_abort ();
       bidi_it->bytepos += bidi_it->ch_len;
     }
 
@@ -1581,7 +1576,7 @@ bidi_resolve_explicit (struct bidi_it *bidi_it)
 	}
 
       if (bidi_it->nchars <= 0)
-	abort ();
+	emacs_abort ();
       if (level == prev_level)	/* empty embedding */
 	saved_it.ignore_bn_limit = bidi_it->charpos + bidi_it->nchars;
       else			/* this embedding is non-empty */
@@ -1644,7 +1639,7 @@ bidi_resolve_weak (struct bidi_it *bidi_it)
       || type == RLE
       || type == RLO
       || type == PDF)
-    abort ();
+    emacs_abort ();
 
   if (new_level != prev_level
       || bidi_it->type == NEUTRAL_B)
@@ -1685,7 +1680,7 @@ bidi_resolve_weak (struct bidi_it *bidi_it)
 	  else if (bidi_it->sor == L2R)
 	    type = STRONG_L;
 	  else /* shouldn't happen! */
-	    abort ();
+	    emacs_abort ();
 	}
       if (type == WEAK_EN	/* W2 */
 	  && bidi_it->last_strong.type_after_w1 == STRONG_AL)
@@ -1767,7 +1762,7 @@ bidi_resolve_weak (struct bidi_it *bidi_it)
 					: bidi_it->string.s);
 
 	      if (bidi_it->nchars <= 0)
-		abort ();
+		emacs_abort ();
 	      next_char
 		= (bidi_it->charpos + bidi_it->nchars >= eob
 		   ? BIDI_EOB
@@ -1842,7 +1837,7 @@ bidi_resolve_weak (struct bidi_it *bidi_it)
 
 /* Resolve the type of a neutral character according to the type of
    surrounding strong text and the current embedding level.  */
-static inline bidi_type_t
+static bidi_type_t
 bidi_resolve_neutral_1 (bidi_type_t prev_type, bidi_type_t next_type, int lev)
 {
   /* N1: European and Arabic numbers are treated as though they were R.  */
@@ -1875,7 +1870,7 @@ bidi_resolve_neutral (struct bidi_it *bidi_it)
 	|| type == NEUTRAL_S
 	|| type == NEUTRAL_WS
 	|| type == NEUTRAL_ON))
-    abort ();
+    emacs_abort ();
 
   if ((type != NEUTRAL_B /* Don't risk entering the long loop below if
 			    we are already at paragraph end.  */
@@ -1930,7 +1925,7 @@ bidi_resolve_neutral (struct bidi_it *bidi_it)
 	  bidi_type_t next_type;
 
 	  if (bidi_it->scan_dir == -1)
-	    abort ();
+	    emacs_abort ();
 
 	  bidi_copy_it (&saved_it, bidi_it);
 	  /* Scan the text forward until we find the first non-neutral
@@ -1979,7 +1974,7 @@ bidi_resolve_neutral (struct bidi_it *bidi_it)
 		break;
 	      case WEAK_BN:
 		if (!bidi_explicit_dir_char (bidi_it->ch))
-		  abort ();		/* can't happen: BNs are skipped */
+		  emacs_abort (); /* can't happen: BNs are skipped */
 		/* FALLTHROUGH */
 	      case NEUTRAL_B:
 		/* Marched all the way to the end of this level run.
@@ -1998,7 +1993,7 @@ bidi_resolve_neutral (struct bidi_it *bidi_it)
 		  }
 		break;
 	      default:
-		abort ();
+		emacs_abort ();
 	    }
 	  type = bidi_resolve_neutral_1 (saved_it.prev_for_neutral.type,
 					 next_type, current_level);
@@ -2023,7 +2018,7 @@ bidi_type_of_next_char (struct bidi_it *bidi_it)
 
   /* This should always be called during a forward scan.  */
   if (bidi_it->scan_dir != 1)
-    abort ();
+    emacs_abort ();
 
   /* Reset the limit until which to ignore BNs if we step out of the
      area where we found only empty levels.  */
@@ -2107,7 +2102,7 @@ bidi_level_of_next_char (struct bidi_it *bidi_it)
       if (bidi_it->scan_dir > 0)
 	{
 	  if (bidi_it->nchars <= 0)
-	    abort ();
+	    emacs_abort ();
 	  next_char_pos = bidi_it->charpos + bidi_it->nchars;
 	}
       else if (bidi_it->charpos >= bob)
@@ -2143,7 +2138,7 @@ bidi_level_of_next_char (struct bidi_it *bidi_it)
   if (bidi_it->scan_dir == -1)
     /* If we are going backwards, the iterator state is already cached
        from previous scans, and should be fully resolved.  */
-    abort ();
+    emacs_abort ();
 
   if (type == UNKNOWN_BT)
     type = bidi_type_of_next_char (bidi_it);
@@ -2156,7 +2151,7 @@ bidi_level_of_next_char (struct bidi_it *bidi_it)
       || (type == WEAK_BN && prev_level == level))
     {
       if (bidi_it->next_for_neutral.type == UNKNOWN_BT)
-	abort ();
+	emacs_abort ();
 
       /* If the cached state shows a neutral character, it was not
 	 resolved by bidi_resolve_neutral, so do it now.  */
@@ -2170,7 +2165,7 @@ bidi_level_of_next_char (struct bidi_it *bidi_it)
 	|| type == WEAK_BN
 	|| type == WEAK_EN
 	|| type == WEAK_AN))
-    abort ();
+    emacs_abort ();
   bidi_it->type = type;
   bidi_check_type (bidi_it->type);
 
@@ -2192,7 +2187,7 @@ bidi_level_of_next_char (struct bidi_it *bidi_it)
       int dpp = bidi_it->disp_prop;
 
       if (bidi_it->nchars <= 0)
-	abort ();
+	emacs_abort ();
       do {
 	ch = bidi_fetch_char (bpos += clen, cpos += nc, &disp_pos, &dpp, &bs,
 			      fwp, &clen, &nc);
@@ -2301,8 +2296,9 @@ bidi_find_other_level_edge (struct bidi_it *bidi_it, int level, bool end_flag)
     {
       int new_level;
 
+      /* If we are at end of level, its edges must be cached.  */
       if (end_flag)
-	abort (); /* if we are at end of level, its edges must be cached */
+	emacs_abort ();
 
       bidi_cache_iterator_state (bidi_it, 1);
       do {
@@ -2320,7 +2316,7 @@ bidi_move_to_visually_next (struct bidi_it *bidi_it)
   struct gcpro gcpro1;
 
   if (bidi_it->charpos < 0 || bidi_it->bytepos < 0)
-    abort ();
+    emacs_abort ();
 
   if (bidi_it->scan_dir == 0)
     {
@@ -2431,7 +2427,7 @@ bidi_move_to_visually_next (struct bidi_it *bidi_it)
 	    = bidi_at_paragraph_end (bidi_it->charpos + bidi_it->nchars,
 				     bidi_it->bytepos + bidi_it->ch_len);
 	  if (bidi_it->nchars <= 0)
-	    abort ();
+	    emacs_abort ();
 	  if (sep_len >= 0)
 	    {
 	      bidi_it->new_paragraph = 1;

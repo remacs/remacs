@@ -586,7 +586,7 @@ This function is called from `compilation-filter-hook'."
 		  'exec-plus)
 		 ((and
 		   (grep-probe find-program `(nil nil nil ,null-device "-print0"))
-		   (grep-probe xargs-program `(nil nil nil "-0" "-e" "echo")))
+		   (grep-probe xargs-program `(nil nil nil "-0" "echo")))
 		  'gnu)
 		 (t
 		  'exec))))
@@ -596,7 +596,7 @@ This function is called from `compilation-filter-hook'."
 		       ;; Windows shells need the program file name
 		       ;; after the pipe symbol be quoted if they use
 		       ;; forward slashes as directory separators.
-		       (format "%s . -type f -print0 | \"%s\" -0 -e %s"
+		       (format "%s . -type f -print0 | \"%s\" -0 %s"
 			       find-program xargs-program grep-command))
 		      ((memq grep-find-use-xargs '(exec exec-plus))
 		       (let ((cmd0 (format "%s . -type f -exec %s"
@@ -621,7 +621,7 @@ This function is called from `compilation-filter-hook'."
 				(format "%s " null-device)
 			      "")))
 		  (cond ((eq grep-find-use-xargs 'gnu)
-			 (format "%s . <X> -type f <F> -print0 | \"%s\" -0 -e %s"
+			 (format "%s . <X> -type f <F> -print0 | \"%s\" -0 %s"
 				 find-program xargs-program gcmd))
 			((eq grep-find-use-xargs 'exec)
 			 (format "%s . <X> -type f <F> -exec %s {} %s%s"
@@ -817,11 +817,11 @@ substitution string.  Note dynamic scoping of variables.")
 (defun grep-read-regexp ()
   "Read regexp arg for interactive grep."
   (let ((default (grep-tag-default)))
-    (read-string
+    (read-regexp
      (concat "Search for"
 	     (if (and default (> (length default) 0))
 		 (format " (default \"%s\"): " default) ": "))
-     nil 'grep-regexp-history default)))
+     default 'grep-regexp-history)))
 
 (defun grep-read-files (regexp)
   "Read files arg for interactive grep."

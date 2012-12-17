@@ -3,7 +3,7 @@
 ;; Copyright (C) 1993, 2001-2012  Free Software Foundation, Inc.
 
 ;; Author: Dave Gillespie <daveg@synaptics.com>
-;; Version: 2.02
+;; Version: 1.0
 ;; Keywords: extensions
 
 ;; This file is part of GNU Emacs.
@@ -93,8 +93,8 @@
 
 (require 'macroexp)
 
-(defvar cl-optimize-speed 1)
-(defvar cl-optimize-safety 1)
+(defvar cl--optimize-speed 1)
+(defvar cl--optimize-safety 1)
 
 ;;;###autoload
 (define-obsolete-variable-alias
@@ -113,15 +113,9 @@ printer proceeds to the next function on the list.
 This variable is not used at present, but it is defined in hopes that
 a future Emacs interpreter will be able to use it.")
 
-(defun cl-unload-function ()
-  "Stop unloading of the Common Lisp extensions."
-  (message "Cannot unload the feature `cl'")
-  ;; Stop standard unloading!
-  t)
-
 ;;; Generalized variables.
 ;; These macros are defined here so that they
-;; can safely be used in .emacs files.
+;; can safely be used in init files.
 
 (defmacro cl-incf (place &optional x)
   "Increment PLACE by X (1 by default).
@@ -248,28 +242,31 @@ one value.
 	   (equal (buffer-name (symbol-value 'byte-compile--outbuffer))
 		  " *Compiler Output*"))))
 
-(defvar cl-proclaims-deferred nil)
+(defvar cl--proclaims-deferred nil)
 
 (defun cl-proclaim (spec)
-  (if (fboundp 'cl-do-proclaim) (cl-do-proclaim spec t)
-    (push spec cl-proclaims-deferred))
+  "Record a global declaration specified by SPEC."
+  (if (fboundp 'cl--do-proclaim) (cl--do-proclaim spec t)
+    (push spec cl--proclaims-deferred))
   nil)
 
 (defmacro cl-declaim (&rest specs)
-  (let ((body (mapcar (function (lambda (x) (list 'cl-proclaim (list 'quote x))))
-		      specs)))
-    (if (cl--compiling-file) (cl-list* 'cl-eval-when '(compile load eval) body)
-      (cons 'progn body))))   ; avoid loading cl-macs.el for cl-eval-when
+  "Like `cl-proclaim', but takes any number of unevaluated, unquoted arguments.
+Puts `(cl-eval-when (compile load eval) ...)' around the declarations
+so that they are registered at compile-time as well as run-time."
+  (let ((body (mapcar (lambda (x) `(cl-proclaim ',x)) specs)))
+    (if (cl--compiling-file) `(cl-eval-when (compile load eval) ,@body)
+      `(progn ,@body))))           ; Avoid loading cl-macs.el for cl-eval-when.
 
 
 ;;; Symbols.
 
-(defun cl-random-time ()
+(defun cl--random-time ()
   (let* ((time (copy-sequence (current-time-string))) (i (length time)) (v 0))
     (while (>= (cl-decf i) 0) (setq v (+ (* v 3) (aref time i))))
     v))
 
-(defvar cl--gensym-counter (* (logand (cl-random-time) 1023) 100))
+(defvar cl--gensym-counter (* (logand (cl--random-time) 1023) 100))
 
 
 ;;; Numbers.
@@ -296,7 +293,8 @@ always returns nil."
   "Return t if INTEGER is even."
   (eq (logand integer 1) 0))
 
-(defvar cl--random-state (vector 'cl-random-state-tag -1 30 (cl-random-time)))
+(defvar cl--random-state
+  (vector 'cl--random-state-tag -1 30 (cl--random-time)))
 
 (defconst cl-most-positive-float nil
   "The largest value that a Lisp float can hold.
@@ -656,7 +654,7 @@ If ALIST is non-nil, the new pairs are prepended to it."
 (gv-define-setter face-foreground (x f &optional s)
   `(set-face-foreground ,f ,x ,s))
 (gv-define-setter face-underline-p (x f &optional s)
-  `(set-face-underline-p ,f ,x ,s))
+  `(set-face-underline ,f ,x ,s))
 (gv-define-simple-setter file-modes set-file-modes t)
 (gv-define-simple-setter frame-height set-screen-height t)
 (gv-define-simple-setter frame-parameters modify-frame-parameters t)
@@ -728,7 +726,8 @@ If ALIST is non-nil, the new pairs are prepended to it."
 ;;;###autoload
 (progn
   ;; Make sure functions defined with cl-defsubst can be inlined even in
-  ;; packages which do not require CL.
+  ;; packages which do not require CL.  We don't put an autoload cookie
+  ;; directly on that function, since those cookies only go to cl-loaddefs.
   (autoload 'cl--defsubst-expand "cl-macs")
   ;; Autoload, so autoload.el and font-lock can use it even when CL
   ;; is not loaded.
@@ -741,11 +740,8 @@ If ALIST is non-nil, the new pairs are prepended to it."
 
 (provide 'cl-lib)
 
-(run-hooks 'cl-load-hook)
-
 ;; Local variables:
 ;; byte-compile-dynamic: t
-;; byte-compile-warnings: (not cl-functions)
 ;; End:
 
 ;;; cl-lib.el ends here

@@ -796,7 +796,7 @@ IT_set_face (int face)
       /* The default face for the frame should always be realized and
 	 cached.  */
       if (!fp)
-	abort ();
+	emacs_abort ();
     }
   screen_face = face;
   fg = fp->foreground;
@@ -1229,7 +1229,7 @@ IT_update_begin (struct frame *f)
   if (display_info->termscript)
     fprintf (display_info->termscript, "\n\n<UPDATE_BEGIN");
 
-  BLOCK_INPUT;
+  block_input ();
 
   if (f && f == mouse_face_frame)
     {
@@ -1275,11 +1275,10 @@ IT_update_begin (struct frame *f)
       hlinfo->mouse_face_beg_row = hlinfo->mouse_face_beg_col = -1;
       hlinfo->mouse_face_end_row = hlinfo->mouse_face_end_col = -1;
       hlinfo->mouse_face_window = Qnil;
-      hlinfo->mouse_face_deferred_gc = 0;
       hlinfo->mouse_face_mouse_frame = NULL;
     }
 
-  UNBLOCK_INPUT;
+  unblock_input ();
 }
 
 static void
@@ -1295,21 +1294,10 @@ IT_update_end (struct frame *f)
 static void
 IT_frame_up_to_date (struct frame *f)
 {
-  Mouse_HLInfo *hlinfo = MOUSE_HL_INFO (f);
   Lisp_Object new_cursor, frame_desired_cursor;
   struct window *sw;
 
-  if (hlinfo->mouse_face_deferred_gc
-      || (f && f == hlinfo->mouse_face_mouse_frame))
-    {
-      BLOCK_INPUT;
-      if (hlinfo->mouse_face_mouse_frame)
-	note_mouse_highlight (hlinfo->mouse_face_mouse_frame,
-			      hlinfo->mouse_face_mouse_x,
-			      hlinfo->mouse_face_mouse_y);
-      hlinfo->mouse_face_deferred_gc = 0;
-      UNBLOCK_INPUT;
-    }
+  FRAME_MOUSE_UPDATE (f);
 
   /* Set the cursor type to whatever they wanted.  In a minibuffer
      window, we want the cursor to appear only if we are reading input
@@ -1393,7 +1381,7 @@ IT_insert_glyphs (struct frame *f, struct glyph *start, int len)
 static void
 IT_delete_glyphs (struct frame *f, int n)
 {
-  abort ();
+  emacs_abort ();
 }
 
 /* set-window-configuration on window.c needs this.  */
@@ -1849,7 +1837,6 @@ internal_terminal_init (void)
 	    FRAME_BACKGROUND_PIXEL (SELECTED_FRAME ()) = colors[1];
 	}
       the_only_display_info.mouse_highlight.mouse_face_mouse_frame = NULL;
-      the_only_display_info.mouse_highlight.mouse_face_deferred_gc = 0;
       the_only_display_info.mouse_highlight.mouse_face_beg_row =
 	the_only_display_info.mouse_highlight.mouse_face_beg_col = -1;
       the_only_display_info.mouse_highlight.mouse_face_end_row =
@@ -3013,7 +3000,7 @@ XMenuAddPane (Display *foo, XMenu *menu, const char *txt, int enable)
   const char *p;
 
   if (!enable)
-    abort ();
+    emacs_abort ();
 
   IT_menu_make_room (menu);
   menu->submenu[menu->count] = IT_menu_create ();
@@ -3305,7 +3292,7 @@ XMenuActivate (Display *foo, XMenu *menu, int *pane, int *selidx,
      Emacs will process them after we return and surprise the user.  */
   discard_mouse_events ();
   mouse_clear_clicks ();
-  if (!kbd_buffer_events_waiting (1))
+  if (!kbd_buffer_events_waiting ())
     clear_input_pending ();
   /* Allow mouse events generation by dos_rawgetc.  */
   mouse_preempted--;
@@ -3927,8 +3914,10 @@ croak (char *badfunc)
 /*
  * A few unimplemented functions that we silently ignore.
  */
-int setpgrp (void) {return 0; }
+pid_t tcgetpgrp (int fd) { return 0; }
+int setpgid (int pid, int pgid) { return 0; }
 int setpriority (int x, int y, int z) { return 0; }
+pid_t setsid (void) { return 0; }
 
 #if __DJGPP__ == 2 && __DJGPP_MINOR__ < 4
 ssize_t
@@ -4119,7 +4108,7 @@ sys_select (int nfds, SELECT_TYPE *rfds, SELECT_TYPE *wfds, SELECT_TYPE *efds,
     FD_ZERO (efds);
 
   if (nfds != 1)
-    abort ();
+    emacs_abort ();
 
   /* If we are looking only for the terminal, with no timeout,
      just read it and wait -- that's more efficient.  */
@@ -4214,26 +4203,8 @@ init_gettimeofday (void)
 }
 #endif
 
-#ifdef abort
-#undef abort
-void
-dos_abort (char *file, int line)
-{
-  char buffer1[200], buffer2[400];
-  int i, j;
-
-  sprintf (buffer1, "<EMACS FATAL ERROR IN %s LINE %d>", file, line);
-  for (i = j = 0; buffer1[i]; i++) {
-    buffer2[j++] = buffer1[i];
-    buffer2[j++] = 0x70;
-  }
-  dosmemput (buffer2, j, (int)ScreenPrimary);
-  ScreenSetCursor (2, 0);
-  abort ();
-}
-#else
-void
-abort (void)
+static void
+msdos_abort (void)
 {
   dos_ttcooked ();
   ScreenSetCursor (10, 0);
@@ -4249,7 +4220,15 @@ abort (void)
 #endif /* __DJGPP_MINOR__ >= 2 */
   exit (2);
 }
-#endif
+
+void
+msdos_fatal_signal (int sig)
+{
+  if (sig == SIGABRT)
+    msdos_abort ();
+  else
+    raise (sig);
+}
 
 void
 syms_of_msdos (void)

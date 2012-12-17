@@ -60,6 +60,8 @@
 ;; is in a loop, the repeated macro-expansion becomes terribly costly, so we
 ;; memoize previous macro expansions to try and avoid recomputing them
 ;; over and over again.
+;; FIXME: Now that macroexpansion is also performed when loading an interpreted
+;; file, this is not a real problem any more.
 (defconst pcase--memoize (make-hash-table :weakness 'key :test 'eq))
 ;; (defconst pcase--memoize-1 (make-hash-table :test 'eq))
 ;; (defconst pcase--memoize-2 (make-hash-table :weakness 'key :test 'equal))
@@ -515,6 +517,10 @@ MATCH is the pattern that needs to be matched, of the form:
 (defun pcase--self-quoting-p (upat)
   (or (keywordp upat) (numberp upat) (stringp upat)))
 
+(defsubst pcase--mark-used (sym)
+  ;; Exceptionally, `sym' may be a constant expression rather than a symbol.
+  (if (symbolp sym) (put sym 'pcase-used t)))
+
 ;; It's very tempting to use `pcase' below, tho obviously, it'd create
 ;; bootstrapping problems.
 (defun pcase--u1 (matches code vars rest)
@@ -579,7 +585,7 @@ Otherwise, it defers to REST which is a list of branches of the form
        ((memq upat '(t _)) (pcase--u1 matches code vars rest))
        ((eq upat 'pcase--dontcare) :pcase--dontcare)
        ((memq (car-safe upat) '(guard pred))
-        (if (eq (car upat) 'pred) (put sym 'pcase-used t))
+        (if (eq (car upat) 'pred) (pcase--mark-used sym))
         (let* ((splitrest
                 (pcase--split-rest
                  sym (lambda (pat) (pcase--split-pred upat pat)) rest))
@@ -612,10 +618,10 @@ Otherwise, it defers to REST which is a list of branches of the form
                      (pcase--u1 matches code vars then-rest)
                      (pcase--u else-rest))))
        ((pcase--self-quoting-p upat)
-        (put sym 'pcase-used t)
+        (pcase--mark-used sym)
         (pcase--q1 sym upat matches code vars rest))
        ((symbolp upat)
-        (put sym 'pcase-used t)
+        (pcase--mark-used sym)
         (if (not (assq upat vars))
             (pcase--u1 matches code (cons (cons upat sym) vars) rest)
           ;; Non-linear pattern.  Turn it into an `eq' test.
@@ -638,7 +644,7 @@ Otherwise, it defers to REST which is a list of branches of the form
           (pcase--u1 (cons `(match ,sym . ,(nth 1 upat)) matches)
                      code vars rest)))
        ((eq (car-safe upat) '\`)
-        (put sym 'pcase-used t)
+        (pcase--mark-used sym)
         (pcase--q1 sym (cadr upat) matches code vars rest))
        ((eq (car-safe upat) 'or)
         (let ((all (> (length (cdr upat)) 1))
@@ -660,7 +666,7 @@ Otherwise, it defers to REST which is a list of branches of the form
                        sym (lambda (pat) (pcase--split-member elems pat)) rest))
                      (then-rest (car splitrest))
                      (else-rest (cdr splitrest)))
-                (put sym 'pcase-used t)
+                (pcase--mark-used sym)
                 (pcase--if `(,(if memq-fine #'memq #'member) ,sym ',elems)
                            (pcase--u1 matches code vars then-rest)
                            (pcase--u else-rest)))

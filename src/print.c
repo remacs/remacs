@@ -21,7 +21,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include <config.h>
 #include <stdio.h>
-#include <setjmp.h>
+
 #include "lisp.h"
 #include "character.h"
 #include "buffer.h"
@@ -45,14 +45,8 @@ static Lisp_Object Qtemp_buffer_setup_hook;
 
 static Lisp_Object Qfloat_output_format;
 
-#include <math.h>
 #include <float.h>
 #include <ftoastr.h>
-
-/* Default to values appropriate for IEEE floating point.  */
-#ifndef DBL_DIG
-#define DBL_DIG 15
-#endif
 
 /* Avoid actual stack overflow in print.  */
 static ptrdiff_t print_depth;
@@ -759,9 +753,9 @@ append to existing target file.  */)
 {
   if (initial_stderr_stream != NULL)
     {
-      BLOCK_INPUT;
+      block_input ();
       fclose (stderr);
-      UNBLOCK_INPUT;
+      unblock_input ();
     }
   stderr = initial_stderr_stream;
   initial_stderr_stream = NULL;
@@ -804,7 +798,7 @@ safe_debug_print (Lisp_Object arg)
   else
     fprintf (stderr, "#<%s_LISP_OBJECT 0x%08"pI"x>\r\n",
 	     !valid ? "INVALID" : "SOME",
-	     XHASH (arg));
+	     XLI (arg));
 }
 
 
@@ -1821,14 +1815,14 @@ print_object (Lisp_Object obj, register Lisp_Object printcharfun, int escapeflag
 #endif
 	  /* Implement a readable output, e.g.:
 	    #s(hash-table size 2 test equal data (k1 v1 k2 v2)) */
-	  /* Always print the size. */
+	  /* Always print the size.  */
 	  len = sprintf (buf, "#s(hash-table size %"pD"d", ASIZE (h->next));
 	  strout (buf, len, len, printcharfun);
 
-	  if (!NILP (h->test))
+	  if (!NILP (h->test.name))
 	    {
 	      strout (" test ", -1, -1, printcharfun);
-	      print_object (h->test, printcharfun, escapeflag);
+	      print_object (h->test.name, printcharfun, escapeflag);
 	    }
 
 	  if (!NILP (h->weak))
@@ -1879,7 +1873,7 @@ print_object (Lisp_Object obj, register Lisp_Object printcharfun, int escapeflag
 	}
       else if (BUFFERP (obj))
 	{
-	  if (NILP (BVAR (XBUFFER (obj), name)))
+	  if (!BUFFER_LIVE_P (XBUFFER (obj)))
 	    strout ("#<killed buffer>", -1, -1, printcharfun);
 	  else if (escapeflag)
 	    {
@@ -2096,7 +2090,7 @@ print_object (Lisp_Object obj, register Lisp_Object printcharfun, int escapeflag
       {
 	int len;
 	/* We're in trouble if this happens!
-	   Probably should just abort () */
+	   Probably should just emacs_abort ().  */
 	strout ("#<EMACS BUG: INVALID DATATYPE ", -1, -1, printcharfun);
 	if (MISCP (obj))
 	  len = sprintf (buf, "(MISC 0x%04x)", (int) XMISCTYPE (obj));
@@ -2117,7 +2111,7 @@ print_object (Lisp_Object obj, register Lisp_Object printcharfun, int escapeflag
 /* Print a description of INTERVAL using PRINTCHARFUN.
    This is part of printing a string that has text properties.  */
 
-void
+static void
 print_interval (INTERVAL interval, Lisp_Object printcharfun)
 {
   if (NILP (interval->plist))

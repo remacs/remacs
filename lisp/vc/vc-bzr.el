@@ -150,12 +150,6 @@ Use the current Bzr root directory as the ROOT argument to
 (defconst vc-bzr-admin-branchconf
   (concat vc-bzr-admin-dirname "/branch/branch.conf"))
 
-;;;###autoload (defun vc-bzr-registered (file)
-;;;###autoload   (if (vc-find-root file vc-bzr-admin-checkout-format-file)
-;;;###autoload       (progn
-;;;###autoload         (load "vc-bzr")
-;;;###autoload         (vc-bzr-registered file))))
-
 (defun vc-bzr-root (file)
   "Return the root directory of the bzr repository containing FILE."
   ;; Cache technique copied from vc-arch.el.
@@ -291,6 +285,14 @@ in the repository root directory of FILE."
          (message "Falling back on \"slow\" status detection (%S)" err)
          (vc-bzr-state file))))))
 
+;; This is a cheap approximation that is autoloaded.  If it finds a
+;; possible match it loads this file and runs the real function.
+;; It requires vc-bzr-admin-checkout-format-file to be autoloaded too.
+;;;###autoload (defun vc-bzr-registered (file)
+;;;###autoload   (if (vc-find-root file vc-bzr-admin-checkout-format-file)
+;;;###autoload       (progn
+;;;###autoload         (load "vc-bzr")
+;;;###autoload         (vc-bzr-registered file))))
 
 (defun vc-bzr-registered (file)
   "Return non-nil if FILE is registered with bzr."
@@ -534,7 +536,9 @@ in the branch repository (or whose status not be determined)."
 			 ;; FIXME: maybe it's overkill to check if both these
 			 ;; files exist.
 			 (and (file-exists-p branch-format-file)
-			      (file-exists-p lastrev-file)))))
+			      (file-exists-p lastrev-file)
+			      (equal (emacs-bzr-version-dirstate l-c-parent-dir)
+				     (emacs-bzr-version-dirstate rootdir))))))
 		 t)))
         (with-temp-buffer
           (insert-file-contents branch-format-file)
@@ -553,13 +557,17 @@ in the branch repository (or whose status not be determined)."
             (insert-file-contents lastrev-file)
             (when (re-search-forward "[0-9]+" nil t)
 	      (buffer-substring (match-beginning 0) (match-end 0))))))
-      ;; fallback to calling "bzr revno"
+      ;; Fallback to calling "bzr revno --tree".
+      ;; The "--tree" matters for lightweight checkouts not on the same
+      ;; revision as the parent.
       (let* ((result (vc-bzr-command-discarding-stderr
-                      vc-bzr-program "revno" (file-relative-name file)))
+                      vc-bzr-program "revno" "--tree"
+                      (file-relative-name file)))
              (exitcode (car result))
              (output (cdr result)))
         (cond
-         ((eq exitcode 0) (substring output 0 -1))
+         ((and (eq exitcode 0) (not (zerop (length output))))
+          (substring output 0 -1))
          (t nil))))))
 
 (defun vc-bzr-create-repo ()

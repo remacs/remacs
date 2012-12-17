@@ -482,11 +482,6 @@ struct buffer_text
 
 struct buffer
 {
-  /* HEADER.NEXT is the next buffer, in chain of all buffers, including killed
-     buffers.  This chain, starting from all_buffers, is used only for garbage
-     collection, in order to collect killed buffers properly.  Note that large
-     vectors and large pseudo-vector objects are all on another chain starting
-     from large_vectors.  */
   struct vectorlike_header header;
 
   /* The name of this buffer.  */
@@ -750,6 +745,9 @@ struct buffer
      In an indirect buffer, this is the own_text field of another buffer.  */
   struct buffer_text *text;
 
+  /* Next buffer, in chain of all buffers, including killed ones.  */
+  struct buffer *next;
+
   /* Char position of point in buffer.  */
   ptrdiff_t pt;
 
@@ -772,10 +770,14 @@ struct buffer
      In an ordinary buffer, it is 0.  */
   struct buffer *base_buffer;
 
-  /* In an indirect buffer, this is -1. In an ordinary buffer,
+  /* In an indirect buffer, this is -1.  In an ordinary buffer,
      it's the number of indirect buffers that share our text;
      zero means that we're the only owner of this text.  */
   int indirections;
+
+  /* Number of windows showing this buffer.  Always -1 for
+     an indirect buffer since it counts as its base buffer.  */
+  int window_count;
 
   /* A non-zero value in slot IDX means that per-buffer variable
      with index IDX has a local value in this buffer.  The index IDX
@@ -959,7 +961,52 @@ bset_width_table (struct buffer *b, Lisp_Object val)
   b->INTERNAL_FIELD (width_table) = val;
 }
 
-
+/* Number of Lisp_Objects at the beginning of struct buffer.
+   If you add, remove, or reorder Lisp_Objects within buffer
+   structure, make sure that this is still correct.  */
+
+#define BUFFER_LISP_SIZE						\
+  ((offsetof (struct buffer, own_text) - header_size) / word_size)
+
+/* Size of the struct buffer part beyond leading Lisp_Objects, in word_size
+   units.  Rounding is needed for --with-wide-int configuration.  */
+
+#define BUFFER_REST_SIZE						\
+  ((((sizeof (struct buffer) - offsetof (struct buffer, own_text))	\
+     + (word_size - 1)) & ~(word_size - 1)) / word_size)
+
+/* Initialize the pseudovector header of buffer object.  BUFFER_LISP_SIZE
+   is required for GC, but BUFFER_REST_SIZE is set up just to be consistent
+   with other pseudovectors.  */
+
+#define BUFFER_PVEC_INIT(b)                                    \
+  XSETPVECTYPESIZE (b, PVEC_BUFFER, BUFFER_LISP_SIZE, BUFFER_REST_SIZE)
+
+/* Convenient check whether buffer B is live.  */
+
+#define BUFFER_LIVE_P(b) (!NILP (BVAR (b, name)))
+
+/* Convenient check whether buffer B is hidden (i.e. its name
+   starts with a space).  Caller must ensure that B is live.  */
+
+#define BUFFER_HIDDEN_P(b) (SREF (BVAR (b, name), 0) == ' ')
+
+/* Verify indirection counters.  */
+
+#define BUFFER_CHECK_INDIRECTION(b)			\
+  do {							\
+    if (BUFFER_LIVE_P (b))				\
+    {							\
+      if (b->base_buffer)				\
+	{						\
+	  eassert (b->indirections == -1);		\
+	  eassert (b->base_buffer->indirections > 0);	\
+	}						\
+      else						\
+	eassert (b->indirections >= 0);			\
+    }							\
+  } while (0)
+
 /* Chain of all buffers, including killed ones.  */
 
 extern struct buffer *all_buffers;
@@ -967,7 +1014,7 @@ extern struct buffer *all_buffers;
 /* Used to iterate over the chain above.  */
 
 #define FOR_EACH_BUFFER(b) \
-  for ((b) = all_buffers; (b); (b) = (b)->header.next.buffer)
+  for ((b) = all_buffers; (b); (b) = (b)->next)
 
 /* This structure holds the default values of the buffer-local variables
    that have special slots in each buffer.
@@ -1126,7 +1173,18 @@ BUF_FETCH_MULTIBYTE_CHAR (struct buffer *buf, ptrdiff_t pos)
        + pos + BUF_BEG_ADDR (buf) - BEG_BYTE);
   return STRING_CHAR (p);
 }
-
+
+/* Return number of windows showing B.  */
+
+BUFFER_INLINE int
+buffer_window_count (struct buffer *b)
+{
+  if (b->base_buffer)
+    b = b->base_buffer;
+  eassert (b->window_count >= 0);
+  return b->window_count;
+}
+
 /* Overlays */
 
 /* Return the marker that stands for where OV starts in the buffer.  */
@@ -1145,7 +1203,7 @@ BUF_FETCH_MULTIBYTE_CHAR (struct buffer *buf, ptrdiff_t pos)
    We assume you know which buffer it's pointing into.  */
 
 #define OVERLAY_POSITION(P) \
- (MARKERP (P) ? marker_position (P) : (abort (), 0))
+ (MARKERP (P) ? marker_position (P) : (emacs_abort (), 0))
 
 
 /***********************************************************************
@@ -1185,7 +1243,7 @@ extern int last_per_buffer_idx;
 
 #define PER_BUFFER_VALUE_P(B, IDX)		\
     (((IDX) < 0 || IDX >= last_per_buffer_idx)	\
-     ? (abort (), 0)				\
+     ? (emacs_abort (), 0)			\
      : ((B)->local_flags[IDX] != 0))
 
 /* Set whether per-buffer variable with index IDX has a buffer-local
@@ -1194,7 +1252,7 @@ extern int last_per_buffer_idx;
 #define SET_PER_BUFFER_VALUE_P(B, IDX, VAL)	\
      do {						\
        if ((IDX) < 0 || (IDX) >= last_per_buffer_idx)	\
-	 abort ();					\
+	 emacs_abort ();				\
        (B)->local_flags[IDX] = (VAL);			\
      } while (0)
 

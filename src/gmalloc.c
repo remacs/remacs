@@ -36,6 +36,10 @@ Fifth Floor, Boston, MA 02110-1301, USA.
 #include <pthread.h>
 #endif
 
+#ifdef WINDOWSNT
+#include <w32heap.h>	/* for sbrk */
+#endif
+
 #ifdef	__cplusplus
 extern "C"
 {
@@ -460,7 +464,7 @@ get_contiguous_space (ptrdiff_t size, void *position)
 /* This is called when `_heapinfo' and `heapsize' have just
    been set to describe a new info table.  Set up the table
    to describe itself and account for it in the statistics.  */
-static inline void
+static void
 register_heapinfo (void)
 {
   size_t block, blocks;
@@ -1289,7 +1293,9 @@ Fifth Floor, Boston, MA 02110-1301, USA.
    The author may be reached (Email) at the address mike@ai.mit.edu,
    or (US mail) as Mike Haertel c/o Free Software Foundation.  */
 
+#ifndef min
 #define min(A, B) ((A) < (B) ? (A) : (B))
+#endif
 
 /* On Cygwin the dumped emacs may try to realloc storage allocated in
    the static heap.  We just malloc space in the new heap and copy the
@@ -1638,14 +1644,6 @@ memalign (size_t alignment, size_t size)
 
   return result;
 }
-
-#ifndef ENOMEM
-#define ENOMEM 12
-#endif
-
-#ifndef EINVAL
-#define EINVAL 22
-#endif
 
 int
 posix_memalign (void **memptr, size_t alignment, size_t size)

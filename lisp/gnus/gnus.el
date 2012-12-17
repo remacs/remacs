@@ -2495,7 +2495,16 @@ Disabling the agent may result in noticeable loss of performance."
   :type 'boolean)
 
 (defcustom gnus-other-frame-function 'gnus
-  "Function called by the command `gnus-other-frame'."
+  "Function called by the command `gnus-other-frame' when starting Gnus."
+  :group 'gnus-start
+  :type '(choice (function-item gnus)
+		 (function-item gnus-no-server)
+		 (function-item gnus-slave)
+		 (function-item gnus-slave-no-server)))
+
+(defcustom gnus-other-frame-resume-function 'gnus-group-get-new-news
+  "Function called by the command `gnus-other-frame' when resuming Gnus."
+  :version "24.4"
   :group 'gnus-start
   :type '(choice (function-item gnus)
 		 (function-item gnus-no-server)
@@ -3824,12 +3833,28 @@ You should probably use `gnus-find-method-for-group' instead."
   "Go through PARAMETERS and expand them according to the match data."
   (let (new)
     (dolist (elem parameters)
-      (if (and (stringp (cdr elem))
-	       (string-match "\\\\[0-9&]" (cdr elem)))
-	  (push (cons (car elem)
-		      (gnus-expand-group-parameter match (cdr elem) group))
-		new)
-	(push elem new)))
+      (cond
+       ((and (stringp (cdr elem))
+             (string-match "\\\\[0-9&]" (cdr elem)))
+        (push (cons (car elem)
+                    (gnus-expand-group-parameter match (cdr elem) group))
+              new))
+       ;; For `sieve' group parameters, perform substitutions for every
+       ;; string within the match rule.  This allows for parameters such
+       ;; as:
+       ;;  ("list\\.\\(.*\\)"
+       ;;   (sieve header :is "list-id" "<\\1.domain.org>"))
+       ((eq 'sieve (car elem))
+        (push (mapcar (lambda (sieve-elem)
+                        (if (and (stringp sieve-elem)
+                                 (string-match "\\\\[0-9&]" sieve-elem))
+                            (gnus-expand-group-parameter match sieve-elem
+                                                         group)
+                          sieve-elem))
+                      (cdr elem))
+              new))
+       (t
+	(push elem new))))
     new))
 
 (defun gnus-group-fast-parameter (group symbol &optional allow-list)
@@ -3861,9 +3886,20 @@ The function `gnus-group-find-parameter' will do that for you."
 	      (when this-result
 		(setq result (car this-result))
 		;; Expand if necessary.
-		(if (and (stringp result) (string-match "\\\\[0-9&]" result))
-		    (setq result (gnus-expand-group-parameter
-				  (car head) result group)))))))
+		(cond
+                 ((and (stringp result) (string-match "\\\\[0-9&]" result))
+                  (setq result (gnus-expand-group-parameter
+                                (car head) result group)))
+                 ;; For `sieve' group parameters, perform substitutions
+                 ;; for every string within the match rule (see above).
+                 ((eq symbol 'sieve)
+                  (setq result
+                        (mapcar (lambda (elem)
+                                  (if (stringp elem)
+                                      (gnus-expand-group-parameter (car head)
+                                                                   elem group)
+                                    elem))
+                                result))))))))
 	;; Done.
 	result))))
 
@@ -4321,13 +4357,22 @@ server."
   (interactive "P")
   (gnus arg nil 'slave))
 
+(defun gnus-delete-gnus-frame ()
+  "Delete gnus frame unless it is the only one.
+Used for `gnus-exit-gnus-hook' in `gnus-other-frame'."
+  (when (and (frame-live-p gnus-other-frame-object)
+             (cdr (frame-list)))
+    (delete-frame gnus-other-frame-object))
+  (setq gnus-other-frame-object nil))
+
 ;;;###autoload
 (defun gnus-other-frame (&optional arg display)
   "Pop up a frame to read news.
 This will call one of the Gnus commands which is specified by the user
 option `gnus-other-frame-function' (default `gnus') with the argument
-ARG if Gnus is not running, otherwise just pop up a Gnus frame.  The
-optional second argument DISPLAY should be a standard display string
+ARG if Gnus is not running, otherwise pop up a Gnus frame and run the
+command specified by `gnus-other-frame-resume-function'.
+The optional second argument DISPLAY should be a standard display string
 such as \"unix:0\" to specify where to pop up a frame.  If DISPLAY is
 omitted or the function `make-frame-on-display' is not available, the
 current display is used."
@@ -4359,14 +4404,16 @@ current display is used."
 		 (make-frame-on-display display gnus-other-frame-parameters)
 	       (make-frame gnus-other-frame-parameters))))
       (if alive
-	  (switch-to-buffer gnus-group-buffer)
+	  (progn (switch-to-buffer gnus-group-buffer)
+		 (funcall gnus-other-frame-resume-function arg))
 	(funcall gnus-other-frame-function arg)
-	(add-hook 'gnus-exit-gnus-hook
-		  (lambda nil
-                    (when (and (frame-live-p gnus-other-frame-object)
-                               (cdr (frame-list)))
-                      (delete-frame gnus-other-frame-object))
-                    (setq gnus-other-frame-object nil)))))))
+	(add-hook 'gnus-exit-gnus-hook 'gnus-delete-gnus-frame)
+  ;; One might argue that `gnus-delete-gnus-frame' should not be called
+  ;; from `gnus-suspend-gnus-hook', but, on the other hand, one might
+  ;; argue that it should.  No matter what you think, for the sake of
+  ;; those who want it to be called from it, please keep (defun
+  ;; gnus-delete-gnus-frame) even if you remove the next `add-hook'.
+  (add-hook 'gnus-suspend-gnus-hook 'gnus-delete-gnus-frame)))))
 
 ;;;###autoload
 (defun gnus (&optional arg dont-connect slave)

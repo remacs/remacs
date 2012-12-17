@@ -646,10 +646,8 @@ struct coding_system
    for file names, if any.  */
 #define ENCODE_FILE(name)						   \
   (! NILP (Vfile_name_coding_system)					   \
-   && !EQ (Vfile_name_coding_system, make_number (0))			   \
    ? code_convert_string_norecord (name, Vfile_name_coding_system, 1)	   \
    : (! NILP (Vdefault_file_name_coding_system)				   \
-      && !EQ (Vdefault_file_name_coding_system, make_number (0))	   \
       ? code_convert_string_norecord (name, Vdefault_file_name_coding_system, 1) \
       : name))
 
@@ -658,10 +656,8 @@ struct coding_system
    for file names, if any.  */
 #define DECODE_FILE(name)						   \
   (! NILP (Vfile_name_coding_system)					   \
-   && !EQ (Vfile_name_coding_system, make_number (0))			   \
    ? code_convert_string_norecord (name, Vfile_name_coding_system, 0)	   \
    : (! NILP (Vdefault_file_name_coding_system)				   \
-      && !EQ (Vdefault_file_name_coding_system, make_number (0))	   \
       ? code_convert_string_norecord (name, Vdefault_file_name_coding_system, 0) \
       : name))
 
@@ -670,7 +666,6 @@ struct coding_system
    for system functions, if any.  */
 #define ENCODE_SYSTEM(str)						   \
   (! NILP (Vlocale_coding_system)					   \
-   && !EQ (Vlocale_coding_system, make_number (0))			   \
    ? code_convert_string_norecord (str, Vlocale_coding_system, 1)	   \
    : str)
 
@@ -678,7 +673,6 @@ struct coding_system
    for system functions, if any.  */
 #define DECODE_SYSTEM(str)						   \
   (! NILP (Vlocale_coding_system)					   \
-   && !EQ (Vlocale_coding_system, make_number (0))			   \
    ? code_convert_string_norecord (str, Vlocale_coding_system, 0)	   \
    : str)
 
@@ -706,6 +700,28 @@ extern void decode_coding_object (struct coding_system *,
 extern void encode_coding_object (struct coding_system *,
                                   Lisp_Object, ptrdiff_t, ptrdiff_t,
                                   ptrdiff_t, ptrdiff_t, Lisp_Object);
+
+#if defined (WINDOWSNT) || defined (CYGWIN)
+
+/* These functions use Lisp string objects to store the UTF-16LE
+   strings that modern versions of Windows expect.  These strings are
+   not particularly useful to Lisp, and all Lisp strings should be
+   native Emacs multibyte.  */
+
+/* Access the wide-character string stored in a Lisp string object.  */
+#define WCSDATA(x) ((wchar_t *) SDATA (x))
+
+/* Convert the multi-byte string in STR to UTF-16LE encoded unibyte
+   string, and store it in *BUF.  BUF may safely point to STR on entry.  */
+extern wchar_t *to_unicode (Lisp_Object str, Lisp_Object *buf);
+
+/* Convert STR, a UTF-16LE encoded string embedded in a unibyte string
+   object, to a multi-byte Emacs string and return it.  This function
+   calls code_convert_string_norecord internally and has all its
+   failure modes.  STR itself is not modified.  */
+extern Lisp_Object from_unicode (Lisp_Object str);
+
+#endif /* WINDOWSNT || CYGWIN */
 
 /* Macros for backward compatibility.  */
 

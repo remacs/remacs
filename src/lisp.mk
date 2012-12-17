@@ -34,8 +34,9 @@
 ## that does not have an explicit .el extension, but beware of any
 ## no-byte-compile ones.
 
-## Confusingly, term/internal is not in loadup, but is unconditionally
-## loaded by pc-win, which is.
+## Confusingly, international/cp51932 and international/eucjp-ms are
+## unconditionally loaded from language/japanese, instead of being
+## loaded directly from loadup.el; FIXME.
 
 ## Note that this list should not include lisp files which might not
 ## be present, like site-load.el and site-init.el; this makefile
@@ -65,6 +66,7 @@ lisp = \
 	$(lispsource)/format.elc \
 	$(lispsource)/bindings.elc \
 	$(lispsource)/files.elc \
+	$(lispsource)/emacs-lisp/macroexp.elc \
 	$(lispsource)/cus-face.elc \
 	$(lispsource)/faces.elc \
 	$(lispsource)/button.elc \
@@ -93,6 +95,8 @@ lisp = \
 	$(lispsource)/language/greek.elc \
 	$(lispsource)/language/hebrew.elc \
 	$(lispsource)/language/japanese.elc \
+	$(lispsource)/international/cp51932.el \
+	$(lispsource)/international/eucjp-ms.el \
 	$(lispsource)/language/korean.elc \
 	$(lispsource)/language/lao.elc \
 	$(lispsource)/language/tai-viet.elc \

@@ -606,7 +606,7 @@ buffer if the variable `delete-trailing-lines' is non-nil."
         (when (and (not end)
 		   delete-trailing-lines
                    ;; Really the end of buffer.
-                   (save-restriction (widen) (eobp))
+		   (= (point-max) (1+ (buffer-size)))
                    (<= (skip-chars-backward "\n") -2))
           (delete-region (1+ (point)) end-marker))
         (set-marker end-marker nil))))
@@ -744,7 +744,7 @@ If BACKWARD-ONLY is non-nil, only delete them before point."
 
 (defun just-one-space (&optional n)
   "Delete all spaces and tabs around point, leaving one space (or N spaces).
-If N is negative, delete newlines as well."
+If N is negative, delete newlines as well, leaving -N spaces."
   (interactive "*p")
   (unless n (setq n 1))
   (let ((orig-pos (point))
@@ -974,7 +974,9 @@ rather than the region.
 
 If called from Lisp, return the number of words between positions
 START and END."
-  (interactive "r\nP")
+  (interactive (if current-prefix-arg
+		   (list nil nil current-prefix-arg)
+		 (list (region-beginning) (region-end) nil)))
   (cond ((not (called-interactively-p 'any))
 	 (count-words start end))
 	(arg
@@ -1008,9 +1010,7 @@ END, without printing any message."
 
 (defun count-words--buffer-message ()
   (count-words--message
-   (if (= (point-max) (1+ (buffer-size)))
-       "Buffer"
-     "Narrowed part of buffer")
+   (if (buffer-narrowed-p) "Narrowed part of buffer" "Buffer")
    (point-min) (point-max)))
 
 (defun count-words--message (str start end)
@@ -1855,9 +1855,13 @@ as an argument limits undo to changes within the current region."
   ;; another undo command will find the undo history empty
   ;; and will get another error.  To begin undoing the undos,
   ;; you must type some other command.
-  (let ((modified (buffer-modified-p))
-	(recent-save (recent-auto-save-p))
-	message)
+  (let* ((modified (buffer-modified-p))
+	 ;; For an indirect buffer, look in the base buffer for the
+	 ;; auto-save data.
+	 (base-buffer (or (buffer-base-buffer) (current-buffer)))
+	 (recent-save (with-current-buffer base-buffer
+			(recent-auto-save-p)))
+	 message)
     ;; If we get an error in undo-start,
     ;; the next command should not be a "consecutive undo".
     ;; So set `this-command' to something other than `undo'.
@@ -1935,7 +1939,8 @@ as an argument limits undo to changes within the current region."
     ;; Record what the current undo list says,
     ;; so the next command can tell if the buffer was modified in between.
     (and modified (not (buffer-modified-p))
-	 (delete-auto-save-file-if-necessary recent-save))
+	 (with-current-buffer base-buffer
+	   (delete-auto-save-file-if-necessary recent-save)))
     ;; Display a message announcing success.
     (if message
 	(message "%s" message))))
@@ -2599,8 +2604,6 @@ is encoded using coding-system specified by `process-coding-system-alist',
 falling back to `default-process-coding-system' if no match for COMMAND
 is found in `process-coding-system-alist'.
 
-The noninteractive arguments are START, END, COMMAND,
-OUTPUT-BUFFER, REPLACE, ERROR-BUFFER, and DISPLAY-ERROR-BUFFER.
 Noninteractive callers can specify coding systems by binding
 `coding-system-for-read' and `coding-system-for-write'.
 
@@ -2608,34 +2611,34 @@ If the command generates output, the output may be displayed
 in the echo area or in a buffer.
 If the output is short enough to display in the echo area
 \(determined by the variable `max-mini-window-height' if
-`resize-mini-windows' is non-nil), it is shown there.  Otherwise
-it is displayed in the buffer `*Shell Command Output*'.  The output
-is available in that buffer in both cases.
+`resize-mini-windows' is non-nil), it is shown there.
+Otherwise it is displayed in the buffer `*Shell Command Output*'.
+The output is available in that buffer in both cases.
 
 If there is output and an error, a message about the error
-appears at the end of the output.
+appears at the end of the output.  If there is no output, or if
+output is inserted in the current buffer, the buffer `*Shell
+Command Output*' is deleted.
 
-If there is no output, or if output is inserted in the current buffer,
-then `*Shell Command Output*' is deleted.
+Optional fourth arg OUTPUT-BUFFER specifies where to put the
+command's output.  If the value is a buffer or buffer name, put
+the output there.  Any other value, including nil, means to
+insert the output in the current buffer.  In either case, the
+output is inserted after point (leaving mark after it).
 
-If the optional fourth argument OUTPUT-BUFFER is non-nil,
-that says to put the output in some other buffer.
-If OUTPUT-BUFFER is a buffer or buffer name, put the output there.
-If OUTPUT-BUFFER is not a buffer and not nil,
-insert output in the current buffer.
-In either case, the output is inserted after point (leaving mark after it).
-
-If REPLACE, the optional fifth argument, is non-nil, that means insert
-the output in place of text from START to END, putting point and mark
+Optional fifth arg REPLACE, if non-nil, means to insert the
+output in place of text from START to END, putting point and mark
 around it.
 
-If optional sixth argument ERROR-BUFFER is non-nil, it is a buffer
-or buffer name to which to direct the command's standard error output.
-If it is nil, error output is mingled with regular output.
-If DISPLAY-ERROR-BUFFER is non-nil, display the error buffer if there
-were any errors.  (This is always t, interactively.)
-In an interactive call, the variable `shell-command-default-error-buffer'
-specifies the value of ERROR-BUFFER."
+Optional sixth arg ERROR-BUFFER, if non-nil, specifies a buffer
+or buffer name to which to direct the command's standard error
+output.  If nil, error output is mingled with regular output.
+When called interactively, `shell-command-default-error-buffer'
+is used for ERROR-BUFFER.
+
+Optional seventh arg DISPLAY-ERROR-BUFFER, if non-nil, means to
+display the error buffer if there were any errors.  When called
+interactively, this is t."
   (interactive (let (string)
 		 (unless (mark)
 		   (error "The mark is not set now, so there is no region"))
@@ -4009,7 +4012,8 @@ run `deactivate-mark-hook'."
   (when (mark t)
     (setq mark-active t)
     (unless transient-mark-mode
-      (setq transient-mark-mode 'lambda))))
+      (setq transient-mark-mode 'lambda))
+    (run-hooks 'activate-mark-hook)))
 
 (defun set-mark (pos)
   "Set this buffer's mark to POS.  Don't use this function!
@@ -4130,14 +4134,6 @@ after C-u \\[set-mark-command]."
   :type 'boolean
   :group 'editing-basics)
 
-(defcustom set-mark-default-inactive nil
-  "If non-nil, setting the mark does not activate it.
-This causes \\[set-mark-command] and \\[exchange-point-and-mark] to
-behave the same whether or not `transient-mark-mode' is enabled."
-  :type 'boolean
-  :group 'editing-basics
-  :version "23.1")
-
 (defun set-mark-command (arg)
   "Set the mark where point is, or jump to the mark.
 Setting the mark also alters the region, which is the text
@@ -4199,8 +4195,7 @@ purposes.  See the documentation of `set-mark' for more information."
       (activate-mark)
       (message "Mark activated")))
    (t
-    (push-mark-command nil)
-    (if set-mark-default-inactive (deactivate-mark)))))
+    (push-mark-command nil))))
 
 (defun push-mark (&optional location nomsg activate)
   "Set mark at LOCATION (point, by default) and push old mark on mark ring.
@@ -4264,7 +4259,6 @@ mode temporarily."
     (deactivate-mark)
     (set-mark (point))
     (goto-char omark)
-    (if set-mark-default-inactive (deactivate-mark))
     (cond (temp-highlight
 	   (setq transient-mark-mode (cons 'only transient-mark-mode)))
 	  ((or (and arg (region-active-p)) ; (xor arg (not (region-active-p)))
@@ -4329,14 +4323,14 @@ else--for example, incremental search, \\[beginning-of-buffer], and \\[end-of-bu
 You can also deactivate the mark by typing \\[keyboard-quit] or
 \\[keyboard-escape-quit].
 
-Many commands change their behavior when Transient Mark mode is in effect
-and the mark is active, by acting on the region instead of their usual
-default part of the buffer's text.  Examples of such commands include
-\\[comment-dwim], \\[flush-lines], \\[keep-lines], \
+Many commands change their behavior when Transient Mark mode is
+in effect and the mark is active, by acting on the region instead
+of their usual default part of the buffer's text.  Examples of
+such commands include \\[comment-dwim], \\[flush-lines], \\[keep-lines],
 \\[query-replace], \\[query-replace-regexp], \\[ispell], and \\[undo].
-Invoke \\[apropos-documentation] and type \"transient\" or
-\"mark.*active\" at the prompt, to see the documentation of
-commands which are sensitive to the Transient Mark mode."
+To see the documentation of commands which are sensitive to the
+Transient Mark mode, invoke \\[apropos-documentation] and type \"transient\"
+or \"mark.*active\" at the prompt."
   :global t
   ;; It's defined in C/cus-start, this stops the d-m-m macro defining it again.
   :variable transient-mark-mode)
@@ -4580,6 +4574,9 @@ lines."
     (unless (and auto-window-vscroll try-vscroll
 		 ;; Only vscroll for single line moves
 		 (= (abs arg) 1)
+		 ;; Under scroll-conservatively, the display engine
+		 ;; does this better.
+		 (zerop scroll-conservatively)
 		 ;; But don't vscroll in a keyboard macro.
 		 (not defining-kbd-macro)
 		 (not executing-kbd-macro)
@@ -6377,9 +6374,8 @@ With prefix argument N, move N items (negative N means move backward)."
       (point))))
 
 (defun choose-completion-delete-max-match (string)
+  (declare (obsolete choose-completion-guess-base-position "23.2"))
   (delete-region (choose-completion-guess-base-position string) (point)))
-(make-obsolete 'choose-completion-delete-max-match
-               'choose-completion-guess-base-position "23.2")
 
 (defvar choose-completion-string-functions nil
   "Functions that may override the normal insertion of a completion choice.
@@ -6870,7 +6866,7 @@ call `normal-erase-is-backspace-mode' (which see) instead."
        (if (if (eq normal-erase-is-backspace 'maybe)
                (and (not noninteractive)
                     (or (memq system-type '(ms-dos windows-nt))
-			(memq window-system '(ns))
+			(memq window-system '(w32 ns))
                         (and (memq window-system '(x))
                              (fboundp 'x-backspace-delete-keys-p)
                              (x-backspace-delete-keys-p))
@@ -6968,7 +6964,7 @@ positive, otherwise make it writable.  If buffer is read-only
 and `view-read-only' is non-nil, enter view mode.
 
 Do not call this from a Lisp program unless you really intend to
-do the same thing as the \\[toggle-read-only] command, including
+do the same thing as the \\[read-only-mode] command, including
 possibly enabling or disabling View mode.  Also, note that this
 command works by setting the variable `buffer-read-only', which
 does not affect read-only regions caused by text properties.  To

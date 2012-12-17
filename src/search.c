@@ -20,7 +20,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 
 #include <config.h>
-#include <setjmp.h>
+
 #include "lisp.h"
 #include "syntax.h"
 #include "category.h"
@@ -156,7 +156,7 @@ compile_pattern_1 (struct regexp_cache *cp, Lisp_Object pattern, Lisp_Object tra
   re_set_whitespace_regexp (NULL);
 
   re_set_syntax (old);
-  /* UNBLOCK_INPUT;  */
+  /* unblock_input ();  */
   if (val)
     xsignal1 (Qinvalid_regexp, build_string (val));
 
@@ -636,12 +636,12 @@ newline_cache_on_off (struct buffer *buf)
    If we don't find COUNT instances before reaching END, set *SHORTAGE
    to the number of TARGETs left unfound, and return END.
 
-   If ALLOW_QUIT is non-zero, set immediate_quit.  That's good to do
+   If ALLOW_QUIT, set immediate_quit.  That's good to do
    except when inside redisplay.  */
 
 ptrdiff_t
-scan_buffer (register int target, ptrdiff_t start, ptrdiff_t end,
-	     ptrdiff_t count, ptrdiff_t *shortage, int allow_quit)
+scan_buffer (int target, ptrdiff_t start, ptrdiff_t end,
+	     ptrdiff_t count, ptrdiff_t *shortage, bool allow_quit)
 {
   struct region_cache *newline_cache;
   int direction;
@@ -674,7 +674,7 @@ scan_buffer (register int target, ptrdiff_t start, ptrdiff_t end,
            obstacle --- the last character the dumb search loop should
            examine.  */
 	ptrdiff_t ceiling_byte = CHAR_TO_BYTE (end) - 1;
-	ptrdiff_t start_byte = CHAR_TO_BYTE (start);
+	ptrdiff_t start_byte;
 	ptrdiff_t tem;
 
         /* If we're looking for a newline, consult the newline cache
@@ -684,9 +684,11 @@ scan_buffer (register int target, ptrdiff_t start, ptrdiff_t end,
             ptrdiff_t next_change;
             immediate_quit = 0;
             while (region_cache_forward
-                   (current_buffer, newline_cache, start_byte, &next_change))
-              start_byte = next_change;
+                   (current_buffer, newline_cache, start, &next_change))
+              start = next_change;
             immediate_quit = allow_quit;
+
+	    start_byte = CHAR_TO_BYTE (start);
 
             /* START should never be after END.  */
             if (start_byte > ceiling_byte)
@@ -694,8 +696,10 @@ scan_buffer (register int target, ptrdiff_t start, ptrdiff_t end,
 
             /* Now the text after start is an unknown region, and
                next_change is the position of the next known region. */
-            ceiling_byte = min (next_change - 1, ceiling_byte);
+            ceiling_byte = min (CHAR_TO_BYTE (next_change) - 1, ceiling_byte);
           }
+	else
+	  start_byte = CHAR_TO_BYTE (start);
 
         /* The dumb loop can only scan text stored in contiguous
            bytes. BUFFER_CEILING_OF returns the last character
@@ -747,7 +751,7 @@ scan_buffer (register int target, ptrdiff_t start, ptrdiff_t end,
       {
         /* The last character to check before the next obstacle.  */
 	ptrdiff_t ceiling_byte = CHAR_TO_BYTE (end);
-	ptrdiff_t start_byte = CHAR_TO_BYTE (start);
+	ptrdiff_t start_byte;
 	ptrdiff_t tem;
 
         /* Consult the newline cache, if appropriate.  */
@@ -756,9 +760,11 @@ scan_buffer (register int target, ptrdiff_t start, ptrdiff_t end,
             ptrdiff_t next_change;
             immediate_quit = 0;
             while (region_cache_backward
-                   (current_buffer, newline_cache, start_byte, &next_change))
-              start_byte = next_change;
+                   (current_buffer, newline_cache, start, &next_change))
+              start = next_change;
             immediate_quit = allow_quit;
+
+	    start_byte = CHAR_TO_BYTE (start);
 
             /* Start should never be at or before end.  */
             if (start_byte <= ceiling_byte)
@@ -766,8 +772,10 @@ scan_buffer (register int target, ptrdiff_t start, ptrdiff_t end,
 
             /* Now the text before start is an unknown region, and
                next_change is the position of the next known region. */
-            ceiling_byte = max (next_change, ceiling_byte);
+            ceiling_byte = max (CHAR_TO_BYTE (next_change), ceiling_byte);
           }
+	else
+	  start_byte = CHAR_TO_BYTE (start);
 
         /* Stop scanning before the gap.  */
 	tem = BUFFER_FLOOR_OF (start_byte - 1);
@@ -829,23 +837,23 @@ scan_buffer (register int target, ptrdiff_t start, ptrdiff_t end,
    the number of line boundaries left unfound, and position at
    the limit we bumped up against.
 
-   If ALLOW_QUIT is non-zero, set immediate_quit.  That's good to do
+   If ALLOW_QUIT, set immediate_quit.  That's good to do
    except in special cases.  */
 
 EMACS_INT
 scan_newline (ptrdiff_t start, ptrdiff_t start_byte,
 	      ptrdiff_t limit, ptrdiff_t limit_byte,
-	      register EMACS_INT count, int allow_quit)
+	      EMACS_INT count, bool allow_quit)
 {
   int direction = ((count > 0) ? 1 : -1);
 
-  register unsigned char *cursor;
+  unsigned char *cursor;
   unsigned char *base;
 
   ptrdiff_t ceiling;
-  register unsigned char *ceiling_addr;
+  unsigned char *ceiling_addr;
 
-  int old_immediate_quit = immediate_quit;
+  bool old_immediate_quit = immediate_quit;
 
   /* The code that follows is like scan_buffer
      but checks for either newline or carriage return.  */
@@ -1009,7 +1017,7 @@ search_command (Lisp_Object string, Lisp_Object bound, Lisp_Object noerror,
       if (!EQ (noerror, Qt))
 	{
 	  if (lim < BEGV || lim > ZV)
-	    abort ();
+	    emacs_abort ();
 	  SET_PT_BOTH (lim, lim_byte);
 	  return Qnil;
 #if 0 /* This would be clean, but maybe programs depend on
@@ -1022,7 +1030,7 @@ search_command (Lisp_Object string, Lisp_Object bound, Lisp_Object noerror,
     }
 
   if (np < BEGV || np > ZV)
-    abort ();
+    emacs_abort ();
 
   SET_PT (np);
 
@@ -1398,7 +1406,7 @@ search_buffer (Lisp_Object string, ptrdiff_t pos, ptrdiff_t pos_byte,
 	  char_base = 0;
 	  while (--len >= 0)
 	    {
-	      int c, translated;
+	      int c, translated, inverse;
 
 	      /* If we got here and the RE flag is set, it's because we're
 		 dealing with a regexp known to be trivial, so the backslash
@@ -1412,6 +1420,20 @@ search_buffer (Lisp_Object string, ptrdiff_t pos, ptrdiff_t pos_byte,
 	      c = *base_pat++;
 	      TRANSLATE (translated, trt, c);
 	      *pat++ = translated;
+	      /* Check that none of C's equivalents violates the
+		 assumptions of boyer_moore.  */
+	      TRANSLATE (inverse, inverse_trt, c);
+	      while (1)
+		{
+		  if (inverse >= 0200)
+		    {
+		      boyer_moore_ok = 0;
+		      break;
+		    }
+		  if (c == inverse)
+		    break;
+		  TRANSLATE (inverse, inverse_trt, inverse);
+		}
 	    }
 	}
 
@@ -2212,15 +2234,14 @@ DEFUN ("replace-match", Freplace_match, Sreplace_match, 1, 5, 0,
        doc: /* Replace text matched by last search with NEWTEXT.
 Leave point at the end of the replacement text.
 
-If second arg FIXEDCASE is non-nil, do not alter case of replacement text.
-Otherwise maybe capitalize the whole text, or maybe just word initials,
-based on the replaced text.
-If the replaced text has only capital letters
-and has at least one multiletter word, convert NEWTEXT to all caps.
-Otherwise if all words are capitalized in the replaced text,
-capitalize each word in NEWTEXT.
+If optional second arg FIXEDCASE is non-nil, do not alter the case of
+the replacement text.  Otherwise, maybe capitalize the whole text, or
+maybe just word initials, based on the replaced text.  If the replaced
+text has only capital letters and has at least one multiletter word,
+convert NEWTEXT to all caps.  Otherwise if all words are capitalized
+in the replaced text, capitalize each word in NEWTEXT.
 
-If third arg LITERAL is non-nil, insert NEWTEXT literally.
+If optional third arg LITERAL is non-nil, insert NEWTEXT literally.
 Otherwise treat `\\' as special:
   `\\&' in NEWTEXT means substitute original matched text.
   `\\N' means substitute what matched the Nth `\\(...\\)'.
@@ -2231,13 +2252,11 @@ Otherwise treat `\\' as special:
   Any other character following `\\' signals an error.
 Case conversion does not apply to these substitutions.
 
-FIXEDCASE and LITERAL are optional arguments.
-
-The optional fourth argument STRING can be a string to modify.
-This is meaningful when the previous match was done against STRING,
-using `string-match'.  When used this way, `replace-match'
-creates and returns a new string made by copying STRING and replacing
-the part of STRING that was matched.
+If optional fourth argument STRING is non-nil, it should be a string
+to act on; this should be the string on which the previous match was
+done via `string-match'.  In this case, `replace-match' creates and
+returns a new string, made by copying STRING and replacing the part of
+STRING that was matched (the original STRING itself is not altered).
 
 The optional fifth argument SUBEXP specifies a subexpression;
 it says to replace just that subexpression with NEWTEXT,
@@ -2770,7 +2789,7 @@ Return value is undefined if the last search failed.  */)
 	    }
 	  else
 	    /* last_thing_searched must always be Qt, a buffer, or Qnil.  */
-	    abort ();
+	    emacs_abort ();
 
 	  len = 2 * i + 2;
 	}

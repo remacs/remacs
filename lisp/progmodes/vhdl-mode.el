@@ -483,6 +483,7 @@ with other user Makefiles."
   :type '(list (string :tag "Compile entire design")
 	       (string :tag "Clean entire design  ")
 	       (string :tag "Create design library"))
+  :version "24.3"
   :group 'vhdl-compile)
 
 (defcustom vhdl-makefile-generation-hook nil
@@ -772,6 +773,7 @@ index, the record field or array index is included with the record name in
 the sensitivity list (e.g. \"in1(0)\", \"in2.f0\").
 Otherwise, only the record name is included (e.g. \"in1\", \"in2\")."
   :type 'boolean
+  :version "24.3"
   :group 'vhdl-style)
 
 (defgroup vhdl-naming nil
@@ -1849,6 +1851,7 @@ Otherwise, comment lines are indented like the preceding code line.
 Indenting comment lines like the following code line gives nicer indentation
 when comments precede the code that they refer to."
   :type 'boolean
+  :version "24.3"
   :group 'vhdl-misc)
 
 (defcustom vhdl-word-completion-case-sensitive nil
@@ -4138,10 +4141,7 @@ STRING are replaced by `-' and substrings are converted to lower case."
   (set (make-local-variable 'imenu-generic-expression)
        vhdl-imenu-generic-expression)
   (when (and vhdl-index-menu (fboundp 'imenu))
-    (if (or (not (boundp 'font-lock-maximum-size))
-	    (> font-lock-maximum-size (buffer-size)))
-	(imenu-add-to-menubar "Index")
-      (message "Scanning buffer for index...buffer too big"))))
+    (imenu-add-to-menubar "Index")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Source file menu (using `easy-menu.el')
@@ -12525,6 +12525,7 @@ options vhdl-upper-case-{keywords,types,attributes,enum-values}."
 (defun vhdl-line-expand (&optional prefix-arg)
   "Hippie-expand current line."
   (interactive "P")
+  (require 'hippie-exp)
   (let ((case-fold-search t) (case-replace nil)
 	(hippie-expand-try-functions-list
 	 '(try-expand-line try-expand-line-all-buffers)))
@@ -14385,10 +14386,10 @@ if required."
 	  (define-key vhdl-speedbar-key-map (int-to-string key)
 	    `(lambda () (interactive) (vhdl-speedbar-set-depth ,key)))
 	  (setq key (1+ key)))))
-    (define-key speedbar-key-map "h"
+    (define-key speedbar-mode-map "h"
       (lambda () (interactive)
 	(speedbar-change-initial-expansion-list "vhdl directory")))
-    (define-key speedbar-key-map "H"
+    (define-key speedbar-mode-map "H"
       (lambda () (interactive)
 	(speedbar-change-initial-expansion-list "vhdl project")))
     ;; menu
@@ -17400,7 +17401,8 @@ to visually support naming conventions.")
   "Display VARIABLE's documentation in *Help* buffer."
   (interactive)
   (unless (featurep 'xemacs)
-    (help-setup-xref (list #'vhdl-doc-variable variable) (interactive-p)))
+    (help-setup-xref (list #'vhdl-doc-variable variable)
+		     (called-interactively-p 'interactive)))
   (with-output-to-temp-buffer
       (if (fboundp 'help-buffer) (help-buffer) "*Help*")
     (princ (documentation-property variable 'variable-documentation))
@@ -17412,7 +17414,8 @@ to visually support naming conventions.")
   "Display VHDL Mode documentation in *Help* buffer."
   (interactive)
   (unless (featurep 'xemacs)
-    (help-setup-xref (list #'vhdl-doc-mode) (interactive-p)))
+    (help-setup-xref (list #'vhdl-doc-mode)
+		     (called-interactively-p 'interactive)))
   (with-output-to-temp-buffer
       (if (fboundp 'help-buffer) (help-buffer) "*Help*")
     (princ mode-name)

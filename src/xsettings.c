@@ -21,7 +21,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include <float.h>
 #include <limits.h>
-#include <setjmp.h>
 #include <fcntl.h>
 #include "lisp.h"
 #include "xterm.h"
@@ -30,7 +29,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "keyboard.h"
 #include "blockinput.h"
 #include "termhooks.h"
-#include "termopts.h"
 
 #include <X11/Xproto.h>
 
@@ -711,12 +709,12 @@ apply_xft_settings (struct x_display_info *dpyinfo,
       if (send_event_p)
         store_config_changed_event (Qfont_render,
                                     XCAR (dpyinfo->name_list_element));
-      Vxft_settings 
+      Vxft_settings
 	= make_formatted_string (buf, format,
 				 oldsettings.aa, oldsettings.hinting,
 				 oldsettings.rgba, oldsettings.lcdfilter,
 				 oldsettings.hintstyle, oldsettings.dpi);
-      
+
     }
   else
     FcPatternDestroy (pat);
@@ -930,7 +928,7 @@ init_xsettings (struct x_display_info *dpyinfo)
 {
   Display *dpy = dpyinfo->display;
 
-  BLOCK_INPUT;
+  block_input ();
 
   /* Select events so we can detect client messages sent when selection
      owner changes.  */
@@ -940,7 +938,7 @@ init_xsettings (struct x_display_info *dpyinfo)
   if (dpyinfo->xsettings_window != None)
     read_and_apply_settings (dpyinfo, False);
 
-  UNBLOCK_INPUT;
+  unblock_input ();
 }
 
 void

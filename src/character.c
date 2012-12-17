@@ -36,7 +36,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #ifdef emacs
 
 #include <sys/types.h>
-#include <setjmp.h>
 #include <intprops.h>
 #include "lisp.h"
 #include "character.h"
@@ -127,8 +126,6 @@ char_string (unsigned int c, unsigned char *p)
       c &= ~CHAR_MODIFIER_MASK;
     }
 
-  MAYBE_UNIFY_CHAR (c);
-
   if (c <= MAX_3_BYTE_CHAR)
     {
       bytes = CHAR_STRING (c, p);
@@ -195,8 +192,6 @@ string_char (const unsigned char *p, const unsigned char **advanced, int *len)
 	   | ((p)[4] & 0x3F));
       p += 5;
     }
-
-  MAYBE_UNIFY_CHAR (c);
 
   if (len)
     *len = p - saved_p;
@@ -541,7 +536,7 @@ multibyte_chars_in_text (const unsigned char *ptr, ptrdiff_t nbytes)
       int len = MULTIBYTE_LENGTH (ptr, endp);
 
       if (len == 0)
-	abort ();
+	emacs_abort ();
       ptr += len;
       chars++;
     }

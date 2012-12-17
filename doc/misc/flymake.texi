@@ -47,7 +47,7 @@ developing GNU and promoting software freedom.''
 @ifnottex
 @node Top
 @top GNU Flymake
-@insertcopying 
+@insertcopying
 @end ifnottex
 
 @menu
@@ -69,7 +69,7 @@ Emacs minor mode. Flymake runs the pre-configured syntax check tool
 (compiler for C++ files, @code{perl} for perl files, etc.) in the
 background, passing it a temporary copy of the current buffer, and
 parses the output for known error/warning message patterns. Flymake
-then highlights erroneous lines (i.e. lines for which at least one
+then highlights erroneous lines (i.e., lines for which at least one
 error or warning has been reported by the syntax check tool), and
 displays an overall buffer status in the mode line. Status information
 displayed by Flymake contains total number of errors and warnings
@@ -291,9 +291,11 @@ A list of @code{(filename-regexp, init-function, cleanup-function
 getfname-function)} for configuring syntax check tools. @xref{Adding
 support for a new syntax check tool}.
 
+@ignore
 @item flymake-buildfile-dirs
 A list of directories (relative paths) for searching a
 buildfile. @xref{Locating the buildfile}.
+@end ignore
 
 @item flymake-master-file-dirs
 A list of directories for searching a master file. @xref{Locating a
@@ -336,6 +338,17 @@ been reported.
 @item flymake-warnline
 A custom face for highlighting lines for which at least one warning
 and no errors have been reported.
+
+@item flymake-error-bitmap
+A bitmap used in the fringe to mark lines for which an error has
+been reported.
+
+@item flymake-warning-bitmap
+A bitmap used in the fringe to mark lines for which a warning has
+been reported.
+
+@item flymake-fringe-indicator-position
+Which fringe (if any) should show the warning/error bitmaps.
 
 @end table
 
@@ -664,10 +677,13 @@ buildfile to reference the 'project configuration' file.
 
 Special function, @code{flymake-find-buildfile} is provided for locating buildfiles.
 Searching for a buildfile is done in a manner similar to that of searching
-for possible master files. A customizable variable
+for possible master files.
+@ignore
+A customizable variable
 @code{flymake-buildfile-dirs} holds a list of relative paths to the
-buildfile. They are checked sequentially until a buildfile is found. In case
-there's no build file, syntax check is aborted.
+buildfile. They are checked sequentially until a buildfile is found.
+@end ignore
+In case there's no build file, syntax check is aborted.
 
 Buildfile values are also cached.
 
@@ -717,6 +733,15 @@ sentinel, after calling the cleanup function. Two customizable faces
 are used: @code{flymake-errline} and
 @code{flymake-warnline}.  Errors belonging outside the current
 buffer are considered to belong to line 1 of the current buffer.
+
+@c This manual does not use vindex.
+@c @vindex flymake-fringe-indicator-position
+@c @vindex flymake-error-bitmap
+@c @vindex flymake-warning-bitmap
+If the option @code{flymake-fringe-indicator-position} is non-@code{nil},
+errors and warnings are also highlighted in the left or right fringe,
+using the bitmaps specified by @code{flymake-error-bitmap}
+and @code{flymake-warning-bitmap}.
 
 @node Interaction with other modes
 @section Interaction with other modes

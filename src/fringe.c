@@ -18,7 +18,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include <config.h>
 #include <stdio.h>
-#include <setjmp.h>
 
 #include "lisp.h"
 #include "frame.h"
@@ -659,7 +658,14 @@ draw_fringe_bitmap_1 (struct window *w, struct glyph_row *row, int left_p, int o
 	{
 	  /* If W has a vertical border to its left, don't draw over it.  */
 	  wd -= ((!WINDOW_LEFTMOST_P (w)
-		  && !WINDOW_HAS_VERTICAL_SCROLL_BAR (w))
+		  && !WINDOW_HAS_VERTICAL_SCROLL_BAR (w)
+		  /* But don't reduce the fringe width if the window
+		     has a left margin, because that means we are not
+		     in danger of drawing over the vertical border,
+		     and OTOH leaving out that one pixel leaves behind
+		     traces of the cursor, if it was in column zero
+		     before drawing non-empty margin area.  */
+		  && NILP (w->left_margin_cols))
 		 ? 1 : 0);
 	  p.bx = x - wd;
 	  p.nx = wd;
@@ -866,7 +872,7 @@ draw_fringe_bitmap (struct window *w, struct glyph_row *row, int left_p)
 void
 draw_row_fringe_bitmaps (struct window *w, struct glyph_row *row)
 {
-  eassert (interrupt_input_blocked);
+  eassert (input_blocked_p ());
 
   /* If row is completely invisible, because of vscrolling, we
      don't have to draw anything.  */
@@ -1725,10 +1731,8 @@ Return nil if POS is not visible in WINDOW.  */)
   struct glyph_row *row;
   ptrdiff_t textpos;
 
-  if (NILP (window))
-    window = selected_window;
-  CHECK_WINDOW (window);
-  w = XWINDOW (window);
+  w = decode_any_window (window);
+  XSETWINDOW (window, w);
 
   if (!NILP (pos))
     {
@@ -1740,7 +1744,7 @@ Return nil if POS is not visible in WINDOW.  */)
   else if (w == XWINDOW (selected_window))
     textpos = PT;
   else
-    textpos = XMARKER (w->pointm)->charpos;
+    textpos = marker_position (w->pointm);
 
   row = MATRIX_FIRST_TEXT_ROW (w->current_matrix);
   row = row_containing_pos (w, textpos, row, NULL, 0);

@@ -2,6 +2,8 @@
 
 ;; Copyright (C) 2002-2004, 2006-2012 Free Software Foundation, Inc.
 
+;; Maintainer: FSF
+
 ;; This file is part of GNU Emacs.
 
 ;; GNU Emacs is free software: you can redistribute it and/or modify
@@ -60,7 +62,7 @@
 
 (require 'erc)
 (require 'erc-networks)
-(eval-when-compile (require 'cl))
+(eval-when-compile (require 'cl-lib))
 
 ;; Customization:
 

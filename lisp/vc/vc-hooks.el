@@ -34,18 +34,6 @@
 
 ;; Customization Variables (the rest is in vc.el)
 
-(defvar vc-ignore-vc-files nil)
-(make-obsolete-variable 'vc-ignore-vc-files
-                        "set `vc-handled-backends' to nil to disable VC."
-			"21.1")
-
-(defvar vc-master-templates ())
-(make-obsolete-variable 'vc-master-templates
- "to define master templates for a given BACKEND, use
-vc-BACKEND-master-templates.  To enable or disable VC for a given
-BACKEND, use `vc-handled-backends'."
- "21.1")
-
 (defcustom vc-ignore-dir-regexp
   ;; Stop SMB, automounter, AFS, and DFS host lookups.
   locate-dominating-stop-dir-regexp
@@ -119,10 +107,12 @@ control systems."
   :type 'boolean
   :group 'vc)
 
-(defcustom vc-mistrust-permissions nil
+;; If you fix bug#11490, probably you can set this back to nil.
+(defcustom vc-mistrust-permissions t
   "If non-nil, don't assume permissions/ownership track version-control status.
 If nil, do rely on the permissions.
 See also variable `vc-consult-headers'."
+  :version "24.3"                       ; nil->t, bug#11490
   :type 'boolean
   :group 'vc)
 
@@ -236,6 +226,8 @@ VC commands are globally reachable under the prefix `\\[vc-prefix-map]':
 
 (defun vc-file-clearprops (file)
   "Clear all VC properties of FILE."
+  (if (boundp 'vc-parent-buffer)
+      (kill-local-variable 'vc-parent-buffer))
   (setplist (intern file vc-file-prop-obarray) nil))
 
 
@@ -446,8 +438,8 @@ For registered files, the possible values are:
 (defun vc-state (file &optional backend)
   "Return the version control state of FILE.
 
-If FILE is not registered, this function always returns nil.
-For registered files, the value returned is one of:
+A return of nil from this function means we have no information on the
+status of this file.  Otherwise, the value returned is one of:
 
   'up-to-date        The working file is unmodified with respect to the
                      latest version on the current branch, and not locked.
@@ -499,10 +491,8 @@ For registered files, the value returned is one of:
                      that any file with vc-state nil might be ignorable
                      without VC knowing it.
 
-  'unregistered      The file is not under version control.
+  'unregistered      The file is not under version control."
 
-A return of nil from this function means we have no information on the
-status of this file."
   ;; Note: in Emacs 22 and older, return of nil meant the file was
   ;; unregistered.  This is potentially a source of
   ;; backward-compatibility bugs.
@@ -586,16 +576,7 @@ If FILE is not registered, this function always returns nil."
   "Check if FILE is registered in BACKEND using vc-BACKEND-master-templates."
   (let ((sym (vc-make-backend-sym backend 'master-templates)))
     (unless (get backend 'vc-templates-grabbed)
-      (put backend 'vc-templates-grabbed t)
-      (set sym (append (delq nil
-			     (mapcar
-			      (lambda (template)
-				(and (consp template)
-				     (eq (cdr template) backend)
-				     (car template)))
-                              (with-no-warnings
-                               vc-master-templates)))
-		       (symbol-value sym))))
+      (put backend 'vc-templates-grabbed t))
     (let ((result (vc-check-master-templates file (symbol-value sym))))
       (if (stringp result)
 	  (vc-file-setprop file 'vc-name result)
@@ -875,8 +856,9 @@ current, and kill the buffer that visits the link."
 	  (set (make-local-variable 'backup-inhibited) t))
 	;; Let the backend setup any buffer-local things he needs.
 	(vc-call-backend backend 'find-file-hook))
-       ((let ((link-type (and (not (equal buffer-file-name buffer-file-truename))
-			      (vc-backend buffer-file-truename))))
+       ((let* ((truename (expand-file-name buffer-file-truename))
+	       (link-type (and (not (equal buffer-file-name truename))
+			       (vc-backend truename))))
 	  (cond ((not link-type) nil)	;Nothing to do.
 		((eq vc-follow-symlinks nil)
 		 (message

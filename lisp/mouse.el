@@ -284,23 +284,24 @@ not it is actually displayed."
 (defun mouse-major-mode-menu (event &optional prefix)
   "Pop up a mode-specific menu of mouse commands.
 Default to the Edit menu if the major mode doesn't define a menu."
+  (declare (obsolete mouse-menu-major-mode-map "23.1"))
   (interactive "@e\nP")
   (run-hooks 'activate-menubar-hook 'menu-bar-update-hook)
   (popup-menu (mouse-menu-major-mode-map) event prefix))
-(make-obsolete 'mouse-major-mode-menu 'mouse-menu-major-mode-map "23.1")
 
 (defun mouse-popup-menubar (event prefix)
   "Pop up a menu equivalent to the menu bar for keyboard EVENT with PREFIX.
 The contents are the items that would be in the menu bar whether or
 not it is actually displayed."
+  (declare (obsolete mouse-menu-bar-map "23.1"))
   (interactive "@e \nP")
   (run-hooks 'activate-menubar-hook 'menu-bar-update-hook)
   (popup-menu (mouse-menu-bar-map) (unless (integerp event) event) prefix))
-(make-obsolete 'mouse-popup-menubar 'mouse-menu-bar-map "23.1")
 
 (defun mouse-popup-menubar-stuff (event prefix)
   "Popup a menu like either `mouse-major-mode-menu' or `mouse-popup-menubar'.
 Use the former if the menu bar is showing, otherwise the latter."
+  (declare (obsolete nil "23.1"))
   (interactive "@e\nP")
   (run-hooks 'activate-menubar-hook 'menu-bar-update-hook)
   (popup-menu
@@ -308,7 +309,6 @@ Use the former if the menu bar is showing, otherwise the latter."
        (mouse-menu-bar-map)
      (mouse-menu-major-mode-map))
    event prefix))
-(make-obsolete 'mouse-popup-menubar-stuff nil "23.1")
 
 ;; Commands that operate on windows.
 
@@ -425,7 +425,7 @@ must be one of the symbols `header', `mode', or `vertical'."
 				   (frame-parameters frame)))
 			'right)))
 	 (draggable t)
-	 event position growth dragged)
+	 finished event position growth dragged)
     (cond
      ((eq line 'header)
       ;; Check whether header-line can be dragged at all.
@@ -457,7 +457,7 @@ must be one of the symbols `header', `mode', or `vertical'."
     ;; Start tracking.
     (track-mouse
       ;; Loop reading events and sampling the position of the mouse.
-      (while draggable
+      (while (not finished)
 	(setq event (read-event))
 	(setq position (mouse-position))
 	;; Do nothing if
@@ -472,7 +472,7 @@ must be one of the symbols `header', `mode', or `vertical'."
 	;;   - there is a keyboard event or some other unknown event.
 	(cond
 	 ((not (consp event))
-	  (setq draggable nil))
+	  (setq finished t))
 	 ((memq (car event) '(switch-frame select-window))
 	  nil)
 	 ((not (memq (car event) '(mouse-movement scroll-bar-movement)))
@@ -480,15 +480,15 @@ must be one of the symbols `header', `mode', or `vertical'."
 	    ;; Do not unread a drag-mouse-1 event to avoid selecting
 	    ;; some other window.  For vertical line dragging do not
 	    ;; unread mouse-1 events either (but only if we dragged at
-	    ;; least once to allow mouse-1 clicks get through.
+	    ;; least once to allow mouse-1 clicks get through).
 	    (unless (and dragged
 			 (if (eq line 'vertical)
 			     (memq (car event) '(drag-mouse-1 mouse-1))
 			   (eq (car event) 'drag-mouse-1)))
 	      (push event unread-command-events)))
-	  (setq draggable nil))
-	 ((or (not (eq (car position) frame))
-	      (null (car (cdr position))))
+	  (setq finished t))
+	 ((not (and (eq (car position) frame)
+		    (cadr position)))
 	  nil)
 	 ((eq line 'vertical)
 	  ;; Drag vertical divider.
@@ -517,8 +517,8 @@ must be one of the symbols `header', `mode', or `vertical'."
       ;; If mouse-2 has never been done by the user, it doesn't have
       ;; the necessary property to be interpreted correctly.
       (put 'mouse-2 'event-kind 'mouse-click)
-      (setcar event 'mouse-2))
-    (push event unread-command-events)))
+      (setcar event 'mouse-2)
+      (push event unread-command-events))))
 
 (defun mouse-drag-mode-line (start-event)
   "Change the height of a window by dragging on the mode line."
@@ -1151,7 +1151,7 @@ regardless of where you click."
   (or mouse-yank-at-point (mouse-set-point click))
   (let ((primary
 	 (cond
-	  ((eq system-type 'windows-nt)
+	  ((eq (framep (selected-frame)) 'w32)
 	   ;; MS-Windows emulates PRIMARY in x-get-selection, but not
 	   ;; in x-get-selection-value (the latter only accesses the
 	   ;; clipboard).  So try PRIMARY first, in case they selected

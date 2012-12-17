@@ -397,6 +397,12 @@
 (require 'ring)
 (require 'ehelp)
 
+(declare-function ring-empty-p "ring" (ring))
+(declare-function ring-ref "ring" (ring index))
+(declare-function ring-insert-at-beginning "ring" (ring item))
+(declare-function ring-length "ring" (ring))
+(declare-function ring-insert "ring" (ring item))
+
 (defgroup term nil
   "General command interpreter in a window."
   :group 'processes)
@@ -452,7 +458,7 @@ state 4: term-terminal-parameter contains pending output.")
   "A queue of strings whose echo we want suppressed.")
 (defvar term-terminal-parameter)
 (defvar term-terminal-previous-parameter)
-(defvar term-current-face 'term-face)
+(defvar term-current-face 'term)
 (defvar term-scroll-start 0 "Top-most line (inclusive) of scrolling region.")
 (defvar term-scroll-end) ; Number of line (zero-based) after scrolling region.
 (defvar term-pager-count nil
@@ -759,7 +765,7 @@ Buffer local variable.")
 
 ;;; Faces
 (defvar ansi-term-color-vector
-  [term-face
+  [term
    term-color-black
    term-color-red
    term-color-green
@@ -770,18 +776,20 @@ Buffer local variable.")
    term-color-white])
 
 (defcustom term-default-fg-color nil
-  "If non-nil, default color for foreground in Term mode.
-This is deprecated in favor of customizing the `term-face' face."
+  "If non-nil, default color for foreground in Term mode."
   :group 'term
   :type 'string)
+(make-obsolete-variable 'term-default-fg-color "use the face `term' instead."
+                        "24.3")
 
 (defcustom term-default-bg-color nil
-  "If non-nil, default color for foreground in Term mode.
-This is deprecated in favor of customizing the `term-face' face."
+  "If non-nil, default color for foreground in Term mode."
   :group 'term
   :type 'string)
+(make-obsolete-variable 'term-default-bg-color "use the face `term' instead."
+                        "24.3")
 
-(defface term-face
+(defface term
   `((t
      :foreground ,term-default-fg-color
      :background ,term-default-bg-color
@@ -988,13 +996,16 @@ is buffer-local."
     dt))
 
 (defun term-ansi-reset ()
-  (setq term-current-face 'term-face)
+  (setq term-current-face 'term)
   (setq term-ansi-current-underline nil)
   (setq term-ansi-current-bold nil)
   (setq term-ansi-current-reverse nil)
   (setq term-ansi-current-color 0)
   (setq term-ansi-current-invisible nil)
-  (setq term-ansi-face-already-done t)
+  ;; Stefan thought this should be t, but could not remember why.
+  ;; Setting it to t seems to cause bug#11785.  Setting it to nil
+  ;; again to see if there are other consequences...
+  (setq term-ansi-face-already-done nil)
   (setq term-ansi-current-bg-color 0))
 
 (define-derived-mode term-mode fundamental-mode "Term"
@@ -4048,6 +4059,7 @@ Returns `partial' if completed as far as possible with the completion matches.
 Returns `listed' if a completion listing was shown.
 
 See also `term-dynamic-complete-filename'."
+  (declare (obsolete completion-in-region "23.2"))
   (let* ((completion-ignore-case nil)
 	 (candidates (mapcar (function (lambda (x) (list x))) candidates))
 	 (completions (all-completions stub candidates)))
@@ -4081,8 +4093,6 @@ See also `term-dynamic-complete-filename'."
  		   (t
 		    (message "Partially completed")
 		    'partial)))))))
-(make-obsolete 'term-dynamic-simple-complete 'completion-in-region "23.2")
-
 
 (defun term-dynamic-list-filename-completions ()
   "List in help buffer possible completions of the filename at point."
@@ -4174,11 +4184,16 @@ the process.  Any more args are arguments to PROGRAM."
   (term-mode)
   (term-char-mode)
 
-  ;; I wanna have find-file on C-x C-f -mm
-  ;; your mileage may definitely vary, maybe it's better to put this in your
-  ;; .emacs ...
-
-  (term-set-escape-char ?\C-x)
+  ;; Historical baggage.  A call to term-set-escape-char used to not
+  ;; undo any previous call to t-s-e-c.  Because of this, ansi-term
+  ;; ended up with both C-x and C-c as escape chars.  Who knows what
+  ;; the original intention was, but people could have become used to
+  ;; either.   (Bug#12842)
+  (let (term-escape-char)
+    ;; I wanna have find-file on C-x C-f -mm
+    ;; your mileage may definitely vary, maybe it's better to put this in your
+    ;; .emacs ...
+    (term-set-escape-char ?\C-x))
 
   (switch-to-buffer term-ansi-buffer-name))
 

@@ -31,14 +31,13 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <sys/file.h>
 #include <sys/time.h>
 #include <sys/utime.h>
-#include <mbstring.h>	/* for _mbspbrk */
 #include <math.h>
-#include <setjmp.h>
 #include <time.h>
 
 /* must include CRT headers *before* config.h */
 
 #include <config.h>
+#include <mbstring.h>	/* for _mbspbrk */
 
 #undef access
 #undef chdir
@@ -102,17 +101,17 @@ typedef struct _MEMORY_STATUS_EX {
    _WIN32_WINNT than what we use.  w32api supplied with MinGW 3.15
    defines it in psapi.h  */
 typedef struct _PROCESS_MEMORY_COUNTERS_EX {
-  DWORD cb;
-  DWORD PageFaultCount;
-  DWORD PeakWorkingSetSize;
-  DWORD WorkingSetSize;
-  DWORD QuotaPeakPagedPoolUsage;
-  DWORD QuotaPagedPoolUsage;
-  DWORD QuotaPeakNonPagedPoolUsage;
-  DWORD QuotaNonPagedPoolUsage;
-  DWORD PagefileUsage;
-  DWORD PeakPagefileUsage;
-  DWORD PrivateUsage;
+  DWORD  cb;
+  DWORD  PageFaultCount;
+  SIZE_T PeakWorkingSetSize;
+  SIZE_T WorkingSetSize;
+  SIZE_T QuotaPeakPagedPoolUsage;
+  SIZE_T QuotaPagedPoolUsage;
+  SIZE_T QuotaPeakNonPagedPoolUsage;
+  SIZE_T QuotaNonPagedPoolUsage;
+  SIZE_T PagefileUsage;
+  SIZE_T PeakPagefileUsage;
+  SIZE_T PrivateUsage;
 } PROCESS_MEMORY_COUNTERS_EX,*PPROCESS_MEMORY_COUNTERS_EX;
 #endif
 
@@ -120,9 +119,10 @@ typedef struct _PROCESS_MEMORY_COUNTERS_EX {
 #include <aclapi.h>
 
 #ifdef _MSC_VER
-/* MSVC doesn't provide the definition of REPARSE_DATA_BUFFER, except
-   on ntifs.h, which cannot be included because it triggers conflicts
-   with other Windows API headers.  So we define it here by hand.  */
+/* MSVC doesn't provide the definition of REPARSE_DATA_BUFFER and the
+   associated macros, except on ntifs.h, which cannot be included
+   because it triggers conflicts with other Windows API headers.  So
+   we define it here by hand.  */
 
 typedef struct _REPARSE_DATA_BUFFER {
     ULONG  ReparseTag;
@@ -150,6 +150,20 @@ typedef struct _REPARSE_DATA_BUFFER {
     } DUMMYUNIONNAME;
 } REPARSE_DATA_BUFFER, *PREPARSE_DATA_BUFFER;
 
+#ifndef FILE_DEVICE_FILE_SYSTEM
+#define FILE_DEVICE_FILE_SYSTEM	9
+#endif
+#ifndef METHOD_BUFFERED
+#define METHOD_BUFFERED	        0
+#endif
+#ifndef FILE_ANY_ACCESS
+#define FILE_ANY_ACCESS	        0x00000000
+#endif
+#ifndef CTL_CODE
+#define CTL_CODE(t,f,m,a)       (((t)<<16)|((a)<<14)|((f)<<2)|(m))
+#endif
+#define FSCTL_GET_REPARSE_POINT \
+  CTL_CODE(FILE_DEVICE_FILE_SYSTEM, 42, METHOD_BUFFERED, FILE_ANY_ACCESS)
 #endif
 
 /* TCP connection support.  */
@@ -173,8 +187,10 @@ typedef struct _REPARSE_DATA_BUFFER {
 #undef sendto
 
 #include "w32.h"
-#include "ndir.h"
+#include <dirent.h>
+#include "w32common.h"
 #include "w32heap.h"
+#include "w32select.h"
 #include "systime.h"
 #include "dispextern.h"		/* for xstrcasecmp */
 #include "coding.h"		/* for Vlocale_coding_system */
@@ -197,6 +213,12 @@ static char * chase_symlinks (const char *);
 static int enable_privilege (LPCTSTR, BOOL, TOKEN_PRIVILEGES *);
 static int restore_privilege (TOKEN_PRIVILEGES *);
 static BOOL WINAPI revert_to_self (void);
+
+extern int sys_access (const char *, int);
+extern void *e_malloc (size_t);
+extern int sys_select (int, SELECT_TYPE *, SELECT_TYPE *, SELECT_TYPE *,
+		       EMACS_TIME *, void *);
+
 
 
 /* Initialization states.
@@ -329,8 +351,8 @@ typedef BOOL (WINAPI * GetProcessMemoryInfo_Proc) (
     DWORD cb);
 typedef BOOL (WINAPI * GetProcessWorkingSetSize_Proc) (
     HANDLE hProcess,
-    DWORD * lpMinimumWorkingSetSize,
-    DWORD * lpMaximumWorkingSetSize);
+    PSIZE_T lpMinimumWorkingSetSize,
+    PSIZE_T lpMaximumWorkingSetSize);
 typedef BOOL (WINAPI * GlobalMemoryStatus_Proc) (
     LPMEMORYSTATUS lpBuffer);
 typedef BOOL (WINAPI * GlobalMemoryStatusEx_Proc) (
@@ -867,23 +889,6 @@ create_symbolic_link (LPTSTR lpSymlinkFilename,
   return retval;
 }
 
-/* Equivalent of strerror for W32 error codes.  */
-char *
-w32_strerror (int error_no)
-{
-  static char buf[500];
-
-  if (error_no == 0)
-    error_no = GetLastError ();
-
-  buf[0] = '\0';
-  if (!FormatMessage (FORMAT_MESSAGE_FROM_SYSTEM, NULL,
-		      error_no,
-		      0, /* choose most suitable language */
-		      buf, sizeof (buf), NULL))
-    sprintf (buf, "w32 error %u", error_no);
-  return buf;
-}
 
 /* Return 1 if P is a valid pointer to an object of size SIZE.  Return
    0 if P is NOT a valid pointer.  Return -1 if we cannot validate P.
@@ -911,8 +916,18 @@ static char startup_dir[MAXPATHLEN];
 
 /* Get the current working directory.  */
 char *
-getwd (char *dir)
+getcwd (char *dir, int dirsize)
 {
+  if (!dirsize)
+    {
+      errno = EINVAL;
+      return NULL;
+    }
+  if (dirsize <= strlen (startup_dir))
+    {
+      errno = ERANGE;
+      return NULL;
+    }
 #if 0
   if (GetCurrentDirectory (MAXPATHLEN, dir) > 0)
     return dir;
@@ -1273,9 +1288,9 @@ init_user_info (void)
 
   /* Ensure HOME and SHELL are defined. */
   if (getenv ("HOME") == NULL)
-    abort ();
+    emacs_abort ();
   if (getenv ("SHELL") == NULL)
-    abort ();
+    emacs_abort ();
 
   /* Set dir and shell from environment variables. */
   strcpy (dflt_passwd.pw_dir, getenv ("HOME"));
@@ -1529,74 +1544,48 @@ is_unc_volume (const char *filename)
   return 1;
 }
 
-/* Routines that are no-ops on NT but are defined to get Emacs to compile.  */
-
+/* Emulate the Posix unsetenv.  */
 int
-sigsetmask (int signal_mask)
+unsetenv (const char *name)
 {
-  return 0;
+  char *var;
+  size_t name_len;
+  int retval;
+
+  if (name == NULL || *name == '\0' || strchr (name, '=') != NULL)
+    {
+      errno = EINVAL;
+      return -1;
+    }
+  name_len = strlen (name);
+  /* MS docs says an environment variable cannot be longer than 32K.  */
+  if (name_len > 32767)
+    {
+      errno = ENOMEM;
+      return 0;
+    }
+  /* It is safe to use 'alloca' with 32K size, since the stack is at
+     least 2MB, and we set it to 8MB in the link command line.  */
+  var = alloca (name_len + 2);
+  var[name_len++] = '=';
+  var[name_len] = '\0';
+  return _putenv (var);
 }
 
+/* MS _putenv doesn't support removing a variable when the argument
+   does not include the '=' character, so we fix that here.  */
 int
-sigmask (int sig)
+sys_putenv (char *str)
 {
-  return 0;
-}
+  const char *const name_end = strchr (str, '=');
 
-int
-sigblock (int sig)
-{
-  return 0;
-}
+  if (name_end == NULL)
+    {
+      /* Remove the variable from the environment.  */
+      return unsetenv (str);
+    }
 
-int
-sigunblock (int sig)
-{
-  return 0;
-}
-
-int
-sigemptyset (sigset_t *set)
-{
-  return 0;
-}
-
-int
-sigaddset (sigset_t *set, int signo)
-{
-  return 0;
-}
-
-int
-sigfillset (sigset_t *set)
-{
-  return 0;
-}
-
-int
-sigprocmask (int how, const sigset_t *set, sigset_t *oset)
-{
-  return 0;
-}
-
-int
-pthread_sigmask (int how, const sigset_t *set, sigset_t *oset)
-{
-  if (sigprocmask (how, set, oset) == -1)
-    return EINVAL;
-  return 0;
-}
-
-int
-setpgrp (int pid, int gid)
-{
-  return 0;
-}
-
-int
-alarm (int seconds)
-{
-  return 0;
+  return _putenv (str);
 }
 
 #define REG_ROOT "SOFTWARE\\GNU\\Emacs"
@@ -1677,7 +1666,7 @@ init_environment (char ** argv)
 	 see if it succeeds.  But I think that's too much to ask.  */
 
       /* MSVCRT's _access crashes with D_OK.  */
-      if (tmp && sys_access (tmp, D_OK) == 0)
+      if (tmp && faccessat (AT_FDCWD, tmp, D_OK, AT_EACCESS) == 0)
 	{
 	  char * var = alloca (strlen (tmp) + 8);
 	  sprintf (var, "TMPDIR=%s", tmp);
@@ -1699,7 +1688,6 @@ init_environment (char ** argv)
     LPBYTE lpval;
     DWORD dwType;
     char locale_name[32];
-    struct stat ignored;
     char default_home[MAX_PATH];
     int appdata = 0;
 
@@ -1740,7 +1728,7 @@ init_environment (char ** argv)
     /* For backwards compatibility, check if a .emacs file exists in C:/
        If not, then we can try to default to the appdata directory under the
        user's profile, which is more likely to be writable.   */
-    if (stat ("C:/.emacs", &ignored) < 0)
+    if (!check_existing ("C:/.emacs"))
       {
 	HRESULT profile_result;
 	/* Dynamically load ShGetFolderPath, as it won't exist on versions
@@ -1788,9 +1776,9 @@ init_environment (char ** argv)
       char modname[MAX_PATH];
 
       if (!GetModuleFileName (NULL, modname, MAX_PATH))
-	abort ();
+	emacs_abort ();
       if ((p = strrchr (modname, '\\')) == NULL)
-	abort ();
+	emacs_abort ();
       *p = 0;
 
       if ((p = strrchr (modname, '\\')) && xstrcasecmp (p, "\\bin") == 0)
@@ -1809,7 +1797,8 @@ init_environment (char ** argv)
       /* FIXME: should use substring of get_emacs_configuration ().
 	 But I don't think the Windows build supports alpha, mips etc
          anymore, so have taken the easy option for now.  */
-      else if (p && xstrcasecmp (p, "\\i386") == 0)
+      else if (p && (xstrcasecmp (p, "\\i386") == 0
+                     || xstrcasecmp (p, "\\AMD64") == 0))
 	{
 	  *p = 0;
 	  p = strrchr (modname, '\\');
@@ -1898,17 +1887,17 @@ init_environment (char ** argv)
 	memcpy (*envp, "COMSPEC=", 8);
   }
 
-  /* Remember the initial working directory for getwd.  */
+  /* Remember the initial working directory for getcwd.  */
   /* FIXME: Do we need to resolve possible symlinks in startup_dir?
      Does it matter anywhere in Emacs?  */
   if (!GetCurrentDirectory (MAXPATHLEN, startup_dir))
-    abort ();
+    emacs_abort ();
 
   {
     static char modname[MAX_PATH];
 
     if (!GetModuleFileName (NULL, modname, MAX_PATH))
-      abort ();
+      emacs_abort ();
     argv[0] = modname;
   }
 
@@ -1930,7 +1919,7 @@ emacs_root_dir (void)
 
   p = getenv ("emacs_dir");
   if (p == NULL)
-    abort ();
+    emacs_abort ();
   strcpy (root_dir, p);
   root_dir[parse_root (root_dir, NULL)] = '\0';
   dostounix_filename (root_dir);
@@ -1957,7 +1946,16 @@ get_emacs_configuration (void)
     case PROCESSOR_INTEL_386:
     case PROCESSOR_INTEL_486:
     case PROCESSOR_INTEL_PENTIUM:
+#ifdef _WIN64
+      arch = "amd64";
+#else
       arch = "i386";
+#endif
+      break;
+#endif
+#ifdef PROCESSOR_AMD_X8664
+    case PROCESSOR_AMD_X8664:
+      arch = "amd64";
       break;
 #endif
 
@@ -2502,7 +2500,7 @@ is_exec (const char * name)
    and readdir.  We can't use the procedures supplied in sysdep.c,
    so we provide them here.  */
 
-struct direct dir_static;       /* simulated directory contents */
+struct dirent dir_static;       /* simulated directory contents */
 static HANDLE dir_find_handle = INVALID_HANDLE_VALUE;
 static int    dir_is_fat;
 static char   dir_pathname[MAXPATHLEN+1];
@@ -2572,7 +2570,7 @@ closedir (DIR *dirp)
   xfree ((char *) dirp);
 }
 
-struct direct *
+struct dirent *
 readdir (DIR *dirp)
 {
   int downcase = !NILP (Vw32_downcase_file_names);
@@ -2626,7 +2624,7 @@ readdir (DIR *dirp)
       downcase = 1;	/* 8+3 aliases are returned in all caps */
     }
   dir_static.d_namlen = strlen (dir_static.d_name);
-  dir_static.d_reclen = sizeof (struct direct) - MAXNAMLEN + 3 +
+  dir_static.d_reclen = sizeof (struct dirent) - MAXNAMLEN + 3 +
     dir_static.d_namlen - dir_static.d_namlen % 4;
 
   /* If the file name in cFileName[] includes `?' characters, it means
@@ -2779,15 +2777,19 @@ logon_network_drive (const char *path)
   WNetAddConnection2 (&resource, NULL, NULL, CONNECT_INTERACTIVE);
 }
 
-/* Shadow some MSVC runtime functions to map requests for long filenames
-   to reasonable short names if necessary.  This was originally added to
-   permit running Emacs on NT 3.1 on a FAT partition, which doesn't support
-   long file names.  */
-
+/* Emulate faccessat(2).  */
 int
-sys_access (const char * path, int mode)
+faccessat (int dirfd, const char * path, int mode, int flags)
 {
   DWORD attributes;
+
+  if (dirfd != AT_FDCWD
+      && !(IS_DIRECTORY_SEP (path[0])
+	   || IS_DEVICE_SEP (path[1])))
+    {
+      errno = EBADF;
+      return -1;
+    }
 
   /* MSVCRT implementation of 'access' doesn't recognize D_OK, and its
      newer versions blow up when passed D_OK.  */
@@ -2796,7 +2798,8 @@ sys_access (const char * path, int mode)
      to get the attributes of its target file.  Note: any symlinks in
      PATH elements other than the last one are transparently resolved
      by GetFileAttributes below.  */
-  if ((volume_info.flags & FILE_SUPPORTS_REPARSE_POINTS) != 0)
+  if ((volume_info.flags & FILE_SUPPORTS_REPARSE_POINTS) != 0
+      && (flags & AT_SYMLINK_NOFOLLOW) == 0)
     path = chase_symlinks (path);
 
   if ((attributes = GetFileAttributes (path)) == -1)
@@ -2828,7 +2831,8 @@ sys_access (const char * path, int mode)
 	}
       return -1;
     }
-  if ((mode & X_OK) != 0 && !is_exec (path))
+  if ((mode & X_OK) != 0
+      && !(is_exec (path) || (attributes & FILE_ATTRIBUTE_DIRECTORY) != 0))
     {
       errno = EACCES;
       return -1;
@@ -2845,6 +2849,11 @@ sys_access (const char * path, int mode)
     }
   return 0;
 }
+
+/* Shadow some MSVC runtime functions to map requests for long filenames
+   to reasonable short names if necessary.  This was originally added to
+   permit running Emacs on NT 3.1 on a FAT partition, which doesn't support
+   long file names.  */
 
 int
 sys_chdir (const char * path)
@@ -3031,7 +3040,7 @@ sys_mktemp (char * template)
 	{
 	  int save_errno = errno;
 	  p[0] = first_char[i];
-	  if (sys_access (template, 0) < 0)
+	  if (faccessat (AT_FDCWD, template, F_OK, AT_EACCESS) < 0)
 	    {
 	      errno = save_errno;
 	      return template;
@@ -3287,7 +3296,7 @@ generate_inode_val (const char * name)
      doesn't resolve aliasing due to subst commands, or recognize hard
      links.  */
   if (!w32_get_long_filename ((char *)name, fullname, MAX_PATH))
-    abort ();
+    emacs_abort ();
 
   parse_root (fullname, &p);
   /* Normal W32 filesystems are still case insensitive. */
@@ -3528,6 +3537,10 @@ is_slow_fs (const char *name)
   return !(devtype == DRIVE_FIXED || devtype == DRIVE_RAMDISK);
 }
 
+/* If this is non-zero, the caller wants accurate information about
+   file's owner and group, which could be expensive to get.  */
+int w32_stat_get_owner_group;
+
 /* MSVC stat function can't cope with UNC names and has other bugs, so
    replace it with our own.  This also allows us to calculate consistent
    inode values and owner/group without hacks in the main Emacs code. */
@@ -3699,6 +3712,7 @@ stat_worker (const char * path, struct stat * buf, int follow_symlinks)
       /* We produce the fallback owner and group data, based on the
 	 current user that runs Emacs, in the following cases:
 
+	  . caller didn't request owner and group info
 	  . this is Windows 9X
 	  . getting security by handle failed, and we need to produce
 	    information for the target of a symlink (this is better
@@ -3707,23 +3721,25 @@ stat_worker (const char * path, struct stat * buf, int follow_symlinks)
 
 	 If getting security by handle fails, and we don't need to
 	 resolve symlinks, we try getting security by name.  */
-      if (is_windows_9x () != TRUE)
-	psd = get_file_security_desc_by_handle (fh);
-      if (psd)
-	{
-	  get_file_owner_and_group (psd, name, buf);
-	  LocalFree (psd);
-	}
-      else if (is_windows_9x () == TRUE)
+      if (!w32_stat_get_owner_group || is_windows_9x () == TRUE)
 	get_file_owner_and_group (NULL, name, buf);
-      else if (!(is_a_symlink && follow_symlinks))
-	{
-	  psd = get_file_security_desc_by_name (name);
-	  get_file_owner_and_group (psd, name, buf);
-	  xfree (psd);
-	}
       else
-	get_file_owner_and_group (NULL, name, buf);
+	{
+	  psd = get_file_security_desc_by_handle (fh);
+	  if (psd)
+	    {
+	      get_file_owner_and_group (psd, name, buf);
+	      LocalFree (psd);
+	    }
+	  else if (!(is_a_symlink && follow_symlinks))
+	    {
+	      psd = get_file_security_desc_by_name (name);
+	      get_file_owner_and_group (psd, name, buf);
+	      xfree (psd);
+	    }
+	  else
+	    get_file_owner_and_group (NULL, name, buf);
+	}
       CloseHandle (fh);
     }
   else
@@ -4013,9 +4029,13 @@ utime (const char *name, struct utimbuf *times)
     }
 
   /* Need write access to set times.  */
-  fh = CreateFile (name, GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE,
-		   0, OPEN_EXISTING, 0, NULL);
-  if (fh)
+  fh = CreateFile (name, FILE_WRITE_ATTRIBUTES,
+		   /* If NAME specifies a directory, FILE_SHARE_DELETE
+		      allows other processes to delete files inside it,
+		      while we have the directory open.  */
+		   FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+		   0, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL);
+  if (fh != INVALID_HANDLE_VALUE)
     {
       convert_from_time_t (times->actime, &atime);
       convert_from_time_t (times->modtime, &mtime);
@@ -4078,7 +4098,7 @@ symlink (char const *filename, char const *linkname)
     {
       /* Non-absolute FILENAME is understood as being relative to
 	 LINKNAME's directory.  We need to prepend that directory to
-	 FILENAME to get correct results from sys_access below, since
+	 FILENAME to get correct results from faccessat below, since
 	 otherwise it will interpret FILENAME relative to the
 	 directory where the Emacs process runs.  Note that
 	 make-symbolic-link always makes sure LINKNAME is a fully
@@ -4092,10 +4112,10 @@ symlink (char const *filename, char const *linkname)
 	strncpy (tem, linkfn, p - linkfn);
       tem[p - linkfn] = '\0';
       strcat (tem, filename);
-      dir_access = sys_access (tem, D_OK);
+      dir_access = faccessat (AT_FDCWD, tem, D_OK, AT_EACCESS);
     }
   else
-    dir_access = sys_access (filename, D_OK);
+    dir_access = faccessat (AT_FDCWD, filename, D_OK, AT_EACCESS);
 
   /* Since Windows distinguishes between symlinks to directories and
      to files, we provide a kludgy feature: if FILENAME doesn't
@@ -4672,8 +4692,8 @@ get_process_memory_info (HANDLE h_proc,
 
 static BOOL WINAPI
 get_process_working_set_size (HANDLE h_proc,
-			      DWORD *minrss,
-			      DWORD *maxrss)
+			      PSIZE_T minrss,
+			      PSIZE_T maxrss)
 {
   static GetProcessWorkingSetSize_Proc
     s_pfn_Get_Process_Working_Set_Size = NULL;
@@ -4918,7 +4938,7 @@ system_process_attributes (Lisp_Object pid)
   unsigned egid;
   PROCESS_MEMORY_COUNTERS mem;
   PROCESS_MEMORY_COUNTERS_EX mem_ex;
-  DWORD minrss, maxrss;
+  SIZE_T minrss, maxrss;
   MEMORYSTATUS memst;
   MEMORY_STATUS_EX memstex;
   double totphys = 0.0;
@@ -5146,7 +5166,7 @@ system_process_attributes (Lisp_Object pid)
       && get_process_memory_info (h_proc, (PROCESS_MEMORY_COUNTERS *)&mem_ex,
 				  sizeof (mem_ex)))
     {
-      DWORD rss = mem_ex.WorkingSetSize / 1024;
+      SIZE_T rss = mem_ex.WorkingSetSize / 1024;
 
       attrs = Fcons (Fcons (Qmajflt,
 			    make_fixnum_or_float (mem_ex.PageFaultCount)),
@@ -5161,7 +5181,7 @@ system_process_attributes (Lisp_Object pid)
   else if (h_proc
 	   && get_process_memory_info (h_proc, &mem, sizeof (mem)))
     {
-      DWORD rss = mem_ex.WorkingSetSize / 1024;
+      SIZE_T rss = mem_ex.WorkingSetSize / 1024;
 
       attrs = Fcons (Fcons (Qmajflt,
 			    make_fixnum_or_float (mem.PageFaultCount)),
@@ -5587,7 +5607,7 @@ socket_to_fd (SOCKET s)
 	  if (fd_info[ fd ].cp != NULL)
 	    {
 	      DebPrint (("sys_socket: fd_info[%d] apparently in use!\n", fd));
-	      abort ();
+	      emacs_abort ();
 	    }
 
 	  fd_info[ fd ].cp = cp;
@@ -5910,7 +5930,7 @@ fcntl (int s, int cmd, int options)
   check_errno ();
   if (fd_info[s].flags & FILE_SOCKET)
     {
-      if (cmd == F_SETFL && options == O_NDELAY)
+      if (cmd == F_SETFL && options == O_NONBLOCK)
 	{
 	  unsigned long nblock = 1;
 	  int rc = pfn_ioctlsocket (SOCK_HANDLE (s), FIONBIO, &nblock);
@@ -5966,7 +5986,7 @@ sys_close (int fd)
 	    {
 	      if (fd_info[fd].flags & FILE_SOCKET)
 		{
-		  if (winsock_lib == NULL) abort ();
+		  if (winsock_lib == NULL) emacs_abort ();
 
 		  pfn_shutdown (SOCK_HANDLE (fd), 2);
 		  rc = pfn_closesocket (SOCK_HANDLE (fd));
@@ -6065,7 +6085,8 @@ sys_pipe (int * phandles)
 }
 
 /* Function to do blocking read of one byte, needed to implement
-   select.  It is only allowed on sockets and pipes. */
+   select.  It is only allowed on communication ports, sockets, or
+   pipes. */
 int
 _sys_read_ahead (int fd)
 {
@@ -6084,7 +6105,7 @@ _sys_read_ahead (int fd)
       || (fd_info[fd].flags & FILE_READ) == 0)
     {
       DebPrint (("_sys_read_ahead: internal error: fd %d is not a pipe, serial port, or socket!\n", fd));
-      abort ();
+      emacs_abort ();
     }
 
   cp->status = STATUS_READ_IN_PROGRESS;
@@ -6220,7 +6241,7 @@ sys_read (int fd, char * buffer, unsigned int count)
       /* re-read CR carried over from last read */
       if (fd_info[fd].flags & FILE_LAST_CR)
 	{
-	  if (fd_info[fd].flags & FILE_BINARY) abort ();
+	  if (fd_info[fd].flags & FILE_BINARY) emacs_abort ();
 	  *buffer++ = 0x0d;
 	  count--;
 	  nchars++;
@@ -6323,7 +6344,7 @@ sys_read (int fd, char * buffer, unsigned int count)
 	    }
 	  else /* FILE_SOCKET */
 	    {
-	      if (winsock_lib == NULL) abort ();
+	      if (winsock_lib == NULL) emacs_abort ();
 
 	      /* do the equivalent of a non-blocking read */
 	      pfn_ioctlsocket (SOCK_HANDLE (fd), FIONREAD, &waiting);
@@ -6474,7 +6495,7 @@ sys_write (int fd, const void * buffer, unsigned int count)
   else if (fd < MAXDESC && fd_info[fd].flags & FILE_SOCKET)
     {
       unsigned long nblock = 0;
-      if (winsock_lib == NULL) abort ();
+      if (winsock_lib == NULL) emacs_abort ();
 
       /* TODO: implement select() properly so non-blocking I/O works. */
       /* For now, make sure the write blocks.  */
@@ -6546,33 +6567,27 @@ sys_localtime (const time_t *t)
 
 
 
-/* Delayed loading of libraries.  */
+/* Try loading LIBRARY_ID from the file(s) specified in
+   Vdynamic_library_alist.  If the library is loaded successfully,
+   return the handle of the DLL, and record the filename in the
+   property :loaded-from of LIBRARY_ID.  If the library could not be
+   found, or when it was already loaded (because the handle is not
+   recorded anywhere, and so is lost after use), return NULL.
 
-Lisp_Object Vlibrary_cache;
-
-/* The argument LIBRARIES is an alist that associates a symbol
-   LIBRARY_ID, identifying an external DLL library known to Emacs, to
-   a list of filenames under which the library is usually found.  In
-   most cases, the argument passed as LIBRARIES is the variable
-   `dynamic-library-alist', which is initialized to a list of common
-   library names.  If the function loads the library successfully, it
-   returns the handle of the DLL, and records the filename in the
-   property :loaded-from of LIBRARY_ID; it returns NULL if the library
-   could not be found, or when it was already loaded (because the
-   handle is not recorded anywhere, and so is lost after use).  It
-   would be trivial to save the handle too in :loaded-from, but
-   currently there's no use case for it.  */
+   We could also save the handle in :loaded-from, but currently
+   there's no use case for it.  */
 HMODULE
-w32_delayed_load (Lisp_Object libraries, Lisp_Object library_id)
+w32_delayed_load (Lisp_Object library_id)
 {
   HMODULE library_dll = NULL;
 
   CHECK_SYMBOL (library_id);
 
-  if (CONSP (libraries) && NILP (Fassq (library_id, Vlibrary_cache)))
+  if (CONSP (Vdynamic_library_alist)
+      && NILP (Fassq (library_id, Vlibrary_cache)))
     {
       Lisp_Object found = Qnil;
-      Lisp_Object dlls = Fassq (library_id, libraries);
+      Lisp_Object dlls = Fassq (library_id, Vdynamic_library_alist);
 
       if (CONSP (dlls))
         for (dlls = XCDR (dlls); CONSP (dlls); dlls = XCDR (dlls))
@@ -6640,8 +6655,7 @@ check_windows_init_file (void)
 		      buffer,
 		      "Emacs Abort Dialog",
 		      MB_OK | MB_ICONEXCLAMATION | MB_TASKMODAL);
-      /* Use the low-level Emacs abort. */
-#undef abort
+	  /* Use the low-level system abort. */
 	  abort ();
 	}
       else
@@ -6652,8 +6666,12 @@ check_windows_init_file (void)
 }
 
 void
-term_ntproc (void)
+term_ntproc (int ignored)
 {
+  (void)ignored;
+
+  term_timers ();
+
   /* shutdown the socket interface if necessary */
   term_winsock ();
 
@@ -6661,8 +6679,10 @@ term_ntproc (void)
 }
 
 void
-init_ntproc (void)
+init_ntproc (int dumping)
 {
+  sigset_t initial_mask = 0;
+
   /* Initialize the socket interface now if available and requested by
      the user by defining PRELOAD_WINSOCK; otherwise loading will be
      delayed until open-network-stream is called (w32-has-winsock can
@@ -6718,19 +6738,19 @@ init_ntproc (void)
     fclose (stderr);
 
     if (stdin_save != INVALID_HANDLE_VALUE)
-      _open_osfhandle ((long) stdin_save, O_TEXT);
+      _open_osfhandle ((intptr_t) stdin_save, O_TEXT);
     else
       _open ("nul", O_TEXT | O_NOINHERIT | O_RDONLY);
     _fdopen (0, "r");
 
     if (stdout_save != INVALID_HANDLE_VALUE)
-      _open_osfhandle ((long) stdout_save, O_TEXT);
+      _open_osfhandle ((intptr_t) stdout_save, O_TEXT);
     else
       _open ("nul", O_TEXT | O_NOINHERIT | O_WRONLY);
     _fdopen (1, "w");
 
     if (stderr_save != INVALID_HANDLE_VALUE)
-      _open_osfhandle ((long) stderr_save, O_TEXT);
+      _open_osfhandle ((intptr_t) stderr_save, O_TEXT);
     else
       _open ("nul", O_TEXT | O_NOINHERIT | O_WRONLY);
     _fdopen (2, "w");
@@ -6738,7 +6758,13 @@ init_ntproc (void)
 
   /* unfortunately, atexit depends on implementation of malloc */
   /* atexit (term_ntproc); */
-  signal (SIGABRT, term_ntproc);
+  if (!dumping)
+    {
+      /* Make sure we start with all signals unblocked.  */
+      sigprocmask (SIG_SETMASK, &initial_mask, NULL);
+      signal (SIGABRT, term_ntproc);
+    }
+  init_timers ();
 
   /* determine which drives are fixed, for GetCachedVolumeInformation */
   {
@@ -6795,9 +6821,6 @@ globals_of_w32 (void)
 
   DEFSYM (QCloaded_from, ":loaded-from");
 
-  Vlibrary_cache = Qnil;
-  staticpro (&Vlibrary_cache);
-
   g_b_init_is_windows_9x = 0;
   g_b_init_open_process_token = 0;
   g_b_init_get_token_information = 0;
@@ -6834,6 +6857,9 @@ globals_of_w32 (void)
 
   /* "None" is the default group name on standalone workstations.  */
   strcpy (dflt_group_name, "None");
+
+  /* Reset, in case it has some value inherited from dump time.  */
+  w32_stat_get_owner_group = 0;
 }
 
 /* For make-serial-process  */
@@ -6848,7 +6874,7 @@ serial_open (char *port)
 		    OPEN_EXISTING, FILE_FLAG_OVERLAPPED, 0);
   if (hnd == INVALID_HANDLE_VALUE)
     error ("Could not open %s", port);
-  fd = (int) _open_osfhandle ((int) hnd, 0);
+  fd = (int) _open_osfhandle ((intptr_t) hnd, 0);
   if (fd == -1)
     error ("Could not open %s", port);
 
@@ -7033,7 +7059,7 @@ emacs_gnutls_pull (gnutls_transport_ptr_t p, void* buf, size_t sz)
 {
   int n, sc, err;
   SELECT_TYPE fdset;
-  struct timeval timeout;
+  EMACS_TIME timeout;
   struct Lisp_Process *process = (struct Lisp_Process *)p;
   int fd = process->infd;
 
@@ -7049,8 +7075,7 @@ emacs_gnutls_pull (gnutls_transport_ptr_t p, void* buf, size_t sz)
       if (err == EWOULDBLOCK)
         {
           /* Set a small timeout.  */
-	  timeout.tv_sec = 1;
-	  timeout.tv_usec = 0;
+	  timeout = make_emacs_time (1, 0);
           FD_ZERO (&fdset);
           FD_SET ((int)fd, &fdset);
 

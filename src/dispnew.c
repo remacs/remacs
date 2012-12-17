@@ -21,14 +21,11 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #define DISPEXTERN_INLINE EXTERN_INLINE
 
-#include <signal.h>
 #include <stdio.h>
-#include <setjmp.h>
 #include <unistd.h>
 
 #include "lisp.h"
 #include "termchar.h"
-#include "termopts.h"
 /* cm.h must come after dispextern.h on Windows.  */
 #include "dispextern.h"
 #include "cm.h"
@@ -56,12 +53,14 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "systime.h"
 #include <errno.h>
 
-#ifdef DISPNEW_NEEDS_STDIO_EXT
-#include <stdio_ext.h>
-#endif
+#include <fpending.h>
 
 #if defined (HAVE_TERM_H) && defined (GNU_LINUX)
 #include <term.h>		/* for tgetent */
+#endif
+
+#ifdef WINDOWSNT
+#include "w32.h"
 #endif
 
 /* Structure to pass dimensions around.  Used for character bounding
@@ -141,10 +140,6 @@ struct frame *last_nonminibuf_frame;
 /* True means SIGWINCH happened when not safe.  */
 
 static bool delayed_size_change;
-
-/* 1 means glyph initialization has been completed at startup.  */
-
-static bool glyphs_initialized_initially_p;
 
 /* Updated window if != 0.  Set by update_window.  */
 
@@ -297,7 +292,7 @@ DEFUN ("dump-redisplay-history", Fdump_redisplay_history,
 void
 __executable_start (void)
 {
-  abort ();
+  emacs_abort ();
 }
 #endif
 
@@ -347,7 +342,7 @@ free_glyph_matrix (struct glyph_matrix *matrix)
       /* Detect the case that more matrices are freed than were
 	 allocated.  */
       if (--glyph_matrix_count < 0)
-	abort ();
+	emacs_abort ();
 
       /* Free glyph memory if MATRIX owns it.  */
       if (matrix->pool == NULL)
@@ -1030,7 +1025,7 @@ swap_glyphs_in_rows (struct glyph_row *a, struct glyph_row *b)
    these should all go together for the row's hash value to be
    correct.  */
 
-static inline void
+static void
 swap_glyph_pointers (struct glyph_row *a, struct glyph_row *b)
 {
   int i;
@@ -1059,7 +1054,7 @@ swap_glyph_pointers (struct glyph_row *a, struct glyph_row *b)
    that glyph pointers, the `used' counts, and the hash values in the
    structures are left unchanged.  */
 
-static inline void
+static void
 copy_row_except_pointers (struct glyph_row *to, struct glyph_row *from)
 {
   struct glyph *pointers[1 + LAST_AREA];
@@ -1086,7 +1081,7 @@ copy_row_except_pointers (struct glyph_row *to, struct glyph_row *from)
    exchanged between TO and FROM.  Pointers must be exchanged to avoid
    a memory leak.  */
 
-static inline void
+static void
 assign_row (struct glyph_row *to, struct glyph_row *from)
 {
   swap_glyph_pointers (to, from);
@@ -1251,7 +1246,7 @@ line_draw_cost (struct glyph_matrix *matrix, int vpos)
 /* Return true if the glyph rows A and B have equal contents.
    MOUSE_FACE_P means compare the mouse_face_p flags of A and B, too.  */
 
-static inline bool
+static bool
 row_equal_p (struct glyph_row *a, struct glyph_row *b, bool mouse_face_p)
 {
   eassert (verify_row_hash (a));
@@ -1836,7 +1831,7 @@ adjust_glyphs (struct frame *f)
 {
   /* Block input so that expose events and other events that access
      glyph matrices are not processed while we are changing them.  */
-  BLOCK_INPUT;
+  block_input ();
 
   if (f)
     adjust_frame_glyphs (f);
@@ -1848,45 +1843,8 @@ adjust_glyphs (struct frame *f)
 	adjust_frame_glyphs (XFRAME (lisp_frame));
     }
 
-  UNBLOCK_INPUT;
+  unblock_input ();
 }
-
-
-/* Adjust frame glyphs when Emacs is initialized.
-
-   To be called from init_display.
-
-   We need a glyph matrix because redraw will happen soon.
-   Unfortunately, window sizes on selected_frame are not yet set to
-   meaningful values.  I believe we can assume that there are only two
-   windows on the frame---the mini-buffer and the root window.  Frame
-   height and width seem to be correct so far.  So, set the sizes of
-   windows to estimated values.  */
-
-static void
-adjust_frame_glyphs_initially (void)
-{
-  struct frame *sf = SELECTED_FRAME ();
-  struct window *root = XWINDOW (sf->root_window);
-  struct window *mini = XWINDOW (root->next);
-  int frame_lines = FRAME_LINES (sf);
-  int frame_cols = FRAME_COLS (sf);
-  int top_margin = FRAME_TOP_MARGIN (sf);
-
-  /* Do it for the root window.  */
-  wset_top_line (root, make_number (top_margin));
-  wset_total_lines (root, make_number (frame_lines - 1 - top_margin));
-  wset_total_cols (root, make_number (frame_cols));
-
-  /* Do it for the mini-buffer window.  */
-  wset_top_line (mini, make_number (frame_lines - 1));
-  wset_total_lines (mini, make_number (1));
-  wset_total_cols (mini, make_number (frame_cols));
-
-  adjust_frame_glyphs (sf);
-  glyphs_initialized_initially_p = 1;
-}
-
 
 /* Allocate/reallocate glyph matrices of a single frame F.  */
 
@@ -2244,7 +2202,7 @@ free_glyphs (struct frame *f)
     {
       /* Block interrupt input so that we don't get surprised by an X
          event while we're in an inconsistent state.  */
-      BLOCK_INPUT;
+      block_input ();
       f->glyphs_initialized_p = 0;
 
       /* Release window sub-matrices.  */
@@ -2289,7 +2247,7 @@ free_glyphs (struct frame *f)
 	  f->desired_pool = f->current_pool = NULL;
 	}
 
-      UNBLOCK_INPUT;
+      unblock_input ();
     }
 }
 
@@ -2339,9 +2297,9 @@ check_glyph_memory (void)
 
   /* Check that nothing is left allocated.  */
   if (glyph_matrix_count)
-    abort ();
+    emacs_abort ();
   if (glyph_pool_count)
-    abort ();
+    emacs_abort ();
 }
 
 
@@ -2659,7 +2617,7 @@ fill_up_frame_row_with_spaces (struct glyph_row *row, int upto)
    function must be called before updates to make explicit that we are
    working on frame matrices or not.  */
 
-static inline void
+static void
 set_frame_matrix_frame (struct frame *f)
 {
   frame_matrix_frame = f;
@@ -2674,7 +2632,7 @@ set_frame_matrix_frame (struct frame *f)
    done in frame matrices, and that we have to perform analogous
    operations in window matrices of frame_matrix_frame.  */
 
-static inline void
+static void
 make_current (struct glyph_matrix *desired_matrix, struct glyph_matrix *current_matrix, int row)
 {
   struct glyph_row *current_row = MATRIX_ROW (current_matrix, row);
@@ -3024,7 +2982,7 @@ check_matrix_pointers (struct glyph_matrix *window_matrix,
     {
       if (!glyph_row_slice_p (window_matrix->rows + i,
 			      frame_matrix->rows + j))
-        abort ();
+        emacs_abort ();
       ++i, ++j;
     }
 }
@@ -3072,21 +3030,13 @@ window_to_frame_hpos (struct window *w, int hpos)
 			    Redrawing Frames
  **********************************************************************/
 
-DEFUN ("redraw-frame", Fredraw_frame, Sredraw_frame, 1, 1, 0,
-       doc: /* Clear frame FRAME and output again what is supposed to appear on it.  */)
-  (Lisp_Object frame)
+/* Redraw frame F.  */
+
+void
+redraw_frame (struct frame *f)
 {
-  struct frame *f;
-
-  CHECK_LIVE_FRAME (frame);
-  f = XFRAME (frame);
-
-  /* Ignore redraw requests, if frame has no glyphs yet.
-     (Implementation note: It still has to be checked why we are
-     called so early here).  */
-  if (!glyphs_initialized_initially_p)
-    return Qnil;
-
+  /* Error if F has no glyphs.  */
+  eassert (f->glyphs_initialized_p);
   update_begin (f);
 #ifdef MSDOS
   if (FRAME_MSDOS_P (f))
@@ -3103,21 +3053,16 @@ DEFUN ("redraw-frame", Fredraw_frame, Sredraw_frame, 1, 1, 0,
   mark_window_display_accurate (FRAME_ROOT_WINDOW (f), 0);
   set_window_update_flags (XWINDOW (FRAME_ROOT_WINDOW (f)), 1);
   f->garbaged = 0;
+}
+
+DEFUN ("redraw-frame", Fredraw_frame, Sredraw_frame, 0, 1, 0,
+       doc: /* Clear frame FRAME and output again what is supposed to appear on it.
+If FRAME is omitted or nil, the selected frame is used.  */)
+  (Lisp_Object frame)
+{
+  redraw_frame (decode_live_frame (frame));
   return Qnil;
 }
-
-
-/* Redraw frame F.  This is nothing more than a call to the Lisp
-   function redraw-frame.  */
-
-void
-redraw_frame (struct frame *f)
-{
-  Lisp_Object frame;
-  XSETFRAME (frame, f);
-  Fredraw_frame (frame);
-}
-
 
 DEFUN ("redraw-display", Fredraw_display, Sredraw_display, 0, 0, "",
        doc: /* Clear and redisplay all visible frames.  */)
@@ -3127,7 +3072,7 @@ DEFUN ("redraw-display", Fredraw_display, Sredraw_display, 0, 0, "",
 
   FOR_EACH_FRAME (tail, frame)
     if (FRAME_VISIBLE_P (XFRAME (frame)))
-      Fredraw_frame (frame);
+      redraw_frame (XFRAME (frame));
 
   return Qnil;
 }
@@ -3453,7 +3398,7 @@ check_current_matrix_flags (struct window *w)
       if (!last_seen_p && MATRIX_ROW_BOTTOM_Y (row) >= yb)
 	last_seen_p = 1;
       else if (last_seen_p && row->enabled_p)
-	abort ();
+	emacs_abort ();
     }
 }
 
@@ -3952,6 +3897,11 @@ update_window_line (struct window *w, int vpos, bool *mouse_face_overwritten_p)
 	{
 	  changed_p = 1;
 	  update_marginal_area (w, LEFT_MARGIN_AREA, vpos);
+	  /* Setting this flag will ensure the vertical border, if
+	     any, between this window and the one on its left will be
+	     redrawn.  This is necessary because updating the left
+	     margin area can potentially draw over the border.  */
+	  current_row->redraw_fringe_bitmaps_p = 1;
 	}
 
       /* Update the display of the text area.  */
@@ -4066,11 +4016,10 @@ set_window_cursor_after_update (struct window *w)
       vpos = w->cursor.vpos;
     }
 
-  /* Window cursor can be out of sync for horizontally split windows.  */
-  hpos = max (-1, hpos); /* -1 is for when cursor is on the left fringe */
-  hpos = min (w->current_matrix->matrix_w - 1, hpos);
-  vpos = max (0, vpos);
-  vpos = min (w->current_matrix->nrows - 1, vpos);
+  /* Window cursor can be out of sync for horizontally split windows.
+     Horizontal position is -1 when cursor is on the left fringe.   */
+  hpos = clip_to_bounds (-1, hpos, w->current_matrix->matrix_w - 1);
+  vpos = clip_to_bounds (0, vpos, w->current_matrix->nrows - 1);
   rif->cursor_to (vpos, hpos, cy, cx);
 }
 
@@ -4155,7 +4104,7 @@ static struct run **runs;
 
 /* Add glyph row ROW to the scrolling hash table.  */
 
-static inline struct row_entry *
+static struct row_entry *
 add_row_entry (struct glyph_row *row)
 {
   struct row_entry *entry;
@@ -4641,24 +4590,10 @@ update_frame_1 (struct frame *f, bool force_p, bool inhibit_id_p)
 	      FILE *display_output = FRAME_TTY (f)->output;
 	      if (display_output)
 		{
-		  int outq = PENDING_OUTPUT_COUNT (display_output);
+		  ptrdiff_t outq = __fpending (display_output);
 		  if (outq > 900
 		      || (outq > 20 && ((i - 1) % preempt_count == 0)))
-		    {
-		      fflush (display_output);
-		      if (preempt_count == 1)
-			{
-#ifdef EMACS_OUTQSIZE
-			  if (EMACS_OUTQSIZE (0, &outq) < 0)
-			    /* Probably not a tty.  Ignore the error and reset
-			       the outq count.  */
-			    outq = PENDING_OUTPUT_COUNT (FRAME_TTY (f->output));
-#endif
-			  outq *= 10;
-			  if (baud_rate <= outq && baud_rate > 0)
-			    sleep (outq / baud_rate);
-			}
-		    }
+		    fflush (display_output);
 		}
 	    }
 
@@ -4809,7 +4744,7 @@ scrolling (struct frame *frame)
   struct glyph_matrix *desired_matrix = frame->desired_matrix;
 
   if (!current_matrix)
-    abort ();
+    emacs_abort ();
 
   /* Compute hash codes of all the lines.  Also calculate number of
      changed lines, number of unchanged lines at the beginning, and
@@ -5477,7 +5412,7 @@ marginal_area_string (struct window *w, enum window_part part,
   else if (part == ON_RIGHT_MARGIN)
     area = RIGHT_MARGIN_AREA;
   else
-    abort ();
+    emacs_abort ();
 
   for (i = 0; row->enabled_p && i < w->current_matrix->nrows; ++i, ++row)
     if (wy >= row->y && wy < MATRIX_ROW_BOTTOM_Y (row))
@@ -5552,17 +5487,13 @@ marginal_area_string (struct window *w, enum window_part part,
 
 #ifdef SIGWINCH
 
+static void deliver_window_change_signal (int);
+
 static void
-window_change_signal (int signalnum) /* If we don't have an argument, */
-                   		/* some compilers complain in signal calls.  */
+handle_window_change_signal (int sig)
 {
   int width, height;
-  int old_errno = errno;
-
   struct tty_display_info *tty;
-
-  signal (SIGWINCH, window_change_signal);
-  SIGNAL_THREAD_CHECK (signalnum);
 
   /* The frame size change obviously applies to a single
      termcap-controlled terminal, but we can't decide which.
@@ -5591,8 +5522,12 @@ window_change_signal (int signalnum) /* If we don't have an argument, */
           change_frame_size (XFRAME (frame), height, width, 0, 1, 0);
     }
   }
+}
 
-  errno = old_errno;
+static void
+deliver_window_change_signal (int sig)
+{
+  deliver_process_signal (sig, handle_window_change_signal);
 }
 #endif /* SIGWINCH */
 
@@ -5604,7 +5539,7 @@ window_change_signal (int signalnum) /* If we don't have an argument, */
 void
 do_pending_window_change (bool safe)
 {
-  /* If window_change_signal should have run before, run it now.  */
+  /* If window change signal handler should have run before, run it now.  */
   if (redisplaying_p && !safe)
     return;
 
@@ -5701,7 +5636,7 @@ change_frame_size_1 (struct frame *f, int newheight, int newwidth,
       && new_frame_total_cols == FRAME_TOTAL_COLS (f))
     return;
 
-  BLOCK_INPUT;
+  block_input ();
 
 #ifdef MSDOS
   /* We only can set screen dimensions to certain values supported
@@ -5753,7 +5688,7 @@ change_frame_size_1 (struct frame *f, int newheight, int newwidth,
   SET_FRAME_GARBAGED (f);
   f->resized_p = 1;
 
-  UNBLOCK_INPUT;
+  unblock_input ();
 
   record_unwind_current_buffer ();
 
@@ -5784,9 +5719,9 @@ FILE = nil means just close any termscript file currently open.  */)
 
   if (tty->termscript != 0)
   {
-    BLOCK_INPUT;
+    block_input ();
     fclose (tty->termscript);
-    UNBLOCK_INPUT;
+    unblock_input ();
   }
   tty->termscript = 0;
 
@@ -5817,7 +5752,7 @@ when TERMINAL is nil.  */)
 
   /* ??? Perhaps we should do something special for multibyte strings here.  */
   CHECK_STRING (string);
-  BLOCK_INPUT;
+  block_input ();
 
   if (!t)
     error ("Unknown terminal device");
@@ -5842,7 +5777,7 @@ when TERMINAL is nil.  */)
     }
   fwrite (SDATA (string), 1, SBYTES (string), out);
   fflush (out);
-  UNBLOCK_INPUT;
+  unblock_input ();
   return Qnil;
 }
 
@@ -5916,15 +5851,16 @@ additional wait period, in milliseconds; this is for backwards compatibility.
    TIMEOUT is number of seconds to wait (float or integer),
    or t to wait forever.
    READING is true if reading input.
-   If DO_DISPLAY is >0 display process output while waiting.
-   If DO_DISPLAY is >1 perform an initial redisplay before waiting.
+   If DISPLAY_OPTION is >0 display process output while waiting.
+   If DISPLAY_OPTION is >1 perform an initial redisplay before waiting.
 */
 
 Lisp_Object
-sit_for (Lisp_Object timeout, bool reading, int do_display)
+sit_for (Lisp_Object timeout, bool reading, int display_option)
 {
   intmax_t sec;
   int nsec;
+  bool do_display = display_option > 0;
 
   swallow_events (do_display);
 
@@ -5932,7 +5868,7 @@ sit_for (Lisp_Object timeout, bool reading, int do_display)
       || !NILP (Vexecuting_kbd_macro))
     return Qnil;
 
-  if (do_display >= 2)
+  if (display_option > 1)
     redisplay_preserve_echo_area (2);
 
   if (INTEGERP (timeout))
@@ -5963,8 +5899,8 @@ sit_for (Lisp_Object timeout, bool reading, int do_display)
     wrong_type_argument (Qnumberp, timeout);
 
 
-#ifdef SIGIO
-  gobble_input (0);
+#ifdef USABLE_SIGIO
+  gobble_input ();
 #endif
 
   wait_reading_process_output (sec, nsec, reading ? -1 : 1, do_display,
@@ -6173,7 +6109,11 @@ init_display (void)
 #ifndef CANNOT_DUMP
   if (initialized)
 #endif /* CANNOT_DUMP */
-    signal (SIGWINCH, window_change_signal);
+    {
+      struct sigaction action;
+      emacs_sigaction_init (&action, deliver_window_change_signal);
+      sigaction (SIGWINCH, &action, 0);
+    }
 #endif /* SIGWINCH */
 
   /* If running as a daemon, no need to initialize any frames/terminal. */
@@ -6215,7 +6155,6 @@ init_display (void)
 	 So call tgetent.  */
       { char b[2044]; tgetent (b, "xterm");}
 #endif
-      adjust_frame_glyphs_initially ();
       return;
     }
 #endif /* HAVE_X_WINDOWS */
@@ -6225,7 +6164,6 @@ init_display (void)
     {
       Vinitial_window_system = Qw32;
       Vwindow_system_version = make_number (1);
-      adjust_frame_glyphs_initially ();
       return;
     }
 #endif /* HAVE_NTGUI */
@@ -6239,7 +6177,6 @@ init_display (void)
     {
       Vinitial_window_system = Qns;
       Vwindow_system_version = make_number (10);
-      adjust_frame_glyphs_initially ();
       return;
     }
 #endif
@@ -6272,12 +6209,14 @@ init_display (void)
     struct terminal *t;
     struct frame *f = XFRAME (selected_frame);
 
+    init_foreground_group ();
+
     /* Open a display on the controlling tty. */
     t = init_tty (0, terminal_type, 1); /* Errors are fatal. */
 
     /* Convert the initial frame to use the new display. */
     if (f->output_method != output_initial)
-      abort ();
+      emacs_abort ();
     f->output_method = t->type;
     f->terminal = t;
 
@@ -6327,7 +6266,6 @@ init_display (void)
       fatal ("screen size %dx%d too big", width, height);
   }
 
-  adjust_frame_glyphs_initially ();
   calculate_costs (XFRAME (selected_frame));
 
   /* Set up faces of the initial terminal frame of a dumped Emacs.  */
@@ -6362,15 +6300,7 @@ don't show a cursor.  */)
   /* Don't change cursor state while redisplaying.  This could confuse
      output routines.  */
   if (!redisplaying_p)
-    {
-      if (NILP (window))
-	window = selected_window;
-      else
-	CHECK_WINDOW (window);
-
-      XWINDOW (window)->cursor_off_p = NILP (show);
-    }
-
+    decode_any_window (window)->cursor_off_p = NILP (show);
   return Qnil;
 }
 
@@ -6381,15 +6311,7 @@ DEFUN ("internal-show-cursor-p", Finternal_show_cursor_p,
 WINDOW nil or omitted means report on the selected window.  */)
   (Lisp_Object window)
 {
-  struct window *w;
-
-  if (NILP (window))
-    window = selected_window;
-  else
-    CHECK_WINDOW (window);
-
-  w = XWINDOW (window);
-  return w->cursor_off_p ? Qnil : Qt;
+  return decode_any_window (window)->cursor_off_p ? Qnil : Qt;
 }
 
 DEFUN ("last-nonminibuffer-frame", Flast_nonminibuf_frame,

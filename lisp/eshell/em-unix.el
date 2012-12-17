@@ -306,12 +306,13 @@ Remove (unlink) the FILE(s).")
   (eshell-eval-using-options
    "mkdir" args
    '((?h "help" nil nil "show this usage screen")
+     (?p "parents" nil em-parents "make parent directories as needed")
      :external "mkdir"
      :show-usage
      :usage "[OPTION] DIRECTORY...
 Create the DIRECTORY(ies), if they do not already exist.")
    (while args
-     (eshell-funcalln 'make-directory (car args))
+     (eshell-funcalln 'make-directory (car args) em-parents)
      (setq args (cdr args)))
    nil))
 
@@ -1111,7 +1112,7 @@ Execute a COMMAND as the superuser or another USER.")
 				  (substring prefix 0 -1) user host dir)
 			(format "/sudo:%s@%s:%s" user host dir))))
 		;; Ensure, that Tramp has connected to that construct already.
-		(file-exists-p default-directory)
+		(ignore (file-exists-p default-directory))
 		(eshell-named-command (car orig-args) (cdr orig-args))))))))
 
 (put 'eshell/sudo 'eshell-no-numeric-conversions t)

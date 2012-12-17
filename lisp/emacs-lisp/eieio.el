@@ -94,21 +94,6 @@ default setting for optimization purposes.")
 (defvar eieio-optimize-primary-methods-flag t
   "Non-nil means to optimize the method dispatch on primary methods.")
 
-;; State Variables
-;; FIXME: These two constants below should have an `eieio-' prefix added!!
-(defvar this nil
-  "Inside a method, this variable is the object in question.
-DO NOT SET THIS YOURSELF unless you are trying to simulate friendly slots.
-
-Note: Embedded methods are no longer supported.  The variable THIS is
-still set for CLOS methods for the sake of routines like
-`call-next-method'.")
-
-(defvar scoped-class nil
-  "This is set to a class when a method is running.
-This is so we know we are allowed to check private parts or how to
-execute a `call-next-method'.  DO NOT SET THIS YOURSELF!")
-
 (defvar eieio-initializing-object  nil
   "Set to non-nil while initializing an object.")
 
@@ -410,6 +395,7 @@ It creates an autoload function for CNAME's constructor."
 	(autoload cname filename doc nil nil)
 	(autoload (intern (concat (symbol-name cname) "-p")) filename "" nil nil)
 	(autoload (intern (concat (symbol-name cname) "-child-p")) filename "" nil nil)
+	(autoload (intern (concat (symbol-name cname) "-list-p")) filename "" nil nil)
 
 	))))
 
@@ -538,6 +524,23 @@ See `defclass' for more information."
 		  cname)
 	       (and (eieio-object-p obj)
 		    (object-of-class-p obj ,cname))))
+
+    ;; Create a handy list of the class test too
+    (let ((csym (intern (concat (symbol-name cname) "-list-p"))))
+      (fset csym
+	    `(lambda (obj)
+	       ,(format
+		  "Test OBJ to see if it a list of objects which are a child of type %s"
+		  cname)
+	       (when (listp obj)
+		 (let ((ans t)) ;; nil is valid
+		   ;; Loop over all the elements of the input list, test
+		   ;; each to make sure it is a child of the desired object class.
+		   (while (and obj ans)
+		     (setq ans (and (eieio-object-p (car obj))
+				    (object-of-class-p (car obj) ,cname)))
+		     (setq obj (cdr obj)))
+		   ans)))))
 
       ;; When using typep, (typep OBJ 'myclass) returns t for objects which
       ;; are subclasses of myclass.  For our predicates, however, it is
@@ -780,6 +783,16 @@ See `defclass' for more information."
     ;; Use stored value since it is calculated in a non-trivial way
     (put cname 'variable-documentation
 	 (class-option-assoc options :documentation))
+
+    ;; Save the file location where this class is defined.
+    (let ((fname (if load-in-progress
+		     load-file-name
+		   buffer-file-name))
+	  loc)
+      (when fname
+	(when (string-match "\\.elc$" fname)
+	  (setq fname (substring fname 0 (1- (length fname)))))
+	(put cname 'class-location fname)))
 
     ;; We have a list of custom groups.  Store them into the options.
     (let ((g (class-option-assoc options :custom-groups)))
@@ -1254,8 +1267,10 @@ IMPL is the symbol holding the method implementation."
 		  (eieio-generic-call-methodname ',method)
 		  (eieio-generic-call-arglst local-args)
 		  )
-	      (apply #',impl local-args)
-              ;;(,impl local-args)
+	      ,(if (< emacs-major-version 24)
+		  `(apply ,(list 'quote impl) local-args)
+		`(apply #',impl local-args))
+	      ;(,impl local-args)
 	      )))))))
 
 (defsubst eieio-defgeneric-reset-generic-form-primary-only-one (method)
@@ -1541,71 +1556,6 @@ Fills in OBJ's SLOT with its default value."
    ;; return it verbatim
    (t val)))
 
-;;; Object Set macros
-;;
-(defmacro oset (obj slot value)
-  "Set the value in OBJ for slot SLOT to VALUE.
-SLOT is the slot name as specified in `defclass' or the tag created
-with in the :initarg slot.  VALUE can be any Lisp object."
-  `(eieio-oset ,obj (quote ,slot) ,value))
-
-(defun eieio-oset (obj slot value)
-  "Do the work for the macro `oset'.
-Fills in OBJ's SLOT with VALUE."
-  (if (not (eieio-object-p obj)) (signal 'wrong-type-argument (list 'eieio-object-p obj)))
-  (if (not (symbolp slot)) (signal 'wrong-type-argument (list 'symbolp slot)))
-  (let ((c (eieio-slot-name-index (object-class-fast obj) obj slot)))
-    (if (not c)
-	;; It might be missing because it is a :class allocated slot.
-	;; Let's check that info out.
-	(if (setq c
-		  (eieio-class-slot-name-index (aref obj object-class) slot))
-	    ;; Oset that slot.
-	    (progn
-	      (eieio-validate-class-slot-value (object-class-fast obj) c value slot)
-	      (aset (aref (class-v (aref obj object-class))
-			  class-class-allocation-values)
-		    c value))
-	  ;; See oref for comment on `slot-missing'
-	  (slot-missing obj slot 'oset value)
-	  ;;(signal 'invalid-slot-name (list (object-name obj) slot))
-	  )
-      (eieio-validate-slot-value (object-class-fast obj) c value slot)
-      (aset obj c value))))
-
-(defmacro oset-default (class slot value)
-  "Set the default slot in CLASS for SLOT to VALUE.
-The default value is usually set with the :initform tag during class
-creation.  This allows users to change the default behavior of classes
-after they are created."
-  `(eieio-oset-default ,class (quote ,slot) ,value))
-
-(defun eieio-oset-default (class slot value)
-  "Do the work for the macro `oset-default'.
-Fills in the default value in CLASS' in SLOT with VALUE."
-  (if (not (class-p class)) (signal 'wrong-type-argument (list 'class-p class)))
-  (if (not (symbolp slot)) (signal 'wrong-type-argument (list 'symbolp slot)))
-  (let* ((scoped-class class)
-	 (c (eieio-slot-name-index class nil slot)))
-    (if (not c)
-	;; It might be missing because it is a :class allocated slot.
-	;; Let's check that info out.
-	(if (setq c (eieio-class-slot-name-index class slot))
-	    (progn
-	      ;; Oref that slot.
-	      (eieio-validate-class-slot-value class c value slot)
-	      (aset (aref (class-v class) class-class-allocation-values) c
-		    value))
-	  (signal 'invalid-slot-name (list (class-name class) slot)))
-      (eieio-validate-slot-value class c value slot)
-      ;; Set this into the storage for defaults.
-      (setcar (nthcdr (- c 3) (aref (class-v class) class-public-d))
-	      value)
-      ;; Take the value, and put it into our cache object.
-      (eieio-oset (aref (class-v class) class-default-object-cache)
-		  slot value)
-      )))
-
 ;;; Handy CLOS macros
 ;;
 (defmacro with-slots (spec-list object &rest body)
@@ -1856,6 +1806,71 @@ method invocation orders of the involved classes."
       (setq ia (cdr ia)))
     f))
 
+;;; Object Set macros
+;;
+(defmacro oset (obj slot value)
+  "Set the value in OBJ for slot SLOT to VALUE.
+SLOT is the slot name as specified in `defclass' or the tag created
+with in the :initarg slot.  VALUE can be any Lisp object."
+  `(eieio-oset ,obj (quote ,slot) ,value))
+
+(defun eieio-oset (obj slot value)
+  "Do the work for the macro `oset'.
+Fills in OBJ's SLOT with VALUE."
+  (if (not (eieio-object-p obj)) (signal 'wrong-type-argument (list 'eieio-object-p obj)))
+  (if (not (symbolp slot)) (signal 'wrong-type-argument (list 'symbolp slot)))
+  (let ((c (eieio-slot-name-index (object-class-fast obj) obj slot)))
+    (if (not c)
+	;; It might be missing because it is a :class allocated slot.
+	;; Let's check that info out.
+	(if (setq c
+		  (eieio-class-slot-name-index (aref obj object-class) slot))
+	    ;; Oset that slot.
+	    (progn
+	      (eieio-validate-class-slot-value (object-class-fast obj) c value slot)
+	      (aset (aref (class-v (aref obj object-class))
+			  class-class-allocation-values)
+		    c value))
+	  ;; See oref for comment on `slot-missing'
+	  (slot-missing obj slot 'oset value)
+	  ;;(signal 'invalid-slot-name (list (object-name obj) slot))
+	  )
+      (eieio-validate-slot-value (object-class-fast obj) c value slot)
+      (aset obj c value))))
+
+(defmacro oset-default (class slot value)
+  "Set the default slot in CLASS for SLOT to VALUE.
+The default value is usually set with the :initform tag during class
+creation.  This allows users to change the default behavior of classes
+after they are created."
+  `(eieio-oset-default ,class (quote ,slot) ,value))
+
+(defun eieio-oset-default (class slot value)
+  "Do the work for the macro `oset-default'.
+Fills in the default value in CLASS' in SLOT with VALUE."
+  (if (not (class-p class)) (signal 'wrong-type-argument (list 'class-p class)))
+  (if (not (symbolp slot)) (signal 'wrong-type-argument (list 'symbolp slot)))
+  (let* ((scoped-class class)
+	 (c (eieio-slot-name-index class nil slot)))
+    (if (not c)
+	;; It might be missing because it is a :class allocated slot.
+	;; Let's check that info out.
+	(if (setq c (eieio-class-slot-name-index class slot))
+	    (progn
+	      ;; Oref that slot.
+	      (eieio-validate-class-slot-value class c value slot)
+	      (aset (aref (class-v class) class-class-allocation-values) c
+		    value))
+	  (signal 'invalid-slot-name (list (class-name class) slot)))
+      (eieio-validate-slot-value class c value slot)
+      ;; Set this into the storage for defaults.
+      (setcar (nthcdr (- c 3) (aref (class-v class) class-public-d))
+	      value)
+      ;; Take the value, and put it into our cache object.
+      (eieio-oset (aref (class-v class) class-default-object-cache)
+		  slot value)
+      )))
+
 ;;; CLOS queries into classes and slots
 ;;
 (defun slot-boundp (object slot)
@@ -2008,13 +2023,13 @@ reverse-lookup that name, and recurse with the associated slot value."
 	 ((not (get fsym 'protection))
 	  (+ 3 fsi))
 	 ((and (eq (get fsym 'protection) 'protected)
-	       scoped-class
+	       (bound-and-true-p scoped-class)
 	       (or (child-of-class-p class scoped-class)
 		   (and (eieio-object-p obj)
 			(child-of-class-p class (object-class obj)))))
 	  (+ 3 fsi))
 	 ((and (eq (get fsym 'protection) 'private)
-	       (or (and scoped-class
+	       (or (and (bound-and-true-p scoped-class)
 			(eieio-slot-originating-class-p scoped-class slot))
 		   eieio-initializing-object))
 	  (+ 3 fsi))
@@ -2051,7 +2066,9 @@ Keys are a number representing :before, :primary, and :after methods.")
 During executions, the list is first generated, then as each next method
 is called, the next method is popped off the stack.")
 
-(defvar eieio-pre-method-execution-hooks nil
+(define-obsolete-variable-alias 'eieio-pre-method-execution-hooks
+  'eieio-pre-method-execution-functions "24.3")
+(defvar eieio-pre-method-execution-functions nil
   "Abnormal hook run just before an EIEIO method is executed.
 The hook function must accept one argument, the list of forms
 about to be executed.")
@@ -2157,7 +2174,7 @@ This should only be called from a generic function."
 	      (eieiomt-method-list method method-primary nil)))
       )
 
-    (run-hook-with-args 'eieio-pre-method-execution-hooks
+    (run-hook-with-args 'eieio-pre-method-execution-functions
 			primarymethodlist)
 
     ;; Now loop through all occurrences forms which we must execute
@@ -2262,7 +2279,7 @@ for this common case to improve performance."
 
 	;; Do the regular implementation here.
 
-	(run-hook-with-args 'eieio-pre-method-execution-hooks
+	(run-hook-with-args 'eieio-pre-method-execution-functions
 			    lambdas)
 
 	(setq lastval (apply (car lambdas) newargs))
@@ -2319,7 +2336,7 @@ If REPLACEMENT-ARGS is non-nil, then use them instead of
 arguments passed in at the top level.
 
 Use `next-method-p' to find out if there is a next method to call."
-  (if (not scoped-class)
+  (if (not (bound-and-true-p scoped-class))
       (error "`call-next-method' not called within a class specific method"))
   (if (and (/= eieio-generic-call-key method-primary)
 	   (/= eieio-generic-call-key method-static))
@@ -2403,6 +2420,18 @@ CLASS is the class this method is associated with."
     (if (< key method-num-lists)
 	(let ((nsym (intern (symbol-name class) (aref emto key))))
 	  (fset nsym method)))
+    ;; Save the defmethod file location in a symbol property.
+    (let ((fname (if load-in-progress
+		     load-file-name
+		   buffer-file-name))
+	  loc)
+      (when fname
+	(when (string-match "\\.elc$" fname)
+	  (setq fname (substring fname 0 (1- (length fname)))))
+	(setq loc (get method-name 'method-locations))
+	(add-to-list 'loc
+		     (list class fname))
+	(put method-name 'method-locations loc)))
     ;; Now optimize the entire obarray
     (if (< key method-num-lists)
 	(let ((eieiomt-optimizing-obarray (aref emto key)))
@@ -2723,7 +2752,7 @@ This method signals `no-next-method' by default.  Override this
 method to not throw an error, and its return value becomes the
 return value of `call-next-method'."
   (signal 'no-next-method (list (object-name object) args))
-)
+  )
 
 (defgeneric clone (obj &rest params)
   "Make a copy of OBJ, and then supply PARAMS.
@@ -2807,9 +2836,9 @@ this object."
     (princ (make-string (* eieio-print-depth 2) ? ))
     (princ "(")
     (princ (symbol-name (class-constructor (object-class this))))
-    (princ " \"")
-    (princ (object-name-string this))
-    (princ "\"\n")
+    (princ " ")
+    (prin1 (object-name-string this))
+    (princ "\n")
     ;; Loop over all the public slots
     (let ((publa (aref cv class-public-a))
 	  (publd (aref cv class-public-d))
@@ -2821,28 +2850,36 @@ this object."
 		(v (eieio-oref this (car publa)))
 		)
 	    (unless (or (not i) (equal v (car publd)))
+	      (unless (bolp)
+		(princ "\n"))
 	      (princ (make-string (* eieio-print-depth 2) ? ))
 	      (princ (symbol-name i))
-	      (princ " ")
 	      (if (car publp)
 		  ;; Use our public printer
-		  (funcall (car publp) v)
+		  (progn
+		    (princ " ")
+		    (funcall (car publp) v))
 		;; Use our generic override prin1 function.
-		(eieio-override-prin1 v))
-	      (princ "\n"))))
+		(princ (if (or (eieio-object-p v)
+                               (eieio-object-p (car-safe v)))
+                           "\n" " "))
+		(eieio-override-prin1 v)))))
 	(setq publa (cdr publa) publd (cdr publd)
-	      publp (cdr publp)))
-      (princ (make-string (* eieio-print-depth 2) ? )))
-    (princ ")\n")))
+	      publp (cdr publp))))
+    (princ ")")
+    (when (= eieio-print-depth 0)
+      (princ "\n"))))
 
 (defun eieio-override-prin1 (thing)
   "Perform a `prin1' on THING taking advantage of object knowledge."
   (cond ((eieio-object-p thing)
 	 (object-write thing))
-	((listp thing)
+	((consp thing)
 	 (eieio-list-prin1 thing))
 	((class-p thing)
 	 (princ (class-name thing)))
+	((or (keywordp thing) (booleanp thing))
+	 (prin1 thing))
 	((symbolp thing)
 	 (princ (concat "'" (symbol-name thing))))
 	(t (prin1 thing))))
@@ -2853,16 +2890,16 @@ this object."
       (progn
 	(princ "'")
 	(prin1 list))
-    (princ "(list ")
-    (if (eieio-object-p (car list)) (princ "\n "))
-    (while list
-      (if (eieio-object-p (car list))
-	  (object-write (car list))
-	(princ "'")
-	(prin1 (car list)))
-      (princ " ")
-      (setq list (cdr list)))
     (princ (make-string (* eieio-print-depth 2) ? ))
+    (princ "(list")
+    (let ((eieio-print-depth (1+ eieio-print-depth)))
+      (while list
+	(princ "\n")
+	(if (eieio-object-p (car list))
+	    (object-write (car list))
+	  (princ (make-string (* eieio-print-depth 2) ? ))
+	  (eieio-override-prin1 (car list)))
+	(setq list (cdr list))))
     (princ ")")))
 
 
@@ -2876,7 +2913,6 @@ of `eq'."
 
 )
 
-
 ;;; Obsolete backward compatibility functions.
 ;; Needed to run byte-code compiled with the EIEIO of Emacs-23.
 
@@ -3020,29 +3056,6 @@ Optional argument NOESCAPE is passed to `prin1-to-string' when appropriate."
 	    ;; (defalias 'edebug-prin1-to-string 'eieio-edebug-prin1-to-string)
 	    )
 	  )
-
-;;; Interfacing with imenu in emacs lisp mode
-;;    (Only if the expression is defined)
-;;
-(if (eval-when-compile (boundp 'list-imenu-generic-expression))
-(progn
-
-(defun eieio-update-lisp-imenu-expression ()
-  "Examine `lisp-imenu-generic-expression' and modify it to find `defmethod'."
-  (let ((exp lisp-imenu-generic-expression))
-    (while exp
-      ;; it's of the form '( ( title expr indx ) ... )
-      (let* ((subcar (cdr (car exp)))
-	     (substr (car subcar)))
-	(if (and (not (string-match "|method\\\\" substr))
-		 (string-match "|advice\\\\" substr))
-	    (setcar subcar
-		    (replace-match "|advice\\|method\\" t t substr 0))))
-      (setq exp (cdr exp)))))
-
-(eieio-update-lisp-imenu-expression)
-
-))
 
 ;;; Autoloading some external symbols, and hooking into the help system
 ;;

@@ -495,7 +495,8 @@ define pgx
   end
   xgettype ($g.object)
   if ($type == Lisp_String)
-    printf " str=%x[%d]", $g.object, $g.charpos
+    xgetptr $g.object
+    printf " str=0x%x[%d]", ((struct Lisp_String *)$ptr)->data, $g.charpos
   else
     printf " pos=%d", $g.charpos
   end
@@ -650,19 +651,52 @@ If the first type printed is Lisp_Vector or Lisp_Misc,
 a second line gives the more precise type.
 end
 
-define xvectype
-  xgetptr $
-  set $size = ((struct Lisp_Vector *) $ptr)->header.size
+define pvectype
+  set $size = ((struct Lisp_Vector *) $arg0)->header.size
   if ($size & PSEUDOVECTOR_FLAG)
-    output (enum pvec_type) (($size & PVEC_TYPE_MASK) >> PSEUDOVECTOR_SIZE_BITS)
+    output (enum pvec_type) (($size & PVEC_TYPE_MASK) >> PSEUDOVECTOR_AREA_BITS)
   else
-    output $size & ~ARRAY_MARK_FLAG
+    output PVEC_NORMAL_VECTOR
   end
   echo \n
 end
+document pvectype
+Print the subtype of vectorlike object.
+Takes one argument, a pointer to an object.
+end
+
+define xvectype
+  xgetptr $
+  pvectype $ptr
+end
 document xvectype
-Print the size or vector subtype of $.
-This command assumes that $ is a vector or pseudovector.
+Print the subtype of vectorlike object.
+This command assumes that $ is a Lisp_Object.
+end
+
+define pvecsize
+  set $size = ((struct Lisp_Vector *) $arg0)->header.size
+  if ($size & PSEUDOVECTOR_FLAG)
+    output ($size & PSEUDOVECTOR_SIZE_MASK)
+    echo \n
+    output (($size & PSEUDOVECTOR_REST_MASK) >> PSEUDOVECTOR_SIZE_BITS)
+  else
+    output ($size & ~ARRAY_MARK_FLAG)
+  end
+  echo \n
+end
+document pvecsize
+Print the size of vectorlike object.
+Takes one argument, a pointer to an object.
+end
+
+define xvecsize
+  xgetptr $
+  pvecsize $ptr
+end
+document xvecsize
+Print the size of $
+This command assumes that $ is a Lisp_Object.
 end
 
 define xmisctype
@@ -996,7 +1030,7 @@ define xpr
   if $type == Lisp_Vectorlike
     set $size = ((struct Lisp_Vector *) $ptr)->header.size
     if ($size & PSEUDOVECTOR_FLAG)
-      set $vec = (enum pvec_type) (($size & PVEC_TYPE_MASK) >> PSEUDOVECTOR_SIZE_BITS)
+      set $vec = (enum pvec_type) (($size & PVEC_TYPE_MASK) >> PSEUDOVECTOR_AREA_BITS)
       if $vec == PVEC_NORMAL_VECTOR
 	xvector
       end
@@ -1121,18 +1155,18 @@ end
 define xbacktrace
   set $bt = backtrace_list
   while $bt
-    xgettype (*$bt->function)
+    xgettype ($bt->function)
     if $type == Lisp_Symbol
-      xprintsym (*$bt->function)
+      xprintsym ($bt->function)
       printf " (0x%x)\n", $bt->args
     else
-      xgetptr *$bt->function
+      xgetptr $bt->function
       printf "0x%x ", $ptr
       if $type == Lisp_Vectorlike
-	xgetptr (*$bt->function)
+	xgetptr ($bt->function)
         set $size = ((struct Lisp_Vector *) $ptr)->header.size
         if ($size & PSEUDOVECTOR_FLAG)
-	  output (enum pvec_type) (($size & PVEC_TYPE_MASK) >> PSEUDOVECTOR_SIZE_BITS)
+	  output (enum pvec_type) (($size & PVEC_TYPE_MASK) >> PSEUDOVECTOR_AREA_BITS)
 	else
 	  output $size & ~ARRAY_MARK_FLAG
 	end
@@ -1213,24 +1247,9 @@ set print sevenbit-strings
 show environment DISPLAY
 show environment TERM
 
-# People get bothered when they see messages about non-existent functions...
-xgetptr globals.f_Vsystem_type
-# $ptr is NULL in temacs
-if ($ptr != 0)
-  set $tem = (struct Lisp_Symbol *) $ptr
-  xgetptr $tem->name
-  set $tem = (struct Lisp_String *) $ptr
-  set $tem = (char *) $tem->data
-
-  # Don't let abort actually run, as it will make stdio stop working and
-  # therefore the `pr' command above as well.
-  if $tem[0] == 'w' && $tem[1] == 'i' && $tem[2] == 'n' && $tem[3] == 'd'
-    # The windows-nt build replaces abort with its own function.
-    break w32_abort
-  else
-    break abort
-  end
-end
+# When debugging, it is handy to be able to "return" from
+# terminate_due_to_signal when an assertion failure is non-fatal.
+break terminate_due_to_signal
 
 # x_error_quitter is defined only on X.  But window-system is set up
 # only at run time, during Emacs startup, so we need to defer setting

@@ -585,12 +585,12 @@ Variables you can use to customize Octave mode
 Turning on Octave mode runs the hook `octave-mode-hook'.
 
 To begin using this mode for all `.m' files that you edit, add the
-following lines to your `.emacs' file:
+following lines to your init file:
 
   (add-to-list 'auto-mode-alist '(\"\\\\.m\\\\'\" . octave-mode))
 
 To automatically turn on the abbrev and auto-fill features,
-add the following lines to your `.emacs' file as well:
+add the following lines to your init file as well:
 
   (add-hook 'octave-mode-hook
 	    (lambda ()
@@ -794,11 +794,14 @@ does not end in `...' or `\\' or is inside an open parenthesis list."
   "Put point at the beginning of this Octave block, mark at the end.
 The block marked is the one that contains point or follows point."
   (interactive)
+  (if (and (looking-at "\\sw\\|\\s_")
+           (looking-back "\\sw\\|\\s_" (1- (point))))
+      (skip-syntax-forward "w_"))
   (unless (or (looking-at "\\s(")
               (save-excursion
                 (let* ((token (funcall smie-forward-token-function))
                        (level (assoc token smie-grammar)))
-                  (and level (null (cadr level))))))
+                  (and level (not (numberp (cadr level)))))))
     (backward-up-list 1))
   (mark-sexp))
 

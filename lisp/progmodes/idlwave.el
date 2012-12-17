@@ -51,7 +51,7 @@
 ;;
 ;; Follow the instructions in the INSTALL file of the distribution.
 ;; In short, put this file on your load path and add the following
-;; lines to your .emacs file:
+;; lines to your init file:
 ;;
 ;; (autoload 'idlwave-mode "idlwave" "IDLWAVE Mode" t)
 ;; (autoload 'idlwave-shell "idlw-shell" "IDLWAVE Shell" t)
@@ -746,7 +746,7 @@ or even '?'.  '.' is not a good choice because it can make structure
 field names act like abbrevs in certain circumstances.
 
 Changes to this in `idlwave-mode-hook' will have no effect.  Instead a user
-must set it directly using `setq' in the .emacs file before idlwave.el
+must set it directly using `setq' in the init file before idlwave.el
 is loaded."
   :group 'idlwave-abbrev-and-indent-action
   :type 'string)
@@ -1151,7 +1151,7 @@ As a user, you should not set this to t.")
        (common-blocks
 	'("\\<\\(common\\)\\>[ \t]*\\(\\sw+\\)?[ \t]*,?"
 	  (1 font-lock-keyword-face)	          ; "common"
-	  (2 font-lock-reference-face nil t)      ; block name
+	  (2 font-lock-constant-face nil t)      ; block name
 	  ("[ \t]*\\(\\sw+\\)[ ,]*"
 	   ;; Start with point after block name and comma
 	   (goto-char (match-end 0))  ; needed for XEmacs, could be nil
@@ -1169,20 +1169,20 @@ As a user, you should not set this to t.")
 
        ;; Labels
        (label
-	'("^[ \t]*\\([a-zA-Z]\\sw*:\\)" (1 font-lock-reference-face)))
+	'("^[ \t]*\\([a-zA-Z]\\sw*:\\)" (1 font-lock-constant-face)))
 
        ;; The goto statement and its label
        (goto
 	'("\\(goto\\)[ \t]*,[ \t]*\\([a-zA-Z]\\sw*\\)"
 	  (1 font-lock-keyword-face)
-	  (2 font-lock-reference-face)))
+	  (2 font-lock-constant-face)))
 
        ;; Tags in structure definitions.  Note that this definition
        ;; actually collides with labels, so we have to use the same
        ;; face.  It also matches named subscript ranges,
        ;; e.g. vec{bottom:top].  No good way around this.
        (structtag
-	'("\\<\\([a-zA-Z][a-zA-Z0-9_]*:\\)[^:]" (1 font-lock-reference-face)))
+	'("\\<\\([a-zA-Z][a-zA-Z0-9_]*:\\)[^:]" (1 font-lock-constant-face)))
 
        ;; Structure names
        (structname
@@ -1195,7 +1195,7 @@ As a user, you should not set this to t.")
        ;; fontification.  Slow, use it only in fancy fontification.
        (keyword-parameters
 	'("\\(,\\|[a-zA-Z0-9_](\\)[ \t]*\\(\\$[ \t]*\\(;.*\\)?\n\\([ \t]*\\(;.*\\)?\n\\)*[ \t]*\\)?\\(/[a-zA-Z_]\\sw*\\|[a-zA-Z_]\\sw*[ \t]*=\\)"
-	  (6 font-lock-reference-face)))
+	  (6 font-lock-constant-face)))
 
        ;; System variables start with a bang.
        (system-variables

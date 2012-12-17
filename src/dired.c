@@ -22,7 +22,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <setjmp.h>
 
 #ifdef HAVE_PWD_H
 #include <pwd.h>
@@ -32,43 +31,9 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <errno.h>
 #include <unistd.h>
 
-/* The d_nameln member of a struct dirent includes the '\0' character
-   on some systems, but not on others.  What's worse, you can't tell
-   at compile-time which one it will be, since it really depends on
-   the sort of system providing the filesystem you're reading from,
-   not the system you are running on.  Paul Eggert
-   <eggert@bi.twinsun.com> says this occurs when Emacs is running on a
-   SunOS 4.1.2 host, reading a directory that is remote-mounted from a
-   Solaris 2.1 host and is in a native Solaris 2.1 filesystem.
-
-   Since applying strlen to the name always works, we'll just do that.  */
-#define NAMLEN(p) strlen (p->d_name)
-
-#ifdef HAVE_DIRENT_H
-
 #include <dirent.h>
-#define DIRENTRY struct dirent
-
-#else /* not HAVE_DIRENT_H */
-
-#include <sys/dir.h>
-#include <sys/stat.h>
-
-#define DIRENTRY struct direct
-
-extern DIR *opendir (char *);
-extern struct direct *readdir (DIR *);
-
-#endif /* HAVE_DIRENT_H */
-
 #include <filemode.h>
 #include <stat-time.h>
-
-#ifdef MSDOS
-#define DIRENTRY_NONEMPTY(p) ((p)->d_name[0] != 0)
-#else
-#define DIRENTRY_NONEMPTY(p) ((p)->d_ino)
-#endif
 
 #include "lisp.h"
 #include "systime.h"
@@ -89,6 +54,17 @@ static Lisp_Object Qfile_attributes_lessp;
 
 static ptrdiff_t scmp (const char *, const char *, ptrdiff_t);
 
+/* Return the number of bytes in DP's name.  */
+static ptrdiff_t
+dirent_namelen (struct dirent *dp)
+{
+#ifdef _D_EXACT_NAMLEN
+  return _D_EXACT_NAMLEN (dp);
+#else
+  return strlen (dp->d_name);
+#endif
+}
+
 #ifdef WINDOWSNT
 Lisp_Object
 directory_files_internal_w32_unwind (Lisp_Object arg)
@@ -102,9 +78,9 @@ static Lisp_Object
 directory_files_internal_unwind (Lisp_Object dh)
 {
   DIR *d = (DIR *) XSAVE_VALUE (dh)->pointer;
-  BLOCK_INPUT;
+  block_input ();
   closedir (d);
-  UNBLOCK_INPUT;
+  unblock_input ();
   return Qnil;
 }
 
@@ -125,7 +101,7 @@ directory_files_internal (Lisp_Object directory, Lisp_Object full,
   bool needsep = 0;
   ptrdiff_t count = SPECPDL_INDEX ();
   struct gcpro gcpro1, gcpro2, gcpro3, gcpro4, gcpro5;
-  DIRENTRY *dp;
+  struct dirent *dp;
 #ifdef WINDOWSNT
   Lisp_Object w32_save = Qnil;
 #endif
@@ -165,9 +141,9 @@ directory_files_internal (Lisp_Object directory, Lisp_Object full,
   /* Now *bufp is the compiled form of MATCH; don't call anything
      which might compile a new regexp until we're done with the loop!  */
 
-  BLOCK_INPUT;
+  block_input ();
   d = opendir (SSDATA (dirfilename));
-  UNBLOCK_INPUT;
+  unblock_input ();
   if (d == NULL)
     report_file_error ("Opening directory", Fcons (directory, Qnil));
 
@@ -210,110 +186,103 @@ directory_files_internal (Lisp_Object directory, Lisp_Object full,
   /* Loop reading blocks until EOF or error.  */
   for (;;)
     {
+      ptrdiff_t len;
+      bool wanted = 0;
+      Lisp_Object name, finalname;
+      struct gcpro gcpro1, gcpro2;
+
       errno = 0;
       dp = readdir (d);
-
-      if (dp == NULL && (0
-#ifdef EAGAIN
-			 || errno == EAGAIN
-#endif
-#ifdef EINTR
-			 || errno == EINTR
-#endif
-			 ))
-	{ QUIT; continue; }
-
-      if (dp == NULL)
-	break;
-
-      if (DIRENTRY_NONEMPTY (dp))
+      if (!dp)
 	{
-	  ptrdiff_t len;
-	  bool wanted = 0;
-	  Lisp_Object name, finalname;
-	  struct gcpro gcpro1, gcpro2;
-
-	  len = NAMLEN (dp);
-	  name = finalname = make_unibyte_string (dp->d_name, len);
-	  GCPRO2 (finalname, name);
-
-	  /* Note: DECODE_FILE can GC; it should protect its argument,
-	     though.  */
-	  name = DECODE_FILE (name);
-	  len = SBYTES (name);
-
-	  /* Now that we have unwind_protect in place, we might as well
-             allow matching to be interrupted.  */
-	  immediate_quit = 1;
-	  QUIT;
-
-	  if (NILP (match)
-	      || (0 <= re_search (bufp, SSDATA (name), len, 0, len, 0)))
-	    wanted = 1;
-
-	  immediate_quit = 0;
-
-	  if (wanted)
+	  if (errno == EAGAIN || errno == EINTR)
 	    {
-	      if (!NILP (full))
-		{
-		  Lisp_Object fullname;
-		  ptrdiff_t nbytes = len + directory_nbytes + needsep;
-		  ptrdiff_t nchars;
-
-		  fullname = make_uninit_multibyte_string (nbytes, nbytes);
-		  memcpy (SDATA (fullname), SDATA (directory),
-			  directory_nbytes);
-
-		  if (needsep)
-		    SSET (fullname, directory_nbytes, DIRECTORY_SEP);
-
-		  memcpy (SDATA (fullname) + directory_nbytes + needsep,
-			  SDATA (name), len);
-
-		  nchars = chars_in_text (SDATA (fullname), nbytes);
-
-		  /* Some bug somewhere.  */
-		  if (nchars > nbytes)
-		    abort ();
-
-		  STRING_SET_CHARS (fullname, nchars);
-		  if (nchars == nbytes)
-		    STRING_SET_UNIBYTE (fullname);
-
-		  finalname = fullname;
-		}
-	      else
-		finalname = name;
-
-	      if (attrs)
-		{
-		  /* Construct an expanded filename for the directory entry.
-		     Use the decoded names for input to Ffile_attributes.  */
-		  Lisp_Object decoded_fullname, fileattrs;
-		  struct gcpro gcpro1, gcpro2;
-
-		  decoded_fullname = fileattrs = Qnil;
-		  GCPRO2 (decoded_fullname, fileattrs);
-
-		  /* Both Fexpand_file_name and Ffile_attributes can GC.  */
-		  decoded_fullname = Fexpand_file_name (name, directory);
-		  fileattrs = Ffile_attributes (decoded_fullname, id_format);
-
-		  list = Fcons (Fcons (finalname, fileattrs), list);
-		  UNGCPRO;
-		}
-	      else
-		list = Fcons (finalname, list);
+	      QUIT;
+	      continue;
 	    }
-
-	  UNGCPRO;
+	  break;
 	}
+
+      len = dirent_namelen (dp);
+      name = finalname = make_unibyte_string (dp->d_name, len);
+      GCPRO2 (finalname, name);
+
+      /* Note: DECODE_FILE can GC; it should protect its argument,
+	 though.  */
+      name = DECODE_FILE (name);
+      len = SBYTES (name);
+
+      /* Now that we have unwind_protect in place, we might as well
+	 allow matching to be interrupted.  */
+      immediate_quit = 1;
+      QUIT;
+
+      if (NILP (match)
+	  || (0 <= re_search (bufp, SSDATA (name), len, 0, len, 0)))
+	wanted = 1;
+
+      immediate_quit = 0;
+
+      if (wanted)
+	{
+	  if (!NILP (full))
+	    {
+	      Lisp_Object fullname;
+	      ptrdiff_t nbytes = len + directory_nbytes + needsep;
+	      ptrdiff_t nchars;
+
+	      fullname = make_uninit_multibyte_string (nbytes, nbytes);
+	      memcpy (SDATA (fullname), SDATA (directory),
+		      directory_nbytes);
+
+	      if (needsep)
+		SSET (fullname, directory_nbytes, DIRECTORY_SEP);
+
+	      memcpy (SDATA (fullname) + directory_nbytes + needsep,
+		      SDATA (name), len);
+
+	      nchars = chars_in_text (SDATA (fullname), nbytes);
+
+	      /* Some bug somewhere.  */
+	      if (nchars > nbytes)
+		emacs_abort ();
+
+	      STRING_SET_CHARS (fullname, nchars);
+	      if (nchars == nbytes)
+		STRING_SET_UNIBYTE (fullname);
+
+	      finalname = fullname;
+	    }
+	  else
+	    finalname = name;
+
+	  if (attrs)
+	    {
+	      /* Construct an expanded filename for the directory entry.
+		 Use the decoded names for input to Ffile_attributes.  */
+	      Lisp_Object decoded_fullname, fileattrs;
+	      struct gcpro gcpro1, gcpro2;
+
+	      decoded_fullname = fileattrs = Qnil;
+	      GCPRO2 (decoded_fullname, fileattrs);
+
+	      /* Both Fexpand_file_name and Ffile_attributes can GC.  */
+	      decoded_fullname = Fexpand_file_name (name, directory);
+	      fileattrs = Ffile_attributes (decoded_fullname, id_format);
+
+	      list = Fcons (Fcons (finalname, fileattrs), list);
+	      UNGCPRO;
+	    }
+	  else
+	    list = Fcons (finalname, list);
+	}
+
+      UNGCPRO;
     }
 
-  BLOCK_INPUT;
+  block_input ();
   closedir (d);
-  UNBLOCK_INPUT;
+  unblock_input ();
 #ifdef WINDOWSNT
   if (attrs)
     Vw32_get_true_file_attributes = w32_save;
@@ -443,7 +412,8 @@ These are all file names in directory DIRECTORY which begin with FILE.  */)
   return file_name_completion (file, directory, 1, Qnil);
 }
 
-static int file_name_completion_stat (Lisp_Object dirname, DIRENTRY *dp, struct stat *st_addr);
+static int file_name_completion_stat (Lisp_Object dirname, struct dirent *dp,
+				      struct stat *st_addr);
 static Lisp_Object Qdefault_directory;
 
 static Lisp_Object
@@ -487,9 +457,9 @@ file_name_completion (Lisp_Object file, Lisp_Object dirname, bool all_flag,
 
   encoded_dir = ENCODE_FILE (dirname);
 
-  BLOCK_INPUT;
+  block_input ();
   d = opendir (SSDATA (Fdirectory_file_name (encoded_dir)));
-  UNBLOCK_INPUT;
+  unblock_input ();
   if (!d)
     report_file_error ("Opening directory", Fcons (dirname, Qnil));
 
@@ -500,29 +470,26 @@ file_name_completion (Lisp_Object file, Lisp_Object dirname, bool all_flag,
   /* (att3b compiler bug requires do a null comparison this way) */
   while (1)
     {
-      DIRENTRY *dp;
+      struct dirent *dp;
       ptrdiff_t len;
       bool canexclude = 0;
 
       errno = 0;
       dp = readdir (d);
-      if (dp == NULL && (0
-# ifdef EAGAIN
-			 || errno == EAGAIN
-# endif
-# ifdef EINTR
-			 || errno == EINTR
-# endif
-			 ))
-	{ QUIT; continue; }
+      if (!dp)
+	{
+	  if (errno == EAGAIN || errno == EINTR)
+	    {
+	      QUIT;
+	      continue;
+	    }
+	  break;
+	}
 
-      if (!dp) break;
-
-      len = NAMLEN (dp);
+      len = dirent_namelen (dp);
 
       QUIT;
-      if (! DIRENTRY_NONEMPTY (dp)
-	  || len < SCHARS (encoded_file)
+      if (len < SCHARS (encoded_file)
 	  || 0 <= scmp (dp->d_name, SSDATA (encoded_file),
 			SCHARS (encoded_file)))
 	continue;
@@ -807,9 +774,10 @@ scmp (const char *s1, const char *s2, ptrdiff_t len)
 }
 
 static int
-file_name_completion_stat (Lisp_Object dirname, DIRENTRY *dp, struct stat *st_addr)
+file_name_completion_stat (Lisp_Object dirname, struct dirent *dp,
+			   struct stat *st_addr)
 {
-  ptrdiff_t len = NAMLEN (dp);
+  ptrdiff_t len = dirent_namelen (dp);
   ptrdiff_t pos = SCHARS (dirname);
   int value;
   USE_SAFE_ALLOCA;
@@ -852,7 +820,7 @@ stat_uname (struct stat *st)
 #ifdef WINDOWSNT
   return st->st_uname;
 #else
-  struct passwd *pw = (struct passwd *) getpwuid (st->st_uid);
+  struct passwd *pw = getpwuid (st->st_uid);
 
   if (pw)
     return pw->pw_name;
@@ -867,7 +835,7 @@ stat_gname (struct stat *st)
 #ifdef WINDOWSNT
   return st->st_gname;
 #else
-  struct group *gr = (struct group *) getgrgid (st->st_gid);
+  struct group *gr = getgrgid (st->st_gid);
 
   if (gr)
     return gr->gr_name;
@@ -901,7 +869,7 @@ Elements of the attribute list are:
  7. Size in bytes.
   This is a floating point number if the size is too large for an integer.
  8. File modes, as a string of ten letters or dashes as in ls -l.
- 9. t if file's gid would change if file were deleted and recreated.
+ 9. An unspecified value, present only for backward compatibility.
 10. inode number.  If it is larger than what an Emacs integer can hold,
   this is of the form (HIGH . LOW): first the high bits, then the low 16 bits.
   If even HIGH is too large for an Emacs integer, this is instead of the form
@@ -923,10 +891,7 @@ so last access time will always be midnight of that day.  */)
   Lisp_Object values[12];
   Lisp_Object encoded;
   struct stat s;
-#ifdef BSD4_2
-  Lisp_Object dirname;
-  struct stat sdir;
-#endif /* BSD4_2 */
+  int lstat_result;
 
   /* An array to hold the mode string generated by filemodestring,
      including its terminating space and null byte.  */
@@ -954,7 +919,21 @@ so last access time will always be midnight of that day.  */)
   encoded = ENCODE_FILE (filename);
   UNGCPRO;
 
-  if (lstat (SSDATA (encoded), &s) < 0)
+#ifdef WINDOWSNT
+  /* We usually don't request accurate owner and group info, because
+     it can be very expensive on Windows to get that, and most callers
+     of 'lstat' don't need that.  But here we do want that information
+     to be accurate.  */
+  w32_stat_get_owner_group = 1;
+#endif
+
+  lstat_result = lstat (SSDATA (encoded), &s);
+
+#ifdef WINDOWSNT
+  w32_stat_get_owner_group = 0;
+#endif
+
+  if (lstat_result < 0)
     return Qnil;
 
   values[0] = (S_ISLNK (s.st_mode) ? Ffile_symlink_p (filename)
@@ -963,10 +942,10 @@ so last access time will always be midnight of that day.  */)
 
   if (!(NILP (id_format) || EQ (id_format, Qinteger)))
     {
-      BLOCK_INPUT;
+      block_input ();
       uname = stat_uname (&s);
       gname = stat_gname (&s);
-      UNBLOCK_INPUT;
+      unblock_input ();
     }
   if (uname)
     values[2] = DECODE_SYSTEM (build_string (uname));
@@ -991,17 +970,7 @@ so last access time will always be midnight of that day.  */)
 
   filemodestring (&s, modes);
   values[8] = make_string (modes, 10);
-#ifdef BSD4_2 /* file gid will be dir gid */
-  dirname = Ffile_name_directory (filename);
-  if (! NILP (dirname))
-    encoded = ENCODE_FILE (dirname);
-  if (! NILP (dirname) && stat (SDATA (encoded), &sdir) == 0)
-    values[9] = (sdir.st_gid != s.st_gid) ? Qt : Qnil;
-  else					/* if we can't tell, assume worst */
-    values[9] = Qt;
-#else					/* file gid will be egid */
-  values[9] = (s.st_gid != getegid ()) ? Qt : Qnil;
-#endif	/* not BSD4_2 */
+  values[9] = Qt;
   values[10] = INTEGER_TO_CONS (s.st_ino);
   values[11] = INTEGER_TO_CONS (s.st_dev);
 

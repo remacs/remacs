@@ -120,15 +120,18 @@ library when needed.  This way people who don't use those aspects of
 your file do not need to load the extra library.
 
 @item
-Please don't require the @code{cl} package of Common Lisp extensions at
-run time.  Use of this package is optional, and it is not part of the
-standard Emacs namespace.  If your package loads @code{cl} at run time,
-that could cause name clashes for users who don't use that package.
+If you need Common Lisp extensions, use the @code{cl-lib} library
+rather than the old @code{cl} library.  The latter does not
+use a clean namespace (i.e., its definitions do not
+start with a @samp{cl-} prefix).  If your package loads @code{cl} at
+run time, that could cause name clashes for users who don't use that
+package.
 
-However, there is no problem with using the @code{cl} package at
-compile time, with @code{(eval-when-compile (require 'cl))}.  That's
+There is no problem with using the @code{cl} package at @emph{compile}
+time, with @code{(eval-when-compile (require 'cl))}.  That's
 sufficient for using the macros in the @code{cl} package, because the
-compiler expands them before generating the byte-code.
+compiler expands them before generating the byte-code.  It is still
+better to use the more modern @code{cl-lib} in this case, though.
 
 @item
 When defining a major mode, please follow the major mode
@@ -457,18 +460,8 @@ Lisp programs.
 
 @itemize @bullet
 @item
-@cindex profiling
-@cindex timing programs
-@cindex @file{elp.el}
-Profile your program with the @file{elp} library.  See the file
-@file{elp.el} for instructions.
-
-@item
-@cindex @file{benchmark.el}
-@cindex benchmarking
-Check the speed of individual Emacs Lisp forms using the
-@file{benchmark} library.  See the functions @code{benchmark-run} and
-@code{benchmark-run-compiled} in @file{benchmark.el}.
+Profile your program, to find out where the time is being spent.
+@xref{Profiling}.
 
 @item
 Use iteration rather than recursion whenever possible.
@@ -765,7 +758,7 @@ describe the most important commands in your major mode, and then use
 @item
 For consistency, phrase the verb in the first sentence of a function's
 documentation string as an imperative---for instance, use ``Return the
-cons of A and B.'' in preference to ``Returns the cons of A and B@.''
+cons of A and B.@:'' in preference to ``Returns the cons of A and B@.''
 Usually it looks good to do likewise for the rest of the first
 paragraph.  Subsequent paragraphs usually look better if each sentence
 is indicative and has a proper subject.
@@ -792,7 +785,7 @@ defun (@pxref{Defuns,, Defuns, emacs, The GNU Emacs Manual}).
 @item
 Write documentation strings in the active voice, not the passive, and in
 the present tense, not the future.  For instance, use ``Return a list
-containing A and B.'' instead of ``A list containing A and B will be
+containing A and B.@:'' instead of ``A list containing A and B will be
 returned.''
 
 @item

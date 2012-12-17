@@ -308,8 +308,14 @@ be determined."
   "Determine the type of image file FILE from its name.
 Value is a symbol specifying the image type, or nil if type cannot
 be determined."
-  (assoc-default file image-type-file-name-regexps 'string-match-p))
-
+  (let (type first)
+    (catch 'found
+      (dolist (elem image-type-file-name-regexps first)
+	(when (string-match-p (car elem) file)
+	  (if (image-type-available-p (setq type (cdr elem)))
+	      (throw 'found type)
+	    ;; If nothing seems to be supported, return first type that matched.
+	    (or first (setq first type))))))))
 
 ;;;###autoload
 (defun image-type (source &optional type data-p)
@@ -346,7 +352,7 @@ Optional DATA-P non-nil means SOURCE is a string containing image data."
   "Return non-nil if image type TYPE is available.
 Image types are symbols like `xbm' or `jpeg'."
   (and (fboundp 'init-image-library)
-       (init-image-library type dynamic-library-alist)))
+       (init-image-library type)))
 
 
 ;;;###autoload
@@ -423,7 +429,7 @@ means display it in the right marginal area."
   "Insert IMAGE into current buffer at point.
 IMAGE is displayed by inserting STRING into the current buffer
 with a `display' property whose value is the image.  STRING
-defaults to the empty string if you omit it.
+defaults to a single space if you omit it.
 AREA is where to display the image.  AREA nil or omitted means
 display it in the text area, a value of `left-margin' means
 display it in the left marginal area, a value of `right-margin'
@@ -461,8 +467,8 @@ height of the image; integer values are taken as pixel values."
 (defun insert-sliced-image (image &optional string area rows cols)
   "Insert IMAGE into current buffer at point.
 IMAGE is displayed by inserting STRING into the current buffer
-with a `display' property whose value is the image.  STRING is
-defaulted if you omit it.
+with a `display' property whose value is the image.  The default
+STRING is a single space.
 AREA is where to display the image.  AREA nil or omitted means
 display it in the text area, a value of `left-margin' means
 display it in the left marginal area, a value of `right-margin'
@@ -645,8 +651,8 @@ number, play until that number of seconds has elapsed."
     (while tail
       (setq timer (car tail)
 	    tail (cdr tail))
-      (if (and (eq (aref timer 5) 'image-animate-timeout)
-	       (eq (car-safe (aref timer 6)) image))
+      (if (and (eq (timer--function timer) 'image-animate-timeout)
+	       (eq (car-safe (timer--args timer)) image))
 	  (setq tail nil)
 	(setq timer nil)))
     timer))
@@ -798,7 +804,7 @@ to enable all types that ImageMagick supports.
 
 The variable `imagemagick-types-inhibit' overrides this variable.
 
-If you change this without outside of Customize, you must call
+If you change this without using customize, you must call
 `imagemagick-register-types' afterwards.
 
 If Emacs is compiled without ImageMagick support, this variable

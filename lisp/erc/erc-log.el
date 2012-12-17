@@ -3,6 +3,7 @@
 ;; Copyright (C) 2003-2012 Free Software Foundation, Inc.
 
 ;; Author: Lawrence Mitchell <wence@gmx.li>
+;; Maintainer: FSF
 ;; Keywords: IRC, chat, client, Internet, logging
 
 ;; Created 2003-04-26
@@ -92,9 +93,7 @@
 ;;; Code:
 
 (require 'erc)
-(eval-when-compile
-  (require 'erc-networks)
-  (require 'cl))
+(eval-when-compile (require 'erc-networks))
 
 (defgroup erc-log nil
   "Logging facilities for ERC."
@@ -113,11 +112,13 @@ If you want to write logs into different directories, make a
 custom function which returns the directory part and set
 `erc-log-channels-directory' to its name."
   :group 'erc-log
-  :type '(choice (const :tag "Long style" erc-generate-log-file-name-long)
-		 (const :tag "Long, but with network name rather than server"
+  :type '(choice (const :tag "#channel!nick@server:port.txt"
+			erc-generate-log-file-name-long)
+		 (const :tag "#channel!nick@network.txt"
 			erc-generate-log-file-name-network)
-		 (const :tag "Short" erc-generate-log-file-name-short)
-		 (const :tag "With date" erc-generate-log-file-name-with-date)
+		 (const :tag "#channel.txt" erc-generate-log-file-name-short)
+		 (const :tag "#channel@date.txt"
+			erc-generate-log-file-name-with-date)
 		 (function :tag "Other function")))
 
 (defcustom erc-truncate-buffer-on-save nil
@@ -426,7 +427,8 @@ You can save every individual message by putting this function on
 					file t 'nomessage))))
 		  (let ((coding-system-for-write coding-system))
 		    (write-region start end file t 'nomessage))))
-	      (if (and erc-truncate-buffer-on-save (interactive-p))
+	      (if (and erc-truncate-buffer-on-save
+		       (called-interactively-p 'interactive))
 		  (progn
 		    (let ((inhibit-read-only t)) (erase-buffer))
 		    (move-marker erc-last-saved-position (point-max))

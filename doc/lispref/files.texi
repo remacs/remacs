@@ -29,7 +29,7 @@ arguments, except where noted.  @xref{Magic File Names}, for details.
   When file I/O functions signal Lisp errors, they usually use the
 condition @code{file-error} (@pxref{Handling Errors}).  The error
 message is in most cases obtained from the operating system, according
-to locale @code{system-message-locale}, and decoded using coding system
+to locale @code{system-messages-locale}, and decoded using coding system
 @code{locale-coding-system} (@pxref{Locales}).
 
 @menu
@@ -241,9 +241,9 @@ used, and in many cases only some of the functions are called.
 @defvar find-file-literally
 This buffer-local variable, if set to a non-@code{nil} value, makes
 @code{save-buffer} behave as if the buffer were visiting its file
-literally, i.e. without conversions of any kind.  The command
+literally, i.e., without conversions of any kind.  The command
 @code{find-file-literally} sets this variable's local value, but other
-equivalent functions and commands can do that as well, e.g.@: to avoid
+equivalent functions and commands can do that as well, e.g., to avoid
 automatic addition of a newline at the end of the file.  This variable
 is permanent local, so it is unaffected by changes of major modes.
 @end defvar
@@ -895,10 +895,13 @@ returns @code{nil}.  However, if the open fails, it signals an error
 using @var{string} as the error message text.
 @end defun
 
-@defun file-ownership-preserved-p filename
+@defun file-ownership-preserved-p filename &optional group
 This function returns @code{t} if deleting the file @var{filename} and
 then creating it anew would keep the file's owner unchanged.  It also
 returns @code{t} for nonexistent files.
+
+If the optional argument @var{group} is non-@code{nil}, this function
+also checks that the file's group would be unchanged.
 
 If @var{filename} is a symbolic link, then, unlike the other functions
 discussed here, @code{file-ownership-preserved-p} does @emph{not}
@@ -938,7 +941,7 @@ on the 19th, @file{aug-20} was written on the 20th, and the file
 @end example
 
 You can use @code{file-attributes} to get a file's last modification
-time as a list of two numbers.  @xref{File Attributes}.
+time as a list of four integers.  @xref{File Attributes}.
 @end defun
 
 @node Kinds of Files
@@ -1220,20 +1223,19 @@ point number.
 The file's @acronym{GID}, likewise.
 
 @item
-The time of last access, as a list of two integers.
-The first integer has the high-order 16 bits of time,
-the second has the low 16 bits.  (This is similar to the
+The time of last access, as a list of four integers @code{(@var{sec-high}
+@var{sec-low} @var{microsec} @var{picosec})}.  (This is similar to the
 value of @code{current-time}; see @ref{Time of Day}.)  Note that on
 some FAT-based filesystems, only the date of last access is recorded,
 so this time will always hold the midnight of the day of last access.
 
 @cindex modification time of file
 @item
-The time of last modification as a list of two integers (as above).
+The time of last modification as a list of four integers (as above).
 This is the last time when the file's contents were modified.
 
 @item
-The time of last status change as a list of two integers (as above).
+The time of last status change as a list of four integers (as above).
 This is the time of the last change to the file's access mode bits,
 its owner and group, and other information recorded in the filesystem
 for the file, beyond the file's contents.
@@ -1247,8 +1249,7 @@ The file's modes, as a string of ten letters or dashes,
 as in @samp{ls -l}.
 
 @item
-@code{t} if the file's @acronym{GID} would change if file were
-deleted and recreated; @code{nil} otherwise.
+An unspecified value, present for backward compatibility.
 
 @item
 The file's inode number.  If possible, this is an integer.  If the
@@ -1276,11 +1277,11 @@ For example, here are the file attributes for @file{files.texi}:
 @group
 (file-attributes "files.texi" 'string)
      @result{}  (nil 1 "lh" "users"
-          (19145 42977)
-          (19141 59576)
-          (18340 17300)
+          (20614 64019 50040 152000)
+          (20000 23 0 0)
+          (20614 64555 902289 872000)
           122295 "-rw-rw-rw-"
-          nil  (5888 2 . 43978)
+          t (5888 2 . 43978)
           (15479 . 46724))
 @end group
 @end example
@@ -1302,14 +1303,14 @@ is owned by the user with name "lh".
 @item "users"
 is in the group with name "users".
 
-@item (19145 42977)
-was last accessed on Oct 5 2009, at 10:01:37.
+@item (20614 64019 50040 152000)
+was last accessed on October 23, 2012, at 20:12:03.050040152 UTC.
 
-@item (19141 59576)
-last had its contents modified on Oct 2 2009, at 13:49:12.
+@item (20000 23 0 0)
+was last modified on July 15, 2001, at 08:53:43 UTC.
 
-@item (18340 17300)
-last had its status changed on Feb 2 2008, at 12:19:00.
+@item (20614 64555 902289 872000)
+last had its status changed on October 23, 2012, at 20:20:59.902289872 UTC.
 
 @item 122295
 is 122295 bytes long.  (It may not contain 122295 characters, though,
@@ -1319,8 +1320,8 @@ end-of-line format is CR-LF.)
 @item "-rw-rw-rw-"
 has a mode of read and write access for the owner, group, and world.
 
-@item nil
-would retain the same @acronym{GID} if it were recreated.
+@item t
+is merely a placeholder; it carries no information.
 
 @item (5888 2 . 43978)
 has an inode number of 6473924464520138.
@@ -1349,6 +1350,36 @@ actually mean.
 If the file does not exist or is inaccessible, or if the system does
 not support SELinux, or if Emacs was not compiled with SELinux
 support, then the return value is @code{(nil nil nil nil)}.
+@end defun
+
+@cindex access control list
+@cindex ACL entries
+  If Emacs has been compiled with @dfn{ACL} (access control list)
+support, you can use the function @code{file-acl} to retrieve a file's
+ACL entries.  The format is platform-specific; on GNU/Linux and BSD,
+Emacs uses the POSIX ACL interface.  For the function
+@code{set-file-acl}, see @ref{Changing Files}.
+
+@defun file-acl filename
+This function returns the ACL entries of the file @var{filename}.
+The return value is a string containing the textual representation of
+the ACL entries, like the following:
+
+@example
+@group
+user::rw-
+group::r--
+group:gnu:rwx
+mask::rwx
+other::r--
+@end group
+@end example
+
+If the file does not exist or is inaccessible, or if Emacs was unable to
+determine the ACL entries, then the return value is @code{nil}.  The
+latter can happen for local files if Emacs was not compiled with ACL
+support, or for remote files if the file handler returns nil for the
+file's ACL entries.
 @end defun
 
 @node Locating Files
@@ -1391,7 +1422,7 @@ predicate function for testing whether a candidate file is suitable.
 The predicate is passed the candidate file name as its single
 argument.  If @var{predicate} is @code{nil} or omitted,
 @code{locate-file} uses @code{file-readable-p} as the predicate.
-@xref{Kinds of Files}, for other useful predicates, e.g.@:
+@xref{Kinds of Files}, for other useful predicates, e.g.,
 @code{file-executable-p} and @code{file-directory-p}.
 
 For compatibility, @var{predicate} can also be one of the symbols
@@ -1540,9 +1571,10 @@ non-@code{nil}, we attempt to copy the user and group ownership of the
 file.  This works only on some operating systems, and only if you have
 the correct permissions to do so.
 
-If the optional argument @var{preserve-selinux} is non-@code{nil}, and
-Emacs has been compiled with SELinux support, this function attempts
-to copy the file's SELinux context (@pxref{File Attributes}).
+If the optional argument @var{preserve-extended-attributes} is
+non-@code{nil}, and Emacs has been built with the appropriate support,
+this function attempts to copy the file's extended attributes, such as
+its SELinux context and ACL entries (@pxref{File Attributes}).
 @end deffn
 
 @deffn Command make-symbolic-link filename newname  &optional ok-if-exists
@@ -1661,7 +1693,7 @@ This function converts a symbolic file mode specification in
 @var{modes} into the equivalent integer value.  If the symbolic
 specification is based on an existing file, that file's mode bits are
 taken from the optional argument @var{base-modes}; if that argument is
-omitted or @code{nil}, it defaults to 0, i.e.@: no access rights at
+omitted or @code{nil}, it defaults to 0, i.e., no access rights at
 all.
 @end defun
 
@@ -1681,6 +1713,13 @@ a list @code{(@var{user} @var{role} @var{type} @var{range})}, like the
 return value of @code{file-selinux-context}.  The function does
 nothing if SELinux is disabled, or if Emacs was compiled without
 SELinux support.
+@end defun
+
+@defun set-file-acl filename acl-string
+This function sets the ACL entries of the file @var{filename} to
+@var{acl-string}.  @xref{File Attributes}, for a brief description of
+ACLs.  The @var{acl-string} argument should be a string containing the
+textual representation of the desired ACL entries.
 @end defun
 
 @node File Names

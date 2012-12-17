@@ -9,10 +9,10 @@
 
 ;; This file is part of GNU Emacs.
 
-;; GNU Emacs is free software; you can redistribute it and/or modify
+;; GNU Emacs is free software: you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 3, or (at your option)
-;; any later version.
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
 
 ;; GNU Emacs is distributed in the hope that it will be useful,
 ;; but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -20,9 +20,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs; see the file COPYING.  If not, write to the
-;; Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
-;; Boston, MA 02110-1301, USA.
+;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Change Log:
 
@@ -592,7 +590,9 @@ EXTRA-PROPERTIES is currently unused."
 	 (version-control 'never))
     (unless (fboundp 'autoload-ensure-default-file)
       (package-autoload-ensure-default-file generated-autoload-file))
-    (update-directory-autoloads pkg-dir)))
+    (update-directory-autoloads pkg-dir)
+    (let ((buf (find-buffer-visiting generated-autoload-file)))
+      (when buf (kill-buffer buf)))))
 
 (defvar tar-parse-info)
 (declare-function tar-untar-buffer "tar-mode" ())
@@ -730,6 +730,7 @@ It will move point to somewhere in the headers."
 (defun package-installed-p (package &optional min-version)
   "Return true if PACKAGE, of MIN-VERSION or newer, is installed.
 MIN-VERSION should be a version list."
+  (unless package--initialized (error "package.el is not yet initialized!"))
   (let ((pkg-desc (assq package package-alist)))
     (if pkg-desc
 	(version-list-<= min-version

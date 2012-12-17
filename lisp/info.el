@@ -1668,7 +1668,9 @@ escaped (\\\",\\\\)."
 		 " ("
 		 (if (stringp Info-current-file)
 		     (replace-regexp-in-string
-		      "%" "%%" (file-name-nondirectory Info-current-file))
+		      "%" "%%"
+		      (file-name-sans-extension
+		       (file-name-nondirectory Info-current-file)))
 		   (format "*%S*" Info-current-file))
 		 ") "
 		 (if Info-current-node
@@ -1882,9 +1884,7 @@ If DIRECTION is `backward', search in the reverse direction."
 	  (while (and (not give-up)
 		      (or (null found)
 			  (not (funcall isearch-filter-predicate beg-found found))))
-	    (let ((search-spaces-regexp
-		   (if (or (not isearch-mode) isearch-regexp)
-		       Info-search-whitespace-regexp)))
+	    (let ((search-spaces-regexp Info-search-whitespace-regexp))
 	      (if (if backward
 		      (re-search-backward regexp bound t)
 		    (re-search-forward regexp bound t))
@@ -1904,9 +1904,7 @@ If DIRECTION is `backward', search in the reverse direction."
 	  (if (null Info-current-subfile)
 	      (if isearch-mode
 		  (signal 'search-failed (list regexp "end of manual"))
-		(let ((search-spaces-regexp
-		       (if (or (not isearch-mode) isearch-regexp)
-			   Info-search-whitespace-regexp)))
+		(let ((search-spaces-regexp Info-search-whitespace-regexp))
 		  (if backward
 		      (re-search-backward regexp)
 		    (re-search-forward regexp))))
@@ -1964,9 +1962,7 @@ If DIRECTION is `backward', search in the reverse direction."
 		(while (and (not give-up)
 			    (or (null found)
 				(not (funcall isearch-filter-predicate beg-found found))))
-		  (let ((search-spaces-regexp
-			 (if (or (not isearch-mode) isearch-regexp)
-			     Info-search-whitespace-regexp)))
+		  (let ((search-spaces-regexp Info-search-whitespace-regexp))
 		    (if (if backward
 			    (re-search-backward regexp nil t)
 			  (re-search-forward regexp nil t))
@@ -2034,21 +2030,26 @@ If DIRECTION is `backward', search in the reverse direction."
 (defun Info-isearch-search ()
   (if Info-isearch-search
       (lambda (string &optional bound noerror count)
-	(Info-search
-	 (cond
-	  (isearch-word
-	   ;; Lax version of word search
-	   (let ((lax (not (or isearch-nonincremental
-			       (eq (length string)
-				   (length (isearch--state-string
-					    (car isearch-cmds))))))))
-	     (if (functionp isearch-word)
-		 (funcall isearch-word string lax)
-	       (word-search-regexp string lax))))
-	  (isearch-regexp string)
-	  (t (regexp-quote string)))
-	 bound noerror count
-	 (unless isearch-forward 'backward))
+	(let ((Info-search-whitespace-regexp
+	       (if (if isearch-regexp
+		       isearch-regexp-lax-whitespace
+		     isearch-lax-whitespace)
+		   search-whitespace-regexp)))
+	  (Info-search
+	   (cond
+	    (isearch-word
+	     ;; Lax version of word search
+	     (let ((lax (not (or isearch-nonincremental
+				 (eq (length string)
+				     (length (isearch--state-string
+					      (car isearch-cmds))))))))
+	       (if (functionp isearch-word)
+		   (funcall isearch-word string lax)
+		 (word-search-regexp string lax))))
+	    (isearch-regexp string)
+	    (t (regexp-quote string)))
+	   bound noerror count
+	   (unless isearch-forward 'backward)))
 	(point))
     (isearch-search-fun-default)))
 
@@ -2647,6 +2648,7 @@ Because of ambiguities, this should be concatenated with something like
                     (while (re-search-forward pattern nil t)
                       (push (match-string-no-properties 1)
                             completions))
+		    (setq completions (delete-dups completions))
                     ;; Check subsequent nodes if applicable.
                     (or (and Info-complete-next-re
                              (setq nextnode (Info-extract-pointer "next" t))
@@ -4032,7 +4034,9 @@ With a zero prefix arg, put the name inside a function call to `info'."
   (unless Info-current-node
     (user-error "No current Info node"))
   (let ((node (if (stringp Info-current-file)
-		  (concat "(" (file-name-nondirectory Info-current-file) ") "
+		  (concat "(" (file-name-sans-extension
+			       (file-name-nondirectory Info-current-file))
+			  ") "
 			  Info-current-node))))
     (if (zerop (prefix-numeric-value arg))
         (setq node (concat "(info \"" node "\")")))
@@ -4157,8 +4161,6 @@ Advanced commands:
        'Info-isearch-push-state)
   (set (make-local-variable 'isearch-filter-predicate)
        'Info-isearch-filter)
-  (set (make-local-variable 'search-whitespace-regexp)
-       Info-search-whitespace-regexp)
   (set (make-local-variable 'revert-buffer-function)
        'Info-revert-buffer-function)
   (Info-set-mode-line)
@@ -4421,7 +4423,8 @@ first line or header line, and for breadcrumb links.")
 	       (if (not (equal node "Top")) node
 		 (format "(%s)Top"
 			 (if (stringp Info-current-file)
-			     (file-name-nondirectory Info-current-file)
+			     (file-name-sans-extension
+			      (file-name-nondirectory Info-current-file))
 			   ;; Some legacy code can still use a symbol.
 			   Info-current-file)))))
 	  (setq line (concat
@@ -4533,7 +4536,8 @@ first line or header line, and for breadcrumb links.")
 	      (if (re-search-forward
 		   (format "File: %s\\([^,\n\t]+\\),"
 			   (if (stringp Info-current-file)
-			       (file-name-nondirectory Info-current-file)
+			       (file-name-sans-extension
+				(file-name-nondirectory Info-current-file))
 			     Info-current-file))
 		   header-end t)
 		  (put-text-property (match-beginning 1) (match-end 1)
@@ -4828,8 +4832,8 @@ first line or header line, and for breadcrumb links.")
       ;; Hide empty lines at the end of the node.
       (goto-char (point-max))
       (skip-chars-backward "\n")
-      (when (< (1+ (point)) (point-max))
-	(put-text-property (1+ (point)) (point-max) 'invisible t))
+      (when (< (point) (1- (point-max)))
+	(put-text-property (point) (1- (point-max)) 'invisible t))
 
       (set-buffer-modified-p nil))))
 
@@ -4837,6 +4841,17 @@ first line or header line, and for breadcrumb links.")
 ;; These functions permit speedbar to display the "tags" in the
 ;; current Info node.
 (eval-when-compile (require 'speedbar))
+
+(declare-function speedbar-add-expansion-list "speedbar" (new-list))
+(declare-function speedbar-center-buffer-smartly "speedbar" ())
+(declare-function speedbar-change-expand-button-char "speedbar" (char))
+(declare-function speedbar-change-initial-expansion-list "speedbar" (new-default))
+(declare-function speedbar-delete-subblock "speedbar" (indent))
+(declare-function speedbar-make-specialized-keymap "speedbar" ())
+(declare-function speedbar-make-tag-line "speedbar"
+                  (exp-button-type exp-button-char exp-button-function
+                   exp-button-data tag-button tag-button-function
+                   tag-button-data tag-button-face depth))
 
 (defvar Info-speedbar-key-map nil
   "Keymap used when in the Info display mode.")
@@ -5060,7 +5075,8 @@ BUFFER is the buffer speedbar is requesting buttons for."
   "This implements the `bookmark-make-record-function' type (which see)
 for Info nodes."
   (let* ((file (and (stringp Info-current-file)
-		    (file-name-nondirectory Info-current-file)))
+		    (file-name-sans-extension
+		     (file-name-nondirectory Info-current-file))))
 	 (bookmark-name (if file
 			    (concat "(" file ") " Info-current-node)
 			  Info-current-node))
@@ -5088,8 +5104,16 @@ type returned by `Info-bookmark-make-record', which see."
 
 ;;;###autoload
 (defun info-display-manual (manual)
-  "Go to Info buffer that displays MANUAL, creating it if none already exists."
-  (interactive "sManual name: ")
+  "Display an Info buffer displaying MANUAL.
+If there is an existing Info buffer for MANUAL, display it.
+Otherwise, visit the manual in a new Info buffer."
+  (interactive
+   (list
+    (progn
+      (info-initialize)
+      (completing-read "Manual name: "
+		       (info--manual-names)
+		       nil t))))
   (let ((blist (buffer-list))
 	(manual-re (concat "\\(/\\|\\`\\)" manual "\\(\\.\\|\\'\\)"))
 	(case-fold-search t)
@@ -5104,7 +5128,22 @@ type returned by `Info-bookmark-make-record', which see."
     (if found
 	(switch-to-buffer found)
       (info-initialize)
-      (info (Info-find-file manual)))))
+      (info (Info-find-file manual)
+	    (generate-new-buffer-name "*info*")))))
+
+(defun info--manual-names ()
+  (let (names)
+    (dolist (buffer (buffer-list))
+      (with-current-buffer buffer
+	(and (eq major-mode 'Info-mode)
+	     (stringp Info-current-file)
+	     (push (file-name-sans-extension
+		    (file-name-nondirectory Info-current-file))
+		   names))))
+    (delete-dups (append (nreverse names)
+			 (apply-partially 'Info-read-node-name-2
+					  Info-directory-list
+					  (mapcar 'car Info-suffix-list))))))
 
 (provide 'info)
 

@@ -29,14 +29,12 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <unistd.h>
 #include <sys/param.h>
 #include <stdio.h>
-#include <setjmp.h>
 
 #include "lisp.h"
 #include "systime.h"
 #include "sysselect.h"
 #include "frame.h"
 #include "termhooks.h"
-#include "termopts.h"
 #include "xterm.h"
 #include "process.h"
 #include "keyboard.h"

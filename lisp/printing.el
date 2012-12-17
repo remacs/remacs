@@ -139,10 +139,9 @@ Please send all bug fixes and enhancements to
 ;;
 ;; One way to set variables is by calling `pr-customize', customize all
 ;; variables and save the customization by future sessions (see Options
-;; section).  Other way is by coding your settings on Emacs init file (that is,
-;; ~/.emacs file), see below for a first setting template that it should be
-;; inserted on your ~/.emacs file (or c:/_emacs, if you're using Windows 9x/NT
-;; or MS-DOS):
+;; section).  Other way is by adding code to your init file; see below
+;; for a first setting template that it should be inserted on your
+;; init file:
 ;;
 ;; * Example of setting for Windows system:
 ;;
@@ -297,8 +296,7 @@ Please send all bug fixes and enhancements to
 ;; Using `printing'
 ;; ----------------
 ;;
-;; To use `printing' insert in your ~/.emacs file (or c:/_emacs, if you're
-;; using Windows 9x/NT or MS-DOS):
+;; To use `printing' insert in your init file:
 ;;
 ;;    (require 'printing)
 ;;    ;; ...some user settings...
@@ -1384,6 +1382,10 @@ Used by `pr-menu-bind' and `pr-update-menus'.")
   ;; third... time, but "print" item exists only in the first load.
   (eval-when-compile
     (require 'easymenu))		; to avoid compilation gripes
+
+  (declare-function easy-menu-add-item "easymenu"
+                    (map path item &optional before))
+  (declare-function easy-menu-remove-item "easymenu" (map path name))
 
   (eval-and-compile
       (defun pr-global-menubar (pr-menu-spec)
@@ -6081,6 +6083,8 @@ COMMAND.exe, COMMAND.bat and COMMAND.com in this order."
   (and pr-i-region			; let region activated
        (pr-keep-region-active)))
 
+(declare-function widget-field-action "wid-edit" (widget &optional _event))
+(declare-function widget-value-set "wid-edit" (widget value))
 
 (defun pr-insert-section-1 ()
   ;; 1. Print:

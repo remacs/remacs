@@ -653,7 +653,6 @@
 
 (require 'vc-hooks)
 (require 'vc-dispatcher)
-(require 'ediff)
 
 (declare-function diff-setup-whitespace "diff-mode" ())
 
@@ -808,16 +807,6 @@ is sensitive to blank lines."
 		       (string :tag "Comment Start")
 		       (string :tag "Comment End")))
   :group 'vc)
-
-(defcustom vc-checkout-carefully (= (user-uid) 0)
-  "Non-nil means be extra-careful in checkout.
-Verify that the file really is not locked
-and that its contents match what the repository version says."
-  :type 'boolean
-  :group 'vc)
-(make-obsolete-variable 'vc-checkout-carefully
-                        "the corresponding checks are always done now."
-                        "21.1")
 
 
 ;; Variables users don't need to see
@@ -1116,24 +1105,27 @@ For old-style locking-based version control systems, like RCS:
      ;; Files have local changes
      ((vc-compatible-state state 'edited)
       (let ((ready-for-commit files))
-	;; If files are edited but read-only, give user a chance to correct.
-	(dolist (file files)
-	  ;; If committing a mix of removed and edited files, the
-	  ;; fileset has state = 'edited.  Rather than checking the
-	  ;; state of each individual file in the fileset, it seems
-	  ;; simplest to just check if the file exists.	 Bug#9781.
-	  (when (and (file-exists-p file) (not (file-writable-p file)))
-	    ;; Make the file+buffer read-write.
-	    (unless (y-or-n-p (format "%s is edited but read-only; make it writable and continue? " file))
-	      (error "Aborted"))
-            ;; Maybe we somehow lost permissions on the directory.
-            (condition-case nil
-                (set-file-modes file (logior (file-modes file) 128))
-              (error (error "Unable to make file writable")))
-	    (let ((visited (get-file-buffer file)))
-	      (when visited
-		(with-current-buffer visited
-		  (read-only-mode -1))))))
+	;; CVS, SVN and bzr don't care about read-only (bug#9781).
+	;; RCS does, SCCS might (someone should check...).
+	(when (memq backend '(RCS SCCS))
+	  ;; If files are edited but read-only, give user a chance to correct.
+	  (dolist (file files)
+	    ;; If committing a mix of removed and edited files, the
+	    ;; fileset has state = 'edited.  Rather than checking the
+	    ;; state of each individual file in the fileset, it seems
+	    ;; simplest to just check if the file exists.	 Bug#9781.
+	    (when (and (file-exists-p file) (not (file-writable-p file)))
+	      ;; Make the file+buffer read-write.
+	      (unless (y-or-n-p (format "%s is edited but read-only; make it writable and continue? " file))
+		(error "Aborted"))
+	      ;; Maybe we somehow lost permissions on the directory.
+	      (condition-case nil
+		  (set-file-modes file (logior (file-modes file) 128))
+		(error (error "Unable to make file writable")))
+	      (let ((visited (get-file-buffer file)))
+		(when visited
+		  (with-current-buffer visited
+		    (read-only-mode -1)))))))
 	;; Allow user to revert files with no changes
 	(save-excursion
           (dolist (file files)
@@ -1279,12 +1271,10 @@ first backend that could register the file is used."
     ;; many VCS allow that as well.
     (dolist (fname files)
       (let ((bname (get-file-buffer fname)))
-	(unless fname (setq fname buffer-file-name))
-	(when (vc-backend fname)
-	  (if (vc-registered fname)
-	      (error "This file is already registered")
-	    (unless (y-or-n-p "Previous master file has vanished.  Make a new one? ")
-	      (error "Aborted"))))
+	(unless fname
+	  (setq fname buffer-file-name))
+	(when (vc-call-backend backend 'registered fname)
+	  (error "This file is already registered"))
 	;; Watch out for new buffers of size 0: the corresponding file
 	;; does not exist yet, even though buffer-modified-p is nil.
 	(when bname
@@ -1517,8 +1507,9 @@ to override the value of `vc-diff-switches' and `diff-switches'."
       (when (listp switches) switches))))
 
 ;; Old def for compatibility with Emacs-21.[123].
-(defmacro vc-diff-switches-list (backend) `(vc-switches ',backend 'diff))
-(make-obsolete 'vc-diff-switches-list 'vc-switches "22.1")
+(defmacro vc-diff-switches-list (backend)
+  (declare (obsolete vc-switches "22.1"))
+  `(vc-switches ',backend 'diff))
 
 (defun vc-diff-finish (buffer messages)
   ;; The empty sync output case has already been handled, so the only
@@ -1591,21 +1582,21 @@ Return t if the buffer had changes, nil otherwise."
     (let ((vc-disable-async-diff (not async)))
       (vc-call-backend (car vc-fileset) 'diff files rev1 rev2 buffer))
     (set-buffer buffer)
+    (diff-mode)
+    (set (make-local-variable 'diff-vc-backend) (car vc-fileset))
+    (set (make-local-variable 'revert-buffer-function)
+	 `(lambda (ignore-auto noconfirm)
+	    (vc-diff-internal ,async ',vc-fileset ,rev1 ,rev2 ,verbose)))
+    ;; Make the *vc-diff* buffer read only, the diff-mode key
+    ;; bindings are nicer for read only buffers. pcl-cvs does the
+    ;; same thing.
+    (setq buffer-read-only t)
     (if (and (zerop (buffer-size))
              (not (get-buffer-process (current-buffer))))
         ;; Treat this case specially so as not to pop the buffer.
         (progn
           (message "%s" (cdr messages))
           nil)
-      (diff-mode)
-      (set (make-local-variable 'diff-vc-backend) (car vc-fileset))
-      (set (make-local-variable 'revert-buffer-function)
-	   `(lambda (ignore-auto noconfirm)
-	      (vc-diff-internal ,async ',vc-fileset ,rev1 ,rev2 ,verbose)))
-      ;; Make the *vc-diff* buffer read only, the diff-mode key
-      ;; bindings are nicer for read only buffers. pcl-cvs does the
-      ;; same thing.
-      (setq buffer-read-only t)
       ;; Display the buffer, but at the end because it can change point.
       (pop-to-buffer (current-buffer))
       ;; The diff process may finish early, so call `vc-diff-finish'
@@ -1698,7 +1689,9 @@ saving the buffer."
     (vc-diff-internal t (vc-deduce-fileset t) nil nil
 		      (called-interactively-p 'interactive))))
 
-(declare-function ediff-vc-internal (rev1 rev2 &optional startup-hooks))
+(declare-function ediff-load-version-control "ediff" (&optional silent))
+(declare-function ediff-vc-internal "ediff-vers"
+                  (rev1 rev2 &optional startup-hooks))
 
 ;;;###autoload
 (defun vc-version-ediff (files rev1 rev2)
@@ -1719,7 +1712,8 @@ repository history using ediff."
    ;; FIXME We only support running ediff on one file for now.
    ;; We could spin off an ediff session per file in the file set.
    ((= (length files) 1)
-    (ediff-load-version-control)
+    (require 'ediff)
+    (ediff-load-version-control)  ; loads ediff-vers
     (find-file (car files))             ;FIXME: find-file from Elisp is bad.
     (ediff-vc-internal rev1 rev2 nil))
    (t
@@ -2560,8 +2554,12 @@ backend to NEW-BACKEND, and unregister FILE from the current backend.
 
 ;;;###autoload
 (defun vc-delete-file (file)
-  "Delete file and mark it as such in the version control system."
-  (interactive "fVC delete file: ")
+  "Delete file and mark it as such in the version control system.
+If called interactively, read FILE, defaulting to the current
+buffer's file name if it's under version control."
+  (interactive (list (read-file-name "VC delete file: " nil
+                                     (when (vc-backend buffer-file-name)
+                                       buffer-file-name) t)))
   (setq file (expand-file-name file))
   (let ((buf (get-file-buffer file))
         (backend (vc-backend file)))
@@ -2599,8 +2597,13 @@ backend to NEW-BACKEND, and unregister FILE from the current backend.
 
 ;;;###autoload
 (defun vc-rename-file (old new)
-  "Rename file OLD to NEW in both work area and repository."
-  (interactive "fVC rename file: \nFRename to: ")
+  "Rename file OLD to NEW in both work area and repository.
+If called interactively, read OLD and NEW, defaulting OLD to the
+current buffer's file name if it's under version control."
+  (interactive (list (read-file-name "VC rename file: " nil
+                                     (when (vc-backend buffer-file-name)
+                                       buffer-file-name) t)
+                     (read-file-name "Rename to: ")))
   ;; in CL I would have said (setq new (merge-pathnames new old))
   (let ((old-base (file-name-nondirectory old)))
     (when (and (not (string= "" old-base))

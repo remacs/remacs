@@ -37,7 +37,7 @@
 ;; When this minor mode is on, the faces of the current line are updated with
 ;; every insertion or deletion.
 ;;
-;; To turn Font Lock mode on automatically, add this to your ~/.emacs file:
+;; To turn Font Lock mode on automatically, add this to your init file:
 ;;
 ;;  (add-hook 'emacs-lisp-mode-hook 'turn-on-font-lock)
 ;;
@@ -340,8 +340,8 @@ This can be an \"!\" or the \"n\" in \"ifndef\".")
 (defvar font-lock-preprocessor-face	'font-lock-preprocessor-face
   "Face name to use for preprocessor directives.")
 
-(defvar font-lock-reference-face	'font-lock-constant-face)
-(make-obsolete-variable 'font-lock-reference-face 'font-lock-constant-face "20.3")
+(define-obsolete-variable-alias
+  'font-lock-reference-face 'font-lock-constant-face "20.3")
 
 ;; Fontification variables:
 

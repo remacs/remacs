@@ -81,8 +81,14 @@ The return value of this function is not used."
          #'(lambda (f _args new-name when)
              `(make-obsolete ',f ',new-name ,when)))
    (list 'compiler-macro
-         #'(lambda (f _args compiler-function)
-             `(put ',f 'compiler-macro #',compiler-function)))
+         #'(lambda (f args compiler-function)
+             ;; FIXME: Make it possible to just reuse `args'.
+             `(eval-and-compile
+                (put ',f 'compiler-macro
+                     ,(if (eq (car-safe compiler-function) 'lambda)
+                          `(lambda ,(append (cadr compiler-function) args)
+                             ,@(cddr compiler-function))
+                        `#',compiler-function)))))
    (list 'doc-string
          #'(lambda (f _args pos)
              (list 'put (list 'quote f) ''doc-string-elt (list 'quote pos))))
@@ -185,11 +191,10 @@ The return value is undefined.
                    ((and (featurep 'cl)
                          (memq (car x)  ;C.f. cl-do-proclaim.
                                '(special inline notinline optimize warn)))
-                    (if (null (stringp docstring))
-                        (push (list 'declare x) body)
-                      (setcdr body (cons (list 'declare x) (cdr body))))
+                    (push (list 'declare x)
+                          (if (stringp docstring) (cdr body) body))
                     nil)
-                   (t (message "Warning: Unknown defun property %S in %S"
+                   (t (message "Warning: Unknown defun property `%S' in %S"
                                (car x) name)))))
                    decls))
           (def (list 'defalias
@@ -233,7 +238,8 @@ The return value is undefined.
 ;; 		fns)))
 
 (defmacro defsubst (name arglist &rest body)
-  "Define an inline function.  The syntax is just like that of `defun'."
+  "Define an inline function.  The syntax is just like that of `defun'.
+\(fn NAME ARGLIST &optional DOCSTRING DECL &rest BODY)"
   (declare (debug defun) (doc-string 3))
   (or (memq (get name 'byte-optimizer)
 	    '(nil byte-compile-inline-expand))
@@ -254,7 +260,9 @@ convention was modified."
            advertised-signature-table))
 
 (defun make-obsolete (obsolete-name current-name &optional when)
-  "Make the byte-compiler warn that OBSOLETE-NAME is obsolete.
+  "Make the byte-compiler warn that function OBSOLETE-NAME is obsolete.
+OBSOLETE-NAME should be a function name or macro name (a symbol).
+
 The warning will say that CURRENT-NAME should be used instead.
 If CURRENT-NAME is a string, that is the `use instead' message
 \(it should end with a period, and not start with a capital).
@@ -313,7 +321,7 @@ This uses `defvaralias' and `make-obsolete-variable' (which see).
 See the Info node `(elisp)Variable Aliases' for more details.
 
 If CURRENT-NAME is a defcustom (more generally, any variable
-where OBSOLETE-NAME may be set, e.g. in a .emacs file, before the
+where OBSOLETE-NAME may be set, e.g. in an init file, before the
 alias is defined), then the define-obsolete-variable-alias
 statement should be evaluated before the defcustom, if user
 customizations are to be respected.  The simplest way to achieve

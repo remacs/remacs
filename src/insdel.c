@@ -19,7 +19,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 
 #include <config.h>
-#include <setjmp.h>
 
 #include <intprops.h>
 
@@ -69,13 +68,13 @@ check_markers (void)
   for (tail = BUF_MARKERS (current_buffer); tail; tail = tail->next)
     {
       if (tail->buffer->text != current_buffer->text)
-	abort ();
+	emacs_abort ();
       if (tail->charpos > Z)
-	abort ();
+	emacs_abort ();
       if (tail->bytepos > Z_BYTE)
-	abort ();
+	emacs_abort ();
       if (multibyte && ! CHAR_HEAD_P (FETCH_BYTE (tail->bytepos)))
-	abort ();
+	emacs_abort ();
     }
 }
 
@@ -808,7 +807,7 @@ insert_1_both (const char *string,
 #ifdef BYTE_COMBINING_DEBUG
   if (count_combining_before (string, nbytes, PT, PT_BYTE)
       || count_combining_after (string, nbytes, PT, PT_BYTE))
-    abort ();
+    emacs_abort ();
 #endif
 
   /* Record deletion of the surrounding text that combines with
@@ -840,8 +839,7 @@ insert_1_both (const char *string,
 			     PT + nchars, PT_BYTE + nbytes,
 			     before_markers);
 
-  if (buffer_intervals (current_buffer))
-    offset_intervals (current_buffer, PT, nchars);
+  offset_intervals (current_buffer, PT, nchars);
 
   if (!inherit && buffer_intervals (current_buffer))
     set_text_properties (make_number (PT), make_number (PT + nchars),
@@ -943,7 +941,7 @@ insert_from_string_1 (Lisp_Object string, ptrdiff_t pos, ptrdiff_t pos_byte,
      the text that has been stored by copy_text.  */
   if (count_combining_before (GPT_ADDR, outgoing_nbytes, PT, PT_BYTE)
       || count_combining_after (GPT_ADDR, outgoing_nbytes, PT, PT_BYTE))
-    abort ();
+    emacs_abort ();
 #endif
 
   record_insert (PT, nchars);
@@ -1126,7 +1124,7 @@ insert_from_buffer_1 (struct buffer *buf,
      the text that has been stored by copy_text.  */
   if (count_combining_before (GPT_ADDR, outgoing_nbytes, PT, PT_BYTE)
       || count_combining_after (GPT_ADDR, outgoing_nbytes, PT, PT_BYTE))
-    abort ();
+    emacs_abort ();
 #endif
 
   record_insert (PT, nchars);
@@ -1153,8 +1151,7 @@ insert_from_buffer_1 (struct buffer *buf,
 			     PT_BYTE + outgoing_nbytes,
 			     0);
 
-  if (buffer_intervals (current_buffer))
-    offset_intervals (current_buffer, PT, nchars);
+  offset_intervals (current_buffer, PT, nchars);
 
   /* Get the intervals for the part of the string we are inserting.  */
   intervals = buffer_intervals (buf);
@@ -1187,7 +1184,7 @@ adjust_after_replace (ptrdiff_t from, ptrdiff_t from_byte,
 #ifdef BYTE_COMBINING_DEBUG
   if (count_combining_before (GPT_ADDR, len_byte, from, from_byte)
       || count_combining_after (GPT_ADDR, len_byte, from, from_byte))
-    abort ();
+    emacs_abort ();
 #endif
 
   if (STRINGP (prev_text))
@@ -1222,8 +1219,7 @@ adjust_after_replace (ptrdiff_t from, ptrdiff_t from_byte,
   else if (len < nchars_del)
     adjust_overlays_for_delete (from, nchars_del - len);
 
-  if (buffer_intervals (current_buffer))
-    offset_intervals (current_buffer, from, len - nchars_del);
+  offset_intervals (current_buffer, from, len - nchars_del);
 
   if (from < PT)
     adjust_point (len - nchars_del, len_byte - nbytes_del);
@@ -1370,7 +1366,7 @@ replace_range (ptrdiff_t from, ptrdiff_t to, Lisp_Object new,
      the text that has been stored by copy_text.  */
   if (count_combining_before (GPT_ADDR, outgoing_insbytes, from, from_byte)
       || count_combining_after (GPT_ADDR, outgoing_insbytes, from, from_byte))
-    abort ();
+    emacs_abort ();
 #endif
 
   if (! EQ (BVAR (current_buffer, undo_list), Qt))
@@ -1394,15 +1390,15 @@ replace_range (ptrdiff_t from, ptrdiff_t to, Lisp_Object new,
 
   eassert (GPT <= GPT_BYTE);
 
-  /* Adjust the overlay center as needed.  This must be done after
-     adjusting the markers that bound the overlays.  */
-  adjust_overlays_for_delete (from, nchars_del);
-  adjust_overlays_for_insert (from, inschars);
-
   /* Adjust markers for the deletion and the insertion.  */
   if (markers)
     adjust_markers_for_replace (from, from_byte, nchars_del, nbytes_del,
 				inschars, outgoing_insbytes);
+
+  /* Adjust the overlay center as needed.  This must be done after
+     adjusting the markers that bound the overlays.  */
+  adjust_overlays_for_delete (from, nchars_del);
+  adjust_overlays_for_insert (from, inschars);
 
   offset_intervals (current_buffer, from, inschars - nchars_del);
 
@@ -1496,7 +1492,7 @@ replace_range_2 (ptrdiff_t from, ptrdiff_t from_byte,
      the text that has been stored by copy_text.  */
   if (count_combining_before (GPT_ADDR, insbytes, from, from_byte)
       || count_combining_after (GPT_ADDR, insbytes, from, from_byte))
-    abort ();
+    emacs_abort ();
 #endif
 
   GAP_SIZE -= insbytes;
@@ -1510,6 +1506,12 @@ replace_range_2 (ptrdiff_t from, ptrdiff_t from_byte,
 
   eassert (GPT <= GPT_BYTE);
 
+  /* Adjust markers for the deletion and the insertion.  */
+  if (markers
+      && ! (nchars_del == 1 && inschars == 1 && nbytes_del == insbytes))
+    adjust_markers_for_replace (from, from_byte, nchars_del, nbytes_del,
+				inschars, insbytes);
+
   /* Adjust the overlay center as needed.  This must be done after
      adjusting the markers that bound the overlays.  */
   if (nchars_del != inschars)
@@ -1517,12 +1519,6 @@ replace_range_2 (ptrdiff_t from, ptrdiff_t from_byte,
       adjust_overlays_for_insert (from, inschars);
       adjust_overlays_for_delete (from + inschars, nchars_del);
     }
-
-  /* Adjust markers for the deletion and the insertion.  */
-  if (markers
-      && ! (nchars_del == 1 && inschars == 1 && nbytes_del == insbytes))
-    adjust_markers_for_replace (from, from_byte, nchars_del, nbytes_del,
-				inschars, insbytes);
 
   offset_intervals (current_buffer, from, inschars - nchars_del);
 
@@ -1704,7 +1700,7 @@ del_range_2 (ptrdiff_t from, ptrdiff_t from_byte,
 #ifdef BYTE_COMBINING_DEBUG
   if (count_combining_before (BUF_BYTE_ADDRESS (current_buffer, to_byte),
 			      Z_BYTE - to_byte, from, from_byte))
-    abort ();
+    emacs_abort ();
 #endif
 
   if (ret_string || ! EQ (BVAR (current_buffer, undo_list), Qt))
@@ -1759,9 +1755,9 @@ del_range_2 (ptrdiff_t from, ptrdiff_t from_byte,
 
   return deletion;
 }
-
-/* Call this if you're about to change the region of BUFFER from
-   character positions START to END.  This checks the read-only
+
+/* Call this if you're about to change the region of current buffer
+   from character positions START to END.  This checks the read-only
    properties of the region, calls the necessary modification hooks,
    and warns the next redisplay that it should pay attention to that
    area.
@@ -1770,16 +1766,11 @@ del_range_2 (ptrdiff_t from, ptrdiff_t from_byte,
    Otherwise set CHARS_MODIFF to the new value of MODIFF.  */
 
 void
-modify_region (struct buffer *buffer, ptrdiff_t start, ptrdiff_t end,
-	       bool preserve_chars_modiff)
+modify_region_1 (ptrdiff_t start, ptrdiff_t end, bool preserve_chars_modiff)
 {
-  struct buffer *old_buffer = current_buffer;
-
-  set_buffer_internal (buffer);
-
   prepare_to_modify_buffer (start, end, NULL);
 
-  BUF_COMPUTE_UNCHANGED (buffer, start - 1, end);
+  BUF_COMPUTE_UNCHANGED (current_buffer, start - 1, end);
 
   if (MODIFF <= SAVE_MODIFF)
     record_first_change ();
@@ -1787,11 +1778,9 @@ modify_region (struct buffer *buffer, ptrdiff_t start, ptrdiff_t end,
   if (! preserve_chars_modiff)
     CHARS_MODIFF = MODIFF;
 
-  bset_point_before_scroll (buffer, Qnil);
-
-  set_buffer_internal (old_buffer);
+  bset_point_before_scroll (current_buffer, Qnil);
 }
-
+
 /* Check that it is okay to modify the buffer between START and END,
    which are char positions.
 
@@ -1811,9 +1800,10 @@ prepare_to_modify_buffer (ptrdiff_t start, ptrdiff_t end,
   if (!NILP (BVAR (current_buffer, read_only)))
     Fbarf_if_buffer_read_only ();
 
-  /* Let redisplay consider other windows than selected_window
-     if modifying another buffer.  */
-  if (XBUFFER (XWINDOW (selected_window)->buffer) != current_buffer)
+  /* If we're modifying the buffer other than shown in a selected window,
+     let redisplay consider other windows if this buffer is visible.  */
+  if (XBUFFER (XWINDOW (selected_window)->buffer) != current_buffer
+      && buffer_window_count (current_buffer))
     ++windows_or_buffers_changed;
 
   if (buffer_intervals (current_buffer))
@@ -1865,7 +1855,7 @@ prepare_to_modify_buffer (ptrdiff_t start, ptrdiff_t end,
 	  : (!NILP (Vselect_active_regions)
 	     && !NILP (Vtransient_mark_mode))))
     {
-      ptrdiff_t b = XMARKER (BVAR (current_buffer, mark))->charpos;
+      ptrdiff_t b = marker_position (BVAR (current_buffer, mark));
       ptrdiff_t e = PT;
       if (b < e)
 	Vsaved_region_selection = make_buffer_string (b, e, 0);
@@ -2107,7 +2097,7 @@ DEFUN ("combine-after-change-execute", Fcombine_after_change_execute,
      non-nil, and insertion calls a file handler (e.g. through
      lock_file) which scribbles into a temp file -- cyd  */
   if (!BUFFERP (combine_after_change_buffer)
-      || NILP (BVAR (XBUFFER (combine_after_change_buffer), name)))
+      || !BUFFER_LIVE_P (XBUFFER (combine_after_change_buffer)))
     {
       combine_after_change_list = Qnil;
       return Qnil;

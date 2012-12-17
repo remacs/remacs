@@ -1,3 +1,75 @@
+2012-12-14  Dmitry Gutov  <dgutov@yandex.ru>
+
+	* automated/ruby-mode-tests.el
+	Rename one interpolation test; add three more.
+	(ruby-with-temp-buffer): New macro, use it where appropriate.
+	(ruby-add-log-current-method-examples): Use "_" for target point.
+	Add four new tests for ruby-add-log-current-method.
+
+2012-12-11  Glenn Morris  <rgm@gnu.org>
+
+	* automated/f90.el (f90-test-bug13138): New test.
+
+2012-12-10  Rüdiger Sonderfeld  <ruediger@c-plusplus.de>
+
+	* automated/inotify-test.el: New test.
+
+2012-12-02  Chong Yidong  <cyd@gnu.org>
+
+	* automated/ruby-mode-tests.el
+	(ruby-add-log-current-method-examples): Don't use loop macro, to
+	allow automated testing to work.
+
+2012-11-20  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* automated/advice-tests.el (advice-tests--data): Remove.
+	(advice-tests): Move the tests directly here instead.
+	Add called-interactively-p tests.
+
+2012-11-19  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* automated/ert-x-tests.el: Use cl-lib.
+	* automated/ert-tests.el: Use lexical-binding and cl-lib.
+
+2012-11-14  Dmitry Gutov  <dgutov@yandex.ru>
+
+	* automated/ruby-mode-tests.el (ruby-indent-singleton-class): Pass.
+	(ruby-indent-inside-heredoc-after-operator)
+	(ruby-indent-inside-heredoc-after-space): New tests.
+	Change direct font-lock face references to var references.
+	(ruby-interpolation-suppresses-syntax-inside): New test.
+	(ruby-interpolation-inside-percent-literal-with-paren):
+	New failing test.
+
+2012-11-13  Dmitry Gutov  <dgutov@yandex.ru>
+
+	* automated/ruby-mode-tests.el (ruby-heredoc-font-lock)
+	(ruby-singleton-class-no-heredoc-font-lock)
+	(ruby-add-log-current-method-examples): New tests.
+	(ruby-test-string): Extract from ruby-should-indent-buffer.
+	(ruby-deftest-move-to-block): New macro.
+	Add several move-to-block tests.
+
+2012-11-12  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* automated/advice-tests.el: New tests.
+
+2012-10-14  Eli Zaretskii  <eliz@gnu.org>
+
+	* automated/compile-tests.el (compile-tests--test-regexps-data):
+	Add new data for msft's new format.
+
+2012-09-08  Dmitry Gutov  <dgutov@yandex.ru>
+
+	* automated/ruby-mode-tests.el:
+	(ruby-toggle-block-to-multiline): New test.
+	(ruby-should-indent-buffer, ruby-toggle-block-to-do-end)
+	(ruby-toggle-block-to-brace): Use buffer-string.
+
+2012-09-07  Dmitry Gutov  <dgutov@yandex.ru>
+
+	* automated/ruby-mode-tests.el: New tests (Bug#11613).
+
 2012-08-28  Chong Yidong  <cyd@gnu.org>
 
 	* automated/files.el: Test every combination of values for

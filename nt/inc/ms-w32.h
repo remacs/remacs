@@ -120,20 +120,6 @@ extern char *getenv ();
 #endif
 #include <sys/types.h>
 
-#ifdef _MSC_VER
-typedef unsigned long sigset_t;
-typedef int ssize_t;
-#endif
-
-struct sigaction {
-  int sa_flags;
-  void (*sa_handler)(int);
-  sigset_t sa_mask;
-};
-#define SIG_BLOCK       1
-#define SIG_SETMASK     2
-#define SIG_UNBLOCK     3
-
 #ifndef MAXPATHLEN
 #define MAXPATHLEN      _MAX_PATH
 #endif
@@ -159,8 +145,6 @@ struct sigaction {
 #endif
 
 /* Calls that are emulated or shadowed.  */
-#undef access
-#define access  sys_access
 #undef chdir
 #define chdir   sys_chdir
 #undef chmod
@@ -194,14 +178,20 @@ struct sigaction {
 #define strerror sys_strerror
 #undef unlink
 #define unlink  sys_unlink
+/* This prototype is needed because some files include config.h
+   _after_ the standard headers, so sys_unlink gets no prototype from
+   stdio.h or io.h.  */
+extern int sys_unlink (const char *);
 #undef write
 #define write   sys_write
 
 /* Subprocess calls that are emulated.  */
 #define spawnve sys_spawnve
-#define wait    sys_wait
 #define kill    sys_kill
 #define signal  sys_signal
+
+/* Internal signals.  */
+#define emacs_raise(sig) emacs_abort()
 
 /* termcap.c calls that are emulated.  */
 #define tputs   sys_tputs
@@ -247,6 +237,9 @@ typedef int pid_t;
 #define stricmp   _stricmp
 #define tzset     _tzset
 
+/* We cannot include system header process.h, since there's src/process.h.  */
+int _getpid (void);
+
 /* Include time.h before redirecting tzname, since MSVC's time.h
    defines _tzname to call a function, but also declares tzname a
    2-element array.  Having the redirection before including the
@@ -267,6 +260,10 @@ struct timespec
   time_t	tv_sec;		/* seconds */
   long int	tv_nsec;	/* nanoseconds */
 };
+
+/* Required for functions in lib/time_r.c, since we don't use lib/time.h.  */
+extern struct tm *gmtime_r (time_t const * restrict, struct tm * restrict);
+extern struct tm *localtime_r (time_t const * restrict, struct tm * restrict);
 
 /* This is hacky, but is necessary to avoid warnings about macro
    redefinitions using the SDK compilers.  */
@@ -290,10 +287,42 @@ struct timespec
 #define SIGPIPE 13              /* Write on pipe with no readers */
 #define SIGALRM 14              /* Alarm */
 #define SIGCHLD 18              /* Death of child */
+#define SIGPROF 19              /* Profiling */
 
 #ifndef NSIG
 #define NSIG 23
 #endif
+
+#ifdef _MSC_VER
+typedef int sigset_t;
+typedef int ssize_t;
+#endif
+
+typedef void (_CALLBACK_ *signal_handler) (int);
+extern signal_handler sys_signal (int, signal_handler);
+
+struct sigaction {
+  int sa_flags;
+  void (_CALLBACK_ *sa_handler)(int);
+  sigset_t sa_mask;
+};
+#define SA_RESTART      0
+#define SIG_BLOCK       1
+#define SIG_SETMASK     2
+#define SIG_UNBLOCK     3
+
+extern int sigemptyset (sigset_t *);
+extern int sigaddset (sigset_t *, int);
+extern int sigfillset (sigset_t *);
+extern int sigprocmask (int, const sigset_t *, sigset_t *);
+extern int pthread_sigmask (int, const sigset_t *, sigset_t *);
+extern int sigismember (const sigset_t *, int);
+extern int setpgrp (int, int);
+extern int sigaction (int, const struct sigaction *, struct sigaction *);
+extern int alarm (int);
+
+extern int sys_kill (int, int);
+
 
 /* For integration with MSDOS support.  */
 #define getdisk()               (_getdrive () - 1)
@@ -334,16 +363,7 @@ extern char *get_emacs_configuration_options (void);
 #include <malloc.h>
 #endif
 
-/* stdlib.h must be included after redefining malloc & friends, but
-   before redefining abort.  Isn't library redefinition funny?  */
 #include <stdlib.h>
-
-/* Redefine abort.  */
-#ifdef HAVE_NTGUI
-#define abort	w32_abort
-extern _Noreturn void w32_abort (void);
-#endif
-
 #include <sys/stat.h>
 
 /* Define for those source files that do not include enough NT system files.  */
@@ -360,9 +380,17 @@ extern _Noreturn void w32_abort (void);
 #define sys_nerr _sys_nerr
 #endif
 
-extern int getloadavg (double *, int);
+/* This must be after including stdlib.h, which defines putenv on MinGW.  */
+#ifdef putenv
+# undef putenv
+#endif
+#define putenv    sys_putenv
+extern int sys_putenv (char *);
 
-#if defined (__MINGW32__) || _MSC_VER >= 1400
+extern int getloadavg (double *, int);
+extern int getpagesize (void);
+
+#if defined (__MINGW32__)
 
 /* Define to 1 if the system has the type `long long int'. */
 # define HAVE_LONG_LONG_INT 1
@@ -370,21 +398,37 @@ extern int getloadavg (double *, int);
 /* Define to 1 if the system has the type `unsigned long long int'. */
 # define HAVE_UNSIGNED_LONG_LONG_INT 1
 
-#elif _MSC_VER >= 1200
+#endif
 
+#ifdef _MSC_VER
+# if defined(_WIN64)
+typedef __int64 EMACS_INT;
+typedef unsigned __int64 EMACS_UINT;
+#  define EMACS_INT_MAX	          LLONG_MAX
+#  define PRIuMAX                 "llu"
+#  define pI			  "ll"
+/* Fix a bug in MSVC headers : stdint.h */
+#  define _INTPTR 2
+# elif defined(_WIN32)
 /* Temporarily disable wider-than-pointer integers until they're tested more.
    Build with CFLAGS='-DWIDE_EMACS_INT' to try them out.  */
 
-# ifdef WIDE_EMACS_INT
+#  ifdef WIDE_EMACS_INT
 
 /* Use pre-C99-style 64-bit integers.  */
 typedef __int64 EMACS_INT;
 typedef unsigned __int64 EMACS_UINT;
-# define EMACS_INT_MAX _I64_MAX
-# define pI "I64"
-
+#   define EMACS_INT_MAX           LLONG_MAX
+#   define PRIuMAX                 "llu"
+#   define pI			  "I64"
+#  else
+typedef int EMACS_INT;
+typedef unsigned int EMACS_UINT;
+#   define EMACS_INT_MAX           LONG_MAX
+#   define PRIuMAX                 "lu"
+#   define pI			  "l"
+#  endif
 # endif
-
 #endif
 
 /* We need a little extra space, see ../../lisp/loadup.el.  */
@@ -424,6 +468,22 @@ extern void _DebPrint (const char *fmt, ...);
 #define DebPrint(stuff)
 #endif
 
+#ifdef _MSC_VER
+#if _MSC_VER >= 800 && !defined(__cplusplus)
+/* Unnamed type definition in parentheses.
+   A structure, union, or enumerated type with no name is defined in a
+   parenthetical expression.  The type definition is meaningless.  */
+#pragma warning(disable:4116)
+/* 'argument' : conversion from 'type1' to 'type2', possible loss of
+   data A floating point type was converted to an integer type.  A
+   possible loss of data may have occurred.  */
+#pragma warning(disable:4244)
+/* Negative integral constant converted to unsigned type.
+   An expression converts a negative integer constant to an unsigned type.
+   The result of the expression is probably meaningless.  */
+#pragma warning(disable:4308)
+#endif
+#endif
 #define TERM_HEADER "w32term.h"
 
 

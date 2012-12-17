@@ -4,6 +4,7 @@
 
 ;; Author: Mario Lang <mlang@delysid.org>
 ;; Contributor: Eric M. Ludlam <eric@siege-engine.com>
+;; Maintainer: FSF
 
 ;; This file is part of GNU Emacs.
 
@@ -37,7 +38,6 @@
 (require 'erc)
 (require 'speedbar)
 (condition-case nil (require 'dframe) (error nil))
-(eval-when-compile (require 'cl))
 
 ;;; Customization:
 

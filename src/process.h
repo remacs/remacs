@@ -145,6 +145,9 @@ struct Lisp_Process
     /* Flag to set coding-system of the process buffer from the
        coding_system used to decode process output.  */
     unsigned int inherit_coding_system_flag : 1;
+    /* Whether the process is alive, i.e., can be waited for.  Running
+       processes can be waited for, but exited and fake processes cannot.  */
+    unsigned int alive : 1;
     /* Record the process status in the raw form in which it comes from `wait'.
        This is to avoid consing in a signal handler.  The `raw_status_new'
        flag indicates that `raw_status' contains a new status that still
@@ -185,23 +188,6 @@ pset_gnutls_cred_type (struct Lisp_Process *p, Lisp_Object val)
 }
 #endif
 
-/* True if we are about to fork off a synchronous process or if we
-   are waiting for it.  */
-extern bool synch_process_alive;
-
-/* Communicate exit status of sync process to from sigchld_handler
-   to Fcall_process.  */
-
-/* Nonzero => this is a string explaining death of synchronous subprocess.  */
-extern const char *synch_process_death;
-
-/* Nonzero => this is the signal number that terminated the subprocess.  */
-extern int synch_process_termsig;
-
-/* If synch_process_death is zero,
-   this is exit code of synchronous subprocess.  */
-extern int synch_process_retcode;
-
 /* Nonzero means don't run process sentinels.  This is used
    when exiting.  */
 extern int inhibit_sentinels;
@@ -214,6 +200,12 @@ extern Lisp_Object Qtime, Qctime;
 extern Lisp_Object QCspeed;
 extern Lisp_Object QCbytesize, QCstopbits, QCparity, Qodd, Qeven;
 extern Lisp_Object QCflowcontrol, Qhw, Qsw, QCsummary;
+
+/* Defined in callproc.c.  */
+
+extern void record_kill_process (struct Lisp_Process *);
+
+/* Defined in process.c.  */
 
 extern Lisp_Object list_system_processes (void);
 extern Lisp_Object system_process_attributes (Lisp_Object);

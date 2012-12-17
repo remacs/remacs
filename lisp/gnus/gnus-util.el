@@ -1926,31 +1926,27 @@ Same as `string-match' except this function does not change the match data."
     (save-match-data
       (string-match regexp string start))))
 
-(eval-and-compile
-  (if (fboundp 'macroexpand-all)
-      (defalias 'gnus-macroexpand-all 'macroexpand-all)
-    (defun gnus-macroexpand-all (form &optional environment)
-      "Return result of expanding macros at all levels in FORM.
-If no macros are expanded, FORM is returned unchanged.
-The second optional arg ENVIRONMENT specifies an environment of macro
-definitions to shadow the loaded ones for use in file byte-compilation."
-      (if (consp form)
-	  (let ((idx 1)
-		(len (length (setq form (copy-sequence form))))
-		expanded)
-	    (while (< idx len)
-	      (setcar (nthcdr idx form) (gnus-macroexpand-all (nth idx form)
-							      environment))
-	      (setq idx (1+ idx)))
-	    (if (eq (setq expanded (macroexpand form environment)) form)
-		form
-	      (gnus-macroexpand-all expanded environment)))
-	form))))
+(if (fboundp 'string-prefix-p)
+    (defalias 'gnus-string-prefix-p 'string-prefix-p)
+  (defun gnus-string-prefix-p (str1 str2 &optional ignore-case)
+    "Return non-nil if STR1 is a prefix of STR2.
+If IGNORE-CASE is non-nil, the comparison is done without paying attention
+to case differences."
+    (and (<= (length str1) (length str2))
+	 (let ((prefix (substring str2 0 (length str1))))
+	   (if ignore-case
+	       (string-equal (downcase str1) (downcase prefix))
+	     (string-equal str1 prefix))))))
 
 ;; Simple check: can be a macro but this way, although slow, it's really clear.
 ;; We don't use `bound-and-true-p' because it's not in XEmacs.
 (defun gnus-bound-and-true-p (sym)
   (and (boundp sym) (symbol-value sym)))
+
+(if (fboundp 'timer--function)
+    (defalias 'gnus-timer--function 'timer--function)
+  (defun gnus-timer--function (timer)
+    (elt timer 5)))
 
 (provide 'gnus-util)
 

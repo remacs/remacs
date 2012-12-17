@@ -592,8 +592,10 @@ Done before generating the new subject of a forward."
   ;; comes back to you (e.g. a mailing-list to which you subscribe, in which
   ;; case you may be removed from the list on the grounds that mail to you
   ;; bounced with a "mailing loop" error).
-  "^Return-receipt\\|^X-Gnus\\|^Gnus-Warning:\\|^>?From \\|^Delivered-To:"
+  "^Return-receipt\\|^X-Gnus\\|^Gnus-Warning:\\|^>?From \\|^Delivered-To:\
+\\|^X-Content-Length:\\|^X-UIDL:"
   "*All headers that match this regexp will be deleted when resending a message."
+  :version "24.4"
   :group 'message-interface
   :link '(custom-manual "(message)Resending")
   :type '(repeat :value-to-internal (lambda (widget value)
@@ -3135,22 +3137,10 @@ M-RET    `message-newline-and-reformat' (break the line and reformat)."
   (push-mark)
   (message-position-on-field "Summary" "Subject"))
 
-(eval-when-compile
-  (defmacro message-called-interactively-p (kind)
-    (condition-case nil
-	(progn
-	  (eval '(called-interactively-p 'any))
-	  ;; Emacs >=23.2
-	  `(called-interactively-p ,kind))
-      ;; Emacs <23.2
-      (wrong-number-of-arguments '(called-interactively-p))
-      ;; XEmacs
-      (void-function '(interactive-p)))))
-
 (defun message-goto-body ()
   "Move point to the beginning of the message body."
   (interactive)
-  (when (and (message-called-interactively-p 'any)
+  (when (and (gmm-called-interactively-p 'any)
 	     (looking-at "[ \t]*\n"))
     (expand-abbrev))
   (push-mark)
@@ -3160,8 +3150,12 @@ M-RET    `message-newline-and-reformat' (break the line and reformat)."
 
 (defun message-in-body-p ()
   "Return t if point is in the message body."
-  (let ((body (save-excursion (message-goto-body))))
-    (>= (point) body)))
+  (>= (point)
+      (save-excursion
+	(goto-char (point-min))
+	(or (search-forward (concat "\n" mail-header-separator "\n") nil t)
+	    (search-forward-regexp "[^:]+:\\([^\n]\\|\n[ \t]\\)+\n\n" nil t))
+	(point))))
 
 (defun message-goto-eoh ()
   "Move point to the end of the headers."
@@ -3292,11 +3286,33 @@ or in the synonym headers, defined by `message-header-synonyms'."
 (defun message-insert-newsgroups ()
   "Insert the Newsgroups header from the article being replied to."
   (interactive)
-  (when (and (message-position-on-field "Newsgroups")
-	     (mail-fetch-field "newsgroups")
-	     (not (string-match "\\` *\\'" (mail-fetch-field "newsgroups"))))
-    (insert ","))
-  (insert (or (message-fetch-reply-field "newsgroups") "")))
+  (let ((old-newsgroups (mail-fetch-field "newsgroups"))
+	(new-newsgroups (message-fetch-reply-field "newsgroups"))
+	(first t)
+	insert-newsgroups)
+    (message-position-on-field "Newsgroups")
+    (cond
+     ((not new-newsgroups)
+      (error "No Newsgroups to insert"))
+     ((not old-newsgroups)
+      (insert new-newsgroups))
+     (t
+      (setq new-newsgroups (split-string new-newsgroups "[, ]+")
+	    old-newsgroups (split-string old-newsgroups "[, ]+"))
+      (dolist (group new-newsgroups)
+	(unless (member group old-newsgroups)
+	  (push group insert-newsgroups)))
+      (if (null insert-newsgroups)
+	  (error "Newgroup%s already in the header"
+		 (if (> (length new-newsgroups) 1)
+		     "s" ""))
+	(when old-newsgroups
+	  (setq first nil))
+	(dolist (group insert-newsgroups)
+	  (unless first
+	    (insert ","))
+	  (setq first nil)
+	  (insert group)))))))
 
 
 
@@ -6702,11 +6718,16 @@ The function is called with one parameter, a cons cell ..."
 			       ", "))
 	    mct (message-fetch-field "mail-copies-to")
 	    author (or (message-fetch-field "mail-reply-to")
-		       (message-fetch-field "reply-to")
-		       (message-fetch-field "from")
-		       "")
+		       (message-fetch-field "reply-to"))
 	    mft (and message-use-mail-followup-to
-		     (message-fetch-field "mail-followup-to"))))
+		     (message-fetch-field "mail-followup-to")))
+      ;; Make sure this message goes to the author if this is a wide
+      ;; reply, since Reply-To address may be a list address a mailing
+      ;; list server added.
+      (when (and wide author)
+	(setq cc (concat author ", " cc)))
+      (when (or wide (not author))
+	(setq author (or (message-fetch-field "from") ""))))
 
     ;; Handle special values of Mail-Copies-To.
     (when mct
@@ -8108,8 +8129,7 @@ regexp VARSTR."
   (if (fboundp 'mail-abbrevs-setup)
       (let ((minibuffer-setup-hook 'mail-abbrevs-setup)
 	    (minibuffer-local-map message-minibuffer-local-map))
-	(flet ((mail-abbrev-in-expansion-header-p nil t))
-	  (read-from-minibuffer prompt initial-contents)))
+	(read-from-minibuffer prompt initial-contents))
     (let ((minibuffer-setup-hook 'mail-abbrev-minibuffer-setup-hook)
 	  (minibuffer-local-map message-minibuffer-local-map))
       (read-string prompt initial-contents))))

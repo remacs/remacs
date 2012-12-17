@@ -7,7 +7,7 @@
 @c This is *so* much nicer :)
 @footnotestyle end
 
-@c In the Tramp CVS, the version number is auto-frobbed from
+@c In the Tramp repository, the version number is auto-frobbed from
 @c configure.ac, so you should edit that file and run
 @c "autoconf && ./configure" to change the version number.
 
@@ -106,7 +106,7 @@ If you're using the other Emacs flavor, you should read the
 @ifhtml
 The latest release of @value{tramp} is available for
 @uref{ftp://ftp.gnu.org/gnu/tramp/, download}, or you may see
-@ref{Obtaining Tramp} for more details, including the CVS server
+@ref{Obtaining Tramp} for more details, including the Git server
 details.
 
 @value{tramp} also has a @uref{http://savannah.gnu.org/projects/tramp/,
@@ -377,13 +377,13 @@ includes @value{tramp} already, and there is a @value{tramp} package
 for XEmacs, as well.  So maybe it is easier to just use those.  But if
 you want the bleeding edge, read on@dots{...}
 
-For the especially brave, @value{tramp} is available from CVS.  The CVS
+For the especially brave, @value{tramp} is available from Git.  The Git
 version is the latest version of the code and may contain incomplete
 features or new issues.  Use these versions at your own risk.
 
 Instructions for obtaining the latest development version of @value{tramp}
-from CVS can be found by going to the Savannah project page at the
-following URL and then clicking on the CVS link in the navigation bar
+from Git can be found by going to the Savannah project page at the
+following URL and then clicking on the Git link in the navigation bar
 at the top.
 
 @noindent
@@ -394,8 +394,14 @@ Or follow the example session below:
 
 @example
 ] @strong{cd ~/@value{emacsdir}}
-] @strong{export CVS_RSH="ssh"}
-] @strong{cvs -z3 -d:pserver:anonymous@@cvs.savannah.gnu.org:/sources/tramp co tramp}
+] @strong{git clone git://git.savannah.gnu.org/tramp.git}
+@end example
+
+@noindent
+Tramp developers use instead
+
+@example
+] @strong{git clone login@@git.sv.gnu.org:/srv/git/tramp.git}
 @end example
 
 @noindent
@@ -405,12 +411,11 @@ updates from the repository by issuing the command:
 
 @example
 ] @strong{cd ~/@value{emacsdir}/tramp}
-] @strong{export CVS_RSH="ssh"}
-] @strong{cvs update -d}
+] @strong{git pull}
 @end example
 
 @noindent
-Once you've got updated files from the CVS repository, you need to run
+Once you've got updated files from the Git repository, you need to run
 @command{autoconf} in order to get an up-to-date @file{configure}
 script:
 
@@ -447,7 +452,8 @@ GVFS integration started in February 2009.
 Remote commands on Windows hosts are available since September 2011.
 @end ifset
 Ad-hoc multi-hop methods (with a changed syntax) have been reenabled
-in November 2011.
+in November 2011.  In November 2012, Juergen Hoetzel's
+@file{tramp-adb.el} has been added.
 
 In December 2001, @value{tramp} has been added to the XEmacs package
 repository.  Being part of the Emacs repository happened in June 2002,
@@ -710,7 +716,7 @@ This is another method from the Kerberos suite.  It behaves like @option{su}.
 @cindex plink method
 
 This method is mostly interesting for Windows users using the PuTTY
-implementation of SSH.  It uses @samp{plink -ssh} to log in to the
+implementation of SSH@.  It uses @samp{plink -ssh} to log in to the
 remote host.
 
 This supports the @samp{-P} argument.
@@ -980,7 +986,7 @@ This works only for unified filenames, see @ref{Issues}.
 @cindex method smb
 @cindex smb method
 
-This is another not natural @value{tramp} method.  It uses the
+This is another not native @value{tramp} method.  It uses the
 @command{smbclient} command on different Unices in order to connect to
 an SMB server.  An SMB server might be a Samba (or CIFS) server on
 another UNIX host or, more interesting, a host running MS Windows.  So
@@ -990,7 +996,7 @@ XP, MS Windows Vista, and MS Windows 7.
 The first directory in the localname must be a share name on the remote
 host.  Remember that the @code{$} character, in which default shares
 usually end, must be written @code{$$} due to environment variable
-substitution in file names.  If no share name is given (i.e. remote
+substitution in file names.  If no share name is given (i.e., remote
 directory @code{/}), all available shares are listed.
 
 Since authorization is done on share level, you will always be
@@ -1025,6 +1031,17 @@ Windows, this method isn't available.  Instead, you can use UNC
 file names like @file{//melancholia/daniel$$/.emacs}.  The only
 disadvantage is that there's no possibility to specify another user
 name.
+
+
+@item @option{adb}
+@cindex method adb
+@cindex adb method
+
+This special method uses the Android Debug Bridge for connecting
+Android devices.  The Android Debug Bridge, part of the Android SDK,
+must be installed locally.  The variable @var{tramp-adb-sdk-dir} must
+be set to its installation directory.
+
 @end table
 
 
@@ -1037,7 +1054,7 @@ name.
 
 The connection methods described in this section are based on GVFS
 @uref{http://en.wikipedia.org/wiki/GVFS}.  Via GVFS, the remote
-filesystem is mounted locally through FUSE.  @value{tramp} uses
+filesystem is mounted locally through FUSE@.  @value{tramp} uses
 this local mounted directory internally.
 
 The communication with GVFS is implemented via D-Bus messages.
@@ -1073,11 +1090,12 @@ phones.  For the time being, @value{tramp} only supports OBEX over Bluetooth.
 The @option{synce} method allows communication with Windows Mobile
 devices.  Beside GVFS for mounting remote files and directories via
 FUSE, it also needs the SYNCE-GVFS plugin.
+
 @end table
 
 @defopt tramp-gvfs-methods
 This customer option, a list, defines the external methods which
-shall be used with GVFS.  Per default, these are @option{dav},
+shall be used with GVFS@.  Per default, these are @option{dav},
 @option{davs}, @option{obex} and @option{synce}.  Other possible
 values are @option{ftp}, @option{sftp} and @option{smb}.
 @end defopt
@@ -1580,6 +1598,7 @@ can return user names only.
 
 Finally, a function which parses @file{~/.netrc} like files.  This
 includes also @file{~/.authinfo}-style files.
+
 @end table
 
 If you want to keep your own data in a file, with your own structure,
@@ -2853,6 +2872,9 @@ If you can identify a minimal test case that reproduces the problem,
 include that with your bug report.  This will make it much easier for
 the development team to analyze and correct the problem.
 
+Sometimes, there might be also problems due to Tramp caches.  Flush
+all caches before running the test, @ref{Cleanup remote connections}.
+
 Before reporting the bug, you should set the verbosity level to 6
 (@pxref{Traces and Profiles, Traces}) in the @file{~/.emacs} file and
 repeat the bug.  Then, include the contents of the @file{*tramp/foo*}
@@ -2915,11 +2937,12 @@ information about remote hosts is kept in the file specified in
 @code{tramp-persistency-file-name}.  Keep this file.  If you are
 confident that files on remote hosts are not changed out of
 @value{emacsname}' control, set @code{remote-file-name-inhibit-cache}
-to @code{nil}.
+to @code{nil}.  Set also @code{tramp-completion-reread-directory-timeout}
+to @code{nil}, @ref{Filename completion}.
 
 Disable version control.  If you access remote files which are not
 under version control, a lot of check operations can be avoided by
-disabling VC.  This can be achieved by
+disabling VC@.  This can be achieved by
 
 @lisp
 (setq vc-ignore-dir-regexp
@@ -3004,10 +3027,10 @@ checksum.
 
 @lisp
 (add-hook
- 'find-file-hooks
- '(lambda ()
-    (when (file-remote-p default-directory)
-      (set (make-local-variable 'file-precious-flag) t))))
+ 'find-file-hook
+ (lambda ()
+   (when (file-remote-p default-directory)
+     (set (make-local-variable 'file-precious-flag) t))))
 @end lisp
 @end itemize
 
@@ -3123,7 +3146,7 @@ into your @file{~/.emacs}:
     (setq mode-line-format
           (format-mode-line mode-line-format 'font-lock-warning-face))))
 
-(add-hook 'find-file-hooks 'my-mode-line-function)
+(add-hook 'find-file-hook 'my-mode-line-function)
 (add-hook 'dired-mode-hook 'my-mode-line-function)
 @end lisp
 @end ifset
@@ -3156,10 +3179,10 @@ should put it into your @file{~/.emacs}:
 
 (add-hook
  'dired-mode-hook
- '(lambda ()
-    (setq
-     mode-line-buffer-identification
-     my-mode-line-buffer-identification)))
+ (lambda ()
+   (setq
+    mode-line-buffer-identification
+    my-mode-line-buffer-identification)))
 @end lisp
 
 Since @value{emacsname} 23.1, the mode line contains an indication if
@@ -3192,9 +3215,9 @@ like this:
 @lisp
 (add-hook
  'dired-before-readin-hook
- '(lambda ()
-    (when (file-remote-p default-directory)
-      (setq dired-actual-switches "-al"))))
+ (lambda ()
+   (when (file-remote-p default-directory)
+     (setq dired-actual-switches "-al"))))
 @end lisp
 @end ifset
 
@@ -3248,7 +3271,7 @@ local host as @samp{root} user, is possible just by @kbd{C-x C-f
 
 @item Use configuration possibilities of your method:
 
-Several connection methods (i.e. the programs used) offer powerful
+Several connection methods (i.e., the programs used) offer powerful
 configuration possibilities (@pxref{Customizing Completion}).  In the
 given case, this could be @file{~/.ssh/config}:
 
@@ -3326,9 +3349,9 @@ minibuffer:
 
 (add-hook
  'minibuffer-setup-hook
- '(lambda ()
-    (abbrev-mode 1)
-    (setq local-abbrev-table my-tramp-abbrev-table)))
+ (lambda ()
+   (abbrev-mode 1)
+   (setq local-abbrev-table my-tramp-abbrev-table)))
 
 (defadvice minibuffer-complete
   (before my-minibuffer-complete activate)
@@ -3395,7 +3418,7 @@ their readability through a remote access:
 @ifset xemacs
 (recent-files-initialize)
 (add-hook
- 'find-file-hooks
+ 'find-file-hook
  (lambda ()
    (when (file-remote-p (buffer-file-name))
      (recent-files-make-permanent)))

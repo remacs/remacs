@@ -940,6 +940,17 @@ See `sh-feature'.")
     (concat "<<-?\\s-*\\\\?\\(\\(?:['\"][^'\"]+['\"]\\|\\sw\\|[-/~._]\\)+\\)"
             sh-escaped-line-re "\\(\n\\)")))
 
+(defun sh--inside-noncommand-expression (pos)
+  (save-excursion
+    (let ((ppss (syntax-ppss pos)))
+      (when (nth 1 ppss)
+        (goto-char (nth 1 ppss))
+        (pcase (char-after)
+          ;; $((...)) or $[...] or ${...}.
+          (`?\( (and (eq ?\( (char-before))
+                     (eq ?\$ (char-before (1- (point))))))
+          ((or `?\{ `?\[) (eq ?\$ (char-before))))))))
+
 (defun sh-font-lock-open-heredoc (start string eol)
   "Determine the syntax of the \\n after a <<EOF.
 START is the position of <<.
@@ -948,7 +959,8 @@ INDENTED is non-nil if the here document's content (and the EOF mark) can
 be indented (i.e. a <<- was used rather than just <<).
 Point is at the beginning of the next line."
   (unless (or (memq (char-before start) '(?< ?>))
-	      (sh-in-comment-or-string start))
+	      (sh-in-comment-or-string start)
+              (sh--inside-noncommand-expression start))
     ;; We're looking at <<STRING, so we add "^STRING$" to the syntactic
     ;; font-lock keywords to detect the end of this here document.
     (let ((str (replace-regexp-in-string "['\"]" "" string))
@@ -1033,50 +1045,57 @@ subshells can nest."
 (defun sh-font-lock-paren (start)
   (unless (nth 8 (syntax-ppss))
     (save-excursion
-      (goto-char start)
-      ;; Skip through all patterns
-      (while
-          (progn
-            (while
-                (progn
-                  (forward-comment (- (point-max)))
-                  (when (and (eolp) (sh-is-quoted-p (point)))
-                    (forward-char -1)
-                    t)))
-            ;; Skip through one pattern
-            (while
-                (or (/= 0 (skip-syntax-backward "w_"))
-                    (/= 0 (skip-chars-backward "-$=?[]*@/\\\\"))
-                    (and (sh-is-quoted-p (1- (point)))
-                         (goto-char (- (point) 2)))
-                    (when (memq (char-before) '(?\" ?\' ?\}))
-                      (condition-case nil (progn (backward-sexp 1) t)
-                        (error nil)))))
-            ;; Patterns can be preceded by an open-paren (Bug#1320).
-            (if (eq (char-before (point)) ?\()
+      (let ((open nil))
+        (goto-char start)
+        ;; Skip through all patterns
+        (while
+            (progn
+              (while
+                  (progn
+                    (forward-comment (- (point-max)))
+                    (when (and (eolp) (sh-is-quoted-p (point)))
+                      (forward-char -1)
+                      t)))
+              ;; Skip through one pattern
+              (while
+                  (or (/= 0 (skip-syntax-backward "w_"))
+                      (/= 0 (skip-chars-backward "-$=?[]*@/\\\\"))
+                      (and (sh-is-quoted-p (1- (point)))
+                           (goto-char (- (point) 2)))
+                      (when (memq (char-before) '(?\" ?\' ?\}))
+                        (condition-case nil (progn (backward-sexp 1) t)
+                          (error nil)))))
+              ;; Patterns can be preceded by an open-paren (bug#1320).
+              (when (eq (char-before (point)) ?\()
+                (backward-char 1)
+                (setq open (point)))
+              (while (progn
+                       (forward-comment (- (point-max)))
+                       ;; Maybe we've bumped into an escaped newline.
+                       (sh-is-quoted-p (point)))
                 (backward-char 1))
-            (while (progn
-                     (forward-comment (- (point-max)))
-                     ;; Maybe we've bumped into an escaped newline.
-                     (sh-is-quoted-p (point)))
-              (backward-char 1))
-            (when (eq (char-before) ?|)
-              (backward-char 1) t)))
-      (when (progn (backward-char 2)
-                   (if (> start (line-end-position))
-                       (put-text-property (point) (1+ start)
-                                          'syntax-multiline t))
-                   ;; FIXME: The `in' may just be a random argument to
-                   ;; a normal command rather than the real `in' keyword.
-                   ;; I.e. we should look back to try and find the
-                   ;; corresponding `case'.
-                   (and (looking-at ";[;&]\\|\\_<in")
-                        ;; ";; esac )" is a case that looks like a case-pattern
-                        ;; but it's really just a close paren after a case
-                        ;; statement.  I.e. if we skipped over `esac' just now,
-                        ;; we're not looking at a case-pattern.
-                        (not (looking-at "..[ \t\n]+esac[^[:word:]_]"))))
-        sh-st-punc))))
+              (when (eq (char-before) ?|)
+                (backward-char 1) t)))
+        (and (> (point) (1+ (point-min)))
+             (progn (backward-char 2)
+                    (if (> start (line-end-position))
+                        (put-text-property (point) (1+ start)
+                                           'syntax-multiline t))
+                    ;; FIXME: The `in' may just be a random argument to
+                    ;; a normal command rather than the real `in' keyword.
+                    ;; I.e. we should look back to try and find the
+                    ;; corresponding `case'.
+                    (and (looking-at ";[;&]\\|\\_<in")
+                         ;; ";; esac )" is a case that looks
+                         ;; like a case-pattern but it's really just a close
+                         ;; paren after a case statement.  I.e. if we skipped
+                         ;; over `esac' just now, we're not looking
+                         ;; at a case-pattern.
+                         (not (looking-at "..[ \t\n]+esac[^[:word:]_]"))))
+             (progn
+               (when open
+                 (put-text-property open (1+ open) 'syntax-table sh-st-punc))
+               sh-st-punc))))))
 
 (defun sh-font-lock-backslash-quote ()
   (if (eq (save-excursion (nth 3 (syntax-ppss (match-beginning 0)))) ?\')
@@ -1478,42 +1497,41 @@ with your script for an edit-interpret-debug cycle."
   (make-local-variable 'sh-shell-file)
   (make-local-variable 'sh-shell)
 
-  (set (make-local-variable 'skeleton-pair-default-alist)
-       sh-skeleton-pair-default-alist)
-  (set (make-local-variable 'skeleton-end-hook)
-       (lambda () (or (eolp) (newline) (indent-relative))))
+  (setq-local skeleton-pair-default-alist
+	      sh-skeleton-pair-default-alist)
+  (setq-local skeleton-end-hook
+	      (lambda () (or (eolp) (newline) (indent-relative))))
 
-  (set (make-local-variable 'paragraph-start) (concat page-delimiter "\\|$"))
-  (set (make-local-variable 'paragraph-separate) paragraph-start)
-  (set (make-local-variable 'comment-start) "# ")
-  (set (make-local-variable 'comment-start-skip) "#+[\t ]*")
-  (set (make-local-variable 'local-abbrev-table) sh-mode-abbrev-table)
-  (set (make-local-variable 'comint-dynamic-complete-functions)
-       sh-dynamic-complete-functions)
+  (setq-local paragraph-start (concat page-delimiter "\\|$"))
+  (setq-local paragraph-separate paragraph-start)
+  (setq-local comment-start "# ")
+  (setq-local comment-start-skip "#+[\t ]*")
+  (setq-local local-abbrev-table sh-mode-abbrev-table)
+  (setq-local comint-dynamic-complete-functions
+	      sh-dynamic-complete-functions)
   (add-hook 'completion-at-point-functions 'comint-completion-at-point nil t)
   ;; we can't look if previous line ended with `\'
-  (set (make-local-variable 'comint-prompt-regexp) "^[ \t]*")
-  (set (make-local-variable 'imenu-case-fold-search) nil)
-  (set (make-local-variable 'font-lock-defaults)
-       `((sh-font-lock-keywords
-          sh-font-lock-keywords-1 sh-font-lock-keywords-2)
-         nil nil
-         ((?/ . "w") (?~ . "w") (?. . "w") (?- . "w") (?_ . "w")) nil
-         (font-lock-syntactic-face-function
-          . sh-font-lock-syntactic-face-function)))
-  (set (make-local-variable 'syntax-propertize-function)
-       #'sh-syntax-propertize-function)
+  (setq-local comint-prompt-regexp "^[ \t]*")
+  (setq-local imenu-case-fold-search nil)
+  (setq font-lock-defaults
+	`((sh-font-lock-keywords
+	   sh-font-lock-keywords-1 sh-font-lock-keywords-2)
+	  nil nil
+	  ((?/ . "w") (?~ . "w") (?. . "w") (?- . "w") (?_ . "w")) nil
+	  (font-lock-syntactic-face-function
+	   . sh-font-lock-syntactic-face-function)))
+  (setq-local syntax-propertize-function #'sh-syntax-propertize-function)
   (add-hook 'syntax-propertize-extend-region-functions
             #'syntax-propertize-multiline 'append 'local)
   (sh-electric-here-document-mode 1)
-  (set (make-local-variable 'skeleton-pair-alist) '((?` _ ?`)))
-  (set (make-local-variable 'skeleton-pair-filter-function) 'sh-quoted-p)
-  (set (make-local-variable 'skeleton-further-elements)
-       '((< '(- (min sh-indentation (current-column))))))
-  (set (make-local-variable 'skeleton-filter-function) 'sh-feature)
-  (set (make-local-variable 'skeleton-newline-indent-rigidly) t)
-  (set (make-local-variable 'defun-prompt-regexp)
-       (concat "^\\(function[ \t]\\|[[:alnum:]]+[ \t]+()[ \t]+\\)"))
+  (setq-local skeleton-pair-alist '((?` _ ?`)))
+  (setq-local skeleton-pair-filter-function 'sh-quoted-p)
+  (setq-local skeleton-further-elements
+	      '((< '(- (min sh-indentation (current-column))))))
+  (setq-local skeleton-filter-function 'sh-feature)
+  (setq-local skeleton-newline-indent-rigidly t)
+  (setq-local defun-prompt-regexp
+	      (concat "^\\(function[ \t]\\|[[:alnum:]]+[ \t]+()[ \t]+\\)"))
   ;; Parse or insert magic number for exec, and set all variables depending
   ;; on the shell thus determined.
   (sh-set-shell
@@ -1628,7 +1646,8 @@ before the newline and in that case point should be just before the token."
            (cmd "|" cmd) (cmd "|&" cmd)
            (cmd "&&" cmd) (cmd "||" cmd)
            (cmd ";" cmd) (cmd "&" cmd))
-      (pattern (pattern "|" pattern))
+      (rpattern (rpattern "|" rpattern))
+      (pattern (rpattern) ("case-(" rpattern))
       (branches (branches ";;" branches)
                 (branches ";&" branches) (branches ";;&" branches) ;bash.
                 (pattern "case-)" cmd)))
@@ -1714,6 +1733,7 @@ Does not preserve point."
              (tok (smie-default-forward-token)))
         (cond
          ((equal tok ")") "case-)")
+         ((equal tok "(") "case-(")
          ((and tok (string-match "\\`[a-z]" tok)
                (assoc tok smie-grammar)
                (not
@@ -1758,6 +1778,7 @@ Does not preserve point."
       (let ((tok (smie-default-backward-token)))
         (cond
          ((equal tok ")") "case-)")
+         ((equal tok "(") "case-(")
          ((and tok (string-match "\\`[a-z]" tok)
                (assoc tok smie-grammar)
                (not (save-excursion (sh-smie--sh-keyword-p tok))))
@@ -1766,7 +1787,9 @@ Does not preserve point."
 
 (defcustom sh-indent-after-continuation t
   "If non-nil, try to make sure text is indented after a line continuation."
-  :type 'boolean)
+  :version "24.3"
+  :type 'boolean
+  :group 'sh-indentation)
 
 (defun sh-smie--continuation-start-indent ()
   "Return the initial indentation of a continued line.
@@ -2080,19 +2103,19 @@ Calls the value of `sh-set-shell-hook' if set."
 	    (executable-set-magic shell (sh-feature sh-shell-arg)
 				  no-query-flag insert-flag)))
   (setq mode-line-process (format "[%s]" sh-shell))
-  (set (make-local-variable 'sh-shell-variables) nil)
-  (set (make-local-variable 'sh-shell-variables-initialized) nil)
-  (set (make-local-variable 'imenu-generic-expression)
-       (sh-feature sh-imenu-generic-expression))
+  (setq-local sh-shell-variables nil)
+  (setq-local sh-shell-variables-initialized nil)
+  (setq-local imenu-generic-expression
+	      (sh-feature sh-imenu-generic-expression))
   (let ((tem (sh-feature sh-mode-syntax-table-input)))
     (when tem
-      (set (make-local-variable 'sh-mode-syntax-table)
-           (apply 'sh-mode-syntax-table tem))
+      (setq-local sh-mode-syntax-table
+		  (apply 'sh-mode-syntax-table tem))
       (set-syntax-table sh-mode-syntax-table)))
   (dolist (var (sh-feature sh-variables))
     (sh-remember-variable var))
-  (if (set (make-local-variable 'sh-indent-supported-here)
-           (sh-feature sh-indent-supported))
+  (if (setq-local sh-indent-supported-here
+		  (sh-feature sh-indent-supported))
       (progn
 	(message "Setting up indent for shell type %s" sh-shell)
         (if sh-use-smie
@@ -2103,16 +2126,16 @@ Calls the value of `sh-set-shell-hook' if set."
                           (funcall mksym "rules")
                           :forward-token  (funcall mksym "forward-token")
                           :backward-token (funcall mksym "backward-token")))
-          (set (make-local-variable 'parse-sexp-lookup-properties) t)
-          (set (make-local-variable 'sh-kw-alist) (sh-feature sh-kw))
+          (setq-local parse-sexp-lookup-properties t)
+          (setq-local sh-kw-alist (sh-feature sh-kw))
           (let ((regexp (sh-feature sh-kws-for-done)))
             (if regexp
-                (set (make-local-variable 'sh-regexp-for-done)
-                     (sh-mkword-regexpr (regexp-opt regexp t)))))
+                (setq-local sh-regexp-for-done
+			    (sh-mkword-regexpr (regexp-opt regexp t)))))
           (message "setting up indent stuff")
           ;; sh-mode has already made indent-line-function local
           ;; but do it in case this is called before that.
-          (set (make-local-variable 'indent-line-function) 'sh-indent-line))
+          (setq-local indent-line-function 'sh-indent-line))
 	(if sh-make-vars-local
 	    (sh-make-vars-local))
 	(message "Indentation setup for shell type %s" sh-shell))
@@ -4078,11 +4101,10 @@ option followed by a colon `:' if the option accepts an argument."
 (defun sh-maybe-here-document (arg)
   "Insert self.  Without prefix, following unquoted `<' inserts here document.
 The document is bounded by `sh-here-document-word'."
+  (declare (obsolete sh-electric-here-document-mode "24.3"))
   (interactive "*P")
   (self-insert-command (prefix-numeric-value arg))
   (or arg (sh--maybe-here-document)))
-(make-obsolete 'sh--maybe-here-document
-               'sh-electric-here-document-mode "24.3")
 
 (defun sh--maybe-here-document ()
   (or (not (looking-back "[^<]<<"))

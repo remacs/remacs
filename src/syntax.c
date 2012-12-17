@@ -21,7 +21,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <config.h>
 
 #include <sys/types.h>
-#include <setjmp.h>
+
 #include "lisp.h"
 #include "commands.h"
 #include "character.h"
@@ -151,7 +151,7 @@ static void scan_sexps_forward (struct lisp_parse_state *,
 static int in_classes (int, Lisp_Object);
 
 /* This setter is used only in this file, so it can be private.  */
-static inline void
+static void
 bset_syntax_table (struct buffer *b, Lisp_Object val)
 {
   b->INTERNAL_FIELD (syntax_table) = val;
@@ -372,7 +372,7 @@ char_quoted (ptrdiff_t charpos, ptrdiff_t bytepos)
 /* Return the bytepos one character before BYTEPOS.
    We assume that BYTEPOS is not at the start of the buffer.  */
 
-static inline ptrdiff_t
+static ptrdiff_t
 dec_bytepos (ptrdiff_t bytepos)
 {
   if (NILP (BVAR (current_buffer, enable_multibyte_characters)))
@@ -921,11 +921,11 @@ DEFUN ("matching-paren", Fmatching_paren, Smatching_paren, 1, 1, 0,
 }
 
 DEFUN ("string-to-syntax", Fstring_to_syntax, Sstring_to_syntax, 1, 1, 0,
-       doc: /* Convert a syntax specification STRING into syntax cell form.
-STRING should be a string as it is allowed as argument of
-`modify-syntax-entry'.  Value is the equivalent cons cell
-\(CODE . MATCHING-CHAR) that can be used as value of a `syntax-table'
-text property.  */)
+       doc: /* Convert a syntax descriptor STRING into a raw syntax descriptor.
+STRING should be a string of the form allowed as argument of
+`modify-syntax-entry'.  The return value is a raw syntax descriptor: a
+cons cell \(CODE . MATCHING-CHAR) which can be used, for example, as
+the value of a `syntax-table' text property.  */)
   (Lisp_Object string)
 {
   register const unsigned char *p;

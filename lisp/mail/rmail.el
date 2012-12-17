@@ -100,6 +100,10 @@ its character representation and its display representation.")
   "The current header display style choice, one of
 'normal (selected headers) or 'full (all headers).")
 
+(defvar rmail-mime-decoded nil
+  "Non-nil if message has been processed by `rmail-show-mime-function'.")
+(put 'rmail-mime-decoded 'permanent-local t) ; for rmail-edit
+
 (defgroup rmail nil
   "Mail reader for Emacs."
   :group 'mail)
@@ -2699,6 +2703,27 @@ N defaults to the current message."
   :group 'rmail
   :version "23.1")
 
+;; FIXME?
+;; rmail-show-mime-function does not unquote >From lines.  Should it?
+(defcustom rmail-mbox-format 'mboxrd
+  "The mbox format that your system uses.
+There is no way to determine this, so you should set the appropriate value.
+The formats quote lines containing \"From \" differently.
+The choices are:
+  `mboxo' : lines that start with \"From \" quoted as \">From \"
+  `mboxrd': lines that start with \">*From \" quoted with another \">\"
+The `mboxo' format is ambiguous, in that one cannot know whether
+a line starting with \">From \" originally had a \">\" or not.
+
+It is not critical to set this to the correct value; it only affects
+how Rmail displays lines starting with \">*From \" in non-MIME messages.
+
+See also `unrmail-mbox-format'."
+  :type '(choice (const mboxrd)
+		 (const mboxro))
+  :version "24.4"
+  :group 'rmail-files)
+
 (defun rmail-show-message-1 (&optional msg)
   "Show message MSG (default: current message) using `rmail-view-buffer'.
 Return text to display in the minibuffer if MSG is out of
@@ -2747,6 +2772,7 @@ The current mail message becomes the message displayed."
 		 (re-search-forward "mime-version: 1.0" nil t))
 	    (let ((rmail-buffer mbox-buf)
 		  (rmail-view-buffer view-buf))
+	      (set (make-local-variable 'rmail-mime-decoded) t)
 	      (funcall rmail-show-mime-function))
 	  (setq body-start (search-forward "\n\n" nil t))
 	  (narrow-to-region beg (point))
@@ -2791,11 +2817,15 @@ The current mail message becomes the message displayed."
 	    ;; Prepare the separator (blank line) before the body.
 	    (goto-char (point-min))
 	    (insert "\n")
-	    ;; Unquote quoted From lines
-	    (while (re-search-forward "^>+From " nil t)
-	      (beginning-of-line)
-	      (delete-char 1)
-	      (forward-line))
+	    ;; Unquote quoted From lines.
+	    (let ((fromline (if (eq 'mboxrd rmail-mbox-format)
+				"^>+From "
+			      "^>From "))
+		  case-fold-search)
+	      (while (re-search-forward fromline nil t)
+		(beginning-of-line)
+		(delete-char 1)
+		(forward-line)))
 	    (goto-char (point-min)))
 	  ;; Copy the headers to the front of the message view buffer.
 	  (rmail-copy-headers beg end)
@@ -3869,6 +3899,7 @@ see the documentation of `rmail-resend'."
 	  (msgnum rmail-current-message)
 	  (subject (concat "["
 			   (let ((from (or (mail-fetch-field "From")
+					   ;; FIXME - huh?
 					   (mail-fetch-field ">From"))))
 			     (if from
 				 (concat (mail-strip-quoted-names from) ": ")
@@ -4068,6 +4099,13 @@ The variable `rmail-retry-ignored-headers' is a regular expression
 specifying headers which should not be copied into the new message."
   (interactive)
   (require 'mail-utils)
+  (if rmail-enable-mime
+      (with-current-buffer rmail-buffer
+	(if (rmail-mime-message-p)
+	    (let ((rmail-mime-mbox-buffer rmail-view-buffer)
+		  (rmail-mime-view-buffer rmail-buffer))
+	      (rmail-mime-toggle-raw 'raw)))))
+
   (let ((rmail-this-buffer (current-buffer))
 	(msgnum rmail-current-message)
 	bounce-start bounce-end bounce-indent resending
@@ -4187,6 +4225,7 @@ This has an effect only if a summary buffer exists."
 ;; Put the summary buffer back on the screen, if user wants that.
 (defun rmail-maybe-display-summary ()
   (let ((selected (selected-window))
+	(buffer (current-buffer))
 	window)
     ;; If requested, make sure the summary is displayed.
     (and rmail-summary-buffer (buffer-name rmail-summary-buffer)
@@ -4208,7 +4247,8 @@ This has an effect only if a summary buffer exists."
 	     (progn
 	       (select-window window)
 	       (enlarge-window (- rmail-summary-window-size (window-height))))
-	   (select-window selected)))))
+	   (select-window selected)
+	   (set-buffer buffer)))))
 
 ;;;; *** Rmail Local Fontification ***
 
@@ -4543,7 +4583,7 @@ encoded string (and the same mask) will decode the string."
 ;;; Start of automatically extracted autoloads.
 
 ;;;### (autoloads (rmail-edit-current-message) "rmailedit" "rmailedit.el"
-;;;;;;  "7d558f958574f6003fa474ce2f3c80a8")
+;;;;;;  "791ea184628feb6335fe3e29f7234934")
 ;;; Generated autoloads from rmailedit.el
 
 (autoload 'rmail-edit-current-message "rmailedit" "\
@@ -4598,7 +4638,7 @@ With prefix argument N moves forward N messages with these labels.
 
 ;;;***
 
-;;;### (autoloads (rmail-mime) "rmailmm" "rmailmm.el" "cd7656f82944d0b92b0d093a5f3a4c36")
+;;;### (autoloads (rmail-mime) "rmailmm" "rmailmm.el" "f1937f85a1258de8880a089fa5ae5621")
 ;;; Generated autoloads from rmailmm.el
 
 (autoload 'rmail-mime "rmailmm" "\
@@ -4700,7 +4740,7 @@ If prefix argument REVERSE is non-nil, sorts in reverse order.
 
 ;;;### (autoloads (rmail-summary-by-senders rmail-summary-by-topic
 ;;;;;;  rmail-summary-by-regexp rmail-summary-by-recipients rmail-summary-by-labels
-;;;;;;  rmail-summary) "rmailsum" "rmailsum.el" "bef21a376bd5bd59792a20dd86e6ec34")
+;;;;;;  rmail-summary) "rmailsum" "rmailsum.el" "856fc6e337d5398b302c448ee7a2315e")
 ;;; Generated autoloads from rmailsum.el
 
 (autoload 'rmail-summary "rmailsum" "\

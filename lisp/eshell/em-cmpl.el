@@ -295,8 +295,10 @@ to writing a completion function."
     'pcomplete-expand-and-complete)
   (define-key eshell-command-map [space] 'pcomplete-expand)
   (define-key eshell-command-map [? ] 'pcomplete-expand)
-  (define-key eshell-mode-map [tab] 'pcomplete)
-  (define-key eshell-mode-map [(control ?i)] 'pcomplete)
+  (define-key eshell-mode-map [tab] 'eshell-pcomplete)
+  (define-key eshell-mode-map [(control ?i)] 'eshell-pcomplete)
+  (add-hook 'completion-at-point-functions
+            #'pcomplete-completions-at-point nil t)
   ;; jww (1999-10-19): Will this work on anything but X?
   (if (featurep 'xemacs)
       (define-key eshell-mode-map [iso-left-tab] 'pcomplete-reverse)
@@ -448,6 +450,13 @@ to writing a completion function."
 				 (null completions)))
 			(all-completions filename obarray 'functionp))
 		   completions)))))))
+
+(defun eshell-pcomplete ()
+  "Eshell wrapper for `pcomplete'."
+  (interactive)
+  (condition-case nil
+      (pcomplete)
+    (text-read-only (completion-at-point)))) ; Workaround for bug#12838.
 
 (provide 'em-cmpl)
 

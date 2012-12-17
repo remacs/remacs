@@ -21,7 +21,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #define TERMHOOKS_INLINE EXTERN_INLINE
 
 #include <stdio.h>
-#include <setjmp.h>
 
 #include "lisp.h"
 #include "frame.h"
@@ -43,7 +42,7 @@ struct terminal *initial_terminal;
 static void delete_initial_terminal (struct terminal *);
 
 /* This setter is used only in this file, so it can be private.  */
-static inline void
+static void
 tset_param_alist (struct terminal *t, Lisp_Object val)
 {
   t->param_alist = val;
@@ -294,7 +293,7 @@ delete_terminal (struct terminal *terminal)
 
   for (tp = &terminal_list; *tp != terminal; tp = &(*tp)->next_terminal)
     if (! *tp)
-      abort ();
+      emacs_abort ();
   *tp = terminal->next_terminal;
 
   xfree (terminal->keyboard_coding);
@@ -361,14 +360,7 @@ If FRAME is nil, the selected frame is used.
 The terminal device is represented by its integer identifier.  */)
   (Lisp_Object frame)
 {
-  struct terminal *t;
-
-  if (NILP (frame))
-    frame = selected_frame;
-
-  CHECK_LIVE_FRAME (frame);
-
-  t = FRAME_TERMINAL (XFRAME (frame));
+  struct terminal *t = FRAME_TERMINAL (decode_live_frame (frame));
 
   if (!t)
     return Qnil;
@@ -411,7 +403,7 @@ possible return values.  */)
     case output_ns:
       return Qns;
     default:
-      abort ();
+      emacs_abort ();
     }
 }
 
@@ -519,7 +511,7 @@ struct terminal *
 init_initial_terminal (void)
 {
   if (initialized || terminal_list || tty_list)
-    abort ();
+    emacs_abort ();
 
   initial_terminal = create_terminal ();
   initial_terminal->type = output_initial;
@@ -538,7 +530,7 @@ static void
 delete_initial_terminal (struct terminal *terminal)
 {
   if (terminal != initial_terminal)
-    abort ();
+    emacs_abort ();
 
   delete_terminal (terminal);
   initial_terminal = NULL;

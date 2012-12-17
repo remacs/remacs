@@ -195,45 +195,34 @@ score-mode.el.  KEYWORDS-CASE-INSENSITIVE non-nil means that for
 font-lock keywords will not be case sensitive."
   (when lisp-syntax
     (set-syntax-table lisp-mode-syntax-table))
-  (make-local-variable 'paragraph-ignore-fill-prefix)
-  (setq paragraph-ignore-fill-prefix t)
-  (make-local-variable 'fill-paragraph-function)
-  (setq fill-paragraph-function 'lisp-fill-paragraph)
+  (setq-local paragraph-ignore-fill-prefix t)
+  (setq-local fill-paragraph-function 'lisp-fill-paragraph)
   ;; Adaptive fill mode gets the fill wrong for a one-line paragraph made of
   ;; a single docstring.  Let's fix it here.
-  (set (make-local-variable 'adaptive-fill-function)
-       (lambda () (if (looking-at "\\s-+\"[^\n\"]+\"\\s-*$") "")))
+  (setq-local adaptive-fill-function
+	      (lambda () (if (looking-at "\\s-+\"[^\n\"]+\"\\s-*$") "")))
   ;; Adaptive fill mode gets in the way of auto-fill,
   ;; and should make no difference for explicit fill
   ;; because lisp-fill-paragraph should do the job.
   ;;  I believe that newcomment's auto-fill code properly deals with it  -stef
   ;;(set (make-local-variable 'adaptive-fill-mode) nil)
-  (make-local-variable 'indent-line-function)
-  (setq indent-line-function 'lisp-indent-line)
-  (make-local-variable 'outline-regexp)
-  (setq outline-regexp ";;;\\(;* [^ \t\n]\\|###autoload\\)\\|(")
-  (make-local-variable 'outline-level)
-  (setq outline-level 'lisp-outline-level)
-  (make-local-variable 'comment-start)
-  (setq comment-start ";")
-  (make-local-variable 'comment-start-skip)
+  (setq-local indent-line-function 'lisp-indent-line)
+  (setq-local outline-regexp ";;;\\(;* [^ \t\n]\\|###autoload\\)\\|(")
+  (setq-local outline-level 'lisp-outline-level)
+  (setq-local add-log-current-defun-function #'lisp-current-defun-name)
+  (setq-local comment-start ";")
   ;; Look within the line for a ; following an even number of backslashes
   ;; after either a non-backslash or the line beginning.
-  (setq comment-start-skip "\\(\\(^\\|[^\\\\\n]\\)\\(\\\\\\\\\\)*\\);+ *")
-  (make-local-variable 'font-lock-comment-start-skip)
+  (setq-local comment-start-skip "\\(\\(^\\|[^\\\\\n]\\)\\(\\\\\\\\\\)*\\);+ *")
   ;; Font lock mode uses this only when it KNOWS a comment is starting.
-  (setq font-lock-comment-start-skip ";+ *")
-  (make-local-variable 'comment-add)
-  (setq comment-add 1)			;default to `;;' in comment-region
-  (make-local-variable 'comment-column)
-  (setq comment-column 40)
+  (setq-local font-lock-comment-start-skip ";+ *")
+  (setq-local comment-add 1)		;default to `;;' in comment-region
+  (setq-local comment-column 40)
   ;; Don't get confused by `;' in doc strings when paragraph-filling.
-  (set (make-local-variable 'comment-use-global-state) t)
-  (make-local-variable 'imenu-generic-expression)
-  (setq imenu-generic-expression lisp-imenu-generic-expression)
-  (make-local-variable 'multibyte-syntax-as-symbol)
-  (setq multibyte-syntax-as-symbol t)
-  (set (make-local-variable 'syntax-begin-function) 'beginning-of-defun)
+  (setq-local comment-use-global-state t)
+  (setq-local imenu-generic-expression lisp-imenu-generic-expression)
+  (setq-local multibyte-syntax-as-symbol t)
+  (setq-local syntax-begin-function 'beginning-of-defun)
   (setq font-lock-defaults
 	`((lisp-font-lock-keywords
 	   lisp-font-lock-keywords-1 lisp-font-lock-keywords-2)
@@ -248,6 +237,32 @@ font-lock keywords will not be case sensitive."
     (if (looking-at "(\\|;;;###autoload")
 	1000
       len)))
+
+(defun lisp-current-defun-name ()
+  "Return the name of the defun at point, or nil."
+  (save-excursion
+    (let ((location (point)))
+      ;; If we are now precisely at the beginning of a defun, make sure
+      ;; beginning-of-defun finds that one rather than the previous one.
+      (or (eobp) (forward-char 1))
+      (beginning-of-defun)
+      ;; Make sure we are really inside the defun found, not after it.
+      (when (and (looking-at "\\s(")
+		 (progn (end-of-defun)
+			(< location (point)))
+		 (progn (forward-sexp -1)
+			(>= location (point))))
+	(if (looking-at "\\s(")
+	    (forward-char 1))
+	;; Skip the defining construct name, typically "defun" or
+	;; "defvar".
+	(forward-sexp 1)
+	;; The second element is usually a symbol being defined.  If it
+	;; is not, use the first symbol in it.
+	(skip-chars-forward " \t\n'(")
+	(buffer-substring-no-properties (point)
+					(progn (forward-sexp 1)
+					       (point)))))))
 
 (defvar lisp-mode-shared-map
   (let ((map (make-sparse-keymap)))
@@ -431,6 +446,61 @@ if that value is non-nil."
   (add-hook 'completion-at-point-functions
             'lisp-completion-at-point nil 'local))
 
+;;; Emacs Lisp Byte-Code mode
+
+(eval-and-compile
+  (defconst emacs-list-byte-code-comment-re
+    (concat "\\(#\\)@\\([0-9]+\\) "
+            ;; Make sure it's a docstring and not a lazy-loaded byte-code.
+            "\\(?:[^(]\\|([^\"]\\)")))
+
+(defun emacs-lisp-byte-code-comment (end &optional _point)
+  "Try to syntactically mark the #@NNN ....^_ docstrings in byte-code files."
+  (let ((ppss (syntax-ppss)))
+    (when (and (nth 4 ppss)
+               (eq (char-after (nth 8 ppss)) ?#))
+      (let* ((n (save-excursion
+                  (goto-char (nth 8 ppss))
+                  (when (looking-at emacs-list-byte-code-comment-re)
+                    (string-to-number (match-string 2)))))
+             ;; `maxdiff' tries to make sure the loop below terminates.
+             (maxdiff n))
+        (when n
+          (let* ((bchar (match-end 2))
+                 (b (position-bytes bchar)))
+            (goto-char (+ b n))
+            (while (let ((diff (- (position-bytes (point)) b n)))
+                     (unless (zerop diff)
+                       (when (> diff maxdiff) (setq diff maxdiff))
+                       (forward-char (- diff))
+                       (setq maxdiff (if (> diff 0) diff
+                                       (max (1- maxdiff) 1)))
+                       t))))
+          (if (<= (point) end)
+              (put-text-property (1- (point)) (point)
+                                 'syntax-table
+                                 (string-to-syntax "> b"))
+            (goto-char end)))))))
+
+(defun emacs-lisp-byte-code-syntax-propertize (start end)
+  (emacs-lisp-byte-code-comment end (point))
+  (funcall
+   (syntax-propertize-rules
+    (emacs-list-byte-code-comment-re
+     (1 (prog1 "< b" (emacs-lisp-byte-code-comment end (point))))))
+   start end))
+
+(add-to-list 'auto-mode-alist '("\\.elc\\'" . emacs-lisp-byte-code-mode))
+(define-derived-mode emacs-lisp-byte-code-mode emacs-lisp-mode
+  "Elisp-Byte-Code"
+  "Major mode for *.elc files."
+  ;; TODO: Add way to disassemble byte-code under point.
+  (setq-local open-paren-in-column-0-is-defun-start nil)
+  (setq-local syntax-propertize-function
+              #'emacs-lisp-byte-code-syntax-propertize))
+
+;;; Generic Lisp mode.
+
 (defvar lisp-mode-map
   (let ((map (make-sparse-keymap))
 	(menu-map (make-sparse-keymap "Lisp")))
@@ -464,10 +534,9 @@ or to switch back to an existing one.
 Entry to this mode calls the value of `lisp-mode-hook'
 if that value is non-nil."
   (lisp-mode-variables nil t)
-  (set (make-local-variable 'find-tag-default-function) 'lisp-find-tag-default)
-  (make-local-variable 'comment-start-skip)
-  (setq comment-start-skip
-       "\\(\\(^\\|[^\\\\\n]\\)\\(\\\\\\\\\\)*\\)\\(;+\\|#|\\) *")
+  (setq-local find-tag-default-function 'lisp-find-tag-default)
+  (setq-local comment-start-skip
+	      "\\(\\(^\\|[^\\\\\n]\\)\\(\\\\\\\\\\)*\\)\\(;+\\|#|\\) *")
   (setq imenu-case-fold-search t))
 
 (defun lisp-find-tag-default ()
@@ -730,10 +799,12 @@ POS specifies the starting position where EXP was found and defaults to point."
       (let ((vars ()))
         (goto-char (point-min))
         (while (re-search-forward
-                "^(def\\(?:var\\|const\\|custom\\)[ \t\n]+\\([^; '()\n\t]+\\)"
+                "(def\\(?:var\\|const\\|custom\\)[ \t\n]+\\([^; '()\n\t]+\\)"
                 pos t)
           (let ((var (intern (match-string 1))))
-            (unless (special-variable-p var)
+            (and (not (special-variable-p var))
+                 (save-excursion
+                   (zerop (car (syntax-ppss (match-beginning 0)))))
               (push var vars))))
         `(progn ,@(mapcar (lambda (v) `(defvar ,v)) vars) ,exp)))))
 
@@ -759,6 +830,7 @@ this command arranges for all errors to enter the debugger."
 (defun eval-defun-1 (form)
   "Treat some expressions specially.
 Reset the `defvar' and `defcustom' variables to the initial value.
+\(For `defcustom', use the :set function if there is one.)
 Reinitialize the face according to the `defface' specification."
   ;; The code in edebug-defun should be consistent with this, but not
   ;; the same, since this gets a macroexpanded form.
@@ -774,14 +846,19 @@ Reinitialize the face according to the `defface' specification."
 	;; `custom-declare-variable' with a quoted value arg.
 	((and (eq (car form) 'custom-declare-variable)
 	      (default-boundp (eval (nth 1 form) lexical-binding)))
-	 ;; Force variable to be bound.
-	 (set-default (eval (nth 1 form) lexical-binding)
-		      ;; The second arg is an expression that evaluates to
-		      ;; an expression.  The second evaluation is the one
-		      ;; normally performed not be normal execution but by
-		      ;; custom-initialize-set (for example), which does not
-		      ;; use lexical-binding.
-		      (eval (eval (nth 2 form) lexical-binding)))
+	 ;; Force variable to be bound, using :set function if specified.
+	 (let ((setfunc (memq :set form)))
+	   (when setfunc
+	     (setq setfunc (car-safe (cdr-safe setfunc)))
+	     (or (functionp setfunc) (setq setfunc nil)))
+	   (funcall (or setfunc 'set-default)
+		    (eval (nth 1 form) lexical-binding)
+		    ;; The second arg is an expression that evaluates to
+		    ;; an expression.  The second evaluation is the one
+		    ;; normally performed not by normal execution but by
+		    ;; custom-initialize-set (for example), which does not
+		    ;; use lexical-binding.
+		    (eval (eval (nth 2 form) lexical-binding))))
 	 form)
 	;; `defface' is macroexpanded to `custom-declare-face'.
 	((eq (car form) 'custom-declare-face)
@@ -790,21 +867,8 @@ Reinitialize the face according to the `defface' specification."
 	   (setq face-new-frame-defaults
 		 (assq-delete-all face-symbol face-new-frame-defaults))
 	   (put face-symbol 'face-defface-spec nil)
-	   (put face-symbol 'face-documentation (nth 3 form))
-	   ;; Setting `customized-face' to the new spec after calling
-	   ;; the form, but preserving the old saved spec in `saved-face',
-	   ;; imitates the situation when the new face spec is set
-	   ;; temporarily for the current session in the customize
-	   ;; buffer, thus allowing `face-user-default-spec' to use the
-	   ;; new customized spec instead of the saved spec.
-	   ;; Resetting `saved-face' temporarily to nil is needed to let
-	   ;; `defface' change the spec, regardless of a saved spec.
-	   (prog1 `(prog1 ,form
-		     (put ,(nth 1 form) 'saved-face
-			  ',(get face-symbol 'saved-face))
-		     (put ,(nth 1 form) 'customized-face
-			  ,(nth 2 form)))
-	     (put face-symbol 'saved-face nil))))
+	   (put face-symbol 'face-override-spec nil))
+	 form)
 	((eq (car form) 'progn)
 	 (cons 'progn (mapcar 'eval-defun-1 (cdr form))))
 	(t form)))
@@ -820,7 +884,6 @@ if it already has a value.\)
 
 With argument, insert value in current buffer after the defun.
 Return the result of evaluation."
-  (interactive "P")
   ;; FIXME: the print-length/level bindings should only be applied while
   ;; printing, not while evaluating.
   (let ((debug-on-error eval-expression-debug-on-error)
@@ -858,11 +921,12 @@ Return the result of evaluation."
 
 If the current defun is actually a call to `defvar' or `defcustom',
 evaluating it this way resets the variable using its initial value
-expression even if the variable already has some other value.
-\(Normally `defvar' and `defcustom' do not alter the value if there
-already is one.)  In an analogous way, evaluating a `defface'
-overrides any customizations of the face, so that it becomes
-defined exactly as the `defface' expression says.
+expression (using the defcustom's :set function if there is one), even
+if the variable already has some other value.  \(Normally `defvar' and
+`defcustom' do not alter the value if there already is one.)  In an
+analogous way, evaluating a `defface' overrides any customizations of
+the face, so that it becomes defined exactly as the `defface' expression
+says.
 
 If `eval-expression-debug-on-error' is non-nil, which is the default,
 this command arranges for all errors to enter the debugger.
@@ -925,6 +989,7 @@ rigidly along with this one."
     (if (or (null indent) (looking-at "\\s<\\s<\\s<"))
 	;; Don't alter indentation of a ;;; comment line
 	;; or a line that starts in a string.
+        ;; FIXME: inconsistency: comment-indent moves ;;; to column 0.
 	(goto-char (- (point-max) pos))
       (if (and (looking-at "\\s<") (not (looking-at "\\s<\\s<")))
 	  ;; Single-semicolon comment lines should be indented
@@ -939,18 +1004,7 @@ rigidly along with this one."
       ;; If initial point was within line's indentation,
       ;; position after the indentation.  Else stay at same point in text.
       (if (> (- (point-max) pos) (point))
-	  (goto-char (- (point-max) pos)))
-      ;; If desired, shift remaining lines of expression the same amount.
-      (and whole-exp (not (zerop shift-amt))
-	   (save-excursion
-	     (goto-char beg)
-	     (forward-sexp 1)
-	     (setq end (point))
-	     (goto-char beg)
-	     (forward-line 1)
-	     (setq beg (point))
-	     (> end beg))
-	   (indent-code-rigidly beg end shift-amt)))))
+	  (goto-char (- (point-max) pos))))))
 
 (defvar calculate-lisp-indent-last-sexp)
 
@@ -1230,7 +1284,6 @@ Lisp function does not specify a special indentation."
 (put 'prog2 'lisp-indent-function 2)
 (put 'save-excursion 'lisp-indent-function 0)
 (put 'save-restriction 'lisp-indent-function 0)
-(put 'save-match-data 'lisp-indent-function 0)
 (put 'save-current-buffer 'lisp-indent-function 0)
 (put 'let 'lisp-indent-function 1)
 (put 'let* 'lisp-indent-function 1)

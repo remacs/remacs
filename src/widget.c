@@ -30,7 +30,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include <config.h>
 #include <stdio.h>
-#include <setjmp.h>
+
 #include "lisp.h"
 #include "xterm.h"
 
@@ -49,9 +49,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <X11/Shell.h>
 #include <X11/ShellP.h>
 #include "../lwlib/lwlib.h"
-
-#include <signal.h>
-#include "syssignal.h"
 
 #include "character.h"
 #include "font.h"
@@ -226,7 +223,7 @@ get_wm_shell (Widget w)
 static void
 mark_shell_size_user_specified (Widget wmshell)
 {
-  if (! XtIsWMShell (wmshell)) abort ();
+  if (! XtIsWMShell (wmshell)) emacs_abort ();
   /* This is kind of sleazy, but I can't see how else to tell it to make it
      mark the WM_SIZE_HINTS size as user specified when appropriate. */
   ((WMShellWidget) wmshell)->wm.size_hints.flags |= USSize;
@@ -290,7 +287,7 @@ set_frame_size (EmacsFrame ew)
   Widget wmshell = get_wm_shell ((Widget) ew);
   /* Each Emacs shell is now independent and top-level.  */
 
-  if (! XtIsSubclass (wmshell, shellWidgetClass)) abort ();
+  if (! XtIsSubclass (wmshell, shellWidgetClass)) emacs_abort ();
 
   /* We don't need this for the moment. The geometry is computed in
      xfns.c.  */
@@ -653,6 +650,16 @@ EmacsFrameInitialize (Widget request, Widget new, ArgList dum1, Cardinal *dum2)
   set_frame_size (ew);
 }
 
+static void
+resize_cb (Widget widget,
+           XtPointer closure,
+           XEvent* event,
+           Boolean* continue_to_dispatch)
+{
+  EmacsFrame ew = (EmacsFrame) widget;
+  EmacsFrameResize (widget);
+}
+
 
 static void
 EmacsFrameRealize (Widget widget, XtValueMask *mask, XSetWindowAttributes *attrs)
@@ -668,6 +675,9 @@ EmacsFrameRealize (Widget widget, XtValueMask *mask, XSetWindowAttributes *attrs
   *mask |= CWEventMask;
   XtCreateWindow (widget, InputOutput, (Visual *)CopyFromParent, *mask,
 		  attrs);
+  /* Some ConfigureNotify events does not end up in EmacsFrameResize so
+     make sure we get them all.  Seen with xfcwm4 for example.  */
+  XtAddRawEventHandler (widget, StructureNotifyMask, False, resize_cb, NULL);
   update_wm_hints (ew);
 }
 
@@ -677,16 +687,16 @@ EmacsFrameDestroy (Widget widget)
   EmacsFrame ew = (EmacsFrame) widget;
   struct frame* s = ew->emacs_frame.frame;
 
-  if (! s) abort ();
-  if (! s->output_data.x) abort ();
+  if (! s) emacs_abort ();
+  if (! s->output_data.x) emacs_abort ();
 
-  BLOCK_INPUT;
+  block_input ();
   x_free_gcs (s);
   if (s->output_data.x->white_relief.gc)
     XFreeGC (XtDisplay (widget), s->output_data.x->white_relief.gc);
   if (s->output_data.x->black_relief.gc)
     XFreeGC (XtDisplay (widget), s->output_data.x->black_relief.gc);
-  UNBLOCK_INPUT;
+  unblock_input ();
 }
 
 static void
@@ -694,15 +704,22 @@ EmacsFrameResize (Widget widget)
 {
   EmacsFrame ew = (EmacsFrame)widget;
   struct frame *f = ew->emacs_frame.frame;
+  struct x_output *x = f->output_data.x;
   int columns;
   int rows;
 
   pixel_to_char_size (ew, ew->core.width, ew->core.height, &columns, &rows);
-  change_frame_size (f, rows, columns, 0, 1, 0);
-  update_wm_hints (ew);
-  update_various_frame_slots (ew);
+  if (columns != FRAME_COLS (f)
+      || rows != FRAME_LINES (f)
+      || ew->core.width != FRAME_PIXEL_WIDTH (f)
+      || ew->core.height + x->menubar_height != FRAME_PIXEL_HEIGHT (f))
+    {
+      change_frame_size (f, rows, columns, 0, 1, 0);
+      update_wm_hints (ew);
+      update_various_frame_slots (ew);
 
-  cancel_mouse_face (f);
+      cancel_mouse_face (f);
+    }
 }
 
 static Boolean

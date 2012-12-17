@@ -32,7 +32,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #define CATEGORY_INLINE EXTERN_INLINE
 
-#include <setjmp.h>
 #include "lisp.h"
 #include "character.h"
 #include "buffer.h"
@@ -41,7 +40,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "keymap.h"
 
 /* This setter is used only in this file, so it can be private.  */
-static inline void
+static void
 bset_category_table (struct buffer *b, Lisp_Object val)
 {
   b->INTERNAL_FIELD (category_table) = val;
@@ -79,10 +78,10 @@ hash_get_category_set (Lisp_Object table, Lisp_Object category_set)
   if (NILP (XCHAR_TABLE (table)->extras[1]))
     set_char_table_extras
       (table, 1,
-       make_hash_table (Qequal, make_number (DEFAULT_HASH_SIZE),
+       make_hash_table (hashtest_equal, make_number (DEFAULT_HASH_SIZE),
 			make_float (DEFAULT_REHASH_SIZE),
 			make_float (DEFAULT_REHASH_THRESHOLD),
-			Qnil, Qnil, Qnil));
+			Qnil));
   h = XHASH_TABLE (XCHAR_TABLE (table)->extras[1]);
   i = hash_lookup (h, category_set, &hash);
   if (i >= 0)

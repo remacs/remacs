@@ -585,6 +585,8 @@ temporarily enables it to allow getting help on disabled items and buttons."
 	     (setq saved-yank-menu (copy-sequence yank-menu))
 	     (menu-bar-update-yank-menu "(any string)" nil))
 	   (setq key (read-key-sequence "Describe key (or click or menu item): "))
+	   ;; Clear the echo area message (Bug#7014).
+	   (message nil)
 	   ;; If KEY is a down-event, read and discard the
 	   ;; corresponding up-event.  Note that there are also
 	   ;; down-events on scroll bars and mode lines: the actual
@@ -962,7 +964,11 @@ is currently activated with completion."
     result))
 
 ;;; Automatic resizing of temporary buffers.
-(defcustom temp-buffer-max-height (lambda (buffer) (/ (- (frame-height) 2) 2))
+(defcustom temp-buffer-max-height
+  (lambda (buffer)
+    (if (eq (selected-window) (frame-root-window))
+	(/ (x-display-pixel-height) (frame-char-height) 2)
+      (/ (- (frame-height) 2) 2)))
   "Maximum height of a window displaying a temporary buffer.
 This is effective only when Temp Buffer Resize mode is enabled.
 The value is the maximum height (in lines) which
@@ -973,7 +979,7 @@ buffer, and should return a positive integer.  At the time the
 function is called, the window to be resized is selected."
   :type '(choice integer function)
   :group 'help
-  :version "20.4")
+  :version "24.3")
 
 (define-minor-mode temp-buffer-resize-mode
   "Toggle auto-resizing temporary buffer windows (Temp Buffer Resize Mode).
@@ -985,6 +991,11 @@ When Temp Buffer Resize mode is enabled, the windows in which we
 show a temporary buffer are automatically resized in height to
 fit the buffer's contents, but never more than
 `temp-buffer-max-height' nor less than `window-min-height'.
+
+A window is resized only if it has been specially created for the
+buffer.  Windows that have shown another buffer before are not
+resized.  A frame is resized only if `fit-frame-to-buffer' is
+non-nil.
 
 This mode is used by `help', `apropos' and `completion' buffers,
 and some others."
@@ -1001,16 +1012,30 @@ WINDOW can be any live window and defaults to the selected one.
 
 Do not make WINDOW higher than `temp-buffer-max-height' nor
 smaller than `window-min-height'.  Do nothing if WINDOW is not
-vertically combined or some of its contents are scrolled out of
-view."
+vertically combined, some of its contents are scrolled out of
+view, or WINDOW was not created by `display-buffer'."
   (setq window (window-normalize-window window t))
-  (let ((height (if (functionp temp-buffer-max-height)
-		    (with-selected-window window
-		      (funcall temp-buffer-max-height (window-buffer)))
-		  temp-buffer-max-height)))
-    (when (and (pos-visible-in-window-p (point-min) window)
-	       (window-combined-p window))
-      (fit-window-to-buffer window height))))
+  (let ((buffer-name (buffer-name (window-buffer window))))
+    (let ((height (if (functionp temp-buffer-max-height)
+		      (with-selected-window window
+			(funcall temp-buffer-max-height (window-buffer)))
+		    temp-buffer-max-height))
+	  (quit-cadr (cadr (window-parameter window 'quit-restore))))
+      (cond
+       ;; Resize WINDOW iff it was split off by `display-buffer'.
+       ((and (eq quit-cadr 'window)
+	     (pos-visible-in-window-p (point-min) window)
+	     (window-combined-p window))
+	(fit-window-to-buffer window height))
+       ;; Resize FRAME iff it was created by `display-buffer'.
+       ((and fit-frame-to-buffer
+	     (eq quit-cadr 'frame)
+	     (eq window (frame-root-window window)))
+	(let ((frame (window-frame window)))
+	  (fit-frame-to-buffer
+	   frame (+ (frame-height frame)
+		    (- (window-total-size window))
+		    height))))))))
 
 ;;; Help windows.
 (defcustom help-window-select 'other

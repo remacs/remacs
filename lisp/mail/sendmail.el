@@ -243,15 +243,14 @@ Used by `mail-yank-original' via `mail-indent-citation'."
   :type 'integer
   :group 'sendmail)
 
-;; FIXME make it really obsolete.
 (defvar mail-yank-hooks nil
   "Obsolete hook for modifying a citation just inserted in the mail buffer.
 Each hook function can find the citation between (point) and (mark t).
 And each hook function should leave point and mark around the citation
 text as modified.
-
 This is a normal hook, misnamed for historical reasons.
-It is semi-obsolete and mail agents should no longer use it.")
+It is obsolete and mail agents should no longer use it.")
+(make-obsolete-variable 'mail-yank-hooks 'mail-citation-hook "19.34")
 
 ;;;###autoload
 (defcustom mail-citation-hook nil
@@ -1414,6 +1413,7 @@ just append to the file, in Babyl format if necessary."
 
 (defun mail-sent-via ()
   "Make a Sent-via header line from each To or CC header line."
+  (declare (obsolete "nobody can remember what it is for." "24.1"))
   (interactive)
   (save-excursion
     ;; put a marker at the end of the header
@@ -1433,9 +1433,6 @@ just append to the file, in Babyl format if necessary."
 				   (point)))))
 	  ;; Insert a copy, with altered header field name.
 	  (insert-before-markers "Sent-via:" to-line))))))
-
-(make-obsolete 'mail-sent-via "nobody can remember what it is for." "24.1")
-
 
 (defun mail-to ()
   "Move point to end of To field, creating it if necessary."

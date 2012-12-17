@@ -34,7 +34,7 @@
 ;;		- some local variables
 
 ;; To use this, use customize to turn on desktop-save-mode or add the
-;; following line somewhere in your .emacs file:
+;; following line somewhere in your init file:
 ;;
 ;;	(desktop-save-mode 1)
 ;;
@@ -825,7 +825,7 @@ MODE is the major mode.
          (or (and filename
 		  (stringp desktop-files-not-to-save)
                   (not (string-match desktop-files-not-to-save filename)))
-             (and (eq mode 'dired-mode)
+             (and (memq mode '(dired-mode vc-dir-mode))
                   (with-current-buffer bufname
                     (not (setq dired-skip
                                (string-match desktop-files-not-to-save
@@ -1045,11 +1045,10 @@ Using it may cause conflicts.  Use it anyway? " owner)))))
 (defun desktop-load-default ()
   "Load the `default' start-up library manually.
 Also inhibit further loading of it."
+  (declare (obsolete desktop-save-mode "22.1"))
   (unless inhibit-default-init	        ; safety check
     (load "default" t t)
     (setq inhibit-default-init t)))
-(make-obsolete 'desktop-load-default
-               'desktop-save-mode "22.1")
 
 ;; ----------------------------------------------------------------------------
 ;;;###autoload

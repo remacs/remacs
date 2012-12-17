@@ -27,8 +27,6 @@ INLINE_HEADER_BEGIN
 # define WINDOW_INLINE INLINE
 #endif
 
-extern Lisp_Object Qleft, Qright;
-
 /* Windows are allocated as if they were vectors, but then the
 Lisp data type is changed to Lisp_Window.  They are garbage
 collected along with the vectors.
@@ -222,13 +220,6 @@ struct window
     /* t means this window's child windows are not (re-)combined.  */
     Lisp_Object combination_limit;
 
-    /* Alist of <buffer, window-start, window-point> triples listing
-       buffers previously shown in this window.  */
-    Lisp_Object prev_buffers;
-
-    /* List of buffers re-shown in this window.  */
-    Lisp_Object next_buffers;
-
     /* An alist with parameters.  */
     Lisp_Object window_parameters;
 
@@ -239,6 +230,14 @@ struct window
     /* Glyph matrices.  */
     struct glyph_matrix *current_matrix;
     struct glyph_matrix *desired_matrix;
+
+    /* The two Lisp_Object fields below are marked in a special way,
+       which is why they're placed after `current_matrix'.  */
+    /* Alist of <buffer, window-start, window-point> triples listing
+       buffers previously shown in this window.  */
+    Lisp_Object prev_buffers;
+    /* List of buffers re-shown in this window.  */
+    Lisp_Object next_buffers;
 
     /* Number saying how recently window was selected.  */
     int use_time;
@@ -352,11 +351,6 @@ struct window
 /* Most code should use these functions to set Lisp fields in struct
    window.  */
 WINDOW_INLINE void
-wset_buffer (struct window *w, Lisp_Object val)
-{
-  w->buffer = val;
-}
-WINDOW_INLINE void
 wset_frame (struct window *w, Lisp_Object val)
 {
   w->frame = val;
@@ -416,7 +410,16 @@ wset_window_end_vpos (struct window *w, Lisp_Object val)
 {
   w->window_end_vpos = val;
 }
-
+WINDOW_INLINE void
+wset_prev_buffers (struct window *w, Lisp_Object val)
+{
+  w->prev_buffers = val;
+}
+WINDOW_INLINE void
+wset_next_buffers (struct window *w, Lisp_Object val)
+{
+  w->next_buffers = val;
+}
 
 /* 1 if W is a minibuffer window.  */
 
@@ -939,11 +942,6 @@ extern int windows_or_buffers_changed;
 
 extern int cursor_type_changed;
 
-/* Number of windows displaying the selected buffer.  Normally this is
-   1, but it can be more.  */
-
-extern int buffer_shared;
-
 /* If *ROWS or *COLS are too small a size for FRAME, set them to the
    minimum allowable size.  */
 
@@ -962,10 +960,18 @@ struct glyph *get_phys_cursor_glyph (struct window *w);
        || !NILP (XWINDOW (WINDOW)->vchild)		\
        || !NILP (XWINDOW (WINDOW)->hchild)))
 
+/* A window of any sort, leaf or interior, is "valid" if one
+   of its buffer, vchild, or hchild members is non-nil.  */
+#define CHECK_VALID_WINDOW(WINDOW)				\
+  CHECK_TYPE (WINDOW_VALID_P (WINDOW), Qwindow_valid_p, WINDOW)
 
 /* Value is non-zero if WINDOW is a live window.  */
 #define WINDOW_LIVE_P(WINDOW)					\
   (WINDOWP (WINDOW) && !NILP (XWINDOW (WINDOW)->buffer))
+
+/* A window is "live" if and only if it shows a buffer.  */
+#define CHECK_LIVE_WINDOW(WINDOW)				\
+  CHECK_TYPE (WINDOW_LIVE_P (WINDOW), Qwindow_live_p, WINDOW)
 
 /* These used to be in lisp.h.  */
 
@@ -973,13 +979,16 @@ extern Lisp_Object Qwindowp, Qwindow_live_p;
 extern Lisp_Object Vwindow_list;
 
 extern struct window *decode_live_window (Lisp_Object);
-extern int compare_window_configurations (Lisp_Object, Lisp_Object, int);
+extern struct window *decode_any_window (Lisp_Object);
+extern bool compare_window_configurations (Lisp_Object, Lisp_Object, bool);
 extern void mark_window_cursors_off (struct window *);
 extern int window_internal_height (struct window *);
 extern int window_body_cols (struct window *w);
 extern void temp_output_buffer_show (Lisp_Object);
 extern void replace_buffer_in_windows (Lisp_Object);
 extern void replace_buffer_in_windows_safely (Lisp_Object);
+/* This looks like a setter, but it is a bit special.  */
+extern void wset_buffer (struct window *, Lisp_Object);
 extern void init_window_once (void);
 extern void init_window (void);
 extern void syms_of_window (void);

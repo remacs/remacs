@@ -24,7 +24,6 @@ Carbon version by Yamamoto Mitsuharu. */
 /* This should be the first include, as it may set up #defines affecting
    interpretation of even the system includes. */
 #include <config.h>
-#include <setjmp.h>
 
 #include "lisp.h"
 #include "window.h"
@@ -116,21 +115,20 @@ popup_activated (void)
 
 /* --------------------------------------------------------------------------
     Update menubar.  Three cases:
-    1) deep_p = 0, submenu = nil: Fresh switch onto a frame -- either set up
+    1) ! deep_p, submenu = nil: Fresh switch onto a frame -- either set up
        just top-level menu strings (OS X), or goto case (2) (GNUstep).
-    2) deep_p = 1, submenu = nil: Recompute all submenus.
-    3) deep_p = 1, submenu = non-nil: Update contents of a single submenu.
+    2) deep_p, submenu = nil: Recompute all submenus.
+    3) deep_p, submenu = non-nil: Update contents of a single submenu.
    -------------------------------------------------------------------------- */
 void
-ns_update_menubar (struct frame *f, int deep_p, EmacsMenu *submenu)
+ns_update_menubar (struct frame *f, bool deep_p, EmacsMenu *submenu)
 {
   NSAutoreleasePool *pool;
   id menu = [NSApp mainMenu];
   static EmacsMenu *last_submenu = nil;
   BOOL needsSet = NO;
   const char *submenuTitle = [[submenu title] UTF8String];
-  extern int waiting_for_input;
-  int owfi;
+  bool owfi;
   Lisp_Object items;
   widget_value *wv, *first_wv, *prev_wv = 0;
   int i;
@@ -147,7 +145,7 @@ ns_update_menubar (struct frame *f, int deep_p, EmacsMenu *submenu)
   XSETFRAME (Vmenu_updating_frame, f);
 /*fprintf (stderr, "ns_update_menubar: frame: %p\tdeep: %d\tsub: %p\n", f, deep_p, submenu); */
 
-  BLOCK_INPUT;
+  block_input ();
   pool = [[NSAutoreleasePool alloc] init];
 
   /* Menu may have been created automatically; if so, discard it. */
@@ -183,7 +181,8 @@ ns_update_menubar (struct frame *f, int deep_p, EmacsMenu *submenu)
       /* Fully parse one or more of the submenus. */
       int n = 0;
       int *submenu_start, *submenu_end;
-      int *submenu_top_level_items, *submenu_n_panes;
+      bool *submenu_top_level_items;
+      int *submenu_n_panes;
       struct buffer *prev = current_buffer;
       Lisp_Object buffer;
       ptrdiff_t specpdl_count = SPECPDL_INDEX ();
@@ -272,7 +271,7 @@ ns_update_menubar (struct frame *f, int deep_p, EmacsMenu *submenu)
 	  discard_menu_items ();
 	  unbind_to (specpdl_count, Qnil);
           [pool release];
-          UNBLOCK_INPUT;
+          unblock_input ();
 	  return;
         }
 
@@ -334,7 +333,7 @@ ns_update_menubar (struct frame *f, int deep_p, EmacsMenu *submenu)
               discard_menu_items ();
               unbind_to (specpdl_count, Qnil);
               [pool release];
-              UNBLOCK_INPUT;
+              unblock_input ();
               return;
             }
         }
@@ -405,7 +404,7 @@ ns_update_menubar (struct frame *f, int deep_p, EmacsMenu *submenu)
         {
           free_menubar_widget_value_tree (first_wv);
           [pool release];
-          UNBLOCK_INPUT;
+          unblock_input ();
           return;
         }
 
@@ -436,7 +435,7 @@ ns_update_menubar (struct frame *f, int deep_p, EmacsMenu *submenu)
             {
               free_menubar_widget_value_tree (first_wv);
               [pool release];
-              UNBLOCK_INPUT;
+              unblock_input ();
               return;
             }
         }
@@ -499,7 +498,7 @@ ns_update_menubar (struct frame *f, int deep_p, EmacsMenu *submenu)
     [NSApp setMainMenu: menu];
 
   [pool release];
-  UNBLOCK_INPUT;
+  unblock_input ();
 
 }
 
@@ -508,7 +507,7 @@ ns_update_menubar (struct frame *f, int deep_p, EmacsMenu *submenu)
    frame's menus have changed, and the *step representation should be updated
    from Lisp. */
 void
-set_frame_menubar (struct frame *f, int first_time, int deep_p)
+set_frame_menubar (struct frame *f, bool first_time, bool deep_p)
 {
   ns_update_menubar (f, deep_p, nil);
 }
@@ -589,10 +588,7 @@ extern NSString *NSMenuDidBeginTrackingNotification;
      From 10.6 on, we could also use -[NSMenu propertiesToUpdate]: In the
      key press case, NSMenuPropertyItemImage (e.g.) won't be set.
   */
-  if (trackingMenu == 0
-      /* Also, don't try this if from an event picked up asynchronously,
-         as lots of lisp evaluation happens in ns_update_menubar. */
-      || handling_signal != 0)
+  if (trackingMenu == 0)
     return;
 /*fprintf (stderr, "Updating menu '%s'\n", [[self title] UTF8String]); NSLog (@"%@\n", event); */
   ns_update_menubar (frame, 1, self);
@@ -726,11 +722,6 @@ extern NSString *NSMenuDidBeginTrackingNotification;
 #ifdef NS_IMPL_GNUSTEP
   if ([[self window] isVisible])
     [self sizeToFit];
-#else
-#if MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_X_VERSION_10_2
-  if ([self supermenu] == nil)
-    [self sizeToFit];
-#endif
 #endif
 }
 
@@ -750,7 +741,7 @@ extern NSString *NSMenuDidBeginTrackingNotification;
 
 /* run a menu in popup mode */
 - (Lisp_Object)runMenuAt: (NSPoint)p forFrame: (struct frame *)f
-                 keymaps: (int)keymaps
+                 keymaps: (bool)keymaps
 {
   EmacsView *view = FRAME_NS_VIEW (f);
   NSEvent *e, *event;
@@ -789,7 +780,7 @@ extern NSString *NSMenuDidBeginTrackingNotification;
    ========================================================================== */
 
 Lisp_Object
-ns_menu_show (FRAME_PTR f, int x, int y, int for_click, int keymaps,
+ns_menu_show (FRAME_PTR f, int x, int y, bool for_click, bool keymaps,
 	      Lisp_Object title, const char **error)
 {
   EmacsMenu *pmenu;
@@ -811,7 +802,7 @@ ns_menu_show (FRAME_PTR f, int x, int y, int for_click, int keymaps,
 
 #if 0
   /* FIXME: a couple of one-line differences prevent reuse */
-  wv = digest_single_submenu (0, menu_items_used, Qnil);
+  wv = digest_single_submenu (0, menu_items_used, 0);
 #else
   {
   widget_value *save_wv = 0, *prev_wv = 0;
@@ -948,7 +939,7 @@ ns_menu_show (FRAME_PTR f, int x, int y, int for_click, int keymaps,
 	  else if (EQ (type, QCradio))
 	    wv->button_type = BUTTON_TYPE_RADIO;
 	  else
-	    abort ();
+	    emacs_abort ();
 
 	  wv->selected = !NILP (selected);
 
@@ -1016,10 +1007,10 @@ free_frame_tool_bar (FRAME_PTR f)
     Under NS we just hide the toolbar until it might be needed again.
    -------------------------------------------------------------------------- */
 {
-  BLOCK_INPUT;
+  block_input ();
   [[FRAME_NS_VIEW (f) toolbar] setVisible: NO];
   FRAME_TOOLBAR_HEIGHT (f) = 0;
-  UNBLOCK_INPUT;
+  unblock_input ();
 }
 
 void
@@ -1033,7 +1024,7 @@ update_frame_tool_bar (FRAME_PTR f)
   NSWindow *window = [view window];
   EmacsToolbar *toolbar = [view toolbar];
 
-  BLOCK_INPUT;
+  block_input ();
   [toolbar clearActive];
 
   /* update EmacsToolbar as in GtkUtils, build items list */
@@ -1119,7 +1110,7 @@ update_frame_tool_bar (FRAME_PTR f)
   FRAME_TOOLBAR_HEIGHT (f) =
     NSHeight ([window frameRectForContentRect: NSMakeRect (0, 0, 0, 0)])
     - FRAME_NS_TITLEBAR_HEIGHT (f);
-  UNBLOCK_INPUT;
+    unblock_input ();
 }
 
 
@@ -1359,7 +1350,7 @@ pop_down_menu (Lisp_Object arg)
   struct Lisp_Save_Value *p = XSAVE_VALUE (arg);
   struct Popdown_data *unwind_data = (struct Popdown_data *) p->pointer;
 
-  BLOCK_INPUT;
+  block_input ();
   if (popup_activated_flag)
     {
       EmacsDialogPanel *panel = unwind_data->dialog;
@@ -1370,7 +1361,7 @@ pop_down_menu (Lisp_Object arg)
     }
 
   xfree (unwind_data);
-  UNBLOCK_INPUT;
+  unblock_input ();
 
   return Qnil;
 }
@@ -1438,7 +1429,7 @@ ns_popup_dialog (Lisp_Object position, Lisp_Object contents, Lisp_Object header)
        the dialog.  */
     contents = Fcons (title, Fcons (Fcons (build_string ("Ok"), Qt), Qnil));
 
-  BLOCK_INPUT;
+  block_input ();
   pool = [[NSAutoreleasePool alloc] init];
   dialog = [[EmacsDialogPanel alloc] initFromContents: contents
                                            isQuestion: isQ];
@@ -1456,7 +1447,7 @@ ns_popup_dialog (Lisp_Object position, Lisp_Object contents, Lisp_Object header)
     unbind_to (specpdl_count, Qnil);  /* calls pop_down_menu */
   }
 
-  UNBLOCK_INPUT;
+  unblock_input ();
 
   return tem;
 }
@@ -1770,7 +1761,7 @@ ns_popup_dialog (Lisp_Object position, Lisp_Object contents, Lisp_Object header)
 }
 
 
- 
+
 - (void)timeout_handler: (NSTimer *)timedEntry
 {
   NSEvent *nxev = [NSEvent otherEventWithType: NSApplicationDefined

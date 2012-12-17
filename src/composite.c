@@ -26,7 +26,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #define COMPOSITE_INLINE EXTERN_INLINE
 
-#include <setjmp.h>
 #include "lisp.h"
 #include "character.h"
 #include "buffer.h"
@@ -677,7 +676,7 @@ composition_gstring_put_cache (Lisp_Object gstring, ptrdiff_t len)
   ptrdiff_t i;
 
   header = LGSTRING_HEADER (gstring);
-  hash = h->hashfn (h, header);
+  hash = h->test.hashfn (&h->test, header);
   if (len < 0)
     {
       ptrdiff_t j, glyph_len = LGSTRING_GLYPH_LEN (gstring);
@@ -1220,9 +1219,6 @@ composition_reseat_it (struct composition_it *cmp_it, ptrdiff_t charpos,
 		       ptrdiff_t bytepos, ptrdiff_t endpos, struct window *w,
 		       struct face *face, Lisp_Object string)
 {
-  if (endpos < 0)
-    endpos = NILP (string) ? BEGV : 0;
-
   if (cmp_it->ch == -2)
     {
       composition_compute_stop_pos (cmp_it, charpos, bytepos, endpos, string);
@@ -1230,6 +1226,9 @@ composition_reseat_it (struct composition_it *cmp_it, ptrdiff_t charpos,
 	/* The current position is not composed.  */
 	return 0;
     }
+
+  if (endpos < 0)
+    endpos = NILP (string) ? BEGV : 0;
 
   if (cmp_it->ch < 0)
     {
@@ -1278,36 +1277,23 @@ composition_reseat_it (struct composition_it *cmp_it, ptrdiff_t charpos,
 	{
 	  ptrdiff_t cpos = charpos, bpos = bytepos;
 
-	  while (1)
-	    {
-	      elt = XCAR (val);
-	      if (cmp_it->lookback > 0)
-		{
-		  cpos = charpos - cmp_it->lookback;
-		  if (STRINGP (string))
-		    bpos = string_char_to_byte (string, cpos);
-		  else
-		    bpos = CHAR_TO_BYTE (cpos);
-		}
-	      lgstring = autocmp_chars (elt, cpos, bpos, charpos + 1, w, face,
-					string);
-	      if (composition_gstring_p (lgstring)
-		  && cpos + LGSTRING_CHAR_LEN (lgstring) - 1 == charpos)
-		break;
-	      /* Composition failed or didn't cover the current
-		 character.  */
-	      if (cmp_it->lookback == 0)
-		goto no_composition;
-	      lgstring = Qnil;
-	      /* Try to find a shorter composition that starts after CPOS.  */
-	      composition_compute_stop_pos (cmp_it, charpos, bytepos, cpos,
-					    string);
-	      if (cmp_it->ch == -2 || cmp_it->stop_pos < charpos)
-		goto no_composition;
-	      val = CHAR_TABLE_REF (Vcomposition_function_table, cmp_it->ch);
-	      for (i = 0; i < cmp_it->rule_idx; i++, val = XCDR (val));
-	    }
 	  cmp_it->reversed_p = 1;
+	  elt = XCAR (val);
+	  if (cmp_it->lookback > 0)
+	    {
+	      cpos = charpos - cmp_it->lookback;
+	      if (STRINGP (string))
+		bpos = string_char_to_byte (string, cpos);
+	      else
+		bpos = CHAR_TO_BYTE (cpos);
+	    }
+	  lgstring = autocmp_chars (elt, cpos, bpos, charpos + 1, w, face,
+				    string);
+	  if (! composition_gstring_p (lgstring)
+	      || cpos + LGSTRING_CHAR_LEN (lgstring) - 1 != charpos)
+	    /* Composition failed or didn't cover the current
+	       character.  */
+	    goto no_composition;
 	}
       if (NILP (lgstring))
 	goto no_composition;
@@ -1342,6 +1328,8 @@ composition_reseat_it (struct composition_it *cmp_it, ptrdiff_t charpos,
       /* BYTEPOS is calculated in composition_compute_stop_pos */
       bytepos = -1;
     }
+  if (cmp_it->reversed_p)
+    endpos = -1;
   composition_compute_stop_pos (cmp_it, charpos, bytepos, endpos, string);
   return 0;
 }
@@ -1394,7 +1382,7 @@ composition_update_it (struct composition_it *cmp_it, ptrdiff_t charpos, ptrdiff
     }
   else
     {
-      /* automatic composition */
+      /* Automatic composition.  */
       Lisp_Object gstring = composition_gstring_from_id (cmp_it->id);
       Lisp_Object glyph;
       ptrdiff_t from;

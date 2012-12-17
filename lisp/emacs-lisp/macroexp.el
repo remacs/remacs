@@ -100,6 +100,45 @@ each clause."
     (error (message "Compiler-macro error for %S: %S" (car form) err)
            form)))
 
+(defun macroexp--funcall-if-compiled (_form)
+  "Pseudo function used internally by macroexp to delay warnings.
+The purpose is to delay warnings to bytecomp.el, so they can use things
+like `byte-compile-log-warning' to get better file-and-line-number data
+and also to avoid outputting the warning during normal execution."
+  nil)
+(put 'macroexp--funcall-if-compiled 'byte-compile
+     (lambda (form)
+       (funcall (eval (cadr form)))
+       (byte-compile-constant nil)))
+
+(defun macroexp--warn-and-return (msg form)
+  (let ((when-compiled (lambda () (byte-compile-log-warning msg t))))
+    (cond
+     ((null msg) form)
+     ;; FIXME: ¡¡Major Ugly Hack!! To determine whether the output of this
+     ;; macro-expansion will be processed by the byte-compiler, we check
+     ;; circumstantial evidence.
+     ((member '(declare-function . byte-compile-macroexpand-declare-function)
+                macroexpand-all-environment)
+      `(progn
+         (macroexp--funcall-if-compiled ',when-compiled)
+         ,form))
+     (t
+      (message "%s%s" (if (stringp load-file-name)
+                          (concat (file-relative-name load-file-name) ": ")
+                        "")
+               msg)
+      form))))
+
+(defun macroexp--obsolete-warning (fun obsolescence-data type)
+  (let ((instead (car obsolescence-data))
+        (asof (nth 2 obsolescence-data)))
+    (format "`%s' is an obsolete %s%s%s" fun type
+            (if asof (concat " (as of " asof ")") "")
+            (cond ((stringp instead) (concat "; " instead))
+                  (instead (format "; use `%s' instead." instead))
+                  (t ".")))))
+
 (defun macroexp--expand-all (form)
   "Expand all macros in FORM.
 This is an internal version of `macroexpand-all'.
@@ -112,14 +151,24 @@ Assumes the caller has bound `macroexpand-all-environment'."
       (macroexpand (macroexp--all-forms form 1)
 		   macroexpand-all-environment)
     ;; Normal form; get its expansion, and then expand arguments.
-    (let ((new-form (macroexpand form macroexpand-all-environment)))
-      (when (and (not (eq form new-form)) ;It was a macro call.
-                 (car-safe form)
-                 (symbolp (car form))
-                 (get (car form) 'byte-obsolete-info)
-                 (fboundp 'byte-compile-warn-obsolete))
-        (byte-compile-warn-obsolete (car form)))
-      (setq form new-form))
+    (let ((new-form
+           (macroexpand form macroexpand-all-environment)))
+      (setq form
+            (if (and (not (eq form new-form)) ;It was a macro call.
+                     (car-safe form)
+                     (symbolp (car form))
+                     (get (car form) 'byte-obsolete-info)
+                     (or (not (fboundp 'byte-compile-warning-enabled-p))
+                         (byte-compile-warning-enabled-p 'obsolete)))
+                (let* ((fun (car form))
+                       (obsolete (get fun 'byte-obsolete-info)))
+                  (macroexp--warn-and-return
+                   (macroexp--obsolete-warning
+                    fun obsolete
+                    (if (symbolp (symbol-function fun))
+                        "alias" "macro"))
+                   new-form))
+              new-form)))
     (pcase form
       (`(cond . ,clauses)
        (macroexp--cons 'cond (macroexp--all-clauses clauses) form))
@@ -161,26 +210,16 @@ Assumes the caller has bound `macroexpand-all-environment'."
       ;; First arg is a function:
       (`(,(and fun (or `funcall `apply `mapcar `mapatoms `mapconcat `mapc))
          ',(and f `(lambda . ,_)) . ,args)
-       (byte-compile-log-warning
+       (macroexp--warn-and-return
         (format "%s quoted with ' rather than with #'"
                 (list 'lambda (nth 1 f) '...))
-        t)
-       ;; We don't use `macroexp--cons' since there's clearly a change.
-       (cons fun
-             (cons (macroexp--expand-all (list 'function f))
-                   (macroexp--all-forms args))))
+        (macroexp--expand-all `(,fun ,f . ,args))))
       ;; Second arg is a function:
       (`(,(and fun (or `sort)) ,arg1 ',(and f `(lambda . ,_)) . ,args)
-       (byte-compile-log-warning
+       (macroexp--warn-and-return
         (format "%s quoted with ' rather than with #'"
                 (list 'lambda (nth 1 f) '...))
-        t)
-       ;; We don't use `macroexp--cons' since there's clearly a change.
-       (cons fun
-             (cons (macroexp--expand-all arg1)
-                   (cons (macroexp--expand-all
-                          (list 'function f))
-                         (macroexp--all-forms args)))))
+        (macroexp--expand-all `(,fun ,arg1 ,f . ,args))))
       (`(,func . ,_)
        ;; Macro expand compiler macros.  This cannot be delayed to
        ;; byte-optimize-form because the output of the compiler-macro can
@@ -322,6 +361,86 @@ symbol itself."
 (defun macroexp-copyable-p (exp)
   "Return non-nil if EXP can be copied without extra cost."
   (or (symbolp exp) (macroexp-const-p exp)))
+
+;;; Load-time macro-expansion.
+
+;; Because macro-expansion used to be more lazy, eager macro-expansion
+;; tends to bump into previously harmless/unnoticeable cyclic-dependencies.
+;; So, we have to delay macro-expansion like we used to when we detect
+;; such a cycle, and we also want to help coders resolve those cycles (since
+;; they can be non-obvious) by providing a usefully trimmed backtrace
+;; (hopefully) highlighting the problem.
+
+(defun macroexp--backtrace ()
+  "Return the Elisp backtrace, more recent frames first."
+  (let ((bt ())
+        (i 0))
+    (while
+        (let ((frame (backtrace-frame i)))
+          (when frame
+            (push frame bt)
+            (setq i (1+ i)))))
+    (nreverse bt)))
+
+(defun macroexp--trim-backtrace-frame (frame)
+  (pcase frame
+    (`(,_ macroexpand (,head . ,_) . ,_) `(macroexpand (,head …)))
+    (`(,_ internal-macroexpand-for-load (,head ,second . ,_) . ,_)
+     (if (or (symbolp second)
+             (and (eq 'quote (car-safe second))
+                  (symbolp (cadr second))))
+         `(macroexpand-all (,head ,second …))
+       '(macroexpand-all …)))
+    (`(,_ load-with-code-conversion ,name . ,_)
+     `(load ,(file-name-nondirectory name)))))
+
+(defvar macroexp--pending-eager-loads nil
+  "Stack of files currently undergoing eager macro-expansion.")
+
+(defun internal-macroexpand-for-load (form)
+  ;; Called from the eager-macroexpansion in readevalloop.
+  (cond
+   ;; Don't repeat the same warning for every top-level element.
+   ((eq 'skip (car macroexp--pending-eager-loads)) form)
+   ;; If we detect a cycle, skip macro-expansion for now, and output a warning
+   ;; with a trimmed backtrace.
+   ((and load-file-name (member load-file-name macroexp--pending-eager-loads))
+    (let* ((bt (delq nil
+                     (mapcar #'macroexp--trim-backtrace-frame
+                             (macroexp--backtrace))))
+           (elem `(load ,(file-name-nondirectory load-file-name)))
+           (tail (member elem (cdr (member elem bt)))))
+      (if tail (setcdr tail (list '…)))
+      (if (eq (car-safe (car bt)) 'macroexpand-all) (setq bt (cdr bt)))
+      (message "Warning: Eager macro-expansion skipped due to cycle:\n  %s"
+               (mapconcat #'prin1-to-string (nreverse bt) " => "))
+      (push 'skip macroexp--pending-eager-loads)
+      form))
+   (t
+    (condition-case err
+        (let ((macroexp--pending-eager-loads
+               (cons load-file-name macroexp--pending-eager-loads)))
+          (macroexpand-all form))
+      (error
+       ;; Hopefully this shouldn't happen thanks to the cycle detection,
+       ;; but in case it does happen, let's catch the error and give the
+       ;; code a chance to macro-expand later.
+       (message "Eager macro-expansion failure: %S" err)
+       form)))))
+
+;; ¡¡¡ Big Ugly Hack !!!
+;; src/bootstrap-emacs is mostly used to compile .el files, so it needs
+;; macroexp, bytecomp, cconv, and byte-opt to be fast.  Generally this is done
+;; by compiling those files first, but this only makes a difference if those
+;; files are not preloaded.  But macroexp.el is preloaded so we reload it if
+;; the current version is interpreted and there's a compiled version available.
+(eval-when-compile
+  (add-hook 'emacs-startup-hook
+            (lambda ()
+              (and (not (byte-code-function-p
+                         (symbol-function 'macroexpand-all)))
+                   (locate-library "macroexp.elc")
+                   (load "macroexp.elc")))))
 
 (provide 'macroexp)
 
