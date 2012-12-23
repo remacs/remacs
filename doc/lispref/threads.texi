@@ -31,6 +31,13 @@ local variables are not---a dynamic @code{let} binding is local.  Each
 thread also has its own current buffer (@pxref{Current Buffer}) and
 its own match data (@pxref{Match Data}).
 
+  Note that @code{let} bindings are treated specially by the Emacs
+Lisp implementation.  There is no way to duplicate this unwinding and
+rewinding behavior other than by using @code{let}.  For example, a
+manual implementation of @code{let} written using
+@code{unwind-protect} cannot arrange for variable values to be
+thread-specific.
+
   In the case of lexical bindings (@pxref{Variable Scoping}), a
 closure is an object like any other in Emacs Lisp, and bindings in a
 closure are shared by any threads invoking the closure.
