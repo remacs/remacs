@@ -1,3 +1,49 @@
+2012-12-30  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* coding.c (Qmac): Now static.
+
+2012-12-30  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* gtkutil.c (TOOLBAR_TOP_WIDGET): New macro.
+	(xg_pack_tool_bar): Use TOOLBAR_TOP_WIDGET, condition out use of
+	handlebox_widget.  Set toolbar_in_hbox to false/true, set
+	toolbar_is_packed to true.
+	(xg_update_tool_bar_sizes): Use widget returned by TOOLBAR_TOP_WIDGET.
+	(update_frame_tool_bar): Check toolbar_is_packed for packing.
+	Show all on TOOLBAR_TOP_WIDGET.
+	(free_frame_tool_bar): Check toolbar_is_packed.  Use widget returned
+	by TOOLBAR_TOP_WIDGET.
+	(xg_change_toolbar_position): Use widget returned by TOOLBAR_TOP_WIDGET.
+	Check toolbar_is_packed.
+	(xg_have_tear_offs, tearoff_remove, tearoff_activate): Condition on
+	HAVE_GTK_TEAROFF_MENU_ITEM_NEW.
+	(xg_have_tear_offs): When ! HAVE_GTK_TEAROFF_MENU_ITEM_NEW, return
+	false.
+	(create_menus): Create tearoff only if HAVE_GTK_TEAROFF_MENU_ITEM_NEW.
+	(xg_update_menubar): Update title only if
+	HAVE_GTK_TEAROFF_MENU_ITEM_NEW.
+	(xg_update_submenu): Skip tearoff only if
+	HAVE_GTK_TEAROFF_MENU_ITEM_NEW.
+	(xg_initialize): Initialize xg_detached_menus only if
+	HAVE_GTK_TEAROFF_MENU_ITEM_NEW.
+
+	* xterm.h (struct x_output): Surround handlebox_widget with
+	#ifdef HAVE_GTK_HANDLE_BOX_NEW.  toolbar_is_packed is new,
+	toolbar_in_hbox is bool.
+
+2012-12-30  Andreas Schwab  <schwab@linux-m68k.org>
+
+	* src/Makefile.in (TEMACS_LDFLAGS2): Remove.
+	(LIBS_GNUSTEP): Define.
+	(LIBES): Add $(LIBS_GNUSTEP).
+	(temacs$(EXEEXT)): Use $(LDFLAGS) instead of $(TEMACS_LDFLAGS2).
+
+2012-12-30  Eli Zaretskii  <eliz@gnu.org>
+
+	* xdisp.c (set_cursor_from_row): Don't confuse a truncation or
+	continuation glyph on a TTY with an indication of an empty line.
+	(Bug#13277)
+
 2012-12-29  Eli Zaretskii  <eliz@gnu.org>
 
 	* fileio.c (Fset_file_selinux_context, Fset_file_acl): Return t if

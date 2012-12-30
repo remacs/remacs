@@ -361,6 +361,11 @@ AC_ARG_ENABLE(autodepend,
  		 found])],
 [ac_enable_autodepend="${enableval}"],[ac_enable_autodepend=yes])
 
+AC_ARG_ENABLE(gtk-deprecation-warnings,
+[AS_HELP_STRING([--enable-gtk-deprecation-warnings],
+		[Show Gtk+/Gdk deprecation warnings for Gtk+ >= 3.0])],
+[ac_enable_gtk_deprecation_warnings="${enableval}"],[])
+
 #### Make srcdir absolute, if it isn't already.  It's important to
 #### avoid running the file name through pwd unnecessarily, since pwd can
 #### give you automounter prefixes, which can go away.  We do all this
@@ -1477,8 +1482,8 @@ tmp_CPPFLAGS="$CPPFLAGS"
 tmp_CFLAGS="$CFLAGS"
 CPPFLAGS="$CPPFLAGS -x objective-c"
 CFLAGS="$CFLAGS -x objective-c"
-TEMACS_LDFLAGS2="\${LDFLAGS}"
 GNU_OBJC_CFLAGS=
+LIBS_GNUSTEP=
 if test "${with_ns}" != no; then
   if test "${opsys}" = darwin; then
      NS_IMPL_COCOA=yes
@@ -1505,9 +1510,9 @@ if test "${with_ns}" != no; then
      CPPFLAGS="$CPPFLAGS -I${GNUSTEP_SYSTEM_HEADERS} ${GNUSTEP_LOCAL_HEADERS}"
      CFLAGS="$CFLAGS -I${GNUSTEP_SYSTEM_HEADERS} ${GNUSTEP_LOCAL_HEADERS}"
      LDFLAGS="$LDFLAGS -L${GNUSTEP_SYSTEM_LIBRARIES} ${GNUSTEP_LOCAL_LIBRARIES}"
+     LIBS_GNUSTEP="-lgnustep-gui -lgnustep-base -lobjc -lpthread"
      LIB_STANDARD=
      START_FILES=
-     TEMACS_LDFLAGS2=
      dnl GNUstep defines BASE_NATIVE_OBJC_EXCEPTIONS to 0 or 1.
      dnl If they had chosen to either define it or not, we could have
      dnl just used AC_CHECK_DECL here.
@@ -1558,7 +1563,7 @@ fail;
   fi
 fi
 
-AC_SUBST(TEMACS_LDFLAGS2)
+AC_SUBST(LIBS_GNUSTEP)
 
 INSTALL_ARCH_INDEP_EXTRA=install-etc
 ns_self_contained=no
@@ -1998,6 +2003,9 @@ if test "${with_gtk3}" = "yes" || test "${with_gtk}" = "yes" || test "$USE_X_TOO
      GTK_OBJ=emacsgtkfixed.o
      term_header=gtkutil.h
      USE_GTK_TOOLKIT="GTK3"
+     if test "x$ac_enable_gtk_deprecation_warnings" = x; then
+         GTK_CFLAGS="$GTK_CFLAGS -DGDK_DISABLE_DEPRECATION_WARNINGS"
+     fi
   else
      check_gtk2=yes
      gtk3_pkg_errors="$GTK_PKG_ERRORS "
@@ -2073,6 +2081,23 @@ if test "${HAVE_GTK}" = "yes"; then
     AC_CHECK_FUNCS(gtk_file_selection_new)
   fi
 
+  dnl Same as above for gtk_handle_box.
+  HAVE_GTK_HANDLE_BOX=no
+  AC_CHECK_DECL(GTK_TYPE_HANDLE_BOX, HAVE_GTK_HANDLE_BOX=yes,
+                   HAVE_GTK_HANDLE_BOX=no, [AC_INCLUDES_DEFAULT
+#include <gtk/gtk.h>])
+  if test "$HAVE_GTK_HANDLE_BOX" = yes; then
+    AC_CHECK_FUNCS(gtk_handle_box_new)
+  fi
+
+  dnl Same as above for gtk_tearoff_menu_item.
+  HAVE_GTK_TEAROFF_MENU_ITEM=no
+  AC_CHECK_DECL(GTK_TYPE_TEAROFF_MENU_ITEM, HAVE_GTK_TEAROFF_MENU_ITEM=yes,
+                   HAVE_GTK_TEAROFF_MENU_ITEM=no, [AC_INCLUDES_DEFAULT
+#include <gtk/gtk.h>])
+  if test "$HAVE_GTK_TEAROFF_MENU_ITEM" = yes; then
+    AC_CHECK_FUNCS(gtk_tearoff_menu_item_new)
+  fi
 
   dnl Check for functions introduced in 2.14 and later.
   AC_CHECK_FUNCS(gtk_widget_get_window gtk_widget_set_has_window \
@@ -4347,10 +4372,6 @@ case "$opsys" in
 
   *) LD_SWITCH_SYSTEM_TEMACS= ;;
 esac
-
-if test "$NS_IMPL_GNUSTEP" = "yes"; then
-  LD_SWITCH_SYSTEM_TEMACS="${LD_SWITCH_SYSTEM_TEMACS} -L${GNUSTEP_SYSTEM_LIBRARIES} ${GNUSTEP_LOCAL_LIBRARIES} -lgnustep-gui -lgnustep-base -lobjc -lpthread"
-fi
 
 AC_SUBST(LD_SWITCH_SYSTEM_TEMACS)
 

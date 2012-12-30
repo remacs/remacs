@@ -1458,7 +1458,9 @@ and gid of the corresponding user is taken.  Both parameters must be integers."
   ;; working with su(do)? when it is needed, so it shall succeed in
   ;; the majority of cases.
   ;; Don't modify `last-coding-system-used' by accident.
-  (let ((last-coding-system-used last-coding-system-used))
+  (let ((last-coding-system-used last-coding-system-used)
+	(uid (and (numberp uid) (round uid)))
+	(gid (and (numberp gid) (round gid))))
     (if (file-remote-p filename)
 	(with-parsed-tramp-file-name filename nil
 	  (if (and (zerop (user-uid)) (tramp-local-host-p v))
@@ -1530,10 +1532,11 @@ and gid of the corresponding user is taken.  Both parameters must be integers."
 			(if (stringp (nth 3 context))
 			    (format "--range=%s" (nth 3 context)) "")
 			(tramp-shell-quote-argument localname))))
-	(tramp-set-file-property v localname "file-selinux-context" context)
-      (tramp-set-file-property v localname "file-selinux-context" 'undef)))
-  ;; We always return nil.
-  nil)
+	(progn
+	  (tramp-set-file-property v localname "file-selinux-context" context)
+	  t)
+      (tramp-set-file-property v localname "file-selinux-context" 'undef)
+      nil)))
 
 (defun tramp-remote-acl-p (vec)
   "Check, whether ACL is enabled on the remote host."
