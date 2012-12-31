@@ -1,3 +1,28 @@
+2012-12-31  Jürgen Hötzel  <juergen@archlinux.org>
+
+	* net/tramp-adb.el (tramp-adb-maybe-open-connection): Handle errors
+	(No device connected, invalid device name). (Bug #13299)
+
+2012-12-31  Martin Rudalics  <rudalics@gmx.at>
+
+	* window.el (window-resizable--p): Rename to window-resizable-p.
+	(window-resize-no-error): New function.
+
+	* mail/rmail.el (rmail-maybe-display-summary): Restore behavior
+	broken in fix from 2012-12-28.
+
+2012-12-31  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* subr.el (special-form-p): Don't signal errors on undef aliases.
+
+2012-12-31  Jay Belanger  <jay.p.belanger@gmail.com>
+
+	* calc/calc-forms.el (math-parse-date): Try using
+	`math-parse-iso-date' when it looks like it might be needed.
+	Allow times of 24:00.
+	(math-parse-date-validate, math-parse-iso-date-validate):  Allow times
+	of 24:00.
+
 2012-12-30  Glenn Morris  <rgm@gnu.org>
 
 	* net/mairix.el (rmail, rmail-summary-displayed, rmail-summary):
@@ -17,8 +42,8 @@
 
 2012-12-30  Mark Lillibridge  <mark.lillibridge@hp.com>
 
-	* mail/rmailmm.el (rmail-insert-mime-forwarded-message): Insert
-	the undecoded text of the message being forwarded.  (Bug#9521)
+	* mail/rmailmm.el (rmail-insert-mime-forwarded-message):
+	Insert the undecoded text of the message being forwarded.  (Bug#9521)
 
 2012-12-30  Michael Albinus  <michael.albinus@gmx.de>
 
@@ -28,8 +53,8 @@
 	* net/tramp-sh.el (tramp-sh-handle-set-file-selinux-context):
 	Return `t' on success.
 
-	* net/tramp-smb.el (tramp-smb-file-name-handler-alist): Add
-	handler for `set-file-selinux-context'.
+	* net/tramp-smb.el (tramp-smb-file-name-handler-alist):
+	Add handler for `set-file-selinux-context'.
 
 2012-12-29  Michael Albinus  <michael.albinus@gmx.de>
 
@@ -38,8 +63,8 @@
 
 2012-12-29  Eli Zaretskii  <eliz@gnu.org>
 
-	* files.el (backup-buffer-copy, basic-save-buffer-2): If
-	set-file-extended-attributes fails, fall back on set-file-modes
+	* files.el (backup-buffer-copy, basic-save-buffer-2):
+	If set-file-extended-attributes fails, fall back on set-file-modes
 	instead of signaling an error.  (Bug#13298)
 	(basic-save-buffer): Likewise.
 
@@ -67,8 +92,8 @@
 
 2012-12-28  Martin Rudalics  <rudalics@gmx.at>
 
-	* mail/rmail.el (rmail-maybe-display-summary): Rewrite
-	(Bug#13066).
+	* mail/rmail.el (rmail-maybe-display-summary):
+	Rewrite (Bug#13066).
 
 2012-12-28  Andreas Schwab  <schwab@linux-m68k.org>
 
@@ -123,8 +148,8 @@
 2012-12-27  Dmitry Gutov  <dgutov@yandex.ru>
 
 	* progmodes/ruby-mode.el (ruby-indent-beg-re): Only allow "class",
-	"module" and "def" to have indentation before them.  Regression
-	from 2012-09-07T04:15:56Z!dgutov@yandex.ru (see the new test).
+	"module" and "def" to have indentation before them.
+	Regression from 2012-09-07T04:15:56Z!dgutov@yandex.ru (see the new test).
 
 	* progmodes/ruby-mode.el: Bump the version to 1.2 (Bug#13200).
 
@@ -137,8 +162,8 @@
 2012-12-27  Vitalie Spinu  <spinuvit@gmail.com>  (tiny change)
 
 	* comint.el (comint-adjust-window-point): New function.
-	(comint-postoutput-scroll-to-bottom): Call
-	comint-adjust-window-point (Bug#13248).
+	(comint-postoutput-scroll-to-bottom):
+	Call comint-adjust-window-point (Bug#13248).
 
 2012-12-26  Dmitry Gutov  <dgutov@yandex.ru>
 
@@ -149,8 +174,8 @@
 
 2012-12-26  Jürgen Hötzel  <juergen@archlinux.org>
 
-	* net/tramp-adb.el (tramp-adb-get-ls-command): New defun.  Suppress
-	coloring, if possible (required for BusyBox based systems like
+	* net/tramp-adb.el (tramp-adb-get-ls-command): New defun.
+	Suppress coloring, if possible (required for BusyBox based systems like
 	CynagenMod).
 	(tramp-adb-handle-file-attributes)
 	(tramp-adb-handle-insert-directory)
@@ -179,8 +204,8 @@
 	* notifications.el (notifications-notify): Protect body with
 	`with-demoted-errors'.
 
-	* net/tramp-adb.el (tramp-adb-maybe-open-connection): Check
-	properties of remote device.  Restart connection, if there is a
+	* net/tramp-adb.el (tramp-adb-maybe-open-connection):
+	Check properties of remote device.  Restart connection, if there is a
 	change.
 
 2012-12-21  Chong Yidong  <cyd@gnu.org>
