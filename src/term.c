@@ -1,6 +1,6 @@
 /* Terminal control module for terminals described by TERMCAP
-   Copyright (C) 1985-1987, 1993-1995, 1998, 2000-2012
-                 Free Software Foundation, Inc.
+   Copyright (C) 1985-1987, 1993-1995, 1998, 2000-2013 Free Software
+   Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -953,8 +953,8 @@ tty_ins_del_lines (struct frame *f, int vpos, int n)
   const char *single = n > 0 ? tty->TS_ins_line : tty->TS_del_line;
   const char *scroll = n > 0 ? tty->TS_rev_scroll : tty->TS_fwd_scroll;
 
-  register int i = n > 0 ? n : -n;
-  register char *buf;
+  int i = eabs (n);
+  char *buf;
 
   /* If the lines below the insertion are being pushed
      into the end of the window, this is the same as clearing;

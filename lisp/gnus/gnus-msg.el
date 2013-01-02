@@ -1,6 +1,6 @@
 ;;; gnus-msg.el --- mail and post interface for Gnus
 
-;; Copyright (C) 1995-2012  Free Software Foundation, Inc.
+;; Copyright (C) 1995-2013 Free Software Foundation, Inc.
 
 ;; Author: Masanobu UMEDA <umerin@flab.flab.fujitsu.junet>
 ;;	Lars Magne Ingebrigtsen <larsi@gnus.org>
@@ -1745,7 +1745,8 @@ this is a reply."
 	      (setq var (cdr var)))
 	    result)))
 	 name)
-    (when (or groups gcc-self-val)
+    (when (and (or groups gcc-self-val)
+	       (gnus-alive-p))
       (when (stringp groups)
 	(setq groups (list groups)))
       (save-excursion

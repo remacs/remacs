@@ -1,6 +1,6 @@
 ;;; nnimap.el --- IMAP interface for Gnus
 
-;; Copyright (C) 2010-2012 Free Software Foundation, Inc.
+;; Copyright (C) 2010-2013 Free Software Foundation, Inc.
 
 ;; Author: Lars Magne Ingebrigtsen <larsi@gnus.org>
 ;;         Simon Josefsson <simon@josefsson.org>
@@ -1420,7 +1420,9 @@ textual parts.")
 		     (gnus-set-difference
 		      (gnus-set-difference
 		       existing
-		       (cdr (assoc '%Seen flags)))
+		       (gnus-sorted-union
+			(cdr (assoc '%Seen flags))
+			(cdr (assoc '%Deleted flags))))
 		      (cdr (assoc '%Flagged flags)))))
 		   (read (gnus-range-difference
 			  (cons start-article high) unread)))

@@ -1,6 +1,6 @@
 ;;; tramp-sh.el --- Tramp access functions for (s)sh-like connections
 
-;; Copyright (C) 1998-2012 Free Software Foundation, Inc.
+;; Copyright (C) 1998-2013 Free Software Foundation, Inc.
 
 ;; (copyright statements below in code to be updated with the above notice)
 
@@ -1570,7 +1570,7 @@ and gid of the corresponding user is taken.  Both parameters must be integers."
 		       v (format
 			  "setfacl -m %s %s"
 			  line (tramp-shell-quote-argument localname)))
-		(error))))
+		(error nil))))
 	;; In case of errors, we return `nil'.
 	(error
 	 (tramp-set-file-property v localname "file-acl" 'undef)
@@ -2097,9 +2097,11 @@ file names."
 	  ;; One of them must be a Tramp file.
 	  (error "Tramp implementation says this cannot happen")))
 
-	;; Handle `preserve-extended-attributes'.
+	;; Handle `preserve-extended-attributes'.  We ignore possible
+	;; errors, because ACL strings could be incompatible.
 	(when attributes
-	  (apply 'set-file-extended-attributes (list newname attributes)))
+	  (ignore-errors
+	    (apply 'set-file-extended-attributes (list newname attributes))))
 
 	;; In case of `rename', we must flush the cache of the source file.
 	(when (and t1 (eq op 'rename))

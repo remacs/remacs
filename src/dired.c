@@ -1,5 +1,6 @@
 /* Lisp functions for making directory listings.
-   Copyright (C) 1985-1986, 1993-1994, 1999-2012 Free Software Foundation, Inc.
+   Copyright (C) 1985-1986, 1993-1994, 1999-2013 Free Software
+   Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -671,10 +672,7 @@ file_name_completion (Lisp_Object file, Lisp_Object dirname, bool all_flag,
 				name, zero,
 				make_number (compare),
 				completion_ignore_case ? Qt : Qnil);
-	  ptrdiff_t matchsize
-	    = (EQ (cmp, Qt)     ? compare
-	       : XINT (cmp) < 0 ? - XINT (cmp) - 1
-	       :                  XINT (cmp) - 1);
+	  ptrdiff_t matchsize = EQ (cmp, Qt) ? compare : eabs (XINT (cmp)) - 1;
 
 	  if (completion_ignore_case)
 	    {
