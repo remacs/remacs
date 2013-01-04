@@ -1,3 +1,59 @@
+2013-01-04  Daiki Ueno  <ueno@gnu.org>
+
+	* epg.el: Silence byte-compiler warnings.
+	(epg--start): Use delete-char instead of delete-backward-char.
+	(epg-wait-for-completion): Pass FRAME arg to redraw-frame.
+
+2013-01-04  Daiki Ueno  <ueno@gnu.org>
+
+	* epg.el (epg--start): Don't call "tty" program on W32 platforms.
+	Suggested by Eli Zaretskii  <eliz@gnu.org>.
+
+2013-01-04  Michael Albinus  <michael.albinus@gmx.de>
+
+	* net/tramp-sh.el (tramp-set-file-uid-gid): UID and GID must be
+	non-negative integers.  Otherwise, the default values are used.
+	(tramp-convert-file-attributes): Convert uid and gid to integers.
+
+2013-01-04  Glenn Morris  <rgm@gnu.org>
+
+	* term.el (term-handle-colors-array): Ensure face attributes
+	are fully specified, not nil.  (Bug#13337)
+
+	* term.el (term-default-fg-color, term-default-bg-color):
+	Fix custom type.
+
+	* progmodes/etags.el (tags-compression-info-list): Doc fix.
+	(tag-find-file-of-tag-noselect): Check auto-compression-mode
+	rather than 'jka-compr being loaded.  (Bug#13338)
+
+2013-01-04  Wesley Dawson  <whd@lavabit.com>  (tiny change)
+
+	* icomplete.el (icomplete-completions):
+	Honor icomplete-prospects-height once more following
+	2012-11-29 changes.  (Bug#13224)
+
+2013-01-04  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* subr.el (internal--called-interactively-p--get-frame): Find aliases
+	of called-interactively-p as well (bug#13237).
+
+	* view.el (view--enable, view--disable): Rename from view-mode-enable
+	and view-mode-disable and assume it's called from view-mode.
+	(view-mode-enable, view-mode-disable): Redefine as obsolete
+	compatibility layer above view-mode.
+	(view-mode-enter): Call `view-mode'.
+
+	* files.el (after-find-file): Call `view-mode'.
+
+	* doc-view.el (doc-view-scale-internally): New var.
+	(doc-view-enlarge, doc-view-insert-image): Obey it.
+
+2013-01-03  Daiki Ueno  <ueno@gnu.org>
+
+	* epg.el (epg--start): Ignore errors when /dev/fd/0 does not
+	exist.  (Bug#13344)
+
 2013-01-03  Glenn Morris  <rgm@gnu.org>
 
 	* mail/rmail.el (rmail-set-header-1): Ignore case.
@@ -337,6 +393,8 @@
 	the first line.
 	(lm-homepage): New function.
 	(lm-with-file): Don't be confused if narrowing is in effect.
+
+2012-12-19  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* vc/diff-mode.el (diff-post-command-hook): Don't ignore changes at the
 	very beginning of a hunk (e.g. killing the first line).
