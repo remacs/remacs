@@ -1135,7 +1135,8 @@ print (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag)
    || (VECTORLIKEP (obj)				   \
        && (VECTORP (obj) || COMPILEDP (obj)		   \
 	   || CHAR_TABLE_P (obj) || SUB_CHAR_TABLE_P (obj) \
-	   || HASH_TABLE_P (obj) || FONTP (obj)))	   \
+	   || HASH_TABLE_P (obj) || FONTP (obj)		   \
+	   || RECORDP (obj)))				   \
    || (! NILP (Vprint_gensym)				   \
        && SYMBOLP (obj)					   \
        && !SYMBOL_INTERNED_P (obj)))
@@ -1962,6 +1963,30 @@ print_object (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag)
 	  printchar ('>', printcharfun);
 	}
         break;
+
+      case PVEC_RECORD:
+	{
+	  ptrdiff_t n, size = ASIZE (obj) & PSEUDOVECTOR_SIZE_MASK;
+	  int i;
+
+	  /* Don't print more elements than the specified maximum.  */
+	  if (NATNUMP (Vprint_length)
+	      && XFASTINT (Vprint_length) < size)
+	    n = XFASTINT (Vprint_length);
+	  else
+	    n = size;
+
+	  print_c_string ("#s(", printcharfun);
+	  for (i = 0; i < n; i ++)
+	    {
+	      if (i) printchar (' ', printcharfun);
+	      print_object (AREF (obj, i), printcharfun, escapeflag);
+	    }
+	  if (n < size)
+	    print_c_string (" ...", printcharfun);
+	  printchar (')', printcharfun);
+	}
+	break;
 
       case PVEC_SUB_CHAR_TABLE:
       case PVEC_COMPILED:

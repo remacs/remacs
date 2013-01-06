@@ -2603,8 +2603,18 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
 	      int param_count = 0;
 
 	      if (!EQ (head, Qhash_table))
-		error ("Invalid extended read marker at head of #s list "
-		       "(only hash-table allowed)");
+		{
+		  ptrdiff_t size = XINT (Flength (tmp));
+		  Lisp_Object record = Fmake_record (CAR_SAFE (tmp),
+						     make_number (size - 1),
+						     Qnil);
+		  for (int i = 1; i < size; i++)
+		    {
+		      tmp = Fcdr (tmp);
+		      ASET (record, i, Fcar (tmp));
+		    }
+		  return record;
+		}
 
 	      tmp = CDR_SAFE (tmp);
 

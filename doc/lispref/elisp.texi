@@ -180,6 +180,7 @@ To view this manual in other formats, click
 * Sequences Arrays Vectors::  Lists, strings and vectors are called sequences.
                                 Certain functions act on any kind of sequence.
                                 The description of vectors is here as well.
+* Records::                 Compound objects with programmer-defined types.
 * Hash Tables::             Very fast lookup-tables.
 * Symbols::                 Symbols represent names, uniquely.
 
@@ -314,6 +315,7 @@ Programming Types
                           expression, more fundamental but less pretty.
 * Primitive Function Type::     A function written in C, callable from Lisp.
 * Byte-Code Type::      A function written in Lisp, then compiled.
+* Record Type::         Compound objects with programmer-defined types.
 * Autoload Type::       A type used for automatically loading seldom-used
                           functions.
 * Finalizer Type::      Runs code when no longer reachable.
@@ -417,6 +419,10 @@ Sequences, Arrays, and Vectors
 * Char-Tables::             How to work with char-tables.
 * Bool-Vectors::            How to work with bool-vectors.
 * Rings::                   Managing a fixed-size ring of objects.
+
+Records
+
+* Record Functions::        Functions for records.
 
 Hash Tables
 
@@ -1594,6 +1600,7 @@ Object Internals
 
 @include lists.texi
 @include sequences.texi
+@include records.texi
 @include hash.texi
 @include symbols.texi
 @include eval.texi

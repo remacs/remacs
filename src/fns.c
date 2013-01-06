@@ -106,7 +106,7 @@ To get the number of bytes, use `string-bytes'.  */)
     XSETFASTINT (val, MAX_CHAR);
   else if (BOOL_VECTOR_P (sequence))
     XSETFASTINT (val, bool_vector_size (sequence));
-  else if (COMPILEDP (sequence))
+  else if (COMPILEDP (sequence) || RECORDP (sequence))
     XSETFASTINT (val, ASIZE (sequence) & PSEUDOVECTOR_SIZE_MASK);
   else if (CONSP (sequence))
     {

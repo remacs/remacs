@@ -3392,6 +3392,94 @@ allocate_buffer (void)
   return b;
 }
 
+
+/* Allocate a new record with COUNT slots.  Return NULL if COUNT is
+   too large.  */
+
+static struct Lisp_Vector *
+allocate_record (int count)
+{
+  if (count >= (1 << PSEUDOVECTOR_SIZE_BITS))
+    return NULL;
+
+  struct Lisp_Vector *p = allocate_vector (count);
+  XSETPVECTYPE (p, PVEC_RECORD);
+  return p;
+}
+
+
+DEFUN ("make-record", Fmake_record, Smake_record, 3, 3, 0,
+       doc: /* Create a new record.
+TYPE is its type as returned by `type-of'.  SLOTS is the number of
+slots, each initialized to INIT.  The number of slots, including the
+type slot, must fit in PSEUDOVECTOR_SIZE_BITS.  */)
+  (Lisp_Object type, Lisp_Object slots, Lisp_Object init)
+{
+  Lisp_Object record;
+  ptrdiff_t size, i;
+  struct Lisp_Vector *p;
+
+  CHECK_NATNUM (slots);
+
+  size = XFASTINT (slots) + 1;
+  p = allocate_record (size);
+  if (p == NULL)
+    error ("Attempt to allocate a record of %ld slots; max is %d",
+	   size, (1 << PSEUDOVECTOR_SIZE_BITS) - 1);
+
+  p->contents[0] = type;
+  for (i = 1; i < size; i++)
+    p->contents[i] = init;
+
+  XSETVECTOR (record, p);
+  return record;
+}
+
+
+DEFUN ("record", Frecord, Srecord, 1, MANY, 0,
+       doc: /* Create a new record.
+TYPE is its type as returned by `type-of'.  SLOTS is used to
+initialize the record slots with shallow copies of the arguments.  The
+number of slots, including the type slot, must fit in
+PSEUDOVECTOR_SIZE_BITS.
+usage: (record TYPE &rest SLOTS) */)
+  (ptrdiff_t nargs, Lisp_Object *args)
+{
+  struct Lisp_Vector *p = allocate_record (nargs);
+  if (p == NULL)
+    error ("Attempt to allocate a record of %ld slots; max is %d",
+	   nargs, (1 << PSEUDOVECTOR_SIZE_BITS) - 1);
+
+  Lisp_Object type = args[0];
+  Lisp_Object record;
+
+  p->contents[0] = type;
+  memcpy (p->contents + 1, args + 1, (nargs - 1) * sizeof *args);
+
+  XSETVECTOR (record, p);
+  return record;
+}
+
+
+DEFUN ("copy-record", Fcopy_record, Scopy_record, 1, 1, 0,
+       doc: /* Return a new record that is a shallow copy of the argument RECORD.  */)
+  (Lisp_Object record)
+{
+  CHECK_RECORD (record);
+  struct Lisp_Vector *src = XVECTOR (record);
+  ptrdiff_t size = ASIZE (record) & PSEUDOVECTOR_SIZE_MASK;
+  struct Lisp_Vector *new = allocate_record (size);
+  if (new == NULL)
+    error ("Attempt to allocate a record of %ld slots; max is %d",
+	   size, (1 << PSEUDOVECTOR_SIZE_BITS) - 1);
+
+  memcpy (&(new->contents[0]), &(src->contents[0]),
+          size * sizeof (Lisp_Object));
+  XSETVECTOR (record, new);
+  return record;
+}
+
+
 DEFUN ("make-vector", Fmake_vector, Smake_vector, 2, 2, 0,
        doc: /* Return a newly created vector of length LENGTH, with each element being INIT.
 See also the function `vector'.  */)
@@ -5532,7 +5620,7 @@ purecopy (Lisp_Object obj)
       struct Lisp_Hash_Table *h = purecopy_hash_table (table);
       XSET_HASH_TABLE (obj, h);
     }
-  else if (COMPILEDP (obj) || VECTORP (obj))
+  else if (COMPILEDP (obj) || VECTORP (obj) || RECORDP (obj))
     {
       struct Lisp_Vector *objp = XVECTOR (obj);
       ptrdiff_t nbytes = vector_nbytes (objp);
@@ -7461,10 +7549,13 @@ The time is in seconds as a floating point value.  */);
   defsubr (&Scons);
   defsubr (&Slist);
   defsubr (&Svector);
+  defsubr (&Srecord);
+  defsubr (&Scopy_record);
   defsubr (&Sbool_vector);
   defsubr (&Smake_byte_code);
   defsubr (&Smake_list);
   defsubr (&Smake_vector);
+  defsubr (&Smake_record);
   defsubr (&Smake_string);
   defsubr (&Smake_bool_vector);
   defsubr (&Smake_symbol);

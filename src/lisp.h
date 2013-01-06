@@ -889,6 +889,7 @@ enum pvec_type
   PVEC_COMPILED,
   PVEC_CHAR_TABLE,
   PVEC_SUB_CHAR_TABLE,
+  PVEC_RECORD,
   PVEC_FONT /* Should be last because it's used for range checking.  */
 };
 
@@ -1411,6 +1412,7 @@ CHECK_VECTOR (Lisp_Object x)
 {
   CHECK_TYPE (VECTORP (x), Qvectorp, x);
 }
+
 
 /* A pseudovector is like a vector, but has other non-Lisp components.  */
 
@@ -2730,6 +2732,18 @@ INLINE bool
 FRAMEP (Lisp_Object a)
 {
   return PSEUDOVECTORP (a, PVEC_FRAME);
+}
+
+INLINE bool
+RECORDP (Lisp_Object a)
+{
+  return PSEUDOVECTORP (a, PVEC_RECORD);
+}
+
+INLINE void
+CHECK_RECORD (Lisp_Object x)
+{
+  CHECK_TYPE (RECORDP (x), Qrecordp, x);
 }
 
 /* Test for image (image . spec)  */

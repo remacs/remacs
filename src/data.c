@@ -267,6 +267,15 @@ for example, (type-of 1) returns `integer'.  */)
         case PVEC_MUTEX: return Qmutex;
         case PVEC_CONDVAR: return Qcondition_variable;
         case PVEC_TERMINAL: return Qterminal;
+        case PVEC_RECORD:
+          {
+            Lisp_Object t = AREF (object, 0);
+            if (RECORDP (t) && 1 < (ASIZE (t) & PSEUDOVECTOR_SIZE_MASK))
+              /* Return the type name field of the class!  */
+              return AREF (t, 1);
+            else
+              return t;
+          }
         /* "Impossible" cases.  */
         case PVEC_XWIDGET:
         case PVEC_OTHER:
@@ -355,6 +364,15 @@ DEFUN ("vectorp", Fvectorp, Svectorp, 1, 1, 0,
   (Lisp_Object object)
 {
   if (VECTORP (object))
+    return Qt;
+  return Qnil;
+}
+
+DEFUN ("recordp", Frecordp_p, Srecordp, 1, 1, 0,
+       doc: /* Return t if OBJECT is a record.  */)
+  (Lisp_Object object)
+{
+  if (RECORDP (object))
     return Qt;
   return Qnil;
 }
@@ -2287,7 +2305,7 @@ or a byte-code object.  IDX starts at 0.  */)
       ptrdiff_t size = 0;
       if (VECTORP (array))
 	size = ASIZE (array);
-      else if (COMPILEDP (array))
+      else if (COMPILEDP (array) || RECORDP (array))
 	size = ASIZE (array) & PSEUDOVECTOR_SIZE_MASK;
       else
 	wrong_type_argument (Qarrayp, array);
@@ -2308,7 +2326,8 @@ bool-vector.  IDX starts at 0.  */)
 
   CHECK_NUMBER (idx);
   idxval = XINT (idx);
-  CHECK_ARRAY (array, Qarrayp);
+  if (! RECORDP (array))
+    CHECK_ARRAY (array, Qarrayp);
 
   if (VECTORP (array))
     {
@@ -2328,7 +2347,14 @@ bool-vector.  IDX starts at 0.  */)
       CHECK_CHARACTER (idx);
       CHAR_TABLE_SET (array, idxval, newelt);
     }
-  else
+  else if (RECORDP (array))
+    {
+      ptrdiff_t size = ASIZE (array) & PSEUDOVECTOR_SIZE_MASK;
+      if (idxval < 0 || idxval >= size)
+	args_out_of_range (array, idx);
+      ASET (array, idxval, newelt);
+    }
+  else /* STRINGP */
     {
       int c;
 
@@ -3604,6 +3630,7 @@ syms_of_data (void)
   DEFSYM (Qsequencep, "sequencep");
   DEFSYM (Qbufferp, "bufferp");
   DEFSYM (Qvectorp, "vectorp");
+  DEFSYM (Qrecordp, "recordp");
   DEFSYM (Qbool_vector_p, "bool-vector-p");
   DEFSYM (Qchar_or_string_p, "char-or-string-p");
   DEFSYM (Qmarkerp, "markerp");
@@ -3714,6 +3741,7 @@ syms_of_data (void)
   DEFSYM (Qbuffer, "buffer");
   DEFSYM (Qframe, "frame");
   DEFSYM (Qvector, "vector");
+  DEFSYM (Qrecord, "record");
   DEFSYM (Qchar_table, "char-table");
   DEFSYM (Qbool_vector, "bool-vector");
   DEFSYM (Qhash_table, "hash-table");
@@ -3750,6 +3778,7 @@ syms_of_data (void)
   defsubr (&Sstringp);
   defsubr (&Smultibyte_string_p);
   defsubr (&Svectorp);
+  defsubr (&Srecordp);
   defsubr (&Schar_table_p);
   defsubr (&Svector_or_char_table_p);
   defsubr (&Sbool_vector_p);
