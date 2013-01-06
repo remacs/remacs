@@ -3,9 +3,9 @@
 @include gnus-overrides.texi
 
 @setfilename ../../info/pgg
-@settitle PGG @value{VERSION}
 
 @set VERSION 0.1
+@settitle PGG @value{VERSION}
 
 @copying
 This file describes PGG @value{VERSION}, an Emacs interface to various
