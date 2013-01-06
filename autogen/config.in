@@ -2,7 +2,7 @@
 
 /* GNU Emacs site configuration template file.
 
-Copyright (C) 1988, 1993-1994, 1999-2002, 2004-2012
+Copyright (C) 1988, 1993-1994, 1999-2002, 2004-2013
   Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
@@ -479,11 +479,17 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 /* Define to 1 if you have the `gtk_file_selection_new' function. */
 #undef HAVE_GTK_FILE_SELECTION_NEW
 
+/* Define to 1 if you have the `gtk_handle_box_new' function. */
+#undef HAVE_GTK_HANDLE_BOX_NEW
+
 /* Define to 1 if you have the `gtk_main' function. */
 #undef HAVE_GTK_MAIN
 
 /* Define to 1 if you have the `gtk_orientable_set_orientation' function. */
 #undef HAVE_GTK_ORIENTABLE_SET_ORIENTATION
+
+/* Define to 1 if you have the `gtk_tearoff_menu_item_new' function. */
+#undef HAVE_GTK_TEAROFF_MENU_ITEM_NEW
 
 /* Define to 1 if you have the `gtk_widget_get_mapped' function. */
 #undef HAVE_GTK_WIDGET_GET_MAPPED
@@ -715,6 +721,9 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 /* Define to 1 if you have the <png.h> header file. */
 #undef HAVE_PNG_H
+
+/* Define to 1 if using POSIX ACL support. */
+#undef HAVE_POSIX_ACL
 
 /* Define to 1 if you have the `posix_memalign' function. */
 #undef HAVE_POSIX_MEMALIGN

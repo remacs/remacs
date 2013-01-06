@@ -1,7 +1,7 @@
 /* Window creation, deletion and examination for GNU Emacs.
    Does not include redisplay.
-   Copyright (C) 1985-1987, 1993-1998, 2000-2012
-                 Free Software Foundation, Inc.
+   Copyright (C) 1985-1987, 1993-1998, 2000-2013 Free Software
+   Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -87,6 +87,7 @@ static Lisp_Object window_list_1 (Lisp_Object, Lisp_Object, Lisp_Object);
 static int window_resize_check (struct window *, int);
 static void window_resize_apply (struct window *, int);
 static Lisp_Object select_window (Lisp_Object, Lisp_Object, int);
+static void select_window_1 (Lisp_Object, bool);
 
 /* This is the window in which the terminal's cursor should
    be left when nothing is being done with it.  This must
@@ -280,7 +281,7 @@ adjust_window_count (struct window *w, int arg)
   if (BUFFERP (w->buffer))
     {
       struct buffer *b = XBUFFER (w->buffer);
-      
+
       if (b->base_buffer)
 	b = b->base_buffer;
       b->window_count += arg;
@@ -487,7 +488,6 @@ static Lisp_Object
 select_window (Lisp_Object window, Lisp_Object norecord, int inhibit_point_swap)
 {
   register struct window *w;
-  register struct window *ow;
   struct frame *sf;
 
   CHECK_LIVE_WINDOW (window);
@@ -523,12 +523,25 @@ select_window (Lisp_Object window, Lisp_Object norecord, int inhibit_point_swap)
   else
     fset_selected_window (sf, window);
 
+  select_window_1 (window, inhibit_point_swap);
+
+  bset_last_selected_window (XBUFFER (w->buffer), window);
+  windows_or_buffers_changed++;
+  return window;
+}
+
+/* Select window with a minimum of fuss, i.e. don't record the change anywhere
+   (not even for redisplay's benefit), and assume that the window's frame is
+   already selected.  */
+static void
+select_window_1 (Lisp_Object window, bool inhibit_point_swap)
+{
   /* Store the old selected window's buffer's point in pointm of the old
      selected window.  It belongs to that window, and when the window is
      not selected, must be in the window.  */
   if (!inhibit_point_swap)
     {
-      ow = XWINDOW (selected_window);
+      struct window *ow = XWINDOW (selected_window);
       if (! NILP (ow->buffer))
 	set_marker_both (ow->pointm, ow->buffer,
 			 BUF_PT (XBUFFER (ow->buffer)),
@@ -536,7 +549,6 @@ select_window (Lisp_Object window, Lisp_Object norecord, int inhibit_point_swap)
     }
 
   selected_window = window;
-  bset_last_selected_window (XBUFFER (w->buffer), window);
 
   /* Go to the point recorded in the window.
      This is important when the buffer is in more
@@ -544,7 +556,7 @@ select_window (Lisp_Object window, Lisp_Object norecord, int inhibit_point_swap)
      redisplay_window has altered point after scrolling,
      because it makes the change only in the window.  */
   {
-    register ptrdiff_t new_point = marker_position (w->pointm);
+    register ptrdiff_t new_point = marker_position (XWINDOW (window)->pointm);
     if (new_point < BEGV)
       SET_PT (BEGV);
     else if (new_point > ZV)
@@ -552,15 +564,14 @@ select_window (Lisp_Object window, Lisp_Object norecord, int inhibit_point_swap)
     else
       SET_PT (new_point);
   }
-
-  windows_or_buffers_changed++;
-  return window;
 }
 
 DEFUN ("select-window", Fselect_window, Sselect_window, 1, 2, 0,
-       doc: /* Select WINDOW.  Most editing will apply to WINDOW's buffer.
-Also make WINDOW's buffer current and make WINDOW the frame's selected
-window.  Return WINDOW.
+       doc: /* Select WINDOW which must be a live window.
+Also make WINDOW's frame the selected frame and WINDOW that frame's
+selected window.  In addition, make WINDOW's buffer current and set that
+buffer's value of `point' to the value of WINDOW's `window-point'.
+Return WINDOW.
 
 Optional second arg NORECORD non-nil means do not put this buffer at the
 front of the buffer list and do not make this window the most recently
@@ -791,12 +802,12 @@ window_body_cols (struct window *w)
        occupies one column only.  */
     width -= 1;
 
+  /* Display margins cannot be used for normal text.  */
+  width -= WINDOW_LEFT_MARGIN_COLS (w) + WINDOW_RIGHT_MARGIN_COLS (w);
+
   if (FRAME_WINDOW_P (f))
-    /* On window-systems, fringes and display margins cannot be
-       used for normal text.  */
-    width -= (WINDOW_FRINGE_COLS (w)
-	      + WINDOW_LEFT_MARGIN_COLS (w)
-	      + WINDOW_RIGHT_MARGIN_COLS (w));
+    /* On window-systems, fringes cannot be used for normal text.  */
+    width -= WINDOW_FRINGE_COLS (w);
 
   return width;
 }

@@ -1,6 +1,6 @@
 /* Window definitions for GNU Emacs.
-   Copyright (C) 1985-1986, 1993, 1995, 1997-2012
-                 Free Software Foundation, Inc.
+   Copyright (C) 1985-1986, 1993, 1995, 1997-2013 Free Software
+   Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -261,7 +261,7 @@ struct window
     EMACS_INT last_overlay_modified;
 
     /* Value of point at that time.  Since this is a position in a buffer,
-       it should be positive. */
+       it should be positive.  */
     ptrdiff_t last_point;
 
     /* Scaling factor for the glyph_matrix size calculation in this window.
@@ -290,7 +290,7 @@ struct window
     /* Non-zero if this window is a minibuffer window.  */
     unsigned mini : 1;
 
-    /* Non-zero means must regenerate mode line of this window */
+    /* Non-zero means must regenerate mode line of this window.  */
     unsigned update_mode_line : 1;
 
     /* Non-nil if the buffer was "modified" when the window
@@ -343,7 +343,7 @@ struct window
        y-direction (smooth scrolling).  */
     int vscroll;
 
-    /* Z_BYTE - the buffer position of the last glyph in the current matrix of W.
+    /* Z_BYTE - Buffer position of the last glyph in the current matrix of W.
        Should be nonnegative, and only valid if window_end_valid is not nil.  */
     ptrdiff_t window_end_bytepos;
 };
@@ -934,7 +934,7 @@ extern EMACS_INT minibuf_level;
 extern int update_mode_lines;
 
 /* Nonzero if window sizes or contents have changed since last
-   redisplay that finished */
+   redisplay that finished.  */
 
 extern int windows_or_buffers_changed;
 

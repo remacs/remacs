@@ -1,7 +1,7 @@
 /* String search routines for GNU Emacs.
 
-Copyright (C) 1985-1987, 1993-1994, 1997-1999, 2001-2012
-  Free Software Foundation, Inc.
+Copyright (C) 1985-1987, 1993-1994, 1997-1999, 2001-2013 Free Software
+Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -1313,8 +1313,11 @@ search_buffer (Lisp_Object string, ptrdiff_t pos, ptrdiff_t pos_byte,
 	     non-nil, we can use boyer-moore search only if TRT can be
 	     represented by the byte array of 256 elements.  For that,
 	     all non-ASCII case-equivalents of all case-sensitive
-	     characters in STRING must belong to the same charset and
-	     row.  */
+	     characters in STRING must belong to the same character
+	     group (two characters belong to the same group iff their
+	     multibyte forms are the same except for the last byte;
+	     i.e. every 64 characters form a group; U+0000..U+003F,
+	     U+0040..U+007F, U+0080..U+00BF, ...).  */
 
 	  while (--len >= 0)
 	    {
@@ -2599,7 +2602,7 @@ since only regular expressions have distinguished subexpressions.  */)
 	      ptrdiff_t begbyte = CHAR_TO_BYTE (search_regs.start[idx]);
 	      add_len = CHAR_TO_BYTE (search_regs.end[idx]) - begbyte;
 	      if (search_regs.start[idx] < GPT && GPT < search_regs.end[idx])
-		move_gap (search_regs.start[idx]);
+		move_gap_both (search_regs.start[idx], begbyte);
 	      add_stuff = BYTE_POS_ADDR (begbyte);
 	    }
 

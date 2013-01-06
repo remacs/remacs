@@ -1201,6 +1201,7 @@ FONTCONFIG_LIBS
 FONTCONFIG_CFLAGS
 LIBXMU
 LIBXTR6
+LIBACL_LIBS
 LIBGNUTLS_LIBS
 LIBGNUTLS_CFLAGS
 LIBSELINUX_LIBS
@@ -1236,7 +1237,7 @@ NS_OBJC_OBJ
 NS_OBJ
 ns_self_contained
 INSTALL_ARCH_INDEP_EXTRA
-TEMACS_LDFLAGS2
+LIBS_GNUSTEP
 LD_SWITCH_X_SITE_RPATH
 XMKMF
 DEPFLAGS
@@ -1395,6 +1396,7 @@ with_dbus
 with_gconf
 with_gsettings
 with_selinux
+with_acl
 with_gnutls
 with_inotify
 with_makeinfo
@@ -1409,6 +1411,7 @@ enable_checking
 enable_check_lisp_object_type
 enable_profiling
 enable_autodepend
+enable_gtk_deprecation_warnings
 enable_dependency_tracking
 enable_largefile
 enable_gcc_warnings
@@ -2068,6 +2071,8 @@ Optional Features:
   --enable-autodepend     automatically generate dependencies to .h-files.
                           Requires GNU Make and Gcc. Enabled if GNU Make and
                           Gcc is found
+  --enable-gtk-deprecation-warnings
+                          Show Gtk+/Gdk deprecation warnings for Gtk+ >= 3.0
   --disable-dependency-tracking  speeds up one-time build
   --enable-dependency-tracking   do not reject slow dependency extractors
   --disable-largefile     omit support for large files
@@ -2118,6 +2123,7 @@ Optional Packages:
   --without-gconf         don't compile with GConf support
   --without-gsettings     don't compile with GSettings support
   --without-selinux       don't compile with SELinux support
+  --without-acl           don't compile with ACL support
   --without-gnutls        don't use -lgnutls for SSL/TLS support
   --without-inotify       don't compile with inotify (file-watch) support
   --without-makeinfo      don't require makeinfo for building manuals
@@ -3327,6 +3333,7 @@ ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
+emacs_config_options="$@"
 ac_config_headers="$ac_config_headers src/config.h:src/config.in"
 
 
@@ -3680,7 +3687,6 @@ fi
 fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $MKDIR_P" >&5
 $as_echo "$MKDIR_P" >&6; }
-
 
 mkdir_p="$MKDIR_P"
 case $mkdir_p in
@@ -4174,6 +4180,14 @@ else
 fi
 
 
+# Check whether --with-acl was given.
+if test "${with_acl+set}" = set; then :
+  withval=$with_acl;
+else
+     with_acl=$with_features
+fi
+
+
 # Check whether --with-gnutls was given.
 if test "${with_gnutls+set}" = set; then :
   withval=$with_gnutls;
@@ -4382,6 +4396,12 @@ if test "${enable_autodepend+set}" = set; then :
   enableval=$enable_autodepend; ac_enable_autodepend="${enableval}"
 else
   ac_enable_autodepend=yes
+fi
+
+
+# Check whether --enable-gtk-deprecation-warnings was given.
+if test "${enable_gtk_deprecation_warnings+set}" = set; then :
+  enableval=$enable_gtk_deprecation_warnings; ac_enable_gtk_deprecation_warnings="${enableval}"
 fi
 
 
@@ -7282,37 +7302,11 @@ fi
   # <http://lists.gnu.org/archive/html/emacs-diffs/2011-11/msg00265.html>.
   nw="$nw -Wshadow"
 
+  # Emacs's use of alloca inhibits protecting the stack.
+  nw="$nw -Wstack-protector"
+
   # The following line should be removable at some point.
   nw="$nw -Wsuggest-attribute=pure"
-
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to use -Wstack-protector" >&5
-$as_echo_n "checking whether to use -Wstack-protector... " >&6; }
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#if (1 <= __LONG_MAX__ >> 31 >> 31 \
-           && 4 < __GNUC__ + (7 < __GNUC_MINOR__ + (2 <= __GNUC_PATCHLEVEL__)))
-	   /* OK */
-         #else
-	   #error "Not GCC, or GCC before 4.7.2, or 'long int' has < 64 bits."
-	 #endif
-
-int
-main ()
-{
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_cpp "$LINENO"; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-     nw="$nw -Wstack-protector"
-fi
-rm -f conftest.err conftest.$ac_ext
 
 
 
@@ -9526,8 +9520,8 @@ tmp_CPPFLAGS="$CPPFLAGS"
 tmp_CFLAGS="$CFLAGS"
 CPPFLAGS="$CPPFLAGS -x objective-c"
 CFLAGS="$CFLAGS -x objective-c"
-TEMACS_LDFLAGS2="\${LDFLAGS}"
 GNU_OBJC_CFLAGS=
+LIBS_GNUSTEP=
 if test "${with_ns}" != no; then
   if test "${opsys}" = darwin; then
      NS_IMPL_COCOA=yes
@@ -9552,9 +9546,9 @@ if test "${with_ns}" != no; then
      CPPFLAGS="$CPPFLAGS -I${GNUSTEP_SYSTEM_HEADERS} ${GNUSTEP_LOCAL_HEADERS}"
      CFLAGS="$CFLAGS -I${GNUSTEP_SYSTEM_HEADERS} ${GNUSTEP_LOCAL_HEADERS}"
      LDFLAGS="$LDFLAGS -L${GNUSTEP_SYSTEM_LIBRARIES} ${GNUSTEP_LOCAL_LIBRARIES}"
+     LIBS_GNUSTEP="-lgnustep-gui -lgnustep-base -lobjc -lpthread"
      LIB_STANDARD=
      START_FILES=
-     TEMACS_LDFLAGS2=
                     { $as_echo "$as_me:${as_lineno-$LINENO}: checking if GNUstep defines BASE_NATIVE_OBJC_EXCEPTIONS" >&5
 $as_echo_n "checking if GNUstep defines BASE_NATIVE_OBJC_EXCEPTIONS... " >&6; }
 if test "${emacs_cv_objc_exceptions+set}" = set; then :
@@ -10869,6 +10863,9 @@ $as_echo "#define HAVE_GTK3 1" >>confdefs.h
      GTK_OBJ=emacsgtkfixed.o
      term_header=gtkutil.h
      USE_GTK_TOOLKIT="GTK3"
+     if test "x$ac_enable_gtk_deprecation_warnings" = x; then
+         GTK_CFLAGS="$GTK_CFLAGS -DGDK_DISABLE_DEPRECATION_WARNINGS"
+     fi
   else
      check_gtk2=yes
      gtk3_pkg_errors="$GTK_PKG_ERRORS "
@@ -11018,6 +11015,53 @@ done
 
   fi
 
+    HAVE_GTK_HANDLE_BOX=no
+  ac_fn_c_check_decl "$LINENO" "GTK_TYPE_HANDLE_BOX" "ac_cv_have_decl_GTK_TYPE_HANDLE_BOX" "$ac_includes_default
+#include <gtk/gtk.h>
+"
+if test "x$ac_cv_have_decl_GTK_TYPE_HANDLE_BOX" = x""yes; then :
+  HAVE_GTK_HANDLE_BOX=yes
+else
+  HAVE_GTK_HANDLE_BOX=no
+fi
+
+  if test "$HAVE_GTK_HANDLE_BOX" = yes; then
+    for ac_func in gtk_handle_box_new
+do :
+  ac_fn_c_check_func "$LINENO" "gtk_handle_box_new" "ac_cv_func_gtk_handle_box_new"
+if test "x$ac_cv_func_gtk_handle_box_new" = x""yes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_GTK_HANDLE_BOX_NEW 1
+_ACEOF
+
+fi
+done
+
+  fi
+
+    HAVE_GTK_TEAROFF_MENU_ITEM=no
+  ac_fn_c_check_decl "$LINENO" "GTK_TYPE_TEAROFF_MENU_ITEM" "ac_cv_have_decl_GTK_TYPE_TEAROFF_MENU_ITEM" "$ac_includes_default
+#include <gtk/gtk.h>
+"
+if test "x$ac_cv_have_decl_GTK_TYPE_TEAROFF_MENU_ITEM" = x""yes; then :
+  HAVE_GTK_TEAROFF_MENU_ITEM=yes
+else
+  HAVE_GTK_TEAROFF_MENU_ITEM=no
+fi
+
+  if test "$HAVE_GTK_TEAROFF_MENU_ITEM" = yes; then
+    for ac_func in gtk_tearoff_menu_item_new
+do :
+  ac_fn_c_check_func "$LINENO" "gtk_tearoff_menu_item_new" "ac_cv_func_gtk_tearoff_menu_item_new"
+if test "x$ac_cv_func_gtk_tearoff_menu_item_new" = x""yes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_GTK_TEAROFF_MENU_ITEM_NEW 1
+_ACEOF
+
+fi
+done
+
+  fi
 
     for ac_func in gtk_widget_get_window gtk_widget_set_has_window \
                  gtk_dialog_get_action_area gtk_widget_get_sensitive \
@@ -11488,6 +11532,73 @@ if test "$ac_cv_func_inotify_init1" = yes; then
 $as_echo "#define HAVE_INOTIFY 1" >>confdefs.h
 
 fi
+
+HAVE_POSIX_ACL=no
+LIBACL_LIBS=
+if test "${with_acl}" = "yes"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for acl_set_file in -lacl" >&5
+$as_echo_n "checking for acl_set_file in -lacl... " >&6; }
+if test "${ac_cv_lib_acl_acl_set_file+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lacl  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char acl_set_file ();
+int
+main ()
+{
+return acl_set_file ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_acl_acl_set_file=yes
+else
+  ac_cv_lib_acl_acl_set_file=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_acl_acl_set_file" >&5
+$as_echo "$ac_cv_lib_acl_acl_set_file" >&6; }
+if test "x$ac_cv_lib_acl_acl_set_file" = x""yes; then :
+  HAVE_POSIX_ACL=yes
+else
+  HAVE_POSIX_ACL=no
+fi
+
+  if test "$HAVE_POSIX_ACL" = yes; then
+
+$as_echo "#define HAVE_POSIX_ACL 1" >>confdefs.h
+
+    LIBACL_LIBS=-lacl
+  else
+    ac_fn_c_check_func "$LINENO" "acl_set_file" "ac_cv_func_acl_set_file"
+if test "x$ac_cv_func_acl_set_file" = x""yes; then :
+  HAVE_POSIX_ACL=yes
+else
+  HAVE_POSIX_ACL=no
+fi
+
+    if test "$HAVE_POSIX_ACL" = yes; then
+
+$as_echo "#define HAVE_POSIX_ACL 1" >>confdefs.h
+
+    fi
+ fi
+fi
+
 
 HAVE_XAW3D=no
 LUCID_LIBW=
@@ -15483,7 +15594,7 @@ esac
 
 
 case $opsys in
-      aix4-2 | cygwin | gnu | irix6-5 | freebsd | netbsd | openbsd )
+      aix4-2 | cygwin | gnu | irix6-5 | freebsd | netbsd | openbsd | darwin )
     $as_echo "#define SIGNALS_VIA_CHARACTERS 1" >>confdefs.h
 
     ;;
@@ -15991,7 +16102,7 @@ fi
 
 version=$PACKAGE_VERSION
 
-copyright="Copyright (C) 2012 Free Software Foundation, Inc."
+copyright="Copyright (C) 2013 Free Software Foundation, Inc."
 
 cat >>confdefs.h <<_ACEOF
 #define COPYRIGHT "$copyright"
@@ -16055,9 +16166,10 @@ cat >>confdefs.h <<_ACEOF
 #define EMACS_CONFIGURATION "${canonical}"
 _ACEOF
 
+emacs_config_options=`echo "$emacs_config_options" | sed -e "s/\"/'/g"`
 
 cat >>confdefs.h <<_ACEOF
-#define EMACS_CONFIG_OPTIONS "${ac_configure_args}"
+#define EMACS_CONFIG_OPTIONS "${emacs_config_options}"
 _ACEOF
 
 
@@ -20558,6 +20670,9 @@ int result = 0;
             /* Many gnulib modules require POSIX conformance of EBADF.  */
             if (dup2 (2, 1000000) == -1 && errno != EBADF)
               result |= 16;
+            /* Flush out a cygwin core dump.  */
+            if (dup2 (2, -1) != -1 || errno != EBADF)
+              result |= 32;
             return result;
 
   ;
@@ -25732,10 +25847,6 @@ case "$opsys" in
 
   *) LD_SWITCH_SYSTEM_TEMACS= ;;
 esac
-
-if test "$NS_IMPL_GNUSTEP" = "yes"; then
-  LD_SWITCH_SYSTEM_TEMACS="${LD_SWITCH_SYSTEM_TEMACS} -L${GNUSTEP_SYSTEM_LIBRARIES} ${GNUSTEP_LOCAL_LIBRARIES} -lgnustep-gui -lgnustep-base -lobjc -lpthread"
-fi
 
 
 

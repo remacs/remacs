@@ -1,6 +1,7 @@
 ;;; startup.el --- process Emacs shell arguments  -*- lexical-binding: t -*-
 
-;; Copyright (C) 1985-1986, 1992, 1994-2012  Free Software Foundation, Inc.
+;; Copyright (C) 1985-1986, 1992, 1994-2013 Free Software Foundation,
+;; Inc.
 
 ;; Maintainer: FSF
 ;; Keywords: internal
@@ -41,9 +42,10 @@
 (defcustom initial-buffer-choice nil
   "Buffer to show after starting Emacs.
 If the value is nil and `inhibit-startup-screen' is nil, show the
-startup screen.  If the value is a string, visit the specified file
-or directory using `find-file'.  If t, open the `*scratch*'
-buffer.
+startup screen.  If the value is a string, switch to a buffer
+visiting the file or directory specified by that string.  If the
+value is a function, switch to the buffer returned by that
+function.  If t, open the `*scratch*' buffer.
 
 A string value also causes emacsclient to open the specified file
 or directory when no target file is specified."
@@ -51,8 +53,9 @@ or directory when no target file is specified."
 	  (const     :tag "Startup screen" nil)
 	  (directory :tag "Directory" :value "~/")
 	  (file      :tag "File" :value "~/.emacs")
+          (function  :tag "Function")
 	  (const     :tag "Lisp scratch buffer" t))
-  :version "23.1"
+  :version "24.4"
   :group 'initialization)
 
 (defcustom inhibit-startup-screen nil
@@ -2323,10 +2326,14 @@ A fancy display is used on graphic displays, normal otherwise."
 	     (set-buffer-modified-p nil))))
 
     (when initial-buffer-choice
-      (cond ((eq initial-buffer-choice t)
-	     (switch-to-buffer (get-buffer-create "*scratch*")))
-	    ((stringp initial-buffer-choice)
-	     (find-file initial-buffer-choice))))
+      (let ((buf
+             (cond ((stringp initial-buffer-choice)
+		    (find-file-noselect initial-buffer-choice))
+		   ((functionp initial-buffer-choice)
+		    (funcall initial-buffer-choice)))))
+	(switch-to-buffer
+	 (if (buffer-live-p buf) buf (get-buffer-create "*scratch*"))
+	 'norecord)))
 
     (if (or inhibit-startup-screen
 	    initial-buffer-choice

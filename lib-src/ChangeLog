@@ -1,3 +1,7 @@
+2013-01-01  Juanma Barranquero  <lekktu@gmail.com>
+
+	* makefile.w32-in (lisp1): Add macroexp.elc (bug#13320).
+
 2012-12-11  Juanma Barranquero  <lekktu@gmail.com>
 
 	* makefile.w32-in (SYSWAIT_H): Update dependencies.
@@ -8479,7 +8483,7 @@
 ;; coding: utf-8
 ;; End:
 
-  Copyright (C) 1988-1999, 2001-2012 Free Software Foundation, Inc.
+  Copyright (C) 1988-1999, 2001-2013 Free Software Foundation, Inc.
 
   This file is part of GNU Emacs.
 

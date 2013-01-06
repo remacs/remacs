@@ -1,7 +1,7 @@
 /* Header file for the buffer manipulation primitives.
 
-Copyright (C) 1985-1986, 1993-1995, 1997-2012
-                 Free Software Foundation, Inc.
+Copyright (C) 1985-1986, 1993-1995, 1997-2013 Free Software Foundation,
+Inc.
 
 This file is part of GNU Emacs.
 
@@ -192,6 +192,9 @@ INLINE_HEADER_BEGIN
 /* Modification count as of last auto-save.  */
 /* FIXME: should we move this into ->text->auto_save_modiff?  */
 #define BUF_AUTOSAVE_MODIFF(buf) ((buf)->auto_save_modified)
+
+/* Compaction count.  */
+#define BUF_COMPACT(buf) ((buf)->text->compact)
 
 /* Marker chain of buffer.  */
 #define BUF_MARKERS(buf) ((buf)->text->markers)

@@ -1,5 +1,6 @@
 /* Markers: examining, setting and deleting.
-   Copyright (C) 1985, 1997-1998, 2001-2012  Free Software Foundation, Inc.
+   Copyright (C) 1985, 1997-1998, 2001-2013 Free Software Foundation,
+   Inc.
 
 This file is part of GNU Emacs.
 
@@ -82,9 +83,7 @@ clear_charpos_cache (struct buffer *b)
    and everywhere there is a marker.  So we find the one of these places
    that is closest to the specified position, and scan from there.  */
 
-/* charpos_to_bytepos returns the byte position corresponding to CHARPOS.  */
-
-/* This macro is a subroutine of charpos_to_bytepos.
+/* This macro is a subroutine of buf_charpos_to_bytepos.
    Note that it is desirable that BYTEPOS is not evaluated
    except when we really want its value.  */
 
@@ -128,11 +127,7 @@ clear_charpos_cache (struct buffer *b)
     }									\
 }
 
-ptrdiff_t
-charpos_to_bytepos (ptrdiff_t charpos)
-{
-  return buf_charpos_to_bytepos (current_buffer, charpos);
-}
+/* Return the byte position corresponding to CHARPOS in B.  */
 
 ptrdiff_t
 buf_charpos_to_bytepos (struct buffer *b, ptrdiff_t charpos)
@@ -141,8 +136,7 @@ buf_charpos_to_bytepos (struct buffer *b, ptrdiff_t charpos)
   ptrdiff_t best_above, best_above_byte;
   ptrdiff_t best_below, best_below_byte;
 
-  if (charpos < BUF_BEG (b) || charpos > BUF_Z (b))
-    emacs_abort ();
+  eassert (BUF_BEG (b) <= charpos && charpos <= BUF_Z (b));
 
   best_above = BUF_Z (b);
   best_above_byte = BUF_Z_BYTE (b);
@@ -242,9 +236,6 @@ buf_charpos_to_bytepos (struct buffer *b, ptrdiff_t charpos)
 
 #undef CONSIDER
 
-/* buf_bytepos_to_charpos returns the char position corresponding to
-   BYTEPOS.  */
-
 /* This macro is a subroutine of buf_bytepos_to_charpos.
    It is used when BYTEPOS is actually the byte position.  */
 
@@ -288,6 +279,8 @@ buf_charpos_to_bytepos (struct buffer *b, ptrdiff_t charpos)
     }									\
 }
 
+/* Return the character position corresponding to BYTEPOS in B.  */
+
 ptrdiff_t
 buf_bytepos_to_charpos (struct buffer *b, ptrdiff_t bytepos)
 {
@@ -295,8 +288,7 @@ buf_bytepos_to_charpos (struct buffer *b, ptrdiff_t bytepos)
   ptrdiff_t best_above, best_above_byte;
   ptrdiff_t best_below, best_below_byte;
 
-  if (bytepos < BUF_BEG_BYTE (b) || bytepos > BUF_Z_BYTE (b))
-    emacs_abort ();
+  eassert (BUF_BEG_BYTE (b) <= bytepos && bytepos <= BUF_Z_BYTE (b));
 
   best_above = BUF_Z (b);
   best_above_byte = BUF_Z_BYTE (b);

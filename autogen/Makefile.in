@@ -15,7 +15,7 @@
 
 @SET_MAKE@
 
-# Copyright (C) 2002-2012 Free Software Foundation, Inc.
+# Copyright (C) 2002-2013 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -119,8 +119,8 @@ am__libgnu_a_SOURCES_DIST = allocator.c c-ctype.h c-ctype.c \
 	c-strcase.h c-strcasecmp.c c-strncasecmp.c careadlinkat.c \
 	close-stream.c md5.c sha1.c sha256.c sha512.c dtoastr.c \
 	dtotimespec.c filemode.c gettext.h gettime.c stat-time.c \
-	stdio.c strftime.c timespec.c timespec-add.c timespec-sub.c \
-	u64.c unistd.c utimens.c
+	strftime.c timespec.c timespec-add.c timespec-sub.c u64.c \
+	unistd.c utimens.c
 am__objects_1 =
 am_libgnu_a_OBJECTS = allocator.$(OBJEXT) c-ctype.$(OBJEXT) \
 	c-strcasecmp.$(OBJEXT) c-strncasecmp.$(OBJEXT) \
@@ -128,9 +128,9 @@ am_libgnu_a_OBJECTS = allocator.$(OBJEXT) c-ctype.$(OBJEXT) \
 	sha1.$(OBJEXT) sha256.$(OBJEXT) sha512.$(OBJEXT) \
 	dtoastr.$(OBJEXT) dtotimespec.$(OBJEXT) filemode.$(OBJEXT) \
 	$(am__objects_1) gettime.$(OBJEXT) stat-time.$(OBJEXT) \
-	stdio.$(OBJEXT) strftime.$(OBJEXT) timespec.$(OBJEXT) \
-	timespec-add.$(OBJEXT) timespec-sub.$(OBJEXT) u64.$(OBJEXT) \
-	unistd.$(OBJEXT) utimens.$(OBJEXT)
+	strftime.$(OBJEXT) timespec.$(OBJEXT) timespec-add.$(OBJEXT) \
+	timespec-sub.$(OBJEXT) u64.$(OBJEXT) unistd.$(OBJEXT) \
+	utimens.$(OBJEXT)
 libgnu_a_OBJECTS = $(am_libgnu_a_OBJECTS)
 depcomp = $(SHELL) $(top_srcdir)/build-aux/depcomp
 am__depfiles_maybe = depfiles
@@ -543,6 +543,7 @@ LD_SWITCH_SYSTEM = @LD_SWITCH_SYSTEM@
 LD_SWITCH_SYSTEM_TEMACS = @LD_SWITCH_SYSTEM_TEMACS@
 LD_SWITCH_X_SITE = @LD_SWITCH_X_SITE@
 LD_SWITCH_X_SITE_RPATH = @LD_SWITCH_X_SITE_RPATH@
+LIBACL_LIBS = @LIBACL_LIBS@
 LIBGIF = @LIBGIF@
 LIBGNUTLS_CFLAGS = @LIBGNUTLS_CFLAGS@
 LIBGNUTLS_LIBS = @LIBGNUTLS_LIBS@
@@ -560,6 +561,7 @@ LIBRESOLV = @LIBRESOLV@
 LIBS = @LIBS@
 LIBSELINUX_LIBS = @LIBSELINUX_LIBS@
 LIBSOUND = @LIBSOUND@
+LIBS_GNUSTEP = @LIBS_GNUSTEP@
 LIBS_MAIL = @LIBS_MAIL@
 LIBS_SYSTEM = @LIBS_SYSTEM@
 LIBS_TERMCAP = @LIBS_TERMCAP@
@@ -762,7 +764,6 @@ STDINT_H = @STDINT_H@
 STRIP = @STRIP@
 SUBDIR_MAKEFILES_IN = @SUBDIR_MAKEFILES_IN@
 SYS_TIME_H_DEFINES_STRUCT_TIMESPEC = @SYS_TIME_H_DEFINES_STRUCT_TIMESPEC@
-TEMACS_LDFLAGS2 = @TEMACS_LDFLAGS2@
 TERMCAP_OBJ = @TERMCAP_OBJ@
 TIME_H_DEFINES_STRUCT_TIMESPEC = @TIME_H_DEFINES_STRUCT_TIMESPEC@
 TOOLKIT_LIBW = @TOOLKIT_LIBW@
@@ -919,9 +920,9 @@ DEFAULT_INCLUDES = -I. -I$(top_srcdir)/lib -I../src -I$(top_srcdir)/src
 libgnu_a_SOURCES = allocator.c c-ctype.h c-ctype.c c-strcase.h \
 	c-strcasecmp.c c-strncasecmp.c careadlinkat.c close-stream.c \
 	md5.c sha1.c sha256.c sha512.c dtoastr.c dtotimespec.c \
-	filemode.c $(am__append_1) gettime.c stat-time.c stdio.c \
-	strftime.c timespec.c timespec-add.c timespec-sub.c u64.c \
-	unistd.c utimens.c
+	filemode.c $(am__append_1) gettime.c stat-time.c strftime.c \
+	timespec.c timespec-add.c timespec-sub.c u64.c unistd.c \
+	utimens.c
 libgnu_a_LIBADD = $(gl_LIBOBJS)
 libgnu_a_DEPENDENCIES = $(gl_LIBOBJS)
 EXTRA_libgnu_a_SOURCES = ftoastr.c dup2.c euidaccess.c execinfo.c \
@@ -1024,7 +1025,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sig2str.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/stat-time.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/stat.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/stdio.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/strftime.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/strtoimax.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/strtol.Po@am__quote@

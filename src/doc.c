@@ -1,6 +1,7 @@
 /* Record indices of function doc strings stored in a file.
 
-Copyright (C) 1985-1986, 1993-1995, 1997-2012 Free Software Foundation, Inc.
+Copyright (C) 1985-1986, 1993-1995, 1997-2013 Free Software Foundation,
+Inc.
 
 This file is part of GNU Emacs.
 
@@ -83,24 +84,23 @@ get_doc_string (Lisp_Object filepos, bool unibyte, bool definition)
   ptrdiff_t minsize;
   int offset;
   EMACS_INT position;
-  Lisp_Object file, tem;
+  Lisp_Object file, tem, pos;
   USE_SAFE_ALLOCA;
 
   if (INTEGERP (filepos))
     {
       file = Vdoc_file_name;
-      position = XINT (filepos);
+      pos = filepos;
     }
   else if (CONSP (filepos))
     {
       file = XCAR (filepos);
-      position = XINT (XCDR (filepos));
+      pos = XCDR (filepos);
     }
   else
     return Qnil;
 
-  if (position < 0)
-    position = - position;
+  position = eabs (XINT (pos));
 
   if (!STRINGP (Vdoc_directory))
     return Qnil;

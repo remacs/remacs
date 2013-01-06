@@ -4,7 +4,7 @@ dnl 	autoconf
 dnl in the directory containing this script.
 dnl If you changed any AC_DEFINES, also run autoheader.
 dnl
-dnl Copyright (C) 1994-1996, 1999-2012 Free Software Foundation, Inc.
+dnl Copyright (C) 1994-1996, 1999-2013 Free Software Foundation, Inc.
 dnl
 dnl  This file is part of GNU Emacs.
 dnl
@@ -23,6 +23,9 @@ dnl  along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
 
 AC_PREREQ(2.65)
 AC_INIT(emacs, 24.3.50)
+dnl This is the documented way to record the args passed to configure,
+dnl rather than $ac_configure_args.
+emacs_config_options="$@"
 AC_CONFIG_HEADER(src/config.h:src/config.in)
 AC_CONFIG_SRCDIR(src/lisp.h)
 AC_CONFIG_AUX_DIR(build-aux)
@@ -355,6 +358,11 @@ AC_ARG_ENABLE(autodepend,
  		 Requires GNU Make and Gcc. Enabled if GNU Make and Gcc is
  		 found])],
 [ac_enable_autodepend="${enableval}"],[ac_enable_autodepend=yes])
+
+AC_ARG_ENABLE(gtk-deprecation-warnings,
+[AS_HELP_STRING([--enable-gtk-deprecation-warnings],
+		[Show Gtk+/Gdk deprecation warnings for Gtk+ >= 3.0])],
+[ac_enable_gtk_deprecation_warnings="${enableval}"],[])
 
 #### Make srcdir absolute, if it isn't already.  It's important to
 #### avoid running the file name through pwd unnecessarily, since pwd can
@@ -727,22 +735,11 @@ else
   # <http://lists.gnu.org/archive/html/emacs-diffs/2011-11/msg00265.html>.
   nw="$nw -Wshadow"
 
+  # Emacs's use of alloca inhibits protecting the stack.
+  nw="$nw -Wstack-protector"
+
   # The following line should be removable at some point.
   nw="$nw -Wsuggest-attribute=pure"
-
-  AC_MSG_CHECKING([whether to use -Wstack-protector])
-  AC_PREPROC_IFELSE(
-    [AC_LANG_PROGRAM(
-       [[#if (1 <= __LONG_MAX__ >> 31 >> 31 \
-           && 4 < __GNUC__ + (7 < __GNUC_MINOR__ + (2 <= __GNUC_PATCHLEVEL__)))
-	   /* OK */
-         #else
-	   #error "Not GCC, or GCC before 4.7.2, or 'long int' has < 64 bits."
-	 #endif
-       ]])],
-    [AC_MSG_RESULT(yes)],
-    [AC_MSG_RESULT(no)
-     nw="$nw -Wstack-protector"])
 
   gl_MANYWARN_ALL_GCC([ws])
   gl_MANYWARN_COMPLEMENT([ws], [$ws], [$nw])
@@ -1483,8 +1480,8 @@ tmp_CPPFLAGS="$CPPFLAGS"
 tmp_CFLAGS="$CFLAGS"
 CPPFLAGS="$CPPFLAGS -x objective-c"
 CFLAGS="$CFLAGS -x objective-c"
-TEMACS_LDFLAGS2="\${LDFLAGS}"
 GNU_OBJC_CFLAGS=
+LIBS_GNUSTEP=
 if test "${with_ns}" != no; then
   if test "${opsys}" = darwin; then
      NS_IMPL_COCOA=yes
@@ -1511,9 +1508,9 @@ if test "${with_ns}" != no; then
      CPPFLAGS="$CPPFLAGS -I${GNUSTEP_SYSTEM_HEADERS} ${GNUSTEP_LOCAL_HEADERS}"
      CFLAGS="$CFLAGS -I${GNUSTEP_SYSTEM_HEADERS} ${GNUSTEP_LOCAL_HEADERS}"
      LDFLAGS="$LDFLAGS -L${GNUSTEP_SYSTEM_LIBRARIES} ${GNUSTEP_LOCAL_LIBRARIES}"
+     LIBS_GNUSTEP="-lgnustep-gui -lgnustep-base -lobjc -lpthread"
      LIB_STANDARD=
      START_FILES=
-     TEMACS_LDFLAGS2=
      dnl GNUstep defines BASE_NATIVE_OBJC_EXCEPTIONS to 0 or 1.
      dnl If they had chosen to either define it or not, we could have
      dnl just used AC_CHECK_DECL here.
@@ -1564,7 +1561,7 @@ fail;
   fi
 fi
 
-AC_SUBST(TEMACS_LDFLAGS2)
+AC_SUBST(LIBS_GNUSTEP)
 
 INSTALL_ARCH_INDEP_EXTRA=install-etc
 ns_self_contained=no
@@ -2004,6 +2001,9 @@ if test "${with_gtk3}" = "yes" || test "${with_gtk}" = "yes" || test "$USE_X_TOO
      GTK_OBJ=emacsgtkfixed.o
      term_header=gtkutil.h
      USE_GTK_TOOLKIT="GTK3"
+     if test "x$ac_enable_gtk_deprecation_warnings" = x; then
+         GTK_CFLAGS="$GTK_CFLAGS -DGDK_DISABLE_DEPRECATION_WARNINGS"
+     fi
   else
      check_gtk2=yes
      gtk3_pkg_errors="$GTK_PKG_ERRORS "
@@ -2079,6 +2079,23 @@ if test "${HAVE_GTK}" = "yes"; then
     AC_CHECK_FUNCS(gtk_file_selection_new)
   fi
 
+  dnl Same as above for gtk_handle_box.
+  HAVE_GTK_HANDLE_BOX=no
+  AC_CHECK_DECL(GTK_TYPE_HANDLE_BOX, HAVE_GTK_HANDLE_BOX=yes,
+                   HAVE_GTK_HANDLE_BOX=no, [AC_INCLUDES_DEFAULT
+#include <gtk/gtk.h>])
+  if test "$HAVE_GTK_HANDLE_BOX" = yes; then
+    AC_CHECK_FUNCS(gtk_handle_box_new)
+  fi
+
+  dnl Same as above for gtk_tearoff_menu_item.
+  HAVE_GTK_TEAROFF_MENU_ITEM=no
+  AC_CHECK_DECL(GTK_TYPE_TEAROFF_MENU_ITEM, HAVE_GTK_TEAROFF_MENU_ITEM=yes,
+                   HAVE_GTK_TEAROFF_MENU_ITEM=no, [AC_INCLUDES_DEFAULT
+#include <gtk/gtk.h>])
+  if test "$HAVE_GTK_TEAROFF_MENU_ITEM" = yes; then
+    AC_CHECK_FUNCS(gtk_tearoff_menu_item_new)
+  fi
 
   dnl Check for functions introduced in 2.14 and later.
   AC_CHECK_FUNCS(gtk_widget_get_window gtk_widget_set_has_window \
@@ -3684,7 +3701,7 @@ AH_TEMPLATE(SIGNALS_VIA_CHARACTERS, [Make process_send_signal work by
 case $opsys in
   dnl Perry Smith <pedz@ddivt1.austin.ibm.com> says this is correct for AIX.
   dnl thomas@mathematik.uni-bremen.de says this is needed for IRIX.
-  aix4-2 | cygwin | gnu | irix6-5 | freebsd | netbsd | openbsd )
+  aix4-2 | cygwin | gnu | irix6-5 | freebsd | netbsd | openbsd | darwin )
     AC_DEFINE(SIGNALS_VIA_CHARACTERS, 1)
     ;;
 
@@ -4024,7 +4041,7 @@ fi
 
 version=$PACKAGE_VERSION
 
-copyright="Copyright (C) 2012 Free Software Foundation, Inc."
+copyright="Copyright (C) 2013 Free Software Foundation, Inc."
 AC_DEFINE_UNQUOTED(COPYRIGHT, ["$copyright"],
   [Short copyright string for this version of Emacs.])
 AC_SUBST(copyright)
@@ -4079,7 +4096,9 @@ fi
 
 AC_DEFINE_UNQUOTED(EMACS_CONFIGURATION,  "${canonical}",
 		   [Define to the canonical Emacs configuration name.])
-AC_DEFINE_UNQUOTED(EMACS_CONFIG_OPTIONS, "${ac_configure_args}",
+dnl Replace any embedded " characters (bug#13274).
+emacs_config_options=`echo "$emacs_config_options" | sed -e "s/\"/'/g"`
+AC_DEFINE_UNQUOTED(EMACS_CONFIG_OPTIONS, "${emacs_config_options}",
 		   [Define to the options passed to configure.])
 AH_TEMPLATE(config_opsysfile, [Some platforms that do not use configure
   define this to include extra configuration information.])
@@ -4293,10 +4312,6 @@ case "$opsys" in
   *) LD_SWITCH_SYSTEM_TEMACS= ;;
 esac
 
-if test "$NS_IMPL_GNUSTEP" = "yes"; then
-  LD_SWITCH_SYSTEM_TEMACS="${LD_SWITCH_SYSTEM_TEMACS} -L${GNUSTEP_SYSTEM_LIBRARIES} ${GNUSTEP_LOCAL_LIBRARIES} -lgnustep-gui -lgnustep-base -lobjc -lpthread"
-fi
-
 AC_SUBST(LD_SWITCH_SYSTEM_TEMACS)
 
 
@@ -4391,7 +4406,7 @@ AC_SUBST(WINDOW_SYSTEM_OBJ)
 
 AH_TOP([/* GNU Emacs site configuration template file.
 
-Copyright (C) 1988, 1993-1994, 1999-2002, 2004-2012
+Copyright (C) 1988, 1993-1994, 1999-2002, 2004-2013
   Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.

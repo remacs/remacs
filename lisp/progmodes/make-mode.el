@@ -1,6 +1,6 @@
 ;;; make-mode.el --- makefile editing commands for Emacs -*- lexical-binding:t -*-
 
-;; Copyright (C) 1992, 1994, 1999-2012  Free Software Foundation, Inc.
+;; Copyright (C) 1992, 1994, 1999-2013 Free Software Foundation, Inc.
 
 ;; Author: Thomas Neumann <tom@smart.bo.open.de>
 ;;	Eric S. Raymond <esr@snark.thyrsus.com>
@@ -1273,9 +1273,9 @@ definition and conveniently use this command."
 
 ;; Filling
 
-(defun makefile-fill-paragraph (_arg)
-  ;; Fill comments, backslashed lines, and variable definitions
-  ;; specially.
+(defun makefile-fill-paragraph (_justify)
+  "Function used for `fill-paragraph-function' in Makefile mode.
+Fill comments, backslashed lines, and variable definitions specially."
   (save-excursion
     (beginning-of-line)
     (cond
@@ -1295,7 +1295,9 @@ definition and conveniently use this command."
 	       (end-of-line 0)
 	       (while (= (preceding-char) ?\\)
 		 (end-of-line 0))
-	       (forward-char)
+	       ;; Maybe we hit bobp, in which case we are not at EOL.
+	       (if (eq (point) (line-end-position))
+		   (forward-char))
 	       (point)))
 	    (end
 	     (save-excursion

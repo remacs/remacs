@@ -1,7 +1,7 @@
 ;;; view.el --- peruse file or buffer without editing
 
-;; Copyright (C) 1985, 1989, 1994-1995, 1997, 2000-2012
-;;   Free Software Foundation, Inc.
+;; Copyright (C) 1985, 1989, 1994-1995, 1997, 2000-2013 Free Software
+;; Foundation, Inc.
 
 ;; Author: K. Shane Hartman
 ;; Maintainer: Inge Frick <inge@nada.kth.se>
@@ -461,15 +461,13 @@ then \\[View-leave], \\[View-quit] and \\[View-kill-and-leave] will return to th
 
 Entry to view-mode runs the normal hook `view-mode-hook'."
   :lighter " View" :keymap view-mode-map
-  (if view-mode (view-mode-enable) (view-mode-disable)))
+  (if view-mode (view--enable) (view--disable)))
 
-(defun view-mode-enable ()
-  "Turn on View mode."
+(defun view--enable ()
   ;; Always leave view mode before changing major mode.
   ;; This is to guarantee that the buffer-read-only variable is restored.
-  (add-hook 'change-major-mode-hook 'view-mode-disable nil t)
-  (setq view-mode t
-	view-page-size nil
+  (add-hook 'change-major-mode-hook 'view--disable nil t)
+  (setq view-page-size nil
 	view-half-page-size nil
 	view-old-buffer-read-only buffer-read-only
 	buffer-read-only t)
@@ -480,15 +478,18 @@ Entry to view-mode runs the normal hook `view-mode-hook'."
 	    (format "continue viewing %s"
 		    (if (buffer-file-name)
 			(file-name-nondirectory (buffer-file-name))
-		      (buffer-name)))))
-  (force-mode-line-update)
-  (run-hooks 'view-mode-hook))
+		      (buffer-name))))))
 
+
+(define-obsolete-function-alias 'view-mode-enable 'view-mode "24.4")
 (defun view-mode-disable ()
   "Turn off View mode."
-  (remove-hook 'change-major-mode-hook 'view-mode-disable t)
+  (declare (obsolete view-mode "24.4"))
+  (view-mode -1))
+
+(defun view--disable ()
+  (remove-hook 'change-major-mode-hook 'view--disable t)
   (and view-overlay (delete-overlay view-overlay))
-  (force-mode-line-update)
   ;; Calling toggle-read-only while View mode is enabled
   ;; sets view-read-only to t as a buffer-local variable
   ;; after exiting View mode.  That arranges that the next toggle-read-only
@@ -497,7 +498,6 @@ Entry to view-mode runs the normal hook `view-mode-hook'."
   ;; so that View mode stays off if toggle-read-only is called.
   (if (local-variable-p 'view-read-only)
       (kill-local-variable 'view-read-only))
-  (setq view-mode nil)
   (if (boundp 'Helper-return-blurb)
       (setq Helper-return-blurb view-old-Helper-return-blurb))
   (if buffer-read-only
@@ -560,8 +560,7 @@ This function runs the normal hook `view-mode-hook'."
     (setq view-exit-action exit-action))
 
   (unless view-mode
-    (view-mode-enable)
-    (force-mode-line-update)
+    (view-mode 1)
     (unless view-inhibit-help-message
       (message "%s"
 	       (substitute-command-keys "\
@@ -588,7 +587,7 @@ current buffer. "
   (when view-mode
     (let ((buffer (window-buffer)))
       (unless view-no-disable-on-exit
-	(view-mode-disable))
+	(view-mode -1))
 
       (unless exit-only
 	(cond
@@ -599,8 +598,7 @@ current buffer. "
 	  (quit-window)))
 
 	(when exit-action
-	  (funcall exit-action buffer))
-	(force-mode-line-update)))))
+	  (funcall exit-action buffer))))))
 
 (defun View-exit ()
   "Exit View mode but stay in current buffer."

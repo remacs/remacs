@@ -1,6 +1,7 @@
 ;;; server.el --- Lisp code for GNU Emacs running as server process -*- lexical-binding: t -*-
 
-;; Copyright (C) 1986-1987, 1992, 1994-2012  Free Software Foundation, Inc.
+;; Copyright (C) 1986-1987, 1992, 1994-2013 Free Software Foundation,
+;; Inc.
 
 ;; Author: William Sommerfeld <wesommer@athena.mit.edu>
 ;; Maintainer: FSF
@@ -1256,12 +1257,17 @@ The following commands are accepted by the client:
           (mapc 'funcall (nreverse commands))
 
 	  ;; If we were told only to open a new client, obey
-	  ;; `initial-buffer-choice' if it specifies a file.
-	  (unless (or files commands)
-	    (if (stringp initial-buffer-choice)
-		(find-file initial-buffer-choice)
-	      (switch-to-buffer (get-buffer-create "*scratch*")
-				'norecord)))
+	  ;; `initial-buffer-choice' if it specifies a file
+          ;; or a function.
+          (unless (or files commands)
+            (let ((buf
+                   (cond ((stringp initial-buffer-choice)
+			  (find-file-noselect initial-buffer-choice))
+			 ((functionp initial-buffer-choice)
+			  (funcall initial-buffer-choice)))))
+	      (switch-to-buffer
+	       (if (buffer-live-p buf) buf (get-buffer-create "*scratch*"))
+	       'norecord)))
 
           ;; Delete the client if necessary.
           (cond

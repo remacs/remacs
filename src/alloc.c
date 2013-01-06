@@ -1,7 +1,7 @@
 /* Storage allocation and gc for GNU Emacs Lisp interpreter.
 
-Copyright (C) 1985-1986, 1988, 1993-1995, 1997-2012
-  Free Software Foundation, Inc.
+Copyright (C) 1985-1986, 1988, 1993-1995, 1997-2013 Free Software
+Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -4726,12 +4726,12 @@ valid_pointer_p (void *p)
 #endif
 }
 
-/* Return 2 if OBJ is a killed or special buffer object.
-   Return 1 if OBJ is a valid lisp object.
-   Return 0 if OBJ is NOT a valid lisp object.
-   Return -1 if we cannot validate OBJ.
-   This function can be quite slow,
-   so it should only be used in code for manual debugging.  */
+/* Return 2 if OBJ is a killed or special buffer object, 1 if OBJ is a
+   valid lisp object, 0 if OBJ is NOT a valid lisp object, or -1 if we
+   cannot validate OBJ.  This function can be quite slow, so its primary
+   use is the manual debugging.  The only exception is print_object, where
+   we use it to check whether the memory referenced by the pointer of
+   Lisp_Save_Value object contains valid objects.  */
 
 int
 valid_lisp_object_p (Lisp_Object obj)

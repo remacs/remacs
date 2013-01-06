@@ -1,6 +1,7 @@
 /* Lisp parsing and input streams.
 
-Copyright (C) 1985-1989, 1993-1995, 1997-2012  Free Software Foundation, Inc.
+Copyright (C) 1985-1989, 1993-1995, 1997-2013 Free Software Foundation,
+Inc.
 
 This file is part of GNU Emacs.
 
@@ -3569,9 +3570,8 @@ read_list (bool flag, Lisp_Object readcharfun)
 			 doc string, caller must make it
 			 multibyte.  */
 
-		      EMACS_INT pos = XINT (XCDR (val));
 		      /* Position is negative for user variables.  */
-		      if (pos < 0) pos = -pos;
+		      EMACS_INT pos = eabs (XINT (XCDR (val)));
 		      if (pos >= saved_doc_string_position
 			  && pos < (saved_doc_string_position
 				    + saved_doc_string_length))

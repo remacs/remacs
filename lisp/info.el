@@ -1,6 +1,6 @@
 ;; info.el --- info package for Emacs
 
-;; Copyright (C) 1985-1986, 1992-2012 Free Software Foundation, Inc.
+;; Copyright (C) 1985-1986, 1992-2013 Free Software Foundation, Inc.
 
 ;; Maintainer: FSF
 ;; Keywords: help
@@ -397,6 +397,10 @@ Marker points nowhere if file has no tag table.")
 (defvar Info-current-file-completions nil
   "Cached completion list for current Info file.")
 
+(defvar Info-file-completions nil
+  "Cached completion alist of visited Info files.
+Each element of the alist is (FILE . COMPLETIONS)")
+
 (defvar Info-file-supports-index-cookies nil
   "Non-nil if current Info file supports index cookies.")
 
@@ -742,11 +746,15 @@ in `Info-file-supports-index-cookies-list'."
 		  (push dir Info-directory-list)))))))
 
 ;;;###autoload
-(defun info-other-window (&optional file-or-node)
+(defun info-other-window (&optional file-or-node buffer)
   "Like `info' but show the Info buffer in another window."
-  (interactive (if current-prefix-arg
-		   (list (read-file-name "Info file name: " nil nil t))))
-  (info-setup file-or-node (switch-to-buffer-other-window "*info*")))
+  (interactive (list
+		(if (and current-prefix-arg (not (numberp current-prefix-arg)))
+		    (read-file-name "Info file name: " nil nil t))
+		(if (numberp current-prefix-arg)
+		    (format "*info*<%s>" current-prefix-arg))))
+  (info-setup file-or-node
+	      (switch-to-buffer-other-window (or buffer "*info*"))))
 
 ;;;###autoload (put 'info 'info-file (purecopy "emacs"))
 ;;;###autoload
@@ -763,8 +771,9 @@ with the top-level Info directory.
 
 In interactive use, a non-numeric prefix argument directs
 this command to read a file name from the minibuffer.
-A numeric prefix argument selects an Info buffer with the prefix number
-appended to the Info buffer name.
+
+A numeric prefix argument N selects an Info buffer named
+\"*info*<%s>\".
 
 The search path for Info files is in the variable `Info-directory-list'.
 The top-level Info directory is made by combining all the files named `dir'
@@ -1771,12 +1780,20 @@ See `completing-read' for a description of arguments and usage."
      (substring string 1)
      predicate
      code))
-   ;; If a file name was given, then any node is fair game.
-   ((string-match "\\`(" string)
-    (cond
-     ((eq code nil) string)
-     ((eq code t) nil)
-     (t t)))
+   ;; If a file name was given, complete nodes in the file.
+   ((string-match "\\`(\\([^)]+\\))" string)
+    (let ((file0 (match-string 0 string))
+	  (file1 (match-string 1 string))
+	  (node (substring string (match-end 0))))
+      (completion-table-with-context
+       file0
+       (apply-partially
+	(lambda (string pred action)
+	  (complete-with-action
+	   action
+	   (Info-build-node-completions (Info-find-file file1))
+	   string pred)))
+       node predicate code)))
    ;; Otherwise use Info-read-node-completion-table.
    (t (complete-with-action
        code Info-read-node-completion-table string predicate))))
@@ -1793,41 +1810,54 @@ in the current Info file, or \"(FILENAME)NODENAME\"."
 	(Info-read-node-name prompt)
       nodename)))
 
-(defun Info-build-node-completions ()
-  (or Info-current-file-completions
-      (let ((compl nil)
-	    ;; Bind this in case the user sets it to nil.
-	    (case-fold-search t)
-	    (node-regexp "Node: *\\([^,\n]*\\) *[,\n\t]"))
-	(save-excursion
-	  (save-restriction
-	    (or Info-tag-table-marker
-		(error "No Info tags found"))
-	    (if (marker-buffer Info-tag-table-marker)
-		(let ((marker Info-tag-table-marker))
-		  (set-buffer (marker-buffer marker))
-		  (widen)
-		  (goto-char marker)
-		  (while (re-search-forward "\n\\(Node\\|Ref\\): \\(.*\\)\177" nil t)
-		    (setq compl
-			  (cons (list (match-string-no-properties 2))
-				compl))))
+(defun Info-build-node-completions (&optional file)
+  (if file
+      (or (cdr (assoc file Info-file-completions))
+	  (with-temp-buffer
+	    (Info-mode)
+	    (Info-goto-node (format "(%s)Top" file))
+	    (Info-build-node-completions-1)
+	    (push (cons file Info-current-file-completions) Info-file-completions)
+	    Info-current-file-completions))
+    (or Info-current-file-completions
+	(Info-build-node-completions-1))))
+
+(defun Info-build-node-completions-1 ()
+  (let ((compl nil)
+	;; Bind this in case the user sets it to nil.
+	(case-fold-search t)
+	(node-regexp "Node: *\\([^,\n]*\\) *[,\n\t]"))
+    (save-excursion
+      (save-restriction
+	(or Info-tag-table-marker
+	    (error "No Info tags found"))
+	(if (marker-buffer Info-tag-table-marker)
+	    (let ((marker Info-tag-table-marker))
+	      (set-buffer (marker-buffer marker))
 	      (widen)
-	      (goto-char (point-min))
-	      ;; If the buffer begins with a node header, process that first.
-	      (if (Info-node-at-bob-matching node-regexp)
-		  (setq compl (list (match-string-no-properties 1))))
-	      ;; Now for the rest of the nodes.
-	      (while (search-forward "\n\^_" nil t)
-		(forward-line 1)
-		(let ((beg (point)))
-		  (forward-line 1)
-		  (if (re-search-backward node-regexp beg t)
-		      (setq compl
-			    (cons (list (match-string-no-properties 1))
-				  compl))))))))
-	(setq compl (cons '("*") compl))
-	(set (make-local-variable 'Info-current-file-completions) compl))))
+	      (goto-char marker)
+	      (while (re-search-forward "\n\\(Node\\|Ref\\): \\(.*\\)\177" nil t)
+		(setq compl
+		      (cons (list (match-string-no-properties 2))
+			    compl))))
+	  (widen)
+	  (goto-char (point-min))
+	  ;; If the buffer begins with a node header, process that first.
+	  (if (Info-node-at-bob-matching node-regexp)
+	      (setq compl (list (match-string-no-properties 1))))
+	  ;; Now for the rest of the nodes.
+	  (while (search-forward "\n\^_" nil t)
+	    (forward-line 1)
+	    (let ((beg (point)))
+	      (forward-line 1)
+	      (if (re-search-backward node-regexp beg t)
+		  (setq compl
+			(cons (list (match-string-no-properties 1))
+			      compl))))))))
+    (setq compl (cons '("*") (nreverse compl)))
+    (set (make-local-variable 'Info-current-file-completions) compl)
+    compl))
+
 
 (defun Info-restore-point (hl)
   "If this node has been visited, restore the point value when we left."

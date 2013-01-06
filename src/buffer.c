@@ -1,6 +1,7 @@
 /* Buffer manipulation primitives for GNU Emacs.
 
-Copyright (C) 1985-1989, 1993-1995, 1997-2012 Free Software Foundation, Inc.
+Copyright (C) 1985-1989, 1993-1995, 1997-2013 Free Software Foundation,
+Inc.
 
 This file is part of GNU Emacs.
 
@@ -573,6 +574,7 @@ even if it is dead.  The return value is never nil.  */)
   BUF_CHARS_MODIFF (b) = 1;
   BUF_OVERLAY_MODIFF (b) = 1;
   BUF_SAVE_MODIFF (b) = 1;
+  BUF_COMPACT (b) = 1;
   set_buffer_intervals (b, NULL);
   BUF_UNCHANGED_MODIFIED (b) = 1;
   BUF_OVERLAY_UNCHANGED_MODIFIED (b) = 1;
@@ -1338,7 +1340,7 @@ DEFUN ("set-buffer-modified-p", Fset_buffer_modified_p, Sset_buffer_modified_p,
 A non-nil FLAG means mark the buffer modified.  */)
   (Lisp_Object flag)
 {
-  Lisp_Object fn, buffer, window;
+  Lisp_Object fn;
 
 #ifdef CLASH_DETECTION
   /* If buffer becoming modified, lock the file.
@@ -1391,9 +1393,7 @@ A non-nil FLAG means mark the buffer modified.  */)
      Ideally, I think there should be another mechanism for fontifying
      buffers without "modifying" buffers, or redisplay should be
      smarter about updating the `*' in mode lines.  --gerd  */
-  XSETBUFFER (buffer, current_buffer);
-  window = Fget_buffer_window (buffer, Qt);
-  if (WINDOWP (window))
+  if (buffer_window_count (current_buffer))
     {
       ++update_mode_lines;
       current_buffer->prevent_redisplay_optimizations_p = 1;
@@ -1667,7 +1667,7 @@ compact_buffer (struct buffer *buffer)
      which aren't changed since last compaction.  */
   if (BUFFER_LIVE_P (buffer)
       && (buffer->base_buffer == NULL)
-      && (buffer->text->compact != buffer->text->modiff))
+      && (BUF_COMPACT (buffer) != BUF_MODIFF (buffer)))
     {
       /* If a buffer's undo list is Qt, that means that undo is
 	 turned off in that buffer.  Calling truncate_undo_list on
@@ -1692,7 +1692,7 @@ compact_buffer (struct buffer *buffer)
 	      current_buffer = save_current;
 	    }
 	}
-      buffer->text->compact = buffer->text->modiff;
+      BUF_COMPACT (buffer) = BUF_MODIFF (buffer);
     }
 }
 
@@ -2047,7 +2047,7 @@ DEFUN ("bury-buffer-internal", Fbury_buffer_internal, Sbury_buffer_internal,
 DEFUN ("set-buffer-major-mode", Fset_buffer_major_mode, Sset_buffer_major_mode, 1, 1, 0,
        doc: /* Set an appropriate major mode for BUFFER.
 For the *scratch* buffer, use `initial-major-mode', otherwise choose a mode
-according to `default-major-mode'.
+according to the default value of `major-mode'.
 Use this function before selecting the buffer, since it may need to inspect
 the current buffer's major mode.  */)
   (Lisp_Object buffer)

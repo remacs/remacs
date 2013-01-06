@@ -1,7 +1,7 @@
 ;;; icomplete.el --- minibuffer completion incremental feedback
 
-;; Copyright (C) 1992-1994, 1997, 1999, 2001-2012
-;;   Free Software Foundation, Inc.
+;; Copyright (C) 1992-1994, 1997, 1999, 2001-2013 Free Software
+;; Foundation, Inc.
 
 ;; Author: Ken Manheimer <klm@i.am>
 ;; Maintainer: Ken Manheimer <klm@i.am>
@@ -337,12 +337,16 @@ are exhibited within the square braces.)"
 				((= compare (length name))
                                  ;; Typical case: name is a prefix.
 				 (substring most compare))
-				((< compare 5) most)
-				(t (concat "..." (substring most compare))))
+                                ;; Don't bother truncating if it doesn't gain
+                                ;; us at least 2 columns.
+				((< compare 3) most)
+				(t (concat "…" (substring most compare))))
 			       close-bracket)))
 	     ;;"-prospects" - more than one candidate
-	     (prospects-len (+ (length determ) 6 ;; take {,...} into account
-                               (string-width (buffer-string))))
+	     (prospects-len (+ (length determ)
+			       (string-width icomplete-separator)
+			       3 ;; take {…} into account
+			       (string-width (buffer-string))))
              (prospects-max
               ;; Max total length to use, including the minibuffer content.
               (* (+ icomplete-prospects-height
@@ -373,7 +377,9 @@ are exhibited within the square braces.)"
 	    (cond ((string-equal comp "") (setq most-is-exact t))
 		  ((member comp prospects))
 		  (t (setq prospects-len
-                           (+ (string-width comp) 1 prospects-len))
+                           (+ (string-width comp)
+			      (string-width icomplete-separator)
+			      prospects-len))
 		     (if (< prospects-len prospects-max)
 			 (push comp prospects)
 		       (setq limit t))))))

@@ -1,3 +1,7 @@
+2013-01-04  Glenn Morris  <rgm@gnu.org>
+
+	* erc-backend.el (312): Fix typo.  (Bug#13235)
+
 2012-11-30  Glenn Morris  <rgm@gnu.org>
 
 	* erc.el (erc-accidental-paste-threshold-seconds): Add :version.
@@ -449,7 +453,7 @@
 
 See ChangeLog.08 for earlier changes.
 
-	Copyright (C) 2009-2012 Free Software Foundation, Inc.
+	Copyright (C) 2009-2013 Free Software Foundation, Inc.
 
   This file is part of GNU Emacs.
 

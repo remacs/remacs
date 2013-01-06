@@ -1,5 +1,5 @@
 /* Utility and Unix shadow routines for GNU Emacs on the Microsoft Windows API.
-   Copyright (C) 1994-1995, 2000-2012  Free Software Foundation, Inc.
+   Copyright (C) 1994-1995, 2000-2013 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -117,6 +117,15 @@ typedef struct _PROCESS_MEMORY_COUNTERS_EX {
 
 #include <winioctl.h>
 #include <aclapi.h>
+#include <sddl.h>
+
+#include <sys/acl.h>
+
+/* This is not in MinGW's sddl.h (but they are in MSVC headers), so we
+   define them by hand if not already defined.  */
+#ifndef SDDL_REVISION_1
+#define SDDL_REVISION_1	1
+#endif	/* SDDL_REVISION_1 */
 
 #ifdef _MSC_VER
 /* MSVC doesn't provide the definition of REPARSE_DATA_BUFFER and the
@@ -257,6 +266,11 @@ static BOOL g_b_init_copy_sid;
 static BOOL g_b_init_get_native_system_info;
 static BOOL g_b_init_get_system_times;
 static BOOL g_b_init_create_symbolic_link;
+static BOOL g_b_init_get_security_descriptor_dacl;
+static BOOL g_b_init_convert_sd_to_sddl;
+static BOOL g_b_init_convert_sddl_to_sd;
+static BOOL g_b_init_is_valid_security_descriptor;
+static BOOL g_b_init_set_file_security;
 
 /*
   BEGIN: Wrapper functions around OpenProcessToken
@@ -286,9 +300,11 @@ GetProcessTimes_Proc get_process_times_fn = NULL;
 #ifdef _UNICODE
 const char * const LookupAccountSid_Name = "LookupAccountSidW";
 const char * const GetFileSecurity_Name =  "GetFileSecurityW";
+const char * const SetFileSecurity_Name =  "SetFileSecurityW";
 #else
 const char * const LookupAccountSid_Name = "LookupAccountSidA";
 const char * const GetFileSecurity_Name =  "GetFileSecurityA";
+const char * const SetFileSecurity_Name =  "SetFileSecurityA";
 #endif
 typedef BOOL (WINAPI * LookupAccountSid_Proc) (
     LPCTSTR lpSystemName,
@@ -318,6 +334,10 @@ typedef BOOL (WINAPI * GetFileSecurity_Proc) (
     PSECURITY_DESCRIPTOR pSecurityDescriptor,
     DWORD nLength,
     LPDWORD lpnLengthNeeded);
+typedef BOOL (WINAPI *SetFileSecurity_Proc) (
+    LPCTSTR lpFileName,
+    SECURITY_INFORMATION SecurityInformation,
+    PSECURITY_DESCRIPTOR pSecurityDescriptor);
 typedef BOOL (WINAPI * GetSecurityDescriptorOwner_Proc) (
     PSECURITY_DESCRIPTOR pSecurityDescriptor,
     PSID *pOwner,
@@ -326,6 +346,11 @@ typedef BOOL (WINAPI * GetSecurityDescriptorGroup_Proc) (
     PSECURITY_DESCRIPTOR pSecurityDescriptor,
     PSID *pGroup,
     LPBOOL lpbGroupDefaulted);
+typedef BOOL (WINAPI *GetSecurityDescriptorDacl_Proc) (
+    PSECURITY_DESCRIPTOR pSecurityDescriptor,
+    LPBOOL lpbDaclPresent,
+    PACL *pDacl,
+    LPBOOL lpbDaclDefaulted);
 typedef BOOL (WINAPI * IsValidSid_Proc) (
     PSID sid);
 typedef HANDLE (WINAPI * CreateToolhelp32Snapshot_Proc) (
@@ -376,6 +401,18 @@ typedef BOOLEAN (WINAPI *CreateSymbolicLink_Proc) (
     LPTSTR lpSymlinkFileName,
     LPTSTR lpTargetFileName,
     DWORD  dwFlags);
+typedef BOOL (WINAPI *ConvertStringSecurityDescriptorToSecurityDescriptor_Proc) (
+    LPCTSTR StringSecurityDescriptor,
+    DWORD StringSDRevision,
+    PSECURITY_DESCRIPTOR  *SecurityDescriptor,
+    PULONG  SecurityDescriptorSize);
+typedef BOOL (WINAPI *ConvertSecurityDescriptorToStringSecurityDescriptor_Proc) (
+    PSECURITY_DESCRIPTOR  SecurityDescriptor,
+    DWORD RequestedStringSDRevision,
+    SECURITY_INFORMATION SecurityInformation,
+    LPTSTR  *StringSecurityDescriptor,
+    PULONG StringSecurityDescriptorLen);
+typedef BOOL (WINAPI *IsValidSecurityDescriptor_Proc) (PSECURITY_DESCRIPTOR);
 
   /* ** A utility function ** */
 static BOOL
@@ -621,6 +658,7 @@ get_file_security (LPCTSTR lpFileName,
   HMODULE hm_advapi32 = NULL;
   if (is_windows_9x () == TRUE)
     {
+      errno = ENOTSUP;
       return FALSE;
     }
   if (g_b_init_get_file_security == 0)
@@ -633,11 +671,41 @@ get_file_security (LPCTSTR lpFileName,
     }
   if (s_pfn_Get_File_Security == NULL)
     {
+      errno = ENOTSUP;
       return FALSE;
     }
   return (s_pfn_Get_File_Security (lpFileName, RequestedInformation,
 				   pSecurityDescriptor, nLength,
 				   lpnLengthNeeded));
+}
+
+static BOOL WINAPI
+set_file_security (LPCTSTR lpFileName,
+		   SECURITY_INFORMATION SecurityInformation,
+		   PSECURITY_DESCRIPTOR pSecurityDescriptor)
+{
+  static SetFileSecurity_Proc s_pfn_Set_File_Security = NULL;
+  HMODULE hm_advapi32 = NULL;
+  if (is_windows_9x () == TRUE)
+    {
+      errno = ENOTSUP;
+      return FALSE;
+    }
+  if (g_b_init_set_file_security == 0)
+    {
+      g_b_init_set_file_security = 1;
+      hm_advapi32 = LoadLibrary ("Advapi32.dll");
+      s_pfn_Set_File_Security =
+        (SetFileSecurity_Proc) GetProcAddress (
+            hm_advapi32, SetFileSecurity_Name);
+    }
+  if (s_pfn_Set_File_Security == NULL)
+    {
+      errno = ENOTSUP;
+      return FALSE;
+    }
+  return (s_pfn_Set_File_Security (lpFileName, SecurityInformation,
+				   pSecurityDescriptor));
 }
 
 static BOOL WINAPI
@@ -649,6 +717,7 @@ get_security_descriptor_owner (PSECURITY_DESCRIPTOR pSecurityDescriptor,
   HMODULE hm_advapi32 = NULL;
   if (is_windows_9x () == TRUE)
     {
+      errno = ENOTSUP;
       return FALSE;
     }
   if (g_b_init_get_security_descriptor_owner == 0)
@@ -661,6 +730,7 @@ get_security_descriptor_owner (PSECURITY_DESCRIPTOR pSecurityDescriptor,
     }
   if (s_pfn_Get_Security_Descriptor_Owner == NULL)
     {
+      errno = ENOTSUP;
       return FALSE;
     }
   return (s_pfn_Get_Security_Descriptor_Owner (pSecurityDescriptor, pOwner,
@@ -676,6 +746,7 @@ get_security_descriptor_group (PSECURITY_DESCRIPTOR pSecurityDescriptor,
   HMODULE hm_advapi32 = NULL;
   if (is_windows_9x () == TRUE)
     {
+      errno = ENOTSUP;
       return FALSE;
     }
   if (g_b_init_get_security_descriptor_group == 0)
@@ -688,10 +759,42 @@ get_security_descriptor_group (PSECURITY_DESCRIPTOR pSecurityDescriptor,
     }
   if (s_pfn_Get_Security_Descriptor_Group == NULL)
     {
+      errno = ENOTSUP;
       return FALSE;
     }
   return (s_pfn_Get_Security_Descriptor_Group (pSecurityDescriptor, pGroup,
 					       lpbGroupDefaulted));
+}
+
+static BOOL WINAPI
+get_security_descriptor_dacl (PSECURITY_DESCRIPTOR pSecurityDescriptor,
+			      LPBOOL lpbDaclPresent,
+			      PACL *pDacl,
+			      LPBOOL lpbDaclDefaulted)
+{
+  static GetSecurityDescriptorDacl_Proc s_pfn_Get_Security_Descriptor_Dacl = NULL;
+  HMODULE hm_advapi32 = NULL;
+  if (is_windows_9x () == TRUE)
+    {
+      errno = ENOTSUP;
+      return FALSE;
+    }
+  if (g_b_init_get_security_descriptor_dacl == 0)
+    {
+      g_b_init_get_security_descriptor_dacl = 1;
+      hm_advapi32 = LoadLibrary ("Advapi32.dll");
+      s_pfn_Get_Security_Descriptor_Dacl =
+        (GetSecurityDescriptorDacl_Proc) GetProcAddress (
+            hm_advapi32, "GetSecurityDescriptorDacl");
+    }
+  if (s_pfn_Get_Security_Descriptor_Dacl == NULL)
+    {
+      errno = ENOTSUP;
+      return FALSE;
+    }
+  return (s_pfn_Get_Security_Descriptor_Dacl (pSecurityDescriptor,
+					      lpbDaclPresent, pDacl,
+					      lpbDaclDefaulted));
 }
 
 static BOOL WINAPI
@@ -888,6 +991,120 @@ create_symbolic_link (LPTSTR lpSymlinkFilename,
     }
   return retval;
 }
+
+static BOOL WINAPI
+is_valid_security_descriptor (PSECURITY_DESCRIPTOR pSecurityDescriptor)
+{
+  static IsValidSecurityDescriptor_Proc s_pfn_Is_Valid_Security_Descriptor_Proc = NULL;
+
+  if (is_windows_9x () == TRUE)
+    {
+      errno = ENOTSUP;
+      return FALSE;
+    }
+
+  if (g_b_init_is_valid_security_descriptor == 0)
+    {
+      g_b_init_is_valid_security_descriptor = 1;
+      s_pfn_Is_Valid_Security_Descriptor_Proc =
+	(IsValidSecurityDescriptor_Proc)GetProcAddress (GetModuleHandle ("Advapi32.dll"),
+							"IsValidSecurityDescriptor");
+    }
+  if (s_pfn_Is_Valid_Security_Descriptor_Proc == NULL)
+    {
+      errno = ENOTSUP;
+      return FALSE;
+    }
+
+  return s_pfn_Is_Valid_Security_Descriptor_Proc (pSecurityDescriptor);
+}
+
+static BOOL WINAPI
+convert_sd_to_sddl (PSECURITY_DESCRIPTOR SecurityDescriptor,
+		    DWORD RequestedStringSDRevision,
+		    SECURITY_INFORMATION SecurityInformation,
+		    LPTSTR  *StringSecurityDescriptor,
+		    PULONG StringSecurityDescriptorLen)
+{
+  static ConvertSecurityDescriptorToStringSecurityDescriptor_Proc s_pfn_Convert_SD_To_SDDL = NULL;
+  BOOL retval;
+
+  if (is_windows_9x () == TRUE)
+    {
+      errno = ENOTSUP;
+      return FALSE;
+    }
+
+  if (g_b_init_convert_sd_to_sddl == 0)
+    {
+      g_b_init_convert_sd_to_sddl = 1;
+#ifdef _UNICODE
+      s_pfn_Convert_SD_To_SDDL =
+	(ConvertSecurityDescriptorToStringSecurityDescriptor_Proc)GetProcAddress (GetModuleHandle ("Advapi32.dll"),
+										  "ConvertSecurityDescriptorToStringSecurityDescriptorW");
+#else
+      s_pfn_Convert_SD_To_SDDL =
+	(ConvertSecurityDescriptorToStringSecurityDescriptor_Proc)GetProcAddress (GetModuleHandle ("Advapi32.dll"),
+										  "ConvertSecurityDescriptorToStringSecurityDescriptorA");
+#endif
+    }
+  if (s_pfn_Convert_SD_To_SDDL == NULL)
+    {
+      errno = ENOTSUP;
+      return FALSE;
+    }
+
+  retval = s_pfn_Convert_SD_To_SDDL (SecurityDescriptor,
+				     RequestedStringSDRevision,
+				     SecurityInformation,
+				     StringSecurityDescriptor,
+				     StringSecurityDescriptorLen);
+
+  return retval;
+}
+
+static BOOL WINAPI
+convert_sddl_to_sd (LPCTSTR StringSecurityDescriptor,
+		    DWORD StringSDRevision,
+		    PSECURITY_DESCRIPTOR  *SecurityDescriptor,
+		    PULONG  SecurityDescriptorSize)
+{
+  static ConvertStringSecurityDescriptorToSecurityDescriptor_Proc s_pfn_Convert_SDDL_To_SD = NULL;
+  BOOL retval;
+
+  if (is_windows_9x () == TRUE)
+    {
+      errno = ENOTSUP;
+      return FALSE;
+    }
+
+  if (g_b_init_convert_sddl_to_sd == 0)
+    {
+      g_b_init_convert_sddl_to_sd = 1;
+#ifdef _UNICODE
+      s_pfn_Convert_SDDL_To_SD =
+	(ConvertStringSecurityDescriptorToSecurityDescriptor_Proc)GetProcAddress (GetModuleHandle ("Advapi32.dll"),
+										  "ConvertStringSecurityDescriptorToSecurityDescriptorW");
+#else
+      s_pfn_Convert_SDDL_To_SD =
+	(ConvertStringSecurityDescriptorToSecurityDescriptor_Proc)GetProcAddress (GetModuleHandle ("Advapi32.dll"),
+										  "ConvertStringSecurityDescriptorToSecurityDescriptorA");
+#endif
+    }
+  if (s_pfn_Convert_SDDL_To_SD == NULL)
+    {
+      errno = ENOTSUP;
+      return FALSE;
+    }
+
+  retval = s_pfn_Convert_SDDL_To_SD (StringSecurityDescriptor,
+				     StringSDRevision,
+				     SecurityDescriptor,
+				     SecurityDescriptorSize);
+
+  return retval;
+}
+
 
 
 /* Return 1 if P is a valid pointer to an object of size SIZE.  Return
@@ -1567,6 +1784,7 @@ unsetenv (const char *name)
   /* It is safe to use 'alloca' with 32K size, since the stack is at
      least 2MB, and we set it to 8MB in the link command line.  */
   var = alloca (name_len + 2);
+  strncpy (var, name, name_len);
   var[name_len++] = '=';
   var[name_len] = '\0';
   return _putenv (var);
@@ -3427,8 +3645,7 @@ w32_add_to_cache (PSID sid, unsigned id, char *name)
 #define GID 2
 
 static int
-get_name_and_id (PSECURITY_DESCRIPTOR psd, const char *fname,
-		 unsigned *id, char *nm, int what)
+get_name_and_id (PSECURITY_DESCRIPTOR psd, unsigned *id, char *nm, int what)
 {
   PSID sid = NULL;
   char machine[MAX_COMPUTERNAME_LENGTH+1];
@@ -3438,7 +3655,6 @@ get_name_and_id (PSECURITY_DESCRIPTOR psd, const char *fname,
   DWORD name_len = sizeof (name);
   char domain[1024];
   DWORD domain_len = sizeof (domain);
-  char *mp = NULL;
   int use_dflt = 0;
   int result;
 
@@ -3453,22 +3669,7 @@ get_name_and_id (PSECURITY_DESCRIPTOR psd, const char *fname,
     use_dflt = 1;
   else if (!w32_cached_id (sid, id, nm))
     {
-      /* If FNAME is a UNC, we need to lookup account on the
-	 specified machine.  */
-      if (IS_DIRECTORY_SEP (fname[0]) && IS_DIRECTORY_SEP (fname[1])
-	  && fname[2] != '\0')
-	{
-	  const char *s;
-	  char *p;
-
-	  for (s = fname + 2, p = machine;
-	       *s && !IS_DIRECTORY_SEP (*s); s++, p++)
-	    *p = *s;
-	  *p = '\0';
-	  mp = machine;
-	}
-
-      if (!lookup_account_sid (mp, sid, name, &name_len,
+      if (!lookup_account_sid (NULL, sid, name, &name_len,
 			       domain, &domain_len, &ignore)
 	  || name_len > UNLEN+1)
 	use_dflt = 1;
@@ -3483,9 +3684,7 @@ get_name_and_id (PSECURITY_DESCRIPTOR psd, const char *fname,
 }
 
 static void
-get_file_owner_and_group (PSECURITY_DESCRIPTOR psd,
-			  const char *fname,
-			  struct stat *st)
+get_file_owner_and_group (PSECURITY_DESCRIPTOR psd, struct stat *st)
 {
   int dflt_usr = 0, dflt_grp = 0;
 
@@ -3496,9 +3695,9 @@ get_file_owner_and_group (PSECURITY_DESCRIPTOR psd,
     }
   else
     {
-      if (get_name_and_id (psd, fname, &st->st_uid, st->st_uname, UID))
+      if (get_name_and_id (psd, &st->st_uid, st->st_uname, UID))
 	dflt_usr = 1;
-      if (get_name_and_id (psd, fname, &st->st_gid, st->st_gname, GID))
+      if (get_name_and_id (psd, &st->st_gid, st->st_gname, GID))
 	dflt_grp = 1;
     }
   /* Consider files to belong to current user/group, if we cannot get
@@ -3722,23 +3921,23 @@ stat_worker (const char * path, struct stat * buf, int follow_symlinks)
 	 If getting security by handle fails, and we don't need to
 	 resolve symlinks, we try getting security by name.  */
       if (!w32_stat_get_owner_group || is_windows_9x () == TRUE)
-	get_file_owner_and_group (NULL, name, buf);
+	get_file_owner_and_group (NULL, buf);
       else
 	{
 	  psd = get_file_security_desc_by_handle (fh);
 	  if (psd)
 	    {
-	      get_file_owner_and_group (psd, name, buf);
+	      get_file_owner_and_group (psd, buf);
 	      LocalFree (psd);
 	    }
 	  else if (!(is_a_symlink && follow_symlinks))
 	    {
 	      psd = get_file_security_desc_by_name (name);
-	      get_file_owner_and_group (psd, name, buf);
+	      get_file_owner_and_group (psd, buf);
 	      xfree (psd);
 	    }
 	  else
-	    get_file_owner_and_group (NULL, name, buf);
+	    get_file_owner_and_group (NULL, buf);
 	}
       CloseHandle (fh);
     }
@@ -3847,7 +4046,7 @@ stat_worker (const char * path, struct stat * buf, int follow_symlinks)
       else
 	buf->st_mode = S_IFREG;
 
-      get_file_owner_and_group (NULL, name, buf);
+      get_file_owner_and_group (NULL, buf);
     }
 
 #if 0
@@ -4301,7 +4500,7 @@ readlink (const char *name, char *buf, size_t buf_size)
 	errno = EINVAL;
       else
 	{
-	  /* Copy the link target name, in wide characters, fro
+	  /* Copy the link target name, in wide characters, from
 	     reparse_data, then convert it to multibyte encoding in
 	     the current locale's codepage.  */
 	  WCHAR *lwname;
@@ -4477,6 +4676,239 @@ chase_symlinks (const char *file)
   return target;
 }
 
+
+/* Posix ACL emulation.  */
+
+int
+acl_valid (acl_t acl)
+{
+  return is_valid_security_descriptor ((PSECURITY_DESCRIPTOR)acl) ? 0 : -1;
+}
+
+char *
+acl_to_text (acl_t acl, ssize_t *size)
+{
+  LPTSTR str_acl;
+  SECURITY_INFORMATION flags =
+    OWNER_SECURITY_INFORMATION |
+    GROUP_SECURITY_INFORMATION |
+    DACL_SECURITY_INFORMATION;
+  char *retval = NULL;
+  ULONG local_size;
+  int e = errno;
+
+  errno = 0;
+
+  if (convert_sd_to_sddl ((PSECURITY_DESCRIPTOR)acl, SDDL_REVISION_1, flags, &str_acl, &local_size))
+    {
+      errno = e;
+      /* We don't want to mix heaps, so we duplicate the string in our
+	 heap and free the one allocated by the API.  */
+      retval = xstrdup (str_acl);
+      if (size)
+	*size = local_size;
+      LocalFree (str_acl);
+    }
+  else if (errno != ENOTSUP)
+    errno = EINVAL;
+
+  return retval;
+}
+
+acl_t
+acl_from_text (const char *acl_str)
+{
+  PSECURITY_DESCRIPTOR psd, retval = NULL;
+  ULONG sd_size;
+  int e = errno;
+
+  errno = 0;
+
+  if (convert_sddl_to_sd (acl_str, SDDL_REVISION_1, &psd, &sd_size))
+    {
+      errno = e;
+      retval = xmalloc (sd_size);
+      memcpy (retval, psd, sd_size);
+      LocalFree (psd);
+    }
+  else if (errno != ENOTSUP)
+    errno = EINVAL;
+
+  return retval;
+}
+
+int
+acl_free (void *ptr)
+{
+  xfree (ptr);
+  return 0;
+}
+
+acl_t
+acl_get_file (const char *fname, acl_type_t type)
+{
+  PSECURITY_DESCRIPTOR psd = NULL;
+  const char *filename;
+
+  if (type == ACL_TYPE_ACCESS)
+    {
+      DWORD sd_len, err;
+      SECURITY_INFORMATION si =
+	OWNER_SECURITY_INFORMATION |
+	GROUP_SECURITY_INFORMATION |
+	DACL_SECURITY_INFORMATION ;
+      int e = errno;
+
+      filename = map_w32_filename (fname, NULL);
+      if ((volume_info.flags & FILE_SUPPORTS_REPARSE_POINTS) != 0)
+	fname = chase_symlinks (filename);
+      else
+	fname = filename;
+
+      errno = 0;
+      if (!get_file_security (fname, si, psd, 0, &sd_len)
+	  && errno != ENOTSUP)
+	{
+	  err = GetLastError ();
+	  if (err == ERROR_INSUFFICIENT_BUFFER)
+	    {
+	      psd = xmalloc (sd_len);
+	      if (!get_file_security (fname, si, psd, sd_len, &sd_len))
+		{
+		  xfree (psd);
+		  errno = EIO;
+		  psd = NULL;
+		}
+	    }
+	  else if (err == ERROR_FILE_NOT_FOUND
+		   || err == ERROR_PATH_NOT_FOUND)
+	    errno = ENOENT;
+	  else
+	    errno = EIO;
+	}
+      else if (!errno)
+	errno = e;
+    }
+  else if (type != ACL_TYPE_DEFAULT)
+    errno = EINVAL;
+
+  return psd;
+}
+
+int
+acl_set_file (const char *fname, acl_type_t type, acl_t acl)
+{
+  TOKEN_PRIVILEGES old1, old2;
+  DWORD err;
+  BOOL res;
+  int st = 0, retval = -1;
+  SECURITY_INFORMATION flags = 0;
+  PSID psid;
+  PACL pacl;
+  BOOL dflt;
+  BOOL dacl_present;
+  int e;
+  const char *filename;
+
+  if (acl_valid (acl) != 0
+      || (type != ACL_TYPE_DEFAULT && type != ACL_TYPE_ACCESS))
+    {
+      errno = EINVAL;
+      return -1;
+    }
+
+  if (type == ACL_TYPE_DEFAULT)
+    {
+      errno = ENOSYS;
+      return -1;
+    }
+
+  filename = map_w32_filename (fname, NULL);
+  if ((volume_info.flags & FILE_SUPPORTS_REPARSE_POINTS) != 0)
+    fname = chase_symlinks (filename);
+  else
+    fname = filename;
+
+  if (get_security_descriptor_owner ((PSECURITY_DESCRIPTOR)acl, &psid, &dflt)
+      && psid)
+    flags |= OWNER_SECURITY_INFORMATION;
+  if (get_security_descriptor_group ((PSECURITY_DESCRIPTOR)acl, &psid, &dflt)
+      && psid)
+    flags |= GROUP_SECURITY_INFORMATION;
+  if (get_security_descriptor_dacl ((PSECURITY_DESCRIPTOR)acl, &dacl_present,
+				    &pacl, &dflt)
+      && dacl_present)
+    flags |= DACL_SECURITY_INFORMATION;
+  if (!flags)
+    return 0;
+
+  /* According to KB-245153, setting the owner will succeed if either:
+     (1) the caller is the user who will be the new owner, and has the
+         SE_TAKE_OWNERSHIP privilege, or
+     (2) the caller has the SE_RESTORE privilege, in which case she can
+         set any valid user or group as the owner
+
+     We request below both SE_TAKE_OWNERSHIP and SE_RESTORE
+     privileges, and disregard any failures in obtaining them.  If
+     these privileges cannot be obtained, and do not already exist in
+     the calling thread's security token, this function could fail
+     with EPERM.  */
+  if (enable_privilege (SE_TAKE_OWNERSHIP_NAME, TRUE, &old1))
+    st++;
+  if (enable_privilege (SE_RESTORE_NAME, TRUE, &old2))
+    st++;
+
+  e = errno;
+  errno = 0;
+  set_file_security ((char *)fname, flags, (PSECURITY_DESCRIPTOR)acl);
+  err = GetLastError ();
+  if (st)
+    {
+      if (st >= 2)
+	restore_privilege (&old2);
+      restore_privilege (&old1);
+      revert_to_self ();
+    }
+
+  if (errno == ENOTSUP)
+    ;
+  else if (err == ERROR_SUCCESS)
+    {
+      retval = 0;
+      errno = e;
+    }
+  else if (err == ERROR_INVALID_OWNER || err == ERROR_NOT_ALL_ASSIGNED)
+    {
+      /* Maybe the requested ACL and the one the file already has are
+	 identical, in which case we can silently ignore the
+	 failure.  (And no, Windows doesn't.)  */
+      acl_t current_acl = acl_get_file (fname, ACL_TYPE_ACCESS);
+
+      errno = EPERM;
+      if (current_acl)
+	{
+	  char *acl_from = acl_to_text (current_acl, NULL);
+	  char *acl_to = acl_to_text (acl, NULL);
+
+	  if (acl_from && acl_to && xstrcasecmp (acl_from, acl_to) == 0)
+	    {
+	      retval = 0;
+	      errno = e;
+	    }
+	  if (acl_from)
+	    acl_free (acl_from);
+	  if (acl_to)
+	    acl_free (acl_to);
+	  acl_free (current_acl);
+	}
+    }
+  else if (err == ERROR_FILE_NOT_FOUND || err == ERROR_PATH_NOT_FOUND)
+    errno = ENOENT;
+
+  return retval;
+}
+
+
 /* MS-Windows version of careadlinkat (cf. ../lib/careadlinkat.c).  We
    have a fixed max size for file names, so we don't need the kind of
    alloc/malloc/realloc dance the gnulib version does.  We also don't
@@ -5993,7 +6425,21 @@ sys_close (int fd)
 
 		  winsock_inuse--; /* count open sockets */
 		}
-	      delete_child (cp);
+	      /* If the process handle is NULL, it's either a socket
+		 or serial connection, or a subprocess that was
+		 already reaped by reap_subprocess, but whose
+		 resources were not yet freed, because its output was
+		 not fully read yet by the time it was reaped.  (This
+		 usually happens with async subprocesses whose output
+		 is being read by Emacs.)  Otherwise, this process was
+		 not reaped yet, so we set its FD to a negative value
+		 to make sure sys_select will eventually get to
+		 calling the SIGCHLD handler for it, which will then
+		 invoke waitpid and reap_subprocess.  */
+	      if (cp->procinfo.hProcess == NULL)
+		delete_child (cp);
+	      else
+		cp->fd = -1;
 	    }
 	}
     }
@@ -6848,6 +7294,11 @@ globals_of_w32 (void)
   g_b_init_get_native_system_info = 0;
   g_b_init_get_system_times = 0;
   g_b_init_create_symbolic_link = 0;
+  g_b_init_get_security_descriptor_dacl = 0;
+  g_b_init_convert_sd_to_sddl = 0;
+  g_b_init_convert_sddl_to_sd = 0;
+  g_b_init_is_valid_security_descriptor = 0;
+  g_b_init_set_file_security = 0;
   num_of_processors = 0;
   /* The following sets a handler for shutdown notifications for
      console apps. This actually applies to Emacs in both console and

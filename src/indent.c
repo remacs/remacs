@@ -1,6 +1,6 @@
 /* Indentation functions.
-   Copyright (C) 1985-1988, 1993-1995, 1998, 2000-2012
-                 Free Software Foundation, Inc.
+   Copyright (C) 1985-1988, 1993-1995, 1998, 2000-2013 Free Software
+   Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -571,7 +571,8 @@ scan_for_column (ptrdiff_t *endpos, EMACS_INT *goalcol, ptrdiff_t *prevcol)
 	    col += width;
 	    if (endp > scan) /* Avoid infinite loops with 0-width overlays.  */
 	      {
-		scan = endp; scan_byte = charpos_to_bytepos (scan);
+		scan = endp;
+		scan_byte = CHAR_TO_BYTE (scan);
 		continue;
 	      }
 	  }

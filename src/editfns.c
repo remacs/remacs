@@ -1,6 +1,6 @@
 /* Lisp functions pertaining to editing.
 
-Copyright (C) 1985-1987, 1989, 1993-2012 Free Software Foundation, Inc.
+Copyright (C) 1985-1987, 1989, 1993-2013 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -2361,10 +2361,9 @@ usage: (insert-before-markers-and-inherit &rest ARGS)  */)
 }
 
 DEFUN ("insert-char", Finsert_char, Sinsert_char, 1, 3,
-       "(list (or (read-char-by-name \"Insert character (Unicode name or hex): \")\
-	  (error \"You did not specify a valid character\"))\
-      (prefix-numeric-value current-prefix-arg)\
-      t))",
+       "(list (read-char-by-name \"Insert character (Unicode name or hex): \")\
+              (prefix-numeric-value current-prefix-arg)\
+              t))",
        doc: /* Insert COUNT copies of CHARACTER.
 Interactively, prompt for CHARACTER.  You can specify CHARACTER in one
 of these ways:
@@ -2501,7 +2500,7 @@ make_buffer_string_both (ptrdiff_t start, ptrdiff_t start_byte,
   Lisp_Object result, tem, tem1;
 
   if (start < GPT && GPT < end)
-    move_gap (start);
+    move_gap_both (start, start_byte);
 
   if (! NILP (BVAR (current_buffer, enable_multibyte_characters)))
     result = make_uninit_multibyte_string (end - start, end_byte - start_byte);
@@ -2599,7 +2598,7 @@ If narrowing is in effect, this function returns only the visible part
 of the buffer.  */)
   (void)
 {
-  return make_buffer_string (BEGV, ZV, 1);
+  return make_buffer_string_both (BEGV, BEGV_BYTE, ZV, ZV_BYTE, 1);
 }
 
 DEFUN ("insert-buffer-substring", Finsert_buffer_substring, Sinsert_buffer_substring,

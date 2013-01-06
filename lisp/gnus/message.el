@@ -1,6 +1,6 @@
 ;;; message.el --- composing mail and news messages
 
-;; Copyright (C) 1996-2012 Free Software Foundation, Inc.
+;; Copyright (C) 1996-2013 Free Software Foundation, Inc.
 
 ;; Author: Lars Magne Ingebrigtsen <larsi@gnus.org>
 ;; Keywords: mail, news
@@ -264,7 +264,7 @@ This is a list of regexps and regexp matches."
   :type 'sexp)
 
 (defcustom message-ignored-news-headers
-  "^NNTP-Posting-Host:\\|^Xref:\\|^[BGF]cc:\\|^Resent-Fcc:\\|^X-Draft-From:\\|^X-Gnus-Agent-Meta-Information:"
+  "^NNTP-Posting-Host:\\|^Xref:\\|^[BGF]cc:\\|^Resent-Fcc:\\|^X-Draft-From:\\|^X-Gnus-Agent-Meta-Information:\\|^X-Message-SMTP-Method:"
   "*Regexp of headers to be removed unconditionally before posting."
   :group 'message-news
   :group 'message-headers
@@ -3814,7 +3814,9 @@ prefix, and don't delete any headers."
   (interactive "P")
   ;; eval the let forms contained in message-cite-style
   (eval
-   `(let ,message-cite-style
+   `(let ,(if (symbolp message-cite-style)
+	      (symbol-value message-cite-style)
+	    message-cite-style)
       (message--yank-original-internal ',arg))))
 
 (defun message-yank-buffer (buffer)

@@ -1,6 +1,6 @@
 /* System description file for Windows NT.
 
-Copyright (C) 1993-1995, 2001-2012  Free Software Foundation, Inc.
+Copyright (C) 1993-1995, 2001-2013 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -291,6 +291,10 @@ extern struct tm *localtime_r (time_t const * restrict, struct tm * restrict);
 
 #ifndef NSIG
 #define NSIG 23
+#endif
+
+#ifndef ENOTSUP
+#define ENOTSUP ENOSYS
 #endif
 
 #ifdef _MSC_VER

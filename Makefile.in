@@ -2,7 +2,7 @@
 # DIST: make most of the changes to this file you might want, so try
 # DIST: that first.
 
-# Copyright (C) 1992-2012 Free Software Foundation, Inc.
+# Copyright (C) 1992-2013 Free Software Foundation, Inc.
 
 # This file is part of GNU Emacs.
 
@@ -445,7 +445,7 @@ install-arch-dep: src install-arch-indep install-doc
 	    INSTALL_STRIP=${INSTALL_STRIP}
 	if test "${ns_self_contained}" = "no"; then \
 	  ${INSTALL_PROGRAM} $(INSTALL_STRIP) src/emacs${EXEEXT} $(DESTDIR)${bindir}/$(EMACSFULL) || exit 1 ; \
-	  chmod 1755 $(DESTDIR)${bindir}/$(EMACSFULL) ; \
+	  chmod 1755 $(DESTDIR)${bindir}/$(EMACSFULL) || true; \
 	  if test "x${NO_BIN_LINK}" = x; then \
 	    rm -f $(DESTDIR)${bindir}/$(EMACS) ; \
 	    cd $(DESTDIR)${bindir} && $(LN_S) $(EMACSFULL) $(EMACS); \

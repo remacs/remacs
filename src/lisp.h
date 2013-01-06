@@ -1,6 +1,7 @@
 /* Fundamental definitions for GNU Emacs Lisp interpreter.
 
-Copyright (C) 1985-1987, 1993-1995, 1997-2012 Free Software Foundation, Inc.
+Copyright (C) 1985-1987, 1993-1995, 1997-2013 Free Software Foundation,
+Inc.
 
 This file is part of GNU Emacs.
 
@@ -327,6 +328,10 @@ enum Lisp_Fwd_Type
    members that are accessible only from C.  A Lisp_Misc object is a
    wrapper for a C struct that can contain anything you like.
 
+   Explicit freeing is discouraged for Lisp objects in general.  But if
+   you really need to exploit this, use Lisp_Misc (check free_misc in
+   alloc.c to see why).  There is no way to free a vectorlike object.
+
    To add a new pseudovector type, extend the pvec_type enumeration;
    to add a new Lisp_Misc, extend the Lisp_Misc_Type enumeration.
 
@@ -335,6 +340,10 @@ enum Lisp_Fwd_Type
    the others, starting with a 16-bit member of the Lisp_Misc_Type
    enumeration and a 1-bit GC markbit) and make sure the overall size
    of the union is not increased by your addition.
+
+   For a new pseudovector, it's highly desirable to limit the size
+   of your data type by VBLOCK_BYTES_MAX bytes (defined in alloc.c).
+   Otherwise you will need to change sweep_vectors (also in alloc.c).
 
    Then you will need to add switch branches in print.c (in
    print_object, to print your object, and possibly also in
@@ -3196,7 +3205,6 @@ extern void keys_of_buffer (void);
 extern ptrdiff_t marker_position (Lisp_Object);
 extern ptrdiff_t marker_byte_position (Lisp_Object);
 extern void clear_charpos_cache (struct buffer *);
-extern ptrdiff_t charpos_to_bytepos (ptrdiff_t);
 extern ptrdiff_t buf_charpos_to_bytepos (struct buffer *, ptrdiff_t);
 extern ptrdiff_t buf_bytepos_to_charpos (struct buffer *, ptrdiff_t);
 extern void unchain_marker (struct Lisp_Marker *marker);

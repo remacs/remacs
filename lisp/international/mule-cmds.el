@@ -1,6 +1,6 @@
 ;;; mule-cmds.el --- commands for multilingual environment -*-coding: iso-2022-7bit -*-
 
-;; Copyright (C) 1997-2012 Free Software Foundation, Inc.
+;; Copyright (C) 1997-2013 Free Software Foundation, Inc.
 ;; Copyright (C) 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004,
 ;;   2005, 2006, 2007, 2008, 2009, 2010, 2011
 ;;   National Institute of Advanced Industrial Science and Technology (AIST)
@@ -2953,14 +2953,18 @@ point or a number in hash notation, e.g. #o21430 for octal,
 	     (let ((completion-ignore-case t))
 	       (if (eq action 'metadata)
 		   '(metadata (category . unicode-name))
-		 (complete-with-action action (ucs-names) string pred)))))))
-    (cond
-     ((string-match-p "\\`[0-9a-fA-F]+\\'" input)
-      (string-to-number input 16))
-     ((string-match-p "\\`#" input)
-      (read input))
-     (t
-      (cdr (assoc-string input (ucs-names) t))))))
+		 (complete-with-action action (ucs-names) string pred))))))
+	 (char
+	  (cond
+	   ((string-match-p "\\`[0-9a-fA-F]+\\'" input)
+	    (string-to-number input 16))
+	   ((string-match-p "\\`#" input)
+	    (read input))
+	   (t
+	    (cdr (assoc-string input (ucs-names) t))))))
+    (unless (characterp char)
+      (error "Invalid character"))
+    char))
 
 (define-obsolete-function-alias 'ucs-insert 'insert-char "24.3")
 (define-key ctl-x-map "8\r" 'insert-char)

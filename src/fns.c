@@ -1,6 +1,6 @@
 /* Random utility Lisp functions.
-   Copyright (C) 1985-1987, 1993-1995, 1997-2012
-		 Free Software Foundation, Inc.
+
+Copyright (C) 1985-1987, 1993-1995, 1997-2013 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -86,7 +86,7 @@ Other values of LIMIT are ignored.  */)
    before it's time to do a QUIT.  This must be a power of 2.  */
 enum { QUIT_COUNT_HEURISTIC = 1 << 16 };
 
-/* Random data-structure functions */
+/* Random data-structure functions.  */
 
 DEFUN ("length", Flength, Slength, 1, 1, 0,
        doc: /* Return the length of vector, list or string SEQUENCE.
@@ -211,12 +211,18 @@ Symbols are also allowed; their print names are used instead.  */)
 
 DEFUN ("compare-strings", Fcompare_strings, Scompare_strings, 6, 7, 0,
        doc: /* Compare the contents of two strings, converting to multibyte if needed.
-In string STR1, skip the first START1 characters and stop at END1.
-In string STR2, skip the first START2 characters and stop at END2.
-END1 and END2 default to the full lengths of the respective strings.
+The arguments START1, END1, START2, and END2, if non-nil, are
+positions specifying which parts of STR1 or STR2 to compare.  In
+string STR1, compare the part between START1 (inclusive) and END1
+\(exclusive).  If START1 is nil, it defaults to 0, the beginning of
+the string; if END1 is nil, it defaults to the length of the string.
+Likewise, in string STR2, compare the part between START2 and END2.
 
-Case is significant in this comparison if IGNORE-CASE is nil.
-Unibyte strings are converted to multibyte for comparison.
+The strings are compared by the numeric values of their characters.
+For instance, STR1 is "less than" STR2 if its first differing
+character has a smaller numeric value.  If IGNORE-CASE is non-nil,
+characters are converted to lower-case before comparing them.  Unibyte
+strings are converted to multibyte for comparison.
 
 The value is t if the strings (or specified portions) match.
 If string STR1 is less, the value is a negative number N;

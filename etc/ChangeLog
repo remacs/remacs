@@ -1,3 +1,16 @@
+2012-12-23  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* TODO: Adjust entry about NS event loop.
+
+2012-12-19  Michael Albinus  <michael.albinus@gmx.de>
+
+	* NEWS: Tramp implements `file-acl' and `set-file-acl'.
+
+2012-12-19  Tassilo Horn  <tsdh@gnu.org>
+
+	* themes/tsdh-dark-theme.el (tsdh-dark): Add customizations of
+	many new faces.
+
 2012-12-14  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Fix permissions bugs with setgid directories etc. (Bug#13125)
@@ -5943,7 +5956,7 @@
 ;; coding: utf-8
 ;; End:
 
-  Copyright (C) 1993-1999, 2001-2012  Free Software Foundation, Inc.
+  Copyright (C) 1993-1999, 2001-2013 Free Software Foundation, Inc.
 
   This file is part of GNU Emacs.
 

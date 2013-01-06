@@ -1,5 +1,5 @@
 /* Process support for GNU Emacs on the Microsoft Windows API.
-   Copyright (C) 1992, 1995, 1999-2012  Free Software Foundation, Inc.
+   Copyright (C) 1992, 1995, 1999-2013 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -800,7 +800,7 @@ new_child (void)
   DWORD id;
 
   for (cp = child_procs + (child_proc_count-1); cp >= child_procs; cp--)
-    if (!CHILD_ACTIVE (cp))
+    if (!CHILD_ACTIVE (cp) && cp->procinfo.hProcess == NULL)
       goto Initialize;
   if (child_proc_count == MAX_CHILDREN)
     return NULL;
@@ -859,7 +859,7 @@ delete_child (child_process *cp)
     if (fd_info[i].cp == cp)
       emacs_abort ();
 
-  if (!CHILD_ACTIVE (cp))
+  if (!CHILD_ACTIVE (cp) && cp->procinfo.hProcess == NULL)
     return;
 
   /* Delete the child's temporary input file, if any, that is pending
@@ -918,7 +918,8 @@ delete_child (child_process *cp)
   if (cp == child_procs + child_proc_count - 1)
     {
       for (i = child_proc_count-1; i >= 0; i--)
-	if (CHILD_ACTIVE (&child_procs[i]))
+	if (CHILD_ACTIVE (&child_procs[i])
+	    || child_procs[i].procinfo.hProcess != NULL)
 	  {
 	    child_proc_count = i + 1;
 	    break;
@@ -935,7 +936,8 @@ find_child_pid (DWORD pid)
   child_process *cp;
 
   for (cp = child_procs + (child_proc_count-1); cp >= child_procs; cp--)
-    if (CHILD_ACTIVE (cp) && pid == cp->pid)
+    if ((CHILD_ACTIVE (cp) || cp->procinfo.hProcess != NULL)
+	&& pid == cp->pid)
       return cp;
   return NULL;
 }
@@ -963,10 +965,15 @@ reader_thread (void *arg)
     {
       int rc;
 
-      if (fd_info[cp->fd].flags & FILE_LISTEN)
+      if (cp->fd >= 0 && fd_info[cp->fd].flags & FILE_LISTEN)
 	rc = _sys_wait_accept (cp->fd);
       else
 	rc = _sys_read_ahead (cp->fd);
+
+      /* Don't bother waiting for the event if we already have been
+	 told to exit by delete_child.  */
+      if (cp->status == STATUS_READ_ERROR || !cp->char_avail)
+	break;
 
       /* The name char_avail is a misnomer - it really just means the
 	 read-ahead has completed, whether successfully or not. */
@@ -984,6 +991,11 @@ reader_thread (void *arg)
       if (rc == STATUS_READ_FAILED)
 	break;
 
+      /* Don't bother waiting for the acknowledge if we already have
+	 been told to exit by delete_child.  */
+      if (cp->status == STATUS_READ_ERROR || !cp->char_consumed)
+	break;
+
       /* Wait until our input is acknowledged before reading again */
       if (WaitForSingleObject (cp->char_consumed, INFINITE) != WAIT_OBJECT_0)
         {
@@ -991,6 +1003,10 @@ reader_thread (void *arg)
 		     "%lu for fd %ld\n", GetLastError (), cp->fd));
 	  break;
         }
+      /* delete_child sets status to STATUS_READ_ERROR when it wants
+	 us to exit.  */
+      if (cp->status == STATUS_READ_ERROR)
+	break;
     }
   return 0;
 }
@@ -1161,11 +1177,11 @@ reap_subprocess (child_process *cp)
       cp->procinfo.hThread = NULL;
     }
 
-  /* For asynchronous children, the child_proc resources will be freed
-     when the last pipe read descriptor is closed; for synchronous
-     children, we must explicitly free the resources now because
-     register_child has not been called. */
-  if (cp->fd == -1)
+  /* If cp->fd was not closed yet, we might be still reading the
+     process output, so don't free its resources just yet.  The call
+     to delete_child on behalf of this subprocess will be made by
+     sys_read when the subprocess output is fully read.  */
+  if (cp->fd < 0)
     delete_child (cp);
 }
 

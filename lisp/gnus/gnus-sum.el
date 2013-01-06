@@ -1,6 +1,6 @@
 ;;; gnus-sum.el --- summary mode commands for Gnus
 
-;; Copyright (C) 1996-2012 Free Software Foundation, Inc.
+;; Copyright (C) 1996-2013 Free Software Foundation, Inc.
 
 ;; Author: Lars Magne Ingebrigtsen <larsi@gnus.org>
 ;; Keywords: news
@@ -3493,8 +3493,8 @@ If the setup was successful, non-nil is returned."
 	  (set-buffer buffer)
 	  (setq gnus-summary-buffer (current-buffer))
 	  (not gnus-newsgroup-prepared))
-      ;; Fix by Sudish Joseph <joseph@cis.ohio-state.edu>
-      (setq gnus-summary-buffer (set-buffer (gnus-get-buffer-create buffer)))
+      (set-buffer (gnus-get-buffer-create buffer))
+      (setq gnus-summary-buffer (current-buffer))
       (gnus-summary-mode group)
       (when (gnus-group-quit-config group)
 	(set (make-local-variable 'gnus-single-article-buffer) nil))
@@ -3552,11 +3552,7 @@ buffer that was in action when the last article was fetched."
 	    (if (consp (car locals))
 		(set (caar locals) (pop vlist))
 	      (set (car locals) (pop vlist)))
-	    (setq locals (cdr locals))))
-	;; The article buffer also has local variables.
-	(when (gnus-buffer-live-p gnus-article-buffer)
-	  (set-buffer gnus-article-buffer)
-	  (setq gnus-summary-buffer summary))))))
+	    (setq locals (cdr locals))))))))
 
 (defun gnus-summary-article-unread-p (article)
   "Say whether ARTICLE is unread or not."
@@ -7874,7 +7870,6 @@ If STOP is non-nil, just stop when reaching the end of the message.
 
 Also see the variable `gnus-article-skip-boring'."
   (interactive "P")
-  (setq gnus-summary-buffer (current-buffer))
   (gnus-set-global-variables)
   (let ((article (gnus-summary-article-number))
 	(article-window (get-buffer-window gnus-article-buffer t))
@@ -10127,17 +10122,20 @@ ACTION can be either `move' (the default), `crosspost' or `copy'."
 
 (defun gnus-summary-push-marks-to-backend (article)
   (let ((set nil)
+	(del nil)
 	(marks gnus-article-mark-lists))
     (unless (memq article gnus-newsgroup-unreads)
       (push 'read set))
     (while marks
-      (when (and (eq (gnus-article-mark-to-type (cdar marks)) 'list)
-		 (memq article (symbol-value
-				(intern (format "gnus-newsgroup-%s"
-						(caar marks))))))
-	(push (cdar marks) set))
+      (if (and (eq (gnus-article-mark-to-type (cdar marks)) 'list)
+	       (memq article (symbol-value
+			      (intern (format "gnus-newsgroup-%s"
+					      (caar marks))))))
+	  (push (cdar marks) set)
+	(push (cdar marks) del))
       (pop marks))
-    (gnus-request-set-mark gnus-newsgroup-name `(((,article) set ,set)))))
+    (gnus-request-set-mark gnus-newsgroup-name `(((,article) set ,set)
+						 ((,article) del ,del)))))
 
 (defun gnus-summary-copy-article (&optional n to-newsgroup select-method)
   "Copy the current article to some other group.
@@ -11647,10 +11645,10 @@ If PREDICATE is supplied, threads that satisfy this predicate
 will not be hidden.
 Returns nil if no threads were there to be hidden."
   (interactive)
+  (beginning-of-line)
   (let ((start (point))
 	(starteol (line-end-position))
 	(article (gnus-summary-article-number)))
-    (goto-char start)
     ;; Go forward until either the buffer ends or the subthread ends.
     (when (and (not (eobp))
 	       (or (zerop (gnus-summary-next-thread 1 t))
@@ -12521,7 +12519,7 @@ If REVERSE, save parts that do not match TYPE."
                         (memq article gnus-newsgroup-undownloaded)
                         (not (memq article gnus-newsgroup-cached)))))
     (let ((face (funcall (gnus-summary-highlight-line-0))))
-      (unless (eq face (get-text-property beg 'face))
+      (unless (eq face (gnus-get-text-property-excluding-characters-with-faces beg 'face))
 	(gnus-put-text-property-excluding-characters-with-faces
 	 beg (point-at-eol) 'face
 	 (setq face (if (boundp face) (symbol-value face) face)))

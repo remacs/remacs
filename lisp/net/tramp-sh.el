@@ -1,6 +1,6 @@
 ;;; tramp-sh.el --- Tramp access functions for (s)sh-like connections
 
-;; Copyright (C) 1998-2012 Free Software Foundation, Inc.
+;; Copyright (C) 1998-2013 Free Software Foundation, Inc.
 
 ;; (copyright statements below in code to be updated with the above notice)
 
@@ -805,7 +805,7 @@ on the remote host.")
 (defconst tramp-perl-encode
   "%s -e '
 # This script contributed by Juanma Barranquero <lektu@terra.es>.
-# Copyright (C) 2002-2012 Free Software Foundation, Inc.
+# Copyright (C) 2002-2013 Free Software Foundation, Inc.
 use strict;
 
 my %%trans = do {
@@ -843,7 +843,7 @@ This string is passed to `format', so percent characters need to be doubled.")
 (defconst tramp-perl-decode
   "%s -e '
 # This script contributed by Juanma Barranquero <lektu@terra.es>.
-# Copyright (C) 2002-2012 Free Software Foundation, Inc.
+# Copyright (C) 2002-2013 Free Software Foundation, Inc.
 use strict;
 
 my %%trans = do {
@@ -935,6 +935,7 @@ This is used to map a mode number to a permission string.")
     (file-name-nondirectory . tramp-handle-file-name-nondirectory)
     (file-truename . tramp-sh-handle-file-truename)
     (file-exists-p . tramp-sh-handle-file-exists-p)
+    (file-accessible-directory-p . tramp-handle-file-accessible-directory-p)
     (file-directory-p . tramp-sh-handle-file-directory-p)
     (file-executable-p . tramp-sh-handle-file-executable-p)
     (file-readable-p . tramp-sh-handle-file-readable-p)
@@ -985,6 +986,8 @@ This is used to map a mode number to a permission string.")
     (verify-visited-file-modtime . tramp-sh-handle-verify-visited-file-modtime)
     (file-selinux-context . tramp-sh-handle-file-selinux-context)
     (set-file-selinux-context . tramp-sh-handle-set-file-selinux-context)
+    (file-acl . tramp-sh-handle-file-acl)
+    (set-file-acl . tramp-sh-handle-set-file-acl)
     (vc-registered . tramp-sh-handle-vc-registered))
   "Alist of handler functions.
 Operations not mentioned here will be handled by the normal Emacs functions.")
@@ -1449,7 +1452,8 @@ of."
 (defun tramp-set-file-uid-gid (filename &optional uid gid)
   "Set the ownership for FILENAME.
 If UID and GID are provided, these values are used; otherwise uid
-and gid of the corresponding user is taken.  Both parameters must be integers."
+and gid of the corresponding user is taken.  Both parameters must
+be non-negative integers."
   ;; Modern Unices allow chown only for root.  So we might need
   ;; another implementation, see `dired-do-chown'.  OTOH, it is mostly
   ;; working with su(do)? when it is needed, so it shall succeed in
@@ -1461,9 +1465,9 @@ and gid of the corresponding user is taken.  Both parameters must be integers."
 	  (if (and (zerop (user-uid)) (tramp-local-host-p v))
 	      ;; If we are root on the local host, we can do it directly.
 	      (tramp-set-file-uid-gid localname uid gid)
-	    (let ((uid (or (and (integerp uid) uid)
+	    (let ((uid (or (and (natnump uid) uid)
 			   (tramp-get-remote-uid v 'integer)))
-		  (gid (or (and (integerp gid) gid)
+		  (gid (or (and (natnump gid) gid)
 			   (tramp-get-remote-gid v 'integer))))
 	      (tramp-send-command
 	       v (format
@@ -1472,8 +1476,8 @@ and gid of the corresponding user is taken.  Both parameters must be integers."
 
       ;; We handle also the local part, because there doesn't exist
       ;; `set-file-uid-gid'.  On W32 "chown" might not work.
-      (let ((uid (or (and (integerp uid) uid) (tramp-get-local-uid 'integer)))
-	    (gid (or (and (integerp gid) gid) (tramp-get-local-gid 'integer))))
+      (let ((uid (or (and (natnump uid) uid) (tramp-get-local-uid 'integer)))
+	    (gid (or (and (natnump gid) gid) (tramp-get-local-gid 'integer))))
 	(tramp-compat-call-process
 	 "chown" nil nil nil
          (format "%d:%d" uid gid) (tramp-shell-quote-argument filename))))))
@@ -1527,10 +1531,49 @@ and gid of the corresponding user is taken.  Both parameters must be integers."
 			(if (stringp (nth 3 context))
 			    (format "--range=%s" (nth 3 context)) "")
 			(tramp-shell-quote-argument localname))))
-	(tramp-set-file-property v localname "file-selinux-context" context)
-      (tramp-set-file-property v localname "file-selinux-context" 'undef)))
-  ;; We always return nil.
-  nil)
+	(progn
+	  (tramp-set-file-property v localname "file-selinux-context" context)
+	  t)
+      (tramp-set-file-property v localname "file-selinux-context" 'undef)
+      nil)))
+
+(defun tramp-remote-acl-p (vec)
+  "Check, whether ACL is enabled on the remote host."
+  (with-tramp-connection-property (tramp-get-connection-process vec) "acl-p"
+    (tramp-send-command-and-check vec "getfacl /")))
+
+(defun tramp-sh-handle-file-acl (filename)
+  "Like `file-acl' for Tramp files."
+  (with-parsed-tramp-file-name filename nil
+    (with-tramp-file-property v localname "file-acl"
+      (when (and (tramp-remote-acl-p v)
+		 (tramp-send-command-and-check
+		  v (format
+		     "getfacl -acs %s 2>/dev/null"
+		     (tramp-shell-quote-argument localname))))
+	(with-current-buffer (tramp-get-connection-buffer v)
+	  (goto-char (point-max))
+	  (delete-blank-lines)
+	  (when (> (point-max) (point-min))
+	    (substring-no-properties (buffer-string))))))))
+
+(defun tramp-sh-handle-set-file-acl (filename acl-string)
+  "Like `set-file-acl' for Tramp files."
+  (with-parsed-tramp-file-name filename nil
+    (when (tramp-remote-acl-p v)
+      (condition-case nil
+	  (when (stringp acl-string)
+	    (tramp-set-file-property v localname "file-acl" acl-string)
+	    (dolist (line (split-string acl-string nil t) t)
+	      (unless (tramp-send-command-and-check
+		       v (format
+			  "setfacl -m %s %s"
+			  line (tramp-shell-quote-argument localname)))
+		(error nil))))
+	;; In case of errors, we return `nil'.
+	(error
+	 (tramp-set-file-property v localname "file-acl" 'undef)
+	 nil)))))
 
 ;; Simple functions using the `test' command.
 
@@ -1883,7 +1926,7 @@ tramp-sh-handle-file-name-all-completions: internal error accessing `%s': `%s'"
 
 (defun tramp-sh-handle-copy-file
   (filename newname &optional ok-if-already-exists keep-date
-	    preserve-uid-gid preserve-selinux-context)
+	    preserve-uid-gid preserve-extended-attributes)
   "Like `copy-file' for Tramp files."
   (setq filename (expand-file-name filename))
   (setq newname (expand-file-name newname))
@@ -1893,13 +1936,13 @@ tramp-sh-handle-file-name-all-completions: internal error accessing `%s': `%s'"
 	(tramp-tramp-file-p newname))
     (tramp-do-copy-or-rename-file
      'copy filename newname ok-if-already-exists keep-date
-     preserve-uid-gid preserve-selinux-context))
+     preserve-uid-gid preserve-extended-attributes))
    ;; Compat section.
-   (preserve-selinux-context
+   (preserve-extended-attributes
     (tramp-run-real-handler
      'copy-file
      (list filename newname ok-if-already-exists keep-date
-	   preserve-uid-gid preserve-selinux-context)))
+	   preserve-uid-gid preserve-extended-attributes)))
    (preserve-uid-gid
     (tramp-run-real-handler
      'copy-file
@@ -1962,7 +2005,7 @@ tramp-sh-handle-file-name-all-completions: internal error accessing `%s': `%s'"
 
 (defun tramp-do-copy-or-rename-file
   (op filename newname &optional ok-if-already-exists keep-date
-      preserve-uid-gid preserve-selinux-context)
+      preserve-uid-gid preserve-extended-attributes)
   "Copy or rename a remote file.
 OP must be `copy' or `rename' and indicates the operation to perform.
 FILENAME specifies the file to copy or rename, NEWNAME is the name of
@@ -1971,7 +2014,7 @@ OK-IF-ALREADY-EXISTS means don't barf if NEWNAME exists already.
 KEEP-DATE means to make sure that NEWNAME has the same timestamp
 as FILENAME.  PRESERVE-UID-GID, when non-nil, instructs to keep
 the uid and gid if both files are on the same host.
-PRESERVE-SELINUX-CONTEXT activates selinux commands.
+PRESERVE-EXTENDED-ATTRIBUTES activates selinux and acl commands.
 
 This function is invoked by `tramp-sh-handle-copy-file' and
 `tramp-sh-handle-rename-file'.  It is an error if OP is neither
@@ -1982,8 +2025,8 @@ file names."
   (let ((t1 (tramp-tramp-file-p filename))
 	(t2 (tramp-tramp-file-p newname))
 	(length (nth 7 (file-attributes (file-truename filename))))
-	(context (and preserve-selinux-context
-		      (apply 'file-selinux-context (list filename))))
+	(attributes (and preserve-extended-attributes
+			 (apply 'file-extended-attributes (list filename))))
 	pr tm)
 
     (with-parsed-tramp-file-name (if t1 filename newname) nil
@@ -2053,8 +2096,11 @@ file names."
 	  ;; One of them must be a Tramp file.
 	  (error "Tramp implementation says this cannot happen")))
 
-	;; Handle `preserve-selinux-context'.
-	(when context (apply 'set-file-selinux-context (list newname context)))
+	;; Handle `preserve-extended-attributes'.  We ignore possible
+	;; errors, because ACL strings could be incompatible.
+	(when attributes
+	  (ignore-errors
+	    (apply 'set-file-extended-attributes (list newname attributes))))
 
 	;; In case of `rename', we must flush the cache of the source file.
 	(when (and t1 (eq op 'rename))
@@ -4618,7 +4664,7 @@ raises an error."
 		  command (buffer-string))))))))
 
 (defun tramp-convert-file-attributes (vec attr)
-  "Convert file-attributes ATTR generated by perl script, stat or ls.
+  "Convert `file-attributes' ATTR generated by perl script, stat or ls.
 Convert file mode bits to string and set virtual device number.
 Return ATTR."
   (when attr
@@ -4626,6 +4672,17 @@ Return ATTR."
     (when (stringp (car attr))
       (while (string-match tramp-color-escape-sequence-regexp (car attr))
 	(setcar attr (replace-match "" nil nil (car attr)))))
+    ;; Convert uid and gid.  Use -1 as indication of unusable value.
+    (when (and (numberp (nth 2 attr)) (< (nth 2 attr) 0))
+      (setcar (nthcdr 2 attr) -1))
+    (when (and (floatp (nth 2 attr))
+               (<= (nth 2 attr) (tramp-compat-most-positive-fixnum)))
+      (setcar (nthcdr 2 attr) (round (nth 2 attr))))
+    (when (and (numberp (nth 3 attr)) (< (nth 3 attr) 0))
+      (setcar (nthcdr 3 attr) -1))
+    (when (and (floatp (nth 3 attr))
+               (<= (nth 3 attr) (tramp-compat-most-positive-fixnum)))
+      (setcar (nthcdr 3 attr) (round (nth 3 attr))))
     ;; Convert last access time.
     (unless (listp (nth 4 attr))
       (setcar (nthcdr 4 attr)

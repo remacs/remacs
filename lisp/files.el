@@ -1,6 +1,6 @@
 ;;; files.el --- file input and output commands for Emacs
 
-;; Copyright (C) 1985-1987, 1992-2012 Free Software Foundation, Inc.
+;; Copyright (C) 1985-1987, 1992-2013 Free Software Foundation, Inc.
 
 ;; Maintainer: FSF
 ;; Package: emacs
@@ -209,7 +209,6 @@ have fast storage with limited space, such as a RAM disk."
 (declare-function dired-unmark "dired" (arg))
 (declare-function dired-do-flagged-delete "dired" (&optional nomessage))
 (declare-function dos-8+3-filename "dos-fns" (filename))
-(declare-function view-mode-disable "view" ())
 (declare-function dosified-file-name "dos-fns" (file-name))
 
 (defvar file-name-invalid-regexp
@@ -660,11 +659,14 @@ Not actually set up until the first time you use it.")
   "Explode a search path into a list of directory names.
 Directories are separated by `path-separator' (which is colon in
 GNU and Unix systems).  Substitute environment variables into the
-resulting list of directory names."
+resulting list of directory names.  For an empty path element (i.e.,
+a leading or trailing separator, or two adjacent separators), return
+nil (meaning `default-directory') as the associated list element."
   (when (stringp search-path)
     (mapcar (lambda (f)
-	      (substitute-in-file-name (file-name-as-directory f)))
-	    (split-string search-path path-separator t))))
+	      (if (equal "" f) nil
+		(substitute-in-file-name (file-name-as-directory f))))
+	    (split-string search-path path-separator))))
 
 (defun cd-absolute (dir)
   "Change current directory to given absolute file name DIR."
@@ -2122,7 +2124,7 @@ unless NOMODES is non-nil."
     (setq buffer-read-only t))
   (unless nomodes
     (when (and view-read-only view-mode)
-      (view-mode-disable))
+      (view-mode -1))
     (normal-mode t)
     ;; If requested, add a newline at the end of the file.
     (and (memq require-final-newline '(visit visit-save))
@@ -4019,10 +4021,12 @@ BACKUPNAME is the backup file name, which is the old file renamed."
 	      nil)))
       ;; Reset the umask.
       (set-default-file-modes umask)))
-  (and modes
-       (set-file-modes to-name (logand modes #o1777)))
-  (and extended-attributes
-       (set-file-extended-attributes to-name extended-attributes)))
+  ;; If set-file-extended-attributes fails, fall back on set-file-modes.
+  (unless (and extended-attributes
+	       (with-demoted-errors
+		 (set-file-extended-attributes to-name extended-attributes)))
+    (and modes
+	 (set-file-modes to-name (logand modes #o1777)))))
 
 (defvar file-name-version-regexp
   "\\(?:~\\|\\.~[-[:alnum:]:#@^._]+\\(?:~[[:digit:]]+\\)?~\\)"
@@ -4619,9 +4623,11 @@ Before and after saving the buffer, this function runs
 	    (if setmodes
 		(condition-case ()
 		    (progn
-		      (set-file-modes buffer-file-name (car setmodes))
-		      (set-file-extended-attributes buffer-file-name
-						    (nth 1 setmodes)))
+		      (unless
+			  (with-demoted-errors
+			    (set-file-modes buffer-file-name (car setmodes)))
+			(set-file-extended-attributes buffer-file-name
+						      (nth 1 setmodes))))
 		  (error nil))))
 	  ;; If the auto-save file was recent before this command,
 	  ;; delete it now.
@@ -4737,8 +4743,14 @@ Before and after saving the buffer, this function runs
 	       (setq setmodes (list (file-modes buffer-file-name)
 				    (file-extended-attributes buffer-file-name)
 				    buffer-file-name))
-	       (set-file-modes buffer-file-name (logior (car setmodes) 128))
-	       (set-file-extended-attributes buffer-file-name (nth 1 setmodes)))))
+	       ;; If set-file-extended-attributes fails, fall back on
+	       ;; set-file-modes.
+	       (unless
+		   (with-demoted-errors
+		     (set-file-extended-attributes buffer-file-name
+						   (nth 1 setmodes)))
+		 (set-file-modes buffer-file-name
+				 (logior (car setmodes) 128))))))
 	(let (success)
 	  (unwind-protect
 	      (progn
@@ -5717,7 +5729,7 @@ See also `auto-save-file-name-p'."
 (defun auto-save-file-name-p (filename)
   "Return non-nil if FILENAME can be yielded by `make-auto-save-file-name'.
 FILENAME should lack slashes.  You can redefine this for customization."
-  (string-match "^#.*#$" filename))
+  (string-match "\\`#.*#\\'" filename))
 
 (defun wildcard-to-regexp (wildcard)
   "Given a shell file name pattern WILDCARD, return an equivalent regexp.

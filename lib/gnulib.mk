@@ -1,6 +1,6 @@
 ## DO NOT EDIT! GENERATED AUTOMATICALLY!
 ## Process this file with automake to produce Makefile.in.
-# Copyright (C) 2002-2012 Free Software Foundation, Inc.
+# Copyright (C) 2002-2013 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -774,7 +774,6 @@ EXTRA_DIST += stdint.in.h
 ## begin gnulib module stdio
 
 BUILT_SOURCES += stdio.h
-libgnu_a_SOURCES += stdio.c
 
 # We need the following in order to create <stdio.h> when the system
 # doesn't have one that works with the given compiler.

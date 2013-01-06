@@ -1,6 +1,6 @@
 ;;; rmailmm.el --- MIME decoding and display stuff for RMAIL
 
-;; Copyright (C) 2006-2012  Free Software Foundation, Inc.
+;; Copyright (C) 2006-2013 Free Software Foundation, Inc.
 
 ;; Author: Alexander Pohoyda
 ;;	Alex Schroeder
@@ -1368,8 +1368,8 @@ This is the usual value of `rmail-insert-mime-forwarded-message-function'."
   (let ((message-buffer
 	 (with-current-buffer forward-buffer
 	   (if rmail-buffer-swapped
-	       forward-buffer
-	     rmail-view-buffer))))
+	       rmail-view-buffer
+	     forward-buffer))))
     (save-restriction
       (narrow-to-region (point) (point))
       (message-forward-make-body-mime message-buffer))))

@@ -1,7 +1,7 @@
 ;;; etags.el --- etags facility for Emacs  -*- lexical-binding: t -*-
 
-;; Copyright (C) 1985-1986, 1988-1989, 1992-1996, 1998, 2000-2012
-;;   Free Software Foundation, Inc.
+;; Copyright (C) 1985-1986, 1988-1989, 1992-1996, 1998, 2000-2013 Free
+;; Software Foundation, Inc.
 
 ;; Author: Roland McGrath <roland@gnu.org>
 ;; Maintainer: FSF
@@ -67,11 +67,8 @@ Use the `etags' program to make a tags table file."
 ;;;###autoload
 (defcustom tags-compression-info-list
   (purecopy '("" ".Z" ".bz2" ".gz" ".xz" ".tgz"))
-  "List of extensions tried by etags when jka-compr is used.
-An empty string means search the non-compressed file.
-These extensions will be tried only if jka-compr was activated
-\(i.e. via customize of `auto-compression-mode' or by calling the function
-`auto-compression-mode')."
+  "List of extensions tried by etags when `auto-compression-mode' is on.
+An empty string means search the non-compressed file."
   :version "24.1"			; added xz
   :type  '(repeat string)
   :group 'etags)
@@ -1182,7 +1179,7 @@ error message."
   "Find the right line in the specified FILE."
   ;; If interested in compressed-files, search files with extensions.
   ;; Otherwise, search only the real file.
-  (let* ((buffer-search-extensions (if (featurep 'jka-compr)
+  (let* ((buffer-search-extensions (if auto-compression-mode
 				       tags-compression-info-list
 				     '("")))
 	 the-buffer
@@ -1206,7 +1203,7 @@ error message."
 	  (setq file-search-extensions (cdr file-search-extensions))
 	(setq the-buffer (find-file-noselect (concat file (car file-search-extensions))))))
     (if (not the-buffer)
-	(if (featurep 'jka-compr)
+	(if auto-compression-mode
 	    (error "File %s (with or without extensions %s) not found" file tags-compression-info-list)
 	  (error "File %s not found" file))
       (set-buffer the-buffer))))
@@ -1869,7 +1866,7 @@ If FILE-LIST-FORM is non-nil, it should be a form that, when
 evaluated, will return a list of file names.  The search will be
 restricted to these files.
 
-Aleso see the documentation of the `tags-file-name' variable."
+Also see the documentation of the `tags-file-name' variable."
   (interactive "sTags search (regexp): ")
   (if (and (equal regexp "")
 	   (eq (car tags-loop-scan) 're-search-forward)

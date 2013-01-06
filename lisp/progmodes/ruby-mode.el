@@ -1,13 +1,13 @@
 ;;; ruby-mode.el --- Major mode for editing Ruby files
 
-;; Copyright (C) 1994-2012  Free Software Foundation, Inc.
+;; Copyright (C) 1994-2013 Free Software Foundation, Inc.
 
 ;; Authors: Yukihiro Matsumoto
 ;;	Nobuyoshi Nakada
 ;; URL: http://www.emacswiki.org/cgi-bin/wiki/RubyMode
 ;; Created: Fri Feb  4 14:49:13 JST 1994
 ;; Keywords: languages ruby
-;; Version: 1.0
+;; Version: 1.2
 
 ;; This file is part of GNU Emacs.
 
@@ -64,8 +64,9 @@
   "Regexp to match keywords that nest without blocks.")
 
 (defconst ruby-indent-beg-re
-  (concat "^\\s *" (regexp-opt '("class" "module" "def" "if" "unless" "case"
-                                 "while" "until" "for" "begin")) "\\_>")
+  (concat "^\\(\\s *" (regexp-opt '("class" "module" "def")) "\\|"
+          (regexp-opt '("if" "unless" "case" "while" "until" "for" "begin"))
+          "\\)\\_>")
   "Regexp to match where the indentation gets deeper.")
 
 (defconst ruby-modifier-beg-keywords
@@ -1682,7 +1683,9 @@ The variable `ruby-indent-level' controls the amount of indentation.
 ;;;###autoload
 (add-to-list 'auto-mode-alist (cons (purecopy "\\.rb\\'") 'ruby-mode))
 ;;;###autoload
-(add-to-list 'auto-mode-alist '("Rakefile\\'" . ruby-mode))
+(add-to-list 'auto-mode-alist (cons (purecopy "Rakefile\\'") 'ruby-mode))
+;;;###autoload
+(add-to-list 'auto-mode-alist (cons (purecopy "\\.gemspec\\'") 'ruby-mode))
 
 ;;;###autoload
 (dolist (name (list "ruby" "rbx" "jruby" "ruby1.9" "ruby1.8"))

@@ -37,7 +37,7 @@
 @end macro
 
 @copying
-Copyright @copyright{} 1999-2012 Free Software Foundation, Inc.
+Copyright @copyright{} 1999--2013 Free Software Foundation, Inc.
 
 @quotation
 Permission is granted to copy, distribute and/or modify this document
@@ -48,8 +48,7 @@ and with the Back-Cover Texts as in (a) below.  A copy of the license
 is included in the section entitled ``GNU Free Documentation License''.
 
 (a) The FSF's Back-Cover Text is: ``You have the freedom to
-copy and modify this GNU manual.  Buying copies from the FSF
-supports it in developing GNU and promoting software freedom.''
+copy and modify this GNU manual.''
 @end quotation
 @end copying
 
@@ -375,7 +374,7 @@ This release includes the full documentation and code for
 @value{tramp}, suitable for installation.  But Emacs (22 or later)
 includes @value{tramp} already, and there is a @value{tramp} package
 for XEmacs, as well.  So maybe it is easier to just use those.  But if
-you want the bleeding edge, read on@dots{...}
+you want the bleeding edge, read on@dots{}
 
 For the especially brave, @value{tramp} is available from Git.  The Git
 version is the latest version of the code and may contain incomplete
@@ -516,8 +515,8 @@ Method}.
 * Connection caching::          Reusing connection related information.
 * Remote Programs::             How @value{tramp} finds and uses programs on the remote machine.
 * Remote shell setup::          Remote shell setup hints.
-* Windows setup hints::         Issues with Cygwin ssh.
 * Auto-save and Backup::        Auto-save and Backup.
+* Windows setup hints::         Issues with Cygwin ssh.
 @end menu
 
 
@@ -763,7 +762,7 @@ transferred with the corresponding inline method.  It should provide a
 fair trade-off between both approaches.
 
 @table @asis
-@item @option{rcp}  ---  @command{rsh} and @command{rcp}
+@item @option{rcp}---@command{rsh} and @command{rcp}
 @cindex method rcp
 @cindex rcp method
 @cindex rcp (with rcp method)
@@ -778,7 +777,7 @@ The alternative method @option{remcp} uses the @command{remsh} and
 @command{remsh} is used instead of @command{rsh}.
 
 
-@item @option{scp}  ---  @command{ssh} and @command{scp}
+@item @option{scp}---@command{ssh} and @command{scp}
 @cindex method scp
 @cindex scp method
 @cindex scp (with scp method)
@@ -808,7 +807,7 @@ specify @samp{-p 42} in the argument list for @command{ssh}, and to
 specify @samp{-P 42} in the argument list for @command{scp}.
 
 
-@item @option{sftp}  ---  @command{ssh} and @command{sftp}
+@item @option{sftp}---@command{ssh} and @command{sftp}
 @cindex method sftp
 @cindex sftp method
 @cindex sftp (with sftp method)
@@ -824,7 +823,7 @@ within this session.  Instead of, @command{ssh} is used for login.
 This method supports the @samp{-p} argument.
 
 
-@item @option{rsync}  ---  @command{ssh} and @command{rsync}
+@item @option{rsync}---@command{ssh} and @command{rsync}
 @cindex method rsync
 @cindex rsync method
 @cindex rsync (with rsync method)
@@ -845,7 +844,7 @@ the corresponding buffer, visiting this file, is alive.
 This method supports the @samp{-p} argument.
 
 
-@item @option{scpx} --- @command{ssh} and @command{scp}
+@item @option{scpx}---@command{ssh} and @command{scp}
 @cindex method scpx
 @cindex scpx method
 @cindex scp (with scpx method)
@@ -868,7 +867,7 @@ to not print any shell prompt, which confuses @value{tramp} mightily.
 This method supports the @samp{-p} argument.
 
 
-@item @option{scpc} --- @command{ssh} and @command{scp}
+@item @option{scpc}---@command{ssh} and @command{scp}
 @cindex method scpc
 @cindex scpc method
 @cindex scp (with scpc method)
@@ -899,7 +898,7 @@ version, must be set to @option{no}.
 This method supports the @samp{-p} argument.
 
 
-@item @option{rsyncc}  ---  @command{ssh} and @command{rsync}
+@item @option{rsyncc}---@command{ssh} and @command{rsync}
 @cindex method rsyncc
 @cindex rsyncc method
 @cindex rsync (with rsyncc method)
@@ -913,7 +912,7 @@ which increases performance.
 This method supports the @samp{-p} argument.
 
 
-@item @option{pscp} --- @command{plink} and @command{pscp}
+@item @option{pscp}---@command{plink} and @command{pscp}
 @cindex method pscp
 @cindex pscp method
 @cindex pscp (with pscp method)
@@ -928,7 +927,7 @@ of PuTTY, an SSH implementation for Windows.
 This method supports the @samp{-P} argument.
 
 
-@item @option{psftp} --- @command{plink} and @command{psftp}
+@item @option{psftp}---@command{plink} and @command{psftp}
 @cindex method psftp
 @cindex psftp method
 @cindex psftp (with psftp method)
@@ -943,7 +942,7 @@ part of PuTTY, an SSH implementation for Windows.
 This method supports the @samp{-P} argument.
 
 
-@item @option{fcp} --- @command{fsh} and @command{fcp}
+@item @option{fcp}---@command{fsh} and @command{fcp}
 @cindex method fcp
 @cindex fcp method
 @cindex fsh (with fcp method)
@@ -982,7 +981,7 @@ This works only for unified filenames, see @ref{Issues}.
 @end ifset
 
 
-@item @option{smb} --- @command{smbclient}
+@item @option{smb}---@command{smbclient}
 @cindex method smb
 @cindex smb method
 
@@ -1866,7 +1865,7 @@ but it is not at the end of the buffer.
 This regular expression is used by @value{tramp} in the same way as
 @code{shell-prompt-pattern}, to match prompts from the remote shell.
 This second variable exists because the prompt from the remote shell
-might be different from the prompt from a local shell --- after all,
+might be different from the prompt from a local shell---after all,
 the whole point of @value{tramp} is to log in to remote hosts as a
 different user.  The default value of
 @code{tramp-shell-prompt-pattern} is the same as the default value of
@@ -1900,7 +1899,7 @@ of your (local or remote) host, you might need to adapt this. Example:
           "passwort" "Passwort"
           ;; Fran@,{c}ais
           "mot de passe" "Mot de passe") t)
-      ".*: ? *"))
+      ".*:\0? *"))
 @end lisp
 
 In parallel, it might also be necessary to adapt
@@ -2292,7 +2291,7 @@ This edits the same file, using the fully qualified domain name of
 the machine.
 
 @item @trampfn{, , melancholia, ~/.emacs}
-This also edits the same file --- the @file{~} is expanded to your
+This also edits the same file; the @file{~} is expanded to your
 home directory on the remote machine, just like it is locally.
 
 @item @trampfn{, , melancholia, ~daniel/.emacs}
@@ -2381,13 +2380,13 @@ For the time being, @code{tramp-syntax} can have the following values:
 
 @itemize @w{}
 @ifset emacs
-@item @code{ftp} -- That is the default syntax
-@item @code{url} -- URL-like syntax
+@item @code{ftp}---That is the default syntax
+@item @code{url}---URL-like syntax
 @end ifset
 @ifset xemacs
-@item @code{sep} -- That is the default syntax
-@item @code{url} -- URL-like syntax
-@item @code{ftp} -- EFS-like syntax
+@item @code{sep}---That is the default syntax
+@item @code{url}---URL-like syntax
+@item @code{ftp}---EFS-like syntax
 @end ifset
 @end itemize
 

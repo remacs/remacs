@@ -1,6 +1,6 @@
 ;;; gnus-art.el --- article mode commands for Gnus
 
-;; Copyright (C) 1996-2012 Free Software Foundation, Inc.
+;; Copyright (C) 1996-2013 Free Software Foundation, Inc.
 
 ;; Author: Lars Magne Ingebrigtsen <larsi@gnus.org>
 ;; Keywords: news
@@ -1121,8 +1121,8 @@ parts.  When nil, redisplay article."
 	   (const :tag "Header" head)))
 
 (defvar gnus-article-treat-types '("text/plain" "text/x-verbatim"
-				   "text/x-patch")
-  "Parts to treat.")
+				   "text/x-patch" "text/html")
+  "Part types eligible for treatment.")
 
 (defvar gnus-inhibit-treatment nil
   "Whether to inhibit treatment.")
@@ -4539,18 +4539,17 @@ commands:
 	    (gnus-article-mode))
 	  (setq truncate-lines gnus-article-truncate-lines)
 	  (current-buffer))
-      (with-current-buffer (gnus-get-buffer-create name)
-	(gnus-article-mode)
-	(setq truncate-lines gnus-article-truncate-lines)
-	(make-local-variable 'gnus-summary-buffer)
-	(setq gnus-summary-buffer
-	      (gnus-summary-buffer-name gnus-newsgroup-name))
-	(gnus-summary-set-local-parameters gnus-newsgroup-name)
-	(when article-lapsed-timer
-	  (gnus-stop-date-timer))
-	(when gnus-article-update-date-headers
-	  (gnus-start-date-timer gnus-article-update-date-headers))
-	(current-buffer)))))
+      (let ((summary gnus-summary-buffer))
+	(with-current-buffer (gnus-get-buffer-create name)
+	  (gnus-article-mode)
+	  (setq truncate-lines gnus-article-truncate-lines)
+	  (set (make-local-variable 'gnus-summary-buffer) summary)
+	  (gnus-summary-set-local-parameters gnus-newsgroup-name)
+	  (when article-lapsed-timer
+	    (gnus-stop-date-timer))
+	  (when gnus-article-update-date-headers
+	    (gnus-start-date-timer gnus-article-update-date-headers))
+	  (current-buffer))))))
 
 (defun gnus-article-stop-animations ()
   (dolist (timer (and (boundp 'timer-list)

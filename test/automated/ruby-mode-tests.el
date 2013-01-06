@@ -1,6 +1,6 @@
 ;;; ruby-mode-tests.el --- Test suite for ruby-mode
 
-;; Copyright (C) 2012  Free Software Foundation, Inc.
+;; Copyright (C) 2012-2013 Free Software Foundation, Inc.
 
 ;; This file is part of GNU Emacs.
 
@@ -223,6 +223,19 @@ VALUES-PLIST is a list with alternating index and value elements."
    |end
    |  end
    |"))
+
+(ert-deftest ruby-indent-after-block-in-continued-expression ()
+  (ruby-should-indent-buffer
+   "var =
+   |  begin
+   |    val
+   |  end
+   |statement"
+   "var =
+   |begin
+   |val
+   |end
+   |statement"))
 
 (ert-deftest ruby-move-to-block-stops-at-indentation ()
   (ruby-with-temp-buffer "def f\nend"
