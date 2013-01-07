@@ -1,3 +1,50 @@
+2013-01-07  Bastien Guerry  <bzg@gnu.org>
+
+	* menu-bar.el (menu-bar-search-documentation-menu): Use
+	`apropos-user-option' and fix the help message.
+
+2013-01-07  Bastien Guerry  <bzg@gnu.org>
+
+	* apropos.el (apropos-do-all): Update docstring.
+	(apropos-user-option-button): New face.
+	(apropos-user-option): Rename from `apropos-variable' and update
+	docstring.
+	(apropos-variable): Rewrite, now show all variables by default.
+	(apropos-print): Mention "User option" instead of "Variable" when
+	printing doc for user options.  (Bug#13276)
+
+2013-01-07  Jürgen Hötzel  <juergen@archlinux.org>
+
+	* net/tramp-adb.el (tramp-do-parse-file-attributes-with-ls):
+	Handle filename correctly, when parsing "source -> target" symlink
+	output.
+	(tramp-adb-handle-set-file-times): New defun.
+
+2013-01-07  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* emacs-lisp/advice.el (ad-activate-advised-definition): Refresh the
+	advice list when the interactive-spec of ad-Advice-* changes.
+
+2013-01-07  Katsumi Yamaoka  <yamaoka@jpl.org>
+
+	* wid-edit.el (widget-default-get): Work for inlined elements.
+	(Bug#12670)
+
+2013-01-07  Michael Albinus  <michael.albinus@gmx.de>
+
+	* net/tramp.el (tramp-default-host-alist): New defcustom.
+	(tramp-find-host): Use it.
+	(tramp-eshell-directory-change): Move from tramp-sh.el.  Add to
+	`eshell-directory-change-hook'.
+
+	* net/tramp-adb.el (top): Add adb specific entry in
+	`tramp-default-host-alist'.
+	(tramp-adb-file-name-host): Remove function.
+	(tramp-adb-execute-adb-command, tramp-adb-maybe-open-connection):
+	Use `tramp-file-name-host' instead of `tramp-adb-file-name-host'.
+
+	* net/tramp-sh.el: Move eshell integration code to tramp.el.
+
 2013-01-06  Jürgen Hötzel  <juergen@archlinux.org>
 
 	* net/tramp-adb.el (tramp-methods): Add `tramp-tmpdir' entry.
@@ -5,9 +52,9 @@
 2013-01-06  Michael Albinus  <michael.albinus@gmx.de>
 
 	* net/tramp-adb.el (tramp-adb-ls-toolbox-regexp): The file size can
-	consist of mor than one digit.
-	(tramp-adb-file-name-handler-alist): Use
-	`tramp-handle-file-exists-p' consistently.
+	consist of more than one digit.
+	(tramp-adb-file-name-handler-alist):
+	Use `tramp-handle-file-exists-p' consistently.
 	(tramp-adb-file-name-handler): Don't tweak `tramp-default-host'.
 	(tramp-adb-handle-file-exists-p): Remove function.
 	(tramp-adb-file-name-host): New defun.
@@ -141,8 +188,8 @@
 	(tramp-do-copy-or-rename-file): Ignore errors when calling
 	`set-file-extended-attributes'.
 
-	* net/tramp-smb.el (tramp-smb-file-name-handler-alist): Add
-	handler for `file-acl'.
+	* net/tramp-smb.el (tramp-smb-file-name-handler-alist):
+	Add handler for `file-acl'.
 	(tramp-smb-handle-file-acl): New defun.
 
 2013-01-02  Jay Belanger  <jay.p.belanger@gmail.com>

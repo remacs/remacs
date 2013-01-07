@@ -66,8 +66,12 @@
    "[[:space:]]+\\(.*\\)$"))		; \6 filename
 
 ;;;###tramp-autoload
-(add-to-list 'tramp-methods `(,tramp-adb-method
-			      (tramp-tmpdir "/data/local/tmp")))
+(add-to-list 'tramp-methods
+	     `(,tramp-adb-method
+	       (tramp-tmpdir "/data/local/tmp")))
+
+;;;###tramp-autoload
+(add-to-list 'tramp-default-host-alist `(,tramp-adb-method nil ""))
 
 ;;;###tramp-autoload
 (eval-after-load 'tramp
@@ -119,7 +123,7 @@
     (vc-registered . ignore)	;no  vc control files on Android devices
     (write-region . tramp-adb-handle-write-region)
     (set-file-modes . tramp-adb-handle-set-file-modes)
-    (set-file-times . ignore)
+    (set-file-times . tramp-adb-handle-set-file-times)
     (copy-file . tramp-adb-handle-copy-file)
     (rename-file . tramp-adb-handle-rename-file)
     (process-file . tramp-adb-handle-process-file)
@@ -307,7 +311,9 @@ pass to the OPERATION."
 		(and is-symlink
 		     (cadr (split-string name "\\( -> \\|\n\\)")))))
 	  (push (list
-		 name
+		 (if is-symlink
+		     (car (split-string name "\\( -> \\|\n\\)"))
+		   name)
 		 (or is-dir symlink-target)
 		 1     ;link-count
 		 ;; no way to handle numeric ids in Androids ash
@@ -610,6 +616,19 @@ But handle the case, if the \"test\" command is not available."
     (tramp-adb-barf-unless-okay
      v (format "chmod %s %s" (tramp-compat-decimal-to-octal mode) localname)
      "Error while changing file's mode %s" filename)))
+
+(defun tramp-adb-handle-set-file-times (filename &optional time)
+  "Like `set-file-times' for Tramp files."
+  (with-parsed-tramp-file-name filename nil
+    (tramp-flush-file-property v localname)
+    (let ((time (if (or (null time) (equal time '(0 0)))
+		    (current-time)
+		  time)))
+      (tramp-adb-command-exit-status
+       ;; use shell arithmetic because of Emacs integer size limit
+       v (format "touch -t $(( %d * 65536 + %d )) %s"
+		 (car time) (cadr time)
+		 (tramp-shell-quote-argument localname))))))
 
 (defun tramp-adb-handle-copy-file
   (filename newname &optional ok-if-already-exists keep-date
@@ -937,17 +956,10 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 
 ;; Helper functions.
 
-(defun tramp-adb-file-name-host (vec)
-  "Return host component of VEC.
-If it is equal to the default value of `tramp-default-host', `nil' is returned."
-  (let ((host (tramp-file-name-host vec)))
-    (unless (equal host (eval (car (get 'tramp-default-host 'standard-value))))
-      host)))
-
 (defun tramp-adb-execute-adb-command (vec &rest args)
   "Returns nil on success error-output on failure."
-  (when (tramp-adb-file-name-host vec)
-    (setq args (append (list "-s" (tramp-adb-file-name-host vec)) args)))
+  (when (> (length (tramp-file-name-host vec)) 0)
+    (setq args (append (list "-s" (tramp-file-name-host vec)) args)))
   (with-temp-buffer
     (prog1
 	(unless (zerop (apply 'call-process (tramp-adb-program) nil t nil args))
@@ -1048,6 +1060,7 @@ Does not do anything if a connection is already open, but re-opens the
 connection if a previous connection has died for some reason."
   (let* ((buf (tramp-get-connection-buffer vec))
 	 (p (get-buffer-process buf))
+	 (host (tramp-file-name-host vec))
 	 (devices (mapcar 'cadr (tramp-adb-parse-device-names nil))))
     (unless
 	(and p (processp p) (memq (process-status p) '(run open)))
@@ -1055,21 +1068,17 @@ connection if a previous connection has died for some reason."
 	(when (and p (processp p)) (delete-process p))
 	(if (not devices)
 	    (tramp-error vec 'file-error "No device connected"))
-	(if (and (tramp-adb-file-name-host vec)
-		 (not (member (tramp-adb-file-name-host vec) devices)))
-	    (tramp-error
-	     vec 'file-error
-	     "Device %s not connected" (tramp-adb-file-name-host vec)))
-	(if (and (not (eq (length devices) 1))
-		 (not (tramp-adb-file-name-host vec)))
+	(if (and (> (length host) 0) (not (member host devices)))
+	    (tramp-error vec 'file-error "Device %s not connected" host))
+	(if (and (> (length devices) 1) (zerop (length host)))
 	    (tramp-error
 	     vec 'file-error
 	     "Multiple Devices connected: No Host/Device specified"))
 	(with-tramp-progress-reporter vec 3 "Opening adb shell connection"
 	  (let* ((coding-system-for-read 'utf-8-dos) ;is this correct?
 		 (process-connection-type tramp-process-connection-type)
-		 (args (if (tramp-adb-file-name-host vec)
-			   (list "-s" (tramp-adb-file-name-host vec) "shell")
+		 (args (if (> (length host) 0)
+			   (list "-s" host "shell")
 			 (list "shell")))
 		 (p (let ((default-directory
 			    (tramp-compat-temporary-file-directory)))
