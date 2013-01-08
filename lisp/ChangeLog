@@ -1,7 +1,56 @@
+2013-01-08  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* emacs-lisp/pcase.el (pcase--split-equal): Also take advantage if
+	the predicate returns nil.
+
+	* simple.el: Use lexical-binding.
+	(primitive-undo): Use pcase.
+	(minibuffer-history-isearch-push-state): Use a closure.
+
+2013-01-08  Aaron S. Hawley  <aaron.s.hawley@gmail.com>
+
+	* simple.el (primitive-undo): Move from undo.c.
+
+2013-01-08  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* vc/pcvs.el (cvs-cleanup-collection): Extend meaning of `rm-handled'.
+	(cvs-mode-remove-handled): Use it (bug#13380).
+
+	* emacs-lisp/nadvice.el (advice--tweak): New function.
+	(advice--remove-function, advice--subst-main): Use it.
+
+	* emacs-lisp/advice.el: Update commentary.
+
+2013-01-08  Michael Albinus  <michael.albinus@gmx.de>
+
+	* net/tramp-adb.el (tramp-adb-file-name-handler-alist):
+	Remove spurious entry.
+
+2013-01-08  Glenn Morris  <rgm@gnu.org>
+
+	* net/tramp.el (tramp-default-host-alist): Add :version.
+
+2013-01-08  Juri Linkov  <juri@jurta.org>
+
+	* info.el (Info-read-node-name-2): Don't duplicate suffixes for
+	single completion.  (Bug#12456)
+	(info--manual-names): Expand node completions into an explicit list
+	before appending it to another list.  Filter out internal buffers
+	with the leading space in the buffer name.  (Bug#10771)
+
+2013-01-08  Juri Linkov  <juri@jurta.org>
+
+	* info.el (Info-read-node-name-1): Allow empty node name in (FILENAME)
+	that defaults to the Top node.
+	(Info-goto-node, Info-read-node-name): Doc fix to mention that
+	the short format (FILENAME) goes to the Top node.
+	(Info-build-node-completions): Rename arg `file' to `filename'.
+	(Bug#13365)
+
 2013-01-07  Bastien Guerry  <bzg@gnu.org>
 
-	* menu-bar.el (menu-bar-search-documentation-menu): Use
-	`apropos-user-option' and fix the help message.
+	* menu-bar.el (menu-bar-search-documentation-menu):
+	Use `apropos-user-option' and fix the help message.
 
 2013-01-07  Bastien Guerry  <bzg@gnu.org>
 
