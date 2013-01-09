@@ -1,3 +1,74 @@
+2013-01-09  Elias Pipping  <pipping@lavabit.com>
+
+	* doc-view.el: Add support for DjVu (bug#13164).
+	(doc-view-djvu->png-converter-function): New config var.
+	(doc-view-single-page-converter-function, doc-view--image-type)
+	(doc-view--image-file-extension): New vars.
+	(doc-view-mode): Initialize them.
+	(doc-view-goto-page): Use them.
+	(doc-view-mode-p): Add support for ddjvu.
+	(doc-view-djvu->png-converter-ddjvu, doc-view-djvu->png-1)
+	(doc-view-set-up-single-converter): New funs.
+	(doc-view-pdf/ps->png): Extend for djvu.
+	(doc-view-document->png): Rename from doc-view-pdf->png.
+	(doc-view-convert-current-doc): Handle djvu.
+	(doc-view-insert-image, doc-view-display)
+	(doc-view-already-converted-p): Don't hardcode png.
+	(doc-view-set-doc-type): Recognize djvu docs.
+
+2013-01-09  Elias Pipping  <pipping@lavabit.com>
+
+	* doc-view.el: Add support for mupdf converter (bug#13164).
+	(doc-view-pdfdraw-program, doc-view-pdf->png-converter-function)
+	(doc-view-ps->png-converter-function): New config vars.
+	(doc-view-pdf->png-converter-ghostscript)
+	(doc-view-ps->png-converter-ghostscript)
+	(doc-view-pdf->png-converter-mupdf): New functions.
+	(doc-view-pdf/ps->png, doc-view-pdf->png-1): Use them.
+
+2013-01-09  Jürgen Hötzel  <juergen@archlinux.org>
+
+	* net/tramp.el (tramp-eshell-directory-change): Check remote-path
+	first in session cache: When `tramp-own-remote-path' is in
+	`tramp-remote-path', the remote path is only set in the session
+	cache.
+
+2013-01-09  Glenn Morris  <rgm@gnu.org>
+
+	* emacs-lisp/trace.el (trace-function-foreground)
+	(trace-function-background): Doc fix.
+
+2013-01-09  Juri Linkov  <juri@jurta.org>
+
+	* international/mule-cmds.el (read-char-by-name): Move let-binding
+	of completion-ignore-case around completing-read to fix regression
+	exhibited by the test case `C-x 8 RET *acc TAB' and caused by
+	`string-match-p' using the nil value of `case-fold-search' and
+	`completion-ignore-case' in `completion-pcm--all-completions'.
+	(Bug#12615).
+
+2013-01-09  Glenn Morris  <rgm@gnu.org>
+
+	* progmodes/compile.el (compilation-parse-errors):
+	Fix typo.  (Bug#13369)
+
+2013-01-09  Vitalie Spinu  <spinuvit@gmail.com>  (tiny change)
+
+	* comint.el (comint-send-input): Check size of buffer before
+	waiting for process output, in case already accepted.  (Bug#13290)
+
+2013-01-09  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Spelling fixes.
+	* net/tramp-adb.el (tramp-adb-get-toolbox):
+	Fix misspelling of 'unknown'.
+
+2013-01-08  Juri Linkov  <juri@jurta.org>
+
+	* textmodes/flyspell.el (flyspell-incorrect, flyspell-duplicate):
+	* progmodes/flymake.el (flymake-errline, flymake-warnline):
+	Use underline style wave on terminals that support it.  (Bug#13000)
+
 2013-01-08  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* emacs-lisp/pcase.el (pcase--split-equal): Also take advantage if
@@ -430,7 +501,7 @@
 
 	* net/tramp-adb.el (tramp-adb-get-ls-command): New defun.
 	Suppress coloring, if possible (required for BusyBox based systems like
-	CynagenMod).
+	CyanogenMod).
 	(tramp-adb-handle-file-attributes)
 	(tramp-adb-handle-insert-directory)
 	(tramp-adb-handle-file-name-all-completions): Use it.
@@ -11603,7 +11674,7 @@
 
 2012-03-16  Alan Mackenzie  <acm@muc.de>
 
-	Further optimise the handling of large macros.
+	Further optimize the handling of large macros.
 
 	* progmodes/cc-engine.el (c-crosses-statement-barrier-p): Use a
 	limit to a call of `c-literal-limits'.
@@ -13255,7 +13326,7 @@
 
 2012-01-08  Alan Mackenzie  <acm@muc.de>
 
-	Optimise font locking in long enum definitions.
+	Optimize font locking in long enum definitions.
 
 	* progmodes/cc-fonts.el (c-font-lock-declarations): Add an extra
 	arm to a cond form to handle enums.
