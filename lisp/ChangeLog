@@ -1,3 +1,116 @@
+2013-01-10  Michael Albinus  <michael.albinus@gmx.de>
+
+	* autorevert.el (auto-revert-notify-enabled): Move up.
+	(auto-revert-use-notify): New defcustom.
+	(auto-revert-mode, global-auto-revert-mode)
+	(auto-revert-notify-add-watch, auto-revert-handler)
+	(auto-revert-buffers): Use `auto-revert-use-notify' instead of
+	`auto-revert-notify-enabled'.
+
+2013-01-10  Elias Pipping  <pipping@exherbo.org>
+
+	* files.el (auto-mode-alist): Use doc-view for djvu files (bug#13164).
+	* doc-view.el (doc-view-document->bitmap):
+	Use doc-view-single-page-converter-function instead of
+	single-page-converter arg; adjust callers.
+
+2013-01-10  Feng Li  <fengli@gmail.com>  (tiny change)
+
+	* progmodes/which-func.el (which-function): Understand Semantic's use
+	of overlays in imenu--index-alist.
+
+2013-01-10  Wolfgang Jenkner  <wjenkner@inode.at>
+
+	* man.el: Handle different "man -k" behaviors (bug#13160).  Use utf-8.
+	(Man-man-k-use-anchor): New var.
+	(Man-parse-man-k): New function.
+	(Man-completion-table): Use it.
+	(man): Flush the completion cache between uses.
+
+2013-01-10  Michael Albinus  <michael.albinus@gmx.de>
+
+	* autorevert.el: Add file watch support.
+	(auto-revert-notify-enabled): New defconst.
+	(auto-revert-notify-watch-descriptor-hash-list)
+	(auto-revert-notify-watch-descriptor)
+	(auto-revert-notify-modified-p): New defvars.
+	(auto-revert-notify-rm-watch, auto-revert-notify-add-watch)
+	(auto-revert-notify-handler): New defuns.
+	(auto-revert-mode, global-auto-revert-mode): Remove file watches
+	when mode is disabled.
+	(auto-revert-handler): Check for `auto-revert-notify-modified-p'.
+	(auto-revert-buffers): Add file watches for active buffers.
+
+2013-01-10  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	* cus-start.el (toplevel): Only allow float values for
+	scroll-up-aggressively and scroll-down-aggressively.
+	Allow any number for line-spacing.
+
+2013-01-10  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* doc-view.el (doc-view-pdfdraw-program): Allow "pdfdraw" name.
+	(doc-view-pdf->png-converter-function): Use mupdf if available.
+	(doc-view-djvu->png-converter-function)
+	(doc-view-ps->png-converter-function): Remove.
+	(doc-view--image-file-pattern): Replace doc-view--image-file-extension.
+	(doc-view-goto-page, doc-view-convert-current-doc, doc-view-display)
+	(doc-view-already-converted-p): Adjust accordingly.
+	(doc-view-mode-p): Simplify.
+	(doc-view-enlarge): Use setq-local.
+	(doc-view-pdf->png-converter-ghostscript)
+	(doc-view-djvu->png-converter-ddjvu)
+	(doc-view-pdf->png-converter-mupdf): Rework to call
+	doc-view-start-process directly.
+	(doc-view-pdf/ps->png): Simplify accordingly.
+	(doc-view-pdf->png-1, doc-view-djvu->png-1): Remove.
+	(doc-view-document->bitmap): Rename from doc-view-document->png.
+	(doc-view-convert-current-doc): Merge pdf and djvu cases.
+	(doc-view-set-slice-from-bounding-box): Fix completion table.
+	(doc-view-mode): Use add-hook for after-revert-hook.
+
+2013-01-10  Glenn Morris  <rgm@gnu.org>
+
+	* emacs-lisp/authors.el (authors-ignored-files)
+	(authors-valid-file-names, authors-renamed-files-alist):
+	Add some more entries.
+
+2013-01-10  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* image-mode.el (image-mode-winprops): Don't throw away the fallback
+	`t' pseudo-window entry.
+
+2013-01-10  Alan Mackenzie  <acm@muc.de>
+
+	Fix bugs in the c-parse-state mechanism.  Reuse some markers
+	instead of continually generating new ones.
+
+	* progmodes/cc-engine.el (c-state-old-cpp-beg-marker)
+	(c-state-old-cpp-end-marker): New variables.
+	(c-append-lower-brace-pair-to-state-cache): Start a backward
+	search for "}" definitively outside CPP constructs.
+	(c-remove-stale-state-cache): Inform the caller of a need to
+	search back for a brace pair in certain circumstances.
+	(c-state-maybe-marker): New macro.
+	(c-parse-state): Reuse markers when appropriate.
+
+2013-01-10  Glenn Morris  <rgm@gnu.org>
+
+	* simple.el (execute-extended-command): Doc fix.
+	Bind prefix-arg around read-extended-command, for prompt.  (Bug#13395)
+
+2013-01-10  Chong Yidong  <cyd@gnu.org>
+
+	* faces.el (read-face-name): Doc fix.
+
+2013-01-10  Roland Winkler  <winkler@gnu.org>
+
+	* emacs-lisp/crm.el: Allow any regexp for separators.
+	(crm-default-separator): All spaces around the default comma separator.
+	(crm--completion-command): New macro.
+	(crm-completion-help, crm-complete, crm-complete-word): Use it.
+	(crm-complete-and-exit): Handle non-single-char separators.
+
 2013-01-09  Elias Pipping  <pipping@lavabit.com>
 
 	* doc-view.el: Add support for DjVu (bug#13164).
@@ -5945,7 +6058,7 @@
 
 2012-08-08  Fabián Ezequiel Gallina  <fgallina@cuca>
 
-	* progmodes/python.el Fixed defsubst warning.
+	* progmodes/python.el: Fix defsubst warning.
 	(python-syntax-context) Rename from python-info-ppss-context.
 	(python-syntax-context-type): Rename from
 	python-info-ppss-context-type.
