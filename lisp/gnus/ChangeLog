@@ -1,3 +1,15 @@
+2013-01-11  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	* gnus-art.el (gnus-mime-display-security): Use point-min-marker
+	and point-max-marker.
+	* gnus-async.el (gnus-async-article-callback): Use point-max-marker.
+
+2013-01-10  Uwe Brauer  <oub@mat.ucm.es>  (tiny change)
+
+	* mml-smime.el (mml-smime-encrypt-to-self): New user option analogous
+	to mml2015-encrypt-to-self.
+	(mml-smime-epg-encrypt): Respect mml-smime-encrypt-to-self.
+
 2013-01-09  Daiki Ueno  <ueno@gnu.org>
 
 	* mml-smime.el (epg-sub-key-fingerprint): Autoload for
