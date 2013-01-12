@@ -97,7 +97,7 @@
 
 ;; Dependencies:
 
-(eval-when-compile (require 'cl))
+(eval-when-compile (require 'cl-lib))
 (require 'timer)
 
 ;; Custom Group:
@@ -311,7 +311,7 @@ Hash key is a watch descriptor, hash value is the corresponding buffer.")
 
 (defvar auto-revert-notify-watch-descriptor nil
   "The file watch descriptor active for the current buffer.")
-(make-variable-buffer-local 'auto-revert-notify-watch-descriptor)
+(put 'auto-revert-notify-watch-descriptor 'permanent-local t)
 
 (defvar auto-revert-notify-modified-p nil
   "Non-nil when file has been modified on the file system.
@@ -527,17 +527,18 @@ will use an up-to-date value of `auto-revert-interval'"
       (ignore-errors
 	;; Check, that event is meant for us.
 	;; TODO: Filter events which stop watching, like `move' or `removed'.
-	(assert descriptor)
-	(when (featurep 'inotify) (assert (memq 'modify descriptor)))
-	(when (featurep 'w32notify) (assert (eq 'modified descriptor)))
-	(assert (bufferp buffer))
-	(when (stringp file)
-	  (assert (string-equal
-		   (directory-file-name file)
-		   (directory-file-name (buffer-file-name buffer)))))
-
-	;; Mark buffer modified.
+	(cl-assert descriptor)
+	(when (featurep 'inotify) (cl-assert (memq 'modify action)))
+	(when (featurep 'w32notify) (cl-assert (eq 'modified action)))
+	(cl-assert (bufferp buffer))
 	(with-current-buffer buffer
+	  (when (and (stringp file) (stringp buffer-file-name))
+	    ;; w32notify returns the basename of the file without its
+	    ;; leading directories; inotify returns its full absolute
+	    ;; file name.
+	    (cl-assert (file-equal-p file buffer-file-name)))
+
+	  ;; Mark buffer modified.
 	  (setq auto-revert-notify-modified-p t))))))
 
 (defun auto-revert-active-p ()
