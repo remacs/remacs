@@ -1,3 +1,43 @@
+2013-01-13  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* nsfont.m (LCD_SMOOTHING_MARGIN): New define.
+	(nsfont_draw): Remove disabling of LCD smoothing.
+	(ns_glyph_metrics): Add LCD_SMOOTHING_MARGIN to bearings to fix
+	Bug#11484 with LCD smoothing on.
+
+2013-01-13  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Fix SIGDANGER handlers, for AIX (Bug#13408).
+	* sysdep.c.c (handle_danger_signal, deliver_danger_signal) [SIGDANGER]:
+	Move handlers here from emacs.c; they were out of place.
+
+2013-01-11  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* xterm.c (syms_of_xterm): Adjust documentation for
+	scroll-bar-adjust-thumb-portion.
+
+2012-12-31  Adam Sjøgren  <asjo@koldfront.dk>  (tiny change)
+
+	* xterm.c (scroll-bar-adjust-thumb-portion): New variable to
+	determine whether scroll bar thumb size should be adjusted or
+	not. Use variable for MOTIF.
+
+	* gtkutil.c (scroll-bar-adjust-thumb-portion): Use variable for
+	GTK.
+
+2013-01-13  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* nsterm.m (keyDown:): Set processingCompose to NO if an emacs key
+	event is generated.
+	(doCommandBySelector:): Set processingCompose to NO.
+
+	* nsfont.m (ns_findfonts): Add block/unblock_input calls.
+	Remove check for fkeys count > zero, block/unblock fixes the real bug.
+	(nsfont_list_family): Add block/unblock_input calls.
+	(nsfont_open): Move block_input earlier.  Add unblock_input before early
+	return.
+	(nsfont_draw): Add block/unblock_input calls.
+
 2013-01-12  Dmitry Antipov  <dmantipov@yandex.ru>
 
 	* indent.c (Fvertical_motion): Remove now-incorrect GCPROs
@@ -46,7 +86,7 @@
 	(dissociate_if_controlling_tty): If setsid fails, fall back on TIOCNOTTY.
 	This is the main part of the bug fix.
 
-2013-01-10  Rainer Orth <ro@CeBiTec.Uni-Bielefeld.DE> (tiny change)
+2013-01-10  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>  (tiny change)
 
 	* gtkutil.c (xg_initialize): Add ifdef HAVE_FREETYPE around
 	x_last_font_name (Bug#13403).
@@ -1758,7 +1798,7 @@
 	* image.c (xpm_make_color_table_h): Fix compiler error because
 	make_hash_table changed.
 
-2012-11-08  Thomas Kappler <tkappler@gmail.com> (tiny change)
+2012-11-08  Thomas Kappler  <tkappler@gmail.com>  (tiny change)
 
 	* nsfont.m (ns_findfonts): Handle empty matchingDescs (Bug#11541).
 

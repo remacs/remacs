@@ -1,3 +1,36 @@
+2013-01-13  Fabián Ezequiel Gallina  <fgallina@cuca>
+
+	* progmodes/python.el (python-nav-end-of-statement): Fix
+	cornercase when handling multiline strings.
+
+2013-01-13  Richard Stallman  <rms@gnu.org>
+
+	* mail/sendmail.el (mail-position-on-field): Add doc string.
+
+	* mail/rmailmm.el (rmail-insert-mime-forwarded-message): Get
+	current message boundaries and pass them to
+	message-forward-make-body-mime.  Minor style changes.
+
+2013-01-13  Eli Zaretskii  <eliz@gnu.org>
+
+	* cus-start.el (all): Avoid warnings about
+	scroll-bar-adjust-thumb-portion on platforms where it is not
+	defined.
+
+2013-01-11  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* cus-start.el (all): Add scroll-bar-adjust-thumb-portion.
+
+2013-01-13  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* jit-lock.el (jit-lock-debug-mode): New minor mode.
+	(jit-lock--debug-fontifying): New var.
+	(jit-lock--debug-fontify): New function.
+	* subr.el (condition-case-unless-debug): Don't prevent catching the
+	error, just let the debbugger run.
+	* emacs-lisp/timer.el (timer-event-handler): Don't prevent debugging
+	timer code and don't drop errors silently.
+
 2013-01-12  Michael Albinus  <michael.albinus@gmx.de>
 
 	* autorevert.el (auto-revert-notify-watch-descriptor): Give it

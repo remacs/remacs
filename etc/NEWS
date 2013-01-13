@@ -58,6 +58,8 @@ entries of a file.  On GNU/Linux, the POSIX ACL interface is used via
 libacl.  On MS-Windows, the NT Security APIs are used to emulate the
 POSIX ACL interfaces.
 
+** New option `scroll-bar-adjust-thumb-portion'.
+
 * Editing Changes in Emacs 24.4
 
 ** New commands `toggle-frame-fullscreen' and `toggle-frame-maximized',
@@ -65,6 +67,8 @@ bound to <f11> and M-<f10>, respectively.
 
 
 * Changes in Specialized Modes and Packages in Emacs 24.4
+
+** jit-lock-debug-mode lets you use the debuggers on code run via jit-lock.
 
 ** completing-read-multiple's separator can now be a regexp.
 The default separator is changed to allow surrounding spaces around the comma.
