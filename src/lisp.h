@@ -1418,13 +1418,25 @@ struct Lisp_Save_Value
     } data[4];
   };
 
-/* Compatibility macro to set and extract saved pointer.  */
+/* Macro to set and extract Nth saved pointer.  Type
+   checking is ugly because it's used as an lvalue.  */
 
-#define XSAVE_POINTER(obj) XSAVE_VALUE (obj)->data[0].pointer
+#define XSAVE_POINTER(obj, n)					\
+  XSAVE_VALUE (obj)->data[(eassert (XSAVE_VALUE (obj)->type	\
+    ## n == SAVE_POINTER), n)].pointer
 
 /* Likewise for the saved integer.  */
 
-#define XSAVE_INTEGER(obj) XSAVE_VALUE (obj)->data[1].integer
+#define XSAVE_INTEGER(obj, n)					\
+  XSAVE_VALUE (obj)->data[(eassert (XSAVE_VALUE (obj)->type	\
+    ## n == SAVE_INTEGER), n)].integer
+
+/* Macro to extract Nth saved object.  This is never used as
+   an lvalue, so we can do more convenient type checking.  */
+
+#define XSAVE_OBJECT(obj, n)					\
+  (eassert (XSAVE_VALUE (obj)->type ## n == SAVE_OBJECT),	\
+   XSAVE_VALUE (obj)->data[n].object)
 
 /* A miscellaneous object, when it's on the free list.  */
 struct Lisp_Free
@@ -2926,7 +2938,6 @@ extern void memory_warnings (void *, void (*warnfun) (const char *));
 
 /* Defined in alloc.c.  */
 extern void check_pure_size (void);
-extern Lisp_Object allocate_misc (enum Lisp_Misc_Type);
 extern void free_misc (Lisp_Object);
 extern void allocate_string_data (struct Lisp_String *, EMACS_INT, EMACS_INT);
 extern void malloc_warning (const char *);
@@ -3012,8 +3023,8 @@ extern bool abort_on_gc;
 extern Lisp_Object make_float (double);
 extern void display_malloc_warning (void);
 extern ptrdiff_t inhibit_garbage_collection (void);
+extern Lisp_Object format_save_value (const char *, ...);
 extern Lisp_Object make_save_value (void *, ptrdiff_t);
-extern void free_save_value (Lisp_Object);
 extern Lisp_Object build_overlay (Lisp_Object, Lisp_Object, Lisp_Object);
 extern void free_marker (Lisp_Object);
 extern void free_cons (struct Lisp_Cons *);

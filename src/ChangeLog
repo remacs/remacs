@@ -1,3 +1,42 @@
+2013-01-15  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* alloc.c (free_save_value): Now static.
+
+2013-01-15  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	* keymap.c (map_keymap_internal): Use format_save_value.
+	(map_keymap_char_table_item): Adjust accordingly.
+	* fileio.c (non_regular_fd, non_regular_inserted)
+	(non_regular_nbytes): Remove.
+	(Finsert_file_contents): Convert trytry to ptrdiff_t.  Use
+	format_save_value to pass parameters to read_non_regular.
+	(read_non_regular): Use XSAVE_ macros to extract parameters.
+	Adjust comment.
+	* xmenu.c (xmenu_show) [!USE_X_TOOLKIT && !USE_GTK]: Use
+	format_save_value.
+	(pop_down_menu) [!USE_X_TOOLKIT && !USE_GTK]: Adjust user.
+
+2013-01-15  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	* lisp.h (XSAVE_POINTER, XSAVE_INTEGER): Change to allow
+	extraction from any Lisp_Save_Value slot.  Add type checking.
+	* alloc.c, dired.c, editfns.c, fileio.c, ftfont.c, gtkutil.c:
+	* keymap.c, lread.c, nsterm.h, nsmenu.c, xfns.c, xmenu.c:
+	* xselect.c: All users changed.
+
+2013-01-15  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	Some convenient bits to deal with Lisp_Save_Values.
+	* lisp.h (XSAVE_OBJECT): New macro to extract saved objects.
+	(allocate_misc): Remove prototype.
+	(format_save_value): New prototype.
+	* alloc.c (allocate_misc): Revert back to static.
+	(format_save_value): New function to build Lisp_Save_Value
+	object with the specified internal structure.
+	(make_save_value): Reimplement using format_save_value.
+	* editfns.c (save_excursion_save): Use format_save_value.
+	(save_excursion_restore): Use XSAVE_OBJECT.
+
 2013-01-14  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Avoid needless casts with XSAVE_POINTER.
