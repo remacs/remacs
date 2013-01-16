@@ -320,6 +320,16 @@ while (0)
 #define BUF_BYTES_MAX \
   (ptrdiff_t) min (MOST_POSITIVE_FIXNUM - 1, min (SIZE_MAX, PTRDIFF_MAX))
 
+/* Maximum gap size after compact_buffer, in bytes.  Also
+   used in make_gap_larger to get some extra reserved space.  */
+
+#define GAP_BYTES_DFL 2000
+
+/* Minimum gap size after compact_buffer, in bytes.  Also
+   used in make_gap_smaller to avoid too small gap size.  */
+
+#define GAP_BYTES_MIN 20
+
 /* Return the address of byte position N in current buffer.  */
 
 #define BYTE_POS_ADDR(n) \
@@ -1064,7 +1074,6 @@ extern void set_buffer_internal_1 (struct buffer *);
 extern void set_buffer_temp (struct buffer *);
 extern Lisp_Object buffer_local_value_1 (Lisp_Object, Lisp_Object);
 extern void record_buffer (Lisp_Object);
-extern _Noreturn void buffer_slot_type_mismatch (Lisp_Object, int);
 extern void fix_overlays_before (struct buffer *, ptrdiff_t, ptrdiff_t);
 extern void mmap_set_vars (bool);
 

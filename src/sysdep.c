@@ -714,6 +714,27 @@ init_foreground_group (void)
   inherited_pgroup = getpid () == pgrp ? 0 : pgrp;
 }
 
+/* Block and unblock SIGTTOU.  */
+
+void
+block_tty_out_signal (void)
+{
+#ifdef SIGTTOU
+  sigset_t blocked;
+  sigemptyset (&blocked);
+  sigaddset (&blocked, SIGTTOU);
+  pthread_sigmask (SIG_BLOCK, &blocked, 0);
+#endif
+}
+
+void
+unblock_tty_out_signal (void)
+{
+#ifdef SIGTTOU
+  pthread_sigmask (SIG_SETMASK, &empty_mask, 0);
+#endif
+}
+
 /* Safely set a controlling terminal FD's process group to PGID.
    If we are not in the foreground already, POSIX requires tcsetpgrp
    to deliver a SIGTTOU signal, which would stop us.  This is an
@@ -725,11 +746,10 @@ static void
 tcsetpgrp_without_stopping (int fd, pid_t pgid)
 {
 #ifdef SIGTTOU
-  signal_handler_t handler;
   block_input ();
-  handler = signal (SIGTTOU, SIG_IGN);
+  block_tty_out_signal ();
   tcsetpgrp (fd, pgid);
-  signal (SIGTTOU, handler);
+  unblock_tty_out_signal ();
   unblock_input ();
 #endif
 }
@@ -1657,6 +1677,25 @@ deliver_arith_signal (int sig)
 {
   deliver_thread_signal (sig, handle_arith_signal);
 }
+
+#ifdef SIGDANGER
+
+/* Handler for SIGDANGER.  */
+static void
+handle_danger_signal (int sig)
+{
+  malloc_warning ("Operating system warns that virtual memory is running low.\n");
+
+  /* It might be unsafe to call do_auto_save now.  */
+  force_auto_save_soon ();
+}
+
+static void
+deliver_danger_signal (int sig)
+{
+  deliver_process_signal (sig, handle_danger_signal);
+}
+#endif
 
 /* Treat SIG as a terminating signal, unless it is already ignored and
    we are in --batch mode.  Among other things, this makes nohup work.  */

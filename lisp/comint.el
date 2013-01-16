@@ -1521,7 +1521,7 @@ Intended to be added to `isearch-mode-hook' in `comint-mode'."
 If there are no search errors, this function displays an overlay with
 the Isearch prompt which replaces the original comint prompt.
 Otherwise, it displays the standard Isearch message returned from
-`isearch-message'."
+the function `isearch-message'."
   (if (not (and isearch-success (not isearch-error)))
       ;; Use standard function `isearch-message' when not in comint prompt,
       ;; or search fails, or has an error (like incomplete regexp).
@@ -1847,9 +1847,9 @@ Similarly for Soar, Scheme, etc."
           (let ((echo-len (- comint-last-input-end
                              comint-last-input-start)))
             ;; Wait for all input to be echoed:
-            (while (and (accept-process-output proc)
-                        (> (+ comint-last-input-end echo-len)
+            (while (and (> (+ comint-last-input-end echo-len)
                            (point-max))
+                        (accept-process-output proc)
                         (zerop
                          (compare-buffer-substrings
                           nil comint-last-input-start

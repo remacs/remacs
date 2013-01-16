@@ -209,6 +209,7 @@ Lisp_Object Qchar_table_extra_slots;
 
 static Lisp_Object Qpost_gc_hook;
 
+static void free_save_value (Lisp_Object);
 static void mark_terminals (void);
 static void gc_sweep (void);
 static Lisp_Object make_pure_vector (ptrdiff_t);
@@ -219,7 +220,6 @@ static void refill_memory_reserve (void);
 #endif
 static void compact_small_strings (void);
 static void free_large_strings (void);
-static void free_misc (Lisp_Object);
 extern Lisp_Object which_symbols (Lisp_Object, EMACS_INT) EXTERNALLY_VISIBLE;
 
 /* When scanning the C stack for live Lisp objects, Emacs keeps track of
@@ -3337,9 +3337,9 @@ allocate_misc (enum Lisp_Misc_Type type)
   return val;
 }
 
-/* Free a Lisp_Misc object */
+/* Free a Lisp_Misc object.  */
 
-static void
+void
 free_misc (Lisp_Object misc)
 {
   XMISCTYPE (misc) = Lisp_Misc_Free;
@@ -3349,34 +3349,77 @@ free_misc (Lisp_Object misc)
   total_free_markers++;
 }
 
-/* Return a Lisp_Misc_Save_Value object containing POINTER and
-   INTEGER.  This is used to package C values to call record_unwind_protect.
-   The unwind function can get the C values back using XSAVE_VALUE.  */
+/* Return a Lisp_Save_Value object with the data saved according to
+   FMT.  Format specifiers are `i' for an integer, `p' for a pointer
+   and `o' for Lisp_Object.  Up to 4 objects can be specified.  */
+
+Lisp_Object
+format_save_value (const char *fmt, ...)
+{
+  va_list ap;
+  int len = strlen (fmt);
+  Lisp_Object val = allocate_misc (Lisp_Misc_Save_Value);
+  struct Lisp_Save_Value *p = XSAVE_VALUE (val);
+
+  eassert (0 < len && len < 5);
+  va_start (ap, fmt);
+
+#define INITX(index)                                           \
+  do {                                                         \
+    if (len <= index)                                          \
+      p->type ## index = SAVE_UNUSED;                          \
+    else                                                       \
+      {							       \
+        if (fmt[index] == 'i')                                 \
+         {                                                     \
+           p->type ## index = SAVE_INTEGER;                    \
+           p->data[index].integer = va_arg (ap, ptrdiff_t);    \
+         }                                                     \
+       else if (fmt[index] == 'p')                             \
+         {                                                     \
+           p->type ## index = SAVE_POINTER;                    \
+           p->data[index].pointer = va_arg (ap, void *);       \
+         }                                                     \
+       else if (fmt[index] == 'o')                             \
+         {                                                     \
+           p->type ## index = SAVE_OBJECT;                     \
+           p->data[index].object = va_arg (ap, Lisp_Object);   \
+         }                                                     \
+       else                                                    \
+         emacs_abort ();                                       \
+      }							       \
+  } while (0)
+
+  INITX (0);
+  INITX (1);
+  INITX (2);
+  INITX (3);
+
+#undef INITX
+
+  va_end (ap);
+  p->area = 0;
+  return val;
+}
+
+/* Return a Lisp_Save_Value object containing POINTER and INTEGER.
+   Most code should use this to package C integers and pointers
+   to call record_unwind_protect.  The unwind function can get the
+   C values back using XSAVE_POINTER and XSAVE_INTEGER.  */
 
 Lisp_Object
 make_save_value (void *pointer, ptrdiff_t integer)
 {
-  register Lisp_Object val;
-  register struct Lisp_Save_Value *p;
-
-  val = allocate_misc (Lisp_Misc_Save_Value);
-  p = XSAVE_VALUE (val);
-  p->pointer = pointer;
-  p->integer = integer;
-  p->dogc = 0;
-  return val;
+  return format_save_value ("pi", pointer, integer);
 }
 
-/* Free a Lisp_Misc_Save_Value object.  */
+/* Free a Lisp_Save_Value object.  Do not use this function
+   if SAVE contains pointer other than returned by xmalloc.  */
 
-void
+static void
 free_save_value (Lisp_Object save)
 {
-  register struct Lisp_Save_Value *p = XSAVE_VALUE (save);
-
-  p->dogc = 0;
-  xfree (p->pointer);
-  p->pointer = NULL;
+  xfree (XSAVE_POINTER (save, 0));
   free_misc (save);
 }
 
@@ -4443,11 +4486,6 @@ mark_memory (void *start, void *end)
 	  mark_maybe_object (XIL ((intptr_t) p));
       }
 }
-
-/* setjmp will work with GCC unless NON_SAVING_SETJMP is defined in
-   the GCC system configuration.  In gcc 3.2, the only systems for
-   which this is so are i386-sco5 non-ELF, i386-sysv3 (maybe included
-   by others?) and ns32k-pc532-min.  */
 
 #if !defined GC_SAVE_REGISTERS_ON_STACK && !defined GC_SETJMP_WORKS
 
@@ -5913,20 +5951,33 @@ mark_object (Lisp_Object arg)
 
 	case Lisp_Misc_Save_Value:
 	  XMISCANY (obj)->gcmarkbit = 1;
-#if GC_MARK_STACK
 	  {
 	    register struct Lisp_Save_Value *ptr = XSAVE_VALUE (obj);
-	    /* If DOGC is set, POINTER is the address of a memory
-	       area containing INTEGER potential Lisp_Objects.  */
-	    if (ptr->dogc)
+	    /* If `area' is nonzero, `data[0].pointer' is the address
+	       of a memory area containing `data[1].integer' potential
+	       Lisp_Objects.  */
+#if GC_MARK_STACK
+	    if (ptr->area)
 	      {
-		Lisp_Object *p = (Lisp_Object *) ptr->pointer;
+		Lisp_Object *p = ptr->data[0].pointer;
 		ptrdiff_t nelt;
-		for (nelt = ptr->integer; nelt > 0; nelt--, p++)
+		for (nelt = ptr->data[1].integer; nelt > 0; nelt--, p++)
 		  mark_maybe_object (*p);
 	      }
+	    else
+#endif /* GC_MARK_STACK */
+	      {
+		/* Find Lisp_Objects in `data[N]' slots and mark them.  */
+		if (ptr->type0 == SAVE_OBJECT)
+		  mark_object (ptr->data[0].object);
+		if (ptr->type1 == SAVE_OBJECT)
+		  mark_object (ptr->data[1].object);
+		if (ptr->type2 == SAVE_OBJECT)
+		  mark_object (ptr->data[2].object);
+		if (ptr->type3 == SAVE_OBJECT)
+		  mark_object (ptr->data[3].object);
+	      }
 	  }
-#endif
 	  break;
 
 	case Lisp_Misc_Overlay:

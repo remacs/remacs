@@ -1,3 +1,48 @@
+2013-01-13  Bastien Guerry  <bzg@gnu.org>
+
+	* org.texi (Installation): Simplify.
+
+2013-01-13  François Allisson  <francois@allisson.co>  (tiny change)
+
+	* org.texi (Handling links): Update the mention to the obsolete
+	variable `org-link-to-org-use-id' with a mention to the newer
+	variable `org-id-link-to-org-use-id'.  Mention the need to load
+	the org-id library.
+
+2013-01-10  Michael Albinus  <michael.albinus@gmx.de>
+
+	* tramp.texi (Default Host): Introduce `tramp-default-host-alist'.
+
+2013-01-09  Bastien Guerry  <bzg@gnu.org>
+
+	* org.texi (Pushing to MobileOrg): Add footnote about using
+	symbolic links in `org-directory'.
+	(Timestamps, Deadlines and scheduling): Use `diary-float' instead
+	of the now obsolete alias `org-float'.
+	(TODO basics): Add `org-use-fast-todo-selection' to the variable
+	index.  Fix description of TODO keywords cycling.
+	(Advanced features): Add missing argument for @item.
+	(Storing searches): Add index entries and a note about
+	*-tree agenda views.
+	(Structure editing): Document `org-mark-element' and
+	`org-mark-subtree'.
+	(Tag inheritance): Document `org-agenda-use-tag-inheritance'.
+
+2013-01-08  Juri Linkov  <juri@jurta.org>
+
+	* info.texi (Go to node): Mention the abbreviated format
+	`(FILENAME)' equal to `(FILENAME)Top'.  (Bug#13365)
+
+2013-01-06  Andreas Schwab  <schwab@linux-m68k.org>
+
+	* autotype.texi: Remove undefined command @subtitlefont.
+	* cc-mode.texi: Likewise.
+
+	* org.texi (Advanced features): Use `@w{ }' instead of `@ ' in
+	@item argument.
+	(Property searches): Use \\ instead of @backslashchar{}.
+	* pgg.texi (VERSION): Move @set below @setfilename.
+
 2013-01-05  Andreas Schwab  <schwab@linux-m68k.org>
 
 	* ada-mode.texi: Remove braces from @title argument.

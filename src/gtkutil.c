@@ -1650,8 +1650,7 @@ xg_dialog_response_cb (GtkDialog *w,
 static Lisp_Object
 pop_down_dialog (Lisp_Object arg)
 {
-  struct Lisp_Save_Value *p = XSAVE_VALUE (arg);
-  struct xg_dialog_data *dd = (struct xg_dialog_data *) p->pointer;
+  struct xg_dialog_data *dd = XSAVE_POINTER (arg, 0);
 
   block_input ();
   if (dd->w) gtk_widget_destroy (dd->w);
@@ -3795,13 +3794,17 @@ xg_set_toolkit_scroll_bar_thumb (struct scroll_bar *bar,
 
       adj = gtk_range_get_adjustment (GTK_RANGE (wscroll));
 
-      /* We do the same as for MOTIF in xterm.c, assume 30 chars per line
-         rather than the real portion value.  This makes the thumb less likely
-         to resize and that looks better.  */
-      portion = WINDOW_TOTAL_LINES (XWINDOW (bar->window)) * 30;
-      /* When the thumb is at the bottom, position == whole.
-         So we need to increase `whole' to make space for the thumb.  */
-      whole += portion;
+      if (scroll_bar_adjust_thumb_portion_p)
+        {
+          /* We do the same as for MOTIF in xterm.c, use 30 chars per
+             line rather than the real portion value.  This makes the
+             thumb less likely to resize and that looks better.  */
+          portion = WINDOW_TOTAL_LINES (XWINDOW (bar->window)) * 30;
+
+          /* When the thumb is at the bottom, position == whole.
+             So we need to increase `whole' to make space for the thumb.  */
+          whole += portion;
+        }
 
       if (whole <= 0)
         top = 0, shown = 1;
@@ -5041,7 +5044,9 @@ xg_initialize (void)
                                 "cancel", 0);
   update_theme_scrollbar_width ();
 
+#ifdef HAVE_FREETYPE
   x_last_font_name = NULL;
+#endif
 }
 
 #endif /* USE_GTK */

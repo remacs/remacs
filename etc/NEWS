@@ -32,6 +32,13 @@ configure option `--without-acl'.
 * Changes in Emacs 24.4
 
 +++
+** `apropos-variable' is now `apropos-user-option'
+`apropos-user-option' shows all user options while `apropos-variable'
+shows all variables.  When called with a universal prefix argument,
+the two commands swap their behaviors.  When `apropos-do-all' is
+non-nil, they output the same results.
+
++++
 ** `eval-defun' on an already defined defcustom calls the :set function,
 if there is one.
 
@@ -51,6 +58,8 @@ entries of a file.  On GNU/Linux, the POSIX ACL interface is used via
 libacl.  On MS-Windows, the NT Security APIs are used to emulate the
 POSIX ACL interfaces.
 
+** New option `scroll-bar-adjust-thumb-portion'.
+
 * Editing Changes in Emacs 24.4
 
 ** New commands `toggle-frame-fullscreen' and `toggle-frame-maximized',
@@ -58,6 +67,11 @@ bound to <f11> and M-<f10>, respectively.
 
 
 * Changes in Specialized Modes and Packages in Emacs 24.4
+
+** jit-lock-debug-mode lets you use the debuggers on code run via jit-lock.
+
+** completing-read-multiple's separator can now be a regexp.
+The default separator is changed to allow surrounding spaces around the comma.
 
 ** Battery
 
@@ -197,6 +211,9 @@ property using the supplied face spec.
 
 *** Face specs set via Custom themes now replace the `defface' spec
 rather than inheriting from it (as do face specs set via Customize).
+
+*** New face characteristic (supports :underline (:style wave))
+specifies whether or not the terminal can display a wavy line.
 
 ** time-to-seconds is not obsolete any more.
 ** New function special-form-p.

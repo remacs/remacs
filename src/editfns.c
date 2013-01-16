@@ -833,21 +833,17 @@ This function does not move point.  */)
 Lisp_Object
 save_excursion_save (void)
 {
-  Lisp_Object save, *data = xmalloc (word_size * 4);
-
-  data[0] = Fpoint_marker ();
-  /* Do not copy the mark if it points to nowhere.  */
-  data[1] = (XMARKER (BVAR (current_buffer, mark))->buffer
-	     ? Fcopy_marker (BVAR (current_buffer, mark), Qnil)
-	     : Qnil);
-  /* Selected window if current buffer is shown in it, nil otherwise.  */
-  data[2] = ((XBUFFER (XWINDOW (selected_window)->buffer) == current_buffer)
-	     ? selected_window : Qnil);
-  data[3] = BVAR (current_buffer, mark_active);
-
-  save = make_save_value (data, 4);
-  XSAVE_VALUE (save)->dogc = 1;
-  return save;
+  return format_save_value
+    ("oooo",
+     Fpoint_marker (),
+     /* Do not copy the mark if it points to nowhere.  */
+     (XMARKER (BVAR (current_buffer, mark))->buffer
+      ? Fcopy_marker (BVAR (current_buffer, mark), Qnil)
+      : Qnil),
+     /* Selected window if current buffer is shown in it, nil otherwise.  */
+     ((XBUFFER (XWINDOW (selected_window)->buffer) == current_buffer)
+      ? selected_window : Qnil),
+     BVAR (current_buffer, mark_active));
 }
 
 /* Restore saved buffer before leaving `save-excursion' special form.  */
@@ -855,10 +851,10 @@ save_excursion_save (void)
 Lisp_Object
 save_excursion_restore (Lisp_Object info)
 {
-  Lisp_Object tem, tem1, omark, nmark, *data = XSAVE_VALUE (info)->pointer;
+  Lisp_Object tem, tem1, omark, nmark;
   struct gcpro gcpro1, gcpro2, gcpro3;
 
-  tem = Fmarker_buffer (data[0]);
+  tem = Fmarker_buffer (XSAVE_OBJECT (info, 0));
   /* If we're unwinding to top level, saved buffer may be deleted.  This
      means that all of its markers are unchained and so tem is nil.  */
   if (NILP (tem))
@@ -870,12 +866,12 @@ save_excursion_restore (Lisp_Object info)
   Fset_buffer (tem);
 
   /* Point marker.  */
-  tem = data[0];
+  tem = XSAVE_OBJECT (info, 0);
   Fgoto_char (tem);
   unchain_marker (XMARKER (tem));
 
   /* Mark marker.  */
-  tem = data[1];
+  tem = XSAVE_OBJECT (info, 1);
   omark = Fmarker_position (BVAR (current_buffer, mark));
   if (NILP (tem))
     unchain_marker (XMARKER (BVAR (current_buffer, mark)));
@@ -887,7 +883,7 @@ save_excursion_restore (Lisp_Object info)
     }
 
   /* Mark active.  */
-  tem = data[3];
+  tem = XSAVE_OBJECT (info, 3);
   tem1 = BVAR (current_buffer, mark_active);
   bset_mark_active (current_buffer, tem);
 
@@ -911,7 +907,7 @@ save_excursion_restore (Lisp_Object info)
   /* If buffer was visible in a window, and a different window was
      selected, and the old selected window is still showing this
      buffer, restore point in that window.  */
-  tem = data[2];
+  tem = XSAVE_OBJECT (info, 2);
   if (WINDOWP (tem)
       && !EQ (tem, selected_window)
       && (tem1 = XWINDOW (tem)->buffer,
@@ -925,7 +921,7 @@ save_excursion_restore (Lisp_Object info)
 
  out:
 
-  free_save_value (info);
+  free_misc (info);
   return Qnil;
 }
 
@@ -968,7 +964,7 @@ usage: (save-current-buffer &rest BODY)  */)
   return unbind_to (count, Fprogn (args));
 }
 
-DEFUN ("buffer-size", Fbufsize, Sbufsize, 0, 1, 0,
+DEFUN ("buffer-size", Fbuffer_size, Sbuffer_size, 0, 1, 0,
        doc: /* Return the number of characters in the current buffer.
 If BUFFER, return the number of characters in that buffer instead.  */)
   (Lisp_Object buffer)
@@ -2188,6 +2184,7 @@ set_time_zone_rule (const char *tzstring)
       xputenv (set_time_zone_rule_tz[1]);
     }
   tzset ();
+  tzvalbuf_in_environ = 0;
 #endif
 
   if (!tzstring)
@@ -4257,7 +4254,7 @@ usage: (format STRING &rest OBJECTS)  */)
 	    memcpy (buf, initial_buffer, used);
 	  }
 	else
-	  XSAVE_VALUE (buf_save_value)->pointer = buf = xrealloc (buf, bufsize);
+	  XSAVE_POINTER (buf_save_value, 0) = buf = xrealloc (buf, bufsize);
 
 	p = buf + used;
       }
@@ -4522,7 +4519,7 @@ Transposing beyond buffer boundaries is an error.  */)
   (Lisp_Object startr1, Lisp_Object endr1, Lisp_Object startr2, Lisp_Object endr2, Lisp_Object leave_markers)
 {
   register ptrdiff_t start1, end1, start2, end2;
-  ptrdiff_t start1_byte, start2_byte, len1_byte, len2_byte;
+  ptrdiff_t start1_byte, start2_byte, len1_byte, len2_byte, end2_byte;
   ptrdiff_t gap, len1, len_mid, len2;
   unsigned char *start1_addr, *start2_addr, *temp;
 
@@ -4583,20 +4580,22 @@ Transposing beyond buffer boundaries is an error.  */)
      the gap the minimum distance to get it out of the way, and then
      deal with an unbroken array.  */
 
+  start1_byte = CHAR_TO_BYTE (start1);
+  end2_byte = CHAR_TO_BYTE (end2);
+
   /* Make sure the gap won't interfere, by moving it out of the text
      we will operate on.  */
   if (start1 < gap && gap < end2)
     {
       if (gap - start1 < end2 - gap)
-	move_gap (start1);
+	move_gap_both (start1, start1_byte);
       else
-	move_gap (end2);
+	move_gap_both (end2, end2_byte);
     }
 
-  start1_byte = CHAR_TO_BYTE (start1);
   start2_byte = CHAR_TO_BYTE (start2);
   len1_byte = CHAR_TO_BYTE (end1) - start1_byte;
-  len2_byte = CHAR_TO_BYTE (end2) - start2_byte;
+  len2_byte = end2_byte - start2_byte;
 
 #ifdef BYTE_COMBINING_DEBUG
   if (end1 == start2)
@@ -4883,12 +4882,10 @@ functions if all the text being accessed has this property.  */);
   defsubr (&Sline_beginning_position);
   defsubr (&Sline_end_position);
 
-/*  defsubr (&Smark); */
-/*  defsubr (&Sset_mark); */
   defsubr (&Ssave_excursion);
   defsubr (&Ssave_current_buffer);
 
-  defsubr (&Sbufsize);
+  defsubr (&Sbuffer_size);
   defsubr (&Spoint_max);
   defsubr (&Spoint_min);
   defsubr (&Spoint_min_marker);

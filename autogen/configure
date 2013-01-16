@@ -2076,9 +2076,10 @@ Optional Features:
   --disable-dependency-tracking  speeds up one-time build
   --enable-dependency-tracking   do not reject slow dependency extractors
   --disable-largefile     omit support for large files
-  --enable-gcc-warnings   turn on lots of GCC warnings. This is intended for
-                          developers, and may generate false alarms when used
-                          with older or non-GNU development tools.
+  --enable-gcc-warnings   turn on lots of GCC warnings/errors. This is
+                          intended for developers, and may generate false
+                          alarms when used with older or non-GNU development
+                          tools.
   --enable-link-time-optimization
                           build emacs with link-time optimization. This is
                           supported only for GCC since 4.5.0.
@@ -15707,14 +15708,7 @@ esac
 
 
 
-
-
 case $opsys in
-  aix4-2 | hpux* | unixware)
-            $as_echo "#define GC_MARK_STACK GC_USE_GCPROS_AS_BEFORE" >>confdefs.h
-
-    ;;
-
           gnu-linux | gnu-kfreebsd )
     cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -15738,9 +15732,6 @@ main ()
 _ACEOF
 if ac_fn_c_try_cpp "$LINENO"; then :
   $as_echo "#define GC_SETJMP_WORKS 1" >>confdefs.h
-
-else
-  $as_echo "#define GC_MARK_STACK GC_USE_GCPROS_AS_BEFORE" >>confdefs.h
 
 fi
 rm -f conftest.err conftest.$ac_ext

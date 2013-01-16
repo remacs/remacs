@@ -1389,20 +1389,60 @@ struct Lisp_Overlay
     Lisp_Object plist;
   };
 
-/* Hold a C pointer for later use.
-   This type of object is used in the arg to record_unwind_protect.  */
+/* Types of data which may be saved in a Lisp_Save_Value.  */
+
+enum
+  {
+    SAVE_UNUSED,
+    SAVE_INTEGER,
+    SAVE_POINTER,
+    SAVE_OBJECT
+  };
+
+/* Special object used to hold a different values for later use.  */
+
 struct Lisp_Save_Value
   {
     ENUM_BF (Lisp_Misc_Type) type : 16;	/* = Lisp_Misc_Save_Value */
     unsigned gcmarkbit : 1;
-    int spacer : 14;
-    /* If DOGC is set, POINTER is the address of a memory
-       area containing INTEGER potential Lisp_Objects.  */
-    unsigned int dogc : 1;
-    void *pointer;
-    ptrdiff_t integer;
+    int spacer : 6;
+    /* If `area' is nonzero, `data[0].pointer' is the address of a memory area
+       containing `data[1].integer' potential Lisp_Objects.  The rest of `data'
+       fields are unused.  */
+    unsigned area : 1;
+    /* If `area' is zero, `data[N]' may hold different objects which type is
+       encoded in `typeN' fields as described by the anonymous enum above.
+       E.g. if `type0' is SAVE_INTEGER, `data[0].integer' is in use.  */
+    unsigned type0 : 2;
+    unsigned type1 : 2;
+    unsigned type2 : 2;
+    unsigned type3 : 2;
+    union {
+      void *pointer;
+      ptrdiff_t integer;
+      Lisp_Object object;
+    } data[4];
   };
 
+/* Macro to set and extract Nth saved pointer.  Type
+   checking is ugly because it's used as an lvalue.  */
+
+#define XSAVE_POINTER(obj, n)					\
+  XSAVE_VALUE (obj)->data[(eassert (XSAVE_VALUE (obj)->type	\
+    ## n == SAVE_POINTER), n)].pointer
+
+/* Likewise for the saved integer.  */
+
+#define XSAVE_INTEGER(obj, n)					\
+  XSAVE_VALUE (obj)->data[(eassert (XSAVE_VALUE (obj)->type	\
+    ## n == SAVE_INTEGER), n)].integer
+
+/* Macro to extract Nth saved object.  This is never used as
+   an lvalue, so we can do more convenient type checking.  */
+
+#define XSAVE_OBJECT(obj, n)					\
+  (eassert (XSAVE_VALUE (obj)->type ## n == SAVE_OBJECT),	\
+   XSAVE_VALUE (obj)->data[n].object)
 
 /* A miscellaneous object, when it's on the free list.  */
 struct Lisp_Free
@@ -1461,7 +1501,8 @@ struct Lisp_Buffer_Objfwd
   {
     enum Lisp_Fwd_Type type;	/* = Lisp_Fwd_Buffer_Obj */
     int offset;
-    Lisp_Object slottype; /* Qnil, Lisp_Int, Lisp_Symbol, or Lisp_String.  */
+    /* One of Qnil, Qintegerp, Qsymbolp, Qstringp, Qfloatp or Qnumberp.  */
+    Lisp_Object predicate;
   };
 
 /* struct Lisp_Buffer_Local_Value is used in a symbol value cell when
@@ -2231,8 +2272,12 @@ struct gcpro
    2    Mark the stack, and check that everything GCPRO'd is
 	marked.
    3	Mark using GCPRO's, mark stack last, and count how many
-	dead objects are kept alive.  */
+	dead objects are kept alive.
 
+   Formerly, method 0 was used.  Currently, method 1 is used unless
+   otherwise specified by hand when building, e.g.,
+   "make CPPFLAGS='-DGC_MARK_STACK=GC_USE_GCPROS_AS_BEFORE'".
+   Methods 2 and 3 are present mainly to debug the transition from 0 to 1.  */
 
 #define GC_USE_GCPROS_AS_BEFORE		0
 #define GC_MAKE_GCPROS_NOOPS		1
@@ -2788,10 +2833,10 @@ extern void syms_of_image (void);
 
 /* Defined in insdel.c.  */
 extern Lisp_Object Qinhibit_modification_hooks;
-extern void move_gap (ptrdiff_t);
 extern void move_gap_both (ptrdiff_t, ptrdiff_t);
 extern _Noreturn void buffer_overflow (void);
 extern void make_gap (ptrdiff_t);
+extern void make_gap_1 (struct buffer *, ptrdiff_t);
 extern ptrdiff_t copy_text (const unsigned char *, unsigned char *,
 			    ptrdiff_t, bool, bool);
 extern int count_combining_before (const unsigned char *,
@@ -2902,6 +2947,7 @@ extern void memory_warnings (void *, void (*warnfun) (const char *));
 
 /* Defined in alloc.c.  */
 extern void check_pure_size (void);
+extern void free_misc (Lisp_Object);
 extern void allocate_string_data (struct Lisp_String *, EMACS_INT, EMACS_INT);
 extern void malloc_warning (const char *);
 extern _Noreturn void memory_full (size_t);
@@ -2989,8 +3035,8 @@ extern bool abort_on_gc;
 extern Lisp_Object make_float (double);
 extern void display_malloc_warning (void);
 extern ptrdiff_t inhibit_garbage_collection (void);
+extern Lisp_Object format_save_value (const char *, ...);
 extern Lisp_Object make_save_value (void *, ptrdiff_t);
-extern void free_save_value (Lisp_Object);
 extern Lisp_Object build_overlay (Lisp_Object, Lisp_Object, Lisp_Object);
 extern void free_marker (Lisp_Object);
 extern void free_cons (struct Lisp_Cons *);
@@ -3479,6 +3525,8 @@ extern void init_sigio (int);
 extern void sys_subshell (void);
 extern void sys_suspend (void);
 extern void discard_tty_input (void);
+extern void block_tty_out_signal (void);
+extern void unblock_tty_out_signal (void);
 extern void init_sys_modes (struct tty_display_info *);
 extern void reset_sys_modes (struct tty_display_info *);
 extern void init_all_sys_modes (void);
@@ -3707,7 +3755,7 @@ extern void *record_xmalloc (size_t);
 	Lisp_Object arg_;				       \
 	buf = xmalloc ((nelt) * word_size);		       \
 	arg_ = make_save_value (buf, nelt);		       \
-	XSAVE_VALUE (arg_)->dogc = 1;			       \
+	XSAVE_VALUE (arg_)->area = 1;			       \
 	sa_must_free = 1;				       \
 	record_unwind_protect (safe_alloca_unwind, arg_);      \
       }							       \

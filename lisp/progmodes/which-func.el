@@ -290,7 +290,7 @@ If no function name is found, return nil."
     (when (and (null name)
 	       (boundp 'imenu--index-alist) (null imenu--index-alist)
 	       (null which-function-imenu-failed))
-      (imenu--make-index-alist t)
+      (ignore-errors (imenu--make-index-alist t))
       (unless imenu--index-alist
         (set (make-local-variable 'which-function-imenu-failed) t)))
     ;; If we have an index alist, use it.
@@ -319,7 +319,9 @@ If no function name is found, return nil."
                     namestack (cons (car pair) namestack)
                     alist     (cdr pair)))
 
-             ((number-or-marker-p (setq mark (cdr pair)))
+             ((or (number-or-marker-p (setq mark (cdr pair)))
+		  (and (overlayp mark)
+		       (setq mark (overlay-start mark))))
               (when (and (>= (setq offset (- (point) mark)) 0)
                          (< offset minoffset)) ; Find the closest item.
                 (setq minoffset offset
