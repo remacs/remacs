@@ -1,3 +1,76 @@
+2013-01-19  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* lisp.h (eabs): Define unconditionally (Bug#13419).
+	The old "#if !defined (eabs)" was an unnecessary revenant of back
+	when this macro was called "abs".  Document 'eabs' better.
+
+2013-01-19  Glenn Morris  <rgm@gnu.org>
+
+	* fns.c (Frandom): Doc fix.
+
+2013-01-19  Eli Zaretskii  <eliz@gnu.org>
+
+	* editfns.c (get_pos_property): Use SAFE_ALLOCA_LISP, to avoid
+	segfault when there are lots of overlays.
+
+	* buffer.c (sort_overlays): Use SAFE_NALLOCA, to avoid segfault
+	when there are lots of overlays.  See
+	http://lists.gnu.org/archive/html/emacs-devel/2013-01/msg00421.html
+	for the details and a way to reproduce.
+
+2013-01-19  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* fileio.c: Use O_APPEND to append.
+	This corresponds better to the natural interpretation of "append",
+	and avoids the need to open the output file twice, or to invoke
+	lseek when APPEND is neither nil nor a number.
+	This relies on POSIX 1003.1-1988 or later, which is OK nowadays.
+	(Fwrite_region): Simplify.  Use O_APPEND instead of opening the
+	file possibly twice, and lseeking to its end; this avoids the
+	need to lseek on non-regular files.  Do not use O_EXCL and O_TRUNC
+	at the same time: the combination is never needed and apparently
+	it doesn't work with DOS_NT.
+
+	Fix size bug on DOS_NT introduced by CIFS workaround (Bug#13149).
+	* fileio.c (Fwrite_region): Use O_BINARY in checking code, too.
+
+	Allow floating-point file offsets.
+	Problem reported by Vitalie Spinu in
+	<http://lists.gnu.org/archive/html/emacs-devel/2013-01/msg00411.html>.
+	* fileio.c (emacs_lseek): Remove.
+	(file_offset): New function.
+	(Finsert_file_contents, Fwrite_region): Use it.
+
+2013-01-19  Chong Yidong  <cyd@gnu.org>
+
+	* emacs.c (Fkill_emacs): Set waiting_for_input to 0 to avoid
+	aborting on Fsignal (Bug#13289).
+
+2013-01-19  Eli Zaretskii  <eliz@gnu.org>
+
+	* w32.c (acl_set_file): Treat ERROR_ACCESS_DENIED from
+	set_file_security as failure due to insufficient privileges.
+	Reported by Fabrice Popineau <fabrice.popineau@supelec.fr>.
+	(fstat): Return owner and group like 'stat' and 'lstat' do.
+
+2013-01-19  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Work around bug in CIFS and vboxsf file systems (Bug#13149).
+	The bug was observed on Ubuntu operating inside a virtual machine,
+	editing files mounted via CIFS or vboxsf from the MS Windows 7 host.
+	The workaround introduces a race condition on non-buggy hosts,
+	but it's an unlikely race and anyway there's a nearly identical
+	nearby race that can't be fixed.
+	* fileio.c (valid_timestamp_file_system, timestamp_file_system):
+	New static vars.
+	(Fwrite_region): Test for file system time stamp bug.
+	(init_fileio): New function.
+	* lisp.h (init_fileio): Declare it.
+	* emacs.c (main): Call it.
+
+	* fileio.c (Finsert_file_contents): Simplify new diagnostic
+	and make it more consistent with other stat-failure diagnostics.
+
 2013-01-18  Dmitry Antipov  <dmantipov@yandex.ru>
 
 	Fix crash when inserting data from non-regular files.  See

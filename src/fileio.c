@@ -103,6 +103,11 @@ static mode_t auto_save_mode_bits;
 /* Set by auto_save_1 if an error occurred during the last auto-save.  */
 static bool auto_save_error_occurred;
 
+/* If VALID_TIMESTAMP_FILE_SYSTEM, then TIMESTAMP_FILE_SYSTEM is the device
+   number of a file system where time stamps were observed to to work.  */
+static bool valid_timestamp_file_system;
+static dev_t timestamp_file_system;
+
 /* The symbol bound to coding-system-for-read when
    insert-file-contents is called for recovering a file.  This is not
    an actual coding system name, but just an indicator to tell
@@ -3438,19 +3443,25 @@ read_contents_quit (Lisp_Object ignore)
   return Qnil;
 }
 
-/* Reposition FD to OFFSET, based on WHENCE.  This acts like lseek
-   except that it also tests for OFFSET being out of lseek's range.  */
+/* Return the file offset that VAL represents, checking for type
+   errors and overflow.  */
 static off_t
-emacs_lseek (int fd, EMACS_INT offset, int whence)
+file_offset (Lisp_Object val)
 {
-  /* Use "&" rather than "&&" to suppress a bogus GCC warning; see
-     <http://gcc.gnu.org/bugzilla/show_bug.cgi?id=43772>.  */
-  if (! ((offset >= TYPE_MINIMUM (off_t)) & (offset <= TYPE_MAXIMUM (off_t))))
+  if (RANGED_INTEGERP (0, val, TYPE_MAXIMUM (off_t)))
+    return XINT (val);
+
+  if (FLOATP (val))
     {
-      errno = EINVAL;
-      return -1;
+      double v = XFLOAT_DATA (val);
+      if (0 <= v
+	  && (sizeof (off_t) < sizeof v
+	      ? v <= TYPE_MAXIMUM (off_t)
+	      : v < TYPE_MAXIMUM (off_t)))
+	return v;
     }
-  return lseek (fd, offset, whence);
+
+  wrong_type_argument (intern ("file-offset"), val);
 }
 
 /* Return a special time value indicating the error number ERRNUM.  */
@@ -3574,8 +3585,7 @@ by calling `format-decode', which see.  */)
   record_unwind_protect (close_file_unwind, make_number (fd));
 
   if (fstat (fd, &st) != 0)
-    report_file_error ("Getting input file status",
-		       Fcons (orig_filename, Qnil));
+    report_file_error ("Input file status", Fcons (orig_filename, Qnil));
   mtime = get_stat_mtime (&st);
 
   /* This code will need to be changed in order to work on named
@@ -3602,20 +3612,12 @@ by calling `format-decode', which see.  */)
     }
 
   if (!NILP (beg))
-    {
-      if (! RANGED_INTEGERP (0, beg, TYPE_MAXIMUM (off_t)))
-	wrong_type_argument (intern ("file-offset"), beg);
-      beg_offset = XFASTINT (beg);
-    }
+    beg_offset = file_offset (beg);
   else
     beg_offset = 0;
 
   if (!NILP (end))
-    {
-      if (! RANGED_INTEGERP (0, end, TYPE_MAXIMUM (off_t)))
-	wrong_type_argument (intern ("file-offset"), end);
-      end_offset = XFASTINT (end);
-    }
+    end_offset = file_offset (end);
   else
     {
       if (not_regular)
@@ -4710,7 +4712,7 @@ If START is a string, then output that string to the file
 instead of any buffer contents; END is ignored.
 
 Optional fourth argument APPEND if non-nil means
-  append to existing file contents (if any).  If it is an integer,
+  append to existing file contents (if any).  If it is a number,
   seek to that offset in the file before writing.
 Optional fifth argument VISIT, if t or a string, means
   set the last-save-file-modtime of buffer to this file's modtime
@@ -4739,6 +4741,9 @@ This calls `write-region-annotate-functions' at the start, and
   (Lisp_Object start, Lisp_Object end, Lisp_Object filename, Lisp_Object append, Lisp_Object visit, Lisp_Object lockname, Lisp_Object mustbenew)
 {
   int desc;
+  int open_flags;
+  int mode;
+  off_t offset IF_LINT (= 0);
   bool ok;
   int save_errno = 0;
   const char *fn;
@@ -4858,27 +4863,20 @@ This calls `write-region-annotate-functions' at the start, and
 #endif /* CLASH_DETECTION */
 
   encoded_filename = ENCODE_FILE (filename);
-
   fn = SSDATA (encoded_filename);
-  desc = -1;
-  if (!NILP (append))
+  open_flags = O_WRONLY | O_BINARY | O_CREAT;
+  open_flags |= EQ (mustbenew, Qexcl) ? O_EXCL : !NILP (append) ? 0 : O_TRUNC;
+  if (NUMBERP (append))
+    offset = file_offset (append);
+  else if (!NILP (append))
+    open_flags |= O_APPEND;
 #ifdef DOS_NT
-    desc = emacs_open (fn, O_WRONLY | O_BINARY, 0);
-#else  /* not DOS_NT */
-    desc = emacs_open (fn, O_WRONLY, 0);
-#endif /* not DOS_NT */
+  mode = S_IREAD | S_IWRITE;
+#else
+  mode = auto_saving ? auto_save_mode_bits : 0666;
+#endif
 
-  if (desc < 0 && (NILP (append) || errno == ENOENT))
-#ifdef DOS_NT
-  desc = emacs_open (fn,
-		     O_WRONLY | O_CREAT | O_BINARY
-		     | (EQ (mustbenew, Qexcl) ? O_EXCL : O_TRUNC),
-		     S_IREAD | S_IWRITE);
-#else  /* not DOS_NT */
-  desc = emacs_open (fn, O_WRONLY | O_TRUNC | O_CREAT
-		     | (EQ (mustbenew, Qexcl) ? O_EXCL : 0),
-		     auto_saving ? auto_save_mode_bits : 0666);
-#endif /* not DOS_NT */
+  desc = emacs_open (fn, open_flags, mode);
 
   if (desc < 0)
     {
@@ -4893,14 +4891,9 @@ This calls `write-region-annotate-functions' at the start, and
 
   record_unwind_protect (close_file_unwind, make_number (desc));
 
-  if (!NILP (append) && !NILP (Ffile_regular_p (filename)))
+  if (NUMBERP (append))
     {
-      off_t ret;
-
-      if (NUMBERP (append))
-	ret = emacs_lseek (desc, XINT (append), SEEK_CUR);
-      else
-	ret = lseek (desc, 0, SEEK_END);
+      off_t ret = lseek (desc, offset, SEEK_SET);
       if (ret < 0)
 	{
 #ifdef CLASH_DETECTION
@@ -4972,6 +4965,48 @@ This calls `write-region-annotate-functions' at the start, and
   /* Discard the unwind protect for close_file_unwind.  */
   specpdl_ptr = specpdl + count1;
 
+  /* Some file systems have a bug where st_mtime is not updated
+     properly after a write.  For example, CIFS might not see the
+     st_mtime change until after the file is opened again.
+
+     Attempt to detect this file system bug, and update MODTIME to the
+     newer st_mtime if the bug appears to be present.  This introduces
+     a race condition, so to avoid most instances of the race condition
+     on non-buggy file systems, skip this check if the most recently
+     encountered non-buggy file system was the current file system.
+
+     A race condition can occur if some other process modifies the
+     file between the fstat above and the fstat below, but the race is
+     unlikely and a similar race between the last write and the fstat
+     above cannot possibly be closed anyway.  */
+
+  if (EMACS_TIME_VALID_P (modtime)
+      && ! (valid_timestamp_file_system && st.st_dev == timestamp_file_system))
+    {
+      int desc1 = emacs_open (fn, O_WRONLY | O_BINARY, 0);
+      if (0 <= desc1)
+	{
+	  struct stat st1;
+	  if (fstat (desc1, &st1) == 0
+	      && st.st_dev == st1.st_dev && st.st_ino == st1.st_ino)
+	    {
+	      EMACS_TIME modtime1 = get_stat_mtime (&st1);
+	      if (EMACS_TIME_EQ (modtime, modtime1)
+		  && st.st_size == st1.st_size)
+		{
+		  timestamp_file_system = st.st_dev;
+		  valid_timestamp_file_system = 1;
+		}
+	      else
+		{
+		  st.st_size = st1.st_size;
+		  modtime = modtime1;
+		}
+	    }
+	  emacs_close (desc1);
+	}
+    }
+
   /* Call write-region-post-annotation-function. */
   while (CONSP (Vwrite_region_annotation_buffers))
     {
@@ -5024,7 +5059,7 @@ This calls `write-region-annotate-functions' at the start, and
     }
 
   if (!auto_saving)
-    message_with_string ((INTEGERP (append)
+    message_with_string ((NUMBERP (append)
 			  ? "Updated %s"
 			  : ! NILP (append)
 			  ? "Added to %s"
@@ -5768,6 +5803,12 @@ Fread_file_name (Lisp_Object prompt, Lisp_Object dir, Lisp_Object default_filena
 }
 
 
+void
+init_fileio (void)
+{
+  valid_timestamp_file_system = 0;
+}
+
 void
 syms_of_fileio (void)
 {

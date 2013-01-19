@@ -4164,13 +4164,23 @@ fstat (int desc, struct stat * buf)
   else
     buf->st_ino = fake_inode;
 
-  /* Consider files to belong to current user.
-     FIXME: this should use GetSecurityInfo API, but it is only
-     available for _WIN32_WINNT >= 0x501.  */
-  buf->st_uid = dflt_passwd.pw_uid;
-  buf->st_gid = dflt_passwd.pw_gid;
-  strcpy (buf->st_uname, dflt_passwd.pw_name);
-  strcpy (buf->st_gname, dflt_group.gr_name);
+  /* If the caller so requested, get the true file owner and group.
+     Otherwise, consider the file to belong to the current user.  */
+  if (!w32_stat_get_owner_group || is_windows_9x () == TRUE)
+    get_file_owner_and_group (NULL, buf);
+  else
+    {
+      PSECURITY_DESCRIPTOR psd = NULL;
+
+      psd = get_file_security_desc_by_handle (fh);
+      if (psd)
+	{
+	  get_file_owner_and_group (psd, buf);
+	  LocalFree (psd);
+	}
+      else
+	get_file_owner_and_group (NULL, buf);
+    }
 
   buf->st_dev = info.dwVolumeSerialNumber;
   buf->st_rdev = info.dwVolumeSerialNumber;
@@ -4875,7 +4885,8 @@ acl_set_file (const char *fname, acl_type_t type, acl_t acl)
       retval = 0;
       errno = e;
     }
-  else if (err == ERROR_INVALID_OWNER || err == ERROR_NOT_ALL_ASSIGNED)
+  else if (err == ERROR_INVALID_OWNER || err == ERROR_NOT_ALL_ASSIGNED
+	   || err == ERROR_ACCESS_DENIED)
     {
       /* Maybe the requested ACL and the one the file already has are
 	 identical, in which case we can silently ignore the

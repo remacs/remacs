@@ -1,3 +1,19 @@
+2013-01-19  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* trouble.texi (Crashing): Suggest -p for newer addr2line.  (Bug#13445)
+	Without it, I don't see function names.  Older addr2line
+	implementations will die out sooner or later, so tailor the
+	first suggestion to recent addr2line, with a followup about
+	older ones.
+
+2013-01-19  Glenn Morris  <rgm@gnu.org>
+
+	* custom.texi (Directory Variables): Fix paren typo.
+
+	* trouble.texi (Crashing): Not all addr2line have -p.  (Bug#13445)
+
+	* custom.texi (Custom Themes): Fix typo.
+
 2013-01-07  Bastien Guerry  <bzg@gnu.org>
 
 	* help.texi (Apropos): Document `apropos-user-option' and update
