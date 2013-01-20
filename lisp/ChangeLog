@@ -1,3 +1,12 @@
+2013-01-20  Glenn Morris  <rgm@gnu.org>
+
+	* emacs-lisp/lisp-mode.el (emacs-lisp-mode-map):
+	Add native profiler menu entries.
+
+	* profiler.el (profiler-running-p): New function.
+	(profiler-cpu-profile): Use profiler-running-p.
+	(profiler-report-mode-map): Add some more menu entries.
+
 2013-01-19  Glenn Morris  <rgm@gnu.org>
 
 	* mail/unrmail.el (unrmail): Do not mangle the mbox From line;
