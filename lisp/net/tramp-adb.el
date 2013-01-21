@@ -33,6 +33,7 @@
 ;;; Code:
 
 (require 'tramp)
+(require 'time-date)
 
 (defvar dired-move-to-filename-regexp)
 
@@ -465,7 +466,7 @@ Emacs dired can't find files."
     (setq time-a (apply 'encode-time (parse-time-string (match-string 0 a))))
     (string-match tramp-adb-ls-date-regexp b)
     (setq time-b (apply 'encode-time (parse-time-string (match-string 0 b))))
-    (time-less-p time-b time-a)))
+    (tramp-time-less-p time-b time-a)))
 
 (defun tramp-adb-ls-output-name-less-p (a b)
   "Sort \"ls\" output by name, ascending."
@@ -638,7 +639,7 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 	newname (expand-file-name newname))
 
   (if (file-directory-p filename)
-      (copy-directory filename newname keep-date t)
+      (tramp-file-name-handler 'copy-directory filename newname keep-date t)
     (with-tramp-progress-reporter
 	(tramp-dissect-file-name (if (file-remote-p filename) filename newname))
 	0 (format "Copying %s to %s" filename newname)
@@ -698,7 +699,10 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 	    (tramp-flush-file-property v localname)
 	    ;; Short track.
 	    (tramp-adb-barf-unless-okay
-	     v (format "mv %s %s" (file-remote-p filename 'localname) localname)
+	     v (format
+		"mv %s %s"
+		(tramp-file-name-handler 'file-remote-p filename 'localname)
+		localname)
 	     "Error renaming %s to %s" filename newname))
 
 	;; Rename by copy.
@@ -907,15 +911,11 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 				(cons program args) " "))))
 	  (tramp-process-connection-type
 	   (or (null program) tramp-process-connection-type))
-	  (bmp (and (buffer-live-p buffer) (buffer-modified-p buffer)))
 	  (name1 name)
 	  (i 0))
       (unwind-protect
 	  (save-excursion
 	    (save-restriction
-	      (unless buffer
-		;; BUFFER can be nil.  We use a temporary buffer.
-		(setq buffer (generate-new-buffer tramp-temp-buffer-name)))
 	      (while (get-process name1)
 		;; NAME must be unique as process name.
 		(setq i (1+ i)
@@ -923,35 +923,21 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 	      (setq name name1)
 	      ;; Set the new process properties.
 	      (tramp-set-connection-property v "process-name" name)
-	      (tramp-set-connection-property v "process-buffer" buffer)
-	      ;; Activate narrowing in order to save BUFFER contents.
-	      ;; Clear also the modification time; otherwise we might
-	      ;; be interrupted by `verify-visited-file-modtime'.
-	      (with-current-buffer (tramp-get-connection-buffer v)
-		(let ((buffer-undo-list t))
-		  (clear-visited-file-modtime)
-		  (narrow-to-region (point-max) (point-max))
-		  (if command
-		      ;; Send the command.
-		      (tramp-adb-send-command v command)
-		    ;; Open the connection.
-		    (tramp-adb-maybe-open-connection v))))
-	      (let ((p (tramp-get-connection-process v)))
-		;; Set sentinel and query flag for this process.
-		(tramp-set-connection-property p "vector" v)
-		(set-process-sentinel p 'tramp-process-sentinel)
-		(tramp-compat-set-process-query-on-exit-flag p t)
-		;; Return process.
-		p)))
-	;; Save exit.
-	(with-current-buffer (tramp-get-connection-buffer v)
-	  (if (string-match tramp-temp-buffer-name (buffer-name))
-	      (progn
-		(set-process-buffer (tramp-get-connection-process v) nil)
-		(kill-buffer (current-buffer)))
-	    (set-buffer-modified-p bmp)))
-	(tramp-set-connection-property v "process-name" nil)
-	(tramp-set-connection-property v "process-buffer" nil)))))
+	      (when command
+		(let* ((host (tramp-file-name-host v))
+		       (devices (mapcar 'cadr (tramp-adb-parse-device-names nil)))
+		       (args (if (> (length host) 0)
+				 (list "-s" host "shell" command)
+			       (list "shell" command)))
+		       (p (apply 'start-process (tramp-get-connection-name v) buffer
+				 (tramp-adb-program) args)))
+		  ;; Set sentinel and query flag for this process.
+		  (tramp-set-connection-property p "vector" v)
+		  (set-process-sentinel p 'tramp-process-sentinel)
+		  (tramp-compat-set-process-query-on-exit-flag p t)
+		  ;; Return process.
+		  p))))
+	(tramp-set-connection-property v "process-name" nil)))))
 
 ;; Helper functions.
 
@@ -1089,7 +1075,7 @@ connection if a previous connection has died for some reason."
 	    (tramp-adb-wait-for-output p)
 	    (unless (eq 'run (process-status p))
 	      (tramp-error  vec 'file-error "Terminated!"))
-	    (set-process-query-on-exit-flag p nil)
+	    (tramp-compat-set-process-query-on-exit-flag p nil)
 
 	    ;; Check whether the properties have been changed.  If
 	    ;; yes, this is a strong indication that we must expire all
