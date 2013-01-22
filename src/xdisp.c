@@ -2544,8 +2544,7 @@ check_it (struct it *it)
 static void
 check_window_end (struct window *w)
 {
-  if (!MINI_WINDOW_P (w)
-      && !NILP (w->window_end_valid))
+  if (!MINI_WINDOW_P (w) && w->window_end_valid)
     {
       struct glyph_row *row;
       eassert ((row = MATRIX_ROW (w->current_matrix,
@@ -12976,10 +12975,10 @@ static void
 reconsider_clip_changes (struct window *w, struct buffer *b)
 {
   if (b->clip_changed
-	   && !NILP (w->window_end_valid)
-	   && w->current_matrix->buffer == b
-	   && w->current_matrix->zv == BUF_ZV (b)
-	   && w->current_matrix->begv == BUF_BEGV (b))
+      && w->window_end_valid
+      && w->current_matrix->buffer == b
+      && w->current_matrix->zv == BUF_ZV (b)
+      && w->current_matrix->begv == BUF_BEGV (b))
     b->clip_changed = 0;
 
   /* If display wasn't paused, and W is not a tool bar window, see if
@@ -12987,8 +12986,7 @@ reconsider_clip_changes (struct window *w, struct buffer *b)
      we set b->clip_changed to 1 to force updating the screen.  If
      b->clip_changed has already been set to 1, we can skip this
      check.  */
-  if (!b->clip_changed
-      && BUFFERP (w->buffer) && !NILP (w->window_end_valid))
+  if (!b->clip_changed && BUFFERP (w->buffer) && w->window_end_valid)
     {
       ptrdiff_t pt;
 
@@ -13382,7 +13380,7 @@ redisplay_internal (void)
 	      else if (XFASTINT (w->window_end_vpos) == this_line_vpos
 		       && this_line_vpos > 0)
 		wset_window_end_vpos (w, make_number (this_line_vpos - 1));
-	      wset_window_end_valid (w, Qnil);
+	      w->window_end_valid = 0;
 
 	      /* Update hint: No need to try to scroll in update_window.  */
 	      w->desired_matrix->no_scrolling_p = 1;
@@ -13783,50 +13781,43 @@ unwind_redisplay (Lisp_Object old_frame)
 }
 
 
-/* Mark the display of window W as accurate or inaccurate.  If
-   ACCURATE_P is non-zero mark display of W as accurate.  If
-   ACCURATE_P is zero, arrange for W to be redisplayed the next time
-   redisplay_internal is called.  */
+/* Mark the display of leaf window W as accurate or inaccurate.
+   If ACCURATE_P is non-zero mark display of W as accurate.  If
+   ACCURATE_P is zero, arrange for W to be redisplayed the next
+   time redisplay_internal is called.  */
 
 static void
 mark_window_display_accurate_1 (struct window *w, int accurate_p)
 {
-  if (BUFFERP (w->buffer))
-    {
-      struct buffer *b = XBUFFER (w->buffer);
+  struct buffer *b = XBUFFER (w->buffer);
 
-      w->last_modified = accurate_p ? BUF_MODIFF (b) : 0;
-      w->last_overlay_modified = accurate_p ? BUF_OVERLAY_MODIFF (b) : 0;
-      w->last_had_star
-	= BUF_MODIFF (b) > BUF_SAVE_MODIFF (b);
-
-      if (accurate_p)
-	{
-	  b->clip_changed = 0;
-	  b->prevent_redisplay_optimizations_p = 0;
-
-	  BUF_UNCHANGED_MODIFIED (b) = BUF_MODIFF (b);
-	  BUF_OVERLAY_UNCHANGED_MODIFIED (b) = BUF_OVERLAY_MODIFF (b);
-	  BUF_BEG_UNCHANGED (b) = BUF_GPT (b) - BUF_BEG (b);
-	  BUF_END_UNCHANGED (b) = BUF_Z (b) - BUF_GPT (b);
-
-	  w->current_matrix->buffer = b;
-	  w->current_matrix->begv = BUF_BEGV (b);
-	  w->current_matrix->zv = BUF_ZV (b);
-
-	  w->last_cursor = w->cursor;
-	  w->last_cursor_off_p = w->cursor_off_p;
-
-	  if (w == XWINDOW (selected_window))
-	    w->last_point = BUF_PT (b);
-	  else
-	    w->last_point = marker_position (w->pointm);
-	}
-    }
+  w->last_modified = accurate_p ? BUF_MODIFF (b) : 0;
+  w->last_overlay_modified = accurate_p ? BUF_OVERLAY_MODIFF (b) : 0;
+  w->last_had_star = BUF_MODIFF (b) > BUF_SAVE_MODIFF (b);
 
   if (accurate_p)
     {
-      wset_window_end_valid (w, w->buffer);
+      b->clip_changed = 0;
+      b->prevent_redisplay_optimizations_p = 0;
+
+      BUF_UNCHANGED_MODIFIED (b) = BUF_MODIFF (b);
+      BUF_OVERLAY_UNCHANGED_MODIFIED (b) = BUF_OVERLAY_MODIFF (b);
+      BUF_BEG_UNCHANGED (b) = BUF_GPT (b) - BUF_BEG (b);
+      BUF_END_UNCHANGED (b) = BUF_Z (b) - BUF_GPT (b);
+
+      w->current_matrix->buffer = b;
+      w->current_matrix->begv = BUF_BEGV (b);
+      w->current_matrix->zv = BUF_ZV (b);
+
+      w->last_cursor = w->cursor;
+      w->last_cursor_off_p = w->cursor_off_p;
+
+      if (w == XWINDOW (selected_window))
+	w->last_point = BUF_PT (b);
+      else
+	w->last_point = marker_position (w->pointm);
+
+      w->window_end_valid = 1;
       w->update_mode_line = 0;
     }
 }
@@ -13845,25 +13836,21 @@ mark_window_display_accurate (Lisp_Object window, int accurate_p)
   for (; !NILP (window); window = w->next)
     {
       w = XWINDOW (window);
-      mark_window_display_accurate_1 (w, accurate_p);
-
       if (!NILP (w->vchild))
 	mark_window_display_accurate (w->vchild, accurate_p);
-      if (!NILP (w->hchild))
+      else if (!NILP (w->hchild))
 	mark_window_display_accurate (w->hchild, accurate_p);
+      else if (BUFFERP (w->buffer))
+	mark_window_display_accurate_1 (w, accurate_p);
     }
 
   if (accurate_p)
-    {
-      update_overlay_arrows (1);
-    }
+    update_overlay_arrows (1);
   else
-    {
-      /* Force a thorough redisplay the next time by setting
-	 last_arrow_position and last_arrow_string to t, which is
-	 unequal to any useful value of Voverlay_arrow_...  */
-      update_overlay_arrows (-1);
-    }
+    /* Force a thorough redisplay the next time by setting
+       last_arrow_position and last_arrow_string to t, which is
+       unequal to any useful value of Voverlay_arrow_...  */
+    update_overlay_arrows (-1);
 }
 
 
@@ -15532,7 +15519,7 @@ redisplay_window (Lisp_Object window, int just_this_one_p)
   set_buffer_internal_1 (XBUFFER (w->buffer));
 
   current_matrix_up_to_date_p
-    = (!NILP (w->window_end_valid)
+    = (w->window_end_valid
        && !current_buffer->clip_changed
        && !current_buffer->prevent_redisplay_optimizations_p
        && !window_outdated (w));
@@ -15555,7 +15542,7 @@ redisplay_window (Lisp_Object window, int just_this_one_p)
   specbind (Qinhibit_point_motion_hooks, Qt);
 
   buffer_unchanged_p
-    = (!NILP (w->window_end_valid)
+    = (w->window_end_valid
        && !current_buffer->clip_changed
        && !window_outdated (w));
 
@@ -15568,7 +15555,7 @@ redisplay_window (Lisp_Object window, int just_this_one_p)
       if (XMARKER (w->start)->buffer == current_buffer)
 	compute_window_start_on_continuation_line (w);
 
-      wset_window_end_valid (w, Qnil);
+      w->window_end_valid = 0;
     }
 
   /* Some sanity checks.  */
@@ -15657,7 +15644,7 @@ redisplay_window (Lisp_Object window, int just_this_one_p)
 
       w->force_start = 0;
       w->vscroll = 0;
-      wset_window_end_valid (w, Qnil);
+      w->window_end_valid = 0;
 
       /* Forget any recorded base line for line number display.  */
       if (!buffer_unchanged_p)
@@ -16106,8 +16093,7 @@ redisplay_window (Lisp_Object window, int just_this_one_p)
      line.)  */
   if (w->cursor.vpos < 0)
     {
-      if (!NILP (w->window_end_valid)
-	  && PT >= Z - XFASTINT (w->window_end_pos))
+      if (w->window_end_valid && PT >= Z - XFASTINT (w->window_end_pos))
 	{
 	  clear_glyph_matrix (w->desired_matrix);
 	  move_it_by_lines (&it, 1);
@@ -16431,7 +16417,7 @@ try_window (Lisp_Object window, struct text_pos pos, int flags)
     }
 
   /* But that is not valid info until redisplay finishes.  */
-  wset_window_end_valid (w, Qnil);
+  w->window_end_valid = 0;
   return 1;
 }
 
@@ -16685,7 +16671,7 @@ try_window_reusing_current_matrix (struct window *w)
 	  wset_window_end_pos (w, make_number (Z - ZV));
 	  wset_window_end_vpos (w, make_number (0));
 	}
-      wset_window_end_valid (w, Qnil);
+      w->window_end_valid = 0;
 
       /* Update hint: don't try scrolling again in update_window.  */
       w->desired_matrix->no_scrolling_p = 1;
@@ -16883,7 +16869,7 @@ try_window_reusing_current_matrix (struct window *w)
 	    (w, make_number (XFASTINT (w->window_end_vpos) - nrows_scrolled));
 	}
 
-      wset_window_end_valid (w, Qnil);
+      w->window_end_valid = 0;
       w->desired_matrix->no_scrolling_p = 1;
 
 #ifdef GLYPH_DEBUG
@@ -17016,7 +17002,7 @@ find_first_unchanged_at_end_row (struct window *w,
 
   /* Display must not have been paused, otherwise the current matrix
      is not up to date.  */
-  eassert (!NILP (w->window_end_valid));
+  eassert (w->window_end_valid);
 
   /* A value of window_end_pos >= END_UNCHANGED means that the window
      end is in the range of changed text.  If so, there is no
@@ -17200,7 +17186,7 @@ row_containing_pos (struct window *w, ptrdiff_t charpos,
 
 /* Try to redisplay window W by reusing its existing display.  W's
    current matrix must be up to date when this function is called,
-   i.e. window_end_valid must not be nil.
+   i.e. window_end_valid must be nonzero.
 
    Value is
 
@@ -17315,7 +17301,7 @@ try_window_id (struct window *w)
     GIVE_UP (7);
 
   /* Verify that display wasn't paused.  */
-  if (NILP (w->window_end_valid))
+  if (!w->window_end_valid)
     GIVE_UP (8);
 
   /* Can't use this if highlighting a region because a cursor movement
@@ -17966,7 +17952,7 @@ try_window_id (struct window *w)
 	    debug_end_vpos = XFASTINT (w->window_end_vpos));
 
   /* Record that display has not been completed.  */
-  wset_window_end_valid (w, Qnil);
+  w->window_end_valid = 0;
   w->desired_matrix->no_scrolling_p = 1;
   return 3;
 
@@ -28045,7 +28031,7 @@ note_mouse_highlight (struct frame *f, int x, int y)
      And verify the buffer's text has not changed.  */
   b = XBUFFER (w->buffer);
   if (part == ON_TEXT
-      && EQ (w->window_end_valid, w->buffer)
+      && w->window_end_valid
       && w->last_modified == BUF_MODIFF (b)
       && w->last_overlay_modified == BUF_OVERLAY_MODIFF (b))
     {
