@@ -9698,8 +9698,7 @@ message3_nolog (Lisp_Object m)
   /* Error messages get reported properly by cmd_error, so this must be just an
      informative message; if the frame hasn't really been initialized yet, just
      toss it.  */
-  else if (INTERACTIVE
-	   && sf->glyphs_initialized_p)
+  else if (INTERACTIVE && sf->glyphs_initialized_p)
     {
       /* Get the frame containing the mini-buffer
 	 that the selected frame is using.  */
@@ -9707,9 +9706,7 @@ message3_nolog (Lisp_Object m)
       Lisp_Object frame = XWINDOW (mini_window)->frame;
       struct frame *f = XFRAME (frame);
 
-      FRAME_SAMPLE_VISIBILITY (f);
-      if (FRAME_VISIBLE_P (sf)
-	  && !FRAME_VISIBLE_P (f))
+      if (FRAME_VISIBLE_P (sf) && !FRAME_VISIBLE_P (f))
 	Fmake_frame_visible (frame);
 
       if (STRINGP (m) && SCHARS (m) > 0)
@@ -12978,7 +12975,6 @@ redisplay_internal (void)
     {
       struct frame *f = XFRAME (frame);
 
-      FRAME_SAMPLE_VISIBILITY (f);
       if (FRAME_VISIBLE_P (f))
 	++number_of_visible_frames;
       clear_desired_matrices (f);
@@ -13531,9 +13527,6 @@ redisplay_internal (void)
 	{
 	  int this_is_visible = 0;
 
-	  if (XFRAME (frame)->visible)
-	    this_is_visible = 1;
-	  FRAME_SAMPLE_VISIBILITY (XFRAME (frame));
 	  if (XFRAME (frame)->visible)
 	    this_is_visible = 1;
 
