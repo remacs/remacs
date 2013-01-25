@@ -1,3 +1,67 @@
+2013-01-25  Alan Mackenzie  <acm@muc.de>
+
+	AWK Mode: Fix indentation bug at top level.  Bug #12274.
+
+	* progmodes/cc-engine.el (c-guess-basic-syntax): Move CASE 5P to
+	just before CASE 5D.
+
+2013-01-25  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	* net/socks.el (socks-nslookup-host): Use string-to-number.
+
+2013-01-25  Michael Albinus  <michael.albinus@gmx.de>
+
+	* autorevert.el (auto-revert-remote-files)
+	(auto-revert-notify-exclude-dir-regexp): New defcustoms.
+	(auto-revert-notify-enabled, auto-revert-use-notify)
+	(auto-revert-notify-watch-descriptor-hash-list)
+	(auto-revert-notify-modified-p, auto-revert-notify-event-p)
+	(auto-revert-notify-event-descriptor)
+	(auto-revert-notify-event-action)
+	(auto-revert-notify-event-file-name): Doc fix.
+	(global-auto-revert-mode): Reorder checks.
+	(auto-revert-notify-rm-watch): Respect changed values of
+	`auto-revert-notify-watch-descriptor-hash-list'.
+	(auto-revert-notify-add-watch): Check for
+	`auto-revert-notify-exclude-dir-regexp'.  Adapt filters for
+	`inotify-add-watch'.  Watch `default-directory' instead of
+	`buffer-file-name'.  `auto-revert-notify-watch-descriptor-hash-list'
+	has a changed meaning now.  (Bug#13540)
+	(auto-revert-notify-handler): Change implementation wrt events
+	returning from a directory.
+	(auto-revert-handler): Reorder implementation for checks of remote
+	files.
+	(auto-revert-buffers): Fix parentheses error.
+
+2013-01-25  Fabián Ezequiel Gallina  <fgallina@cuca>
+
+	* progmodes/python.el: Enhancements to header documentation about
+	skeletons.  (Bug#5716)
+
+	* imenu.el (imenu-default-create-index-function): Remove useless
+	infinite loop check.  (Bug#13438)
+
+2013-01-25  Alan Mackenzie  <acm@muc.de>
+
+	Fix a bug in the state cache mechanism.  Refactor this a bit.
+
+	* progmodes/cc-engine.el (c-parse-state-get-strategy): Remove the
+	`cache-pos' element from the return value.
+	(c-append-lower-brace-pair-to-state-cache): "Narrow" to end of
+	buffer to enable proper searching from beyond HERE.  Amend the
+	test for detecting the sought brace pair.  Amend the value written
+	to the "brace desert cache" when the brace isn't found.
+	(c-remove-stale-state-cache): Rename `good-pos' to `start-point',
+	and several other variables analogously.
+	(c-remove-stale-state-cache-backwards): Change `cache-pos' from a
+	parameter to a locally calculated variable.
+	(c-parse-state-1): Change the calling conventions to the two
+	defuns involving `cache-pos'.
+
+2013-01-25  Chong Yidong  <cyd@gnu.org>
+
+	* xml.el (xml-entity-or-char-ref-re): Fix regexp.
+
 2013-01-24  Aaron Ecay <aaronecay@gmail.com>  (tiny change)
 
 	* paren.el (show-paren-function): Make sure to set 'priority and
