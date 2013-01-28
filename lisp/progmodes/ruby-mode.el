@@ -905,7 +905,7 @@ current block, a sibling block, or an outer block.  Do that (abs N) times."
          ((and backward (looking-at "^=end\\>"))
           (re-search-backward "^=begin\\>"))
          (t
-          (setq pos (current-indentation))
+          (setq pos (ruby-calculate-indent))
           (cond
            ;; Deeper indentation, we found a block.
            ;; FIXME: We can't recognize empty blocks this way.
@@ -1613,7 +1613,7 @@ See `font-lock-syntax-table'.")
    '("\\(\\$\\|@\\|@@\\)\\(\\w\\|_\\)+"
      0 font-lock-variable-name-face)
    ;; constants
-   '("\\_<\\([A-Z]+\\(\\w\\|_\\)*\\)"
+   '("\\(?:\\_<\\|::\\)\\([A-Z]+\\(\\w\\|_\\)*\\)"
      1 font-lock-type-face)
    '("\\(^\\s *\\|[\[\{\(,]\\s *\\|\\sw\\s +\\)\\(\\(\\sw\\|_\\)+\\):[^:]" 2 font-lock-constant-face)
    ;; expression expansion
