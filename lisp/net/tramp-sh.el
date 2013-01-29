@@ -988,7 +988,8 @@ This is used to map a mode number to a permission string.")
     (set-file-selinux-context . tramp-sh-handle-set-file-selinux-context)
     (file-acl . tramp-sh-handle-file-acl)
     (set-file-acl . tramp-sh-handle-set-file-acl)
-    (vc-registered . tramp-sh-handle-vc-registered))
+    (vc-registered . tramp-sh-handle-vc-registered)
+    (inotify-add-watch . tramp-sh-handle-inotify-add-watch))
   "Alist of handler functions.
 Operations not mentioned here will be handled by the normal Emacs functions.")
 
@@ -2824,6 +2825,8 @@ the result will be a local, non-Tramp, filename."
 
       (with-current-buffer (tramp-get-connection-buffer v)
 	(unwind-protect
+	    ;; We catch this event.  Otherwise, `start-process' could
+	    ;; be called on the local host.
 	    (save-excursion
 	      (save-restriction
 		;; Activate narrowing in order to save BUFFER
@@ -2837,31 +2840,32 @@ the result will be a local, non-Tramp, filename."
 		  (narrow-to-region (point-max) (point-max))
 		  ;; We call `tramp-maybe-open-connection', in order
 		  ;; to cleanup the prompt afterwards.
-		  (tramp-maybe-open-connection v)
-		  (widen)
-		  (delete-region mark (point))
-		  (narrow-to-region (point-max) (point-max))
-		  ;; Now do it.
-		  (if command
-		      ;; Send the command.
-		      (tramp-send-command v command nil t) ; nooutput
-		    ;; Check, whether a pty is associated.
-		    (unless (tramp-compat-process-get
-			     (tramp-get-connection-process v) 'remote-tty)
-		      (tramp-error
-		       v 'file-error
-		       "pty association is not supported for `%s'" name))))
-		(let ((p (tramp-get-connection-process v)))
-		  ;; Set query flag for this process.  We ignore errors,
-		  ;; because the process could have finished already.
-		  (ignore-errors
-		    (tramp-compat-set-process-query-on-exit-flag p t))
-		  ;; Return process.
-		  p)))
+		  (catch 'suppress
+		    (tramp-maybe-open-connection v)
+		    (widen)
+		    (delete-region mark (point))
+		    (narrow-to-region (point-max) (point-max))
+		    ;; Now do it.
+		    (if command
+			;; Send the command.
+			(tramp-send-command v command nil t) ; nooutput
+		      ;; Check, whether a pty is associated.
+		      (unless (tramp-compat-process-get
+			       (tramp-get-connection-process v) 'remote-tty)
+			(tramp-error
+			 v 'file-error
+			 "pty association is not supported for `%s'" name))))
+		  (let ((p (tramp-get-connection-process v)))
+		    ;; Set query flag for this process.  We ignore errors,
+		    ;; because the process could have finished already.
+		    (ignore-errors
+		      (tramp-compat-set-process-query-on-exit-flag p t))
+		    ;; Return process.
+		    p))))
 
 	  ;; Save exit.
 	  (if (string-match tramp-temp-buffer-name (buffer-name))
-	      (progn
+	      (ignore-errors
 		(set-process-buffer (tramp-get-connection-process v) nil)
 		(kill-buffer (current-buffer)))
 	    (set-buffer-modified-p bmp))
@@ -3483,6 +3487,64 @@ Fall back to normal file name handler if no Tramp handler exists."
 	 (fn (save-match-data (apply (cdr fn) args)))
 	 ;; Default file name handlers, we don't care.
 	 (t (tramp-run-real-handler operation args)))))))
+
+(defun tramp-sh-handle-inotify-add-watch (file-name aspect callback)
+  "Like `inotify-add-watch' for Tramp files."
+  (setq file-name (expand-file-name file-name))
+  (unless (consp aspect) (setq aspect (cons aspect nil)))
+  (with-parsed-tramp-file-name file-name nil
+    (let* ((default-directory (file-name-directory file-name))
+	   (command (tramp-get-remote-inotifywait v))
+	   (aspect (mapconcat
+		    (lambda (x)
+		      (replace-regexp-in-string "-" "_" (symbol-name x)))
+		    aspect ","))
+	   (p (and command
+		   (start-file-process
+		    "inotifywait" nil command "-mq" "-e" aspect localname))))
+      (when (processp p)
+	(tramp-compat-set-process-query-on-exit-flag p nil)
+	(set-process-filter p 'tramp-sh-inotify-process-filter)
+	(tramp-set-connection-property p "inotify-callback" callback)
+	;; Return the file-name vector as watch-descriptor.
+	(tramp-set-connection-property p "inotify-watch-descriptor" v)))))
+
+(defun tramp-sh-inotify-process-filter (proc string)
+  "Read output from \"inotifywait\" and add corresponding inotify events."
+  (tramp-message
+   (tramp-get-connection-property proc "vector" nil) 6
+   (format "%s\n%s" proc string))
+  (dolist (line (split-string string "[\n\r]+" 'omit-nulls))
+    ;; Check, whether there is a problem.
+    (unless
+	(string-match
+	 "^[^[:blank:]]+[[:blank:]]+\\([^[:blank:]]+\\)+\\([[:blank:]]+\\([^[:blank:]]+\\)\\)?[[:blank:]]*$" line)
+      (tramp-error proc 'filewatch-error "%s" line))
+
+    (let* ((object
+	    (list
+	     (tramp-get-connection-property
+	      proc "inotify-watch-descriptor" nil)
+	     ;; Aspect symbols.  We filter out MOVE and CLOSE, which
+	     ;; are convenience macros.  See INOTIFY(7).
+	     (mapcar
+	      (lambda (x)
+		(intern-soft (replace-regexp-in-string "_" "-" (downcase x))))
+	      (delete "MOVE" (delete "CLOSE"
+	        (split-string (match-string 1 line) "," 'omit-nulls))))
+	     ;; We cannot gather any cookie value.  So we return 0 as
+	     ;; "don't know".
+	     0 (match-string 3 line)))
+	   (callback
+	    (tramp-get-connection-property proc "inotify-callback" nil))
+	   (event `(file-inotify ,object ,callback)))
+
+      ;; Usually, we would add an Emacs event now.  Unfortunately,
+      ;; `unread-command-events' does not accept several events at
+      ;; once.  Therefore, we apply the callback directly.
+      ;(setq unread-command-events (cons event unread-command-events)))))
+      (let ((last-input-event event))
+	(funcall callback object)))))
 
 ;;; Internal Functions:
 
@@ -4206,6 +4268,9 @@ Goes through the list `tramp-inline-compress-commands'."
 	(tramp-message
 	 vec 2 "Couldn't find an inline transfer compress command")))))
 
+(defvar tramp-gw-tunnel-method)
+(defvar tramp-gw-socks-method)
+
 (defun tramp-compute-multi-hops (vec)
   "Expands VEC according to `tramp-default-proxies-alist'.
 Gateway hops are already opened."
@@ -4266,10 +4331,11 @@ Gateway hops are already opened."
 	    (setq choices tramp-default-proxies-alist)))))
 
     ;; Handle gateways.
-    (when (string-match
-	   (format
-	    "^\\(%s\\|%s\\)$" tramp-gw-tunnel-method tramp-gw-socks-method)
-	   (tramp-file-name-method (car target-alist)))
+    (when (and tramp-gw-tunnel-method tramp-gw-socks-method
+	       (string-match
+		(format
+		 "^\\(%s\\|%s\\)$" tramp-gw-tunnel-method tramp-gw-socks-method)
+		(tramp-file-name-method (car target-alist))))
       (let ((gw (pop target-alist))
 	    (hop (pop target-alist)))
 	;; Is the method prepared for gateways?
@@ -5038,6 +5104,11 @@ This is used internally by `tramp-file-mode-from-int'."
   (with-tramp-connection-property vec "trash"
     (tramp-message vec 5 "Finding a suitable `trash' command")
     (tramp-find-executable vec "trash" (tramp-get-remote-path vec))))
+
+(defun tramp-get-remote-inotifywait (vec)
+  (with-tramp-connection-property vec "inotifywait"
+    (tramp-message vec 5 "Finding a suitable `inotifywait' command")
+    (tramp-find-executable vec "inotifywait" (tramp-get-remote-path vec) t t)))
 
 (defun tramp-get-remote-id (vec)
   (with-tramp-connection-property vec "id"
