@@ -555,16 +555,14 @@ NOT share structure with ALIST."
 
 (defun imenu--truncate-items (menulist)
   "Truncate all strings in MENULIST to `imenu-max-item-length'."
-  (mapcar (lambda (item)
-            (cond
-             ((consp (cdr item))
-              (imenu--truncate-items (cdr item)))
-             ;; truncate if necessary
-             ((and (numberp imenu-max-item-length)
-                   (> (length (car item)) imenu-max-item-length))
-              (setcar item (substring (car item) 0 imenu-max-item-length)))))
-	  menulist))
-
+  (mapc (lambda (item)
+	  ;; truncate if necessary
+	  (when (and (numberp imenu-max-item-length)
+		     (> (length (car item)) imenu-max-item-length))
+	    (setcar item (substring (car item) 0 imenu-max-item-length)))
+	  (when (imenu--subalist-p item)
+	    (imenu--truncate-items (cdr item))))
+	menulist))
 
 (defun imenu--make-index-alist (&optional noerror)
   "Create an index alist for the definitions in the current buffer.
@@ -678,11 +676,13 @@ The alternate method, which is the one most often used, is to call
   ;; in these major modes.  But save that change for later.
   (cond ((and imenu-prev-index-position-function
 	      imenu-extract-index-name-function)
-	 (let ((index-alist '()) (pos (point))
+	 (let ((index-alist '()) (pos -1)
 	       name)
 	   (goto-char (point-max))
 	   ;; Search for the function
 	   (while (funcall imenu-prev-index-position-function)
+             (when (= pos (point))
+               (error "Infinite loop at %s:%d: imenu-prev-index-position-function does not move point" (buffer-name) pos))
              (setq pos (point))
 	     (save-excursion
 	       (setq name (funcall imenu-extract-index-name-function)))
