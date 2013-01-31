@@ -71,6 +71,12 @@ bound to <f11> and M-<f10>, respectively.
 
 * Changes in Specialized Modes and Packages in Emacs 24.4
 
+** Delphi mode is now called OPascal mode.
+*** All delphi-* variables and functions have been renamed to opascal-*.
+*** `delphi-newline-always-indents' is not supported any more
+use `electric-indent-mode' instead.
+*** `delphi-tab' is gone, replaced by `indent-for-tab-command'.
+
 ** jit-lock-debug-mode lets you use the debuggers on code run via jit-lock.
 
 ** completing-read-multiple's separator can now be a regexp.
@@ -156,6 +162,11 @@ New features include:
 when its arg ADJACENT is non-nil (when called interactively with C-u C-u)
 it works like the utility `uniq'.  Otherwise by default it deletes
 duplicate lines everywhere in the region without regard to adjacency.
+
+** New `cycle-spacing' command allows cycling between having just one
+space, no spaces, or reverting to the original spacing.  Like
+`just-one-space' command it can handle or ignore newlines and
+leave different number of spaces.
 
 ** Tramp
 +++
