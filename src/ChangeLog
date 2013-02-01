@@ -1,3 +1,62 @@
+2013-02-01  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Fix timestamp bug when write-region appends nothing (Bug#13149).
+	* fileio.c (Fwrite_region): When neither O_EXCL nor O_TRUNC is used,
+	the file's time stamp doesn't change if Emacs happens to write nothing
+	to the file, and on a buggy file system this could cause Emacs to
+	incorrectly infer that the file system doesn't have the bug.
+	Avoid this problem by inhibiting the inference in this case.
+
+2013-02-01  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	* window.h (struct window): Convert base_line_number, base_line_pos
+	and column_number_displayed members from Lisp_Object to ptrdiff_t.
+	Convert region_showing member from Lisp_Object to bitfield.
+	Remove sequence_number member.  Adjust comments.
+	* window.c (sequence_number): Remove.
+	(make_window): Initialize column_number_displayed.
+	* print.c (print_object): Follow the printed representation of
+	frames and print window pointer to distinguish between windows.
+	(adjust_window_count): Invalidate base_line_pos.  Adjust comment.
+	* xdisp.c (wset_base_line_number, wset_base_line_pos)
+	(wset_column_number_displayed, wset_region_showing): Remove.
+	(window_buffer_changed, mode_line_update_needed, redisplay_internal)
+	(try_scrolling, try_cursor_movement, redisplay_window)
+	(try_window_reusing_current_matrix, try_window_id, display_line)
+	(display_mode_lines, decode_mode_spec): Adjust users.
+	* .gdbinit (pwinx): Do not print sequence_number.
+
+2013-02-01  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Use fdopendir, fstatat and readlinkat, for efficiency (Bug#13539).
+	* conf_post.h (GNULIB_SUPPORT_ONLY_AT_FDCWD): Remove.
+	* dired.c: Include <fcntl.h>.
+	(open_directory): New function, which uses open and fdopendir
+	rather than opendir.  DOS_NT platforms still use opendir, though.
+	(directory_files_internal, file_name_completion): Use it.
+	(file_attributes): New function, with most of the old Ffile_attributes.
+	(directory_files_internal, Ffile_attributes): Use it.
+	(file_attributes, file_name_completion_stat): First arg is now fd,
+	not dir name.  All uses changed.  Use fstatat rather than lstat +
+	stat.
+	(file_attributes): Use emacs_readlinkat rather than Ffile_symlink_p.
+	* fileio.c: Include <allocator.h>, <careadlinkat.h>.
+	(emacs_readlinkat): New function, with much of the old
+	Ffile_symlink_p, but with an fd argument for speed.
+	It uses readlinkat rather than careadlinkatcwd, so that it
+	need not assume the working directory.
+	(Ffile_symlink_p): Use it.
+	* filelock.c (current_lock_owner): Use emacs_readlinkat
+	rather than emacs_readlink.
+	* lisp.h (emacs_readlinkat): New decl.
+	(READLINK_BUFSIZE, emacs_readlink): Remove.
+	* sysdep.c: Do not include <allocator.h>, <careadlinkat.h>.
+	(emacs_norealloc_allocator, emacs_readlink): Remove.
+	This stuff is moved to fileio.c.
+	* w32.c (fstatat, readlinkat): New functions.
+	(careadlinkat): Don't check that fd == AT_FDCWD.
+	(careadlinkatcwd): Remove; no longer needed.
+
 2013-01-31  Glenn Morris  <rgm@gnu.org>
 
 	* fileio.c (choose_write_coding_system): Make it callable from Lisp.
