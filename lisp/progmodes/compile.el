@@ -42,24 +42,21 @@
 
 ;;;###autoload
 (defcustom compilation-mode-hook nil
-  "List of hook functions run by `compilation-mode' (see `run-mode-hooks')."
+  "List of hook functions run by `compilation-mode'."
   :type 'hook
   :group 'compilation)
 
 ;;;###autoload
 (defcustom compilation-start-hook nil
-  "List of hook functions run by `compilation-start' on the compilation process.
-\(See `run-hook-with-args').
-If you use \"omake -P\" and do not want \\[save-buffers-kill-terminal] to ask whether you want
-the compilation to be killed, you can use this hook:
-  (add-hook 'compilation-start-hook
-    (lambda (process) (set-process-query-on-exit-flag process nil)) nil t)"
+  "Hook run after starting a new compilation process.
+The hook is run with one argument, the new process."
   :type 'hook
   :group 'compilation)
 
 ;;;###autoload
 (defcustom compilation-window-height nil
-  "Number of lines in a compilation window.  If nil, use Emacs default."
+  "Number of lines in a compilation window.
+If nil, use Emacs default."
   :type '(choice (const :tag "Default" nil)
 		 integer)
   :group 'compilation)
@@ -265,7 +262,8 @@ of[ \t]+\"?\\([a-zA-Z]?:?[^\":\n]+\\)\"?:" 3 2 nil (1))
 \\([0-9]+\\)\\(?:-\\(?4:[0-9]+\\)\\(?:\\.\\(?5:[0-9]+\\)\\)?\
 \\|[.:]\\(?3:[0-9]+\\)\\(?:-\\(?:\\(?4:[0-9]+\\)\\.\\)?\\(?5:[0-9]+\\)\\)?\\)?:\
 \\(?: *\\(\\(?:Future\\|Runtime\\)?[Ww]arning\\|W:\\)\\|\
- *\\([Ii]nfo\\(?:\\>\\|rmationa?l?\\)\\|I:\\|instantiated from\\|[Nn]ote\\)\\|\
+ *\\([Ii]nfo\\(?:\\>\\|rmationa?l?\\)\\|I:\\|\\[ skipping .+ \\]\\|\
+\\(?:instantiated\\|required\\) from\\|[Nn]ote\\)\\|\
  *[Ee]rror\\|[0-9]?\\(?:[^0-9\n]\\|$\\)\\|[0-9][0-9][0-9]\\)"
      1 (2 . 4) (3 . 5) (6 . 7))
 
