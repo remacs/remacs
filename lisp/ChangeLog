@@ -1,3 +1,16 @@
+2013-02-06  Nicolas Richard <theonewiththeevillook@yahoo.fr>  (tiny change)
+
+	* emacs-lisp/package.el (describe-package-1): Tell what archive is
+	used to install the package.
+
+2013-02-06  Glenn Morris  <rgm@gnu.org>
+
+	* vc/vc-hooks.el (vc-find-file-hook): Don't ask about following links
+	if we can't get user input.  (Bug#6567)
+
+	* startup.el (command-line): If simple.el is missing,
+	test and warn about for some possible causes.
+
 2013-02-05  Jan Djärv  <jan.h.d@swipnet.se>
 
 	* cus-start.el (all): Add ns-use-native-fullscreen.
