@@ -1,3 +1,38 @@
+2013-02-08  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* lread.c (skip_dyn_bytes): New function (bug#12598).
+	(read1): Use it.  Use getc instead of READCHAR to read bytes.
+	(load_each_byte): Remove.  Update users.
+
+2013-02-08  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	* search.c (scan_buffer): Calculate end byte position just once.
+	(scan_newline): Do not recalculate start_byte.
+	(search_command): Use eassert.
+	* syntax.c (struct lisp_parse_state): New member location_byte.
+	(scan_sexps_forward): Record from_byte and avoid redundant
+	character to byte position calculation ...
+	(Fparse_partial_sexp): ... here.  Break too long line.
+
+2013-02-08  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	* lisp.h (make_uninit_vector): New function.
+	* alloc.c (Fvector, Fmake_byte_code):
+	* ccl.c (Fregister_ccl_program):
+	* charset.c (Fdefine_charset_internal, define_charset_internal):
+	* coding.c (make_subsidiaries, Fdefine_coding_system_internal):
+	* composite.c (syms_of_composite):
+	* font.c (Fquery_font, Ffont_info, syms_of_font):
+	* fontset.c (FONT_DEF_NEW, Fset_fontset_font):
+	* ftfont.c (ftfont_shape_by_flt):
+	* indent.c (recompute_width_table):
+	* nsselect.m (clean_local_selection_data):
+	* syntax.c (init_syntax_once):
+	* w32unsubscribe.c (uniscribe_shape):
+	* window.c (Fcurrent_window_configuration):
+	* xfaces.c (Fx_family_fonts):
+	* xselect.c (selection_data_to_lisp_data): Use it.
+
 2013-02-07  Dmitry Antipov  <dmantipov@yandex.ru>
 
 	* coding.c (Fdefine_coding_system_internal): Use AREF where

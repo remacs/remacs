@@ -1,3 +1,26 @@
+2013-02-08  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* emacs-lisp/byte-run.el (eval-when-compile, eval-and-compile):
+	Eval body right away, now that we do eager macroexpansion (bug#13605).
+
+	* simple.el (end-of-buffer): Don't touch unrelated windows (bug#13466).
+	(fundamental-mode): Use run-mode-hooks.
+
+	* eshell/esh-proc.el (eshell/kill): Fix last change.
+	* eshell/em-ls.el (eshell-ls-dir): Fix use of CL in last change.
+
+2013-02-08  Aidan Gauland  <aidalgol@no8wireless.co.nz>
+
+	* eshell/esh-proc.el (eshell/kill): Rewrite.
+
+	* eshell/em-ls.el (show-almost-all): Declare.
+	(eshell-do-ls): Add support for -A argument.
+
+2013-02-08  Jambunathan K  <kjambunathan@gmail.com>
+
+	* icomplete.el (icomplete-forward-completions)
+	(icomplete-backward-completions): Handle corner case (bug#13602).
+
 2013-02-07  Michael Albinus  <michael.albinus@gmx.de>
 
 	* vc/vc-hooks.el (vc-find-file-hook): `buffer-file-truename' can
