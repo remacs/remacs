@@ -21630,9 +21630,6 @@ decode_mode_spec (struct window *w, register int c, int field_width,
 	  return "@";
       }
 
-    case 't':			/* indicate TEXT or BINARY */
-      return "T";
-
     case 'z':
       /* coding-system (not including end-of-line format) */
     case 'Z':

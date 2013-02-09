@@ -1,3 +1,61 @@
+2013-02-09  Eli Zaretskii  <eliz@gnu.org>
+
+	* subr.el (buffer-file-type, default-buffer-file-type): Remove.
+
+	* net/ange-ftp.el (ange-ftp-insert-file-contents): Don't reference
+	buffer-file-type.
+
+	* mail/feedmail.el (feedmail-force-binary-write): Doc fix.
+	(feedmail-run-the-queue, feedmail-dump-message-to-queue)
+	(feedmail-send-it-immediately): Don't bind buffer-file-type, bind
+	coding-system-for-write instead.
+
+	* jka-compr.el (jka-compr-write-region): Don't bind
+	buffer-file-type.
+
+	* emacs-lisp/bytecomp.el (byte-compile-file): Don't bind
+	buffer-file-type.
+
+	* files.el (file-name-buffer-file-type-alist): Remove defvar.
+	(insert-file-contents-literally): Remove reference to
+	file-name-buffer-file-type-alist.
+
+	* dos-w32.el (file-name-buffer-file-type-alist): Deprecate and
+	make-obsolete.
+	(find-buffer-file-type-match, find-buffer-file-type): Remove.
+	(find-buffer-file-type-coding-system): Remove references to
+	find-buffer-file-type-match, find-buffer-file-type, and
+	buffer-file-type.
+	Don't put find-buffer-file-type-coding-system into
+	file-coding-system-alist.
+	(find-file-binary, find-file-text): Bind coding-system-for-read
+	instead of file-name-buffer-file-type-alist.
+
+2013-02-09  Tassilo Horn  <tsdh@gnu.org>
+
+	* doc-view.el: Use (and prefer) soffice as default ODF->PDF
+	converter (Bug#13622).  Patch provided by Jambunathan K
+	<kjambunathan@gmail.com>.
+	(doc-view-unoconv-program): Make obsolete variable.
+	(doc-view-odf->pdf-converter-program): New variable.
+	(doc-view-odf->pdf-converter-function): New variable.
+	(doc-view-mode-p): Use it.
+	(doc-view-odf->pdf-converter-unoconv): Rename from
+	`doc-view-odf->pdf-converter-unoconv'.
+	(doc-view-odf->pdf-converter-soffice): New function.
+	(doc-view-convert-current-doc): Use
+	`doc-view-odf->pdf-converter-function'.
+
+2013-02-09  Chong Yidong  <cyd@gnu.org>
+
+	* minibuffer.el (minibuffer-inactive-mode-map): Bind mouse-1 to
+	view-echo-area-messages (Bug#13340).
+
+	* help.el (view-echo-area-messages): Use display-buffer.
+
+	* dired-x.el (dired-do-run-mail): Prompt for confirmation
+	(Bug#13561).
+
 2013-02-08  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* emacs-lisp/byte-run.el (eval-when-compile, eval-and-compile):
