@@ -1,3 +1,21 @@
+2013-02-10  Christopher Schmidt  <christopher@ch.ristopher.com>
+
+	* minibuf-eldef.el (minibuffer-default--in-prompt-regexps): Handle
+	"foo (bar, default: xxx): " prompts.
+
+2013-02-10  Chong Yidong  <cyd@gnu.org>
+
+	* files.el (basic-save-buffer-1): Do not set
+	buffer-file-coding-system-explicit (Bug#4533).
+
+	* mail/emacsbug.el (report-emacs-bug): Change binding of
+	report-emacs-bug-insert-to-mailer to C-c M-i (Bug#13510).
+
+2013-02-09  Jay Belanger  <jay.p.belanger@gmail.com>
+
+	* calc/calc.el (calc-allow-units-as-numbers): New variable.
+	* calc/calc-units.el (calc-convert-units): Use new variable.
+
 2013-02-09  Eli Zaretskii  <eliz@gnu.org>
 
 	* subr.el (buffer-file-type, default-buffer-file-type): Remove.
@@ -31,20 +49,19 @@
 	(find-file-binary, find-file-text): Bind coding-system-for-read
 	instead of file-name-buffer-file-type-alist.
 
-2013-02-09  Tassilo Horn  <tsdh@gnu.org>
+2013-02-09  Jambunathan K  <kjambunathan@gmail.com>
 
 	* doc-view.el: Use (and prefer) soffice as default ODF->PDF
-	converter (Bug#13622).  Patch provided by Jambunathan K
-	<kjambunathan@gmail.com>.
-	(doc-view-unoconv-program): Make obsolete variable.
+	converter (Bug#13622).
+	(doc-view-unoconv-program): Make obsolete alias.
 	(doc-view-odf->pdf-converter-program): New variable.
 	(doc-view-odf->pdf-converter-function): New variable.
 	(doc-view-mode-p): Use it.
-	(doc-view-odf->pdf-converter-unoconv): Rename from
-	`doc-view-odf->pdf-converter-unoconv'.
+	(doc-view-odf->pdf-converter-unoconv):
+	Rename from `doc-view-odf->pdf-converter-unoconv'.
 	(doc-view-odf->pdf-converter-soffice): New function.
-	(doc-view-convert-current-doc): Use
-	`doc-view-odf->pdf-converter-function'.
+	(doc-view-convert-current-doc):
+	Use `doc-view-odf->pdf-converter-function'.
 
 2013-02-09  Chong Yidong  <cyd@gnu.org>
 
