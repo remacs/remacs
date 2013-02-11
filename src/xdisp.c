@@ -9057,7 +9057,10 @@ move_it_vertically_backward (struct it *it, int dy)
 
   /* Estimate how many newlines we must move back.  */
   nlines = max (1, dy / FRAME_LINE_HEIGHT (it->f));
-  pos_limit = max (start_pos - nlines * nchars_per_row, BEGV);
+  if (it->line_wrap == TRUNCATE)
+    pos_limit = BEGV;
+  else
+    pos_limit = max (start_pos - nlines * nchars_per_row, BEGV);
 
   /* Set the iterator's position that many lines back.  But don't go
      back more than NLINES full screen lines -- this wins a day with
@@ -9307,7 +9310,10 @@ move_it_by_lines (struct it *it, ptrdiff_t dvpos)
       /* Go back -DVPOS buffer lines, but no farther than -DVPOS full
 	 screen lines, and reseat the iterator there.  */
       start_charpos = IT_CHARPOS (*it);
-      pos_limit = max (start_charpos + dvpos * nchars_per_row, BEGV);
+      if (it->line_wrap == TRUNCATE)
+	pos_limit = BEGV;
+      else
+	pos_limit = max (start_charpos + dvpos * nchars_per_row, BEGV);
       for (i = -dvpos; i > 0 && IT_CHARPOS (*it) > pos_limit; --i)
 	back_to_previous_visible_line_start (it);
       reseat (it, it->current.pos, 1);
@@ -9450,11 +9456,11 @@ message_dolog (const char *m, ptrdiff_t nbytes, int nlflag, int multibyte)
       bset_undo_list (current_buffer, Qt);
 
       oldpoint = message_dolog_marker1;
-      set_marker_restricted (oldpoint, make_number (PT), Qnil);
+      set_marker_restricted_both (oldpoint, Qnil, PT, PT_BYTE);
       oldbegv = message_dolog_marker2;
-      set_marker_restricted (oldbegv, make_number (BEGV), Qnil);
+      set_marker_restricted_both (oldbegv, Qnil, BEGV, BEGV_BYTE);
       oldzv = message_dolog_marker3;
-      set_marker_restricted (oldzv, make_number (ZV), Qnil);
+      set_marker_restricted_both (oldzv, Qnil, ZV, ZV_BYTE);
       GCPRO1 (old_deactivate_mark);
 
       if (PT == Z)

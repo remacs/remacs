@@ -28,7 +28,10 @@ This happens by default if a suitable support library is found at
 build time, like libacl on GNU/Linux.  To prevent this, use the
 configure option `--without-acl'.
 
+
 * Startup Changes in Emacs 24.4
+
+
 * Changes in Emacs 24.4
 
 +++
@@ -41,6 +44,10 @@ non-nil, they output the same results.
 +++
 ** `eval-defun' on an already defined defcustom calls the :set function,
 if there is one.
+
+** If the new variable `enable-dir-local-variables' is nil,
+directory local variables are ignored.  May be useful for some modes
+that want to ignore directory-locals while still respecting file-locals.
 
 ** The option `set-mark-default-inactive' has been deleted.
 This unfinished feature was introduced by accident in Emacs 23.1;
@@ -63,13 +70,7 @@ Available only on X, this option allows to control over-scrolling
 using the scroll bar (i.e. dragging the thumb down even when the end
 of the buffer is visible).
 
-** Nextstep (GNUstep / Mac OS X) port
-
-*** Improved fullscreen support.
-Both native (>= OSX 10.7) and "old style" fullscreen are supported.
-Customize ns-use-native-fullscreen to change style.  For >= 10.7
-native is the default.
-
+
 * Editing Changes in Emacs 24.4
 
 ** New commands `toggle-frame-fullscreen' and `toggle-frame-maximized',
@@ -206,7 +207,10 @@ It is layered as:
 - advice-add/advice-remove to add/remove a piece of advice on a named function,
   much like `defadvice' does.
 
+
 * Incompatible Lisp Changes in Emacs 24.4
+
+** Removed inhibit-local-menu-bar-menus.
 
 ** frame-local variables that affect redisplay do not work any more.
 More specifically, the redisplay does not bother to check for a frame-local
@@ -229,13 +233,28 @@ alist of extended attributes as returned by the new function
 `file-extended-attributes'.  The attributes can be applied to another
 file using `set-file-extended-attributes'.
 
-* Lisp changes in Emacs 24.4
+
+* Lisp Changes in Emacs 24.4
 
 ** Support for filesystem notifications.
 Emacs now supports notifications of filesystem changes, such as
 creation, modification, and deletion of files.  This requires the
 'inotify' API on GNU/Linux systems.  On MS-Windows systems, this is
 supported for Windows XP and newer versions.
+
+** Changes in autorevert.el
+
+---
+*** If Emacs is compiled with file notification support, notifications
+are used instead of checking the time stamp of the files.  You can
+disable this by setting the user option `auto-revert-use-notify' to
+nil.  Alternatively, a regular expression of directories to be
+excluded from file notifications can be specified by
+`auto-revert-notify-exclude-dir-regexp'.
+
+---
+*** The new user option `auto-revert-remote-files' enables reversion
+of remote files when set to non-nil.
 
 ** Face changes
 
@@ -273,7 +292,8 @@ used in place of the 9th element of `file-attributes'.
 `preserve-extended-attributes' as it now handles both SELinux context
 and ACL entries.
 
-* Changes in Emacs 24.4 on non-free operating systems
+
+* Changes in Emacs 24.4 on Non-Free Operating Systems
 
 +++
 ** The "generate a backtrace on fatal error" feature now works on MS Windows.
@@ -285,6 +305,11 @@ directory where Emacs was running.
 Setting it has no effect, and %t in the mode-line format is ignored.
 Likewise, `file-name-buffer-file-type-alist' is now obsolete, and
 modifying it has no effect.
+
+** Improved fullscreen support on Mac OS X.
+Both native (>= OSX 10.7) and "old style" fullscreen are supported.
+Customize `ns-use-native-fullscreen' to change style.  For >= 10.7
+native is the default.
 
 
 * Installation Changes in Emacs 24.3

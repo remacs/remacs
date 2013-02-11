@@ -1,7 +1,30 @@
+2013-02-11  Elias Pipping  <pipping@lavabit.com>
+
+	* doc-view.el (doc-view-current-cache-dir): Beware % escapes
+	(bug#13689).
+
+2013-02-11  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* cus-start.el (all): Remove inhibit-local-menu-bar-menus.
+
+2013-02-11  Glenn Morris  <rgm@gnu.org>
+
+	* vc/diff.el (diff-use-labels): New variable.
+	(diff-no-select): Use --label rather than -L, and first
+	check that it is supported.  (Bug#11067)
+
+	* files.el (enable-dir-local-variables): New variable.
+	(hack-dir-local-variables): Respect enable-dir-local-variables.
+	* tutorial.el (help-with-tutorial):
+	Ignore directory-local variables.  (Bug#11127)
+
+	* vc/vc-svn.el (vc-svn-command): Move --non-interactive from here...
+	(vc-svn-global-switches): ... to here.  (Bug#13513)
+
 2013-02-10  Christopher Schmidt  <christopher@ch.ristopher.com>
 
-	* minibuf-eldef.el (minibuffer-default--in-prompt-regexps): Handle
-	"foo (bar, default: xxx): " prompts.
+	* minibuf-eldef.el (minibuffer-default--in-prompt-regexps):
+	Handle "foo (bar, default: xxx): " prompts.
 
 2013-02-10  Chong Yidong  <cyd@gnu.org>
 

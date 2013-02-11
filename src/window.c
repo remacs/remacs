@@ -1545,7 +1545,7 @@ Return POS.  */)
 {
   register struct window *w = decode_live_window (window);
 
-  CHECK_NUMBER_COERCE_MARKER (pos);
+  /* Type of POS is checked by Fgoto_char or set_marker_restricted ...  */
 
   if (w == XWINDOW (selected_window))
     {
@@ -1555,6 +1555,8 @@ Return POS.  */)
 	{
 	  struct buffer *old_buffer = current_buffer;
 
+	  /* ... but here we want to catch type error before buffer change.  */
+	  CHECK_NUMBER_COERCE_MARKER (pos);
 	  set_buffer_internal (XBUFFER (w->buffer));
 	  Fgoto_char (pos);
 	  set_buffer_internal (old_buffer);
@@ -1580,9 +1582,8 @@ overriding motion of point in order to display at this exact start.  */)
 {
   register struct window *w = decode_live_window (window);
 
-  CHECK_NUMBER_COERCE_MARKER (pos);
   set_marker_restricted (w->start, pos, w->buffer);
-  /* this is not right, but much easier than doing what is right. */
+  /* This is not right, but much easier than doing what is right.  */
   w->start_at_line_beg = 0;
   if (NILP (noforce))
     w->force_start = 1;
@@ -4619,8 +4620,8 @@ window_scroll_pixel_based (Lisp_Object window, int n, int whole, int noerror)
 	}
 
       /* Set the window start, and set up the window for redisplay.  */
-      set_marker_restricted (w->start, make_number (pos),
-			     w->buffer);
+      set_marker_restricted_both (w->start, w->buffer, IT_CHARPOS (it),
+				  IT_BYTEPOS (it));
       bytepos = marker_byte_position (w->start);
       w->start_at_line_beg = (pos == BEGV || FETCH_BYTE (bytepos - 1) == '\n');
       w->update_mode_line = 1;
@@ -5799,8 +5800,7 @@ the return value is nil.  Otherwise the value is t.  */)
 	     {
 	       /* Set window markers at start of visible range.  */
 	       if (XMARKER (w->start)->buffer == 0)
-		 set_marker_restricted (w->start, make_number (0),
-					w->buffer);
+		 set_marker_restricted_both (w->start, w->buffer, 0, 0);
 	       if (XMARKER (w->pointm)->buffer == 0)
 		 set_marker_restricted_both
 		   (w->pointm, w->buffer,
@@ -5818,10 +5818,8 @@ the return value is nil.  Otherwise the value is t.  */)
 	      wset_buffer (w, other_buffer_safely (Fcurrent_buffer ()));
 	      /* This will set the markers to beginning of visible
 		 range.  */
-	      set_marker_restricted (w->start,
-				     make_number (0), w->buffer);
-	      set_marker_restricted (w->pointm,
-				     make_number (0), w->buffer);
+	      set_marker_restricted_both (w->start, w->buffer, 0, 0);
+	      set_marker_restricted_both (w->pointm, w->buffer, 0, 0);
 	      w->start_at_line_beg = 1;
 	      if (!NILP (w->dedicated))
 		/* Record this window as dead.  */
