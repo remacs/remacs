@@ -1397,21 +1397,9 @@ pos_visible_p (struct window *w, ptrdiff_t charpos, int *x, int *y,
 	      Lisp_Object cpos = make_number (charpos);
 	      Lisp_Object spec = Fget_char_property (cpos, Qdisplay, Qnil);
 	      Lisp_Object string = string_from_display_spec (spec);
-	      int newline_in_string = 0;
-
-	      if (STRINGP (string))
-		{
-		  const char *s = SSDATA (string);
-		  const char *e = s + SBYTES (string);
-		  while (s < e)
-		    {
-		      if (*s++ == '\n')
-			{
-			  newline_in_string = 1;
-			  break;
-			}
-		    }
-		}
+	      bool newline_in_string
+		= (STRINGP (string)
+		   && memchr (SDATA (string), '\n', SBYTES (string)));
 	      /* The tricky code below is needed because there's a
 		 discrepancy between move_it_to and how we set cursor
 		 when the display line ends in a newline from a
@@ -13317,8 +13305,6 @@ redisplay_internal (void)
   ++clear_image_cache_count;
 #endif
 
-  w->region_showing = XINT (Fmarker_position (BVAR (XBUFFER (w->buffer), mark)));
-
   /* Build desired matrices, and update the display.  If
      consider_all_windows_p is non-zero, do it for all windows on all
      frames.  Otherwise do it for selected_window, only.  */
@@ -14679,14 +14665,24 @@ try_scrolling (Lisp_Object window, int just_this_one_p,
   else
     {
       struct text_pos scroll_margin_pos = startp;
+      int y_offset = 0;
 
       /* See if point is inside the scroll margin at the top of the
          window.  */
       if (this_scroll_margin)
 	{
+	  int y_start;
+
 	  start_display (&it, w, startp);
+	  y_start = it.current_y;
 	  move_it_vertically (&it, this_scroll_margin);
 	  scroll_margin_pos = it.current.pos;
+	  /* If we didn't move enough before hitting ZV, request
+	     additional amount of scroll, to move point out of the
+	     scroll margin.  */
+	  if (IT_CHARPOS (it) == ZV
+	      && it.current_y - y_start < this_scroll_margin)
+	    y_offset = this_scroll_margin - (it.current_y - y_start);
 	}
 
       if (PT < CHARPOS (scroll_margin_pos))
@@ -14712,6 +14708,9 @@ try_scrolling (Lisp_Object window, int just_this_one_p,
 	  if (dy > scroll_max
 	      || IT_CHARPOS (it) < CHARPOS (scroll_margin_pos))
 	    return SCROLLING_FAILED;
+
+	  /* Additional scroll for when ZV was too close to point.  */
+	  dy += y_offset;
 
 	  /* Compute new window start.  */
 	  start_display (&it, w, startp);
@@ -14820,7 +14819,7 @@ compute_window_start_on_continuation_line (struct window *w)
 	SET_TEXT_POS (start_pos, ZV, ZV_BYTE);
 
       /* Find the start of the continued line.  This should be fast
-	 because scan_buffer is fast (newline cache).  */
+	 because find_newline is fast (newline cache).  */
       row = w->desired_matrix->rows + (WINDOW_WANTS_HEADER_LINE_P (w) ? 1 : 0);
       init_iterator (&it, w, CHARPOS (start_pos), BYTEPOS (start_pos),
 		     row, DEFAULT_FACE_ID);
@@ -19255,7 +19254,7 @@ display_line (struct it *it)
     }
 
   /* Is IT->w showing the region?  */
-  it->w->region_showing = it->region_beg_charpos > 0 ? -1 : 0;
+  it->w->region_showing = it->region_beg_charpos > 0 ? it->region_beg_charpos : 0;
 
   /* Clear the result glyph row and enable it.  */
   prepare_desired_row (row);
@@ -21731,31 +21730,36 @@ display_count_lines (ptrdiff_t start_byte,
 	  ceiling = min (limit_byte - 1, ceiling);
 	  ceiling_addr = BYTE_POS_ADDR (ceiling) + 1;
 	  base = (cursor = BYTE_POS_ADDR (start_byte));
-	  while (1)
+
+	  do
 	    {
 	      if (selective_display)
-		while (*cursor != '\n' && *cursor != 015 && ++cursor != ceiling_addr)
-		  ;
-	      else
-		while (*cursor != '\n' && ++cursor != ceiling_addr)
-		  ;
-
-	      if (cursor != ceiling_addr)
 		{
-		  if (--count == 0)
-		    {
-		      start_byte += cursor - base + 1;
-		      *byte_pos_ptr = start_byte;
-		      return orig_count;
-		    }
-		  else
-		    if (++cursor == ceiling_addr)
-		      break;
+		  while (*cursor != '\n' && *cursor != 015
+			 && ++cursor != ceiling_addr)
+		    continue;
+		  if (cursor == ceiling_addr)
+		    break;
 		}
 	      else
-		break;
+		{
+		  cursor = memchr (cursor, '\n', ceiling_addr - cursor);
+		  if (! cursor)
+		    break;
+		}
+
+	      cursor++;
+
+	      if (--count == 0)
+		{
+		  start_byte += cursor - base;
+		  *byte_pos_ptr = start_byte;
+		  return orig_count;
+		}
 	    }
-	  start_byte += cursor - base;
+	  while (cursor < ceiling_addr);
+
+	  start_byte += ceiling_addr - base;
 	}
     }
   else
@@ -21764,35 +21768,35 @@ display_count_lines (ptrdiff_t start_byte,
 	{
 	  ceiling = BUFFER_FLOOR_OF (start_byte - 1);
 	  ceiling = max (limit_byte, ceiling);
-	  ceiling_addr = BYTE_POS_ADDR (ceiling) - 1;
+	  ceiling_addr = BYTE_POS_ADDR (ceiling);
 	  base = (cursor = BYTE_POS_ADDR (start_byte - 1) + 1);
 	  while (1)
 	    {
 	      if (selective_display)
-		while (--cursor != ceiling_addr
-		       && *cursor != '\n' && *cursor != 015)
-		  ;
-	      else
-		while (--cursor != ceiling_addr && *cursor != '\n')
-		  ;
-
-	      if (cursor != ceiling_addr)
 		{
-		  if (++count == 0)
-		    {
-		      start_byte += cursor - base + 1;
-		      *byte_pos_ptr = start_byte;
-		      /* When scanning backwards, we should
-			 not count the newline posterior to which we stop.  */
-		      return - orig_count - 1;
-		    }
+		  while (--cursor >= ceiling_addr
+			 && *cursor != '\n' && *cursor != 015)
+		    continue;
+		  if (cursor < ceiling_addr)
+		    break;
 		}
 	      else
-		break;
+		{
+		  cursor = memrchr (ceiling_addr, '\n', cursor - ceiling_addr);
+		  if (! cursor)
+		    break;
+		}
+
+	      if (++count == 0)
+		{
+		  start_byte += cursor - base + 1;
+		  *byte_pos_ptr = start_byte;
+		  /* When scanning backwards, we should
+		     not count the newline posterior to which we stop.  */
+		  return - orig_count - 1;
+		}
 	    }
-	  /* Here we add 1 to compensate for the last decrement
-	     of CURSOR, which took it past the valid range.  */
-	  start_byte += cursor - base + 1;
+	  start_byte += ceiling_addr - base;
 	}
     }
 

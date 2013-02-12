@@ -1,7 +1,47 @@
+2013-02-12  Michael Albinus  <michael.albinus@gmx.de>
+
+	* net/tramp-adb.el (tramp-adb-handle-start-file-process): Rewrite.
+
+	* net/tramp-compat.el (top): Declare `remote-file-name-inhibit-cache'
+	only if it doesn't exist.
+
+	* net/tramp-sh.el (tramp-sh-handle-start-file-process): Set
+	process marker.
+
+2013-02-12  Tassilo Horn  <tsdh@gnu.org>
+
+	* doc-view.el (doc-view-odf->pdf-converter-soffice): Use separate
+	UserInstallation when calling soffice to work around LibreOffice
+	bug 37531.
+
+2013-02-12  Glenn Morris  <rgm@gnu.org>
+
+	* files.el (basic-save-buffer):
+	Offer to create a non-existing directory.  (Bug#3016)
+
+	* calc/calc-graph.el (calc-graph-show-dumb):
+	* calendar/calendar.el (calendar-mode-map):
+	* cus-edit.el (custom-mode-map):
+	* ehelp.el (electric-help-map):
+	* emulation/vip.el (vip-mode-map):
+	* epa.el (epa-key-list-mode-map):
+	* info.el (Info-mode-map):
+	* mail/rmail.el (rmail-mode-map):
+	* mail/rmailsum.el (rmail-summary-mode-map):
+	* man.el (Man-mode-map):
+	* net/newst-plainview.el (newsticker-mode-map):
+	* progmodes/cpp.el (cpp-edit-mode-map):
+	* progmodes/grep.el (grep-mode-map):
+	* progmodes/idlw-help.el (idlwave-help-mode-map):
+	* simple.el (special-mode-map):
+	* startup.el (splash-screen-keymap):
+	* view.el (view-mode-map):
+	Make S-SPC scroll in the opposite sense to SPC.  (Bug#2145)
+
 2013-02-11  Elias Pipping  <pipping@lavabit.com>
 
 	* doc-view.el (doc-view-current-cache-dir): Beware % escapes
-	(bug#13689).
+	(bug#13679).
 
 2013-02-11  Stefan Monnier  <monnier@iro.umontreal.ca>
 
