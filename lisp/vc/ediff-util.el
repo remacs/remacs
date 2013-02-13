@@ -143,6 +143,7 @@ to invocation.")
 					'ediff-previous-difference nil))
   ;; must come after C-h, or else C-h wipes out backspace's binding in XEmacs
   (define-key ediff-mode-map [backspace] 'ediff-previous-difference)
+  (define-key ediff-mode-map [?\S-\ ] 'ediff-previous-difference)
   (define-key ediff-mode-map "n" 'ediff-next-difference)
   (define-key ediff-mode-map " " 'ediff-next-difference)
   (define-key ediff-mode-map "j" 'ediff-jump-to-difference)
@@ -786,7 +787,12 @@ Reestablish the default three-window display."
 	   (frame-live-p ediff-control-frame)
 	   (not ediff-use-long-help-message)
 	   (not (ediff-frame-iconified-p ediff-control-frame)))
-      (raise-frame ediff-control-frame))
+      (if (fboundp 'select-frame-set-input-focus)
+	  (select-frame-set-input-focus ediff-control-frame)
+	(raise-frame ediff-control-frame)
+	(select-frame ediff-control-frame)
+	(if (fboundp 'focus-frame)
+	    (focus-frame ediff-control-frame))))
 
   ;; Redisplay whatever buffers are showing, if there is a selected difference
   (let ((control-frame ediff-control-frame)

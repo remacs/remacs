@@ -1,3 +1,119 @@
+2013-02-13  Michael Albinus  <michael.albinus@gmx.de>
+
+	Use ControlMaster where applicable.  (Bug#13677)
+
+	* net/tramp.el (tramp-ssh-controlmaster-template): New defvar,
+	replacing `tramp-detect-ssh-controlmaster'.
+	(tramp-default-method): Use it.
+
+	* net/tramp-sh.el (tramp-methods) [scp, scp1, scp2, scpx, sftp]:
+	[rsync, ssh, ssh1, ssh2, sshx]: Add ControlPath and ControlMaster
+	arguments.
+	[scpc, rsyncc]: Remove methods.
+	(top): Remove completion functions for "scpc", "rsyncc", "ssh1_old"
+	and "ssh2_old".
+	(tramp-do-copy-or-rename-file-out-of-band):  Change trace level.
+	(tramp-maybe-open-connection): Reuse tmpfile for ControlPath.
+
+2013-02-13  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* emacs-lisp/package.el (package--initialized): Move before first use.
+
+2013-02-13  Jambunathan K  <kjambunathan@gmail.com>
+
+	* icomplete.el (icomplete-hide-common-prefix):  New user option.
+	(icomplete-first-match): New face.
+	(icomplete-completions): Correct handling of "complete but not
+	unique" (Bug#12638).
+
+2013-02-13  YE Qianchuan  <stool.ye@gmail.com>  (tiny change)
+
+	* descr-text.el (describe-char): Display the script (bug#13698).
+
+2013-02-13  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* tmm.el: Use lexical-binding and current-active-maps.
+	(tmm-menubar): Use map-keymap and pcase.
+	(tmm--completion-table): New function.
+	(tmm-prompt): Use it to fix the menu order.
+	(tmm-get-keybind): Use current-active-maps.
+
+2013-02-12  Christopher Schmidt  <christopher@ch.ristopher.com>
+
+	Add dired-hide-details-mode.  (Bug#6799)
+
+	* locate.el (locate-mode): Set parent mode property to dired-mode.
+
+	* find-dired.el (find-dired): Call dired-insert-set-properties on
+	initial information line.  Set process mark on end of buffer.
+	(find-dired-sentinel):
+	Call dired-insert-set-properties on summary.
+
+	* dired.el (dired-hide-details-hide-symlink-targets)
+	(dired-hide-details-hide-information-lines): New options.
+	(dired-insert-directory):
+	Set properties after final treatment of output.
+	(dired-insert-set-properties):
+	Set dired-hide-details-* properties.
+	(dired-mode-map): Bind dired-hide-details-mode.
+	(dired-mode): Set buffer-invisibility-spec to a list.
+	(dired-next-line): Skip hidden lines.
+	(dired-previous-line): Use dired-next-line.
+	(dired-hide-details-mode): New minor mode.
+	(dired-hide-details-update-invisibility-spec): New function.
+
+2013-02-13  Glenn Morris  <rgm@gnu.org>
+
+	* play/yow.el: Move to obsolete/.  (Bug#9384)
+
+2013-02-13  Juri Linkov  <juri@jurta.org>
+
+	* vc/ediff-util.el (ediff-recenter): Use `select-frame-set-input-focus'
+	to select `ediff-control-frame' and set input focus correctly on Xfce.
+	(Bug#12218)
+
+2013-02-13  Juri Linkov  <juri@jurta.org>
+
+	* image-mode.el (image-mode-map):
+	* doc-view.el (doc-view-mode-map):
+	* vc/ediff-util.el (ediff-setup-keymap):
+	Make S-SPC scroll in the opposite sense to SPC.  (Bug#2145)
+
+2013-02-13  Dmitry Gutov  <dgutov@yandex.ru>
+
+	* progmodes/ruby-mode.el (ruby-move-to-block): Improve
+	performance.  Instead of recalculating indentation fully for each
+	line, sum up indentation depth based only on visited lines.
+	(ruby-parse-partial): Increase the depth after "do" even when END
+	is right after it.
+	(ruby-parse-partial): When END is in the middle of a percent
+	literal, increase the depth if the delimiter chars belong to the
+	paren syntax class.
+
+2013-02-13  Kirill A. Korinskiy  <catap@catap.ru>
+
+	* play/fortune.el (fortune-compile): Also make the compiled file
+	if it does not exist at all, not just if it is old.  (Bug#5338)
+
+2013-02-13  Glenn Morris  <rgm@gnu.org>
+
+	* emacs-lisp/package.el (package-menu-execute): Doc fix.
+
+2013-02-13  Yves Baumes  <ybaumes@gmail.com>  (tiny change)
+
+	* lisp/emacs-lisp/package.el (package-menu-execute):
+	Add optional noquery argument.  (Bug#13625)
+
+2013-02-13  Michael Albinus  <michael.albinus@gmx.de>
+
+	* net/ange-ftp.el (ange-ftp-make-directory): Don't raise an error,
+	if DIR exists and PARENTS is non-nil.
+
+2013-02-13  Juanma Barranquero  <lekktu@gmail.com>
+
+	* progmodes/js.el (js--multi-line-declaration-indentation):
+	Silence byte-compiler warning.
+
 2013-02-12  Michael Albinus  <michael.albinus@gmx.de>
 
 	* net/tramp-adb.el (tramp-adb-handle-start-file-process): Rewrite.

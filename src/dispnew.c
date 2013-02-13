@@ -6025,7 +6025,6 @@ init_display (void)
 
   inverse_video = 0;
   cursor_in_echo_area = 0;
-  terminal_type = (char *) 0;
 
   /* Now is the time to initialize this; it's used by init_sys_modes
      during startup.  */
@@ -6120,8 +6119,7 @@ init_display (void)
 #ifdef WINDOWSNT
   terminal_type = "w32console";
 #else
-  /* Look at the TERM variable.  */
-  terminal_type = (char *) getenv ("TERM");
+  terminal_type = getenv ("TERM");
 #endif
   if (!terminal_type)
     {
