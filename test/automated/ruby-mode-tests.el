@@ -390,11 +390,13 @@ VALUES-PLIST is a list with alternating index and value elements."
                           |  class C
                           |    class D
                           |    end
-                          |    _
+                          |    def foo
+                          |      _
+                          |    end
                           |  end
                           |end")
     (search-backward "_")
-    (should (string= (ruby-add-log-current-method) "M::C"))))
+    (should (string= (ruby-add-log-current-method) "M::C#foo"))))
 
 (defvar ruby-block-test-example
   (ruby-test-string
@@ -449,19 +451,36 @@ VALUES-PLIST is a list with alternating index and value elements."
   (dolist (s (list (ruby-test-string
                     "foo do
                     |  a = %%w(
+                    |    def yaa
                     |  )
                     |end")
                    (ruby-test-string
                     "foo do
                     |  a = %%w|
+                    |    end
                     |  |
                     |end")))
     (ruby-with-temp-buffer s
       (goto-line 1)
       (ruby-end-of-block)
-      (should (= 4 (line-number-at-pos)))
+      (should (= 5 (line-number-at-pos)))
       (ruby-beginning-of-block)
       (should (= 1 (line-number-at-pos))))))
+
+(ert-deftest ruby-move-to-block-skips-heredoc ()
+  (ruby-with-temp-buffer
+      (ruby-test-string
+       "if something_wrong?
+       |  ActiveSupport::Deprecation.warn(<<-eowarn)
+       |  boo hoo
+       |  end
+       |  eowarn
+       |end")
+    (goto-line 1)
+    (ruby-end-of-block)
+    (should (= 6 (line-number-at-pos)))
+    (ruby-beginning-of-block)
+    (should (= 1 (line-number-at-pos)))))
 
 (provide 'ruby-mode-tests)
 
