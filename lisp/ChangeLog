@@ -1,3 +1,55 @@
+2013-02-15  Alan Mackenzie  <acm@muc.de>
+
+	* emacs-lisp/easy-mmode.el (define-globalized-minor-mode): When a
+	global minor mode has been enabled, call the minor mode function
+	for a new buffer once only, after the major mode hook, whilst
+	allowing that hook explicitly to disable the minor mode.
+	(MODE-disable-in-buffer): new (generated) function.
+	(disable-MODE): new (generated) buffer local variable.
+
+2013-02-15  Jambunathan K  <kjambunathan@gmail.com>
+
+	* iswitchb.el (iswitchb-read-buffer): Bind `C-.' and `C-,' to
+	`iswitchb-next-match' and `iswitchb-prev-match' resply.
+
+	* ido.el (ido-init-completion-maps): Bind `C-.' and `C-,' to
+	`ido-next-match' and `ido-prev-match' resply.
+
+	* icomplete.el (icomplete-minibuffer-map): Unbind `C-s' and `C-r'.
+	Bind `C-.' and `C-,' to `icomplete-forward-completions' and
+	`icomplete-backward-completions' (Bug#13708).
+
+2013-02-15  Michael Albinus  <michael.albinus@gmx.de>
+
+	* emacs-lisp/easy-mmode.el (define-minor-mode): Doc fix.
+
+2013-02-15  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* net/goto-addr.el (goto-address-fontify): Add start and end args.
+	(goto-address-fontify-region): Use them instead of narrowing, so
+	syntax-ppss has access to the whole buffer.
+
+2013-02-15  Fabián Ezequiel Gallina  <fgallina@cuca>
+
+	* progmodes/python.el: Explain how to restore "cc-mode"-like
+	forward-sexp movement in header documentation (Bug#13642).
+	(python-nav--forward-sexp): Behave like emacs-lisp-mode in
+	comments and strings (GH bug 114).
+
+2013-02-15  Fabián Ezequiel Gallina  <fgallina@cuca>
+
+	* progmodes/python.el (python-info-current-defun): Fix current
+	defun detection (Bug#13618).
+
+2013-02-15  Chong Yidong  <cyd@gnu.org>
+
+	* xml.el (xml-parse-string): Fix typo in handling of bad character
+	references.
+
+2013-02-15  Glenn Morris  <rgm@gnu.org>
+
+	* play/fortune.el (fortune-compile): Simplify and fix previous change.
+
 2013-02-14  Michael Albinus  <michael.albinus@gmx.de>
 
 	* net/tramp.el (tramp-debug-message): Add

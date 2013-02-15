@@ -1,3 +1,59 @@
+2013-02-15  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* process.c (h_errno) [!HAVE_H_ERRNO]: Remove unused decl.
+
+2013-02-15  Eli Zaretskii  <eliz@gnu.org>
+
+	* keyboard.c (read_char): Fix calculation of auto-save time out
+	when auto-save-timeout is less than 4.  (Bug#13720)
+
+	* w32proc.c (new_child): Free up to 2 slots of dead processes at a
+	time.  Improve diagnostics in DebPrint.  (Bug#13546)
+
+	* w32.c (sys_socket, sys_bind, sys_connect, sys_gethostname)
+	(sys_gethostbyname, sys_getservbyname, sys_getpeername)
+	(sys_shutdown, sys_setsockopt, sys_listen, sys_getsockname)
+	(sys_accept, sys_recvfrom, sys_sendto, fcntl): In case of failure,
+	make sure errno is set to an appropriate value.  (Bug#13546)
+	(socket_to_fd): Add assertion against indexing fd_info[] with a
+	value that is out of bounds.
+	(sys_accept): If fd is negative, do not set up the child_process
+	structure for reading.
+
+2013-02-15  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	* composite.c (fill_gstring_header): Remove useless prototype.
+	Break long line.
+	* lisp.h (message_dolog, compile_pattern): Adjust prototype.
+	* print.c (PRINTDECLARE, print_object):
+	* search.c (compile_pattern, fast_looking_at, search_buffer):
+	(simple_search, boyer_moore, Freplace_match):
+	* xdisp.c (c_string_pos, number_of_chars, message_dolog):
+	(get_overlay_arrow_glyph_row, display_mode_element):
+	(decode_mode_spec_coding, message3):
+	* xfaces.c (face_at_string_position): Use bool for booleans.
+	Adjust comments.
+
+2013-02-15  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Fix AIX port (Bug#13650).
+	* lisp.h (XPNTR) [!USE_LSB_TAG && DATA_SEG_BITS]:
+	Fix bug introduced in 2012-07-27 change.  DATA_SEG_BITS, if set,
+	was #undeffed earlier, so it cannot be used as a macro here.
+	Use the constant and not the macro.
+
+2013-02-15  Eli Zaretskii  <eliz@gnu.org>
+
+	* w32proc.c (new_child): If no vacant slots are found in
+	child_procs[], make another pass looking for slots whose process
+	has exited or died.  (Bug#13546)
+
+	* w32.c (sys_pipe): When failing due to file descriptors above
+	MAXDESC, set errno to EMFILE.
+	(_sys_read_ahead): Update cp->status when failing to read serial
+	communications input, so that the status doesn't stay at
+	STATUS_READ_IN_PROGRESS.  (Bug#13546)
+
 2013-02-14  Jan Djärv  <jan.h.d@swipnet.se>
 
 	* gtkutil.c (tb_size_cb): New function.

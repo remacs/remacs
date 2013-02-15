@@ -803,6 +803,48 @@ new_child (void)
     if (!CHILD_ACTIVE (cp) && cp->procinfo.hProcess == NULL)
       goto Initialize;
   if (child_proc_count == MAX_CHILDREN)
+    {
+      int i = 0;
+      child_process *dead_cp = NULL;
+
+      DebPrint (("new_child: No vacant slots, looking for dead processes\n"));
+      for (cp = child_procs + (child_proc_count-1); cp >= child_procs; cp--)
+	if (!CHILD_ACTIVE (cp) && cp->procinfo.hProcess)
+	  {
+	    DWORD status = 0;
+
+	    if (!GetExitCodeProcess (cp->procinfo.hProcess, &status))
+	      {
+		DebPrint (("new_child.GetExitCodeProcess: error %lu for PID %lu\n",
+			   GetLastError (), cp->procinfo.dwProcessId));
+		status = STILL_ACTIVE;
+	      }
+	    if (status != STILL_ACTIVE
+		|| WaitForSingleObject (cp->procinfo.hProcess, 0) == WAIT_OBJECT_0)
+	      {
+		DebPrint (("new_child: Freeing slot of dead process %d, fd %d\n",
+			   cp->procinfo.dwProcessId, cp->fd));
+		CloseHandle (cp->procinfo.hProcess);
+		cp->procinfo.hProcess = NULL;
+		CloseHandle (cp->procinfo.hThread);
+		cp->procinfo.hThread = NULL;
+		/* Free up to 2 dead slots at a time, so that if we
+		   have a lot of them, they will eventually all be
+		   freed when the tornado ends.  */
+		if (i == 0)
+		  dead_cp = cp;
+		else
+		  break;
+		i++;
+	      }
+	  }
+      if (dead_cp)
+	{
+	  cp = dead_cp;
+	  goto Initialize;
+	}
+    }
+  if (child_proc_count == MAX_CHILDREN)
     return NULL;
   cp = &child_procs[child_proc_count++];
 
@@ -979,8 +1021,9 @@ reader_thread (void *arg)
 	 read-ahead has completed, whether successfully or not. */
       if (!SetEvent (cp->char_avail))
         {
-	  DebPrint (("reader_thread.SetEvent failed with %lu for fd %ld\n",
-		     GetLastError (), cp->fd));
+	  DebPrint (("reader_thread.SetEvent(0x%x) failed with %lu for fd %ld (PID %d)\n",
+		     (DWORD_PTR)cp->char_avail, GetLastError (),
+		     cp->fd, cp->pid));
 	  return 1;
 	}
 
@@ -2008,7 +2051,7 @@ count_children:
     /* Some child_procs might be sockets; ignore them.  Also some
        children may have died already, but we haven't finished reading
        the process output; ignore them too.  */
-    if (CHILD_ACTIVE (cp) && cp->procinfo.hProcess
+    if ((CHILD_ACTIVE (cp) && cp->procinfo.hProcess)
 	&& (cp->fd < 0
 	    || (fd_info[cp->fd].flags & FILE_SEND_SIGCHLD) == 0
 	    || (fd_info[cp->fd].flags & FILE_AT_EOF) != 0)

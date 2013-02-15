@@ -510,13 +510,9 @@ static EMACS_INT const VALMASK
   (XIL ((EMACS_INT) ((EMACS_UINT) (type) << VALBITS)  \
 	+ ((intptr_t) (ptr) & VALMASK)))
 
-#if DATA_SEG_BITS
 /* DATA_SEG_BITS forces extra bits to be or'd in with any pointers
    which were stored in a Lisp_Object.  */
 #define XPNTR(a) ((uintptr_t) ((XLI (a) & VALMASK)) | DATA_SEG_BITS))
-#else
-#define XPNTR(a) ((uintptr_t) (XLI (a) & VALMASK))
-#endif
 
 #endif /* not USE_LSB_TAG */
 
@@ -2962,7 +2958,7 @@ extern void message1 (const char *);
 extern void message1_nolog (const char *);
 extern void message3 (Lisp_Object);
 extern void message3_nolog (Lisp_Object);
-extern void message_dolog (const char *, ptrdiff_t, int, int);
+extern void message_dolog (const char *, ptrdiff_t, bool, bool);
 extern void message_with_string (const char *, Lisp_Object, int);
 extern void message_log_maybe_newline (void);
 extern void update_echo_area (void);
@@ -3344,7 +3340,7 @@ extern void record_unwind_save_match_data (void);
 struct re_registers;
 extern struct re_pattern_buffer *compile_pattern (Lisp_Object,
 						  struct re_registers *,
-						  Lisp_Object, int, int);
+						  Lisp_Object, int, bool);
 extern ptrdiff_t fast_string_match (Lisp_Object, Lisp_Object);
 extern ptrdiff_t fast_c_string_match_ignore_case (Lisp_Object, const char *,
 						  ptrdiff_t);
