@@ -1,25 +1,96 @@
+2013-02-16  Glenn Morris  <rgm@gnu.org>
+
+	* image.el (image-animated-types): Remove.
+	(image-multi-frame-p): Rename from image-animated-p, and generalize.
+	(image-animated-p): Make obsolete alias.
+	(image-animate, image-nth-frame, image-animate-timeout):
+	Use image-multi-frame-p.
+	(image-animate-timeout): If no delay, use image-default-frame-delay.
+	* image-mode.el (image-mode, image-toggle-animation):
+	Use image-multi-frame-p.  (Bug#763, bug#10739)
+	(image-mode): Adjust startup message for a multi-frame image.
+
+	* image-mode.el (image-mode-map): Give it a menu.
+
+2013-02-16  Michael Albinus  <michael.albinus@gmx.de>
+
+	* net/tramp-cache.el (tramp-connection-properties): New customer
+	option.
+	(tramp-get-connection-property): Use it.
+
+	* net/tramp-compat.el (top): Require 'trampver.
+
+	* net/tramp-sh.el (tramp-remote-process-environment): Set
+	tramp-autoload cookie.
+
+2013-02-16  Kevin Ryde  <user42@zip.com.au>
+
+	* info-look.el (info-lookup-select-mode): If major-mode has no
+	info-lookup-alist entry then search up derived-mode-parent (bug#8660).
+
+2013-02-16  Jambunathan K  <kjambunathan@gmail.com>
+
+	* replace.el (read-regexp): Tighten the regexp that matches tag.
+	When tag is retrieved with `find-tag-default', use regexp that
+	matches tag at point.  Also update docstring (Bug#13687).
+
+2013-02-16  Eli Zaretskii  <eliz@gnu.org>
+
+	* autorevert.el (auto-revert-notify-add-watch): With 'w32notify',
+	add watch for the file, not its parent directory, since w32notify
+	sets up the watch for the directory internally.  (Bug#13725)
+
+2013-02-16  Glenn Morris  <rgm@gnu.org>
+
+	* image.el (image-default-frame-delay): New variable.
+	(image-animated-p): Use image-default-frame-delay.
+	(image-minimum-frame-delay): New constant.
+	(image-animate-timeout): Use image-minimum-frame-delay.
+
+	* image.el (image-nth-frame): New, split from image-animate-timeout.
+	(image-animate-timeout): Use image-nth-frame.
+	* image-mode.el (image-goto-frame, image-next-frame)
+	(image-previous-frame): New commands.
+	(image-mode-map): Add new frame commands.
+
+2013-02-16  Jonas Bernoulli  <jonas@bernoul.li>
+
+	* emacs-lisp/tabulated-list.el (tabulated-list-print-col):
+	If col-desc already has help-echo, use it.  (Bug#13563)
+
+2013-02-16  Glenn Morris  <rgm@gnu.org>
+
+	* image.el (image-current-frame): New variable.
+	(image-animate-timeout): Set image-current-frame.
+	* image-mode.el (image-mode): For animated images,
+	display a frame counter via mode-line-process.
+
+	* font-lock.el (lisp-font-lock-keywords-1): Add defvar-local.
+
+2013-02-15  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* simple.el (eval-expression): Let `exp' set the mark (bug#13724).
+
 2013-02-15  Alan Mackenzie  <acm@muc.de>
 
 	* emacs-lisp/easy-mmode.el (define-globalized-minor-mode): When a
 	global minor mode has been enabled, call the minor mode function
 	for a new buffer once only, after the major mode hook, whilst
 	allowing that hook explicitly to disable the minor mode.
-	(MODE-disable-in-buffer): new (generated) function.
-	(disable-MODE): new (generated) buffer local variable.
+	(MODE-disable-in-buffer): New (generated) function.
+	(disable-MODE): New (generated) buffer local variable.
 
 2013-02-15  Jambunathan K  <kjambunathan@gmail.com>
 
 	* iswitchb.el (iswitchb-read-buffer): Bind `C-.' and `C-,' to
 	`iswitchb-next-match' and `iswitchb-prev-match' resply.
-
 	* ido.el (ido-init-completion-maps): Bind `C-.' and `C-,' to
 	`ido-next-match' and `ido-prev-match' resply.
-
 	* icomplete.el (icomplete-minibuffer-map): Unbind `C-s' and `C-r'.
 	Bind `C-.' and `C-,' to `icomplete-forward-completions' and
 	`icomplete-backward-completions' (Bug#13708).
 
-2013-02-15  Michael Albinus  <michael.albinus@gmx.de>
+2013-02-15  Glenn Morris  <rgm@gnu.org>
 
 	* emacs-lisp/easy-mmode.el (define-minor-mode): Doc fix.
 
@@ -52,8 +123,8 @@
 
 2013-02-14  Michael Albinus  <michael.albinus@gmx.de>
 
-	* net/tramp.el (tramp-debug-message): Add
-	`tramp-condition-case-unless-debug'.
+	* net/tramp.el (tramp-debug-message):
+	Add `tramp-condition-case-unless-debug'.
 	(tramp-debug-on-error): New defvar.
 	(tramp-condition-case-unless-debug): New defun.
 	(tramp-file-name-handler): Use it.
@@ -207,8 +278,8 @@
 	* net/tramp-compat.el (top): Declare `remote-file-name-inhibit-cache'
 	only if it doesn't exist.
 
-	* net/tramp-sh.el (tramp-sh-handle-start-file-process): Set
-	process marker.
+	* net/tramp-sh.el (tramp-sh-handle-start-file-process):
+	Set process marker.
 
 2013-02-12  Tassilo Horn  <tsdh@gnu.org>
 

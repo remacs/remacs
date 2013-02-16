@@ -340,6 +340,9 @@ call."
     (define-key map (kbd "S-SPC")     'image-scroll-down)
     (define-key map (kbd "DEL")       'image-scroll-down)
     (define-key map (kbd "RET")       'image-toggle-animation)
+    (define-key map "F" 'image-goto-frame)
+    (define-key map "f" 'image-next-frame)
+    (define-key map "b" 'image-previous-frame)
     (define-key map "n" 'image-next-file)
     (define-key map "p" 'image-previous-file)
     (define-key map [remap forward-char] 'image-forward-hscroll)
@@ -356,6 +359,53 @@ call."
     (define-key map [remap move-end-of-line] 'image-eol)
     (define-key map [remap beginning-of-buffer] 'image-bob)
     (define-key map [remap end-of-buffer] 'image-eob)
+    (easy-menu-define image-mode-menu map "Menu for Image mode."
+      '("Image"
+	["Show as Text" image-toggle-display :active t
+	 :help "Show image as text"]
+	"--"
+	["Fit Frame to Image" image-mode-fit-frame :active t
+	 :help "Resize frame to match image"]
+	["Fit to Window Height" image-transform-fit-to-height
+	 :visible (eq image-type 'imagemagick)
+	 :help "Resize image to match the window height"]
+	["Fit to Window Width" image-transform-fit-to-width
+	 :visible (eq image-type 'imagemagick)
+	 :help "Resize image to match the window width"]
+	["Rotate Image..." image-transform-set-rotation
+	 :visible (eq image-type 'imagemagick)
+	 :help "Rotate the image"]
+	"--"
+	["Next Image" image-next-file :active t
+         :help "Move to next image in this directory"]
+	["Previous Image" image-previous-file :active t
+         :help "Move to previous image in this directory"]
+	"--"
+	["Animate Image" image-toggle-animation :style toggle
+	 :selected (let ((image (image-get-display-property)))
+		     (and image (image-animate-timer image)))
+	 :active image-current-frame
+         :help "Toggle image animation"]
+	["Loop Animation"
+	 (lambda () (interactive)
+;;;	   (make-variable-buffer-local 'image-animate-loop)
+	   (setq image-animate-loop (not image-animate-loop))
+	   ;; FIXME this is a hacky way to make it affect a currently
+	   ;; animating image.
+	   (when (let ((image (image-get-display-property)))
+		   (and image (image-animate-timer image)))
+	     (image-toggle-animation)
+	     (image-toggle-animation)))
+	 :style toggle :selected image-animate-loop
+	 :active image-current-frame
+         :help "Animate images once, or forever?"]
+	["Next Frame" image-next-frame :active image-current-frame
+	 :help "Show the next frame of this image"]
+	["Previous Frame" image-previous-frame :active image-current-frame
+	 :help "Show the previous frame of this image"]
+	["Goto Frame..." image-goto-frame :active image-current-frame
+	 :help "Show a specific frame of this image"]
+	))
     map)
   "Mode keymap for `image-mode'.")
 
@@ -409,15 +459,22 @@ to toggle between display as an image and display as text."
 	(run-mode-hooks 'image-mode-hook)
 	(let ((image (image-get-display-property))
 	      (msg1 (substitute-command-keys
-		     "Type \\[image-toggle-display] to view the image as ")))
+		     "Type \\[image-toggle-display] to view the image as "))
+	      animated)
 	  (cond
 	   ((null image)
 	    (message "%s" (concat msg1 "an image.")))
-	   ((image-animated-p image)
+	   ((setq animated (image-multi-frame-p image))
+	    (setq image-current-frame (or (plist-get (cdr image) :index) 0)
+		  mode-line-process
+		  `(:eval (propertize (format " [%s/%s]"
+					      (1+ image-current-frame)
+					      ,(car animated))
+				      'help-echo "Frame number")))
 	    (message "%s"
-		     (concat msg1 "text, or "
-			     (substitute-command-keys
-			      "\\[image-toggle-animation] to animate."))))
+		     (concat msg1 "text.  This image has multiple frames.")))
+;;;			     (substitute-command-keys
+;;;			      "\\[image-toggle-animation] to animate."))))
 	   (t
 	    (message "%s" (concat msg1 "text."))))))
 
@@ -606,7 +663,7 @@ Otherwise it plays once, then stops."
     (cond
      ((null image)
       (error "No image is present"))
-     ((null (setq animation (image-animated-p image)))
+     ((null (setq animation (image-multi-frame-p image)))
       (message "No image animation."))
      (t
       (let ((timer (image-animate-timer image)))
@@ -619,6 +676,36 @@ Otherwise it plays once, then stops."
 		 (setq index nil))
 	    (image-animate image index
 			   (if image-animate-loop t)))))))))
+
+(defun image-goto-frame (n &optional relative)
+  "Show frame N of a multi-frame image.
+Optional argument OFFSET non-nil means interpret N as relative to the
+current frame.  Frames are indexed from 1."
+  (interactive
+   (list (or current-prefix-arg
+	     (read-number "Show frame number: "))))
+  (let ((image (image-get-display-property)))
+    (cond
+     ((null image)
+      (error "No image is present"))
+     ((null image-current-frame)
+      (message "No image animation."))
+     (t
+      (image-nth-frame image (if relative (+ n image-current-frame) (1- n)))))))
+
+(defun image-next-frame (&optional n)
+  "Switch to the next frame of a multi-frame image.
+With optional argument N, switch to the Nth frame after the current one.
+If N is negative, switch to the Nth frame before the current one."
+  (interactive "p")
+  (image-goto-frame n t))
+
+(defun image-previous-frame (&optional n)
+  "Switch to the previous frame of a multi-frame image.
+With optional argument N, switch to the Nth frame before the current one.
+If N is negative, switch to the Nth frame after the current one."
+  (interactive "p")
+  (image-next-frame (- n)))
 
 
 ;;; Switching to the next/previous image
