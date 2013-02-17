@@ -1,3 +1,28 @@
+2013-02-17  Didier Verna  <didier@didierverna.net>
+
+	* net/network-stream.el (network-stream-open-starttls):
+	Check that response to the starttls-command is non-nil.  (Bug#13706)
+
+2013-02-17  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* font-lock.el (lisp-font-lock-keywords-1, lisp-font-lock-keywords-2):
+	Don't assume all identifier chars have syntax word.
+	* emacs-lisp/lisp-mode.el (lisp-mode-variables):
+	Remove bar-not-symbol.  Adjust callers.
+	(lisp-mode-variables): Don't set a font-lock-syntax-table.
+
+2013-02-17  Leo Liu  <sdl.web@gmail.com>
+
+	* net/rcirc.el (rcirc-keepalive): Fix invalid timer error.
+
+2013-02-17  Glenn Morris  <rgm@gnu.org>
+
+	* menu-bar.el (menu-bar-tools-menu): Fix case of EDE entry.
+
+	* image-mode.el (image-mode-map): Add image-dired menu entry.
+
+	* image-dired.el (tumme): Make this alias obsolete.
+
 2013-02-16  Glenn Morris  <rgm@gnu.org>
 
 	* image.el (image-animated-types): Remove.
@@ -20,8 +45,8 @@
 
 	* net/tramp-compat.el (top): Require 'trampver.
 
-	* net/tramp-sh.el (tramp-remote-process-environment): Set
-	tramp-autoload cookie.
+	* net/tramp-sh.el (tramp-remote-process-environment):
+	Set tramp-autoload cookie.
 
 2013-02-16  Kevin Ryde  <user42@zip.com.au>
 
