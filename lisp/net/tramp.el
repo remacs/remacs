@@ -281,16 +281,24 @@ started on the local host.  You should specify a remote host
 useful only in combination with `tramp-default-proxies-alist'.")
 
 ;;;###tramp-autoload
-(defvar tramp-ssh-controlmaster-template
+(defconst tramp-ssh-controlmaster-template
+  (let (result)
     (ignore-errors
       (with-temp-buffer
 	(call-process "ssh" nil t nil "-o" "ControlMaster")
 	(goto-char (point-min))
 	(when (search-forward-regexp "Missing ControlMaster argument" nil t)
-	  '("-o" "ControlPath=%t.%%r@%%h:%%p"
-	    "-o" "ControlMaster=auto"
-	    "-o" "ControlPersist=no"))))
-    "Call ssh to detect whether it supports the ControlMaster argument.
+	  (setq result
+		'("-o" "ControlPath=%t.%%r@%%h:%%p"
+		  "-o" "ControlMaster=auto"))))
+      (when result
+	(with-temp-buffer
+	  (call-process "ssh" nil t nil "-o" "ControlPersist")
+	  (goto-char (point-min))
+	  (when (search-forward-regexp "Missing ControlPersist argument" nil t)
+	    (setq result (append result '("-o" "ControlPersist=no")))))))
+    result)
+    "Call ssh to detect whether it supports the Control* arguments.
 Return a template to be used in `tramp-methods'.")
 
 (defcustom tramp-default-method
@@ -1346,6 +1354,8 @@ The outline level is equal to the verbosity of the Tramp message."
       (get-buffer-create (tramp-debug-buffer-name vec))
     (when (bobp)
       (setq buffer-undo-list t)
+      ;; So it does not get loaded while outline-regexp is let-bound.
+      (require 'outline)
       ;; Activate `outline-mode'.  This runs `text-mode-hook' and
       ;; `outline-mode-hook'.  We must prevent that local processes
       ;; die.  Yes: I've seen `flyspell-mode', which starts "ispell".
