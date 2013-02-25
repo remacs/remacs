@@ -28,6 +28,9 @@ This happens by default if a suitable support library is found at
 build time, like libacl on GNU/Linux.  To prevent this, use the
 configure option `--without-acl'.
 
+** The configure option --with-crt-dir has been removed.
+It is no longer needed, as the crt*.o files are no longer linked specially.
+
 
 * Startup Changes in Emacs 24.4
 
@@ -344,6 +347,13 @@ directory where Emacs was running.
 Setting it has no effect, and %t in the mode-line format is ignored.
 Likewise, `file-name-buffer-file-type-alist' is now obsolete, and
 modifying it has no effect.
+
+---
+** Lock files now work on MS-Windows.
+This allows to avoid losing your edits if the same file is being
+edited in another Emacs session or by another user.  See the node
+"Interlocking" in the Emacs User Manual for the details.  To disable
+file locking, customize `create-lockfiles' to nil.
 
 ** Improved fullscreen support on Mac OS X.
 Both native (>= OSX 10.7) and "old style" fullscreen are supported.
