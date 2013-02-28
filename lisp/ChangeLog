@@ -1,3 +1,65 @@
+2013-02-28  Juri Linkov  <juri@jurta.org>
+
+	* dired-aux.el (dired-diff): If file at point is a backup file,
+	use its original as the default value, and reverse the order
+	of arguments to the `diff' call.  Doc fix.  (Bug#13772)
+
+2013-02-28  Michael Albinus  <michael.albinus@gmx.de>
+
+	* net/tramp-adb.el (tramp-adb-sdk-dir): Remove.  Replaced by ...
+	(tramp-adb-program): New defcustom.  Remove function.  Adapt calls.
+
+2013-02-28  Agustín Martín Domingo  <agustin.martin@hispalinux.es>
+
+	Initial support for hunspell dictionaries auto-detection (Bug#13639)
+
+	* textmodes/ispell.el (ispell-find-hunspell-dictionaries):
+	Ask hunspell about available and default dictionaries.
+	(ispell-parse-hunspell-affix-file): Extract relevant info from
+	hunspell affix file.
+	(ispell-hunspell-fill-dictionary-entry): Fill non-initialized
+	`ispell-dictionary-alist' entry for given dictionary after info
+	provided by `ispell-parse-hunspell-affix-file'.
+	(ispell-hunspell-dict-paths-alist): New defvar to contain an alist
+	of parsed hunspell dicts and associated affix files.
+	(ispell-hunspell-dictionary-alist): New defvar to contain an alist
+	of parsed hunspell dicts and associated parameters.
+	(ispell-set-spellchecker-params):
+	Call `ispell-find-hunspell-dictionaries' if hunspell and not
+	previously done.
+	(ispell-start-process):
+	Call `ispell-hunspell-fill-dictionary-entry' for current
+	dictionary if it is not initialized.
+
+2013-02-28  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* imenu.el: Comment nitpicks.
+
+2013-02-28  Sam Steingold  <sds@gnu.org>
+
+	* vc/diff-mode.el (diff-hunk-file-names): Handle filenames with spaces.
+	See <http://stackoverflow.com/questions/14720205>.
+
+2013-02-28  Thierry Volpiatto  <thierry.volpiatto@gmail.com>
+
+	* net/net-utils.el (net-utils--revert-function): New fun (bug#13831).
+	(net-utils-mode): Use it.
+	(net-utils--revert-cmd): New var.
+	(net-utils-run-simple): Set it, and remove bogus interactive spec.
+	(traceroute): Use net-utils-run-simple.
+
+2013-02-28  Glenn Morris  <rgm@gnu.org>
+
+	* textmodes/paragraphs.el (mark-paragraph): Doc fix.
+
+2013-02-28  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* doc-view.el: Preserve h&v scroll across C-c C-c C-c C-c.
+	(doc-view-fallback-mode): Remove overlays here.
+	(doc-view-toggle-display): Instead of here.  Don't throw away
+	image-mode-winprops-alist.
+	(doc-view-goto-page): Don't mess with hscroll.
+
 2013-02-27  Thierry Volpiatto  <thierry.volpiatto@gmail.com>
 
 	* font-lock.el (lisp-font-lock-keywords-2): Fix highlighting of
