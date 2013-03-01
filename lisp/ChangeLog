@@ -1,3 +1,49 @@
+2013-03-01  Michael Albinus  <michael.albinus@gmx.de>
+
+	* net/tramp-adb.el (tramp-adb-prompt): Extend regexp.
+	(tramp-adb-handle-process-file): Remove superfluous setting.
+	(tramp-adb-command-exit-status): Handle case that COMMAND is nil.
+	(tramp-adb-barf-unless-okay): Use `tramp-adb-command-exit-status'.
+	(tramp-adb-maybe-open-connection): Apply "su" if user is defined.
+
+2013-03-01  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* textmodes/ispell.el: Fix nitpicks and byte-compiler warnings.
+	(ispell-print-if-debug): Build `format' in.  Avoid end-of-buffer.
+	(ispell-parse-hunspell-affix-file): Avoid beginning-of-buffer.
+	Use dict-key rather than dict-name for the error message.
+
+2013-03-01  Thierry Volpiatto  <thierry.volpiatto@gmail.com>
+
+	* net/net-utils.el (net-utils-run-simple): Don't display-buffer
+	when reverting (bug#13831).
+
+2013-03-01  Agustín Martín Domingo  <agustin.martin@hispalinux.es>
+
+	* textmodes/ispell.el (ispell-find-hunspell-dictionaries):
+	Always expand affix-file before storing to protect against changed
+	`default-directory'.
+	(ispell-print-if-debug): Make sure message is printed at the end
+	of the debug buffer.
+
+2013-03-01  Michael Albinus  <michael.albinus@gmx.de>
+
+	* net/tramp.el (tramp-obsolete-methods): New defconst.
+	(tramp-warned-obsolete-methods): New defvar.
+	(tramp-find-method): Check for obsolete methods.  Map them to a
+	replacement method if appropriate.
+
+	* net/tramp-sh.el (tramp-methods) [scp1, scp2, ssh1, ssh2, plink1]:
+	Remove methods.
+	(top): Remove completion functions for "scp1", "scp2", "ssh1",
+	"ssh2" and "plink1".
+
+2013-02-28  Dale Sedivec  <dale@codefu.org>
+
+	* textmodes/sgml-mode.el (sgml-syntax-propertize-function):
+	Return valid syntax-table property value when converting
+	quotes within text from string syntax to punctuation syntax (bug#13844).
+
 2013-02-28  Juri Linkov  <juri@jurta.org>
 
 	* dired-aux.el (dired-diff): If file at point is a backup file,
