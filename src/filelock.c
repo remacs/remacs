@@ -64,7 +64,8 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #define WTMP_FILE "/var/log/wtmp"
 #endif
 
-/* The strategy: to lock a file FN, create a symlink .#FN in FN's
+/* On non-MS-Windows systems, use a symbolic link to represent a lock.
+   The strategy: to lock a file FN, create a symlink .#FN in FN's
    directory, with link data `user@host.pid'.  This avoids a single
    mount (== failure) point for lock files.
 
@@ -97,7 +98,12 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
    has contributed this implementation for Emacs), and was designed by
    Ethan Jacobson, Kimbo Mundy, and others.
 
-   --karl@cs.umb.edu/karl@hq.ileaf.com.  */
+   --karl@cs.umb.edu/karl@hq.ileaf.com.
+
+   On MS-Windows, symbolic links do not work well, so instead of a
+   symlink .#FN -> 'user@host.pid', the lock is a regular file .#-FN
+   with contents 'user@host.pid'.  MS-Windows and non-MS-Windows
+   versions of Emacs ignore each other's locks.  */
 
 
 /* Return the time of the last system boot.  */
@@ -291,55 +297,31 @@ typedef struct
 /* Free the two dynamically-allocated pieces in PTR.  */
 #define FREE_LOCK_INFO(i) do { xfree ((i).user); xfree ((i).host); } while (0)
 
-
-/* Write the name of the lock file for FNAME into LOCKNAME.  Length
-   will be that of FN plus two more for the leading `.#' plus 1 for
-   the trailing period plus one for the digit after it plus one for
-   the null.  */
-#define MAKE_LOCK_NAME(LOCKNAME, FNAME) \
-  (LOCKNAME = alloca (SBYTES (FNAME) + 2 + 1 + 1 + 1), \
-   fill_in_lock_file_name (LOCKNAME, (FNAME)))
-
 #ifdef WINDOWSNT
-/* 256 chars for user, 1024 chars for host, 10 digits for each of 2 int's.  */
-#define MAX_LFINFO (256 + 1024 + 10 + 10 + 2)
-                                                    /* min size: .@PID */
-#define IS_LOCK_FILE(ST) (MAX_LFINFO >= (ST).st_size && (ST).st_size >= 3)
+enum { defined_WINDOWSNT = 1 };
 #else
-#define IS_LOCK_FILE(ST) S_ISLNK ((ST).st_mode)
+enum { defined_WINDOWSNT = 0 };
 #endif
 
+/* Write the name of the lock file for FNAME into LOCKNAME.  Length
+   will be that of FNAME plus two more for the leading ".#",
+   plus one for "-" if MS-Windows, plus one for the null.  */
+#define MAKE_LOCK_NAME(lockname, fname) \
+  (lockname = SAFE_ALLOCA (SBYTES (fname) + 2 + defined_WINDOWSNT + 1), \
+   fill_in_lock_file_name (lockname, fname))
+
 static void
-fill_in_lock_file_name (register char *lockfile, register Lisp_Object fn)
+fill_in_lock_file_name (char *lockfile, Lisp_Object fn)
 {
-  ptrdiff_t length = SBYTES (fn);
-  register char *p;
-  struct stat st;
-  int count = 0;
-
-  strcpy (lockfile, SSDATA (fn));
-
-  /* Shift the nondirectory part of the file name (including the null)
-     right two characters.  Here is one of the places where we'd have to
-     do something to support 14-character-max file names.  */
-  for (p = lockfile + length; p != lockfile && *p != '/'; p--)
-    p[2] = *p;
-
-  /* Insert the `.#'.  */
-  p[1] = '.';
-  p[2] = '#';
-
-  p = lockfile + length + 2;
-
-  while (lstat (lockfile, &st) == 0 && !IS_LOCK_FILE (st))
-    {
-      if (count > 9)
-	{
-	  *p = '\0';
-	  return;
-	}
-      sprintf (p, ".%d", count++);
-    }
+  char *last_slash = memrchr (SSDATA (fn), '/', SBYTES (fn));
+  char *base = last_slash + 1;
+  ptrdiff_t dirlen = base - SSDATA (fn);
+  memcpy (lockfile, SSDATA (fn), dirlen);
+  lockfile[dirlen] = '.';
+  lockfile[dirlen + 1] = '#';
+  if (defined_WINDOWSNT)
+    lockfile[dirlen + 2] = '-';
+  strcpy (lockfile + dirlen + 2 + defined_WINDOWSNT, base);
 }
 
 static int
@@ -356,8 +338,8 @@ create_lock_file (char *lfname, char *lock_info_str, bool force)
   {
     /* Deny everybody else any kind of access to the file until we are
        done writing it and close the handle.  This makes the entire
-       open/write/close operation atomic, as far as other processes
-       are concerned.  */
+       open/write/close operation atomic, as far as other WINDOWSNT
+       processes are concerned.  */
     int fd = _sopen (lfname,
 		     _O_WRONLY | _O_BINARY | _O_CREAT | _O_EXCL | _O_NOINHERIT,
 		     _SH_DENYRW, S_IREAD | S_IWRITE);
@@ -380,7 +362,7 @@ create_lock_file (char *lfname, char *lock_info_str, bool force)
   }
 #else
   err = symlink (lock_info_str, lfname);
-  if (errno == EEXIST && force)
+  if (err != 0 && errno == EEXIST && force)
     {
       unlink (lfname);
       err = symlink (lock_info_str, lfname);
@@ -440,6 +422,8 @@ read_lock_data (char *lfname)
 #else
   int fd = emacs_open (lfname, O_RDONLY | O_BINARY, S_IREAD);
   ssize_t nbytes;
+  /* 256 chars for user, 1024 chars for host, 10 digits for each of 2 int's.  */
+  enum { MAX_LFINFO = 256 + 1024 + 10 + 10 + 2 };
   char lfinfo[MAX_LFINFO + 1];
 
   if (fd < 0)
@@ -601,6 +585,7 @@ lock_if_free (lock_info_type *clasher, register char *lfname)
    decided to go ahead without locking.
 
    When this returns, either the lock is locked for us,
+   or lock creation failed,
    or the user has said to go ahead without locking.
 
    If the file is locked by someone else, this calls
@@ -612,11 +597,9 @@ lock_if_free (lock_info_type *clasher, register char *lfname)
 void
 lock_file (Lisp_Object fn)
 {
-  register Lisp_Object attack, orig_fn, encoded_fn;
-  register char *lfname, *locker;
-  ptrdiff_t locker_size;
+  Lisp_Object orig_fn, encoded_fn;
+  char *lfname;
   lock_info_type lock_info;
-  printmax_t pid;
   struct gcpro gcpro1;
   USE_SAFE_ALLOCA;
 
@@ -657,38 +640,36 @@ lock_file (Lisp_Object fn)
       call1 (intern ("ask-user-about-supersession-threat"), fn);
 
   }
-  UNGCPRO;
 
-  /* Try to lock the lock. */
-  if (lock_if_free (&lock_info, lfname) <= 0)
-    /* Return now if we have locked it, or if lock creation failed */
-    return;
-
-  /* Else consider breaking the lock */
-  locker_size = (strlen (lock_info.user) + strlen (lock_info.host)
-		 + INT_STRLEN_BOUND (printmax_t)
-		 + sizeof "@ (pid )");
-  locker = SAFE_ALLOCA (locker_size);
-  pid = lock_info.pid;
-  esprintf (locker, "%s@%s (pid %"pMd")",
-	    lock_info.user, lock_info.host, pid);
-  FREE_LOCK_INFO (lock_info);
-
-  attack = call2 (intern ("ask-user-about-lock"), fn, build_string (locker));
-  SAFE_FREE ();
-  if (!NILP (attack))
-    /* User says take the lock */
+  /* Try to lock the lock.  */
+  if (0 < lock_if_free (&lock_info, lfname))
     {
-      lock_file_1 (lfname, 1);
-      return;
+      /* Someone else has the lock.  Consider breaking it.  */
+      ptrdiff_t locker_size = (strlen (lock_info.user) + strlen (lock_info.host)
+			       + INT_STRLEN_BOUND (printmax_t)
+			       + sizeof "@ (pid )");
+      char *locker = SAFE_ALLOCA (locker_size);
+      printmax_t pid = lock_info.pid;
+      Lisp_Object attack;
+      esprintf (locker, "%s@%s (pid %"pMd")",
+		lock_info.user, lock_info.host, pid);
+      FREE_LOCK_INFO (lock_info);
+
+      attack = call2 (intern ("ask-user-about-lock"), fn, build_string (locker));
+      /* Take the lock if the user said so.  */
+      if (!NILP (attack))
+	lock_file_1 (lfname, 1);
     }
-  /* User says ignore the lock */
+
+  UNGCPRO;
+  SAFE_FREE ();
 }
 
 void
-unlock_file (register Lisp_Object fn)
+unlock_file (Lisp_Object fn)
 {
-  register char *lfname;
+  char *lfname;
+  USE_SAFE_ALLOCA;
 
   fn = Fexpand_file_name (fn, Qnil);
   fn = ENCODE_FILE (fn);
@@ -697,6 +678,8 @@ unlock_file (register Lisp_Object fn)
 
   if (current_lock_owner (0, lfname) == 2)
     unlink (lfname);
+
+  SAFE_FREE ();
 }
 
 void
@@ -762,9 +745,10 @@ t if it is locked by you, else a string saying which user has locked it.  */)
   (Lisp_Object filename)
 {
   Lisp_Object ret;
-  register char *lfname;
+  char *lfname;
   int owner;
   lock_info_type locker;
+  USE_SAFE_ALLOCA;
 
   filename = Fexpand_file_name (filename, Qnil);
 
@@ -781,6 +765,7 @@ t if it is locked by you, else a string saying which user has locked it.  */)
   if (owner > 0)
     FREE_LOCK_INFO (locker);
 
+  SAFE_FREE ();
   return ret;
 }
 
