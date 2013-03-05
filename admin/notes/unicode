@@ -1,4 +1,4 @@
-                                            -*-mode: text; coding: latin-1;-*-
+                                            -*-mode: text; coding: utf-8;-*-
 
 Copyright (C) 2002-2013 Free Software Foundation, Inc.
 See the end of the file for license conditions.
@@ -12,9 +12,9 @@ regard to completeness.
 
  * SINGLE_BYTE_CHAR_P returns true for Latin-1 characters, which has
    undesirable effects.  E.g.:
-   (multibyte-string-p (let ((s "x")) (aset s 0 ?£) s)) => nil
-   (multibyte-string-p (concat [?£])) => nil
-   (text-char-description ?£) => "M-#"
+   (multibyte-string-p (let ((s "x")) (aset s 0 ?Â£) s)) => nil
+   (multibyte-string-p (concat [?Â£])) => nil
+   (text-char-description ?Â£) => "M-#"
 
 	These examples are all fixed by the change of 2002-10-14, but
 	there still exist questionable SINGLE_BYTE_CHAR_P in the
@@ -77,7 +77,7 @@ regard to completeness.
    spelling and calendar, but that's not a Unicode issue.)
 
  * Handle Unicode combining characters usefully, e.g. diacritics, and
-   handle more scripts specifically (à la Devanagari).  There are
+   handle more scripts specifically (Ã  la Devanagari).  There are
    issues with canonicalization.
 
  * We need tabular input methods, e.g. for maths symbols.  (Not
@@ -97,6 +97,62 @@ regard to completeness.
 
  * Old auto-save files, and similar files, such as Gnus drafts,
    containing non-ASCII characters probably won't be re-read correctly.
+
+
+Source file encoding
+--------------------
+
+Most Emacs source files are encoded in UTF-8 (or in ASCII, which is a
+subset), but there are a few exceptions, listed below.  Perhaps
+someday these files will be converted to UTF-8, for convenience when
+using tools like 'grep -r', but this might need nontrivial changes to
+the build process.
+
+ * chinese-big5
+
+	leim/CXTERM-DIC/4Corner.tit
+	leim/CXTERM-DIC/ARRAY30.tit
+	leim/CXTERM-DIC/ECDICT.tit
+	leim/CXTERM-DIC/ETZY.tit
+	leim/CXTERM-DIC/PY-b5.tit
+	leim/CXTERM-DIC/Punct-b5.tit
+	leim/CXTERM-DIC/QJ-b5.tit
+	leim/CXTERM-DIC/ZOZY.tit
+	leim/MISC-DIC/CTLau-b5.html
+	leim/MISC-DIC/cangjie-table.b5
+
+ * chinese-iso-8bit
+
+	leim/CXTERM-DIC/CCDOSPY.tit
+	leim/CXTERM-DIC/Punct.tit
+	leim/CXTERM-DIC/QJ.tit
+	leim/CXTERM-DIC/SW.tit
+	leim/CXTERM-DIC/TONEPY.tit
+	leim/MISC-DIC/pinyin.map
+	leim/MISC-DIC/CTLau.html
+	leim/MISC-DIC/ziranma.cin
+
+ * iso-latin-2
+
+	etc/refcards/cs-refcard.tex
+	etc/refcards/sk-survival.tex
+	etc/refcards/cs-survival.tex
+	etc/refcards/cs-dired-ref.tex
+	etc/refcards/sk-dired-ref.tex
+	etc/refcards/sk-refcard.tex
+
+ * japanese-iso-8bit
+
+	leim/SKK-DIC/SKK-JISYO.L
+	leim/ja-dic/ja-dic.el
+
+ * japanese-shift-jis
+
+	admin/charsets/mapfiles/cns2ucsdkw.txt
+
+ * no-conversion
+
+	lib-src/testfile
 
 
 This file is part of GNU Emacs.

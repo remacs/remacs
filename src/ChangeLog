@@ -1,3 +1,79 @@
+2013-03-05  Paul Eggert  <eggert@cs.ucla.edu>
+
+	FILE's lock is now always .#FILE and may be a regular file (Bug#13807).
+	* filelock.c: Include <c-ctype.h>.
+	(MAX_LFINFO): New top-level constant.
+	(lock_info_type): Remove members pid, boot_time.  Add members at,
+	dot, colon.  Change user member to be the entire buffer, not a
+	pointer.  This allows us to handle the case where a foreign
+	pid or boot time exceeds the local range.  All uses changed.
+	(LINKS_MIGHT_NOT_WORK): New constant.
+	(FREE_LOCK_INFO): Remove, as the pieces no longer need freeing.
+	(defined_WINDOWSNT): Remove.
+	(MAKE_LOCK_NAME, file_in_lock_file_name):
+	Always use .#FILE (not .#-FILE) for the file lock,
+	even if it is a regular file.
+	(rename_lock_file): New function.
+	(create_lock_file): Use it.
+	(create_lock_file, read_lock_data):
+	Prefer a symbolic link for the lock file, falling back on a
+	regular file if symlinks don't work.  Do not try to create
+	symlinks on MS-Windows, due to security hassles.  Stick with
+	POSIXish functions (open, read, write, close, fchmod, readlink, symlink,
+	link, rename, unlink, mkstemp) when creating locks, as a GNUish
+	host may be using a Windowsish file system, and cannot use
+	MS-Windows-only system calls.  Fall back on mktemp if mkstemp
+	doesn't work.  Don't fail merely because of a symlink-contents
+	length limit in the current file system; fall back on regular
+	files.  Increase the symlink contents length limit to 8 KiB, this
+	should be big enough for any real use and doesn't crunch the
+	stack.
+	(create_lock_file, lock_file_1, read_lock_data):
+	Simplify allocation of lock file buffers now that they fit in 8 KiB.
+	(lock_file_1): Return error number, not bool.  All callers changed.
+	(ELOOP): New macro, if not already defined.
+	(read_lock_data): Return size of lock file contents, not Lisp object.
+	All callers changed.  Handle a race condition if some other process
+	replaces a regular-file lock with a symlink lock or vice versa,
+	while we're trying to read the lock.
+	(current_lock_owner): Parse contents more carefully, to help avoid
+	confusing a regular-file lock with some other application's use
+	of the file.  Check for lock file contents being too long, or
+	not parsing correctly.
+	(current_lock_owner, lock_file):
+	Allow foreign pid and boot times that exceed the local range.
+	(current_lock_owner, lock_if_free, lock_file):
+	Simplify allocation of lock file contents.
+	* w32.c (sys_rename_replace): New function, containing most of
+	the contents of the old sys_rename.
+	(sys_rename): Use it.
+	(fchmod): New dummy function.
+	* w32.h (sys_rename_replace, fchmod): New decls.
+
+2013-03-05  Eli Zaretskii  <eliz@gnu.org>
+
+	* bidi.c (bidi_resolve_explicit_1): Don't call CHAR_TO_BYTE or
+	bidi_count_bytes, as the callers now arrange for bidi_it->charpos
+	to be in sync with bidi_it->bytepos.  Suggested by Dmitry Antipov
+	<dmantipov@yandex.ru>.
+
+2013-03-05  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Fix a build failure on OpenBSD 4.x and MirBSD.
+	* sysdep.c (KERN_PROC, kinfo_proc)
+	[BSD_SYSTEM && (!KERN_PROC || __MirBSD__)]:
+	Define to KERN_PROC2 and kinfo_proc2, for OpenBSD 4.9 and MirBSD.
+	list-system-processes still returns nil, but at least it doesn't crash.
+	Problem reported by Nelson H. F. Beebe in
+	<http://lists.gnu.org/archive/html/emacs-devel/2013-03/msg00021.html>.
+
+2013-03-05  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	* composite.c (get_composition_id, fill_gstring_header):
+	Use make_uninit_vector where appropriate.
+	* font.c (Ffont_get_glyphs, build_style_table): Likewise.
+	* xselect.c (clean_local_selection_data): Likewise.
+
 2013-03-04  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Fix misuse of ImageMagick that caused core dump (Bug#13846).
