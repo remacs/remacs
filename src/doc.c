@@ -176,9 +176,9 @@ get_doc_string (Lisp_Object filepos, bool unibyte, bool definition)
       if (space_left <= 0)
 	{
 	  ptrdiff_t in_buffer = p - get_doc_string_buffer;
-	  get_doc_string_buffer =
-	    xpalloc (get_doc_string_buffer, &get_doc_string_buffer_size,
-		     16 * 1024, -1, 1);
+	  get_doc_string_buffer
+	    = xpalloc (get_doc_string_buffer, &get_doc_string_buffer_size,
+		       16 * 1024, -1, 1);
 	  p = get_doc_string_buffer + in_buffer;
 	  space_left = (get_doc_string_buffer_size - 1
 			- (p - get_doc_string_buffer));
@@ -279,10 +279,10 @@ Invalid data in documentation file -- %c followed by code %03o",
   else
     {
       /* The data determines whether the string is multibyte.  */
-      ptrdiff_t nchars =
-	multibyte_chars_in_text (((unsigned char *) get_doc_string_buffer
-				  + offset),
-				 to - (get_doc_string_buffer + offset));
+      ptrdiff_t nchars
+	= multibyte_chars_in_text (((unsigned char *) get_doc_string_buffer
+				    + offset),
+				   to - (get_doc_string_buffer + offset));
       return make_string_from_bytes (get_doc_string_buffer + offset,
 				     nchars,
 				     to - (get_doc_string_buffer + offset));
@@ -630,11 +630,10 @@ the same file name is found in the `doc-directory'.  */)
 	break;
 
       buf[filled] = 0;
-      p = buf;
       end = buf + (filled < 512 ? filled : filled - 128);
-      while (p != end && *p != '\037') p++;
+      p = memchr (buf, '\037', end - buf);
       /* p points to ^_Ffunctionname\n or ^_Vvarname\n or ^_Sfilename\n.  */
-      if (p != end)
+      if (p)
 	{
 	  end = strchr (p, '\n');
 

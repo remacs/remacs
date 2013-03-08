@@ -445,28 +445,34 @@ usage: (call-process PROGRAM &optional INFILE BUFFER DISPLAY &rest ARGS)  */)
     path = Fsubstring (path, make_number (2), Qnil);
 
   new_argv = SAFE_ALLOCA ((nargs > 4 ? nargs - 2 : 2) * sizeof *new_argv);
-  if (nargs > 4)
-    {
-      ptrdiff_t i;
-      struct gcpro gcpro1, gcpro2, gcpro3, gcpro4, gcpro5;
 
-      GCPRO5 (infile, buffer, current_dir, path, error_file);
-      argument_coding.dst_multibyte = 0;
-      for (i = 4; i < nargs; i++)
-	{
-	  argument_coding.src_multibyte = STRING_MULTIBYTE (args[i]);
-	  if (CODING_REQUIRE_ENCODING (&argument_coding))
-	    /* We must encode this argument.  */
-	    args[i] = encode_coding_string (&argument_coding, args[i], 1);
-	}
-      UNGCPRO;
-      for (i = 4; i < nargs; i++)
-	new_argv[i - 3] = SSDATA (args[i]);
-      new_argv[i - 3] = 0;
-    }
-  else
-    new_argv[1] = 0;
-  new_argv[0] = SSDATA (path);
+  {
+    struct gcpro gcpro1, gcpro2, gcpro3, gcpro4, gcpro5;
+
+    GCPRO5 (infile, buffer, current_dir, path, error_file);
+    if (nargs > 4)
+      {
+	ptrdiff_t i;
+
+	argument_coding.dst_multibyte = 0;
+	for (i = 4; i < nargs; i++)
+	  {
+	    argument_coding.src_multibyte = STRING_MULTIBYTE (args[i]);
+	    if (CODING_REQUIRE_ENCODING (&argument_coding))
+	      /* We must encode this argument.  */
+	      args[i] = encode_coding_string (&argument_coding, args[i], 1);
+	  }
+	for (i = 4; i < nargs; i++)
+	  new_argv[i - 3] = SSDATA (args[i]);
+	new_argv[i - 3] = 0;
+      }
+    else
+      new_argv[1] = 0;
+    if (STRING_MULTIBYTE (path))
+      path = ENCODE_FILE (path);
+    new_argv[0] = SSDATA (path);
+    UNGCPRO;
+  }
 
 #ifdef MSDOS /* MW, July 1993 */
 
@@ -481,7 +487,7 @@ usage: (call-process PROGRAM &optional INFILE BUFFER DISPLAY &rest ARGS)  */)
 	  tempfile = alloca (20);
 	  *tempfile = '\0';
 	}
-      dostounix_filename (tempfile);
+      dostounix_filename (tempfile, 0);
       if (*tempfile == '\0' || tempfile[strlen (tempfile) - 1] != '/')
 	strcat (tempfile, "/");
       strcat (tempfile, "detmp.XXX");
@@ -991,13 +997,11 @@ usage: (call-process-region START END PROGRAM &optional DELETE BUFFER DISPLAY &r
     tmpdir = Vtemporary_file_directory;
   else
     {
-#ifndef DOS_NT
-      if (getenv ("TMPDIR"))
-	tmpdir = build_string (getenv ("TMPDIR"));
-      else
-	tmpdir = build_string ("/tmp/");
-#else /* DOS_NT */
       char *outf;
+#ifndef DOS_NT
+      outf = getenv ("TMPDIR");
+      tmpdir = build_string (outf ? outf : "/tmp/");
+#else /* DOS_NT */
       if ((outf = egetenv ("TMPDIR"))
 	  || (outf = egetenv ("TMP"))
 	  || (outf = egetenv ("TEMP")))
@@ -1010,8 +1014,26 @@ usage: (call-process-region START END PROGRAM &optional DELETE BUFFER DISPLAY &r
   {
     USE_SAFE_ALLOCA;
     Lisp_Object pattern = Fexpand_file_name (Vtemp_file_name_pattern, tmpdir);
-    Lisp_Object encoded_tem = ENCODE_FILE (pattern);
-    char *tempfile = SAFE_ALLOCA (SBYTES (encoded_tem) + 1);
+    Lisp_Object encoded_tem;
+    char *tempfile;
+
+#ifdef WINDOWSNT
+    /* Cannot use the result of Fexpand_file_name, because it
+       downcases the XXXXXX part of the pattern, and mktemp then
+       doesn't recognize it.  */
+    if (!NILP (Vw32_downcase_file_names))
+      {
+	Lisp_Object dirname = Ffile_name_directory (pattern);
+
+	if (NILP (dirname))
+	  pattern = Vtemp_file_name_pattern;
+	else
+	  pattern = concat2 (dirname, Vtemp_file_name_pattern);
+      }
+#endif
+
+    encoded_tem = ENCODE_FILE (pattern);
+    tempfile = SAFE_ALLOCA (SBYTES (encoded_tem) + 1);
     memcpy (tempfile, SDATA (encoded_tem), SBYTES (encoded_tem) + 1);
     coding_systems = Qt;
 
@@ -1631,7 +1653,7 @@ init_callproc (void)
   if (! file_accessible_directory_p (SSDATA (tempdir)))
     dir_warning ("arch-independent data dir", Vdata_directory);
 
-  sh = (char *) getenv ("SHELL");
+  sh = getenv ("SHELL");
   Vshell_file_name = build_string (sh ? sh : "/bin/sh");
 
 #ifdef DOS_NT

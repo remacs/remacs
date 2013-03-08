@@ -1785,13 +1785,13 @@ statement spanning multiple lines; otherwise, return nil."
                         (or (eq (char-before) ?,)
                             (and (not (eq (char-before) ?\;))
                                  (prog2
-                                     (skip-chars-backward "[[:punct:]]")
+                                     (skip-syntax-backward ".")
                                      (looking-at js--indent-operator-re)
                                    (js--backward-syntactic-ws))
                                  (not (eq (char-before) ?\;)))
                             (and (>= pos (point-at-bol))
                                  (<= pos (point-at-eol)))))))
-          (condition-case err
+          (condition-case nil
               (backward-sexp)
             (scan-error (setq at-opening-bracket t))))
         (when (looking-at js--declaration-keyword-re)
@@ -3405,8 +3405,7 @@ If one hasn't been set, or if it's stale, prompt for a new one."
   ;; calls to syntax-propertize wherever it's really needed.
   (syntax-propertize (point-max)))
 
-;;;###autoload
-(defalias 'javascript-mode 'js-mode)
+;;;###autoload (defalias 'javascript-mode 'js-mode)
 
 (eval-after-load 'folding
   '(when (fboundp 'folding-add-to-marks-list)

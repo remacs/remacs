@@ -47,17 +47,16 @@ The whitespace before and including \"|\" on each line is removed."
 (defun ruby-test-string (s &rest args)
   (apply 'format (replace-regexp-in-string "^[ \t]*|" "" s) args))
 
-(defun ruby-assert-state (content &rest values-plist)
+(defun ruby-assert-state (content index value &optional point)
   "Assert syntax state values at the end of CONTENT.
 
 VALUES-PLIST is a list with alternating index and value elements."
   (ruby-with-temp-buffer content
+    (when point (goto-char point))
     (syntax-propertize (point))
-    (while values-plist
-      (should (eq (nth (car values-plist)
-                       (parse-partial-sexp (point-min) (point)))
-                  (cadr values-plist)))
-      (setq values-plist (cddr values-plist)))))
+    (should (eq (nth index
+                     (parse-partial-sexp (point-min) (point)))
+                value))))
 
 (defun ruby-assert-face (content pos face)
   (ruby-with-temp-buffer content
@@ -103,6 +102,12 @@ VALUES-PLIST is a list with alternating index and value elements."
   (ruby-should-indent "a = \"abc\nif\"\n  " 0)
   (ruby-should-indent "a = %w[abc\n       def]\n  " 0)
   (ruby-should-indent "a = \"abc\n      def\"\n  " 0))
+
+(ert-deftest ruby-regexp-doest-start-in-string ()
+  (ruby-assert-state "'(/', /\d+/" 3 nil))
+
+(ert-deftest ruby-regexp-starts-after-string ()
+  (ruby-assert-state "'(/', /\d+/" 3 ?/ 8))
 
 (ert-deftest ruby-indent-simple ()
   (ruby-should-indent-buffer
@@ -236,6 +241,18 @@ VALUES-PLIST is a list with alternating index and value elements."
    |val
    |end
    |statement"))
+
+(ert-deftest ruby-indent-spread-args-in-parens ()
+  (let ((ruby-deep-indent-paren '(?\()))
+    (ruby-should-indent-buffer
+     "foo(1,
+     |    2,
+     |    3)
+     |"
+     "foo(1,
+     | 2,
+     |  3)
+     |")))
 
 (ert-deftest ruby-move-to-block-stops-at-indentation ()
   (ruby-with-temp-buffer "def f\nend"
@@ -378,11 +395,13 @@ VALUES-PLIST is a list with alternating index and value elements."
                           |  class C
                           |    class D
                           |    end
-                          |    _
+                          |    def foo
+                          |      _
+                          |    end
                           |  end
                           |end")
     (search-backward "_")
-    (should (string= (ruby-add-log-current-method) "M::C"))))
+    (should (string= (ruby-add-log-current-method) "M::C#foo"))))
 
 (defvar ruby-block-test-example
   (ruby-test-string
@@ -396,7 +415,8 @@ VALUES-PLIST is a list with alternating index and value elements."
    |  end
    |
    |  def baz
-   |    some do
+   |some do
+   |3
    |    end
    |  end
    |end"))
@@ -413,7 +433,7 @@ VALUES-PLIST is a list with alternating index and value elements."
 (ruby-deftest-move-to-block works-on-do
   (goto-line 11)
   (ruby-end-of-block)
-  (should (= 12 (line-number-at-pos)))
+  (should (= 13 (line-number-at-pos)))
   (ruby-beginning-of-block)
   (should (= 11 (line-number-at-pos))))
 
@@ -425,12 +445,47 @@ VALUES-PLIST is a list with alternating index and value elements."
 (ruby-deftest-move-to-block ok-with-three
   (goto-line 2)
   (ruby-move-to-block 3)
-  (should (= 13 (line-number-at-pos))))
+  (should (= 14 (line-number-at-pos))))
 
 (ruby-deftest-move-to-block ok-with-minus-two
   (goto-line 10)
   (ruby-move-to-block -2)
   (should (= 2 (line-number-at-pos))))
+
+(ert-deftest ruby-move-to-block-skips-percent-literal ()
+  (dolist (s (list (ruby-test-string
+                    "foo do
+                    |  a = %%w(
+                    |    def yaa
+                    |  )
+                    |end")
+                   (ruby-test-string
+                    "foo do
+                    |  a = %%w|
+                    |    end
+                    |  |
+                    |end")))
+    (ruby-with-temp-buffer s
+      (goto-line 1)
+      (ruby-end-of-block)
+      (should (= 5 (line-number-at-pos)))
+      (ruby-beginning-of-block)
+      (should (= 1 (line-number-at-pos))))))
+
+(ert-deftest ruby-move-to-block-skips-heredoc ()
+  (ruby-with-temp-buffer
+      (ruby-test-string
+       "if something_wrong?
+       |  ActiveSupport::Deprecation.warn(<<-eowarn)
+       |  boo hoo
+       |  end
+       |  eowarn
+       |end")
+    (goto-line 1)
+    (ruby-end-of-block)
+    (should (= 6 (line-number-at-pos)))
+    (ruby-beginning-of-block)
+    (should (= 1 (line-number-at-pos)))))
 
 (provide 'ruby-mode-tests)
 

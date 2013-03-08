@@ -4587,12 +4587,9 @@ DEFUN ("xw-color-values", Fxw_color_values, Sxw_color_values, 1, 2, 0,
   CHECK_STRING (color);
 
   if (w32_defined_color (f, SDATA (color), &foo, 0))
-    return list3 (make_number ((GetRValue (foo.pixel) << 8)
-			       | GetRValue (foo.pixel)),
-		  make_number ((GetGValue (foo.pixel) << 8)
-			       | GetGValue (foo.pixel)),
-		  make_number ((GetBValue (foo.pixel) << 8)
-			       | GetBValue (foo.pixel)));
+    return list3i ((GetRValue (foo.pixel) << 8) | GetRValue (foo.pixel),
+		   (GetGValue (foo.pixel) << 8) | GetGValue (foo.pixel),
+		   (GetBValue (foo.pixel) << 8) | GetBValue (foo.pixel));
   else
     return Qnil;
 }
@@ -4718,9 +4715,7 @@ DISPLAY should be either a frame or a display name (a string).
 If omitted or nil, that stands for the selected frame's display.  */)
   (Lisp_Object display)
 {
-  return Fcons (make_number (w32_major_version),
-		Fcons (make_number (w32_minor_version),
-		       Fcons (make_number (w32_build_number), Qnil)));
+  return list3i (w32_major_version, w32_minor_version, w32_build_number);
 }
 
 DEFUN ("x-display-screens", Fx_display_screens, Sx_display_screens, 0, 1, 0,
@@ -5943,7 +5938,7 @@ Text larger than the specified size is clipped.  */)
 		  SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
 
     /* Let redisplay know that we have made the frame visible already.  */
-    f->async_visible = 1;
+    SET_FRAME_VISIBLE (f, 1);
 
     ShowWindow (FRAME_W32_WINDOW (f), SW_SHOWNOACTIVATE);
   }
@@ -6254,7 +6249,7 @@ Otherwise, if ONLY-DIR-P is non-nil, the user can only select directories.  */)
             /* we get one of the two final 0 bytes for free. */
             1 + sizeof (wchar_t) * wcslen (filename_buf)));
 #else /* !NTGUI_UNICODE */
-        dostounix_filename (filename_buf);
+        dostounix_filename (filename_buf, 0);
         filename = DECODE_FILE (build_string (filename_buf));
 #endif /* NTGUI_UNICODE */
 
@@ -6484,12 +6479,12 @@ w32_parse_hot_key (Lisp_Object key)
 
   CHECK_VECTOR (key);
 
-  if (XFASTINT (Flength (key)) != 1)
+  if (ASIZE (key) != 1)
     return Qnil;
 
   GCPRO1 (key);
 
-  c = Faref (key, make_number (0));
+  c = AREF (key, 0);
 
   if (CONSP (c) && lucid_event_type_list_p (c))
     c = Fevent_convert_list (c);

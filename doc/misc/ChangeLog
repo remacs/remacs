@@ -1,3 +1,147 @@
+2013-03-08  Glenn Morris  <rgm@gnu.org>
+
+	* faq.texi (Top): Don't say this was updated @today.
+	That's irrelevant and leads to spurious diffs.
+
+2013-03-08  Jay Belanger  <jay.p.belanger@gmail.com>
+
+	* calc.texi (Basic Operations on Units): Fix
+	cross-reference.
+
+2013-03-07  Katsumi Yamaoka  <yamaoka@jpl.org>
+
+	* gnus-faq.texi (FAQ 3-11): Now Gnus supports POP3 UIDL.
+
+2013-03-06  Alan Mackenzie  <acm@muc.de>
+
+	* cc-mode.texi (Custom Line-Up): Clarify position of point on
+	calling a line-up function.
+
+2013-03-04  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* emacs-mime.texi, htmlfontify.texi, mairix-el.texi, mh-e.texi:
+	* ses.texi: Switch from Latin-1 to UTF-8.
+
+2013-03-03  Michael Albinus  <michael.albinus@gmx.de>
+
+	* tramp.texi (External methods): Tramp does not connect Android
+	devices by itself.
+
+2013-03-02  Bill Wohler  <wohler@newt.com>
+
+	Release MH-E manual version 8.5.
+
+	* mh-e.texi (VERSION, EDITION, UPDATED, UPDATE-MONTH): Update for
+	release 8.5.
+
+	* mh-e.texi (Preface, Conventions, Getting Started)
+	(Using This Manual, Folder Selection, Viewing, Aliases)
+	(Identities, Speedbar, Menu Bar, Tool Bar, Scan Line Formats)
+	(Bug Reports, Mailing Lists, MH FAQ and Support, Getting MH-E):
+	Update URLs.
+
+2013-03-01  Michael Albinus  <michael.albinus@gmx.de>
+
+	* tramp.texi (Inline methods): Remove "ssh1", "ssh2", "plink1"
+	and "plink2" entries.  "plink2" is obsolete for a long time.
+	(External methods): Remove "scp1" and "scp2" entries.  Explain
+	user name and host name specification for "adb".
+
+2013-02-28  Michael Albinus  <michael.albinus@gmx.de>
+
+	* tramp.texi (External methods): Mention `tramp-adb-program'.
+
+2013-02-28  Bastien Guerry  <bzg@gnu.org>
+
+	* org.texi (Visibility cycling): Suggest to set
+	`org-agenda-inhibit-startup' to nil if user wants the startup
+	visibility settings to be honored in any circumstances.
+	(Progress logging, Checkboxes): Fix typos.
+
+2013-02-28  Michael Albinus  <michael.albinus@gmx.de>
+
+	* tramp.texi (top) [xxx, yyy, trampfn]: Provide two versions of
+	the macros, for Texinfo 4.13 and 5.0.
+
+2013-02-24  Michael Albinus  <michael.albinus@gmx.de>
+
+	Port Tramp documentation to Texinfo 5.0.
+	* tramp.texi (top) [xxx, yyy, trampfn]: Remove superfluous @c.
+	(Filename Syntax): Do not use @trampfn{} in @item.
+	(Filename completion): Use @columnfractions in @multitable.
+
+2013-02-22  Glenn Morris  <rgm@gnu.org>
+
+	* flymake.texi (Syntax check statuses): Fix multitable continued rows.
+
+2013-02-21  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* Makefile.in (html): New rule.
+
+2013-02-20  Michael Albinus  <michael.albinus@gmx.de>
+
+	* tramp.texi (Android shell setup): Improve.  Reported by Thierry
+	Volpiatto <thierry.volpiatto@gmail.com>.
+
+2013-02-16  Michael Albinus  <michael.albinus@gmx.de>
+
+	* tramp.texi (Top, Configuration): Insert section `Android shell
+	setup' in menu.
+	(Android shell setup): New section.
+	(Connection types, Default Method)
+	(Frequently Asked Questions): Mention "scp" instead of "scpc".
+	(External methods): Remove "scpc" and "rsyncc" entries.
+	(Frequently Asked Questions): Remove entry about ControlPersist.
+
+2013-02-13  Glenn Morris  <rgm@gnu.org>
+
+	* message.texi (News Headers): Don't mention yow any more.
+
+2013-02-09  Jay Belanger  <jay.p.belanger@gmail.com>
+
+	* calc.texi (Basic Operations on Units):
+	(Customizing Calc): Mention the variable `calc-allow-units-as-numbers'.
+
+2013-02-08  Aidan Gauland  <aidalgol@no8wireless.co.nz>
+
+	* eshell.texi: Fill most of the missing sections.
+
+2013-02-07  Bastien Guerry  <bzg@gnu.org>
+
+	* org.texi (References): Clarify an example.
+	(Installation): Fix instructions.
+	(Org-Plot): Fix link.
+	(Checkboxes, Radio lists): Fix typos.
+
+2013-02-07  Glenn Morris  <rgm@gnu.org>
+
+	* cl.texi (Equality Predicates): Mention memql.
+
+2013-02-07  Eric Ludlam  <zappo@gnu.org>
+
+	* doc/misc/ede.texi (Creating a project): Make ede-new doc less
+	specific, and only about items it supports, indicating that there
+	might be more.  Remove refs to simple project and direct automake
+	from ede new.
+	(Simple projects): Re-write to not talk about ede-simple-project
+	which is deprecated, and instead use the term to mean projects
+	that don't do much management, just project wrapping.  Add
+	ede-generic-project link.
+	(ede-generic-project): New node (bug#11441).
+
+2013-02-07  Glenn Morris  <rgm@gnu.org>
+
+	* cl.texi (Equality Predicates): Fix eq/eql pedantry.
+
+2013-02-01  Glenn Morris  <rgm@gnu.org>
+
+	* calc.texi (Help Commands): Update calc-view-news description.
+	Mention etc/CALC-NEWS.
+
+2013-01-24  Michael Albinus  <michael.albinus@gmx.de>
+
+	* tramp.texi (Filename Syntax): Filenames must be unibyte strings.
+
 2013-01-13  Bastien Guerry  <bzg@gnu.org>
 
 	* org.texi (Installation): Simplify.

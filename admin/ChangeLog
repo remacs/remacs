@@ -1,3 +1,35 @@
+2013-03-05  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* notes/unicode: Add notes about Emacs source file encoding.
+
+2013-03-04  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* grammars/java-tags.wy (CHAR): Remove "('\u0000' to '\uffff')"
+	from summary, as this causes javat-wy.el to contain both a null byte
+	and a byte sequence that is not valid UTF-8, which is inconvenient.
+
+2013-03-03  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* bzrmerge.el (bzrmerge-apply): Omit Latin-1 char from diagnostic.
+	If there were a real need, it should be UTF-8 anyway.
+
+2013-02-25  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Simplify data_start configuration (Bug#13783).
+	* CPP-DEFINES (DATA_START, ORDINARY_LINK): Remove.
+
+2013-02-11  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Tune by using memchr and memrchr.
+	* merge-gnulib (GNULIB_MODULES): Add memrchr.
+
+2013-02-01  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Use fdopendir, fstatat and readlinkat, for efficiency (Bug#13539).
+	* merge-gnulib (GNULIB_MODULES): Add fdopendir, fstatat, readlinkat.
+	(GNULIB_TOOL_FLAGS): Do not avoid at-internal, openat-h.
+	Avoid dup, open, opendir.
+
 2013-01-15  Dmitry Antipov  <dmantipov@yandex.ru>
 
 	* coccinelle/xsave.cocci: Semantic patch to adjust users of

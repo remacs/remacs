@@ -70,6 +70,18 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #define HAVE___BUILTIN_UNWIND_INIT 1
 #endif
 
+/* This isn't perfect, as some systems might have the page file in
+   another place.  Also, I suspect that the time stamp of that file
+   might also change when Windows enlarges the file due to
+   insufficient VM.  Still, this seems to be the most reliable way;
+   the alternative (of using GetSystemTimes) won't work on laptops
+   that hibernate, because the system clock is stopped then.  Other
+   possibility would be to run "net statistics workstation" and parse
+   the output, but that's gross.  So this should do; if the file is
+   not there, the boot time will be returned as zero, and filelock.c
+   already handles that.  */
+#define BOOT_TIME_FILE "C:/pagefile.sys"
+
 /* ============================================================ */
 
 /* Here, add any special hacks needed to make Emacs work on this
@@ -149,7 +161,6 @@ extern char *getenv ();
 #define chdir   sys_chdir
 #undef chmod
 #define chmod   sys_chmod
-#define chown   sys_chown
 #undef close
 #define close   sys_close
 #undef creat
@@ -222,7 +233,6 @@ typedef int pid_t;
 #define strtoll   _strtoi64
 #endif
 #define isatty    _isatty
-#define logb      _logb
 #define _longjmp  longjmp
 #define lseek     _lseek
 #define popen     _popen
@@ -265,8 +275,11 @@ struct timespec
 extern struct tm *gmtime_r (time_t const * restrict, struct tm * restrict);
 extern struct tm *localtime_r (time_t const * restrict, struct tm * restrict);
 
+#ifdef _MSC_VER
 /* This is hacky, but is necessary to avoid warnings about macro
-   redefinitions using the SDK compilers.  */
+   redefinitions using the MSVC compilers, since, when __STDC__ is
+   undefined or zero, those compilers declare functions like fileno,
+   lseek, and chdir, for which we defined macros above.  */
 #ifndef __STDC__
 #define __STDC__ 1
 #define MUST_UNDEF__STDC__
@@ -278,6 +291,11 @@ extern struct tm *localtime_r (time_t const * restrict, struct tm * restrict);
 #undef __STDC__
 #undef MUST_UNDEF__STDC__
 #endif
+#else  /* !_MSC_VER */
+#include <direct.h>
+#include <io.h>
+#include <stdio.h>
+#endif	/* !_MSC_VER */
 
 /* Defines that we need that aren't in the standard signal.h.  */
 #define SIGHUP  1               /* Hang up */
@@ -393,6 +411,9 @@ extern int sys_putenv (char *);
 
 extern int getloadavg (double *, int);
 extern int getpagesize (void);
+
+extern void * memrchr (void const *, int, size_t);
+
 
 #if defined (__MINGW32__)
 

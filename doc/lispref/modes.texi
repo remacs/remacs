@@ -905,9 +905,8 @@ modes derived from Special mode are given a @code{mode-class} property
 of @code{special} (@pxref{Major Mode Conventions}).
 
 Special mode sets the buffer to read-only.  Its keymap defines several
-common bindings, including @kbd{q} for @code{quit-window}, @kbd{z} for
-@code{kill-this-buffer}, and @kbd{g} for @code{revert-buffer}
-(@pxref{Reverting}).
+common bindings, including @kbd{q} for @code{quit-window} and @kbd{g}
+for @code{revert-buffer} (@pxref{Reverting}).
 
 An example of a major mode derived from Special mode is Buffer Menu
 mode, which is used by the @file{*Buffer List*} buffer.  @xref{List
@@ -1361,7 +1360,7 @@ follow them is to use the macro @code{define-minor-mode}.
 @cindex mode variable
 Define a variable whose name ends in @samp{-mode}.  We call this the
 @dfn{mode variable}.  The minor mode command should set this variable.
-The value will be @code{nil} is the mode is disabled, and non-@code{nil}
+The value will be @code{nil} if the mode is disabled, and non-@code{nil}
 if the mode is enabled.  The variable should be buffer-local if the
 minor mode is buffer-local.
 
@@ -2149,11 +2148,6 @@ visible on screen; or @samp{Bottom} or @samp{All}.
 @item %s
 The status of the subprocess belonging to the current buffer, obtained with
 @code{process-status}.  @xref{Process Information}.
-
-@item %t
-Whether the visited file is a text file or a binary file.  This is a
-meaningful distinction only on certain operating systems (@pxref{MS-DOS
-File Types}).
 
 @item %z
 The mnemonics of keyboard, terminal, and buffer coding systems.

@@ -134,6 +134,7 @@ Lisp_Object Qfile_name_handler_alist;
 Lisp_Object Qrisky_local_variable;
 
 Lisp_Object Qkill_emacs;
+static Lisp_Object Qkill_emacs_hook;
 
 /* If true, Emacs should not attempt to use a window-specific code,
    but instead should use the virtual terminal under which it was started.  */
@@ -515,32 +516,6 @@ DEFUN ("invocation-directory", Finvocation_directory, Sinvocation_directory,
    It is OK (though a bit slower) if the user actually chooses this value.  */
 static char const dump_tz[] = "UtC0";
 #endif
-
-#ifndef ORDINARY_LINK
-/* We don't include crtbegin.o and crtend.o in the link,
-   so these functions and variables might be missed.
-   Provide dummy definitions to avoid error.
-   (We don't have any real constructors or destructors.)  */
-#ifdef __GNUC__
-
-/* Define a dummy function F.  Declare F too, to pacify gcc
-   -Wmissing-prototypes.  */
-#define DEFINE_DUMMY_FUNCTION(f) \
-  void f (void) ATTRIBUTE_CONST EXTERNALLY_VISIBLE; void f (void) {}
-
-#ifndef GCC_CTORS_IN_LIBC
-DEFINE_DUMMY_FUNCTION (__do_global_ctors)
-DEFINE_DUMMY_FUNCTION (__do_global_ctors_aux)
-DEFINE_DUMMY_FUNCTION (__do_global_dtors)
-/* GNU/Linux has a bug in its library; avoid an error.  */
-#ifndef GNU_LINUX
-char * __CTOR_LIST__[2] EXTERNALLY_VISIBLE = { (char *) (-1), 0 };
-#endif
-char * __DTOR_LIST__[2] EXTERNALLY_VISIBLE = { (char *) (-1), 0 };
-#endif /* GCC_CTORS_IN_LIBC */
-DEFINE_DUMMY_FUNCTION (__main)
-#endif /* __GNUC__ */
-#endif /* ORDINARY_LINK */
 
 /* Test whether the next argument in ARGV matches SSTR or a prefix of
    LSTR (at least MINLEN characters).  If so, then if VALPTR is non-null
@@ -1047,7 +1022,7 @@ Using an Emacs configured with --with-x-toolkit=lucid does not have this problem
 
             argv[skip_args] = fdStr;
 
-            execv (argv[0], argv);
+            execvp (argv[0], argv);
             fprintf (stderr, "emacs daemon: exec failed: %d\n", errno);
             exit (1);
           }
@@ -1308,6 +1283,7 @@ Using an Emacs configured with --with-x-toolkit=lucid does not have this problem
     }
 
   init_callproc ();	/* Must follow init_cmdargs but not init_sys_modes.  */
+  init_fileio ();
   init_lread ();
 #ifdef WINDOWSNT
   /* Check to see if Emacs has been installed correctly.  */
@@ -1832,7 +1808,6 @@ all of which are called before Emacs is actually killed.  */)
   (Lisp_Object arg)
 {
   struct gcpro gcpro1;
-  Lisp_Object hook;
   int exit_code;
 
   GCPRO1 (arg);
@@ -1840,9 +1815,10 @@ all of which are called before Emacs is actually killed.  */)
   if (feof (stdin))
     arg = Qt;
 
-  hook = intern ("kill-emacs-hook");
-  Frun_hooks (1, &hook);
-
+  /* Fsignal calls emacs_abort () if it sees that waiting_for_input is
+     set.  */
+  waiting_for_input = 0;
+  Frun_hooks (1, &Qkill_emacs_hook);
   UNGCPRO;
 
 #ifdef HAVE_X_WINDOWS
@@ -2142,7 +2118,7 @@ decode_env_path (const char *evarname, const char *defalt)
     {
       char *path_copy = alloca (strlen (path) + 1);
       strcpy (path_copy, path);
-      dostounix_filename (path_copy);
+      dostounix_filename (path_copy, 0);
       path = path_copy;
     }
 #endif
@@ -2254,6 +2230,7 @@ syms_of_emacs (void)
   DEFSYM (Qfile_name_handler_alist, "file-name-handler-alist");
   DEFSYM (Qrisky_local_variable, "risky-local-variable");
   DEFSYM (Qkill_emacs, "kill-emacs");
+  DEFSYM (Qkill_emacs_hook, "kill-emacs-hook");
 
 #ifndef CANNOT_DUMP
   defsubr (&Sdump_emacs);

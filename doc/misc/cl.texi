@@ -703,14 +703,6 @@ The type symbol @code{real} is a synonym for @code{number}, and
 The type symbols @code{character} and @code{string-char} match
 integers in the range from 0 to 255.
 
-@c No longer relevant, so covered by first item above (float -> floatp).
-@ignore
-@item
-The type symbol @code{float} uses the @code{cl-floatp-safe} predicate
-defined by this package rather than @code{floatp}, so it will work
-correctly even in Emacs versions without floating-point support.
-@end ignore
-
 @item
 The type list @code{(integer @var{low} @var{high})} represents all
 integers between @var{low} and @var{high}, inclusive.  Either bound
@@ -748,7 +740,7 @@ This function attempts to convert @var{object} to the specified
 @var{type}.  If @var{object} is already of that type as determined by
 @code{cl-typep}, it is simply returned.  Otherwise, certain types of
 conversions will be made:  If @var{type} is any sequence type
-(@code{string}, @code{list}, etc.) then @var{object} will be
+(@code{string}, @code{list}, etc.)@: then @var{object} will be
 converted to that type if possible.  If @var{type} is
 @code{character}, then strings of length one and symbols with
 one-character names can be coerced.  If @var{type} is @code{float},
@@ -817,8 +809,9 @@ not compare strings against vectors of integers.
 Also note that the Common Lisp functions @code{member} and @code{assoc}
 use @code{eql} to compare elements, whereas Emacs Lisp follows the
 MacLisp tradition and uses @code{equal} for these two functions.
-In Emacs, use @code{memq} (or @code{cl-member}) and @code{assq} (or
-@code{cl-assoc}) to get functions which use @code{eql} for comparisons.
+The functions @code{cl-member} and @code{cl-assoc} use @code{eql},
+as in Common Lisp.  The standard Emacs Lisp functions @code{memq} and
+@code{assq} use @code{eq}, and the standard @code{memql} uses @code{eql}.
 
 @node Control Structure
 @chapter Control Structure
@@ -2919,14 +2912,6 @@ error if the argument is not an integer.
 This predicate tests whether @var{integer} is even.  It is an
 error if the argument is not an integer.
 @end defun
-
-@ignore
-@defun cl-floatp-safe object
-This predicate tests whether @var{object} is a floating-point
-number.  On systems that support floating-point, this is equivalent
-to @code{floatp}.  On other systems, this always returns @code{nil}.
-@end defun
-@end ignore
 
 @node Numerical Functions
 @section Numerical Functions

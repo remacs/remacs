@@ -370,9 +370,6 @@ bset_zv_marker (struct buffer *b, Lisp_Object val)
   b->INTERNAL_FIELD (zv_marker) = val;
 }
 
-/* For debugging; temporary.  See set_buffer_internal.  */
-/* Lisp_Object Qlisp_mode, Vcheck_symbol; */
-
 void
 nsberror (Lisp_Object spec)
 {
@@ -3152,7 +3149,10 @@ ptrdiff_t
 sort_overlays (Lisp_Object *overlay_vec, ptrdiff_t noverlays, struct window *w)
 {
   ptrdiff_t i, j;
-  struct sortvec *sortvec = alloca (noverlays * sizeof *sortvec);
+  USE_SAFE_ALLOCA;
+  struct sortvec *sortvec;
+
+  SAFE_NALLOCA (sortvec, 1, noverlays);
 
   /* Put the valid and relevant overlays into sortvec.  */
 
@@ -3198,6 +3198,8 @@ sort_overlays (Lisp_Object *overlay_vec, ptrdiff_t noverlays, struct window *w)
 
   for (i = 0; i < noverlays; i++)
     overlay_vec[i] = sortvec[i].overlay;
+
+  SAFE_FREE ();
   return (noverlays);
 }
 
@@ -6000,10 +6002,6 @@ simple case that you moved off with C-b means scrolling just one line.
 1.0 means point goes at the bottom, so that in that simple case, the
 window scrolls by a full window height.  Meaningful values are
 between 0.0 and 1.0, inclusive.  */);
-
-/*DEFVAR_LISP ("debug-check-symbol", &Vcheck_symbol,
-    "Don't ask.");
-*/
 
   DEFVAR_LISP ("before-change-functions", Vbefore_change_functions,
 	       doc: /* List of functions to call before each text change.

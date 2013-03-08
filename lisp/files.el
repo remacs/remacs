@@ -507,6 +507,11 @@ and ignores this variable."
 		 (other :tag "Query" other))
   :group 'find-file)
 
+(defvar enable-dir-local-variables t
+  "Non-nil means enable use of directory-local variables.
+Some modes may wish to set this to nil to prevent directory-local
+settings being applied, but still respect file-local ones.")
+
 ;; This is an odd variable IMO.
 ;; You might wonder why it is needed, when we could just do:
 ;; (set (make-local-variable 'enable-local-variables) nil)
@@ -1983,8 +1988,6 @@ Do you want to revisit the file normally now? ")
 	(after-find-file error (not nowarn)))
       (current-buffer))))
 
-(defvar file-name-buffer-file-type-alist) ;From dos-w32.el.
-
 (defun insert-file-contents-literally (filename &optional visit beg end replace)
   "Like `insert-file-contents', but only reads in the file literally.
 A buffer may be modified in several ways after reading into the buffer,
@@ -1996,7 +1999,6 @@ This function ensures that none of these modifications will take place."
 	(after-insert-file-functions nil)
 	(coding-system-for-read 'no-conversion)
 	(coding-system-for-write 'no-conversion)
-	(file-name-buffer-file-type-alist '(("" . t)))
         (inhibit-file-name-handlers
          ;; FIXME: Yuck!!  We should turn insert-file-contents-literally
          ;; into a file operation instead!
@@ -2496,6 +2498,7 @@ See also `auto-mode-alist'.")
 		      "\\.zoo\\'" "\\.[jew]ar\\'" "\\.xpi\\'" "\\.rar\\'"
 		      "\\.7z\\'"
 		      "\\.sx[dmicw]\\'" "\\.odt\\'"
+		      "\\.diff\\'" "\\.patch\\'"
 		      "\\.tiff?\\'" "\\.gif\\'" "\\.png\\'" "\\.jpe?g\\'"))
   "List of regexps matching file names in which to ignore local variables.
 This includes `-*-' lines as well as trailing \"Local Variables\" sections.
@@ -3662,8 +3665,12 @@ is found.  Returns the new class name."
 (defun hack-dir-local-variables ()
   "Read per-directory local variables for the current buffer.
 Store the directory-local variables in `dir-local-variables-alist'
-and `file-local-variables-alist', without applying them."
+and `file-local-variables-alist', without applying them.
+
+This does nothing if either `enable-local-variables' or
+`enable-dir-local-variables' are nil."
   (when (and enable-local-variables
+	     enable-dir-local-variables
 	     (or enable-remote-dir-locals
 		 (not (file-remote-p (or (buffer-file-name)
 					 default-directory)))))
@@ -4557,28 +4564,21 @@ Before and after saving the buffer, this function runs
 		 (not (file-exists-p buffer-file-name))))
 	(let ((recent-save (recent-auto-save-p))
 	      setmodes)
-	  ;; If buffer has no file name, ask user for one.
+          ;; If buffer has no file name, ask user for one.
 	  (or buffer-file-name
-	      (let ((filename
-		     (expand-file-name
-		      (read-file-name "File to save in: "
-				      nil (expand-file-name (buffer-name))))))
-		(if (file-exists-p filename)
-		    (if (file-directory-p filename)
-			;; Signal an error if the user specified the name of an
-			;; existing directory.
-			(error "%s is a directory" filename)
-		      (unless (y-or-n-p (format "File `%s' exists; overwrite? "
-						filename))
-			(error "Canceled")))
-		  ;; Signal an error if the specified name refers to a
-		  ;; non-existing directory.
-		  (let ((dir (file-name-directory filename)))
-		    (unless (file-directory-p dir)
-		      (if (file-exists-p dir)
-			  (error "%s is not a directory" dir)
-			(error "%s: no such directory" dir)))))
-		(set-visited-file-name filename)))
+              (let ((filename
+                     (expand-file-name
+                      (read-file-name "File to save in: "
+                                      nil (expand-file-name (buffer-name))))))
+                (if (file-exists-p filename)
+                    (if (file-directory-p filename)
+                        ;; Signal an error if the user specified the name of an
+                        ;; existing directory.
+                        (error "%s is a directory" filename)
+                      (unless (y-or-n-p (format "File `%s' exists; overwrite? "
+                                                filename))
+                        (error "Canceled"))))
+                (set-visited-file-name filename)))
 	  (or (verify-visited-file-modtime (current-buffer))
 	      (not (file-exists-p buffer-file-name))
 	      (yes-or-no-p
@@ -4611,7 +4611,14 @@ Before and after saving the buffer, this function runs
 		(run-hook-with-args-until-success 'write-file-functions)
 		;; If a hook returned t, file is already "written".
 		;; Otherwise, write it the usual way now.
-		(setq setmodes (basic-save-buffer-1)))
+		(let ((dir (file-name-directory
+			    (expand-file-name buffer-file-name))))
+		  (unless (file-exists-p dir)
+		    (if (y-or-n-p
+			 (format "Directory `%s' does not exist; create? " dir))
+			(make-directory dir t)
+		      (error "Canceled")))
+		  (setq setmodes (basic-save-buffer-1))))
 	    ;; Now we have saved the current buffer.  Let's make sure
 	    ;; that buffer-file-coding-system is fixed to what
 	    ;; actually used for saving by binding it locally.
@@ -4649,14 +4656,12 @@ Before and after saving the buffer, this function runs
 	    (basic-save-buffer-2))
 	(basic-save-buffer-2))
     (if buffer-file-coding-system-explicit
-	(setcar buffer-file-coding-system-explicit last-coding-system-used)
-      (setq buffer-file-coding-system-explicit
-	    (cons last-coding-system-used nil)))))
+	(setcar buffer-file-coding-system-explicit last-coding-system-used))))
 
 ;; This returns a value (MODES EXTENDED-ATTRIBUTES BACKUPNAME), like
 ;; backup-buffer.
 (defun basic-save-buffer-2 ()
-  (let (tempsetmodes setmodes)
+  (let (tempsetmodes setmodes writecoding)
     (if (not (file-writable-p buffer-file-name))
 	(let ((dir (file-name-directory buffer-file-name)))
 	  (if (not (file-directory-p dir))
@@ -4672,6 +4677,14 @@ Before and after saving the buffer, this function runs
 		     buffer-file-name)))
 		  (setq tempsetmodes t)
 		(error "Attempt to save to a file which you aren't allowed to write"))))))
+    ;; This may involve prompting, so do it now before backing up the file.
+    ;; Otherwise there can be a delay while the user answers the
+    ;; prompt during which the original file has been renamed.  (Bug#13522)
+    (setq writecoding
+	  ;; Args here should match write-region call below around
+	  ;; which we use writecoding.
+	  (choose-write-coding-system nil nil buffer-file-name nil t
+				      buffer-file-truename))
     (or buffer-backed-up
 	(setq setmodes (backup-buffer)))
     (let* ((dir (file-name-directory buffer-file-name))
@@ -4753,10 +4766,11 @@ Before and after saving the buffer, this function runs
 				 (logior (car setmodes) 128))))))
 	(let (success)
 	  (unwind-protect
-	      (progn
                 ;; Pass in nil&nil rather than point-min&max to indicate
                 ;; we're saving the buffer rather than just a region.
                 ;; write-region-annotate-functions may make us of it.
+	      (let ((coding-system-for-write writecoding)
+		    (coding-system-require-warning nil))
 		(write-region nil nil
 			      buffer-file-name nil t buffer-file-truename)
 		(setq success t))

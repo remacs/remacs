@@ -52,6 +52,7 @@
   (require 'format-spec)
   (require 'shell)
 
+  (require 'trampver)
   (require 'tramp-loaddefs)
 
   ;; As long as password.el is not part of (X)Emacs, it shouldn't be
@@ -96,7 +97,8 @@
   ;; `remote-file-name-inhibit-cache' has been introduced with Emacs 24.1.
   ;; Besides `t', `nil', and integer, we use also timestamps (as
   ;; returned by `current-time') internally.
-  (defvar remote-file-name-inhibit-cache nil)
+  (unless (boundp 'remote-file-name-inhibit-cache)
+    (defvar remote-file-name-inhibit-cache nil))
 
   ;; For not existing functions, or functions with a changed argument
   ;; list, there are compiler warnings.  We want to avoid them in
@@ -382,25 +384,30 @@ Not actually used.  Use `(format \"%o\" i)' instead?"
 		 trash)))
        (delete-file filename)))))
 
-;; RECURSIVE has been introduced with Emacs 23.2.
-(defun tramp-compat-delete-directory (directory &optional recursive)
+;; RECURSIVE has been introduced with Emacs 23.2.  TRASH has been
+;; introduced with Emacs 24.1.
+(defun tramp-compat-delete-directory (directory &optional recursive trash)
   "Like `delete-directory' for Tramp files (compat function)."
-  (if (null recursive)
-      (delete-directory directory)
-    (condition-case nil
-	(tramp-compat-funcall 'delete-directory directory recursive)
-      ;; This Emacs version does not support the RECURSIVE flag.  We
-      ;; use the implementation from Emacs 23.2.
-      (wrong-number-of-arguments
-       (setq directory (directory-file-name (expand-file-name directory)))
-       (if (not (file-symlink-p directory))
-	   (mapc (lambda (file)
-		   (if (eq t (car (file-attributes file)))
-		       (tramp-compat-delete-directory file recursive)
-		     (delete-file file)))
-		 (directory-files
-		  directory 'full "^\\([^.]\\|\\.\\([^.]\\|\\..\\)\\).*")))
-       (delete-directory directory)))))
+  (condition-case nil
+      (cond
+       (trash
+	(tramp-compat-funcall 'delete-directory directory recursive trash))
+       (recursive
+	(tramp-compat-funcall 'delete-directory directory recursive))
+       (t
+	(delete-directory directory)))
+    ;; This Emacs version does not support the RECURSIVE or TRASH flag.  We
+    ;; use the implementation from Emacs 23.2.
+    (wrong-number-of-arguments
+     (setq directory (directory-file-name (expand-file-name directory)))
+     (if (not (file-symlink-p directory))
+	 (mapc (lambda (file)
+		 (if (eq t (car (file-attributes file)))
+		     (tramp-compat-delete-directory file recursive trash)
+		   (tramp-compat-delete-file file trash)))
+	       (directory-files
+		directory 'full "^\\([^.]\\|\\.\\([^.]\\|\\..\\)\\).*")))
+     (delete-directory directory))))
 
 ;; `number-sequence' does not exist in XEmacs.  Implementation is
 ;; taken from Emacs 23.

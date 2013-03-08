@@ -59,15 +59,6 @@ to the user."
   :group 'info
   :version "24.1")
 
-(defcustom Info-enable-edit nil
-  "Non-nil means the \\<Info-mode-map>\\[Info-edit] command in Info can edit the current node.
-This is convenient if you want to write Info files by hand.
-However, we recommend that you not do this.
-It is better to write a Texinfo file and generate the Info file from that,
-because that gives you a printed manual as well."
-  :type 'boolean
-  :group 'info)
-
 (defvar Info-enable-active-nodes nil
   "Non-nil allows Info to execute Lisp code associated with nodes.
 The Lisp code is executed when the node is selected.")
@@ -374,6 +365,9 @@ with wrapping around the current Info node."
 
 (defvar Info-edit-mode-hook nil
   "Hooks run when `Info-edit-mode' is called.")
+
+(make-obsolete-variable 'Info-edit-mode-hook
+			"editing Info nodes by hand is not recommended." "24.4")
 
 (defvar Info-current-file nil
   "Info file that Info is now looking at, or nil.
@@ -2151,7 +2145,7 @@ and is not in the header line or a tag table."
     (let ((backward (< found beg-found)))
       (not
        (or
-	(and (not (eq search-invisible t))
+	(and (not search-invisible)
 	     (if backward
 		 (or (text-property-not-all found beg-found 'invisible nil)
 		     (text-property-not-all found beg-found 'display nil))
@@ -3063,48 +3057,62 @@ See `Info-scroll-down'."
 	(select-window (posn-window (event-start e))))
     (Info-scroll-down)))
 
-(defun Info-next-reference (&optional recur)
-  "Move cursor to the next cross-reference or menu item in the node."
-  (interactive)
-  (let ((pat "\\*note[ \n\t]+\\([^:]+\\):\\|^\\* .*:\\|[hf]t?tps?://")
-	(old-pt (point))
-	(case-fold-search t))
-    (or (eobp) (forward-char 1))
-    (or (re-search-forward pat nil t)
-	(progn
-	  (goto-char (point-min))
-	  (or (re-search-forward pat nil t)
-	      (progn
-		(goto-char old-pt)
-		(user-error "No cross references in this node")))))
-    (goto-char (or (match-beginning 1) (match-beginning 0)))
-    (if (looking-at "\\* Menu:")
-	(if recur
-	    (user-error "No cross references in this node")
-	  (Info-next-reference t))
-      (if (looking-at "^\\* ")
-	  (forward-char 2)))))
+(defun Info-next-reference (&optional recur count)
+  "Move cursor to the next cross-reference or menu item in the node.
+If COUNT is non-nil (interactively with a prefix arg), jump over
+COUNT cross-references."
+  (interactive "i\np")
+  (unless count
+    (setq count 1))
+  (if (< count 0)
+      (Info-prev-reference recur (- count))
+    (while (unless (zerop count) (setq count (1- count)))
+      (let ((pat "\\*note[ \n\t]+\\([^:]+\\):\\|^\\* .*:\\|[hf]t?tps?://")
+	    (old-pt (point))
+	    (case-fold-search t))
+	(or (eobp) (forward-char 1))
+	(or (re-search-forward pat nil t)
+	    (progn
+	      (goto-char (point-min))
+	      (or (re-search-forward pat nil t)
+		  (progn
+		    (goto-char old-pt)
+		    (user-error "No cross references in this node")))))
+	(goto-char (or (match-beginning 1) (match-beginning 0)))
+	(if (looking-at "\\* Menu:")
+	    (if recur
+		(user-error "No cross references in this node")
+	      (Info-next-reference t))
+	  (if (looking-at "^\\* ")
+	      (forward-char 2)))))))
 
-(defun Info-prev-reference (&optional recur)
-  "Move cursor to the previous cross-reference or menu item in the node."
-  (interactive)
-  (let ((pat "\\*note[ \n\t]+\\([^:]+\\):\\|^\\* .*:\\|[hf]t?tps?://")
-	(old-pt (point))
-	(case-fold-search t))
-    (or (re-search-backward pat nil t)
-	(progn
-	  (goto-char (point-max))
-	  (or (re-search-backward pat nil t)
-	      (progn
-		(goto-char old-pt)
-		(user-error "No cross references in this node")))))
-    (goto-char (or (match-beginning 1) (match-beginning 0)))
-    (if (looking-at "\\* Menu:")
-	(if recur
-	    (user-error "No cross references in this node")
-	  (Info-prev-reference t))
-      (if (looking-at "^\\* ")
-	  (forward-char 2)))))
+(defun Info-prev-reference (&optional recur count)
+  "Move cursor to the previous cross-reference or menu item in the node.
+If COUNT is non-nil (interactively with a prefix arg), jump over
+COUNT cross-references."
+  (interactive "i\np")
+  (unless count
+    (setq count 1))
+  (if (< count 0)
+      (Info-next-reference recur (- count))
+    (while (unless (zerop count) (setq count (1- count)))
+      (let ((pat "\\*note[ \n\t]+\\([^:]+\\):\\|^\\* .*:\\|[hf]t?tps?://")
+	    (old-pt (point))
+	    (case-fold-search t))
+	(or (re-search-backward pat nil t)
+	    (progn
+	      (goto-char (point-max))
+	      (or (re-search-backward pat nil t)
+		  (progn
+		    (goto-char old-pt)
+		    (user-error "No cross references in this node")))))
+	(goto-char (or (match-beginning 1) (match-beginning 0)))
+	(if (looking-at "\\* Menu:")
+	    (if recur
+		(user-error "No cross references in this node")
+	      (Info-prev-reference t))
+	  (if (looking-at "^\\* ")
+	      (forward-char 2)))))))
 
 (defun Info-index-nodes (&optional file)
   "Return a list of names of all index nodes in Info FILE.
@@ -3860,6 +3868,7 @@ If FORK is non-nil, it is passed to `Info-goto-node'."
     (suppress-keymap map)
     (define-key map "." 'beginning-of-buffer)
     (define-key map " " 'Info-scroll-up)
+    (define-key map [?\S-\ ] 'Info-scroll-down)
     (define-key map "\C-m" 'Info-follow-nearest-node)
     (define-key map "\t" 'Info-next-reference)
     (define-key map "\e\t" 'Info-prev-reference)
@@ -4238,6 +4247,10 @@ Advanced commands:
 			map)
   "Local keymap used within `e' command of Info.")
 
+(make-obsolete-variable 'Info-edit-map
+			"editing Info nodes by hand is not recommended."
+			"24.4")
+
 ;; Info-edit mode is suitable only for specially formatted data.
 (put 'Info-edit-mode 'mode-class 'special)
 
@@ -4255,15 +4268,21 @@ which returns to Info mode for browsing.
   (buffer-enable-undo (current-buffer))
   (run-mode-hooks 'Info-edit-mode-hook))
 
+(make-obsolete 'Info-edit-mode
+	       "editing Info nodes by hand is not recommended." "24.4")
+
 (defun Info-edit ()
-  "Edit the contents of this Info node.
-Allowed only if variable `Info-enable-edit' is non-nil."
+  "Edit the contents of this Info node."
   (interactive)
-  (or Info-enable-edit
-      (error "Editing Info nodes is not enabled"))
   (Info-edit-mode)
   (message "%s" (substitute-command-keys
 		 "Editing: Type \\<Info-edit-map>\\[Info-cease-edit] to return to info")))
+
+(put 'Info-edit 'disabled "Editing Info nodes by hand is not recommended.
+This feature will be removed in future.")
+
+(make-obsolete 'Info-edit
+	       "editing Info nodes by hand is not recommended." "24.4")
 
 (defun Info-cease-edit ()
   "Finish editing Info node; switch back to Info proper."
@@ -4281,6 +4300,9 @@ Allowed only if variable `Info-enable-edit' is non-nil."
   (and (marker-position Info-tag-table-marker)
        (buffer-modified-p)
        (message "Tags may have changed.  Use Info-tagify if necessary")))
+
+(make-obsolete 'Info-cease-edit
+	       "editing Info nodes by hand is not recommended." "24.4")
 
 (defvar Info-file-list-for-emacs
   '("ediff" "eudc" "forms" "gnus" "info" ("Info" . "info") ("mh" . "mh-e")

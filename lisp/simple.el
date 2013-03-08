@@ -349,8 +349,7 @@ buffer causes automatic display of the corresponding source code location."
 Other major modes are defined by comparison with this one."
   (interactive)
   (kill-all-local-variables)
-  (unless delay-mode-hooks
-    (run-hooks 'after-change-major-mode-hook)))
+  (run-mode-hooks))
 
 ;; Special major modes to view specially formatted data rather than files.
 
@@ -359,6 +358,7 @@ Other major modes are defined by comparison with this one."
     (suppress-keymap map)
     (define-key map "q" 'quit-window)
     (define-key map " " 'scroll-up-command)
+    (define-key map [?\S-\ ] 'scroll-down-command)
     (define-key map "\C-?" 'scroll-down-command)
     (define-key map "?" 'describe-mode)
     (define-key map "h" 'describe-mode)
@@ -746,21 +746,76 @@ If BACKWARD-ONLY is non-nil, only delete them before point."
   "Delete all spaces and tabs around point, leaving one space (or N spaces).
 If N is negative, delete newlines as well, leaving -N spaces."
   (interactive "*p")
-  (unless n (setq n 1))
-  (let ((orig-pos (point))
-        (skip-characters (if (< n 0) " \t\n\r" " \t"))
-        (n (abs n)))
-    (skip-chars-backward skip-characters)
+  (cycle-spacing n nil t))
+
+(defvar cycle-spacing--context nil
+  "Store context used in consecutive calls to `cycle-spacing' command.
+The first time this function is run, it saves the original point
+position and original spacing around the point in this
+variable.")
+
+(defun cycle-spacing (&optional n preserve-nl-back single-shot)
+  "Manipulate spaces around the point in a smart way.
+
+When run as an interactive command, the first time it's called
+in a sequence, deletes all spaces and tabs around point leaving
+one (or N spaces).  If this does not change content of the
+buffer, skips to the second step:
+
+When run for the second time in a sequence, deletes all the
+spaces it has previously inserted.
+
+When run for the third time, returns the whitespace and point in
+a state encountered when it had been run for the first time.
+
+For example, if buffer contains \"foo ^ bar\" with \"^\" denoting the
+point, calling `cycle-spacing' command will replace two spaces with
+a single space, calling it again immediately after, will remove all
+spaces, and calling it for the third time will bring two spaces back
+together.
+
+If N is negative, delete newlines as well.  However, if
+PRESERVE-NL-BACK is t new line characters prior to the point
+won't be removed.
+
+If SINGLE-SHOT is non-nil, will only perform the first step.  In
+other words, it will work just like `just-one-space' command."
+  (interactive "*p")
+  (let ((orig-pos	 (point))
+	(skip-characters (if (and n (< n 0)) " \t\n\r" " \t"))
+	(n		 (abs (or n 1))))
+    (skip-chars-backward (if preserve-nl-back " \t" skip-characters))
     (constrain-to-field nil orig-pos)
-    (dotimes (_ n)
-      (if (= (following-char) ?\s)
-	  (forward-char 1)
-	(insert ?\s)))
-    (delete-region
-     (point)
-     (progn
-       (skip-chars-forward skip-characters)
-       (constrain-to-field nil orig-pos t)))))
+    (cond
+     ;; Command run for the first time or single-shot is non-nil.
+     ((or single-shot
+	  (not (equal last-command this-command))
+	  (not cycle-spacing--context))
+      (let* ((start (point))
+	     (n	    (- n (skip-chars-forward " " (+ n (point)))))
+	     (mid   (point))
+	     (end   (progn
+		      (skip-chars-forward skip-characters)
+		      (constrain-to-field nil orig-pos t))))
+	(setq cycle-spacing--context  ;; Save for later.
+	      ;; Special handling for case where there was no space at all.
+	      (unless (= start end)
+		(cons orig-pos (buffer-substring start (point)))))
+	;; If this run causes no change in buffer content, delete all spaces,
+	;; otherwise delete all excess spaces.
+	(delete-region (if (and (not single-shot) (zerop n) (= mid end))
+			   start mid) end)
+        (insert (make-string n ?\s))))
+
+     ;; Command run for the second time.
+     ((not (equal orig-pos (point)))
+      (delete-region (point) orig-pos))
+
+     ;; Command run for the third time.
+     (t
+      (insert (cdr cycle-spacing--context))
+      (goto-char (car cycle-spacing--context))
+      (setq cycle-spacing--context nil)))))
 
 (defun beginning-of-buffer (&optional arg)
   "Move point to the beginning of the buffer.
@@ -813,7 +868,8 @@ Don't use this command in Lisp programs!
   ;; If we went to a place in the middle of the buffer,
   ;; adjust it to the beginning of a line.
   (cond ((and arg (not (consp arg))) (forward-line 1))
-	((> (point) (window-end nil t))
+	((and (eq (current-buffer) (window-buffer))
+              (> (point) (window-end nil t)))
 	 ;; If the end of the buffer is not already on the screen,
 	 ;; then scroll specially to put it near, but not at, the bottom.
 	 (overlay-recenter (point))
@@ -1237,13 +1293,12 @@ display the result of expression evaluation."
 
 ;; We define this, rather than making `eval' interactive,
 ;; for the sake of completion of names like eval-region, eval-buffer.
-(defun eval-expression (eval-expression-arg
-			&optional eval-expression-insert-value)
-  "Evaluate EVAL-EXPRESSION-ARG and print value in the echo area.
+(defun eval-expression (exp &optional insert-value)
+  "Evaluate EXP and print value in the echo area.
 When called interactively, read an Emacs Lisp expression and
 evaluate it.
 Value is also consed on to front of the variable `values'.
-Optional argument EVAL-EXPRESSION-INSERT-VALUE non-nil (interactively,
+Optional argument INSERT-VALUE non-nil (interactively,
 with prefix argument) means insert the result into the current buffer
 instead of printing it in the echo area.  Truncates long output
 according to the value of the variables `eval-expression-print-length'
@@ -1259,12 +1314,12 @@ this command arranges for all errors to enter the debugger."
 	 current-prefix-arg))
 
   (if (null eval-expression-debug-on-error)
-      (push (eval eval-expression-arg lexical-binding) values)
+      (push (eval exp lexical-binding) values)
     (let ((old-value (make-symbol "t")) new-value)
       ;; Bind debug-on-error to something unique so that we can
       ;; detect when evalled code changes it.
       (let ((debug-on-error old-value))
-	(push (eval eval-expression-arg lexical-binding) values)
+	(push (eval exp lexical-binding) values)
 	(setq new-value debug-on-error))
       ;; If evalled code has changed the value of debug-on-error,
       ;; propagate that change to the global binding.
@@ -1272,8 +1327,9 @@ this command arranges for all errors to enter the debugger."
 	(setq debug-on-error new-value))))
 
   (let ((print-length eval-expression-print-length)
-	(print-level eval-expression-print-level))
-    (if eval-expression-insert-value
+	(print-level eval-expression-print-level)
+        (deactivate-mark))
+    (if insert-value
 	(with-no-warnings
 	 (let ((standard-output (current-buffer)))
 	   (prin1 (car values))))
@@ -1343,6 +1399,8 @@ to get different commands to edit and resubmit."
       (if command-history
 	  (error "Argument %d is beyond length of command history" arg)
 	(error "There are no previous complex commands to repeat")))))
+
+(defvar extended-command-history nil)
 
 (defun read-extended-command ()
   "Read command name to invoke in `execute-extended-command'."
@@ -1433,6 +1491,53 @@ give to the command you invoke, if it asks for an argument."
             (sit-for (if (numberp suggest-key-bindings)
                          suggest-key-bindings
                        2))))))))
+
+(defun command-execute (cmd &optional record-flag keys special)
+  ;; BEWARE: Called directly from the C code.
+  "Execute CMD as an editor command.
+CMD must be a symbol that satisfies the `commandp' predicate.
+Optional second arg RECORD-FLAG non-nil
+means unconditionally put this command in the variable `command-history'.
+Otherwise, that is done only if an arg is read using the minibuffer.
+The argument KEYS specifies the value to use instead of (this-command-keys)
+when reading the arguments; if it is nil, (this-command-keys) is used.
+The argument SPECIAL, if non-nil, means that this command is executing
+a special event, so ignore the prefix argument and don't clear it."
+  (setq debug-on-next-call nil)
+  (let ((prefixarg (unless special
+                     (prog1 prefix-arg
+                       (setq current-prefix-arg prefix-arg)
+                       (setq prefix-arg nil)))))
+    (and (symbolp cmd)
+         (get cmd 'disabled)
+         ;; FIXME: Weird calling convention!
+         (run-hooks 'disabled-command-function))
+    (let ((final cmd))
+      (while
+          (progn
+            (setq final (indirect-function final))
+            (if (autoloadp final)
+                (setq final (autoload-do-load final cmd)))))
+      (cond
+       ((arrayp final)
+        ;; If requested, place the macro in the command history.  For
+        ;; other sorts of commands, call-interactively takes care of this.
+        (when record-flag
+          (push `(execute-kbd-macro ,final ,prefixarg) command-history)
+          ;; Don't keep command history around forever.
+          (when (and (numberp history-length) (> history-length 0))
+            (let ((cell (nthcdr history-length command-history)))
+              (if (consp cell) (setcdr cell nil)))))
+        (execute-kbd-macro final prefixarg))
+       (t
+        ;; Pass `cmd' rather than `final', for the backtrace's sake.
+        (prog1 (call-interactively cmd record-flag keys)
+          (when (and (symbolp cmd)
+                     (get cmd 'byte-obsolete-info)
+                     (not (get cmd 'command-execute-obsolete-warned)))
+            (put cmd 'command-execute-obsolete-warned t)
+            (message "%s" (macroexp--obsolete-warning
+                           cmd (get cmd 'byte-obsolete-info) "command")))))))))
 
 (defvar minibuffer-history nil
   "Default minibuffer history list.

@@ -1,3 +1,48 @@
+2013-03-05  Paul Eggert  <eggert@cs.ucla.edu>
+
+	FILE's lock is now always .#FILE and may be a regular file (Bug#13807).
+	* inc/unistd.h (O_NOFOLLOW): New macro.
+
+2013-03-04  Juanma Barranquero  <lekktu@gmail.com>
+
+	* config.nt: Sync with autogen/config.in.
+	(DATA_START, ORDINARY_LINK): Remove.
+	(HAVE_DATA_START, HAVE__PUTENV): New macros.
+
+2013-02-25  Eli Zaretskii  <eliz@gnu.org>
+
+	* inc/ms-w32.h (BOOT_TIME_FILE): Define.
+
+	* config.nt (CLASH_DETECTION): Define to 1.
+
+2013-02-16  Eli Zaretskii  <eliz@gnu.org>
+
+	* inc/ms-w32.h (__STDC__): Fiddle with value only for MSVC.
+	(Bug#9066)
+	(chown, logb): Remove, unused.
+
+2013-02-13  Juanma Barranquero  <lekktu@gmail.com>
+
+	* config.nt: Sync with autogen/config.in.
+	(GC_MARK_STACK): Remove.
+	(GNULIB_FDOPENDIR, HAVE_DECL_FDOPENDIR, HAVE_DECL_MEMRCHR)
+	(HAVE_DIRENT_H, HAVE_FDOPENDIR, HAVE_FSTATAT, HAVE_MEMRCHR)
+	(HAVE_WORKING_FSTATAT_ZERO_FLAG, _NETBSD_SOURCE): New macros.
+
+2013-02-12  Eli Zaretskii  <eliz@gnu.org>
+
+	* inc/ms-w32.h: Add prototype for memrchr.
+
+2013-02-01  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Use fdopendir, fstatat and readlinkat, for efficiency (Bug#13539).
+	* inc/sys/stat.h (fstatat):
+	* inc/unistd.h (readlinkat): New decls.
+
+2013-01-28  Eli Zaretskii  <eliz@gnu.org>
+
+	* inc/dirent.h (opendir): Update prototype.
+
 2013-01-11  Eli Zaretskii  <eliz@gnu.org>
 
 	* inc/unistd.h (O_IGNORE_CTTY): Define, as it is unconditionally

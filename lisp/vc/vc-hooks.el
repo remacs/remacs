@@ -858,14 +858,23 @@ current, and kill the buffer that visits the link."
 	  (set (make-local-variable 'backup-inhibited) t))
 	;; Let the backend setup any buffer-local things he needs.
 	(vc-call-backend backend 'find-file-hook))
-       ((let* ((truename (expand-file-name buffer-file-truename))
-	       (link-type (and (not (equal buffer-file-name truename))
+       ((let* ((truename (and buffer-file-truename
+			      (expand-file-name buffer-file-truename)))
+	       (link-type (and truename
+			       (not (equal buffer-file-name truename))
 			       (vc-backend truename))))
 	  (cond ((not link-type) nil)	;Nothing to do.
 		((eq vc-follow-symlinks nil)
 		 (message
 		  "Warning: symbolic link to %s-controlled source file" link-type))
 		((or (not (eq vc-follow-symlinks 'ask))
+		     ;; Assume we cannot ask, default to yes.
+		     noninteractive
+		     ;; Copied from server-start.  Seems like there should
+		     ;; be a better way to ask "can we get user input?"...
+		     (and (daemonp)
+			  (null (cdr (frame-list)))
+			  (eq (selected-frame) terminal-frame))
 		     ;; If we already visited this file by following
 		     ;; the link, don't ask again if we try to visit
 		     ;; it again.  GUD does that, and repeated questions
@@ -976,6 +985,10 @@ current, and kill the buffer that visits the link."
 "))
     (bindings--define-key map [undo]
       '(menu-item "Undo Last Check-In" vc-rollback
+                  :enable (let ((backend (if buffer-file-name
+                                             (vc-backend buffer-file-name))))
+                            (or (not backend)
+                                (vc-find-backend-function backend 'rollback)))
 		  :help "Remove the most recent changeset committed to the repository"))
     (bindings--define-key map [vc-revert]
       '(menu-item "Revert to Base Version" vc-revert

@@ -658,17 +658,6 @@ insert_before_markers_and_inherit (const char *string,
     }
 }
 
-/* Subroutine used by the insert functions above.  */
-
-void
-insert_1 (const char *string, ptrdiff_t nbytes,
-	  bool inherit, bool prepare, bool before_markers)
-{
-  insert_1_both (string, chars_in_text ((unsigned char *) string, nbytes),
-		 nbytes, inherit, prepare, before_markers);
-}
-
-
 #ifdef BYTE_COMBINING_DEBUG
 
 /* See if the bytes before POS/POS_BYTE combine with bytes
@@ -2024,9 +2013,8 @@ signal_after_change (ptrdiff_t charpos, ptrdiff_t lendel, ptrdiff_t lenins)
 	  && current_buffer != XBUFFER (combine_after_change_buffer))
 	Fcombine_after_change_execute ();
 
-      elt = Fcons (make_number (charpos - BEG),
-		   Fcons (make_number (Z - (charpos - lendel + lenins)),
-			  Fcons (make_number (lenins - lendel), Qnil)));
+      elt = list3i (charpos - BEG, Z - (charpos - lendel + lenins),
+		    lenins - lendel);
       combine_after_change_list
 	= Fcons (elt, combine_after_change_list);
       combine_after_change_buffer = Fcurrent_buffer ();

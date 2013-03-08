@@ -1,3 +1,84 @@
+2013-03-06  Katsumi Yamaoka  <yamaoka@jpl.org>
+
+	* nndir.el (nndir-request-list): Remove 2nd argument passed to
+	nnml-request-list.  (Bug#13873)
+	(nndir-request-newsgroups): Remove, unused.
+
+	* nndraft.el (nndraft-request-newsgroups): Remove, unused.
+
+2013-03-03  Ted Phelps  <phelps@gnusto.com>
+
+	* shr.el: Make all the overlays set the `evaporate' property so that
+	they're removed properly.
+
+2013-02-25  Adam Sjøgren  <asjo@koldfront.dk>
+
+	* mml2015-el (mml2015-epg-key-image): Wrap epg-gpg-program in
+	shell-quote-argument.
+
+2013-02-22  David Engster  <deng@randomsample.de>
+
+	* gnus-registry.el (gnus-registry-save): Provide class name when
+	calling `eieio-persistent-read' to avoid "unsafe call" warning.  Use
+	`condition-case' to stay compatible with older EIEIO versions which
+	only accept one argument.
+
+2013-02-17  Daiki Ueno  <ueno@gnu.org>
+
+	* mml2015.el (epg-key-user-id-list, epg-user-id-string)
+	(epg-user-id-validity): Autoload.
+	(mml2015-epg-check-user-id): New function.
+	(mml2015-epg-check-sub-key): New function split from
+	mml2015-epg-find-usable-key.
+	(mml2015-epg-find-usable-key): Accept context, name, usage, and
+	optional name-is-key-id, to handle the case when user-id is unusable.
+	Reported by Łukasz Stelmach <stlman@poczta.fm>.
+
+2013-02-17  Glenn Morris  <rgm@gnu.org>
+
+	* shr.el (shr-put-image): Use image-multi-frame-p if available.
+
+2013-02-16  Glenn Morris  <rgm@gnu.org>
+
+	* shr.el (shr-put-image): Only animate images that specify a delay.
+	This is consistent with the old image-animated-p behavior.
+
+2013-02-14  Katsumi Yamaoka  <yamaoka@jpl.org>
+
+	* gnus-util.el (gnus-define-keys): Convert [?\S-\ ] to [(shift space)]
+	for XEmacs.
+
+2013-02-13  Juri Linkov  <juri@jurta.org>
+
+	* gnus-art.el (gnus-article-mode-map):
+	* gnus-sum.el (gnus-summary-mode-map, gnus-summary-article-map):
+	Make S-SPC scroll in the opposite sense to SPC.  (Bug#2145)
+
+2013-02-10  Katsumi Yamaoka  <yamaoka@jpl.org>
+
+	* nnir.el ("nnir"): Add 'virtual ability to nnir backend.  (This was
+	done in 2012-07-22 by Andrew Cohen, but I reverted it mistakenly.)
+
+2013-02-07  Gábor Vida  <gabor.v.vida@ericsson.com>  (tiny change)
+
+	* auth-source.el (auth-source-format-prompt): Don't get confused by
+	any "\" in replacement text.  (Bug#13637)
+
+2013-01-30  Christopher Schmidt  <christopher@ch.ristopher.com>
+
+	* gnus-int.el (gnus-backend-trace-elapsed): New variable.
+	(gnus-backend-trace): Honour gnus-backend-trace.
+
+	* mml.el (mml-insert-part): Insert closing tag.
+
+	* mm-decode.el (mm-save-part): Handle invalid read-file-name results.
+
+2013-01-21  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* gnus-sum.el (gnus-summary-read-group-1): Protect against not being
+	able to find the article, which can happen in debbugs groups,
+	apparently.
+
 2013-01-16  Glenn Morris  <rgm@gnu.org>
 
 	* smiley.el (smiley-style): Make the file loadable in batch mode.
@@ -1434,7 +1515,7 @@
 	(nnimap-request-move-article): Delete the message from the correct IMAP
 	server.
 
-2012-02-19  Vida Gábor  <vidagabor@gmail.com>  (tiny change)
+2012-02-19  Gábor Vida  <vidagabor@gmail.com>  (tiny change)
 
 	* gnus-demon.el (gnus-demon-init): Don't multiply time twice.
 	Reported by Peter Münster.
@@ -1644,7 +1725,7 @@
 	* shr.el (shr-browse-url): Fix the name of the `browse-url-mail'
 	function call.
 
-2012-01-27  Vida Gábor  <vidagabor@gmail.com>  (tiny change)
+2012-01-27  Gábor Vida  <vidagabor@gmail.com>  (tiny change)
 
 	* gnus-demon.el (gnus-demon-run-callback, gnus-demon-init): Convert to
 	seconds, and make the repeat clause with HH:MM specs work as

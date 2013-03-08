@@ -26,7 +26,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <limits.h>		/* For CHAR_BIT.  */
 
 #ifdef ENABLE_CHECKING
-#include <signal.h>		/* For SIGABRT. */
+#include <signal.h>		/* For SIGABRT.  */
 #endif
 
 #ifdef HAVE_PTHREAD
@@ -836,7 +836,7 @@ void *
 record_xmalloc (size_t size)
 {
   void *p = xmalloc (size);
-  record_unwind_protect (safe_alloca_unwind, make_save_value (p, 0));
+  record_unwind_protect (safe_alloca_unwind, make_save_pointer (p));
   return p;
 }
 
@@ -1675,7 +1675,7 @@ allocate_string_data (struct Lisp_String *s,
       b = lisp_malloc (size + GC_STRING_EXTRA, MEM_TYPE_NON_LISP);
 
 #ifdef DOUG_LEA_MALLOC
-      /* Back to a reasonable maximum of mmap'ed areas. */
+      /* Back to a reasonable maximum of mmap'ed areas.  */
       mallopt (M_MMAP_MAX, MMAP_MAX_AREAS);
 #endif
 
@@ -1892,7 +1892,7 @@ compact_small_strings (void)
 
 #ifdef GC_CHECK_STRING_BYTES
 	  /* Check that the string size recorded in the string is the
-	     same as the one recorded in the sdata structure. */
+	     same as the one recorded in the sdata structure.  */
 	  if (s && string_bytes (s) != SDATA_NBYTES (from))
 	    emacs_abort ();
 #endif /* GC_CHECK_STRING_BYTES */
@@ -3103,13 +3103,10 @@ Any number of arguments, even zero arguments, are allowed.
 usage: (vector &rest OBJECTS)  */)
   (ptrdiff_t nargs, Lisp_Object *args)
 {
-  register Lisp_Object len, val;
   ptrdiff_t i;
-  register struct Lisp_Vector *p;
+  register Lisp_Object val = make_uninit_vector (nargs);
+  register struct Lisp_Vector *p = XVECTOR (val);
 
-  XSETFASTINT (len, nargs);
-  val = Fmake_vector (len, Qnil);
-  p = XVECTOR (val);
   for (i = 0; i < nargs; i++)
     p->contents[i] = args[i];
   return val;
@@ -3147,9 +3144,9 @@ stack before executing the byte-code.
 usage: (make-byte-code ARGLIST BYTE-CODE CONSTANTS DEPTH &optional DOCSTRING INTERACTIVE-SPEC &rest ELEMENTS)  */)
   (ptrdiff_t nargs, Lisp_Object *args)
 {
-  register Lisp_Object len, val;
   ptrdiff_t i;
-  register struct Lisp_Vector *p;
+  register Lisp_Object val = make_uninit_vector (nargs);
+  register struct Lisp_Vector *p = XVECTOR (val);
 
   /* We used to purecopy everything here, if purify-flag was set.  This worked
      OK for Emacs-23, but with Emacs-24's lexical binding code, it can be
@@ -3159,10 +3156,6 @@ usage: (make-byte-code ARGLIST BYTE-CODE CONSTANTS DEPTH &optional DOCSTRING INT
      just wasteful and other times plainly wrong (e.g. those free vars may want
      to be setcar'd).  */
 
-  XSETFASTINT (len, nargs);
-  val = Fmake_vector (len, Qnil);
-
-  p = XVECTOR (val);
   for (i = 0; i < nargs; i++)
     p->contents[i] = args[i];
   make_byte_code (p);
@@ -3354,7 +3347,7 @@ free_misc (Lisp_Object misc)
    and `o' for Lisp_Object.  Up to 4 objects can be specified.  */
 
 Lisp_Object
-format_save_value (const char *fmt, ...)
+make_save_value (const char *fmt, ...)
 {
   va_list ap;
   int len = strlen (fmt);
@@ -3402,15 +3395,19 @@ format_save_value (const char *fmt, ...)
   return val;
 }
 
-/* Return a Lisp_Save_Value object containing POINTER and INTEGER.
-   Most code should use this to package C integers and pointers
-   to call record_unwind_protect.  The unwind function can get the
-   C values back using XSAVE_POINTER and XSAVE_INTEGER.  */
+/* The most common task it to save just one C pointer.  */
 
 Lisp_Object
-make_save_value (void *pointer, ptrdiff_t integer)
+make_save_pointer (void *pointer)
 {
-  return format_save_value ("pi", pointer, integer);
+  Lisp_Object val = allocate_misc (Lisp_Misc_Save_Value);
+  struct Lisp_Save_Value *p = XSAVE_VALUE (val);
+
+  p->area = 0;
+  p->type0 = SAVE_POINTER;
+  p->data[0].pointer = pointer;
+  p->type1 = p->type2 = p->type3 = SAVE_UNUSED;
+  return val;
 }
 
 /* Free a Lisp_Save_Value object.  Do not use this function
@@ -6533,7 +6530,7 @@ die (const char *msg, const char *file, int line)
 }
 #endif
 
-/* Initialization */
+/* Initialization.  */
 
 void
 init_alloc_once (void)
@@ -6548,9 +6545,9 @@ init_alloc_once (void)
 #endif
 
 #ifdef DOUG_LEA_MALLOC
-  mallopt (M_TRIM_THRESHOLD, 128*1024); /* trim threshold */
-  mallopt (M_MMAP_THRESHOLD, 64*1024); /* mmap threshold */
-  mallopt (M_MMAP_MAX, MMAP_MAX_AREAS); /* max. number of mmap'ed areas */
+  mallopt (M_TRIM_THRESHOLD, 128 * 1024); /* Trim threshold.  */
+  mallopt (M_MMAP_THRESHOLD, 64 * 1024);  /* Mmap threshold.  */
+  mallopt (M_MMAP_MAX, MMAP_MAX_AREAS);   /* Max. number of mmap'ed areas.  */
 #endif
   init_strings ();
   init_vectors ();

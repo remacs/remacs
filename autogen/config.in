@@ -93,9 +93,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 /* Extra bits to be or'd in with any pointers stored in a Lisp_Object. */
 #undef DATA_SEG_BITS
 
-/* Address of the start of the data segment. */
-#undef DATA_START
-
 /* Name of the default sound device. */
 #undef DEFAULT_SOUND_DEVICE
 
@@ -191,6 +188,10 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #undef GNULIB_FACCESSAT
 
 /* Define to a C preprocessor expression that evaluates to 1 or 0, depending
+   whether the gnulib module fdopendir shall be considered present. */
+#undef GNULIB_FDOPENDIR
+
+/* Define to a C preprocessor expression that evaluates to 1 or 0, depending
    whether the gnulib module fscanf shall be considered present. */
 #undef GNULIB_FSCANF
 
@@ -255,6 +256,10 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 /* Define to 1 if you have the `copysign' function. */
 #undef HAVE_COPYSIGN
 
+/* Define to 1 if data_start is the address of the start of the main data
+   segment. */
+#undef HAVE_DATA_START
+
 /* Define to 1 if using D-Bus. */
 #undef HAVE_DBUS
 
@@ -276,6 +281,10 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 /* Define to 1 if you have the `dbus_watch_get_unix_fd' function. */
 #undef HAVE_DBUS_WATCH_GET_UNIX_FD
 
+/* Define to 1 if you have the declaration of `fdopendir', and to 0 if you
+   don't. */
+#undef HAVE_DECL_FDOPENDIR
+
 /* Define to 1 if you have the declaration of `getenv', and to 0 if you don't.
    */
 #undef HAVE_DECL_GETENV
@@ -283,6 +292,10 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 /* Define to 1 if you have the declaration of `localtime_r', and to 0 if you
    don't. */
 #undef HAVE_DECL_LOCALTIME_R
+
+/* Define to 1 if you have the declaration of `memrchr', and to 0 if you
+   don't. */
+#undef HAVE_DECL_MEMRCHR
 
 /* Define to 1 if you have the declaration of `strmode', and to 0 if you
    don't. */
@@ -333,6 +346,9 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 /* Define to 1 if you have the `difftime' function. */
 #undef HAVE_DIFFTIME
 
+/* Define to 1 if you have the <dirent.h> header file. */
+#undef HAVE_DIRENT_H
+
 /* Define to 1 if you have the 'dup2' function. */
 #undef HAVE_DUP2
 
@@ -357,6 +373,9 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 /* Define to 1 if you have the `faccessat' function. */
 #undef HAVE_FACCESSAT
 
+/* Define to 1 if you have the `fdopendir' function. */
+#undef HAVE_FDOPENDIR
+
 /* Define to 1 if you have the `fork' function. */
 #undef HAVE_FORK
 
@@ -368,6 +387,9 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 /* Define to 1 if fseeko (and presumably ftello) exists and is declared. */
 #undef HAVE_FSEEKO
+
+/* Define to 1 if you have the `fstatat' function. */
+#undef HAVE_FSTATAT
 
 /* Define to 1 if you have the `fsync' function. */
 #undef HAVE_FSYNC
@@ -675,6 +697,9 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
+
+/* Define to 1 if you have the `memrchr' function. */
+#undef HAVE_MEMRCHR
 
 /* Define to 1 if you have mouse menus. (This is automatic if you use X, but
    the option to specify it remains.) It is also defined with other window
@@ -1040,6 +1065,10 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 /* Define to 1 if `fork' works. */
 #undef HAVE_WORKING_FORK
 
+/* Define to 1 if fstatat (..., 0) works. For example, it does not work in AIX
+   7.1. */
+#undef HAVE_WORKING_FSTATAT_ZERO_FLAG
+
 /* Define if utimes works properly. */
 #undef HAVE_WORKING_UTIMES
 
@@ -1100,6 +1129,9 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 /* Define to 1 if you have the `_ftime' function. */
 #undef HAVE__FTIME
+
+/* Define to 1 if you have the `_putenv' function. */
+#undef HAVE__PUTENV
 
 /* Define to 1 if _setjmp and _longjmp work. */
 #undef HAVE__SETJMP
@@ -1198,9 +1230,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 /* Define to 1 if the nlist n_name member is a pointer */
 #undef N_NAME_POINTER
-
-/* Define if the C compiler is the linker. */
-#undef ORDINARY_LINK
 
 /* Name of package */
 #undef PACKAGE
@@ -1377,6 +1406,38 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 /* Define to 1 if using the Motif X toolkit. */
 #undef USE_MOTIF
 
+/* Enable extensions on AIX 3, Interix.  */
+#ifndef _ALL_SOURCE
+# undef _ALL_SOURCE
+#endif
+/* Enable general extensions on OS X.  */
+#ifndef _DARWIN_C_SOURCE
+# undef _DARWIN_C_SOURCE
+#endif
+/* Enable GNU extensions on systems that have them.  */
+#ifndef _GNU_SOURCE
+# undef _GNU_SOURCE
+#endif
+/* Enable threading extensions on Solaris.  */
+#ifndef _POSIX_PTHREAD_SEMANTICS
+# undef _POSIX_PTHREAD_SEMANTICS
+#endif
+/* Enable extensions on HP NonStop.  */
+#ifndef _TANDEM_SOURCE
+# undef _TANDEM_SOURCE
+#endif
+/* Enable X/Open extensions if necessary.  HP-UX 11.11 defines
+   mbstate_t only if _XOPEN_SOURCE is defined to 500, regardless of
+   whether compiling with -Ae or -D_HPUX_SOURCE=1.  */
+#ifndef _XOPEN_SOURCE
+# undef _XOPEN_SOURCE
+#endif
+/* Enable general extensions on Solaris.  */
+#ifndef __EXTENSIONS__
+# undef __EXTENSIONS__
+#endif
+
+
 /* Define to 1 if we should use toolkit scroll bars. */
 #undef USE_TOOLKIT_SCROLL_BARS
 
@@ -1441,10 +1502,8 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 /* Define if the system is AIX. */
 #undef _AIX
 
-/* Enable large inode numbers on Mac OS X.  */
-#ifndef _DARWIN_USE_64_BIT_INODE
-# define _DARWIN_USE_64_BIT_INODE 1
-#endif
+/* Enable large inode numbers on Mac OS X 10.5. */
+#undef _DARWIN_USE_64_BIT_INODE
 
 /* Number of bits in a file offset, on hosts where this is settable. */
 #undef _FILE_OFFSET_BITS
@@ -1464,6 +1523,9 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 /* Define if GNUstep uses ObjC exceptions. */
 #undef _NATIVE_OBJC_EXCEPTIONS
+
+/* Define to 1 to make NetBSD features available. MINIX 3 needs this. */
+#undef _NETBSD_SOURCE
 
 /* The _Noreturn keyword of C11.  */
 #if ! (defined _Noreturn \
@@ -1489,35 +1551,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 /* Needed for system_process_attributes on Solaris. */
 #undef _STRUCTURED_PROC
 
-/* Define to 500 only on HP-UX. */
-#undef _XOPEN_SOURCE
-
-/* Enable extensions on AIX 3, Interix.  */
-#ifndef _ALL_SOURCE
-# undef _ALL_SOURCE
-#endif
-/* Enable general extensions on Mac OS X.  */
-#ifndef _DARWIN_C_SOURCE
-# undef _DARWIN_C_SOURCE
-#endif
-/* Enable GNU extensions on systems that have them.  */
-#ifndef _GNU_SOURCE
-# undef _GNU_SOURCE
-#endif
-/* Enable threading extensions on Solaris.  */
-#ifndef _POSIX_PTHREAD_SEMANTICS
-# undef _POSIX_PTHREAD_SEMANTICS
-#endif
-/* Enable extensions on HP NonStop.  */
-#ifndef _TANDEM_SOURCE
-# undef _TANDEM_SOURCE
-#endif
-/* Enable general extensions on Solaris.  */
-#ifndef __EXTENSIONS__
-# undef __EXTENSIONS__
-#endif
-
-
 /* Define to rpl_ if the getopt replacement functions and variables should be
    used. */
 #undef __GETOPT_PREFIX
@@ -1540,13 +1573,16 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
    _GL_INLINE_HEADER_END contains useful stuff to put
      in the same include file, after uses of _GL_INLINE.
 
+   Suppress extern inline with HP-UX cc, as it appears to be broken; see
+   <http://lists.gnu.org/archive/html/bug-texinfo/2013-02/msg00030.html>.
+
    Suppress the use of extern inline on Apple's platforms,
    as Libc-825.25 (2012-09-19) is incompatible with it; see
    <http://lists.gnu.org/archive/html/bug-gnulib/2012-12/msg00023.html>.
    Perhaps Apple will fix this some day.  */
 #if ((__GNUC__ \
       ? defined __GNUC_STDC_INLINE__ && __GNUC_STDC_INLINE__ \
-      : 199901L <= __STDC_VERSION__) \
+      : 199901L <= __STDC_VERSION__ && !defined __HP_cc) \
      && !defined __APPLE__)
 # define _GL_INLINE inline
 # define _GL_EXTERN_INLINE extern inline

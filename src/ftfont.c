@@ -393,7 +393,7 @@ ftfont_lookup_cache (Lisp_Object key, enum ftfont_cache_for cache_for)
       cache_data = xmalloc (sizeof *cache_data);
       cache_data->ft_face = NULL;
       cache_data->fc_charset = NULL;
-      val = make_save_value (cache_data, 0);
+      val = make_save_value ("pi", cache_data, 0);
       cache = Fcons (Qnil, val);
       Fputhash (key, cache, ft_face_cache);
     }
@@ -2541,7 +2541,7 @@ ftfont_shape_by_flt (Lisp_Object lgstring, struct font *font,
 
       if (NILP (lglyph))
 	{
-	  lglyph = Fmake_vector (make_number (LGLYPH_SIZE), Qnil);
+	  lglyph = LGLYPH_NEW ();
 	  LGSTRING_SET_GLYPH (lgstring, i, lglyph);
 	}
       LGLYPH_SET_FROM (lglyph, g->from);
@@ -2555,9 +2555,8 @@ ftfont_shape_by_flt (Lisp_Object lgstring, struct font *font,
       LGLYPH_SET_DESCENT (lglyph, g->descent >> 6);
       if (g->adjusted)
 	{
-	  Lisp_Object vec;
+	  Lisp_Object vec = make_uninit_vector (3);
 
-	  vec = Fmake_vector (make_number (3), Qnil);
 	  ASET (vec, 0, make_number (g->xoff >> 6));
 	  ASET (vec, 1, make_number (g->yoff >> 6));
 	  ASET (vec, 2, make_number (g->xadv >> 6));

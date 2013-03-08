@@ -735,6 +735,8 @@ It will move point to somewhere in the headers."
     (package--with-work-buffer location file
       (package-unpack name version))))
 
+(defvar package--initialized nil)
+
 (defun package-installed-p (package &optional min-version)
   "Return true if PACKAGE, of MIN-VERSION or newer, is installed.
 MIN-VERSION should be a version list."
@@ -895,8 +897,6 @@ using `package-compute-transaction'."
       (package-maybe-load-descriptor (symbol-name elt) v-string
 				     package-user-dir)
       (package-activate elt (version-to-list v-string)))))
-
-(defvar package--initialized nil)
 
 ;;;###autoload
 (defun package-install (name)
@@ -1182,7 +1182,7 @@ If optional arg NO-ACTIVATE is non-nil, don't activate packages."
   (require 'lisp-mnt)
   (let ((package-name (symbol-name package))
 	(built-in (assq package package--builtins))
-	desc pkg-dir reqs version installable)
+	desc pkg-dir reqs version installable archive)
     (prin1 package)
     (princ " is ")
     (cond
@@ -1196,6 +1196,7 @@ If optional arg NO-ACTIVATE is non-nil, don't activate packages."
      ;; Available packages are in `package-archive-contents'.
      ((setq desc (cdr (assq package package-archive-contents)))
       (setq version (package-version-join (package-desc-vers desc))
+	    archive (aref desc (- (length desc) 1))
 	    installable t)
       (if built-in
 	  (insert "a built-in package.\n\n")
@@ -1224,8 +1225,10 @@ If optional arg NO-ACTIVATE is non-nil, don't activate packages."
 	  (installable
 	   (if built-in
 	       (insert (propertize "Built-in." 'font-lock-face 'font-lock-builtin-face)
-		       "  Alternate version available -- ")
-	     (insert "Available -- "))
+		       "  Alternate version available")
+	     (insert "Available"))
+	   (insert " from " archive)
+	   (insert " -- ")
 	   (let ((button-text (if (display-graphic-p) "Install" "[Install]"))
 		 (button-face (if (display-graphic-p)
 				  '(:box (:line-width 2 :color "dark grey")
@@ -1588,10 +1591,11 @@ call will upgrade the package."
 	       (length upgrades)
 	       (if (= (length upgrades) 1) "" "s")))))
 
-(defun package-menu-execute ()
+(defun package-menu-execute (&optional noquery)
   "Perform marked Package Menu actions.
 Packages marked for installation are downloaded and installed;
-packages marked for deletion are removed."
+packages marked for deletion are removed.
+Optional argument NOQUERY non-nil means do not ask the user to confirm."
   (interactive)
   (unless (derived-mode-p 'package-menu-mode)
     (error "The current buffer is not in Package Menu mode"))
@@ -1611,16 +1615,20 @@ packages marked for deletion are removed."
 		 (push (car id) install-list))))
 	(forward-line)))
     (when install-list
-      (if (yes-or-no-p
+      (if (or
+           noquery
+           (yes-or-no-p
 	   (if (= (length install-list) 1)
 	       (format "Install package `%s'? " (car install-list))
 	     (format "Install these %d packages (%s)? "
 		     (length install-list)
-		     (mapconcat 'symbol-name install-list ", "))))
+                      (mapconcat 'symbol-name install-list ", ")))))
 	  (mapc 'package-install install-list)))
     ;; Delete packages, prompting if necessary.
     (when delete-list
-      (if (yes-or-no-p
+      (if (or
+           noquery
+           (yes-or-no-p
 	   (if (= (length delete-list) 1)
 	       (format "Delete package `%s-%s'? "
 		       (caar delete-list)
@@ -1630,7 +1638,7 @@ packages marked for deletion are removed."
 		     (mapconcat (lambda (elt)
 				  (concat (car elt) "-" (cdr elt)))
 				delete-list
-				", "))))
+                                 ", ")))))
 	  (dolist (elt delete-list)
 	    (condition-case-unless-debug err
 		(package-delete (car elt) (cdr elt))

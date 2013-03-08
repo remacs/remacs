@@ -1,3 +1,62 @@
+2013-03-05  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* indent/octave.m: Fix encoding error in comment.  Add coding tag.
+
+2013-02-28  Fabián Ezequiel Gallina  <fgallina@cuca>
+
+	* automated/python-tests.el (python-tests-with-temp-buffer): Doc fix.
+	(python-tests-with-temp-file): New macro.
+	(python-tests-shell-interpreter): New var.
+	(python-shell-get-process-name-1)
+	(python-shell-internal-get-process-name-1)
+	(python-shell-parse-command-1)
+	(python-shell-calculate-process-environment-1)
+	(python-shell-calculate-process-environment-2)
+	(python-shell-calculate-process-environment-3)
+	(python-shell-calculate-exec-path-1)
+	(python-shell-calculate-exec-path-2)
+	(python-shell-make-comint-1)
+	(python-shell-make-comint-2)
+	(python-shell-get-process-1)
+	(python-shell-get-or-create-process-1)
+	(python-shell-internal-get-or-create-process-1): New tests.
+
+2013-02-21  Fabián Ezequiel Gallina  <fgallina@cuca>
+
+	* automated/python-tests.el: New file.
+
+2013-02-14  Dmitry Gutov  <dgutov@yandex.ru>
+
+	* automated/ruby-mode-tests.el
+	(ruby-move-to-block-skips-percent-literal): Add depth-affecting
+	bits inside the examples.
+	(ruby-move-to-block-skips-heredoc): New test.
+	(ruby-add-log-current-method-after-inner-class): Lower
+	expectations: move point inside a method, initially.
+
+2013-02-13  Dmitry Gutov  <dgutov@yandex.ru>
+
+	* automated/ruby-mode-tests.el
+	(ruby-move-to-block-skips-percent-literal): New test.
+
+2013-02-04  Chong Yidong  <cyd@gnu.org>
+
+	* automated/thingatpt.el: New file.
+
+2013-02-03  Chong Yidong  <cyd@gnu.org>
+
+	* automated/files.el (file-test--do-local-variables-test): Avoid
+	compilation warning message.
+
+2013-01-27  Dmitry Gutov  <dgutov@yandex.ru>
+
+	* automated/ruby-mode-tests.el
+	(ruby-indent-spread-args-in-parens): New test.
+	* automated/ruby-mode-tests.el (ruby-block-test-example):
+	Break indentation of the do block opener and add a line inside it.
+	* automated/ruby-mode-tests.el (works-on-do, ok-with-three):
+	Adjust line numbers.
+
 2013-01-15  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* automated/advice-tests.el: Split up.  Add advice-test-preactivate.

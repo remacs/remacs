@@ -2,7 +2,7 @@
 @c %**start of header
 @setfilename ../../info/org
 @settitle The Org Manual
-@set VERSION 7.9.3d (GNU Emacs 24.3)
+@set VERSION 7.9.3f (GNU Emacs 24.3)
 
 @c Use proper quote and backtick for code sections in PDF output
 @c Cf. Texinfo manual 14.2
@@ -903,17 +903,20 @@ $ git clone git://orgmode.org/org-mode.git
 $ make autoloads
 @end example
 
-Note that @code{make autoloads} is mandatory: it defines Org's version and
-Org's autoloaded functions, respectively in @file{org-version.el} and in
+Note that in this case, @code{make autoloads} is mandatory: it defines Org's
+version in @file{org-version.el} and Org's autoloads in
 @file{org-loaddefs.el}.
 
 Remember to add the correct load-path as described in the method above.
 
-You can also compile and install Org from this git repository: check
-@code{make help} to get the list of compilation/installation options.
+You can also compile with @code{make}, generate the documentation with
+@code{make doc}, create a local configuration with @code{make config} and
+install Org with @code{make install}.  Please run @code{make help} to get
+the list of compilation/installation options.
 
 For more detailed explanations on Org's build system, please check the Org
-Build System page on @uref{http://orgmode.org/worg/dev/org-build-system.html, Worg}.
+Build System page on @uref{http://orgmode.org/worg/dev/org-build-system.html,
+Worg}.
 
 @node Activation, Feedback, Installation, Introduction
 @section Activation
@@ -1293,6 +1296,7 @@ Copy the @i{visible} text in the region into the kill ring.
 @end table
 
 @vindex org-startup-folded
+@vindex org-agenda-inhibit-startup
 @cindex @code{overview}, STARTUP keyword
 @cindex @code{content}, STARTUP keyword
 @cindex @code{showall}, STARTUP keyword
@@ -1310,6 +1314,10 @@ buffer:
 #+STARTUP: showall
 #+STARTUP: showeverything
 @end example
+
+The startup visibility options are ignored when the file is open for the
+first time during the agenda generation: if you want the agenda to honor
+the startup visibility, set @code{org-agenda-inhibit-startup} to nil.
 
 @cindex property, VISIBILITY
 @noindent
@@ -1423,7 +1431,7 @@ level).
 Move subtree down (swap with next subtree of same level).
 @orgcmd{M-h,org-mark-element}
 Mark the element at point.  Hitting repeatedly will mark subsequent elements
-of the one just marked.  E.g. hitting @key{M-h} on a paragraph will mark it,
+of the one just marked.  E.g., hitting @key{M-h} on a paragraph will mark it,
 hitting @key{M-h} immediately again will mark the next one.
 @orgcmd{C-c @@,org-mark-subtree}
 Mark the subtree at point.  Hitting repeatedly will mark subsequent subtrees
@@ -2444,7 +2452,7 @@ $1..$3        @r{first three fields in the current row}
 $P..$Q        @r{range, using column names (see under Advanced)}
 $<<<..$>>     @r{start in third column, continue to the one but last}
 @@2$1..@@4$3    @r{6 fields between these two fields (same as @code{A2..C4})}
-@@-1$-2..@@-1   @r{3 numbers from the column to the left, 2 up to current row}
+@@-1$-2..@@-1   @r{in the first row up, 3 fields from 2 columns on the left}
 @@I..II        @r{between first and second hline, short for @code{@@I..@@II}}
 @end example
 
@@ -3023,9 +3031,9 @@ functions.
 
 Org-Plot can produce 2D and 3D graphs of information stored in org tables
 using @file{Gnuplot} @uref{http://www.gnuplot.info/} and @file{gnuplot-mode}
-@uref{http://cars9.uchicago.edu/~ravel/software/gnuplot-mode.html}.  To see
-this in action, ensure that you have both Gnuplot and Gnuplot mode installed
-on your system, then call @code{org-plot/gnuplot} on the following table.
+@uref{http://xafs.org/BruceRavel/GnuplotMode}.  To see this in action, ensure
+that you have both Gnuplot and Gnuplot mode installed on your system, then
+call @code{org-plot/gnuplot} on the following table.
 
 @example
 @group
@@ -4072,7 +4080,7 @@ module @file{org-depend.el}.
 
 Org mode can automatically record a timestamp and possibly a note when
 you mark a TODO item as DONE, or even each time you change the state of
-a TODO item.  This system is highly configurable, settings can be on a
+a TODO item.  This system is highly configurable; settings can be on a
 per-keyword basis and can be localized to a file or even a subtree.  For
 information on how to clock working time for a task, see @ref{Clocking
 work time}.
@@ -4428,7 +4436,7 @@ lists.  But you can allow it by modifying @code{org-list-automatic-rules}
 accordingly.} (@pxref{Plain lists}) can be made into a checkbox by starting
 it with the string @samp{[ ]}.  This feature is similar to TODO items
 (@pxref{TODO Items}), but is more lightweight.  Checkboxes are not included
-into the global TODO list, so they are often great to split a task into a
+in the global TODO list, so they are often great to split a task into a
 number of simple steps.  Or you can use them in a shopping list.  To toggle a
 checkbox, use @kbd{C-c C-c}, or use the mouse (thanks to Piotr Zielinski's
 @file{org-mouse.el}).
@@ -4486,7 +4494,7 @@ off a box while there are unchecked boxes above it.
 @orgcmd{C-c C-c,org-toggle-checkbox}
 Toggle checkbox status or (with prefix arg) checkbox presence at point.
 With a single prefix argument, add an empty checkbox or remove the current
-one@footnote{`C-u C-c C-c' on the @emph{first} item of a list with no checkbox
+one@footnote{@kbd{C-u C-c C-c} on the @emph{first} item of a list with no checkbox
 will add checkboxes to the rest of the list.}.  With a double prefix argument, set it to @samp{[-]}, which is
 considered to be an intermediate state.
 @orgcmd{C-c C-x C-b,org-toggle-checkbox}
@@ -11987,7 +11995,7 @@ resource or resource node which is known to TaskJuggler, such as
 @samp{efficiency}, @samp{journalentry}, @samp{rate} for resources or
 @samp{account}, @samp{start}, @samp{note}, @samp{duration}, @samp{end},
 @samp{journalentry}, @samp{milestone}, @samp{reference}, @samp{responsible},
-@samp{scheduling}, etc for tasks.
+@samp{scheduling}, etc.@: for tasks.
 
 @subsection Dependencies
 
@@ -15987,7 +15995,7 @@ Here is a @LaTeX{} example.  Let's say that you have this in your
 \end@{comment@}
 @end example
 
-Pressing `C-c C-c' on @code{a new house} and will insert the converted
+Pressing @kbd{C-c C-c} on @code{a new house} and will insert the converted
 @LaTeX{} list between the two marker lines.
 
 @node Dynamic blocks, Special agenda views, Tables in arbitrary syntax, Hacking

@@ -1110,6 +1110,8 @@ update_frame_tool_bar (FRAME_PTR f)
   FRAME_TOOLBAR_HEIGHT (f) =
     NSHeight ([window frameRectForContentRect: NSMakeRect (0, 0, 0, 0)])
     - FRAME_NS_TITLEBAR_HEIGHT (f);
+    if (FRAME_TOOLBAR_HEIGHT (f) < 0) // happens if frame is fullscreen.
+      FRAME_TOOLBAR_HEIGHT (f) = 0;
     unblock_input ();
 }
 
@@ -1440,7 +1442,7 @@ ns_popup_dialog (Lisp_Object position, Lisp_Object contents, Lisp_Object header)
     unwind_data->pool = pool;
     unwind_data->dialog = dialog;
 
-    record_unwind_protect (pop_down_menu, make_save_value (unwind_data, 0));
+    record_unwind_protect (pop_down_menu, make_save_pointer (unwind_data));
     popup_activated_flag = 1;
     tem = [dialog runDialogAt: p];
     unbind_to (specpdl_count, Qnil);  /* calls pop_down_menu */

@@ -451,7 +451,7 @@ current article is unread."
   :group 'gnus-summary-maneuvering
   :type 'boolean)
 
-(defcustom gnus-auto-center-summary 
+(defcustom gnus-auto-center-summary
   (max (or (bound-and-true-p scroll-margin) 0) 2)
   "*If non-nil, always center the current summary buffer.
 In particular, if `vertical' do only vertical recentering.  If non-nil
@@ -1819,6 +1819,7 @@ increase the score of each group you read."
 
 (gnus-define-keys gnus-summary-mode-map
   " " gnus-summary-next-page
+  [?\S-\ ] gnus-summary-prev-page
   "\177" gnus-summary-prev-page
   [delete] gnus-summary-prev-page
   [backspace] gnus-summary-prev-page
@@ -2058,6 +2059,7 @@ increase the score of each group you read."
 (gnus-define-keys (gnus-summary-article-map "A" gnus-summary-mode-map)
   " " gnus-summary-next-page
   "n" gnus-summary-next-page
+  [?\S-\ ] gnus-summary-prev-page
   "\177" gnus-summary-prev-page
   [delete] gnus-summary-prev-page
   "p" gnus-summary-prev-page
@@ -4058,9 +4060,10 @@ If SELECT-ARTICLES, only select those articles from GROUP."
 		 gnus-auto-select-first)
 	    (progn
 	      (let ((art (gnus-summary-article-number)))
-		(unless (and (not gnus-plugged)
-			     (or (memq art gnus-newsgroup-undownloaded)
-				 (memq art gnus-newsgroup-downloadable)))
+		(when (and art
+			   gnus-plugged
+			   (not (memq art gnus-newsgroup-undownloaded))
+			   (not (memq art gnus-newsgroup-downloadable)))
 		  (gnus-summary-goto-article art))))
 	  ;; Don't select any articles.
 	  (gnus-summary-position-point)
@@ -9785,7 +9788,7 @@ installed for this command to work."
 	    (when (message-goto-body)
 	      (gnus-narrow-to-body))
 	    (goto-char (point-min))
-	    (while (search-forward "·" (point-max) t)
+	    (while (search-forward "Â·" (point-max) t)
 	      (replace-match "."))
 	    (unmorse-region (point-min) (point-max))
 	    (widen)
@@ -12975,7 +12978,7 @@ BOOKMARK is a bookmark name or a bookmark record."
 (run-hooks 'gnus-sum-load-hook)
 
 ;; Local Variables:
-;; coding: iso-8859-1
+;; coding: utf-8
 ;; End:
 
 ;;; gnus-sum.el ends here

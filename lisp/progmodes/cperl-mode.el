@@ -1551,7 +1551,7 @@ and POD directives (Disabled by default, see `cperl-electric-keywords'.)
 
 The user types the keyword immediately followed by a space, which
 causes the construct to be expanded, and the point is positioned where
-she is most likely to want to be.  eg. when the user types a space
+she is most likely to want to be.  E.g., when the user types a space
 following \"if\" the following appears in the buffer: if () { or if ()
 } { } and the cursor is between the parentheses.  The user can then
 type some boolean expression within the parens.  Having done that,
@@ -1839,7 +1839,7 @@ or as help on variables `cperl-tips', `cperl-problems',
   (make-local-variable 'cperl-syntax-state)
   (setq cperl-syntax-state nil)		; reset syntaxification cache
   (if cperl-use-syntax-table-text-property
-      (if (boundp 'syntax-propertize-function)
+      (if (eval-when-compile (fboundp 'syntax-propertize-rules))
           (progn
             ;; Reset syntaxification cache.
             (set (make-local-variable 'cperl-syntax-done-to) nil)

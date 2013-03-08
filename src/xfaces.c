@@ -1585,7 +1585,7 @@ the face font sort order.  */)
   for (i = nfonts - 1; i >= 0; --i)
     {
       Lisp_Object font = AREF (vec, i);
-      Lisp_Object v = Fmake_vector (make_number (8), Qnil);
+      Lisp_Object v = make_uninit_vector (8);
       int point;
       Lisp_Object spacing;
 
@@ -6152,7 +6152,7 @@ face_at_string_position (struct window *w, Lisp_Object string,
   struct frame *f = XFRAME (WINDOW_FRAME (w));
   Lisp_Object attrs[LFACE_VECTOR_SIZE];
   struct face *base_face;
-  int multibyte_p = STRING_MULTIBYTE (string);
+  bool multibyte_p = STRING_MULTIBYTE (string);
   Lisp_Object prop_name = mouse_p ? Qmouse_face : Qface;
 
   /* Get the value of the face property at the current position within

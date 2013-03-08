@@ -220,7 +220,8 @@ pair of the form (KEY VALUE).  The following KEYs are defined:
     argument.  By this, arguments like (\"-l\" \"%u\") are optional.
     \"%t\" is replaced by the temporary file name produced with
     `tramp-make-tramp-temp-file'.  \"%k\" indicates the keep-date
-    parameter of a program, if exists.
+    parameter of a program, if exists.  \"%c\" adds additional
+    `tramp-ssh-controlmaster-options' options for the first hop.
   * `tramp-async-args'
     When an asynchronous process is started, we know already that
     the connection works.  Therefore, we can pass additional
@@ -280,15 +281,24 @@ started on the local host.  You should specify a remote host
 `localhost' or the name of the local host.  Another host name is
 useful only in combination with `tramp-default-proxies-alist'.")
 
-(defun tramp-detect-ssh-controlmaster ()
-  "Call ssh to detect whether it supports the ControlMaster argument.
-This function may return nil when the argument is supported, but
-shouldn't return t when it isn't."
-  (ignore-errors
-    (with-temp-buffer
-      (call-process "ssh" nil t nil "-o" "ControlMaster")
-      (goto-char (point-min))
-      (search-forward-regexp "Missing ControlMaster argument" nil t))))
+;;;###tramp-autoload
+(defconst tramp-ssh-controlmaster-options
+  (let ((result ""))
+    (ignore-errors
+      (with-temp-buffer
+	(call-process "ssh" nil t nil "-o" "ControlMaster")
+	(goto-char (point-min))
+	(when (search-forward-regexp "Missing ControlMaster argument" nil t)
+	  (setq result "-o ControlPath=%t.%%r@%%h:%%p -o ControlMaster=auto")))
+      (when result
+	(with-temp-buffer
+	  (call-process "ssh" nil t nil "-o" "ControlPersist")
+	  (goto-char (point-min))
+	  (when (search-forward-regexp "Missing ControlPersist argument" nil t)
+	    (setq result (concat result " -o ControlPersist=no"))))))
+    result)
+    "Call ssh to detect whether it supports the Control* arguments.
+Return a string to be used in `tramp-methods'.")
 
 (defcustom tramp-default-method
   ;; An external copy method seems to be preferred, because it performs
@@ -297,8 +307,9 @@ shouldn't return t when it isn't."
   ;; permanent password queries.  Either a password agent like
   ;; "ssh-agent" or "Pageant" shall run, or the optional
   ;; password-cache.el or auth-sources.el packages shall be active for
-  ;; password caching.  "scpc" is chosen if we detect that the user is
-  ;; running OpenSSH 4.0 or newer.
+  ;; password caching.  If we detect that the user is running OpenSSH
+  ;; 4.0 or newer, we could reuse the connection, which calls also for
+  ;; an external method.
   (cond
    ;; PuTTY is installed.  We don't take it, if it is installed on a
    ;; non-windows system, or pscp from the pssh (parallel ssh) package
@@ -314,16 +325,16 @@ shouldn't return t when it isn't."
       "plink"))
    ;; There is an ssh installation.
    ((executable-find "scp")
-    (cond
-     ((tramp-detect-ssh-controlmaster) "scpc")
-     ((or (fboundp 'password-read)
-	  (fboundp 'auth-source-user-or-password)
-	  (fboundp 'auth-source-search)
-	  ;; ssh-agent is running.
-	  (getenv "SSH_AUTH_SOCK")
-	  (getenv "SSH_AGENT_PID"))
-      "scp")
-     (t "ssh")))
+    (if	(or (fboundp 'password-read)
+	    (fboundp 'auth-source-user-or-password)
+	    (fboundp 'auth-source-search)
+	    ;; ssh-agent is running.
+	    (getenv "SSH_AUTH_SOCK")
+	    (getenv "SSH_AGENT_PID")
+	    ;; We could reuse the connection.
+	    (> (length tramp-ssh-controlmaster-options) 0))
+	"scp"
+      "ssh"))
    ;; Fallback.
    (t "ftp"))
   "Default method to use for transferring files.
@@ -1018,10 +1029,24 @@ this variable to be set as well."
 ;; for an override of the system default.
 (defcustom tramp-process-connection-type t
   "Overrides `process-connection-type' for connections from Tramp.
-Tramp binds process-connection-type to the value given here before
+Tramp binds `process-connection-type' to the value given here before
 opening a connection to a remote host."
   :group 'tramp
   :type '(choice (const nil) (const t) (const pty)))
+
+(defcustom tramp-connection-min-time-diff 5
+  "Defines seconds between two consecutive connection attempts.
+This is necessary as self defense mechanism, in order to avoid
+yo-yo connection attempts when the remote host is unavailable.
+
+A value of 0 or `nil' suppresses this check.  This might be
+necessary, when several out-of-order copy operations are
+performed, or when several asynchronous processes will be started
+in a short time frame.  In those cases it is recommended to
+let-bind this variable."
+  :group 'tramp
+  :version "24.4"
+  :type '(choice (const nil) integer))
 
 (defcustom tramp-completion-reread-directory-timeout 10
   "Defines seconds since last remote command before rereading a directory.
@@ -1033,7 +1058,7 @@ have been gone since last remote command execution.  A value of `t'
 would require an immediate reread during filename completion, `nil'
 means to use always cached values for the directory contents."
   :group 'tramp
-  :type '(choice (const nil) integer))
+  :type '(choice (const nil) (const t) integer))
 
 ;;; Internal Variables:
 
@@ -1142,23 +1167,48 @@ If the `tramp-methods' entry does not exist, return nil."
 (defun tramp-tramp-file-p (name)
   "Return t if NAME is a string with Tramp file name syntax."
   (save-match-data
-    (and (stringp name) (string-match tramp-file-name-regexp name))))
+    (and (stringp name)
+	 (string-match tramp-file-name-regexp name))))
+
+;; Obsoleted with Tramp 2.2.7.
+(defconst tramp-obsolete-methods
+  '("ssh1" "ssh2" "scp1" "scp2" "scpc" "rsyncc" "plink1")
+  "Obsolete methods.")
+
+(defvar tramp-warned-obsolete-methods nil
+  "Which methods the user has been warned to be obsolete.")
 
 (defun tramp-find-method (method user host)
   "Return the right method string to use.
 This is METHOD, if non-nil. Otherwise, do a lookup in
-`tramp-default-method-alist'."
-  (or method
-      (let ((choices tramp-default-method-alist)
-	    lmethod item)
-	(while choices
-	  (setq item (pop choices))
-	  (when (and (string-match (or (nth 0 item) "") (or host ""))
-		     (string-match (or (nth 1 item) "") (or user "")))
-	    (setq lmethod (nth 2 item))
-	    (setq choices nil)))
-	lmethod)
-      tramp-default-method))
+`tramp-default-method-alist'.  It maps also obsolete methods to
+their replacement."
+  (let ((result
+	 (or method
+	     (let ((choices tramp-default-method-alist)
+		   lmethod item)
+	       (while choices
+		 (setq item (pop choices))
+		 (when (and (string-match (or (nth 0 item) "") (or host ""))
+			    (string-match (or (nth 1 item) "") (or user "")))
+		   (setq lmethod (nth 2 item))
+		   (setq choices nil)))
+	       lmethod)
+	     tramp-default-method)))
+    ;; This is needed for a transition period only.
+    (when (member result tramp-obsolete-methods)
+      (unless (member result tramp-warned-obsolete-methods)
+	(if noninteractive
+	    (warn "Method %s is obsolete, using %s"
+		  result (substring result 0 -1))
+	  (unless (y-or-n-p (format "Method %s is obsolete, use %s? "
+				    result (substring result 0 -1)))
+	    (error 'file-error "Method \"%s\" not supported" result)))
+	(add-to-list 'tramp-warned-obsolete-methods result))
+      ;; This works with the current set of `tramp-obsolete-methods'.
+      ;; Must be improved, if their are more sophisticated replacements.
+      (setq result (substring result 0 -1)))
+    result))
 
 (defun tramp-find-user (method user host)
   "Return the right user string to use.
@@ -1325,6 +1375,8 @@ The outline level is equal to the verbosity of the Tramp message."
       (get-buffer-create (tramp-debug-buffer-name vec))
     (when (bobp)
       (setq buffer-undo-list t)
+      ;; So it does not get loaded while `outline-regexp' is let-bound.
+      (require 'outline)
       ;; Activate `outline-mode'.  This runs `text-mode-hook' and
       ;; `outline-mode-hook'.  We must prevent that local processes
       ;; die.  Yes: I've seen `flyspell-mode', which starts "ispell".
@@ -1374,8 +1426,11 @@ ARGS to actually emit the message (if applicable)."
 		     (concat
 		      "^"
 		      (regexp-opt
-		       '("tramp-compat-funcall"
+		       '("tramp-backtrace"
+			 "tramp-compat-condition-case-unless-debug"
+			 "tramp-compat-funcall"
 			 "tramp-compat-with-temp-message"
+			 "tramp-condition-case-unless-debug"
 			 "tramp-debug-message"
 			 "tramp-error"
 			 "tramp-error-with-buffer"
@@ -1487,6 +1542,11 @@ an input event arrives.  The other arguments are passed to `tramp-error'."
 	     "Tramp failed to connect.  If this happens repeatedly, try"
 	     "`M-x tramp-cleanup-this-connection'"))
 	  (sit-for 30))))))
+
+(defsubst tramp-backtrace (vec-or-proc)
+  "Dump a backtrace into the debug buffer.
+This function is meant for debugging purposes."
+  (tramp-message vec-or-proc 10 "\n%s" (with-output-to-string (backtrace))))
 
 (defmacro with-parsed-tramp-file-name (filename var &rest body)
   "Parse a Tramp filename and make components available in the body.
@@ -1779,28 +1839,23 @@ value of `default-file-modes', without execute permissions."
   (or (file-modes filename)
       (logand (default-file-modes) (tramp-compat-octal-to-decimal "0666"))))
 
-(defalias 'tramp-replace-environment-variables
-  (if (ignore-errors
-        (equal "${ tramp?}"
-	       (tramp-compat-funcall
-		'substitute-env-vars "${ tramp?}" 'only-defined)))
-      (lambda (filename)
-        "Like `substitute-env-vars' with `only-defined' non-nil."
-        (tramp-compat-funcall 'substitute-env-vars filename 'only-defined))
-    (lambda (filename)
-      "Replace environment variables in FILENAME.
+(defun tramp-replace-environment-variables (filename)
+ "Replace environment variables in FILENAME.
 Return the string with the replaced variables."
-      (save-match-data
-        (let ((idx (string-match "$\\(\\w+\\)" filename)))
-          ;; `$' is coded as `$$'.
-          (when (and idx
-                     (or (zerop idx) (not (eq ?$ (aref filename (1- idx)))))
-                     (getenv (match-string 1 filename)))
-            (setq filename
-                  (replace-match
-                   (substitute-in-file-name (match-string 0 filename))
-                   t nil filename)))
-          filename)))))
+ (or (ignore-errors
+       (tramp-compat-funcall 'substitute-env-vars filename 'only-defined))
+     ;; We need an own implementation.
+     (save-match-data
+       (let ((idx (string-match "$\\(\\w+\\)" filename)))
+	 ;; `$' is coded as `$$'.
+	 (when (and idx
+		    (or (zerop idx) (not (eq ?$ (aref filename (1- idx)))))
+		    (getenv (match-string 1 filename)))
+	   (setq filename
+		 (replace-match
+		  (substitute-in-file-name (match-string 0 filename))
+		  t nil filename)))
+	 filename))))
 
 ;; In XEmacs, electricity is implemented via a key map for ?/ and ?~,
 ;; which calls corresponding functions (see minibuf.el).
@@ -1988,6 +2043,15 @@ ARGS are the arguments OPERATION has been called with."
 		  res (cdr elt))))
 	res))))
 
+(defvar tramp-debug-on-error nil
+  "Like `debug-on-error' but used Tramp internal.")
+
+(defmacro tramp-condition-case-unless-debug
+  (var bodyform &rest handlers)
+  "Like `condition-case-unless-debug' but `tramp-debug-on-error'."
+  `(let ((debug-on-error tramp-debug-on-error))
+     (tramp-compat-condition-case-unless-debug ,var ,bodyform ,@handlers)))
+
 ;; Main function.
 ;;;###autoload
 (defun tramp-file-name-handler (operation &rest args)
@@ -2003,7 +2067,7 @@ Falls back to normal file name handler if no Tramp file name handler exists."
 	  (with-parsed-tramp-file-name filename nil
 	    ;; Call the backend function.
 	    (if foreign
-		(tramp-compat-condition-case-unless-debug err
+		(tramp-condition-case-unless-debug err
 		    (let ((sf (symbol-function foreign))
 			  result)
 		      ;; Some packages set the default directory to a
@@ -2056,7 +2120,7 @@ Falls back to normal file name handler if no Tramp file name handler exists."
 		  ;; in order to give the user a chance to correct the
 		  ;; file name in the minibuffer.
 		  ;; In order to get a full backtrace, one could apply
-		  ;;   (setq debug-on-error t debug-on-signal t)
+		  ;;   (setq tramp-debug-on-error t)
 		  (error
 		   (cond
 		    ((and completion (zerop (length localname))
@@ -3011,13 +3075,15 @@ User is always nil."
 		  (setq tramp-temp-buffer-file-name local-copy))
 
 		;; We must ensure that `file-coding-system-alist'
-		;; matches `local-copy'.
+		;; matches `local-copy'.  We must also use `visit',
+		;; otherwise there might be an error in the
+		;; `revert-buffer' function under XEmacs.
 		(let ((file-coding-system-alist
 		       (tramp-find-file-name-coding-system-alist
 			filename local-copy)))
 		  (setq result
 			(insert-file-contents
-			 local-copy nil nil nil replace)))))
+			 local-copy visit nil nil replace)))))
 
 	  ;; Save exit.
 	  (progn
@@ -3401,7 +3467,9 @@ Erase echoed commands if exists."
 		     0 (min tramp-echo-mark-marker-length (1- (point-max))))
 		    (tramp-compat-funcall
 		     'buffer-substring-no-properties
-		     1 (min (1+ tramp-echo-mark-marker-length) (point-max))))))
+		     (point-min)
+		     (min (+ (point-min) tramp-echo-mark-marker-length)
+			  (point-max))))))
       ;; No echo to be handled, now we can look for the regexp.
       ;; Sometimes, lines are much to long, and we run into a "Stack
       ;; overflow in regexp matcher".  For example, //DIRED// lines of

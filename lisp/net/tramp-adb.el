@@ -23,31 +23,33 @@
 
 ;;; Commentary:
 
-;; The Android Debug Bridge must be installed on your local machine.
-;; Add the following form into your .emacs:
+;; The Android Debug Bridge "adb" must be installed on your local
+;; machine.  If it is not in your $PATH, add the following form into
+;; your .emacs:
 ;;
-;;   (setq tramp-adb-sdk-dir "/path/to/android/sdk")
+;;   (setq tramp-adb-program "/path/to/adb")
 ;;
 ;; Due to security it is not possible to access non-root devices.
 
 ;;; Code:
 
 (require 'tramp)
+(require 'time-date)
 
 (defvar dired-move-to-filename-regexp)
 
-(defcustom tramp-adb-sdk-dir "~/Android/sdk"
-  "Set to the directory containing the Android SDK."
-  :type 'string
+(defcustom tramp-adb-program "adb"
+  "Name of the Android Debug Bridge program."
+  :group 'tramp
   :version "24.4"
-  :group 'tramp)
+  :type 'string)
 
 ;;;###tramp-autoload
 (defconst tramp-adb-method "adb"
   "*When this method name is used, forward all calls to Android Debug Bridge.")
 
 (defcustom tramp-adb-prompt
-  "^\\(?:[[:alnum:]]*@[[:alnum:]]*[^#\\$]*\\)?[#\\$][[:space:]]"
+  "^\\(?:[[:digit:]]*|?\\)?\\(?:[[:alnum:]]*@[[:alnum:]]*[^#\\$]*\\)?[#\\$][[:space:]]"
   "Regexp used as prompt in almquist shell."
   :type 'string
   :version "24.4"
@@ -148,21 +150,17 @@ pass to the OPERATION."
 	(save-match-data (apply (cdr fn) args))
       (tramp-run-real-handler operation args))))
 
-;; This cannot be a constant, because `tramp-adb-sdk-dir' is customizable.
-(defun tramp-adb-program ()
-  "The Android Debug Bridge."
-  (expand-file-name "platform-tools/adb" tramp-adb-sdk-dir))
-
 ;;;###tramp-autoload
 (defun tramp-adb-parse-device-names (ignore)
   "Return a list of (nil host) tuples allowed to access."
-  (with-temp-buffer
-    (when (zerop (call-process (tramp-adb-program) nil t nil "devices"))
-      (let (result)
-	(goto-char (point-min))
-	(while (search-forward-regexp "^\\(\\S-+\\)[[:space:]]+device$" nil t)
-	  (add-to-list 'result (list nil (match-string 1))))
-	result))))
+  (with-timeout (10)
+    (with-temp-buffer
+      (when (zerop (call-process tramp-adb-program nil t nil "devices"))
+	(let (result)
+	  (goto-char (point-min))
+	  (while (search-forward-regexp "^\\(\\S-+\\)[[:space:]]+device$" nil t)
+	    (add-to-list 'result (list nil (match-string 1))))
+	  result)))))
 
 (defun tramp-adb-handle-expand-file-name (name &optional dir)
   "Like `expand-file-name' for Tramp files."
@@ -465,7 +463,7 @@ Emacs dired can't find files."
     (setq time-a (apply 'encode-time (parse-time-string (match-string 0 a))))
     (string-match tramp-adb-ls-date-regexp b)
     (setq time-b (apply 'encode-time (parse-time-string (match-string 0 b))))
-    (time-less-p time-b time-a)))
+    (tramp-time-less-p time-b time-a)))
 
 (defun tramp-adb-ls-output-name-less-p (a b)
   "Sort \"ls\" output by name, ascending."
@@ -638,7 +636,7 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 	newname (expand-file-name newname))
 
   (if (file-directory-p filename)
-      (copy-directory filename newname keep-date t)
+      (tramp-file-name-handler 'copy-directory filename newname keep-date t)
     (with-tramp-progress-reporter
 	(tramp-dissect-file-name (if (file-remote-p filename) filename newname))
 	0 (format "Copying %s to %s" filename newname)
@@ -698,7 +696,10 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 	    (tramp-flush-file-property v localname)
 	    ;; Short track.
 	    (tramp-adb-barf-unless-okay
-	     v (format "mv %s %s" (file-remote-p filename 'localname) localname)
+	     v (format
+		"mv %s %s"
+		(tramp-file-name-handler 'file-remote-p filename 'localname)
+		localname)
 	     "Error renaming %s to %s" filename newname))
 
 	;; Rename by copy.
@@ -774,13 +775,11 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
       ;; directory.
       (condition-case nil
 	  (progn
-	    (setq ret 0
-		  ret
-		  (tramp-adb-barf-unless-okay
-		   v (format "(cd %s; %s)"
-			     (tramp-shell-quote-argument localname)
-			     command)
-		   ""))
+	    (setq ret 0)
+	    (tramp-adb-barf-unless-okay
+	     v (format "(cd %s; %s)"
+		       (tramp-shell-quote-argument localname) command)
+	     "")
 	    ;; We should show the output anyway.
 	    (when outbuf
 	      (with-current-buffer outbuf
@@ -898,60 +897,76 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 (defun tramp-adb-handle-start-file-process (name buffer program &rest args)
   "Like `start-file-process' for Tramp files."
   (with-parsed-tramp-file-name default-directory nil
-    ;; When PROGRAM is nil, we just provide a tty.
+    ;; When PROGRAM is nil, we should provide a tty.  This is not
+    ;; possible here.
+    (unless (stringp program)
+      (tramp-error v 'file-error "PROGRAM must be a string"))
+
     (let ((command
-	   (when (stringp program)
-	     (format "cd %s; %s"
-		     (tramp-shell-quote-argument localname)
-		     (mapconcat 'tramp-shell-quote-argument
-				(cons program args) " "))))
+	   (format "cd %s; %s"
+		   (tramp-shell-quote-argument localname)
+		   (mapconcat 'tramp-shell-quote-argument
+			      (cons program args) " ")))
 	  (tramp-process-connection-type
 	   (or (null program) tramp-process-connection-type))
 	  (bmp (and (buffer-live-p buffer) (buffer-modified-p buffer)))
 	  (name1 name)
 	  (i 0))
-      (unwind-protect
-	  (save-excursion
-	    (save-restriction
-	      (unless buffer
-		;; BUFFER can be nil.  We use a temporary buffer.
-		(setq buffer (generate-new-buffer tramp-temp-buffer-name)))
-	      (while (get-process name1)
-		;; NAME must be unique as process name.
-		(setq i (1+ i)
-		      name1 (format "%s<%d>" name i)))
-	      (setq name name1)
-	      ;; Set the new process properties.
-	      (tramp-set-connection-property v "process-name" name)
-	      (tramp-set-connection-property v "process-buffer" buffer)
-	      ;; Activate narrowing in order to save BUFFER contents.
-	      ;; Clear also the modification time; otherwise we might
-	      ;; be interrupted by `verify-visited-file-modtime'.
-	      (with-current-buffer (tramp-get-connection-buffer v)
-		(let ((buffer-undo-list t))
+
+      (unless buffer
+	;; BUFFER can be nil.  We use a temporary buffer.
+	(setq buffer (generate-new-buffer tramp-temp-buffer-name)))
+      (while (get-process name1)
+	;; NAME must be unique as process name.
+	(setq i (1+ i)
+	      name1 (format "%s<%d>" name i)))
+      (setq name name1)
+      ;; Set the new process properties.
+      (tramp-set-connection-property v "process-name" name)
+      (tramp-set-connection-property v "process-buffer" buffer)
+
+      (with-current-buffer (tramp-get-connection-buffer v)
+	(unwind-protect
+	    ;; We catch this event.  Otherwise, `start-process' could
+	    ;; be called on the local host.
+	    (save-excursion
+	      (save-restriction
+		;; Activate narrowing in order to save BUFFER
+		;; contents.  Clear also the modification time;
+		;; otherwise we might be interrupted by
+		;; `verify-visited-file-modtime'.
+		(let ((buffer-undo-list t)
+		      (buffer-read-only nil)
+		      (mark (point)))
 		  (clear-visited-file-modtime)
 		  (narrow-to-region (point-max) (point-max))
-		  (if command
-		      ;; Send the command.
-		      (tramp-adb-send-command v command)
-		    ;; Open the connection.
-		    (tramp-adb-maybe-open-connection v))))
-	      (let ((p (tramp-get-connection-process v)))
-		;; Set sentinel and query flag for this process.
-		(tramp-set-connection-property p "vector" v)
-		(set-process-sentinel p 'tramp-process-sentinel)
-		(tramp-compat-set-process-query-on-exit-flag p t)
-		;; Return process.
-		p)))
-	;; Save exit.
-	(with-current-buffer (tramp-get-connection-buffer v)
+		  ;; We call `tramp-adb-maybe-open-connection', in
+		  ;; order to cleanup the prompt afterwards.
+		  (tramp-adb-maybe-open-connection v)
+		  (widen)
+		  (delete-region mark (point))
+		  (narrow-to-region (point-max) (point-max))
+		  ;; Send the command.
+		  (let ((tramp-adb-prompt (regexp-quote command)))
+		    (tramp-adb-send-command v command))
+		  (let ((p (tramp-get-connection-process v)))
+		    ;; Set query flag and process marker for this
+		    ;; process.  We ignore errors, because the process
+		    ;; could have finished already.
+		    (ignore-errors
+		      (tramp-compat-set-process-query-on-exit-flag p t)
+		      (set-marker (process-mark p) (point)))
+		    ;; Return process.
+		    p))))
+
+	  ;; Save exit.
 	  (if (string-match tramp-temp-buffer-name (buffer-name))
-	      (progn
+	      (ignore-errors
 		(set-process-buffer (tramp-get-connection-process v) nil)
 		(kill-buffer (current-buffer)))
-	    (set-buffer-modified-p bmp)))
-	(tramp-set-connection-property v "process-name" nil)
-	(tramp-set-connection-property v "process-buffer" nil)))))
+	    (set-buffer-modified-p bmp))
+	  (tramp-set-connection-property v "process-name" nil)
+	  (tramp-set-connection-property v "process-buffer" nil))))))
 
 ;; Helper functions.
 
@@ -961,11 +976,11 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
     (setq args (append (list "-s" (tramp-file-name-host vec)) args)))
   (with-temp-buffer
     (prog1
-	(unless (zerop (apply 'call-process (tramp-adb-program) nil t nil args))
+	(unless (zerop (apply 'call-process tramp-adb-program nil t nil args))
 	  (buffer-string))
       (tramp-message
        vec 6 "%s %s\n%s"
-       (tramp-adb-program) (mapconcat 'identity args " ") (buffer-string)))))
+       tramp-adb-program (mapconcat 'identity args " ") (buffer-string)))))
 
 (defun tramp-adb-find-test-command (vec)
   "Checks, whether the ash has a builtin \"test\" command.
@@ -994,34 +1009,31 @@ This happens for Android >= 4.0."
       (while (re-search-forward "\r+$" nil t)
 	(replace-match "" nil nil)))))
 
-(defun tramp-adb-barf-unless-okay (vec command fmt &rest args)
-  "Run COMMAND, check exit status, throw error if exit status not okay.
-FMT and ARGS are passed to `error'."
-  (tramp-adb-send-command vec (format "%s; echo tramp_exit_status $?" command))
-  (with-current-buffer (tramp-get-connection-buffer vec)
-    (goto-char (point-max))
-    (unless (re-search-backward "tramp_exit_status [0-9]+" nil t)
-      (tramp-error
-       vec 'file-error "Couldn't find exit status of `%s'" command))
-    (skip-chars-forward "^ ")
-    (unless (zerop (read (current-buffer)))
-      (apply 'tramp-error vec 'file-error fmt args))
-    (let (buffer-read-only)
-      (delete-region (match-beginning 0) (point-max)))))
-
 (defun tramp-adb-command-exit-status
   (vec command)
   "Run COMMAND and return its exit status.
 Sends `echo $?' along with the COMMAND for checking the exit status.  If
 COMMAND is nil, just sends `echo $?'.  Returns the exit status found."
-  (tramp-adb-send-command vec (format "%s; echo tramp_exit_status $?" command))
+  (tramp-adb-send-command
+   vec (if command
+	   (format "%s; echo tramp_exit_status $?" command)
+	 "echo tramp_exit_status $?"))
   (with-current-buffer (tramp-get-connection-buffer vec)
     (goto-char (point-max))
     (unless (re-search-backward "tramp_exit_status [0-9]+" nil t)
       (tramp-error
        vec 'file-error "Couldn't find exit status of `%s'" command))
     (skip-chars-forward "^ ")
-    (read (current-buffer))))
+    (prog1
+	(read (current-buffer))
+      (let (buffer-read-only)
+	(delete-region (match-beginning 0) (point-max))))))
+
+(defun tramp-adb-barf-unless-okay (vec command fmt &rest args)
+  "Run COMMAND, check exit status, throw error if exit status not okay.
+FMT and ARGS are passed to `error'."
+  (unless (zerop (tramp-adb-command-exit-status vec command))
+    (apply 'tramp-error vec 'file-error fmt args)))
 
 (defun tramp-adb-wait-for-output (proc &optional timeout)
   "Wait for output from remote command."
@@ -1060,7 +1072,15 @@ connection if a previous connection has died for some reason."
   (let* ((buf (tramp-get-connection-buffer vec))
 	 (p (get-buffer-process buf))
 	 (host (tramp-file-name-host vec))
+	 (user (tramp-file-name-user vec))
 	 (devices (mapcar 'cadr (tramp-adb-parse-device-names nil))))
+
+    ;; Maybe we know already that "su" is not supported.  We cannot
+    ;; use a connection property, because we have not checked yet
+    ;; whether it is still the same device.
+    (when (and user (not (tramp-get-file-property vec "" "su-command-p" t)))
+      (tramp-error vec 'file-error "Cannot switch to user `%s'" user))
+
     (unless
 	(and p (processp p) (memq (process-status p) '(run open)))
       (save-match-data
@@ -1082,14 +1102,14 @@ connection if a previous connection has died for some reason."
 		 (p (let ((default-directory
 			    (tramp-compat-temporary-file-directory)))
 		      (apply 'start-process (tramp-get-connection-name vec) buf
-			     (tramp-adb-program) args))))
+			     tramp-adb-program args))))
 	    (tramp-message
 	     vec 6 "%s" (mapconcat 'identity (process-command p) " "))
 	    ;; Wait for initial prompt.
-	    (tramp-adb-wait-for-output p)
+	    (tramp-adb-wait-for-output p 30)
 	    (unless (eq 'run (process-status p))
 	      (tramp-error  vec 'file-error "Terminated!"))
-	    (set-process-query-on-exit-flag p nil)
+	    (tramp-compat-set-process-query-on-exit-flag p nil)
 
 	    ;; Check whether the properties have been changed.  If
 	    ;; yes, this is a strong indication that we must expire all
@@ -1114,6 +1134,15 @@ connection if a previous connection has died for some reason."
 		 "Connection reset, because remote host changed from `%s' to `%s'"
 		 old-getprop new-getprop)
 		(tramp-adb-maybe-open-connection vec)))
+
+	    ;; Change user if indicated.
+	    (when user
+	      (tramp-adb-send-command vec (format "su %s" user))
+	      (unless (zerop (tramp-adb-command-exit-status vec nil))
+		(delete-process p)
+		(tramp-set-file-property vec "" "su-command-p" nil)
+		(tramp-error
+		 vec 'file-error "Cannot switch to user `%s'" user)))
 
 	    ;; Set "remote-path" connection property.  This is needed
 	    ;; for eshell.

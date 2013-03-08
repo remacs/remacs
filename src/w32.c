@@ -37,7 +37,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 /* must include CRT headers *before* config.h */
 
 #include <config.h>
-#include <mbstring.h>	/* for _mbspbrk */
+#include <mbstring.h>	/* for _mbspbrk, _mbslwr, _mbsrchr, ... */
 
 #undef access
 #undef chdir
@@ -1531,35 +1531,110 @@ srandom (int seed)
   srand (seed);
 }
 
+/* Current codepage for encoding file names.  */
+static int file_name_codepage;
+
+/* Return the maximum length in bytes of a multibyte character
+   sequence encoded in the current ANSI codepage.  This is required to
+   correctly walk the encoded file names one character at a time.  */
+static int
+max_filename_mbslen (void)
+{
+  /* A simple cache to avoid calling GetCPInfo every time we need to
+     normalize a file name.  The file-name encoding is not supposed to
+     be changed too frequently, if ever.  */
+  static Lisp_Object last_file_name_encoding;
+  static int last_max_mbslen;
+  Lisp_Object current_encoding;
+
+  current_encoding = Vfile_name_coding_system;
+  if (NILP (current_encoding))
+    current_encoding = Vdefault_file_name_coding_system;
+
+  if (!EQ (last_file_name_encoding, current_encoding))
+    {
+      CPINFO cp_info;
+
+      last_file_name_encoding = current_encoding;
+      /* Default to the current ANSI codepage.  */
+      file_name_codepage = w32_ansi_code_page;
+      if (!NILP (current_encoding))
+	{
+	  char *cpname = SDATA (SYMBOL_NAME (current_encoding));
+	  char *cp = NULL, *end;
+	  int cpnum;
+
+	  if (strncmp (cpname, "cp", 2) == 0)
+	    cp = cpname + 2;
+	  else if (strncmp (cpname, "windows-", 8) == 0)
+	    cp = cpname + 8;
+
+	  if (cp)
+	    {
+	      end = cp;
+	      cpnum = strtol (cp, &end, 10);
+	      if (cpnum && *end == '\0' && end - cp >= 2)
+		file_name_codepage = cpnum;
+	    }
+	}
+
+      if (!file_name_codepage)
+	file_name_codepage = CP_ACP; /* CP_ACP = 0, but let's not assume that */
+
+      if (!GetCPInfo (file_name_codepage, &cp_info))
+	{
+	  file_name_codepage = CP_ACP;
+	  if (!GetCPInfo (file_name_codepage, &cp_info))
+	    emacs_abort ();
+	}
+      last_max_mbslen = cp_info.MaxCharSize;
+    }
+
+  return last_max_mbslen;
+}
 
 /* Normalize filename by converting all path separators to
    the specified separator.  Also conditionally convert upper
    case path name components to lower case.  */
 
 static void
-normalize_filename (register char *fp, char path_sep)
+normalize_filename (register char *fp, char path_sep, int multibyte)
 {
   char sep;
-  char *elem;
+  char *elem, *p2;
+  int dbcs_p = max_filename_mbslen () > 1;
+
+  /* Multibyte file names are in the Emacs internal representation, so
+     we can traverse them by bytes with no problems.  */
+  if (multibyte)
+    dbcs_p = 0;
 
   /* Always lower-case drive letters a-z, even if the filesystem
      preserves case in filenames.
      This is so filenames can be compared by string comparison
      functions that are case-sensitive.  Even case-preserving filesystems
      do not distinguish case in drive letters.  */
-  if (fp[1] == ':' && *fp >= 'A' && *fp <= 'Z')
+  if (dbcs_p)
+    p2 = CharNextExA (file_name_codepage, fp, 0);
+  else
+    p2 = fp + 1;
+
+  if (*p2 == ':' && *fp >= 'A' && *fp <= 'Z')
     {
       *fp += 'a' - 'A';
       fp += 2;
     }
 
-  if (NILP (Vw32_downcase_file_names))
+  if (multibyte || NILP (Vw32_downcase_file_names))
     {
       while (*fp)
 	{
 	  if (*fp == '/' || *fp == '\\')
 	    *fp = path_sep;
-	  fp++;
+	  if (!dbcs_p)
+	    fp++;
+	  else
+	    fp = CharNextExA (file_name_codepage, fp, 0);
 	}
       return;
     }
@@ -1582,27 +1657,36 @@ normalize_filename (register char *fp, char path_sep)
 	if (elem && elem != fp)
 	  {
 	    *fp = 0;		/* temporary end of string */
-	    _strlwr (elem);	/* while we convert to lower case */
+	    _mbslwr (elem);	/* while we convert to lower case */
 	  }
 	*fp = sep;		/* convert (or restore) path separator */
 	elem = fp + 1;		/* next element starts after separator */
 	sep = path_sep;
       }
-  } while (*fp++);
+    if (*fp)
+      {
+	if (!dbcs_p)
+	  fp++;
+	else
+	  fp = CharNextExA (file_name_codepage, fp, 0);
+      }
+  } while (*fp);
 }
 
-/* Destructively turn backslashes into slashes.  */
+/* Destructively turn backslashes into slashes.  MULTIBYTE non-zero
+   means the file name is a multibyte string in Emacs's internal
+   representation.  */
 void
-dostounix_filename (register char *p)
+dostounix_filename (register char *p, int multibyte)
 {
-  normalize_filename (p, '/');
+  normalize_filename (p, '/', multibyte);
 }
 
 /* Destructively turn slashes into backslashes.  */
 void
 unixtodos_filename (register char *p)
 {
-  normalize_filename (p, '\\');
+  normalize_filename (p, '\\', 0);
 }
 
 /* Remove all CR's that are followed by a LF.
@@ -1653,12 +1737,17 @@ parse_root (char * name, char ** pPath)
   else if (IS_DIRECTORY_SEP (name[0]) && IS_DIRECTORY_SEP (name[1]))
     {
       int slashes = 2;
+      int dbcs_p = max_filename_mbslen () > 1;
+
       name += 2;
       do
         {
 	  if (IS_DIRECTORY_SEP (*name) && --slashes == 0)
 	    break;
-	  name++;
+	  if (dbcs_p)
+	    name = CharNextExA (file_name_codepage, name, 0);
+	  else
+	    name++;
 	}
       while ( *name );
       if (IS_DIRECTORY_SEP (name[0]))
@@ -1723,7 +1812,7 @@ w32_get_long_filename (char * name, char * buf, int size)
   while (p != NULL && *p)
     {
       q = p;
-      p = strchr (q, '\\');
+      p = _mbschr (q, '\\');
       if (p) *p = '\0';
       len = get_long_basename (full, o, size);
       if (len > 0)
@@ -1995,16 +2084,16 @@ init_environment (char ** argv)
 
       if (!GetModuleFileName (NULL, modname, MAX_PATH))
 	emacs_abort ();
-      if ((p = strrchr (modname, '\\')) == NULL)
+      if ((p = _mbsrchr (modname, '\\')) == NULL)
 	emacs_abort ();
       *p = 0;
 
-      if ((p = strrchr (modname, '\\')) && xstrcasecmp (p, "\\bin") == 0)
+      if ((p = _mbsrchr (modname, '\\')) && xstrcasecmp (p, "\\bin") == 0)
 	{
 	  char buf[SET_ENV_BUF_SIZE];
 
 	  *p = 0;
-	  for (p = modname; *p; p++)
+	  for (p = modname; *p; p = CharNext (p))
 	    if (*p == '\\') *p = '/';
 
 	  _snprintf (buf, sizeof (buf)-1, "emacs_dir=%s", modname);
@@ -2019,17 +2108,17 @@ init_environment (char ** argv)
                      || xstrcasecmp (p, "\\AMD64") == 0))
 	{
 	  *p = 0;
-	  p = strrchr (modname, '\\');
+	  p = _mbsrchr (modname, '\\');
 	  if (p != NULL)
 	    {
 	      *p = 0;
-	      p = strrchr (modname, '\\');
+	      p = _mbsrchr (modname, '\\');
 	      if (p && xstrcasecmp (p, "\\src") == 0)
 		{
 		  char buf[SET_ENV_BUF_SIZE];
 
 		  *p = 0;
-		  for (p = modname; *p; p++)
+		  for (p = modname; *p; p = CharNext (p))
 		    if (*p == '\\') *p = '/';
 
 		  _snprintf (buf, sizeof (buf)-1, "emacs_dir=%s", modname);
@@ -2140,7 +2229,7 @@ emacs_root_dir (void)
     emacs_abort ();
   strcpy (root_dir, p);
   root_dir[parse_root (root_dir, NULL)] = '\0';
-  dostounix_filename (root_dir);
+  dostounix_filename (root_dir, 0);
   return root_dir;
 }
 
@@ -2564,12 +2653,23 @@ get_volume_info (const char * name, const char ** pPath)
     {
       char *str = temp;
       int slashes = 4;
+      int dbcs_p = max_filename_mbslen () > 1;
+
       rootname = temp;
       do
         {
 	  if (IS_DIRECTORY_SEP (*name) && --slashes == 0)
 	    break;
-	  *str++ = *name++;
+	  if (!dbcs_p)
+	    *str++ = *name++;
+	  else
+	    {
+	      const char *p = name;
+
+	      name = CharNextExA (file_name_codepage, name, 0);
+	      memcpy (str, p, name - p);
+	      str += name - p;
+	    }
 	}
       while ( *name );
 
@@ -2732,7 +2832,7 @@ static char  *read_unc_volume (HANDLE, char *, int);
 static void   close_unc_volume (HANDLE);
 
 DIR *
-opendir (char *filename)
+opendir (const char *filename)
 {
   DIR *dirp;
 
@@ -2805,11 +2905,23 @@ readdir (DIR *dirp)
     {
       char filename[MAXNAMLEN + 3];
       int ln;
+      int dbcs_p = max_filename_mbslen () > 1;
 
       strcpy (filename, dir_pathname);
       ln = strlen (filename) - 1;
-      if (!IS_DIRECTORY_SEP (filename[ln]))
-	strcat (filename, "\\");
+      if (!dbcs_p)
+	{
+	  if (!IS_DIRECTORY_SEP (filename[ln]))
+	    strcat (filename, "\\");
+	}
+      else
+	{
+	  char *end = filename + ln + 1;
+	  char *last_char = CharPrevExA (file_name_codepage, filename, end, 0);
+
+	  if (!IS_DIRECTORY_SEP (*last_char))
+	    strcat (filename, "\\");
+	}
       strcat (filename, "*");
 
       /* Note: No need to resolve symlinks in FILENAME, because
@@ -2860,15 +2972,22 @@ readdir (DIR *dirp)
     strcpy (dir_static.d_name, dir_find_data.cFileName);
   dir_static.d_namlen = strlen (dir_static.d_name);
   if (dir_is_fat)
-    _strlwr (dir_static.d_name);
+    _mbslwr (dir_static.d_name);
   else if (downcase)
     {
       register char *p;
-      for (p = dir_static.d_name; *p; p++)
-	if (*p >= 'a' && *p <= 'z')
-	  break;
+      int dbcs_p = max_filename_mbslen () > 1;
+      for (p = dir_static.d_name; *p; )
+	{
+	  if (*p >= 'a' && *p <= 'z')
+	    break;
+	  if (dbcs_p)
+	    p = CharNextExA (file_name_codepage, p, 0);
+	  else
+	    p++;
+	}
       if (!*p)
-	_strlwr (dir_static.d_name);
+	_mbslwr (dir_static.d_name);
     }
 
   return &dir_static;
@@ -2907,6 +3026,7 @@ read_unc_volume (HANDLE henum, char *readbuf, int size)
   DWORD bufsize = 512;
   char *buffer;
   char *ptr;
+  int dbcs_p = max_filename_mbslen () > 1;
 
   count = 1;
   buffer = alloca (bufsize);
@@ -2917,7 +3037,13 @@ read_unc_volume (HANDLE henum, char *readbuf, int size)
   /* WNetEnumResource returns \\resource\share...skip forward to "share". */
   ptr = ((LPNETRESOURCE) buffer)->lpRemoteName;
   ptr += 2;
-  while (*ptr && !IS_DIRECTORY_SEP (*ptr)) ptr++;
+  if (!dbcs_p)
+    while (*ptr && !IS_DIRECTORY_SEP (*ptr)) ptr++;
+  else
+    {
+      while (*ptr && !IS_DIRECTORY_SEP (*ptr))
+	ptr = CharNextExA (file_name_codepage, ptr, 0);
+    }
   ptr++;
 
   strncpy (readbuf, ptr, size);
@@ -2954,9 +3080,11 @@ logon_network_drive (const char *path)
 {
   NETRESOURCE resource;
   char share[MAX_PATH];
-  int i, n_slashes;
+  int n_slashes;
   char drive[4];
   UINT drvtype;
+  char *p;
+  int dbcs_p;
 
   if (IS_DIRECTORY_SEP (path[0]) && IS_DIRECTORY_SEP (path[1]))
     drvtype = DRIVE_REMOTE;
@@ -2978,13 +3106,18 @@ logon_network_drive (const char *path)
   n_slashes = 2;
   strncpy (share, path, MAX_PATH);
   /* Truncate to just server and share name.  */
-  for (i = 2; i < MAX_PATH; i++)
+  dbcs_p = max_filename_mbslen () > 1;
+  for (p = share + 2; *p && p < share + MAX_PATH; )
     {
-      if (IS_DIRECTORY_SEP (share[i]) && ++n_slashes > 3)
+      if (IS_DIRECTORY_SEP (*p) && ++n_slashes > 3)
         {
-          share[i] = '\0';
+          *p = '\0';
           break;
         }
+      if (dbcs_p)
+	p = CharNextExA (file_name_codepage, p, 0);
+      else
+	p++;
     }
 
   resource.dwType = RESOURCETYPE_DISK;
@@ -3084,14 +3217,6 @@ sys_chmod (const char * path, int mode)
 {
   path = chase_symlinks (map_w32_filename (path, NULL));
   return _chmod (path, mode);
-}
-
-int
-sys_chown (const char *path, uid_t owner, gid_t group)
-{
-  if (sys_chmod (path, S_IREAD) == -1) /* check if file exists */
-    return -1;
-  return 0;
 }
 
 int
@@ -3277,17 +3402,27 @@ int
 sys_open (const char * path, int oflag, int mode)
 {
   const char* mpath = map_w32_filename (path, NULL);
-  /* Try to open file without _O_CREAT, to be able to write to hidden
-     and system files. Force all file handles to be
-     non-inheritable. */
-  int res = _open (mpath, (oflag & ~_O_CREAT) | _O_NOINHERIT, mode);
-  if (res >= 0)
-    return res;
-  return _open (mpath, oflag | _O_NOINHERIT, mode);
+  int res = -1;
+
+  /* If possible, try to open file without _O_CREAT, to be able to
+     write to existing hidden and system files.  Force all file
+     handles to be non-inheritable. */
+  if ((oflag & (_O_CREAT | _O_EXCL)) != (_O_CREAT | _O_EXCL))
+    res = _open (mpath, (oflag & ~_O_CREAT) | _O_NOINHERIT, mode);
+  if (res < 0)
+    res = _open (mpath, oflag | _O_NOINHERIT, mode);
+
+  return res;
 }
 
 int
-sys_rename (const char * oldname, const char * newname)
+fchmod (int fd, mode_t mode)
+{
+  return 0;
+}
+
+int
+sys_rename_replace (const char *oldname, const char *newname, BOOL force)
 {
   BOOL result;
   char temp[MAX_PATH];
@@ -3343,7 +3478,7 @@ sys_rename (const char * oldname, const char * newname)
 	return -1;
     }
 
-  /* Emulate Unix behavior - newname is deleted if it already exists
+  /* If FORCE, emulate Unix behavior - newname is deleted if it already exists
      (at least if it is a file; don't do this for directories).
 
      Since we mustn't do this if we are just changing the case of the
@@ -3361,7 +3496,7 @@ sys_rename (const char * oldname, const char * newname)
 
   result = rename (temp, newname);
 
-  if (result < 0)
+  if (result < 0 && force)
     {
       DWORD w32err = GetLastError ();
 
@@ -3398,6 +3533,12 @@ sys_rename (const char * oldname, const char * newname)
     }
 
   return result;
+}
+
+int
+sys_rename (char const *old, char const *new)
+{
+  return sys_rename_replace (old, new, TRUE);
 }
 
 int
@@ -3759,6 +3900,7 @@ stat_worker (const char * path, struct stat * buf, int follow_symlinks)
   DWORD access_rights = 0;
   DWORD fattrs = 0, serialnum = 0, fs_high = 0, fs_low = 0, nlinks = 1;
   FILETIME ctime, atime, wtime;
+  int dbcs_p;
 
   if (path == NULL || buf == NULL)
     {
@@ -3956,6 +4098,7 @@ stat_worker (const char * path, struct stat * buf, int follow_symlinks)
 	 did not ask for extra precision, resolving symlinks will fly
 	 in the face of that request, since the user then wants the
 	 lightweight version of the code.  */
+      dbcs_p = max_filename_mbslen () > 1;
       rootdir = (path >= save_name + len - 1
 		 && (IS_DIRECTORY_SEP (*path) || *path == 0));
 
@@ -3983,8 +4126,19 @@ stat_worker (const char * path, struct stat * buf, int follow_symlinks)
 	}
       else if (rootdir)
 	{
-	  if (!IS_DIRECTORY_SEP (name[len-1]))
-	    strcat (name, "\\");
+	  if (!dbcs_p)
+	    {
+	      if (!IS_DIRECTORY_SEP (name[len-1]))
+		strcat (name, "\\");
+	    }
+	  else
+	    {
+	      char *end = name + len;
+	      char *n = CharPrevExA (file_name_codepage, name, end, 0);
+
+	      if (!IS_DIRECTORY_SEP (*n))
+		strcat (name, "\\");
+	    }
 	  if (GetDriveType (name) < 2)
 	    {
 	      errno = ENOENT;
@@ -3996,15 +4150,37 @@ stat_worker (const char * path, struct stat * buf, int follow_symlinks)
 	}
       else
 	{
-	  if (IS_DIRECTORY_SEP (name[len-1]))
-	    name[len - 1] = 0;
+	  if (!dbcs_p)
+	    {
+	      if (IS_DIRECTORY_SEP (name[len-1]))
+		name[len - 1] = 0;
+	    }
+	  else
+	    {
+	      char *end = name + len;
+	      char *n = CharPrevExA (file_name_codepage, name, end, 0);
+
+	      if (IS_DIRECTORY_SEP (*n))
+		*n = 0;
+	    }
 
 	  /* (This is hacky, but helps when doing file completions on
 	     network drives.)  Optimize by using information available from
 	     active readdir if possible.  */
 	  len = strlen (dir_pathname);
-	  if (IS_DIRECTORY_SEP (dir_pathname[len-1]))
-	    len--;
+	  if (!dbcs_p)
+	    {
+	      if (IS_DIRECTORY_SEP (dir_pathname[len-1]))
+		len--;
+	    }
+	  else
+	    {
+	      char *end = dir_pathname + len;
+	      char *n = CharPrevExA (file_name_codepage, dir_pathname, end, 0);
+
+	      if (IS_DIRECTORY_SEP (*n))
+		len--;
+	    }
 	  if (dir_find_handle != INVALID_HANDLE_VALUE
 	      && !(is_a_symlink && follow_symlinks)
 	      && strnicmp (save_name, dir_pathname, len) == 0
@@ -4110,6 +4286,30 @@ lstat (const char * path, struct stat * buf)
   return stat_worker (path, buf, 0);
 }
 
+int
+fstatat (int fd, char const *name, struct stat *st, int flags)
+{
+  /* Rely on a hack: an open directory is modeled as file descriptor 0.
+     This is good enough for the current usage in Emacs, but is fragile.
+
+     FIXME: Add proper support for fdopendir, fstatat, readlinkat.
+     Gnulib does this and can serve as a model.  */
+  char fullname[MAX_PATH];
+
+  if (fd != AT_FDCWD)
+    {
+      if (_snprintf (fullname, sizeof fullname, "%s/%s", dir_pathname, name)
+	  < 0)
+	{
+	  errno = ENAMETOOLONG;
+	  return -1;
+	}
+      name = fullname;
+    }
+
+  return stat_worker (name, st, ! (flags & AT_SYMLINK_NOFOLLOW));
+}
+
 /* Provide fstat and utime as well as stat for consistent handling of
    file timestamps. */
 int
@@ -4164,13 +4364,23 @@ fstat (int desc, struct stat * buf)
   else
     buf->st_ino = fake_inode;
 
-  /* Consider files to belong to current user.
-     FIXME: this should use GetSecurityInfo API, but it is only
-     available for _WIN32_WINNT >= 0x501.  */
-  buf->st_uid = dflt_passwd.pw_uid;
-  buf->st_gid = dflt_passwd.pw_gid;
-  strcpy (buf->st_uname, dflt_passwd.pw_name);
-  strcpy (buf->st_gname, dflt_group.gr_name);
+  /* If the caller so requested, get the true file owner and group.
+     Otherwise, consider the file to belong to the current user.  */
+  if (!w32_stat_get_owner_group || is_windows_9x () == TRUE)
+    get_file_owner_and_group (NULL, buf);
+  else
+    {
+      PSECURITY_DESCRIPTOR psd = NULL;
+
+      psd = get_file_security_desc_by_handle (fh);
+      if (psd)
+	{
+	  get_file_owner_and_group (psd, buf);
+	  LocalFree (psd);
+	}
+      else
+	get_file_owner_and_group (NULL, buf);
+    }
 
   buf->st_dev = info.dwVolumeSerialNumber;
   buf->st_rdev = info.dwVolumeSerialNumber;
@@ -4265,6 +4475,7 @@ symlink (char const *filename, char const *linkname)
   char linkfn[MAX_PATH], *tgtfn;
   DWORD flags = 0;
   int dir_access, filename_ends_in_slash;
+  int dbcs_p;
 
   /* Diagnostics follows Posix as much as possible.  */
   if (filename == NULL || linkname == NULL)
@@ -4290,6 +4501,8 @@ symlink (char const *filename, char const *linkname)
       return -1;
     }
 
+  dbcs_p = max_filename_mbslen () > 1;
+
   /* Note: since empty FILENAME was already rejected, we can safely
      refer to FILENAME[1].  */
   if (!(IS_DIRECTORY_SEP (filename[0]) || IS_DEVICE_SEP (filename[1])))
@@ -4304,8 +4517,21 @@ symlink (char const *filename, char const *linkname)
       char tem[MAX_PATH];
       char *p = linkfn + strlen (linkfn);
 
-      while (p > linkfn && !IS_ANY_SEP (p[-1]))
-	p--;
+      if (!dbcs_p)
+	{
+	  while (p > linkfn && !IS_ANY_SEP (p[-1]))
+	    p--;
+	}
+      else
+	{
+	  char *p1 = CharPrevExA (file_name_codepage, linkfn, p, 0);
+
+	  while (p > linkfn && !IS_ANY_SEP (*p1))
+	    {
+	      p = p1;
+	      p1 = CharPrevExA (file_name_codepage, linkfn, p1, 0);
+	    }
+	}
       if (p > linkfn)
 	strncpy (tem, linkfn, p - linkfn);
       tem[p - linkfn] = '\0';
@@ -4320,7 +4546,15 @@ symlink (char const *filename, char const *linkname)
      exist, but ends in a slash, we create a symlink to directory.  If
      FILENAME exists and is a directory, we always create a symlink to
      directory.  */
-  filename_ends_in_slash = IS_DIRECTORY_SEP (filename[strlen (filename) - 1]);
+  if (!dbcs_p)
+    filename_ends_in_slash = IS_DIRECTORY_SEP (filename[strlen (filename) - 1]);
+  else
+    {
+      const char *end = filename + strlen (filename);
+      const char *n = CharPrevExA (file_name_codepage, filename, end, 0);
+
+      filename_ends_in_slash = IS_DIRECTORY_SEP (*n);
+    }
   if (dir_access == 0 || filename_ends_in_slash)
     flags = SYMBOLIC_LINK_FLAG_DIRECTORY;
 
@@ -4510,6 +4744,8 @@ readlink (const char *name, char *buf, size_t buf_size)
 	  WCHAR *lwname_src =
 	    reparse_data->SymbolicLinkReparseBuffer.PathBuffer
 	    + reparse_data->SymbolicLinkReparseBuffer.PrintNameOffset/sizeof(WCHAR);
+	  /* This updates file_name_codepage which we need below.  */
+	  int dbcs_p = max_filename_mbslen () > 1;
 
 	  /* According to MSDN, PrintNameLength does not include the
 	     terminating null character.  */
@@ -4517,9 +4753,7 @@ readlink (const char *name, char *buf, size_t buf_size)
 	  memcpy (lwname, lwname_src, lwname_len);
 	  lwname[lwname_len/sizeof(WCHAR)] = 0; /* null-terminate */
 
-	  /* FIXME: Should we use the current file-name coding system
-	     instead of the fixed value of the ANSI codepage?  */
-	  lname_len = WideCharToMultiByte (w32_ansi_code_page, 0, lwname, -1,
+	  lname_len = WideCharToMultiByte (file_name_codepage, 0, lwname, -1,
 					   lname, MAX_PATH, NULL, NULL);
 	  if (!lname_len)
 	    {
@@ -4545,18 +4779,33 @@ readlink (const char *name, char *buf, size_t buf_size)
 	  else
 	    {
 	      size_t size_to_copy = buf_size;
-	      BYTE *p = lname;
+	      BYTE *p = lname, *p2;
 	      BYTE *pend = p + lname_len;
 
 	      /* Normalize like dostounix_filename does, but we don't
 		 want to assume that lname is null-terminated.  */
-	      if (*p && p[1] == ':' && *p >= 'A' && *p <= 'Z')
-		*p += 'a' - 'A';
+	      if (dbcs_p)
+		p2 = CharNextExA (file_name_codepage, p, 0);
+	      else
+		p2 = p + 1;
+	      if (*p && *p2 == ':' && *p >= 'A' && *p <= 'Z')
+		{
+		  *p += 'a' - 'A';
+		  p += 2;
+		}
 	      while (p <= pend)
 		{
 		  if (*p == '\\')
 		    *p = '/';
-		  ++p;
+		  if (dbcs_p)
+		    {
+		      p = CharNextExA (file_name_codepage, p, 0);
+		      /* CharNextExA doesn't advance at null character.  */
+		      if (!*p)
+			break;
+		    }
+		  else
+		    ++p;
 		}
 	      /* Testing for null-terminated LNAME is paranoia:
 		 WideCharToMultiByte should always return a
@@ -4603,6 +4852,28 @@ readlink (const char *name, char *buf, size_t buf_size)
   return retval;
 }
 
+ssize_t
+readlinkat (int fd, char const *name, char *buffer,
+	    size_t buffer_size)
+{
+  /* Rely on a hack: an open directory is modeled as file descriptor 0,
+     as in fstatat.  FIXME: Add proper support for readlinkat.  */
+  char fullname[MAX_PATH];
+
+  if (fd != AT_FDCWD)
+    {
+      if (_snprintf (fullname, sizeof fullname, "%s/%s", dir_pathname, name)
+	  < 0)
+	{
+	  errno = ENAMETOOLONG;
+	  return -1;
+	}
+      name = fullname;
+    }
+
+  return readlink (name, buffer, buffer_size);
+}
+
 /* If FILE is a symlink, return its target (stored in a static
    buffer); otherwise return FILE.
 
@@ -4630,6 +4901,7 @@ chase_symlinks (const char *file)
   char link[MAX_PATH];
   ssize_t res, link_len;
   int loop_count = 0;
+  int dbcs_p;
 
   if (is_windows_9x () == TRUE || !is_symlink (file))
     return (char *)file;
@@ -4637,13 +4909,27 @@ chase_symlinks (const char *file)
   if ((link_len = GetFullPathName (file, MAX_PATH, link, NULL)) == 0)
     return (char *)file;
 
+  dbcs_p = max_filename_mbslen () > 1;
   target[0] = '\0';
   do {
 
     /* Remove trailing slashes, as we want to resolve the last
        non-trivial part of the link name.  */
-    while (link_len > 3 && IS_DIRECTORY_SEP (link[link_len-1]))
-      link[link_len--] = '\0';
+    if (!dbcs_p)
+      {
+	while (link_len > 3 && IS_DIRECTORY_SEP (link[link_len-1]))
+	  link[link_len--] = '\0';
+      }
+    else if (link_len > 3)
+      {
+	char *n = CharPrevExA (file_name_codepage, link, link + link_len, 0);
+
+	while (n >= link + 2 && IS_DIRECTORY_SEP (*n))
+	  {
+	    n[1] = '\0';
+	    n = CharPrevExA (file_name_codepage, link, n, 0);
+	  }
+      }
 
     res = readlink (link, target, MAX_PATH);
     if (res > 0)
@@ -4656,8 +4942,21 @@ chase_symlinks (const char *file)
 	       the symlink, then copy the result back to target.  */
 	    char *p = link + link_len;
 
-	    while (p > link && !IS_ANY_SEP (p[-1]))
-	      p--;
+	    if (!dbcs_p)
+	      {
+		while (p > link && !IS_ANY_SEP (p[-1]))
+		  p--;
+	      }
+	    else
+	      {
+		char *p1 = CharPrevExA (file_name_codepage, link, p, 0);
+
+		while (p > link && !IS_ANY_SEP (*p1))
+		  {
+		    p = p1;
+		    p1 = CharPrevExA (file_name_codepage, link, p1, 0);
+		  }
+	      }
 	    strcpy (p, target);
 	    strcpy (target, link);
 	  }
@@ -4858,8 +5157,50 @@ acl_set_file (const char *fname, acl_type_t type, acl_t acl)
 
   e = errno;
   errno = 0;
-  set_file_security ((char *)fname, flags, (PSECURITY_DESCRIPTOR)acl);
-  err = GetLastError ();
+  if (!set_file_security ((char *)fname, flags, (PSECURITY_DESCRIPTOR)acl))
+    {
+      err = GetLastError ();
+
+      if (errno == ENOTSUP)
+	;
+      else if (err == ERROR_INVALID_OWNER
+	       || err == ERROR_NOT_ALL_ASSIGNED
+	       || err == ERROR_ACCESS_DENIED)
+	{
+	  /* Maybe the requested ACL and the one the file already has
+	     are identical, in which case we can silently ignore the
+	     failure.  (And no, Windows doesn't.)  */
+	  acl_t current_acl = acl_get_file (fname, ACL_TYPE_ACCESS);
+
+	  errno = EPERM;
+	  if (current_acl)
+	    {
+	      char *acl_from = acl_to_text (current_acl, NULL);
+	      char *acl_to = acl_to_text (acl, NULL);
+
+	      if (acl_from && acl_to && xstrcasecmp (acl_from, acl_to) == 0)
+		{
+		  retval = 0;
+		  errno = e;
+		}
+	      if (acl_from)
+		acl_free (acl_from);
+	      if (acl_to)
+		acl_free (acl_to);
+	      acl_free (current_acl);
+	    }
+	}
+      else if (err == ERROR_FILE_NOT_FOUND || err == ERROR_PATH_NOT_FOUND)
+	errno = ENOENT;
+      else
+	errno = EACCES;
+    }
+  else
+    {
+      retval = 0;
+      errno = e;
+    }
+
   if (st)
     {
       if (st >= 2)
@@ -4867,41 +5208,6 @@ acl_set_file (const char *fname, acl_type_t type, acl_t acl)
       restore_privilege (&old1);
       revert_to_self ();
     }
-
-  if (errno == ENOTSUP)
-    ;
-  else if (err == ERROR_SUCCESS)
-    {
-      retval = 0;
-      errno = e;
-    }
-  else if (err == ERROR_INVALID_OWNER || err == ERROR_NOT_ALL_ASSIGNED)
-    {
-      /* Maybe the requested ACL and the one the file already has are
-	 identical, in which case we can silently ignore the
-	 failure.  (And no, Windows doesn't.)  */
-      acl_t current_acl = acl_get_file (fname, ACL_TYPE_ACCESS);
-
-      errno = EPERM;
-      if (current_acl)
-	{
-	  char *acl_from = acl_to_text (current_acl, NULL);
-	  char *acl_to = acl_to_text (acl, NULL);
-
-	  if (acl_from && acl_to && xstrcasecmp (acl_from, acl_to) == 0)
-	    {
-	      retval = 0;
-	      errno = e;
-	    }
-	  if (acl_from)
-	    acl_free (acl_from);
-	  if (acl_to)
-	    acl_free (acl_to);
-	  acl_free (current_acl);
-	}
-    }
-  else if (err == ERROR_FILE_NOT_FOUND || err == ERROR_PATH_NOT_FOUND)
-    errno = ENOENT;
 
   return retval;
 }
@@ -4920,12 +5226,6 @@ careadlinkat (int fd, char const *filename,
   char linkname[MAX_PATH];
   ssize_t link_size;
 
-  if (fd != AT_FDCWD)
-    {
-      errno = EINVAL;
-      return NULL;
-    }
-
   link_size = preadlinkat (fd, filename, linkname, sizeof(linkname));
 
   if (link_size > 0)
@@ -4941,14 +5241,6 @@ careadlinkat (int fd, char const *filename,
       return retval;
     }
   return NULL;
-}
-
-ssize_t
-careadlinkatcwd (int fd, char const *filename, char *buffer,
-                 size_t buffer_size)
-{
-  (void) fd;
-  return readlink (filename, buffer, buffer_size);
 }
 
 
@@ -5288,10 +5580,8 @@ ltime (ULONGLONG time_100ns)
 {
   ULONGLONG time_sec = time_100ns / 10000000;
   int subsec = time_100ns % 10000000;
-  return list4 (make_number (time_sec >> 16),
-		make_number (time_sec & 0xffff),
-		make_number (subsec / 10),
-		make_number (subsec % 10 * 100000));
+  return list4i (time_sec >> 16, time_sec & 0xffff,
+		 subsec / 10, subsec % 10 * 100000);
 }
 
 #define U64_TO_LISP_TIME(time) ltime (time)
@@ -5805,35 +6095,39 @@ init_winsock (int load_now)
 
 int h_errno = 0;
 
-/* function to set h_errno for compatibility; map winsock error codes to
-   normal system codes where they overlap (non-overlapping definitions
-   are already in <sys/socket.h> */
+/* Function to map winsock error codes to errno codes for those errno
+   code defined in errno.h (errno values not defined by errno.h are
+   already in nt/inc/sys/socket.h).  */
 static void
 set_errno (void)
 {
-  if (winsock_lib == NULL)
-    h_errno = EINVAL;
-  else
-    h_errno = pfn_WSAGetLastError ();
+  int wsa_err;
 
-  switch (h_errno)
+  h_errno = 0;
+  if (winsock_lib == NULL)
+    wsa_err = EINVAL;
+  else
+    wsa_err = pfn_WSAGetLastError ();
+
+  switch (wsa_err)
     {
-    case WSAEACCES:		h_errno = EACCES; break;
-    case WSAEBADF: 		h_errno = EBADF; break;
-    case WSAEFAULT:		h_errno = EFAULT; break;
-    case WSAEINTR: 		h_errno = EINTR; break;
-    case WSAEINVAL:		h_errno = EINVAL; break;
-    case WSAEMFILE:		h_errno = EMFILE; break;
-    case WSAENAMETOOLONG: 	h_errno = ENAMETOOLONG; break;
-    case WSAENOTEMPTY:		h_errno = ENOTEMPTY; break;
+    case WSAEACCES:		errno = EACCES; break;
+    case WSAEBADF: 		errno = EBADF; break;
+    case WSAEFAULT:		errno = EFAULT; break;
+    case WSAEINTR: 		errno = EINTR; break;
+    case WSAEINVAL:		errno = EINVAL; break;
+    case WSAEMFILE:		errno = EMFILE; break;
+    case WSAENAMETOOLONG: 	errno = ENAMETOOLONG; break;
+    case WSAENOTEMPTY:		errno = ENOTEMPTY; break;
+    default:			errno = wsa_err; break;
     }
-  errno = h_errno;
 }
 
 static void
 check_errno (void)
 {
-  if (h_errno == 0 && winsock_lib != NULL)
+  h_errno = 0;
+  if (winsock_lib != NULL)
     pfn_WSASetLastError (0);
 }
 
@@ -5945,7 +6239,7 @@ sys_socket (int af, int type, int protocol)
 
   if (winsock_lib == NULL)
     {
-      h_errno = ENETDOWN;
+      errno = ENETDOWN;
       return INVALID_SOCKET;
     }
 
@@ -6022,6 +6316,7 @@ socket_to_fd (SOCKET s)
 	      }
 	  }
       }
+      eassert (fd < MAXDESC);
       fd_info[fd].hnd = (HANDLE) s;
 
       /* set our own internal flags */
@@ -6050,8 +6345,9 @@ socket_to_fd (SOCKET s)
       /* clean up */
       _close (fd);
     }
+  else
   pfn_closesocket (s);
-  h_errno = EMFILE;
+  errno = EMFILE;
   return -1;
 }
 
@@ -6060,7 +6356,7 @@ sys_bind (int s, const struct sockaddr * addr, int namelen)
 {
   if (winsock_lib == NULL)
     {
-      h_errno = ENOTSOCK;
+      errno = ENOTSOCK;
       return SOCKET_ERROR;
     }
 
@@ -6072,7 +6368,7 @@ sys_bind (int s, const struct sockaddr * addr, int namelen)
 	set_errno ();
       return rc;
     }
-  h_errno = ENOTSOCK;
+  errno = ENOTSOCK;
   return SOCKET_ERROR;
 }
 
@@ -6081,7 +6377,7 @@ sys_connect (int s, const struct sockaddr * name, int namelen)
 {
   if (winsock_lib == NULL)
     {
-      h_errno = ENOTSOCK;
+      errno = ENOTSOCK;
       return SOCKET_ERROR;
     }
 
@@ -6093,7 +6389,7 @@ sys_connect (int s, const struct sockaddr * name, int namelen)
 	set_errno ();
       return rc;
     }
-  h_errno = ENOTSOCK;
+  errno = ENOTSOCK;
   return SOCKET_ERROR;
 }
 
@@ -6122,12 +6418,20 @@ int
 sys_gethostname (char * name, int namelen)
 {
   if (winsock_lib != NULL)
-    return pfn_gethostname (name, namelen);
+    {
+      int retval;
+
+      check_errno ();
+      retval = pfn_gethostname (name, namelen);
+      if (retval == SOCKET_ERROR)
+	set_errno ();
+      return retval;
+    }
 
   if (namelen > MAX_COMPUTERNAME_LENGTH)
     return !GetComputerName (name, (DWORD *)&namelen);
 
-  h_errno = EFAULT;
+  errno = EFAULT;
   return SOCKET_ERROR;
 }
 
@@ -6135,17 +6439,24 @@ struct hostent *
 sys_gethostbyname (const char * name)
 {
   struct hostent * host;
+  int h_err = h_errno;
 
   if (winsock_lib == NULL)
     {
-      h_errno = ENETDOWN;
+      h_errno = NO_RECOVERY;
+      errno = ENETDOWN;
       return NULL;
     }
 
   check_errno ();
   host = pfn_gethostbyname (name);
   if (!host)
-    set_errno ();
+    {
+      set_errno ();
+      h_errno = errno;
+    }
+  else
+    h_errno = h_err;
   return host;
 }
 
@@ -6156,7 +6467,7 @@ sys_getservbyname (const char * name, const char * proto)
 
   if (winsock_lib == NULL)
     {
-      h_errno = ENETDOWN;
+      errno = ENETDOWN;
       return NULL;
     }
 
@@ -6172,7 +6483,7 @@ sys_getpeername (int s, struct sockaddr *addr, int * namelen)
 {
   if (winsock_lib == NULL)
     {
-      h_errno = ENETDOWN;
+      errno = ENETDOWN;
       return SOCKET_ERROR;
     }
 
@@ -6184,7 +6495,7 @@ sys_getpeername (int s, struct sockaddr *addr, int * namelen)
 	set_errno ();
       return rc;
     }
-  h_errno = ENOTSOCK;
+  errno = ENOTSOCK;
   return SOCKET_ERROR;
 }
 
@@ -6193,7 +6504,7 @@ sys_shutdown (int s, int how)
 {
   if (winsock_lib == NULL)
     {
-      h_errno = ENETDOWN;
+      errno = ENETDOWN;
       return SOCKET_ERROR;
     }
 
@@ -6205,7 +6516,7 @@ sys_shutdown (int s, int how)
 	set_errno ();
       return rc;
     }
-  h_errno = ENOTSOCK;
+  errno = ENOTSOCK;
   return SOCKET_ERROR;
 }
 
@@ -6214,7 +6525,7 @@ sys_setsockopt (int s, int level, int optname, const void * optval, int optlen)
 {
   if (winsock_lib == NULL)
     {
-      h_errno = ENETDOWN;
+      errno = ENETDOWN;
       return SOCKET_ERROR;
     }
 
@@ -6227,7 +6538,7 @@ sys_setsockopt (int s, int level, int optname, const void * optval, int optlen)
 	set_errno ();
       return rc;
     }
-  h_errno = ENOTSOCK;
+  errno = ENOTSOCK;
   return SOCKET_ERROR;
 }
 
@@ -6236,7 +6547,7 @@ sys_listen (int s, int backlog)
 {
   if (winsock_lib == NULL)
     {
-      h_errno = ENETDOWN;
+      errno = ENETDOWN;
       return SOCKET_ERROR;
     }
 
@@ -6250,7 +6561,7 @@ sys_listen (int s, int backlog)
 	fd_info[s].flags |= FILE_LISTEN;
       return rc;
     }
-  h_errno = ENOTSOCK;
+  errno = ENOTSOCK;
   return SOCKET_ERROR;
 }
 
@@ -6259,7 +6570,7 @@ sys_getsockname (int s, struct sockaddr * name, int * namelen)
 {
   if (winsock_lib == NULL)
     {
-      h_errno = ENETDOWN;
+      errno = ENETDOWN;
       return SOCKET_ERROR;
     }
 
@@ -6271,7 +6582,7 @@ sys_getsockname (int s, struct sockaddr * name, int * namelen)
 	set_errno ();
       return rc;
     }
-  h_errno = ENOTSOCK;
+  errno = ENOTSOCK;
   return SOCKET_ERROR;
 }
 
@@ -6280,7 +6591,7 @@ sys_accept (int s, struct sockaddr * addr, int * addrlen)
 {
   if (winsock_lib == NULL)
     {
-      h_errno = ENETDOWN;
+      errno = ENETDOWN;
       return -1;
     }
 
@@ -6294,11 +6605,14 @@ sys_accept (int s, struct sockaddr * addr, int * addrlen)
       else
 	fd = socket_to_fd (t);
 
-      fd_info[s].cp->status = STATUS_READ_ACKNOWLEDGED;
-      ResetEvent (fd_info[s].cp->char_avail);
+      if (fd >= 0)
+	{
+	  fd_info[s].cp->status = STATUS_READ_ACKNOWLEDGED;
+	  ResetEvent (fd_info[s].cp->char_avail);
+	}
       return fd;
     }
-  h_errno = ENOTSOCK;
+  errno = ENOTSOCK;
   return -1;
 }
 
@@ -6308,7 +6622,7 @@ sys_recvfrom (int s, char * buf, int len, int flags,
 {
   if (winsock_lib == NULL)
     {
-      h_errno = ENETDOWN;
+      errno = ENETDOWN;
       return SOCKET_ERROR;
     }
 
@@ -6320,7 +6634,7 @@ sys_recvfrom (int s, char * buf, int len, int flags,
 	set_errno ();
       return rc;
     }
-  h_errno = ENOTSOCK;
+  errno = ENOTSOCK;
   return SOCKET_ERROR;
 }
 
@@ -6330,7 +6644,7 @@ sys_sendto (int s, const char * buf, int len, int flags,
 {
   if (winsock_lib == NULL)
     {
-      h_errno = ENETDOWN;
+      errno = ENETDOWN;
       return SOCKET_ERROR;
     }
 
@@ -6342,7 +6656,7 @@ sys_sendto (int s, const char * buf, int len, int flags,
 	set_errno ();
       return rc;
     }
-  h_errno = ENOTSOCK;
+  errno = ENOTSOCK;
   return SOCKET_ERROR;
 }
 
@@ -6353,7 +6667,7 @@ fcntl (int s, int cmd, int options)
 {
   if (winsock_lib == NULL)
     {
-      h_errno = ENETDOWN;
+      errno = ENETDOWN;
       return -1;
     }
 
@@ -6372,11 +6686,11 @@ fcntl (int s, int cmd, int options)
 	}
       else
 	{
-	  h_errno = EINVAL;
+	  errno = EINVAL;
 	  return SOCKET_ERROR;
 	}
     }
-  h_errno = ENOTSOCK;
+  errno = ENOTSOCK;
   return SOCKET_ERROR;
 }
 
@@ -6442,14 +6756,14 @@ sys_close (int fd)
 	}
     }
 
+  if (fd >= 0 && fd < MAXDESC)
+    fd_info[fd].flags = 0;
+
   /* Note that sockets do not need special treatment here (at least on
      NT and Windows 95 using the standard tcp/ip stacks) - it appears that
      closesocket is equivalent to CloseHandle, which is to be expected
      because socket handles are fully fledged kernel handles. */
   rc = _close (fd);
-
-  if (rc == 0 && fd < MAXDESC)
-    fd_info[fd].flags = 0;
 
   return rc;
 }
@@ -6513,6 +6827,7 @@ sys_pipe (int * phandles)
 	{
 	  _close (phandles[0]);
 	  _close (phandles[1]);
+	  errno = EMFILE;
 	  rc = -1;
 	}
       else
@@ -6586,19 +6901,31 @@ _sys_read_ahead (int fd)
 
       /* Configure timeouts for blocking read.  */
       if (!GetCommTimeouts (hnd, &ct))
-	return STATUS_READ_ERROR;
+	{
+	  cp->status = STATUS_READ_ERROR;
+	  return STATUS_READ_ERROR;
+	}
       ct.ReadIntervalTimeout		= 0;
       ct.ReadTotalTimeoutMultiplier	= 0;
       ct.ReadTotalTimeoutConstant	= 0;
       if (!SetCommTimeouts (hnd, &ct))
-	return STATUS_READ_ERROR;
+	{
+	  cp->status = STATUS_READ_ERROR;
+	  return STATUS_READ_ERROR;
+	}
 
       if (!ReadFile (hnd, &cp->chr, sizeof (char), (DWORD*) &rc, ovl))
 	{
 	  if (GetLastError () != ERROR_IO_PENDING)
-	    return STATUS_READ_ERROR;
+	    {
+	      cp->status = STATUS_READ_ERROR;
+	      return STATUS_READ_ERROR;
+	    }
 	  if (!GetOverlappedResult (hnd, ovl, (DWORD*) &rc, TRUE))
-	    return STATUS_READ_ERROR;
+	    {
+	      cp->status = STATUS_READ_ERROR;
+	      return STATUS_READ_ERROR;
+	    }
 	}
     }
   else if (fd_info[fd].flags & FILE_SOCKET)
@@ -6794,7 +7121,7 @@ sys_read (int fd, char * buffer, unsigned int count)
 	      pfn_ioctlsocket (SOCK_HANDLE (fd), FIONREAD, &waiting);
 	      if (waiting == 0 && nchars == 0)
 	        {
-		  h_errno = errno = EWOULDBLOCK;
+		  errno = EWOULDBLOCK;
 		  return -1;
 		}
 
@@ -7506,47 +7833,26 @@ serial_configure (struct Lisp_Process *p, Lisp_Object contact)
 ssize_t
 emacs_gnutls_pull (gnutls_transport_ptr_t p, void* buf, size_t sz)
 {
-  int n, sc, err;
+  int n, err;
   SELECT_TYPE fdset;
   EMACS_TIME timeout;
   struct Lisp_Process *process = (struct Lisp_Process *)p;
   int fd = process->infd;
 
-  for (;;)
-    {
-      n = sys_read (fd, (char*)buf, sz);
+  n = sys_read (fd, (char*)buf, sz);
 
-      if (n >= 0)
-        return n;
+  if (n >= 0)
+    return n;
 
-      err = errno;
+  err = errno;
 
-      if (err == EWOULDBLOCK)
-        {
-          /* Set a small timeout.  */
-	  timeout = make_emacs_time (1, 0);
-          FD_ZERO (&fdset);
-          FD_SET ((int)fd, &fdset);
+  /* Translate the WSAEWOULDBLOCK alias EWOULDBLOCK to EAGAIN. */
+  if (err == EWOULDBLOCK)
+    err = EAGAIN;
 
-          /* Use select with the timeout to poll the selector.  */
-          sc = select (fd + 1, &fdset, (SELECT_TYPE *)0, (SELECT_TYPE *)0,
-                       &timeout, NULL);
+  emacs_gnutls_transport_set_errno (process->gnutls_state, err);
 
-          if (sc > 0)
-            continue;  /* Try again.  */
-
-          /* Translate the WSAEWOULDBLOCK alias EWOULDBLOCK to EAGAIN.
-             Also accept select return 0 as an indicator to EAGAIN.  */
-          if (sc == 0 || errno == EWOULDBLOCK)
-            err = EAGAIN;
-          else
-            err = errno; /* Other errors are just passed on.  */
-        }
-
-      emacs_gnutls_transport_set_errno (process->gnutls_state, err);
-
-      return -1;
-    }
+  return -1;
 }
 
 ssize_t

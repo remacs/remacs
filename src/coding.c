@@ -322,8 +322,7 @@ Lisp_Object Qcall_process, Qcall_process_region;
 Lisp_Object Qstart_process, Qopen_network_stream;
 static Lisp_Object Qtarget_idx;
 
-static Lisp_Object Qinsufficient_source, Qinconsistent_eol, Qinvalid_source;
-static Lisp_Object Qinterrupted, Qinsufficient_memory;
+static Lisp_Object Qinsufficient_source, Qinvalid_source, Qinterrupted;
 
 /* If a symbol has this property, evaluate the value to define the
    symbol as a coding system.  */
@@ -820,17 +819,11 @@ record_conversion_result (struct coding_system *coding,
     case CODING_RESULT_INSUFFICIENT_SRC:
       Vlast_code_conversion_error = Qinsufficient_source;
       break;
-    case CODING_RESULT_INCONSISTENT_EOL:
-      Vlast_code_conversion_error = Qinconsistent_eol;
-      break;
     case CODING_RESULT_INVALID_SRC:
       Vlast_code_conversion_error = Qinvalid_source;
       break;
     case CODING_RESULT_INTERRUPT:
       Vlast_code_conversion_error = Qinterrupted;
-      break;
-    case CODING_RESULT_INSUFFICIENT_MEM:
-      Vlast_code_conversion_error = Qinsufficient_memory;
       break;
     case CODING_RESULT_INSUFFICIENT_DST:
       /* Don't record this error in Vlast_code_conversion_error
@@ -3057,20 +3050,7 @@ detect_coding_iso_2022 (struct coding_system *coding,
 	    }
 	  if (single_shifting)
 	    break;
-	check_extra_latin:
-	  if (! VECTORP (Vlatin_extra_code_table)
-	      || NILP (AREF (Vlatin_extra_code_table, c)))
-	    {
-	      rejected = CATEGORY_MASK_ISO;
-	      break;
-	    }
-	  if (CODING_ISO_FLAGS (&coding_categories[coding_category_iso_8_1])
-	      & CODING_ISO_FLAG_LATIN_EXTRA)
-	    found |= CATEGORY_MASK_ISO_8_1;
-	  else
-	    rejected |= CATEGORY_MASK_ISO_8_1;
-	  rejected |= CATEGORY_MASK_ISO_8_2;
-	  break;
+	  goto check_extra_latin;
 
 	default:
 	  if (c < 0)
@@ -3121,6 +3101,20 @@ detect_coding_iso_2022 (struct coding_system *coding,
 		}
 	      break;
 	    }
+	check_extra_latin:
+	  if (! VECTORP (Vlatin_extra_code_table)
+	      || NILP (AREF (Vlatin_extra_code_table, c)))
+	    {
+	      rejected = CATEGORY_MASK_ISO;
+	      break;
+	    }
+	  if (CODING_ISO_FLAGS (&coding_categories[coding_category_iso_8_1])
+	      & CODING_ISO_FLAG_LATIN_EXTRA)
+	    found |= CATEGORY_MASK_ISO_8_1;
+	  else
+	    rejected |= CATEGORY_MASK_ISO_8_1;
+	  rejected |= CATEGORY_MASK_ISO_8_2;
+	  break;
 	}
     }
   detect_info->rejected |= CATEGORY_MASK_ISO;
@@ -6883,22 +6877,8 @@ produce_charset (struct coding_system *coding, int *charbuf, ptrdiff_t pos)
 
 #define ALLOC_CONVERSION_WORK_AREA(coding)				\
   do {									\
-    int size = CHARBUF_SIZE;						\
-    									\
-    coding->charbuf = NULL;						\
-    while (size > 1024)							\
-      {									\
-	coding->charbuf = alloca (sizeof (int) * size);			\
-	if (coding->charbuf)						\
-	  break;							\
-	size >>= 1;							\
-      }									\
-    if (! coding->charbuf)						\
-      {									\
-	record_conversion_result (coding, CODING_RESULT_INSUFFICIENT_MEM); \
-	return;								\
-      }									\
-    coding->charbuf_size = size;					\
+    coding->charbuf = SAFE_ALLOCA (CHARBUF_SIZE * sizeof (int));	\
+    coding->charbuf_size = CHARBUF_SIZE;				\
   } while (0)
 
 
@@ -6966,6 +6946,8 @@ decode_coding (struct coding_system *coding)
   struct ccl_spec cclspec;
   int carryover;
   int i;
+
+  USE_SAFE_ALLOCA;
 
   if (BUFFERP (coding->src_object)
       && coding->src_pos > 0
@@ -7089,6 +7071,8 @@ decode_coding (struct coding_system *coding)
       bset_undo_list (current_buffer, undo_list);
       record_insert (coding->dst_pos, coding->produced_char);
     }
+
+  SAFE_FREE ();
 }
 
 
@@ -7372,6 +7356,8 @@ encode_coding (struct coding_system *coding)
   int max_lookup;
   struct ccl_spec cclspec;
 
+  USE_SAFE_ALLOCA;
+
   attrs = CODING_ID_ATTRS (coding->id);
   if (coding->encoder == encode_coding_raw_text)
     translation_table = Qnil, max_lookup = 0;
@@ -7406,6 +7392,8 @@ encode_coding (struct coding_system *coding)
 
   if (BUFFERP (coding->dst_object) && coding->produced_char > 0)
     insert_from_gap (coding->produced_char, coding->produced);
+
+  SAFE_FREE ();
 }
 
 
@@ -7694,14 +7682,8 @@ decode_coding_object (struct coding_system *coding,
       set_buffer_internal (XBUFFER (coding->dst_object));
       if (dst_bytes < coding->produced)
 	{
+	  eassert (coding->produced > 0);
 	  destination = xrealloc (destination, coding->produced);
-	  if (! destination)
-	    {
-	      record_conversion_result (coding,
-					CODING_RESULT_INSUFFICIENT_MEM);
-	      unbind_to (count, Qnil);
-	      return;
-	    }
 	  if (BEGV < GPT && GPT < BEGV + coding->produced_char)
 	    move_gap_both (BEGV, BEGV_BYTE);
 	  memcpy (destination, BEGV_ADDR, coding->produced);
@@ -9482,7 +9464,7 @@ make_subsidiaries (Lisp_Object base)
   int i;
 
   memcpy (buf, SDATA (SYMBOL_NAME (base)), base_name_len);
-  subsidiaries = Fmake_vector (make_number (3), Qnil);
+  subsidiaries = make_uninit_vector (3);
   for (i = 0; i < 3; i++)
     {
       strcpy (buf + base_name_len, suffixes[i]);
@@ -9782,7 +9764,7 @@ usage: (define-coding-system-internal ...)  */)
       CHECK_VECTOR (initial);
       for (i = 0; i < 4; i++)
 	{
-	  val = Faref (initial, make_number (i));
+	  val = AREF (initial, i);
 	  if (! NILP (val))
 	    {
 	      struct charset *charset;
@@ -9987,7 +9969,8 @@ usage: (define-coding-system-internal ...)  */)
 	  this_name = AREF (eol_type, i);
 	  this_aliases = Fcons (this_name, Qnil);
 	  this_eol_type = (i == 0 ? Qunix : i == 1 ? Qdos : Qmac);
-	  this_spec = Fmake_vector (make_number (3), attrs);
+	  this_spec = make_uninit_vector (3);
+	  ASET (this_spec, 0, attrs);
 	  ASET (this_spec, 1, this_aliases);
 	  ASET (this_spec, 2, this_eol_type);
 	  Fputhash (this_name, this_spec, Vcoding_system_hash_table);
@@ -10000,7 +9983,8 @@ usage: (define-coding-system-internal ...)  */)
 	}
     }
 
-  spec_vec = Fmake_vector (make_number (3), attrs);
+  spec_vec = make_uninit_vector (3);
+  ASET (spec_vec, 0, attrs);
   ASET (spec_vec, 1, aliases);
   ASET (spec_vec, 2, eol_type);
 
@@ -10405,10 +10389,8 @@ syms_of_coding (void)
 	intern_c_string ("coding-category-undecided"));
 
   DEFSYM (Qinsufficient_source, "insufficient-source");
-  DEFSYM (Qinconsistent_eol, "inconsistent-eol");
   DEFSYM (Qinvalid_source, "invalid-source");
   DEFSYM (Qinterrupted, "interrupted");
-  DEFSYM (Qinsufficient_memory, "insufficient-memory");
   DEFSYM (Qcoding_system_define_form, "coding-system-define-form");
 
   defsubr (&Scoding_system_p);
@@ -10709,7 +10691,7 @@ reading if you suppress escape sequence detection.
 
 The other way to read escape sequences in a file without decoding is
 to explicitly specify some coding system that doesn't use ISO-2022
-escape sequence (e.g `latin-1') on reading by \\[universal-coding-system-argument].  */);
+escape sequence (e.g., `latin-1') on reading by \\[universal-coding-system-argument].  */);
   inhibit_iso_escape_detection = 0;
 
   DEFVAR_BOOL ("inhibit-null-byte-detection",

@@ -30,9 +30,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <limits.h>
 #include <unistd.h>
 
-#include <allocator.h>
 #include <c-ctype.h>
-#include <careadlinkat.h>
 #include <ignore-value.h>
 #include <utimens.h>
 
@@ -529,10 +527,10 @@ sys_subshell (void)
 #ifdef DOS_NT    /* MW, Aug 1993 */
       getcwd (oldwd, sizeof oldwd);
       if (sh == 0)
-	sh = (char *) egetenv ("SUSPEND");	/* KFS, 1994-12-14 */
+	sh = egetenv ("SUSPEND");	/* KFS, 1994-12-14 */
 #endif
       if (sh == 0)
-	sh = (char *) egetenv ("SHELL");
+	sh = egetenv ("SHELL");
       if (sh == 0)
 	sh = "sh";
 
@@ -2247,22 +2245,6 @@ emacs_write (int fildes, const char *buf, ptrdiff_t nbyte)
 
   return (bytes_written);
 }
-
-static struct allocator const emacs_norealloc_allocator =
-  { xmalloc, NULL, xfree, memory_full };
-
-/* Get the symbolic link value of FILENAME.  Return a pointer to a
-   NUL-terminated string.  If readlink fails, return NULL and set
-   errno.  If the value fits in INITIAL_BUF, return INITIAL_BUF.
-   Otherwise, allocate memory and return a pointer to that memory.  If
-   memory allocation fails, diagnose and fail without returning.  If
-   successful, store the length of the symbolic link into *LINKLEN.  */
-char *
-emacs_readlink (char const *filename, char initial_buf[READLINK_BUFSIZE])
-{
-  return careadlinkat (AT_FDCWD, filename, initial_buf, READLINK_BUFSIZE,
-		       &emacs_norealloc_allocator, careadlinkatcwd);
-}
 
 /* Return a struct timeval that is roughly equivalent to T.
    Use the least timeval not less than T.
@@ -2559,12 +2541,12 @@ list_system_processes (void)
   return proclist;
 }
 
-#elif defined BSD_SYSTEM
+#elif defined DARWIN_OS || defined __FreeBSD__
 
 Lisp_Object
 list_system_processes (void)
 {
-#if defined DARWIN_OS || defined __NetBSD__ || defined __OpenBSD__
+#ifdef DARWIN_OS
   int mib[] = {CTL_KERN, KERN_PROC, KERN_PROC_ALL};
 #else
   int mib[] = {CTL_KERN, KERN_PROC, KERN_PROC_PROC};
@@ -2590,10 +2572,8 @@ list_system_processes (void)
   len /= sizeof (struct kinfo_proc);
   for (i = 0; i < len; i++)
     {
-#if defined DARWIN_OS || defined __NetBSD__
+#ifdef DARWIN_OS
       proclist = Fcons (make_fixnum_or_float (procs[i].kp_proc.p_pid), proclist);
-#elif defined __OpenBSD__
-      proclist = Fcons (make_fixnum_or_float (procs[i].p_pid), proclist);
 #else
       proclist = Fcons (make_fixnum_or_float (procs[i].ki_pid), proclist);
 #endif

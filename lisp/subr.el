@@ -1229,7 +1229,6 @@ is converted into a string by expressing it in decimal."
 (make-obsolete-variable 'default-scroll-down-aggressively 'scroll-down-aggressively "23.2")
 (make-obsolete-variable 'default-fill-column 'fill-column "23.2")
 (make-obsolete-variable 'default-cursor-type 'cursor-type "23.2")
-(make-obsolete-variable 'default-buffer-file-type 'buffer-file-type "23.2")
 (make-obsolete-variable 'default-cursor-in-non-selected-windows 'cursor-in-non-selected-windows "23.2")
 (make-obsolete-variable 'default-buffer-file-coding-system 'buffer-file-coding-system "23.2")
 (make-obsolete-variable 'default-major-mode 'major-mode "23.2")
@@ -2622,15 +2621,6 @@ When the hook runs, the temporary buffer is current.
 This hook is normally set up with a function to put the buffer in Help
 mode.")
 
-(defvar-local buffer-file-type nil
-  "Non-nil if the visited file is a binary file.
-This variable is meaningful on MS-DOG and MS-Windows.
-On those systems, it is automatically local in every buffer.
-On other systems, this variable is normally always nil.
-
-WARNING: This variable is obsolete and will disappear Real Soon Now.
-Don't use it!")
-
 ;; The `assert' macro from the cl package signals
 ;; `cl-assertion-failed' at runtime so always define it.
 (put 'cl-assertion-failed 'error-conditions '(error))
@@ -2706,6 +2696,22 @@ If there is no plausible default, return nil."
 		     (skip-syntax-forward "w_")
 		     (setq to (point)))))
       (buffer-substring-no-properties from to))))
+
+(defun find-tag-default-as-regexp ()
+  "Return regexp that matches the default tag at point.
+If there is no tag at point, return nil.
+
+When in a major mode that does not provide its own
+`find-tag-default-function', return a regexp that matches the
+symbol at point exactly."
+  (let* ((tagf (or find-tag-default-function
+		   (get major-mode 'find-tag-default-function)
+		   'find-tag-default))
+	 (tag (funcall tagf)))
+    (cond ((not tag))
+	  ((eq tagf 'find-tag-default)
+	   (format "\\_<%s\\_>" (regexp-quote tag)))
+	  (t (regexp-quote tag)))))
 
 (defun play-sound (sound)
   "SOUND is a list of the form `(sound KEYWORD VALUE...)'.
@@ -3976,12 +3982,13 @@ the number of frames to skip (minus 1).")
   ;; "static" variables.
   (let ((sym (make-symbol "base-index")))
     `(progn
-       (defvar ,sym
+       (defvar ,sym)
+       (unless (boundp ',sym)
          (let ((i 1))
            (while (not (eq (indirect-function (nth 1 (backtrace-frame i)) t)
                            (indirect-function 'called-interactively-p)))
              (setq i (1+ i)))
-           i))
+           (setq ,sym i)))
        ;; (unless (eq (nth 1 (backtrace-frame ,sym)) 'called-interactively-p)
        ;;   (error "called-interactively-p: %s is out-of-sync!" ,sym))
        (backtrace-frame (+ ,sym ,n)))))

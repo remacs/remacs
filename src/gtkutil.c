@@ -983,7 +983,7 @@ xg_frame_set_char_size (FRAME_PTR f, int cols, int rows)
      size as fast as possible.
      For unmapped windows, we can set rows/cols.  When
      the frame is mapped again we will (hopefully) get the correct size.  */
-  if (f->async_visible)
+  if (FRAME_VISIBLE_P (f))
     {
       /* Must call this to flush out events */
       (void)gtk_events_pending ();
@@ -1716,7 +1716,7 @@ xg_dialog_run (FRAME_PTR f, GtkWidget *w)
   g_signal_connect (G_OBJECT (w), "delete-event", G_CALLBACK (gtk_true), NULL);
   gtk_widget_show (w);
 
-  record_unwind_protect (pop_down_dialog, make_save_value (&dd, 0));
+  record_unwind_protect (pop_down_dialog, make_save_pointer (&dd));
 
   (void) xg_maybe_add_timer (&dd);
   g_main_loop_run (dd.loop);
@@ -4353,6 +4353,21 @@ xg_pack_tool_bar (FRAME_PTR f, Lisp_Object pos)
   x->toolbar_is_packed = true;
 }
 
+static bool xg_update_tool_bar_sizes (FRAME_PTR f);
+
+static void
+tb_size_cb (GtkWidget    *widget,
+            GdkRectangle *allocation,
+            gpointer      user_data)
+{
+  /* When tool bar is created it has one preferred size.  But when size is
+     allocated between widgets, it may get another.  So we must update
+     size hints if tool bar size changes.  Seen on Fedora 18 at least.  */
+  FRAME_PTR f = (FRAME_PTR) user_data;
+  if (xg_update_tool_bar_sizes (f))
+    x_wm_set_size_hint (f, 0, 0);
+}
+
 /* Create a tool bar for frame F.  */
 
 static void
@@ -4384,6 +4399,8 @@ xg_create_tool_bar (FRAME_PTR f)
 
   gtk_toolbar_set_style (GTK_TOOLBAR (x->toolbar_widget), GTK_TOOLBAR_ICONS);
   toolbar_set_orientation (x->toolbar_widget, GTK_ORIENTATION_HORIZONTAL);
+  g_signal_connect (x->toolbar_widget, "size-allocate",
+                    G_CALLBACK (tb_size_cb), f);
 #if GTK_CHECK_VERSION (3, 3, 6)
   gsty = gtk_widget_get_style_context (x->toolbar_widget);
   gtk_style_context_add_class (gsty, "primary-toolbar");

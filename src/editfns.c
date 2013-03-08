@@ -386,6 +386,7 @@ get_pos_property (Lisp_Object position, register Lisp_Object prop, Lisp_Object o
       ptrdiff_t noverlays;
       Lisp_Object *overlay_vec, tem;
       struct buffer *obuf = current_buffer;
+      USE_SAFE_ALLOCA;
 
       set_buffer_temp (XBUFFER (object));
 
@@ -398,7 +399,7 @@ get_pos_property (Lisp_Object position, register Lisp_Object prop, Lisp_Object o
 	 make enough space for all, and try again.  */
       if (noverlays > 40)
 	{
-	  overlay_vec = alloca (noverlays * sizeof *overlay_vec);
+	  SAFE_ALLOCA_LISP (overlay_vec, noverlays);
 	  noverlays = overlays_around (posn, overlay_vec, noverlays);
 	}
       noverlays = sort_overlays (overlay_vec, noverlays, NULL);
@@ -421,10 +422,12 @@ get_pos_property (Lisp_Object position, register Lisp_Object prop, Lisp_Object o
 		; /* The overlay will not cover a char inserted at point.  */
 	      else
 		{
+		  SAFE_FREE ();
 		  return tem;
 		}
 	    }
 	}
+      SAFE_FREE ();
 
       { /* Now check the text properties.  */
 	int stickiness = text_property_stickiness (prop, position, object);
@@ -666,7 +669,8 @@ If the optional argument INHIBIT-CAPTURE-PROPERTY is non-nil, and OLD-POS has
 a non-nil property of that name, then any field boundaries are ignored.
 
 Field boundaries are not noticed if `inhibit-field-text-motion' is non-nil.  */)
-  (Lisp_Object new_pos, Lisp_Object old_pos, Lisp_Object escape_from_edge, Lisp_Object only_in_line, Lisp_Object inhibit_capture_property)
+  (Lisp_Object new_pos, Lisp_Object old_pos, Lisp_Object escape_from_edge,
+   Lisp_Object only_in_line, Lisp_Object inhibit_capture_property)
 {
   /* If non-zero, then the original point, before re-positioning.  */
   ptrdiff_t orig_point = 0;
@@ -732,9 +736,9 @@ Field boundaries are not noticed if `inhibit-field-text-motion' is non-nil.  */)
 	      /* This is the ONLY_IN_LINE case, check that NEW_POS and
 		 FIELD_BOUND are on the same line by seeing whether
 		 there's an intervening newline or not.  */
-	      || (scan_buffer ('\n',
-			       XFASTINT (new_pos), XFASTINT (field_bound),
-			       fwd ? -1 : 1, &shortage, 1),
+	      || (find_newline (XFASTINT (new_pos), -1,
+				XFASTINT (field_bound), -1,
+				fwd ? -1 : 1, &shortage, NULL, 1),
 		  shortage != 0)))
 	/* Constrain NEW_POS to FIELD_BOUND.  */
 	new_pos = field_bound;
@@ -819,7 +823,8 @@ This function does not move point.  */)
     CHECK_NUMBER (n);
 
   clipped_n = clip_to_bounds (PTRDIFF_MIN + 1, XINT (n), PTRDIFF_MAX);
-  end_pos = find_before_next_newline (orig, 0, clipped_n - (clipped_n <= 0));
+  end_pos = find_before_next_newline (orig, 0, clipped_n - (clipped_n <= 0),
+				      NULL);
 
   /* Return END_POS constrained to the current input field.  */
   return Fconstrain_to_field (make_number (end_pos), make_number (orig),
@@ -833,7 +838,7 @@ This function does not move point.  */)
 Lisp_Object
 save_excursion_save (void)
 {
-  return format_save_value
+  return make_save_value
     ("oooo",
      Fpoint_marker (),
      /* Do not copy the mark if it points to nowhere.  */
@@ -1481,9 +1486,7 @@ Lisp_Object
 make_lisp_time (EMACS_TIME t)
 {
   int ns = EMACS_NSECS (t);
-  return make_time_tail (EMACS_SECS (t),
-			 list2 (make_number (ns / 1000),
-				make_number (ns % 1000 * 1000)));
+  return make_time_tail (EMACS_SECS (t), list2i (ns / 1000, ns % 1000 * 1000));
 }
 
 /* Decode a Lisp list SPECIFIED_TIME that represents a time.
@@ -3426,12 +3429,6 @@ usage: (save-restriction &rest BODY)  */)
   return unbind_to (count, val);
 }
 
-/* Buffer for the most recent text displayed by Fmessage_box.  */
-static char *message_text;
-
-/* Allocated length of that buffer.  */
-static ptrdiff_t message_length;
-
 DEFUN ("message", Fmessage, Smessage, 1, MANY, 0,
        doc: /* Display a message at the bottom of the screen.
 The message also goes into the `*Messages*' buffer, if `message-log-max'
@@ -3455,14 +3452,14 @@ usage: (message FORMAT-STRING &rest ARGS)  */)
       || (STRINGP (args[0])
 	  && SBYTES (args[0]) == 0))
     {
-      message (0);
+      message1 (0);
       return args[0];
     }
   else
     {
       register Lisp_Object val;
       val = Fformat (nargs, args);
-      message3 (val, SBYTES (val), STRING_MULTIBYTE (val));
+      message3 (val);
       return val;
     }
 }
@@ -3481,13 +3478,12 @@ usage: (message-box FORMAT-STRING &rest ARGS)  */)
 {
   if (NILP (args[0]))
     {
-      message (0);
+      message1 (0);
       return Qnil;
     }
   else
     {
-      register Lisp_Object val;
-      val = Fformat (nargs, args);
+      Lisp_Object val = Fformat (nargs, args);
 #ifdef HAVE_MENUS
       /* The MS-DOS frames support popup menus even though they are
 	 not FRAME_WINDOW_P.  */
@@ -3504,16 +3500,7 @@ usage: (message-box FORMAT-STRING &rest ARGS)  */)
 	return val;
       }
 #endif /* HAVE_MENUS */
-      /* Copy the data so that it won't move when we GC.  */
-      if (SBYTES (val) > message_length)
-	{
-	  ptrdiff_t new_length = SBYTES (val) + 80;
-	  message_text = xrealloc (message_text, new_length);
-	  message_length = new_length;
-	}
-      memcpy (message_text, SDATA (val), SBYTES (val));
-      message2 (message_text, SBYTES (val),
-		STRING_MULTIBYTE (val));
+      message3 (val);
       return val;
     }
 }
@@ -4249,7 +4236,7 @@ usage: (format STRING &rest OBJECTS)  */)
 	  {
 	    buf = xmalloc (bufsize);
 	    sa_must_free = 1;
-	    buf_save_value = make_save_value (buf, 0);
+	    buf_save_value = make_save_pointer (buf);
 	    record_unwind_protect (safe_alloca_unwind, buf_save_value);
 	    memcpy (buf, initial_buffer, used);
 	  }

@@ -54,8 +54,13 @@
 ;; `python-nav-beginning-of-statement', `python-nav-end-of-statement',
 ;; `python-nav-beginning-of-block' and `python-nav-end-of-block' are
 ;; included but no bound to any key.  At last but not least the
-;; specialized `python-nav-forward-sexp' allows easy
-;; navigation between code blocks.
+;; specialized `python-nav-forward-sexp' allows easy navigation
+;; between code blocks.  If you prefer `cc-mode'-like `forward-sexp'
+;; movement, setting `forward-sexp-function' to nil is enough, You can
+;; do that using the `python-mode-hook':
+
+;; (add-hook 'python-mode-hook
+;;           (lambda () (setq forward-sexp-function nil)))
 
 ;; Shell interaction: is provided and allows you to execute easily any
 ;; block of code of your current buffer in an inferior Python process.
@@ -155,7 +160,10 @@
 ;; dabbrev.  If you have `dabbrev-mode' activated and
 ;; `python-skeleton-autoinsert' is set to t, then whenever you type
 ;; the name of any of those defined and hit SPC, they will be
-;; automatically expanded.
+;; automatically expanded.  As an alternative you can use the defined
+;; skeleton commands: `python-skeleton-class', `python-skeleton-def'
+;; `python-skeleton-for', `python-skeleton-if', `python-skeleton-try'
+;; and `python-skeleton-while'.
 
 ;; FFAP: You can find the filename for a given module when using ffap
 ;; out of the box.  This feature needs an inferior python shell
@@ -700,10 +708,9 @@ START is the buffer position where the sexp starts."
         ;; After backslash
         ((setq start (when (not (or (python-syntax-context 'string ppss)
                                     (python-syntax-context 'comment ppss)))
-                       (let ((line-beg-pos (line-beginning-position)))
-                         (when (python-info-line-ends-backslash-p
-                                (1- line-beg-pos))
-                           (- line-beg-pos 2)))))
+                       (let ((line-beg-pos (line-number-at-pos)))
+                         (python-info-line-ends-backslash-p
+                          (1- line-beg-pos)))))
          'after-backslash)
         ;; After beginning of block
         ((setq start (save-excursion
@@ -1346,13 +1353,10 @@ backwards."
                            're-search-backward))
            (context-type (python-syntax-context-type)))
       (cond
-       ((eq context-type 'string)
+       ((memq context-type '(string comment))
         ;; Inside of a string, get out of it.
-        (while (and (funcall re-search-fn "[\"']" nil t)
-                    (python-syntax-context 'string))))
-       ((eq context-type 'comment)
-        ;; Inside of a comment, just move forward.
-        (python-util-forward-comment dir))
+        (let ((forward-sexp-function))
+          (forward-sexp dir)))
        ((or (eq context-type 'paren)
             (and forward-p (looking-at (python-rx open-paren)))
             (and (not forward-p)
@@ -1375,16 +1379,16 @@ backwards."
                 (save-excursion
                   (python-nav-lisp-forward-sexp-safe dir)
                   (point)))
-              (next-sexp-context
-               (save-excursion
-                 (goto-char next-sexp-pos)
-                 (cond
-                  ((python-info-beginning-of-block-p) 'block-start)
-                  ((python-info-end-of-block-p) 'block-end)
-                  ((python-info-beginning-of-statement-p) 'statement-start)
-                  ((python-info-end-of-statement-p) 'statement-end)
-                  ((python-info-statement-starts-block-p) 'starts-block)
-                  ((python-info-statement-ends-block-p) 'ends-block)))))
+               (next-sexp-context
+                (save-excursion
+                  (goto-char next-sexp-pos)
+                  (cond
+                   ((python-info-beginning-of-block-p) 'block-start)
+                   ((python-info-end-of-block-p) 'block-end)
+                   ((python-info-beginning-of-statement-p) 'statement-start)
+                   ((python-info-end-of-statement-p) 'statement-end)
+                   ((python-info-statement-starts-block-p) 'starts-block)
+                   ((python-info-statement-ends-block-p) 'ends-block)))))
           (if forward-p
               (cond ((and (not (eobp))
                           (python-info-current-line-empty-p))
@@ -1408,8 +1412,8 @@ backwards."
                     (t (goto-char next-sexp-pos)))
             (cond ((and (not (bobp))
                         (python-info-current-line-empty-p))
-                     (python-util-forward-comment dir)
-                     (python-nav--forward-sexp dir))
+                   (python-util-forward-comment dir)
+                   (python-nav--forward-sexp dir))
                   ((eq context 'block-end)
                    (python-nav-beginning-of-block))
                   ((eq context 'statement-end)
@@ -1661,7 +1665,11 @@ uniqueness for different types of configurations."
 
 (defun python-shell-parse-command ()
   "Calculate the string used to execute the inferior Python process."
-  (format "%s %s" python-shell-interpreter python-shell-interpreter-args))
+  (let ((process-environment (python-shell-calculate-process-environment))
+        (exec-path (python-shell-calculate-exec-path)))
+    (format "%s %s"
+            (executable-find python-shell-interpreter)
+            python-shell-interpreter-args)))
 
 (defun python-shell-calculate-process-environment ()
   "Calculate process environment given `python-shell-virtualenv-path'."
@@ -2320,15 +2328,17 @@ Argument OUTPUT is a string with the output from the comint process."
            (file-name
             (with-temp-buffer
               (insert full-output)
-              (goto-char (point-min))
-              ;; OK, this sucked but now it became a cool hack. The
-              ;; stacktrace information normally is on the first line
-              ;; but in some cases (like when doing a step-in) it is
-              ;; on the second.
-              (when (or (looking-at python-pdbtrack-stacktrace-info-regexp)
-                        (and
-                         (forward-line)
-                         (looking-at python-pdbtrack-stacktrace-info-regexp)))
+              ;; When the debugger encounters a pdb.set_trace()
+              ;; command, it prints a single stack frame.  Sometimes
+              ;; it prints a bit of extra information about the
+              ;; arguments of the present function.  When ipdb
+              ;; encounters an exception, it prints the _entire_ stack
+              ;; trace.  To handle all of these cases, we want to find
+              ;; the _last_ stack frame printed in the most recent
+              ;; batch of output, then jump to the corresponding
+              ;; file/line number.
+              (goto-char (point-max))
+              (when (re-search-backward python-pdbtrack-stacktrace-info-regexp nil t)
                 (setq line-number (string-to-number
                                    (match-string-no-properties 2)))
                 (match-string-no-properties 1)))))
@@ -2937,40 +2947,62 @@ Optional argument INCLUDE-TYPE indicates to include the type of the defun.
 This function is compatible to be used as
 `add-log-current-defun-function' since it returns nil if point is
 not inside a defun."
-    (save-restriction
-      (widen)
-      (save-excursion
-        (end-of-line 1)
-        (let ((names)
-              (starting-indentation
-               (save-excursion
-                 (and
-                  (python-nav-beginning-of-defun 1)
-                  ;; This extra number is just for checking code
-                  ;; against indentation to work well on first run.
-                  (+ (current-indentation) 4))))
-              (starting-point (point)))
-          ;; Check point is inside a defun.
-          (when (and starting-indentation
-                     (< starting-point
+  (save-restriction
+    (widen)
+    (save-excursion
+      (end-of-line 1)
+      (let ((names)
+            (starting-indentation (current-indentation))
+            (starting-pos (point))
+            (first-run t)
+            (last-indent)
+            (type))
+        (catch 'exit
+          (while (python-nav-beginning-of-defun 1)
+            (when (save-match-data
+                    (and
+                     (or (not last-indent)
+                         (< (current-indentation) last-indent))
+                     (or
+                      (and first-run
+                           (save-excursion
+                             ;; If this is the first run, we may add
+                             ;; the current defun at point.
+                             (setq first-run nil)
+                             (goto-char starting-pos)
+                             (python-nav-beginning-of-statement)
+                             (beginning-of-line 1)
+                             (looking-at-p
+                              python-nav-beginning-of-defun-regexp)))
+                      (< starting-pos
                          (save-excursion
-                           (python-nav-end-of-defun)
-                           (point))))
-            (catch 'exit
-              (while (python-nav-beginning-of-defun 1)
-                (when (< (current-indentation) starting-indentation)
-                  (setq starting-indentation (current-indentation))
-                  (setq names
-                        (cons
-                         (if (not include-type)
-                             (match-string-no-properties 1)
-                           (mapconcat 'identity
-                                      (split-string
-                                       (match-string-no-properties 0)) " "))
-                         names)))
-                (and (= (current-indentation) 0) (throw 'exit t)))))
-          (and names
-               (mapconcat (lambda (string) string) names "."))))))
+                           (let ((min-indent
+                                  (+ (current-indentation)
+                                     python-indent-offset)))
+                             (if (< starting-indentation  min-indent)
+                                 ;; If the starting indentation is not
+                                 ;; within the min defun indent make the
+                                 ;; check fail.
+                                 starting-pos
+                               ;; Else go to the end of defun and add
+                               ;; up the current indentation to the
+                               ;; ending position.
+                               (python-nav-end-of-defun)
+                               (+ (point)
+                                  (if (>= (current-indentation) min-indent)
+                                      (1+ (current-indentation))
+                                    0)))))))))
+              (save-match-data (setq last-indent (current-indentation)))
+              (if (or (not include-type) type)
+                  (setq names (cons (match-string-no-properties 1) names))
+                (let ((match (split-string (match-string-no-properties 0))))
+                  (setq type (car match))
+                  (setq names (cons (cadr match) names)))))
+            ;; Stop searching ASAP.
+            (and (= (current-indentation) 0) (throw 'exit t))))
+        (and names
+             (concat (and type (format "%s " type))
+                     (mapconcat 'identity names ".")))))))
 
 (defun python-info-current-symbol (&optional replace-self)
   "Return current symbol using dotty syntax.
@@ -3083,7 +3115,7 @@ With optional argument LINE-NUMBER, check that line instead."
     (save-restriction
       (widen)
       (when line-number
-        (goto-char line-number))
+        (python-util-goto-line line-number))
       (while (and (not (eobp))
                   (goto-char (line-end-position))
                   (python-syntax-context 'paren)
@@ -3099,7 +3131,7 @@ Optional argument LINE-NUMBER forces the line number to check against."
     (save-restriction
       (widen)
       (when line-number
-        (goto-char line-number))
+        (python-util-goto-line line-number))
       (when (python-info-line-ends-backslash-p)
         (while (save-excursion
                  (goto-char (line-beginning-position))
@@ -3178,7 +3210,9 @@ operator."
 
 (defun python-info-current-line-comment-p ()
   "Check if current line is a comment line."
-  (char-equal (or (char-after (+ (point) (current-indentation))) ?_) ?#))
+  (char-equal
+   (or (char-after (+ (line-beginning-position) (current-indentation))) ?_)
+   ?#))
 
 (defun python-info-current-line-empty-p ()
   "Check if current line is empty, ignoring whitespace."
@@ -3193,12 +3227,10 @@ operator."
 
 ;;; Utility functions
 
-(defun python-util-position (item seq)
-  "Find the first occurrence of ITEM in SEQ.
-Return the index of the matching item, or nil if not found."
-  (let ((member-result (member item seq)))
-    (when member-result
-      (- (length seq) (length member-result)))))
+(defun python-util-goto-line (line-number)
+  "Move point to LINE-NUMBER."
+  (goto-char (point-min))
+  (forward-line (1- line-number)))
 
 ;; Stolen from org-mode
 (defun python-util-clone-local-variables (from-buffer &optional regexp)

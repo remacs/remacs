@@ -24,7 +24,6 @@
 
 #include <errno.h>
 #include <limits.h>
-#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -38,20 +37,6 @@
 #endif
 
 #include "allocator.h"
-
-/* Get the symbolic link value of FILENAME and put it into BUFFER, with
-   size BUFFER_SIZE.  This function acts like readlink  but has
-   readlinkat's signature.  */
-ssize_t
-careadlinkatcwd (int fd, char const *filename, char *buffer,
-                 size_t buffer_size)
-{
-  /* FD must be AT_FDCWD here, otherwise the caller is using this
-     function in contexts for which it was not meant for.  */
-  if (fd != AT_FDCWD)
-    abort ();
-  return readlink (filename, buffer, buffer_size);
-}
 
 /* Assuming the current directory is FD, get the symbolic link value
    of FILENAME as a null-terminated string and put it into a buffer.

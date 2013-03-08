@@ -347,11 +347,11 @@ size, and full-buffer size."
    ((eq shr-folding-mode 'none)
     (insert text))
    (t
-    (when (and (string-match "\\`[ \t\n ]" text)
+    (when (and (string-match "\\`[ \t\nÂ ]" text)
 	       (not (bolp))
 	       (not (eq (char-after (1- (point))) ? )))
       (insert " "))
-    (dolist (elem (split-string text "[ \f\t\n\r\v ]+" t))
+    (dolist (elem (split-string text "[ \f\t\n\r\vÂ ]+" t))
       (when (and (bolp)
 		 (> shr-indentation 0))
 	(shr-indent))
@@ -391,7 +391,7 @@ size, and full-buffer size."
 	    (shr-indent))
 	  (end-of-line))
 	(insert " ")))
-    (unless (string-match "[ \t\r\n ]\\'" text)
+    (unless (string-match "[ \t\r\nÂ ]\\'" text)
       (delete-char -1)))))
 
 (defun shr-find-fill-point ()
@@ -520,6 +520,11 @@ size, and full-buffer size."
     (dolist (type types)
       (shr-add-font (or shr-start (point)) (point) type))))
 
+(defun shr-make-overlay (beg end &optional buffer front-advance rear-advance)
+  (let ((overlay (make-overlay beg end buffer front-advance rear-advance)))
+    (overlay-put overlay 'evaporate t)
+    overlay))
+
 ;; Add an overlay in the region, but avoid putting the font properties
 ;; on blank text at the start of the line, and the newline at the end,
 ;; to avoid ugliness.
@@ -529,7 +534,7 @@ size, and full-buffer size."
     (while (< (point) end)
       (when (bolp)
 	(skip-chars-forward " "))
-      (let ((overlay (make-overlay (point) (min (line-end-position) end))))
+      (let ((overlay (shr-make-overlay (point) (min (line-end-position) end))))
 	(overlay-put overlay 'face type))
       (if (< (line-end-position) end)
 	  (forward-line 1)
@@ -615,7 +620,12 @@ size, and full-buffer size."
 		  (overlay-put overlay 'face 'default)))
 	    (insert-image image (or alt "*")))
 	  (put-text-property start (point) 'image-size size)
-	  (when (image-animated-p image)
+	  (when (if (fboundp 'image-multi-frame-p)
+		    ;; Only animate multi-frame things that specify a
+		    ;; delay; eg animated gifs as opposed to
+		    ;; multi-page tiffs.  FIXME?
+		    (cdr (image-multi-frame-p image))
+		  (image-animated-p image))
 	    (image-animate image nil 60)))
 	image)
     (insert alt)))
@@ -785,7 +795,7 @@ ones, in case fg and bg are nil."
 	(when (and (< (setq column (current-column)) width)
 		   (< (setq column (shr-previous-newline-padding-width column))
 		      width))
-	  (let ((overlay (make-overlay (point) (1+ (point)))))
+	  (let ((overlay (shr-make-overlay (point) (1+ (point)))))
 	    (overlay-put overlay 'before-string
 			 (concat
 			  (mapconcat
@@ -1233,8 +1243,8 @@ ones, in case fg and bg are nil."
 	    (end-of-line)
 	    (insert line shr-table-vertical-line)
 	    (dolist (overlay overlay-line)
-	      (let ((o (make-overlay (- (point) (nth 0 overlay) 1)
-				     (- (point) (nth 1 overlay) 1)))
+	      (let ((o (shr-make-overlay (- (point) (nth 0 overlay) 1)
+					 (- (point) (nth 1 overlay) 1)))
 		    (properties (nth 2 overlay)))
 		(while properties
 		  (overlay-put o (pop properties) (pop properties)))))
@@ -1335,8 +1345,8 @@ ones, in case fg and bg are nil."
 	      (let ((end (length (car cache))))
 		(dolist (overlay (cadr cache))
 		  (let ((new-overlay
-			 (make-overlay (1+ (- end (nth 0 overlay)))
-				       (1+ (- end (nth 1 overlay)))))
+			 (shr-make-overlay (1+ (- end (nth 0 overlay)))
+					   (1+ (- end (nth 1 overlay)))))
 			(properties (nth 2 overlay)))
 		    (while properties
 		      (overlay-put new-overlay
@@ -1466,7 +1476,7 @@ ones, in case fg and bg are nil."
 (provide 'shr)
 
 ;; Local Variables:
-;; coding: iso-8859-1
+;; coding: utf-8
 ;; End:
 
 ;;; shr.el ends here

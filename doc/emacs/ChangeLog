@@ -1,3 +1,63 @@
+2013-03-04  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Prefer UTF-8 for documentation.
+	With GNU Texinfo 5.0, this generates nicer-looking info files,
+	since they can use curly quotes.  With older Texinfo it doesn't matter.
+	* ack.texi, cal-xtra.texi, calendar.texi, emacs-xtra.texi, emacs.texi:
+	Switch from Latin-1 to UTF-8.
+
+2013-02-28  Bastien Guerry  <bzg@gnu.org>
+
+	* xresources.texi (GTK resources): Fix broken link.
+
+2013-02-25  Eli Zaretskii  <eliz@gnu.org>
+
+	* files.texi (Interlocking): Don't refer to symlinks as the
+	exclusive means of locking files.
+
+2013-02-22  Glenn Morris  <rgm@gnu.org>
+
+	* ack.texi (Acknowledgments):
+	* emacs.texi (Acknowledgments): Small updates.
+
+2013-02-21  Glenn Morris  <rgm@gnu.org>
+
+	* files.texi (File Conveniences): Not just GIFs can be animated.
+
+2013-02-13  Glenn Morris  <rgm@gnu.org>
+
+	* ack.texi (Acknowledgments): Don't mention yow any more.
+
+2013-02-13  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* cmdargs.texi (General Variables):
+	Fix TMPDIR documentation to match the code's behavior.
+
+2013-02-10  Glenn Morris  <rgm@gnu.org>
+
+	* trouble.texi (Checklist): Update bug keybinding.
+
+2013-02-09  Eli Zaretskii  <eliz@gnu.org>
+
+	* msdog.texi (Text and Binary): Delete the description of
+	file-name-buffer-file-type-alist.
+
+2013-01-19  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* trouble.texi (Crashing): Suggest -p for newer addr2line.  (Bug#13445)
+	Without it, I don't see function names.  Older addr2line
+	implementations will die out sooner or later, so tailor the
+	first suggestion to recent addr2line, with a followup about
+	older ones.
+
+2013-01-19  Glenn Morris  <rgm@gnu.org>
+
+	* custom.texi (Directory Variables): Fix paren typo.
+
+	* trouble.texi (Crashing): Not all addr2line have -p.  (Bug#13445)
+
+	* custom.texi (Custom Themes): Fix typo.
+
 2013-01-07  Bastien Guerry  <bzg@gnu.org>
 
 	* help.texi (Apropos): Document `apropos-user-option' and update
