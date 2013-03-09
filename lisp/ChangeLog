@@ -1,10 +1,92 @@
+2013-03-09  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* mouse.el (mouse-drag-track): Remove left-over debugging code.
+
+2013-03-09  Michael Albinus  <michael.albinus@gmx.de>
+
+	Major rewrite due to changed D-Bus interface of GVFS 1.14.
+
+	* net/tramp-gvfs.el (top): Extend check for gvfs availability.
+	(tramp-gvfs-methods-mounttracker, tramp-gvfs-listmounts)
+	(tramp-gvfs-mountlocation, tramp-gvfs-mountlocation-signature):
+	New defconst.
+	(tramp-gvfs-file-name-handler-alist) [directory-files]
+	[directory-files-and-attributes, file-exists-p, file-modes]:
+	Use Tramp default handler.
+	[file-acl, file-selinux-context, process-file, set-file-acl]:
+	[set-file-modes, set-file-selinux-context, shell-command]:
+	[start-file-process ]: Remove handler.
+	[verify-visited-file-modtime]: New handler.
+	(tramp-gvfs-dbus-string-to-byte-array)
+	(tramp-gvfs-dbus-byte-array-to-string): New defuns.  Replace all
+	calls of `dbus-string-to-byte-array' and
+	`tramp-gvfs-dbus-byte-array-to-string'.
+	(tramp-gvfs-handle-copy-file)
+	(tramp-gvfs-handle-delete-directory)
+	(tramp-gvfs-handle-delete-file, tramp-gvfs-handle-file-attributes)
+	(tramp-gvfs-handle-file-directory-p)
+	(tramp-gvfs-handle-file-executable-p)
+	(tramp-gvfs-handle-file-name-all-completions)
+	(tramp-gvfs-handle-file-readable-p)
+	(tramp-gvfs-handle-file-writable-p)
+	(tramp-gvfs-handle-insert-directory)
+	(tramp-gvfs-handle-insert-file-contents)
+	(tramp-gvfs-handle-make-directory, tramp-gvfs-handle-rename-file)
+	(tramp-gvfs-handle-set-visited-file-modtime)
+	(tramp-gvfs-handle-write-region): Rewrite.
+	(tramp-gvfs-handle-file-acl)
+	(tramp-gvfs-handle-file-selinux-context)
+	(tramp-gvfs-handle-process-file, tramp-gvfs-handle-set-file-acl)
+	(tramp-gvfs-handle-set-file-modes)
+	(tramp-gvfs-handle-set-file-selinux-context)
+	(tramp-gvfs-handle-shell-command)
+	(tramp-gvfs-handle-start-file-process)
+	(tramp-gvfs-handle-verify-visited-file-modtime): Remove defuns.
+	(tramp-gvfs-url-file-name): Do not use `file-truename', we work
+	over the symlinks.  Fix user handling.
+	(top, tramp-gvfs-handler-mounted-unmounted): Handle different names
+	of the D-Bus signals.
+	(tramp-gvfs-connection-mounted-p): Handle different names of the
+	D-Bus methods.
+	(tramp-gvfs-mount-spec-entry): New defun.
+	(tramp-gvfs-mount-spec): Use it.
+	(tramp-gvfs-maybe-open-connection): Check, that in case of "smb"
+	there is a share name.  Handle different names of the D-Bus
+	signals and methods.
+	(tramp-gvfs-maybe-open-connection): Set connection properties
+	needed for `tramp-check-cached-permissions'.
+	(tramp-gvfs-send-command): Apply `tramp-gvfs-maybe-open-connection'.
+	Return t or nil.
+
+	* net/tramp.el (tramp-backtrace): Move up.
+	(tramp-error): Apply a backtrace into the debug buffer when
+	`tramp-verbose > 9.
+	(tramp-file-mode-type-map, tramp-file-mode-from-int)
+	(tramp-file-mode-permissions, tramp-get-local-uid)
+	(tramp-get-local-gid, tramp-check-cached-permissions): Move from
+	tramp-sh.el.
+
+	* net/tramp-sh.el (tramp-file-mode-type-map)
+	(tramp-check-cached-permissions, tramp-file-mode-from-int)
+	(tramp-file-mode-permissions, tramp-get-local-uid)
+	(tramp-get-local-gid): Move to tramp.el.
+
+2013-03-09  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	Separate mouse-1-click-follows-link from mouse-drag-region.
+	* mouse.el (mouse--down-1-maybe-follows-link): New function.
+	(key-translation-map): Use it to implement mouse-1-click-follows-link.
+	(mouse-drag-line, mouse-drag-track):
+	Remove mouse-1-click-follows-link code.
+	(mouse--remap-link-click-p): Remove.
+
 2013-03-08  Jambunathan K  <kjambunathan@gmail.com>
 
 	* hi-lock.el (hi-lock-read-regexp-defaults-function): New var.
 	(hi-lock-read-regexp-defaults):	 New defun.
 	(hi-lock-line-face-buffer, hi-lock-face-buffer)
-	(hi-lock-face-phrase-buffer): Propagate above change.  Update
-	docstring (bug#13892).
+	(hi-lock-face-phrase-buffer): Propagate above change.
+	Update docstring (bug#13892).
 
 	* subr.el (find-tag-default-as-regexp): New defun.
 	* replace.el (read-regexp): Propagate above change.
@@ -45,13 +127,13 @@
 
 2013-03-07  Dmitry Gutov  <dgutov@yandex.ru>
 
-	* progmodes/js.el (js--multi-line-declaration-indentation): Merge
-	from js2-mode (https://github.com/mooz/js2-mode/issues/89).
+	* progmodes/js.el (js--multi-line-declaration-indentation):
+	Merge from js2-mode (https://github.com/mooz/js2-mode/issues/89).
 
 2013-03-06  Dmitry Gutov  <dgutov@yandex.ru>
 
-	* progmodes/ruby-mode.el (ruby-syntax-propertize-function): Only
-	propertize regexp when not inside a string (Bug#13885).
+	* progmodes/ruby-mode.el (ruby-syntax-propertize-function):
+	Only propertize regexp when not inside a string (Bug#13885).
 
 2013-03-06  Alan Mackenzie  <acm@muc.de>
 
@@ -62,8 +144,8 @@
 
 2013-03-05  Michael Albinus  <michael.albinus@gmx.de>
 
-	* net/tramp-compat.el (tramp-compat-delete-directory): Implement
-	TRASH argument.
+	* net/tramp-compat.el (tramp-compat-delete-directory):
+	Implement TRASH argument.
 
 2013-03-05  Dmitry Gutov  <dgutov@yandex.ru>
 
