@@ -1,5 +1,5 @@
 /* Thread definitions
-   Copyright (C) 2012 Free Software Foundation, Inc.
+   Copyright (C) 2012, 2013 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -138,7 +138,7 @@ struct thread_state
 
   /* If non-zero the match data have been saved in saved_search_regs
      during the execution of a sentinel or filter. */
-  int m_search_regs_saved;
+  bool m_search_regs_saved;
 #define search_regs_saved (current_thread->m_search_regs_saved)
 
   struct re_registers m_saved_search_regs;
