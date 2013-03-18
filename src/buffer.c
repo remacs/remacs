@@ -1726,6 +1726,9 @@ cleaning up all windows currently displaying the buffer to be killed. */)
   if (!BUFFER_LIVE_P (b))
     return Qnil;
 
+  if (thread_check_current_buffer (b))
+    return Qnil;
+
   /* Query if the buffer is still modified.  */
   if (INTERACTIVE && !NILP (BVAR (b, filename))
       && BUF_MODIFF (b) > BUF_SAVE_MODIFF (b))

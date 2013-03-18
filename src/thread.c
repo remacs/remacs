@@ -881,6 +881,25 @@ DEFUN ("all-threads", Fall_threads, Sall_threads, 0, 0, 0,
 
 
 
+int
+thread_check_current_buffer (struct buffer *buffer)
+{
+  struct thread_state *iter;
+
+  for (iter = all_threads; iter; iter = iter->next_thread)
+    {
+      if (iter == current_thread)
+	continue;
+
+      if (iter->m_current_buffer == buffer)
+	return 1;
+    }
+
+  return 0;
+}
+
+
+
 static void
 init_primary_thread (void)
 {
