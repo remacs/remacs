@@ -1143,7 +1143,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 /* Define to 1 if you have the `_ftime' function. */
 #undef HAVE__FTIME
 
-/* Define to 1 if _setjmp and _longjmp work. */
+/* Define to 1 if _setjmp and _longjmp work.  */
 #define HAVE__SETJMP 1
 
 /* Define to 1 if you have the `__builtin_unwind_init' function. */

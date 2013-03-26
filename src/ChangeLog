@@ -1,5 +1,14 @@
 2013-03-26  Eli Zaretskii  <eliz@gnu.org>
 
+	* w32.c (_REPARSE_DATA_BUFFER): Condition by _MSVC and _W64.
+
+2013-03-26  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* gtkutil.c (style_changed_cb): Check if frame is live and an
+	X frame (Bug#14038).
+
+2013-03-26  Eli Zaretskii  <eliz@gnu.org>
+
 	* w32.c (_PROCESS_MEMORY_COUNTERS_EX) [_WIN32_WINNT < 0x0500]:
 	Define only for _WIN32_WINNT less than 0x0500.
 	(_ANONYMOUS_UNION, _ANONYMOUS_STRUCT) [!_W64]: Don't define for
