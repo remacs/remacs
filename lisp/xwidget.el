@@ -64,7 +64,7 @@ see xwidget.c for types suitable for TYPE."
 ;;; webkit support
 (require 'browse-url)
 (require 'image-mode);;for some image-mode alike functinoality
-(require 'cl);;for flet
+(require 'cl-macs);;for flet
 
 ;;;###autoload
 (defun xwidget-webkit-browse-url (url &optional new-session)
@@ -93,13 +93,13 @@ defaults to the string looking like a url around the cursor position."
 (defmacro xwidget-image-mode-navigation-adaptor (fn)
   "Image code adaptor.  `image-mode' FN is called."
   `(lambda () (interactive)
-     (flet ((image-display-size (spec) (xwidget-image-display-size spec)))
+     (cl-flet ((image-display-size (spec) (xwidget-image-display-size spec)))
        (funcall ,fn ))))
 
 (defmacro xwidget-image-mode-navigation-adaptor-p (fn)
     "Image code adaptor.  `image-mode' FN is called with interactive arg."
   `(lambda (n) (interactive "p")
-     (flet ((image-display-size (spec) (xwidget-image-display-size spec)))
+     (cl-flet ((image-display-size (spec) (xwidget-image-display-size spec)))
        (funcall ,fn n))))
 
 
