@@ -3769,7 +3769,6 @@ If omitted or nil, that stands for the selected frame's display.  */)
 
     default:
       error ("Strange value for BackingStore parameter of screen");
-      result = Qnil;
     }
 
   return result;
@@ -3811,7 +3810,6 @@ If omitted or nil, that stands for the selected frame's display.  */)
       break;
     default:
       error ("Display has an unknown visual class");
-      result = Qnil;
     }
 
   return result;
@@ -5067,7 +5065,7 @@ Text larger than the specified size is clipped.  */)
       int row_width;
 
       /* Stop at the first empty row at the end.  */
-      if (!row->enabled_p || !row->displays_text_p)
+      if (!row->enabled_p || !MATRIX_ROW_DISPLAYS_TEXT_P (row))
 	break;
 
       /* Let the row go over the full width of the frame.  */
@@ -5126,7 +5124,7 @@ Text larger than the specified size is clipped.  */)
 	  struct glyph *last;
 	  int row_width;
 
-	  if (!row->enabled_p || !row->displays_text_p)
+	  if (!row->enabled_p || !MATRIX_ROW_DISPLAYS_TEXT_P (row))
 	    break;
 	  row->full_width_p = 1;
 	  row_width = row->pixel_width;

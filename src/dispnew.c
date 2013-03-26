@@ -3394,8 +3394,8 @@ update_window (struct window *w, bool force_p)
 
       rif->update_window_begin_hook (w);
       yb = window_text_bottom_y (w);
-      row = desired_matrix->rows;
-      end = row + desired_matrix->nrows - 1;
+      row = MATRIX_ROW (desired_matrix, 0);
+      end = MATRIX_MODE_LINE_ROW (desired_matrix);
 
       /* Take note of the header line, if there is one.  We will
 	 update it below, after updating all of the window's lines.  */
@@ -6111,10 +6111,7 @@ init_display (void)
 
   /* If no window system has been specified, try to use the terminal.  */
   if (! isatty (0))
-    {
-      fatal ("standard input is not a tty");
-      exit (1);
-    }
+    fatal ("standard input is not a tty");
 
 #ifdef WINDOWSNT
   terminal_type = "w32console";
