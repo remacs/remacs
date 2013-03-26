@@ -365,7 +365,7 @@ margin_glyphs_to_reserve (struct window *w, int total_glyphs, Lisp_Object margin
 
   if (NUMBERP (margin))
     {
-      int width = XFASTINT (w->total_cols);
+      int width = w->total_cols;
       double d = max (0, XFLOATINT (margin));
       d = min (width / 2 - 1, d);
       n = (int) ((double) total_glyphs / width * d);
@@ -796,11 +796,13 @@ clear_current_matrices (register struct frame *f)
   if (f->current_matrix)
     clear_glyph_matrix (f->current_matrix);
 
+#if defined (HAVE_X_WINDOWS) && ! defined (USE_X_TOOLKIT) && ! defined (USE_GTK)
   /* Clear the matrix of the menu bar window, if such a window exists.
      The menu bar window is currently used to display menus on X when
      no toolkit support is compiled in.  */
   if (WINDOWP (f->menu_bar_window))
     clear_glyph_matrix (XWINDOW (f->menu_bar_window)->current_matrix);
+#endif
 
   /* Clear the matrix of the tool-bar window, if any.  */
   if (WINDOWP (f->tool_bar_window))
@@ -820,8 +822,10 @@ clear_desired_matrices (register struct frame *f)
   if (f->desired_matrix)
     clear_glyph_matrix (f->desired_matrix);
 
+#if defined (HAVE_X_WINDOWS) && ! defined (USE_X_TOOLKIT) && ! defined (USE_GTK)
   if (WINDOWP (f->menu_bar_window))
     clear_glyph_matrix (XWINDOW (f->menu_bar_window)->desired_matrix);
+#endif
 
   if (WINDOWP (f->tool_bar_window))
     clear_glyph_matrix (XWINDOW (f->tool_bar_window)->desired_matrix);
@@ -1778,7 +1782,7 @@ required_matrix_width (struct window *w)
     }
 #endif /* HAVE_WINDOW_SYSTEM */
 
-  return XINT (w->total_cols);
+  return w->total_cols;
 }
 
 
@@ -2116,10 +2120,10 @@ adjust_frame_glyphs_for_window_redisplay (struct frame *f)
 
     /* Set window dimensions to frame dimensions and allocate or
        adjust glyph matrices of W.  */
-    wset_top_line (w, make_number (0));
-    wset_left_col (w, make_number (0));
-    wset_total_lines (w, make_number (FRAME_MENU_BAR_LINES (f)));
-    wset_total_cols (w, make_number (FRAME_TOTAL_COLS (f)));
+    w->top_line = 0;
+    w->left_col = 0;
+    w->total_lines = FRAME_MENU_BAR_LINES (f);
+    w->total_cols = FRAME_TOTAL_COLS (f);
     allocate_matrices_for_window_redisplay (w);
   }
 #endif /* not USE_X_TOOLKIT && not USE_GTK */
@@ -2142,10 +2146,10 @@ adjust_frame_glyphs_for_window_redisplay (struct frame *f)
     else
       w = XWINDOW (f->tool_bar_window);
 
-    wset_top_line (w, make_number (FRAME_MENU_BAR_LINES (f)));
-    wset_left_col (w, make_number (0));
-    wset_total_lines (w, make_number (FRAME_TOOL_BAR_LINES (f)));
-    wset_total_cols (w, make_number (FRAME_TOTAL_COLS (f)));
+    w->top_line = FRAME_MENU_BAR_LINES (f);
+    w->left_col = 0;
+    w->total_lines = FRAME_TOOL_BAR_LINES (f);
+    w->total_cols = FRAME_TOTAL_COLS (f);
     allocate_matrices_for_window_redisplay (w);
   }
 #endif
@@ -2186,6 +2190,7 @@ free_glyphs (struct frame *f)
       if (!NILP (f->root_window))
         free_window_matrices (XWINDOW (f->root_window));
 
+#if defined (HAVE_X_WINDOWS) && ! defined (USE_X_TOOLKIT) && ! defined (USE_GTK)
       /* Free the dummy window for menu bars without X toolkit and its
 	 glyph matrices.  */
       if (!NILP (f->menu_bar_window))
@@ -2196,6 +2201,7 @@ free_glyphs (struct frame *f)
 	  w->desired_matrix = w->current_matrix = NULL;
 	  fset_menu_bar_window (f, Qnil);
 	}
+#endif
 
       /* Free the tool bar window and its glyph matrices.  */
       if (!NILP (f->tool_bar_window))
@@ -3094,10 +3100,12 @@ update_frame (struct frame *f, bool force_p, bool inhibit_hairy_id_p)
 	 when pending input is detected.  */
       update_begin (f);
 
+#if defined (HAVE_X_WINDOWS) && ! defined (USE_X_TOOLKIT) && ! defined (USE_GTK)
       /* Update the menu bar on X frames that don't have toolkit
 	 support.  */
       if (WINDOWP (f->menu_bar_window))
 	update_window (XWINDOW (f->menu_bar_window), 1);
+#endif
 
       /* Update the tool-bar window, if present.  */
       if (WINDOWP (f->tool_bar_window))
@@ -4462,7 +4470,7 @@ scrolling_window (struct window *w, bool header_line_p)
     row_table[row_entry_pool[i].bucket] = NULL;
 
   /* Value is 1 to indicate that we scrolled the display.  */
-  return 0 < nruns;
+  return nruns > 0;
 }
 
 
@@ -4548,7 +4556,7 @@ update_frame_1 (struct frame *f, bool force_p, bool inhibit_id_p)
 	}
     }
 
-  lint_assume (0 <= FRAME_LINES (f));
+  lint_assume (FRAME_LINES (f) >= 0);
   pause_p = 0 < i && i < FRAME_LINES (f) - 1;
 
   /* Now just clean up termcap drivers and set cursor, etc.  */
@@ -5594,7 +5602,7 @@ change_frame_size_1 (struct frame *f, int newheight, int newwidth,
 	FrameCols (FRAME_TTY (f)) = newwidth;
 
       if (WINDOWP (f->tool_bar_window))
-	wset_total_cols (XWINDOW (f->tool_bar_window), make_number (newwidth));
+	XWINDOW (f->tool_bar_window)->total_cols = newwidth;
     }
 
   FRAME_LINES (f) = newheight;
@@ -5736,7 +5744,11 @@ bitch_at_user (void)
   if (noninteractive)
     putchar (07);
   else if (!INTERACTIVE)  /* Stop executing a keyboard macro.  */
-    error ("Keyboard macro terminated by a command ringing the bell");
+    {
+      const char *msg
+	= "Keyboard macro terminated by a command ringing the bell";
+      Fsignal (Quser_error, Fcons (build_string (msg), Qnil));
+    }
   else
     ring_bell (XFRAME (selected_frame));
 }
@@ -5763,7 +5775,7 @@ additional wait period, in milliseconds; this is for backwards compatibility.
       duration += XINT (milliseconds) / 1000.0;
     }
 
-  if (0 < duration)
+  if (duration > 0)
     {
       EMACS_TIME t = EMACS_TIME_FROM_DOUBLE (duration);
       wait_reading_process_output (min (EMACS_SECS (t), WAIT_READING_MAX),
@@ -5803,14 +5815,14 @@ sit_for (Lisp_Object timeout, bool reading, int display_option)
   if (INTEGERP (timeout))
     {
       sec = XINT (timeout);
-      if (! (0 < sec))
+      if (sec <= 0)
 	return Qt;
       nsec = 0;
     }
   else if (FLOATP (timeout))
     {
       double seconds = XFLOAT_DATA (timeout);
-      if (! (0 < seconds))
+      if (seconds <= 0)
 	return Qt;
       else
 	{

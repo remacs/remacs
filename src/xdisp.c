@@ -984,7 +984,7 @@ window_text_bottom_y (struct window *w)
 int
 window_box_width (struct window *w, int area)
 {
-  int cols = XFASTINT (w->total_cols);
+  int cols = w->total_cols;
   int pixels = 0;
 
   if (!w->pseudo_window_p)
@@ -2682,7 +2682,7 @@ init_iterator (struct it *it, struct window *w,
      and IT->region_end_charpos to the start and end of a visible region
      in window IT->w.  Set both to -1 to indicate no region.  */
   markpos = markpos_of_region ();
-  if (0 <= markpos
+  if (markpos >= 0
       /* Maybe highlight only in selected window.  */
       && (/* Either show region everywhere.  */
 	  highlight_nonselected_windows
@@ -13231,8 +13231,8 @@ redisplay_internal (void)
 	       PT == w->last_point
 	       /* Make sure the cursor was last displayed
 		  in this window.  Otherwise we have to reposition it.  */
-	       && 0 <= w->cursor.vpos
-	       && WINDOW_TOTAL_LINES (w) > w->cursor.vpos)
+	       && w->cursor.vpos >= 0
+	       && w->cursor.vpos < WINDOW_TOTAL_LINES (w))
 	{
 	  if (!must_finish)
 	    {
@@ -15581,7 +15581,7 @@ redisplay_window (Lisp_Object window, int just_this_one_p)
 
 	  /* If we are highlighting the region, then we just changed
 	     the region, so redisplay to show it.  */
-	  if (0 <= markpos_of_region ())
+	  if (markpos_of_region () >= 0)
 	    {
 	      clear_glyph_matrix (w->desired_matrix);
 	      if (!try_window (window, startp, 0))
@@ -16296,7 +16296,7 @@ try_window_reusing_current_matrix (struct window *w)
     return 0;
 
   /* Can't do this if region may have changed.  */
-  if (0 <= markpos_of_region ()
+  if (markpos_of_region () >= 0
       || w->region_showing
       || !NILP (Vshow_trailing_whitespace))
     return 0;
@@ -17135,7 +17135,7 @@ try_window_id (struct window *w)
 
   /* Can't use this if highlighting a region because a cursor movement
      will do more than just set the cursor.  */
-  if (0 <= markpos_of_region ())
+  if (markpos_of_region () >= 0)
     GIVE_UP (9);
 
   /* Likewise if highlighting trailing whitespace.  */
@@ -20093,18 +20093,17 @@ display_menu_bar (struct window *w)
     return;
 #endif /* HAVE_NS */
 
-#ifdef USE_X_TOOLKIT
+#if defined (USE_X_TOOLKIT) || defined (USE_GTK)
   eassert (!FRAME_WINDOW_P (f));
   init_iterator (&it, w, -1, -1, f->desired_matrix->rows, MENU_FACE_ID);
   it.first_visible_x = 0;
   it.last_visible_x = FRAME_TOTAL_COLS (f) * FRAME_COLUMN_WIDTH (f);
-#else /* not USE_X_TOOLKIT */
+#elif defined (HAVE_X_WINDOWS) /* X without toolkit.  */
   if (FRAME_WINDOW_P (f))
     {
       /* Menu bar lines are displayed in the desired matrix of the
 	 dummy window menu_bar_window.  */
       struct window *menu_w;
-      eassert (WINDOWP (f->menu_bar_window));
       menu_w = XWINDOW (f->menu_bar_window);
       init_iterator (&it, menu_w, -1, -1, menu_w->desired_matrix->rows,
 		     MENU_FACE_ID);
@@ -20112,6 +20111,7 @@ display_menu_bar (struct window *w)
       it.last_visible_x = FRAME_TOTAL_COLS (f) * FRAME_COLUMN_WIDTH (f);
     }
   else
+#endif /* not USE_X_TOOLKIT and not USE_GTK */
     {
       /* This is a TTY frame, i.e. character hpos/vpos are used as
 	 pixel x/y.  */
@@ -20120,7 +20120,6 @@ display_menu_bar (struct window *w)
       it.first_visible_x = 0;
       it.last_visible_x = FRAME_COLS (f);
     }
-#endif /* not USE_X_TOOLKIT */
 
   /* FIXME: This should be controlled by a user option.  See the
      comments in redisplay_tool_bar and display_mode_line about
@@ -21114,7 +21113,7 @@ pint2hrstr (char *buf, int width, ptrdiff_t d)
   char * psuffix;
   char * p;
 
-  if (1000 <= quotient)
+  if (quotient >= 1000)
     {
       /* Scale to the appropriate EXPONENT. */
       do
@@ -21123,13 +21122,13 @@ pint2hrstr (char *buf, int width, ptrdiff_t d)
 	  quotient /= 1000;
 	  exponent++;
 	}
-      while (1000 <= quotient);
+      while (quotient >= 1000);
 
       /* Round to nearest and decide whether to use TENTHS or not. */
       if (quotient <= 9)
 	{
 	  tenths = remainder / 100;
-	  if (50 <= remainder % 100)
+	  if (remainder % 100 >= 50)
 	    {
 	      if (tenths < 9)
 		tenths++;
@@ -21144,7 +21143,7 @@ pint2hrstr (char *buf, int width, ptrdiff_t d)
 	    }
 	}
       else
-	if (500 <= remainder)
+	if (remainder >= 500)
 	  {
 	    if (quotient < 999)
 	      quotient++;
@@ -22187,11 +22186,6 @@ else if the text is replaced by an ellipsis.  */)
 
 */
 
-#define NUMVAL(X)				\
-     ((INTEGERP (X) || FLOATP (X))		\
-      ? XFLOATINT (X)				\
-      : - 1)
-
 static int
 calc_pixel_width_or_height (double *res, struct it *it, Lisp_Object prop,
 			    struct font *font, int width_p, int *align_to)
@@ -22222,24 +22216,11 @@ calc_pixel_width_or_height (double *res, struct it *it, Lisp_Object prop,
 	    pixels = 0;
 	  if (pixels > 0)
 	    {
-	      double ppi;
-#ifdef HAVE_WINDOW_SYSTEM
-	      if (FRAME_WINDOW_P (it->f)
-		  && (ppi = (width_p
-			     ? FRAME_X_DISPLAY_INFO (it->f)->resx
-			     : FRAME_X_DISPLAY_INFO (it->f)->resy),
-		      ppi > 0))
-		return OK_PIXELS (ppi / pixels);
-#endif
+	      double ppi = (width_p ? FRAME_RES_X (it->f)
+			    : FRAME_RES_Y (it->f));
 
-	      if ((ppi = NUMVAL (Vdisplay_pixels_per_inch), ppi > 0)
-		  || (CONSP (Vdisplay_pixels_per_inch)
-		      && (ppi = (width_p
-				 ? NUMVAL (XCAR (Vdisplay_pixels_per_inch))
-				 : NUMVAL (XCDR (Vdisplay_pixels_per_inch))),
-			  ppi > 0)))
+	      if (ppi > 0)
 		return OK_PIXELS (ppi / pixels);
-
 	      return 0;
 	    }
 	}
@@ -22522,16 +22503,16 @@ get_char_face_and_encoding (struct frame *f, int c, int face_id,
 			    XChar2b *char2b, int display_p)
 {
   struct face *face = FACE_FROM_ID (f, face_id);
+  unsigned code = 0;
 
   if (face->font)
     {
-      unsigned code = face->font->driver->encode_char (face->font, c);
+      code = face->font->driver->encode_char (face->font, c);
 
-      if (code != FONT_INVALID_CODE)
-	STORE_XCHAR2B (char2b, (code >> 8), (code & 0xFF));
-      else
-	STORE_XCHAR2B (char2b, 0, 0);
+      if (code == FONT_INVALID_CODE)
+	code = 0;
     }
+  STORE_XCHAR2B (char2b, (code >> 8), (code & 0xFF));
 
   /* Make sure X resources of the face are allocated.  */
 #ifdef HAVE_X_WINDOWS
@@ -22555,31 +22536,30 @@ get_glyph_face_and_encoding (struct frame *f, struct glyph *glyph,
 			     XChar2b *char2b, int *two_byte_p)
 {
   struct face *face;
+  unsigned code = 0;
 
   eassert (glyph->type == CHAR_GLYPH);
   face = FACE_FROM_ID (f, glyph->face_id);
+
+  /* Make sure X resources of the face are allocated.  */
+  eassert (face != NULL);
+  PREPARE_FACE_FOR_DISPLAY (f, face);
 
   if (two_byte_p)
     *two_byte_p = 0;
 
   if (face->font)
     {
-      unsigned code;
-
       if (CHAR_BYTE8_P (glyph->u.ch))
 	code = CHAR_TO_BYTE8 (glyph->u.ch);
       else
 	code = face->font->driver->encode_char (face->font, glyph->u.ch);
 
-      if (code != FONT_INVALID_CODE)
-	STORE_XCHAR2B (char2b, (code >> 8), (code & 0xFF));
-      else
-	STORE_XCHAR2B (char2b, 0, 0);
+      if (code == FONT_INVALID_CODE)
+	code = 0;
     }
 
-  /* Make sure X resources of the face are allocated.  */
-  eassert (face != NULL);
-  PREPARE_FACE_FOR_DISPLAY (f, face);
+  STORE_XCHAR2B (char2b, (code >> 8), (code & 0xFF));
   return face;
 }
 
@@ -22902,9 +22882,12 @@ static struct font_metrics *
 get_per_char_metric (struct font *font, XChar2b *char2b)
 {
   static struct font_metrics metrics;
-  unsigned code = (XCHAR2B_BYTE1 (char2b) << 8) | XCHAR2B_BYTE2 (char2b);
+  unsigned code;
 
-  if (! font || code == FONT_INVALID_CODE)
+  if (! font)
+    return NULL;
+  code = (XCHAR2B_BYTE1 (char2b) << 8) | XCHAR2B_BYTE2 (char2b);
+  if (code == FONT_INVALID_CODE)
     return NULL;
   font->driver->text_extents (font, &code, 1, &metrics);
   return &metrics;
@@ -28750,11 +28733,11 @@ expose_frame (struct frame *f, int x, int y, int w, int h)
 
 #ifdef HAVE_X_WINDOWS
 #ifndef MSDOS
-#ifndef USE_X_TOOLKIT
+#if ! defined (USE_X_TOOLKIT) && ! defined (USE_GTK)
   if (WINDOWP (f->menu_bar_window))
     mouse_face_overwritten_p
       |= expose_window (XWINDOW (f->menu_bar_window), &r);
-#endif /* not USE_X_TOOLKIT */
+#endif /* not USE_X_TOOLKIT and not USE_GTK */
 #endif
 #endif
 
@@ -29488,13 +29471,13 @@ init_xdisp (void)
 
       echo_area_window = minibuf_window;
 
-      wset_top_line (r, make_number (FRAME_TOP_MARGIN (f)));
-      wset_total_lines
-	(r, make_number (FRAME_LINES (f) - 1 - FRAME_TOP_MARGIN (f)));
-      wset_total_cols (r, make_number (FRAME_COLS (f)));
-      wset_top_line (m, make_number (FRAME_LINES (f) - 1));
-      wset_total_lines (m, make_number (1));
-      wset_total_cols (m, make_number (FRAME_COLS (f)));
+      r->top_line = FRAME_TOP_MARGIN (f);
+      r->total_lines = FRAME_LINES (f) - 1 - FRAME_TOP_MARGIN (f);
+      r->total_cols = FRAME_COLS (f);
+
+      m->top_line = FRAME_LINES (f) - 1;
+      m->total_lines = 1;
+      m->total_cols = FRAME_COLS (f);
 
       scratch_glyph_row.glyphs[TEXT_AREA] = scratch_glyphs;
       scratch_glyph_row.glyphs[TEXT_AREA + 1]

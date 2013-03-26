@@ -261,6 +261,29 @@ ns_display_info_for_name (Lisp_Object name)
   return dpyinfo;
 }
 
+static NSString *
+ns_filename_from_panel (NSSavePanel *panel)
+{
+#if defined (NS_IMPL_COCOA) && MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_6
+  NSURL *url = [panel URL];
+  NSString *str = [url path];
+  return str;
+#else
+  return [panel filename];
+#endif
+}
+
+static NSString *
+ns_directory_from_panel (NSSavePanel *panel)
+{
+#if defined (NS_IMPL_COCOA) && MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_6
+  NSURL *url = [panel directoryURL];
+  NSString *str = [url path];
+  return str;
+#else
+  return [panel directory];
+#endif
+}
 
 static Lisp_Object
 interpret_services_menu (NSMenu *menu, Lisp_Object prefix, Lisp_Object old)
@@ -1220,9 +1243,6 @@ This function is an internal primitive--use `make-frame' instead.  */)
       specbind (Qx_resource_name, name);
     }
 
-  f->resx = dpyinfo->resx;
-  f->resy = dpyinfo->resy;
-
   block_input ();
   register_font_driver (&nsfont_driver, f);
   x_default_parameter (f, parms, Qfont_backend, Qnil,
@@ -1471,7 +1491,7 @@ Optional arg DIR_ONLY_P, if non-nil, means choose only directories.  */)
    Lisp_Object init, Lisp_Object dir_only_p)
 {
   static id fileDelegate = nil;
-  int ret;
+  BOOL ret;
   id panel;
   Lisp_Object fname;
 
@@ -1508,6 +1528,13 @@ Optional arg DIR_ONLY_P, if non-nil, means choose only directories.  */)
       [panel setCanChooseDirectories: YES];
       [panel setCanChooseFiles: NO];
     }
+  else
+    {
+      /* This is not quite what the documentation says, but it is compatible
+         with the Gtk+ code.  Also, the menu entry says "Open File...".  */
+      [panel setCanChooseDirectories: NO];
+      [panel setCanChooseFiles: YES];
+    }
 
   block_input ();
 #if defined (NS_IMPL_COCOA) && \
@@ -1528,15 +1555,19 @@ Optional arg DIR_ONLY_P, if non-nil, means choose only directories.  */)
     }
   else
     {
-      [panel setCanChooseDirectories: YES];
       ret = [panel runModalForDirectory: dirS file: initS types: nil];
     }
 #endif
 
   ret = (ret == NSOKButton) || panelOK;
 
-  if (ret)
-    fname = build_string ([[panel filename] UTF8String]);
+  if (ret) 
+    {
+      NSString *str = [panel getFilename];
+      if (! str) str = [panel getDirectory];
+      if (! str) ret = NO;
+      else fname = build_string ([str UTF8String]);
+    }
 
   [[FRAME_NS_VIEW (SELECTED_FRAME ()) window] makeKeyWindow];
   unblock_input ();
@@ -2603,6 +2634,14 @@ Value is t if tooltip was open, nil otherwise.  */)
   [NSApp stop: self];
 }
 #endif
+- (NSString *) getFilename
+{
+  return ns_filename_from_panel (self);
+}
+- (NSString *) getDirectory
+{
+  return ns_directory_from_panel (self);
+}
 @end
 
 
@@ -2616,6 +2655,12 @@ Value is t if tooltip was open, nil otherwise.  */)
 - (void) ok: (id)sender
 {
   [super ok: sender];
+
+  // If not choosing directories, and Open is pressed on a directory, return.
+  if (! [self canChooseDirectories] && [self getDirectory] &&
+      ! [self getFilename])
+    return;
+
   panelOK = 1;
   [NSApp stop: self];
 }
@@ -2624,7 +2669,17 @@ Value is t if tooltip was open, nil otherwise.  */)
   [super cancel: sender];
   [NSApp stop: self];
 }
+
 #endif
+- (NSString *) getFilename
+{
+  return ns_filename_from_panel (self);
+}
+- (NSString *) getDirectory
+{
+  return ns_directory_from_panel (self);
+}
+
 @end
 
 

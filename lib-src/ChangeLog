@@ -1,3 +1,23 @@
+2013-03-26  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix incompatibilities between MinGW.org and MinGW64 headers.
+	* ntlib.c (struct timespec) [!_TIMEZONE_DEFINED]: Define the
+	struct only if _TIMEZONE_DEFINED is not defined.
+
+2013-03-23  cg  <chengang31@gmail.com>  (tiny change)
+
+	* makefile.w32-in (LIB_SRC): Move before first use.
+
+2013-03-16  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* pop.c: Fix ERRMAX typo (Bug#13925).
+	(socket_connection) [!HAVE_KRB5_ERROR_TEXT && HAVE_KRB5_ERROR_E_TEXT]:
+	Use ERROR_MAX, not ERRMAX.
+
+2013-03-16  Glenn Morris  <rgm@gnu.org>
+
+	* Version 24.3 released.
+
 2013-03-13  Paul Eggert  <eggert@cs.ucla.edu>
 
 	File synchronization fixes (Bug#13944).
@@ -6,8 +26,8 @@
 	* emacsclient.c (main): Use fdatasync, not fsync, since we don't
 	care about metadata.  Keep trying if interrupted.
 	* movemail.c (main, popmail): Don't worry about BSD_SYSTEM, since
-	fsync is available everywhere (or there is a substitute).  Don't
-	report an error if fsync returns EINVAL.
+	fsync is available everywhere (or there is a substitute).
+	Don't report an error if fsync returns EINVAL.
 
 	Static checking by Sun C 5.12.
 	* etags.c (analyse_regex): Omit unreachable code.
@@ -5182,7 +5202,7 @@
 	(longopts): New long options without short counterpart are
 	globals, members, no-globals, no-members.  Regexp options are now
 	defined  conditionally to ETAGS_REGEXPS.
-	(print_help): Updated.
+	(print_help): Update.
 
 1997-05-22  Francesco Potortì  <F.Potorti@cnuce.cnr.it>
 

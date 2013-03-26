@@ -1,3 +1,273 @@
+2013-03-26  Eli Zaretskii  <eliz@gnu.org>
+
+	* w32.c (_PROCESS_MEMORY_COUNTERS_EX) [_WIN32_WINNT < 0x0500]:
+	Define only for _WIN32_WINNT less than 0x0500.
+	(_ANONYMOUS_UNION, _ANONYMOUS_STRUCT) [!_W64]: Don't define for
+	MinGW64.
+	Move inclusion of time.h before sys/time.h, so that MinGW64 could
+	see its own definitions of 'struct timeval' and 'struct timezone'.
+
+	Fix incompatibilities between MinGW.org and MinGW64 headers.
+	* w32term.c (WCRANGE, GLYPHSET): Don't define if _W64 is defined.
+
+	* w32.c (REPARSE_DATA_BUFFER): Guard with
+	MAXIMUM_REPARSE_DATA_BUFFER_SIZE being defined.
+
+2013-03-25  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* xterm.c: Include X11/XKBlib.h
+	(XTring_bell): Use XkbBell if HAVE_XKB (Bug#14041).
+
+2013-03-24  Andreas Schwab  <schwab@linux-m68k.org>
+
+	* alloc.c (xpalloc, Fgarbage_collect): Reorder conditions that are
+	written backwards.
+	* blockinput.h (input_blocked_p): Likewise.
+	* bytecode.c (exec_byte_code): Likewise.
+	* callproc.c (call_process_kill, call_process_cleanup)
+	(Fcall_process): Likewise.
+	* ccl.c (ccl_driver, resolve_symbol_ccl_program)
+	(Fccl_execute_on_string): Likewise.
+	* character.c (string_escape_byte8): Likewise.
+	* charset.c (read_hex): Likewise.
+	* cm.c (calccost): Likewise.
+	* data.c (cons_to_unsigned): Likewise.
+	* dired.c (directory_files_internal, file_name_completion):
+	Likewise.
+	* dispnew.c (scrolling_window, update_frame_1, Fsleep_for)
+	(sit_for): Likewise.
+	* doc.c (Fsubstitute_command_keys): Likewise.
+	* doprnt.c (doprnt): Likewise.
+	* editfns.c (hi_time, decode_time_components, Fformat): Likewise.
+	* emacsgtkfixed.c: Likewise.
+	* fileio.c (file_offset, Fwrite_region): Likewise.
+	* floatfns.c (Fexpt, fmod_float): Likewise.
+	* fns.c (larger_vector, make_hash_table, Fmake_hash_table):
+	Likewise.
+	* font.c (font_intern_prop): Likewise.
+	* frame.c (x_set_alpha): Likewise.
+	* gtkutil.c (get_utf8_string): Likewise.
+	* indent.c (check_display_width): Likewise.
+	* intervals.c (create_root_interval, rotate_right, rotate_left)
+	(split_interval_right, split_interval_left)
+	(adjust_intervals_for_insertion, delete_node)
+	(interval_deletion_adjustment, adjust_intervals_for_deletion)
+	(merge_interval_right, merge_interval_left, copy_intervals)
+	(set_intervals_multibyte_1): Likewise.
+	* keyboard.c (gobble_input, append_tool_bar_item): Likewise.
+	* keymap.c (Fkey_description): Likewise.
+	* lisp.h (FIXNUM_OVERFLOW_P, vcopy): Likewise.
+	* lread.c (openp, read_integer, read1, string_to_number):
+	Likewise.
+	* menu.c (ensure_menu_items): Likewise.
+	* minibuf.c (read_minibuf_noninteractive): Likewise.
+	* print.c (printchar, strout): Likewise.
+	* process.c (create_process, Faccept_process_output)
+	(wait_reading_process_output, read_process_output, send_process)
+	(wait_reading_process_output): Likewise.
+	* profiler.c (make_log, handle_profiler_signal): Likewise.
+	* regex.c (re_exec): Likewise.
+	* regex.h: Likewise.
+	* search.c (looking_at_1, Freplace_match): Likewise.
+	* sysdep.c (get_child_status, procfs_ttyname)
+	(procfs_get_total_memory): Likewise.
+	* systime.h (EMACS_TIME_VALID_P): Likewise.
+	* term.c (dissociate_if_controlling_tty): Likewise.
+	* window.c (get_phys_cursor_glyph): Likewise.
+	* xdisp.c (init_iterator, redisplay_internal, redisplay_window)
+	(try_window_reusing_current_matrix, try_window_id, pint2hrstr):
+	Likewise.
+	* xfns.c (Fx_window_property): Likewise.
+	* xmenu.c (set_frame_menubar): Likewise.
+	* xselect.c (x_get_window_property, x_handle_dnd_message):
+	Likewise.
+	* xsmfns.c (smc_save_yourself_CB): Likewise.
+	* xterm.c (x_scroll_bar_set_handle): Likewise.
+
+2013-03-24  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	* xfaces.c (Finternal_face_x_get_resource): Allow 3rd (frame) argument
+	to be optional or nil.  Adjust comment and convert it to docstring.
+	* xselect.c (Fx_send_client_event): Rename to Fx_send_client_message.
+	* frame.c (display_x_get_resource, Fx_get_resource): Break long line.
+
+2013-03-24  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Static checking by GCC 4.8-20130319.
+	* image.c (gif_load): Assume pass < 3 to pacify GCC.
+	* process.c (Fset_process_datagram_address)
+	(Fmake_network_process): Check get_lisp_to_sockaddr_size return value.
+	* xdisp.c (get_char_face_and_encoding):
+	(get_glyph_face_and_encoding): Ensure that *CHAR2B is initialized.
+	(get_glyph_face_and_encoding): Prepare face before possibly using it.
+	(get_per_char_metric): Don't use CHAR2B if it might not be initialized.
+
+2013-03-24  Ken Brown  <kbrown@cornell.edu>
+
+	* w32fns.c (emacs_abort) [CYGWIN]: Define `_open' as a macro to
+	fix compilation on 64-bit Cygwin, where underscores are not
+	automatically prepended.
+
+	* w32term.c (w32_initialize): Silence compiler warning.
+
+2013-03-23  Eli Zaretskii  <eliz@gnu.org>
+
+	* w32term.c (w32fullscreen_hook): Use FRAME_NORMAL_WIDTH,
+	FRAME_NORMAL_HEIGHT, and FRAME_PREV_FSMODE, instead of static
+	variables, to save and restore frame dimensions.  Use
+	FRAME_NORMAL_LEFT and FRAME_NORMAL_TOP to restore frame position
+	after returning from a 'fullscreen' configuration.  use
+	SendMessage instead of PostMessage to send the SC_RESTORE message,
+	to avoid races between the main thread and the input thread.
+
+	* w32term.h (struct w32_output): New members normal_width,
+	normal_height, normal_top, normal_left, and prev_fsmode.
+	(FRAME_NORMAL_WIDTH, FRAME_NORMAL_HEIGHT, FRAME_NORMAL_TOP)
+	(FRAME_NORMAL_LEFT, FRAME_PREV_FSMODE): New macros to access these
+	members of a frame.
+
+	* w32term.c (w32fullscreen_hook): Record last value of the frame's
+	'fullscreen' parameter.  Always record previous width and height
+	of the frame, except when switching out of maximized modes, so
+	that they could be restored correctly, instead of resetting to the
+	default frame dimensions.  Send SC_RESTORE command to the frame,
+	unless we are going to send SC_MAXIMIZE, to restore the frame
+	resize hints in the mouse pointer shown by the window manager.
+	(Bug#14032)
+
+	* frame.c (get_frame_param): Now extern for WINDOWSNT as well.
+
+	* lisp.h (get_frame_param): Adjust conditions for prototype
+	declaration.
+
+2013-03-22  Ken Brown  <kbrown@cornell.edu>
+
+	* unexcw.c: Drop unneeded inclusion of w32common.h.
+	(report_sheap_usage): Declare.
+	(read_exe_header): Add magic numbers for x86_64.
+	(fixup_executable): Fix printf format specifier for unsigned long
+	argument.
+
+2013-03-22  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	* frame.h (struct frame): Put menu_bar_window under #ifdef
+	because this member is not needed when X toolkit is in use.
+	(fset_menu_bar_window):
+	* dispnew.c (clear_current_matrices, clear_desired_matrices)
+	(free_glyphs, update_frame):
+	* xdisp.c (expose_frame): Likewise.
+	(display_menu_bar): Likewise.  Remove redundant eassert.
+	* window.h (WINDOW_MENU_BAR_P): Always define to 0 if X
+	toolkit is in use.
+
+2013-03-21  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Use functions and constants to manipulate Lisp_Save_Value objects.
+	This replaces code that used macros and strings and token-pasting.
+	The change makes the C source a bit easier to follow,
+	and shrinks the Emacs executable a bit.
+	* alloc.c: Verify some properties of Lisp_Save_Value's representation.
+	(make_save_value): Change 1st arg from string to enum.  All callers
+	changed.
+	(INTX): Remove.
+	(mark_object): Use if, not #if, for GC_MARK_STACK.
+	* lisp.h (SAVE_VALUEP, XSAVE_VALUE, XSAVE_POINTER, XSAVE_INTEGER)
+	(XSAVE_OBJECT): Now functions, not macros.
+	(STRING_BYTES_BOUND): Now just a macro, not a constant too;
+	the constant was never used.
+	(SAVE_SLOT_BITS, SAVE_VALUE_SLOTS, SAVE_TYPE_BITS, SAVE_TYPE_INT_INT)
+	(SAVE_TYPE_INT_INT_INT, SAVE_TYPE_OBJ_OBJ, SAVE_TYPE_OBJ_OBJ_OBJ)
+	(SAVE_TYPE_OBJ_OBJ_OBJ_OBJ, SAVE_TYPE_PTR_INT, SAVE_TYPE_PTR_OBJ)
+	(SAVE_TYPE_PTR_PTR, SAVE_TYPE_PTR_PTR_OBJ, SAVE_TYPE_MEMORY):
+	New constants.
+	(struct Lisp_Save_Value): Replace members area, type0, type1, type2,
+	type3 with a single member save_type.  All uses changed.
+	(save_type, set_save_pointer, set_save_integer): New functions.
+	* print.c (PRINTX): Remove.
+
+	* alloc.c: Remove redundant static declarations.
+
+2013-03-20  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	* window.h (struct window): Convert left_col, top_line, total_lines
+	and total_cols from Lisp_Objects to integers.  Adjust comments.
+	(wset_left_col, wset_top_line, wset_total_cols, wset_total_lines):
+	Remove.
+	(WINDOW_TOTAL_COLS, WINDOW_TOTAL_LINES, WINDOW_LEFT_EDGE_COL)
+	(WINDOW_TOP_EDGE_LINE): Drop Lisp_Object to integer conversion.
+	* dispnew.c, frame.c, w32fns.c, window.c, xdisp.c, xfns.c:
+	Adjust users where appropriate.
+
+2013-03-20  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	* frame.h (struct frame): Drop resx and resy because the same data is
+	available from window system-specific output context.  Adjust users.
+	(default_pixels_per_inch_x, default_pixels_per_inch_y): New
+	functions to provide defaults when no window system available.
+	(FRAME_RES_X, FRAME_RES_Y): New macros.
+	(NUMVAL): Moved from xdisp.c.
+	* font.c (font_pixel_size, font_find_for_lface, font_open_for_lface)
+	(Ffont_face_attributes, Fopen_font):
+	* image.c (gs_load):
+	* w32font.c (fill_in_logfont):
+	* xdisp.c (calc_pixel_width_or_height):
+	* xfaces.c (Fx_family_fonts, set_lface_from_font): Use them.
+	* xsettings.c (apply_xft_settings): Drop frame loop and adjust comment.
+
+2013-03-20  Kenichi Handa  <handa@gnu.org>
+
+	* coding.c (syms_of_coding): Initialize disable_ascii_optimization
+	to 1 (temporary workaround until a bug related to ASCII
+	optimization is fixed).
+
+2013-03-19  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	* window.c (Fwindow_combination_limit, Fset_window_combination_limit):
+	Signal error if window is not internal.  Adjust docstring.
+	(delete_all_child_windows): Use combination_limit to save the buffer.
+	(Fset_window_configuration): Adjust accordingly.
+	* print.c (syms_of_print): Initialize debugging output not here...
+	(init_print_once): ...but in a new function here.
+	* lisp.h (init_print_once): Add prototype.
+	* emacs.c (main): Add call to init_print_once.  Adjust comments.
+
+2013-03-18  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	* window.c (window_resize_check, window_resize_apply)
+	(window_from_coordinates, recombine_windows, set_window_buffer)
+	(make_parent_window, Fwindow_resize_apply, resize_frame_windows)
+	(Fsplit_window_internal, Fdelete_window_internal)
+	(freeze_window_starts): Use bool for booleans.
+	* window.h (window_frame_coordinates, resize_frame_windows)
+	(freeze_window_starts, set_window_buffer): Adjust prototypes.
+
+2013-03-17  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* dispnew.c (bitch_at_user): Use `user-error'.
+
+2013-03-17  Ken Brown  <kbrown@cornell.edu>
+
+	* dispextern.h (RGB_PIXEL_COLOR): Move here from image.c.  Use it
+	as return type of image_background.  (Bug#13981)
+	* image.c (RGB_PIXEL_COLOR): Move to dispextern.h.
+
+2013-03-16  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* nsterm.m (updateFrameSize:): Change resize increments if needed.
+	(ns_select): Don't return with result uninitialized.
+
+	* nsterm.h (EmacsSavePanel, EmacsOpenPanel): Add getFilename
+	and getDirectory.
+
+	* nsfns.m (ns_filename_from_panel, ns_directory_from_panel):
+	New functions.
+	(Fns_read_file_name): ret is BOOL.  If ! dir_only_p, don't choose
+	directories.  If filename is nil, get directory name (Bug#13932).
+	Use getFilename and getDirectory.
+	(getFilename, getDirectory): New methods for EmacsSavePanel and
+	EmacsOpenPanel.
+	(ok:): In EmacsOpenPanel, if we can't choose directories, just return.
+
 2013-03-15  Paul Eggert  <eggert@cs.ucla.edu>
 
 	* coding.c (decode_coding_gap): Fix typo caught by static checking.
@@ -22,10 +292,6 @@
 	Deccode EOL format according to coding->eol_seen.
 	(syms_of_coding): Declare disable-ascii-optimization as a Lisp
 	variable.
-
-	* global.h (struct emacs_globals): New member
-	f_disable_ascii_optimization.
-	(disable_ascii_optimization): New macro.
 
 	* lisp.h (adjust_after_replace): Cancel externing it.
 	(insert_from_gap): Adjust prototype.
@@ -5093,8 +5359,8 @@
 	a public macro and no need to inline by hand.
 
 2012-09-26  Tomohiro Matsuyama  <tomo@cx4a.org>
-            Stefan Monnier  <monnier@iro.umontreal.ca>
-            Juanma Barranquero  <lekktu@gmail.com>
+	    Stefan Monnier  <monnier@iro.umontreal.ca>
+	    Juanma Barranquero  <lekktu@gmail.com>
 
 	* profiler.c: New file.
 	* Makefile.in (base_obj): Add profiler.o.

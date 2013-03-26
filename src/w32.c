@@ -29,10 +29,10 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <ctype.h>
 #include <signal.h>
 #include <sys/file.h>
+#include <time.h>	/* must be before nt/inc/sys/time.h, for MinGW64 */
 #include <sys/time.h>
 #include <sys/utime.h>
 #include <math.h>
-#include <time.h>
 
 /* must include CRT headers *before* config.h */
 
@@ -69,7 +69,8 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <pwd.h>
 #include <grp.h>
 
-#ifdef __GNUC__
+/* MinGW64 (_W64) defines these in its _mingw.h.  */
+#if defined(__GNUC__) && !defined(_W64)
 #define _ANONYMOUS_UNION
 #define _ANONYMOUS_STRUCT
 #endif
@@ -96,6 +97,7 @@ typedef struct _MEMORY_STATUS_EX {
 #ifndef _MSC_VER
 #include <w32api.h>
 #endif
+#if _WIN32_WINNT < 0x0500
 #if !defined (__MINGW32__) || __W32API_MAJOR_VERSION < 3 || (__W32API_MAJOR_VERSION == 3 && __W32API_MINOR_VERSION < 15)
 /* This either is not in psapi.h or guarded by higher value of
    _WIN32_WINNT than what we use.  w32api supplied with MinGW 3.15
@@ -114,6 +116,7 @@ typedef struct _PROCESS_MEMORY_COUNTERS_EX {
   SIZE_T PrivateUsage;
 } PROCESS_MEMORY_COUNTERS_EX,*PPROCESS_MEMORY_COUNTERS_EX;
 #endif
+#endif
 
 #include <winioctl.h>
 #include <aclapi.h>
@@ -127,7 +130,7 @@ typedef struct _PROCESS_MEMORY_COUNTERS_EX {
 #define SDDL_REVISION_1	1
 #endif	/* SDDL_REVISION_1 */
 
-#ifdef _MSC_VER
+#ifndef MAXIMUM_REPARSE_DATA_BUFFER_SIZE
 /* MSVC doesn't provide the definition of REPARSE_DATA_BUFFER and the
    associated macros, except on ntifs.h, which cannot be included
    because it triggers conflicts with other Windows API headers.  So

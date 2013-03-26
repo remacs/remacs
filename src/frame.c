@@ -155,8 +155,8 @@ set_menu_bar_lines_1 (Lisp_Object window, int n)
   struct window *w = XWINDOW (window);
 
   w->last_modified = 0;
-  wset_top_line (w, make_number (XFASTINT (w->top_line) + n));
-  wset_total_lines (w, make_number (XFASTINT (w->total_lines) - n));
+  w->top_line += n;
+  w->total_lines -= n;
 
   /* Handle just the top child in a vertical split.  */
   if (!NILP (w->vchild))
@@ -332,14 +332,14 @@ make_frame (int mini_p)
   SET_FRAME_COLS (f, 10);
   FRAME_LINES (f) = 10;
 
-  wset_total_cols (XWINDOW (root_window), make_number (10));
-  wset_total_lines (XWINDOW (root_window), make_number (mini_p ? 9 : 10));
+  XWINDOW (root_window)->total_cols = 10;
+  XWINDOW (root_window)->total_lines = mini_p ? 9 : 10;
 
   if (mini_p)
     {
-      wset_total_cols (XWINDOW (mini_window), make_number (10));
-      wset_top_line (XWINDOW (mini_window), make_number (9));
-      wset_total_lines (XWINDOW (mini_window), make_number (1));
+      XWINDOW (mini_window)->total_cols = 10;
+      XWINDOW (mini_window)->top_line = 9;
+      XWINDOW (mini_window)->total_lines = 1;
     }
 
   /* Choose a buffer for the frame's root window.  */
@@ -1819,7 +1819,7 @@ See `redirect-frame-focus'.  */)
 /* Return the value of frame parameter PROP in frame FRAME.  */
 
 #ifdef HAVE_WINDOW_SYSTEM
-#if !HAVE_NS
+#if !HAVE_NS && !defined(WINDOWSNT)
 static
 #endif
 Lisp_Object
@@ -3315,13 +3315,13 @@ x_set_alpha (struct frame *f, Lisp_Object arg, Lisp_Object oldval)
       else if (FLOATP (item))
 	{
 	  alpha = XFLOAT_DATA (item);
-	  if (alpha < 0.0 || 1.0 < alpha)
+	  if (alpha < 0.0 || alpha > 1.0)
 	    args_out_of_range (make_float (0.0), make_float (1.0));
 	}
       else if (INTEGERP (item))
 	{
 	  EMACS_INT ialpha = XINT (item);
-	  if (ialpha < 0 || 100 < ialpha)
+	  if (ialpha < 0 || ialpha > 100)
 	    args_out_of_range (make_number (0), make_number (100));
 	  else
 	    alpha = ialpha / 100.0;
@@ -3495,7 +3495,8 @@ The optional arguments COMPONENT and SUBCLASS add to the key and the
 class, respectively.  You must specify both of them or neither.
 If you specify them, the key is `INSTANCE.COMPONENT.ATTRIBUTE'
 and the class is `Emacs.CLASS.SUBCLASS'.  */)
-  (Lisp_Object attribute, Lisp_Object class, Lisp_Object component, Lisp_Object subclass)
+  (Lisp_Object attribute, Lisp_Object class, Lisp_Object component,
+   Lisp_Object subclass)
 {
 #ifdef HAVE_X_WINDOWS
   check_x ();
@@ -3508,7 +3509,9 @@ and the class is `Emacs.CLASS.SUBCLASS'.  */)
 /* Get an X resource, like Fx_get_resource, but for display DPYINFO.  */
 
 Lisp_Object
-display_x_get_resource (Display_Info *dpyinfo, Lisp_Object attribute, Lisp_Object class, Lisp_Object component, Lisp_Object subclass)
+display_x_get_resource (Display_Info *dpyinfo, Lisp_Object attribute,
+			Lisp_Object class, Lisp_Object component,
+			Lisp_Object subclass)
 {
   return xrdb_get_resource (dpyinfo->xrdb,
 			    attribute, class, component, subclass);

@@ -1824,6 +1824,7 @@ if test "${HAVE_X11}" = "yes"; then
   AC_MSG_RESULT($emacs_xkb)
   if test $emacs_xkb = yes; then
     AC_DEFINE(HAVE_XKBGETKEYBOARD, 1, [Define to 1 if you have the XkbGetKeyboard function.])
+    AC_DEFINE(HAVE_XKB, 1, [Define to 1 if you have the Xkb extension.])
   fi
 
   AC_CHECK_FUNCS(XrmSetDatabase XScreenResourceString \
@@ -1882,7 +1883,8 @@ if test "${HAVE_X11}" = "yes"; then
     ## 6.2.8 is the earliest version known to work, but earlier versions
     ## might work - let us know if you find one.
     ## 6.0.7 does not work.  See bug#7955.
-    IMAGEMAGICK_MODULE="Wand >= 6.2.8"
+    ## 6.8.2 makes Emacs crash; see Bug#13867.
+    IMAGEMAGICK_MODULE="Wand >= 6.2.8 Wand != 6.8.2"
     PKG_CHECK_MODULES(IMAGEMAGICK, $IMAGEMAGICK_MODULE, HAVE_IMAGEMAGICK=yes, :)
     AC_SUBST(IMAGEMAGICK_CFLAGS)
     AC_SUBST(IMAGEMAGICK_LIBS)

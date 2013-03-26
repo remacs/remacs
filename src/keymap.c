@@ -611,7 +611,8 @@ map_keymap_internal (Lisp_Object map,
 	}
       else if (CHAR_TABLE_P (binding))
 	map_char_table (map_keymap_char_table_item, Qnil, binding,
-			make_save_value ("ppo", fun, data, args));
+			make_save_value (SAVE_TYPE_PTR_PTR_OBJ,
+					 fun, data, args));
     }
   UNGCPRO;
   return tail;
@@ -2062,7 +2063,7 @@ For an approximate inverse of this, see `kbd'.  */)
     size += XINT (Flength (prefix));
 
   /* This has one extra element at the end that we don't pass to Fconcat.  */
-  if (min (PTRDIFF_MAX, SIZE_MAX) / word_size / 4 < size)
+  if (size > min (PTRDIFF_MAX, SIZE_MAX) / word_size / 4)
     memory_full (SIZE_MAX);
   SAFE_ALLOCA_LISP (args, size * 4);
 

@@ -839,7 +839,7 @@ Lisp_Object
 save_excursion_save (void)
 {
   return make_save_value
-    ("oooo",
+    (SAVE_TYPE_OBJ_OBJ_OBJ_OBJ,
      Fpoint_marker (),
      /* Do not copy the mark if it points to nowhere.  */
      (XMARKER (BVAR (current_buffer, mark))->buffer
@@ -1398,8 +1398,8 @@ hi_time (time_t t)
      no runtime check is needed, and taking care not to convert
      negative numbers to unsigned before comparing them.  */
   if (! ((! TYPE_SIGNED (time_t)
-	  || MOST_NEGATIVE_FIXNUM <= TIME_T_MIN >> 16
-	  || MOST_NEGATIVE_FIXNUM <= hi)
+	  || TIME_T_MIN >> 16 >= MOST_NEGATIVE_FIXNUM
+	  || hi >= MOST_NEGATIVE_FIXNUM)
 	 && (TIME_T_MAX >> 16 <= MOST_POSITIVE_FIXNUM
 	     || hi <= MOST_POSITIVE_FIXNUM)))
     time_overflow ();
@@ -1561,7 +1561,7 @@ decode_time_components (Lisp_Object high, Lisp_Object low, Lisp_Object usec,
 
   if (result)
     {
-      if ((TYPE_SIGNED (time_t) ? TIME_T_MIN >> 16 <= hi : 0 <= hi)
+      if (hi >= (TYPE_SIGNED (time_t) ? TIME_T_MIN >> 16 : 0)
 	  && hi <= TIME_T_MAX >> 16)
 	{
 	  /* Return the greatest representable time that is not greater
@@ -3958,7 +3958,7 @@ usage: (format STRING &rest OBJECTS)  */)
 		   trailing "d").  */
 		pMlen = sizeof pMd - 2
 	      };
-	      verify (0 < USEFUL_PRECISION_MAX);
+	      verify (USEFUL_PRECISION_MAX > 0);
 
 	      int prec;
 	      ptrdiff_t padding, sprintf_bytes;
@@ -4241,7 +4241,10 @@ usage: (format STRING &rest OBJECTS)  */)
 	    memcpy (buf, initial_buffer, used);
 	  }
 	else
-	  XSAVE_POINTER (buf_save_value, 0) = buf = xrealloc (buf, bufsize);
+	  {
+	    buf = xrealloc (buf, bufsize);
+	    set_save_pointer (buf_save_value, 0, buf);
+	  }
 
 	p = buf + used;
       }
