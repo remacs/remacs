@@ -68,8 +68,6 @@ typedef struct x_bitmap_record Bitmap_Record;
 #define GET_PIXEL(ximg, x, y) XGetPixel (ximg, x, y)
 #define NO_PIXMAP None
 
-#define RGB_PIXEL_COLOR unsigned long
-
 #define PIX_MASK_RETAIN	0
 #define PIX_MASK_DRAW	1
 #endif /* HAVE_X_WINDOWS */
@@ -87,8 +85,6 @@ typedef struct x_bitmap_record Bitmap_Record;
 typedef struct w32_bitmap_record Bitmap_Record;
 #define GET_PIXEL(ximg, x, y) GetPixel (ximg, x, y)
 #define NO_PIXMAP 0
-
-#define RGB_PIXEL_COLOR COLORREF
 
 #define PIX_MASK_RETAIN	0
 #define PIX_MASK_DRAW	1
@@ -110,7 +106,6 @@ typedef struct ns_bitmap_record Bitmap_Record;
 #define GET_PIXEL(ximg, x, y) XGetPixel (ximg, x, y)
 #define NO_PIXMAP 0
 
-#define RGB_PIXEL_COLOR unsigned long
 #define ZPixmap 0
 
 #define PIX_MASK_RETAIN	0
@@ -159,15 +154,15 @@ XGetImage (Display *display, Pixmap pixmap, int x, int y,
   return pixmap;
 }
 
-/* use with imgs created by ns_image_for_XPM */
+/* Use with images created by ns_image_for_XPM.  */
 unsigned long
 XGetPixel (XImagePtr ximage, int x, int y)
 {
   return ns_get_pixel (ximage, x, y);
 }
 
-/* use with imgs created by ns_image_for_XPM; alpha set to 1;
-   pixel is assumed to be in form RGB */
+/* Use with images created by ns_image_for_XPM; alpha set to 1;
+   pixel is assumed to be in RGB form.  */
 void
 XPutPixel (XImagePtr ximage, int x, int y, unsigned long pixel)
 {
@@ -7378,11 +7373,10 @@ gif_load (struct frame *f, struct image *img)
 	       y < subimg_height;
 	       y++, row += interlace_increment[pass])
 	    {
-	      if (row >= subimg_height)
+	      while (subimg_height <= row)
 		{
+		  lint_assume (pass < 3);
 		  row = interlace_start[++pass];
-		  while (row >= subimg_height)
-		    row = interlace_start[++pass];
 		}
 
 	      for (x = 0; x < subimg_width; x++)
@@ -8559,10 +8553,10 @@ gs_load (struct frame *f, struct image *img)
      info.  */
   pt_width = image_spec_value (img->spec, QCpt_width, NULL);
   in_width = INTEGERP (pt_width) ? XFASTINT (pt_width) / 72.0 : 0;
-  in_width *= FRAME_X_DISPLAY_INFO (f)->resx;
+  in_width *= FRAME_RES_X (f);
   pt_height = image_spec_value (img->spec, QCpt_height, NULL);
   in_height = INTEGERP (pt_height) ? XFASTINT (pt_height) / 72.0 : 0;
-  in_height *= FRAME_X_DISPLAY_INFO (f)->resy;
+  in_height *= FRAME_RES_Y (f);
 
   if (! (in_width <= INT_MAX && in_height <= INT_MAX
 	 && check_image_size (f, in_width, in_height)))

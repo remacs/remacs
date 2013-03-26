@@ -6075,7 +6075,7 @@ complement_process_encoding_system (Lisp_Object coding_system)
 static Lisp_Object adjust_coding_eol_type (struct coding_system *coding, int eol_seen);
 
 
-/* Return 1 if all the source bytes are ASCII, and return 0 otherwize.
+/* Return true iff all the source bytes are ASCII.
    By side effects, set coding->head_ascii and coding->eol_seen.  The
    value of coding->eol_seen is "logical or" of EOL_SEEN_LF,
    EOL_SEEN_CR, and EOL_SEEN_CRLF, but the value is reliable only when
@@ -10877,7 +10877,7 @@ decode text as usual.  */);
   DEFVAR_BOOL ("disable-ascii-optimization", disable_ascii_optimization,
 	       doc: /* If non-nil, Emacs does not optimize code decoder for ASCII files.
 Internal use only.  Removed after the experimental optimizer gets stable. */);
-  disable_ascii_optimization = 0;
+  disable_ascii_optimization = 1;
 
   DEFVAR_LISP ("translation-table-for-input", Vtranslation_table_for_input,
 	       doc: /* Char table for translating self-inserting characters.

@@ -170,9 +170,11 @@ struct frame
      most recently buried buffer is first.  For last-buffer.  */
   Lisp_Object buried_buffer_list;
 
+#if defined (HAVE_X_WINDOWS) && ! defined (USE_X_TOOLKIT) && ! defined (USE_GTK)
   /* A dummy window used to display menu bars under X when no X
      toolkit support is available.  */
   Lisp_Object menu_bar_window;
+#endif
 
   /* A window used to display the tool-bar of a frame.  */
   Lisp_Object tool_bar_window;
@@ -275,9 +277,6 @@ struct frame
 
   /* Size of the frame window in pixels.  */
   int pixel_height, pixel_width;
-
-  /* Dots per inch of the screen the frame is on.  */
-  double resx, resy;
 
   /* These many pixels are the difference between the outer window (i.e. the
      left and top of the window manager decoration) and FRAME_X_WINDOW. */
@@ -518,11 +517,13 @@ fset_menu_bar_vector (struct frame *f, Lisp_Object val)
 {
   f->menu_bar_vector = val;
 }
+#if defined (HAVE_X_WINDOWS) && ! defined (USE_X_TOOLKIT) && ! defined (USE_GTK)
 FRAME_INLINE void
 fset_menu_bar_window (struct frame *f, Lisp_Object val)
 {
   f->menu_bar_window = val;
 }
+#endif
 FRAME_INLINE void
 fset_name (struct frame *f, Lisp_Object val)
 {
@@ -569,6 +570,26 @@ fset_tool_bar_window (struct frame *f, Lisp_Object val)
   f->tool_bar_window = val;
 }
 
+#define NUMVAL(X) ((INTEGERP (X) || FLOATP (X)) ? XFLOATINT (X) : -1)
+
+FRAME_INLINE double
+default_pixels_per_inch_x (void)
+{
+  Lisp_Object v = (CONSP (Vdisplay_pixels_per_inch)
+		   ? XCAR (Vdisplay_pixels_per_inch)
+		   : Vdisplay_pixels_per_inch);
+  return NUMVAL (v) > 0 ? NUMVAL (v) : 72.0;
+}
+
+FRAME_INLINE double
+default_pixels_per_inch_y (void)
+{
+  Lisp_Object v = (CONSP (Vdisplay_pixels_per_inch)
+		   ? XCDR (Vdisplay_pixels_per_inch)
+		   : Vdisplay_pixels_per_inch);
+  return NUMVAL (v) > 0 ? NUMVAL (v) : 72.0;
+}
+
 #define FRAME_KBOARD(f) ((f)->terminal->kboard)
 
 /* Return a pointer to the image cache of frame F.  */
@@ -602,6 +623,37 @@ typedef struct frame *FRAME_PTR;
 #else
 #define FRAME_NS_P(f) ((f)->output_method == output_ns)
 #endif
+
+/* Dots per inch of the screen the frame F is on.  */
+
+#ifdef HAVE_X_WINDOWS
+#define FRAME_RES_X(f)						\
+  (eassert (FRAME_X_P (f)), FRAME_X_DISPLAY_INFO (f)->resx)
+#define FRAME_RES_Y(f)						\
+  (eassert (FRAME_X_P (f)), FRAME_X_DISPLAY_INFO (f)->resy)
+#endif
+
+#ifdef HAVE_NTGUI
+#define FRAME_RES_X(f)						\
+  (eassert (FRAME_W32_P (f)), FRAME_W32_DISPLAY_INFO (f)->resx)
+#define FRAME_RES_Y(f)						\
+  (eassert (FRAME_W32_P (f)), FRAME_W32_DISPLAY_INFO (f)->resy)
+#endif
+
+#ifdef HAVE_NS
+#define FRAME_RES_X(f)						\
+  (eassert (FRAME_NS_P (f)), FRAME_NS_DISPLAY_INFO (f)->resx)
+#define FRAME_RES_Y(f)						\
+  (eassert (FRAME_NS_P (f)), FRAME_NS_DISPLAY_INFO (f)->resy)
+#endif
+
+/* Defaults when no window system available.  */
+
+#ifndef FRAME_RES_X
+#define FRAME_RES_X(f) default_pixels_per_inch_x ()
+#define FRAME_RES_Y(f) default_pixels_per_inch_y ()
+#endif
+
 /* FRAME_WINDOW_P tests whether the frame is a window, and is
    defined to be the predicate for the window system being used.  */
 

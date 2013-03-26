@@ -1,3 +1,269 @@
+2013-03-26  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* desktop.el (desktop--v2s): Rename from desktop-internal-v2s.
+	Change return value to be a sexp.  Delay `get-buffer' to after
+	restoring the desktop (bug#13951).
+
+2013-03-26  Leo Liu  <sdl.web@gmail.com>
+
+	* register.el: Move semantic tag handling back to
+	cedet/semantic/senator.el.  (Bug#14052)
+
+2013-03-26  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* eshell/em-prompt.el (eshell-emit-prompt): Make sure we can't insert
+	into the prompt either (bug#13963).
+
+2013-03-25  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* font-lock.el (lisp-font-lock-keywords-2): Don't highlight the "error"
+	part of "(error-foo)".
+
+2013-03-24  Juri Linkov  <juri@jurta.org>
+
+	* replace.el (list-matching-lines-prefix-face): New defcustom.
+	(occur-1): Pass `list-matching-lines-prefix-face' to the function
+	`occur-engine' if `face-differs-from-default-p' returns t.
+	(occur-engine): Add `,' inside backquote construct to evaluate
+	`prefix-face'.  Propertize the prefix with the `prefix-face' face.
+	Pass `prefix-face' to the functions `occur-context-lines' and
+	`occur-engine-add-prefix'.
+	(occur-engine-add-prefix, occur-context-lines): Add optional arg
+	`prefix-face' and propertize the prefix with `prefix-face'.
+	(Bug#14017)
+
+2013-03-24  Leo Liu  <sdl.web@gmail.com>
+
+	* nxml/rng-valid.el (rng-validate-while-idle)
+	(rng-validate-quick-while-idle): Guard against deleted buffer.
+	(Bug#13999)
+
+	* emacs-lisp/edebug.el (edebug-mode): Make sure edebug-kill-buffer
+	is the last entry in kill-buffer-hook.
+
+	* files.el (kill-buffer-hook): Doc fix.
+
+2013-03-23  Dmitry Gutov  <dgutov@yandex.ru>
+
+	* emacs-lisp/lisp-mode.el (emacs-lisp-docstring-fill-column):
+	Make it safe-local.
+
+	* vc/diff-mode.el (diff-mode-shared-map): Unbind "/" (Bug#14034).
+
+2013-03-23  Leo Liu  <sdl.web@gmail.com>
+
+	* nxml/nxml-util.el (nxml-with-unmodifying-text-property-changes):
+	Remove.
+
+	* nxml/rng-valid.el (rng-validate-mode)
+	(rng-after-change-function, rng-do-some-validation):
+	* nxml/rng-maint.el (rng-validate-buffer):
+	* nxml/nxml-rap.el (nxml-tokenize-forward, nxml-ensure-scan-up-to-date):
+	* nxml/nxml-outln.el (nxml-show-all, nxml-set-outline-state):
+	* nxml/nxml-mode.el (nxml-mode, nxml-degrade, nxml-after-change)
+	(nxml-extend-after-change-region): Use with-silent-modifications.
+
+	* nxml/rng-nxml.el (rng-set-state-after): Do not let-bind
+	timer-idle-list.
+
+	* nxml/rng-valid.el (rng-validate-while-idle-continue-p)
+	(rng-next-error-1, rng-previous-error-1): Do not let-bind
+	timer-idle-list.  (Bug#13999)
+
+2013-03-23  Juri Linkov  <juri@jurta.org>
+
+	* info.el (info-index-match): New face.
+	(Info-index, Info-apropos-matches): Add a nested subgroup to the
+	main pattern and add text properties with the new face to matches
+	in index entries relative to the beginning of the index entry.
+	(Bug#14015)
+
+2013-03-21  Eric Ludlam  <zappo@gnu.org>
+
+	* eieio/eieio-datadebug.el (data-debug/eieio-insert-slots):
+	Inhibit read only while inserting objects.
+
+2013-03-22  Teodor Zlatanov  <tzz@lifelogs.com>
+
+	* progmodes/cfengine.el: Update docs to mention
+	`cfengine-auto-mode'.  Use \_> and \_< instead of \> and \< for
+	symbol motion.  Remove "_" from the word syntax.
+
+2013-03-21  Teodor Zlatanov  <tzz@lifelogs.com>
+
+	* progmodes/cfengine.el (cfengine-common-syntax): Add "_" to word
+	syntax for both `cfengine2-mode' and `cfengine3-mode'.
+
+2013-03-20  Juri Linkov  <juri@jurta.org>
+
+	* info.el (Info-next-reference-or-link)
+	(Info-prev-reference-or-link): New functions.
+	(Info-next-reference, Info-prev-reference): Use them.
+	(Info-try-follow-nearest-node): Handle footnote navigation.
+	(Info-fontify-node): Fontify footnotes.  (Bug#13989)
+
+2013-03-20  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* subr.el (posn-point, posn-string): Fix it here instead (bug#13979).
+	* mouse.el (mouse-on-link-p): Undo scroll-bar fix.
+
+2013-03-20  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Suppress unnecessary non-ASCII chatter during build process.
+	* international/ja-dic-cnv.el (skkdic-collect-okuri-nasi)
+	(batch-skkdic-convert): Suppress most of the chatter.
+	It's not needed so much now that machines are faster,
+	and its non-ASCII component was confusing; see Dmitry Gutov in
+	<http://lists.gnu.org/archive/html/emacs-devel/2013-03/msg00508.html>.
+
+2013-03-20  Leo Liu  <sdl.web@gmail.com>
+
+	* ido.el (ido-chop): Fix bug#10994.
+
+2013-03-19  Dmitry Gutov  <dgutov@yandex.ru>
+
+	* whitespace.el (whitespace-font-lock, whitespace-font-lock-mode):
+	Remove vars.
+	(whitespace-color-on, whitespace-color-off):
+	Use `font-lock-fontify-buffer' (Bug#13817).
+
+2013-03-19  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* mouse.el (mouse--down-1-maybe-follows-link): Fix follow-link
+	remapping in mode-line.
+	(mouse-on-link-p): Also check [mode-line follow-link] bindings.
+
+2013-03-19  Dmitry Gutov  <dgutov@yandex.ru>
+
+	* whitespace.el (whitespace-color-on): Use `prepend' OVERRIDE
+	value for `whitespace-line' face (Bug#13875).
+	(whitespace-font-lock-keywords): Change description.
+	(whitespace-color-on): Don't save `font-lock-keywords' value, save
+	the constructed keywords instead.
+	(whitespace-color-off): Use `font-lock-remove-keywords' (Bug#13817).
+
+2013-03-19  Leo Liu  <sdl.web@gmail.com>
+
+	* progmodes/compile.el (compilation-display-error): New command.
+	(compilation-mode-map, compilation-minor-mode-map): Bind it to
+	C-o.  (Bug#13992)
+
+2013-03-18  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* term/x-win.el (x-keysym-pair): Add a Fixme (Bug#13936).
+
+2013-03-18  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* mouse.el (mouse-on-link-p): Check for scroll bar (Bug#13979).
+
+2013-03-18  Michael Albinus  <michael.albinus@gmx.de>
+
+	* net/tramp-compat.el (tramp-compat-user-error): New defun.
+
+	* net/tramp-adb.el (tramp-adb-handle-shell-command):
+	* net/tramp-gvfs.el (top):
+	* net/tramp.el (tramp-find-method, tramp-dissect-file-name)
+	(tramp-handle-shell-command): Use it.
+	(tramp-dissect-file-name): Raise an error when hostname is a
+	method name, and neither method nor user is specified.
+
+	* net/trampver.el: Update release number.
+
+2013-03-18  Leo Liu  <sdl.web@gmail.com>
+
+	Make sure eldoc can be turned off properly.
+	* emacs-lisp/eldoc.el (eldoc-schedule-timer): Conditionalize on
+	eldoc-mode.
+	(eldoc-display-message-p): Revert last change.
+	(eldoc-display-message-no-interference-p)
+	(eldoc-print-current-symbol-info): Tweak.
+
+2013-03-18  Tassilo Horn  <tsdh@gnu.org>
+
+	* doc-view.el (doc-view-new-window-function): Check the new window
+	overlay's display property instead the char property of the
+	buffer's first char.  Use `with-selected-window' instead of
+	`save-window-excursion' with `select-window'.
+	(doc-view-document->bitmap): Check the current doc-view overlay's
+	display property instead the char property of the buffer's first char.
+
+2013-03-18  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Automate the build of ja-dic.el (Bug#13984).
+	* international/ja-dic-cnv.el (skkdic-convert): Remove the annotations
+	from the input, rather than assume that it's been done for us by the
+	SKK script unannotate.awk.  Switch ja-dic.el to UTF-8.  Don't put
+	the current date into a ja-dic.el comment, as that complicates
+	regression testing.
+
+2013-03-18  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* whitespace.el: Fix double evaluation.
+	(whitespace-space, whitespace-hspace, whitespace-tab)
+	(whitespace-newline, whitespace-trailing, whitespace-line)
+	(whitespace-space-before-tab, whitespace-indentation)
+	(whitespace-empty, whitespace-space-after-tab): Turn defcustoms into
+	obsolete defvars.
+	(whitespace-hspace-regexp): Fix regexp for emacs-unicode.
+	(whitespace-color-on): Use a single font-lock-add-keywords call.
+	Fix double-evaluation of face variables.
+
+2013-03-17  Michael Albinus  <michael.albinus@gmx.de>
+
+	* net/tramp-adb.el (tramp-adb-parse-device-names):
+	Use `start-process' instead of `call-process'.  Otherwise, the
+	function might be blocked under MS Windows.  (Bug#13299)
+
+2013-03-17  Leo Liu  <sdl.web@gmail.com>
+
+	Extend eldoc to display info in the mode-line.  (Bug#13978)
+	* emacs-lisp/eldoc.el (eldoc-post-insert-mode): New minor mode.
+	(eldoc-mode-line-string): New variable.
+	(eldoc-minibuffer-message): New function.
+	(eldoc-message-function): New variable.
+	(eldoc-message): Use it.
+	(eldoc-display-message-p)
+	(eldoc-display-message-no-interference-p):
+	Support eldoc-post-insert-mode.
+
+	* simple.el (eval-expression-minibuffer-setup-hook): New hook.
+	(eval-expression): Run it.
+
+2013-03-17  Roland Winkler  <winkler@gnu.org>
+
+	* emacs-lisp/crm.el (completing-read-multiple): Ignore empty
+	strings in the list of return values.
+
+2013-03-17  Jay Belanger  <jay.p.belanger@gmail.com>
+
+	* calc/calc-ext.el (math-read-number-fancy): Check for an explicit
+	radix before checking for HMS forms.
+
+2013-03-16  Leo Liu  <sdl.web@gmail.com>
+
+	* progmodes/scheme.el: Add indentation and font-locking for λ.
+	(Bug#13975)
+
+2013-03-16  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* emacs-lisp/smie.el (smie-auto-fill): Don't inf-loop if there's no
+	token before point (bug#13942).
+
+2013-03-16  Leo Liu  <sdl.web@gmail.com>
+
+	* thingatpt.el (end-of-sexp): Fix bug#13952.  Use syntax-after.
+
+2013-03-16  Glenn Morris  <rgm@gnu.org>
+
+	* Version 24.3 released.
+
+2013-03-16  Eli Zaretskii  <eliz@gnu.org>
+
+	* startup.el (command-line-normalize-file-name): Fix handling of
+	backslashes in DOS and Windows file names.  Reported by Xue Fuqiao
+	<xfq.free@gmail.com> in
+	http://lists.gnu.org/archive/html/help-gnu-emacs/2013-03/msg00245.html.
+
 2013-03-15  Michael Albinus  <michael.albinus@gmx.de>
 
 	Sync with Tramp 2.2.7.
@@ -563,6 +829,11 @@
 	* textmodes/ispell.el (ispell-highlight-spelling-error-overlay):
 	Let-bind `isearch-other-end' to `start', `isearch-forward' to t
 	and `isearch-error' to nil.
+
+2013-03-16  Fabián Ezequiel Gallina  <fgallina@cuca>
+
+	* progmodes/python.el (python-info-current-defun):
+	Enhance match-data cluttering prevention.
 
 2013-02-22  Michael Albinus  <michael.albinus@gmx.de>
 
