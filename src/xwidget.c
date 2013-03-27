@@ -901,7 +901,13 @@ xwidget_init_view (struct xwidget *xww,
 #endif
 
 
-  } else {
+  } else     //xwgir sanity checks:
+    if(Fget(xww->type, Qcxwgir_class) == Qnil){
+      printf("error, Fget(xww->type, Qcxwgir_class) was nil\n");
+      //we cant just return null here, because drawing will crash later.
+      //currently just display an error component, and stop furher xwgir handling
+      xv->widget = gtk_button_new_with_label ("xwgir failed");
+    } else {
     //here we have run out of hard coded symbols, we will now attempt to create
     //a widget dynamically
     //TODO
@@ -909,7 +915,11 @@ xwidget_init_view (struct xwidget *xww,
     // - support constructor args
     // - support signals
     // - check that the argument widget type actually exists
-    printf("xwgir symbol %s %s %s:\n",SDATA(SYMBOL_NAME(xww->type)),     SDATA(Fcar(Fcdr(Fget(xww->type, Qcxwgir_class)))), SDATA(Fcar(Fget(xww->type, Qcxwgir_class))));
+
+    printf("xwgir symbol %s %s %s:\n",
+           SDATA(SYMBOL_NAME(xww->type)),
+           SDATA(Fcar(Fcdr(Fget(xww->type, Qcxwgir_class)))),
+           SDATA(Fcar(Fget(xww->type, Qcxwgir_class))));
     //xv->widget = xwgir_create ("Button");
     Fcar(Fget(xww->type, Qcxwgir_class));
     xv->widget = xwgir_create(    SDATA(Fcar(Fcdr(Fget(xww->type, Qcxwgir_class)))),

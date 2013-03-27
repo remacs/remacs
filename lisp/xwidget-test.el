@@ -76,7 +76,9 @@
               (xwidget-insert (point-min)  'xwgir "xwgir" 1000  1000)
               (define-key (current-local-map) [xwidget-event] 'xwidget-handler-demo-basic))
 
-(xwidget-demo "a-xwgir-color-button" 
+(xwidget-demo "a-xwgir-color-button"
+               (xwgir-require-namespace "Gtk" "3.0")
+               (put 'ColorButton :xwgir-class '("Gtk" "ColorSelection"))
               (xwidget-insert (point-min)  'ColorButton "xwgir-color-button" 1000  1000)
               (define-key (current-local-map) [xwidget-event] 'xwidget-handler-demo-basic))
 
