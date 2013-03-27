@@ -179,7 +179,7 @@ gboolean webkit_osr_navigation_policy_decision_requested_callback(WebKitWebView 
                                                         WebKitWebNavigationAction *navigation_action,
                                                         WebKitWebPolicyDecision   *policy_decision,
                                                                   gpointer                   user_data);
-
+GtkWidget* xwgir_create(char* class, char* namespace);
   
 DEFUN ("make-xwidget", Fmake_xwidget, Smake_xwidget, 7, 7, 0,
          doc: /* xw */
@@ -297,6 +297,49 @@ DEFUN ("make-xwidget", Fmake_xwidget, Smake_xwidget, 7, 7, 0,
 
   }
 
+
+  ////////////////////////////////////////////////////////
+  if(Fget(xw->type, Qcxwgir_class) != Qnil){
+    //here we have run out of hard coded symbols, we will now attempt to create
+    //a widget dynamically
+    //TODO
+    // - support OSR
+    // - support constructor args
+    // - support signals
+    // - check that the argument widget type actually exists
+    printf("init xwgir osr\n");
+    block_input();
+    xw->widgetwindow_osr = GTK_CONTAINER (gtk_offscreen_window_new ());
+    gtk_window_resize(    GTK_WINDOW(xw->widgetwindow_osr), xw->width, xw->height);
+    
+    printf("xwgir symbol %s %s %s:\n",
+           SDATA(SYMBOL_NAME(xw->type)),
+           SDATA(Fcar(Fcdr(Fget(xw->type, Qcxwgir_class)))),
+           SDATA(Fcar(Fget(xw->type, Qcxwgir_class))));
+    //xv->widget = xwgir_create ("Button");
+    Fcar(Fget(xw->type, Qcxwgir_class));
+    xw->widget_osr = xwgir_create(    SDATA(Fcar(Fcdr(Fget(xw->type, Qcxwgir_class)))),
+                                      SDATA(Fcar(Fget(xw->type, Qcxwgir_class))));
+
+    gtk_widget_set_size_request (GTK_WIDGET (xw->widget_osr), xw->width, xw->height);
+    gtk_container_add (xw->widgetwindow_osr, xw->widget_osr);
+
+    gtk_widget_show_all (GTK_WIDGET (xw->widgetwindow_osr));
+
+    /* store some xwidget data in the gtk widgets for convenient retrieval in the event handlers. */
+    g_object_set_data (G_OBJECT (xw->widget_osr), XG_XWIDGET, (gpointer) (xw));
+    g_object_set_data (G_OBJECT (xw->widgetwindow_osr), XG_XWIDGET, (gpointer) (xw));
+    /* signals */
+    g_signal_connect (G_OBJECT ( xw->widgetwindow_osr), "damage-event",    G_CALLBACK (webkit_osr_damage_event_callback), NULL);
+
+    
+    unblock_input();
+  }
+
+  ////////////////////////////////////////////////////////
+  
+
+  
   UNGCPRO;
   return val;
 }
@@ -877,8 +920,12 @@ xwidget_init_view (struct xwidget *xww,
     /* Show the stage: */
     clutter_actor_show (stage);
 #endif
-  } else if (EQ(xww->type, Qwebkit_osr)||EQ(xww->type, Qsocket_osr)) {
-#ifdef HAVE_WEBKIT_OSR
+  } else if (EQ(xww->type, Qwebkit_osr)||
+             EQ(xww->type, Qsocket_osr)||
+             (Fget(xww->type, Qcxwgir_class) != Qnil))//xwgir widgets are OSR
+    {
+#ifdef HAVE_WEBKIT_OSR //TODO the ifdef isnt really relevant anymore, we always have osr
+      printf("osr init:%s\n",SDATA(SYMBOL_NAME(xww->type)));
     xv->widget = gtk_drawing_area_new();
     gtk_widget_set_app_paintable ( xv->widget, TRUE); //because expose event handling
     gtk_widget_add_events(xv->widget,
@@ -901,32 +948,7 @@ xwidget_init_view (struct xwidget *xww,
 #endif
 
 
-  } else     //xwgir sanity checks:
-    if(Fget(xww->type, Qcxwgir_class) == Qnil){
-      printf("error, Fget(xww->type, Qcxwgir_class) was nil\n");
-      //we cant just return null here, because drawing will crash later.
-      //currently just display an error component, and stop furher xwgir handling
-      xv->widget = gtk_button_new_with_label ("xwgir failed");
-    } else {
-    //here we have run out of hard coded symbols, we will now attempt to create
-    //a widget dynamically
-    //TODO
-    // - support OSR
-    // - support constructor args
-    // - support signals
-    // - check that the argument widget type actually exists
-
-    printf("xwgir symbol %s %s %s:\n",
-           SDATA(SYMBOL_NAME(xww->type)),
-           SDATA(Fcar(Fcdr(Fget(xww->type, Qcxwgir_class)))),
-           SDATA(Fcar(Fget(xww->type, Qcxwgir_class))));
-    //xv->widget = xwgir_create ("Button");
-    Fcar(Fget(xww->type, Qcxwgir_class));
-    xv->widget = xwgir_create(    SDATA(Fcar(Fcdr(Fget(xww->type, Qcxwgir_class)))),
-                                  SDATA(Fcar(Fget(xww->type, Qcxwgir_class))));
-
-  }
-
+  } 
     //else return NULL;
 
   //widget realization
