@@ -77,24 +77,19 @@
               (define-key (current-local-map) [xwidget-event] 'xwidget-handler-demo-basic))
 
 (xwidget-demo "a-xwgir-color-button"
-               (xwgir-require-namespace "Gtk" "3.0")
-               (put 'ColorButton :xwgir-class '("Gtk" "ColorSelection"))
+              (xwgir-require-namespace "Gtk" "3.0")
+              (put 'ColorButton :xwgir-class '("Gtk" "ColorSelection"))
               (xwidget-insert (point-min)  'ColorButton "xwgir-color-button" 1000  1000)
               (define-key (current-local-map) [xwidget-event] 'xwidget-handler-demo-basic))
 
-(xwidget-demo "a-xwgir-button" 
-              (xwidget-insert (point-min)  'Button "xwgir-button" 100  100)
+(xwidget-demo "a-xwgir-button"
+              (xwgir-require-namespace "Gtk" "3.0")
+              (put 'xwgirButton :xwgir-class '("Gtk" "Button"))
+
+              (xwidget-insert (point-min)  'xwgirButton "xwgir label didnt work..." 200  100)
+              (xwgir-call-method (xwidget-at 1) "set_label" '( "xwgir label worked!"))
               (define-key (current-local-map) [xwidget-event] 'xwidget-handler-demo-basic))
 
-
-(defun xwgir-test ()
-  (interactive)
-  (xwgir-require-namespace "Gtk" "3.0")
-  (put 'color-selection :xwgir-class '("Gtk" "ColorSelection"))
-  
-  (xwgir-demo-a-xwgir-button)
-  (xwgir-call-method (xwidget-at 1) "set_label" '( "xwgir set label!"))
-  )
 
 
 ;; tentative testcase:

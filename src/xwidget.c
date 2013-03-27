@@ -614,7 +614,7 @@ webkit_osr_navigation_policy_decision_requested_callback(WebKitWebView          
   return FALSE;
 }
 
-//for gtk3 webkit_osr
+//for gtk3 offscreen rendered widgets
 gboolean
 xwidget_osr_draw_callback (GtkWidget *widget, cairo_t *cr, gpointer data)
 {
