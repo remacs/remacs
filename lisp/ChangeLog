@@ -1,3 +1,25 @@
+2013-03-27  Eli Zaretskii  <eliz@gnu.org>
+
+	* facemenu.el (list-colors-callback): New defvar.
+	(list-colors-redisplay): New function.
+	(list-colors-display): Install list-colors-redisplay as the
+	revert-buffer-function.  (Bug#14063)
+
+2013-03-27  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* minibuffer.el (completion-pcm--merge-completions): Make sure prefixes
+	and suffixes don't overlap (bug#14061).
+
+	* case-table.el: Use lexical-binding.
+	(case-table-get-table): New function.
+	(get-upcase-table): Use it.  Mark as obsolete.  Adjust callers.
+
+2013-03-27  Teodor Zlatanov  <tzz@lifelogs.com>
+
+	* progmodes/subword.el: Add `superword-mode' to do word motion
+	over symbol_words (parallels and leverages `subword-mode' which
+	does word motion inside MixedCaseWords).
+
 2013-03-26  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* desktop.el (desktop--v2s): Rename from desktop-internal-v2s.
