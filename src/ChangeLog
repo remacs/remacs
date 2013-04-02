@@ -1,3 +1,20 @@
+2013-03-27  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* casetab.c (init_casetab_once): Don't abuse the ascii eqv table for
+	the upcase table.
+
+2013-03-27  rzl24ozi  <rzl24ozi@gmail.com>  (tiny changes)
+
+	* image.c [WINDOWSNT]: Fix calls to DEF_IMGLIB_FN for SVG function.
+
+2013-03-27  Eli Zaretskii  <eliz@gnu.org>
+
+	* w32proc.c (IsValidLocale) [__GNUC__]: Don't declare prototype,
+	since MinGW's w32api headers do.  This avoids compiler warnings.
+
+	* w32.c (FSCTL_GET_REPARSE_POINT) [_MSC_VER || _W64]: Don't define
+	if already defined.
+
 2013-03-26  Eli Zaretskii  <eliz@gnu.org>
 
 	* w32.c (_REPARSE_DATA_BUFFER): Condition by _MSVC and _W64.
