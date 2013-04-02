@@ -86,8 +86,22 @@
               (xwgir-require-namespace "Gtk" "3.0")
               (put 'xwgirButton :xwgir-class '("Gtk" "Button"))
 
-              (xwidget-insert (point-min)  'xwgirButton "xwgir label didnt work..." 200  100)
+              (xwidget-insert (point-min)  'xwgirButton "xwgir label didnt work..." 700  700)
               (xwgir-call-method (xwidget-at 1) "set_label" '( "xwgir label worked!"))
+              (define-key (current-local-map) [xwidget-event] 'xwidget-handler-demo-basic))
+
+(xwidget-demo "a-xwgir-check-button"
+              (xwgir-require-namespace "Gtk" "3.0")
+              (put 'xwgirCheckButton :xwgir-class '("Gtk" "CheckButton"))
+
+              (xwidget-insert (point-min)  'xwgirCheckButton "xwgir label didnt work..." 700  700)
+              (define-key (current-local-map) [xwidget-event] 'xwidget-handler-demo-basic))
+
+(xwidget-demo "a-xwgir-webkit"
+              (xwgir-require-namespace "WebKit" "3.0")
+              (put 'xwgirWebkit :xwgir-class '("WebKit" "WebView"))
+
+              (xwidget-insert (point-min)  'xwgirWebkit "xwgir webkit..." 700  700)
               (define-key (current-local-map) [xwidget-event] 'xwidget-handler-demo-basic))
 
 
@@ -132,13 +146,12 @@
 ;try the openvrml:
 ;/usr/libexec/openvrml-xembed 0 ~/Desktop/HelloWorld.wrl
 
-
 (defun xwidget-handler-demo-basic ()
   (interactive)
   (message "stuff happened to xwidget %S" last-input-event)
   (let*
-      ((xwidget-event-type (nth 2 last-input-event))
-       (xwidget (nth 1 last-input-event)))
+      ((xwidget-event-type (nth 1 last-input-event))
+       (xwidget (nth 2 last-input-event)))
     (cond ( (eq xwidget-event-type 'xembed-ready)
             (let*
                 ((xembed-id (nth 3 last-input-event)))
@@ -146,7 +159,7 @@
               ;;will start emacs/uzbl in a xembed socket when its ready
               (cond
                (t;;(eq 3 xwidget)
-                (start-process "xembed" "*xembed*" (format "%s/src/emacs" default-directory) "-q" "--parent-id" (number-to-string xembed-id) ) )
+                (start-process "xembed" "*xembed*" "/var/lib/jenkins/jobs/emacs-xwidgets-automerge/workspace/src/emacs" "-q" "--parent-id" (number-to-string xembed-id) ) )
 ;;               ((eq 5 xwidget-id)
 ;;                (start-process "xembed2" "*xembed2*" "uzbl-core"  "-s" (number-to-string xembed-id)  "http://www.fsf.org" )
                )

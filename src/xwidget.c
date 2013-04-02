@@ -149,7 +149,7 @@ extern Lisp_Object QCwidth, QCheight;
 
 struct xwidget_view* xwidget_view_lookup(struct xwidget* xw,     struct window *w);
 Lisp_Object xwidget_spec_value ( Lisp_Object spec, Lisp_Object  key,  int *found);
-gboolean webkit_osr_damage_event_callback (GtkWidget *widget, GdkEventExpose *event, gpointer data) ;
+gboolean xwidget_osr_damage_event_callback (GtkWidget *widget, GdkEventExpose *event, gpointer data) ;
 gboolean webkit_osr_key_event_callback (GtkWidget *widget, GdkEventKey *event, gpointer data) ;
 void     webkit_osr_document_load_finished_callback (WebKitWebView  *webkitwebview,
                                                      WebKitWebFrame *arg1,
@@ -179,6 +179,12 @@ gboolean webkit_osr_navigation_policy_decision_requested_callback(WebKitWebView 
                                                         WebKitWebNavigationAction *navigation_action,
                                                         WebKitWebPolicyDecision   *policy_decision,
                                                                   gpointer                   user_data);
+
+gboolean
+xwgir_event_callback (GtkWidget *widget,
+                      GdkEvent  *event,
+                      gpointer   user_data);
+
 GtkWidget* xwgir_create(char* class, char* namespace);
   
 DEFUN ("make-xwidget", Fmake_xwidget, Smake_xwidget, 7, 7, 0,
@@ -215,13 +221,23 @@ DEFUN ("make-xwidget", Fmake_xwidget, Smake_xwidget, 7, 7, 0,
   /* DIY mvc. widget is rendered offscreen,
      later bitmap copied to the views.
    */
-  if (EQ(xw->type, Qwebkit_osr)){
-    printf("init webkit osr\n");
+  if (EQ(xw->type, Qwebkit_osr)||
+      EQ(xw->type, Qsocket_osr)||
+      (Fget(xw->type, Qcxwgir_class) != Qnil)){
+    printf("init osr widget\n");
     block_input();
     xw->widgetwindow_osr = GTK_CONTAINER (gtk_offscreen_window_new ());
     gtk_window_resize(    GTK_WINDOW(xw->widgetwindow_osr), xw->width, xw->height);
-    xw->widget_osr = webkit_web_view_new();
 
+    if (EQ(xw->type, Qwebkit_osr))
+      xw->widget_osr = webkit_web_view_new();
+    if(EQ(xw->type, Qsocket_osr))
+      xw->widget_osr = gtk_socket_new();    
+    if(Fget(xw->type, Qcxwgir_class) != Qnil)
+      xw->widget_osr = xwgir_create(    SDATA(Fcar(Fcdr(Fget(xw->type, Qcxwgir_class)))),
+                                        SDATA(Fcar(Fget(xw->type, Qcxwgir_class))));
+
+    
     gtk_widget_set_size_request (GTK_WIDGET (xw->widget_osr), xw->width, xw->height);
     gtk_container_add (xw->widgetwindow_osr, xw->widget_osr);
 
@@ -231,110 +247,122 @@ DEFUN ("make-xwidget", Fmake_xwidget, Smake_xwidget, 7, 7, 0,
     g_object_set_data (G_OBJECT (xw->widget_osr), XG_XWIDGET, (gpointer) (xw));
     g_object_set_data (G_OBJECT (xw->widgetwindow_osr), XG_XWIDGET, (gpointer) (xw));
     /* signals */
-    g_signal_connect (G_OBJECT ( xw->widgetwindow_osr), "damage-event",    G_CALLBACK (webkit_osr_damage_event_callback), NULL);
+    g_signal_connect (G_OBJECT ( xw->widgetwindow_osr), "damage-event",    G_CALLBACK (xwidget_osr_damage_event_callback), NULL);
 
     //TODO these were just a test hack
     /* g_signal_connect (G_OBJECT ( xw->widget_osr), "key-press-event",    G_CALLBACK (webkit_osr_key_event_callback), NULL); */
     /* g_signal_connect (G_OBJECT ( xw->widget_osr), "key-release-event",    G_CALLBACK (webkit_osr_key_event_callback), NULL);     */
 
-    g_signal_connect (G_OBJECT ( xw->widget_osr),
-                      "document-load-finished",
-                      G_CALLBACK (webkit_osr_document_load_finished_callback),
-                      xw);    
+    if (EQ(xw->type, Qwebkit_osr)){
+      g_signal_connect (G_OBJECT ( xw->widget_osr),
+                        "document-load-finished",
+                        G_CALLBACK (webkit_osr_document_load_finished_callback),
+                        xw);    
+      
+      g_signal_connect (G_OBJECT ( xw->widget_osr),
+                        "download-requested",
+                        G_CALLBACK (webkit_osr_download_callback),
+                        xw);    
 
-    g_signal_connect (G_OBJECT ( xw->widget_osr),
-                      "download-requested",
-                      G_CALLBACK (webkit_osr_download_callback),
-                      xw);    
+      g_signal_connect (G_OBJECT ( xw->widget_osr),
+                        "mime-type-policy-decision-requested",
+                        G_CALLBACK (webkit_osr_mime_type_policy_typedecision_requested_callback),
+                        xw);    
 
-    g_signal_connect (G_OBJECT ( xw->widget_osr),
-                      "mime-type-policy-decision-requested",
-                      G_CALLBACK (webkit_osr_mime_type_policy_typedecision_requested_callback),
-                      xw);    
+      g_signal_connect (G_OBJECT ( xw->widget_osr),
+                        "new-window-policy-decision-requested",
+                        G_CALLBACK (webkit_osr_new_window_policy_decision_requested_callback),
+                        xw);    
 
-    g_signal_connect (G_OBJECT ( xw->widget_osr),
-                      "new-window-policy-decision-requested",
-                      G_CALLBACK (webkit_osr_new_window_policy_decision_requested_callback),
-                      xw);    
+      g_signal_connect (G_OBJECT ( xw->widget_osr),
+                        "navigation-policy-decision-requested",
+                        G_CALLBACK (webkit_osr_navigation_policy_decision_requested_callback),
+                        xw);
+      //webkit_web_view_load_uri(WEBKIT_WEB_VIEW(xw->widget_osr), "http://www.fsf.org");
 
-    g_signal_connect (G_OBJECT ( xw->widget_osr),
-                      "navigation-policy-decision-requested",
-                      G_CALLBACK (webkit_osr_navigation_policy_decision_requested_callback),
-                      xw);    
+    }
 
 
-    webkit_web_view_load_uri(WEBKIT_WEB_VIEW(xw->widget_osr), "http://www.fsf.org");
     unblock_input();
 
   }
 #endif
 
-  if (EQ(xw->type, Qsocket_osr)){
-    printf("init socket osr\n");
-    block_input();
-    xw->widgetwindow_osr = GTK_CONTAINER (gtk_offscreen_window_new ());
-    gtk_window_resize(    GTK_WINDOW(xw->widgetwindow_osr), xw->width, xw->height);
+  /* if (EQ(xw->type, Qsocket_osr)){ */
+  /*   printf("init socket osr\n"); */
+  /*   block_input(); */
+  /*   xw->widgetwindow_osr = GTK_CONTAINER (gtk_offscreen_window_new ()); */
+  /*   gtk_window_resize(    GTK_WINDOW(xw->widgetwindow_osr), xw->width, xw->height); */
 
-    ////////////////////
-    //xw->widget_osr = webkit_web_view_new();
-    xw->widget_osr = gtk_socket_new();
-    //g_signal_connect_after(xv->widget, "plug-added", G_CALLBACK(xwidget_plug_added), "plug added");
-    //g_signal_connect_after(xv->widget, "plug-removed", G_CALLBACK(xwidget_plug_removed), "plug removed");
-    ///////////////////
+  /*   //////////////////// */
+  /*   //xw->widget_osr = webkit_web_view_new(); */
+  /*   xw->widget_osr = gtk_socket_new(); */
+  /*   //g_signal_connect_after(xv->widget, "plug-added", G_CALLBACK(xwidget_plug_added), "plug added"); */
+  /*   //g_signal_connect_after(xv->widget, "plug-removed", G_CALLBACK(xwidget_plug_removed), "plug removed"); */
+  /*   /////////////////// */
     
-    gtk_widget_set_size_request (GTK_WIDGET (xw->widget_osr), xw->width, xw->height);
-    gtk_container_add (xw->widgetwindow_osr, xw->widget_osr);
+  /*   gtk_widget_set_size_request (GTK_WIDGET (xw->widget_osr), xw->width, xw->height); */
+  /*   gtk_container_add (xw->widgetwindow_osr, xw->widget_osr); */
 
-    gtk_widget_show_all (GTK_WIDGET (xw->widgetwindow_osr));
+  /*   gtk_widget_show_all (GTK_WIDGET (xw->widgetwindow_osr)); */
 
-    /* store some xwidget data in the gtk widgets for convenient retrieval in the event handlers. */
-    g_object_set_data (G_OBJECT (xw->widget_osr), XG_XWIDGET, (gpointer) (xw));
-    g_object_set_data (G_OBJECT (xw->widgetwindow_osr), XG_XWIDGET, (gpointer) (xw));
-    g_signal_connect (G_OBJECT (    xw->widgetwindow_osr), "damage-event",    G_CALLBACK (webkit_osr_damage_event_callback), NULL);
+  /*   /\* store some xwidget data in the gtk widgets for convenient retrieval in the event handlers. *\/ */
+  /*   g_object_set_data (G_OBJECT (xw->widget_osr), XG_XWIDGET, (gpointer) (xw)); */
+  /*   g_object_set_data (G_OBJECT (xw->widgetwindow_osr), XG_XWIDGET, (gpointer) (xw)); */
+  /*   g_signal_connect (G_OBJECT (    xw->widgetwindow_osr), "damage-event",    G_CALLBACK (xwidget_osr_damage_event_callback), NULL); */
 
-    //webkit_web_view_load_uri(WEBKIT_WEB_VIEW(xw->widget_osr), "http://www.fsf.org");
-    unblock_input();
+  /*   //webkit_web_view_load_uri(WEBKIT_WEB_VIEW(xw->widget_osr), "http://www.fsf.org"); */
+  /*   unblock_input(); */
 
-  }
+  /* } */
 
 
-  ////////////////////////////////////////////////////////
-  if(Fget(xw->type, Qcxwgir_class) != Qnil){
-    //here we have run out of hard coded symbols, we will now attempt to create
-    //a widget dynamically
-    //TODO
-    // - support OSR
-    // - support constructor args
-    // - support signals
-    // - check that the argument widget type actually exists
-    printf("init xwgir osr\n");
-    block_input();
-    xw->widgetwindow_osr = GTK_CONTAINER (gtk_offscreen_window_new ());
-    gtk_window_resize(    GTK_WINDOW(xw->widgetwindow_osr), xw->width, xw->height);
+  /* //////////////////////////////////////////////////////// */
+  /* if(Fget(xw->type, Qcxwgir_class) != Qnil){ */
+  /*   //here we have run out of hard coded symbols, we will now attempt to create */
+  /*   //a widget dynamically */
+  /*   //TODO */
+  /*   // - support OSR */
+  /*   // - support constructor args */
+  /*   // - support signals */
+  /*   // - check that the argument widget type actually exists */
+
+  /*   //mostly the same as for webkit, so TODO refactor */
+  /*   printf("init xwgir osr\n"); */
+  /*   block_input(); */
+  /*   xw->widgetwindow_osr = GTK_CONTAINER (gtk_offscreen_window_new ()); */
+  /*   gtk_window_resize(    GTK_WINDOW(xw->widgetwindow_osr), xw->width, xw->height); */
+  /*   ////////////////////////////// */
+  /*   //create the xwgir widget */
+  /*   printf("xwgir symbol %s %s %s:\n", */
+  /*          SDATA(SYMBOL_NAME(xw->type)), */
+  /*          SDATA(Fcar(Fcdr(Fget(xw->type, Qcxwgir_class)))), */
+  /*          SDATA(Fcar(Fget(xw->type, Qcxwgir_class)))); */
+  /*   //xv->widget = xwgir_create ("Button"); */
+  /*   Fcar(Fget(xw->type, Qcxwgir_class)); */
+  /*   xw->widget_osr = xwgir_create(    SDATA(Fcar(Fcdr(Fget(xw->type, Qcxwgir_class)))), */
+  /*                                     SDATA(Fcar(Fget(xw->type, Qcxwgir_class)))); */
+  /*   gtk_widget_add_events(xw->widget_osr, */
+  /*                         GDK_BUTTON_PRESS_MASK */
+  /*                         | GDK_BUTTON_RELEASE_MASK */
+  /*                         | GDK_POINTER_MOTION_MASK); */
+       
+  /*   ////////////////////////////// */
+  /*   gtk_widget_set_size_request (GTK_WIDGET (xw->widget_osr), xw->width, xw->height); */
+  /*   gtk_container_add (xw->widgetwindow_osr, xw->widget_osr); */
+
+  /*   gtk_widget_show_all (GTK_WIDGET (xw->widgetwindow_osr)); */
+
+  /*   /\* store some xwidget data in the gtk widgets for convenient retrieval in the event handlers. *\/ */
+  /*   g_object_set_data (G_OBJECT (xw->widget_osr), XG_XWIDGET, (gpointer) (xw)); */
+  /*   g_object_set_data (G_OBJECT (xw->widgetwindow_osr), XG_XWIDGET, (gpointer) (xw)); */
+  /*   /\* signals *\/ */
+  /*   g_signal_connect (G_OBJECT ( xw->widgetwindow_osr), "damage-event",    G_CALLBACK (xwidget_osr_damage_event_callback), NULL); */
+  /*   g_signal_connect (G_OBJECT ( xw->widget_osr), "button-press-event",    G_CALLBACK (xwgir_event_callback), xw); */
+
     
-    printf("xwgir symbol %s %s %s:\n",
-           SDATA(SYMBOL_NAME(xw->type)),
-           SDATA(Fcar(Fcdr(Fget(xw->type, Qcxwgir_class)))),
-           SDATA(Fcar(Fget(xw->type, Qcxwgir_class))));
-    //xv->widget = xwgir_create ("Button");
-    Fcar(Fget(xw->type, Qcxwgir_class));
-    xw->widget_osr = xwgir_create(    SDATA(Fcar(Fcdr(Fget(xw->type, Qcxwgir_class)))),
-                                      SDATA(Fcar(Fget(xw->type, Qcxwgir_class))));
-
-    gtk_widget_set_size_request (GTK_WIDGET (xw->widget_osr), xw->width, xw->height);
-    gtk_container_add (xw->widgetwindow_osr, xw->widget_osr);
-
-    gtk_widget_show_all (GTK_WIDGET (xw->widgetwindow_osr));
-
-    /* store some xwidget data in the gtk widgets for convenient retrieval in the event handlers. */
-    g_object_set_data (G_OBJECT (xw->widget_osr), XG_XWIDGET, (gpointer) (xw));
-    g_object_set_data (G_OBJECT (xw->widgetwindow_osr), XG_XWIDGET, (gpointer) (xw));
-    /* signals */
-    g_signal_connect (G_OBJECT ( xw->widgetwindow_osr), "damage-event",    G_CALLBACK (webkit_osr_damage_event_callback), NULL);
-
-    
-    unblock_input();
-  }
+  /*   unblock_input(); */
+  /* } */
 
   ////////////////////////////////////////////////////////
   
@@ -478,9 +506,9 @@ xwidget_slider_changed (GtkRange *range,
 /* when the off-screen webkit master view changes this signal is called.
    it copies the bitmap from the off-screen webkit instance */
 gboolean
-webkit_osr_damage_event_callback (GtkWidget *widget, GdkEventExpose *event, gpointer data)
+xwidget_osr_damage_event_callback (GtkWidget *widget, GdkEventExpose *event, gpointer data)
 {
-  //TODO this is wrong! should just oueu a redraw of onscreen widget
+  //TODO this is wrong! should just queu a redraw of onscreen widget
   struct xwidget* xw = (struct xwidget*) g_object_get_data (G_OBJECT (widget), XG_XWIDGET);
   struct xwidget_view* xv;
   //webkit_osr_redraw_child(xw, widget);
@@ -621,8 +649,8 @@ xwidget_osr_draw_callback (GtkWidget *widget, cairo_t *cr, gpointer data)
   struct xwidget* xw = (struct xwidget*) g_object_get_data (G_OBJECT (widget), XG_XWIDGET);
   struct xwidget_view* xv = (struct xwidget_view*) g_object_get_data (G_OBJECT (widget), XG_XWIDGET_VIEW);
 
-  //  printf("xwidget_osr_draw_callback gtk3 xw.id:%d xw.type:%d window:%d vis:%d\n",
-  //         xw,xw->type, gtk_widget_get_window (widget),  gtk_widget_get_visible (xw->widget_osr));
+  printf("xwidget_osr_draw_callback gtk3 xw.id:%d xw.type:%d window:%d vis:%d\n",
+           xw,xw->type, gtk_widget_get_window (widget),  gtk_widget_get_visible (xw->widget_osr));
 
   cairo_rectangle(cr, 0,0, xv->clip_right, xv->clip_bottom);//xw->width, xw->height);
   cairo_clip(cr);
@@ -633,19 +661,47 @@ xwidget_osr_draw_callback (GtkWidget *widget, cairo_t *cr, gpointer data)
   return FALSE;
 }
 
+GtkWidget* xwgir_create_debug;
 
 gboolean
-xwidget_osr_button_callback (GtkWidget *widget,
+xwidget_osr_event_forward (GtkWidget *widget,
+                           GdkEvent  *event,
+                           gpointer   user_data)
+{
+  /* copy events that arrive at the outer widget to the offscreen widget */
+  struct xwidget* xw = (struct xwidget*) g_object_get_data (G_OBJECT (widget), XG_XWIDGET);
+  GdkEvent* eventcopy =  gdk_event_copy(event);
+  
+  //((GdkEventAny*)eventcopy)->window = gtk_widget_get_window(xw->widget_osr);
+  //((GdkEventAny*)eventcopy)->window = xw->widgetwindow_osr;
+  //((GdkEventAny*)eventcopy)->window = gtk_widget_get_window(xwgir_create_debug);
+  eventcopy->any.window = gtk_widget_get_window(xw->widget_osr);//gtk_widget_get_window(xwgir_create_debug);
+  //eventcopy->send_event = TRUE;
+  printf("xwidget_osr_event_forward redirect event to window:%d\n",   ((GdkEventAny*)eventcopy)->window);
+  printf("A type:%d x:%d y:%d \n",   event->type, event->button.x, event->button.y);  
+  printf("B type:%d x:%d y:%d \n",   eventcopy->type, eventcopy->button.x, eventcopy->button.y);  
+    //gtk_button_get_event_window(xwgir_create_debug);
+  gtk_main_do_event(eventcopy); //TODO this will leak events. they should be deallocated later, perhaps in xwgir_event_callback
+  //gdk_event_put(eventcopy);
+  //gdk_event_queue_append(eventcopy);
+  //gdk_event_free(eventcopy);
+  return TRUE; //dont propagate this event furter
+  //return FALSE; //dont propagate this event furter
+}
+
+
+gboolean
+xwgir_event_callback (GtkWidget *widget,
                              GdkEvent  *event,
                              gpointer   user_data)
 {
+  //debugging
+  //perhaps delete copied events here
   struct xwidget* xw = (struct xwidget*) g_object_get_data (G_OBJECT (widget), XG_XWIDGET);
-  GdkEvent* eventcopy =  gdk_event_copy(event);
-
-  ((GdkEventButton*)eventcopy)->window = gtk_widget_get_window(xw->widget_osr);
-  gtk_main_do_event(eventcopy); //TODO this will leak events. they should be deallocated later
-  return TRUE; //dont propagate this event furter
+  printf("xwgir_event_callback\n");
+  return FALSE;
 }
+
 
 
 GIRepository *girepository ;
@@ -683,6 +739,7 @@ GtkWidget* xwgir_create(char* class, char* namespace){
                          NULL, 0,
                          &return_value,
                          NULL);
+  xwgir_create_debug = return_value.v_pointer;
   return return_value.v_pointer;
   
 }
@@ -935,15 +992,15 @@ xwidget_init_view (struct xwidget *xww,
     g_signal_connect (G_OBJECT (    xv->widget), "draw",
                       G_CALLBACK (xwidget_osr_draw_callback), NULL);
     g_signal_connect (G_OBJECT (    xv->widget), "button-press-event",
-                      G_CALLBACK (xwidget_osr_button_callback), NULL);
+                      G_CALLBACK (xwidget_osr_event_forward), NULL);
     g_signal_connect (G_OBJECT (    xv->widget), "button-release-event",
-                      G_CALLBACK (xwidget_osr_button_callback), NULL);
+                      G_CALLBACK (xwidget_osr_event_forward), NULL);
     g_signal_connect (G_OBJECT (    xv->widget), "motion-notify-event",
-                      G_CALLBACK (xwidget_osr_button_callback), NULL);
+                      G_CALLBACK (xwidget_osr_event_forward), NULL);
     /* g_signal_connect (G_OBJECT (    xv->widget), "key-press-event", */
-    /*                   G_CALLBACK (xwidget_osr_button_callback), NULL); */
+    /*                   G_CALLBACK (xwidget_osr_event_forward), NULL); */
     /* g_signal_connect (G_OBJECT (    xv->widget), "key-release-event", */
-    /*                   G_CALLBACK (xwidget_osr_button_callback), NULL); */
+    /*                   G_CALLBACK (xwidget_osr_event_forward), NULL); */
     
 #endif
 
