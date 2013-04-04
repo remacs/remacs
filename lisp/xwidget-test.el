@@ -70,7 +70,8 @@
 
 (xwidget-demo "a-webkit-osr" 
               (xwidget-insert (point-min)  'webkit-osr "webkit-osr" 1000  1000)
-              (define-key (current-local-map) [xwidget-event] 'xwidget-handler-demo-basic))
+              (define-key (current-local-map) [xwidget-event] 'xwidget-handler-demo-basic)
+              (xwidget-webkit-goto-uri (xwidget-at 1) "http://www.fsf.org"))
 
 (xwidget-demo "a-xwgir" 
               (xwidget-insert (point-min)  'xwgir "xwgir" 1000  1000)

@@ -186,7 +186,8 @@ xwgir_event_callback (GtkWidget *widget,
                       gpointer   user_data);
 
 GtkWidget* xwgir_create(char* class, char* namespace);
-  
+static void
+send_xembed_ready_event (struct xwidget* xw, int xembedid);  
 DEFUN ("make-xwidget", Fmake_xwidget, Smake_xwidget, 7, 7, 0,
          doc: /* xw */
          )
@@ -237,7 +238,11 @@ DEFUN ("make-xwidget", Fmake_xwidget, Smake_xwidget, 7, 7, 0,
       xw->widget_osr = xwgir_create(    SDATA(Fcar(Fcdr(Fget(xw->type, Qcxwgir_class)))),
                                         SDATA(Fcar(Fget(xw->type, Qcxwgir_class))));
 
-    
+    ///debug xwgir
+    /* gdk_offscreen_window_set_embedder (      gtk_widget_get_window (xw->widget_osr), */
+    /*                                          gtk_widget_get_window (GTK_WIDGET (xw->widgetwindow_osr)) */
+    /*                                          ); */
+    ///
     gtk_widget_set_size_request (GTK_WIDGET (xw->widget_osr), xw->width, xw->height);
     gtk_container_add (xw->widgetwindow_osr, xw->widget_osr);
 
@@ -282,6 +287,16 @@ DEFUN ("make-xwidget", Fmake_xwidget, Smake_xwidget, 7, 7, 0,
 
     }
 
+    if (EQ(xw->type, Qsocket_osr)) {
+    printf ("xwid:%d socket id:%x %d\n",
+            xw,
+            gtk_socket_get_id (GTK_SOCKET (xw->widget_osr)),
+            gtk_socket_get_id (GTK_SOCKET (xw->widget_osr)));
+    send_xembed_ready_event (xw,
+                             gtk_socket_get_id (GTK_SOCKET (xw->widget_osr)));
+    //gtk_widget_realize(xw->widget);
+  }
+
 
     unblock_input();
 
@@ -316,36 +331,6 @@ DEFUN ("make-xwidget", Fmake_xwidget, Smake_xwidget, 7, 7, 0,
 
   /* } */
 
-
-  /* //////////////////////////////////////////////////////// */
-  /* if(Fget(xw->type, Qcxwgir_class) != Qnil){ */
-  /*   //here we have run out of hard coded symbols, we will now attempt to create */
-  /*   //a widget dynamically */
-  /*   //TODO */
-  /*   // - support OSR */
-  /*   // - support constructor args */
-  /*   // - support signals */
-  /*   // - check that the argument widget type actually exists */
-
-  /*   //mostly the same as for webkit, so TODO refactor */
-  /*   printf("init xwgir osr\n"); */
-  /*   block_input(); */
-  /*   xw->widgetwindow_osr = GTK_CONTAINER (gtk_offscreen_window_new ()); */
-  /*   gtk_window_resize(    GTK_WINDOW(xw->widgetwindow_osr), xw->width, xw->height); */
-  /*   ////////////////////////////// */
-  /*   //create the xwgir widget */
-  /*   printf("xwgir symbol %s %s %s:\n", */
-  /*          SDATA(SYMBOL_NAME(xw->type)), */
-  /*          SDATA(Fcar(Fcdr(Fget(xw->type, Qcxwgir_class)))), */
-  /*          SDATA(Fcar(Fget(xw->type, Qcxwgir_class)))); */
-  /*   //xv->widget = xwgir_create ("Button"); */
-  /*   Fcar(Fget(xw->type, Qcxwgir_class)); */
-  /*   xw->widget_osr = xwgir_create(    SDATA(Fcar(Fcdr(Fget(xw->type, Qcxwgir_class)))), */
-  /*                                     SDATA(Fcar(Fget(xw->type, Qcxwgir_class)))); */
-  /*   gtk_widget_add_events(xw->widget_osr, */
-  /*                         GDK_BUTTON_PRESS_MASK */
-  /*                         | GDK_BUTTON_RELEASE_MASK */
-  /*                         | GDK_POINTER_MOTION_MASK); */
        
   /*   ////////////////////////////// */
   /*   gtk_widget_set_size_request (GTK_WIDGET (xw->widget_osr), xw->width, xw->height); */
@@ -663,6 +648,8 @@ xwidget_osr_draw_callback (GtkWidget *widget, cairo_t *cr, gpointer data)
 
 GtkWidget* xwgir_create_debug;
 
+
+
 gboolean
 xwidget_osr_event_forward (GtkWidget *widget,
                            GdkEvent  *event,
@@ -671,24 +658,35 @@ xwidget_osr_event_forward (GtkWidget *widget,
   /* copy events that arrive at the outer widget to the offscreen widget */
   struct xwidget* xw = (struct xwidget*) g_object_get_data (G_OBJECT (widget), XG_XWIDGET);
   GdkEvent* eventcopy =  gdk_event_copy(event);
+  //GdkEvent* eventcopy =  gdk_event_new(GDK_BUTTON_PRESS);
+  
   
   //((GdkEventAny*)eventcopy)->window = gtk_widget_get_window(xw->widget_osr);
-  //((GdkEventAny*)eventcopy)->window = xw->widgetwindow_osr;
+  //eventcopy->any.window = gtk_widget_get_window(GTK_WIDGET (xw->widgetwindow_osr));
   //((GdkEventAny*)eventcopy)->window = gtk_widget_get_window(xwgir_create_debug);
   eventcopy->any.window = gtk_widget_get_window(xw->widget_osr);//gtk_widget_get_window(xwgir_create_debug);
-  //eventcopy->send_event = TRUE;
+  //eventcopy->any.window = gtk_button_get_event_window(GTK_BUTTON(xw->widget_osr));//gtk_widget_get_window(xwgir_create_debug);
+  //eventcopy->button.x=200; eventcopy->button.y=200;
+  //event->button.button = GDK_BUTTON_PRIMARY; //debug
+  
+  //eventcopy->any.window = xw->widgetwindow_osr;//gtk_widget_get_window(xwgir_create_debug);
+  /* eventcopy->any.send_event = TRUE; */
+  /* eventcopy->button.time = GDK_CURRENT_TIME; */
+  /* eventcopy->button.device =   event->button.device; */
+
+  
   printf("xwidget_osr_event_forward redirect event to window:%d\n",   ((GdkEventAny*)eventcopy)->window);
-  printf("A type:%d x:%d y:%d \n",   event->type, event->button.x, event->button.y);  
-  printf("B type:%d x:%d y:%d \n",   eventcopy->type, eventcopy->button.x, eventcopy->button.y);  
+  printf("A type:%d x:%f y:%f \n",   event->type, event->button.x, event->button.y);  
+  printf("B type:%d x:%f y:%f \n",   eventcopy->type, eventcopy->button.x, eventcopy->button.y);  
     //gtk_button_get_event_window(xwgir_create_debug);
   gtk_main_do_event(eventcopy); //TODO this will leak events. they should be deallocated later, perhaps in xwgir_event_callback
+  //printf("gtk_widget_event:%d\n",gtk_widget_event(xw->widget_osr, eventcopy));
   //gdk_event_put(eventcopy);
   //gdk_event_queue_append(eventcopy);
   //gdk_event_free(eventcopy);
   return TRUE; //dont propagate this event furter
   //return FALSE; //dont propagate this event furter
 }
-
 
 gboolean
 xwgir_event_callback (GtkWidget *widget,
@@ -878,7 +876,80 @@ DEFUN ("xwgir-call-method", Fxwgir_call_method,  Sxwgir_call_method,       3, 3,
   return Qt;
 }
 
+ void
+to_child (GtkWidget *bin,
+          double         widget_x,
+          double         widget_y,
+          double        *x_out,
+          double        *y_out)
+{
+  *x_out = widget_x;
+  *y_out = widget_y;
+}
 
+
+void
+offscreen_window_from_parent (GdkWindow     *window,
+                              double         parent_x,
+                              double         parent_y,
+                              double        *offscreen_x,
+                              double        *offscreen_y,
+                              GtkWidget *bin)
+{
+  /* printf("offscreen_window_from_parent %d  %f,%f  %f,%f\n", */
+  /*        window, */
+  /*        parent_x, */
+  /*        parent_y, */
+  /*        offscreen_x, */
+  /*        offscreen_y         ); */
+  to_child (bin, parent_x, parent_y, offscreen_x, offscreen_y);
+}
+
+ GdkWindow *
+pick_offscreen_child (GdkWindow     *offscreen_window,
+                      double         widget_x,
+                      double         widget_y,
+                      GdkWindow *bin)
+{
+  //in this simple case we assume the window contains a single widget. easy.
+  //but then we get the problem that the widget cant be embedded in several windows
+    printf("pick_offscreen_child %d %f %f  %d\n",
+offscreen_window,
+    widget_x,
+    widget_y,
+           bin           );
+  return bin;
+}
+
+
+void
+xwidget_set_embedder_view(struct xwidget* xww,
+                          struct xwidget_view* xv){
+  printf("gdk_offscreen_window_set_embedder %d %d\n",
+         GDK_IS_WINDOW(gtk_widget_get_window (xww->widget_osr)),
+         GDK_IS_WINDOW(gtk_widget_get_window (GTK_WIDGET (xv->widget))));
+  //set_embedder needs to be called after xv->widget realization
+  gdk_offscreen_window_set_embedder (      gtk_widget_get_window (xww->widget_osr),
+                                           gtk_widget_get_window (GTK_WIDGET (xv->widget))
+                                           
+
+                                           );
+  //this signal doesnt seem completely necessary
+  /* g_signal_connect (gtk_widget_get_window (xww->widget_osr), "from-embedder", */
+  /*                   G_CALLBACK (offscreen_window_from_parent), gtk_widget_get_window (GTK_WIDGET (xv->widget))); */
+  //but this one is
+  g_signal_connect (gtk_widget_get_window (xv->widget), "pick-embedded-child",
+                    G_CALLBACK (pick_offscreen_child), gtk_widget_get_window (xww->widget_osr));
+}
+
+gboolean
+xwidget_osr_event_set_embedder (GtkWidget *widget,
+                           GdkEvent  *event,
+                           gpointer   xv)
+{
+  xwidget_set_embedder_view(((struct xwidget_view*) xv)->model,
+                            (struct xwidget_view*) xv);
+}
 
  
 int xwidget_view_index=0;
@@ -989,14 +1060,30 @@ xwidget_init_view (struct xwidget *xww,
                           GDK_BUTTON_PRESS_MASK
                           | GDK_BUTTON_RELEASE_MASK
                           | GDK_POINTER_MOTION_MASK);
+
+
+    if (EQ(xww->type, Qwebkit_osr)){
+      /* ///xwgir debug */
+      /* //forward events. this isnt compatible with the set_embedded strategy */
+      g_signal_connect (G_OBJECT (    xv->widget), "button-press-event",
+                        G_CALLBACK (xwidget_osr_event_forward), NULL);
+      g_signal_connect (G_OBJECT (    xv->widget), "button-release-event",
+                        G_CALLBACK (xwidget_osr_event_forward), NULL);
+      g_signal_connect (G_OBJECT (    xv->widget), "motion-notify-event",
+                        G_CALLBACK (xwidget_osr_event_forward), NULL);
+    }else{
+      //xwgir debug , orthogonal to forwarding
+      g_signal_connect (G_OBJECT (    xv->widget), "motion-notify-event",
+                        G_CALLBACK (xwidget_osr_event_set_embedder), xv);
+    }
+    
+    //draw
     g_signal_connect (G_OBJECT (    xv->widget), "draw",
                       G_CALLBACK (xwidget_osr_draw_callback), NULL);
-    g_signal_connect (G_OBJECT (    xv->widget), "button-press-event",
-                      G_CALLBACK (xwidget_osr_event_forward), NULL);
-    g_signal_connect (G_OBJECT (    xv->widget), "button-release-event",
-                      G_CALLBACK (xwidget_osr_event_forward), NULL);
-    g_signal_connect (G_OBJECT (    xv->widget), "motion-notify-event",
-                      G_CALLBACK (xwidget_osr_event_forward), NULL);
+
+
+
+
     /* g_signal_connect (G_OBJECT (    xv->widget), "key-press-event", */
     /*                   G_CALLBACK (xwidget_osr_event_forward), NULL); */
     /* g_signal_connect (G_OBJECT (    xv->widget), "key-release-event", */
@@ -1032,6 +1119,8 @@ xwidget_init_view (struct xwidget *xww,
   xv->x = x;  xv->y = y;
   gtk_widget_show_all (GTK_WIDGET (xv->widgetwindow));
 
+
+  
   //widgettype specific initialization only possible after realization
   if (EQ(xww->type, Qsocket)) {
     printf ("xwid:%d socket id:%x %d\n",
@@ -1042,6 +1131,29 @@ xwidget_init_view (struct xwidget *xww,
                              gtk_socket_get_id (GTK_SOCKET (xv->widget)));
     //gtk_widget_realize(xw->widget);
   }
+
+  //////////////////////////////////////////////////////////////
+  //xwgir debug
+  if (//EQ(xww->type, Qwebkit_osr)||
+      EQ(xww->type, Qsocket_osr)||
+      (Fget(xww->type, Qcxwgir_class) != Qnil))//xwgir widgets are OSR
+    {
+      //xwidget_set_embedder_view(xww,xv);
+      printf("gdk_offscreen_window_set_embedder %d %d\n",
+             GDK_IS_WINDOW(gtk_widget_get_window (xww->widget_osr)),
+             GDK_IS_WINDOW(gtk_widget_get_window (GTK_WIDGET (xv->widget))));
+      //set_embedder needs to be called after xv->widget realization
+      gdk_offscreen_window_set_embedder (      gtk_widget_get_window (xww->widget_osr),
+                                               gtk_widget_get_window (GTK_WIDGET (xv->widget))
+
+                                               );
+      /* g_signal_connect (gtk_widget_get_window (xww->widget_osr), "from-embedder", */
+      /*                   G_CALLBACK (offscreen_window_from_parent), gtk_widget_get_window (GTK_WIDGET (xv->widget))); */
+      g_signal_connect (gtk_widget_get_window (xv->widget), "pick-embedded-child",
+                        G_CALLBACK (pick_offscreen_child), gtk_widget_get_window (xww->widget_osr));
+    }
+  ////////////////////////////////////////
+  
   return xv;
 }
 
