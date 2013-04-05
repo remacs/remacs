@@ -98,6 +98,13 @@
               (xwidget-insert (point-min)  'xwgirCheckButton "xwgir label didnt work..." 700  700)
               (define-key (current-local-map) [xwidget-event] 'xwidget-handler-demo-basic))
 
+(xwidget-demo "a-xwgir-slider"
+              (xwgir-require-namespace "Gtk" "3.0")
+              (put 'xwgirSlider :xwgir-class '("Gtk" "Slider"))
+
+              (xwidget-insert (point-min)  'xwgirSlider "xwgir label didnt work..." 700  700)
+              (define-key (current-local-map) [xwidget-event] 'xwidget-handler-demo-basic))
+
 (xwidget-demo "a-xwgir-webkit"
               (xwgir-require-namespace "WebKit" "3.0")
               (put 'xwgirWebkit :xwgir-class '("WebKit" "WebView"))
