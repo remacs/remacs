@@ -1134,7 +1134,7 @@ xwidget_init_view (struct xwidget *xww,
 
   //////////////////////////////////////////////////////////////
   //xwgir debug
-  if (//EQ(xww->type, Qwebkit_osr)||
+  if (//EQ(xww->type, Qwebkit_osr)|| //TODO should be able to choose compile time which method to use with webkit
       EQ(xww->type, Qsocket_osr)||
       (Fget(xww->type, Qcxwgir_class) != Qnil))//xwgir widgets are OSR
     {
