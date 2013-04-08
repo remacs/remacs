@@ -464,7 +464,7 @@ webkit_osr_key_event_callback (GtkWidget *widget, GdkEventKey *event, gpointer d
 
 
 void
-store_xwidget_event_string(struct xwidget* xw, char* eventname,char* eventstr)
+store_xwidget_event_string(struct xwidget* xw, char* eventname, const char* eventstr)
 {
   //refactor attempt
   struct input_event event;
@@ -758,7 +758,7 @@ xwgir_convert_lisp_to_gir_arg(GIArgument* giarg,
   return 0;
 }
 
-
+#if 0
 void
 refactor_attempt(){
   //this methhod should be called from xwgir-xwidget-call-method and from xwgir xwidget construction  
@@ -792,7 +792,7 @@ refactor_attempt(){
    }   
   return Qt;
 }
-
+#endif
 
 DEFUN ("xwgir-xwidget-call-method", Fxwgir_xwidget_call_method,  Sxwgir_xwidget_call_method,       3, 3, 0,
        doc:	/* call xwidget object method.*/)
@@ -1384,7 +1384,8 @@ DEFUN ("xwidget-resize", Fxwidget_resize, Sxwidget_resize, 3, 3, 0, doc:
     gtk_widget_set_size_request (GTK_WIDGET (xw->widget_osr), xw->width, xw->height); //minimum size
     //gtk_window_resize(    GTK_WINDOW(xw->widget_osr), xw->width, xw->height);
     gtk_window_resize(    GTK_WINDOW(xw->widgetwindow_osr), xw->width, xw->height);
-    gtk_container_resize_children ( GTK_WINDOW(xw->widgetwindow_osr));
+    //gtk_container_resize_children ( GTK_WINDOW(xw->widgetwindow_osr));
+    gtk_container_resize_children ( GTK_CONTAINER(xw->widgetwindow_osr));
     
   }
 
