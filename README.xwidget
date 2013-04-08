@@ -1627,8 +1627,39 @@ Current limitation:
 - next to no argument checking. If wrong type args are used with the
   xwgir methods, emacs crashes.
 
+*** TODO xwgir create components with more advanced constructor
+so this opens up an entire new can of beans.
 
-** TODO investigate gdk_offscreen_window_set_embedder()
+explain by example:
+lets say we want to create agtkhscale on screen. its a slider.
+https://developer.gnome.org/gtk3/stable/GtkHScale.html
+we can already create buttons, so sliders shouldnt be much more
+advanced right? wrong.
+
+the simplest slider constructor looks like:
+GtkWidget *         gtk_hscale_new
+(GtkAdjustment *adjustment);
+
+so in order to call it, we must be able to forward arguments to the
+constructor. this is almost already done, but we lack the ability to
+pass object instances, only simple types atm.
+
+we need to be able to create GtkAdjustment 
+https://developer.gnome.org/gtk3/stable/GtkAdjustment.html
+
+this we can already almost do, because an xwidget is a gir object
+with some decorations. we also store the decorated gir object in an
+array, retrievable from lisp.
+
+In order for this to be usable in practice, we need some changes:
+- lightweight objects should be stored un-decorated. they have no
+  need for the entire graphical machinery of xwidgets
+- lightweight objects should be garbage collectable, but this is the
+  same for all the xwidget objects, and isnt really resolved atm.
+
+
+** DONE investigate gdk_offscreen_window_set_embedder()
+   CLOSED: [2013-04-06 Sat 10:45]
 https://developer.gnome.org/gdk/unstable/gdk-Windows.html
 
 ,----

@@ -88,7 +88,7 @@
               (put 'xwgirButton :xwgir-class '("Gtk" "Button"))
 
               (xwidget-insert (point-min)  'xwgirButton "xwgir label didnt work..." 700  700)
-              (xwgir-call-method (xwidget-at 1) "set_label" '( "xwgir label worked!"))
+              (xwgir-xwidget-call-method (xwidget-at 1) "set_label" '( "xwgir label worked!"))
               (define-key (current-local-map) [xwidget-event] 'xwidget-handler-demo-basic))
 
 (xwidget-demo "a-xwgir-check-button"
@@ -98,11 +98,11 @@
               (xwidget-insert (point-min)  'xwgirCheckButton "xwgir label didnt work..." 700  700)
               (define-key (current-local-map) [xwidget-event] 'xwidget-handler-demo-basic))
 
-(xwidget-demo "a-xwgir-slider"
+(xwidget-demo "a-xwgir-hscale"
               (xwgir-require-namespace "Gtk" "3.0")
-              (put 'xwgirSlider :xwgir-class '("Gtk" "Slider"))
+              (put 'xwgirHScale :xwgir-class '("Gtk" "HScale"))
 
-              (xwidget-insert (point-min)  'xwgirSlider "xwgir label didnt work..." 700  700)
+              (xwidget-insert (point-min)  'xwgirHScale "xwgir label didnt work..." 700  700)
               (define-key (current-local-map) [xwidget-event] 'xwidget-handler-demo-basic))
 
 (xwidget-demo "a-xwgir-webkit"

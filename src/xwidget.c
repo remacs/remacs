@@ -758,7 +758,43 @@ xwgir_convert_lisp_to_gir_arg(GIArgument* giarg,
   return 0;
 }
 
-DEFUN ("xwgir-call-method", Fxwgir_call_method,  Sxwgir_call_method,       3, 3, 0,
+
+void
+refactor_attempt(){
+  //this methhod should be called from xwgir-xwidget-call-method and from xwgir xwidget construction  
+  char* class = SDATA(Fcar(Fcdr(Fget(xw->type, Qcxwgir_class))));
+
+  GIObjectInfo* obj_info = g_irepository_find_by_name(girepository, namespace, class);
+  GIFunctionInfo* f_info = g_object_info_find_method (obj_info, SDATA(method));
+
+  //loop over args, convert from lisp to primitive type, given arg introspection data
+  //TODO g_callable_info_get_n_args(f_info) should match
+  int argscount = XFASTINT(Flength(arguments));
+  if(argscount !=  g_callable_info_get_n_args(f_info)){
+    printf("xwgir call method arg count doesn match! \n");
+    return Qnil;
+  }
+  int i;
+  for (i = 1; i < argscount + 1; ++i)
+    {
+      xwgir_convert_lisp_to_gir_arg(&in_args[i], g_callable_info_get_arg(f_info, i - 1), Fnth(i - 1, arguments));
+    }
+
+  in_args[0].v_pointer = widget;
+  if(g_function_info_invoke(f_info,
+                            in_args, argscount + 1,
+                            NULL, 0,
+                            &return_value,
+                            &error)) { 
+    //g_error("ERROR: %s\n", error->message);
+    printf("invokation error\n");
+     return Qnil; 
+   }   
+  return Qt;
+}
+
+
+DEFUN ("xwgir-xwidget-call-method", Fxwgir_xwidget_call_method,  Sxwgir_xwidget_call_method,       3, 3, 0,
        doc:	/* call xwidget object method.*/)
   (Lisp_Object xwidget, Lisp_Object method, Lisp_Object arguments)
 {
@@ -1562,7 +1598,7 @@ syms_of_xwidget (void)
   DEFSYM (Qwebkit_osr ,"webkit-osr");
 #endif
 
-  defsubr (&Sxwgir_call_method  );
+  defsubr (&Sxwgir_xwidget_call_method  );
   defsubr (&Sxwgir_require_namespace);
   defsubr (&Sxwidget_size_request  );
   defsubr (&Sxwidget_delete_zombies);
