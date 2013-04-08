@@ -238,11 +238,6 @@ DEFUN ("make-xwidget", Fmake_xwidget, Smake_xwidget, 7, 7, 0,
       xw->widget_osr = xwgir_create(    SDATA(Fcar(Fcdr(Fget(xw->type, Qcxwgir_class)))),
                                         SDATA(Fcar(Fget(xw->type, Qcxwgir_class))));
 
-    ///debug xwgir
-    /* gdk_offscreen_window_set_embedder (      gtk_widget_get_window (xw->widget_osr), */
-    /*                                          gtk_widget_get_window (GTK_WIDGET (xw->widgetwindow_osr)) */
-    /*                                          ); */
-    ///
     gtk_widget_set_size_request (GTK_WIDGET (xw->widget_osr), xw->width, xw->height);
     gtk_container_add (xw->widgetwindow_osr, xw->widget_osr);
 
@@ -254,9 +249,6 @@ DEFUN ("make-xwidget", Fmake_xwidget, Smake_xwidget, 7, 7, 0,
     /* signals */
     g_signal_connect (G_OBJECT ( xw->widgetwindow_osr), "damage-event",    G_CALLBACK (xwidget_osr_damage_event_callback), NULL);
 
-    //TODO these were just a test hack
-    /* g_signal_connect (G_OBJECT ( xw->widget_osr), "key-press-event",    G_CALLBACK (webkit_osr_key_event_callback), NULL); */
-    /* g_signal_connect (G_OBJECT ( xw->widget_osr), "key-release-event",    G_CALLBACK (webkit_osr_key_event_callback), NULL);     */
 
     if (EQ(xw->type, Qwebkit_osr)){
       g_signal_connect (G_OBJECT ( xw->widget_osr),
@@ -303,56 +295,6 @@ DEFUN ("make-xwidget", Fmake_xwidget, Smake_xwidget, 7, 7, 0,
   }
 #endif
 
-  /* if (EQ(xw->type, Qsocket_osr)){ */
-  /*   printf("init socket osr\n"); */
-  /*   block_input(); */
-  /*   xw->widgetwindow_osr = GTK_CONTAINER (gtk_offscreen_window_new ()); */
-  /*   gtk_window_resize(    GTK_WINDOW(xw->widgetwindow_osr), xw->width, xw->height); */
-
-  /*   //////////////////// */
-  /*   //xw->widget_osr = webkit_web_view_new(); */
-  /*   xw->widget_osr = gtk_socket_new(); */
-  /*   //g_signal_connect_after(xv->widget, "plug-added", G_CALLBACK(xwidget_plug_added), "plug added"); */
-  /*   //g_signal_connect_after(xv->widget, "plug-removed", G_CALLBACK(xwidget_plug_removed), "plug removed"); */
-  /*   /////////////////// */
-    
-  /*   gtk_widget_set_size_request (GTK_WIDGET (xw->widget_osr), xw->width, xw->height); */
-  /*   gtk_container_add (xw->widgetwindow_osr, xw->widget_osr); */
-
-  /*   gtk_widget_show_all (GTK_WIDGET (xw->widgetwindow_osr)); */
-
-  /*   /\* store some xwidget data in the gtk widgets for convenient retrieval in the event handlers. *\/ */
-  /*   g_object_set_data (G_OBJECT (xw->widget_osr), XG_XWIDGET, (gpointer) (xw)); */
-  /*   g_object_set_data (G_OBJECT (xw->widgetwindow_osr), XG_XWIDGET, (gpointer) (xw)); */
-  /*   g_signal_connect (G_OBJECT (    xw->widgetwindow_osr), "damage-event",    G_CALLBACK (xwidget_osr_damage_event_callback), NULL); */
-
-  /*   //webkit_web_view_load_uri(WEBKIT_WEB_VIEW(xw->widget_osr), "http://www.fsf.org"); */
-  /*   unblock_input(); */
-
-  /* } */
-
-       
-  /*   ////////////////////////////// */
-  /*   gtk_widget_set_size_request (GTK_WIDGET (xw->widget_osr), xw->width, xw->height); */
-  /*   gtk_container_add (xw->widgetwindow_osr, xw->widget_osr); */
-
-  /*   gtk_widget_show_all (GTK_WIDGET (xw->widgetwindow_osr)); */
-
-  /*   /\* store some xwidget data in the gtk widgets for convenient retrieval in the event handlers. *\/ */
-  /*   g_object_set_data (G_OBJECT (xw->widget_osr), XG_XWIDGET, (gpointer) (xw)); */
-  /*   g_object_set_data (G_OBJECT (xw->widgetwindow_osr), XG_XWIDGET, (gpointer) (xw)); */
-  /*   /\* signals *\/ */
-  /*   g_signal_connect (G_OBJECT ( xw->widgetwindow_osr), "damage-event",    G_CALLBACK (xwidget_osr_damage_event_callback), NULL); */
-  /*   g_signal_connect (G_OBJECT ( xw->widget_osr), "button-press-event",    G_CALLBACK (xwgir_event_callback), xw); */
-
-    
-  /*   unblock_input(); */
-  /* } */
-
-  ////////////////////////////////////////////////////////
-  
-
-  
   UNGCPRO;
   return val;
 }
@@ -522,7 +464,7 @@ webkit_osr_key_event_callback (GtkWidget *widget, GdkEventKey *event, gpointer d
 
 
 void
-store_xwidget_event_string(struct xwidget* xw, char* eventname,char* eventstr)
+store_xwidget_event_string(struct xwidget* xw, char* eventname, const char* eventstr)
 {
   //refactor attempt
   struct input_event event;
@@ -816,7 +758,43 @@ xwgir_convert_lisp_to_gir_arg(GIArgument* giarg,
   return 0;
 }
 
-DEFUN ("xwgir-call-method", Fxwgir_call_method,  Sxwgir_call_method,       3, 3, 0,
+#if 0
+void
+refactor_attempt(){
+  //this methhod should be called from xwgir-xwidget-call-method and from xwgir xwidget construction  
+  char* class = SDATA(Fcar(Fcdr(Fget(xw->type, Qcxwgir_class))));
+
+  GIObjectInfo* obj_info = g_irepository_find_by_name(girepository, namespace, class);
+  GIFunctionInfo* f_info = g_object_info_find_method (obj_info, SDATA(method));
+
+  //loop over args, convert from lisp to primitive type, given arg introspection data
+  //TODO g_callable_info_get_n_args(f_info) should match
+  int argscount = XFASTINT(Flength(arguments));
+  if(argscount !=  g_callable_info_get_n_args(f_info)){
+    printf("xwgir call method arg count doesn match! \n");
+    return Qnil;
+  }
+  int i;
+  for (i = 1; i < argscount + 1; ++i)
+    {
+      xwgir_convert_lisp_to_gir_arg(&in_args[i], g_callable_info_get_arg(f_info, i - 1), Fnth(i - 1, arguments));
+    }
+
+  in_args[0].v_pointer = widget;
+  if(g_function_info_invoke(f_info,
+                            in_args, argscount + 1,
+                            NULL, 0,
+                            &return_value,
+                            &error)) { 
+    //g_error("ERROR: %s\n", error->message);
+    printf("invokation error\n");
+     return Qnil; 
+   }   
+  return Qt;
+}
+#endif
+
+DEFUN ("xwgir-xwidget-call-method", Fxwgir_xwidget_call_method,  Sxwgir_xwidget_call_method,       3, 3, 0,
        doc:	/* call xwidget object method.*/)
   (Lisp_Object xwidget, Lisp_Object method, Lisp_Object arguments)
 {
@@ -1406,7 +1384,8 @@ DEFUN ("xwidget-resize", Fxwidget_resize, Sxwidget_resize, 3, 3, 0, doc:
     gtk_widget_set_size_request (GTK_WIDGET (xw->widget_osr), xw->width, xw->height); //minimum size
     //gtk_window_resize(    GTK_WINDOW(xw->widget_osr), xw->width, xw->height);
     gtk_window_resize(    GTK_WINDOW(xw->widgetwindow_osr), xw->width, xw->height);
-    gtk_container_resize_children ( GTK_WINDOW(xw->widgetwindow_osr));
+    //gtk_container_resize_children ( GTK_WINDOW(xw->widgetwindow_osr));
+    gtk_container_resize_children ( GTK_CONTAINER(xw->widgetwindow_osr));
     
   }
 
@@ -1620,7 +1599,7 @@ syms_of_xwidget (void)
   DEFSYM (Qwebkit_osr ,"webkit-osr");
 #endif
 
-  defsubr (&Sxwgir_call_method  );
+  defsubr (&Sxwgir_xwidget_call_method  );
   defsubr (&Sxwgir_require_namespace);
   defsubr (&Sxwidget_size_request  );
   defsubr (&Sxwidget_delete_zombies);

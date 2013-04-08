@@ -404,7 +404,9 @@ Missing separate debuginfos, use: debuginfo-install hunspell-1.2.15-2.fc15.x86_6
    CLOSED: [2011-07-19 Tue 14:26]
 now we just hard code sizes. but webkit widgets for instance can
 report sizes that suit the content. support that.
-** TODO BUG xwidget view ghosts
+** DONE BUG xwidget view ghosts
+   CLOSED: [2013-04-05 Fri 23:35]
+(havent seen this in quite a while)
 - xwidget-webkit-browse-url somewhere
 - split window.
 now theres 2 webkit views
@@ -929,7 +931,9 @@ http://developer.gnome.org/gdk/stable/gdk-Windows.html#GdkWindow-from-embedder
 turned out to be not so hard, captured events, copied them and
 forwarded them offscreen!
 
-** TODO investigate gdk_window_redirect_to_drawable
+** CANCELLED investigate gdk_window_redirect_to_drawable
+   CLOSED: [2013-04-05 Fri 23:37]
+(cancelled this, the current approach seems okay)
 http://developer.gnome.org/gdk/stable/gdk-Windows.html#gdk-offscreen-window-set-embedder
 maybe could be used in place of my own copy hacks? to work it must
 support a chain of redirects, which seems unlikely. the benefit would
@@ -1397,7 +1401,9 @@ isn't needed if emacs bg erase disabled
 might be some annoying local issues with my install because it is not
 reliably reproducible. (went away during merges)
 
-** TODO low impact xwidget based image viewer
+** CANCELLED low impact xwidget based image viewer
+   CLOSED: [2013-04-05 Fri 23:38]
+(cancelled this because it no longer seems like a good idea)
 for instance to render SVG using webkit, or some other canvas.
 that way it would be possible to merge to trunk in stages.
 
@@ -1558,7 +1564,6 @@ when an xwidget is removed from xwidget-alist, and there are no other
 references(mostly views) the xwidget should be garbage collected.
 
 special finalization would go into gc_sweep()
-<<<<<<< TREE
 ** TODO embedding evince
 http://developer.gnome.org/libevview/3.2/libevview-ev-view.html
 would be useful for reading PDF:s and other document types.
@@ -1622,4 +1627,91 @@ Current limitation:
 - next to no argument checking. If wrong type args are used with the
   xwgir methods, emacs crashes.
 
+*** TODO xwgir create components with more advanced constructor
+so this opens up an entire new can of beans.
 
+explain by example:
+lets say we want to create agtkhscale on screen. its a slider.
+https://developer.gnome.org/gtk3/stable/GtkHScale.html
+we can already create buttons, so sliders shouldnt be much more
+advanced right? wrong.
+
+the simplest slider constructor looks like:
+GtkWidget *         gtk_hscale_new
+(GtkAdjustment *adjustment);
+
+so in order to call it, we must be able to forward arguments to the
+constructor. this is almost already done, but we lack the ability to
+pass object instances, only simple types atm.
+
+we need to be able to create GtkAdjustment 
+https://developer.gnome.org/gtk3/stable/GtkAdjustment.html
+
+this we can already almost do, because an xwidget is a gir object
+with some decorations. we also store the decorated gir object in an
+array, retrievable from lisp.
+
+In order for this to be usable in practice, we need some changes:
+- lightweight objects should be stored un-decorated. they have no
+  need for the entire graphical machinery of xwidgets
+- lightweight objects should be garbage collectable, but this is the
+  same for all the xwidget objects, and isnt really resolved atm.
+
+
+** DONE investigate gdk_offscreen_window_set_embedder()
+   CLOSED: [2013-04-06 Sat 10:45]
+https://developer.gnome.org/gdk/unstable/gdk-Windows.html
+
+,----
+| Offscreen windows are more general than composited windows, since they
+| allow not only to modify the rendering of the child window onto its
+| parent, but also to apply coordinate transformations.
+| 
+| To integrate an offscreen window into a window hierarchy, one has to
+| call gdk_offscreen_window_set_embedder() and handle a number of
+| signals. The "pick-embedded-child" signal on the embedder window is
+| used to select an offscreen child at given coordinates, and the
+| "to-embedder" and "from-embedder" signals on the offscreen window are
+| used to translate coordinates between the embedder and the offscreen
+| window.
+| 
+| For rendering an offscreen window onto its embedder, the contents of
+| the offscreen window are available as a pixmap, via
+| gdk_offscreen_window_get_pixmap().
+`----
+
+okay, [2013-04-03 Wed] I finally suceeded in this approach!
+it was pretty  hard to make it work and currently works like this:
+- the on screen dravwing area is the embedder
+- you must implement "pick child"
+event forwarding is done automatically! 
+
+BUT its not really super, because it only works well with a single
+embedder.
+
+perhaps the strategy could be refined:
+- the window frame would be the embedder for all xwidgets. (but what
+  about several frames then?)
+- in the from-embedder signal handler, which maps container coords to
+  embedded widget coords, find out which xw-view i clicked on, and
+  compute the coords.
+
+[2013-04-04 Thu] I had a strategy working for a xwgir button but not
+a webkit. set_embedded in the motion event handler for the xv. it
+even works for 2 frames! but not webkit :(
+
+[2013-04-05 Fri] it works for xwgir osr components, but not for
+webkit. Webkit retains the previous event forwarding system.
+
+Now it works like this:
+- the offscreen widget is created as before
+- the on-screen views also as before, painting and copying as before.
+- gdk_offscreen_window_set_embedder() is now used to embedd the
+  offscreen widget in the onscreen one, upon view creation
+- only one widget can embedd one other. This means that the embedding
+  widget must be switched between the onscreen ones. This is now done
+  in the mouse motion event handler.
+
+The above approach has been tested for xwgir created buttons and seems
+to work. it doesnt work for webkit, so the old scheme is preserved
+for webkit.
