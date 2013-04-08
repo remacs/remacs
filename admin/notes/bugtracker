@@ -103,7 +103,7 @@ This is annoying.
 to hopefully stop this happening, but it is still better to use X-Debbugs-CC.)
 
 If a new report contains X-Debbugs-CC in the input, this is
-converted to a real Cc header in the output.  (See Bug#1720).
+converted to a real Cc header in the output.  (See Bug#1780,5384)
 It is also merged into the Resent-CC header (see below).
 
 ** How does Debbugs send out mails?
@@ -627,7 +627,9 @@ following headers:
 
 1) The leading envelope From line.
 2) Message-ID (get it from /var/log/mailman/vette).
-3) X-Debbugs-Envelope-To: submit
+3) X-Debbugs-Envelope-To: xxx
+For a new report, xxx = submit; for a control message, xxx = control;
+for a reply to bug#123, xxx = 123
 
 Then pipe it to receive as above.
 

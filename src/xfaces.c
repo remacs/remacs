@@ -231,7 +231,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #undef FRAME_X_DISPLAY_INFO
 #define FRAME_X_DISPLAY_INFO FRAME_W32_DISPLAY_INFO
 #define x_display_info w32_display_info
-#define check_x check_w32
 #define GCGraphicsExposures 0
 #endif /* HAVE_NTGUI */
 
@@ -239,7 +238,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #undef FRAME_X_DISPLAY_INFO
 #define FRAME_X_DISPLAY_INFO FRAME_NS_DISPLAY_INFO
 #define x_display_info ns_display_info
-#define check_x check_ns
 #define GCGraphicsExposures 0
 #endif /* HAVE_NS */
 #endif /* HAVE_WINDOW_SYSTEM */
@@ -1636,7 +1634,7 @@ the WIDTH times as wide as FACE on FRAME.  */)
   struct frame *f;
   int size, avgwidth IF_LINT (= 0);
 
-  check_x ();
+  check_window_system (NULL);
   CHECK_STRING (pattern);
 
   if (! NILP (maximum))
@@ -1645,8 +1643,8 @@ the WIDTH times as wide as FACE on FRAME.  */)
   if (!NILP (width))
     CHECK_NUMBER (width);
 
-  /* We can't simply call check_x_frame because this function may be
-     called before any frame is created.  */
+  /* We can't simply call decode_window_system_frame because
+     this function may be called before any frame is created.  */
   f = decode_live_frame (frame);
   if (! FRAME_WINDOW_P (f))
     {
@@ -3925,8 +3923,8 @@ If FRAME is omitted or nil, use the selected frame.  */)
   struct frame *f;
   Lisp_Object lface1, lface2;
 
-  /* Don't use check_x_frame here because this function is called
-     before X frames exist.  At that time, if FRAME is nil,
+  /* Don't use decode_window_system_frame here because this function
+     is called before X frames exist.  At that time, if FRAME is nil,
      selected_frame will be used which is the frame dumped with
      Emacs.  That frame is not an X frame.  */
   f = EQ (frame, Qt) ? NULL : decode_live_frame (frame);
@@ -5964,7 +5962,7 @@ face_at_buffer_position (struct window *w, ptrdiff_t pos,
 
   /* W must display the current buffer.  We could write this function
      to use the frame and buffer of W, but right now it doesn't.  */
-  /* eassert (XBUFFER (w->buffer) == current_buffer); */
+  /* eassert (XBUFFER (w->contents) == current_buffer); */
 
   XSETFASTINT (position, pos);
 
@@ -5974,9 +5972,9 @@ face_at_buffer_position (struct window *w, ptrdiff_t pos,
 
   /* Get the `face' or `mouse_face' text property at POS, and
      determine the next position at which the property changes.  */
-  prop = Fget_text_property (position, propname, w->buffer);
+  prop = Fget_text_property (position, propname, w->contents);
   XSETFASTINT (limit1, (limit < endpos ? limit : endpos));
-  end = Fnext_single_property_change (position, propname, w->buffer, limit1);
+  end = Fnext_single_property_change (position, propname, w->contents, limit1);
   if (INTEGERP (end))
     endpos = XINT (end);
 
@@ -6072,7 +6070,7 @@ face_for_overlay_string (struct window *w, ptrdiff_t pos,
 
   /* W must display the current buffer.  We could write this function
      to use the frame and buffer of W, but right now it doesn't.  */
-  /* eassert (XBUFFER (w->buffer) == current_buffer); */
+  /* eassert (XBUFFER (w->contents) == current_buffer); */
 
   XSETFASTINT (position, pos);
 
@@ -6082,9 +6080,9 @@ face_for_overlay_string (struct window *w, ptrdiff_t pos,
 
   /* Get the `face' or `mouse_face' text property at POS, and
      determine the next position at which the property changes.  */
-  prop = Fget_text_property (position, propname, w->buffer);
+  prop = Fget_text_property (position, propname, w->contents);
   XSETFASTINT (limit1, (limit < endpos ? limit : endpos));
-  end = Fnext_single_property_change (position, propname, w->buffer, limit1);
+  end = Fnext_single_property_change (position, propname, w->contents, limit1);
   if (INTEGERP (end))
     endpos = XINT (end);
 

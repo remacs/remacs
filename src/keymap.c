@@ -1556,8 +1556,8 @@ like in the respective argument of `key-binding'.  */)
       window = POSN_WINDOW (position);
 
       if (WINDOWP (window)
-	  && BUFFERP (XWINDOW (window)->buffer)
-	  && XBUFFER (XWINDOW (window)->buffer) != current_buffer)
+	  && BUFFERP (XWINDOW (window)->contents)
+	  && XBUFFER (XWINDOW (window)->contents) != current_buffer)
 	{
 	  /* Arrange to go back to the original buffer once we're done
 	     processing the key sequence.  We don't use
@@ -1567,7 +1567,7 @@ like in the respective argument of `key-binding'.  */)
 	     things the same.
 	  */
 	  record_unwind_current_buffer ();
-	  set_buffer_internal (XBUFFER (XWINDOW (window)->buffer));
+	  set_buffer_internal (XBUFFER (XWINDOW (window)->contents));
 	}
     }
 
@@ -2063,7 +2063,7 @@ For an approximate inverse of this, see `kbd'.  */)
     size += XINT (Flength (prefix));
 
   /* This has one extra element at the end that we don't pass to Fconcat.  */
-  if (size > min (PTRDIFF_MAX, SIZE_MAX) / word_size / 4)
+  if (min (PTRDIFF_MAX, SIZE_MAX) / word_size / 4 < size)
     memory_full (SIZE_MAX);
   SAFE_ALLOCA_LISP (args, size * 4);
 

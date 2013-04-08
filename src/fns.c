@@ -2443,10 +2443,9 @@ is nil, and `use-dialog-box' is non-nil.  */)
   CHECK_STRING (prompt);
 
 #ifdef HAVE_MENUS
-  if (FRAME_WINDOW_P (SELECTED_FRAME ())
-      && (NILP (last_nonmenu_event) || CONSP (last_nonmenu_event))
+  if ((NILP (last_nonmenu_event) || CONSP (last_nonmenu_event))
       && use_dialog_box
-      && have_menus_p ())
+      && window_system_available (SELECTED_FRAME ()))
     {
       Lisp_Object pane, menu, obj;
       redisplay_preserve_echo_area (4);
@@ -3409,7 +3408,7 @@ larger_vector (Lisp_Object vec, ptrdiff_t incr_min, ptrdiff_t nitems_max)
   ptrdiff_t n_max = (0 <= nitems_max && nitems_max < C_language_max
 		     ? nitems_max : C_language_max);
   eassert (VECTORP (vec));
-  eassert (incr_min > 0 && nitems_max >= -1);
+  eassert (0 < incr_min && -1 <= nitems_max);
   old_size = ASIZE (vec);
   incr_max = n_max - old_size;
   incr = max (incr_min, min (old_size >> 1, incr_max));
@@ -3574,9 +3573,9 @@ make_hash_table (struct hash_table_test test,
   eassert (SYMBOLP (test.name));
   eassert (INTEGERP (size) && XINT (size) >= 0);
   eassert ((INTEGERP (rehash_size) && XINT (rehash_size) > 0)
-	   || (FLOATP (rehash_size) && XFLOAT_DATA (rehash_size) > 1));
+	   || (FLOATP (rehash_size) && 1 < XFLOAT_DATA (rehash_size)));
   eassert (FLOATP (rehash_threshold)
-	   && XFLOAT_DATA (rehash_threshold) > 0
+	   && 0 < XFLOAT_DATA (rehash_threshold)
 	   && XFLOAT_DATA (rehash_threshold) <= 1.0);
 
   if (XFASTINT (size) == 0)
@@ -4312,15 +4311,15 @@ usage: (make-hash-table &rest KEYWORD-ARGS)  */)
   /* Look for `:rehash-size SIZE'.  */
   i = get_key_arg (QCrehash_size, nargs, args, used);
   rehash_size = i ? args[i] : make_float (DEFAULT_REHASH_SIZE);
-  if (! ((INTEGERP (rehash_size) && XINT (rehash_size) > 0)
-	 || (FLOATP (rehash_size) && XFLOAT_DATA (rehash_size) > 1)))
+  if (! ((INTEGERP (rehash_size) && 0 < XINT (rehash_size))
+	 || (FLOATP (rehash_size) && 1 < XFLOAT_DATA (rehash_size))))
     signal_error ("Invalid hash table rehash size", rehash_size);
 
   /* Look for `:rehash-threshold THRESHOLD'.  */
   i = get_key_arg (QCrehash_threshold, nargs, args, used);
   rehash_threshold = i ? args[i] : make_float (DEFAULT_REHASH_THRESHOLD);
   if (! (FLOATP (rehash_threshold)
-	 && XFLOAT_DATA (rehash_threshold) > 0
+	 && 0 < XFLOAT_DATA (rehash_threshold)
 	 && XFLOAT_DATA (rehash_threshold) <= 1))
     signal_error ("Invalid hash table rehash threshold", rehash_threshold);
 

@@ -548,7 +548,7 @@ static EMACS_INT const VALMASK
    type or if I is a NaN.  */
 
 #define FIXNUM_OVERFLOW_P(i) \
-  (! (((i) >= 0 || (i) >= MOST_NEGATIVE_FIXNUM) && (i) <= MOST_POSITIVE_FIXNUM))
+  (! ((0 <= (i) || MOST_NEGATIVE_FIXNUM <= (i)) && (i) <= MOST_POSITIVE_FIXNUM))
 
 LISP_INLINE ptrdiff_t
 clip_to_bounds (ptrdiff_t lower, EMACS_INT num, ptrdiff_t upper)
@@ -557,11 +557,6 @@ clip_to_bounds (ptrdiff_t lower, EMACS_INT num, ptrdiff_t upper)
 }
 
 
-/* Forward declarations.  */
-
-LISP_INLINE bool SAVE_VALUEP (Lisp_Object);
-LISP_INLINE struct Lisp_Save_Value *XSAVE_VALUE (Lisp_Object);
-
 /* Extract a value or address from a Lisp_Object.  */
 
 #define XCONS(a)   (eassert (CONSP (a)), \
@@ -1492,53 +1487,6 @@ struct Lisp_Save_Value
     } data[SAVE_VALUE_SLOTS];
   };
 
-/* Return the type of V's Nth saved value.  */
-LISP_INLINE int
-save_type (struct Lisp_Save_Value *v, int n)
-{
-  eassert (0 <= n && n < SAVE_VALUE_SLOTS);
-  return (v->save_type >> (SAVE_SLOT_BITS * n) & ((1 << SAVE_SLOT_BITS) - 1));
-}
-
-/* Get and set the Nth saved pointer.  */
-
-LISP_INLINE void *
-XSAVE_POINTER (Lisp_Object obj, int n)
-{
-  eassert (save_type (XSAVE_VALUE (obj), n) == SAVE_POINTER);
-  return XSAVE_VALUE (obj)->data[n].pointer;;
-}
-LISP_INLINE void
-set_save_pointer (Lisp_Object obj, int n, void *val)
-{
-  eassert (save_type (XSAVE_VALUE (obj), n) == SAVE_POINTER);
-  XSAVE_VALUE (obj)->data[n].pointer = val;
-}
-
-/* Likewise for the saved integer.  */
-
-LISP_INLINE ptrdiff_t
-XSAVE_INTEGER (Lisp_Object obj, int n)
-{
-  eassert (save_type (XSAVE_VALUE (obj), n) == SAVE_INTEGER);
-  return XSAVE_VALUE (obj)->data[n].integer;
-}
-LISP_INLINE void
-set_save_integer (Lisp_Object obj, int n, ptrdiff_t val)
-{
-  eassert (save_type (XSAVE_VALUE (obj), n) == SAVE_INTEGER);
-  XSAVE_VALUE (obj)->data[n].integer = val;
-}
-
-/* Extract Nth saved object.  */
-
-LISP_INLINE Lisp_Object
-XSAVE_OBJECT (Lisp_Object obj, int n)
-{
-  eassert (save_type (XSAVE_VALUE (obj), n) == SAVE_OBJECT);
-  return XSAVE_VALUE (obj)->data[n].object;
-}
-
 /* A miscellaneous object, when it's on the free list.  */
 struct Lisp_Free
   {
@@ -1559,13 +1507,6 @@ union Lisp_Misc
     struct Lisp_Overlay u_overlay;
     struct Lisp_Save_Value u_save_value;
   };
-
-LISP_INLINE struct Lisp_Save_Value *
-XSAVE_VALUE (Lisp_Object a)
-{
-  eassert (SAVE_VALUEP (a));
-  return & XMISC (a)->u_save_value;
-}
 
 /* Forwarding pointer to an int variable.
    This is allowed only in the value cell of a symbol,
@@ -1857,6 +1798,60 @@ LISP_INLINE bool
 SAVE_VALUEP (Lisp_Object x)
 {
   return MISCP (x) && XMISCTYPE (x) == Lisp_Misc_Save_Value;
+}
+
+LISP_INLINE struct Lisp_Save_Value *
+XSAVE_VALUE (Lisp_Object a)
+{
+  eassert (SAVE_VALUEP (a));
+  return & XMISC (a)->u_save_value;
+}
+
+/* Return the type of V's Nth saved value.  */
+LISP_INLINE int
+save_type (struct Lisp_Save_Value *v, int n)
+{
+  eassert (0 <= n && n < SAVE_VALUE_SLOTS);
+  return (v->save_type >> (SAVE_SLOT_BITS * n) & ((1 << SAVE_SLOT_BITS) - 1));
+}
+
+/* Get and set the Nth saved pointer.  */
+
+LISP_INLINE void *
+XSAVE_POINTER (Lisp_Object obj, int n)
+{
+  eassert (save_type (XSAVE_VALUE (obj), n) == SAVE_POINTER);
+  return XSAVE_VALUE (obj)->data[n].pointer;;
+}
+LISP_INLINE void
+set_save_pointer (Lisp_Object obj, int n, void *val)
+{
+  eassert (save_type (XSAVE_VALUE (obj), n) == SAVE_POINTER);
+  XSAVE_VALUE (obj)->data[n].pointer = val;
+}
+
+/* Likewise for the saved integer.  */
+
+LISP_INLINE ptrdiff_t
+XSAVE_INTEGER (Lisp_Object obj, int n)
+{
+  eassert (save_type (XSAVE_VALUE (obj), n) == SAVE_INTEGER);
+  return XSAVE_VALUE (obj)->data[n].integer;
+}
+LISP_INLINE void
+set_save_integer (Lisp_Object obj, int n, ptrdiff_t val)
+{
+  eassert (save_type (XSAVE_VALUE (obj), n) == SAVE_INTEGER);
+  XSAVE_VALUE (obj)->data[n].integer = val;
+}
+
+/* Extract Nth saved object.  */
+
+LISP_INLINE Lisp_Object
+XSAVE_OBJECT (Lisp_Object obj, int n)
+{
+  eassert (save_type (XSAVE_VALUE (obj), n) == SAVE_OBJECT);
+  return XSAVE_VALUE (obj)->data[n].object;
 }
 
 #define AUTOLOADP(x) (CONSP (x) && EQ (Qautoload, XCAR (x)))
@@ -2570,7 +2565,7 @@ gc_aset (Lisp_Object array, ptrdiff_t idx, Lisp_Object val)
 LISP_INLINE void
 vcopy (Lisp_Object v, ptrdiff_t offset, Lisp_Object *args, ptrdiff_t count)
 {
-  eassert (offset >= 0 && count >= 0 && offset + count <= ASIZE (v));
+  eassert (0 <= offset && 0 <= count && offset + count <= ASIZE (v));
   memcpy (XVECTOR (v)->contents + offset, args, count * sizeof *args);
 }
 
@@ -3779,11 +3774,6 @@ extern char *x_get_keysym_name (int);
 /* Defined in xml.c.  */
 extern void syms_of_xml (void);
 extern void xml_cleanup_parser (void);
-#endif
-
-#ifdef HAVE_MENUS
-/* Defined in (x|w32)fns.c, nsfns.m...  */
-extern int have_menus_p (void);
 #endif
 
 #ifdef HAVE_DBUS

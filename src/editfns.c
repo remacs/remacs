@@ -373,7 +373,7 @@ get_pos_property (Lisp_Object position, register Lisp_Object prop, Lisp_Object o
   if (NILP (object))
     XSETBUFFER (object, current_buffer);
   else if (WINDOWP (object))
-    object = XWINDOW (object)->buffer;
+    object = XWINDOW (object)->contents;
 
   if (!BUFFERP (object))
     /* pos-property only makes sense in buffers right now, since strings
@@ -846,7 +846,7 @@ save_excursion_save (void)
       ? Fcopy_marker (BVAR (current_buffer, mark), Qnil)
       : Qnil),
      /* Selected window if current buffer is shown in it, nil otherwise.  */
-     ((XBUFFER (XWINDOW (selected_window)->buffer) == current_buffer)
+     (EQ (XWINDOW (selected_window)->contents, Fcurrent_buffer ())
       ? selected_window : Qnil),
      BVAR (current_buffer, mark_active));
 }
@@ -915,7 +915,7 @@ save_excursion_restore (Lisp_Object info)
   tem = XSAVE_OBJECT (info, 2);
   if (WINDOWP (tem)
       && !EQ (tem, selected_window)
-      && (tem1 = XWINDOW (tem)->buffer,
+      && (tem1 = XWINDOW (tem)->contents,
 	  (/* Window is live...  */
 	   BUFFERP (tem1)
 	   /* ...and it shows the current buffer.  */
@@ -1398,8 +1398,8 @@ hi_time (time_t t)
      no runtime check is needed, and taking care not to convert
      negative numbers to unsigned before comparing them.  */
   if (! ((! TYPE_SIGNED (time_t)
-	  || TIME_T_MIN >> 16 >= MOST_NEGATIVE_FIXNUM
-	  || hi >= MOST_NEGATIVE_FIXNUM)
+	  || MOST_NEGATIVE_FIXNUM <= TIME_T_MIN >> 16
+	  || MOST_NEGATIVE_FIXNUM <= hi)
 	 && (TIME_T_MAX >> 16 <= MOST_POSITIVE_FIXNUM
 	     || hi <= MOST_POSITIVE_FIXNUM)))
     time_overflow ();
@@ -1561,7 +1561,7 @@ decode_time_components (Lisp_Object high, Lisp_Object low, Lisp_Object usec,
 
   if (result)
     {
-      if (hi >= (TYPE_SIGNED (time_t) ? TIME_T_MIN >> 16 : 0)
+      if ((TYPE_SIGNED (time_t) ? TIME_T_MIN >> 16 <= hi : 0 <= hi)
 	  && hi <= TIME_T_MAX >> 16)
 	{
 	  /* Return the greatest representable time that is not greater

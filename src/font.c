@@ -229,7 +229,7 @@ font_intern_prop (const char *str, ptrdiff_t len, bool force_symbol)
 
   if (len == 1 && *str == '*')
     return Qnil;
-  if (!force_symbol && len > 0 && '0' <= *str && *str <= '9')
+  if (!force_symbol && 0 < len && '0' <= *str && *str <= '9')
     {
       for (i = 1; i < len; i++)
 	if (! ('0' <= str[i] && str[i] <= '9'))
@@ -243,7 +243,7 @@ font_intern_prop (const char *str, ptrdiff_t len, bool force_symbol)
 	    {
 	      if (i == len)
 		return make_number (n);
-	      if (n > MOST_POSITIVE_FIXNUM / 10)
+	      if (MOST_POSITIVE_FIXNUM / 10 < n)
 		break;
 	    }
 
@@ -4761,7 +4761,7 @@ character at index specified by POSITION.  */)
 
   if (NILP (string))
     {
-      if (XBUFFER (w->buffer) != current_buffer)
+      if (XBUFFER (w->contents) != current_buffer)
 	error ("Specified window is not displaying the current buffer.");
       CHECK_NUMBER_COERCE_MARKER (position);
       if (! (BEGV <= XINT (position) && XINT (position) < ZV))
@@ -4844,11 +4844,9 @@ If the named font is not yet loaded, return nil.  */)
   Lisp_Object info;
   Lisp_Object font_object;
 
-  (*check_window_system_func) ();
-
   if (! FONTP (name))
     CHECK_STRING (name);
-  f = decode_live_frame (frame);
+  f = decode_window_system_frame (frame);
 
   if (STRINGP (name))
     {

@@ -779,7 +779,7 @@ xpalloc (void *pa, ptrdiff_t *nitems, ptrdiff_t nitems_incr_min,
   ptrdiff_t nitems_incr_max = n_max - n;
   ptrdiff_t incr = max (nitems_incr_min, min (incr_estimate, nitems_incr_max));
 
-  eassert (item_size > 0 && nitems_incr_min > 0 && n >= 0 && nitems_max >= -1);
+  eassert (0 < item_size && 0 < nitems_incr_min && 0 <= n && -1 <= nitems_max);
   if (! pa)
     *nitems = 0;
   if (nitems_incr_max < incr)
@@ -5376,7 +5376,7 @@ See Info node `(elisp)Garbage Collection'.  */)
       double tot = total_bytes_of_live_objects ();
 
       tot *= XFLOAT_DATA (Vgc_cons_percentage);
-      if (tot > 0)
+      if (0 < tot)
 	{
 	  if (tot < TYPE_MAXIMUM (EMACS_INT))
 	    gc_relative_threshold = tot;
@@ -5810,14 +5810,13 @@ mark_object (Lisp_Object arg)
 	  case PVEC_WINDOW:
 	    {
 	      struct window *w = (struct window *) ptr;
-	      bool leaf = NILP (w->hchild) && NILP (w->vchild);
 
 	      mark_vectorlike (ptr);
 
-	      /* Mark glyphs for leaf windows.  Marking window
+	      /* Mark glyph matrices, if any.  Marking window
 		 matrices is sufficient because frame matrices
 		 use the same glyph memory.  */
-	      if (leaf && w->current_matrix)
+	      if (w->current_matrix)
 		{
 		  mark_glyph_matrix (w->current_matrix);
 		  mark_glyph_matrix (w->desired_matrix);

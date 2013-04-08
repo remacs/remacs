@@ -1,3 +1,31 @@
+2013-04-01  Eli Zaretskii  <eliz@gnu.org>
+
+	* README: A better documentation of ddeclient.exe.
+
+	* README.W32: A better documentation of ddeclient.exe.
+
+	* paths.h (PATH_EXEC): Add nt/oo-spd/i386 and nt/oo/i386
+	subdirectories.
+
+2013-03-30  Eli Zaretskii  <eliz@gnu.org>
+
+	* inc/ms-w32.h (TERM_HEADER): Remove definition.
+
+	* config.nt (TERM_HEADER): Move the definition to "w32term.h" from
+	ms-w32.h.
+
+2013-03-29  Eli Zaretskii  <eliz@gnu.org>
+
+	* inc/ms-w32.h (copysign) [_MSC_VER]: Redirect to _copysign.
+
+	* config.nt (HAVE_COPYSIGN): Define.
+
+2013-03-29  Juanma Barranquero  <lekktu@gmail.com>
+
+	* config.nt: Sync with autogen/config.in.
+	(HAVE_XKBGETKEYBOARD): Remove.
+	(HAVE_XKB): New macro.
+
 2013-03-27  Eli Zaretskii  <eliz@gnu.org>
 
 	* makefile.w32-in (all-other-dirs-nmake, all-other-dirs-gmake)
