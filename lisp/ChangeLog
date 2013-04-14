@@ -1,3 +1,35 @@
+2013-04-14  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* files.el (normal-mode): Only use default major-mode if no other mode
+	was specified.
+
+	* emacs-lisp/trace.el (trace-values): New function.
+
+	* files.el: Allow : in local variables (bug#14089).
+	(hack-local-variable-regexp): New var.
+	(hack-local-variables-prop-line, hack-local-variables): Use it.
+
+2013-04-13  Roland Winkler  <winkler@gnu.org>
+
+	* textmodes/bibtex.el (bibtex-search-entries): Bug fix.  Use match
+	data before it gets modified by bibtex-beginning-of-entry.
+
+2013-04-13  Roland Winkler  <winkler@gnu.org>
+
+	* textmodes/bibtex.el (bibtex-url): Doc fix.
+
+2013-04-13  Roland Winkler  <winkler@gnu.org>
+
+	* textmodes/bibtex.el (bibtex-initialize): If the current buffer
+	does not visit a BibTeX file, exclude it from the list of buffers
+	returned by bibtex-initialize.
+
+2013-04-13  Stephen Berman  <stephen.berman@gmx.net>
+
+	* window.el (split-window): Remove interactive form, since as a
+	command this function is a special case of split-window-below.
+	Correct doc string.
+
 2013-04-12  Roland Winkler  <winkler@gnu.org>
 
 	* faces.el (read-face-name): Do not override value of arg default.
