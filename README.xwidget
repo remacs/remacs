@@ -262,11 +262,24 @@ Emacs sockets.
    in that case not phantomed.
 
 * ToDo:s
+** TODO webkit crash
+[2013-04-13 Sat] seems to crash a lot on http://www.dilbert.com
+Not always, but enough to be annoying.
+
 ** TODO optimize drawing off large offscreen widgets
-Currently I just allocate as large an area as the offscreen widget
-desires. This works well most of the time. But a HTML page might in
-principle be of infinite height so there will probably be cases where
-this doesn't work too well.
+Currently I just allocate as large an area as the offscreen webkit
+widget desires. This works well most of the time. But a HTML page
+might in principle be of infinite height so there are cases where this
+doesn't work too well.
+
+Heres a proposed strategy:
+- never grow the offscreen webkit over xwidget-webkit-max-height
+- allow for webkit to handle its own scrolling internally as well
+- be more clever about when you have more than one emacs window
+  showing the same webkit instance. 
+- allow to grow the offscreen instance in steps rather than just
+  allocate the entire height at once
+
 ** DONE again a trace
    CLOSED: [2011-10-28 Fri 13:48]
 [2011-08-23 Tue]
@@ -700,6 +713,9 @@ I used gtk signals, the implementation for sliders works well!
 ** TODO canvas support
 heres an interesting comparision of gtk canvases
 http://live.gnome.org/ProjectRidley/CanvasOverview
+
+ATM there are small hardcoded demos in the code, these should be
+removed and replaced with working xwgir counterparts.
 *** goocanvas
 goocanvas is a gtk canvas implemented using cairo. investigate.
 
