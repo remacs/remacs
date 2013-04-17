@@ -1,3 +1,62 @@
+2013-04-14  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* keyboard.c (timer_start_idle): Remove no-longer-used local.
+
+2013-04-14  Eli Zaretskii  <eliz@gnu.org>
+
+	* buffer.c (syms_of_buffer) <left-margin-width, right-margin-width>
+	<left-fringe-width, right-fringe-width, fringes-outside-margins>:
+	Mention in the doc string that setting these variables takes
+	effect only after a call to set-window-buffer.  (Bug#14200)
+
+2013-04-13  Eli Zaretskii  <eliz@gnu.org>
+
+	* indent.c (Fvertical_motion): Don't consider display strings on
+	overlay strings as display strings on the buffer position we
+	started from.  This prevents vertical cursor motion from jumping
+	more than one line when there's an overlay string with a display
+	property at end of line.
+	Reported by Karl Chen <Karl.Chen@quarl.org> in
+	http://lists.gnu.org/archive/html/emacs-devel/2013-04/msg00362.html.
+
+2013-04-12  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* window.c (select_window): `record_buffer' even if window is
+	already selected (bug#14191).
+
+2013-04-11  Eli Zaretskii  <eliz@gnu.org>
+
+	* window.c (Fwindow_end): Test more flags, including the buffer's
+	last_overlay_modified flag, to determine whether the window's
+	display is really up-to-date.  Prevents the function from
+	returning a stale value.  (Bug#14170)
+	(Fwindow_line_height): Fix the test for up-to-date-ness of the
+	current matrix.
+
+2013-04-10  Eli Zaretskii  <eliz@gnu.org>
+
+	* frame.c (do_switch_frame): Mark the TTY frame we switch to as
+	garbaged only if it is not already the top frame on its TTY.
+	This prevents flickering due to constant redrawing of TTY frames when
+	there are GUI frames open in the same session.  (Bug#13864)
+
+2013-04-10  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* keyboard.c (timer_start_idle): Call internal-timer-start-idle instead
+	of marking the idle timers directly.
+
+2013-04-09  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* minibuf.c (Ftest_completion): Ignore non-string/symbol keys in hash
+	tables (bug#14054).
+
+2013-04-08  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* window.c (select_window): Don't record_buffer while the invariant is
+	temporarily broken (bug#14161).
+
+	* fns.c (Fdelq): Don't assume !NILP => CONSP.
+
 2013-04-07  Eli Zaretskii  <eliz@gnu.org>
 
 	* fileio.c (ACL_NOT_WELL_SUPPORTED): Define macro for WINDOWSNT.
@@ -62,7 +121,7 @@
 	The following changes is to optimize the code for reading UTF-8
 	files.
 
-	* coding.c (check_ascii): Renamed from detect_ascii.  Return value
+	* coding.c (check_ascii): Rename from detect_ascii.  Return value
 	changed.  Check EOL format.  Do not call adjust_coding_eol_type
 	here.
 	(check_utf_8): New function.
@@ -254,8 +313,8 @@
 
 	* xdisp.c (with_echo_area_buffer_unwind_data): Save window
 	start marker...
-	(unwind_with_echo_area_buffer): ...to restore it here.  This
-	is needed to ensure that...
+	(unwind_with_echo_area_buffer): ...to restore it here.
+	This is needed to ensure that...
 	(redisplay_window): ...both window markers are valid here,
 	which is verified by eassert.
 	* editfns.c (save_excursion_save): Do not assume that
@@ -405,10 +464,10 @@
 
 	* w32term.c (w32fullscreen_hook): Use FRAME_NORMAL_WIDTH,
 	FRAME_NORMAL_HEIGHT, and FRAME_PREV_FSMODE, instead of static
-	variables, to save and restore frame dimensions.  Use
-	FRAME_NORMAL_LEFT and FRAME_NORMAL_TOP to restore frame position
-	after returning from a 'fullscreen' configuration.  use
-	SendMessage instead of PostMessage to send the SC_RESTORE message,
+	variables, to save and restore frame dimensions.
+	Use FRAME_NORMAL_LEFT and FRAME_NORMAL_TOP to restore frame position
+	after returning from a 'fullscreen' configuration.
+	use SendMessage instead of PostMessage to send the SC_RESTORE message,
 	to avoid races between the main thread and the input thread.
 
 	* w32term.h (struct w32_output): New members normal_width,
@@ -493,10 +552,10 @@
 
 	* frame.h (struct frame): Drop resx and resy because the same data is
 	available from window system-specific output context.  Adjust users.
-	(default_pixels_per_inch_x, default_pixels_per_inch_y): New
-	functions to provide defaults when no window system available.
+	(default_pixels_per_inch_x, default_pixels_per_inch_y):
+	New functions to provide defaults when no window system available.
 	(FRAME_RES_X, FRAME_RES_Y): New macros.
-	(NUMVAL): Moved from xdisp.c.
+	(NUMVAL): Move from xdisp.c.
 	* font.c (font_pixel_size, font_find_for_lface, font_open_for_lface)
 	(Ffont_face_attributes, Fopen_font):
 	* image.c (gs_load):
