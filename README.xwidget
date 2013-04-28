@@ -1731,3 +1731,4 @@ Now it works like this:
 The above approach has been tested for xwgir created buttons and seems
 to work. it doesnt work for webkit, so the old scheme is preserved
 for webkit.
+** TODO investigate git-remote-bzr
