@@ -1,5 +1,19 @@
-2013-04-26  Paul Eggert  <eggert@cs.ucla.edu>
+2013-04-27  Juri Linkov  <juri@jurta.org>
 
+	* callint.c (Fcall_interactively): Call `Qread_number' for
+	interactive code letter `n' instead of using duplicate code.
+	(Bug#14254)
+
+2013-04-27  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* systime.h (make_timeval): Declare as 'const'.
+
+2013-04-27  Kenichi Handa  <handa@gnu.org>
+
+	* font.c (font_open_entity): Always open a font of manageable
+	size.
+
+2013-04-26  Paul Eggert  <eggert@cs.ucla.edu>
 	Port better to AIX (Bug#14258).
 	* lisp.h (ENUM_BF) [__IBMC__]: Make it 'unsigned int' here, too,
 	to pacify AIX xlc.
