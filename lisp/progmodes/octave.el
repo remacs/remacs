@@ -42,54 +42,26 @@
 (define-obsolete-function-alias 'octave-submit-bug-report
   'report-emacs-bug "24.4")
 
-(define-abbrev-table 'octave-abbrev-table
-  (mapcar (lambda (e) (append e '(nil 0 t)))
-          '(("`a" "all_va_args")
-            ("`b" "break")
-            ("`cs" "case")
-            ("`ca" "catch")
-            ("`c" "continue")
-            ("`el" "else")
-            ("`eli" "elseif")
-            ("`et" "end_try_catch")
-            ("`eu" "end_unwind_protect")
-            ("`ef" "endfor")
-            ("`efu" "endfunction")
-            ("`ei" "endif")
-            ("`es" "endswitch")
-            ("`ew" "endwhile")
-            ("`f" "for")
-            ("`fu" "function")
-            ("`gl" "global")
-            ("`gp" "gplot")
-            ("`gs" "gsplot")
-            ("`if" "if ()")
-            ("`o" "otherwise")
-            ("`rp" "replot")
-            ("`r" "return")
-            ("`s" "switch")
-            ("`t" "try")
-            ("`u" "until ()")
-            ("`up" "unwind_protect")
-            ("`upc" "unwind_protect_cleanup")
-            ("`w" "while ()")))
+(define-abbrev-table 'octave-abbrev-table nil
   "Abbrev table for Octave's reserved words.
-Used in `octave-mode' and `inferior-octave-mode' buffers.
-All Octave abbrevs start with a grave accent (`)."
-  :regexp "\\(?:[^`]\\|^\\)\\(\\(?:\\<\\|`\\)\\w+\\)\\W*")
+Used in `octave-mode' and `inferior-octave-mode' buffers.")
 
 (defvar octave-comment-char ?#
   "Character to start an Octave comment.")
+
 (defvar octave-comment-start
   (string octave-comment-char ?\s)
   "String to insert to start a new Octave in-line comment.")
+
 (defvar octave-comment-start-skip "\\s<+\\s-*"
   "Regexp to match the start of an Octave comment up to its body.")
 
 (defvar octave-begin-keywords
   '("do" "for" "function" "if" "switch" "try" "unwind_protect" "while"))
+
 (defvar octave-else-keywords
   '("case" "catch" "else" "elseif" "otherwise" "unwind_protect_cleanup"))
+
 (defvar octave-end-keywords
   '("endfor" "endfunction" "endif" "endswitch" "end_try_catch"
     "end_unwind_protect" "endwhile" "until" "end"))
@@ -107,37 +79,6 @@ All Octave abbrevs start with a grave accent (`)."
     "load" "ls" "more" "run_history" "save" "type"
     "which" "who" "whos")
   "Text functions in Octave.")
-
-(defvar octave-variables
-  '("DEFAULT_EXEC_PATH" "DEFAULT_LOADPATH"
-    "EDITOR" "EXEC_PATH" "F_DUPFD" "F_GETFD" "F_GETFL" "F_SETFD"
-    "F_SETFL" "I" "IMAGE_PATH" "Inf" "J"
-    "NaN" "OCTAVE_VERSION" "O_APPEND" "O_CREAT" "O_EXCL"
-    "O_NONBLOCK" "O_RDONLY" "O_RDWR" "O_TRUNC" "O_WRONLY" "PAGER" "PS1"
-    "PS2" "PS4" "PWD" "SEEK_CUR" "SEEK_END" "SEEK_SET" "__F_DUPFD__"
-    "__F_GETFD__" "__F_GETFL__" "__F_SETFD__" "__F_SETFL__" "__I__"
-    "__Inf__" "__J__" "__NaN__" "__OCTAVE_VERSION__" "__O_APPEND__"
-    "__O_CREAT__" "__O_EXCL__" "__O_NONBLOCK__" "__O_RDONLY__"
-    "__O_RDWR__" "__O_TRUNC__" "__O_WRONLY__" "__PWD__" "__SEEK_CUR__"
-    "__SEEK_END__" "__SEEK_SET__" "__argv__" "__e__" "__eps__"
-    "__i__" "__inf__" "__j__" "__nan__" "__pi__"
-    "__program_invocation_name__" "__program_name__" "__realmax__"
-    "__realmin__" "__stderr__" "__stdin__" "__stdout__" "ans" "argv"
-    "beep_on_error" "completion_append_char"
-    "crash_dumps_octave_core" "default_save_format"
-    "e" "echo_executing_commands" "eps"
-    "error_text" "gnuplot_binary" "history_file"
-    "history_size" "ignore_function_time_stamp"
-    "inf" "nan" "nargin" "output_max_field_width" "output_precision"
-    "page_output_immediately" "page_screen_output" "pi"
-    "print_answer_id_name" "print_empty_dimensions"
-    "program_invocation_name" "program_name"
-    "realmax" "realmin" "return_last_computed_value" "save_precision"
-    "saving_history" "sighup_dumps_octave_core" "sigterm_dumps_octave_core"
-    "silent_functions" "split_long_rows" "stderr" "stdin" "stdout"
-    "string_fill_char" "struct_levels_to_print"
-    "suppress_verbose_help_message")
-  "Builtin variables in Octave.")
 
 (defvar octave-function-header-regexp
   (concat "^\\s-*\\_<\\(function\\)\\_>"
@@ -171,9 +112,6 @@ parenthetical grouping.")
 	 (if (boundp 'font-lock-builtin-face)
 	     'font-lock-builtin-face
 	   'font-lock-preprocessor-face))
-   ;; Fontify all builtin variables.
-   (cons (concat "\\_<" (regexp-opt octave-variables) "\\_>")
-	 'font-lock-variable-name-face)
    ;; Fontify all function declarations.
    (list octave-function-header-regexp
 	 '(1 font-lock-keyword-face)
@@ -206,7 +144,6 @@ parenthetical grouping.")
 
 (defvar octave-mode-map
   (let ((map (make-sparse-keymap)))
-    (define-key map "`" 'octave-abbrev-start)
     (define-key map "\e\n" 'octave-indent-new-comment-line)
     (define-key map "\M-\C-q" 'octave-indent-defun)
     (define-key map "\C-c\C-p" 'octave-previous-code-line)
@@ -266,9 +203,6 @@ parenthetical grouping.")
     "-"
     ["Indent Line"		indent-according-to-mode t]
     ["Complete Symbol"		completion-at-point t]
-    "-"
-    ["Toggle Abbrev Mode"	abbrev-mode
-     :style toggle :selected abbrev-mode]
     ["Toggle Auto-Fill Mode"	auto-fill-mode
      :style toggle :selected auto-fill-function]
     "-"
@@ -311,6 +245,12 @@ parenthetical grouping.")
     (modify-syntax-entry ?\n ">"  table)
     table)
   "Syntax table in use in `octave-mode' buffers.")
+
+(defcustom octave-font-lock-texinfo-comment t
+  "Control whether to highlight the texinfo comment block."
+  :type 'boolean
+  :group 'octave
+  :version "24.4")
 
 (defcustom octave-blink-matching-block t
   "Control the blinking of matching Octave block keywords.
@@ -359,11 +299,13 @@ newline or semicolon after an else or end keyword."
   "Non-nil means display `inferior-octave-buffer' after sending to it."
   :type 'boolean
   :group 'octave)
+
 (defcustom octave-send-line-auto-forward t
   "Control auto-forward after sending to the inferior Octave process.
 Non-nil means always go to the next Octave code line after sending."
   :type 'boolean
   :group 'octave)
+
 (defcustom octave-send-echo-input t
   "Non-nil means echo input sent to the inferior Octave process."
   :type 'boolean
@@ -527,7 +469,7 @@ Octave is a high-level language, primarily intended for numerical
 computations.  It provides a convenient command line interface
 for solving linear and nonlinear problems numerically.  Function
 definitions can also be stored in files and used in batch mode."
-  (setq local-abbrev-table octave-abbrev-table)
+  :abbrev-table octave-abbrev-table
 
   (smie-setup octave-smie-grammar #'octave-smie-rules
               :forward-token  #'octave-smie-forward-token
@@ -575,6 +517,7 @@ definitions can also be stored in files and used in batch mode."
             'octave-completion-at-point-function nil t)
   (add-hook 'before-save-hook 'octave-sync-function-file-names nil t)
   (setq-local beginning-of-defun-function 'octave-beginning-of-defun)
+  (and octave-font-lock-texinfo-comment (octave-font-lock-texinfo-comment))
 
   (easy-menu-add octave-mode-menu))
 
@@ -594,6 +537,13 @@ definitions can also be stored in files and used in batch mode."
   "Regexp to match prompts for the inferior Octave process."
   :type 'regexp
   :group 'octave)
+
+(defcustom inferior-octave-prompt-read-only comint-prompt-read-only
+  "If non-nil, the Octave prompt is read only.
+See `comint-prompt-read-only' for details."
+  :type 'boolean
+  :group 'octave
+  :version "24.4")
 
 (defcustom inferior-octave-startup-file nil
   "Name of the inferior Octave startup file.
@@ -670,9 +620,8 @@ in the Inferior Octave buffer.")
 
 (define-derived-mode inferior-octave-mode comint-mode "Inferior Octave"
   "Major mode for interacting with an inferior Octave process."
-  (setq comint-prompt-regexp inferior-octave-prompt
-	mode-line-process '(":%s")
-	local-abbrev-table octave-abbrev-table)
+  :abbrev-table octave-abbrev-table
+  (setq comint-prompt-regexp inferior-octave-prompt)
 
   (setq-local comment-start octave-comment-start)
   (setq-local comment-end "")
@@ -688,6 +637,7 @@ in the Inferior Octave buffer.")
 	comint-input-ring-size (or (getenv "OCTAVE_HISTSIZE") 1024))
   (setq-local comint-dynamic-complete-functions
               inferior-octave-dynamic-complete-functions)
+  (setq-local comint-prompt-read-only inferior-octave-prompt-read-only)
   (add-hook 'comint-input-filter-functions
 	'inferior-octave-directory-tracker nil t)
   (comint-read-input-ring t))
@@ -1049,6 +999,50 @@ q: Don't fix\n" func file))
                            nil 'delimited nil nil beg end)
         (message "Function names match")))))
 
+;; Adapted from texinfo-font-lock-keywords
+(defvar octave-texinfo-font-lock-keywords
+  `(("@\\([a-zA-Z]+\\|[^ \t\n]\\)" 1 font-lock-keyword-face prepend) ;commands
+    ("^\\*\\([^\n:]*\\)" 1 font-lock-function-name-face prepend) ;menu items
+    ("@\\(emph\\|i\\|sc\\){\\([^}]+\\)" 2 'italic prepend)
+    ("@\\(strong\\|b\\){\\([^}]+\\)" 2 'bold prepend)
+    ("@\\(kbd\\|key\\|url\\|uref\\){\\([^}]+\\)"
+     2 font-lock-string-face prepend)
+    ("@\\(file\\|email\\){\\([^}]+\\)" 2 font-lock-string-face prepend)
+    ("@\\(samp\\|code\\|var\\|math\\|env\\|command\\|option\\){\\([^}]+\\)"
+     2 font-lock-variable-name-face prepend)
+    ("@\\(cite\\|x?ref\\|pxref\\|dfn\\|inforef\\){\\([^}]+\\)"
+     2 font-lock-constant-face prepend)
+    ("@\\(anchor\\){\\([^}]+\\)" 2 font-lock-type-face prepend)
+    ("@\\(dmn\\|acronym\\|value\\){\\([^}]+\\)"
+     2 font-lock-builtin-face prepend)
+    ("@\\(end\\|itemx?\\) +\\(.+\\)" 2 font-lock-keyword-face prepend))
+  "Additional keywords to highlight in texinfo comment block.")
+
+(defface octave-function-comment-block
+  '((t (:inherit font-lock-doc-face)))
+  "Face used to highlight function comment block."
+  :group 'octave)
+
+(defun octave-font-lock-texinfo-comment ()
+  (font-lock-add-keywords
+   nil
+   '(((lambda (limit)
+        (while (and (search-forward "-*- texinfo -*-" limit t)
+                    (octave-in-comment-p))
+          (let ((beg (nth 8 (syntax-ppss)))
+                (end (progn
+                       (octave-skip-comment-forward (point-max))
+                       (point))))
+            (put-text-property beg end 'font-lock-multiline t)
+            (font-lock-prepend-text-property
+             beg end 'face 'octave-function-comment-block)
+            (dolist (kw octave-texinfo-font-lock-keywords)
+              (goto-char beg)
+              (while (re-search-forward (car kw) end 'move)
+                (font-lock-apply-highlight (cdr kw))))))
+        nil)))
+   'append))
+
 
 ;;; Indentation
 
@@ -1336,29 +1330,12 @@ otherwise."
                            (process-live-p inferior-octave-process)
                            (inferior-octave-completion-table))
                       (append octave-reserved-words
-                              octave-text-functions
-                              octave-variables)))))
+                              octave-text-functions)))))
 
 (define-obsolete-function-alias 'octave-complete-symbol
   'completion-at-point "24.1")
 
 ;;; Electric characters && friends
-
-(defun octave-abbrev-start ()
-  "Start entering an Octave abbreviation.
-If Abbrev mode is turned on, typing ` (grave accent) followed by ? or
-\\[help-command] lists all Octave abbrevs.  Any other key combination is
-executed normally.
-Note that all Octave mode abbrevs start with a grave accent."
-  (interactive)
-  (self-insert-command 1)
-  (when abbrev-mode
-    (set-temporary-overlay-map
-     (let ((map (make-sparse-keymap)))
-       (define-key map [??] 'list-abbrevs)
-       (define-key map (vector help-char) 'list-abbrevs)
-       map))))
-
 (define-skeleton octave-insert-defun
   "Insert an Octave function skeleton.
 Prompt for the function's name, arguments and return values (to be
