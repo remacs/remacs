@@ -42,8 +42,8 @@ LC_MESSAGES=
 LANG=
 export LANGUAGE LC_ALL LC_MESSAGES LANG
 
-## Remove unnecessary restrictions on file access.
-umask 022
+## Don't restrict access to any files.
+umask 0
 
 update=yes
 check=yes

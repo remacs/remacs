@@ -2801,4 +2801,3 @@ surrounded by (cl-block NAME ...).
 (provide 'cl-macs)
 
 ;;; cl-macs.el ends here
-

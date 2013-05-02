@@ -3,7 +3,7 @@
 ;; Copyright (C) 1993, 2001-2013 Free Software Foundation, Inc.
 
 ;; Author: Dave Gillespie <daveg@synaptics.com>
-;; Version: 2.02
+;; Version: 1.0
 ;; Keywords: extensions
 
 ;; This file is part of GNU Emacs.
