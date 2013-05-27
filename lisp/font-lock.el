@@ -2290,7 +2290,7 @@ in which C preprocessor directives are used. e.g. `asm-mode' and
 		 "condition-case" "condition-case-unless-debug"
 		 "track-mouse" "eval-after-load" "eval-and-compile"
 		 "eval-when-compile" "eval-when" "eval-next-after-load"
-		 "with-case-table" "with-category-table"
+		 "with-case-table" "with-category-table" "with-coding-priority"
 		 "with-current-buffer" "with-demoted-errors"
 		 "with-electric-help"
 		 "with-local-quit" "with-no-warnings"
@@ -2298,7 +2298,7 @@ in which C preprocessor directives are used. e.g. `asm-mode' and
 		 "with-selected-window" "with-selected-frame"
 		 "with-silent-modifications" "with-syntax-table"
 		 "with-temp-buffer" "with-temp-file" "with-temp-message"
-		 "with-timeout" "with-timeout-handler" "with-wrapper-hook") t)
+		 "with-timeout" "with-timeout-handler") t)
 	  "\\_>")
 	  .  1)
        ;; Control structures.  Common Lisp forms.

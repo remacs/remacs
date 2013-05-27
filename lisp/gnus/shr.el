@@ -52,7 +52,7 @@ fit these criteria."
   "Images that have URLs matching this regexp will be blocked."
   :version "24.1"
   :group 'shr
-  :type 'regexp)
+  :type '(choice (const nil) regexp))
 
 (defcustom shr-table-horizontal-line ?\s
   "Character used to draw horizontal table lines."
@@ -1087,6 +1087,14 @@ ones, in case fg and bg are nil."
     (insert "\n")
     (shr-indent))
   (shr-generic cont))
+
+(defun shr-tag-span (cont)
+  (let ((title (cdr (assq :title cont))))
+    (shr-generic cont)
+    (when title
+      (when shr-start
+        (let ((overlay (shr-make-overlay shr-start (point))))
+          (overlay-put overlay 'help-echo title))))))
 
 (defun shr-tag-h1 (cont)
   (shr-heading cont 'bold 'underline))

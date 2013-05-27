@@ -3152,15 +3152,13 @@ for first matching file."
     (exit-minibuffer)))
 
 (defun ido-chop (items elem)
-  "Remove all elements before ELEM and put them at the end of ITEMS.
-Use `eq' for comparison."
+  "Remove all elements before ELEM and put them at the end of ITEMS."
   (let ((ret nil)
 	(next nil)
 	(sofar nil))
     (while (not ret)
       (setq next (car items))
-      ;; Use `eq' to avoid bug http://debbugs.gnu.org/10994
-      (if (eq next elem)
+      (if (equal next elem)
 	  (setq ret (append items (nreverse sofar)))
 	;; else
 	(progn
@@ -3787,7 +3785,7 @@ This is to make them appear as if they were \"virtual buffers\"."
 	   (if (string-match re name)
 	       (setq matches (cons item matches)))))
        items))
-    matches))
+    (delete-consecutive-dups matches t)))
 
 
 (defun ido-set-matches ()

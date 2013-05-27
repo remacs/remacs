@@ -1530,11 +1530,14 @@ a case-insensitive match is tried."
     ;; Widen in case we are in the same subfile as before.
     (widen)
     (goto-char (point-min))
+    ;; Skip the summary segment for `Info-search'.
     (if (looking-at "\^_")
 	(forward-char 1)
       (search-forward "\n\^_"))
+    ;; Don't add the length of the skipped summary segment to
+    ;; the value returned to `Info-find-node-2'.  (Bug#14125)
     (if (numberp nodepos)
-	(+ (- nodepos lastfilepos) (point)))))
+	(+ (- nodepos lastfilepos) (point-min)))))
 
 (defun Info-unescape-quotes (value)
   "Unescape double quotes and backslashes in VALUE."
@@ -4982,7 +4985,7 @@ first line or header line, and for breadcrumb links.")
 ;;; Speedbar support:
 ;; These functions permit speedbar to display the "tags" in the
 ;; current Info node.
-(eval-when-compile (require 'speedbar))
+(eval-when-compile (require 'speedbar))	; for speedbar-with-writable
 
 (declare-function speedbar-add-expansion-list "speedbar" (new-list))
 (declare-function speedbar-center-buffer-smartly "speedbar" ())
@@ -5043,6 +5046,10 @@ This will add a speedbar major display mode."
   ;; Now, throw us into Info mode on speedbar.
   (speedbar-change-initial-expansion-list "Info")
   )
+
+;; speedbar loads dframe at runtime.
+(declare-function dframe-select-attached-frame "dframe" (&optional frame))
+(declare-function dframe-current-frame "dframe" (frame-var desired-major-mode))
 
 (defun Info-speedbar-hierarchy-buttons (_directory depth &optional node)
   "Display an Info directory hierarchy in speedbar.

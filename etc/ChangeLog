@@ -1,3 +1,36 @@
+2013-05-25  Xue Fuqiao  <xfq.free@gmail.com>
+
+	* refcards/refcard.tex: Refine some entries.  (Bug#14087)
+
+	* refcards/dired-ref.tex: Refine some entries. (Bug#14072)
+
+2013-05-24  Fabrice Niessen  <fni@missioncriticalit.com>
+
+	* themes/leuven-theme.el: Update theme.
+
+2013-05-16  Eli Zaretskii  <eliz@gnu.org>
+
+	* NEWS: Advertise the MSYS build on MS-Windows.
+
+2013-05-15  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* .gitignore: Don't ignore DOC-* any more.
+
+2013-05-07  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Use Gnulib ACL implementation, for benefit of Solaris etc. (Bug#14295)
+	* NEWS: Emacs is no longer limited to POSIX ACLs.  --disable-acl,
+	not --without-acl, since we're now using Gnulib's implementation.
+
+2013-05-07  YAMAMOTO Mitsuharu  <mituharu@math.s.chiba-u.ac.jp>
+
+	* NEWS: Mention multi-monitor support.
+
+2013-05-05  Paul Eggert  <eggert@cs.ucla.edu>
+
+	`write-region-inhibit-fsync' defaults to noninteractive (Bug#14273).
+	* NEWS: Document this.
+
 2013-04-24  Tassilo Horn  <tsdh@gnu.org>
 
 	* themes/tsdh-dark-theme.el (tsdh-dark): Add ido faces and remove

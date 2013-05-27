@@ -932,7 +932,7 @@ The function will be called with two arguments, the LABEL and the DEFAULT
 FORMAT, which usually is `\\label{%s}'.  The function should return the
 string to insert into the buffer."
   :group 'reftex-making-and-inserting-labels
-  :type 'function)
+  :type '(choice (const nil) function))
 
 ;; Label referencing
 
@@ -1000,7 +1000,9 @@ This is used to string together whole reference sets, like
     ("Fancyref" "fancyref"
      (("\\fref" ?f) ("\\Fref" ?F)))
     ("Hyperref" "hyperref"
-     (("\\autoref" ?a) ("\\autopageref" ?u))))
+     (("\\autoref" ?a) ("\\autopageref" ?u)))
+    ("Cleveref" "cleveref"
+     (("\\cref" ?c) ("\\Cref" ?C) ("\\cpageref" ?d) ("\\Cpageref" ?D))))
   "Alist of reference styles.
 Each element is a list of the style name, the name of the LaTeX
 package associated with the style or t for any package, and an
@@ -1112,7 +1114,7 @@ buffer."
   :group 'reftex)
 
 (defcustom reftex-bibliography-commands
-  '("bibliography" "nobibliography" "setupbibtex\\[.*?database=")
+  '("bibliography" "nobibliography" "setupbibtex\\[.*?database=" "addbibresource")
   "LaTeX commands which specify the BibTeX databases to use with the document."
   :group 'reftex-citation-support
   :type '(repeat string))

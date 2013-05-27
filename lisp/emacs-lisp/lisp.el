@@ -714,7 +714,11 @@ considered."
                                     (append
                                      macro-declarations-alist
                                      defun-declarations-alist)))))
-                    ((or `condition-case `condition-case-unless-debug)
+                    ((and (or `condition-case `condition-case-unless-debug)
+                          (guard (save-excursion
+                                   (ignore-errors
+                                     (forward-sexp 2)
+                                     (< (point) beg)))))
                      (list t obarray
                            :predicate (lambda (sym) (get sym 'error-conditions))))
                     (_ (list nil obarray #'fboundp))))))))
@@ -722,7 +726,7 @@ considered."
         (let ((tail (if (null (car table-etc))
                         (cdr table-etc)
                       (cons
-                       (if (memq (char-syntax (char-after end))
+                       (if (memq (char-syntax (or (char-after end) ?\s))
                                  '(?\s ?>))
                            (cadr table-etc)
                          (apply-partially 'completion-table-with-terminator

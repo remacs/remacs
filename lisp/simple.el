@@ -380,12 +380,18 @@ Other major modes are defined by comparison with this one."
     map)
   "Keymap used for programming modes.")
 
-(defun prog-indent-sexp ()
-  "Indent the expression after point."
-  (interactive)
-  (let ((start (point))
-        (end (save-excursion (forward-sexp 1) (point))))
-    (indent-region start end nil)))
+(defun prog-indent-sexp (&optional defun)
+  "Indent the expression after point.
+When interactively called with prefix, indent the enclosing defun
+instead."
+  (interactive "P")
+  (save-excursion
+    (when defun
+      (end-of-line)
+      (beginning-of-defun))
+    (let ((start (point))
+	  (end (progn (forward-sexp 1) (point))))
+      (indent-region start end nil))))
 
 (define-derived-mode prog-mode fundamental-mode "Prog"
   "Major mode for editing programming language source code."
@@ -1236,13 +1242,33 @@ in *Help* buffer.  See also the command `describe-char'."
 		   bidi-fixer encoding-msg pos total percent col hscroll))))))
 
 ;; Initialize read-expression-map.  It is defined at C level.
-(let ((m (make-sparse-keymap)))
-  (define-key m "\M-\t" 'lisp-complete-symbol)
-  ;; Might as well bind TAB to completion, since inserting a TAB char is much
-  ;; too rarely useful.
-  (define-key m "\t" 'lisp-complete-symbol)
-  (set-keymap-parent m minibuffer-local-map)
-  (setq read-expression-map m))
+(defvar read-expression-map
+  (let ((m (make-sparse-keymap)))
+    (define-key m "\M-\t" 'completion-at-point)
+    ;; Might as well bind TAB to completion, since inserting a TAB char is
+    ;; much too rarely useful.
+    (define-key m "\t" 'completion-at-point)
+    (set-keymap-parent m minibuffer-local-map)
+    m))
+
+(defun read-minibuffer (prompt &optional initial-contents)
+  "Return a Lisp object read using the minibuffer, unevaluated.
+Prompt with PROMPT.  If non-nil, optional second arg INITIAL-CONTENTS
+is a string to insert in the minibuffer before reading.
+\(INITIAL-CONTENTS can also be a cons of a string and an integer.
+Such arguments are used as in `read-from-minibuffer'.)"
+  ;; Used for interactive spec `x'.
+  (read-from-minibuffer prompt initial-contents minibuffer-local-map
+                        t minibuffer-history))
+
+(defun eval-minibuffer (prompt &optional initial-contents)
+  "Return value of Lisp expression read using the minibuffer.
+Prompt with PROMPT.  If non-nil, optional second arg INITIAL-CONTENTS
+is a string to insert in the minibuffer before reading.
+\(INITIAL-CONTENTS can also be a cons of a string and an integer.
+Such arguments are used as in `read-from-minibuffer'.)"
+  ;; Used for interactive spec `X'.
+  (eval (read--expression prompt initial-contents)))
 
 (defvar minibuffer-completing-symbol nil
   "Non-nil means completing a Lisp symbol in the minibuffer.")
@@ -1294,6 +1320,17 @@ display the result of expression evaluation."
 (defvar eval-expression-minibuffer-setup-hook nil
   "Hook run by `eval-expression' when entering the minibuffer.")
 
+(defun read--expression (prompt &optional initial-contents)
+  (let ((minibuffer-completing-symbol t))
+    (minibuffer-with-setup-hook
+        (lambda ()
+          (add-hook 'completion-at-point-functions
+                    #'lisp-completion-at-point nil t)
+          (run-hooks 'eval-expression-minibuffer-setup-hook))
+      (read-from-minibuffer prompt initial-contents
+                            read-expression-map t
+                            'read-expression-history))))
+
 ;; We define this, rather than making `eval' interactive,
 ;; for the sake of completion of names like eval-region, eval-buffer.
 (defun eval-expression (exp &optional insert-value)
@@ -1310,12 +1347,7 @@ and `eval-expression-print-level'.
 If `eval-expression-debug-on-error' is non-nil, which is the default,
 this command arranges for all errors to enter the debugger."
   (interactive
-   (list (let ((minibuffer-completing-symbol t))
-	   (minibuffer-with-setup-hook
-	       (lambda () (run-hooks 'eval-expression-minibuffer-setup-hook))
-	     (read-from-minibuffer "Eval: "
-				   nil read-expression-map t
-				   'read-expression-history)))
+   (list (read--expression "Eval: ")
 	 current-prefix-arg))
 
   (if (null eval-expression-debug-on-error)
@@ -2846,7 +2878,7 @@ Command Output*' is deleted.
 
 Optional fourth arg OUTPUT-BUFFER specifies where to put the
 command's output.  If the value is a buffer or buffer name, put
-the output there.  Any other value, including nil, means to
+the output there.  Any other value, excluding nil, means to
 insert the output in the current buffer.  In either case, the
 output is inserted after point (leaving mark after it).
 
@@ -2895,7 +2927,7 @@ interactively, this is t."
 	  (goto-char start)
 	  (and replace (push-mark (point) 'nomsg))
 	  (setq exit-status
-		(call-process-region start end shell-file-name t
+		(call-process-region start end shell-file-name replace
 				     (if error-file
 					 (list t error-file)
 				       t)
@@ -4835,13 +4867,25 @@ lines."
 			 (frame-char-width)) hscroll))))))
     (if target-hscroll
 	(set-window-hscroll (selected-window) target-hscroll))
-    (or (and (= (vertical-motion
-		 (cons (or goal-column
-			   (if (consp temporary-goal-column)
-			       (car temporary-goal-column)
-			     temporary-goal-column))
-		       arg))
-		arg)
+    ;; vertical-motion can move more than it was asked to if it moves
+    ;; across display strings with newlines.  We don't want to ring
+    ;; the bell and announce beginning/end of buffer in that case.
+    (or (and (or (and (>= arg 0)
+		      (>= (vertical-motion
+			   (cons (or goal-column
+				     (if (consp temporary-goal-column)
+					 (car temporary-goal-column)
+				       temporary-goal-column))
+				 arg))
+			  arg))
+		 (and (< arg 0)
+		      (<= (vertical-motion
+			   (cons (or goal-column
+				     (if (consp temporary-goal-column)
+					 (car temporary-goal-column)
+				       temporary-goal-column))
+				 arg))
+			  arg)))
 	     (or (>= arg 0)
 		 (/= (point) opoint)
 		 ;; If the goal column lies on a display string,
@@ -6714,15 +6758,21 @@ Called from `temp-buffer-show-hook'."
 (defun completion-setup-function ()
   (let* ((mainbuf (current-buffer))
          (base-dir
-          ;; When reading a file name in the minibuffer,
-          ;; try and find the right default-directory to set in the
-          ;; completion list buffer.
-          ;; FIXME: Why do we do that, actually?  --Stef
+          ;; FIXME: This is a bad hack.  We try to set the default-directory
+          ;; in the *Completions* buffer so that the relative file names
+          ;; displayed there can be treated as valid file names, independently
+          ;; from the completion context.  But this suffers from many problems:
+          ;; - It's not clear when the completions are file names.  With some
+          ;;   completion tables (e.g. bzr revision specs), the listed
+          ;;   completions can mix file names and other things.
+          ;; - It doesn't pay attention to possible quoting.
+          ;; - With fancy completion styles, the code below will not always
+          ;;   find the right base directory.
           (if minibuffer-completing-file-name
               (file-name-as-directory
                (expand-file-name
-                (substring (minibuffer-completion-contents)
-                           0 (or completion-base-size 0)))))))
+                (buffer-substring (minibuffer-prompt-end)
+                                  (- (point) (or completion-base-size 0))))))))
     (with-current-buffer standard-output
       (let ((base-size completion-base-size) ;Read before killing localvars.
             (base-position completion-base-position)
