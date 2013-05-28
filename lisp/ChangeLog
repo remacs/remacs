@@ -1,3 +1,120 @@
+2013-05-28  Alan Mackenzie  <acm@muc.de>
+
+	Handle "capitalised keywords" correctly.
+	* progmodes/cc-mode.el (c-after-change): bind case-fold-search to
+	nil.
+
+2013-05-28  Aidan Gauland  <aidalgol@amuri.net>
+
+	* eshell/em-unix.el: Added -r option to cp
+
+2013-05-28  Glenn Morris  <rgm@gnu.org>
+
+	* vc/vc-arch.el (vc-exec-after): Declare.
+	(vc-switches): Autoload.
+	* vc/vc-bzr.el: No need to require vc when compiling.
+	(vc-exec-after, vc-set-async-update, vc-default-dir-printer)
+	(vc-resynch-buffer, vc-dir-refresh): Declare.
+	(vc-setup-buffer, vc-switches): Autoload.
+	* vc/vc-cvs.el (vc-exec-after, vc-coding-system-for-diff)
+	(vc-resynch-buffer): Declare.
+	(vc-switches, vc-default-revert, vc-version-backup-file): Autoload.
+	* vc/vc-dir.el (desktop-missing-file-warning): Declare.
+	* vc/vc-git.el (vc-exec-after, vc-set-async-update)
+	(grep-read-regexp, grep-read-files, grep-expand-template)
+	(vc-dir-refresh): Declare.
+	(vc-setup-buffer, vc-switches, vc-resynch-buffer): Autoload.
+	* vc/vc-hg.el (vc-exec-after, vc-set-async-update): Declare.
+	(vc-setup-buffer, vc-switches, vc-do-async-command): Autoload.
+	* vc/vc-mtn.el (vc-exec-after): Declare.
+	(vc-switches): Autoload.
+	* vc/vc-rcs.el (vc-expand-dirs, vc-switches)
+	(vc-tag-precondition, vc-buffer-sync, vc-rename-master): Autoload.
+	(vc-file-tree-walk): Declare.
+	* vc/vc-sccs.el (vc-file-tree-walk): Declare.
+	(vc-expand-dirs, vc-switches, vc-setup-buffer, vc-delistify)
+	(vc-tag-precondition, vc-rename-master): Autoload.
+	* vc/vc-svn.el (vc-exec-after): Declare.
+	(vc-switches, vc-setup-buffer): Autoload.
+	* obsolete/vc-mcvs.el (vc-checkout, vc-switches, vc-default-revert):
+	Autoload.
+	(vc-resynch-buffer): Declare.
+
+	* obsolete/fast-lock.el (byte-compile-warnings):
+	Don't warn about obsolete features in this obsolete file.
+
+	* progmodes/cc-vars.el (c-macro-names-with-semicolon):
+	Move definition before use.
+
+	* play/dunnet.el (byte-compile-warnings): Don't disable them all.
+	(dun-unix-verbs): Remove dun-zippy.
+	(dun-zippy): Remove function.
+
+	* emacs-lisp/bytecomp.el (byte-compile-warnings): Doc fix.
+
+2013-05-27  Juri Linkov  <juri@jurta.org>
+
+	* replace.el (replace-search): New function with code moved out
+	from `perform-replace'.
+	(replace-highlight, replace-dehighlight): Move function definitions
+	up closer to `replace-search'.  (Bug#11746)
+
+2013-05-27  Juri Linkov  <juri@jurta.org>
+
+	* replace.el (perform-replace): Ignore invisible matches.
+	In addition to checking `query-replace-skip-read-only', also
+	filter out matches by calling `run-hook-with-args-until-failure'
+	on `isearch-filter-predicates', and also check `search-invisible'
+	for t or call `isearch-range-invisible'.
+	(replace-dehighlight): Call `isearch-clean-overlays'.  (Bug#11746)
+
+2013-05-27  Juri Linkov  <juri@jurta.org>
+
+	* isearch.el (isearch-filter-predicates): Rename from
+	`isearch-filter-predicate'.  Doc fix.  (Bug#11378)
+	(isearch-message-prefix): Display text from the property
+	`isearch-message-prefix' of the currently active filters.
+	(isearch-search): Don't compare `isearch-filter-predicate' with
+	`isearch-filter-visible'.  Call `run-hook-with-args-until-failure'
+	on `isearch-filter-predicates'.  Also check `search-invisible' for t
+	or call `isearch-range-invisible'.
+	(isearch-filter-visible): Make obsolete.
+	(isearch-lazy-highlight-search):
+	Call `run-hook-with-args-until-failure' on
+	`isearch-filter-predicates' and use `isearch-range-invisible'.
+
+	* info.el (Info-search): Call `run-hook-with-args-until-failure' on
+	`isearch-filter-predicates' instead of `funcall'ing
+	`isearch-filter-predicate'.
+	(Info-mode): Set `Info-isearch-filter' to
+	`isearch-filter-predicates' instead of `isearch-filter-predicate'.
+
+	* dired-aux.el (dired-isearch-filter-predicate-orig):
+	Remove variable.
+	(dired-isearch-filenames-toggle, dired-isearch-filenames-setup)
+	(dired-isearch-filenames-end): Add and remove
+	`dired-isearch-filter-filenames' in `isearch-filter-predicates'
+	instead of changing the value of `isearch-filter-predicate'.
+	Rebind `dired-isearch-filenames-toggle' from "\M-sf" to "\M-sff".
+	(dired-isearch-filter-filenames): Don't use `isearch-filter-visible'.
+	Put property `isearch-message-prefix' to "filename " on
+	`dired-isearch-filter-filenames'.
+
+	* wdired.el (wdired-change-to-wdired-mode):
+	Add `isearch-filter-predicates' to `wdired-isearch-filter-read-only'
+	locally instead of changing `isearch-filter-predicate'.
+	(wdired-isearch-filter-read-only): Don't use `isearch-filter-visible'.
+
+2013-05-27  Dmitry Gutov  <dgutov@yandex.ru>
+
+	* vc/vc-git.el (vc-git-working-revision): When in detached mode,
+	return the commit hash (Bug#14459).  Also set the
+	`vc-git-detached' property.
+	(vc-git--rev-parse): Extract from `vc-git-previous-revision'.
+	(vc-git-mode-line-string): Use the same help-echo format whether
+	in detached mode or not, because we know the actual revision now.
+	When in detached mode, shorten the revision to 7 chars.
+
 2013-05-27  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* emacs-lisp/easy-mmode.el (define-minor-mode):
