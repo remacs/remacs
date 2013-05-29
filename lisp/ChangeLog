@@ -1,3 +1,26 @@
+2013-05-29  Leo Liu  <sdl.web@gmail.com>
+
+	* progmodes/octave.el (octave-indent-comment): Tweak regexps.
+	(octave-help): Small simplification.
+
+	* emacs-lisp/smie.el (smie-highlight-matching-block): Always turn
+	off the highlight first.
+
+2013-05-29  Glenn Morris  <rgm@gnu.org>
+
+	* progmodes/idlwave.el (idlwave-concatenate-rinfo-lists):
+	Handle idlwave-last-system-routine-info-cons-cell being nil.
+
+	* progmodes/idlwave.el (idlwave-scan-user-lib-files)
+	(idlwave-write-paths): Simplify via with-temp-buffer.
+
+	* emulation/cua-gmrk.el: Also load cua-base, cua-rect at run time.
+	* emulation/cua-rect.el: Also load cua-base at run time.
+
+	* progmodes/cperl-mode.el (imenu-choose-buffer-index)
+	(file-of-tag, etags-snarf-tag, etags-goto-tag-location): Declare.
+	(cperl-imenu-on-info): Require imenu.
+
 2013-05-28  Alan Mackenzie  <acm@muc.de>
 
 	Handle "capitalised keywords" correctly.
