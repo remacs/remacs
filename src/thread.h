@@ -72,9 +72,6 @@ struct thread_state
   /* An address near the top of the stack.  */
   char *stack_top;
 
-  struct backtrace *m_backtrace_list;
-#define backtrace_list (current_thread->m_backtrace_list)
-
   struct catchtag *m_catchlist;
 #define catchlist (current_thread->m_catchlist)
 

@@ -558,6 +558,11 @@ unless the current buffer is a scratch buffer."
   (other-frame -1))
 
 ;; If no position specified, make new frame offset by 25 from current.
+;; You'd think this was a window manager's job, but apparently without
+;; this, new frames open exactly on top of old ones (?).
+;; http://lists.gnu.org/archive/html/emacs-devel/2010-10/msg00988.html
+;; Note that AFAICS it is not documented that functions on
+;; before-make-frame-hook can access PARAMETERS.
 (defvar parameters)		     ; dynamically bound in make-frame
 (add-hook 'before-make-frame-hook
           (lambda ()
@@ -895,7 +900,7 @@ See the documentation of `create-fontset-from-fontset-spec' for the format.")
 
 ;; Do the actual Nextstep Windows setup here; the above code just
 ;; defines functions and variables that we use now.
-(defun ns-initialize-window-system ()
+(defun ns-initialize-window-system (&optional _display)
   "Initialize Emacs for Nextstep (Cocoa / GNUstep) windowing."
   (cl-assert (not ns-initialized))
 

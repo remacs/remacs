@@ -245,6 +245,8 @@ used by the analyzer debugger."
 	  (semantic-scope-set-typecache scope nil)
 	  )))))
 
+(autoload 'semantic-tag-similar-p "semantic/tag-ls")
+
 (defun semantic-analyze-dereference-metatype-stack (type scope &optional type-declaration)
   "Dereference metatypes repeatedly until we hit a real TYPE.
 Uses `semantic-analyze-dereference-metatype'.
@@ -255,7 +257,7 @@ Optional argument TYPE-DECLARATION is how TYPE was found referenced."
 	(nexttype (semantic-analyze-dereference-metatype type scope type-declaration))
 	(idx 0))
     (catch 'metatype-recursion
-      (while (and nexttype (not (eq (car nexttype) lasttype)))
+      (while (and nexttype (not (semantic-tag-similar-p (car nexttype) lasttype)))
 	(setq lasttype (car nexttype)
 	      lasttypedeclaration (cadr nexttype))
 	(setq nexttype (semantic-analyze-dereference-metatype lasttype scope lasttypedeclaration))

@@ -163,7 +163,7 @@ that created this EDE locate object."
   "Create or update the database for the current project.
 You cannot create projects for the baseclass."
   (error "Cannot create/update a database of type %S"
-	 (object-name loc)))
+	 (eieio-object-name loc)))
 
 ;;; LOCATE
 ;;
@@ -310,8 +310,8 @@ that created this EDE locate object."
 ;;; CSCOPE
 ;;
 
-(declare-function cedet-cscope-version-check "cedet-scope")
-(declare-function cedet-cscope-support-for-directory "cedet-scope")
+(declare-function cedet-cscope-version-check "cedet-cscope")
+(declare-function cedet-cscope-support-for-directory "cedet-cscope")
 (declare-function cedet-cscope-expand-filename "cedet-cscope")
 (declare-function cedet-cscope-create/update-database "cedet-cscope")
 

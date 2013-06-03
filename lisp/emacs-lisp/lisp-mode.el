@@ -266,6 +266,7 @@ font-lock keywords will not be case sensitive."
 
 (defvar lisp-mode-shared-map
   (let ((map (make-sparse-keymap)))
+    (set-keymap-parent map prog-mode-map)
     (define-key map "\e\C-q" 'indent-sexp)
     (define-key map "\177" 'backward-delete-char-untabify)
     ;; This gets in the way when viewing a Lisp file in view-mode.  As
@@ -394,7 +395,7 @@ font-lock keywords will not be case sensitive."
 		  :enable mark-active))
     (bindings--define-key menu-map [eval-sexp]
       '(menu-item "Evaluate Last S-expression" eval-last-sexp
-		  :help "Evaluate sexp before point; print value in minibuffer"))
+		  :help "Evaluate sexp before point; print value in echo area"))
     (bindings--define-key menu-map [separator-format] menu-bar-separator)
     (bindings--define-key menu-map [comment-region]
       '(menu-item "Comment Out Region" comment-region
@@ -772,7 +773,7 @@ If CHAR is not a character, return nil."
 
 
 (defun eval-last-sexp-1 (eval-last-sexp-arg-internal)
-  "Evaluate sexp before point; print value in minibuffer.
+  "Evaluate sexp before point; print value in the echo area.
 With argument, print output into current buffer."
   (let ((standard-output (if eval-last-sexp-arg-internal (current-buffer) t)))
     ;; Setup the lexical environment if lexical-binding is enabled.
@@ -808,6 +809,7 @@ With argument, print output into current buffer."
 (defun eval-sexp-add-defvars (exp &optional pos)
   "Prepend EXP with all the `defvar's that precede it in the buffer.
 POS specifies the starting position where EXP was found and defaults to point."
+  (setq exp (macroexpand-all exp))      ;Eager macro-expansion.
   (if (not lexical-binding)
       exp
     (save-excursion
@@ -825,7 +827,7 @@ POS specifies the starting position where EXP was found and defaults to point."
         `(progn ,@(mapcar (lambda (v) `(defvar ,v)) vars) ,exp)))))
 
 (defun eval-last-sexp (eval-last-sexp-arg-internal)
-  "Evaluate sexp before point; print value in minibuffer.
+  "Evaluate sexp before point; print value in the echo area.
 Interactively, with prefix argument, print output into current buffer.
 Truncates long output according to the value of the variables
 `eval-expression-print-length' and `eval-expression-print-level'.
@@ -891,14 +893,13 @@ Reinitialize the face according to the `defface' specification."
 
 (defun eval-defun-2 ()
   "Evaluate defun that point is in or before.
-The value is displayed in the minibuffer.
+The value is displayed in the echo area.
 If the current defun is actually a call to `defvar',
 then reset the variable using the initial value expression
 even if the variable already has some other value.
 \(Normally `defvar' does not change the variable's value
 if it already has a value.\)
 
-With argument, insert value in current buffer after the defun.
 Return the result of evaluation."
   ;; FIXME: the print-length/level bindings should only be applied while
   ;; printing, not while evaluating.
@@ -950,11 +951,11 @@ this command arranges for all errors to enter the debugger.
 With a prefix argument, instrument the code for Edebug.
 
 If acting on a `defun' for FUNCTION, and the function was
-instrumented, `Edebug: FUNCTION' is printed in the minibuffer.  If not
+instrumented, `Edebug: FUNCTION' is printed in the echo area.  If not
 instrumented, just FUNCTION is printed.
 
 If not acting on a `defun', the result of evaluation is displayed in
-the minibuffer.  This display is controlled by the variables
+the echo area.  This display is controlled by the variables
 `eval-expression-print-length' and `eval-expression-print-level',
 which see."
   (interactive "P")
@@ -1436,6 +1437,8 @@ Any non-integer value means do not use a different value of
   :type '(choice (integer)
                  (const :tag "Use the current `fill-column'" t))
   :group 'lisp)
+(put 'emacs-lisp-docstring-fill-column 'safe-local-variable
+     (lambda (x) (or (eq x t) (integerp x))))
 
 (defun lisp-fill-paragraph (&optional justify)
   "Like \\[fill-paragraph], but handle Emacs Lisp comments and docstrings.

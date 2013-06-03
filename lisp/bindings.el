@@ -675,7 +675,7 @@ language you are using."
 (garbage-collect)
 
 
-(setq help-event-list '(help f1))
+(setq help-event-list '(help f1 ?\?))
 
 (make-variable-buffer-local 'minor-mode-overriding-map-alist)
 
@@ -894,6 +894,7 @@ if `inhibit-field-text-motion' is non-nil."
 (define-key search-map "hr" 'highlight-regexp)
 (define-key search-map "hp" 'highlight-phrase)
 (define-key search-map "hl" 'highlight-lines-matching-regexp)
+(define-key search-map "h." 'highlight-symbol-at-point)
 (define-key search-map "hu" 'unhighlight-regexp)
 (define-key search-map "hf" 'hi-lock-find-patterns)
 (define-key search-map "hw" 'hi-lock-write-interactive-patterns)

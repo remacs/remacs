@@ -75,6 +75,7 @@ enum
     BITS_PER_SHORT     = CHAR_BIT * sizeof (short),
     BITS_PER_INT       = CHAR_BIT * sizeof (int),
     BITS_PER_LONG      = CHAR_BIT * sizeof (long int),
+    BITS_PER_PTRDIFF_T = CHAR_BIT * sizeof (ptrdiff_t),
     BITS_PER_EMACS_INT = CHAR_BIT * sizeof (EMACS_INT)
   };
 
@@ -233,9 +234,9 @@ enum enum_USE_LSB_TAG { USE_LSB_TAG = 0 };
 #define case_Lisp_Int case Lisp_Int0: case Lisp_Int1
 #define LISP_INT_TAG_P(x) (((x) & ~Lisp_Int1) == 0)
 
-/* Stolen from GDB.  The only known compiler that doesn't support
-   enums in bitfields is MSVC.  */
-#ifdef _MSC_VER
+/* Idea stolen from GDB.  MSVC doesn't support enums in bitfields,
+   and xlc complains vociferously about them.  */
+#if defined _MSC_VER || defined __IBMC__
 #define ENUM_BF(TYPE) unsigned int
 #else
 #define ENUM_BF(TYPE) enum TYPE
@@ -556,6 +557,7 @@ clip_to_bounds (ptrdiff_t lower, EMACS_INT num, ptrdiff_t upper)
   return num < lower ? lower : num <= upper ? num : upper;
 }
 
+
 /* Extract a value or address from a Lisp_Object.  */
 
 #define XCONS(a)   (eassert (CONSP (a)), \
@@ -576,7 +578,6 @@ clip_to_bounds (ptrdiff_t lower, EMACS_INT num, ptrdiff_t upper)
 #define XMISCTYPE(a)   (XMISCANY (a)->type)
 #define XMARKER(a)	(eassert (MARKERP (a)), &(XMISC (a)->u_marker))
 #define XOVERLAY(a)	(eassert (OVERLAYP (a)), &(XMISC (a)->u_overlay))
-#define XSAVE_VALUE(a)	(eassert (SAVE_VALUEP (a)), &(XMISC (a)->u_save_value))
 
 /* Forwarding object types.  */
 
@@ -590,10 +591,12 @@ clip_to_bounds (ptrdiff_t lower, EMACS_INT num, ptrdiff_t upper)
   (eassert (KBOARD_OBJFWDP (a)), &((a)->u_kboard_objfwd))
 
 /* Pseudovector types.  */
-
+struct Lisp_Process;
+LISP_INLINE Lisp_Object make_lisp_proc (struct Lisp_Process *p)
+{ return make_lisp_ptr (p, Lisp_Vectorlike); }
 #define XPROCESS(a) (eassert (PROCESSP (a)), \
 		     (struct Lisp_Process *) XUNTAG (a, Lisp_Vectorlike))
-#define XWINDOW(a) (eassert (WINDOWP (a)), \
+#define XWINDOW(a) (eassert (WINDOWP (a)),				\
 		    (struct window *) XUNTAG (a, Lisp_Vectorlike))
 #define XTERMINAL(a) (eassert (TERMINALP (a)), \
 		      (struct terminal *) XUNTAG (a, Lisp_Vectorlike))
@@ -792,13 +795,10 @@ extern ptrdiff_t string_bytes (struct Lisp_String *);
    would expose alloc.c internal details that we'd rather keep
    private.
 
-   This is a macro for use in static initializers, and a constant for
-   visibility to GDB.  The cast to ptrdiff_t ensures that
-   the macro is signed.  */
-static ptrdiff_t const STRING_BYTES_BOUND =
+   This is a macro for use in static initializers.  The cast to
+   ptrdiff_t ensures that the macro is signed.  */
 #define STRING_BYTES_BOUND  \
   ((ptrdiff_t) min (MOST_POSITIVE_FIXNUM, min (SIZE_MAX, PTRDIFF_MAX) - 1))
-	STRING_BYTES_BOUND;
 
 /* Mark STR as a unibyte string.  */
 #define STRING_SET_UNIBYTE(STR)  \
@@ -1403,6 +1403,35 @@ enum
     SAVE_OBJECT
   };
 
+/* Number of bits needed to store one of the above values.  */
+enum { SAVE_SLOT_BITS = 2 };
+
+/* Number of slots in a save value where save_type is nonzero.  */
+enum { SAVE_VALUE_SLOTS = 4 };
+
+/* Bit-width and values for struct Lisp_Save_Value's save_type member.  */
+
+enum { SAVE_TYPE_BITS = SAVE_VALUE_SLOTS * SAVE_SLOT_BITS + 1 };
+
+enum Lisp_Save_Type
+  {
+    SAVE_TYPE_INT_INT = SAVE_INTEGER + (SAVE_INTEGER << SAVE_SLOT_BITS),
+    SAVE_TYPE_INT_INT_INT
+      = (SAVE_INTEGER + (SAVE_TYPE_INT_INT << SAVE_SLOT_BITS)),
+    SAVE_TYPE_OBJ_OBJ = SAVE_OBJECT + (SAVE_OBJECT << SAVE_SLOT_BITS),
+    SAVE_TYPE_OBJ_OBJ_OBJ = SAVE_OBJECT + (SAVE_TYPE_OBJ_OBJ << SAVE_SLOT_BITS),
+    SAVE_TYPE_OBJ_OBJ_OBJ_OBJ
+      = SAVE_OBJECT + (SAVE_TYPE_OBJ_OBJ_OBJ << SAVE_SLOT_BITS),
+    SAVE_TYPE_PTR_INT = SAVE_POINTER + (SAVE_INTEGER << SAVE_SLOT_BITS),
+    SAVE_TYPE_PTR_OBJ = SAVE_POINTER + (SAVE_OBJECT << SAVE_SLOT_BITS),
+    SAVE_TYPE_PTR_PTR = SAVE_POINTER + (SAVE_POINTER << SAVE_SLOT_BITS),
+    SAVE_TYPE_PTR_PTR_OBJ
+      = SAVE_POINTER + (SAVE_TYPE_PTR_OBJ << SAVE_SLOT_BITS),
+
+    /* This has an extra bit indicating it's raw memory.  */
+    SAVE_TYPE_MEMORY = SAVE_TYPE_PTR_INT + (1 << (SAVE_TYPE_BITS - 1))
+  };
+
 /* Special object used to hold a different values for later use.
 
    This is mostly used to package C integers and pointers to call
@@ -1423,73 +1452,49 @@ enum
 
    If yon need to pass more than just one C pointer, you should
    use make_save_value.  This function allows you to pack up to
-   4 integers, pointers or Lisp_Objects and conveniently get them
-   back with XSAVE_POINTER, XSAVE_INTEGER and XSAVE_OBJECT macros:
+   SAVE_VALUE_SLOTS integers, pointers or Lisp_Objects and
+   conveniently get them back with XSAVE_POINTER, XSAVE_INTEGER and
+   XSAVE_OBJECT macros:
 
    ...
      struct my_data *md = get_my_data ();
-     ptrdiff_t my_offset = get_my_offset ();
      Lisp_Object my_object = get_my_object ();
      record_unwind_protect
-       (my_unwind, make_save_value ("pio", md, my_offset, my_object));
+       (my_unwind, make_save_value (SAVE_TYPE_PTR_OBJ, md, my_object));
    ...
 
    Lisp_Object my_unwind (Lisp_Object arg)
    {
      struct my_data *md = XSAVE_POINTER (arg, 0);
-     ptrdiff_t my_offset = XSAVE_INTEGER (arg, 1);
-     Lisp_Object my_object = XSAVE_OBJECT (arg, 2);
+     Lisp_Object my_object = XSAVE_OBJECT (arg, 1);
      ...
    }
 
    If ENABLE_CHECKING is in effect, XSAVE_xxx macros do type checking of the
    saved objects and raise eassert if type of the saved object doesn't match
    the type which is extracted.  In the example above, XSAVE_INTEGER (arg, 2)
-   or XSAVE_OBJECT (arg, 1) are wrong because integer was saved in slot 1 and
-   Lisp_Object was saved in slot 2 of ARG.  */
+   or XSAVE_OBJECT (arg, 0) are wrong because nothing was saved in slot 2 and
+   Lisp_Object was saved in slot 1 of ARG.  */
 
 struct Lisp_Save_Value
   {
     ENUM_BF (Lisp_Misc_Type) type : 16;	/* = Lisp_Misc_Save_Value */
     unsigned gcmarkbit : 1;
-    int spacer : 6;
-    /* If `area' is nonzero, `data[0].pointer' is the address of a memory area
-       containing `data[1].integer' potential Lisp_Objects.  The rest of `data'
-       fields are unused.  */
-    unsigned area : 1;
-    /* If `area' is zero, `data[N]' may hold different objects which type is
-       encoded in `typeN' fields as described by the anonymous enum above.
-       E.g. if `type0' is SAVE_INTEGER, `data[0].integer' is in use.  */
-    unsigned type0 : 2;
-    unsigned type1 : 2;
-    unsigned type2 : 2;
-    unsigned type3 : 2;
+    int spacer : 32 - (16 + 1 + SAVE_TYPE_BITS);
+
+    /* DATA[N] may hold up to SAVE_VALUE_SLOTS entries.  The type of
+       V's Ith entry is given by save_type (V, I).  E.g., if save_type
+       (V, 3) == SAVE_INTEGER, V->data[3].integer is in use.
+
+       If SAVE_TYPE == SAVE_TYPE_MEMORY, DATA[0].pointer is the address of
+       a memory area containing DATA[1].integer potential Lisp_Objects.  */
+    ENUM_BF (Lisp_Save_Type) save_type : SAVE_TYPE_BITS;
     union {
       void *pointer;
       ptrdiff_t integer;
       Lisp_Object object;
-    } data[4];
+    } data[SAVE_VALUE_SLOTS];
   };
-
-/* Macro to set and extract Nth saved pointer.  Type
-   checking is ugly because it's used as an lvalue.  */
-
-#define XSAVE_POINTER(obj, n)					\
-  XSAVE_VALUE (obj)->data[(eassert (XSAVE_VALUE (obj)->type	\
-    ## n == SAVE_POINTER), n)].pointer
-
-/* Likewise for the saved integer.  */
-
-#define XSAVE_INTEGER(obj, n)					\
-  XSAVE_VALUE (obj)->data[(eassert (XSAVE_VALUE (obj)->type	\
-    ## n == SAVE_INTEGER), n)].integer
-
-/* Macro to extract Nth saved object.  This is never used as
-   an lvalue, so we can do more convenient type checking.  */
-
-#define XSAVE_OBJECT(obj, n)					\
-  (eassert (XSAVE_VALUE (obj)->type ## n == SAVE_OBJECT),	\
-   XSAVE_VALUE (obj)->data[n].object)
 
 /* A miscellaneous object, when it's on the free list.  */
 struct Lisp_Free
@@ -1797,7 +1802,66 @@ typedef struct {
 #define VECTORP(x) (VECTORLIKEP (x) && !(ASIZE (x) & PSEUDOVECTOR_FLAG))
 #define OVERLAYP(x) (MISCP (x) && XMISCTYPE (x) == Lisp_Misc_Overlay)
 #define MARKERP(x) (MISCP (x) && XMISCTYPE (x) == Lisp_Misc_Marker)
-#define SAVE_VALUEP(x) (MISCP (x) && XMISCTYPE (x) == Lisp_Misc_Save_Value)
+
+LISP_INLINE bool
+SAVE_VALUEP (Lisp_Object x)
+{
+  return MISCP (x) && XMISCTYPE (x) == Lisp_Misc_Save_Value;
+}
+
+LISP_INLINE struct Lisp_Save_Value *
+XSAVE_VALUE (Lisp_Object a)
+{
+  eassert (SAVE_VALUEP (a));
+  return & XMISC (a)->u_save_value;
+}
+
+/* Return the type of V's Nth saved value.  */
+LISP_INLINE int
+save_type (struct Lisp_Save_Value *v, int n)
+{
+  eassert (0 <= n && n < SAVE_VALUE_SLOTS);
+  return (v->save_type >> (SAVE_SLOT_BITS * n) & ((1 << SAVE_SLOT_BITS) - 1));
+}
+
+/* Get and set the Nth saved pointer.  */
+
+LISP_INLINE void *
+XSAVE_POINTER (Lisp_Object obj, int n)
+{
+  eassert (save_type (XSAVE_VALUE (obj), n) == SAVE_POINTER);
+  return XSAVE_VALUE (obj)->data[n].pointer;;
+}
+LISP_INLINE void
+set_save_pointer (Lisp_Object obj, int n, void *val)
+{
+  eassert (save_type (XSAVE_VALUE (obj), n) == SAVE_POINTER);
+  XSAVE_VALUE (obj)->data[n].pointer = val;
+}
+
+/* Likewise for the saved integer.  */
+
+LISP_INLINE ptrdiff_t
+XSAVE_INTEGER (Lisp_Object obj, int n)
+{
+  eassert (save_type (XSAVE_VALUE (obj), n) == SAVE_INTEGER);
+  return XSAVE_VALUE (obj)->data[n].integer;
+}
+LISP_INLINE void
+set_save_integer (Lisp_Object obj, int n, ptrdiff_t val)
+{
+  eassert (save_type (XSAVE_VALUE (obj), n) == SAVE_INTEGER);
+  XSAVE_VALUE (obj)->data[n].integer = val;
+}
+
+/* Extract Nth saved object.  */
+
+LISP_INLINE Lisp_Object
+XSAVE_OBJECT (Lisp_Object obj, int n)
+{
+  eassert (save_type (XSAVE_VALUE (obj), n) == SAVE_OBJECT);
+  return XSAVE_VALUE (obj)->data[n].object;
+}
 
 #define AUTOLOADP(x) (CONSP (x) && EQ (Qautoload, XCAR (x)))
 
@@ -2136,12 +2200,24 @@ typedef jmp_buf sys_jmp_buf;
 #endif
 
 
+/* Elisp uses several stacks:
+   - the C stack.
+   - the bytecode stack: used internally by the bytecode interpreter.
+     Allocated from the C stack.
+   - The specpdl stack: keeps track of active unwind-protect and
+     dynamic-let-bindings.  Allocated from the `specpdl' array, a manually
+     managed stack.
+   - The catch stack: keeps track of active catch tags.
+     Allocated on the C stack.  This is where the setmp data is kept.
+   - The handler stack: keeps track of active condition-case handlers.
+     Allocated on the C stack.  Every entry there also uses an entry in
+     the catch stack.  */
+
 /* Structure for recording Lisp call stack for backtrace purposes.  */
 
 /* The special binding stack holds the outer values of variables while
    they are bound by a function application or a let form, stores the
-   code to be executed for Lisp unwind-protect forms, and stores the C
-   functions to be called for record_unwind_protect.
+   code to be executed for unwind-protect forms.
 
    If func is non-zero, undoing this binding applies func to old_value;
       This implements record_unwind_protect.
@@ -2154,32 +2230,82 @@ typedef jmp_buf sys_jmp_buf;
    which means having bound a local value while CURRENT-BUFFER was active.
    If WHERE is nil this means we saw the default value when binding SYMBOL.
    WHERE being a buffer or frame means we saw a buffer-local or frame-local
-   value.  Other values of WHERE mean an internal error.  */
+   value.  Other values of WHERE mean an internal error.
+
+   NOTE: The specbinding struct is defined here, because SPECPDL_INDEX is
+   used all over the place, needs to be fast, and needs to know the size of
+   struct specbinding.  But only eval.c should access it.  */
 
 typedef Lisp_Object (*specbinding_func) (Lisp_Object);
 
-struct specbinding
-  {
-    Lisp_Object symbol, old_value;
-    specbinding_func func;
-    /* Normally this is unused; but it is to the symbol's current
-       value when a thread is swapped out.  */
-    Lisp_Object saved_value;
-  };
-
-#define SPECPDL_INDEX()	(specpdl_ptr - specpdl)
-
-struct backtrace
-{
-  struct backtrace *next;
-  Lisp_Object function;
-  Lisp_Object *args;	/* Points to vector of args.  */
-  ptrdiff_t nargs;	/* Length of vector.  */
-  /* Nonzero means call value of debugger when done with this operation.  */
-  unsigned int debug_on_exit : 1;
+enum specbind_tag {
+  SPECPDL_UNWIND,		/* An unwind_protect function.  */
+  SPECPDL_BACKTRACE,		/* An element of the backtrace.  */
+  SPECPDL_LET,			/* A plain and simple dynamic let-binding.  */
+  /* Tags greater than SPECPDL_LET must be "subkinds" of LET.  */
+  SPECPDL_LET_LOCAL,		/* A buffer-local let-binding.  */
+  SPECPDL_LET_DEFAULT		/* A global binding for a localized var.  */
 };
 
-extern struct backtrace *backtrace_list;
+struct specbinding
+  {
+    enum specbind_tag kind;
+    union {
+      struct {
+	Lisp_Object arg;
+	specbinding_func func;
+      } unwind;
+      struct {
+	/* `where' is not used in the case of SPECPDL_LET.  */
+	Lisp_Object symbol, old_value, where;
+	/* Normally this is unused; but it is to the symbol's current
+	   value when a thread is swapped out.  */
+	Lisp_Object saved_value;
+      } let;
+      struct {
+	Lisp_Object function;
+	Lisp_Object *args;
+	ptrdiff_t nargs : BITS_PER_PTRDIFF_T - 1;
+	bool debug_on_exit : 1;
+      } bt;
+    } v;
+  };
+
+LISP_INLINE Lisp_Object specpdl_symbol (struct specbinding *pdl)
+{ eassert (pdl->kind >= SPECPDL_LET); return pdl->v.let.symbol; }
+
+LISP_INLINE Lisp_Object specpdl_old_value (struct specbinding *pdl)
+{ eassert (pdl->kind >= SPECPDL_LET); return pdl->v.let.old_value; }
+
+LISP_INLINE Lisp_Object specpdl_saved_value (struct specbinding *pdl)
+{ eassert (pdl->kind >= SPECPDL_LET); return pdl->v.let.saved_value; }
+
+LISP_INLINE Lisp_Object specpdl_where (struct specbinding *pdl)
+{ eassert (pdl->kind > SPECPDL_LET); return pdl->v.let.where; }
+
+LISP_INLINE Lisp_Object specpdl_arg (struct specbinding *pdl)
+{ eassert (pdl->kind == SPECPDL_UNWIND); return pdl->v.unwind.arg; }
+
+LISP_INLINE specbinding_func specpdl_func (struct specbinding *pdl)
+{ eassert (pdl->kind == SPECPDL_UNWIND); return pdl->v.unwind.func; }
+
+LISP_INLINE Lisp_Object backtrace_function (struct specbinding *pdl)
+{ eassert (pdl->kind == SPECPDL_BACKTRACE); return pdl->v.bt.function; }
+
+LISP_INLINE ptrdiff_t backtrace_nargs (struct specbinding *pdl)
+{ eassert (pdl->kind == SPECPDL_BACKTRACE); return pdl->v.bt.nargs; }
+
+LISP_INLINE Lisp_Object *backtrace_args (struct specbinding *pdl)
+{ eassert (pdl->kind == SPECPDL_BACKTRACE); return pdl->v.bt.args; }
+
+LISP_INLINE bool backtrace_debug_on_exit (struct specbinding *pdl)
+{ eassert (pdl->kind == SPECPDL_BACKTRACE); return pdl->v.bt.debug_on_exit; }
+
+/* extern struct specbinding *specpdl; */
+/* extern struct specbinding *specpdl_ptr; */
+/* extern ptrdiff_t specpdl_size; */
+
+#define SPECPDL_INDEX()	(specpdl_ptr - specpdl)
 
 /* Everything needed to describe an active condition case.
 
@@ -2235,9 +2361,10 @@ struct catchtag
   Lisp_Object tag;
   Lisp_Object volatile val;
   struct catchtag *volatile next;
+#if 1 /* GC_MARK_STACK == GC_MAKE_GCPROS_NOOPS, but they're defined later.  */
   struct gcpro *gcpro;
+#endif
   sys_jmp_buf jmp;
-  struct backtrace *backlist;
   struct handler *f_handlerlist;
   EMACS_INT f_lisp_eval_depth;
   ptrdiff_t volatile pdlcount;
@@ -3122,7 +3249,7 @@ extern bool abort_on_gc;
 extern Lisp_Object make_float (double);
 extern void display_malloc_warning (void);
 extern ptrdiff_t inhibit_garbage_collection (void);
-extern Lisp_Object make_save_value (const char *, ...);
+extern Lisp_Object make_save_value (enum Lisp_Save_Type, ...);
 extern Lisp_Object make_save_pointer (void *);
 extern Lisp_Object build_overlay (Lisp_Object, Lisp_Object, Lisp_Object);
 extern void free_marker (Lisp_Object);
@@ -3180,6 +3307,7 @@ extern Lisp_Object internal_with_output_to_temp_buffer
         (const char *, Lisp_Object (*) (Lisp_Object), Lisp_Object);
 enum FLOAT_TO_STRING_BUFSIZE { FLOAT_TO_STRING_BUFSIZE = 350 };
 extern int float_to_string (char *, double);
+extern void init_print_once (void);
 extern void syms_of_print (void);
 
 /* Defined in doprnt.c.  */
@@ -3294,6 +3422,14 @@ extern Lisp_Object safe_call1 (Lisp_Object, Lisp_Object);
 extern Lisp_Object safe_call2 (Lisp_Object, Lisp_Object, Lisp_Object);
 extern void init_eval (void);
 extern void syms_of_eval (void);
+extern void record_in_backtrace (Lisp_Object function,
+				 Lisp_Object *args, ptrdiff_t nargs);
+extern void mark_specpdl (struct specbinding *first, struct specbinding *ptr);
+extern void get_backtrace (Lisp_Object array);
+Lisp_Object backtrace_top_function (void);
+extern bool let_shadows_buffer_binding_p (struct Lisp_Symbol *symbol);
+extern bool let_shadows_global_binding_p (Lisp_Object symbol);
+
 
 /* Defined in thread.c.  */
 extern void mark_threads (void);
@@ -3464,7 +3600,7 @@ extern Lisp_Object Qvisible;
 extern void store_frame_param (struct frame *, Lisp_Object, Lisp_Object);
 extern void store_in_alist (Lisp_Object *, Lisp_Object, Lisp_Object);
 extern Lisp_Object do_switch_frame (Lisp_Object, int, int, Lisp_Object);
-#if HAVE_NS
+#if HAVE_NS || defined(WINDOWSNT)
 extern Lisp_Object get_frame_param (struct frame *, Lisp_Object);
 #endif
 extern void frames_discard_buffer (Lisp_Object);
@@ -3678,14 +3814,19 @@ extern void syms_of_fontset (void);
 extern Lisp_Object Qfont_param;
 #endif
 
-#ifdef WINDOWSNT
-/* Defined on w32notify.c.  */
-extern void syms_of_w32notify (void);
+/* Defined in gfilenotify.c */
+#ifdef HAVE_GFILENOTIFY
+extern void syms_of_gfilenotify (void);
 #endif
 
 /* Defined in inotify.c */
 #ifdef HAVE_INOTIFY
 extern void syms_of_inotify (void);
+#endif
+
+#ifdef HAVE_W32NOTIFY
+/* Defined on w32notify.c.  */
+extern void syms_of_w32notify (void);
 #endif
 
 /* Defined in xfaces.c.  */
@@ -3726,11 +3867,6 @@ extern char *x_get_keysym_name (int);
 /* Defined in xml.c.  */
 extern void syms_of_xml (void);
 extern void xml_cleanup_parser (void);
-#endif
-
-#ifdef HAVE_MENUS
-/* Defined in (x|w32)fns.c, nsfns.m...  */
-extern int have_menus_p (void);
 #endif
 
 #ifdef HAVE_DBUS
@@ -3840,8 +3976,7 @@ extern void *record_xmalloc (size_t);
       {							       \
 	Lisp_Object arg_;				       \
 	buf = xmalloc ((nelt) * word_size);		       \
-	arg_ = make_save_value ("pi", buf, nelt);	       \
-	XSAVE_VALUE (arg_)->area = 1;			       \
+	arg_ = make_save_value (SAVE_TYPE_MEMORY, buf, nelt);  \
 	sa_must_free = 1;				       \
 	record_unwind_protect (safe_alloca_unwind, arg_);      \
       }							       \

@@ -1,5 +1,5 @@
 /* Threading code.
-   Copyright (C) 2012 Free Software Foundation, Inc.
+   Copyright (C) 2012, 2013 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -507,16 +507,10 @@ thread_select (select_func *func, int max_fds, SELECT_TYPE *rfds,
 static void
 mark_one_thread (struct thread_state *thread)
 {
-  struct specbinding *bind;
   struct handler *handler;
   Lisp_Object tem;
 
-  for (bind = thread->m_specpdl; bind != thread->m_specpdl_ptr; bind++)
-    {
-      mark_object (bind->symbol);
-      mark_object (bind->old_value);
-      mark_object (bind->saved_value);
-    }
+  mark_specpdl (thread->m_specpdl, thread->m_specpdl_ptr);
 
 #if (GC_MARK_STACK == GC_MAKE_GCPROS_NOOPS \
      || GC_MARK_STACK == GC_MARK_STACK_CHECK_GCPROS)
@@ -541,8 +535,6 @@ mark_one_thread (struct thread_state *thread)
       mark_object (handler->handler);
       mark_object (handler->var);
     }
-
-  mark_backtrace (thread->m_backtrace_list);
 #endif
 
   if (thread->m_current_buffer)

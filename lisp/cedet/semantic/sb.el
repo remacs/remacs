@@ -43,6 +43,11 @@ This will replace the named bucket that would have usually occurred here."
   :group 'speedbar
   :type 'integer)
 
+(defvar semantic-sb-filter-tags-of-class '(code)
+  "Tags classes to not display in speedbar.
+Make this buffer local for modes that have different types of tags
+that should be ignored.")
+
 (defcustom semantic-sb-button-format-tag-function 'semantic-format-tag-abbreviate
   "*Function called to create the text for a but from a token."
   :group 'speedbar
@@ -318,7 +323,7 @@ TEXT TOKEN and INDENT are the details."
     ;; that other timer.
     ;; (speedbar-set-timer dframe-update-speed)
     ;;(recenter)
-    (speedbar-maybee-jump-to-attached-frame)
+    (dframe-maybee-jump-to-attached-frame)
     (run-hooks 'speedbar-visiting-tag-hook)))
 
 (defun semantic-sb-expand-group (text token indent)
@@ -405,7 +410,12 @@ Returns the tag list, or t for an error."
 	      (setq out (semantic-adopt-external-members out))
 	      ;; Dump all the tokens into buckets.
 	      (semantic-sb-with-tag-buffer (car out)
-		(semantic-bucketize out)))
+		(semantic-bucketize out nil
+				    (lambda (tagsin)
+				      ;; Remove all boring tags.
+				      (semantic-filter-tags-by-class
+				       semantic-sb-filter-tags-of-class
+				       tagsin)))))
 	  (error t))
       t)))
 
@@ -414,5 +424,9 @@ Returns the tag list, or t for an error."
 	     '(semantic-sb-fetch-tag-table  . semantic-sb-insert-tag-table))
 
 (provide 'semantic/sb)
+
+;; Local variables:
+;; generated-autoload-load-name: "semantic/sb"
+;; End:
 
 ;;; semantic/sb.el ends here

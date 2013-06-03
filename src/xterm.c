@@ -130,6 +130,10 @@ extern void _XEditResCheckMessages (Widget, XtPointer, XEvent *, Boolean *);
 
 #include "bitmaps/gray.xbm"
 
+#ifdef HAVE_XKB
+#include <X11/XKBlib.h>
+#endif
+
 /* Default to using XIM if available.  */
 #ifdef USE_XIM
 int use_xim = 1;
@@ -3218,7 +3222,11 @@ XTring_bell (struct frame *f)
       else
 	{
 	  block_input ();
+#ifdef HAVE_XKB
+          XkbBell (FRAME_X_DISPLAY (f), None, 0, None);
+#else
 	  XBell (FRAME_X_DISPLAY (f), 0);
+#endif
 	  XFlush (FRAME_X_DISPLAY (f));
 	  unblock_input ();
 	}
@@ -5076,7 +5084,7 @@ x_scroll_bar_set_handle (struct scroll_bar *bar, int start, int end, int rebuild
 
     /* Draw the empty space above the handle.  Note that we can't clear
        zero-height areas; that means "clear to end of window."  */
-    if (0 < start)
+    if (start > 0)
       x_clear_area (FRAME_X_DISPLAY (f), w,
 		    /* x, y, width, height, and exposures.  */
 		    VERTICAL_SCROLL_BAR_LEFT_BORDER,
@@ -9889,6 +9897,13 @@ x_term_init (Lisp_Object display_name, char *xrm_option, char *resource_name)
 
         XSetLocaleModifiers ("");
 
+	/* If D-Bus is not already configured, inhibit D-Bus autolaunch,
+	   as autolaunch can mess up Emacs's SIGCHLD handler.
+	   FIXME: Rewrite subprocess handlers to use glib's child watchers.
+	   See Bug#14474.  */
+	if (! egetenv ("DBUS_SESSION_BUS_ADDRESS"))
+	  xputenv ("DBUS_SESSION_BUS_ADDRESS=unix:path=/dev/null");
+
         /* Emacs can only handle core input events, so make sure
            Gtk doesn't use Xinput or Xinput2 extensions.  */
 	xputenv ("GDK_CORE_DEVICE_EVENTS=1");
@@ -9913,7 +9928,7 @@ x_term_init (Lisp_Object display_name, char *xrm_option, char *resource_name)
 
         dpy = DEFAULT_GDK_DISPLAY ();
 
-#if GTK_MAJOR_VERSION <= 2 && GTK_MINOR_VERSION <= 90
+#if ! GTK_CHECK_VERSION (2, 90, 0)
         /* Load our own gtkrc if it exists.  */
         {
           const char *file = "~/.emacs.d/gtkrc";
@@ -10243,6 +10258,8 @@ x_term_init (Lisp_Object display_name, char *xrm_option, char *resource_name)
       { "_NET_WM_WINDOW_OPACITY", &dpyinfo->Xatom_net_wm_window_opacity },
       { "_NET_ACTIVE_WINDOW", &dpyinfo->Xatom_net_active_window },
       { "_NET_FRAME_EXTENTS", &dpyinfo->Xatom_net_frame_extents },
+      { "_NET_CURRENT_DESKTOP", &dpyinfo->Xatom_net_current_desktop },
+      { "_NET_WORKAREA", &dpyinfo->Xatom_net_workarea },
       /* Session management */
       { "SM_CLIENT_ID", &dpyinfo->Xatom_SM_CLIENT_ID },
       { "_XSETTINGS_SETTINGS", &dpyinfo->Xatom_xsettings_prop },

@@ -176,7 +176,6 @@
       'font-lock-negation-char-face))
 
 (cc-bytecomp-defun face-inverse-video-p) ; Only in Emacs.
-(cc-bytecomp-defun face-property-instance) ; Only in XEmacs.
 
 (defun c-make-inverse-face (oldface newface)
   ;; Emacs and XEmacs have completely different face manipulation
@@ -2486,7 +2485,7 @@ need for `pike-font-lock-extra-types'.")
 	      (setq comment-beg nil))
 	    (setq region-beg comment-beg))
 
-      (if (eq (elt (parse-partial-sexp comment-beg (+ comment-beg 2)) 7) t)
+      (if (elt (parse-partial-sexp comment-beg (+ comment-beg 2)) 7)
 	  ;; Collect a sequence of doc style line comments.
 	  (progn
 	    (goto-char comment-beg)

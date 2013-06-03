@@ -48,8 +48,7 @@
   (require 'semantic/find)
   (require 'semantic/db))
 
-(declare-function semantic-grammar-wy--install-parser
-		  "semantic/gram-wy-fallback")
+(declare-function semantic-grammar-wy--install-parser "semantic/grammar-wy")
 
 
 ;;;;
@@ -1485,7 +1484,10 @@ expression then Lisp symbols are completed."
   (interactive)
   (if (semantic-grammar-in-lisp-p)
       ;; We are in lisp code.  Do lisp completion.
-      (lisp-complete-symbol)
+      (let ((completion-at-point-functions
+             (append '(lisp-completion-at-point)
+                     completion-at-point-functions)))
+        (completion-at-point))
     ;; We are not in lisp code.  Do rule completion.
     (let* ((nonterms (semantic-find-tags-by-class 'nonterminal (current-buffer)))
            (sym (car (semantic-ctxt-current-symbol)))
@@ -1909,5 +1911,9 @@ Optional argument COLOR determines if color is added to the text."
       )))
 
 (provide 'semantic/grammar)
+
+;; Local variables:
+;; generated-autoload-load-name: "semantic/grammar"
+;; End:
 
 ;;; semantic/grammar.el ends here
