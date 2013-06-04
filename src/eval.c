@@ -3014,11 +3014,11 @@ let_shadows_global_binding_p (Lisp_Object symbol)
 }
 
 static Lisp_Object
-binding_symbol (const struct specbinding *bind)
+binding_symbol (struct specbinding *bind)
 {
-  if (!CONSP (bind->symbol))
-    return bind->symbol;
-  return XCAR (bind->symbol);
+  if (!CONSP (specpdl_symbol (bind)))
+    return specpdl_symbol (bind);
+  return XCAR (specpdl_symbol (bind));
 }
 
 void
@@ -3031,22 +3031,22 @@ do_specbind (struct Lisp_Symbol *sym, struct specbinding *bind,
       if (!sym->constant)
 	SET_SYMBOL_VAL (sym, value);
       else
-	set_internal (bind->symbol, value, Qnil, 1);
+	set_internal (specpdl_symbol (bind), value, Qnil, 1);
       break;
 
     case SYMBOL_LOCALIZED:
     case SYMBOL_FORWARDED:
       if ((sym->redirect == SYMBOL_LOCALIZED
 	   || BUFFER_OBJFWDP (SYMBOL_FWD (sym)))
-	  && CONSP (bind->symbol))
+	  && CONSP (specpdl_symbol (bind)))
 	{
 	  Lisp_Object where;
 
-	  where = XCAR (XCDR (bind->symbol));
+	  where = XCAR (XCDR (specpdl_symbol (bind)));
 	  if (NILP (where)
 	      && sym->redirect == SYMBOL_FORWARDED)
 	    {
-	      Fset_default (XCAR (bind->symbol), value);
+	      Fset_default (XCAR (specpdl_symbol (bind)), value);
 	      return;
 	    }
 	}
@@ -3164,16 +3164,16 @@ rebind_for_thread_switch (void)
     {
       if (bind->kind >= SPECPDL_LET)
 	{
-	  Lisp_Object value = bind->saved_value;
+	  Lisp_Object value = specpdl_saved_value (bind);
 
-	  bind->saved_value = Qnil;
+	  bind->v.let.saved_value = Qnil;
 	  do_specbind (XSYMBOL (binding_symbol (bind)), bind, value);
 	}
     }
 }
 
 static void
-do_one_unbind (const struct specbinding *this_binding, int unwinding)
+do_one_unbind (struct specbinding *this_binding, int unwinding)
 {
   switch (this_binding->kind)
     {
@@ -3260,7 +3260,7 @@ unbind_for_thread_switch (void)
     {
       if (bind->kind >= SPECPDL_LET)
 	{
-	  bind->saved_value = find_symbol_value (binding_symbol (bind));
+	  bind->v.let.saved_value = find_symbol_value (binding_symbol (bind));
 	  do_one_unbind (bind, 0);
 	}
     }
