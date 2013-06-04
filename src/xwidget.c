@@ -68,7 +68,7 @@
 
 #include "gtkutil.h"
 #include "font.h"
-#endif
+#endif  /* HAVE_X_WINDOWS */
 
 #include <gtk/gtk.h>
 #include <gdk/gdk.h>
@@ -293,7 +293,7 @@ DEFUN ("make-xwidget", Fmake_xwidget, Smake_xwidget, 7, 7, 0,
     unblock_input();
 
   }
-#endif
+#endif  /* HAVE_WEBKIT_OSR */
 
   UNGCPRO;
   return val;
@@ -792,7 +792,7 @@ refactor_attempt(){
    }   
   return Qt;
 }
-#endif
+#endif  /* 0 */
 
 DEFUN ("xwgir-xwidget-call-method", Fxwgir_xwidget_call_method,  Sxwgir_xwidget_call_method,       3, 3, 0,
        doc:	/* call xwidget object method.*/)
@@ -1025,7 +1025,7 @@ xwidget_init_view (struct xwidget *xww,
 
     /* Show the stage: */
     clutter_actor_show (stage);
-#endif
+#endif  /* HAVE_CLUTTER */
   } else if (EQ(xww->type, Qwebkit_osr)||
              EQ(xww->type, Qsocket_osr)||
              (Fget(xww->type, Qcxwgir_class) != Qnil))//xwgir widgets are OSR
@@ -1067,7 +1067,7 @@ xwidget_init_view (struct xwidget *xww,
     /* g_signal_connect (G_OBJECT (    xv->widget), "key-release-event", */
     /*                   G_CALLBACK (xwidget_osr_event_forward), NULL); */
     
-#endif
+#endif  /* HAVE_WEBKIT_OSR */
 
 
   } 
@@ -1350,7 +1350,7 @@ DEFUN ("xwidget-webkit-dom-dump", Fxwidget_webkit_dom_dump,  Sxwidget_webkit_dom
 
 
 
-#endif
+#endif  /* HAVE_WEBKIT_OSR */
 
 
 
@@ -1852,4 +1852,4 @@ xwidget_end_redisplay (struct window *w, struct glyph_matrix *matrix)
 }
 
       
-#endif
+#endif  /* HAVE_XWIDGETS */
