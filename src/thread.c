@@ -52,7 +52,11 @@ post_acquire_global_lock (struct thread_state *self)
 
   if (self != current_thread)
     {
-      unbind_for_thread_switch ();
+      /* CURRENT_THREAD is NULL if the previously current thread
+	 exited.  In this case, there is no reason to unbind, and
+	 trying will crash.  */
+      if (current_thread != NULL)
+	unbind_for_thread_switch ();
       current_thread = self;
       rebind_for_thread_switch ();
     }
@@ -625,7 +629,7 @@ run_thread (void *state)
   struct thread_state **iter;
 
   self->m_stack_bottom = &stack_pos;
-  self->stack_top = self->m_stack_bottom = &stack_pos;
+  self->stack_top = &stack_pos;
   self->thread_id = sys_thread_self ();
 
   acquire_global_lock (self);
@@ -653,6 +657,7 @@ run_thread (void *state)
   self->m_specpdl_ptr = NULL;
   self->m_specpdl_size = 0;
 
+  current_thread = NULL;
   sys_cond_broadcast (&self->thread_condvar);
 
   release_global_lock ();
@@ -905,8 +910,6 @@ init_primary_thread (void)
   primary_thread.error_symbol = Qnil;
   primary_thread.error_data = Qnil;
   primary_thread.event_object = Qnil;
-
-  sys_cond_init (&primary_thread.thread_condvar);
 }
 
 void
@@ -918,10 +921,11 @@ init_threads_once (void)
 void
 init_threads (void)
 {
-  init_primary_thread ();
-
+  sys_cond_init (&primary_thread.thread_condvar);
   sys_mutex_init (&global_lock);
   sys_mutex_lock (&global_lock);
+  current_thread = &primary_thread;
+  primary_thread.thread_id = sys_thread_self ();
 }
 
 void
