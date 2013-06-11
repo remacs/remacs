@@ -79,18 +79,6 @@
 #include "emacsgtkfixed.h"
 #endif
 
-
-
-#ifdef HAVE_GOOCANVAS
-#include <goocanvas.h>
-#endif
-
-#ifdef HAVE_CLUTTER
-#include <librsvg/rsvg.h>
-#include <clutter/clutter.h>
-#include <clutter-gtk/clutter-gtk.h>
-#endif
-
 #include <wchar.h>
 
 #ifdef HAVE_WEBKIT_OSR
@@ -995,51 +983,6 @@ xwidget_init_view (struct xwidget *xww,
     //Cairo view
     //uhm cairo is differentish in gtk 3.
     //gdk_cairo_create (gtk_widget_get_window (FRAME_GTK_WIDGET (s->f)));
-#ifdef HAVE_GOOCANVAS
-    xv->widget = goo_canvas_new();
-    GooCanvasItem *root, *rect_item, *text_item;
-    goo_canvas_set_bounds (GOO_CANVAS (xv->widget), 0, 0, 1000, 1000);
-    root = goo_canvas_get_root_item (GOO_CANVAS (xv->widget));
-    rect_item = goo_canvas_rect_new (root, 100, 100, 400, 400,
-                                     "line-width", 10.0,
-                                     "radius-x", 20.0,
-                                     "radius-y", 10.0,
-                                     "stroke-color", "yellow",
-                                     "fill-color", "red",
-                                     NULL);
-
-    text_item = goo_canvas_text_new (root, "Hello World", 300, 300, -1,
-                                     GTK_ANCHOR_CENTER,
-                                     "font", "Sans 24",
-                                     NULL);
-    goo_canvas_item_rotate (text_item, 45, 300, 300);
-
-#endif
-#ifdef HAVE_CLUTTER
-    xv->widget = gtk_clutter_embed_new ();;
-    ClutterActor *stage = NULL;
-    stage = gtk_clutter_embed_get_stage (GTK_CLUTTER_EMBED (        xv->widget));
-    ClutterColor stage_color = { 0xaa, 0xaa, 0xaa, 0xff }; /* Black */
-    clutter_stage_set_color (CLUTTER_STAGE (stage), &stage_color);
-
-    ClutterActor *  texture =  clutter_cairo_texture_new (1000, 1000);
-    clutter_container_add_actor(stage, texture);
-    clutter_actor_set_position(texture, 0,0);
-    clutter_actor_show(texture);
-
-    cairo_t *cr;
-    cr = clutter_cairo_texture_create (CLUTTER_CAIRO_TEXTURE (texture));
-
-    /* draw on the context */
-    RsvgHandle *h =  rsvg_handle_new_from_file  ("/tmp/tst.svg",
-                                                 NULL);
-
-    rsvg_handle_render_cairo(h, cr);
-    cairo_destroy (cr);
-
-    /* Show the stage: */
-    clutter_actor_show (stage);
-#endif  /* HAVE_CLUTTER */
   } else if (EQ(xww->type, Qwebkit_osr)||
              EQ(xww->type, Qsocket_osr)||
              (Fget(xww->type, Qcxwgir_class) != Qnil))//xwgir widgets are OSR
