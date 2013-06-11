@@ -208,11 +208,11 @@ DEFUN ("make-xwidget", Fmake_xwidget, Smake_xwidget, 7, 7, 0,
   XSETSYMBOL(xw->type, type);
   XSETSTRING(xw->title, title);
   //TODO buffer should be an optional argument not just assumed to be the current buffer
-  XSETBUFFER(xw->buffer,  Fcurrent_buffer()); // conservatively gcpro xw since we call lisp
+  XSETBUFFER(xw->buffer, Fcurrent_buffer()); // conservatively gcpro xw since we call lisp
   xw->height = XFASTINT(height);
   xw->width = XFASTINT(width);
-  XSETPSEUDOVECTOR (val, xw, PVEC_XWIDGET); //?? dunno why i need this
-  Vxwidget_alist = Fcons ( val, Vxwidget_alist);
+  XSETPSEUDOVECTOR (val, xw, PVEC_XWIDGET); // set the vectorlike_header of VAL with the correct value
+  Vxwidget_alist = Fcons (val, Vxwidget_alist);
   xw->widgetwindow_osr = NULL;
   xw->widget_osr = NULL;
   xw->plist = Qnil;
@@ -224,73 +224,73 @@ DEFUN ("make-xwidget", Fmake_xwidget, Smake_xwidget, 7, 7, 0,
    */
   if (EQ(xw->type, Qwebkit_osr)||
       EQ(xw->type, Qsocket_osr)||
-      (Fget(xw->type, Qcxwgir_class) != Qnil)){
-    printf("init osr widget\n");
-    block_input();
-    xw->widgetwindow_osr = GTK_CONTAINER (gtk_offscreen_window_new ());
-    gtk_window_resize(    GTK_WINDOW(xw->widgetwindow_osr), xw->width, xw->height);
+      (Fget(xw->type, Qcxwgir_class) != Qnil)) {
+      printf("init osr widget\n");
+      block_input();
+      xw->widgetwindow_osr = GTK_CONTAINER (gtk_offscreen_window_new ());
+      gtk_window_resize(GTK_WINDOW(xw->widgetwindow_osr), xw->width, xw->height);
 
-    if (EQ(xw->type, Qwebkit_osr))
-      xw->widget_osr = webkit_web_view_new();
-    if(EQ(xw->type, Qsocket_osr))
-      xw->widget_osr = gtk_socket_new();    
-    if(Fget(xw->type, Qcxwgir_class) != Qnil)
-      xw->widget_osr = xwgir_create(    SDATA(Fcar(Fcdr(Fget(xw->type, Qcxwgir_class)))),
+      if (EQ(xw->type, Qwebkit_osr))
+          xw->widget_osr = webkit_web_view_new();
+      if(EQ(xw->type, Qsocket_osr))
+          xw->widget_osr = gtk_socket_new();    
+      if(Fget(xw->type, Qcxwgir_class) != Qnil)
+          xw->widget_osr = xwgir_create(SDATA(Fcar(Fcdr(Fget(xw->type, Qcxwgir_class)))),
                                         SDATA(Fcar(Fget(xw->type, Qcxwgir_class))));
 
-    gtk_widget_set_size_request (GTK_WIDGET (xw->widget_osr), xw->width, xw->height);
-    gtk_container_add (xw->widgetwindow_osr, xw->widget_osr);
+      gtk_widget_set_size_request (GTK_WIDGET (xw->widget_osr), xw->width, xw->height);
+      gtk_container_add (xw->widgetwindow_osr, xw->widget_osr);
 
-    gtk_widget_show_all (GTK_WIDGET (xw->widgetwindow_osr));
+      gtk_widget_show_all (GTK_WIDGET (xw->widgetwindow_osr));
 
-    /* store some xwidget data in the gtk widgets for convenient retrieval in the event handlers. */
-    g_object_set_data (G_OBJECT (xw->widget_osr), XG_XWIDGET, (gpointer) (xw));
-    g_object_set_data (G_OBJECT (xw->widgetwindow_osr), XG_XWIDGET, (gpointer) (xw));
-    /* signals */
-    g_signal_connect (G_OBJECT ( xw->widgetwindow_osr), "damage-event",    G_CALLBACK (xwidget_osr_damage_event_callback), NULL);
+      /* store some xwidget data in the gtk widgets for convenient retrieval in the event handlers. */
+      g_object_set_data (G_OBJECT (xw->widget_osr), XG_XWIDGET, (gpointer) (xw));
+      g_object_set_data (G_OBJECT (xw->widgetwindow_osr), XG_XWIDGET, (gpointer) (xw));
 
+      /* signals */
+      g_signal_connect (G_OBJECT (xw->widgetwindow_osr), "damage-event",
+                        G_CALLBACK (xwidget_osr_damage_event_callback), NULL);
 
-    if (EQ(xw->type, Qwebkit_osr)){
-      g_signal_connect (G_OBJECT ( xw->widget_osr),
-                        "document-load-finished",
-                        G_CALLBACK (webkit_osr_document_load_finished_callback),
-                        xw);    
+      if (EQ(xw->type, Qwebkit_osr)) {
+          g_signal_connect (G_OBJECT (xw->widget_osr),
+                            "document-load-finished",
+                            G_CALLBACK (webkit_osr_document_load_finished_callback),
+                            xw);    
       
-      g_signal_connect (G_OBJECT ( xw->widget_osr),
-                        "download-requested",
-                        G_CALLBACK (webkit_osr_download_callback),
-                        xw);    
+          g_signal_connect (G_OBJECT (xw->widget_osr),
+                            "download-requested",
+                            G_CALLBACK (webkit_osr_download_callback),
+                            xw);    
 
-      g_signal_connect (G_OBJECT ( xw->widget_osr),
-                        "mime-type-policy-decision-requested",
-                        G_CALLBACK (webkit_osr_mime_type_policy_typedecision_requested_callback),
-                        xw);    
+          g_signal_connect (G_OBJECT (xw->widget_osr),
+                            "mime-type-policy-decision-requested",
+                            G_CALLBACK (webkit_osr_mime_type_policy_typedecision_requested_callback),
+                            xw);    
 
-      g_signal_connect (G_OBJECT ( xw->widget_osr),
-                        "new-window-policy-decision-requested",
-                        G_CALLBACK (webkit_osr_new_window_policy_decision_requested_callback),
-                        xw);    
+          g_signal_connect (G_OBJECT (xw->widget_osr),
+                            "new-window-policy-decision-requested",
+                            G_CALLBACK (webkit_osr_new_window_policy_decision_requested_callback),
+                            xw);    
 
-      g_signal_connect (G_OBJECT ( xw->widget_osr),
-                        "navigation-policy-decision-requested",
-                        G_CALLBACK (webkit_osr_navigation_policy_decision_requested_callback),
-                        xw);
-      //webkit_web_view_load_uri(WEBKIT_WEB_VIEW(xw->widget_osr), "http://www.fsf.org");
+          g_signal_connect (G_OBJECT (xw->widget_osr),
+                            "navigation-policy-decision-requested",
+                            G_CALLBACK (webkit_osr_navigation_policy_decision_requested_callback),
+                            xw);
+          //webkit_web_view_load_uri(WEBKIT_WEB_VIEW(xw->widget_osr), "http://www.fsf.org");
 
-    }
+      }
 
-    if (EQ(xw->type, Qsocket_osr)) {
-    printf ("xwid:%d socket id:%x %d\n",
-            xw,
-            gtk_socket_get_id (GTK_SOCKET (xw->widget_osr)),
-            gtk_socket_get_id (GTK_SOCKET (xw->widget_osr)));
-    send_xembed_ready_event (xw,
-                             gtk_socket_get_id (GTK_SOCKET (xw->widget_osr)));
-    //gtk_widget_realize(xw->widget);
-  }
+      if (EQ(xw->type, Qsocket_osr)) {
+          printf ("xwid:%d socket id:%x %d\n",
+                  xw,
+                  gtk_socket_get_id (GTK_SOCKET (xw->widget_osr)),
+                  gtk_socket_get_id (GTK_SOCKET (xw->widget_osr)));
+          send_xembed_ready_event (xw, gtk_socket_get_id (GTK_SOCKET (xw->widget_osr)));
+          //gtk_widget_realize(xw->widget);
+      }
 
 
-    unblock_input();
+      unblock_input();
 
   }
 #endif  /* HAVE_WEBKIT_OSR */

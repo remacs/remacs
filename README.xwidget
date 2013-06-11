@@ -121,7 +121,7 @@ we provide proper sizes and so on back to the redisplay engine.
 The problem is that Emacs cant actually draw the widgets, as it can with
 images. Emacs must notify GTK about where the widgets should be, and how they
 should be clipped and so on, and this information must be given to GTK
-synchonous with Emacs display changes. Ok, so why is that difficult then?
+synchronous with Emacs display changes. Ok, so why is that difficult then?
 
 - How do we know when a widget is NOT to be drawn? The only way I found so far
   is having a flag for each xwdiget, that is reset before a redisplay. When an
@@ -198,9 +198,9 @@ xembed host widget that allows for embedding other applications inside
 an Emacs window, the story gets more complex.
 
 The problem is that xembed is designed to plug an application window
-inside a a secket and thats it. You can't move a plug between
+inside a socket and thats it. You can't move a plug between
 sockets. I tried numerous hacks to get around this but there is
-nothing that works realy well.
+nothing that works really well.
 
 Therefore the Emacs part of the code will only expose well-defined
 interfaces. cooperating applications will be able to use the interface
@@ -215,14 +215,14 @@ multi view xembed function. That way Emacs is sane and the insanity
 contained.
 
 This app will work by providing a socket that an app plugs into. The
-socket window is copied efficientlp by means of composition to a
-number of other windows, that then are plugged into the different
+socket window is copied efficiently by means of composition to a
+number of other windows, that are then plugged into the different
 Emacs sockets. 
 ** old notes from x_draw_xwidget_glyph_string
 
     BUG it seems this method for some reason is called with bad s->x and s->y sometimes.
     When this happens the xwidget doesnt move on screen as it should.
-    This mightbe because of x_scroll_run. Emacs decides to scroll the screen by blitting sometimes.
+    This might be because of x_scroll_run. Emacs decides to scroll the screen by blitting sometimes.
     then emacs doesnt try to actualy call the paint routines, which means this here code will never
     run so the xwidget wont know it has been moved.
 
@@ -233,7 +233,7 @@ Emacs sockets.
     always available in an off-screen buffer. My current attempt at composition doesnt work properly however.
 
     //allocation debugging. the correct values cant be expected to show upp immediately, but eventually they should get to be ok
-    // this is because we dont know when the container gets around to doing layout
+    // this is because we dont know when the container gets around to do layout
     //GtkAllocation galloc;
     //gtk_widget_get_allocation(GTK_WIDGET (xv->widgetwindow), &galloc);
     //printf("allocation %d %d , %d %d\n", galloc.x,galloc.y,galloc.width,galloc.height);
@@ -242,7 +242,7 @@ Emacs sockets.
 *** old notes about the old live/phantom scheme
 
    //TODO:
-   // 1) always draw live xwidget in slected window
+   // 1) always draw live xwidget in selected window
    // (2) if there were no live instances of the xwidget in selected window, also draw it live)
    // 3) if there was a live xwidget previously, now phantom it.
 
@@ -547,7 +547,7 @@ hangs.
 
 http://kegel.com/gtk/button.c
 
-*** TODO examine some library to synthesise events
+*** TODO examine some library to synthesize events
 xdotool
 xte xautomation
 crikey
@@ -641,7 +641,7 @@ the other aproach would be to work more like images:
   xwidget.
 - retrieve the xwidget objet from the spec with an xwidget-at-point function. It
   can be uninitalized which client code must handle. Unlike
-  assynchronous process creation we dont get back a handle, because
+  asynchronous process creation we dont get back a handle, because
   there is none yet.
 - emitted event on initialization, when needed. Many widgets don't
   need this. for instance, a button sends an event when pressed. but
@@ -831,7 +831,7 @@ anyway clipping is rather complicated but seems to finally work okay.
     CLOSED: [2011-07-04 Mon 16:55]
 http://www.lanedo.com/~carlos/gtk3-doc/GtkWidget.html#gtk-widget-set-has-window
 mentions that it has_window can only be called inside a widget
-impementation.
+implementation.
 
 this wasnt really the issue. allocation was the problem
 *** DONE try scrolled window
@@ -922,7 +922,7 @@ see:
 I returned to using a simple gtkfixed for the widgetwindow. with
 allocation hack and set_has_window it works. Idea prefer not to have
 the allocatien hack and it wasnt needed it gtk3 only gtk2. needs
-furthi investigation,
+further investigation.
 
 ** various code cleanups
 There are many cleanups necessary before any hope of inclusion in
@@ -1013,9 +1013,9 @@ crash in gtk_window_get_size instead. great.
 
 http://gtkplus-p3.0.sourcearchive.com/documentation/2.91.5-0ubuntu1/testoffscreenwindow_8c-source.html
 
-after many atempts, the basic issue remains. for some reason the
+after many attempts, the basic issue remains. for some reason the
 offscreen widget isnt ok when I want to snapshot it, so i simply get
-emptiness. the surface is only ok someimes. 
+emptiness. the surface is only ok sometimes.
 
 here is a useful debugging snippets:
 #+begin_src C
@@ -1060,7 +1060,7 @@ seems to be severly bitrotted
 heres a newer aproach
 http://hg.mozilla.org/incubator/embedding/file/29ac0fe51754/gtk/tests/test.cpp
 
-while webkit clearly has the best traction as an embeddee, the
+while webkit clearly has the best traction as an embedded, the
 offscreen rendering issues makes it interesting to see what ff brings
 to the table. 
 
@@ -1100,7 +1100,7 @@ maybe
 https://launchpad.net/gnome-seed
 
 or this funny hack:
-<jave> im trying to understanh how to interact via javascript to an embedded
+<jave> im trying to understand how to interact via javascript to an embedded
        webkit gtk instance  [23:38]
 <jave> i use webkit_web_view_execute_script() which is nice but doesnt return
        a value, by design aparently  [23:39]
@@ -1139,7 +1139,7 @@ easy.
 ** webkit related
 *** TODO webkit support webkit signals
 
-**** DONE particularily document-load-finished
+**** DONE particularly document-load-finished
      CLOSED: [2011-08-01 Mon 22:34]
 http://webkitgtk.org/reference/webkitgtk-webkitwebview.html#WebKitWebView-document-load-finished
 because one might need tell set a title and sizes and things when it loads.
@@ -1375,7 +1375,7 @@ Maybe a new image type could be added that was a wraper on an
 xwidget. Then image mode could be reused for webkit mode. 
 
 I tried some adaptor code in xwidget.el so webkit mode now delegates
-to image mode buh its a kludge.
+to image mode but its a kludge.
 
 ** socket related
 *** TODO some flickering during redisplay of sockets
@@ -1385,13 +1385,13 @@ xwidget socket type. The webkit xwidget doesn't seem similarily
 afflicted.
 
 the size allocation workaround works by 1st running the ordinary
-allocation then modifying the results. its done this way to minimise
+allocation then modifying the results. its done this way to minimize
 the copy paste index from the base class. it might be that the
 original allocation has a brief time window to show itself.
 
 tried to modify the allocation hack so it doesn't call allocate
 twice. this doesn't seem to help flicker at all aparently so the
-hypothesis falls. Maybe then a socket simply doesn't lke being clipped
+hypothesis falls. Maybe then a socket simply doesn't like being clipped
 by gtkfixed. 
 
 *** TODO xwidget view reaping too agressive
@@ -1434,7 +1434,7 @@ suspects:
 - XCopyArea
   - x_shift_glyphs_for_insert
   - x_scroll_run. this is run by the try_window* functions, and
-    inhibiting them dösnt help. but also callid in scrolling_window.
+    inhibiting them doesnt help. but also callid in scrolling_window.
   
 
 - try_window_reusing_current_matrix
@@ -1452,7 +1452,7 @@ workaround:
 (run-with-timer 1 1 'redraw-display)
 
 seems to work:
-inhibiting scrolling_window(). and this seem to be enaugh to restore
+inhibiting scrolling_window(). and this seem to be enough to restore the
 old behaviour, GLYPH_DEBUG doesn't seem needed.
 
 
