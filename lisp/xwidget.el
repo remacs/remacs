@@ -11,6 +11,8 @@
 ;;TODO model after make-text-button instead!
 ;;; Code:
 
+(eval-when-compile (require 'cl))
+
 (defun xwidget-insert (pos type title width height)
   "Insert an xwidget at POS, given ID, TYPE, TITLE WIDTH and
 HEIGHT in the current buffer.
@@ -189,8 +191,7 @@ defaults to the string looking like a url around the cursor position."
 (defun  xwidget-webkit-last-session ()
   "Last active webkit, or nil."
   (if (buffer-live-p xwidget-webkit-last-session-buffer)
-      (save-excursion
-        (set-buffer xwidget-webkit-last-session-buffer)
+      (with-current-buffer xwidget-webkit-last-session-buffer
         (xwidget-at 1))
     nil))
 
@@ -272,7 +273,8 @@ Argument STR string."
 (defun xwidget-webkit-end-edit-textarea ()
   (interactive)
   (goto-char (point-min))
-  (replace-string "\n" "\\n")
+  (while (search-forward "\n" nil t)
+    (replace-match "\\n" nil t))
   (xwidget-webkit-execute-script xwbl (format "findactiveelement(document).value='%s'"
                                               (buffer-substring (point-min) (point-max))))
   ;;TODO convert linefeed to \n
