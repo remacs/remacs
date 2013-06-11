@@ -12,10 +12,12 @@
 ;;; Code:
 
 (defun xwidget-insert (pos type title width height)
-  "Insert an xwidget at POS, given ID, TYPE, TITLE WIDTH and HEIGHT.
+  "Insert an xwidget at POS, given ID, TYPE, TITLE WIDTH and
+HEIGHT in the current buffer.
+
 Return ID
 
-see xwidget.c for types suitable for TYPE."
+see `make-xwidget' for types suitable for TYPE."
   (goto-char pos)
   (let ((id (make-xwidget (point) (point)
                           type title width height nil)))

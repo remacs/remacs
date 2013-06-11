@@ -188,14 +188,27 @@ xwgir_event_callback (GtkWidget *widget,
 GtkWidget* xwgir_create(char* class, char* namespace);
 static void
 send_xembed_ready_event (struct xwidget* xw, int xembedid);  
-DEFUN ("make-xwidget", Fmake_xwidget, Smake_xwidget, 7, 7, 0,
-         doc: /* xw */
+DEFUN ("make-xwidget", Fmake_xwidget, Smake_xwidget, 7, 8, 0,
+         doc: /* Make an xwidget from BEG to END of TYPE. 
+
+If BUFFER is nil it uses the current buffer. If BUFFER is a string and
+no such buffer exists, it is created.
+
+TYPE is a symbol which can take one of the following values:
+- Button
+- ToggleButton
+- slider
+- socket
+- socket-osr
+- cairo
+*/
          )
   (Lisp_Object beg, Lisp_Object end,
-     Lisp_Object type,
-     Lisp_Object title,
-     Lisp_Object width, Lisp_Object height,
-     Lisp_Object data)
+   Lisp_Object type,
+   Lisp_Object title,
+   Lisp_Object width, Lisp_Object height,
+   Lisp_Object data,
+   Lisp_Object buffer)
 {
   //should work a bit like "make-button"(make-button BEG END &rest PROPERTIES)
   // arg "type" and fwd should be keyword args eventually
@@ -203,12 +216,14 @@ DEFUN ("make-xwidget", Fmake_xwidget, Smake_xwidget, 7, 7, 0,
   //(xwidget-info (car xwidget-alist))
   struct xwidget* xw = allocate_xwidget();
   Lisp_Object val;
-  struct gcpro gcpro1;
-  GCPRO1(xw);
   XSETSYMBOL(xw->type, type);
   XSETSTRING(xw->title, title);
-  //TODO buffer should be an optional argument not just assumed to be the current buffer
-  XSETBUFFER(xw->buffer, Fcurrent_buffer()); // conservatively gcpro xw since we call lisp
+  if (NILP (buffer))
+      buffer = Fcurrent_buffer(); // no need to gcpro because Fcurrent_buffer doesn't call Feval/eval_sub.
+  else
+      buffer = Fget_buffer_create (buffer);
+  XSETBUFFER(xw->buffer, buffer);
+  
   xw->height = XFASTINT(height);
   xw->width = XFASTINT(width);
   XSETPSEUDOVECTOR (val, xw, PVEC_XWIDGET); // set the vectorlike_header of VAL with the correct value
@@ -295,7 +310,6 @@ DEFUN ("make-xwidget", Fmake_xwidget, Smake_xwidget, 7, 7, 0,
   }
 #endif  /* HAVE_WEBKIT_OSR */
 
-  UNGCPRO;
   return val;
 }
 
@@ -1617,6 +1631,8 @@ syms_of_xwidget (void)
   DEFSYM (Qcxwgir_class ,":xwgir-class");
   DEFSYM (Qtitle ,":title");
 
+  /* Do not forget to update the docstring of make-xwidget if you add
+     new types. */
   DEFSYM (Qbutton, "Button"); //changed to match the gtk class because xwgir(experimental and not really needed)
   DEFSYM (Qtoggle, "ToggleButton");
   DEFSYM (Qslider, "slider");
