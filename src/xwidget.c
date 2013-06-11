@@ -120,14 +120,14 @@ allocate_xwidget_view (void)
 #define XSETXWIDGET_VIEW(a, b) (XSETPSEUDOVECTOR (a, b, PVEC_XWIDGET_VIEW))
 
 Lisp_Object Qxwidget;
-Lisp_Object Qcxwidget;
-Lisp_Object Qtitle;
+Lisp_Object QCxwidget;
+Lisp_Object QCtitle;
 Lisp_Object Qxwidget_set_keyboard_grab;
 Lisp_Object Qxwidget_embed_steal_window;
 Lisp_Object Qxwidget_info;
 Lisp_Object Qxwidget_resize;
 Lisp_Object Qxwidget_send_keyboard_event;
-Lisp_Object Qcxwgir_class;
+Lisp_Object QCxwgir_class;
 Lisp_Object Qbutton, Qtoggle, Qslider, Qsocket, Qsocket_osr, Qcairo, Qxwgir,
   Qwebkit_osr, QCplist;
 
@@ -227,7 +227,7 @@ TYPE is a symbol which can take one of the following values:
    */
   if (EQ(xw->type, Qwebkit_osr)||
       EQ(xw->type, Qsocket_osr)||
-      (Fget(xw->type, Qcxwgir_class) != Qnil)) {
+      (Fget(xw->type, QCxwgir_class) != Qnil)) {
       printf("init osr widget\n");
       block_input();
       xw->widgetwindow_osr = GTK_CONTAINER (gtk_offscreen_window_new ());
@@ -237,9 +237,9 @@ TYPE is a symbol which can take one of the following values:
           xw->widget_osr = webkit_web_view_new();
       if(EQ(xw->type, Qsocket_osr))
           xw->widget_osr = gtk_socket_new();    
-      if(Fget(xw->type, Qcxwgir_class) != Qnil)
-          xw->widget_osr = xwgir_create(SDATA(Fcar(Fcdr(Fget(xw->type, Qcxwgir_class)))),
-                                        SDATA(Fcar(Fget(xw->type, Qcxwgir_class))));
+      if(Fget(xw->type, QCxwgir_class) != Qnil)
+          xw->widget_osr = xwgir_create(SDATA(Fcar(Fcdr(Fget(xw->type, QCxwgir_class)))),
+                                        SDATA(Fcar(Fget(xw->type, QCxwgir_class))));
 
       gtk_widget_set_size_request (GTK_WIDGET (xw->widget_osr), xw->width, xw->height);
       gtk_container_add (xw->widgetwindow_osr, xw->widget_osr);
@@ -764,7 +764,7 @@ xwgir_convert_lisp_to_gir_arg(GIArgument* giarg,
 void
 refactor_attempt(){
   //this methhod should be called from xwgir-xwidget-call-method and from xwgir xwidget construction  
-  char* class = SDATA(Fcar(Fcdr(Fget(xw->type, Qcxwgir_class))));
+  char* class = SDATA(Fcar(Fcdr(Fget(xw->type, QCxwgir_class))));
 
   GIObjectInfo* obj_info = g_irepository_find_by_name(girepository, namespace, class);
   GIFunctionInfo* f_info = g_object_info_find_method (obj_info, SDATA(method));
@@ -810,7 +810,7 @@ DEFUN ("xwgir-xwidget-call-method", Fxwgir_xwidget_call_method,  Sxwgir_xwidget_
   if(Qnil == xwidget) {printf("ERROR xwidget nil\n");   return Qnil;};  
   xw = XXWIDGET(xwidget);                                               
   if(NULL == xw) printf("ERROR xw is 0\n");                               
-  char* namespace = SDATA(Fcar(Fget(xw->type, Qcxwgir_class)));
+  char* namespace = SDATA(Fcar(Fget(xw->type, QCxwgir_class)));
   //we need the concrete widget, which happens in 2 ways depending on OSR or not TODO
   GtkWidget* widget = NULL;
   if(NULL == xw->widget_osr) {
@@ -825,7 +825,7 @@ DEFUN ("xwgir-xwidget-call-method", Fxwgir_xwidget_call_method,  Sxwgir_xwidget_
   /* char* class = G_OBJECT_TYPE_NAME(widget); //gives "GtkButton"(I want "Button") */
   /* class += strlen(namespace);  //TODO check for corresponding api method. but this seems to work. */
 
-  char* class = SDATA(Fcar(Fcdr(Fget(xw->type, Qcxwgir_class))));
+  char* class = SDATA(Fcar(Fcdr(Fget(xw->type, QCxwgir_class))));
 
   GIObjectInfo* obj_info = g_irepository_find_by_name(girepository, namespace, class);
   GIFunctionInfo* f_info = g_object_info_find_method (obj_info, SDATA(method));
@@ -985,7 +985,7 @@ xwidget_init_view (struct xwidget *xww,
     //gdk_cairo_create (gtk_widget_get_window (FRAME_GTK_WIDGET (s->f)));
   } else if (EQ(xww->type, Qwebkit_osr)||
              EQ(xww->type, Qsocket_osr)||
-             (Fget(xww->type, Qcxwgir_class) != Qnil))//xwgir widgets are OSR
+             (Fget(xww->type, QCxwgir_class) != Qnil))//xwgir widgets are OSR
     {
 #ifdef HAVE_WEBKIT_OSR //TODO the ifdef isnt really relevant anymore, we always have osr
       printf("osr init:%s\n",SDATA(SYMBOL_NAME(xww->type)));
@@ -1071,7 +1071,7 @@ xwidget_init_view (struct xwidget *xww,
   //xwgir debug
   if (//EQ(xww->type, Qwebkit_osr)|| //TODO should be able to choose compile time which method to use with webkit
       EQ(xww->type, Qsocket_osr)||
-      (Fget(xww->type, Qcxwgir_class) != Qnil))//xwgir widgets are OSR
+      (Fget(xww->type, QCxwgir_class) != Qnil))//xwgir widgets are OSR
     {
       //xwidget_set_embedder_view(xww,xv);
       printf("gdk_offscreen_window_set_embedder %d %d\n",
@@ -1568,11 +1568,11 @@ syms_of_xwidget (void)
   defsubr (&Sxwidget_buffer);
   defsubr (&Sset_xwidget_plist);
   
-  DEFSYM (Qxwidget ,"xwidget");
+  DEFSYM (Qxwidget, "xwidget");
 
-  DEFSYM (Qcxwidget ,":xwidget");
-  DEFSYM (Qcxwgir_class ,":xwgir-class");
-  DEFSYM (Qtitle ,":title");
+  DEFSYM (QCxwidget, ":xwidget");
+  DEFSYM (QCxwgir_class, ":xwgir-class");
+  DEFSYM (QCtitle, ":title");
 
   /* Do not forget to update the docstring of make-xwidget if you add
      new types. */
@@ -1703,12 +1703,12 @@ lookup_xwidget (Lisp_Object  spec)
   Lisp_Object value;
   struct xwidget *xw;
 
-  value = xwidget_spec_value (spec, Qcxwidget, &found1);
+  value = xwidget_spec_value (spec, QCxwidget, &found1);
   xw = XXWIDGET(value);
 
   /* value = xwidget_spec_value (spec, QCtype, &found); */
   /* xw->type = SYMBOLP (value) ? value : Qbutton;	//default to button */
-  /* value = xwidget_spec_value (spec, Qtitle, &found2); */
+  /* value = xwidget_spec_value (spec, QCtitle, &found2); */
   /* xw->title = STRINGP (value) ? (char *) SDATA (value) : "?";	//funky cast FIXME TODO */
 
   /* value = xwidget_spec_value (spec, QCheight, NULL); */
