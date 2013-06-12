@@ -1585,10 +1585,11 @@ syms_of_xwidget (void)
 
   DEFSYM (QCplist, ":plist");
 
-   DEFVAR_LISP ("xwidget-alist", Vxwidget_alist, doc: /*xwidgets list*/);
-   Vxwidget_alist = Qnil;
-   DEFVAR_LISP ("xwidget-view-alist", Vxwidget_view_alist, doc: /*xwidget views list*/);
-   Vxwidget_alist = Qnil;
+  DEFVAR_LISP ("xwidget-alist", Vxwidget_alist, doc: /*xwidgets list*/);
+  Vxwidget_alist = Qnil;
+
+  DEFVAR_LISP ("xwidget-view-alist", Vxwidget_view_alist, doc: /*xwidget views list*/);
+  Vxwidget_view_alist = Qnil;
 
   Fprovide (intern ("xwidget-internal"), Qnil);
 
