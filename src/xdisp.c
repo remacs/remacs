@@ -2655,6 +2655,7 @@ init_iterator (struct it *it, struct window *w,
   it->bidi_it.string.lstring = Qnil;
   it->bidi_it.string.s = NULL;
   it->bidi_it.string.bufpos = 0;
+  it->bidi_it.w = w;
 
   /* The window in which we iterate over current_buffer:  */
   XSETWINDOW (it->window, w);
@@ -3129,6 +3130,7 @@ init_from_display_pos (struct it *it, struct window *w, struct display_pos *pos)
 	  it->bidi_it.string.bufpos = it->overlay_strings_charpos;
 	  it->bidi_it.string.from_disp_str = it->string_from_display_prop_p;
 	  it->bidi_it.string.unibyte = !it->multibyte_p;
+	  it->bidi_it.w = it->w;
 	  bidi_init_it (IT_STRING_CHARPOS (*it), IT_STRING_BYTEPOS (*it),
 			FRAME_WINDOW_P (it->f), &it->bidi_it);
 
@@ -3495,11 +3497,11 @@ next_overlay_change (ptrdiff_t pos)
 ptrdiff_t
 compute_display_string_pos (struct text_pos *position,
 			    struct bidi_string_data *string,
+			    struct window *w,
 			    int frame_window_p, int *disp_prop)
 {
   /* OBJECT = nil means current buffer.  */
-  Lisp_Object object =
-    (string && STRINGP (string->lstring)) ? string->lstring : Qnil;
+  Lisp_Object object, object1;
   Lisp_Object pos, spec, limpos;
   int string_p = (string && (STRINGP (string->lstring) || string->s));
   ptrdiff_t eob = string_p ? string->schars : ZV;
@@ -3509,6 +3511,16 @@ compute_display_string_pos (struct text_pos *position,
     (charpos < eob - MAX_DISP_SCAN) ? charpos + MAX_DISP_SCAN : eob;
   struct text_pos tpos;
   int rv = 0;
+
+  if (string && STRINGP (string->lstring))
+    object1 = object = string->lstring;
+  else if (w && !string_p)
+    {
+      XSETWINDOW (object, w);
+      object1 = Qnil;
+    }
+  else
+    object1 = object = Qnil;
 
   *disp_prop = 1;
 
@@ -3548,7 +3560,7 @@ compute_display_string_pos (struct text_pos *position,
      that will replace the underlying text when displayed.  */
   limpos = make_number (lim);
   do {
-    pos = Fnext_single_char_property_change (pos, Qdisplay, object, limpos);
+    pos = Fnext_single_char_property_change (pos, Qdisplay, object1, limpos);
     CHARPOS (tpos) = XFASTINT (pos);
     if (CHARPOS (tpos) >= lim)
       {
@@ -5043,6 +5055,7 @@ handle_single_display_spec (struct it *it, Lisp_Object spec, Lisp_Object object,
 	      it->bidi_it.string.bufpos = bufpos;
 	      it->bidi_it.string.from_disp_str = 1;
 	      it->bidi_it.string.unibyte = !it->multibyte_p;
+	      it->bidi_it.w = it->w;
 	      bidi_init_it (0, 0, FRAME_WINDOW_P (it->f), &it->bidi_it);
 	    }
 	}
@@ -5434,6 +5447,7 @@ next_overlay_string (struct it *it)
 	  it->bidi_it.string.bufpos = it->overlay_strings_charpos;
 	  it->bidi_it.string.from_disp_str = it->string_from_display_prop_p;
 	  it->bidi_it.string.unibyte = !it->multibyte_p;
+	  it->bidi_it.w = it->w;
 	  bidi_init_it (0, 0, FRAME_WINDOW_P (it->f), &it->bidi_it);
 	}
     }
@@ -5737,6 +5751,7 @@ get_overlay_strings_1 (struct it *it, ptrdiff_t charpos, int compute_stop_p)
 	  it->bidi_it.string.bufpos = pos;
 	  it->bidi_it.string.from_disp_str = it->string_from_display_prop_p;
 	  it->bidi_it.string.unibyte = !it->multibyte_p;
+	  it->bidi_it.w = it->w;
 	  bidi_init_it (0, 0, FRAME_WINDOW_P (it->f), &it->bidi_it);
 	}
       return 1;
@@ -6379,6 +6394,7 @@ reseat_1 (struct it *it, struct text_pos pos, int set_stop_p)
       it->bidi_it.string.lstring = Qnil;
       it->bidi_it.string.bufpos = 0;
       it->bidi_it.string.unibyte = 0;
+      it->bidi_it.w = it->w;
     }
 
   if (set_stop_p)
@@ -6456,6 +6472,7 @@ reseat_to_string (struct it *it, const char *s, Lisp_Object string,
 	  it->bidi_it.string.bufpos = 0;
 	  it->bidi_it.string.from_disp_str = 0;
 	  it->bidi_it.string.unibyte = !it->multibyte_p;
+	  it->bidi_it.w = it->w;
 	  bidi_init_it (charpos, IT_STRING_BYTEPOS (*it),
 			FRAME_WINDOW_P (it->f), &it->bidi_it);
 	}
@@ -6487,6 +6504,7 @@ reseat_to_string (struct it *it, const char *s, Lisp_Object string,
 	  it->bidi_it.string.bufpos = 0;
 	  it->bidi_it.string.from_disp_str = 0;
 	  it->bidi_it.string.unibyte = !it->multibyte_p;
+	  it->bidi_it.w = it->w;
 	  bidi_init_it (charpos, IT_BYTEPOS (*it), FRAME_WINDOW_P (it->f),
 			&it->bidi_it);
 	}
@@ -12186,11 +12204,26 @@ handle_tool_bar_click (struct frame *f, int x, int y, int down_p,
   int hpos, vpos, prop_idx;
   struct glyph *glyph;
   Lisp_Object enabled_p;
+  int ts;
 
-  /* If not on the highlighted tool-bar item, return.  */
+  /* If not on the highlighted tool-bar item, and mouse-highlight is
+     non-nil, return.  This is so we generate the tool-bar button
+     click only when the mouse button is released on the same item as
+     where it was pressed.  However, when mouse-highlight is disabled,
+     generate the click when the button is released regardless of the
+     highlight, since tool-bar items are not highlighted in that
+     case.  */
   frame_to_window_pixel_xy (w, &x, &y);
-  if (get_tool_bar_item (f, x, y, &glyph, &hpos, &vpos, &prop_idx) != 0)
+  ts = get_tool_bar_item (f, x, y, &glyph, &hpos, &vpos, &prop_idx);
+  if (ts == -1
+      || (ts != 0 && !NILP (Vmouse_highlight)))
     return;
+
+  /* When mouse-highlight is off, generate the click for the item
+     where the button was pressed, disregarding where it was
+     released.  */
+  if (NILP (Vmouse_highlight) && !down_p)
+    prop_idx = last_tool_bar_item;
 
   /* If item is disabled, do nothing.  */
   enabled_p = AREF (f->tool_bar_items, prop_idx + TOOL_BAR_ITEM_ENABLED_P);
@@ -12200,7 +12233,8 @@ handle_tool_bar_click (struct frame *f, int x, int y, int down_p,
   if (down_p)
     {
       /* Show item in pressed state.  */
-      show_mouse_face (hlinfo, DRAW_IMAGE_SUNKEN);
+      if (!NILP (Vmouse_highlight))
+	show_mouse_face (hlinfo, DRAW_IMAGE_SUNKEN);
       last_tool_bar_item = prop_idx;
     }
   else
@@ -12210,7 +12244,8 @@ handle_tool_bar_click (struct frame *f, int x, int y, int down_p,
       EVENT_INIT (event);
 
       /* Show item in released state.  */
-      show_mouse_face (hlinfo, DRAW_IMAGE_RAISED);
+      if (!NILP (Vmouse_highlight))
+	show_mouse_face (hlinfo, DRAW_IMAGE_RAISED);
 
       key = AREF (f->tool_bar_items, prop_idx + TOOL_BAR_ITEM_KEY);
 
@@ -12283,7 +12318,7 @@ note_tool_bar_highlight (struct frame *f, int x, int y)
 
   /* If tool-bar item is not enabled, don't highlight it.  */
   enabled_p = AREF (f->tool_bar_items, prop_idx + TOOL_BAR_ITEM_ENABLED_P);
-  if (!NILP (enabled_p))
+  if (!NILP (enabled_p) && !NILP (Vmouse_highlight))
     {
       /* Compute the x-position of the glyph.  In front and past the
 	 image is a space.  We include this in the highlighted area.  */
@@ -12900,7 +12935,6 @@ redisplay_internal (void)
   struct frame *sf;
   int polling_stopped_here = 0;
   Lisp_Object tail, frame;
-  struct backtrace backtrace;
 
   /* Non-zero means redisplay has to consider all windows on all
      frames.  Zero means, only selected_window is considered.  */
@@ -12944,12 +12978,7 @@ redisplay_internal (void)
   specbind (Qinhibit_free_realized_faces, Qnil);
 
   /* Record this function, so it appears on the profiler's backtraces.  */
-  backtrace.next = backtrace_list;
-  backtrace.function = Qredisplay_internal;
-  backtrace.args = &Qnil;
-  backtrace.nargs = 0;
-  backtrace.debug_on_exit = 0;
-  backtrace_list = &backtrace;
+  record_in_backtrace (Qredisplay_internal, &Qnil, 0);
 
   FOR_EACH_FRAME (tail, frame)
     XFRAME (frame)->already_hscrolled_p = 0;
@@ -13593,7 +13622,6 @@ redisplay_internal (void)
 #endif /* HAVE_WINDOW_SYSTEM */
 
  end_of_redisplay:
-  backtrace_list = backtrace.next;
   unbind_to (count, Qnil);
   RESUME_POLLING;
 }
@@ -19016,6 +19044,7 @@ push_prefix_prop (struct it *it, Lisp_Object prop)
 	  it->bidi_it.string.bufpos = IT_CHARPOS (*it);
 	  it->bidi_it.string.from_disp_str = it->string_from_display_prop_p;
 	  it->bidi_it.string.unibyte = !it->multibyte_p;
+	  it->bidi_it.w = it->w;
 	  bidi_init_it (0, 0, FRAME_WINDOW_P (it->f), &it->bidi_it);
 	}
     }
@@ -19046,16 +19075,19 @@ push_prefix_prop (struct it *it, Lisp_Object prop)
 static Lisp_Object
 get_it_property (struct it *it, Lisp_Object prop)
 {
-  Lisp_Object position;
+  Lisp_Object position, object = it->object;
 
-  if (STRINGP (it->object))
+  if (STRINGP (object))
     position = make_number (IT_STRING_CHARPOS (*it));
-  else if (BUFFERP (it->object))
-    position = make_number (IT_CHARPOS (*it));
+  else if (BUFFERP (object))
+    {
+      position = make_number (IT_CHARPOS (*it));
+      object = it->window;
+    }
   else
     return Qnil;
 
-  return Fget_char_property (position, prop, it->object);
+  return Fget_char_property (position, prop, object);
 }
 
 /* See if there's a line- or wrap-prefix, and if so, push it on IT.  */
@@ -20085,6 +20117,10 @@ See also `bidi-paragraph-direction'.  */)
       itb.string.lstring = Qnil;
       itb.string.bufpos = 0;
       itb.string.unibyte = 0;
+      /* We have no window to use here for ignoring window-specific
+	 overlays.  Using NULL for window pointer will cause
+	 compute_display_string_pos to use the current buffer.  */
+      itb.w = NULL;
       bidi_paragraph_init (NEUTRAL_DIR, &itb, 1);
       bidi_unshelve_cache (itb_data, 0);
       set_buffer_temp (old);
@@ -27658,7 +27694,7 @@ note_mode_line_or_margin_highlight (Lisp_Object window, int x, int y,
   if (STRINGP (string))
     {
       mouse_face = Fget_text_property (pos, Qmouse_face, string);
-      if (!NILP (mouse_face)
+      if (!NILP (Vmouse_highlight) && !NILP (mouse_face)
 	  && ((area == ON_MODE_LINE) || (area == ON_HEADER_LINE))
 	  && glyph)
 	{
@@ -27796,8 +27832,10 @@ note_mode_line_or_margin_highlight (Lisp_Object window, int x, int y,
 
 /* EXPORT:
    Take proper action when the mouse has moved to position X, Y on
-   frame F as regards highlighting characters that have mouse-face
-   properties.  Also de-highlighting chars where the mouse was before.
+   frame F with regards to highlighting portions of display that have
+   mouse-face properties.  Also de-highlight portions of display where
+   the mouse was before, set the mouse pointer shape as appropriate
+   for the mouse coordinates, and activate help echo (tooltips).
    X and Y can be negative or out of range.  */
 
 void
@@ -27817,8 +27855,7 @@ note_mouse_highlight (struct frame *f, int x, int y)
     return;
 #endif
 
-  if (NILP (Vmouse_highlight)
-      || !f->glyphs_initialized_p
+  if (!f->glyphs_initialized_p
       || f->pointer_invisible)
     return;
 
@@ -28013,6 +28050,12 @@ note_mouse_highlight (struct frame *f, int x, int y)
 	}
       else
 	noverlays = 0;
+
+      if (NILP (Vmouse_highlight))
+	{
+	  clear_mouse_face (hlinfo);
+	  goto check_help_echo;
+	}
 
       same_region = coords_in_mouse_face_p (w, hpos, vpos);
 
