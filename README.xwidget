@@ -27,6 +27,8 @@ necessary to support the Emacs window paradigm.
 
 ** building
 bzr co bzr+ssh://bzr.savannah.gnu.org/emacs/xwidget/
+#or:
+#git clone https://github.com/jave/xwidget-emacs.git
 #the below compiler flags shouldn't be strictly necessary
 export CFLAGS=" -g"
 ./configure --with-xwidgets --enable-asserts --with-x-toolkit=gtk3
