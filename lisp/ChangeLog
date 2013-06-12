@@ -1,3 +1,37 @@
+2013-06-12  Grégoire Jadi  <daimrod@gmail.com>
+
+	* mail/reporter.el (reporter-submit-bug-report):
+	Handle missing package-name.  (Bug#14600)
+
+2013-06-12  Rüdiger Sonderfeld  <ruediger@c-plusplus.de>
+
+	* textmodes/reftex-cite.el (reftex-cite-regexp-hist)
+	(reftex-citation-prompt, reftex-default-bibliography)
+	(reftex-bib-or-thebib, reftex-get-bibfile-list)
+	(reftex-pop-to-bibtex-entry, reftex-extract-bib-entries)
+	(reftex-bib-sort-author, reftex-bib-sort-year)
+	(reftex-bib-sort-year-reverse, reftex-get-crossref-alist)
+	(reftex-extract-bib-entries-from-thebibliography)
+	(reftex-get-bibkey-default, reftex-get-bib-names)
+	(reftex-parse-bibtex-entry, reftex-get-bib-field)
+	(reftex-format-bib-entry, reftex-parse-bibitem)
+	(reftex-format-bibitem, reftex-do-citation)
+	(reftex-figure-out-cite-format, reftex-offer-bib-menu)
+	(reftex-restrict-bib-matches, reftex-extract-bib-file)
+	(reftex-insert-bib-matches, reftex-format-citation)
+	(reftex-make-cite-echo-string, reftex-bibtex-selection-callback)
+	(reftex-create-bibtex-file): Add docstrings, mostly by converting
+	existing comments into docstrings.
+
+2013-06-12  Xue Fuqiao  <xfq.free@gmail.com>
+
+	* ibuf-ext.el (ibuffer-mark-help-buffers): Doc fix.
+
+2013-06-12  Andreas Schwab  <schwab@suse.de>
+
+	* international/mule.el (auto-coding-alist): Use utf-8-emacs-unix
+	for auto-save files.
+
 2013-06-12  Glenn Morris  <rgm@gnu.org>
 
 	* ido.el (ido-delete-ignored-files): Remove.
@@ -129,6 +163,11 @@
 
 	* epa.el (epa-read-file-name): New function.  (Bug#14510)
 	(epa-decrypt-file): Make plain-file optional.  Use epa-read-file-name.
+
+2013-06-09  Xue Fuqiao  <xfq.free@gmail.com>
+
+	* vc/vc-cvs.el (vc-cvs-stay-local): Doc fix.
+	* vc/vc-hooks.el (vc-stay-local): Doc fix.
 
 2013-06-09  Aidan Gauland  <aidalgol@amuri.net>
 

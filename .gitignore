@@ -10,12 +10,10 @@ lib/Makefile.in
 src/config.in
 autom4te.cache
 makefile
+TAGS
 *~
 /README.W32
 
 /bin/
 /site-lisp/
-*.o
-*.elc
-.bzr
-*#
+/leim/ja-dic/
