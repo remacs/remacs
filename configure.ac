@@ -2208,8 +2208,6 @@ fi
 
 HAVE_XWIDGETS=no
 HAVE_WEBKIT=no
-HAVE_GOOCANVAS=no
-HAVE_CLUTTER=no
 HAVE_GIR=no
 
 if test "${with_xwidgets}" != "no"; then
@@ -2219,7 +2217,7 @@ if test "${with_xwidgets}" != "no"; then
 #xwidgets
 #TODO
 # - enable only if gtk/gtk3 enabled
-# - webkit, goocanvas, clutter
+# - webkit
 # - only webkit_osr is good so remove plain webkit laterish
 
 #webkit version for gtk3. 
@@ -2231,26 +2229,6 @@ if test "${with_xwidgets}" != "no"; then
     if test $HAVE_WEBKIT = yes; then
         AC_DEFINE(HAVE_WEBKIT_OSR, 1, [Define to 1 if you have webkit_osr support.])     
     fi
-  fi
-
-  if test "${with_xwdemo}"  = "yes"; then
-#clutter and goocanvas are just proof of concept so disable for now  
-  CLUTTER_REQUIRED=1.0.0   
-  CLUTTER_MODULES="clutter-gtk-1.0 >= $CLUTTER_REQUIRED"
-
-  PKG_CHECK_MODULES(CLUTTER, $CLUTTER_MODULES, HAVE_CLUTTER=yes, HAVE_CLUTTER=no)
-  if test $HAVE_CLUTTER = yes;  then
-     AC_DEFINE(HAVE_CLUTTER, 1, [Define to 1 if you have clutter support.])
-  fi
-
-
-  GOOCANVAS_REQUIRED=1.4.0
-  GOOCANVAS_MODULES="goocanvasgtk-3.0 >= $GOOCANVAS_REQUIRED"
-
-  PKG_CHECK_MODULES(GOOCANVAS, $GOOCANVAS_MODULES, HAVE_GOOCANVAS=yes, HAVE_GOOCANVAS=no)
-  if test $HAVE_GOOCANVAS = yes; then
-     AC_DEFINE(HAVE_GOOCANVAS, 1, [Define to 1 if you have goocanvas support.])
-  fi
   fi
 
   GIR_REQUIRED=1.32.1
@@ -4836,8 +4814,6 @@ echo "  Does Emacs use toolkit scroll bars?                     ${USE_TOOLKIT_SC
 echo "  Does Emacs support Xwidgets?                            ${HAVE_XWIDGETS}"
 echo "       Does xwidgets support webkit(requires gtk3)?       ${HAVE_WEBKIT}"
 echo "       Does xwidgets support gobject introspection?       ${HAVE_GIR}"
-echo "       Does xwidgets support clutter(demo code)?          ${HAVE_CLUTTER}"
-echo "       Does xwidgets support goocanvas(demo code)?        ${HAVE_GOOCANVAS}"
 echo
 
 if test -n "${EMACSDATA}"; then

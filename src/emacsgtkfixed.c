@@ -184,7 +184,7 @@ static void emacs_fixed_gtk_widget_size_allocate (GtkWidget *widget,
 
 }
 
-#endif
+#endif  /* HAVE_XWIDGETS */
 
 static void
 emacs_fixed_class_init (EmacsFixedClass *klass)

@@ -194,3 +194,5 @@
 ;  (xwidget-resize-hack 1 200 200)
 
 ;(xwidget-demo-basic)
+
+(provide 'xwidget-test)

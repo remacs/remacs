@@ -68,7 +68,7 @@
 
 #include "gtkutil.h"
 #include "font.h"
-#endif
+#endif  /* HAVE_X_WINDOWS */
 
 #include <gtk/gtk.h>
 #include <gdk/gdk.h>
@@ -77,18 +77,6 @@
 //for gtk3; sockets and plugs
 #include <gtk/gtkx.h>
 #include "emacsgtkfixed.h"
-#endif
-
-
-
-#ifdef HAVE_GOOCANVAS
-#include <goocanvas.h>
-#endif
-
-#ifdef HAVE_CLUTTER
-#include <librsvg/rsvg.h>
-#include <clutter/clutter.h>
-#include <clutter-gtk/clutter-gtk.h>
 #endif
 
 #include <wchar.h>
@@ -132,14 +120,14 @@ allocate_xwidget_view (void)
 #define XSETXWIDGET_VIEW(a, b) (XSETPSEUDOVECTOR (a, b, PVEC_XWIDGET_VIEW))
 
 Lisp_Object Qxwidget;
-Lisp_Object Qcxwidget;
-Lisp_Object Qtitle;
+Lisp_Object QCxwidget;
+Lisp_Object QCtitle;
 Lisp_Object Qxwidget_set_keyboard_grab;
 Lisp_Object Qxwidget_embed_steal_window;
 Lisp_Object Qxwidget_info;
 Lisp_Object Qxwidget_resize;
 Lisp_Object Qxwidget_send_keyboard_event;
-Lisp_Object Qcxwgir_class;
+Lisp_Object QCxwgir_class;
 Lisp_Object Qbutton, Qtoggle, Qslider, Qsocket, Qsocket_osr, Qcairo, Qxwgir,
   Qwebkit_osr, QCplist;
 
@@ -188,14 +176,27 @@ xwgir_event_callback (GtkWidget *widget,
 GtkWidget* xwgir_create(char* class, char* namespace);
 static void
 send_xembed_ready_event (struct xwidget* xw, int xembedid);  
-DEFUN ("make-xwidget", Fmake_xwidget, Smake_xwidget, 7, 7, 0,
-         doc: /* xw */
+DEFUN ("make-xwidget", Fmake_xwidget, Smake_xwidget, 7, 8, 0,
+         doc: /* Make an xwidget from BEG to END of TYPE. 
+
+If BUFFER is nil it uses the current buffer. If BUFFER is a string and
+no such buffer exists, it is created.
+
+TYPE is a symbol which can take one of the following values:
+- Button
+- ToggleButton
+- slider
+- socket
+- socket-osr
+- cairo
+*/
          )
   (Lisp_Object beg, Lisp_Object end,
-     Lisp_Object type,
-     Lisp_Object title,
-     Lisp_Object width, Lisp_Object height,
-     Lisp_Object data)
+   Lisp_Object type,
+   Lisp_Object title,
+   Lisp_Object width, Lisp_Object height,
+   Lisp_Object data,
+   Lisp_Object buffer)
 {
   //should work a bit like "make-button"(make-button BEG END &rest PROPERTIES)
   // arg "type" and fwd should be keyword args eventually
@@ -203,16 +204,18 @@ DEFUN ("make-xwidget", Fmake_xwidget, Smake_xwidget, 7, 7, 0,
   //(xwidget-info (car xwidget-alist))
   struct xwidget* xw = allocate_xwidget();
   Lisp_Object val;
-  struct gcpro gcpro1;
-  GCPRO1(xw);
   XSETSYMBOL(xw->type, type);
   XSETSTRING(xw->title, title);
-  //TODO buffer should be an optional argument not just assumed to be the current buffer
-  XSETBUFFER(xw->buffer,  Fcurrent_buffer()); // conservatively gcpro xw since we call lisp
+  if (NILP (buffer))
+      buffer = Fcurrent_buffer(); // no need to gcpro because Fcurrent_buffer doesn't call Feval/eval_sub.
+  else
+      buffer = Fget_buffer_create (buffer);
+  XSETBUFFER(xw->buffer, buffer);
+  
   xw->height = XFASTINT(height);
   xw->width = XFASTINT(width);
-  XSETPSEUDOVECTOR (val, xw, PVEC_XWIDGET); //?? dunno why i need this
-  Vxwidget_alist = Fcons ( val, Vxwidget_alist);
+  XSETPSEUDOVECTOR (val, xw, PVEC_XWIDGET); // set the vectorlike_header of VAL with the correct value
+  Vxwidget_alist = Fcons (val, Vxwidget_alist);
   xw->widgetwindow_osr = NULL;
   xw->widget_osr = NULL;
   xw->plist = Qnil;
@@ -224,78 +227,77 @@ DEFUN ("make-xwidget", Fmake_xwidget, Smake_xwidget, 7, 7, 0,
    */
   if (EQ(xw->type, Qwebkit_osr)||
       EQ(xw->type, Qsocket_osr)||
-      (Fget(xw->type, Qcxwgir_class) != Qnil)){
-    printf("init osr widget\n");
-    block_input();
-    xw->widgetwindow_osr = GTK_CONTAINER (gtk_offscreen_window_new ());
-    gtk_window_resize(    GTK_WINDOW(xw->widgetwindow_osr), xw->width, xw->height);
+      (Fget(xw->type, QCxwgir_class) != Qnil)) {
+      printf("init osr widget\n");
+      block_input();
+      xw->widgetwindow_osr = GTK_CONTAINER (gtk_offscreen_window_new ());
+      gtk_window_resize(GTK_WINDOW(xw->widgetwindow_osr), xw->width, xw->height);
 
-    if (EQ(xw->type, Qwebkit_osr))
-      xw->widget_osr = webkit_web_view_new();
-    if(EQ(xw->type, Qsocket_osr))
-      xw->widget_osr = gtk_socket_new();    
-    if(Fget(xw->type, Qcxwgir_class) != Qnil)
-      xw->widget_osr = xwgir_create(    SDATA(Fcar(Fcdr(Fget(xw->type, Qcxwgir_class)))),
-                                        SDATA(Fcar(Fget(xw->type, Qcxwgir_class))));
+      if (EQ(xw->type, Qwebkit_osr))
+          xw->widget_osr = webkit_web_view_new();
+      if(EQ(xw->type, Qsocket_osr))
+          xw->widget_osr = gtk_socket_new();    
+      if(Fget(xw->type, QCxwgir_class) != Qnil)
+          xw->widget_osr = xwgir_create(SDATA(Fcar(Fcdr(Fget(xw->type, QCxwgir_class)))),
+                                        SDATA(Fcar(Fget(xw->type, QCxwgir_class))));
 
-    gtk_widget_set_size_request (GTK_WIDGET (xw->widget_osr), xw->width, xw->height);
-    gtk_container_add (xw->widgetwindow_osr, xw->widget_osr);
+      gtk_widget_set_size_request (GTK_WIDGET (xw->widget_osr), xw->width, xw->height);
+      gtk_container_add (xw->widgetwindow_osr, xw->widget_osr);
 
-    gtk_widget_show_all (GTK_WIDGET (xw->widgetwindow_osr));
+      gtk_widget_show_all (GTK_WIDGET (xw->widgetwindow_osr));
 
-    /* store some xwidget data in the gtk widgets for convenient retrieval in the event handlers. */
-    g_object_set_data (G_OBJECT (xw->widget_osr), XG_XWIDGET, (gpointer) (xw));
-    g_object_set_data (G_OBJECT (xw->widgetwindow_osr), XG_XWIDGET, (gpointer) (xw));
-    /* signals */
-    g_signal_connect (G_OBJECT ( xw->widgetwindow_osr), "damage-event",    G_CALLBACK (xwidget_osr_damage_event_callback), NULL);
+      /* store some xwidget data in the gtk widgets for convenient retrieval in the event handlers. */
+      g_object_set_data (G_OBJECT (xw->widget_osr), XG_XWIDGET, (gpointer) (xw));
+      g_object_set_data (G_OBJECT (xw->widgetwindow_osr), XG_XWIDGET, (gpointer) (xw));
 
+      /* signals */
+      g_signal_connect (G_OBJECT (xw->widgetwindow_osr), "damage-event",
+                        G_CALLBACK (xwidget_osr_damage_event_callback), NULL);
 
-    if (EQ(xw->type, Qwebkit_osr)){
-      g_signal_connect (G_OBJECT ( xw->widget_osr),
-                        "document-load-finished",
-                        G_CALLBACK (webkit_osr_document_load_finished_callback),
-                        xw);    
+      if (EQ(xw->type, Qwebkit_osr)) {
+          g_signal_connect (G_OBJECT (xw->widget_osr),
+                            "document-load-finished",
+                            G_CALLBACK (webkit_osr_document_load_finished_callback),
+                            xw);    
       
-      g_signal_connect (G_OBJECT ( xw->widget_osr),
-                        "download-requested",
-                        G_CALLBACK (webkit_osr_download_callback),
-                        xw);    
+          g_signal_connect (G_OBJECT (xw->widget_osr),
+                            "download-requested",
+                            G_CALLBACK (webkit_osr_download_callback),
+                            xw);    
 
-      g_signal_connect (G_OBJECT ( xw->widget_osr),
-                        "mime-type-policy-decision-requested",
-                        G_CALLBACK (webkit_osr_mime_type_policy_typedecision_requested_callback),
-                        xw);    
+          g_signal_connect (G_OBJECT (xw->widget_osr),
+                            "mime-type-policy-decision-requested",
+                            G_CALLBACK (webkit_osr_mime_type_policy_typedecision_requested_callback),
+                            xw);    
 
-      g_signal_connect (G_OBJECT ( xw->widget_osr),
-                        "new-window-policy-decision-requested",
-                        G_CALLBACK (webkit_osr_new_window_policy_decision_requested_callback),
-                        xw);    
+          g_signal_connect (G_OBJECT (xw->widget_osr),
+                            "new-window-policy-decision-requested",
+                            G_CALLBACK (webkit_osr_new_window_policy_decision_requested_callback),
+                            xw);    
 
-      g_signal_connect (G_OBJECT ( xw->widget_osr),
-                        "navigation-policy-decision-requested",
-                        G_CALLBACK (webkit_osr_navigation_policy_decision_requested_callback),
-                        xw);
-      //webkit_web_view_load_uri(WEBKIT_WEB_VIEW(xw->widget_osr), "http://www.fsf.org");
+          g_signal_connect (G_OBJECT (xw->widget_osr),
+                            "navigation-policy-decision-requested",
+                            G_CALLBACK (webkit_osr_navigation_policy_decision_requested_callback),
+                            xw);
+          //webkit_web_view_load_uri(WEBKIT_WEB_VIEW(xw->widget_osr), "http://www.fsf.org");
 
-    }
+      }
 
-    if (EQ(xw->type, Qsocket_osr)) {
-    printf ("xwid:%d socket id:%x %d\n",
-            xw,
-            gtk_socket_get_id (GTK_SOCKET (xw->widget_osr)),
-            gtk_socket_get_id (GTK_SOCKET (xw->widget_osr)));
-    send_xembed_ready_event (xw,
-                             gtk_socket_get_id (GTK_SOCKET (xw->widget_osr)));
-    //gtk_widget_realize(xw->widget);
+      if (EQ(xw->type, Qsocket_osr)) {
+          printf ("xwid:%d socket id:%x %d\n",
+                  xw,
+                  gtk_socket_get_id (GTK_SOCKET (xw->widget_osr)),
+                  gtk_socket_get_id (GTK_SOCKET (xw->widget_osr)));
+          send_xembed_ready_event (xw, gtk_socket_get_id (GTK_SOCKET (xw->widget_osr)));
+          //gtk_widget_realize(xw->widget);
+      }
+
+
+      unblock_input();
+
   }
+#endif  /* HAVE_WEBKIT_OSR */
 
-
-    unblock_input();
-
-  }
-#endif
-
-  UNGCPRO;
   return val;
 }
 
@@ -762,7 +764,7 @@ xwgir_convert_lisp_to_gir_arg(GIArgument* giarg,
 void
 refactor_attempt(){
   //this methhod should be called from xwgir-xwidget-call-method and from xwgir xwidget construction  
-  char* class = SDATA(Fcar(Fcdr(Fget(xw->type, Qcxwgir_class))));
+  char* class = SDATA(Fcar(Fcdr(Fget(xw->type, QCxwgir_class))));
 
   GIObjectInfo* obj_info = g_irepository_find_by_name(girepository, namespace, class);
   GIFunctionInfo* f_info = g_object_info_find_method (obj_info, SDATA(method));
@@ -792,7 +794,7 @@ refactor_attempt(){
    }   
   return Qt;
 }
-#endif
+#endif  /* 0 */
 
 DEFUN ("xwgir-xwidget-call-method", Fxwgir_xwidget_call_method,  Sxwgir_xwidget_call_method,       3, 3, 0,
        doc:	/* call xwidget object method.*/)
@@ -808,7 +810,7 @@ DEFUN ("xwgir-xwidget-call-method", Fxwgir_xwidget_call_method,  Sxwgir_xwidget_
   if(Qnil == xwidget) {printf("ERROR xwidget nil\n");   return Qnil;};  
   xw = XXWIDGET(xwidget);                                               
   if(NULL == xw) printf("ERROR xw is 0\n");                               
-  char* namespace = SDATA(Fcar(Fget(xw->type, Qcxwgir_class)));
+  char* namespace = SDATA(Fcar(Fget(xw->type, QCxwgir_class)));
   //we need the concrete widget, which happens in 2 ways depending on OSR or not TODO
   GtkWidget* widget = NULL;
   if(NULL == xw->widget_osr) {
@@ -823,7 +825,7 @@ DEFUN ("xwgir-xwidget-call-method", Fxwgir_xwidget_call_method,  Sxwgir_xwidget_
   /* char* class = G_OBJECT_TYPE_NAME(widget); //gives "GtkButton"(I want "Button") */
   /* class += strlen(namespace);  //TODO check for corresponding api method. but this seems to work. */
 
-  char* class = SDATA(Fcar(Fcdr(Fget(xw->type, Qcxwgir_class))));
+  char* class = SDATA(Fcar(Fcdr(Fget(xw->type, QCxwgir_class))));
 
   GIObjectInfo* obj_info = g_irepository_find_by_name(girepository, namespace, class);
   GIFunctionInfo* f_info = g_object_info_find_method (obj_info, SDATA(method));
@@ -981,54 +983,9 @@ xwidget_init_view (struct xwidget *xww,
     //Cairo view
     //uhm cairo is differentish in gtk 3.
     //gdk_cairo_create (gtk_widget_get_window (FRAME_GTK_WIDGET (s->f)));
-#ifdef HAVE_GOOCANVAS
-    xv->widget = goo_canvas_new();
-    GooCanvasItem *root, *rect_item, *text_item;
-    goo_canvas_set_bounds (GOO_CANVAS (xv->widget), 0, 0, 1000, 1000);
-    root = goo_canvas_get_root_item (GOO_CANVAS (xv->widget));
-    rect_item = goo_canvas_rect_new (root, 100, 100, 400, 400,
-                                     "line-width", 10.0,
-                                     "radius-x", 20.0,
-                                     "radius-y", 10.0,
-                                     "stroke-color", "yellow",
-                                     "fill-color", "red",
-                                     NULL);
-
-    text_item = goo_canvas_text_new (root, "Hello World", 300, 300, -1,
-                                     GTK_ANCHOR_CENTER,
-                                     "font", "Sans 24",
-                                     NULL);
-    goo_canvas_item_rotate (text_item, 45, 300, 300);
-
-#endif
-#ifdef HAVE_CLUTTER
-    xv->widget = gtk_clutter_embed_new ();;
-    ClutterActor *stage = NULL;
-    stage = gtk_clutter_embed_get_stage (GTK_CLUTTER_EMBED (        xv->widget));
-    ClutterColor stage_color = { 0xaa, 0xaa, 0xaa, 0xff }; /* Black */
-    clutter_stage_set_color (CLUTTER_STAGE (stage), &stage_color);
-
-    ClutterActor *  texture =  clutter_cairo_texture_new (1000, 1000);
-    clutter_container_add_actor(stage, texture);
-    clutter_actor_set_position(texture, 0,0);
-    clutter_actor_show(texture);
-
-    cairo_t *cr;
-    cr = clutter_cairo_texture_create (CLUTTER_CAIRO_TEXTURE (texture));
-
-    /* draw on the context */
-    RsvgHandle *h =  rsvg_handle_new_from_file  ("/tmp/tst.svg",
-                                                 NULL);
-
-    rsvg_handle_render_cairo(h, cr);
-    cairo_destroy (cr);
-
-    /* Show the stage: */
-    clutter_actor_show (stage);
-#endif
   } else if (EQ(xww->type, Qwebkit_osr)||
              EQ(xww->type, Qsocket_osr)||
-             (Fget(xww->type, Qcxwgir_class) != Qnil))//xwgir widgets are OSR
+             (Fget(xww->type, QCxwgir_class) != Qnil))//xwgir widgets are OSR
     {
 #ifdef HAVE_WEBKIT_OSR //TODO the ifdef isnt really relevant anymore, we always have osr
       printf("osr init:%s\n",SDATA(SYMBOL_NAME(xww->type)));
@@ -1067,7 +1024,7 @@ xwidget_init_view (struct xwidget *xww,
     /* g_signal_connect (G_OBJECT (    xv->widget), "key-release-event", */
     /*                   G_CALLBACK (xwidget_osr_event_forward), NULL); */
     
-#endif
+#endif  /* HAVE_WEBKIT_OSR */
 
 
   } 
@@ -1114,7 +1071,7 @@ xwidget_init_view (struct xwidget *xww,
   //xwgir debug
   if (//EQ(xww->type, Qwebkit_osr)|| //TODO should be able to choose compile time which method to use with webkit
       EQ(xww->type, Qsocket_osr)||
-      (Fget(xww->type, Qcxwgir_class) != Qnil))//xwgir widgets are OSR
+      (Fget(xww->type, QCxwgir_class) != Qnil))//xwgir widgets are OSR
     {
       //xwidget_set_embedder_view(xww,xv);
       printf("gdk_offscreen_window_set_embedder %d %d\n",
@@ -1350,7 +1307,7 @@ DEFUN ("xwidget-webkit-dom-dump", Fxwidget_webkit_dom_dump,  Sxwidget_webkit_dom
 
 
 
-#endif
+#endif  /* HAVE_WEBKIT_OSR */
 
 
 
@@ -1611,12 +1568,14 @@ syms_of_xwidget (void)
   defsubr (&Sxwidget_buffer);
   defsubr (&Sset_xwidget_plist);
   
-  DEFSYM (Qxwidget ,"xwidget");
+  DEFSYM (Qxwidget, "xwidget");
 
-  DEFSYM (Qcxwidget ,":xwidget");
-  DEFSYM (Qcxwgir_class ,":xwgir-class");
-  DEFSYM (Qtitle ,":title");
+  DEFSYM (QCxwidget, ":xwidget");
+  DEFSYM (QCxwgir_class, ":xwgir-class");
+  DEFSYM (QCtitle, ":title");
 
+  /* Do not forget to update the docstring of make-xwidget if you add
+     new types. */
   DEFSYM (Qbutton, "Button"); //changed to match the gtk class because xwgir(experimental and not really needed)
   DEFSYM (Qtoggle, "ToggleButton");
   DEFSYM (Qslider, "slider");
@@ -1626,10 +1585,11 @@ syms_of_xwidget (void)
 
   DEFSYM (QCplist, ":plist");
 
-   DEFVAR_LISP ("xwidget-alist", Vxwidget_alist, doc: /*xwidgets list*/);
-   Vxwidget_alist = Qnil;
-   DEFVAR_LISP ("xwidget-view-alist", Vxwidget_view_alist, doc: /*xwidget views list*/);
-   Vxwidget_alist = Qnil;
+  DEFVAR_LISP ("xwidget-alist", Vxwidget_alist, doc: /*xwidgets list*/);
+  Vxwidget_alist = Qnil;
+
+  DEFVAR_LISP ("xwidget-view-alist", Vxwidget_view_alist, doc: /*xwidget views list*/);
+  Vxwidget_view_alist = Qnil;
 
   Fprovide (intern ("xwidget-internal"), Qnil);
 
@@ -1744,12 +1704,12 @@ lookup_xwidget (Lisp_Object  spec)
   Lisp_Object value;
   struct xwidget *xw;
 
-  value = xwidget_spec_value (spec, Qcxwidget, &found1);
+  value = xwidget_spec_value (spec, QCxwidget, &found1);
   xw = XXWIDGET(value);
 
   /* value = xwidget_spec_value (spec, QCtype, &found); */
   /* xw->type = SYMBOLP (value) ? value : Qbutton;	//default to button */
-  /* value = xwidget_spec_value (spec, Qtitle, &found2); */
+  /* value = xwidget_spec_value (spec, QCtitle, &found2); */
   /* xw->title = STRINGP (value) ? (char *) SDATA (value) : "?";	//funky cast FIXME TODO */
 
   /* value = xwidget_spec_value (spec, QCheight, NULL); */
@@ -1852,4 +1812,4 @@ xwidget_end_redisplay (struct window *w, struct glyph_matrix *matrix)
 }
 
       
-#endif
+#endif  /* HAVE_XWIDGETS */
