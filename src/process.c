@@ -4693,10 +4693,10 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 	    }
 #endif
 	  nfds = thread_select (
-#if defined (USE_GTK) || defined (HAVE_GCONF) || defined (HAVE_GSETTINGS)
-				xg_select
-#elif defined (HAVE_NS)
+#if defined (HAVE_NS)
 				ns_select
+#elif defined (HAVE_GLIB)
+				xg_select
 #else
 				pselect
 #endif
@@ -6255,6 +6255,12 @@ process has been transmitted to the serial port.  */)
    might inadvertently reap a GTK-created process that happened to
    have the same process ID.  */
 
+/* LIB_CHILD_HANDLER is a SIGCHLD handler that Emacs calls while doing
+   its own SIGCHLD handling.  On POSIXish systems, glib needs this to
+   keep track of its own children.  The default handler does nothing.  */
+static void dummy_handler (int sig) {}
+static signal_handler_t volatile lib_child_handler = dummy_handler;
+
 /* Handle a SIGCHLD signal by looking for known child processes of
    Emacs whose status have changed.  For each one found, record its
    new status.
@@ -6336,6 +6342,8 @@ handle_child_signal (int sig)
 	    }
 	}
     }
+
+  lib_child_handler (sig);
 }
 
 static void
@@ -7181,14 +7189,19 @@ integer or floating point values.
   return system_process_attributes (pid);
 }
 
+#ifndef NS_IMPL_GNUSTEP
+static
+#endif
 void
 catch_child_signal (void)
 {
-#ifdef SIGCHLD
-  struct sigaction action;
+  struct sigaction action, old_action;
   emacs_sigaction_init (&action, deliver_child_signal);
-  sigaction (SIGCHLD, &action, 0);
-#endif
+  sigaction (SIGCHLD, &action, &old_action);
+  eassert (! (old_action.sa_flags & SA_SIGINFO));
+  if (old_action.sa_handler != SIG_DFL && old_action.sa_handler != SIG_IGN
+      && old_action.sa_handler != deliver_child_signal)
+    lib_child_handler = old_action.sa_handler;
 }
 
 
@@ -7206,6 +7219,12 @@ init_process_emacs (void)
   if (! noninteractive || initialized)
 #endif
     {
+#if defined HAVE_GLIB && !defined WINDOWSNT
+      /* Tickle glib's child-handling code.  Ask glib to wait for Emacs itself;
+	 this should always fail, but is enough to initialize glib's
+	 private SIGCHLD handler.  */
+      g_source_unref (g_child_watch_source_new (getpid ()));
+#endif
       catch_child_signal ();
     }
 

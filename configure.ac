@@ -86,7 +86,7 @@ AC_DEFUN([OPTION_DEFAULT_OFF], [dnl
 ])dnl
 
 dnl OPTION_DEFAULT_ON(NAME, HELP-STRING)
-dnl Create a new --with option that defaults to $enable_features.
+dnl Create a new --with option that defaults to $with_features.
 dnl NAME is the base name of the option.  The shell variable with_NAME
 dnl   will be set either to 'no' (for a plain --without-NAME) or to
 dnl   'yes' (if the option is not specified).  Note that the shell
@@ -216,7 +216,7 @@ this option's value should be `yes', `no', `gfile', `inotify' or `w32'.
    esac
    with_file_notification=$val
  ],
- [with_file_notification=yes])
+ [with_file_notification=$with_features])
 
 ## For the times when you want to build Emacs but don't have
 ## a suitable makeinfo, and can live without the manuals.
@@ -2317,19 +2317,21 @@ if test "${with_file_notification}" = "yes"; then
    if test "${opsys}" = "mingw32"; then
       with_file_notification=w32
    else
-      with_file_notification=gfile
+      if test "${with_ns}" != yes; then
+        with_file_notification=gfile
+      fi
    fi
 fi
 
-dnl g_file_monitor exists since glib 2.18.  It has been tested under
+dnl g_file_monitor exists since glib 2.18.  G_FILE_MONITOR_EVENT_MOVED
+dnl has been added in glib 2.24.  It has been tested under
 dnl GNU/Linux only.  We take precedence over inotify, but this makes
 dnl only sense when glib has been compiled with inotify support.  How
 dnl to check?
 if test "${with_file_notification}" = "gfile"; then
-   PKG_CHECK_MODULES(GFILENOTIFY, gio-2.0 >= 2.18, HAVE_GFILENOTIFY=yes, HAVE_GFILENOTIFY=no)
+   PKG_CHECK_MODULES(GFILENOTIFY, gio-2.0 >= 2.24, HAVE_GFILENOTIFY=yes, HAVE_GFILENOTIFY=no)
    if test "$HAVE_GFILENOTIFY" = "yes"; then
       AC_DEFINE(HAVE_GFILENOTIFY, 1, [Define to 1 if using GFile.])
-      LIBS="$LIBS $GFILENOTIFY_LIBS"
       NOTIFY_OBJ=gfilenotify.o
       NOTIFY_SUMMARY="yes -lgio (gfile)"
    fi
@@ -2359,6 +2361,8 @@ if test -n "$NOTIFY_OBJ"; then
    AC_DEFINE(USE_FILE_NOTIFY, 1, [Define to 1 if using file notifications.])
 fi
 AC_SUBST(NOTIFY_OBJ)
+AC_SUBST(GFILENOTIFY_CFLAGS)
+AC_SUBST(GFILENOTIFY_LIBS)
 
 dnl Do not put whitespace before the #include statements below.
 dnl Older compilers (eg sunos4 cc) choke on it.
@@ -3612,6 +3616,25 @@ AC_FUNC_FORK
 
 AC_CHECK_FUNCS(snprintf)
 
+dnl Check this late.  It depends on what other libraries (lrsvg, Gtk+ etc)
+dnl Emacs uses.
+XGSELOBJ=
+AC_MSG_CHECKING([whether GLib is linked in])
+AC_LINK_IFELSE([AC_LANG_PROGRAM(
+	[[#include <glib.h>
+ 	]],
+	[[g_print ("Hello world");]])],
+     [links_glib=yes],
+     [links_glib=no])
+AC_MSG_RESULT([$links_glib])
+if test "${links_glib}" = "yes"; then
+  AC_DEFINE(HAVE_GLIB, 1, [Define to 1 if GLib is linked in.])
+  if test "$HAVE_NS" = no;then
+    XGSELOBJ=xgselect.o
+  fi
+fi
+AC_SUBST(XGSELOBJ)
+
 dnl Adapted from Haible's version.
 AC_CACHE_CHECK([for nl_langinfo and CODESET], emacs_cv_langinfo_codeset,
   [AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <langinfo.h>]],
@@ -4398,7 +4421,7 @@ if test "${HAVE_X_WINDOWS}" = "yes" ; then
   AC_DEFINE(HAVE_X_WINDOWS, 1,
 	    [Define to 1 if you want to use the X window system.])
   XMENU_OBJ=xmenu.o
-  XOBJ="xterm.o xfns.o xselect.o xrdb.o xsmfns.o xsettings.o xgselect.o"
+  XOBJ="xterm.o xfns.o xselect.o xrdb.o xsmfns.o xsettings.o"
   FONT_OBJ=xfont.o
   if test "$HAVE_XFT" = "yes"; then
     FONT_OBJ="$FONT_OBJ ftfont.o xftfont.o ftxfont.o"

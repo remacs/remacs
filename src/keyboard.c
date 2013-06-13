@@ -7392,7 +7392,8 @@ menu_bar_items (Lisp_Object old)
     Lisp_Object *tmaps;
 
     /* Should overriding-terminal-local-map and overriding-local-map apply?  */
-    if (!NILP (Voverriding_local_map_menu_flag))
+    if (!NILP (Voverriding_local_map_menu_flag)
+	&& !NILP (Voverriding_local_map))
       {
 	/* Yes, use them (if non-nil) as well as the global map.  */
 	maps = alloca (3 * sizeof (maps[0]));
@@ -7412,8 +7413,11 @@ menu_bar_items (Lisp_Object old)
 	Lisp_Object tem;
 	ptrdiff_t nminor;
 	nminor = current_minor_maps (NULL, &tmaps);
-	maps = alloca ((nminor + 3) * sizeof *maps);
+	maps = alloca ((nminor + 4) * sizeof *maps);
 	nmaps = 0;
+	tem = KVAR (current_kboard, Voverriding_terminal_local_map);
+	if (!NILP (tem) && !NILP (Voverriding_local_map_menu_flag))
+	  maps[nmaps++] = tem;
 	if (tem = get_local_map (PT, current_buffer, Qkeymap), !NILP (tem))
 	  maps[nmaps++] = tem;
 	memcpy (maps + nmaps, tmaps, nminor * sizeof (maps[0]));
@@ -7938,7 +7942,8 @@ tool_bar_items (Lisp_Object reuse, int *nitems)
      to process.  */
 
   /* Should overriding-terminal-local-map and overriding-local-map apply?  */
-  if (!NILP (Voverriding_local_map_menu_flag))
+  if (!NILP (Voverriding_local_map_menu_flag)
+      && !NILP (Voverriding_local_map))
     {
       /* Yes, use them (if non-nil) as well as the global map.  */
       maps = alloca (3 * sizeof *maps);
@@ -7958,8 +7963,11 @@ tool_bar_items (Lisp_Object reuse, int *nitems)
       Lisp_Object tem;
       ptrdiff_t nminor;
       nminor = current_minor_maps (NULL, &tmaps);
-      maps = alloca ((nminor + 3) * sizeof *maps);
+      maps = alloca ((nminor + 4) * sizeof *maps);
       nmaps = 0;
+      tem = KVAR (current_kboard, Voverriding_terminal_local_map);
+      if (!NILP (tem) && !NILP (Voverriding_local_map_menu_flag))
+	maps[nmaps++] = tem;
       if (tem = get_local_map (PT, current_buffer, Qkeymap), !NILP (tem))
 	maps[nmaps++] = tem;
       memcpy (maps + nmaps, tmaps, nminor * sizeof (maps[0]));
@@ -8142,11 +8150,12 @@ parse_tool_bar_item (Lisp_Object key, Lisp_Object item)
 #if !defined (USE_GTK) && !defined (HAVE_NS)
 	  /* If we use build_desired_tool_bar_string to render the
 	     tool bar, the separator is rendered as an image.  */
-	  PROP (TOOL_BAR_ITEM_IMAGES)
-	    = menu_item_eval_property (Vtool_bar_separator_image_expression);
-	  PROP (TOOL_BAR_ITEM_ENABLED_P) = Qnil;
-	  PROP (TOOL_BAR_ITEM_SELECTED_P) = Qnil;
-	  PROP (TOOL_BAR_ITEM_CAPTION) = Qnil;
+	  set_prop (TOOL_BAR_ITEM_IMAGES,
+		    (menu_item_eval_property
+		     (Vtool_bar_separator_image_expression)));
+	  set_prop (TOOL_BAR_ITEM_ENABLED_P, Qnil);
+	  set_prop (TOOL_BAR_ITEM_SELECTED_P, Qnil);
+	  set_prop (TOOL_BAR_ITEM_CAPTION, Qnil);
 #endif
 	  return 1;
 	}
@@ -11443,10 +11452,7 @@ tool-bar separators natively.  Otherwise it is unused (e.g. on GTK).  */);
 
   DEFVAR_KBOARD ("overriding-terminal-local-map",
 		 Voverriding_terminal_local_map,
-		 doc: /* Per-terminal keymap that overrides all other local keymaps.
-If this variable is non-nil, it is used as a keymap instead of the
-buffer's local map, and the minor mode keymaps and text property keymaps.
-It also replaces `overriding-local-map'.
+		 doc: /* Per-terminal keymap that takes precedence over all other keymaps.
 
 This variable is intended to let commands such as `universal-argument'
 set up a different keymap for reading the next command.
@@ -11456,7 +11462,7 @@ terminal device.
 See Info node `(elisp)Multiple Terminals'.  */);
 
   DEFVAR_LISP ("overriding-local-map", Voverriding_local_map,
-	       doc: /* Keymap that overrides all other local keymaps.
+	       doc: /* Keymap that overrides almost all other local keymaps.
 If this variable is non-nil, it is used as a keymap--replacing the
 buffer's local map, the minor mode keymaps, and char property keymaps.  */);
   Voverriding_local_map = Qnil;
