@@ -95,16 +95,10 @@ until Emacs 25. OTOH since I now use xwidget emacs as my primary
 emacs, I will merge from trunk much more often than in the past.
 
 ** reporting bugs
-emacs xwidgets uses the same tracker as mainline emacs, but a
-different package.
+Emacs xwidgets uses the same tracker as mainline emacs, but a
+different package. To report a bug:
+M-x report-xwidget-bug
 
-m-x report-emacs-bug
-
-Change the address to:
-submit@debbugs.gnu.org
-
-Include this line first in the body:
-Package: emacs-xwidgets
 
 browse bugs:
 http://debbugs.gnu.org/cgi/pkgreport.cgi?package=emacs-xwidgets

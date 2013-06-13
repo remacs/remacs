@@ -12,6 +12,7 @@
 ;;; Code:
 
 (eval-when-compile (require 'cl))
+(require 'reporter)
 
 (defun xwidget-insert (pos type title width height)
   "Insert an xwidget at POS, given ID, TYPE, TITLE WIDTH and
@@ -466,6 +467,26 @@ yet, so deinstall Flash instead for now."
     (setq xwidget-webkit-kill-flash-oneshot t)))
 
 (xwidget-webkit-kill-flash)
+
+(defun report-xwidget-bug ()
+  "Report a bug in GNU Emacs about the XWidget branch.
+Prompts for bug subject.  Leaves you in a mail buffer."
+  (interactive)
+  (let ((reporter-prompt-for-summary-p t))
+    (reporter-submit-bug-report "submit@debbugs.gnu.org" nil nil nil nil
+                                (format "Package: emacs-xwidgets
+
+Please describee xactly whata ctions triggered the bug, and the
+precise symptoms of the bug.  If you can, give a recipe starting
+from `emacs -Q'.
+
+If Emacs crashed, and you have the Emacs process in the gdb
+deubbger, please include the output from the following gdb
+commands:
+    `bt full' and `xbacktrace'.
+
+For information about debugging Emacs, please read the file
+%s" (expand-file-name "DEBUG" data-directory)))))
 
 (provide 'xwidget)
 
