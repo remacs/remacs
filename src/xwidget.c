@@ -88,6 +88,7 @@
 #include <webkit/webkitglobals.h>
 #include <webkit/webkitwebnavigationaction.h>
 #include <webkit/webkitdownload.h>
+#include <webkit/webkitwebpolicydecision.h>
 #endif
 
 //for GIR
