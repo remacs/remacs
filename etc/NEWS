@@ -296,6 +296,18 @@ and opens overlays with hidden text when `search-invisible' is `open'.
 *** By default, prefix arguments do not now terminate Isearch mode.
 Set `isearch-allow-prefix' to nil to restore old behavior.
 
+*** More Isearch commands accept prefix arguments, namely
+`isearch-printing-char', `isearch-quote-char', `isearch-yank-word',
+`isearch-yank-line'.
+
+*** Word search now matches whitespace at the beginning/end
+of the search string if it contains leading/trailing whitespace.
+In an incremental word search or when using a non-nil LAX argument
+of `word-search-regexp', the lax matching can also match part of
+the first word (in addition to the lax matching of the last word).
+The same rules are now applied to the symbol search with the difference
+that it matches symbols, and non-symbol characters between symbols.
+
 ** MH-E has been updated to MH-E version 8.5.
 See MH-E-NEWS for details.
 
@@ -365,6 +377,8 @@ External su and sudo commands are now the default; the internal,
 TRAMP-using variants can still be used by enabling the eshell-tramp
 module.
 
+** New term.el option `term-suppress-hard-newline'.
+
 ** Obsolete packages:
 
 *** longlines.el is obsolete; use visual-line-mode instead.
@@ -399,6 +413,12 @@ It is layered as:
 
 
 * Incompatible Lisp Changes in Emacs 24.4
+
+** The default file coding for Emacs Lisp files is now utf-8.
+(See file-coding-system-alist.)  In most cases, this change is transparent, but
+files that contain unusual characters without specifying an explicit coding
+system may fail to load with obscure errors.
+You should either convert them to utf-8 or add an explicit coding: cookie.
 
 ** overriding-terminal-local-map does not replace the local keymaps any more.
 It used to disable the minor mode, major mode, and text-property keymaps,
@@ -437,6 +457,9 @@ file using `set-file-extended-attributes'.
 
 
 * Lisp Changes in Emacs 24.4
+
++++
+** New macro with-eval-after-load.  Like eval-after-load, but better behaved.
 
 ** Obsoleted functions:
 *** `dont-compile'
