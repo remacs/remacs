@@ -44,6 +44,10 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "keymap.h"
 #include "frame.h"
 
+#ifdef HAVE_XWIDGETS
+#include "xwidget.h"
+#endif  /* HAVE_XWIDGETS */
+
 struct buffer *current_buffer;		/* The current buffer.  */
 
 /* First buffer in chain of all buffers (in reverse order of creation).
@@ -1835,6 +1839,11 @@ cleaning up all windows currently displaying the buffer to be killed. */)
   kill_buffer_processes (buffer);
   UNGCPRO;
 
+#ifdef HAVE_XWIDGETS
+  GCPRO1 (buffer);
+  kill_buffer_xwidgets (buffer);
+  UNGCPRO;
+#endif  /* HAVE_XWIDGETS */
   /* Killing buffer processes may run sentinels which may have killed
      our buffer.  */
   if (!BUFFER_LIVE_P (b))

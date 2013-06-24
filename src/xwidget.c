@@ -202,7 +202,7 @@ TYPE is a symbol which can take one of the following values:
   //should work a bit like "make-button"(make-button BEG END &rest PROPERTIES)
   // arg "type" and fwd should be keyword args eventually
   //(make-xwidget 3 3 'button "oei" 31 31 nil)
-  //(xwidget-info (car xwidget-alist))
+  //(xwidget-info (car xwidget-list))
   struct xwidget* xw = allocate_xwidget();
   Lisp_Object val;
   xw->type = type;
@@ -1619,7 +1619,7 @@ syms_of_xwidget (void)
 
   DEFSYM (QCplist, ":plist");
 
-  DEFVAR_LISP ("xwidget-alist", Vxwidget_list, doc: /*xwidgets list*/);
+  DEFVAR_LISP ("xwidget-list", Vxwidget_list, doc: /*xwidgets list*/);
   Vxwidget_list = Qnil;
 
   DEFVAR_LISP ("xwidget-view-alist", Vxwidget_view_alist, doc: /*xwidget views list*/);
@@ -1843,6 +1843,20 @@ xwidget_end_redisplay (struct window *w, struct glyph_matrix *matrix)
             xwidget_hide_view (xv);
         }
     }
+}
+
+/* Kill all xwidget in BUFFER. */
+void
+kill_buffer_xwidgets (Lisp_Object buffer)
+{
+    Lisp_Object tail, xw;
+
+    for (tail = Fget_buffer_xwidgets (buffer); CONSP (tail); tail = XCDR (tail))
+        {
+            xw = XCAR (tail);
+            Vxwidget_list = Fdelq (xw, Vxwidget_list);
+            /* TODO free the GTK things in xw */
+        }
 }
 
 #endif  /* HAVE_XWIDGETS */

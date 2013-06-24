@@ -454,6 +454,16 @@ It can be retrieved with `(xwidget-get XWIDGET PROPNAME)'."
 ;;(add-hook 'window-configuration-change-hook 'xwidget-cleanup)
 (add-hook 'window-configuration-change-hook 'xwidget-delete-zombies)
 
+(defun xwidget-kill-buffer-query-function ()
+  "Ask beforek illing a buffer that has xwidgets."
+  (let ((xwidgets (get-buffer-xwidgets (current-buffer))))
+    (or (not xwidgets)
+        (yes-or-no-p
+         (format "Buffer %S has xwidgets; kill it? "
+                 (buffer-name (current-buffer)))))))
+
+(add-hook 'kill-buffer-query-functions 'xwidget-kill-buffer-query-function)
+
 ;;killflash is sadly not reliable yet.
 (defvar xwidget-webkit-kill-flash-oneshot t)
 (defun xwidget-webkit-kill-flash ()
