@@ -74,7 +74,7 @@ struct xwidget_view{
 #define XWIDGETP(x) (CONSP (x) && EQ (XCAR (x), Qxwidget))
 /* Test for xwidget pseudovector*/
 #define XXWIDGETP(x) PSEUDOVECTORP (x, PVEC_XWIDGET)
-#define XXWIDGET(a) (eassert (XWIDGETP(a)),(struct xwidget *) XPNTR(a))
+#define XXWIDGET(a) (eassert (XXWIDGETP(a)),(struct xwidget *) XPNTR(a))
 
 
 struct xwidget_type
