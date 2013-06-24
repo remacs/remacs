@@ -205,13 +205,13 @@ TYPE is a symbol which can take one of the following values:
   //(xwidget-info (car xwidget-alist))
   struct xwidget* xw = allocate_xwidget();
   Lisp_Object val;
-  XSETSYMBOL(xw->type, type);
-  XSETSTRING(xw->title, title);
+  xw->type = type;
+  xw->title = title;
   if (NILP (buffer))
       buffer = Fcurrent_buffer(); // no need to gcpro because Fcurrent_buffer doesn't call Feval/eval_sub.
   else
       buffer = Fget_buffer_create (buffer);
-  XSETBUFFER(xw->buffer, buffer);
+  xw->buffer = buffer;
   
   xw->height = XFASTINT(height);
   xw->width = XFASTINT(width);
@@ -228,7 +228,7 @@ TYPE is a symbol which can take one of the following values:
    */
   if (EQ(xw->type, Qwebkit_osr)||
       EQ(xw->type, Qsocket_osr)||
-      (Fget(xw->type, QCxwgir_class) != Qnil)) {
+      (!NILP (Fget(xw->type, QCxwgir_class)))) {
       printf("init osr widget\n");
       block_input();
       xw->widgetwindow_osr = GTK_CONTAINER (gtk_offscreen_window_new ());
@@ -238,7 +238,7 @@ TYPE is a symbol which can take one of the following values:
           xw->widget_osr = webkit_web_view_new();
       if(EQ(xw->type, Qsocket_osr))
           xw->widget_osr = gtk_socket_new();    
-      if(Fget(xw->type, QCxwgir_class) != Qnil)
+      if(!NILP (Fget(xw->type, QCxwgir_class)))
           xw->widget_osr = xwgir_create(SDATA(Fcar(Fcdr(Fget(xw->type, QCxwgir_class)))),
                                         SDATA(Fcar(Fget(xw->type, QCxwgir_class))));
 
@@ -312,11 +312,13 @@ xwidget_hidden(struct xwidget_view *xv)
 static void
 buttonclick_handler (GtkWidget * widget, gpointer data)
 {
-  struct xwidget *xw = (struct xwidget *) data;
+  Lisp_Object xw;
+  XSETXWIDGET(xw, (struct xwidget *) data);
+  
   struct input_event event;
   Lisp_Object frame;
-  FRAME_PTR f = NULL;//(FRAME_PTR) g_object_get_data (G_OBJECT (xw->widget), XG_FRAME_DATA); //TODO
-  printf ("button clicked xw:%d '%s'\n", xw, xw->title);
+  FRAME_PTR f = NULL; //(FRAME_PTR) g_object_get_data (G_OBJECT (XXWIDGET (xw)->widget), XG_FRAME_DATA); //TODO
+  printf ("button clicked xw:%d '%s'\n", xw, XXWIDGET (xw)->title);
 
   EVENT_INIT (event);
   event.kind = XWIDGET_EVENT;
@@ -327,7 +329,7 @@ buttonclick_handler (GtkWidget * widget, gpointer data)
 
 
   event.arg = Qnil;
-  event.arg = Fcons ((Lisp_Object)xw, event.arg); //TODO send the actual xwidget object now instead
+  event.arg = Fcons (xw, event.arg);
   event.arg = Fcons (intern ("buttonclick"), event.arg);
 
   kbd_buffer_store_event (&event);
@@ -339,6 +341,8 @@ buttonclick_handler (GtkWidget * widget, gpointer data)
 static void
 send_xembed_ready_event (struct xwidget* xw, int xembedid)
 {
+  Lisp_Object xw_lo;
+  XSETXWIDGET(xw_lo, xw);
   struct input_event event;
   EVENT_INIT (event);
   event.kind = XWIDGET_EVENT;
@@ -346,7 +350,7 @@ send_xembed_ready_event (struct xwidget* xw, int xembedid)
 
   event.arg = Qnil;
   event.arg = Fcons (make_number (xembedid), event.arg);
-  event.arg = Fcons ((Lisp_Object)xw, event.arg); //TODO
+  event.arg = Fcons (xw_lo, event.arg);
   event.arg = Fcons (intern ("xembed-ready"), event.arg);
 
 
@@ -808,7 +812,7 @@ DEFUN ("xwgir-xwidget-call-method", Fxwgir_xwidget_call_method,  Sxwgir_xwidget_
 
   struct xwidget* xw; 
   if(!XXWIDGETP(xwidget)) {printf("ERROR not an xwidget\n"); return Qnil;}; 
-  if(Qnil == xwidget) {printf("ERROR xwidget nil\n");   return Qnil;};  
+  if (NILP (xwidget)) { printf("ERROR xwidget nil\n"); return Qnil; };  
   xw = XXWIDGET(xwidget);                                               
   if(NULL == xw) printf("ERROR xw is 0\n");                               
   char* namespace = SDATA(Fcar(Fget(xw->type, QCxwgir_class)));
@@ -839,9 +843,11 @@ DEFUN ("xwgir-xwidget-call-method", Fxwgir_xwidget_call_method,  Sxwgir_xwidget_
     return Qnil;
   }
   int i;
+  Lisp_Object n;
   for (i = 1; i < argscount + 1; ++i)
     {
-      xwgir_convert_lisp_to_gir_arg(&in_args[i], g_callable_info_get_arg(f_info, i - 1), Fnth(i - 1, arguments));
+        XSETFASTINT (n, i - 1);
+        xwgir_convert_lisp_to_gir_arg(&in_args[i], g_callable_info_get_arg(f_info, i - 1), Fnth(n, arguments));
     }
 
   in_args[0].v_pointer = widget;
@@ -986,7 +992,7 @@ xwidget_init_view (struct xwidget *xww,
     //gdk_cairo_create (gtk_widget_get_window (FRAME_GTK_WIDGET (s->f)));
   } else if (EQ(xww->type, Qwebkit_osr)||
              EQ(xww->type, Qsocket_osr)||
-             (Fget(xww->type, QCxwgir_class) != Qnil))//xwgir widgets are OSR
+             (!NILP (Fget(xww->type, QCxwgir_class))))//xwgir widgets are OSR
     {
 #ifdef HAVE_WEBKIT_OSR //TODO the ifdef isnt really relevant anymore, we always have osr
       printf("osr init:%s\n",SDATA(SYMBOL_NAME(xww->type)));
@@ -1072,7 +1078,7 @@ xwidget_init_view (struct xwidget *xww,
   //xwgir debug
   if (//EQ(xww->type, Qwebkit_osr)|| //TODO should be able to choose compile time which method to use with webkit
       EQ(xww->type, Qsocket_osr)||
-      (Fget(xww->type, QCxwgir_class) != Qnil))//xwgir widgets are OSR
+      (!NILP (Fget(xww->type, QCxwgir_class))))//xwgir widgets are OSR
     {
       //xwidget_set_embedder_view(xww,xv);
       printf("gdk_offscreen_window_set_embedder %d %d\n",
@@ -1182,7 +1188,7 @@ x_draw_xwidget_glyph_string (struct glyph_string *s)
 #define WEBKIT_FN_INIT()                        \
   struct xwidget* xw; \
 if(!XXWIDGETP(xwidget)) {printf("ERROR not an xwidget\n"); return Qnil;}; \
-if(Qnil == xwidget) {printf("ERROR xwidget nil\n");   return Qnil;};    \
+ if(NILP (xwidget)) {printf("ERROR xwidget nil\n"); return Qnil;};    \
   xw = XXWIDGET(xwidget);                                                    \
   if(NULL == xw) printf("ERROR xw is 0\n");                               \
   if((NULL == xw->widget_osr) || !WEBKIT_IS_WEB_VIEW(xw->widget_osr)){  \
@@ -1383,15 +1389,16 @@ DEFUN ("xwidgetp", Fxwidgetp, Sxwidgetp, 1, 1, 0,
 DEFUN("xwidget-info", Fxwidget_info , Sxwidget_info, 1,1,0, doc: /* get xwidget props */)
   (Lisp_Object xwidget)
 {
-  Lisp_Object info;
+  Lisp_Object info, n;
   struct xwidget* xw = XXWIDGET(xwidget);
 
   info = Fmake_vector (make_number (4), Qnil);
-  XSETSYMBOL (XVECTOR (info)->contents[0], xw->type);
-  XSETSTRING (XVECTOR (info)->contents[1], xw->title);
-  XSETINT    (XVECTOR (info)->contents[2], xw->width);
-  XSETINT    (XVECTOR (info)->contents[3], xw->height);
-
+  ASET (info, 0, xw->type);
+  ASET (info, 1, xw->title);
+  XSETFASTINT(n, xw->width);
+  ASET (info, 2, n);
+  XSETFASTINT(n, xw->height);
+  ASET (info, 2, n);
 
   return info;
 }
@@ -1497,7 +1504,8 @@ DEFUN("xwidget-delete-zombies", Fxwidget_delete_zombies , Sxwidget_delete_zombie
   Lisp_Object w;
   for (int i = 0; i < MAX_XWIDGETS; i++){
       xv =  &xwidget_views[i];
-      XSETWINDOW(w,  xv->w);
+      if (xv->w != NULL)
+          XSETWINDOW(w,  xv->w);
       if(xv->initialized && (! (WINDOW_LIVE_P(w)))){
 
         gtk_widget_destroy(GTK_WIDGET(xv->widgetwindow));
