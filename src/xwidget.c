@@ -444,7 +444,7 @@ xwidget_slider_changed (GtkRange *range,
   for (int i = 0; i < MAX_XWIDGETS; i++)
     {
       xv = &xwidget_views[i];
-      if(xv->initialized && xvp->model == xv->model){
+      if(xv->initialized && EQ (xvp->model, xv->model)){
         g_signal_handler_block( xv->widget,xv->handler_id);
       }
     }
@@ -452,7 +452,7 @@ xwidget_slider_changed (GtkRange *range,
   for (int i = 0; i < MAX_XWIDGETS; i++)
     {
       xv = &xwidget_views[i];
-      if(xv->initialized && xvp->model == xv->model){
+      if(xv->initialized && EQ (xvp->model, xv->model)){
         gtk_range_set_value(GTK_RANGE(xv->widget), v);
         g_signal_handler_unblock( xv->widget,xv->handler_id);
       }
@@ -474,7 +474,7 @@ xwidget_osr_damage_event_callback (GtkWidget *widget, GdkEventExpose *event, gpo
   for (int i = 0; i < MAX_XWIDGETS; i++)//todo mvc refactor
     {
       xv = &xwidget_views[i];
-      if(xv->initialized && xv->model == xw){
+      if(xv->initialized && XXWIDGET (xv->model) == xw){
         gtk_widget_queue_draw (xv->widget); //redraw all views, the master has changed
       }
     }
@@ -958,7 +958,7 @@ xwidget_osr_event_set_embedder (GtkWidget *widget,
                            GdkEvent  *event,
                            gpointer   xv)
 {
-  xwidget_set_embedder_view(((struct xwidget_view*) xv)->model,
+  xwidget_set_embedder_view(XXWIDGET (((struct xwidget_view*) xv)->model),
                             (struct xwidget_view*) xv);
 }
 
@@ -986,7 +986,7 @@ xwidget_init_view (struct xwidget *xww,
 
   xv->initialized = 1;
   xv->w = s->w;
-  xv->model = xww;
+  XSETXWIDGET(xv->model, xww);
 
   //widget creation
   if(EQ(xww->type, Qbutton))
@@ -1380,7 +1380,7 @@ DEFUN ("xwidget-resize", Fxwidget_resize, Sxwidget_resize, 3, 3, 0, doc:
   for (int i = 0; i < MAX_XWIDGETS; i++) //TODO MVC refactor lazy linear search
     {
       xv = &xwidget_views[i];
-      if(xv->initialized && xv->model == xw){
+      if(xv->initialized && XXWIDGET (xv->model) == xw){
         gtk_layout_set_size (GTK_LAYOUT (xv->widgetwindow), xw->width, xw->height);
         gtk_widget_set_size_request (GTK_WIDGET (xv->widget), xw->width, xw->height);
       }
@@ -1718,7 +1718,7 @@ xwidget_view_lookup (struct xwidget* xw, struct window *w)
   struct xwidget_view* xv = NULL;
   for (int i = 0; i < MAX_XWIDGETS; i++){
     xv = &xwidget_views[i];
-    if (xv->initialized && (xv->model == xw) && (xv->w == w))
+    if (xv->initialized && (XXWIDGET (xv->model) == xw) && (xv->w == w))
       return xv;
   }
   return NULL; /* we didnt find a matching view */

@@ -43,9 +43,9 @@ struct xwidget{
 
 
 //struct for each xwidget view
-struct xwidget_view{
+struct xwidget_view {
   struct vectorlike_header header;
-  struct xwidget* model; //TODO should be lisp
+  Lisp_Object model;
 
   
   //here ends the lisp part.
@@ -72,10 +72,14 @@ struct xwidget_view{
 
 /* Test for xwidget (xwidget . spec)  (car must be the symbol xwidget)*/
 #define XWIDGETP(x) (CONSP (x) && EQ (XCAR (x), Qxwidget))
+
 /* Test for xwidget pseudovector*/
 #define XXWIDGETP(x) PSEUDOVECTORP (x, PVEC_XWIDGET)
 #define XXWIDGET(a) (eassert (XXWIDGETP(a)),(struct xwidget *) XPNTR(a))
 
+/* Test for xwidget_view pseudovector */
+#define XXWIDGET_VIEW_P(x) PSEUDOVECTORP (x, PVEC_XWIDGET_VIEW)
+#define XXWIDGET_VIEW(a) (eassert (XXWIDGET_VIEW_P(a)),(struct xwidget_view *) XPNTR(a))
 
 struct xwidget_type
 {
