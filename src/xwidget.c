@@ -215,7 +215,7 @@ TYPE is a symbol which can take one of the following values:
   
   xw->height = XFASTINT(height);
   xw->width = XFASTINT(width);
-  XSETPSEUDOVECTOR (val, xw, PVEC_XWIDGET); // set the vectorlike_header of VAL with the correct value
+  XSETXWIDGET (val, xw); // set the vectorlike_header of VAL with the correct value
   Vxwidget_list = Fcons (val, Vxwidget_list);
   xw->widgetwindow_osr = NULL;
   xw->widget_osr = NULL;
