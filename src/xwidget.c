@@ -96,13 +96,6 @@
 
 #include "xwidget.h"
 
-//TODO should of course not be a hardcoded array but I can't be bothered atm
-//just a fixed array of xwidgets for now
-//would need to be hashtables or something
-
-#define MAX_XWIDGETS 100
-struct xwidget_view xwidget_views[MAX_XWIDGETS];
-
 //TODO embryo of lisp allocators for xwidgets
 //TODO xwidget* should be Lisp_xwidget*
 struct xwidget*
@@ -439,25 +432,20 @@ xwidget_slider_changed (GtkRange *range,
 
   printf("slider changed val:%f\n", v);
 
-
-  //block sibling views signal handlers
-  for (int i = 0; i < MAX_XWIDGETS; i++)
+  for (Lisp_Object tail = Vxwidget_view_list; CONSP (tail); tail = XCDR (tail))
     {
-      xv = &xwidget_views[i];
-      if(xv->initialized && EQ (xvp->model, xv->model)){
-        g_signal_handler_block( xv->widget,xv->handler_id);
+      if (XXWIDGET_VIEW_P (XCAR (tail))) {
+        xv = XXWIDGET_VIEW (XCAR (tail));
+        if (EQ (xvp->model, xv->model)) {
+          //block sibling views signal handlers
+          g_signal_handler_block(xv->widget, xv->handler_id);
+
+          //set values of sibling views and unblock
+          gtk_range_set_value(GTK_RANGE(xv->widget), v);
+          g_signal_handler_unblock(xv->widget,xv->handler_id);
+        }
       }
     }
-  //set values of sibling views and unblock
-  for (int i = 0; i < MAX_XWIDGETS; i++)
-    {
-      xv = &xwidget_views[i];
-      if(xv->initialized && EQ (xvp->model, xv->model)){
-        gtk_range_set_value(GTK_RANGE(xv->widget), v);
-        g_signal_handler_unblock( xv->widget,xv->handler_id);
-      }
-    }
-
 }
 
 
@@ -471,11 +459,13 @@ xwidget_osr_damage_event_callback (GtkWidget *widget, GdkEventExpose *event, gpo
   struct xwidget_view* xv;
   //webkit_osr_redraw_child(xw, widget);
   printf ("damage\n");
-  for (int i = 0; i < MAX_XWIDGETS; i++)//todo mvc refactor
+
+  for (Lisp_Object tail = Vxwidget_view_list; CONSP (tail); tail = XCDR (tail))
     {
-      xv = &xwidget_views[i];
-      if(xv->initialized && XXWIDGET (xv->model) == xw){
-        gtk_widget_queue_draw (xv->widget); //redraw all views, the master has changed
+      if (XXWIDGET_VIEW_P (XCAR (tail))) {
+        xv = XXWIDGET_VIEW (XCAR (tail));
+        if (XXWIDGET (xv->model) == xw)
+          gtk_widget_queue_draw (xv->widget); //redraw all views, the master has changed
       }
     }
 
@@ -963,8 +953,6 @@ xwidget_osr_event_set_embedder (GtkWidget *widget,
 }
 
  
-int xwidget_view_index=0;
-
 /* initializes and does initial placement of an xwidget view on screen */
 struct xwidget_view*
 xwidget_init_view (struct xwidget *xww,
@@ -972,19 +960,13 @@ xwidget_init_view (struct xwidget *xww,
                    int x, int y)
 {
   //TODO temp code replace with lisp list
-  struct xwidget_view *xv;
+  struct xwidget_view *xv = allocate_xwidget_view();
+  Lisp_Object val;
   GdkColor color;
 
-  do{
-    if(xwidget_view_index < MAX_XWIDGETS)
-      xwidget_view_index++;
-    else
-      xwidget_view_index=0;
-
-    xv = &xwidget_views[xwidget_view_index];
-  }while(  xv->initialized == 1); //TODO yeah this can infloop if there are MAX_WIDGETS on-screen
-
-  xv->initialized = 1;
+  XSETXWIDGET_VIEW (val, xv)  ;
+  Vxwidget_view_list = Fcons (val, Vxwidget_view_list);
+  
   XSETWINDOW(xv->w, s->w);
   XSETXWIDGET(xv->model, xww);
 
@@ -1143,14 +1125,11 @@ x_draw_xwidget_glyph_string (struct glyph_string *s)
   int y = s->y + (s->height / 2) - (xww->height / 2);
   int moved=0;
 
-  if (xv == NULL || xv->initialized == 0){
-    /* Views must be initialized once(only once).
-       We do it here in the display loop because there is no other time to know things like
-       window placement etc.
-    */
-    printf ("xv init for xw %d\n", xww);
-    xv = xwidget_init_view (xww, s, x, y);
-  }
+  /* We do it here in the display loop because there is no other
+     time to know things like window placement etc.
+  */
+  printf ("xv init for xw %d\n", xww);
+  xv = xwidget_init_view (xww, s, x, y);
 
   //calculate clipping, which is used for all manner of onscreen xwidget views
   //each widget border can get clipped by other emacs objects so there are four clipping variables
@@ -1377,12 +1356,14 @@ DEFUN ("xwidget-resize", Fxwidget_resize, Sxwidget_resize, 3, 3, 0, doc:
     
   }
 
-  for (int i = 0; i < MAX_XWIDGETS; i++) //TODO MVC refactor lazy linear search
+  for (Lisp_Object tail = Vxwidget_view_list; CONSP (tail); tail = XCDR (tail)) //TODO MVC refactor lazy linear search
     {
-      xv = &xwidget_views[i];
-      if(xv->initialized && XXWIDGET (xv->model) == xw){
-        gtk_layout_set_size (GTK_LAYOUT (xv->widgetwindow), xw->width, xw->height);
-        gtk_widget_set_size_request (GTK_WIDGET (xv->widget), xw->width, xw->height);
+      if (XXWIDGET_VIEW_P (XCAR (tail))) {
+        xv = XXWIDGET_VIEW (XCAR (tail));
+        if(XXWIDGET (xv->model) == xw) {
+          gtk_layout_set_size (GTK_LAYOUT (xv->widgetwindow), xw->width, xw->height);
+          gtk_widget_set_size_request (GTK_WIDGET (xv->widget), xw->width, xw->height);
+        }
       }
     }
 
@@ -1525,13 +1506,16 @@ DEFUN("xwidget-delete-zombies", Fxwidget_delete_zombies , Sxwidget_delete_zombie
 
    */
   struct xwidget_view* xv = NULL;
-  for (int i = 0; i < MAX_XWIDGETS; i++){
-      xv =  &xwidget_views[i];
-      if(xv->initialized && !WINDOW_LIVE_P (xv->w)) {
+  for (Lisp_Object tail = Vxwidget_view_list; CONSP (tail); tail = XCDR (tail))
+    {
+      if (XXWIDGET_VIEW_P (XCAR (tail))) {
+        xv = XXWIDGET_VIEW (XCAR (tail));
+        if(!WINDOW_LIVE_P (xv->w)) {
           gtk_widget_destroy(GTK_WIDGET(xv->widgetwindow));
-          xv->initialized = 0;
+          Vxwidget_view_list = Fdelq (XCAR (tail), Vxwidget_view_list);
+        }
       }
-  }
+    }
 }
 
 
@@ -1618,13 +1602,11 @@ syms_of_xwidget (void)
   DEFVAR_LISP ("xwidget-list", Vxwidget_list, doc: /*xwidgets list*/);
   Vxwidget_list = Qnil;
 
-  DEFVAR_LISP ("xwidget-view-alist", Vxwidget_view_alist, doc: /*xwidget views list*/);
-  Vxwidget_view_alist = Qnil;
+  DEFVAR_LISP ("xwidget-view-list", Vxwidget_view_list, doc: /*xwidget views list*/);
+  Vxwidget_view_list = Qnil;
 
   Fprovide (intern ("xwidget-internal"), Qnil);
 
-  //  for (i = 0; i < MAX_XWIDGETS; i++)
-  //xwidgets[i].initialized = 0;
 }
 
 
@@ -1697,13 +1679,16 @@ void
 xwidget_view_delete_all_in_window (struct window *w)
 {
   struct xwidget_view* xv = NULL;
-  for (int i = 0; i < MAX_XWIDGETS; i++){
-      xv =  &xwidget_views[i];
-      if(xv->initialized && XWINDOW (xv->w) == w){
-        gtk_widget_destroy(GTK_WIDGET(xv->widgetwindow));
-        xv->initialized = 0;
+  for (Lisp_Object tail = Vxwidget_view_list; CONSP (tail); tail = XCDR (tail))
+    {
+      if (XXWIDGET_VIEW_P (XCAR (tail))) {
+        xv = XXWIDGET_VIEW (XCAR (tail));
+        if(XWINDOW (xv->w) == w) {
+          gtk_widget_destroy(GTK_WIDGET(xv->widgetwindow));
+          Vxwidget_view_list = Fdelq (XCAR (tail), Vxwidget_view_list);
+        }
       }
-  }
+    }
 }
 
 
@@ -1712,11 +1697,14 @@ struct xwidget_view*
 xwidget_view_lookup (struct xwidget* xw, struct window *w)
 {
   struct xwidget_view* xv = NULL;
-  for (int i = 0; i < MAX_XWIDGETS; i++){
-    xv = &xwidget_views[i];
-    if (xv->initialized && (XXWIDGET (xv->model) == xw) && (XWINDOW (xv->w) == w))
-      return xv;
-  }
+  for (Lisp_Object tail = Vxwidget_view_list; CONSP (tail); tail = XCDR (tail))
+    {
+      if (XXWIDGET_VIEW_P (XCAR (tail))) {
+        xv = XXWIDGET_VIEW (XCAR (tail));
+        if (XXWIDGET (xv->model) == xw && XWINDOW (xv->w) == w)
+          return xv;
+      }
+    }
   return NULL; /* we didnt find a matching view */
 }
 
@@ -1761,10 +1749,11 @@ lookup_xwidget (Lisp_Object  spec)
 void
 xwidget_start_redisplay (void)
 {
-  int i;
-  for (i = 0; i < MAX_XWIDGETS; i++)
-    xwidget_views[i].redisplayed = 0;
-
+  for (Lisp_Object tail = Vxwidget_view_list; CONSP (tail); tail = XCDR (tail))
+    {
+      if (XXWIDGET_VIEW_P (XCAR (tail)))
+        XXWIDGET_VIEW (XCAR (tail))->redisplayed = 0;
+    }
 }
 
 /* the xwidget was touched during redisplay, so it isnt a candidate for hiding*/
@@ -1826,18 +1815,19 @@ xwidget_end_redisplay (struct window *w, struct glyph_matrix *matrix)
         }
     }
 
-  for (i = 0; i < MAX_XWIDGETS; i++)
+  for (Lisp_Object tail = Vxwidget_view_list; CONSP (tail); tail = XCDR (tail))
     {
-      struct xwidget_view* xv = &xwidget_views[i];
+      if (XXWIDGET_VIEW_P (XCAR (tail))) {
+        struct xwidget_view* xv = XXWIDGET_VIEW (XCAR (tail));
 
-      //"touched" is only meaningful for the current window, so disregard other views
-      if (xv->initialized && (XWINDOW (xv->w) == w))
-        {
+        //"touched" is only meaningful for the current window, so disregard other views
+        if (XWINDOW (xv->w) == w) {
           if (xwidget_touched(xv))
             xwidget_show_view (xv);
           else
             xwidget_hide_view (xv);
         }
+      }
     }
 }
 
@@ -1845,14 +1835,13 @@ xwidget_end_redisplay (struct window *w, struct glyph_matrix *matrix)
 void
 kill_buffer_xwidgets (Lisp_Object buffer)
 {
-    Lisp_Object tail, xw;
-
-    for (tail = Fget_buffer_xwidgets (buffer); CONSP (tail); tail = XCDR (tail))
-        {
-            xw = XCAR (tail);
-            Vxwidget_list = Fdelq (xw, Vxwidget_list);
-            /* TODO free the GTK things in xw */
-        }
+  Lisp_Object tail, xw;
+  for (tail = Fget_buffer_xwidgets (buffer); CONSP (tail); tail = XCDR (tail))
+    {
+      xw = XCAR (tail);
+      Vxwidget_list = Fdelq (xw, Vxwidget_list);
+      /* TODO free the GTK things in xw */
+    }
 }
 
 #endif  /* HAVE_XWIDGETS */

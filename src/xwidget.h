@@ -54,8 +54,6 @@ struct xwidget_view {
 
   int hidden;//if the "live" instance isnt drawn
 
-  int initialized;  
-
   GtkWidget* widget;
   GtkContainer* widgetwindow;
   GtkContainer* emacswindow;
