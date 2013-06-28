@@ -46,15 +46,12 @@ struct xwidget{
 struct xwidget_view {
   struct vectorlike_header header;
   Lisp_Object model;
-
+  Lisp_Object w;
   
   //here ends the lisp part.
   //"redisplayed" is the marker field
   int redisplayed; //if touched by redisplay  
 
-
-  struct window *w; //TODO should be lisp
-  
   int hidden;//if the "live" instance isnt drawn
 
   int initialized;  

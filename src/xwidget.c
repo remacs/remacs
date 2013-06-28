@@ -985,7 +985,7 @@ xwidget_init_view (struct xwidget *xww,
   }while(  xv->initialized == 1); //TODO yeah this can infloop if there are MAX_WIDGETS on-screen
 
   xv->initialized = 1;
-  xv->w = s->w;
+  XSETWINDOW(xv->w, s->w);
   XSETXWIDGET(xv->model, xww);
 
   //widget creation
@@ -1136,7 +1136,7 @@ x_draw_xwidget_glyph_string (struct glyph_string *s)
   int box_line_vwidth = max (s->face->box_line_width, 0);
   int height = s->height;
   struct xwidget *xww = s->xwidget;
-  struct xwidget_view *xv = xwidget_view_lookup(xww, (s->w));
+  struct xwidget_view *xv = xwidget_view_lookup(xww, s->w);
   int clip_right; int clip_bottom; int clip_top; int clip_left;
 
   int x = s->x;
@@ -1525,15 +1525,11 @@ DEFUN("xwidget-delete-zombies", Fxwidget_delete_zombies , Sxwidget_delete_zombie
 
    */
   struct xwidget_view* xv = NULL;
-  Lisp_Object w;
   for (int i = 0; i < MAX_XWIDGETS; i++){
       xv =  &xwidget_views[i];
-      if (xv->w != NULL)
-          XSETWINDOW(w,  xv->w);
-      if(xv->initialized && (! (WINDOW_LIVE_P(w)))){
-
-        gtk_widget_destroy(GTK_WIDGET(xv->widgetwindow));
-        xv->initialized = 0;
+      if(xv->initialized && !WINDOW_LIVE_P (xv->w)) {
+          gtk_widget_destroy(GTK_WIDGET(xv->widgetwindow));
+          xv->initialized = 0;
       }
   }
 }
@@ -1703,7 +1699,7 @@ xwidget_view_delete_all_in_window (struct window *w)
   struct xwidget_view* xv = NULL;
   for (int i = 0; i < MAX_XWIDGETS; i++){
       xv =  &xwidget_views[i];
-      if(xv->initialized && xv->w == w){
+      if(xv->initialized && XWINDOW (xv->w) == w){
         gtk_widget_destroy(GTK_WIDGET(xv->widgetwindow));
         xv->initialized = 0;
       }
@@ -1718,7 +1714,7 @@ xwidget_view_lookup (struct xwidget* xw, struct window *w)
   struct xwidget_view* xv = NULL;
   for (int i = 0; i < MAX_XWIDGETS; i++){
     xv = &xwidget_views[i];
-    if (xv->initialized && (XXWIDGET (xv->model) == xw) && (xv->w == w))
+    if (xv->initialized && (XXWIDGET (xv->model) == xw) && (XWINDOW (xv->w) == w))
       return xv;
   }
   return NULL; /* we didnt find a matching view */
@@ -1835,7 +1831,7 @@ xwidget_end_redisplay (struct window *w, struct glyph_matrix *matrix)
       struct xwidget_view* xv = &xwidget_views[i];
 
       //"touched" is only meaningful for the current window, so disregard other views
-      if (xv->initialized && ( xv->w ==    w))
+      if (xv->initialized && (XWINDOW (xv->w) == w))
         {
           if (xwidget_touched(xv))
             xwidget_show_view (xv);
