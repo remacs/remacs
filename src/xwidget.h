@@ -75,11 +75,13 @@ struct xwidget_view {
 
 /* Test for xwidget pseudovector*/
 #define XXWIDGETP(x) PSEUDOVECTORP (x, PVEC_XWIDGET)
-#define XXWIDGET(a) (eassert (XXWIDGETP(a)),(struct xwidget *) XPNTR(a))
+#define XXWIDGET(a) (eassert (XXWIDGETP(a)), \
+                     (struct xwidget *) XUNTAG(a, Lisp_Vectorlike))
 
 /* Test for xwidget_view pseudovector */
 #define XXWIDGET_VIEW_P(x) PSEUDOVECTORP (x, PVEC_XWIDGET_VIEW)
-#define XXWIDGET_VIEW(a) (eassert (XXWIDGET_VIEW_P(a)),(struct xwidget_view *) XPNTR(a))
+#define XXWIDGET_VIEW(a) (eassert (XXWIDGET_VIEW_P(a)), \
+                          (struct xwidget_view *) XUNTAG(a, Lisp_Vectorlike))
 
 struct xwidget_type
 {
