@@ -992,6 +992,23 @@ document xscrollbar
 Print $ as a scrollbar pointer.
 end
 
+define xxwidget
+  xgetptr $
+  set $xw = (struct xwidget *) $ptr
+  print $xw
+  printf " Type: "
+  xprintsym $xw->type
+  echo \n
+  printf " Title: "
+  xgetptr $xw->title
+  set $title = (struct Lisp_String *) $ptr
+  xprintstr $title
+  echo \n
+end
+document xxwidget
+Print $ assuming it is a xwidget.
+end
+
 define xpr
   xtype
   if $type == Lisp_Int0 || $type == Lisp_Int1
@@ -1060,6 +1077,9 @@ define xpr
       end
       if $vec == PVEC_HASH_TABLE
 	xhashtable
+      end
+      if $vec == PVEC_XWIDGET
+	xxwidget
       end
     else
       xvector
