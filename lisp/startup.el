@@ -53,7 +53,8 @@ or directory when no target file is specified."
 	  (const     :tag "Startup screen" nil)
 	  (directory :tag "Directory" :value "~/")
 	  (file      :tag "File" :value "~/.emacs")
-          (function  :tag "Function")
+	  (const     :tag "Notes buffer" remember-notes)
+	  (function  :tag "Function")
 	  (const     :tag "Lisp scratch buffer" t))
   :version "24.4"
   :group 'initialization)
@@ -413,19 +414,18 @@ Warning Warning!!!  Pure space overflow    !!!Warning Warning
   :type 'directory
   :initialize 'custom-initialize-delay)
 
-(defconst package-subdirectory-regexp
-  "\\([^.].*?\\)-\\([0-9]+\\(?:[.][0-9]+\\|\\(?:pre\\|beta\\|alpha\\)[0-9]+\\)*\\)"
-  "Regular expression matching the name of a package subdirectory.
-The first subexpression is the package name.
-The second subexpression is the version string.
-
-The regexp should not contain a starting \"\\`\" or a trailing
- \"\\'\"; those are added automatically by callers.")
+(defvar package--builtin-versions
+  ;; Mostly populated by loaddefs.el via autoload-builtin-package-versions.
+  (purecopy `((emacs . ,(version-to-list emacs-version))))
+  "Alist giving the version of each versioned builtin package.
+I.e. each element of the list is of the form (NAME . VERSION) where
+NAME is the package name as a symbol, and VERSION is its version
+as a list.")
 
 (defun package--description-file (dir)
   (concat (let ((subdir (file-name-nondirectory
                          (directory-file-name dir))))
-            (if (string-match package-subdirectory-regexp subdir)
+            (if (string-match "\\([^.].*?\\)-\\([0-9]+\\(?:[.][0-9]+\\|\\(?:pre\\|beta\\|alpha\\)[0-9]+\\)*\\)" subdir)
                 (match-string 1 subdir) subdir))
           "-pkg.el"))
 
@@ -1204,7 +1204,9 @@ the `--debug-init' option to view a complete error backtrace."
 		 (when (let ((subdir (expand-file-name subdir dir)))
                          (and (file-directory-p subdir)
                               (file-exists-p
-                               (package--description-file subdir))))
+                               (expand-file-name
+                                (package--description-file subdir)
+                                subdir))))
 		   (throw 'package-dir-found t)))))))
        (package-initialize))
 

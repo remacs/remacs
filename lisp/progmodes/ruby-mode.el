@@ -1368,7 +1368,10 @@ It will be properly highlighted even when the call omits parens.")
         (defvar ruby-syntax-before-regexp-re
           (concat
            ;; Special tokens that can't be followed by a division operator.
-           "\\(^\\|[[=(,~?:;<>]"
+           "\\(^\\|[[=(,~;<>]"
+           ;; Distinguish ternary operator tokens.
+           ;; FIXME: They don't really have to be separated with spaces.
+           "\\|[?:] "
            ;; Control flow keywords and operators following bol or whitespace.
            "\\|\\(?:^\\|\\s \\)"
            (regexp-opt '("if" "elsif" "unless" "while" "until" "when" "and"
@@ -1419,7 +1422,9 @@ It will be properly highlighted even when the call omits parens.")
             ("^\\(=\\)begin\\_>" (1 "!"))
             ;; Handle here documents.
             ((concat ruby-here-doc-beg-re ".*\\(\n\\)")
-             (7 (unless (ruby-singleton-class-p (match-beginning 0))
+             (7 (unless (or (nth 8 (save-excursion
+                                     (syntax-ppss (match-beginning 0))))
+                            (ruby-singleton-class-p (match-beginning 0)))
                   (put-text-property (match-beginning 7) (match-end 7)
                                      'syntax-table (string-to-syntax "\""))
                   (ruby-syntax-propertize-heredoc end))))
@@ -1723,19 +1728,18 @@ See `font-lock-syntax-table'.")
    ;; functions
    '("^\\s *def\\s +\\([^( \t\n]+\\)"
      1 font-lock-function-name-face)
-   ;; keywords
-   (cons (concat
-          "\\(^\\|[^.@$]\\|\\.\\.\\)\\_<\\(defined\\?\\|"
+   (list (concat
+          "\\(^\\|[^.@$]\\|\\.\\.\\)\\("
+          ;; keywords
           (regexp-opt
-           '("alias_method"
-             "alias"
+           '("alias"
              "and"
              "begin"
              "break"
              "case"
-             "catch"
              "class"
              "def"
+             "defined?"
              "do"
              "elsif"
              "else"
@@ -1745,21 +1749,15 @@ See `font-lock-syntax-table'.")
              "end"
              "if"
              "in"
-             "module_function"
              "module"
              "next"
              "not"
              "or"
-             "public"
-             "private"
-             "protected"
-             "raise"
              "redo"
              "rescue"
              "retry"
              "return"
              "then"
-             "throw"
              "super"
              "unless"
              "undef"
@@ -1767,10 +1765,40 @@ See `font-lock-syntax-table'.")
              "when"
              "while"
              "yield")
-           t)
-          "\\)"
-          ruby-keyword-end-re)
-         2)
+           'symbols)
+          "\\|"
+          ;; keyword-like methods on Kernel and Module
+          (regexp-opt
+           '("alias_method"
+             "autoload"
+             "attr"
+             "attr_accessor"
+             "attr_reader"
+             "attr_writer"
+             "catch"
+             "define_method"
+             "extend"
+             "fail"
+             "include"
+             "lambda"
+             "loop"
+             "module_function"
+             "private"
+             "proc"
+             "protected"
+             "public"
+             "raise"
+             "refine"
+             "require"
+             "require_relative"
+             "throw"
+             "using")
+           'symbols)
+          "\\)")
+         2
+         '(if (match-beginning 4)
+              font-lock-builtin-face
+            font-lock-keyword-face))
    ;; here-doc beginnings
    `(,ruby-here-doc-beg-re 0 (unless (ruby-singleton-class-p (match-beginning 0))
                                'font-lock-string-face))
@@ -1854,11 +1882,14 @@ The variable `ruby-indent-level' controls the amount of indentation.
 ;;; Invoke ruby-mode when appropriate
 
 ;;;###autoload
-(add-to-list 'auto-mode-alist (cons (purecopy "\\.rb\\'") 'ruby-mode))
-;;;###autoload
-(add-to-list 'auto-mode-alist (cons (purecopy "Rakefile\\'") 'ruby-mode))
-;;;###autoload
-(add-to-list 'auto-mode-alist (cons (purecopy "\\.gemspec\\'") 'ruby-mode))
+(add-to-list 'auto-mode-alist
+             (cons (purecopy (concat "\\(?:\\."
+                                     "rb\\|ru\\|rake\\|thor"
+                                     "\\|jbuilder\\|gemspec"
+                                     "\\|/"
+                                     "\\(?:Gem\\|Rake\\|Cap\\|Thor"
+                                     "Vagrant\\|Guard\\)file"
+                                     "\\)\\'")) 'ruby-mode))
 
 ;;;###autoload
 (dolist (name (list "ruby" "rbx" "jruby" "ruby1.9" "ruby1.8"))

@@ -4,7 +4,6 @@
 
 ;; Author: Tom Tromey <tromey@redhat.com>
 ;; Created: 10 Mar 2007
-;; Version: 0.9
 ;; Keywords: tools
 ;; Package: package
 
@@ -205,12 +204,12 @@ if it exists."
                              package--default-summary)
 			 (read-string "Description of package: ")
 		       (package-desc-summary pkg-desc)))
-	       (pkg-version (package-desc-version pkg-desc))
+	       (split-version (package-desc-version pkg-desc))
 	       (commentary
                 (pcase file-type
                   (`single (lm-commentary))
                   (`tar nil))) ;; FIXME: Get it from the README file.
-	       (split-version (version-to-list pkg-version))
+	       (pkg-version (package-version-join split-version))
 	       (pkg-buffer (current-buffer)))
 
 	  ;; Get archive-contents from ARCHIVE-URL if it's non-nil, or
@@ -224,7 +223,7 @@ if it exists."
 	    (let ((elt (assq pkg-name (cdr contents))))
 	      (if elt
 		  (if (version-list-<= split-version
-				       (package-desc-version (cdr elt)))
+				       (package--ac-desc-version (cdr elt)))
 		      (error "New package has smaller version: %s" pkg-version)
 		    (setcdr elt new-desc))
 		(setq contents (cons (car contents)
@@ -291,10 +290,11 @@ If `package-archive-upload-base' does not specify a valid upload
 destination, prompt for one."
   (interactive "fPackage file name: ")
   (with-temp-buffer
-    (insert-file-contents-literally file)
+    (insert-file-contents file)
     (let ((pkg-desc
            (cond
-            ((string-match "\\.tar\\'" file) (package-tar-file-info file))
+            ((string-match "\\.tar\\'" file)
+             (tar-mode) (package-tar-file-info))
             ((string-match "\\.el\\'" file) (package-buffer-info))
             (t (error "Unrecognized extension `%s'"
                       (file-name-extension file))))))
