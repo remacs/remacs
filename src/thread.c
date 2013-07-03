@@ -637,8 +637,6 @@ run_thread (void *state)
   /* It might be nice to do something with errors here.  */
   internal_condition_case (invoke_thread_function, Qt, do_nothing);
 
-  unbind_for_thread_switch ();
-
   update_processes_for_thread_death (Fcurrent_thread ());
 
   /* Unlink this thread from the list of all threads.  */
