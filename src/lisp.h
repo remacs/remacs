@@ -2258,8 +2258,8 @@ struct specbinding
       struct {
 	/* `where' is not used in the case of SPECPDL_LET.  */
 	Lisp_Object symbol, old_value, where;
-	/* Normally this is unused; but it is to the symbol's current
-	   value when a thread is swapped out.  */
+	/* Normally this is unused; but it is set to the symbol's
+	   current value when a thread is swapped out.  */
 	Lisp_Object saved_value;
       } let;
       struct {
