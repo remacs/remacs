@@ -37,6 +37,12 @@ Lisp_Object Qthreadp, Qmutexp, Qcondition_variablep;
 
 
 
+/* m_specpdl is set when the thread is created and cleared when the
+   thread dies.  */
+#define thread_alive_p(STATE) ((STATE)->m_specpdl != NULL)
+
+
+
 static void
 release_global_lock (void)
 {
@@ -796,9 +802,7 @@ DEFUN ("thread-alive-p", Fthread_alive_p, Sthread_alive_p, 1, 1, 0,
   CHECK_THREAD (thread);
   tstate = XTHREAD (thread);
 
-  /* m_specpdl is set when the thread is created and cleared when the
-     thread dies.  */
-  return tstate->m_specpdl == NULL ? Qnil : Qt;
+  return thread_alive_p (tstate) ? Qt : Qnil;
 }
 
 DEFUN ("thread-blocker", Fthread_blocker, Sthread_blocker, 1, 1, 0,
@@ -865,10 +869,13 @@ DEFUN ("all-threads", Fall_threads, Sall_threads, 0, 0, 0,
 
   for (iter = all_threads; iter; iter = iter->next_thread)
     {
-      Lisp_Object thread;
+      if (thread_alive_p (iter))
+	{
+	  Lisp_Object thread;
 
-      XSETTHREAD (thread, iter);
-      result = Fcons (thread, result);
+	  XSETTHREAD (thread, iter);
+	  result = Fcons (thread, result);
+	}
     }
 
   return result;
