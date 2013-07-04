@@ -1,6 +1,6 @@
 ;;; threads.el --- tests for threads.
 
-;; Copyright (C) 2012  Free Software Foundation, Inc.
+;; Copyright (C) 2012, 2013  Free Software Foundation, Inc.
 
 ;; This file is part of GNU Emacs.
 
@@ -85,7 +85,7 @@
   "simple test of threads and let bindings"
   (should
    (progn
-     (setq threads-test-binding nil)
+     (setq threads-test-global nil)
      (make-thread #'threads-test-thread2)
      (while (not threads-test-global)
        (thread-yield))
