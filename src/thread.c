@@ -645,17 +645,6 @@ run_thread (void *state)
 
   update_processes_for_thread_death (Fcurrent_thread ());
 
-  /* Unlink this thread from the list of all threads.  */
-  for (iter = &all_threads; *iter != self; iter = &(*iter)->next_thread)
-    ;
-  *iter = (*iter)->next_thread;
-
-  self->m_last_thing_searched = Qnil;
-  self->m_saved_last_thing_searched = Qnil;
-  self->name = Qnil;
-  self->function = Qnil;
-  self->error_symbol = Qnil;
-  self->error_data = Qnil;
   xfree (self->m_specpdl);
   self->m_specpdl = NULL;
   self->m_specpdl_ptr = NULL;
@@ -663,6 +652,14 @@ run_thread (void *state)
 
   current_thread = NULL;
   sys_cond_broadcast (&self->thread_condvar);
+
+  /* Unlink this thread from the list of all threads.  Note that we
+     have to do this very late, after broadcasting our death.
+     Otherwise the GC may decide to reap the thread_state object,
+     leading to crashes.  */
+  for (iter = &all_threads; *iter != self; iter = &(*iter)->next_thread)
+    ;
+  *iter = (*iter)->next_thread;
 
   release_global_lock ();
 
