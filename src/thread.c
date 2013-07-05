@@ -337,7 +337,7 @@ condition_wait_callback (void *arg)
   Lisp_Object cond;
 
   XSETCONDVAR (cond, cvar);
-  current_thread->event_object = cond;
+  self->event_object = cond;
   saved_count = lisp_mutex_unlock_for_wait (&mutex->mutex);
   /* If we were signalled while unlocking, we skip the wait, but we
      still must reacquire our lock.  */
@@ -348,7 +348,7 @@ condition_wait_callback (void *arg)
       self->wait_condvar = NULL;
     }
   lisp_mutex_lock (&mutex->mutex, saved_count);
-  current_thread->event_object = Qnil;
+  self->event_object = Qnil;
   post_acquire_global_lock (self);
 }
 
@@ -614,6 +614,7 @@ static Lisp_Object
 invoke_thread_function (void)
 {
   Lisp_Object iter;
+  volatile struct thread_state *self = current_thread;
 
   int count = SPECPDL_INDEX ();
 
