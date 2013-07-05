@@ -40,8 +40,7 @@ xg_select (int fds_lim, SELECT_TYPE *rfds, SELECT_TYPE *wfds, SELECT_TYPE *efds,
   GPollFD *gfds = gfds_buf;
   int gfds_size = sizeof gfds_buf / sizeof *gfds_buf;
   int n_gfds, retval = 0, our_fds = 0, max_fds = fds_lim - 1;
-  int i, nfds, tmo_in_millisec;
-  USE_SAFE_ALLOCA;
+  int i, nfds, tmo_in_millisec, must_free = 0;
 
   /* Do not try to optimize with an initial check with g_main_context_pending
      and a call to pselect if it returns false.  If Gdk has a timeout for 0.01
@@ -60,7 +59,8 @@ xg_select (int fds_lim, SELECT_TYPE *rfds, SELECT_TYPE *wfds, SELECT_TYPE *efds,
 				 gfds, gfds_size);
   if (gfds_size < n_gfds)
     {
-      SAFE_NALLOCA (gfds, sizeof *gfds, n_gfds);
+      gfds = xnmalloc (n_gfds, sizeof *gfds);
+      must_free = 1;
       gfds_size = n_gfds;
       n_gfds = g_main_context_query (context, G_PRIORITY_LOW, &tmo_in_millisec,
 				     gfds, gfds_size);
@@ -81,7 +81,8 @@ xg_select (int fds_lim, SELECT_TYPE *rfds, SELECT_TYPE *wfds, SELECT_TYPE *efds,
         }
     }
 
-  SAFE_FREE ();
+  if (must_free)
+    xfree (gfds);
 
   if (tmo_in_millisec >= 0)
     {
