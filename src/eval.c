@@ -3118,6 +3118,7 @@ specbind (Lisp_Object symbol, Lisp_Object value)
 	specpdl_ptr->v.let.symbol = symbol;
 	specpdl_ptr->v.let.old_value = ovalue;
 	specpdl_ptr->v.let.where = Fcurrent_buffer ();
+	specpdl_ptr->v.let.saved_value = Qnil;
 
 	eassert (sym->redirect != SYMBOL_LOCALIZED
 		 || (EQ (SYMBOL_BLV (sym)->where, Fcurrent_buffer ())));
@@ -3184,6 +3185,7 @@ rebind_for_thread_switch (void)
 static void
 do_one_unbind (struct specbinding *this_binding, int unwinding)
 {
+  eassert (unwinding || this_binding->kind >= SPECPDL_LET);
   switch (this_binding->kind)
     {
     case SPECPDL_UNWIND:
