@@ -4649,6 +4649,7 @@ void
 flush_stack_call_func (void (*func) (void *arg), void *arg)
 {
   void *end;
+  struct thread_state *self = current_thread;
 
 #ifdef HAVE___BUILTIN_UNWIND_INIT
   /* Force callee-saved registers and register windows onto the stack.
@@ -4702,8 +4703,10 @@ flush_stack_call_func (void (*func) (void *arg), void *arg)
 #endif /* not GC_SAVE_REGISTERS_ON_STACK */
 #endif /* not HAVE___BUILTIN_UNWIND_INIT */
 
-  current_thread->stack_top = end;
+  self->stack_top = end;
   (*func) (arg);
+
+  eassert (current_thread == self);
 }
 
 #endif /* GC_MARK_STACK != 0 */
