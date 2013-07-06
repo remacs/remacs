@@ -924,6 +924,7 @@ init_threads_once (void)
 void
 init_threads (void)
 {
+  init_primary_thread ();
   sys_cond_init (&primary_thread.thread_condvar);
   sys_mutex_init (&global_lock);
   sys_mutex_lock (&global_lock);
