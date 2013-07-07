@@ -646,7 +646,7 @@ run_thread (void *state)
 
   update_processes_for_thread_death (Fcurrent_thread ());
 
-  xfree (self->m_specpdl);
+  xfree (self->m_specpdl - 1);
   self->m_specpdl = NULL;
   self->m_specpdl_ptr = NULL;
   self->m_specpdl_size = 0;
