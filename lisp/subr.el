@@ -1206,6 +1206,11 @@ is converted into a string by expressing it in decimal."
   (declare (obsolete make-hash-table "22.1"))
   (make-hash-table :test (or test 'eql)))
 
+(defun log10 (x)
+  "Return (log X 10), the log base 10 of X."
+  (declare (obsolete log "24.4"))
+  (log x 10))
+
 ;; These are used by VM and some old programs
 (defalias 'focus-frame 'ignore "")
 (make-obsolete 'focus-frame "it does nothing." "22.1")
@@ -1985,20 +1990,14 @@ for numeric input."
 or the octal character code.
 RET terminates the character code and is discarded;
 any other non-digit terminates the character code and is then used as input."))
-	(setq char (read-event (and prompt (format "%s-" prompt)) t))
+	(setq translated (read-key (and prompt (format "%s-" prompt))))
 	(if inhibit-quit (setq quit-flag nil)))
-      ;; Translate TAB key into control-I ASCII character, and so on.
-      ;; Note: `read-char' does it using the `ascii-character' property.
-      ;; We should try and use read-key instead.
-      (let ((translation (lookup-key local-function-key-map (vector char))))
-	(setq translated (if (arrayp translation)
-			     (aref translation 0)
-			   char)))
       (if (integerp translated)
 	  (setq translated (char-resolve-modifiers translated)))
       (cond ((null translated))
 	    ((not (integerp translated))
-	     (setq unread-command-events (list char)
+	     (setq unread-command-events
+                   (listify-key-sequence (this-single-command-raw-keys))
 		   done t))
 	    ((/= (logand translated ?\M-\^@) 0)
 	     ;; Turn a meta-character into a character with the 0200 bit set.
@@ -2017,7 +2016,8 @@ any other non-digit terminates the character code and is then used as input."))
 	    ((and (not first) (eq translated ?\C-m))
 	     (setq done t))
 	    ((not first)
-	     (setq unread-command-events (list char)
+	     (setq unread-command-events
+                   (listify-key-sequence (this-single-command-raw-keys))
 		   done t))
 	    (t (setq code translated
 		     done t)))
@@ -2181,6 +2181,7 @@ An obsolete, but still supported form is
 where the optional arg MILLISECONDS specifies an additional wait period,
 in milliseconds; this was useful when Emacs was built without
 floating point support."
+  (declare (advertised-calling-convention (seconds &optional nodisp) "22.1"))
   (if (numberp nodisp)
       (setq seconds (+ seconds (* 1e-3 nodisp))
             nodisp obsolete)
@@ -2195,7 +2196,10 @@ floating point support."
     (or nodisp (redisplay)))
    (t
     (or nodisp (redisplay))
-    (let ((read (read-event nil nil seconds)))
+    ;; FIXME: we should not read-event here at all, because it's much too
+    ;; difficult to reliably "undo" a read-event by pushing it onto
+    ;; unread-command-events.
+    (let ((read (read-event nil t seconds)))
       (or (null read)
 	  (progn
 	    ;; If last command was a prefix arg, e.g. C-u, push this event onto
@@ -2205,7 +2209,6 @@ floating point support."
 		(setq read (cons t read)))
 	    (push read unread-command-events)
 	    nil))))))
-(set-advertised-calling-convention 'sit-for '(seconds &optional nodisp) "22.1")
 
 (defun y-or-n-p (prompt)
   "Ask user a \"y or n\" question.  Return t if answer is \"y\".
@@ -2235,7 +2238,8 @@ is nil and `use-dialog-box' is non-nil."
     (cond
      (noninteractive
       (setq prompt (concat prompt
-                           (if (eq ?\s (aref prompt (1- (length prompt))))
+                           (if (or (zerop (length prompt))
+                                   (eq ?\s (aref prompt (1- (length prompt)))))
                                "" " ")
                            "(y or n) "))
       (let ((temp-prompt prompt))
@@ -2252,7 +2256,8 @@ is nil and `use-dialog-box' is non-nil."
 	    (x-popup-dialog t `(,prompt ("Yes" . act) ("No" . skip)))))
      (t
       (setq prompt (concat prompt
-                           (if (eq ?\s (aref prompt (1- (length prompt))))
+                           (if (or (zerop (length prompt))
+                                   (eq ?\s (aref prompt (1- (length prompt)))))
                                "" " ")
                            "(y or n) "))
       (while
@@ -2444,11 +2449,12 @@ If MESSAGE is nil, instructions to type EXIT-CHAR are displayed there."
                 (recenter (/ (window-height) 2))))
           (message (or message "Type %s to continue editing.")
                    (single-key-description exit-char))
-	  (let ((event (read-event)))
+	  (let ((event (read-key)))
 	    ;; `exit-char' can be an event, or an event description list.
 	    (or (eq event exit-char)
 		(eq event (event-convert-list exit-char))
-		(setq unread-command-events (list event)))))
+		(setq unread-command-events
+                      (append (this-single-command-raw-keys))))))
       (delete-overlay ol))))
 
 
@@ -3729,6 +3735,8 @@ Return nil if there isn't one."
 (defun eval-after-load (file form)
   "Arrange that if FILE is loaded, FORM will be run immediately afterwards.
 If FILE is already loaded, evaluate FORM right now.
+FORM can be an Elisp expression (in which case it's passed to `eval'),
+or a function (in which case it's passed to `funcall' with no argument).
 
 If a matching file is loaded again, FORM will be evaluated again.
 
@@ -3756,43 +3764,61 @@ Usually FILE is just a library name like \"font-lock\" or a feature name
 like 'font-lock.
 
 This function makes or adds to an entry on `after-load-alist'."
+  (declare (compiler-macro
+            (lambda (whole)
+              (if (eq 'quote (car-safe form))
+                  ;; Quote with lambda so the compiler can look inside.
+                  `(eval-after-load ,file (lambda () ,(nth 1 form)))
+                whole))))
   ;; Add this FORM into after-load-alist (regardless of whether we'll be
   ;; evaluating it now).
   (let* ((regexp-or-feature
 	  (if (stringp file)
               (setq file (purecopy (load-history-regexp file)))
             file))
-	 (elt (assoc regexp-or-feature after-load-alist)))
+	 (elt (assoc regexp-or-feature after-load-alist))
+         (func
+          (if (functionp form) form
+            ;; Try to use the "current" lexical/dynamic mode for `form'.
+            (eval `(lambda () ,form) lexical-binding))))
     (unless elt
       (setq elt (list regexp-or-feature))
       (push elt after-load-alist))
-    ;; Make sure `form' is evalled in the current lexical/dynamic code.
-    (setq form `(funcall ',(eval `(lambda () ,form) lexical-binding)))
     ;; Is there an already loaded file whose name (or `provide' name)
     ;; matches FILE?
     (prog1 (if (if (stringp file)
 		   (load-history-filename-element regexp-or-feature)
 		 (featurep file))
-	       (eval form))
-      (when (symbolp regexp-or-feature)
-	;; For features, the after-load-alist elements get run when `provide' is
-	;; called rather than at the end of the file.  So add an indirection to
-	;; make sure that `form' is really run "after-load" in case the provide
-	;; call happens early.
-	(setq form
-	      `(if load-file-name
-		   (let ((fun (make-symbol "eval-after-load-helper")))
-		     (fset fun `(lambda (file)
-				  (if (not (equal file ',load-file-name))
-				      nil
-				    (remove-hook 'after-load-functions ',fun)
-				    ,',form)))
-		     (add-hook 'after-load-functions fun))
-		 ;; Not being provided from a file, run form right now.
-		 ,form)))
-      ;; Add FORM to the element unless it's already there.
-      (unless (member form (cdr elt))
-	(nconc elt (list form))))))
+	       (funcall func))
+      (let ((delayed-func
+             (if (not (symbolp regexp-or-feature)) func
+               ;; For features, the after-load-alist elements get run when
+               ;; `provide' is called rather than at the end of the file.
+               ;; So add an indirection to make sure that `func' is really run
+               ;; "after-load" in case the provide call happens early.
+               (lambda ()
+                 (if (not load-file-name)
+                     ;; Not being provided from a file, run func right now.
+                     (funcall func)
+                   (let ((lfn load-file-name)
+                         ;; Don't use letrec, because equal (in
+                         ;; add/remove-hook) would get trapped in a cycle.
+                         (fun (make-symbol "eval-after-load-helper")))
+                     (fset fun (lambda (file)
+                                 (when (equal file lfn)
+                                   (remove-hook 'after-load-functions fun)
+                                   (funcall func))))
+                     (add-hook 'after-load-functions fun)))))))
+        ;; Add FORM to the element unless it's already there.
+        (unless (member delayed-func (cdr elt))
+          (nconc elt (list delayed-func)))))))
+
+(defmacro with-eval-after-load (file &rest body)
+  "Execute BODY after FILE is loaded.
+FILE is normally a feature name, but it can also be a file name,
+in case that file does not provide any feature."
+  (declare (indent 1) (debug t))
+  `(eval-after-load ,file (lambda () ,@body)))
 
 (defvar after-load-functions nil
   "Special hook run after loading a file.
@@ -3804,12 +3830,11 @@ name of the file just loaded.")
 ABS-FILE, a string, should be the absolute true name of a file just loaded.
 This function is called directly from the C code."
   ;; Run the relevant eval-after-load forms.
-  (mapc #'(lambda (a-l-element)
-	    (when (and (stringp (car a-l-element))
-		       (string-match-p (car a-l-element) abs-file))
-	      ;; discard the file name regexp
-	      (mapc #'eval (cdr a-l-element))))
-	after-load-alist)
+  (dolist (a-l-element after-load-alist)
+    (when (and (stringp (car a-l-element))
+               (string-match-p (car a-l-element) abs-file))
+      ;; discard the file name regexp
+      (mapc #'funcall (cdr a-l-element))))
   ;; Complain when the user uses obsolete files.
   (when (string-match-p "/obsolete/[^/]*\\'" abs-file)
     (run-with-timer 0 nil
@@ -4234,7 +4259,25 @@ use `called-interactively-p'."
   (declare (obsolete called-interactively-p "23.2"))
   (called-interactively-p 'interactive))
 
-(defun set-temporary-overlay-map (map &optional keep-pred)
+(defun internal-push-keymap (keymap symbol)
+  (let ((map (symbol-value symbol)))
+    (unless (memq keymap map)
+      (unless (memq 'add-keymap-witness (symbol-value symbol))
+        (setq map (make-composed-keymap nil (symbol-value symbol)))
+        (push 'add-keymap-witness (cdr map))
+        (set symbol map))
+      (push keymap (cdr map)))))
+
+(defun internal-pop-keymap (keymap symbol)
+  (let ((map (symbol-value symbol)))
+    (when (memq keymap map)
+      (setf (cdr map) (delq keymap (cdr map))))
+    (let ((tail (cddr map)))
+      (and (or (null tail) (keymapp tail))
+           (eq 'add-keymap-witness (nth 1 map))
+           (set symbol tail)))))
+
+(defun set-temporary-overlay-map (map &optional keep-pred on-exit)
   "Set MAP as a temporary keymap taking precedence over most other keymaps.
 Note that this does NOT take precedence over the \"overriding\" maps
 `overriding-terminal-local-map' and `overriding-local-map' (or the
@@ -4244,29 +4287,32 @@ found in MAP, the normal key lookup sequence then continues.
 Normally, MAP is used only once.  If the optional argument
 KEEP-PRED is t, MAP stays active if a key from MAP is used.
 KEEP-PRED can also be a function of no arguments: if it returns
-non-nil then MAP stays active."
-  (let* ((clearfunsym (make-symbol "clear-temporary-overlay-map"))
-         (overlaysym (make-symbol "t"))
-         (alist (list (cons overlaysym map)))
-         (clearfun
-          ;; FIXME: Use lexical-binding.
-          `(lambda ()
-             (unless ,(cond ((null keep-pred) nil)
-                            ((eq t keep-pred)
-                             `(eq this-command
-                                  (lookup-key ',map
-                                              (this-command-keys-vector))))
-                            (t `(funcall ',keep-pred)))
-               (set ',overlaysym nil)   ;Just in case.
-               (remove-hook 'pre-command-hook ',clearfunsym)
-               (setq emulation-mode-map-alists
-                     (delq ',alist emulation-mode-map-alists))))))
-    (set overlaysym overlaysym)
-    (fset clearfunsym clearfun)
-    (add-hook 'pre-command-hook clearfunsym)
-    ;; FIXME: That's the keymaps with highest precedence, except for
-    ;; the `keymap' text-property ;-(
-    (push alist emulation-mode-map-alists)))
+non-nil then MAP stays active.
+
+Optional ON-EXIT argument is a function that is called after the
+deactivation of MAP."
+  (let ((clearfun (make-symbol "clear-temporary-overlay-map")))
+    ;; Don't use letrec, because equal (in add/remove-hook) would get trapped
+    ;; in a cycle.
+    (fset clearfun
+          (lambda ()
+            ;; FIXME: Handle the case of multiple temporary-overlay-maps
+            ;; E.g. if isearch and C-u both use temporary-overlay-maps, Then
+            ;; the lifetime of the C-u should be nested within the isearch
+            ;; overlay, so the pre-command-hook of isearch should be
+            ;; suspended during the C-u one so we don't exit isearch just
+            ;; because we hit 1 after C-u and that 1 exits isearch whereas it
+            ;; doesn't exit C-u.
+            (unless (cond ((null keep-pred) nil)
+                          ((eq t keep-pred)
+                           (eq this-command
+                               (lookup-key map (this-command-keys-vector))))
+                          (t (funcall keep-pred)))
+              (remove-hook 'pre-command-hook clearfun)
+              (internal-pop-keymap map 'overriding-terminal-local-map)
+              (when on-exit (funcall on-exit)))))
+    (add-hook 'pre-command-hook clearfun)
+    (internal-push-keymap map 'overriding-terminal-local-map)))
 
 ;;;; Progress reporters.
 
@@ -4447,20 +4493,6 @@ convenience wrapper around `make-progress-reporter' and friends.
 				   (setq ,(car spec) (1+ ,(car spec)))))
        (progress-reporter-done ,temp2)
        nil ,@(cdr (cdr spec)))))
-
-
-;;;; Support for watching filesystem events.
-
-(defun file-notify-handle-event (event)
-  "Handle file system monitoring event.
-If EVENT is a filewatch event, call its callback.
-Otherwise, signal a `filewatch-error'."
-  (interactive "e")
-  (if (and (eq (car event) 'file-notify)
-	   (>= (length event) 3))
-      (funcall (nth 2 event) (nth 1 event))
-    (signal 'filewatch-error
-	    (cons "Not a valid file-notify event" event))))
 
 
 ;;;; Comparing version strings.

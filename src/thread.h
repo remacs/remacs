@@ -92,11 +92,11 @@ struct thread_state
 #define specpdl_size (current_thread->m_specpdl_size)
 
   /* Pointer to beginning of specpdl.  */
-  struct specbinding *m_specpdl;
+  union specbinding *m_specpdl;
 #define specpdl (current_thread->m_specpdl)
 
   /* Pointer to first unused element in specpdl.  */
-  struct specbinding *m_specpdl_ptr;
+  union specbinding *m_specpdl_ptr;
 #define specpdl_ptr (current_thread->m_specpdl_ptr)
 
   /* Depth in Lisp evaluations and function calls.  */

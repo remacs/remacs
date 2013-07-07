@@ -150,8 +150,8 @@ extern void set_waiting_for_input (EMACS_TIME *);
 
 /* When lisp.h is not included Lisp_Object is not defined (this can
    happen when this files is used outside the src directory).
-   Use GCPRO1 to determine if lisp.h was included.  */
-#ifdef GCPRO1
+   Use GCTYPEBITS to determine if lisp.h was included.  */
+#ifdef GCTYPEBITS
 /* defined in editfns.c */
 extern Lisp_Object make_lisp_time (EMACS_TIME);
 extern bool decode_time_components (Lisp_Object, Lisp_Object, Lisp_Object,

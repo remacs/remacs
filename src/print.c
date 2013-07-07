@@ -20,7 +20,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 
 #include <config.h>
-#include <stdio.h>
+#include "sysstdio.h"
 
 #include "lisp.h"
 #include "character.h"
@@ -765,7 +765,7 @@ append to existing target file.  */)
     {
       file = Fexpand_file_name (file, Qnil);
       initial_stderr_stream = stderr;
-      stderr = fopen (SSDATA (file), NILP (append) ? "w" : "a");
+      stderr = emacs_fopen (SSDATA (file), NILP (append) ? "w" : "a");
       if (stderr == NULL)
 	{
 	  stderr = initial_stderr_stream;
@@ -2139,6 +2139,12 @@ print_object (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag)
 				     v->data[index].pointer);
 			break;
 
+		      case SAVE_FUNCPOINTER:
+			i = sprintf (buf, "<funcpointer %p>",
+				     ((void *) (intptr_t)
+				      v->data[index].funcpointer));
+			break;
+
 		      case SAVE_INTEGER:
 			i = sprintf (buf, "<integer %"pD"d>",
 				     v->data[index].integer);
@@ -2148,6 +2154,9 @@ print_object (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag)
 			print_object (v->data[index].object, printcharfun,
 				      escapeflag);
 			continue;
+
+		      default:
+			emacs_abort ();
 		      }
 
 		    strout (buf, i, i, printcharfun);

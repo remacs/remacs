@@ -990,13 +990,14 @@ calculating indentation on the lines after it."
 (defun ruby-move-to-block (n)
   "Move to the beginning (N < 0) or the end (N > 0) of the
 current block, a sibling block, or an outer block.  Do that (abs N) times."
+  (back-to-indentation)
   (let ((signum (if (> n 0) 1 -1))
         (backward (< n 0))
-        (depth (or (nth 2 (ruby-parse-region (line-beginning-position)
-                                             (line-end-position)))
-                   0))
+        (depth (or (nth 2 (ruby-parse-region (point) (line-end-position))) 0))
         case-fold-search
         down done)
+    (when (looking-at ruby-block-mid-re)
+      (setq depth (+ depth signum)))
     (when (< (* depth signum) 0)
       ;; Moving end -> end or beginning -> beginning.
       (setq depth 0))
@@ -1033,22 +1034,16 @@ current block, a sibling block, or an outer block.  Do that (abs N) times."
             (unless (car state) ; Line ends with unfinished string.
               (setq depth (+ (nth 2 state) depth))))
           (cond
-           ;; Deeper indentation, we found a block.
-           ;; FIXME: We can't recognize empty blocks this way.
+           ;; Increased depth, we found a block.
            ((> (* signum depth) 0)
             (setq down t))
-           ;; Block found, and same indentation as when started, stop.
+           ;; We're at the same depth as when we started, and we've
+           ;; encountered a block before.  Stop.
            ((and down (zerop depth))
             (setq done t))
-           ;; Shallower indentation, means outer block, can stop now.
+           ;; Lower depth, means outer block, can stop now.
            ((< (* signum depth) 0)
-            (setq done t)))))
-        (if done
-            (save-excursion
-              (back-to-indentation)
-              ;; Not really at the first or last line of the block, move on.
-              (if (looking-at (concat "\\<\\(" ruby-block-mid-re "\\)\\>"))
-                  (setq done nil))))))
+            (setq done t)))))))
     (back-to-indentation)))
 
 (defun ruby-beginning-of-block (&optional arg)
@@ -1368,7 +1363,10 @@ It will be properly highlighted even when the call omits parens.")
         (defvar ruby-syntax-before-regexp-re
           (concat
            ;; Special tokens that can't be followed by a division operator.
-           "\\(^\\|[[=(,~?:;<>]"
+           "\\(^\\|[[=(,~;<>]"
+           ;; Distinguish ternary operator tokens.
+           ;; FIXME: They don't really have to be separated with spaces.
+           "\\|[?:] "
            ;; Control flow keywords and operators following bol or whitespace.
            "\\|\\(?:^\\|\\s \\)"
            (regexp-opt '("if" "elsif" "unless" "while" "until" "when" "and"
@@ -1419,7 +1417,9 @@ It will be properly highlighted even when the call omits parens.")
             ("^\\(=\\)begin\\_>" (1 "!"))
             ;; Handle here documents.
             ((concat ruby-here-doc-beg-re ".*\\(\n\\)")
-             (7 (unless (ruby-singleton-class-p (match-beginning 0))
+             (7 (unless (or (nth 8 (save-excursion
+                                     (syntax-ppss (match-beginning 0))))
+                            (ruby-singleton-class-p (match-beginning 0)))
                   (put-text-property (match-beginning 7) (match-end 7)
                                      'syntax-table (string-to-syntax "\""))
                   (ruby-syntax-propertize-heredoc end))))
@@ -1723,19 +1723,18 @@ See `font-lock-syntax-table'.")
    ;; functions
    '("^\\s *def\\s +\\([^( \t\n]+\\)"
      1 font-lock-function-name-face)
-   ;; keywords
-   (cons (concat
-          "\\(^\\|[^.@$]\\|\\.\\.\\)\\_<\\(defined\\?\\|"
+   (list (concat
+          "\\(^\\|[^.@$]\\|\\.\\.\\)\\("
+          ;; keywords
           (regexp-opt
-           '("alias_method"
-             "alias"
+           '("alias"
              "and"
              "begin"
              "break"
              "case"
-             "catch"
              "class"
              "def"
+             "defined?"
              "do"
              "elsif"
              "else"
@@ -1745,21 +1744,15 @@ See `font-lock-syntax-table'.")
              "end"
              "if"
              "in"
-             "module_function"
              "module"
              "next"
              "not"
              "or"
-             "public"
-             "private"
-             "protected"
-             "raise"
              "redo"
              "rescue"
              "retry"
              "return"
              "then"
-             "throw"
              "super"
              "unless"
              "undef"
@@ -1767,16 +1760,86 @@ See `font-lock-syntax-table'.")
              "when"
              "while"
              "yield")
-           t)
-          "\\)"
-          ruby-keyword-end-re)
-         2)
+           'symbols)
+          "\\|"
+          (regexp-opt
+           ;; built-in methods on Kernel
+           '("__callee__"
+             "__dir__"
+             "__method__"
+             "abort"
+             "at_exit"
+             "autoload"
+             "autoload?"
+             "binding"
+             "block_given?"
+             "caller"
+             "catch"
+             "eval"
+             "exec"
+             "exit"
+             "exit!"
+             "fail"
+             "fork"
+             "format"
+             "lambda"
+             "load"
+             "loop"
+             "open"
+             "p"
+             "print"
+             "printf"
+             "proc"
+             "putc"
+             "puts"
+             "raise"
+             "rand"
+             "readline"
+             "readlines"
+             "require"
+             "require_relative"
+             "sleep"
+             "spawn"
+             "sprintf"
+             "srand"
+             "syscall"
+             "system"
+             "throw"
+             "trap"
+             "warn"
+             ;; keyword-like private methods on Module
+             "alias_method"
+             "autoload"
+             "attr"
+             "attr_accessor"
+             "attr_reader"
+             "attr_writer"
+             "define_method"
+             "extend"
+             "include"
+             "module_function"
+             "prepend"
+             "private"
+             "protected"
+             "public"
+             "refine"
+             "using")
+           'symbols)
+          "\\)")
+         2
+         '(if (match-beginning 4)
+              font-lock-builtin-face
+            font-lock-keyword-face))
+   ;; Perl-ish keywords
+   "\\_<\\(?:BEGIN\\|END\\)\\_>\\|^__END__$"
    ;; here-doc beginnings
    `(,ruby-here-doc-beg-re 0 (unless (ruby-singleton-class-p (match-beginning 0))
                                'font-lock-string-face))
    ;; variables
    '("\\(^\\|[^.@$]\\|\\.\\.\\)\\_<\\(nil\\|self\\|true\\|false\\)\\>"
      2 font-lock-variable-name-face)
+   ;; keywords that evaluate to certain values
+   '("\\_<__\\(?:LINE\\|ENCODING\\|FILE\\)__\\_>" 0 font-lock-variable-name-face)
    ;; symbols
    '("\\(^\\|[^:]\\)\\(:\\([-+~]@?\\|[/%&|^`]\\|\\*\\*?\\|<\\(<\\|=>?\\)?\\|>[>=]?\\|===?\\|=~\\|![~=]?\\|\\[\\]=?\\|@?\\(\\w\\|_\\)+\\([!?=]\\|\\b_*\\)\\|#{[^}\n\\\\]*\\(\\\\.[^}\n\\\\]*\\)*}\\)\\)"
      2 font-lock-constant-face)
@@ -1854,11 +1917,14 @@ The variable `ruby-indent-level' controls the amount of indentation.
 ;;; Invoke ruby-mode when appropriate
 
 ;;;###autoload
-(add-to-list 'auto-mode-alist (cons (purecopy "\\.rb\\'") 'ruby-mode))
-;;;###autoload
-(add-to-list 'auto-mode-alist (cons (purecopy "Rakefile\\'") 'ruby-mode))
-;;;###autoload
-(add-to-list 'auto-mode-alist (cons (purecopy "\\.gemspec\\'") 'ruby-mode))
+(add-to-list 'auto-mode-alist
+             (cons (purecopy (concat "\\(?:\\."
+                                     "rb\\|ru\\|rake\\|thor"
+                                     "\\|jbuilder\\|gemspec"
+                                     "\\|/"
+                                     "\\(?:Gem\\|Rake\\|Cap\\|Thor"
+                                     "Vagrant\\|Guard\\)file"
+                                     "\\)\\'")) 'ruby-mode))
 
 ;;;###autoload
 (dolist (name (list "ruby" "rbx" "jruby" "ruby1.9" "ruby1.8"))

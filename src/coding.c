@@ -649,11 +649,44 @@ static struct coding_system coding_categories[coding_category_max];
 #define max(a, b) ((a) > (b) ? (a) : (b))
 #endif
 
+/* Encode a flag that can be nil, something else, or t as -1, 0, 1.  */
+
+static int
+encode_inhibit_flag (Lisp_Object flag)
+{
+  return NILP (flag) ? -1 : EQ (flag, Qt);
+}
+
+/* True if the value of ENCODED_FLAG says a flag should be treated as set.
+   1 means yes, -1 means no, 0 means ask the user variable VAR.  */
+
+static bool
+inhibit_flag (int encoded_flag, bool var)
+{
+  return 0 < encoded_flag + var;
+}
+
 #define CODING_GET_INFO(coding, attrs, charset_list)	\
   do {							\
     (attrs) = CODING_ID_ATTRS ((coding)->id);		\
     (charset_list) = CODING_ATTR_CHARSET_LIST (attrs);	\
   } while (0)
+
+static void
+CHECK_NATNUM_CAR (Lisp_Object x)
+{
+  Lisp_Object tmp = XCAR (x);
+  CHECK_NATNUM (tmp);
+  XSETCAR (x, tmp);
+}
+
+static void
+CHECK_NATNUM_CDR (Lisp_Object x)
+{
+  Lisp_Object tmp = XCDR (x);
+  CHECK_NATNUM (tmp);
+  XSETCDR (x, tmp);
+}
 
 
 /* Safely get one byte from the source text pointed by SRC which ends
@@ -5689,6 +5722,14 @@ setup_coding_system (Lisp_Object coding_system, struct coding_system *coding)
       coding->decoder = decode_coding_raw_text;
       coding->encoder = encode_coding_raw_text;
       coding->common_flags |= CODING_REQUIRE_DETECTION_MASK;
+      coding->spec.undecided.inhibit_nbd
+	= (encode_inhibit_flag
+	   (AREF (attrs, coding_attr_undecided_inhibit_null_byte_detection)));
+      coding->spec.undecided.inhibit_ied
+	= (encode_inhibit_flag
+	   (AREF (attrs, coding_attr_undecided_inhibit_iso_escape_detection)));
+      coding->spec.undecided.prefer_utf_8
+	= ! NILP (AREF (attrs, coding_attr_undecided_prefer_utf_8));
     }
   else if (EQ (coding_type, Qiso_2022))
     {
@@ -6446,6 +6487,11 @@ detect_coding (struct coding_system *coding)
       int c, i;
       struct coding_detection_info detect_info;
       bool null_byte_found = 0, eight_bit_found = 0;
+      bool inhibit_nbd = inhibit_flag (coding->spec.undecided.inhibit_nbd,
+				       inhibit_null_byte_detection);
+      bool inhibit_ied = inhibit_flag (coding->spec.undecided.inhibit_ied,
+				       inhibit_iso_escape_detection);
+      bool prefer_utf_8 = coding->spec.undecided.prefer_utf_8;
 
       coding->head_ascii = 0;
       detect_info.checked = detect_info.found = detect_info.rejected = 0;
@@ -6461,7 +6507,7 @@ detect_coding (struct coding_system *coding)
 	  else if (c < 0x20)
 	    {
 	      if ((c == ISO_CODE_ESC || c == ISO_CODE_SI || c == ISO_CODE_SO)
-		  && ! inhibit_iso_escape_detection
+		  && ! inhibit_ied
 		  && ! detect_info.checked)
 		{
 		  if (detect_coding_iso_2022 (coding, &detect_info))
@@ -6480,7 +6526,7 @@ detect_coding (struct coding_system *coding)
 		      break;
 		    }
 		}
-	      else if (! c && !inhibit_null_byte_detection)
+	      else if (! c && !inhibit_nbd)
 		{
 		  null_byte_found = 1;
 		  if (eight_bit_found)
@@ -6536,6 +6582,12 @@ detect_coding (struct coding_system *coding)
 		{
 		  detect_info.checked |= ~CATEGORY_MASK_UTF_16;
 		  detect_info.rejected |= ~CATEGORY_MASK_UTF_16;
+		}
+	      else if (prefer_utf_8
+		       && detect_coding_utf_8 (coding, &detect_info))
+		{
+		  detect_info.checked |= ~CATEGORY_MASK_UTF_8;
+		  detect_info.rejected |= ~CATEGORY_MASK_UTF_8;
 		}
 	      for (i = 0; i < coding_category_raw_text; i++)
 		{
@@ -8498,6 +8550,11 @@ detect_coding_system (const unsigned char *src,
       enum coding_category category IF_LINT (= 0);
       struct coding_system *this IF_LINT (= NULL);
       int c, i;
+      bool inhibit_nbd = inhibit_flag (coding.spec.undecided.inhibit_nbd,
+				       inhibit_null_byte_detection);
+      bool inhibit_ied = inhibit_flag (coding.spec.undecided.inhibit_ied,
+				       inhibit_iso_escape_detection);
+      bool prefer_utf_8 = coding.spec.undecided.prefer_utf_8;
 
       /* Skip all ASCII bytes except for a few ISO2022 controls.  */
       for (; src < src_end; src++)
@@ -8512,7 +8569,7 @@ detect_coding_system (const unsigned char *src,
 	  else if (c < 0x20)
 	    {
 	      if ((c == ISO_CODE_ESC || c == ISO_CODE_SI || c == ISO_CODE_SO)
-		  && ! inhibit_iso_escape_detection
+		  && ! inhibit_ied
 		  && ! detect_info.checked)
 		{
 		  if (detect_coding_iso_2022 (&coding, &detect_info))
@@ -8531,7 +8588,7 @@ detect_coding_system (const unsigned char *src,
 		      break;
 		    }
 		}
-	      else if (! c && !inhibit_null_byte_detection)
+	      else if (! c && !inhibit_nbd)
 		{
 		  null_byte_found = 1;
 		  if (eight_bit_found)
@@ -8563,6 +8620,12 @@ detect_coding_system (const unsigned char *src,
 		{
 		  detect_info.checked |= ~CATEGORY_MASK_UTF_16;
 		  detect_info.rejected |= ~CATEGORY_MASK_UTF_16;
+		}
+	      else if (prefer_utf_8
+		       && detect_coding_utf_8 (&coding, &detect_info))
+		{
+		  detect_info.checked |= ~CATEGORY_MASK_UTF_8;
+		  detect_info.rejected |= ~CATEGORY_MASK_UTF_8;
 		}
 	      for (i = 0; i < coding_category_raw_text; i++)
 		{
@@ -8902,8 +8965,7 @@ DEFUN ("find-coding-systems-region-internal",
 	Lisp_Object attrs;
 
 	attrs = AREF (CODING_SYSTEM_SPEC (XCAR (tail)), 0);
-	if (EQ (XCAR (tail), CODING_ATTR_BASE_NAME (attrs))
-	    && ! EQ (CODING_ATTR_TYPE (attrs), Qundecided))
+	if (EQ (XCAR (tail), CODING_ATTR_BASE_NAME (attrs)))
 	  {
 	    ASET (attrs, coding_attr_trans_tbl,
 		  get_translation_table (attrs, 1, NULL));
@@ -10317,7 +10379,17 @@ usage: (define-coding-system-internal ...)  */)
 		  : coding_category_utf_8_sig);
     }
   else if (EQ (coding_type, Qundecided))
-    category = coding_category_undecided;
+    {
+      if (nargs < coding_arg_undecided_max)
+	goto short_args;
+      ASET (attrs, coding_attr_undecided_inhibit_null_byte_detection,
+	    args[coding_arg_undecided_inhibit_null_byte_detection]);
+      ASET (attrs, coding_attr_undecided_inhibit_iso_escape_detection,
+	    args[coding_arg_undecided_inhibit_iso_escape_detection]);
+      ASET (attrs, coding_attr_undecided_prefer_utf_8,
+	    args[coding_arg_undecided_prefer_utf_8]);
+      category = coding_category_undecided;
+    }
   else
     error ("Invalid coding system type: %s",
 	   SDATA (SYMBOL_NAME (coding_type)));
@@ -11105,11 +11177,11 @@ internal character representation.  */);
     Vtranslation_table_for_input = Qnil;
 
   {
-    Lisp_Object args[coding_arg_max];
+    Lisp_Object args[coding_arg_undecided_max];
     Lisp_Object plist[16];
     int i;
 
-    for (i = 0; i < coding_arg_max; i++)
+    for (i = 0; i < coding_arg_undecided_max; i++)
       args[i] = Qnil;
 
     plist[0] = intern_c_string (":name");
@@ -11146,7 +11218,7 @@ character.");
     plist[13] = build_pure_c_string ("No conversion on encoding, automatic conversion on decoding.");
     plist[15] = args[coding_arg_eol_type] = Qnil;
     args[coding_arg_plist] = Flist (16, plist);
-    Fdefine_coding_system_internal (coding_arg_max, args);
+    Fdefine_coding_system_internal (coding_arg_undecided_max, args);
   }
 
   setup_coding_system (Qno_conversion, &safe_terminal_coding);

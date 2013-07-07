@@ -15,10 +15,10 @@ You can narrow news to a specific version by calling `view-emacs-news'
 with a prefix argument or by typing C-u C-h C-n.
 
 Temporary note:
-+++ indicates that the appropriate manual has already been updated.
---- means no change in the manuals is called for.
-When you add a new item, please add it without either +++ or ---
-so we will look at it and add it to the manual.
++++ indicates that all necessary updates to the manuals in doc/ are complete.
+--- means no change in the manuals is needed.
+When you add a new item, use the appropriate mark if you know it applies,
+otherwise leave it unmarked.
 
 
 * Installation Changes in Emacs 24.4
@@ -30,7 +30,7 @@ configure option `--disable-acl'.
 
 ** Emacs can be compiled with file notification support.
 The configure option `--with-file-notification=LIB' enables file
-notification support in Emacs. This option's value should be `yes',
+notification support in Emacs.  This option's value should be `yes',
 `no', `gfile', `inotify' or `w32'.  `yes' is a synonym for `w32' on
 MS-Windows, and for `gfile' otherwise.  The default value is `yes'.
 
@@ -56,6 +56,9 @@ share/emacs/VERSION/site-lisp, Info docs are in share/info, and data
 files are in share/emacs/VERSION/etc.  (Emacs knows about all these
 directories and will find the files in there automatically; there's no
 need to set any variables due to this change.)
+
+** Directories passed to configure option `--enable-locallisppath' are
+no longer created during installation.
 
 
 * Startup Changes in Emacs 24.4
@@ -87,6 +90,14 @@ simply disabling Transient Mark mode does the same thing.
 ** `initial-buffer-choice' can now specify a function to set up the
 initial buffer.
 
+** `remember-notes' creates a buffer whose content is saved on kill-emacs.
+You may think of it as a *scratch* buffer whose content is preserved.
+In fact, it was designed as a replacement for *scratch* buffer and can
+be used that way by setting `initial-buffer-choice' to `remember-notes'
+and `remember-notes-buffer-name' to "*scratch*".  Without the second
+change, *scratch* buffer will still be there for notes that do not
+need to be preserved.
+
 ** `write-region-inhibit-fsync' now defaults to t in batch mode.
 
 ** ACL support has been added.
@@ -103,6 +114,9 @@ Available only on X, this option allows to control over-scrolling
 using the scroll bar (i.e. dragging the thumb down even when the end
 of the buffer is visible).
 
+** New function `add-face-text-property' has been added, which can be
+used to conveniently prepend/append new face attributes to text.
+
 ** In compiled Lisp files, the header no longer includes a timestamp.
 
 ** Multi-monitor support has been added.
@@ -110,6 +124,18 @@ of the buffer is visible).
 *** New functions `display-monitor-attributes-list' and
 `frame-monitor-attributes' can be used to obtain information about
 each physical monitor on multi-monitor setups.
+
+*** The functions `display-pixel-width' and `display-pixel-height' now
+behave consistently among the platforms: they return the pixel width
+or height for all physical monitors associated with the given display
+as just they were on X11.  To get information for each physical
+monitor, use the new functions above.  Similar notes also apply to
+`x-display-pixel-width', `x-display-pixel-height', `display-mm-width',
+`display-mm-height', `x-display-mm-width', and `x-display-mm-height'.
+
+** New macro `alternatives-define' can be used to define generic commands.
+Generic commands are interactive functions whose implementation can be
+selected among several alternatives, as a matter of user preference.
 
 
 * Editing Changes in Emacs 24.4
@@ -124,6 +150,13 @@ bound to <f11> and M-<f10>, respectively.
 
 ** In keymaps where SPC scrolls, S-SPC now scrolls in the reverse direction.
 Eg View mode, etc.
+
++++
+** New option `visual-order-cursor-movement'.
+If this is non-nil, cursor motion with arrow keys will follow the
+visual order of characters on the screen: <left> always moves to the
+left, <right> always moves to the right, disregarding the surrounding
+bidirectional context.
 
 ** New command `kmacro-to-register' to store keyboard macros in registers.
 
@@ -147,6 +180,9 @@ usually line-oriented command a visual command.  Typical examples are
 pager by default.  See `eshell-visual-subcommands' and
 `eshell-visual-options'.
 
+** If your Emacs is compiled with libxml2 support, you can use the new
+built-in web browser `eww'.
+
 ** `remember' can now store notes in separates files
 You can use the new function `remember-store-in-files' within the
 `remember-handler-functions' option.
@@ -158,9 +194,6 @@ for new options related to this function.
 ** More packages look for ~/.emacs.d/<foo> additionally to ~/.<foo>.
 Affected files:
 ~/.emacs.d/timelog	replaces  ~/.timelog
-~/.emacs.d/todo-do	replaces  ~/.todo-do
-~/.emacs.d/todo-done	replaces  ~/.todo-done
-~/.emacs.d/todo-top	replaces  ~/.todo-top
 ~/.emacs.d/vip		replaces  ~/.vip
 ~/.emacs.d/viper	replaces  ~/.viper
 ~/.emacs.d/ido.last	replaces  ~/.ido.last
@@ -174,11 +207,16 @@ Affected files:
 ~/.emacs.d/strokes	replaces  ~/.strokes
 ~/.emacs.d/notes	replaces  ~/.notes
 ~/.emacs.d/type-break	replaces  ~/.type-break
+Also the following files used by the now obsolete otodo-mode.el:
+~/.emacs.d/todo-do	replaces  ~/.todo-do
+~/.emacs.d/todo-done	replaces  ~/.todo-done
+~/.emacs.d/todo-top	replaces  ~/.todo-top
+
 
 ** Delphi mode is now called OPascal mode.
 *** All delphi-* variables and functions have been renamed to opascal-*.
-*** `delphi-newline-always-indents' is not supported any more
-use `electric-indent-mode' instead.
+*** `delphi-newline-always-indents' is not supported any more.
+Use `electric-indent-mode' instead.
 *** `delphi-tab' is gone, replaced by `indent-for-tab-command'.
 
 ** Eldoc Mode works properly in the minibuffer.
@@ -191,6 +229,10 @@ The default separator is changed to allow surrounding spaces around the comma.
 ** Battery
 
 *** Battery information via the BSD `apm' utility is now supported.
+
+** Buffer Menu
+
+*** `M-s a C-o' shows lines matching a regexp in marked buffers using Occur.
 
 ** Calendar and Diary
 
@@ -226,6 +268,9 @@ on the given date.
 *** `desktop-auto-save-timeout' defines the number of seconds between
 auto-saves of the desktop.
 
+*** `desktop-restore-frames' enables saving and restoring the window/frame
+configuration.
+
 ** Dired
 
 *** New minor mode `dired-hide-details-mode' hides details.
@@ -239,7 +284,7 @@ amounts of data into the ERC input.
 ---
 ** New F90 mode option `f90-smart-end-names'.
 
-** Icomplete is a bit more like IDO.
+** Icomplete is a bit more like Ido.
 *** key bindings to navigate through and select the completions.
 *** The icomplete-separator is customizable, and its default has changed.
 *** Removed icomplete-show-key-bindings.
@@ -296,6 +341,18 @@ and opens overlays with hidden text when `search-invisible' is `open'.
 *** By default, prefix arguments do not now terminate Isearch mode.
 Set `isearch-allow-prefix' to nil to restore old behavior.
 
+*** More Isearch commands accept prefix arguments, namely
+`isearch-printing-char', `isearch-quote-char', `isearch-yank-word',
+`isearch-yank-line'.
+
+*** Word search now matches whitespace at the beginning/end
+of the search string if it contains leading/trailing whitespace.
+In an incremental word search or when using a non-nil LAX argument
+of `word-search-regexp', the lax matching can also match part of
+the first word (in addition to the lax matching of the last word).
+The same rules are now applied to the symbol search with the difference
+that it matches symbols, and non-symbol characters between symbols.
+
 ** MH-E has been updated to MH-E version 8.5.
 See MH-E-NEWS for details.
 
@@ -323,13 +380,32 @@ New features include:
 When its arg ADJACENT is non-nil (when called interactively with C-u C-u)
 it works like the utility `uniq'.  Otherwise by default it deletes
 duplicate lines everywhere in the region without regard to adjacency.
-When it arg KEEP-BLANKS is non-nil (when called interactively with C-u C-u C-u),
-duplicate blank lines are preserved.
+When its arg KEEP-BLANKS is non-nil (when called interactively with
+C-u C-u C-u), duplicate blank lines are preserved.
 
 ** New `cycle-spacing' command allows cycling between having just one
 space, no spaces, or reverting to the original spacing.  Like
 `just-one-space' command it can handle or ignore newlines and
 leave different number of spaces.
+
+** Todo mode has been rewritten and enhanced.
+New features include:
+- support for multiple todo files and archive files of done items;
+- renaming, reordering, moving, merging, and deleting categories;
+- sortable tabular summaries of categories and the types of items they contain;
+- cross-category lists of items filtered by specific criteria;
+- more fine-grained interaction with the Emacs diary, by being able to decide
+  for each todo item whether it appears in the Fancy Diary display;
+- highly flexible new item insertion and item editing;
+- moving items between categories, storing done items in their category or in
+  archive files, undoing or unarchiving done items;
+- reprioritizing items by inputting a numerical priority;
+- extensive customizability of operation and display, including numerous faces.
+To support some of these features, a new file format is used, which is
+incompatible with the old format; however, you can convert old todo and done
+item files to the new format on initializing the first new todo file, or at any
+later time with the provided conversion command.  The old version of
+todo-mode.el has been made obsolete and renamed otodo-mode.el.
 
 ** Tramp
 
@@ -347,6 +423,10 @@ when possible.
 *** Handlers for `file-acl' and `set-file-acl' for remote machines
 which support POSIX ACLs.
 
++++
+*** Handlers for `file-notify-add-watch' and `file-notify-rm-watch'
+for remote machines which support filesystem notifications.
+
 ** VHDL mode
 
 *** New options: `vhdl-actual-generic-name', `vhdl-beautify-options'.
@@ -356,13 +436,13 @@ which support POSIX ACLs.
 ** Woman
 
 *** The commands `woman-default-faces' and `woman-monochrome-faces'
-are obsolete.  Customize the `woman-* faces instead.
+are obsolete.  Customize the `woman-*' faces instead.
 
 ** Eshell
 
-*** Added Eshell-TRAMP module
+*** Added Eshell-Tramp module
 External su and sudo commands are now the default; the internal,
-TRAMP-using variants can still be used by enabling the eshell-tramp
+Tramp-using variants can still be used by enabling the eshell-tramp
 module.
 
 ** New term.el option `term-suppress-hard-newline'.
@@ -376,6 +456,8 @@ module.
 
 *** terminal.el is obsolete; use term.el instead.
 
+*** The previous version of todo-mode.el is obsolete and renamed otodo-mode.el.
+
 *** xesam.el.
 
 +++
@@ -387,6 +469,7 @@ has not been relevant for some time.
 
 
 * New Modes and Packages in Emacs 24.4
+
 ** New `superword-mode' in subword.el
 `superword-mode' overrides the default word motion commands to treat
 symbol_words as a single word, similar to what `subword-mode' does and
@@ -399,8 +482,21 @@ It is layered as:
 - advice-add/advice-remove to add/remove a piece of advice on a named function,
   much like `defadvice' does.
 
+** The package file-notify.el provides an interface for file system
+notifications.  It requires, that Emacs is compiled with one of the
+low-level libraries gfilenotify.c, inotify.c or w32notify.c.
+
 
 * Incompatible Lisp Changes in Emacs 24.4
+
+** The syntax of ?» and ?« is now punctuation instead of matched parens.
+Some languages match those as »...« and others as «...» so better stay neutral.
+
+** The default file coding for Emacs Lisp files is now utf-8.
+(See file-coding-system-alist.)  In most cases, this change is transparent, but
+files that contain unusual characters without specifying an explicit coding
+system may fail to load with obscure errors.
+You should either convert them to utf-8 or add an explicit `coding:' cookie.
 
 ** overriding-terminal-local-map does not replace the local keymaps any more.
 It used to disable the minor mode, major mode, and text-property keymaps,
@@ -440,16 +536,11 @@ file using `set-file-extended-attributes'.
 
 * Lisp Changes in Emacs 24.4
 
-FIXME - someone who knows what they are talking about, please improve
-this - see http://debbugs.gnu.org/14596
-** The default file coding for Emacs Lisp files is now utf-8.
-(See file-coding-system-alist.)  In most cases, this change is
-totally transparent.  Files that contain unusual characters but do
-not specify an explicit coding system may fail to load with obscure
-errors.  You should either convert them to utf-8 or add an explicit
-coding: cookie.
++++
+** New macro with-eval-after-load.  Like eval-after-load, but better behaved.
 
 ** Obsoleted functions:
+*** `log10'
 *** `dont-compile'
 *** `lisp-complete-symbol'
 *** `field-complete'
@@ -490,7 +581,7 @@ of remote files when set to non-nil.
 
 ** Face changes
 
-*** The `face-spec-set' is now analogous to `setq' for face specs.
+*** The function `face-spec-set' is now analogous to `setq' for face specs.
 Its third arg now accepts values specifying exactly which face spec to
 set (defface, custom, or user spec), and it directly sets the relevant
 property using the supplied face spec.
@@ -674,6 +765,9 @@ afterwards if you do not use customize to change this.)
 ImageMagick types are treated as images.  The function
 `imagemagick-filter-types' returns the list of types that will be
 treated as images.
+
+*** ImageMagick images now support the :max-width and :max-height
+keywords.
 
 ** Minibuffer
 
@@ -964,7 +1058,7 @@ file at point.
 `DEL' (`dired-unmark-backward'), and `d' (`dired-flag-file-deletion')
 mark/unmark/flag all files in the active region.
 
-*** The minibuffer default for `=' (`dired-diff) has changed.
+*** The minibuffer default for `=' (`dired-diff') has changed.
 It is now the backup file for the file at point, if one exists.
 In Transient Mark mode the default is the file at the active mark.
 
@@ -1167,6 +1261,9 @@ and the `attributes' slot is always nil.
 *** New function `url-encode-url' for encoding a URI string.
 The `url-retrieve' function now uses this to encode its URL argument,
 in case that is not properly encoded.
+
+*** New command `url-cookie-list' displays all the current cookies, and
+allows deleting selected cookies.
 
 ** notifications.el supports now version 1.2 of the Notifications API.
 The function `notifications-get-capabilities' returns the supported
@@ -2854,10 +2951,10 @@ should be derived.
 modes, e.g. (add-hook 'prog-mode-hook 'flyspell-prog-mode) to enable
 on-the-fly spell checking for comments and strings.
 
-**** New option, `prog-prettify-symbols' lets the user control symbol
-prettify (replacing a string like "lambda" with the Greek lambda
-character.  The mode derived from `prog-mode' must call
-`prog-prettify-install' with its own custom alist, which can be empty.
+**** New minor modes `prettify-symbols-mode' and
+`global-prettify-symbols-mode' let the user enable symbol
+prettification (replacing a string like "lambda" with the Greek lambda
+character).
 
 *** New hook `change-major-mode-after-body-hook', run by
 `run-mode-hooks' just before any other mode hooks.

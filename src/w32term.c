@@ -143,6 +143,15 @@ BOOL (WINAPI *pfnSetLayeredWindowAttributes) (HWND, COLORREF, BYTE, DWORD);
 #define WS_EX_LAYERED 0x80000
 #endif
 
+/* SM_CXVIRTUALSCREEN and SM_CYVIRTUALSCREEN are not defined on 95 and
+   NT4.  */
+#ifndef SM_CXVIRTUALSCREEN
+#define SM_CXVIRTUALSCREEN 78
+#endif
+#ifndef SM_CYVIRTUALSCREEN
+#define SM_CYVIRTUALSCREEN 79
+#endif
+
 /* This is a frame waiting to be autoraised, within w32_read_socket.  */
 struct frame *pending_autoraise_frame;
 
@@ -151,6 +160,9 @@ HWND w32_system_caret_hwnd;
 int w32_system_caret_height;
 int w32_system_caret_x;
 int w32_system_caret_y;
+struct window *w32_system_caret_window;
+int w32_system_caret_hdr_height;
+int w32_system_caret_mode_height;
 DWORD dwWindowsThreadId = 0;
 HANDLE hWindowsThread = NULL;
 DWORD dwMainThreadId = 0;
@@ -516,18 +528,24 @@ x_set_frame_alpha (struct frame *f)
 int
 x_display_pixel_height (struct w32_display_info *dpyinfo)
 {
-  HDC dc = GetDC (NULL);
-  int pixels = GetDeviceCaps (dc, VERTRES);
-  ReleaseDC (NULL, dc);
+  int pixels = GetSystemMetrics (SM_CYVIRTUALSCREEN);
+
+  if (pixels == 0)
+    /* Fallback for Windows 95 or NT 4.0.  */
+    pixels = GetSystemMetrics (SM_CYSCREEN);
+
   return pixels;
 }
 
 int
 x_display_pixel_width (struct w32_display_info *dpyinfo)
 {
-  HDC dc = GetDC (NULL);
-  int pixels = GetDeviceCaps (dc, HORZRES);
-  ReleaseDC (NULL, dc);
+  int pixels = GetSystemMetrics (SM_CXVIRTUALSCREEN);
+
+  if (pixels == 0)
+    /* Fallback for Windows 95 or NT 4.0.  */
+    pixels = GetSystemMetrics (SM_CXSCREEN);
+
   return pixels;
 }
 
@@ -5328,6 +5346,9 @@ w32_draw_window_cursor (struct window *w, struct glyph_row *glyph_row,
 	  w32_system_caret_y
 	    = (WINDOW_TO_FRAME_PIXEL_Y (w, w->phys_cursor.y)
 	       + glyph_row->ascent - w->phys_cursor_ascent);
+	  w32_system_caret_window = w;
+	  w32_system_caret_hdr_height = WINDOW_HEADER_LINE_HEIGHT (w);
+	  w32_system_caret_mode_height = WINDOW_MODE_LINE_HEIGHT (w);
 
 	  PostMessage (hwnd, WM_IME_STARTCOMPOSITION, 0, 0);
 
@@ -6600,7 +6621,7 @@ w32_initialize (void)
     }
 
 #ifdef CYGWIN
-  if ((w32_message_fd = open ("/dev/windows", O_RDWR | O_CLOEXEC)) == -1)
+  if ((w32_message_fd = emacs_open ("/dev/windows", O_RDWR, 0)) == -1)
     fatal ("opening /dev/windows: %s", strerror (errno));
 #endif /* CYGWIN */
 

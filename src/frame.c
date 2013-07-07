@@ -2925,7 +2925,7 @@ x_report_frame_params (struct frame *f, Lisp_Object *alistptr)
   if (FRAME_X_OUTPUT (f)->parent_desc == FRAME_X_DISPLAY_INFO (f)->root_window)
     tem = Qnil;
   else
-    XSETFASTINT (tem, FRAME_X_OUTPUT (f)->parent_desc);
+    tem = make_natnum ((uintptr_t) FRAME_X_OUTPUT (f)->parent_desc);
   store_in_alist (alistptr, Qexplicit_name, (f->explicit_name ? Qt : Qnil));
   store_in_alist (alistptr, Qparent_id, tem);
   store_in_alist (alistptr, Qtool_bar_position, f->tool_bar_position);
@@ -2964,6 +2964,15 @@ x_set_line_spacing (struct frame *f, Lisp_Object new_value, Lisp_Object old_valu
     f->extra_line_spacing = 0;
   else if (RANGED_INTEGERP (0, new_value, INT_MAX))
     f->extra_line_spacing = XFASTINT (new_value);
+  else if (FLOATP (new_value))
+    {
+      int new_spacing = XFLOAT_DATA (new_value) * FRAME_LINE_HEIGHT (f) + 0.5;
+
+      if (new_spacing >= 0)
+	f->extra_line_spacing = new_spacing;
+      else
+	signal_error ("Invalid line-spacing", new_value);
+    }
   else
     signal_error ("Invalid line-spacing", new_value);
   if (FRAME_VISIBLE_P (f))

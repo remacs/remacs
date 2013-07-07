@@ -707,8 +707,10 @@ If NAME is given, it names the new thread.  */)
   new_thread->event_object = Qnil;
 
   new_thread->m_specpdl_size = 50;
-  new_thread->m_specpdl = xmalloc (new_thread->m_specpdl_size
-				   * sizeof (struct specbinding));
+  new_thread->m_specpdl = xmalloc ((1 + new_thread->m_specpdl_size)
+				   * sizeof (union specbinding));
+  /* Skip the dummy entry.  */
+  ++new_thread->m_specpdl;
   new_thread->m_specpdl_ptr = new_thread->m_specpdl;
 
   sys_cond_init (&new_thread->thread_condvar);

@@ -1,12 +1,34 @@
+2013-07-03  Glenn Morris  <rgm@gnu.org>
+
+	* maintaining.texi (EDE): Fix cross-reference.
+
+	* programs.texi (Program Modes): Fix emacs-xtra reference.
+
+	* help.texi (Misc Help): Index describe-syntax.
+
+2013-06-29  Eli Zaretskii  <eliz@gnu.org>
+
+	* basic.texi (Moving Point): Document visual-order-cursor-movement
+	and its effect on right-char and left-char.
+
+2013-06-28  Glenn Morris  <rgm@gnu.org>
+
+	* ack.texi (Acknowledgments): Small update.
+
+2013-06-19  Glenn Morris  <rgm@gnu.org>
+
+	* Makefile.in (dist): Edit more configure variables.
+	Try to check that we do not miss any in future.
+
+2013-06-12  Xue Fuqiao  <xfq.free@gmail.com>
+
+	* vc1-xtra.texi (Revision Tags): Add a cross reference.
+	(CVS Options): Fix the default value of `vc-cvs-stay-local'.
+
 2013-06-11  Glenn Morris  <rgm@gnu.org>
 
 	* maintaining.texi (VC Directory Commands): Copyedit.
 	(Branches): Put back milder version of pre 2013-06-07 text.
-
-2013-06-09  Xue Fuqiao  <xfq.free@gmail.com>
-
-	* vc1-xtra.texi (Revision Tags): Add a cross reference.
-	(CVS Options): Fix the default value of `vc-cvs-stay-local'.
 
 2013-06-07  Xue Fuqiao  <xfq.free@gmail.com>
 

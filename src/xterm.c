@@ -69,7 +69,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "atimer.h"
 #include "keymap.h"
 #include "font.h"
-#include "fontset.h"
 #include "xsettings.h"
 #include "xgselect.h"
 #include "sysselect.h"
@@ -7824,7 +7823,7 @@ static void x_error_quitter (Display *, XErrorEvent *);
 static int
 x_error_handler (Display *display, XErrorEvent *event)
 {
-#ifdef HAVE_GTK3
+#if defined USE_GTK && defined HAVE_GTK3
   if (event->error_code == BadMatch
       && event->request_code == X_SetInputFocus
       && event->minor_code == 0)
