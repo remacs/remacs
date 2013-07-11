@@ -832,7 +832,7 @@ thread_join_callback (void *arg)
   XSETTHREAD (thread, tstate);
   self->event_object = thread;
   self->wait_condvar = &tstate->thread_condvar;
-  while (tstate->m_specpdl != NULL && NILP (self->error_symbol))
+  while (thread_alive_p (tstate) && NILP (self->error_symbol))
     sys_cond_wait (self->wait_condvar, &global_lock);
 
   self->wait_condvar = NULL;
@@ -854,7 +854,7 @@ It is an error for a thread to try to join itself.  */)
   if (tstate == current_thread)
     error ("cannot join current thread");
 
-  if (tstate->m_specpdl != NULL)
+  if (thread_alive_p (tstate))
     flush_stack_call_func (thread_join_callback, tstate);
 
   return Qnil;
