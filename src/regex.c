@@ -531,8 +531,10 @@ init_syntax_once (void)
 /* Type of source-pattern and string chars.  */
 #ifdef _MSC_VER
 typedef unsigned char re_char;
+typedef const re_char const_re_char;
 #else
 typedef const unsigned char re_char;
+typedef re_char const_re_char;
 #endif
 
 typedef char boolean;
@@ -2019,7 +2021,7 @@ struct range_table_work_area
 
 /* Map a string to the char class it names (if any).  */
 re_wctype_t
-re_wctype (const re_char *str)
+re_wctype (const_re_char *str)
 {
   const char *string = (const char *) str;
   if      (STREQ (string, "alnum"))	return RECC_ALNUM;
@@ -2413,7 +2415,8 @@ do {									\
   } while (0)
 
 static reg_errcode_t
-regex_compile (const re_char *pattern, size_t size, reg_syntax_t syntax, struct re_pattern_buffer *bufp)
+regex_compile (const_re_char *pattern, size_t size, reg_syntax_t syntax,
+	       struct re_pattern_buffer *bufp)
 {
   /* We fetch characters from PATTERN here.  */
   register re_wchar_t c, c1;
@@ -3769,7 +3772,7 @@ insert_op2 (re_opcode_t op, unsigned char *loc, int arg1, int arg2, unsigned cha
    least one character before the ^.  */
 
 static boolean
-at_begline_loc_p (const re_char *pattern, const re_char *p, reg_syntax_t syntax)
+at_begline_loc_p (const_re_char *pattern, const_re_char *p, reg_syntax_t syntax)
 {
   re_char *prev = p - 2;
   boolean odd_backslashes;
@@ -3810,7 +3813,7 @@ at_begline_loc_p (const re_char *pattern, const re_char *p, reg_syntax_t syntax)
    at least one character after the $, i.e., `P < PEND'.  */
 
 static boolean
-at_endline_loc_p (const re_char *p, const re_char *pend, reg_syntax_t syntax)
+at_endline_loc_p (const_re_char *p, const_re_char *pend, reg_syntax_t syntax)
 {
   re_char *next = p;
   boolean next_backslash = *next == '\\';
@@ -3854,7 +3857,8 @@ group_in_compile_stack (compile_stack_type compile_stack, regnum_t regnum)
    Return -1 if fastmap was not updated accurately.  */
 
 static int
-analyse_first (const re_char *p, const re_char *pend, char *fastmap, const int multibyte)
+analyse_first (const_re_char *p, const_re_char *pend, char *fastmap,
+	       const int multibyte)
 {
   int j, k;
   boolean not;
@@ -4598,7 +4602,7 @@ static int bcmp_translate (re_char *s1, re_char *s2,
 /* If the operation is a match against one or more chars,
    return a pointer to the next operation, else return NULL.  */
 static re_char *
-skip_one_char (const re_char *p)
+skip_one_char (const_re_char *p)
 {
   switch (*p++)
     {
@@ -4640,7 +4644,7 @@ skip_one_char (const re_char *p)
 
 /* Jump over non-matching operations.  */
 static re_char *
-skip_noops (const re_char *p, const re_char *pend)
+skip_noops (const_re_char *p, const_re_char *pend)
 {
   int mcnt;
   while (p < pend)
@@ -4667,7 +4671,8 @@ skip_noops (const re_char *p, const re_char *pend)
 
 /* Non-zero if "p1 matches something" implies "p2 fails".  */
 static int
-mutually_exclusive_p (struct re_pattern_buffer *bufp, const re_char *p1, const re_char *p2)
+mutually_exclusive_p (struct re_pattern_buffer *bufp, const_re_char *p1,
+		      const_re_char *p2)
 {
   re_opcode_t op2;
   const boolean multibyte = RE_MULTIBYTE_P (bufp);
@@ -4920,8 +4925,8 @@ WEAK_ALIAS (__re_match_2, re_match_2)
 /* This is a separate function so that we can force an alloca cleanup
    afterwards.  */
 static regoff_t
-re_match_2_internal (struct re_pattern_buffer *bufp, const re_char *string1,
-		     size_t size1, const re_char *string2, size_t size2,
+re_match_2_internal (struct re_pattern_buffer *bufp, const_re_char *string1,
+		     size_t size1, const_re_char *string2, size_t size2,
 		     ssize_t pos, struct re_registers *regs, ssize_t stop)
 {
   /* General temporaries.  */
@@ -6263,7 +6268,7 @@ re_match_2_internal (struct re_pattern_buffer *bufp, const re_char *string1,
    bytes; nonzero otherwise.  */
 
 static int
-bcmp_translate (const re_char *s1, const re_char *s2, register ssize_t len,
+bcmp_translate (const_re_char *s1, const_re_char *s2, register ssize_t len,
 		RE_TRANSLATE_TYPE translate, const int target_multibyte)
 {
   register re_char *p1 = s1, *p2 = s2;
@@ -6432,7 +6437,7 @@ re_exec (const char *s)
    the return codes and their meanings.)  */
 
 reg_errcode_t
-regcomp (regex_t *__restrict preg, const char *__restrict pattern,
+regcomp (regex_t *_Restrict_ preg, const char *_Restrict_ pattern,
 	 int cflags)
 {
   reg_errcode_t ret;
@@ -6513,8 +6518,8 @@ WEAK_ALIAS (__regcomp, regcomp)
    We return 0 if we find a match and REG_NOMATCH if not.  */
 
 reg_errcode_t
-regexec (const regex_t *__restrict preg, const char *__restrict string,
-	 size_t nmatch, regmatch_t pmatch[__restrict_arr], int eflags)
+regexec (const regex_t *_Restrict_ preg, const char *_Restrict_ string,
+	 size_t nmatch, regmatch_t pmatch[_Restrict_arr_], int eflags)
 {
   regoff_t ret;
   struct re_registers regs;

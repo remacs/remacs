@@ -31,6 +31,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #ifdef WINDOWSNT
 #define NOMINMAX
+#include <sys/socket.h>	/* for fcntl */
 #include <windows.h>
 #include "w32.h"
 #define _P_NOWAIT 1	/* from process.h */
@@ -418,9 +419,10 @@ usage: (call-process PROGRAM &optional INFILE DESTINATION DISPLAY &rest ARGS)  *
 			      default_output_mode);
       if (fd_output < 0)
 	{
+	  int open_errno = errno;
 	  output_file = DECODE_FILE (output_file);
-	  report_file_error ("Opening process output file",
-			     Fcons (output_file, Qnil));
+	  report_file_errno ("Opening process output file",
+			     Fcons (output_file, Qnil), open_errno);
 	}
       if (STRINGP (error_file) || NILP (error_file))
 	output_to_buffer = 0;
@@ -429,16 +431,19 @@ usage: (call-process PROGRAM &optional INFILE DESTINATION DISPLAY &rest ARGS)  *
   /* Search for program; barf if not found.  */
   {
     struct gcpro gcpro1, gcpro2, gcpro3, gcpro4;
+    int ok;
 
     GCPRO4 (infile, buffer, current_dir, error_file);
-    openp (Vexec_path, args[0], Vexec_suffixes, &path, make_number (X_OK));
+    ok = openp (Vexec_path, args[0], Vexec_suffixes, &path, make_number (X_OK));
     UNGCPRO;
+    if (ok < 0)
+      {
+	int openp_errno = errno;
+	emacs_close (filefd);
+	report_file_errno ("Searching for program",
+			   Fcons (args[0], Qnil), openp_errno);
+      }
   }
-  if (NILP (path))
-    {
-      emacs_close (filefd);
-      report_file_error ("Searching for program", Fcons (args[0], Qnil));
-    }
 
   /* If program file name starts with /: for quoting a magic name,
      discard that.  */
@@ -496,11 +501,13 @@ usage: (call-process PROGRAM &optional INFILE DESTINATION DISPLAY &rest ARGS)  *
       mktemp (tempfile);
       outfilefd = emacs_open (tempfile, O_WRONLY | O_CREAT | O_TRUNC,
 			      S_IREAD | S_IWRITE);
-      if (outfilefd < 0) {
-	emacs_close (filefd);
-	report_file_error ("Opening process output file",
-			   Fcons (build_string (tempfile), Qnil));
-      }
+      if (outfilefd < 0)
+	{
+	  int open_errno = errno;
+	  emacs_close (filefd);
+	  report_file_errno ("Opening process output file",
+			     Fcons (build_string (tempfile), Qnil), open_errno);
+	}
     }
   else
     outfilefd = fd_output;
@@ -517,12 +524,11 @@ usage: (call-process PROGRAM &optional INFILE DESTINATION DISPLAY &rest ARGS)  *
     {
 #ifndef MSDOS
       int fd[2];
-      if (pipe (fd) == -1)
+      if (pipe2 (fd, O_CLOEXEC) != 0)
 	{
 	  int pipe_errno = errno;
 	  emacs_close (filefd);
-	  errno = pipe_errno;
-	  report_file_error ("Creating process pipe", Qnil);
+	  report_file_errno ("Creating process pipe", Qnil, pipe_errno);
 	}
       fd0 = fd[0];
       fd1 = fd[1];
@@ -544,6 +550,7 @@ usage: (call-process PROGRAM &optional INFILE DESTINATION DISPLAY &rest ARGS)  *
 
     if (fd_error < 0)
       {
+	int open_errno = errno;
 	emacs_close (filefd);
 	if (fd0 != filefd)
 	  emacs_close (fd0);
@@ -556,7 +563,8 @@ usage: (call-process PROGRAM &optional INFILE DESTINATION DISPLAY &rest ARGS)  *
 	  error_file = build_string (NULL_DEVICE);
 	else if (STRINGP (error_file))
 	  error_file = DECODE_FILE (error_file);
-	report_file_error ("Cannot redirect stderr", Fcons (error_file, Qnil));
+	report_file_errno ("Cannot redirect stderr",
+			   Fcons (error_file, Qnil), open_errno);
       }
 
 #ifdef MSDOS /* MW, July 1993 */
@@ -584,10 +592,12 @@ usage: (call-process PROGRAM &optional INFILE DESTINATION DISPLAY &rest ARGS)  *
 	fd0 = emacs_open (tempfile, O_RDONLY | O_BINARY, 0);
 	if (fd0 < 0)
 	  {
+	    int open_errno = errno;
 	    unlink (tempfile);
 	    emacs_close (filefd);
-	    report_file_error ("Cannot re-open temporary file",
-			       Fcons (build_string (tempfile), Qnil));
+	    report_file_errno ("Cannot re-open temporary file",
+			       Fcons (build_string (tempfile), Qnil),
+			       open_errno);
 	  }
       }
     else
@@ -705,10 +715,7 @@ usage: (call-process PROGRAM &optional INFILE DESTINATION DISPLAY &rest ARGS)  *
   }
 
   if (pid < 0)
-    {
-      errno = child_errno;
-      report_file_error ("Doing vfork", Qnil);
-    }
+    report_file_errno ("Doing vfork", Qnil, child_errno);
 
   if (INTEGERP (buffer))
     return unbind_to (count, Qnil);
@@ -1034,29 +1041,29 @@ usage: (call-process-region START END PROGRAM &optional DELETE BUFFER DISPLAY &r
     memcpy (tempfile, SDATA (encoded_tem), SBYTES (encoded_tem) + 1);
     coding_systems = Qt;
 
-#ifdef HAVE_MKSTEMP
+#if defined HAVE_MKOSTEMP || defined HAVE_MKSTEMP
     {
-      int fd;
+      int fd, open_errno;
 
       block_input ();
+# ifdef HAVE_MKOSTEMP
+      fd = mkostemp (tempfile, O_CLOEXEC);
+# else
       fd = mkstemp (tempfile);
+# endif
+      open_errno = errno;
       unblock_input ();
-      if (fd == -1)
-	report_file_error ("Failed to open temporary file",
-			   Fcons (build_string (tempfile), Qnil));
-      else
-	close (fd);
+      if (fd < 0)
+	report_file_errno ("Failed to open temporary file",
+			   Fcons (build_string (tempfile), Qnil), open_errno);
+      emacs_close (fd);
     }
 #else
-    errno = 0;
+    errno = EEXIST;
     mktemp (tempfile);
     if (!*tempfile)
-      {
-	if (!errno)
-	  errno = EEXIST;
-	report_file_error ("Failed to open temporary file using pattern",
-			   Fcons (pattern, Qnil));
-      }
+      report_file_error ("Failed to open temporary file using pattern",
+			 Fcons (pattern, Qnil));
 #endif
 
     filename_string = build_string (tempfile);
@@ -1182,15 +1189,6 @@ child_setup (int in, int out, int err, char **new_argv, bool set_pgrp,
 
   pid_t pid = getpid ();
 
-  /* Close Emacs's descriptors that this process should not have.  */
-  close_process_descs ();
-
-  /* DOS_NT isn't in a vfork, so if we are in the middle of load-file,
-     we will lose if we call close_load_descs here.  */
-#ifndef DOS_NT
-  close_load_descs ();
-#endif
-
   /* Note that use of alloca is always safe here.  It's obvious for systems
      that do not have true vfork or that have true (stack) alloca.
      If using vfork and C_ALLOCA (when Emacs used to include
@@ -1223,7 +1221,7 @@ child_setup (int in, int out, int err, char **new_argv, bool set_pgrp,
        are changed between the check and this chdir, but we should
        at least check.  */
     if (chdir (temp) < 0)
-      _exit (errno);
+      _exit (EXIT_CANCELED);
 #else /* DOS_NT */
     /* Get past the drive letter, so that d:/ is left alone.  */
     if (i > 2 && IS_DEVICE_SEP (temp[1]) && IS_DIRECTORY_SEP (temp[2]))
@@ -1352,9 +1350,11 @@ child_setup (int in, int out, int err, char **new_argv, bool set_pgrp,
   emacs_close (1);
   emacs_close (2);
 
+  /* Redirect file descriptors and clear FD_CLOEXEC on the redirected ones.  */
   dup2 (in, 0);
   dup2 (out, 1);
   dup2 (err, 2);
+
   emacs_close (in);
   if (out != in)
     emacs_close (out);
@@ -1366,10 +1366,12 @@ child_setup (int in, int out, int err, char **new_argv, bool set_pgrp,
 
   execve (new_argv[0], new_argv, env);
 
-  emacs_write (1, "Can't exec program: ", 20);
-  emacs_write (1, new_argv[0], strlen (new_argv[0]));
-  emacs_write (1, "\n", 1);
-  _exit (1);
+  /* Don't output the program name here, as it can be arbitrarily long,
+     and a long write from a vforked child to its parent can cause a
+     deadlock.  */
+  emacs_perror ("child process");
+
+  _exit (errno == ENOENT ? EXIT_ENOENT : EXIT_CANNOT_INVOKE);
 
 #else /* MSDOS */
   pid = run_msdos_command (new_argv, pwd_var + 4, in, out, err, env);
@@ -1392,16 +1394,11 @@ relocate_fd (int fd, int minfd)
     return fd;
   else
     {
-      int new = fcntl (fd, F_DUPFD, minfd);
+      int new = fcntl (fd, F_DUPFD_CLOEXEC, minfd);
       if (new == -1)
 	{
-	  const char *message_1 = "Error while setting up child: ";
-	  const char *errmessage = strerror (errno);
-	  const char *message_2 = "\n";
-	  emacs_write (2, message_1, strlen (message_1));
-	  emacs_write (2, errmessage, strlen (errmessage));
-	  emacs_write (2, message_2, strlen (message_2));
-	  _exit (1);
+	  emacs_perror ("while setting up child");
+	  _exit (EXIT_CANCELED);
 	}
       emacs_close (fd);
       return new;

@@ -28,12 +28,12 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <unistd.h>
 
 #include <close-stream.h>
-#include <ignore-value.h>
 
 #include "lisp.h"
 
 #ifdef WINDOWSNT
 #include <fcntl.h>
+#include <sys/socket.h>
 #include "w32.h"
 #include "w32heap.h"
 #endif
@@ -197,10 +197,10 @@ int initial_argc;
 static void sort_args (int argc, char **argv);
 static void syms_of_emacs (void);
 
-/* MSVC needs each string be shorter than 2048 bytes, so the usage
+/* C89 needs each string be at most 509 characters, so the usage
    strings below are split to not overflow this limit.  */
-#define USAGE1 "\
-Usage: %s [OPTION-OR-FILENAME]...\n\
+static char const *const usage_message[] =
+  { "\
 \n\
 Run Emacs, the extensible, customizable, self-documenting real-time\n\
 display editor.  The recommended way to start Emacs for normal editing\n\
@@ -211,11 +211,15 @@ read the main documentation for these command-line arguments.\n\
 \n\
 Initialization options:\n\
 \n\
+",
+    "\
 --batch                     do not do interactive display; implies -q\n\
 --chdir DIR                 change to directory DIR\n\
 --daemon                    start a server in the background\n\
 --debug-init                enable Emacs Lisp debugger for init file\n\
 --display, -d DISPLAY       use X server DISPLAY\n\
+",
+    "\
 --no-desktop                do not load a saved desktop\n\
 --no-init-file, -q          load neither ~/.emacs nor default.el\n\
 --no-shared-memory, -nl     do not use shared memory\n\
@@ -223,14 +227,16 @@ Initialization options:\n\
 --no-site-lisp, -nsl        do not add site-lisp directories to load-path\n\
 --no-splash                 do not display a splash screen on startup\n\
 --no-window-system, -nw     do not communicate with X, ignoring $DISPLAY\n\
+",
+    "\
 --quick, -Q                 equivalent to:\n\
                               -q --no-site-file --no-site-lisp --no-splash\n\
 --script FILE               run FILE as an Emacs Lisp script\n\
 --terminal, -t DEVICE       use DEVICE for terminal I/O\n\
 --user, -u USER             load ~USER/.emacs instead of your own\n\
-\n%s"
-
-#define USAGE2 "\
+\n\
+",
+    "\
 Action options:\n\
 \n\
 FILE                    visit FILE using find-file\n\
@@ -239,6 +245,8 @@ FILE                    visit FILE using find-file\n\
 --directory, -L DIR     add DIR to variable load-path\n\
 --eval EXPR             evaluate Emacs Lisp expression EXPR\n\
 --execute EXPR          evaluate Emacs Lisp expression EXPR\n\
+",
+    "\
 --file FILE             visit FILE using find-file\n\
 --find-file FILE        visit FILE using find-file\n\
 --funcall, -f FUNC      call Emacs Lisp function FUNC with no arguments\n\
@@ -246,9 +254,9 @@ FILE                    visit FILE using find-file\n\
 --kill                  exit without asking for confirmation\n\
 --load, -l FILE         load Emacs Lisp FILE using the load function\n\
 --visit FILE            visit FILE using find-file\n\
-\n"
-
-#define USAGE3 "\
+\n\
+",
+    "\
 Display options:\n\
 \n\
 --background-color, -bg COLOR   window background color\n\
@@ -256,6 +264,8 @@ Display options:\n\
                                   used for debugging Emacs\n\
 --border-color, -bd COLOR       main border color\n\
 --border-width, -bw WIDTH       width of main border\n\
+",
+    "\
 --color, --color=MODE           override color mode for character terminals;\n\
                                   MODE defaults to `auto', and\n\
                                   can also be `never', `always',\n\
@@ -263,17 +273,23 @@ Display options:\n\
 --cursor-color, -cr COLOR       color of the Emacs cursor indicating point\n\
 --font, -fn FONT                default font; must be fixed-width\n\
 --foreground-color, -fg COLOR   window foreground color\n\
+",
+    "\
 --fullheight, -fh               make the first frame high as the screen\n\
 --fullscreen, -fs               make the first frame fullscreen\n\
 --fullwidth, -fw                make the first frame wide as the screen\n\
 --maximized, -mm                make the first frame maximized\n\
 --geometry, -g GEOMETRY         window geometry\n\
+",
+    "\
 --no-bitmap-icon, -nbi          do not use picture of gnu for Emacs icon\n\
 --iconic                        start Emacs in iconified state\n\
 --internal-border, -ib WIDTH    width between text and main border\n\
 --line-spacing, -lsp PIXELS     additional space to put between lines\n\
 --mouse-color, -ms COLOR        mouse cursor color in Emacs window\n\
 --name NAME                     title for initial Emacs frame\n\
+",
+    "\
 --no-blinking-cursor, -nbc      disable blinking cursor\n\
 --reverse-video, -r, -rv        switch foreground and background\n\
 --title, -T TITLE               title for initial Emacs frame\n\
@@ -282,9 +298,9 @@ Display options:\n\
 --parent-id XID                 set parent window\n\
 --help                          display this help and exit\n\
 --version                       output version information and exit\n\
-\n"
-
-#define USAGE4 "\
+\n\
+",
+    "\
 You can generally also specify long option names with a single -; for\n\
 example, -batch as well as --batch.  You can use any unambiguous\n\
 abbreviation for a --option.\n\
@@ -294,6 +310,7 @@ Emacs' operation.  See the main documentation.\n\
 \n\
 Report bugs to bug-gnu-emacs@gnu.org.  First, please see the Bugs\n\
 section of the Emacs manual or the file BUGS.\n"
+  };
 
 
 /* True if handling a fatal error already.  */
@@ -641,9 +658,7 @@ close_output_streams (void)
 {
   if (close_stream (stdout) != 0)
     {
-      fprintf (stderr, "Write error to standard output: %s\n",
-	       strerror (errno));
-      fflush (stderr);
+      emacs_perror ("Write error to standard output");
       _exit (EXIT_FAILURE);
     }
 
@@ -780,7 +795,7 @@ main (int argc, char **argv)
       execvp (argv[0], argv);
 
       /* If the exec fails, try to dump anyway.  */
-      perror ("execvp");
+      emacs_perror (argv[0]);
     }
 #endif /* HAVE_PERSONALITY_LINUX32 */
 
@@ -878,7 +893,7 @@ main (int argc, char **argv)
 	  emacs_close (0);
 	  emacs_close (1);
 	  result = emacs_open (term, O_RDWR, 0);
-	  if (result < 0 || dup (0) < 0)
+	  if (result < 0 || fcntl (0, F_DUPFD_CLOEXEC, 1) < 0)
 	    {
 	      char *errstring = strerror (errno);
 	      fprintf (stderr, "%s: %s: %s\n", argv[0], term, errstring);
@@ -925,9 +940,10 @@ main (int argc, char **argv)
   /* Handle the --help option, which gives a usage message.  */
   if (argmatch (argv, argc, "-help", "--help", 3, NULL, &skip_args))
     {
-      printf (USAGE1, argv[0], USAGE2);
-      printf (USAGE3);
-      printf (USAGE4);
+      int i;
+      printf ("Usage: %s [OPTION-OR-FILENAME]...\n", argv[0]);
+      for (i = 0; i < sizeof usage_message / sizeof *usage_message; i++)
+	fputs (usage_message[i], stdout);
       exit (0);
     }
 
@@ -958,7 +974,7 @@ main (int argc, char **argv)
 	 use a pipe for synchronization.  The parent waits for the child
 	 to close its end of the pipe (using `daemon-initialized')
 	 before exiting.  */
-      if (pipe (daemon_pipe) == -1)
+      if (pipe2 (daemon_pipe, O_CLOEXEC) != 0)
 	{
 	  fprintf (stderr, "Cannot pipe!\n");
 	  exit (1);
@@ -983,7 +999,7 @@ Using an Emacs configured with --with-x-toolkit=lucid does not have this problem
 	  char buf[1];
 
 	  /* Close unused writing end of the pipe.  */
-	  close (daemon_pipe[1]);
+	  emacs_close (daemon_pipe[1]);
 
 	  /* Just wait for the child to close its end of the pipe.  */
 	  do
@@ -1003,13 +1019,13 @@ Using an Emacs configured with --with-x-toolkit=lucid does not have this problem
 	      exit (1);
 	    }
 
-	  close (daemon_pipe[0]);
+	  emacs_close (daemon_pipe[0]);
 	  exit (0);
 	}
       if (f < 0)
 	{
-	  fprintf (stderr, "Cannot fork!\n");
-	  exit (1);
+	  emacs_perror ("fork");
+	  exit (EXIT_CANCELED);
 	}
 
 #ifdef DAEMON_MUST_EXEC
@@ -1026,14 +1042,14 @@ Using an Emacs configured with --with-x-toolkit=lucid does not have this problem
 	    if (! (0 <= fdStrlen && fdStrlen < sizeof fdStr))
               {
                 fprintf (stderr, "daemon: child name too long\n");
-                exit (1);
+                exit (EXIT_CANNOT_INVOKE);
               }
 
             argv[skip_args] = fdStr;
 
             execvp (argv[0], argv);
-            fprintf (stderr, "emacs daemon: exec failed: %d\n", errno);
-            exit (1);
+	    emacs_perror (argv[0]);
+	    exit (errno == ENOENT ? EXIT_ENOENT : EXIT_CANNOT_INVOKE);
           }
 
         /* In exec'd: parse special dname into pipe and name info. */
@@ -1041,7 +1057,7 @@ Using an Emacs configured with --with-x-toolkit=lucid does not have this problem
             || strlen (dname_arg) < 1 || strlen (dname_arg) > 70)
           {
             fprintf (stderr, "emacs daemon: daemon name absent or too long\n");
-            exit (1);
+            exit (EXIT_CANNOT_INVOKE);
           }
         dname_arg2[0] = '\0';
         sscanf (dname_arg, "\n%d,%d\n%s", &(daemon_pipe[0]), &(daemon_pipe[1]),
@@ -1053,10 +1069,7 @@ Using an Emacs configured with --with-x-toolkit=lucid does not have this problem
       if (dname_arg)
        	daemon_name = xstrdup (dname_arg);
       /* Close unused reading end of the pipe.  */
-      close (daemon_pipe[0]);
-      /* Make sure that the used end of the pipe is closed on exec, so
-	 that it is not accessible to programs started from .emacs.  */
-      fcntl (daemon_pipe[1], F_SETFD, FD_CLOEXEC);
+      emacs_close (daemon_pipe[0]);
 
       setsid ();
 #else /* DOS_NT */
@@ -1910,8 +1923,8 @@ shut_down_emacs (int sig, Lisp_Object stuff)
 	    char buf[sizeof format - 2 + INT_STRLEN_BOUND (int)];
 	    int buflen = sprintf (buf, format, sig);
 	    char const *sig_desc = safe_strsignal (sig);
-	    ignore_value (write (STDERR_FILENO, buf, buflen));
-	    ignore_value (write (STDERR_FILENO, sig_desc, strlen (sig_desc)));
+	    emacs_write (STDERR_FILENO, buf, buflen);
+	    emacs_write (STDERR_FILENO, sig_desc, strlen (sig_desc));
 	  }
       }
   }
@@ -2233,7 +2246,7 @@ from the parent process and its tty file descriptors.  */)
   err |= dup2 (nfd, 0) < 0;
   err |= dup2 (nfd, 1) < 0;
   err |= dup2 (nfd, 2) < 0;
-  err |= close (nfd) != 0;
+  err |= emacs_close (nfd) != 0;
 
   /* Closing the pipe will notify the parent that it can exit.
      FIXME: In case some other process inherited the pipe, closing it here
@@ -2243,7 +2256,7 @@ from the parent process and its tty file descriptors.  */)
      call-process to make sure the pipe is never inherited by
      subprocesses.  */
   err |= write (daemon_pipe[1], "\n", 1) < 0;
-  err |= close (daemon_pipe[1]) != 0;
+  err |= emacs_close (daemon_pipe[1]) != 0;
   /* Set it to an invalid value so we know we've already run this function.  */
   daemon_pipe[1] = -1;
 

@@ -3461,8 +3461,14 @@ This is to make them appear as if they were \"virtual buffers\"."
   (setq ido-virtual-buffers nil)
   (let (name)
     (dolist (head recentf-list)
-      (and (setq name (file-name-nondirectory head))
-           (null (get-file-buffer head))
+      (setq name (file-name-nondirectory head))
+      ;; In case HEAD is a directory with trailing /.  See bug#14552.
+      (when (equal name "")
+	(setq name (file-name-nondirectory (directory-file-name head))))
+      (when (equal name "")
+	(setq name head))
+      (and (not (equal name ""))
+	   (null (get-file-buffer head))
            (not (assoc name ido-virtual-buffers))
            (not (member name ido-temp-list))
            (not (ido-ignore-item-p name ido-ignore-buffers))
@@ -4721,9 +4727,12 @@ Modified from `icomplete-completions'."
 
 ;;; Helper functions for other programs
 
-(put 'dired-do-rename 'ido 'ignore)
 (put 'ibuffer-find-file 'ido 'find-file)
+(put 'dired 'ido 'dir)
 (put 'dired-other-window 'ido 'dir)
+;; See http://debbugs.gnu.org/11954 for reasons.
+(put 'dired-do-copy 'ido 'ignore)
+(put 'dired-do-rename 'ido 'ignore)
 
 ;;;###autoload
 (defun ido-read-buffer (prompt &optional default require-match)
@@ -4754,9 +4763,7 @@ See `read-file-name' for additional parameters."
 	  (eq (get this-command 'ido) 'dir)
 	  (memq this-command ido-read-file-name-as-directory-commands))
       (setq filename
-	    (ido-read-directory-name prompt dir default-filename mustmatch initial))
-      (if (eq ido-exit 'fallback)
-	  (setq filename 'fallback)))
+	    (ido-read-directory-name prompt dir default-filename mustmatch initial)))
      ((and (not (eq (get this-command 'ido) 'ignore))
 	   (not (memq this-command ido-read-file-name-non-ido))
 	   (or (null predicate) (eq predicate 'file-exists-p)))
@@ -4776,7 +4783,15 @@ See `read-file-name' for additional parameters."
 	     (ido-find-literal nil))
 	(setq ido-exit nil)
 	(setq filename
-	      (ido-read-internal 'file prompt 'ido-file-history default-filename mustmatch initial))
+	      (ido-read-internal 'file prompt 'ido-file-history
+				 (cond	; Bug#11861.
+				  ((stringp default-filename) default-filename)
+				  ((consp default-filename) (car default-filename))
+				  ((and (not default-filename) initial)
+				   (expand-file-name initial dir))
+				  (buffer-file-name buffer-file-name))
+				 mustmatch initial))
+	(setq dir ido-current-directory) ; See bug#1516.
 	(cond
 	 ((eq ido-exit 'fallback)
 	  (setq filename 'fallback))
@@ -4808,12 +4823,21 @@ See `read-directory-name' for additional parameters."
 				     (ido-directory-too-big-p ido-current-directory)))
 	 (ido-work-directory-index -1)
 	 (ido-work-file-index -1))
-    (setq filename
-	  (ido-read-internal 'dir prompt 'ido-file-history default-dirname mustmatch initial))
-    (if filename
-	(if (and (stringp filename) (string-equal filename "."))
-	    ido-current-directory
-	  (concat ido-current-directory filename)))))
+    (setq filename (ido-read-internal
+		    'dir prompt 'ido-file-history
+		    (or default-dirname	; Bug#11861.
+			(if initial
+			    (expand-file-name initial ido-current-directory)
+			  ido-current-directory))
+		    mustmatch initial))
+    (cond
+     ((eq ido-exit 'fallback)
+      (let ((read-file-name-function nil))
+	(run-hook-with-args 'ido-before-fallback-functions 'read-directory-name)
+	(read-directory-name prompt ido-current-directory
+			     default-dirname mustmatch initial)))
+     ((equal filename ".") ido-current-directory)
+     (t (concat ido-current-directory filename)))))
 
 ;;;###autoload
 (defun ido-completing-read (prompt choices &optional _predicate require-match

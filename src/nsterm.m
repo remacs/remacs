@@ -3603,7 +3603,7 @@ ns_select (int nfds, fd_set *readfds, fd_set *writefds,
 
       /* Inform fd_handler that select should be called */
       c = 'g';
-      emacs_write (selfds[1], &c, 1);
+      emacs_write_sig (selfds[1], &c, 1);
     }
   else if (nr == 0 && timeout)
     {
@@ -3636,7 +3636,7 @@ ns_select (int nfds, fd_set *readfds, fd_set *writefds,
   if (nr > 0 && readfds)
     {
       c = 's';
-      emacs_write (selfds[1], &c, 1);
+      emacs_write_sig (selfds[1], &c, 1);
     }
   unblock_input ();
 
@@ -4142,7 +4142,7 @@ ns_term_init (Lisp_Object display_name)
 
   if (selfds[0] == -1)
     {
-      if (pipe (selfds) == -1)
+      if (pipe2 (selfds, O_CLOEXEC) != 0)
         {
           fprintf (stderr, "Failed to create pipe: %s\n",
                    emacs_strerror (errno));
@@ -4418,6 +4418,16 @@ ns_term_shutdown (int sig)
   NSWindow *window = [theEvent window];
 /*  NSTRACE (sendEvent); */
 /*fprintf (stderr, "received event of type %d\t%d\n", type);*/
+
+#ifdef NS_IMPL_GNUSTEP
+  // Keyboard events aren't propagated to file dialogs for some reason.
+  if ([NSApp modalWindow] != nil &&
+      (type == NSKeyDown || type == NSKeyUp || type == NSFlagsChanged))
+    {
+      [[NSApp modalWindow] sendEvent: theEvent];
+      return;
+    }
+#endif
 
   if (type == NSApplicationDefined)
     {
