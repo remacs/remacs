@@ -1,3 +1,441 @@
+2013-07-13  Dmitry Gutov  <dgutov@yandex.ru>
+
+	* progmodes/ruby-mode.el (ruby-font-lock-keywords): Highlight
+	conversion methods on Kernel.
+
+2013-07-13  Alan Mackenzie  <acm@muc.de>
+
+	* progmodes/cc-engine.el (c-forward-decl-or-cast-1): Label CASE 13
+	and comment it out.  This out-commenting enables certain C++
+	declarations to be parsed correctly.
+
+2013-07-13  Eli Zaretskii  <eliz@gnu.org>
+
+	* international/mule.el (define-coding-system): Doc fix.
+
+	* simple.el (default-font-height): Don't call font-info if the
+	frame's default font didn't change since the frame was created.
+	(Bug#14838)
+
+2013-07-13  Leo Liu  <sdl.web@gmail.com>
+
+	* ido.el (ido-read-file-name): Guard against non-symbol value.
+
+2013-07-13  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	* progmodes/python.el (python-imenu--build-tree): Fix corner case
+	in nested defuns.
+
+2013-07-13  Leo Liu  <sdl.web@gmail.com>
+
+	* ido.el (ido-exhibit): Handle ido-enter-matching-directory before
+	ido-set-matches call.  (Bug#6852)
+
+2013-07-12  Dmitry Gutov  <dgutov@yandex.ru>
+
+	* progmodes/ruby-mode.el (ruby-percent-literals-beg-re):
+	(ruby-syntax-expansion-allowed-p): Support array of symbols, for
+	Ruby 2.0.
+	(ruby-font-lock-keywords): Distinguish calls to functions with
+	module-like names from module references.  Highlight character
+	literals.
+
+2013-07-12  Sergio Durigan Junior  <sergiodj@riseup.net>  (tiny change)
+
+	* progmodes/gdb-mi.el (gdb-strip-string-backslash): New function.
+	(gdb-send): Handle continued commands.  (Bug#14847)
+
+2013-07-12  Juanma Barranquero  <lekktu@gmail.com>
+
+	* desktop.el (desktop--v2s): Remove unused local variable.
+	(desktop-save-buffer): Make defvar-local; adjust docstring.
+	(desktop-auto-save-timeout, desktop-owner): Use ignore-errors.
+	(desktop-clear, desktop-save-buffer-p): Use string-match-p.
+
+2013-07-12  Andreas Schwab  <schwab@linux-m68k.org>
+
+	* emacs-lisp/map-ynp.el (map-y-or-n-p): Fix last change.
+
+2013-07-12  Eli Zaretskii  <eliz@gnu.org>
+
+	* simple.el (next-line, previous-line): Document TRY-VSCROLL and ARG.
+	(Bug#14842)
+
+2013-07-12  Glenn Morris  <rgm@gnu.org>
+
+	* doc-view.el: Require cl-lib at runtime too.
+	(doc-view-remove-if): Remove.
+	(doc-view-search-next-match, doc-view-search-previous-match):
+	Use cl-remove-if.
+
+	* edmacro.el: Require cl-lib at runtime too.
+	(edmacro-format-keys, edmacro-parse-keys): Use cl-mismatch, cl-subseq.
+	(edmacro-mismatch, edmacro-subseq): Remove.
+
+	* shadowfile.el: Require cl-lib.
+	(shadow-remove-if): Remove.
+	(shadow-set-cluster, shadow-shadows-of-1, shadow-remove-from-todo):
+	Use cl-remove-if.
+
+	* wid-edit.el: Require cl-lib.
+	(widget-choose): Use cl-remove-if.
+	(widget-remove-if): Remove.
+
+	* progmodes/ebrowse.el: Require cl-lib at runtime too.
+	(ebrowse-delete-if-not): Remove.
+	(ebrowse-browser-buffer-list, ebrowse-member-buffer-list)
+	(ebrowse-tree-buffer-list, ebrowse-same-tree-member-buffer-list):
+	Use cl-delete-if-not.
+
+2013-07-12  Juanma Barranquero  <lekktu@gmail.com>
+
+	* emacs-lisp/cl-macs.el (cl-multiple-value-bind, cl-multiple-value-setq)
+	(cl-the, cl-declare, cl-defstruct): Fix typos in docstrings.
+
+2013-07-12  Leo Liu  <sdl.web@gmail.com>
+
+	* ido.el (dired-do-copy, dired): Set 'ido property.  (Bug#11954)
+
+2013-07-11  Glenn Morris  <rgm@gnu.org>
+
+	* emacs-lisp/edebug.el: Require cl-lib at run-time too.
+	(edebug-gensym-index, edebug-gensym):
+	Remove reimplementation of cl-gensym.
+	(edebug-make-enter-wrapper, edebug-make-form-wrapper): Use cl-gensym.
+
+	* thumbs.el: Require cl-lib at run-time too.
+	(thumbs-gensym-counter, thumbs-gensym):
+	Remove reimplementation of cl-gensym.
+	(thumbs-temp-file): Use cl-gensym.
+
+	* emacs-lisp/ert.el: Require cl-lib at runtime too.
+	(ert--cl-do-remf, ert--remprop, ert--remove-if-not)
+	(ert--intersection, ert--set-difference, ert--set-difference-eq)
+	(ert--union, ert--gensym-counter, ert--gensym-counter)
+	(ert--coerce-to-vector, ert--remove*, ert--string-position)
+	(ert--mismatch, ert--subseq): Remove reimplementations of cl funcs.
+	(ert-make-test-unbound, ert--expand-should-1)
+	(ert--expand-should, ert--should-error-handle-error)
+	(should-error, ert--explain-equal-rec)
+	(ert--plist-difference-explanation, ert-select-tests)
+	(ert--make-stats, ert--remove-from-list, ert--string-first-line):
+	Use cl-lib functions rather than reimplementations.
+
+2013-07-11  Michael Albinus  <michael.albinus@gmx.de>
+
+	* net/tramp.el (tramp-methods): Extend docstring.
+	(tramp-connection-timeout): New defcustom.
+	(tramp-error-with-buffer): Reset timestamp only when appropriate.
+	(with-tramp-progress-reporter): Simplify.
+	(tramp-process-actions): Improve messages.
+
+	* net/tramp-gvfs.el (tramp-gvfs-maybe-open-connection):
+	* net/tramp-sh.el (tramp-maybe-open-connection):
+	Use `tramp-connection-timeout'.
+	(tramp-methods) [su, sudo, ksu]: Add method specific timeouts.
+	(Bug#14808)
+
+2013-07-11  Leo Liu  <sdl.web@gmail.com>
+
+	* ido.el (ido-read-file-name): Conform to the requirements of
+	read-file-name.  (Bug#11861)
+	(ido-read-directory-name): Conform to the requirements of
+	read-directory-name.
+
+2013-07-11  Juanma Barranquero  <lekktu@gmail.com>
+
+	* subr.el (delay-warning): New function.
+
+2013-07-10  Eli Zaretskii  <eliz@gnu.org>
+
+	* simple.el (default-line-height): New function.
+	(line-move-partial, line-move): Use it instead of computing the
+	line height inline.
+	(line-move-partial): Always compute ROWH.  If the last line is
+	partially-visible, but its text is completely visible, allow
+	cursor to enter such a partially-visible line.
+
+2013-07-10  Michael Albinus  <michael.albinus@gmx.de>
+
+	Improve error messages.  (Bug#14808)
+
+	* net/tramp.el (tramp-current-connection): New defvar, moved from
+	tramp-sh.el.
+	(tramp-message-show-progress-reporter-message): Removed, not
+	needed anymore.
+	(tramp-error-with-buffer): Show message in minibuffer.  Discard
+	input before waiting.  Reset connection timestamp.
+	(with-tramp-progress-reporter): Improve messages.
+	(tramp-process-actions): Use progress reporter.  Delete process in
+	case of error.  Improve messages.
+
+	* net/tramp-sh.el (tramp-barf-if-no-shell-prompt): Use
+	condition-case.  Call `tramp-error-with-buffer' with vector and buffer.
+	(tramp-current-connection): Removed.
+	(tramp-maybe-open-connection): The car of
+	`tramp-current-connection' are the first 3 slots of the vector.
+
+2013-07-10  Teodor Zlatanov  <tzz@lifelogs.com>
+
+	* progmodes/cfengine.el (cfengine3-indent-line): Do not indent
+	inside continued strings.
+
+2013-07-10  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Timestamp fixes for undo (Bug#14824).
+	* files.el (clear-visited-file-modtime): Move here from fileio.c.
+
+2013-07-10  Leo Liu  <sdl.web@gmail.com>
+
+	* files.el (require-final-newline): Allow safe local value.
+	(Bug#14834)
+
+2013-07-09  Leo Liu  <sdl.web@gmail.com>
+
+	* ido.el (ido-read-directory-name): Handle fallback.
+	(ido-read-file-name): Update DIR to ido-current-directory.
+	(Bug#1516)
+	(ido-add-virtual-buffers-to-list): Robustify.  (Bug#14552)
+
+2013-07-09  Dmitry Gutov  <dgutov@yandex.ru>
+
+	* progmodes/ruby-mode.el (ruby-font-lock-keywords): Remove extra
+	"autoload".  Remove "warn lower camel case" section, previously
+	commented out.  Highlight negation char.  Do not highlight the
+	target in singleton method definitions.
+
+2013-07-08  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* faces.el (tty-setup-hook): Declare the hook.
+
+	* emacs-lisp/pcase.el (pcase--split-pred): Add `vars' argument to try
+	and detect when a guard/pred depends on local vars (bug#14773).
+	(pcase--u1): Adjust caller.
+
+2013-07-08  Eli Zaretskii  <eliz@gnu.org>
+
+	* simple.el (line-move-partial, line-move): Account for
+	line-spacing.
+	(line-move-partial): Avoid setting vscroll when the last
+	partially-visible line in window is of default height.
+
+2013-07-08  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* net/shr.el (shr-map): Reinstate the `u' key binding, since it's
+	been used a while.
+
+2013-07-07  Juanma Barranquero  <lekktu@gmail.com>
+
+	* subr.el (read-quoted-char): Remove unused local variable `char'.
+
+2013-07-07  Michael Kifer  <kifer@cs.stonybrook.edu>
+
+	* ediff.el (ediff-version): Version update.
+	(ediff-files-command, ediff3-files-command, ediff-merge-command)
+	(ediff-merge-with-ancestor-command, ediff-directories-command)
+	(ediff-directories3-command, ediff-merge-directories-command)
+	(ediff-merge-directories-with-ancestor-command): New functions.
+	All are command-line interfaces to ediff: to facilitate calling
+	Emacs with the appropriate ediff functions invoked.
+
+	* viper-cmd.el (viper-del-forward-char-in-insert): New function.
+	(viper-save-kill-buffer): Check if buffer is modified.
+
+	* viper.el (viper-version): Version update.
+	(viper-emacs-state-mode-list): Add egg-status-buffer-mode.
+
+2013-07-07  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* faces.el (tty-run-terminal-initialization): Run new tty-setup-hook.
+	* viper-cmd.el (viper-envelop-ESC-key): Remove function.
+	(viper-intercept-ESC-key): Simplify.
+	* viper-keym.el (viper-ESC-key): Make it a constant, don't use kbd.
+	* viper.el (viper--tty-ESC-filter, viper--lookup-key)
+	(viper-catch-tty-ESC, viper-uncatch-tty-ESC)
+	(viper-setup-ESC-to-escape): New functions.
+	(viper-go-away, viper-set-hooks): Call viper-setup-ESC-to-escape.
+	(viper-set-hooks): Do not modify flyspell-mode-hook.  (Bug#13793)
+
+2013-07-07  Eli Zaretskii  <eliz@gnu.org>
+
+	* simple.el (default-font-height, window-screen-lines):
+	New functions.
+	(line-move, line-move-partial): Use them instead of
+	frame-char-height and window-text-height.  This makes scrolling
+	text smoother when the buffer's default face uses a font that is
+	different from the frame's default font.
+
+2013-07-06  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* files.el (write-file): Do not display confirm dialog for NS,
+	it does its own dialog, which can't be cancelled (Bug#14578).
+
+2013-07-06  Eli Zaretskii  <eliz@gnu.org>
+
+	* simple.el (line-move-partial): Adjust the row returned by
+	posn-at-point for the current window-vscroll.  (Bug#14567)
+
+2013-07-06  Michael Albinus  <michael.albinus@gmx.de>
+
+	* net/tramp-sh.el (tramp-sh-file-gvfs-monitor-dir-process-filter):
+	(tramp-sh-file-inotifywait-process-filter): Handle file names with
+	spaces.
+
+2013-07-06  Martin Rudalics  <rudalics@gmx.at>
+
+	* window.el (window-state-put-stale-windows): New variable.
+	(window--state-put-2): Save list of windows without matching buffer.
+	(window-state-put): Remove "bufferless" windows if possible.
+
+2013-07-06  Juanma Barranquero  <lekktu@gmail.com>
+
+	* simple.el (alternatives-define): Remove leftover :group keyword.
+	Tweak docstring.
+
+2013-07-06  Leo Liu  <sdl.web@gmail.com>
+
+	* ido.el (ido-use-virtual-buffers): Allow new value 'auto.
+	(ido-enable-virtual-buffers): New variable.
+	(ido-buffer-internal, ido-toggle-virtual-buffers)
+	(ido-make-buffer-list): Use it.
+	(ido-exhibit): Support turning on and off virtual buffers
+	automatically.
+
+2013-07-06  Juanma Barranquero  <lekktu@gmail.com>
+
+	* simple.el (alternatives-define): New macro.
+
+2013-07-06  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* subr.el (read-quoted-char): Use read-key.
+	(sit-for): Let read-event decode tty input (bug#14782).
+
+2013-07-05  Stephen Berman  <stephen.berman@gmx.net>
+
+	* calendar/todo-mode.el: Add handling of file deletion, both by
+	mode command and externally.  Fix various related bugs.
+	Clarify Commentary and improve some documentation strings and code.
+	(todo-delete-file): New command.
+	(todo-check-file): New function.
+	(todo-show): Handle external deletion of the file we're trying to
+	show (bug#14688).  Replace called-interactively-p by an optional
+	prefix argument to avoid problematic interaction with catch form
+	when byte compiled (bug#14702).
+	(todo-quit): Handle external deletion of the archive's todo file.
+	Make sure the buffer that was visiting the archive file is still
+	live before trying to bury it.
+	(todo-category-completions): Handle external deletion of any
+	category completion files.
+	(todo-jump-to-category, todo-basic-insert-item): Recalculate list
+	of todo files, in case of external deletion.
+	(todo-add-file): Replace unnecessary setq by let-binding.
+	(todo-find-archive): Check whether there are any archives.
+	Replace unnecessary setq by let-binding.
+	(todo-archive-done-item): Use find-file-noselect to get the
+	archive buffer whether or not the archive already exists.
+	Remove superfluous code.  Use file size instead of buffer-file-name to
+	check if the archive is new; if it is, update list of archives.
+	(todo-default-todo-file): Allow nil to be a valid value for when
+	there are no todo files.
+	(todo-reevaluate-default-file-defcustom): Use corrected definition
+	of todo-default-todo-file.
+	(todo-key-bindings-t+a+f): Add key binding for todo-delete-file.
+	(todo-delete-category, todo-show-categories-table)
+	(todo-category-number): Clarify comment.
+	(todo-filter-items): Clarify documentation string.
+	(todo-show-current-file, todo-display-as-todo-file)
+	(todo-reset-and-enable-done-separator): Tweak documentation string.
+	(todo-done-separator): Make separator length window-width, since
+	bug#2749 is now fixed.
+
+2013-07-05  Michael Albinus  <michael.albinus@gmx.de>
+
+	* net/tramp-sh.el (tramp-sh-handle-file-notify-add-watch):
+	Support both "gvfs-monitor-dir" and "inotifywait".
+	(tramp-sh-file-inotifywait-process-filter): Rename from
+	`tramp-sh-file-notify-process-filter'.
+	(tramp-sh-file-gvfs-monitor-dir-process-filter)
+	(tramp-get-remote-gvfs-monitor-dir): New defuns.
+
+2013-07-05  Leo Liu  <sdl.web@gmail.com>
+
+	* autoinsert.el (auto-insert-alist): Default to lexical-binding.
+
+2013-07-04  YAMAMOTO Mitsuharu  <mituharu@math.s.chiba-u.ac.jp>
+
+	* frame.el (display-pixel-height, display-pixel-width)
+	(display-mm-height, display-mm-width): Mention behavior on
+	multi-monitor setups in docstrings.
+	(w32-display-monitor-attributes-list): Declare function.
+	(display-monitor-attributes-list): Use it.
+
+2013-07-04  Michael Albinus  <michael.albinus@gmx.de>
+
+	* filenotify.el: New package.
+
+	* autorevert.el (top): Require filenotify.el.
+	(auto-revert-notify-enabled): Remove.  Use `file-notify-support'
+	instead.
+	(auto-revert-notify-rm-watch, auto-revert-notify-add-watch)
+	(auto-revert-notify-handler): Use `file-notify-*' functions.
+
+	* subr.el (file-notify-handle-event): Move function to filenotify.el.
+
+	* net/tramp.el (tramp-file-name-for-operation):
+	Handle `file-notify-add-watch' and `file-notify-rm-watch'.
+
+	* net/tramp-sh.el (tramp-sh-file-name-handler-alist): Add handler
+	for `file-notify-add-watch' and `file-notify-rm-watch'.
+	(tramp-process-sentinel): Improve trace.
+	(tramp-sh-handle-file-notify-add-watch)
+	(tramp-sh-file-notify-process-filter)
+	(tramp-sh-handle-file-notify-rm-watch)
+	(tramp-get-remote-inotifywait): New defuns.
+
+2013-07-03  Juri Linkov  <juri@jurta.org>
+
+	* buff-menu.el (Buffer-menu-multi-occur): Add args and move the
+	call of `occur-read-primary-args' to interactive spec.
+
+	* ibuffer.el (ibuffer-mode-map): Bind "M-s a C-o" to
+	`ibuffer-do-occur' like in buff-menu.el.  (Bug#14673)
+
+2013-07-03  Matthias Meulien  <orontee@gmail.com>
+
+	* buff-menu.el (Buffer-menu-mode-map): Bind "M-s a C-o" to
+	`Buffer-menu-multi-occur'.  Add it to the menu.
+	(Buffer-menu-mode): Document it in docstring.
+	(Buffer-menu-multi-occur): New command.  (Bug#14673)
+
+2013-07-03  Dmitry Gutov  <dgutov@yandex.ru>
+
+	* progmodes/ruby-mode.el (ruby-font-lock-keywords): Highlight more
+	keywords and built-ins.
+
+2013-07-03  Glenn Morris  <rgm@gnu.org>
+
+	* subr.el (y-or-n-p): Handle empty prompts.  (Bug#14770)
+
+	Make info-xref checks case-sensitive by default
+	* info.el (Info-find-node, Info-find-in-tag-table)
+	(Info-find-node-in-buffer, Info-find-node-2, Info-goto-node):
+	Add option for exact case matching of nodes.
+	* info-xref.el (info-xref): New custom group.
+	(info-xref-case-fold): New option.
+	(info-xref-goto-node-p): Pass info-xref-case-fold to Info-goto-node.
+
+2013-07-03  Leo Liu  <sdl.web@gmail.com>
+
+	* ido.el (ido-delete-file-at-head): Respect delete-by-moving-to-trash.
+
+2013-07-03  Dmitry Gutov  <dgutov@yandex.ru>
+
+	* progmodes/ruby-mode.el (ruby-move-to-block): When we're at a
+	middle of block statement initially, lower the depth.  Remove
+	FIXME comment, not longer valid.  Remove middle of block statement
+	detection, no need to do that anymore since we've been using
+	`ruby-parse-region' here.
+
 2013-07-02  Jan Djärv  <jan.h.d@swipnet.se>
 
 	* term/ns-win.el (display-format-alist): Use .* (Bug#14765).
@@ -255,12 +693,12 @@
 
 2013-06-25  Rüdiger Sonderfeld  <ruediger@c-plusplus.de>
 
-	* lisp/textmodes/bibtex.el (bibtex-generate-url-list): Add support
+	* textmodes/bibtex.el (bibtex-generate-url-list): Add support
 	for DOI URLs.
 
 2013-06-25  Rüdiger Sonderfeld  <ruediger@c-plusplus.de>
 
-	* lisp/textmodes/bibtex.el (bibtex-mode, bibtex-set-dialect):
+	* textmodes/bibtex.el (bibtex-mode, bibtex-set-dialect):
 	Update imenu-support when dialect changes.
 
 2013-06-25  Leo Liu  <sdl.web@gmail.com>
@@ -361,7 +799,7 @@
 	* emacs-lock.el (emacs-lock-mode, emacs-lock--old-mode)
 	(emacs-lock--try-unlocking): Make defvar-local.
 
-2013-06-22  Glenn Morris  <rgm@fencepost.gnu.org>
+2013-06-22  Glenn Morris  <rgm@gnu.org>
 
 	* play/cookie1.el (cookie-apropos): Minor simplification.
 
@@ -827,7 +1265,7 @@
 
 	* net/shr.el (shr-map): Bind [down-mouse-1] to browse URLs.
 
-2013-06-19  Glenn Morris  <rgm@fencepost.gnu.org>
+2013-06-19  Glenn Morris  <rgm@gnu.org>
 
 	* emacs-lisp/eieio.el (defclass): Make it eval-and-compile once more.
 
@@ -970,6 +1408,7 @@
 2013-06-18  Matthias Meulien  <orontee@gmail.com>
 
 	* tabify.el (untabify, tabify): With prefix, apply to entire buffer.
+	<http://lists.gnu.org/archive/html/emacs-devel/2013-03/msg00545.html>
 
 2013-06-18  Glenn Morris  <rgm@gnu.org>
 

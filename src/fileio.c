@@ -20,7 +20,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <config.h>
 #include <limits.h>
 #include <fcntl.h>
-#include <stdio.h>
+#include "sysstdio.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -55,7 +55,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #ifdef WINDOWSNT
 #define NOMINMAX 1
 #include <windows.h>
-#include <fcntl.h>
 #include <sys/file.h>
 #include "w32.h"
 #endif /* not WINDOWSNT */
@@ -63,7 +62,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #ifdef MSDOS
 #include "msdos.h"
 #include <sys/param.h>
-#include <fcntl.h>
 #endif
 
 #ifdef DOS_NT
@@ -148,7 +146,7 @@ static Lisp_Object Qdelete_directory;
 #ifdef WINDOWSNT
 #endif
 
-Lisp_Object Qfile_error;
+Lisp_Object Qfile_error, Qfile_notify_error;
 static Lisp_Object Qfile_already_exists, Qfile_date_error;
 static Lisp_Object Qexcl;
 Lisp_Object Qfile_name_history;
@@ -161,11 +159,13 @@ static bool e_write (int, Lisp_Object, ptrdiff_t, ptrdiff_t,
 		     struct coding_system *);
 
 
+/* Signal a file-access failure.  STRING describes the failure,
+   DATA the file that was involved, and ERRORNO the errno value.  */
+
 void
-report_file_error (const char *string, Lisp_Object data)
+report_file_errno (char const *string, Lisp_Object data, int errorno)
 {
   Lisp_Object errstring;
-  int errorno = errno;
   char *str;
 
   synchronize_system_messages_locale ();
@@ -196,6 +196,12 @@ report_file_error (const char *string, Lisp_Object data)
 	xsignal (Qfile_error,
 		 Fcons (build_string (string), Fcons (errstring, data)));
       }
+}
+
+void
+report_file_error (char const *string, Lisp_Object data)
+{
+  report_file_errno (string, data, errno);
 }
 
 Lisp_Object
@@ -2021,11 +2027,8 @@ entries (depending on how Emacs was built).  */)
     {
       /* CopyFile doesn't set errno when it fails.  By far the most
 	 "popular" reason is that the target is read-only.  */
-      if (GetLastError () == 5)
-	errno = EACCES;
-      else
-	errno = EPERM;
-      report_file_error ("Copying file", Fcons (file, Fcons (newname, Qnil)));
+      report_file_errno ("Copying file", Fcons (file, Fcons (newname, Qnil)),
+			 GetLastError () == 5 ? EACCES : EPERM);
     }
   /* CopyFile retains the timestamp by default.  */
   else if (NILP (keep_time))
@@ -2086,36 +2089,25 @@ entries (depending on how Emacs was built).  */)
 
   if (out_st.st_mode != 0
       && st.st_dev == out_st.st_dev && st.st_ino == out_st.st_ino)
-    {
-      errno = 0;
-      report_file_error ("Input and output files are the same",
-			 Fcons (file, Fcons (newname, Qnil)));
-    }
+    report_file_errno ("Input and output files are the same",
+		       Fcons (file, Fcons (newname, Qnil)), 0);
 
   /* We can copy only regular files.  */
   if (!S_ISREG (st.st_mode))
-    {
-      /* Get a better looking error message. */
-      errno = S_ISDIR (st.st_mode) ? EISDIR : EINVAL;
-      report_file_error ("Non-regular file", Fcons (file, Qnil));
-    }
+    report_file_errno ("Non-regular file", Fcons (file, Qnil),
+		       S_ISDIR (st.st_mode) ? EISDIR : EINVAL);
 
-#ifdef MSDOS
-  /* System's default file type was set to binary by _fmode in emacs.c.  */
-  ofd = emacs_open (SDATA (encoded_newname),
-		    O_WRONLY | O_TRUNC | O_CREAT
-		    | (NILP (ok_if_already_exists) ? O_EXCL : 0),
-		    S_IREAD | S_IWRITE);
-#else  /* not MSDOS */
   {
-    mode_t new_mask = !NILP (preserve_uid_gid) ? 0600 : 0666;
-    new_mask &= st.st_mode;
+#ifndef MSDOS
+    int new_mask = st.st_mode & (!NILP (preserve_uid_gid) ? 0600 : 0666);
+#else
+    int new_mask = S_IREAD | S_IWRITE;
+#endif
     ofd = emacs_open (SSDATA (encoded_newname),
 		      (O_WRONLY | O_TRUNC | O_CREAT
 		       | (NILP (ok_if_already_exists) ? O_EXCL : 0)),
 		      new_mask);
   }
-#endif /* not MSDOS */
   if (ofd < 0)
     report_file_error ("Opening output file", Fcons (newname, Qnil));
 
@@ -2124,7 +2116,7 @@ entries (depending on how Emacs was built).  */)
   immediate_quit = 1;
   QUIT;
   while ((n = emacs_read (ifd, buf, sizeof buf)) > 0)
-    if (emacs_write (ofd, buf, n) != n)
+    if (emacs_write_sig (ofd, buf, n) != n)
       report_file_error ("I/O error", Fcons (newname, Qnil));
   immediate_quit = 0;
 
@@ -2611,7 +2603,11 @@ Use `file-symlink-p' to test for such links.  */)
      call the corresponding file handler.  */
   handler = Ffind_file_name_handler (absname, Qfile_exists_p);
   if (!NILP (handler))
-    return call2 (handler, Qfile_exists_p, absname);
+    {
+      Lisp_Object result = call2 (handler, Qfile_exists_p, absname);
+      errno = 0;
+      return result;
+    }
 
   absname = ENCODE_FILE (absname);
 
@@ -2708,7 +2704,6 @@ If there is no error, returns nil.  */)
   (Lisp_Object filename, Lisp_Object string)
 {
   Lisp_Object handler, encoded_filename, absname;
-  int fd;
 
   CHECK_STRING (filename);
   absname = Fexpand_file_name (filename, Qnil);
@@ -2723,10 +2718,8 @@ If there is no error, returns nil.  */)
 
   encoded_filename = ENCODE_FILE (absname);
 
-  fd = emacs_open (SSDATA (encoded_filename), O_RDONLY, 0);
-  if (fd < 0)
+  if (faccessat (AT_FDCWD, SSDATA (encoded_filename), R_OK, AT_EACCESS) != 0)
     report_file_error (SSDATA (string), Fcons (filename, Qnil));
-  emacs_close (fd);
 
   return Qnil;
 }
@@ -2835,7 +2828,11 @@ searchable directory.  */)
      call the corresponding file handler.  */
   handler = Ffind_file_name_handler (absname, Qfile_accessible_directory_p);
   if (!NILP (handler))
-    return call2 (handler, Qfile_accessible_directory_p, absname);
+    {
+      Lisp_Object r = call2 (handler, Qfile_accessible_directory_p, absname);
+      errno = 0;
+      return r;
+    }
 
   absname = ENCODE_FILE (absname);
   return file_accessible_directory_p (SSDATA (absname)) ? Qt : Qnil;
@@ -3347,7 +3344,7 @@ otherwise, if FILE2 does not exist, the answer is t.  */)
   if (stat (SSDATA (absname2), &st2) < 0)
     return Qt;
 
-  return (EMACS_TIME_GT (get_stat_mtime (&st1), get_stat_mtime (&st2))
+  return (EMACS_TIME_LT (get_stat_mtime (&st2), get_stat_mtime (&st1))
 	  ? Qt : Qnil);
 }
 
@@ -4577,8 +4574,8 @@ by calling `format-decode', which see.  */)
       && EMACS_NSECS (current_buffer->modtime) == NONEXISTENT_MODTIME_NSECS)
     {
       /* If visiting nonexistent file, return nil.  */
-      errno = save_errno;
-      report_file_error ("Opening input file", Fcons (orig_filename, Qnil));
+      report_file_errno ("Opening input file", Fcons (orig_filename, Qnil),
+			 save_errno);
     }
 
   if (read_quit)
@@ -4899,13 +4896,13 @@ This calls `write-region-annotate-functions' at the start, and
 
   if (desc < 0)
     {
+      int open_errno = errno;
 #ifdef CLASH_DETECTION
-      save_errno = errno;
       if (!auto_saving) unlock_file (lockname);
-      errno = save_errno;
 #endif /* CLASH_DETECTION */
       UNGCPRO;
-      report_file_error ("Opening output file", Fcons (filename, Qnil));
+      report_file_errno ("Opening output file", Fcons (filename, Qnil),
+			 open_errno);
     }
 
   record_unwind_protect (close_file_unwind, make_number (desc));
@@ -4915,13 +4912,13 @@ This calls `write-region-annotate-functions' at the start, and
       off_t ret = lseek (desc, offset, SEEK_SET);
       if (ret < 0)
 	{
+	  int lseek_errno = errno;
 #ifdef CLASH_DETECTION
-	  save_errno = errno;
 	  if (!auto_saving) unlock_file (lockname);
-	  errno = save_errno;
 #endif /* CLASH_DETECTION */
 	  UNGCPRO;
-	  report_file_error ("Lseek error", Fcons (filename, Qnil));
+	  report_file_errno ("Lseek error", Fcons (filename, Qnil),
+			     lseek_errno);
 	}
     }
 
@@ -5319,12 +5316,10 @@ e_write (int desc, Lisp_Object string, ptrdiff_t start, ptrdiff_t end,
 
       if (coding->produced > 0)
 	{
-	  coding->produced
-	    -= emacs_write (desc,
-			    STRINGP (coding->dst_object)
-			    ? SSDATA (coding->dst_object)
-			    : (char *) BYTE_POS_ADDR (coding->dst_pos_byte),
-			    coding->produced);
+	  char *buf = (STRINGP (coding->dst_object)
+		       ? SSDATA (coding->dst_object)
+		       : (char *) BYTE_POS_ADDR (coding->dst_pos_byte));
+	  coding->produced -= emacs_write_sig (desc, buf, coding->produced);
 
 	  if (coding->produced)
 	    return 0;
@@ -5379,36 +5374,19 @@ See Info node `(elisp)Modification Time' for more details.  */)
   return Qnil;
 }
 
-DEFUN ("clear-visited-file-modtime", Fclear_visited_file_modtime,
-       Sclear_visited_file_modtime, 0, 0, 0,
-       doc: /* Clear out records of last mod time of visited file.
-Next attempt to save will certainly not complain of a discrepancy.  */)
-  (void)
-{
-  current_buffer->modtime = make_emacs_time (0, UNKNOWN_MODTIME_NSECS);
-  current_buffer->modtime_size = -1;
-  return Qnil;
-}
-
 DEFUN ("visited-file-modtime", Fvisited_file_modtime,
        Svisited_file_modtime, 0, 0, 0,
        doc: /* Return the current buffer's recorded visited file modification time.
 The value is a list of the form (HIGH LOW USEC PSEC), like the time values that
 `file-attributes' returns.  If the current buffer has no recorded file
 modification time, this function returns 0.  If the visited file
-doesn't exist, HIGH will be -1.
+doesn't exist, return -1.
 See Info node `(elisp)Modification Time' for more details.  */)
   (void)
 {
-  if (EMACS_NSECS (current_buffer->modtime) < 0)
-    {
-      if (EMACS_NSECS (current_buffer->modtime) == NONEXISTENT_MODTIME_NSECS)
-	{
-	  /* make_lisp_time won't work here if time_t is unsigned.  */
-	  return list4i (-1, 65535, 0, 0);
-	}
-      return make_number (0);
-    }
+  int ns = EMACS_NSECS (current_buffer->modtime);
+  if (ns < 0)
+    return make_number (UNKNOWN_MODTIME_NSECS - ns);
   return make_lisp_time (current_buffer->modtime);
 }
 
@@ -5419,12 +5397,22 @@ Useful if the buffer was not read from the file normally
 or if the file itself has been changed for some known benign reason.
 An argument specifies the modification time value to use
 \(instead of that of the visited file), in the form of a list
-\(HIGH LOW USEC PSEC) as returned by `current-time'.  */)
-  (Lisp_Object time_list)
+\(HIGH LOW USEC PSEC) or an integer flag as returned by
+`visited-file-modtime'.  */)
+  (Lisp_Object time_flag)
 {
-  if (!NILP (time_list))
+  if (!NILP (time_flag))
     {
-      current_buffer->modtime = lisp_time_argument (time_list);
+      EMACS_TIME mtime;
+      if (INTEGERP (time_flag))
+	{
+	  CHECK_RANGED_INTEGER (time_flag, -1, 0);
+	  mtime = make_emacs_time (0, UNKNOWN_MODTIME_NSECS - XINT (time_flag));
+	}
+      else
+	mtime = lisp_time_argument (time_flag);
+
+      current_buffer->modtime = mtime;
       current_buffer->modtime_size = -1;
     }
   else
@@ -5620,7 +5608,7 @@ A non-nil CURRENT-ONLY argument means save only current buffer.  */)
 	  UNGCPRO;
 	}
 
-      stream = fopen (SSDATA (listfile), "w");
+      stream = emacs_fopen (SSDATA (listfile), "w");
     }
 
   record_unwind_protect (do_auto_save_unwind,
@@ -5887,6 +5875,7 @@ syms_of_fileio (void)
   DEFSYM (Qfile_error, "file-error");
   DEFSYM (Qfile_already_exists, "file-already-exists");
   DEFSYM (Qfile_date_error, "file-date-error");
+  DEFSYM (Qfile_notify_error, "file-notify-error");
   DEFSYM (Qexcl, "excl");
 
   DEFVAR_LISP ("file-name-coding-system", Vfile_name_coding_system,
@@ -5924,6 +5913,11 @@ of file names regardless of the current language environment.  */);
 	Fpurecopy (list3 (Qfile_date_error, Qfile_error, Qerror)));
   Fput (Qfile_date_error, Qerror_message,
 	build_pure_c_string ("Cannot set file date"));
+
+  Fput (Qfile_notify_error, Qerror_conditions,
+	Fpurecopy (list3 (Qfile_notify_error, Qfile_error, Qerror)));
+  Fput (Qfile_notify_error, Qerror_message,
+	build_pure_c_string ("File notification error"));
 
   DEFVAR_LISP ("file-name-handler-alist", Vfile_name_handler_alist,
 	       doc: /* Alist of elements (REGEXP . HANDLER) for file names handled specially.
@@ -6119,7 +6113,6 @@ This includes interactive calls to `delete-file' and
   defsubr (&Swrite_region);
   defsubr (&Scar_less_than_car);
   defsubr (&Sverify_visited_file_modtime);
-  defsubr (&Sclear_visited_file_modtime);
   defsubr (&Svisited_file_modtime);
   defsubr (&Sset_visited_file_modtime);
   defsubr (&Sdo_auto_save);

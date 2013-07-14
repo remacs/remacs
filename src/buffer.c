@@ -4612,7 +4612,6 @@ evaporate_overlays (ptrdiff_t pos)
 
 #ifdef USE_MMAP_FOR_BUFFERS
 
-#include <sys/types.h>
 #include <sys/mman.h>
 
 #ifndef MAP_ANON
@@ -4626,8 +4625,6 @@ evaporate_overlays (ptrdiff_t pos)
 #ifndef MAP_FAILED
 #define MAP_FAILED ((void *) -1)
 #endif
-
-#include <stdio.h>
 
 #if MAP_ANON == 0
 #include <fcntl.h>
@@ -4738,7 +4735,7 @@ mmap_init (void)
   if (mmap_fd <= 0)
     {
       /* No anonymous mmap -- we need the file descriptor.  */
-      mmap_fd = open ("/dev/zero", O_RDONLY);
+      mmap_fd = emacs_open ("/dev/zero", O_RDONLY, 0);
       if (mmap_fd == -1)
 	fatal ("Cannot open /dev/zero: %s", emacs_strerror (errno));
     }
@@ -6106,6 +6103,11 @@ unmodified; (HIGH LOW USEC PSEC) is in the same style as (current-time)
 and is the visited file's modification time, as of that time.  If the
 modification time of the most recent save is different, this entry is
 obsolete.
+
+An entry (t . 0) means means the buffer was previously unmodified but
+its time stamp was unknown because it was not associated with a file.
+An entry (t . -1) is similar, except that it means the buffer's visited
+file did not exist.
 
 An entry (nil PROPERTY VALUE BEG . END) indicates that a text property
 was modified between BEG and END.  PROPERTY is the property name,

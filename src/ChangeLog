@@ -1,3 +1,476 @@
+2013-07-14  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* callproc.c (child_setup, relocate_fd) [!DOS_NT]:
+	* process.c (create_process) [!DOS_NT]:
+	Remove now-unnecessary calls to emacs_close.
+
+2013-07-13  Eli Zaretskii  <eliz@gnu.org>
+
+	* w32term.c (x_draw_hollow_cursor): Delete the brush object when
+	returning early.  (Bug#14850)
+
+	* coding.c (syms_of_coding): Set up inhibit-null-byte-detection
+	and inhibit-iso-escape-detection attributes of 'undecided'.
+	(Bug#14822)
+
+2013-07-13  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* deps.mk (sysdep.o): Remove dependency on ../lib/ignore-value.h.
+	Reported by Herbert J. Skuhra in
+	<http://lists.gnu.org/archive/html/emacs-devel/2013-07/msg00455.html>.
+
+	Don't lose top specpdl entry when memory is exhausted.
+	* eval.c (grow_specpdl): Increment specpdl top by 1 and check for
+	specpdl overflow here, to simplify callers; all callers changed.
+	Always reserve an unused entry at the stack top; this avoids
+	losing the top entry's information when memory is exhausted.
+
+2013-07-12  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Clean up errno reporting and fix some errno-reporting bugs.
+	* callproc.c (Fcall_process):
+	* fileio.c (Fcopy_file, Finsert_file_contents, Fwrite_region):
+	* process.c (create_process, Fmake_network_process):
+	* unexaix.c (report_error):
+	* unexcoff.c (report_error):
+	Be more careful about reporting the errno of failed operations.
+	The code previously reported the wrong errno sometimes.
+	Also, prefer report_file_errno to setting errno + report_file_error.
+	(Fcall_process): Look at openp return value rather than at path,
+	as that's a bit faster and clearer when there's a numeric predicate.
+	* fileio.c (report_file_errno): New function, with most of the
+	old contents of report_file_error.
+	(report_file_error): Use it.
+	(Ffile_exists_p, Ffile_accessible_directory_p):
+	Set errno to 0 when it is junk.
+	* fileio.c (Faccess_file):
+	* image.c (x_create_bitmap_from_file):
+	Use faccessat rather than opening the file, to avoid the hassle of
+	having a file descriptor open.
+	* lisp.h (report_file_errno): New decl.
+	* lread.c (Flocate_file_internal): File descriptor 0 is valid, too.
+
+	Minor EBADF fixes.
+	* process.c (create_process, wait_reading_process_output) [AIX]:
+	Remove obsolete SIGHUP-related  code, as Emacs no longer disables
+	SIGHUP, so EBADF is no longer acceptable here (it wouldn't work in
+	a multithreaded environment anyway).
+	* sysdep.c (emacs_close): It's not dangerous to invoke emacs_close (-1).
+
+2013-07-12  Andreas Schwab  <schwab@linux-m68k.org>
+
+	* image.c (x_find_image_file): Don't close a remote file handle.
+
+2013-07-12  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Fix races with threads and file descriptors.
+	* callproc.c (Fcall_process_region):
+	* dired.c (open_directory):
+	* emacs.c (main, Fdaemon_initialized):
+	* image.c (x_find_image_file):
+	* inotify.c (Finotify_rm_watch):
+	* lread.c (Flocate_file_internal):
+	* process.c (Fnetwork_interface_list, Fnetwork_interface_info):
+	* term.c (term_mouse_moveto, init_tty):
+	* termcap.c (tgetent):
+	* unexaix.c, unexcoff.c (report_error, report_error_1, adjust_lnnoptrs)
+	* unexaix.c, unexcoff.c, unexcw.c, unexelf.c (unexec):
+	* unexhp9k800.c, unexmacosx.c (unexec):
+	* callproc.c (Fcall_process_region):
+	Use emacs_close, not close.
+	* sysdep.c (POSIX_CLOSE_RESTART, posix_close) [!POSIX_CLOSE_RESTART]:
+	New macro and function, which emulates the POSIX_CLOSE_RESTART macro
+	and posix_close function on current platforms (which all lack them).
+	(emacs_close): Use it.  This should fix the races on GNU/Linux and
+	on AIX and on future platforms that support POSIX_CLOSE_RESTART,
+	and it should avoid closing random victim file descriptors on
+	other platforms.
+
+2013-07-11  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* inotify.c (uninitialized): Remove.  All uses replaced by -1.
+	(Finotify_add_watch): Simplify, since -1 means uninitialized now.
+	Touch up doc a bit.
+
+	* eval.c (backtrace_function, backtrace_args): Now EXTERNALLY_VISIBLE.
+	This is for .gdbinit xbacktrace.
+
+	* sysdep.c, term.c, termcap.c, terminal.c: Integer-related minor fixes.
+	* sysdep.c (emacs_get_tty): Return void, since nobody uses the value.
+	(emacs_set_tty): Now static.
+	* sysdep.c (emacs_set_tty, tabs_safe_p, emacs_close):
+	* term.c (tty_capable_p, tty_default_color_capabilities)
+	(get_tty_terminal, term_mouse_movement)
+	(handle_one_term_event, init_tty, maybe_fatal):
+	* termcap.c (tgetst1, struct termcap_buffer, valid_filename_p)
+	(tgetent, scan_file, name_match, compare_contin):
+	* terminal.c (get_terminal):
+	Use bool for boolean.
+	* sysdep.c (init_system_name): Don't overflow stack on huge hostname.
+	Prefer char to unsigned char if either will do.
+	* term.c (OUTPUT, turn_on_face): Omit unnecessary casts to int.
+	(tty_write_glyphs): Prefer int to unsigned.
+	(produce_glyphless_glyph): Remove 2nd (unused) int arg.
+	All callers changed.
+	* termcap.c (tprint, main) [TEST]: Remove non-working test.
+
+2013-07-10  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Port to C89.
+	* bytecode.c (BYTE_CODE_THREADED): Do not define if __STRICT_ANSI__.
+	(B__dummy__): New dummy symbol, to pacify C89.
+	* dbusbind.c (XD_DEBUG_MESSAGE): Omit debugging on C89 hosts, since
+	they can't grok varargs macros.
+	* dispnew.c (add_window_display_history)
+	(add_frame_display_history):
+	* print.c (print_object):
+	* xdisp.c (debug_method_add):
+	Use %p printf format only for void pointers.
+	* emacs.c (usage_message): New constant, replacing ...
+	(USAGE1, USAGE2, USAGE3): Remove; they were too long for C89.
+	(main): Adjust to usage reorg.
+	* fns.c (syms_of_fns):
+	* profiler.c (syms_of_profiler):
+	Don't use non-constant struct initializers.
+	* gnutls.h (gnutls_initstage_t):
+	* lisp.h (enum Lisp_Fwd_Type):
+	* lread.c (lisp_file_lexically_bound_p):
+	* xsettings.c (anonymous enum):
+	Remove trailing comma.
+	* xsettings.c (apply_xft_settings): Use %f, not %lf; %lf is a C99ism.
+	* lisp.h (ENUM_BF): Use unsigned if pedantic.
+	(DEFUN_FUNCTION_INIT): New macro, that falls back on a cast if pre-C99.
+	(DEFUN): Use it.
+	* regex.c (const_re_char): New type, to pacify strict C89.
+	All uses of 'const re_char' replaced to use it.
+	* regex.h (_Restrict_): Rename from __restrict, to avoid clash
+	with glibc when strict C89.  This change is imported from gnulib.
+	All uses changed.
+	(_Restrict_arr_): Rename from __restrict_arr, similarly.
+	* sysdep.c (time_from_jiffies) [!HAVE_LONG_LONG_INT]:
+	Omit GNU_LINUX implementation, since it requires long long.
+	* xterm.c (x_draw_underwave):
+	Do not assume the traditional order of struct's members.
+	(x_term_init): Rewrite to avoid the need for non-constant structure
+	initializers.
+
+	Syntax cleanup, mostly replacing macros with functions.
+`	This removes the need for the syntax_temp hack.
+	* search.c: Include syntax.h after buffer.h, since syntax.h uses BVAR.
+	* syntax.c (SYNTAX_INLINE): New macro.
+	(SYNTAX_FLAGS_COMSTART_FIRST, SYNTAX_FLAGS_COMSTART_SECOND)
+	(SYNTAX_FLAGS_COMEND_FIRST, SYNTAX_FLAGS_COMEND_SECOND)
+	(SYNTAX_FLAGS_PREFIX, SYNTAX_FLAGS_COMMENT_STYLEB)
+	(SYNTAX_FLAGS_COMMENT_STYLEC, SYNTAX_FLAGS_COMMENT_STYLEC2)
+	(SYNTAX_FLAGS_COMMENT_NESTED, SYNTAX_FLAGS_COMMENT_STYLE)
+	(SYNTAX_COMEND_FIRST): Now functions, not macros.
+	(ST_COMMENT_STYLE, ST_STRING_STYLE, INTERVALS_AT_ONCE):
+	Now constants, not macros.
+	(syntax_temp) [!__GNUC__]: Remove.
+	(SYNTAX_PREFIX): Remove; all uses replaced by syntax_prefix_flag_p.
+	(syntax_prefix_flag_p): Move implementation of SYNTAX_PREFIX here.
+	(SET_RAW_SYNTAX_ENTRY, SET_RAW_SYNTAX_ENTRY_RANGE, SYNTAX_MATCH)
+	(SETUP_SYNTAX_TABLE, SETUP_SYNTAX_TABLE_FOR_OBJECT):
+	Move here from syntax.h; now functions, not macros.  Except for the
+	last function, these are static since only syntax.c uses them.
+	(syntax_multibyte): Rename from SYNTAX_WITH_MULTIBYTE_CHECK.
+	All uses changed.  Now a function, not a macro; use this fact
+	to simplify the code.
+	(scan_lists, scan_sexps_forward): Remove workarounds for ancient
+	compiler bugs; no longer relevant.
+	* syntax.h: Use INLINE_HEADER_BEGIN, INLINE_HEADER_END.
+	(SYNTAX_INLINE): New macro.
+	(struct gl_state_s, gl_state): Move earlier, so that it's in scope
+	for the new functions.  Use bool for boolean member.
+	(SYNTAX_ENTRY, SYNTAX, SYNTAX_WITH_FLAGS, SYNTAX_MATCH)
+	(SYNTAX_TABLE_BYTE_TO_CHAR, UPDATE_SYNTAX_TABLE_FORWARD)
+	(UPDATE_SYNTAX_TABLE_BACKWARD, UPDATE_SYNTAX_TABLE)
+	(SETUP_BUFFER_SYNTAX_TABLE):
+	Now extern inline functions, not macros.
+	(CURRENT_SYNTAX_TABLE, SYNTAX_ENTRY_INT):
+	Remove; all uses replaced by implementation.
+	(syntax_temp) [!__GNUC__]: Remove decl.
+	(SETUP_SYNTAX_TABLE_FOR_OBJECT): New decl.
+
+2013-07-10  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* emacs.c (main): Fix syntax error.
+
+2013-07-10  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Timestamp fixes for undo (Bug#14824).
+	* atimer.c (schedule_atimer):
+	* fileio.c (Ffile_newer_than_file_p):
+	Minor cleanup: use EMACS_TIME_LT so that we can remove EMACS_TIME_GT.
+	* buffer.c (buffer-undo-list): Document (t . 0) and (t . -1).
+	* fileio.c (Fclear_visited_file_modtime): Move to lisp/files.el.
+	(syms_of_fileio): Remove Sclear_visited_file_name.
+	(Fvisited_file_modtime): Return -1, not (-1 ...), when the visited
+	file doesn't exist; this avoids an ambiguity with negative timestamps.
+	(Fset_visited_file_modtime): Accept -1 and 0 as time-list arg.
+	* systime.h (make_emacs_time, invalid_emacs_time):
+	Don't assume struct timespec layout; POSIX doesn't guarantee it.
+	(EMACS_TIME_NE, EMACS_TIME_GT, EMACS_TIME_GE): Remove.
+	* undo.c (record_first_change): Push (visited-file-modtime) onto
+	undo list rather than reimplementing it by hand, incorrectly.
+
+2013-07-09  Ken Brown  <kbrown@cornell.edu>
+
+	* sheap.c (STATIC_HEAP_SIZE) [__x86_64__]: Increase to 18MB.
+
+2013-07-09  Juanma Barranquero  <lekktu@gmail.com>
+
+	* makefile.w32-in ($(BLD)/emacs.$(O), $(BLD)/sysdep.$(O)): Update.
+
+2013-07-09  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Handle errno and exit status a bit more carefully.
+	* callproc.c (child_setup) [!DOS_NT]: Don't try to stuff an error
+	number into an exit status.  Instead, use EXIT_CANCELED.
+	(child_setup) [!MSDOS]: Avoid possible deadlock with vfork.
+	* callproc.c (relocate_fd):
+	* emacs.c (close_output_streams, main):
+	* process.c (create_process):
+	* sysdep.c (sys_subshell) [!DOS_NT || !WINDOWSNT]:
+	Use emacs_perror for simplicity.
+	* callproc.c (relocate_fd, main):
+	* sysdep.c (sys_subshell):
+	Exit with EXIT_CANCELED etc., not 1, when exec setup fails.
+	(shut_down_emacs): Use emacs_write, not write.
+	* emacs.c, sysdep.c: Don't include <ignore-value.h>.
+	* fileio.c (Fcopy_file, e_write):
+	* nsterm.m (ns_select):
+	* process.c (send_process):
+	* sound.c (vox_write):
+	Use emacs_write_sig, not emacs_write.
+	* lisp.h (emacs_write_sig, emacs_perror): New decls.
+	* process.h (EXIT_CANCELED), EXIT_CANNOT_INVOKE, EXIT_ENOENT):
+	New constants.
+	* sysdep.c (emacs_backtrace): Use emacs_write, not ignore_value
+	of write.
+	(emacs_full_write): New function.
+	(emacs_write): Rewrite to use it.
+	(emacswrite_sig, emacs_perror): New functions.
+	* xrdb.c (fatal): Don't invoke perror, since errno might be garbage.
+
+2013-07-08  Magnus Henoch <magnus.henoch@gmail.com> (tiny change).
+
+	* image.c (imagemagick_load_image): Do not use MagickExportImagePixels
+	on NS even if it is present.  Pixmap on NS is a void*.
+
+2013-07-07  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Port to Ubuntu 10 (Bug#14803).
+	Problem reported by T.V. Raman.
+	* process.c (close_on_exec, accept4, process_socket):
+	Define these if !HAVE_ACCEPT4, not if !SOCK_CLOEXEC.
+
+2013-07-07  Eli Zaretskii  <eliz@gnu.org>
+
+	* w32.c (sys_dup): Declare prototype.
+
+	* filelock.c:
+	* emacs.c:
+	* callproc.c [WINDOWSNT]: Include sys/socket.h.
+
+2013-07-07  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Make file descriptors close-on-exec when possible (Bug#14803).
+	This simplifies Emacs a bit, since it no longer needs to worry
+	about closing file descriptors by hand in some cases.
+	It also fixes some unlikely races.  Not all such races, as
+	libraries often open files internally without setting
+	close-on-exec, but it's an improvement.
+	* alloc.c (valid_pointer_p) [!WINDOWSNT]:
+	* callproc.c (Fcall_process) [!MSDOS]:
+	* emacs.c (main) [!DOS_NT]:
+	* nsterm.m (ns_term_init):
+	* process.c (create_process):
+	Use 'pipe2' with O_CLOEXEC instead of 'pipe'.
+	* emacs.c (Fcall_process_region) [HAVE_MKOSTEMP]:
+	* filelock.c (create_lock_file) [HAVE_MKOSTEMP]:
+	Prefer mkostemp with O_CLOEXEC to mkstemp.
+	* callproc.c (relocate_fd) [!WINDOWSNT]:
+	* emacs.c (main): Use F_DUPFD_CLOEXEC, not plain F_DUPFD.
+	No need to use fcntl (..., F_SETFD, FD_CLOEXEC), since we're
+	now using pipe2.
+	* filelock.c (create_lock_file) [! HAVE_MKOSTEMP]:
+	Make the resulting file descriptor close-on-exec.
+	* lisp.h, lread.c, process.c (close_load_descs, close_process_descs):
+	* lread.c (load_descriptor_list, load_descriptor_unwind):
+	Remove; no longer needed.  All uses removed.
+	* process.c (SOCK_CLOEXEC): Define to 0 if not supplied by system.
+	(close_on_exec, accept4, process_socket) [!SOCK_CLOEXEC]:
+	New functions.
+	(socket) [!SOCK_CLOEXEC]: Supply a substitute.
+	(Fmake_network_process, Fnetwork_interface_list):
+	(Fnetwork_interface_info, server_accept_connection):
+	Make newly-created socket close-on-exec.
+	* sysdep.c (emacs_open, emacs_fopen):
+	Make new-created descriptor close-on-exec.
+	* w32.c (fcntl): Support F_DUPFD_CLOEXEC well enough for Emacs.
+	* w32.c, w32.h (pipe2): Rename from 'pipe', with new flags arg.
+
+2013-07-07  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* nsterm.m (sendEvent:): Propagate keyboard events to modal windows
+	for NS_IMPL_GNUSTEP.
+
+2013-07-07  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Fix openp errno handling.
+	* callproc.c (Fcall_process): Preserve openp errno around close.
+	* lread.c (openp): Set errno when returning -1, as some callers
+	expect this.
+
+2013-07-06  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* nsterm.m (sendEvent:): Handle NSAPP_DATA2_RUNFILEDIALOG.
+
+	* nsterm.h (NSSavePanel): Update comment.
+	(NSAPP_DATA2_RUNFILEDIALOG): Define.
+	(ns_run_file_dialog): Declare.
+
+	* nsfns.m: Remove panelOK.
+	(ns_fd_data): New.
+	(ns_run_file_dialog): New function.
+	(Fns_read_file_name): Fill in ns_fd_data, post an event and start the
+	event loop, so file dialog is popped up by ns_run_file_dialog, called
+	by sendEvent (Bug#14578).
+	(EmacsSavePanel, EmacsOpenPanel): Remove ok and cancel methods.
+
+2013-07-06  Eli Zaretskii  <eliz@gnu.org>
+
+	* xdisp.c (default_line_pixel_height): New function.
+	(pos_visible_p, move_it_vertically_backward, try_scrolling)
+	(try_cursor_movement, redisplay_window, try_window)
+	(try_window_id): Use it instead of FRAME_LINE_HEIGHT.  (Bug#14771)
+
+	* window.c (window_scroll_pixel_based): use
+	default_line_pixel_height.
+
+	* dispextern.h (default_line_pixel_height): Add prototype.
+
+	* frame.c (x_set_line_spacing): Accept a float value for
+	line-spacing parameter, per the documentation.
+
+	* data.c (Fmultibyte_string_p): Doc fix.
+
+2013-07-05  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Use emacs_open more consistently when opening files.
+	This handles EINTR more consistently now, and makes it easier
+	to introduce other uniform changes to file descriptor handling.
+	* src/systdio.h: New file.
+	* src/buffer.c (mmap_init):
+	* cygw32.c (chdir_to_default_directory):
+	* dispnew.c (Fopen_termscript):
+	* emacs.c (Fdaemon_initialized):
+	* fileio.c (Fdo_auto_save):
+	* image.c (slurp_file, png_load_body, jpeg_load_body):
+	* keyboard.c (Fopen_dribble_file):
+	* lread.c (Fload):
+	* print.c (Fredirect_debugging_output):
+	* sysdep.c (get_up_time, procfs_ttyname, procfs_get_total_memory):
+	* termcap.c (tgetent):
+	* unexaix.c, unexcoff.c (unexec, adjust_lnnoptrs):
+	* unexcw.c, unexelf.c, unexhp9k800.c, unexmacosx.c (unexec):
+	* w32term.c (w32_initialize) [CYGWIN]:
+	* xfaces.c (Fx_load_color_file):
+	Use emacs_open instead of plain open, and emacs_fopen instead of
+	plain fopen.
+	* dispnew.c, fileio.c, image.c, keyboard.c, lread.c, print.c, sysdep.c:
+	* xfaces.c: Include sysstdio.h rather than stdio.h, for emacs_fopen.
+	* callproc.c (default_output_mode): New constant.
+	(Fcall_process): Use it to call emacs_open instead of plain creat.
+	* dispnew.c (Fopen_termscript): Fix minor race in opening termscript.
+	* sysdep.c (emacs_open): Add commentary and don't call file name "path".
+	(emacs_fopen): New function.
+	* unexaix.c, unexcoff.c, unexelf.c, unexhp9k800.c, unexmacosx.c:
+	Include <lisp.h>, for emacs_open.
+	* unexelf.c (fatal): Remove decl; not needed with <lisp.h> included.
+
+	Remove duplicate #include directives.
+	* alloc.c [GC_MARK_STACK == GC_USE_GCPROS_CHECK_ZOMBIES]:
+	* xfaces.c:
+	Don't include stdio.h twice.
+	* buffer.c [USE_MMAP_FOR_BUFFERS]:
+	Don't include sys/types.h or stdio.h twice.
+	* fileio.c [WINDOWSNT | MSDOS]: Don't include fcntl.h twice.
+	* lread.c: Don't include coding.h twice.
+	* nsfont.m: Don't include frame.h twice.
+	* process.c [HAVE_RES_INIT]: Don't include <netinet/in.h> twice.
+	* ralloc.c: Don't include <unistd.h> twice.
+	* xdisp.c: Don't include font.h twice.
+	* xterm.c: Don't include fontset.h twice.
+	* xterm.h [USE_X_TOOLKIT]: Don't include X11/StringDefs.h twice.
+
+2013-07-04  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Scale ImageMagick images more carefully.
+	* image.c (scale_image_size) [HAVE_IMAGEMAGICK]: New function.
+	(compute_image_size): Use it.  Define only if HAVE_IMAGEMAGICK.
+	Be more careful about avoiding undefined behavior after
+	integer overflow and division by zero.
+
+2013-07-04  YAMAMOTO Mitsuharu  <mituharu@math.s.chiba-u.ac.jp>
+
+	* w32fns.c (Qgeometry, Qworkarea, Qmm_size, Qframes): New variables.
+	(syms_of_w32fns): DEFSYM them.
+	(MONITORINFOF_PRIMARY, SM_XVIRTUALSCREEN, SM_YVIRTUALSCREEN)
+	(CCHDEVICENAME): Define macros if not defined.
+	(struct MONITOR_INFO_EX): New struct.
+	(MonitorEnum_Proc, EnumDisplayMonitors_Proc): New prototypes.
+	(enum_display_monitors_fn): New variable.
+	(globals_of_w32fns): Initialize it.
+	(Fx_display_pixel_width, Fx_display_pixel_height)
+	(Fx_display_mm_height, Fx_display_mm_width): Mention behavior on
+	multi-monitor setups in docstrings.
+	(Fx_display_mm_height, Fx_display_mm_width): Approximate whole
+	screen size by primary monitor's millimeter per pixel.
+	(w32_monitor_enum, w32_display_monitor_attributes_list)
+	(w32_display_monitor_attributes_list_fallback)
+	(Fw32_display_monitor_attributes_list): New functions.
+	(syms_of_w32fns): Defsubr Sw32_display_monitor_attributes_list.
+
+	* w32term.c (SM_CXVIRTUALSCREEN, SM_CYVIRTUALSCREEN): Define macros
+	if not defined.
+	(x_display_pixel_height, x_display_pixel_width): Use GetSystemMetrics.
+
+2013-07-04  Michael Albinus  <michael.albinus@gmx.de>
+
+	* fileio.c (Qfile_notify_error): New error symbol.
+
+	* gfilenotify.c (Fgfile_add_watch, Fgfile_rm_watch):
+	* inotify.c (inotify_callback, symbol_to_inotifymask)
+	(Finotify_add_watch, Finotify_rm_watch): Use it.
+	(inotifyevent_to_event): Exchange order of cookie and file name.
+	(Finotify_add_watch): Adapt docstring.
+
+	* lisp.h (Qfile_notify_error): Declare.
+
+2013-07-04  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Try again to fix FreeBSD bug re multithreaded memory alloc (Bug#14569).
+	* emacs.c (main) [HAVE_PTHREAD && !SYSTEM_MALLOC && !DOUG_LEA_MALLOC]:
+	Do not clear _malloc_thread_enabled_p, undoing the previous change,
+	which did not work (see <http://bugs.gnu.org/14569#307>).
+	(main): Do not invoke malloc_enable_thread if (! CANNOT_DUMP
+	&& (!noninteractive || initialized)).  This attempts to thread
+	the needle between the Scylla of FreeBSD and the Charybdis of Cygwin.
+
+2013-07-04  Juanma Barranquero  <lekktu@gmail.com>
+
+	* image.c (x_to_xcolors) [HAVE_NTGUI]: Remove unused var `hdc'.
+	(x_build_heuristic_mask) [HAVE_NTGUI]: Remove unused var `frame_dc'.
+
+2013-07-04  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Try to fix FreeBSD bug re multithreaded memory allocation (Bug#14569).
+	* emacs.c (main) [HAVE_PTHREAD && !SYSTEM_MALLOC && !DOUG_LEA_MALLOC]:
+	Clear _malloc_thread_enabled_p at startup.  Reported by Ashish SHUKLA in
+	<http://lists.gnu.org/archive/html/emacs-devel/2013-07/msg00088.html>.
+
 2013-07-02  Paul Eggert  <eggert@cs.ucla.edu>
 
 	* sysdep.c (sys_siglist) [HAVE_DECL___SYS_SIGLIST]:
@@ -507,7 +980,7 @@
 	(VALMASK): Also a constant, for benefit of old GDB.
 	(LISP_INT_TAG_P): Remove; no longer needed as the only caller
 	is INTEGERP, which can fold it in.
-	(XLI, XIL, XHASH, XTYPE,XINT, XFASTINT, XUINT)
+	(XLI, XIL, XHASH, XTYPE, XINT, XFASTINT, XUINT)
 	(make_number, XPNTR, XUNTAG, EQ, XCONS, XVECTOR, XSTRING, XSYMBOL)
 	(XFLOAT, XPROCESS, XWINDOW, XTERMINAL, XSUBR, XBUFFER, XCHAR_TABLE)
 	(XSUB_CHAR_TABLE, XBOOL_VECTOR, make_lisp_ptr, CHECK_TYPE)

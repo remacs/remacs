@@ -990,13 +990,14 @@ calculating indentation on the lines after it."
 (defun ruby-move-to-block (n)
   "Move to the beginning (N < 0) or the end (N > 0) of the
 current block, a sibling block, or an outer block.  Do that (abs N) times."
+  (back-to-indentation)
   (let ((signum (if (> n 0) 1 -1))
         (backward (< n 0))
-        (depth (or (nth 2 (ruby-parse-region (line-beginning-position)
-                                             (line-end-position)))
-                   0))
+        (depth (or (nth 2 (ruby-parse-region (point) (line-end-position))) 0))
         case-fold-search
         down done)
+    (when (looking-at ruby-block-mid-re)
+      (setq depth (+ depth signum)))
     (when (< (* depth signum) 0)
       ;; Moving end -> end or beginning -> beginning.
       (setq depth 0))
@@ -1033,22 +1034,16 @@ current block, a sibling block, or an outer block.  Do that (abs N) times."
             (unless (car state) ; Line ends with unfinished string.
               (setq depth (+ (nth 2 state) depth))))
           (cond
-           ;; Deeper indentation, we found a block.
-           ;; FIXME: We can't recognize empty blocks this way.
+           ;; Increased depth, we found a block.
            ((> (* signum depth) 0)
             (setq down t))
-           ;; Block found, and same indentation as when started, stop.
+           ;; We're at the same depth as when we started, and we've
+           ;; encountered a block before.  Stop.
            ((and down (zerop depth))
             (setq done t))
-           ;; Shallower indentation, means outer block, can stop now.
+           ;; Lower depth, means outer block, can stop now.
            ((< (* signum depth) 0)
-            (setq done t)))))
-        (if done
-            (save-excursion
-              (back-to-indentation)
-              ;; Not really at the first or last line of the block, move on.
-              (if (looking-at (concat "\\<\\(" ruby-block-mid-re "\\)\\>"))
-                  (setq done nil))))))
+            (setq done t)))))))
     (back-to-indentation)))
 
 (defun ruby-beginning-of-block (&optional arg)
@@ -1356,7 +1351,7 @@ If the result is do-end block, it will always be multiline."
     (progn
       (eval-and-compile
         (defconst ruby-percent-literal-beg-re
-          "\\(%\\)[qQrswWx]?\\([[:punct:]]\\)"
+          "\\(%\\)[qQrswWxIi]?\\([[:punct:]]\\)"
           "Regexp to match the beginning of percent literal.")
 
         (defconst ruby-syntax-methods-before-regexp
@@ -1392,7 +1387,7 @@ It will be properly highlighted even when the call omits parens.")
           (funcall
            (syntax-propertize-rules
             ;; $' $" $` .... are variables.
-            ;; ?' ?" ?` are ascii codes.
+            ;; ?' ?" ?` are character literals (one-char strings in 1.9+).
             ("\\([?$]\\)[#\"'`]"
              (1 (unless (save-excursion
                           ;; Not within a string.
@@ -1523,7 +1518,7 @@ It will be properly highlighted even when the call omits parens.")
             (save-match-data
               (save-excursion
                 (goto-char (nth 8 parse-state))
-                (looking-at "%\\(?:[QWrx]\\|\\W\\)")))))))
+                (looking-at "%\\(?:[QWrxI]\\|\\W\\)")))))))
 
       (defun ruby-syntax-propertize-expansions (start end)
         (save-excursion
@@ -1726,7 +1721,7 @@ See `font-lock-syntax-table'.")
 (defconst ruby-font-lock-keywords
   (list
    ;; functions
-   '("^\\s *def\\s +\\([^( \t\n]+\\)"
+   '("^\\s *def\\s +\\(?:[^( \t\n.]*\\.\\)?\\([^( \t\n]+\\)"
      1 font-lock-function-name-face)
    (list (concat
           "\\(^\\|[^.@$]\\|\\.\\.\\)\\("
@@ -1767,31 +1762,66 @@ See `font-lock-syntax-table'.")
              "yield")
            'symbols)
           "\\|"
-          ;; keyword-like methods on Kernel and Module
           (regexp-opt
-           '("alias_method"
+           ;; built-in methods on Kernel
+           '("__callee__"
+             "__dir__"
+             "__method__"
+             "abort"
+             "at_exit"
              "autoload"
+             "autoload?"
+             "binding"
+             "block_given?"
+             "caller"
+             "catch"
+             "eval"
+             "exec"
+             "exit"
+             "exit!"
+             "fail"
+             "fork"
+             "format"
+             "lambda"
+             "load"
+             "loop"
+             "open"
+             "p"
+             "print"
+             "printf"
+             "proc"
+             "putc"
+             "puts"
+             "raise"
+             "rand"
+             "readline"
+             "readlines"
+             "require"
+             "require_relative"
+             "sleep"
+             "spawn"
+             "sprintf"
+             "srand"
+             "syscall"
+             "system"
+             "throw"
+             "trap"
+             "warn"
+             ;; keyword-like private methods on Module
+             "alias_method"
              "attr"
              "attr_accessor"
              "attr_reader"
              "attr_writer"
-             "catch"
              "define_method"
              "extend"
-             "fail"
              "include"
-             "lambda"
-             "loop"
              "module_function"
+             "prepend"
              "private"
-             "proc"
              "protected"
              "public"
-             "raise"
              "refine"
-             "require"
-             "require_relative"
-             "throw"
              "using")
            'symbols)
           "\\)")
@@ -1799,12 +1829,16 @@ See `font-lock-syntax-table'.")
          '(if (match-beginning 4)
               font-lock-builtin-face
             font-lock-keyword-face))
+   ;; Perl-ish keywords
+   "\\_<\\(?:BEGIN\\|END\\)\\_>\\|^__END__$"
    ;; here-doc beginnings
    `(,ruby-here-doc-beg-re 0 (unless (ruby-singleton-class-p (match-beginning 0))
                                'font-lock-string-face))
    ;; variables
    '("\\(^\\|[^.@$]\\|\\.\\.\\)\\_<\\(nil\\|self\\|true\\|false\\)\\>"
      2 font-lock-variable-name-face)
+   ;; keywords that evaluate to certain values
+   '("\\_<__\\(?:LINE\\|ENCODING\\|FILE\\)__\\_>" 0 font-lock-variable-name-face)
    ;; symbols
    '("\\(^\\|[^:]\\)\\(:\\([-+~]@?\\|[/%&|^`]\\|\\*\\*?\\|<\\(<\\|=>?\\)?\\|>[>=]?\\|===?\\|=~\\|![~=]?\\|\\[\\]=?\\|@?\\(\\w\\|_\\)+\\([!?=]\\|\\b_*\\)\\|#{[^}\n\\\\]*\\(\\\\.[^}\n\\\\]*\\)*}\\)\\)"
      2 font-lock-constant-face)
@@ -1815,14 +1849,22 @@ See `font-lock-syntax-table'.")
      0 font-lock-variable-name-face)
    ;; constants
    '("\\(?:\\_<\\|::\\)\\([A-Z]+\\(\\w\\|_\\)*\\)"
-     1 font-lock-type-face)
+     1 (unless (eq ?\( (char-after)) font-lock-type-face))
    '("\\(^\\s *\\|[\[\{\(,]\\s *\\|\\sw\\s +\\)\\(\\(\\sw\\|_\\)+\\):[^:]" 2 font-lock-constant-face)
+   ;; conversion methods on Kernel
+   (list (concat "\\(?:^\\|[^.@$]\\|\\.\\.\\)"
+                 (regexp-opt '("Array" "Complex" "Float" "Hash"
+                               "Integer" "Rational" "String") 'symbols))
+         1 font-lock-builtin-face)
    ;; expression expansion
    '(ruby-match-expression-expansion
      2 font-lock-variable-name-face t)
-   ;; warn lower camel case
-                                        ;'("\\<[a-z]+[a-z0-9]*[A-Z][A-Za-z0-9]*\\([!?]?\\|\\>\\)"
-                                        ;  0 font-lock-warning-face)
+   ;; negation char
+   '("[^[:alnum:]_]\\(!\\)[^=]"
+     1 font-lock-negation-char-face)
+   ;; character literals
+   ;; FIXME: Support longer escape sequences.
+   '("\\?\\\\?\\S " 0 font-lock-string-face)
    )
   "Additional expressions to highlight in Ruby mode.")
 

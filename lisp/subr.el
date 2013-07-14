@@ -1980,7 +1980,7 @@ any other terminator is used itself as input.
 The optional argument PROMPT specifies a string to use to prompt the user.
 The variable `read-quoted-char-radix' controls which radix to use
 for numeric input."
-  (let ((message-log-max nil) done (first t) (code 0) char translated)
+  (let ((message-log-max nil) done (first t) (code 0) translated)
     (while (not done)
       (let ((inhibit-quit first)
 	    ;; Don't let C-h get the help message--only help function keys.
@@ -1990,20 +1990,14 @@ for numeric input."
 or the octal character code.
 RET terminates the character code and is discarded;
 any other non-digit terminates the character code and is then used as input."))
-	(setq char (read-event (and prompt (format "%s-" prompt)) t))
+	(setq translated (read-key (and prompt (format "%s-" prompt))))
 	(if inhibit-quit (setq quit-flag nil)))
-      ;; Translate TAB key into control-I ASCII character, and so on.
-      ;; Note: `read-char' does it using the `ascii-character' property.
-      ;; We should try and use read-key instead.
-      (let ((translation (lookup-key local-function-key-map (vector char))))
-	(setq translated (if (arrayp translation)
-			     (aref translation 0)
-			   char)))
       (if (integerp translated)
 	  (setq translated (char-resolve-modifiers translated)))
       (cond ((null translated))
 	    ((not (integerp translated))
-	     (setq unread-command-events (list char)
+	     (setq unread-command-events
+                   (listify-key-sequence (this-single-command-raw-keys))
 		   done t))
 	    ((/= (logand translated ?\M-\^@) 0)
 	     ;; Turn a meta-character into a character with the 0200 bit set.
@@ -2022,7 +2016,8 @@ any other non-digit terminates the character code and is then used as input."))
 	    ((and (not first) (eq translated ?\C-m))
 	     (setq done t))
 	    ((not first)
-	     (setq unread-command-events (list char)
+	     (setq unread-command-events
+                   (listify-key-sequence (this-single-command-raw-keys))
 		   done t))
 	    (t (setq code translated
 		     done t)))
@@ -2186,6 +2181,7 @@ An obsolete, but still supported form is
 where the optional arg MILLISECONDS specifies an additional wait period,
 in milliseconds; this was useful when Emacs was built without
 floating point support."
+  (declare (advertised-calling-convention (seconds &optional nodisp) "22.1"))
   (if (numberp nodisp)
       (setq seconds (+ seconds (* 1e-3 nodisp))
             nodisp obsolete)
@@ -2200,7 +2196,10 @@ floating point support."
     (or nodisp (redisplay)))
    (t
     (or nodisp (redisplay))
-    (let ((read (read-event nil nil seconds)))
+    ;; FIXME: we should not read-event here at all, because it's much too
+    ;; difficult to reliably "undo" a read-event by pushing it onto
+    ;; unread-command-events.
+    (let ((read (read-event nil t seconds)))
       (or (null read)
 	  (progn
 	    ;; If last command was a prefix arg, e.g. C-u, push this event onto
@@ -2210,7 +2209,6 @@ floating point support."
 		(setq read (cons t read)))
 	    (push read unread-command-events)
 	    nil))))))
-(set-advertised-calling-convention 'sit-for '(seconds &optional nodisp) "22.1")
 
 (defun y-or-n-p (prompt)
   "Ask user a \"y or n\" question.  Return t if answer is \"y\".
@@ -2240,7 +2238,8 @@ is nil and `use-dialog-box' is non-nil."
     (cond
      (noninteractive
       (setq prompt (concat prompt
-                           (if (eq ?\s (aref prompt (1- (length prompt))))
+                           (if (or (zerop (length prompt))
+                                   (eq ?\s (aref prompt (1- (length prompt)))))
                                "" " ")
                            "(y or n) "))
       (let ((temp-prompt prompt))
@@ -2257,7 +2256,8 @@ is nil and `use-dialog-box' is non-nil."
 	    (x-popup-dialog t `(,prompt ("Yes" . act) ("No" . skip)))))
      (t
       (setq prompt (concat prompt
-                           (if (eq ?\s (aref prompt (1- (length prompt))))
+                           (if (or (zerop (length prompt))
+                                   (eq ?\s (aref prompt (1- (length prompt)))))
                                "" " ")
                            "(y or n) "))
       (while
@@ -2449,11 +2449,12 @@ If MESSAGE is nil, instructions to type EXIT-CHAR are displayed there."
                 (recenter (/ (window-height) 2))))
           (message (or message "Type %s to continue editing.")
                    (single-key-description exit-char))
-	  (let ((event (read-event)))
+	  (let ((event (read-key)))
 	    ;; `exit-char' can be an event, or an event description list.
 	    (or (eq event exit-char)
 		(eq event (event-convert-list exit-char))
-		(setq unread-command-events (list event)))))
+		(setq unread-command-events
+                      (append (this-single-command-raw-keys))))))
       (delete-overlay ol))))
 
 
@@ -3852,6 +3853,7 @@ FILE should be the name of a library, with no directory name."
   (declare (obsolete eval-after-load "23.2"))
   (eval-after-load file (read)))
 
+
 (defun display-delayed-warnings ()
   "Display delayed warnings from `delayed-warnings-list'.
 Used from `delayed-warnings-hook' (which see)."
@@ -3884,6 +3886,12 @@ Used from `delayed-warnings-hook' (which see)."
 By default, this hook contains functions to consolidate the
 warnings listed in `delayed-warnings-list', display them, and set
 `delayed-warnings-list' back to nil.")
+
+(defun delay-warning (type message &optional level buffer-name)
+  "Display a delayed warning.
+Aside from going through `delayed-warnings-list', this is equivalent
+to `display-warning'."
+  (push (list type message level buffer-name) delayed-warnings-list))
 
 
 ;;;; invisibility specs
@@ -4492,20 +4500,6 @@ convenience wrapper around `make-progress-reporter' and friends.
 				   (setq ,(car spec) (1+ ,(car spec)))))
        (progress-reporter-done ,temp2)
        nil ,@(cdr (cdr spec)))))
-
-
-;;;; Support for watching filesystem events.
-
-(defun file-notify-handle-event (event)
-  "Handle file system monitoring event.
-If EVENT is a filewatch event, call its callback.
-Otherwise, signal a `filewatch-error'."
-  (interactive "e")
-  (if (and (eq (car event) 'file-notify)
-	   (>= (length event) 3))
-      (funcall (nth 2 event) (nth 1 event))
-    (signal 'filewatch-error
-	    (cons "Not a valid file-notify event" event))))
 
 
 ;;;; Comparing version strings.

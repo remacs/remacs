@@ -363,9 +363,9 @@ enum enum_USE_LSB_TAG { USE_LSB_TAG = 0 };
 #define INTMASK (EMACS_INT_MAX >> (INTTYPEBITS - 1))
 #define case_Lisp_Int case Lisp_Int0: case Lisp_Int1
 
-/* Idea stolen from GDB.  MSVC doesn't support enums in bitfields,
-   and xlc complains vociferously about them.  */
-#if defined _MSC_VER || defined __IBMC__
+/* Idea stolen from GDB.  Pedantic GCC complains about enum bitfields,
+   MSVC doesn't support them, and xlc complains vociferously about them.  */
+#if defined __STRICT_ANSI__ || defined _MSC_VER || defined __IBMC__
 #define ENUM_BF(TYPE) unsigned int
 #else
 #define ENUM_BF(TYPE) enum TYPE
@@ -398,7 +398,7 @@ enum Lisp_Type
     /* Cons.  XCONS (object) points to a struct Lisp_Cons.  */
     Lisp_Cons = 6,
 
-    Lisp_Float = 7,
+    Lisp_Float = 7
   };
 
 /* This is the set of data types that share a common structure.
@@ -428,7 +428,7 @@ enum Lisp_Fwd_Type
     Lisp_Fwd_Bool,		/* Fwd to a C boolean var.  */
     Lisp_Fwd_Obj,		/* Fwd to a C Lisp_Object variable.  */
     Lisp_Fwd_Buffer_Obj,	/* Fwd to a Lisp_Object field of buffers.  */
-    Lisp_Fwd_Kboard_Obj,	/* Fwd to a Lisp_Object field of kboards.  */
+    Lisp_Fwd_Kboard_Obj		/* Fwd to a Lisp_Object field of kboards.  */
   };
 
 /* If you want to define a new Lisp data type, here are some
@@ -2545,11 +2545,16 @@ CHECK_NUMBER_CDR (Lisp_Object x)
        minargs, maxargs, lname, intspec, 0};				\
    Lisp_Object fnname
 #else  /* not _MSC_VER */
+# if __STDC_VERSION__ < 199901
+#  define DEFUN_FUNCTION_INIT(fnname, maxargs) (Lisp_Object (*) (void)) fnname
+# else
+#  define DEFUN_FUNCTION_INIT(fnname, maxargs) .a ## maxargs = fnname
+# endif
 #define DEFUN(lname, fnname, sname, minargs, maxargs, intspec, doc)	\
    Lisp_Object fnname DEFUN_ARGS_ ## maxargs ;				\
    static struct Lisp_Subr alignas (GCALIGNMENT) sname =		\
      { { PVEC_SUBR << PSEUDOVECTOR_AREA_BITS },				\
-       { .a ## maxargs = fnname },					\
+       { DEFUN_FUNCTION_INIT (fnname, maxargs) },			\
        minargs, maxargs, lname, intspec, 0};				\
    Lisp_Object fnname
 #endif
@@ -3673,7 +3678,6 @@ extern Lisp_Object string_to_number (char const *, int, bool);
 extern void map_obarray (Lisp_Object, void (*) (Lisp_Object, Lisp_Object),
                          Lisp_Object);
 extern void dir_warning (const char *, Lisp_Object);
-extern void close_load_descs (void);
 extern void init_obarray (void);
 extern void init_lread (void);
 extern void syms_of_lread (void);
@@ -3814,6 +3818,7 @@ extern void syms_of_marker (void);
 /* Defined in fileio.c.  */
 
 extern Lisp_Object Qfile_error;
+extern Lisp_Object Qfile_notify_error;
 extern Lisp_Object Qfile_exists_p;
 extern Lisp_Object Qfile_directory_p;
 extern Lisp_Object Qinsert_file_contents;
@@ -3822,6 +3827,7 @@ extern Lisp_Object expand_and_dir_to_file (Lisp_Object, Lisp_Object);
 EXFUN (Fread_file_name, 6);     /* Not a normal DEFUN.  */
 extern Lisp_Object close_file_unwind (Lisp_Object);
 extern Lisp_Object restore_point_unwind (Lisp_Object);
+extern _Noreturn void report_file_errno (const char *, Lisp_Object, int);
 extern _Noreturn void report_file_error (const char *, Lisp_Object);
 extern bool internal_delete_file (Lisp_Object);
 extern Lisp_Object emacs_readlinkat (int, const char *);
@@ -3927,7 +3933,7 @@ extern Lisp_Object Qvisible;
 extern void store_frame_param (struct frame *, Lisp_Object, Lisp_Object);
 extern void store_in_alist (Lisp_Object *, Lisp_Object, Lisp_Object);
 extern Lisp_Object do_switch_frame (Lisp_Object, int, int, Lisp_Object);
-#if HAVE_NS || defined(WINDOWSNT)
+#if HAVE_NS || defined WINDOWSNT
 extern Lisp_Object get_frame_param (struct frame *, Lisp_Object);
 #endif
 extern void frames_discard_buffer (Lisp_Object);
@@ -3999,11 +4005,11 @@ extern void delete_keyboard_wait_descriptor (int);
 extern void add_gpm_wait_descriptor (int);
 extern void delete_gpm_wait_descriptor (int);
 #endif
-extern void close_process_descs (void);
 extern void init_process_emacs (void);
 extern void syms_of_process (void);
 extern void setup_process_coding_systems (Lisp_Object);
 
+/* Defined in callproc.c.  */
 #ifndef DOS_NT
  _Noreturn
 #endif
@@ -4096,6 +4102,8 @@ extern int emacs_open (const char *, int, int);
 extern int emacs_close (int);
 extern ptrdiff_t emacs_read (int, char *, ptrdiff_t);
 extern ptrdiff_t emacs_write (int, const char *, ptrdiff_t);
+extern ptrdiff_t emacs_write_sig (int, char const *, ptrdiff_t);
+extern void emacs_perror (char const *);
 
 extern void unlock_all_files (void);
 extern void lock_file (Lisp_Object);

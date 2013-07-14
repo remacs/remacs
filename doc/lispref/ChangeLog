@@ -1,3 +1,26 @@
+2013-07-10  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Timestamp fixes for undo (Bug#14824).
+	* text.texi (Undo): Document (t . 0) and (t . -1) in buffer-undo-list.
+
+2013-07-06  Eli Zaretskii  <eliz@gnu.org>
+
+	* nonascii.texi (Text Representations): Document that
+	multibyte-string-p returns nil for non-string objects.
+
+2013-07-06  Glenn Morris  <rgm@gnu.org>
+
+	* elisp.texi (Top): Move WWW_GNU_ORG section outside @copying.
+
+2013-07-03  Glenn Morris  <rgm@gnu.org>
+
+	* debugging.texi (Debugging):
+	* files.texi (File Attributes, Changing Files): Fix cross-references.
+
+	* package.texi (Package Archives): Fix @url call.
+
+	* syntax.texi (Syntax Table Functions): Mention describe-syntax.
+
 2013-06-29  Eli Zaretskii  <eliz@gnu.org>
 
 	* display.texi (Bidirectional Display): Document move-point-visually.

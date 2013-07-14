@@ -316,6 +316,7 @@ A value of nil means don't add newlines.
 
 Certain major modes set this locally to the value obtained
 from `mode-require-final-newline'."
+  :safe #'symbolp
   :type '(choice (const :tag "When visiting" visit)
 		 (const :tag "When saving" t)
 		 (const :tag "When visiting or saving" visit-save)
@@ -3878,6 +3879,10 @@ Interactively, confirmation is required unless you supply a prefix argument."
 				    (or buffer-file-name (buffer-name))))))
 	(and confirm
 	     (file-exists-p filename)
+	     ;; NS does its own confirm dialog.
+	     (not (and (eq (framep-on-display) 'ns)
+		       (listp last-nonmenu-event)
+		       use-dialog-box))
 	     (or (y-or-n-p (format "File `%s' exists; overwrite? " filename))
 		 (error "Canceled")))
 	(set-visited-file-name filename (not confirm))))
@@ -4912,6 +4917,11 @@ change the additional actions you can take on files."
 		     (length autosaved-buffers)
 		     (mapconcat 'identity autosaved-buffers ", "))))))))
 
+(defun clear-visited-file-modtime ()
+  "Clear out records of last mod time of visited file.
+Next attempt to save will certainly not complain of a discrepancy."
+  (set-visited-file-modtime 0))
+
 (defun not-modified (&optional arg)
   "Mark current buffer as unmodified, not needing to be saved.
 With prefix ARG, mark buffer as modified, so \\[save-buffer] will save.

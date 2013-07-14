@@ -112,14 +112,6 @@ Edition @value{edition-number}, @value{update-date}
 @ifnottex
 Distributed with Emacs version @value{EMACSVER}.
 @end ifnottex
-@ifset WWW_GNU_ORG
-@html
-<p>The homepage for GNU Emacs is at
-<a href="http://www.gnu.org/software/emacs/">http://www.gnu.org/software/emacs/</a>.
-<br>To view this manual in other formats, click
-<a href="/software/emacs/emacs-lisp-intro/emacs-lisp-intro.html">here</a>.
-@end html
-@end ifset
 @sp 1
 Copyright @copyright{} 1990--1995, 1997, 2001--2013 Free Software
 Foundation, Inc.
@@ -210,6 +202,15 @@ supports it in developing GNU and promoting software freedom.''
 @ifnottex
 @node Top
 @top An Introduction to Programming in Emacs Lisp
+
+@ifset WWW_GNU_ORG
+@html
+<p>The homepage for GNU Emacs is at
+<a href="/software/emacs/">http://www.gnu.org/software/emacs/</a>.<br>
+To view this manual in other formats, click
+<a href="/software/emacs/manual/eintr.html">here</a>.
+@end html
+@end ifset
 
 @insertcopying
 
@@ -18483,7 +18484,7 @@ shows which line you are currently executing.
 You can walk through the execution of a function, line by line, or run
 quickly until reaching a @dfn{breakpoint} where execution stops.
 
-Edebug is described in @ref{edebug, , Edebug, elisp, The GNU Emacs
+Edebug is described in @ref{Edebug, , , elisp, The GNU Emacs
 Lisp Reference Manual}.
 
 @need 1250
@@ -18610,7 +18611,7 @@ error or at specified stopping points; you can cause it to display the
 changing values of various expressions; you can find out how many
 times a function is called, and more.
 
-Edebug is described in @ref{edebug, , Edebug, elisp, The GNU Emacs
+Edebug is described in @ref{Edebug, , , elisp, The GNU Emacs
 Lisp Reference Manual}.
 
 @need 1500

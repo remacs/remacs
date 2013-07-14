@@ -2097,6 +2097,10 @@ the above example."
 	      nil))))
   type)
 
+(defvar tty-setup-hook nil
+  "Hook run after running the initialization function of a new text terminal.
+This can be used to fine tune the `input-decode-map', for example.")
+
 (defun tty-run-terminal-initialization (frame &optional type)
   "Run the special initialization code for the terminal type of FRAME.
 The optional TYPE parameter may be used to override the autodetected
@@ -2122,7 +2126,8 @@ terminal type to a different value."
 		       type)
 	(when (fboundp term-init-func)
 	  (funcall term-init-func))
-	(set-terminal-parameter frame 'terminal-initted term-init-func)))))
+	(set-terminal-parameter frame 'terminal-initted term-init-func)
+	(run-hooks 'tty-setup-hook)))))
 
 ;; Called from C function init_display to initialize faces of the
 ;; dumped terminal frame on startup.

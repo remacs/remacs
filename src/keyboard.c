@@ -23,7 +23,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #define BLOCKINPUT_INLINE EXTERN_INLINE
 #define KEYBOARD_INLINE EXTERN_INLINE
 
-#include <stdio.h>
+#include "sysstdio.h"
 
 #include "lisp.h"
 #include "termchar.h"
@@ -2289,7 +2289,6 @@ read_event_from_main_queue (EMACS_TIME *end_time,
       XSETINT (c, XINT (c) | (extra_keyboard_modifiers & ~0xff7f & ~CHAR_CTL));
     }
 
-  /* FIXME: Decode tty keyboard input here.  */
   return c;
 }
 
@@ -7035,7 +7034,7 @@ tty_read_avail_input (struct terminal *terminal,
     {
       nread = emacs_read (fileno (tty->input), (char *) cbuf, n_to_read);
       /* POSIX infers that processes which are not in the session leader's
-         process group won't get SIGHUP's at logout time.  BSDI adheres to
+         process group won't get SIGHUPs at logout time.  BSDI adheres to
          this part standard and returns -1 from read (0) with errno==EIO
          when the control tty is taken away.
          Jeffrey Honig <jch@bsdi.com> says this is generally safe.  */
@@ -10156,7 +10155,7 @@ The file will be closed when Emacs exits.  */)
   if (!NILP (file))
     {
       file = Fexpand_file_name (file, Qnil);
-      dribble = fopen (SSDATA (file), "w");
+      dribble = emacs_fopen (SSDATA (file), "w");
       if (dribble == 0)
 	report_file_error ("Opening dribble", Fcons (file, Qnil));
     }

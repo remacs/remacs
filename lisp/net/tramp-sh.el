@@ -222,21 +222,24 @@ detected as prompt when being sent on echoing hosts, therefore.")
     (tramp-login-program        "su")
     (tramp-login-args           (("-") ("%u")))
     (tramp-remote-shell         "/bin/sh")
-    (tramp-remote-shell-args    ("-c"))))
+    (tramp-remote-shell-args    ("-c"))
+    (tramp-connection-timeout   10)))
 ;;;###tramp-autoload
 (add-to-list 'tramp-methods
   '("sudo"
     (tramp-login-program        "sudo")
     (tramp-login-args           (("-u" "%u") ("-s") ("-H") ("-p" "Password:")))
     (tramp-remote-shell         "/bin/sh")
-    (tramp-remote-shell-args    ("-c"))))
+    (tramp-remote-shell-args    ("-c"))
+    (tramp-connection-timeout   10)))
 ;;;###tramp-autoload
 (add-to-list 'tramp-methods
   '("ksu"
     (tramp-login-program        "ksu")
     (tramp-login-args           (("%u") ("-q")))
     (tramp-remote-shell         "/bin/sh")
-    (tramp-remote-shell-args    ("-c"))))
+    (tramp-remote-shell-args    ("-c"))
+    (tramp-connection-timeout   10)))
 ;;;###tramp-autoload
 (add-to-list 'tramp-methods
   '("krlogin"
@@ -862,7 +865,9 @@ of command line.")
     (set-file-selinux-context . tramp-sh-handle-set-file-selinux-context)
     (file-acl . tramp-sh-handle-file-acl)
     (set-file-acl . tramp-sh-handle-set-file-acl)
-    (vc-registered . tramp-sh-handle-vc-registered))
+    (vc-registered . tramp-sh-handle-vc-registered)
+    (file-notify-add-watch . tramp-sh-handle-file-notify-add-watch)
+    (file-notify-rm-watch . tramp-sh-handle-file-notify-rm-watch))
   "Alist of handler functions.
 Operations not mentioned here will be handled by the normal Emacs functions.")
 
@@ -2669,7 +2674,7 @@ the result will be a local, non-Tramp, filename."
   (unless (memq (process-status proc) '(run open))
     (let ((vec (tramp-get-connection-property proc "vector" nil)))
       (when vec
-	(tramp-message vec 5 "Sentinel called: `%s' `%s'" proc event)
+	(tramp-message vec 5 "Sentinel called: `%S' `%s'" proc event)
         (tramp-flush-connection-property proc)
         (tramp-flush-directory-property vec "")))))
 
@@ -3376,6 +3381,122 @@ Fall back to normal file name handler if no Tramp handler exists."
 	 ;; Default file name handlers, we don't care.
 	 (t (tramp-run-real-handler operation args)))))))
 
+(defun tramp-sh-handle-file-notify-add-watch (file-name flags callback)
+  "Like `file-notify-add-watch' for Tramp files."
+  (setq file-name (expand-file-name file-name))
+  (with-parsed-tramp-file-name file-name nil
+    (let* ((default-directory (file-name-directory file-name))
+	   command events filter p)
+      (cond
+       ;; gvfs-monitor-dir.
+       ((setq command (tramp-get-remote-gvfs-monitor-dir v))
+	(setq filter 'tramp-sh-file-gvfs-monitor-dir-process-filter
+	      p (start-file-process
+		 "gvfs-monitor-dir" (generate-new-buffer " *gvfs-monitor-dir*")
+		 command localname)))
+       ;; inotifywait.
+       ((setq command (tramp-get-remote-inotifywait v))
+	(setq filter 'tramp-sh-file-inotifywait-process-filter
+	      events
+	      (cond
+	       ((and (memq 'change flags) (memq 'attribute-change flags))
+		"create,modify,move,delete,attrib")
+	       ((memq 'change flags) "create,modify,move,delete")
+	       ((memq 'attribute-change flags) "attrib"))
+	      p (start-file-process
+		  "inotifywait" (generate-new-buffer " *inotifywait*")
+		  command "-mq" "-e" events localname)))
+       ;; None.
+       (t (tramp-error
+	   v 'file-notify-error
+	   "No file notification program found on %s"
+	   (file-remote-p file-name))))
+      ;; Return the process object as watch-descriptor.
+      (if (not (processp p))
+	  (tramp-error
+	   v 'file-notify-error "`%s' failed to start on remote host" command)
+	(tramp-compat-set-process-query-on-exit-flag p nil)
+	(set-process-filter p filter)
+	p))))
+
+(defun tramp-sh-file-gvfs-monitor-dir-process-filter (proc string)
+  "Read output from \"gvfs-monitor-dir\" and add corresponding file-notify events."
+  (let ((remote-prefix
+	 (with-current-buffer (process-buffer proc)
+	   (file-remote-p default-directory)))
+	(rest-string (tramp-compat-process-get proc 'rest-string)))
+    (when rest-string
+      (tramp-message proc 10 (format "Previous string:\n%s" rest-string)))
+    (tramp-message proc 6 (format "%S\n%s" proc string))
+    (setq string (concat rest-string string)
+	  ;; Attribute change is returned in unused wording.
+	  string (replace-regexp-in-string
+		  "ATTRIB CHANGED" "ATTRIBUTE_CHANGED" string))
+
+    (while (string-match
+	    (concat "^[\n\r]*"
+		    "Directory Monitor Event:[\n\r]+"
+		    "Child = \\([^\n\r]+\\)[\n\r]+"
+		    "\\(Other = \\([^\n\r]+\\)[\n\r]+\\)?"
+		    "Event = \\([^[:blank:]]+\\)[\n\r]+")
+	    string)
+      (let ((object
+	     (list
+	      proc
+	      (intern-soft
+	       (replace-regexp-in-string
+		"_" "-" (downcase (match-string 4 string))))
+	      ;; File names are returned as absolute paths.  We must
+	      ;; add the remote prefix.
+	      (concat remote-prefix (match-string 1 string))
+	      (when (match-string 3 string)
+		(concat remote-prefix (match-string 3 string))))))
+	(setq string (replace-match "" nil nil string))
+	;; Usually, we would add an Emacs event now.  Unfortunately,
+	;; `unread-command-events' does not accept several events at
+	;; once.  Therefore, we apply the callback directly.
+	(tramp-compat-funcall 'file-notify-callback object)))
+
+    ;; Save rest of the string.
+    (when (zerop (length string)) (setq string nil))
+    (when string (tramp-message proc 10 (format "Rest string:\n%s" string)))
+    (tramp-compat-process-put proc 'rest-string string)))
+
+(defun tramp-sh-file-inotifywait-process-filter (proc string)
+  "Read output from \"inotifywait\" and add corresponding file-notify events."
+  (tramp-message proc 6 (format "%S\n%s" proc string))
+  (dolist (line (split-string string "[\n\r]+" 'omit-nulls))
+    ;; Check, whether there is a problem.
+    (unless
+	(string-match
+	 (concat "^[^[:blank:]]+"
+		 "[[:blank:]]+\\([^[:blank:]]+\\)+"
+		 "\\([[:blank:]]+\\([^\n\r]+\\)\\)?")
+	 line)
+      (tramp-error proc 'file-notify-error "%s" line))
+
+    (let ((object
+	   (list
+	    proc
+	    (mapcar
+	     (lambda (x)
+	       (intern-soft (replace-regexp-in-string "_" "-" (downcase x))))
+	     (split-string (match-string 1 line) "," 'omit-nulls))
+	    (match-string 3 line))))
+      ;; Usually, we would add an Emacs event now.  Unfortunately,
+      ;; `unread-command-events' does not accept several events at
+      ;; once.  Therefore, we apply the callback directly.
+      (tramp-compat-funcall 'file-notify-callback object))))
+
+(defvar file-notify-descriptors)
+(defun tramp-sh-handle-file-notify-rm-watch (proc)
+  "Like `file-notify-rm-watch' for Tramp files."
+  ;; The descriptor must be a process object.
+  (unless (and (processp proc) (gethash proc file-notify-descriptors))
+    (tramp-error proc 'file-notify-error "Not a valid descriptor %S" proc))
+  (tramp-message proc 6 (format "Kill %S" proc))
+  (kill-process proc))
+
 ;;; Internal Functions:
 
 (defun tramp-maybe-send-script (vec script name)
@@ -3634,12 +3755,16 @@ file exists and nonzero exit status otherwise."
   "Wait for shell prompt and barf if none appears.
 Looks at process PROC to see if a shell prompt appears in TIMEOUT
 seconds.  If not, it produces an error message with the given ERROR-ARGS."
-  (unless
-      (tramp-wait-for-regexp
-       proc timeout
-       (format
-	"\\(%s\\|%s\\)\\'" shell-prompt-pattern tramp-shell-prompt-pattern))
-    (apply 'tramp-error-with-buffer nil proc 'file-error error-args)))
+  (let ((vec (tramp-get-connection-property proc "vector" nil)))
+    (condition-case err
+	(tramp-wait-for-regexp
+	 proc timeout
+	 (format
+	  "\\(%s\\|%s\\)\\'" shell-prompt-pattern tramp-shell-prompt-pattern))
+      (error
+       (delete-process proc)
+       (apply 'tramp-error-with-buffer
+	      (tramp-get-connection-buffer vec) vec 'file-error error-args)))))
 
 (defun tramp-open-connection-setup-interactive-shell (proc vec)
   "Set up an interactive shell.
@@ -4214,9 +4339,6 @@ Gateway hops are already opened."
     ;; Result.
     target-alist))
 
-(defvar tramp-current-connection nil
-  "Last connection timestamp.")
-
 (defun tramp-maybe-open-connection (vec)
   "Maybe open a connection VEC.
 Does not do anything if a connection is already open, but re-opens the
@@ -4230,7 +4352,7 @@ connection if a previous connection has died for some reason."
       ;; If Tramp opens the same connection within a short time frame,
       ;; there is a problem.  We shall signal this.
       (unless (or (and p (processp p) (memq (process-status p) '(run open)))
-		  (not (equal (butlast (append vec nil))
+		  (not (equal (butlast (append vec nil) 2)
 			      (car tramp-current-connection)))
 		  (> (tramp-time-diff
 		      (current-time) (cdr tramp-current-connection))
@@ -4315,7 +4437,7 @@ connection if a previous connection has died for some reason."
 		(set-process-sentinel p 'tramp-process-sentinel)
 		(tramp-compat-set-process-query-on-exit-flag p nil)
 		(setq tramp-current-connection
-		      (cons (butlast (append vec nil)) (current-time))
+		      (cons (butlast (append vec nil) 2) (current-time))
 		      tramp-current-host (system-name))
 
 		(tramp-message
@@ -4323,8 +4445,8 @@ connection if a previous connection has died for some reason."
 
 		;; Check whether process is alive.
 		(tramp-barf-if-no-shell-prompt
-		 p 60
-		 "Couldn't find local shell prompt %s" tramp-encoding-shell)
+		 p 10
+		 "Couldn't find local shell prompt for %s" tramp-encoding-shell)
 
 		;; Now do all the connections as specified.
 		(while target-alist
@@ -4342,6 +4464,9 @@ connection if a previous connection has died for some reason."
 			 (async-args
 			  (tramp-get-method-parameter
 			   l-method 'tramp-async-args))
+			 (connection-timeout
+			  (tramp-get-method-parameter
+			   l-method 'tramp-connection-timeout))
 			 (gw-args
 			  (tramp-get-method-parameter l-method 'tramp-gw-args))
 			 (gw (tramp-get-file-property hop "" "gateway" nil))
@@ -4424,7 +4549,8 @@ connection if a previous connection has died for some reason."
 		    (tramp-message vec 3 "Sending command `%s'" command)
 		    (tramp-send-command vec command t t)
 		    (tramp-process-actions
-		     p vec pos tramp-actions-before-shell 60)
+		     p vec pos tramp-actions-before-shell
+		     (or connection-timeout tramp-connection-timeout))
 		    (tramp-message
 		     vec 3 "Found remote shell prompt on `%s'" l-host))
 		  ;; Next hop.
@@ -4863,6 +4989,17 @@ Return ATTR."
   (with-tramp-connection-property vec "trash"
     (tramp-message vec 5 "Finding a suitable `trash' command")
     (tramp-find-executable vec "trash" (tramp-get-remote-path vec))))
+
+(defun tramp-get-remote-gvfs-monitor-dir (vec)
+  (with-tramp-connection-property vec "gvfs-monitor-dir"
+    (tramp-message vec 5 "Finding a suitable `gvfs-monitor-dir' command")
+    (tramp-find-executable
+     vec "gvfs-monitor-dir" (tramp-get-remote-path vec) t t)))
+
+(defun tramp-get-remote-inotifywait (vec)
+  (with-tramp-connection-property vec "inotifywait"
+    (tramp-message vec 5 "Finding a suitable `inotifywait' command")
+    (tramp-find-executable vec "inotifywait" (tramp-get-remote-path vec) t t)))
 
 (defun tramp-get-remote-id (vec)
   (with-tramp-connection-property vec "id"

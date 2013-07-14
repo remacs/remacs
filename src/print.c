@@ -20,7 +20,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 
 #include <config.h>
-#include <stdio.h>
+#include "sysstdio.h"
 
 #include "lisp.h"
 #include "character.h"
@@ -767,7 +767,7 @@ append to existing target file.  */)
     {
       file = Fexpand_file_name (file, Qnil);
       initial_stderr_stream = stderr;
-      stderr = fopen (SSDATA (file), NILP (append) ? "w" : "a");
+      stderr = emacs_fopen (SSDATA (file), NILP (append) ? "w" : "a");
       if (stderr == NULL)
 	{
 	  stderr = initial_stderr_stream;
@@ -1774,9 +1774,8 @@ print_object (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag)
 #endif      
       else if (WINDOWP (obj))
 	{
-	  int len;
-	  strout ("#<window ", -1, -1, printcharfun);
-	  len = sprintf (buf, "%p", XWINDOW (obj));
+	  void *ptr = XWINDOW (obj);
+	  int len = sprintf (buf, "#<window %p", ptr);
 	  strout (buf, len, len, printcharfun);
 	  if (BUFFERP (XWINDOW (obj)->contents))
 	    {
@@ -1807,6 +1806,7 @@ print_object (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag)
 	  ptrdiff_t real_size, size;
 	  int len;
 #if 0
+	  void *ptr = h;
 	  strout ("#<hash-table", -1, -1, printcharfun);
 	  if (SYMBOLP (h->test))
 	    {
@@ -1819,9 +1819,8 @@ print_object (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag)
 	      len = sprintf (buf, "%"pD"d/%"pD"d", h->count, ASIZE (h->next));
 	      strout (buf, len, len, printcharfun);
 	    }
-	  len = sprintf (buf, " %p", h);
+	  len = sprintf (buf, " %p>", ptr);
 	  strout (buf, len, len, printcharfun);
-	  PRINTCHAR ('>');
 #endif
 	  /* Implement a readable output, e.g.:
 	    #s(hash-table size 2 test equal data (k1 v1 k2 v2)) */
@@ -1901,6 +1900,7 @@ print_object (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag)
       else if (FRAMEP (obj))
 	{
 	  int len;
+	  void *ptr = XFRAME (obj);
 	  Lisp_Object frame_name = XFRAME (obj)->name;
 
 	  strout ((FRAME_LIVE_P (XFRAME (obj))
@@ -1916,9 +1916,8 @@ print_object (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag)
 		frame_name = build_string ("*INVALID*FRAME*NAME*");
 	    }
 	  print_string (frame_name, printcharfun);
-	  len = sprintf (buf, " %p", XFRAME (obj));
+	  len = sprintf (buf, " %p>", ptr);
 	  strout (buf, len, len, printcharfun);
-	  PRINTCHAR ('>');
 	}
       else if (FONTP (obj))
 	{

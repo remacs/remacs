@@ -90,9 +90,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 /* Name of the default sound device. */
 #undef DEFAULT_SOUND_DEVICE
 
-/* Character that separates a device in a file name. */
-#undef DEVICE_SEP
-
 /* Define to 1 for DGUX with <sys/dg_sys_info.h>. */
 #undef DGUX
 
@@ -122,6 +119,9 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 /* Define to 1 if expensive run-time data type and consistency checks are
    enabled. */
 #undef ENABLE_CHECKING
+
+/* Define this to 1 if F_DUPFD behavior does not match POSIX */
+#undef FCNTL_DUPFD_BUGGY
 
 /* Letter to use in finding device name of first PTY, if PTYs are supported.
    */
@@ -209,6 +209,9 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
    startup, if using GTK. */
 #undef G_SLICE_ALWAYS_MALLOC
 
+/* Define to 1 if you have the `accept4' function. */
+#undef HAVE_ACCEPT4
+
 /* Define to 1 if you have the `access' function. */
 #undef HAVE_ACCESS
 
@@ -280,9 +283,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 /* Define to 1 if the ACL type ACL_TYPE_EXTENDED exists. */
 #undef HAVE_ACL_TYPE_EXTENDED
-
-/* Define to 1 if the file /usr/lpp/X11/bin/smt.exp exists. */
-#undef HAVE_AIX_SMT_EXP
 
 /* Define to 1 if you have 'alloca' after including <alloca.h>, a header that
    may be supplied by this distribution. */
@@ -412,12 +412,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
    don't. */
 #undef HAVE_DECL___SYS_SIGLIST
 
-/* Define to 1 if you have the <des.h> header file. */
-#undef HAVE_DES_H
-
-/* Define to 1 if dynamic ptys are supported. */
-#undef HAVE_DEV_PTMX
-
 /* Define to 1 if you have the `difftime' function. */
 #undef HAVE_DIFFTIME
 
@@ -450,6 +444,9 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 /* Define to 1 if you have the `facl' function. */
 #undef HAVE_FACL
+
+/* Define to 1 if you have the `fcntl' function. */
+#undef HAVE_FCNTL
 
 /* Define to 1 if you have the `fdatasync' function. */
 #undef HAVE_FDATASYNC
@@ -498,6 +495,9 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 /* Define to 1 if you have the `getdelim' function. */
 #undef HAVE_GETDELIM
+
+/* Define to 1 if you have the `getdtablesize' function. */
+#undef HAVE_GETDTABLESIZE
 
 /* Define to 1 if you have the `getgrent' function. */
 #undef HAVE_GETGRENT
@@ -558,13 +558,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 /* Define if using GnuTLS. */
 #undef HAVE_GNUTLS
-
-/* Define if using GnuTLS certificate verification callbacks. */
-#undef HAVE_GNUTLS_CALLBACK_CERTIFICATE_VERIFY
-
-/* Define to 1 if you have the `gnutls_certificate_set_verify_function'
-   function. */
-#undef HAVE_GNUTLS_CERTIFICATE_SET_VERIFY_FUNCTION
 
 /* Define to 1 if you have the gpm library (-lgpm). */
 #undef HAVE_GPM
@@ -635,14 +628,8 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 /* Define to 1 if you have the jpeg library (-ljpeg). */
 #undef HAVE_JPEG
 
-/* Define to 1 if you have the <kerberosIV/des.h> header file. */
-#undef HAVE_KERBEROSIV_DES_H
-
 /* Define to 1 if you have the <kerberosIV/krb.h> header file. */
 #undef HAVE_KERBEROSIV_KRB_H
-
-/* Define to 1 if you have the <kerberos/des.h> header file. */
-#undef HAVE_KERBEROS_DES_H
 
 /* Define to 1 if you have the <kerberos/krb.h> header file. */
 #undef HAVE_KERBEROS_KRB_H
@@ -662,18 +649,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 /* Define if you have <langinfo.h> and nl_langinfo(CODESET). */
 #undef HAVE_LANGINFO_CODESET
 
-/* Define to 1 if you have the `com_err' library (-lcom_err). */
-#undef HAVE_LIBCOM_ERR
-
-/* Define to 1 if you have the `crypto' library (-lcrypto). */
-#undef HAVE_LIBCRYPTO
-
-/* Define to 1 if you have the `des' library (-ldes). */
-#undef HAVE_LIBDES
-
-/* Define to 1 if you have the `des425' library (-ldes425). */
-#undef HAVE_LIBDES425
-
 /* Define to 1 if you have the `dgc' library (-ldgc). */
 #undef HAVE_LIBDGC
 
@@ -682,21 +657,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 /* Define to 1 if you have the <libgen.h> header file. */
 #undef HAVE_LIBGEN_H
-
-/* Define to 1 if you have the hesiod library (-lhesiod). */
-#undef HAVE_LIBHESIOD
-
-/* Define to 1 if you have the `k5crypto' library (-lk5crypto). */
-#undef HAVE_LIBK5CRYPTO
-
-/* Define to 1 if you have the `krb' library (-lkrb). */
-#undef HAVE_LIBKRB
-
-/* Define to 1 if you have the `krb4' library (-lkrb4). */
-#undef HAVE_LIBKRB4
-
-/* Define to 1 if you have the `krb5' library (-lkrb5). */
-#undef HAVE_LIBKRB5
 
 /* Define to 1 if you have the `kstat' library (-lkstat). */
 #undef HAVE_LIBKSTAT
@@ -722,9 +682,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 /* Define to 1 if you have the `pthreads' library (-lpthreads). */
 #undef HAVE_LIBPTHREADS
 
-/* Define to 1 if you have the resolv library (-lresolv). */
-#undef HAVE_LIBRESOLV
-
 /* Define to 1 if using SELinux. */
 #undef HAVE_LIBSELINUX
 
@@ -736,9 +693,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 /* Define to 1 if you have the `Xmu' library (-lXmu). */
 #undef HAVE_LIBXMU
-
-/* Define to 1 if you have the <linux/version.h> header file. */
-#undef HAVE_LINUX_VERSION_H
 
 /* Define to 1 if you have the `localtime_r' function. */
 #undef HAVE_LOCALTIME_R
@@ -796,14 +750,14 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
    systems that support xmenu.c. */
 #undef HAVE_MENUS
 
+/* Define to 1 if you have the `mkostemp' function. */
+#undef HAVE_MKOSTEMP
+
 /* Define to 1 if you have the `mkstemp' function. */
 #undef HAVE_MKSTEMP
 
 /* Define to 1 if you have a working `mmap' system call. */
 #undef HAVE_MMAP
-
-/* Define to 1 if you have the <mmsystem.h> header file. */
-#undef HAVE_MMSYSTEM_H
 
 /* Define to 1 if you have the `nanotime' function. */
 #undef HAVE_NANOTIME
@@ -829,6 +783,9 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 /* Define to 1 if personality LINUX32 can be set. */
 #undef HAVE_PERSONALITY_LINUX32
+
+/* Define to 1 if you have the `pipe2' function. */
+#undef HAVE_PIPE2
 
 /* Define to 1 if you have the png library (-lpng). */
 #undef HAVE_PNG
@@ -938,9 +895,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 /* Define to 1 if you have the <soundcard.h> header file. */
 #undef HAVE_SOUNDCARD_H
-
-/* Define to 1 if `speed_t' is declared by <termios.h>. */
-#undef HAVE_SPEED_T
 
 /* Define to 1 if you have the `statacl' function. */
 #undef HAVE_STATACL
@@ -1127,9 +1081,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 /* Define to 1 if you have the `utimensat' function. */
 #undef HAVE_UTIMENSAT
-
-/* Define to 1 if you have the `utimes' function. */
-#undef HAVE_UTIMES
 
 /* Define to 1 if you have the <utime.h> header file. */
 #undef HAVE_UTIME_H
@@ -1561,9 +1512,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 /* Define if the system is compatible with System III. */
 #undef USG
 
-/* Define if the system is compatible with System V. */
-#undef USG5
-
 /* Define if the system is compatible with System V Release 4. */
 #undef USG5_4
 
@@ -1796,9 +1744,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 /* Define to enable asynchronous subprocesses. */
 #undef subprocesses
-
-/* Define to any substitute for sys_siglist. */
-#undef sys_siglist
 
 /* Define as a marker that can be attached to declarations that might not
     be used.  This helps to reduce warnings, such as from

@@ -782,21 +782,29 @@ remaining completion.  If absent, elements 5 and 6 are used instead."
   :group 'ido)
 
 (defcustom ido-use-virtual-buffers nil
-  "If non-nil, refer to past buffers as well as existing ones.
+  "Specify how virtual buffers should be used.
+The value can be one of the following:
+
+  nil:  No virtual buffers are used.
+  auto: Use virtual bufferw when the current input matches no
+        existing buffers.
+  t:    Always use virtual buffers.
+
 Essentially it works as follows: Say you are visiting a file and
 the buffer gets cleaned up by midnight.el.  Later, you want to
-switch to that buffer, but find it's no longer open.  With
-virtual buffers enabled, the buffer name stays in the buffer
-list (using the `ido-virtual' face, and always at the end), and if
-you select it, it opens the file back up again.  This allows you
-to think less about whether recently opened files are still open
-or not.  Most of the time you can quit Emacs, restart, and then
-switch to a file buffer that was previously open as if it still
-were.
-    This feature relies upon the `recentf' package, which will be
-enabled if this variable is configured to a non-nil value."
-  :version "24.1"
-  :type 'boolean
+switch to that buffer, but find it's no longer open.  With virtual
+buffers enabled, the buffer name stays in the buffer list (using
+the `ido-virtual' face, and always at the end), and if you select
+it, it opens the file back up again.  This allows you to think
+less about whether recently opened files are still open or not.
+Most of the time you can quit Emacs, restart, and then switch to
+a file buffer that was previously open as if it still were.  This
+feature relies upon the `recentf' package, which will be enabled
+if this variable is configured to a non-nil value."
+  :version "24.4"
+  :type '(choice (const :tag "Always" t)
+		 (const :tag "Automatic" auto)
+		 (const :tag "Never" nil))
   :group 'ido)
 
 (defcustom ido-use-faces t
@@ -1102,6 +1110,9 @@ Only used if `ido-use-virtual-buffers' is non-nil.")
 
 ;; Don't process ido-ignore- lists once.
 (defvar ido-process-ignore-lists-inhibit)
+
+;; Is ido using virtual buffers?
+(defvar ido-enable-virtual-buffers)
 
 ;; Buffer from which ido was entered.
 (defvar ido-entry-buffer)
@@ -2202,7 +2213,8 @@ If cursor is not at the end of the user input, move to end of input."
 	   (ido-current-directory nil)
 	   (ido-directory-nonreadable nil)
 	   (ido-directory-too-big nil)
-	   (ido-use-virtual-buffers ido-use-virtual-buffers)
+	   (ido-enable-virtual-buffers (and ido-use-virtual-buffers
+					    (not (eq ido-use-virtual-buffers 'auto))))
 	   (require-match (confirm-nonexistent-file-or-buffer))
 	   (buf (ido-read-internal 'buffer (or prompt "Buffer: ") 'ido-buffer-history default
 				   require-match initial))
@@ -2243,7 +2255,8 @@ If cursor is not at the end of the user input, move to end of input."
 	  (ido-visit-buffer buf method t)))
 
        ;; check for a virtual buffer reference
-       ((and ido-use-virtual-buffers ido-virtual-buffers
+       ((and ido-enable-virtual-buffers
+	     ido-virtual-buffers
 	     (setq filename (assoc buf ido-virtual-buffers)))
 	(ido-visit-buffer (find-file-noselect (cdr filename)) method t))
 
@@ -2734,7 +2747,11 @@ C-x C-f ... C-d  enter `dired' on current directory."
 See `ido-use-virtual-buffers' for explanation of virtual buffer."
   (interactive)
   (when (and ido-mode (eq ido-cur-item 'buffer))
-    (setq ido-use-virtual-buffers (not ido-use-virtual-buffers))
+    (setq ido-enable-virtual-buffers
+	  (if ido-enable-virtual-buffers
+	      nil
+	    ;; Use `always' instead of t for `ido-exhibit'.
+	    'always))
     (setq ido-text-init ido-text)
     (setq ido-exit 'refresh)
     (exit-minibuffer)))
@@ -3427,9 +3444,9 @@ it is put to the start of the list."
 	(nconc ido-temp-list ido-current-buffers)
       (setq ido-temp-list ido-current-buffers))
     (if default
-        (setq ido-temp-list
-              (cons default (delete default ido-temp-list))))
-    (if ido-use-virtual-buffers
+	(setq ido-temp-list
+	      (cons default (delete default ido-temp-list))))
+    (if (bound-and-true-p ido-enable-virtual-buffers)
 	(ido-add-virtual-buffers-to-list))
     (run-hooks 'ido-make-buffer-list-hook)
     ido-temp-list))
@@ -3444,8 +3461,14 @@ This is to make them appear as if they were \"virtual buffers\"."
   (setq ido-virtual-buffers nil)
   (let (name)
     (dolist (head recentf-list)
-      (and (setq name (file-name-nondirectory head))
-           (null (get-file-buffer head))
+      (setq name (file-name-nondirectory head))
+      ;; In case HEAD is a directory with trailing /.  See bug#14552.
+      (when (equal name "")
+	(setq name (file-name-nondirectory (directory-file-name head))))
+      (when (equal name "")
+	(setq name head))
+      (and (not (equal name ""))
+	   (null (get-file-buffer head))
            (not (assoc name ido-virtual-buffers))
            (not (member name ido-temp-list))
            (not (ido-ignore-item-p name ido-ignore-buffers))
@@ -3986,6 +4009,7 @@ If cursor is not at the end of the user input, delete to end of input."
 ;;; DELETE CURRENT FILE
 (defun ido-delete-file-at-head ()
   "Delete the file at the head of `ido-matches'.
+Trash the file if `delete-by-moving-to-trash' is non-nil.
 If cursor is not at the end of the user input, delete to end of input."
   (interactive)
   (if (not (eobp))
@@ -3998,8 +4022,9 @@ If cursor is not at the end of the user input, delete to end of input."
 		 (file-exists-p file)
 		 (not (file-directory-p file))
 		 (file-writable-p ido-current-directory)
-		 (yes-or-no-p (concat "Delete " file "? ")))
-	(delete-file file)
+		 (or delete-by-moving-to-trash
+		     (yes-or-no-p (concat "Delete " file "? "))))
+	(delete-file file 'trash)
 	;; Check if file still exists.
 	(if (file-exists-p file)
 	    ;; file could not be deleted
@@ -4457,11 +4482,6 @@ For details of keybindings, see `ido-find-file'."
 	  (setq ido-exit 'refresh)
 	  (exit-minibuffer))
 
-	;; Update the list of matches
-	(setq ido-text contents)
-	(ido-set-matches)
-	(ido-trace "new    " ido-matches)
-
 	(when (and ido-enter-matching-directory
 		   ido-matches
 		   (or (eq ido-enter-matching-directory 'first)
@@ -4474,6 +4494,32 @@ For details of keybindings, see `ido-find-file'."
 	   (concat ido-current-directory (ido-name (car ido-matches))))
 	  (setq ido-exit 'refresh)
 	  (exit-minibuffer))
+
+	;; Update the list of matches
+	(setq ido-text contents)
+	(ido-set-matches)
+	(ido-trace "new    " ido-matches)
+
+	(when (and (boundp 'ido-enable-virtual-buffers)
+		   (not (eq ido-enable-virtual-buffers 'always))
+		   (eq ido-cur-item 'buffer)
+		   (eq ido-use-virtual-buffers 'auto))
+
+	  (when (and (not ido-enable-virtual-buffers)
+		     (not ido-matches))
+	    (setq ido-text-init ido-text)
+	    (setq ido-enable-virtual-buffers t)
+	    (setq ido-exit 'refresh)
+	    (exit-minibuffer))
+
+	  ;; If input matches real buffers turn off virtual buffers.
+	  (when (and ido-enable-virtual-buffers
+		     ido-matches
+		     (ido-set-matches-1 (ido-make-buffer-list-1)))
+	    (setq ido-enable-virtual-buffers nil)
+	    (setq ido-text-init ido-text)
+	    (setq ido-exit 'refresh)
+	    (exit-minibuffer)))
 
 	(when (and (not ido-matches)
 		   (not ido-directory-nonreadable)
@@ -4681,9 +4727,12 @@ Modified from `icomplete-completions'."
 
 ;;; Helper functions for other programs
 
-(put 'dired-do-rename 'ido 'ignore)
 (put 'ibuffer-find-file 'ido 'find-file)
+(put 'dired 'ido 'dir)
 (put 'dired-other-window 'ido 'dir)
+;; See http://debbugs.gnu.org/11954 for reasons.
+(put 'dired-do-copy 'ido 'ignore)
+(put 'dired-do-rename 'ido 'ignore)
 
 ;;;###autoload
 (defun ido-read-buffer (prompt &optional default require-match)
@@ -4711,18 +4760,20 @@ See `read-file-name' for additional parameters."
   (let (filename)
     (cond
      ((or (eq predicate 'file-directory-p)
-	  (eq (get this-command 'ido) 'dir)
+	  (eq (and (symbolp this-command)
+		   (get this-command 'ido)) 'dir)
 	  (memq this-command ido-read-file-name-as-directory-commands))
       (setq filename
-	    (ido-read-directory-name prompt dir default-filename mustmatch initial))
-      (if (eq ido-exit 'fallback)
-	  (setq filename 'fallback)))
-     ((and (not (eq (get this-command 'ido) 'ignore))
+	    (ido-read-directory-name prompt dir default-filename mustmatch initial)))
+     ((and (not (eq (and (symbolp this-command)
+			 (get this-command 'ido)) 'ignore))
 	   (not (memq this-command ido-read-file-name-non-ido))
 	   (or (null predicate) (eq predicate 'file-exists-p)))
       (let* (ido-saved-vc-hb
 	     (ido-context-switch-command
-	      (if (eq (get this-command 'ido) 'find-file) nil 'ignore))
+	      (if (eq (and (symbolp this-command)
+			   (get this-command 'ido)) 'find-file)
+		  nil 'ignore))
 	     (vc-handled-backends (and (boundp 'vc-handled-backends) vc-handled-backends))
 	     (minibuffer-completing-file-name t)
 	     (ido-current-directory (ido-expand-directory dir))
@@ -4736,7 +4787,15 @@ See `read-file-name' for additional parameters."
 	     (ido-find-literal nil))
 	(setq ido-exit nil)
 	(setq filename
-	      (ido-read-internal 'file prompt 'ido-file-history default-filename mustmatch initial))
+	      (ido-read-internal 'file prompt 'ido-file-history
+				 (cond	; Bug#11861.
+				  ((stringp default-filename) default-filename)
+				  ((consp default-filename) (car default-filename))
+				  ((and (not default-filename) initial)
+				   (expand-file-name initial dir))
+				  (buffer-file-name buffer-file-name))
+				 mustmatch initial))
+	(setq dir ido-current-directory) ; See bug#1516.
 	(cond
 	 ((eq ido-exit 'fallback)
 	  (setq filename 'fallback))
@@ -4768,12 +4827,21 @@ See `read-directory-name' for additional parameters."
 				     (ido-directory-too-big-p ido-current-directory)))
 	 (ido-work-directory-index -1)
 	 (ido-work-file-index -1))
-    (setq filename
-	  (ido-read-internal 'dir prompt 'ido-file-history default-dirname mustmatch initial))
-    (if filename
-	(if (and (stringp filename) (string-equal filename "."))
-	    ido-current-directory
-	  (concat ido-current-directory filename)))))
+    (setq filename (ido-read-internal
+		    'dir prompt 'ido-file-history
+		    (or default-dirname	; Bug#11861.
+			(if initial
+			    (expand-file-name initial ido-current-directory)
+			  ido-current-directory))
+		    mustmatch initial))
+    (cond
+     ((eq ido-exit 'fallback)
+      (let ((read-file-name-function nil))
+	(run-hook-with-args 'ido-before-fallback-functions 'read-directory-name)
+	(read-directory-name prompt ido-current-directory
+			     default-dirname mustmatch initial)))
+     ((equal filename ".") ido-current-directory)
+     (t (concat ido-current-directory filename)))))
 
 ;;;###autoload
 (defun ido-completing-read (prompt choices &optional _predicate require-match

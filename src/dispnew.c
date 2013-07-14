@@ -21,7 +21,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #define DISPEXTERN_INLINE EXTERN_INLINE
 
-#include <stdio.h>
+#include "sysstdio.h"
 #include <unistd.h>
 
 #include "lisp.h"
@@ -216,6 +216,7 @@ static void
 add_window_display_history (struct window *w, const char *msg, bool paused_p)
 {
   char *buf;
+  void *ptr = w;
 
   if (history_idx >= REDISPLAY_HISTORY_SIZE)
     history_idx = 0;
@@ -225,7 +226,7 @@ add_window_display_history (struct window *w, const char *msg, bool paused_p)
   snprintf (buf, sizeof redisplay_history[0].trace,
 	    "%"pMu": window %p (`%s')%s\n%s",
 	    history_tick++,
-	    w,
+	    ptr,
 	    ((BUFFERP (w->contents)
 	      && STRINGP (BVAR (XBUFFER (w->contents), name)))
 	     ? SSDATA (BVAR (XBUFFER (w->contents), name))
@@ -242,6 +243,7 @@ add_window_display_history (struct window *w, const char *msg, bool paused_p)
 static void add_frame_display_history (struct frame *f, int paused_p)
 {
   char *buf;
+  void *ptr = f;
 
   if (history_idx >= REDISPLAY_HISTORY_SIZE)
     history_idx = 0;
@@ -250,7 +252,7 @@ static void add_frame_display_history (struct frame *f, int paused_p)
 
   sprintf (buf, "%"pMu": update frame %p%s",
 	   history_tick++,
-	   f, paused_p ? " ***paused***" : "");
+	   ptr, paused_p ? " ***paused***" : "");
 }
 
 
@@ -5616,17 +5618,17 @@ FILE = nil means just close any termscript file currently open.  */)
   tty = CURTTY ();
 
   if (tty->termscript != 0)
-  {
-    block_input ();
-    fclose (tty->termscript);
-    unblock_input ();
-  }
-  tty->termscript = 0;
+    {
+      block_input ();
+      fclose (tty->termscript);
+      tty->termscript = 0;
+      unblock_input ();
+    }
 
   if (! NILP (file))
     {
       file = Fexpand_file_name (file, Qnil);
-      tty->termscript = fopen (SSDATA (file), "w");
+      tty->termscript = emacs_fopen (SSDATA (file), "w");
       if (tty->termscript == 0)
 	report_file_error ("Opening termscript", Fcons (file, Qnil));
     }
