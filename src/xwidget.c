@@ -1437,6 +1437,24 @@ DEFUN ("xwidget-view-info", Fxwidget_view_info , Sxwidget_view_info, 1, 1, 0, do
   return info;
 }
 
+DEFUN ("xwidget-view-model", Fxwidget_view_model, Sxwidget_view_model,
+       1, 1, 0,
+       doc: /* get xwidget view model */)
+  (Lisp_Object xwidget_view)
+{
+  CHECK_XWIDGET_VIEW (xwidget_view);
+  return XXWIDGET_VIEW (xwidget_view)->model;
+}
+
+DEFUN ("xwidget-view-window", Fxwidget_view_window, Sxwidget_view_window,
+       1, 1, 0,
+       doc: /* get xwidget view window */)
+  (Lisp_Object xwidget_view)
+{
+  CHECK_XWIDGET_VIEW (xwidget_view);
+  return XXWIDGET_VIEW (xwidget_view)->w;
+}
+
 DEFUN ("xwidget-send-keyboard-event", Fxwidget_send_keyboard_event, Sxwidget_send_keyboard_event, 2, 2, 0, doc:/* synthesize a kbd event for a xwidget. */
        )
   (Lisp_Object  xwidget, Lisp_Object keydescriptor)
@@ -1572,6 +1590,8 @@ syms_of_xwidget (void)
   defsubr (&Sxwidget_view_info);
   defsubr (&Sxwidget_resize);
   defsubr (&Sget_buffer_xwidgets);
+  defsubr (&Sxwidget_view_model);
+  defsubr (&Sxwidget_view_window);
 
 #ifdef HAVE_WEBKIT_OSR
   defsubr (&Sxwidget_webkit_goto_uri);
