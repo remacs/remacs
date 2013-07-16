@@ -1401,7 +1401,7 @@ DEFUN ("xwidget-view-p", Fxwidget_view_p, Sxwidget_view_p, 1, 1, 0,
   return XWIDGET_VIEW_P (object) ? Qt : Qnil;
 }
 
-DEFUN("xwidget-info", Fxwidget_info , Sxwidget_info, 1,1,0, doc: /* get xwidget props */)
+DEFUN ("xwidget-info", Fxwidget_info , Sxwidget_info, 1,1,0, doc: /* get xwidget props */)
   (Lisp_Object xwidget)
 {
   CHECK_XWIDGET (xwidget);
@@ -1419,7 +1419,7 @@ DEFUN("xwidget-info", Fxwidget_info , Sxwidget_info, 1,1,0, doc: /* get xwidget 
   return info;
 }
 
-DEFUN("xwidget-view-info", Fxwidget_view_info , Sxwidget_view_info, 1, 1, 0, doc: /* get xwidget view props */)
+DEFUN ("xwidget-view-info", Fxwidget_view_info , Sxwidget_view_info, 1, 1, 0, doc: /* get xwidget view props */)
   (Lisp_Object xwidget_view)
 {
   CHECK_XWIDGET_VIEW (xwidget_view);
