@@ -209,6 +209,7 @@ TYPE is a symbol which can take one of the following values:
   
   xw->height = XFASTINT(height);
   xw->width = XFASTINT(width);
+  xw->kill_without_query = 1;
   XSETXWIDGET (val, xw); // set the vectorlike_header of VAL with the correct value
   Vxwidget_list = Fcons (val, Vxwidget_list);
   xw->widgetwindow_osr = NULL;
@@ -1598,6 +1599,30 @@ DEFUN ("set-xwidget-plist", Fset_xwidget_plist, Sset_xwidget_plist,
   return plist;
 }
 
+DEFUN ("set-xwidget-query-on-exit-flag",
+       Fset_xwidget_query_on_exit_flag, Sset_xwidget_query_on_exit_flag,
+       2, 2, 0,
+       doc: /* Specify if query is needed for XWIDGET when Emacs is
+exited.  If the second argument FLAG is non-nil, Emacs will query the
+user before exiting or killing a buffer if XWIDGET is running.  This
+function returns FLAG. */)
+  (Lisp_Object xwidget, Lisp_Object flag)
+{
+  CHECK_XWIDGET (xwidget);
+  XXWIDGET (xwidget)->kill_without_query = NILP (flag);
+  return flag;
+}
+
+DEFUN ("xwidget-query-on-exit-flag",
+       Fxwidget_query_on_exit_flag, Sxwidget_query_on_exit_flag,
+       1, 1, 0,
+       doc: /* Return the current value of query-on-exit flag for XWIDGET. */)
+  (Lisp_Object xwidget)
+{
+  CHECK_XWIDGET (xwidget);
+  return (XXWIDGET (xwidget)->kill_without_query ? Qnil : Qt);
+}
+
 void
 syms_of_xwidget (void)
 {
@@ -1615,6 +1640,8 @@ syms_of_xwidget (void)
   defsubr (&Sxwidget_view_model);
   defsubr (&Sxwidget_view_window);
   defsubr (&Sxwidget_view_lookup);
+  defsubr (&Sxwidget_query_on_exit_flag);
+  defsubr (&Sset_xwidget_query_on_exit_flag);
 
 #ifdef HAVE_WEBKIT_OSR
   defsubr (&Sxwidget_webkit_goto_uri);

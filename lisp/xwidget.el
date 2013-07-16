@@ -458,6 +458,7 @@ It can be retrieved with `(xwidget-get XWIDGET PROPNAME)'."
   "Ask beforek illing a buffer that has xwidgets."
   (let ((xwidgets (get-buffer-xwidgets (current-buffer))))
     (or (not xwidgets)
+        (not (memq t (mapcar 'xwidget-query-on-exit-flag xwidgets)))
         (yes-or-no-p
          (format "Buffer %S has xwidgets; kill it? "
                  (buffer-name (current-buffer)))))))

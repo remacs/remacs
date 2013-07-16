@@ -34,6 +34,8 @@ struct xwidget{
   //for offscreen widgets, unused if not osr
   GtkWidget* widget_osr;
   GtkContainer* widgetwindow_osr;
+  /* Non-nil means kill silently if Emacs is exited. */
+  unsigned int kill_without_query : 1;
 
   //TODO these are WIP
 
