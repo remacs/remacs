@@ -7,7 +7,7 @@ void syms_of_xwidget ();
 extern Lisp_Object Qxwidget;
 
 
-int valid_xwidget_p (Lisp_Object object) ;
+int valid_xwidget_spec_p (Lisp_Object object) ;
 
 #include <gtk/gtk.h>
 
@@ -64,19 +64,21 @@ struct xwidget_view {
   long handler_id;
 };
 
-
-/* Test for xwidget (xwidget . spec)  (car must be the symbol xwidget)*/
-#define XWIDGETP(x) (CONSP (x) && EQ (XCAR (x), Qxwidget))
-
 /* Test for xwidget pseudovector*/
-#define XXWIDGETP(x) PSEUDOVECTORP (x, PVEC_XWIDGET)
-#define XXWIDGET(a) (eassert (XXWIDGETP(a)), \
+#define XWIDGETP(x) PSEUDOVECTORP (x, PVEC_XWIDGET)
+#define XXWIDGET(a) (eassert (XWIDGETP(a)), \
                      (struct xwidget *) XUNTAG(a, Lisp_Vectorlike))
 
+#define CHECK_XWIDGET(x) \
+  CHECK_TYPE (XWIDGETP (x), Qxwidgetp, x)
+
 /* Test for xwidget_view pseudovector */
-#define XXWIDGET_VIEW_P(x) PSEUDOVECTORP (x, PVEC_XWIDGET_VIEW)
-#define XXWIDGET_VIEW(a) (eassert (XXWIDGET_VIEW_P(a)), \
+#define XWIDGET_VIEW_P(x) PSEUDOVECTORP (x, PVEC_XWIDGET_VIEW)
+#define XXWIDGET_VIEW(a) (eassert (XWIDGET_VIEW_P(a)), \
                           (struct xwidget_view *) XUNTAG(a, Lisp_Vectorlike))
+
+#define CHECK_XWIDGET_VIEW(x) \
+  CHECK_TYPE (XWIDGET_VIEW_P (x), Qxwidget_view_p, x)
 
 struct xwidget_type
 {

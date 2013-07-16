@@ -5051,7 +5051,7 @@ handle_single_display_spec (struct it *it, Lisp_Object spec, Lisp_Object object,
 #endif /* not HAVE_WINDOW_SYSTEM */
              || (CONSP (value) && EQ (XCAR (value), Qspace))
 #ifdef HAVE_XWIDGETS
-             || XWIDGETP(value)
+             || valid_xwidget_spec_p(value)
 #endif
              );
 
@@ -5129,7 +5129,7 @@ handle_single_display_spec (struct it *it, Lisp_Object spec, Lisp_Object object,
 	  retval = 1 + (it->area == TEXT_AREA);
 	}
 #ifdef HAVE_XWIDGETS
-      else if (XWIDGETP(value))
+      else if (valid_xwidget_spec_p(value))
 	{
           //printf("handle_single_display_spec: im an xwidget!!\n");
           it->what = IT_XWIDGET;
@@ -22879,7 +22879,7 @@ calc_pixel_width_or_height (double *res, struct it *it, Lisp_Object prop,
 	      return OK_PIXELS (width_p ? img->width : img->height);
 	    }
 #ifdef HAVE_XWIDGETS
-	  if (FRAME_WINDOW_P (it->f) && valid_xwidget_p (prop))
+	  if (FRAME_WINDOW_P (it->f) && valid_xwidget_spec_p (prop))
 	    {
               printf("calc_pixel_width_or_height: return dummy size FIXME\n");
               return OK_PIXELS (width_p ? 100 : 100);

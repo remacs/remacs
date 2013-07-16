@@ -1766,12 +1766,12 @@ print_object (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag)
 	  PRINTCHAR ('>');
 	}
 #ifdef HAVE_XWIDGETS
-      else if (XXWIDGETP (obj))
+      else if (XWIDGETP (obj))
 	{
 	  strout ("#<xwidget ", -1, -1, printcharfun);
 	  PRINTCHAR ('>');
 	}
-      else if (XXWIDGET_VIEW_P (obj))
+      else if (XWIDGET_VIEW_P (obj))
 	{
 	  strout ("#<xwidget-view ", -1, -1, printcharfun);
 	  PRINTCHAR ('>');
