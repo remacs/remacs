@@ -1883,12 +1883,21 @@ xwidget_end_redisplay (struct window *w, struct glyph_matrix *matrix)
 void
 kill_buffer_xwidgets (Lisp_Object buffer)
 {
-  Lisp_Object tail, xw;
+  Lisp_Object tail, xwidget;
   for (tail = Fget_buffer_xwidgets (buffer); CONSP (tail); tail = XCDR (tail))
     {
-      xw = XCAR (tail);
-      Vxwidget_list = Fdelq (xw, Vxwidget_list);
+      xwidget = XCAR (tail);
+      Vxwidget_list = Fdelq (xwidget, Vxwidget_list);
       /* TODO free the GTK things in xw */
+      {
+        CHECK_XWIDGET (xwidget);
+        struct xwidget *xw = XXWIDGET (xwidget);
+        if (xw->widget_osr && xw->widgetwindow_osr)
+          {
+            gtk_widget_destroy(GTK_WIDGET (xw->widget_osr));
+            gtk_widget_destroy(GTK_WIDGET (xw->widgetwindow_osr));
+          }
+      }
     }
 }
 
