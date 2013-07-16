@@ -1771,6 +1771,11 @@ print_object (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag)
 	  strout ("#<xwidget ", -1, -1, printcharfun);
 	  PRINTCHAR ('>');
 	}
+      else if (XXWIDGET_VIEW_P (obj))
+	{
+	  strout ("#<xwidget-view ", -1, -1, printcharfun);
+	  PRINTCHAR ('>');
+	}
 #endif      
       else if (WINDOWP (obj))
 	{
