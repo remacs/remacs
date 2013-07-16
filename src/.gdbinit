@@ -993,7 +993,11 @@ Print $ as a scrollbar pointer.
 end
 
 define xxwidget
-  xgetptr $
+  if $argc == 1
+    xgetptr $arg0
+  else
+    xgetptr $
+  end
   set $xw = (struct xwidget *) $ptr
   print $xw
   printf " Type: "
