@@ -1545,6 +1545,28 @@ DEFUN("xwidget-delete-zombies", Fxwidget_delete_zombies , Sxwidget_delete_zombie
     }
 }
 
+DEFUN ("xwidget-view-lookup", Fxwidget_view_lookup, Sxwidget_view_lookup,
+       1, 2, 0,
+       doc: /* Return the xwidget-view associated to XWIDGET in
+WINDOW if specified, otherwise it uses the selected window. */)
+  (Lisp_Object xwidget, Lisp_Object window)
+{
+  CHECK_XWIDGET (xwidget);
+
+  if (NILP (window))
+    window = Fselected_window();
+  CHECK_WINDOW (window);
+
+  for (Lisp_Object tail = Vxwidget_view_list; CONSP (tail); tail = XCDR (tail))
+    {
+      Lisp_Object xwidget_view = XCAR (tail);
+      if (EQ (Fxwidget_view_model (xwidget_view), xwidget)
+          && EQ (Fxwidget_view_window (xwidget_view), window))
+        return xwidget_view;
+    }
+  
+  return Qnil;
+}
 
 DEFUN ("xwidget-plist", Fxwidget_plist, Sxwidget_plist,
        1, 1, 0,
@@ -1592,6 +1614,7 @@ syms_of_xwidget (void)
   defsubr (&Sget_buffer_xwidgets);
   defsubr (&Sxwidget_view_model);
   defsubr (&Sxwidget_view_window);
+  defsubr (&Sxwidget_view_lookup);
 
 #ifdef HAVE_WEBKIT_OSR
   defsubr (&Sxwidget_webkit_goto_uri);
@@ -1721,21 +1744,16 @@ xwidget_view_delete_all_in_window (struct window *w)
     }
 }
 
-
-
 struct xwidget_view*
 xwidget_view_lookup (struct xwidget* xw, struct window *w)
 {
-  struct xwidget_view* xv = NULL;
-  for (Lisp_Object tail = Vxwidget_view_list; CONSP (tail); tail = XCDR (tail))
-    {
-      if (XWIDGET_VIEW_P (XCAR (tail))) {
-        xv = XXWIDGET_VIEW (XCAR (tail));
-        if (XXWIDGET (xv->model) == xw && XWINDOW (xv->w) == w)
-          return xv;
-      }
-    }
-  return NULL; /* we didnt find a matching view */
+  Lisp_Object xwidget, window, ret;
+  XSETXWIDGET (xwidget, xw);
+  XSETWINDOW (window, w);
+
+  ret = Fxwidget_view_lookup (xwidget, window);
+
+  return EQ (ret, Qnil) ? NULL : XXWIDGET_VIEW (ret);
 }
 
 struct xwidget*
