@@ -209,7 +209,7 @@ TYPE is a symbol which can take one of the following values:
   
   xw->height = XFASTINT(height);
   xw->width = XFASTINT(width);
-  xw->kill_without_query = 1;
+  xw->kill_without_query = 0;
   XSETXWIDGET (val, xw); // set the vectorlike_header of VAL with the correct value
   Vxwidget_list = Fcons (val, Vxwidget_list);
   xw->widgetwindow_osr = NULL;
