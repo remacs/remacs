@@ -998,6 +998,10 @@ xwidget_init_view (struct xwidget *xww,
     //Cairo view
     //uhm cairo is differentish in gtk 3.
     //gdk_cairo_create (gtk_widget_get_window (FRAME_GTK_WIDGET (s->f)));
+    xv->widget = gtk_drawing_area_new();
+    g_signal_connect (G_OBJECT (    xv->widget), "draw",
+                      G_CALLBACK (xwidget_osr_draw_callback), NULL);
+    
   } else if (EQ(xww->type, Qwebkit_osr)||
              EQ(xww->type, Qsocket_osr)||
              (!NILP (Fget(xww->type, QCxwgir_class))))//xwgir widgets are OSR
