@@ -97,18 +97,12 @@ defaults to the string looking like a url around the cursor position."
     (cons (aref xwi 2)
           (aref xwi 3))))
 
-(defmacro xwidget-image-mode-navigation-adaptor (fn)
-  "Image code adaptor.  `image-mode' FN is called."
-  `(lambda () (interactive)
-     (cl-flet ((image-display-size (spec) (xwidget-image-display-size spec)))
-       (funcall ,fn ))))
-
-(defmacro xwidget-image-mode-navigation-adaptor-p (fn)
-  "Image code adaptor.  `image-mode' FN is called with interactive arg."
-  `(lambda (n) (interactive "p")
-     (cl-flet ((image-display-size (spec) (xwidget-image-display-size spec)))
-       (funcall ,fn n))))
-
+(defadvice image-display-size (around image-display-size-for-xwidget
+                                      (spec &optional pixels frame)
+                                      activate)
+  (if (eq (car spec) 'xwidget)
+      (setq ad-return-value (xwidget-image-display-size spec pixels frame))
+    ad-do-it))
 
 ;;todo.
 ;; - check that the webkit support is compiled in
@@ -123,26 +117,26 @@ defaults to the string looking like a url around the cursor position."
     (define-key map "w" 'xwidget-webkit-current-url)
 
     ;;similar to image mode bindings
-    (define-key map (kbd "SPC")                    (xwidget-image-mode-navigation-adaptor   'image-scroll-up))
-    (define-key map (kbd "DEL")                    (xwidget-image-mode-navigation-adaptor   'image-scroll-down))
+    (define-key map (kbd "SPC")                    'image-scroll-up)
+    (define-key map (kbd "DEL")                    'image-scroll-down)
 
-    (define-key map [remap scroll-up]              (xwidget-image-mode-navigation-adaptor   'image-scroll-up))
-    (define-key map [remap scroll-up-command]      (xwidget-image-mode-navigation-adaptor   'image-scroll-up))
+    (define-key map [remap scroll-up]              'image-scroll-up)
+    (define-key map [remap scroll-up-command]      'image-scroll-up)
 
-    (define-key map [remap scroll-down]            (xwidget-image-mode-navigation-adaptor   'image-scroll-down))
-    (define-key map [remap scroll-down-command]    (xwidget-image-mode-navigation-adaptor   'image-scroll-down))
+    (define-key map [remap scroll-down]            'image-scroll-down)
+    (define-key map [remap scroll-down-command]    'image-scroll-down)
 
-    (define-key map [remap forward-char]           (xwidget-image-mode-navigation-adaptor-p 'image-forward-hscroll))
-    (define-key map [remap backward-char]          (xwidget-image-mode-navigation-adaptor-p 'image-backward-hscroll))
-    (define-key map [remap right-char]             (xwidget-image-mode-navigation-adaptor-p 'image-forward-hscroll))
-    (define-key map [remap left-char]              (xwidget-image-mode-navigation-adaptor-p 'image-backward-hscroll))
-    (define-key map [remap previous-line]          (xwidget-image-mode-navigation-adaptor-p 'image-previous-line))
-    (define-key map [remap next-line]              (xwidget-image-mode-navigation-adaptor-p 'image-next-line))
+    (define-key map [remap forward-char]           'image-forward-hscroll)
+    (define-key map [remap backward-char]          'image-backward-hscroll)
+    (define-key map [remap right-char]             'image-forward-hscroll)
+    (define-key map [remap left-char]              'image-backward-hscroll)
+    (define-key map [remap previous-line]          'image-previous-line)
+    (define-key map [remap next-line]              'image-next-line)
 
-    (define-key map [remap move-beginning-of-line] (xwidget-image-mode-navigation-adaptor-p 'image-bol))
-    (define-key map [remap move-end-of-line]       (xwidget-image-mode-navigation-adaptor-p 'image-eol))
-    (define-key map [remap beginning-of-buffer]    (xwidget-image-mode-navigation-adaptor   'image-bob))
-    (define-key map [remap end-of-buffer]          (xwidget-image-mode-navigation-adaptor   'image-eob))
+    (define-key map [remap move-beginning-of-line] 'image-bol)
+    (define-key map [remap move-end-of-line]       'image-eol)
+    (define-key map [remap beginning-of-buffer]    'image-bob)
+    (define-key map [remap end-of-buffer]          'image-eob)
     map)
   "Keymap for `xwidget-webkit-mode'.")
 
