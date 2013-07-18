@@ -1415,7 +1415,7 @@ DEFUN ("xwidget-info", Fxwidget_info , Sxwidget_info, 1,1,0, doc: /* get xwidget
   XSETFASTINT(n, xw->width);
   ASET (info, 2, n);
   XSETFASTINT(n, xw->height);
-  ASET (info, 2, n);
+  ASET (info, 3, n);
 
   return info;
 }
