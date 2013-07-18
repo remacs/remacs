@@ -37,10 +37,6 @@ struct xwidget{
   /* Non-nil means kill silently if Emacs is exited. */
   unsigned int kill_without_query : 1;
 
-  //TODO these are WIP
-
-
-  
 };
 
 
