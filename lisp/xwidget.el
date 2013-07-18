@@ -58,7 +58,13 @@ see `make-xwidget' for types suitable for TYPE."
 ;;               ;;   (start-process "xembed2" "*xembed2*" "uzbl-core"  "-s" (number-to-string xembed-id)  "http://www.fsf.org" )  )
 ;;               )))))
 
-
+(defun xwidget-display (xwidget)
+  "Force xwidget to be displayed to create a xwidget_view."
+  (let* ((buffer (xwidget-buffer xwidget))
+         (window (display-buffer buffer))
+         (frame (window-frame window)))
+    (set-frame-visible frame t)
+    (redisplay t)))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
