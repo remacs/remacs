@@ -438,16 +438,24 @@ It can be retrieved with `(xwidget-get XWIDGET PROPNAME)'."
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defun xwidget-delete-zombies ()
+  (mapcar (lambda (xwidget-view)
+            (when (or (not (window-live-p (xwidget-view-window xwidget-view)))
+                      (not (find (xwidget-view-model xwidget-view)
+                                 xwidget-list)))
+              (delete-xwidget-view xwidget-view)))
+          xwidget-view-list))
+
 (defun xwidget-cleanup ()
   "Delete zombie xwidgets."
   ;;its still pretty easy to trigger bugs with xwidgets.
   ;;this function tries to implement a workaround
   (interactive)
-  (xwidget-delete-zombies) ;;kill xviews who should have been deleted but stull linger
-  (redraw-display);;redraw display otherwise ghost of zombies  will remain to haunt the screen
-  )
-
-
+  ;; kill xviews who should have been deleted but stull linger
+  (xwidget-delete-zombies)
+  ;; redraw display otherwise ghost of zombies  will remain to haunt the screen
+  (redraw-display))
 
 ;;this is a workaround because I cant find the right place to put it in C
 ;;seems to work well in practice though

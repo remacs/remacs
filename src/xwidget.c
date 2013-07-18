@@ -1520,30 +1520,15 @@ DEFUN ("xwidget-send-keyboard-event", Fxwidget_send_keyboard_event, Sxwidget_sen
   return Qnil;
 }
 
-
-
-DEFUN("xwidget-delete-zombies", Fxwidget_delete_zombies , Sxwidget_delete_zombies, 0,0,0, doc: /* */)
-  (void)
+DEFUN ("delete-xwidget-view", Fdelete_xwidget_view, Sdelete_xwidget_view,
+       1, 1, 0,
+       doc: /* Delete the XWIDGET-VIEW. */)
+  (Lisp_Object xwidget_view)
 {
-  /*
-    - remove all views with window gone
-
-    TODO
-    - remove all xwidgets with buffer gone
-    - remove all views with xw gone
-
-   */
-  struct xwidget_view* xv = NULL;
-  for (Lisp_Object tail = Vxwidget_view_list; CONSP (tail); tail = XCDR (tail))
-    {
-      if (XWIDGET_VIEW_P (XCAR (tail))) {
-        xv = XXWIDGET_VIEW (XCAR (tail));
-        if(!WINDOW_LIVE_P (xv->w)) {
-          gtk_widget_destroy(GTK_WIDGET(xv->widgetwindow));
-          Vxwidget_view_list = Fdelq (XCAR (tail), Vxwidget_view_list);
-        }
-      }
-    }
+  CHECK_XWIDGET_VIEW (xwidget_view);
+  struct xwidget_view *xv = XXWIDGET_VIEW (xwidget_view);
+  gtk_widget_destroy(GTK_WIDGET (xv->widgetwindow));
+  Vxwidget_view_list = Fdelq (xwidget_view, Vxwidget_view_list);
 }
 
 DEFUN ("xwidget-view-lookup", Fxwidget_view_lookup, Sxwidget_view_lookup,
@@ -1653,7 +1638,7 @@ syms_of_xwidget (void)
   defsubr (&Sxwgir_xwidget_call_method  );
   defsubr (&Sxwgir_require_namespace);
   defsubr (&Sxwidget_size_request  );
-  defsubr (&Sxwidget_delete_zombies);
+  defsubr (&Sdelete_xwidget_view);
   defsubr (&Sxwidget_disable_plugin_for_mime);
 
   defsubr (&Sxwidget_send_keyboard_event);
