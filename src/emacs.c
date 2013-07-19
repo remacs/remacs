@@ -988,7 +988,7 @@ main (int argc, char **argv)
 	 use a pipe for synchronization.  The parent waits for the child
 	 to close its end of the pipe (using `daemon-initialized')
 	 before exiting.  */
-      if (pipe2 (daemon_pipe, O_CLOEXEC) != 0)
+      if (emacs_pipe (daemon_pipe) != 0)
 	{
 	  fprintf (stderr, "Cannot pipe!\n");
 	  exit (1);
@@ -1508,12 +1508,11 @@ Using an Emacs configured with --with-x-toolkit=lucid does not have this problem
       char *file;
       /* Handle -l loadup, args passed by Makefile.  */
       if (argmatch (argv, argc, "-l", "--load", 3, &file, &skip_args))
-	Vtop_level = Fcons (intern_c_string ("load"),
-			    Fcons (build_string (file), Qnil));
+	Vtop_level = list2 (intern_c_string ("load"), build_string (file));
       /* Unless next switch is -nl, load "loadup.el" first thing.  */
       if (! no_loadup)
-	Vtop_level = Fcons (intern_c_string ("load"),
-			    Fcons (build_string ("loadup.el"), Qnil));
+	Vtop_level = list2 (intern_c_string ("load"),
+			    build_string ("loadup.el"));
     }
 
   if (initialized)

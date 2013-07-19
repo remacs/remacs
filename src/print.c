@@ -201,11 +201,10 @@ bool print_output_debug_flag EXTERNALLY_VISIBLE = 1;
 /* This is used to restore the saved contents of print_buffer
    when there is a recursive call to print.  */
 
-static Lisp_Object
+static void
 print_unwind (Lisp_Object saved_text)
 {
   memcpy (print_buffer, SDATA (saved_text), SCHARS (saved_text));
-  return Qnil;
 }
 
 
@@ -772,8 +771,7 @@ append to existing target file.  */)
 	{
 	  stderr = initial_stderr_stream;
 	  initial_stderr_stream = NULL;
-	  report_file_error ("Cannot open debugging output stream",
-			     Fcons (file, Qnil));
+	  report_file_error ("Cannot open debugging output stream", file);
 	}
     }
   return Qnil;
@@ -1303,7 +1301,7 @@ print_prune_string_charset (Lisp_Object string)
       if (print_check_string_result & PRINT_STRING_NON_CHARSET_FOUND)
 	{
 	  if (NILP (print_prune_charset_plist))
-	    print_prune_charset_plist = Fcons (Qcharset, Qnil);
+	    print_prune_charset_plist = list1 (Qcharset);
 	  Fremove_text_properties (make_number (0),
 				   make_number (SCHARS (string)),
 				   print_prune_charset_plist, string);

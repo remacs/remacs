@@ -1,3 +1,118 @@
+2013-07-19  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* net/shr.el (shr-mouse-browse-url): New command and keystroke
+	(bug#14815).
+
+	* net/eww.el (eww-process-text-input): Allow inputting when the
+	point is at the start of the line, as the properties aren't
+	front-sticky.
+
+	* net/shr.el (shr-make-table-1): Ensure that we don't infloop on
+	degenerate widths.
+
+2013-07-19  Richard Stallman  <rms@gnu.org>
+
+	* epa.el (epa-popup-info-window): Doc fix.
+
+	* subr.el (split-string): New arg TRIM.
+
+2013-07-18  Juanma Barranquero  <lekktu@gmail.com>
+
+	* frame.el (blink-cursor-timer-function, blink-cursor-suspend):
+	Add check for W32 (followup to 2013-07-16T11:41:06Z!jan.h.d@swipnet.se).
+
+2013-07-18  Michael Albinus  <michael.albinus@gmx.de>
+
+	* filenotify.el (file-notify--library): Rename from
+	`file-notify-support'.  Do not autoload.  Adapt all uses.
+	(file-notify-supported-p): New defun.
+
+	* autorevert.el (auto-revert-use-notify):
+	Use `file-notify-supported-p' instead of `file-notify-support'.
+	Adapt docstring.
+	(auto-revert-notify-add-watch): Use `file-notify-supported-p'.
+
+	* net/tramp.el (tramp-file-name-for-operation):
+	Add `file-notify-supported-p'.
+
+	* net/tramp-sh.el (tramp-sh-handle-file-notify-supported-p):
+	New defun.
+	(tramp-sh-file-name-handler-alist): Add it as handler for
+	`file-notify-supported-p '.
+
+	* net/tramp-adb.el (tramp-adb-file-name-handler-alist):
+	* net/tramp-gvfs.el (tramp-gvfs-file-name-handler-alist):
+	* net/tramp-smb.el (tramp-smb-file-name-handler-alist):
+	Add `ignore' as handler for `file-notify-*' functions.
+
+2013-07-17  Eli Zaretskii  <eliz@gnu.org>
+
+	* simple.el (line-move-partial, line-move): Don't start vscroll or
+	scroll-up if the current line is not taller than the window.
+	(Bug#14881)
+
+2013-07-16  Dmitry Gutov  <dgutov@yandex.ru>
+
+	* progmodes/ruby-mode.el (ruby-font-lock-keywords): Do not
+	highlight question marks in the method names as strings.
+	(ruby-block-beg-keywords): Inline.
+	(ruby-font-lock-keyword-beg-re): Extract from
+	`ruby-font-lock-keywords'.
+
+2013-07-16  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* frame.el (blink-cursor-blinks): New defcustom.
+	(blink-cursor-blinks-done): New defvar.
+	(blink-cursor-start): Set blink-cursor-blinks-done to 1.
+	(blink-cursor-timer-function): Check if number of blinks has been
+	done on X and NS.
+	(blink-cursor-suspend, blink-cursor-check): New defuns.
+
+2013-07-15  Glenn Morris  <rgm@gnu.org>
+
+	* edmacro.el (edmacro-format-keys): Fix previous change.
+
+2013-07-15  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* shell.el (explicit-bash-args): Remove obsolete hack for Bash 1.x.
+	The hack didn't work outside English locales anyway.
+
+2013-07-15  Juanma Barranquero  <lekktu@gmail.com>
+
+	* simple.el (define-alternatives): Rename from alternatives-define,
+	per RMS' suggestion.
+
+2013-07-14  Juanma Barranquero  <lekktu@gmail.com>
+
+	* desktop.el (desktop-restore-frames): Change default to t.
+	(desktop-restore-in-current-display): Now offer more options.
+	(desktop-restoring-reuses-frames): New customization option.
+	(desktop--saved-states): Doc fix.
+	(desktop-filter-parameters-alist): New variable, renamed and expanded
+	from desktop--excluded-frame-parameters.
+	(desktop--target-display): New variable.
+	(desktop-switch-to-gui-p, desktop-switch-to-tty-p)
+	(desktop--filter-tty*, desktop--filter-*-color)
+	(desktop--filter-minibuffer, desktop--filter-restore-desktop-parm)
+	(desktop--filter-save-desktop-parm)
+	(desktop-restore-in-original-display-p): New functions.
+	(desktop--filter-frame-parms): Use new desktop-filter-parameters-alist.
+	(desktop--save-minibuffer-frames): New function, inspired by a similar
+	function from Martin Rudalics.
+	(desktop--save-frames): Call it; play nice with desktop-globals-to-save.
+	(desktop--restore-in-this-display-p): Remove.
+	(desktop--find-frame): Rename from desktop--find-frame-in-display
+	and add predicate argument.
+	(desktop--make-full-frame): Remove, integrated into desktop--make-frame.
+	(desktop--reuse-list): New variable.
+	(desktop--select-frame, desktop--make-frame, desktop--sort-states):
+	New functions.
+	(desktop--restore-frames): Add support for "minibuffer-special" frames.
+
+2013-07-14  Michael Albinus  <michael.albinus@gmx.de>
+
+	* net/tramp-sh.el (tramp-sh-handle-vc-registered): Use `ignore-error'.
+
 2013-07-13  Dmitry Gutov  <dgutov@yandex.ru>
 
 	* progmodes/ruby-mode.el (ruby-font-lock-keywords): Highlight
@@ -3475,8 +3590,8 @@
 	(prolog-char-quote-workaround):
 	* progmodes/cperl-mode.el (cperl-under-as-char):
 	* progmodes/vhdl-mode.el (vhdl-underscore-is-part-of-word):
-	 Mark as obsolete.
-	 (vhdl-mode-syntax-table, vhdl-mode-ext-syntax-table): Initialize in
+	Mark as obsolete.
+	(vhdl-mode-syntax-table, vhdl-mode-ext-syntax-table): Initialize in
 	their declaration.
 	(vhdl-mode-syntax-table-init): Remove.
 

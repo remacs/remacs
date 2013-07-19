@@ -981,7 +981,7 @@ frame_parm_handler ns_frame_parm_handlers[] =
 /* Handler for signals raised during x_create_frame.
    FRAME is the frame which is partially constructed.  */
 
-static Lisp_Object
+static void
 unwind_create_frame (Lisp_Object frame)
 {
   struct frame *f = XFRAME (frame);
@@ -990,7 +990,7 @@ unwind_create_frame (Lisp_Object frame)
      display is disconnected after the frame has become official, but
      before x_create_frame removes the unwind protect.  */
   if (!FRAME_LIVE_P (f))
-    return Qnil;
+    return;
 
   /* If frame is ``official'', nothing to do.  */
   if (NILP (Fmemq (frame, Vframe_list)))
@@ -1006,10 +1006,7 @@ unwind_create_frame (Lisp_Object frame)
       /* Check that reference counts are indeed correct.  */
       eassert (dpyinfo->terminal->image_cache->refcount == image_cache_refcount);
 #endif
-      return Qt;
     }
-
-  return Qnil;
 }
 
 /*
@@ -2022,7 +2019,7 @@ there was no result.  */)
   ns_string_to_pasteboard (pb, send);
 
   if (NSPerformService (svcName, pb) == NO)
-    Fsignal (Qquit, Fcons (build_string ("service not available"), Qnil));
+    Fsignal (Qquit, list1 (build_string ("service not available")));
 
   if ([[pb types] count] == 0)
     return build_string ("");
@@ -2878,7 +2875,7 @@ Example: Install an icon Gnus.tiff and execute the following code
 
 When you miniaturize a Group, Summary or Article frame, Gnus.tiff will
 be used as the image of the icon representing the frame.  */);
-  Vns_icon_type_alist = Fcons (Qt, Qnil);
+  Vns_icon_type_alist = list1 (Qt);
 
   DEFVAR_LISP ("ns-version-string", Vns_version_string,
                doc: /* Toolkit version for NS Windowing.  */);

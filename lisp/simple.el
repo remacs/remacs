@@ -4800,6 +4800,8 @@ The value is a floating-point number."
 	   (this-ypos (nth 2 this-lh))
 	   (dlh (default-line-height))
 	   (wslines (window-screen-lines))
+	   (edges (window-inside-pixel-edges))
+	   (winh (- (nth 3 edges) (nth 1 edges) 1))
 	   py vs last-line)
       (if (> (mod wslines 1.0) 0.0)
 	  (setq wslines (round (+ wslines 0.5))))
@@ -4848,7 +4850,7 @@ The value is a floating-point number."
 	  nil)
 	 ;; If cursor is not in the bottom scroll margin, and the
 	 ;; current line is is not too tall, move forward.
-	 ((and (or (null this-height) (<= this-height dlh))
+	 ((and (or (null this-height) (<= this-height winh))
 	       vpos
 	       (> vpos 0)
 	       (< py last-line))
@@ -4865,7 +4867,7 @@ The value is a floating-point number."
 	       (> vpos 0)
 	       (= py last-line))
 	  ;; Don't vscroll if the partially-visible line at window
-	  ;; bottom has the default height (a.k.a. "just one more text
+	  ;; bottom is not too tall (a.k.a. "just one more text
 	  ;; line"): in that case, we do want redisplay to behave
 	  ;; normally, i.e. recenter or whatever.
 	  ;;
@@ -4874,7 +4876,7 @@ The value is a floating-point number."
 	  ;; partially-visible glyph row at the end of the window.  As
 	  ;; we are dealing with floats, we disregard sub-pixel
 	  ;; discrepancies between that and DLH.
-	  (if (and rowh rbot (>= (- (+ rowh rbot) dlh) 1))
+	  (if (and rowh rbot (>= (- (+ rowh rbot) winh) 1))
 	      (set-window-vscroll nil dlh t))
 	  (line-move-1 arg noerror to-end)
 	  t)
@@ -4918,10 +4920,13 @@ The value is a floating-point number."
 	    ;; If we moved into a tall line, set vscroll to make
 	    ;; scrolling through tall images more smooth.
 	    (let ((lh (line-pixel-height))
-		  (dlh (default-line-height)))
+		  (edges (window-inside-pixel-edges))
+		  (dlh (default-line-height))
+		  winh)
+	      (setq winh (- (nth 3 edges) (nth 1 edges) 1))
 	      (if (and (< arg 0)
 		       (< (point) (window-start))
-		       (> lh dlh))
+		       (> lh winh))
 		  (set-window-vscroll
 		   nil
 		   (- lh dlh) t))))
@@ -7437,19 +7442,19 @@ warning using STRING as the message.")
 
 ;;; Generic dispatcher commands
 
-;; Macro `alternatives-define' is used to create generic commands.
+;; Macro `define-alternatives' is used to create generic commands.
 ;; Generic commands are these (like web, mail, news, encrypt, irc, etc.)
 ;; that can have different alternative implementations where choosing
 ;; among them is exclusively a matter of user preference.
 
-;; (alternatives-define COMMAND) creates a new interactive command
+;; (define-alternatives COMMAND) creates a new interactive command
 ;; M-x COMMAND and a customizable variable COMMAND-alternatives.
 ;; Typically, the user will not need to customize this variable; packages
 ;; wanting to add alternative implementations should use
 ;;
 ;; ;;;###autoload (push '("My impl name" . my-impl-symbol) COMMAND-alternatives
 
-(defmacro alternatives-define (command &rest customizations)
+(defmacro define-alternatives (command &rest customizations)
   "Define new command `COMMAND'.
 The variable `COMMAND-alternatives' will contain alternative
 implementations of COMMAND, so that running `C-u M-x COMMAND'

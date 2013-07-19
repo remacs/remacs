@@ -617,7 +617,7 @@ even if it is dead.  The return value is never nil.  */)
 
   /* Put this in the alist of all live buffers.  */
   XSETBUFFER (buffer, b);
-  Vbuffer_alist = nconc2 (Vbuffer_alist, Fcons (Fcons (name, buffer), Qnil));
+  Vbuffer_alist = nconc2 (Vbuffer_alist, list1 (Fcons (name, buffer)));
   /* And run buffer-list-update-hook.  */
   if (!NILP (Vrun_hooks))
     call1 (Vrun_hooks, Qbuffer_list_update_hook);
@@ -828,7 +828,7 @@ CLONE nil means the indirect buffer's state is reset to default values.  */)
 
   /* Put this in the alist of all live buffers.  */
   XSETBUFFER (buf, b);
-  Vbuffer_alist = nconc2 (Vbuffer_alist, Fcons (Fcons (name, buf), Qnil));
+  Vbuffer_alist = nconc2 (Vbuffer_alist, list1 (Fcons (name, buf)));
 
   bset_mark (b, Fmake_marker ());
 
@@ -2215,14 +2215,19 @@ ends when the current command terminates.  Use `switch-to-buffer' or
   return buffer;
 }
 
+void
+restore_buffer (Lisp_Object buffer_or_name)
+{
+  Fset_buffer (buffer_or_name);
+}
+
 /* Set the current buffer to BUFFER provided if it is alive.  */
 
-Lisp_Object
+void
 set_buffer_if_live (Lisp_Object buffer)
 {
   if (BUFFER_LIVE_P (XBUFFER (buffer)))
     set_buffer_internal (XBUFFER (buffer));
-  return Qnil;
 }
 
 DEFUN ("barf-if-buffer-read-only", Fbarf_if_buffer_read_only,

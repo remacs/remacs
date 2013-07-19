@@ -1,4 +1,413 @@
+2013-07-19  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Fix some minor file descriptor leaks and related glitches.
+	* filelock.c (create_lock_file) [!O_CLOEXEC]: Use fcntl with FD_CLOEXEC.
+	(create_lock_file): Use write, not emacs_write.
+	* image.c (slurp_file, png_load_body):
+	* process.c (Fnetwork_interface_list, Fnetwork_interface_info)
+	(server_accept_connection):
+	Don't leak an fd on memory allocation failure.
+	* image.c (slurp_file): Add a cheap heuristic for growing files.
+	* xfaces.c (Fx_load_color_file): Block input around the fopen too,
+	as that's what the other routines do.  Maybe input need not be
+	blocked at all, but it's better to be consistent.
+	Avoid undefined behavior when strlen is zero.
+
+	* alloc.c (staticpro): Avoid buffer overrun on repeated calls.
+	(NSTATICS): Now a constant; doesn't need to be a macro.
+
+2013-07-19  Richard Stallman  <rms@gnu.org>
+
+	* coding.c (decode_coding_utf_8): Add simple loop for fast
+	processing of ASCII characters.
+
+2013-07-19  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* conf_post.h (RE_TRANSLATE_P) [emacs]: Remove obsolete optimization.
+
+2013-07-19  Eli Zaretskii  <eliz@gnu.org>
+
+	* keyboard.c (kbd_buffer_get_event): Use Display_Info instead of
+	unportable 'struct x_display_info'.
+	(DISPLAY_LIST_INFO): Delete macro: not needed, since Display_Info
+	is a portable type.
+
+2013-07-19  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* sysdep.c [GNU_LINUX]: Fix fd and memory leaks and similar issues.
+	(procfs_ttyname): Don't use uninitialized storage if emacs_fopen
+	or fscanf fails.
+	(system_process_attributes): Prefer plain char to unsigned char
+	when either will do.  Clean up properly if interrupted or if
+	memory allocations fail.  Don't assume sscanf succeeds.  Remove
+	no-longer-needed workaround to stop GCC from whining.  Read
+	command-line once, instead of multiple times.  Check read status a
+	bit more carefully.
+
+	Fix obscure porting bug with varargs functions.
+	The code assumed that int is treated like ptrdiff_t in a vararg
+	function, which is not a portable assumption.  There was a similar
+	-- though these days less likely -- porting problem with various
+	assumptions that pointers of different types all smell the same as
+	far as vararg functions is conserved.  To make this problem less
+	likely in the future, redo the API to use varargs functions.
+	* alloc.c (make_save_value): Remove this vararg function.
+	All uses changed to ...
+	(make_save_int_int_int, make_save_obj_obj_obj_obj)
+	(make_save_ptr_int, make_save_funcptr_ptr_obj, make_save_memory):
+	New functions.
+	(make_save_ptr): Rename from make_save_pointer, for consistency with
+	the above.  Define only on platforms that need it.  All uses changed.
+
+2013-07-18  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* keyboard.c: Try to fix typos in previous change.
+	(DISPLAY_LIST_INFO): New macro.
+	(kbd_buffer_get_event): Do not access members that are not present
+	in X11.  Revert inadvertent change of "!=" to "=".
+
+2013-07-18  Juanma Barranquero  <lekktu@gmail.com>
+
+	* keyboard.c (kbd_buffer_get_event):
+	* w32term.c (x_focus_changed): Port FOCUS_(IN|OUT)_EVENT changes to W32.
+	Followup to 2013-07-16T11:41:06Z!jan.h.d@swipnet.se.
+
+2013-07-18  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* filelock.c: Fix unlikely file descriptor leaks.
+	(get_boot_time_1): Rework to avoid using emacs_open.
+	This doesn't actually fix a leak, but is better anyway.
+	(read_lock_data): Use read, not emacs_read.
+
+	* doc.c: Fix minor memory and file descriptor leaks.
+	* doc.c (get_doc_string): Fix memory leak when doc file absent.
+	(get_doc_string, Fsnarf_documentation):
+	Fix file descriptor leak on error.
+
+	* term.c: Fix minor fdopen-related file descriptor leaks.
+	* term.c (Fresume_tty) [!MSDOS]: Close fd if fdopen (fd) fails.
+	(init_tty) [!DOS_NT]: Likewise.  Also close fd if isatty (fd) fails.
+
+	* charset.c: Fix file descriptor leaks and errno issues.
+	Include <errno.h>.
+	(load_charset_map_from_file): Don't leak file descriptor on error.
+	Use plain record_xmalloc since the allocation is larger than
+	MAX_ALLOCA; that's simpler here.  Simplify test for exhaustion
+	of entries.
+	* eval.c (record_unwind_protect_nothing):
+	* fileio.c (fclose_unwind):
+	New functions.
+	* lread.c (load_unwind): Remove.  All uses replaced by fclose_unwind.
+	The replacement doesn't block input, but that no longer seems
+	necessary.
+
+2013-07-17  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* lread.c: Fix file descriptor leaks and errno issues.
+	(Fload): Close some races that leaked fds or streams when 'load'
+	was interrupted.
+	(Fload, openp): Report error number of last nontrivial failure to open.
+	ENOENT counts as trivial.
+	* eval.c (do_nothing, clear_unwind_protect, set_unwind_protect_ptr):
+	New functions.
+	* fileio.c (close_file_unwind): No need to test whether FD is nonnegative,
+	now that the function is always called with a nonnegative arg.
+	* lisp.h (set_unwind_protect_ptr, set_unwind_protect_int): Remove.
+	All uses replaced with ...
+	(clear_unwind_protect, set_unwind_protect_ptr): New decls.
+
+	A few more minor file errno-reporting bugs.
+	* callproc.c (Fcall_process):
+	* doc.c (Fsnarf_documentation):
+	* fileio.c (Frename_file, Fadd_name_to_file, Fmake_symbolic_link):
+	* process.c (set_socket_option):
+	Don't let a constructor trash errno.
+	* doc.c: Include <errno.h>.
+
+2013-07-16  Juanma Barranquero  <lekktu@gmail.com>
+
+	* w32fns.c (unwind_create_tip_frame): Fix declaration.
+
+2013-07-16  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Fix w32 bug with call-process-region (Bug#14885).
+	* callproc.c (Fcall_process_region): Pass nil, not "/dev/null",
+	to Fcall_process when the input is empty.  This simplifies the
+	code a bit.  It makes no difference on POSIXish platforms but
+	apparently it fixes a bug on w32.
+
+	Fix bug where insert-file-contents closes a file twice. (Bug#14839).
+	* fileio.c (close_file_unwind): Don't close if FD is negative;
+	this can happen when unwinding a zapped file descriptor.
+	(Finsert_file_contents): Unwind-protect the fd before the point marker,
+	in case Emacs runs out of memory between the two unwind-protects.
+	Don't trash errno when closing FD.
+	Zap the FD in the specpdl when closing it, instead of deferring
+	the removal of the unwind-protect; this fixes a bug where a child
+	function unwinds the stack past us.
+
+	New unwind-protect flavors to better type-check C callbacks.
+	This also lessens the need to write wrappers for callbacks,
+	and the need for make_save_pointer.
+	* alloca.c (free_save_value):
+	* atimer.c (run_all_atimers):
+	Now extern.
+	* alloc.c (safe_alloca_unwind):
+	* atimer.c (unwind_stop_other_atimers):
+	* keyboard.c (cancel_hourglass_unwind) [HAVE_WINDOW_SYSTEM]:
+	* menu.c (cleanup_popup_menu) [HAVE_NS]:
+	* minibuf.c (choose_minibuf_frame_1):
+	* process.c (make_serial_process_unwind):
+	* xdisp.h (pop_message_unwind):
+	* xselect.c (queue_selection_requests_unwind):
+	Remove no-longer-needed wrapper.  All uses replaced by the wrappee.
+	* alloca.c (record_xmalloc):
+	Prefer record_unwind_protect_ptr to record_unwind_protect with
+	make_save_pointer.
+	* alloca.c (Fgarbage_collect):
+	Prefer record_unwind_protect_void to passing a dummy.
+	* buffer.c (restore_buffer):
+	* window.c (restore_window_configuration):
+	* xfns.c, w32fns.c (do_unwind_create_frame)
+	New wrapper.  All record-unwind uses of wrappee changed.
+	* buffer.c (set_buffer_if_live):
+	* callproc.c (call_process_cleanup, delete_temp_file):
+	* coding.c (code_conversion_restore):
+	* dired.c (directory_files_internal_w32_unwind) [WINDOWSNT]:
+	* editfns.c (save_excursion_restore)
+	(subst_char_in_region_unwind, subst_char_in_region_unwind_1)
+	(save_restriction_restore):
+	* eval.c (restore_stack_limits, un_autoload):
+	* fns.c (require_unwind):
+	* keyboard.c (recursive_edit_unwind, tracking_off):
+	* lread.c (record_load_unwind, load_warn_old_style_backquotes):
+	* macros.c (pop_kbd_macro, restore_menu_items):
+	* nsfns.m (unwind_create_frame):
+	* print.c (print_unwind):
+	* process.c (start_process_unwind):
+	* search.c (unwind_set_match_data):
+	* window.c (select_window_norecord, select_frame_norecord):
+	* xdisp.c (unwind_with_echo_area_buffer, unwind_format_mode_line)
+	(fast_set_selected_frame):
+	* xfns.c, w32fns.c (unwind_create_tip_frame):
+	Return void, not a dummy Lisp_Object.  All uses changed.
+	* buffer.h (set_buffer_if_live): Move decl here from lisp.h.
+	* callproc.c (call_process_kill):
+	* fileio.c (restore_point_unwind, decide_coding_unwind)
+	(build_annotations_unwind):
+	* insdel.c (Fcombine_after_change_execute_1):
+	* keyboard.c (read_char_help_form_unwind):
+	* menu.c (unuse_menu_items):
+	* minibuf.c (run_exit_minibuf_hook, read_minibuf_unwind):
+	* sound.c (sound_cleanup):
+	* xdisp.c (unwind_redisplay):
+	* xfns.c (clean_up_dialog):
+	* xselect.c (x_selection_request_lisp_error, x_catch_errors_unwind):
+	Accept no args and return void, instead of accepting and returning
+	a dummy Lisp_Object.  All uses changed.
+	* cygw32.c (fchdir_unwind):
+	* fileio.c (close_file_unwind):
+	* keyboard.c (restore_kboard_configuration):
+	* lread.c (readevalllop_1):
+	* process.c (wait_reading_process_output_unwind):
+	Accept int and return void, rather than accepting an Emacs integer
+	and returning a dummy object.  In some cases this fixes an
+	unlikely bug when the corresponding int is outside Emacs integer
+	range.  All uses changed.
+	* dired.c (directory_files_internal_unwind):
+	* fileio.c (do_auto_save_unwind):
+	* gtkutil.c (pop_down_dialog):
+	* insdel.c (reset_var_on_error):
+	* lread.c (load_unwind):
+	* xfns.c (clean_up_file_dialog):
+	* xmenu.c, nsmenu.m (pop_down_menu):
+	* xmenu.c (cleanup_widget_value_tree):
+	* xselect.c (wait_for_property_change_unwind):
+	Accept pointer and return void, rather than accepting an Emacs
+	save value encapsulating the pointer and returning a dummy object.
+	All uses changed.
+	* editfns.c (Fformat): Update the saved pointer directly via
+	set_unwind_protect_ptr rather than indirectly via make_save_pointer.
+	* eval.c (specpdl_func): Remove.  All uses replaced by definiens.
+	(unwind_body): New function.
+	(record_unwind_protect): First arg is now a function returning void,
+	not a dummy Lisp_Object.
+	(record_unwind_protect_ptr, record_unwind_protect_int)
+	(record_unwind_protect_void): New functions.
+	(unbind_to): Support SPECPDL_UNWIND_PTR etc.
+	* fileio.c (struct auto_save_unwind): New type.
+	(do_auto_save_unwind): Use it.
+	(do_auto_save_unwind_1): Remove; subsumed by new do_auto_save_unwind.
+	* insdel.c (struct rvoe_arg): New type.
+	(reset_var_on_error): Use it.
+	* lisp.h (SPECPDL_UNWIND_PTR, SPECPDL_UNWIND_INT, SPECPDL_UNWIND_VOID):
+	New constants.
+	(specbinding_func): Remove; there are now several such functions.
+	(union specbinding): New members unwind_ptr, unwind_int, unwind_void.
+	(set_unwind_protect_ptr): New function.
+	* xselect.c: Remove unnecessary forward decls, to simplify maintenance.
+
+	Be simpler and more consistent about reporting I/O errors.
+	* fileio.c (Fcopy_file, Finsert_file_contents, Fwrite_region):
+	Say "Read error" and "Write error", rather than "I/O error", or
+	"IO error reading", or "IO error writing", when a read or write
+	error occurs.
+	* process.c (Fmake_network_process, wait_reading_process_output)
+	(send_process, Fprocess_send_eof, wait_reading_process_output):
+	Capitalize diagnostics consistently.  Put "failed foo" at the
+	start of the diagnostic, so that we don't capitalize the
+	function name "foo".  Consistently say "failed" for such
+	diagnostics.
+	* sysdep.c, w32.c (serial_open): Now accepts Lisp string, not C string.
+	All callers changed.  This is so it can use report_file_error.
+	* sysdep.c (serial_open, serial_configure): Capitalize I/O
+	diagnostics consistently as above.
+
+	* fileio.c (report_file_errno): Fix errno reporting bug.
+	If the file name is neither null nor a pair, package it up as a
+	singleton list.  All callers changed, both to this function and to
+	report_file_error.  This fixes a bug where the memory allocator
+	invoked by list1 set errno so that the immediately following
+	report_file_error reported the wrong errno value.
+
+	Fix minor problems found by --enable-gcc-warnings.
+	* frame.c (Fhandle_focus_in, Fhandle_focus_out): Return a value.
+	* keyboard.c (kbd_buffer_get_event): Remove unused local.
+
+2013-07-16  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* xterm.c (x_focus_changed): Always generate FOCUS_IN_EVENT.
+	Set event->arg to Qt if switch-event shall be generated.
+	Generate FOCUS_OUT_EVENT for FocusOut if this is the focused frame.
+
+	* termhooks.h (enum event_kind): Add FOCUS_OUT_EVENT.
+
+	* nsterm.m (windowDidResignKey): If this is the focused frame, generate
+	FOCUS_OUT_EVENT.
+
+	* keyboard.c (Qfocus_in, Qfocus_out): New static objects.
+	(make_lispy_focus_in, make_lispy_focus_out): Declare and define.
+	(kbd_buffer_get_event): For FOCUS_IN, make a focus_in event if no
+	switch frame event is made.  Check ! NILP (event->arg) if X11 (moved
+	from xterm.c). Make focus_out event for FOCUS_OUT_EVENT if NS or X11
+	and there is a focused frame.
+	(head_table): Add focus-in and focus-out.
+	(keys_of_keyboard): Add focus-in and focus-out to Vspecial_event_map,
+	bind to handle-focus-in/out.
+
+	* frame.c (Fhandle_focus_in, Fhandle_focus_out): New functions.
+	(Fhandle_switch_frame): Call Fhandle_focus_in.
+	(syms_of_frame): defsubr handle-focus-in/out.
+
+2013-07-16  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Fix porting bug to older POSIXish platforms (Bug#14862).
+	* sysdep.c (emacs_pipe): New function, that implements
+	pipe2 (fd, O_CLOEXEC) even on hosts that lack O_CLOEXEC.
+	This should port better to CentOS 5 and to Mac OS X 10.6.
+	All calls to pipe2 changed.
+
+	Prefer list1 (X) to Fcons (X, Qnil) when building lists.
+	This makes the code easier to read and the executable a bit smaller.
+	Do not replace all calls to Fcons that happen to create lists,
+	just calls that are intended to create lists.  For example, when
+	creating an alist that maps FOO to nil, use list1 (Fcons (FOO, Qnil))
+	rather than list1 (list1 (FOO)) or Fcons (Fcons (FOO, Qnil), Qnil).
+	Similarly for list2 through list5.
+	* buffer.c (Fget_buffer_create, Fmake_indirect_buffer):
+	* bytecode.c (exec_byte_code):
+	* callint.c (quotify_arg, Fcall_interactively):
+	* callproc.c (Fcall_process, create_temp_file):
+	* charset.c (load_charset_map_from_file)
+	(Fdefine_charset_internal, init_charset):
+	* coding.c (get_translation_table, detect_coding_system)
+	(Fcheck_coding_systems_region)
+	(Fset_terminal_coding_system_internal)
+	(Fdefine_coding_system_internal, Fdefine_coding_system_alias):
+	* composite.c (update_compositions, Ffind_composition_internal):
+	* dired.c (directory_files_internal, file_name_completion)
+	(Fsystem_users):
+	* dispnew.c (Fopen_termscript, bitch_at_user, init_display):
+	* doc.c (Fsnarf_documentation):
+	* editfns.c (Fmessage_box):
+	* emacs.c (main):
+	* eval.c (do_debug_on_call, signal_error, maybe_call_debugger)
+	(Feval, eval_sub, Ffuncall, apply_lambda):
+	* fileio.c (make_temp_name, Fcopy_file, Faccess_file)
+	(Fset_file_selinux_context, Fset_file_acl, Fset_file_modes)
+	(Fset_file_times, Finsert_file_contents)
+	(Fchoose_write_coding_system, Fwrite_region):
+	* fns.c (Flax_plist_put, Fyes_or_no_p, syms_of_fns):
+	* font.c (font_registry_charsets, font_parse_fcname)
+	(font_prepare_cache, font_update_drivers, Flist_fonts):
+	* fontset.c (Fset_fontset_font, Ffontset_info, syms_of_fontset):
+	* frame.c (make_frame, Fmake_terminal_frame)
+	(x_set_frame_parameters, x_report_frame_params)
+	(x_default_parameter, Fx_parse_geometry):
+	* ftfont.c (syms_of_ftfont):
+	* image.c (gif_load):
+	* keyboard.c (command_loop_1):
+	* keymap.c (Fmake_keymap, Fmake_sparse_keymap, access_keymap_1)
+	(Fcopy_keymap, append_key, Fcurrent_active_maps)
+	(Fminor_mode_key_binding, accessible_keymaps_1)
+	(Faccessible_keymaps, Fwhere_is_internal):
+	* lread.c (read_emacs_mule_char):
+	* menu.c (find_and_return_menu_selection):
+	* minibuf.c (get_minibuffer):
+	* nsfns.m (Fns_perform_service):
+	* nsfont.m (ns_script_to_charset):
+	* nsmenu.m (ns_popup_dialog):
+	* nsselect.m (ns_get_local_selection, ns_string_from_pasteboard)
+	(Fx_own_selection_internal):
+	* nsterm.m (append2):
+	* print.c (Fredirect_debugging_output)
+	(print_prune_string_charset):
+	* process.c (Fdelete_process, Fprocess_contact)
+	(Fformat_network_address, set_socket_option)
+	(read_and_dispose_of_process_output, write_queue_push)
+	(send_process, exec_sentinel):
+	* sound.c (Fplay_sound_internal):
+	* textprop.c (validate_plist, add_properties)
+	(Fput_text_property, Fadd_face_text_property)
+	(copy_text_properties, text_property_list, syms_of_textprop):
+	* unexaix.c (report_error):
+	* unexcoff.c (report_error):
+	* unexsol.c (unexec):
+	* xdisp.c (redisplay_tool_bar, store_mode_line_string)
+	(Fformat_mode_line, syms_of_xdisp):
+	* xfaces.c (set_font_frame_param)
+	(Finternal_lisp_face_attribute_values)
+	(Finternal_merge_in_global_face, syms_of_xfaces):
+	* xfns.c (x_default_scroll_bar_color_parameter)
+	(x_default_font_parameter, x_create_tip_frame):
+	* xfont.c (xfont_supported_scripts):
+	* xmenu.c (Fx_popup_dialog, xmenu_show, xdialog_show)
+	(menu_help_callback, xmenu_show):
+	* xml.c (make_dom):
+	* xterm.c (set_wm_state):
+	Prefer list1 (FOO) to Fcons (FOO, Qnil) when creating a list,
+	and similarly for list2 through list5.
+
+2013-07-15  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* callproc.c (Fcall_process_region): Fix minor race and tune.
+	(create_temp_file): New function, with the temp-file-creation part
+	of the old Fcall_process_region.  Use Fcopy_sequence to create the
+	temp file name, rather than alloca + build_string, for simplicity.
+	Don't bother to block input around the temp file creation;
+	shouldn't be needed.  Simplify use of mktemp.  Use
+	record_unwind_protect immediately after creating the temp file;
+	this closes an unlikely race where the temp file was not removed.
+	Use memcpy rather than an open-coded loop.
+	(Fcall_process_region): Use the new function.  If the input is
+	empty, redirect from /dev/null rather than from a newly created
+	empty temp file; this avoids unnecessary file system traffic.
+
 2013-07-14  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* filelock.c (create_lock_file) [!HAVE_MKOSTEMP && !HAVE_MKSTEMP]:
+	Simplify by making this case like the other two.  This is a bit
+	slower on obsolete hosts, but the extra complexity isn't worth it.
 
 	* callproc.c (child_setup, relocate_fd) [!DOS_NT]:
 	* process.c (create_process) [!DOS_NT]:

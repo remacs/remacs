@@ -1363,6 +1363,45 @@ decode_coding_utf_8 (struct coding_system *coding)
 	  break;
 	}
 
+      /* In the simple case, rapidly handle ordinary characters */
+      if (multibytep && ! eol_dos
+	  && charbuf < charbuf_end - 6 && src < src_end - 6)
+	{
+	  while (charbuf < charbuf_end - 6 && src < src_end - 6)
+	    {
+	      c1 = *src;
+	      if (c1 & 0x80)
+		break;
+	      src++;
+	      consumed_chars++;
+	      *charbuf++ = c1;
+
+	      c1 = *src;
+	      if (c1 & 0x80)
+		break;
+	      src++;
+	      consumed_chars++;
+	      *charbuf++ = c1;
+
+	      c1 = *src;
+	      if (c1 & 0x80)
+		break;
+	      src++;
+	      consumed_chars++;
+	      *charbuf++ = c1;
+
+	      c1 = *src;
+	      if (c1 & 0x80)
+		break;
+	      src++;
+	      consumed_chars++;
+	      *charbuf++ = c1;
+	    }
+	  /* If we handled at least one character, restart the main loop.  */
+	  if (src != src_base)
+	    continue;
+	}
+
       if (byte_after_cr >= 0)
 	c1 = byte_after_cr, byte_after_cr = -1;
       else
@@ -6864,11 +6903,9 @@ get_translation_table (Lisp_Object attrs, bool encodep, int *max_lookup)
       if (CHAR_TABLE_P (standard))
 	{
 	  if (CONSP (translation_table))
-	    translation_table = nconc2 (translation_table,
-					Fcons (standard, Qnil));
+	    translation_table = nconc2 (translation_table, list1 (standard));
 	  else
-	    translation_table = Fcons (translation_table,
-				       Fcons (standard, Qnil));
+	    translation_table = list2 (translation_table, standard);
 	}
     }
 
@@ -7793,7 +7830,7 @@ make_conversion_work_buffer (bool multibyte)
 }
 
 
-static Lisp_Object
+static void
 code_conversion_restore (Lisp_Object arg)
 {
   Lisp_Object current, workbuf;
@@ -7811,7 +7848,6 @@ code_conversion_restore (Lisp_Object arg)
     }
   set_buffer_internal (XBUFFER (current));
   UNGCPRO;
-  return Qnil;
 }
 
 Lisp_Object
@@ -8667,20 +8703,20 @@ detect_coding_system (const unsigned char *src,
 	{
 	  detect_info.found = CATEGORY_MASK_RAW_TEXT;
 	  id = CODING_SYSTEM_ID (Qno_conversion);
-	  val = Fcons (make_number (id), Qnil);
+	  val = list1 (make_number (id));
 	}
       else if (! detect_info.rejected && ! detect_info.found)
 	{
 	  detect_info.found = CATEGORY_MASK_ANY;
 	  id = coding_categories[coding_category_undecided].id;
-	  val = Fcons (make_number (id), Qnil);
+	  val = list1 (make_number (id));
 	}
       else if (highest)
 	{
 	  if (detect_info.found)
 	    {
 	      detect_info.found = 1 << category;
-	      val = Fcons (make_number (this->id), Qnil);
+	      val = list1 (make_number (this->id));
 	    }
 	  else
 	    for (i = 0; i < coding_category_raw_text; i++)
@@ -8688,7 +8724,7 @@ detect_coding_system (const unsigned char *src,
 		{
 		  detect_info.found = 1 << coding_priorities[i];
 		  id = coding_categories[coding_priorities[i]].id;
-		  val = Fcons (make_number (id), Qnil);
+		  val = list1 (make_number (id));
 		  break;
 		}
 	}
@@ -8705,7 +8741,7 @@ detect_coding_system (const unsigned char *src,
 		  found |= 1 << category;
 		  id = coding_categories[category].id;
 		  if (id >= 0)
-		    val = Fcons (make_number (id), val);
+		    val = list1 (make_number (id));
 		}
 	    }
 	  for (i = coding_category_raw_text - 1; i >= 0; i--)
@@ -8730,7 +8766,7 @@ detect_coding_system (const unsigned char *src,
 	    this = coding_categories + coding_category_utf_8_sig;
 	  else
 	    this = coding_categories + coding_category_utf_8_nosig;
-	  val = Fcons (make_number (this->id), Qnil);
+	  val = list1 (make_number (this->id));
 	}
     }
   else if (base_category == coding_category_utf_16_auto)
@@ -8747,13 +8783,13 @@ detect_coding_system (const unsigned char *src,
 	    this = coding_categories + coding_category_utf_16_be_nosig;
 	  else
 	    this = coding_categories + coding_category_utf_16_le_nosig;
-	  val = Fcons (make_number (this->id), Qnil);
+	  val = list1 (make_number (this->id));
 	}
     }
   else
     {
       detect_info.found = 1 << XINT (CODING_ATTR_CATEGORY (attrs));
-      val = Fcons (make_number (coding.id), Qnil);
+      val = list1 (make_number (coding.id));
     }
 
   /* Then, detect eol-format if necessary.  */
@@ -9224,7 +9260,7 @@ is nil.  */)
       attrs = AREF (CODING_SYSTEM_SPEC (elt), 0);
       ASET (attrs, coding_attr_trans_tbl,
 	    get_translation_table (attrs, 1, NULL));
-      list = Fcons (Fcons (elt, Fcons (attrs, Qnil)), list);
+      list = Fcons (list2 (elt, attrs), list);
     }
 
   if (STRINGP (start))
@@ -9635,7 +9671,7 @@ DEFUN ("set-terminal-coding-system-internal", Fset_terminal_coding_system_intern
   tset_charset_list
     (term, (terminal_coding->common_flags & CODING_REQUIRE_ENCODING_MASK
 	    ? coding_charset_list (terminal_coding)
-	    : Fcons (make_number (charset_ascii), Qnil)));
+	    : list1 (make_number (charset_ascii))));
   return Qnil;
 }
 
@@ -10080,9 +10116,9 @@ usage: (define-coding-system-internal ...)  */)
 		{
 		  dim2 = CHARSET_DIMENSION (CHARSET_FROM_ID (XFASTINT (tmp)));
 		  if (dim < dim2)
-		    tmp = Fcons (XCAR (tail), Fcons (tmp, Qnil));
+		    tmp = list2 (XCAR (tail), tmp);
 		  else
-		    tmp = Fcons (tmp, Fcons (XCAR (tail), Qnil));
+		    tmp = list2 (tmp, XCAR (tail));
 		}
 	      else
 		{
@@ -10093,7 +10129,7 @@ usage: (define-coding-system-internal ...)  */)
 			break;
 		    }
 		  if (NILP (tmp2))
-		    tmp = nconc2 (tmp, Fcons (XCAR (tail), Qnil));
+		    tmp = nconc2 (tmp, list1 (XCAR (tail)));
 		  else
 		    {
 		      XSETCDR (tmp2, Fcons (XCAR (tmp2), XCDR (tmp2)));
@@ -10411,7 +10447,7 @@ usage: (define-coding-system-internal ...)  */)
       && ! EQ (eol_type, Qmac))
     error ("Invalid eol-type");
 
-  aliases = Fcons (name, Qnil);
+  aliases = list1 (name);
 
   if (NILP (eol_type))
     {
@@ -10421,7 +10457,7 @@ usage: (define-coding-system-internal ...)  */)
 	  Lisp_Object this_spec, this_name, this_aliases, this_eol_type;
 
 	  this_name = AREF (eol_type, i);
-	  this_aliases = Fcons (this_name, Qnil);
+	  this_aliases = list1 (this_name);
 	  this_eol_type = (i == 0 ? Qunix : i == 1 ? Qdos : Qmac);
 	  this_spec = make_uninit_vector (3);
 	  ASET (this_spec, 0, attrs);
@@ -10536,7 +10572,7 @@ DEFUN ("define-coding-system-alias", Fdefine_coding_system_alias,
      list.  */
   while (!NILP (XCDR (aliases)))
     aliases = XCDR (aliases);
-  XSETCDR (aliases, Fcons (alias, Qnil));
+  XSETCDR (aliases, list1 (alias));
 
   eol_type = AREF (spec, 2);
   if (VECTORP (eol_type))
