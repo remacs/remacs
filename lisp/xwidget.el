@@ -440,12 +440,11 @@ It can be retrieved with `(xwidget-get XWIDGET PROPNAME)'."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun xwidget-delete-zombies ()
-  (mapcar (lambda (xwidget-view)
-            (when (or (not (window-live-p (xwidget-view-window xwidget-view)))
-                      (not (find (xwidget-view-model xwidget-view)
-                                 xwidget-list)))
-              (delete-xwidget-view xwidget-view)))
-          xwidget-view-list))
+  (dolist (xwidget-view xwidget-view-list)
+    (when (or (not (window-live-p (xwidget-view-window xwidget-view)))
+              (not (memq (xwidget-view-model xwidget-view)
+                         xwidget-list)))
+      (delete-xwidget-view xwidget-view))))
 
 (defun xwidget-cleanup ()
   "Delete zombie xwidgets."
