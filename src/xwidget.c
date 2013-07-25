@@ -132,8 +132,7 @@ extern Lisp_Object QCwidth, QCheight;
 
 struct xwidget_view* xwidget_view_lookup(struct xwidget* xw,     struct window *w);
 Lisp_Object xwidget_spec_value ( Lisp_Object spec, Lisp_Object  key,  int *found);
-gboolean xwidget_osr_damage_event_callback (GtkWidget *widget, GdkEventExpose *event, gpointer data) ;
-gboolean webkit_osr_key_event_callback (GtkWidget *widget, GdkEventKey *event, gpointer data) ;
+gboolean offscreen_damage_event (GtkWidget *widget, GdkEvent *event, gpointer data);
 void     webkit_osr_document_load_finished_callback (WebKitWebView  *webkitwebview,
                                                      WebKitWebFrame *arg1,
                                                      gpointer        user_data);
@@ -162,11 +161,6 @@ gboolean webkit_osr_navigation_policy_decision_requested_callback(WebKitWebView 
                                                         WebKitWebNavigationAction *navigation_action,
                                                         WebKitWebPolicyDecision   *policy_decision,
                                                                   gpointer                   user_data);
-
-gboolean
-xwgir_event_callback (GtkWidget *widget,
-                      GdkEvent  *event,
-                      gpointer   user_data);
 
 GtkWidget* xwgir_create(char* class, char* namespace);
 static void
@@ -224,9 +218,8 @@ TYPE is a symbol which can take one of the following values:
   if (EQ(xw->type, Qwebkit_osr)||
       EQ(xw->type, Qsocket_osr)||
       (!NILP (Fget(xw->type, QCxwgir_class)))) {
-      printf("init osr widget\n");
       block_input();
-      xw->widgetwindow_osr = GTK_CONTAINER (gtk_offscreen_window_new ());
+      xw->widgetwindow_osr = gtk_offscreen_window_new ();
       gtk_window_resize(GTK_WINDOW(xw->widgetwindow_osr), xw->width, xw->height);
 
       if (EQ(xw->type, Qwebkit_osr))
@@ -238,18 +231,16 @@ TYPE is a symbol which can take one of the following values:
                                         SDATA(Fcar(Fget(xw->type, QCxwgir_class))));
 
       gtk_widget_set_size_request (GTK_WIDGET (xw->widget_osr), xw->width, xw->height);
-      gtk_container_add (xw->widgetwindow_osr, xw->widget_osr);
+      gtk_container_add (GTK_CONTAINER (xw->widgetwindow_osr), xw->widget_osr);
 
-      gtk_widget_show_all (GTK_WIDGET (xw->widgetwindow_osr));
+      gtk_widget_show (xw->widget_osr);
+      gtk_widget_show (xw->widgetwindow_osr);
 
       /* store some xwidget data in the gtk widgets for convenient retrieval in the event handlers. */
       g_object_set_data (G_OBJECT (xw->widget_osr), XG_XWIDGET, (gpointer) (xw));
       g_object_set_data (G_OBJECT (xw->widgetwindow_osr), XG_XWIDGET, (gpointer) (xw));
 
       /* signals */
-      g_signal_connect (G_OBJECT (xw->widgetwindow_osr), "damage-event",
-                        G_CALLBACK (xwidget_osr_damage_event_callback), NULL);
-
       if (EQ(xw->type, Qwebkit_osr)) {
           g_signal_connect (G_OBJECT (xw->widget_osr),
                             "document-load-finished",
@@ -275,15 +266,9 @@ TYPE is a symbol which can take one of the following values:
                             "navigation-policy-decision-requested",
                             G_CALLBACK (webkit_osr_navigation_policy_decision_requested_callback),
                             xw);
-          //webkit_web_view_load_uri(WEBKIT_WEB_VIEW(xw->widget_osr), "http://www.fsf.org");
-
       }
 
       if (EQ(xw->type, Qsocket_osr)) {
-          printf ("xwid:%d socket id:%x %d\n",
-                  xw,
-                  gtk_socket_get_id (GTK_SOCKET (xw->widget_osr)),
-                  gtk_socket_get_id (GTK_SOCKET (xw->widget_osr)));
           send_xembed_ready_event (xw, gtk_socket_get_id (GTK_SOCKET (xw->widget_osr)));
           //gtk_widget_realize(xw->widget);
       }
@@ -377,8 +362,8 @@ void
 xwidget_show_view (struct xwidget_view *xv)
 {
   xv->hidden = 0;
-  gtk_widget_show(GTK_WIDGET(xv->widgetwindow));
-  gtk_fixed_move (GTK_FIXED (xv->emacswindow), GTK_WIDGET (xv->widgetwindow),  xv->x  + xv->clip_left, xv->y + xv->clip_top); //TODO refactor
+  gtk_widget_show(xv->widgetwindow);
+  gtk_fixed_move (GTK_FIXED (xv->emacswindow), xv->widgetwindow,  xv->x  + xv->clip_left, xv->y + xv->clip_top); //TODO refactor
 }
 
 
@@ -387,8 +372,8 @@ void
 xwidget_hide_view (struct xwidget_view *xv)
 {
   xv->hidden = 1;
-  //gtk_widget_hide(GTK_WIDGET(xw->widgetwindow));
-  gtk_fixed_move (GTK_FIXED (xv->emacswindow), GTK_WIDGET (xv->widgetwindow),
+  //gtk_widget_hide(xw->widgetwindow);
+  gtk_fixed_move (GTK_FIXED (xv->emacswindow), xv->widgetwindow,
                   10000, 10000);
 }
 
@@ -450,37 +435,12 @@ xwidget_slider_changed (GtkRange *range,
 /* when the off-screen webkit master view changes this signal is called.
    it copies the bitmap from the off-screen webkit instance */
 gboolean
-xwidget_osr_damage_event_callback (GtkWidget *widget, GdkEventExpose *event, gpointer data)
+offscreen_damage_event (GtkWidget *widget, GdkEvent *event, gpointer data)
 {
   //TODO this is wrong! should just queu a redraw of onscreen widget
-  struct xwidget* xw = (struct xwidget*) g_object_get_data (G_OBJECT (widget), XG_XWIDGET);
-  struct xwidget_view* xv;
-  //webkit_osr_redraw_child(xw, widget);
-  printf ("damage\n");
-
-  for (Lisp_Object tail = Vxwidget_view_list; CONSP (tail); tail = XCDR (tail))
-    {
-      if (XWIDGET_VIEW_P (XCAR (tail))) {
-        xv = XXWIDGET_VIEW (XCAR (tail));
-        if (XXWIDGET (xv->model) == xw)
-          gtk_widget_queue_draw (xv->widget); //redraw all views, the master has changed
-      }
-    }
-
+  gtk_widget_queue_draw (GTK_WIDGET (data));
   return FALSE;
 }
-
-
-
-gboolean
-webkit_osr_key_event_callback (GtkWidget *widget, GdkEventKey *event, gpointer data)
-{
-  printf("terminating a webkit osr keypress\n");
-  //TRUE terminate the event here. no paren handlers will be called. but webkit then doesng get the event and it still crashes
-  //FALSE paren handlers will be called. webkit then gets the event and it still crashes
-  return TRUE; 
-}
-
 
 void
 store_xwidget_event_string(struct xwidget* xw, char* eventname, const char* eventstr)
@@ -595,14 +555,10 @@ xwidget_osr_draw_callback (GtkWidget *widget, cairo_t *cr, gpointer data)
   struct xwidget* xw = (struct xwidget*) g_object_get_data (G_OBJECT (widget), XG_XWIDGET);
   struct xwidget_view* xv = (struct xwidget_view*) g_object_get_data (G_OBJECT (widget), XG_XWIDGET_VIEW);
 
-  printf("xwidget_osr_draw_callback gtk3 xw.id:%d xw.type:%d window:%d vis:%d\n",
-           xw,xw->type, gtk_widget_get_window (widget),  gtk_widget_get_visible (xw->widget_osr));
-
   cairo_rectangle(cr, 0,0, xv->clip_right, xv->clip_bottom);//xw->width, xw->height);
   cairo_clip(cr);
 
-  gtk_widget_draw (xw->widget_osr,  cr);
-
+  gtk_widget_draw (xw->widget_osr, cr);
 
   return FALSE;
 }
@@ -648,20 +604,6 @@ xwidget_osr_event_forward (GtkWidget *widget,
   return TRUE; //dont propagate this event furter
   //return FALSE; //dont propagate this event furter
 }
-
-gboolean
-xwgir_event_callback (GtkWidget *widget,
-                             GdkEvent  *event,
-                             gpointer   user_data)
-{
-  //debugging
-  //perhaps delete copied events here
-  struct xwidget* xw = (struct xwidget*) g_object_get_data (G_OBJECT (widget), XG_XWIDGET);
-  printf("xwgir_event_callback\n");
-  return FALSE;
-}
-
-
 
 GIRepository *girepository ;
 DEFUN( "xwgir-require-namespace",Fxwgir_require_namespace, Sxwgir_require_namespace, 2,2,0,
@@ -887,67 +829,53 @@ to_child (GtkWidget *bin,
 }
 
 
-void
-offscreen_window_from_parent (GdkWindow     *window,
-                              double         parent_x,
-                              double         parent_y,
-                              double        *offscreen_x,
-                              double        *offscreen_y,
-                              GtkWidget *bin)
-{
-  /* printf("offscreen_window_from_parent %d  %f,%f  %f,%f\n", */
-  /*        window, */
-  /*        parent_x, */
-  /*        parent_y, */
-  /*        offscreen_x, */
-  /*        offscreen_y         ); */
-  to_child (bin, parent_x, parent_y, offscreen_x, offscreen_y);
-}
-
- GdkWindow *
-pick_offscreen_child (GdkWindow     *offscreen_window,
-                      double         widget_x,
-                      double         widget_y,
-                      GdkWindow *bin)
+GdkWindow *
+offscreen_pick_embedded_child (GdkWindow *window,
+                               double x,
+                               double y,
+                               gpointer *data)
 {
   //in this simple case we assume the window contains a single widget. easy.
   //but then we get the problem that the widget cant be embedded in several windows
-    printf("pick_offscreen_child %d %f %f  %d\n",
-offscreen_window,
-    widget_x,
-    widget_y,
-           bin           );
-  return bin;
+  return gtk_widget_get_window (GTK_WIDGET (data));
 }
 
+void
+offscreen_to_embedder (GdkWindow *window,
+                       gdouble offscreen_x,
+                       gdouble offscreen_y,
+                       gpointer embedder_x,
+                       gpointer embedder_y,
+                       gpointer data)
+{
+  * (gdouble *) embedder_x = offscreen_x;
+  * (gdouble *) embedder_y = offscreen_y;
+}
 
 void
-xwidget_set_embedder_view(struct xwidget* xww,
-                          struct xwidget_view* xv){
-  printf("gdk_offscreen_window_set_embedder %d %d\n",
-         GDK_IS_WINDOW(gtk_widget_get_window (xww->widget_osr)),
-         GDK_IS_WINDOW(gtk_widget_get_window (GTK_WIDGET (xv->widget))));
-  //set_embedder needs to be called after xv->widget realization
-  gdk_offscreen_window_set_embedder (      gtk_widget_get_window (xww->widget_osr),
-                                           gtk_widget_get_window (GTK_WIDGET (xv->widget))
-                                           
-
-                                           );
-  //this signal doesnt seem completely necessary
-  /* g_signal_connect (gtk_widget_get_window (xww->widget_osr), "from-embedder", */
-  /*                   G_CALLBACK (offscreen_window_from_parent), gtk_widget_get_window (GTK_WIDGET (xv->widget))); */
-  //but this one is
-  g_signal_connect (gtk_widget_get_window (xv->widget), "pick-embedded-child",
-                    G_CALLBACK (pick_offscreen_child), gtk_widget_get_window (xww->widget_osr));
+offscreen_from_embedder (GdkWindow *window,
+                         gdouble embedder_x,
+                         gdouble embedder_y,
+                         gpointer offscreen_x,
+                         gpointer offscreen_y,
+                         gpointer user_data)
+{
+  * (gdouble *) offscreen_x = embedder_x;
+  * (gdouble *) offscreen_y = embedder_y;
 }
 
 gboolean
 xwidget_osr_event_set_embedder (GtkWidget *widget,
-                           GdkEvent  *event,
-                           gpointer   xv)
+                                GdkEvent *event,
+                                gpointer data)
 {
-  xwidget_set_embedder_view(XXWIDGET (((struct xwidget_view*) xv)->model),
-                            (struct xwidget_view*) xv);
+  struct xwidget_view *xv = (struct xwidget_view *) data;
+  struct xwidget *xww = XXWIDGET (xv->model);
+  printf("gdk_offscreen_window_set_embedder %d %d\n",
+         GDK_IS_WINDOW(gtk_widget_get_window (xww->widget_osr)),
+         GDK_IS_WINDOW(gtk_widget_get_window (GTK_WIDGET (xv->widget))));
+  gdk_offscreen_window_set_embedder (gtk_widget_get_window (xww->widgetwindow_osr),
+                                     gtk_widget_get_window (xv->widget));
 }
 
  
@@ -1000,16 +928,15 @@ xwidget_init_view (struct xwidget *xww,
   } else if (EQ(xww->type, Qwebkit_osr)||
              EQ(xww->type, Qsocket_osr)||
              (!NILP (Fget(xww->type, QCxwgir_class))))//xwgir widgets are OSR
-    {
-#ifdef HAVE_WEBKIT_OSR //TODO the ifdef isnt really relevant anymore, we always have osr
-      printf("osr init:%s\n",SDATA(SYMBOL_NAME(xww->type)));
+  {
+    printf("osr init:%s\n",SDATA(SYMBOL_NAME(xww->type)));
     xv->widget = gtk_drawing_area_new();
     gtk_widget_set_app_paintable ( xv->widget, TRUE); //because expose event handling
-    gtk_widget_add_events(xv->widget,
-                          GDK_BUTTON_PRESS_MASK
-                          | GDK_BUTTON_RELEASE_MASK
-                          | GDK_POINTER_MOTION_MASK);
+    gtk_widget_add_events(xv->widget, GDK_ALL_EVENTS_MASK);
 
+    /* Draw the view on damage-event */
+    g_signal_connect (G_OBJECT (xww->widgetwindow_osr), "damage-event",
+                      G_CALLBACK (offscreen_damage_event), xv->widget);
 
     if (EQ(xww->type, Qwebkit_osr)){
       /* ///xwgir debug */
@@ -1022,37 +949,26 @@ xwidget_init_view (struct xwidget *xww,
                         G_CALLBACK (xwidget_osr_event_forward), NULL);
     }else{
       //xwgir debug , orthogonal to forwarding
-      g_signal_connect (G_OBJECT (    xv->widget), "motion-notify-event",
+      g_signal_connect (G_OBJECT (xv->widget), "enter-notify-event",
                         G_CALLBACK (xwidget_osr_event_set_embedder), xv);
     }
     
     //draw
-    g_signal_connect (G_OBJECT (    xv->widget), "draw",
+    g_signal_connect (G_OBJECT (xv->widget), "draw",
                       G_CALLBACK (xwidget_osr_draw_callback), NULL);
 
-
-
-
-    /* g_signal_connect (G_OBJECT (    xv->widget), "key-press-event", */
-    /*                   G_CALLBACK (xwidget_osr_event_forward), NULL); */
-    /* g_signal_connect (G_OBJECT (    xv->widget), "key-release-event", */
-    /*                   G_CALLBACK (xwidget_osr_event_forward), NULL); */
-    
-#endif  /* HAVE_WEBKIT_OSR */
-
-
   } 
-    //else return NULL;
+  //else return NULL;
 
   //widget realization
   //make container widget 1st, and put the actual widget inside the container
   //later, drawing should crop container window if necessary to handle case where xwidget
   //is partially obscured by other emacs windows
   //other containers than gtk_fixed where explored, but gtk_fixed had the most predictable behaviour so far.
-  xv->emacswindow = GTK_CONTAINER (FRAME_GTK_WIDGET (s->f));
-  xv->widgetwindow = GTK_CONTAINER (gtk_fixed_new ()); 
-  gtk_widget_set_has_window(GTK_WIDGET (  xv->widgetwindow), TRUE);
-  gtk_container_add (xv->widgetwindow, xv->widget);
+  xv->emacswindow = FRAME_GTK_WIDGET (s->f);
+  xv->widgetwindow = gtk_fixed_new (); 
+  gtk_widget_set_has_window(xv->widgetwindow, TRUE);
+  gtk_container_add (GTK_CONTAINER (xv->widgetwindow), xv->widget);
 
   //store some xwidget data in the gtk widgets
   g_object_set_data (G_OBJECT (xv->widget), XG_FRAME_DATA, (gpointer) (s->f)); //the emacs frame
@@ -1063,10 +979,10 @@ xwidget_init_view (struct xwidget *xww,
 
 
   gtk_widget_set_size_request (GTK_WIDGET (xv->widget), xww->width, xww->height);
-  gtk_widget_set_size_request (GTK_WIDGET (xv->widgetwindow), xww->width, xww->height);
-  gtk_fixed_put (GTK_FIXED (FRAME_GTK_WIDGET (s->f)), GTK_WIDGET (xv->widgetwindow), x, y);
+  gtk_widget_set_size_request (xv->widgetwindow, xww->width, xww->height);
+  gtk_fixed_put (GTK_FIXED (FRAME_GTK_WIDGET (s->f)), xv->widgetwindow, x, y);
   xv->x = x;  xv->y = y;
-  gtk_widget_show_all (GTK_WIDGET (xv->widgetwindow));
+  gtk_widget_show_all (xv->widgetwindow);
 
 
   
@@ -1082,24 +998,24 @@ xwidget_init_view (struct xwidget *xww,
   }
 
   //////////////////////////////////////////////////////////////
-  //xwgir debug
+  // xwgir debug
   if (//EQ(xww->type, Qwebkit_osr)|| //TODO should be able to choose compile time which method to use with webkit
       EQ(xww->type, Qsocket_osr)||
       (!NILP (Fget(xww->type, QCxwgir_class))))//xwgir widgets are OSR
     {
-      //xwidget_set_embedder_view(xww,xv);
       printf("gdk_offscreen_window_set_embedder %d %d\n",
              GDK_IS_WINDOW(gtk_widget_get_window (xww->widget_osr)),
              GDK_IS_WINDOW(gtk_widget_get_window (GTK_WIDGET (xv->widget))));
-      //set_embedder needs to be called after xv->widget realization
-      gdk_offscreen_window_set_embedder (      gtk_widget_get_window (xww->widget_osr),
-                                               gtk_widget_get_window (GTK_WIDGET (xv->widget))
-
-                                               );
-      /* g_signal_connect (gtk_widget_get_window (xww->widget_osr), "from-embedder", */
-      /*                   G_CALLBACK (offscreen_window_from_parent), gtk_widget_get_window (GTK_WIDGET (xv->widget))); */
+      // set_embedder needs to be called after xv->widget realization
+      gdk_offscreen_window_set_embedder (gtk_widget_get_window (xww->widgetwindow_osr),
+                                         gtk_widget_get_window (xv->widget));
       g_signal_connect (gtk_widget_get_window (xv->widget), "pick-embedded-child",
-                        G_CALLBACK (pick_offscreen_child), gtk_widget_get_window (xww->widget_osr));
+                        G_CALLBACK (offscreen_pick_embedded_child), xww->widgetwindow_osr);
+
+      g_signal_connect (gtk_widget_get_window (xww->widgetwindow_osr), "from-embedder",
+                        G_CALLBACK (offscreen_from_embedder), NULL);
+      g_signal_connect (gtk_widget_get_window (xww->widgetwindow_osr), "to-embedder",
+                        G_CALLBACK (offscreen_to_embedder), NULL);
     }
   ////////////////////////////////////////
   
@@ -1158,7 +1074,7 @@ x_draw_xwidget_glyph_string (struct glyph_string *s)
         {
           //TODO should be possible to use xwidget_show_view here
           gtk_fixed_move (GTK_FIXED (FRAME_GTK_WIDGET (s->f)),
-                          GTK_WIDGET (xv->widgetwindow),
+                          xv->widgetwindow,
                           x + clip_left, y + clip_top);
         }
     }
@@ -1169,7 +1085,7 @@ x_draw_xwidget_glyph_string (struct glyph_string *s)
      || (xv->clip_bottom != clip_bottom)
      || (xv->clip_top != clip_top)
      || (xv->clip_left != clip_left)){
-    gtk_widget_set_size_request (GTK_WIDGET (xv->widgetwindow),  clip_right + clip_left, clip_bottom + clip_top);
+    gtk_widget_set_size_request (xv->widgetwindow,  clip_right + clip_left, clip_bottom + clip_top);
     gtk_fixed_move(GTK_FIXED(xv->widgetwindow), xv->widget, -clip_left, -clip_top);
     printf("reclip %d %d -> %d %d  clip_top:%d clip_left:%d\n",xv->clip_right, xv->clip_bottom,  clip_right, clip_bottom, clip_top , clip_left);
 
@@ -1180,7 +1096,7 @@ x_draw_xwidget_glyph_string (struct glyph_string *s)
   //TODO it seems its possible to get out of sync with emacs redraws so emacs bg sometimes shows up instead of xwidget
   //its just a visual glitch though
   if (!xwidget_hidden(xv)){
-    gtk_widget_queue_draw (GTK_WIDGET(xv->widgetwindow));
+    gtk_widget_queue_draw (xv->widgetwindow);
     gtk_widget_queue_draw (xv->widget);
   }
 }
@@ -1254,18 +1170,6 @@ DEFUN("xwidget-disable-plugin-for-mime", Fxwidget_disable_plugin_for_mime , Sxwi
   return Qnil;
 }
 
-
-//attempting a workaround for a webkit offscreen bug
-//TODO verify its still needed
-void
-gtk_window_get_position (GtkWindow *window,
-                         gint *root_x,
-                         gint *root_y)
-{
-  printf("my getsize\n");
-  *root_x = 0;
-  *root_y = 0;
-}
 
 void
 xwidget_webkit_dom_dump(WebKitDOMNode* parent)
@@ -1354,7 +1258,7 @@ DEFUN ("xwidget-resize", Fxwidget_resize, Sxwidget_resize, 3, 3, 0, doc:
     //gtk_window_resize(    GTK_WINDOW(xw->widget_osr), xw->width, xw->height);
     gtk_window_resize(    GTK_WINDOW(xw->widgetwindow_osr), xw->width, xw->height);
     //gtk_container_resize_children ( GTK_WINDOW(xw->widgetwindow_osr));
-    gtk_container_resize_children ( GTK_CONTAINER(xw->widgetwindow_osr));
+    gtk_container_resize_children (GTK_CONTAINER(xw->widgetwindow_osr));
     
   }
 
@@ -1526,7 +1430,7 @@ DEFUN ("delete-xwidget-view", Fdelete_xwidget_view, Sdelete_xwidget_view,
 {
   CHECK_XWIDGET_VIEW (xwidget_view);
   struct xwidget_view *xv = XXWIDGET_VIEW (xwidget_view);
-  gtk_widget_destroy(GTK_WIDGET (xv->widgetwindow));
+  gtk_widget_destroy(xv->widgetwindow);
   Vxwidget_view_list = Fdelq (xwidget_view, Vxwidget_view_list);
 }
 
@@ -1760,7 +1664,7 @@ xwidget_view_delete_all_in_window (struct window *w)
       if (XWIDGET_VIEW_P (XCAR (tail))) {
         xv = XXWIDGET_VIEW (XCAR (tail));
         if(XWINDOW (xv->w) == w) {
-          gtk_widget_destroy(GTK_WIDGET(xv->widgetwindow));
+          gtk_widget_destroy(xv->widgetwindow);
           Vxwidget_view_list = Fdelq (XCAR (tail), Vxwidget_view_list);
         }
       }
@@ -1917,8 +1821,8 @@ kill_buffer_xwidgets (Lisp_Object buffer)
         struct xwidget *xw = XXWIDGET (xwidget);
         if (xw->widget_osr && xw->widgetwindow_osr)
           {
-            gtk_widget_destroy(GTK_WIDGET (xw->widget_osr));
-            gtk_widget_destroy(GTK_WIDGET (xw->widgetwindow_osr));
+            gtk_widget_destroy(xw->widget_osr);
+            gtk_widget_destroy(xw->widgetwindow_osr);
           }
       }
     }
