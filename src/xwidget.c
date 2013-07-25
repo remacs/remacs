@@ -275,8 +275,6 @@ TYPE is a symbol which can take one of the following values:
                             "navigation-policy-decision-requested",
                             G_CALLBACK (webkit_osr_navigation_policy_decision_requested_callback),
                             xw);
-          //webkit_web_view_load_uri(WEBKIT_WEB_VIEW(xw->widget_osr), "http://www.fsf.org");
-
       }
 
       if (EQ(xw->type, Qsocket_osr)) {
