@@ -233,7 +233,8 @@ TYPE is a symbol which can take one of the following values:
       gtk_widget_set_size_request (GTK_WIDGET (xw->widget_osr), xw->width, xw->height);
       gtk_container_add (GTK_CONTAINER (xw->widgetwindow_osr), xw->widget_osr);
 
-      gtk_widget_show_all (xw->widgetwindow_osr);
+      gtk_widget_show (xw->widget_osr);
+      gtk_widget_show (xw->widgetwindow_osr);
 
       /* store some xwidget data in the gtk widgets for convenient retrieval in the event handlers. */
       g_object_set_data (G_OBJECT (xw->widget_osr), XG_XWIDGET, (gpointer) (xw));
