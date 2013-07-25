@@ -132,7 +132,7 @@ extern Lisp_Object QCwidth, QCheight;
 
 struct xwidget_view* xwidget_view_lookup(struct xwidget* xw,     struct window *w);
 Lisp_Object xwidget_spec_value ( Lisp_Object spec, Lisp_Object  key,  int *found);
-gboolean xwidget_osr_damage_event_callback (GtkWidget *widget, GdkEventExpose *event, gpointer data) ;
+gboolean offscreen_damage_event (GtkWidget *widget, GdkEvent *event, gpointer data);
 gboolean webkit_osr_key_event_callback (GtkWidget *widget, GdkEventKey *event, gpointer data) ;
 void     webkit_osr_document_load_finished_callback (WebKitWebView  *webkitwebview,
                                                      WebKitWebFrame *arg1,
@@ -247,9 +247,6 @@ TYPE is a symbol which can take one of the following values:
       g_object_set_data (G_OBJECT (xw->widgetwindow_osr), XG_XWIDGET, (gpointer) (xw));
 
       /* signals */
-      g_signal_connect (G_OBJECT (xw->widgetwindow_osr), "damage-event",
-                        G_CALLBACK (xwidget_osr_damage_event_callback), NULL);
-
       if (EQ(xw->type, Qwebkit_osr)) {
           g_signal_connect (G_OBJECT (xw->widget_osr),
                             "document-load-finished",
@@ -452,23 +449,10 @@ xwidget_slider_changed (GtkRange *range,
 /* when the off-screen webkit master view changes this signal is called.
    it copies the bitmap from the off-screen webkit instance */
 gboolean
-xwidget_osr_damage_event_callback (GtkWidget *widget, GdkEventExpose *event, gpointer data)
+offscreen_damage_event (GtkWidget *widget, GdkEvent *event, gpointer data)
 {
   //TODO this is wrong! should just queu a redraw of onscreen widget
-  struct xwidget* xw = (struct xwidget*) g_object_get_data (G_OBJECT (widget), XG_XWIDGET);
-  struct xwidget_view* xv;
-  //webkit_osr_redraw_child(xw, widget);
-  printf ("damage\n");
-
-  for (Lisp_Object tail = Vxwidget_view_list; CONSP (tail); tail = XCDR (tail))
-    {
-      if (XWIDGET_VIEW_P (XCAR (tail))) {
-        xv = XXWIDGET_VIEW (XCAR (tail));
-        if (XXWIDGET (xv->model) == xw)
-          gtk_widget_queue_draw (xv->widget); //redraw all views, the master has changed
-      }
-    }
-
+  gtk_widget_queue_draw (GTK_WIDGET (data));
   return FALSE;
 }
 
@@ -1013,6 +997,9 @@ xwidget_init_view (struct xwidget *xww,
                           | GDK_BUTTON_RELEASE_MASK
                           | GDK_POINTER_MOTION_MASK);
 
+    /* Draw the view on damage-event */
+    g_signal_connect (G_OBJECT (xww->widgetwindow_osr), "damage-event",
+                      G_CALLBACK (offscreen_damage_event), xv->widget);
 
     if (EQ(xww->type, Qwebkit_osr)){
       /* ///xwgir debug */
