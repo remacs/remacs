@@ -331,29 +331,25 @@ xwidget_hidden(struct xwidget_view *xv)
 static void
 buttonclick_handler (GtkWidget * widget, gpointer data)
 {
-  Lisp_Object xw;
-  XSETXWIDGET(xw, (struct xwidget *) data);
+  Lisp_Object xwidget_view, xwidget;
+  XSETXWIDGET_VIEW (xwidget_view, (struct xwidget_view *) data);
+  xwidget = Fxwidget_view_model (xwidget_view);
   
   struct input_event event;
-  Lisp_Object frame;
-  FRAME_PTR f = NULL; //(FRAME_PTR) g_object_get_data (G_OBJECT (XXWIDGET (xw)->widget), XG_FRAME_DATA); //TODO
-  printf ("button clicked xw:%d '%s'\n", xw, XXWIDGET (xw)->title);
+  Lisp_Object frame = Fwindow_frame (Fxwidget_view_window (xwidget_view));
+  FRAME_PTR f = XFRAME (frame);
+  printf ("button clicked xw:%d '%s'\n", XXWIDGET (xwidget), XXWIDGET (xwidget)->title);
 
   EVENT_INIT (event);
   event.kind = XWIDGET_EVENT;
 
-  XSETFRAME (frame, f);
-
-  event.frame_or_window = Qnil;	//frame; //how to get the frame here?
-
+  event.frame_or_window = frame;
 
   event.arg = Qnil;
-  event.arg = Fcons (xw, event.arg);
+  event.arg = Fcons (xwidget, event.arg);
   event.arg = Fcons (intern ("buttonclick"), event.arg);
 
   kbd_buffer_store_event (&event);
-
-
 }
 
 
@@ -961,7 +957,6 @@ xwidget_init_view (struct xwidget *xww,
                    struct glyph_string *s,
                    int x, int y)
 {
-  //TODO temp code replace with lisp list
   struct xwidget_view *xv = allocate_xwidget_view();
   Lisp_Object val;
   GdkColor color;
@@ -977,7 +972,7 @@ xwidget_init_view (struct xwidget *xww,
     {
       xv->widget = gtk_button_new_with_label (XSTRING(xww->title)->data);
       g_signal_connect (G_OBJECT (xv->widget), "clicked",
-                        G_CALLBACK (buttonclick_handler), xww); //the model rather than the view
+                        G_CALLBACK (buttonclick_handler), xv); // the view rather than the model
     } else if (EQ(xww->type, Qtoggle)) {
     xv->widget = gtk_toggle_button_new_with_label (XSTRING(xww->title)->data);
     //xv->widget = gtk_entry_new ();//temp hack to experiment with key propagation TODO entry widget is useful for testing
