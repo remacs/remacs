@@ -987,9 +987,8 @@ xwidget_init_view (struct xwidget *xww,
   } else if (EQ(xww->type, Qwebkit_osr)||
              EQ(xww->type, Qsocket_osr)||
              (!NILP (Fget(xww->type, QCxwgir_class))))//xwgir widgets are OSR
-    {
-#ifdef HAVE_WEBKIT_OSR //TODO the ifdef isnt really relevant anymore, we always have osr
-      printf("osr init:%s\n",SDATA(SYMBOL_NAME(xww->type)));
+  {
+    printf("osr init:%s\n",SDATA(SYMBOL_NAME(xww->type)));
     xv->widget = gtk_drawing_area_new();
     gtk_widget_set_app_paintable ( xv->widget, TRUE); //because expose event handling
     gtk_widget_add_events(xv->widget,
@@ -1021,14 +1020,6 @@ xwidget_init_view (struct xwidget *xww,
                       G_CALLBACK (xwidget_osr_draw_callback), NULL);
 
 
-
-
-    /* g_signal_connect (G_OBJECT (    xv->widget), "key-press-event", */
-    /*                   G_CALLBACK (xwidget_osr_event_forward), NULL); */
-    /* g_signal_connect (G_OBJECT (    xv->widget), "key-release-event", */
-    /*                   G_CALLBACK (xwidget_osr_event_forward), NULL); */
-    
-#endif  /* HAVE_WEBKIT_OSR */
 
 
   } 
