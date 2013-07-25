@@ -133,7 +133,6 @@ extern Lisp_Object QCwidth, QCheight;
 struct xwidget_view* xwidget_view_lookup(struct xwidget* xw,     struct window *w);
 Lisp_Object xwidget_spec_value ( Lisp_Object spec, Lisp_Object  key,  int *found);
 gboolean offscreen_damage_event (GtkWidget *widget, GdkEvent *event, gpointer data);
-gboolean webkit_osr_key_event_callback (GtkWidget *widget, GdkEventKey *event, gpointer data) ;
 void     webkit_osr_document_load_finished_callback (WebKitWebView  *webkitwebview,
                                                      WebKitWebFrame *arg1,
                                                      gpointer        user_data);
@@ -162,11 +161,6 @@ gboolean webkit_osr_navigation_policy_decision_requested_callback(WebKitWebView 
                                                         WebKitWebNavigationAction *navigation_action,
                                                         WebKitWebPolicyDecision   *policy_decision,
                                                                   gpointer                   user_data);
-
-gboolean
-xwgir_event_callback (GtkWidget *widget,
-                      GdkEvent  *event,
-                      gpointer   user_data);
 
 GtkWidget* xwgir_create(char* class, char* namespace);
 static void
@@ -224,7 +218,6 @@ TYPE is a symbol which can take one of the following values:
   if (EQ(xw->type, Qwebkit_osr)||
       EQ(xw->type, Qsocket_osr)||
       (!NILP (Fget(xw->type, QCxwgir_class)))) {
-      printf("init osr widget\n");
       block_input();
       xw->widgetwindow_osr = gtk_offscreen_window_new ();
       gtk_window_resize(GTK_WINDOW(xw->widgetwindow_osr), xw->width, xw->height);
@@ -275,10 +268,6 @@ TYPE is a symbol which can take one of the following values:
       }
 
       if (EQ(xw->type, Qsocket_osr)) {
-          printf ("xwid:%d socket id:%x %d\n",
-                  xw,
-                  gtk_socket_get_id (GTK_SOCKET (xw->widget_osr)),
-                  gtk_socket_get_id (GTK_SOCKET (xw->widget_osr)));
           send_xembed_ready_event (xw, gtk_socket_get_id (GTK_SOCKET (xw->widget_osr)));
           //gtk_widget_realize(xw->widget);
       }
@@ -456,18 +445,6 @@ offscreen_damage_event (GtkWidget *widget, GdkEvent *event, gpointer data)
   return FALSE;
 }
 
-
-
-gboolean
-webkit_osr_key_event_callback (GtkWidget *widget, GdkEventKey *event, gpointer data)
-{
-  printf("terminating a webkit osr keypress\n");
-  //TRUE terminate the event here. no paren handlers will be called. but webkit then doesng get the event and it still crashes
-  //FALSE paren handlers will be called. webkit then gets the event and it still crashes
-  return TRUE; 
-}
-
-
 void
 store_xwidget_event_string(struct xwidget* xw, char* eventname, const char* eventstr)
 {
@@ -581,14 +558,10 @@ xwidget_osr_draw_callback (GtkWidget *widget, cairo_t *cr, gpointer data)
   struct xwidget* xw = (struct xwidget*) g_object_get_data (G_OBJECT (widget), XG_XWIDGET);
   struct xwidget_view* xv = (struct xwidget_view*) g_object_get_data (G_OBJECT (widget), XG_XWIDGET_VIEW);
 
-  printf("xwidget_osr_draw_callback gtk3 xw.id:%d xw.type:%d window:%d vis:%d\n",
-           xw,xw->type, gtk_widget_get_window (widget),  gtk_widget_get_visible (xw->widget_osr));
-
   cairo_rectangle(cr, 0,0, xv->clip_right, xv->clip_bottom);//xw->width, xw->height);
   cairo_clip(cr);
 
-  gtk_widget_draw (xw->widget_osr,  cr);
-
+  gtk_widget_draw (xw->widget_osr, cr);
 
   return FALSE;
 }
@@ -634,20 +607,6 @@ xwidget_osr_event_forward (GtkWidget *widget,
   return TRUE; //dont propagate this event furter
   //return FALSE; //dont propagate this event furter
 }
-
-gboolean
-xwgir_event_callback (GtkWidget *widget,
-                             GdkEvent  *event,
-                             gpointer   user_data)
-{
-  //debugging
-  //perhaps delete copied events here
-  struct xwidget* xw = (struct xwidget*) g_object_get_data (G_OBJECT (widget), XG_XWIDGET);
-  printf("xwgir_event_callback\n");
-  return FALSE;
-}
-
-
 
 GIRepository *girepository ;
 DEFUN( "xwgir-require-namespace",Fxwgir_require_namespace, Sxwgir_require_namespace, 2,2,0,
@@ -872,23 +831,6 @@ to_child (GtkWidget *bin,
   *y_out = widget_y;
 }
 
-
-void
-offscreen_window_from_parent (GdkWindow     *window,
-                              double         parent_x,
-                              double         parent_y,
-                              double        *offscreen_x,
-                              double        *offscreen_y,
-                              GtkWidget *bin)
-{
-  /* printf("offscreen_window_from_parent %d  %f,%f  %f,%f\n", */
-  /*        window, */
-  /*        parent_x, */
-  /*        parent_y, */
-  /*        offscreen_x, */
-  /*        offscreen_y         ); */
-  to_child (bin, parent_x, parent_y, offscreen_x, offscreen_y);
-}
 
 GdkWindow *
 offscreen_pick_embedded_child (GdkWindow *window,
@@ -1232,18 +1174,6 @@ DEFUN("xwidget-disable-plugin-for-mime", Fxwidget_disable_plugin_for_mime , Sxwi
   return Qnil;
 }
 
-
-//attempting a workaround for a webkit offscreen bug
-//TODO verify its still needed
-void
-gtk_window_get_position (GtkWindow *window,
-                         gint *root_x,
-                         gint *root_y)
-{
-  printf("my getsize\n");
-  *root_x = 0;
-  *root_y = 0;
-}
 
 void
 xwidget_webkit_dom_dump(WebKitDOMNode* parent)
