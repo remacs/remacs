@@ -226,7 +226,7 @@ TYPE is a symbol which can take one of the following values:
       (!NILP (Fget(xw->type, QCxwgir_class)))) {
       printf("init osr widget\n");
       block_input();
-      xw->widgetwindow_osr = GTK_CONTAINER (gtk_offscreen_window_new ());
+      xw->widgetwindow_osr = gtk_offscreen_window_new ();
       gtk_window_resize(GTK_WINDOW(xw->widgetwindow_osr), xw->width, xw->height);
 
       if (EQ(xw->type, Qwebkit_osr))
@@ -238,9 +238,9 @@ TYPE is a symbol which can take one of the following values:
                                         SDATA(Fcar(Fget(xw->type, QCxwgir_class))));
 
       gtk_widget_set_size_request (GTK_WIDGET (xw->widget_osr), xw->width, xw->height);
-      gtk_container_add (xw->widgetwindow_osr, xw->widget_osr);
+      gtk_container_add (GTK_CONTAINER (xw->widgetwindow_osr), xw->widget_osr);
 
-      gtk_widget_show_all (GTK_WIDGET (xw->widgetwindow_osr));
+      gtk_widget_show_all (xw->widgetwindow_osr);
 
       /* store some xwidget data in the gtk widgets for convenient retrieval in the event handlers. */
       g_object_set_data (G_OBJECT (xw->widget_osr), XG_XWIDGET, (gpointer) (xw));
@@ -381,8 +381,8 @@ void
 xwidget_show_view (struct xwidget_view *xv)
 {
   xv->hidden = 0;
-  gtk_widget_show(GTK_WIDGET(xv->widgetwindow));
-  gtk_fixed_move (GTK_FIXED (xv->emacswindow), GTK_WIDGET (xv->widgetwindow),  xv->x  + xv->clip_left, xv->y + xv->clip_top); //TODO refactor
+  gtk_widget_show(xv->widgetwindow);
+  gtk_fixed_move (GTK_FIXED (xv->emacswindow), xv->widgetwindow,  xv->x  + xv->clip_left, xv->y + xv->clip_top); //TODO refactor
 }
 
 
@@ -391,8 +391,8 @@ void
 xwidget_hide_view (struct xwidget_view *xv)
 {
   xv->hidden = 1;
-  //gtk_widget_hide(GTK_WIDGET(xw->widgetwindow));
-  gtk_fixed_move (GTK_FIXED (xv->emacswindow), GTK_WIDGET (xv->widgetwindow),
+  //gtk_widget_hide(xw->widgetwindow);
+  gtk_fixed_move (GTK_FIXED (xv->emacswindow), xv->widgetwindow,
                   10000, 10000);
 }
 
@@ -1054,10 +1054,10 @@ xwidget_init_view (struct xwidget *xww,
   //later, drawing should crop container window if necessary to handle case where xwidget
   //is partially obscured by other emacs windows
   //other containers than gtk_fixed where explored, but gtk_fixed had the most predictable behaviour so far.
-  xv->emacswindow = GTK_CONTAINER (FRAME_GTK_WIDGET (s->f));
-  xv->widgetwindow = GTK_CONTAINER (gtk_fixed_new ()); 
-  gtk_widget_set_has_window(GTK_WIDGET (  xv->widgetwindow), TRUE);
-  gtk_container_add (xv->widgetwindow, xv->widget);
+  xv->emacswindow = FRAME_GTK_WIDGET (s->f);
+  xv->widgetwindow = gtk_fixed_new (); 
+  gtk_widget_set_has_window(xv->widgetwindow, TRUE);
+  gtk_container_add (GTK_CONTAINER (xv->widgetwindow), xv->widget);
 
   //store some xwidget data in the gtk widgets
   g_object_set_data (G_OBJECT (xv->widget), XG_FRAME_DATA, (gpointer) (s->f)); //the emacs frame
@@ -1068,10 +1068,10 @@ xwidget_init_view (struct xwidget *xww,
 
 
   gtk_widget_set_size_request (GTK_WIDGET (xv->widget), xww->width, xww->height);
-  gtk_widget_set_size_request (GTK_WIDGET (xv->widgetwindow), xww->width, xww->height);
-  gtk_fixed_put (GTK_FIXED (FRAME_GTK_WIDGET (s->f)), GTK_WIDGET (xv->widgetwindow), x, y);
+  gtk_widget_set_size_request (xv->widgetwindow, xww->width, xww->height);
+  gtk_fixed_put (GTK_FIXED (FRAME_GTK_WIDGET (s->f)), xv->widgetwindow, x, y);
   xv->x = x;  xv->y = y;
-  gtk_widget_show_all (GTK_WIDGET (xv->widgetwindow));
+  gtk_widget_show_all (xv->widgetwindow);
 
 
   
@@ -1163,7 +1163,7 @@ x_draw_xwidget_glyph_string (struct glyph_string *s)
         {
           //TODO should be possible to use xwidget_show_view here
           gtk_fixed_move (GTK_FIXED (FRAME_GTK_WIDGET (s->f)),
-                          GTK_WIDGET (xv->widgetwindow),
+                          xv->widgetwindow,
                           x + clip_left, y + clip_top);
         }
     }
@@ -1174,7 +1174,7 @@ x_draw_xwidget_glyph_string (struct glyph_string *s)
      || (xv->clip_bottom != clip_bottom)
      || (xv->clip_top != clip_top)
      || (xv->clip_left != clip_left)){
-    gtk_widget_set_size_request (GTK_WIDGET (xv->widgetwindow),  clip_right + clip_left, clip_bottom + clip_top);
+    gtk_widget_set_size_request (xv->widgetwindow,  clip_right + clip_left, clip_bottom + clip_top);
     gtk_fixed_move(GTK_FIXED(xv->widgetwindow), xv->widget, -clip_left, -clip_top);
     printf("reclip %d %d -> %d %d  clip_top:%d clip_left:%d\n",xv->clip_right, xv->clip_bottom,  clip_right, clip_bottom, clip_top , clip_left);
 
@@ -1185,7 +1185,7 @@ x_draw_xwidget_glyph_string (struct glyph_string *s)
   //TODO it seems its possible to get out of sync with emacs redraws so emacs bg sometimes shows up instead of xwidget
   //its just a visual glitch though
   if (!xwidget_hidden(xv)){
-    gtk_widget_queue_draw (GTK_WIDGET(xv->widgetwindow));
+    gtk_widget_queue_draw (xv->widgetwindow);
     gtk_widget_queue_draw (xv->widget);
   }
 }
@@ -1359,7 +1359,7 @@ DEFUN ("xwidget-resize", Fxwidget_resize, Sxwidget_resize, 3, 3, 0, doc:
     //gtk_window_resize(    GTK_WINDOW(xw->widget_osr), xw->width, xw->height);
     gtk_window_resize(    GTK_WINDOW(xw->widgetwindow_osr), xw->width, xw->height);
     //gtk_container_resize_children ( GTK_WINDOW(xw->widgetwindow_osr));
-    gtk_container_resize_children ( GTK_CONTAINER(xw->widgetwindow_osr));
+    gtk_container_resize_children (GTK_CONTAINER(xw->widgetwindow_osr));
     
   }
 
@@ -1531,7 +1531,7 @@ DEFUN ("delete-xwidget-view", Fdelete_xwidget_view, Sdelete_xwidget_view,
 {
   CHECK_XWIDGET_VIEW (xwidget_view);
   struct xwidget_view *xv = XXWIDGET_VIEW (xwidget_view);
-  gtk_widget_destroy(GTK_WIDGET (xv->widgetwindow));
+  gtk_widget_destroy(xv->widgetwindow);
   Vxwidget_view_list = Fdelq (xwidget_view, Vxwidget_view_list);
 }
 
@@ -1765,7 +1765,7 @@ xwidget_view_delete_all_in_window (struct window *w)
       if (XWIDGET_VIEW_P (XCAR (tail))) {
         xv = XXWIDGET_VIEW (XCAR (tail));
         if(XWINDOW (xv->w) == w) {
-          gtk_widget_destroy(GTK_WIDGET(xv->widgetwindow));
+          gtk_widget_destroy(xv->widgetwindow);
           Vxwidget_view_list = Fdelq (XCAR (tail), Vxwidget_view_list);
         }
       }
@@ -1922,8 +1922,8 @@ kill_buffer_xwidgets (Lisp_Object buffer)
         struct xwidget *xw = XXWIDGET (xwidget);
         if (xw->widget_osr && xw->widgetwindow_osr)
           {
-            gtk_widget_destroy(GTK_WIDGET (xw->widget_osr));
-            gtk_widget_destroy(GTK_WIDGET (xw->widgetwindow_osr));
+            gtk_widget_destroy(xw->widget_osr);
+            gtk_widget_destroy(xw->widgetwindow_osr);
           }
       }
     }

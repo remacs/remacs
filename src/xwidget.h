@@ -33,7 +33,7 @@ struct xwidget{
 
   //for offscreen widgets, unused if not osr
   GtkWidget* widget_osr;
-  GtkContainer* widgetwindow_osr;
+  GtkWidget* widgetwindow_osr;
   /* Non-nil means kill silently if Emacs is exited. */
   unsigned int kill_without_query : 1;
 
@@ -53,8 +53,8 @@ struct xwidget_view {
   int hidden;//if the "live" instance isnt drawn
 
   GtkWidget* widget;
-  GtkContainer* widgetwindow;
-  GtkContainer* emacswindow;
+  GtkWidget* widgetwindow;
+  GtkWidget* emacswindow;
   int x; int y;
   int clip_right; int clip_bottom; int clip_top; int clip_left;
 
