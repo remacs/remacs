@@ -890,50 +890,53 @@ offscreen_window_from_parent (GdkWindow     *window,
   to_child (bin, parent_x, parent_y, offscreen_x, offscreen_y);
 }
 
- GdkWindow *
-pick_offscreen_child (GdkWindow     *offscreen_window,
-                      double         widget_x,
-                      double         widget_y,
-                      GdkWindow *bin)
+GdkWindow *
+offscreen_pick_embedded_child (GdkWindow *window,
+                               double x,
+                               double y,
+                               gpointer *data)
 {
   //in this simple case we assume the window contains a single widget. easy.
   //but then we get the problem that the widget cant be embedded in several windows
-    printf("pick_offscreen_child %d %f %f  %d\n",
-offscreen_window,
-    widget_x,
-    widget_y,
-           bin           );
-  return bin;
+  return gtk_widget_get_window (GTK_WIDGET (data));
 }
 
+void
+offscreen_to_embedder (GdkWindow *window,
+                       gdouble offscreen_x,
+                       gdouble offscreen_y,
+                       gpointer embedder_x,
+                       gpointer embedder_y,
+                       gpointer data)
+{
+  * (gdouble *) embedder_x = offscreen_x;
+  * (gdouble *) embedder_y = offscreen_y;
+}
 
 void
-xwidget_set_embedder_view(struct xwidget* xww,
-                          struct xwidget_view* xv){
-  printf("gdk_offscreen_window_set_embedder %d %d\n",
-         GDK_IS_WINDOW(gtk_widget_get_window (xww->widget_osr)),
-         GDK_IS_WINDOW(gtk_widget_get_window (GTK_WIDGET (xv->widget))));
-  //set_embedder needs to be called after xv->widget realization
-  gdk_offscreen_window_set_embedder (      gtk_widget_get_window (xww->widget_osr),
-                                           gtk_widget_get_window (GTK_WIDGET (xv->widget))
-                                           
-
-                                           );
-  //this signal doesnt seem completely necessary
-  /* g_signal_connect (gtk_widget_get_window (xww->widget_osr), "from-embedder", */
-  /*                   G_CALLBACK (offscreen_window_from_parent), gtk_widget_get_window (GTK_WIDGET (xv->widget))); */
-  //but this one is
-  g_signal_connect (gtk_widget_get_window (xv->widget), "pick-embedded-child",
-                    G_CALLBACK (pick_offscreen_child), gtk_widget_get_window (xww->widget_osr));
+offscreen_from_embedder (GdkWindow *window,
+                         gdouble embedder_x,
+                         gdouble embedder_y,
+                         gpointer offscreen_x,
+                         gpointer offscreen_y,
+                         gpointer user_data)
+{
+  * (gdouble *) offscreen_x = embedder_x;
+  * (gdouble *) offscreen_y = embedder_y;
 }
 
 gboolean
 xwidget_osr_event_set_embedder (GtkWidget *widget,
-                           GdkEvent  *event,
-                           gpointer   xv)
+                                GdkEvent *event,
+                                gpointer data)
 {
-  xwidget_set_embedder_view(XXWIDGET (((struct xwidget_view*) xv)->model),
-                            (struct xwidget_view*) xv);
+  struct xwidget_view *xv = (struct xwidget_view *) data;
+  struct xwidget *xww = XXWIDGET (xv->model);
+  printf("gdk_offscreen_window_set_embedder %d %d\n",
+         GDK_IS_WINDOW(gtk_widget_get_window (xww->widget_osr)),
+         GDK_IS_WINDOW(gtk_widget_get_window (GTK_WIDGET (xv->widget))));
+  gdk_offscreen_window_set_embedder (gtk_widget_get_window (xww->widgetwindow_osr),
+                                     gtk_widget_get_window (xv->widget));
 }
 
  
@@ -1011,7 +1014,7 @@ xwidget_init_view (struct xwidget *xww,
                         G_CALLBACK (xwidget_osr_event_forward), NULL);
     }else{
       //xwgir debug , orthogonal to forwarding
-      g_signal_connect (G_OBJECT (    xv->widget), "motion-notify-event",
+      g_signal_connect (G_OBJECT (xv->widget), "motion-notify-event",
                         G_CALLBACK (xwidget_osr_event_set_embedder), xv);
     }
     
@@ -1019,11 +1022,8 @@ xwidget_init_view (struct xwidget *xww,
     g_signal_connect (G_OBJECT (    xv->widget), "draw",
                       G_CALLBACK (xwidget_osr_draw_callback), NULL);
 
-
-
-
   } 
-    //else return NULL;
+  //else return NULL;
 
   //widget realization
   //make container widget 1st, and put the actual widget inside the container
@@ -1063,24 +1063,24 @@ xwidget_init_view (struct xwidget *xww,
   }
 
   //////////////////////////////////////////////////////////////
-  //xwgir debug
+  // xwgir debug
   if (//EQ(xww->type, Qwebkit_osr)|| //TODO should be able to choose compile time which method to use with webkit
       EQ(xww->type, Qsocket_osr)||
       (!NILP (Fget(xww->type, QCxwgir_class))))//xwgir widgets are OSR
     {
-      //xwidget_set_embedder_view(xww,xv);
       printf("gdk_offscreen_window_set_embedder %d %d\n",
              GDK_IS_WINDOW(gtk_widget_get_window (xww->widget_osr)),
              GDK_IS_WINDOW(gtk_widget_get_window (GTK_WIDGET (xv->widget))));
-      //set_embedder needs to be called after xv->widget realization
-      gdk_offscreen_window_set_embedder (      gtk_widget_get_window (xww->widget_osr),
-                                               gtk_widget_get_window (GTK_WIDGET (xv->widget))
-
-                                               );
-      /* g_signal_connect (gtk_widget_get_window (xww->widget_osr), "from-embedder", */
-      /*                   G_CALLBACK (offscreen_window_from_parent), gtk_widget_get_window (GTK_WIDGET (xv->widget))); */
+      // set_embedder needs to be called after xv->widget realization
+      gdk_offscreen_window_set_embedder (gtk_widget_get_window (xww->widgetwindow_osr),
+                                         gtk_widget_get_window (xv->widget));
       g_signal_connect (gtk_widget_get_window (xv->widget), "pick-embedded-child",
-                        G_CALLBACK (pick_offscreen_child), gtk_widget_get_window (xww->widget_osr));
+                        G_CALLBACK (offscreen_pick_embedded_child), xww->widgetwindow_osr);
+
+      g_signal_connect (gtk_widget_get_window (xww->widgetwindow_osr), "from-embedder",
+                        G_CALLBACK (offscreen_from_embedder), NULL);
+      g_signal_connect (gtk_widget_get_window (xww->widgetwindow_osr), "to-embedder",
+                        G_CALLBACK (offscreen_to_embedder), NULL);
     }
   ////////////////////////////////////////
   
