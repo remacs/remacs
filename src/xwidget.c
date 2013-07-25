@@ -994,10 +994,7 @@ xwidget_init_view (struct xwidget *xww,
     printf("osr init:%s\n",SDATA(SYMBOL_NAME(xww->type)));
     xv->widget = gtk_drawing_area_new();
     gtk_widget_set_app_paintable ( xv->widget, TRUE); //because expose event handling
-    gtk_widget_add_events(xv->widget,
-                          GDK_BUTTON_PRESS_MASK
-                          | GDK_BUTTON_RELEASE_MASK
-                          | GDK_POINTER_MOTION_MASK);
+    gtk_widget_add_events(xv->widget, GDK_ALL_EVENTS_MASK);
 
     /* Draw the view on damage-event */
     g_signal_connect (G_OBJECT (xww->widgetwindow_osr), "damage-event",
