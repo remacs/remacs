@@ -1011,12 +1011,12 @@ xwidget_init_view (struct xwidget *xww,
                         G_CALLBACK (xwidget_osr_event_forward), NULL);
     }else{
       //xwgir debug , orthogonal to forwarding
-      g_signal_connect (G_OBJECT (xv->widget), "motion-notify-event",
+      g_signal_connect (G_OBJECT (xv->widget), "enter-notify-event",
                         G_CALLBACK (xwidget_osr_event_set_embedder), xv);
     }
     
     //draw
-    g_signal_connect (G_OBJECT (    xv->widget), "draw",
+    g_signal_connect (G_OBJECT (xv->widget), "draw",
                       G_CALLBACK (xwidget_osr_draw_callback), NULL);
 
   } 
