@@ -1498,9 +1498,10 @@ other hooks, such as major mode hooks, can do the job."
       ;; FIXME: Something like this could be used for `set' as well.
       (if (or (not (eq 'quote (car-safe list-var)))
               (special-variable-p (cadr list-var))
-              (and append compare-fn))
+              (not (macroexp-const-p append)))
           exp
         (let* ((sym (cadr list-var))
+               (append (eval append))
                (msg (format "`add-to-list' can't use lexical var `%s'; use `push' or `cl-pushnew'"
                             sym))
                ;; Big ugly hack so we only output a warning during
@@ -1513,13 +1514,17 @@ other hooks, such as major mode hooks, can do the job."
                           (when (assq sym byte-compile--lexical-environment)
                             (byte-compile-log-warning msg t :error))))
                (code
-                (if append
-                    (macroexp-let2 macroexp-copyable-p x element
-                    `(unless (member ,x ,sym)
-                       (setq ,sym (append ,sym (list ,x)))))
-                  (require 'cl-lib)
-                  `(cl-pushnew ,element ,sym
-                               :test ,(or compare-fn '#'equal)))))
+                (macroexp-let2 macroexp-copyable-p x element
+                  `(unless ,(if compare-fn
+                                (progn
+                                  (require 'cl-lib)
+                                  `(cl-member ,x ,sym :test ,compare-fn))
+                              ;; For bootstrapping reasons, don't rely on
+                              ;; cl--compiler-macro-member for the base case.
+                              `(member ,x ,sym))
+                     ,(if append
+                          `(setq ,sym (append ,sym (list ,x)))
+                        `(push ,x ,sym))))))
           (if (not (macroexp--compiling-p))
               code
             `(progn
@@ -3529,7 +3534,7 @@ likely to have undesired semantics.")
 ;; defaulted, OMIT-NULLS should be treated as t.  Simplifying the logical
 ;; expression leads to the equivalent implementation that if SEPARATORS
 ;; is defaulted, OMIT-NULLS is treated as t.
-(defun split-string (string &optional separators omit-nulls)
+(defun split-string (string &optional separators omit-nulls trim)
   "Split STRING into substrings bounded by matches for SEPARATORS.
 
 The beginning and end of STRING, and each match for SEPARATORS, are
@@ -3547,17 +3552,50 @@ that for the default value of SEPARATORS leading and trailing whitespace
 are effectively trimmed).  If nil, all zero-length substrings are retained,
 which correctly parses CSV format, for example.
 
+If TRIM is non-nil, it should be a regular expression to match
+text to trim from the beginning and end of each substring.  If trimming
+makes the substring empty, it is treated as null.
+
+If you want to trim whitespace from the substrings, the reliably correct
+way is using TRIM.  Making SEPARATORS match that whitespace gives incorrect
+results when there is whitespace at the start or end of STRING.  If you
+see such calls to `split-string', please fix them.
+
 Note that the effect of `(split-string STRING)' is the same as
 `(split-string STRING split-string-default-separators t)'.  In the rare
 case that you wish to retain zero-length substrings when splitting on
 whitespace, use `(split-string STRING split-string-default-separators)'.
 
 Modifies the match data; use `save-match-data' if necessary."
-  (let ((keep-nulls (not (if separators omit-nulls t)))
-	(rexp (or separators split-string-default-separators))
-	(start 0)
-	notfirst
-	(list nil))
+  (let* ((keep-nulls (not (if separators omit-nulls t)))
+	 (rexp (or separators split-string-default-separators))
+	 (start 0)
+	 this-start this-end
+	 notfirst
+	 (list nil)
+	 (push-one
+	  ;; Push the substring in range THIS-START to THIS-END
+	  ;; onto LIST, trimming it and perhaps discarding it.
+	  (lambda ()
+	    (when trim
+	      ;; Discard the trim from start of this substring.
+	      (let ((tem (string-match trim string this-start)))
+		(and (eq tem this-start)
+		     (setq this-start (match-end 0)))))
+
+	    (when (or keep-nulls (< this-start this-end))
+	      (let ((this (substring string this-start this-end)))
+
+		;; Discard the trim from end of this substring.
+		(when trim
+		  (let ((tem (string-match (concat trim "\\'") this 0)))
+		    (and tem (< tem (length this))
+			 (setq this (substring this 0 tem)))))
+
+		;; Trimming could make it empty; check again.
+		(when (or keep-nulls (> (length this) 0))
+		  (push this list)))))))
+
     (while (and (string-match rexp string
 			      (if (and notfirst
 				       (= start (match-beginning 0))
@@ -3565,15 +3603,15 @@ Modifies the match data; use `save-match-data' if necessary."
 				  (1+ start) start))
 		(< start (length string)))
       (setq notfirst t)
-      (if (or keep-nulls (< start (match-beginning 0)))
-	  (setq list
-		(cons (substring string start (match-beginning 0))
-		      list)))
-      (setq start (match-end 0)))
-    (if (or keep-nulls (< start (length string)))
-	(setq list
-	      (cons (substring string start)
-		    list)))
+      (setq this-start start this-end (match-beginning 0)
+	    start (match-end 0))
+
+      (funcall push-one))
+
+    ;; Handle the substring at the end of STRING.
+    (setq this-start start this-end (length string))
+    (funcall push-one)
+
     (nreverse list)))
 
 (defun combine-and-quote-strings (strings &optional separator)
@@ -4153,22 +4191,6 @@ I is the index of the frame after FRAME2.  It should return nil
 if those frames don't seem special and otherwise, it should return
 the number of frames to skip (minus 1).")
 
-(defmacro internal--called-interactively-p--get-frame (n)
-  ;; `sym' will hold a global variable, which will be used kind of like C's
-  ;; "static" variables.
-  (let ((sym (make-symbol "base-index")))
-    `(progn
-       (defvar ,sym)
-       (unless (boundp ',sym)
-         (let ((i 1))
-           (while (not (eq (indirect-function (nth 1 (backtrace-frame i)) t)
-                           (indirect-function 'called-interactively-p)))
-             (setq i (1+ i)))
-           (setq ,sym i)))
-       ;; (unless (eq (nth 1 (backtrace-frame ,sym)) 'called-interactively-p)
-       ;;   (error "called-interactively-p: %s is out-of-sync!" ,sym))
-       (backtrace-frame (+ ,sym ,n)))))
-
 (defun called-interactively-p (&optional kind)
   "Return t if the containing function was called by `call-interactively'.
 If KIND is `interactive', then only return t if the call was made
@@ -4203,7 +4225,7 @@ command is called from a keyboard macro?"
            (get-next-frame
             (lambda ()
               (setq frame nextframe)
-              (setq nextframe (internal--called-interactively-p--get-frame i))
+              (setq nextframe (backtrace-frame i 'called-interactively-p))
               ;; (message "Frame %d = %S" i nextframe)
               (setq i (1+ i)))))
       (funcall get-next-frame) ;; Get the first frame.

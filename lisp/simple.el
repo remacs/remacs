@@ -3141,14 +3141,17 @@ Also, delete any process that is exited or signaled."
   (display-buffer (button-get button 'process-buffer)))
 
 (defun list-processes (&optional query-only buffer)
-  "Display a list of all processes.
+  "Display a list of all processes that are Emacs sub-processes.
 If optional argument QUERY-ONLY is non-nil, only processes with
 the query-on-exit flag set are listed.
 Any process listed as exited or signaled is actually eliminated
 after the listing is made.
 Optional argument BUFFER specifies a buffer to use, instead of
 \"*Process List*\".
-The return value is always nil."
+The return value is always nil.
+
+This function lists only processes that were launched by Emacs.  To
+see other processes running on the system, use `list-system-processes'."
   (interactive)
   (or (fboundp 'process-list)
       (error "Asynchronous subprocesses are not supported on this system"))
@@ -4739,10 +4742,15 @@ lines."
 
 (defun default-font-height ()
   "Return the height in pixels of the current buffer's default face font."
-  (cond
-   ((display-multi-font-p)
-    (aref (font-info (face-font 'default)) 3))
-   (t (frame-char-height))))
+  (let ((default-font (face-font 'default)))
+    (cond
+     ((and (display-multi-font-p)
+	   ;; Avoid calling font-info if the frame's default font was
+	   ;; not changed since the frame was created.  That's because
+	   ;; font-info is expensive for some fonts, see bug #14838.
+	   (not (string= (frame-parameter nil 'font) default-font)))
+      (aref (font-info default-font) 3))
+     (t (frame-char-height)))))
 
 (defun default-line-height ()
   "Return the pixel height of current buffer's default-face text line.
@@ -4795,6 +4803,8 @@ The value is a floating-point number."
 	   (this-ypos (nth 2 this-lh))
 	   (dlh (default-line-height))
 	   (wslines (window-screen-lines))
+	   (edges (window-inside-pixel-edges))
+	   (winh (- (nth 3 edges) (nth 1 edges) 1))
 	   py vs last-line)
       (if (> (mod wslines 1.0) 0.0)
 	  (setq wslines (round (+ wslines 0.5))))
@@ -4843,7 +4853,7 @@ The value is a floating-point number."
 	  nil)
 	 ;; If cursor is not in the bottom scroll margin, and the
 	 ;; current line is is not too tall, move forward.
-	 ((and (or (null this-height) (<= this-height dlh))
+	 ((and (or (null this-height) (<= this-height winh))
 	       vpos
 	       (> vpos 0)
 	       (< py last-line))
@@ -4860,7 +4870,7 @@ The value is a floating-point number."
 	       (> vpos 0)
 	       (= py last-line))
 	  ;; Don't vscroll if the partially-visible line at window
-	  ;; bottom has the default height (a.k.a. "just one more text
+	  ;; bottom is not too tall (a.k.a. "just one more text
 	  ;; line"): in that case, we do want redisplay to behave
 	  ;; normally, i.e. recenter or whatever.
 	  ;;
@@ -4869,7 +4879,7 @@ The value is a floating-point number."
 	  ;; partially-visible glyph row at the end of the window.  As
 	  ;; we are dealing with floats, we disregard sub-pixel
 	  ;; discrepancies between that and DLH.
-	  (if (and rowh rbot (>= (- (+ rowh rbot) dlh) 1))
+	  (if (and rowh rbot (>= (- (+ rowh rbot) winh) 1))
 	      (set-window-vscroll nil dlh t))
 	  (line-move-1 arg noerror to-end)
 	  t)
@@ -4913,10 +4923,13 @@ The value is a floating-point number."
 	    ;; If we moved into a tall line, set vscroll to make
 	    ;; scrolling through tall images more smooth.
 	    (let ((lh (line-pixel-height))
-		  (dlh (default-line-height)))
+		  (edges (window-inside-pixel-edges))
+		  (dlh (default-line-height))
+		  winh)
+	      (setq winh (- (nth 3 edges) (nth 1 edges) 1))
 	      (if (and (< arg 0)
 		       (< (point) (window-start))
-		       (> lh dlh))
+		       (> lh winh))
 		  (set-window-vscroll
 		   nil
 		   (- lh dlh) t))))
@@ -5520,8 +5533,7 @@ Mode' for details."
   (visual-line-mode 1))
 
 (define-globalized-minor-mode global-visual-line-mode
-  visual-line-mode turn-on-visual-line-mode
-  :lighter " vl")
+  visual-line-mode turn-on-visual-line-mode)
 
 
 (defun transpose-chars (arg)
@@ -7432,19 +7444,19 @@ warning using STRING as the message.")
 
 ;;; Generic dispatcher commands
 
-;; Macro `alternatives-define' is used to create generic commands.
+;; Macro `define-alternatives' is used to create generic commands.
 ;; Generic commands are these (like web, mail, news, encrypt, irc, etc.)
 ;; that can have different alternative implementations where choosing
 ;; among them is exclusively a matter of user preference.
 
-;; (alternatives-define COMMAND) creates a new interactive command
+;; (define-alternatives COMMAND) creates a new interactive command
 ;; M-x COMMAND and a customizable variable COMMAND-alternatives.
 ;; Typically, the user will not need to customize this variable; packages
 ;; wanting to add alternative implementations should use
 ;;
 ;; ;;;###autoload (push '("My impl name" . my-impl-symbol) COMMAND-alternatives
 
-(defmacro alternatives-define (command &rest customizations)
+(defmacro define-alternatives (command &rest customizations)
   "Define new command `COMMAND'.
 The variable `COMMAND-alternatives' will contain alternative
 implementations of COMMAND, so that running `C-u M-x COMMAND'

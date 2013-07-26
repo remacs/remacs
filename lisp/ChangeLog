@@ -1,3 +1,451 @@
+2013-07-26  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* emacs-lisp/nadvice.el (advice--called-interactively-skip): Use the new
+	`base' arg of backtrace-frame.
+
+2013-07-26  Eli Zaretskii  <eliz@gnu.org>
+
+	* simple.el (list-processes): Doc fix.
+
+2013-07-26  Juanma Barranquero  <lekktu@gmail.com>
+
+	* desktop.el (desktop--select-frame):
+	Try harder to reuse the initial frame.
+
+2013-07-26  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* emacs-lisp/edebug.el: Use backtrace-eval to handle lexical variables.
+	(edebug-eval): Use backtrace-eval.
+	(edebug--display, edebug--recursive-edit): Don't let-bind the
+	edebug-outer-* vars that keep track of variables we locally let-bind.
+	(edebug-outside-excursion): Don't restore outside values of locally
+	let-bound vars.
+	(edebug--display): Use user-error.
+	(cl-lexical-debug, cl-debug-env): Remove.
+
+2013-07-26  Juanma Barranquero  <lekktu@gmail.com>
+
+	* desktop.el (desktop-restore-frames): Call `sit-for' once all frames
+	are restored to be sure that they are visible before deleting any
+	remaining ones.
+
+2013-07-26  Matthias Meulien  <orontee@gmail.com>
+
+	* vc/vc-dir.el (vc-dir-mode-map): Add binding for vc-print-root-log.
+
+2013-07-26  Richard Stallman  <rms@gnu.org>
+
+	Add aliases for encrypting mail.
+	* epa.el (epa-mail-aliases): New option.
+	* epa-mail.el (epa-mail-encrypt): Rewrite to be callable from programs.
+	Bind inhibit-read-only so read-only text doesn't ruin everything.
+	(epa-mail-default-recipients): New subroutine broken out.
+	Handle epa-mail-aliases.
+
+2013-07-26  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	Add support for lexical variables to the debugger's `e' command.
+	* emacs-lisp/debug.el (debug): Don't let-bind the debugger-outer-*
+	vars, except for debugger-outer-match-data.
+	(debugger-frame-number): Move check for "on a function call" from
+	callers into it.  Add `skip-base' argument.
+	(debugger-frame, debugger-frame-clear): Simplify accordingly.
+	(debugger-env-macro): Only reset the state stored in non-variables,
+	i.e. current-buffer and match-data.
+	(debugger-eval-expression): Rewrite using backtrace-eval.
+	* subr.el (internal--called-interactively-p--get-frame): Remove.
+	(called-interactively-p):
+	* emacs-lisp/edebug.el (edebug--called-interactively-skip): Use the new
+	`base' arg of backtrace-frame instead.
+
+2013-07-26  Glenn Morris  <rgm@gnu.org>
+
+	* align.el (align-regexp): Doc fix.  (Bug#14857)
+	(align-region): Explicit error if subexpression missing/does not match.
+
+	* simple.el (global-visual-line-mode):
+	Do not duplicate the mode lighter.  (Bug#14858)
+
+2013-07-25  Martin Rudalics  <rudalics@gmx.at>
+
+	* window.el (display-buffer): In display-buffer bind
+	split-window-keep-point to t, bug#14829.
+
+2013-07-25  Juanma Barranquero  <lekktu@gmail.com>
+
+	* desktop.el: Rename internal "desktop-X" frame params to "desktop--X".
+	(desktop-filter-parameters-alist, desktop--filter-restore-desktop-parm)
+	(desktop--filter-save-desktop-parm, desktop--process-minibuffer-frames)
+	(desktop--select-frame, desktop--sort-states, desktop-restore-frames):
+	Change accordingly.
+	(desktop--select-frame, desktop--sort-states, desktop-restore-frames):
+	Use pcase-let, pcase-let* to deobfuscate access to desktop--mini values.
+
+2013-07-25  Glenn Morris  <rgm@gnu.org>
+
+	* dired-x.el (dired-mark-extension): Convert comment to doc string.
+
+2013-07-25  Juanma Barranquero  <lekktu@gmail.com>
+
+	* desktop.el (desktop--make-frame): Do not pass the `fullscreen'
+	parameter to modify-frame-parameters if the value has not changed;
+	this is a workaround for bug#14949.
+	(desktop--make-frame): On cl-delete-if call, check parameter name,
+	not full parameter.
+
+2013-07-24  Juanma Barranquero  <lekktu@gmail.com>
+
+	* desktop.el (desktop-restoring-frames-p): Return a true boolean.
+	(desktop-restore-frames): Warn when deleting an existing frame failed.
+
+2013-07-24  Glenn Morris  <rgm@gnu.org>
+
+	* ffap.el (ffap-machine-p): Handle "not known" response.  (Bug#14929)
+
+2013-07-24  Michael Albinus  <michael.albinus@gmx.de>
+
+	* filenotify.el (file-notify-supported-p):
+	* net/tramp-sh.el (tramp-sh-handle-file-notify-supported-p):
+	Remove functions.
+
+	* autorevert.el (auto-revert-use-notify):
+	(auto-revert-notify-add-watch):
+	* net/tramp.el (tramp-file-name-for-operation):
+	* net/tramp-adb.el (tramp-adb-file-name-handler-alist):
+	* net/tramp-gvfs.el (tramp-gvfs-file-name-handler-alist):
+	* net/tramp-sh.el (tramp-sh-file-name-handler-alist):
+	* net/tramp-smb.el (tramp-smb-file-name-handler-alist):
+	Remove `file-notify-supported-p' entry.
+
+2013-07-24  Glenn Morris  <rgm@gnu.org>
+
+	* printing.el: Replace all uses of deleted ps-windows-system,
+	ps-lp-system, ps-flatten-list with lpr- versions.
+
+2013-07-24  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* emacs-lisp/pcase.el (pcase--u1): Verify if self-quoting values can be
+	checked with memq (bug#14935).
+
+	* files.el (revert-buffer-function): Use a non-nil default.
+	(revert-buffer-preserve-modes): Declare var to
+	provide access to the `preserve-modes' argument.
+	(revert-buffer): Let-bind it.
+	(revert-buffer--default): New function, extracted from revert-buffer.
+
+2013-07-24  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* lpr.el: Signal print errors more prominently.
+	(print-region-function): Don't default to nil.
+	(lpr-print-region): New function, extracted from print-region-1.
+	Check lpr's return value and signal an error in case of problem.
+	(print-region-1): Use it.
+	* ps-print.el (ps-windows-system, ps-lp-system): Remove.  Use the lpr-*
+	versions instead.
+	(ps-printer-name): Default to nil.
+	(ps-printer-name-option): Default to lpr-printer-switch.
+	(ps-print-region-function): Don't default to nil.
+	(ps-postscript-code-directory): Simplify default.
+	(ps-do-despool): Use lpr-print-region to properly check the outcome.
+	(ps-string-list, ps-eval-switch, ps-flatten-list)
+	(ps-flatten-list-1): Remove.
+	(ps-multibyte-buffer): Avoid setq.
+	* dos-w32.el (direct-print-region-helper): Use proper regexp operators.
+	(print-region-function, ps-print-region-function): Don't set them here.
+
+2013-07-24  Xue Fuqiao  <xfq.free@gmail.com>
+
+	* ido.el (ido-fractionp):
+	(ido-cache-ftp-work-directory-time, ido-max-prospects, ido-mode)
+	(ido-max-file-prompt-width, ido-unc-hosts-cache)
+	(ido-max-directory-size, ido-max-dir-file-cache)
+	(ido-decorations): Doc fix.
+
+	* ansi-color.el: Fix old URL.
+
+2013-07-23  Michael R. Mauger  <michael@mauger.com>
+
+	* progmodes/sql.el Version 3.3
+	(sql-product-alist): Improve oracle :prompt-cont-regexp.
+	(sql-starts-with-prompt-re, sql-ends-with-prompt-re): New functions.
+	(sql-interactive-remove-continuation-prompt): Rewrite, use
+	functions above.  Fix continuation prompt and complete output line
+	handling.
+	(sql-redirect-one, sql-execute): Use `read-only-mode' on
+	redirected output buffer.
+	(sql-mode): Restore deleted code (Bug#13591).
+
+2013-07-23  Juanma Barranquero  <lekktu@gmail.com>
+
+	* desktop.el (desktop-clear, desktop-list*): Fix previous change.
+
+2013-07-23  Michael Albinus  <michael.albinus@gmx.de>
+
+	* net/tramp.el (tramp-handle-file-notify-add-watch): New defun.
+
+	* net/tramp-adb.el (tramp-adb-file-name-handler-alist):
+	* net/tramp-gvfs.el (tramp-gvfs-file-name-handler-alist):
+	* net/tramp-smb.el (tramp-smb-file-name-handler-alist): Use it.
+
+2013-07-23  Juanma Barranquero  <lekktu@gmail.com>
+
+	* desktop.el (desktop-clear): Simplify; remove useless checks
+	against invalid buffer names.
+	(desktop-list*): Use cl-list*.
+	(desktop-buffer-info, desktop-create-buffer): Simplify.
+
+2013-07-23  Leo Liu  <sdl.web@gmail.com>
+
+	* bookmark.el (bookmark-make-record): Restore NAME as a default
+	value.  (Bug#14933)
+
+2013-07-22  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* emacs-lisp/autoload.el (autoload--setup-output): New function,
+	extracted from autoload--insert-text.
+	(autoload--insert-text): Remove.
+	(autoload--print-cookie-text): New function, extracted from
+	autoload--insert-cookie-text.
+	(autoload--insert-cookie-text): Remove.
+	(autoload-generate-file-autoloads): Adjust calls accordingly.
+
+	* winner.el (winner-hook-installed-p): Remove.
+	(winner-mode): Simplify accordingly.
+
+	* subr.el (add-to-list): Fix compiler-macro when `append' is
+	not constant.  Don't use `cl-member' for the base case.
+
+	* progmodes/subword.el: Fix boundary case (bug#13758).
+	(subword-forward-regexp): Make it a constant.  Wrap optional \\W in its
+	own group.
+	(subword-backward-regexp): Make it a constant.
+	(subword-forward-internal): Don't treat a trailing capital as the
+	beginning of a word.
+
+2013-07-22  Ari Roponen  <ari.roponen@gmail.com>  (tiny change)
+
+	* emacs-lisp/package.el (package-menu-mode): Don't modify the
+	global value of tabulated-list-revert-hook (bug#14930).
+
+2013-07-22  Juanma Barranquero  <lekktu@gmail.com>
+
+	* desktop.el: Require 'cl-lib.
+	(desktop-before-saving-frames-functions): New hook.
+	(desktop--process-minibuffer-frames): Set desktop-mini parameter only
+	for frames being saved.  Rename from desktop--save-minibuffer-frames.
+	(desktop-save-frames): Run hook desktop-before-saving-frames-functions.
+	Do not save frames with non-nil `desktop-dont-save' parameter.
+	Filter out deleted frames.
+	(desktop--find-frame): Use cl-find-if.
+	(desktop--select-frame): Use cl-(first|second|third) to access values
+	of desktop-mini.
+	(desktop--make-frame): Use cl-delete-if.
+	(desktop--sort-states): Fix sorting of minibuffer-owning frames.
+	(desktop-restore-frames): Use cl-(first|second|third) to access values
+	of desktop-mini.  Look for visible frame at the end, not while
+	restoring frames.
+
+	* dired-x.el (dired-mark-unmarked-files, dired-virtual)
+	(dired-guess-default, dired-mark-sexp, dired-filename-at-point):
+	Use string-match-p, looking-at-p (bug#14927).
+
+2013-07-21  Juanma Barranquero  <lekktu@gmail.com>
+
+	* desktop.el (desktop-saved-frame-states):
+	Rename from desktop--saved-states; all users changed.
+	(desktop-save-frames): Rename from desktop--save-frames.
+	Do not save state to desktop file.
+	(desktop-save): Save desktop-saved-frame-states to desktop file
+	and reset to nil.
+	(desktop-restoring-frames-p): New function.
+	(desktop-restore-frames): Use it.  Rename from desktop--restore-frames.
+	(desktop-read): Use desktop-restoring-frames-p.  Do not try to fix
+	buffer-lists when restoring frames.  Suggested by Martin Rudalics.
+
+	* desktop.el: Correctly restore iconified frames.
+	(desktop--filter-iconified-position): New function.
+	(desktop-filter-parameters-alist): Add entries for `top' and `left'.
+
+2013-07-20  Glenn Morris  <rgm@gnu.org>
+
+	* progmodes/gdb-mi.el (gdb-delete-handler, gdb-stopped):
+	Let `message' do the formatting.
+	(def-gdb-preempt-display-buffer): Add explicit format.
+
+	* image-dired.el (image-dired-track-original-file):
+	Use with-current-buffer.
+	(image-dired-track-thumbnail): Use with-current-buffer.
+	Avoid changing point of wrong window.
+
+	* image-dired.el (image-dired-track-original-file):
+	Avoid changing point of wrong window.  (Bug#14909)
+
+2013-07-20  Richard Copley  <rcopley@gmail.com>  (tiny change)
+
+	* progmodes/gdb-mi.el (gdb-done-or-error):
+	Guard against "%" in gdb output.  (Bug#14127)
+
+2013-07-20  Andreas Schwab  <schwab@linux-m68k.org>
+
+	* progmodes/sh-script.el (sh-read-variable): Remove interactive spec.
+	(Bug#14826)
+
+	* international/mule.el (coding-system-iso-2022-flags): Fix last
+	change.
+
+2013-07-20  Kenichi Handa  <handa@gnu.org>
+
+	* international/mule.el (coding-system-iso-2022-flags):
+	Add `8-bit-level-4'.  (Bug#8522)
+
+2013-07-19  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* net/shr.el (shr-mouse-browse-url): New command and keystroke
+	(bug#14815).
+
+	* net/eww.el (eww-process-text-input): Allow inputting when the
+	point is at the start of the line, as the properties aren't
+	front-sticky.
+
+	* net/shr.el (shr-make-table-1): Ensure that we don't infloop on
+	degenerate widths.
+
+2013-07-19  Richard Stallman  <rms@gnu.org>
+
+	* epa.el (epa-popup-info-window): Doc fix.
+
+	* subr.el (split-string): New arg TRIM.
+
+2013-07-18  Juanma Barranquero  <lekktu@gmail.com>
+
+	* frame.el (blink-cursor-timer-function, blink-cursor-suspend):
+	Add check for W32 (followup to 2013-07-16T11:41:06Z!jan.h.d@swipnet.se).
+
+2013-07-18  Michael Albinus  <michael.albinus@gmx.de>
+
+	* filenotify.el (file-notify--library): Rename from
+	`file-notify-support'.  Do not autoload.  Adapt all uses.
+	(file-notify-supported-p): New defun.
+
+	* autorevert.el (auto-revert-use-notify):
+	Use `file-notify-supported-p' instead of `file-notify-support'.
+	Adapt docstring.
+	(auto-revert-notify-add-watch): Use `file-notify-supported-p'.
+
+	* net/tramp.el (tramp-file-name-for-operation):
+	Add `file-notify-supported-p'.
+
+	* net/tramp-sh.el (tramp-sh-handle-file-notify-supported-p):
+	New defun.
+	(tramp-sh-file-name-handler-alist): Add it as handler for
+	`file-notify-supported-p '.
+
+	* net/tramp-adb.el (tramp-adb-file-name-handler-alist):
+	* net/tramp-gvfs.el (tramp-gvfs-file-name-handler-alist):
+	* net/tramp-smb.el (tramp-smb-file-name-handler-alist):
+	Add `ignore' as handler for `file-notify-*' functions.
+
+2013-07-17  Eli Zaretskii  <eliz@gnu.org>
+
+	* simple.el (line-move-partial, line-move): Don't start vscroll or
+	scroll-up if the current line is not taller than the window.
+	(Bug#14881)
+
+2013-07-16  Dmitry Gutov  <dgutov@yandex.ru>
+
+	* progmodes/ruby-mode.el (ruby-font-lock-keywords): Do not
+	highlight question marks in the method names as strings.
+	(ruby-block-beg-keywords): Inline.
+	(ruby-font-lock-keyword-beg-re): Extract from
+	`ruby-font-lock-keywords'.
+
+2013-07-16  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* frame.el (blink-cursor-blinks): New defcustom.
+	(blink-cursor-blinks-done): New defvar.
+	(blink-cursor-start): Set blink-cursor-blinks-done to 1.
+	(blink-cursor-timer-function): Check if number of blinks has been
+	done on X and NS.
+	(blink-cursor-suspend, blink-cursor-check): New defuns.
+
+2013-07-15  Glenn Morris  <rgm@gnu.org>
+
+	* edmacro.el (edmacro-format-keys): Fix previous change.
+
+2013-07-15  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* shell.el (explicit-bash-args): Remove obsolete hack for Bash 1.x.
+	The hack didn't work outside English locales anyway.
+
+2013-07-15  Juanma Barranquero  <lekktu@gmail.com>
+
+	* simple.el (define-alternatives): Rename from alternatives-define,
+	per RMS' suggestion.
+
+2013-07-14  Juanma Barranquero  <lekktu@gmail.com>
+
+	* desktop.el (desktop-restore-frames): Change default to t.
+	(desktop-restore-in-current-display): Now offer more options.
+	(desktop-restoring-reuses-frames): New customization option.
+	(desktop--saved-states): Doc fix.
+	(desktop-filter-parameters-alist): New variable, renamed and expanded
+	from desktop--excluded-frame-parameters.
+	(desktop--target-display): New variable.
+	(desktop-switch-to-gui-p, desktop-switch-to-tty-p)
+	(desktop--filter-tty*, desktop--filter-*-color)
+	(desktop--filter-minibuffer, desktop--filter-restore-desktop-parm)
+	(desktop--filter-save-desktop-parm)
+	(desktop-restore-in-original-display-p): New functions.
+	(desktop--filter-frame-parms): Use new desktop-filter-parameters-alist.
+	(desktop--save-minibuffer-frames): New function, inspired by a similar
+	function from Martin Rudalics.
+	(desktop--save-frames): Call it; play nice with desktop-globals-to-save.
+	(desktop--restore-in-this-display-p): Remove.
+	(desktop--find-frame): Rename from desktop--find-frame-in-display
+	and add predicate argument.
+	(desktop--make-full-frame): Remove, integrated into desktop--make-frame.
+	(desktop--reuse-list): New variable.
+	(desktop--select-frame, desktop--make-frame, desktop--sort-states):
+	New functions.
+	(desktop--restore-frames): Add support for "minibuffer-special" frames.
+
+2013-07-14  Michael Albinus  <michael.albinus@gmx.de>
+
+	* net/tramp-sh.el (tramp-sh-handle-vc-registered): Use `ignore-error'.
+
+2013-07-13  Dmitry Gutov  <dgutov@yandex.ru>
+
+	* progmodes/ruby-mode.el (ruby-font-lock-keywords):
+	Highlight conversion methods on Kernel.
+
+2013-07-13  Alan Mackenzie  <acm@muc.de>
+
+	* progmodes/cc-engine.el (c-forward-decl-or-cast-1): Label CASE 13
+	and comment it out.  This out-commenting enables certain C++
+	declarations to be parsed correctly.
+
+2013-07-13  Eli Zaretskii  <eliz@gnu.org>
+
+	* international/mule.el (define-coding-system): Doc fix.
+
+	* simple.el (default-font-height): Don't call font-info if the
+	frame's default font didn't change since the frame was created.
+	(Bug#14838)
+
+2013-07-13  Leo Liu  <sdl.web@gmail.com>
+
+	* ido.el (ido-read-file-name): Guard against non-symbol value.
+
+2013-07-13  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	* progmodes/python.el (python-imenu--build-tree): Fix corner case
+	in nested defuns.
+
+2013-07-13  Leo Liu  <sdl.web@gmail.com>
+
+	* ido.el (ido-exhibit): Handle ido-enter-matching-directory before
+	ido-set-matches call.  (Bug#6852)
+
 2013-07-12  Dmitry Gutov  <dgutov@yandex.ru>
 
 	* progmodes/ruby-mode.el (ruby-percent-literals-beg-re):
@@ -128,17 +576,17 @@
 
 	* net/tramp.el (tramp-current-connection): New defvar, moved from
 	tramp-sh.el.
-	(tramp-message-show-progress-reporter-message): Removed, not
+	(tramp-message-show-progress-reporter-message): Remove, not
 	needed anymore.
-	(tramp-error-with-buffer): Show message in minibuffer.  Discard
-	input before waiting.  Reset connection timestamp.
+	(tramp-error-with-buffer): Show message in minibuffer.
+	Discard input before waiting.  Reset connection timestamp.
 	(with-tramp-progress-reporter): Improve messages.
 	(tramp-process-actions): Use progress reporter.  Delete process in
 	case of error.  Improve messages.
 
-	* net/tramp-sh.el (tramp-barf-if-no-shell-prompt): Use
-	condition-case.  Call `tramp-error-with-buffer' with vector and buffer.
-	(tramp-current-connection): Removed.
+	* net/tramp-sh.el (tramp-barf-if-no-shell-prompt): Use condition-case.
+	Call `tramp-error-with-buffer' with vector and buffer.
+	(tramp-current-connection): Remove.
 	(tramp-maybe-open-connection): The car of
 	`tramp-current-connection' are the first 3 slots of the vector.
 
@@ -3442,8 +3890,8 @@
 	(prolog-char-quote-workaround):
 	* progmodes/cperl-mode.el (cperl-under-as-char):
 	* progmodes/vhdl-mode.el (vhdl-underscore-is-part-of-word):
-	 Mark as obsolete.
-	 (vhdl-mode-syntax-table, vhdl-mode-ext-syntax-table): Initialize in
+	Mark as obsolete.
+	(vhdl-mode-syntax-table, vhdl-mode-ext-syntax-table): Initialize in
 	their declaration.
 	(vhdl-mode-syntax-table-init): Remove.
 

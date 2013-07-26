@@ -27,8 +27,7 @@
 
 ;;; Code:
 
-;;;###autoload
-(defconst file-notify-support
+(defconst file-notify--library
   (cond
    ((featurep 'gfilenotify) 'gfilenotify)
    ((featurep 'inotify) 'inotify)
@@ -238,7 +237,7 @@ FILE is the name of the file whose event is being reported."
 
   (let* ((handler (find-file-name-handler file 'file-notify-add-watch))
 	 (dir (directory-file-name
-	       (if (or (and (not handler) (eq file-notify-support 'w32notify))
+	       (if (or (and (not handler) (eq file-notify--library 'w32notify))
 		       (file-directory-p file))
 		   file
 		 (file-name-directory file))))
@@ -259,32 +258,33 @@ FILE is the name of the file whose event is being reported."
 
 	;; Check, whether Emacs has been compiled with file
 	;; notification support.
-	(unless file-notify-support
+	(unless file-notify--library
 	  (signal 'file-notify-error
 		  '("No file notification package available")))
 
 	;; Determine low-level function to be called.
-	(setq func (cond
-		    ((eq file-notify-support 'gfilenotify) 'gfile-add-watch)
-		    ((eq file-notify-support 'inotify) 'inotify-add-watch)
-		    ((eq file-notify-support 'w32notify) 'w32notify-add-watch)))
+	(setq func
+	      (cond
+	       ((eq file-notify--library 'gfilenotify) 'gfile-add-watch)
+	       ((eq file-notify--library 'inotify) 'inotify-add-watch)
+	       ((eq file-notify--library 'w32notify) 'w32notify-add-watch)))
 
 	;; Determine respective flags.
-	(if (eq file-notify-support 'gfilenotify)
+	(if (eq file-notify--library 'gfilenotify)
 	    (setq l-flags '(watch-mounts send-moved))
 	  (when (memq 'change flags)
 	    (setq
 	     l-flags
 	     (cond
-	      ((eq file-notify-support 'inotify) '(create modify move delete))
-	      ((eq file-notify-support 'w32notify)
+	      ((eq file-notify--library 'inotify) '(create modify move delete))
+	      ((eq file-notify--library 'w32notify)
 	       '(file-name directory-name size last-write-time)))))
 	  (when (memq 'attribute-change flags)
 	    (add-to-list
 	     'l-flags
 	     (cond
-	      ((eq file-notify-support 'inotify) 'attrib)
-	      ((eq file-notify-support 'w32notify) 'attributes)))))
+	      ((eq file-notify--library 'inotify) 'attrib)
+	      ((eq file-notify--library 'w32notify) 'attributes)))))
 
 	;; Call low-level function.
 	(setq desc (funcall func dir l-flags 'file-notify-callback))))
@@ -311,9 +311,9 @@ DESCRIPTOR should be an object returned by `file-notify-add-watch'."
 	  (funcall handler 'file-notify-rm-watch descriptor)
 	(funcall
 	 (cond
-	  ((eq file-notify-support 'gfilenotify) 'gfile-rm-watch)
-	  ((eq file-notify-support 'inotify) 'inotify-rm-watch)
-	  ((eq file-notify-support 'w32notify) 'w32notify-rm-watch))
+	  ((eq file-notify--library 'gfilenotify) 'gfile-rm-watch)
+	  ((eq file-notify--library 'inotify) 'inotify-rm-watch)
+	  ((eq file-notify--library 'w32notify) 'w32notify-rm-watch))
 	 descriptor)))
 
     (remhash descriptor file-notify-descriptors)))

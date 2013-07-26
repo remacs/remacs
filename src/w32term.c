@@ -2912,9 +2912,15 @@ x_focus_changed (int type, int state, struct w32_display_info *dpyinfo,
               && CONSP (Vframe_list)
               && !NILP (XCDR (Vframe_list)))
             {
-              bufp->kind = FOCUS_IN_EVENT;
-              XSETFRAME (bufp->frame_or_window, frame);
+              bufp->arg = Qt;
             }
+          else
+            {
+              bufp->arg = Qnil;
+            }
+
+          bufp->kind = FOCUS_IN_EVENT;
+          XSETFRAME (bufp->frame_or_window, frame);
         }
 
       frame->output_data.x->focus_state |= state;
@@ -2929,7 +2935,10 @@ x_focus_changed (int type, int state, struct w32_display_info *dpyinfo,
         {
           dpyinfo->w32_focus_event_frame = 0;
           x_new_focus_frame (dpyinfo, 0);
-        }
+
+          bufp->kind = FOCUS_OUT_EVENT;
+          XSETFRAME (bufp->frame_or_window, frame);
+      }
 
       /* TODO: IME focus?  */
     }
@@ -4351,8 +4360,9 @@ w32_read_socket (struct terminal *terminal,
 		  SET_FRAME_VISIBLE (f, 1);
 		  SET_FRAME_ICONIFIED (f, 0);
 		  SET_FRAME_GARBAGED (f);
-		  DebPrint (("frame %p (%s) reexposed by WM_PAINT\n", f,
-			     SDATA (f->name)));
+		  if (!f->output_data.w32->asked_for_visible)
+		    DebPrint (("frame %p (%s) reexposed by WM_PAINT\n", f,
+			       SDATA (f->name)));
 
 		  /* WM_PAINT serves as MapNotify as well, so report
 		     visibility changes properly.  */
@@ -4810,7 +4820,8 @@ w32_read_socket (struct terminal *terminal,
 		  {
 		    bool iconified = FRAME_ICONIFIED_P (f);
 
-		    SET_FRAME_VISIBLE (f, 1);
+		    if (iconified)
+		      SET_FRAME_VISIBLE (f, 1);
 		    SET_FRAME_ICONIFIED (f, 0);
 
 		    /* wait_reading_process_output will notice this
@@ -5174,7 +5185,10 @@ x_draw_hollow_cursor (struct window *w, struct glyph_row *row)
      the current matrix is invalid or such, give up.  */
   cursor_glyph = get_phys_cursor_glyph (w);
   if (cursor_glyph == NULL)
-    return;
+    {
+      DeleteObject (hb);
+      return;
+    }
 
   /* Compute frame-relative coordinates for phys cursor.  */
   get_phys_cursor_geometry (w, row, cursor_glyph, &left, &top, &h);
@@ -6116,6 +6130,9 @@ x_iconify_frame (struct frame *f)
 
   /* Simulate the user minimizing the frame.  */
   SendMessage (FRAME_W32_WINDOW (f), WM_SYSCOMMAND, SC_MINIMIZE, 0);
+
+  SET_FRAME_VISIBLE (f, 0);
+  SET_FRAME_ICONIFIED (f, 1);
 
   unblock_input ();
 }

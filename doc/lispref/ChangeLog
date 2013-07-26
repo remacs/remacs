@@ -1,3 +1,38 @@
+2013-07-24  Michael Albinus  <michael.albinus@gmx.de>
+
+	* errors.texi (Standard Errors): Fix typo.
+
+	* files.texi (Magic File Names):
+	* os.texi (File Notifications): Remove file-notify-supported-p.
+
+2013-07-24  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* eval.texi (Special Forms): Mention 'lambda'.  Also, say that
+	non-well-formed expressions result in unspecified behavior, though
+	Emacs will not crash.
+
+2013-07-22  Michael Albinus  <michael.albinus@gmx.de>
+
+	* files.texi (Magic File Names): Add file-notify-add-watch,
+	file-notify-rm-watch and file-notify-supported-p.  Move
+	file-remote-p down.
+
+	* errors.texi (Standard Errors): Add file-notify-error.
+
+	* os.texi (Desktop Notifications): Rename from Notifications.
+	(File Notifications): New node.
+
+	* elisp.texi (Top): Update menu for these changes.
+
+2013-07-19  Xue Fuqiao  <xfq.free@gmail.com>
+
+	* windows.texi (Display Action Functions): Mention next-window.
+
+2013-07-16  Xue Fuqiao  <xfq.free@gmail.com>
+
+	* windows.texi (Selecting Windows): Fix the introduction of
+	`set-frame-selected-window''s arguments.
+
 2013-07-10  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Timestamp fixes for undo (Bug#14824).
@@ -1045,7 +1080,7 @@
 	* display.texi (Face Attributes): Copyedits.  Add a few cindex entries.
 	Overlining no longer behaves exactly like underlining.
 
-2012-06-16  Aurelien Aptel  <aurelien.aptel@gmail.com>
+2012-06-16  Aurélien Aptel  <aurelien.aptel@gmail.com>
 
 	* display.texi (Face Attributes):
 	Document wave-style underline face attribute.

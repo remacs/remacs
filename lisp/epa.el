@@ -34,8 +34,7 @@
   :group 'epg)
 
 (defcustom epa-popup-info-window t
-  "If non-nil, status information from epa commands is displayed on
-the separate window."
+  "If non-nil, display status information from epa commands in another window."
   :type 'boolean
   :group 'epa)
 
@@ -48,6 +47,18 @@ the separate window."
   "Faces for epa-mode."
   :version "23.1"
   :group 'epa)
+
+(defcustom epa-mail-aliases nil
+  "Alist of aliases of email addresses that stand for encryption keys.
+Each element is (ALIAS EXPANSIONS...).
+It means that when a message is addressed to ALIAS,
+instead of encrypting it for ALIAS, encrypt it for EXPANSIONS...
+If EXPANSIONS is empty, ignore ALIAS as regards encryption.
+That is a handy way to avoid warnings about addresses
+that you don't have any key for."
+  :type '(repeat (cons (string :tag "Alias") (repeat '(string :tag "Expansion"))))
+  :group 'epa
+  :version "24.4")
 
 (defface epa-validity-high
   '((default :weight bold)

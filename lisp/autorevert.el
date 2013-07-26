@@ -271,21 +271,18 @@ This variable becomes buffer local when set in any fashion.")
   :type 'boolean
   :version "24.4")
 
-(defcustom auto-revert-use-notify (and file-notify-support t)
+(defcustom auto-revert-use-notify t
   "If non-nil Auto Revert Mode uses file notification functions.
-This requires Emacs being compiled with file notification
-support (see `file-notify-support').  You should set this variable
-through Custom."
+You should set this variable through Custom."
   :group 'auto-revert
   :type 'boolean
   :set (lambda (variable value)
-	 (set-default variable (and file-notify-support value))
+	 (set-default variable value)
 	 (unless (symbol-value variable)
-	   (when file-notify-support
-	     (dolist (buf (buffer-list))
-	       (with-current-buffer buf
-		 (when (symbol-value 'auto-revert-notify-watch-descriptor)
-		   (auto-revert-notify-rm-watch)))))))
+	   (dolist (buf (buffer-list))
+	     (with-current-buffer buf
+	       (when (symbol-value 'auto-revert-notify-watch-descriptor)
+		 (auto-revert-notify-rm-watch))))))
   :initialize 'custom-initialize-default
   :version "24.4")
 

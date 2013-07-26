@@ -3246,9 +3246,9 @@ If ARG, insert string at point."
 		    0))
       (string-to-number
        (if (zerop major)
-	     (format "%s00%02d%02d"
+	     (format "%1.2f00%02d%02d"
 		     (if (member alpha '("(ding)" "d"))
-			 "4.99"
+			 4.99
 		       (+ 5 (* 0.02
 			       (abs
 				(- (mm-char-int (aref (downcase alpha) 0))

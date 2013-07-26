@@ -362,7 +362,7 @@ append2 (Lisp_Object list, Lisp_Object item)
 {
   Lisp_Object array[2];
   array[0] = list;
-  array[1] = Fcons (item, Qnil);
+  array[1] = list1 (item);
   return Fnconc (2, &array[0]);
 }
 
@@ -3777,7 +3777,7 @@ ns_set_vertical_scroll_bar (struct window *window,
         }
 
       bar = [[EmacsScroller alloc] initFrame: r window: win];
-      wset_vertical_scroll_bar (window, make_save_pointer (bar));
+      wset_vertical_scroll_bar (window, make_save_ptr (bar));
     }
   else
     {
@@ -4142,7 +4142,7 @@ ns_term_init (Lisp_Object display_name)
 
   if (selfds[0] == -1)
     {
-      if (pipe2 (selfds, O_CLOEXEC) != 0)
+      if (emacs_pipe (selfds) != 0)
         {
           fprintf (stderr, "Failed to create pipe: %s\n",
                    emacs_strerror (errno));
@@ -4416,6 +4416,7 @@ ns_term_shutdown (int sig)
 {
   int type = [theEvent type];
   NSWindow *window = [theEvent window];
+
 /*  NSTRACE (sendEvent); */
 /*fprintf (stderr, "received event of type %d\t%d\n", type);*/
 
@@ -4468,6 +4469,23 @@ ns_term_shutdown (int sig)
           send_appdefined = YES;
         }
     }
+
+
+#ifdef NS_IMPL_COCOA
+  /* If no dialog and none of our frames have focus and it is a move, skip it.
+     It is a mouse move in an auxillary menu, i.e. on the top right on OSX,
+     such as Wifi, sound, date or similar.
+     This prevents "spooky" highlightning in the frame under the menu.  */
+  if (type == NSMouseMoved && [NSApp modalWindow] == nil)
+    {
+      struct ns_display_info *di;
+      BOOL has_focus = NO;
+      for (di = x_display_list; ! has_focus && di; di = di->next)
+        has_focus = di->x_focus_frame != 0;
+      if (! has_focus)
+        return;
+    }
+#endif
 
   [super sendEvent: theEvent];
 }
@@ -5746,9 +5764,10 @@ not_in_argv (NSString *arg)
 /* cf. x_detect_focus_change(), x_focus_changed(), x_new_focus_frame() */
 {
   struct ns_display_info *dpyinfo = FRAME_NS_DISPLAY_INFO (emacsframe);
+  BOOL is_focus_frame = dpyinfo->x_focus_frame == emacsframe;
   NSTRACE (windowDidResignKey);
 
-  if (dpyinfo->x_focus_frame == emacsframe)
+  if (is_focus_frame)
     dpyinfo->x_focus_frame = 0;
 
   ns_frame_rehighlight (emacsframe);
@@ -5761,10 +5780,10 @@ not_in_argv (NSString *arg)
       x_set_frame_alpha (emacsframe);
     }
 
-  if (emacs_event)
+  if (emacs_event && is_focus_frame)
     {
       [self deleteWorkingText];
-      emacs_event->kind = FOCUS_IN_EVENT;
+      emacs_event->kind = FOCUS_OUT_EVENT;
       EV_TRAILER ((id)nil);
     }
 }

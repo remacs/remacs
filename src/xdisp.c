@@ -813,21 +813,20 @@ static void handle_stop (struct it *);
 static void handle_stop_backwards (struct it *, ptrdiff_t);
 static void vmessage (const char *, va_list) ATTRIBUTE_FORMAT_PRINTF (1, 0);
 static void ensure_echo_area_buffers (void);
-static Lisp_Object unwind_with_echo_area_buffer (Lisp_Object);
+static void unwind_with_echo_area_buffer (Lisp_Object);
 static Lisp_Object with_echo_area_buffer_unwind_data (struct window *);
 static int with_echo_area_buffer (struct window *, int,
                                   int (*) (ptrdiff_t, Lisp_Object),
                                   ptrdiff_t, Lisp_Object);
 static void clear_garbaged_frames (void);
 static int current_message_1 (ptrdiff_t, Lisp_Object);
-static void pop_message (void);
 static int truncate_message_1 (ptrdiff_t, Lisp_Object);
 static void set_message (Lisp_Object);
 static int set_message_1 (ptrdiff_t, Lisp_Object);
 static int display_echo_area (struct window *);
 static int display_echo_area_1 (ptrdiff_t, Lisp_Object);
 static int resize_mini_window_1 (ptrdiff_t, Lisp_Object);
-static Lisp_Object unwind_redisplay (Lisp_Object);
+static void unwind_redisplay (void);
 static int string_char_and_length (const unsigned char *, int *);
 static struct text_pos display_prop_end (struct it *, Lisp_Object,
                                          struct text_pos);
@@ -10146,7 +10145,7 @@ with_echo_area_buffer_unwind_data (struct window *w)
 /* Restore global state from VECTOR which was created by
    with_echo_area_buffer_unwind_data.  */
 
-static Lisp_Object
+static void
 unwind_with_echo_area_buffer (Lisp_Object vector)
 {
   set_buffer_internal_1 (XBUFFER (AREF (vector, 0)));
@@ -10171,7 +10170,6 @@ unwind_with_echo_area_buffer (Lisp_Object vector)
     }
 
   Vwith_echo_area_save_vector = vector;
-  return Qnil;
 }
 
 
@@ -10570,20 +10568,12 @@ restore_message (void)
 }
 
 
-/* Handler for record_unwind_protect calling pop_message.  */
+/* Handler for unwind-protect calling pop_message.  */
 
-Lisp_Object
-pop_message_unwind (Lisp_Object dummy)
+void
+pop_message_unwind (void)
 {
-  pop_message ();
-  return Qnil;
-}
-
-/* Pop the top-most entry off Vmessage_stack.  */
-
-static void
-pop_message (void)
-{
+  /* Pop the top-most entry off Vmessage_stack.  */
   eassert (CONSP (Vmessage_stack));
   Vmessage_stack = XCDR (Vmessage_stack);
 }
@@ -10979,7 +10969,7 @@ format_mode_line_unwind_data (struct frame *target_frame,
   return vector;
 }
 
-static Lisp_Object
+static void
 unwind_format_mode_line (Lisp_Object vector)
 {
   Lisp_Object old_window = AREF (vector, 7);
@@ -11022,7 +11012,6 @@ unwind_format_mode_line (Lisp_Object vector)
     }
 
   Vmode_line_unwind_vector = vector;
-  return Qnil;
 }
 
 
@@ -11471,7 +11460,7 @@ int last_tool_bar_item;
    do_switch_frame.
    FIXME: Maybe do_switch_frame should be trimmed down similarly
    when `norecord' is set.  */
-static Lisp_Object
+static void
 fast_set_selected_frame (Lisp_Object frame)
 {
   if (!EQ (selected_frame, frame))
@@ -11479,7 +11468,6 @@ fast_set_selected_frame (Lisp_Object frame)
       selected_frame = frame;
       selected_window = XFRAME (frame)->selected_window;
     }
-  return Qnil;
 }
 
 /* Update the tool-bar item list for frame F.  This has to be done
@@ -11999,9 +11987,8 @@ redisplay_tool_bar (struct frame *f)
 
 	  XSETFRAME (frame, f);
 	  Fmodify_frame_parameters (frame,
-				    Fcons (Fcons (Qtool_bar_lines,
-						  make_number (nlines)),
-					   Qnil));
+				    list1 (Fcons (Qtool_bar_lines,
+						  make_number (nlines))));
 	  if (WINDOW_TOTAL_LINES (w) != old_height)
 	    {
 	      clear_glyph_matrix (w->desired_matrix);
@@ -12100,9 +12087,8 @@ redisplay_tool_bar (struct frame *f)
 	    {
 	      XSETFRAME (frame, f);
 	      Fmodify_frame_parameters (frame,
-					Fcons (Fcons (Qtool_bar_lines,
-						      make_number (nlines)),
-					       Qnil));
+					list1 (Fcons (Qtool_bar_lines,
+						      make_number (nlines))));
 	      if (WINDOW_TOTAL_LINES (w) != old_height)
 		{
 		  clear_glyph_matrix (w->desired_matrix);
@@ -12982,7 +12968,7 @@ redisplay_internal (void)
   /* Record a function that clears redisplaying_p
      when we leave this function.  */
   count = SPECPDL_INDEX ();
-  record_unwind_protect (unwind_redisplay, selected_frame);
+  record_unwind_protect_void (unwind_redisplay);
   redisplaying_p = 1;
   specbind (Qinhibit_free_realized_faces, Qnil);
 
@@ -13662,14 +13648,12 @@ redisplay_preserve_echo_area (int from_where)
 }
 
 
-/* Function registered with record_unwind_protect in redisplay_internal.
-   Clear redisplaying_p.  Also select the previously selected frame.  */
+/* Function registered with record_unwind_protect in redisplay_internal.  */
 
-static Lisp_Object
-unwind_redisplay (Lisp_Object old_frame)
+static void
+unwind_redisplay (void)
 {
   redisplaying_p = 0;
-  return Qnil;
 }
 
 
@@ -15624,10 +15608,11 @@ redisplay_window (Lisp_Object window, int just_this_one_p)
 	     the Y coordinate of the _next_ row, see the definition of
 	     MATRIX_ROW_BOTTOM_Y.  */
 	  if (w->cursor.vpos < margin + header_line)
-	    new_vpos
-	      = pixel_margin + (header_line
-				? CURRENT_HEADER_LINE_HEIGHT (w)
-				: 0) + frame_line_height;
+	    {
+	      w->cursor.vpos = -1;
+	      clear_glyph_matrix (w->desired_matrix);
+	      goto try_to_scroll;
+	    }
 	  else
 	    {
 	      int window_height = window_box_height (w);
@@ -15635,7 +15620,11 @@ redisplay_window (Lisp_Object window, int just_this_one_p)
 	      if (header_line)
 		window_height += CURRENT_HEADER_LINE_HEIGHT (w);
 	      if (w->cursor.y >= window_height - pixel_margin)
-		new_vpos = window_height - pixel_margin;
+		{
+		  w->cursor.vpos = -1;
+		  clear_glyph_matrix (w->desired_matrix);
+		  goto try_to_scroll;
+		}
 	    }
 	}
 
@@ -21345,7 +21334,7 @@ store_mode_line_string (const char *string, Lisp_Object lisp_string, int copy_st
 	  if (NILP (face))
 	    face = mode_line_string_face;
 	  else
-	    face = Fcons (face, Fcons (mode_line_string_face, Qnil));
+	    face = list2 (face, mode_line_string_face);
 	  props = Fplist_put (props, Qface, face);
 	}
       Fadd_text_properties (make_number (0), make_number (len),
@@ -21369,8 +21358,8 @@ store_mode_line_string (const char *string, Lisp_Object lisp_string, int copy_st
 	  if (NILP (face))
 	    face = mode_line_string_face;
 	  else
-	    face = Fcons (face, Fcons (mode_line_string_face, Qnil));
-	  props = Fcons (Qface, Fcons (face, Qnil));
+	    face = list2 (face, mode_line_string_face);
+	  props = list2 (Qface, face);
 	  if (copy_string)
 	    lisp_string = Fcopy_sequence (lisp_string);
 	}
@@ -21484,7 +21473,7 @@ are the selected window and the WINDOW's buffer).  */)
       mode_line_string_list = Qnil;
       mode_line_string_face = face;
       mode_line_string_face_prop
-	= (NILP (face) ? Qnil : Fcons (Qface, Fcons (face, Qnil)));
+	= NILP (face) ? Qnil : list2 (Qface, face);
     }
 
   push_kboard (FRAME_KBOARD (it.f));
@@ -29234,9 +29223,8 @@ syms_of_xdisp (void)
   DEFSYM (Qarrow, "arrow");
   DEFSYM (Qinhibit_free_realized_faces, "inhibit-free-realized-faces");
 
-  list_of_error = Fcons (Fcons (intern_c_string ("error"),
-				Fcons (intern_c_string ("void-variable"), Qnil)),
-			 Qnil);
+  list_of_error = list1 (list2 (intern_c_string ("error"),
+				intern_c_string ("void-variable")));
   staticpro (&list_of_error);
 
   DEFSYM (Qlast_arrow_position, "last-arrow-position");
@@ -29340,7 +29328,7 @@ See also `overlay-arrow-position'.  */);
 The symbols on this list are examined during redisplay to determine
 where to display overlay arrows.  */);
   Voverlay_arrow_variable_list
-    = Fcons (intern_c_string ("overlay-arrow-position"), Qnil);
+    = list1 (intern_c_string ("overlay-arrow-position"));
 
   DEFVAR_INT ("scroll-step", emacs_scroll_step,
     doc: /* The number of lines to try scrolling a window by when point moves out.
