@@ -2499,12 +2499,12 @@ If ARG is given, opens the URL in a new browser window."
            (end (match-end 0))
            (url (match-string-no-properties 0))
            (link-text (buffer-substring-no-properties start end)))
-      (make-button start end
-		   'face 'rcirc-url
-		   'follow-link t
-		   'rcirc-url url
-		   'action (lambda (button)
-			     (browse-url (button-get button 'rcirc-url))))
+      (make-text-button start end
+			'face 'rcirc-url
+			'follow-link t
+			'rcirc-url url
+			'action (lambda (button)
+				  (browse-url (button-get button 'rcirc-url))))
       ;; record the url if it is not already the latest stored url
       (when (not (string= link-text (caar rcirc-urls)))
         (push (cons link-text start) rcirc-urls)))))
