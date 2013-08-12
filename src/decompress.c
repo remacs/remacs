@@ -26,6 +26,60 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "character.h"
 #include "buffer.h"
 
+static Lisp_Object Qzlib_dll;
+
+#ifdef WINDOWSNT
+#include <windows.h>
+#include "w32.h"
+
+/* Macro for defining functions that will be loaded from the zlib DLL.  */
+#define DEF_ZLIB_FN(rettype,func,args) static rettype (FAR CDECL *fn_##func)args
+
+/* Macro for loading zlib functions from the library.  */
+#define LOAD_ZLIB_FN(lib,func) {					\
+    fn_##func = (void *) GetProcAddress (lib, #func);			\
+    if (!fn_##func) return false;					\
+  }
+
+DEF_ZLIB_FN (int, inflateInit2_,
+	     (z_streamp strm, int  windowBits, const char *version, int stream_size));
+
+DEF_ZLIB_FN (int, inflate,
+	     (z_streamp strm, int flush));
+
+DEF_ZLIB_FN (int, inflateEnd,
+	     (z_streamp strm));
+
+static bool zlib_initialized;
+
+static bool
+init_zlib_functions (void)
+{
+  HMODULE library = w32_delayed_load (Qzlib_dll);
+
+  if (!library)
+    {
+      message1 ("zlib library not found");
+      return false;
+    }
+
+  LOAD_ZLIB_FN (library, inflateInit2_);
+  LOAD_ZLIB_FN (library, inflate);
+  LOAD_ZLIB_FN (library, inflateEnd);
+  return true;
+}
+
+#define fn_inflateInit2(strm, windowBits) \
+        fn_inflateInit2_((strm), (windowBits), ZLIB_VERSION, sizeof(z_stream))
+
+#else /* !WINDOWSNT */
+
+#define fn_inflateInit2		inflateInit2
+#define fn_inflate		inflate
+#define fn_inflateEnd		inflateEnd
+
+#endif	/* WINDOWSNT */
+
 
 struct decompress_unwind_data
 {
@@ -37,7 +91,7 @@ static void
 unwind_decompress (void *ddata)
 {
   struct decompress_unwind_data *data = ddata;
-  inflateEnd (data->stream);
+  fn_inflateEnd (data->stream);
 
   /* Delete any uncompressed data already inserted and restore point.  */
   if (data->start)
@@ -47,10 +101,30 @@ unwind_decompress (void *ddata)
     }
 }
 
-DEFUN ("decompress-gzipped-region", Fdecompress_gzipped_region,
-       Sdecompress_gzipped_region,
+DEFUN ("zlib-available-p", Fzlib_available_p, Szlib_available_p, 0, 0, 0,
+       doc: /* Return t if zlib decompression is available in this instance of Emacs.  */)
+     (void)
+{
+#ifdef WINDOWSNT
+  Lisp_Object found = Fassq (Qzlib_dll, Vlibrary_cache);
+  if (CONSP (found))
+    return XCDR (found);
+  else
+    {
+      Lisp_Object status;
+      status = init_zlib_functions () ? Qt : Qnil;
+      Vlibrary_cache = Fcons (Fcons (Qzlib_dll, status), Vlibrary_cache);
+      return status;
+    }
+#else
+  return Qt;
+#endif
+}
+
+DEFUN ("zlib-decompress-region", Fzlib_decompress_region,
+       Szlib_decompress_region,
        2, 2, 0,
-       doc: /* Decompress a gzip-compressed region.
+       doc: /* Decompress a gzip- or zlib-compressed region.
 Replace the text in the region by the decompressed data.
 On failure, return nil and leave the data in place.
 This function can be called only in unibyte buffers.  */)
@@ -67,6 +141,11 @@ This function can be called only in unibyte buffers.  */)
   if (! NILP (BVAR (current_buffer, enable_multibyte_characters)))
     error ("This function can be called only in unibyte buffers");
 
+#ifdef WINDOWSNT
+  if (!zlib_initialized)
+    zlib_initialized = init_zlib_functions ();
+#endif
+
   /* This is a unibyte buffer, so character positions and bytes are
      the same.  */
   istart = XINT (start);
@@ -79,8 +158,9 @@ This function can be called only in unibyte buffers.  */)
   stream.avail_in = 0;
   stream.next_in = Z_NULL;
 
-  /* This magic number apparently means "this is gzip".  */
-  if (inflateInit2 (&stream, 16 + MAX_WBITS) != Z_OK)
+  /* The magic number 32 apparently means "autodect both the gzip and
+     zlib formats" according to zlib.h.  */
+  if (fn_inflateInit2 (&stream, MAX_WBITS + 32) != Z_OK)
     return Qnil;
 
   unwind_data.start = iend;
@@ -111,7 +191,7 @@ This function can be called only in unibyte buffers.  */)
       stream.avail_in = avail_in;
       stream.next_out = GPT_ADDR;
       stream.avail_out = avail_out;
-      inflate_status = inflate (&stream, Z_NO_FLUSH);
+      inflate_status = fn_inflate (&stream, Z_NO_FLUSH);
       pos_byte += avail_in - stream.avail_in;
       decompressed = avail_out - stream.avail_out;
       insert_from_gap (decompressed, decompressed, 0);
@@ -137,7 +217,9 @@ This function can be called only in unibyte buffers.  */)
 void
 syms_of_decompress (void)
 {
-  defsubr (&Sdecompress_gzipped_region);
+  DEFSYM (Qzlib_dll, "zlib");
+  defsubr (&Szlib_decompress_region);
+  defsubr (&Szlib_available_p);
 }
 
 #endif /* HAVE_ZLIB */

@@ -2985,21 +2985,19 @@ AC_SUBST(LIBPNG)
 HAVE_ZLIB=no
 LIBZ=
 if test "${with_zlib}" != "no"; then
-  if test "${HAVE_PNG}" = "yes"; then
-    ### PNG depends on zlib, so if we have PNG, we have zlib.
-    HAVE_ZLIB=yes
-  else
-    ### No PNG, so check zlib ourselves.
-    OLIBS=$LIBS
-    AC_SEARCH_LIBS([inflateEnd], [z], [HAVE_ZLIB=yes])
-    LIBS=$OLIBS
-    case $ac_cv_search_inflateEnd in
-      -*) LIBZ=$ac_cv_search_inflateEnd ;;
-    esac
-  fi
+  OLIBS=$LIBS
+  AC_SEARCH_LIBS([inflateEnd], [z], [HAVE_ZLIB=yes])
+  LIBS=$OLIBS
+  case $ac_cv_search_inflateEnd in
+    -*) LIBZ=$ac_cv_search_inflateEnd ;;
+  esac
 fi
 if test "${HAVE_ZLIB}" = "yes"; then
   AC_DEFINE([HAVE_ZLIB], 1, [Define to 1 if you have the zlib library (-lz).])
+  ### mingw32 doesn't use -lz, since it loads the library dynamically.
+  if test "${opsys}" = "mingw32"; then
+     LIBZ=
+  fi
 fi
 AC_SUBST(LIBZ)
 

@@ -1,3 +1,39 @@
+2013-08-12  Eli Zaretskii  <eliz@gnu.org>
+
+	* decompress.c <zlib_initialized> [WINDOWSNT]: New static variable.
+	(Fzlib_decompress_region) [WINDOWSNT]: Call init_zlib_functions if
+	not yet initialized.
+
+2013-08-12  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* decompress.c (Fzlib_decompress_region): Support zlib
+	decompression, too, and rename.
+
+2013-08-12  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Minor zlib configuration tweaks.
+	* decompress.c (fn_inflateInit2) [!WINDOWSNT]:
+	Don't assume presence of fn_inflateInit2_ zlib internal function.
+
+2013-08-12  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* decompress.c (Fzlib_decompress_gzipped_region): Rename to
+	include the zlib prefix.
+
+2013-08-12  Eli Zaretskii  <eliz@gnu.org>
+
+	* decompress.c [WINDOWSNT]: Include windows.h and w32.h.
+	(DEF_ZLIB_FN, LOAD_ZLIB_FN) [WINDOWSNT]: New macros.  Use them to
+	define static variables that are pointers to zlib functions to be
+	dynamically loaded.
+	(init_zlib_functions) [WINDOWSNT]: New function.
+	(fn_inflateInit2_, fn_inflate, fn_inflateEnd, fn_inflateInit2):
+	New macros.
+	(Fdecompress_gzipped_region, unwind_decompress): Use the fn_*
+	macros instead of invoking the zlib functions directly.
+	(syms_of_decompress): DEFSYM Qzlib_dll.  Staticpro
+	Szlib_available_p.
+
 2013-08-12  Dmitry Antipov  <dmantipov@yandex.ru>
 
 	Avoid looping over all frame windows to freeze and unfreeze.
