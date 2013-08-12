@@ -1,3 +1,51 @@
+2013-08-12  Katsumi Yamaoka  <yamaoka@jpl.org>
+
+	* gnus.texi (Mail Source Specifiers): Fix description for pop3's :leave.
+
+2013-08-12  Glenn Morris  <rgm@gnu.org>
+
+	* Makefile.in (ada_mode_deps, auth_deps, autotype_deps)
+	(bovine_deps, calc_deps, ccmode_deps, cl_deps, dbus_deps)
+	(dired_x_deps, ebrowse_deps, ede_deps, ediff_deps, edt_deps)
+	(eieio_deps, emacs_gnutls_deps, emacs_mime_deps, epa_deps)
+	(erc_deps, ert_deps, eshell_deps, eudc_deps, faq_deps)
+	(flymake_deps, forms_deps, gnus_deps, htmlfontify_deps)
+	(idlwave_deps, ido_deps, info_deps, mairix_el_deps, message_deps)
+	(mh_e_deps, newsticker_deps, nxml_mode_deps, org_deps)
+	(pcl_cvs_deps, pgg_deps, rcirc_deps, reftex_deps, remember_deps)
+	(sasl_deps, sc_deps, semantic_deps, ses_deps, sieve_deps)
+	(smtpmail_deps, speedbar_deps, srecode_deps, todo_mode_deps)
+	(tramp_deps, url_deps, vip_deps, viper_deps, widget_deps)
+	(wisent_deps, woman_deps): New variables.  Use to reduce duplication.
+
+	* woman.texi (Top): Avoid mailto: in html output.
+
+	* Makefile.in (prefix, datarootdir, datadir, PACKAGE_TARNAME)
+	(docdir, dvidir, htmldir, pdfdir, psdir, GZIP_PROG, INSTALL)
+	(INSTALL_DATA): New, set by configure.
+	(HTML_OPTS, HTML_TARGETS, PS_TARGETS, DVIPS): New variables.
+	(.PHONY): Add html, ps, install-dvi, install-html, install-pdf,
+	install-ps ,install-doc, uninstall-dvi, uninstall-html, uninstall-pdf,
+	uninstall-ps, and uninstall-doc.
+	(.SUFFIXES): Add .ps and .dvi.
+	(.dvi.ps): New suffix rule.
+	(html, ps, ada-mode.html, auth.html, autotype.html, bovine.html)
+	(calc.html, cc-mode.html, cl.html, dbus.html, dired-x.html)
+	(ebrowse.html, ede.html, ediff.html, edt.html, eieio.html)
+	(emacs-gnutls.html, emacs-mime.html, epa.html, erc.html)
+	(ert.html, eshell.html, eudc.html, faq.html, flymake.html)
+	(forms.html, gnus.html, htmlfontify.html, idlwave.html)
+	(ido.html, mairix-el.html, message.html, mh-e.html)
+	(newsticker.html, nxml-mode.html, org.html, pgg.html)
+	(rcirc.html, reftex.html, remember.html, sasl.html, sc.html)
+	(semantic.html, sieve.html, smtpmail.html, speedbar.html)
+	(srecode.html, todo-mode.html, tramp.html, url.html, vip.html)
+	(viper.html, widget.html, wisent.html, woman.html, install-dvi)
+	(install-html, install-pdf, install-ps, install-doc, uninstall-dvi)
+	(uninstall-html, uninstall-ps, uninstall-pdf, uninstall-doc):
+	New rules.
+	(clean): Remove HTML_TARGETS and PS_TARGETS.
+
 2013-08-10  Xue Fuqiao  <xfq.free@gmail.com>
 
 	* ido.texi (Working Directories):
