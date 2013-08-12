@@ -69,14 +69,12 @@ static Lisp_Object Qsafe, Qabove, Qbelow, Qwindow_size, Qclone_of;
 static int displayed_window_lines (struct window *);
 static int count_windows (struct window *);
 static int get_leaf_windows (struct window *, struct window **, int);
-static void window_scroll (Lisp_Object, EMACS_INT, int, int);
-static void window_scroll_pixel_based (Lisp_Object, int, int, int);
-static void window_scroll_line_based (Lisp_Object, int, int, int);
+static void window_scroll (Lisp_Object, EMACS_INT, bool, int);
+static void window_scroll_pixel_based (Lisp_Object, int, bool, int);
+static void window_scroll_line_based (Lisp_Object, int, bool, int);
 static int freeze_window_start (struct window *, void *);
 static Lisp_Object window_list (void);
 static int add_window_to_list (struct window *, void *);
-static int candidate_window_p (Lisp_Object, Lisp_Object, Lisp_Object,
-                               Lisp_Object);
 static Lisp_Object next_window (Lisp_Object, Lisp_Object,
                                 Lisp_Object, int);
 static void decode_next_window_args (Lisp_Object *, Lisp_Object *,
@@ -242,6 +240,17 @@ wset_combination (struct window *w, bool horflag, Lisp_Object val)
      is meaningless.  */
   if (!NILP (val))
     w->horizontal = horflag;
+}
+
+/* Nonzero if leaf window W doesn't reflect the actual state
+   of displayed buffer due to its text or overlays change.  */
+
+bool
+window_outdated (struct window *w)
+{
+  struct buffer *b = XBUFFER (w->contents);
+  return (w->last_modified < BUF_MODIFF (b)
+	  || w->last_overlay_modified < BUF_OVERLAY_MODIFF (b));
 }
 
 struct window *
@@ -1358,7 +1367,7 @@ struct check_window_data
 static int
 check_window_containing (struct window *w, void *user_data)
 {
-  struct check_window_data *cw = (struct check_window_data *) user_data;
+  struct check_window_data *cw = user_data;
   enum window_part found;
   int continue_p = 1;
 
@@ -1511,8 +1520,7 @@ if it isn't already recorded.  */)
 	  || !w->window_end_valid
 	  || b->clip_changed
 	  || b->prevent_redisplay_optimizations_p
-	  || w->last_modified < BUF_MODIFF (b)
-	  || w->last_overlay_modified < BUF_OVERLAY_MODIFF (b))
+	  || window_outdated (w))
       && !noninteractive)
     {
       struct text_pos startp;
@@ -1609,9 +1617,8 @@ overriding motion of point in order to display at this exact start.  */)
   if (NILP (noforce))
     w->force_start = 1;
   w->update_mode_line = 1;
-  w->last_modified = 0;
-  w->last_overlay_modified = 0;
   if (!EQ (window, selected_window))
+    /* Enforce full redisplay.  FIXME: make it more selective.  */
     windows_or_buffers_changed++;
 
   return pos;
@@ -1725,8 +1732,7 @@ Return nil if window display is not up-to-date.  In that case, use
       || windows_or_buffers_changed
       || b->clip_changed
       || b->prevent_redisplay_optimizations_p
-      || w->last_modified < BUF_MODIFF (b)
-      || w->last_overlay_modified < BUF_OVERLAY_MODIFF (b))
+      || window_outdated (w))
     return Qnil;
 
   if (NILP (line))
@@ -2161,7 +2167,7 @@ delete_deletable_window (Lisp_Object window)
 static int
 add_window_to_list (struct window *w, void *user_data)
 {
-  Lisp_Object *list = (Lisp_Object *) user_data;
+  Lisp_Object *list = user_data;
   Lisp_Object window;
   XSETWINDOW (window, w);
   *list = Fcons (window, *list);
@@ -2216,12 +2222,13 @@ window_list (void)
 		a window means search the frame that window belongs to,
 		a frame means consider windows on that frame, only.  */
 
-static int
-candidate_window_p (Lisp_Object window, Lisp_Object owindow, Lisp_Object minibuf, Lisp_Object all_frames)
+static bool
+candidate_window_p (Lisp_Object window, Lisp_Object owindow,
+		    Lisp_Object minibuf, Lisp_Object all_frames)
 {
   struct window *w = XWINDOW (window);
   struct frame *f = XFRAME (w->frame);
-  int candidate_p = 1;
+  bool candidate_p = 1;
 
   if (!BUFFERP (w->contents))
     candidate_p = 0;
@@ -3023,7 +3030,7 @@ replace_buffer_in_windows_safely (Lisp_Object buffer)
    minimum allowable size.  */
 
 void
-check_frame_size (FRAME_PTR frame, int *rows, int *cols)
+check_frame_size (struct frame *frame, int *rows, int *cols)
 {
   /* For height, we have to see:
      how many windows the frame has at minimum (one or two),
@@ -3123,7 +3130,7 @@ run_window_configuration_change_hook (struct frame *f)
 
   if (SELECTED_FRAME () != f)
     {
-      record_unwind_protect (select_frame_norecord, Fselected_frame ());
+      record_unwind_protect (select_frame_norecord, selected_frame);
       select_frame_norecord (frame);
     }
 
@@ -3138,7 +3145,7 @@ run_window_configuration_change_hook (struct frame *f)
 				      buffer)))
 	  {
 	    ptrdiff_t inner_count = SPECPDL_INDEX ();
-	    record_unwind_protect (select_window_norecord, Fselected_window ());
+	    record_unwind_protect (select_window_norecord, selected_window);
 	    select_window_norecord (window);
 	    run_funs (Fbuffer_local_value (Qwindow_configuration_change_hook,
 					   buffer));
@@ -3210,8 +3217,6 @@ set_window_buffer (Lisp_Object window, Lisp_Object buffer,
 			     buffer);
       w->start_at_line_beg = 0;
       w->force_start = 0;
-      w->last_modified = 0;
-      w->last_overlay_modified = 0;
     }
   /* Maybe we could move this into the `if' but it's not obviously safe and
      I doubt it's worth the trouble.  */
@@ -3672,10 +3677,6 @@ window_resize_apply (struct window *w, bool horflag)
 	  c = NILP (c->next) ? 0 : XWINDOW (c->next);
 	}
     }
-
-  /* Clear out some redisplay caches.  */
-  w->last_modified = 0;
-  w->last_overlay_modified = 0;
 }
 
 
@@ -4197,9 +4198,7 @@ grow_mini_window (struct window *w, int delta)
       /* Grow the mini-window.  */
       w->top_line = r->top_line + r->total_lines;
       w->total_lines -= XINT (value);
-      w->last_modified = 0;
-      w->last_overlay_modified = 0;
-
+      /* Enforce full redisplay.  FIXME: make it more selective.  */
       windows_or_buffers_changed++;
       adjust_glyphs (f);
       unblock_input ();
@@ -4233,10 +4232,7 @@ shrink_mini_window (struct window *w)
 	  /* Shrink the mini-window.  */
 	  w->top_line = r->top_line + r->total_lines;
 	  w->total_lines = 1;
-
-	  w->last_modified = 0;
-	  w->last_overlay_modified = 0;
-
+	  /* Enforce full redisplay.  FIXME: make it more selective.  */
 	  windows_or_buffers_changed++;
 	  adjust_glyphs (f);
 	  unblock_input ();
@@ -4343,7 +4339,7 @@ window_internal_height (struct window *w)
    respectively.  */
 
 static void
-window_scroll (Lisp_Object window, EMACS_INT n, int whole, int noerror)
+window_scroll (Lisp_Object window, EMACS_INT n, bool whole, int noerror)
 {
   immediate_quit = 1;
   n = clip_to_bounds (INT_MIN, n, INT_MAX);
@@ -4364,7 +4360,7 @@ window_scroll (Lisp_Object window, EMACS_INT n, int whole, int noerror)
    descriptions.  */
 
 static void
-window_scroll_pixel_based (Lisp_Object window, int n, int whole, int noerror)
+window_scroll_pixel_based (Lisp_Object window, int n, bool whole, int noerror)
 {
   struct it it;
   struct window *w = XWINDOW (window);
@@ -4462,8 +4458,6 @@ window_scroll_pixel_based (Lisp_Object window, int n, int whole, int noerror)
 					 w->contents);
 		  w->start_at_line_beg = 1;
 		  w->update_mode_line = 1;
-		  w->last_modified = 0;
-		  w->last_overlay_modified = 0;
 		  /* Set force_start so that redisplay_window will run the
 		     window-scroll-functions.  */
 		  w->force_start = 1;
@@ -4608,8 +4602,6 @@ window_scroll_pixel_based (Lisp_Object window, int n, int whole, int noerror)
       bytepos = marker_byte_position (w->start);
       w->start_at_line_beg = (pos == BEGV || FETCH_BYTE (bytepos - 1) == '\n');
       w->update_mode_line = 1;
-      w->last_modified = 0;
-      w->last_overlay_modified = 0;
       /* Set force_start so that redisplay_window will run the
 	 window-scroll-functions.  */
       w->force_start = 1;
@@ -4732,7 +4724,7 @@ window_scroll_pixel_based (Lisp_Object window, int n, int whole, int noerror)
    See the comment of window_scroll for parameter descriptions.  */
 
 static void
-window_scroll_line_based (Lisp_Object window, int n, int whole, int noerror)
+window_scroll_line_based (Lisp_Object window, int n, bool whole, int noerror)
 {
   register struct window *w = XWINDOW (window);
   /* Fvertical_motion enters redisplay, which can trigger
@@ -4744,7 +4736,7 @@ window_scroll_line_based (Lisp_Object window, int n, int whole, int noerror)
   register ptrdiff_t pos, pos_byte;
   register int ht = window_internal_height (w);
   register Lisp_Object tem;
-  int lose;
+  bool lose;
   Lisp_Object bolp;
   ptrdiff_t startpos = marker_position (w->start);
   ptrdiff_t startbyte = marker_byte_position (w->start);
@@ -4808,8 +4800,6 @@ window_scroll_line_based (Lisp_Object window, int n, int whole, int noerror)
       set_marker_restricted_both (w->start, w->contents, pos, pos_byte);
       w->start_at_line_beg = !NILP (bolp);
       w->update_mode_line = 1;
-      w->last_modified = 0;
-      w->last_overlay_modified = 0;
       /* Set force_start so that redisplay_window will run
 	 the window-scroll-functions.  */
       w->force_start = 1;
@@ -5178,7 +5168,7 @@ and redisplay normally--don't erase and redraw the frame.  */)
   struct window *w = XWINDOW (selected_window);
   struct buffer *buf = XBUFFER (w->contents);
   struct buffer *obuf = current_buffer;
-  int center_p = 0;
+  bool center_p = 0;
   ptrdiff_t charpos, bytepos;
   EMACS_INT iarg IF_LINT (= 0);
   int this_scroll_margin;
@@ -5523,7 +5513,7 @@ the return value is nil.  Otherwise the value is t.  */)
   struct Lisp_Vector *saved_windows;
   Lisp_Object new_current_buffer;
   Lisp_Object frame;
-  FRAME_PTR f;
+  struct frame *f;
   ptrdiff_t old_point = -1;
 
   CHECK_WINDOW_CONFIGURATION (configuration);
@@ -5740,9 +5730,6 @@ the return value is nil.  Otherwise the value is t.  */)
 		    Fset_window_parameter (window, XCAR (pers), XCDR (pers));
 		}
 	    }
-
-	  w->last_modified = 0;
-	  w->last_overlay_modified = 0;
 
 	  if (BUFFERP (p->buffer) && BUFFER_LIVE_P (XBUFFER (p->buffer)))
 	    /* If saved buffer is alive, install it.  */
@@ -6500,7 +6487,7 @@ freeze_window_start (struct window *w, void *freeze_p)
 void
 freeze_window_starts (struct frame *f, bool freeze_p)
 {
-  foreach_window (f, freeze_window_start, (void *) (freeze_p ? f : 0));
+  foreach_window (f, freeze_window_start, freeze_p ? f : 0);
 }
 
 

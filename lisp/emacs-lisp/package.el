@@ -296,7 +296,7 @@ contrast, `package-user-dir' contains packages for personal use."
                (:constructor
                 package-desc-from-define
                 (name-string version-string &optional summary requirements
-                 &key kind archive
+                 &key kind archive &allow-other-keys
                  &aux
                  (name (intern name-string))
                  (version (version-to-list version-string))
@@ -1393,7 +1393,7 @@ Letters do not insert themselves; instead, they are commands.
 			       ("Description" 0 nil)])
   (setq tabulated-list-padding 2)
   (setq tabulated-list-sort-key (cons "Status" nil))
-  (add-hook 'tabulated-list-revert-hook 'package-menu--refresh)
+  (add-hook 'tabulated-list-revert-hook 'package-menu--refresh nil t)
   (tabulated-list-init-header))
 
 (defmacro package--push (pkg-desc status listname)

@@ -69,7 +69,6 @@ Lisp_Object Qnoelisp;
 static Lisp_Object Qx_frame_parameter;
 Lisp_Object Qx_resource_name;
 Lisp_Object Qterminal;
-Lisp_Object Qterminal_live_p;
 
 /* Frame parameters (set or reported).  */
 
@@ -186,7 +185,6 @@ set_menu_bar_lines_1 (Lisp_Object window, int n)
 {
   struct window *w = XWINDOW (window);
 
-  w->last_modified = 0;
   w->top_line += n;
   w->total_lines -= n;
 
@@ -310,7 +308,7 @@ predicates which report frame's specific UI-related capabilities.  */)
 }
 
 struct frame *
-make_frame (int mini_p)
+make_frame (bool mini_p)
 {
   Lisp_Object frame;
   register struct frame *f;
@@ -711,7 +709,7 @@ affects all frames on the same terminal device.  */)
           type[SBYTES (tty_type)] = 0;
         }
 
-      t = init_tty (name, type, 0); /* Errors are not fatal. */
+      t = init_tty (name, type, 0); /* Errors are not fatal.  */
     }
 
   f = make_terminal_frame (t);
@@ -725,16 +723,13 @@ affects all frames on the same terminal device.  */)
   adjust_glyphs (f);
   calculate_costs (f);
   XSETFRAME (frame, f);
+
+  store_in_alist (&parms, Qtty_type, build_string (t->display_info.tty->type));
+  store_in_alist (&parms, Qtty,
+		  (t->display_info.tty->name
+		   ? build_string (t->display_info.tty->name)
+		   : Qnil));
   Fmodify_frame_parameters (frame, parms);
-  Fmodify_frame_parameters
-    (frame, list1 (Fcons (Qtty_type,
-			  build_string (t->display_info.tty->type))));
-  if (t->display_info.tty->name != NULL)
-    Fmodify_frame_parameters
-      (frame, list1 (Fcons (Qtty,
-			    build_string (t->display_info.tty->name))));
-  else
-    Fmodify_frame_parameters (frame, list1 (Fcons (Qtty, Qnil)));
 
   /* Make the frame face alist be frame-specific, so that each
      frame could change its face definitions independently.  */
@@ -1097,7 +1092,7 @@ Otherwise, include all frames.  */)
    (Exception: if F is the terminal frame, and we are using X, return 1.)  */
 
 static int
-other_visible_frames (FRAME_PTR f)
+other_visible_frames (struct frame *f)
 {
   Lisp_Object frames, this;
 
@@ -1157,10 +1152,14 @@ delete_frame (Lisp_Object frame, Lisp_Object force)
 
       FOR_EACH_FRAME (frames, this)
 	{
-	  if (! EQ (this, frame)
-	      && EQ (frame,
-		     WINDOW_FRAME (XWINDOW
-				   (FRAME_MINIBUF_WINDOW (XFRAME (this))))))
+	  Lisp_Object fminiw;
+
+	  if (EQ (this, frame))
+	    continue;
+
+	  fminiw = FRAME_MINIBUF_WINDOW (XFRAME (this));
+
+	  if (WINDOWP (fminiw) && EQ (frame, WINDOW_FRAME (XWINDOW (fminiw))))
 	    {
 	      /* If we MUST delete this frame, delete the other first.
 		 But do this only if FORCE equals `noelisp'.  */
@@ -1467,7 +1466,7 @@ passing the normal return value to that function as an argument,
 and returns whatever that function returns.  */)
   (void)
 {
-  FRAME_PTR f;
+  struct frame *f;
   Lisp_Object lispy_dummy;
   Lisp_Object x, y, retval;
   struct gcpro gcpro1;
@@ -1513,7 +1512,7 @@ to read the mouse position, it returns the selected frame for FRAME
 and nil for X and Y.  */)
   (void)
 {
-  FRAME_PTR f;
+  struct frame *f;
   Lisp_Object lispy_dummy;
   Lisp_Object x, y;
 
@@ -2249,7 +2248,9 @@ use is not recommended.  Explicitly check for a frame-parameter instead.  */)
   (Lisp_Object frame, Lisp_Object alist)
 {
   struct frame *f = decode_live_frame (frame);
-  register Lisp_Object tail, prop, val;
+  register Lisp_Object prop, val;
+
+  CHECK_LIST (alist);
 
   /* I think this should be done with a hook.  */
 #ifdef HAVE_WINDOW_SYSTEM
@@ -2274,12 +2275,11 @@ use is not recommended.  Explicitly check for a frame-parameter instead.  */)
 
       /* Extract parm names and values into those vectors.  */
 
-      i = 0;
-      for (tail = alist; CONSP (tail); tail = XCDR (tail))
+      for (i = 0; CONSP (alist); alist = XCDR (alist))
 	{
 	  Lisp_Object elt;
 
-	  elt = XCAR (tail);
+	  elt = XCAR (alist);
 	  parms[i] = Fcar (elt);
 	  values[i] = Fcdr (elt);
 	  i++;
@@ -2360,7 +2360,7 @@ to `frame-height'). */)
 
 #ifdef HAVE_WINDOW_SYSTEM
   if (FRAME_WINDOW_P (f))
-    return make_number (x_pixel_height (f));
+    return make_number (FRAME_PIXEL_HEIGHT (f));
   else
 #endif
     return make_number (FRAME_LINES (f));
@@ -2377,7 +2377,7 @@ If FRAME is omitted or nil, the selected frame is used.  */)
 
 #ifdef HAVE_WINDOW_SYSTEM
   if (FRAME_WINDOW_P (f))
-    return make_number (x_pixel_width (f));
+    return make_number (FRAME_PIXEL_WIDTH (f));
   else
 #endif
     return make_number (FRAME_COLS (f));
@@ -2402,8 +2402,9 @@ is used.  */)
 
 DEFUN ("set-frame-height", Fset_frame_height, Sset_frame_height, 2, 3, 0,
        doc: /* Specify that the frame FRAME has LINES lines.
-Optional third arg non-nil means that redisplay should use LINES lines
-but that the idea of the actual height of the frame should not be changed.  */)
+If FRAME is nil, the selected frame is used.  Optional third arg
+non-nil means that redisplay should use LINES lines but that the
+idea of the actual height of the frame should not be changed.  */)
   (Lisp_Object frame, Lisp_Object lines, Lisp_Object pretend)
 {
   register struct frame *f = decode_live_frame (frame);
@@ -2426,8 +2427,9 @@ but that the idea of the actual height of the frame should not be changed.  */)
 
 DEFUN ("set-frame-width", Fset_frame_width, Sset_frame_width, 2, 3, 0,
        doc: /* Specify that the frame FRAME has COLS columns.
-Optional third arg non-nil means that redisplay should use COLS columns
-but that the idea of the actual width of the frame should not be changed.  */)
+If FRAME is nil, the selected frame is used.  Optional third arg
+non-nil means that redisplay should use COLS columns but that the
+idea of the actual width of the frame should not be changed.  */)
   (Lisp_Object frame, Lisp_Object cols, Lisp_Object pretend)
 {
   register struct frame *f = decode_live_frame (frame);
@@ -2449,15 +2451,14 @@ but that the idea of the actual width of the frame should not be changed.  */)
 }
 
 DEFUN ("set-frame-size", Fset_frame_size, Sset_frame_size, 3, 3, 0,
-       doc: /* Sets size of FRAME to COLS by ROWS, measured in characters.  */)
+       doc: /* Sets size of FRAME to COLS by ROWS, measured in characters.
+If FRAME is nil, the selected frame is used.  */)
   (Lisp_Object frame, Lisp_Object cols, Lisp_Object rows)
 {
-  register struct frame *f;
+  register struct frame *f = decode_live_frame (frame);
 
-  CHECK_LIVE_FRAME (frame);
   CHECK_TYPE_RANGED_INTEGER (int, cols);
   CHECK_TYPE_RANGED_INTEGER (int, rows);
-  f = XFRAME (frame);
 
   /* I think this should be done with a hook.  */
 #ifdef HAVE_WINDOW_SYSTEM
@@ -2479,17 +2480,16 @@ DEFUN ("set-frame-size", Fset_frame_size, Sset_frame_size, 3, 3, 0,
 DEFUN ("set-frame-position", Fset_frame_position,
        Sset_frame_position, 3, 3, 0,
        doc: /* Sets position of FRAME in pixels to XOFFSET by YOFFSET.
-This is actually the position of the upper left corner of the frame.
-Negative values for XOFFSET or YOFFSET are interpreted relative to
-the rightmost or bottommost possible position (that stays within the screen).  */)
+If FRAME is nil, the selected frame is used.  XOFFSET and YOFFSET are
+actually the position of the upper left corner of the frame.  Negative
+values for XOFFSET or YOFFSET are interpreted relative to the rightmost
+or bottommost possible position (that stays within the screen).  */)
   (Lisp_Object frame, Lisp_Object xoffset, Lisp_Object yoffset)
 {
-  register struct frame *f;
+  register struct frame *f = decode_live_frame (frame);
 
-  CHECK_LIVE_FRAME (frame);
   CHECK_TYPE_RANGED_INTEGER (int, xoffset);
   CHECK_TYPE_RANGED_INTEGER (int, yoffset);
-  f = XFRAME (frame);
 
   /* I think this should be done with a hook.  */
 #ifdef HAVE_WINDOW_SYSTEM
@@ -2609,7 +2609,7 @@ x_fullscreen_adjust (struct frame *f, int *width, int *height, int *top_pos, int
    to store the new value in the parameter alist.  */
 
 void
-x_set_frame_parameters (FRAME_PTR f, Lisp_Object alist)
+x_set_frame_parameters (struct frame *f, Lisp_Object alist)
 {
   Lisp_Object tail;
 
@@ -2628,9 +2628,9 @@ x_set_frame_parameters (FRAME_PTR f, Lisp_Object alist)
   Lisp_Object *parms;
   Lisp_Object *values;
   ptrdiff_t i, p;
-  int left_no_change = 0, top_no_change = 0;
-  int icon_left_no_change = 0, icon_top_no_change = 0;
-  int size_changed = 0;
+  bool left_no_change = 0, top_no_change = 0;
+  bool icon_left_no_change = 0, icon_top_no_change = 0;
+  bool size_changed = 0;
   struct gcpro gcpro1, gcpro2;
 
   i = 0;
@@ -2866,10 +2866,11 @@ x_set_frame_parameters (FRAME_PTR f, Lisp_Object alist)
 	/* Actually set that position, and convert to absolute.  */
 	x_set_offset (f, leftpos, toppos, -1);
       }
-
+#ifdef HAVE_X_WINDOWS
     if ((!NILP (icon_left) || !NILP (icon_top))
 	&& ! (icon_left_no_change && icon_top_no_change))
       x_wm_set_icon_position (f, XINT (icon_left), XINT (icon_top));
+#endif /* HAVE_X_WINDOWS */
   }
 
   UNGCPRO;
@@ -3346,7 +3347,7 @@ x_set_scroll_bar_width (struct frame *f, Lisp_Object arg, Lisp_Object oldval)
 /* Return non-nil if frame F wants a bitmap icon.  */
 
 Lisp_Object
-x_icon_type (FRAME_PTR f)
+x_icon_type (struct frame *f)
 {
   Lisp_Object tem;
 
@@ -3543,7 +3544,7 @@ xrdb_get_resource (XrmDatabase rdb, Lisp_Object attribute, Lisp_Object class, Li
 
   value = x_get_string_resource (rdb, name_key, class_key);
 
-  if (value != (char *) 0 && *value)
+  if (value && *value)
     return build_string (value);
   else
     return Qnil;
@@ -3934,8 +3935,8 @@ On Nextstep, this just calls `ns-parse-geometry'.  */)
 #define DEFAULT_ROWS 35
 #define DEFAULT_COLS 80
 
-int
-x_figure_window_size (struct frame *f, Lisp_Object parms, int toolbar_p)
+long
+x_figure_window_size (struct frame *f, Lisp_Object parms, bool toolbar_p)
 {
   register Lisp_Object tem0, tem1, tem2;
   long window_prompting = 0;
@@ -4202,8 +4203,7 @@ make_monitor_attribute_list (struct MonitorInfo *monitors,
 			 mi->work.width, mi->work.height);
       geometry = list4i (mi->geom.x, mi->geom.y,
 			 mi->geom.width, mi->geom.height);
-      attributes = Fcons (Fcons (Qsource,
-                                 make_string (source, strlen (source))),
+      attributes = Fcons (Fcons (Qsource, build_string (source)),
                           attributes);
       attributes = Fcons (Fcons (Qframes, AREF (monitor_frames, i)),
 			  attributes);
@@ -4286,7 +4286,6 @@ syms_of_frame (void)
   DEFSYM (Qx_frame_parameter, "x-frame-parameter");
 
   DEFSYM (Qterminal, "terminal");
-  DEFSYM (Qterminal_live_p, "terminal-live-p");
 
   DEFSYM (Qgeometry, "geometry");
   DEFSYM (Qworkarea, "workarea");

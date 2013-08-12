@@ -42,9 +42,14 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #endif
 
 #ifdef __FreeBSD__
-#include <sys/user.h>
-#include <sys/resource.h>
-#include <math.h>
+/* Sparc/ARM machine/frame.h has 'struct frame' which conflicts with Emacs's
+   'struct frame', so rename it.  */
+# define frame freebsd_frame
+# include <sys/user.h>
+# undef frame
+
+# include <sys/resource.h>
+# include <math.h>
 #endif
 
 #ifdef WINDOWSNT
@@ -3238,13 +3243,11 @@ system_process_attributes (Lisp_Object pid)
 		     attrs);
 
       decoded_cmd = (code_convert_string_norecord
-		     (make_unibyte_string (pinfo.pr_fname,
-					   strlen (pinfo.pr_fname)),
+		     (build_unibyte_string (pinfo.pr_fname),
 		      Vlocale_coding_system, 0));
       attrs = Fcons (Fcons (Qcomm, decoded_cmd), attrs);
       decoded_cmd = (code_convert_string_norecord
-		     (make_unibyte_string (pinfo.pr_psargs,
-					   strlen (pinfo.pr_psargs)),
+		     (build_unibyte_string (pinfo.pr_psargs),
 		      Vlocale_coding_system, 0));
       attrs = Fcons (Fcons (Qargs, decoded_cmd), attrs);
     }
@@ -3314,9 +3317,9 @@ system_process_attributes (Lisp_Object pid)
   if (gr)
     attrs = Fcons (Fcons (Qgroup, build_string (gr->gr_name)), attrs);
 
-  decoded_comm = code_convert_string_norecord
-    (make_unibyte_string (proc.ki_comm, strlen (proc.ki_comm)),
-     Vlocale_coding_system, 0);
+  decoded_comm = (code_convert_string_norecord
+		  (build_unibyte_string (proc.ki_comm),
+		   Vlocale_coding_system, 0));
 
   attrs = Fcons (Fcons (Qcomm, decoded_comm), attrs);
   {

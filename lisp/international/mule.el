@@ -407,12 +407,12 @@ PLIST (property list) may contain any type of information a user
 ;; because that makes a bootstrapping problem
 ;; if you need to recompile all the Lisp files using interpreted code.
 
-(defun charset-id (charset)
+(defun charset-id (_charset)
   "Always return 0.  This is provided for backward compatibility."
   (declare (obsolete nil "23.1"))
   0)
 
-(defmacro charset-bytes (charset)
+(defmacro charset-bytes (_charset)
   "Always return 0.  This is provided for backward compatibility."
   (declare (obsolete nil "23.1"))
   0)
@@ -471,7 +471,7 @@ Return -1 if charset isn't an ISO 2022 one."
 ;;; CHARACTER
 (define-obsolete-function-alias 'char-valid-p 'characterp "23.1")
 
-(defun generic-char-p (char)
+(defun generic-char-p (_char)
   "Always return nil.  This is provided for backward compatibility."
   (declare (obsolete nil "23.1"))
   nil)
@@ -518,7 +518,8 @@ Return -1 if charset isn't an ISO 2022 one."
     composition
     euc-tw-shift
     use-roman
-    use-oldjis)
+    use-oldjis
+    8-bit-level-4)
   "List of symbols that control ISO-2022 encoder/decoder.
 
 The value of the `:flags' attribute in the argument of the function
@@ -542,8 +543,9 @@ If `locking-shift' is specified, decode locking-shift code correctly
 on decoding, and use locking-shift to invoke a graphic element on
 encoding.
 
-If `single-shift' is specified, decode single-shift code correctly on
-decoding, and use single-shift to invoke a graphic element on encoding.
+If `single-shift' is specified, decode single-shift code
+correctly on decoding, and use single-shift to invoke a graphic
+element on encoding.  See also `8-bit-level-4' specification.
 
 If `designation' is specified, decode designation code correctly on
 decoding, and use designation to designate a charset to a graphic
@@ -578,7 +580,13 @@ If `use-roman' is specified, JIS0201-1976-Roman is designated instead
 of ASCII.
 
 If `use-oldjis' is specified, JIS0208-1976 is designated instead of
-JIS0208-1983.")
+JIS0208-1983.
+
+If `8-bit-level-4' is specified, the decoder assumes the
+implementation level \"4\" for 8-bit codes which means that GL is
+identified as the single-shift area.  The default implementation
+level for 8-bit code is \"4A\" which means that GR is identified
+as the single-shift area.")
 
 (defun define-coding-system (name docstring &rest props)
   "Define NAME (a symbol) as a coding system with DOCSTRING and attributes.
@@ -1338,7 +1346,7 @@ graphical terminals."
   (if coding-system
       (setq default-terminal-coding-system coding-system))
   (set-terminal-coding-system-internal coding-system terminal)
-  (redraw-frame (selected-frame)))
+  (redraw-frame))
 
 (defvar default-keyboard-coding-system nil
   "Default value of the keyboard coding system.
@@ -1421,7 +1429,7 @@ use either \\[customize] or \\[set-keyboard-coding-system]."
   :type '(coding-system :tag "Coding system")
   :link '(info-link "(emacs)Terminal Coding")
   :link '(info-link "(emacs)Unibyte Mode")
-  :set (lambda (symbol value)
+  :set (lambda (_symbol value)
 	 ;; Don't load encoded-kb unnecessarily.
 	 (if (or value (boundp 'encoded-kbd-setup-display))
 	     (set-keyboard-coding-system value)
@@ -1842,7 +1850,7 @@ If nothing is specified, the return value is nil."
 	     (head-end (+ head-start (min size 1024)))
 	     (tail-start (+ head-start (max (- size 3072) 0)))
 	     (tail-end (+ head-start size))
-	     coding-system head-found tail-found pos char-trans)
+	     coding-system head-found tail-found char-trans)
 	;; Try a short cut by searching for the string "coding:"
 	;; and for "unibyte:" at the head and tail of SIZE bytes.
 	(setq head-found (or (search-forward "coding:" head-end t)
@@ -1952,11 +1960,10 @@ use \"coding: 'raw-text\" instead." :warning)
       (let ((funcs auto-coding-functions)
 	    (coding-system nil))
 	(while (and funcs (not coding-system))
-	  (setq coding-system (condition-case e
-				  (save-excursion
-				    (goto-char (point-min))
-				    (funcall (pop funcs) size))
-				(error nil))))
+	  (setq coding-system (ignore-errors
+				(save-excursion
+				  (goto-char (point-min))
+				  (funcall (pop funcs) size)))))
 	(if coding-system
 	    (cons coding-system 'auto-coding-functions)))))
 

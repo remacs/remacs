@@ -323,10 +323,10 @@ static SELECT_TYPE connect_wait_mask;
 static int num_pending_connects;
 #endif	/* NON_BLOCKING_CONNECT */
 
-/* The largest descriptor currently in use for a process object.  */
+/* The largest descriptor currently in use for a process object; -1 if none.  */
 static int max_process_desc;
 
-/* The largest descriptor currently in use for input.  */
+/* The largest descriptor currently in use for input; -1 if none.  */
 static int max_input_desc;
 
 /* Indexed by descriptor, gives the process (if any) for that descriptor */
@@ -500,13 +500,27 @@ add_write_fd (int fd, fd_callback func, void *data)
   fd_callback_info[fd].condition |= FOR_WRITE;
 }
 
+/* FD is no longer an input descriptor; update max_input_desc accordingly.  */
+
+static void
+delete_input_desc (int fd)
+{
+  if (fd == max_input_desc)
+    {
+      do
+	fd--;
+      while (0 <= fd && ! (FD_ISSET (fd, &input_wait_mask)
+			   || FD_ISSET (fd, &write_mask)));
+
+      max_input_desc = fd;
+    }
+}
+
 /* Stop monitoring file descriptor FD for when write is possible.  */
 
 void
 delete_write_fd (int fd)
 {
-  int lim = max_input_desc;
-
   eassert (fd < MAXDESC);
   FD_CLR (fd, &write_mask);
   fd_callback_info[fd].condition &= ~FOR_WRITE;
@@ -514,15 +528,7 @@ delete_write_fd (int fd)
     {
       fd_callback_info[fd].func = 0;
       fd_callback_info[fd].data = 0;
-
-      if (fd == max_input_desc)
-        for (fd = lim; fd >= 0; fd--)
-          if (FD_ISSET (fd, &input_wait_mask) || FD_ISSET (fd, &write_mask))
-            {
-              max_input_desc = fd;
-              break;
-            }
-
+      delete_input_desc (fd);
     }
 }
 
@@ -640,19 +646,16 @@ status_message (struct Lisp_Process *p)
     return Fcopy_sequence (Fsymbol_name (symbol));
 }
 
-#ifdef HAVE_PTYS
-
-/* The file name of the pty opened by allocate_pty.  */
-static char pty_name[24];
+enum { PTY_NAME_SIZE = 24 };
 
 /* Open an available pty, returning a file descriptor.
-   Return -1 on failure.
-   The file name of the terminal corresponding to the pty
-   is left in the variable pty_name.  */
+   Store into PTY_NAME the file name of the terminal corresponding to the pty.
+   Return -1 on failure.  */
 
 static int
-allocate_pty (void)
+allocate_pty (char pty_name[PTY_NAME_SIZE])
 {
+#ifdef HAVE_PTYS
   int fd;
 
 #ifdef PTY_ITERATION
@@ -697,9 +700,9 @@ allocate_pty (void)
 	    return fd;
 	  }
       }
+#endif /* HAVE_PTYS */
   return -1;
 }
-#endif /* HAVE_PTYS */
 
 static Lisp_Object
 make_process (Lisp_Object name)
@@ -1333,7 +1336,7 @@ Returns nil if format of ADDRESS is invalid.  */)
 }
 
 DEFUN ("process-list", Fprocess_list, Sprocess_list, 0, 0, 0,
-       doc: /* Return a list of all processes.  */)
+       doc: /* Return a list of all processes that are Emacs sub-processes.  */)
   (void)
 {
   return Fmapcar (Qcdr, Vprocess_alist);
@@ -1602,12 +1605,6 @@ start_process_unwind (Lisp_Object proc)
     remove_process (proc);
 }
 
-static void
-create_process_1 (struct atimer *timer)
-{
-  /* Nothing to do.  */
-}
-
 
 static void
 create_process (Lisp_Object process, char **new_argv, Lisp_Object current_dir)
@@ -1621,14 +1618,14 @@ create_process (Lisp_Object process, char **new_argv, Lisp_Object current_dir)
 #endif
   int forkin, forkout;
   bool pty_flag = 0;
+  char pty_name[PTY_NAME_SIZE];
   Lisp_Object lisp_pty_name = Qnil;
   Lisp_Object encoded_current_dir;
 
   inchannel = outchannel = -1;
 
-#ifdef HAVE_PTYS
   if (!NILP (Vprocess_connection_type))
-    outchannel = inchannel = allocate_pty ();
+    outchannel = inchannel = allocate_pty (pty_name);
 
   if (inchannel >= 0)
     {
@@ -1647,7 +1644,6 @@ create_process (Lisp_Object process, char **new_argv, Lisp_Object current_dir)
       lisp_pty_name = build_string (pty_name);
     }
   else
-#endif /* HAVE_PTYS */
     {
       if (emacs_pipe (sv) != 0)
 	report_file_error ("Creating pipe", Qnil);
@@ -1704,7 +1700,6 @@ create_process (Lisp_Object process, char **new_argv, Lisp_Object current_dir)
     Lisp_Object volatile encoded_current_dir_volatile = encoded_current_dir;
     Lisp_Object volatile lisp_pty_name_volatile = lisp_pty_name;
     Lisp_Object volatile process_volatile = process;
-    bool volatile pty_flag_volatile = pty_flag;
     char **volatile new_argv_volatile = new_argv;
     int volatile forkin_volatile = forkin;
     int volatile forkout_volatile = forkout;
@@ -1716,12 +1711,13 @@ create_process (Lisp_Object process, char **new_argv, Lisp_Object current_dir)
     encoded_current_dir = encoded_current_dir_volatile;
     lisp_pty_name = lisp_pty_name_volatile;
     process = process_volatile;
-    pty_flag = pty_flag_volatile;
     new_argv = new_argv_volatile;
     forkin = forkin_volatile;
     forkout = forkout_volatile;
     wait_child_setup[0] = wait_child_setup_0_volatile;
     wait_child_setup[1] = wait_child_setup_1_volatile;
+
+    pty_flag = XPROCESS (process)->pty_flag;
   }
 
   if (pid == 0)
@@ -1791,15 +1787,15 @@ create_process (Lisp_Object process, char **new_argv, Lisp_Object current_dir)
       if (pty_flag)
 	{
 
-	  /* I wonder if emacs_close (emacs_open (pty_name, ...))
+	  /* I wonder if emacs_close (emacs_open (SSDATA (lisp_pty_name), ...))
 	     would work?  */
 	  if (xforkin >= 0)
 	    emacs_close (xforkin);
-	  xforkout = xforkin = emacs_open (pty_name, O_RDWR, 0);
+	  xforkout = xforkin = emacs_open (SSDATA (lisp_pty_name), O_RDWR, 0);
 
 	  if (xforkin < 0)
 	    {
-	      emacs_perror (pty_name);
+	      emacs_perror (SSDATA (lisp_pty_name));
 	      _exit (EXIT_CANCELED);
 	    }
 
@@ -1845,14 +1841,13 @@ create_process (Lisp_Object process, char **new_argv, Lisp_Object current_dir)
   unblock_child_signal ();
   unblock_input ();
 
+  if (forkin >= 0)
+    emacs_close (forkin);
+  if (forkin != forkout && forkout >= 0)
+    emacs_close (forkout);
+
   if (pid < 0)
-    {
-      if (forkin >= 0)
-	emacs_close (forkin);
-      if (forkin != forkout && forkout >= 0)
-	emacs_close (forkout);
-      report_file_errno ("Doing vfork", Qnil, vfork_errno);
-    }
+    report_file_errno ("Doing vfork", Qnil, vfork_errno);
   else
     {
       /* vfork succeeded.  */
@@ -1860,26 +1855,6 @@ create_process (Lisp_Object process, char **new_argv, Lisp_Object current_dir)
 #ifdef WINDOWSNT
       register_child (pid, inchannel);
 #endif /* WINDOWSNT */
-
-      /* If the subfork execv fails, and it exits,
-	 this close hangs.  I don't know why.
-	 So have an interrupt jar it loose.  */
-      {
-	struct atimer *timer;
-	EMACS_TIME offset = make_emacs_time (1, 0);
-
-	stop_polling ();
-	timer = start_atimer (ATIMER_RELATIVE, offset, create_process_1, 0);
-
-	if (forkin >= 0)
-	  emacs_close (forkin);
-
-	cancel_atimer (timer);
-	start_polling ();
-      }
-
-      if (forkin != forkout && forkout >= 0)
-	emacs_close (forkout);
 
       pset_tty_name (XPROCESS (process), lisp_pty_name);
 
@@ -1899,17 +1874,16 @@ create_process (Lisp_Object process, char **new_argv, Lisp_Object current_dir)
     }
 }
 
-void
+static void
 create_pty (Lisp_Object process)
 {
+  char pty_name[PTY_NAME_SIZE];
   int inchannel, outchannel;
-  bool pty_flag = 0;
 
   inchannel = outchannel = -1;
 
-#ifdef HAVE_PTYS
   if (!NILP (Vprocess_connection_type))
-    outchannel = inchannel = allocate_pty ();
+    outchannel = inchannel = allocate_pty (pty_name);
 
   if (inchannel >= 0)
     {
@@ -1928,40 +1902,34 @@ create_pty (Lisp_Object process)
       child_setup_tty (forkout);
 #endif /* DONT_REOPEN_PTY */
 #endif /* not USG, or USG_SUBTTY_WORKS */
-      pty_flag = 1;
+
+      fcntl (inchannel, F_SETFL, O_NONBLOCK);
+      fcntl (outchannel, F_SETFL, O_NONBLOCK);
+
+      /* Record this as an active process, with its channels.
+	 As a result, child_setup will close Emacs's side of the pipes.  */
+      chan_process[inchannel] = process;
+      XPROCESS (process)->infd = inchannel;
+      XPROCESS (process)->outfd = outchannel;
+
+      /* Previously we recorded the tty descriptor used in the subprocess.
+	 It was only used for getting the foreground tty process, so now
+	 we just reopen the device (see emacs_get_tty_pgrp) as this is
+	 more portable (see USG_SUBTTY_WORKS above).  */
+
+      XPROCESS (process)->pty_flag = 1;
+      pset_status (XPROCESS (process), Qrun);
+      setup_process_coding_systems (process);
+
+      FD_SET (inchannel, &input_wait_mask);
+      FD_SET (inchannel, &non_keyboard_wait_mask);
+      if (inchannel > max_process_desc)
+	max_process_desc = inchannel;
+
+      pset_tty_name (XPROCESS (process), build_string (pty_name));
     }
-#endif /* HAVE_PTYS */
-
-  fcntl (inchannel, F_SETFL, O_NONBLOCK);
-  fcntl (outchannel, F_SETFL, O_NONBLOCK);
-
-  /* Record this as an active process, with its channels.
-     As a result, child_setup will close Emacs's side of the pipes.  */
-  chan_process[inchannel] = process;
-  XPROCESS (process)->infd = inchannel;
-  XPROCESS (process)->outfd = outchannel;
-
-  /* Previously we recorded the tty descriptor used in the subprocess.
-     It was only used for getting the foreground tty process, so now
-     we just reopen the device (see emacs_get_tty_pgrp) as this is
-     more portable (see USG_SUBTTY_WORKS above).  */
-
-  XPROCESS (process)->pty_flag = pty_flag;
-  pset_status (XPROCESS (process), Qrun);
-  setup_process_coding_systems (process);
-
-  FD_SET (inchannel, &input_wait_mask);
-  FD_SET (inchannel, &non_keyboard_wait_mask);
-  if (inchannel > max_process_desc)
-    max_process_desc = inchannel;
 
   XPROCESS (process)->pid = -2;
-#ifdef HAVE_PTYS
-  if (pty_flag)
-    pset_tty_name (XPROCESS (process), build_string (pty_name));
-  else
-#endif
-    pset_tty_name (XPROCESS (process), Qnil);
 }
 
 
@@ -2589,7 +2557,7 @@ usage:  (make-serial-process &rest ARGS)  */)
     p->kill_without_query = 1;
   if (tem = Fplist_get (contact, QCstop), !NILP (tem))
     pset_command (p, Qt);
-  p->pty_flag = 0;
+  eassert (! p->pty_flag);
 
   if (!EQ (p->command, Qt))
     {
@@ -3869,13 +3837,14 @@ deactivate_process (Lisp_Object proc)
 #endif
       if (inchannel == max_process_desc)
 	{
-	  int i;
 	  /* We just closed the highest-numbered process input descriptor,
 	     so recompute the highest-numbered one now.  */
-	  max_process_desc = 0;
-	  for (i = 0; i < MAXDESC; i++)
-	    if (!NILP (chan_process[i]))
-	      max_process_desc = i;
+	  int i = inchannel;
+	  do
+	    i--;
+	  while (0 <= i && NILP (chan_process[i]));
+
+	  max_process_desc = i;
 	}
     }
 }
@@ -4557,7 +4526,7 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 #endif
             (max (max_process_desc, max_input_desc) + 1,
              &Available,
-             (check_write ? &Writeok : (SELECT_TYPE *)0),
+             (check_write ? &Writeok : 0),
              NULL, &timeout, NULL);
 
 #ifdef HAVE_GNUTLS
@@ -6801,16 +6770,9 @@ void
 delete_keyboard_wait_descriptor (int desc)
 {
 #ifdef subprocesses
-  int fd;
-  int lim = max_input_desc;
-
   FD_CLR (desc, &input_wait_mask);
   FD_CLR (desc, &non_process_wait_mask);
-
-  if (desc == max_input_desc)
-    for (fd = 0; fd < lim; fd++)
-      if (FD_ISSET (fd, &input_wait_mask) || FD_ISSET (fd, &write_mask))
-        max_input_desc = fd;
+  delete_input_desc (desc);
 #endif
 }
 
@@ -7075,7 +7037,7 @@ init_process_emacs (void)
   FD_ZERO (&non_keyboard_wait_mask);
   FD_ZERO (&non_process_wait_mask);
   FD_ZERO (&write_mask);
-  max_process_desc = 0;
+  max_process_desc = max_input_desc = -1;
   memset (fd_callback_info, 0, sizeof (fd_callback_info));
 
 #ifdef NON_BLOCKING_CONNECT

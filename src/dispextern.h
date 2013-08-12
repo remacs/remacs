@@ -1204,11 +1204,6 @@ extern bool fonts_changed_p;
 
 extern struct glyph space_glyph;
 
-/* Window being updated by update_window.  This is non-null as long as
-   update_window has not finished, and null otherwise.  */
-
-extern struct window *updated_window;
-
 /* Glyph row and area updated by update_window_line.  */
 
 extern struct glyph_row *updated_row;
@@ -2746,12 +2741,12 @@ struct redisplay_interface
 
   /* Write or insert LEN glyphs from STRING at the nominal output
      position.  */
-  void (*write_glyphs) (struct glyph *string, int len);
-  void (*insert_glyphs) (struct glyph *start, int len);
+  void (*write_glyphs) (struct window *w, struct glyph *string, int len);
+  void (*insert_glyphs) (struct window *w, struct glyph *start, int len);
 
   /* Clear from nominal output position to X.  X < 0 means clear
      to right end of display.  */
-  void (*clear_end_of_line) (int x);
+  void (*clear_end_of_line) (struct window *w, int x);
 
   /* Function to call to scroll the display as described by RUN on
      window W.  */
@@ -2760,7 +2755,8 @@ struct redisplay_interface
   /* Function to call after a line in a display has been completely
      updated.  Used to draw truncation marks and alike.  DESIRED_ROW
      is the desired row which has been updated.  */
-  void (*after_update_window_line_hook) (struct glyph_row *desired_row);
+  void (*after_update_window_line_hook) (struct window *w,
+					 struct glyph_row *desired_row);
 
   /* Function to call before beginning to update window W in
      window-based redisplay.  */
@@ -2777,7 +2773,7 @@ struct redisplay_interface
   /* Move cursor to row/column position VPOS/HPOS, pixel coordinates
      Y/X. HPOS/VPOS are window-relative row and column numbers and X/Y
      are window-relative pixel positions.  */
-  void (*cursor_to) (int vpos, int hpos, int y, int x);
+  void (*cursor_to) (struct window *w, int vpos, int hpos, int y, int x);
 
   /* Flush the display of frame F.  For X, this is XFlush.  */
   void (*flush_display) (struct frame *f);
@@ -3210,9 +3206,9 @@ extern void x_get_glyph_overhangs (struct glyph *, struct frame *,
                                    int *, int *);
 extern void x_produce_glyphs (struct it *);
 
-extern void x_write_glyphs (struct glyph *, int);
-extern void x_insert_glyphs (struct glyph *, int len);
-extern void x_clear_end_of_line (int);
+extern void x_write_glyphs (struct window *, struct glyph *, int);
+extern void x_insert_glyphs (struct window *, struct glyph *, int len);
+extern void x_clear_end_of_line (struct window *, int);
 
 extern struct cursor_pos output_cursor;
 
@@ -3228,7 +3224,7 @@ extern void display_and_set_cursor (struct window *,
                                     int, int, int, int, int);
 
 extern void set_output_cursor (struct cursor_pos *);
-extern void x_cursor_to (int, int, int, int);
+extern void x_cursor_to (struct window *, int, int, int, int);
 
 extern void x_update_cursor (struct frame *, int);
 extern void x_clear_cursor (struct window *);
@@ -3263,9 +3259,9 @@ extern void tty_draw_row_with_mouse_face (struct window *, struct glyph_row *,
 int lookup_fringe_bitmap (Lisp_Object);
 void draw_fringe_bitmap (struct window *, struct glyph_row *, int);
 void draw_row_fringe_bitmaps (struct window *, struct glyph_row *);
-int draw_window_fringes (struct window *, int);
-int update_window_fringes (struct window *, int);
-void compute_fringe_widths (struct frame *, int);
+bool draw_window_fringes (struct window *, bool);
+bool update_window_fringes (struct window *, bool);
+void compute_fringe_widths (struct frame *, bool);
 
 #ifdef HAVE_NTGUI
 void w32_init_fringe (struct redisplay_interface *);

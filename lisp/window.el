@@ -685,10 +685,8 @@ symbols and values as passed to `display-buffer-in-side-window'.
 This function may be called only if no window on SIDE exists yet.
 The new window automatically becomes the \"major\" side window on
 SIDE.  Return the new window, nil if its creation window failed."
-  (let* ((root (frame-root-window))
-	 (left-or-right (memq side '(left right)))
+  (let* ((left-or-right (memq side '(left right)))
 	 (major (window--major-side-window side))
-	 (selected-window (selected-window))
 	 (on-side (cond
 		   ((eq side 'top) 'above)
 		   ((eq side 'bottom) 'below)
@@ -698,8 +696,7 @@ SIDE.  Return the new window, nil if its creation window failed."
 	 ;; parent window unless needed.
 	 (window-combination-resize 'side)
 	 (window-combination-limit nil)
-	 (new (split-window major nil on-side))
-	 fun)
+	 (new (split-window major nil on-side)))
     (when new
       ;; Initialize `window-side' parameter of new window to SIDE.
       (set-window-parameter new 'window-side side)
@@ -749,8 +746,7 @@ following symbols can be used:
   A positive value means use a slot following (that is, below or
   on the right of) the middle slot.  The default is zero."
   (let ((side (or (cdr (assq 'side alist)) 'bottom))
-	(slot (or (cdr (assq 'slot alist)) 0))
-	new)
+	(slot (or (cdr (assq 'slot alist)) 0)))
     (cond
      ((not (memq side '(top bottom left right)))
       (error "Invalid side %s specified" side))
@@ -776,9 +772,8 @@ following symbols can be used:
 		  ((eq side 'right) 2)
 		  ((eq side 'bottom) 3))
 		 window-sides-slots))
-	   (selected-window (selected-window))
 	   window this-window this-slot prev-window next-window
-	   best-window best-slot abs-slot new-window)
+	   best-window best-slot abs-slot)
 
       (cond
        ((and (numberp max-slots) (<= max-slots 0))
@@ -1486,7 +1481,7 @@ This function changes neither the order of recently selected
 windows nor the buffer list."
   ;; If we start from the minibuffer window, don't fail to come
   ;; back to it.
-  (when (window-minibuffer-p (selected-window))
+  (when (window-minibuffer-p)
     (setq minibuf t))
   ;; Make sure to not mess up the order of recently selected
   ;; windows.  Use `save-selected-window' and `select-window'
@@ -5470,6 +5465,9 @@ argument, ACTION is t."
   (let ((buffer (if (bufferp buffer-or-name)
 		    buffer-or-name
 		  (get-buffer buffer-or-name)))
+	;; Make sure that when we split windows the old window keeps
+	;; point, bug#14829.
+	(split-window-keep-point t)
 	;; Handle the old form of the first argument.
 	(inhibit-same-window (and action (not (listp action)))))
     (unless (listp action) (setq action nil))
@@ -5727,7 +5725,7 @@ above, even if that window never showed BUFFER before."
 		   0)
 		  (display-buffer-reuse-frames 0)
 		  (t (last-nonminibuffer-frame))))
-	 entry best-window second-best-window window)
+	 best-window second-best-window window)
     ;; Scan windows whether they have shown the buffer recently.
     (catch 'best
       (dolist (window (window-list-1 (frame-first-window) 'nomini frames))
@@ -6673,7 +6671,7 @@ is active.  This function is run by `mouse-autoselect-window-timer'."
        ;; minibuffer.  Use `unread-command-events' in order to execute pre-
        ;; and post-command hooks and trigger idle timers.  To avoid delaying
        ;; autoselection again, set `mouse-autoselect-window-state'."
-       (unless (window-minibuffer-p (selected-window))
+       (unless (window-minibuffer-p)
 	 (setq mouse-autoselect-window-state 'select)
 	 (setq unread-command-events
 	       (cons (list 'select-window (list window))
@@ -6699,7 +6697,7 @@ is active.  This function is run by `mouse-autoselect-window-timer'."
 		;; minibuffer gets unselected unexpectedly, and where
 		;; you then have to move your mouse all the way down to
 		;; the minibuffer to select it.
-		(window-minibuffer-p (selected-window))
+		(window-minibuffer-p)
 		;; Don't switch to minibuffer window unless it's active.
 		(and (window-minibuffer-p window)
 		     (not (minibuffer-window-active-p window)))

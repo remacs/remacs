@@ -493,6 +493,8 @@ enum iso_code_class_type
 
 #define CODING_ISO_FLAG_USE_OLDJIS	0x10000
 
+#define CODING_ISO_FLAG_LEVEL_4		0x20000
+
 #define CODING_ISO_FLAG_FULL_SUPPORT	0x100000
 
 /* A character to be produced on output if encoding of the original
@@ -3772,7 +3774,10 @@ decode_coding_iso_2022 (struct coding_system *coding)
 	      else
 		charset = CHARSET_FROM_ID (charset_id_2);
 	      ONE_MORE_BYTE (c1);
-	      if (c1 < 0x20 || (c1 >= 0x80 && c1 < 0xA0))
+	      if (c1 < 0x20 || (c1 >= 0x80 && c1 < 0xA0)
+		  || (! (CODING_ISO_FLAGS (coding) & CODING_ISO_FLAG_SEVEN_BITS)
+		      && ((CODING_ISO_FLAGS (coding) & CODING_ISO_FLAG_LEVEL_4)
+			  ? c1 >= 0x80 : c1 < 0x80)))
 		goto invalid_code;
 	      break;
 
@@ -3786,7 +3791,10 @@ decode_coding_iso_2022 (struct coding_system *coding)
 	      else
 		charset = CHARSET_FROM_ID (charset_id_3);
 	      ONE_MORE_BYTE (c1);
-	      if (c1 < 0x20 || (c1 >= 0x80 && c1 < 0xA0))
+	      if (c1 < 0x20 || (c1 >= 0x80 && c1 < 0xA0)
+		  || (! (CODING_ISO_FLAGS (coding) & CODING_ISO_FLAG_SEVEN_BITS)
+		      && ((CODING_ISO_FLAGS (coding) & CODING_ISO_FLAG_LEVEL_4)
+			  ? c1 >= 0x80 : c1 < 0x80)))
 		goto invalid_code;
 	      break;
 
@@ -7489,7 +7497,7 @@ handle_composition_annotation (ptrdiff_t pos, ptrdiff_t limit,
 	  /* We found a composition.  Store the corresponding
 	     annotation data in BUF.  */
 	  int *head = buf;
-	  enum composition_method method = COMPOSITION_METHOD (prop);
+	  enum composition_method method = composition_method (prop);
 	  int nchars = COMPOSITION_LENGTH (prop);
 
 	  ADD_COMPOSITION_DATA (buf, nchars, 0, method);

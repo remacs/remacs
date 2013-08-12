@@ -317,6 +317,9 @@ there (in decreasing order of priority)."
 		   t))
 	  ;; Create the new frame.
 	  (let (parms new)
+	    ;; MS-Windows needs this to avoid inflooping below.
+	    (if (eq system-type 'windows-nt)
+		(sit-for 0 t))
 	    ;; If the frame isn't visible yet, wait till it is.
 	    ;; If the user has to position the window,
 	    ;; Emacs doesn't know its real position until
@@ -497,10 +500,7 @@ See help of `modify-frame-parameters' for more information."
   "Return some frame other than the current frame.
 Create one if necessary.  Note that the minibuffer frame, if separate,
 is not considered (see `next-frame')."
-  (let ((s (if (equal (next-frame (selected-frame)) (selected-frame))
-	       (make-frame)
-	     (next-frame (selected-frame)))))
-    s))
+  (if (equal (next-frame) (selected-frame)) (make-frame) (next-frame)))
 
 (defun next-multiframe-window ()
   "Select the next window, regardless of which frame it is on."
@@ -1275,9 +1275,6 @@ keys and their meanings."
 
 
 ;;;; Frame/display capabilities.
-(defun selected-terminal ()
-  "Return the terminal that is now selected."
-  (frame-terminal (selected-frame)))
 
 (declare-function msdos-mouse-p "dosfns.c")
 
@@ -1740,7 +1737,7 @@ frame receives focus."
       (setq blink-cursor-idle-timer nil))))
 
 (defun blink-cursor-check ()
-  "Check if cursot blinking shall be restarted.
+  "Check if cursor blinking shall be restarted.
 This is done when a frame gets focus.  Blink timers may be stopped by
 `blink-cursor-suspend'."
   (when (and blink-cursor-mode

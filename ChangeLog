@@ -1,3 +1,67 @@
+2013-08-11  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* configure.ac: Test for zlib.
+
+2013-08-10  Eli Zaretskii  <eliz@gnu.org>
+
+	* configure.ac: Define and substitute UPDATE_MANIFEST.
+
+2013-08-04  Stephen Berman  <stephen.berman@gmx.net>
+
+	* info/dir: Add todo-mode.
+
+2013-08-04  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Fix some minor races in hosts lacking mkostemp (Bug#15015).
+	Gnulib's emulation of mkostemp doesn't have races that Emacs's does.
+	* configure.ac (mkostemp): Remove check for this function;
+	gnulib does the check now.
+	(mkstemp): Remove check for this no-longer-used function.
+	* lib/mkostemp.c, lib/secure_getenv.c, lib/tempname.c, lib/tempname.h:
+	* m4/mkostemp.m4, m4/secure_getenv.m4, m4/tempname.m4:
+	New files, copied from Gnulib.
+	* lib/gnulib.mk, m4/gnulib-comp.m4: Regenerate.
+
+2013-07-29  Michael Albinus  <michael.albinus@gmx.de>
+
+	* INSTALL (DETAILED BUILDING AND INSTALLATION): Add
+	--without-file-notification to --without-all.
+
+2013-07-29  Xue Fuqiao  <xfq.free@gmail.com>
+
+	* INSTALL: Fix description.
+
+2013-07-27  Glenn Morris  <rgm@gnu.org>
+
+	* configure.ac: Extend the --with-sound option to allow
+	specification of OSS or ALSA (see bug#14812#64).
+
+2013-07-25  Glenn Morris  <rgm@gnu.org>
+
+	* info/dir: Add ido.
+
+	* make-dist: Add a --tests option, to include test/.
+
+2013-07-24  Glenn Morris  <rgm@gnu.org>
+
+	* configure.ac: Use self-descriptive tags for AC_CONFIG_COMMANDS.
+
+2013-07-23  Glenn Morris  <rgm@gnu.org>
+
+	* configure.ac (etc, lisp): No need to create specially.
+	Configure already creates lisp, src/Makefile now creates etc.
+
+2013-07-23  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Port to GNU/Linux systems with tinfo but not ncurses.
+	* configure.ac (USE_NCURSES): New symbol.
+
+2013-07-20  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Fix array bounds violation when pty allocation fails.
+	* configure.ac (PTY_TTY_NAME_SPRINTF): Use PTY_NAME_SIZE,
+	not sizeof pty_name, since pty_name is now a pointer to the array.
+
 2013-07-13  Paul Eggert  <eggert@cs.ucla.edu>
 
 	* configure.ac: Simplify --with-file-notification handling.
@@ -35,7 +99,7 @@
 	* lib/ignore-value.h: Remove this gnulib-imported file.
 	* lib/gnulib.mk, m4/gnulib-comp.m4: Regenerate.
 
-2013-07-08  Magnus Henoch <magnus.henoch@gmail.com> (tiny change)
+2013-07-08  Magnus Henoch  <magnus.henoch@gmail.com>  (tiny change)
 
 	* configure.ac (HAVE_IMAGEMAGICK): Check on NS also (Bug#14798).
 
@@ -2001,7 +2065,7 @@
 	* Makefile.in (install-arch-indep, install-doc, install-info)
 	(uninstall): Scrap superfluous subshells.
 
-2012-05-19  Ulrich Mueller  <ulm@gentoo.org>
+2012-05-19  Ulrich Müller  <ulm@gentoo.org>
 
 	* Makefile.in (install-etc): Respect DESTDIR.  (Bug#11518)
 
@@ -3777,7 +3841,7 @@
 	* Makefile.in (install-arch-indep, info):
 	Replace MAKEINFO = off with HAVE_MAKEINFO = no.
 
-2010-12-29  Ulrich Mueller  <ulm@gentoo.org>
+2010-12-29  Ulrich Müller  <ulm@gentoo.org>
 
 	* configure.in: Make gameuser configurable (Bug#7717).
 
@@ -4987,7 +5051,7 @@
 
 	* info/dir: Untabify.
 
-2008-11-28  Ulrich Mueller  <ulm@gentoo.org>
+2008-11-28  Ulrich Müller  <ulm@gentoo.org>
 
 	* configure.in: Fix last change.
 
@@ -5050,7 +5114,7 @@
 	* configure (*-sunos5*, *-solaris*): Use the new file sol2-10.h.
 	Use sol2-6.h for Solaris 7-9.
 
-2008-10-18  Ulrich Mueller  <ulm@gentoo.org>
+2008-10-18  Ulrich Müller  <ulm@gentoo.org>
 
 	* configure.in: Add support for GNU/Linux on SuperH.
 
@@ -5134,7 +5198,7 @@
 
 	* configure.in (COCOA_EXPERIMENTAL_CTRL_G): Fix 2008-08-04 change.
 
-2008-08-05  Ulrich Mueller  <ulm@gentoo.org>
+2008-08-05  Ulrich Müller  <ulm@gentoo.org>
 
 	* configure.in: Add checks for krb5_error.text and
 	krb5_error.e_text struct members.
@@ -5502,7 +5566,7 @@
 	* configure.in (--with-gcc): Remove.
 	* INSTALL (DETAILED BUILDING AND INSTALLATION): Remove --with-gcc.
 
-2008-02-05  Ulrich Mueller  <ulm@gentoo.org>
+2008-02-05  Ulrich Müller  <ulm@gentoo.org>
 
 	* INSTALL: Recommend giflib, not libungif.
 
@@ -5524,7 +5588,7 @@
 	* configure.in: For libotf and m17n-flt checks, set shell vars
 	HAVE_LIBOTF and HAVE_M17N_FLT instead of pkg_check_libotf and
 	pkg_check_m17n_flt, respectively, for the sake of the summary output.
-	Reported by Ulrich Mueller.
+	Reported by Ulrich Müller.
 
 2008-02-02  Eli Zaretskii  <eliz@gnu.org>
 
@@ -5838,7 +5902,7 @@
 
 	* configure.in: Put quotes around nested macro calls.
 
-2007-08-31  Ulrich Mueller  <ulm@gentoo.org>  (tiny change)
+2007-08-31  Ulrich Müller  <ulm@gentoo.org>  (tiny change)
 
 	* configure.in: Fix typo.
 	* configure: Regenerate.

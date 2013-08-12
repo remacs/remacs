@@ -47,7 +47,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #undef fopen
 #undef link
 #undef mkdir
-#undef mktemp
 #undef open
 #undef rename
 #undef rmdir
@@ -89,6 +88,21 @@ typedef struct _MEMORY_STATUS_EX {
   DWORDLONG ullAvailVirtual;
   DWORDLONG ullAvailExtendedVirtual;
 } MEMORY_STATUS_EX,*LPMEMORY_STATUS_EX;
+
+/* These are here so that GDB would know about these data types.  This
+   allows to attach GDB to Emacs when a fatal exception is triggered
+   and Windows pops up the "application needs to be closed" dialog.
+   At that point, _gnu_exception_handler, the top-level exception
+   handler installed by the MinGW startup code, is somewhere on the
+   call-stack of the main thread, so going to that call frame and
+   looking at the argument to _gnu_exception_handler, which is a
+   PEXCEPTION_POINTERS pointer, can reveal the exception code
+   (excptr->ExceptionRecord->ExceptionCode) and the address where the
+   exception happened (excptr->ExceptionRecord->ExceptionAddress), as
+   well as some additional information specific to the exception.  */
+PEXCEPTION_POINTERS excptr;
+PEXCEPTION_RECORD excprec;
+PCONTEXT ctxrec;
 
 #include <lmcons.h>
 #include <shlobj.h>
@@ -3414,56 +3428,6 @@ sys_mkdir (const char * path)
   return _mkdir (map_w32_filename (path, NULL));
 }
 
-/* Because of long name mapping issues, we need to implement this
-   ourselves.  Also, MSVC's _mktemp returns NULL when it can't generate
-   a unique name, instead of setting the input template to an empty
-   string.
-
-   Standard algorithm seems to be use pid or tid with a letter on the
-   front (in place of the 6 X's) and cycle through the letters to find a
-   unique name.  We extend that to allow any reasonable character as the
-   first of the 6 X's.  */
-char *
-sys_mktemp (char * template)
-{
-  char * p;
-  int i;
-  unsigned uid = GetCurrentThreadId ();
-  static char first_char[] = "abcdefghijklmnopqrstuvwyz0123456789!%-_@#";
-
-  if (template == NULL)
-    return NULL;
-  p = template + strlen (template);
-  i = 5;
-  /* replace up to the last 5 X's with uid in decimal */
-  while (--p >= template && p[0] == 'X' && --i >= 0)
-    {
-      p[0] = '0' + uid % 10;
-      uid /= 10;
-    }
-
-  if (i < 0 && p[0] == 'X')
-    {
-      i = 0;
-      do
-	{
-	  int save_errno = errno;
-	  p[0] = first_char[i];
-	  if (faccessat (AT_FDCWD, template, F_OK, AT_EACCESS) < 0)
-	    {
-	      errno = save_errno;
-	      return template;
-	    }
-	}
-      while (++i < sizeof (first_char));
-    }
-
-  /* Template is badly formed or else we can't generate a unique name,
-     so return empty string */
-  template[0] = 0;
-  return template;
-}
-
 int
 sys_open (const char * path, int oflag, int mode)
 {
@@ -3479,6 +3443,61 @@ sys_open (const char * path, int oflag, int mode)
     res = _open (mpath, oflag | _O_NOINHERIT, mode);
 
   return res;
+}
+
+/* Implementation of mkostemp for MS-Windows, to avoid race conditions
+   when using mktemp.
+
+   Standard algorithm for generating a temporary file name seems to be
+   use pid or tid with a letter on the front (in place of the 6 X's)
+   and cycle through the letters to find a unique name.  We extend
+   that to allow any reasonable character as the first of the 6 X's,
+   so that the number of simultaneously used temporary files will be
+   greater.  */
+
+int
+mkostemp (char * template, int flags)
+{
+  char * p;
+  int i, fd = -1;
+  unsigned uid = GetCurrentThreadId ();
+  int save_errno = errno;
+  static char first_char[] = "abcdefghijklmnopqrstuvwyz0123456789!%-_@#";
+
+  errno = EINVAL;
+  if (template == NULL)
+    return -1;
+
+  p = template + strlen (template);
+  i = 5;
+  /* replace up to the last 5 X's with uid in decimal */
+  while (--p >= template && p[0] == 'X' && --i >= 0)
+    {
+      p[0] = '0' + uid % 10;
+      uid /= 10;
+    }
+
+  if (i < 0 && p[0] == 'X')
+    {
+      i = 0;
+      do
+	{
+	  p[0] = first_char[i];
+	  if ((fd = sys_open (template,
+			      flags | _O_CREAT | _O_EXCL | _O_RDWR,
+			      S_IRUSR | S_IWUSR)) >= 0
+	      || errno != EEXIST)
+	    {
+	      if (fd >= 0)
+		errno = save_errno;
+	      return fd;
+	    }
+	}
+      while (++i < sizeof (first_char));
+    }
+
+  /* Template is badly formed or else we can't generate a unique name.  */
+  return -1;
 }
 
 int
@@ -5750,8 +5769,8 @@ system_process_attributes (Lisp_Object pid)
 		{
 		  /* Decode the command name from locale-specific
 		     encoding.  */
-		  cmd_str = make_unibyte_string (pe.szExeFile,
-						 strlen (pe.szExeFile));
+		  cmd_str = build_unibyte_string (pe.szExeFile);
+
 		  decoded_cmd =
 		    code_convert_string_norecord (cmd_str,
 						  Vlocale_coding_system, 0);

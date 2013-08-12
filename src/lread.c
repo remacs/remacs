@@ -1175,7 +1175,12 @@ Return t if the file exists and loads successfully.  */)
 #endif
     }
 
-  if (0 <= fd)
+  if (fd < 0)
+    {
+      /* Pacify older GCC with --enable-gcc-warnings.  */
+      IF_LINT (fd_index = 0);
+    }
+  else
     {
       fd_index = SPECPDL_INDEX ();
       record_unwind_protect_int (close_file_unwind, fd);

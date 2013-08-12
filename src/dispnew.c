@@ -138,10 +138,6 @@ struct frame *last_nonminibuf_frame;
 
 static bool delayed_size_change;
 
-/* Updated window if != 0.  Set by update_window.  */
-
-struct window *updated_window;
-
 /* Glyph row updated in update_window_line, and area that is updated.  */
 
 struct glyph_row *updated_row;
@@ -151,11 +147,15 @@ int updated_area;
 
 struct glyph space_glyph;
 
+#if defined GLYPH_DEBUG && defined ENABLE_CHECKING
+
 /* Counts of allocated structures.  These counts serve to diagnose
    memory leaks and double frees.  */
 
 static int glyph_matrix_count;
 static int glyph_pool_count;
+
+#endif /* GLYPH_DEBUG and ENABLE_CHECKING */
 
 /* If non-null, the frame whose frame matrices are manipulated.  If
    null, window matrices are worked on.  */
@@ -309,9 +309,11 @@ new_glyph_matrix (struct glyph_pool *pool)
 {
   struct glyph_matrix *result = xzalloc (sizeof *result);
 
+#if defined GLYPH_DEBUG && defined ENABLE_CHECKING
   /* Increment number of allocated matrices.  This count is used
      to detect memory leaks.  */
   ++glyph_matrix_count;
+#endif
 
   /* Set pool and return.  */
   result->pool = pool;
@@ -321,10 +323,10 @@ new_glyph_matrix (struct glyph_pool *pool)
 
 /* Free glyph matrix MATRIX.  Passing in a null MATRIX is allowed.
 
-   The global counter glyph_matrix_count is decremented when a matrix
-   is freed.  If the count gets negative, more structures were freed
-   than allocated, i.e. one matrix was freed more than once or a bogus
-   pointer was passed to this function.
+   If GLYPH_DEBUG and ENABLE_CHECKING are in effect, the global counter
+   glyph_matrix_count is decremented when a matrix is freed.  If the count
+   gets negative, more structures were freed than allocated, i.e. one matrix
+   was freed more than once or a bogus pointer was passed to this function.
 
    If MATRIX->pool is null, this means that the matrix manages its own
    glyph memory---this is done for matrices on X frames.  Freeing the
@@ -337,10 +339,12 @@ free_glyph_matrix (struct glyph_matrix *matrix)
     {
       int i;
 
+#if defined GLYPH_DEBUG && defined ENABLE_CHECKING
       /* Detect the case that more matrices are freed than were
 	 allocated.  */
-      if (--glyph_matrix_count < 0)
-	emacs_abort ();
+      --glyph_matrix_count;
+      eassert (glyph_matrix_count >= 0);
+#endif
 
       /* Free glyph memory if MATRIX owns it.  */
       if (matrix->pool == NULL)
@@ -1312,38 +1316,41 @@ row_equal_p (struct glyph_row *a, struct glyph_row *b, bool mouse_face_p)
      See dispextern.h for an overall explanation of glyph pools.
  ***********************************************************************/
 
-/* Allocate a glyph_pool structure.  The structure returned is
-   initialized with zeros.  The global variable glyph_pool_count is
-   incremented for each pool allocated.  */
+/* Allocate a glyph_pool structure.  The structure returned is initialized
+   with zeros.  If GLYPH_DEBUG and ENABLE_CHECKING are in effect, the global
+   variable glyph_pool_count is incremented for each pool allocated.  */
 
 static struct glyph_pool *
 new_glyph_pool (void)
 {
   struct glyph_pool *result = xzalloc (sizeof *result);
 
+#if defined GLYPH_DEBUG && defined ENABLE_CHECKING
   /* For memory leak and double deletion checking.  */
   ++glyph_pool_count;
+#endif
 
   return result;
 }
 
 
 /* Free a glyph_pool structure POOL.  The function may be called with
-   a null POOL pointer.  The global variable glyph_pool_count is
-   decremented with every pool structure freed.  If this count gets
-   negative, more structures were freed than allocated, i.e. one
-   structure must have been freed more than once or a bogus pointer
-   was passed to free_glyph_pool.  */
+   a null POOL pointer.  If GLYPH_DEBUG and ENABLE_CHECKING are in effect,
+   global variable glyph_pool_count is decremented with every pool structure
+   freed.  If this count gets negative, more structures were freed than
+   allocated, i.e. one structure must have been freed more than once or
+   a bogus pointer was passed to free_glyph_pool.  */
 
 static void
 free_glyph_pool (struct glyph_pool *pool)
 {
   if (pool)
     {
+#if defined GLYPH_DEBUG && defined ENABLE_CHECKING
       /* More freed than allocated?  */
       --glyph_pool_count;
       eassert (glyph_pool_count >= 0);
-
+#endif
       xfree (pool->glyphs);
       xfree (pool);
     }
@@ -2256,11 +2263,11 @@ check_glyph_memory (void)
   FOR_EACH_FRAME (tail, frame)
     free_glyphs (XFRAME (frame));
 
+#if defined GLYPH_DEBUG && defined ENABLE_CHECKING
   /* Check that nothing is left allocated.  */
-  if (glyph_matrix_count)
-    emacs_abort ();
-  if (glyph_pool_count)
-    emacs_abort ();
+  eassert (glyph_matrix_count == 0);
+  eassert (glyph_pool_count == 0);
+#endif
 }
 
 
@@ -2277,7 +2284,7 @@ check_glyph_memory (void)
    screen.  We build such a view by constructing a frame matrix from
    window matrices in this section.
 
-   Windows that must be updated have their must_be_update_p flag set.
+   Windows that must be updated have their must_be_updated_p flag set.
    For all such windows, their desired matrix is made part of the
    desired frame matrix.  For other windows, their current matrix is
    made part of the desired frame matrix.
@@ -3234,12 +3241,12 @@ redraw_overlapped_rows (struct window *w, int yb)
 	    {
 	      updated_row = row;
 	      updated_area = area;
-	      FRAME_RIF (f)->cursor_to (i, 0, row->y,
+	      FRAME_RIF (f)->cursor_to (w, i, 0, row->y,
                                         area == TEXT_AREA ? row->x : 0);
 	      if (row->used[area])
-		FRAME_RIF (f)->write_glyphs (row->glyphs[area],
+		FRAME_RIF (f)->write_glyphs (w, row->glyphs[area],
                                              row->used[area]);
-	      FRAME_RIF (f)->clear_end_of_line (-1);
+	      FRAME_RIF (f)->clear_end_of_line (w, -1);
 	    }
 
 	  row->overlapped_p = 0;
@@ -3528,10 +3535,10 @@ update_marginal_area (struct window *w, int area, int vpos)
   /* Set cursor to start of glyphs, write them, and clear to the end
      of the area.  I don't think that something more sophisticated is
      necessary here, since marginal areas will not be the default.  */
-  rif->cursor_to (vpos, 0, desired_row->y, 0);
+  rif->cursor_to (w, vpos, 0, desired_row->y, 0);
   if (desired_row->used[area])
-    rif->write_glyphs (desired_row->glyphs[area], desired_row->used[area]);
-  rif->clear_end_of_line (-1);
+    rif->write_glyphs (w, desired_row->glyphs[area], desired_row->used[area]);
+  rif->clear_end_of_line (w, -1);
 }
 
 
@@ -3569,14 +3576,14 @@ update_text_area (struct window *w, int vpos)
 	  && !(current_row->mode_line_p && vpos > 0))
       || current_row->x != desired_row->x)
     {
-      rif->cursor_to (vpos, 0, desired_row->y, desired_row->x);
+      rif->cursor_to (w, vpos, 0, desired_row->y, desired_row->x);
 
       if (desired_row->used[TEXT_AREA])
-	rif->write_glyphs (desired_row->glyphs[TEXT_AREA],
+	rif->write_glyphs (w, desired_row->glyphs[TEXT_AREA],
 			   desired_row->used[TEXT_AREA]);
 
       /* Clear to end of window.  */
-      rif->clear_end_of_line (-1);
+      rif->clear_end_of_line (w, -1);
       changed_p = 1;
 
       /* This erases the cursor.  We do this here because
@@ -3712,8 +3719,8 @@ update_text_area (struct window *w, int vpos)
 		  break;
 		}
 
-	      rif->cursor_to (vpos, start_hpos, desired_row->y, start_x);
-	      rif->write_glyphs (start, i - start_hpos);
+	      rif->cursor_to (w, vpos, start_hpos, desired_row->y, start_x);
+	      rif->write_glyphs (w, start, i - start_hpos);
 	      changed_p = 1;
 	    }
 	}
@@ -3721,8 +3728,8 @@ update_text_area (struct window *w, int vpos)
       /* Write the rest.  */
       if (i < desired_row->used[TEXT_AREA])
 	{
-	  rif->cursor_to (vpos, i, desired_row->y, x);
-	  rif->write_glyphs (desired_glyph, desired_row->used[TEXT_AREA] - i);
+	  rif->cursor_to (w, vpos, i, desired_row->y, x);
+	  rif->write_glyphs (w, desired_glyph, desired_row->used[TEXT_AREA] - i);
 	  changed_p = 1;
 	}
 
@@ -3742,9 +3749,9 @@ update_text_area (struct window *w, int vpos)
 	{
 	  /* If old row extends to the end of the text area, clear.  */
 	  if (i >= desired_row->used[TEXT_AREA])
-	    rif->cursor_to (vpos, i, desired_row->y,
+	    rif->cursor_to (w, vpos, i, desired_row->y,
 			    desired_row->pixel_width);
-	  rif->clear_end_of_line (-1);
+	  rif->clear_end_of_line (w, -1);
 	  changed_p = 1;
 	}
       else if (desired_row->pixel_width < current_row->pixel_width)
@@ -3754,7 +3761,7 @@ update_text_area (struct window *w, int vpos)
 	  int xlim;
 
 	  if (i >= desired_row->used[TEXT_AREA])
-	    rif->cursor_to (vpos, i, desired_row->y,
+	    rif->cursor_to (w, vpos, i, desired_row->y,
 			    desired_row->pixel_width);
 
 	  /* If cursor is displayed at the end of the line, make sure
@@ -3772,7 +3779,7 @@ update_text_area (struct window *w, int vpos)
 	    }
 	  else
 	    xlim = current_row->pixel_width;
-	  rif->clear_end_of_line (xlim);
+	  rif->clear_end_of_line (w, xlim);
 	  changed_p = 1;
 	}
     }
@@ -3844,7 +3851,7 @@ update_window_line (struct window *w, int vpos, bool *mouse_face_overwritten_p)
 	  || desired_row->exact_window_width_line_p != current_row->exact_window_width_line_p
 	  || (MATRIX_ROW_CONTINUATION_LINE_P (desired_row)
 	      != MATRIX_ROW_CONTINUATION_LINE_P (current_row)))
-	rif->after_update_window_line_hook (desired_row);
+	rif->after_update_window_line_hook (w, desired_row);
     }
 
   /* Update current_row from desired_row.  */
@@ -3933,7 +3940,7 @@ set_window_cursor_after_update (struct window *w)
      Horizontal position is -1 when cursor is on the left fringe.   */
   hpos = clip_to_bounds (-1, hpos, w->current_matrix->matrix_w - 1);
   vpos = clip_to_bounds (0, vpos, w->current_matrix->nrows - 1);
-  rif->cursor_to (vpos, hpos, cy, cx);
+  rif->cursor_to (w, vpos, hpos, cy, cx);
 }
 
 
@@ -5895,9 +5902,8 @@ pass nil for VARIABLE.  */)
 	goto changed;
     }
   /* Check that the buffer info matches.  */
-  for (tail = Vbuffer_alist; CONSP (tail); tail = XCDR (tail))
+  FOR_EACH_LIVE_BUFFER (tail, buf)
     {
-      buf = XCDR (XCAR (tail));
       /* Ignore buffers that aren't included in buffer lists.  */
       if (SREF (BVAR (XBUFFER (buf), name), 0) == ' ')
 	continue;
@@ -5927,7 +5933,7 @@ pass nil for VARIABLE.  */)
   n = 1;
   FOR_EACH_FRAME (tail, frame)
     n += 2;
-  for (tail = Vbuffer_alist; CONSP (tail); tail = XCDR (tail))
+  FOR_EACH_LIVE_BUFFER (tail, buf)
     n += 3;
   /* Reallocate the vector if data has grown to need it,
      or if it has shrunk a lot.  */
@@ -5952,9 +5958,8 @@ pass nil for VARIABLE.  */)
       ASET (state, idx, XFRAME (frame)->name);
       idx++;
     }
-  for (tail = Vbuffer_alist; CONSP (tail); tail = XCDR (tail))
+  FOR_EACH_LIVE_BUFFER (tail, buf)
     {
-      buf = XCDR (XCAR (tail));
       /* Ignore buffers that aren't included in buffer lists.  */
       if (SREF (BVAR (XBUFFER (buf), name), 0) == ' ')
 	continue;
@@ -6052,7 +6057,7 @@ init_display (void)
 #ifdef HAVE_X11
       Vwindow_system_version = make_number (11);
 #endif
-#ifdef GNU_LINUX
+#ifdef USE_NCURSES
       /* In some versions of ncurses,
 	 tputs crashes if we have not called tgetent.
 	 So call tgetent.  */

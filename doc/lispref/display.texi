@@ -217,9 +217,9 @@ over the @code{line-prefix} variable.  @xref{Special Properties}.
 continuation to display them, computing the continuation lines can
 make redisplay slow.  The column computation and indentation functions
 also become slow.  Then you might find it advisable to set
-@code{cache-long-line-scans} to @code{t}.
+@code{cache-long-scans} to @code{t}.
 
-@defvar cache-long-line-scans
+@defvar cache-long-scans
 If this variable is non-@code{nil}, various indentation and motion
 functions, and Emacs redisplay, cache the results of scanning the
 buffer, and consult the cache to avoid rescanning regions of the buffer
@@ -1243,6 +1243,7 @@ Type RET when done reading
 @node Overlays
 @section Overlays
 @cindex overlays
+@c FIXME: mention intervals in this section?
 
 You can use @dfn{overlays} to alter the appearance of a buffer's text on
 the screen, for the sake of presentation features.  An overlay is an
@@ -2738,6 +2739,7 @@ differently from the default face.
 @end defun
 
 @cindex face alias
+@cindex alias, for faces
 A @dfn{face alias} provides an equivalent name for a face.  You can
 define a face alias by giving the alias symbol the @code{face-alias}
 property, with a value of the target face name.  The following example

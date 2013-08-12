@@ -250,9 +250,6 @@ static int menu_will_open_state = MENU_NONE;
 
 /* Saved position for menu click.  */
 static CGPoint menu_mouse_point;
-
-/* Title for the menu to open.  */
-static char *menu_pending_title = 0;
 #endif
 
 /* Convert modifiers in a NeXTstep event to emacs style modifiers.  */
@@ -344,8 +341,8 @@ hold_event (struct input_event *event)
     {
       if (hold_event_q.cap == 0) hold_event_q.cap = 10;
       else hold_event_q.cap *= 2;
-      hold_event_q.q = (struct input_event *)
-        xrealloc (hold_event_q.q, hold_event_q.cap * sizeof (*hold_event_q.q));
+      hold_event_q.q =
+        xrealloc (hold_event_q.q, hold_event_q.cap * sizeof *hold_event_q.q);
     }
 
   hold_event_q.q[hold_event_q.nr++] = *event;
@@ -691,9 +688,18 @@ ns_update_begin (struct frame *f)
   {
     NSBezierPath *bp;
     NSRect r = [view frame];
-  bp = [[NSBezierPath bezierPathWithRect: r] retain];
-  [bp setClip];
-  [bp release];
+    NSRect cr = [[view window] frame];
+    /* If a large frame size is set, r may be larger than the window frame
+       before constrained.  In that case don't change the clip path, as we
+       will clear in to the tool bar and title bar.  */
+    if (r.size.height
+        + FRAME_NS_TITLEBAR_HEIGHT (f)
+        + FRAME_TOOLBAR_HEIGHT (f) <= cr.size.height)
+      {
+        bp = [[NSBezierPath bezierPathWithRect: r] retain];
+        [bp setClip];
+        [bp release];
+      }
   }
 #endif
 
@@ -711,9 +717,9 @@ ns_update_window_begin (struct window *w)
    -------------------------------------------------------------------------- */
 {
   struct frame *f = XFRAME (WINDOW_FRAME (w));
- Mouse_HLInfo *hlinfo = MOUSE_HL_INFO (f);
+  Mouse_HLInfo *hlinfo = MOUSE_HL_INFO (f);
+
   NSTRACE (ns_update_window_begin);
-  updated_window = w;
   set_output_cursor (&w->cursor);
 
   block_input ();
@@ -770,7 +776,6 @@ ns_update_window_end (struct window *w, int cursor_on_p,
       hlinfo->mouse_face_window = Qnil;
     }
 
-  updated_window = NULL;
   NSTRACE (update_window_end);
 }
 
@@ -785,9 +790,9 @@ ns_update_end (struct frame *f)
   EmacsView *view = FRAME_NS_VIEW (f);
 
 /*   if (f == MOUSE_HL_INFO (f)->mouse_face_mouse_frame) */
-    MOUSE_HL_INFO (f)->mouse_face_defer = 0;
+  MOUSE_HL_INFO (f)->mouse_face_defer = 0;
 
-    block_input ();
+  block_input ();
 
   [view unlockFocus];
   [[view window] flushWindow];
@@ -1353,7 +1358,7 @@ x_set_window_size (struct frame *f, int change_grav, int cols, int rows)
 
 
 static void
-ns_fullscreen_hook (FRAME_PTR f)
+ns_fullscreen_hook (struct frame *f)
 {
   EmacsView *view = (EmacsView *)FRAME_NS_VIEW (f);
 
@@ -1883,10 +1888,9 @@ ns_frame_up_to_date (struct frame *f)
 	{
 	  block_input ();
 	  ns_update_begin(f);
-	  if (hlinfo->mouse_face_mouse_frame)
-	    note_mouse_highlight (hlinfo->mouse_face_mouse_frame,
-				  hlinfo->mouse_face_mouse_x,
-				  hlinfo->mouse_face_mouse_y);
+	  note_mouse_highlight (hlinfo->mouse_face_mouse_frame,
+				hlinfo->mouse_face_mouse_x,
+				hlinfo->mouse_face_mouse_y);
 	  ns_update_end(f);
 	  unblock_input ();
 	}
@@ -2085,7 +2089,6 @@ ns_scroll_run (struct window *w, struct run *run)
 
   block_input ();
 
-  updated_window = w;
   x_clear_cursor (w);
 
   {
@@ -2103,12 +2106,11 @@ ns_scroll_run (struct window *w, struct run *run)
 
 
 static void
-ns_after_update_window_line (struct glyph_row *desired_row)
+ns_after_update_window_line (struct window *w, struct glyph_row *desired_row)
 /* --------------------------------------------------------------------------
     External (RIF): preparatory to fringe update after text was updated
    -------------------------------------------------------------------------- */
 {
-  struct window *w = updated_window;
   struct frame *f;
   int width, height;
 
@@ -3392,12 +3394,6 @@ check_native_fs ()
 /* GNUStep and OSX <= 10.4 does not have cancelTracking.  */
 #if defined (NS_IMPL_COCOA) && \
   MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_5
-const char *
-ns_get_pending_menu_title ()
-{
-  return menu_pending_title;
-}
-
 /* Check if menu open should be cancelled or continued as normal.  */
 void
 ns_check_menu_open (NSMenu *menu)
@@ -3406,6 +3402,14 @@ ns_check_menu_open (NSMenu *menu)
   NSArray *a = [[NSApp mainMenu] itemArray];
   int i;
   BOOL found = NO;
+
+  if (menu == nil) // Menu tracking ended.
+    {
+      if (menu_will_open_state == MENU_OPENING)
+        menu_will_open_state = MENU_NONE;
+      return;
+    }
+
   for (i = 0; ! found && i < [a count]; i++)
     found = menu == [[a objectAtIndex:i] submenu];
   if (found)
@@ -3423,8 +3427,6 @@ ns_check_menu_open (NSMenu *menu)
           CGEventRef ourEvent = CGEventCreate (NULL);
           menu_mouse_point = CGEventGetLocation (ourEvent);
           CFRelease (ourEvent);
-          xfree (menu_pending_title);
-          menu_pending_title = xstrdup ([[menu title] UTF8String]);
         }
       else if (menu_will_open_state == MENU_OPENING)
         {
@@ -3862,15 +3864,6 @@ ns_judge_scroll_bars (struct frame *f)
   if (removed)
     [eview updateFrameSize: NO];
 }
-
-
-void
-x_wm_set_icon_position (struct frame *f, int icon_x, int icon_y)
-{
-  /* XXX irrelevant under NS */
-}
-
-
 
 /* ==========================================================================
 
@@ -4416,6 +4409,7 @@ ns_term_shutdown (int sig)
 {
   int type = [theEvent type];
   NSWindow *window = [theEvent window];
+
 /*  NSTRACE (sendEvent); */
 /*fprintf (stderr, "received event of type %d\t%d\n", type);*/
 
@@ -4468,6 +4462,23 @@ ns_term_shutdown (int sig)
           send_appdefined = YES;
         }
     }
+
+
+#ifdef NS_IMPL_COCOA
+  /* If no dialog and none of our frames have focus and it is a move, skip it.
+     It is a mouse move in an auxiliary menu, i.e. on the top right on OSX,
+     such as Wifi, sound, date or similar.
+     This prevents "spooky" highlighting in the frame under the menu.  */
+  if (type == NSMouseMoved && [NSApp modalWindow] == nil)
+    {
+      struct ns_display_info *di;
+      BOOL has_focus = NO;
+      for (di = x_display_list; ! has_focus && di; di = di->next)
+        has_focus = di->x_focus_frame != 0;
+      if (! has_focus)
+        return;
+    }
+#endif
 
   [super sendEvent: theEvent];
 }
@@ -5655,17 +5666,17 @@ not_in_argv (NSString *arg)
             old_title = 0;
           }
       }
-    else
+    else if (fs_state == FULLSCREEN_NONE && ! maximizing_resize)
       {
         char *size_title;
         NSWindow *window = [self window];
         if (old_title == 0)
           {
-            const char *t = [[[self window] title] UTF8String];
+            char *t = strdup ([[[self window] title] UTF8String]);
             char *pos = strstr (t, "  —  ");
             if (pos)
               *pos = '\0';
-            old_title = xstrdup (t);
+            old_title = t;
           }
         size_title = xmalloc (strlen (old_title) + 40);
 	esprintf (size_title, "%s  —  (%d x %d)", old_title, cols, rows);
@@ -5704,21 +5715,27 @@ not_in_argv (NSString *arg)
   NSTRACE (windowDidResize);
 /*fprintf (stderr,"windowDidResize: %.0f\n",[theWindow frame].size.height); */
 
-#ifdef NS_IMPL_COCOA
-  if (old_title != 0)
-    {
-      xfree (old_title);
-      old_title = 0;
-    }
-#endif /* NS_IMPL_COCOA */
-
-  if (cols > 0 && rows > 0)
+if (cols > 0 && rows > 0)
     {
       [self updateFrameSize: YES];
     }
 
   ns_send_appdefined (-1);
 }
+
+#ifdef NS_IMPL_COCOA
+- (void)viewDidEndLiveResize
+{
+  [super viewDidEndLiveResize];
+  if (old_title != 0)
+    {
+      [[self window] setTitle: [NSString stringWithUTF8String: old_title]];
+      xfree (old_title);
+      old_title = 0;
+    }
+  maximizing_resize = NO;
+}
+#endif /* NS_IMPL_COCOA */
 
 
 - (void)windowDidBecomeKey: (NSNotification *)notification
@@ -5823,7 +5840,10 @@ not_in_argv (NSString *arg)
 
   FRAME_NS_VIEW (f) = self;
   emacsframe = f;
+#ifdef NS_IMPL_COCOA
   old_title = 0;
+  maximizing_resize = NO;
+#endif
 
   win = [[EmacsWindow alloc]
             initWithContentRect: r
@@ -5966,6 +5986,9 @@ not_in_argv (NSString *arg)
       maximized_width = -1;
       result.origin.y = defaultFrame.origin.y;
       [self setFSValue: FULLSCREEN_HEIGHT];
+#ifdef NS_IMPL_COCOA
+      maximizing_resize = YES;
+#endif
     }
   else if (next_maximized == FULLSCREEN_WIDTH)
     {
@@ -5984,12 +6007,18 @@ not_in_argv (NSString *arg)
       maximized_width = result.size.width;
       maximized_height = result.size.height;
       [self setFSValue: FULLSCREEN_MAXIMIZED];
+#ifdef NS_IMPL_COCOA
+      maximizing_resize = YES;
+#endif
     }
   else
     {
       /* restore */
       result = ns_userRect.size.height ? ns_userRect : result;
       ns_userRect = NSMakeRect (0, 0, 0, 0);
+#ifdef NS_IMPL_COCOA
+      maximizing_resize = fs_state != FULLSCREEN_NONE;
+#endif
       [self setFSValue: FULLSCREEN_NONE];
       maximized_width = maximized_height = -1;
     }

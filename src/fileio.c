@@ -3860,7 +3860,8 @@ by calling `format-decode', which see.  */)
       if (same_at_start - BEGV_BYTE == end_offset - beg_offset)
 	{
 	  emacs_close (fd);
-	  specpdl_ptr--;
+	  clear_unwind_protect (fd_index);
+
 	  /* Truncate the buffer to the size of the file.  */
 	  del_range_1 (same_at_start, same_at_end, 0, 0);
 	  goto handled;
@@ -5095,8 +5096,6 @@ This calls `write-region-annotate-functions' at the start, and
   return Qnil;
 }
 
-Lisp_Object merge (Lisp_Object, Lisp_Object, Lisp_Object);
-
 DEFUN ("car-less-than-car", Fcar_less_than_car, Scar_less_than_car, 2, 2, 0,
        doc: /* Return t if (car A) is numerically less than (car B).  */)
   (Lisp_Object a, Lisp_Object b)
@@ -5619,9 +5618,8 @@ A non-nil CURRENT-ONLY argument means save only current buffer.  */)
      couldn't handle some ange-ftp'd file.  */
 
   for (do_handled_files = 0; do_handled_files < 2; do_handled_files++)
-    for (tail = Vbuffer_alist; CONSP (tail); tail = XCDR (tail))
+    FOR_EACH_LIVE_BUFFER (tail, buf)
       {
-	buf = XCDR (XCAR (tail));
 	b = XBUFFER (buf);
 
 	/* Record all the buffers that have auto save mode

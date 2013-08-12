@@ -520,8 +520,7 @@ init_cmdargs (int argc, char **argv, int skip_args)
 	   They are decoded in the function command-line after we know
 	   locale-coding-system.  */
 	Vcommand_line_args
-	  = Fcons (make_unibyte_string (argv[i], strlen (argv[i])),
-		   Vcommand_line_args);
+	  = Fcons (build_unibyte_string (argv[i]), Vcommand_line_args);
     }
 
   unbind_to (count, Qnil);
@@ -1411,6 +1410,10 @@ Using an Emacs configured with --with-x-toolkit=lucid does not have this problem
 
 #ifdef HAVE_LIBXML2
       syms_of_xml ();
+#endif
+
+#ifdef HAVE_ZLIB
+      syms_of_decompress ();
 #endif
 
       syms_of_menu ();

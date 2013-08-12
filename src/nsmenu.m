@@ -366,7 +366,7 @@ ns_update_menubar (struct frame *f, bool deep_p, EmacsMenu *submenu)
         }
       else
         {
-          [menu fillWithWidgetValue: first_wv->contents];
+          [menu fillWithWidgetValue: first_wv->contents frame: f];
         }
 
     }
@@ -504,21 +504,7 @@ void
 x_activate_menubar (struct frame *f)
 {
 #ifdef NS_IMPL_COCOA
-  NSArray *a = [[NSApp mainMenu] itemArray];
-  /* Update each submenu separately so ns_update_menubar doesn't reset
-     the delegate.  */
-  int i = 0;
-  while (i < [a count])
-    {
-      EmacsMenu *menu = (EmacsMenu *)[[a objectAtIndex:i] submenu];
-      const char *title = [[menu title] UTF8String];
-      if (strcmp (title, ns_get_pending_menu_title ()) == 0)
-        {
-          ns_update_menubar (f, true, menu);
-          break;
-        }
-      ++i;
-    }
+  ns_update_menubar (f, true, nil);
   ns_check_pending_open_menu ();
 #endif
 }
@@ -541,6 +527,7 @@ x_activate_menubar (struct frame *f)
 /* override designated initializer */
 - initWithTitle: (NSString *)title
 {
+  frame = 0;
   if ((self = [super initWithTitle: title]))
     [self setAutoenablesItems: NO];
   return self;
@@ -576,16 +563,33 @@ extern NSString *NSMenuDidBeginTrackingNotification;
   /* Update menu in menuNeedsUpdate only while tracking menus.  */
   trackingMenu = ([notification name] == NSMenuDidBeginTrackingNotification
                   ? 1 : 0);
+  if (! trackingMenu) ns_check_menu_open (nil);
 }
 
 #if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_5
 - (void)menuWillOpen:(NSMenu *)menu
 {
-  ns_check_menu_open (menu);
-}
+  ++trackingMenu;
+
+#if MAC_OS_X_VERSION_MAX_ALLOWED <= MAC_OS_X_VERSION_10_6
+  // On 10.6 we get repeated calls, only the one for NSSystemDefined is "real".
+  if ([[NSApp currentEvent] type] != NSSystemDefined) return;
 #endif
 
-#endif
+  /* When dragging from one menu to another, we get willOpen followed by didClose,
+     i.e. trackingMenu == 3 in willOpen and then 2 after didClose.
+     We have updated all menus, so avoid doing it when trackingMenu == 3.  */
+  if (trackingMenu == 2)
+    ns_check_menu_open (menu);
+}
+
+- (void)menuDidClose:(NSMenu *)menu
+{
+  --trackingMenu;
+}
+#endif /* OSX >= 10.5 */
+
+#endif /* NS_IMPL_COCOA */
 
 /* delegate method called when a submenu is being opened: run a 'deep' call
    to set_frame_menubar */
@@ -722,6 +726,11 @@ extern NSString *NSMenuDidBeginTrackingNotification;
 
 - (void)fillWithWidgetValue: (void *)wvptr
 {
+  [self fillWithWidgetValue: wvptr frame:nil];
+}
+
+- (void)fillWithWidgetValue: (void *)wvptr frame: (struct frame *)f
+{
   widget_value *wv = (widget_value *)wvptr;
 
   /* clear existing contents */
@@ -735,7 +744,12 @@ extern NSString *NSMenuDidBeginTrackingNotification;
 
       if (wv->contents)
         {
-          EmacsMenu *submenu = [[EmacsMenu alloc] initWithTitle: [item title]];
+          EmacsMenu *submenu;
+
+          if (f)
+            submenu = [[EmacsMenu alloc] initWithTitle: [item title] frame:f];
+          else
+            submenu = [[EmacsMenu alloc] initWithTitle: [item title]];
 
           [self setSubmenu: submenu forItem: item];
           [submenu fillWithWidgetValue: wv->contents];
@@ -806,7 +820,7 @@ extern NSString *NSMenuDidBeginTrackingNotification;
    ========================================================================== */
 
 Lisp_Object
-ns_menu_show (FRAME_PTR f, int x, int y, bool for_click, bool keymaps,
+ns_menu_show (struct frame *f, int x, int y, bool for_click, bool keymaps,
 	      Lisp_Object title, const char **error)
 {
   EmacsMenu *pmenu;
@@ -1028,7 +1042,7 @@ ns_menu_show (FRAME_PTR f, int x, int y, bool for_click, bool keymaps,
    ========================================================================== */
 
 void
-free_frame_tool_bar (FRAME_PTR f)
+free_frame_tool_bar (struct frame *f)
 /* --------------------------------------------------------------------------
     Under NS we just hide the toolbar until it might be needed again.
    -------------------------------------------------------------------------- */
@@ -1040,7 +1054,7 @@ free_frame_tool_bar (FRAME_PTR f)
 }
 
 void
-update_frame_tool_bar (FRAME_PTR f)
+update_frame_tool_bar (struct frame *f)
 /* --------------------------------------------------------------------------
     Update toolbar contents
    -------------------------------------------------------------------------- */
@@ -1665,7 +1679,7 @@ ns_popup_dialog (Lisp_Object position, Lisp_Object contents, Lisp_Object header)
     }
 
   if (buttons > 0)
-    button_values = (Lisp_Object *) xmalloc (buttons * sizeof (*button_values));
+    button_values = xmalloc (buttons * sizeof *button_values);
 
   for (; XTYPE (list) == Lisp_Cons; list = XCDR (list))
     {

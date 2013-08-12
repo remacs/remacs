@@ -164,20 +164,20 @@ XPutPixel (XImagePtr ximage, int x, int y, unsigned long pixel)
 /* Functions to access the contents of a bitmap, given an id.  */
 
 int
-x_bitmap_height (FRAME_PTR f, ptrdiff_t id)
+x_bitmap_height (struct frame *f, ptrdiff_t id)
 {
   return FRAME_X_DISPLAY_INFO (f)->bitmaps[id - 1].height;
 }
 
 int
-x_bitmap_width (FRAME_PTR f, ptrdiff_t id)
+x_bitmap_width (struct frame *f, ptrdiff_t id)
 {
   return FRAME_X_DISPLAY_INFO (f)->bitmaps[id - 1].width;
 }
 
 #if defined (HAVE_X_WINDOWS) || defined (HAVE_NTGUI)
 ptrdiff_t
-x_bitmap_pixmap (FRAME_PTR f, ptrdiff_t id)
+x_bitmap_pixmap (struct frame *f, ptrdiff_t id)
 {
   /* HAVE_NTGUI needs the explicit cast here.  */
   return (ptrdiff_t) FRAME_X_DISPLAY_INFO (f)->bitmaps[id - 1].pixmap;
@@ -186,7 +186,7 @@ x_bitmap_pixmap (FRAME_PTR f, ptrdiff_t id)
 
 #ifdef HAVE_X_WINDOWS
 int
-x_bitmap_mask (FRAME_PTR f, ptrdiff_t id)
+x_bitmap_mask (struct frame *f, ptrdiff_t id)
 {
   return FRAME_X_DISPLAY_INFO (f)->bitmaps[id - 1].mask;
 }
@@ -195,7 +195,7 @@ x_bitmap_mask (FRAME_PTR f, ptrdiff_t id)
 /* Allocate a new bitmap record.  Returns index of new record.  */
 
 static ptrdiff_t
-x_allocate_bitmap_record (FRAME_PTR f)
+x_allocate_bitmap_record (struct frame *f)
 {
   Display_Info *dpyinfo = FRAME_X_DISPLAY_INFO (f);
   ptrdiff_t i;
@@ -216,7 +216,7 @@ x_allocate_bitmap_record (FRAME_PTR f)
 /* Add one reference to the reference count of the bitmap with id ID.  */
 
 void
-x_reference_bitmap (FRAME_PTR f, ptrdiff_t id)
+x_reference_bitmap (struct frame *f, ptrdiff_t id)
 {
   ++FRAME_X_DISPLAY_INFO (f)->bitmaps[id - 1].refcount;
 }
@@ -384,7 +384,7 @@ free_bitmap_record (Display_Info *dpyinfo, Bitmap_Record *bm)
 /* Remove reference to bitmap with id number ID.  */
 
 void
-x_destroy_bitmap (FRAME_PTR f, ptrdiff_t id)
+x_destroy_bitmap (struct frame *f, ptrdiff_t id)
 {
   Display_Info *dpyinfo = FRAME_X_DISPLAY_INFO (f);
 
@@ -1569,7 +1569,7 @@ which is then usually a filename.  */)
 
 DEFUN ("image-flush", Fimage_flush, Simage_flush,
        1, 2, 0,
-       doc: /* Fush the image with specification SPEC on frame FRAME.
+       doc: /* Flush the image with specification SPEC on frame FRAME.
 This removes the image from the Emacs image cache.  If SPEC specifies
 an image file, the next redisplay of this image will read from the
 current contents of that file.
@@ -3332,7 +3332,7 @@ static int
 xpm_alloc_color (Display *dpy, Colormap cmap, char *color_name, XColor *color,
 		 void *closure)
 {
-  return xpm_lookup_color ((struct frame *) closure, color_name, color);
+  return xpm_lookup_color (closure, color_name, color);
 }
 
 
@@ -5652,8 +5652,7 @@ struct png_memory_storage
 static void
 png_read_from_memory (png_structp png_ptr, png_bytep data, png_size_t length)
 {
-  struct png_memory_storage *tbr
-    = (struct png_memory_storage *) fn_png_get_io_ptr (png_ptr);
+  struct png_memory_storage *tbr = fn_png_get_io_ptr (png_ptr);
 
   if (length > tbr->len - tbr->index)
     fn_png_error (png_ptr, "Read error");
@@ -5670,7 +5669,7 @@ png_read_from_memory (png_structp png_ptr, png_bytep data, png_size_t length)
 static void
 png_read_from_file (png_structp png_ptr, png_bytep data, png_size_t length)
 {
-  FILE *fp = (FILE *) fn_png_get_io_ptr (png_ptr);
+  FILE *fp = fn_png_get_io_ptr (png_ptr);
 
   if (fread (data, 1, length, fp) < length)
     fn_png_error (png_ptr, "Read error");
@@ -5814,9 +5813,9 @@ png_load_body (struct frame *f, struct image *img, struct png_load_context *c)
 
   /* Read image info.  */
   if (!NILP (specified_data))
-    fn_png_set_read_fn (png_ptr, (void *) &tbr, png_read_from_memory);
+    fn_png_set_read_fn (png_ptr, &tbr, png_read_from_memory);
   else
-    fn_png_set_read_fn (png_ptr, (void *) fp, png_read_from_file);
+    fn_png_set_read_fn (png_ptr, fp, png_read_from_file);
 
   fn_png_set_sig_bytes (png_ptr, sizeof sig);
   fn_png_read_info (png_ptr, info_ptr);
@@ -6306,7 +6305,7 @@ our_memory_fill_input_buffer (j_decompress_ptr cinfo)
 static void
 our_memory_skip_input_data (j_decompress_ptr cinfo, long int num_bytes)
 {
-  struct jpeg_source_mgr *src = (struct jpeg_source_mgr *) cinfo->src;
+  struct jpeg_source_mgr *src = cinfo->src;
 
   if (src)
     {
@@ -6326,19 +6325,17 @@ our_memory_skip_input_data (j_decompress_ptr cinfo, long int num_bytes)
 static void
 jpeg_memory_src (j_decompress_ptr cinfo, JOCTET *data, ptrdiff_t len)
 {
-  struct jpeg_source_mgr *src;
+  struct jpeg_source_mgr *src = cinfo->src;
 
-  if (cinfo->src == NULL)
+  if (! src)
     {
       /* First time for this JPEG object?  */
-      cinfo->src = (struct jpeg_source_mgr *)
-	(*cinfo->mem->alloc_small) ((j_common_ptr) cinfo, JPOOL_PERMANENT,
-				    sizeof (struct jpeg_source_mgr));
-      src = (struct jpeg_source_mgr *) cinfo->src;
+      src = cinfo->mem->alloc_small ((j_common_ptr) cinfo,
+				     JPOOL_PERMANENT, sizeof *src);
+      cinfo->src = src;
       src->next_input_byte = data;
     }
 
-  src = (struct jpeg_source_mgr *) cinfo->src;
   src->init_source = our_common_init_source;
   src->fill_input_buffer = our_memory_fill_input_buffer;
   src->skip_input_data = our_memory_skip_input_data;
@@ -6430,20 +6427,17 @@ our_stdio_skip_input_data (j_decompress_ptr cinfo, long int num_bytes)
 static void
 jpeg_file_src (j_decompress_ptr cinfo, FILE *fp)
 {
-  struct jpeg_stdio_mgr *src;
+  struct jpeg_stdio_mgr *src = (struct jpeg_stdio_mgr *) cinfo->src;
 
-  if (cinfo->src != NULL)
-      src = (struct jpeg_stdio_mgr *) cinfo->src;
-  else
+  if (! src)
     {
       /* First time for this JPEG object?  */
-      cinfo->src = (struct jpeg_source_mgr *)
-        (*cinfo->mem->alloc_small) ((j_common_ptr) cinfo, JPOOL_PERMANENT,
-                                    sizeof (struct jpeg_stdio_mgr));
-      src = (struct jpeg_stdio_mgr *) cinfo->src;
-      src->buffer = (JOCTET *)
-          (*cinfo->mem->alloc_small) ((j_common_ptr) cinfo, JPOOL_PERMANENT,
-                                      JPEG_STDIO_BUFFER_SIZE);
+      src = cinfo->mem->alloc_small ((j_common_ptr) cinfo,
+				     JPOOL_PERMANENT, sizeof *src);
+      cinfo->src = (struct jpeg_source_mgr *) src;
+      src->buffer = cinfo->mem->alloc_small ((j_common_ptr) cinfo,
+					     JPOOL_PERMANENT,
+					     JPEG_STDIO_BUFFER_SIZE);
     }
 
   src->file = fp;
@@ -8120,7 +8114,7 @@ imagemagick_load_image (struct frame *f, struct image *img,
 
       /* Copy pixels from the imagemagick image structure to the x image map. */
       iterator = NewPixelIterator (image_wand);
-      if (iterator == (PixelIterator *) NULL)
+      if (! iterator)
         {
 #ifdef COLOR_TABLE_SUPPORT
 	  free_color_table ();
@@ -8135,7 +8129,7 @@ imagemagick_load_image (struct frame *f, struct image *img,
       for (y = 0; y < image_height; y++)
         {
           pixels = PixelGetNextIteratorRow (iterator, &width);
-          if (pixels == (PixelWand **) NULL)
+          if (! pixels)
             break;
           for (x = 0; x < (long) width; x++)
             {
@@ -9200,7 +9194,7 @@ A cross is always drawn on black & white displays.  */);
 
   DEFVAR_LISP ("x-bitmap-file-path", Vx_bitmap_file_path,
     doc: /* List of directories to search for window system bitmap files.  */);
-  Vx_bitmap_file_path = decode_env_path ((char *) 0, PATH_BITMAPS);
+  Vx_bitmap_file_path = decode_env_path (0, PATH_BITMAPS);
 
   DEFVAR_LISP ("image-cache-eviction-delay", Vimage_cache_eviction_delay,
     doc: /* Maximum time after which images are removed from the cache.

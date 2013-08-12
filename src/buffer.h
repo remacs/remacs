@@ -632,9 +632,9 @@ struct buffer
   /* List of symbols naming the file format used for auto-save file.  */
   Lisp_Object INTERNAL_FIELD (auto_save_file_format);
 
-  /* True if the newline position cache and width run cache are
-     enabled.  See search.c and indent.c.  */
-  Lisp_Object INTERNAL_FIELD (cache_long_line_scans);
+  /* True if the newline position cache, width run cache and BIDI paragraph
+     cache are enabled.  See search.c, indent.c and bidi.c for details.  */
+  Lisp_Object INTERNAL_FIELD (cache_long_scans);
 
   /* If the width run cache is enabled, this table contains the
      character widths width_run_cache (see above) assumes.  When we
@@ -839,9 +839,12 @@ struct buffer
      the character's width; if it maps a character to zero, we don't
      know what its width is.  This allows compute_motion to process
      such regions very quickly, using algebra instead of inspecting
-     each character.   See also width_table, below.  */
+     each character.   See also width_table, below.
+
+     The latter cache is used to speedup bidi_find_paragraph_start.  */
   struct region_cache *newline_cache;
   struct region_cache *width_run_cache;
+  struct region_cache *bidi_paragraph_cache;
 
   /* Non-zero means don't use redisplay optimizations for
      displaying this buffer.  */
@@ -1120,9 +1123,19 @@ record_unwind_current_buffer (void)
       }									\
   } while (0)
 
+extern Lisp_Object Vbuffer_alist;
 extern Lisp_Object Qbefore_change_functions;
 extern Lisp_Object Qafter_change_functions;
 extern Lisp_Object Qfirst_change_hook;
+extern Lisp_Object Qpriority, Qbefore_string, Qafter_string;
+
+/* FOR_EACH_LIVE_BUFFER (LIST_VAR, BUF_VAR) followed by a statement is
+   a `for' loop which iterates over the buffers from Vbuffer_alist.  */
+
+#define FOR_EACH_LIVE_BUFFER(list_var, buf_var)				\
+  for (list_var = Vbuffer_alist;					\
+       (CONSP (list_var) && (buf_var = XCDR (XCAR (list_var)), 1));	\
+       list_var = XCDR (list_var))
 
 /* Get text properties of B.  */
 

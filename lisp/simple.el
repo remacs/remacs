@@ -3141,14 +3141,17 @@ Also, delete any process that is exited or signaled."
   (display-buffer (button-get button 'process-buffer)))
 
 (defun list-processes (&optional query-only buffer)
-  "Display a list of all processes.
+  "Display a list of all processes that are Emacs sub-processes.
 If optional argument QUERY-ONLY is non-nil, only processes with
 the query-on-exit flag set are listed.
 Any process listed as exited or signaled is actually eliminated
 after the listing is made.
 Optional argument BUFFER specifies a buffer to use, instead of
 \"*Process List*\".
-The return value is always nil."
+The return value is always nil.
+
+This function lists only processes that were launched by Emacs.  To
+see other processes running on the system, use `list-system-processes'."
   (interactive)
   (or (fboundp 'process-list)
       (error "Asynchronous subprocesses are not supported on this system"))
@@ -4095,9 +4098,9 @@ Don't call it from programs: use `insert-buffer-substring' instead!"
     (progn
       (barf-if-buffer-read-only)
       (read-buffer "Insert buffer: "
-		   (if (eq (selected-window) (next-window (selected-window)))
+		   (if (eq (selected-window) (next-window))
 		       (other-buffer (current-buffer))
-		     (window-buffer (next-window (selected-window))))
+		     (window-buffer (next-window)))
 		   t))))
   (push-mark
    (save-excursion
@@ -4157,8 +4160,7 @@ START and END specify the portion of the current buffer to be copied."
       (save-excursion
 	(insert-buffer-substring oldbuf start end)))))
 
-(put 'mark-inactive 'error-conditions '(mark-inactive error))
-(put 'mark-inactive 'error-message (purecopy "The mark is not active now"))
+(define-error 'mark-inactive (purecopy "The mark is not active now"))
 
 (defvar activate-mark-hook nil
   "Hook run when the mark becomes active.
@@ -5530,8 +5532,7 @@ Mode' for details."
   (visual-line-mode 1))
 
 (define-globalized-minor-mode global-visual-line-mode
-  visual-line-mode turn-on-visual-line-mode
-  :lighter " vl")
+  visual-line-mode turn-on-visual-line-mode)
 
 
 (defun transpose-chars (arg)
@@ -5963,7 +5964,7 @@ The variable `selective-display' has a separate value for each buffer."
     (setq selective-display
 	  (and arg (prefix-numeric-value arg)))
     (recenter current-vpos))
-  (set-window-start (selected-window) (window-start (selected-window)))
+  (set-window-start (selected-window) (window-start))
   (princ "selective-display set to " t)
   (prin1 selective-display t)
   (princ "." t))
@@ -6627,8 +6628,7 @@ Go to the window from which completion was requested."
   (interactive)
   (let ((buf completion-reference-buffer))
     (if (one-window-p t)
-	(if (window-dedicated-p (selected-window))
-	    (delete-frame (selected-frame)))
+	(if (window-dedicated-p) (delete-frame))
       (delete-window (selected-window))
       (if (get-buffer-window buf)
 	  (select-window (get-buffer-window buf))))))
