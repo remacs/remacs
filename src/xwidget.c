@@ -322,7 +322,7 @@ buttonclick_handler (GtkWidget * widget, gpointer data)
   
   struct input_event event;
   Lisp_Object frame = Fwindow_frame (Fxwidget_view_window (xwidget_view));
-  FRAME_PTR f = XFRAME (frame);
+  struct frame *f = XFRAME (frame);
   printf ("button clicked xw:%d '%s'\n", XXWIDGET (xwidget), XXWIDGET (xwidget)->title);
 
   EVENT_INIT (event);
