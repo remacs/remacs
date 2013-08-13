@@ -90,11 +90,10 @@
                              (with-temp-buffer
                                (insert ?\0)
                                (let* ((xwidget (xwidget-insert 1 type title 100 100))
-                                      (window (display-buffer (current-buffer))))
+                                      (window (xwidget-display xwidget)))
                                  (set-xwidget-query-on-exit-flag xwidget nil)
-                                 (set-frame-visible (window-frame window) t)
-                                 (redisplay t)
-                                 (xwidget-view-p (xwidget-view-lookup xwidget window)))))
+                                 (xwidget-view-p
+                                  (xwidget-view-lookup xwidget window)))))
                            :env (list type title)
                            :graphical t
                            :emacs-args '("-T" "emacs-debug")))))
