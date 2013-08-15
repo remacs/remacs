@@ -7908,6 +7908,7 @@ imagemagick_compute_animated_image (MagickWand *super_wand, int ino)
       MagickGetImagePage (sub_wand, &source_width, &source_height,
 			  &source_left, &source_top);
 
+      /* This flag says how to handle transparent pixels.  */
       dispose = MagickGetImageDispose (sub_wand);
 
       source_iterator = NewPixelIterator (sub_wand);
@@ -7968,7 +7969,7 @@ imagemagick_compute_animated_image (MagickWand *super_wand, int ino)
 		  PixelSetMagickColor (dest[x + source_left], &pixel);
 		}
 	    }
-	  PixelSyncIterator(dest_iterator);
+	  PixelSyncIterator (dest_iterator);
 	}
 
       DestroyPixelIterator (source_iterator);
