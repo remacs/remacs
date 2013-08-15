@@ -1,3 +1,20 @@
+2013-08-15  Ken Brown  <kbrown@cornell.edu>
+
+	* emacs.c (main): Update comment about G_SLICE_ALWAYS_MALLOC.
+	* gmalloc.c (memalign) [CYGWIN]: Revert last change; it's not
+	needed.
+
+2013-08-15  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Fix minor problems found by static checking.
+	* frame.c (delete_frame):
+	* xdisp.c (next_element_from_display_vector):
+	Avoid uninitialized local.
+	* image.c (imagemagick_compute_animated_image): Port to C89.
+	Prefer usual GNU indentation style for loops.
+	Be more careful about bizarrely large sizes, by using ptrdiff_t
+	instead of int.
+
 2013-08-15  Dmitry Antipov  <dmantipov@yandex.ru>
 
 	Fix infinite frame selection loop (Bug#15025).
@@ -18,6 +35,9 @@
 
 	* image.c (imagemagick_compute_animated_image): Implement animated
 	images (bug#14700).
+	(imagemagick_compute_animated_image): Fix some compilation
+	warnings.  Implement a very simple cache to make the animation
+	usable at all, but it should be replaced with a per-image cache.
 
 2013-08-15  Dmitry Antipov  <dmantipov@yandex.ru>
 
