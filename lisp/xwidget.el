@@ -59,12 +59,14 @@ see `make-xwidget' for types suitable for TYPE."
 ;;               )))))
 
 (defun xwidget-display (xwidget)
-  "Force xwidget to be displayed to create a xwidget_view."
+  "Force xwidget to be displayed to create a xwidget_view. Return
+the window displaying XWIDGET."
   (let* ((buffer (xwidget-buffer xwidget))
          (window (display-buffer buffer))
          (frame (window-frame window)))
     (set-frame-visible frame t)
-    (redisplay t)))
+    (redisplay t)
+    window))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

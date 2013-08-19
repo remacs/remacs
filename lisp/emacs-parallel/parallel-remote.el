@@ -22,12 +22,15 @@
 
 ;;; Code:
 
+(require 'cl)
+
 (defvar parallel-service nil)
 (defvar parallel-task-id nil)
 (defvar parallel-client nil)
 (defvar parallel--executed nil)
+(defvar parallel-continue-when-executed nil)
 
-(defun parallel-send (data)
+(defun parallel-remote-send (data)
   (process-send-string parallel-client
                        (format "%S " (cons parallel-task-id data))))
 
@@ -39,7 +42,7 @@
                                               :host "localhost"
                                               :family 'ipv4))
   (set-process-filter parallel-client #'parallel-remote--filter)
-  (parallel-send 'code)
+  (parallel-remote-send 'code)
   (when noninteractive                  ; Batch Mode
     ;; The evaluation is done in the `parallel--filter' but in Batch
     ;; Mode, Emacs doesn't wait for the input, it stops as soon as
@@ -48,15 +51,30 @@
       (sleep-for 10))))                 ; arbitrary chosen
 
 (defun parallel-remote--filter (_proc output)
-  (parallel-send
-   (if (or noninteractive
-           (not debug-on-error))
-       (condition-case err
-           (eval (read output))
-         (error err))
-     (eval (read output))))
-  (setq parallel--executed t)
-  (kill-emacs))
+  (dolist (code (parallel--read-output output))
+    (parallel-remote-send
+     (if (or noninteractive
+             (not debug-on-error))
+         (condition-case err
+             (eval code)
+           (error err))
+       (eval code))))
+  (unless parallel-continue-when-executed
+    (setq parallel--executed t)
+    (kill-emacs)))
+
+(defun parallel--read-output (output)
+  "Read lisp forms from output and return them as a list."
+  (loop with output = (replace-regexp-in-string
+                       "\\`[ \t\n]*" ""
+                       (replace-regexp-in-string "[ \t\n]*\\'" "" output)) ; trim string
+        with start = 0
+        with end = (length output)
+        for ret = (read-from-string output start end)
+        for data = (first ret)
+        do (setq start (rest ret))
+        collect data
+        until (= start end)))
 
 (provide 'parallel-remote)
 

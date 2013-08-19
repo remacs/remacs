@@ -38,8 +38,8 @@
                     (let* ((buffer (current-buffer))
                            (xwidget (make-xwidget beg end type title width height data buffer)))
                       (set-xwidget-query-on-exit-flag xwidget nil)
-                      (parallel-send (coerce (xwidget-info xwidget) 'list))
-                      (parallel-send (buffer-name buffer))
+                      (parallel-remote-send (coerce (xwidget-info xwidget) 'list))
+                      (parallel-remote-send (buffer-name buffer))
                       (buffer-name (xwidget-buffer xwidget)))))
                 :env (list beg end type title width height data)))
          (results (parallel-get-results proc)))
@@ -57,7 +57,7 @@
                   (parallel-start (lambda ()
                                     (require 'xwidget)
                                     (let ((xwidget (make-xwidget 1 1 'Button "Button" 100 100 nil)))
-                                      (parallel-send (xwidget-query-on-exit-flag xwidget))
+                                      (parallel-remote-send (xwidget-query-on-exit-flag xwidget))
                                       (set-xwidget-query-on-exit-flag xwidget nil)
                                       (xwidget-query-on-exit-flag xwidget))))))))
 
@@ -90,11 +90,10 @@
                              (with-temp-buffer
                                (insert ?\0)
                                (let* ((xwidget (xwidget-insert 1 type title 100 100))
-                                      (window (display-buffer (current-buffer))))
+                                      (window (xwidget-display xwidget)))
                                  (set-xwidget-query-on-exit-flag xwidget nil)
-                                 (set-frame-visible (window-frame window) t)
-                                 (redisplay t)
-                                 (xwidget-view-p (xwidget-view-lookup xwidget window)))))
+                                 (xwidget-view-p
+                                  (xwidget-view-lookup xwidget window)))))
                            :env (list type title)
                            :graphical t
                            :emacs-args '("-T" "emacs-debug")))))
