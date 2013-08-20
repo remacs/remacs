@@ -550,22 +550,6 @@ recompute_max_desc (void)
     }
 }
 
-/* FD is no longer an input descriptor; update max_input_desc accordingly.  */
-
-static void
-delete_input_desc (int fd)
-{
-  if (fd == max_input_desc)
-    {
-      do
-	fd--;
-      while (0 <= fd && ! (FD_ISSET (fd, &input_wait_mask)
-			   || FD_ISSET (fd, &write_mask)));
-
-      max_input_desc = fd;
-    }
-}
-
 /* Stop monitoring file descriptor FD for when write is possible.  */
 
 void
@@ -2155,7 +2139,7 @@ create_pty (Lisp_Object process)
       pset_status (p, Qrun);
       setup_process_coding_systems (process);
 
-      fixme;
+      add_non_keyboard_read_fd (pty_fd);
 
       pset_tty_name (p, build_string (pty_name));
     }
