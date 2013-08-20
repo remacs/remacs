@@ -1,3 +1,57 @@
+2013-08-14  Daniel Hackney  <dan@haxney.org>
+
+	* package-test.el: Remove tar-package-building functions.  Tar file
+	used for testing is included in the repository.
+	(package-test-install-texinfo, package-test-cleanup-built-files):
+	Remove.
+
+2013-08-13  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	* automated/python-tests.el (python-imenu-create-index-4)
+	(python-imenu-create-flat-index-2): New tests.
+
+2013-08-05  Glenn Morris  <rgm@gnu.org>
+
+	* automated/mule-util.el: New file, with tests extracted from
+	lisp/international/mule-util.el.
+
+2013-08-04  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* automated/advice-tests.el (advice-tests-nadvice): Test removal
+	before definition.
+	(advice-tests-macroaliases): New test.
+
+2013-08-04  Glenn Morris  <rgm@gnu.org>
+
+	* automated/ert-tests.el: Disable failing test that no-one seems
+	to know how to fix.  (Bug#13064)
+
+	* automated/icalendar-tests.el (icalendar-tests--test-export)
+	(icalendar-tests--test-import): Try more precise TZ specification.
+	Remove debug messages.
+
+2013-08-03  Glenn Morris  <rgm@gnu.org>
+
+	* automated/core-elisp-tests.el (core-elisp-tests): Fix defcustom.
+
+	* automated/icalendar-tests.el (icalendar-tests--test-export)
+	(icalendar-tests--test-import):
+	Use getenv/setenv rather than set-time-zone-rule.  Add debug messages.
+	(icalendar-tests--test-import): Reset zone even if error occurred.
+
+2013-08-02  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* automated/core-elisp-tests.el: New file.
+
+2013-08-01  Glenn Morris  <rgm@gnu.org>
+
+	* automated/file-notify-tests.el (file-notify--test-remote-enabled):
+	Try to check that the remote system has a notification program.
+
+2013-07-31  Glenn Morris  <rgm@gnu.org>
+
+	* automated/undo-tests.el (undo-test2, undo-test5): Be quieter.
+
 2013-07-24  Michael Albinus  <michael.albinus@gmx.de>
 
 	* automated/file-notify-tests.el

@@ -2330,6 +2330,10 @@ to multibyte for insertion (see `unibyte-char-to-multibyte').
 If the current buffer is unibyte, multibyte strings are converted
 to unibyte for insertion.
 
+If an overlay begins at the insertion point, the inserted text falls
+outside the overlay; if a nonempty overlay ends at the insertion
+point, the inserted text falls inside that overlay.
+
 usage: (insert-before-markers &rest ARGS)  */)
   (ptrdiff_t nargs, Lisp_Object *args)
 {
@@ -2928,7 +2932,7 @@ Both characters must have the same length of multi-byte form.  */)
 	  else if (!changed)
 	    {
 	      changed = -1;
-	      modify_region_1 (pos, XINT (end), false);
+	      modify_text (pos, XINT (end));
 
 	      if (! NILP (noundo))
 		{
@@ -3104,7 +3108,7 @@ It returns the number of characters changed.  */)
   pos = XINT (start);
   pos_byte = CHAR_TO_BYTE (pos);
   end_pos = XINT (end);
-  modify_region_1 (pos, end_pos, false);
+  modify_text (pos, end_pos);
 
   cnt = 0;
   for (; pos < end_pos; )
@@ -4615,7 +4619,7 @@ Transposing beyond buffer boundaries is an error.  */)
 
   if (end1 == start2)		/* adjacent regions */
     {
-      modify_region_1 (start1, end2, false);
+      modify_text (start1, end2);
       record_change (start1, len1 + len2);
 
       tmp_interval1 = copy_intervals (cur_intv, start1, len1);
@@ -4674,8 +4678,8 @@ Transposing beyond buffer boundaries is an error.  */)
         {
 	  USE_SAFE_ALLOCA;
 
-          modify_region_1 (start1, end1, false);
-          modify_region_1 (start2, end2, false);
+          modify_text (start1, end1);
+          modify_text (start2, end2);
           record_change (start1, len1);
           record_change (start2, len2);
           tmp_interval1 = copy_intervals (cur_intv, start1, len1);
@@ -4708,7 +4712,7 @@ Transposing beyond buffer boundaries is an error.  */)
         {
 	  USE_SAFE_ALLOCA;
 
-          modify_region_1 (start1, end2, false);
+          modify_text (start1, end2);
           record_change (start1, (end2 - start1));
           tmp_interval1 = copy_intervals (cur_intv, start1, len1);
           tmp_interval_mid = copy_intervals (cur_intv, end1, len_mid);
@@ -4741,7 +4745,7 @@ Transposing beyond buffer boundaries is an error.  */)
 	  USE_SAFE_ALLOCA;
 
           record_change (start1, (end2 - start1));
-          modify_region_1 (start1, end2, false);
+          modify_text (start1, end2);
 
           tmp_interval1 = copy_intervals (cur_intv, start1, len1);
           tmp_interval_mid = copy_intervals (cur_intv, end1, len_mid);

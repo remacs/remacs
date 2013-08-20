@@ -678,6 +678,51 @@ The return value is BASE-VARIABLE.  */)
   return base_variable;
 }
 
+static union specbinding *
+default_toplevel_binding (Lisp_Object symbol)
+{
+  union specbinding *binding = NULL;
+  union specbinding *pdl = specpdl_ptr;
+  while (pdl > specpdl)
+    {
+      switch ((--pdl)->kind)
+	{
+	case SPECPDL_LET_DEFAULT:
+	case SPECPDL_LET:
+	  if (EQ (specpdl_symbol (pdl), symbol))
+	    binding = pdl;
+	  break;
+	}
+    }
+  return binding;
+}
+
+DEFUN ("default-toplevel-value", Fdefault_toplevel_value, Sdefault_toplevel_value, 1, 1, 0,
+       doc: /* Return SYMBOL's toplevel default value.
+"Toplevel" means outside of any let binding.  */)
+  (Lisp_Object symbol)
+{
+  union specbinding *binding = default_toplevel_binding (symbol);
+  Lisp_Object value
+    = binding ? specpdl_old_value (binding) : Fdefault_value (symbol);
+  if (!EQ (value, Qunbound))
+    return value;
+  xsignal1 (Qvoid_variable, symbol);
+}
+
+DEFUN ("set-default-toplevel-value", Fset_default_toplevel_value,
+       Sset_default_toplevel_value, 2, 2, 0,
+       doc: /* Set SYMBOL's toplevel default value to VALUE.
+"Toplevel" means outside of any let binding.  */)
+     (Lisp_Object symbol, Lisp_Object value)
+{
+  union specbinding *binding = default_toplevel_binding (symbol);
+  if (binding)
+    set_specpdl_old_value (binding, value);
+  else
+    Fset_default (symbol, value);
+  return Qnil;
+}
 
 DEFUN ("defvar", Fdefvar, Sdefvar, 1, UNEVALLED, 0,
        doc: /* Define SYMBOL as a variable, and return SYMBOL.
@@ -726,18 +771,10 @@ usage: (defvar SYMBOL &optional INITVALUE DOCSTRING)  */)
       else
 	{ /* Check if there is really a global binding rather than just a let
 	     binding that shadows the global unboundness of the var.  */
-	  union specbinding *pdl = specpdl_ptr;
-	  while (pdl > specpdl)
+	  union specbinding *binding = default_toplevel_binding (sym);
+	  if (binding && EQ (specpdl_old_value (binding), Qunbound))
 	    {
-	      if ((--pdl)->kind >= SPECPDL_LET
-		  && EQ (specpdl_symbol (pdl), sym)
-		  && EQ (specpdl_old_value (pdl), Qunbound))
-		{
-		  message_with_string
-		    ("Warning: defvar ignored because %s is let-bound",
-		     SYMBOL_NAME (sym), 1);
-		  break;
-		}
+	      set_specpdl_old_value (binding, eval_sub (XCAR (tail)));
 	    }
 	}
       tail = XCDR (tail);
@@ -3325,53 +3362,50 @@ do_one_unbind (union specbinding *this_binding, int unwinding)
   switch (this_binding->kind)
     {
     case SPECPDL_UNWIND:
-      specpdl_ptr->unwind.func (specpdl_ptr->unwind.arg);
+      this_binding->unwind.func (this_binding->unwind.arg);
       break;
     case SPECPDL_UNWIND_PTR:
-      specpdl_ptr->unwind_ptr.func (specpdl_ptr->unwind_ptr.arg);
+      this_binding->unwind_ptr.func (this_binding->unwind_ptr.arg);
       break;
     case SPECPDL_UNWIND_INT:
-      specpdl_ptr->unwind_int.func (specpdl_ptr->unwind_int.arg);
+      this_binding->unwind_int.func (this_binding->unwind_int.arg);
       break;
     case SPECPDL_UNWIND_VOID:
-      specpdl_ptr->unwind_void.func ();
+      this_binding->unwind_void.func ();
       break;
     case SPECPDL_BACKTRACE:
       break;
     case SPECPDL_LET:
-      /* If variable has a trivial value (no forwarding), we can
-	 just set it.  No need to check for constant symbols here,
-	 since that was already done by specbind.  */
-      if (XSYMBOL (specpdl_symbol (this_binding))->redirect
-	  == SYMBOL_PLAINVAL)
-	SET_SYMBOL_VAL (XSYMBOL (specpdl_symbol (this_binding)),
-			specpdl_old_value (this_binding));
-      else
-	/* NOTE: we only ever come here if make_local_foo was used for
-	   the first time on this var within this let.  */
-	Fset_default (specpdl_symbol (this_binding),
-		      specpdl_old_value (this_binding));
+      { /* If variable has a trivial value (no forwarding), we can
+	   just set it.  No need to check for constant symbols here,
+	   since that was already done by specbind.  */
+	struct Lisp_Symbol *sym = XSYMBOL (specpdl_symbol (this_binding));
+	if (sym->redirect == SYMBOL_PLAINVAL)
+	  {
+	    SET_SYMBOL_VAL (sym, specpdl_old_value (this_binding));
+	    break;
+	  }
+	else
+	  { /* FALLTHROUGH!!
+	       NOTE: we only ever come here if make_local_foo was used for
+	       the first time on this var within this let.  */
+	  }
+      }
+    case SPECPDL_LET_DEFAULT:
+      Fset_default (specpdl_symbol (this_binding),
+		    specpdl_old_value (this_binding));
       break;
     case SPECPDL_LET_LOCAL:
-    case SPECPDL_LET_DEFAULT:
-      { /* If the symbol is a list, it is really (SYMBOL WHERE
-	   . CURRENT-BUFFER) where WHERE is either nil, a buffer, or a
-	   frame.  If WHERE is a buffer or frame, this indicates we
-	   bound a variable that had a buffer-local or frame-local
-	   binding.  WHERE nil means that the variable had the default
-	   value when it was bound.  CURRENT-BUFFER is the buffer that
-	   was current when the variable was bound.  */
+      {
 	Lisp_Object symbol = specpdl_symbol (this_binding);
 	Lisp_Object where = specpdl_where (this_binding);
+	Lisp_Object old_value = specpdl_old_value (this_binding);
 	eassert (BUFFERP (where));
 
-	if (this_binding->kind == SPECPDL_LET_DEFAULT)
-	  Fset_default (symbol, specpdl_old_value (this_binding));
 	/* If this was a local binding, reset the value in the appropriate
 	   buffer, but only if that buffer's binding still exists.  */
-	else if (!NILP (Flocal_variable_p (symbol, where)))
-	  set_internal (symbol, specpdl_old_value (this_binding),
-			where, 1);
+	if (!NILP (Flocal_variable_p (symbol, where)))
+	  set_internal (symbol, old_value, where, 1);
       }
       break;
     }
@@ -3404,6 +3438,16 @@ clear_unwind_protect (ptrdiff_t count)
 /* Set the unwind-protect entry COUNT so that it invokes FUNC (ARG).
    It need not be at the top of the stack.  Discard the entry's
    previous value without invoking it.  */
+
+void
+set_unwind_protect (ptrdiff_t count, void (*func) (Lisp_Object),
+		    Lisp_Object arg)
+{
+  union specbinding *p = specpdl + count;
+  p->unwind.kind = SPECPDL_UNWIND;
+  p->unwind.func = func;
+  p->unwind.arg = arg;
+}
 
 void
 set_unwind_protect_ptr (ptrdiff_t count, void (*func) (void *), void *arg)
@@ -3592,7 +3636,7 @@ nearest activation frame.  */)
    directly in the pre-existing specpdl elements (i.e. we swap the current
    value and the old value stored in the specpdl), kind of like the inplace
    pointer-reversal trick.  As it turns out, the rewind does the same as the
-   unwind, except it starts from the other end of the spepdl stack, so we use
+   unwind, except it starts from the other end of the specpdl stack, so we use
    the same function for both unwind and rewind.  */
 static void
 backtrace_eval_unrewind (int distance)
@@ -3622,24 +3666,23 @@ backtrace_eval_unrewind (int distance)
 	case SPECPDL_BACKTRACE:
 	  break;
 	case SPECPDL_LET:
-	  /* If variable has a trivial value (no forwarding), we can
-	     just set it.  No need to check for constant symbols here,
-	     since that was already done by specbind.  */
-	  if (XSYMBOL (specpdl_symbol (tmp))->redirect
-	      == SYMBOL_PLAINVAL)
-	    {
-	      struct Lisp_Symbol *sym = XSYMBOL (specpdl_symbol (tmp));
-	      Lisp_Object old_value = specpdl_old_value (tmp);
-	      set_specpdl_old_value (tmp, SYMBOL_VAL (sym));
-	      SET_SYMBOL_VAL (sym, old_value);
-	      break;
-	    }
-	  else
-	    {
-	      /* FALLTHROUGH!
-		 NOTE: we only ever come here if make_local_foo was used for
-		 the first time on this var within this let.  */
-	    }
+	  { /* If variable has a trivial value (no forwarding), we can
+	       just set it.  No need to check for constant symbols here,
+	       since that was already done by specbind.  */
+	    struct Lisp_Symbol *sym = XSYMBOL (specpdl_symbol (tmp));
+	    if (sym->redirect == SYMBOL_PLAINVAL)
+	      {
+		Lisp_Object old_value = specpdl_old_value (tmp);
+		set_specpdl_old_value (tmp, SYMBOL_VAL (sym));
+		SET_SYMBOL_VAL (sym, old_value);
+		break;
+	      }
+	    else
+	      { /* FALLTHROUGH!!
+		   NOTE: we only ever come here if make_local_foo was used for
+		   the first time on this var within this let.  */
+	      }
+	  }
 	case SPECPDL_LET_DEFAULT:
 	  {
 	    Lisp_Object sym = specpdl_symbol (tmp);
@@ -3908,6 +3951,8 @@ alist of active lexical bindings.  */);
   defsubr (&Ssetq);
   defsubr (&Squote);
   defsubr (&Sfunction);
+  defsubr (&Sdefault_toplevel_value);
+  defsubr (&Sset_default_toplevel_value);
   defsubr (&Sdefvar);
   defsubr (&Sdefvaralias);
   defsubr (&Sdefconst);

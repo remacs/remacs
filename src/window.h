@@ -141,31 +141,9 @@ struct window
        it yet, or if the frame doesn't have any scroll bars, this is nil.  */
     Lisp_Object vertical_scroll_bar;
 
-    /* Width of left and right marginal areas.  A value of nil means
-       no margin.  */
-    Lisp_Object left_margin_cols;
-    Lisp_Object right_margin_cols;
-
-    /* Width of left and right fringes.
-       A value of nil or t means use frame values.  */
-    Lisp_Object left_fringe_width;
-    Lisp_Object right_fringe_width;
-
-    /* Pixel width of scroll bars.
-       A value of nil or t means use frame values.  */
-    Lisp_Object scroll_bar_width;
-
     /* Type of vertical scroll bar.  A value of nil means
        no scroll bar.  A value of t means use frame value.  */
     Lisp_Object vertical_scroll_bar_type;
-
-    /* Z - the buffer position of the last glyph in the current
-       matrix of W.  Only valid if window_end_valid is nonzero.  */
-    Lisp_Object window_end_pos;
-
-    /* Glyph matrix row of the last glyph in the current matrix
-       of W.  Only valid if window_end_valid is nonzero.  */
-    Lisp_Object window_end_vpos;
 
     /* Display-table to use for displaying chars in this window.
        Nil means use the buffer's own display-table.  */
@@ -269,6 +247,28 @@ struct window
     /* This is handy for undrawing the cursor.  */
     int phys_cursor_ascent, phys_cursor_height;
 
+    /* Width of left and right fringes, in pixels.
+       A value of -1 means use frame values.  */
+    int left_fringe_width;
+    int right_fringe_width;
+
+    /* Width of left and right marginal areas in columns.
+       A value of 0 means no margin.  */
+    int left_margin_cols;
+    int right_margin_cols;
+
+    /* Pixel width of scroll bars.
+       A value of -1 means use frame values.  */
+    int scroll_bar_width;
+
+    /* Z - the buffer position of the last glyph in the current
+       matrix of W.  Only valid if window_end_valid is nonzero.  */
+    ptrdiff_t window_end_pos;
+
+    /* Glyph matrix row of the last glyph in the current matrix
+       of W.  Only valid if window_end_valid is nonzero.  */
+    int window_end_vpos;
+
     /* Non-zero if this window is a minibuffer window.  */
     unsigned mini : 1;
 
@@ -315,11 +315,6 @@ struct window
     /* Flag indicating that this window is not a real one.
        Currently only used for menu bar windows of frames.  */
     unsigned pseudo_window_p : 1;
-
-    /* 1 means the window start of this window is frozen and may not
-       be changed during redisplay.  If point is not in the window,
-       accept that.  */
-    unsigned frozen_window_start_p : 1;
 
     /* Non-zero means fringes are drawn outside display margins.
        Otherwise draw them between margin areas and text.  */
@@ -369,16 +364,6 @@ WINDOW_INLINE void
 wset_vertical_scroll_bar (struct window *w, Lisp_Object val)
 {
   w->vertical_scroll_bar = val;
-}
-WINDOW_INLINE void
-wset_window_end_pos (struct window *w, Lisp_Object val)
-{
-  w->window_end_pos = val;
-}
-WINDOW_INLINE void
-wset_window_end_vpos (struct window *w, Lisp_Object val)
-{
-  w->window_end_vpos = val;
 }
 WINDOW_INLINE void
 wset_prev_buffers (struct window *w, Lisp_Object val)
@@ -605,33 +590,21 @@ wset_next_buffers (struct window *w, Lisp_Object val)
 
 /* Width of left margin area in columns.  */
 
-#define WINDOW_LEFT_MARGIN_COLS(W)	\
-  (NILP (W->left_margin_cols)		\
-   ? 0					\
-   : XINT (W->left_margin_cols))
+#define WINDOW_LEFT_MARGIN_COLS(W) (W->left_margin_cols)
 
 /* Width of right marginal area in columns.  */
 
-#define WINDOW_RIGHT_MARGIN_COLS(W)	\
-  (NILP (W->right_margin_cols)		\
-   ? 0					\
-   : XINT (W->right_margin_cols))
+#define WINDOW_RIGHT_MARGIN_COLS(W) (W->right_margin_cols)
 
 /* Width of left margin area in pixels.  */
 
-#define WINDOW_LEFT_MARGIN_WIDTH(W)	\
-  (NILP (W->left_margin_cols)		\
-   ? 0					\
-   : (XINT (W->left_margin_cols)	\
-      * WINDOW_FRAME_COLUMN_WIDTH (W)))
+#define WINDOW_LEFT_MARGIN_WIDTH(W)			\
+  (W->left_margin_cols * WINDOW_FRAME_COLUMN_WIDTH (W))
 
 /* Width of right marginal area in pixels.  */
 
-#define WINDOW_RIGHT_MARGIN_WIDTH(W)	\
-  (NILP (W->right_margin_cols)		\
-   ? 0					\
-   : (XINT (W->right_margin_cols)	\
-      * WINDOW_FRAME_COLUMN_WIDTH (W)))
+#define WINDOW_RIGHT_MARGIN_WIDTH(W)			\
+  (W->right_margin_cols * WINDOW_FRAME_COLUMN_WIDTH (W))
 
 /* Total width of fringes reserved for drawing truncation bitmaps,
    continuation bitmaps and alike.  The width is in canonical char
@@ -640,10 +613,10 @@ wset_next_buffers (struct window *w, Lisp_Object val)
    able to split windows horizontally nicely.  */
 
 #define WINDOW_FRINGE_COLS(W)			\
-  ((INTEGERP (W->left_fringe_width)		\
-    || INTEGERP (W->right_fringe_width))	\
-   ? ((WINDOW_LEFT_FRINGE_WIDTH (W)		\
-       + WINDOW_RIGHT_FRINGE_WIDTH (W)		\
+  ((W->left_fringe_width >= 0			\
+    && W->right_fringe_width >= 0)		\
+   ? ((W->left_fringe_width			\
+       + W->right_fringe_width			\
        + WINDOW_FRAME_COLUMN_WIDTH (W) - 1)	\
       / WINDOW_FRAME_COLUMN_WIDTH (W))		\
    : FRAME_FRINGE_COLS (WINDOW_XFRAME (W)))
@@ -663,13 +636,11 @@ wset_next_buffers (struct window *w, Lisp_Object val)
 /* Pixel-width of the left and right fringe.  */
 
 #define WINDOW_LEFT_FRINGE_WIDTH(W)			\
-  (INTEGERP (W->left_fringe_width)			\
-   ? XFASTINT (W->left_fringe_width)			\
+  (W->left_fringe_width >= 0 ? W->left_fringe_width	\
    : FRAME_LEFT_FRINGE_WIDTH (WINDOW_XFRAME (W)))
 
 #define WINDOW_RIGHT_FRINGE_WIDTH(W)			\
-  (INTEGERP (W->right_fringe_width)			\
-   ? XFASTINT (W->right_fringe_width)			\
+  (W->right_fringe_width >= 0 ? W->right_fringe_width	\
    : FRAME_RIGHT_FRINGE_WIDTH (WINDOW_XFRAME (W)))
 
 /* Total width of fringes in pixels.  */
@@ -714,8 +685,7 @@ wset_next_buffers (struct window *w, Lisp_Object val)
    nonzero.  */
 
 #define WINDOW_CONFIG_SCROLL_BAR_WIDTH(w)		\
-  (INTEGERP (w->scroll_bar_width)			\
-   ? XFASTINT (w->scroll_bar_width)			\
+  (w->scroll_bar_width >= 0 ? w->scroll_bar_width	\
    : FRAME_CONFIG_SCROLL_BAR_WIDTH (WINDOW_XFRAME (w)))
 
 /* Width that a scroll bar in window W should have, if there is one.
@@ -723,8 +693,8 @@ wset_next_buffers (struct window *w, Lisp_Object val)
    this is still nonzero.  */
 
 #define WINDOW_CONFIG_SCROLL_BAR_COLS(w)		\
-  (INTEGERP (w->scroll_bar_width)			\
-   ? ((XFASTINT (w->scroll_bar_width)			\
+  (w->scroll_bar_width >= 0				\
+   ? ((w->scroll_bar_width				\
        + WINDOW_FRAME_COLUMN_WIDTH (w) - 1)		\
       / WINDOW_FRAME_COLUMN_WIDTH (w))			\
    : FRAME_CONFIG_SCROLL_BAR_COLS (WINDOW_XFRAME (w)))
@@ -847,13 +817,25 @@ wset_next_buffers (struct window *w, Lisp_Object val)
 #define WINDOW_TEXT_TO_FRAME_PIXEL_X(W, X)	\
   (window_box_left ((W), TEXT_AREA) + (X))
 
-/* This is the window in which the terminal's cursor should
-   be left when nothing is being done with it.  This must
-   always be a leaf window, and its buffer is selected by
-   the top level editing loop at the end of each command.
+/* Nonzero if the background of the window W's fringe that is adjacent to
+   a scroll bar is extended to the gap between the fringe and the bar.  */
 
-   This value is always the same as
-    FRAME_SELECTED_WINDOW (selected_frame).  */
+#define WINDOW_FRINGE_EXTENDED_P(w)			\
+  (WINDOW_HAS_VERTICAL_SCROLL_BAR_ON_LEFT (w)		\
+   ? (WINDOW_LEFTMOST_P (w)				\
+      && WINDOW_LEFT_FRINGE_WIDTH (w)			\
+      && (WINDOW_HAS_FRINGES_OUTSIDE_MARGINS (w)	\
+	  || WINDOW_LEFT_MARGIN_COLS (w) == 0))		\
+   : (WINDOW_RIGHTMOST_P (w)				\
+      && WINDOW_RIGHT_FRINGE_WIDTH (w)			\
+      && (WINDOW_HAS_FRINGES_OUTSIDE_MARGINS (w)	\
+	  || WINDOW_RIGHT_MARGIN_COLS (w) == 0)))
+
+/* This is the window in which the terminal's cursor should be left when
+   nothing is being done with it.  This must always be a leaf window, and its
+   buffer is selected by the top level editing loop at the end of each command.
+
+   This value is always the same as FRAME_SELECTED_WINDOW (selected_frame).  */
 
 extern Lisp_Object selected_window;
 
@@ -888,7 +870,6 @@ extern Lisp_Object window_from_coordinates (struct frame *, int, int,
 extern void resize_frame_windows (struct frame *, int, bool);
 extern void restore_window_configuration (Lisp_Object);
 extern void delete_all_child_windows (Lisp_Object);
-extern void freeze_window_starts (struct frame *, bool);
 extern void grow_mini_window (struct window *, int);
 extern void shrink_mini_window (struct window *);
 extern int window_relative_x_coord (struct window *, enum window_part, int);
@@ -924,10 +905,6 @@ extern int update_mode_lines;
    redisplay that finished.  */
 
 extern int windows_or_buffers_changed;
-
-/* Nonzero means a frame's cursor type has been changed.  */
-
-extern int cursor_type_changed;
 
 /* If *ROWS or *COLS are too small a size for FRAME, set them to the
    minimum allowable size.  */
@@ -973,6 +950,7 @@ extern void replace_buffer_in_windows (Lisp_Object);
 extern void replace_buffer_in_windows_safely (Lisp_Object);
 /* This looks like a setter, but it is a bit special.  */
 extern void wset_buffer (struct window *, Lisp_Object);
+extern bool window_outdated (struct window *);
 extern void init_window_once (void);
 extern void init_window (void);
 extern void syms_of_window (void);

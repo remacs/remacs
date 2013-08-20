@@ -775,6 +775,7 @@ extern Lisp_Object Qarrayp, Qbufferp, Qbuffer_or_string_p, Qchar_table_p;
 extern Lisp_Object Qconsp, Qfloatp, Qintegerp, Qlambda, Qlistp, Qmarkerp, Qnil;
 extern Lisp_Object Qnumberp, Qstringp, Qsymbolp, Qvectorp;
 extern Lisp_Object Qvector_or_char_table_p, Qwholenump;
+extern Lisp_Object Qwindow;
 extern Lisp_Object Ffboundp (Lisp_Object);
 extern _Noreturn Lisp_Object wrong_type_argument (Lisp_Object, Lisp_Object);
 
@@ -3371,6 +3372,7 @@ extern struct hash_table_test hashtest_eql, hashtest_equal;
 
 extern Lisp_Object substring_both (Lisp_Object, ptrdiff_t, ptrdiff_t,
 				   ptrdiff_t, ptrdiff_t);
+extern Lisp_Object merge (Lisp_Object, Lisp_Object, Lisp_Object);
 extern Lisp_Object do_yes_or_no_p (Lisp_Object);
 extern Lisp_Object concat2 (Lisp_Object, Lisp_Object);
 extern Lisp_Object concat3 (Lisp_Object, Lisp_Object, Lisp_Object);
@@ -3437,8 +3439,9 @@ extern void del_range_byte (ptrdiff_t, ptrdiff_t, bool);
 extern void del_range_both (ptrdiff_t, ptrdiff_t, ptrdiff_t, ptrdiff_t, bool);
 extern Lisp_Object del_range_2 (ptrdiff_t, ptrdiff_t,
 				ptrdiff_t, ptrdiff_t, bool);
-extern void modify_region_1 (ptrdiff_t, ptrdiff_t, bool);
+extern void modify_text (ptrdiff_t, ptrdiff_t);
 extern void prepare_to_modify_buffer (ptrdiff_t, ptrdiff_t, ptrdiff_t *);
+extern void prepare_to_modify_buffer_1 (ptrdiff_t, ptrdiff_t, ptrdiff_t *);
 extern void signal_after_change (ptrdiff_t, ptrdiff_t, ptrdiff_t);
 extern void adjust_after_insert (ptrdiff_t, ptrdiff_t, ptrdiff_t,
 				 ptrdiff_t, ptrdiff_t);
@@ -3816,11 +3819,12 @@ extern Lisp_Object internal_condition_case_n
      Lisp_Object, Lisp_Object (*) (Lisp_Object, ptrdiff_t, Lisp_Object *));
 extern void specbind (Lisp_Object, Lisp_Object);
 extern void record_unwind_protect (void (*) (Lisp_Object), Lisp_Object);
-extern void record_unwind_protect_int (void (*) (int), int);
 extern void record_unwind_protect_ptr (void (*) (void *), void *);
+extern void record_unwind_protect_int (void (*) (int), int);
 extern void record_unwind_protect_void (void (*) (void));
 extern void record_unwind_protect_nothing (void);
 extern void clear_unwind_protect (ptrdiff_t);
+extern void set_unwind_protect (ptrdiff_t, void (*) (Lisp_Object), Lisp_Object);
 extern void set_unwind_protect_ptr (ptrdiff_t, void (*) (void *), void *);
 extern Lisp_Object unbind_to (ptrdiff_t, Lisp_Object);
 extern void rebind_for_thread_switch (void);
@@ -3874,9 +3878,7 @@ extern void fix_start_end_in_overlays (ptrdiff_t, ptrdiff_t);
 extern void report_overlay_modification (Lisp_Object, Lisp_Object, bool,
                                          Lisp_Object, Lisp_Object, Lisp_Object);
 extern bool overlay_touches_p (ptrdiff_t);
-extern Lisp_Object Vbuffer_alist;
 extern Lisp_Object other_buffer_safely (Lisp_Object);
-extern Lisp_Object Qpriority, Qwindow, Qbefore_string, Qafter_string;
 extern Lisp_Object get_truename_buffer (Lisp_Object);
 extern void init_buffer_once (void);
 extern void init_buffer (void);
@@ -3907,6 +3909,9 @@ extern Lisp_Object Qfile_directory_p;
 extern Lisp_Object Qinsert_file_contents;
 extern Lisp_Object Qfile_name_history;
 extern Lisp_Object expand_and_dir_to_file (Lisp_Object, Lisp_Object);
+extern Lisp_Object write_region (Lisp_Object, Lisp_Object, Lisp_Object,
+				 Lisp_Object, Lisp_Object, Lisp_Object,
+				 Lisp_Object, int);
 EXFUN (Fread_file_name, 6);     /* Not a normal DEFUN.  */
 extern void close_file_unwind (int);
 extern void fclose_unwind (void *);
@@ -4289,6 +4294,11 @@ extern void syms_of_xml (void);
 extern void xml_cleanup_parser (void);
 #endif
 
+#ifdef HAVE_ZLIB
+/* Defined in decompress.c.  */
+extern void syms_of_decompress (void);
+#endif
+
 #ifdef HAVE_DBUS
 /* Defined in dbusbind.c.  */
 void syms_of_dbusbind (void);
@@ -4322,9 +4332,16 @@ extern void *xnrealloc (void *, ptrdiff_t, ptrdiff_t);
 extern void *xpalloc (void *, ptrdiff_t *, ptrdiff_t, ptrdiff_t, ptrdiff_t);
 
 extern char *xstrdup (const char *);
+extern char *xlispstrdup (Lisp_Object);
 extern void xputenv (const char *);
 
 extern char *egetenv (const char *);
+
+/* Copy Lisp string to temporary (allocated on stack) C string.  */
+
+#define xlispstrdupa(string)			\
+  memcpy (alloca (SBYTES (string) + 1),		\
+	  SSDATA (string), SBYTES (string) + 1)
 
 /* Set up the name of the machine we're running on.  */
 extern void init_system_name (void);
@@ -4402,6 +4419,12 @@ extern void *record_xmalloc (size_t);
       memory_full (SIZE_MAX);				       \
   } while (0)
 
+/* Do a `for' loop over alist values.  */
+
+#define FOR_EACH_ALIST_VALUE(head_var, list_var, value_var)		\
+  for (list_var = head_var;						\
+       (CONSP (list_var) && (value_var = XCDR (XCAR (list_var)), 1));	\
+       list_var = XCDR (list_var))
 
 /* Check whether it's time for GC, and run it if so.  */
 

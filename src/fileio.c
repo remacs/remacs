@@ -366,8 +366,7 @@ Given a Unix syntax file name, returns a string ending in slash.  */)
     }
 
 #ifdef DOS_NT
-  beg = alloca (SBYTES (filename) + 1);
-  memcpy (beg, SSDATA (filename), SBYTES (filename) + 1);
+  beg = xlispstrdupa (filename);
 #else
   beg = SSDATA (filename);
 #endif
@@ -944,8 +943,7 @@ filesystem tree, not (expand-file-name ".."  dirname).  */)
 #endif
 
   /* Make a local copy of nm[] to protect it from GC in DECODE_FILE below.  */
-  nm = alloca (SBYTES (name) + 1);
-  memcpy (nm, SSDATA (name), SBYTES (name) + 1);
+  nm = xlispstrdupa (name);
 
 #ifdef DOS_NT
   /* Note if special escape prefix is present, but remove for now.  */
@@ -1693,8 +1691,7 @@ those `/' is discarded.  */)
   /* Always work on a copy of the string, in case GC happens during
      decode of environment variables, causing the original Lisp_String
      data to be relocated.  */
-  nm = alloca (SBYTES (filename) + 1);
-  memcpy (nm, SDATA (filename), SBYTES (filename) + 1);
+  nm = xlispstrdupa (filename);
 
 #ifdef DOS_NT
   dostounix_filename (nm, multibyte);
@@ -4746,25 +4743,39 @@ This does code conversion according to the value of
 
 This calls `write-region-annotate-functions' at the start, and
 `write-region-post-annotation-function' at the end.  */)
-  (Lisp_Object start, Lisp_Object end, Lisp_Object filename, Lisp_Object append, Lisp_Object visit, Lisp_Object lockname, Lisp_Object mustbenew)
+  (Lisp_Object start, Lisp_Object end, Lisp_Object filename, Lisp_Object append,
+   Lisp_Object visit, Lisp_Object lockname, Lisp_Object mustbenew)
 {
-  int desc;
+  return write_region (start, end, filename, append, visit, lockname, mustbenew,
+		       -1);
+}
+
+/* Like Fwrite_region, except that if DESC is nonnegative, it is a file
+   descriptor for FILENAME, so do not open or close FILENAME.  */
+
+Lisp_Object
+write_region (Lisp_Object start, Lisp_Object end, Lisp_Object filename,
+	      Lisp_Object append, Lisp_Object visit, Lisp_Object lockname,
+	      Lisp_Object mustbenew, int desc)
+{
   int open_flags;
   int mode;
   off_t offset IF_LINT (= 0);
+  bool open_and_close_file = desc < 0;
   bool ok;
   int save_errno = 0;
   const char *fn;
   struct stat st;
   EMACS_TIME modtime;
   ptrdiff_t count = SPECPDL_INDEX ();
-  ptrdiff_t count1;
+  ptrdiff_t count1 IF_LINT (= 0);
   Lisp_Object handler;
   Lisp_Object visit_file;
   Lisp_Object annotations;
   Lisp_Object encoded_filename;
   bool visiting = (EQ (visit, Qt) || STRINGP (visit));
   bool quietly = !NILP (visit);
+  bool file_locked = 0;
   struct gcpro gcpro1, gcpro2, gcpro3, gcpro4, gcpro5;
   struct buffer *given_buffer;
   struct coding_system coding;
@@ -4832,7 +4843,6 @@ This calls `write-region-annotate-functions' at the start, and
   record_unwind_protect (build_annotations_unwind,
 			 Vwrite_region_annotation_buffers);
   Vwrite_region_annotation_buffers = list1 (Fcurrent_buffer ());
-  count1 = SPECPDL_INDEX ();
 
   given_buffer = current_buffer;
 
@@ -4871,8 +4881,11 @@ This calls `write-region-annotate-functions' at the start, and
     coding.mode |= CODING_MODE_SELECTIVE_DISPLAY;
 
 #ifdef CLASH_DETECTION
-  if (!auto_saving)
-    lock_file (lockname);
+  if (open_and_close_file && !auto_saving)
+    {
+      lock_file (lockname);
+      file_locked = 1;
+    }
 #endif /* CLASH_DETECTION */
 
   encoded_filename = ENCODE_FILE (filename);
@@ -4889,19 +4902,23 @@ This calls `write-region-annotate-functions' at the start, and
   mode = auto_saving ? auto_save_mode_bits : 0666;
 #endif
 
-  desc = emacs_open (fn, open_flags, mode);
-
-  if (desc < 0)
+  if (open_and_close_file)
     {
-      int open_errno = errno;
+      desc = emacs_open (fn, open_flags, mode);
+      if (desc < 0)
+	{
+	  int open_errno = errno;
 #ifdef CLASH_DETECTION
-      if (!auto_saving) unlock_file (lockname);
+	  if (file_locked)
+	    unlock_file (lockname);
 #endif /* CLASH_DETECTION */
-      UNGCPRO;
-      report_file_errno ("Opening output file", filename, open_errno);
-    }
+	  UNGCPRO;
+	  report_file_errno ("Opening output file", filename, open_errno);
+	}
 
-  record_unwind_protect_int (close_file_unwind, desc);
+      count1 = SPECPDL_INDEX ();
+      record_unwind_protect_int (close_file_unwind, desc);
+    }
 
   if (NUMBERP (append))
     {
@@ -4910,7 +4927,8 @@ This calls `write-region-annotate-functions' at the start, and
 	{
 	  int lseek_errno = errno;
 #ifdef CLASH_DETECTION
-	  if (!auto_saving) unlock_file (lockname);
+	  if (file_locked)
+	    unlock_file (lockname);
 #endif /* CLASH_DETECTION */
 	  UNGCPRO;
 	  report_file_errno ("Lseek error", filename, lseek_errno);
@@ -4945,9 +4963,9 @@ This calls `write-region-annotate-functions' at the start, and
 
   immediate_quit = 0;
 
-  /* fsync is not crucial for auto-save files, since they might lose
-     some work anyway.  */
-  if (!auto_saving && !write_region_inhibit_fsync)
+  /* fsync is not crucial for temporary files.  Nor for auto-save
+     files, since they might lose some work anyway.  */
+  if (open_and_close_file && !auto_saving && !write_region_inhibit_fsync)
     {
       /* Transfer data and metadata to disk, retrying if interrupted.
 	 fsync can report a write failure here, e.g., due to disk full
@@ -4971,12 +4989,15 @@ This calls `write-region-annotate-functions' at the start, and
 	ok = 0, save_errno = errno;
     }
 
-  /* NFS can report a write failure now.  */
-  if (emacs_close (desc) < 0)
-    ok = 0, save_errno = errno;
+  if (open_and_close_file)
+    {
+      /* NFS can report a write failure now.  */
+      if (emacs_close (desc) < 0)
+	ok = 0, save_errno = errno;
 
-  /* Discard the unwind protect for close_file_unwind.  */
-  specpdl_ptr = specpdl + count1;
+      /* Discard the unwind protect for close_file_unwind.  */
+      specpdl_ptr = specpdl + count1;
+    }
 
   /* Some file systems have a bug where st_mtime is not updated
      properly after a write.  For example, CIFS might not see the
@@ -5052,7 +5073,7 @@ This calls `write-region-annotate-functions' at the start, and
   unbind_to (count, Qnil);
 
 #ifdef CLASH_DETECTION
-  if (!auto_saving)
+  if (file_locked)
     unlock_file (lockname);
 #endif /* CLASH_DETECTION */
 
@@ -5096,8 +5117,6 @@ This calls `write-region-annotate-functions' at the start, and
   return Qnil;
 }
 
-Lisp_Object merge (Lisp_Object, Lisp_Object, Lisp_Object);
-
 DEFUN ("car-less-than-car", Fcar_less_than_car, Scar_less_than_car, 2, 2, 0,
        doc: /* Return t if (car A) is numerically less than (car B).  */)
   (Lisp_Object a, Lisp_Object b)
@@ -5620,9 +5639,8 @@ A non-nil CURRENT-ONLY argument means save only current buffer.  */)
      couldn't handle some ange-ftp'd file.  */
 
   for (do_handled_files = 0; do_handled_files < 2; do_handled_files++)
-    for (tail = Vbuffer_alist; CONSP (tail); tail = XCDR (tail))
+    FOR_EACH_LIVE_BUFFER (tail, buf)
       {
-	buf = XCDR (XCAR (tail));
 	b = XBUFFER (buf);
 
 	/* Record all the buffers that have auto save mode

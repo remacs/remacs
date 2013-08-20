@@ -106,9 +106,9 @@ static void call_overlay_mod_hooks (Lisp_Object list, Lisp_Object overlay,
 static void swap_out_buffer_local_variables (struct buffer *b);
 static void reset_buffer_local_variables (struct buffer *, bool);
 
-/* Alist of all buffer names vs the buffers.  */
-/* This used to be a variable, but is no longer,
- to prevent lossage due to user rplac'ing this alist or its elements.  */
+/* Alist of all buffer names vs the buffers.  This used to be
+   a Lisp-visible variable, but is no longer, to prevent lossage
+   due to user rplac'ing this alist or its elements.  */
 Lisp_Object Vbuffer_alist;
 
 static Lisp_Object Qkill_buffer_query_functions;
@@ -201,9 +201,9 @@ bset_buffer_file_coding_system (struct buffer *b, Lisp_Object val)
   b->INTERNAL_FIELD (buffer_file_coding_system) = val;
 }
 static void
-bset_cache_long_line_scans (struct buffer *b, Lisp_Object val)
+bset_cache_long_scans (struct buffer *b, Lisp_Object val)
 {
-  b->INTERNAL_FIELD (cache_long_line_scans) = val;
+  b->INTERNAL_FIELD (cache_long_scans) = val;
 }
 static void
 bset_case_fold_search (struct buffer *b, Lisp_Object val)
@@ -476,8 +476,7 @@ If there is no such live buffer, return nil.
 See also `find-buffer-visiting'.  */)
   (register Lisp_Object filename)
 {
-  register Lisp_Object tail, buf, tem;
-  Lisp_Object handler;
+  register Lisp_Object tail, buf, handler;
 
   CHECK_STRING (filename);
   filename = Fexpand_file_name (filename, Qnil);
@@ -492,13 +491,10 @@ See also `find-buffer-visiting'.  */)
       return BUFFERP (handled_buf) ? handled_buf : Qnil;
     }
 
-  for (tail = Vbuffer_alist; CONSP (tail); tail = XCDR (tail))
+  FOR_EACH_LIVE_BUFFER (tail, buf)
     {
-      buf = Fcdr (XCAR (tail));
-      if (!BUFFERP (buf)) continue;
       if (!STRINGP (BVAR (XBUFFER (buf), filename))) continue;
-      tem = Fstring_equal (BVAR (XBUFFER (buf), filename), filename);
-      if (!NILP (tem))
+      if (!NILP (Fstring_equal (BVAR (XBUFFER (buf), filename), filename)))
 	return buf;
     }
   return Qnil;
@@ -507,15 +503,12 @@ See also `find-buffer-visiting'.  */)
 Lisp_Object
 get_truename_buffer (register Lisp_Object filename)
 {
-  register Lisp_Object tail, buf, tem;
+  register Lisp_Object tail, buf;
 
-  for (tail = Vbuffer_alist; CONSP (tail); tail = XCDR (tail))
+  FOR_EACH_LIVE_BUFFER (tail, buf)
     {
-      buf = Fcdr (XCAR (tail));
-      if (!BUFFERP (buf)) continue;
       if (!STRINGP (BVAR (XBUFFER (buf), file_truename))) continue;
-      tem = Fstring_equal (BVAR (XBUFFER (buf), file_truename), filename);
-      if (!NILP (tem))
+      if (!NILP (Fstring_equal (BVAR (XBUFFER (buf), file_truename), filename)))
 	return buf;
     }
   return Qnil;
@@ -588,6 +581,7 @@ even if it is dead.  The return value is never nil.  */)
 
   b->newline_cache = 0;
   b->width_run_cache = 0;
+  b->bidi_paragraph_cache = 0;
   bset_width_table (b, Qnil);
   b->prevent_redisplay_optimizations_p = 1;
 
@@ -811,6 +805,7 @@ CLONE nil means the indirect buffer's state is reset to default values.  */)
 
   b->newline_cache = 0;
   b->width_run_cache = 0;
+  b->bidi_paragraph_cache = 0;
   bset_width_table (b, Qnil);
 
   name = Fcopy_sequence (name);
@@ -1579,10 +1574,8 @@ exists, return the buffer `*scratch*' (creating it if necessary).  */)
     }
 
   /* Consider alist of all buffers next.  */
-  tail = Vbuffer_alist;
-  for (; CONSP (tail); tail = XCDR (tail))
+  FOR_EACH_LIVE_BUFFER (tail, buf)
     {
-      buf = Fcdr (XCAR (tail));
       if (candidate_buffer (buf, buffer)
 	  /* If the frame has a buffer_predicate, disregard buffers that
 	     don't fit the predicate.  */
@@ -1619,12 +1612,9 @@ other_buffer_safely (Lisp_Object buffer)
 {
   Lisp_Object tail, buf;
 
-  for (tail = Vbuffer_alist; CONSP (tail); tail = XCDR (tail))
-    {
-      buf = Fcdr (XCAR (tail));
-      if (candidate_buffer (buf, buffer))
-	return buf;
-    }
+  FOR_EACH_LIVE_BUFFER (tail, buf)
+    if (candidate_buffer (buf, buffer))
+      return buf;
 
   buf = Fget_buffer (build_string ("*scratch*"));
   if (NILP (buf))
@@ -1957,6 +1947,11 @@ cleaning up all windows currently displaying the buffer to be killed. */)
     {
       free_region_cache (b->width_run_cache);
       b->width_run_cache = 0;
+    }
+  if (b->bidi_paragraph_cache)
+    {
+      free_region_cache (b->bidi_paragraph_cache);
+      b->bidi_paragraph_cache = 0;
     }
   bset_width_table (b, Qnil);
   unblock_input ();
@@ -2368,6 +2363,7 @@ DEFUN ("buffer-swap-text", Fbuffer_swap_text, Sbuffer_swap_text,
   current_buffer->clip_changed = 1;	other_buffer->clip_changed = 1;
   swapfield (newline_cache, struct region_cache *);
   swapfield (width_run_cache, struct region_cache *);
+  swapfield (bidi_paragraph_cache, struct region_cache *);
   current_buffer->prevent_redisplay_optimizations_p = 1;
   other_buffer->prevent_redisplay_optimizations_p = 1;
   swapfield (overlays_before, struct Lisp_Overlay *);
@@ -2414,7 +2410,7 @@ DEFUN ("buffer-swap-text", Fbuffer_swap_text, Sbuffer_swap_text,
        live window points to that window's buffer.  So since we
        just swapped the markers between the two buffers, we need
        to undo the effect of this swap for window markers.  */
-    Lisp_Object w = Fselected_window (), ws = Qnil;
+    Lisp_Object w = selected_window, ws = Qnil;
     Lisp_Object buf1, buf2;
     XSETBUFFER (buf1, current_buffer); XSETBUFFER (buf2, other_buffer);
 
@@ -3151,8 +3147,8 @@ struct sortvec
 static int
 compare_overlays (const void *v1, const void *v2)
 {
-  const struct sortvec *s1 = (const struct sortvec *) v1;
-  const struct sortvec *s2 = (const struct sortvec *) v2;
+  const struct sortvec *s1 = v1;
+  const struct sortvec *s2 = v2;
   if (s1->priority != s2->priority)
     return s1->priority < s2->priority ? -1 : 1;
   if (s1->beg != s2->beg)
@@ -3258,8 +3254,8 @@ static ptrdiff_t overlay_str_len;
 static int
 cmp_for_strings (const void *as1, const void *as2)
 {
-  struct sortstr *s1 = (struct sortstr *)as1;
-  struct sortstr *s2 = (struct sortstr *)as2;
+  struct sortstr const *s1 = as1;
+  struct sortstr const *s2 = as2;
   if (s1->size != s2->size)
     return s2->size < s1->size ? -1 : 1;
   if (s1->priority != s2->priority)
@@ -4757,7 +4753,7 @@ static struct mmap_region *
 mmap_find (void *start, void *end)
 {
   struct mmap_region *r;
-  char *s = (char *) start, *e = (char *) end;
+  char *s = start, *e = end;
 
   for (r = mmap_regions; r; r = r->next)
     {
@@ -4916,7 +4912,7 @@ mmap_alloc (void **var, size_t nbytes)
     }
   else
     {
-      struct mmap_region *r = (struct mmap_region *) p;
+      struct mmap_region *r = p;
 
       r->nbytes_specified = nbytes;
       r->nbytes_mapped = map;
@@ -5056,7 +5052,7 @@ alloc_buffer_text (struct buffer *b, ptrdiff_t nbytes)
       memory_full (nbytes);
     }
 
-  b->text->beg = (unsigned char *) p;
+  b->text->beg = p;
   unblock_input ();
 }
 
@@ -5084,7 +5080,7 @@ enlarge_buffer_text (struct buffer *b, ptrdiff_t delta)
       memory_full (nbytes);
     }
 
-  BUF_BEG_ADDR (b) = (unsigned char *) p;
+  BUF_BEG_ADDR (b) = p;
   unblock_input ();
 }
 
@@ -5182,7 +5178,7 @@ init_buffer_once (void)
   bset_buffer_file_coding_system (&buffer_defaults, Qnil);
   XSETFASTINT (BVAR (&buffer_defaults, fill_column), 70);
   XSETFASTINT (BVAR (&buffer_defaults, left_margin), 0);
-  bset_cache_long_line_scans (&buffer_defaults, Qnil);
+  bset_cache_long_scans (&buffer_defaults, Qnil);
   bset_file_truename (&buffer_defaults, Qnil);
   XSETFASTINT (BVAR (&buffer_defaults, display_count), 0);
   XSETFASTINT (BVAR (&buffer_defaults, left_margin_cols), 0);
@@ -5246,7 +5242,7 @@ init_buffer_once (void)
   XSETFASTINT (BVAR (&buffer_local_flags, abbrev_table), idx); ++idx;
   XSETFASTINT (BVAR (&buffer_local_flags, display_table), idx); ++idx;
   XSETFASTINT (BVAR (&buffer_local_flags, syntax_table), idx); ++idx;
-  XSETFASTINT (BVAR (&buffer_local_flags, cache_long_line_scans), idx); ++idx;
+  XSETFASTINT (BVAR (&buffer_local_flags, cache_long_scans), idx); ++idx;
   XSETFASTINT (BVAR (&buffer_local_flags, category_table), idx); ++idx;
   XSETFASTINT (BVAR (&buffer_local_flags, bidi_display_reordering), idx); ++idx;
   XSETFASTINT (BVAR (&buffer_local_flags, bidi_paragraph_direction), idx); ++idx;
@@ -5402,11 +5398,7 @@ defvar_per_buffer (struct Lisp_Buffer_Objfwd *bo_fwd, const char *namestring,
   bo_fwd->predicate = predicate;
   sym->declared_special = 1;
   sym->redirect = SYMBOL_FORWARDED;
-  {
-    /* I tried to do the job without a cast, but it seems impossible.
-       union Lisp_Fwd *fwd; &(fwd->u_buffer_objfwd) = bo_fwd;  */
-    SET_SYMBOL_FWD (sym, (union Lisp_Fwd *)bo_fwd);
-  }
+  SET_SYMBOL_FWD (sym, (union Lisp_Fwd *) bo_fwd);
   XSETSYMBOL (PER_BUFFER_SYMBOL (offset), sym);
 
   if (PER_BUFFER_IDX (offset) == 0)
@@ -6115,7 +6107,7 @@ An entry (apply FUN-NAME . ARGS) means undo the change with
 
 An entry (apply DELTA BEG END FUN-NAME . ARGS) supports selective undo
 in the active region.  BEG and END is the range affected by this entry
-and DELTA is the number of bytes added or deleted in that range by
+and DELTA is the number of characters added or deleted in that range by
 this change.
 
 An entry (MARKER . DISTANCE) indicates that the marker MARKER
@@ -6133,8 +6125,8 @@ If the value of the variable is t, undo information is not recorded.  */);
   DEFVAR_PER_BUFFER ("mark-active", &BVAR (current_buffer, mark_active), Qnil,
 		     doc: /* Non-nil means the mark and region are currently active in this buffer.  */);
 
-  DEFVAR_PER_BUFFER ("cache-long-line-scans", &BVAR (current_buffer, cache_long_line_scans), Qnil,
-		     doc: /* Non-nil means that Emacs should use caches to handle long lines more quickly.
+  DEFVAR_PER_BUFFER ("cache-long-scans", &BVAR (current_buffer, cache_long_scans), Qnil,
+		     doc: /* Non-nil means that Emacs should use caches in attempt to speedup buffer scans.
 
 Normally, the line-motion functions work by scanning the buffer for
 newlines.  Columnar operations (like `move-to-column' and
@@ -6144,17 +6136,23 @@ buffer's lines are very long (say, more than 500 characters), these
 motion functions will take longer to execute.  Emacs may also take
 longer to update the display.
 
-If `cache-long-line-scans' is non-nil, these motion functions cache the
+If `cache-long-scans' is non-nil, these motion functions cache the
 results of their scans, and consult the cache to avoid rescanning
 regions of the buffer until the text is modified.  The caches are most
 beneficial when they prevent the most searching---that is, when the
 buffer contains long lines and large regions of characters with the
 same, fixed screen width.
 
-When `cache-long-line-scans' is non-nil, processing short lines will
+When `cache-long-scans' is non-nil, processing short lines will
 become slightly slower (because of the overhead of consulting the
 cache), and the caches will use memory roughly proportional to the
 number of newlines and characters whose screen width varies.
+
+Bidirectional editing also requires buffer scans to find paragraph
+separators.  If you have large paragraphs or no paragraph separators
+at all, these scans may be slow.  If `cache-long-scans' is non-nil,
+results of these scans are cached.  This doesn't help too much if
+paragraphs are of the reasonable (few thousands of characters) size.
 
 The caches require no explicit maintenance; their accuracy is
 maintained internally by the Emacs primitives.  Enabling or disabling

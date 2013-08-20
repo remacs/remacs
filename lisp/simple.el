@@ -3338,6 +3338,7 @@ extract characters that are special to a buffer, and should not
 be copied into other buffers."
   (funcall filter-buffer-substring-function beg end delete))
 
+;; FIXME: `with-wrapper-hook' is obsolete
 (defun buffer-substring--filter (beg end &optional delete)
   (with-wrapper-hook filter-buffer-substring-functions (beg end delete)
     (cond
@@ -4098,9 +4099,9 @@ Don't call it from programs: use `insert-buffer-substring' instead!"
     (progn
       (barf-if-buffer-read-only)
       (read-buffer "Insert buffer: "
-		   (if (eq (selected-window) (next-window (selected-window)))
+		   (if (eq (selected-window) (next-window))
 		       (other-buffer (current-buffer))
-		     (window-buffer (next-window (selected-window))))
+		     (window-buffer (next-window)))
 		   t))))
   (push-mark
    (save-excursion
@@ -4160,8 +4161,7 @@ START and END specify the portion of the current buffer to be copied."
       (save-excursion
 	(insert-buffer-substring oldbuf start end)))))
 
-(put 'mark-inactive 'error-conditions '(mark-inactive error))
-(put 'mark-inactive 'error-message (purecopy "The mark is not active now"))
+(define-error 'mark-inactive (purecopy "The mark is not active now"))
 
 (defvar activate-mark-hook nil
   "Hook run when the mark becomes active.
@@ -5671,7 +5671,8 @@ current object."
 
 (defun backward-word (&optional arg)
   "Move backward until encountering the beginning of a word.
-With argument ARG, do this that many times."
+With argument ARG, do this that many times.
+If ARG is omitted or nil, move point backward one word."
   (interactive "^p")
   (forward-word (- (or arg 1))))
 
@@ -5965,7 +5966,7 @@ The variable `selective-display' has a separate value for each buffer."
     (setq selective-display
 	  (and arg (prefix-numeric-value arg)))
     (recenter current-vpos))
-  (set-window-start (selected-window) (window-start (selected-window)))
+  (set-window-start (selected-window) (window-start))
   (princ "selective-display set to " t)
   (prin1 selective-display t)
   (princ "." t))
@@ -6629,8 +6630,7 @@ Go to the window from which completion was requested."
   (interactive)
   (let ((buf completion-reference-buffer))
     (if (one-window-p t)
-	(if (window-dedicated-p (selected-window))
-	    (delete-frame (selected-frame)))
+	(if (window-dedicated-p) (delete-frame))
       (delete-window (selected-window))
       (if (get-buffer-window buf)
 	  (select-window (get-buffer-window buf))))))
