@@ -26719,7 +26719,7 @@ erase_phys_cursor (struct window *w)
    where to put the cursor is specified by HPOS, VPOS, X and Y.  */
 
 void
-display_and_set_cursor (struct window *w, int on,
+display_and_set_cursor (struct window *w, bool on,
 			int hpos, int vpos, int x, int y)
 {
   struct frame *f = XFRAME (w->frame);
@@ -26803,7 +26803,7 @@ display_and_set_cursor (struct window *w, int on,
    of ON.  */
 
 static void
-update_window_cursor (struct window *w, int on)
+update_window_cursor (struct window *w, bool on)
 {
   /* Don't update cursor in windows whose frame is in the process
      of being deleted.  */
@@ -26839,7 +26839,7 @@ update_window_cursor (struct window *w, int on)
    in the window tree rooted at W.  */
 
 static void
-update_cursor_in_window_tree (struct window *w, int on_p)
+update_cursor_in_window_tree (struct window *w, bool on_p)
 {
   while (w)
     {
@@ -26858,7 +26858,7 @@ update_cursor_in_window_tree (struct window *w, int on_p)
    Don't change the cursor's position.  */
 
 void
-x_update_cursor (struct frame *f, int on_p)
+x_update_cursor (struct frame *f, bool on_p)
 {
   update_cursor_in_window_tree (XWINDOW (f->root_window), on_p);
 }
