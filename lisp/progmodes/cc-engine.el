@@ -1271,6 +1271,9 @@ comment at the start of cc-engine.el for more info."
 	      (throw 'done (point)))))
 	  ;; In trailing space after an as yet undetected virtual semicolon?
 	  (c-backward-syntactic-ws from)
+	  (when (and (bolp) (not (bobp))) ; Can happen in AWK Mode with an
+					  ; unterminated string/regexp.
+	    (backward-char))
 	  (if (and (< (point) to)
 		   (c-at-vsemi-p))
 	      (point)
@@ -9796,12 +9799,12 @@ comment at the start of cc-engine.el for more info."
 			      (not (eq (char-after) ?:))
 			      )))
 		   (save-excursion
-		     (c-backward-syntactic-ws lim)
-		     (if (eq char-before-ip ?:)
-			 (progn
-			   (forward-char -1)
-			   (c-backward-syntactic-ws lim)))
-		     (back-to-indentation)
+		     (c-beginning-of-statement-1 lim)
+		     (when (looking-at c-opt-<>-sexp-key)
+		       (goto-char (match-end 1))
+		       (c-forward-syntactic-ws)
+		       (c-forward-<>-arglist nil)
+		       (c-forward-syntactic-ws))
 		     (looking-at c-class-key)))
 	      ;; for Java
 	      (and (c-major-mode-is 'java-mode)

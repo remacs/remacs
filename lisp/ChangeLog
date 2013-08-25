@@ -1,3 +1,92 @@
+2013-08-25  Alan Mackenzie  <acm@muc.de>
+
+	Parse C++ inher-intro when there's a template split over 2 lines.
+
+	* progmodes/cc-engine.el (c-guess-basic-syntax CASE 5C): Code more
+	rigorously the search for "class" etc. followed by ":".
+
+	* progmodes/cc-langs.el (c-opt-<>-sexp-key): Make the value for
+	random languages a regexp which never matches rather than nil.
+
+	Handle "/"s more accurately in test for virtual semicolons (AWK Mode).
+
+	* progmodes/cc-awk.el (c-awk-one-line-possibly-open-string-re)
+	(c-awk-regexp-one-line-possibly-open-char-list-re)
+	(c-awk-one-line-possibly-open-regexp-re)
+	(c-awk-one-line-non-syn-ws*-re): Remove.
+	(c-awk-possibly-open-string-re, c-awk-non-/-syn-ws*-re)
+	(c-awk-space*-/-re, c-awk-space*-regexp-/-re)
+	(c-awk-space*-unclosed-regexp-/-re): New constants.
+	(c-awk-at-vsemi-p): Reformulate better to recognize "/"s which
+	aren't regexp delimiters.
+
+	* progmodes/cc-engine.el (c-crosses-statement-barrier-p): Add in
+	handling for a rare situation in AWK Mode involving unterminated
+	strings/regexps.
+
+2013-08-23  Glenn Morris  <rgm@gnu.org>
+
+	* files.el (auto-mode-alist): Use sh-mode for .bash_history.
+
+	* files.el (interpreter-mode-alist): Use tcl-mode for expect scripts.
+
+	* files.el (create-file-buffer): If the result would begin with
+	spaces, prepend a "|" instead of removing them.  (Bug#15162)
+
+2013-08-23  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* textmodes/fill.el (fill-match-adaptive-prefix): Don't throw away
+	text-properties (bug#15155).
+
+	* calc/calc-keypd.el (calc-keypad-execute): `x-flush-mouse-queue' doesn't
+	exist any more.
+	(calc-keypad-redraw): Remove unused var `pad'.
+	(calc-keypad-press): Remove unused var `menu'.
+
+2013-08-23  Martin Rudalics  <rudalics@gmx.at>
+
+	* window.el (display-buffer-pop-up-frame):
+	Call pop-up-frame-function with BUFFER current so `make-frame' will
+	use it as the new frame's buffer (Bug#15133).
+
+2013-08-22  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* calendar/timeclock.el: Minor cleanups.
+	(timeclock-ask-before-exiting, timeclock-use-display-time):
+	Use `symbol'.
+	(timeclock-modeline-display): Define as alias before the
+	actual definition.
+	(timeclock-mode-line-display): Use define-minor-mode.
+	(timeclock-day-list-template): Make it a function, add an argument.
+	(timeclock-day-list-required, timeclock-day-list-length)
+	(timeclock-day-list-debt, timeclock-day-list-span)
+	(timeclock-day-list-break): Adjust calls accordingly.
+
+2013-08-21  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* emacs-lisp/pp.el (pp-eval-expression, pp-macroexpand-expression):
+	Use read--expression so that completion works again.
+
+2013-08-21  Sam Steingold  <sds@gnu.org>
+
+	Add rudimentary inferior shell interaction
+	* progmodes/sh-script.el (sh-shell-process): New buffer-local variable.
+	(sh-set-shell): Reset it.
+	(sh-show-shell, sh-cd-here, sh-send-line-or-region-and-step):
+	New commands (bound to C-c C-z, C-c C-d, and C-c C-n).
+
+2013-08-20  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* align.el: Use lexical-binding.
+	(align-region): Simplify accordingly.
+
+2013-08-20  Michael Albinus  <michael.albinus@gmx.de>
+
+	* minibuffer.el (completion--sifn-requote): Bind `non-essential'.
+
+	* rfn-eshadow.el (rfn-eshadow-update-overlay): Move binding of
+	`non-essential' up.
+
 2013-08-17  Michael Albinus  <michael.albinus@gmx.de>
 
 	* net/tramp.el:

@@ -826,6 +826,15 @@ allocate_pty (char pty_name[PTY_NAME_SIZE])
 
 	if (fd >= 0)
 	  {
+#ifdef PTY_OPEN
+	    /* Set FD's close-on-exec flag.  This is needed even if
+	       PT_OPEN calls posix_openpt with O_CLOEXEC, since POSIX
+	       doesn't require support for that combination.
+	       Multithreaded platforms where posix_openpt ignores
+	       O_CLOEXEC (or where PTY_OPEN doesn't call posix_openpt)
+	       have a race condition between the PTY_OPEN and here.  */
+	    fcntl (fd, F_SETFD, FD_CLOEXEC);
+#endif
 	    /* check to make certain that both sides are available
 	       this avoids a nasty yet stupid bug in rlogins */
 #ifdef PTY_TTY_NAME_SPRINTF
@@ -1322,15 +1331,18 @@ DEFUN ("process-thread", Fprocess_thread, Sprocess_thread,
 DEFUN ("set-process-window-size", Fset_process_window_size,
        Sset_process_window_size, 3, 3, 0,
        doc: /* Tell PROCESS that it has logical window size HEIGHT and WIDTH.  */)
-  (register Lisp_Object process, Lisp_Object height, Lisp_Object width)
+  (Lisp_Object process, Lisp_Object height, Lisp_Object width)
 {
   CHECK_PROCESS (process);
-  CHECK_RANGED_INTEGER (height, 0, INT_MAX);
-  CHECK_RANGED_INTEGER (width, 0, INT_MAX);
+
+  /* All known platforms store window sizes as 'unsigned short'.  */
+  CHECK_RANGED_INTEGER (height, 0, USHRT_MAX);
+  CHECK_RANGED_INTEGER (width, 0, USHRT_MAX);
 
   if (XPROCESS (process)->infd < 0
-      || set_window_size (XPROCESS (process)->infd,
-			  XINT (height), XINT (width)) <= 0)
+      || (set_window_size (XPROCESS (process)->infd,
+			   XINT (height), XINT (width))
+	  < 0))
     return Qnil;
   else
     return Qt;
@@ -1590,22 +1602,9 @@ usage: (start-process NAME BUFFER PROGRAM &rest PROGRAM-ARGS)  */)
      function.  The argument list is protected by the caller, so all
      we really have to worry about is buffer.  */
   {
-    struct gcpro gcpro1, gcpro2;
-
-    current_dir = BVAR (current_buffer, directory);
-
-    GCPRO2 (buffer, current_dir);
-
-    current_dir = Funhandled_file_name_directory (current_dir);
-    if (NILP (current_dir))
-      /* If the file name handler says that current_dir is unreachable, use
-	 a sensible default. */
-      current_dir = build_string ("~/");
-    current_dir = expand_and_dir_to_file (current_dir, Qnil);
-    if (NILP (Ffile_accessible_directory_p (current_dir)))
-      report_file_error ("Setting current directory",
-			 BVAR (current_buffer, directory));
-
+    struct gcpro gcpro1;
+    GCPRO1 (buffer);
+    current_dir = encode_current_directory ();
     UNGCPRO;
   }
 
@@ -1852,7 +1851,6 @@ create_process (Lisp_Object process, char **new_argv, Lisp_Object current_dir)
   bool pty_flag = 0;
   char pty_name[PTY_NAME_SIZE];
   Lisp_Object lisp_pty_name = Qnil;
-  Lisp_Object encoded_current_dir;
 
   inchannel = outchannel = -1;
 
@@ -1914,15 +1912,13 @@ create_process (Lisp_Object process, char **new_argv, Lisp_Object current_dir)
   /* This may signal an error. */
   setup_process_coding_systems (process);
 
-  encoded_current_dir = ENCODE_FILE (current_dir);
-
   block_input ();
   block_child_signal ();
 
 #ifndef WINDOWSNT
   /* vfork, and prevent local vars from being clobbered by the vfork.  */
   {
-    Lisp_Object volatile encoded_current_dir_volatile = encoded_current_dir;
+    Lisp_Object volatile current_dir_volatile = current_dir;
     Lisp_Object volatile lisp_pty_name_volatile = lisp_pty_name;
     char **volatile new_argv_volatile = new_argv;
     int volatile forkin_volatile = forkin;
@@ -1931,7 +1927,7 @@ create_process (Lisp_Object process, char **new_argv, Lisp_Object current_dir)
 
     pid = vfork ();
 
-    encoded_current_dir = encoded_current_dir_volatile;
+    current_dir = current_dir_volatile;
     lisp_pty_name = lisp_pty_name_volatile;
     new_argv = new_argv_volatile;
     forkin = forkin_volatile;
@@ -2043,11 +2039,9 @@ create_process (Lisp_Object process, char **new_argv, Lisp_Object current_dir)
       if (pty_flag)
 	child_setup_tty (xforkout);
 #ifdef WINDOWSNT
-      pid = child_setup (xforkin, xforkout, xforkout,
-			 new_argv, 1, encoded_current_dir);
+      pid = child_setup (xforkin, xforkout, xforkout, new_argv, 1, current_dir);
 #else  /* not WINDOWSNT */
-      child_setup (xforkin, xforkout, xforkout,
-		   new_argv, 1, encoded_current_dir);
+      child_setup (xforkin, xforkout, xforkout, new_argv, 1, current_dir);
 #endif /* not WINDOWSNT */
     }
 
@@ -4012,15 +4006,12 @@ deactivate_process (Lisp_Object proc)
     }
 #endif
 
-  inchannel = p->infd;
-
   /* Beware SIGCHLD hereabouts. */
-  if (inchannel >= 0)
-    flush_pending_output (inchannel);
 
   for (i = 0; i < PROCESS_OPEN_FDS; i++)
     close_process_fd (&p->open_fd[i]);
 
+  inchannel = p->infd;
   if (inchannel >= 0)
     {
       p->infd  = -1;
@@ -5928,10 +5919,9 @@ process_send_signal (Lisp_Object process, int signo, Lisp_Object current_group,
 	return;
     }
 
-  switch (signo)
-    {
 #ifdef SIGCONT
-    case SIGCONT:
+  if (signo == SIGCONT)
+    {
       p->raw_status_new = 0;
       pset_status (p, Qrun);
       p->tick = ++process_tick;
@@ -5940,14 +5930,8 @@ process_send_signal (Lisp_Object process, int signo, Lisp_Object current_group,
 	  status_notify (NULL);
 	  redisplay_preserve_echo_area (13);
 	}
-      break;
-#endif /* ! defined (SIGCONT) */
-    case SIGINT:
-    case SIGQUIT:
-    case SIGKILL:
-      flush_pending_output (p->infd);
-      break;
     }
+#endif
 
   /* If we don't have process groups, send the signal to the immediate
      subprocess.  That isn't really right, but it's better than any

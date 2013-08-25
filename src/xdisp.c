@@ -3912,10 +3912,14 @@ handle_face_prop (struct it *it)
 	  /* For strings from a `display' property, use the face at
 	     IT's current buffer position as the base face to merge
 	     with, so that overlay strings appear in the same face as
-	     surrounding text, unless they specify their own
-	     faces.  */
+	     surrounding text, unless they specify their own faces.
+	     For strings from wrap-prefix and line-prefix properties,
+	     use the default face, possibly remapped via
+	     Vface_remapping_alist.  */
 	  base_face_id = it->string_from_prefix_prop_p
-	    ? DEFAULT_FACE_ID
+	    ? (!NILP (Vface_remapping_alist)
+	       ? lookup_basic_face (it->f, DEFAULT_FACE_ID)
+	       : DEFAULT_FACE_ID)
 	    : underlying_face_id (it);
 	}
 
@@ -7046,7 +7050,9 @@ get_next_display_element (struct it *it)
 		}
 	    }
 	}
-      else
+      /* next_element_from_display_vector sets this flag according to
+	 faces of the display vector glyphs, see there.  */
+      else if (it->method != GET_FROM_DISPLAY_VECTOR)
 	{
 	  int face_id = face_after_it_pos (it);
 	  it->end_of_box_run_p
@@ -25763,12 +25769,12 @@ x_produce_glyphs (struct it *it)
 
 /* EXPORT for RIF:
    Output LEN glyphs starting at START at the nominal cursor position.
-   Advance the nominal cursor over the text.  The global variable
-   updated_row is the glyph row being updated, and updated_area is the
-   area of that row being updated.  */
+   Advance the nominal cursor over the text.  UPDATED_ROW is the glyph row
+   being updated, and UPDATED_AREA is the area of that row being updated.  */
 
 void
-x_write_glyphs (struct window *w, struct glyph *start, int len)
+x_write_glyphs (struct window *w, struct glyph_row *updated_row,
+		struct glyph *start, enum glyph_row_area updated_area, int len)
 {
   int x, hpos, chpos = w->phys_cursor.hpos;
 
@@ -25811,7 +25817,8 @@ x_write_glyphs (struct window *w, struct glyph *start, int len)
    Insert LEN glyphs from START at the nominal cursor position.  */
 
 void
-x_insert_glyphs (struct window *w, struct glyph *start, int len)
+x_insert_glyphs (struct window *w, struct glyph_row *updated_row,
+		 struct glyph *start, enum glyph_row_area updated_area, int len)
 {
   struct frame *f;
   int line_height, shift_by_width, shifted_region_width;
@@ -25863,11 +25870,12 @@ x_insert_glyphs (struct window *w, struct glyph *start, int len)
    (inclusive) to pixel column TO_X (exclusive).  The idea is that
    everything from TO_X onward is already erased.
 
-   TO_X is a pixel position relative to updated_area of currently
+   TO_X is a pixel position relative to UPDATED_AREA of currently
    updated window W.  TO_X == -1 means clear to the end of this area.  */
 
 void
-x_clear_end_of_line (struct window *w, int to_x)
+x_clear_end_of_line (struct window *w, struct glyph_row *updated_row,
+		     enum glyph_row_area updated_area, int to_x)
 {
   struct frame *f;
   int max_x, min_y, max_y;
@@ -26463,7 +26471,7 @@ erase_phys_cursor (struct window *w)
    where to put the cursor is specified by HPOS, VPOS, X and Y.  */
 
 void
-display_and_set_cursor (struct window *w, int on,
+display_and_set_cursor (struct window *w, bool on,
 			int hpos, int vpos, int x, int y)
 {
   struct frame *f = XFRAME (w->frame);
@@ -26547,7 +26555,7 @@ display_and_set_cursor (struct window *w, int on,
    of ON.  */
 
 static void
-update_window_cursor (struct window *w, int on)
+update_window_cursor (struct window *w, bool on)
 {
   /* Don't update cursor in windows whose frame is in the process
      of being deleted.  */
@@ -26583,7 +26591,7 @@ update_window_cursor (struct window *w, int on)
    in the window tree rooted at W.  */
 
 static void
-update_cursor_in_window_tree (struct window *w, int on_p)
+update_cursor_in_window_tree (struct window *w, bool on_p)
 {
   while (w)
     {
@@ -26602,7 +26610,7 @@ update_cursor_in_window_tree (struct window *w, int on_p)
    Don't change the cursor's position.  */
 
 void
-x_update_cursor (struct frame *f, int on_p)
+x_update_cursor (struct frame *f, bool on_p)
 {
   update_cursor_in_window_tree (XWINDOW (f->root_window), on_p);
 }

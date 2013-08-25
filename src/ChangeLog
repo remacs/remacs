@@ -1,3 +1,124 @@
+2013-08-24  Eli Zaretskii  <eliz@gnu.org>
+
+	* xdisp.c (get_next_display_element): Don't apply to characters
+	from a display vector the logic of setting it->end_of_box_run_p
+	suitable for characters from a buffer.  (Bug#15175)
+
+	* w32.c (fdutimens): Call 'utime', which is implemented on w32.c
+	to handle directories, rather than '_utime' which doesn't.
+	(Bug#15176)
+
+2013-08-24  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* gtkutil.c (x_wm_set_size_hint): Don't set hints when maximized
+	or fullscreen (Bug#14627).
+
+2013-08-24  Paul Eggert  <eggert@cs.ucla.edu>
+
+	System-dependent integer overflow fixes.
+	* process.c (Fset_process_window_size): Signal an error if
+	the window size is outside the range supported by the lower level.
+	* sysdep.c (set_window_size): Return negative on error,
+	nonnegative on success, rather than -1, 0, 1 on not in system,
+	failure, success.  This is simpler.  Caller changed.
+	(serial_configure): Remove unnecessary initialization of local.
+	(procfs_get_total_memory) [GNU_LINUX]: Don't assume system memory
+	size fits in unsigned long; this isn't true on some 32-bit hosts.
+	Avoid buffer overrun if some future version of /proc/meminfo has a
+	variable name longer than 20 bytes.
+	(system_process_attributes) [__FreeBSD__]:
+	Don't assume hw.availpages fits in 'int'.
+
+2013-08-23  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Don't let very long directory names overrun the stack.
+	Fix some related minor problems involving "//", vfork.
+	* callproc.c (encode_current_directory): New function.
+	(call_process): Don't append "/"; not needed.
+	* fileio.c (file_name_as_directory_slop): New constant.
+	(file_name_as_directory): Allow SRC to be longer than SRCLEN;
+	this can save the caller having to alloca.
+	(Ffile_name_as_directory, Fdirectory_file_name, Fexpand_file_name):
+	Use SAFE_ALLOCA, not alloca.
+	(directory_file_name, Fexpand_file_name): Leave leading "//"
+	alone, since it can be special even on POSIX platforms.
+	* callproc.c (call_process):
+	* process.c (Fformat_network_address):
+	* sysdep.c (sys_subshell):
+	Use encode_current_directory rather than rolling our own.
+	(create_process): No need to encode directory; caller does that now.
+	* process.h (encode_current_directory): New decl.
+	* sysdep.c (sys_subshell): Work even if vfork trashes saved_handlers.
+	Rework to avoid 'goto xyzzy;'.
+
+2013-08-23  Eli Zaretskii  <eliz@gnu.org>
+
+	* xdisp.c (handle_face_prop): If the default face was remapped use
+	the remapped face for strings from prefix properties.  (Bug#15155)
+
+2013-08-23  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	Minor cleanup for redisplay interface and few related functions.
+	* frame.h (enum text_cursor_kinds): Move from here...
+	* dispextern.h (enum text_cursor_kinds): ...to here.
+	(toplevel): Drop unnecessary declarations.
+	(struct redisplay_interface): Use bool and enum text_cursor_kinds
+	in update_window_end_hook and draw_window_cursor functions.
+	(display_and_set_cursor, x_update_cursor): Adjust prototypes.
+	* nsterm.m (ns_update_window_end, ns_draw_window_cursor):
+	* w32term.c (x_update_window_end,w32_draw_window_cursor):
+	* xterm.c (x_update_window_end, x_draw_window_cursor):
+	* xdisp.c (display_and_set_cursor, update_window_cursor)
+	(update_cursor_in_window_tree, x_update_cursor): Use bool and
+	enum text_cursor_kinds where appropriate.
+
+2013-08-23  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	Redesign redisplay interface to drop updated_row and updated_area.
+	* dispextern.h (updated_row, updated_area): Remove declaration.
+	(struct redisplay_interface): Pass glyph row and row area parameters
+	to write_glyphs, insert_glyphs and clear_end_of_line functions.
+	(x_write_glyphs, x_insert_glyphs, x_clear_end_of_line):
+	Adjust prototypes.
+	* dispnew.c (updated_row, updated_area): Remove.
+	(redraw_overlapped_rows, update_window_line): Adjust user.
+	(update_marginal_area, update_text_area): Likewise.  Pass updated row
+	as a parameter.  Prefer enum glyph_row_area to int where appropriate.
+	* xdisp.c (x_write_glyphs, x_insert_glyphs, x_clear_end_of_line):
+	Adjust users.
+
+2013-08-22  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* process.c (flush_pending_output): Remove stub.
+	All uses removed.
+
+2013-08-21  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* callproc.c: Fix race that killed background processes (Bug#15144).
+	(call_process): New arg TEMPFILE_INDEX.  Callers changed.
+	Record deleted process-id in critical section, not afterwards.
+	Don't mistakenly kill process created by a call-process invocation
+	that discards output and does not wait.
+
+2013-08-21  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	Fix compilation with GC_MARK_STACK == GC_USE_GCPROS_AS_BEFORE
+	and GC_MARK_STACK == GC_USE_GCPROS_CHECK_ZOMBIES.
+	* alloc.c (toplevel): Remove unnecessary nested #if...#endif.
+	(mark_maybe_object) [!GC_MARK_STACK]: Define to emacs_abort
+	to shut up compiler in mark_object.
+	(dump_zombies): Convert to global and add EXTERNALLY_VISIBLE.
+
+2013-08-21  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* process.c (allocate_pty) [PTY_OPEN]: Set fd's FD_CLOEXEC flag.
+	We can't portably rely on PTY_OPEN doing that, even if
+	it calls posix_openpt with O_CLOEXEC.
+
+2013-08-20  Kenichi Handa  <handa@gnu.org>
+
+	* character.c (string_char): Improve commentary.
+
 2013-08-20  Paul Eggert  <eggert@cs.ucla.edu>
 
 	* image.c (SIGNATURE_DIGESTSIZE): Remove.

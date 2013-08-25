@@ -337,16 +337,6 @@ child_status_changed (pid_t child, int *status, int options)
   return get_child_status (child, status, WNOHANG | options, 0);
 }
 
-/*
- *	flush any pending output
- *      (may flush input as well; it does not matter the way we use it)
- */
-
-void
-flush_pending_output (int channel)
-{
-  /* FIXME: maybe this function should be removed */
-}
 
 /*  Set up the terminal at the other end of a pseudo-terminal that
     we will be controlling an inferior through.
@@ -481,10 +471,20 @@ sys_subshell (void)
   pid_t pid;
   int status;
   struct save_signal saved_handlers[5];
-  Lisp_Object dir;
-  unsigned char *volatile str_volatile = 0;
-  unsigned char *str;
-  int len;
+  char *str = SSDATA (encode_current_directory ());
+
+#ifdef DOS_NT
+  pid = 0;
+#else
+  {
+    char *volatile str_volatile = str;
+    pid = vfork ();
+    str = str_volatile;
+  }
+#endif
+
+  if (pid < 0)
+    error ("Can't spawn subshell");
 
   saved_handlers[0].code = SIGINT;
   saved_handlers[1].code = SIGQUIT;
@@ -496,31 +496,8 @@ sys_subshell (void)
   saved_handlers[3].code = 0;
 #endif
 
-  /* Mentioning current_buffer->buffer would mean including buffer.h,
-     which somehow wedges the hp compiler.  So instead...  */
-
-  dir = intern ("default-directory");
-  if (NILP (Fboundp (dir)))
-    goto xyzzy;
-  dir = Fsymbol_value (dir);
-  if (!STRINGP (dir))
-    goto xyzzy;
-
-  dir = expand_and_dir_to_file (Funhandled_file_name_directory (dir), Qnil);
-  str_volatile = str = alloca (SCHARS (dir) + 2);
-  len = SCHARS (dir);
-  memcpy (str, SDATA (dir), len);
-  if (str[len - 1] != '/') str[len++] = '/';
-  str[len] = 0;
- xyzzy:
-
 #ifdef DOS_NT
-  pid = 0;
   save_signal_handlers (saved_handlers);
-#else
-  pid = vfork ();
-  if (pid == -1)
-    error ("Can't spawn subshell");
 #endif
 
   if (pid == 0)
@@ -538,11 +515,10 @@ sys_subshell (void)
 	sh = "sh";
 
       /* Use our buffer's default directory for the subshell.  */
-      str = str_volatile;
-      if (str && chdir ((char *) str) != 0)
+      if (chdir (str) != 0)
 	{
 #ifndef DOS_NT
-	  emacs_perror ((char *) str);
+	  emacs_perror (str);
 	  _exit (EXIT_CANCELED);
 #endif
 	}
@@ -556,8 +532,6 @@ sys_subshell (void)
 	if (epwd)
 	  {
 	    strcpy (old_pwd, epwd);
-	    if (str[len - 1] == '/')
-	      str[len - 1] = '\0';
 	    setenv ("PWD", str, 1);
 	  }
 	st = system (sh);
@@ -1196,7 +1170,8 @@ get_tty_size (int fd, int *widthp, int *heightp)
 }
 
 /* Set the logical window size associated with descriptor FD
-   to HEIGHT and WIDTH.  This is used mainly with ptys.  */
+   to HEIGHT and WIDTH.  This is used mainly with ptys.
+   Return a negative value on failure.  */
 
 int
 set_window_size (int fd, int height, int width)
@@ -1208,10 +1183,7 @@ set_window_size (int fd, int height, int width)
   size.ws_row = height;
   size.ws_col = width;
 
-  if (ioctl (fd, TIOCSWINSZ, &size) == -1)
-    return 0; /* error */
-  else
-    return 1;
+  return ioctl (fd, TIOCSWINSZ, &size);
 
 #else
 #ifdef TIOCSSIZE
@@ -1221,10 +1193,7 @@ set_window_size (int fd, int height, int width)
   size.ts_lines = height;
   size.ts_cols = width;
 
-  if (ioctl (fd, TIOCGSIZE, &size) == -1)
-    return 0;
-  else
-    return 1;
+  return ioctl (fd, TIOCGSIZE, &size);
 #else
   return -1;
 #endif /* not SunOS-style */
@@ -2485,7 +2454,7 @@ serial_configure (struct Lisp_Process *p,
   Lisp_Object childp2 = Qnil;
   Lisp_Object tem = Qnil;
   struct termios attr;
-  int err = -1;
+  int err;
   char summary[4] = "???"; /* This usually becomes "8N1".  */
 
   childp2 = Fcopy_sequence (p->childp);
@@ -2852,29 +2821,41 @@ procfs_ttyname (int rdev)
   return build_string (name);
 }
 
-static unsigned long
+static uintmax_t
 procfs_get_total_memory (void)
 {
   FILE *fmem;
-  unsigned long retval = 2 * 1024 * 1024; /* default: 2GB */
+  uintmax_t retval = 2 * 1024 * 1024; /* default: 2 GiB */
+  int c;
 
   block_input ();
   fmem = emacs_fopen ("/proc/meminfo", "r");
 
   if (fmem)
     {
-      unsigned long entry_value;
-      char entry_name[20];	/* the longest I saw is 13+1 */
+      uintmax_t entry_value;
+      bool done;
 
-      while (!feof (fmem) && !ferror (fmem))
-	{
-	  if (fscanf (fmem, "%s %lu kB\n", entry_name, &entry_value) >= 2
-	      && strcmp (entry_name, "MemTotal:") == 0)
-	    {
-	      retval = entry_value;
-	      break;
-	    }
-	}
+      do
+	switch (fscanf (fmem, "MemTotal: %"SCNuMAX, &entry_value))
+	  {
+	  case 1:
+	    retval = entry_value;
+	    done = 1;
+	    break;
+
+	  case 0:
+	    while ((c = getc (fmem)) != EOF && c != '\n')
+	      continue;
+	    done = c == EOF;
+	    break;
+
+	  default:
+	    done = 1;
+	    break;
+	  }
+      while (!done);
+
       fclose (fmem);
     }
   unblock_input ();
@@ -3275,7 +3256,7 @@ system_process_attributes (Lisp_Object pid)
 {
   int proc_id;
   int pagesize = getpagesize ();
-  int npages;
+  unsigned long npages;
   int fscale;
   struct passwd *pw;
   struct group  *gr;
