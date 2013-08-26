@@ -1,5 +1,5 @@
 /* System thread definitions
-   Copyright (C) 2012 Free Software Foundation, Inc.
+   Copyright (C) 2012, 2013 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -19,6 +19,8 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #ifndef SYSTHREAD_H
 #define SYSTHREAD_H
 
+#ifdef THREADS_ENABLED
+
 #ifdef HAVE_PTHREAD
 
 #include <pthread.h>
@@ -32,11 +34,20 @@ typedef pthread_cond_t sys_cond_t;
 /* A system thread.  */
 typedef pthread_t sys_thread_t;
 
-#else
+#else /* HAVE_PTHREAD */
 
 #error port me
 
-#endif
+#endif /* HAVE_PTHREAD */
+
+#else /* THREADS_ENABLED */
+
+/* For the no-threads case we can simply use dummy definitions.  */
+typedef int sys_mutex_t;
+typedef int sys_cond_t;
+typedef int sys_thread_t;
+
+#endif /* THREADS_ENABLED */
 
 typedef void *(thread_creation_function) (void *);
 

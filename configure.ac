@@ -237,6 +237,7 @@ OPTION_DEFAULT_ON([gsettings],[don't compile with GSettings support])
 OPTION_DEFAULT_ON([selinux],[don't compile with SELinux support])
 OPTION_DEFAULT_ON([gnutls],[don't use -lgnutls for SSL/TLS support])
 OPTION_DEFAULT_ON([zlib],[don't compile with zlib decompression support])
+OPTION_DEFAULT_ON([threads],[don't compile with elisp threading support])
 
 AC_ARG_WITH([file-notification],[AS_HELP_STRING([--with-file-notification=LIB],
  [use a file notification library (LIB one of: yes, gfile, inotify, w32, no)])],
@@ -1947,6 +1948,17 @@ fi
 AC_SUBST([LIB_PTHREAD])
 
 AC_CHECK_LIB(pthreads, cma_open)
+
+AC_MSG_CHECKING([for thread support])
+threads_enabled=no
+if test "$with_threads" = yes; then
+   if test "$HAVE_PTHREAD" = yes; then
+      AC_DEFINE(THREADS_ENABLED, 1,
+                [Define to 1 if you want elisp thread support.])
+      threads_enabled=yes
+   fi
+fi
+AC_MSG_RESULT([$threads_enabled])
 
 ## Note: when using cpp in s/aix4.2.h, this definition depended on
 ## HAVE_LIBPTHREADS.  That was not defined earlier in configure when
@@ -4843,6 +4855,7 @@ echo "  Does Emacs use -lxft?                                   ${HAVE_XFT}"
 echo "  Does Emacs directly use zlib?                           ${HAVE_ZLIB}"
 
 echo "  Does Emacs use toolkit scroll bars?                     ${USE_TOOLKIT_SCROLL_BARS}"
+echo "  Does Emacs have threading support in elisp?             ${threads_enabled}"
 echo
 
 if test -n "${EMACSDATA}"; then

@@ -1,5 +1,5 @@
 /* System thread definitions
-   Copyright (C) 2012 Free Software Foundation, Inc.
+   Copyright (C) 2012, 2013 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -20,7 +20,80 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <setjmp.h>
 #include "lisp.h"
 
-#ifdef HAVE_PTHREAD
+#ifndef THREADS_ENABLED
+
+void
+sys_mutex_init (sys_mutex_t *m)
+{
+  *m = 0;
+}
+
+void
+sys_mutex_lock (sys_mutex_t *m)
+{
+}
+
+void
+sys_mutex_unlock (sys_mutex_t *m)
+{
+}
+
+void
+sys_mutex_destroy (sys_mutex_t *m)
+{
+}
+
+void
+sys_cond_init (sys_cond_t *c)
+{
+  *c = 0;
+}
+
+void
+sys_cond_wait (sys_cond_t *c, sys_mutex_t *m)
+{
+}
+
+void
+sys_cond_signal (sys_cond_t *c)
+{
+}
+
+void
+sys_cond_broadcast (sys_cond_t *c)
+{
+}
+
+void
+sys_cond_destroy (sys_cond_t *c)
+{
+}
+
+sys_thread_t
+sys_thread_self (void)
+{
+  return 0;
+}
+
+int
+sys_thread_equal (sys_thread_t x, sys_thread_t y)
+{
+  return x == y;
+}
+
+int
+sys_thread_create (sys_thread_t *t, const char *name,
+		   thread_creation_function *func, void *datum)
+{
+  return 0;
+}
+
+void
+sys_thread_yield (void)
+{
+}
+
+#elif defined (HAVE_PTHREAD)
 
 #include <sched.h>
 

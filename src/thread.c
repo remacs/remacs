@@ -937,24 +937,29 @@ init_threads (void)
 void
 syms_of_threads (void)
 {
-  defsubr (&Sthread_yield);
-  defsubr (&Smake_thread);
-  defsubr (&Scurrent_thread);
-  defsubr (&Sthread_name);
-  defsubr (&Sthread_signal);
-  defsubr (&Sthread_alive_p);
-  defsubr (&Sthread_join);
-  defsubr (&Sthread_blocker);
-  defsubr (&Sall_threads);
-  defsubr (&Smake_mutex);
-  defsubr (&Smutex_lock);
-  defsubr (&Smutex_unlock);
-  defsubr (&Smutex_name);
-  defsubr (&Smake_condition_variable);
-  defsubr (&Scondition_wait);
-  defsubr (&Scondition_notify);
-  defsubr (&Scondition_mutex);
-  defsubr (&Scondition_name);
+#ifndef THREADS_ENABLED
+  if (0)
+#endif
+    {
+      defsubr (&Sthread_yield);
+      defsubr (&Smake_thread);
+      defsubr (&Scurrent_thread);
+      defsubr (&Sthread_name);
+      defsubr (&Sthread_signal);
+      defsubr (&Sthread_alive_p);
+      defsubr (&Sthread_join);
+      defsubr (&Sthread_blocker);
+      defsubr (&Sall_threads);
+      defsubr (&Smake_mutex);
+      defsubr (&Smutex_lock);
+      defsubr (&Smutex_unlock);
+      defsubr (&Smutex_name);
+      defsubr (&Smake_condition_variable);
+      defsubr (&Scondition_wait);
+      defsubr (&Scondition_notify);
+      defsubr (&Scondition_mutex);
+      defsubr (&Scondition_name);
+    }
 
   Qthreadp = intern_c_string ("threadp");
   staticpro (&Qthreadp);
