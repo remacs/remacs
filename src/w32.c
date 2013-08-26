@@ -39,6 +39,8 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <config.h>
 #include <mbstring.h>	/* for _mbspbrk, _mbslwr, _mbsrchr, ... */
 
+#include <sys/socket.h>
+
 #undef access
 #undef chdir
 #undef chmod
@@ -70,7 +72,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <grp.h>
 
 /* MinGW64 (_W64) defines these in its _mingw.h.  */
-#if defined(__GNUC__) && !defined(_W64)
+#if !defined(_ANONYMOUS_UNION) && !defined(_ANONYMOUS_STRUCT)
 #define _ANONYMOUS_UNION
 #define _ANONYMOUS_STRUCT
 #endif
@@ -197,7 +199,6 @@ typedef struct _REPARSE_DATA_BUFFER {
 #endif
 
 /* TCP connection support.  */
-#include <sys/socket.h>
 #undef socket
 #undef bind
 #undef connect
@@ -247,7 +248,7 @@ static BOOL WINAPI revert_to_self (void);
 extern int sys_access (const char *, int);
 extern void *e_malloc (size_t);
 extern int sys_select (int, SELECT_TYPE *, SELECT_TYPE *, SELECT_TYPE *,
-		       EMACS_TIME *, void *);
+		       EMACS_TIME *, sigset_t *);
 extern int sys_dup (int);
 
 

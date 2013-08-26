@@ -31,8 +31,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <unistd.h>
 #include <fcntl.h>
 
-#include "lisp.h"
-
 /* Only MS-DOS does not define `subprocesses'.  */
 #ifdef subprocesses
 
@@ -96,6 +94,8 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #endif	/* subprocesses */
 
+#include "lisp.h"
+
 #include "systime.h"
 #include "systty.h"
 
@@ -132,8 +132,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #endif
 
 #ifdef WINDOWSNT
-extern int sys_select (int, SELECT_TYPE *, SELECT_TYPE *, SELECT_TYPE *,
-		       EMACS_TIME *, void *);
+#include "w32.h"
 #endif
 
 #ifndef SOCK_CLOEXEC
@@ -532,7 +531,9 @@ add_non_blocking_write_fd (int fd)
   fd_callback_info[fd].flags |= FOR_WRITE | NON_BLOCKING_CONNECT_FD;
   if (fd > max_desc)
     max_desc = fd;
+#ifdef NON_BLOCKING_CONNECT
   ++num_pending_connects;
+#endif
 }
 
 static void
@@ -560,11 +561,13 @@ delete_write_fd (int fd)
   eassert (fd < MAXDESC);
   eassert (fd <= max_desc);
 
+#ifdef NON_BLOCKING_CONNECT
   if ((fd_callback_info[fd].flags & NON_BLOCKING_CONNECT_FD) != 0)
     {
       if (--num_pending_connects < 0)
 	abort ();
     }
+#endif
   fd_callback_info[fd].flags &= ~(FOR_WRITE | NON_BLOCKING_CONNECT_FD);
   if (fd_callback_info[fd].flags == 0)
     {

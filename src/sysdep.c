@@ -33,6 +33,17 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <c-ctype.h>
 #include <utimens.h>
 
+#ifdef HAVE_SOCKETS
+#include <sys/socket.h>
+#include <netdb.h>
+#endif /* HAVE_SOCKETS */
+
+#ifdef TRY_AGAIN
+#ifndef HAVE_H_ERRNO
+extern int h_errno;
+#endif
+#endif /* TRY_AGAIN */
+
 #include "lisp.h"
 #include "sysselect.h"
 #include "blockinput.h"
@@ -58,7 +69,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #ifndef STDERR_FILENO
 #define STDERR_FILENO fileno(GetStdHandle(STD_ERROR_HANDLE))
 #endif
-#include <windows.h>
+#include "w32.h"
 #endif /* not WINDOWSNT */
 
 #include <sys/types.h>
@@ -1325,17 +1336,6 @@ setup_pty (int fd)
 }
 #endif /* HAVE_PTYS */
 
-#ifdef HAVE_SOCKETS
-#include <sys/socket.h>
-#include <netdb.h>
-#endif /* HAVE_SOCKETS */
-
-#ifdef TRY_AGAIN
-#ifndef HAVE_H_ERRNO
-extern int h_errno;
-#endif
-#endif /* TRY_AGAIN */
-
 void
 init_system_name (void)
 {

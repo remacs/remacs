@@ -1916,7 +1916,7 @@ extern int proc_buffered_char[];
 
 int
 sys_select (int nfds, SELECT_TYPE *rfds, SELECT_TYPE *wfds, SELECT_TYPE *efds,
-	    EMACS_TIME *timeout, void *ignored)
+	    EMACS_TIME *timeout, sigset_t *ignored)
 {
   SELECT_TYPE orfds;
   DWORD timeout_ms, start_time;

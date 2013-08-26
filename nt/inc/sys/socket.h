@@ -53,6 +53,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <ws2tcpip.h>
 /* process.c uses uint16_t (from C99) for IPv6, but
    apparently it is not defined in some versions of mingw and msvc.  */
+#include <stdint.h>
 #ifndef UINT16_C
 typedef unsigned short uint16_t;
 #endif
@@ -73,7 +74,7 @@ typedef unsigned short uint16_t;
 
 /* allow us to provide our own version of fd_set */
 #define fd_set ws_fd_set
-#include "w32.h"
+#include "sysselect.h"
 #endif	/* EMACS_CONFIG_H */
 
 #if defined (HAVE_TIMEVAL) && defined (_MSC_VER)

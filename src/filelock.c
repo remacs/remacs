@@ -36,6 +36,11 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <sys/sysctl.h>
 #endif /* __FreeBSD__ */
 
+#ifdef WINDOWSNT
+#include <share.h>
+#include <sys/socket.h>	/* for fcntl */
+#endif
+
 #include <errno.h>
 
 #include <c-ctype.h>
@@ -46,8 +51,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "coding.h"
 #include "systime.h"
 #ifdef WINDOWSNT
-#include <share.h>
-#include <sys/socket.h>	/* for fcntl */
 #include "w32.h"	/* for dostounix_filename */
 #endif
 

@@ -29,16 +29,18 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include <close-stream.h>
 
-#include "lisp.h"
-
 #ifdef WINDOWSNT
 #include <fcntl.h>
 #include <sys/socket.h>
-#include "w32.h"
 #include "w32heap.h"
 #endif
 
+#include "lisp.h"
+
 #if defined WINDOWSNT || defined HAVE_NTGUI
+#ifdef WINDOWSNT
+#include "w32.h"
+#endif
 #include "w32select.h"
 #include "w32font.h"
 #include "w32common.h"

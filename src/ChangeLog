@@ -1,3 +1,22 @@
+2013-08-26  Eli Zaretskii  <eliz@gnu.org>
+
+	* callproc.c: 
+	* emacs.c: 
+	* filelock.c: 
+	* process.c: 
+	* sysdep.c: 
+	* w32.c: Reshuffle Windows-specific headers to avoid errors with
+	redefinition of fd_set etc.
+
+	* process.c: Don't use num_pending_connects when
+	NON_BLOCKING_CONNECT is not defined.
+
+	* sysselect.h: Move definitions of FD_* macros and of SELECT_TYPE
+	here from w32.h.
+
+	* w32proc.c (sys_select): Adjust the argument types to what
+	thread.h expects.
+
 2013-08-24  Eli Zaretskii  <eliz@gnu.org>
 
 	* xdisp.c (get_next_display_element): Don't apply to characters
