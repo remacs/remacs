@@ -220,11 +220,10 @@ mutex_lock_callback (void *arg)
     post_acquire_global_lock (self);
 }
 
-static Lisp_Object
-do_unwind_mutex_lock (Lisp_Object ignore)
+static void
+do_unwind_mutex_lock (void)
 {
   current_thread->event_object = Qnil;
-  return Qnil;
 }
 
 DEFUN ("mutex-lock", Fmutex_lock, Smutex_lock, 1, 1, 0,
@@ -244,7 +243,7 @@ Note that calls to `mutex-lock' and `mutex-unlock' must be paired.  */)
   lmutex = XMUTEX (mutex);
 
   current_thread->event_object = mutex;
-  record_unwind_protect (do_unwind_mutex_lock, Qnil);
+  record_unwind_protect_void (do_unwind_mutex_lock);
   flush_stack_call_func (mutex_lock_callback, lmutex);
   return unbind_to (count, Qnil);
 }
