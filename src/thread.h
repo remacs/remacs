@@ -241,6 +241,6 @@ int thread_select  (select_func *func, int max_fds, SELECT_TYPE *rfds,
 		    SELECT_TYPE *wfds, SELECT_TYPE *efds, EMACS_TIME *timeout,
 		    sigset_t *sigmask);
 
-int thread_check_current_buffer (struct buffer *);
+bool thread_check_current_buffer (struct buffer *);
 
 #endif /* THREAD_H */

@@ -882,7 +882,7 @@ DEFUN ("all-threads", Fall_threads, Sall_threads, 0, 0, 0,
 
 
 
-int
+bool
 thread_check_current_buffer (struct buffer *buffer)
 {
   struct thread_state *iter;
@@ -893,10 +893,10 @@ thread_check_current_buffer (struct buffer *buffer)
 	continue;
 
       if (iter->m_current_buffer == buffer)
-	return 1;
+	return true;
     }
 
-  return 0;
+  return false;
 }
 
 
