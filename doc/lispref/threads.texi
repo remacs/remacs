@@ -192,8 +192,7 @@ and waiting on the condition variable.  For example:
 @end example
 
   The mutex ensures atomicity, and the loop is for robustness---there
-may be spurious notifications.  Emacs Lisp provides a macro,
-@code{until-condition}, to do this automatically.
+may be spurious notifications.
 
   Similarly, the mutex must be held before notifying the condition.
 The typical, and best, approach is to acquire the mutex, make the
@@ -251,9 +250,3 @@ Return the name of @var{cond}, as passed to
 Return the mutex associated with @var{cond}.  Note that the associated
 mutex cannot be changed.
 @end defun
-
-@defmac until-condition test cond
-Acquire the mutex associated with @var{cond}, and then loop, invoking
-the form @var{test}.  If @var{test} evaluates to @code{nil}, invoke
-@code{condition-wait} on @var{cond}.
-@end defmac
