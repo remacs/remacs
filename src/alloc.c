@@ -4704,6 +4704,17 @@ mark_stack (char *bottom, char *end)
 #endif
 }
 
+/* This is a trampoline function that flushes registers to the stack,
+   and then calls FUNC.  ARG is passed through to FUNC verbatim.
+
+   This function must be called whenever Emacs is about to release the
+   global interpreter lock.  This lets the garbage collector easily
+   find roots in registers on threads that are not actively running
+   Lisp.
+   
+   It is invalid to run any Lisp code or to allocate any GC memory
+   from FUNC.  */
+
 void
 flush_stack_call_func (void (*func) (void *arg), void *arg)
 {
