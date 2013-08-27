@@ -196,12 +196,12 @@ may be spurious notifications.
 
   Similarly, the mutex must be held before notifying the condition.
 The typical, and best, approach is to acquire the mutex, make the
-changes associated with this condition, and then signal it:
+changes associated with this condition, and then notify it:
 
 @example
 (with-mutex mutex
   (setq global-variable (some-computation))
-  (condition-signal cond-var))
+  (condition-notify cond-var))
 @end example
 
 @defun make-condition-variable mutex &optional name
