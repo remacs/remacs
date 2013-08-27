@@ -4788,20 +4788,6 @@ This is the simplest safe way to acquire and release a mutex."
 	   (progn ,@body)
 	 (mutex-unlock ,sym)))))
 
-(defmacro until-condition (test condition)
-  "Wait for the condition variable CONDITION, checking TEST.
-Acquire CONDITION's mutex, then check TEST.
-If TEST evaluates to nil, repeatedly invoke `condition-wait' on CONDITION.
-When CONDITION is signalled, check TEST again.
-
-This is the simplest safe way to invoke `condition-wait'."
-  (let ((cond-sym (make-symbol "condition")))
-    `(let ((,cond-sym ,condition))
-       (with-mutex (condition-mutex ,cond-sym)
-         (while (not ,test)
-	   (condition-wait ,cond-sym))))))
-
-
 
 ;;; Misc.
 (defconst menu-bar-separator '("--")
