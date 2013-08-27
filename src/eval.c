@@ -3171,14 +3171,6 @@ let_shadows_global_binding_p (Lisp_Object symbol)
   return 0;
 }
 
-static Lisp_Object
-binding_symbol (union specbinding *bind)
-{
-  if (!CONSP (specpdl_symbol (bind)))
-    return specpdl_symbol (bind);
-  return XCAR (specpdl_symbol (bind));
-}
-
 void
 do_specbind (struct Lisp_Symbol *sym, union specbinding *bind,
 	     Lisp_Object value)
@@ -3209,7 +3201,7 @@ do_specbind (struct Lisp_Symbol *sym, union specbinding *bind,
 	    }
 	}
 
-      set_internal (binding_symbol (bind), value, Qnil, 1);
+      set_internal (specpdl_symbol (bind), value, Qnil, 1);
       break;
 
     default:
@@ -3350,7 +3342,7 @@ rebind_for_thread_switch (void)
 	  Lisp_Object value = specpdl_saved_value (bind);
 
 	  bind->let.saved_value = Qnil;
-	  do_specbind (XSYMBOL (binding_symbol (bind)), bind, value);
+	  do_specbind (XSYMBOL (specpdl_symbol (bind)), bind, value);
 	}
     }
 }
@@ -3500,7 +3492,7 @@ unbind_for_thread_switch (void)
     {
       if (bind->kind >= SPECPDL_LET)
 	{
-	  bind->let.saved_value = find_symbol_value (binding_symbol (bind));
+	  bind->let.saved_value = find_symbol_value (specpdl_symbol (bind));
 	  do_one_unbind (bind, 0);
 	}
     }
