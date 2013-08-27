@@ -1,6 +1,6 @@
 @c -*-texinfo-*-
 @c This is part of the GNU Emacs Lisp Reference Manual.
-@c Copyright (C) 2012
+@c Copyright (C) 2012, 2013
 @c   Free Software Foundation, Inc.
 @c See the file elisp.texi for copying conditions.
 @node Threads
@@ -101,9 +101,10 @@ Return @code{t} if @var{thread} is alive, or @code{nil} if it is not.
 A thread is alive as long as its function is still executing.
 @end defun
 
-@defun thread-blocker thread
+@defun thread--blocker thread
 Return the object that @var{thread} is waiting on.  This function is
-primarily intended for debugging.
+primarily intended for debugging, and is given a ``double hyphen''
+name to indicate that.
 
 If @var{thread} is blocked in @code{thread-join}, this returns the
 thread for which it is waiting.

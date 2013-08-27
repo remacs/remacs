@@ -804,7 +804,7 @@ DEFUN ("thread-alive-p", Fthread_alive_p, Sthread_alive_p, 1, 1, 0,
   return thread_alive_p (tstate) ? Qt : Qnil;
 }
 
-DEFUN ("thread-blocker", Fthread_blocker, Sthread_blocker, 1, 1, 0,
+DEFUN ("thread--blocker", Fthread_blocker, Sthread_blocker, 1, 1, 0,
        doc: /* Return the object that THREAD is blocking on.
 If THREAD is blocked in `thread-join' on a second thread, return that
 thread.
