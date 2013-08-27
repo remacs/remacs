@@ -147,7 +147,9 @@ struct thread_state
 #define re_syntax_options (current_thread->m_re_syntax_options)
 
   /* Regexp to use to replace spaces, or NULL meaning don't.  */
-  /*re_char*/ unsigned char *m_whitespace_regexp;
+  /* This ought to be a "const re_char *" but that is not available
+     outside regex.h.  */
+  const void *m_whitespace_regexp;
 #define whitespace_regexp (current_thread->m_whitespace_regexp)
 
   /* This variable is different from waiting_for_input in keyboard.c.
