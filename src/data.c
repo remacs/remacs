@@ -547,8 +547,7 @@ DEFUN ("threadp", Fthreadp, Sthreadp, 1, 1, 0,
 {
   if (THREADP (object))
     return Qt;
-  else
-    return Qnil;
+  return Qnil;
 }
 
 DEFUN ("mutexp", Fmutexp, Smutexp, 1, 1, 0,
@@ -557,8 +556,7 @@ DEFUN ("mutexp", Fmutexp, Smutexp, 1, 1, 0,
 {
   if (MUTEXP (object))
     return Qt;
-  else
-    return Qnil;
+  return Qnil;
 }
 
 DEFUN ("condition-variable-p", Fcondition_variable_p, Scondition_variable_p,
@@ -568,8 +566,7 @@ DEFUN ("condition-variable-p", Fcondition_variable_p, Scondition_variable_p,
 {
   if (CONDVARP (object))
     return Qt;
-  else
-    return Qnil;
+  return Qnil;
 }
 
 /* Extract and set components of lists.  */
