@@ -197,6 +197,155 @@ sys_thread_yield (void)
   sched_yield ();
 }
 
+#elif defined (WINDOWSNT)
+
+#include <windows.h>
+
+/* Cannot include <process.h> because of the local header by the same
+   name, sigh.  */
+uintptr_t _beginthread (void (__cdecl *)(void *), unsigned, void *);
+
+/* Mutexes are implemented as critical sections, because they are
+   faster than Windows mutex objects (implemented in userspace), and
+   satisfy the requirements, since we only needto synchronize within a
+   single process.  */
+void
+sys_mutex_init (sys_mutex_t *mutex)
+{
+  InitializeCriticalSection ((LPCRITICAL_SECTION)mutex);
+}
+
+void
+sys_mutex_lock (sys_mutex_t *mutex)
+{
+  /* FIXME: What happens if the owning thread exits without releasing
+     the mutex?  Accoding to MSDN, the result is undefined behavior.  */
+  EnterCriticalSection ((LPCRITICAL_SECTION)mutex);
+}
+
+void
+sys_mutex_unlock (sys_mutex_t *mutex)
+{
+  LeaveCriticalSection ((LPCRITICAL_SECTION)mutex);
+}
+
+void
+sys_mutex_destroy (sys_mutex_t *mutex)
+{
+  /* FIXME: According to MSDN, deleting a critical session that is
+     owned by a thread leaves the other threads waiting for the
+     critical session in an undefined state.  Posix docs seems to say
+     the same about pthread_mutex_destroy.  Do we need to protect
+     against such calamities?  */
+  DeleteCriticalSection ((LPCRITICAL_SECTION)mutex);
+}
+
+void
+sys_cond_init (sys_cond_t *cond)
+{
+  cond->events[CONDV_SIGNAL] = CreateEvent (NULL, FALSE, FALSE, NULL);
+  cond->events[CONDV_BROADCAST] = CreateEvent (NULL, TRUE, FALSE, NULL);
+}
+
+void
+sys_cond_wait (sys_cond_t *cond, sys_mutex_t *mutex)
+{
+  /* FIXME: This implementation is simple, but incorrect.  Stay tuned
+     for better and more complicated implementation.  */
+  LeaveCriticalSection ((LPCRITICAL_SECTION)mutex);
+  WaitForMultipleObjects (2, cond->events, FALSE, INFINITE);
+  EnterCriticalSection ((LPCRITICAL_SECTION)mutex);
+}
+
+void
+sys_cond_signal (sys_cond_t *cond)
+{
+  PulseEvent (cond->events[CONDV_SIGNAL]);
+}
+
+void
+sys_cond_broadcast (sys_cond_t *cond)
+{
+  PulseEvent (cond->events[CONDV_BROADCAST]);
+}
+
+void
+sys_cond_destroy (sys_cond_t *cond)
+{
+  CloseHandle (cond->events[CONDV_SIGNAL]);
+  CloseHandle (cond->events[CONDV_BROADCAST]);
+}
+
+sys_thread_t
+sys_thread_self (void)
+{
+  return (sys_thread_t) GetCurrentThreadId ();
+}
+
+int
+sys_thread_equal (sys_thread_t one, sys_thread_t two)
+{
+  return one == two;
+}
+
+static thread_creation_function *thread_start_address;
+
+static void
+w32_beginthread_wrapper (void *arg)
+{
+  (void)thread_start_address (arg);
+}
+
+int
+sys_thread_create (sys_thread_t *thread_ptr, const char *name,
+		   thread_creation_function *func, void *arg)
+{
+  /* FIXME: Do threads that run Lisp require some minimum amount of
+     stack?  Zero here means each thread will get the same amount as
+     the main program.  On GNU/Linux, it seems like the stack is 2MB
+     by default, overridden by RLIMIT_STACK at program start time.
+     Not sure what to do with this.  See also the comment in
+     w32proc"new_child.  */
+  const unsigned stack_size = 0;
+  uintptr_t thandle;
+
+  /* _beginthread wants a void function, while we are passed a
+     function that returns a pointer.  So we use a wrapper.  */
+  thread_start_address = func;
+
+  /* We use _beginthread rather than CreateThread because the former
+     arranges for the thread handle to be automatically closed when
+     the thread exits, thus preventing handle leaks and/or the need to
+     track all the threads and close their handles when they exit.
+     Also, MSDN seems to imply that code which uses CRT _must_ call
+     _beginthread, although if that is true, we already violate that
+     rule in many places...  */
+  thandle = _beginthread (w32_beginthread_wrapper, stack_size, arg);
+  if (thandle == (uintptr_t)-1L)
+    return errno;
+
+  /* Kludge alert!  We use the Windows thread ID, an unsigned 32-bit
+     number, as the sys_thread_t type, because that ID is the only
+     unique identifier of a thread on Windows.  But _beginthread
+     returns a handle of the thread, and there's no easy way of
+     getting the thread ID given a handle (GetThreadId is available
+     only since Vista, so we cannot use it portably).  Fortunately,
+     the value returned by sys_thread_create is not used by its
+     callers; instead, run_thread, which runs in the context of the
+     new thread, calls sys_thread_self and uses its return value;
+     sys_thread_self in this implementation calls GetCurrentThreadId.
+     Therefore, we return some more or less arbitrary value of the
+     thread ID from this function. */
+  *thread_ptr = thandle & 0xFFFFFFFF;
+  return 0;
+}
+
+void
+sys_thread_yield (void)
+{
+  Sleep (0);
+}
+
 #else
 
 #error port me

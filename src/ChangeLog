@@ -1,3 +1,14 @@
+2013-08-30  Eli Zaretskii  <eliz@gnu.org>
+
+	* systhread.h (w32thread_critsect, w32thread_cond_t, sys_mutex_t)
+	(sys_cond_t, sys_thread_t) [WINDOWSNT]: New data types.
+
+	* systhread.c (sys_mutex_init, sys_mutex_lock, sys_mutex_unlock)
+	(sys_mutex_destroy, sys_cond_init, sys_cond_wait)
+	(sys_cond_signal, sys_cond_broadcast, sys_cond_destroy)
+	(sys_thread_self, sys_thread_equal, w32_beginthread_wrapper)
+	(sys_thread_create, sys_thread_yield) [WINDOWSNT]: New functions.
+
 2013-08-26  Eli Zaretskii  <eliz@gnu.org>
 
 	* callproc.c: 

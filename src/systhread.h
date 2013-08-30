@@ -36,8 +36,42 @@ typedef pthread_t sys_thread_t;
 
 #else /* HAVE_PTHREAD */
 
+#ifdef WINDOWSNT
+
+/* This header is indirectly included in every source file.  We don't
+   want to include windows.h in every source file, so we repeat
+   declarations of the few necessary data types here (under different
+   names, to avoid conflicts with files that do include
+   windows.h).  */
+
+typedef struct {
+  struct _CRITICAL_SECTION_DEBUG *DebugInfo;
+  long LockCount;
+  long RecursionCount;
+  void *OwningThread;
+  void *LockSemaphore;
+  unsigned long SpinCount;
+} w32thread_critsect;
+
+enum { CONDV_SIGNAL = 0, CONDV_BROADCAST = 1, CONDV_MAX = 2 };
+
+typedef struct {
+  unsigned waiters_count;
+  w32thread_critsect waiters_count_lock;
+  void *events[CONDV_MAX];
+} w32thread_cond_t;
+
+typedef w32thread_critsect sys_mutex_t;
+
+typedef w32thread_cond_t sys_cond_t;
+
+typedef unsigned long sys_thread_t;
+
+#else  /* !WINDOWSNT */
+
 #error port me
 
+#endif	/* WINDOWSNT */
 #endif /* HAVE_PTHREAD */
 
 #else /* THREADS_ENABLED */

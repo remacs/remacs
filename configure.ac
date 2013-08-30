@@ -1956,6 +1956,11 @@ if test "$with_threads" = yes; then
       AC_DEFINE(THREADS_ENABLED, 1,
                 [Define to 1 if you want elisp thread support.])
       threads_enabled=yes
+   elif test "${opsys}" = "mingw32"; then
+      dnl MinGW can do native Windows threads even without pthreads
+      AC_DEFINE(THREADS_ENABLED, 1,
+                [Define to 1 if you want elisp thread support.])
+      threads_enabled=yes
    fi
 fi
 AC_MSG_RESULT([$threads_enabled])

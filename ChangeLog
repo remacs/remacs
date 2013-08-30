@@ -1,3 +1,8 @@
+2013-08-30  Eli Zaretskii  <eliz@gnu.org>
+
+	* configure.ac (THREADS_ENABLED): Enable threads for MinGW, even
+	if pthreads is not available.
+
 2013-08-22  Paul Eggert  <eggert@cs.ucla.edu>
 
 	* configure.ac (EMACS_CONFIG_OPTIONS): Quote systematically (Bug#13274).
