@@ -497,7 +497,6 @@ void
 delete_read_fd (int fd)
 {
   eassert (fd < MAXDESC);
-  eassert (fd <= max_desc);
   delete_keyboard_wait_descriptor (fd);
 
   if (fd_callback_info[fd].flags == 0)
@@ -559,7 +558,6 @@ delete_write_fd (int fd)
   int lim = max_desc;
 
   eassert (fd < MAXDESC);
-  eassert (fd <= max_desc);
 
 #ifdef NON_BLOCKING_CONNECT
   if ((fd_callback_info[fd].flags & NON_BLOCKING_CONNECT_FD) != 0)
@@ -6942,7 +6940,6 @@ delete_keyboard_wait_descriptor (int desc)
   int lim = max_desc;
 
   eassert (desc >= 0 && desc < MAXDESC);
-  eassert (desc <= max_desc);
 
   fd_callback_info[desc].flags &= ~(FOR_READ | KEYBOARD_FD | PROCESS_FD);
 

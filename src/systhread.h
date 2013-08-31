@@ -56,9 +56,13 @@ typedef struct {
 enum { CONDV_SIGNAL = 0, CONDV_BROADCAST = 1, CONDV_MAX = 2 };
 
 typedef struct {
-  unsigned waiters_count;
-  w32thread_critsect waiters_count_lock;
+  /* Count of threads that are waiting for this condition variable.  */
+  unsigned wait_count;
+  /* Critical section to protect changes to the count above.  */
+  w32thread_critsect wait_count_lock;
+  /* Handles of events used for signal and broadcast.  */
   void *events[CONDV_MAX];
+  bool initialized;
 } w32thread_cond_t;
 
 typedef w32thread_critsect sys_mutex_t;

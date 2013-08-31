@@ -243,37 +243,101 @@ sys_mutex_destroy (sys_mutex_t *mutex)
 void
 sys_cond_init (sys_cond_t *cond)
 {
+  cond->initialized = false;
+  cond->wait_count = 0;
+  /* Auto-reset event for signal.  */
   cond->events[CONDV_SIGNAL] = CreateEvent (NULL, FALSE, FALSE, NULL);
+  /* Manual-reset event for broadcast.  */
   cond->events[CONDV_BROADCAST] = CreateEvent (NULL, TRUE, FALSE, NULL);
+  if (!cond->events[CONDV_SIGNAL] || !cond->events[CONDV_BROADCAST])
+    return;
+  InitializeCriticalSection ((LPCRITICAL_SECTION)&cond->wait_count_lock);
+  cond->initialized = true;
 }
 
 void
 sys_cond_wait (sys_cond_t *cond, sys_mutex_t *mutex)
 {
-  /* FIXME: This implementation is simple, but incorrect.  Stay tuned
-     for better and more complicated implementation.  */
+  DWORD wait_result;
+  bool last_thread_waiting;
+
+  if (!cond->initialized)
+    return;
+
+  /* Increment the wait count avoiding race conditions.  */
+  EnterCriticalSection ((LPCRITICAL_SECTION)&cond->wait_count_lock);
+  cond->wait_count++;
+  LeaveCriticalSection ((LPCRITICAL_SECTION)&cond->wait_count_lock);
+
+  /* Release the mutex and wait for either the signal or the broadcast
+     event.  */
   LeaveCriticalSection ((LPCRITICAL_SECTION)mutex);
-  WaitForMultipleObjects (2, cond->events, FALSE, INFINITE);
+  wait_result = WaitForMultipleObjects (2, cond->events, FALSE, INFINITE);
+
+  /* Decrement the wait count and see if we are the last thread
+     waiting on the condition variable.  */
+  EnterCriticalSection ((LPCRITICAL_SECTION)&cond->wait_count_lock);
+  cond->wait_count--;
+  last_thread_waiting =
+    wait_result == WAIT_OBJECT_0 + CONDV_BROADCAST
+    && cond->wait_count == 0;
+  LeaveCriticalSection ((LPCRITICAL_SECTION)&cond->wait_count_lock);
+
+  /* Broadcast uses a manual-reset event, so when the last thread is
+     released, we must manually reset that event.  */
+  if (last_thread_waiting)
+    ResetEvent (cond->events[CONDV_BROADCAST]);
+
+  /* Per the API, re-acquire the mutex.  */
   EnterCriticalSection ((LPCRITICAL_SECTION)mutex);
 }
 
 void
 sys_cond_signal (sys_cond_t *cond)
 {
-  PulseEvent (cond->events[CONDV_SIGNAL]);
+  bool threads_waiting;
+
+  if (!cond->initialized)
+    return;
+
+  EnterCriticalSection ((LPCRITICAL_SECTION)&cond->wait_count_lock);
+  threads_waiting = cond->wait_count > 0;
+  LeaveCriticalSection ((LPCRITICAL_SECTION)&cond->wait_count_lock);
+
+  if (threads_waiting)
+    SetEvent (cond->events[CONDV_SIGNAL]);
 }
 
 void
 sys_cond_broadcast (sys_cond_t *cond)
 {
-  PulseEvent (cond->events[CONDV_BROADCAST]);
+  bool threads_waiting;
+
+  if (!cond->initialized)
+    return;
+
+  EnterCriticalSection ((LPCRITICAL_SECTION)&cond->wait_count_lock);
+  threads_waiting = cond->wait_count > 0;
+  LeaveCriticalSection ((LPCRITICAL_SECTION)&cond->wait_count_lock);
+
+  if (threads_waiting)
+    SetEvent (cond->events[CONDV_BROADCAST]);
 }
 
 void
 sys_cond_destroy (sys_cond_t *cond)
 {
-  CloseHandle (cond->events[CONDV_SIGNAL]);
-  CloseHandle (cond->events[CONDV_BROADCAST]);
+  if (cond->events[CONDV_SIGNAL])
+    CloseHandle (cond->events[CONDV_SIGNAL]);
+  if (cond->events[CONDV_BROADCAST])
+    CloseHandle (cond->events[CONDV_BROADCAST]);
+
+  if (!cond->initialized)
+    return;
+
+  /* FIXME: What if wait_count is non-zero, i.e. there are still
+     threads waiting on this condition variable?  */
+  DeleteCriticalSection ((LPCRITICAL_SECTION)&cond->wait_count_lock);
 }
 
 sys_thread_t
@@ -322,7 +386,7 @@ sys_thread_create (sys_thread_t *thread_ptr, const char *name,
      rule in many places...  */
   thandle = _beginthread (w32_beginthread_wrapper, stack_size, arg);
   if (thandle == (uintptr_t)-1L)
-    return errno;
+    return 0;
 
   /* Kludge alert!  We use the Windows thread ID, an unsigned 32-bit
      number, as the sys_thread_t type, because that ID is the only
@@ -337,7 +401,7 @@ sys_thread_create (sys_thread_t *thread_ptr, const char *name,
      Therefore, we return some more or less arbitrary value of the
      thread ID from this function. */
   *thread_ptr = thandle & 0xFFFFFFFF;
-  return 0;
+  return 1;
 }
 
 void

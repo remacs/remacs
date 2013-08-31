@@ -1,3 +1,22 @@
+2013-08-31  Eli Zaretskii  <eliz@gnu.org>
+
+	* systhread.c (sys_cond_init): Set the 'initialized' member to
+	true only if initialization is successful.  Initialize wait_count
+	and wait_count_lock.
+	(sys_cond_wait, sys_cond_signal, sys_cond_broadcast): If
+	'initialized' is false, do nothing.
+	(sys_cond_wait): Fix the implementation to avoid the "missed
+	wakeup" bug: count the waiting threads, and reset the broadcast
+	event once the last thread was released.
+	(sys_cond_signal, sys_cond_broadcast): Use SetEvent instead of
+	PulseEvent.  Don't signal the event if no threads are waiting.
+	(sys_cond_destroy): Only close non-NULL handles.
+	(sys_thread_create): Return zero if unsuccessful, 1 if successful.
+
+	* systhread.h (w32thread_cond_t): New member 'initialized'.
+	Rename waiters_count and waiters_count_lock to wait_count and
+	wait_count_lock, respectively.
+
 2013-08-30  Eli Zaretskii  <eliz@gnu.org>
 
 	* systhread.h (w32thread_critsect, w32thread_cond_t, sys_mutex_t)
