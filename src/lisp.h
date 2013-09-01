@@ -3828,7 +3828,7 @@ extern void set_unwind_protect (ptrdiff_t, void (*) (Lisp_Object), Lisp_Object);
 extern void set_unwind_protect_ptr (ptrdiff_t, void (*) (void *), void *);
 extern Lisp_Object unbind_to (ptrdiff_t, Lisp_Object);
 extern void rebind_for_thread_switch (void);
-extern void unbind_for_thread_switch (void);
+extern void unbind_for_thread_switch (struct thread_state *);
 extern _Noreturn void error (const char *, ...) ATTRIBUTE_FORMAT_PRINTF (1, 2);
 extern _Noreturn void verror (const char *, va_list)
   ATTRIBUTE_FORMAT_PRINTF (1, 0);

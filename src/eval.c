@@ -3484,11 +3484,11 @@ unbind_to (ptrdiff_t count, Lisp_Object value)
 }
 
 void
-unbind_for_thread_switch (void)
+unbind_for_thread_switch (struct thread_state *thr)
 {
   union specbinding *bind;
 
-  for (bind = specpdl_ptr; bind != specpdl; --bind)
+  for (bind = thr->m_specpdl_ptr; bind != thr->m_specpdl; --bind)
     {
       if (bind->kind >= SPECPDL_LET)
 	{

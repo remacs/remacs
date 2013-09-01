@@ -55,15 +55,20 @@ static void
 post_acquire_global_lock (struct thread_state *self)
 {
   Lisp_Object buffer;
+  struct thread_state *prev_thread = current_thread;
 
-  if (self != current_thread)
+  /* Do this early on, so that code below could signal errors (e.g.,
+     unbind_for_thread_switch might) correctly, because we are already
+     running in the context of the thread pointed by SELF.  */
+  current_thread = self;
+
+  if (prev_thread != current_thread)
     {
-      /* CURRENT_THREAD is NULL if the previously current thread
+      /* PREV_THREAD is NULL if the previously current thread
 	 exited.  In this case, there is no reason to unbind, and
 	 trying will crash.  */
-      if (current_thread != NULL)
-	unbind_for_thread_switch ();
-      current_thread = self;
+      if (prev_thread != NULL)
+	unbind_for_thread_switch (prev_thread);
       rebind_for_thread_switch ();
     }
 

@@ -1,3 +1,13 @@
+2013-09-01  Eli Zaretskii  <eliz@gnu.org>
+
+	* eval.c (unbind_for_thread_switch): Accept a 'struct
+	thread_state *' argument and use specpdl_ptr and specpdl of that
+	thread.  Fixes crashes if find_symbol_value signals an error.
+
+	* thread.c (post_acquire_global_lock): Update current_thread
+	before calling unbind_for_thread_switch.  Pass the previous thread
+	to unbind_for_thread_switch.
+
 2013-08-31  Eli Zaretskii  <eliz@gnu.org>
 
 	* systhread.c (sys_cond_init): Set the 'initialized' member to
