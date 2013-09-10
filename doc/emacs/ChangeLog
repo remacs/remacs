@@ -1,3 +1,18 @@
+2013-09-04  Xue Fuqiao  <xfq.free@gmail.com>
+
+	* maintaining.texi (VC Ignore): Mention `vc-ignore' with prefix argument.
+
+2013-08-31  Ulrich Müller  <ulm@gentoo.org>
+
+	* xresources.texi (Motif Resources):
+	Rename from LessTif Resources.  Update xrefs.  (Bug#15145)
+	* emacs.texi: Update menu.
+
+2013-08-28  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* Makefile.in (SHELL): Now @SHELL@, not /bin/sh,
+	for portability to hosts where /bin/sh has problems.
+
 2013-08-17  Xue Fuqiao  <xfq.free@gmail.com>
 
 	* text.texi (Enriched Justification): Minor fixes.

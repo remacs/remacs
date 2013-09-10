@@ -39,13 +39,9 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "blockinput.h"
 #include "intervals.h"
 #include "termhooks.h"		/* For FRAME_TERMINAL.  */
-
-#ifdef HAVE_X_WINDOWS
-#include "xterm.h"
-#endif	/* HAVE_X_WINDOWS */
-#ifdef HAVE_NTGUI
-#include "w32term.h"
-#endif
+#ifdef HAVE_WINDOW_SYSTEM
+#include TERM_HEADER
+#endif /* HAVE_WINDOW_SYSTEM */
 #ifdef MSDOS
 #include "msdos.h"
 #endif
@@ -552,15 +548,7 @@ select_window_1 (Lisp_Object window, bool inhibit_point_swap)
      than one window.  It also matters when
      redisplay_window has altered point after scrolling,
      because it makes the change only in the window.  */
-  {
-    register ptrdiff_t new_point = marker_position (XWINDOW (window)->pointm);
-    if (new_point < BEGV)
-      SET_PT (BEGV);
-    else if (new_point > ZV)
-      SET_PT (ZV);
-    else
-      SET_PT (new_point);
-  }
+  set_point_from_marker (XWINDOW (window)->pointm);
 }
 
 DEFUN ("select-window", Fselect_window, Sselect_window, 1, 2, 0,
@@ -1505,7 +1493,6 @@ if it isn't already recorded.  */)
       && !noninteractive)
     {
       struct text_pos startp;
-      ptrdiff_t charpos = marker_position (w->start);
       struct it it;
       struct buffer *old_buffer = NULL;
       void *itdata = NULL;
@@ -1523,12 +1510,7 @@ if it isn't already recorded.  */)
          `-l' containing a call to `rmail' with subsequent other
          commands.  At the end, W->start happened to be BEG, while
          rmail had already narrowed the buffer.  */
-      if (charpos < BEGV)
-	SET_TEXT_POS (startp, BEGV, BEGV_BYTE);
-      else if (charpos > ZV)
-	SET_TEXT_POS (startp, ZV, ZV_BYTE);
-      else
-	SET_TEXT_POS_FROM_MARKER (startp, w->start);
+      CLIP_TEXT_POS_FROM_MARKER (startp, w->start);
 
       itdata = bidi_shelve_cache ();
       start_display (&it, w, startp);
@@ -2969,7 +2951,7 @@ window-start value is reasonable when this function is called.  */)
 	}
     }
 
-  adjust_glyphs (f);
+  adjust_frame_glyphs (f);
   unblock_input ();
 
   run_window_configuration_change_hook (f);
@@ -3352,10 +3334,8 @@ temp_output_buffer_show (register Lisp_Object buf)
 
   if (!NILP (Vtemp_buffer_show_function))
     call1 (Vtemp_buffer_show_function, buf);
-  else
+  else if (WINDOW_LIVE_P (window = display_buffer (buf, Qnil, Qnil)))
     {
-      window = display_buffer (buf, Qnil, Qnil);
-
       if (!EQ (XWINDOW (window)->frame, selected_frame))
 	Fmake_frame_visible (WINDOW_FRAME (XWINDOW (window)));
       Vminibuf_scroll_window = window;
@@ -3445,6 +3425,7 @@ make_window (void)
      non-Lisp data, so do it only for slots which should not be zero.  */
   w->nrows_scale_factor = w->ncols_scale_factor = 1;
   w->left_fringe_width = w->right_fringe_width = -1;
+  w->mode_line_height = w->header_line_height = -1;
   w->phys_cursor_type = -1;
   w->phys_cursor_width = -1;
   w->scroll_bar_width = -1;
@@ -3670,7 +3651,7 @@ be applied on the Elisp level.  */)
   windows_or_buffers_changed++;
   FRAME_WINDOW_SIZES_CHANGED (f) = 1;
 
-  adjust_glyphs (f);
+  adjust_frame_glyphs (f);
   unblock_input ();
 
   run_window_configuration_change_hook (f);
@@ -3940,7 +3921,7 @@ set correctly.  See the code of `split-window' for how this is done.  */)
 
   block_input ();
   window_resize_apply (p, horflag);
-  adjust_glyphs (f);
+  adjust_frame_glyphs (f);
   /* Set buffer of NEW to buffer of reference window.  Don't run
      any hooks.  */
   set_window_buffer (new, r->contents, 0, 1);
@@ -4072,7 +4053,7 @@ Signal an error when WINDOW is the only window on its frame.  */)
 	  recombine_windows (sibling);
 	}
 
-      adjust_glyphs (f);
+      adjust_frame_glyphs (f);
 
       if (!WINDOW_LIVE_P (FRAME_SELECTED_WINDOW (f)))
 	/* We deleted the frame's selected window.  */
@@ -4159,7 +4140,7 @@ grow_mini_window (struct window *w, int delta)
       w->total_lines -= XINT (value);
       /* Enforce full redisplay.  FIXME: make it more selective.  */
       windows_or_buffers_changed++;
-      adjust_glyphs (f);
+      adjust_frame_glyphs (f);
       unblock_input ();
     }
 }
@@ -4193,7 +4174,7 @@ shrink_mini_window (struct window *w)
 	  w->total_lines = 1;
 	  /* Enforce full redisplay.  FIXME: make it more selective.  */
 	  windows_or_buffers_changed++;
-	  adjust_glyphs (f);
+	  adjust_frame_glyphs (f);
 	  unblock_input ();
 	}
       /* If the above failed for whatever strange reason we must make a
@@ -4234,7 +4215,7 @@ DEFUN ("resize-mini-window-internal", Fresize_mini_window_internal, Sresize_mini
 
       windows_or_buffers_changed++;
       FRAME_WINDOW_SIZES_CHANGED (f) = 1;
-      adjust_glyphs (f);
+      adjust_frame_glyphs (f);
       unblock_input ();
 
       run_window_configuration_change_hook (f);
@@ -4505,7 +4486,7 @@ window_scroll_pixel_based (Lisp_Object window, int n, bool whole, int noerror)
 		 visible.  */
 	      w->vscroll = (it.last_visible_y
 			    - it.current_y + it.max_ascent + it.max_descent);
-	      adjust_glyphs (it.f);
+	      adjust_frame_glyphs (it.f);
 	    }
 	  else
 	    {
@@ -5054,7 +5035,6 @@ displayed_window_lines (struct window *w)
 {
   struct it it;
   struct text_pos start;
-  ptrdiff_t charpos = marker_position (w->start);
   int height = window_box_height (w);
   struct buffer *old_buffer;
   int bottom_y;
@@ -5071,12 +5051,7 @@ displayed_window_lines (struct window *w)
   /* In case W->start is out of the accessible range, do something
      reasonable.  This happens in Info mode when Info-scroll-down
      calls (recenter -1) while W->start is 1.  */
-  if (charpos < BEGV)
-    SET_TEXT_POS (start, BEGV, BEGV_BYTE);
-  else if (charpos > ZV)
-    SET_TEXT_POS (start, ZV, ZV_BYTE);
-  else
-    SET_TEXT_POS_FROM_MARKER (start, w->start);
+  CLIP_TEXT_POS_FROM_MARKER (start, w->start);
 
   itdata = bidi_shelve_cache ();
   start_display (&it, w, start);
@@ -5788,7 +5763,7 @@ the return value is nil.  Otherwise the value is t.  */)
 	    ++n;
 	}
 
-      adjust_glyphs (f);
+      adjust_frame_glyphs (f);
       unblock_input ();
 
       /* Scan dead buffer windows.  */
@@ -6117,7 +6092,7 @@ apply_window_adjustment (struct window *w)
   clear_glyph_matrix (w->current_matrix);
   w->window_end_valid = 0;
   windows_or_buffers_changed++;
-  adjust_glyphs (XFRAME (WINDOW_FRAME (w)));
+  adjust_frame_glyphs (XFRAME (WINDOW_FRAME (w)));
 }
 
 
@@ -6383,7 +6358,7 @@ If PIXELS-P is non-nil, the return value is VSCROLL.  */)
 	  /* Adjust glyph matrix of the frame if the virtual display
 	     area becomes larger than before.  */
 	  if (w->vscroll < 0 && w->vscroll < old_dy)
-	    adjust_glyphs (f);
+	    adjust_frame_glyphs (f);
 
 	  /* Prevent redisplay shortcuts.  */
 	  XBUFFER (w->contents)->prevent_redisplay_optimizations_p = 1;

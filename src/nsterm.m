@@ -308,8 +308,13 @@ static CGPoint menu_mouse_point;
 /* This is a piece of code which is common to all the event handling
    methods.  Maybe it should even be a function.  */
 #define EV_TRAILER(e)                                                   \
-    {                                                                   \
-      XSETFRAME (emacs_event->frame_or_window, emacsframe);             \
+  {                                                                     \
+    XSETFRAME (emacs_event->frame_or_window, emacsframe);               \
+    EV_TRAILER2 (e);                                                    \
+  }
+
+#define EV_TRAILER2(e)                                                  \
+  {                                                                     \
       if (e) emacs_event->timestamp = EV_TIMESTAMP (e);                 \
       if (q_event_ptr)                                                  \
         {                                                               \
@@ -720,7 +725,7 @@ ns_update_window_begin (struct window *w)
   Mouse_HLInfo *hlinfo = MOUSE_HL_INFO (f);
 
   NSTRACE (ns_update_window_begin);
-  set_output_cursor (&w->cursor);
+  w->output_cursor = w->cursor;
 
   block_input ();
 
@@ -756,8 +761,8 @@ ns_update_window_end (struct window *w, bool cursor_on_p,
 
       if (cursor_on_p)
 	display_and_set_cursor (w, 1,
-                                output_cursor.hpos, output_cursor.vpos,
-				output_cursor.x, output_cursor.y);
+				w->output_cursor.hpos, w->output_cursor.vpos,
+				w->output_cursor.x, w->output_cursor.y);
 
       if (draw_window_fringes (w, 1))
 	x_draw_vertical_border (w);
@@ -795,18 +800,6 @@ ns_update_end (struct frame *f)
   ns_updating_frame = NULL;
   NSTRACE (ns_update_end);
 }
-
-
-static void
-ns_flush (struct frame *f)
-/* --------------------------------------------------------------------------
-   external (RIF) call
-   NS impl is no-op since currently we flush in ns_update_end and elsewhere
-   -------------------------------------------------------------------------- */
-{
-    NSTRACE (ns_flush);
-}
-
 
 static void
 ns_focus (struct frame *f, NSRect *r, int n)
@@ -885,7 +878,8 @@ ns_unfocus (struct frame *f)
 
 
 static void
-ns_clip_to_row (struct window *w, struct glyph_row *row, int area, BOOL gc)
+ns_clip_to_row (struct window *w, struct glyph_row *row,
+		enum glyph_row_area area, BOOL gc)
 /* --------------------------------------------------------------------------
      Internal (but parallels other terms): Focus drawing on given row
    -------------------------------------------------------------------------- */
@@ -953,24 +947,6 @@ ns_ring_bell (struct frame *f)
       NSBeep ();
     }
 }
-
-
-static void
-ns_reset_terminal_modes (struct terminal *terminal)
-/*  Externally called as hook */
-{
-  NSTRACE (ns_reset_terminal_modes);
-}
-
-
-static void
-ns_set_terminal_modes (struct terminal *terminal)
-/*  Externally called as hook */
-{
-  NSTRACE (ns_set_terminal_modes);
-}
-
-
 
 /* ==========================================================================
 
@@ -1989,9 +1965,6 @@ ns_clear_frame (struct frame *f)
 
   mark_window_cursors_off (XWINDOW (FRAME_ROOT_WINDOW (f)));
 
-  output_cursor.hpos = output_cursor.vpos = 0;
-  output_cursor.x = -1;
-
   r = [view bounds];
 
   block_input ();
@@ -2047,7 +2020,7 @@ ns_scroll_run (struct window *w, struct run *run)
   /* Get frame-relative bounding box of the text display area of W,
      without mode lines.  Include in this box the left and right
      fringe of W.  */
-  window_box (w, -1, &x, &y, &width, &height);
+  window_box (w, ANY_AREA, &x, &y, &width, &height);
 
   from_y = WINDOW_TO_FRAME_PIXEL_Y (w, run->current_y);
   to_y = WINDOW_TO_FRAME_PIXEL_Y (w, run->desired_y);
@@ -2222,7 +2195,7 @@ ns_draw_fringe_bitmap (struct window *w, struct glyph_row *row,
     }
 
   /* Must clip because of partially visible lines.  */
-  ns_clip_to_row (w, row, -1, YES);
+  ns_clip_to_row (w, row, ANY_AREA, YES);
 
   if (!p->overlay_p)
     {
@@ -2402,7 +2375,7 @@ ns_draw_window_cursor (struct window *w, struct glyph_row *glyph_row,
 
   /* TODO: only needed in rare cases with last-resort font in HELLO..
      should we do this more efficiently? */
-  ns_clip_to_row (w, glyph_row, -1, NO); /* do ns_focus(f, &r, 1); if remove */
+  ns_clip_to_row (w, glyph_row, ANY_AREA, NO); /* do ns_focus(f, &r, 1); if remove */
 
 
   face = FACE_FROM_ID (f, phys_cursor_glyph->face_id);
@@ -3713,7 +3686,7 @@ ns_set_vertical_scroll_bar (struct window *window,
   NSTRACE (ns_set_vertical_scroll_bar);
 
   /* Get dimensions.  */
-  window_box (window, -1, 0, &window_y, 0, &window_height);
+  window_box (window, ANY_AREA, 0, &window_y, 0, &window_height);
   top = window_y;
   height = window_height;
   width = WINDOW_CONFIG_SCROLL_BAR_COLS (window) * FRAME_COLUMN_WIDTH (f);
@@ -3978,9 +3951,7 @@ static struct redisplay_interface ns_redisplay_interface =
   ns_after_update_window_line,
   ns_update_window_begin,
   ns_update_window_end,
-  x_cursor_to,
-  ns_flush,
-  0, /* flush_display_optional */
+  0, /* flush_display */
   x_clear_window_mouse_face,
   x_get_glyph_overhangs,
   x_fix_overlapping_area,
@@ -4045,8 +4016,8 @@ ns_create_terminal (struct ns_display_info *dpyinfo)
   terminal->ins_del_lines_hook = 0; /* XXX vestigial? */
   terminal->delete_glyphs_hook = 0; /* XXX vestigial? */
   terminal->ring_bell_hook = ns_ring_bell;
-  terminal->reset_terminal_modes_hook = ns_reset_terminal_modes;
-  terminal->set_terminal_modes_hook = ns_set_terminal_modes;
+  terminal->reset_terminal_modes_hook = NULL;
+  terminal->set_terminal_modes_hook = NULL;
   terminal->update_begin_hook = ns_update_begin;
   terminal->update_end_hook = ns_update_end;
   terminal->set_terminal_window_hook = NULL; /* XXX vestigial? */
@@ -4686,7 +4657,7 @@ not_in_argv (NSString *arg)
   int waiting = 1, nfds;
   char c;
 
-  SELECT_TYPE readfds, writefds, *wfds;
+  fd_set readfds, writefds, *wfds;
   struct timespec timeout, *tmo;
   NSAutoreleasePool *pool = nil;
 
@@ -4699,7 +4670,7 @@ not_in_argv (NSString *arg)
 
       if (waiting)
         {
-          SELECT_TYPE fds;
+          fd_set fds;
           FD_ZERO (&fds);
           FD_SET (selfds[0], &fds);
           result = select (selfds[0]+1, &fds, NULL, NULL, NULL);
@@ -5467,6 +5438,30 @@ not_in_argv (NSString *arg)
   /* tooltip handling */
   previous_help_echo_string = help_echo_string;
   help_echo_string = Qnil;
+
+  if (!NILP (Vmouse_autoselect_window))
+    {
+      NSTRACE (mouse_autoselect_window);
+      static Lisp_Object last_mouse_window;
+      Lisp_Object window = window_from_coordinates
+	(emacsframe, last_mouse_motion_position.x,
+	 last_mouse_motion_position.y, 0, 0);
+
+      if (WINDOWP (window)
+          && !EQ (window, last_mouse_window)
+          && !EQ (window, selected_window)
+          && (focus_follows_mouse
+              || (EQ (XWINDOW (window)->frame,
+                      XWINDOW (selected_window)->frame))))
+        {
+          NSTRACE (in_window);
+          emacs_event->kind = SELECT_WINDOW_EVENT;
+          emacs_event->frame_or_window = window;
+          EV_TRAILER2 (e);
+        }
+      /* Remember the last window where we saw the mouse.  */
+      last_mouse_window = window;
+    }
 
   if (!note_mouse_movement (emacsframe, last_mouse_motion_position.x,
                             last_mouse_motion_position.y))

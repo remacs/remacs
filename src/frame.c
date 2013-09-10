@@ -224,7 +224,7 @@ set_menu_bar_lines (struct frame *f, Lisp_Object value, Lisp_Object oldval)
       FRAME_WINDOW_SIZES_CHANGED (f) = 1;
       FRAME_MENU_BAR_LINES (f) = nlines;
       set_menu_bar_lines_1 (f->root_window, nlines - olines);
-      adjust_glyphs (f);
+      adjust_frame_glyphs (f);
     }
 }
 
@@ -712,7 +712,7 @@ affects all frames on the same terminal device.  */)
     change_frame_size (f, height, width, 0, 0, 0);
   }
 
-  adjust_glyphs (f);
+  adjust_frame_glyphs (f);
   calculate_costs (f);
   XSETFRAME (frame, f);
 
@@ -1078,6 +1078,19 @@ Otherwise, include all frames.  */)
   CHECK_LIVE_FRAME (frame);
   return prev_frame (frame, miniframe);
 }
+
+DEFUN ("last-nonminibuffer-frame", Flast_nonminibuf_frame,
+       Slast_nonminibuf_frame, 0, 0, 0,
+       doc: /* Return last non-minibuffer frame selected. */)
+  (void)
+{
+  Lisp_Object frame = Qnil;
+
+  if (last_nonminibuf_frame)
+    XSETFRAME (frame, last_nonminibuf_frame);
+
+  return frame;
+}
 
 /* Return 1 if it is ok to delete frame F;
    0 if all frames aside from F are invisible.
@@ -1095,7 +1108,7 @@ other_visible_frames (struct frame *f)
 
       /* Verify that we can still talk to the frame's X window,
 	 and note any recent change in visibility.  */
-#ifdef HAVE_WINDOW_SYSTEM
+#ifdef HAVE_X_WINDOWS
       if (FRAME_WINDOW_P (XFRAME (this)))
 	x_sync (XFRAME (this));
 #endif
@@ -1120,6 +1133,8 @@ check_minibuf_window (Lisp_Object frame, int select)
 {
   struct frame *f = decode_live_frame (frame);
 
+  XSETFRAME (frame, f);
+
   if (WINDOWP (minibuf_window) && EQ (f->minibuffer_window, minibuf_window))
     {
       Lisp_Object frames, this, window = make_number (0);
@@ -1137,9 +1152,8 @@ check_minibuf_window (Lisp_Object frame, int select)
 	      }
 	  }
 
-      if (!WINDOWP (window))
-	emacs_abort ();
-      else
+      /* Don't abort if no window was found (Bug#15247).  */
+      if (WINDOWP (window))
 	{
 	  /* Use set_window_buffer instead of Fset_window_buffer (see
 	     discussion of bug#11984, bug#12025, bug#12026).  */
@@ -4493,6 +4507,7 @@ automatically.  See also `mouse-autoselect-window'.  */);
   defsubr (&Sframe_list);
   defsubr (&Snext_frame);
   defsubr (&Sprevious_frame);
+  defsubr (&Slast_nonminibuf_frame);
   defsubr (&Sdelete_frame);
   defsubr (&Smouse_position);
   defsubr (&Smouse_pixel_position);

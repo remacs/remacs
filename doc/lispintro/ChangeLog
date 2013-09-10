@@ -1,3 +1,18 @@
+2013-09-01  Glenn Morris  <rgm@gnu.org>
+
+	* emacs-lisp-intro.texi (beginning-of-buffer complete):
+	Put back a version of the removed paragraph about raw prefix arg.
+
+2013-09-01  Dani Moncayo  <dmoncayo@gmail.com>
+
+	* emacs-lisp-intro.texi (beginning-of-buffer complete):
+	Update function details.  (Bug#15085)
+
+2013-08-28  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* Makefile.in (SHELL): Now @SHELL@, not /bin/sh,
+	for portability to hosts where /bin/sh has problems.
+
 2013-08-12  Glenn Morris  <rgm@gnu.org>
 
 	* emacs-lisp-intro.texi (Complete copy-region-as-kill): Fix typo.

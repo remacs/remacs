@@ -1,3 +1,70 @@
+2013-09-09  Glenn Morris  <rgm@gnu.org>
+
+	* configure.ac (LDFLAGS_NOCOMBRELOC): New variable.
+	(LDFLAGS): Move nocombreloc option from here...
+	(LD_SWITCH_SYSTEM_TEMACS): ... to here.
+
+2013-09-08  Glenn Morris  <rgm@gnu.org>
+
+	* configure.ac (--without-compress-install):
+	Rename from --without-compress-info.  (Bug#9789)
+	(GZIP_INFO): Remove.
+	(GZIP_PROG): Allow --without-compress-install to disable it.
+	* Makefile.in (GZIP_INFO): Remove all references.
+
+	* info/dir: Tweak emacs-gnutls entry.
+
+2013-09-07  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Port --without-x --enable-gcc-warnings to Fedora 19.
+	* configure.ac (WERROR_CFLAGS): Omit redundant use of
+	-Wmissing-field-initializers, -Wswitch, -Wtype-limits,
+	-Wunused-parameter.  If there is no window system, also omit
+	-Wsuggest-attribute=const and -Wsuggest-attribute=noreturn; this
+	is needed for Fedora 19.
+
+2013-09-05  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	Make --without-x compatible with --enable-gcc-warnings.
+	* configure.ac: If both --without-x and --enable-gcc-warnings are
+	specified, use -Wno-unused-variable, -Wno-unused-but-set-variable
+	and -Wno-unused-but-set-parameter.
+
+2013-09-04  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Makefile improvements.
+	* Makefile.in (lib): Depend on am--refresh, to avoid a race.
+	(src): Remove duplicate dependency on FRC.
+	Invoke just one submake, not two.  Avoid the need for 'pwd'.
+
+2013-09-02  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* configure.ac: Add ns_check_file.
+
+2013-08-31  Glenn Morris  <rgm@gnu.org>
+
+	* configure.ac (--with-sound): Rename ossaudio to bsd-ossaudio,
+	and voxware to oss.
+
+2013-08-31  Ulrich Müller  <ulm@gentoo.org>
+
+	* configure.ac: Allow for --with-sound=voxware that will enable
+	sound but otherwise disable ALSA.  This will use the OSS device,
+	typically /dev/dsp, for sound output.  (Bug#15067)
+
+2013-08-31  Glenn Morris  <rgm@gnu.org>
+
+	* make-dist: Update for nt/INSTALL* changes.
+
+2013-08-28  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* Makefile.in (SHELL): Now @SHELL@, not /bin/sh,
+	for portability to hosts where /bin/sh has problems.
+
+2013-08-28  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* configure.ac (DOCMISC_W32): New var to replace DOCMISC_*_W32.
+
 2013-08-27  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Simplify EMACS_TIME-related code.

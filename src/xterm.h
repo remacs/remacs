@@ -20,8 +20,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #ifndef XTERM_H
 #define XTERM_H
 
-#include "dispextern.h"
-
 #include <X11/Xlib.h>
 #include <X11/cursorfont.h>
 
@@ -73,14 +71,13 @@ typedef GtkWidget *xt_or_gtk_widget;
 #define USE_GTK_TOOLTIP
 #endif
 
-
-/* Bookkeeping to distinguish X versions.  */
-
-
 #ifdef HAVE_X_I18N
 #include <X11/Xlocale.h>
 #endif
-
+
+#include "dispextern.h"
+#include "termhooks.h"
+
 #define BLACK_PIX_DEFAULT(f) BlackPixel (FRAME_X_DISPLAY (f), \
 					 XScreenNumberOfScreen (FRAME_X_SCREEN (f)))
 #define WHITE_PIX_DEFAULT(f) WhitePixel (FRAME_X_DISPLAY (f), \
@@ -140,9 +137,6 @@ struct x_display_info
 
   /* The generic display parameters corresponding to this X display. */
   struct terminal *terminal;
-
-  /* Connection number (normally a file descriptor number).  */
-  int connection;
 
   /* This says how to access this display in Xlib.  */
   Display *display;
@@ -409,9 +403,6 @@ extern bool x_display_ok (const char *);
 
 extern void select_visual (struct x_display_info *);
 
-
-struct font;
-
 /* Each X frame object points to its own struct x_output object
    in the output_data.x field.  The x_output structure contains
    the information that is specific to X windows.  */
@@ -632,11 +623,6 @@ struct x_output
   int move_offset_top;
   int move_offset_left;
 
-  /* The frame's left/top offsets before we call XMoveWindow.  See
-     x_check_expected_move.  */
-  int left_before_move;
-  int top_before_move;
-
   /* Non-zero if _NET_WM_STATE_HIDDEN is set for this frame.  */
   unsigned net_wm_state_hidden_seen : 1;
 };
@@ -812,8 +798,8 @@ struct scroll_bar
   /* If the scroll bar handle is currently being dragged by the user,
      this is the number of pixels from the top of the handle to the
      place where the user grabbed it.  If the handle isn't currently
-     being dragged, this is Qnil.  */
-  Lisp_Object dragging;
+     being dragged, this is -1.  */
+  int dragging;
 
   /* 1 if the background of the fringe that is adjacent to a scroll
      bar is extended to the gap between the fringe and the bar.  */
@@ -919,14 +905,6 @@ struct selection_input_event
 #define SELECTION_EVENT_TIME(eventp)	\
   (((struct selection_input_event *) (eventp))->time)
 
-
-struct window;
-struct glyph_matrix;
-struct frame;
-struct input_event;
-struct face;
-struct image;
-
 /* From xselect.c.  */
 
 void x_handle_selection_notify (XSelectionEvent *);
@@ -968,7 +946,7 @@ extern bool x_alloc_lighter_color_for_widget (Widget, Display *, Colormap,
 #endif
 extern bool x_alloc_nearest_color (struct frame *, Colormap, XColor *);
 extern void x_query_color (struct frame *f, XColor *);
-extern void x_clear_area (Display *, Window, int, int, int, int, int);
+extern void x_clear_area (Display *, Window, int, int, int, int);
 #if defined HAVE_MENUS && !defined USE_X_TOOLKIT && !defined USE_GTK
 extern void x_mouse_leave (struct x_display_info *);
 #endif

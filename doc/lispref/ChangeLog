@@ -1,3 +1,13 @@
+2013-09-08  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* macros.texi (Defining Macros): Prefer "function" to "lambda
+	expression" (bug#15296).
+
+2013-08-28  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* Makefile.in (SHELL): Now @SHELL@, not /bin/sh,
+	for portability to hosts where /bin/sh has problems.
+
 2013-08-26  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* variables.texi (File Local Variables): Don't recommend quoting!  Ever!

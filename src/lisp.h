@@ -871,11 +871,7 @@ make_lisp_proc (struct Lisp_Process *p)
 #define XSETSTRING(a, b) ((a) = make_lisp_ptr (b, Lisp_String))
 #define XSETSYMBOL(a, b) ((a) = make_lisp_ptr (b, Lisp_Symbol))
 #define XSETFLOAT(a, b) ((a) = make_lisp_ptr (b, Lisp_Float))
-
-/* Misc types.  */
-
 #define XSETMISC(a, b) ((a) = make_lisp_ptr (b, Lisp_Misc))
-#define XSETMARKER(a, b) (XSETMISC (a, b), XMISCTYPE (a) = Lisp_Misc_Marker)
 
 /* Pseudovector types.  */
 
@@ -2639,19 +2635,6 @@ typedef jmp_buf sys_jmp_buf;
    they are bound by a function application or a let form, stores the
    code to be executed for unwind-protect forms.
 
-   If func is non-zero, undoing this binding applies func to old_value;
-      This implements record_unwind_protect.
-
-   Otherwise, the element is a variable binding.
-
-   If the symbol field is a symbol, it is an ordinary variable binding.
-
-   Otherwise, it should be a structure (SYMBOL WHERE . CURRENT-BUFFER),
-   which means having bound a local value while CURRENT-BUFFER was active.
-   If WHERE is nil this means we saw the default value when binding SYMBOL.
-   WHERE being a buffer or frame means we saw a buffer-local or frame-local
-   value.  Other values of WHERE mean an internal error.
-
    NOTE: The specbinding union is defined here, because SPECPDL_INDEX is
    used all over the place, needs to be fast, and needs to know the size of
    union specbinding.  But only eval.c should access it.  */
@@ -3381,9 +3364,6 @@ extern Lisp_Object Qglyphless_char;
 extern Lisp_Object QCdata, QCfile;
 extern Lisp_Object QCmap;
 extern Lisp_Object Qrisky_local_variable;
-extern struct frame *last_glyphless_glyph_frame;
-extern int last_glyphless_glyph_face_id;
-extern int last_glyphless_glyph_merged_face_id;
 extern int noninteractive_need_newline;
 extern Lisp_Object echo_area_buffer[2];
 extern void add_to_log (const char *, Lisp_Object, Lisp_Object);
@@ -3485,7 +3465,7 @@ build_unibyte_string (const char *str)
 }
 
 extern Lisp_Object make_multibyte_string (const char *, ptrdiff_t, ptrdiff_t);
-extern Lisp_Object make_event_array (int, Lisp_Object *);
+extern Lisp_Object make_event_array (ptrdiff_t, Lisp_Object *);
 extern Lisp_Object make_uninit_string (EMACS_INT);
 extern Lisp_Object make_uninit_multibyte_string (EMACS_INT, EMACS_INT);
 extern Lisp_Object make_string_from_bytes (const char *, ptrdiff_t, ptrdiff_t);
@@ -3839,8 +3819,8 @@ extern ptrdiff_t fast_looking_at (Lisp_Object, ptrdiff_t, ptrdiff_t,
                                   ptrdiff_t, ptrdiff_t, Lisp_Object);
 extern ptrdiff_t find_newline (ptrdiff_t, ptrdiff_t, ptrdiff_t, ptrdiff_t,
 			       ptrdiff_t, ptrdiff_t *, ptrdiff_t *, bool);
-extern EMACS_INT scan_newline (ptrdiff_t, ptrdiff_t, ptrdiff_t, ptrdiff_t,
-			       EMACS_INT, bool);
+extern ptrdiff_t scan_newline (ptrdiff_t, ptrdiff_t, ptrdiff_t, ptrdiff_t,
+			       ptrdiff_t, bool);
 extern ptrdiff_t find_newline_no_quit (ptrdiff_t, ptrdiff_t,
 				       ptrdiff_t, ptrdiff_t *);
 extern ptrdiff_t find_before_next_newline (ptrdiff_t, ptrdiff_t,

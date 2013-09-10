@@ -170,12 +170,16 @@ PLACE must be a generalized variable whose value is a list.
 If the value is nil, `pop' returns nil but does not actually
 change the list."
   (declare (debug (gv-place)))
-  (list 'car
-        (if (symbolp place)
-            ;; So we can use `pop' in the bootstrap before `gv' can be used.
-            (list 'prog1 place (list 'setq place (list 'cdr place)))
-          (gv-letplace (getter setter) place
-            `(prog1 ,getter ,(funcall setter `(cdr ,getter)))))))
+  ;; We use `car-safe' here instead of `car' because the behavior is the same
+  ;; (if it's not a cons cell, the `cdr' would have signaled an error already),
+  ;; but `car-safe' is total, so the byte-compiler can safely remove it if the
+  ;; result is not used.
+  `(car-safe
+    ,(if (symbolp place)
+         ;; So we can use `pop' in the bootstrap before `gv' can be used.
+         (list 'prog1 place (list 'setq place (list 'cdr place)))
+       (gv-letplace (getter setter) place
+         `(prog1 ,getter ,(funcall setter `(cdr ,getter)))))))
 
 (defmacro when (cond &rest body)
   "If COND yields non-nil, do BODY, else return nil.
@@ -3346,16 +3350,22 @@ even if this catches the signal."
 (define-obsolete-function-alias 'condition-case-no-debug
   'condition-case-unless-debug "24.1")
 
-(defmacro with-demoted-errors (&rest body)
+(defmacro with-demoted-errors (format &rest body)
   "Run BODY and demote any errors to simple messages.
 If `debug-on-error' is non-nil, run BODY without catching its errors.
 This is to be used around code which is not expected to signal an error
-but which should be robust in the unexpected case that an error is signaled."
-  (declare (debug t) (indent 0))
-  (let ((err (make-symbol "err")))
+but which should be robust in the unexpected case that an error is signaled.
+For backward compatibility, if FORMAT is not a constant string, it
+is assumed to be part of BODY, in which case the message format
+used is \"Error: %S\"."
+  (declare (debug t) (indent 1))
+  (let ((err (make-symbol "err"))
+        (format (if (and (stringp format) body) format
+                  (prog1 "Error: %S"
+                    (if format (push format body))))))
     `(condition-case-unless-debug ,err
-         (progn ,@body)
-       (error (message "Error: %S" ,err) nil))))
+         ,(macroexp-progn body)
+       (error (message ,format ,err) nil))))
 
 (defmacro combine-after-change-calls (&rest body)
   "Execute BODY, but don't call the after-change functions till the end.

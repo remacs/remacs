@@ -80,7 +80,6 @@ struct dim
 static void update_frame_line (struct frame *, int);
 static int required_matrix_height (struct window *);
 static int required_matrix_width (struct window *);
-static void adjust_frame_glyphs (struct frame *);
 static void change_frame_size_1 (struct frame *, int, int, bool, bool, bool);
 static void increment_row_positions (struct glyph_row *, ptrdiff_t, ptrdiff_t);
 static void fill_up_frame_row_with_spaces (struct glyph_row *, int);
@@ -154,16 +153,6 @@ static int glyph_pool_count;
    null, window matrices are worked on.  */
 
 static struct frame *frame_matrix_frame;
-
-/* True means that fonts have been loaded since the last glyph
-   matrix adjustments.  Redisplay must stop, and glyph matrices must
-   be adjusted when this flag becomes true during display.  The
-   reason fonts can be loaded so late is that fonts of fontsets are
-   loaded on demand.  Another reason is that a line contains many
-   characters displayed by zero width or very narrow glyphs of
-   variable-width fonts.  */
-
-bool fonts_changed_p;
 
 /* Convert vpos and hpos from frame to window and vice versa.
    This may only be used for terminal frames.  */
@@ -415,7 +404,7 @@ adjust_glyph_matrix (struct window *w, struct glyph_matrix *matrix, int x, int y
      Get W's size.  */
   if (w)
     {
-      window_box (w, -1, 0, 0, &window_width, &window_height);
+      window_box (w, ANY_AREA, 0, 0, &window_width, &window_height);
 
       header_line_p = WINDOW_WANTS_HEADER_LINE_P (w);
       header_line_changed_p = header_line_p != matrix->header_line_p;
@@ -435,7 +424,7 @@ adjust_glyph_matrix (struct window *w, struct glyph_matrix *matrix, int x, int y
 				  || right != matrix->right_margin_glyphs);
 
       if (!marginal_areas_changed_p
-	  && !fonts_changed_p
+	  && !XFRAME (w->frame)->fonts_changed
 	  && !header_line_changed_p
 	  && matrix->window_left_col == WINDOW_LEFT_EDGE_COL (w)
 	  && matrix->window_top_line == WINDOW_TOP_EDGE_LINE (w)
@@ -1801,37 +1790,17 @@ allocate_matrices_for_window_redisplay (struct window *w)
     }
 }
 
-
-/* Re-allocate/ re-compute glyph matrices on frame F.  If F is null,
-   do it for all frames; otherwise do it just for the given frame.
-   This function must be called when a new frame is created, its size
-   changes, or its window configuration changes.  */
+/* Allocate/reallocate glyph matrices of a single frame F.
+   This function must be called when a new frame is created,
+   its size changes, or its window configuration changes.  */
 
 void
-adjust_glyphs (struct frame *f)
+adjust_frame_glyphs (struct frame *f)
 {
   /* Block input so that expose events and other events that access
      glyph matrices are not processed while we are changing them.  */
   block_input ();
 
-  if (f)
-    adjust_frame_glyphs (f);
-  else
-    {
-      Lisp_Object tail, lisp_frame;
-
-      FOR_EACH_FRAME (tail, lisp_frame)
-	adjust_frame_glyphs (XFRAME (lisp_frame));
-    }
-
-  unblock_input ();
-}
-
-/* Allocate/reallocate glyph matrices of a single frame F.  */
-
-static void
-adjust_frame_glyphs (struct frame *f)
-{
   if (FRAME_WINDOW_P (f))
     adjust_frame_glyphs_for_window_redisplay (f);
   else
@@ -1841,6 +1810,8 @@ adjust_frame_glyphs (struct frame *f)
   adjust_decode_mode_spec_buffer (f);
 
   f->glyphs_initialized_p = 1;
+
+  unblock_input ();
 }
 
 /* Return true if any window in the tree has nonzero window margins.  See
@@ -3092,16 +3063,6 @@ update_frame (struct frame *f, bool force_p, bool inhibit_hairy_id_p)
       /* Update windows.  */
       paused_p = update_window_tree (root_window, force_p);
       update_end (f);
-
-      /* This flush is a performance bottleneck under X,
- 	 and it doesn't seem to be necessary anyway (in general).
-         It is necessary when resizing the window with the mouse, or
- 	 at least the fringes are not redrawn in a timely manner.  ++kfs */
-      if (f->force_flush_display_p)
- 	{
-     	  FRAME_RIF (f)->flush_display (f);
- 	  f->force_flush_display_p = 0;
- 	}
     }
   else
     {
@@ -3225,8 +3186,8 @@ redraw_overlapped_rows (struct window *w, int yb)
 
 	  for (area = LEFT_MARGIN_AREA; area < LAST_AREA; ++area)
 	    {
-	      FRAME_RIF (f)->cursor_to (w, i, 0, row->y,
-                                        area == TEXT_AREA ? row->x : 0);
+	      output_cursor_to (w, i, 0, row->y,
+				area == TEXT_AREA ? row->x : 0);
 	      if (row->used[area])
 		FRAME_RIF (f)->write_glyphs (w, row, row->glyphs[area],
                                              area, row->used[area]);
@@ -3483,7 +3444,7 @@ update_window (struct window *w, bool force_p)
       /* End the update of window W.  Don't set the cursor if we
          paused updating the display because in this case,
          set_window_cursor_after_update hasn't been called, and
-         output_cursor doesn't contain the cursor location.  */
+         W->output_cursor doesn't contain the cursor location.  */
       rif->update_window_end_hook (w, !paused_p, mouse_face_overwritten_p);
     }
   else
@@ -3516,7 +3477,7 @@ update_marginal_area (struct window *w, struct glyph_row *updated_row,
   /* Set cursor to start of glyphs, write them, and clear to the end
      of the area.  I don't think that something more sophisticated is
      necessary here, since marginal areas will not be the default.  */
-  rif->cursor_to (w, vpos, 0, desired_row->y, 0);
+  output_cursor_to (w, vpos, 0, desired_row->y, 0);
   if (desired_row->used[area])
     rif->write_glyphs (w, updated_row, desired_row->glyphs[area],
 		       area, desired_row->used[area]);
@@ -3554,7 +3515,7 @@ update_text_area (struct window *w, struct glyph_row *updated_row, int vpos)
 	  && !(current_row->mode_line_p && vpos > 0))
       || current_row->x != desired_row->x)
     {
-      rif->cursor_to (w, vpos, 0, desired_row->y, desired_row->x);
+      output_cursor_to (w, vpos, 0, desired_row->y, desired_row->x);
 
       if (desired_row->used[TEXT_AREA])
 	rif->write_glyphs (w, updated_row, desired_row->glyphs[TEXT_AREA],
@@ -3697,7 +3658,7 @@ update_text_area (struct window *w, struct glyph_row *updated_row, int vpos)
 		  break;
 		}
 
-	      rif->cursor_to (w, vpos, start_hpos, desired_row->y, start_x);
+	      output_cursor_to (w, vpos, start_hpos, desired_row->y, start_x);
 	      rif->write_glyphs (w, updated_row, start,
 				 TEXT_AREA, i - start_hpos);
 	      changed_p = 1;
@@ -3707,7 +3668,7 @@ update_text_area (struct window *w, struct glyph_row *updated_row, int vpos)
       /* Write the rest.  */
       if (i < desired_row->used[TEXT_AREA])
 	{
-	  rif->cursor_to (w, vpos, i, desired_row->y, x);
+	  output_cursor_to (w, vpos, i, desired_row->y, x);
 	  rif->write_glyphs (w, updated_row, desired_glyph,
 			     TEXT_AREA, desired_row->used[TEXT_AREA] - i);
 	  changed_p = 1;
@@ -3729,8 +3690,8 @@ update_text_area (struct window *w, struct glyph_row *updated_row, int vpos)
 	{
 	  /* If old row extends to the end of the text area, clear.  */
 	  if (i >= desired_row->used[TEXT_AREA])
-	    rif->cursor_to (w, vpos, i, desired_row->y,
-			    desired_row->pixel_width);
+	    output_cursor_to (w, vpos, i, desired_row->y,
+			      desired_row->pixel_width);
 	  rif->clear_end_of_line (w, updated_row, TEXT_AREA, -1);
 	  changed_p = 1;
 	}
@@ -3741,8 +3702,8 @@ update_text_area (struct window *w, struct glyph_row *updated_row, int vpos)
 	  int xlim;
 
 	  if (i >= desired_row->used[TEXT_AREA])
-	    rif->cursor_to (w, vpos, i, desired_row->y,
-			    desired_row->pixel_width);
+	    output_cursor_to (w, vpos, i, desired_row->y,
+			      desired_row->pixel_width);
 
 	  /* If cursor is displayed at the end of the line, make sure
 	     it's cleared.  Nowadays we don't have a phys_cursor_glyph
@@ -3841,7 +3802,6 @@ static void
 set_window_cursor_after_update (struct window *w)
 {
   struct frame *f = XFRAME (w->frame);
-  struct redisplay_interface *rif = FRAME_RIF (f);
   int cx, cy, vpos, hpos;
 
   /* Not intended for frame matrix updates.  */
@@ -3913,7 +3873,7 @@ set_window_cursor_after_update (struct window *w)
      Horizontal position is -1 when cursor is on the left fringe.   */
   hpos = clip_to_bounds (-1, hpos, w->current_matrix->matrix_w - 1);
   vpos = clip_to_bounds (0, vpos, w->current_matrix->nrows - 1);
-  rif->cursor_to (w, vpos, hpos, cy, cx);
+  output_cursor_to (w, vpos, hpos, cy, cx);
 }
 
 
@@ -5078,9 +5038,7 @@ buffer_posn_from_coords (struct window *w, int *x, int *y, struct display_pos *p
      wrong thing with `face-remapping-alist' (bug#2044).  */
   Fset_buffer (w->contents);
   itdata = bidi_shelve_cache ();
-  SET_TEXT_POS_FROM_MARKER (startp, w->start);
-  CHARPOS (startp) = min (ZV, max (BEGV, CHARPOS (startp)));
-  BYTEPOS (startp) = min (ZV_BYTE, max (BEGV_BYTE, BYTEPOS (startp)));
+  CLIP_TEXT_POS_FROM_MARKER (startp, w->start);
   start_display (&it, w, startp);
   /* start_display takes into account the header-line row, but IT's
      vpos still counts from the glyph row that includes the window's
@@ -5560,7 +5518,7 @@ change_frame_size_1 (struct frame *f, int newheight, int newwidth,
       w->cursor.vpos = w->cursor.y = 0;
   }
 
-  adjust_glyphs (f);
+  adjust_frame_glyphs (f);
   calculate_costs (f);
   SET_FRAME_GARBAGED (f);
   f->resized_p = 1;
@@ -6186,19 +6144,6 @@ WINDOW nil or omitted means report on the selected window.  */)
 {
   return decode_any_window (window)->cursor_off_p ? Qnil : Qt;
 }
-
-DEFUN ("last-nonminibuffer-frame", Flast_nonminibuf_frame,
-       Slast_nonminibuf_frame, 0, 0, 0,
-       doc: /* Value is last nonminibuffer frame. */)
-  (void)
-{
-  Lisp_Object frame = Qnil;
-
-  if (last_nonminibuf_frame)
-    XSETFRAME (frame, last_nonminibuf_frame);
-
-  return frame;
-}
 
 /***********************************************************************
 			    Initialization
@@ -6217,7 +6162,6 @@ syms_of_display (void)
   defsubr (&Ssend_string_to_terminal);
   defsubr (&Sinternal_show_cursor);
   defsubr (&Sinternal_show_cursor_p);
-  defsubr (&Slast_nonminibuf_frame);
 
 #ifdef GLYPH_DEBUG
   defsubr (&Sdump_redisplay_history);

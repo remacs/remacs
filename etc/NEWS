@@ -34,6 +34,10 @@ build time.  To prevent this, use the configure option
 `--with-file-notification-no'.  See below for file-notify features.
 FIXME?  This feature is not available for the Nextstep port. (?)
 
+** The configure option `without-compress-info' has been generalized,
+and renamed to `without-compress-install'.  It now prevents compression
+of _any_ files during installation.
+
 ** The configure option --with-crt-dir has been removed.
 It is no longer needed, as the crt*.o files are no longer linked
 specially.
@@ -262,8 +266,9 @@ whole tree revisions.
 *** In VC directory mode, `L' lists the change log for the current VC
 controlled tree in a window.
 
-*** `C-x v G' (globally) and `G' (in VC directory mode) ignores a
-file under current version control system.
+*** `C-x v G' (globally) and `G' (in VC directory mode) ignores a file
+under current version control system.  When called with a prefix
+argument, you can remove a file from the ignored file list.
 
 ** cl-lib
 
@@ -331,6 +336,10 @@ This is useful to avoid a query when you have no key for that name.
 *** key bindings to navigate through and select the completions.
 *** The icomplete-separator is customizable, and its default has changed.
 *** Removed icomplete-show-key-bindings.
+*** Icomplete-mode by defaults applies to all forms of minibuffer completion.
+(setq icomplete-with-completion-tables '(internal-complete-buffer))
+will revert to the old behavior.
+
 
 ** Ido
 *** Ido has a manual now.
@@ -459,6 +468,8 @@ later time with the provided conversion command.  The old version of
 todo-mode.el has been made obsolete and renamed otodo-mode.el.
 
 ** Tramp
+
+*** The experimental url syntax for remote file names is withdrawn.
 
 +++
 *** New connection method "adb", which allows to access Android
@@ -603,9 +614,20 @@ file using `set-file-extended-attributes'.
 ** `visited-file-modtime' now returns -1 for nonexistent files.
 Formerly it returned a list (-1 LOW USEC PSEC), but this was ambiguous
 in the presence of files with negative time stamps.
+
+** The cars of the elements in `interpreter-mode-alist' are now treated
+as regexps rather than literal strings.  For the time being, any
+element whose car does not start with "\\" is still treated as a
+literal string, so this change should not cause any incompatibilities
+if you have code that just adds elements to the list, only if you are
+actually using interpreter-mode-alist for something.
+
 
 * Lisp Changes in Emacs 24.4
 
+** The second argument of `eval' can now be a lexical-environment.
+
+** `with-demoted-errors' takes an additional argument `format'.
 +++
 ** New function `define-error'.
 
@@ -753,6 +775,11 @@ used in place of the 9th element of `file-attributes'.
 `preserve-extended-attributes' as it now handles both SELinux context
 and ACL entries.
 
+** The `common-substring' argument of display-completion-list is obsolete.
+Either use `completion-all-completions' which already returns highlighted
+strings (including for partial or substring completion) or call
+`completion-hilit-commonality' to add the highlight.
+
 ** Changes to the Emacs Lisp Coding Conventions in Emacs 24.4
 
 *** The package descriptor and name of global variables, constants,
@@ -762,12 +789,10 @@ meant to be used by other packages.
 
 * Changes in Emacs 24.4 on Non-Free Operating Systems
 
-** Emacs for MS-Windows can now be built by running the configure script
-using the MSYS environment and MinGW development tools.
-This is from now on the preferred method of building Emacs on
-MS-Windows.  The Windows-specific configure.bat and makefile.w32-in
-files are deprecated.  See the file nt/INSTALL.MSYS for detailed
-instructions.
+** The procedure for building Emacs on MS-Windows has changed.
+It is now built by running the same configure script as on all other
+platforms.  This requires the MSYS environment and MinGW development
+tools.  See the updated instructions in nt/INSTALL for details.
 
 Using the Posix configure script and Makefile's also means a change in
 the directory structure of the Emacs installation on Windows.  It is

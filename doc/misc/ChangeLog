@@ -1,4 +1,26 @@
+2013-09-08  Glenn Morris  <rgm@gnu.org>
+
+	* emacs-gnutls.texi: Tweak direntry.
+
+2013-09-06  Michael Albinus  <michael.albinus@gmx.de>
+
+	* tramp.texi (Alternative Syntax): Remove chapter.
+
+2013-08-28  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* Makefile.in (SHELL): Now @SHELL@, not /bin/sh,
+	for portability to hosts where /bin/sh has problems.
+
+2013-08-28  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	Try to reduce redundancy in doc/misc/Makefile.in.
+	* Makefile.in (DOCMISC_W32): New var to replace DOCMISC_*_W32.
+	(TARGETS): New intermediate variable.
+	(DVI_TARGETS, HTML_TARGETS, PDF_TARGETS, PS_TARGETS): Use it.
+
 2013-08-27  Glenn Morris  <rgm@gnu.org>
+
+	* efaq.texi (Emacs for MS-Windows): Update location of MS FAQ.
 
 	* efaq.texi: Rename from faq.texi, to match its output files.
 	* Makefile.in: Update for faq.texi name change.

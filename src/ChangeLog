@@ -1,4 +1,463 @@
+2013-09-10  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* eval.c (Feval): Document the new use of `lexical'.
+
+2013-09-09  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	Review and drop old frame resize hack.
+	* frame.h (struct frame): Remove force_flush_display_p.
+	* dispnew.c (update_frame): Adjust user and don't call
+	flush_frame here.  The comment has said that there was an issues
+	with redisplaying fringes, but I don't see any differences with
+	and without this hack.  Hopefully we can continue without it.
+	* xdisp.c (clear_garbaged_frames): Adjust user and do not clear
+	current frame matrices twice if resized_p is set.
+
+2013-09-09  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	Do not populate pure Xism x_sync to other ports.
+	* frame.h (x_sync): Move under HAVE_X_WINDOWS.
+	* frame.c (other_visible_frames) [HAVE_X_WINDOWS]: Use as such.
+	* nsfns.m, w32xfns.c (x_sync): Remove no-op.
+	* w32term.h (x_sync): Remove prototype.
+
+2013-09-09  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	Cleanup frame flushing.
+	* dispextern.h (struct redisplay_interface):
+	Drop flush_display_optional because flush_display is enough
+	for X and flushing via RIF is just a no-op for others.
+	* frame.h (flush_frame): New function.
+	* dispnew.c (update_frame):
+	* minibuf.c (read_minibuf):
+	* xdisp.c (echo_area_display, redisplay_preserve_echo_area):
+	Use it.
+	* keyboard.c (detect_input_pending_run_timers): Do not flush
+	all frames but selected one in redisplay_preserve_echo_area.
+	* nsterm.m (ns_flush): Remove no-op.
+	(ns_redisplay_interface): Adjust user.
+	* w32term.h (x_flush): Remove no-op.
+	(w32_redisplay_interface): Adjust user.
+	* xterm.c (x_flush): Simplify because we do not flush all
+	frames at once any more.  Adjust comment.
+	(x_redisplay_interface): Adjust user.
+
+2013-09-07  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Port --without-x --enable-gcc-warnings to Fedora 19.
+	* gfilenotify.c (globals_of_gfilenotify):
+	Call g_type_init only if using an older glib version that needs it.
+
+2013-09-06  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	* lisp.h (last_glyphless_glyph_frame, last_glyphless_glyph_face_id)
+	(last_glyphless_glyph_merged_face_id): Remove declarations.
+	* dispextern.h (merge_glyphless_glyph_face): Add prototype.
+	* xdisp.c (last_glyphless_glyph_frame, last_glyphless_glyph_face_id)
+	(last_glyphless_glyph_merged_face_id): Now static.
+	(merge_escape_glyph_face): New function, refactored from...
+	(get_next_display_element): ...here.
+	(merge_glyphless_glyph_face): New function, refactored from...
+	(produce_glyphless_glyph): ...here...
+	* term.c (produce_glyphless_glyph): ...and here.
+
+2013-09-06  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* eval.c (eval_sub): Only call Ffunction if necessary.
+
+2013-09-06  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	Attempt to make redisplay more selective when changing cursor type.
+	* frame.h (struct frame): New bitfield cursor_type_changed.
+	* xdisp.c (cursor_type_changed): Remove.
+	(try_cursor_movement, redisplay_window, try_window_id)
+	(set_frame_cursor_types, try_window_reusing_current_matrix):
+	Adjust to use per-frame bitfield.
+	(redisplay_internal): Look for cursor type change on each visible
+	frame and consider all frames if cursor type has been changed on
+	the frame other than selected.  If cursor type has been changed on
+	selected frame only, do not use fast update.
+
+2013-09-06  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	Attempt to make redisplay more selective when changing fonts.
+	* frame.h (struct frame): New bitfield fonts_changed.
+	* dispextern.h (fonts_changed_p, adjust_glyphs): Remove declaration.
+	(adjust_frame_glyphs): Add prototype.
+	* dispnew.c (fonts_changed_p): Remove.
+	(adjust_glyphs): Remove because we do not
+	adjust matrices on all frames at once any more.
+	(adjust_frame_glyphs): Block and unblock input here.
+	(adjust_glyph_matrix): Use fonts_changed.
+	(change_frame_size_1): Use adjust_frame_glyphs.
+	* font.c (font_open_entity): Use fonts_changed.
+	* frame.c (set_menu_bar_lines, Fmake_terminal_frame):
+	* w32fns.c (x_set_menu_bar_lines, x_set_tool_bar_lines, Fx_show_tip):
+	* window.c (Fdelete_other_windows_internal, Fwindow_resize_apply)
+	(Fsplit_window_internal, Fdelete_window_internal, grow_mini_window)
+	(shrink_mini_window, Fresize_mini_window_internal)
+	(window_scroll_pixel_based, Fset_window_configuration)
+	(apply_window_adjustment, Fset_window_vscroll):
+	* xfns.c (x_set_menu_bar_lines, x_set_tool_bar_lines, Fx_show_tip):
+	Use adjust_frame_glyphs.
+	* xdisp.c (redisplay_tool_bar, redisplay_window, try_window)
+	(try_window_reusing_current_matrix, try_window_id, display_line)
+	(IT_EXPAND_MATRIX_WIDTH): Use fonts_changed.
+	(redisplay_internal): Consider fonts_changed and adjust frame
+	matrices for each frame only if the frame is visible.  If font
+	has been changed on some frame during full redisplay, retry
+	only visible frames where the font has been actually changed.
+
+2013-09-05  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	Cache current header and mode line height for each window.
+	* window.h (struct window): New fields mode_line_height
+	and header_line_height.
+	* window.c (make_window): Initialize them.
+	* dispextern.h (CURRENT_MODE_LINE_HEIGHT)
+	(CURRENT_HEADER_LINE_HEIGHT): Use them.  Adjust comment.
+	(current_mode_line_height, current_header_line_height):
+	Remove declaration.
+	* xdisp.c (current_mode_line_height, current_header_line_height):
+	Remove.
+	(pos_visible_p, init_xdisp): Adjust user.
+	(redisplay_window): Invalidate mode_line_height and
+	header_line_height if current and desired matrices do not agree.
+
+2013-09-05  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	* fontset.c, window.c, xdisp.c (toplevel): Use TERM_HEADER.
+	* xfaces.c (toplevel) [HAVE_X_WINDOWS]: Do not include xterm.h twice.
+
+2013-09-05  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	Make --without-x compatible with --enable-gcc-warnings.
+	* font.c (register_font_driver): Move check under HAVE_WINDOW_SYSTEM.
+	* font.h (struct font_driver): Move draw, get_bitmap and free_bitmap
+	members under HAVE_WINDOW_SYSTEM.
+	* keyboard.c (make_lispy_focus_out): Likewise.
+	(record_menu_key): Move under HAVE_MENUS.
+	* xdisp.c (toplevel): Move hourglass_shown_p, hourglass_atimer and
+	THIN_SPACE_WIDTH under HAVE_WINDOW_SYSTEM.
+	(syms_of_xdisp): Adjust user.
+	(window_box_edges): Define only if HAVE_WINDOW_SYSTEM.
+	(start_hourglass, cancel_hourglass):
+	* xfaces.c (toplevel): Likewise with PT_PER_INCH,
+	clear_font_table_count, CLEAR_FONT_TABLE_COUNT
+	and CLEAR_FONT_TABLE_NFONTS.
+	(set_font_frame_param, clear_face_gcs, realize_non_ascii_face):
+	Declare only if HAVE_WINDOW_SYSTEM.
+	(lface_same_font_attributes_p, clear_face_gcs): Define only
+	if HAVE_WINDOW_SYSTEM.
+
+2013-09-05  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	* frame.c (check_minibuf_window): Update 'frame' with frame pointer.
+	* xterm.c (x_scroll_bar_handle_click) [!USE_TOOLKIT_SCROLL_BARS]:
+	Don't pass C integer to XINT (tiny fix for 2013-09-03 change).
+
+2013-09-05  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* cmds.c (Fself_insert_command): Don't pass a non-integer to XINT.
+
+2013-09-04  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* alloc.c (make_event_array): First arg is now ptrdiff_t, not int.
+	This fixes a type error on hosts where ptrdiff_t is wider than int.
+
+2013-09-04  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* keyboard.c (read_key_sequence_vs): New function.
+	(Fread_key_sequence_vector, Fread_key_sequence): Use it to factor out
+	common code.
+
+	* callint.c (Fcall_interactively): Always return a vector for 'K'.
+
+2013-09-04  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Makefile improvements.
+	* Makefile.in (config.status): Don't use double-colon rules, as
+	they are not portable according to POSIX.  Fix shell typo with `;
+	I guess this rule has never been tested?
+	(VCSWITNESS): New macro, to override any environment var.
+
+2013-09-04  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	* xterm.h (struct x_display_info): Do not track X connection
+	fd separately because it is always available from Display.
+	* xterm.c (x_term_init, x_delete_terminal, x_delete_display):
+	Adjust users.
+
+2013-09-03  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	* buffer.c (drop_overlay):
+	* fileio.c (restore_point_unwind): Prefer unchain_marker to
+	Fset_marker (X, Qnil, ...) (which is the same but a bit slower).
+
+2013-09-03  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	* buffer.c (Fmake_overlay, Fmove_overlay):
+	* intervals.c (set_point_from_marker):
+	* print.c (PRINTPREPARE): Prefer signal_error
+	to plain error and report unsuitable marker too.
+
+2013-09-03  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	* xterm.h (struct scroll_bar): Prefer int to Lisp_Object
+	for 'dragging' member.
+	(struct x_output): Remove set-but-unused leftovers
+	'left_before_move' and 'top_before_move'.
+	* gtkutil.c (xg_set_toolkit_scroll_bar_thumb):
+	* xterm.c (xt_action_hook, xm_scroll_callback, xg_scroll_callback)
+	(xg_end_scroll_callback, xaw_jump_callback, xaw_scroll_callback)
+	(x_set_toolkit_scroll_bar_thumb, x_scroll_bar_create)
+	(x_scroll_bar_set_handle, XTset_vertical_scroll_bar)
+	(x_scroll_bar_handle_click, x_scroll_bar_note_movement)
+	(x_scroll_bar_report_motion, x_set_offset): Related users changed.
+	* xfns.c, image.c (XLIB_ILLEGAL_ACCESS): No longer needed.
+
+2013-09-03  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* nsfont.m (INVALID_GLYPH): New define.
+	(nsfont_encode_char): Use INVALID_GLYPH.
+	(ns_uni_to_glyphs): Ditto, check for NSNullGlyph (Bug#15138).
+
+2013-09-02  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	* xterm.c (x_last_mouse_movement_time): Revert last change.
+	This code should use XDisplayMotionBufferSize to check display's
+	motion history first, and there are few other issues as well.
+	(x_scroll_bar_note_movement): Pass XMotionEvent rather than XEvent.
+	(handle_one_xevent): Adjust user.
+
+2013-09-02  Martin Rudalics  <rudalics@gmx.at>
+
+	* dispnew.c (Flast_nonminibuf_frame): Move from here ...
+	* frame.c (Flast_nonminibuf_frame): ... to here.
+	(check_minibuf_window): Don't abort if no window was found
+	(Bug#15247).
+
+2013-09-02  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	Use XGetMotionEvents to ask the last mouse motion time from X server.
+	* xterm.c (X_MOTION_HISTORY): Default to 1.
+	(x_last_mouse_movement_time) [X_MOTION_HISTORY]: New function.
+	(x_last_mouse_movement_time) [!X_MOTION_HISTORY]: Legacy version.
+	(note_mouse_movement, x_scroll_bar_note_movement) [!X_MOTION_HISTORY]:
+	Ifdef away legacy code.
+	(XTmouse_position, x_scroll_bar_report_motion):
+	Use x_last_mouse_movement_time.
+	(handle_one_xevent): Use event.xunmap and not event.xmap when handling
+	UnmapNotify event.
+
+2013-09-02  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	* msdos.c (last_mouse_window): Move to...
+	(dos_rawgetc): ...this function and adjust comment.
+	* nsterm.m (last_window): Rename to last_mouse_window, move to...
+	(mouseMoved): ...this function and adjust comment.
+	* w32term.c (last_window): Likewise with...
+	(w32_read_socket): ...this function.
+	* xterm.c (last_window): Likewise with...
+	(handle_one_xevent): ...this function.
+
+2013-09-02  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	* window.h (Vmouse_window, Vmouse_event): Remove the leftovers.
+	* xterm.c (toplevel): Drop obsolete comment and move compose_status...
+	(handle_one_xevent): ...to here.
+	(STORE_KEYSYM_FOR_DEBUG): Move under ENABLE_CHECKING and make no-op
+	otherwise.
+
+2013-09-02  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	* msdos.c (IT_set_terminal_window): Remove no-op.
+	(initialize_msdos_display): Adjust terminal setup.
+	* w32console.c (w32con_set_terminal_window): Remove no-op.
+	(initialize_w32_display): Adjust terminal setup.
+	* w32term.c (w32_set_terminal_window): Remove no-op.
+	(w32_create_terminal): Adjust terminal setup.
+	* xterm.c (XTset_terminal_window): Remove no-op.
+	(x_create_terminal): Adjust terminal setup.
+
+2013-09-01  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	* nsterm.m (ns_set_terminal_modes, ns_reset_terminal_modes):
+	Remove no-ops.
+	(ns_create_terminal): Adjust terminal setup.
+	* w32term.c (w32_set_terminal_modes, w32_reset_terminal_modes):
+	Remove no-ops.
+	(w32_create_terminal): Adjust terminal setup.
+	* xterm.c (XTset_terminal_modes, XTreset_terminal_modes):
+	Remove no-ops.
+	(x_create_terminal): Adjust terminal setup.
+
+2013-09-01  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	* dispextern.h (SET_TEXT_POS_FROM_MARKER): Indent.
+	(CLIP_TEXT_POS_FROM_MARKER): New macro.
+	* dispnew.c (buffer_posn_from_coords):
+	* window.c (Fwindow_end, displayed_window_lines):
+	* xdisp.c (redisplay_mode_lines): Use it.
+
+2013-09-01  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* fontset.c (face_for_char): Check char in the current face font first
+	if HAVE_NS (Bug#15138).
+
+2013-08-31  Martin Rudalics  <rudalics@gmx.at>
+
+	* window.c (temp_output_buffer_show): Make sure window returned
+	by display_buffer is live (Bug#15213).
+
+2013-08-30  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	Minor cleanup to avoid forward declarations.
+	* coding.h (struct ccl_spec): Remove forward declaration.
+	* composite.h (toplevel): Include font.h.
+	(struct composition_it, struct face, struct font_metrics):
+	Remove forward declaration.
+	* dispextern.h (struct image, struct atimer): Likewise.
+	* emacsgtkfixed.h (struct frame): Likewise.
+	* emacsgtkfixed.c (toplevel): Reorder headers and drop stdio.h.
+	* font.h (struct font_driver, struct font, struct glyph_string)
+	(struct face): Remove forward declaration.
+	* fontset.h (struct face, struct font): Likewise.
+	* frame.h (toplevel): Style cleanup.
+	(enum output_method): Move to...
+	* termhooks.h (enum output_method): ...here.
+	(struct glyph, struct frame, struct ns_display_info)
+	(struct x_display_info, struct w32_display_info):
+	Remove forward declaration.
+	* xterm.h (toplevel): Include termhooks.h.
+	(struct font, struct window, struct glyph_matrix, struct frame)
+	(struct input_event, struct face, struct image): Remove forward
+	declaration.
+	* gtkutil.h (struct _widget_value): Likewise.
+	* keyboard.h (toplevel): Include termhooks.h.
+	(struct input_event): Remove forward declaration.
+
+2013-08-29  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	* intervals.c (set_point_from_marker): New function.
+	* editfns.c (Fgoto_char):
+	* process.c (Finternal_default_process_filter):
+	* window.c (select_window_1): Use it.
+	* buffer.h (set_point_from_marker): Add prototype.
+
+2013-08-29  Eli Zaretskii  <eliz@gnu.org>
+
+	* w32.c (term_winsock): Call release_listen_threads before calling
+	WSACleanup.
+	(_sys_wait_accept): Wait for accept event in a loop with a finite
+	timeout, instead of waiting indefinitely.  Will hopefully avoid
+	hanging during exit because WSACleanup deadlocks waiting for the
+	event object to be released.  (Bug#14333)
+
+	* w32proc.c (release_listen_threads): New function, signals all
+	the reader threads that listen for connections to stop waiting.
+
+	* w32.h (release_listen_threads): Add prototype.
+
+2013-08-29  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	* alloc.c (Fmake_marker, build_marker): Zero need_adjustment
+	field of new marker (for sanity and safety).
+	* lisp.h (XSETMARKER): Remove unused macro (it doesn't work
+	anyway because XMISCTYPE is a function and can't be an lvalue).
+
+2013-08-29  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	* xterm.c (x_clear_area): Lost 7th arg because it is always False.
+	(x_after_update_window_line, x_scroll_bar_create):
+	(x_scroll_bar_set_handle, XTset_vertical_scroll_bar):
+	(handle_one_xevent, x_clear_frame_area):
+	* gtkutil.c (xg_clear_under_internal_border, xg_update_scrollbar_pos):
+	* xfns.c (x_set_menu_bar_lines, x_set_tool_bar_lines): Adjust users.
+	* xterm.h (x_clear_area): Adjust prototype.
+
+2013-08-29  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	Hook scanning and indentation functions to find_newline.  This helps
+	to avoid duplicated code and renders more respect to newline cache.
+	* lisp.h (scan_newline): Prefer ptrdiff_t to EMACS_INT.
+	* cmds.c (Fforward_line):
+	* indent.c (scan_for_column, Fcurrent_indentation, indented_beyond_p):
+	Use find_newline and avoid unnecessary point movements.
+	* search.c (scan_newline): Implement on top of find_newline.
+
+2013-08-28  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* eval.c (Ffuncall): Fix handling of ((lambda ..) ..) in lexically
+	scoped code (bug#11258).
+
+2013-08-28  Davor Cubranic  <cubranic@stat.ubc.ca> (tiny change)
+
+	* nsterm.m (last_window): New variable.
+	(EV_TRAILER2): New macro.
+	(EV_TRAILER): Call EV_TRAILER2.
+	(mouseMoved:):  Add support for mouse-autoselect-window
+	on nextstep (Bug#6888).
+
+2013-08-28  Andreas Schwab  <schwab@suse.de>
+
+	* regex.c (CHAR_CHARSET, CHARSET_LEADING_CODE_BASE, CHAR_HEAD_P)
+	(SINGLE_BYTE_CHAR_P, SAME_CHARSET_P, MAKE_CHAR, BYTE8_TO_CHAR):
+	Remove unused macro definitions.
+	(CHARSET_RANGE_TABLE_BITS, EXTEND_RANGE_TABLE)
+	(SET_RANGE_TABLE_WORK_AREA_BIT, SET_RANGE_TABLE_WORK_AREA):
+	Only define if emacs.
+
+2013-08-28  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	Prefer enum glyph_row_area to int where appropriate.
+	* dispextern.h (enum glyph_row_area): Add ANY_AREA member.
+	Fix comment.
+	(window_box, window_box_width, window_box_left, window_box_left_offset)
+	(window_box_right, window_box_right_offset): Adjust prototypes.
+	* xdisp.c (window_box, window_box_width, window_box_left)
+	(window_box_left_offset, window_box_right, window_box_right_offset):
+	Use enum glyph_row_area.  Adjust users and tweak comment where needed.
+	(window_box_edges): Likewise.  Lost 2nd arg since it is always ANY_AREA.
+	* nsterm.m (ns_clip_to_row):
+	* w32term.c (w32_clip_to_row):
+	* xterm.c (x_clip_to_row): Likewise.
+
+2013-08-28  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	* buffer.c (Foverlays_at, Foverlays_in, Fnext_overlay_change)
+	(Fprevious_overlay_change): Fast path for buffer with no overlays.
+
+2013-08-28  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* Makefile.in (SHELL): Now @SHELL@, not /bin/sh,
+	for portability to hosts where /bin/sh has problems.
+
+2013-08-28  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	Redesign redisplay interface to drop global output_cursor.
+	* dispextern.h (struct redisplay_interface): Remove cursor_to member.
+	(toplevel): Remove declaration of output_cursor.
+	(set_output_cursor, x_cursor_to): Remove prototype.
+	* window.h (struct window): New member output_cursor.
+	(output_cursor_to): New function to replace RIF member.
+	* dispnew.c (redraw_overlapped_rows, update_marginal_area)
+	(update_text_area, set_window_cursor_after_update): Use it.
+	* xdisp.c (output_cursor, set_output_cursor, x_cursor_to): Remove.
+	(x_write_glyphs, x_insert_glyphs, x_clear_end_of_line):
+	* nsterm.m (ns_update_window_begin, ns_update_window_end):
+	* w32term.c (x_update_window_begin, x_update_window_end):
+	* xterm.c (x_update_window_begin, x_update_window_end):
+	Adjust to use per-window output cursor.
+
 2013-08-27  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Simplify SELECT_TYPE-related code.
+	Like EMACS_TIME, this portability layer is no longer needed, since
+	Emacs has been using fd_set as a portability layer for some time.
+	* sysselect.h (FD_SETSIZE): Rename from MAXDESC.  All uses changed.
+	(SELECT_TYPE): Remove.  All uses changed to fd_set.
+	(fd_set) [!FD_SET]: New typedef.
 
 	Simplify EMACS_TIME-related code.
 	This portability layer is no longer needed, since Emacs has been

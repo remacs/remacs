@@ -236,6 +236,9 @@ struct window
     /* Where the cursor actually is.  */
     struct cursor_pos phys_cursor;
 
+    /* Internally used for redisplay purposes.  */
+    struct cursor_pos output_cursor;
+
     /* Vertical cursor position as of last update that completed
        without pause.  This is the position of last_point.  */
     int last_cursor_vpos;
@@ -260,6 +263,12 @@ struct window
     /* Pixel width of scroll bars.
        A value of -1 means use frame values.  */
     int scroll_bar_width;
+
+    /* Effective height of the mode line, or -1 if not known.  */
+    int mode_line_height;
+
+    /* Effective height of the header line, or -1 if not known.  */
+    int header_line_height;
 
     /* Z - the buffer position of the last glyph in the current
        matrix of W.  Only valid if window_end_valid is nonzero.  */
@@ -856,14 +865,6 @@ extern Lisp_Object minibuf_window;
 
 extern Lisp_Object minibuf_selected_window;
 
-/* Window that the mouse is over (nil if no mouse support).  */
-
-extern Lisp_Object Vmouse_window;
-
-/* Last mouse-click event (nil if no mouse support).  */
-
-extern Lisp_Object Vmouse_event;
-
 extern Lisp_Object make_window (void);
 extern Lisp_Object window_from_coordinates (struct frame *, int, int,
                                             enum window_part *, bool);
@@ -955,6 +956,22 @@ extern void init_window_once (void);
 extern void init_window (void);
 extern void syms_of_window (void);
 extern void keys_of_window (void);
+
+/* Move cursor to row/column position VPOS/HPOS, pixel coordinates
+   Y/X. HPOS/VPOS are window-relative row and column numbers and X/Y
+   are window-relative pixel positions.  This is always done during
+   window update, so the position is the future output cursor position
+   for currently updated window W.  */
+
+WINDOW_INLINE void
+output_cursor_to (struct window *w, int vpos, int hpos, int y, int x)
+{
+  eassert (w);
+  w->output_cursor.hpos = hpos;
+  w->output_cursor.vpos = vpos;
+  w->output_cursor.x = x;
+  w->output_cursor.y = y;
+}
 
 INLINE_HEADER_END
 

@@ -56,11 +56,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 extern Lisp_Object Qfont_spec, Qfont_entity, Qfont_object;
 
-
-struct font_driver;
-struct font;
-struct glyph_string;
-
 /* An enumerator for each font property.  This is used as an index to
    the vector of FONT-SPEC and FONT-ENTITY.
 
@@ -487,8 +482,6 @@ struct font_bitmap
    this value.  */
 #define FONT_PIXEL_SIZE_QUANTUM 1
 
-struct face;
-
 #define FONT_INVALID_CODE 0xFFFFFFFF
 
 /* Font driver.  Members specified as "optional" can be NULL.  */
@@ -582,6 +575,8 @@ struct font_driver
                        unsigned *code, int nglyphs,
                        struct font_metrics *metrics);
 
+#ifdef HAVE_WINDOW_SYSTEM
+
   /* Optional.
      Draw glyphs between FROM and TO of S->char2b at (X Y) pixel
      position of frame F with S->FACE and S->GC.  If WITH_BACKGROUND,
@@ -601,6 +596,8 @@ struct font_driver
   /* Optional.
      Free bitmap data in BITMAP.  */
   void (*free_bitmap) (struct font *font, struct font_bitmap *bitmap);
+
+#endif /* HAVE_WINDOW_SYSTEM */
 
   /* Optional.
      Return an outline data for glyph-code CODE of FONT.  The format

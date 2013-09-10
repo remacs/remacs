@@ -84,9 +84,6 @@ static int last_mousemove_y = 0;
 
 static int any_help_event_p;
 
-/* Last window where we saw the mouse.  Used by mouse-autoselect-window.  */
-static Lisp_Object last_window;
-
 extern unsigned int msh_mousewheel;
 
 extern void free_frame_menubar (struct frame *);
@@ -224,8 +221,6 @@ void x_wm_set_icon_pixmap (struct frame *, int);
 static void w32_initialize (void);
 static void x_update_end (struct frame *);
 static void w32_frame_up_to_date (struct frame *);
-static void w32_set_terminal_modes (struct terminal *);
-static void w32_reset_terminal_modes (struct terminal *);
 static void x_clear_frame (struct frame *);
 static void frame_highlight (struct frame *);
 static void frame_unhighlight (struct frame *);
@@ -240,7 +235,8 @@ static void x_frame_rehighlight (struct w32_display_info *);
 static void x_draw_hollow_cursor (struct window *, struct glyph_row *);
 static void x_draw_bar_cursor (struct window *, struct glyph_row *, int,
                                enum text_cursor_kinds);
-static void w32_clip_to_row (struct window *, struct glyph_row *, int, HDC);
+static void w32_clip_to_row (struct window *, struct glyph_row *,
+			     enum glyph_row_area, HDC);
 static BOOL my_show_window (struct frame *, HWND, int);
 static void my_set_window_pos (HWND, HWND, int, int, int, int, UINT);
 #if 0
@@ -576,8 +572,7 @@ x_update_begin (struct frame *f)
 }
 
 
-/* Start update of window W.  Set output_cursor to the cursor
-   position of W.  */
+/* Start update of window W.  */
 
 static void
 x_update_window_begin (struct window *w)
@@ -591,7 +586,7 @@ x_update_window_begin (struct window *w)
       SendMessage (w32_system_caret_hwnd, WM_EMACS_HIDE_CARET, 0, 0);
     }
 
-  set_output_cursor (&w->cursor);
+  w->output_cursor = w->cursor;
 
   block_input ();
 
@@ -683,9 +678,9 @@ x_update_window_end (struct window *w, bool cursor_on_p,
       block_input ();
 
       if (cursor_on_p)
-	display_and_set_cursor (w, 1, output_cursor.hpos,
-				output_cursor.vpos,
-				output_cursor.x, output_cursor.y);
+	display_and_set_cursor (w, 1,
+				w->output_cursor.hpos, w->output_cursor.vpos,
+				w->output_cursor.x, w->output_cursor.y);
 
       if (draw_window_fringes (w, 1))
 	x_draw_vertical_border (w);
@@ -849,7 +844,7 @@ w32_draw_fringe_bitmap (struct window *w, struct glyph_row *row,
     }
 
   /* Must clip because of partially visible lines.  */
-  w32_clip_to_row (w, row, -1, hdc);
+  w32_clip_to_row (w, row, ANY_AREA, hdc);
 
   if (p->which && p->which < max_fringe_bmp)
     {
@@ -934,28 +929,6 @@ w32_destroy_fringe_bitmap (int which)
   fringe_bmp[which] = 0;
 }
 
-
-
-/* This is called when starting Emacs and when restarting after
-   suspend.  When starting Emacs, no window is mapped.  And nothing
-   must be done to Emacs's own window if it is suspended (though that
-   rarely happens).  */
-
-static void
-w32_set_terminal_modes (struct terminal *term)
-{
-}
-
-/* This is called when exiting or suspending Emacs.  Exiting will make
-   the W32 windows go away, and suspending requires no action. */
-
-static void
-w32_reset_terminal_modes (struct terminal *term)
-{
-}
-
-
-
 /***********************************************************************
 			   Display Iterator
  ***********************************************************************/
@@ -2651,11 +2624,7 @@ x_clear_frame (struct frame *f)
   /* Clearing the frame will erase any cursor, so mark them all as no
      longer visible.  */
   mark_window_cursors_off (XWINDOW (FRAME_ROOT_WINDOW (f)));
-  output_cursor.hpos = output_cursor.vpos = 0;
-  output_cursor.x = -1;
 
-  /* We don't set the output cursor here because there will always
-     follow an explicit cursor_to.  */
   block_input ();
 
   w32_clear_window (f);
@@ -2693,19 +2662,6 @@ w32_ring_bell (struct frame *f)
   unblock_input ();
 }
 
-
-/* Specify how many text lines, from the top of the window,
-   should be affected by insert-lines and delete-lines operations.
-   This, and those operations, are used only within an update
-   that is bounded by calls to x_update_begin and x_update_end.  */
-
-static void
-w32_set_terminal_window (struct frame *f, int n)
-{
-  /* This function intentionally left blank.  */
-}
-
-
 /***********************************************************************
 			      Line Dance
  ***********************************************************************/
@@ -2736,7 +2692,7 @@ x_scroll_run (struct window *w, struct run *run)
   /* Get frame-relative bounding box of the text display area of W,
      without mode lines.  Include in this box the left and right
      fringes of W.  */
-  window_box (w, -1, &x, &y, &width, &height);
+  window_box (w, ANY_AREA, &x, &y, &width, &height);
 
   /* If the fringe is adjacent to the left (right) scroll bar of a
      leftmost (rightmost, respectively) window, then extend its
@@ -3830,7 +3786,7 @@ w32_set_vertical_scroll_bar (struct window *w,
   bool fringe_extended_p;
 
   /* Get window dimensions.  */
-  window_box (w, -1, 0, &window_y, 0, &window_height);
+  window_box (w, ANY_AREA, 0, &window_y, 0, &window_height);
   top  = window_y;
   width = WINDOW_CONFIG_SCROLL_BAR_COLS (w) * FRAME_COLUMN_WIDTH (f);
   height = window_height;
@@ -4544,18 +4500,16 @@ w32_read_socket (struct terminal *terminal,
 	      /* Generate SELECT_WINDOW_EVENTs when needed.  */
 	      if (!NILP (Vmouse_autoselect_window))
 		{
-		  Lisp_Object window;
-		  int x = LOWORD (msg.msg.lParam);
-		  int y = HIWORD (msg.msg.lParam);
-
-		  window = window_from_coordinates (f, x, y, 0, 0);
+		  static Lisp_Object last_mouse_window;
+		  Lisp_Object window = window_from_coordinates
+		    (f, LOWORD (msg.msg.lParam), HIWORD (msg.msg.lParam), 0, 0);
 
 		  /* Window will be selected only when it is not
 		     selected now and last mouse movement event was
 		     not in it.  Minibuffer window will be selected
 		     only when it is active.  */
 		  if (WINDOWP (window)
-		      && !EQ (window, last_window)
+		      && !EQ (window, last_mouse_window)
 		      && !EQ (window, selected_window)
 		      /* For click-to-focus window managers
 			 create event iff we don't leave the
@@ -4567,8 +4521,8 @@ w32_read_socket (struct terminal *terminal,
 		      inev.kind = SELECT_WINDOW_EVENT;
 		      inev.frame_or_window = window;
 		    }
-
-		  last_window = window;
+		  /* Remember the last window where we saw the mouse.  */
+		  last_mouse_window = window;
 		}
 	      if (!note_mouse_movement (f, &msg.msg))
 		help_echo_string = previous_help_echo_string;
@@ -5123,7 +5077,8 @@ w32_read_socket (struct terminal *terminal,
    mode lines must be clipped to the whole window.  */
 
 static void
-w32_clip_to_row (struct window *w, struct glyph_row *row, int area, HDC hdc)
+w32_clip_to_row (struct window *w, struct glyph_row *row,
+		 enum glyph_row_area area, HDC hdc)
 {
   RECT clip_rect;
   int window_x, window_y, window_width;
@@ -6303,11 +6258,6 @@ w32_make_rdb (char *xrm_option)
   return buffer;
 }
 
-void
-x_flush (struct frame * f)
-{ /* Nothing to do */ }
-
-
 extern frame_parm_handler w32_frame_parm_handlers[];
 
 static struct redisplay_interface w32_redisplay_interface =
@@ -6321,9 +6271,7 @@ static struct redisplay_interface w32_redisplay_interface =
   x_after_update_window_line,
   x_update_window_begin,
   x_update_window_end,
-  x_cursor_to,
-  x_flush,
-  0,  /* flush_display_optional */
+  0, /* flush_display */
   x_clear_window_mouse_face,
   x_get_glyph_overhangs,
   x_fix_overlapping_area,
@@ -6358,11 +6306,11 @@ w32_create_terminal (struct w32_display_info *dpyinfo)
   terminal->ins_del_lines_hook = x_ins_del_lines;
   terminal->delete_glyphs_hook = x_delete_glyphs;
   terminal->ring_bell_hook = w32_ring_bell;
-  terminal->reset_terminal_modes_hook = w32_reset_terminal_modes;
-  terminal->set_terminal_modes_hook = w32_set_terminal_modes;
+  terminal->reset_terminal_modes_hook = NULL;
+  terminal->set_terminal_modes_hook = NULL;
   terminal->update_begin_hook = x_update_begin;
   terminal->update_end_hook = x_update_end;
-  terminal->set_terminal_window_hook = w32_set_terminal_window;
+  terminal->set_terminal_window_hook = NULL;
   terminal->read_socket_hook = w32_read_socket;
   terminal->frame_up_to_date_hook = w32_frame_up_to_date;
   terminal->mouse_position_hook = w32_mouse_position;

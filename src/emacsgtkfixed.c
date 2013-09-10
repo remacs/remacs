@@ -20,15 +20,14 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include <config.h>
 
-#include "emacsgtkfixed.h"
-#include <stdio.h>
-
 #include "lisp.h"
 #include "frame.h"
 #include "xterm.h"
 #ifdef HAVE_XWIDGETS
 #include "xwidget.h"
 #endif
+#include "emacsgtkfixed.h"
+
 /* Silence a bogus diagnostic; see GNOME bug 683906.  */
 #if 4 < __GNUC__ + (7 <= __GNUC_MINOR__)
 # pragma GCC diagnostic push

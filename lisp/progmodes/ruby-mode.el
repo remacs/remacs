@@ -137,6 +137,7 @@ This should only be called after matching against `ruby-here-doc-beg-re'."
 
 (defconst ruby-symbol-chars "a-zA-Z0-9_"
   "List of characters that symbol names may contain.")
+
 (defconst ruby-symbol-re (concat "[" ruby-symbol-chars "]")
   "Regexp to match symbols.")
 
@@ -254,11 +255,13 @@ Also ignores spaces after parenthesis when 'space."
             ("for" for-body "end")
             ("[" expseq "]")
             ("{" hashvals "}")
+            ("{" insts "}")
             ("while" insts "end")
             ("until" insts "end")
             ("unless" insts "end")
             ("if" if-body "end")
             ("case"  cases "end"))
+      (formal-params ("opening-|" exp "|"))
       (for-body (for-head ";" insts))
       (for-head (id "in" exp))
       (cases (exp "then" insts) ;; FIXME: Ruby also allows (exp ":" insts).
@@ -285,10 +288,20 @@ Also ignores spaces after parenthesis when 'space."
   (save-excursion
     (skip-chars-backward " \t")
     (not (or (bolp)
-             (memq (char-before) '(?\; ?- ?+ ?* ?/ ?:))
+             (and (memq (char-before) '(?\; ?- ?+ ?* ?/ ?: ?.))
+                  ;; Make sure it's not the end of a regexp.
+                  (not (eq (car (syntax-after (1- (point)))) 7)))
              (and (memq (char-before) '(?\? ?=))
-                  (not (memq (char-syntax (char-before (1- (point))))
-                             '(?w ?_))))))))
+                  (let ((tok (ruby-smie--backward-token)))
+                    (or (equal tok "?")
+                        (string-match "\\`\\s." tok))))))))
+
+(defun ruby-smie--opening-pipe-p ()
+  (save-excursion
+    (if (eq ?| (char-before)) (forward-char -1))
+    (skip-chars-backward " \t\n")
+    (or (eq ?\{ (char-before))
+        (looking-back "\\_<do" (- (point) 2)))))
 
 (defun ruby-smie--forward-token ()
   (skip-chars-forward " \t")
@@ -299,12 +312,16 @@ Also ignores spaces after parenthesis when 'space."
         (if (eolp) (forward-char 1) (forward-comment 1))
         ";")
     (forward-comment (point-max))
+    (if (looking-at ":\\s.+")
+        (progn (goto-char (match-end 0)) (match-string 0)) ;; bug#15208.
     (let ((tok (smie-default-forward-token)))
       (cond
        ((member tok '("unless" "if" "while" "until"))
         (if (save-excursion (forward-word -1) (ruby-smie--bosp))
             tok "iuwu-mod"))
-       (t tok)))))
+         ((equal tok "|")
+          (if (ruby-smie--opening-pipe-p) "opening-|" tok))
+         (t tok))))))
 
 (defun ruby-smie--backward-token ()
   (let ((pos (point)))
@@ -314,10 +331,14 @@ Also ignores spaces after parenthesis when 'space."
         (progn (skip-chars-forward " \t")
                ";")
       (let ((tok (smie-default-backward-token)))
+        (when (and (eq ?: (char-before)) (string-match "\\`\\s." tok))
+          (forward-char -1) (setq tok (concat ":" tok))) ;; bug#15208.
         (cond
          ((member tok '("unless" "if" "while" "until"))
           (if (ruby-smie--bosp)
               tok "iuwu-mod"))
+         ((equal tok "|")
+          (if (ruby-smie--opening-pipe-p) "opening-|" tok))
          (t tok))))))
 
 (defun ruby-smie-rules (kind token)
@@ -332,7 +353,19 @@ Also ignores spaces after parenthesis when 'space."
        ;; For (invalid) code between switch and case.
        ;; (if (smie-parent-p "switch") 4)
        0))
-    (`(:before . ,(or `"else" `"then" `"elsif")) 0)
+    (`(:before . "do")
+     (when
+         (save-excursion
+           (forward-word 1)   ;Skip "do"
+           (skip-chars-forward " \t")
+           (and (equal (save-excursion (ruby-smie--forward-token)) "opening-|")
+                (save-excursion (forward-sexp 1)
+                                (skip-chars-forward " \t")
+                                (or (eolp)
+                                    (looking-at comment-start-skip)))))
+       ;; `(column . ,(smie-indent-virtual))
+       (smie-rule-parent)))
+    (`(:before . ,(or `"else" `"then" `"elsif" `"rescue")) 0)
     (`(:before . ,(or `"when"))
      (if (not (smie-rule-sibling-p)) 0)) ;; ruby-indent-level
     ;; Hack attack: Since newlines are separators, don't try to align args that
@@ -903,6 +936,10 @@ Can be one of `heredoc', `modifier', `expr-qstr', `expr-re'."
                       (not (looking-at "[a-z_]"))))
                (and (looking-at ruby-operator-re)
                     (not (ruby-special-char-p))
+                    (save-excursion
+                      (forward-char -1)
+                      (or (not (looking-at ruby-operator-re))
+                          (not (eq (char-before) ?:))))
                     ;; Operator at the end of line.
                     (let ((c (char-after (point))))
                       (and
@@ -1825,11 +1862,11 @@ See `font-lock-syntax-table'.")
              "using")
            'symbols))
          1 'font-lock-builtin-face)
-   ;; Perl-ish keywords
-   "\\_<\\(?:BEGIN\\|END\\)\\_>\\|^__END__$"
    ;; here-doc beginnings
    `(,ruby-here-doc-beg-re 0 (unless (ruby-singleton-class-p (match-beginning 0))
                                'font-lock-string-face))
+   ;; Perl-ish keywords
+   "\\_<\\(?:BEGIN\\|END\\)\\_>\\|^__END__$"
    ;; variables
    `(,(concat ruby-font-lock-keyword-beg-re
               "\\_<\\(nil\\|self\\|true\\|false\\)\\>")
@@ -1931,8 +1968,7 @@ The variable `ruby-indent-level' controls the amount of indentation.
                                      "\\)\\'")) 'ruby-mode))
 
 ;;;###autoload
-(dolist (name (list "ruby" "rbx" "jruby" "ruby1.9" "ruby1.8"))
-  (add-to-list 'interpreter-mode-alist (cons (purecopy name) 'ruby-mode)))
+(add-to-list 'interpreter-mode-alist (cons (purecopy "\\`\\(rbx\\|j?ruby\\(1\\.[89]\\)?\\)\\'") 'ruby-mode))
 
 (provide 'ruby-mode)
 

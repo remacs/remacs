@@ -167,12 +167,12 @@ AC_ARG_WITH([mailhost],[AS_HELP_STRING([--with-mailhost=HOSTNAME],
     AC_DEFINE_UNQUOTED(MAILHOST, ["$withval"], [String giving fallback POP mail host.]))
 
 AC_ARG_WITH([sound],[AS_HELP_STRING([--with-sound=VALUE],
-  [compile with sound support (VALUE one of: yes, ossaudio, alsa, no;
+  [compile with sound support (VALUE one of: yes, alsa, oss, bsd-ossaudio, no;
 default yes).  Only for GNU/Linux, FreeBSD, NetBSD, MinGW.])],
   [ case "${withval}" in
-      yes|no|ossaudio|alsa) val=$withval ;;
+      yes|no|alsa|oss|bsd-ossaudio) val=$withval ;;
       *) AC_MSG_ERROR([`--with-sound=$withval' is invalid;
-this option's value should be `yes', `no', `ossaudio', or `alsa'.])
+this option's value should be `yes', `no', `alsa', `oss', or `bsd-ossaudio'.])
       ;;
     esac
     with_sound=$val
@@ -268,13 +268,9 @@ AC_SUBST(cache_file)
 
 ## This is an option because I do not know if all info/man support
 ## compressed files, nor how to test if they do so.
-OPTION_DEFAULT_ON([compress-info],[don't compress the installed Info pages])
-if test $with_compress_info = yes; then
-   GZIP_INFO=yes
-else
-   GZIP_INFO=
-fi
-AC_SUBST(GZIP_INFO)
+OPTION_DEFAULT_ON([compress-install],
+  [don't compress some files (.el, .info, etc.) when installing.  Equivalent to:
+make GZIP_PROG= install])
 
 AC_ARG_WITH([pkg-config-prog],dnl
 [AS_HELP_STRING([--with-pkg-config-prog=FILENAME],
@@ -828,6 +824,13 @@ else
   # The following line should be removable at some point.
   nw="$nw -Wsuggest-attribute=pure"
 
+  # This part is merely for shortening the command line,
+  # since -Wno-FOO needs to be added below regardless.
+  nw="$nw -Wmissing-field-initializers"
+  nw="$nw -Wswitch"
+  nw="$nw -Wtype-limits"
+  nw="$nw -Wunused-parameter"
+
   # clang is unduly picky about some things.
   AC_CACHE_CHECK([whether the compiler is clang], [emacs_cv_clang],
     [AC_COMPILE_IFELSE(
@@ -945,6 +948,9 @@ AC_PATH_PROG(INSTALL_INFO, install-info, :,
 dnl Don't use GZIP, which is used by gzip for additional parameters.
 AC_PATH_PROG(GZIP_PROG, gzip)
 
+test $with_compress_install != yes && test -n "$GZIP_PROG" && \
+   GZIP_PROG=" # $GZIP_PROG # (disabled by configure --without-compress-install)"
+
 if test $opsys = gnu-linux; then
   AC_PATH_PROG(PAXCTL, paxctl,,
     [$PATH$PATH_SEPARATOR/sbin$PATH_SEPARATOR/usr/sbin])
@@ -1000,23 +1006,11 @@ AC_SUBST(INFO_EXT)
 AC_SUBST(INFO_OPTS)
 
 if test $opsys = mingw32; then
-   DOCMISC_DVI_W32=efaq-w32.dvi
-   DOCMISC_HTML_W32=efaq-w32.html
-   DOCMISC_INFO_W32=efaq-w32
-   DOCMISC_PDF_W32=efaq-w32.pdf
-   DOCMISC_PS_W32=efaq-w32.ps
+   DOCMISC_W32=efaq-w32
 else
-   DOCMISC_DVI_W32=
-   DOCMISC_HTML_W32=
-   DOCMISC_INFO_W32=
-   DOCMISC_PDF_W32=
-   DOCMISC_PS_W32=
+   DOCMISC_W32=
 fi
-AC_SUBST(DOCMISC_DVI_W32)
-AC_SUBST(DOCMISC_HTML_W32)
-AC_SUBST(DOCMISC_INFO_W32)
-AC_SUBST(DOCMISC_PDF_W32)
-AC_SUBST(DOCMISC_PS_W32)
+AC_SUBST(DOCMISC_W32)
 
 dnl Add our options to ac_link now, after it is set up.
 
@@ -1034,19 +1028,30 @@ dnl (Don't use `-z nocombreloc' as -z takes no arg on Irix.)
 dnl Treat GCC specially since it just gives a non-fatal `unrecognized option'
 dnl if not built to support GNU ld.
 
-late_LDFLAGS=$LDFLAGS
+dnl For a long time, -znocombreloc was added to LDFLAGS rather than
+dnl LD_SWITCH_SYSTEM_TEMACS.  That is:
+dnl * inappropriate, as LDFLAGS is a user option but this is essential.
+dnl   Eg "make LDFLAGS=... all" could run into problems,
+dnl   http://bugs.debian.org/684788
+dnl * unnecessary, since temacs is the only thing that actually needs it.
+dnl   Indeed this is where it was originally, prior to:
+dnl   http://lists.gnu.org/archive/html/emacs-pretest-bug/2004-03/msg00170.html
+late_LDFLAGS="$LDFLAGS"
 if test x$GCC = xyes; then
-  LDFLAGS="$LDFLAGS -Wl,-znocombreloc"
+  LDFLAGS_NOCOMBRELOC="-Wl,-znocombreloc"
 else
-  LDFLAGS="$LDFLAGS -znocombreloc"
+  LDFLAGS_NOCOMBRELOC="-znocombreloc"
 fi
+
+LDFLAGS="$LDFLAGS $LDFLAGS_NOCOMBRELOC"
 
 AC_MSG_CHECKING([for -znocombreloc])
 AC_LINK_IFELSE([AC_LANG_PROGRAM([], [])],
   [AC_MSG_RESULT(yes)],
-  LDFLAGS=$late_LDFLAGS
+  LDFLAGS_NOCOMBRELOC=
   [AC_MSG_RESULT(no)])
 
+LDFLAGS="$late_LDFLAGS"
 
 dnl The function dump-emacs will not be defined and temacs will do
 dnl (load "loadup") automatically unless told otherwise.
@@ -1321,12 +1326,15 @@ if test "${with_sound}" != "no"; then
     #include <windows.h>
     #endif
     ])
-  if test "${with_sound}" = "ossaudio" || test "${with_sound}" = "yes"; then
+  test "${with_sound}" = "oss" && test "${have_sound_header}" != "yes" && \
+    AC_MSG_ERROR([OSS sound support requested but not found.])
+
+  if test "${with_sound}" = "bsd-ossaudio" || test "${with_sound}" = "yes"; then
     # Emulation library used on NetBSD.
     AC_CHECK_LIB(ossaudio, _oss_ioctl, LIBSOUND=-lossaudio, LIBSOUND=)
-    test "${with_sound}" = "ossaudio" && test -z "$LIBSOUND" && \
-      AC_MSG_ERROR([ossaudio sound support requested but not found.])
-    dnl FIXME?  If we did find ossaudio, should we set with_sound=ossaudio?
+    test "${with_sound}" = "bsd-ossaudio" && test -z "$LIBSOUND" && \
+      AC_MSG_ERROR([bsd-ossaudio sound support requested but not found.])
+    dnl FIXME?  If we did find ossaudio, should we set with_sound=bsd-ossaudio?
     dnl Traditionally, we go on to check for alsa too.  Does that make sense?
   fi
   AC_SUBST(LIBSOUND)
@@ -1785,6 +1793,18 @@ fi
 
 ## $window_system is now set to the window system we will
 ## ultimately use.
+
+if test "$window_system" = none && test "$gl_gcc_warnings" = yes; then
+   # Too many warnings for now.
+   nw=
+   nw="$nw -Wsuggest-attribute=const"
+   nw="$nw -Wsuggest-attribute=noreturn"
+   gl_MANYWARN_COMPLEMENT([WARN_CFLAGS], [$WARN_CFLAGS], [$nw])
+
+   gl_WARN_ADD([-Wno-unused-variable])
+   gl_WARN_ADD([-Wno-unused-but-set-variable])
+   gl_WARN_ADD([-Wno-unused-but-set-parameter])
+fi
 
 term_header=
 HAVE_X_WINDOWS=no
@@ -4770,6 +4790,8 @@ if test x$ac_enable_profiling != x ; then
   esac
 fi
 
+LD_SWITCH_SYSTEM_TEMACS="$LDFLAGS_NOCOMBRELOC $LD_SWITCH_SYSTEM_TEMACS"
+
 AC_SUBST(LD_SWITCH_SYSTEM_TEMACS)
 
 ## MinGW-specific post-link processing of temacs.
@@ -4949,10 +4971,13 @@ if test "$HAVE_NS" = "yes"; then
   if test "$NS_IMPL_GNUSTEP" = yes; then
     AC_CONFIG_FILES([nextstep/GNUstep/Emacs.base/Resources/Info-gnustep.plist:nextstep/templates/Info-gnustep.plist.in \
       nextstep/GNUstep/Emacs.base/Resources/Emacs.desktop:nextstep/templates/Emacs.desktop.in])
+    ns_check_file=Resources/Info-gnustep.plist
   else
     AC_CONFIG_FILES([nextstep/Cocoa/Emacs.base/Contents/Info.plist:nextstep/templates/Info.plist.in \
       nextstep/Cocoa/Emacs.base/Contents/Resources/English.lproj/InfoPlist.strings:nextstep/templates/InfoPlist.strings.in])
+    ns_check_file=Contents/Info.plist
   fi
+  AC_SUBST(ns_check_file)
 fi
 
 dnl Obviously there is duplication here wrt $SUBDIR_MAKEFILES.

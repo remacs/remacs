@@ -892,8 +892,8 @@ drop_overlay (struct buffer *b, struct Lisp_Overlay *ov)
   eassert (b == XBUFFER (Fmarker_buffer (ov->start)));
   modify_overlay (b, marker_position (ov->start),
 		  marker_position (ov->end));
-  Fset_marker (ov->start, Qnil, Qnil);
-  Fset_marker (ov->end, Qnil, Qnil);
+  unchain_marker (XMARKER (ov->start));
+  unchain_marker (XMARKER (ov->end));
 
 }
 
@@ -3843,7 +3843,8 @@ for the front of the overlay advance when text is inserted there
 The fifth arg REAR-ADVANCE, if non-nil, makes the marker
 for the rear of the overlay advance when text is inserted there
 \(which means the text *is* included in the overlay).  */)
-  (Lisp_Object beg, Lisp_Object end, Lisp_Object buffer, Lisp_Object front_advance, Lisp_Object rear_advance)
+  (Lisp_Object beg, Lisp_Object end, Lisp_Object buffer,
+   Lisp_Object front_advance, Lisp_Object rear_advance)
 {
   Lisp_Object overlay;
   struct buffer *b;
@@ -3852,12 +3853,11 @@ for the rear of the overlay advance when text is inserted there
     XSETBUFFER (buffer, current_buffer);
   else
     CHECK_BUFFER (buffer);
-  if (MARKERP (beg)
-      && ! EQ (Fmarker_buffer (beg), buffer))
-    error ("Marker points into wrong buffer");
-  if (MARKERP (end)
-      && ! EQ (Fmarker_buffer (end), buffer))
-    error ("Marker points into wrong buffer");
+
+  if (MARKERP (beg) && !EQ (Fmarker_buffer (beg), buffer))
+    signal_error ("Marker points into wrong buffer", beg);
+  if (MARKERP (end) && !EQ (Fmarker_buffer (end), buffer))
+    signal_error ("Marker points into wrong buffer", end);
 
   CHECK_NUMBER_COERCE_MARKER (beg);
   CHECK_NUMBER_COERCE_MARKER (end);
@@ -3983,12 +3983,10 @@ buffer.  */)
   if (NILP (Fbuffer_live_p (buffer)))
     error ("Attempt to move overlay to a dead buffer");
 
-  if (MARKERP (beg)
-      && ! EQ (Fmarker_buffer (beg), buffer))
-    error ("Marker points into wrong buffer");
-  if (MARKERP (end)
-      && ! EQ (Fmarker_buffer (end), buffer))
-    error ("Marker points into wrong buffer");
+  if (MARKERP (beg) && !EQ (Fmarker_buffer (beg), buffer))
+    signal_error ("Marker points into wrong buffer", beg);
+  if (MARKERP (end) && !EQ (Fmarker_buffer (end), buffer))
+    signal_error ("Marker points into wrong buffer", end);
 
   CHECK_NUMBER_COERCE_MARKER (beg);
   CHECK_NUMBER_COERCE_MARKER (end);
@@ -4170,6 +4168,9 @@ DEFUN ("overlays-at", Foverlays_at, Soverlays_at, 1, 1, 0,
 
   CHECK_NUMBER_COERCE_MARKER (pos);
 
+  if (!buffer_has_overlays ())
+    return Qnil;
+
   len = 10;
   /* We can't use alloca here because overlays_at can call xrealloc.  */
   overlay_vec = xmalloc (len * sizeof *overlay_vec);
@@ -4202,6 +4203,9 @@ end of the buffer.  */)
   CHECK_NUMBER_COERCE_MARKER (beg);
   CHECK_NUMBER_COERCE_MARKER (end);
 
+  if (!buffer_has_overlays ())
+    return Qnil;
+
   len = 10;
   overlay_vec = xmalloc (len * sizeof *overlay_vec);
 
@@ -4229,6 +4233,9 @@ the value is (point-max).  */)
   Lisp_Object *overlay_vec;
 
   CHECK_NUMBER_COERCE_MARKER (pos);
+
+  if (!buffer_has_overlays ())
+    return make_number (ZV);
 
   len = 10;
   overlay_vec = xmalloc (len * sizeof *overlay_vec);
@@ -4268,6 +4275,9 @@ the value is (point-min).  */)
   ptrdiff_t len;
 
   CHECK_NUMBER_COERCE_MARKER (pos);
+
+  if (!buffer_has_overlays ())
+    return make_number (BEGV);
 
   /* At beginning of buffer, we know the answer;
      avoid bug subtracting 1 below.  */

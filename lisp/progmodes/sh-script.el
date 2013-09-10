@@ -1,7 +1,6 @@
 ;;; sh-script.el --- shell-script editing commands for Emacs
 
-;; Copyright (C) 1993-1997, 1999, 2001-2013 Free Software Foundation,
-;; Inc.
+;; Copyright (C) 1993-1997, 1999, 2001-2013 Free Software Foundation, Inc.
 
 ;; Author: Daniel Pfeiffer <occitan@esperanto.org>
 ;; Version: 2.0f
@@ -673,7 +672,9 @@ removed when closing the here document."
 	  "." "alias" "bg" "bind" "builtin" "caller" "compgen" "complete"
           "declare" "dirs" "disown" "enable" "fc" "fg" "help" "history"
           "jobs" "kill" "let" "local" "popd" "printf" "pushd" "shopt"
-          "source" "suspend" "typeset" "unalias")
+          "source" "suspend" "typeset" "unalias"
+          ;; bash4
+          "mapfile" "readarray")
 
     ;; The next entry is only used for defining the others
     (bourne sh-append shell
@@ -737,6 +738,7 @@ implemented as aliases.  See `sh-feature'."
   :type '(repeat (cons (symbol :tag "Shell")
 		       (choice (repeat string)
 			       (sexp :format "Evaluate: %v"))))
+  :version "24.4"                       ; bash4 additions
   :group 'sh-script)
 
 
@@ -2168,11 +2170,18 @@ the visited file executable, and NO-QUERY-FLAG (the second argument)
 controls whether to query about making the visited file executable.
 
 Calls the value of `sh-set-shell-hook' if set."
-  (interactive (list (completing-read (format "Shell \(default %s\): "
- 					      sh-shell-file)
-  				      interpreter-mode-alist
- 				      (lambda (x) (eq (cdr x) 'sh-mode))
- 				      nil nil nil sh-shell-file)
+  (interactive (list (completing-read
+                      (format "Shell \(default %s\): "
+                              sh-shell-file)
+                      ;; This used to use interpreter-mode-alist, but that is
+                      ;; no longer appropriate now that uses regexps.
+                      ;; Maybe there could be a separate variable that lists
+                      ;; the shells, used here and to construct i-mode-alist.
+                      ;; But the following is probably good enough:
+                      (append (mapcar (lambda (e) (symbol-name (car e)))
+                                      sh-ancestor-alist)
+                              '("csh" "rc" "sh"))
+                      nil nil nil nil sh-shell-file)
 		     (eq executable-query 'function)
 		     t))
   (if (string-match "\\.exe\\'" shell)

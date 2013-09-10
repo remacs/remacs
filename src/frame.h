@@ -24,30 +24,12 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #define EMACS_FRAME_H
 
 #include "dispextern.h"
+#include "termhooks.h"
 
 INLINE_HEADER_BEGIN
 #ifndef FRAME_INLINE
 # define FRAME_INLINE INLINE
 #endif
-
-
-/* Miscellanea.  */
-
-/* Nonzero means there is at least one garbaged frame.  */
-extern bool frame_garbaged;
-
-
-/* The structure representing a frame.  */
-
-enum output_method
-{
-  output_initial,
-  output_termcap,
-  output_x_window,
-  output_msdos_raw,
-  output_w32,
-  output_ns
-};
 
 enum vertical_scroll_bar_type
 {
@@ -66,10 +48,7 @@ enum fullscreen_type
   FULLSCREEN_WAIT      = 0x100
 };
 
-
-#define FRAME_FOREGROUND_PIXEL(f) ((f)->foreground_pixel)
-#define FRAME_BACKGROUND_PIXEL(f) ((f)->background_pixel)
-
+/* The structure representing a frame.  */
 
 struct frame
 {
@@ -206,10 +185,6 @@ struct frame
      Clear the frame in clear_garbaged_frames if set.  */
   unsigned resized_p : 1;
 
-  /* Set to non-zero in when we want for force a flush_display in
-     update_frame, usually after resizing the frame.  */
-  unsigned force_flush_display_p : 1;
-
   /* Set to non-zero if the default face for the frame has been
      realized.  Reset to zero whenever the default face changes.
      Used to see the difference between a font change and face change.  */
@@ -230,6 +205,13 @@ struct frame
   /* Nonzero means using a tool bar that comes from the toolkit.  */
   unsigned external_tool_bar : 1;
 #endif
+
+  /* Nonzero means that fonts have been loaded since the last glyph
+     matrix adjustments.  */
+  unsigned fonts_changed : 1;
+
+  /* Nonzero means that cursor type has been changed.  */
+  unsigned cursor_type_changed : 1;
 
   /* Margin at the top of the frame.  Used to display the tool-bar.  */
   int tool_bar_lines;
@@ -884,6 +866,9 @@ default_pixels_per_inch_y (void)
 #define FRAME_CURSOR_WIDTH(f) ((f)->cursor_width)
 #define FRAME_BLINK_OFF_CURSOR_WIDTH(f) ((f)->blink_off_cursor_width)
 
+#define FRAME_FOREGROUND_PIXEL(f) ((f)->foreground_pixel)
+#define FRAME_BACKGROUND_PIXEL(f) ((f)->background_pixel)
+
 /* Return a pointer to the face cache of frame F.  */
 
 #define FRAME_FACE_CACHE(F)	(F)->face_cache
@@ -949,6 +934,9 @@ extern Lisp_Object Qtty, Qtty_type;
 extern Lisp_Object Qtty_color_mode;
 extern Lisp_Object Qterminal;
 extern Lisp_Object Qnoelisp;
+
+/* Nonzero means there is at least one garbaged frame.  */
+extern bool frame_garbaged;
 
 extern struct frame *last_nonminibuf_frame;
 
@@ -1251,7 +1239,6 @@ extern Lisp_Object display_x_get_resource (Display_Info *,
 extern void set_frame_menubar (struct frame *f, bool first_time, bool deep_p);
 extern void x_set_window_size (struct frame *f, int change_grav,
                               int cols, int rows);
-extern void x_sync (struct frame *);
 extern Lisp_Object x_get_focus_frame (struct frame *);
 extern void x_set_mouse_position (struct frame *f, int h, int v);
 extern void x_set_mouse_pixel_position (struct frame *f, int pix_x, int pix_y);
@@ -1277,13 +1264,24 @@ extern void x_wm_set_icon_position (struct frame *, int, int);
 #if !defined USE_X_TOOLKIT
 extern char *x_get_resource_string (const char *, const char *);
 #endif
-#endif
+extern void x_sync (struct frame *);
+#endif /* HAVE_X_WINDOWS */
 
 extern void x_query_colors (struct frame *f, XColor *, int);
 extern void x_query_color (struct frame *f, XColor *);
 
 #endif /* HAVE_WINDOW_SYSTEM */
 
+
+FRAME_INLINE void
+flush_frame (struct frame *f)
+{
+  struct redisplay_interface *rif = FRAME_RIF (f);
+
+  if (rif && rif->flush_display)
+    rif->flush_display (f);
+}
+
 /***********************************************************************
 			Multimonitor data
  ***********************************************************************/

@@ -223,8 +223,16 @@ struct text_pos
 /* Set text position POS from marker MARKER.  */
 
 #define SET_TEXT_POS_FROM_MARKER(POS, MARKER)		\
-     (CHARPOS (POS) = marker_position ((MARKER)),	\
-      BYTEPOS (POS) = marker_byte_position ((MARKER)))
+  (CHARPOS (POS) = marker_position (MARKER),		\
+   BYTEPOS (POS) = marker_byte_position (MARKER))
+
+/* Like above, but clip POS within accessible range.  */
+
+#define CLIP_TEXT_POS_FROM_MARKER(POS, MARKER)		\
+  (CHARPOS (POS) = clip_to_bounds			\
+   (BEGV, marker_position (MARKER), ZV),		\
+   BYTEPOS (POS) = clip_to_bounds			\
+   (BEGV_BYTE, marker_byte_position (MARKER), ZV_BYTE))
 
 /* Set marker MARKER from text position POS.  */
 
@@ -758,11 +766,12 @@ void check_matrix_pointer_lossage (struct glyph_matrix *);
 			     Glyph Rows
  ***********************************************************************/
 
-/* Area in window glyph matrix.  If values are added or removed, the
-   function mark_object in alloc.c has to be changed.  */
+/* Area in window glyph matrix.  If values are added or removed,
+   the function mark_glyph_matrix in alloc.c may need to be changed.  */
 
 enum glyph_row_area
 {
+  ANY_AREA = -1,
   LEFT_MARGIN_AREA,
   TEXT_AREA,
   RIGHT_MARGIN_AREA,
@@ -1193,12 +1202,6 @@ struct glyph_row *matrix_row (struct glyph_matrix *, int);
       ((ROW)->phys_height - (ROW)->phys_ascent	\
        > (ROW)->height - (ROW)->ascent)
 
-/* True means that fonts have been loaded since the last glyph
-   matrix adjustments.  The function redisplay_internal adjusts glyph
-   matrices when this flag is true.  */
-
-extern bool fonts_changed_p;
-
 /* A glyph for a space.  */
 
 extern struct glyph space_glyph;
@@ -1429,31 +1432,31 @@ struct glyph_string
 #define CURRENT_MODE_LINE_FACE_ID(W)		\
 	(CURRENT_MODE_LINE_FACE_ID_3((W), XWINDOW (selected_window), (W)))
 
-/* Return the current height of the mode line of window W.  If not
-   known from current_mode_line_height, look at W's current glyph
-   matrix, or return a default based on the height of the font of the
-   face `mode-line'.  */
+/* Return the current height of the mode line of window W.  If not known
+   from W->mode_line_height, look at W's current glyph matrix, or return
+   a default based on the height of the font of the face `mode-line'.  */
 
-#define CURRENT_MODE_LINE_HEIGHT(W)				\
-     (current_mode_line_height >= 0				\
-      ? current_mode_line_height				\
-      : (MATRIX_MODE_LINE_HEIGHT ((W)->current_matrix)		\
-	 ? MATRIX_MODE_LINE_HEIGHT ((W)->current_matrix)	\
-	 : estimate_mode_line_height (XFRAME ((W)->frame),	\
-				      CURRENT_MODE_LINE_FACE_ID (W))))
+#define CURRENT_MODE_LINE_HEIGHT(W)					\
+  (W->mode_line_height >= 0						\
+   ? W->mode_line_height						\
+   : (W->mode_line_height						\
+      = (MATRIX_MODE_LINE_HEIGHT (W->current_matrix)			\
+	 ? MATRIX_MODE_LINE_HEIGHT (W->current_matrix)			\
+	 : estimate_mode_line_height					\
+	     (XFRAME (W->frame), CURRENT_MODE_LINE_FACE_ID (W)))))
 
-/* Return the current height of the header line of window W.  If not
-   known from current_header_line_height, look at W's current glyph
-   matrix, or return an estimation based on the height of the font of
-   the face `header-line'.  */
+/* Return the current height of the header line of window W.  If not known
+   from W->header_line_height, look at W's current glyph matrix, or return
+   an estimation based on the height of the font of the face `header-line'.  */
 
 #define CURRENT_HEADER_LINE_HEIGHT(W)				\
-      (current_header_line_height >= 0				\
-       ? current_header_line_height				\
-       : (MATRIX_HEADER_LINE_HEIGHT ((W)->current_matrix)	\
-	  ? MATRIX_HEADER_LINE_HEIGHT ((W)->current_matrix)	\
-	  : estimate_mode_line_height (XFRAME ((W)->frame),	\
-				       HEADER_LINE_FACE_ID)))
+  (W->header_line_height >= 0					\
+   ? W->header_line_height					\
+   : (W->header_line_height					\
+      = (MATRIX_HEADER_LINE_HEIGHT (W->current_matrix)		\
+	 ? MATRIX_HEADER_LINE_HEIGHT (W->current_matrix)	\
+	 : estimate_mode_line_height				\
+	     (XFRAME (W->frame), HEADER_LINE_FACE_ID))))
 
 /* Return the height of the desired mode line of window W.  */
 
@@ -2818,18 +2821,8 @@ struct redisplay_interface
   void (*update_window_end_hook) (struct window *w, bool cursor_on_p,
                                   bool mouse_face_overwritten_p);
 
-  /* Move cursor to row/column position VPOS/HPOS, pixel coordinates
-     Y/X. HPOS/VPOS are window-relative row and column numbers and X/Y
-     are window-relative pixel positions.  */
-  void (*cursor_to) (struct window *w, int vpos, int hpos, int y, int x);
-
   /* Flush the display of frame F.  For X, this is XFlush.  */
   void (*flush_display) (struct frame *f);
-
-  /* Flush the display of frame F if non-NULL.  This is called
-     during redisplay, and should be NULL on systems which flush
-     automatically before reading input.  */
-  void (*flush_display_optional) (struct frame *f);
 
   /* Clear the mouse highlight in window W, if there is any.  */
   void (*clear_window_mouse_face) (struct window *w);
@@ -2900,11 +2893,6 @@ struct redisplay_interface
  ***********************************************************************/
 
 #ifdef HAVE_WINDOW_SYSTEM
-
-/* Structure forward declarations.  */
-
-struct image;
-
 
 /* Each image format (JPEG, TIFF, ...) supported is described by
    a structure of the type below.  */
@@ -3196,14 +3184,15 @@ int resize_mini_window (struct window *, int);
 void set_vertical_scroll_bar (struct window *);
 #endif
 int try_window (Lisp_Object, struct text_pos, int);
-void window_box (struct window *, int, int *, int *, int *, int *);
+void window_box (struct window *, enum glyph_row_area,
+		 int *, int *, int *, int *);
 int window_box_height (struct window *);
 int window_text_bottom_y (struct window *);
-int window_box_width (struct window *, int);
-int window_box_left (struct window *, int);
-int window_box_left_offset (struct window *, int);
-int window_box_right (struct window *, int);
-int window_box_right_offset (struct window *, int);
+int window_box_width (struct window *, enum glyph_row_area);
+int window_box_left (struct window *, enum glyph_row_area);
+int window_box_left_offset (struct window *, enum glyph_row_area);
+int window_box_right (struct window *, enum glyph_row_area);
+int window_box_right_offset (struct window *, enum glyph_row_area);
 int estimate_mode_line_height (struct frame *, enum face_id);
 void pixel_to_glyph_coords (struct frame *, int, int, int *, int *,
                             NativeRectangle *, int);
@@ -3229,7 +3218,6 @@ int frame_mode_line_height (struct frame *);
 extern Lisp_Object Qtool_bar;
 extern bool redisplaying_p;
 extern int help_echo_showing_p;
-extern int current_mode_line_height, current_header_line_height;
 extern Lisp_Object help_echo_string, help_echo_window;
 extern Lisp_Object help_echo_object, previous_help_echo_string;
 extern ptrdiff_t help_echo_pos;
@@ -3243,6 +3231,7 @@ extern ptrdiff_t compute_display_string_pos (struct text_pos *,
 extern ptrdiff_t compute_display_string_end (ptrdiff_t,
 					     struct bidi_string_data *);
 extern void produce_stretch_glyph (struct it *);
+extern int merge_glyphless_glyph_face (struct it *);
 
 #ifdef HAVE_WINDOW_SYSTEM
 
@@ -3260,9 +3249,6 @@ extern void x_insert_glyphs (struct window *, struct glyph_row *,
 			     struct glyph *, enum glyph_row_area, int);
 extern void x_clear_end_of_line (struct window *, struct glyph_row *,
 				 enum glyph_row_area, int);
-
-extern struct cursor_pos output_cursor;
-
 extern void x_fix_overlapping_area (struct window *, struct glyph_row *,
                                     enum glyph_row_area, int);
 extern void draw_phys_cursor_glyph (struct window *,
@@ -3272,10 +3258,6 @@ extern void get_phys_cursor_geometry (struct window *, struct glyph_row *,
                                       struct glyph *, int *, int *, int *);
 extern void erase_phys_cursor (struct window *);
 extern void display_and_set_cursor (struct window *, bool, int, int, int, int);
-
-extern void set_output_cursor (struct cursor_pos *);
-extern void x_cursor_to (struct window *, int, int, int, int);
-
 extern void x_update_cursor (struct frame *, bool);
 extern void x_clear_cursor (struct window *);
 extern void x_draw_vertical_border (struct window *w);
@@ -3439,8 +3421,6 @@ extern frame_parm_handler x_frame_parm_handlers[];
 extern void start_hourglass (void);
 extern void cancel_hourglass (void);
 extern int hourglass_shown_p;
-
-struct atimer;			/* Defined in atimer.h.  */
 /* If non-null, an asynchronous timer that, when it expires, displays
    an hourglass cursor on all frames.  */
 extern struct atimer *hourglass_atimer;
@@ -3492,7 +3472,7 @@ extern void cancel_line (int, struct frame *);
 extern void init_desired_glyphs (struct frame *);
 extern bool update_frame (struct frame *, bool, bool);
 extern void bitch_at_user (void);
-void adjust_glyphs (struct frame *);
+extern void adjust_frame_glyphs (struct frame *);
 void free_glyphs (struct frame *);
 void free_window_matrices (struct window *);
 void check_glyph_memory (void);

@@ -47,6 +47,7 @@
 
 (eval-when-compile
   (require 'cl-lib)
+  (require 'vc-dispatcher)
   (require 'vc-dir))                    ; vc-dir-at-event
 
 ;; Clear up the cache to force vc-call to check again and discover
@@ -354,7 +355,7 @@ prompt for the Bzr command to run."
 	    command        (cadr args)
 	    args           (cddr args)))
     (let ((buf (apply 'vc-bzr-async-command command args)))
-      (with-current-buffer buf (vc-exec-after '(vc-compilation-mode 'bzr)))
+      (with-current-buffer buf (vc-run-delayed (vc-compilation-mode 'bzr)))
       (vc-set-async-update buf))))
 
 (defun vc-bzr-merge-branch ()
@@ -385,7 +386,7 @@ default if it is available."
 	 (command        (cadr cmd))
 	 (args           (cddr cmd)))
     (let ((buf (apply 'vc-bzr-async-command command args)))
-      (with-current-buffer buf (vc-exec-after '(vc-compilation-mode 'bzr)))
+      (with-current-buffer buf (vc-run-delayed (vc-compilation-mode 'bzr)))
       (vc-set-async-update buf))))
 
 (defun vc-bzr-status (file)
@@ -650,21 +651,6 @@ REV non-nil gets an error."
       (if (and rev (stringp rev) (not (string= rev "")))
           (vc-bzr-command "cat" t 0 file "-r" rev)
         (vc-bzr-command "cat" t 0 file))))
-
-(defun vc-bzr-ignore (file &optional directory remove)
-  "Ignore FILE under Bazaar.
-If DIRECTORY is non-nil, the repository to use will be deduced by
-DIRECTORY; if REMOVE is non-nil, remove FILE from ignored files."
-  (if remove
-      (if directory
-	  (vc--remove-regexp file (vc-bzr-find-ignore-file directory))
-	(vc--remove-regexp file
-			   (vc-bzr-find-ignore-file default-directory)))
-    (vc-bzr-command "ignore" t 0 file)))
-
-(defun vc-bzr-ignore-completion-table (file)
-  "Return the list of ignored files."
-  (vc--read-lines (vc-bzr-find-ignore-file file)))
 
 (defun vc-bzr-find-ignore-file (file)
   "Return the root directory of the repository of FILE."
@@ -1010,23 +996,23 @@ stream.  Standard error output is discarded."
 (defun vc-bzr-dir-status (dir update-function)
   "Return a list of conses (file . state) for DIR."
   (vc-bzr-command "status" (current-buffer) 'async dir "-v" "-S")
-  (vc-exec-after
-   `(vc-bzr-after-dir-status (quote ,update-function)
-			     ;; "bzr status" results are relative to
-			     ;; the bzr root directory, NOT to the
-			     ;; directory "bzr status" was invoked in.
-			     ;; Ugh.
-			     ;; We pass the relative directory here so
-			     ;; that `vc-bzr-after-dir-status' can
-			     ;; frob the results accordingly.
-			     (file-relative-name ,dir (vc-bzr-root ,dir)))))
+  (vc-run-delayed
+   (vc-bzr-after-dir-status update-function
+                            ;; "bzr status" results are relative to
+                            ;; the bzr root directory, NOT to the
+                            ;; directory "bzr status" was invoked in.
+                            ;; Ugh.
+                            ;; We pass the relative directory here so
+                            ;; that `vc-bzr-after-dir-status' can
+                            ;; frob the results accordingly.
+                            (file-relative-name dir (vc-bzr-root dir)))))
 
 (defun vc-bzr-dir-status-files (dir files _default-state update-function)
   "Return a list of conses (file . state) for DIR."
   (apply 'vc-bzr-command "status" (current-buffer) 'async dir "-v" "-S" files)
-  (vc-exec-after
-   `(vc-bzr-after-dir-status (quote ,update-function)
-			     (file-relative-name ,dir (vc-bzr-root ,dir)))))
+  (vc-run-delayed
+   (vc-bzr-after-dir-status update-function
+                            (file-relative-name dir (vc-bzr-root dir)))))
 
 (defvar vc-bzr-shelve-map
   (let ((map (make-sparse-keymap)))

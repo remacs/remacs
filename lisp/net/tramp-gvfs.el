@@ -453,7 +453,7 @@ Every entry is a list (NAME ADDRESS).")
     (insert-directory . tramp-gvfs-handle-insert-directory)
     (insert-file-contents . tramp-gvfs-handle-insert-file-contents)
     (load . tramp-handle-load)
-    ;; `make-auto-save-file-name' performed by default handler.
+    (make-auto-save-file-name . tramp-handle-make-auto-save-file-name)
     (make-directory . tramp-gvfs-handle-make-directory)
     (make-directory-internal . ignore)
     (make-symbolic-link . ignore)
@@ -490,7 +490,7 @@ Operations not mentioned here will be handled by the default Emacs primitives.")
 First arg specifies the OPERATION, second arg is a list of arguments to
 pass to the OPERATION."
   (unless tramp-gvfs-enabled
-    (tramp-compat-user-error "Package `tramp-gvfs' not supported"))
+    (tramp-user-error nil "Package `tramp-gvfs' not supported"))
   (let ((fn (assoc operation tramp-gvfs-file-name-handler-alist)))
     (if fn
 	(save-match-data (apply (cdr fn) args))
@@ -594,15 +594,19 @@ is no information where to trace the message.")
 	    (and (tramp-tramp-file-p newname)
 		 (not (tramp-gvfs-file-name-p newname))))
 
-	;; We cannot copy directly.
+	;; We cannot call `copy-file' directly.  Use
+	;; `tramp-compat-funcall' for backward compatibility (number
+	;; of arguments).
 	(let ((tmpfile (tramp-compat-make-temp-file filename)))
 	  (cond
 	   (preserve-extended-attributes
-	    (copy-file
+	    (tramp-compat-funcall
+	     'copy-file
 	     filename tmpfile t keep-date preserve-uid-gid
 	     preserve-extended-attributes))
 	   (preserve-uid-gid
-	    (copy-file filename tmpfile t keep-date preserve-uid-gid))
+	    (tramp-compat-funcall
+	     'copy-file filename tmpfile t keep-date preserve-uid-gid))
 	   (t
 	    (copy-file filename tmpfile t keep-date)))
 	  (rename-file tmpfile newname ok-if-already-exists))
@@ -950,7 +954,7 @@ is no information where to trace the message.")
     (tramp-message proc 6 "%S\n%s" proc string)
     (setq string (concat rest-string string)
 	  ;; Attribute change is returned in unused wording.
-	  string (replace-regexp-in-string
+	  string (tramp-compat-replace-regexp-in-string
 		  "ATTRIB CHANGED" "ATTRIBUTE_CHANGED" string))
 
     (while (string-match
@@ -960,7 +964,7 @@ is no information where to trace the message.")
 		    "Event = \\([^[:blank:]]+\\)[\n\r]+")
 	    string)
       (let ((action (intern-soft
-		     (replace-regexp-in-string
+		     (tramp-compat-replace-regexp-in-string
 		      "_" "-" (downcase (match-string 2 string)))))
 	    (file (match-string 1 string)))
 	(setq string (replace-match "" nil nil string))
@@ -1158,7 +1162,8 @@ is no information where to trace the message.")
 (defun tramp-gvfs-file-name (object-path)
   "Retrieve file name from D-Bus OBJECT-PATH."
   (dbus-unescape-from-identifier
-   (replace-regexp-in-string "^.*/\\([^/]+\\)$" "\\1" object-path)))
+   (tramp-compat-replace-regexp-in-string
+    "^.*/\\([^/]+\\)$" "\\1" object-path)))
 
 (defun tramp-bluez-address (device)
   "Return bluetooth device address from a given bluetooth DEVICE name."
@@ -1417,47 +1422,38 @@ It was \"a(say)\", but has changed to \"a{sv})\"."
 	 (port (tramp-file-name-port vec))
 	 (localname (tramp-file-name-localname vec))
 	 (ssl (if (string-match "^davs" method) "true" "false"))
-	 (mount-spec '(:array))
-	 (mount-pref "/"))
-
-    (setq
-     mount-spec
-     (append
-      mount-spec
-      (cond
-       ((string-equal "smb" method)
-	(string-match "^/?\\([^/]+\\)" localname)
-	(list (tramp-gvfs-mount-spec-entry "type" "smb-share")
-	      (tramp-gvfs-mount-spec-entry "server" host)
-	      (tramp-gvfs-mount-spec-entry "share" (match-string 1 localname))))
-       ((string-equal "obex" method)
-	(list (tramp-gvfs-mount-spec-entry "type" method)
-	      (tramp-gvfs-mount-spec-entry
-	       "host" (concat "[" (tramp-bluez-address host) "]"))))
-       ((string-match "^dav" method)
-	(list (tramp-gvfs-mount-spec-entry "type" "dav")
-	      (tramp-gvfs-mount-spec-entry "host" host)
-	      (tramp-gvfs-mount-spec-entry "ssl" ssl)))
-       (t
-	(list (tramp-gvfs-mount-spec-entry "type" method)
-	      (tramp-gvfs-mount-spec-entry "host" host))))))
-
-    (when user
-      (add-to-list
-       'mount-spec (tramp-gvfs-mount-spec-entry "user" user) 'append))
-
-    (when domain
-      (add-to-list
-       'mount-spec (tramp-gvfs-mount-spec-entry "domain" domain) 'append))
-
-    (when port
-      (add-to-list
-       'mount-spec (tramp-gvfs-mount-spec-entry "port" (number-to-string port))
-       'append))
-
-    (when (and (string-match "^dav" method)
-	       (string-match "^/?[^/]+" localname))
-      (setq mount-pref (match-string 0 localname)))
+	 (mount-spec
+          `(:array
+            ,@(cond
+               ((string-equal "smb" method)
+                (string-match "^/?\\([^/]+\\)" localname)
+                (list (tramp-gvfs-mount-spec-entry "type" "smb-share")
+                      (tramp-gvfs-mount-spec-entry "server" host)
+                      (tramp-gvfs-mount-spec-entry
+		       "share" (match-string 1 localname))))
+               ((string-equal "obex" method)
+                (list (tramp-gvfs-mount-spec-entry "type" method)
+                      (tramp-gvfs-mount-spec-entry
+                       "host" (concat "[" (tramp-bluez-address host) "]"))))
+               ((string-match "\\`dav" method)
+                (list (tramp-gvfs-mount-spec-entry "type" "dav")
+                      (tramp-gvfs-mount-spec-entry "host" host)
+                      (tramp-gvfs-mount-spec-entry "ssl" ssl)))
+               (t
+                (list (tramp-gvfs-mount-spec-entry "type" method)
+                      (tramp-gvfs-mount-spec-entry "host" host))))
+            ,@(when user
+                (list (tramp-gvfs-mount-spec-entry "user" user)))
+            ,@(when domain
+                (list (tramp-gvfs-mount-spec-entry "domain" domain)))
+            ,@(when port
+                (list (tramp-gvfs-mount-spec-entry
+		       "port" (number-to-string port))))))
+	 (mount-pref
+          (if (and (string-match "\\`dav" method)
+                   (string-match "^/?[^/]+" localname))
+              (match-string 0 localname)
+            "/")))
 
     ;; Return.
     `(:struct ,(tramp-gvfs-dbus-string-to-byte-array mount-pref) ,mount-spec)))
@@ -1718,11 +1714,13 @@ They are retrieved from the hal daemon."
       (when (with-tramp-dbus-call-method tramp-gvfs-dbus-event-vector t
 	      :system tramp-hal-service device tramp-hal-interface-device
 	      "PropertyExists" "sync.plugin")
-	(add-to-list
-	 'tramp-synce-devices
-	 (with-tramp-dbus-call-method tramp-gvfs-dbus-event-vector t
-	   :system tramp-hal-service device tramp-hal-interface-device
-	   "GetPropertyString" "pda.pocketpc.name"))))
+	(let ((prop
+	       (with-tramp-dbus-call-method
+		tramp-gvfs-dbus-event-vector t
+		:system tramp-hal-service device tramp-hal-interface-device
+		"GetPropertyString" "pda.pocketpc.name")))
+	  (unless (member prop tramp-synce-devices)
+	    (push prop tramp-synce-devices)))))
     (tramp-message tramp-gvfs-dbus-event-vector 10 "%s" tramp-synce-devices)
     tramp-synce-devices))
 
