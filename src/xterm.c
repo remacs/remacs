@@ -4090,10 +4090,6 @@ static void x_set_toolkit_scroll_bar_thumb (struct scroll_bar *,
 
 static Lisp_Object window_being_scrolled;
 
-/* Last scroll bar part sent in xm_scroll_callback.  */
-
-static int last_scroll_bar_part;
-
 /* Whether this is an Xaw with arrow-scrollbars.  This should imply
    that movements of 1/20 of the screen size are mapped to up/down.  */
 
@@ -4135,20 +4131,23 @@ xt_action_hook (Widget widget, XtPointer client_data, String action_name,
       && WINDOWP (window_being_scrolled))
     {
       struct window *w;
+      struct scroll_bar *bar;
 
       x_send_scroll_bar_event (window_being_scrolled,
 			       scroll_bar_end_scroll, 0, 0);
       w = XWINDOW (window_being_scrolled);
+      bar = XSCROLL_BAR (w->vertical_scroll_bar);
 
-      if (XSCROLL_BAR (w->vertical_scroll_bar)->dragging != -1)
+      if (bar->dragging != -1)
 	{
-	  XSCROLL_BAR (w->vertical_scroll_bar)->dragging = -1;
+	  bar->dragging = -1;
 	  /* The thumb size is incorrect while dragging: fix it.  */
 	  set_vertical_scroll_bar (w);
 	}
       window_being_scrolled = Qnil;
-      last_scroll_bar_part = -1;
-
+#if defined (USE_LUCID)
+      bar->last_seen_part = scroll_bar_nowhere;
+#endif
       /* Xt timeouts no longer needed.  */
       toolkit_scroll_bar_interaction = 0;
     }
@@ -4332,7 +4331,6 @@ xm_scroll_callback (Widget widget, XtPointer client_data, XtPointer call_data)
   if (part >= 0)
     {
       window_being_scrolled = bar->window;
-      last_scroll_bar_part = part;
       x_send_scroll_bar_event (bar->window, part, portion, whole);
     }
 }
@@ -4393,7 +4391,6 @@ xg_scroll_callback (GtkRange     *range,
   if (part >= 0)
     {
       window_being_scrolled = bar->window;
-      last_scroll_bar_part = part;
       x_send_scroll_bar_event (bar->window, part, portion, whole);
     }
 
@@ -4435,7 +4432,7 @@ xaw_jump_callback (Widget widget, XtPointer client_data, XtPointer call_data)
   float top = *top_addr;
   float shown;
   int whole, portion, height;
-  int part;
+  enum scroll_bar_part part;
 
   /* Get the size of the thumb, a value between 0 and 1.  */
   block_input ();
@@ -4457,7 +4454,7 @@ xaw_jump_callback (Widget widget, XtPointer client_data, XtPointer call_data)
 
   window_being_scrolled = bar->window;
   bar->dragging = portion;
-  last_scroll_bar_part = part;
+  bar->last_seen_part = part;
   x_send_scroll_bar_event (bar->window, part, portion, whole);
 }
 
@@ -4477,7 +4474,7 @@ xaw_scroll_callback (Widget widget, XtPointer client_data, XtPointer call_data)
   /* The position really is stored cast to a pointer.  */
   int position = (intptr_t) call_data;
   Dimension height;
-  int part;
+  enum scroll_bar_part part;
 
   /* Get the height of the scroll bar.  */
   block_input ();
@@ -4496,7 +4493,7 @@ xaw_scroll_callback (Widget widget, XtPointer client_data, XtPointer call_data)
 
   window_being_scrolled = bar->window;
   bar->dragging = -1;
-  last_scroll_bar_part = part;
+  bar->last_seen_part = part;
   x_send_scroll_bar_event (bar->window, part, position, height);
 }
 
@@ -4806,7 +4803,7 @@ x_set_toolkit_scroll_bar_thumb (struct scroll_bar *bar, int portion, int positio
 		   NULL);
 
     /* Massage the top+shown values.  */
-    if (bar->dragging == -1 || last_scroll_bar_part == scroll_bar_down_arrow)
+    if (bar->dragging == -1 || bar->last_seen_part == scroll_bar_down_arrow)
       top = max (0, min (1, top));
     else
       top = old_top;
@@ -4911,6 +4908,9 @@ x_scroll_bar_create (struct window *w, int top, int left, int width, int height)
   bar->end = 0;
   bar->dragging = -1;
   bar->fringe_extended_p = 0;
+#if defined (USE_TOOLKIT_SCROLL_BARS) && defined (USE_LUCID)
+  bar->last_seen_part = scroll_bar_nowhere;
+#endif
 
   /* Add bar to its frame's list of scroll bars.  */
   bar->next = FRAME_SCROLL_BARS (f);
