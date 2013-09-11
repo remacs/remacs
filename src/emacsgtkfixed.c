@@ -23,12 +23,9 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "lisp.h"
 #include "frame.h"
 #include "xterm.h"
-<<<<<<< HEAD
 #ifdef HAVE_XWIDGETS
 #include "xwidget.h"
 #endif
-=======
->>>>>>> trunk
 #include "emacsgtkfixed.h"
 
 /* Silence a bogus diagnostic; see GNOME bug 683906.  */

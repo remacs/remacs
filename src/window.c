@@ -45,15 +45,12 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #ifdef MSDOS
 #include "msdos.h"
 #endif
-<<<<<<< HEAD
 #ifdef HAVE_NS
 #include "nsterm.h"
 #endif
 #ifdef HAVE_XWIDGETS
 #include "xwidget.h"
 #endif
-=======
->>>>>>> trunk
 
 Lisp_Object Qwindowp, Qwindow_live_p;
 static Lisp_Object Qwindow_valid_p;
