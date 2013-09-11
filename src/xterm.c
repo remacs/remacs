@@ -6234,6 +6234,7 @@ handle_one_xevent (struct x_display_info *dpyinfo, XEvent *eventptr,
 
       f = x_any_window_to_frame (dpyinfo, event.xkey.window);
 
+#if ! defined (USE_GTK)
       /* If mouse-highlight is an integer, input clears out
 	 mouse highlighting.  */
       if (!hlinfo->mouse_face_hidden && INTEGERP (Vmouse_highlight)
@@ -6243,6 +6244,7 @@ handle_one_xevent (struct x_display_info *dpyinfo, XEvent *eventptr,
           clear_mouse_face (hlinfo);
           hlinfo->mouse_face_hidden = 1;
         }
+#endif
 
 #if defined USE_MOTIF && defined USE_TOOLKIT_SCROLL_BARS
       if (f == 0)
@@ -6782,6 +6784,7 @@ handle_one_xevent (struct x_display_info *dpyinfo, XEvent *eventptr,
 #endif
         if (f)
           {
+#if ! defined (USE_GTK)
             /* Is this in the tool-bar?  */
             if (WINDOWP (f->tool_bar_window)
                 && WINDOW_TOTAL_LINES (XWINDOW (f->tool_bar_window)))
@@ -6794,13 +6797,11 @@ handle_one_xevent (struct x_display_info *dpyinfo, XEvent *eventptr,
                 tool_bar_p = EQ (window, f->tool_bar_window);
 
                 if (tool_bar_p && event.xbutton.button < 4)
-                  {
-		    handle_tool_bar_click (f, x, y,
-					   event.xbutton.type == ButtonPress,
-					   x_x_to_emacs_modifiers (dpyinfo,
-								   event.xbutton.state));
-                  }
+		  handle_tool_bar_click
+		    (f, x, y, event.xbutton.type == ButtonPress,
+		     x_x_to_emacs_modifiers (dpyinfo, event.xbutton.state));
               }
+#endif /* !USE_GTK */
 
             if (!tool_bar_p)
 #if defined (USE_X_TOOLKIT) || defined (USE_GTK)
