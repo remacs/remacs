@@ -303,10 +303,13 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include TERM_HEADER
 #endif /* HAVE_WINDOW_SYSTEM */
 
+<<<<<<< HEAD
 #include "font.h"
 #ifdef HAVE_XWIDGETS
 #include "xwidget.h"
 #endif
+=======
+>>>>>>> trunk
 #ifndef FRAME_X_OUTPUT
 #define FRAME_X_OUTPUT(f) ((f)->output_data.x)
 #endif
