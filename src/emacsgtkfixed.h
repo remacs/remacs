@@ -25,7 +25,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 G_BEGIN_DECLS
 
-<<<<<<< HEAD
 struct frame;
 
 #define EMACS_TYPE_FIXED                  (emacs_fixed_get_type ())
@@ -53,8 +52,6 @@ struct _EmacsFixedClass
   GtkFixedClass parent_class;
 };
 
-=======
->>>>>>> trunk
 extern GtkWidget *emacs_fixed_new (struct frame *f);
 extern GType emacs_fixed_get_type (void);
 
