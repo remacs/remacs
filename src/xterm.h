@@ -78,10 +78,11 @@ typedef GtkWidget *xt_or_gtk_widget;
 #include "dispextern.h"
 #include "termhooks.h"
 
-#define BLACK_PIX_DEFAULT(f) BlackPixel (FRAME_X_DISPLAY (f), \
-					 XScreenNumberOfScreen (FRAME_X_SCREEN (f)))
-#define WHITE_PIX_DEFAULT(f) WhitePixel (FRAME_X_DISPLAY (f), \
-					 XScreenNumberOfScreen (FRAME_X_SCREEN (f)))
+/* Black and white pixel values for the screen which frame F is on.  */
+#define BLACK_PIX_DEFAULT(f)					\
+  BlackPixel (FRAME_X_DISPLAY (f), FRAME_X_SCREEN_NUMBER (f))
+#define WHITE_PIX_DEFAULT(f)					\
+  WhitePixel (FRAME_X_DISPLAY (f), FRAME_X_SCREEN_NUMBER (f))
 
 #define FONT_WIDTH(f)	((f)->max_width)
 #define FONT_HEIGHT(f)	((f)->ascent + (f)->descent)
@@ -707,6 +708,8 @@ enum
 
 /* This is the `Screen *' which frame F is on.  */
 #define FRAME_X_SCREEN(f) (FRAME_DISPLAY_INFO (f)->screen)
+
+/* This is the screen index number of screen which frame F is on.  */
 #define FRAME_X_SCREEN_NUMBER(f) XScreenNumberOfScreen (FRAME_X_SCREEN (f))
 
 /* This is the Visual which frame F is on.  */
@@ -731,16 +734,6 @@ enum
 #define FRAME_XIC_STYLE(f) ((f)->output_data.x->xic_style)
 #define FRAME_XIC_FONTSET(f) ((f)->output_data.x->xic_xfs)
 
-/* Value is the smallest width of any character in any font on frame F.  */
-
-#define FRAME_SMALLEST_CHAR_WIDTH(F) \
-     FRAME_DISPLAY_INFO(F)->smallest_char_width
-
-/* Value is the smallest height of any font on frame F.  */
-
-#define FRAME_SMALLEST_FONT_HEIGHT(F) \
-     FRAME_DISPLAY_INFO(F)->smallest_font_height
-
 /* X-specific scroll bar stuff.  */
 
 /* We represent scroll bars as lisp vectors.  This allows us to place
@@ -803,6 +796,7 @@ struct scroll_bar
 /* Turning a lisp vector value into a pointer to a struct scroll_bar.  */
 #define XSCROLL_BAR(vec) ((struct scroll_bar *) XVECTOR (vec))
 
+#ifdef USE_X_TOOLKIT
 
 /* Extract the X widget of the scroll bar from a struct scroll_bar.
    XtWindowToWidget should be fast enough since Xt uses a hash table
@@ -819,14 +813,14 @@ struct scroll_bar
     ptr->x_window = window;			\
 } while (0)
 
+#endif /* USE_X_TOOLKIT */
 
 /* Return the inside width of a vertical scroll bar, given the outside
    width.  */
 #define VERTICAL_SCROLL_BAR_INSIDE_WIDTH(f, width) \
   ((width) \
    - VERTICAL_SCROLL_BAR_LEFT_BORDER \
-   - VERTICAL_SCROLL_BAR_RIGHT_BORDER \
-   - VERTICAL_SCROLL_BAR_WIDTH_TRIM * 2)
+   - VERTICAL_SCROLL_BAR_RIGHT_BORDER)
 
 /* Return the length of the rectangle within which the top of the
    handle must stay.  This isn't equivalent to the inside height,
@@ -863,11 +857,6 @@ struct scroll_bar
 /* Minimum lengths for scroll bar handles, in pixels.  */
 #define VERTICAL_SCROLL_BAR_MIN_HANDLE (5)
 
-/* Trimming off a few pixels from each side prevents
-   text from glomming up against the scroll bar */
-#define VERTICAL_SCROLL_BAR_WIDTH_TRIM (0)
-
-
 /* If a struct input_event has a kind which is SELECTION_REQUEST_EVENT
    or SELECTION_CLEAR_EVENT, then its contents are really described
    by this structure.  */

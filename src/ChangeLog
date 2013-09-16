@@ -1,3 +1,69 @@
+2013-09-15  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* nsfns.m (Fx_create_frame): Fix font driver registration for
+	GNUStep.
+
+	* font.c (syms_of_font): Check MAC_OS_X_VERSION_MAX_ALLOWED >= 1050
+	for syms_of_macfont.
+
+	* nsterm.m: Include macfont.h.
+	(ns_tmp_flags, ns_tmp_font): Remove.
+	(ns_compute_glyph_string_overhangs): Check for driver Qns.
+	(ns_draw_glyph_string): Use local variables instead of ns_tmp_flags,
+	ns_tmp_font.  Call ns_draw_text_decoration here instead of nsfont.m.
+	(changeFont:): Fix code style.  Check for font driver type when
+	getiing font.
+
+	* nsterm.h (FONT_DESCENT, FONT_ASCENT): Define to (f)->ascent and
+	(f)->descent.
+
+	* nsfont.m (ns_tmp_flags, ns_tmp_font): Remove.
+	(nsfont_open): Set font driver type.
+	Set font->ascent and font->descent.  Figure out font instead of
+	ns_tmp_font, and flags instead of ns_tmp_flags.
+	Fix indentation. Remove call to ns_draw_text_decoration,
+	moved to nsterm.
+
+	* nsfns.m: Include macfont.h.
+	(Fx_create_frame): Register macfont driver, make a better default font.
+	(Fns_popup_font_panel): Get font from macfont driver, if used.
+
+	* macfont.m, macfont.h, maccuvs.h: New files.
+
+	* font.h: Declare syms_of_macfont.
+
+	* font.c (syms_of_font): Call syms_of_macfont.
+
+	* Makefile.in (NS_OBJ, SOME_MACHINE_OBJECTS): Add macfont.o.
+
+2013-09-15  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	Drop VERTICAL_SCROLL_BAR_WIDTH_TRIM.  For X, it is zero since 1999,
+	and it is always zero for others, so I assume that this is an ancient
+	leftover which nobody will want to change any more.
+	* xterm.h, w32term.h, nsterm.h (VERTICAL_SCROLL_BAR_WIDTH_TRIM): Remove.
+	(VERTICAL_SCROLL_BAR_INSIDE_WIDTH):
+	* frame.c (x_set_scroll_bar_width):
+	* w32fns.c (w32_createscrollbar):
+	* w32term.c (w32_set_vertical_scroll_bar):
+	* xfns.c (x_set_scroll_bar_default_width):
+	* xterm.c (XTflash, x_scroll_bar_create, XTset_vertical_scroll_bar)
+	(x_scroll_bar_expose): Related users changed.
+
+2013-09-15  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	* xterm.h (FRAME_X_SCREEN_NUMBER): Add comment.
+	(BLACK_PIX_DEFAULT, WHITE_PIX_DEFAULT): Use FRAME_X_SCREEN_NUMBER.
+	(SCROLL_BAR_X_WIDGET, SET_SCROLL_BAR_X_WIDGET) [USE_X_TOOLKIT]:
+	Define as such.
+	* frame.h (FRAME_SMALLEST_CHAR_WIDTH, FRAME_SMALLEST_FONT_HEIGHT):
+	Define once here...
+	* nsterm.h, w32term.h, xterm.h: ...and not here.
+	* w32term.h (SCROLL_BAR_X_WIDGET, SET_SCROLL_BAR_X_WIDGET):
+	Remove unused Xisms.
+	* xterm.c, xfns.c (toplevel): Remove #ifdef HAVE_X_WINDOWS because
+	these modules are never compiled otherwise.
+
 2013-09-14  Eli Zaretskii  <eliz@gnu.org>
 
 	* buffer.c (syms_of_buffer) <left-margin-width, right-margin-width>:

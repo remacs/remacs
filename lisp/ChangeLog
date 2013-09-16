@@ -1,3 +1,27 @@
+2013-09-15  Dmitry Gutov  <dgutov@yandex.ru>
+
+	* progmodes/ruby-mode.el (ruby-operator-re): Consider line
+	continuation character an operator, as far as indentation is
+	concerned (Bug#15369).
+
+2013-09-15  Martin Rudalics  <rudalics@gmx.at>
+
+	* window.el (window--state-put-2): Don't process buffer state
+	when buffer doesn't exist any more (Bug#15382).
+
+2013-09-15  Glenn Morris  <rgm@gnu.org>
+
+	* eshell/em-unix.el (eshell/rm):
+	Make -f ignore missing files.  (Bug#15373)
+
+	* eshell/esh-cmd.el (eshell--local-vars): New variable.  (Bug#15372)
+	(eshell-rewrite-for-command): Add for loop vars to eshell--local-vars.
+	* eshell/esh-var.el (eshell-get-variable): Respect eshell--local-vars.
+
+2013-09-14  Glenn Morris  <rgm@gnu.org>
+
+	* eshell/esh-var.el (eshell-variable-aliases-list): Fix doc typo.
+
 2013-09-13  Glenn Morris  <rgm@gnu.org>
 
 	* dired-x.el (dired-guess-shell-alist-user): Doc fix.

@@ -382,16 +382,6 @@ extern struct w32_output w32term_display;
 /* This is the `Display *' which frame F is on.  */
 #define FRAME_X_DISPLAY(f) (0)
 
-/* Value is the smallest width of any character in any font on frame F.  */
-
-#define FRAME_SMALLEST_CHAR_WIDTH(F) \
-     FRAME_DISPLAY_INFO(F)->smallest_char_width
-
-/* Value is the smallest height of any font on frame F.  */
-
-#define FRAME_SMALLEST_FONT_HEIGHT(F) \
-     FRAME_DISPLAY_INFO(F)->smallest_font_height
-
 #define FRAME_NORMAL_PLACEMENT(F) ((F)->output_data.w32->normal_placement)
 #define FRAME_PREV_FSMODE(F)      ((F)->output_data.w32->prev_fsmode)
 
@@ -483,21 +473,12 @@ struct scroll_bar {
 #define SET_SCROLL_BAR_W32_WINDOW(ptr, id) \
   (SCROLL_BAR_UNPACK ((ptr)->w32_window_low, (ptr)->w32_window_high, (intptr_t) id))
 
-/* Extract the X widget of the scroll bar from a struct scroll_bar.  */
-#define SCROLL_BAR_X_WIDGET(ptr) \
-  ((Widget) SCROLL_BAR_PACK ((ptr)->x_widget_low, (ptr)->x_widget_high))
-
-/* Store a widget id in a struct scroll_bar.  */
-#define SET_SCROLL_BAR_X_WIDGET(ptr, w) \
-  (SCROLL_BAR_UNPACK ((ptr)->x_widget_low, (ptr)->x_widget_high, (int) w))
-
 /* Return the inside width of a vertical scroll bar, given the outside
    width.  */
 #define VERTICAL_SCROLL_BAR_INSIDE_WIDTH(f,width) \
   ((width) \
    - VERTICAL_SCROLL_BAR_LEFT_BORDER \
-   - VERTICAL_SCROLL_BAR_RIGHT_BORDER \
-   - VERTICAL_SCROLL_BAR_WIDTH_TRIM * 2)
+   - VERTICAL_SCROLL_BAR_RIGHT_BORDER)
 
 /* Return the length of the rectangle within which the top of the
    handle must stay.  This isn't equivalent to the inside height,
@@ -534,11 +515,6 @@ struct scroll_bar {
 /* Minimum lengths for scroll bar handles, in pixels.  */
 #define VERTICAL_SCROLL_BAR_MIN_HANDLE (vertical_scroll_bar_min_handle)
 
-/* Trimming off a few pixels from each side prevents
-   text from glomming up against the scroll bar */
-#define VERTICAL_SCROLL_BAR_WIDTH_TRIM (0)
-
-
 struct frame;  /* from frame.h */
 
 extern void w32_fill_rect (struct frame *, HDC, COLORREF, RECT *);

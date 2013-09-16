@@ -42,8 +42,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "termchar.h"
 #include "font.h"
 
-#ifdef HAVE_X_WINDOWS
-
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -1470,9 +1468,8 @@ x_set_scroll_bar_default_width (struct frame *f)
   int minw = 16;
 #endif
   /* A minimum width of 14 doesn't look good for toolkit scroll bars.  */
-  int width = minw + 2 * VERTICAL_SCROLL_BAR_WIDTH_TRIM;
-  FRAME_CONFIG_SCROLL_BAR_COLS (f) = (width + wid - 1) / wid;
-  FRAME_CONFIG_SCROLL_BAR_WIDTH (f) = width;
+  FRAME_CONFIG_SCROLL_BAR_COLS (f) = (minw + wid - 1) / wid;
+  FRAME_CONFIG_SCROLL_BAR_WIDTH (f) = minw;
 #else
   /* Make the actual width at least 14 pixels and a multiple of a
      character width.  */
@@ -6186,5 +6183,3 @@ When using Gtk+ tooltips, the tooltip face is not used.  */);
   defsubr (&Sx_select_font);
 #endif
 }
-
-#endif /* HAVE_X_WINDOWS */
