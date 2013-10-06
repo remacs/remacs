@@ -166,7 +166,7 @@ is set to `defun'.")
 	(forward-char 1)
 	(forward-sexp 2)
 	(backward-sexp 1)
-	(looking-at "\\sw"))
+	(looking-at "\\(:\\|\\sw\\)"))
     (error t)))
 
 (defun lisp-indent-find-method (symbol &optional no-compat)
