@@ -33,7 +33,7 @@ static struct thread_state *all_threads = &primary_thread;
 
 static sys_mutex_t global_lock;
 
-Lisp_Object Qthreadp, Qmutexp, Qcondition_variablep;
+Lisp_Object Qthreadp, Qmutexp, Qcondition_variable_p;
 
 
 
@@ -969,6 +969,6 @@ syms_of_threads (void)
   staticpro (&Qthreadp);
   Qmutexp = intern_c_string ("mutexp");
   staticpro (&Qmutexp);
-  Qcondition_variablep = intern_c_string ("condition-variablep");
-  staticpro (&Qcondition_variablep);
+  Qcondition_variable_p = intern_c_string ("condition-variable-p");
+  staticpro (&Qcondition_variable_p);
 }

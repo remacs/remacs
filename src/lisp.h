@@ -792,7 +792,7 @@ extern double extract_float (Lisp_Object);
 extern Lisp_Object Qprocessp;
 
 /* Defined in thread.c.  */
-extern Lisp_Object Qthreadp, Qmutexp, Qcondition_variablep;
+extern Lisp_Object Qthreadp, Qmutexp, Qcondition_variable_p;
 
 /* Defined in window.c.  */
 extern Lisp_Object Qwindowp;
@@ -2538,7 +2538,7 @@ CHECK_MUTEX (Lisp_Object x)
 LISP_INLINE void
 CHECK_CONDVAR (Lisp_Object x)
 {
-  CHECK_TYPE (CONDVARP (x), Qcondition_variablep, x);
+  CHECK_TYPE (CONDVARP (x), Qcondition_variable_p, x);
 }
 
 /* Since we can't assign directly to the CAR or CDR fields of a cons
