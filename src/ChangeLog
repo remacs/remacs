@@ -1,3 +1,8 @@
+2013-10-19  Barry O'Reilly <gundaetiapo@gmail.com>
+
+	* eval.c (unbind_for_thread_switch): Fix iteration over the
+	specpdl stack.
+
 2013-09-01  Eli Zaretskii  <eliz@gnu.org>
 
 	* eval.c (unbind_for_thread_switch): Accept a 'struct

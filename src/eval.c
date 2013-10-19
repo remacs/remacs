@@ -3488,9 +3488,9 @@ unbind_for_thread_switch (struct thread_state *thr)
 {
   union specbinding *bind;
 
-  for (bind = thr->m_specpdl_ptr; bind != thr->m_specpdl; --bind)
+  for (bind = thr->m_specpdl_ptr; bind > thr->m_specpdl;)
     {
-      if (bind->kind >= SPECPDL_LET)
+      if ((--bind)->kind >= SPECPDL_LET)
 	{
 	  bind->let.saved_value = find_symbol_value (specpdl_symbol (bind));
 	  do_one_unbind (bind, 0);
