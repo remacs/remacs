@@ -1933,10 +1933,10 @@ If NO-PROC is non-nil, do not try to contact the GDB process."
   ;; gdb-break-list is maintained in breakpoints handler
   (gdb-get-buffer-create 'gdb-breakpoints-buffer)
 
+  (gdb-get-changed-registers)
   (unless no-proc
     (gdb-emit-signal gdb-buf-publisher 'update))
 
-  (gdb-get-changed-registers)
   (when (and (boundp 'speedbar-frame) (frame-live-p speedbar-frame))
     (dolist (var gdb-var-list)
       (setcar (nthcdr 5 var) nil))
