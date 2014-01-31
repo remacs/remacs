@@ -4347,7 +4347,7 @@
 
 2013-10-08  Bastien Guerry  <bzg@gnu.org>
 
-	* register.el (insert-register): Fix 2013-10-07T01:28:34Z!sdl.web@gmail.com.
+	* register.el (insert-register): Fix 2013-10-07 change.
 
 2013-10-08  Stefan Monnier  <monnier@iro.umontreal.ca>
 
