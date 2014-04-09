@@ -593,6 +593,9 @@ massage the input string, this is your hook.  This is called from
 the user command `term-send-input'.  `term-simple-send' just sends
 the string plus a newline.")
 
+(defvar term-partial-ansi-terminal-message nil
+  "Keep partial ansi terminal messages for future processing.")
+
 (defcustom term-eol-on-send t
   "Non-nil means go to the end of the line before sending input.
 See `term-send-input'."
@@ -1076,6 +1079,8 @@ Entry to this mode runs the hooks on `term-mode-hook'."
   (make-local-variable 'ange-ftp-default-user)
   (make-local-variable 'ange-ftp-default-password)
   (make-local-variable 'ange-ftp-generate-anonymous-password)
+
+  (make-local-variable 'term-partial-ansi-terminal-message)
 
   ;; You may want to have different scroll-back sizes -mm
   (make-local-variable 'term-buffer-maximum-size)
@@ -2702,6 +2707,11 @@ See `term-prompt-regexp'."
 ;;difference ;-) -mm
 
 (defun term-handle-ansi-terminal-messages (message)
+  ;; Handle stored partial message
+  (when term-partial-ansi-terminal-message
+    (setq message (concat term-partial-ansi-terminal-message message))
+    (setq term-partial-ansi-terminal-message nil))
+
   ;; Is there a command here?
   (while (string-match "\eAnSiT.+\n" message)
     ;; Extract the command code and the argument.
@@ -2754,6 +2764,11 @@ See `term-prompt-regexp'."
 	  (setq ange-ftp-default-user nil)
 	  (setq ange-ftp-default-password nil)
 	  (setq ange-ftp-generate-anonymous-password nil)))))
+  ;; If there is a partial message at the end of the string, store it
+  ;; for future use.
+  (when (string-match "\eAnSiT.+$" message)
+    (setq term-partial-ansi-terminal-message (match-string 0 message))
+    (setq message (replace-match "" t t message)))
   message)
 
 
