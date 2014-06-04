@@ -4,6 +4,7 @@
 @c setfilename emacs-lisp-intro.info
 @c sethtmlfilename emacs-lisp-intro.html
 @settitle Programming in Emacs Lisp
+@documentencoding UTF-8
 @syncodeindex vr cp
 @syncodeindex fn cp
 @finalout
@@ -96,10 +97,9 @@
 
 @c ----------------------------------------------------
 
-@dircategory GNU Emacs Lisp
+@dircategory Emacs lisp
 @direntry
-* Emacs Lisp Intro: (eintr).
-                          A simple introduction to Emacs Lisp programming.
+* Emacs Lisp Intro: (eintr).    A simple introduction to Emacs Lisp programming.
 @end direntry
 
 @copying
@@ -113,7 +113,7 @@ Edition @value{edition-number}, @value{update-date}
 Distributed with Emacs version @value{EMACSVER}.
 @end ifnottex
 @sp 1
-Copyright @copyright{} 1990--1995, 1997, 2001--2013 Free Software
+Copyright @copyright{} 1990--1995, 1997, 2001--2014 Free Software
 Foundation, Inc.
 @sp 1
 
@@ -142,6 +142,7 @@ Boston, MA 02110-1301 USA
 @sp 1
 ISBN 1-882114-43-4
 
+@quotation
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
 any later version published by the Free Software Foundation; there
@@ -153,6 +154,7 @@ Documentation License''.
 (a) The FSF's Back-Cover Text is: ``You have the freedom to
 copy and modify this GNU manual.  Buying copies from the FSF
 supports it in developing GNU and promoting software freedom.''
+@end quotation
 @end copying
 
 @c half title; two lines here, so do not use `shorttitlepage'
@@ -11608,7 +11610,7 @@ and this provides a sense of its primal capabilities.
 @node Every
 @unnumberedsubsubsec Recursive Pattern: @emph{every}
 @cindex Every, type of recursive pattern
-@cindex Recursive pattern: every
+@cindex Recursive pattern - every
 
 In the @code{every} recursive pattern, an action is performed on every
 element of a list.
@@ -11707,7 +11709,7 @@ But when the list has at least one element,
 @node Accumulate
 @unnumberedsubsubsec Recursive Pattern: @emph{accumulate}
 @cindex Accumulate, type of recursive pattern
-@cindex Recursive pattern: accumulate
+@cindex Recursive pattern - accumulate
 
 Another recursive pattern is called the @code{accumulate} pattern.  In
 the @code{accumulate} recursive pattern, an action is performed on
@@ -11758,7 +11760,7 @@ accumulate pattern.
 @node Keep
 @unnumberedsubsubsec Recursive Pattern: @emph{keep}
 @cindex Keep, type of recursive pattern
-@cindex Recursive pattern: keep
+@cindex Recursive pattern - keep
 
 A third recursive pattern is called the @code{keep} pattern.
 In the @code{keep} recursive pattern, each element of a list is tested;
@@ -11910,7 +11912,6 @@ more steps.
 @node No deferment solution
 @subsection No Deferment Solution
 @cindex No deferment solution
-@cindex Defermentless solution
 @cindex Solution without deferment
 
 The solution to the problem of deferred operations is to write in a
@@ -13544,7 +13545,7 @@ regexps.  @xref{the-the, , @code{the-the} Duplicated Words Function}.
 @end itemize
 
 @node Counting Words
-@chapter Counting: Repetition and Regexps
+@chapter Counting via Repetition and Regexps
 @cindex Repetition for word counting
 @cindex Regular expressions for word counting
 
@@ -14428,7 +14429,7 @@ exclamation mark, and question mark.  Do the same using recursion.
 
 Our next project is to count the number of words in a function
 definition.  Clearly, this can be done using some variant of
-@code{@value{COUNT-WORDS}}.  @xref{Counting Words, , Counting Words:
+@code{@value{COUNT-WORDS}}.  @xref{Counting Words, , Counting via
 Repetition and Regexps}.  If we are just going to count the words in
 one definition, it is easy enough to mark the definition with the
 @kbd{C-M-h} (@code{mark-defun}) command, and then call
@@ -15060,18 +15061,19 @@ C-e} (@code{eval-last-sexp}).
 @c !!! 22.1.1 lisp sources location here
 @smallexample
 (lengths-list-file
- "/usr/local/share/emacs/22.1.1/lisp/emacs-lisp/debug.el")
+ "/usr/local/share/emacs/22.1/lisp/emacs-lisp/debug.el")
 @end smallexample
 
 @noindent
-(You may need to change the pathname of the file; the one here is for
-GNU Emacs version 22.1.1.  To change the expression, copy it to
+You may need to change the pathname of the file; the one here is for
+GNU Emacs version 22.1.  To change the expression, copy it to
 the @file{*scratch*} buffer and edit it.
 
 @need 1200
 @noindent
-(Also, to see the full length of the list, rather than a truncated
+Also, to see the full length of the list, rather than a truncated
 version, you may have to evaluate the following:
+@c We do not want to insert, so do not mention the zero prefix argument.
 
 @smallexample
 (custom-set-variables '(eval-expression-print-length nil))
@@ -15097,7 +15099,8 @@ took seven seconds to produce and looked like this:
 (75 41 80 62 20 45 44 68 45 12 34 235)
 @end smallexample
 
-(The newer version of @file{debug.el} contains more defuns than the
+@noindent
+The newer version of @file{debug.el} contains more defuns than the
 earlier one; and my new machine is much faster than the old one.)
 
 Note that the length of the last definition in the file is first in
@@ -15602,7 +15605,7 @@ Let's write a function definition to do these tasks.  We will use a
 directory, checking what needs to be done; and we will use a recursive
 call to repeat the actions on each sub-directory.  The recursive
 pattern is `accumulate'
-(@pxref{Accumulate, , Recursive Pattern: @emph{accumulate}}),
+(@pxref{Accumulate}),
 using @code{append} as the combiner.
 
 @ignore
@@ -17752,7 +17755,7 @@ file that set values:
 
 @group
 ;; Set calendar highlighting colors
-(setq calendar-load-hook
+(add-hook 'calendar-load-hook
       (lambda ()
         (set-face-foreground 'diary-face   "skyblue")
         (set-face-background 'holiday-face "slate blue")

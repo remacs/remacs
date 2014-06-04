@@ -1,6 +1,6 @@
 ;;; cperl-mode.el --- Perl code editing commands for Emacs
 
-;; Copyright (C) 1985-1987, 1991-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1985-1987, 1991-2014 Free Software Foundation, Inc.
 
 ;; Author: Ilya Zakharevich
 ;;	Bob Olson
@@ -3124,7 +3124,7 @@ and closing parentheses and brackets."
 	  (+ (if (or (memq (elt i 2) (append "}])" nil)) ; char-after
                      (eq 'continuation ; do not stagger continuations
                          (elt (cperl-sniff-for-indent parse-data) 0)))
-		 0 ; Closing parenth or continuation of a continuation
+		 0 ; Closing parenthesis or continuation of a continuation
 	       cperl-continued-statement-offset)
 	     (if (or (elt i 3)		; is-block
 		     (not (elt i 4))		; is-brace
@@ -5145,7 +5145,7 @@ Returns some position at the last line."
 	      (if (eq (following-char) ?\( )
 		  (progn
 		    (forward-sexp 1)
-		    (setq pp (point)))	; past parenth-group
+		    (setq pp (point)))	; past parenthesis-group
 		;; after `else' or nothing
 		(if ml			; after `else'
 		    (skip-chars-backward " \t\n")
@@ -8900,8 +8900,9 @@ do extra unwind via `cperl-unwind-to-safe'."
 		  (beginning-of-line)
 		  (eq (get-text-property (setq beg (point)) 'syntax-type)
 		      'multiline)))
-      (if (setq beg (cperl-beginning-of-property beg 'syntax-type))
-	  (goto-char beg)))
+      (let ((new-beg (cperl-beginning-of-property beg 'syntax-type)))
+	(setq beg (if (= new-beg beg) nil new-beg))
+	(goto-char new-beg)))
     (setq beg (point))
     (goto-char end)
     (while (and end

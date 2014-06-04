@@ -3,11 +3,11 @@
 % Load plain if necessary, i.e., if running under initex.
 \expandafter\ifx\csname fmtname\endcsname\relax\input plain\fi
 %
-\def\texinfoversion{2013-08-20.10}
+\def\texinfoversion{2014-05-20.16}
 %
 % Copyright 1985, 1986, 1988, 1990, 1991, 1992, 1993, 1994, 1995,
 % 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006,
-% 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
+% 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014 Free Software Foundation, Inc.
 %
 % This texinfo.tex file is free software: you can redistribute it and/or
 % modify it under the terms of the GNU General Public License as
@@ -322,10 +322,13 @@
   %
   % Do this outside of the \shipout so @code etc. will be expanded in
   % the headline as they should be, not taken literally (outputting ''code).
+  \def\commmonheadfootline{\let\hsize=\pagewidth \texinfochars}
+  %
   \ifodd\pageno \getoddheadingmarks \else \getevenheadingmarks \fi
-  \setbox\headlinebox = \vbox{\let\hsize=\pagewidth \makeheadline}%
+  \global\setbox\headlinebox = \vbox{\commmonheadfootline \makeheadline}%
+  %
   \ifodd\pageno \getoddfootingmarks \else \getevenfootingmarks \fi
-  \setbox\footlinebox = \vbox{\let\hsize=\pagewidth \makefootline}%
+  \global\setbox\footlinebox = \vbox{\commmonheadfootline \makefootline}%
   %
   {%
     % Have to do this stuff outside the \shipout because we want it to
@@ -1135,10 +1138,12 @@ output) for that.)}
 
 \ifpdf
   %
-  % Color manipulation macros based on pdfcolor.tex,
+  % Color manipulation macros using ideas from pdfcolor.tex,
   % except using rgb instead of cmyk; the latter is said to render as a
   % very dark gray on-screen and a very dark halftone in print, instead
-  % of actual black.
+  % of actual black. The dark red here is dark enough to print on paper as
+  % nearly black, but still distinguishable for online viewing.  We use
+  % black by default, though.
   \def\rgbDarkRed{0.50 0.09 0.12}
   \def\rgbBlack{0 0 0}
   %
@@ -1248,10 +1253,9 @@ output) for that.)}
   % used to mark target names; must be expandable.
   \def\pdfmkpgn#1{#1}
   %
-  % by default, use a color that is dark enough to print on paper as
-  % nearly black, but still distinguishable for online viewing.
-  \def\urlcolor{\rgbDarkRed}
-  \def\linkcolor{\rgbDarkRed}
+  % by default, use black for everything.
+  \def\urlcolor{\rgbBlack}
+  \def\linkcolor{\rgbBlack}
   \def\endlink{\setcolor{\maincolor}\pdfendlink}
   %
   % Adding outlines to PDF; macros for calculating structure of outlines
@@ -2142,7 +2146,7 @@ end
   \let\tenttsl=\secttsl
   \def\curfontsize{sec}%
   \def\lsize{subsec}\def\lllsize{reduced}%
-  \resetmathfonts \setleading{16pt}}
+  \resetmathfonts \setleading{17pt}}
 \def\subsecfonts{%
   \let\tenrm=\ssecrm \let\tenit=\ssecit \let\tensl=\ssecsl
   \let\tenbf=\ssecbf \let\tentt=\ssectt \let\smallcaps=\ssecsc
@@ -2571,37 +2575,21 @@ end
 \let\file=\code
 \let\option=\code
 
-% @uref (abbreviation for `urlref') takes an optional (comma-separated)
-% second argument specifying the text to display and an optional third
-% arg as text to display instead of (rather than in addition to) the url
-% itself.  First (mandatory) arg is the url.
-% (This \urefnobreak definition isn't used now, leaving it for a while
-% for comparison.)
-\def\urefnobreak#1{\dourefnobreak #1,,,\finish}
-\def\dourefnobreak#1,#2,#3,#4\finish{\begingroup
-  \unsepspaces
-  \pdfurl{#1}%
-  \setbox0 = \hbox{\ignorespaces #3}%
-  \ifdim\wd0 > 0pt
-    \unhbox0 % third arg given, show only that
-  \else
-    \setbox0 = \hbox{\ignorespaces #2}%
-    \ifdim\wd0 > 0pt
-      \ifpdf
-        \unhbox0             % PDF: 2nd arg given, show only it
-      \else
-        \unhbox0\ (\code{#1})% DVI: 2nd arg given, show both it and url
-      \fi
-    \else
-      \code{#1}% only url given, so show it
-    \fi
-  \fi
-  \endlink
-\endgroup}
+% @uref (abbreviation for `urlref') aka @url takes an optional
+% (comma-separated) second argument specifying the text to display and
+% an optional third arg as text to display instead of (rather than in
+% addition to) the url itself.  First (mandatory) arg is the url.
 
-% This \urefbreak definition is the active one.
+% TeX-only option to allow changing PDF output to show only the second
+% arg (if given), and not the url (which is then just the link target).
+\newif\ifurefurlonlylink
+
+% The main macro is \urefbreak, which allows breaking at expected
+% places within the url.  (There used to be another version, which
+% didn't support automatic breaking.)
 \def\urefbreak{\begingroup \urefcatcodes \dourefbreak}
 \let\uref=\urefbreak
+%
 \def\dourefbreak#1{\urefbreakfinish #1,,,\finish}
 \def\urefbreakfinish#1,#2,#3,#4\finish{% doesn't work in @example
   \unsepspaces
@@ -2610,12 +2598,19 @@ end
   \ifdim\wd0 > 0pt
     \unhbox0 % third arg given, show only that
   \else
-    \setbox0 = \hbox{\ignorespaces #2}%
+    \setbox0 = \hbox{\ignorespaces #2}% look for second arg
     \ifdim\wd0 > 0pt
       \ifpdf
-        \unhbox0             % PDF: 2nd arg given, show only it
+        \ifurefurlonlylink
+          % PDF plus option to not display url, show just arg
+          \unhbox0             
+        \else
+          % PDF, normally display both arg and url for consistency,
+          % visibility, if the pdf is eventually used to print, etc.
+          \unhbox0\ (\urefcode{#1})%
+        \fi
       \else
-        \unhbox0\ (\urefcode{#1})% DVI: 2nd arg given, show both it and url
+        \unhbox0\ (\urefcode{#1})% DVI, always show arg and url
       \fi
     \else
       \urefcode{#1}% only url given, so show it
@@ -2655,8 +2650,10 @@ end
 % we put a little stretch before and after the breakable chars, to help
 % line breaking of long url's.  The unequal skips make look better in
 % cmtt at least, especially for dots.
-\def\urefprestretch{\urefprebreak \hskip0pt plus.13em }
-\def\urefpoststretch{\urefpostbreak \hskip0pt plus.1em }
+\def\urefprestretchamount{.13em}
+\def\urefpoststretchamount{.1em}
+\def\urefprestretch{\urefprebreak \hskip0pt plus\urefprestretchamount\relax}
+\def\urefpoststretch{\urefpostbreak \hskip0pt plus\urefprestretchamount\relax}
 %
 \def\urefcodeamp{\urefprestretch \&\urefpoststretch}
 \def\urefcodedot{\urefprestretch .\urefpoststretch}
@@ -2891,6 +2888,15 @@ end
   \def\inlinefmtname{#1}%
   \ifx\inlinefmtname\outfmtnametex \ignorespaces #2\fi
 }
+% 
+% @inlinefmtifelse{FMTNAME,THEN-TEXT,ELSE-TEXT} expands THEN-TEXT if
+% FMTNAME is tex, else ELSE-TEXT.
+\long\def\inlinefmtifelse#1{\doinlinefmtifelse #1,,,\finish}
+\long\def\doinlinefmtifelse#1,#2,#3,#4,\finish{%
+  \def\inlinefmtname{#1}%
+  \ifx\inlinefmtname\outfmtnametex \ignorespaces #2\else \ignorespaces #3\fi
+}
+%
 % For raw, must switch into @tex before parsing the argument, to avoid
 % setting catcodes prematurely.  Doing it this way means that, for
 % example, @inlineraw{html, foo{bar} gets a parse error instead of being
@@ -2905,6 +2911,23 @@ end
   \def\inlinerawname{#1}%
   \ifx\inlinerawname\outfmtnametex \ignorespaces #2\fi
   \endgroup % close group opened by \tex.
+}
+
+% @inlineifset{VAR, TEXT} expands TEXT if VAR is @set.
+%
+\long\def\inlineifset#1{\doinlineifset #1,\finish}
+\long\def\doinlineifset#1,#2,\finish{%
+  \def\inlinevarname{#1}%
+  \expandafter\ifx\csname SET\inlinevarname\endcsname\relax
+  \else\ignorespaces#2\fi
+}
+
+% @inlineifclear{VAR, TEXT} expands TEXT if VAR is not @set.
+%
+\long\def\inlineifclear#1{\doinlineifclear #1,\finish}
+\long\def\doinlineifclear#1,#2,\finish{%
+  \def\inlinevarname{#1}%
+  \expandafter\ifx\csname SET\inlinevarname\endcsname\relax \ignorespaces#2\fi
 }
 
 
@@ -3662,7 +3685,7 @@ end
   \parskip=\smallskipamount
   \ifdim\parskip=0pt \parskip=2pt \fi
   %
-  % Try typesetting the item mark that if the document erroneously says
+  % Try typesetting the item mark so that if the document erroneously says
   % something like @itemize @samp (intending @table), there's an error
   % right away at the @itemize.  It's not the best error message in the
   % world, but it's better than leaving it to the @item.  This means if
@@ -3912,18 +3935,22 @@ end
 }
 
 % multitable-only commands.
-%
-% @headitem starts a heading row, which we typeset in bold.
-% Assignments have to be global since we are inside the implicit group
-% of an alignment entry.  \everycr resets \everytab so we don't have to
+% 
+% @headitem starts a heading row, which we typeset in bold.  Assignments
+% have to be global since we are inside the implicit group of an
+% alignment entry.  \everycr below resets \everytab so we don't have to
 % undo it ourselves.
 \def\headitemfont{\b}% for people to use in the template row; not changeable
 \def\headitem{%
   \checkenv\multitable
   \crcr
+  \gdef\headitemcrhook{\nobreak}% attempt to avoid page break after headings
   \global\everytab={\bf}% can't use \headitemfont since the parsing differs
   \the\everytab % for the first item
 }%
+%
+% default for tables with no headings.
+\let\headitemcrhook=\relax
 %
 % A \tab used to include \hskip1sp.  But then the space in a template
 % line is not enough.  That is bad.  So let's go back to just `&' until
@@ -3955,15 +3982,15 @@ end
   %
   \everycr = {%
     \noalign{%
-      \global\everytab={}%
+      \global\everytab={}% Reset from possible headitem.
       \global\colcount=0 % Reset the column counter.
-      % Check for saved footnotes, etc.
+      %
+      % Check for saved footnotes, etc.:
       \checkinserts
-      % Keeps underfull box messages off when table breaks over pages.
-      %\filbreak
-	% Maybe so, but it also creates really weird page breaks when the
-	% table breaks over pages. Wouldn't \vfil be better?  Wait until the
-	% problem manifests itself, so it can be fixed for real --karl.
+      %
+      % Perhaps a \nobreak, then reset:
+      \headitemcrhook
+      \global\let\headitemcrhook=\relax
     }%
   }%
   %
@@ -4202,7 +4229,7 @@ end
 \def\value{\begingroup\makevalueexpandable\valuexxx}
 \def\valuexxx#1{\expandablevalue{#1}\endgroup}
 {
-  \catcode`\- = \active \catcode`\_ = \active
+  \catcode`\-=\active \catcode`\_=\active
   %
   \gdef\makevalueexpandable{%
     \let\value = \expandablevalue
@@ -4222,7 +4249,12 @@ end
 % variable's value contains other Texinfo commands, it's almost certain
 % it will fail (although perhaps we could fix that with sufficient work
 % to do a one-level expansion on the result, instead of complete).
-%
+% 
+% Unfortunately, this has the consequence that when _ is in the *value*
+% of an @set, it does not print properly in the roman fonts (get the cmr
+% dot accent at position 126 instead).  No fix comes to mind, and it's
+% been this way since 2003 or earlier, so just ignore it.
+% 
 \def\expandablevalue#1{%
   \expandafter\ifx\csname SET#1\endcsname\relax
     {[No value for ``#1'']}%
@@ -4400,7 +4432,7 @@ end
   % complicated, when \tex is in effect and \{ is a \delimiter again.
   % We can't use \lbracecmd and \rbracecmd because texindex assumes
   % braces and backslashes are used only as delimiters.  Perhaps we
-  % should define @lbrace and @rbrace commands a la @comma.
+  % should use @lbracechar and @rbracechar?
   \def\{{{\tt\char123}}%
   \def\}{{\tt\char125}}%
   %
@@ -4421,8 +4453,7 @@ end
   % @end macro
   % ...
   % @funindex commtest
-  %
-  % The above is not enough to reproduce the bug, but it gives the flavor.
+  % This is not enough to reproduce the bug, but it gives the flavor.
   %
   % Sample whatsit resulting:
   % .@write3{\entry{xyz}{@folio }{@code {xyz@endinput }}}
@@ -4623,7 +4654,20 @@ end
   \definedummyword\verb
   \definedummyword\w
   \definedummyword\xref
+  %
+  % Consider:
+  %   @macro mkind{arg1,arg2}
+  %   @cindex \arg2\
+  %   @end macro
+  %   @mkind{foo, bar}
+  % The space after the comma will end up in the temporary definition
+  % that we make for arg2 (see \parsemargdef ff.).  We want all this to be
+  % expanded for the sake of the index, so we end up just seeing "bar".
+  \let\xeatspaces = \eatspaces
 }
+
+% For testing: output @{ and @} in index sort strings as \{ and \}.
+\newif\ifusebracesinindexes
 
 % \indexnofonts is used when outputting the strings to sort the index
 % by, and when constructing control sequence names.  It eliminates all
@@ -4653,11 +4697,16 @@ end
   % Unfortunately, texindex is not prepared to handle braces in the
   % content at all.  So for index sorting, we map @{ and @} to strings
   % starting with |, since that ASCII character is between ASCII { and }.
-  \def\{{|a}%
-  \def\lbracechar{|a}%
+  \ifusebracesinindexes
+    \def\lbracechar{\lbracecmd}%
+    \def\rbracechar{\rbracecmd}%
+  \else
+    \def\lbracechar{|a}%
+    \def\rbracechar{|b}%
+  \fi
+  \let\{=\lbracechar
+  \let\}=\rbracechar
   %
-  \def\}{|b}%
-  \def\rbracechar{|b}%
   %
   % Non-English letters.
   \def\AA{AA}%
@@ -6276,8 +6325,8 @@ end
   \catcode `\|=\other
   \catcode `\<=\other
   \catcode `\>=\other
-  \catcode`\`=\other
-  \catcode`\'=\other
+  \catcode `\`=\other
+  \catcode `\'=\other
   \escapechar=`\\
   %
   % ' is active in math mode (mathcode"8000).  So reset it, and all our
@@ -6301,7 +6350,7 @@ end
   \let\/=\ptexslash
   \let\*=\ptexstar
   \let\t=\ptext
-  \expandafter \let\csname top\endcsname=\ptextop  % outer
+  \expandafter \let\csname top\endcsname=\ptextop  % we've made it outer
   \let\frenchspacing=\plainfrenchspacing
   %
   \def\endldots{\mathinner{\ldots\ldots\ldots\ldots}}%
@@ -6385,8 +6434,6 @@ end
 				% side, and for 6pt waste from
 				% each corner char, and rule thickness
   \normbskip=\baselineskip \normpskip=\parskip \normlskip=\lineskip
-  % Flag to tell @lisp, etc., not to narrow margin.
-  \let\nonarrowing = t%
   %
   % If this cartouche directly follows a sectioning command, we need the
   % \parskip glue (backspaced over by default) or the cartouche can
@@ -6553,9 +6600,13 @@ end
 
 
 % @raggedright does more-or-less normal line breaking but no right
-% justification.  From plain.tex.
+% justification.  From plain.tex.  Don't stretch around special
+% characters in urls in this environment, since the stretch at the right
+% should be enough.
 \envdef\raggedright{%
-  \rightskip0pt plus2em \spaceskip.3333em \xspaceskip.5em\relax
+  \rightskip0pt plus2.4em \spaceskip.3333em \xspaceskip.5em\relax
+  \def\urefprestretchamount{0pt}%
+  \def\urefpoststretchamount{0pt}%
 }
 \let\Eraggedright\par
 
@@ -7448,7 +7499,7 @@ end
 
 % Parse the optional {params} list.  Set up \paramno and \paramlist
 % so \defmacro knows what to do.  Define \macarg.BLAH for each BLAH
-% in the params list to some hook where the argument si to be expanded.  If
+% in the params list to some hook where the argument is to be expanded.  If
 % there are less than 10 arguments that hook is to be replaced by ##N where N
 % is the position in that list, that is to say the macro arguments are to be
 % defined `a la TeX in the macro body.  
@@ -8310,6 +8361,7 @@ end
 \gdef\footnote{%
   \let\indent=\ptexindent
   \let\noindent=\ptexnoindent
+  %
   \global\advance\footnoteno by \@ne
   \edef\thisfootno{$^{\the\footnoteno}$}%
   %
@@ -8333,6 +8385,11 @@ end
 %
 \gdef\dofootnote{%
   \insert\footins\bgroup
+  %
+  % Nested footnotes are not supported in TeX, that would take a lot
+  % more work.  (\startsavinginserts does not suffice.)
+  \let\footnote=\errfootnote
+  %
   % We want to typeset this text as a normal paragraph, even if the
   % footnote reference occurs in (for example) a display environment.
   % So reset some parameters.
@@ -8370,13 +8427,19 @@ end
 }
 }%end \catcode `\@=11
 
+\def\errfootnote{%
+  \errhelp=\EMsimple
+  \errmessage{Nested footnotes not supported in texinfo.tex,
+    even though they work in makeinfo; sorry}
+}
+
 % In case a @footnote appears in a vbox, save the footnote text and create
 % the real \insert just after the vbox finished.  Otherwise, the insertion
 % would be lost.
 % Similarly, if a @footnote appears inside an alignment, save the footnote
 % text to a box and make the \insert when a row of the table is finished.
 % And the same can be done for other insert classes.  --kasal, 16nov03.
-
+%
 % Replace the \insert primitive by a cheating macro.
 % Deeper inside, just make sure that the saved insertions are not spilled
 % out prematurely.
@@ -8793,20 +8856,20 @@ end
 {
   \catcode`\_ = \active
   \globaldefs=1
-\parseargdef\documentlanguage{\begingroup
-  \let_=\normalunderscore  % normal _ character for filenames
+\parseargdef\documentlanguage{%
   \tex % read txi-??.tex file in plain TeX.
     % Read the file by the name they passed if it exists.
+    \let_ = \normalunderscore  % normal _ character for filename test
     \openin 1 txi-#1.tex
     \ifeof 1
-      \documentlanguagetrywithoutunderscore{#1_\finish}%
+      \documentlanguagetrywithoutunderscore #1_\finish
     \else
       \globaldefs = 1  % everything in the txi-LL files needs to persist
       \input txi-#1.tex
     \fi
     \closein 1
   \endgroup % end raw TeX
-\endgroup}
+}
 %
 % If they passed de_DE, and txi-de_DE.tex doesn't exist,
 % try txi-de.tex.
@@ -9944,11 +10007,9 @@ directory should work if nowhere else does.}
 \catcode`\"=\active
 \def\activedoublequote{{\tt\char34}}
 \let"=\activedoublequote
-\catcode`\~=\active
-\def~{{\tt\char126}}
+\catcode`\~=\active \def\activetilde{{\tt\char126}} \let~ = \activetilde
 \chardef\hat=`\^
-\catcode`\^=\active
-\def^{{\tt \hat}}
+\catcode`\^=\active \def\activehat{{\tt \hat}} \let^ = \activehat
 
 \catcode`\_=\active
 \def_{\ifusingtt\normalunderscore\_}
@@ -9958,16 +10019,26 @@ directory should work if nowhere else does.}
 
 \catcode`\|=\active
 \def|{{\tt\char124}}
+
 \chardef \less=`\<
-\catcode`\<=\active
-\def<{{\tt \less}}
+\catcode`\<=\active \def\activeless{{\tt \less}}\let< = \activeless
 \chardef \gtr=`\>
-\catcode`\>=\active
-\def>{{\tt \gtr}}
-\catcode`\+=\active
-\def+{{\tt \char 43}}
-\catcode`\$=\active
-\def${\ifusingit{{\sl\$}}\normaldollar}%$ font-lock fix
+\catcode`\>=\active \def\activegtr{{\tt \gtr}}\let> = \activegtr
+\catcode`\+=\active \def+{{\tt \char 43}}
+\catcode`\$=\active \def${\ifusingit{{\sl\$}}\normaldollar}%$ font-lock fix
+
+% used for headline/footline in the output routine, in case the page
+% breaks in the middle of an @tex block.
+\def\texinfochars{%
+  \let< = \activeless
+  \let> = \activegtr
+  \let~ = \activetilde 
+  \let^ = \activehat
+  \markupsetuplqdefault \markupsetuprqdefault 
+  \let\b = \strong
+  \let\i = \smartitalic
+  % in principle, all other definitions in \tex have to be undone too.
+}
 
 % If a .fmt file is being used, characters that might appear in a file
 % name cannot be active until we have parsed the command line.

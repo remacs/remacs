@@ -1,6 +1,6 @@
 ;;; gravatar.el --- Get Gravatars
 
-;; Copyright (C) 2010-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2010-2014 Free Software Foundation, Inc.
 
 ;; Author: Julien Danjou <julien@danjou.info>
 ;; Keywords: news
@@ -33,19 +33,25 @@
   :group 'comm)
 
 (defcustom gravatar-automatic-caching t
-  "Whether cache retrieved gravatar."
+  "Whether to cache retrieved gravatars."
+  :type 'boolean
   :group 'gravatar)
 
+;; FIXME a time value is not the nicest format for a custom variable.
 (defcustom gravatar-cache-ttl (days-to-time 30)
   "Time to live for gravatar cache entries."
+  :type '(repeat integer)
   :group 'gravatar)
 
+;; FIXME Doc is tautological.  What are the options?
 (defcustom gravatar-rating "g"
   "Default rating for gravatar."
+  :type 'string
   :group 'gravatar)
 
 (defcustom gravatar-size 32
   "Default size in pixels for gravatars."
+  :type 'integer
   :group 'gravatar)
 
 (defconst gravatar-base-url
@@ -132,9 +138,7 @@ You can provide a list of argument to pass to CB in CBARGS."
   "Retrieve MAIL-ADDRESS gravatar and returns it."
   (let ((url (gravatar-build-url mail-address)))
     (if (gravatar-cache-expired url)
-        (with-current-buffer (if (featurep 'xemacs)
-				 (url-retrieve url)
-			       (url-retrieve-synchronously url))
+        (with-current-buffer (url-retrieve-synchronously url)
 	  (when gravatar-automatic-caching
             (url-store-in-cache (current-buffer)))
           (let ((data (gravatar-data->image)))

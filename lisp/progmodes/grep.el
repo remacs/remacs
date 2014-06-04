@@ -1,10 +1,9 @@
-;;; grep.el --- run `grep' and display the results
+;;; grep.el --- run `grep' and display the results  -*- lexical-binding:t -*-
 
-;; Copyright (C) 1985-1987, 1993-1999, 2001-2013 Free Software
-;; Foundation, Inc.
+;; Copyright (C) 1985-1987, 1993-1999, 2001-2014 Free Software Foundation, Inc.
 
 ;; Author: Roland McGrath <roland@gnu.org>
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: tools, processes
 
 ;; This file is part of GNU Emacs.
@@ -423,8 +422,9 @@ This variable's value takes effect when `grep-compute-defaults' is called.")
 
 ;;;###autoload
 (defvar find-program (purecopy "find")
-  "The default find program for `grep-find-command'.
-This variable's value takes effect when `grep-compute-defaults' is called.")
+  "The default find program.
+This is used by commands like `grep-find-command', `find-dired'
+and others.")
 
 ;;;###autoload
 (defvar xargs-program (purecopy "xargs")
@@ -804,27 +804,26 @@ substitution string.  Note dynamic scoping of variables.")
 
 (defun grep-expand-template (template &optional regexp files dir excl)
   "Patch grep COMMAND string replacing <C>, <D>, <F>, <R>, and <X>."
-  (let ((command template)
-	(cf case-fold-search)
-	(case-fold-search nil))
+  (let* ((command template)
+         (env `((cf . ,case-fold-search)
+                (excl . ,excl)
+                (dir . ,dir)
+                (files . ,files)
+                (regexp . ,regexp)))
+         (case-fold-search nil))
     (dolist (kw grep-expand-keywords command)
       (if (string-match (car kw) command)
 	  (setq command
 		(replace-match
 		 (or (if (symbolp (cdr kw))
-			 (symbol-value (cdr kw))
-		       (save-match-data (eval (cdr kw))))
+			 (eval (cdr kw) env)
+		       (save-match-data (eval (cdr kw) env)))
 		     "")
 		 t t command))))))
 
 (defun grep-read-regexp ()
-  "Read regexp arg for interactive grep."
-  (let ((default (grep-tag-default)))
-    (read-regexp
-     (concat "Search for"
-	     (if (and default (> (length default) 0))
-		 (format " (default \"%s\"): " default) ": "))
-     default 'grep-regexp-history)))
+  "Read regexp arg for interactive grep using `read-regexp'."
+  (read-regexp "Search for" 'grep-tag-default 'grep-regexp-history))
 
 (defun grep-read-files (regexp)
   "Read files arg for interactive grep."
@@ -905,7 +904,7 @@ This command shares argument histories with \\[rgrep] and \\[grep]."
 		(confirm (equal current-prefix-arg '(4))))
 	   (list regexp files dir confirm))))))
   (when (and (stringp regexp) (> (length regexp) 0))
-    (unless (and dir (file-directory-p dir) (file-readable-p dir))
+    (unless (and dir (file-accessible-directory-p dir))
       (setq dir default-directory))
     (let ((command regexp))
       (if (null files)
@@ -986,7 +985,7 @@ to specify a command to run."
 		(confirm (equal current-prefix-arg '(4))))
 	   (list regexp files dir confirm))))))
   (when (and (stringp regexp) (> (length regexp) 0))
-    (unless (and dir (file-directory-p dir) (file-readable-p dir))
+    (unless (and dir (file-accessible-directory-p dir))
       (setq dir default-directory))
     (if (null files)
 	(if (not (string= regexp (if (consp grep-find-command)
@@ -995,8 +994,6 @@ to specify a command to run."
 	    (compilation-start regexp 'grep-mode))
       (setq dir (file-name-as-directory (expand-file-name dir)))
       (require 'find-dired)		; for `find-name-arg'
-      ;; In Tramp, there could be problems if the command line is too
-      ;; long.  We escape it, therefore.
       (let ((command (grep-expand-template
 		      grep-find-template
 		      regexp
@@ -1005,7 +1002,7 @@ to specify a command to run."
 			      (mapconcat
 			       #'shell-quote-argument
 			       (split-string files)
-			       (concat "\\\n" " -o " find-name-arg " "))
+			       (concat " -o " find-name-arg " "))
 			      " "
 			      (shell-quote-argument ")"))
 		      dir
@@ -1026,7 +1023,7 @@ to specify a command to run."
 						      (concat "*/"
 							      (cdr ignore)))))))
 				     grep-find-ignored-directories
-				     "\\\n -o -path ")
+				     " -o -path ")
 				    " "
 				    (shell-quote-argument ")")
 				    " -prune -o "))
@@ -1044,7 +1041,7 @@ to specify a command to run."
 						     (shell-quote-argument
 						      (cdr ignore))))))
 				     grep-find-ignored-files
-				     "\\\n -o -name ")
+				     " -o -name ")
 				    " "
 				    (shell-quote-argument ")")
 				    " -prune -o "))))))
@@ -1061,7 +1058,7 @@ to specify a command to run."
 	      (setq default-directory dir)))))))
 
 ;;;###autoload
-(defun zrgrep (regexp &optional files dir confirm grep-find-template)
+(defun zrgrep (regexp &optional files dir confirm template)
   "Recursively grep for REGEXP in gzipped FILES in tree rooted at DIR.
 Like `rgrep' but uses `zgrep' for `grep-program', sets the default
 file name to `*.gz', and sets `grep-highlight-matches' to `always'."
@@ -1096,10 +1093,8 @@ file name to `*.gz', and sets `grep-highlight-matches' to `always'."
 	     (list regexp files dir confirm grep-find-template)))))))
   ;; Set `grep-highlight-matches' to `always'
   ;; since `zgrep' puts filters in the grep output.
-  (let ((grep-highlight-matches 'always))
-    ;; `rgrep' uses the dynamically bound value `grep-find-template'
-    ;; from the argument `grep-find-template' whose value is computed
-    ;; in the `interactive' spec.
+  (let ((grep-find-template template)
+        (grep-highlight-matches 'always))
     (rgrep regexp files dir confirm)))
 
 ;;;###autoload

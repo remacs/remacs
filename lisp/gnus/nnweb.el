@@ -1,6 +1,6 @@
 ;;; nnweb.el --- retrieving articles via web search engines
 
-;; Copyright (C) 1996-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1996-2014 Free Software Foundation, Inc.
 
 ;; Author: Lars Magne Ingebrigtsen <larsi@gnus.org>
 ;; Keywords: news
@@ -22,8 +22,6 @@
 
 ;;; Commentary:
 
-;; Note: You need to have `w3' installed for some functions to work.
-
 ;;; Code:
 
 (eval-when-compile (require 'cl))
@@ -38,7 +36,6 @@
 (eval-and-compile
   (ignore-errors
     (require 'url)))
-(autoload 'w3-parse-buffer "w3-parse")
 
 (nnoo-declare nnweb)
 
@@ -527,7 +524,7 @@ Valid types include `google', `dejanews', and `gmane'.")
     url))
 
 ;;;
-;;; General web/w3 interface utility functions
+;;; General web interface utility functions
 ;;;
 
 (defun nnweb-insert-html (parse)

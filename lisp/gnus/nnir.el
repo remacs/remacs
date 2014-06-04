@@ -1,6 +1,6 @@
 ;;; nnir.el --- search mail with various search engines -*- coding: utf-8 -*-
 
-;; Copyright (C) 1998-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1998-2014 Free Software Foundation, Inc.
 
 ;; Author: Kai Großjohann <grossjohann@ls6.cs.uni-dortmund.de>
 ;; Swish-e and Swish++ backends by:
@@ -170,10 +170,6 @@
 ;;; Code:
 
 ;;; Setup:
-
-;; For Emacs <22.2 and XEmacs.
-(eval-and-compile
-  (unless (fboundp 'declare-function) (defmacro declare-function (&rest r))))
 
 (require 'nnoo)
 (require 'gnus-group)
@@ -834,7 +830,8 @@ skips all prompting."
 (deffoo nnir-request-update-mark (group article mark)
   (let ((artgroup (nnir-article-group article))
 	(artnumber (nnir-article-number article)))
-    (gnus-request-update-mark artgroup artnumber mark)))
+    (when (and artgroup artnumber)
+      (gnus-request-update-mark artgroup artnumber mark))))
 
 (deffoo nnir-request-set-mark (group actions &optional server)
   (nnir-possibly-change-group group server)
@@ -1486,7 +1483,7 @@ Tested with Namazu 2.0.6 on a GNU/Linux system."
 
       (goto-char (point-min))
       (while (re-search-forward
-              "^\\([0-9]+\\.\\).*\\((score: \\([0-9]+\\)\\))\n\\([^ ]+\\)"
+              "^\\([0-9,]+\\.\\).*\\((score: \\([0-9]+\\)\\))\n\\([^ ]+\\)"
               nil t)
         (setq score (match-string 3)
               group (file-name-directory (match-string 4))

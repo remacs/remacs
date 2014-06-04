@@ -4,7 +4,7 @@ Mulţumiri Aidei Hulubei <aida@chang.pub.ro> pentru corecturi şi sugestii.
 
 Această versiune a fost produsă plecând de la versiunea în limba
 engleză, care este
-Copyright (c) 1985, 2013 Free Software Foundation, Inc.
+Copyright (c) 1985, 2013-2014 Free Software Foundation, Inc.
 
 Citiţi acum versiunea românească a tutorialului de Emacs.
 
@@ -328,7 +328,7 @@ cursorului.
 
 Când o linie de text devine prea mare pentru a putea fi reprezentată
 pe o linie de ecran, linia de text este continuată pe următoarea linie
-de pe ecran.  Un caracter backslash ("\") la marginea din dreapta
+de pe ecran.  Un caracter backslash („\”) la marginea din dreapta
 indică o linie care a fost continuată.
 
 >> Introduceţi text până când depăşiţi cu câteva caractere marginea
@@ -636,13 +636,13 @@ C-z este comanda cu care puteţi ieşi din Emacs *temporar* - astfel
 Pe sistemele unde este posibil, C-z "suspendă" Emacs-ul; asta înseamnă
 că, deşi vă veţi întoarce la prompt-ul shell-ului, Emacs-ul nu a fost
 distrus.  În shell-urile (interpretoarele de comenzi Unix) cele mai
-uzuale puteţi reactiva Emacs-ul cu comanda `fg' sau `%emacs'.
+uzuale puteţi reactiva Emacs-ul cu comanda "fg" sau "%emacs".
 
 Pe sistemele care nu implementează mecanismele de suspendare, C-z
 creează un subshell care rulează sub Emacs pentru a vă oferi
 posibilitatea de a rula alte programe şi de a vă întoarce la Emacs mai
 târziu; pe aceste sisteme C-z nu iese cu adevărat din Emacs - comanda
-`exit' la promptul subshell-ului este modalitatea uzuală de a vă
+"exit" la promptul subshell-ului este modalitatea uzuală de a vă
 întoarce în Emacs.
 
 În general C-x C-c se foloseşte înainte de părăsirea sistemului.
@@ -1082,7 +1082,7 @@ continuare noţita de copyright originală în limba engleză.
 This version of the tutorial, like GNU Emacs, is copyrighted, and
 comes with permission to distribute copies on certain conditions:
 
-Copyright (C) 1998, 2001-2013 Free Software Foundation, Inc.
+Copyright (C) 1998, 2001-2014 Free Software Foundation, Inc.
 
    Permission is granted to anyone to make or distribute verbatim copies
    of this document as received, in any medium, provided that the

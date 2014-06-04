@@ -1,6 +1,6 @@
 ;;; bs.el --- menu for selecting and displaying buffers -*- lexical-binding: t -*-
 
-;; Copyright (C) 1998-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1998-2014 Free Software Foundation, Inc.
 ;; Author: Olaf Sylvester <Olaf.Sylvester@netsurf.de>
 ;; Maintainer: Olaf Sylvester <Olaf.Sylvester@netsurf.de>
 ;; Keywords: convenience
@@ -1143,7 +1143,7 @@ and move point to current buffer."
     (delete-char -1)
     (bs--set-window-height)
     (bs--goto-current-buffer)
-    (font-lock-fontify-buffer)
+    (font-lock-ensure)
     (bs-apply-sort-faces)
     (set-buffer-modified-p nil)))
 

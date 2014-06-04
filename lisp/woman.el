@@ -1,9 +1,9 @@
 ;;; woman.el --- browse UN*X manual pages `wo (without) man'
 
-;; Copyright (C) 2000-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2000-2014 Free Software Foundation, Inc.
 
 ;; Author: Francis J. Wright <F.J.Wright@qmul.ac.uk>
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: help, unix
 ;; Adapted-By: Eli Zaretskii <eliz@gnu.org>
 ;; Version: 0.551
@@ -495,6 +495,8 @@ As a special case, if PATHS is nil then replace it by calling
 (defgroup woman nil
   "Browse UNIX manual pages `wo (without) man'."
   :tag "WoMan"
+  :link '(custom-manual "(woman) Top")
+  :link '(emacs-commentary-link :tag "Commentary" "woman.el")
   :group 'help)
 
 (defcustom woman-show-log nil
@@ -949,7 +951,7 @@ or different fonts."
 
 (defun woman-default-faces ()
   "Set foreground colors of italic and bold faces to their default values."
-  (declare (obsolete choose-completion-guess-base-position "23.2"))
+  (declare (obsolete "customize the woman-* faces instead." "24.4"))
   (interactive)
   (face-spec-set 'woman-italic (face-user-default-spec 'woman-italic))
   (face-spec-set 'woman-bold (face-user-default-spec 'woman-bold)))
@@ -957,7 +959,7 @@ or different fonts."
 (defun woman-monochrome-faces ()
   "Set foreground colors of italic and bold faces to that of the default face.
 This is usually either black or white."
-  (declare (obsolete choose-completion-guess-base-position "23.2"))
+  (declare (obsolete "customize the woman-* faces instead." "24.4"))
   (interactive)
   (set-face-foreground 'woman-italic 'unspecified)
   (set-face-foreground 'woman-bold 'unspecified))
@@ -2300,7 +2302,7 @@ Currently set only from '\" t in the first line of the source file.")
 
     ;; Process \k escapes BEFORE changing tab width (?):
     (goto-char from)
-    (woman-mark-horizonal-position)
+    (woman-mark-horizontal-position)
 
     ;; Set buffer-local variables:
     (setq fill-column woman-fill-column
@@ -3452,7 +3454,7 @@ Format paragraphs upto TO.  Supports special chars.
 Each element has the form (KEY VALUE . INC) -- inc may be nil.
 Also bound locally in `woman2-roff-buffer'.")
 
-(defun woman-mark-horizonal-position ()
+(defun woman-mark-horizontal-position ()
   "\\kx -- Store current horizontal position in INPUT LINE in register x."
   (while (re-search-forward "\\\\k\\(.\\)" nil t)
     (goto-char (match-beginning 0))

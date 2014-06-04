@@ -1,6 +1,6 @@
 ;;; x-win.el --- parse relevant switches and set up for X  -*-coding: iso-2022-7bit;-*-
 
-;; Copyright (C) 1993-1994, 2001-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1993-1994, 2001-2014 Free Software Foundation, Inc.
 
 ;; Author: FSF
 ;; Keywords: terminals, i18n
@@ -1217,6 +1217,8 @@ The value nil is the same as the list (UTF8_STRING COMPOUND_TEXT STRING)."
 	(remove-text-properties 0 (length text) '(foreign-selection nil) text))
     text))
 
+(defvar x-select-enable-clipboard)	; common-win
+
 ;; Return the value of the current X selection.
 ;; Consult the selection.  Treat empty strings as if they were unset.
 ;; If this function is called twice and finds the same text,
@@ -1324,6 +1326,8 @@ Request data types in the order specified by `x-select-request-type'."
 ;;; Window system initialization.
 
 (defun x-win-suspend-error ()
+  "Report an error when a suspend is attempted.
+This returns an error if any Emacs frames are X frames, or always under W32."
   ;; Don't allow suspending if any of the frames are X frames.
   (if (memq 'x (mapcar 'window-system (frame-list)))
       (error "Cannot suspend Emacs while running under X")))
@@ -1592,6 +1596,8 @@ This uses `icon-map-list' to map icon file names to stock icon names."
 		     icon-map (cdr icon-map)))
 	     (and value (cdr value))))
 	 x-gtk-stock-cache))))
+
+(global-set-key [XF86WakeUp] 'ignore)
 
 (provide 'x-win)
 

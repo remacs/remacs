@@ -1,9 +1,9 @@
 ;;; help-mode.el --- `help-mode' used by *Help* buffers
 
-;; Copyright (C) 1985-1986, 1993-1994, 1998-2013 Free Software
+;; Copyright (C) 1985-1986, 1993-1994, 1998-2014 Free Software
 ;; Foundation, Inc.
 
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: help, internal
 ;; Package: emacs
 
@@ -37,6 +37,8 @@
     (set-keymap-parent map (make-composed-keymap button-buffer-map
                                                  special-mode-map))
     (define-key map [mouse-2] 'help-follow-mouse)
+    (define-key map "l" 'help-go-back)
+    (define-key map "r" 'help-go-forward)
     (define-key map "\C-c\C-b" 'help-go-back)
     (define-key map "\C-c\C-f" 'help-go-forward)
     (define-key map [XF86Back] 'help-go-back)
@@ -295,16 +297,8 @@ Commands:
 
 ;;;###autoload
 (defun help-mode-finish ()
-  (when (eq major-mode 'help-mode)
+  (when (derived-mode-p 'help-mode)
     (setq buffer-read-only t)
-    (save-excursion
-      (goto-char (point-min))
-      (let ((inhibit-read-only t))
-	(when (re-search-forward "^This [^[:space:]]+ is advised.$" nil t)
-	  (put-text-property (match-beginning 0)
-			     (match-end 0)
-			     'face 'font-lock-warning-face))))
-
     (help-make-xrefs (current-buffer))))
 
 ;; Grokking cross-reference information in doc strings and

@@ -1,6 +1,6 @@
 ;;; ansi-color.el --- translate ANSI escape sequences into faces -*- lexical-binding: t -*-
 
-;; Copyright (C) 1999-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1999-2014 Free Software Foundation, Inc.
 
 ;; Author: Alex Schroeder <alex@gnu.org>
 ;; Maintainer: Alex Schroeder <alex@gnu.org>
@@ -117,7 +117,7 @@ map.  This color map is stored in the variable `ansi-color-map'."
   :group 'ansi-colors)
 
 (defcustom ansi-color-names-vector
-  ["black" "red" "green" "yellow" "blue" "magenta" "cyan" "white"]
+  ["black" "red3" "green3" "yellow3" "blue2" "magenta3" "cyan3" "gray90"]
   "Colors used for SGR control sequences determining a color.
 This vector holds the colors used for SGR control sequences parameters
 30 to 37 (foreground colors) and 40 to 47 (background colors).
@@ -147,13 +147,14 @@ foreground and background colors, respectively."
                  (choice color (cons color color)))
   :set 'ansi-color-map-update
   :initialize 'custom-initialize-default
+  :version "24.4" ; default colors copied from `xterm-standard-colors'
   :group 'ansi-colors)
 
 (defconst ansi-color-regexp "\033\\[\\([0-9;]*m\\)"
   "Regexp that matches SGR control sequences.")
 
 (defconst ansi-color-drop-regexp
-  "\033\\[\\([ABCDsuK]\\|2J\\|=[0-9]+[hI]\\|[0-9;]*[Hf]\\)"
+  "\033\\[\\([ABCDsuK]\\|[12][JK]\\|=[0-9]+[hI]\\|[0-9;]*[Hf]\\)"
   "Regexp that matches ANSI control sequences to silently drop.")
 
 (defconst ansi-color-parameter-regexp "\\([0-9]*\\)[m;]"

@@ -1,6 +1,6 @@
 ;;; vc-cvs.el --- non-resident support for CVS version-control  -*- lexical-binding: t -*-
 
-;; Copyright (C) 1995, 1998-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1995, 1998-2014 Free Software Foundation, Inc.
 
 ;; Author:      FSF (see vc.el for full credits)
 ;; Maintainer:  Andre Spiegel <spiegel@gnu.org>
@@ -1226,12 +1226,15 @@ is non-nil."
                    table (lambda () (vc-cvs-revision-table (car files))))))
     table))
 
+(defun vc-cvs-find-admin-dir (file)
+  "Return the administrative directory of FILE."
+  (vc-find-root file "CVS"))
+
 (defun vc-cvs-ignore (file &optional _directory _remove)
   "Ignore FILE under CVS."
-  (cvs-append-to-ignore (file-name-directory file) file))
+  (vc-cvs-append-to-ignore (file-name-directory file) file))
 
-;; FIXME This should be in the vc-cvs- namespace if it is to live here.
-(defun cvs-append-to-ignore (dir str &optional old-dir)
+(defun vc-cvs-append-to-ignore (dir str &optional old-dir)
   "In DIR, add STR to the .cvsignore file.
 If OLD-DIR is non-nil, then this is a directory that we don't want
 to hear about anymore."

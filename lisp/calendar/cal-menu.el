@@ -1,6 +1,6 @@
 ;;; cal-menu.el --- calendar functions for menu bar and popup menu support
 
-;; Copyright (C) 1994-1995, 2001-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1994-1995, 2001-2014 Free Software Foundation, Inc.
 
 ;; Author: Edward M. Reingold <reingold@cs.uiuc.edu>
 ;;         Lara Rios <lrios@coewl.cen.uiuc.edu>
@@ -56,6 +56,11 @@
      ["One time" diary-bahai-insert-entry]
      ["Monthly" diary-bahai-insert-monthly-entry]
      ["Yearly" diary-bahai-insert-yearly-entry])
+    ("Insert Chinese"
+     ["One time" diary-chinese-insert-entry]
+     ["Monthly" diary-chinese-insert-monthly-entry]
+     ["Yearly" diary-chinese-insert-yearly-entry]
+     ["Anniversary" diary-chinese-insert-anniversary-entry])
     ("Insert Islamic"
      ["One time" diary-islamic-insert-entry]
      ["Monthly" diary-islamic-insert-monthly-entry]

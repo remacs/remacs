@@ -1,8 +1,8 @@
 ;;; syntax.el --- helper functions to find syntactic context  -*- lexical-binding: t -*-
 
-;; Copyright (C) 2000-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2000-2014 Free Software Foundation, Inc.
 
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: internal
 
 ;; This file is part of GNU Emacs.
@@ -405,9 +405,14 @@ point (where the PPSS is equivalent to nil).")
 (defun syntax-ppss (&optional pos)
   "Parse-Partial-Sexp State at POS, defaulting to point.
 The returned value is the same as that of `parse-partial-sexp'
-run from point-min to POS except that values at positions 2 and 6
+run from `point-min' to POS except that values at positions 2 and 6
 in the returned list (counting from 0) cannot be relied upon.
-Point is at POS when this function returns."
+Point is at POS when this function returns.
+
+It is necessary to call `syntax-ppss-flush-cache' explicitly if
+this function is called while `before-change-functions' is
+temporarily let-bound, or if the buffer is modified without
+running the hook."
   ;; Default values.
   (unless pos (setq pos (point)))
   (syntax-propertize pos)

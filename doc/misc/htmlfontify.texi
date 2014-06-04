@@ -3,19 +3,21 @@
 @setfilename ../../info/htmlfontify
 @settitle Htmlfontify User Manual
 @exampleindent 2
+@documentencoding UTF-8
 @comment %**end of header
 
 @copying
 This manual documents Htmlfontify, a source code -> crosslinked +
 formatted + syntax colorized html transformer.
 
-Copyright @copyright{} 2002, 2003, 2013 Free Software Foundation, Inc.
+Copyright @copyright{} 2002-2003, 2013-2014 Free Software Foundation,
+Inc.
 
 @quotation
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
 any later version published by the Free Software Foundation; with no
-Invariant Sections, with the Front-Cover texts being ``A GNU Manual,''
+Invariant Sections, with the Front-Cover Texts being ``A GNU Manual,''
 and with the Back-Cover Texts as in (a) below.  A copy of the license
 is included in the section entitled ``GNU Free Documentation License''.
 
@@ -26,7 +28,7 @@ modify this GNU manual.''
 
 @dircategory Emacs misc features
 @direntry
-* Htmlfontify: (htmlfontify).    Convert source code to html.
+* Htmlfontify: (htmlfontify).   Convert source code to html.
 @end direntry
 
 @titlepage
@@ -56,7 +58,7 @@ modify this GNU manual.''
 @menu
 * Introduction::                   About Htmlfontify.
 * Usage & Examples::               How to use Htmlfontify.
-* Customization::                  Fine-tuning Htmlfontify's behaviour.
+* Customization::                  Fine-tuning Htmlfontify's behavior.
 * Requirements::                   External programs used by Htmlfontify.
 * GNU Free Documentation License:: The license for this documentation.
 * Index::                          Index of contents.
@@ -819,7 +821,7 @@ which @emph{didn't} clash with @var{class} was returned.  In versions
 from 0.18 onwards, each font attribute list is scored, and the
 non-conflicting list with the highest score is returned.  (A specification
 with a class of @code{t} is considered to match any class you specify.
-This matches Emacs's behaviour when deciding on which face attributes to
+This matches Emacs's behavior when deciding on which face attributes to
 use, to the best of my understanding ).
 
 If @var{class} is nil, then you just get get whatever
@@ -1587,3 +1589,7 @@ A copy of the @code{file} command.
 
 @setchapternewpage odd
 @bye
+
+@c Local Variables:
+@c coding: utf-8
+@c End:

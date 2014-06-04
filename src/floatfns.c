@@ -1,7 +1,6 @@
 /* Primitive operations on floating point for GNU Emacs Lisp interpreter.
 
-Copyright (C) 1988, 1993-1994, 1999, 2001-2013 Free Software Foundation,
-Inc.
+Copyright (C) 1988, 1993-1994, 1999, 2001-2014 Free Software Foundation, Inc.
 
 Author: Wolfgang Rupprecht
 (according to ack.texi)
@@ -46,12 +45,13 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include <math.h>
 
-#ifndef isfinite
-# define isfinite(x) ((x) - (x) == 0)
-#endif
-#ifndef isnan
-# define isnan(x) ((x) != (x))
-#endif
+/* 'isfinite' and 'isnan' cause build failures on Solaris 10 with the
+   bundled GCC in c99 mode.  Work around the bugs with simple
+   implementations that are good enough.  */
+#undef isfinite
+#define isfinite(x) ((x) - (x) == 0)
+#undef isnan
+#define isnan(x) ((x) != (x))
 
 /* Check that X is a floating point number.  */
 
@@ -141,7 +141,7 @@ DEFUN ("tan", Ftan, Stan, 1, 1, 0,
 }
 
 DEFUN ("isnan", Fisnan, Sisnan, 1, 1, 0,
-       doc: /* Return non nil iff argument X is a NaN.  */)
+       doc: /* Return non nil if argument X is a NaN.  */)
   (Lisp_Object x)
 {
   CHECK_FLOAT (x);
@@ -427,7 +427,9 @@ round2 (EMACS_INT i1, EMACS_INT i2)
 static double
 emacs_rint (double d)
 {
-  return floor (d + 0.5);
+  double d1 = d + 0.5;
+  double r = floor (d1);
+  return r - (r == d1 && fmod (r, 2) != 0);
 }
 #endif
 

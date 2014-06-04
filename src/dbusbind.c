@@ -1,5 +1,5 @@
 /* Elisp bindings for D-Bus.
-   Copyright (C) 2007-2013 Free Software Foundation, Inc.
+   Copyright (C) 2007-2014 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -42,7 +42,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 
 /* Subroutines.  */
-static Lisp_Object Qdbus_init_bus;
+static Lisp_Object Qdbus__init_bus;
 static Lisp_Object Qdbus_get_unique_name;
 static Lisp_Object Qdbus_message_internal;
 
@@ -142,10 +142,7 @@ static bool xd_in_read_queued_messages = 0;
   } while (0)
 
 #else /* !DBUS_DEBUG */
-# if __STDC_VERSION__ < 199901
-#  define XD_DEBUG_MESSAGE (void) /* Pre-C99 compilers cannot debug.  */
-# else
-#  define XD_DEBUG_MESSAGE(...)						\
+# define XD_DEBUG_MESSAGE(...)						\
   do {									\
     if (!NILP (Vdbus_debug))						\
       {									\
@@ -154,7 +151,6 @@ static bool xd_in_read_queued_messages = 0;
 	message ("%s: %s", __func__, s);				\
       }									\
   } while (0)
-# endif
 # define XD_DEBUG_VALID_LISP_OBJECT_P(object)
 #endif
 
@@ -973,6 +969,13 @@ xd_get_connection_references (DBusConnection *connection)
   return *refcount;
 }
 
+/* Convert a Lisp D-Bus object to a pointer.  */
+static DBusConnection*
+xd_lisp_dbus_to_dbus (Lisp_Object bus)
+{
+  return (DBusConnection *) (intptr_t) XFASTINT (bus);
+}
+
 /* Return D-Bus connection address.  BUS is either a Lisp symbol,
    :system or :session, or a string denoting the bus address.  */
 static DBusConnection *
@@ -985,7 +988,7 @@ xd_get_connection_address (Lisp_Object bus)
   if (NILP (val))
     XD_SIGNAL2 (build_string ("No connection to bus"), bus);
   else
-    connection = (DBusConnection *) (intptr_t) XFASTINT (val);
+    connection = xd_lisp_dbus_to_dbus (val);
 
   if (!dbus_connection_get_is_connected (connection))
     XD_SIGNAL2 (build_string ("No connection to bus"), bus);
@@ -1080,14 +1083,21 @@ xd_close_bus (Lisp_Object bus)
 {
   DBusConnection *connection;
   Lisp_Object val;
+  Lisp_Object busobj;
 
   /* Check whether we are connected.  */
   val = Fassoc (bus, xd_registered_buses);
   if (NILP (val))
     return;
 
+  busobj = CDR_SAFE (val);
+  if (NILP (busobj)) {
+    xd_registered_buses = Fdelete (val, xd_registered_buses);
+    return;
+  }
+
   /* Retrieve bus address.  */
-  connection = xd_get_connection_address (bus);
+  connection = xd_lisp_dbus_to_dbus (busobj);
 
   if (xd_get_connection_references (connection) == 1)
     {
@@ -1107,8 +1117,11 @@ xd_close_bus (Lisp_Object bus)
   return;
 }
 
-DEFUN ("dbus-init-bus", Fdbus_init_bus, Sdbus_init_bus, 1, 2, 0,
+DEFUN ("dbus--init-bus", Fdbus__init_bus, Sdbus__init_bus, 1, 2, 0,
        doc: /* Establish the connection to D-Bus BUS.
+
+This function is dbus internal.  You almost certainly want to use
+`dbus-init-bus'.
 
 BUS can be either the symbol `:system' or the symbol `:session', or it
 can be a string denoting the address of the corresponding bus.  For
@@ -1728,8 +1741,8 @@ void
 syms_of_dbusbind (void)
 {
 
-  DEFSYM (Qdbus_init_bus, "dbus-init-bus");
-  defsubr (&Sdbus_init_bus);
+  DEFSYM (Qdbus__init_bus, "dbus--init-bus");
+  defsubr (&Sdbus__init_bus);
 
   DEFSYM (Qdbus_get_unique_name, "dbus-get-unique-name");
   defsubr (&Sdbus_get_unique_name);

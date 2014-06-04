@@ -1,6 +1,6 @@
 ;;; tramp-compat.el --- Tramp compatibility functions
 
-;; Copyright (C) 2007-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2007-2014 Free Software Foundation, Inc.
 
 ;; Author: Michael Albinus <michael.albinus@gmx.de>
 ;; Keywords: comm, processes
@@ -416,6 +416,13 @@ Not actually used.  Use `(format \"%o\" i)' instead?"
 		directory 'full "^\\([^.]\\|\\.\\([^.]\\|\\..\\)\\).*")))
      (delete-directory directory))))
 
+;; MUST-SUFFIX doesn't exist on XEmacs.
+(defun tramp-compat-load (file &optional noerror nomessage nosuffix must-suffix)
+  "Like `load' for Tramp files (compat function)."
+  (if must-suffix
+      (tramp-compat-funcall 'load file noerror nomessage nosuffix must-suffix)
+    (load file noerror nomessage nosuffix)))
+
 ;; `number-sequence' does not exist in XEmacs.  Implementation is
 ;; taken from Emacs 23.
 (defun tramp-compat-number-sequence (from &optional to inc)
@@ -471,7 +478,7 @@ element is not omitted."
 
      ;; Fallback, if there is no Lisp support yet.
      (t (let ((default-directory
-		(if (file-remote-p default-directory)
+		(if (tramp-tramp-file-p default-directory)
 		    (tramp-compat-temporary-file-directory)
 		  default-directory))
 	      (unix95 (getenv "UNIX95"))
@@ -580,6 +587,7 @@ and replace a sub-expression, e.g.
 
 (add-hook 'tramp-unload-hook
 	  (lambda ()
+	    (unload-feature 'tramp-loaddefs 'force)
 	    (unload-feature 'tramp-compat 'force)))
 
 (provide 'tramp-compat)

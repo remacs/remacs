@@ -1,6 +1,6 @@
 ;;; esh-util.el --- general utilities  -*- lexical-binding:t -*-
 
-;; Copyright (C) 1999-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1999-2014 Free Software Foundation, Inc.
 
 ;; Author: John Wiegley <johnw@gnu.org>
 
@@ -144,7 +144,7 @@ function `string-to-number'."
 Otherwise, evaluates FORM with no error handling."
   (declare (indent 2))
   (if eshell-handle-errors
-      `(condition-case ,tag
+      `(condition-case-unless-debug ,tag
 	   ,form
 	 ,@handlers)
     form))
@@ -217,8 +217,7 @@ then quoting is done by a backslash, rather than a doubled delimiter."
 (defun eshell-sublist (l &optional n m)
   "Return from LIST the N to M elements.
 If N or M is nil, it means the end of the list."
-  (let* ((a (copy-sequence l))
-	 result)
+  (let ((a (copy-sequence l)))
     (if (and m (consp (nthcdr m a)))
 	(setcdr (nthcdr m a) nil))
     (if n
@@ -478,10 +477,10 @@ list."
 (defalias 'eshell-user-name 'user-login-name)
 
 (defun eshell-read-hosts-file (filename)
-  "Read in the hosts from the /etc/hosts file."
+  "Read in the hosts from FILENAME, default `eshell-hosts-file'."
   (let (hosts)
     (with-temp-buffer
-      (insert-file-contents eshell-hosts-file)
+      (insert-file-contents (or filename eshell-hosts-file))
       (goto-char (point-min))
       (while (re-search-forward
 	      "^\\([^#[:space:]]+\\)\\s-+\\(\\S-+\\)\\(\\s-*\\(\\S-+\\)\\)?" nil t)
@@ -540,20 +539,17 @@ Unless optional argument INPLACE is non-nil, return a new string."
 
 (defmacro eshell-with-file-modes (modes &rest forms)
   "Evaluate, with file-modes set to MODES, the given FORMS."
-  `(let ((modes (default-file-modes)))
-     (set-default-file-modes ,modes)
-     (unwind-protect
-	 (progn ,@forms)
-       (set-default-file-modes modes))))
+  (declare (obsolete with-file-modes "24.5"))
+  `(with-file-modes ,modes ,@forms))
 
 (defmacro eshell-with-private-file-modes (&rest forms)
   "Evaluate FORMS with private file modes set."
-  `(eshell-with-file-modes ,eshell-private-file-modes ,@forms))
+  `(with-file-modes ,eshell-private-file-modes ,@forms))
 
 (defsubst eshell-make-private-directory (dir &optional parents)
   "Make DIR with file-modes set to `eshell-private-directory-modes'."
-  (eshell-with-file-modes eshell-private-directory-modes
-			  (make-directory dir parents)))
+  (with-file-modes eshell-private-directory-modes
+    (make-directory dir parents)))
 
 (defsubst eshell-substring (string sublen)
   "Return the beginning of STRING, up to SUBLEN bytes."
@@ -564,9 +560,11 @@ Unless optional argument INPLACE is non-nil, return a new string."
 
 (defvar ange-cache)
 
+;; Partial reimplementation of Emacs's builtin directory-files-and-attributes.
+;; id-format not implemented.
 (and (featurep 'xemacs)
      (not (fboundp 'directory-files-and-attributes))
-     (defun directory-files-and-attributes (directory &optional full match nosort id-format)
+     (defun directory-files-and-attributes (directory &optional full match nosort _id-format)
     "Return a list of names of files and their attributes in DIRECTORY.
 There are three optional arguments:
 If FULL is non-nil, return absolute file names.  Otherwise return names

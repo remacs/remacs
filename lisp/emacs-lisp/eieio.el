@@ -1,7 +1,7 @@
 ;;; eieio.el --- Enhanced Implementation of Emacs Interpreted Objects
 ;;;              or maybe Eric's Implementation of Emacs Interpreted Objects
 
-;; Copyright (C) 1995-1996, 1998-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1995-1996, 1998-2014 Free Software Foundation, Inc.
 
 ;; Author: Eric M. Ludlam <zappo@gnu.org>
 ;; Version: 1.4
@@ -246,13 +246,13 @@ Where each VAR is the local variable given to the associated
 SLOT.  A slot specified without a variable name is given a
 variable name of the same name as the slot."
   (declare (indent 2))
-  ;; Transform the spec-list into a symbol-macrolet spec-list.
+  ;; Transform the spec-list into a cl-symbol-macrolet spec-list.
   (let ((mappings (mapcar (lambda (entry)
 			    (let ((var  (if (listp entry) (car entry) entry))
 				  (slot (if (listp entry) (cadr entry) entry)))
 			      (list var `(slot-value ,object ',slot))))
 			  spec-list)))
-    (append (list 'symbol-macrolet mappings)
+    (append (list 'cl-symbol-macrolet mappings)
 	    body)))
 
 ;;; Simple generators, and query functions.  None of these would do
@@ -322,7 +322,7 @@ The CLOS function `class-direct-subclasses' is aliased to this function."
 (defmacro eieio-class-parent (class)
   "Return first parent class to CLASS.  (overload of variable)."
   `(car (eieio-class-parents ,class)))
-(define-obsolete-function-alias 'class-parent #'eieio-class-parent "24.4")
+(define-obsolete-function-alias 'class-parent 'eieio-class-parent "24.4")
 
 (defun same-class-p (obj class) "Return t if OBJ is of class-type CLASS."
   (eieio--check-type class-p class)
@@ -865,6 +865,10 @@ This may create or delete slots, but does not affect the return value
 of `eq'."
   (error "EIEIO: `change-class' is unimplemented"))
 
+;; Hook ourselves into help system for describing classes and methods.
+(add-hook 'help-fns-describe-function-functions 'eieio-help-generic)
+(add-hook 'help-fns-describe-function-functions 'eieio-help-constructor)
+
 ;;; Interfacing with edebug
 ;;
 (defun eieio-edebug-prin1-to-string (object &optional noescape)
@@ -909,14 +913,10 @@ Optional argument NOESCAPE is passed to `prin1-to-string' when appropriate."
 	    )
 	  )
 
-;;; Autoloading some external symbols, and hooking into the help system
-;;
-
 
 ;;; Start of automatically extracted autoloads.
 
-;;;### (autoloads (customize-object) "eieio-custom" "eieio-custom.el"
-;;;;;;  "928623502e8bf40454822355388542b5")
+;;;### (autoloads nil "eieio-custom" "eieio-custom.el" "5b0e7b1beea11f9e9de6887279f75d61")
 ;;; Generated autoloads from eieio-custom.el
 
 (autoload 'customize-object "eieio-custom" "\
@@ -927,9 +927,7 @@ Optional argument GROUP is the sub-group of slots to display.
 
 ;;;***
 
-;;;### (autoloads (eieio-help-mode-augmentation-maybee eieio-describe-generic
-;;;;;;  eieio-describe-constructor eieio-describe-class eieio-browse)
-;;;;;;  "eieio-opt" "eieio-opt.el" "d808328f9c0156ecbd412d77ba8c569e")
+;;;### (autoloads nil "eieio-opt" "eieio-opt.el" "99b94c63a73593402e3c825178a44f4f")
 ;;; Generated autoloads from eieio-opt.el
 
 (autoload 'eieio-browse "eieio-opt" "\
@@ -938,33 +936,22 @@ If optional ROOT-CLASS, then start with that, otherwise start with
 variable `eieio-default-superclass'.
 
 \(fn &optional ROOT-CLASS)" t nil)
-(defalias 'describe-class 'eieio-describe-class)
 
-(autoload 'eieio-describe-class "eieio-opt" "\
-Describe a CLASS defined by a string or symbol.
+(autoload 'eieio-help-class "eieio-opt" "\
+Print help description for CLASS.
 If CLASS is actually an object, then also display current values of that object.
-Optional HEADERFCN should be called to insert a few bits of info first.
 
-\(fn CLASS &optional HEADERFCN)" t nil)
+\(fn CLASS)" nil nil)
 
-(autoload 'eieio-describe-constructor "eieio-opt" "\
-Describe the constructor function FCN.
-Uses `eieio-describe-class' to describe the class being constructed.
+(autoload 'eieio-help-constructor "eieio-opt" "\
+Describe CTR if it is a class constructor.
 
-\(fn FCN)" t nil)
-(defalias 'describe-generic 'eieio-describe-generic)
+\(fn CTR)" nil nil)
 
-(autoload 'eieio-describe-generic "eieio-opt" "\
-Describe the generic function GENERIC.
-Also extracts information about all methods specific to this generic.
+(autoload 'eieio-help-generic "eieio-opt" "\
+Describe GENERIC if it is a generic function.
 
-\(fn GENERIC)" t nil)
-
-(autoload 'eieio-help-mode-augmentation-maybee "eieio-opt" "\
-For buffers thrown into help mode, augment for EIEIO.
-Arguments UNUSED are not used.
-
-\(fn &rest UNUSED)" nil nil)
+\(fn GENERIC)" nil nil)
 
 ;;;***
 

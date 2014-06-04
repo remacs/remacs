@@ -1,6 +1,6 @@
 ;;; url-news.el --- News Uniform Resource Locator retrieval code
 
-;; Copyright (C) 1996-1999, 2004-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1996-1999, 2004-2014 Free Software Foundation, Inc.
 
 ;; Keywords: comm, data, processes
 
@@ -70,8 +70,7 @@
 		"    </xmp>\n"
 		"   </p>\n"
 		"   <p>\n"
-		"    If you If you feel this is an error, <a href=\""
-		"mailto:" url-bug-address "\">send mail</a>\n"
+		"    If you feel this is an error, M-x report-emacs-bug RET.\n"
 		"   </p>\n"
 		"  </div>\n"
 		" </body>\n"

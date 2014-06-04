@@ -1,5 +1,5 @@
 /* Functions for memory limit warnings.
-   Copyright (C) 1990, 1992, 2001-2013 Free Software Foundation, Inc.
+   Copyright (C) 1990, 1992, 2001-2014 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -71,15 +71,6 @@ static char *data_space_start;
 /* Number of bytes of writable memory we can expect to be able to get.  */
 static size_t lim_data;
 
-/* Return true if PTR cannot be represented as an Emacs Lisp object.  */
-static bool
-exceeds_lisp_ptr (void *ptr)
-{
-  return (! USE_LSB_TAG
-	  && VAL_MAX < UINTPTR_MAX
-	  && ((uintptr_t) ptr & ~DATA_SEG_BITS) >> VALBITS != 0);
-}
-
 #ifdef HAVE_GETRLIMIT
 
 # ifndef RLIMIT_AS
@@ -222,9 +213,6 @@ check_memory_limits (void)
       else if (warnlevel > warned_85 && data_size < five_percent * 18)
 	warnlevel = warned_85;
     }
-
-  if (exceeds_lisp_ptr (cp))
-    (*warn_function) ("Warning: memory in use exceeds lisp pointer size");
 }
 
 /* Enable memory usage warnings.

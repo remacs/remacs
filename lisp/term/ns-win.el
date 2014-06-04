@@ -1,6 +1,6 @@
 ;;; ns-win.el --- lisp side of interface with NeXT/Open/GNUstep/MacOS X window system  -*- lexical-binding: t -*-
 
-;; Copyright (C) 1993-1994, 2005-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1993-1994, 2005-2014 Free Software Foundation, Inc.
 
 ;; Authors: Carl Edman
 ;;	Christian Limpach
@@ -50,6 +50,7 @@
 (require 'faces)
 (require 'menu-bar)
 (require 'fontset)
+(require 'dnd)
 
 (defgroup ns nil
   "GNUstep/Mac OS X specific features."
@@ -58,7 +59,8 @@
 ;;;; Command line argument handling.
 
 (defvar x-invocation-args)
-(defvar ns-command-line-resources nil)  ; FIXME unused?
+;; Set in term/common-win.el; currently unused by Nextstep's x-open-connection.
+(defvar x-command-line-resources)
 
 ;; nsterm.m.
 (defvar ns-input-file)
@@ -160,10 +162,6 @@ The properties returned may include `top', `left', `height', and `width'."
 (define-key global-map [ns-power-off] 'save-buffers-kill-emacs)
 (define-key global-map [ns-open-file] 'ns-find-file)
 (define-key global-map [ns-open-temp-file] [ns-open-file])
-(define-key global-map [ns-drag-file] 'ns-find-file)
-(define-key global-map [ns-drag-color] 'ns-set-foreground-at-mouse)
-(define-key global-map [S-ns-drag-color] 'ns-set-background-at-mouse)
-(define-key global-map [ns-drag-text] 'ns-insert-text)
 (define-key global-map [ns-change-font] 'ns-respond-to-change-font)
 (define-key global-map [ns-open-file-line] 'ns-open-file-select-line)
 (define-key global-map [ns-spi-service-call] 'ns-spi-service-call)
@@ -365,14 +363,6 @@ See `ns-insert-working-text'."
 
 ;;;; Inter-app communications support.
 
-(defvar ns-input-text)			; nsterm.m
-
-(defun ns-insert-text ()
-  "Insert contents of `ns-input-text' at point."
-  (interactive)
-  (insert ns-input-text)
-  (setq ns-input-text nil))
-
 (defun ns-insert-file ()
   "Insert contents of file `ns-input-file' like insert-file but with less
 prompting.  If file is a directory perform a `find-file' on it."
@@ -518,6 +508,50 @@ unless the current buffer is a scratch buffer."
       (ns-hide-emacs 'activate)
       (find-file f)))))
 
+
+(defun ns-drag-n-drop (event &optional new-frame force-text)
+  "Edit the files listed in the drag-n-drop EVENT.
+Switch to a buffer editing the last file dropped."
+  (interactive "e")
+  (let* ((window (posn-window (event-start event)))
+         (arg (car (cdr (cdr event))))
+         (type (car arg))
+         (data (car (cdr arg)))
+         (url-or-string (cond ((eq type 'file)
+                               (concat "file:" data))
+                              (t data))))
+    (set-frame-selected-window nil window)
+    (when new-frame
+      (select-frame (make-frame)))
+    (raise-frame)
+    (setq window (selected-window))
+    (if force-text
+        (dnd-insert-text window 'private data)
+      (dnd-handle-one-url window 'private url-or-string))))
+
+
+(defun ns-drag-n-drop-other-frame (event)
+  "Edit the files listed in the drag-n-drop EVENT, in other frames.
+May create new frames, or reuse existing ones.  The frame editing
+the last file dropped is selected."
+  (interactive "e")
+  (ns-drag-n-drop event t))
+
+(defun ns-drag-n-drop-as-text (event)
+  "Drop the data in EVENT as text."
+  (interactive "e")
+  (ns-drag-n-drop event nil t))
+
+(defun ns-drag-n-drop-as-text-other-frame (event)
+  "Drop the data in EVENT as text in a new frame."
+  (interactive "e")
+  (ns-drag-n-drop event t t))
+
+(global-set-key [drag-n-drop] 'ns-drag-n-drop)
+(global-set-key [C-drag-n-drop] 'ns-drag-n-drop-other-frame)
+(global-set-key [M-drag-n-drop] 'ns-drag-n-drop-as-text)
+(global-set-key [C-M-drag-n-drop] 'ns-drag-n-drop-as-text-other-frame)
+
 ;;;; Frame-related functions.
 
 ;; nsterm.m
@@ -593,7 +627,7 @@ unless the current buffer is a scratch buffer."
                                   `(mouse-1 POSITION 1))))
         (if (y-or-n-p (format "Print buffer %s? " (buffer-name)))
             (print-buffer)
-	  (error "Cancelled")))
+	  (error "Canceled")))
     (print-buffer)))
 
 ;;;; Font support.
@@ -830,39 +864,11 @@ See the documentation of `create-fontset-from-fontset-spec' for the format.")
      (t
       nil))))
 
-(defvar ns-input-color)			; nsterm.m
+(defun ns-suspend-error ()
+  ;; Don't allow suspending if any of the frames are NS frames.
+  (if (memq 'ns (mapcar 'window-system (frame-list)))
+      (error "Cannot suspend Emacs while running under NS")))
 
-(defun ns-set-foreground-at-mouse ()
-  "Set the foreground color at the mouse location to `ns-input-color'."
-  (interactive)
-  (let* ((pos (mouse-position))
-         (frame (car pos))
-         (face (ns-face-at-pos pos)))
-    (cond
-     ((eq face 'cursor)
-      (modify-frame-parameters frame (list (cons 'cursor-color
-                                                 ns-input-color))))
-     ((not face)
-      (modify-frame-parameters frame (list (cons 'foreground-color
-                                                 ns-input-color))))
-     (t
-      (set-face-foreground face ns-input-color frame)))))
-
-(defun ns-set-background-at-mouse ()
-  "Set the background color at the mouse location to `ns-input-color'."
-  (interactive)
-  (let* ((pos (mouse-position))
-         (frame (car pos))
-         (face (ns-face-at-pos pos)))
-    (cond
-     ((eq face 'cursor)
-      (modify-frame-parameters frame (list (cons 'cursor-color
-                                                 ns-input-color))))
-     ((not face)
-      (modify-frame-parameters frame (list (cons 'background-color
-                                                 ns-input-color))))
-     (t
-      (set-face-background face ns-input-color frame)))))
 
 ;; Set some options to be as Nextstep-like as possible.
 (setq frame-title-format t
@@ -872,6 +878,7 @@ See the documentation of `create-fontset-from-fontset-spec' for the format.")
 (defvar ns-initialized nil
   "Non-nil if Nextstep windowing has been initialized.")
 
+(declare-function x-handle-args "common-win" (args))
 (declare-function ns-list-services "nsfns.m" ())
 (declare-function x-open-connection "nsfns.m"
                   (display &optional xrm-string must-succeed))
@@ -896,7 +903,26 @@ See the documentation of `create-fontset-from-fontset-spec' for the format.")
             (format "Creation of the standard fontset failed: %s" err)
             :error)))
 
-  (x-open-connection (system-name) nil t)
+  (x-open-connection (system-name) x-command-line-resources t)
+
+  ;; Add GNUstep menu items Services, Hide and Quit.  Rename Help to Info
+  ;; and put it first (i.e. omit from menu-bar-final-items.
+  (if (featurep 'gnustep)
+      (progn
+	(setq menu-bar-final-items '(buffer services hide-app quit))
+
+	;; If running under GNUstep, "Help" is moved and renamed "Info".
+	(bindings--define-key global-map [menu-bar help-menu]
+	  (cons "Info" menu-bar-help-menu))
+	(bindings--define-key global-map [menu-bar quit]
+	  '(menu-item "Quit" save-buffers-kill-emacs
+		      :help "Save unsaved buffers, then exit"))
+	(bindings--define-key global-map [menu-bar hide-app]
+	  '(menu-item "Hide" ns-do-hide-emacs
+		      :help "Hide Emacs"))
+	(bindings--define-key global-map [menu-bar services]
+	  (cons "Services" (make-sparse-keymap "Services")))))
+
 
   (dolist (service (ns-list-services))
       (if (eq (car service) 'undefined)
@@ -911,12 +937,24 @@ See the documentation of `create-fontset-from-fontset-spec' for the format.")
   ;; FIXME: This will surely lead to "MODIFIED OUTSIDE CUSTOM" warnings.
   (menu-bar-mode (if (get-lisp-resource nil "Menus") 1 -1))
 
+  ;; For Darwin nothing except UTF-8 makes sense.
+  (when (eq system-type 'darwin)
+      (add-hook 'before-init-hook
+                #'(lambda ()
+                    (setq locale-coding-system 'utf-8-unix)
+                    (setq default-process-coding-system
+                          '(utf-8-unix . utf-8-unix)))))
+
   ;; OS X Lion introduces PressAndHold, which is unsupported by this port.
   ;; See this thread for more details:
   ;; http://lists.gnu.org/archive/html/emacs-devel/2011-06/msg00505.html
   (ns-set-resource nil "ApplePressAndHoldEnabled" "NO")
 
   (x-apply-session-resources)
+
+  ;; Don't let Emacs suspend under NS.
+  (add-hook 'suspend-hook 'ns-suspend-error)
+
   (setq ns-initialized t))
 
 ;; Any display name is OK.

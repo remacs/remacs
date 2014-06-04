@@ -1,5 +1,5 @@
 /* Font backend for the Microsoft W32 Uniscribe API.
-   Copyright (C) 2008-2013 Free Software Foundation, Inc.
+   Copyright (C) 2008-2014 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -135,7 +135,7 @@ uniscribe_open (struct frame *f, Lisp_Object font_entity, int pixel_size)
 }
 
 static void
-uniscribe_close (struct frame *f, struct font *font)
+uniscribe_close (struct font *font)
 {
   struct uniscribe_font_info *uniscribe_font
     = (struct uniscribe_font_info *) font;
@@ -143,7 +143,7 @@ uniscribe_close (struct frame *f, struct font *font)
   if (uniscribe_font->cache)
     ScriptFreeCache (&(uniscribe_font->cache));
 
-  w32font_close (f, font);
+  w32font_close (font);
 }
 
 /* Return a list describing which scripts/languages FONT supports by
@@ -964,7 +964,7 @@ font_table_error:
 
 struct font_driver uniscribe_font_driver =
   {
-    0, /* Quniscribe */
+    LISP_INITIALLY_ZERO, /* Quniscribe */
     0, /* case insensitive */
     w32font_get_cache,
     uniscribe_list,

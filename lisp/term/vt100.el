@@ -1,6 +1,6 @@
 ;;; vt100.el --- define VT100 function key sequences in function-key-map
 
-;; Copyright (C) 1989, 1993, 2001-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1989, 1993, 2001-2014 Free Software Foundation, Inc.
 
 ;; Author: FSF
 ;; Keywords: terminals
@@ -21,8 +21,6 @@
 ;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Commentary:
-
-;; Uses the Emacs 19 terminal initialization features --- won't work with 18.
 
 ;; Handles all VT100 clones, including the Apollo terminal.  Also handles
 ;; the VT200 --- its PF- and arrow- keys are different, but all those

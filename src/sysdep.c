@@ -1,5 +1,5 @@
 /* Interfaces to system-dependent kernel and library entries.
-   Copyright (C) 1985-1988, 1993-1995, 1999-2013 Free Software
+   Copyright (C) 1985-1988, 1993-1995, 1999-2014 Free Software
    Foundation, Inc.
 
 This file is part of GNU Emacs.
@@ -18,8 +18,6 @@ You should have received a copy of the GNU General Public License
 along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include <config.h>
-
-#define SYSTIME_INLINE EXTERN_INLINE
 
 #include <execinfo.h>
 #include "sysstdio.h"
@@ -130,7 +128,7 @@ static const int baud_convert[] =
 /* Return the current working directory.  Returns NULL on errors.
    Any other returned value must be freed with free. This is used
    only when get_current_dir_name is not defined on the system.  */
-char*
+char *
 get_current_dir_name (void)
 {
   char *buf;
@@ -257,7 +255,7 @@ init_baud_rate (int fd)
 #endif /* not DOS_NT */
     }
 
-  baud_rate = (emacs_ospeed < sizeof baud_convert / sizeof baud_convert[0]
+  baud_rate = (emacs_ospeed < ARRAYELTS (baud_convert)
 	       ? baud_convert[emacs_ospeed] : 9600);
   if (baud_rate == 0)
     baud_rate = 1200;
@@ -466,7 +464,11 @@ sys_subshell (void)
 {
 #ifdef DOS_NT	/* Demacs 1.1.2 91/10/20 Manabu Higashida */
   int st;
+#ifdef MSDOS
   char oldwd[MAXPATHLEN+1]; /* Fixed length is safe on MSDOS.  */
+#else
+  char oldwd[MAX_UTF8_PATH];
+#endif
 #endif
   pid_t pid;
   int status;
@@ -601,6 +603,7 @@ init_sigio (int fd)
 #endif
 }
 
+#ifndef DOS_NT
 static void
 reset_sigio (int fd)
 {
@@ -608,6 +611,7 @@ reset_sigio (int fd)
   fcntl (fd, F_SETFL, old_fcntl_flags[fd]);
 #endif
 }
+#endif
 
 void
 request_sigio (void)
@@ -690,21 +694,21 @@ init_foreground_group (void)
 /* Block and unblock SIGTTOU.  */
 
 void
-block_tty_out_signal (void)
+block_tty_out_signal (sigset_t *oldset)
 {
 #ifdef SIGTTOU
   sigset_t blocked;
   sigemptyset (&blocked);
   sigaddset (&blocked, SIGTTOU);
-  pthread_sigmask (SIG_BLOCK, &blocked, 0);
+  pthread_sigmask (SIG_BLOCK, &blocked, oldset);
 #endif
 }
 
 void
-unblock_tty_out_signal (void)
+unblock_tty_out_signal (sigset_t const *oldset)
 {
 #ifdef SIGTTOU
-  pthread_sigmask (SIG_SETMASK, &empty_mask, 0);
+  pthread_sigmask (SIG_SETMASK, oldset, 0);
 #endif
 }
 
@@ -719,10 +723,11 @@ static void
 tcsetpgrp_without_stopping (int fd, pid_t pgid)
 {
 #ifdef SIGTTOU
+  sigset_t oldset;
   block_input ();
-  block_tty_out_signal ();
+  block_tty_out_signal (&oldset);
   tcsetpgrp (fd, pgid);
-  unblock_tty_out_signal ();
+  unblock_tty_out_signal (&oldset);
   unblock_input ();
 #endif
 }
@@ -1504,7 +1509,9 @@ emacs_sigaction_init (struct sigaction *action, signal_handler_t handler)
   /* When handling a signal, block nonfatal system signals that are caught
      by Emacs.  This makes race conditions less likely.  */
   sigaddset (&action->sa_mask, SIGALRM);
+#ifdef SIGCHLD
   sigaddset (&action->sa_mask, SIGCHLD);
+#endif
 #ifdef SIGDANGER
   sigaddset (&action->sa_mask, SIGDANGER);
 #endif
@@ -1522,9 +1529,6 @@ emacs_sigaction_init (struct sigaction *action, signal_handler_t handler)
       sigaddset (&action->sa_mask, SIGIO);
 #endif
     }
-
-  if (! IEEE_FLOATING_POINT)
-    sigaddset (&action->sa_mask, SIGFPE);
 
   action->sa_handler = handler;
   action->sa_flags = emacs_sigaction_flags ();
@@ -1709,7 +1713,9 @@ init_signals (bool dumping)
 # ifdef SIGBUS
       sys_siglist[SIGBUS] = "Bus error";
 # endif
+# ifdef SIGCHLD
       sys_siglist[SIGCHLD] = "Child status changed";
+# endif
 # ifdef SIGCONT
       sys_siglist[SIGCONT] = "Continued";
 # endif
@@ -2180,6 +2186,9 @@ emacs_fopen (char const *file, char const *mode)
 int
 emacs_pipe (int fd[2])
 {
+#ifdef MSDOS
+  return pipe (fd);
+#else  /* !MSDOS */
   int result = pipe2 (fd, O_CLOEXEC);
   if (! O_CLOEXEC && result == 0)
     {
@@ -2187,6 +2196,7 @@ emacs_pipe (int fd[2])
       fcntl (fd[1], F_SETFD, FD_CLOEXEC);
     }
   return result;
+#endif	/* !MSDOS */
 }
 
 /* Approximate posix_close and POSIX_CLOSE_RESTART well enough for Emacs.
@@ -2259,9 +2269,9 @@ emacs_close (int fd)
    Return the number of bytes read, which might be less than NBYTE.
    On error, set errno and return -1.  */
 ptrdiff_t
-emacs_read (int fildes, char *buf, ptrdiff_t nbyte)
+emacs_read (int fildes, void *buf, ptrdiff_t nbyte)
 {
-  register ssize_t rtnval;
+  ssize_t rtnval;
 
   /* There is no need to check against MAX_RW_COUNT, since no caller ever
      passes a size that large to emacs_read.  */
@@ -2312,14 +2322,14 @@ emacs_full_write (int fildes, char const *buf, ptrdiff_t nbyte,
    interrupted or if a partial write occurs.  Return the number of
    bytes written, setting errno if this is less than NBYTE.  */
 ptrdiff_t
-emacs_write (int fildes, char const *buf, ptrdiff_t nbyte)
+emacs_write (int fildes, void const *buf, ptrdiff_t nbyte)
 {
   return emacs_full_write (fildes, buf, nbyte, 0);
 }
 
 /* Like emacs_write, but also process pending signals if interrupted.  */
 ptrdiff_t
-emacs_write_sig (int fildes, char const *buf, ptrdiff_t nbyte)
+emacs_write_sig (int fildes, void const *buf, ptrdiff_t nbyte)
 {
   return emacs_full_write (fildes, buf, nbyte, 1);
 }

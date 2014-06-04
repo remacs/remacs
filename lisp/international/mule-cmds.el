@@ -1,6 +1,6 @@
 ;;; mule-cmds.el --- commands for multilingual environment -*-coding: utf-8 -*-
 
-;; Copyright (C) 1997-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1997-2014 Free Software Foundation, Inc.
 ;; Copyright (C) 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004,
 ;;   2005, 2006, 2007, 2008, 2009, 2010, 2011
 ;;   National Institute of Advanced Industrial Science and Technology (AIST)
@@ -976,13 +976,17 @@ It is highly recommended to fix it before writing to a file."
 
 	;; Classify the defaults into safe, rejected, and unsafe.
 	(dolist (elt default-coding-system)
-	  (if (or (eq (coding-system-type (car elt)) 'undecided)
-		  (memq (cdr elt) codings))
+	  (if (memq (cdr elt) codings)
+	      ;; This is safe.  Is it acceptable?
 	      (if (and (functionp accept-default-p)
 		       (not (funcall accept-default-p (cdr elt))))
+		  ;; No, not acceptable.
 		  (push (car elt) rejected)
+		;; Yes, acceptable.
 		(push (car elt) safe))
+	    ;; This is not safe.
 	    (push (car elt) unsafe)))
+	;; If there are safe ones, the first one is what we want.
 	(if safe
 	    (setq coding-system (car safe))))
 

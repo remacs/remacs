@@ -1,6 +1,6 @@
 ;;; esh-mode.el --- user interface  -*- lexical-binding:t -*-
 
-;; Copyright (C) 1999-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1999-2014 Free Software Foundation, Inc.
 
 ;; Author: John Wiegley <johnw@gnu.org>
 
@@ -182,7 +182,7 @@ inserted.  They return the string as it should be inserted."
   :group 'eshell-mode)
 
 (defcustom eshell-password-prompt-regexp
-  "[Pp]ass\\(word\\|phrase\\).*:\\s *\\'"
+  (format "\\(%s\\).*:\\s *\\'" (regexp-opt password-word-equivalents))
   "Regexp matching prompts for passwords in the inferior process.
 This is used by `eshell-watch-for-password-prompt'."
   :type 'regexp
@@ -482,7 +482,7 @@ and the hook `eshell-exit-hook'."
 (declare-function find-tag-interactive "etags" (prompt &optional no-default))
 
 (defun eshell-find-tag (&optional tagname next-p regexp-p)
-  "A special version of `find-tag' that ignores read-onlyness."
+  "A special version of `find-tag' that ignores whether the text is read-only."
   (interactive)
   (require 'etags)
   (let ((inhibit-read-only t)
@@ -671,7 +671,7 @@ newline."
 		      (run-hooks 'eshell-input-filter-functions)
 		      (and (catch 'eshell-terminal
 			     (ignore
-			      (if (eshell-invoke-directly cmd input)
+			      (if (eshell-invoke-directly cmd)
 				  (eval cmd)
 				(eshell-eval-command cmd input))))
 			   (eshell-life-is-too-much)))))
@@ -947,11 +947,12 @@ buffer's process if STRING contains a password prompt defined by
 This function could be in the list `eshell-output-filter-functions'."
   (when (eshell-interactive-process)
     (save-excursion
-      (goto-char eshell-last-output-block-begin)
-      (beginning-of-line)
-      (if (re-search-forward eshell-password-prompt-regexp
-			     eshell-last-output-end t)
-	  (eshell-send-invisible)))))
+      (let ((case-fold-search t))
+	(goto-char eshell-last-output-block-begin)
+	(beginning-of-line)
+	(if (re-search-forward eshell-password-prompt-regexp
+			       eshell-last-output-end t)
+	    (eshell-send-invisible))))))
 
 (custom-add-option 'eshell-output-filter-functions
 		   'eshell-watch-for-password-prompt)

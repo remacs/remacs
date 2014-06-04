@@ -1,6 +1,6 @@
 ;;; em-glob.el --- extended file name globbing  -*- lexical-binding:t -*-
 
-;; Copyright (C) 1999-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1999-2014 Free Software Foundation, Inc.
 
 ;; Author: John Wiegley <johnw@gnu.org>
 
@@ -231,6 +231,8 @@ resulting regular expression."
 	    regexp
 	    (regexp-quote (substring pattern matched-in-pattern))
 	    "\\'")))
+
+(defvar ange-cache)			; XEmacs?  See esh-util
 
 (defun eshell-extended-glob (glob)
   "Return a list of files generated from GLOB, perhaps looking for DIRS-ONLY.

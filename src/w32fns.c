@@ -1,6 +1,6 @@
 /* Graphical user interface functions for the Microsoft Windows API.
 
-Copyright (C) 1989, 1992-2013 Free Software Foundation, Inc.
+Copyright (C) 1989, 1992-2014 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -51,6 +51,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #ifdef WINDOWSNT
 #include "w32heap.h"
+#include <mbstring.h>
 #endif /* WINDOWSNT */
 
 #if CYGWIN
@@ -401,12 +402,6 @@ w32_fullscreen_rect (HWND hwnd, int fsmode, RECT normal, RECT *rect)
       rect->right = mi.rcMonitor.right;
       rect->bottom = mi.rcMonitor.bottom;
       break;
-    case FULLSCREEN_MAXIMIZED:
-      rect->left = mi.rcWork.left;
-      rect->top = mi.rcWork.top;
-      rect->right = mi.rcWork.right;
-      rect->bottom = mi.rcWork.bottom;
-      break;
     case FULLSCREEN_WIDTH:
       rect->left = mi.rcWork.left;
       rect->top = normal.top;
@@ -419,7 +414,6 @@ w32_fullscreen_rect (HWND hwnd, int fsmode, RECT normal, RECT *rect)
       rect->right = normal.right;
       rect->bottom = mi.rcWork.bottom;
       break;
-    case FULLSCREEN_NONE:
     default:
       *rect = normal;
       break;
@@ -729,8 +723,7 @@ w32_default_color_map (void)
 
   cmap = Qnil;
 
-  for (i = 0; i < sizeof (w32_color_map) / sizeof (w32_color_map[0]);
-       pc++, i++)
+  for (i = 0; i < ARRAYELTS (w32_color_map); pc++, i++)
     cmap = Fcons (Fcons (build_string (pc->name),
 			 make_number (pc->colorref)),
 		  cmap);
@@ -1383,6 +1376,17 @@ x_set_mouse_color (struct frame *f, Lisp_Object arg, Lisp_Object oldval)
     horizontal_drag_cursor
       = XCreateFontCursor (FRAME_X_DISPLAY (f), XC_sb_h_double_arrow);
 
+  if (!NILP (Vx_window_vertical_drag_shape))
+    {
+      CHECK_NUMBER (Vx_window_vertical_drag_shape);
+      vertical_drag_cursor
+	= XCreateFontCursor (FRAME_X_DISPLAY (f),
+			     XINT (Vx_window_vertical_drag_shape));
+    }
+  else
+    vertical_drag_cursor
+      = XCreateFontCursor (FRAME_X_DISPLAY (f), XC_sb_v_double_arrow);
+
   /* Check and report errors with the above calls.  */
   x_check_errors (FRAME_W32_DISPLAY (f), "can't set cursor shape: %s");
   x_uncatch_errors (FRAME_W32_DISPLAY (f), count);
@@ -1623,6 +1627,7 @@ x_set_menu_bar_lines (struct frame *f, Lisp_Object value, Lisp_Object oldval)
     nlines = 0;
 
   FRAME_MENU_BAR_LINES (f) = 0;
+  FRAME_MENU_BAR_HEIGHT (f) = 0;
   if (nlines)
     FRAME_EXTERNAL_MENU_BAR (f) = 1;
   else
@@ -1634,7 +1639,7 @@ x_set_menu_bar_lines (struct frame *f, Lisp_Object value, Lisp_Object oldval)
       /* Adjust the frame size so that the client (text) dimensions
 	 remain the same.  This depends on FRAME_EXTERNAL_MENU_BAR being
 	 set correctly.  */
-      x_set_window_size (f, 0, FRAME_COLS (f), FRAME_LINES (f));
+      x_set_window_size (f, 0, FRAME_TEXT_WIDTH (f), FRAME_TEXT_HEIGHT (f), 1);
       do_pending_window_change (0);
     }
   adjust_frame_glyphs (f);
@@ -1642,16 +1647,17 @@ x_set_menu_bar_lines (struct frame *f, Lisp_Object value, Lisp_Object oldval)
 
 
 /* Set the number of lines used for the tool bar of frame F to VALUE.
-   VALUE not an integer, or < 0 means set the lines to zero.  OLDVAL
-   is the old number of tool bar lines.  This function changes the
-   height of all windows on frame F to match the new tool bar height.
-   The frame's height doesn't change.  */
+   VALUE not an integer, or < 0 means set the lines to zero.  OLDVAL is
+   the old number of tool bar lines (and is unused).  This function may
+   change the height of all windows on frame F to match the new tool bar
+   height.  By design, the frame's height doesn't change (but maybe it
+   should if we don't get enough space otherwise).  */
 
 void
 x_set_tool_bar_lines (struct frame *f, Lisp_Object value, Lisp_Object oldval)
 {
   int delta, nlines, root_height;
-  Lisp_Object root_window;
+  int unit = FRAME_LINE_HEIGHT (f);
 
   /* Treat tool bars like menu bars.  */
   if (FRAME_MINIBUF_ONLY_P (f))
@@ -1664,21 +1670,31 @@ x_set_tool_bar_lines (struct frame *f, Lisp_Object value, Lisp_Object oldval)
     nlines = 0;
 
   /* Make sure we redisplay all windows in this frame.  */
-  ++windows_or_buffers_changed;
+  windows_or_buffers_changed = 23;
 
-  delta = nlines - FRAME_TOOL_BAR_LINES (f);
+  /* DELTA is in pixels now.  */
+  delta = (nlines - FRAME_TOOL_BAR_LINES (f)) * unit;
 
-  /* Don't resize the tool-bar to more than we have room for.  */
-  root_window = FRAME_ROOT_WINDOW (f);
-  root_height = WINDOW_TOTAL_LINES (XWINDOW (root_window));
-  if (root_height - delta < 1)
+  /* Don't resize the tool-bar to more than we have room for.  Note: The
+     calculations below and the subsequent call to resize_frame_windows
+     are inherently flawed because they can make the toolbar higher than
+     the containing frame.  */
+  if (delta > 0)
     {
-      delta = root_height - 1;
-      nlines = FRAME_TOOL_BAR_LINES (f) + delta;
+      root_height = WINDOW_PIXEL_HEIGHT (XWINDOW (FRAME_ROOT_WINDOW (f)));
+      if (root_height - delta < unit)
+	{
+	  delta = root_height - unit;
+	  /* When creating a new frame and toolbar mode is enabled, we
+	     need at least one toolbar line.  */
+	  nlines = max (FRAME_TOOL_BAR_LINES (f) + delta / unit, 1);
+	}
     }
 
   FRAME_TOOL_BAR_LINES (f) = nlines;
-  resize_frame_windows (f, FRAME_LINES (f), 0);
+  FRAME_TOOL_BAR_HEIGHT (f) = nlines * FRAME_LINE_HEIGHT (f);
+  ++windows_or_buffers_changed;
+  resize_frame_windows (f, FRAME_TEXT_HEIGHT (f), 0, 1);
   adjust_frame_glyphs (f);
 
   /* We also have to make sure that the internal border at the top of
@@ -1687,7 +1703,7 @@ x_set_tool_bar_lines (struct frame *f, Lisp_Object value, Lisp_Object oldval)
      below the tool bar if one is displayed, but is below the menu bar
      if there isn't a tool bar.  The tool bar draws into the area
      below the menu bar.  */
-  if (FRAME_W32_WINDOW (f) && FRAME_TOOL_BAR_LINES (f) == 0)
+  if (FRAME_W32_WINDOW (f) && FRAME_TOOL_BAR_HEIGHT (f) == 0)
     {
       clear_frame (f);
       clear_current_matrices (f);
@@ -1696,26 +1712,23 @@ x_set_tool_bar_lines (struct frame *f, Lisp_Object value, Lisp_Object oldval)
   /* If the tool bar gets smaller, the internal border below it
      has to be cleared.  It was formerly part of the display
      of the larger tool bar, and updating windows won't clear it.  */
-  if (delta < 0)
+  if (FRAME_INTERNAL_BORDER_WIDTH (f) != 0 && FRAME_VISIBLE_P (f))
     {
       int height = FRAME_INTERNAL_BORDER_WIDTH (f);
       int width = FRAME_PIXEL_WIDTH (f);
-      int y = nlines * FRAME_LINE_HEIGHT (f);
+      int y = nlines * unit;
+      HDC hdc = get_frame_dc (f);
 
       block_input ();
-      {
-        HDC hdc = get_frame_dc (f);
-        w32_clear_area (f, hdc, 0, y, width, height);
-        release_frame_dc (f, hdc);
-      }
+      w32_clear_area (f, hdc, 0, y, width, height);
+      release_frame_dc (f, hdc);
       unblock_input ();
-
-      if (WINDOWP (f->tool_bar_window))
-	clear_glyph_matrix (XWINDOW (f->tool_bar_window)->current_matrix);
     }
 
-  run_window_configuration_change_hook (f);
+  if (delta < 0 && WINDOWP (f->tool_bar_window))
+    clear_glyph_matrix (XWINDOW (f->tool_bar_window)->current_matrix);
 
+  run_window_configuration_change_hook (f);
 }
 
 
@@ -1740,7 +1753,7 @@ x_set_name (struct frame *f, Lisp_Object name, int explicit)
       /* If we're switching from explicit to implicit, we had better
 	 update the mode lines and thereby update the title.  */
       if (f->explicit_name && NILP (name))
-	update_mode_lines = 1;
+	update_mode_lines = 25;
 
       f->explicit_name = ! NILP (name);
     }
@@ -1808,7 +1821,7 @@ x_set_title (struct frame *f, Lisp_Object name, Lisp_Object old_name)
   if (EQ (name, f->title))
     return;
 
-  update_mode_lines = 1;
+  update_mode_lines = 26;
 
   fset_title (f, name);
 
@@ -1827,11 +1840,11 @@ x_set_title (struct frame *f, Lisp_Object name, Lisp_Object old_name)
 void
 x_set_scroll_bar_default_width (struct frame *f)
 {
-  int wid = FRAME_COLUMN_WIDTH (f);
+  int unit = FRAME_COLUMN_WIDTH (f);
 
   FRAME_CONFIG_SCROLL_BAR_WIDTH (f) = GetSystemMetrics (SM_CXVSCROLL);
-  FRAME_CONFIG_SCROLL_BAR_COLS (f) = (FRAME_CONFIG_SCROLL_BAR_WIDTH (f) +
-				      wid - 1) / wid;
+  FRAME_CONFIG_SCROLL_BAR_COLS (f)
+    = (FRAME_CONFIG_SCROLL_BAR_WIDTH (f) + unit - 1) / unit;
 }
 
 
@@ -1892,8 +1905,7 @@ w32_createscrollbar (struct frame *f, struct scroll_bar * bar)
 {
   return CreateWindow ("SCROLLBAR", "", SBS_VERT | WS_CHILD | WS_VISIBLE,
 		       /* Position and size of scroll bar.  */
-		       XINT (bar->left), XINT (bar->top),
-		       XINT (bar->width), XINT (bar->height),
+		       bar->left, bar->top, bar->width, bar->height,
 		       FRAME_W32_WINDOW (f), NULL, hinst, NULL);
 }
 
@@ -1948,7 +1960,7 @@ w32_createwindow (struct frame *f)
       SetWindowLong (hwnd, WND_FONTWIDTH_INDEX, FRAME_COLUMN_WIDTH (f));
       SetWindowLong (hwnd, WND_LINEHEIGHT_INDEX, FRAME_LINE_HEIGHT (f));
       SetWindowLong (hwnd, WND_BORDER_INDEX, FRAME_INTERNAL_BORDER_WIDTH (f));
-      SetWindowLong (hwnd, WND_SCROLLBAR_INDEX, f->scroll_bar_actual_width);
+      SetWindowLong (hwnd, WND_SCROLLBAR_INDEX, FRAME_SCROLL_BAR_AREA_WIDTH (f));
       SetWindowLong (hwnd, WND_BACKGROUND_INDEX, FRAME_BACKGROUND_PIXEL (f));
 
       /* Enable drag-n-drop.  */
@@ -2086,6 +2098,7 @@ reset_modifiers (void)
 
 #define CURRENT_STATE(key) ((GetAsyncKeyState (key) & 0x8000) >> 8)
 
+    memset (keystate, 0, sizeof (keystate));
     GetKeyboardState (keystate);
     keystate[VK_SHIFT] = CURRENT_STATE (VK_SHIFT);
     keystate[VK_CONTROL] = CURRENT_STATE (VK_CONTROL);
@@ -3224,6 +3237,7 @@ w32_wnd_proc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			       - WINDOW_RIGHT_MARGIN_WIDTH (w)
 			       - WINDOW_RIGHT_FRINGE_WIDTH (w));
 	  form.rcArea.bottom = (WINDOW_BOTTOM_EDGE_Y (w)
+				- WINDOW_BOTTOM_DIVIDER_WIDTH (w)
 				- w32_system_caret_mode_height);
 
 	  /* Punt if the window was deleted behind our back.  */
@@ -3430,6 +3444,7 @@ w32_wnd_proc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	  tme.cbSize = sizeof (tme);
 	  tme.dwFlags = TME_LEAVE;
 	  tme.hwndTrack = hwnd;
+	  tme.dwHoverTime = HOVER_DEFAULT;
 
 	  track_mouse_event_fn (&tme);
 	  track_mouse_window = hwnd;
@@ -3773,7 +3788,7 @@ w32_wnd_proc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
     case WM_WINDOWPOSCHANGING:
       /* Don't restrict the sizing of tip frames.  */
-      if (hwnd == tip_window)
+      if (frame_resize_pixelwise || hwnd == tip_window)
 	return 0;
 
       /* Don't restrict the sizing of fullscreened frames, allowing them to be
@@ -3789,7 +3804,8 @@ w32_wnd_proc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	wp.length = sizeof (WINDOWPLACEMENT);
 	GetWindowPlacement (hwnd, &wp);
 
-	if (wp.showCmd != SW_SHOWMINIMIZED && (lppos->flags & SWP_NOSIZE) == 0)
+	if (wp.showCmd != SW_SHOWMAXIMIZED && wp.showCmd != SW_SHOWMINIMIZED
+	    && (lppos->flags & SWP_NOSIZE) == 0)
 	  {
 	    RECT rect;
 	    int wdiff;
@@ -4228,6 +4244,17 @@ unwind_create_frame (Lisp_Object frame)
     {
 #ifdef GLYPH_DEBUG
       struct w32_display_info *dpyinfo = FRAME_DISPLAY_INFO (f);
+
+      /* If the frame's image cache refcount is still the same as our
+	 private shadow variable, it means we are unwinding a frame
+	 for which we didn't yet call init_frame_faces, where the
+	 refcount is incremented.  Therefore, we increment it here, so
+	 that free_frame_faces, called in x_free_frame_resources
+	 below, will not mistakenly decrement the counter that was not
+	 incremented yet to account for this new frame.  */
+      if (FRAME_IMAGE_CACHE (f) != NULL
+	  && FRAME_IMAGE_CACHE (f)->refcount == image_cache_refcount)
+	FRAME_IMAGE_CACHE (f)->refcount++;
 #endif
 
       x_free_frame_resources (f);
@@ -4236,7 +4263,10 @@ unwind_create_frame (Lisp_Object frame)
 #ifdef GLYPH_DEBUG
       /* Check that reference counts are indeed correct.  */
       eassert (dpyinfo->reference_count == dpyinfo_refcount);
-      eassert (dpyinfo->terminal->image_cache->refcount == image_cache_refcount);
+      eassert ((dpyinfo->terminal->image_cache == NULL
+		&& image_cache_refcount == 0)
+	       || (dpyinfo->terminal->image_cache != NULL
+		   && dpyinfo->terminal->image_cache->refcount == image_cache_refcount));
 #endif
       return Qt;
     }
@@ -4248,6 +4278,12 @@ static void
 do_unwind_create_frame (Lisp_Object frame)
 {
   unwind_create_frame (frame);
+}
+
+static void
+unwind_create_frame_1 (Lisp_Object val)
+{
+  inhibit_lisp_code = val;
 }
 
 static void
@@ -4316,6 +4352,10 @@ This function is an internal primitive--use `make-frame' instead.  */)
   Lisp_Object parent;
   struct kboard *kb;
 
+  if (!FRAME_W32_P (SELECTED_FRAME ())
+      && !FRAME_INITIAL_P (SELECTED_FRAME ()))
+    error ("Cannot create a GUI frame in a -nw session");
+
   /* Make copy of frame parameters because the original is in pure
      storage now. */
   parameters = Fcopy_alist (parameters);
@@ -4357,7 +4397,7 @@ This function is an internal primitive--use `make-frame' instead.  */)
   frame = Qnil;
   GCPRO4 (parameters, parent, name, frame);
   tem = x_get_arg (dpyinfo, parameters, Qminibuffer, "minibuffer", "Minibuffer",
-                     RES_TYPE_SYMBOL);
+		   RES_TYPE_SYMBOL);
   if (EQ (tem, Qnone) || NILP (tem))
     f = make_frame_without_minibuffer (Qnil, kb, display);
   else if (EQ (tem, Qonly))
@@ -4373,7 +4413,7 @@ This function is an internal primitive--use `make-frame' instead.  */)
   XSETFRAME (frame, f);
 
   /* By default, make scrollbars the system standard width. */
-  FRAME_CONFIG_SCROLL_BAR_WIDTH (f) = GetSystemMetrics (SM_CXVSCROLL);
+  x_set_scroll_bar_default_width (f);
 
   f->terminal = dpyinfo->terminal;
 
@@ -4387,10 +4427,11 @@ This function is an internal primitive--use `make-frame' instead.  */)
   if (! STRINGP (f->icon_name))
     fset_icon_name (f, Qnil);
 
-/*  FRAME_DISPLAY_INFO (f) = dpyinfo; */
+  /*  FRAME_DISPLAY_INFO (f) = dpyinfo; */
 
   /* With FRAME_DISPLAY_INFO set up, this unwind-protect is safe.  */
   record_unwind_protect (do_unwind_create_frame, frame);
+
 #ifdef GLYPH_DEBUG
   image_cache_refcount =
     FRAME_IMAGE_CACHE (f) ? FRAME_IMAGE_CACHE (f)->refcount : 0;
@@ -4444,7 +4485,7 @@ This function is an internal primitive--use `make-frame' instead.  */)
       Lisp_Object value;
 
       value = x_get_arg (dpyinfo, parameters, Qinternal_border_width,
-                           "internalBorder", "InternalBorder", RES_TYPE_NUMBER);
+			 "internalBorder", "InternalBorder", RES_TYPE_NUMBER);
       if (! EQ (value, Qunbound))
 	parameters = Fcons (Fcons (Qinternal_border_width, value),
                             parameters);
@@ -4452,6 +4493,10 @@ This function is an internal primitive--use `make-frame' instead.  */)
   /* Default internalBorderWidth to 0 on Windows to match other programs.  */
   x_default_parameter (f, parameters, Qinternal_border_width, make_number (0),
 		       "internalBorderWidth", "InternalBorder", RES_TYPE_NUMBER);
+  x_default_parameter (f, parameters, Qright_divider_width, make_number (0),
+		       NULL, NULL, RES_TYPE_NUMBER);
+  x_default_parameter (f, parameters, Qbottom_divider_width, make_number (0),
+		       NULL, NULL, RES_TYPE_NUMBER);
   x_default_parameter (f, parameters, Qvertical_scroll_bars, Qright,
 		       "verticalScrollBars", "ScrollBars", RES_TYPE_SYMBOL);
 
@@ -4472,6 +4517,9 @@ This function is an internal primitive--use `make-frame' instead.  */)
 		       "leftFringe", "LeftFringe", RES_TYPE_NUMBER);
   x_default_parameter (f, parameters, Qright_fringe, Qnil,
 		       "rightFringe", "RightFringe", RES_TYPE_NUMBER);
+  /* Process alpha here (Bug#16619).  */
+  x_default_parameter (f, parameters, Qalpha, Qnil,
+                       "alpha", "Alpha", RES_TYPE_NUMBER);
 
   /* Init faces before x_default_parameter is called for scroll-bar
      parameters because that function calls x_set_scroll_bar_width,
@@ -4481,17 +4529,40 @@ This function is an internal primitive--use `make-frame' instead.  */)
      happen.  */
   init_frame_faces (f);
 
-  /* The X resources controlling the menu-bar and tool-bar are
-     processed specially at startup, and reflected in the mode
-     variables; ignore them here.  */
-  x_default_parameter (f, parameters, Qmenu_bar_lines,
-		       NILP (Vmenu_bar_mode)
-		       ? make_number (0) : make_number (1),
-		       NULL, NULL, RES_TYPE_NUMBER);
-  x_default_parameter (f, parameters, Qtool_bar_lines,
-		       NILP (Vtool_bar_mode)
-		       ? make_number (0) : make_number (1),
-		       NULL, NULL, RES_TYPE_NUMBER);
+  /* Avoid calling window-configuration-change-hook; otherwise we
+     could get an infloop in next_frame since the frame is not yet in
+     Vframe_list.  */
+  {
+    ptrdiff_t count2 = SPECPDL_INDEX ();
+
+    record_unwind_protect (unwind_create_frame_1, inhibit_lisp_code);
+    inhibit_lisp_code = Qt;
+
+    /* PXW: This is a duplicate from below.  We have to do it here since
+       otherwise x_set_tool_bar_lines will work with the character sizes
+       installed by init_frame_faces while the frame's pixel size is still
+       calculated from a character size of 1 and we subsequently hit the
+       eassert (height >= 0) assertion in window_box_height.  The
+       non-pixelwise code apparently worked around this because it had one
+       frame line vs one toolbar line which left us with a zero root
+       window height which was obviously wrong as well ...  */
+    change_frame_size (f, FRAME_COLS (f) * FRAME_COLUMN_WIDTH (f),
+		       FRAME_LINES (f) * FRAME_LINE_HEIGHT (f), 1, 0, 0, 1);
+
+    /* The X resources controlling the menu-bar and tool-bar are
+       processed specially at startup, and reflected in the mode
+       variables; ignore them here.  */
+    x_default_parameter (f, parameters, Qmenu_bar_lines,
+			 NILP (Vmenu_bar_mode)
+			 ? make_number (0) : make_number (1),
+			 NULL, NULL, RES_TYPE_NUMBER);
+    x_default_parameter (f, parameters, Qtool_bar_lines,
+			 NILP (Vtool_bar_mode)
+			 ? make_number (0) : make_number (1),
+			 NULL, NULL, RES_TYPE_NUMBER);
+
+    unbind_to (count2, Qnil);
+  }
 
   x_default_parameter (f, parameters, Qbuffer_predicate, Qnil,
 		       "bufferPredicate", "BufferPredicate", RES_TYPE_SYMBOL);
@@ -4509,6 +4580,7 @@ This function is an internal primitive--use `make-frame' instead.  */)
   f->output_data.w32->hand_cursor = w32_load_cursor (IDC_HAND);
   f->output_data.w32->hourglass_cursor = w32_load_cursor (IDC_WAIT);
   f->output_data.w32->horizontal_drag_cursor = w32_load_cursor (IDC_SIZEWE);
+  f->output_data.w32->vertical_drag_cursor = w32_load_cursor (IDC_SIZENS);
 
   f->output_data.w32->current_cursor = f->output_data.w32->nontext_cursor;
 
@@ -4540,18 +4612,15 @@ This function is an internal primitive--use `make-frame' instead.  */)
 		       "cursorType", "CursorType", RES_TYPE_SYMBOL);
   x_default_parameter (f, parameters, Qscroll_bar_width, Qnil,
 		       "scrollBarWidth", "ScrollBarWidth", RES_TYPE_NUMBER);
-  x_default_parameter (f, parameters, Qalpha, Qnil,
-                       "alpha", "Alpha", RES_TYPE_NUMBER);
 
   /* Dimensions, especially FRAME_LINES (f), must be done via change_frame_size.
      Change will not be effected unless different from the current
      FRAME_LINES (f).  */
-  width = FRAME_COLS (f);
-  height = FRAME_LINES (f);
-
-  FRAME_LINES (f) = 0;
-  SET_FRAME_COLS (f, 0);
-  change_frame_size (f, height, width, 1, 0, 0);
+  width = FRAME_TEXT_WIDTH (f);
+  height = FRAME_TEXT_HEIGHT (f);
+  FRAME_TEXT_HEIGHT (f) = 0;
+  SET_FRAME_WIDTH (f, 0);
+  change_frame_size (f, width, height, 1, 0, 0, 1);
 
   /* Tell the server what size and position, etc, we want, and how
      badly we want them.  This should be done after we have the menu
@@ -5126,20 +5195,13 @@ x_screen_planes (register struct frame *f)
 struct w32_display_info *
 x_display_info_for_name (Lisp_Object name)
 {
-  Lisp_Object names;
   struct w32_display_info *dpyinfo;
 
   CHECK_STRING (name);
 
-  for (dpyinfo = &one_w32_display_info, names = w32_display_name_list;
-       dpyinfo && !NILP (w32_display_name_list);
-       dpyinfo = dpyinfo->next, names = XCDR (names))
-    {
-      Lisp_Object tem;
-      tem = Fstring_equal (XCAR (XCAR (names)), name);
-      if (!NILP (tem))
-	return dpyinfo;
-    }
+  for (dpyinfo = &one_w32_display_info; dpyinfo; dpyinfo = dpyinfo->next)
+    if (!NILP (Fstring_equal (XCAR (dpyinfo->name_list_element), name)))
+      return dpyinfo;
 
   /* Use this general default value to start with.  */
   Vx_resource_name = Vinvocation_name;
@@ -5274,11 +5336,11 @@ DEFUN ("x-display-list", Fx_display_list, Sx_display_list, 0, 0, 0,
        doc: /* Return the list of display names that Emacs has connections to.  */)
   (void)
 {
-  Lisp_Object tail, result;
+  Lisp_Object result = Qnil;
+  struct w32_display_info *wdi;
 
-  result = Qnil;
-  for (tail = w32_display_name_list; CONSP (tail); tail = XCDR (tail))
-    result = Fcons (XCAR (XCAR (tail)), result);
+  for (wdi = x_display_list; wdi; wdi = wdi->next)
+    result = Fcons (XCAR (wdi->name_list_element), result);
 
   return result;
 }
@@ -5467,7 +5529,10 @@ show_hourglass (struct atimer *timer)
     f = SELECTED_FRAME ();
 
   if (!FRAME_W32_P (f))
-    return;
+    {
+      unblock_input ();
+      return;
+    }
 
   w32_show_hourglass (f);
   unblock_input ();
@@ -5693,6 +5758,10 @@ x_create_tip_frame (struct w32_display_info *dpyinfo,
   x_default_parameter (f, parms, Qinternal_border_width, make_number (1),
 		       "internalBorderWidth", "internalBorderWidth",
 		       RES_TYPE_NUMBER);
+  x_default_parameter (f, parms, Qright_divider_width, make_number (0),
+		       NULL, NULL, RES_TYPE_NUMBER);
+  x_default_parameter (f, parms, Qbottom_divider_width, make_number (0),
+		       NULL, NULL, RES_TYPE_NUMBER);
 
   /* Also do the stuff which must be set before the window exists.  */
   x_default_parameter (f, parms, Qforeground_color, build_string ("black"),
@@ -5737,14 +5806,14 @@ x_create_tip_frame (struct w32_display_info *dpyinfo,
   x_default_parameter (f, parms, Qcursor_type, Qbox,
 		       "cursorType", "CursorType", RES_TYPE_SYMBOL);
 
-  /* Dimensions, especially FRAME_LINES (f), must be done via change_frame_size.
-     Change will not be effected unless different from the current
-     FRAME_LINES (f).  */
+  /* Dimensions, especially FRAME_LINES (f), must be done via
+     change_frame_size.  Change will not be effected unless different
+     from the current FRAME_LINES (f).  */
   width = FRAME_COLS (f);
   height = FRAME_LINES (f);
   FRAME_LINES (f) = 0;
   SET_FRAME_COLS (f, 0);
-  change_frame_size (f, height, width, 1, 0, 0);
+  change_frame_size (f, width, height, 1, 0, 0, 0);
 
   /* Add `tooltip' frame parameter's default value. */
   if (NILP (Fframe_parameter (frame, Qtooltip)))
@@ -5978,12 +6047,13 @@ Text larger than the specified size is clipped.  */)
 	  /* Put tooltip in topmost group and in position.  */
 	  SetWindowPos (FRAME_W32_WINDOW (f), HWND_TOPMOST,
 			root_x, root_y, 0, 0,
-			SWP_NOSIZE | SWP_NOACTIVATE);
+			SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOOWNERZORDER);
 
 	  /* Ensure tooltip is on top of other topmost windows (eg menus).  */
 	  SetWindowPos (FRAME_W32_WINDOW (f), HWND_TOP,
 			0, 0, 0, 0,
-			SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+			SWP_NOMOVE | SWP_NOSIZE
+			| SWP_NOACTIVATE | SWP_NOOWNERZORDER);
 
 	  unblock_input ();
 	  goto start_timer;
@@ -6002,6 +6072,10 @@ Text larger than the specified size is clipped.  */)
     parms = Fcons (Fcons (Qname, build_string ("tooltip")), parms);
   if (NILP (Fassq (Qinternal_border_width, parms)))
     parms = Fcons (Fcons (Qinternal_border_width, make_number (3)), parms);
+  if (NILP (Fassq (Qright_divider_width, parms)))
+    parms = Fcons (Fcons (Qright_divider_width, make_number (0)), parms);
+  if (NILP (Fassq (Qbottom_divider_width, parms)))
+    parms = Fcons (Fcons (Qbottom_divider_width, make_number (0)), parms);
   if (NILP (Fassq (Qborder_width, parms)))
     parms = Fcons (Fcons (Qborder_width, make_number (1)), parms);
   if (NILP (Fassq (Qborder_color, parms)))
@@ -6023,6 +6097,8 @@ Text larger than the specified size is clipped.  */)
   w = XWINDOW (FRAME_ROOT_WINDOW (f));
   w->left_col = 0;
   w->top_line = 0;
+  w->pixel_left = 0;
+  w->pixel_top = 0;
 
   if (CONSP (Vx_max_tooltip_size)
       && INTEGERP (XCAR (Vx_max_tooltip_size))
@@ -6038,6 +6114,9 @@ Text larger than the specified size is clipped.  */)
       w->total_cols = 80;
       w->total_lines = 40;
     }
+
+  w->pixel_width = w->total_cols * FRAME_COLUMN_WIDTH (f);
+  w->pixel_height = w->total_lines * FRAME_LINE_HEIGHT (f);
 
   FRAME_TOTAL_COLS (f) = WINDOW_TOTAL_COLS (w);
   adjust_frame_glyphs (f);
@@ -6104,11 +6183,17 @@ Text larger than the specified size is clipped.  */)
      width of the frame.  */
   if (seen_reversed_p)
     {
-      /* w->total_cols and FRAME_TOTAL_COLS want the width in columns,
+      /* PXW: Why do we do the pixel-to-cols conversion only if
+	 seen_reversed_p holds?  Don't we have to set other fields of
+	 the window/frame structure?
+
+	 w->total_cols and FRAME_TOTAL_COLS want the width in columns,
 	 not in pixels.  */
+      w->pixel_width = width;
       width /= WINDOW_FRAME_COLUMN_WIDTH (w);
       w->total_cols = width;
       FRAME_TOTAL_COLS (f) = width;
+      SET_FRAME_WIDTH (f, width);
       adjust_frame_glyphs (f);
       w->pseudo_window_p = 1;
       clear_glyph_matrix (w->desired_matrix);
@@ -6138,16 +6223,15 @@ Text larger than the specified size is clipped.  */)
 	}
     }
 
-  /* Round up the height to an integral multiple of FRAME_LINE_HEIGHT.  */
-  if (height % FRAME_LINE_HEIGHT (f) != 0)
-    height += FRAME_LINE_HEIGHT (f) - height % FRAME_LINE_HEIGHT (f);
   /* Add the frame's internal border to the width and height the w32
      window should have.  */
   height += 2 * FRAME_INTERNAL_BORDER_WIDTH (f);
   width += 2 * FRAME_INTERNAL_BORDER_WIDTH (f);
 
   /* Move the tooltip window where the mouse pointer is.  Resize and
-     show it.  */
+     show it.
+
+     PXW: This should use the frame's pixel coordinates.  */
   compute_tip_xy (f, parms, dx, dy, width, height, &root_x, &root_y);
 
   {
@@ -6167,12 +6251,13 @@ Text larger than the specified size is clipped.  */)
     SetWindowPos (FRAME_W32_WINDOW (f), HWND_TOPMOST,
 		  root_x, root_y,
 		  rect.right - rect.left + FRAME_COLUMN_WIDTH (f),
-		  rect.bottom - rect.top, SWP_NOACTIVATE);
+		  rect.bottom - rect.top, SWP_NOACTIVATE | SWP_NOOWNERZORDER);
 
     /* Ensure tooltip is on top of other topmost windows (eg menus).  */
     SetWindowPos (FRAME_W32_WINDOW (f), HWND_TOP,
 		  0, 0, 0, 0,
-		  SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+		  SWP_NOMOVE | SWP_NOSIZE
+		  | SWP_NOACTIVATE | SWP_NOOWNERZORDER);
 
     /* Let redisplay know that we have made the frame visible already.  */
     SET_FRAME_VISIBLE (f, 1);
@@ -6253,18 +6338,31 @@ file_dialog_callback (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
   if (msg == WM_NOTIFY)
     {
+      OFNOTIFYW * notify_w = (OFNOTIFYW *)lParam;
+      OFNOTIFYA * notify_a = (OFNOTIFYA *)lParam;
+      int dropdown_changed;
+      int dir_index;
 #ifdef NTGUI_UNICODE
-      OFNOTIFYW * notify = (OFNOTIFYW *)lParam;
+      const int use_unicode = 1;
 #else /* !NTGUI_UNICODE */
-      OFNOTIFYA * notify = (OFNOTIFYA *)lParam;
+      int use_unicode = w32_unicode_filenames;
 #endif /* NTGUI_UNICODE */
+
       /* Detect when the Filter dropdown is changed.  */
-      if (notify->hdr.code == CDN_TYPECHANGE
-	  || notify->hdr.code == CDN_INITDONE)
+      if (use_unicode)
+	dropdown_changed =
+	  notify_w->hdr.code == CDN_TYPECHANGE
+	  || notify_w->hdr.code == CDN_INITDONE;
+      else
+	dropdown_changed =
+	  notify_a->hdr.code == CDN_TYPECHANGE
+	  || notify_a->hdr.code == CDN_INITDONE;
+      if (dropdown_changed)
 	{
 	  HWND dialog = GetParent (hwnd);
 	  HWND edit_control = GetDlgItem (dialog, FILE_NAME_TEXT_FIELD);
 	  HWND list = GetDlgItem (dialog, FILE_NAME_LIST);
+	  int hdr_code;
 
 	  /* At least on Windows 7, the above attempt to get the window handle
 	     to the File Name Text Field fails.	 The following code does the
@@ -6282,10 +6380,24 @@ file_dialog_callback (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	    }
 
 	  /* Directories is in index 2.	 */
-	  if (notify->lpOFN->nFilterIndex == 2)
+	  if (use_unicode)
 	    {
-	      CommDlg_OpenSave_SetControlText (dialog, FILE_NAME_TEXT_FIELD,
-					       GUISTR ("Current Directory"));
+	      dir_index = notify_w->lpOFN->nFilterIndex;
+	      hdr_code = notify_w->hdr.code;
+	    }
+	  else
+	    {
+	      dir_index = notify_a->lpOFN->nFilterIndex;
+	      hdr_code = notify_a->hdr.code;
+	    }
+	  if (dir_index == 2)
+	    {
+	      if (use_unicode)
+		SendMessageW (dialog, CDM_SETCONTROLTEXT, FILE_NAME_TEXT_FIELD,
+			      (LPARAM)L"Current Directory");
+	      else
+		SendMessageA (dialog, CDM_SETCONTROLTEXT, FILE_NAME_TEXT_FIELD,
+			      (LPARAM)"Current Directory");
 	      EnableWindow (edit_control, FALSE);
 	      /* Note that at least on Windows 7, the above call to EnableWindow
 		 disables the window that would ordinarily have focus.	If we
@@ -6293,16 +6405,21 @@ file_dialog_callback (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		 no man's land and the user will be unable to tab through the
 		 dialog box (pressing tab will only result in a beep).
 		 Avoid that problem by setting focus to the list here.	*/
-	      if (notify->hdr.code == CDN_INITDONE)
+	      if (hdr_code == CDN_INITDONE)
 		SetFocus (list);
 	    }
 	  else
 	    {
 	      /* Don't override default filename on init done.  */
-	      if (notify->hdr.code == CDN_TYPECHANGE)
-		CommDlg_OpenSave_SetControlText (dialog,
-						 FILE_NAME_TEXT_FIELD,
-                                                 GUISTR (""));
+	      if (hdr_code == CDN_TYPECHANGE)
+		{
+		  if (use_unicode)
+		    SendMessageW (dialog, CDM_SETCONTROLTEXT,
+				  FILE_NAME_TEXT_FIELD, (LPARAM)L"");
+		  else
+		    SendMessageA (dialog, CDM_SETCONTROLTEXT,
+				  FILE_NAME_TEXT_FIELD, (LPARAM)"");
+		}
 	      EnableWindow (edit_control, TRUE);
 	    }
 	}
@@ -6322,8 +6439,8 @@ Otherwise, if ONLY-DIR-P is non-nil, the user can only select directories.  */)
   (Lisp_Object prompt, Lisp_Object dir, Lisp_Object default_filename, Lisp_Object mustmatch, Lisp_Object only_dir_p)
 {
   /* Filter index: 1: All Files, 2: Directories only  */
-  static const guichar_t filter[] =
-    GUISTR ("All Files (*.*)\0*.*\0Directories\0*|*\0");
+  static const wchar_t filter_w[] = L"All Files (*.*)\0*.*\0Directories\0*|*\0";
+  static const char filter_a[] = "All Files (*.*)\0*.*\0Directories\0*|*\0";
 
   Lisp_Object filename = default_filename;
   struct frame *f = SELECTED_FRAME ();
@@ -6336,25 +6453,36 @@ Otherwise, if ONLY-DIR-P is non-nil, the user can only select directories.  */)
      enough struct for the new dialog to trick GetOpenFileName into
      giving us the new dialogs on newer versions of Windows.  */
   struct {
-#ifdef NTGUI_UNICODE
     OPENFILENAMEW details;
-#else /* !NTGUI_UNICODE */
-    OPENFILENAMEA details;
-#endif /* NTGUI_UNICODE */
-
 #if _WIN32_WINNT < 0x500 /* < win2k */
       PVOID pvReserved;
       DWORD dwReserved;
       DWORD FlagsEx;
 #endif /* < win2k */
-  } new_file_details;
+  } new_file_details_w;
 
 #ifdef NTGUI_UNICODE
-  wchar_t filename_buf[32*1024 + 1]; // NT kernel maximum
-  OPENFILENAMEW * file_details = &new_file_details.details;
+  wchar_t filename_buf_w[32*1024 + 1]; // NT kernel maximum
+  OPENFILENAMEW * file_details_w = &new_file_details_w.details;
+  const int use_unicode = 1;
 #else /* not NTGUI_UNICODE */
-  char filename_buf[MAX_PATH + 1];
-  OPENFILENAMEA * file_details = &new_file_details.details;
+  struct {
+    OPENFILENAMEA details;
+#if _WIN32_WINNT < 0x500 /* < win2k */
+      PVOID pvReserved;
+      DWORD dwReserved;
+      DWORD FlagsEx;
+#endif /* < win2k */
+  } new_file_details_a;
+  wchar_t filename_buf_w[MAX_PATH + 1], dir_w[MAX_PATH];
+  char filename_buf_a[MAX_PATH + 1], dir_a[MAX_PATH];
+  OPENFILENAMEW * file_details_w = &new_file_details_w.details;
+  OPENFILENAMEA * file_details_a = &new_file_details_a.details;
+  int use_unicode = w32_unicode_filenames;
+  wchar_t *prompt_w;
+  char *prompt_a;
+  int len;
+  char fname_ret[MAX_UTF8_PATH];
 #endif /* NTGUI_UNICODE */
 
   struct gcpro gcpro1, gcpro2, gcpro3, gcpro4, gcpro5, gcpro6;
@@ -6400,6 +6528,10 @@ Otherwise, if ONLY-DIR-P is non-nil, the user can only select directories.  */)
     to_unicode (prompt, &prompt);
     to_unicode (dir, &dir);
     to_unicode (filename, &filename);
+    if (SBYTES (filename) + 1 > sizeof (filename_buf_w))
+      report_file_error ("filename too long", default_filename);
+
+    memcpy (filename_buf_w, SDATA (filename), SBYTES (filename) + 1);
 #else /* !NTGUI_UNICODE */
     prompt = ENCODE_FILE (prompt);
     dir = ENCODE_FILE (dir);
@@ -6410,6 +6542,49 @@ Otherwise, if ONLY-DIR-P is non-nil, the user can only select directories.  */)
     unixtodos_filename (SDATA (dir));
     filename = Fcopy_sequence (filename);
     unixtodos_filename (SDATA (filename));
+    if (SBYTES (filename) >= MAX_UTF8_PATH)
+      report_file_error ("filename too long", default_filename);
+    if (w32_unicode_filenames)
+      {
+	filename_to_utf16 (SSDATA (dir), dir_w);
+	if (filename_to_utf16 (SSDATA (filename), filename_buf_w) != 0)
+	  {
+	    /* filename_to_utf16 sets errno to ENOENT when the file
+	       name is too long or cannot be converted to UTF-16.  */
+	    if (errno == ENOENT && filename_buf_w[MAX_PATH - 1] != 0)
+	      report_file_error ("filename too long", default_filename);
+	  }
+	len = pMultiByteToWideChar (CP_UTF8, MB_ERR_INVALID_CHARS,
+				    SSDATA (prompt), -1, NULL, 0);
+	if (len > 32768)
+	  len = 32768;
+	prompt_w = alloca (len * sizeof (wchar_t));
+	pMultiByteToWideChar (CP_UTF8, MB_ERR_INVALID_CHARS,
+			      SSDATA (prompt), -1, prompt_w, len);
+      }
+    else
+      {
+	filename_to_ansi (SSDATA (dir), dir_a);
+	if (filename_to_ansi (SSDATA (filename), filename_buf_a) != '\0')
+	  {
+	    /* filename_to_ansi sets errno to ENOENT when the file
+	       name is too long or cannot be converted to UTF-16.  */
+	    if (errno == ENOENT && filename_buf_a[MAX_PATH - 1] != 0)
+	      report_file_error ("filename too long", default_filename);
+	  }
+	len = pMultiByteToWideChar (CP_UTF8, MB_ERR_INVALID_CHARS,
+				    SSDATA (prompt), -1, NULL, 0);
+	if (len > 32768)
+	  len = 32768;
+	prompt_w = alloca (len * sizeof (wchar_t));
+	pMultiByteToWideChar (CP_UTF8, MB_ERR_INVALID_CHARS,
+			      SSDATA (prompt), -1, prompt_w, len);
+	len = pWideCharToMultiByte (CP_ACP, 0, prompt_w, -1, NULL, 0, NULL, NULL);
+	if (len > 32768)
+	  len = 32768;
+	prompt_a = alloca (len);
+	pWideCharToMultiByte (CP_ACP, 0, prompt_w, -1, prompt_a, len, NULL, NULL);
+      }
 #endif /* NTGUI_UNICODE */
 
     /* Fill in the structure for the call to GetOpenFileName below.
@@ -6418,48 +6593,88 @@ Otherwise, if ONLY-DIR-P is non-nil, the user can only select directories.  */)
        builds, we tell the OS we're using an old version of the
        structure if the OS isn't new enough to support the newer
        version.  */
-    memset (&new_file_details, 0, sizeof (new_file_details));
-
-    if (w32_major_version > 4 && w32_major_version < 95)
-      file_details->lStructSize = sizeof (new_file_details);
-    else
-      file_details->lStructSize = sizeof (*file_details);
-
-    /* Set up the inout parameter for the selected file name.  */
-    if (SBYTES (filename) + 1 > sizeof (filename_buf))
-      report_file_error ("filename too long", default_filename);
-
-    memcpy (filename_buf, SDATA (filename), SBYTES (filename) + 1);
-    file_details->lpstrFile = filename_buf;
-    file_details->nMaxFile = sizeof (filename_buf) / sizeof (*filename_buf);
-
-    file_details->hwndOwner = FRAME_W32_WINDOW (f);
-    /* Undocumented Bug in Common File Dialog:
-       If a filter is not specified, shell links are not resolved.  */
-    file_details->lpstrFilter = filter;
-    file_details->lpstrInitialDir = (guichar_t*) SDATA (dir);
-    file_details->lpstrTitle = (guichar_t*) SDATA (prompt);
-    file_details->nFilterIndex = NILP (only_dir_p) ? 1 : 2;
-    file_details->Flags = (OFN_HIDEREADONLY | OFN_NOCHANGEDIR
-                           | OFN_EXPLORER | OFN_ENABLEHOOK);
-
-    if (!NILP (mustmatch))
+    if (use_unicode)
       {
-        /* Require that the path to the parent directory exists.  */
-        file_details->Flags |= OFN_PATHMUSTEXIST;
-        /* If we are looking for a file, require that it exists.  */
-        if (NILP (only_dir_p))
-          file_details->Flags |= OFN_FILEMUSTEXIST;
+	memset (&new_file_details_w, 0, sizeof (new_file_details_w));
+	if (w32_major_version > 4 && w32_major_version < 95)
+	  file_details_w->lStructSize = sizeof (new_file_details_w);
+	else
+	  file_details_w->lStructSize = sizeof (*file_details_w);
+	/* Set up the inout parameter for the selected file name.  */
+	file_details_w->lpstrFile = filename_buf_w;
+	file_details_w->nMaxFile =
+	  sizeof (filename_buf_w) / sizeof (*filename_buf_w);
+	file_details_w->hwndOwner = FRAME_W32_WINDOW (f);
+	/* Undocumented Bug in Common File Dialog:
+	   If a filter is not specified, shell links are not resolved.  */
+	file_details_w->lpstrFilter = filter_w;
+#ifdef NTGUI_UNICODE
+	file_details_w->lpstrInitialDir = (wchar_t*) SDATA (dir);
+	file_details_w->lpstrTitle = (guichar_t*) SDATA (prompt);
+#else
+	file_details_w->lpstrInitialDir = dir_w;
+	file_details_w->lpstrTitle = prompt_w;
+#endif
+	file_details_w->nFilterIndex = NILP (only_dir_p) ? 1 : 2;
+	file_details_w->Flags = (OFN_HIDEREADONLY | OFN_NOCHANGEDIR
+				 | OFN_EXPLORER | OFN_ENABLEHOOK);
+	if (!NILP (mustmatch))
+	  {
+	    /* Require that the path to the parent directory exists.  */
+	    file_details_w->Flags |= OFN_PATHMUSTEXIST;
+	    /* If we are looking for a file, require that it exists.  */
+	    if (NILP (only_dir_p))
+	      file_details_w->Flags |= OFN_FILEMUSTEXIST;
+	  }
       }
+#ifndef NTGUI_UNICODE
+    else
+      {
+	memset (&new_file_details_a, 0, sizeof (new_file_details_a));
+	if (w32_major_version > 4 && w32_major_version < 95)
+	  file_details_a->lStructSize = sizeof (new_file_details_a);
+	else
+	  file_details_a->lStructSize = sizeof (*file_details_a);
+	file_details_a->lpstrFile = filename_buf_a;
+	file_details_a->nMaxFile =
+	  sizeof (filename_buf_a) / sizeof (*filename_buf_a);
+	file_details_a->hwndOwner = FRAME_W32_WINDOW (f);
+	file_details_a->lpstrFilter = filter_a;
+	file_details_a->lpstrInitialDir = dir_a;
+	file_details_a->lpstrTitle = prompt_a;
+	file_details_a->nFilterIndex = NILP (only_dir_p) ? 1 : 2;
+	file_details_a->Flags = (OFN_HIDEREADONLY | OFN_NOCHANGEDIR
+				 | OFN_EXPLORER | OFN_ENABLEHOOK);
+	if (!NILP (mustmatch))
+	  {
+	    /* Require that the path to the parent directory exists.  */
+	    file_details_a->Flags |= OFN_PATHMUSTEXIST;
+	    /* If we are looking for a file, require that it exists.  */
+	    if (NILP (only_dir_p))
+	      file_details_a->Flags |= OFN_FILEMUSTEXIST;
+	  }
+      }
+#endif	/* !NTGUI_UNICODE */
 
     {
       int count = SPECPDL_INDEX ();
       /* Prevent redisplay.  */
       specbind (Qinhibit_redisplay, Qt);
       block_input ();
-      file_details->lpfnHook = file_dialog_callback;
+      if (use_unicode)
+	{
+	  file_details_w->lpfnHook = file_dialog_callback;
 
-      file_opened = GUI_FN (GetOpenFileName) (file_details);
+	  file_opened = GetOpenFileNameW (file_details_w);
+	}
+#ifndef NTGUI_UNICODE
+      else
+	{
+	  file_details_a->lpfnHook = file_dialog_callback;
+
+	  file_opened = GetOpenFileNameA (file_details_a);
+	}
+#endif	/* !NTGUI_UNICODE */
       unblock_input ();
       unbind_to (count, Qnil);
     }
@@ -6468,10 +6683,14 @@ Otherwise, if ONLY-DIR-P is non-nil, the user can only select directories.  */)
       {
         /* Get an Emacs string from the value Windows gave us.  */
 #ifdef NTGUI_UNICODE
-        filename = from_unicode_buffer (filename_buf);
+        filename = from_unicode_buffer (filename_buf_w);
 #else /* !NTGUI_UNICODE */
-        dostounix_filename (filename_buf, 0);
-        filename = DECODE_FILE (build_string (filename_buf));
+	if (use_unicode)
+	  filename_from_utf16 (filename_buf_w, fname_ret);
+	else
+	  filename_from_ansi (filename_buf_a, fname_ret);
+	dostounix_filename (fname_ret);
+        filename = DECODE_FILE (build_unibyte_string (fname_ret));
 #endif /* NTGUI_UNICODE */
 
 #ifdef CYGWIN
@@ -6480,10 +6699,12 @@ Otherwise, if ONLY-DIR-P is non-nil, the user can only select directories.  */)
 
         /* Strip the dummy filename off the end of the string if we
            added it to select a directory.  */
-        if (file_details->nFilterIndex == 2)
-          {
-            filename = Ffile_name_directory (filename);
-          }
+        if ((use_unicode && file_details_w->nFilterIndex == 2)
+#ifndef NTGUI_UNICODE
+	    || (!use_unicode && file_details_a->nFilterIndex == 2)
+#endif
+	    )
+	  filename = Ffile_name_directory (filename);
       }
     /* User canceled the dialog without making a selection.  */
     else if (!CommDlgExtendedError ())
@@ -6530,38 +6751,80 @@ DEFUN ("system-move-file-to-trash", Fsystem_move_file_to_trash,
       operation = intern ("delete-directory");
       filename = Fdirectory_file_name (filename);
     }
+
+  /* Must have fully qualified file names for moving files to Recycle
+     Bin. */
   filename = Fexpand_file_name (filename, Qnil);
 
   handler = Ffind_file_name_handler (filename, operation);
   if (!NILP (handler))
     return call2 (handler, operation, filename);
+  else
+    {
+      const char * path;
+      int result;
 
-  encoded_file = ENCODE_FILE (filename);
+      encoded_file = ENCODE_FILE (filename);
 
-  {
-    const char * path;
-    SHFILEOPSTRUCT file_op;
-    char tmp_path[MAX_PATH + 1];
+      path = map_w32_filename (SDATA (encoded_file), NULL);
 
-    path = map_w32_filename (SDATA (encoded_file), NULL);
+      /* The Unicode version of SHFileOperation is not supported on
+	 Windows 9X. */
+      if (w32_unicode_filenames && os_subtype != OS_9X)
+	{
+	  SHFILEOPSTRUCTW file_op_w;
+	  /* We need one more element beyond MAX_PATH because this is
+	     a list of file names, with the last element double-null
+	     terminated. */
+	  wchar_t tmp_path_w[MAX_PATH + 1];
 
-    /* On Windows, write permission is required to delete/move files.  */
-    _chmod (path, 0666);
+	  memset (tmp_path_w, 0, sizeof (tmp_path_w));
+	  filename_to_utf16 (path, tmp_path_w);
 
-    memset (tmp_path, 0, sizeof (tmp_path));
-    strcpy (tmp_path, path);
+	  /* On Windows, write permission is required to delete/move files.  */
+	  _wchmod (tmp_path_w, 0666);
 
-    memset (&file_op, 0, sizeof (file_op));
-    file_op.hwnd = HWND_DESKTOP;
-    file_op.wFunc = FO_DELETE;
-    file_op.pFrom = tmp_path;
-    file_op.fFlags = FOF_SILENT | FOF_NOCONFIRMATION | FOF_ALLOWUNDO
-      | FOF_NOERRORUI | FOF_NO_CONNECTED_ELEMENTS;
-    file_op.fAnyOperationsAborted = FALSE;
+	  memset (&file_op_w, 0, sizeof (file_op_w));
+	  file_op_w.hwnd = HWND_DESKTOP;
+	  file_op_w.wFunc = FO_DELETE;
+	  file_op_w.pFrom = tmp_path_w;
+	  file_op_w.fFlags = FOF_SILENT | FOF_NOCONFIRMATION | FOF_ALLOWUNDO
+	    | FOF_NOERRORUI | FOF_NO_CONNECTED_ELEMENTS;
+	  file_op_w.fAnyOperationsAborted = FALSE;
 
-    if (SHFileOperation (&file_op) != 0)
-      report_file_error ("Removing old name", list1 (filename));
-  }
+	  result = SHFileOperationW (&file_op_w);
+	}
+      else
+	{
+	  SHFILEOPSTRUCTA file_op_a;
+	  char tmp_path_a[MAX_PATH + 1];
+
+	  memset (tmp_path_a, 0, sizeof (tmp_path_a));
+	  filename_to_ansi (path, tmp_path_a);
+
+	  /* If a file cannot be represented in ANSI codepage, don't
+	     let them inadvertently delete other files because some
+	     characters are interpreted as a wildcards.  */
+	  if (_mbspbrk (tmp_path_a, "?*"))
+	    result = ERROR_FILE_NOT_FOUND;
+	  else
+	    {
+	      _chmod (tmp_path_a, 0666);
+
+	      memset (&file_op_a, 0, sizeof (file_op_a));
+	      file_op_a.hwnd = HWND_DESKTOP;
+	      file_op_a.wFunc = FO_DELETE;
+	      file_op_a.pFrom = tmp_path_a;
+	      file_op_a.fFlags = FOF_SILENT | FOF_NOCONFIRMATION | FOF_ALLOWUNDO
+		| FOF_NOERRORUI | FOF_NO_CONNECTED_ELEMENTS;
+	      file_op_a.fAnyOperationsAborted = FALSE;
+
+	      result = SHFileOperationA (&file_op_a);
+	    }
+	}
+      if (result != 0)
+	report_file_error ("Removing old name", list1 (filename));
+    }
   return Qnil;
 }
 
@@ -6603,71 +6866,262 @@ handler application, but typically it is one of the following common
 operations:
 
  \"open\"    - open DOCUMENT, which could be a file, a directory, or an
-               executable program.  If it is an application, that
-               application is launched in the current buffer's default
+               executable program (application).  If it is an application,
+               that application is launched in the current buffer's default
                directory.  Otherwise, the application associated with
                DOCUMENT is launched in the buffer's default directory.
- \"print\"   - print DOCUMENT, which must be a file
- \"explore\" - start the Windows Explorer on DOCUMENT
+ \"opennew\" - like \"open\", but instruct the application to open
+               DOCUMENT in a new window.
+ \"openas\"  - open the \"Open With\" dialog for DOCUMENT.
+ \"print\"   - print DOCUMENT, which must be a file.
+ \"printto\" - print DOCUMENT, which must be a file, to a specified printer.
+               The printer should be provided in PARAMETERS, see below.
+ \"explore\" - start the Windows Explorer on DOCUMENT.
  \"edit\"    - launch an editor and open DOCUMENT for editing; which
                editor is launched depends on the association for the
-               specified DOCUMENT
- \"find\"    - initiate search starting from DOCUMENT which must specify
-               a directory
+               specified DOCUMENT.
+ \"find\"    - initiate search starting from DOCUMENT, which must specify
+               a directory.
+ \"delete\"  - move DOCUMENT, a file or a directory, to Recycle Bin.
+ \"copy\"    - copy DOCUMENT, which must be a file or a directory, into
+               the clipboard.
+ \"cut\"     - move DOCUMENT, a file or a directory, into the clipboard.
+ \"paste\"   - paste the file whose name is in the clipboard into DOCUMENT,
+               which must be a directory.
+ \"pastelink\"
+           - create a shortcut in DOCUMENT (which must be a directory)
+               the file or directory whose name is in the clipboard.
+ \"runas\"   - run DOCUMENT, which must be an excutable file, with
+               elevated privileges (a.k.a. \"as Administrator\").
+ \"properties\"
+           - open the the property sheet dialog for DOCUMENT.
  nil       - invoke the default OPERATION, or \"open\" if default is
-               not defined or unavailable
+               not defined or unavailable.
 
 DOCUMENT is typically the name of a document file or a URL, but can
-also be a program executable to run, or a directory to open in the
-Windows Explorer.
+also be an executable program to run, or a directory to open in the
+Windows Explorer.  If it is a file or a directory, it must be a local
+one; this function does not support remote file names.
 
-If DOCUMENT is a program executable, the optional third arg PARAMETERS
-can be a string containing command line parameters that will be passed
-to the program; otherwise, PARAMETERS should be nil or unspecified.
+If DOCUMENT is an executable program, the optional third arg PARAMETERS
+can be a string containing command line parameters, separated by blanks,
+that will be passed to the program.  Some values of OPERATION also require
+parameters (e.g., \"printto\" requires the printer address).  Otherwise,
+PARAMETERS should be nil or unspecified.  Note that double quote characters
+in PARAMETERS must each be enclosed in 2 additional quotes, as in \"\"\".
 
 Optional fourth argument SHOW-FLAG can be used to control how the
 application will be displayed when it is invoked.  If SHOW-FLAG is nil
-or unspecified, the application is displayed normally, otherwise it is
-an integer representing a ShowWindow flag:
+or unspecified, the application is displayed as if SHOW-FLAG of 10 was
+specified, otherwise it is an integer between 0 and 11 representing
+a ShowWindow flag:
 
   0 - start hidden
-  1 - start normally
-  3 - start maximized
-  6 - start minimized  */)
+  1 - start as normal-size window
+  3 - start in a maximized window
+  6 - start in a minimized window
+ 10 - start as the application itself specifies; this is the default.  */)
   (Lisp_Object operation, Lisp_Object document, Lisp_Object parameters, Lisp_Object show_flag)
 {
-  Lisp_Object current_dir;
   char *errstr;
+  Lisp_Object current_dir = BVAR (current_buffer, directory);;
+  wchar_t *doc_w = NULL, *params_w = NULL, *ops_w = NULL;
+#ifdef CYGWIN
+  intptr_t result;
+#else
+  int use_unicode = w32_unicode_filenames;
+  char *doc_a = NULL, *params_a = NULL, *ops_a = NULL;
+  Lisp_Object absdoc, handler;
+  BOOL success;
+  struct gcpro gcpro1;
+#endif
 
   CHECK_STRING (document);
 
-  /* Encode filename, current directory and parameters.  */
-  current_dir = BVAR (current_buffer, directory);
-
 #ifdef CYGWIN
   current_dir = Fcygwin_convert_file_name_to_windows (current_dir, Qt);
-  if (STRINGP (document))
-    document = Fcygwin_convert_file_name_to_windows (document, Qt);
-#endif /* CYGWIN */
+  document = Fcygwin_convert_file_name_to_windows (document, Qt);
 
+  /* Encode filename, current directory and parameters.  */
   current_dir = GUI_ENCODE_FILE (current_dir);
-  if (STRINGP (document))
-    document = GUI_ENCODE_FILE (document);
+  document = GUI_ENCODE_FILE (document);
+  doc_w = GUI_SDATA (document);
   if (STRINGP (parameters))
-    parameters = GUI_ENCODE_SYSTEM (parameters);
+    {
+      parameters = GUI_ENCODE_SYSTEM (parameters);
+      params_w = GUI_SDATA (parameters);
+    }
+  if (STRINGP (operation))
+    {
+      operation = GUI_ENCODE_SYSTEM (operation);
+      ops_w = GUI_SDATA (operation);
+    }
+  result = (intptr_t) ShellExecuteW (NULL, ops_w, doc_w, params_w,
+				     GUI_SDATA (current_dir),
+				     (INTEGERP (show_flag)
+				      ? XINT (show_flag) : SW_SHOWDEFAULT));
 
-  if ((int) GUI_FN (ShellExecute) (NULL,
-                                   (STRINGP (operation) ?
-                                    GUI_SDATA (operation) : NULL),
-                                   GUI_SDATA (document),
-                                   (STRINGP (parameters) ?
-                                    GUI_SDATA (parameters) : NULL),
-                                   GUI_SDATA (current_dir),
-                                   (INTEGERP (show_flag) ?
-                                    XINT (show_flag) : SW_SHOWDEFAULT))
-      > 32)
+  if (result > 32)
     return Qt;
+
+  switch (result)
+    {
+    case SE_ERR_ACCESSDENIED:
+      errstr = w32_strerror (ERROR_ACCESS_DENIED);
+      break;
+    case SE_ERR_ASSOCINCOMPLETE:
+    case SE_ERR_NOASSOC:
+      errstr = w32_strerror (ERROR_NO_ASSOCIATION);
+      break;
+    case SE_ERR_DDEBUSY:
+    case SE_ERR_DDEFAIL:
+      errstr = w32_strerror (ERROR_DDE_FAIL);
+      break;
+    case SE_ERR_DDETIMEOUT:
+      errstr = w32_strerror (ERROR_TIMEOUT);
+      break;
+    case SE_ERR_DLLNOTFOUND:
+      errstr = w32_strerror (ERROR_DLL_NOT_FOUND);
+      break;
+    case SE_ERR_FNF:
+      errstr = w32_strerror (ERROR_FILE_NOT_FOUND);
+      break;
+    case SE_ERR_OOM:
+      errstr = w32_strerror (ERROR_NOT_ENOUGH_MEMORY);
+      break;
+    case SE_ERR_PNF:
+      errstr = w32_strerror (ERROR_PATH_NOT_FOUND);
+      break;
+    case SE_ERR_SHARE:
+      errstr = w32_strerror (ERROR_SHARING_VIOLATION);
+      break;
+    default:
+      errstr = w32_strerror (0);
+      break;
+    }
+
+#else  /* !CYGWIN */
+
+  current_dir = ENCODE_FILE (current_dir);
+  /* We have a situation here.  If DOCUMENT is a relative file name,
+     but its name includes leading directories, i.e. it lives not in
+     CURRENT_DIR, but in its subdirectory, then ShellExecute below
+     will fail to find it.  So we need to make the file name is
+     absolute.  But DOCUMENT does not have to be a file, it can be a
+     URL, for example.  So we make it absolute only if it is an
+     existing file; if it is a file that does not exist, tough.  */
+  GCPRO1 (absdoc);
+  absdoc = Fexpand_file_name (document, Qnil);
+  /* Don't call file handlers for file-exists-p, since they might
+     attempt to access the file, which could fail or produce undesired
+     consequences, see bug#16558 for an example.  */
+  handler = Ffind_file_name_handler (absdoc, Qfile_exists_p);
+  if (NILP (handler))
+    {
+      Lisp_Object absdoc_encoded = ENCODE_FILE (absdoc);
+
+      if (faccessat (AT_FDCWD, SSDATA (absdoc_encoded), F_OK, AT_EACCESS) == 0)
+	document = absdoc_encoded;
+      else
+	document = ENCODE_FILE (document);
+    }
+  else
+    document = ENCODE_FILE (document);
+  UNGCPRO;
+  if (use_unicode)
+    {
+      wchar_t document_w[MAX_PATH], current_dir_w[MAX_PATH];
+      SHELLEXECUTEINFOW shexinfo_w;
+
+      /* Encode filename, current directory and parameters, and
+	 convert operation to UTF-16.  */
+      filename_to_utf16 (SSDATA (current_dir), current_dir_w);
+      filename_to_utf16 (SSDATA (document), document_w);
+      doc_w = document_w;
+      if (STRINGP (parameters))
+	{
+	  int len;
+
+	  parameters = ENCODE_SYSTEM (parameters);
+	  len = pMultiByteToWideChar (CP_ACP, MB_ERR_INVALID_CHARS,
+				      SSDATA (parameters), -1, NULL, 0);
+	  if (len > 32768)
+	    len = 32768;
+	  params_w = alloca (len * sizeof (wchar_t));
+	  pMultiByteToWideChar (CP_ACP, MB_ERR_INVALID_CHARS,
+				SSDATA (parameters), -1, params_w, len);
+	}
+      if (STRINGP (operation))
+	{
+	  /* Assume OPERATION is pure ASCII.  */
+	  const char *s = SSDATA (operation);
+	  wchar_t *d;
+	  int len = SBYTES (operation) + 1;
+
+	  if (len > 32768)
+	    len = 32768;
+	  d = ops_w = alloca (len * sizeof (wchar_t));
+	  while (d < ops_w + len - 1)
+	    *d++ = *s++;
+	  *d = 0;
+	}
+
+      /* Using ShellExecuteEx and setting the SEE_MASK_INVOKEIDLIST
+	 flag succeeds with more OPERATIONs (a.k.a. "verbs"), as it is
+	 able to invoke verbs from shortcut menu extensions, not just
+	 static verbs listed in the Registry.  */
+      memset (&shexinfo_w, 0, sizeof (shexinfo_w));
+      shexinfo_w.cbSize = sizeof (shexinfo_w);
+      shexinfo_w.fMask =
+	SEE_MASK_INVOKEIDLIST | SEE_MASK_FLAG_DDEWAIT | SEE_MASK_FLAG_NO_UI;
+      shexinfo_w.hwnd = NULL;
+      shexinfo_w.lpVerb = ops_w;
+      shexinfo_w.lpFile = doc_w;
+      shexinfo_w.lpParameters = params_w;
+      shexinfo_w.lpDirectory = current_dir_w;
+      shexinfo_w.nShow =
+	(INTEGERP (show_flag) ? XINT (show_flag) : SW_SHOWDEFAULT);
+      success = ShellExecuteExW (&shexinfo_w);
+    }
+  else
+    {
+      char document_a[MAX_PATH], current_dir_a[MAX_PATH];
+      SHELLEXECUTEINFOA shexinfo_a;
+
+      filename_to_ansi (SSDATA (current_dir), current_dir_a);
+      filename_to_ansi (SSDATA (document), document_a);
+      doc_a = document_a;
+      if (STRINGP (parameters))
+	{
+	  parameters = ENCODE_SYSTEM (parameters);
+	  params_a = SSDATA (parameters);
+	}
+      if (STRINGP (operation))
+	{
+	  /* Assume OPERATION is pure ASCII.  */
+	  ops_a = SSDATA (operation);
+	}
+      memset (&shexinfo_a, 0, sizeof (shexinfo_a));
+      shexinfo_a.cbSize = sizeof (shexinfo_a);
+      shexinfo_a.fMask =
+	SEE_MASK_INVOKEIDLIST | SEE_MASK_FLAG_DDEWAIT | SEE_MASK_FLAG_NO_UI;
+      shexinfo_a.hwnd = NULL;
+      shexinfo_a.lpVerb = ops_a;
+      shexinfo_a.lpFile = doc_a;
+      shexinfo_a.lpParameters = params_a;
+      shexinfo_a.lpDirectory = current_dir_a;
+      shexinfo_a.nShow =
+	(INTEGERP (show_flag) ? XINT (show_flag) : SW_SHOWDEFAULT);
+      success = ShellExecuteExA (&shexinfo_a);
+    }
+
+  if (success)
+    return Qt;
+
   errstr = w32_strerror (0);
+
+#endif /* !CYGWIN */
+
   /* The error string might be encoded in the locale's encoding.  */
   if (!NILP (Vlocale_coding_system))
     {
@@ -6923,6 +7377,29 @@ This is a direct interface to the Windows API FindWindow function.  */)
   return Qt;
 }
 
+DEFUN ("w32-frame-rect", Fw32_frame_rect, Sw32_frame_rect, 0, 2, 0,
+       doc: /* Return boundary rectangle of FRAME in screen coordinates.
+FRAME must be a live frame and defaults to the selected one.
+
+The boundary rectangle is a list of four elements, specifying the left,
+top, right and bottom screen coordinates of FRAME including menu and
+title bar and decorations.  Optional argument CLIENT non-nil means to
+return the boundaries of the client rectangle which excludes menu and
+title bar and decorations.  */)
+  (Lisp_Object frame, Lisp_Object client)
+{
+  struct frame *f = decode_live_frame (frame);
+  RECT rect;
+
+  if (!NILP (client))
+    GetClientRect (FRAME_W32_WINDOW (f), &rect);
+  else
+    GetWindowRect (FRAME_W32_WINDOW (f), &rect);
+
+  return list4 (make_number (rect.left), make_number (rect.top),
+		make_number (rect.right), make_number (rect.bottom));
+}
+
 DEFUN ("w32-battery-status", Fw32_battery_status, Sw32_battery_status, 0, 0, 0,
        doc: /* Get power status information from Windows system.
 
@@ -7057,14 +7534,23 @@ If the underlying system call fails, value is nil.  */)
      added rather late on.  */
   {
     HMODULE hKernel = GetModuleHandle ("kernel32");
-    BOOL (*pfn_GetDiskFreeSpaceEx)
+    BOOL (WINAPI *pfn_GetDiskFreeSpaceExW)
+      (wchar_t *, PULARGE_INTEGER, PULARGE_INTEGER, PULARGE_INTEGER)
+      = GetProcAddress (hKernel, "GetDiskFreeSpaceExW");
+    BOOL (WINAPI *pfn_GetDiskFreeSpaceExA)
       (char *, PULARGE_INTEGER, PULARGE_INTEGER, PULARGE_INTEGER)
-      = (void *) GetProcAddress (hKernel, "GetDiskFreeSpaceEx");
+      = GetProcAddress (hKernel, "GetDiskFreeSpaceExA");
+    bool have_pfn_GetDiskFreeSpaceEx =
+      ((w32_unicode_filenames && pfn_GetDiskFreeSpaceExW)
+       || (!w32_unicode_filenames && pfn_GetDiskFreeSpaceExA));
 
     /* On Windows, we may need to specify the root directory of the
        volume holding FILENAME.  */
-    char rootname[MAX_PATH];
+    char rootname[MAX_UTF8_PATH];
+    wchar_t rootname_w[MAX_PATH];
+    char rootname_a[MAX_PATH];
     char *name = SDATA (encoded);
+    BOOL result;
 
     /* find the root name of the volume if given */
     if (isalpha (name[0]) && name[1] == ':')
@@ -7090,7 +7576,12 @@ If the underlying system call fails, value is nil.  */)
 	*str = 0;
       }
 
-    if (pfn_GetDiskFreeSpaceEx)
+    if (w32_unicode_filenames)
+      filename_to_utf16 (rootname, rootname_w);
+    else
+      filename_to_ansi (rootname, rootname_a);
+
+    if (have_pfn_GetDiskFreeSpaceEx)
       {
 	/* Unsigned large integers cannot be cast to double, so
 	   use signed ones instead.  */
@@ -7098,10 +7589,17 @@ If the underlying system call fails, value is nil.  */)
 	LARGE_INTEGER freebytes;
 	LARGE_INTEGER totalbytes;
 
-	if (pfn_GetDiskFreeSpaceEx (rootname,
-				    (ULARGE_INTEGER *)&availbytes,
-				    (ULARGE_INTEGER *)&totalbytes,
-				    (ULARGE_INTEGER *)&freebytes))
+	if (w32_unicode_filenames)
+	  result = pfn_GetDiskFreeSpaceExW (rootname_w,
+					    (ULARGE_INTEGER *)&availbytes,
+					    (ULARGE_INTEGER *)&totalbytes,
+					    (ULARGE_INTEGER *)&freebytes);
+	else
+	  result = pfn_GetDiskFreeSpaceExA (rootname_a,
+					    (ULARGE_INTEGER *)&availbytes,
+					    (ULARGE_INTEGER *)&totalbytes,
+					    (ULARGE_INTEGER *)&freebytes);
+	if (result)
 	  value = list3 (make_float ((double) totalbytes.QuadPart),
 			 make_float ((double) freebytes.QuadPart),
 			 make_float ((double) availbytes.QuadPart));
@@ -7113,11 +7611,19 @@ If the underlying system call fails, value is nil.  */)
 	DWORD free_clusters;
 	DWORD total_clusters;
 
-	if (GetDiskFreeSpace (rootname,
-			      &sectors_per_cluster,
-			      &bytes_per_sector,
-			      &free_clusters,
-			      &total_clusters))
+	if (w32_unicode_filenames)
+	  result = GetDiskFreeSpaceW (rootname_w,
+				      &sectors_per_cluster,
+				      &bytes_per_sector,
+				      &free_clusters,
+				      &total_clusters);
+	else
+	  result = GetDiskFreeSpaceA (rootname_a,
+				      &sectors_per_cluster,
+				      &bytes_per_sector,
+				      &free_clusters,
+				      &total_clusters);
+	if (result)
 	  value = list3 (make_float ((double) total_clusters
 				     * sectors_per_cluster * bytes_per_sector),
 			 make_float ((double) free_clusters
@@ -7132,6 +7638,7 @@ If the underlying system call fails, value is nil.  */)
 #endif /* WINDOWSNT */
 
 
+#ifdef WINDOWSNT
 DEFUN ("default-printer-name", Fdefault_printer_name, Sdefault_printer_name,
        0, 0, 0, doc: /* Return the name of Windows default printer device.  */)
   (void)
@@ -7139,8 +7646,11 @@ DEFUN ("default-printer-name", Fdefault_printer_name, Sdefault_printer_name,
   static char pname_buf[256];
   int err;
   HANDLE hPrn;
-  PRINTER_INFO_2 *ppi2 = NULL;
+  PRINTER_INFO_2W *ppi2w = NULL;
+  PRINTER_INFO_2A *ppi2a = NULL;
   DWORD dwNeeded = 0, dwReturned = 0;
+  char server_name[MAX_UTF8_PATH], share_name[MAX_UTF8_PATH];
+  char port_name[MAX_UTF8_PATH];
 
   /* Retrieve the default string from Win.ini (the registry).
    * String will be in form "printername,drivername,portname".
@@ -7152,55 +7662,89 @@ DEFUN ("default-printer-name", Fdefault_printer_name, Sdefault_printer_name,
   /* We want to know more than the printer name */
   if (!OpenPrinter (pname_buf, &hPrn, NULL))
     return Qnil;
-  GetPrinter (hPrn, 2, NULL, 0, &dwNeeded);
+  /* GetPrinterW is not supported by unicows.dll.  */
+  if (w32_unicode_filenames && os_subtype != OS_9X)
+    GetPrinterW (hPrn, 2, NULL, 0, &dwNeeded);
+  else
+    GetPrinterA (hPrn, 2, NULL, 0, &dwNeeded);
   if (dwNeeded == 0)
     {
       ClosePrinter (hPrn);
       return Qnil;
     }
-  /* Allocate memory for the PRINTER_INFO_2 struct */
-  ppi2 = xmalloc (dwNeeded);
-  if (!ppi2)
-    {
-      ClosePrinter (hPrn);
-      return Qnil;
-    }
   /* Call GetPrinter again with big enough memory block.  */
-  err = GetPrinter (hPrn, 2, (LPBYTE)ppi2, dwNeeded, &dwReturned);
-  ClosePrinter (hPrn);
-  if (!err)
+  if (w32_unicode_filenames && os_subtype != OS_9X)
     {
-      xfree (ppi2);
-      return Qnil;
-    }
+      /* Allocate memory for the PRINTER_INFO_2 struct.  */
+      ppi2w = xmalloc (dwNeeded);
+      err = GetPrinterW (hPrn, 2, (LPBYTE)ppi2w, dwNeeded, &dwReturned);
+      ClosePrinter (hPrn);
+      if (!err)
+	{
+	  xfree (ppi2w);
+	  return Qnil;
+	}
 
-  if (ppi2)
-    {
-      if (ppi2->Attributes & PRINTER_ATTRIBUTE_SHARED && ppi2->pServerName)
-        {
-	  /* a remote printer */
-	  if (*ppi2->pServerName == '\\')
-	    snprintf (pname_buf, sizeof (pname_buf), "%s\\%s", ppi2->pServerName,
-		       ppi2->pShareName);
-	  else
-	    snprintf (pname_buf, sizeof (pname_buf), "\\\\%s\\%s", ppi2->pServerName,
-		       ppi2->pShareName);
-	  pname_buf[sizeof (pname_buf) - 1] = '\0';
+      if ((ppi2w->Attributes & PRINTER_ATTRIBUTE_SHARED)
+	  && ppi2w->pServerName)
+	{
+	  filename_from_utf16 (ppi2w->pServerName, server_name);
+	  filename_from_utf16 (ppi2w->pShareName, share_name);
 	}
       else
-        {
-	  /* a local printer */
-	  strncpy (pname_buf, ppi2->pPortName, sizeof (pname_buf));
-	  pname_buf[sizeof (pname_buf) - 1] = '\0';
-	  /* `pPortName' can include several ports, delimited by ','.
-	   * we only use the first one. */
-	  strtok (pname_buf, ",");
+	{
+	  server_name[0] = '\0';
+	  filename_from_utf16 (ppi2w->pPortName, port_name);
 	}
-      xfree (ppi2);
+    }
+  else
+    {
+      ppi2a = xmalloc (dwNeeded);
+      err = GetPrinterA (hPrn, 2, (LPBYTE)ppi2a, dwNeeded, &dwReturned);
+      ClosePrinter (hPrn);
+      if (!err)
+	{
+	  xfree (ppi2a);
+	  return Qnil;
+	}
+
+      if ((ppi2a->Attributes & PRINTER_ATTRIBUTE_SHARED)
+	  && ppi2a->pServerName)
+	{
+	  filename_from_ansi (ppi2a->pServerName, server_name);
+	  filename_from_ansi (ppi2a->pShareName, share_name);
+	}
+      else
+	{
+	  server_name[0] = '\0';
+	  filename_from_ansi (ppi2a->pPortName, port_name);
+	}
     }
 
-  return build_string (pname_buf);
+  if (server_name[0])
+    {
+      /* a remote printer */
+      if (server_name[0] == '\\')
+	snprintf (pname_buf, sizeof (pname_buf), "%s\\%s", server_name,
+		  share_name);
+      else
+	snprintf (pname_buf, sizeof (pname_buf), "\\\\%s\\%s", server_name,
+		  share_name);
+      pname_buf[sizeof (pname_buf) - 1] = '\0';
+    }
+  else
+    {
+      /* a local printer */
+      strncpy (pname_buf, port_name, sizeof (pname_buf));
+      pname_buf[sizeof (pname_buf) - 1] = '\0';
+      /* `pPortName' can include several ports, delimited by ','.
+       * we only use the first one. */
+      strtok (pname_buf, ",");
+    }
+
+  return DECODE_FILE (build_unibyte_string (pname_buf));
 }
+#endif	/* WINDOWSNT */
 
 
 /* Equivalent of strerror for W32 error codes.  */
@@ -7514,6 +8058,8 @@ frame_parm_handler w32_frame_parm_handlers[] =
   x_set_icon_name,
   x_set_icon_type,
   x_set_internal_border_width,
+  x_set_right_divider_width,
+  x_set_bottom_divider_width,
   x_set_menu_bar_lines,
   x_set_mouse_color,
   x_explicitly_set_name,
@@ -7765,6 +8311,13 @@ or when you set the mouse color.  */);
 This variable takes effect when you create a new frame
 or when you set the mouse color.  */);
   Vx_window_horizontal_drag_shape = Qnil;
+
+  DEFVAR_LISP ("x-window-vertical-drag-cursor",
+	       Vx_window_vertical_drag_shape,
+	       doc: /* Pointer shape to use for indicating a window can be dragged vertically.
+This variable takes effect when you create a new frame
+or when you set the mouse color.  */);
+  Vx_window_vertical_drag_shape = Qnil;
 #endif
 
   DEFVAR_LISP ("x-cursor-fore-pixel", Vx_cursor_fore_pixel,
@@ -7857,13 +8410,14 @@ only be necessary if the default setting causes problems.  */);
   defsubr (&Sw32_reconstruct_hot_key);
   defsubr (&Sw32_toggle_lock_key);
   defsubr (&Sw32_window_exists_p);
+  defsubr (&Sw32_frame_rect);
   defsubr (&Sw32_battery_status);
 
 #ifdef WINDOWSNT
   defsubr (&Sfile_system_info);
+  defsubr (&Sdefault_printer_name);
 #endif
 
-  defsubr (&Sdefault_printer_name);
   defsubr (&Sset_message_beep);
 
   hourglass_hwnd = NULL;
@@ -7884,61 +8438,35 @@ only be necessary if the default setting causes problems.  */);
 #endif
 }
 
+
 
-/*
-	globals_of_w32fns is used to initialize those global variables that
-	must always be initialized on startup even when the global variable
-	initialized is non zero (see the function main in emacs.c).
-	globals_of_w32fns is called from syms_of_w32fns when the global
-	variable initialized is 0 and directly from main when initialized
-	is non zero.
- */
-void
-globals_of_w32fns (void)
+/* Crashing and reporting backtrace.  */
+
+#ifndef CYGWIN
+static LONG CALLBACK my_exception_handler (EXCEPTION_POINTERS *);
+static LPTOP_LEVEL_EXCEPTION_FILTER prev_exception_handler;
+#endif
+static DWORD except_code;
+static PVOID except_addr;
+
+#ifndef CYGWIN
+/* This handler records the exception code and the address where it
+   was triggered so that this info could be included in the backtrace.
+   Without that, the backtrace in some cases has no information
+   whatsoever about the offending code, and looks as if the top-level
+   exception handler in the MinGW startup code di the one that
+   crashed.  */
+static LONG CALLBACK
+my_exception_handler (EXCEPTION_POINTERS * exception_data)
 {
-  HMODULE user32_lib = GetModuleHandle ("user32.dll");
-  /*
-    TrackMouseEvent not available in all versions of Windows, so must load
-    it dynamically.  Do it once, here, instead of every time it is used.
-  */
-  track_mouse_event_fn = (TrackMouseEvent_Proc)
-    GetProcAddress (user32_lib, "TrackMouseEvent");
+  except_code = exception_data->ExceptionRecord->ExceptionCode;
+  except_addr = exception_data->ExceptionRecord->ExceptionAddress;
 
-  monitor_from_point_fn = (MonitorFromPoint_Proc)
-    GetProcAddress (user32_lib, "MonitorFromPoint");
-  get_monitor_info_fn = (GetMonitorInfo_Proc)
-    GetProcAddress (user32_lib, "GetMonitorInfoA");
-  monitor_from_window_fn = (MonitorFromWindow_Proc)
-    GetProcAddress (user32_lib, "MonitorFromWindow");
-  enum_display_monitors_fn = (EnumDisplayMonitors_Proc)
-    GetProcAddress (user32_lib, "EnumDisplayMonitors");
-
-  {
-    HMODULE imm32_lib = GetModuleHandle ("imm32.dll");
-    get_composition_string_fn = (ImmGetCompositionString_Proc)
-      GetProcAddress (imm32_lib, "ImmGetCompositionStringW");
-    get_ime_context_fn = (ImmGetContext_Proc)
-      GetProcAddress (imm32_lib, "ImmGetContext");
-    release_ime_context_fn = (ImmReleaseContext_Proc)
-      GetProcAddress (imm32_lib, "ImmReleaseContext");
-    set_ime_composition_window_fn = (ImmSetCompositionWindow_Proc)
-      GetProcAddress (imm32_lib, "ImmSetCompositionWindow");
-  }
-  DEFVAR_INT ("w32-ansi-code-page",
-	      w32_ansi_code_page,
-	      doc: /* The ANSI code page used by the system.  */);
-  w32_ansi_code_page = GetACP ();
-
-  if (os_subtype == OS_NT)
-    w32_unicode_gui = 1;
-  else
-    w32_unicode_gui = 0;
-
-  /* MessageBox does not work without this when linked to comctl32.dll 6.0.  */
-  InitCommonControls ();
-
-  syms_of_w32uniscribe ();
+  if (prev_exception_handler)
+    return prev_exception_handler (exception_data);
+  return EXCEPTION_EXECUTE_HANDLER;
 }
+#endif
 
 typedef USHORT (WINAPI * CaptureStackBackTrace_proc) (ULONG, ULONG, PVOID *,
 						      PULONG);
@@ -7995,21 +8523,37 @@ emacs_abort (void)
 
 	if (i)
 	  {
+	    int errfile_fd = -1;
+	    int j;
+	    char buf[sizeof ("\r\nException  at this address:\r\n\r\n")
+		     /* The type below should really be 'void *', but
+			INT_BUFSIZE_BOUND cannot handle that without
+			triggering compiler warnings (under certain
+			pedantic warning switches), it wants an
+			integer type.  */
+		     + 2 * INT_BUFSIZE_BOUND (intptr_t)];
 #ifdef CYGWIN
 	    int stderr_fd = 2;
 #else
 	    HANDLE errout = GetStdHandle (STD_ERROR_HANDLE);
 	    int stderr_fd = -1;
-#endif
-	    int errfile_fd = -1;
-	    int j;
 
-#ifndef CYGWIN
 	    if (errout && errout != INVALID_HANDLE_VALUE)
 	      stderr_fd = _open_osfhandle ((intptr_t)errout, O_APPEND | O_BINARY);
 #endif
+
+	    /* We use %p, not 0x%p, as %p produces a leading "0x" on XP,
+	       but not on Windows 7.  addr2line doesn't mind a missing
+	       "0x", but will be confused by an extra one.  */
+	    if (except_addr)
+	      sprintf (buf, "\r\nException 0x%lx at this address:\r\n%p\r\n",
+		       except_code, except_addr);
 	    if (stderr_fd >= 0)
-	      write (stderr_fd, "\r\nBacktrace:\r\n", 14);
+	      {
+		if (except_addr)
+		  write (stderr_fd, buf, strlen (buf));
+		write (stderr_fd, "\r\nBacktrace:\r\n", 14);
+	      }
 #ifdef CYGWIN
 #define _open open
 #endif
@@ -8017,17 +8561,17 @@ emacs_abort (void)
 	    if (errfile_fd >= 0)
 	      {
 		lseek (errfile_fd, 0L, SEEK_END);
+		if (except_addr)
+		  write (errfile_fd, buf, strlen (buf));
 		write (errfile_fd, "\r\nBacktrace:\r\n", 14);
 	      }
 
 	    for (j = 0; j < i; j++)
 	      {
-		char buf[INT_BUFSIZE_BOUND (void *)];
-
 		/* stack[] gives the return addresses, whereas we want
 		   the address of the call, so decrease each address
 		   by approximate size of 1 CALL instruction.  */
-		sprintf (buf, "0x%p\r\n", (char *)stack[j] - sizeof(void *));
+		sprintf (buf, "%p\r\n", (char *)stack[j] - sizeof(void *));
 		if (stderr_fd >= 0)
 		  write (stderr_fd, buf, strlen (buf));
 		if (errfile_fd >= 0)
@@ -8047,6 +8591,72 @@ emacs_abort (void)
 	break;
       }
     }
+}
+
+
+
+/* Initialization.  */
+
+/*
+	globals_of_w32fns is used to initialize those global variables that
+	must always be initialized on startup even when the global variable
+	initialized is non zero (see the function main in emacs.c).
+	globals_of_w32fns is called from syms_of_w32fns when the global
+	variable initialized is 0 and directly from main when initialized
+	is non zero.
+ */
+void
+globals_of_w32fns (void)
+{
+  HMODULE user32_lib = GetModuleHandle ("user32.dll");
+  /*
+    TrackMouseEvent not available in all versions of Windows, so must load
+    it dynamically.  Do it once, here, instead of every time it is used.
+  */
+  track_mouse_event_fn = (TrackMouseEvent_Proc)
+    GetProcAddress (user32_lib, "TrackMouseEvent");
+
+  monitor_from_point_fn = (MonitorFromPoint_Proc)
+    GetProcAddress (user32_lib, "MonitorFromPoint");
+  get_monitor_info_fn = (GetMonitorInfo_Proc)
+    GetProcAddress (user32_lib, "GetMonitorInfoA");
+  monitor_from_window_fn = (MonitorFromWindow_Proc)
+    GetProcAddress (user32_lib, "MonitorFromWindow");
+  enum_display_monitors_fn = (EnumDisplayMonitors_Proc)
+    GetProcAddress (user32_lib, "EnumDisplayMonitors");
+
+  {
+    HMODULE imm32_lib = GetModuleHandle ("imm32.dll");
+    get_composition_string_fn = (ImmGetCompositionString_Proc)
+      GetProcAddress (imm32_lib, "ImmGetCompositionStringW");
+    get_ime_context_fn = (ImmGetContext_Proc)
+      GetProcAddress (imm32_lib, "ImmGetContext");
+    release_ime_context_fn = (ImmReleaseContext_Proc)
+      GetProcAddress (imm32_lib, "ImmReleaseContext");
+    set_ime_composition_window_fn = (ImmSetCompositionWindow_Proc)
+      GetProcAddress (imm32_lib, "ImmSetCompositionWindow");
+  }
+
+  except_code = 0;
+  except_addr = 0;
+#ifndef CYGWIN
+  prev_exception_handler = SetUnhandledExceptionFilter (my_exception_handler);
+#endif
+
+  DEFVAR_INT ("w32-ansi-code-page",
+	      w32_ansi_code_page,
+	      doc: /* The ANSI code page used by the system.  */);
+  w32_ansi_code_page = GetACP ();
+
+  if (os_subtype == OS_NT)
+    w32_unicode_gui = 1;
+  else
+    w32_unicode_gui = 0;
+
+  /* MessageBox does not work without this when linked to comctl32.dll 6.0.  */
+  InitCommonControls ();
+
+  syms_of_w32uniscribe ();
 }
 
 #ifdef NTGUI_UNICODE

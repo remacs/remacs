@@ -1,6 +1,6 @@
 /* MS-DOS specific C utilities.          -*- coding: cp850 -*-
 
-Copyright (C) 1993-1997, 1999-2013 Free Software Foundation, Inc.
+Copyright (C) 1993-1997, 1999-2014 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -50,6 +50,8 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <unistd.h>	 /* for chdir, dup, dup2, etc. */
 #include <dir.h>	 /* for getdisk */
 #pragma pack(0)		 /* dir.h does a pack(4), which isn't GCC's default */
+#undef opendir
+#include <dirent.h>	 /* for opendir */
 #include <fcntl.h>
 #include <io.h>		 /* for setmode */
 #include <dpmi.h>	 /* for __dpmi_xxx stuff */
@@ -408,7 +410,7 @@ static int term_setup_done;
 
 static unsigned short outside_cursor;
 
-/* Similar to the_only_frame.  */
+/* The only display since MS-DOS does not support multiple ones.  */
 struct tty_display_info the_only_display_info;
 
 /* Support for DOS/V (allows Japanese characters to be displayed on
@@ -564,7 +566,7 @@ dos_set_window_size (int *rows, int *cols)
       };
       int i = 0;
 
-      while (i < sizeof (std_dimension) / sizeof (std_dimension[0]))
+      while (i < ARRAYELTS (std_dimension))
 	{
 	 if (std_dimension[i].need_vga <= have_vga
 	     && std_dimension[i].rows >= *rows)
@@ -1379,13 +1381,6 @@ IT_delete_glyphs (struct frame *f, int n)
   emacs_abort ();
 }
 
-/* set-window-configuration on window.c needs this.  */
-void
-x_set_menu_bar_lines (struct frame *f, Lisp_Object value, Lisp_Object oldval)
-{
-  set_menu_bar_lines (f, value, oldval);
-}
-
 /* This was copied from xfaces.c  */
 
 extern Lisp_Object Qbackground_color;
@@ -1889,18 +1884,6 @@ dos_get_saved_screen (char **screen, int *rows, int *cols)
   return 0;
 #endif
 }
-
-#ifndef HAVE_X_WINDOWS
-
-/* We are not X, but we can emulate it well enough for our needs... */
-void
-check_window_system (void)
-{
-  if (! FRAME_MSDOS_P (SELECTED_FRAME ()))
-    error ("Not running under a window system");
-}
-
-#endif
 
 
 /* ----------------------- Keyboard control ----------------------
@@ -3302,7 +3285,7 @@ void msdos_downcase_filename (unsigned char *);
 /* Destructively turn backslashes into slashes.  */
 
 void
-dostounix_filename (char *p, int ignore)
+dostounix_filename (char *p)
 {
   msdos_downcase_filename (p);
 
@@ -3472,7 +3455,7 @@ init_environment (int argc, char **argv, int skip_args)
   static const char * const tempdirs[] = {
     "$TMPDIR", "$TEMP", "$TMP", "c:/"
   };
-  const int imax = sizeof (tempdirs) / sizeof (tempdirs[0]);
+  const int imax = ARRAYELTS (tempdirs);
 
   /* Make sure they have a usable $TMPDIR.  Many Emacs functions use
      temporary files and assume "/tmp" if $TMPDIR is unset, which
@@ -3566,7 +3549,7 @@ init_environment (int argc, char **argv, int skip_args)
   if (!s) s = "c:/command.com";
   t = alloca (strlen (s) + 1);
   strcpy (t, s);
-  dostounix_filename (t, 0);
+  dostounix_filename (t);
   setenv ("SHELL", t, 0);
 
   /* PATH is also downcased and backslashes mirrored.  */
@@ -3576,7 +3559,7 @@ init_environment (int argc, char **argv, int skip_args)
   /* Current directory is always considered part of MsDos's path but it is
      not normally mentioned.  Now it is.  */
   strcat (strcpy (t, ".;"), s);
-  dostounix_filename (t, 0); /* Not a single file name, but this should work.  */
+  dostounix_filename (t); /* Not a single file name, but this should work.  */
   setenv ("PATH", t, 1);
 
   /* In some sense all dos users have root privileges, so...  */
@@ -3882,6 +3865,9 @@ int setpgid (int pid, int pgid) { return 0; }
 int setpriority (int x, int y, int z) { return 0; }
 pid_t setsid (void) { return 0; }
 
+
+/* Gnulib support and emulation.  */
+
 #if __DJGPP__ == 2 && __DJGPP_MINOR__ < 4
 ssize_t
 readlink (const char *name, char *dummy1, size_t dummy2)
@@ -3892,6 +3878,38 @@ readlink (const char *name, char *dummy1, size_t dummy2)
   return -1;
 }
 #endif
+
+/* dir_pathname is set by sys_opendir and used in readlinkat and in
+   fstatat, when they get a special FD of zero, which means use the
+   last directory opened by opendir.  */
+static char dir_pathname[MAXPATHLEN];
+DIR *
+sys_opendir (const char *dirname)
+{
+  _fixpath (dirname, dir_pathname);
+  return opendir (dirname);
+}
+
+ssize_t
+readlinkat (int fd, char const *name, char *buffer, size_t buffer_size)
+{
+  /* Rely on a hack: an open directory is modeled as file descriptor 0,
+     as in fstatat.  FIXME: Add proper support for readlinkat.  */
+  char fullname[MAXPATHLEN];
+
+  if (fd != AT_FDCWD)
+    {
+      if (strlen (dir_pathname) + strlen (name) + 1 >= MAXPATHLEN)
+	{
+	  errno = ENAMETOOLONG;
+	  return -1;
+	}
+      sprintf (fullname, "%s/%s", dir_pathname, name);
+      name = fullname;
+    }
+
+  return readlink (name, buffer, buffer_size);
+}
 
 char *
 careadlinkat (int fd, char const *filename,
@@ -3919,6 +3937,82 @@ careadlinkat (int fd, char const *filename,
     }
   return buffer;
 }
+
+/* Emulate faccessat(2).  */
+int
+faccessat (int dirfd, const char * path, int mode, int flags)
+{
+  /* We silently ignore FLAGS.  */
+  flags = flags;
+
+  if (dirfd != AT_FDCWD
+      && !(IS_DIRECTORY_SEP (path[0])
+	   || IS_DEVICE_SEP (path[1])))
+    {
+      errno = EBADF;
+      return -1;
+    }
+
+  return access (path, mode);
+}
+
+/* Emulate fstatat.  */
+int
+fstatat (int fd, char const *name, struct stat *st, int flags)
+{
+  /* Rely on a hack: an open directory is modeled as file descriptor 0.
+     This is good enough for the current usage in Emacs, but is fragile.
+
+     FIXME: Add proper support for fdopendir, fstatat, readlinkat.
+     Gnulib does this and can serve as a model.  */
+  char fullname[MAXPATHLEN];
+
+  flags = flags;
+
+  if (fd != AT_FDCWD)
+    {
+      char lastc = dir_pathname[strlen (dir_pathname) - 1];
+
+      if (strlen (dir_pathname) + strlen (name) + IS_DIRECTORY_SEP (lastc)
+	  >= MAXPATHLEN)
+	{
+	  errno = ENAMETOOLONG;
+	  return -1;
+	}
+
+      sprintf (fullname, "%s%s%s",
+	       dir_pathname, IS_DIRECTORY_SEP (lastc) ? "" : "/", name);
+      name = fullname;
+    }
+
+#if __DJGPP__ > 2 || __DJGPP_MINOR__ > 3
+  return (flags & AT_SYMLINK_NOFOLLOW) ? lstat (name, st) : stat (name, st);
+#else
+  return stat (name, st);
+#endif
+}
+
+#if __DJGPP__ == 2 && __DJGPP_MINOR__ < 4
+/* Emulate the Posix unsetenv.  DJGPP v2.04 has this in the library.  */
+int
+unsetenv (const char *name)
+{
+  char *var;
+  size_t name_len;
+  int retval;
+
+  if (name == NULL || *name == '\0' || strchr (name, '=') != NULL)
+    {
+      errno = EINVAL;
+      return -1;
+    }
+
+  /* DJGPP's 'putenv' deletes the entry if it doesn't include '='.  */
+  putenv (name);
+
+  return 0;
+}
+#endif
 
 
 #if __DJGPP__ == 2 && __DJGPP_MINOR__ < 2
@@ -4045,7 +4139,7 @@ dos_yield_time_slice (void)
 /* We don't have to call timer_check here
    because wait_reading_process_output takes care of that.  */
 int
-sys_select (int nfds, SELECT_TYPE *rfds, SELECT_TYPE *wfds, SELECT_TYPE *efds,
+sys_select (int nfds, fd_set *rfds, fd_set *wfds, fd_set *efds,
 	    struct timespec *timeout, void *ignored)
 {
   int check_input;

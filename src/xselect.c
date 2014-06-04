@@ -1,5 +1,5 @@
 /* X Selection processing for Emacs.
-   Copyright (C) 1993-1997, 2000-2013 Free Software Foundation, Inc.
+   Copyright (C) 1993-1997, 2000-2014 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -320,7 +320,7 @@ x_own_selection (Lisp_Object selection_name, Lisp_Object selection_value,
   Window selecting_window = FRAME_X_WINDOW (f);
   struct x_display_info *dpyinfo = FRAME_DISPLAY_INFO (f);
   Display *display = dpyinfo->display;
-  Time timestamp = last_event_timestamp;
+  Time timestamp = dpyinfo->last_user_time;
   Atom selection_atom = symbol_to_x_atom (dpyinfo, selection_name);
 
   block_input ();
@@ -972,7 +972,6 @@ x_handle_selection_clear (struct input_event *event)
     Frun_hook_with_args (2, args);
   }
 
-  prepare_menu_bars ();
   redisplay_preserve_echo_area (20);
 }
 
@@ -1141,7 +1140,7 @@ wait_for_property_change (struct prop_location *location)
 /* Called from XTread_socket in response to a PropertyNotify event.  */
 
 void
-x_handle_property_notify (const XPropertyEvent * const event)
+x_handle_property_notify (const XPropertyEvent *event)
 {
   struct prop_location *rest;
 
@@ -1188,7 +1187,7 @@ x_get_foreign_selection (Lisp_Object selection_symbol, Lisp_Object target_type,
   struct x_display_info *dpyinfo = FRAME_DISPLAY_INFO (f);
   Display *display = dpyinfo->display;
   Window requestor_window = FRAME_X_WINDOW (f);
-  Time requestor_time = last_event_timestamp;
+  Time requestor_time = dpyinfo->last_user_time;
   Atom target_property = dpyinfo->Xatom_EMACS_TMP;
   Atom selection_atom = symbol_to_x_atom (dpyinfo, selection_symbol);
   Atom type_atom = (CONSP (target_type)
@@ -1888,7 +1887,7 @@ clean_local_selection_data (Lisp_Object obj)
    We store t there if the reply is successful, lambda if not.  */
 
 void
-x_handle_selection_notify (const XSelectionEvent * const event)
+x_handle_selection_notify (const XSelectionEvent *event)
 {
   if (event->requestor != reading_selection_window)
     return;
@@ -2067,7 +2066,7 @@ On MS-DOS, all this does is return non-nil if we own the selection.  */)
 
   block_input ();
   if (NILP (time_object))
-    timestamp = last_event_timestamp;
+    timestamp = dpyinfo->last_user_time;
   else
     CONS_TO_INTEGER (time_object, Time, timestamp);
   XSetSelectionOwner (dpyinfo->display, selection_atom, None, timestamp);
@@ -2365,7 +2364,7 @@ x_fill_property_data (Display *dpy, Lisp_Object data, void *ret, int format)
 
 Lisp_Object
 x_property_data_to_lisp (struct frame *f, const unsigned char *data,
-			 Atom type, int format, long unsigned int size)
+			 Atom type, int format, unsigned long size)
 {
   ptrdiff_t format_bytes = format >> 3;
   if (PTRDIFF_MAX / format_bytes < size)
@@ -2488,7 +2487,7 @@ FRAME is on.  If FRAME is nil, the selected frame is used.  */)
 /* Convert an XClientMessageEvent to a Lisp event of type DRAG_N_DROP_EVENT.  */
 
 int
-x_handle_dnd_message (struct frame *f, const XClientMessageEvent * const event,
+x_handle_dnd_message (struct frame *f, const XClientMessageEvent *event,
                       struct x_display_info *dpyinfo, struct input_event *bufp)
 {
   Lisp_Object vec;

@@ -1,9 +1,9 @@
 ;;; browse-url.el --- pass a URL to a WWW browser
 
-;; Copyright (C) 1995-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1995-2014 Free Software Foundation, Inc.
 
 ;; Author: Denis Howe <dbh@doc.ic.ac.uk>
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Created: 03 Apr 1995
 ;; Keywords: hypertext, hypermedia, mouse
 
@@ -227,13 +227,13 @@ regexp should probably be \".\" to specify a default browser."
 	  (function-item :tag "Emacs W3" :value  browse-url-w3)
 	  (function-item :tag "W3 in another Emacs via `gnudoit'"
 			 :value  browse-url-w3-gnudoit)
+	  (function-item :tag "eww" :value  eww-browse-url)
 	  (function-item :tag "Mozilla" :value  browse-url-mozilla)
 	  (function-item :tag "Firefox" :value browse-url-firefox)
 	  (function-item :tag "Chromium" :value browse-url-chromium)
 	  (function-item :tag "Galeon" :value  browse-url-galeon)
 	  (function-item :tag "Epiphany" :value  browse-url-epiphany)
 	  (function-item :tag "Netscape" :value  browse-url-netscape)
-	  (function-item :tag "eww" :value  eww-browse-url)
 	  (function-item :tag "Mosaic" :value  browse-url-mosaic)
 	  (function-item :tag "Mosaic using CCI" :value  browse-url-cci)
 	  (function-item :tag "Text browser in an xterm window"
@@ -724,9 +724,12 @@ interactively.  Turn the filename into a URL with function
 (defun browse-url-file-url (file)
   "Return the URL corresponding to FILE.
 Use variable `browse-url-filename-alist' to map filenames to URLs."
-  (let ((coding (and (default-value 'enable-multibyte-characters)
-		     (or file-name-coding-system
-			 default-file-name-coding-system))))
+  (let ((coding (if (equal system-type 'windows-nt)
+		    ;; W32 pretends that file names are UTF-8 encoded.
+		    'utf-8
+		  (and (default-value 'enable-multibyte-characters)
+		       (or file-name-coding-system
+			   default-file-name-coding-system)))))
     (if coding (setq file (encode-coding-string file coding))))
   (setq file (browse-url-url-encode-chars file "[*\"()',=;?% ]"))
   (dolist (map browse-url-filename-alist)
@@ -813,15 +816,15 @@ first, if that exists."
   (unless (called-interactively-p 'interactive)
     (setq args (or args (list browse-url-new-window-flag))))
   (setq url (url-tidy url))
+  (when (and url-handler-mode (not (file-name-absolute-p url)))
+    (setq url (expand-file-name url)))
   (let ((process-environment (copy-sequence process-environment))
 	(function (or (and (string-match "\\`mailto:" url)
 			   browse-url-mailto-function)
 		      browse-url-browser-function))
 	;; Ensure that `default-directory' exists and is readable (b#6077).
-	(default-directory (if (and (file-directory-p default-directory)
-				    (file-readable-p default-directory))
-			       default-directory
-			     (expand-file-name "~/"))))
+	(default-directory (or (unhandled-file-name-directory default-directory)
+			       (expand-file-name "~/"))))
     ;; When connected to various displays, be careful to use the display of
     ;; the currently selected frame, rather than the original start display,
     ;; which may not even exist any more.
@@ -1339,28 +1342,28 @@ used instead of `browse-url-new-window-flag'."
   (let ((pidfile (expand-file-name browse-url-mosaic-pidfile))
 	pid)
     (if (file-readable-p pidfile)
-	(save-excursion
-	  (find-file pidfile)
-	  (goto-char (point-min))
-	  (setq pid (read (current-buffer)))
-	  (kill-buffer nil)))
-    (if (and pid (zerop (signal-process pid 0))) ; Mosaic running
-	(save-excursion
-	  (find-file (format "/tmp/Mosaic.%d" pid))
-	  (erase-buffer)
-	  (insert (if (browse-url-maybe-new-window new-window)
-		      "newwin\n"
-		    "goto\n")
-		  url "\n")
-	  (save-buffer)
-	  (kill-buffer nil)
+        (with-temp-buffer
+          (insert-file-contents pidfile)
+	  (setq pid (read (current-buffer)))))
+    (if (and (integerp pid) (zerop (signal-process pid 0))) ; Mosaic running
+        (progn
+          (with-temp-buffer
+            (insert (if (browse-url-maybe-new-window new-window)
+                        "newwin\n"
+                      "goto\n")
+                    url "\n")
+            (with-file-modes ?\700
+              (if (file-exists-p
+                   (setq pidfile (format "/tmp/Mosaic.%d" pid)))
+                  (delete-file pidfile))
+              ;; http://debbugs.gnu.org/17428.  Use O_EXCL.
+              (write-region nil nil pidfile nil 'silent nil 'excl)))
 	  ;; Send signal SIGUSR to Mosaic
 	  (message "Signaling Mosaic...")
 	  (signal-process pid 'SIGUSR1)
 	  ;; Or you could try:
 	  ;; (call-process "kill" nil 0 nil "-USR1" (int-to-string pid))
-	  (message "Signaling Mosaic...done")
-	  )
+	  (message "Signaling Mosaic...done"))
       ;; Mosaic not running - start it
       (message "Starting %s..." browse-url-mosaic-program)
       (apply 'start-process "xmosaic" nil browse-url-mosaic-program

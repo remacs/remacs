@@ -1,6 +1,6 @@
 ;;; em-unix.el --- UNIX command aliases  -*- lexical-binding:t -*-
 
-;; Copyright (C) 1999-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1999-2014 Free Software Foundation, Inc.
 
 ;; Author: John Wiegley <johnw@gnu.org>
 
@@ -195,12 +195,12 @@ Otherwise, Emacs will attempt to use rsh to invoke du on the remote machine."
       (Info-menu (car args))
       (setq args (cdr args)))))
 
-(defun eshell-remove-entries (path files &optional top-level)
-  "From PATH, remove all of the given FILES, perhaps interactively."
+(defun eshell-remove-entries (files &optional toplevel)
+  "Remove all of the given FILES, perhaps interactively."
   (while files
     (if (string-match "\\`\\.\\.?\\'"
 		      (file-name-nondirectory (car files)))
-	(if top-level
+	(if toplevel
 	    (eshell-error "rm: cannot remove `.' or `..'\n"))
       (if (and (file-directory-p (car files))
 	       (not (file-symlink-p (car files))))
@@ -296,9 +296,9 @@ Remove (unlink) the FILE(s).")
 			   (y-or-n-p
 			    (format "rm: descend into directory `%s'? "
 				    entry)))
-		     (eshell-remove-entries nil (list entry) t))
+		     (eshell-remove-entries (list entry) t))
 		 (eshell-error (format "rm: %s: is a directory\n" entry)))
-	     (eshell-remove-entries nil (list entry) t))))))
+	     (eshell-remove-entries (list entry) t))))))
      (setq args (cdr args)))
    nil))
 
@@ -460,6 +460,8 @@ Remove the DIRECTORY(ies), if they are empty.")
     (throw 'eshell-replace-command
 	   (eshell-parse-command
 	    (format "tar %s %s" tar-args archive) args))))
+
+(defvar ange-cache)			; XEmacs?  See esh-util
 
 ;; this is to avoid duplicating code...
 (defmacro eshell-mvcpln-template (command action func query-var

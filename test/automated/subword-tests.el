@@ -1,6 +1,6 @@
 ;;; subword-tests.el --- Testing the subword rules
 
-;; Copyright (C) 2011-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2011-2014 Free Software Foundation, Inc.
 
 ;; Author: Stefan Monnier <monnier@iro.umontreal.ca>
 ;; Keywords:
@@ -45,6 +45,37 @@
         (subword-forward 1)
         (insert "^"))
       (should (equal (buffer-string) str)))))
+
+(ert-deftest subword-tests2 ()
+  "Test that motion in subword-mode stops at the right places."
+
+  (let* ((line "fooBarBAZ quXD g_TESTThingAbc word BLAH test")
+         (fwrd "*  *  *  *  * * *    *    *  *    *    *    *")
+         (bkwd "*  *  *   * *  * *   *    *   *    *    *   *"))
+
+    (with-temp-buffer
+      (subword-mode 1)
+      (insert line)
+
+      ;; Test forward motion.
+      
+      (goto-char (point-min))
+      (let ((stops (make-string (length fwrd) ?\ )))
+        (while (progn
+                 (aset stops (1- (point)) ?\*)
+                 (not (eobp)))          
+          (forward-word))
+        (should (equal stops fwrd)))
+
+      ;; Test backward motion.
+
+      (goto-char (point-max))
+      (let ((stops (make-string (length bkwd) ?\ )))
+        (while (progn
+                 (aset stops (1- (point)) ?\*)
+                 (not (bobp)))          
+          (backward-word))
+        (should (equal stops bkwd))))))
 
 (provide 'subword-tests)
 ;;; subword-tests.el ends here

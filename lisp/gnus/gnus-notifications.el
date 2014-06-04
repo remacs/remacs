@@ -1,6 +1,6 @@
 ;; gnus-notifications.el -- Send notification on new message in Gnus
 
-;; Copyright (C) 2012-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2012-2014 Free Software Foundation, Inc.
 
 ;; Author: Julien Danjou <julien@danjou.info>
 ;; Keywords: news
@@ -101,6 +101,9 @@ Return a notification id if any, or t on success."
     (message "New message from %s: %s" from subject)
     ;; Don't return an id
     t))
+
+(declare-function gravatar-retrieve-synchronously "gravatar.el"
+		  (mail-address))
 
 (defun gnus-notifications-get-photo (mail-address)
   "Get photo for mail address."

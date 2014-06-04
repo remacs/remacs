@@ -1,5 +1,5 @@
 /* Definitions and headers for communication with NeXT/Open/GNUstep API.
-   Copyright (C) 1989, 1993, 2005, 2008-2013 Free Software Foundation,
+   Copyright (C) 1989, 1993, 2005, 2008-2014 Free Software Foundation,
    Inc.
 
 This file is part of GNU Emacs.
@@ -42,6 +42,9 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #ifndef MAC_OS_X_VERSION_10_8
 #define MAC_OS_X_VERSION_10_8 1080
 #endif
+#ifndef MAC_OS_X_VERSION_10_9
+#define MAC_OS_X_VERSION_10_9 1090
+#endif
 
 #if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_7
 #define HAVE_NATIVE_FS
@@ -51,7 +54,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #ifdef __OBJC__
 
-/* CGFloat on GNUStep may be 4 or 8 byte, but functions expect float* for some
+/* CGFloat on GNUstep may be 4 or 8 byte, but functions expect float* for some
    versions.
    On Cocoa >= 10.5, functions expect CGFloat*. Make compatible type.  */
 #ifdef NS_IMPL_COCOA
@@ -78,6 +81,18 @@ typedef float EmacsCGFloat;
 
 /* ==========================================================================
 
+   NSColor, EmacsColor category.
+
+   ========================================================================== */
+@interface NSColor (EmacsColor)
++ (NSColor *)colorForEmacsRed:(CGFloat)red green:(CGFloat)green
+                         blue:(CGFloat)blue alpha:(CGFloat)alpha;
+- (NSColor *)colorUsingDefaultColorSpace;
+
+@end
+
+/* ==========================================================================
+
    The Emacs application
 
    ========================================================================== */
@@ -85,7 +100,12 @@ typedef float EmacsCGFloat;
 /* We override sendEvent: as a means to stop/start the event loop */
 @interface EmacsApp : NSApplication
 {
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_9
+  BOOL shouldKeepRunning;
+  BOOL isFirst;
+#endif
 #ifdef NS_IMPL_GNUSTEP
+  BOOL applicationDidFinishLaunchingCalled;
 @public
   int nextappdefined;
 #endif
@@ -142,6 +162,7 @@ typedef float EmacsCGFloat;
    int scrollbarsNeedingUpdate;
    EmacsToolbar *toolbar;
    NSRect ns_userRect;
+   BOOL wait_for_tool_bar;
    }
 
 /* AppKit-side interface */
@@ -166,7 +187,7 @@ typedef float EmacsCGFloat;
 - (BOOL) fsIsNative;
 - (BOOL) isFullscreen;
 #ifdef HAVE_NATIVE_FS
-- (void) updateCollectionBehaviour;
+- (void) updateCollectionBehavior;
 #endif
 
 #ifdef NS_IMPL_GNUSTEP
@@ -453,9 +474,6 @@ extern EmacsMenu *mainMenu, *svcsMenu, *dockMenu;
 #define KEY_NS_POWER_OFF               ((1<<28)|(0<<16)|1)
 #define KEY_NS_OPEN_FILE               ((1<<28)|(0<<16)|2)
 #define KEY_NS_OPEN_TEMP_FILE          ((1<<28)|(0<<16)|3)
-#define KEY_NS_DRAG_FILE               ((1<<28)|(0<<16)|4)
-#define KEY_NS_DRAG_COLOR              ((1<<28)|(0<<16)|5)
-#define KEY_NS_DRAG_TEXT               ((1<<28)|(0<<16)|6)
 #define KEY_NS_CHANGE_FONT             ((1<<28)|(0<<16)|7)
 #define KEY_NS_OPEN_FILE_LINE          ((1<<28)|(0<<16)|8)
 #define KEY_NS_PUT_WORKING_TEXT        ((1<<28)|(0<<16)|9)
@@ -552,8 +570,7 @@ struct ns_display_info
   /* The generic display parameters corresponding to this NS display. */
   struct terminal *terminal;
 
-  /* This is a cons cell of the form (NAME . FONT-LIST-CACHE).
-     The same cons cell also appears in ns_display_name_list.  */
+  /* This is a cons cell of the form (NAME . FONT-LIST-CACHE).  */
   Lisp_Object name_list_element;
 
   /* The number of fonts loaded. */
@@ -568,8 +585,6 @@ struct ns_display_info
   struct ns_bitmap_record *bitmaps;
   ptrdiff_t bitmaps_size;
   ptrdiff_t bitmaps_last;
-
-  struct image_cache *image_cache;
 
   struct ns_color_table *color_table;
 
@@ -597,15 +612,36 @@ struct ns_display_info
 
   struct frame *x_highlight_frame;
   struct frame *x_focus_frame;
+
+  /* The frame where the mouse was last time we reported a mouse event.  */
+  struct frame *last_mouse_frame;
+
+  /* The frame where the mouse was last time we reported a mouse motion.  */
+  struct frame *last_mouse_motion_frame;
+
+  /* Position where the mouse was last time we reported a motion.
+     This is a position on last_mouse_motion_frame.  */
+  int last_mouse_motion_x;
+  int last_mouse_motion_y;
+
+  /* Where the mouse was last time we reported a mouse position.  */
+  NSRect last_mouse_glyph;
+
+  /* Time of last mouse movement.  */
+  Time last_mouse_movement_time;
+
+  /* The scroll bar in which the last motion event occurred.  */
+#ifdef __OBJC__
+  EmacsScroller *last_mouse_scroll_bar;
+#else
+  void *last_mouse_scroll_bar;
+#endif
 };
 
 /* This is a chain of structures for all the NS displays currently in use.  */
 extern struct ns_display_info *x_display_list;
 
-extern Lisp_Object ns_display_name_list;
 extern struct ns_display_info *ns_display_info_for_name (Lisp_Object name);
-
-struct ns_display_info *check_x_display_info (Lisp_Object frame);
 
 struct ns_output
 {
@@ -632,6 +668,7 @@ struct ns_output
   Cursor hand_cursor;
   Cursor hourglass_cursor;
   Cursor horizontal_drag_cursor;
+  Cursor vertical_drag_cursor;
 
   /* NS-specific */
   Cursor current_pointer;
@@ -663,9 +700,6 @@ struct ns_output
   /* This is the Emacs structure for the NS display this frame is on.  */
   struct ns_display_info *display_info;
 
-  /* Non-zero if we want to constrain the frame to the screen.  */
-  int dont_constrain;
-
   /* Non-zero if we are zooming (maximizing) the frame.  */
   int zooming;
 };
@@ -692,17 +726,10 @@ struct x_output
 #define FRAME_FOREGROUND_COLOR(f) ((f)->output_data.ns->foreground_color)
 #define FRAME_BACKGROUND_COLOR(f) ((f)->output_data.ns->background_color)
 
-#define FRAME_X_IMAGE_CACHE(F) FRAME_DISPLAY_INFO ((F))->image_cache
-
 #define NS_FACE_FOREGROUND(f) ((f)->foreground)
 #define NS_FACE_BACKGROUND(f) ((f)->background)
 #define FRAME_NS_TITLEBAR_HEIGHT(f) ((f)->output_data.ns->titlebar_height)
 #define FRAME_TOOLBAR_HEIGHT(f) ((f)->output_data.ns->toolbar_height)
-
-#define FONT_WIDTH(f)	((f)->max_width)
-#define FONT_HEIGHT(f)	((f)->height)
-#define FONT_BASE(f)    ((f)->ascent)
-#define FONT_DESCENT(f) ((f)->descent)
 
 #define FRAME_DEFAULT_FACE(f) FACE_FROM_ID (f, DEFAULT_FACE_ID)
 
@@ -828,8 +855,8 @@ extern void find_and_call_menu_selection (struct frame *f,
 extern Lisp_Object find_and_return_menu_selection (struct frame *f,
                                                    bool keymaps,
                                                    void *client_data);
-extern Lisp_Object ns_popup_dialog (Lisp_Object position, Lisp_Object contents,
-                                    Lisp_Object header);
+extern Lisp_Object ns_popup_dialog (Lisp_Object position, Lisp_Object header,
+                                    Lisp_Object contents);
 
 #define NSAPP_DATA2_RUNASSCRIPT 10
 extern void ns_run_ascript (void);
@@ -868,7 +895,9 @@ extern int ns_select (int nfds, fd_set *readfds, fd_set *writefds,
 		      sigset_t const *sigmask);
 extern unsigned long ns_get_rgb_color (struct frame *f,
                                        float r, float g, float b, float a);
-extern NSPoint last_mouse_motion_position;
+
+extern void ns_init_events ();
+extern void ns_finish_events ();
 
 /* From nsterm.m, needed in nsfont.m. */
 #ifdef __OBJC__
@@ -890,7 +919,8 @@ extern char gnustep_base_version[];  /* version tracking */
 
 #define NS_SCROLL_BAR_WIDTH_DEFAULT     [EmacsScroller scrollerWidth]
 /* This is to match emacs on other platforms, ugly though it is. */
-#define NS_SELECTION_COLOR_DEFAULT	@"LightGoldenrod2";
+#define NS_SELECTION_BG_COLOR_DEFAULT	@"LightGoldenrod2";
+#define NS_SELECTION_FG_COLOR_DEFAULT	@"Black";
 #define RESIZE_HANDLE_SIZE 12
 
 /* Little utility macros */

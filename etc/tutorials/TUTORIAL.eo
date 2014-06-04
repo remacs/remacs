@@ -318,7 +318,7 @@ la nuna kursorloko.
    kopio por vi.
 
 Kiam linio da teksto iĝas pli longa ol la ekrana linio, la teksta
-linio transiras sur la sekvan ekranan linion.  Retroklino ("\") -- aŭ,
+linio transiras sur la sekvan ekranan linion.  Retroklino (“\”) -- aŭ,
 en grafika fenestrosistemo, kurba sageto -- en la dekstra marĝeno
 indikas tian transiron.
 
@@ -1081,7 +1081,7 @@ la dosiero verkita de Stuart Cracraft por la originala Emakso.
 kopirajton, kaj venas kun permeso por disdoni kopiojn se certaj
 kondiĉoj estas observataj:
 
-   Copyright (C) 1985, 1999, 2001-2002, 2005, 2007-2013 Free Software
+   Copyright (C) 1985, 1999, 2001-2002, 2005, 2007-2014 Free Software
    Foundation, Inc.
 
    Ĉi tiu dosiero estas parto de "GNU Emacs".

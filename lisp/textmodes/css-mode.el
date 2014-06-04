@@ -1,6 +1,6 @@
 ;;; css-mode.el --- Major mode to edit CSS files -*- lexical-binding: t -*-
 
-;; Copyright (C) 2006-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2006-2014 Free Software Foundation, Inc.
 
 ;; Author: Stefan Monnier <monnier@iro.umontreal.ca>
 ;; Keywords: hypermedia
@@ -237,7 +237,7 @@
     ;; FIXME: attribute selectors don't work well because they may contain
     ;; strings which have already been highlighted as f-l-string-face and
     ;; thus prevent this highlighting from being applied (actually now that
-    ;; I use `append' this should work better).  But really the part of hte
+    ;; I use `append' this should work better).  But really the part of the
     ;; selector between [...] should simply not be highlighted.
     (,(concat "^\\([ \t]*[^@:{}\n][^:{}]+\\(?::" (regexp-opt css-pseudo-ids t)
               "\\(?:([^)]+)\\)?[^:{\n]*\\)*\\)\\(?:\n[ \t]*\\)*{")
@@ -302,6 +302,7 @@
   (pcase (cons kind token)
     (`(:elem . basic) css-indent-offset)
     (`(:elem . arg) 0)
+    (`(:list-intro . ,(or `";" `"")) t) ;"" stands for BOB (bug#15467).
     (`(:before . "{") (if (smie-rule-hanging-p)
                          (smie-rule-parent 0)))))
 
@@ -320,12 +321,8 @@
   (smie-setup css-smie-grammar #'css-smie-rules
               :forward-token #'css-smie--forward-token
               :backward-token #'css-smie--backward-token)
-  (when css-electric-keys
-    (let ((fc (make-char-table 'auto-fill-chars)))
-      (set-char-table-parent fc auto-fill-chars)
-      (dolist (c css-electric-keys)
-        (aset fc c 'indent-according-to-mode))
-      (setq-local auto-fill-chars fc))))
+  (setq-local electric-indent-chars
+              (append css-electric-keys electric-indent-chars)))
 
 (defvar comment-continue)
 

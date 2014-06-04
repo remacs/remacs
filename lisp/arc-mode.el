@@ -1,6 +1,6 @@
 ;;; arc-mode.el --- simple editing of archives
 
-;; Copyright (C) 1995, 1997-1998, 2001-2013 Free Software Foundation,
+;; Copyright (C) 1995, 1997-1998, 2001-2014 Free Software Foundation,
 ;; Inc.
 
 ;; Author: Morten Welinder <terra@gnu.org>
@@ -78,7 +78,7 @@
 ;;             interaction among members.
 ;;             Headers come in three flavors called level 0, 1 and 2 headers.
 ;;             Level 2 header is free of DOS specific restrictions and most
-;;             prevalently used.  Also level 1 and 2 headers consist of base
+;;             commonly used.  Also level 1 and 2 headers consist of base
 ;;             and extension headers.  For more details see
 ;;             http://homepage1.nifty.com/dangan/en/Content/Program/Java/jLHA/Notes/Notes.html
 ;;             http://www.osirusoft.com/joejared/lzhformat.html
@@ -326,7 +326,7 @@ Archive and member name will be added."
 ;; 7z archive configuration
 
 (defcustom archive-7z-extract
-  `(,archive-7z-program "x" "-so")
+  `(,(or archive-7z-program "7z") "x" "-so")
   "Program and its options to run in order to extract a 7z file member.
 Extraction should happen to standard output.  Archive and member name will
 be added."
@@ -338,7 +338,7 @@ be added."
   :group 'archive-7z)
 
 (defcustom archive-7z-expunge
-  `(,archive-7z-program "d")
+  `(,(or archive-7z-program "7z") "d")
   "Program and its options to run in order to delete 7z file members.
 Archive and member names will be added."
   :version "24.1"
@@ -349,7 +349,7 @@ Archive and member names will be added."
   :group 'archive-7z)
 
 (defcustom archive-7z-update
-  `(,archive-7z-program "u")
+  `(,(or archive-7z-program "7z") "u")
   "Program and its options to run in order to update a 7z file member.
 Options should ensure that specified directory will be put into the 7z
 file.  Archive and member name will be added."
@@ -1165,8 +1165,10 @@ using `make-temp-file', and the generated name is returned."
 	  (delete-file (expand-file-name name dest)))
       (while (file-name-directory name)
 	(setq name (directory-file-name (file-name-directory name)))
-	(delete-directory (expand-file-name name dest)))
-      (delete-directory dest))))
+	(when (file-directory-p (expand-file-name name dest))
+	  (delete-directory (expand-file-name name dest))))
+      (when (file-directory-p dest)
+	(delete-directory dest)))))
 
 (defun archive-extract-other-window ()
   "In archive mode, find this member in another window."

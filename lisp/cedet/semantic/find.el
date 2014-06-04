@@ -1,6 +1,6 @@
 ;;; semantic/find.el --- Search routines for Semantic
 
-;; Copyright (C) 1999-2005, 2008-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1999-2005, 2008-2014 Free Software Foundation, Inc.
 
 ;; Author: Eric M. Ludlam <zappo@gnu.org>
 ;; Keywords: syntax
@@ -457,13 +457,11 @@ TABLE is a tag table.  See `semantic-something-to-tag-table'."
   "Find a tag NAME within STREAMORBUFFER.  NAME is a string.
 If SEARCH-PARTS is non-nil, search children of tags.
 If SEARCH-INCLUDE was never implemented.
+Respects `semantic-case-fold'.
 
 Use `semantic-find-first-tag-by-name' instead."
   (let* ((stream (semantic-something-to-tag-table streamorbuffer))
-         (assoc-fun (if semantic-case-fold
-                        #'assoc-ignore-case
-                      #'assoc))
-	 (m (funcall assoc-fun name stream)))
+	 (m (assoc-string name stream semantic-case-fold)))
     (if m
 	m
       (let ((toklst stream)

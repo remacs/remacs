@@ -1,6 +1,6 @@
 @c -*-texinfo-*-
 @c This is part of the GNU Emacs Lisp Reference Manual.
-@c Copyright (C) 1990-1995, 1998-2013 Free Software Foundation, Inc.
+@c Copyright (C) 1990-1995, 1998-2014 Free Software Foundation, Inc.
 @c See the file elisp.texi for copying conditions.
 @node Text
 @chapter Text
@@ -54,6 +54,7 @@ the character after point.
 * Registers::        How registers are implemented.  Accessing the text or
                        position stored in a register.
 * Transposition::    Swapping two portions of a buffer.
+* Decompression::    Dealing with compressed data.
 * Base 64::          Conversion to or from base 64 encoding.
 * Checksum/Hash::    Computing cryptographic hashes.
 * Parsing HTML/XML:: Parsing HTML and XML.
@@ -771,6 +772,9 @@ space, or @var{n} spaces if @var{n} is specified.  It returns
 @code{nil}.
 @end deffn
 
+@c There is also cycle-spacing, but I cannot see it being useful in
+@c Lisp programs, so it is not mentioned here.
+
 @deffn Command delete-blank-lines
 This function deletes blank lines surrounding point.  If point is on a
 blank line with one or more blank lines before or after it, then all but
@@ -782,6 +786,19 @@ A blank line is defined as a line containing only tabs and spaces.
 @c and the Newline character?
 
 @code{delete-blank-lines} returns @code{nil}.
+@end deffn
+
+@deffn Command delete-trailing-whitespace start end
+Delete trailing whitespace in the region defined by @var{start} and
+@var{end}.
+
+This command deletes whitespace characters after the last
+non-whitespace character in each line in the region.
+
+If this command acts on the entire buffer (i.e. if called
+interactively with the mark inactive, or called from Lisp with
+@var{end} nil), it also deletes all trailing lines at the end of the
+buffer if the variable @code{delete-trailing-lines} is non-@code{nil}.
 @end deffn
 
 @node The Kill Ring
@@ -1253,7 +1270,8 @@ This kind of element indicates how to reinsert text that was deleted.
 The deleted text itself is the string @var{text}.  The place to
 reinsert it is @code{(abs @var{position})}.  If @var{position} is
 positive, point was at the beginning of the deleted text, otherwise it
-was at the end.
+was at the end.  Zero or more (@var{marker} . @var{adjustment})
+elements follow immediately after this element.
 
 @item (t . @var{time-flag})
 This kind of element indicates that an unmodified buffer became
@@ -1279,8 +1297,10 @@ Here's how you might undo the change:
 @item (@var{marker} . @var{adjustment})
 This kind of element records the fact that the marker @var{marker} was
 relocated due to deletion of surrounding text, and that it moved
-@var{adjustment} character positions.  Undoing this element moves
-@var{marker} @minus{} @var{adjustment} characters.
+@var{adjustment} character positions.  If the marker's location is
+consistent with the (@var{text} . @var{position}) element preceding it
+in the undo list, then undoing this element moves @var{marker}
+@minus{} @var{adjustment} characters.
 
 @item (apply @var{funname} . @var{args})
 This is an extensible undo item, which is undone by calling
@@ -1701,7 +1721,7 @@ is value of @code{indent-line-function} in Paragraph-Indent Text mode.
 
 @defopt left-margin
 This variable specifies the base left margin column.  In Fundamental
-mode, @kbd{C-j} indents to this column.  This variable automatically
+mode, @kbd{RET} indents to this column.  This variable automatically
 becomes buffer-local when set in any fashion.
 @end defopt
 
@@ -2185,7 +2205,7 @@ count from zero at the left margin.
 
   This section describes the primitive functions used to count and
 insert indentation.  The functions in the following sections use these
-primitives.  @xref{Width}, for related functions.
+primitives.  @xref{Size of Displayed Text}, for related functions.
 
 @defun current-indentation
 @comment !!Type Primitive Function
@@ -2344,21 +2364,19 @@ a different meaning and does not use this variable.
 @end defvar
 
 @deffn Command indent-rigidly start end count
-This command indents all lines starting between @var{start}
+This function indents all lines starting between @var{start}
 (inclusive) and @var{end} (exclusive) sideways by @var{count} columns.
 This ``preserves the shape'' of the affected region, moving it as a
-rigid unit.  Consequently, this command is useful not only for indenting
-regions of unindented text, but also for indenting regions of formatted
-code.
+rigid unit.
 
-For example, if @var{count} is 3, this command adds 3 columns of
-indentation to each of the lines beginning in the region specified.
+This is useful not only for indenting regions of unindented text, but
+also for indenting regions of formatted code.  For example, if
+@var{count} is 3, this command adds 3 columns of indentation to every
+line that begins in the specified region.
 
-@c FIXME: I suggest using message-indent-citation as the example, or
-@c just remove this paragraph.  --xfq
-In Mail mode, @kbd{C-c C-y} (@code{mail-yank-original}) uses
-@code{indent-rigidly} to indent the text copied from the message being
-replied to.
+If called interactively with no prefix argument, this command invokes
+a transient mode for adjusting indentation rigidly.  @xref{Indentation
+Commands,,, emacs, The GNU Emacs Manual}.
 @end deffn
 
 @deffn Command indent-code-rigidly start end columns &optional nochange-regexp
@@ -2462,19 +2480,19 @@ stop feature only in a few major modes, such as Text mode.
 
 @deffn Command tab-to-tab-stop
 This command inserts spaces or tabs before point, up to the next tab
-stop column defined by @code{tab-stop-list}.  It searches the list for
-an element greater than the current column number, and uses that element
-as the column to indent to.  It does nothing if no such element is
-found.
+stop column defined by @code{tab-stop-list}.
 @end deffn
 
 @defopt tab-stop-list
-This variable is the list of tab stop columns used by
-@code{tab-to-tab-stops}.  The elements should be integers in increasing
-order.  The tab stop columns need not be evenly spaced.
+This variable defines the tab stop columns used by @code{tab-to-tab-stop}.
+It should be either @code{nil}, or a list of increasing integers,
+which need not be evenly spaced.  The list is implicitly
+extended to infinity through repetition of the interval between the
+last and penultimate elements (or @code{tab-width} if the list has
+fewer than two elements).  A value of @code{nil} means a tab stop
+every @code{tab-width} columns.
 
-Use @kbd{M-x edit-tab-stops} to edit the location of tab stops
-interactively.
+Use @kbd{M-x edit-tab-stops} to edit the location of tab stops interactively.
 @end defopt
 
 @node Motion by Indent
@@ -2681,6 +2699,13 @@ followed by the text properties.  If @var{object} is a string, only
 text properties are considered, since strings never have overlays.
 @end defun
 
+@defun get-pos-property position prop &optional object
+This function is like @code{get-char-property}, except that it pays
+attention to properties' stickiness and overlays' advancement settings
+instead of the property of the character at (i.e. right after)
+@var{position}.
+@end defun
+
 @defun get-char-property-and-overlay position prop &optional object
 This is like @code{get-char-property}, but gives extra information
 about the overlay that the property value comes from.
@@ -2825,36 +2850,43 @@ Do not rely on the return value of this function.
 @end defun
 
 @defun add-face-text-property start end face &optional appendp object
-@code{face} text attributes can be combined.  If you want to make a
-section both italic and green, you can either define a new face that
-have those attributes, or you can add both these attributes separately
-to text:
+This function acts on the text between @var{start} and @var{end},
+adding the face @var{face} to the @code{face} text property.
+@var{face} should be a valid value for the @code{face} property
+(@pxref{Special Properties}), such as a face name or an anonymous face
+(@pxref{Faces}).
+
+If any text in the region already has a non-nil @code{face} property,
+those face(s) are retained.  This function sets the @code{face}
+property to a list of faces, with @var{face} as the first element (by
+default) and the pre-existing faces as the remaining elements.  If the
+optional argument @var{append} is non-@code{nil}, @var{face} is
+appended to the end of the list instead.  Note that in a face list,
+the first occurring value for each attribute takes precedence.
+
+For example, the following code would assign a italicized green face
+to the text between @var{start} and @var{end}:
 
 @example
 (add-face-text-property @var{start} @var{end} 'italic)
-(add-face-text-property @var{start} @var{end} '(:foreground "#00ff00"))
+(add-face-text-property @var{start} @var{end} '(:foreground "red"))
+(add-face-text-property @var{start} @var{end} '(:foreground "green"))
 @end example
 
-The attribute is (by default) prepended to the list of face
-attributes, and the first attribute of the same type takes
-precedence.  So if you have two @code{:foreground} specifications, the
-first one will take effect.
-
-If you pass in @var{appendp}, the attribute will be appended instead
-of prepended, which means that it will have no effect if there is
-already an attribute of the same type.
-
+The optional argument @var{object}, if non-@code{nil}, specifies a
+buffer or string to act on, rather than the current buffer.  If
+@var{object} is a string, then @var{start} and @var{end} are
+zero-based indices into the string.
 @end defun
 
-  The easiest way to make a string with text properties
-is with @code{propertize}:
+  The easiest way to make a string with text properties is with
+@code{propertize}:
 
 @defun propertize string &rest properties
-This function returns a copy of @var{string} which has the text
-properties @var{properties}.  These properties apply to all the
-characters in the string that is returned.  Here is an example that
-constructs a string with a @code{face} property and a @code{mouse-face}
-property:
+This function returns a copy of @var{string} with the text properties
+@var{properties} added.  These properties apply to all the characters
+in the string that is returned.  Here is an example that constructs a
+string with a @code{face} property and a @code{mouse-face} property:
 
 @smallexample
 (propertize "foo" 'face 'italic
@@ -3081,6 +3113,9 @@ Font Lock mode (@pxref{Font Lock Mode}) works in most buffers by
 dynamically updating the @code{face} property of characters based on
 the context.
 
+The @code{add-face-text-property} function provides a convenient way
+to set this text property.  @xref{Changing Properties}.
+
 @item font-lock-face
 @kindex font-lock-face @r{(text property)}
 This property specifies a value for the @code{face} property that Font
@@ -3237,7 +3272,7 @@ overlay and text property strings present at the current buffer
 position.  You can place the cursor on any desired character of these
 strings by giving that character a non-@code{nil} @code{cursor} text
 property.  In addition, if the value of the @code{cursor} property is
-an integer number, it specifies the number of buffer's character
+an integer, it specifies the number of buffer's character
 positions, starting with the position where the overlay or the
 @code{display} property begins, for which the cursor should be
 displayed on that character.  Specifically, if the value of the
@@ -3251,7 +3286,7 @@ text property begins in the buffer.
 In other words, the string character with the @code{cursor} property
 of any non-@code{nil} value is the character where to display the
 cursor.  The value of the property says for which buffer positions to
-display the cursor there.  If the value is an integer number @var{n},
+display the cursor there.  If the value is an integer @var{n},
 the cursor is displayed there when point is anywhere between the
 beginning of the overlay or @code{display} property and @var{n}
 positions after that.  If the value is anything else and
@@ -3914,7 +3949,7 @@ single interval.  But suppose instead that we have two adjacent
 intervals with the same properties, and we kill the text of one interval
 and yank it back.  The same interval-coalescence feature that rescues
 the other case causes trouble in this one: after yanking, we have just
-one interval.  One again, editing does not preserve the distinction
+one interval.  Once again, editing does not preserve the distinction
 between one interval and two.
 
   Insertion of text at the border between intervals also raises
@@ -4082,6 +4117,18 @@ a rectangle (a list), currently useless things happen.  This may be
 changed in the future.
 @end deffn
 
+@defun register-read-with-preview prompt
+@cindex register preview
+This function reads and returns a register name, prompting with
+@var{prompt} and possibly showing a preview of the existing registers
+and their contents.  The preview is shown in a temporary window, after
+the delay specified by the user option @code{register-preview-delay},
+if its value and @code{register-alist} are both non-@code{nil}.  The
+preview is also shown if the user requests help (e.g., by typing the
+help character).  We recommend that all interactive commands which
+read register names use this function.
+@end defun
+
 @node Transposition
 @section Transposition of Text
 
@@ -4100,6 +4147,35 @@ two characters in their new position.  However, if @var{leave-markers}
 is non-@code{nil}, @code{transpose-regions} does not do this---it leaves
 all markers unrelocated.
 @end defun
+
+@node Decompression
+@section Dealing With Compressed Data
+
+When @code{auto-compression-mode} is enabled, Emacs automatically
+uncompresses compressed files when you visit them, and automatically
+recompresses them if you alter and save them.  @xref{Compressed
+Files,,, emacs, The GNU Emacs Manual}.
+
+The above feature works by calling an external executable (e.g.,
+@command{gzip}).  Emacs can also be compiled with support for built-in
+decompression using the zlib library, which is faster than calling an
+external program.
+
+@defun zlib-available-p
+This function returns non-@code{nil} if built-in zlib decompression is
+available.
+@end defun
+
+@defun zlib-decompress-region start end
+This function decompresses the region between @var{start} and
+@var{end}, using built-in zlib decompression.  The region should
+contain data that were compressed with gzip or zlib.  On success, the
+function replaces the contents of the region with the decompressed
+data.  On failure, the function leaves the region unchanged and
+returns @code{nil}.  This function can be called only in unibyte
+buffers.
+@end defun
+
 
 @node Base 64
 @section Base 64 Encoding
@@ -4266,6 +4342,14 @@ A call to @code{libxml-parse-html-region} returns this:
     (div ()
       "Yes"))))
 @end example
+@end defun
+
+@cindex rendering html
+@defun shr-insert-document dom
+This function renders the parsed HTML in @var{dom} into the current
+buffer.  The argument @var{dom} should be a list as generated by
+@code{libxml-parse-html-region}.  This function is, e.g., used by
+@ref{Top, EWW,, eww, The Emacs Web Wowser Manual}.
 @end defun
 
 @cindex parsing xml

@@ -1,10 +1,10 @@
 ;;; dired-aux.el --- less commonly used parts of dired
 
-;; Copyright (C) 1985-1986, 1992, 1994, 1998, 2000-2013 Free Software
-;; Foundation, Inc.
+;; Copyright (C) 1985-1986, 1992, 1994, 1998, 2000-2014
+;;   Free Software Foundation, Inc.
 
 ;; Author: Sebastian Kremer <sk@thp.uni-koeln.de>.
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: files
 ;; Package: emacs
 
@@ -215,19 +215,24 @@ condition.  Two file items are considered to match if they are equal
       (dolist (file1 list1)
 	(unless (let ((list list2))
 		  (while (and list
-			      (not (let* ((file2 (car list))
-					  (fa1 (car (cddr file1)))
-					  (fa2 (car (cddr file2)))
-					  (size1 (nth 7 fa1))
-					  (size2 (nth 7 fa2))
-					  (mtime1 (float-time (nth 5 fa1)))
-					  (mtime2 (float-time (nth 5 fa2))))
-				     (and
-				      (equal (car file1) (car file2))
-				      (not (eval predicate))))))
+			      (let* ((file2 (car list))
+                                     (fa1 (car (cddr file1)))
+                                     (fa2 (car (cddr file2))))
+                                (or
+                                 (not (equal (car file1) (car file2)))
+                                 (eval predicate
+                                       `((fa1 . ,fa1)
+                                         (fa2 . ,fa2)
+                                         (size1 . ,(nth 7 fa1))
+                                         (size2 . ,(nth 7 fa2))
+                                         (mtime1
+                                          . ,(float-time (nth 5 fa1)))
+                                         (mtime2
+                                          . ,(float-time (nth 5 fa2)))
+                                         )))))
 		    (setq list (cdr list)))
 		  list)
-	  (setq res (cons file1 res))))
+	  (push file1 res)))
       (nreverse res))))
 
 (defun dired-files-attributes (dir)
@@ -415,6 +420,12 @@ Uses the shell command coming from variables `lpr-command' and
 `lpr-switches' as default."
   (interactive "P")
   (let* ((file-list (dired-get-marked-files t arg))
+	 (lpr-switches
+	  (if (and (stringp printer-name)
+		   (string< "" printer-name))
+	      (cons (concat lpr-printer-switch printer-name)
+		    lpr-switches)
+	    lpr-switches))
 	 (command (dired-mark-read-string
 		   "Print %s with: "
  		   (mapconcat 'identity
@@ -881,7 +892,7 @@ Otherwise, the rule is a compression rule, and compression is done with gzip.")
     ;; See if any suffix rule matches this file name.
     (while suffixes
       (let (case-fold-search)
-	(if (string-match-p (car (car suffixes)) file)
+	(if (string-match (car (car suffixes)) file)
 	    (setq suffix (car suffixes) suffixes nil))
 	(setq suffixes (cdr suffixes))))
     ;; If so, compute desired new name.
@@ -1337,9 +1348,7 @@ Special value `always' suppresses confirmation."
 	     (eq t (car attrs))
 	     (or (eq recursive 'always)
 		 (yes-or-no-p (format "Recursive copies of %s? " from))))
-	;; This is a directory.
 	(copy-directory from to preserve-time)
-      ;; Not a directory.
       (or top (dired-handle-overwrite to))
       (condition-case err
 	  (if (stringp (car attrs))
@@ -1917,8 +1926,9 @@ Type SPC or `y' to %s one match, DEL or `n' to skip to next,
 	 (arg
 	  (if whole-name nil current-prefix-arg))
 	 (regexp
-	  (dired-read-regexp
-	   (concat (if whole-name "Abs. " "") operation " from (regexp): ")))
+	  (read-regexp
+	   (concat (if whole-name "Abs. " "") operation " from (regexp): ")
+	   nil 'dired-regexp-history))
 	 (newname
 	  (read-string
 	   (concat (if whole-name "Abs. " "") operation " " regexp " to: "))))
@@ -2526,24 +2536,22 @@ Intended to be added to `isearch-mode-hook'."
   "Test whether the current search hit is a file name.
 Return non-nil if the text from BEG to END is part of a file
 name (has the text property `dired-filename')."
-  (if dired-isearch-filenames
-      (text-property-not-all (min beg end) (max beg end)
-			     'dired-filename nil)
-    t))
+  (text-property-not-all (min beg end) (max beg end)
+			 'dired-filename nil))
 
 ;;;###autoload
 (defun dired-isearch-filenames ()
   "Search for a string using Isearch only in file names in the Dired buffer."
   (interactive)
   (let ((dired-isearch-filenames t))
-    (isearch-forward)))
+    (isearch-forward nil t)))
 
 ;;;###autoload
 (defun dired-isearch-filenames-regexp ()
   "Search for a regexp using Isearch only in file names in the Dired buffer."
   (interactive)
   (let ((dired-isearch-filenames t))
-    (isearch-forward-regexp)))
+    (isearch-forward-regexp nil t)))
 
 
 ;; Functions for searching in tags style among marked files.

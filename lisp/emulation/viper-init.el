@@ -1,6 +1,6 @@
 ;;; viper-init.el --- some common definitions for Viper
 
-;; Copyright (C) 1997-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1997-2014 Free Software Foundation, Inc.
 
 ;; Author: Michael Kifer <kifer@cs.stonybrook.edu>
 ;; Package: viper
@@ -922,7 +922,7 @@ value refers to the number of characters affected."
 
 (defcustom viper-vi-style-in-minibuffer t
   "If t, use vi-style editing in minibuffer.
-Should be set in `~/.viper' file."
+Should be set in `viper-custom-file-name'."
   :type 'boolean
   :group 'viper)
 

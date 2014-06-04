@@ -1,5 +1,5 @@
-# gnulib-common.m4 serial 33
-dnl Copyright (C) 2007-2013 Free Software Foundation, Inc.
+# gnulib-common.m4 serial 34
+dnl Copyright (C) 2007-2014 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -375,3 +375,63 @@ AC_DEFUN([gl_CACHE_VAL_SILENT],
   AC_CACHE_VAL([$1], [$2])
   as_echo_n="$saved_as_echo_n"
 ])
+
+# AS_VAR_COPY was added in autoconf 2.63b
+m4_define_default([AS_VAR_COPY],
+[AS_LITERAL_IF([$1[]$2], [$1=$$2], [eval $1=\$$2])])
+
+# AC_PROG_SED was added in autoconf 2.59b
+m4_ifndef([AC_PROG_SED],
+[AC_DEFUN([AC_PROG_SED],
+[AC_CACHE_CHECK([for a sed that does not truncate output], ac_cv_path_SED,
+    [dnl ac_script should not contain more than 99 commands (for HP-UX sed),
+     dnl but more than about 7000 bytes, to catch a limit in Solaris 8 /usr/ucb/sed.
+     ac_script=s/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb/
+     for ac_i in 1 2 3 4 5 6 7; do
+       ac_script="$ac_script$as_nl$ac_script"
+     done
+     echo "$ac_script" 2>/dev/null | sed 99q >conftest.sed
+     AS_UNSET([ac_script])
+     if test -z "$SED"; then
+       ac_path_SED_found=false
+       _AS_PATH_WALK([], [
+         for ac_prog in sed gsed; do
+           for ac_exec_ext in '' $ac_executable_extensions; do
+             ac_path_SED="$as_dir/$ac_prog$ac_exec_ext"
+             AS_EXECUTABLE_P(["$ac_path_SED"]) || continue
+             case `"$ac_path_SED" --version 2>&1` in
+               *GNU*) ac_cv_path_SED=$ac_path_SED ac_path_SED_found=:;;
+               *)
+                 ac_count=0
+                 _AS_ECHO_N([0123456789]) >conftest.in
+                 while :
+                 do
+                   cat conftest.in conftest.in >conftest.tmp
+                   mv conftest.tmp conftest.in
+                   cp conftest.in conftest.nl
+                   echo >> conftest.nl
+                   "$ac_path_SED" -f conftest.sed <conftest.nl >conftest.out 2>/dev/null || break
+                   diff conftest.out conftest.nl >/dev/null 2>&1 || break
+                   ac_count=`expr $ac_count + 1`
+                   if test $ac_count -gt ${ac_path_SED_max-0}; then
+                     # Best so far, but keep looking for better
+                     ac_cv_path_SED=$ac_path_SED
+                     ac_path_SED_max=$ac_count
+                   fi
+                   test $ac_count -gt 10 && break
+                 done
+                 rm -f conftest.in conftest.tmp conftest.nl conftest.out;;
+             esac
+             $ac_path_SED_found && break 3
+           done
+         done])
+       if test -z "$ac_cv_path_SED"; then
+         AC_ERROR([no acceptable sed could be found in \$PATH])
+       fi
+     else
+       ac_cv_path_SED=$SED
+     fi
+ SED="$ac_cv_path_SED"
+ AC_SUBST([SED])dnl
+ rm -f conftest.sed
+])])])

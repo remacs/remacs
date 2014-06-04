@@ -1,6 +1,6 @@
 ;;; ruby-mode-tests.el --- Test suite for ruby-mode
 
-;; Copyright (C) 2012-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2012-2014 Free Software Foundation, Inc.
 
 ;; This file is part of GNU Emacs.
 
@@ -24,10 +24,17 @@
 (require 'ert)
 (require 'ruby-mode)
 
+(defmacro ruby-with-temp-buffer (contents &rest body)
+  (declare (indent 1) (debug t))
+  `(with-temp-buffer
+     (insert ,contents)
+     (ruby-mode)
+     ,@body))
+
 (defun ruby-should-indent (content column)
   "Assert indentation COLUMN on the last line of CONTENT."
   (ruby-with-temp-buffer content
-    (ruby-indent-line)
+    (indent-according-to-mode)
     (should (= (current-indentation) column))))
 
 (defun ruby-should-indent-buffer (expected content)
@@ -37,13 +44,6 @@ The whitespace before and including \"|\" on each line is removed."
   (ruby-with-temp-buffer (ruby-test-string content)
     (indent-region (point-min) (point-max))
     (should (string= (ruby-test-string expected) (buffer-string)))))
-
-(defmacro ruby-with-temp-buffer (contents &rest body)
-  (declare (indent 1) (debug t))
-  `(with-temp-buffer
-     (insert ,contents)
-     (ruby-mode)
-     ,@body))
 
 (defun ruby-test-string (s &rest args)
   (apply 'format (replace-regexp-in-string "^[ \t]*|" "" s) args))
@@ -61,7 +61,7 @@ VALUES-PLIST is a list with alternating index and value elements."
 
 (defun ruby-assert-face (content pos face)
   (ruby-with-temp-buffer content
-    (font-lock-fontify-buffer)
+    (font-lock-ensure nil nil)
     (should (eq face (get-text-property pos 'face)))))
 
 (ert-deftest ruby-indent-after-symbol-made-from-string-interpolation ()
@@ -90,6 +90,9 @@ VALUES-PLIST is a list with alternating index and value elements."
 
 (ert-deftest ruby-no-heredoc-inside-quotes ()
   (ruby-assert-state "\"<<\", \"\",\nfoo" 3 nil))
+
+(ert-deftest ruby-exit!-font-lock ()
+  (ruby-assert-face "exit!" 5 font-lock-builtin-face))
 
 (ert-deftest ruby-deep-indent ()
   (let ((ruby-deep-arglist nil)
@@ -279,6 +282,71 @@ VALUES-PLIST is a list with alternating index and value elements."
      |  3)
      |")))
 
+(ert-deftest ruby-align-to-stmt-keywords-t ()
+  (let ((ruby-align-to-stmt-keywords t))
+    (ruby-should-indent-buffer
+     "foo = if bar?
+     |  1
+     |else
+     |  2
+     |end
+     |
+     |foo || begin
+     |  bar
+     |end
+     |
+     |foo ||
+     |  begin
+     |    bar
+     |  end
+     |"
+     "foo = if bar?
+     |       1
+     |else
+     |  2
+     | end
+     |
+     | foo || begin
+     |    bar
+     |end
+     |
+     |  foo ||
+     | begin
+     |bar
+     |  end
+     |")
+    ))
+
+(ert-deftest ruby-align-to-stmt-keywords-case ()
+  (let ((ruby-align-to-stmt-keywords '(case)))
+    (ruby-should-indent-buffer
+     "b = case a
+     |when 13
+     |  6
+     |else
+     |  42
+     |end"
+     "b = case a
+     |    when 13
+     |  6
+     |    else
+     |      42
+     |    end")))
+
+(ert-deftest ruby-align-chained-calls ()
+  (let ((ruby-align-chained-calls t))
+    (ruby-should-indent-buffer
+     "one.two.three
+     |       .four
+     |
+     |my_array.select { |str| str.size > 5 }
+     |        .map    { |str| str.downcase }"
+     "one.two.three
+     |  .four
+     |
+     |my_array.select { |str| str.size > 5 }
+     |   .map    { |str| str.downcase }")))
+
 (ert-deftest ruby-move-to-block-stops-at-indentation ()
   (ruby-with-temp-buffer "def f\nend"
     (beginning-of-line)
@@ -292,8 +360,8 @@ VALUES-PLIST is a list with alternating index and value elements."
     (should (string= "foo do |b|\nend" (buffer-string)))))
 
 (ert-deftest ruby-toggle-block-to-brace ()
-  (let ((pairs '((16 . "foo {|b| b + 2 }")
-                 (15 . "foo {|b|\n  b + 2\n}"))))
+  (let ((pairs '((17 . "foo { |b| b + 2 }")
+                 (16 . "foo { |b|\n  b + 2\n}"))))
     (dolist (pair pairs)
       (with-temp-buffer
         (let ((fill-column (car pair)))
@@ -308,6 +376,12 @@ VALUES-PLIST is a list with alternating index and value elements."
     (beginning-of-line)
     (ruby-toggle-block)
     (should (string= "foo do |b|\n  b + 1\nend" (buffer-string)))))
+
+(ert-deftest ruby-toggle-block-with-interpolation ()
+  (ruby-with-temp-buffer "foo do\n  \"#{bar}\"\nend"
+    (beginning-of-line)
+    (ruby-toggle-block)
+    (should (string= "foo { \"#{bar}\" }" (buffer-string)))))
 
 (ert-deftest ruby-recognize-symbols-starting-with-at-character ()
   (ruby-assert-face ":@abc" 3 font-lock-constant-face))
@@ -346,7 +420,7 @@ VALUES-PLIST is a list with alternating index and value elements."
     (ruby-with-temp-buffer s
       (goto-char (point-min))
       (ruby-mode)
-      (font-lock-fontify-buffer)
+      (syntax-propertize (point-max))
       (search-forward "tee")
       (should (string= (thing-at-point 'symbol) "tee")))))
 
@@ -377,6 +451,10 @@ VALUES-PLIST is a list with alternating index and value elements."
   (ruby-assert-face "%q{foo #@bar}" 8 font-lock-string-face)
   (ruby-assert-face "%w{foo #@bar}" 8 font-lock-string-face)
   (ruby-assert-face "%s{foo #@bar}" 8 font-lock-string-face))
+
+(ert-deftest ruby-interpolation-after-dollar-sign ()
+  (ruby-assert-face "\"$#{balance}\"" 2 'font-lock-string-face)
+  (ruby-assert-face "\"$#{balance}\"" 3 'font-lock-variable-name-face))
 
 (ert-deftest ruby-no-unknown-percent-literals ()
   ;; No folding of case.
@@ -471,14 +549,13 @@ VALUES-PLIST is a list with alternating index and value elements."
    |end"))
 
 (defmacro ruby-deftest-move-to-block (name &rest body)
+  (declare (indent defun))
   `(ert-deftest ,(intern (format "ruby-move-to-block-%s" name)) ()
      (with-temp-buffer
        (insert ruby-block-test-example)
        (ruby-mode)
        (goto-char (point-min))
        ,@body)))
-
-(put 'ruby-deftest-move-to-block 'lisp-indent-function 'defun)
 
 (ruby-deftest-move-to-block works-on-do
   (forward-line 10)
@@ -585,6 +662,51 @@ VALUES-PLIST is a list with alternating index and value elements."
     (forward-line 1)
     (end-of-defun)
     (should (= 5 (line-number-at-pos)))))
+
+(defvar ruby-sexp-test-example
+  (ruby-test-string
+   "class C
+   |  def foo
+   |    self.end
+   |    D.new.class
+   |    [1, 2, 3].map do |i|
+   |      i + 1
+   |    end.sum
+   |  end
+   |end"))
+
+(ert-deftest ruby-forward-sexp-skips-method-calls-with-keyword-names ()
+  (ruby-with-temp-buffer ruby-sexp-test-example
+    (goto-line 2)
+    (ruby-forward-sexp)
+    (should (= 8 (line-number-at-pos)))))
+
+(ert-deftest ruby-backward-sexp-skips-method-calls-with-keyword-names ()
+  (ruby-with-temp-buffer ruby-sexp-test-example
+    (goto-line 8)
+    (end-of-line)
+    (ruby-backward-sexp)
+    (should (= 2 (line-number-at-pos)))))
+
+(ert-deftest ruby--insert-coding-comment-ruby-style ()
+  (with-temp-buffer
+    (let ((ruby-encoding-magic-comment-style 'ruby))
+      (ruby--insert-coding-comment "utf-8")
+      (should (string= "# coding: utf-8\n" (buffer-string))))))
+
+(ert-deftest ruby--insert-coding-comment-emacs-style ()
+  (with-temp-buffer
+    (let ((ruby-encoding-magic-comment-style 'emacs))
+      (ruby--insert-coding-comment "utf-8")
+      (should (string= "# -*- coding: utf-8 -*-\n" (buffer-string))))))
+
+(ert-deftest ruby--insert-coding-comment-custom-style ()
+  (with-temp-buffer
+    (let ((ruby-encoding-magic-comment-style 'custom)
+          (ruby-custom-encoding-magic-comment-template "# encoding: %s\n"))
+      (ruby--insert-coding-comment "utf-8")
+      (should (string= "# encoding: utf-8\n\n" (buffer-string))))))
+
 
 (provide 'ruby-mode-tests)
 

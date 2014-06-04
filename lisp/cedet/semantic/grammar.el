@@ -1,6 +1,6 @@
 ;;; semantic/grammar.el --- Major mode framework for Semantic grammars
 
-;; Copyright (C) 2002-2005, 2007-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2002-2005, 2007-2014 Free Software Foundation, Inc.
 
 ;; Author: David Ponce <david@dponce.com>
 ;; Maintainer: David Ponce <david@dponce.com>
@@ -33,6 +33,8 @@
 (require 'semantic/wisent)
 (require 'semantic/ctxt)
 (require 'semantic/format)
+;; FIXME this is a generated file, but we need to load this file to
+;; generate it!
 (require 'semantic/grammar-wy)
 (require 'semantic/idle)
 (require 'help-fns)
@@ -605,6 +607,11 @@ The symbols in the template are local variables in
 
 \(provide '" libr ")
 
+;; Local Variables:
+;; version-control: never
+;; no-update-autoloads: t
+;; End:
+
 ;;; " file " ends here
 ")
   "Generated footer template.
@@ -822,9 +829,10 @@ Block definitions are read from the current table of lexical types."
       (noninteractive)
     noninteractive))
 
-(defun semantic-grammar-create-package (&optional force)
+(defun semantic-grammar-create-package (&optional force uptodate)
   "Create package Lisp code from grammar in current buffer.
-Does nothing if the Lisp code seems up to date.
+If the Lisp code seems up to date, do nothing (if UPTODATE
+is non-nil, return nil in such cases).
 If optional argument FORCE is non-nil, unconditionally re-generate the
 Lisp code."
   (interactive "P")
@@ -854,7 +862,12 @@ Lisp code."
              (file-newer-than-file-p
               (buffer-file-name semantic--grammar-output-buffer)
               (buffer-file-name semantic--grammar-input-buffer)))
-        (message "Package `%s' is up to date." semantic--grammar-package)
+	(progn
+	  (message "Package `%s' is up to date." semantic--grammar-package)
+	  ;; It would be better if this were always the case, IMO,
+	  ;; but the (unspecified) return value of this function is
+	  ;; assumed to be non-nil in some places, it seems.
+	  (if uptodate (setq output nil)))
       ;; Create the package
       (set-buffer semantic--grammar-output-buffer)
       ;; Use Unix EOLs, so that the file is portable to all platforms.
@@ -1160,12 +1173,16 @@ END is the limit of the search."
 
 (defvar semantic-grammar-mode-keywords-2
   (append semantic-grammar-mode-keywords-1
-          lisp-font-lock-keywords-1)
+	  (if (boundp 'lisp-font-lock-keywords-1)
+	      lisp-font-lock-keywords-1
+	    lisp-el-font-lock-keywords-1))
   "Font Lock keywords used to highlight Semantic grammar buffers.")
 
 (defvar semantic-grammar-mode-keywords-3
   (append semantic-grammar-mode-keywords-1
-          lisp-font-lock-keywords-2)
+	  (if (boundp 'lisp-font-lock-keywords-2)
+	      lisp-font-lock-keywords-2
+	    lisp-el-font-lock-keywords-2))
   "Font Lock keywords used to highlight Semantic grammar buffers.")
 
 (defvar semantic-grammar-mode-keywords
@@ -1910,6 +1927,7 @@ Optional argument COLOR determines if color is added to the text."
 
 (provide 'semantic/grammar)
 
+
 ;; Local variables:
 ;; generated-autoload-load-name: "semantic/grammar"
 ;; End:

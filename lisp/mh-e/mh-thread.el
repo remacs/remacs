@@ -1,6 +1,6 @@
 ;;; mh-thread.el --- MH-E threading support
 
-;; Copyright (C) 2002-2004, 2006-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2002-2004, 2006-2014 Free Software Foundation, Inc.
 
 ;; Author: Satyaki Das <satyaki@theforce.stanford.edu>
 ;; Maintainer: Bill Wohler <wohler@newt.com>
@@ -27,9 +27,11 @@
 ;; The threading portion of this files tries to implement the
 ;; algorithm described at:
 ;;   http://www.jwz.org/doc/threading.html
-;; It also begins to implement the IMAP Threading extension RFC. The
-;; implementation lacks the reference and subject canonicalization of
-;; the RFC.
+;; It also begins to implement the threading section of the IMAP -
+;; SORT and THREAD Extensions RFC at:
+;;   http://tools.ietf.org/html/rfc5256
+;; The implementation lacks the reference and subject canonicalization
+;; of the RFC.
 
 ;; In the presentation buffer, children messages are shown indented
 ;; with either [ ] or < > around them. Square brackets ([ ]) denote

@@ -1,6 +1,6 @@
 ;;; gv.el --- generalized variables  -*- lexical-binding: t -*-
 
-;; Copyright (C) 2012-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2012-2014 Free Software Foundation, Inc.
 
 ;; Author: Stefan Monnier <monnier@iro.umontreal.ca>
 ;; Keywords: extensions
@@ -157,11 +157,13 @@ arguments as NAME.  DO is a function as defined in `gv-get'."
         (_ (message "Unknown %s declaration %S" symbol handler) nil))))
 
 ;;;###autoload
-(push `(gv-expander ,(apply-partially #'gv--defun-declaration 'gv-expander))
-      defun-declarations-alist)
+(or (assq 'gv-expander defun-declarations-alist)
+    (push `(gv-expander ,(apply-partially #'gv--defun-declaration 'gv-expander))
+	  defun-declarations-alist))
 ;;;###autoload
-(push `(gv-setter ,(apply-partially #'gv--defun-declaration 'gv-setter))
-      defun-declarations-alist)
+(or (assq 'gv-setter defun-declarations-alist)
+    (push `(gv-setter ,(apply-partially #'gv--defun-declaration 'gv-setter))
+	  defun-declarations-alist))
 
 ;; (defmacro gv-define-expand (name expander)
 ;;   "Use EXPANDER to handle NAME as a generalized var.
@@ -346,6 +348,10 @@ The return value is the last VAL in the list.
 (gv-define-simple-setter window-point set-window-point)
 (gv-define-simple-setter window-start set-window-start)
 
+(gv-define-setter buffer-local-value (val var buf)
+  (macroexp-let2 nil v val
+    `(with-current-buffer ,buf (set (make-local-variable ,var) ,v))))
+
 ;;; Some occasionally handy extensions.
 
 ;; While several of the "places" below are not terribly useful for direct use,
@@ -450,7 +456,10 @@ The return value is the last VAL in the list.
 ;;;###autoload
 (defmacro gv-ref (place)
   "Return a reference to PLACE.
-This is like the `&' operator of the C language."
+This is like the `&' operator of the C language.
+Note: this only works reliably with lexical binding mode, except for very
+simple PLACEs such as (function-symbol 'foo) which will also work in dynamic
+binding mode."
   (gv-letplace (getter setter) place
     `(cons (lambda () ,getter)
            (lambda (gv--val) ,(funcall setter 'gv--val)))))

@@ -1,6 +1,6 @@
 ;;; vc-git.el --- VC backend for the git version control system -*- lexical-binding: t -*-
 
-;; Copyright (C) 2006-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2006-2014 Free Software Foundation, Inc.
 
 ;; Author: Alexandre Julliard <julliard@winehq.org>
 ;; Keywords: vc tools
@@ -521,7 +521,7 @@ or an empty string if none."
 		  :help "Show the contents of the current stash"))
     map))
 
-(defun vc-git-dir-extra-headers (_dir)
+(defun vc-git-dir-extra-headers (dir)
   (let ((str (with-output-to-string
                (with-current-buffer standard-output
                  (vc-git--out-ok "symbolic-ref" "HEAD"))))
@@ -559,6 +559,11 @@ or an empty string if none."
 	(propertize remote-url
 		    'face 'font-lock-variable-name-face)))
      "\n"
+     ;; For now just a heading, key bindings can be added later for various bisect actions
+     (when (file-exists-p (expand-file-name ".git/BISECT_START" (vc-git-root dir)))
+       (propertize  "Bisect     : in progress\n" 'face 'font-lock-warning-face))
+     (when (file-exists-p (expand-file-name ".git/rebase-apply" (vc-git-root dir)))
+       (propertize  "Rebase     : in progress\n" 'face 'font-lock-warning-face))
      (if stash
        (concat
 	(propertize "Stash      :\n" 'face 'font-lock-type-face
@@ -619,6 +624,7 @@ The car of the list is the current branch."
 (declare-function log-edit-mode "log-edit" ())
 (declare-function log-edit-toggle-header "log-edit" (header value))
 (declare-function log-edit-extract-headers "log-edit" (headers string))
+(declare-function log-edit-set-header "log-edit" (header value &optional toggle))
 
 (defun vc-git-log-edit-toggle-signoff ()
   "Toggle whether to add the \"Signed-off-by\" line at the end of
@@ -636,7 +642,17 @@ If toggling on, also insert its message into the buffer."
     (insert (with-output-to-string
               (vc-git-command
                standard-output 1 nil
-               "log" "--max-count=1" "--pretty=format:%B" "HEAD")))))
+               "log" "--max-count=1" "--pretty=format:%B" "HEAD")))
+    (save-excursion
+      (rfc822-goto-eoh)
+      (forward-line 1)
+      (let ((pt (point)))
+        (and (zerop (forward-line 1))
+             (looking-at "\n\\|\\'")
+             (let ((summary (buffer-substring-no-properties pt (1- (point)))))
+               (skip-chars-forward " \n")
+               (delete-region pt (point))
+               (log-edit-set-header "Summary" summary)))))))
 
 (defvar vc-git-log-edit-mode-map
   (let ((map (make-sparse-keymap "Git-Log-Edit")))
@@ -926,7 +942,7 @@ or BRANCH^ (where \"^\" can be repeated)."
 
 (defun vc-git-annotate-extract-revision-at-line ()
   (save-excursion
-    (move-beginning-of-line 1)
+    (beginning-of-line)
     (when (looking-at "\\([0-9a-f^][0-9a-f]+\\) \\(\\([^(]+\\) \\)?")
       (let ((revision (match-string-no-properties 1)))
 	(if (match-beginning 2)
@@ -1082,7 +1098,7 @@ This command shares argument histories with \\[rgrep] and \\[grep]."
 	      (setq command nil))
 	(setq dir (file-name-as-directory (expand-file-name dir)))
 	(setq command
-	      (grep-expand-template "git grep -n -e <R> -- <F>"
+	      (grep-expand-template "git --no-pager grep -n -e <R> -- <F>"
                                     regexp files))
 	(when command
 	  (if (equal current-prefix-arg '(4))
@@ -1194,7 +1210,15 @@ This command shares argument histories with \\[rgrep] and \\[grep]."
 The difference to vc-do-command is that this function always invokes
 `vc-git-program'."
   (apply 'vc-do-command (or buffer "*vc*") okstatus vc-git-program
-         file-or-list (cons "--no-pager" flags)))
+         ;; http://debbugs.gnu.org/16897
+         (unless (and (not (cdr-safe file-or-list))
+                      (let ((file (or (car-safe file-or-list)
+                                      file-or-list)))
+                        (and file
+                             (eq ?/ (aref file (1- (length file))))
+                             (equal file (vc-git-root file)))))
+           file-or-list)
+         (cons "--no-pager" flags)))
 
 (defun vc-git--empty-db-p ()
   "Check if the git db is empty (no commit done yet)."

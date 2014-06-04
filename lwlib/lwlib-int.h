@@ -1,6 +1,6 @@
 /*
 Copyright (C) 1992 Lucid, Inc.
-Copyright (C) 2000-2013 Free Software Foundation, Inc.
+Copyright (C) 2000-2014 Free Software Foundation, Inc.
 
 This file is part of the Lucid Widget Library.
 
@@ -22,8 +22,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #define LWLIB_INTERNAL_H
 
 #include "lwlib.h"
-
-extern char *safe_strdup (const char *);
 
 struct widget_xft_data;
 

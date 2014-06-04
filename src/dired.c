@@ -1,5 +1,5 @@
 /* Lisp functions for making directory listings.
-   Copyright (C) 1985-1986, 1993-1994, 1999-2013 Free Software
+   Copyright (C) 1985-1986, 1993-1994, 1999-2014 Free Software
    Foundation, Inc.
 
 This file is part of GNU Emacs.
@@ -46,6 +46,10 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "coding.h"
 #include "regex.h"
 #include "blockinput.h"
+
+#ifdef MSDOS
+#include "msdos.h"	/* for fstatat */
+#endif
 
 static Lisp_Object Qdirectory_files;
 static Lisp_Object Qdirectory_files_and_attributes;
@@ -278,7 +282,7 @@ directory_files_internal (Lisp_Object directory, Lisp_Object full,
 	      memcpy (SDATA (fullname) + directory_nbytes + needsep,
 		      SDATA (name), len);
 
-	      nchars = chars_in_text (SDATA (fullname), nbytes);
+	      nchars = multibyte_chars_in_text (SDATA (fullname), nbytes);
 
 	      /* Some bug somewhere.  */
 	      if (nchars > nbytes)
@@ -958,11 +962,11 @@ file_attributes (int fd, char const *name, Lisp_Object id_format)
       unblock_input ();
     }
   if (uname)
-    values[2] = DECODE_SYSTEM (build_string (uname));
+    values[2] = DECODE_SYSTEM (build_unibyte_string (uname));
   else
     values[2] = make_fixnum_or_float (s.st_uid);
   if (gname)
-    values[3] = DECODE_SYSTEM (build_string (gname));
+    values[3] = DECODE_SYSTEM (build_unibyte_string (gname));
   else
     values[3] = make_fixnum_or_float (s.st_gid);
 
@@ -984,7 +988,7 @@ file_attributes (int fd, char const *name, Lisp_Object id_format)
   values[10] = INTEGER_TO_CONS (s.st_ino);
   values[11] = INTEGER_TO_CONS (s.st_dev);
 
-  return Flist (sizeof (values) / sizeof (values[0]), values);
+  return Flist (ARRAYELTS (values), values);
 }
 
 DEFUN ("file-attributes-lessp", Ffile_attributes_lessp, Sfile_attributes_lessp, 2, 2, 0,

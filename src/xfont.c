@@ -1,5 +1,5 @@
 /* xfont.c -- X core font driver.
-   Copyright (C) 2006-2013 Free Software Foundation, Inc.
+   Copyright (C) 2006-2014 Free Software Foundation, Inc.
    Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011
      National Institute of Advanced Industrial Science and Technology (AIST)
      Registration Number H13PRO009
@@ -42,6 +42,7 @@ struct xfont_info
   struct font font;
   Display *display;
   XFontStruct *xfont;
+  unsigned x_display_id;
 };
 
 /* Prototypes of support functions.  */
@@ -119,7 +120,7 @@ static Lisp_Object xfont_list (struct frame *, Lisp_Object);
 static Lisp_Object xfont_match (struct frame *, Lisp_Object);
 static Lisp_Object xfont_list_family (struct frame *);
 static Lisp_Object xfont_open (struct frame *, Lisp_Object, int);
-static void xfont_close (struct frame *, struct font *);
+static void xfont_close (struct font *);
 static int xfont_prepare_face (struct frame *, struct face *);
 static int xfont_has_char (Lisp_Object, int);
 static unsigned xfont_encode_char (struct font *, int);
@@ -808,6 +809,7 @@ xfont_open (struct frame *f, Lisp_Object entity, int pixel_size)
   font = XFONT_OBJECT (font_object);
   ((struct xfont_info *) font)->xfont = xfont;
   ((struct xfont_info *) font)->display = FRAME_X_DISPLAY (f);
+  ((struct xfont_info *) font)->x_display_id = FRAME_DISPLAY_INFO (f)->x_id;
   font->pixel_size = pixel_size;
   font->driver = &xfont_driver;
   font->encoding_charset = encoding->id;
@@ -890,11 +892,28 @@ xfont_open (struct frame *f, Lisp_Object entity, int pixel_size)
 }
 
 static void
-xfont_close (struct frame *f, struct font *font)
+xfont_close (struct font *font)
 {
-  block_input ();
-  XFreeFont (FRAME_X_DISPLAY (f), ((struct xfont_info *) font)->xfont);
-  unblock_input ();
+  struct x_display_info *xdi;
+  struct xfont_info *xfi = (struct xfont_info *) font;
+
+  /* This function may be called from GC when X connection is gone
+     (Bug#16093), and an attempt to free font resources on invalid
+     display may lead to X protocol errors or segfaults.  Moreover,
+     the memory referenced by 'Display *' pointer may be reused for
+     the logically different X connection after the previous display
+     connection was closed.  That's why we also check whether font's
+     ID matches the one recorded in x_display_info for this display.
+     See http://debbugs.gnu.org/cgi/bugreport.cgi?bug=16069.  */
+  if (xfi->xfont
+      && ((xdi = x_display_info_for_display (xfi->display))
+	  && xfi->x_display_id == xdi->x_id))
+    {
+      block_input ();
+      XFreeFont (xfi->display, xfi->xfont);
+      unblock_input ();
+      xfi->xfont = NULL;
+    }
 }
 
 static int

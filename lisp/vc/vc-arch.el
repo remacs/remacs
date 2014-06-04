@@ -1,6 +1,6 @@
 ;;; vc-arch.el --- VC backend for the Arch version-control system  -*- lexical-binding: t -*-
 
-;; Copyright (C) 2004-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2004-2014 Free Software Foundation, Inc.
 
 ;; Author:      FSF (see vc.el for full credits)
 ;; Maintainer:  Stefan Monnier <monnier@gnu.org>
@@ -226,6 +226,10 @@ Only the value `maybe' can be trusted :-(."
 	(when root
 	  (vc-file-setprop
 	   file 'arch-root root)))))
+
+(defun vc-arch-find-admin-dir (file)
+  "Return the administrative directory of FILE."
+  (expand-file-name "{arch}" (vc-arch-root file)))
 
 (defun vc-arch-register (files &optional rev _comment)
   (if rev (error "Explicit initial revision not supported for Arch"))

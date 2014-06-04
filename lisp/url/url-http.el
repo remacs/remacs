@@ -1,8 +1,9 @@
 ;;; url-http.el --- HTTP retrieval routines
 
-;; Copyright (C) 1999, 2001, 2004-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1999, 2001, 2004-2014 Free Software Foundation, Inc.
 
 ;; Author: Bill Perry <wmperry@gnu.org>
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: comm, data, processes
 
 ;; This file is part of GNU Emacs.
@@ -51,7 +52,6 @@
 (defvar url-show-status)
 
 (require 'url-gw)
-(require 'url-util)
 (require 'url-parse)
 (require 'url-cookie)
 (require 'mail-parse)
@@ -357,9 +357,7 @@ request.")
              ;; End request
              "\r\n"
              ;; Any data
-             url-http-data
-	     ;; If `url-http-data' is nil, avoid two CRLFs (Bug#8931).
-	     (if url-http-data "\r\n")))
+             url-http-data))
            ""))
     (url-http-debug "Request is: \n%s" request)
     request))
@@ -417,7 +415,7 @@ Return the number of characters removed."
 	  (goto-char (point-max))
 	  (insert "<hr>Sorry, but I do not know how to handle " type
 		  " authentication.  If you'd like to write it,"
-		  " send it to " url-bug-address ".<hr>")
+		  " please use M-x report-emacs-bug RET.<hr>")
           ;; We used to set a `status' var (declared "special") but I can't
           ;; find the corresponding let-binding, so it's probably an error.
           ;; FIXME: Maybe it was supposed to set `success', i.e. to return t?
@@ -858,6 +856,8 @@ should be shown to the user."
     (goto-char (point-min))
     success))
 
+(declare-function zlib-decompress-region "decompress.c" (start end))
+
 (defun url-handle-content-transfer-encoding ()
   (let ((encoding (mail-fetch-field "content-encoding")))
     (when (and encoding
@@ -917,7 +917,7 @@ should be shown to the user."
 (defun url-http-simple-after-change-function (st nd length)
   ;; Function used when we do NOT know how long the document is going to be
   ;; Just _very_ simple 'downloaded %d' type of info.
-  (url-lazy-message "Reading %s..." (url-pretty-length nd)))
+  (url-lazy-message "Reading %s..." (file-size-human-readable nd)))
 
 (defun url-http-content-length-after-change-function (st nd length)
   "Function used when we DO know how long the document is going to be.
@@ -930,16 +930,16 @@ the callback to be triggered."
        (url-percentage (- nd url-http-end-of-headers)
 		       url-http-content-length)
        url-http-content-type
-       (url-pretty-length (- nd url-http-end-of-headers))
-       (url-pretty-length url-http-content-length)
+       (file-size-human-readable (- nd url-http-end-of-headers))
+       (file-size-human-readable url-http-content-length)
        (url-percentage (- nd url-http-end-of-headers)
 		       url-http-content-length))
     (url-display-percentage
      "Reading... %s of %s (%d%%)"
      (url-percentage (- nd url-http-end-of-headers)
 		     url-http-content-length)
-     (url-pretty-length (- nd url-http-end-of-headers))
-     (url-pretty-length url-http-content-length)
+     (file-size-human-readable (- nd url-http-end-of-headers))
+     (file-size-human-readable url-http-content-length)
      (url-percentage (- nd url-http-end-of-headers)
 		     url-http-content-length)))
 

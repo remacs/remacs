@@ -1,9 +1,9 @@
 ;;; makeinfo.el --- run makeinfo conveniently
 
-;; Copyright (C) 1991, 1993, 2001-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1991, 1993, 2001-2014 Free Software Foundation, Inc.
 
 ;; Author: Robert J. Chassell
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: docs convenience
 
 ;; This file is part of GNU Emacs.

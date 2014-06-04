@@ -1,6 +1,6 @@
 ;;; speedbar --- quick access to files and tags in a frame
 
-;; Copyright (C) 1996-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1996-2014 Free Software Foundation, Inc.
 
 ;; Author: Eric M. Ludlam <zappo@gnu.org>
 ;; Keywords: file, tags, tools
@@ -39,20 +39,8 @@ this version is not backward compatible to 0.14 or earlier.")
 ;;
 ;;; Notes:
 ;;
-;;    Users of really old emacsen without the need timer functions
-;; will not have speedbar updating automatically.  Use "g" to refresh
-;; the display after changing directories.  Remember, do not interrupt
-;; the stealthy updates or your display may not be completely
-;; refreshed.
-;;
 ;;    AUC-TEX users: The imenu tags for AUC-TEX mode don't work very
 ;; well.  Use the imenu keywords from tex-mode.el for better results.
-;;
-;; This file requires the library package assoc (association lists)
-;;     assoc should be available in all modern versions of Emacs.
-;; The custom package is optional (for easy configuration of speedbar)
-;;     http://www.dina.kvl.dk/~abraham/custom/
-;;     custom is available in all versions of Emacs version 20 or better.
 ;;
 ;;; Developing for speedbar
 ;;
@@ -135,17 +123,21 @@ this version is not backward compatible to 0.14 or earlier.")
   :group 'etags
   :group 'tools
   :group 'convenience
+  :link '(custom-manual "(speedbar) Top")
+  :link '(info-link "(speedbar) Customizing")
 ;  :version "20.3"
   )
 
 (defgroup speedbar-faces nil
   "Faces used in speedbar."
   :prefix "speedbar-"
+  :link '(info-link "(speedbar) Frames and Faces")
   :group 'speedbar
   :group 'faces)
 
 (defgroup speedbar-vc nil
   "Version control display in speedbar."
+  :link '(info-link "(speedbar) Version Control")
   :prefix "speedbar-"
   :group 'speedbar)
 
@@ -1072,9 +1064,9 @@ If the selected frame is not speedbar, then speedbar frame is
 selected.  If the speedbar frame is active, then select the attached frame."
   (interactive)
   (speedbar-reset-scanners)
-  (dframe-get-focus 'speedbar-frame 'speedbar-frame-mode
-		    (lambda () (let ((speedbar-update-flag t))
-				 (speedbar-timer-fn)))))
+  (dframe-get-focus 'speedbar-frame 'speedbar-frame-mode)
+  (let ((speedbar-update-flag t))
+    (speedbar-timer-fn)))
 
 (defsubst speedbar-frame-width ()
   "Return the width of the speedbar frame in characters.
@@ -2969,7 +2961,7 @@ that will occur on your system."
    (run-hook-with-args 'speedbar-vc-in-control-hook directory name)
    ))
 
-;; Objet File scanning
+;; Object File scanning
 (defun speedbar-check-objects ()
   "Scan all files in a directory, and for each see if there is an object.
 See `speedbar-check-obj-this-line' and `speedbar-obj-alist' for how

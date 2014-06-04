@@ -1,5 +1,5 @@
 /* Coding system handler (conversion, detection, etc).
-   Copyright (C) 2001-2013 Free Software Foundation, Inc.
+   Copyright (C) 2001-2014 Free Software Foundation, Inc.
    Copyright (C) 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004,
      2005, 2006, 2007, 2008, 2009, 2010, 2011
      National Institute of Advanced Industrial Science and Technology (AIST)
@@ -1202,7 +1202,7 @@ detect_coding_utf_8 (struct coding_system *coding,
   bool multibytep = coding->src_multibyte;
   ptrdiff_t consumed_chars = 0;
   bool bom_found = 0;
-  int nchars = coding->head_ascii;
+  ptrdiff_t nchars = coding->head_ascii;
   int eol_seen = coding->eol_seen;
 
   detect_info->checked |= CATEGORY_MASK_UTF_8;
@@ -1300,6 +1300,7 @@ detect_coding_utf_8 (struct coding_system *coding,
 	   means that we found a valid non-ASCII characters.  */
 	detect_info->found |= CATEGORY_MASK_UTF_8_AUTO | CATEGORY_MASK_UTF_8_NOSIG;
     }
+  coding->detected_utf8_bytes = src_base - coding->source;
   coding->detected_utf8_chars = nchars;
   return 1;
 }
@@ -2013,7 +2014,7 @@ emacs_mule_char (struct coding_system *coding, const unsigned char *src,
   int charset_ID;
   unsigned code;
   int c;
-  int consumed_chars = 0;
+  ptrdiff_t consumed_chars = 0;
   bool mseq_found = 0;
 
   ONE_MORE_BYTE (c);
@@ -3190,7 +3191,7 @@ detect_coding_iso_2022 (struct coding_system *coding,
 	      if (! single_shifting
 		  && ! (rejected & CATEGORY_MASK_ISO_8_2))
 		{
-		  int len = 1;
+		  ptrdiff_t len = 1;
 		  while (src < src_end)
 		    {
 		      src_base = src;
@@ -4456,7 +4457,7 @@ encode_coding_iso_2022 (struct coding_system *coding)
 	{
 	  /* We have to produce designation sequences if any now.  */
 	  unsigned char desig_buf[16];
-	  int nbytes;
+	  ptrdiff_t nbytes;
 	  ptrdiff_t offset;
 
 	  charset_map_loaded = 0;
@@ -5199,7 +5200,7 @@ decode_coding_ccl (struct coding_system *coding)
 	  source_charbuf[i++] = *p++;
 
       if (p == src_end && coding->mode & CODING_MODE_LAST_BLOCK)
-	ccl->last_block = 1;
+	ccl->last_block = true;
       /* As ccl_driver calls DECODE_CHAR, buffer may be relocated.  */
       charset_map_loaded = 0;
       ccl_driver (ccl, source_charbuf, charbuf, i, charbuf_end - charbuf,
@@ -5259,7 +5260,7 @@ encode_coding_ccl (struct coding_system *coding)
   CODING_GET_INFO (coding, attrs, charset_list);
   if (coding->consumed_char == coding->src_chars
       && coding->mode & CODING_MODE_LAST_BLOCK)
-    ccl->last_block = 1;
+    ccl->last_block = true;
 
   do
     {
@@ -5761,6 +5762,7 @@ setup_coding_system (Lisp_Object coding_system, struct coding_system *coding)
   coding->safe_charsets = SDATA (val);
   coding->default_char = XINT (CODING_ATTR_DEFAULT_CHAR (attrs));
   coding->carryover_bytes = 0;
+  coding->raw_destination = 0;
 
   coding_type = CODING_ATTR_TYPE (attrs);
   if (EQ (coding_type, Qundecided))
@@ -6210,7 +6212,7 @@ static Lisp_Object adjust_coding_eol_type (struct coding_system *coding,
    EOL_SEEN_LF, EOL_SEEN_CR, and EOL_SEEN_CRLF, but the value is
    reliable only when all the source bytes are ASCII.  */
 
-static int
+static ptrdiff_t
 check_ascii (struct coding_system *coding)
 {
   const unsigned char *src, *end;
@@ -6282,12 +6284,12 @@ check_ascii (struct coding_system *coding)
    the value is reliable only when all the source bytes are valid
    UTF-8.  */
 
-static int
+static ptrdiff_t
 check_utf_8 (struct coding_system *coding)
 {
   const unsigned char *src, *end;
   int eol_seen;
-  int nchars = coding->head_ascii;
+  ptrdiff_t nchars = coding->head_ascii;
 
   if (coding->head_ascii < 0)
     check_ascii (coding);
@@ -7413,7 +7415,7 @@ decode_coding (struct coding_system *coding)
   coding->carryover_bytes = 0;
   if (coding->consumed < coding->src_bytes)
     {
-      int nbytes = coding->src_bytes - coding->consumed;
+      ptrdiff_t nbytes = coding->src_bytes - coding->consumed;
       const unsigned char *src;
 
       coding_set_source (coding);
@@ -7889,7 +7891,7 @@ decode_coding_gap (struct coding_system *coding,
   coding->dst_multibyte = ! NILP (BVAR (current_buffer, enable_multibyte_characters));
 
   coding->head_ascii = -1;
-  coding->detected_utf8_chars = -1;
+  coding->detected_utf8_bytes = coding->detected_utf8_chars = -1;
   coding->eol_seen = EOL_SEEN_NONE;
   if (CODING_REQUIRE_DETECTION (coding))
     detect_coding (coding);
@@ -7906,7 +7908,8 @@ decode_coding_gap (struct coding_system *coding,
       if (chars != bytes)
 	{
 	  /* There exists a non-ASCII byte.  */
-	  if (EQ (CODING_ATTR_TYPE (attrs), Qutf_8))
+	  if (EQ (CODING_ATTR_TYPE (attrs), Qutf_8)
+	      && coding->detected_utf8_bytes == coding->src_bytes)
 	    {
 	      if (coding->detected_utf8_chars >= 0)
 		chars = coding->detected_utf8_chars;
@@ -8352,6 +8355,11 @@ encode_coding_object (struct coding_system *coding,
     {
       if (BUFFERP (coding->dst_object))
 	coding->dst_object = Fbuffer_string ();
+      else if (coding->raw_destination)
+	/* This is used to avoid creating huge Lisp string.
+	   NOTE: caller who sets `raw_destination' is also
+	   responsible for freeing `destination' buffer.  */
+	coding->dst_object = Qnil;
       else
 	{
 	  coding->dst_object
@@ -8435,11 +8443,11 @@ from_unicode (Lisp_Object str)
 }
 
 Lisp_Object
-from_unicode_buffer (const wchar_t* wstr)
+from_unicode_buffer (const wchar_t *wstr)
 {
     return from_unicode (
         make_unibyte_string (
-            (char*) wstr,
+            (char *) wstr,
             /* we get one of the two final 0 bytes for free. */
             1 + sizeof (wchar_t) * wcslen (wstr)));
 }
@@ -9352,6 +9360,14 @@ code_convert_region (Lisp_Object start, Lisp_Object end,
   setup_coding_system (coding_system, &coding);
   coding.mode |= CODING_MODE_LAST_BLOCK;
 
+  if (BUFFERP (dst_object) && !EQ (dst_object, src_object))
+    {
+      struct buffer *buf = XBUFFER (dst_object);
+      ptrdiff_t buf_pt = BUF_PT (buf);
+
+      invalidate_buffer_caches (buf, buf_pt, buf_pt);
+    }
+
   if (encodep)
     encode_coding_object (&coding, src_object, from, from_byte, to, to_byte,
 			  dst_object);
@@ -9441,6 +9457,15 @@ code_convert_string (Lisp_Object string, Lisp_Object coding_system,
   coding.mode |= CODING_MODE_LAST_BLOCK;
   chars = SCHARS (string);
   bytes = SBYTES (string);
+
+  if (BUFFERP (dst_object))
+    {
+      struct buffer *buf = XBUFFER (dst_object);
+      ptrdiff_t buf_pt = BUF_PT (buf);
+
+      invalidate_buffer_caches (buf, buf_pt, buf_pt);
+    }
+
   if (encodep)
     encode_coding_object (&coding, string, 0, 0, chars, bytes, dst_object);
   else
@@ -9467,6 +9492,55 @@ code_convert_string_norecord (Lisp_Object string, Lisp_Object coding_system,
   return code_convert_string (string, coding_system, Qt, encodep, 0, 1);
 }
 
+/* Encode or decode a file name, to or from a unibyte string suitable
+   for passing to C library functions.  */
+Lisp_Object
+decode_file_name (Lisp_Object fname)
+{
+#ifdef WINDOWSNT
+  /* The w32 build pretends to use UTF-8 for file-name encoding, and
+     converts the file names either to UTF-16LE or to the system ANSI
+     codepage internally, depending on the underlying OS; see w32.c.  */
+  if (! NILP (Fcoding_system_p (Qutf_8)))
+    return code_convert_string_norecord (fname, Qutf_8, 0);
+  return fname;
+#else  /* !WINDOWSNT */
+  if (! NILP (Vfile_name_coding_system))
+    return code_convert_string_norecord (fname, Vfile_name_coding_system, 0);
+  else if (! NILP (Vdefault_file_name_coding_system))
+    return code_convert_string_norecord (fname,
+					 Vdefault_file_name_coding_system, 0);
+  else
+    return fname;
+#endif
+}
+
+Lisp_Object
+encode_file_name (Lisp_Object fname)
+{
+  /* This is especially important during bootstrap and dumping, when
+     file-name encoding is not yet known, and therefore any non-ASCII
+     file names are unibyte strings, and could only be thrashed if we
+     try to encode them.  */
+  if (!STRING_MULTIBYTE (fname))
+    return fname;
+#ifdef WINDOWSNT
+  /* The w32 build pretends to use UTF-8 for file-name encoding, and
+     converts the file names either to UTF-16LE or to the system ANSI
+     codepage internally, depending on the underlying OS; see w32.c.  */
+  if (! NILP (Fcoding_system_p (Qutf_8)))
+    return code_convert_string_norecord (fname, Qutf_8, 1);
+  return fname;
+#else  /* !WINDOWSNT */
+  if (! NILP (Vfile_name_coding_system))
+    return code_convert_string_norecord (fname, Vfile_name_coding_system, 1);
+  else if (! NILP (Vdefault_file_name_coding_system))
+    return code_convert_string_norecord (fname,
+					 Vdefault_file_name_coding_system, 1);
+  else
+    return fname;
+#endif
+}
 
 DEFUN ("decode-coding-string", Fdecode_coding_string, Sdecode_coding_string,
        2, 4, 0,

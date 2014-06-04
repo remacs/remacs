@@ -1,6 +1,6 @@
 ;;; zlib-tests.el --- Test suite for zlib.
 
-;; Copyright (C) 2013 Free Software Foundation, Inc.
+;; Copyright (C) 2013-2014 Free Software Foundation, Inc.
 
 ;; Author: Lars Ingebrigtsen <larsi@gnus.org>
 
@@ -23,6 +23,10 @@
 
 (require 'ert)
 
+(defvar zlib-tests-data-directory
+  (expand-file-name "data/decompress" (getenv "EMACS_TEST_DIRECTORY"))
+  "Directory containing zlib test data.")
+
 (ert-deftest zlib--decompress ()
   "Test decompressing a gzipped file."
   (when (and (fboundp 'zlib-available-p)
@@ -30,7 +34,8 @@
     (should (string=
 	     (with-temp-buffer
 	       (set-buffer-multibyte nil)
-	       (insert-file-contents-literally "data/decompress/foo-gzipped")
+	       (insert-file-contents-literally
+		(expand-file-name "foo-gzipped" zlib-tests-data-directory))
 	       (zlib-decompress-region (point-min) (point-max))
 	       (buffer-string))
 	     "foo\n"))))

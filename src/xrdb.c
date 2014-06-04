@@ -1,5 +1,5 @@
 /* Deal with the X Resource Manager.
-   Copyright (C) 1990, 1993-1994, 2000-2013 Free Software Foundation,
+   Copyright (C) 1990, 1993-1994, 2000-2014 Free Software Foundation,
    Inc.
 
 Author: Joseph Arceneaux
@@ -48,10 +48,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "keyboard.h"
 #endif
 
-char *x_get_string_resource (XrmDatabase rdb, const char *name,
-			     const char *class);
-
-
 /* X file search path processing.  */
 
 
@@ -183,7 +179,7 @@ magic_db (const char *string, ptrdiff_t string_len, const char *class,
       else
 	next = p, next_len = 1;
 
-      /* Do we have room for this component followed by a '\0' ?  */
+      /* Do we have room for this component followed by a '\0'?  */
       if (path_size - path_len <= next_len)
 	{
 	  if (min (PTRDIFF_MAX, SIZE_MAX) / 2 - 1 - path_len < next_len)
@@ -238,9 +234,7 @@ gethomedir (void)
 
   copy = xmalloc (strlen (ptr) + 2);
   strcpy (copy, ptr);
-  strcat (copy, "/");
-
-  return copy;
+  return strcat (copy, "/");
 }
 
 

@@ -1,8 +1,8 @@
 ;;; image.el --- image API
 
-;; Copyright (C) 1998-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1998-2014 Free Software Foundation, Inc.
 
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: multimedia
 ;; Package: emacs
 
@@ -34,7 +34,10 @@
 
 (defconst image-type-header-regexps
   `(("\\`/[\t\n\r ]*\\*.*XPM.\\*/" . xpm)
-    ("\\`P[1-6][[:space:]]+\\(?:#.*[[:space:]]+\\)*[0-9]+[[:space:]]+[0-9]+" . pbm)
+    ("\\`P[1-6]\\\(?:\
+\\(?:\\(?:#[^\r\n]*[\r\n]\\)?[[:space:]]\\)+\
+\\(?:\\(?:#[^\r\n]*[\r\n]\\)?[0-9]\\)+\
+\\)\\{2\\}" . pbm)
     ("\\`GIF8[79]a" . gif)
     ("\\`\x89PNG\r\n\x1a\n" . png)
     ("\\`[\t\n\r ]*#define \\([a-z0-9_]+\\)_width [0-9]+\n\
@@ -101,11 +104,13 @@ AUTODETECT can be
 
 (defvar image-format-suffixes
   '((image/x-icon "ico"))
-  "Alist of MIME Content-Type headers to file name suffixes.
+  "An alist associating image types with file name suffixes.
 This is used as a hint by the ImageMagick library when detecting
-image types.  If `create-image' is called with a :format
-matching found in this alist, the ImageMagick library will be
-told that the data would have this suffix if saved to a file.")
+the type of image data (that does not have an associated file name).
+Each element has the form (MIME-CONTENT-TYPE EXTENSION).
+If `create-image' is called with a :format attribute whose value
+equals a content-type found in this list, the ImageMagick library is
+told that the data would have the associated suffix if saved to a file.")
 
 (defcustom image-load-path
   (list (file-name-as-directory (expand-file-name "images" data-directory))
@@ -115,7 +120,9 @@ If an element is a string, it defines a directory to search.
 If an element is a variable symbol whose value is a string, that
 value defines a directory to search.
 If an element is a variable symbol whose value is a list, the
-value is used as a list of directories to search."
+value is used as a list of directories to search.
+
+Subdirectories are not automatically included in the search."
   :type '(repeat (choice directory variable))
   :initialize 'custom-initialize-delay)
 
@@ -291,6 +298,7 @@ be determined."
 	  (setq types (cdr types)))))
     (goto-char opoint)
     (and type
+	 (boundp 'image-types)
 	 (memq type image-types)
 	 type)))
 
@@ -590,7 +598,7 @@ Image files should not be larger than specified by `max-image-size'."
 
 ;;;###autoload
 (defmacro defimage (symbol specs &optional doc)
-  "Define SYMBOL as an image.
+  "Define SYMBOL as an image, and return SYMBOL.
 
 SPECS is a list of image specifications.  DOC is an optional
 documentation string.
@@ -624,13 +632,14 @@ The actual return value is a cons (NIMAGES . DELAY), where NIMAGES is
 the number of frames (or sub-images) in the image and DELAY is the delay
 in seconds that the image specifies between each frame.  DELAY may be nil,
 in which case you might want to use `image-default-frame-delay'."
-  (let* ((metadata (image-metadata image))
-	 (images (plist-get metadata 'count))
-	 (delay (plist-get metadata 'delay)))
-    (when (and images (> images 1))
-      (if (or (not (numberp delay)) (< delay 0))
-	  (setq delay image-default-frame-delay))
-      (cons images delay))))
+  (when (fboundp 'image-metadata)
+    (let* ((metadata (image-metadata image))
+	   (images (plist-get metadata 'count))
+	   (delay (plist-get metadata 'delay)))
+      (when (and images (> images 1))
+	(if (or (not (numberp delay)) (< delay 0))
+	    (setq delay image-default-frame-delay))
+	(cons images delay)))))
 
 (defun image-animated-p (image)
   "Like `image-multi-frame-p', but returns nil if no delay is specified."
@@ -653,6 +662,7 @@ number, play until that number of seconds has elapsed."
     (when animation
       (if (setq timer (image-animate-timer image))
 	  (cancel-timer timer))
+      (plist-put (cdr image) :animate-buffer (current-buffer))
       (run-with-timer 0.2 nil 'image-animate-timeout
 		      image (or index 0) (car animation)
 		      0 limit))))
@@ -717,30 +727,31 @@ The minimum delay between successive frames is `image-minimum-frame-delay'.
 
 If the image has a non-nil :speed property, it acts as a multiplier
 for the animation speed.  A negative value means to animate in reverse."
-  (image-show-frame image n t)
-  (let* ((speed (image-animate-get-speed image))
-	 (time (float-time))
-	 (animation (image-multi-frame-p image))
-	 ;; Subtract off the time we took to load the image from the
-	 ;; stated delay time.
-	 (delay (max (+ (* (or (cdr animation) image-default-frame-delay)
-			   (/ 1 (abs speed)))
-			time (- (float-time)))
-		     image-minimum-frame-delay))
-	 done)
-    (setq n (if (< speed 0)
-		(1- n)
-	      (1+ n)))
-    (if limit
-	(cond ((>= n count) (setq n 0))
-	      ((< n 0) (setq n (1- count))))
-      (and (or (>= n count) (< n 0)) (setq done t)))
-    (setq time-elapsed (+ delay time-elapsed))
-    (if (numberp limit)
-	(setq done (>= time-elapsed limit)))
-    (unless done
-      (run-with-timer delay nil 'image-animate-timeout
-		      image n count time-elapsed limit))))
+  (when (buffer-live-p (plist-get (cdr image) :animate-buffer))
+    (image-show-frame image n t)
+    (let* ((speed (image-animate-get-speed image))
+	   (time (float-time))
+	   (animation (image-multi-frame-p image))
+	   ;; Subtract off the time we took to load the image from the
+	   ;; stated delay time.
+	   (delay (max (+ (* (or (cdr animation) image-default-frame-delay)
+			     (/ 1 (abs speed)))
+			  time (- (float-time)))
+		       image-minimum-frame-delay))
+	   done)
+      (setq n (if (< speed 0)
+		  (1- n)
+		(1+ n)))
+      (if limit
+	  (cond ((>= n count) (setq n 0))
+		((< n 0) (setq n (1- count))))
+	(and (or (>= n count) (< n 0)) (setq done t)))
+      (setq time-elapsed (+ delay time-elapsed))
+      (if (numberp limit)
+	  (setq done (>= time-elapsed limit)))
+      (unless done
+	(run-with-timer delay nil 'image-animate-timeout
+			image n count time-elapsed limit)))))
 
 
 (defvar imagemagick-types-inhibit)

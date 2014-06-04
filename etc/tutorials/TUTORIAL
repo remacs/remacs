@@ -312,7 +312,7 @@ of text is "continued" onto a second screen line.  If you're using a
 graphical display, little curved arrows appear in the narrow spaces on
 each side of the text area (the left and right "fringes"), to indicate
 where a line has been continued.  If you're using a text terminal, the
-continued line is indicated by a backslash ("\") on the rightmost
+continued line is indicated by a backslash ('\') on the rightmost
 screen column.
 
 >> Insert text until you reach the right margin, and keep on inserting.
@@ -330,6 +330,19 @@ screen width, it will be displayed with a continuation line.
    merges that line with the previous line.
 
 >> Type <Return> to reinsert the Newline you deleted.
+
+The <Return> key is special, in that pressing it may do more than
+just insert a Newline character.  Depending on the surrounding text,
+it may insert whitespace after the Newline character, so that when
+you start typing on the newly created line, the text lines up with
+that on the previous line.  We call this behavior (where pressing a
+key does more than simply inserting the relevant character) "electric".
+
+>> Here is an example of <Return> being electric.
+   Type <Return> at the end of this line.
+
+You should see that after inserting the Newline, Emacs inserts spaces
+so that the cursor moves under the "T" of "Type".
 
 Remember that most Emacs commands can be given a repeat count;
 this includes text characters.  Repeating a text character inserts
@@ -391,7 +404,7 @@ Note that a single C-k kills the contents of the line, and a second
 C-k kills the line itself, and makes all the other lines move up.  C-k
 treats a numeric argument specially: it kills that many lines AND
 their contents.  This is not mere repetition.  C-u 2 C-k kills two
-lines and their newlines; typing C-k twice would not do that.
+lines and their Newlines; typing C-k twice would not do that.
 
 You can yank the killed text either at the same place where it was
 killed, or at some other place in the text you are editing, or even in
@@ -633,7 +646,7 @@ C-z is the command to exit Emacs *temporarily*--so that you can go
 back to the same Emacs session afterward.  When Emacs is running on a
 text terminal, C-z "suspends" Emacs; that is, it returns to the shell
 but does not destroy the Emacs job.  In the most common shells, you
-can resume Emacs with the `fg' command or with `%emacs'.
+can resume Emacs with the "fg" command or with "%emacs".
 
 The time to use C-x C-c is when you are about to log out.  It's also
 the right thing to use to exit an Emacs invoked for a quick edit, such
@@ -822,7 +835,7 @@ called an incremental search waiting for you to type the thing that
 you want to search for.  <Return> terminates a search.
 
 >> Now type C-s to start a search.  SLOWLY, one letter at a time,
-   type the word 'cursor', pausing after you type each
+   type the word "cursor", pausing after you type each
    character to notice what happens to the cursor.
    Now you have searched for "cursor", once.
 >> Type C-s again, to search for the next occurrence of "cursor".
@@ -831,7 +844,7 @@ you want to search for.  <Return> terminates a search.
 
 Did you see what happened?  Emacs, in an incremental search, tries to
 go to the occurrence of the string that you've typed out so far.  To
-go to the next occurrence of 'cursor' just type C-s again.  If no such
+go to the next occurrence of "cursor" just type C-s again.  If no such
 occurrence exists, Emacs beeps and tells you the search is currently
 "failing".  C-g would also terminate the search.
 
@@ -1047,7 +1060,7 @@ corresponding command names (such as C-x C-f beside find-file).
 >> Type C-x 1 to delete the help window.
 
    C-h i	Read included Manuals (a.k.a. Info).  This command puts
-		you into a special buffer called `*info*' where you
+		you into a special buffer called "*info*" where you
 		can read manuals for the packages installed on your system.
 		Type m emacs <Return> to read the Emacs manual.
 		If you have never before used Info, type ? and Emacs
@@ -1097,7 +1110,7 @@ starting with the one written by Stuart Cracraft for the original Emacs.
 This version of the tutorial is a part of GNU Emacs.  It is copyrighted
 and comes with permission to distribute copies on certain conditions:
 
-  Copyright (C) 1985, 1996, 1998, 2001-2013 Free Software Foundation,
+  Copyright (C) 1985, 1996, 1998, 2001-2014 Free Software Foundation,
   Inc.
 
   This file is part of GNU Emacs.
@@ -1118,4 +1131,3 @@ and comes with permission to distribute copies on certain conditions:
 Please read the file COPYING and then do give copies of GNU Emacs to
 your friends.  Help stamp out software obstructionism ("ownership") by
 using, writing, and sharing free software!
-

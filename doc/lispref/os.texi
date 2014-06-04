@@ -1,6 +1,6 @@
 @c -*-texinfo-*-
 @c This is part of the GNU Emacs Lisp Reference Manual.
-@c Copyright (C) 1990-1995, 1998-1999, 2001-2013 Free Software
+@c Copyright (C) 1990-1995, 1998-1999, 2001-2014 Free Software
 @c Foundation, Inc.
 @c See the file elisp.texi for copying conditions.
 @node System Interface
@@ -71,11 +71,12 @@ in their turn.  The files @file{subdirs.el} are normally generated
 automatically when Emacs is installed.
 
 @item
-If the library @file{leim-list.el} exists, Emacs loads it.  This
-optional library is intended for registering input methods; Emacs
-looks for it in @code{load-path} (@pxref{Library Search}), skipping
-those directories containing the standard Emacs libraries (since
-@file{leim-list.el} should not exist in those directories).
+It loads any @file{leim-list.el} that it finds in the @code{load-path}
+directories.  This file is intended for registering input methods.
+The search is only for any personal @file{leim-list.el} files that you
+may have created; it skips the directories containing the standard Emacs
+libraries (these should contain only a single @file{leim-list.el} file,
+which is compiled into the Emacs executable).
 
 @vindex before-init-time
 @item
@@ -174,8 +175,8 @@ If the buffer @file{*scratch*} exists and is still in Fundamental mode
 
 @item
 If started on a text terminal, it loads the terminal-specific
-Lisp library, which is specified by the variable
-@code{term-file-prefix} (@pxref{Terminal-Specific}).  This is not done
+Lisp library (@pxref{Terminal-Specific}), and runs the hook
+@code{tty-setup-hook}.  This is not done
 in @code{--batch} mode, nor if @code{term-file-prefix} is @code{nil}.
 
 @c Now command-line calls command-line-1.
@@ -194,7 +195,9 @@ It now exits if the option @code{--batch} was specified.
 
 @item
 If @code{initial-buffer-choice} is a string, it visits the file with
-that name.  If the @file{*scratch*} buffer exists and is
+that name.  If it is a function, it calls the function and selects the
+buffer returned by the function.  It it is @code{t}, it selects the
+@file{*scratch*} buffer.  If the @file{*scratch*} buffer exists and is
 empty, it inserts @code{initial-scratch-message} into that buffer.
 
 @c To make things nice and confusing, the next three items can be
@@ -207,7 +210,7 @@ empty, it inserts @code{initial-scratch-message} into that buffer.
 @c daemon/session restore step?
 
 @item
-It runs @code{emacs-startup-hook} and then @code{term-setup-hook}.
+It runs @code{emacs-startup-hook}.
 
 @item
 It calls @code{frame-notice-user-settings}, which modifies the
@@ -218,6 +221,7 @@ specify.
 It runs @code{window-setup-hook}.  @xref{Window Systems}.
 
 @item
+@cindex startup screen
 It displays the @dfn{startup screen}, which is a special buffer that
 contains information about copyleft and basic Emacs usage.  This is
 not done if @code{inhibit-startup-screen} or @code{initial-buffer-choice}
@@ -269,11 +273,9 @@ aliases for this variable.
 If non-@code{nil}, this variable is a string that specifies a file or
 directory for Emacs to display after starting up, instead of the
 startup screen.
-@ignore
-@c I do not think this should be mentioned.  AFAICS it is just a dodge
-@c around inhibit-startup-screen not being settable on a site-wide basis.
+If its value is a function, Emacs calls that function which must
+return a buffer which is then displayed.
 If its value is @code{t}, Emacs displays the @file{*scratch*} buffer.
-@end ignore
 @end defopt
 
 @defopt inhibit-startup-echo-area-message
@@ -316,7 +318,7 @@ Run without an interactive terminal.  @xref{Batch Mode}.
 Do not initialize any display; just start a server in the background.
 
 @item --no-init-file
-@itemx -Q
+@itemx -q
 Do not load either the init file, or the @file{default} library.
 
 @item --no-site-file
@@ -406,8 +408,7 @@ terminal) and processing the command-line action arguments.
 
 @defvar emacs-startup-hook
 This normal hook is run, once, just after handling the command line
-arguments, just before @code{term-setup-hook}.  In batch mode, Emacs
-does not run either of these hooks.
+arguments.  In batch mode, Emacs does not run this hook.
 @end defvar
 
 @defvar user-init-file
@@ -429,21 +430,24 @@ This variable holds the name of the @file{.emacs.d} directory.  It is
 run on that type of terminal.  The library's name is constructed by
 concatenating the value of the variable @code{term-file-prefix} and the
 terminal type (specified by the environment variable @env{TERM}).
-Normally, @code{term-file-prefix} has the value
-@code{"term/"}; changing this is not recommended.  Emacs finds the file
-in the normal manner, by searching the @code{load-path} directories, and
-trying the @samp{.elc} and @samp{.el} suffixes.
+Normally, @code{term-file-prefix} has the value @code{"term/"};
+changing this is not recommended.  If there is an entry matching
+@env{TERM} in the @code{term-file-aliases} association list,
+Emacs uses the associated value in place of @env{TERM}.
+Emacs finds the file in the normal manner, by searching the
+@code{load-path} directories, and trying the @samp{.elc} and
+@samp{.el} suffixes.
 
 @cindex Termcap
   The usual role of a terminal-specific library is to enable special
 keys to send sequences that Emacs can recognize.  It may also need to
 set or add to @code{input-decode-map} if the Termcap or Terminfo entry
-does not specify all the terminal's function keys.  @xref{Terminal
-Input}.
+does not specify all the terminal's function keys.  @xref{Terminal Input}.
 
-  When the name of the terminal type contains a hyphen or underscore, and no library
-is found whose name is identical to the terminal's name, Emacs strips
-from the terminal's name the last hyphen or underscore and everything that follows
+  When the name of the terminal type contains a hyphen or underscore,
+and no library is found whose name is identical to the terminal's
+name, Emacs strips from the terminal's name the last hyphen or
+underscore and everything that follows
 it, and tries again.  This process is repeated until Emacs finds a
 matching library, or until there are no more hyphens or underscores in the name
 (i.e., there is no terminal-specific library).  For example, if the
@@ -452,20 +456,16 @@ terminal name is @samp{xterm-256color} and there is no
 @file{term/xterm.el}.  If necessary, the terminal library can evaluate
 @code{(getenv "TERM")} to find the full name of the terminal type.
 
-  Your init file can prevent the loading of the
-terminal-specific library by setting the variable
-@code{term-file-prefix} to @code{nil}.  This feature is useful when
-experimenting with your own peculiar customizations.
+  Your init file can prevent the loading of the terminal-specific
+library by setting the variable @code{term-file-prefix} to @code{nil}.
 
   You can also arrange to override some of the actions of the
-terminal-specific library by setting the variable
-@code{term-setup-hook}.  This is a normal hook that Emacs runs
-at the end of its initialization, after loading both
-your init file and any terminal-specific libraries.  You could
-use this hook to define initializations for terminals that do not
+terminal-specific library by using @code{tty-setup-hook}.  This is
+a normal hook that Emacs runs after initializing a new text terminal.
+You could use this hook to define initializations for terminals that do not
 have their own libraries.  @xref{Hooks}.
 
-@defvar term-file-prefix
+@defopt term-file-prefix
 @cindex @env{TERM} environment variable
 If the value of this variable is non-@code{nil}, Emacs loads a
 terminal-specific initialization file as follows:
@@ -480,15 +480,22 @@ init file if you do not wish to load the
 terminal-initialization file.
 
 On MS-DOS, Emacs sets the @env{TERM} environment variable to @samp{internal}.
-@end defvar
+@end defopt
 
-@defvar term-setup-hook
-This variable is a normal hook that Emacs runs after loading your
-init file, the default initialization file (if any) and the
-terminal-specific Lisp file.
+@defopt term-file-aliases
+This variable is an an association list mapping terminal types to
+their aliases.  For example, an element of the form @code{("vt102"
+. "vt100")} means to treat a terminal of type @samp{vt102} like one of
+type @samp{vt100}.
+@end defopt
 
-You can use @code{term-setup-hook} to override the definitions made by a
-terminal-specific file.
+@defvar tty-setup-hook
+This variable is a normal hook that Emacs runs after initializing a
+new text terminal.  (This applies when Emacs starts up in non-windowed
+mode, and when making a tty @command{emacsclient} connection.)  The
+hook runs after loading your init file (if applicable) and the
+terminal-specific Lisp file, so you can use it to adjust the
+definitions made by that file.
 
 For a related feature, @pxref{Window Systems, window-setup-hook}.
 @end defvar
@@ -516,9 +523,10 @@ displays the startup messages.
 The value of this variable is @code{t} once the command line has been
 processed.
 
-If you redump Emacs by calling @code{dump-emacs}, you may wish to set
-this variable to @code{nil} first in order to cause the new dumped Emacs
-to process its new command-line arguments.
+If you redump Emacs by calling @code{dump-emacs} (@pxref{Building
+Emacs}), you may wish to set this variable to @code{nil} first in
+order to cause the new dumped Emacs to process its new command-line
+arguments.
 @end defvar
 
 @defvar command-switch-alist
@@ -550,8 +558,8 @@ sole argument.
 In some cases, the option is followed in the command line by an
 argument.  In these cases, the @var{handler-function} can find all the
 remaining command-line arguments in the variable
-@code{command-line-args-left}.  (The entire list of command-line
-arguments is in @code{command-line-args}.)
+@code{command-line-args-left} (see below).  (The entire list of
+command-line arguments is in @code{command-line-args}.)
 
 The command-line arguments are parsed by the @code{command-line-1}
 function in the @file{startup.el} file.  See also @ref{Emacs
@@ -959,6 +967,7 @@ to access the value of @var{variable}.  If @var{value} is omitted or
 removes @var{variable} from the environment.  Otherwise, @var{value}
 should be a string.
 
+@c FIXME: Document `substitute-env-vars'?  --xfq
 If the optional argument @var{substitute} is non-@code{nil}, Emacs
 calls the function @code{substitute-env-vars} to expand any
 environment variables in @var{value}.
@@ -1044,7 +1053,7 @@ number of processes trying to run on the system.
 
 By default, the values are integers that are 100 times the system load
 averages, but if @var{use-float} is non-@code{nil}, then they are
-returned as floating point numbers without multiplying by 100.
+returned as floating-point numbers without multiplying by 100.
 
 If it is impossible to obtain the load average, this function signals
 an error.  On some platforms, access to load averages requires
@@ -1095,9 +1104,9 @@ originally logged in.  The value reflects command-line options such as
 Lisp packages that load files of customizations, or any other sort of
 user profile, should obey this variable in deciding where to find it.
 They should load the profile of the user name found in this variable.
-If @code{init-file-user} is @code{nil}, meaning that the @samp{-q}
-option was used, then Lisp packages should not load any customization
-files or user profile.
+If @code{init-file-user} is @code{nil}, meaning that the @samp{-q},
+@samp{-Q}, or @samp{-batch} option was used, then Lisp packages should
+not load any customization files or user profile.
 @end defvar
 
 @defopt user-mail-address
@@ -1147,25 +1156,27 @@ you to ``fake out'' Emacs by telling the functions what to return.  The
 variables are also useful for constructing frame titles (@pxref{Frame
 Titles}).
 
+@cindex UID
 @defun user-real-uid
 This function returns the real @acronym{UID} of the user.
-The value may be a floating point number, in the (unlikely) event that
+The value may be floating point, in the (unlikely) event that
 the UID is too large to fit in a Lisp integer.
 @end defun
 
 @defun user-uid
 This function returns the effective @acronym{UID} of the user.
-The value may be a floating point number.
+The value may be floating point.
 @end defun
 
+@cindex GID
 @defun group-gid
 This function returns the effective @acronym{GID} of the Emacs process.
-The value may be a floating point number.
+The value may be floating point.
 @end defun
 
 @defun group-real-gid
 This function returns the real @acronym{GID} of the Emacs process.
-The value may be a floating point number.
+The value may be floating point.
 @end defun
 
 @defun system-users
@@ -1195,7 +1206,7 @@ integers, @code{(@var{sec-high} @var{sec-low} @var{microsec}
 integers, @code{(@var{sec-high} @var{sec-low} @var{microsec})}, or of
 two integers, @code{(@var{sec-high} @var{sec-low})}.  The integers
 @var{sec-high} and @var{sec-low} give the high and low bits of an
-integer number of seconds.  This integer number,
+integer number of seconds.  This integer,
 @ifnottex
 @var{high} * 2**16 + @var{low},
 @end ifnottex
@@ -1217,9 +1228,9 @@ file-attributes}).  In function arguments, e.g., the @var{time-value}
 argument to @code{current-time-string}, two-, three-, and four-integer
 lists are accepted.  You can convert times from the list
 representation into standard human-readable strings using
-@code{current-time}, or to other forms using the @code{decode-time}
-and @code{format-time-string} functions documented in the following
-sections.
+@code{current-time-string}, or to other forms using the
+@code{decode-time} and @code{format-time-string} functions documented
+in the following sections.
 
 @defun current-time-string &optional time-value
 This function returns the current time and date as a human-readable
@@ -1263,6 +1274,7 @@ exact.  Do not use this function if precise time stamps are required.
 @end defun
 
 @defun current-time-zone &optional time-value
+@cindex time zone, current
 This function returns a list describing the time zone that the user is
 in.
 
@@ -1289,6 +1301,7 @@ time zone.
 
 @node Time Conversion
 @section Time Conversion
+@cindex calendrical information
 
   These functions convert time values (lists of two to four integers,
 as explained in the previous section) into calendrical information and
@@ -1515,9 +1528,9 @@ system.
 @end defun
 
 @defun seconds-to-time seconds
-This function converts @var{seconds}, a floating point number of
-seconds since the epoch, to a time value and returns that.  To perform
-the inverse conversion, use @code{float-time}.
+This function converts @var{seconds}, the number of seconds since the
+epoch, to a time value and returns that.  To convert back, use
+@code{float-time} (@pxref{Time of Day}).
 @end defun
 
 @defun format-seconds format-string seconds
@@ -1579,6 +1592,7 @@ most-positive-fixnum}).
 both elapsed and processor time, used by the Emacs process.
 
 @deffn Command emacs-uptime &optional format
+@cindex uptime of Emacs
 This function returns a string representing the Emacs
 @dfn{uptime}---the elapsed wall-clock time this instance of Emacs is
 running.  The string is formatted by @code{format-seconds} according
@@ -1801,9 +1815,8 @@ work just like ordinary timers.
 
 @deffn Command run-with-idle-timer secs repeat function &rest args
 Set up a timer which runs the next time Emacs is idle for @var{secs}
-seconds.  The value of @var{secs} may be an integer or a floating
-point number; a value of the type returned by @code{current-idle-time}
-is also allowed.
+seconds.  The value of @var{secs} may be a number or a value of the type
+returned by @code{current-idle-time}.
 
 If @var{repeat} is @code{nil}, the timer runs just once, the first time
 Emacs remains idle for a long enough time.  More often @var{repeat} is
@@ -1915,10 +1928,10 @@ functions.
 
 @defun set-input-mode interrupt flow meta &optional quit-char
 This function sets the mode for reading keyboard input.  If
-@var{interrupt} is non-null, then Emacs uses input interrupts.  If it is
-@code{nil}, then it uses @sc{cbreak} mode.  The default setting is
-system-dependent.  Some systems always use @sc{cbreak} mode regardless
-of what is specified.
+@var{interrupt} is non-@code{nil}, then Emacs uses input interrupts.
+If it is @code{nil}, then it uses @sc{cbreak} mode.  The default
+setting is system-dependent.  Some systems always use @sc{cbreak} mode
+regardless of what is specified.
 
 When Emacs communicates directly with X, it ignores this argument and
 uses interrupts if that is the way it knows how to communicate.
@@ -1988,20 +2001,11 @@ This function opens a @dfn{dribble file} named @var{filename}.  When a
 dribble file is open, each input event from the keyboard or mouse (but
 not those from keyboard macros) is written in that file.  A
 non-character event is expressed using its printed representation
-surrounded by @samp{<@dots{}>}.
+surrounded by @samp{<@dots{}>}.  Be aware that sensitive information
+(such as passwords) may end up recorded in the dribble file.
 
 You close the dribble file by calling this function with an argument
 of @code{nil}.
-
-This function is normally used to record the input necessary to
-trigger an Emacs bug, for the sake of a bug report.
-
-@example
-@group
-(open-dribble-file "~/dribble")
-     @result{} nil
-@end group
-@end example
 @end deffn
 
   See also the @code{open-termscript} function (@pxref{Terminal Output}).
@@ -2068,17 +2072,17 @@ often than to actual Emacs bugs.  Once you are certain which characters
 were actually output, you can determine reliably whether they correspond
 to the Termcap specifications in use.
 
-You close the termscript file by calling this function with an
-argument of @code{nil}.
-
-See also @code{open-dribble-file} in @ref{Recording Input}.
-
 @example
 @group
 (open-termscript "../junk/termscript")
      @result{} nil
 @end group
 @end example
+
+You close the termscript file by calling this function with an
+argument of @code{nil}.
+
+See also @code{open-dribble-file} in @ref{Recording Input}.
 @end deffn
 
 @node Sound Output
@@ -2089,6 +2093,7 @@ See also @code{open-dribble-file} in @ref{Recording Input}.
 certain systems are supported; if you call @code{play-sound} on a
 system which cannot really do the job, it gives an error.
 
+@c FIXME: Add indexes for Au and WAV?  --xfq
   The sound must be stored as a file in RIFF-WAVE format (@samp{.wav})
 or Sun Audio format (@samp{.au}).
 
@@ -2150,7 +2155,7 @@ system-specific keysym.  Each element has the form @code{(@var{code}
 . @var{symbol})}, where @var{code} is the numeric keysym code (not
 including the ``vendor specific'' bit,
 @ifnottex
--2**28),
+@minus{}2**28),
 @end ifnottex
 @tex
 $-2^{28}$),
@@ -2160,7 +2165,7 @@ and @var{symbol} is the name for the function key.
 For example @code{(168 . mute-acute)} defines a system-specific key (used
 by HP X servers) whose numeric code is
 @ifnottex
--2**28
+@minus{}2**28
 @end ifnottex
 @tex
 $-2^{28}$
@@ -2235,6 +2240,7 @@ saved session to restore.  For Emacs, this argument is @samp{--smid
 @var{session}}.
 
 @defvar emacs-save-session-functions
+@cindex session file
 Emacs supports saving state via a hook called
 @code{emacs-save-session-functions}.  Emacs runs this hook when the
 session manager tells it that the window system is shutting down.  The
@@ -2274,11 +2280,13 @@ Emacs is restarted by the session manager.
 @node Desktop Notifications
 @section Desktop Notifications
 @cindex desktop notifications
+@cindex notifications, on desktop
 
 Emacs is able to send @dfn{notifications} on systems that support the
 freedesktop.org Desktop Notifications Specification.  In order to use
 this functionality, Emacs must have been compiled with D-Bus support,
-and the @code{notifications} library must be loaded.
+and the @code{notifications} library must be loaded.  @xref{Top, ,
+D-Bus,dbus,D-Bus integration in Emacs}.
 
 @defun notifications-notify &rest params
 This function sends a notification to the desktop via D-Bus,
@@ -2321,10 +2329,10 @@ be anything, though implementations are free not to display it.
 
 @item :timeout @var{timeout}
 The timeout time in milliseconds since the display of the notification
-at which the notification should automatically close.  If -1, the
+at which the notification should automatically close.  If @minus{}1, the
 notification's expiration time is dependent on the notification
 server's settings, and may vary for the type of notification.  If 0,
-the notification never expires.  Default value is -1.
+the notification never expires.  Default value is @minus{}1.
 
 @item :urgency @var{urgency}
 The urgency level.  It can be @code{low}, @code{normal}, or @code{critical}.
@@ -2514,6 +2522,7 @@ specification prior to @samp{"1.0"}.
 @node File Notifications
 @section Notifications on File Changes
 @cindex file notifications
+@cindex watch, for filesystem events
 
 Several operating systems support watching of filesystems for changes
 of files.  If configured properly, Emacs links a respective library

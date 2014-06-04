@@ -1,7 +1,6 @@
 /* Record indices of function doc strings stored in a file.
 
-Copyright (C) 1985-1986, 1993-1995, 1997-2013 Free Software Foundation,
-Inc.
+Copyright (C) 1985-1986, 1993-1995, 1997-2014 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -416,21 +415,6 @@ string is passed through `substitute-command-keys'.  */)
       xsignal1 (Qinvalid_function, fun);
     }
 
-  /* Check for a dynamic docstring.  These come with
-     a dynamic-docstring-function text property.  */
-  if (STRINGP (doc))
-    {
-      Lisp_Object func
-	= Fget_text_property (make_number (0),
-			      intern ("dynamic-docstring-function"),
-				      doc);
-      if (!NILP (func))
-	/* Pass both `doc' and `function' since `function' can be needed, and
-	   finding `doc' can be annoying: calling `documentation' is not an
-	   option because it would infloop.  */
-	doc = call2 (func, doc, function);
-    }
-
   /* If DOC is 0, it's typically because of a dumped file missing
      from the DOC file (bug in src/Makefile.in).  */
   if (EQ (doc, make_number (0)))
@@ -551,6 +535,9 @@ store_function_docstring (Lisp_Object obj, ptrdiff_t offset)
 	 docstring, since we've found a docstring for it.  */
       if ((ASIZE (fun) & PSEUDOVECTOR_SIZE_MASK) > COMPILED_DOC_STRING)
 	ASET (fun, COMPILED_DOC_STRING, make_number (offset));
+      else
+	message ("No docstring slot for %s",
+		 SYMBOLP (obj) ? SSDATA (SYMBOL_NAME (obj)) : "<anonymous>");
     }
 }
 
@@ -574,6 +561,12 @@ the same file name is found in the `doc-directory'.  */)
   char *p, *name;
   bool skip_file = 0;
   ptrdiff_t count;
+  /* Preloaded defcustoms using custom-initialize-delay are added to
+     this list, but kept unbound.  See http://debbugs.gnu.org/11565  */
+  Lisp_Object delayed_init =
+    find_symbol_value (intern ("custom-delayed-init-variables"));
+
+  if (EQ (delayed_init, Qunbound)) delayed_init = Qnil;
 
   CHECK_STRING (filename);
 
@@ -602,7 +595,7 @@ the same file name is found in the `doc-directory'.  */)
 	{
 	  #include "buildobj.h"
 	};
-      int i = sizeof buildobj / sizeof *buildobj;
+      int i = ARRAYELTS (buildobj);
       while (0 <= --i)
 	Vbuild_files = Fcons (build_string (buildobj[i]), Vbuild_files);
       Vbuild_files = Fpurecopy (Vbuild_files);
@@ -671,7 +664,8 @@ the same file name is found in the `doc-directory'.  */)
 		  /* Install file-position as variable-documentation property
 		     and make it negative for a user-variable
 		     (doc starts with a `*').  */
-                  if (!NILP (Fboundp (sym)))
+                  if (!NILP (Fboundp (sym))
+                      || !NILP (Fmemq (sym, delayed_init)))
                     Fput (sym, Qvariable_documentation,
                           make_number ((pos + end + 1 - buf)
                                        * (end[1] == '*' ? -1 : 1)));
@@ -716,7 +710,7 @@ as the keymap for future \\=\\[COMMAND] substrings.
 thus, \\=\\=\\=\\= puts \\=\\= into the output, and \\=\\=\\=\\[ puts \\=\\[ into the output.
 
 Return the original STRING if no substitutions are made.
-Otherwise, return a new string, without any text properties.  */)
+Otherwise, return a new string.  */)
   (Lisp_Object string)
 {
   char *buf;
@@ -850,6 +844,7 @@ Otherwise, return a new string, without any text properties.  */)
 	  /* This is for computing the SHADOWS arg for describe_map_tree.  */
 	  Lisp_Object active_maps = Fcurrent_active_maps (Qnil, Qnil);
 	  Lisp_Object earlier_maps;
+	  ptrdiff_t count = SPECPDL_INDEX ();
 
 	  changed = 1;
 	  strp += 2;		/* skip \{ or \< */
@@ -886,6 +881,10 @@ Otherwise, return a new string, without any text properties.  */)
 	  /* Now switch to a temp buffer.  */
 	  oldbuf = current_buffer;
 	  set_buffer_internal (XBUFFER (Vprin1_to_string_buffer));
+	  /* This is for an unusual case where some after-change
+	     function uses 'format' or 'prin1' or something else that
+	     will thrash Vprin1_to_string_buffer we are using.  */
+	  specbind (Qinhibit_modification_hooks, Qt);
 
 	  if (NILP (tem))
 	    {
@@ -910,6 +909,7 @@ Otherwise, return a new string, without any text properties.  */)
 	  tem = Fbuffer_string ();
 	  Ferase_buffer ();
 	  set_buffer_internal (oldbuf);
+	  unbind_to (count, Qnil);
 
 	subst_string:
 	  start = SDATA (tem);

@@ -322,7 +322,7 @@ När en rad blir för lång för att rymmas på en skärmbredd så fortsätter
 den på raden under. Om du använder ett fönstersystem, visas små böjda
 pilar i det lilla utrymmet på bägge sidor om textmassan (i vänster och
 höger marginal) för att ange var en rad fortsätter, Om du använder
-en textterminal anges med ett bakstreck ("\") i kolumnen längst till
+en textterminal anges med ett bakstreck (”\”) i kolumnen längst till
 höger att raden fortsätter.
 
 >>  Skriv in lite text så att du kommer till slutet av raden och
@@ -1117,7 +1117,7 @@ Lidell översatte den till Svenska.
 This version of the tutorial, like GNU Emacs, is copyrighted, and
 comes with permission to distribute copies on certain conditions:
 
-Copyright (C) 1985, 1996, 1998, 2001-2013 Free Software Foundation, Inc.
+Copyright (C) 1985, 1996, 1998, 2001-2014 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 

@@ -3,6 +3,7 @@
 @set TITLE  Semantic Manual
 @set AUTHOR Eric M. Ludlam, David Ponce, and Richard Y. Kim
 @settitle @value{TITLE}
+@documentencoding UTF-8
 
 @c *************************************************************************
 @c @ Header
@@ -24,14 +25,14 @@
 @copying
 This manual documents the Semantic library and utilities.
 
-Copyright @copyright{} 1999--2005, 2007, 2009--2013 Free Software
+Copyright @copyright{} 1999--2005, 2007, 2009--2014 Free Software
 Foundation, Inc.
 
 @quotation
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
 any later version published by the Free Software Foundation; with no
-Invariant Sections, with the Front-Cover texts being ``A GNU Manual,''
+Invariant Sections, with the Front-Cover Texts being ``A GNU Manual,''
 and with the Back-Cover Texts as in (a) below.  A copy of the license
 is included in the section entitled ``GNU Free Documentation License.''
 
@@ -49,6 +50,9 @@ modify this GNU manual.''
 @center @titlefont{Semantic}
 @sp 4
 @center by @value{AUTHOR}
+@page
+@vskip 0pt plus 1filll
+@insertcopying
 @end titlepage
 @page
 
@@ -223,12 +227,12 @@ grammar developers; it is useful mostly for the hackers who would like
 to learn more about how @semantic{} works.
 
 @menu
-* Parser code ::          Code used for the parsers
-* Tag handling ::         Code used for manipulating tags
-* Semanticdb Internals :: Code used in the semantic database
-* Analyzer Internals ::   Code used in the code analyzer
-* Tools ::                Code used in user tools
-* Tests ::                Code used for testing
+* Parser code::          Code used for the parsers
+* Tag handling::         Code used for manipulating tags
+* Semanticdb Internals:: Code used in the semantic database
+* Analyzer Internals::   Code used in the code analyzer
+* Tools::                Code used in user tools
+* Tests::                Code used for testing
 @end menu
 
 @node Parser code
@@ -351,7 +355,7 @@ tags are @emph{saved} while a buffer is not in memory.
 
 The database and tables both also provide applicable cache information,
 and cache flushing system.  The semanticdb search routines use caches
-to save datastructures that are complex to calculate.
+to save data structures that are complex to calculate.
 
 Lastly, it provides the concept of @dfn{project root}.  It is a system
 by which a file can be associated with the root of a project, so if
@@ -603,11 +607,11 @@ Emacs Lisp.  It is an LALR parser suitable for complex languages.
 @c LocalWords: backquote bnf bovinate bovinates LALR
 @c LocalWords: bovinating bovination bovinator bucketize
 @c LocalWords: cb cdr charquote checkcache cindex CLOS
-@c LocalWords: concat concocting const constantness ctxt Decl defcustom
+@c LocalWords: concat concocting const ctxt Decl defcustom
 @c LocalWords: deffn deffnx defun defvar destructor's dfn diff dir
 @c LocalWords: doc docstring EDE EIEIO elisp emacsman emph enum
 @c LocalWords: eq Exp EXPANDFULL expression fn foo func funcall
-@c LocalWords: ia ids iff ifinfo imenu imenus init int isearch itemx java kbd
+@c LocalWords: ia ids ifinfo imenu imenus init int isearch itemx java kbd
 @c LocalWords: keymap keywordtable lang languagemode lexer lexing Ludlam
 @c LocalWords: menubar metaparent metaparents min minibuffer Misc mode's
 @c LocalWords: multitable NAvigaTOR noindent nomedian nonterm noselect

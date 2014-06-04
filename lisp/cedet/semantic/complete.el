@@ -1,6 +1,6 @@
 ;;; semantic/complete.el --- Routines for performing tag completion
 
-;; Copyright (C) 2003-2005, 2007-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2003-2005, 2007-2014 Free Software Foundation, Inc.
 
 ;; Author: Eric M. Ludlam <zappo@gnu.org>
 ;; Keywords: syntax
@@ -1634,6 +1634,8 @@ Display mechanism using tooltip for a list of possible completions.")
     (error nil))
   )
 
+(defvar tooltip-mode)
+
 (defmethod semantic-displayor-show-request ((obj semantic-displayor-tooltip))
   "A request to show the current tags table."
   (if (or (not (featurep 'tooltip)) (not tooltip-mode))
@@ -1716,15 +1718,23 @@ Display mechanism using tooltip for a list of possible completions.")
   "Return the location of POINT as positioned on the selected frame.
 Return a cons cell (X . Y)"
   (let* ((frame (selected-frame))
-	 (left (or (car-safe (cdr-safe (frame-parameter frame 'left)))
-		   (frame-parameter frame 'left)))
-         (top (or (car-safe (cdr-safe (frame-parameter frame 'top)))
+	 (toolbarleft
+	  (if (eq (cdr (assoc 'tool-bar-position default-frame-alist)) 'left)
+	      (tool-bar-pixel-width)
+	    0))
+	 (left (+ (or (car-safe (cdr-safe (frame-parameter frame 'left)))
+		      (frame-parameter frame 'left))
+		  toolbarleft))
+	 (top (or (car-safe (cdr-safe (frame-parameter frame 'top)))
 		  (frame-parameter frame 'top)))
 	 (point-pix-pos (posn-x-y (posn-at-point)))
 	 (edges (window-inside-pixel-edges (selected-window))))
     (cons (+ (car point-pix-pos) (car edges) left)
           (+ (cdr point-pix-pos) (cadr edges) top))))
 
+
+(defvar tooltip-frame-parameters)
+(declare-function tooltip-show "tooltip" (text &optional use-echo-area))
 
 (defun semantic-displayor-tooltip-show (text)
   "Display a tooltip with TEXT near cursor."
@@ -1963,7 +1973,7 @@ completion works."
 	 (complst nil))
     (when (and thissym (or (not (string= thissym ""))
 			   nextsym))
-      ;; Do a quick calcuation of completions.
+      ;; Do a quick calculation of completions.
       (semantic-collector-calculate-completions
        collector thissym nil)
       ;; Get the master list
@@ -2043,7 +2053,7 @@ completion works."
 	 (complst nil))
     (when (and thissym (or (not (string= thissym ""))
 			   nextsym))
-      ;; Do a quick calcuation of completions.
+      ;; Do a quick calculation of completions.
       (semantic-collector-calculate-completions
        collector thissym nil)
       ;; Get the master list

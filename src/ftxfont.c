@@ -1,5 +1,5 @@
 /* ftxfont.c -- FreeType font driver on X (without using XFT).
-   Copyright (C) 2006-2013 Free Software Foundation, Inc.
+   Copyright (C) 2006-2014 Free Software Foundation, Inc.
    Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011
      National Institute of Advanced Industrial Science and Technology (AIST)
      Registration Number H13PRO009
@@ -57,7 +57,7 @@ struct ftxfont_frame_data
 /* Return an array of 6 GCs for antialiasing.  */
 
 static GC *
-ftxfont_get_gcs (struct frame *f, long unsigned int foreground, long unsigned int background)
+ftxfont_get_gcs (struct frame *f, unsigned long foreground, unsigned long background)
 {
   XColor color;
   XGCValues xgcv;
@@ -260,9 +260,9 @@ ftxfont_open (struct frame *f, Lisp_Object entity, int pixel_size)
 }
 
 static void
-ftxfont_close (struct frame *f, struct font *font)
+ftxfont_close (struct font *font)
 {
-  ftfont_driver.close (f, font);
+  ftfont_driver.close (font);
 }
 
 static int

@@ -20,10 +20,11 @@
 @c @footnotestyle separate
 @c @paragraphindent 2
 @c @@smallbook
+@documentencoding UTF-8
 @c %**end of header
 
 @copying
-Copyright @copyright{} 1988--1993, 1995, 1998--2004, 2007, 2012--2013
+Copyright @copyright{} 1988--1993, 1995, 1998--2004, 2007, 2012--2014
 Free Software Foundation, Inc.
 
 @c Since we are both GNU manuals, we do not need to ack each other here.
@@ -38,7 +39,7 @@ of Bison version 1.49.
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
 any later version published by the Free Software Foundation; with no
-Invariant Sections, with the Front-Cover texts being ``A GNU Manual,''
+Invariant Sections, with the Front-Cover Texts being ``A GNU Manual,''
 and with the Back-Cover Texts as in (a) below.  A copy of the license
 is included in the section entitled ``GNU Free Documentation License''.
 
@@ -130,7 +131,7 @@ June 1985, Report No. UCB/CSD 85/251.
 
 @item
 For generating the lookahead sets, Wisent uses the well-known
-technique of F. DeRemer and A. Pennello described in:
+technique of F. DeRemer and T. Pennello described in:
 @quotation
 @cite{Efficient Computation of LALR(1) Look-Ahead Sets}@*
 October 1982, ACM TOPLAS Vol 4 No 4, 615--49,
@@ -688,7 +689,7 @@ Toggle whether to report verbose information on generated parser.
 @end deffn
 
 The verbose report is printed in the temporary buffer
-@code{*wisent-log*} when running interactively, or in file
+@file{*wisent-log*} when running interactively, or in file
 @file{wisent.output} when running in batch mode.  Different
 reports are separated from each other by a line like this:
 
@@ -759,7 +760,7 @@ Grammar contains 7 shift/reduce conflicts
 @end group
 @end example
 
-The @samp{*wisent-log*} buffer details things!
+The @file{*wisent-log*} buffer details things!
 
 The first section reports conflicts that were solved using precedence
 and/or associativity:

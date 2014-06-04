@@ -1,5 +1,7 @@
 ;;; composite.el --- support character composition
 
+;; Copyright (C) 2001-2014 Free Software Foundation, Inc.
+
 ;; Copyright (C) 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007,
 ;;   2008, 2009, 2010, 2011
 ;;   National Institute of Advanced Industrial Science and Technology (AIST)
@@ -630,14 +632,14 @@ All non-spacing characters have this function in
 		   ((and (= class 0)
 			 (eq (get-char-code-property (lglyph-char glyph)
 						     'general-category) 'Me))
-		    ;; Artificially layouting glyphs in an enclosing
+		    ;; Artificially laying out glyphs in an enclosing
 		    ;; mark is difficult.  All we can do is to adjust
 		    ;; the x-offset and width of the base glyph to
 		    ;; align it at the center of the glyph of the
 		    ;; enclosing mark hoping that the enclosing mark
 		    ;; is big enough.  We also have to adjust the
 		    ;; x-offset and width of the mark ifself properly
-		    ;; depending on how the glyph is designed
+		    ;; depending on how the glyph is designed.
 
 		    ;; (non-spacing or not).  For instance, when we
 		    ;; have these glyphs:
@@ -669,13 +671,15 @@ All non-spacing characters have this function in
 	      (setq i (1+ i))))
 	  gstring))))))
 
-(let ((elt `([,(purecopy "\\c.\\c^+") 1 compose-gstring-for-graphic]
-	     [nil 0 compose-gstring-for-graphic])))
-  (map-char-table
-   #'(lambda (key val)
-       (if (memq val '(Mn Mc Me))
-	   (set-char-table-range composition-function-table key elt)))
-   unicode-category-table))
+;; Allow for bootstrapping without uni-*.el.
+(when unicode-category-table
+  (let ((elt `([,(purecopy "\\c.\\c^+") 1 compose-gstring-for-graphic]
+	       [nil 0 compose-gstring-for-graphic])))
+    (map-char-table
+     #'(lambda (key val)
+	 (if (memq val '(Mn Mc Me))
+	     (set-char-table-range composition-function-table key elt)))
+     unicode-category-table)))
 
 (defun compose-gstring-for-terminal (gstring)
   "Compose glyph-string GSTRING for terminal display.

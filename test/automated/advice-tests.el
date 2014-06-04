@@ -1,6 +1,6 @@
 ;;; advice-tests.el --- Test suite for the new advice thingy.
 
-;; Copyright (C) 2012-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2012-2014 Free Software Foundation, Inc.
 
 ;; This file is part of GNU Emacs.
 
@@ -130,6 +130,38 @@
                 (cons (cons 2 (called-interactively-p)) (apply f args))))
   (should (equal (call-interactively 'sm-test7) '((2 . t) (1 . t) 11))))
 
+(ert-deftest advice-test-called-interactively-p-around ()
+  "Check interaction between around advice and called-interactively-p.
+
+This tests the currently broken case of the innermost advice to a
+function being an around advice."
+  :expected-result :failed
+  (defun sm-test7.2 () (interactive) (cons 1 (called-interactively-p)))
+  (advice-add 'sm-test7.2 :around
+              (lambda (f &rest args)
+                (list (cons 1 (called-interactively-p)) (apply f args))))
+  (should (equal (sm-test7.2) '((1 . nil) (1 . nil))))
+  (should (equal (call-interactively 'sm-test7.2) '((1 . t) (1 . t)))))
+
+(ert-deftest advice-test-called-interactively-p-filter-args ()
+  "Check interaction between filter-args advice and called-interactively-p."
+  :expected-result :failed
+  (defun sm-test7.3 () (interactive) (cons 1 (called-interactively-p)))
+  (advice-add 'sm-test7.3 :filter-args #'list)
+  (should (equal (sm-test7.3) '(1 . nil)))
+  (should (equal (call-interactively 'sm-test7.3) '(1 . t))))
+
+(ert-deftest advice-test-call-interactively ()
+  "Check interaction between advice on call-interactively and called-interactively-p."
+  (defun sm-test7.4 () (interactive) (cons 1 (called-interactively-p)))
+  (let ((old (symbol-function 'call-interactively)))
+    (unwind-protect
+        (progn
+          (advice-add 'call-interactively :before #'ignore)
+          (should (equal (sm-test7.4) '(1 . nil)))
+          (should (equal (call-interactively 'sm-test7.4) '(1 . t))))
+      (fset 'call-interactively old))))
+
 (ert-deftest advice-test-interactive ()
   "Check handling of interactive spec."
   (defun sm-test8 (a) (interactive "p") a)
@@ -146,6 +178,30 @@
   (defadvice sm-test9 (before adv2 pre act protect compile)
     (interactive "P") nil)
   (should (equal (interactive-form 'sm-test9) '(interactive "P"))))
+
+(ert-deftest advice-test-multiples ()
+  (let ((sm-test10 (lambda (a) (+ a 10)))
+        (sm-advice (lambda (x) (if (consp x) (list (* 5 (car x))) (* 4 x)))))
+    (should (equal (funcall sm-test10 5) 15))
+    (add-function :filter-args (var sm-test10) sm-advice)
+    (should (advice-function-member-p sm-advice sm-test10))
+    (should (equal (funcall sm-test10 5) 35))
+    (add-function :filter-return (var sm-test10) sm-advice)
+    (should (equal (funcall sm-test10 5) 60))
+    ;; Make sure we can add multiple times the same function, under the
+    ;; condition that they have different `name' properties.
+    (add-function :filter-args (var sm-test10) sm-advice '((name . "args")))
+    (should (equal (funcall sm-test10 5) 140))
+    (remove-function (var sm-test10) "args")
+    (should (equal (funcall sm-test10 5) 60))
+    (add-function :filter-args (var sm-test10) sm-advice '((name . "args")))
+    (add-function :filter-return (var sm-test10) sm-advice '((name . "ret")))
+    (should (equal (funcall sm-test10 5) 560))
+    ;; Make sure that if we specify to remove a function that was added
+    ;; multiple times, they are all removed, rather than removing only some
+    ;; arbitrary subset of them.
+    (remove-function (var sm-test10) sm-advice)
+    (should (equal (funcall sm-test10 5) 15))))
 
 ;; Local Variables:
 ;; no-byte-compile: t

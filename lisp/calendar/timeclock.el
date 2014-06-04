@@ -1,6 +1,6 @@
 ;;; timeclock.el --- mode for keeping track of how much you work
 
-;; Copyright (C) 1999-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1999-2014 Free Software Foundation, Inc.
 
 ;; Author: John Wiegley <johnw@gnu.org>
 ;; Created: 25 Mar 1999
@@ -64,7 +64,7 @@
 ;;
 ;;   (add-hook 'kill-emacs-query-functions 'timeclock-query-out)
 
-;; NOTE: If you change your .timelog file without using timeclock's
+;; NOTE: If you change your timelog file without using timeclock's
 ;; functions, or if you change the value of any of timeclock's
 ;; customizable variables, you should run the command
 ;; `timeclock-reread-log'.  This will recompute any discrepancies in
@@ -83,6 +83,7 @@
 
 (defcustom timeclock-file (locate-user-emacs-file "timelog" ".timelog")
   "The file used to store timeclock data in."
+  :version "24.4"			; added locate-user-emacs-file
   :type 'file
   :group 'timeclock)
 

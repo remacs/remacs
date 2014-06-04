@@ -1,5 +1,5 @@
 /* NeXT/Open/GNUstep / MacOSX Cocoa selection processing for emacs.
-   Copyright (C) 1993-1994, 2005-2006, 2008-2013 Free Software
+   Copyright (C) 1993-1994, 2005-2006, 2008-2014 Free Software
    Foundation, Inc.
 
 This file is part of GNU Emacs.
@@ -256,9 +256,7 @@ ns_string_from_pasteboard (id pb)
   type = [pb availableTypeFromArray: ns_return_types];
   if (type == nil)
     {
-      Fsignal (Qquit,
-	       list1 (build_string ("empty or unsupported pasteboard type")));
-    return Qnil;
+      return Qnil;
     }
 
   /* get the string */
@@ -274,9 +272,6 @@ ns_string_from_pasteboard (id pb)
         }
       else
         {
-          Fsignal (Qquit,
-		   list1 (build_string ("pasteboard doesn't contain"
-					" valid data")));
           return Qnil;
         }
     }
@@ -356,7 +351,7 @@ On Nextstep, FRAME is unused.  */)
   check_window_system (NULL);
   CHECK_SYMBOL (selection);
   if (NILP (value))
-      error ("selection value may not be nil.");
+    error ("Selection value may not be nil");
   pb = ns_symbol_to_pb (selection);
   if (pb == nil) return Qnil;
 
@@ -434,7 +429,9 @@ On Nextstep, TERMINAL is unused.  */)
   id pb;
   NSArray *types;
 
-  check_window_system (NULL);
+  if (!window_system_available (NULL))
+    return Qnil;
+
   CHECK_SYMBOL (selection);
   if (EQ (selection, Qnil)) selection = QPRIMARY;
   if (EQ (selection, Qt)) selection = QSECONDARY;

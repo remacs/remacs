@@ -1,6 +1,6 @@
 ;;; news.el --- keypad and function key bindings for the Sony NEWS keyboard
 
-;; Copyright (C) 1989, 1993, 2001-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1989, 1993, 2001-2014 Free Software Foundation, Inc.
 
 ;; Author: FSF
 ;; Keywords: terminals
@@ -21,8 +21,6 @@
 ;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Commentary:
-
-;; Uses the Emacs 19 terminal initialization features --- won't work with 18.
 
 ;;; Code:
 

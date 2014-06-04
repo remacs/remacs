@@ -1,6 +1,6 @@
 ;;; image-mode.el --- support for visiting image files  -*- lexical-binding: t -*-
 ;;
-;; Copyright (C) 2005-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2005-2014 Free Software Foundation, Inc.
 ;;
 ;; Author: Richard Stallman <rms@gnu.org>
 ;; Keywords: multimedia
@@ -90,6 +90,8 @@ otherwise it defaults to t, used for times when the buffer is not displayed."
 
 (defun image-mode-window-put (prop val &optional winprops)
   (unless (consp winprops) (setq winprops (image-mode-winprops winprops)))
+  (unless (eq t (car winprops))
+    (image-mode-window-put prop val t))
   (setcdr winprops (cons (cons prop val)
                          (delq (assq prop (cdr winprops)) (cdr winprops)))))
 

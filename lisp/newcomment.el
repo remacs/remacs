@@ -1,6 +1,6 @@
 ;;; newcomment.el --- (un)comment regions of buffers -*- lexical-binding: t -*-
 
-;; Copyright (C) 1999-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1999-2014 Free Software Foundation, Inc.
 
 ;; Author: code extracted from Emacs-20's simple.el
 ;; Maintainer: Stefan Monnier <monnier@iro.umontreal.ca>
@@ -120,8 +120,9 @@ Comments might be indented to a different value in order not to go beyond
 ;;;###autoload
 (defvar comment-start-skip nil
   "Regexp to match the start of a comment plus everything up to its body.
-If there are any \\(...\\) pairs, the comment delimiter text is held to begin
-at the place matched by the close of the first pair.")
+If there are any \\(...\\) pairs and `comment-use-syntax' is nil,
+the comment delimiter text is held to begin at the place matched
+by the close of the first pair.")
 ;;;###autoload
 (put 'comment-start-skip 'safe-local-variable 'stringp)
 
@@ -312,7 +313,7 @@ If `eol' it only comments out empty lines if comments are
 terminated by the end of line (i.e. `comment-end' is empty)."
   :type '(choice (const :tag "Never" nil)
 	  (const :tag "Always" t)
-	  (const :tag "EOl-terminated" 'eol))
+	  (const :tag "EOl-terminated" eol))
   :group 'comment)
 
 ;;;;
@@ -378,7 +379,10 @@ function should first call this function explicitly."
 		 ;; In case comment-start has changed since last time.
 		 (string-match comment-start-skip comment-start))
       (set (make-local-variable 'comment-start-skip)
-	   (concat "\\(\\(^\\|[^\\\n]\\)\\(\\\\\\\\\\)*\\)\\(\\s<+\\|"
+	   (concat (unless (eq comment-use-syntax t)
+                     ;; `syntax-ppss' will detect escaping.
+                     "\\(\\(^\\|[^\\\n]\\)\\(\\\\\\\\\\)*\\)")
+                   "\\(\\s<+\\|"
 		   (regexp-quote (comment-string-strip comment-start t t))
 		   ;; Let's not allow any \s- but only [ \t] since \n
 		   ;; might be both a comment-end marker and \s-.
@@ -435,12 +439,15 @@ If UNP is non-nil, unquote nested comment markers."
 ;;;; Navigation
 ;;;;
 
-(defvar comment-use-global-state nil
+(defvar comment-use-global-state t
   "Non-nil means that the global syntactic context is used.
 More specifically, it means that `syntax-ppss' is used to find out whether
-point is within a string or not.  Major modes whose syntax is faithfully
-described by the syntax-tables can set this to non-nil so comment markers
-in strings will not confuse Emacs.")
+point is within a string or not.  Major modes whose syntax is not faithfully
+described by the syntax-tables (or where `font-lock-syntax-table' is radically
+different from the main syntax table) can set this to nil,
+then `syntax-ppss' cache won't be used in comment-related routines.")
+
+(make-obsolete-variable 'comment-use-global-state 'comment-use-syntax "24.4")
 
 (defun comment-search-forward (limit &optional noerror)
   "Find a comment start between point and LIMIT.
@@ -515,30 +522,40 @@ Ensure that `comment-normalize-vars' has been called before you use this."
   "Find the beginning of the enclosing comment.
 Returns nil if not inside a comment, else moves point and returns
 the same as `comment-search-backward'."
-  ;; HACK ATTACK!
-  ;; We should really test `in-string-p' but that can be expensive.
-  (unless (eq (get-text-property (point) 'face) 'font-lock-string-face)
-    (let ((pt (point))
-	  (cs (comment-search-backward nil t)))
-      (when cs
-	(if (save-excursion
-	      (goto-char cs)
-	      (and
-	       ;; For modes where comment-start and comment-end are the same,
-	       ;; the search above may have found a `ce' rather than a `cs'.
-	       (or (if comment-end-skip (not (looking-at comment-end-skip)))
-		   ;; Maybe font-lock knows that it's a `cs'?
-		   (eq (get-text-property (match-end 0) 'face)
-		       'font-lock-comment-face)
-		   (unless (eq (get-text-property (point) 'face)
-			       'font-lock-comment-face)
-		     ;; Let's assume it's a `cs' if we're on the same line.
-		     (>= (line-end-position) pt)))
-	       ;; Make sure that PT is not past the end of the comment.
-	       (if (comment-forward 1) (> (point) pt) (eobp))))
-	    cs
-	  (goto-char pt)
-	  nil)))))
+  (if (and comment-use-syntax comment-use-global-state)
+      (let ((state (syntax-ppss)))
+        (when (nth 4 state)
+          (goto-char (nth 8 state))
+          (prog1 (point)
+            (when (save-restriction
+                    ;; `comment-start-skip' sometimes checks that the
+                    ;; comment char is not escaped.  (Bug#16971)
+                    (narrow-to-region (point) (point-max))
+                    (looking-at comment-start-skip))
+              (goto-char (match-end 0))))))
+    ;; Can't rely on the syntax table, let's guess based on font-lock.
+    (unless (eq (get-text-property (point) 'face) 'font-lock-string-face)
+      (let ((pt (point))
+            (cs (comment-search-backward nil t)))
+        (when cs
+          (if (save-excursion
+                (goto-char cs)
+                (and
+                 ;; For modes where comment-start and comment-end are the same,
+                 ;; the search above may have found a `ce' rather than a `cs'.
+                 (or (if comment-end-skip (not (looking-at comment-end-skip)))
+                     ;; Maybe font-lock knows that it's a `cs'?
+                     (eq (get-text-property (match-end 0) 'face)
+                         'font-lock-comment-face)
+                     (unless (eq (get-text-property (point) 'face)
+                                 'font-lock-comment-face)
+                       ;; Let's assume it's a `cs' if we're on the same line.
+                       (>= (line-end-position) pt)))
+                 ;; Make sure that PT is not past the end of the comment.
+                 (if (comment-forward 1) (> (point) pt) (eobp))))
+              cs
+            (goto-char pt)
+            nil))))))
 
 (defun comment-forward (&optional n)
   "Skip forward over N comments.
@@ -1373,22 +1390,12 @@ unless optional argument SOFT is non-nil."
 	 ;; If we're not inside a comment, just try to indent.
 	 ((not compos) (indent-according-to-mode))
 	 (t
-	  (let* ((comment-column
-		  ;; The continuation indentation should be somewhere between
-		  ;; the current line's indentation (plus 2 for good measure)
-		  ;; and the current comment's indentation, with a preference
-		  ;; for comment-column.
-		  (save-excursion
-		    ;; FIXME: use prev line's info rather than first line's.
-		    (goto-char compos)
-		    (min (current-column) (max comment-column
-					       (+ 2 (current-indentation))))))
-		 (comstart (buffer-substring compos comin))
+	  (let* ((comstart (buffer-substring compos comin))
 		 (normalp
 		  (string-match (regexp-quote (comment-string-strip
 					       comment-start t t))
 				comstart))
-		 (comment-end
+		 (comend
 		  (if normalp comment-end
 		    ;; The comment starter is not the normal comment-start
 		    ;; so we can't just use comment-end.
@@ -1399,19 +1406,42 @@ unless optional argument SOFT is non-nil."
 			 (buffer-substring
 			  (save-excursion (comment-enter-backward) (point))
 			  (point))
-			 nil t)))))
-		 (comment-start comstart)
-		 (continuep (or comment-multi-line
-				(cadr (assoc comment-style comment-styles))))
-		 ;; Force comment-continue to be recreated from comment-start.
-		 ;; FIXME: wrong if comment-continue was set explicitly!
-		 ;; FIXME: use prev line's continuation if available.
-		 (comment-continue nil))
-	    (if (and comment-multi-line (> (length comment-end) 0))
+			 nil t))))))
+	    (if (and comment-multi-line (> (length comend) 0))
 		(indent-according-to-mode)
 	      (insert-and-inherit ?\n)
 	      (forward-char -1)
-	      (comment-indent continuep)
+              (let* ((comment-column
+                      ;; The continuation indentation should be somewhere
+                      ;; between the current line's indentation (plus 2 for
+                      ;; good measure) and the current comment's indentation,
+                      ;; with a preference for comment-column.
+                      (save-excursion
+                        ;; FIXME: use prev line's info rather than first
+                        ;; line's.
+                        (goto-char compos)
+                        (min (current-column)
+                             (max comment-column
+                                  (+ 2 (current-indentation))))))
+                     (comment-indent-function
+                      ;; If the previous comment is on its own line, then
+                      ;; reuse its indentation unconditionally.
+                      ;; Important for modes like Python/Haskell where
+                      ;; auto-indentation is unreliable.
+                      (if (save-excursion (goto-char compos)
+                                          (skip-chars-backward " \t")
+                                          (bolp))
+                          (lambda () comment-column) comment-indent-function))
+                     (comment-start comstart)
+                     (comment-end comend)
+                     (continuep (or comment-multi-line
+                                    (cadr (assoc comment-style
+                                                 comment-styles))))
+                     ;; Recreate comment-continue from comment-start.
+                     ;; FIXME: wrong if comment-continue was set explicitly!
+                     ;; FIXME: use prev line's continuation if available.
+                     (comment-continue nil))
+                (comment-indent continuep))
 	      (save-excursion
 		(let ((pt (point)))
 		  (end-of-line)

@@ -1,6 +1,6 @@
 ;;; gnus.el --- a newsreader for GNU Emacs
 
-;; Copyright (C) 1987-1990, 1993-1998, 2000-2013 Free Software
+;; Copyright (C) 1987-1990, 1993-1998, 2000-2014 Free Software
 ;; Foundation, Inc.
 
 ;; Author: Masanobu UMEDA <umerin@flab.flab.fujitsu.junet>
@@ -28,10 +28,6 @@
 ;;; Code:
 
 (eval '(run-hooks 'gnus-load-hook))
-
-;; For Emacs <22.2 and XEmacs.
-(eval-and-compile
-  (unless (fboundp 'declare-function) (defmacro declare-function (&rest r))))
 
 (eval-when-compile (require 'cl))
 (require 'wid-edit)
@@ -309,6 +305,7 @@ be set in `.emacs' instead."
 
 (unless (featurep 'gnus-xmas)
   (defalias 'gnus-make-overlay 'make-overlay)
+  (defalias 'gnus-copy-overlay 'copy-overlay)
   (defalias 'gnus-delete-overlay 'delete-overlay)
   (defalias 'gnus-overlay-get 'overlay-get)
   (defalias 'gnus-overlay-put 'overlay-put)
@@ -316,6 +313,7 @@ be set in `.emacs' instead."
   (defalias 'gnus-overlay-buffer 'overlay-buffer)
   (defalias 'gnus-overlay-start 'overlay-start)
   (defalias 'gnus-overlay-end 'overlay-end)
+  (defalias 'gnus-overlays-at 'overlays-at)
   (defalias 'gnus-overlays-in 'overlays-in)
   (defalias 'gnus-extent-detached-p 'ignore)
   (defalias 'gnus-extent-start-open 'ignore)
@@ -1614,7 +1612,7 @@ slower."
   :type 'string)
 
 (defcustom gnus-valid-select-methods
-  '(("nntp" post address prompt-address physical-address)
+  '(("nntp" post address prompt-address physical-address cloud)
     ("nnspool" post address)
     ("nnvirtual" post-mail virtual prompt-address)
     ("nnmbox" mail respool address)
@@ -1631,7 +1629,7 @@ slower."
     ("nnrss" none global)
     ("nnagent" post-mail)
     ("nnimap" post-mail address prompt-address physical-address respool
-     server-marks)
+     server-marks cloud)
     ("nnmaildir" mail respool address server-marks)
     ("nnnil" none))
   "*An alist of valid select methods.
@@ -2688,7 +2686,6 @@ such as a mark that says whether an article is stored in the cache
     (gnus-tree-mode "(gnus)Tree Display"))
   "Alist of major modes and related Info nodes.")
 
-(defvar gnus-group-buffer "*Group*")
 (defvar gnus-summary-buffer "*Summary*")
 (defvar gnus-article-buffer "*Article*")
 (defvar gnus-server-buffer "*Server*")
@@ -2704,7 +2701,10 @@ such as a mark that says whether an article is stored in the cache
 			gnus-newsrc-last-checked-date
 			gnus-newsrc-alist gnus-server-alist
 			gnus-killed-list gnus-zombie-list
-			gnus-topic-topology gnus-topic-alist)
+			gnus-topic-topology gnus-topic-alist
+			gnus-cloud-sequence
+			gnus-cloud-covered-servers
+			gnus-cloud-file-timestamps)
   "Gnus variables saved in the quick startup file.")
 
 (defvar gnus-newsrc-alist nil
@@ -3035,7 +3035,7 @@ See Info node `(gnus)Formatting Variables'."
 
 (defun gnus-suppress-keymap (keymap)
   (suppress-keymap keymap)
-  (let ((keys `([backspace] [delete] "\177" "\M-u"))) ;gnus-mouse-2
+  (let ((keys `([delete] "\177" "\M-u"))) ;gnus-mouse-2
     (while keys
       (define-key keymap (pop keys) 'undefined))))
 

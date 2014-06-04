@@ -1,6 +1,6 @@
 ;;; ediff-init.el --- Macros, variables, and defsubsts used by Ediff
 
-;; Copyright (C) 1994-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1994-2014 Free Software Foundation, Inc.
 
 ;; Author: Michael Kifer <kifer@cs.stonybrook.edu>
 ;; Package: ediff
@@ -567,7 +567,8 @@ and ediff-after-flag.  On a non-window system, differences are always
 highlighted using ASCII flags."
   :type 'boolean
   :group 'ediff-highlighting)
-(ediff-defvar-local ediff-use-faces t "")
+(make-variable-buffer-local 'ediff-use-faces)
+(put 'ediff-use-faces 'permanent-local t)
 
 ;; this indicates that diff regions are word-size, so fine diffs are
 ;; permanently nixed; used in ediff-windows-wordwise and ediff-regions-wordwise
@@ -610,7 +611,8 @@ Otherwise, all difference regions are highlighted, but the selected region is
 shown in brighter colors."
   :type 'boolean
   :group 'ediff-highlighting)
-(ediff-defvar-local ediff-highlight-all-diffs t "")
+(make-variable-buffer-local 'ediff-highlight-all-diffs)
+(put 'ediff-highlight-all-diffs 'permanent-local t)
 
 
 ;; The suffix of the control buffer name.
@@ -704,9 +706,6 @@ shown in brighter colors."
 ;; to be deleted in due time
 ;; List of difference overlays disturbed by working with the current diff.
 (defvar ediff-disturbed-overlays nil "")
-
-;; Priority of non-selected overlays.
-(defvar ediff-shadow-overlay-priority  100 "")
 
 (defcustom ediff-version-control-package 'vc
   "Version control package used.
@@ -808,7 +807,7 @@ TYPE-OF-EMACS is either 'xemacs or 'emacs."
 
 (defun ediff-set-overlay-face (extent face)
   (ediff-overlay-put extent 'face face)
-  (ediff-overlay-put extent 'help-echo 'ediff-region-help-echo))
+  (ediff-overlay-put extent 'help-echo (if face 'ediff-region-help-echo)))
 
 (defun ediff-region-help-echo (extent-or-window &optional overlay _point)
   (unless overlay
@@ -1326,34 +1325,6 @@ this variable represents.")
   "Overlay for the current difference region in buffer C.")
 (ediff-defvar-local ediff-current-diff-overlay-Ancestor nil
   "Overlay for the current difference region in the ancestor buffer.")
-
-;; Compute priority of a current ediff overlay.
-(defun ediff-highest-priority (start end buffer)
-  (let ((pos (max 1 (1- start)))
-	ovr-list)
-    (if (featurep 'xemacs)
-	(1+ ediff-shadow-overlay-priority)
-      (ediff-with-current-buffer buffer
-	(while (< pos (min (point-max) (1+ end)))
-	  (setq ovr-list (append (overlays-at pos) ovr-list))
-	  (setq pos (next-overlay-change pos)))
-	(+ 1 ediff-shadow-overlay-priority
-	   (apply 'max
-		  (cons
-		   1
-		   (mapcar
-		    (lambda (ovr)
-		      (if (and ovr
-			       ;; exclude ediff overlays from priority
-			       ;; calculation, or else priority will keep
-			       ;; increasing
-			       (null (ediff-overlay-get ovr 'ediff))
-			       (null (ediff-overlay-get ovr 'ediff-diff-num)))
-			  ;; use the overlay priority or 0
-			  (or (ediff-overlay-get ovr 'priority) 0)
-			0))
-		    ovr-list))))))))
-
 
 (defvar ediff-toggle-read-only-function 'toggle-read-only
   "Function to be used to toggle read-only status of the buffer.

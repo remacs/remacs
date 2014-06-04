@@ -1,10 +1,10 @@
 ;;; erc-backend.el --- Backend network communication for ERC
 
-;; Copyright (C) 2004-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2004-2014 Free Software Foundation, Inc.
 
 ;; Filename: erc-backend.el
 ;; Author: Lawrence Mitchell <wence@gmx.li>
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Created: 2004-05-7
 ;; Keywords: IRC chat client internet
 
@@ -497,11 +497,12 @@ The current buffer is given by BUFFER."
                                                     erc-server-ping-handler)
                                               erc-server-ping-timer-alist)))))
 
-(defun erc-server-process-alive ()
-  "Return non-nil when `erc-server-process' is open or running."
-  (and erc-server-process
-       (processp erc-server-process)
-       (memq (process-status erc-server-process) '(run open))))
+(defun erc-server-process-alive (&optional buffer)
+  "Return non-nil when BUFFER has an `erc-server-process' open or running."
+  (with-current-buffer (or buffer (current-buffer))
+    (and erc-server-process
+         (processp erc-server-process)
+         (memq (process-status erc-server-process) '(run open)))))
 
 ;;;; Connecting to a server
 

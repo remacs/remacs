@@ -1,7 +1,7 @@
 /* Session management module for systems which understand the X Session
    management protocol.
 
-Copyright (C) 2002-2013 Free Software Foundation, Inc.
+Copyright (C) 2002-2014 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -395,7 +395,7 @@ x_session_initialize (struct x_display_info *dpyinfo)
 {
 #define SM_ERRORSTRING_LEN 512
   char errorstring[SM_ERRORSTRING_LEN];
-  char* previous_id = NULL;
+  char *previous_id = NULL;
   SmcCallbacks callbacks;
   ptrdiff_t name_len = 0;
 

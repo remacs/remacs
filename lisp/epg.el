@@ -1,5 +1,5 @@
 ;;; epg.el --- the EasyPG Library -*- lexical-binding: t -*-
-;; Copyright (C) 1999-2000, 2002-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1999-2000, 2002-2014 Free Software Foundation, Inc.
 
 ;; Author: Daiki Ueno <ueno@unixuser.org>
 ;; Keywords: PGP, GnuPG
@@ -135,7 +135,7 @@
     (?f . full)
     (?u . ultimate)))
 
-(defvar epg-key-capablity-alist
+(defvar epg-key-capability-alist
   '((?e . encrypt)
     (?s . sign)
     (?c . certify)
@@ -1124,7 +1124,7 @@ This function is for internal use only."
    ((eq (car error) 'exit)
     "Exit")
    ((eq (car error) 'quit)
-    "Cancelled")
+    "Canceled")
    ((eq (car error) 'no-data)
     (let ((entry (assq (cdr error) epg-no-data-reason-alist)))
       (if entry
@@ -1206,7 +1206,6 @@ This function is for internal use only."
 	 (coding-system-for-read 'binary)
 	 process-connection-type
 	 (process-environment process-environment)
-	 (orig-mode (default-file-modes))
 	 (buffer (generate-new-buffer " *epg*"))
 	 process
 	 terminal-name
@@ -1265,14 +1264,9 @@ This function is for internal use only."
       (setq epg-agent-file agent-file)
       (make-local-variable 'epg-agent-mtime)
       (setq epg-agent-mtime agent-mtime))
-    (unwind-protect
-	(progn
-	  (set-default-file-modes 448)
-	  (setq process
-		(apply #'start-process "epg" buffer
-		       (epg-context-program context)
-		       args)))
-      (set-default-file-modes orig-mode))
+    (with-file-modes 448
+      (setq process (apply #'start-process "epg" buffer
+			   (epg-context-program context) args)))
     (set-process-filter process #'epg--process-filter)
     (epg-context-set-process context process)))
 
@@ -1922,7 +1916,7 @@ This function is for internal use only."
    (if (aref line 1)
        (cdr (assq (string-to-char (aref line 1)) epg-key-validity-alist)))
    (delq nil
-	 (mapcar (lambda (char) (cdr (assq char epg-key-capablity-alist)))
+	 (mapcar (lambda (char) (cdr (assq char epg-key-capability-alist)))
 		 (aref line 11)))
    (member (aref line 0) '("sec" "ssb"))
    (string-to-number (aref line 3))
@@ -2219,7 +2213,17 @@ SIGNED-TEXT and PLAIN are also a file if they are specified.
 For a detached signature, both SIGNATURE and SIGNED-TEXT should be
 string.  For a normal or a cleartext signature, SIGNED-TEXT should be
 nil.  In the latter case, if PLAIN is specified, the plaintext is
-stored into the file after successful verification."
+stored into the file after successful verification.
+
+Note that this function does not return verification result as t
+or nil, nor signal error on failure.  That's a design decision to
+handle the case where SIGNATURE has multiple signature.
+
+To check the verification results, use `epg-context-result-for' as follows:
+
+\(epg-context-result-for context 'verify)
+
+which will return a list of `epg-signature' object."
   (unwind-protect
       (progn
 	(if plain
@@ -2246,7 +2250,17 @@ SIGNED-TEXT is a string if it is specified.
 For a detached signature, both SIGNATURE and SIGNED-TEXT should be
 string.  For a normal or a cleartext signature, SIGNED-TEXT should be
 nil.  In the latter case, this function returns the plaintext after
-successful verification."
+successful verification.
+
+Note that this function does not return verification result as t
+or nil, nor signal error on failure.  That's a design decision to
+handle the case where SIGNATURE has multiple signature.
+
+To check the verification results, use `epg-context-result-for' as follows:
+
+\(epg-context-result-for context 'verify)
+
+which will return a list of `epg-signature' object."
   (let ((coding-system-for-write 'binary)
 	input-file)
     (unwind-protect

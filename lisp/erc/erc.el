@@ -1,6 +1,6 @@
 ;; erc.el --- An Emacs Internet Relay Chat client  -*- lexical-binding:t -*-
 
-;; Copyright (C) 1997-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1997-2014 Free Software Foundation, Inc.
 
 ;; Author: Alexander L. Belikoff (alexander@belikoff.net)
 ;; Contributors: Sergey Berezin (sergey.berezin@cs.cmu.edu),
@@ -9,7 +9,7 @@
 ;;               Andreas Fuchs (afs@void.at)
 ;;               Gergely Nagy (algernon@midgard.debian.net)
 ;;               David Edmondson (dme@dme.org)
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: IRC, chat, client, Internet
 ;; Version: 5.3
 
@@ -81,6 +81,7 @@
 (defgroup erc nil
   "Emacs Internet Relay Chat client."
   :link '(url-link "http://www.emacswiki.org/cgi-bin/wiki/ERC")
+  :link '(custom-manual "(erc) Top")
   :prefix "erc-"
   :group 'applications)
 
@@ -1312,13 +1313,13 @@ If BUFFER is nil, the current buffer is used."
     (and (eq major-mode 'erc-mode)
 	 (null (erc-default-target)))))
 
-(defun erc-open-server-buffer-p (&optional buffer) ;FIXME: `buffer' is ignored!
+(defun erc-open-server-buffer-p (&optional buffer)
   "Return non-nil if argument BUFFER is an ERC server buffer that
 has an open IRC process.
 
 If BUFFER is nil, the current buffer is used."
-  (and (erc-server-buffer-p)
-       (erc-server-process-alive)))
+  (and (erc-server-buffer-p buffer)
+       (erc-server-process-alive buffer)))
 
 (defun erc-query-buffer-p (&optional buffer)
   "Return non-nil if BUFFER is an ERC query buffer.
@@ -5189,11 +5190,10 @@ If that function has never been called, the value is 0.")
 
 (defcustom erc-accidental-paste-threshold-seconds nil
   "Minimum time, in seconds, before sending new lines via IRC.
-If the value is a number, `erc-send-current-line' signals an
-error if its previous invocation was less than this much time
-ago.  This is useful so that if you accidentally enter large
-amounts of text into the ERC buffer, that text is not sent to the
-IRC server.
+If the value is a number, `erc-send-current-line' signals an error
+if its previous invocation was fewer than this many seconds ago.
+This is useful so that if you accidentally enter large amounts of text
+into the ERC buffer, that text is not sent to the IRC server.
 
 If the value is nil, `erc-send-current-line' always considers any
 submitted line to be intentional."
@@ -5541,14 +5541,12 @@ If ARG is non-nil, turn this mode off (-i).
 This command is sent even if excess flood is detected."
   (interactive "P")
   (erc-set-active-buffer (current-buffer))
-  (let ((tgt (erc-default-target))
-	(erc-force-send t))		;FIXME: Not used anywhere!
-    (cond ((or (not tgt) (not (erc-channel-p tgt)))
-	   (erc-display-message nil 'error (current-buffer) 'no-target))
-	  (arg (erc-load-irc-script-lines (list (concat "/mode " tgt " -i"))
-					  t))
-	  (t (erc-load-irc-script-lines (list (concat "/mode " tgt " +i"))
-					t)))))
+  (let ((tgt (erc-default-target)))
+    (if (or (not tgt) (not (erc-channel-p tgt)))
+	(erc-display-message nil 'error (current-buffer) 'no-target)
+      (erc-load-irc-script-lines
+       (list (concat "/mode " tgt (if arg " -i" " +i")))
+       t))))
 
 (defun erc-get-channel-mode-from-keypress (key)
   "Read a key sequence and call the corresponding channel mode function.
@@ -5579,17 +5577,15 @@ If CHANNEL is non-nil, toggle MODE for that channel, otherwise use
 `erc-default-target'."
   (interactive "P")
   (erc-set-active-buffer (current-buffer))
-  (let ((tgt (or channel (erc-default-target)))
-	(erc-force-send t))		;FIXME: Not used anywhere!
-    (cond ((or (null tgt) (null (erc-channel-p tgt)))
-	   (erc-display-message nil 'error 'active 'no-target))
-	  ((member mode erc-channel-modes)
-	   (erc-log (format "%s: Toggle mode %s OFF" tgt mode))
-	   (message "Toggle channel mode %s OFF" mode)
-	   (erc-server-send (format "MODE %s -%s" tgt mode)))
-	  (t (erc-log (format "%s: Toggle channel mode %s ON" tgt mode))
-	     (message "Toggle channel mode %s ON" mode)
-	     (erc-server-send (format "MODE %s +%s" tgt mode))))))
+  (let ((tgt (or channel (erc-default-target))))
+    (if (or (null tgt) (null (erc-channel-p tgt)))
+	(erc-display-message nil 'error 'active 'no-target)
+      (let* ((active (member mode erc-channel-modes))
+	     (newstate (if active "OFF" "ON")))
+	(erc-log (format "%s: Toggle mode %s %s" tgt mode newstate))
+	(message "Toggle channel mode %s %s" mode newstate)
+	(erc-server-send (format "MODE %s %s%s"
+				 tgt (if active "-" "+") mode))))))
 
 (defun erc-insert-mode-command ()
   "Insert the line \"/mode <current target> \" at `point'."
@@ -5652,7 +5648,7 @@ as an Emacs Lisp program.  Otherwise, treat it as a regular IRC
 script."
   (erc-log (concat "erc-load-script: " file))
   (cond
-   ((string-match "\\.el$" file)
+   ((string-match "\\.el\\'" file)
     (load file))
    (t
     (erc-load-irc-script file))))

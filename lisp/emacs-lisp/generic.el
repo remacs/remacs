@@ -1,6 +1,6 @@
 ;;; generic.el --- defining simple major modes with comment and font-lock
 ;;
-;; Copyright (C) 1997, 1999, 2001-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1997, 1999, 2001-2014 Free Software Foundation, Inc.
 ;;
 ;; Author:  Peter Breton <pbreton@cs.umb.edu>
 ;; Created: Fri Sep 27 1996
@@ -224,7 +224,7 @@ Some generic modes are defined in `generic-x.el'."
 
 ;;; Comment Functionality
 
-(defun generic--normalise-comments (comment-list)
+(defun generic--normalize-comments (comment-list)
   (let ((normalized '()))
     (dolist (start comment-list)
       (let (end)
@@ -300,7 +300,7 @@ Some generic modes are defined in `generic-x.el'."
 (defun generic-mode-set-comments (comment-list)
   "Set up comment functionality for generic mode."
   (let ((st (make-syntax-table))
-        (comment-list (generic--normalise-comments comment-list)))
+        (comment-list (generic--normalize-comments comment-list)))
     (generic-set-comment-syntax st comment-list)
     (generic-set-comment-vars comment-list)
     (set-syntax-table st)))

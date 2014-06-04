@@ -1,6 +1,6 @@
 ;;; tls.el --- TLS/SSL support via wrapper around GnuTLS
 
-;; Copyright (C) 1996-1999, 2002-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1996-1999, 2002-2014 Free Software Foundation, Inc.
 
 ;; Author: Simon Josefsson <simon@josefsson.org>
 ;; Keywords: comm, tls, gnutls, ssl
@@ -80,8 +80,7 @@ and `gnutls-cli' (version 2.0.1) output."
   "List of strings containing commands to start TLS stream to a host.
 Each entry in the list is tried until a connection is successful.
 %h is replaced with server hostname, %p with port to connect to.
-The program should read input on stdin and write output to
-stdout.
+The program should read input on stdin and write output to stdout.
 
 See `tls-checktrust' on how to check trusted root certs.
 
@@ -168,8 +167,8 @@ this to nil if you want to ignore host name mismatches."
   :version "23.1" ;; No Gnus
   :group 'tls)
 
-(defcustom tls-certtool-program (executable-find "certtool")
-  "Name of  GnuTLS certtool.
+(defcustom tls-certtool-program "certtool"
+  "Name of GnuTLS certtool.
 Used by `tls-certificate-information'."
   :version "22.1"
   :type 'string

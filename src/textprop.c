@@ -1,5 +1,5 @@
 /* Interface code for dealing with text properties.
-   Copyright (C) 1993-1995, 1997, 1999-2013 Free Software Foundation,
+   Copyright (C) 1993-1995, 1997, 1999-2014 Free Software Foundation,
    Inc.
 
 This file is part of GNU Emacs.
@@ -1338,20 +1338,27 @@ the designated part of OBJECT.  */)
 DEFUN ("add-face-text-property", Fadd_face_text_property,
        Sadd_face_text_property, 3, 5, 0,
        doc: /* Add the face property to the text from START to END.
-The third argument FACE specifies the face to add.
-If any text in the region already has any face properties, this new
-face property will be added to the front of the face property list.
-If the optional fourth argument APPENDP is non-nil, append to the end
-of the face property list instead.
-If the optional fifth argument OBJECT is a buffer (or nil, which means
-the current buffer), START and END are buffer positions (integers or
+FACE specifies the face to add.  It should be a valid value of the
+`face' property (typically a face name or a plist of face attributes
+and values).
+
+If any text in the region already has a non-nil `face' property, those
+face(s) are retained.  This is done by setting the `face' property to
+a list of faces, with FACE as the first element (by default) and the
+pre-existing faces as the remaining elements.
+
+If optional fourth argument APPEND is non-nil, append FACE to the end
+of the face list instead.
+
+If optional fifth argument OBJECT is a buffer (or nil, which means the
+current buffer), START and END are buffer positions (integers or
 markers).  If OBJECT is a string, START and END are 0-based indices
 into it.  */)
   (Lisp_Object start, Lisp_Object end, Lisp_Object face,
-   Lisp_Object appendp, Lisp_Object object)
+   Lisp_Object append, Lisp_Object object)
 {
   add_text_properties_1 (start, end, list2 (Qface, face), object,
-			 (NILP (appendp)
+			 (NILP (append)
 			  ? TEXT_PROPERTY_PREPEND
 			  : TEXT_PROPERTY_APPEND));
   return Qnil;
@@ -1734,6 +1741,19 @@ Return t if any property was actually removed, nil otherwise.  */)
 	}
       len -= LENGTH (i);
       i = next_interval (i);
+      if (!i)
+        {
+          if (modified)
+            {
+              if (BUFFERP (object))
+                signal_after_change (XINT (start),
+                                     XINT (end) - XINT (start),
+                                     XINT (end) - XINT (start));
+              return Qt;
+            }
+          else
+            return Qnil;
+        }
     }
 }
 
@@ -1819,32 +1839,30 @@ markers).  If OBJECT is a string, START and END are 0-based indices into it.  */
 int
 text_property_stickiness (Lisp_Object prop, Lisp_Object pos, Lisp_Object buffer)
 {
-  Lisp_Object prev_pos, front_sticky;
-  bool is_rear_sticky = 1, is_front_sticky = 0; /* defaults */
+  bool ignore_previous_character;
+  Lisp_Object prev_pos = make_number (XINT (pos) - 1);
+  Lisp_Object front_sticky;
+  bool is_rear_sticky = true, is_front_sticky = false; /* defaults */
   Lisp_Object defalt = Fassq (prop, Vtext_property_default_nonsticky);
 
   if (NILP (buffer))
     XSETBUFFER (buffer, current_buffer);
 
-  if (CONSP (defalt) && !NILP (XCDR (defalt)))
-    is_rear_sticky = 0;
+  ignore_previous_character = XINT (pos) <= BUF_BEGV (XBUFFER (buffer));
 
-  if (XINT (pos) > BUF_BEGV (XBUFFER (buffer)))
-    /* Consider previous character.  */
+  if (ignore_previous_character || (CONSP (defalt) && !NILP (XCDR (defalt))))
+    is_rear_sticky = false;
+  else
     {
-      Lisp_Object rear_non_sticky;
-
-      prev_pos = make_number (XINT (pos) - 1);
-      rear_non_sticky = Fget_text_property (prev_pos, Qrear_nonsticky, buffer);
+      Lisp_Object rear_non_sticky
+	= Fget_text_property (prev_pos, Qrear_nonsticky, buffer);
 
       if (!NILP (CONSP (rear_non_sticky)
 		 ? Fmemq (prop, rear_non_sticky)
 		 : rear_non_sticky))
 	/* PROP is rear-non-sticky.  */
-	is_rear_sticky = 0;
+	is_rear_sticky = false;
     }
-  else
-    return 0;
 
   /* Consider following character.  */
   /* This signals an arg-out-of-range error if pos is outside the
@@ -1855,7 +1873,7 @@ text_property_stickiness (Lisp_Object prop, Lisp_Object pos, Lisp_Object buffer)
       || (CONSP (front_sticky)
 	  && !NILP (Fmemq (prop, front_sticky))))
     /* PROP is inherited from after.  */
-    is_front_sticky = 1;
+    is_front_sticky = true;
 
   /* Simple cases, where the properties are consistent.  */
   if (is_rear_sticky && !is_front_sticky)
@@ -1869,7 +1887,7 @@ text_property_stickiness (Lisp_Object prop, Lisp_Object pos, Lisp_Object buffer)
      disambiguate.  Basically, rear-sticky wins, _except_ if the
      property that would be inherited has a value of nil, in which case
      front-sticky wins.  */
-  if (XINT (pos) == BUF_BEGV (XBUFFER (buffer))
+  if (ignore_previous_character
       || NILP (Fget_text_property (prev_pos, prop, buffer)))
     return 1;
   else

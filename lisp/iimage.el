@@ -1,6 +1,6 @@
 ;;; iimage.el --- Inline image minor mode.
 
-;; Copyright (C) 2004-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2004-2014 Free Software Foundation, Inc.
 
 ;; Author: KOSEKI Yoshinori <kose@meadowy.org>
 ;; Maintainer: KOSEKI Yoshinori <kose@meadowy.org>
@@ -25,7 +25,6 @@
 
 ;; Iimage is a minor mode that displays images, when image-filename
 ;; exists in the buffer.
-;; http://www.netlaputa.ne.jp/~kose/Emacs/iimage.html
 ;;
 ;; ** Display images in *Info* buffer.
 ;;

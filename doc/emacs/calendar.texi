@@ -1,5 +1,5 @@
 @c This is part of the Emacs manual.  -*- coding: utf-8 -*-
-@c Copyright (C) 1985-1987, 1993-1995, 1997, 2000-2013 Free Software
+@c Copyright (C) 1985-1987, 1993-1995, 1997, 2000-2014 Free Software
 @c Foundation, Inc.
 @c See file emacs.texi for copying conditions.
 @node Calendar/Diary
@@ -288,7 +288,7 @@ Display the number of days in the current region
 @kindex M-= @r{(Calendar mode)}
 @findex calendar-count-days-region
   To determine the number of days in a range, set the mark on one
-date using @kbd{C-SPC}, move point to another date, and type @kbd{M-=}
+date using @kbd{C-@key{SPC}}, move point to another date, and type @kbd{M-=}
 (@code{calendar-count-days-region}).  The numbers of days shown is
 @emph{inclusive}; that is, it includes the days specified by mark and
 point.
@@ -301,9 +301,10 @@ point.
 Display day-in-year (@code{calendar-print-day-of-year}).
 @item C-c C-l
 Regenerate the calendar window (@code{calendar-redraw}).
-@item SPC
+@item @key{SPC}
 Scroll the next window up (@code{scroll-other-window}).
-@item DEL
+@item @key{DEL}
+@itemx S-@key{SPC}
 Scroll the next window down (@code{scroll-other-window-down}).
 @item q
 Exit from calendar (@code{calendar-exit}).
@@ -326,8 +327,8 @@ date.
 non-Calendar-mode editing commands.)
 
 @kindex SPC @r{(Calendar mode)}
-  In Calendar mode, you can use @kbd{SPC} (@code{scroll-other-window})
-and @kbd{DEL} (@code{scroll-other-window-down}) to scroll the other
+  In Calendar mode, you can use @key{SPC} (@code{scroll-other-window})
+and @key{DEL} (@code{scroll-other-window-down}) to scroll the other
 window (if there is one) up or down, respectively.  This is handy when
 you display a list of holidays or diary entries in another window.
 
@@ -1347,7 +1348,7 @@ mean ``second'', @minus{}2 would mean ``second-to-last'', and so on).
 The month can be a single month or a list of months.  Thus you could change
 the 11 above to @samp{'(1 2 3)} and have the entry apply to the last
 Thursday of January, February, and March.  If the month is @code{t}, the
-entry applies to all months of the year.@refill
+entry applies to all months of the year.
 
   Each of the standard sexp diary entries takes an optional parameter
 specifying the name of a face or a single-character string to use when
@@ -1615,11 +1616,11 @@ you.  You can, however, customize the value of the variable
 then, only an explicit @kbd{M-x timeclock-out} or @kbd{M-x
 timeclock-change} will tell Emacs that the current interval is over.
 
-@cindex @file{.timelog} file
+@cindex @file{timelog} file
 @vindex timeclock-file
 @findex timeclock-reread-log
   The timeclock functions work by accumulating the data in a file
-called @file{.timelog} in your home directory.  You can specify a
+called @file{~/.emacs.d/timelog}.  You can specify a
 different name for this file by customizing the variable
 @code{timeclock-file}.  If you edit the timeclock file manually, or if
 you change the value of any of timeclock's customizable variables, you

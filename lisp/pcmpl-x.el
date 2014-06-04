@@ -1,6 +1,6 @@
 ;;; pcmpl-x.el --- completion for miscellaneous tools  -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2013 Free Software Foundation, Inc.
+;; Copyright (C) 2013-2014 Free Software Foundation, Inc.
 
 ;; Author: Leo Liu <sdl.web@gmail.com>
 ;; Keywords: processes, tools, convenience
@@ -31,6 +31,7 @@
 
 (defcustom pcmpl-x-tlmgr-program "tlmgr"
   "Name of the tlmgr program."
+  :version "24.4"
   :type 'file
   :group 'pcomplete)
 
@@ -154,6 +155,7 @@
                               (executable-find "ack")
                               "ack"))
   "Name of the ack program."
+  :version "24.4"
   :type 'file
   :group 'pcomplete)
 
@@ -246,6 +248,43 @@ long options."
 
 ;;;###autoload
 (defalias 'pcomplete/ack-grep 'pcomplete/ack)
+
+
+;;;; the_silver_search - https://github.com/ggreer/the_silver_searcher
+
+(defvar pcmpl-x-ag-options nil)
+
+(defun pcmpl-x-ag-options ()
+  (or pcmpl-x-ag-options
+      (setq pcmpl-x-ag-options
+            (with-temp-buffer
+              (when (zerop (call-process "ag" nil t nil "--help"))
+                (let (short long)
+                  (goto-char (point-min))
+                  (while (re-search-forward "^ +\\(-[a-zA-Z]\\) " nil t)
+                    (push (match-string 1) short))
+                  (goto-char (point-min))
+                  (while (re-search-forward
+                          "^ +\\(?:-[a-zA-Z] \\)?\\(--\\(\\[no\\]\\)?[^ \t\n]+\\) "
+                          nil t)
+                    (if (match-string 2)
+                        (progn
+                          (replace-match "" nil nil nil 2)
+                          (push (match-string 1) long)
+                          (replace-match "no" nil nil nil 2)
+                          (push (match-string 1) long))
+                      (push (match-string 1) long)))
+                  (list (cons 'short (nreverse short))
+                        (cons 'long  (nreverse long)))))))))
+
+;;;###autoload
+(defun pcomplete/ag ()
+  "Completion for the `ag' command."
+  (while t
+    (if (pcomplete-match "^-" 0)
+        (pcomplete-here* (cdr (assq (if (pcomplete-match "^--" 0) 'long 'short)
+                                    (pcmpl-x-ag-options))))
+      (pcomplete-here* (pcomplete-dirs-or-entries)))))
 
 (provide 'pcmpl-x)
 ;;; pcmpl-x.el ends here

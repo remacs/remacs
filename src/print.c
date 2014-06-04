@@ -1,6 +1,6 @@
 /* Lisp object printing and output streams.
 
-Copyright (C) 1985-1986, 1988, 1993-1995, 1997-2013 Free Software
+Copyright (C) 1985-1986, 1988, 1993-1995, 1997-2014 Free Software
 Foundation, Inc.
 
 This file is part of GNU Emacs.
@@ -711,17 +711,36 @@ You can call print while debugging emacs, and pass it this function
 to make it write to the debugging output.  */)
   (Lisp_Object character)
 {
-  CHECK_NUMBER (character);
-  putc (XINT (character) & 0xFF, stderr);
+  unsigned int ch;
 
-#ifdef WINDOWSNT
-  /* Send the output to a debugger (nothing happens if there isn't one).  */
-  if (print_output_debug_flag)
+  CHECK_NUMBER (character);
+  ch = XINT (character);
+  if (ASCII_CHAR_P (ch))
     {
-      char buf[2] = {(char) XINT (character), '\0'};
-      OutputDebugString (buf);
-    }
+      putc (ch, stderr);
+#ifdef WINDOWSNT
+      /* Send the output to a debugger (nothing happens if there isn't
+	 one).  */
+      if (print_output_debug_flag)
+	{
+	  char buf[2] = {(char) XINT (character), '\0'};
+	  OutputDebugString (buf);
+	}
 #endif
+    }
+  else
+    {
+      unsigned char mbstr[MAX_MULTIBYTE_LENGTH];
+      ptrdiff_t len = CHAR_STRING (ch, mbstr);
+      Lisp_Object encoded_ch =
+	ENCODE_SYSTEM (make_multibyte_string ((char *) mbstr, 1, len));
+
+      fwrite (SSDATA (encoded_ch), SBYTES (encoded_ch), 1, stderr);
+#ifdef WINDOWSNT
+      if (print_output_debug_flag)
+	OutputDebugString (SSDATA (encoded_ch));
+#endif
+    }
 
   return character;
 }
@@ -1121,7 +1140,7 @@ print (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag)
    string (its text properties will be traced), or a symbol that has
    no obarray (this is for the print-gensym feature).
    The status fields of Vprint_number_table mean whether each object appears
-   more than once in OBJ: Qnil at the first time, and Qt after that .  */
+   more than once in OBJ: Qnil at the first time, and Qt after that.  */
 static void
 print_preprocess (Lisp_Object obj)
 {
@@ -1391,9 +1410,8 @@ print_object (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag)
 	print_string (obj, printcharfun);
       else
 	{
-	  register ptrdiff_t i_byte;
+	  register ptrdiff_t i, i_byte;
 	  struct gcpro gcpro1;
-	  unsigned char *str;
 	  ptrdiff_t size_byte;
 	  /* 1 means we must ensure that the next character we output
 	     cannot be taken as part of a hex character escape.  */
@@ -1412,23 +1430,15 @@ print_object (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag)
 	    }
 
 	  PRINTCHAR ('\"');
-	  str = SDATA (obj);
 	  size_byte = SBYTES (obj);
 
-	  for (i_byte = 0; i_byte < size_byte;)
+	  for (i = 0, i_byte = 0; i_byte < size_byte;)
 	    {
 	      /* Here, we must convert each multi-byte form to the
 		 corresponding character code before handing it to PRINTCHAR.  */
-	      int len;
 	      int c;
 
-	      if (multibyte)
-		{
-		  c = STRING_CHAR_AND_LENGTH (str + i_byte, len);
-		  i_byte += len;
-		}
-	      else
-		c = str[i_byte++];
+	      FETCH_STRING_CHAR_ADVANCE (c, obj, i, i_byte);
 
 	      QUIT;
 
@@ -1706,15 +1716,14 @@ print_object (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag)
 	  int len;
 	  unsigned char c;
 	  struct gcpro gcpro1;
-	  ptrdiff_t size_in_chars
-	    = ((XBOOL_VECTOR (obj)->size + BOOL_VECTOR_BITS_PER_CHAR - 1)
-	       / BOOL_VECTOR_BITS_PER_CHAR);
-
+	  EMACS_INT size = bool_vector_size (obj);
+	  ptrdiff_t size_in_chars = bool_vector_bytes (size);
+	  ptrdiff_t real_size_in_chars = size_in_chars;
 	  GCPRO1 (obj);
 
 	  PRINTCHAR ('#');
 	  PRINTCHAR ('&');
-	  len = sprintf (buf, "%"pI"d", XBOOL_VECTOR (obj)->size);
+	  len = sprintf (buf, "%"pI"d", size);
 	  strout (buf, len, len, printcharfun);
 	  PRINTCHAR ('\"');
 
@@ -1728,7 +1737,7 @@ print_object (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag)
 	  for (i = 0; i < size_in_chars; i++)
 	    {
 	      QUIT;
-	      c = XBOOL_VECTOR (obj)->data[i];
+	      c = bool_vector_uchar_data (obj)[i];
 	      if (c == '\n' && print_escape_newlines)
 		{
 		  PRINTCHAR ('\\');
@@ -1754,6 +1763,9 @@ print_object (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag)
 		  PRINTCHAR (c);
 		}
 	    }
+
+	  if (size_in_chars < real_size_in_chars)
+	    strout (" ...", 4, 4, printcharfun);
 	  PRINTCHAR ('\"');
 
 	  UNGCPRO;
@@ -1778,8 +1790,9 @@ print_object (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag)
 #endif      
       else if (WINDOWP (obj))
 	{
-	  void *ptr = XWINDOW (obj);
-	  int len = sprintf (buf, "#<window %p", ptr);
+	  int len;
+	  strout ("#<window ", -1, -1, printcharfun);
+	  len = sprintf (buf, "%d", XWINDOW (obj)->sequence_number);
 	  strout (buf, len, len, printcharfun);
 	  if (BUFFERP (XWINDOW (obj)->contents))
 	    {

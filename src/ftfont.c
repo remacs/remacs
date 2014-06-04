@@ -1,5 +1,5 @@
 /* ftfont.c -- FreeType font driver.
-   Copyright (C) 2006-2013 Free Software Foundation, Inc.
+   Copyright (C) 2006-2014 Free Software Foundation, Inc.
    Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011
      National Institute of Advanced Industrial Science and Technology (AIST)
      Registration Number H13PRO009
@@ -54,7 +54,7 @@ static Lisp_Object freetype_font_cache;
 /* Cache for FT_Face and FcCharSet. */
 static Lisp_Object ft_face_cache;
 
-/* The actual structure for FreeType font that can be casted to struct
+/* The actual structure for FreeType font that can be cast to struct
    font.  */
 
 struct ftfont_info
@@ -498,7 +498,7 @@ static Lisp_Object ftfont_list (struct frame *, Lisp_Object);
 static Lisp_Object ftfont_match (struct frame *, Lisp_Object);
 static Lisp_Object ftfont_list_family (struct frame *);
 static Lisp_Object ftfont_open (struct frame *, Lisp_Object, int);
-static void ftfont_close (struct frame *, struct font *);
+static void ftfont_close (struct font *);
 static int ftfont_has_char (Lisp_Object, int);
 static unsigned ftfont_encode_char (struct font *, int);
 static int ftfont_text_extents (struct font *, unsigned *, int,
@@ -1011,6 +1011,7 @@ ftfont_list (struct frame *f, Lisp_Object spec)
       if (otspec)
 	{
 	  FcChar8 *file;
+	  bool passed;
 	  OTF *otf;
 
 	  if (FcPatternGetString (fontset->fonts[i], FC_FILE, 0, &file)
@@ -1019,14 +1020,16 @@ ftfont_list (struct frame *f, Lisp_Object spec)
 	  otf = OTF_open ((char *) file);
 	  if (! otf)
 	    continue;
-	  if (OTF_check_features (otf, 1,
-				  otspec->script_tag, otspec->langsys_tag,
-				  otspec->features[0],
-				  otspec->nfeatures[0]) != 1
-	      || OTF_check_features (otf, 0,
-				     otspec->script_tag, otspec->langsys_tag,
-				     otspec->features[1],
-				     otspec->nfeatures[1]) != 1)
+	  passed = (OTF_check_features (otf, 1, otspec->script_tag,
+					otspec->langsys_tag,
+					otspec->features[0],
+					otspec->nfeatures[0]) == 1
+		    && OTF_check_features (otf, 0, otspec->script_tag,
+					   otspec->langsys_tag,
+					   otspec->features[1],
+					   otspec->nfeatures[1]) == 1);
+	  OTF_close (otf);
+	  if (!passed)
 	    continue;
 	}
 #endif	/* HAVE_LIBOTF */
@@ -1317,7 +1320,7 @@ ftfont_open (struct frame *f, Lisp_Object entity, int pixel_size)
 }
 
 static void
-ftfont_close (struct frame *f, struct font *font)
+ftfont_close (struct font *font)
 {
   struct ftfont_info *ftfont_info = (struct ftfont_info *) font;
   Lisp_Object val, cache;
@@ -1478,7 +1481,6 @@ ftfont_get_bitmap (struct font *font, unsigned int code, struct font_bitmap *bit
   bitmap->left = ft_face->glyph->bitmap_left;
   bitmap->top = ft_face->glyph->bitmap_top;
   bitmap->advance = ft_face->glyph->metrics.horiAdvance >> 6;
-  bitmap->extra = NULL;
 
   return 0;
 }
@@ -2425,7 +2427,6 @@ ftfont_shape_by_flt (Lisp_Object lgstring, struct font *font,
     }
 
   len = i;
-  lint_assume (len <= STRING_BYTES_BOUND);
 
   if (with_variation_selector)
     {

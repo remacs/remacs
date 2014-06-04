@@ -1,5 +1,5 @@
 /* Utility and Unix shadow routines for GNU Emacs support programs on NT.
-   Copyright (C) 1994, 2002-2013 Free Software Foundation, Inc.
+   Copyright (C) 1994, 2002-2014 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -90,7 +90,6 @@ int mkostemp (char * template, int flags);
 #define locking   _locking
 #define logb      _logb
 #define _longjmp  longjmp
-#define lseek     _lseek
 #define popen     _popen
 #define pclose    _pclose
 #define umask	  _umask

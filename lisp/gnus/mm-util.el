@@ -1,6 +1,6 @@
 ;;; mm-util.el --- Utility functions for Mule and low level things
 
-;; Copyright (C) 1998-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1998-2014 Free Software Foundation, Inc.
 
 ;; Author: Lars Magne Ingebrigtsen <larsi@gnus.org>
 ;;	MORIOKA Tomohiko <morioka@jaist.ac.jp>
@@ -22,10 +22,6 @@
 ;;; Commentary:
 
 ;;; Code:
-
-;; For Emacs <22.2 and XEmacs.
-(eval-and-compile
-  (unless (fboundp 'declare-function) (defmacro declare-function (&rest r))))
 
 (eval-when-compile (require 'cl))
 (require 'mail-prsvr)
@@ -129,22 +125,6 @@
      (multibyte-char-to-unibyte . identity)
      ;; `set-buffer-multibyte' is an Emacs function, not available in XEmacs.
      (set-buffer-multibyte . ignore)
-     ;; `special-display-p' is an Emacs function, not available in XEmacs.
-     (special-display-p
-      . ,(lambda (buffer-name)
-	   "Returns non-nil if a buffer named BUFFER-NAME gets a special frame."
-	   (and special-display-function
-		(or (and (member buffer-name special-display-buffer-names) t)
-		    (cdr (assoc buffer-name special-display-buffer-names))
-		    (catch 'return
-		      (dolist (elem special-display-regexps)
-			(and (stringp elem)
-			     (string-match elem buffer-name)
-			     (throw 'return t))
-			(and (consp elem)
-			     (stringp (car elem))
-			     (string-match (car elem) buffer-name)
-			     (throw 'return (cdr elem)))))))))
      ;; `substring-no-properties' is available only in Emacs 22.1 or greater.
      (substring-no-properties
       . ,(lambda (string &optional from to)
@@ -173,6 +153,25 @@ to the contents of the accessible portion of the buffer."
 	       (goto-char opoint)
 	       (forward-line 0)
 	       (1+ (count-lines start (point))))))))))
+
+;; `special-display-p' is an Emacs function, not available in XEmacs.
+(defalias 'mm-special-display-p
+  (if (featurep 'emacs)
+      'special-display-p
+    (lambda (buffer-name)
+      "Returns non-nil if a buffer named BUFFER-NAME gets a special frame."
+      (and special-display-function
+	   (or (and (member buffer-name special-display-buffer-names) t)
+	       (cdr (assoc buffer-name special-display-buffer-names))
+	       (catch 'return
+		 (dolist (elem special-display-regexps)
+		   (and (stringp elem)
+			(string-match elem buffer-name)
+			(throw 'return t))
+		   (and (consp elem)
+			(stringp (car elem))
+			(string-match (car elem) buffer-name)
+			(throw 'return (cdr elem))))))))))
 
 ;; `decode-coding-string', `encode-coding-string', `decode-coding-region'
 ;; and `encode-coding-region' are available in Emacs and XEmacs built with
@@ -1375,17 +1374,18 @@ If INHIBIT is non-nil, inhibit `mm-inhibit-file-name-handlers'."
     (write-region start end filename append visit lockname)))
 
 (autoload 'gmm-write-region "gmm-utils")
+(declare-function help-function-arglist "help-fns"
+		  (def &optional preserve-names))
 
 ;; It is not a MIME function, but some MIME functions use it.
 (if (and (fboundp 'make-temp-file)
 	 (ignore-errors
-	   (let ((def (symbol-function 'make-temp-file)))
-	     (and (byte-code-function-p def)
-		  (setq def (if (fboundp 'compiled-function-arglist)
-				;; XEmacs
-				(eval (list 'compiled-function-arglist def))
-			      (aref def 0)))
-		  (>= (length def) 4)
+	   (let ((def (if (fboundp 'compiled-function-arglist) ;; XEmacs
+			  (eval (list 'compiled-function-arglist
+				      (symbol-function 'make-temp-file)))
+			(require 'help-fns)
+			(help-function-arglist 'make-temp-file t))))
+	     (and (>= (length def) 4)
 		  (eq (nth 3 def) 'suffix)))))
     (defalias 'mm-make-temp-file 'make-temp-file)
   ;; Stolen (and modified for XEmacs) from Emacs 22.

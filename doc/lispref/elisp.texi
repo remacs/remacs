@@ -98,14 +98,14 @@ This is the @cite{GNU Emacs Lisp Reference Manual}
 @end ifnottex
 corresponding to Emacs version @value{EMACSVER}.
 
-Copyright @copyright{} 1990--1996, 1998--2013 Free Software Foundation, Inc.
+Copyright @copyright{} 1990--1996, 1998--2014 Free Software Foundation, Inc.
 
 @quotation
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
 any later version published by the Free Software Foundation; with the
 Invariant Sections being ``GNU General Public License,'' with the
-Front-Cover texts being ``A GNU Manual,'' and with the Back-Cover
+Front-Cover Texts being ``A GNU Manual,'' and with the Back-Cover
 Texts as in (a) below.  A copy of the license is included in the
 section entitled ``GNU Free Documentation License.''
 
@@ -117,9 +117,9 @@ developing GNU and promoting software freedom.''
 
 @documentencoding UTF-8
 
-@dircategory GNU Emacs Lisp
+@dircategory Emacs lisp
 @direntry
-* Elisp: (elisp).       The Emacs Lisp Reference Manual.
+* Elisp: (elisp).               The Emacs Lisp Reference Manual.
 @end direntry
 
 @titlepage
@@ -194,7 +194,6 @@ To view this manual in other formats, click
 
 * Loading::                 Reading files of Lisp code into Lisp.
 * Byte Compilation::        Compilation makes programs run faster.
-* Advising Functions::      Adding to the definition of a function.
 * Debugging::               Tools and tips for debugging Lisp programs.
 
 * Read and Print::          Converting Lisp objects to text and back.
@@ -297,7 +296,7 @@ Lisp Data Types
 Programming Types
 
 * Integer Type::        Numbers without fractional parts.
-* Floating Point Type:: Numbers with fractional parts and with a large range.
+* Floating-Point Type:: Numbers with fractional parts and with a large range.
 * Character Type::      The representation of letters, numbers and
                           control characters.
 * Symbol Type::         A multi-use object that refers to a function,
@@ -362,7 +361,7 @@ Numbers
 * Comparison of Numbers::   Equality and inequality predicates.
 * Numeric Conversions::     Converting float to integer and vice versa.
 * Arithmetic Operations::   How to add, subtract, multiply and divide.
-* Rounding Operations::     Explicitly rounding floating point numbers.
+* Rounding Operations::     Explicitly rounding floating-point numbers.
 * Bitwise Operations::      Logical and, or, not, shifting.
 * Math Functions::          Trig, exponential and logarithmic functions.
 * Random Numbers::          Obtaining random integers, predictable or not.
@@ -614,19 +613,6 @@ Byte Compilation
 * Byte-Code Objects::       The data type used for byte-compiled functions.
 * Disassembly::             Disassembling byte-code; how to read byte-code.
 
-Advising Emacs Lisp Functions
-
-* Simple Advice::           A simple example to explain the basics of advice.
-* Defining Advice::         Detailed description of @code{defadvice}.
-* Around-Advice::           Wrapping advice around a function's definition.
-* Computed Advice::         ...is to @code{defadvice} as @code{fset} is to @code{defun}.
-* Activation of Advice::    Advice doesn't do anything until you activate it.
-* Enabling Advice::         You can enable or disable each piece of advice.
-* Preactivation::           Preactivation is a way of speeding up the
-                              loading of compiled advice.
-* Argument Access in Advice:: How advice can access the function's arguments.
-* Combined Definition::     How advice is implemented.
-
 Debugging Lisp Programs
 
 * Debugger::                A debugger for the Emacs Lisp evaluator.
@@ -760,6 +746,8 @@ Defining Commands
 * Interactive Codes::       The standard letter-codes for reading arguments
                               in various ways.
 * Interactive Examples::    Examples of how to read interactive arguments.
+* Generic Commands::        Select among command alternatives.
+
 
 Input Events
 
@@ -915,6 +903,7 @@ Simple Minded Indentation Engine
 * SMIE Indentation::        Specifying indentation rules.
 * SMIE Indentation Helpers:: Helper functions for indentation rules.
 * SMIE Indentation Example:: Sample indentation rules.
+* SMIE Customization::      Customizing indentation.
 
 Documentation
 
@@ -951,7 +940,8 @@ Information about Files
 * Testing Accessibility::   Is a given file readable?  Writable?
 * Kinds of Files::          Is it a directory?  A symbolic link?
 * Truenames::               Eliminating symbolic links from a file name.
-* File Attributes::         How large is it?  Any other names?  Etc.
+* File Attributes::         File sizes, modification times, etc.
+* Extended Attributes::     Extended file attributes for access control.
 * Locating Files::          How to find a file in standard places.
 
 File Names
@@ -1002,7 +992,7 @@ Buffers
                               "behind Emacs's back".
 * Read Only Buffers::       Modifying text is not allowed in a
                               read-only buffer.
-* The Buffer List::         How to look at all the existing buffers.
+* Buffer List::             How to look at all the existing buffers.
 * Creating Buffers::        Functions that create buffers.
 * Killing Buffers::         Buffers exist until explicitly killed.
 * Indirect Buffers::        An indirect buffer shares text with some
@@ -1149,6 +1139,7 @@ Text
 * Registers::               How registers are implemented.  Accessing
                               the text or position stored in a register.
 * Transposition::           Swapping two portions of a buffer.
+* Decompression::           Dealing with compressed data.
 * Base 64::                 Conversion to or from base 64 encoding.
 * Checksum/Hash::           Computing cryptographic hashes.
 * Parsing HTML/XML::        Parsing HTML and XML.
@@ -1318,7 +1309,7 @@ Processes
 
 Receiving Output from Processes
 
-* Process Buffers::         If no filter, output is put in a buffer.
+* Process Buffers::         By default, output is put in a buffer.
 * Filter Functions::        Filter functions accept output from the process.
 * Decoding Output::         Filters can get unibyte or multibyte strings.
 * Accepting Output::        How to wait until process output arrives.
@@ -1347,18 +1338,19 @@ Emacs Display
 * Selective Display::       Hiding part of the buffer text (the old way).
 * Temporary Displays::      Displays that go away automatically.
 * Overlays::                Use overlays to highlight parts of the buffer.
-* Width::                   How wide a character or string is on the screen.
+* Size of Displayed Text::  How large displayed text is.
 * Line Height::             Controlling the height of lines.
 * Faces::                   A face defines a graphics style
                               for text characters: font, colors, etc.
 * Fringes::                 Controlling window fringes.
 * Scroll Bars::             Controlling vertical scroll bars.
+* Window Dividers::         Separating windows visually.
 * Display Property::        Enabling special display features.
 * Images::                  Displaying images in Emacs buffers.
 * Buttons::                 Adding clickable buttons to Emacs buffers.
 * Abstract Display::        Emacs's Widget for Object Collections.
 * Blinking::                How Emacs shows the matching open parenthesis.
-* Character Display::   How Emacs displays individual characters.
+* Character Display::       How Emacs displays individual characters.
 * Beeping::                 Audible signal to the user.
 * Window Systems::          Which window system is being used.
 * Bidirectional Display::   Display of bidirectional scripts, such as
@@ -1393,10 +1385,10 @@ Faces
 * Attribute Functions::     Functions to examine and set face attributes.
 * Displaying Faces::        How Emacs combines the faces specified for
                               a character.
-* Face Remapping::         Remapping faces to alternative definitions.
+* Face Remapping::          Remapping faces to alternative definitions.
 * Face Functions::          How to define and examine faces.
 * Auto Faces::              Hook for automatic face assignment.
-* Basic Faces::         Faces that are defined by default.
+* Basic Faces::             Faces that are defined by default.
 * Font Selection::          Finding the best available font for a face.
 * Font Lookup::             Looking up the names of available fonts
                               and information about them.
@@ -1560,7 +1552,6 @@ Object Internals
 @include customize.texi
 @include loading.texi
 @include compile.texi
-@include advice.texi
 
 @c This includes edebug.texi.
 @include debugging.texi

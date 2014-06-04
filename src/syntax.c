@@ -1,5 +1,5 @@
 /* GNU Emacs routines to deal with syntax tables; also word and list parsing.
-   Copyright (C) 1985, 1987, 1993-1995, 1997-1999, 2001-2013 Free
+   Copyright (C) 1985, 1987, 1993-1995, 1997-1999, 2001-2014 Free
    Software Foundation, Inc.
 
 This file is part of GNU Emacs.
@@ -20,8 +20,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include <config.h>
 
-#define SYNTAX_INLINE EXTERN_INLINE
-
 #include <sys/types.h>
 
 #include "lisp.h"
@@ -31,12 +29,14 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "keymap.h"
 #include "regex.h"
 
-/* Make syntax table lookup grant data in gl_state.  */
-#define SYNTAX_ENTRY_VIA_PROPERTY
-
 #include "syntax.h"
 #include "intervals.h"
 #include "category.h"
+
+/* Make syntax table lookup grant data in gl_state.  */
+#define SYNTAX(c) syntax_property (c, 1)
+#define SYNTAX_ENTRY(c) syntax_property_entry (c, 1)
+#define SYNTAX_WITH_FLAGS(c) syntax_property_with_flags (c, 1)
 
 /* Eight single-bit flags have the following meanings:
   1. This character is the first of a two-character comment-start sequence.
@@ -1485,7 +1485,7 @@ and the function returns nil.  Field boundaries are not noticed if
 
   /* Avoid jumping out of an input field.  */
   tmp = Fconstrain_to_field (make_number (val), make_number (PT),
-			     Qt, Qnil, Qnil);
+			     Qnil, Qnil, Qnil);
   val = XFASTINT (tmp);
 
   SET_PT (val);
@@ -1532,7 +1532,8 @@ DEFUN ("skip-syntax-backward", Fskip_syntax_backward, Sskip_syntax_backward, 1, 
 SYNTAX is a string of syntax code characters.
 Stop on reaching a char whose syntax is not in SYNTAX, or at position LIM.
 If SYNTAX starts with ^, skip characters whose syntax is NOT in SYNTAX.
-This function returns the distance traveled, either zero or negative.  */)
+This function returns either zero or a negative number, and the absolute value
+of this is the distance traveled.  */)
   (Lisp_Object syntax, Lisp_Object lim)
 {
   return skip_syntaxes (0, syntax, lim);

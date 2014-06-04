@@ -1,6 +1,6 @@
 ;;; quickurl.el --- insert a URL based on text at point in buffer
 
-;; Copyright (C) 1999-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1999-2014 Free Software Foundation, Inc.
 
 ;; Author: Dave Pearson <davep@davep.org>
 ;; Maintainer: Dave Pearson <davep@davep.org>
@@ -97,6 +97,7 @@
 (defcustom quickurl-url-file
   (locate-user-emacs-file "quickurls" ".quickurls")
   "File that contains the URL list."
+  :version "24.4"                       ; added locate-user-emacs-file
   :type  'file
   :group 'quickurl)
 

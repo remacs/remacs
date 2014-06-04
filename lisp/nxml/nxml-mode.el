@@ -1,9 +1,9 @@
-;;; nxml-mode.el --- a new XML mode
+;;; nxml-mode.el --- a new XML mode  -*- lexical-binding:t -*-
 
-;; Copyright (C) 2003-2004, 2007-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2003-2004, 2007-2014 Free Software Foundation, Inc.
 
 ;; Author: James Clark
-;; Keywords: XML
+;; Keywords: wp, hypermedia, languages, XML
 
 ;; This file is part of GNU Emacs.
 
@@ -46,6 +46,7 @@
 
 (defgroup nxml nil
   "New XML editing mode."
+  :link '(custom-manual "(nxml-mode) Top")
   :group 'languages)
 
 (defgroup nxml-faces nil
@@ -540,14 +541,14 @@ Many aspects this mode can be customized using
 	  (nxml-scan-prolog)))))
   (add-hook 'completion-at-point-functions
             #'nxml-completion-at-point-function nil t)
-  (add-hook 'after-change-functions 'nxml-after-change nil t)
+  (setq-local syntax-propertize-function #'nxml-after-change)
   (add-hook 'change-major-mode-hook 'nxml-cleanup nil t)
 
   ;; Emacs 23 handles the encoding attribute on the xml declaration
   ;; transparently to nxml-mode, so there is no longer a need for the below
   ;; hook. The hook also had the drawback of overriding explicit user
   ;; instruction to save as some encoding other than utf-8.
-;;;   (add-hook 'write-contents-hooks 'nxml-prepare-to-save)
+  ;;(add-hook 'write-contents-hooks 'nxml-prepare-to-save)
   (when (not (and (buffer-file-name) (file-exists-p (buffer-file-name))))
     (when (and nxml-default-buffer-file-coding-system
 	       (not (local-variable-p 'buffer-file-coding-system)))
@@ -561,8 +562,6 @@ Many aspects this mode can be customized using
           nil  ; font-lock-keywords-case-fold-search. XML is case sensitive
           nil  ; no special syntax table
           nil  ; no automatic syntactic fontification
-          (font-lock-extend-after-change-region-function
-           . nxml-extend-after-change-region)
           (font-lock-extend-region-functions . (nxml-extend-region))
           (jit-lock-contextually . t)
           (font-lock-unfontify-region-function . nxml-unfontify-region)))
@@ -597,6 +596,7 @@ Many aspects this mode can be customized using
 
 ;;; Change management
 
+(defvar font-lock-beg) (defvar font-lock-end)
 (defun nxml-debug-region (start end)
   (interactive "r")
   (let ((font-lock-beg start)
@@ -605,22 +605,16 @@ Many aspects this mode can be customized using
     (goto-char font-lock-beg)
     (set-mark font-lock-end)))
 
-(defun nxml-after-change (start end pre-change-length)
-  ; In font-lock mode, nxml-after-change1 is called via
-  ; nxml-extend-after-change-region instead so that the updated
-  ; book-keeping information is available for fontification.
-  (unless (or font-lock-mode nxml-degraded)
+(defun nxml-after-change (start end)
+  ;; Called via syntax-propertize-function.
+  (unless nxml-degraded
     (nxml-with-degradation-on-error 'nxml-after-change
-        (save-excursion
-          (save-restriction
-            (widen)
-            (save-match-data
-              (nxml-with-invisible-motion
-                (with-silent-modifications
-                  (nxml-after-change1
-                   start end pre-change-length)))))))))
+      (save-restriction
+        (widen)
+        (nxml-with-invisible-motion
+         (nxml-after-change1 start end))))))
 
-(defun nxml-after-change1 (start end pre-change-length)
+(defun nxml-after-change1 (start end)
   "After-change bookkeeping.
 Returns a cons cell containing a possibly-enlarged change region.
 You must call `nxml-extend-region' on this expanded region to obtain
@@ -628,23 +622,14 @@ the full extent of the area needing refontification.
 
 For bookkeeping, call this function even when fontification is
 disabled."
-  (let ((pre-change-end (+ start pre-change-length)))
-    ;; If the prolog might have changed, rescan the prolog
-    (when (<= start
-	      ;; Add 2 so as to include the < and following char that
-	      ;; start the instance (document element), since changing
-	      ;; these can change where the prolog ends.
-	      (+ nxml-prolog-end 2))
-      ;; end must be extended to at least the end of the old prolog in
-      ;; case the new prolog is shorter
-      (when (< pre-change-end nxml-prolog-end)
-	(setq end
-	      ;; don't let end get out of range even if pre-change-length
-	      ;; is bogus
-	      (min (point-max)
-		   (+ end (- nxml-prolog-end pre-change-end)))))
-      (nxml-scan-prolog)
-      (setq start (point-min))))
+  ;; If the prolog might have changed, rescan the prolog.
+  (when (<= start
+            ;; Add 2 so as to include the < and following char that
+            ;; start the instance (document element), since changing
+            ;; these can change where the prolog ends.
+            (+ nxml-prolog-end 2))
+    (nxml-scan-prolog)
+    (setq start (point-min)))
 
   (when (> end nxml-prolog-end)
     (goto-char start)
@@ -653,8 +638,7 @@ disabled."
     (setq end (max (nxml-scan-after-change start end)
                    end)))
 
-  (nxml-debug-change "nxml-after-change1" start end)
-  (cons start end))
+  (nxml-debug-change "nxml-after-change1" start end))
 
 ;;; Encodings
 
@@ -845,7 +829,6 @@ The XML declaration will declare an encoding depending on the buffer's
   (font-lock-default-unfontify-region start end)
   (nxml-clear-char-ref-extra-display start end))
 
-(defvar font-lock-beg) (defvar font-lock-end)
 (defun nxml-extend-region ()
   "Extend the region to hold the minimum area we can fontify with nXML.
 Called with `font-lock-beg' and `font-lock-end' dynamically bound."
@@ -887,22 +870,9 @@ Called with `font-lock-beg' and `font-lock-end' dynamically bound."
       (nxml-debug-change "nxml-extend-region" start end)
       t)))
 
-(defun nxml-extend-after-change-region (start end pre-change-length)
-  (unless nxml-degraded
-    (nxml-with-degradation-on-error
-     'nxml-extend-after-change-region
-     (save-excursion
-       (save-restriction
-         (widen)
-         (save-match-data
-           (nxml-with-invisible-motion
-             (with-silent-modifications
-               (nxml-after-change1
-                start end pre-change-length)))))))))
-
 (defun nxml-fontify-matcher (bound)
   "Called as font-lock keyword matcher."
-
+  (syntax-propertize bound)
   (unless nxml-degraded
     (nxml-debug-change "nxml-fontify-matcher" (point) bound)
 
@@ -2597,7 +2567,7 @@ With a prefix argument, inserts the character directly."
 	       (> (prefix-numeric-value arg) 0))))
     (when (not (eq new nxml-char-ref-extra-display))
       (setq nxml-char-ref-extra-display new)
-      (font-lock-fontify-buffer))))
+      (font-lock-flush))))
 
 (put 'nxml-char-ref 'evaporate t)
 
@@ -2660,8 +2630,9 @@ With a prefix argument, inserts the character directly."
 (put 'entity-ref 'nxml-friendly-name "entity reference")
 (put 'char-ref 'nxml-friendly-name "character reference")
 
-;;;###autoload
-(defalias 'xml-mode 'nxml-mode)
+;; Only do this in loaddefs, so that if someone defines a different
+;; alias in .emacs, loading this file afterwards does not clobber it.
+;;;###autoload(defalias 'xml-mode 'nxml-mode)
 
 (provide 'nxml-mode)
 

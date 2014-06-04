@@ -1,4 +1,4 @@
-# Copyright (C) 1992-1998, 2000-2013 Free Software Foundation, Inc.
+# Copyright (C) 1992-1998, 2000-2014 Free Software Foundation, Inc.
 #
 # This file is part of GNU Emacs.
 #
@@ -49,7 +49,7 @@ define xgetptr
   else
     set $bugfix = $arg0
   end
-  set $ptr = ($bugfix & VALMASK) | DATA_SEG_BITS
+  set $ptr = $bugfix & VALMASK
 end
 
 define xgetint
@@ -67,7 +67,7 @@ define xgettype
   else
     set $bugfix = $arg0
   end
-  set $type = (enum Lisp_Type) (USE_LSB_TAG ? $bugfix & (1 << GCTYPEBITS) - 1 : $bugfix >> VALBITS)
+  set $type = (enum Lisp_Type) (USE_LSB_TAG ? $bugfix & (1 << GCTYPEBITS) - 1 : (EMACS_UINT) $bugfix >> VALBITS)
 end
 
 # Set up something to print out s-expressions.
@@ -1096,7 +1096,13 @@ end
 
 define xprintstr
   set $data = (char *) $arg0->data
-  output ($arg0->size > 1000) ? 0 : ($data[0])@($arg0->size_byte < 0 ? $arg0->size & ~ARRAY_MARK_FLAG : $arg0->size_byte)
+  set $strsize = ($arg0->size_byte < 0) ? ($arg0->size & ~ARRAY_MARK_FLAG) : $arg0->size_byte
+  # GDB doesn't like zero repetition counts
+  if $strsize == 0
+    output ""
+  else
+    output ($arg0->size > 1000) ? 0 : ($data[0])@($strsize)
+  end
 end
 
 define xprintsym
@@ -1111,8 +1117,8 @@ document xprintsym
 end
 
 define xcoding
-  set $tmp = (struct Lisp_Hash_Table *) ((Vcoding_system_hash_table & VALMASK) | DATA_SEG_BITS)
-  set $tmp = (struct Lisp_Vector *) (($tmp->key_and_value & VALMASK) | DATA_SEG_BITS)
+  set $tmp = (struct Lisp_Hash_Table *) (Vcoding_system_hash_table & VALMASK)
+  set $tmp = (struct Lisp_Vector *) ($tmp->key_and_value & VALMASK)
   set $name = $tmp->contents[$arg0 * 2]
   print $name
   pr
@@ -1124,8 +1130,8 @@ document xcoding
 end
 
 define xcharset
-  set $tmp = (struct Lisp_Hash_Table *) ((Vcharset_hash_table & VALMASK) | DATA_SEG_BITS)
-  set $tmp = (struct Lisp_Vector *) (($tmp->key_and_value & VALMASK) | DATA_SEG_BITS)
+  set $tmp = (struct Lisp_Hash_Table *) (Vcharset_hash_table & VALMASK)
+  set $tmp = (struct Lisp_Vector *) ($tmp->key_and_value & VALMASK)
   p $tmp->contents[charset_table[$arg0].hash_index * 2]
   pr
 end
@@ -1208,8 +1214,13 @@ end
 
 define xprintbytestr
   set $data = (char *) $arg0->data
+  set $bstrsize = ($arg0->size_byte < 0) ? ($arg0->size & ~ARRAY_MARK_FLAG) : $arg0->size_byte
   printf "Bytecode: "
-  output/u ($arg0->size > 1000) ? 0 : ($data[0])@($arg0->size_byte < 0 ? $arg0->size & ~ARRAY_MARK_FLAG : $arg0->size_byte)
+  if $bstrsize > 0
+    output/u ($arg0->size > 1000) ? 0 : ($data[0])@($bvsize)
+  else
+    printf ""
+  end
 end
 document xprintbytestr
   Print a string of byte code.

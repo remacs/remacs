@@ -1,6 +1,6 @@
 /* Buffer insertion/deletion and gap motion for GNU Emacs.
-   Copyright (C) 1985-1986, 1993-1995, 1997-2013 Free Software
-   Foundation, Inc.
+
+Copyright (C) 1985-1986, 1993-1995, 1997-2014 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -214,9 +214,8 @@ void
 adjust_markers_for_delete (ptrdiff_t from, ptrdiff_t from_byte,
 			   ptrdiff_t to, ptrdiff_t to_byte)
 {
-  Lisp_Object marker;
-  register struct Lisp_Marker *m;
-  register ptrdiff_t charpos;
+  struct Lisp_Marker *m;
+  ptrdiff_t charpos;
 
   for (m = BUF_MARKERS (current_buffer); m; m = m->next)
     {
@@ -233,33 +232,8 @@ adjust_markers_for_delete (ptrdiff_t from, ptrdiff_t from_byte,
       /* Here's the case where a marker is inside text being deleted.  */
       else if (charpos > from)
 	{
-	  if (! m->insertion_type)
-	    { /* Normal markers will end up at the beginning of the
-	       re-inserted text after undoing a deletion, and must be
-	       adjusted to move them to the correct place.  */
-	      XSETMISC (marker, m);
-	      record_marker_adjustment (marker, from - charpos);
-	    }
-	  else if (charpos < to)
-	    { /* Before-insertion markers will automatically move forward
-	       upon re-inserting the deleted text, so we have to arrange
-	       for them to move backward to the correct position.  */
-	      XSETMISC (marker, m);
-	      record_marker_adjustment (marker, to - charpos);
-	    }
 	  m->charpos = from;
 	  m->bytepos = from_byte;
-	}
-      /* Here's the case where a before-insertion marker is immediately
-	 before the deleted region.  */
-      else if (charpos == from && m->insertion_type)
-	{
-	  /* Undoing the change uses normal insertion, which will
-	     incorrectly make MARKER move forward, so we arrange for it
-	     to then move backward to the correct place at the beginning
-	     of the deleted region.  */
-	  XSETMISC (marker, m);
-	  record_marker_adjustment (marker, to - from);
 	}
     }
 }
@@ -827,7 +801,7 @@ insert_1_both (const char *string,
 
   eassert (GPT <= GPT_BYTE);
 
-  /* The insert may have been in the unchanged region, so check again. */
+  /* The insert may have been in the unchanged region, so check again.  */
   if (Z - GPT < END_UNCHANGED)
     END_UNCHANGED = Z - GPT;
 
@@ -956,7 +930,7 @@ insert_from_string_1 (Lisp_Object string, ptrdiff_t pos, ptrdiff_t pos_byte,
 
   eassert (GPT <= GPT_BYTE);
 
-  /* The insert may have been in the unchanged region, so check again. */
+  /* The insert may have been in the unchanged region, so check again.  */
   if (Z - GPT < END_UNCHANGED)
     END_UNCHANGED = Z - GPT;
 
@@ -988,12 +962,16 @@ insert_from_string_1 (Lisp_Object string, ptrdiff_t pos, ptrdiff_t pos_byte,
 void
 insert_from_gap (ptrdiff_t nchars, ptrdiff_t nbytes, bool text_at_gap_tail)
 {
-  int ins_charpos = GPT;
-  int ins_bytepos = GPT_BYTE;
+  ptrdiff_t ins_charpos = GPT, ins_bytepos = GPT_BYTE;
 
   if (NILP (BVAR (current_buffer, enable_multibyte_characters)))
     nchars = nbytes;
 
+  /* No need to call prepare_to_modify_buffer, since this is called
+     from places that replace some region with a different text, so
+     prepare_to_modify_buffer was already called by the deletion part
+     of this dance.  */
+  invalidate_buffer_caches (current_buffer, GPT, GPT);
   record_insert (GPT, nchars);
   MODIFF++;
 
@@ -1149,7 +1127,7 @@ insert_from_buffer_1 (struct buffer *buf,
 
   eassert (GPT <= GPT_BYTE);
 
-  /* The insert may have been in the unchanged region, so check again. */
+  /* The insert may have been in the unchanged region, so check again.  */
   if (Z - GPT < END_UNCHANGED)
     END_UNCHANGED = Z - GPT;
 
@@ -1215,7 +1193,7 @@ adjust_after_replace (ptrdiff_t from, ptrdiff_t from_byte,
 			       from + len, from_byte + len_byte, 0);
 
   if (nchars_del > 0)
-    record_delete (from, prev_text);
+    record_delete (from, prev_text, false);
   record_insert (from, len);
 
   if (len > nchars_del)
@@ -1380,7 +1358,7 @@ replace_range (ptrdiff_t from, ptrdiff_t to, Lisp_Object new,
   if (!NILP (deletion))
     {
       record_insert (from + SCHARS (deletion), inschars);
-      record_delete (from, deletion);
+      record_delete (from, deletion, false);
     }
 
   GAP_SIZE -= outgoing_insbytes;
@@ -1712,13 +1690,14 @@ del_range_2 (ptrdiff_t from, ptrdiff_t from_byte,
   else
     deletion = Qnil;
 
-  /* Relocate all markers pointing into the new, larger gap
-     to point at the end of the text before the gap.
-     Do this before recording the deletion,
-     so that undo handles this after reinserting the text.  */
+  /* Record marker adjustments, and text deletion into undo
+     history.  */
+  record_delete (from, deletion, true);
+
+  /* Relocate all markers pointing into the new, larger gap to point
+     at the end of the text before the gap.  */
   adjust_markers_for_delete (from, from_byte, to, to_byte);
 
-  record_delete (from, deletion);
   MODIFF++;
   CHARS_MODIFF = MODIFF;
 
@@ -1779,6 +1758,8 @@ modify_text (ptrdiff_t start, ptrdiff_t end)
   bset_point_before_scroll (current_buffer, Qnil);
 }
 
+Lisp_Object Qregion_extract_function;
+
 /* Check that it is okay to modify the buffer between START and END,
    which are char positions.
 
@@ -1798,11 +1779,7 @@ prepare_to_modify_buffer_1 (ptrdiff_t start, ptrdiff_t end,
   if (!NILP (BVAR (current_buffer, read_only)))
     Fbarf_if_buffer_read_only ();
 
-  /* If we're modifying the buffer other than shown in a selected window,
-     let redisplay consider other windows if this buffer is visible.  */
-  if (XBUFFER (XWINDOW (selected_window)->contents) != current_buffer
-      && buffer_window_count (current_buffer))
-    ++windows_or_buffers_changed;
+  bset_redisplay (current_buffer);
 
   if (buffer_intervals (current_buffer))
     {
@@ -1827,39 +1804,26 @@ prepare_to_modify_buffer_1 (ptrdiff_t start, ptrdiff_t end,
   else
     base_buffer = current_buffer;
 
-#ifdef CLASH_DETECTION
+  if (inhibit_modification_hooks)
+    return;
+
   if (!NILP (BVAR (base_buffer, file_truename))
       /* Make binding buffer-file-name to nil effective.  */
       && !NILP (BVAR (base_buffer, filename))
       && SAVE_MODIFF >= MODIFF)
     lock_file (BVAR (base_buffer, file_truename));
-#else
-  /* At least warn if this file has changed on disk since it was visited.  */
-  if (!NILP (BVAR (base_buffer, filename))
-      && SAVE_MODIFF >= MODIFF
-      && NILP (Fverify_visited_file_modtime (Fcurrent_buffer ()))
-      && !NILP (Ffile_exists_p (BVAR (base_buffer, filename))))
-    call1 (intern ("ask-user-about-supersession-threat"),
-	   BVAR (base_buffer,filename));
-#endif /* not CLASH_DETECTION */
 
   /* If `select-active-regions' is non-nil, save the region text.  */
+  /* FIXME: Move this to Elisp (via before-change-functions).  */
   if (!NILP (BVAR (current_buffer, mark_active))
-      && !inhibit_modification_hooks
       && XMARKER (BVAR (current_buffer, mark))->buffer
       && NILP (Vsaved_region_selection)
       && (EQ (Vselect_active_regions, Qonly)
 	  ? EQ (CAR_SAFE (Vtransient_mark_mode), Qonly)
 	  : (!NILP (Vselect_active_regions)
 	     && !NILP (Vtransient_mark_mode))))
-    {
-      ptrdiff_t b = marker_position (BVAR (current_buffer, mark));
-      ptrdiff_t e = PT;
-      if (b < e)
-	Vsaved_region_selection = make_buffer_string (b, e, 0);
-      else if (b > e)
-	Vsaved_region_selection = make_buffer_string (e, b, 0);
-    }
+    Vsaved_region_selection
+      = call1 (Fsymbol_value (Qregion_extract_function), Qnil);
 
   signal_before_change (start, end, preserve_ptr);
   Vdeactivate_mark = Qt;
@@ -1873,19 +1837,58 @@ prepare_to_modify_buffer (ptrdiff_t start, ptrdiff_t end,
 			  ptrdiff_t *preserve_ptr)
 {
   prepare_to_modify_buffer_1 (start, end, preserve_ptr);
+  invalidate_buffer_caches (current_buffer, start, end);
+}
 
-  if (current_buffer->newline_cache)
-    invalidate_region_cache (current_buffer,
-                             current_buffer->newline_cache,
-                             start - BEG, Z - end);
-  if (current_buffer->width_run_cache)
-    invalidate_region_cache (current_buffer,
-                             current_buffer->width_run_cache,
-                             start - BEG, Z - end);
-  if (current_buffer->bidi_paragraph_cache)
-    invalidate_region_cache (current_buffer,
-                             current_buffer->bidi_paragraph_cache,
-                             start - BEG, Z - end);
+/* Invalidate the caches maintained by the buffer BUF, if any, for the
+   region between buffer positions START and END.  */
+void
+invalidate_buffer_caches (struct buffer *buf, ptrdiff_t start, ptrdiff_t end)
+{
+  /* Indirect buffers usually have their caches set to NULL, but we
+     need to consider the caches of their base buffer.  */
+  if (buf->base_buffer)
+    buf = buf->base_buffer;
+  /* The bidi_paragraph_cache must be invalidated first, because doing
+     so might need to use the newline_cache (via find_newline_no_quit,
+     see below).  */
+  if (buf->bidi_paragraph_cache)
+    {
+      if (start != end
+	  && start > BUF_BEG (buf))
+	{
+	  /* If we are deleting or replacing characters, we could
+	     create a paragraph start, because all of the characters
+	     from START to the beginning of START's line are
+	     whitespace.  Therefore, we must extend the region to be
+	     invalidated up to the newline before START.  */
+	  ptrdiff_t line_beg = start;
+	  ptrdiff_t start_byte = buf_charpos_to_bytepos (buf, start);
+
+	  if (BUF_FETCH_BYTE (buf, start_byte - 1) != '\n')
+	    {
+	      struct buffer *old = current_buffer;
+
+	      set_buffer_internal (buf);
+
+	      line_beg = find_newline_no_quit (start, start_byte, -1,
+					       &start_byte);
+	      set_buffer_internal (old);
+	    }
+	  start = line_beg - (line_beg > BUF_BEG (buf));
+	}
+      invalidate_region_cache (buf,
+			       buf->bidi_paragraph_cache,
+			       start - BUF_BEG (buf), BUF_Z (buf) - end);
+    }
+  if (buf->newline_cache)
+    invalidate_region_cache (buf,
+                             buf->newline_cache,
+                             start - BUF_BEG (buf), BUF_Z (buf) - end);
+  if (buf->width_run_cache)
+    invalidate_region_cache (buf,
+                             buf->width_run_cache,
+                             start - BUF_BEG (buf), BUF_Z (buf) - end);
 }
 
 /* These macros work with an argument named `preserve_ptr'
@@ -1951,9 +1954,6 @@ signal_before_change (ptrdiff_t start_int, ptrdiff_t end_int,
   ptrdiff_t count = SPECPDL_INDEX ();
   struct rvoe_arg rvoe_arg;
 
-  if (inhibit_modification_hooks)
-    return;
-
   start = make_number (start_int);
   end = make_number (end_int);
   preserve_marker = Qnil;
@@ -1964,7 +1964,7 @@ signal_before_change (ptrdiff_t start_int, ptrdiff_t end_int,
   specbind (Qinhibit_modification_hooks, Qt);
 
   /* If buffer is unmodified, run a special hook for that case.  The
-   check for Vfirst_change_hook is just a minor optimization. */
+   check for Vfirst_change_hook is just a minor optimization.  */
   if (SAVE_MODIFF >= MODIFF
       && !NILP (Vfirst_change_hook))
     {
@@ -2202,6 +2202,8 @@ This affects `before-change-functions' and `after-change-functions',
 as well as hooks attached to text properties and overlays.  */);
   inhibit_modification_hooks = 0;
   DEFSYM (Qinhibit_modification_hooks, "inhibit-modification-hooks");
+
+  DEFSYM (Qregion_extract_function, "region-extract-function");
 
   defsubr (&Scombine_after_change_execute);
 }

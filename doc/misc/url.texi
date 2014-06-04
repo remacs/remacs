@@ -2,6 +2,8 @@
 @setfilename ../../info/url
 @settitle URL Programmer's Manual
 
+@documentencoding UTF-8
+
 @iftex
 @c @finalout
 @end iftex
@@ -20,14 +22,14 @@
 @copying
 This is the manual for the @code{url} Emacs Lisp library.
 
-Copyright @copyright{} 1993--1999, 2002, 2004--2013 Free Software
+Copyright @copyright{} 1993--1999, 2002, 2004--2014 Free Software
 Foundation, Inc.
 
 @quotation
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
 any later version published by the Free Software Foundation; with no
-Invariant Sections, with the Front-Cover texts being ``A GNU Manual,''
+Invariant Sections, with the Front-Cover Texts being ``A GNU Manual,''
 and with the Back-Cover Texts as in (a) below.  A copy of the license
 is included in the section entitled ``GNU Free Documentation License''.
 
@@ -407,6 +409,13 @@ ignored; any other value means to ask the user on each request.
 
 @node Cookies
 @subsection Cookies
+
+@findex url-cookie-delete
+@defun url-cookie-list
+This command creates a @file{*url cookies*} buffer listing the current
+cookies, if there are any.  You can remove a cookie using the
+@kbd{C-k} (@code{url-cookie-delete}) command.
+@end defun
 
 @defopt url-cookie-file
 The file in which cookies are stored, defaulting to @file{cookies} in
@@ -1240,7 +1249,7 @@ if it exists.
 @defopt url-debug
 @cindex debugging
 Specifies the types of debug messages which are logged to
-the @code{*URL-DEBUG*} buffer.
+the @file{*URL-DEBUG*} buffer.
 @code{t} means log all messages.
 A number means log all messages and show them with @code{message}.
 It may also be a list of the types of messages to be logged.

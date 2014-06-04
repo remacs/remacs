@@ -1,9 +1,9 @@
 ;;; align.el --- align text to a specific column, by regexp -*- lexical-binding:t -*-
 
-;; Copyright (C) 1999-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1999-2014 Free Software Foundation, Inc.
 
 ;; Author: John Wiegley <johnw@gnu.org>
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: convenience languages lisp
 
 ;; This file is part of GNU Emacs.
@@ -937,7 +937,7 @@ throughout the line.
 See `align-rules-list' for more information about these options.
 
 The non-interactive form of the previous example would look something like:
-  \(align-regexp (point-min) (point-max) \"\\\\(\\\\s-*\\\\)(\")
+  (align-regexp (point-min) (point-max) \"\\\\(\\\\s-*\\\\)(\")
 
 This function is a nothing more than a small wrapper that helps you
 construct a rule to pass to `align-region', which does the real work."
@@ -1603,7 +1603,7 @@ aligner would have dealt with are."
 	    rule-index (1+ rule-index)))
     ;; This function can use a lot of temporary markers, so instead of
     ;; waiting for the next GC we delete them immediately (Bug#10047).
-    (set-marker end-mark nil)
+    (when end-mark (set-marker end-mark nil))
     (dolist (m markers)
       (set-marker m nil))
 

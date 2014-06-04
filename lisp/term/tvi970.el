@@ -1,6 +1,6 @@
 ;;; tvi970.el --- terminal support for the Televideo 970
 
-;; Copyright (C) 1992, 2001-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1992, 2001-2014 Free Software Foundation, Inc.
 
 ;; Author: Jim Blandy <jimb@occs.cs.oberlin.edu>
 ;; Keywords: terminals
@@ -22,8 +22,6 @@
 ;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Commentary:
-
-;; Uses the Emacs 19 terminal initialization features --- won't work with 18.
 
 ;;; Code:
 

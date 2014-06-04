@@ -3,7 +3,7 @@
 # doc/lispintro/Makefile, and doc/misc/Makefile under DJGPP v2.x
 # ---------------------------------------------------------------------------
 #
-# Copyright (C) 1997, 2000-2013 Free Software Foundation, Inc.
+# Copyright (C) 1997, 2000-2014 Free Software Foundation, Inc.
 #
 # This file is part of GNU Emacs.
 #
@@ -42,5 +42,5 @@ export MAKEINFO := $(MAKEINFO) $(MAKEINFO_OPTS)
   s/^	for file in $(INFO_TARGETS)\; do rm -f.*$/	rm -f $(INFO_TARGETS)/
 }
 
-/^mkinfodir *=/s| @.*$|@command.com /c if not exist ..\\..\\info\\emacs mkdir ..\\..\\info|
+/^mkinfodir *=/s| @.*$|@command.com /c if not exist ..\\..\\info\\emacs$(INFO_EXT) mkdir ..\\..\\info|
 

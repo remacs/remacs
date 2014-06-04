@@ -1,5 +1,5 @@
 /* systime.h - System-dependent definitions for time manipulations.
-   Copyright (C) 1993-1994, 2002-2013 Free Software Foundation, Inc.
+   Copyright (C) 1993-1994, 2002-2014 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -22,9 +22,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <timespec.h>
 
 INLINE_HEADER_BEGIN
-#ifndef SYSTIME_INLINE
-# define SYSTIME_INLINE INLINE
-#endif
 
 #ifdef emacs
 # ifdef HAVE_X_WINDOWS
@@ -54,23 +51,23 @@ typedef unsigned long Time;
    should be an absolute time since the epoch and B a nonnegative offset.  */
 
 /* Return an invalid timespec.  */
-SYSTIME_INLINE struct timespec
+INLINE struct timespec
 invalid_timespec (void)
 {
   return make_timespec (0, -1);
 }
 
-/* Return 1 if TIME is a valid timespec.  This currently doesn't worry
+/* Return true if TIME is a valid timespec.  This currently doesn't worry
    about whether tv_nsec is less than TIMESPEC_RESOLUTION; leap seconds
    might cause a problem if it did.  */
-SYSTIME_INLINE int
+INLINE bool
 timespec_valid_p (struct timespec t)
 {
   return t.tv_nsec >= 0;
 }
 
 /* Return current system time.  */
-SYSTIME_INLINE struct timespec
+INLINE struct timespec
 current_timespec (void)
 {
   struct timespec r;

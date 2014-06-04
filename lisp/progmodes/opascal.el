@@ -1,6 +1,6 @@
 ;;; opascal.el --- major mode for editing Object Pascal source in Emacs  -*- lexical-binding: t -*-
 
-;; Copyright (C) 1998-1999, 2001-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1998-1999, 2001-2014 Free Software Foundation, Inc.
 
 ;; Authors: Ray Blaak <blaak@infomatch.com>,
 ;;          Simon South <ssouth@member.fsf.org>
@@ -73,7 +73,7 @@ end;"
 (define-obsolete-variable-alias
   'delphi-compound-block-indent 'opascal-compound-block-indent "24.4")
 (defcustom opascal-compound-block-indent 0
-  "Extra indentation for blocks in compound statements. E.g.
+  "Extra indentation for blocks in compound statements.  E.g.
 
 // block indent = 0     vs      // block indent = 2
 if b then                       if b then
@@ -87,7 +87,7 @@ end;                            else
 (define-obsolete-variable-alias
   'delphi-case-label-indent 'opascal-case-label-indent "24.4")
 (defcustom opascal-case-label-indent opascal-indent-level
-  "Extra indentation for case statement labels. E.g.
+  "Extra indentation for case statement labels.  E.g.
 
 // case indent = 0      vs      // case indent = 3
 case value of                   case value of
@@ -106,9 +106,13 @@ end;                            end;"
 (define-obsolete-variable-alias
   'delphi-tab-always-indents 'opascal-tab-always-indents "24.4")
 (defcustom opascal-tab-always-indents tab-always-indent
-  "Non-nil means TAB in OPascal mode should always reindent the current line,
-regardless of where in the line point is when the TAB command is used."
+  "Non-nil means `opascal-tab' should always reindent the current line.
+That is, regardless of where in the line point is at the time."
   :type 'boolean)
+
+(make-obsolete-variable 'opascal-tab-always-indents
+                        "use `indent-for-tab-command' and `tab-always-indent'."
+                        "24.4")
 
 (defconst opascal-directives
   '(absolute abstract assembler automated cdecl default dispid dynamic
@@ -1447,8 +1451,8 @@ If before the indent, the point is moved to the indent."
 
 
 (defun opascal-tab ()
-  "Indent the region, when Transient Mark mode is enabled and the region is
-active.  Otherwise, indent the current line or insert a TAB, depending on the
+  "Indent the region, if Transient Mark mode is on and the region is active.
+Otherwise, indent the current line or insert a TAB, depending on the
 value of `opascal-tab-always-indents' and the current line position."
   (interactive)
   (cond ((use-region-p)
@@ -1465,6 +1469,7 @@ value of `opascal-tab-always-indents' and the current line position."
          ;; Otherwise, insert a tab character.
          (insert "\t"))))
 
+(make-obsolete 'opascal-tab 'indent-for-tab-command "24.4")
 
 (defun opascal-is-directory (path)
   ;; True if the specified path is an existing directory.
@@ -1739,7 +1744,7 @@ comment block.  If not in a // comment, just does a normal newline."
 (define-obsolete-function-alias 'delphi-mode 'opascal-mode "24.4")
 ;;;###autoload
 (define-derived-mode opascal-mode prog-mode "OPascal"
-  "Major mode for editing OPascal code. \\<opascal-mode-map>
+  "Major mode for editing OPascal code.\\<opascal-mode-map>
 \\[opascal-find-unit]\t- Search for a OPascal source file.
 \\[opascal-fill-comment]\t- Fill the current comment.
 \\[opascal-new-comment-line]\t- If in a // comment, do a new comment line.
@@ -1754,9 +1759,6 @@ Customization:
     Extra indentation for blocks in compound statements.
  `opascal-case-label-indent'           (default 0)
     Extra indentation for case statement labels.
- `opascal-tab-always-indents'          (default `tab-always-indents')
-    Non-nil means TAB in OPascal mode should always reindent the current line,
-    regardless of where in the line point is when the TAB command is used.
  `opascal-search-path'                 (default .)
     Directories to search when finding external units.
  `opascal-verbose'                     (default nil)
@@ -1764,11 +1766,8 @@ Customization:
 
 Coloring:
 
- `opascal-keyword-face'                (default font-lock-keyword-face)
-    Face used to color OPascal keywords.
-
-Turning on OPascal mode calls the value of the variable `opascal-mode-hook'
-with no args, if that value is non-nil."
+ `opascal-keyword-face'                (default `font-lock-keyword-face')
+    Face used to color OPascal keywords."
 
   ;; Buffer locals:
   (setq-local indent-line-function #'opascal-indent-line)

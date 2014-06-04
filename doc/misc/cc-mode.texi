@@ -83,6 +83,7 @@ the second with them pointing to the XEmacs manuals.
 
 @setfilename  ../../info/ccmode
 @settitle     CC Mode Manual
+@documentencoding UTF-8
 @footnotestyle end
 
 @c The following four macros generate the filenames and titles of the
@@ -156,13 +157,13 @@ CC Mode
 @copying
 This manual is for CC Mode in Emacs.
 
-Copyright @copyright{} 1995--2013 Free Software Foundation, Inc.
+Copyright @copyright{} 1995--2014 Free Software Foundation, Inc.
 
 @quotation
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
 any later version published by the Free Software Foundation; with no
-Invariant Sections, with the Front-Cover texts being ``A GNU Manual'',
+Invariant Sections, with the Front-Cover Texts being ``A GNU Manual'',
 and with the Back-Cover Texts as in (a) below.  A copy of the license
 is included in the section entitled ``GNU Free Documentation License''.
 
@@ -176,7 +177,7 @@ modify this GNU manual.''
 @dircategory Emacs editing modes
 @direntry
 * CC Mode: (ccmode).            Emacs mode for editing C, C++, Objective-C,
-                                Java, Pike, AWK, and CORBA IDL code.
+                                  Java, Pike, AWK, and CORBA IDL code.
 @end direntry
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -750,12 +751,6 @@ very useful in this case.
 @end itemize
 
 @table @asis
-@item @kbd{C-j} (@code{newline-and-indent})
-@kindex C-j
-@findex newline-and-indent
-Inserts a newline and indents the new blank line, ready to start
-typing.  This is a standard (X)Emacs command.
-
 @item @kbd{C-M-q} (@code{c-indent-exp})
 @kindex C-M-q
 @findex c-indent-exp
@@ -1172,7 +1167,7 @@ You can toggle each of these minor modes on and off, and you can
 configure @ccmode{} so that it starts up with your favorite
 combination of them (@pxref{Sample Init File}).  By default, when
 you initialize a buffer, electric mode and syntactic-indentation mode
-are enabled but the other two modes are disabled.
+are enabled but the other three modes are disabled.
 
 @ccmode{} displays the current state of the first four of these minor
 modes on the modeline by appending letters to the major mode's name,
@@ -7052,18 +7047,20 @@ Set the variable @code{c-basic-offset}.  @xref{Getting Started}.
 @item
 @kindex RET
 @kindex C-j
-@emph{Why doesn't the @kbd{RET} key indent the new line?}
+@emph{Why does/doesn't the @kbd{RET} key indent the new line?}
 
-Emacs's convention is that @kbd{RET} just adds a newline, and that
-@kbd{C-j} adds a newline and indents it.  You can make @kbd{RET} do this
-too by adding this to your @code{c-initialization-hook}:
+Emacs's convention used to be that @kbd{RET} just adds a newline, and that
+@kbd{C-j} adds a newline and indents it.  In Emacs-24.4, this convention was
+reversed.
+
+If you use an older Emacs and you want @kbd{RET} do this
+too, add this to your @code{c-initialization-hook}:
 
 @example
 (define-key c-mode-base-map "\C-m" 'c-context-line-break)
 @end example
 
-@xref{Getting Started}.  This is a very common question.  If you want
-this to be the default behavior, don't lobby us, lobby RMS@!  @t{:-)}
+@xref{Getting Started}.  This was a very common question.
 
 @item
 @emph{How do I stop my code jumping all over the place when I type?}

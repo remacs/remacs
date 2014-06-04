@@ -1,6 +1,6 @@
 /* Generate doc-string file for GNU Emacs from source files.
 
-Copyright (C) 1985-1986, 1992-1994, 1997, 1999-2013 Free Software
+Copyright (C) 1985-1986, 1992-1994, 1997, 1999-2014 Free Software
 Foundation, Inc.
 
 This file is part of GNU Emacs.
@@ -1075,7 +1075,7 @@ read_lisp_symbol (FILE *infile, char *buffer)
 static int
 search_lisp_doc_at_eol (FILE *infile)
 {
-  char c = 0, c1 = 0, c2 = 0;
+  int c = 0, c1 = 0, c2 = 0;
 
   /* Skip until the end of line; remember two previous chars.  */
   while (c != '\n' && c != '\r' && c != EOF)

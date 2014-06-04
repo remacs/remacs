@@ -1,6 +1,6 @@
 ;;; diff-mode.el --- a mode for viewing/editing context diffs -*- lexical-binding: t -*-
 
-;; Copyright (C) 1998-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1998-2014 Free Software Foundation, Inc.
 
 ;; Author: Stefan Monnier <monnier@iro.umontreal.ca>
 ;; Keywords: convenience patch diff vc
@@ -1366,7 +1366,8 @@ a diff with \\[diff-reverse-direction].
 
   (diff-setup-whitespace)
 
-  (setq buffer-read-only diff-default-read-only)
+  (if diff-default-read-only
+      (setq buffer-read-only t))
   ;; setup change hooks
   (if (not diff-update-on-the-fly)
       (add-hook 'write-contents-functions 'diff-write-contents-hooks nil t)

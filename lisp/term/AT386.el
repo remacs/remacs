@@ -1,6 +1,6 @@
 ;;; AT386.el --- terminal support package for IBM AT keyboards
 
-;; Copyright (C) 1992, 2001-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1992, 2001-2014 Free Software Foundation, Inc.
 
 ;; Author: Eric S. Raymond <esr@snark.thyrsus.com>
 ;; Keywords: terminals
@@ -21,8 +21,6 @@
 ;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Commentary:
-
-;; Uses the Emacs 19 terminal initialization features --- won't work with 18.
 
 ;;; Code:
 

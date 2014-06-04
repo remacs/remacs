@@ -1,6 +1,6 @@
 ;;; gnus-util.el --- utility functions for Gnus
 
-;; Copyright (C) 1996-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1996-2014 Free Software Foundation, Inc.
 
 ;; Author: Lars Magne Ingebrigtsen <larsi@gnus.org>
 ;; Keywords: news
@@ -32,9 +32,6 @@
 
 ;;; Code:
 
-;; For Emacs <22.2 and XEmacs.
-(eval-and-compile
-  (unless (fboundp 'declare-function) (defmacro declare-function (&rest r))))
 (eval-when-compile
   (require 'cl))
 
@@ -514,11 +511,14 @@ but also to the ones displayed in the echo area."
 			     (> message-log-max 0)
 			     (/= (length str) 0))
 		    (setq time (current-time))
-		    (with-current-buffer (get-buffer-create "*Messages*")
+		    (with-current-buffer (if (fboundp 'messages-buffer)
+					     (messages-buffer)
+					   (get-buffer-create "*Messages*"))
 		      (goto-char (point-max))
-		      (insert ,timestamp str "\n")
-		      (forward-line (- message-log-max))
-		      (delete-region (point-min) (point))
+		      (let ((inhibit-read-only t))
+			(insert ,timestamp str "\n")
+			(forward-line (- message-log-max))
+			(delete-region (point-min) (point)))
 		      (goto-char (point-max))))
 		  str)
 		 (gnus-add-timestamp-to-message
@@ -934,7 +934,7 @@ Otherwise, return the value."
       'previous-extent-change 'previous-char-property-change))
 
 ;;; Protected and atomic operations.  dmoore@ucsd.edu 21.11.1996
-;; The primary idea here is to try to protect internal datastructures
+;; The primary idea here is to try to protect internal data structures
 ;; from becoming corrupted when the user hits C-g, or if a hook or
 ;; similar blows up.  Often in Gnus multiple tables/lists need to be
 ;; updated at the same time, or information can be lost.
@@ -1887,6 +1887,8 @@ empty directories from OLD-PATH."
               (aref ,display-table ,character)
             (get-char-table ,character ,display-table)))
     `(aref ,display-table ,character)))
+
+(declare-function image-size "image.c" (spec &optional pixels frame))
 
 (defun gnus-rescale-image (image size)
   "Rescale IMAGE to SIZE if possible.

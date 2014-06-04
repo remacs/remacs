@@ -1,6 +1,6 @@
 ;;; info-xref.el --- tests for info-xref.el
 
-;; Copyright (C) 2013 Free Software Foundation, Inc.
+;; Copyright (C) 2013-2014 Free Software Foundation, Inc.
 
 ;; This file is part of GNU Emacs.
 
@@ -95,8 +95,7 @@ text.
 
 (ert-deftest info-xref-test-makeinfo ()
   "Test that info-xref can parse basic makeinfo output."
-  :expected-result (if (executable-find "makeinfo") :passed :failed)
-  (should (executable-find "makeinfo"))
+  (skip-unless (executable-find "makeinfo"))
   (let ((tempfile (make-temp-file "info-xref-test" nil ".texi"))
         (tempfile2 (make-temp-file "info-xref-test2" nil ".texi"))
         (errflag t))

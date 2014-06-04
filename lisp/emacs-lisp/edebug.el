@@ -1,10 +1,9 @@
 ;;; edebug.el --- a source-level debugger for Emacs Lisp  -*- lexical-binding: t -*-
 
-;; Copyright (C) 1988-1995, 1997, 1999-2013 Free Software Foundation,
-;; Inc.
+;; Copyright (C) 1988-1995, 1997, 1999-2014 Free Software Foundation, Inc.
 
 ;; Author: Daniel LaLiberte <liberte@holonexus.org>
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: lisp, tools, maint
 
 ;; This file is part of GNU Emacs.
@@ -497,7 +496,10 @@ the minibuffer."
 			(put (nth 1 form) 'saved-face nil)))))
     (setq edebug-result (eval (eval-sexp-add-defvars form) lexical-binding))
     (if (not edebugging)
-	(princ edebug-result)
+	(prog1
+	    (princ edebug-result)
+	  (let ((str (eval-expression-print-format edebug-result)))
+	    (if str (princ str))))
       edebug-result)))
 
 
@@ -1933,11 +1935,11 @@ expressions; a `progn' form will be returned enclosing these forms."
 	   [&optional stringp]
 	   [&optional ("interactive" interactive)]
 	   def-body))
-;; FIXME? Isn't this missing the doc-string?  Cf defun.
 (def-edebug-spec defmacro
   ;; FIXME: Improve `declare' so we can Edebug gv-expander and
   ;; gv-setter declarations.
-  (&define name lambda-list [&optional ("declare" &rest sexp)] def-body))
+  (&define name lambda-list [&optional stringp]
+           [&optional ("declare" &rest sexp)] def-body))
 
 (def-edebug-spec arglist lambda-list)  ;; deprecated - use lambda-list.
 
@@ -2402,9 +2404,7 @@ MSG is printed after `::::} '."
 	(edebug-outside-d-c-i-n-s-w
          (default-value 'cursor-in-non-selected-windows)))
     (unwind-protect
-	(let ((overlay-arrow-position overlay-arrow-position)
-	      (overlay-arrow-string overlay-arrow-string)
-	      (cursor-in-echo-area nil)
+	(let ((cursor-in-echo-area nil)
 	      (unread-command-events nil)
 	      ;; any others??
 	      )
@@ -2465,136 +2465,141 @@ MSG is printed after `::::} '."
 		(edebug-stop)
 		;;	    (discard-input)		; is this unfriendly??
 		))
-	  ;; Now display arrow based on mode.
-	  (edebug-overlay-arrow)
 
-	  (cond
-	   ((eq 'error arg-mode)
-	    ;; Display error message
-	    (setq edebug-execution-mode 'step)
-	    (edebug-overlay-arrow)
-	    (beep)
-	    (if (eq 'quit (car value))
-		(message "Quit")
-	      (edebug-report-error value)))
-	   (edebug-break
-	    (cond
-	     (edebug-global-break
-	      (message "Global Break: %s => %s"
-		       edebug-global-break-condition
-		       edebug-global-break-result))
-	     (edebug-break-condition
-	      (message "Break: %s => %s"
-		       edebug-break-condition
-		       edebug-break-result))
-	     ((not (eq edebug-execution-mode 'Continue-fast))
-	      (message "Break"))
-	     (t)))
+          ;; Make sure we bind those in the right buffer (bug#16410).
+          (let ((overlay-arrow-position overlay-arrow-position)
+                (overlay-arrow-string overlay-arrow-string))
+            ;; Now display arrow based on mode.
+            (edebug-overlay-arrow)
 
-	   (t (message "")))
+            (cond
+             ((eq 'error arg-mode)
+              ;; Display error message
+              (setq edebug-execution-mode 'step)
+              (edebug-overlay-arrow)
+              (beep)
+              (if (eq 'quit (car value))
+                  (message "Quit")
+                (edebug-report-error value)))
+             (edebug-break
+              (cond
+               (edebug-global-break
+                (message "Global Break: %s => %s"
+                         edebug-global-break-condition
+                         edebug-global-break-result))
+               (edebug-break-condition
+                (message "Break: %s => %s"
+                         edebug-break-condition
+                         edebug-break-result))
+               ((not (eq edebug-execution-mode 'Continue-fast))
+                (message "Break"))
+               (t)))
 
-	  (if (eq 'after arg-mode)
-	      (progn
-		;; Display result of previous evaluation.
-		(if (and edebug-break
-			 (not (eq edebug-execution-mode 'Continue-fast)))
-                    (sit-for edebug-sit-for-seconds)) ; Show message.
-		(edebug-previous-result)))
+             (t (message "")))
 
-	  (cond
-	   (edebug-break
-	    (cond
-	     ((eq edebug-execution-mode 'continue)
-              (sit-for edebug-sit-for-seconds))
-	     ((eq edebug-execution-mode 'Continue-fast) (sit-for 0))
-	     (t (setq edebug-stop t))))
-	   ;; not edebug-break
-	   ((eq edebug-execution-mode 'trace)
-	    (sit-for edebug-sit-for-seconds)) ; Force update and pause.
-	   ((eq edebug-execution-mode 'Trace-fast)
-	    (sit-for 0)))		; Force update and continue.
+            (if (eq 'after arg-mode)
+                (progn
+                  ;; Display result of previous evaluation.
+                  (if (and edebug-break
+                           (not (eq edebug-execution-mode 'Continue-fast)))
+                      (sit-for edebug-sit-for-seconds)) ; Show message.
+                  (edebug-previous-result)))
 
-	  (unwind-protect
-	      (if (or edebug-stop
-		      (memq edebug-execution-mode '(step next))
-		      (eq arg-mode 'error))
-		  (progn
-		    ;; (setq edebug-execution-mode 'step)
-		    ;; (edebug-overlay-arrow)	; This doesn't always show up.
-		    (edebug--recursive-edit arg-mode))) ; <----- Recursive edit
+            (cond
+             (edebug-break
+              (cond
+               ((eq edebug-execution-mode 'continue)
+                (sit-for edebug-sit-for-seconds))
+               ((eq edebug-execution-mode 'Continue-fast) (sit-for 0))
+               (t (setq edebug-stop t))))
+             ;; not edebug-break
+             ((eq edebug-execution-mode 'trace)
+              (sit-for edebug-sit-for-seconds)) ; Force update and pause.
+             ((eq edebug-execution-mode 'Trace-fast)
+              (sit-for 0)))		; Force update and continue.
 
-	    ;; Reset the edebug-window-data to whatever it is now.
-	    (let ((window (if (eq (window-buffer) edebug-buffer)
-			      (selected-window)
-			    (get-buffer-window edebug-buffer))))
-	      ;; Remember window-start for edebug-buffer, if still displayed.
-	      (if window
-		  (progn
-		    (setcar edebug-window-data window)
-		    (setcdr edebug-window-data (window-start window)))))
+            (unwind-protect
+                (if (or edebug-stop
+                        (memq edebug-execution-mode '(step next))
+                        (eq arg-mode 'error))
+                    (progn
+                      ;; (setq edebug-execution-mode 'step)
+                      ;; (edebug-overlay-arrow)	; This doesn't always show up.
+                      (edebug--recursive-edit arg-mode))) ; <--- Recursive edit
 
-	    ;; Save trace window point before restoring outside windows.
-	    ;; Could generalize this for other buffers.
-	    (setq edebug-trace-window (get-buffer-window edebug-trace-buffer))
-	    (if edebug-trace-window
-		(setq edebug-trace-window-start
-		      (and edebug-trace-window
-			   (window-start edebug-trace-window))))
+              ;; Reset the edebug-window-data to whatever it is now.
+              (let ((window (if (eq (window-buffer) edebug-buffer)
+                                (selected-window)
+                              (get-buffer-window edebug-buffer))))
+                ;; Remember window-start for edebug-buffer, if still displayed.
+                (if window
+                    (progn
+                      (setcar edebug-window-data window)
+                      (setcdr edebug-window-data (window-start window)))))
 
-	    ;; Restore windows before continuing.
-	    (if edebug-save-windows
-		(progn
-		  (edebug-set-windows edebug-outside-windows)
+              ;; Save trace window point before restoring outside windows.
+              ;; Could generalize this for other buffers.
+              (setq edebug-trace-window
+                    (get-buffer-window edebug-trace-buffer))
+              (if edebug-trace-window
+                  (setq edebug-trace-window-start
+                        (and edebug-trace-window
+                             (window-start edebug-trace-window))))
 
-		  ;; Restore displayed buffer points.
-		  ;; Needed even if restoring windows because
-		  ;; window-points are not restored. (should they be??)
-		  (if edebug-save-displayed-buffer-points
-		      (edebug-set-buffer-points edebug-buffer-points))
+              ;; Restore windows before continuing.
+              (if edebug-save-windows
+                  (progn
+                    (edebug-set-windows edebug-outside-windows)
 
-		  ;; Unrestore trace window's window-point.
-		  (if edebug-trace-window
-		      (set-window-start edebug-trace-window
-					edebug-trace-window-start))
+                    ;; Restore displayed buffer points.
+                    ;; Needed even if restoring windows because
+                    ;; window-points are not restored. (should they be??)
+                    (if edebug-save-displayed-buffer-points
+                        (edebug-set-buffer-points edebug-buffer-points))
 
-		  ;; Unrestore edebug-buffer's window-start, if displayed.
-		  (let ((window (car edebug-window-data)))
-		    (if (and (edebug-window-live-p window)
-			     (eq (window-buffer) edebug-buffer))
-			(progn
-			  (set-window-start window (cdr edebug-window-data)
-					    'no-force)
-			  ;; Unrestore edebug-buffer's window-point.
-			  ;; Needed in addition to setting the buffer point
-			  ;; - otherwise quitting doesn't leave point as is.
-			  ;; But this causes point to not be restored at times.
-			  ;; Also, it may not be a visible window.
-			  ;; (set-window-point window edebug-point)
-			  )))
+                    ;; Unrestore trace window's window-point.
+                    (if edebug-trace-window
+                        (set-window-start edebug-trace-window
+                                          edebug-trace-window-start))
 
-		  ;; Unrestore edebug-buffer's point.   Rerestored below.
-		  ;;  (goto-char edebug-point) ;; in edebug-buffer
-		  )
-	      ;; Since we may be in a save-excursion, in case of quit,
-	      ;; reselect the outside window only.
-	      ;; Only needed if we are not recovering windows??
-	      (if (edebug-window-live-p edebug-outside-window)
-		  (select-window edebug-outside-window))
-	      )				; if edebug-save-windows
+                    ;; Unrestore edebug-buffer's window-start, if displayed.
+                    (let ((window (car edebug-window-data)))
+                      (if (and (edebug-window-live-p window)
+                               (eq (window-buffer) edebug-buffer))
+                          (progn
+                            (set-window-start window (cdr edebug-window-data)
+                                              'no-force)
+                            ;; Unrestore edebug-buffer's window-point.
+                            ;; Needed in addition to setting the buffer point
+                            ;; - otherwise quitting doesn't leave point as is.
+                            ;; But can this causes point to not be restored.
+                            ;; Also, it may not be a visible window.
+                            ;; (set-window-point window edebug-point)
+                            )))
 
-	    ;; Restore current buffer always, in case application needs it.
-	    (if (buffer-name edebug-outside-buffer)
-		(set-buffer edebug-outside-buffer))
-	    ;; Restore point, and mark.
-	    ;; Needed even if restoring windows because
-	    ;; that doesn't restore point and mark in the current buffer.
-	    ;; But don't restore point if edebug-buffer is current buffer.
-	    (if (not (eq edebug-buffer edebug-outside-buffer))
-		(goto-char edebug-outside-point))
-	    (if (marker-buffer (edebug-mark-marker))
-		;; Does zmacs-regions need to be nil while doing set-marker?
-		(set-marker (edebug-mark-marker) edebug-outside-mark))
-	    )				; unwind-protect
+                    ;; Unrestore edebug-buffer's point.   Rerestored below.
+                    ;;  (goto-char edebug-point) ;; in edebug-buffer
+                    )
+                ;; Since we may be in a save-excursion, in case of quit,
+                ;; reselect the outside window only.
+                ;; Only needed if we are not recovering windows??
+                (if (edebug-window-live-p edebug-outside-window)
+                    (select-window edebug-outside-window))
+                )                       ; if edebug-save-windows
+
+              ;; Restore current buffer always, in case application needs it.
+              (if (buffer-name edebug-outside-buffer)
+                  (set-buffer edebug-outside-buffer))
+              ;; Restore point, and mark.
+              ;; Needed even if restoring windows because
+              ;; that doesn't restore point and mark in the current buffer.
+              ;; But don't restore point if edebug-buffer is current buffer.
+              (if (not (eq edebug-buffer edebug-outside-buffer))
+                  (goto-char edebug-outside-point))
+              (if (marker-buffer (edebug-mark-marker))
+                  ;; Does zmacs-regions need to be nil while doing set-marker?
+                  (set-marker (edebug-mark-marker) edebug-outside-mark))
+              ))     ; unwind-protect
 	  ;; None of the following is done if quit or signal occurs.
 
 	  ;; Restore edebug-buffer's outside point.

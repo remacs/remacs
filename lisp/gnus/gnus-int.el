@@ -1,6 +1,6 @@
 ;;; gnus-int.el --- backend interface functions for Gnus
 
-;; Copyright (C) 1996-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1996-2014 Free Software Foundation, Inc.
 
 ;; Author: Lars Magne Ingebrigtsen <larsi@gnus.org>
 ;; Keywords: news
@@ -113,7 +113,8 @@ If CONFIRM is non-nil, the user will be asked for an NNTP server."
 	(setq gnus-nntp-server
 	      (gnus-completing-read "NNTP server"
                                     (cons gnus-nntp-server
-                                          gnus-secondary-servers)
+					  (if (boundp 'gnus-secondary-servers)
+					      gnus-secondary-servers))
                                     nil gnus-nntp-server)))
 
       (when (and gnus-nntp-server
@@ -302,7 +303,7 @@ If it is down, start it up (again)."
         (setcar
 	 (cdr elem)
 	 (cond (result
-		(if (eq open-server-function #'nnagent-open-server)
+		(if (eq open-server-function 'nnagent-open-server)
 		    ;; The agent's backend has a "special" status
 		    'offline
 		  'ok))
@@ -753,7 +754,6 @@ If GROUP is nil, all groups on GNUS-COMMAND-METHOD are scanned."
 
 (defun gnus-request-accept-article (group &optional gnus-command-method last
 					  no-encode)
-  ;; Make sure there's a newline at the end of the article.
   (when (stringp gnus-command-method)
     (setq gnus-command-method (gnus-server-to-method gnus-command-method)))
   (when (and (not gnus-command-method)
@@ -761,6 +761,7 @@ If GROUP is nil, all groups on GNUS-COMMAND-METHOD are scanned."
     (setq gnus-command-method (or (gnus-find-method-for-group group)
                                   (gnus-group-name-to-method group))))
   (goto-char (point-max))
+  ;; Make sure there's a newline at the end of the article.
   (unless (bolp)
     (insert "\n"))
   (unless no-encode

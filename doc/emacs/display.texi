@@ -1,5 +1,5 @@
 @c This is part of the Emacs manual.
-@c Copyright (C) 1985-1987, 1993-1995, 1997, 2000-2013 Free Software
+@c Copyright (C) 1985-1987, 1993-1995, 1997, 2000-2014 Free Software
 @c Foundation, Inc.
 
 @c See file emacs.texi for copying conditions.
@@ -428,8 +428,8 @@ it.  @xref{Disabling}.
 screenfuls.  It provides commands for scrolling through the buffer
 conveniently but not for changing it.  Apart from the usual Emacs
 cursor motion commands, you can type @key{SPC} to scroll forward one
-windowful, @key{DEL} to scroll backward, and @kbd{s} to start an
-incremental search.
+windowful, @key{S-@key{SPC}} or @key{DEL} to scroll backward, and @kbd{s} to
+start an incremental search.
 
 @kindex q @r{(View mode)}
 @kindex e @r{(View mode)}
@@ -710,6 +710,17 @@ This face determines the color of tool bar icons.  @xref{Tool Bars}.
 @cindex customization of @code{menu} face
 This face determines the colors and font of Emacs's menus.  @xref{Menu
 Bars}.
+@item tty-menu-enabled-face
+@cindex faces for text-mode menus
+@cindex TTY menu faces
+This face is used to display enabled menu items on text-mode
+terminals.
+@item tty-menu-disabled-face
+This face is used to display disabled menu items on text-mode
+terminals.
+@item tty-menu-selected-face
+This face is used to display on text-mode terminals the menu item that
+would be selected if you click a mouse or press @key{RET}.
 @end table
 
 @node Text Scale
@@ -732,9 +743,9 @@ determine which action to take.
 @kbd{C-x}.  For instance, @kbd{C-x C-= C-= C-=} increases the face
 height by three steps.  Each step scales the text height by a factor
 of 1.2; to change this factor, customize the variable
-@code{text-scale-mode-step}.  As an exception, a numeric argument of 0
+@code{text-scale-mode-step}.  A numeric argument of 0
 to the @code{text-scale-adjust} command restores the default height,
-similar to typing @kbd{C-x C-0}.
+the same as typing @kbd{C-x C-0}.
 
 @cindex increase buffer face height
 @findex text-scale-increase
@@ -917,6 +928,12 @@ highlighting, Hi Lock provides several of its own and these are
 pre-loaded into a list of default values.  While being prompted
 for a face use @kbd{M-n} and @kbd{M-p} to cycle through them.
 
+@vindex hi-lock-auto-select-face
+Setting the option @code{hi-lock-auto-select-face} to a non-@code{nil}
+value causes this command (and other Hi Lock commands that read faces)
+to automatically choose the next face from the default list without
+prompting.
+
 You can use this command multiple times, specifying various regular
 expressions to highlight in different ways.
 
@@ -965,8 +982,8 @@ initial lower-case letters will become case insensitive.
 @findex highlight-symbol-at-point
 @cindex symbol, highlighting
 @cindex highlighting symbol at point
-Highlight the symbol found near point without prompting, using the next
-available face automatically (@code{highlight-symbol-at-point}).
+Highlight the symbol found near point, using the next available face
+(@code{highlight-symbol-at-point}).
 
 @item M-s h w
 @itemx C-x w b
@@ -1314,7 +1331,7 @@ specify the mail file to check, or set
 for incoming mail (any nonempty regular file in the directory is
 considered as ``newly arrived mail'').
 
-@cindex mail (on mode line)
+@cindex battery status (on mode line)
 @findex display-battery-mode
 @vindex display-battery-mode
 @vindex battery-mode-line-format
@@ -1462,17 +1479,30 @@ pixels tall), or @code{nil} (no cursor at all).
 @findex blink-cursor-mode
 @cindex cursor, blinking
 @cindex blinking cursor
+@vindex blink-cursor-mode
+@vindex blink-cursor-blinks
 @vindex blink-cursor-alist
-  To disable cursor blinking, change the variable
-@code{blink-cursor-mode} to @code{nil} (@pxref{Easy Customization}),
-or add the line @code{(blink-cursor-mode 0)} to your init file.
-Alternatively, you can change how the cursor looks when it ``blinks
-off'' by customizing the list variable @code{blink-cursor-alist}.
-Each element in the list should have the form @code{(@var{on-type}
-. @var{off-type})}; this means that if the cursor is displayed as
-@var{on-type} when it blinks on (where @var{on-type} is one of the
-cursor types described above), then it is displayed as @var{off-type}
-when it blinks off.
+  By default, the cursor stops blinking after 10 blinks, if Emacs does
+not get any input during that time; any input event restarts the
+count.  You can customize the variable @code{blink-cursor-blinks} to
+control that: its value says how many times to blink without input
+before stopping.  Setting that variable to a zero or negative value
+will make the cursor blink forever.  To disable cursor blinking
+altogether, change the variable @code{blink-cursor-mode} to @code{nil}
+(@pxref{Easy Customization}), or add the line
+
+@lisp
+  (blink-cursor-mode 0)
+@end lisp
+
+@noindent
+to your init file.  Alternatively, you can change how the cursor
+looks when it ``blinks off'' by customizing the list variable
+@code{blink-cursor-alist}.  Each element in the list should have the
+form @code{(@var{on-type} . @var{off-type})}; this means that if the
+cursor is displayed as @var{on-type} when it blinks on (where
+@var{on-type} is one of the cursor types described above), then it is
+displayed as @var{off-type} when it blinks off.
 
 @vindex x-stretch-cursor
 @cindex wide block cursor

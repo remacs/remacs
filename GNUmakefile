@@ -1,6 +1,6 @@
 # Build Emacs from a fresh tarball or version-control checkout.
 
-# Copyright (C) 2011-2013 Free Software Foundation, Inc.
+# Copyright (C) 2011-2014 Free Software Foundation, Inc.
 #
 # This file is part of GNU Emacs.
 #
@@ -32,12 +32,6 @@
 # run "configure" by hand.  But run autogen.sh first, if the source
 # was checked out directly from the repository.
 
-ifneq ($(MSYSTEM),)
-CFG = CONFIG_SITE=$(CURDIR)/nt/mingw-cfg.site
-else
-CFG =
-endif
-
 # If a Makefile already exists, just use it.
 
 ifeq ($(wildcard Makefile),Makefile)
@@ -61,22 +55,30 @@ else
 # Once 'configure' exists, run it.
 # Finally, run the actual 'make'.
 
-default $(filter-out configure Makefile,$(MAKECMDGOALS)): Makefile
+ORDINARY_GOALS = $(filter-out configure Makefile bootstrap,$(MAKECMDGOALS))
+
+default $(ORDINARY_GOALS): Makefile
 	$(MAKE) -f Makefile $(MAKECMDGOALS)
 # Execute in sequence, so that multiple user goals don't conflict.
 .NOTPARALLEL:
 
 configure:
 	@echo >&2 'There seems to be no "configure" file in this directory.'
-	@echo >&2 'Running ./autogen.sh || autogen/copy_autogen ...'
-	./autogen.sh || autogen/copy_autogen
+	@echo >&2 'Running ./autogen.sh ...'
+	./autogen.sh
 	@echo >&2 '"configure" file built.'
 
 Makefile: configure
 	@echo >&2 'There seems to be no Makefile in this directory.'
 	@echo >&2 'Running ./configure ...'
-	$(CFG) ./configure
+	./configure
 	@echo >&2 'Makefile built.'
+
+# 'make bootstrap' in a fresh checkout needn't run 'configure' twice.
+bootstrap: Makefile
+	$(MAKE) -f Makefile all
+
+.PHONY: bootstrap default $(ORDINARY_GOALS)
 
 endif
 endif

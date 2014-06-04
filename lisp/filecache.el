@@ -1,6 +1,6 @@
 ;;; filecache.el --- find files using a pre-loaded cache
 
-;; Copyright (C) 1996, 2000-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1996, 2000-2014 Free Software Foundation, Inc.
 
 ;; Author:  Peter Breton <pbreton@cs.umb.edu>
 ;; Created: Sun Nov 10 1996
@@ -613,7 +613,9 @@ the name is considered already unique; only the second substitution
                      (append completion-setup-hook
                              (list 'file-cache-completion-setup-function))))
 		(with-output-to-temp-buffer file-cache-completions-buffer
-		  (display-completion-list completion-list string))))
+		  (display-completion-list
+                   (completion-hilit-commonality completion-list
+                                                 (length string))))))
 	  (setq file-cache-string (file-cache-file-name completion-string))
 	  (if (string= file-cache-string (minibuffer-contents))
 	      (minibuffer-message file-cache-sole-match-message)

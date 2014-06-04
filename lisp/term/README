@@ -1,13 +1,15 @@
-Copyright (C) 1993, 2001-2013 Free Software Foundation, Inc.
+Copyright (C) 1993, 2001-2014 Free Software Foundation, Inc.
 See the end of the file for license conditions.
 
 
    This directory contains files of elisp that customize Emacs for certain
 terminal types.
 
-   When Emacs opens a new terminal, it checks the TERM environment variable to
-see what type of terminal the user is running on, searches for an elisp file
-named "term/${TERM}.el", and if one exists, loads it.  If Emacs finds no
+   When Emacs opens a new terminal, it checks the TERM environment variable
+to see what type of terminal the user is running on.  (If there is an entry
+for TERM in the `term-file-aliases' variable, Emacs uses the associated value
+in place of TERM in the following.)  Emacs searches for an elisp file named
+"term/${TERM}.el", and if one exists, loads it.  If Emacs finds no
 suitable file, then it strips the last hyphen and what follows it from TERM,
 and tries again.  If that still doesn't yield a file, then the previous hyphen
 is stripped, and so on until all hyphens are gone.  For example, if the
@@ -55,7 +57,7 @@ are listed in src/term.c; look for the string `keys' in that file.
 terminal mode as on an X console.  If there are differences, you can bet
 they'll frustrate you after you've forgotten about them.
 
-   For another, the X keysms provide a standard set of names that Emacs knows
+   For another, the X keysyms provide a standard set of names that Emacs knows
 about.  It tries to bind many of them to useful things at startup, before your
 .emacs is read (so you can override them).  In some ways, the X keysym standard
 is a admittedly poor one; it's incomplete, and not well matched to the set of

@@ -1,6 +1,6 @@
 /* Lisp functions pertaining to editing.
 
-Copyright (C) 1985-1987, 1989, 1993-2013 Free Software Foundation, Inc.
+Copyright (C) 1985-1987, 1989, 1993-2014 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -343,16 +343,15 @@ overlays_around (EMACS_INT pos, Lisp_Object *vec, ptrdiff_t len)
   return idx;
 }
 
-/* Return the value of property PROP, in OBJECT at POSITION.
-   It's the value of PROP that a char inserted at POSITION would get.
-   OBJECT is optional and defaults to the current buffer.
-   If OBJECT is a buffer, then overlay properties are considered as well as
-   text properties.
-   If OBJECT is a window, then that window's buffer is used, but
-   window-specific overlays are considered only if they are associated
-   with OBJECT. */
-Lisp_Object
-get_pos_property (Lisp_Object position, register Lisp_Object prop, Lisp_Object object)
+DEFUN ("get-pos-property", Fget_pos_property, Sget_pos_property, 2, 3, 0,
+       doc: /* Return the value of POSITION's property PROP, in OBJECT.
+Almost identical to `get-char-property' except for the following difference:
+Whereas `get-char-property' returns the property of the char at (i.e. right
+after) POSITION, this pays attention to properties's stickiness and overlays's
+advancement settings, in order to find the property of POSITION itself,
+i.e. the property that a char would inherit if it were inserted
+at POSITION.  */)
+  (Lisp_Object position, register Lisp_Object prop, Lisp_Object object)
 {
   CHECK_NUMBER_COERCE_MARKER (position);
 
@@ -484,7 +483,7 @@ find_field (Lisp_Object pos, Lisp_Object merge_at_boundary,
      specially.  */
   if (NILP (merge_at_boundary))
     {
-      Lisp_Object field = get_pos_property (pos, Qfield, Qnil);
+      Lisp_Object field = Fget_pos_property (pos, Qfield, Qnil);
       if (!EQ (field, after_field))
 	at_field_end = 1;
       if (!EQ (field, before_field))
@@ -647,7 +646,7 @@ also considered to be `on the boundary'.
 
 If the optional argument ONLY-IN-LINE is non-nil and constraining
 NEW-POS would move it to a different line, NEW-POS is returned
-unconstrained.  This useful for commands that move by line, like
+unconstrained.  This is useful for commands that move by line, like
 \\[next-line] or \\[beginning-of-line], which should generally respect field boundaries
 only in the case where they can still move to the right line.
 
@@ -683,7 +682,7 @@ Field boundaries are not noticed if `inhibit-field-text-motion' is non-nil.  */)
       && (!NILP (Fget_char_property (new_pos, Qfield, Qnil))
           || !NILP (Fget_char_property (old_pos, Qfield, Qnil))
           /* To recognize field boundaries, we must also look at the
-             previous positions; we could use `get_pos_property'
+             previous positions; we could use `Fget_pos_property'
              instead, but in itself that would fail inside non-sticky
              fields (like comint prompts).  */
           || (XFASTINT (new_pos) > BEGV
@@ -694,10 +693,12 @@ Field boundaries are not noticed if `inhibit-field-text-motion' is non-nil.  */)
           /* Field boundaries are again a problem; but now we must
              decide the case exactly, so we need to call
              `get_pos_property' as well.  */
-          || (NILP (get_pos_property (old_pos, inhibit_capture_property, Qnil))
+          || (NILP (Fget_pos_property (old_pos, inhibit_capture_property, Qnil))
               && (XFASTINT (old_pos) <= BEGV
-                  || NILP (Fget_char_property (old_pos, inhibit_capture_property, Qnil))
-                  || NILP (Fget_char_property (prev_old, inhibit_capture_property, Qnil))))))
+                  || NILP (Fget_char_property
+			   (old_pos, inhibit_capture_property, Qnil))
+                  || NILP (Fget_char_property
+			   (prev_old, inhibit_capture_property, Qnil))))))
     /* It is possible that NEW_POS is not within the same field as
        OLD_POS; try to move NEW_POS so that it is.  */
     {
@@ -717,7 +718,7 @@ Field boundaries are not noticed if `inhibit-field-text-motion' is non-nil.  */)
 	  /* NEW_POS should be constrained, but only if either
 	     ONLY_IN_LINE is nil (in which case any constraint is OK),
 	     or NEW_POS and FIELD_BOUND are on the same line (in which
-	     case the constraint is OK even if ONLY_IN_LINE is non-nil). */
+	     case the constraint is OK even if ONLY_IN_LINE is non-nil).  */
 	  && (NILP (only_in_line)
 	      /* This is the ONLY_IN_LINE case, check that NEW_POS and
 		 FIELD_BOUND are on the same line by seeing whether
@@ -1702,6 +1703,7 @@ by text that describes the specified date and time in TIME:
 %G is the year corresponding to the ISO week, %g within the century.
 %m is the numeric month.
 %b and %h are the locale's abbreviated month name, %B the full name.
+ (%h is not supported on MS-Windows.)
 %d is the day of the month, zero-padded, %e is blank-padded.
 %u is the numeric day of week from 1 (Monday) to 7, %w from 0 (Sunday) to 6.
 %a is the locale's abbreviated name of the day of week, %A the full name.
@@ -1721,6 +1723,7 @@ by text that describes the specified date and time in TIME:
 %c is the locale's date and time format.
 %x is the locale's "preferred" date format.
 %D is like "%m/%d/%y".
+%F is the ISO 8601 date format (like "%Y-%m-%d").
 
 %R is like "%H:%M", %T is like "%H:%M:%S", %r is like "%I:%M:%S %p".
 %X is the locale's "preferred" time format.
@@ -1739,7 +1742,7 @@ The modifiers are `E' and `O'.  For certain characters X,
 %EX is a locale's alternative version of %X;
 %OX is like %X, but uses the locale's number symbols.
 
-For example, to produce full ISO 8601 format, use "%Y-%m-%dT%T%z".
+For example, to produce full ISO 8601 format, use "%FT%T%z".
 
 usage: (format-time-string FORMAT-STRING &optional TIME UNIVERSAL)  */)
   (Lisp_Object format_string, Lisp_Object timeval, Lisp_Object universal)
@@ -3419,6 +3422,9 @@ The message also goes into the `*Messages*' buffer, if `message-log-max'
 is non-nil.  (In keyboard macros, that's all it does.)
 Return the message.
 
+In batch mode, the message is printed to the standard error stream,
+followed by a newline.
+
 The first argument is a format control string, and the rest are data
 to be formatted under control of the string.  See `format' for details.
 
@@ -3468,23 +3474,14 @@ usage: (message-box FORMAT-STRING &rest ARGS)  */)
   else
     {
       Lisp_Object val = Fformat (nargs, args);
-#ifdef HAVE_MENUS
-      /* The MS-DOS frames support popup menus even though they are
-	 not FRAME_WINDOW_P.  */
-      if (FRAME_WINDOW_P (XFRAME (selected_frame))
-	  || FRAME_MSDOS_P (XFRAME (selected_frame)))
-      {
-	Lisp_Object pane, menu;
-	struct gcpro gcpro1;
-	pane = list1 (Fcons (build_string ("OK"), Qt));
-	GCPRO1 (pane);
-	menu = Fcons (val, pane);
-	Fx_popup_dialog (Qt, menu, Qt);
-	UNGCPRO;
-	return val;
-      }
-#endif /* HAVE_MENUS */
-      message3 (val);
+      Lisp_Object pane, menu;
+      struct gcpro gcpro1;
+
+      pane = list1 (Fcons (build_string ("OK"), Qt));
+      GCPRO1 (pane);
+      menu = Fcons (val, pane);
+      Fx_popup_dialog (Qt, menu, Qt);
+      UNGCPRO;
       return val;
     }
 }
@@ -3503,11 +3500,9 @@ message; let the minibuffer contents show.
 usage: (message-or-box FORMAT-STRING &rest ARGS)  */)
   (ptrdiff_t nargs, Lisp_Object *args)
 {
-#ifdef HAVE_MENUS
   if ((NILP (last_nonmenu_event) || CONSP (last_nonmenu_event))
       && use_dialog_box)
     return Fmessage_box (nargs, args);
-#endif
   return Fmessage (nargs, args);
 }
 
@@ -3641,8 +3636,8 @@ usage: (format STRING &rest OBJECTS)  */)
   struct info
   {
     ptrdiff_t start, end;
-    unsigned converted_to_string : 1;
-    unsigned intervals : 1;
+    bool_bf converted_to_string : 1;
+    bool_bf intervals : 1;
   } *info = 0;
 
   /* It should not be necessary to GCPRO ARGS, because
@@ -4219,7 +4214,7 @@ usage: (format STRING &rest OBJECTS)  */)
 	if (buf == initial_buffer)
 	  {
 	    buf = xmalloc (bufsize);
-	    sa_must_free = 1;
+	    sa_must_free = true;
 	    buf_save_value_index = SPECPDL_INDEX ();
 	    record_unwind_protect_ptr (xfree, buf);
 	    memcpy (buf, initial_buffer, used);
@@ -4383,17 +4378,22 @@ Case is ignored if `case-fold-search' is non-nil in the current buffer.  */)
     return Qnil;
 
   i1 = XFASTINT (c1);
-  if (NILP (BVAR (current_buffer, enable_multibyte_characters))
-      && ! ASCII_CHAR_P (i1))
-    {
-      MAKE_CHAR_MULTIBYTE (i1);
-    }
   i2 = XFASTINT (c2);
-  if (NILP (BVAR (current_buffer, enable_multibyte_characters))
-      && ! ASCII_CHAR_P (i2))
+
+  /* FIXME: It is possible to compare multibyte characters even when
+     the current buffer is unibyte.  Unfortunately this is ambiguous
+     for characters between 128 and 255, as they could be either
+     eight-bit raw bytes or Latin-1 characters.  Assume the former for
+     now.  See Bug#17011, and also see casefiddle.c's casify_object,
+     which has a similar problem.  */
+  if (NILP (BVAR (current_buffer, enable_multibyte_characters)))
     {
-      MAKE_CHAR_MULTIBYTE (i2);
+      if (SINGLE_BYTE_CHAR_P (i1))
+	i1 = UNIBYTE_TO_CHAR (i1);
+      if (SINGLE_BYTE_CHAR_P (i2))
+	i2 = UNIBYTE_TO_CHAR (i2);
     }
+
   return (downcase (i1) == downcase (i2) ? Qt :  Qnil);
 }
 
@@ -4837,6 +4837,7 @@ functions if all the text being accessed has this property.  */);
   defsubr (&Sbuffer_substring);
   defsubr (&Sbuffer_substring_no_properties);
   defsubr (&Sbuffer_string);
+  defsubr (&Sget_pos_property);
 
   defsubr (&Spoint_marker);
   defsubr (&Smark_marker);

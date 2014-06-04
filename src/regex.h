@@ -1,7 +1,7 @@
 /* Definitions for data structures and routines for the regular
    expression library, version 0.12.
 
-   Copyright (C) 1985, 1989-1993, 1995, 2000-2013 Free Software
+   Copyright (C) 1985, 1989-1993, 1995, 2000-2014 Free Software
    Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
@@ -40,7 +40,7 @@ extern "C" {
    The bits are given in alphabetical order, and
    the definitions shifted by one from the previous bit; thus, when we
    add or remove a bit, only one other definition need change.  */
-typedef unsigned long int reg_syntax_t;
+typedef unsigned long reg_syntax_t;
 
 /* If this bit is not set, then \ inside a bracket expression is literal.
    If set, then such a \ quotes the following character.  */

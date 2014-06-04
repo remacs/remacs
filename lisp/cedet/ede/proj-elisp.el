@@ -1,6 +1,6 @@
 ;;; ede-proj-elisp.el --- EDE Generic Project Emacs Lisp support
 
-;; Copyright (C) 1998-2005, 2007-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1998-2005, 2007-2014 Free Software Foundation, Inc.
 
 ;; Author: Eric M. Ludlam <zappo@gnu.org>
 ;; Keywords: project, make
@@ -255,7 +255,7 @@ is found, such as a `-version' variable, or the standard header."
       (save-excursion
 	(if (file-symlink-p ec)
 	    (progn
-	      ;; Desymlinkify
+	      ;; Change symlinks to copies.
 	      (rename-file ec (concat ec ".tmp"))
 	      (copy-file (concat ec ".tmp") ec)
 	      (delete-file (concat ec ".tmp"))))

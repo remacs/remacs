@@ -1,6 +1,6 @@
 /* Minibuffer input and completion.
 
-Copyright (C) 1985-1986, 1993-2013 Free Software Foundation, Inc.
+Copyright (C) 1985-1986, 1993-2014 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -384,6 +384,7 @@ read_minibuf (Lisp_Object map, Lisp_Object initial, Lisp_Object prompt,
   EMACS_INT pos = 0;
   /* String to add to the history.  */
   Lisp_Object histstring;
+  Lisp_Object histval;
 
   Lisp_Object empty_minibuf;
   Lisp_Object dummy, frame;
@@ -395,7 +396,8 @@ read_minibuf (Lisp_Object map, Lisp_Object initial, Lisp_Object prompt,
      in previous recursive minibuffer, but was not set explicitly
      to t for this invocation, so set it to nil in this minibuffer.
      Save the old value now, before we change it.  */
-  specbind (intern ("minibuffer-completing-file-name"), Vminibuffer_completing_file_name);
+  specbind (intern ("minibuffer-completing-file-name"),
+	    Vminibuffer_completing_file_name);
   if (EQ (Vminibuffer_completing_file_name, Qlambda))
     Vminibuffer_completing_file_name = Qnil;
 
@@ -534,6 +536,14 @@ read_minibuf (Lisp_Object map, Lisp_Object initial, Lisp_Object prompt,
      "t" in this minibuffer, but "nil" in next minibuffer.  */
   if (!NILP (Vminibuffer_completing_file_name))
     Vminibuffer_completing_file_name = Qlambda;
+
+  /* If variable is unbound, make it nil.  */
+  histval = find_symbol_value (Vminibuffer_history_variable);
+  if (EQ (histval, Qunbound))
+    {
+      Fset (Vminibuffer_history_variable, Qnil);
+      histval = Qnil;
+    }
 
   if (inherit_input_method)
     {
@@ -703,13 +713,6 @@ read_minibuf (Lisp_Object map, Lisp_Object initial, Lisp_Object prompt,
     {
       /* If the caller wanted to save the value read on a history list,
 	 then do so if the value is not already the front of the list.  */
-      Lisp_Object histval;
-
-      /* If variable is unbound, make it nil.  */
-
-      histval = find_symbol_value (Vminibuffer_history_variable);
-      if (EQ (histval, Qunbound))
-	Fset (Vminibuffer_history_variable, Qnil);
 
       /* The value of the history variable must be a cons or nil.  Other
 	 values are unacceptable.  We silently ignore these values.  */
@@ -865,9 +868,6 @@ read_minibuf_unwind (void)
   if (minibuf_level == 0)
     resize_mini_window (XWINDOW (window), 0);
 
-  /* Enforce full redisplay.  FIXME: make it more selective.  */
-  windows_or_buffers_changed++;
-
   /* In case the previous minibuffer displayed in this miniwindow is
      dead, we may keep displaying this buffer (tho it's inactive), so reset it,
      to make sure we don't leave around bindings and stuff which only
@@ -968,9 +968,9 @@ and some related functions, which use zero-indexing for POSITION.  */)
 DEFUN ("read-string", Fread_string, Sread_string, 1, 5, 0,
        doc: /* Read a string from the minibuffer, prompting with string PROMPT.
 If non-nil, second arg INITIAL-INPUT is a string to insert before reading.
-  This argument has been superseded by DEFAULT-VALUE and should normally
-  be nil in new code.  It behaves as in `read-from-minibuffer'.  See the
-  documentation string of that function for details.
+  This argument has been superseded by DEFAULT-VALUE and should normally be nil
+  in new code.  It behaves as INITIAL-CONTENTS in `read-from-minibuffer' (which
+  see).
 The third arg HISTORY, if non-nil, specifies a history list
   and optionally the initial position in the list.
 See `read-from-minibuffer' for details of HISTORY argument.
@@ -1199,9 +1199,7 @@ is used to further constrain the set of candidates.  */)
     type = (HASH_TABLE_P (collection) ? hash_table
 	    : VECTORP (collection) ? obarray_table
 	    : ((NILP (collection)
-		|| (CONSP (collection)
-		    && (!SYMBOLP (XCAR (collection))
-			|| NILP (XCAR (collection)))))
+		|| (CONSP (collection) && !FUNCTIONP (collection)))
 	       ? list_table : function_table));
   ptrdiff_t idx = 0, obsize = 0;
   int matchcount = 0;
@@ -1460,9 +1458,7 @@ with a space are ignored unless STRING itself starts with a space.  */)
   Lisp_Object allmatches;
   int type = HASH_TABLE_P (collection) ? 3
     : VECTORP (collection) ? 2
-    : NILP (collection) || (CONSP (collection)
-			    && (!SYMBOLP (XCAR (collection))
-				|| NILP (XCAR (collection))));
+    : NILP (collection) || (CONSP (collection) && !FUNCTIONP (collection));
   ptrdiff_t idx = 0, obsize = 0;
   ptrdiff_t bindcount = -1;
   Lisp_Object bucket, tem, zero;
@@ -1691,9 +1687,7 @@ the values STRING, PREDICATE and `lambda'.  */)
 
   CHECK_STRING (string);
 
-  if ((CONSP (collection)
-       && (!SYMBOLP (XCAR (collection)) || NILP (XCAR (collection))))
-      || NILP (collection))
+  if (NILP (collection) || (CONSP (collection) && !FUNCTIONP (collection)))
     {
       tem = Fassoc_string (string, collection, completion_ignore_case ? Qt : Qnil);
       if (NILP (tem))
@@ -1976,7 +1970,7 @@ A value of t means no truncation.
 This variable only affects history lists that don't specify their own
 maximum lengths.  Setting the `history-length' property of a history
 variable overrides this default.  */);
-  XSETFASTINT (Vhistory_length, 30);
+  XSETFASTINT (Vhistory_length, 100);
 
   DEFVAR_BOOL ("history-delete-duplicates", history_delete_duplicates,
 	       doc: /* Non-nil means to delete duplicates in history.

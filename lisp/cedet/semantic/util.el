@@ -1,6 +1,6 @@
 ;;; semantic/util.el --- Utilities for use with semantic tag tables
 
-;;; Copyright (C) 1999-2005, 2007-2013 Free Software Foundation, Inc.
+;;; Copyright (C) 1999-2005, 2007-2014 Free Software Foundation, Inc.
 
 ;; Author: Eric M. Ludlam <zappo@gnu.org>
 ;; Keywords: syntax
@@ -419,7 +419,8 @@ determining which symbols are considered."
 	    (setq list (sort list 'string<))
 	    (if (> (length list) 1)
 		(with-output-to-temp-buffer "*Completions*"
-		  (display-completion-list list pattern))
+		  (display-completion-list
+		   (completion-hilit-commonality list (length pattern) nil)))
 	      ;; Bury any out-of-date completions buffer.
 	      (let ((win (get-buffer-window "*Completions*" 0)))
 		(if win (with-selected-window win (bury-buffer))))))

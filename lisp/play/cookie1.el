@@ -1,9 +1,9 @@
 ;;; cookie1.el --- retrieve random phrases from fortune cookie files
 
-;; Copyright (C) 1993, 2001-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1993, 2001-2014 Free Software Foundation, Inc.
 
 ;; Author: Eric S. Raymond <esr@snark.thyrsus.com>
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: games, extensions
 ;; Created: Mon Mar 22 17:06:26 1993
 
@@ -187,6 +187,7 @@ Argument REQUIRE-MATCH non-nil forces a matching cookie."
 
 (defun cookie-apropos (regexp phrase-file &optional display)
   "Return a list of all entries matching REGEXP from PHRASE-FILE.
+Interactively, uses `read-regexp' to read REGEXP.
 Interactively, PHRASE-FILE defaults to `cookie-file', unless that
 is nil or a prefix argument is used.
 If called interactively, or if DISPLAY is non-nil, display a list of matches."

@@ -1,6 +1,6 @@
 ;;; reftex-parse.el --- parser functions for RefTeX
 
-;; Copyright (C) 1997-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1997-2014 Free Software Foundation, Inc.
 
 ;; Author: Carsten Dominik <dominik@science.uva.nl>
 ;; Maintainer: auctex-devel@gnu.org
@@ -37,17 +37,22 @@
              ,@body))
        (set-syntax-table saved-syntax))))
 
+;;;###autoload
 (defun reftex-parse-one ()
   "Re-parse this file."
   (interactive)
   (let ((reftex-enable-partial-scans t))
     (reftex-access-scan-info '(4))))
 
+;;;###autoload
 (defun reftex-parse-all ()
   "Re-parse entire document."
   (interactive)
   (reftex-access-scan-info '(16)))
 
+(defvar reftex--index-tags)
+
+;;;###autoload
 (defun reftex-do-parse (rescan &optional file)
   "Do a document rescan.
 When allowed, do only a partial scan from FILE."
@@ -72,7 +77,7 @@ When allowed, do only a partial scan from FILE."
          (file (or file (buffer-file-name)))
          (true-file (file-truename file))
          (bibview-cache (assq 'bibview-cache old-list))
-         (index-tags (cdr (assq 'index-tags old-list)))
+         (reftex--index-tags (cdr (assq 'index-tags old-list)))
          from-file appendix docstruct tmp)
 
     ;; Make sure replacement is really an option here
@@ -92,7 +97,7 @@ When allowed, do only a partial scan from FILE."
                 (t (error "This should not happen (reftex-do-parse)"))))
 
     ;; Reset index-tags if we scan everything
-    (if (equal rescan 1) (setq index-tags nil))
+    (if (equal rescan 1) (setq reftex--index-tags nil))
 
     ;; Find active toc entry and initialize section-numbers
     (setq reftex-active-toc (reftex-last-assoc-before-elt
@@ -137,11 +142,12 @@ When allowed, do only a partial scan from FILE."
            (entry (or (assq 'is-multi docstruct)
                       (car (push (list 'is-multi is-multi) docstruct)))))
       (setcdr entry (cons is-multi nil)))
-    (and index-tags (setq index-tags (sort index-tags 'string<)))
+    (and reftex--index-tags
+         (setq reftex--index-tags (sort reftex--index-tags 'string<)))
     (let ((index-tag-cell (assq 'index-tags docstruct)))
       (if index-tag-cell
-          (setcdr index-tag-cell index-tags)
-        (push (cons 'index-tags index-tags) docstruct)))
+          (setcdr index-tag-cell reftex--index-tags)
+        (push (cons 'index-tags reftex--index-tags) docstruct)))
     (unless (assq 'xr docstruct)
       (let* ((allxr (reftex-all-assq 'xr-doc docstruct))
              (alist (mapcar
@@ -165,11 +171,13 @@ When allowed, do only a partial scan from FILE."
     (set reftex-docstruct-symbol docstruct)
     (put reftex-docstruct-symbol 'modified t)))
 
+;;;###autoload
 (defun reftex-everything-regexp ()
   (if reftex-support-index
       reftex-everything-regexp
     reftex-everything-regexp-no-index))
 
+;; NB this is a global autoload - see reftex.el.
 ;;;###autoload
 (defun reftex-all-document-files (&optional relative)
   "Return a list of all files belonging to the current document.
@@ -189,8 +197,6 @@ of master file."
     (nreverse file-list)))
 
 ;; Bound in the caller, reftex-do-parse.
-(defvar index-tags)
-
 (defun reftex-parse-from-file (file docstruct master-dir)
   "Scan the buffer for labels and save them in a list."
   (let ((regexp (reftex-everything-regexp))
@@ -300,7 +306,7 @@ of master file."
                  (when reftex-support-index
                    (setq index-entry (reftex-index-info file))
                    (when index-entry
-                     (add-to-list 'index-tags (nth 1 index-entry))
+                     (add-to-list 'reftex--index-tags (nth 1 index-entry))
                      (push index-entry docstruct))))
 
                 ((match-end 11)
@@ -350,20 +356,39 @@ of master file."
     ;; Return the list
     docstruct))
 
+(defun reftex-using-biblatex-p ()
+  "Return non-nil if we are using biblatex rather than bibtex."
+  (if (boundp 'TeX-active-styles)
+      ;; the sophisticated AUCTeX way
+      (member "biblatex" TeX-active-styles)
+    ;; poor-man's check...
+    (save-excursion
+      (re-search-forward "^[^%]*\\\\usepackage.*{biblatex}" nil t))))
+
+;;;###autoload
 (defun reftex-locate-bibliography-files (master-dir &optional files)
-  "Scan buffer for bibliography macro and return file list."
+  "Scan buffer for bibliography macros and return file list."
   (unless files
     (save-excursion
       (goto-char (point-min))
-      (if (re-search-forward
-           (concat
-;           "\\(\\`\\|[\n\r]\\)[^%]*\\\\\\("
-            "\\(^\\)[^%\n\r]*\\\\\\("
-            (mapconcat 'identity reftex-bibliography-commands "\\|")
-            "\\)\\(\\[.+?\\]\\)?{[ \t]*\\([^}]+\\)") nil t)
-          (setq files
-                (split-string (reftex-match-string 4)
-                              "[ \t\n\r]*,[ \t\n\r]*")))))
+      ;; when biblatex is used, multiple \bibliography or
+      ;; \addbibresource macros are allowed.  With plain bibtex, only
+      ;; the first is used.
+      (let ((using-biblatex (reftex-using-biblatex-p))
+	    (again t))
+	(while (and again
+		    (re-search-forward
+		     (concat
+		      ;;           "\\(\\`\\|[\n\r]\\)[^%]*\\\\\\("
+		      "\\(^\\)[^%\n\r]*\\\\\\("
+		      (mapconcat 'identity reftex-bibliography-commands "\\|")
+		      "\\)\\(\\[.+?\\]\\)?{[ \t]*\\([^}]+\\)") nil t))
+	  (setq files
+		(append files
+			(split-string (reftex-match-string 4)
+				      "[ \t\n\r]*,[ \t\n\r]*")))
+	  (unless using-biblatex
+	    (setq again nil))))))
   (when files
     (setq files
           (mapcar
@@ -403,6 +428,7 @@ This function also makes sure the old toc markers do not point anywhere."
           (setcdr (nthcdr (1- (length new)) new) (cdr eof-list)))
         new))))
 
+;;;###autoload
 (defun reftex-section-info (file)
   "Return a section entry for the current match.
 Careful: This function expects the match-data to be still in place!"
@@ -439,6 +465,7 @@ Careful: This function expects the match-data to be still in place!"
     (list 'toc "toc" text file marker level section-number
           literal (marker-position marker))))
 
+;;;###autoload
 (defun reftex-ensure-index-support (&optional abort)
   "When index support is turned off, ask to turn it on and
 set the current prefix argument so that `reftex-access-scan-info'
@@ -454,11 +481,13 @@ will rescan the entire document."
         (ding)
         (sit-for 1)))))
 
+;;;###autoload
 (defun reftex-index-info-safe (file)
   (reftex-with-special-syntax
    (reftex-index-info file)))
 
 (defvar test-dummy)
+;;;###autoload
 (defun reftex-index-info (file)
   "Return an index entry for the current match.
 Careful: This function expects the match-data to be still in place!"
@@ -507,6 +536,7 @@ Careful: This function expects the match-data to be still in place!"
       ;;       0        1       2      3   4   5  6      7       8      9
       (list 'index index-tag context file bom arg key showkey sortkey key-end))))
 
+;;;###autoload
 (defun reftex-short-context (env parse &optional bound derive)
   "Get about one line of useful context for the label definition at point."
 
@@ -567,6 +597,7 @@ Careful: This function expects the match-data to be still in place!"
     (t
      "INVALID VALUE OF PARSE"))))
 
+;;;###autoload
 (defun reftex-where-am-I ()
   "Return the docstruct entry above point.
 Actually returns a cons cell in which the cdr is a flag indicating
@@ -665,6 +696,7 @@ if the information is exact (t) or approximate (nil)."
             cnt 2))
     (cons rtn (eq cnt 1))))
 
+;;;###autoload
 (defun reftex-notice-new (&optional n force)
   "Hook to handshake with RefTeX after something new has been inserted."
   ;; Add a new entry to the docstruct list.  If it is a section, renumber
@@ -741,7 +773,7 @@ if the information is exact (t) or approximate (nil)."
              ;; Index entry
              (and reftex-support-index
                   (setq entry (reftex-index-info-safe buffer-file-name))
-                  ;; FIXME: (add-to-list 'index-tags (nth 1 index-entry))
+                  ;; FIXME: (add-to-list 'reftex--index-tags (nth 1 index-entry))
                   (push entry (cdr tail))))))))))
 
     (error nil))
@@ -763,11 +795,13 @@ in TeX."
     t)
    (t nil)))
 
+;;;###autoload
 (defun reftex-what-macro-safe (which &optional bound)
   "Call `reftex-what-macro' with special syntax table."
   (reftex-with-special-syntax
    (reftex-what-macro which bound)))
 
+;;;###autoload
 (defun reftex-what-macro (which &optional bound)
   "Find out if point is within the arguments of any TeX-macro.
 The return value is either (\"\\macro\" . (point)) or a list of them.
@@ -830,6 +864,7 @@ considered an argument of macro \\macro."
             (goto-char pos)))
         (nreverse cmd-list)))))
 
+;;;###autoload
 (defun reftex-what-environment (which &optional bound)
   "Find out if point is inside a LaTeX environment.
 The return value is (e.g.) either (\"equation\" . (point)) or a list of
@@ -867,6 +902,7 @@ this point.  If it is nil, limit to nearest \\section - like statement."
             (throw 'exit (cons env (point))))))
         (nreverse env-list)))))
 
+;;;###autoload
 (defun reftex-what-special-env (which &optional bound)
   "Run the special environment parsers and return the matches.
 
@@ -907,7 +943,7 @@ If WHICH is a list of environments, look only for those environments and
             specials
           (car specials))))))
 
-(defsubst reftex-move-to-next-arg (&optional ignore)
+(defsubst reftex-move-to-next-arg (&optional _ignore)
   "Assuming that we are at the end of a macro name or a macro argument,
 move forward to the opening parenthesis of the next argument.
 This function understands the splitting of macros over several lines
@@ -926,6 +962,7 @@ in TeX."
   (let ((entry (assoc key reftex-env-or-mac-alist)))
     (reftex-nth-arg (nth 5 entry) (nth 6 entry))))
 
+;;;###autoload
 (defun reftex-nth-arg (n &optional opt-args)
   "Return the Nth following {} or [] parentheses content.
 OPT-ARGS is a list of argument numbers which are optional."
@@ -964,6 +1001,7 @@ OPT-ARGS is a list of argument numbers which are optional."
           (reftex-context-substring)
         nil))))
 
+;;;###autoload
 (defun reftex-move-over-touching-args ()
   (condition-case nil
       (while (memq (following-char) '(?\[ ?\{))
@@ -1003,6 +1041,7 @@ When point is just after a { or [, limit string to matching parenthesis"
 ;; Variable holding the vector with section numbers
 (defvar reftex-section-numbers (make-vector reftex-max-section-depth 0))
 
+;;;###autoload
 (defun reftex-init-section-numbers (&optional toc-entry appendix)
   "Initialize the section numbers with zeros or with what is found in the TOC-ENTRY."
   (let* ((level  (or (nth 5 toc-entry) -1))
@@ -1021,6 +1060,7 @@ When point is just after a { or [, limit string to matching parenthesis"
       (decf i)))
   (put 'reftex-section-numbers 'appendix appendix))
 
+;;;###autoload
 (defun reftex-section-number (&optional level star)
   "Return a string with the current section number.
 When LEVEL is non-nil, increase section numbers on that level."
@@ -1089,3 +1129,7 @@ When LEVEL is non-nil, increase section numbers on that level."
 (provide 'reftex-parse)
 
 ;;; reftex-parse.el ends here
+
+;; Local Variables:
+;; generated-autoload-file: "reftex.el"
+;; End:

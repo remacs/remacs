@@ -1,5 +1,5 @@
 /* unexec for GNU Emacs on Windows NT.
-   Copyright (C) 1994, 2001-2013 Free Software Foundation, Inc.
+   Copyright (C) 1994, 2001-2014 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -83,7 +83,12 @@ PCHAR  bss_start_static = 0;
 DWORD_PTR  bss_size_static = 0;
 DWORD_PTR  extra_bss_size_static = 0;
 
-PIMAGE_SECTION_HEADER heap_section;
+/* MinGW64 doesn't add a leading underscore to external symbols,
+   whereas configure.ac sets up LD_SWITCH_SYSTEM_TEMACS to force the
+   entry point at __start, with two underscores.  */
+#ifdef __MINGW64__
+#define _start __start
+#endif
 
 /* Startup code for running on NT.  When we are running as the dumped
    version, we need to bootstrap our heap and .bss section into our
@@ -120,6 +125,8 @@ _start (void)
 
 /* File handling.  */
 
+/* Implementation note: this and the next functions work with ANSI
+   codepage encoded file names!  */
 int
 open_input_file (file_data *p_file, char *filename)
 {
@@ -128,8 +135,8 @@ open_input_file (file_data *p_file, char *filename)
   void  *file_base;
   unsigned long size, upper_size;
 
-  file = CreateFile (filename, GENERIC_READ, FILE_SHARE_READ, NULL,
-		     OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+  file = CreateFileA (filename, GENERIC_READ, FILE_SHARE_READ, NULL,
+		      OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
   if (file == INVALID_HANDLE_VALUE)
     return FALSE;
 
@@ -166,9 +173,9 @@ open_output_file (file_data *p_file, char *filename, unsigned long size)
      creating it, all the emacs-XX.YY.ZZ.nn.exe end up being hard
      links to the same file, which defeats the purpose of these hard
      links: being able to run previous builds.  */
-  DeleteFile (filename);
-  file = CreateFile (filename, GENERIC_READ | GENERIC_WRITE, 0, NULL,
-		     CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
+  DeleteFileA (filename);
+  file = CreateFileA (filename, GENERIC_READ | GENERIC_WRITE, 0, NULL,
+		      CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
   if (file == INVALID_HANDLE_VALUE)
     return FALSE;
 
@@ -466,8 +473,6 @@ get_section_info (file_data *p_infile)
       bss_section_static = 0;
       extra_bss_size_static = 0;
     }
-
-  heap_section = rva_to_section (PTR_TO_RVA (get_heap_start ()), nt_header);
 }
 
 
@@ -509,9 +514,11 @@ copy_executable_and_dump_data (file_data *p_infile,
     if (verbose)								\
       {										\
 	printf ("%s\n", (message));						\
-	printf ("\t0x%08x Address in process.\n", s);				\
-	printf ("\t0x%08x Offset in output file.\n", dst - p_outfile->file_base); \
-	printf ("\t0x%08x Size in bytes.\n", count);				\
+	printf ("\t0x%p Address in process.\n", s);				\
+	printf ("\t0x%p Base       output file.\n", p_outfile->file_base); \
+	printf ("\t0x%p Offset  in output file.\n", dst - p_outfile->file_base); \
+	printf ("\t0x%p Address in output file.\n", dst); \
+	printf ("\t0x%p Size in bytes.\n", count);				\
       }										\
     memcpy (dst, s, count);							\
     dst += count;								\
@@ -620,34 +627,6 @@ copy_executable_and_dump_data (file_data *p_infile,
 	  dst_section->Characteristics &= ~IMAGE_SCN_CNT_UNINITIALIZED_DATA;
 	  dst_section->Characteristics |= IMAGE_SCN_CNT_INITIALIZED_DATA;
 	}
-      if (section == heap_section)
-	{
-	  DWORD_PTR heap_start = (DWORD_PTR) get_heap_start ();
-	  DWORD_PTR heap_size = get_committed_heap_size ();
-
-	  /* Dump the used portion of the predump heap, adjusting the
-             section's size to the appropriate size.  */
-	  dst = dst_save
-	    + RVA_TO_SECTION_OFFSET (PTR_TO_RVA (heap_start), dst_section);
-	  COPY_PROC_CHUNK ("Dumping heap...", heap_start, heap_size,
-			   be_verbose);
-	  ROUND_UP_DST (dst_nt_header->OptionalHeader.FileAlignment);
-	  dst_section->PointerToRawData = PTR_TO_OFFSET (dst_save, p_outfile);
-	  /* Determine new size of raw data area.  */
-	  dst = max (dst, dst_save + dst_section->SizeOfRawData);
-	  dst_section->SizeOfRawData = dst - dst_save;
-	  /* Reduce the size of the heap section to fit (must be last
-             section).  */
-	  dst_nt_header->OptionalHeader.SizeOfImage -=
-	    dst_section->Misc.VirtualSize
-	    - ROUND_UP (dst_section->SizeOfRawData,
-			dst_nt_header->OptionalHeader.SectionAlignment);
-	  dst_section->Misc.VirtualSize =
-	    ROUND_UP (dst_section->SizeOfRawData,
-		      dst_nt_header->OptionalHeader.SectionAlignment);
-	  dst_section->Characteristics &= ~IMAGE_SCN_CNT_UNINITIALIZED_DATA;
-	  dst_section->Characteristics |= IMAGE_SCN_CNT_INITIALIZED_DATA;
-	}
 
       /* Align the section's raw data area.  */
       ROUND_UP_DST (dst_nt_header->OptionalHeader.FileAlignment);
@@ -722,25 +701,36 @@ void
 unexec (const char *new_name, const char *old_name)
 {
   file_data in_file, out_file;
-  char out_filename[MAX_PATH], in_filename[MAX_PATH];
+  char out_filename[MAX_PATH], in_filename[MAX_PATH], new_name_a[MAX_PATH];
   unsigned long size;
   char *p;
   char *q;
 
   /* Ignore old_name, and get our actual location from the OS.  */
-  if (!GetModuleFileName (NULL, in_filename, MAX_PATH))
+  if (!GetModuleFileNameA (NULL, in_filename, MAX_PATH))
     abort ();
-  dostounix_filename (in_filename, 0);
+
+  /* Can't use dostounix_filename here, since that needs its file name
+     argument encoded in UTF-8.  */
+  for (p = in_filename; *p; p = CharNextA (p))
+    if (*p == '\\')
+      *p = '/';
+
   strcpy (out_filename, in_filename);
+  filename_to_ansi (new_name, new_name_a);
 
   /* Change the base of the output filename to match the requested name.  */
   if ((p = strrchr (out_filename, '/')) == NULL)
     abort ();
   /* The filenames have already been expanded, and will be in Unix
      format, so it is safe to expect an absolute name.  */
-  if ((q = strrchr (new_name, '/')) == NULL)
+  if ((q = strrchr (new_name_a, '/')) == NULL)
     abort ();
   strcpy (p, q);
+
+#ifdef ENABLE_CHECKING
+  report_temacs_memory_usage ();
+#endif
 
   /* Make sure that the output filename has the ".exe" extension...patch
      it up if not.  */
@@ -750,9 +740,6 @@ unexec (const char *new_name, const char *old_name)
 
   printf ("Dumping from %s\n", in_filename);
   printf ("          to %s\n", out_filename);
-
-  /* We need to round off our heap to NT's page size.  */
-  round_heap (get_page_size ());
 
   /* Open the undumped executable file.  */
   if (!open_input_file (&in_file, in_filename))
@@ -768,7 +755,6 @@ unexec (const char *new_name, const char *old_name)
   /* The size of the dumped executable is the size of the original
      executable plus the size of the heap and the size of the .bss section.  */
   size = in_file.size +
-    get_committed_heap_size () +
     extra_bss_size +
     extra_bss_size_static;
   if (!open_output_file (&out_file, out_filename, size))
@@ -782,6 +768,10 @@ unexec (const char *new_name, const char *old_name)
   using_dynamic_heap = TRUE;
 
   copy_executable_and_dump_data (&in_file, &out_file);
+
+  /* Unset it because it is plain wrong to keep it after dumping.
+     Malloc can still occur!  */
+  using_dynamic_heap = FALSE;
 
   /* Patch up header fields; profiler is picky about this. */
   {

@@ -1,7 +1,7 @@
 ;;; info-look.el --- major-mode-sensitive Info index lookup facility -*- lexical-binding: t -*-
 ;; An older version of this was known as libc.el.
 
-;; Copyright (C) 1995-1999, 2001-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1995-1999, 2001-2014 Free Software Foundation, Inc.
 
 ;; Author: Ralph Schleicher <rs@nunatak.allgaeu.org>
 ;;         (did not show signs of life (Nov 2001)  -stef)
@@ -260,7 +260,7 @@ minibuffer.  In the minibuffer, use M-n to yank the default argument
 value into the minibuffer so you can edit it.  The default symbol is the
 one found at point.
 
-With prefix arg a query for the symbol help mode is offered."
+With prefix arg MODE a query for the symbol help mode is offered."
   (interactive
    (info-lookup-interactive-arguments 'symbol current-prefix-arg))
   (info-lookup 'symbol symbol mode))
@@ -274,7 +274,7 @@ In the minibuffer, use M-n to yank the default file name
 into the minibuffer so you can edit it.
 The default file name is the one found at point.
 
-With prefix arg a query for the file help mode is offered."
+With prefix arg MODE a query for the file help mode is offered."
   (interactive
    (info-lookup-interactive-arguments 'file current-prefix-arg))
   (info-lookup 'file file mode))

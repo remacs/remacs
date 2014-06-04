@@ -1,6 +1,6 @@
-/* Replacement inntypes.h file for building GNU Emacs on MS-DOS with DJGPP.
+/* Replacement inttypes.h file for building GNU Emacs on MS-DOS with DJGPP.
 
-Copyright (C) 2011-2013 Free Software Foundation, Inc.
+Copyright (C) 2011-2014 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -32,6 +32,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #define strtoumax strtoull
 #define strtoimax strtoll
 #define PRIuMAX   "llu"
+#define PRIdMAX   "lld"
 #endif	/* __DJGPP__ < 2.04 */
 
 #endif

@@ -1,6 +1,6 @@
 /* sound.c -- sound support.
 
-Copyright (C) 1998-1999, 2001-2013 Free Software Foundation, Inc.
+Copyright (C) 1998-1999, 2001-2014 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -54,6 +54,8 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 /* BEGIN: Non Windows Includes */
 #ifndef WINDOWSNT
+
+#include <byteswap.h>
 
 #include <sys/ioctl.h>
 
@@ -461,8 +463,7 @@ static u_int32_t
 le2hl (u_int32_t value)
 {
 #ifdef WORDS_BIGENDIAN
-  unsigned char *p = (unsigned char *) &value;
-  value = p[0] + (p[1] << 8) + (p[2] << 16) + (p[3] << 24);
+  value = bswap_32 (value);
 #endif
   return value;
 }
@@ -475,8 +476,7 @@ static u_int16_t
 le2hs (u_int16_t value)
 {
 #ifdef WORDS_BIGENDIAN
-  unsigned char *p = (unsigned char *) &value;
-  value = p[0] + (p[1] << 8);
+  value = bswap_16 (value);
 #endif
   return value;
 }
@@ -489,29 +489,10 @@ static u_int32_t
 be2hl (u_int32_t value)
 {
 #ifndef WORDS_BIGENDIAN
-  unsigned char *p = (unsigned char *) &value;
-  value = p[3] + (p[2] << 8) + (p[1] << 16) + (p[0] << 24);
+  value = bswap_32 (value);
 #endif
   return value;
 }
-
-
-#if 0 /* Currently not used.  */
-
-/* Convert 16-bit value VALUE which is in big-endian byte-order
-   to host byte-order.  */
-
-static u_int16_t
-be2hs (u_int16_t value)
-{
-#ifndef WORDS_BIGENDIAN
-  unsigned char *p = (unsigned char *) &value;
-  value = p[1] + (p[0] << 8);
-#endif
-  return value;
-}
-
-#endif /* 0 */
 
 /***********************************************************************
 			  RIFF-WAVE (*.wav)
@@ -721,7 +702,7 @@ vox_configure (struct sound_device *sd)
 {
   int val;
 #ifdef USABLE_SIGIO
-  sigset_t blocked;
+  sigset_t oldset, blocked;
 #endif
 
   eassert (sd->fd >= 0);
@@ -733,7 +714,7 @@ vox_configure (struct sound_device *sd)
 #ifdef USABLE_SIGIO
   sigemptyset (&blocked);
   sigaddset (&blocked, SIGIO);
-  pthread_sigmask (SIG_BLOCK, &blocked, 0);
+  pthread_sigmask (SIG_BLOCK, &blocked, &oldset);
 #endif
 
   val = sd->format;
@@ -767,7 +748,7 @@ vox_configure (struct sound_device *sd)
 
   turn_on_atimers (1);
 #ifdef USABLE_SIGIO
-  pthread_sigmask (SIG_UNBLOCK, &blocked, 0);
+  pthread_sigmask (SIG_SETMASK, &oldset, 0);
 #endif
 }
 
@@ -783,10 +764,10 @@ vox_close (struct sound_device *sd)
 	 be interrupted by a signal.  Block the ones we know to cause
 	 troubles.  */
 #ifdef USABLE_SIGIO
-      sigset_t blocked;
+      sigset_t blocked, oldset;
       sigemptyset (&blocked);
       sigaddset (&blocked, SIGIO);
-      pthread_sigmask (SIG_BLOCK, &blocked, 0);
+      pthread_sigmask (SIG_BLOCK, &blocked, &oldset);
 #endif
       turn_on_atimers (0);
 
@@ -795,7 +776,7 @@ vox_close (struct sound_device *sd)
 
       turn_on_atimers (1);
 #ifdef USABLE_SIGIO
-      pthread_sigmask (SIG_UNBLOCK, &blocked, 0);
+      pthread_sigmask (SIG_SETMASK, &oldset, 0);
 #endif
 
       /* Close the device.  */
@@ -1351,7 +1332,7 @@ Internal use only, use `play-sound' instead.  */)
     {
       /* Open the sound file.  */
       current_sound->fd = openp (list1 (Vdata_directory),
-				 attrs[SOUND_FILE], Qnil, &file, Qnil);
+				 attrs[SOUND_FILE], Qnil, &file, Qnil, false);
       if (current_sound->fd < 0)
 	sound_perror ("Could not open sound file");
 

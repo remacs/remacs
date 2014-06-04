@@ -1,6 +1,6 @@
 @c -*- coding: utf-8 -*-
 @c This is part of the Emacs manual.
-@c Copyright (C) 1994-1997, 1999-2013 Free Software Foundation, Inc.
+@c Copyright (C) 1994-1997, 1999-2014 Free Software Foundation, Inc.
 @c See file emacs.texi for copying conditions.
 @c
 @node Acknowledgments
@@ -51,8 +51,8 @@ files.
 @item
 Michael Albinus wrote @file{dbus.el}, a package that implements the
 D-Bus message bus protocol; @file{zeroconf.el}, a mode for browsing
-Avahi services; @file{xesam.el}, a Xesam-based search engine
-interface; and @file{secrets.el}, an interface to keyring daemons for
+Avahi services;
+and @file{secrets.el}, an interface to keyring daemons for
 storing confidential data.  He and Kai Großjohann wrote the Tramp package, which
 provides transparent remote file editing using rcp, ssh, ftp, and
 other network protocols.  He and Daniel Pittman wrote
@@ -104,7 +104,7 @@ footnotes in email messages; and @file{gnus-audio.el} and
 @item
 Alexander L. Belikoff, Sergey Berezin, Sacha Chua, David Edmondson,
 Noah Friedman, Andreas Fuchs, Mario Lang, Ben Mesander, Lawrence
-Mitchell, Gergely Nagy, Michael Olson, Per Persson, Jorgen Schaefer,
+Mitchell, Gergely Nagy, Michael Olson, Per Persson, Jorgen Schäfer,
 Alex Schroeder, and Tom Tromey wrote ERC, an advanced Internet Relay
 Chat client (for more information, see the file @file{CREDITS} in the
 ERC distribution).
@@ -122,8 +122,8 @@ by Oliver Seidel), a package for maintaining @file{TODO} list files.
 Anna M. Bigatti wrote @file{cal-html.el}, which produces HTML calendars.
 
 @item
-Ray Blaak and Simon South wrote @file{delphi.el}, a mode for editing
-Delphi (Object Pascal) source code.
+Ray Blaak and Simon South wrote @file{opascal.el}, a mode for editing
+Object Pascal source code.
 
 @item
 Martin Blais, Stefan Merten, and David Goodger wrote @file{rst.el}, a
@@ -276,7 +276,7 @@ over maintainership.  Benjamin Andresen, Thomas Baumann, Joel Boehland, Jan Böc
 Borgman, Baoqiu Cui, Dan Davison, Christian Egli, Eric S. Fraga, Daniel German, Chris Gray, Konrad Hinsen, Tassilo Horn, Philip
 Jackson, Martyn Jago, Thorsten Jolitz, Jambunathan K, Tokuya Kameshima, Sergey Litvinov, David Maus, Ross Patterson, Juan Pechiar, Sebastian Rose, Eric Schulte,
 Paul Sexton, Ulf Stegemann, Andy Stewart, Christopher Suckling, David O'Toole, John Wiegley, Zhang Weize,
-Piotr Zielinski, and others also wrote various Org mode components.
+Piotr Zieliński, and others also wrote various Org mode components.
 For more information, @pxref{History and Acknowledgments,,, org, The Org Manual}.
 
 @item
@@ -303,8 +303,7 @@ to VC and the calendar.
 
 @item
 Stephen Eglen wrote @file{mspools.el}, which tells you which Procmail
-folders have mail waiting in them; and @file{iswitchb.el}, a feature
-for incremental reading and completion of buffer names.
+folders have mail waiting in them.
 
 @item
 Torbjörn Einarsson wrote @file{f90.el}, a mode for Fortran 90 files.
@@ -814,12 +813,11 @@ command with its arguments.
 Richard Mlynarik wrote @file{cl-indent.el}, a package for indenting
 Common Lisp code; @file{ebuff-menu.el}, an ``electric'' browser for
 buffer listings; @file{ehelp.el}, bindings for browsing help screens;
-@file{rfc822.el}, a parser for E-mail addresses in the RFC-822 format,
-used in mail messages and news articles; and @file{terminal.el}, a
-terminal emulator for Emacs subprocesses.
+and @file{rfc822.el}, a parser for E-mail addresses in the RFC-822 format,
+used in mail messages and news articles.
 
 @item
-Gerd Moellmann was the Emacs maintainer from the beginning of Emacs 21
+Gerd Möllmann was the Emacs maintainer from the beginning of Emacs 21
 development until the release of 21.1.  He wrote the new display
 engine used from Emacs 21 onwards, and the asynchronous timers
 facility.  He also wrote @code{ebrowse}, the C@t{++} browser;
@@ -884,7 +882,7 @@ and @code{winterm} terminal emulators; and @file{vc-dir.el}, displaying
 the status of version-controlled directories.
 
 @item
-Hrvoje Niksic wrote @file{savehist.el}, for saving the minibuffer
+Hrvoje Nikšić wrote @file{savehist.el}, for saving the minibuffer
 history between Emacs sessions.
 
 @item
@@ -979,7 +977,7 @@ minor mode for displaying a ruler in the header line; and
 structures.
 
 @item
-Francesco A. Potorti wrote @file{cmacexp.el}, providing a command which
+Francesco A. Potortì wrote @file{cmacexp.el}, providing a command which
 runs the C preprocessor on a region of a file and displays the results.
 He also expanded and redesigned the @code{etags} program.
 
@@ -1100,9 +1098,6 @@ Philippe Schnoebelen wrote @file{gomoku.el}, a Go Moku game played
 against Emacs; and @file{mpuz.el}, a multiplication puzzle.
 
 @item
-Rainer Schoepf contributed to Alpha and OSF1 support.
-
-@item
 Jan Schormann wrote @file{solitaire.el}, an implementation of the
 Solitaire game.
 
@@ -1186,9 +1181,8 @@ written @file{easymenu.el}, a facility for defining Emacs menus;
 color; and also co-authored portions of CC mode.
 
 @item
-Sam Steingold wrote @file{gulp.el}, a facility for asking package
-maintainers for updated versions of their packages via e-mail, and
-@file{midnight.el}, a package for running a command every midnight.
+Sam Steingold wrote @file{midnight.el}, a package for running a
+command every midnight.
 
 @item
 Ake Stenhoff and Lars Lindberg wrote @file{imenu.el}, a framework for

@@ -1,6 +1,6 @@
 /* Functions for handling font and other changes dynamically.
 
-Copyright (C) 2009-2013 Free Software Foundation, Inc.
+Copyright (C) 2009-2014 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -22,6 +22,9 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <float.h>
 #include <limits.h>
 #include <fcntl.h>
+
+#include <byteswap.h>
+
 #include "lisp.h"
 #include "xterm.h"
 #include "xsettings.h"
@@ -88,8 +91,7 @@ store_monospaced_changed (const char *newfont)
   if (current_mono_font != NULL && strcmp (newfont, current_mono_font) == 0)
     return; /* No change. */
 
-  xfree (current_mono_font);
-  current_mono_font = xstrdup (newfont);
+  dupstring (&current_mono_font, newfont);
 
   if (dpyinfo_valid (first_dpyinfo) && use_system_font)
     {
@@ -108,8 +110,7 @@ store_font_name_changed (const char *newfont)
   if (current_font != NULL && strcmp (newfont, current_font) == 0)
     return; /* No change. */
 
-  xfree (current_font);
-  current_font = xstrdup (newfont);
+  dupstring (&current_font, newfont);
 
   if (dpyinfo_valid (first_dpyinfo))
     {
@@ -336,9 +337,6 @@ get_prop_window (struct x_display_info *dpyinfo)
   XUngrabServer (dpy);
 }
 
-#define SWAP32(nr) (((nr) << 24) | (((nr) << 8) & 0xff0000)     \
-                    | (((nr) >> 8) & 0xff00) | ((nr) >> 24))
-#define SWAP16(nr) (((nr) << 8) | ((nr) >> 8))
 #define PAD(nr)    (((nr) + 3) & ~3)
 
 /* Parse xsettings and extract those that deal with Xft.
@@ -393,7 +391,7 @@ get_prop_window (struct x_display_info *dpyinfo)
 
 static int
 parse_settings (unsigned char *prop,
-                long unsigned int bytes,
+                unsigned long bytes,
                 struct xsettings *settings)
 {
   Lisp_Object byteorder = Fbyteorder ();
@@ -408,7 +406,7 @@ parse_settings (unsigned char *prop,
 
   if (bytes < 12) return BadLength;
   memcpy (&n_settings, prop+8, 4);
-  if (my_bo != that_bo) n_settings = SWAP32 (n_settings);
+  if (my_bo != that_bo) n_settings = bswap_32 (n_settings);
   bytes_parsed = 12;
 
   memset (settings, 0, sizeof (*settings));
@@ -430,7 +428,7 @@ parse_settings (unsigned char *prop,
 
       memcpy (&nlen, prop+bytes_parsed, 2);
       bytes_parsed += 2;
-      if (my_bo != that_bo) nlen = SWAP16 (nlen);
+      if (my_bo != that_bo) nlen = bswap_16 (nlen);
       if (bytes_parsed+nlen > bytes) return BadLength;
       to_cpy = nlen > 127 ? 127 : nlen;
       memcpy (name, prop+bytes_parsed, to_cpy);
@@ -457,7 +455,7 @@ parse_settings (unsigned char *prop,
           if (want_this)
             {
               memcpy (&ival, prop+bytes_parsed, 4);
-              if (my_bo != that_bo) ival = SWAP32 (ival);
+              if (my_bo != that_bo) ival = bswap_32 (ival);
             }
           bytes_parsed += 4;
           break;
@@ -466,7 +464,7 @@ parse_settings (unsigned char *prop,
           if (bytes_parsed+4 > bytes) return BadLength;
           memcpy (&vlen, prop+bytes_parsed, 4);
           bytes_parsed += 4;
-          if (my_bo != that_bo) vlen = SWAP32 (vlen);
+          if (my_bo != that_bo) vlen = bswap_32 (vlen);
           if (want_this)
             {
               to_cpy = vlen > 127 ? 127 : vlen;
@@ -492,13 +490,13 @@ parse_settings (unsigned char *prop,
           ++settings_seen;
           if (strcmp (name, XSETTINGS_TOOL_BAR_STYLE) == 0)
             {
-              settings->tb_style = xstrdup (sval);
+              dupstring (&settings->tb_style, sval);
               settings->seen |= SEEN_TB_STYLE;
             }
 #ifdef HAVE_XFT
           else if (strcmp (name, XSETTINGS_FONT_NAME) == 0)
             {
-              settings->font = xstrdup (sval);
+              dupstring (&settings->font, sval);
               settings->seen |= SEEN_FONT;
             }
           else if (strcmp (name, "Xft/Antialias") == 0)
@@ -742,10 +740,7 @@ read_and_apply_settings (struct x_display_info *dpyinfo, int send_event_p)
       if (send_event_p)
         store_font_name_changed (settings.font);
       else
-        {
-          xfree (current_font);
-          current_font = xstrdup (settings.font);
-        }
+	dupstring (&current_font, settings.font);
       xfree (settings.font);
     }
 #endif
@@ -754,7 +749,7 @@ read_and_apply_settings (struct x_display_info *dpyinfo, int send_event_p)
 /* Check if EVENT for the display in DPYINFO is XSettings related.  */
 
 void
-xft_settings_event (struct x_display_info *dpyinfo, const XEvent * const event)
+xft_settings_event (struct x_display_info *dpyinfo, const XEvent *event)
 {
   bool check_window_p = 0, apply_settings_p = 0;
 
@@ -800,17 +795,29 @@ init_gsettings (void)
 {
 #ifdef HAVE_GSETTINGS
   GVariant *val;
-  const gchar *const *schemas;
   int schema_found = 0;
 
-#ifdef HAVE_G_TYPE_INIT
+#if ! GLIB_CHECK_VERSION (2, 36, 0)
   g_type_init ();
 #endif
 
-  schemas = g_settings_list_schemas ();
-  if (schemas == NULL) return;
-  while (! schema_found && *schemas != NULL)
-    schema_found = strcmp (*schemas++, GSETTINGS_SCHEMA) == 0;
+#if GLIB_CHECK_VERSION (2, 32, 0)
+  {
+    GSettingsSchema *sc = g_settings_schema_source_lookup
+      (g_settings_schema_source_get_default (),
+       GSETTINGS_SCHEMA,
+       TRUE);
+    schema_found = sc != NULL;
+    if (sc) g_settings_schema_unref (sc);
+  }
+#else
+  {
+    const gchar *const *schemas = g_settings_list_schemas ();
+    if (schemas == NULL) return;
+    while (! schema_found && *schemas != NULL)
+      schema_found = strcmp (*schemas++, GSETTINGS_SCHEMA) == 0;
+  }
+#endif
   if (!schema_found) return;
 
   gsettings_client = g_settings_new (GSETTINGS_SCHEMA);
@@ -835,7 +842,7 @@ init_gsettings (void)
     {
       g_variant_ref_sink (val);
       if (g_variant_is_of_type (val, G_VARIANT_TYPE_STRING))
-        current_mono_font = xstrdup (g_variant_get_string (val, NULL));
+	dupstring (&current_mono_font, g_variant_get_string (val, NULL));
       g_variant_unref (val);
     }
 
@@ -844,7 +851,7 @@ init_gsettings (void)
     {
       g_variant_ref_sink (val);
       if (g_variant_is_of_type (val, G_VARIANT_TYPE_STRING))
-        current_font = xstrdup (g_variant_get_string (val, NULL));
+        dupstring (&current_font, g_variant_get_string (val, NULL));
       g_variant_unref (val);
     }
 #endif /* HAVE_XFT */
@@ -860,7 +867,7 @@ init_gconf (void)
 #if defined (HAVE_GCONF)
   char *s;
 
-#ifdef HAVE_G_TYPE_INIT
+#if ! GLIB_CHECK_VERSION (2, 36, 0)
   g_type_init ();
 #endif
 
@@ -886,13 +893,13 @@ init_gconf (void)
   s = gconf_client_get_string (gconf_client, GCONF_MONO_FONT, NULL);
   if (s)
     {
-      current_mono_font = xstrdup (s);
+      dupstring (&current_mono_font, s);
       g_free (s);
     }
   s = gconf_client_get_string (gconf_client, GCONF_FONT_NAME, NULL);
   if (s)
     {
-      current_font = xstrdup (s);
+      dupstring (&current_font, s);
       g_free (s);
     }
   gconf_client_add_dir (gconf_client,

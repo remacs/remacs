@@ -1,9 +1,9 @@
 ;;; msb.el --- customizable buffer-selection with multiple menus
 
-;; Copyright (C) 1993-1995, 1997-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1993-1995, 1997-2014 Free Software Foundation, Inc.
 
 ;; Author: Lars Lindberg <lars.lindberg@home.se>
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Created: 8 Oct 1993
 ;; Lindberg's last update version: 3.34
 ;; Keywords: mouse buffer menu

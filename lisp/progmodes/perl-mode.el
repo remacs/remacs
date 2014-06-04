@@ -1,9 +1,9 @@
-;;; perl-mode.el --- Perl code editing commands for GNU Emacs  -*- coding: utf-8 -*-
+;;; perl-mode.el --- Perl code editing commands for GNU Emacs  -*- lexical-binding:t -*-
 
-;; Copyright (C) 1990, 1994, 2001-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1990, 1994, 2001-2014 Free Software Foundation, Inc.
 
 ;; Author: William F. Mann
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Adapted-By: ESR
 ;; Keywords: languages
 
@@ -66,22 +66,7 @@
 ;; a rich language; writing a more suitable parser would be a big job):
 ;; 2)  The globbing syntax <pattern> is not recognized, so special
 ;;       characters in the pattern string must be backslashed.
-;; 3)  The << quoting operators are not recognized; see below.
-;; 5)  To make '$' work correctly, $' is not recognized as a variable.
-;;     Use "$'" or $POSTMATCH instead.
 ;;
-;; If you don't use font-lock, additional problems will appear:
-;; 1)  Regular expression delimiters do not act as quotes, so special
-;;       characters such as `'"#:;[](){} may need to be backslashed
-;;       in regular expressions and in both parts of s/// and tr///.
-;; 4)  The q and qq quoting operators are not recognized; see below.
-;; 5)  To make variables such a $' and $#array work, perl-mode treats
-;;       $ just like backslash, so '$' is not treated correctly.
-;; 6)  Unfortunately, treating $ like \ makes ${var} be treated as an
-;;       unmatched }.  See below.
-;; 7)  When ' (quote) is used as a package name separator, perl-mode
-;;       doesn't understand, and thinks it is seeing a quoted string.
-
 ;; Here are some ugly tricks to bypass some of these problems:  the perl
 ;; expression /`/ (that's a back-tick) usually evaluates harmlessly,
 ;; but will trick perl-mode into starting a quoted string, which
@@ -127,7 +112,7 @@
     (modify-syntax-entry ?\n ">" st)
     (modify-syntax-entry ?# "<" st)
     ;; `$' is also a prefix char so I was tempted to say "/ p",
-    ;; but the `p' thingy basically overrides the `/' :-(   --stef
+    ;; but the `p' thingy basically overrides the `/' :-(   -- Stef
     (modify-syntax-entry ?$ "/" st)
     (modify-syntax-entry ?% ". p" st)
     (modify-syntax-entry ?@ ". p" st)
@@ -218,6 +203,13 @@
 (defvar perl-quote-like-pairs
   '((?\( . ?\)) (?\[ . ?\]) (?\{ . ?\}) (?\< . ?\>)))
 
+(eval-and-compile
+  (defconst perl--syntax-exp-intro-regexp
+    (concat "\\(?:\\(?:^\\|[^$@&%[:word:]]\\)"
+            (regexp-opt '("split" "if" "unless" "until" "while" "print"
+                          "grep" "map" "not" "or" "and" "for" "foreach"))
+            "\\|[-?:.,;|&+*=!~({[]\\|\\(^\\)\\)[ \t\n]*")))
+
 ;; FIXME: handle here-docs and regexps.
 ;; <<EOF <<"EOF" <<'EOF' (no space)
 ;; see `man perlop'
@@ -250,7 +242,11 @@
       ;; Catch ${ so that ${var} doesn't screw up indentation.
       ;; This also catches $' to handle 'foo$', although it should really
       ;; check that it occurs inside a '..' string.
-      ("\\(\\$\\)[{']" (1 ". p"))
+      ("\\(\\$\\)[{']" (1 (unless (and (eq ?\' (char-after (match-end 1)))
+                                       (save-excursion
+                                         (not (nth 3 (syntax-ppss
+                                                      (match-beginning 0))))))
+                            (string-to-syntax ". p"))))
       ;; Handle funny names like $DB'stop.
       ("\\$ ?{?^?[_[:alpha:]][_[:alnum:]]*\\('\\)[_[:alpha:]]" (1 "_"))
       ;; format statements
@@ -274,10 +270,7 @@
       ;; *opening* slash.  We can afford to mis-match the closing ones
       ;; here, because they will be re-treated separately later in
       ;; perl-font-lock-special-syntactic-constructs.
-      ((concat "\\(?:\\(?:^\\|[^$@&%[:word:]]\\)"
-               (regexp-opt '("split" "if" "unless" "until" "while" "split"
-                             "grep" "map" "not" "or" "and"))
-               "\\|[?:.,;=!~({[]\\|\\(^\\)\\)[ \t\n]*\\(/\\)")
+      ((concat perl--syntax-exp-intro-regexp "\\(/\\)")
        (2 (ignore
            (if (and (match-end 1)       ; / at BOL.
                     (save-excursion
@@ -312,10 +305,15 @@
                                   (string-to-syntax "\"")))
              (perl-syntax-propertize-special-constructs end)))))
       ;; Here documents.
-      ;; TODO: Handle <<WORD.  These are trickier because you need to
-      ;; disambiguate with the shift operator.
-      ("<<[ \t]*\\('[^'\n]*'\\|\"[^\"\n]*\"\\|\\\\[[:alpha:]][[:alnum:]]*\\).*\\(\n\\)"
-       (2 (let* ((st (get-text-property (match-beginning 2) 'syntax-table))
+      ((concat
+        "\\(?:"
+        ;; << "EOF", << 'EOF', or << \EOF
+        "<<[ \t]*\\('[^'\n]*'\\|\"[^\"\n]*\"\\|\\\\[[:alpha:]][[:alnum:]]*\\)"
+        ;; The <<EOF case which needs perl--syntax-exp-intro-regexp, to
+        ;; disambiguate with the left-bitshift operator.
+        "\\|" perl--syntax-exp-intro-regexp "<<\\(?1:\\sw+\\)\\)"
+        ".*\\(\n\\)")
+       (3 (let* ((st (get-text-property (match-beginning 3) 'syntax-table))
                  (name (match-string 1)))
             (goto-char (match-end 1))
             (if (save-excursion (nth 8 (syntax-ppss (match-beginning 0))))
@@ -325,7 +323,8 @@
                     ;; Remember the names of heredocs found on this line.
                     (cons (pcase (aref name 0)
                             (`?\\ (substring name 1))
-                            (_ (substring name 1 -1)))
+                            ((or `?\" `?\' `?\`) (substring name 1 -1))
+                            (_ name))
                           (cdr st)))))))
       ;; We don't call perl-syntax-propertize-special-constructs directly
       ;; from the << rule, because there might be other elements (between
@@ -494,8 +493,7 @@
 
 (defcustom perl-indent-level 4
   "Indentation of Perl statements with respect to containing block."
-  :type 'integer
-  :group 'perl)
+  :type 'integer)
 
 ;; Is is not unusual to put both things like perl-indent-level and
 ;; cperl-indent-level in the local variable section of a file. If only
@@ -511,45 +509,37 @@
 
 (defcustom perl-continued-statement-offset 4
   "Extra indent for lines not starting new statements."
-  :type 'integer
-  :group 'perl)
+  :type 'integer)
 (defcustom perl-continued-brace-offset -4
   "Extra indent for substatements that start with open-braces.
 This is in addition to `perl-continued-statement-offset'."
-  :type 'integer
-  :group 'perl)
+  :type 'integer)
 (defcustom perl-brace-offset 0
   "Extra indentation for braces, compared with other text in same context."
-  :type 'integer
-  :group 'perl)
+  :type 'integer)
 (defcustom perl-brace-imaginary-offset 0
   "Imagined indentation of an open brace that actually follows a statement."
-  :type 'integer
-  :group 'perl)
+  :type 'integer)
 (defcustom perl-label-offset -2
   "Offset of Perl label lines relative to usual indentation."
-  :type 'integer
-  :group 'perl)
+  :type 'integer)
 (defcustom perl-indent-continued-arguments nil
   "If non-nil offset of argument lines relative to usual indentation.
 If nil, continued arguments are aligned with the first argument."
-  :type '(choice integer (const nil))
-  :group 'perl)
+  :type '(choice integer (const nil)))
 
 (defcustom perl-indent-parens-as-block nil
   "Non-nil means that non-block ()-, {}- and []-groups are indented as blocks.
 The closing bracket is aligned with the line of the opening bracket,
 not the contents of the brackets."
   :version "24.3"
-  :type 'boolean
-  :group 'perl)
+  :type 'boolean)
 
 (defcustom perl-tab-always-indent tab-always-indent
   "Non-nil means TAB in Perl mode always indents the current line.
 Otherwise it inserts a tab character if you type it past the first
 nonwhite character on the line."
-  :type 'boolean
-  :group 'perl)
+  :type 'boolean)
 
 ;; I changed the default to nil for consistency with general Emacs
 ;; conventions -- rms.
@@ -558,13 +548,12 @@ nonwhite character on the line."
 For lines which don't need indenting, TAB either indents an
 existing comment, moves to end-of-line, or if at end-of-line already,
 create a new comment."
-  :type 'boolean
-  :group 'perl)
+  :type 'boolean)
 
-(defcustom perl-nochange ";?#\\|\f\\|\\s(\\|\\(\\w\\|\\s_\\)+:[^:]"
+(defcustom perl-nochange "\f"
   "Lines starting with this regular expression are not auto-indented."
   :type 'regexp
-  :group 'perl)
+  :options '(";?#\\|\f\\|\\s(\\|\\(\\w\\|\\s_\\)+:[^:]"))
 
 ;; Outline support
 
@@ -685,7 +674,7 @@ Turning on Perl mode runs the normal hook `perl-mode-hook'."
 
 (define-obsolete-function-alias 'electric-perl-terminator
   'perl-electric-terminator "22.1")
-(defun perl-electric-noindent-p (char)
+(defun perl-electric-noindent-p (_char)
   (unless (eolp) 'no-indent))
 
 (defun perl-electric-terminator (arg)
@@ -803,7 +792,11 @@ Return the amount the indentation
 changed by, or (parse-state) if line starts in a quoted string."
   (let ((case-fold-search nil)
 	(pos (- (point-max) (point)))
-	(bof (or parse-start (save-excursion (perl-beginning-of-function))))
+	(bof (or parse-start (save-excursion
+                               ;; Don't consider text on this line as a
+                               ;; valid BOF from which to indent.
+			       (goto-char (line-end-position 0))
+			       (perl-beginning-of-function))))
 	beg indent shift-amt)
     (beginning-of-line)
     (setq beg (point))
@@ -860,11 +853,12 @@ changed by, or (parse-state) if line starts in a quoted string."
    (and (= (char-syntax (following-char)) ?\))
 	(save-excursion
 	  (forward-char 1)
-	  (forward-sexp -1)
-	  (perl-indent-new-calculate
-           ;; Recalculate the parsing-start, since we may have jumped
-           ;; dangerously close (typically in the case of nested functions).
-           'virtual nil (save-excursion (perl-beginning-of-function)))))
+          (when (condition-case nil (progn (forward-sexp -1) t)
+                  (scan-error nil))
+            (perl-indent-new-calculate
+             ;; Recalculate the parsing-start, since we may have jumped
+             ;; dangerously close (typically in the case of nested functions).
+             'virtual nil (save-excursion (perl-beginning-of-function))))))
    (and (and (= (following-char) ?{)
 	     (save-excursion (forward-char) (perl-hanging-paren-p)))
 	(+ (or default (perl-calculate-indent parse-start))
@@ -904,7 +898,9 @@ Optional argument PARSE-START should be the position of `beginning-of-defun'."
 	;;          following_quotep minimum_paren-depth_this_scan)
 	;; Parsing stops if depth in parentheses becomes equal to third arg.
 	(setq containing-sexp (nth 1 state)))
-      (cond ((nth 3 state) 'noindent)	; In a quoted string?
+      (cond
+       ;; Don't auto-indent in a quoted string or a here-document.
+       ((or (nth 3 state) (eq 2 (nth 7 state))) 'noindent)
 	    ((null containing-sexp)	; Line is at top level.
 	     (skip-chars-forward " \t\f")
 	     (if (memq (following-char)

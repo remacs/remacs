@@ -1,6 +1,6 @@
 ;;; hideshow.el --- minor mode cmds to selectively display code/comment blocks -*- coding: utf-8 -*-
 
-;; Copyright (C) 1994-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1994-2014 Free Software Foundation, Inc.
 
 ;; Author: Thien-Thi Nguyen <ttn@gnu.org>
 ;;      Dan Nicolaescu <dann@ics.uci.edu>
@@ -789,6 +789,7 @@ If `hs-hide-comments-when-hiding-all' is non-nil, also hide the comments."
      (unless hs-allow-nesting
        (hs-discard-overlays (point-min) (point-max)))
      (goto-char (point-min))
+     (syntax-propertize (point-max))
      (let ((spew (make-progress-reporter "Hiding all blocks..."
                                          (point-min) (point-max)))
            (re (concat "\\("

@@ -1,5 +1,5 @@
 /* Dump an executable image.
-   Copyright (C) 1985-1988, 1999, 2001-2013 Free Software Foundation,
+   Copyright (C) 1985-1988, 1999, 2001-2014 Free Software Foundation,
    Inc.
 
 This file is part of GNU Emacs.
@@ -379,7 +379,7 @@ copy_text_and_data (int new)
   char *ptr;
 
   lseek (new, text_scnptr, SEEK_SET);
-  ptr = _text + text_scnptr;
+  ptr = _text;
   end = ptr + f_ohdr.tsize;
   write_segment (new, ptr, end);
 
@@ -606,7 +606,7 @@ unrelocate_symbols (int new, int a_out,
 	      PERROR (a_name);
 	    }
 
-          p = (int *) (ldrel.l_vaddr + d_reloc);
+          p = (int *) (intptr_t) (ldrel.l_vaddr + d_reloc);
 
 	  switch (ldrel.l_symndx) {
 	  case SYMNDX_TEXT:

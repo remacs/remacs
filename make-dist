@@ -1,7 +1,8 @@
 #!/bin/sh
 ### make-dist: create an Emacs distribution tar file from current srcdir
 
-## Copyright (C) 1995, 1997-1998, 2000-2013 Free Software Foundation, Inc.
+## Copyright (C) 1995, 1997-1998, 2000-2014 Free Software Foundation,
+## Inc.
 
 ## This file is part of GNU Emacs.
 
@@ -159,7 +160,7 @@ fi
 
 ### Find out which version of Emacs this is.
 version=`
-  sed -n 's/^AC_INIT(emacs,[	 ]*\([^	 )]*\).*/\1/p' <configure.ac
+  sed -n 's/^AC_INIT(GNU Emacs,[	 ]*\([^	 ,)]*\).*/\1/p' <configure.ac
 ` || version=
 if [ ! "${version}" ]; then
   echo "${progname}: can't find current Emacs version in \`./src/emacs.c'" >&2
@@ -201,13 +202,11 @@ fi
 if [ $check = yes ]; then
   ls -1 lisp/[a-zA-Z]*.el lisp/[a-z]*/[a-zA-Z0-9]*.el \
 	lisp/[a-z]*/[a-z]*/[a-zA-Z0-9]*.el \
-	lisp/[a-z]*/[a-z]*/[a-z]*/[a-zA-Z0-9]*.el \
-	leim/[a-z]*/[a-z]*.el > /tmp/el
+	lisp/[a-z]*/[a-z]*/[a-z]*/[a-zA-Z0-9]*.el > /tmp/el
 
   ls -1 lisp/[a-zA-Z]*.elc lisp/[a-z]*/[a-zA-Z0-9]*.elc \
 	lisp/[a-z]*/[a-z]*/[a-zA-Z0-9]*.elc \
-	lisp/[a-z]*/[a-z]*/[a-z]*/[a-zA-Z0-9]*.elc \
-	leim/[a-z]*/[a-z]*.elc > /tmp/elc
+	lisp/[a-z]*/[a-z]*/[a-z]*/[a-zA-Z0-9]*.elc > /tmp/elc
 
   ## Check for .elc files with no corresponding .el file.
   sed 's/\.el$/.elc/' /tmp/el > /tmp/elelc
@@ -253,7 +252,7 @@ if [ $update = yes ]; then
   echo timestamp > src/stamp-h.in
 
   echo "Updating Info files"
-  make info-real
+  make info
 
   echo "Updating finder, custom and autoload data"
   (cd lisp && make updates EMACS="$EMACS")
@@ -262,7 +261,7 @@ if [ $update = yes ]; then
   (cd leim && make leim-list.el EMACS="$EMACS")
 
   echo "Recompiling Lisp files"
-  $EMACS -batch -f batch-byte-recompile-directory lisp leim
+  $EMACS -batch -f batch-byte-recompile-directory lisp
 fi                              # $update = yes
 
 echo "Creating staging directory: \`${tempparent}'"
@@ -291,8 +290,7 @@ ln aclocal.m4 ${tempdir}
 
 echo "Creating subdirectories"
 for subdir in site-lisp \
-	      leim leim/CXTERM-DIC leim/MISC-DIC \
-	      leim/SKK-DIC leim/ja-dic leim/quail \
+	      leim leim/CXTERM-DIC leim/MISC-DIC leim/SKK-DIC \
 	      build-aux build-aux/snippet \
 	      src src/bitmaps lib lib-src oldXMenu lwlib \
 	      nt nt/inc nt/inc/sys nt/inc/arpa nt/inc/netinet nt/icons \
@@ -340,21 +338,16 @@ echo "Making links to \`leim' and its subdirectories"
  ln CXTERM-DIC/README CXTERM-DIC/*.tit ../${tempdir}/leim/CXTERM-DIC
  ln SKK-DIC/README SKK-DIC/SKK-JISYO.L ../${tempdir}/leim/SKK-DIC
  ln MISC-DIC/README MISC-DIC/*.* ../${tempdir}/leim/MISC-DIC
- ln ja-dic/*.el ja-dic/*.elc ../${tempdir}/leim/ja-dic
  ln Makefile.in ../${tempdir}/leim/Makefile.in
- ln leim-ext.el ../${tempdir}/leim/leim-ext.el
- ## Lisp files that start with a capital (also 4Corner.el) are
- ## generated from TIT dictionaries so we don't distribute them.
- ln quail/[a-z]*.el quail/[a-z]*.elc ../${tempdir}/leim/quail
- rm -f ../${tempdir}/leim/quail/quick-b5.*
- rm -f ../${tempdir}/leim/quail/quick-cns.*
- rm -f ../${tempdir}/leim/quail/tsang-b5.*
- rm -f ../${tempdir}/leim/quail/tsang-cns.*)
+ ln leim-ext.el ../${tempdir}/leim/leim-ext.el)
 
+## FIXME Can we not just use the "find -type f" method for this one?
 echo "Making links to \`build-aux'"
 (cd build-aux
- ln compile config.guess config.sub depcomp ../${tempdir}/build-aux
- ln install-sh missing move-if-change update-subdirs ../${tempdir}/build-aux)
+ ln compile config.guess config.sub depcomp msys-to-w32 ../${tempdir}/build-aux
+ ln install-sh missing move-if-change ../${tempdir}/build-aux
+ ln update-copyright update-subdirs ../${tempdir}/build-aux
+ ln dir_top make-info-dir ../${tempdir}/build-aux)
 
 echo "Making links to \`build-aux/snippet'"
 (cd build-aux/snippet
@@ -390,9 +383,10 @@ echo "Making links to \`lib'"
 echo "Making links to \`lib-src'"
 (cd lib-src
  ln [a-zA-Z]*.[ch] ../${tempdir}/lib-src
- ln ChangeLog Makefile.in README testfile ../${tempdir}/lib-src
+ ln ChangeLog Makefile.in README ../${tempdir}/lib-src
  ln grep-changelog rcs2log ../${tempdir}/lib-src
- ln makefile.w32-in ../${tempdir}/lib-src)
+ ln makefile.w32-in ../${tempdir}/lib-src
+ ln update-game-score.exe.manifest ../${tempdir}/lib-src)
 
 echo "Making links to \`m4'"
 (cd m4
@@ -404,7 +398,7 @@ echo "Making links to \`nt'"
  ln config.nt emacsclient.rc emacs-src.tags ../${tempdir}/nt
  ln nmake.defs gmake.defs subdirs.el [a-z]*.bat [a-z]*.[ch] ../${tempdir}/nt
  ln Makefile.in gnulib.mk ../${tempdir}/nt
- ln msysconfig.sh mingw-cfg.site epaths.nt INSTALL.OLD ../${tempdir}/nt
+ ln mingw-cfg.site epaths.nt INSTALL.OLD ../${tempdir}/nt
  ln ChangeLog INSTALL README README.W32 makefile.w32-in ../${tempdir}/nt)
 
 echo "Making links to \`nt/inc' and its subdirectories"
@@ -453,10 +447,12 @@ echo "Making links to \`lwlib'"
  ln *.[ch] *.in ../${tempdir}/lwlib
  ln README ChangeLog ../${tempdir}/lwlib)
 
+## It is important to distribute admin/ because it contains sources
+## for generated lisp/international/uni-*.el files.
 echo "Making links to \`admin' and its subdirectories"
 for f in `find admin -type f`; do
   case $f in
-    admin/unidata/Makefile) continue ;;
+    */Makefile) [ -f $f.in ] && continue ;;
   esac
   ln $f $tempdir/$f
 done
@@ -514,7 +510,7 @@ echo "Making links to \`doc/man'"
 ### It would be nice if they could all be symlinks to top-level copy, but
 ### you're not supposed to have any symlinks in distribution tar files.
 echo "Making sure copying notices are all copies of \`COPYING'"
-for subdir in . etc info leim lib lib-src lisp lwlib msdos nt src; do
+for subdir in . etc leim lib lib-src lisp lwlib msdos nt src; do
   rm -f ${tempdir}/${subdir}/COPYING
   cp COPYING ${tempdir}/${subdir}
 done

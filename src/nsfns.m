@@ -1,6 +1,6 @@
 /* Functions for the NeXT/Open/GNUstep and MacOSX window system.
 
-Copyright (C) 1989, 1992-1994, 2005-2006, 2008-2013 Free Software
+Copyright (C) 1989, 1992-1994, 2005-2006, 2008-2014 Free Software
 Foundation, Inc.
 
 This file is part of GNU Emacs.
@@ -175,28 +175,21 @@ ns_get_window (Lisp_Object maybeFrame)
 struct ns_display_info *
 ns_display_info_for_name (Lisp_Object name)
 {
-  Lisp_Object names;
   struct ns_display_info *dpyinfo;
 
   CHECK_STRING (name);
 
-  for (dpyinfo = x_display_list, names = ns_display_name_list;
-       dpyinfo;
-       dpyinfo = dpyinfo->next, names = XCDR (names))
-    {
-      Lisp_Object tem;
-      tem = Fstring_equal (XCAR (XCAR (names)), name);
-      if (!NILP (tem))
-        return dpyinfo;
-    }
+  for (dpyinfo = x_display_list; dpyinfo; dpyinfo = dpyinfo->next)
+    if (!NILP (Fstring_equal (XCAR (dpyinfo->name_list_element), name)))
+      return dpyinfo;
 
-  error ("Emacs for OpenStep does not yet support multi-display.");
+  error ("Emacs for Nextstep does not yet support multi-display");
 
   Fx_open_connection (name, Qnil, Qnil);
   dpyinfo = x_display_list;
 
   if (dpyinfo == 0)
-    error ("OpenStep on %s not responding.\n", SDATA (name));
+    error ("Display on %s not responding.\n", SDATA (name));
 
   return dpyinfo;
 }
@@ -410,23 +403,23 @@ x_set_icon_name (struct frame *f, Lisp_Object arg, Lisp_Object oldval)
       if (!NILP (f->title))
         arg = f->title;
       else
-        /* explicit name and no icon-name -> explicit_name */
+        /* Explicit name and no icon-name -> explicit_name.  */
         if (f->explicit_name)
           arg = f->name;
         else
           {
-            /* no explicit name and no icon-name ->
-               name has to be rebuild from icon_title_format */
-            windows_or_buffers_changed++;
+            /* No explicit name and no icon-name ->
+               name has to be rebuild from icon_title_format.  */
+            windows_or_buffers_changed = 62;
             return;
           }
     }
 
   /* Don't change the name if it's already NAME.  */
-  if ([[view window] miniwindowTitle] &&
-      ([[[view window] miniwindowTitle]
+  if ([[view window] miniwindowTitle]
+      && ([[[view window] miniwindowTitle]
              isEqualToString: [NSString stringWithUTF8String:
-                                           SSDATA (arg)]]))
+					  SSDATA (arg)]]))
     return;
 
   [[view window] setMiniwindowTitle:
@@ -458,8 +451,8 @@ ns_set_name_internal (struct frame *f, Lisp_Object name)
 
   str = [NSString stringWithUTF8String: SSDATA (encoded_icon_name)];
 
-  if ([[view window] miniwindowTitle] &&
-      ! [[[view window] miniwindowTitle] isEqualToString: str])
+  if ([[view window] miniwindowTitle]
+      && ! [[[view window] miniwindowTitle] isEqualToString: str])
     [[view window] setMiniwindowTitle: str];
 
 }
@@ -476,7 +469,7 @@ ns_set_name (struct frame *f, Lisp_Object name, int explicit)
       /* If we're switching from explicit to implicit, we had better
          update the mode lines and thereby update the title.  */
       if (f->explicit_name && NILP (name))
-        update_mode_lines = 1;
+        update_mode_lines = 21;
 
       f->explicit_name = ! NILP (name);
     }
@@ -484,7 +477,7 @@ ns_set_name (struct frame *f, Lisp_Object name, int explicit)
     return;
 
   if (NILP (name))
-    name = build_string([ns_app_name UTF8String]);
+    name = build_string ([ns_app_name UTF8String]);
   else
     CHECK_STRING (name);
 
@@ -494,7 +487,7 @@ ns_set_name (struct frame *f, Lisp_Object name, int explicit)
 
   fset_name (f, name);
 
-  /* title overrides explicit name */
+  /* Title overrides explicit name.  */
   if (! NILP (f->title))
     name = f->title;
 
@@ -541,7 +534,7 @@ x_set_title (struct frame *f, Lisp_Object name, Lisp_Object old_name)
   if (EQ (name, f->title))
     return;
 
-  update_mode_lines = 1;
+  update_mode_lines = 22;
 
   fset_title (f, name);
 
@@ -710,7 +703,7 @@ x_set_tool_bar_lines (struct frame *f, Lisp_Object value, Lisp_Object oldval)
         }
     }
 
-  x_set_window_size (f, 0, f->text_cols, f->text_lines);
+  x_set_window_size (f, 0, f->text_cols, f->text_lines, 0);
 }
 
 
@@ -953,6 +946,8 @@ frame_parm_handler ns_frame_parm_handlers[] =
   x_set_icon_name,
   x_set_icon_type,
   x_set_internal_border_width, /* generic OK */
+  0, /* x_set_right_divider_width */
+  0, /* x_set_bottom_divider_width */
   x_set_menu_bar_lines,
   x_set_mouse_color,
   x_explicitly_set_name,
@@ -1029,7 +1024,7 @@ get_geometry_from_preferences (struct ns_display_info *dpyinfo,
   };
 
   int i;
-  for (i = 0; i < sizeof (r)/sizeof (r[0]); ++i)
+  for (i = 0; i < ARRAYELTS (r); ++i)
     {
       if (NILP (Fassq (r[i].tem, parms)))
         {
@@ -1201,6 +1196,7 @@ This function is an internal primitive--use `make-frame' instead.  */)
     x_default_parameter (f, parms, Qfont,
                                  build_string (fontname),
                                  "font", "Font", RES_TYPE_STRING);
+    xfree (fontname);
   }
   unblock_input ();
 
@@ -1241,6 +1237,13 @@ This function is an internal primitive--use `make-frame' instead.  */)
 
   init_frame_faces (f);
 
+  /* Read comment about this code in corresponding place in xfns.c.  */
+  width = FRAME_TEXT_WIDTH (f);
+  height = FRAME_TEXT_HEIGHT (f);
+  FRAME_TEXT_HEIGHT (f) = 0;
+  SET_FRAME_WIDTH (f, 0);
+  change_frame_size (f, width, height, 1, 0, 0, 1);
+
   /* The resources controlling the menu-bar and tool-bar are
      processed specially at startup, and reflected in the mode
      variables; ignore them here.  */
@@ -1272,6 +1275,7 @@ This function is an internal primitive--use `make-frame' instead.  */)
   f->output_data.ns->hand_cursor = [NSCursor pointingHandCursor];
   f->output_data.ns->hourglass_cursor = [NSCursor disappearingItemCursor];
   f->output_data.ns->horizontal_drag_cursor = [NSCursor resizeLeftRightCursor];
+  f->output_data.ns->vertical_drag_cursor = [NSCursor resizeUpDownCursor];
   FRAME_DISPLAY_INFO (f)->vertical_scroll_bar_cursor
      = [NSCursor arrowCursor];
   f->output_data.ns->current_pointer = f->output_data.ns->text_cursor;
@@ -1304,12 +1308,11 @@ This function is an internal primitive--use `make-frame' instead.  */)
   x_default_parameter (f, parms, Qfullscreen, Qnil,
                        "fullscreen", "Fullscreen", RES_TYPE_SYMBOL);
 
-  width = FRAME_COLS (f);
-  height = FRAME_LINES (f);
-
-  SET_FRAME_COLS (f, 0);
-  FRAME_LINES (f) = 0;
-  change_frame_size (f, height, width, 1, 0, 0);
+  width = FRAME_TEXT_WIDTH (f);
+  height = FRAME_TEXT_HEIGHT (f);
+  FRAME_TEXT_HEIGHT (f) = 0;
+  SET_FRAME_WIDTH (f, 0);
+  change_frame_size (f, width, height, 1, 0, 0, 1);
 
   if (! f->output_data.ns->explicit_parent)
     {
@@ -1814,10 +1817,10 @@ terminate Emacs if we can't open the connection.
   if (dpyinfo == 0)
     {
       if (!NILP (must_succeed))
-        fatal ("OpenStep on %s not responding.\n",
+        fatal ("Display on %s not responding.\n",
                SSDATA (display));
       else
-        error ("OpenStep on %s not responding.\n",
+        error ("Display on %s not responding.\n",
                SSDATA (display));
     }
 
@@ -1843,11 +1846,11 @@ DEFUN ("x-display-list", Fx_display_list, Sx_display_list, 0, 0, 0,
        doc: /* Return the list of display names that Emacs has connections to.  */)
      (void)
 {
-  Lisp_Object tail, result;
+  Lisp_Object result = Qnil;
+  struct ns_display_info *ndi;
 
-  result = Qnil;
-  for (tail = ns_display_name_list; CONSP (tail); tail = XCDR (tail))
-    result = Fcons (XCAR (XCAR (tail)), result);
+  for (ndi = x_display_list; ndi; ndi = ndi->next)
+    result = Fcons (XCAR (ndi->name_list_element), result);
 
   return result;
 }
@@ -2048,16 +2051,27 @@ DEFUN ("ns-convert-utf8-nfd-to-nfc", Fns_convert_utf8_nfd_to_nfc,
 /* TODO: If GNUstep ever implements precomposedStringWithCanonicalMapping,
          remove this. */
   NSString *utfStr;
-  Lisp_Object ret;
+  Lisp_Object ret = Qnil;
+  NSAutoreleasePool *pool;
 
   CHECK_STRING (str);
-  NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
- utfStr = [NSString stringWithUTF8String: SSDATA (str)];
+  pool = [[NSAutoreleasePool alloc] init];
+  utfStr = [NSString stringWithUTF8String: SSDATA (str)];
 #ifdef NS_IMPL_COCOA
-  utfStr = [utfStr precomposedStringWithCanonicalMapping];
+  if (utfStr)
+    utfStr = [utfStr precomposedStringWithCanonicalMapping];
 #endif
-  ret = build_string ([utfStr UTF8String]);
+  if (utfStr)
+    {
+      const char *cstr = [utfStr UTF8String];
+      if (cstr)
+        ret = build_string (cstr);
+    }
+
   [pool release];
+  if (NILP (ret))
+    error ("Invalid UTF-8");
+
   return ret;
 }
 
@@ -2082,7 +2096,6 @@ ns_do_applescript (Lisp_Object script, Lisp_Object *result)
 
   returnDescriptor = [scriptObject executeAndReturnError: &errorDict];
   [scriptObject release];
-
   *result = Qnil;
 
   if (returnDescriptor != NULL)
@@ -2143,6 +2156,7 @@ In case the execution fails, an error is signaled. */)
   Lisp_Object result;
   int status;
   NSEvent *nxev;
+  struct input_event ev;
 
   CHECK_STRING (script);
   check_window_system (NULL);
@@ -2170,8 +2184,10 @@ In case the execution fails, an error is signaled. */)
 
   // If there are other events, the event loop may exit.  Keep running
   // until the script has been handled.  */
+  ns_init_events (&ev);
   while (! NILP (as_script))
     [NSApp run];
+  ns_finish_events ();
 
   status = as_status;
   as_status = 0;
@@ -2211,17 +2227,13 @@ x_set_scroll_bar_default_width (struct frame *f)
                                       wid - 1) / wid;
 }
 
-
-extern const char *x_get_string_resource (XrmDatabase, char *, char *);
-
-
 /* terms impl this instead of x-get-resource directly */
-const char *
-x_get_string_resource (XrmDatabase rdb, char *name, char *class)
+char *
+x_get_string_resource (XrmDatabase rdb, const char *name, const char *class)
 {
   /* remove appname prefix; TODO: allow for !="Emacs" */
-  char *toCheck = class + (!strncmp (class, "Emacs.", 6) ? 6 : 0);
-  const char *res;
+  const char *res, *toCheck = class + (!strncmp (class, "Emacs.", 6) ? 6 : 0);
+
   check_window_system (NULL);
 
   if (inhibit_x_resources)
@@ -2229,9 +2241,9 @@ x_get_string_resource (XrmDatabase rdb, char *name, char *class)
     return NULL;
 
   res = ns_get_defaults_value (toCheck);
-  return !res ? NULL :
-      (!c_strncasecmp (res, "YES", 3) ? "true" :
-          (!c_strncasecmp (res, "NO", 2) ? "false" : res));
+  return (!res ? NULL :
+	  (!c_strncasecmp (res, "YES", 3) ? "true" :
+	   (!c_strncasecmp (res, "NO", 2) ? "false" : (char *) res)));
 }
 
 
@@ -2279,7 +2291,7 @@ DEFUN ("xw-color-values", Fxw_color_values, Sxw_color_values, 1, 2, 0,
   if (ns_lisp_to_color (color, &col))
     return Qnil;
 
-  [[col colorUsingColorSpaceName: NSCalibratedRGBColorSpace]
+  [[col colorUsingDefaultColorSpace]
         getRed: &red green: &green blue: &blue alpha: &alpha];
   return list3i (lrint (red * 65280), lrint (green * 65280),
 		 lrint (blue * 65280));
@@ -2357,7 +2369,35 @@ each physical monitor, use `display-monitor-attributes-list'.  */)
 }
 
 #ifdef NS_IMPL_COCOA
-/* Returns the name for the screen that DICT came from, or NULL.
+
+/* Returns the name for the screen that OBJ represents, or NULL.
+   Caller must free return value.
+*/
+
+static char *
+ns_get_name_from_ioreg (io_object_t obj)
+{
+  char *name = NULL;
+
+  NSDictionary *info = (NSDictionary *)
+    IODisplayCreateInfoDictionary (obj, kIODisplayOnlyPreferredName);
+  NSDictionary *names = [info objectForKey:
+                                [NSString stringWithUTF8String:
+                                            kDisplayProductName]];
+
+  if ([names count] > 0)
+    {
+      NSString *n = [names objectForKey: [[names allKeys]
+                                                 objectAtIndex:0]];
+      if (n != nil) name = xstrdup ([n UTF8String]);
+    }
+
+  [info release];
+
+  return name;
+}
+
+/* Returns the name for the screen that DID came from, or NULL.
    Caller must free return value.
 */
 
@@ -2365,20 +2405,50 @@ static char *
 ns_screen_name (CGDirectDisplayID did)
 {
   char *name = NULL;
-  NSDictionary *info = (NSDictionary *)
-    IODisplayCreateInfoDictionary (CGDisplayIOServicePort (did),
-                                   kIODisplayOnlyPreferredName);
-  NSDictionary *names
-    = [info objectForKey:
-              [NSString stringWithUTF8String:kDisplayProductName]];
 
-  if ([names count] > 0) {
-    NSString *n = [names objectForKey: [[names allKeys] objectAtIndex:0]];
-    if (n != nil)
-      name = xstrdup ([n UTF8String]);
-  }
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_9
+  mach_port_t masterPort;
+  io_iterator_t it;
+  io_object_t obj;
 
-  [info release];
+  // CGDisplayIOServicePort is deprecated.  Do it another (harder) way.
+
+  if (IOMasterPort (MACH_PORT_NULL, &masterPort) != kIOReturnSuccess
+      || IOServiceGetMatchingServices (masterPort,
+                                       IOServiceMatching ("IONDRVDevice"),
+                                       &it) != kIOReturnSuccess)
+    return name;
+
+  /* Must loop until we find a name.  Many devices can have the same unit
+     number (represents different GPU parts), but only one has a name.  */
+  while (! name && (obj = IOIteratorNext (it)))
+    {
+      CFMutableDictionaryRef props;
+      const void *val;
+
+      if (IORegistryEntryCreateCFProperties (obj,
+                                             &props,
+                                             kCFAllocatorDefault,
+                                             kNilOptions) == kIOReturnSuccess
+          && props != nil
+          && (val = CFDictionaryGetValue(props, @"IOFBDependentIndex")))
+        {
+          unsigned nr = [(NSNumber *)val unsignedIntegerValue];
+          if (nr == CGDisplayUnitNumber (did))
+            name = ns_get_name_from_ioreg (obj);
+        }
+
+      CFRelease (props);
+      IOObjectRelease (obj);
+    }
+
+  IOObjectRelease (it);
+
+#else
+
+  name = ns_get_name_from_ioreg (CGDisplayIOServicePort (did));
+
+#endif
   return name;
 }
 #endif
@@ -2568,6 +2638,7 @@ compute_tip_xy (struct frame *f,
 {
   Lisp_Object left, top;
   EmacsView *view = FRAME_NS_VIEW (f);
+  struct ns_display_info *dpyinfo = FRAME_DISPLAY_INFO (f);
   NSPoint pt;
 
   /* Start with user-specified or mouse position.  */
@@ -2576,7 +2647,8 @@ compute_tip_xy (struct frame *f,
 
   if (!INTEGERP (left) || !INTEGERP (top))
     {
-      pt = last_mouse_motion_position;
+      pt.x = dpyinfo->last_mouse_motion_x;
+      pt.y = dpyinfo->last_mouse_motion_y;
       /* Convert to screen coordinates */
       pt = [view convertPoint: pt toView: nil];
       pt = [[view window] convertBaseToScreen: pt];

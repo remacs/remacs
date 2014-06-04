@@ -1,3 +1,50 @@
+2014-04-17  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* Makefile.in (infoclean): Be consistent about reporting failures.
+
+2014-02-25  Glenn Morris  <rgm@gnu.org>
+
+	* emacs-lisp-intro.texi (X11 Colors): Don't use setq with hooks.
+
+2014-02-06  Glenn Morris  <rgm@gnu.org>
+
+	* emacs-lisp-intro.texi (Recursive Patterns):
+	Do not use colons in index entries.
+
+2014-01-23  Glenn Morris  <rgm@gnu.org>
+
+	* emacs-lisp-intro.texi (lengths-list-file): Fix textual parentheses.
+
+2013-12-30  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Specify .texi encoding (Bug#16292).
+	* emacs-lisp-intro.texi: Add @documentencoding.
+
+2013-12-30  Glenn Morris  <rgm@gnu.org>
+
+	* emacs-lisp-intro.texi: Use @quotation for license notice.
+
+2013-12-12  Glenn Morris  <rgm@gnu.org>
+
+	* emacs-lisp-intro.texi: Tweak dircategory.
+
+	* emacs-lisp-intro.texi: Sync direntry with info/dir version.
+
+2013-12-02  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* emacs-lisp-intro.texi (Counting Words): Don't use ':' in xref
+	titles, as this isn't supported by Texinfo.
+
+2013-11-30  Glenn Morris  <rgm@gnu.org>
+
+	* Makefile.in (distclean): Remove Makefile.
+
+2013-10-23  Glenn Morris  <rgm@gnu.org>
+
+	* Makefile.in (install-dvi, install-html, install-pdf)
+	(install-ps, uninstall-dvi, uninstall-html, uninstall-ps)
+	(uninstall-pdf): Quote entities that might contain whitespace.
+
 2013-09-01  Glenn Morris  <rgm@gnu.org>
 
 	* emacs-lisp-intro.texi (beginning-of-buffer complete):
@@ -30,8 +77,8 @@
 	(emacs-lisp-intro.ps): Remove explicit rule.
 	(emacs-lisp-intro.html): Use HTML_OPTS.
 	(clean): Use DVI_TARGETS, HTML_TARGETS, PDF_TARGETS, PS_TARGETS.
-	(.PHONY): install-dvi, install-html, install-pdf, install-ps
-	,install-doc, uninstall-dvi, uninstall-html, uninstall-pdf,
+	(.PHONY): install-dvi, install-html, install-pdf, install-ps,
+	install-doc, uninstall-dvi, uninstall-html, uninstall-pdf,
 	uninstall-ps, and uninstall-doc.
 	(install-dvi, install-html, install-pdf, install-ps, install-doc)
 	(uninstall-dvi, uninstall-html, uninstall-ps, uninstall-pdf)
@@ -674,7 +721,7 @@
 ;; coding: utf-8
 ;; End:
 
-  Copyright (C) 2001-2013 Free Software Foundation, Inc.
+  Copyright (C) 2001-2014 Free Software Foundation, Inc.
 
   This file is part of GNU Emacs.
 

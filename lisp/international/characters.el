@@ -1,6 +1,6 @@
 ;;; characters.el --- set syntax and category for multibyte characters
 
-;; Copyright (C) 1997, 2000-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1997, 2000-2014 Free Software Foundation, Inc.
 ;; Copyright (C) 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004,
 ;;   2005, 2006, 2007, 2008, 2009, 2010, 2011
 ;;   National Institute of Advanced Industrial Science and Technology (AIST)
@@ -484,13 +484,23 @@ with L, LRE, or LRO Unicode bidi character type.")
 
 ;; Bidi categories
 
-(map-char-table (lambda (key val)
-		  (cond
-		   ((memq val '(R AL RLO RLE))
-		    (modify-category-entry key ?R))
-		   ((memq val '(L LRE LRO))
-		    (modify-category-entry key ?L))))
-		(unicode-property-table-internal 'bidi-class))
+;; If bootstrapping without generated uni-*.el files, table not defined.
+(let ((table (unicode-property-table-internal 'bidi-class)))
+  (when table
+    (map-char-table (lambda (key val)
+		      (cond
+		       ((memq val '(R AL RLO RLE))
+			(modify-category-entry key ?R))
+		       ((memq val '(L LRE LRO))
+			(modify-category-entry key ?L))))
+		    table)))
+
+;; Load uni-mirrored.el if available, so that it gets dumped into
+;; Emacs.  This allows to start Emacs with force-load-messages in
+;; ~/.emacs, and avoid infinite recursion in bidi_initialize, which
+;; needs to load uni-mirrored.el in order to display the "Loading"
+;; messages.
+(unicode-property-table-internal 'mirroring)
 
 ;; Latin
 
@@ -780,6 +790,20 @@ with L, LRE, or LRO Unicode bidi character type.")
     (modify-category-entry c ?l)
     (modify-category-entry (+ c 26) ?l)
     (setq c (1+ c)))
+
+  ;; Coptic
+  (let ((pair-ranges '((#x2C80 . #x2CE2)
+		       (#x2CEB . #x2CF2))))
+    (dolist (elt pair-ranges)
+      (let ((from (car elt)) (to (cdr elt)))
+	(while (< from to)
+	  (set-case-syntax-pair from (1+ from) tbl)
+	  (setq from (+ from 2))))))
+  ;; There's no Coptic category.  However, Coptic letters that are
+  ;; part of the Greek block above get the Greek category, and those
+  ;; in this block are derived from Greek letters, so let's be
+  ;; consistent about their category.
+  (modify-category-entry '(#x2C80 . #x2CFF) ?g)
 
   ;; Fullwidth Latin
   (setq c #xff21)
@@ -1091,7 +1115,7 @@ with L, LRE, or LRO Unicode bidi character type.")
 ;;   (LOCALE TABLE (CHARSET (FROM-CODE . TO-CODE) ...) ...)
 ;; LOCALE: locale symbol
 ;; TABLE: char-table used for char-width-table, initially nil.
-;; CAHRSET: character set
+;; CHARSET: character set
 ;; FROM-CODE, TO-CODE: range of code-points in CHARSET
 
 (defvar cjk-char-width-table-list
@@ -1332,15 +1356,15 @@ Setup char-width-table appropriate for non-CJK language environment."
 
 ;;; Setting unicode-category-table.
 
-(setq unicode-category-table
-      (unicode-property-table-internal 'general-category))
-(map-char-table #'(lambda (key val)
-		    (if (and val
-			     (or (and (/= (aref (symbol-name val) 0) ?M)
-				      (/= (aref (symbol-name val) 0) ?C))
-				 (eq val 'Zs)))
-			(modify-category-entry key ?.)))
-		unicode-category-table)
+(when (setq unicode-category-table
+	    (unicode-property-table-internal 'general-category))
+  (map-char-table #'(lambda (key val)
+		      (if (and val
+			       (or (and (/= (aref (symbol-name val) 0) ?M)
+					(/= (aref (symbol-name val) 0) ?C))
+				   (eq val 'Zs)))
+			  (modify-category-entry key ?.)))
+		  unicode-category-table))
 
 (optimize-char-table (standard-category-table))
 
@@ -1426,23 +1450,24 @@ This function updates the char-table `glyphless-char-display'."
 	     (glyphless-set-char-table-range glyphless-char-display
 					     #x80 #x9F method))
 	    ((eq target 'format-control)
-	     (map-char-table
-	      #'(lambda (char category)
-		  (if (eq category 'Cf)
-		      (let ((this-method method)
-			    from to)
-			(if (consp char)
-			    (setq from (car char) to (cdr char))
-			  (setq from char to char))
-			(while (<= from to)
-			  (when (/= from #xAD)
-			    (if (eq method 'acronym)
-				(setq this-method
-				      (aref char-acronym-table from)))
-			    (set-char-table-range glyphless-char-display
-						  from this-method))
-			  (setq from (1+ from))))))
-	      unicode-category-table))
+	     (when unicode-category-table
+	       (map-char-table
+		#'(lambda (char category)
+		    (if (eq category 'Cf)
+			(let ((this-method method)
+			      from to)
+			  (if (consp char)
+			      (setq from (car char) to (cdr char))
+			    (setq from char to char))
+			  (while (<= from to)
+			    (when (/= from #xAD)
+			      (if (eq method 'acronym)
+				  (setq this-method
+					(aref char-acronym-table from)))
+			      (set-char-table-range glyphless-char-display
+						    from this-method))
+			    (setq from (1+ from))))))
+		unicode-category-table)))
 	    ((eq target 'no-font)
 	     (set-char-table-extra-slot glyphless-char-display 0 method))
 	    (t
@@ -1485,7 +1510,12 @@ METHOD must be one of these symbols:
   `empty-box':  display an empty box.
   `acronym':    display an acronym of the character in a box.  The
                 acronym is taken from `char-acronym-table', which see.
-  `hex-code':   display the hexadecimal character code in a box."
+  `hex-code':   display the hexadecimal character code in a box.
+
+Do not set its value directly from Lisp; the value takes effect
+only via a custom `:set'
+function (`update-glyphless-char-display'), which updates
+`glyphless-char-display'."
   :version "24.1"
   :type '(alist :key-type (symbol :tag "Character Group")
 		:value-type (symbol :tag "Display Method"))

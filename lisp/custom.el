@@ -1,10 +1,10 @@
 ;;; custom.el --- tools for declaring and initializing options
 ;;
-;; Copyright (C) 1996-1997, 1999, 2001-2013 Free Software Foundation,
+;; Copyright (C) 1996-1997, 1999, 2001-2014 Free Software Foundation,
 ;; Inc.
 ;;
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: help, faces
 ;; Package: emacs
 
@@ -232,9 +232,10 @@ The following keywords are meaningful:
 	given in the `defcustom' call.  The default is
 	`custom-initialize-reset'.
 :set	VALUE should be a function to set the value of the symbol
-        when using the Customize user interface.
-	It takes two arguments, the symbol to set and the value to
-	give it.  The default choice of function is `set-default'.
+	when using the Customize user interface.  It takes two arguments,
+	the symbol to set and the value to give it.  The function should
+	not modify its value argument destructively.  The default choice
+	of function is `set-default'.
 :get	VALUE should be a function to extract the value of symbol.
 	The function takes one argument, a symbol, and should return
 	the current value for that symbol.  The default choice of function
@@ -354,7 +355,7 @@ FACE does not need to be quoted.
 
 Third argument DOC is the face documentation.
 
-If FACE has been set with `custom-set-faces', set the face
+If FACE has been set with `custom-theme-set-faces', set the face
 attributes as specified by that function, otherwise set the face
 attributes according to SPEC.
 
@@ -362,7 +363,7 @@ The remaining arguments should have the form [KEYWORD VALUE]...
 For a list of valid keywords, see the common keywords listed in
 `defcustom'.
 
-SPEC should be an alist of the form
+SPEC should be a \"face spec\", i.e., an alist of the form
 
    ((DISPLAY . ATTS)...)
 
@@ -870,20 +871,21 @@ See `custom-known-themes' for a list of known themes."
 	(setcar (cdr setting) value)))
      ;; Add a new setting:
      (t
-      (unless old
-	;; If the user changed a variable outside of Customize, save
-	;; the value to a fake theme, `changed'.  If the theme is
-	;; later disabled, we use this to bring back the old value.
-	;;
-	;; For faces, we just use `face-new-frame-defaults' to
-	;; recompute when the theme is disabled.
-	(when (and (eq prop 'theme-value)
-		   (boundp symbol))
-	  (let ((sv  (get symbol 'standard-value))
-		(val (symbol-value symbol)))
-	    (unless (and sv (equal (eval (car sv)) val))
-	      (setq old `((changed ,(custom-quote val))))))))
-      (put symbol prop (cons (list theme value) old))
+      (unless custom--inhibit-theme-enable
+	(unless old
+	  ;; If the user changed a variable outside of Customize, save
+	  ;; the value to a fake theme, `changed'.  If the theme is
+	  ;; later disabled, we use this to bring back the old value.
+	  ;;
+	  ;; For faces, we just use `face-new-frame-defaults' to
+	  ;; recompute when the theme is disabled.
+	  (when (and (eq prop 'theme-value)
+		     (boundp symbol))
+	    (let ((sv  (get symbol 'standard-value))
+		  (val (symbol-value symbol)))
+	      (unless (and sv (equal (eval (car sv)) val))
+		(setq old `((changed ,(custom-quote val))))))))
+	(put symbol prop (cons (list theme value) old)))
       (put theme 'theme-settings
 	   (cons (list prop symbol theme value) theme-settings))))))
 
@@ -1277,7 +1279,14 @@ NAME should be a symbol."
 		(eq name 'changed)))))
 
 (defun custom-available-themes ()
-  "Return a list of available Custom themes (symbols)."
+  "Return a list of Custom themes available for loading.
+Search the directories specified by `custom-theme-load-path' for
+files named FOO-theme.el, and return a list of FOO symbols.
+
+The returned symbols may not correspond to themes that have been
+loaded, and no effort is made to check that the files contain
+valid Custom themes.  For a list of loaded themes, check the
+variable `custom-known-themes'."
   (let (sym themes)
     (dolist (dir (custom-theme--load-path))
       (when (file-directory-p dir)
@@ -1416,6 +1425,10 @@ See `custom-enabled-themes' for a list of enabled themes."
       (setq custom-enabled-themes
 	    (delq theme custom-enabled-themes)))))
 
+;; Only used if window-system not null.
+(declare-function x-get-resource "frame.c"
+		  (attribute class &optional component subclass))
+
 (defun custom--frame-color-default (frame attribute resource-attr resource-class
 					  tty-default x-default)
   (let ((col (face-attribute 'default attribute t)))
@@ -1448,12 +1461,15 @@ This function returns nil if no custom theme specifies a value for VARIABLE."
 		 (eval (car valspec))))))
 
 (defun custom-theme-recalc-face (face)
-  "Set FACE according to currently enabled custom themes."
+  "Set FACE according to currently enabled custom themes.
+If FACE is not initialized as a face, do nothing; otherwise call
+`face-spec-recalc' to recalculate the face on all frames."
   (if (get face 'face-alias)
       (setq face (get face 'face-alias)))
-  ;; Reset the faces for each frame.
-  (dolist (frame (frame-list))
-    (face-spec-recalc face frame)))
+  (if (facep face)
+      ;; Reset the faces for each frame.
+      (dolist (frame (frame-list))
+	(face-spec-recalc face frame))))
 
 
 ;;; XEmacs compatibility functions
@@ -1485,11 +1501,6 @@ This means reset VARIABLE.  (The argument IGNORED is ignored)."
     (apply 'custom-theme-reset-variables 'user args))
 
 ;;; The End.
-
-;; Process the defcustoms for variables loaded before this file.
-(while custom-declare-variable-list
-  (apply 'custom-declare-variable (car custom-declare-variable-list))
-  (setq custom-declare-variable-list (cdr custom-declare-variable-list)))
 
 (provide 'custom)
 

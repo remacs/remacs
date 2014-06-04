@@ -1,6 +1,6 @@
 ;;; cc-cmds.el --- user level commands for CC Mode
 
-;; Copyright (C) 1985, 1987, 1992-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1985, 1987, 1992-2014 Free Software Foundation, Inc.
 
 ;; Authors:    2003- Alan Mackenzie
 ;;             1998- Martin Stjernholm
@@ -356,6 +356,8 @@ left out."
   (interactive "P")
   (setq c-electric-flag (c-calculate-state arg c-electric-flag))
   (c-update-modeline)
+  (when (fboundp 'electric-indent-local-mode) ; Emacs 24.4 or later.
+    (electric-indent-local-mode (if c-electric-flag 1 0)))
   (c-keep-region-active))
 
 

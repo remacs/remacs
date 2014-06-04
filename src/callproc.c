@@ -1,6 +1,7 @@
 /* Synchronous subprocess invocation for GNU Emacs.
-   Copyright (C) 1985-1988, 1993-1995, 1999-2013
-		 Free Software Foundation, Inc.
+
+Copyright (C) 1985-1988, 1993-1995, 1999-2014 Free Software Foundation,
+Inc.
 
 This file is part of GNU Emacs.
 
@@ -104,24 +105,29 @@ enum
 
 static Lisp_Object call_process (ptrdiff_t, Lisp_Object *, int, ptrdiff_t);
 
+
+#ifndef MSDOS
 /* Block SIGCHLD.  */
 
 void
-block_child_signal (void)
+block_child_signal (sigset_t *oldset)
 {
   sigset_t blocked;
   sigemptyset (&blocked);
   sigaddset (&blocked, SIGCHLD);
-  pthread_sigmask (SIG_BLOCK, &blocked, 0);
+  sigaddset (&blocked, SIGINT);
+  pthread_sigmask (SIG_BLOCK, &blocked, oldset);
 }
 
 /* Unblock SIGCHLD.  */
 
 void
-unblock_child_signal (void)
+unblock_child_signal (sigset_t const *oldset)
 {
-  pthread_sigmask (SIG_SETMASK, &empty_mask, 0);
+  pthread_sigmask (SIG_SETMASK, oldset, 0);
 }
+
+#endif	/* !MSDOS */
 
 /* Return the current buffer's working directory, or the home
    directory if it's unreachable, as a string suitable for a system call.
@@ -161,7 +167,9 @@ encode_current_directory (void)
 void
 record_kill_process (struct Lisp_Process *p, Lisp_Object tempfile)
 {
-  block_child_signal ();
+#ifndef MSDOS
+  sigset_t oldset;
+  block_child_signal (&oldset);
 
   if (p->alive)
     {
@@ -170,7 +178,8 @@ record_kill_process (struct Lisp_Process *p, Lisp_Object tempfile)
       kill (- p->pid, SIGKILL);
     }
 
-  unblock_child_signal ();
+  unblock_child_signal (&oldset);
+#endif	/* !MSDOS */
 }
 
 /* Clean up files, file descriptors and processes created by Fcall_process.  */
@@ -210,6 +219,7 @@ call_process_cleanup (Lisp_Object buffer)
 {
   Fset_buffer (buffer);
 
+#ifndef MSDOS
   if (synch_process_pid)
     {
       kill (-synch_process_pid, SIGINT);
@@ -221,6 +231,7 @@ call_process_cleanup (Lisp_Object buffer)
       immediate_quit = 0;
       message1 ("Waiting for process to die...done");
     }
+#endif	/* !MSDOS */
 }
 
 #ifdef DOS_NT
@@ -312,6 +323,7 @@ call_process (ptrdiff_t nargs, Lisp_Object *args, int filefd,
   char *tempfile = NULL;
   int pid;
 #else
+  sigset_t oldset;
   pid_t pid;
 #endif
   int child_errno;
@@ -465,7 +477,8 @@ call_process (ptrdiff_t nargs, Lisp_Object *args, int filefd,
     int ok;
 
     GCPRO3 (buffer, current_dir, error_file);
-    ok = openp (Vexec_path, args[0], Vexec_suffixes, &path, make_number (X_OK));
+    ok = openp (Vexec_path, args[0], Vexec_suffixes, &path,
+		make_number (X_OK), false);
     UNGCPRO;
     if (ok < 0)
       report_file_error ("Searching for program", args[0]);
@@ -516,10 +529,10 @@ call_process (ptrdiff_t nargs, Lisp_Object *args, int filefd,
       char const *outf = tmpdir ? tmpdir : "";
       tempfile = alloca (strlen (outf) + 20);
       strcpy (tempfile, outf);
-      dostounix_filename (tempfile, 0);
+      dostounix_filename (tempfile);
       if (*tempfile == '\0' || tempfile[strlen (tempfile) - 1] != '/')
 	strcat (tempfile, "/");
-      strcat (tempfile, "detmp.XXX");
+      strcat (tempfile, "emXXXXXX");
       mktemp (tempfile);
       if (!*tempfile)
 	report_file_error ("Opening process output file", Qnil);
@@ -627,7 +640,7 @@ call_process (ptrdiff_t nargs, Lisp_Object *args, int filefd,
 #ifndef MSDOS
 
   block_input ();
-  block_child_signal ();
+  block_child_signal (&oldset);
 
 #ifdef WINDOWSNT
   pid = child_setup (filefd, fd_output, fd_error, new_argv, 0, current_dir);
@@ -669,12 +682,16 @@ call_process (ptrdiff_t nargs, Lisp_Object *args, int filefd,
 
   if (pid == 0)
     {
-      unblock_child_signal ();
+      unblock_child_signal (&oldset);
 
       setsid ();
 
       /* Emacs ignores SIGPIPE, but the child should not.  */
       signal (SIGPIPE, SIG_DFL);
+      /* Likewise for SIGPROF.  */
+#ifdef SIGPROF
+      signal (SIGPROF, SIG_DFL);
+#endif
 
       child_setup (filefd, fd_output, fd_error, new_argv, 0, current_dir);
     }
@@ -701,10 +718,8 @@ call_process (ptrdiff_t nargs, Lisp_Object *args, int filefd,
 	}
     }
 
-  unblock_child_signal ();
+  unblock_child_signal (&oldset);
   unblock_input ();
-
-#endif /* not MSDOS */
 
   if (pid < 0)
     report_file_errno ("Doing vfork", Qnil, child_errno);
@@ -719,6 +734,8 @@ call_process (ptrdiff_t nargs, Lisp_Object *args, int filefd,
       }
   emacs_close (filefd);
   clear_unwind_protect (count - 1);
+
+#endif /* not MSDOS */
 
   if (INTEGERP (buffer))
     return unbind_to (count, Qnil);
@@ -777,7 +794,6 @@ call_process (ptrdiff_t nargs, Lisp_Object *args, int filefd,
       char buf[CALLPROC_BUFFER_SIZE_MAX];
       int bufsize = CALLPROC_BUFFER_SIZE_MIN;
       int nread;
-      bool first = 1;
       EMACS_INT total_read = 0;
       int carryover = 0;
       bool display_on_the_fly = display_p;
@@ -822,6 +838,7 @@ call_process (ptrdiff_t nargs, Lisp_Object *args, int filefd,
 	      ptrdiff_t count1 = SPECPDL_INDEX ();
 
 	      XSETBUFFER (curbuf, current_buffer);
+	      prepare_to_modify_buffer (PT, PT, NULL);
 	      /* We cannot allow after-change-functions be run
 		 during decoding, because that might modify the
 		 buffer, while we rely on process_coding.produced to
@@ -874,9 +891,6 @@ call_process (ptrdiff_t nargs, Lisp_Object *args, int filefd,
 
 	  if (display_p)
 	    {
-	      if (first)
-		prepare_menu_bars ();
-	      first = 0;
 	      redisplay_preserve_echo_area (1);
 	      /* This variable might have been set to 0 for code
 		 detection.  In that case, set it back to 1 because
@@ -1523,14 +1537,14 @@ init_callproc_1 (void)
 #ifdef HAVE_NS
                                              etc_dir ? etc_dir :
 #endif
-                                             PATH_DATA);
+                                             PATH_DATA, 0);
   Vdata_directory = Ffile_name_as_directory (Fcar (Vdata_directory));
 
   Vdoc_directory = decode_env_path ("EMACSDOC",
 #ifdef HAVE_NS
                                              etc_dir ? etc_dir :
 #endif
-                                             PATH_DOC);
+                                             PATH_DOC, 0);
   Vdoc_directory = Ffile_name_as_directory (Fcar (Vdoc_directory));
 
   /* Check the EMACSPATH environment variable, defaulting to the
@@ -1539,10 +1553,10 @@ init_callproc_1 (void)
 #ifdef HAVE_NS
                                 path_exec ? path_exec :
 #endif
-                                PATH_EXEC);
+                                PATH_EXEC, 0);
   Vexec_directory = Ffile_name_as_directory (Fcar (Vexec_path));
   /* FIXME?  For ns, path_exec should go at the front?  */
-  Vexec_path = nconc2 (decode_env_path ("PATH", ""), Vexec_path);
+  Vexec_path = nconc2 (decode_env_path ("PATH", "", 0), Vexec_path);
 }
 
 /* This is run after init_cmdargs, when Vinstallation_directory is valid.  */
@@ -1583,9 +1597,9 @@ init_callproc (void)
 #ifdef HAVE_NS
 					path_exec ? path_exec :
 #endif
-					PATH_EXEC);
+					PATH_EXEC, 0);
 	  Vexec_path = Fcons (tem, Vexec_path);
-	  Vexec_path = nconc2 (decode_env_path ("PATH", ""), Vexec_path);
+	  Vexec_path = nconc2 (decode_env_path ("PATH", "", 0), Vexec_path);
 	}
 
       Vexec_directory = Ffile_name_as_directory (tem);
@@ -1610,17 +1624,17 @@ init_callproc (void)
   if (data_dir == 0)
     {
       Lisp_Object tem, tem1, srcdir;
+      Lisp_Object lispdir = Fcar (decode_env_path (0, PATH_DUMPLOADSEARCH, 0));
 
-      srcdir = Fexpand_file_name (build_string ("../src/"),
-				  build_string (PATH_DUMPLOADSEARCH));
-      tem = Fexpand_file_name (build_string ("GNU"), Vdata_directory);
+      srcdir = Fexpand_file_name (build_string ("../src/"), lispdir);
+
+      tem = Fexpand_file_name (build_string ("NEWS"), Vdata_directory);
       tem1 = Ffile_exists_p (tem);
       if (!NILP (Fequal (srcdir, Vinvocation_directory)) || NILP (tem1))
 	{
 	  Lisp_Object newdir;
-	  newdir = Fexpand_file_name (build_string ("../etc/"),
-				      build_string (PATH_DUMPLOADSEARCH));
-	  tem = Fexpand_file_name (build_string ("GNU"), newdir);
+	  newdir = Fexpand_file_name (build_string ("../etc/"), lispdir);
+	  tem = Fexpand_file_name (build_string ("NEWS"), newdir);
 	  tem1 = Ffile_exists_p (tem);
 	  if (!NILP (tem1))
 	    Vdata_directory = newdir;
@@ -1646,7 +1660,7 @@ init_callproc (void)
 #ifdef DOS_NT
   Vshared_game_score_directory = Qnil;
 #else
-  Vshared_game_score_directory = build_string (PATH_GAME);
+  Vshared_game_score_directory = build_unibyte_string (PATH_GAME);
   if (NILP (Ffile_accessible_directory_p (Vshared_game_score_directory)))
     Vshared_game_score_directory = Qnil;
 #endif
@@ -1669,10 +1683,8 @@ syms_of_callproc (void)
 {
 #ifndef DOS_NT
   Vtemp_file_name_pattern = build_string ("emacsXXXXXX");
-#elif defined (WINDOWSNT)
+#else  /* DOS_NT */
   Vtemp_file_name_pattern = build_string ("emXXXXXX");
-#else
-  Vtemp_file_name_pattern = build_string ("detmp.XXX");
 #endif
   staticpro (&Vtemp_file_name_pattern);
 
@@ -1688,7 +1700,11 @@ default if SHELL is not set.  */);
 
   DEFVAR_LISP ("exec-path", Vexec_path,
 	       doc: /* List of directories to search programs to run in subprocesses.
-Each element is a string (directory name) or nil (try default directory).  */);
+Each element is a string (directory name) or nil (try default directory).
+
+By default the last element of this list is `exec-directory'. The
+last element is not always used, for example in shell completion
+(`shell-dynamic-complete-command').  */);
 
   DEFVAR_LISP ("exec-suffixes", Vexec_suffixes,
 	       doc: /* List of suffixes to try to find executable file names.

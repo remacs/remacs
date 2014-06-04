@@ -1,6 +1,6 @@
 ;;; semantic.el --- Semantic buffer evaluator.
 
-;; Copyright (C) 1999-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1999-2014 Free Software Foundation, Inc.
 
 ;; Author: Eric M. Ludlam <zappo@gnu.org>
 ;; Keywords: syntax tools
@@ -310,14 +310,6 @@ a parse of the buffer.")
 			    'semantic-init-mode-hook "23.2")
 (semantic-varalias-obsolete 'semantic-init-db-hooks
 			    'semantic-init-db-hook "23.2")
-
-(defvar semantic-new-buffer-fcn-was-run nil
-  "Non-nil after `semantic-new-buffer-fcn' has been executed.")
-(make-variable-buffer-local 'semantic-new-buffer-fcn-was-run)
-
-(defsubst semantic-active-p ()
-  "Return non-nil if the current buffer was set up for parsing."
-  semantic-new-buffer-fcn-was-run)
 
 (defsubst semantic-error-if-unparsed ()
   "Raise an error if current buffer was not parsed by Semantic."

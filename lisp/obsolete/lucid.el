@@ -1,8 +1,8 @@
 ;;; lucid.el --- emulate some Lucid Emacs functions
 
-;; Copyright (C) 1993, 1995, 2001-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1993, 1995, 2001-2014 Free Software Foundation, Inc.
 
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: emulations
 ;; Obsolete-since: 23.2
 
@@ -125,7 +125,7 @@ This is an XEmacs compatibility function."
 
 (defun extent-at (pos &optional object property before)
   (with-current-buffer (or object (current-buffer))
-    (let ((overlays (overlays-at pos)))
+    (let ((overlays (overlays-at pos 'sorted)))
       (when property
 	(let (filtered)
 	  (while overlays
@@ -133,14 +133,6 @@ This is an XEmacs compatibility function."
 		(setq filtered (cons (car overlays) filtered)))
 	    (setq overlays (cdr overlays)))
 	  (setq overlays filtered)))
-      (setq overlays
-	    (sort overlays
-		  (function (lambda (o1 o2)
-			      (let ((p1 (or (overlay-get o1 'priority) 0))
-				    (p2 (or (overlay-get o2 'priority) 0)))
-				(or (> p1 p2)
-				    (and (= p1 p2)
-					 (> (overlay-start o1) (overlay-start o2)))))))))
       (if before
 	  (nth 1 (memq before overlays))
 	(car overlays)))))

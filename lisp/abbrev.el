@@ -1,9 +1,9 @@
 ;;; abbrev.el --- abbrev mode commands for Emacs -*- lexical-binding: t -*-
 
-;; Copyright (C) 1985-1987, 1992, 2001-2013 Free Software Foundation,
+;; Copyright (C) 1985-1987, 1992, 2001-2014 Free Software Foundation,
 ;; Inc.
 
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: abbrev convenience
 ;; Package: emacs
 
@@ -421,7 +421,7 @@ A prefix argument means don't query; expand all abbrevs."
 \(fn ABBREV PROP)")
 
 (defalias 'abbrev-put 'put
-  "Set the property PROP of abbrev ABREV to value VAL.
+  "Set the property PROP of abbrev ABBREV to value VAL.
 See `define-abbrev' for the effect of some special properties.
 
 \(fn ABBREV PROP VAL)")
@@ -588,7 +588,7 @@ An obsolete but still supported calling form is:
                  (boundp sym) (symbol-value sym)
                  (not (abbrev-get sym :system)))
       (unless (or system-flag
-                  (and (boundp sym) (fboundp sym)
+                  (and (boundp sym)
                        ;; load-file-name
                        (equal (symbol-value sym) expansion)
                        (equal (symbol-function sym) hook)))
@@ -607,9 +607,9 @@ An obsolete but still supported calling form is:
   "Check if the characters in ABBREV have word syntax in either the
 current (if global is nil) or standard syntax table."
   (with-syntax-table
-      (cond ((null global) (standard-syntax-table))
+      (cond ((null global) (syntax-table))
             ;; ((syntax-table-p global) global)
-            (t (syntax-table)))
+            (t (standard-syntax-table)))
     (when (string-match "\\W" abbrev)
       (let ((badchars ())
             (pos 0))
@@ -1007,7 +1007,7 @@ SORTFUN is passed to `sort' to change the default ordering."
 
 ;; Keep it after define-abbrev-table, since define-derived-mode uses
 ;; define-abbrev-table.
-(define-derived-mode edit-abbrevs-mode special-mode "Edit-Abbrevs"
+(define-derived-mode edit-abbrevs-mode fundamental-mode "Edit-Abbrevs"
   "Major mode for editing the list of abbrev definitions.")
 
 (provide 'abbrev)

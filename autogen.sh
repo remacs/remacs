@@ -1,9 +1,10 @@
 #!/bin/sh
 ### autogen.sh - tool to help build Emacs from a bzr checkout
 
-## Copyright (C) 2011-2013 Free Software Foundation, Inc.
+## Copyright (C) 2011-2014 Free Software Foundation, Inc.
 
 ## Author: Glenn Morris <rgm@gnu.org>
+## Maintainer: emacs-devel@gnu.org
 
 ## This file is part of GNU Emacs.
 
@@ -25,7 +26,7 @@
 ## The Emacs bzr repository does not include the configure script
 ## (and associated helpers).  The first time you fetch Emacs from bzr,
 ## run this script to generate the necessary files.
-## For more details, see the file INSTALL.BZR.
+## For more details, see the file INSTALL.REPO.
 
 ### Code:
 
@@ -49,7 +50,7 @@ automake_min=`sed -n 's/^ *AM_INIT_AUTOMAKE(\([0-9\.]*\)).*/\1/p' configure.ac`
 get_version ()
 {
     ## Remove eg "./autogen.sh: line 50: autoconf: command not found".
-    $1 --version 2>&1 | sed -e '/not found/d' -n -e '1 s/.* \([1-9][0-9\.]*\).*/\1/p'
+    $1 --version 2>&1 | sed -e '/not found/d' -e 's/.* //' -n -e '1 s/\([0-9][0-9\.]*\).*/\1/p'
 }
 
 ## $1 = version string, eg "2.59"
@@ -75,7 +76,7 @@ minor_version ()
 check_version ()
 {
     ## Respect eg $AUTOMAKE if it is set, like autoreconf does.
-    uprog=`echo $1 | sed 'y/abcdefghijklmnopqrstuvwxyz/ABCDEFGHIJKLMNOPQRSTUVWXYZ/'`
+    uprog=`echo $1 | sed -e 's/-/_/g' -e 'y/abcdefghijklmnopqrstuvwxyz/ABCDEFGHIJKLMNOPQRSTUVWXYZ/'`
 
     eval uprog=\$${uprog}
 
@@ -105,7 +106,7 @@ check_version ()
 
 cat <<EOF
 Checking whether you have the necessary tools...
-(Read INSTALL.BZR for more details on building Emacs)
+(Read INSTALL.REPO for more details on building Emacs)
 
 EOF
 
@@ -113,7 +114,9 @@ missing=
 
 for prog in $progs; do
 
-    eval min=\$${prog}_min
+    sprog=`echo "$prog" | sed 's/-/_/g'`
+
+    eval min=\$${sprog}_min
 
     echo "Checking for $prog (need at least version $min)..."
 
@@ -132,7 +135,7 @@ for prog in $progs; do
 
     if [ $retval -ne 0 ]; then
         missing="$missing $prog"
-        eval ${prog}_why=\""$stat"\"
+        eval ${sprog}_why=\""$stat"\"
     fi
 
 done
@@ -146,7 +149,9 @@ Building Emacs from Bzr requires the following specialized programs:
 EOF
 
     for prog in $progs; do
-        eval min=\$${prog}_min
+        sprog=`echo "$prog" | sed 's/-/_/g'`
+
+        eval min=\$${sprog}_min
 
         echo "$prog (minimum version $min)"
     done
@@ -158,7 +163,9 @@ Your system seems to be missing the following tool(s):
 EOF
 
     for prog in $missing; do
-        eval why=\$${prog}_why
+        sprog=`echo "$prog" | sed 's/-/_/g'`
+
+        eval why=\$${sprog}_why
 
         echo "$prog ($why)"
     done
@@ -187,16 +194,9 @@ this script.
 If you know that the required versions are in your PATH, but this
 script has made an error, then you can simply run
 
-autoreconf -i -I m4
+autoreconf -fi -I m4
 
 instead of this script.
-
-If all else fails, you can try using the pre-built versions of the
-generated files by doing:
-
-./autogen/copy_autogen
-
-This is not recommended - see the comments in \`copy_autogen'.
 
 Please report any problems with this script to bug-gnu-emacs@gnu.org .
 EOF
@@ -204,17 +204,19 @@ EOF
     exit 1
 fi
 
-echo "Your system has the required tools, running autoreconf..."
+echo 'Your system has the required tools.'
+echo "Running 'autoreconf -fi -I m4' ..."
 
 
 ## Let autoreconf figure out what, if anything, needs doing.
-autoreconf -i -I m4 || exit $?
+## Use autoreconf's -f option in case autoreconf itself has changed.
+autoreconf -fi -I m4 || exit $?
 
 ## Create a timestamp, so that './autogen.sh; make' doesn't
 ## cause 'make' to needlessly run 'autoheader'.
 echo timestamp > src/stamp-h.in || exit
 
-echo "You can now run \`./configure'."
+echo "You can now run './configure'."
 
 exit 0
 

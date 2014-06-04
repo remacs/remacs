@@ -1,6 +1,6 @@
 ;;; gnus-html.el --- Render HTML in a buffer.
 
-;; Copyright (C) 2010-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2010-2014 Free Software Foundation, Inc.
 
 ;; Author: Lars Magne Ingebrigtsen <larsi@gnus.org>
 ;; Keywords: html, web
@@ -27,10 +27,6 @@
 ;; external HTML renderer (i.e., w3m).
 
 ;;; Code:
-
-;; For Emacs <22.2 and XEmacs.
-(eval-and-compile
-  (unless (fboundp 'declare-function) (defmacro declare-function (&rest r))))
 
 (eval-when-compile (require 'cl))
 
@@ -143,7 +139,8 @@ CHARS is a regexp-like character alternative (e.g., \"[)$]\")."
 		 (charset (mail-content-type-get (mm-handle-type handle)
 						 'charset)))
 	    (when (and charset
-		       (setq charset (mm-charset-to-coding-system charset))
+		       (setq charset (mm-charset-to-coding-system
+				      charset nil t))
 		       (not (eq charset 'ascii)))
 	      (insert (prog1
 			  (mm-decode-coding-string (buffer-string) charset)

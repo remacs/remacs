@@ -1,6 +1,6 @@
 ;;; viper-ex.el --- functions implementing the Ex commands for Viper
 
-;; Copyright (C) 1994-1998, 2000-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1994-1998, 2000-2014 Free Software Foundation, Inc.
 
 ;; Author: Michael Kifer <kifer@cs.stonybrook.edu>
 ;; Package: viper
@@ -1887,7 +1887,8 @@ Please contact your system administrator. "
 			    (if (featurep 'xemacs) "X" "")
 			    ))))))
 
-;; Ex source command.  Loads the file specified as argument or `~/.viper'
+;; Ex source command.
+;; Loads the file specified as argument or viper-custom-file-name.
 (defun ex-source ()
   (viper-get-ex-file)
   (if (string= ex-file "")

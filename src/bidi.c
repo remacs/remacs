@@ -1,5 +1,5 @@
 /* Low-level bidirectional buffer/string-scanning functions for GNU Emacs.
-   Copyright (C) 2000-2001, 2004-2005, 2009-2013 Free Software
+   Copyright (C) 2000-2001, 2004-2005, 2009-2014 Free Software
    Foundation, Inc.
 
 This file is part of GNU Emacs.
@@ -22,9 +22,16 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
    A sequential implementation of the Unicode Bidirectional algorithm,
    (UBA) as per UAX#9, a part of the Unicode Standard.
 
-   Unlike the reference and most other implementations, this one is
-   designed to be called once for every character in the buffer or
-   string.
+   Unlike the Reference Implementation and most other implementations,
+   this one is designed to be called once for every character in the
+   buffer or string.  That way, we can leave intact the design of the
+   Emacs display engine, whereby an iterator object is used to
+   traverse buffer or string text character by character, and generate
+   the necessary data for displaying each character in 'struct glyph'
+   objects.  (See xdisp.c for the details of that iteration.)  The
+   functions on this file replace the original linear iteration in the
+   logical order of the text with a non-linear iteration in the visual
+   order, i.e. in the order characters should be shown on display.
 
    The main entry point is bidi_move_to_visually_next.  Each time it
    is called, it finds the next character in the visual order, and
@@ -52,7 +59,182 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
    A note about references to UAX#9 rules: if the reference says
    something like "X9/Retaining", it means that you need to refer to
    rule X9 and to its modifications described in the "Implementation
-   Notes" section of UAX#9, under "Retaining Format Codes".  */
+   Notes" section of UAX#9, under "Retaining Format Codes".
+
+   Here's the overview of the design of the reordering engine
+   implemented by this file.
+
+   Basic implementation structure
+   ------------------------------
+
+   The sequential processing steps described by UAX#9 are implemented
+   as recursive levels of processing, all of which examine the next
+   character in the logical order.  This hierarchy of processing looks
+   as follows, from the innermost (deepest) to the outermost level,
+   omitting some subroutines used by each level:
+
+     bidi_fetch_char         -- fetch next character
+     bidi_resolve_explicit   -- resolve explicit levels and directions
+     bidi_resolve_weak       -- resolve weak types
+     bidi_resolve_neutral    -- resolve neutral types
+     bidi_level_of_next_char -- resolve implicit levels
+
+   Each level calls the level below it, and works on the result
+   returned by the lower level, including all of its sub-levels.
+
+   Unlike all the levels below it, bidi_level_of_next_char can return
+   the information about either the next or previous character in the
+   logical order, depending on the current direction of scanning the
+   buffer or string.  For the next character, it calls all the levels
+   below it; for the previous character, it uses the cache, described
+   below.
+
+   Thus, the result of calling bidi_level_of_next_char is the resolved
+   level of the next or the previous character in the logical order.
+   Based on this information, the function bidi_move_to_visually_next
+   finds the next character in the visual order and updates the
+   direction in which the buffer is scanned, either forward or
+   backward, to find the next character to be displayed.  (Text is
+   scanned backwards when it needs to be reversed for display, i.e. if
+   the visual order is the inverse of the logical order.)  This
+   implements the last, reordering steps of the UBA, by successively
+   calling bidi_level_of_next_char until the character of the required
+   embedding level is found; the scan direction is dynamically updated
+   as a side effect.  See the commentary before the 'while' loop in
+   bidi_move_to_visually_next, for the details.
+
+   Fetching characters
+   -------------------
+
+   In a nutshell, fetching the next character boils down to calling
+   STRING_CHAR_AND_LENGTH, passing it the address of a buffer or
+   string position.  See bidi_fetch_char.  However, if the next
+   character is "covered" by a display property of some kind,
+   bidi_fetch_char returns the u+FFFC "object replacement character"
+   that represents the entire run of text covered by the display
+   property.  (The ch_len and nchars members of 'struct bidi_it'
+   reflect the length in bytes and characters of that text.)  This is
+   so we reorder text on both sides of the display property as
+   appropriate for an image or embedded string.  Similarly, text
+   covered by a display spec of the form '(space ...)', is replaced
+   with the u+2029 paragraph separator character, so such display
+   specs produce the same effect as a TAB under UBA.  Both these
+   special characters are not actually displayed -- the display
+   property is displayed instead -- but just used to compute the
+   embedding level of the surrounding text so as to produce the
+   required effect.
+
+   Bidi iterator states
+   --------------------
+
+   The UBA is highly context dependent in some of its parts,
+   i.e. results of processing a character can generally depend on
+   characters very far away.  The UAX#9 description of the UBA
+   prescribes a stateful processing of each character, whereby the
+   results of this processing depend on various state variables, such
+   as the current embedding level, level stack, and directional
+   override status.  In addition, the UAX#9 description includes many
+   passages like this (from rule W2 in this case):
+
+     Search backward from each instance of a European number until the
+     first strong type (R, L, AL, or sos) is found. If an AL is found,
+     change the type of the European number to Arabic number.
+
+   To support this, we use a bidi iterator object, 'struct bidi_it',
+   which is a sub-structure of 'struct it' used by xdisp.c (see
+   dispextern.h for the definition of both of these structures).  The
+   bidi iterator holds the entire state of the iteration required by
+   the UBA, and is updated as the text is traversed.  In particular,
+   the embedding level of the current character being resolved is
+   recorded in the iterator state.  To avoid costly searches backward
+   in support of rules like W2 above, the necessary character types
+   are also recorded in the iterator state as they are found during
+   the forward scan, and then used when such rules need to be applied.
+   (Forward scans cannot be avoided in this way; they need to be
+   performed at least once, and the results recorded in the iterator
+   state, to be reused until the forward scan oversteps the recorded
+   position.)
+
+   In this manner, the iterator state acts as a mini-cache of
+   contextual information required for resolving the level of the
+   current character by various UBA rules.
+
+   Caching of bidi iterator states
+   -------------------------------
+
+   As described above, the reordering engine uses the information
+   recorded in the bidi iterator state in order to resolve the
+   embedding level of the current character.  When the reordering
+   engine needs to process the next character in the logical order, it
+   fetches it and applies to it all the UBA levels, updating the
+   iterator state as it goes.  But when the buffer or string is
+   scanned backwards, i.e. in the reverse order of buffer/string
+   positions, the scanned characters were already processed during the
+   preceding forward scan (see bidi_find_other_level_edge).  To avoid
+   costly re-processing of characters that were already processed
+   during the forward scan, the iterator states computed while
+   scanning forward are cached.
+
+   The cache is just a linear array of 'struct bidi_it' objects, which
+   is dynamically allocated and reallocated as needed, since the size
+   of the cache depends on the text being processed.  We only need the
+   cache while processing embedded levels higher than the base
+   paragraph embedding level, because these higher levels require
+   changes in scan direction.  Therefore, as soon as we are back to
+   the base embedding level, we can free the cache; see the calls to
+   bidi_cache_reset and bidi_cache_shrink, for the conditions to do
+   this.
+
+   The cache maintains the index of the next unused cache slot -- this
+   is where the next iterator state will be cached.  The function
+   bidi_cache_iterator_state saves an instance of the state in the
+   cache and increments the unused slot index.  The companion function
+   bidi_cache_find looks up a cached state that corresponds to a given
+   buffer/string position.  All of the cached states must correspond
+   1:1 to the buffer or string region whose processing they reflect;
+   bidi.c will abort if it finds cache slots that violate this 1:1
+   correspondence.
+
+   When the parent iterator 'struct it' is pushed (see push_it in
+   xdisp.c) to pause the current iteration and start iterating over a
+   different object (e.g., a 'display' string that covers some buffer
+   text), the bidi iterator cache needs to be "pushed" as well, so
+   that a new empty cache could be used while iterating over the new
+   object.  Later, when the new object is exhausted, and xdisp.c calls
+   pop_it, we need to "pop" the bidi cache as well and return to the
+   original cache.  See bidi_push_it and bidi_pop_it for how this is
+   done.
+
+   Some functions of the display engine save copies of 'struct it' in
+   local variables, and restore them later.  For examples, see
+   pos_visible_p and move_it_in_display_line_to in xdisp.c, and
+   window_scroll_pixel_based in window.c.  When this happens, we need
+   to save and restore the bidi cache as well, because conceptually
+   the cache is part of the 'struct it' state, and needs to be in
+   perfect sync with the portion of the buffer/string that is being
+   processed.  This saving and restoring of the cache state is handled
+   by bidi_shelve_cache and bidi_unshelve_cache, and the helper macros
+   SAVE_IT and RESTORE_IT defined on xdisp.c.
+
+   Note that, because reordering is implemented below the level in
+   xdisp.c that breaks glyphs into screen lines, we are violating
+   paragraph 3.4 of UAX#9. which mandates that line breaking shall be
+   done before reordering each screen line separately.  However,
+   following UAX#9 to the letter in this matter goes against the basic
+   design of the Emacs display engine, and so we choose here this
+   minor deviation from the UBA letter in preference to redesign of
+   the display engine.  The effect of this is only seen in continued
+   lines that are broken into screen lines in the middle of a run
+   whose direction is opposite to the paragraph's base direction.
+
+   Important design and implementation note: when the code needs to
+   scan far ahead, be sure to avoid such scans as much as possible
+   when the buffer/string doesn't contain any RTL characters.  Users
+   of left-to-right scripts will never forgive you if you introduce
+   some slow-down due to bidi in situations that don't involve any
+   bidirectional text.  See the large comment near the beginning of
+   bidi_resolve_neutral, for one situation where such shortcut was
+   necessary.  */
 
 #include <config.h>
 #include <stdio.h>
@@ -67,16 +249,15 @@ static bool bidi_initialized = 0;
 
 static Lisp_Object bidi_type_table, bidi_mirror_table;
 
-#define LRM_CHAR   0x200E
-#define RLM_CHAR   0x200F
-#define BIDI_EOB   -1
+#define BIDI_EOB   (-1)
 
 /* Data type for describing the bidirectional character categories.  */
 typedef enum {
   UNKNOWN_BC,
   NEUTRAL,
   WEAK,
-  STRONG
+  STRONG,
+  EXPLICIT_FORMATTING
 } bidi_category_t;
 
 /* UAX#9 says to search only for L, AL, or R types of characters, and
@@ -115,13 +296,9 @@ bidi_get_type (int ch, bidi_dir_t override)
   if (default_type == UNKNOWN_BT)
     emacs_abort ();
 
-  if (override == NEUTRAL_DIR)
-    return default_type;
-
   switch (default_type)
     {
-      /* Although UAX#9 does not tell, it doesn't make sense to
-	 override NEUTRAL_B and LRM/RLM characters.  */
+      case WEAK_BN:
       case NEUTRAL_B:
       case LRE:
       case LRO:
@@ -129,20 +306,20 @@ bidi_get_type (int ch, bidi_dir_t override)
       case RLO:
       case PDF:
 	return default_type;
+	/* FIXME: The isolate controls are treated as BN until we add
+	   support for UBA v6.3.  */
+      case LRI:
+      case RLI:
+      case FSI:
+      case PDI:
+	return WEAK_BN;
       default:
-	switch (ch)
-	  {
-	    case LRM_CHAR:
-	    case RLM_CHAR:
-	      return default_type;
-	    default:
-	      if (override == L2R) /* X6 */
-		return STRONG_L;
-	      else if (override == R2L)
-		return STRONG_R;
-	      else
-		emacs_abort ();	/* can't happen: handled above */
-	  }
+	if (override == L2R)
+	  return STRONG_L;
+	else if (override == R2L)
+	  return STRONG_R;
+	else
+	  return default_type;
     }
 }
 
@@ -163,12 +340,7 @@ bidi_get_category (bidi_type_t type)
       case STRONG_L:
       case STRONG_R:
       case STRONG_AL:
-      case LRE:
-      case LRO:
-      case RLE:
-      case RLO:
 	return STRONG;
-      case PDF:		/* ??? really?? */
       case WEAK_EN:
       case WEAK_ES:
       case WEAK_ET:
@@ -176,12 +348,30 @@ bidi_get_category (bidi_type_t type)
       case WEAK_CS:
       case WEAK_NSM:
       case WEAK_BN:
+	/* FIXME */
+      case LRI:
+      case RLI:
+      case FSI:
+      case PDI:
 	return WEAK;
       case NEUTRAL_B:
       case NEUTRAL_S:
       case NEUTRAL_WS:
       case NEUTRAL_ON:
 	return NEUTRAL;
+      case LRE:
+      case LRO:
+      case RLE:
+      case RLO:
+      case PDF:
+#if 0
+	/* FIXME: This awaits implementation of isolate support.  */
+      case LRI:
+      case RLI:
+      case FSI:
+      case PDI:
+#endif
+	return EXPLICIT_FORMATTING;
       default:
 	emacs_abort ();
     }
@@ -870,8 +1060,8 @@ bidi_line_init (struct bidi_it *bidi_it)
    are zero-based character positions in S, BEGBYTE is byte position
    corresponding to BEG.  UNIBYTE means S is a unibyte string.  */
 static ptrdiff_t
-bidi_count_bytes (const unsigned char *s, const ptrdiff_t beg,
-		  const ptrdiff_t begbyte, const ptrdiff_t end, bool unibyte)
+bidi_count_bytes (const unsigned char *s, ptrdiff_t beg,
+		  ptrdiff_t begbyte, ptrdiff_t end, bool unibyte)
 {
   ptrdiff_t pos = beg;
   const unsigned char *p = s + begbyte, *start = p;
@@ -1092,20 +1282,44 @@ bidi_at_paragraph_end (ptrdiff_t charpos, ptrdiff_t bytepos)
 static struct region_cache *
 bidi_paragraph_cache_on_off (void)
 {
+  struct buffer *cache_buffer = current_buffer;
+  bool indirect_p = false;
+
+  /* For indirect buffers, make sure to use the cache of their base
+     buffer.  */
+  if (cache_buffer->base_buffer)
+    {
+      cache_buffer = cache_buffer->base_buffer;
+      indirect_p = true;
+    }
+
+  /* Don't turn on or off the cache in the base buffer, if the value
+     of cache-long-scans of the base buffer is inconsistent with that.
+     This is because doing so will just make the cache pure overhead,
+     since if we turn it on via indirect buffer, it will be
+     immediately turned off by its base buffer.  */
   if (NILP (BVAR (current_buffer, cache_long_scans)))
     {
-      if (current_buffer->bidi_paragraph_cache)
+      if (!indirect_p
+	  || NILP (BVAR (cache_buffer, cache_long_scans)))
 	{
-	  free_region_cache (current_buffer->bidi_paragraph_cache);
-	  current_buffer->bidi_paragraph_cache = 0;
+	  if (cache_buffer->bidi_paragraph_cache)
+	    {
+	      free_region_cache (cache_buffer->bidi_paragraph_cache);
+	      cache_buffer->bidi_paragraph_cache = 0;
+	    }
 	}
       return NULL;
     }
   else
     {
-      if (!current_buffer->bidi_paragraph_cache)
-	current_buffer->bidi_paragraph_cache = new_region_cache ();
-      return current_buffer->bidi_paragraph_cache;
+      if (!indirect_p
+	  || !NILP (BVAR (cache_buffer, cache_long_scans)))
+	{
+	  if (!cache_buffer->bidi_paragraph_cache)
+	    cache_buffer->bidi_paragraph_cache = new_region_cache ();
+	}
+      return cache_buffer->bidi_paragraph_cache;
     }
 }
 
@@ -1126,6 +1340,10 @@ bidi_find_paragraph_start (ptrdiff_t pos, ptrdiff_t pos_byte)
   ptrdiff_t limit = ZV, limit_byte = ZV_BYTE;
   struct region_cache *bpc = bidi_paragraph_cache_on_off ();
   ptrdiff_t n = 0, oldpos = pos, next;
+  struct buffer *cache_buffer = current_buffer;
+
+  if (cache_buffer->base_buffer)
+    cache_buffer = cache_buffer->base_buffer;
 
   while (pos_byte > BEGV_BYTE
 	 && n++ < MAX_PARAGRAPH_SEARCH
@@ -1136,7 +1354,7 @@ bidi_find_paragraph_start (ptrdiff_t pos, ptrdiff_t pos_byte)
 	 of the text over which we scan back includes
 	 paragraph_start_re?  */
       DEC_BOTH (pos, pos_byte);
-      if (bpc && region_cache_backward (current_buffer, bpc, pos, &next))
+      if (bpc && region_cache_backward (cache_buffer, bpc, pos, &next))
 	{
 	  pos = next, pos_byte = CHAR_TO_BYTE (pos);
 	  break;
@@ -1147,7 +1365,10 @@ bidi_find_paragraph_start (ptrdiff_t pos, ptrdiff_t pos_byte)
   if (n >= MAX_PARAGRAPH_SEARCH)
     pos = BEGV, pos_byte = BEGV_BYTE;
   if (bpc)
-    know_region_cache (current_buffer, bpc, pos, oldpos);
+    know_region_cache (cache_buffer, bpc, pos, oldpos);
+  /* Positions returned by the region cache are not limited to
+     BEGV..ZV range, so we limit them here.  */
+  pos_byte = clip_to_bounds (BEGV_BYTE, pos_byte, ZV_BYTE);
   return pos_byte;
 }
 

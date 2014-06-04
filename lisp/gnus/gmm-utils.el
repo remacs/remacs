@@ -1,6 +1,6 @@
 ;;; gmm-utils.el --- Utility functions for Gnus, Message and MML
 
-;; Copyright (C) 2006-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2006-2014 Free Software Foundation, Inc.
 
 ;; Author: Reiner Steib <reiner.steib@gmx.de>
 ;; Keywords: news
@@ -99,7 +99,7 @@ ARGS are passed to `message'."
 
 ;; Copy of the `nnmail-lazy' code from `nnmail.el':
 (define-widget 'gmm-lazy 'default
-  "Base widget for recursive datastructures.
+  "Base widget for recursive data structures.
 
 This is a copy of the `lazy' widget in Emacs 22.1 provided for compatibility."
   :format "%{%t%}: %v"
@@ -441,6 +441,39 @@ rather than relying on `lexical-binding'.
   `(,(progn (require 'cl) (if (fboundp 'cl-labels) 'cl-labels 'labels))
     ,bindings ,@body))
 (put 'gmm-labels 'lisp-indent-function 1)
+(put 'gmm-labels 'edebug-form-spec '((&rest (sexp sexp &rest form)) &rest form))
+
+(defun gmm-format-time-string (format-string &optional time tz)
+  "Use FORMAT-STRING to format the time TIME, or now if omitted.
+The optional TZ specifies the time zone in a number of seconds; any
+other non-nil value will be treated as 0.  Note that both the format
+specifiers `%Z' and `%z' will be replaced with a numeric form. "
+;; FIXME: is there a smart way to replace %Z with a time zone name?
+  (if (and (numberp tz) (not (zerop tz)))
+      (let ((st 0)
+	    (case-fold-search t)
+	    ls nd rest)
+	(setq time (if time
+		       (copy-sequence time)
+		     (current-time)))
+	(if (>= (setq ls (- (cadr time) (car (current-time-zone)) (- tz))) 0)
+	    (setcar (cdr time) ls)
+	  (setcar (cdr time) (+ ls 65536))
+	  (setcar time (1- (car time))))
+	(setq tz (format "%s%02d%02d"
+			 (if (>= tz 0) "+" "-")
+			 (/ (abs tz) 3600)
+			 (/ (% (abs tz) 3600) 60)))
+	(while (string-match "%+z" format-string st)
+	  (if (zerop (% (- (setq nd (match-end 0)) (match-beginning 0)) 2))
+	      (progn
+		(push (substring format-string st (- nd 2)) rest)
+		(push tz rest))
+	    (push (substring format-string st nd) rest))
+	  (setq st nd))
+	(push (substring format-string st) rest)
+	(format-time-string (apply 'concat (nreverse rest)) time))
+    (format-time-string format-string time tz)))
 
 (provide 'gmm-utils)
 

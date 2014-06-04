@@ -1,5 +1,5 @@
 /* xftfont.c -- XFT font driver.
-   Copyright (C) 2006-2013 Free Software Foundation, Inc.
+   Copyright (C) 2006-2014 Free Software Foundation, Inc.
    Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011
      National Institute of Advanced Industrial Science and Technology (AIST)
      Registration Number H13PRO009
@@ -42,7 +42,7 @@ Lisp_Object Qxft;
 static Lisp_Object QChinting, QCautohint, QChintstyle, QCrgba, QCembolden,
   QClcdfilter;
 
-/* The actual structure for Xft font that can be casted to struct
+/* The actual structure for Xft font that can be cast to struct
    font.  */
 
 struct xftfont_info
@@ -58,8 +58,8 @@ struct xftfont_info
   int index;
   FT_Matrix matrix;
   Display *display;
-  int screen;
   XftFont *xftfont;
+  unsigned x_display_id;
 };
 
 /* Structure pointed by (struct face *)->extra  */
@@ -69,11 +69,6 @@ struct xftface_info
   XftColor xft_fg;		/* color for face->foreground */
   XftColor xft_bg;		/* color for face->background */
 };
-
-static void xftfont_get_colors (struct frame *, struct face *, GC gc,
-                                struct xftface_info *,
-                                XftColor *fg, XftColor *bg);
-
 
 /* Setup foreground and background colors of GC into FG and BG.  If
    XFTFACE_INFO is not NULL, reuse the colors in it if possible.  BG
@@ -377,8 +372,8 @@ xftfont_open (struct frame *f, Lisp_Object entity, int pixel_size)
 
   xftfont_info = (struct xftfont_info *) font;
   xftfont_info->display = display;
-  xftfont_info->screen = FRAME_X_SCREEN_NUMBER (f);
   xftfont_info->xftfont = xftfont;
+  xftfont_info->x_display_id = FRAME_DISPLAY_INFO (f)->x_id;
   /* This means that there's no need of transformation.  */
   xftfont_info->matrix.xx = 0;
   if (FcPatternGetMatrix (xftfont->pattern, FC_MATRIX, 0, &matrix)
@@ -486,18 +481,30 @@ xftfont_open (struct frame *f, Lisp_Object entity, int pixel_size)
 }
 
 static void
-xftfont_close (struct frame *f, struct font *font)
+xftfont_close (struct font *font)
 {
+  struct x_display_info *xdi;
   struct xftfont_info *xftfont_info = (struct xftfont_info *) font;
 
 #ifdef HAVE_LIBOTF
   if (xftfont_info->otf)
-    OTF_close (xftfont_info->otf);
+    {
+      OTF_close (xftfont_info->otf);
+      xftfont_info->otf = NULL;
+    }
 #endif
-  block_input ();
-  XftUnlockFace (xftfont_info->xftfont);
-  XftFontClose (xftfont_info->display, xftfont_info->xftfont);
-  unblock_input ();
+
+  /* See comment in xfont_close.  */
+  if (xftfont_info->xftfont
+      && ((xdi = x_display_info_for_display (xftfont_info->display))
+	  && xftfont_info->x_display_id == xdi->x_id))
+    {
+      block_input ();
+      XftUnlockFace (xftfont_info->xftfont);
+      XftFontClose (xftfont_info->display, xftfont_info->xftfont);
+      unblock_input ();
+      xftfont_info->xftfont = NULL;
+    }
 }
 
 static int

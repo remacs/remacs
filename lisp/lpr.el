@@ -1,9 +1,9 @@
 ;;; lpr.el --- print Emacs buffer on line printer
 
-;; Copyright (C) 1985, 1988, 1992, 1994, 2001-2013 Free Software
+;; Copyright (C) 1985, 1988, 1992, 1994, 2001-2014 Free Software
 ;; Foundation, Inc.
 
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: unix
 
 ;; This file is part of GNU Emacs.
@@ -132,7 +132,7 @@ and print the result."
 
 (defcustom print-region-function
   (if (memq system-type '(ms-dos windows-nt))
-      #'direct-print-region-function
+      #'w32-direct-print-region-function
     #'call-process-region)
   "Function to call to print the region on a printer.
 See definition of `print-region-1' for calling conventions."
@@ -161,7 +161,7 @@ See the variables `lpr-switches' and `lpr-command'
 for customization of the printer command."
   (interactive
    (unless (y-or-n-p "Send current buffer to default printer? ")
-     (error "Cancelled")))
+     (error "Canceled")))
   (print-region-1 (point-min) (point-max) lpr-switches nil))
 
 ;;;###autoload
@@ -180,7 +180,7 @@ See the variables `lpr-switches' and `lpr-command'
 for further customization of the printer command."
   (interactive
    (unless (y-or-n-p "Send current buffer to default printer? ")
-     (error "Cancelled")))
+     (error "Canceled")))
   (print-region-1 (point-min) (point-max) lpr-switches t))
 
 ;;;###autoload
@@ -191,7 +191,7 @@ for customization of the printer command."
   (interactive
    (if (y-or-n-p "Send selected text to default printer? ")
        (list (region-beginning) (region-end))
-     (error "Cancelled")))
+     (error "Canceled")))
   (print-region-1 start end lpr-switches nil))
 
 ;;;###autoload
@@ -211,7 +211,7 @@ for further customization of the printer command."
   (interactive
    (if (y-or-n-p "Send selected text to default printer? ")
        (list (region-beginning) (region-end))
-     (error "Cancelled")))
+     (error "Canceled")))
   (print-region-1 start end lpr-switches t))
 
 (defun print-region-1 (start end switches page-headers)

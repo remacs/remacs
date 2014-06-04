@@ -1,6 +1,6 @@
 # emacs-buffer.gdb --- gdb macros for recovering buffers from emacs coredumps
 
-# Copyright (C) 2005-2013 Free Software Foundation, Inc.
+# Copyright (C) 2005-2014 Free Software Foundation, Inc.
 
 # Maintainer: Noah Friedman <friedman@splode.com>
 # Created: 2005-04-28
@@ -79,7 +79,7 @@ set $yfile_buffers_only = 0
 
 define ygetptr
   set $ptr = $arg0
-  set $ptr = ((CHECK_LISP_OBJECT_TYPE ? $ptr.i : $ptr) & VALMASK) | DATA_SEG_BITS
+  set $ptr = (CHECK_LISP_OBJECT_TYPE ? $ptr.i : $ptr) & VALMASK
 end
 
 define ybuffer-list

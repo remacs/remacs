@@ -1,6 +1,6 @@
 % Quick Reference Card for VIP
 
-% Copyright (C) 1987, 2001-2013 Free Software Foundation, Inc.
+% Copyright (C) 1987, 2001-2014 Free Software Foundation, Inc.
 
 % Author: Masahiko Sato <ms@sail.stanford.edu>, <masahiko@sato.riec.tohoku.junet>
 
@@ -279,7 +279,7 @@ If you wish to be in vi mode just after you startup Emacs,
 include the line:
 
 \hskip 5ex
-\kbd{(setq term-setup-hook 'vip-mode)}
+\kbd{(add-hook 'emacs-startup-hook 'vip-mode)}
 
 in your \kbd{.emacs} file.
 Or, you can put the following alias in your \kbd{.cshrc} file.

@@ -1,5 +1,5 @@
 /* Functions taken directly from X sources for use with the Microsoft Windows API.
-   Copyright (C) 1989, 1992-1995, 1999, 2001-2013 Free Software
+   Copyright (C) 1989, 1992-1995, 1999, 2001-2014 Free Software
    Foundation, Inc.
 
 This file is part of GNU Emacs.
@@ -24,6 +24,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "lisp.h"
 #include "keyboard.h"
 #include "frame.h"
+#include "window.h"
 #include "charset.h"
 #include "fontset.h"
 #include "blockinput.h"

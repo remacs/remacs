@@ -1,6 +1,6 @@
 ;;; tramp-cache.el --- file information caching for Tramp
 
-;; Copyright (C) 2000, 2005-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2000, 2005-2014 Free Software Foundation, Inc.
 
 ;; Author: Daniel Pittman <daniel@inanna.danann.net>
 ;;         Michael Albinus <michael.albinus@gmx.de>
@@ -168,7 +168,7 @@ Returns VALUE."
 ;;;###tramp-autoload
 (defun tramp-flush-file-property (key file)
   "Remove all properties of FILE in the cache context of KEY."
-  ;; Remove file property of symlinks.
+  ;; Remove file properties of symlinks.
   (let ((truename (tramp-get-file-property key file "file-truename" nil)))
     (when (and (stringp truename)
 	       (not (string-equal file truename)))
@@ -183,8 +183,13 @@ Returns VALUE."
 (defun tramp-flush-directory-property (key directory)
   "Remove all properties of DIRECTORY in the cache context of KEY.
 Remove also properties of all files in subdirectories."
-  (let ((directory (tramp-run-real-handler
-		    'directory-file-name (list directory))))
+  (let* ((directory (tramp-run-real-handler
+		    'directory-file-name (list directory)))
+	 (truename (tramp-get-file-property key directory "file-truename" nil)))
+    ;; Remove file properties of symlinks.
+    (when (and (stringp truename)
+	       (not (string-equal directory truename)))
+      (tramp-flush-directory-property key truename))
     (tramp-message key 8 "%s" directory)
     (maphash
      (lambda (key _value)
@@ -291,11 +296,14 @@ KEY identifies the connection, it is either a process or a vector."
 	   (when (vectorp key)
 	     (dotimes (i (length key))
 	       (when (stringp (aref key i))
-		 (aset key i (funcall 'substring-no-properties (aref key i))))))
+		 (aset key i
+		       (tramp-compat-funcall
+			'substring-no-properties (aref key i))))))
 	   (when (stringp key)
-	     (setq key (funcall 'substring-no-properties key)))
+	     (setq key (tramp-compat-funcall 'substring-no-properties key)))
 	   (when (stringp value)
-	     (setq value (funcall 'substring-no-properties value))))
+	     (setq value
+		   (tramp-compat-funcall 'substring-no-properties value))))
 	 ;; Dump.
 	 (let ((tmp (format
 		     "(%s %s)"
@@ -402,6 +410,7 @@ for all methods.  Resulting data are derived from connection history."
       (with-temp-buffer
 	(insert-file-contents tramp-persistency-file-name)
 	(let ((list (read (current-buffer)))
+	      (tramp-verbose 0)
 	      element key item)
 	  (while (setq element (pop list))
 	    (setq key (pop element))

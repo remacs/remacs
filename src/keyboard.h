@@ -1,5 +1,5 @@
 /* Declarations useful when processing input.
-   Copyright (C) 1985-1987, 1993, 2001-2013 Free Software Foundation,
+   Copyright (C) 1985-1987, 1993, 2001-2014 Free Software Foundation,
    Inc.
 
 This file is part of GNU Emacs.
@@ -22,9 +22,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "termhooks.h"
 
 INLINE_HEADER_BEGIN
-#ifndef KEYBOARD_INLINE
-# define KEYBOARD_INLINE INLINE
-#endif
 
 /* Most code should use this macro to access Lisp fields in struct kboard.  */
 
@@ -172,49 +169,49 @@ struct kboard
     char kbd_queue_has_data;
 
     /* True means echo each character as typed.  */
-    unsigned immediate_echo : 1;
+    bool_bf immediate_echo : 1;
 
     /* If we have echoed a prompt string specified by the user,
        this is its length in characters.  Otherwise this is -1.  */
     ptrdiff_t echo_after_prompt;
   };
 
-KEYBOARD_INLINE void
+INLINE void
 kset_default_minibuffer_frame (struct kboard *kb, Lisp_Object val)
 {
   kb->INTERNAL_FIELD (Vdefault_minibuffer_frame) = val;
 }
-KEYBOARD_INLINE void
+INLINE void
 kset_defining_kbd_macro (struct kboard *kb, Lisp_Object val)
 {
   kb->INTERNAL_FIELD (defining_kbd_macro) = val;
 }
-KEYBOARD_INLINE void
+INLINE void
 kset_input_decode_map (struct kboard *kb, Lisp_Object val)
 {
   kb->INTERNAL_FIELD (Vinput_decode_map) = val;
 }
-KEYBOARD_INLINE void
+INLINE void
 kset_last_command (struct kboard *kb, Lisp_Object val)
 {
   kb->INTERNAL_FIELD (Vlast_command) = val;
 }
-KEYBOARD_INLINE void
+INLINE void
 kset_last_kbd_macro (struct kboard *kb, Lisp_Object val)
 {
   kb->INTERNAL_FIELD (Vlast_kbd_macro) = val;
 }
-KEYBOARD_INLINE void
+INLINE void
 kset_prefix_arg (struct kboard *kb, Lisp_Object val)
 {
   kb->INTERNAL_FIELD (Vprefix_arg) = val;
 }
-KEYBOARD_INLINE void
+INLINE void
 kset_system_key_alist (struct kboard *kb, Lisp_Object val)
 {
   kb->INTERNAL_FIELD (Vsystem_key_alist) = val;
 }
-KEYBOARD_INLINE void
+INLINE void
 kset_window_system (struct kboard *kb, Lisp_Object val)
 {
   kb->INTERNAL_FIELD (Vwindow_system) = val;
@@ -230,9 +227,6 @@ extern KBOARD *initial_kboard;
    right now considering input.  We can consider input from another
    kboard, but doing so requires throwing to wrong_kboard_jmpbuf.  */
 extern KBOARD *current_kboard;
-
-/* A list of all kboard objects, linked through next_kboard.  */
-extern KBOARD *all_kboards;
 
 /* Total number of times read_char has returned, modulo UINTMAX_MAX + 1.  */
 extern uintmax_t num_input_events;
@@ -463,6 +457,7 @@ extern Lisp_Object Qhelp_echo;
 
 /* Symbols to use for non-text mouse positions.  */
 extern Lisp_Object Qmode_line, Qvertical_line, Qheader_line;
+extern Lisp_Object Qright_divider, Qbottom_divider;
 
 /* True while doing kbd input.  */
 extern bool waiting_for_input;
@@ -499,10 +494,6 @@ extern Lisp_Object QCtoggle, QCradio;
    speed up parse_modifiers.  */
 extern Lisp_Object Qevent_symbol_element_mask;
 
-/* The timestamp of the last input event we received from the X server.
-   X Windows wants this for selection ownership.  */
-extern Time last_event_timestamp;
-
 extern int quit_char;
 
 extern unsigned int timers_run;
@@ -510,7 +501,7 @@ extern unsigned int timers_run;
 extern bool menu_separator_name_p (const char *);
 extern bool parse_menu_item (Lisp_Object, int);
 
-extern void init_kboard (KBOARD *);
+extern KBOARD *allocate_kboard (Lisp_Object);
 extern void delete_kboard (KBOARD *);
 extern void not_single_kboard_state (KBOARD *);
 extern void push_kboard (struct kboard *);
@@ -527,7 +518,9 @@ extern bool input_polling_used (void);
 extern void clear_input_pending (void);
 extern bool requeued_events_pending_p (void);
 extern void bind_polling_period (int);
+#if HAVE_NTGUI
 extern int make_ctrl_char (int) ATTRIBUTE_CONST;
+#endif
 extern void stuff_buffered_input (Lisp_Object);
 extern void clear_waiting_for_input (void);
 extern void swallow_events (bool);

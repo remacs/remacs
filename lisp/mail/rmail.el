@@ -1,9 +1,8 @@
 ;;; rmail.el --- main code of "RMAIL" mail reader for Emacs
 
-;; Copyright (C) 1985-1988, 1993-1998, 2000-2013 Free Software
-;; Foundation, Inc.
+;; Copyright (C) 1985-1988, 1993-1998, 2000-2014 Free Software Foundation, Inc.
 
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: mail
 
 ;; This file is part of GNU Emacs.
@@ -103,6 +102,11 @@ its character representation and its display representation.")
 (defvar rmail-mime-decoded nil
   "Non-nil if message has been processed by `rmail-show-mime-function'.")
 (put 'rmail-mime-decoded 'permanent-local t) ; for rmail-edit
+
+(defsubst rmail-mime-message-p ()
+  "Non-nil if and only if the current message is a MIME."
+  (or (get-text-property (point) 'rmail-mime-entity)
+      (get-text-property (point-min) 'rmail-mime-entity)))
 
 (defgroup rmail nil
   "Mail reader for Emacs."
@@ -249,7 +253,7 @@ We do this by executing it with `--version' and analyzing its output."
 	(cond
 	 ((looking-at ".*movemail: invalid option")
 	  'emacs)    ;; Possibly...
-	 ((looking-at "movemail (GNU Mailutils .*)")
+	 ((looking-at "movemail (GNU Mailutils")
 	  'mailutils)
 	 (t
 	  ;; FIXME:
@@ -686,6 +690,12 @@ Element N specifies the summary line for message N+1.")
 
 This is set to nil by default.")
 
+(defcustom rmail-get-coding-function nil
+  "Function of no args to try to determine coding system for a message."
+  :type 'function
+  :group 'rmail
+  :version "24.4")
+
 (defcustom rmail-enable-mime t
   "If non-nil, RMAIL automatically displays decoded MIME messages.
 For this to work, the feature specified by `rmail-mime-feature' must
@@ -1029,9 +1039,11 @@ This function also reinitializes local variables used by Rmail."
 The buffer is expected to be narrowed to just the header of the message."
   (save-excursion
     (goto-char (point-min))
-    (if (re-search-forward rmail-mime-charset-pattern nil t)
-	(coding-system-from-name (match-string 1))
-      'undecided)))
+    (or (if rmail-get-coding-function
+	    (funcall rmail-get-coding-function))
+	(if (re-search-forward rmail-mime-charset-pattern nil t)
+	    (coding-system-from-name (match-string 1))
+	  'undecided))))
 
 ;;; Set up Rmail mode keymaps
 
@@ -1495,8 +1507,7 @@ If so restore the actual mbox message collection."
 	'(rmail-font-lock-keywords
 	  t t nil nil
 	  (font-lock-maximum-size . nil)
-	  (font-lock-fontify-buffer-function . rmail-fontify-buffer-function)
-	  (font-lock-unfontify-buffer-function . rmail-unfontify-buffer-function)
+          (font-lock-dont-widen . t)
 	  (font-lock-inhibit-thing-lock . (lazy-lock-mode fast-lock-mode))))
   (make-local-variable 'require-final-newline)
   (setq require-final-newline nil)
@@ -1560,7 +1571,7 @@ Hook `rmail-quit-hook' is run after expunging."
   (when (boundp 'rmail-quit-hook)
     (run-hooks 'rmail-quit-hook))
   ;; Don't switch to the summary buffer even if it was recently visible.
-  (when rmail-summary-buffer
+  (when (rmail-summary-exists)
     (with-current-buffer rmail-summary-buffer
       (set-buffer-modified-p nil))
     (replace-buffer-in-windows rmail-summary-buffer)
@@ -3436,47 +3447,66 @@ STATE non-nil means mark as deleted."
   "Delete this message and stay on it."
   (interactive)
   (rmail-set-attribute rmail-deleted-attr-index t)
-  (run-hooks 'rmail-delete-message-hook))
-
-(defun rmail-undelete-previous-message ()
-  "Back up to deleted message, select it, and undelete it."
-  (interactive)
-  (set-buffer rmail-buffer)
-  (let ((msg rmail-current-message))
-    (while (and (> msg 0)
-		(not (rmail-message-deleted-p msg)))
-      (setq msg (1- msg)))
-    (if (= msg 0)
-	(error "No previous deleted message")
-      (if (/= msg rmail-current-message)
-	  (rmail-show-message msg))
-      (rmail-set-attribute rmail-deleted-attr-index nil)
-      (if (rmail-summary-exists)
-	  (with-current-buffer rmail-summary-buffer
-	    (rmail-summary-mark-undeleted msg)))
-      (rmail-maybe-display-summary))))
-
-(defun rmail-delete-forward (&optional backward)
-  "Delete this message and move to next nondeleted one.
-Deleted messages stay in the file until the \\[rmail-expunge] command is given.
-With prefix argument, delete and move backward.
-
-Returns t if a new message is displayed after the delete, or nil otherwise."
-  (interactive "P")
-  (rmail-set-attribute rmail-deleted-attr-index t)
   (run-hooks 'rmail-delete-message-hook)
   (let ((del-msg rmail-current-message))
     (if (rmail-summary-exists)
 	(rmail-select-summary
-	 (rmail-summary-mark-deleted del-msg)))
-    (prog1 (rmail-next-undeleted-message (if backward -1 1))
-      (rmail-maybe-display-summary))))
+	 (rmail-summary-mark-deleted del-msg)))))
 
-(defun rmail-delete-backward ()
+(defun rmail-undelete-previous-message (count)
+  "Back up to deleted message, select it, and undelete it."
+  (interactive "p")
+  (set-buffer rmail-buffer)
+  (let (value)
+    (dotimes (i count)
+      (let ((msg rmail-current-message))
+	(while (and (> msg 0)
+		    (not (rmail-message-deleted-p msg)))
+	  (setq msg (1- msg)))
+	(if (= msg 0)
+	    (error "No previous deleted message")
+	  (if (/= msg rmail-current-message)
+	      (rmail-show-message msg))
+	  (rmail-set-attribute rmail-deleted-attr-index nil)
+	  (if (rmail-summary-exists)
+	      (with-current-buffer rmail-summary-buffer
+		(rmail-summary-mark-undeleted msg))))))
+    (rmail-maybe-display-summary)))
+
+(defun rmail-delete-forward (&optional count)
+  "Delete this message and move to next nondeleted one.
+Deleted messages stay in the file until the \\[rmail-expunge] command is given.
+Optional argument COUNT (interactively, prefix argument) is a repeat count;
+negative argument means move backwards instead of forwards.
+
+Returns t if a new message is displayed after the delete, or nil otherwise."
+  (interactive "p")
+  (if (not count) (setq count 1))
+  (let (value backward)
+    (if (< count 0)
+	(setq count (- count) backward t))
+    (dotimes (i count)
+      (rmail-set-attribute rmail-deleted-attr-index t)
+      (run-hooks 'rmail-delete-message-hook)
+      (let ((del-msg rmail-current-message))
+	(if (rmail-summary-exists)
+	    (rmail-select-summary
+	     (rmail-summary-mark-deleted del-msg)))
+	(setq value (rmail-next-undeleted-message (if backward -1 1)))))
+    (rmail-maybe-display-summary)
+    value))
+
+(defun rmail-delete-backward (&optional count)
   "Delete this message and move to previous nondeleted one.
-Deleted messages stay in the file until the \\[rmail-expunge] command is given."
-  (interactive)
-  (rmail-delete-forward t))
+Deleted messages stay in the file until the \\[rmail-expunge] command is given.
+Optional argument COUNT (interactively, prefix argument) is a repeat count;
+negative argument means move forwards instead of backwards.
+
+Returns t if a new message is displayed after the delete, or nil otherwise."
+
+  (interactive "p")
+  (if (not count) (setq count 1))
+  (rmail-delete-forward (- count)))
 
 ;; Expunging.
 
@@ -3863,16 +3893,18 @@ which is an element of rmail-msgref-vector."
 			message-id))
                    ;; missing From, or Message-ID is sufficiently informative
                    message-id
-                   (concat message-id " (" tem ")"))
+		 (concat message-id " (" tem ")"))
+	     ;; Message has no Message-ID field.
 	     ;; Copy TEM, discarding text properties.
 	     (setq tem (copy-sequence tem))
 	     (set-text-properties 0 (length tem) nil tem)
 	     (setq tem (copy-sequence tem))
 	     ;; Use prin1 to fake RFC822 quoting
 	     (let ((field (prin1-to-string tem)))
+	       ;; Wrap it in parens to make it a comment according to RFC822
 	       (if date
-		   (concat field "'s message of " date)
-		   field)))))
+		   (concat "(" field "'s message of " date ")")
+		 (concat "(" field ")"))))))
         ((let* ((foo "[^][\000-\037()<>@,;:\\\" ]+")
                 (bar "[^][\000-\037()<>@,;:\\\"]+"))
 	   ;; These strings both match all non-ASCII characters.
@@ -3898,7 +3930,8 @@ which is an element of rmail-msgref-vector."
              (if message-id
                  ;; "<AA259@bar.edu> (message from Unix Loser on 1-Apr-89)"
                  (concat message-id " (" field ")")
-                 field))))
+	       ;; Wrap in parens to make it a comment, for RFC822.
+	       (concat "(" field ")")))))
         (t
          ;; If we can't kludge it simply, do it correctly
          (let ((mail-use-rfc822 t))
@@ -4105,7 +4138,6 @@ The message should be narrowed to just the headers."
 
 (autoload 'mail-position-on-field "sendmail")
 
-(declare-function rmail-mime-message-p "rmailmm" ())
 (declare-function rmail-mime-toggle-raw "rmailmm" (&optional state))
 
 (defun rmail-retry-failure ()
@@ -4283,31 +4315,21 @@ This has an effect only if a summary buffer exists."
 
 (defun rmail-unfontify-buffer-function ()
   ;; This function's symbol is bound to font-lock-fontify-unbuffer-function.
-  (let ((modified (buffer-modified-p))
-	(buffer-undo-list t) (inhibit-read-only t)
-	before-change-functions after-change-functions
-	buffer-file-name buffer-file-truename)
+  (with-silent-modifications
     (save-restriction
       (widen)
       (remove-hook 'rmail-show-message-hook 'rmail-fontify-message t)
       (remove-text-properties (point-min) (point-max) '(rmail-fontified nil))
-      (font-lock-default-unfontify-buffer)
-      (and (not modified) (buffer-modified-p)
-           (restore-buffer-modified-p nil)))))
+      (font-lock-default-unfontify-buffer))))
 
 (defun rmail-fontify-message ()
   ;; Fontify the current message if it is not already fontified.
   (if (text-property-any (point-min) (point-max) 'rmail-fontified nil)
-      (let ((modified (buffer-modified-p))
-	    (buffer-undo-list t) (inhibit-read-only t)
-	    before-change-functions after-change-functions
-	    buffer-file-name buffer-file-truename)
+      (with-silent-modifications
 	(save-excursion
 	  (save-match-data
 	    (add-text-properties (point-min) (point-max) '(rmail-fontified t))
-	    (font-lock-fontify-region (point-min) (point-max))
-	    (and (not modified) (buffer-modified-p)
-                 (restore-buffer-modified-p nil)))))))
+	    (font-lock-fontify-region (point-min) (point-max)))))))
 
 ;;; Speedbar support for RMAIL files.
 (defcustom rmail-speedbar-match-folder-regexp "^[A-Z0-9]+\\(\\.[A-Z0-9]+\\)?$"
@@ -4483,7 +4505,7 @@ encoded string (and the same mask) will decode the string."
 ;; There doesn't really seem to be an appropriate menu.
 ;; Eg the edit command is not in a menu either.
 (defun rmail-epa-decrypt ()
-  "Decrypt OpenPGP armors in current message."
+  "Decrypt GnuPG or OpenPGP armors in current message."
   (interactive)
 
   ;; Save the current buffer here for cleanliness, in case we
@@ -4493,14 +4515,10 @@ encoded string (and the same mask) will decode the string."
     (let (decrypts)
       (goto-char (point-min))
 
-      ;; In case the encrypted data is inside a mime attachment,
-      ;; show it.  This is a kludge; to be clean, it should not
-      ;; modify the buffer, but I don't see how to do that.
-      (when (search-forward "octet-stream" nil t)
-	(beginning-of-line)
-	(forward-button 1)
-	(if (looking-at "Show")
-	    (rmail-mime-toggle-hidden)))
+      ;; Turn off mime processing.
+      (when (and (rmail-mime-message-p)
+		 (not (get-text-property (point-min) 'rmail-mime-hidden)))
+	(rmail-mime))
 
       ;; Now find all armored messages in the buffer
       ;; and decrypt them one by one.
@@ -4560,6 +4578,7 @@ encoded string (and the same mask) will decode the string."
 		      (when armor-end
 			(delete-region armor-start armor-end)
 			(insert-buffer-substring from-buffer (nth 0 d) (nth 1 d)))))))))))))
+ 
 
 ;;;;  Desktop support
 
@@ -4612,8 +4631,7 @@ encoded string (and the same mask) will decode the string."
 
 ;;; Start of automatically extracted autoloads.
 
-;;;### (autoloads (rmail-edit-current-message) "rmailedit" "rmailedit.el"
-;;;;;;  "0b056146d4775080a1847b8ce7527bc5")
+;;;### (autoloads nil "rmailedit" "rmailedit.el" "b155463a02e4aa9256ac21997ea003e9")
 ;;; Generated autoloads from rmailedit.el
 
 (autoload 'rmail-edit-current-message "rmailedit" "\
@@ -4623,9 +4641,7 @@ Edit the contents of this message.
 
 ;;;***
 
-;;;### (autoloads (rmail-next-labeled-message rmail-previous-labeled-message
-;;;;;;  rmail-read-label rmail-kill-label rmail-add-label) "rmailkwd"
-;;;;;;  "rmailkwd.el" "b5337290fd35bbc11888afb25d767195")
+;;;### (autoloads nil "rmailkwd" "rmailkwd.el" "d462d15a119ee2a1733de2bc31bf347c")
 ;;; Generated autoloads from rmailkwd.el
 
 (autoload 'rmail-add-label "rmailkwd" "\
@@ -4668,7 +4684,7 @@ With prefix argument N moves forward N messages with these labels.
 
 ;;;***
 
-;;;### (autoloads (rmail-mime) "rmailmm" "rmailmm.el" "93951f748e43e1015da1b485088970ca")
+;;;### (autoloads nil "rmailmm" "rmailmm.el" "4904dafb4e3b7b456c14e63d2dc9163d")
 ;;; Generated autoloads from rmailmm.el
 
 (autoload 'rmail-mime "rmailmm" "\
@@ -4694,8 +4710,7 @@ The arguments ARG and STATE have no effect in this case.
 
 ;;;***
 
-;;;### (autoloads (set-rmail-inbox-list) "rmailmsc" "rmailmsc.el"
-;;;;;;  "8a2466563b4a463710531d01766c07a3")
+;;;### (autoloads nil "rmailmsc" "rmailmsc.el" "0950b0ad020610737220948bb3f37c17")
 ;;; Generated autoloads from rmailmsc.el
 
 (autoload 'set-rmail-inbox-list "rmailmsc" "\
@@ -4709,9 +4724,7 @@ This applies only to the current session.
 
 ;;;***
 
-;;;### (autoloads (rmail-sort-by-labels rmail-sort-by-lines rmail-sort-by-correspondent
-;;;;;;  rmail-sort-by-recipient rmail-sort-by-author rmail-sort-by-subject
-;;;;;;  rmail-sort-by-date) "rmailsort" "rmailsort.el" "3e3a30326fc95d7f17835906c2ccb19f")
+;;;### (autoloads nil "rmailsort" "rmailsort.el" "4106a6e4898795822554ce931f531ab8")
 ;;; Generated autoloads from rmailsort.el
 
 (autoload 'rmail-sort-by-date "rmailsort" "\
@@ -4768,7 +4781,7 @@ If prefix argument REVERSE is non-nil, sorts in reverse order.
 
 ;;;***
 
-;;;### (autoloads nil "rmailsum" "rmailsum.el" "9005bd5da3e21d1cc173e86fd9fec3c9")
+;;;### (autoloads nil "rmailsum" "rmailsum.el" "ee1fa556cd65d7ef457a97ab560e15da")
 ;;; Generated autoloads from rmailsum.el
 
 (autoload 'rmail-summary "rmailsum" "\
@@ -4815,8 +4828,7 @@ SENDERS is a string of regexps separated by commas.
 
 ;;;***
 
-;;;### (autoloads (unforward-rmail-message undigestify-rmail-message)
-;;;;;;  "undigest" "undigest.el" "9b273a3e15b5496ab6121b585d8bd3b3")
+;;;### (autoloads nil "undigest" "undigest.el" "f30d93eb6a006ac64080a1ee8a45a1af")
 ;;; Generated autoloads from undigest.el
 
 (autoload 'undigestify-rmail-message "undigest" "\

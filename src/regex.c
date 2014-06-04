@@ -2,7 +2,7 @@
    0.12.  (Implements POSIX draft P1003.2/D11.2, except for some of the
    internationalization features.)
 
-   Copyright (C) 1993-2013 Free Software Foundation, Inc.
+   Copyright (C) 1993-2014 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -43,7 +43,7 @@
 # endif
 #endif
 
-#if 4 < __GNUC__ + (5 <= __GNUC_MINOR__) && ! defined __clang__
+#if 4 < __GNUC__ + (6 <= __GNUC_MINOR__) && ! defined __clang__
 # pragma GCC diagnostic ignored "-Wunused-but-set-variable"
 #endif
 
@@ -131,11 +131,11 @@
 # include "character.h"
 # include "buffer.h"
 
-/* Make syntax table lookup grant data in gl_state.  */
-# define SYNTAX_ENTRY_VIA_PROPERTY
-
 # include "syntax.h"
 # include "category.h"
+
+/* Make syntax table lookup grant data in gl_state.  */
+# define SYNTAX(c) syntax_property (c, 1)
 
 # ifdef malloc
 #  undef malloc
@@ -713,7 +713,8 @@ typedef enum
 static int
 extract_number (re_char *source)
 {
-  return (SIGN_EXTEND_CHAR (source[1]) << 8) + source[0];
+  unsigned leading_byte = SIGN_EXTEND_CHAR (source[1]);
+  return (leading_byte << 8) + source[0];
 }
 
 /* Same as EXTRACT_NUMBER, except increment SOURCE to after the number.
@@ -1189,12 +1190,7 @@ print_double_string (re_char *where, re_char *string1, ssize_t size1,
 # define assert(e)
 
 # define DEBUG_STATEMENT(e)
-# if __STDC_VERSION__ < 199901L
-#  define DEBUG_COMPILES_ARGUMENTS
-#  define DEBUG_PRINT /* 'DEBUG_PRINT (x, y)' discards X and Y.  */ (void)
-# else
-#  define DEBUG_PRINT(...)
-# endif
+# define DEBUG_PRINT(...)
 # define DEBUG_PRINT_COMPILED_PATTERN(p, s, e)
 # define DEBUG_PRINT_DOUBLE_STRING(w, s1, sz1, s2, sz2)
 
@@ -1989,7 +1985,7 @@ struct range_table_work_area
 #endif /* emacs */
 
 /* Get the next unsigned number in the uncompiled pattern.  */
-#define GET_UNSIGNED_NUMBER(num)					\
+#define GET_INTERVAL_COUNT(num)					\
   do {									\
     if (p == pend)							\
       FREE_STACK_RETURN (REG_EBRACE);					\
@@ -1998,13 +1994,11 @@ struct range_table_work_area
 	PATFETCH (c);							\
 	while ('0' <= c && c <= '9')					\
 	  {								\
-	    int prev;							\
 	    if (num < 0)						\
 	      num = 0;							\
-	    prev = num;							\
-	    num = num * 10 + c - '0';					\
-	    if (num / 10 != prev)					\
+	    if (RE_DUP_MAX / 10 - (RE_DUP_MAX % 10 < c - '0') < num)	\
 	      FREE_STACK_RETURN (REG_BADBR);				\
+	    num = num * 10 + c - '0';					\
 	    if (p == pend)						\
 	      FREE_STACK_RETURN (REG_EBRACE);				\
 	    PATFETCH (c);						\
@@ -3310,16 +3304,16 @@ regex_compile (const_re_char *pattern, size_t size, reg_syntax_t syntax,
 
 		beg_interval = p;
 
-		GET_UNSIGNED_NUMBER (lower_bound);
+		GET_INTERVAL_COUNT (lower_bound);
 
 		if (c == ',')
-		  GET_UNSIGNED_NUMBER (upper_bound);
+		  GET_INTERVAL_COUNT (upper_bound);
 		else
 		  /* Interval such as `{1}' => match exactly once. */
 		  upper_bound = lower_bound;
 
-		if (lower_bound < 0 || upper_bound > RE_DUP_MAX
-		    || (upper_bound >= 0 && lower_bound > upper_bound))
+		if (lower_bound < 0
+		    || (0 <= upper_bound && upper_bound < lower_bound))
 		  FREE_STACK_RETURN (REG_BADBR);
 
 		if (!(syntax & RE_NO_BK_BRACES))
@@ -5907,7 +5901,7 @@ re_match_2_internal (struct re_pattern_buffer *bufp, const_re_char *string1,
 	    EXTRACT_NUMBER_AND_INCR (mcnt, p);
 	    /* Here, we discard `const', making re_match non-reentrant.  */
 	    p2 = (unsigned char*) p + mcnt;
-	    /* Signedness doesn't matter since we only copy MCNT's bits .  */
+	    /* Signedness doesn't matter since we only copy MCNT's bits.  */
 	    EXTRACT_NUMBER_AND_INCR (mcnt, p);
 	    DEBUG_PRINT ("  Setting %p to %d.\n", p2, mcnt);
 	    PUSH_NUMBER (p2, mcnt);

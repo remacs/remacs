@@ -1,10 +1,10 @@
 ;;; emacs-lock.el --- protect buffers against killing or exiting -*- lexical-binding: t -*-
 
-;; Copyright (C) 2011-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2011-2014 Free Software Foundation, Inc.
 
 ;; Author: Juanma Barranquero <lekktu@gmail.com>
 ;; Inspired by emacs-lock.el by Tom Wurgler <twurgler@goodyear.com>
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: extensions, processes
 
 ;; This file is part of GNU Emacs.
@@ -109,8 +109,7 @@ Internal use only.")
 
 (defun emacs-lock-live-process-p (buffer-or-name)
   "Return t if BUFFER-OR-NAME is associated with a live process."
-  (let ((proc (get-buffer-process buffer-or-name)))
-    (and proc (process-live-p proc))))
+  (process-live-p (get-buffer-process buffer-or-name)))
 
 (defun emacs-lock--can-auto-unlock (action)
   "Return t if the current buffer can auto-unlock for ACTION.

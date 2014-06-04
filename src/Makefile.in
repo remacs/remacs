@@ -1,6 +1,6 @@
 ### @configure_input@
 
-# Copyright (C) 1985, 1987-1988, 1993-1995, 1999-2013 Free Software
+# Copyright (C) 1985, 1987-1988, 1993-1995, 1999-2014 Free Software
 # Foundation, Inc.
 
 # This file is part of GNU Emacs.
@@ -28,8 +28,9 @@ SHELL = @SHELL@
 # Here are the things that we expect ../configure to edit.
 # We use $(srcdir) explicitly in dependencies so as not to depend on VPATH.
 srcdir = @srcdir@
+# MinGW CPPFLAGS may use this.
+abs_top_srcdir=@abs_top_srcdir@
 ntsource = $(srcdir)/../nt
-abs_builddir = @abs_builddir@
 VPATH = $(srcdir)
 CC = @CC@
 WINDRES = @WINDRES@
@@ -51,15 +52,14 @@ lispsource = $(srcdir)/../lisp
 lib = ../lib
 libsrc = ../lib-src
 etc = ../etc
-leimdir = ../leim
+leimdir = ${lispsource}/leim
 oldXMenudir = ../oldXMenu
 lwlibdir = ../lwlib
-lispdir = ../lisp
 
 # Configuration files for .o files to depend on.
 config_h = config.h $(srcdir)/conf_post.h
 
-bootstrap_exe = $(abs_builddir)/bootstrap-emacs$(EXEEXT)
+bootstrap_exe = ../src/bootstrap-emacs$(EXEEXT)
 
 ## ns-app if HAVE_NS, else empty.
 OTHER_FILES = @OTHER_FILES@
@@ -77,6 +77,7 @@ C_SWITCH_MACHINE=@C_SWITCH_MACHINE@
 C_SWITCH_SYSTEM=@C_SWITCH_SYSTEM@
 
 GNUSTEP_CFLAGS=@GNUSTEP_CFLAGS@
+PNG_CFLAGS=@PNG_CFLAGS@
 
 ## Define C_SWITCH_X_SITE to contain any special flags your compiler
 ## may need to deal with X Windows.  For instance, if you've defined
@@ -84,6 +85,9 @@ GNUSTEP_CFLAGS=@GNUSTEP_CFLAGS@
 ## compiler can find on its own, you might want to add "-I/..." or
 ## something similar.  This is normally set by configure.
 C_SWITCH_X_SITE=@C_SWITCH_X_SITE@
+
+## Set Emacs dumped heap size for Windows NT
+C_HEAP_SWITCH=@C_HEAP_SWITCH@
 
 ## Define LD_SWITCH_X_SITE to contain any special flags your loader
 ## may need to deal with X Windows.  For instance, if your X libraries
@@ -108,11 +112,12 @@ LD_SWITCH_SYSTEM_TEMACS=@LD_SWITCH_SYSTEM_TEMACS@
 ## Flags to pass to ld only for temacs.
 TEMACS_LDFLAGS = $(LD_SWITCH_SYSTEM) $(LD_SWITCH_SYSTEM_TEMACS)
 
-## If available, the full path to the paxctl program.
+## If available, the names of the paxctl and setfattr programs.
 ## On grsecurity/PaX systems, unexec will fail due to a gap between
-## the bss section and the heap.  This can be prevented by disabling
-## memory randomization in temacs with "paxctl -r".  See bug#11398.
+## the bss section and the heap.  Older versions need paxctl to work
+## around this, newer ones setfattr.  See Bug#11398 and Bug#16343.
 PAXCTL = @PAXCTL@
+SETFATTR = @SETFATTR@
 
 ## Some systems define this to request special libraries.
 LIBS_SYSTEM=@LIBS_SYSTEM@
@@ -120,7 +125,7 @@ LIBS_SYSTEM=@LIBS_SYSTEM@
 ## -lm, or empty.
 LIB_MATH=@LIB_MATH@
 
-## -lpthreads, or empty.
+## -lpthread, or empty.
 LIB_PTHREAD=@LIB_PTHREAD@
 
 LIBIMAGE=@LIBTIFF@ @LIBJPEG@ @LIBPNG@ @LIBGIF@ @LIBXPM@
@@ -179,30 +184,8 @@ LIBXTR6=@LIBXTR6@
 LIBXT_OTHER=@LIBXT_OTHER@
 
 ## If !HAVE_X11 || USE_GTK, empty.
-## Else if USE_X_TOOLKIT really-lwlib, else really-oldxmenu.
-OLDXMENU_TARGET=@OLDXMENU_TARGET@
-
-## If !HAVE_X11 || USE_GTK, empty.
 ## Else if USE_X_TOOLKIT, $(lwlibdir)/liblw.a.
 ## Else $(oldXMenudir)/libXMenu11.a.
-## (Actually, rather than being empty, it is set to "nothing".
-## It is never actually used for anything in this case.
-## This is done because there is a rule with target $(OLDXMENU) below,
-## and I think it might be a syntax error with some makes to have
-## an empty target, even if the associated rule is never run.
-## http://lists.gnu.org/archive/html/help-make/2010-05/msg00058.html
-## The alternative would be to put that rule in a makefile fragment.)
-OLDXMENU=@OLDXMENU@
-
-## If HAVE_X11 && !USE_GTK, $(OLDXMENU) ../src/$(OLDXMENU); else empty.
-## We use stamp-xmenu with these two deps to both ensure that lwlib
-## gets remade based on its dependencies in its own makefile,
-## and remake temacs if lwlib gets changed by this.
-OLDXMENU_DEPS=@OLDXMENU_DEPS@
-
-## If !HAVE_X11 && HAVE_X_WINDOWS, -lXMenu (this case no longer possible).
-## Else if !HAVE_X11 || USE_GTK, empty.
-## Else $(OLDXMENU).
 LIBXMENU=@LIBXMENU@
 
 ## xmenu.o if HAVE_X_WINDOWS, else empty.
@@ -222,7 +205,7 @@ LIBXT=$(TOOLKIT_LIBW) $(LIBXT_OTHER)
 ## If HAVE_X11, $(LIBXT) $(LIBX_EXTRA), else empty.
 LIBX_OTHER=@LIBX_OTHER@
 
-## LIBXMENU is nil if !HAVE_X_WINDOWS.
+## LIBXMENU is empty if !HAVE_X_WINDOWS.
 ## LD_SWITCH_X_SITE should not be used if not using X, but nothing
 ## sets it at present, and if something ever does, it should be
 ## configure, which should set it to nil in non-X builds.
@@ -256,6 +239,9 @@ XRANDR_CFLAGS = @XRANDR_CFLAGS@
 
 XINERAMA_LIBS = @XINERAMA_LIBS@
 XINERAMA_CFLAGS = @XINERAMA_CFLAGS@
+
+XFIXES_LIBS = @XFIXES_LIBS@
+XFIXES_CFLAGS = @XFIXES_CFLAGS@
 
 ## widget.o if USE_X_TOOLKIT, otherwise empty.
 WIDGET_OBJ=@WIDGET_OBJ@
@@ -313,21 +299,14 @@ LIBSELINUX_LIBS = @LIBSELINUX_LIBS@
 LIBGNUTLS_LIBS = @LIBGNUTLS_LIBS@
 LIBGNUTLS_CFLAGS = @LIBGNUTLS_CFLAGS@
 
-LIB_PTHREAD_SIGMASK = @LIB_PTHREAD_SIGMASK@
-
 INTERVALS_H = dispextern.h intervals.h composite.h
 
 GETLOADAVG_LIBS = @GETLOADAVG_LIBS@
 
-RUN_TEMACS = `/bin/pwd`/temacs
+RUN_TEMACS = ./temacs
 
-## Invoke ../nt/addsection for MinGW, ":" elsewhere.
-TEMACS_POST_LINK = @TEMACS_POST_LINK@
-ADDSECTION = @ADDSECTION@
+## Static heap size for temacs on MinGW.
 EMACS_HEAPSIZE = @EMACS_HEAPSIZE@
-MINGW_TEMACS_POST_LINK = \
- mv temacs$(EXEEXT) temacs.tmp; \
- ../nt/addsection temacs.tmp temacs$(EXEEXT) EMHEAP $(EMACS_HEAPSIZE)
 
 UNEXEC_OBJ = @UNEXEC_OBJ@
 
@@ -349,10 +328,11 @@ MKDEPDIR=@MKDEPDIR@
 ##
 ## FIXME? MYCPPFLAGS only referenced in etc/DEBUG.
 ALL_CFLAGS=-Demacs $(MYCPPFLAGS) -I. -I$(srcdir) \
-  -I$(lib) -I$(srcdir)/../lib \
+  -I$(lib) -I$(srcdir)/../lib $(C_HEAP_SWITCH) \
   $(C_SWITCH_MACHINE) $(C_SWITCH_SYSTEM) $(C_SWITCH_X_SITE) \
   $(GNUSTEP_CFLAGS) $(CFLAGS_SOUND) $(RSVG_CFLAGS) $(IMAGEMAGICK_CFLAGS) \
-  $(LIBXML2_CFLAGS) $(DBUS_CFLAGS) $(XRANDR_CFLAGS) $(XINERAMA_CFLAGS) \
+  $(PNG_CFLAGS) $(LIBXML2_CFLAGS) $(DBUS_CFLAGS) \
+  $(XRANDR_CFLAGS) $(XINERAMA_CFLAGS) $(XFIXES_CFLAGS) \
   $(WEBKIT_CFLAGS) $(CLUTTER_CFLAGS) $(GIR_CFLAGS) \
   $(SETTINGS_CFLAGS) $(FREETYPE_CFLAGS) $(FONTCONFIG_CFLAGS) \
   $(LIBOTF_CFLAGS) $(M17N_FLT_CFLAGS) $(DEPFLAGS) \
@@ -436,26 +416,30 @@ LIBES = $(LIBS) $(W32_LIBS) $(LIBS_GNUSTEP) $(LIBX_BASE) $(LIBIMAGE) \
    $(RSVG_LIBS) $(IMAGEMAGICK_LIBS) $(LIB_ACL) $(LIB_CLOCK_GETTIME) \
    $(WEBKIT_LIBS) $(CLUTTER_LIBS) $(GIR_LIBS) \
    $(LIB_EACCESS) $(LIB_FDATASYNC) $(LIB_TIMER_TIME) $(DBUS_LIBS) \
-   $(LIB_EXECINFO) $(XRANDR_LIBS) $(XINERAMA_LIBS) \
+   $(LIB_EXECINFO) $(XRANDR_LIBS) $(XINERAMA_LIBS) $(XFIXES_LIBS) \
    $(LIBXML2_LIBS) $(LIBGPM) $(LIBRESOLV) $(LIBS_SYSTEM) \
    $(LIBS_TERMCAP) $(GETLOADAVG_LIBS) $(SETTINGS_LIBS) $(LIBSELINUX_LIBS) \
    $(FREETYPE_LIBS) $(FONTCONFIG_LIBS) $(LIBOTF_LIBS) $(M17N_FLT_LIBS) \
-   $(LIBGNUTLS_LIBS) $(LIB_PTHREAD) $(LIB_PTHREAD_SIGMASK) \
+   $(LIBGNUTLS_LIBS) $(LIB_PTHREAD) \
    $(GFILENOTIFY_LIBS) $(LIB_MATH) $(LIBZ)
 
 all: emacs$(EXEEXT) $(OTHER_FILES)
 .PHONY: all
 
 $(leimdir)/leim-list.el: bootstrap-emacs$(EXEEXT)
-	cd $(leimdir) && $(MAKE) $(MFLAGS) leim-list.el EMACS=$(bootstrap_exe)
+	cd ../leim && $(MAKE) $(MFLAGS) leim-list.el EMACS="$(bootstrap_exe)"
+
+$(lispsource)/international/charprop.el: bootstrap-emacs$(EXEEXT)
+	cd ../admin/unidata && $(MAKE) $(MFLAGS) all EMACS="../$(bootstrap_exe)"
 
 ## The dumped Emacs is as functional and more efficient than
 ## bootstrap-emacs, so we replace the latter with the former.
 ## Strictly speaking, emacs does not depend directly on all of $lisp,
 ## since not all pieces are used on all platforms.  But DOC depends
 ## on all of $lisp, and emacs depends on DOC, so it is ok to use $lisp here.
-emacs$(EXEEXT): temacs$(EXEEXT) $(ADDSECTION) \
-                $(etc)/DOC $(lisp) $(leimdir)/leim-list.el
+emacs$(EXEEXT): temacs$(EXEEXT) \
+                $(etc)/DOC $(lisp) $(leimdir)/leim-list.el \
+                $(lispsource)/international/charprop.el
 	if test "$(CANNOT_DUMP)" = "yes"; then \
 	  rm -f emacs$(EXEEXT); \
 	  ln temacs$(EXEEXT) emacs$(EXEEXT); \
@@ -514,39 +498,28 @@ $(lib)/libgnu.a: $(config_h)
 ## existence when setting Vinstallation_directory (FIXME?).
 ## This goes on to affect various things, and the emacs binary fails
 ## to start if Vinstallation_directory has the wrong value.
-temacs$(EXEEXT): stamp-oldxmenu $(ALLOBJS) \
+temacs$(EXEEXT): $(LIBXMENU) $(ALLOBJS) \
 	         $(lib)/libgnu.a $(EMACSRES)
 	$(CC) $(ALL_CFLAGS) $(TEMACS_LDFLAGS) $(LDFLAGS) \
 	  -o temacs $(ALLOBJS) $(lib)/libgnu.a $(W32_RES_LINK) $(LIBES)
 	$(MKDIR_P) $(etc)
-	$(TEMACS_POST_LINK)
 	test "$(CANNOT_DUMP)" = "yes" || \
 	  test "X$(PAXCTL)" = X || $(PAXCTL) -r temacs$(EXEEXT)
+	test "$(CANNOT_DUMP)" = "yes" || test -z "$(SETFATTR)" || \
+	  $(SETFATTR) -n user.pax.flags -v r $@
 
 ## The following oldxmenu-related rules are only (possibly) used if
-## HAVE_X11 && !USE_GTK, but there is no harm in always defining them
-## (provided we take a little care that OLDXMENU is never empty).
-really-lwlib: globals.h
-	cd $(lwlibdir); $(MAKE) $(MFLAGS) \
-    CC='$(CC)' CFLAGS='$(CFLAGS)' MAKE='$(MAKE)'
-	@true  # make -t should not create really-lwlib.
-.PHONY: really-lwlib
-
-really-oldXMenu:
-	cd $(oldXMenudir); $(MAKE) $(MFLAGS) \
-    CC='$(CC)' CFLAGS='$(CFLAGS)' MAKE='$(MAKE)'
-	@true  # make -t should not create really-oldXMenu.
-.PHONY: really-oldXMenu
-
-## We do not really need this when OLDXMENU_DEPS is empty, but as
-## things stand we need something to satisfy the temacs dependency.
-stamp-oldxmenu: $(OLDXMENU_DEPS)
-	touch stamp-oldxmenu
-
-## Supply an ordering for parallel make.
-../src/$(OLDXMENU): $(OLDXMENU)
-
-$(OLDXMENU): $(OLDXMENU_TARGET)
+## HAVE_X11 && !USE_GTK, but there is no harm in always defining them.
+$(lwlibdir)/liblw.a: $(config_h) globals.h lisp.h FORCE
+	cd $(lwlibdir) && \
+	  $(MAKE) $(MFLAGS) CC='$(CC)' CFLAGS='$(CFLAGS)' MAKE='$(MAKE)' \
+	    liblw.a
+$(oldXMenudir)/libXMenu11.a: FORCE
+	cd $(oldXMenudir) && \
+	  $(MAKE) $(MFLAGS) CC='$(CC)' CFLAGS='$(CFLAGS)' MAKE='$(MAKE)' \
+	    libXMenu11.a
+FORCE:
+.PHONY: FORCE
 
 ../config.status: config.in epaths.in
 	@echo "The file ${?:.in=.h} needs to be set up from $?."
@@ -565,7 +538,7 @@ ns-app: emacs$(EXEEXT)
 	cd ../nextstep && $(MAKE) $(MFLAGS) all
 
 .PHONY: mostlyclean clean bootstrap-clean distclean maintainer-clean
-.PHONY: versionclean extraclean frc
+.PHONY: versionclean extraclean
 
 mostlyclean:
 	rm -f temacs$(EXEEXT) core *.core \#* *.o libXMenu11.a liblw.a
@@ -582,46 +555,51 @@ clean: mostlyclean
 ## It should remove all files generated during a compilation/bootstrap,
 ## but not things like config.status or TAGS.
 bootstrap-clean: clean
-	rm -f epaths.h config.h config.stamp stamp-h1 stamp-oldxmenu
+	rm -f epaths.h config.h config.stamp stamp-h1
 	if test -f ./.gdbinit; then \
 	  mv ./.gdbinit ./.gdbinit.save; \
 	  if test -f "$(srcdir)/.gdbinit"; then rm -f ./.gdbinit.save; \
 	  else mv ./.gdbinit.save ./.gdbinit; fi; \
 	fi
-## This is used in making a distribution.
-## Do not use it on development directories!
+
 distclean: bootstrap-clean
 	rm -f Makefile
+
 maintainer-clean: distclean
-	@echo "This command is intended for maintainers to use;"
-	@echo "it deletes files that may require special tools to rebuild."
 	rm -f TAGS
 versionclean:
 	-rm -f emacs$(EXEEXT) emacs-*.*.*$(EXEEXT) ../etc/DOC*
 extraclean: distclean
-	-rm -f *~ \#* m/?*~ s/?*~
+	-rm -f *~ \#*
 
-## Arrange to make a tags table TAGS-LISP for ../lisp,
-## plus TAGS for the C files, which includes ../lisp/TAGS by reference.
+
+ETAGS = ../lib-src/etags
 
 ctagsfiles1 = [xyzXYZ]*.[hc]
 ctagsfiles2 = [a-wA-W]*.[hc]
 ctagsfiles3 = [a-zA-Z]*.m
 
-TAGS: $(srcdir)/$(ctagsfiles1) $(srcdir)/$(ctagsfiles2) $(S_FILE)
-	../lib-src/etags --include=TAGS-LISP --include=$(lwlibdir)/TAGS \
+## FIXME? In out-of-tree builds, should TAGS be generated in srcdir?
+
+## This does not need to depend on ../lisp and ../lwlib TAGS files,
+## because etags "--include" only includes a pointer to the file,
+## rather than the file contents.
+TAGS: $(srcdir)/$(ctagsfiles1) $(srcdir)/$(ctagsfiles2) $(srcdir)/$(ctagsfiles3)
+	"$(ETAGS)" --include=../lisp/TAGS --include=$(lwlibdir)/TAGS \
 	  --regex='{c}/[ 	]*DEFVAR_[A-Z_ 	(]+"\([^"]+\)"/' \
-	  $(srcdir)/$(ctagsfiles1) $(srcdir)/$(ctagsfiles2) $(S_FILE) \
+	  $(srcdir)/$(ctagsfiles1) $(srcdir)/$(ctagsfiles2) \
 	  --regex='{objc}/[ 	]*DEFVAR_[A-Z_ 	(]+"\([^"]+\)"/' \
 	  $(srcdir)/$(ctagsfiles3)
-frc:
-TAGS-LISP: frc
-	$(MAKE) -f $(lispdir)/Makefile TAGS-LISP ETAGS=../lib-src/etags
+
+## Arrange to make tags tables for ../lisp and ../lwlib,
+## which the above TAGS file for the C files includes by reference.
+../lisp/TAGS:
+	cd ../lisp && $(MAKE) TAGS ETAGS="$(ETAGS)"
 
 $(lwlibdir)/TAGS:
-	(cd $(lwlibdir); $(MAKE) -f $(lwlibdir)/Makefile tags ETAGS=../lib-src/etags)
+	cd $(lwlibdir) && $(MAKE) TAGS ETAGS="$(ETAGS)"
 
-tags: TAGS TAGS-LISP $(lwlibdir)/TAGS
+tags: TAGS ../lisp/TAGS $(lwlibdir)/TAGS
 .PHONY: tags
 
 
@@ -656,7 +634,7 @@ tags: TAGS TAGS-LISP $(lwlibdir)/TAGS
 ## With GNU Make, we would just say "%.el : %.elc $(BOOTSTRAPEMACS)"
 .el.elc:
 	@cd ../lisp; $(MAKE) $(MFLAGS) compile-onefile \
-	                     THEFILE=$< EMACS=$(bootstrap_exe)
+	                     THEFILE=$< EMACS="$(bootstrap_exe)"
 
 ## Since the .el.elc rule cannot specify an extra dependency, we do it here.
 $(lisp): $(BOOTSTRAPEMACS)
@@ -667,7 +645,7 @@ $(lisp): $(BOOTSTRAPEMACS)
 VCSWITNESS =
 
 $(lispsource)/loaddefs.el: $(BOOTSTRAPEMACS) $(VCSWITNESS)
-	cd ../lisp; $(MAKE) $(MFLAGS) autoloads EMACS=$(bootstrap_exe)
+	cd ../lisp; $(MAKE) $(MFLAGS) autoloads EMACS="$(bootstrap_exe)"
 
 ## Dump an Emacs executable named bootstrap-emacs containing the
 ## files from loadup.el in source form.
@@ -682,7 +660,7 @@ bootstrap-emacs$(EXEEXT): temacs$(EXEEXT)
 	  mv -f emacs$(EXEEXT) bootstrap-emacs$(EXEEXT); \
 	fi
 	@: Compile some files earlier to speed up further compilation.
-	cd ../lisp; $(MAKE) $(MFLAGS) compile-first EMACS=$(bootstrap_exe)
+	cd ../lisp; $(MAKE) $(MFLAGS) compile-first EMACS="$(bootstrap_exe)"
 
 ## Insert either autodeps.mk (if AUTO_DEPEND), else deps.mk.
 @deps_frag@

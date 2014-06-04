@@ -1,6 +1,6 @@
 ;;; ede/cpp-root.el --- A simple way to wrap a C++ project with a single root
 
-;; Copyright (C) 2007-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2007-2014 Free Software Foundation, Inc.
 
 ;; Author: Eric M. Ludlam <eric@siege-engine.com>
 
@@ -95,7 +95,7 @@
 ;; Where FILENAME is a file in the root directory of the project.
 ;; Where MYFCN is a symbol for a function.  See:
 ;;
-;; M-x describe-class RET ede-cpp-root-project RET
+;; M-x describe-function RET ede-cpp-root-project RET
 ;;
 ;; for documentation about the locate-fcn extension.
 ;;

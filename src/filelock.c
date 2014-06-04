@@ -1,6 +1,10 @@
 /* Lock files for editing.
-   Copyright (C) 1985-1987, 1993-1994, 1996, 1998-2013 Free Software
-   Foundation, Inc.
+
+Copyright (C) 1985-1987, 1993-1994, 1996, 1998-2014
+  Free Software Foundation, Inc.
+
+Author: Richard King
+  (according to authors.el)
 
 This file is part of GNU Emacs.
 
@@ -50,8 +54,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <sys/socket.h>	/* for fcntl */
 #include "w32.h"	/* for dostounix_filename */
 #endif
-
-#ifdef CLASH_DETECTION
 
 #ifdef HAVE_UTMP_H
 #include <utmp.h>
@@ -459,10 +461,18 @@ lock_file_1 (char *lfname, bool force)
   char lock_info_str[MAX_LFINFO + 1];
   printmax_t pid = getpid ();
 
-  if (sizeof lock_info_str
-      <= snprintf (lock_info_str, sizeof lock_info_str,
-		   boot ? "%s@%s.%"pMd":%"pMd : "%s@%s.%"pMd,
-		   user_name, host_name, pid, boot))
+  if (boot)
+    {
+      if (sizeof lock_info_str
+          <= snprintf (lock_info_str, sizeof lock_info_str,
+                       "%s@%s.%"pMd":%"pMd,
+                       user_name, host_name, pid, boot))
+        return ENAMETOOLONG;
+    }
+  else if (sizeof lock_info_str
+           <= snprintf (lock_info_str, sizeof lock_info_str,
+                        "%s@%s.%"pMd,
+                        user_name, host_name, pid))
     return ENAMETOOLONG;
 
   return create_lock_file (lfname, lock_info_str, force);
@@ -681,7 +691,7 @@ lock_file (Lisp_Object fn)
   /* Ensure we have only '/' separators, to avoid problems with
      looking (inside fill_in_lock_file_name) for backslashes in file
      names encoded by some DBCS codepage.  */
-  dostounix_filename (SSDATA (fn), 1);
+  dostounix_filename (SSDATA (fn));
 #endif
   encoded_fn = ENCODE_FILE (fn);
 
@@ -761,7 +771,9 @@ DEFUN ("lock-buffer", Flock_buffer, Slock_buffer,
        0, 1, 0,
        doc: /* Lock FILE, if current buffer is modified.
 FILE defaults to current buffer's visited file,
-or else nothing is done if current buffer isn't visiting a file.  */)
+or else nothing is done if current buffer isn't visiting a file.
+
+If the option `create-lockfiles' is nil, this does nothing.  */)
   (Lisp_Object file)
 {
   if (NILP (file))
@@ -825,8 +837,6 @@ t if it is locked by you, else a string saying which user has locked it.  */)
   return ret;
 }
 
-#endif /* CLASH_DETECTION */
-
 void
 syms_of_filelock (void)
 {
@@ -838,9 +848,7 @@ syms_of_filelock (void)
 	       doc: /* Non-nil means use lockfiles to avoid editing collisions.  */);
   create_lockfiles = 1;
 
-#ifdef CLASH_DETECTION
   defsubr (&Sunlock_buffer);
   defsubr (&Slock_buffer);
   defsubr (&Sfile_locked_p);
-#endif
 }

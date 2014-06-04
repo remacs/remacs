@@ -1,5 +1,5 @@
 /* GNU Emacs routines to deal with case tables.
-   Copyright (C) 1993-1994, 2001-2013 Free Software Foundation, Inc.
+   Copyright (C) 1993-1994, 2001-2014 Free Software Foundation, Inc.
 
 Author: Howard Gayle
 
@@ -205,7 +205,6 @@ set_identity (Lisp_Object table, Lisp_Object c, Lisp_Object elt)
 	from = to = XINT (c);
 
       to++;
-      lint_assume (to <= MAX_CHAR + 1);
       for (; from < to; from++)
 	CHAR_TABLE_SET (table, from, make_number (from));
     }
@@ -232,7 +231,6 @@ shuffle (Lisp_Object table, Lisp_Object c, Lisp_Object elt)
 	from = to = XINT (c);
 
       to++;
-      lint_assume (to <= MAX_CHAR + 1);
       for (; from < to; from++)
 	{
 	  Lisp_Object tem = Faref (table, elt);

@@ -1,6 +1,6 @@
 /* System description file for Windows NT.
 
-Copyright (C) 1993-1995, 2001-2013 Free Software Foundation, Inc.
+Copyright (C) 1993-1995, 2001-2014 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -23,6 +23,8 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #ifndef WINDOWSNT
 #define WINDOWSNT
 #endif
+
+#include <mingw_time.h>
 
 /* #undef const */
 
@@ -138,6 +140,7 @@ extern char *getenv ();
    in its system headers, and is not really compatible with values
    lower than 0x0500, so leave it alone.  */
 #ifndef _W64
+# undef _WIN32_WINNT
 # define _WIN32_WINNT 0x0400
 #endif
 
@@ -150,12 +153,12 @@ extern char *getenv ();
 #define MAXPATHLEN      _MAX_PATH
 #endif
 
+/* This is used to hold UTF-8 encoded file names.  */
+#define MAX_UTF8_PATH   (MAXPATHLEN * 4)
+
 #ifdef HAVE_NTGUI
 # ifndef HAVE_WINDOW_SYSTEM
 #  define HAVE_WINDOW_SYSTEM 1
-# endif
-# ifndef HAVE_MENUS
-#  define HAVE_MENUS 1
 # endif
 #endif
 
@@ -174,7 +177,7 @@ extern char *getenv ();
 extern struct tm * sys_localtime (const time_t *);
 /* MinGW64 uses a 2-argument _setjmp, and setjmp is a macro defined to
    supply the 2nd arg correctly, so don't use _setjmp directly in that
-   case. */
+   case.  */
 #undef HAVE__SETJMP
 #endif
 
@@ -219,12 +222,23 @@ extern struct tm * sys_localtime (const time_t *);
 #define strerror sys_strerror
 #undef unlink
 #define unlink  sys_unlink
+#undef opendir
+#define opendir sys_opendir
+#undef closedir
+#define closedir sys_closedir
+#undef readdir
+#define readdir sys_readdir
+#undef seekdir
+#define seekdir sys_seekdir
 /* This prototype is needed because some files include config.h
    _after_ the standard headers, so sys_unlink gets no prototype from
    stdio.h or io.h.  */
 extern int sys_unlink (const char *);
 #undef write
 #define write   sys_write
+#undef umask
+#define umask   sys_umask
+extern int sys_umask (int);
 
 /* Subprocess calls that are emulated.  */
 #define spawnve sys_spawnve
@@ -263,10 +277,12 @@ typedef int pid_t;
 #endif
 #define isatty    _isatty
 #define _longjmp  longjmp
+/* MinGW64 defines lseek to invoke lseek64.  */
+#ifndef lseek
 #define lseek     _lseek
+#endif
 #define popen     _popen
 #define pclose    _pclose
-#define umask	  _umask
 #define strdup    _strdup
 #define strupr    _strupr
 #define strnicmp  _strnicmp
@@ -376,13 +392,18 @@ extern int sigemptyset (sigset_t *);
 extern int sigaddset (sigset_t *, int);
 extern int sigfillset (sigset_t *);
 extern int sigprocmask (int, const sigset_t *, sigset_t *);
+/* MinGW64 defines pthread_sigmask as zero in its pthread_signal.h
+   header, but we have an implementation for that function in w32proc.c.  */
+#ifdef pthread_sigmask
+#undef pthread_sigmask
+#endif
 extern int pthread_sigmask (int, const sigset_t *, sigset_t *);
 extern int sigismember (const sigset_t *, int);
 extern int setpgrp (int, int);
 extern int sigaction (int, const struct sigaction *, struct sigaction *);
 extern int alarm (int);
 
-extern int sys_kill (int, int);
+extern int sys_kill (pid_t, int);
 
 
 /* For integration with MSDOS support.  */
@@ -407,20 +428,36 @@ extern char *get_emacs_configuration_options (void);
 #define _WINSOCK_H
 
 /* Defines size_t and alloca ().  */
-#ifdef emacs
-#define malloc e_malloc
-#define free   e_free
-#define realloc e_realloc
-#define calloc e_calloc
-#endif
+#include <stdlib.h>
+#include <sys/stat.h>
 #ifdef _MSC_VER
 #define alloca _alloca
 #else
 #include <malloc.h>
 #endif
 
-#include <stdlib.h>
-#include <sys/stat.h>
+#ifdef emacs
+
+typedef void * (* malloc_fn)(size_t);
+typedef void * (* realloc_fn)(void *, size_t);
+typedef void (* free_fn)(void *);
+
+extern void *malloc_before_dump(size_t);
+extern void *realloc_before_dump(void *, size_t);
+extern void free_before_dump(void *);
+extern void *malloc_after_dump(size_t);
+extern void *realloc_after_dump(void *, size_t);
+extern void free_after_dump(void *);
+
+extern malloc_fn the_malloc_fn;
+extern realloc_fn the_realloc_fn;
+extern free_fn the_free_fn;
+
+#define malloc(size) (*the_malloc_fn)(size)
+#define free(ptr)   (*the_free_fn)(ptr)
+#define realloc(ptr, size) (*the_realloc_fn)(ptr, size)
+
+#endif
 
 /* Define for those source files that do not include enough NT system files.  */
 #ifndef NULL

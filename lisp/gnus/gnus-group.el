@@ -1,6 +1,6 @@
 ;;; gnus-group.el --- group mode commands for Gnus
 
-;; Copyright (C) 1996-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1996-2014 Free Software Foundation, Inc.
 
 ;; Author: Lars Magne Ingebrigtsen <larsi@gnus.org>
 ;; Keywords: news
@@ -23,10 +23,6 @@
 ;;; Commentary:
 
 ;;; Code:
-
-;; For Emacs <22.2 and XEmacs.
-(eval-and-compile
-  (unless (fboundp 'declare-function) (defmacro declare-function (&rest r))))
 
 (eval-when-compile
   (require 'cl))
@@ -571,7 +567,6 @@ simple manner.")
   "p" gnus-group-prev-unread-group
   "\177" gnus-group-prev-unread-group
   [delete] gnus-group-prev-unread-group
-  [backspace] gnus-group-prev-unread-group
   "N" gnus-group-next-group
   "P" gnus-group-prev-group
   "\M-n" gnus-group-next-unread-group-same-level
@@ -2729,7 +2724,7 @@ server."
   (interactive
    (list
     (gnus-read-group "Group name: ")
-    (gnus-read-method "From method")))
+    (gnus-read-method "Select method for new group (use tab for completion)")))
 
   (when (stringp method)
     (setq method (or (gnus-server-to-method method) method)))
@@ -4398,7 +4393,12 @@ and the second element is the address."
 		     ;; Suggested by mapjph@bath.ac.uk.
 		     (gnus-completing-read
 		      "Address"
-		      gnus-secondary-servers))
+		      ;; FIXME? gnus-secondary-servers is obsolete,
+		      ;; and it is not obvious that there is anything
+		      ;; sensible to use instead in this particular case.
+		      (if (boundp 'gnus-secondary-servers)
+			  gnus-secondary-servers
+			(cdr gnus-select-method))))
 	     ;; We got a server name.
 	     how))))
   (gnus-browse-foreign-server method))

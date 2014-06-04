@@ -6,7 +6,7 @@
 ;; This file is part of GNU Emacs.
 
 ;; Author: Gary Delp <delp@huey.Udel.Edu>
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Created: 13 Jan 1986
 ;; Keywords: mail
 ;; Obsolete-since: 24.3
@@ -75,12 +75,7 @@ site-init."
 	    (if mail-interactive
 		(with-current-buffer errbuf
 		  (erase-buffer))))
-	  (let ((m (default-file-modes)))
-	    (unwind-protect
-		(progn
-		  (set-default-file-modes 384)
-		  (setq temfile  (make-temp-file ",rpost")))
-	      (set-default-file-modes m)))
+	  (with-file-modes 384 (setq temfile (make-temp-file ",rpost")))
 	  (apply 'call-process
 		 (append (list (if (boundp 'post-mail-program)
 				   post-mail-program

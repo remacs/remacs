@@ -1,23 +1,24 @@
 \input texinfo
 @c This is an annex of the Emacs manual.
-@c Author: Daniel.Pfeiffer@Informatik.START.dbp.de, fax (+49 69) 7588-2389
+@c Author: Daniel Pfeiffer <Daniel.Pfeiffer@Informatik.START.dbp.de>
 @setfilename ../../info/autotype
 @c @node Autotypist, Picture, Abbrevs, Top
 @c @chapter Features for Automatic Typing
 @settitle Features for Automatic Typing
+@documentencoding UTF-8
 @c  @cindex text
 @c  @cindex selfinserting text
 @c  @cindex autotypist
 
 @copying
-Copyright @copyright{} 1994--1995, 1999, 2001--2013
+Copyright @copyright{} 1994--1995, 1999, 2001--2014
 Free Software Foundation, Inc.
 
 @quotation
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
 any later version published by the Free Software Foundation; with no
-Invariant Sections, with the Front-Cover texts being ``A GNU Manual'',
+Invariant Sections, with the Front-Cover Texts being ``A GNU Manual'',
 and with the Back-Cover Texts as in (a) below.  A copy of the license
 is included in the section entitled ``GNU Free Documentation License''.
 
@@ -28,8 +29,8 @@ modify this GNU manual.''
 
 @dircategory Emacs misc features
 @direntry
-* Autotype: (autotype).         Convenient features for text that you
-                                  enter frequently in Emacs.
+* Autotype: (autotype).         Convenient features for text that you enter
+                                  frequently in Emacs.
 @end direntry
 
 @titlepage
@@ -240,10 +241,10 @@ put at these places.  Point is left at first @code{_} where nothing is wrapped.
 Indent line according to major mode.  When following element is @code{_}, and
 there is a interregion that will be wrapped here, indent that interregion.
 @item @code{&}
-Logical and.  Iff preceding element moved point, i.e., usually inserted
+Logical and.  If preceding element moved point, i.e., usually inserted
 something, do following element.
 @item @code{|}
-Logical xor.  Iff preceding element didn't move point, i.e., usually inserted
+Logical xor.  If preceding element didn't move point, i.e., usually inserted
 nothing, do following element.
 @item @code{-@var{number}}
 Delete preceding number characters.  Depends on value of
@@ -301,7 +302,7 @@ of the same name as the command and can thus be overridden from your
   Various characters usually appear in pairs.  When, for example, you insert
 an open parenthesis, no matter whether you are programming or writing prose,
 you will surely enter a closing one later.  By entering both at the same time
-and leaving the cursor inbetween, Emacs can guarantee you that such
+and leaving the cursor in between, Emacs can guarantee you that such
 parentheses are always balanced.  And if you have a non-qwerty keyboard, where
 typing some of the stranger programming language symbols makes you bend your
 fingers backwards, this can be quite relieving too.

@@ -1,6 +1,6 @@
 ;;; url-cookie.el --- URL cookie support
 
-;; Copyright (C) 1996-1999, 2004-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1996-1999, 2004-2014 Free Software Foundation, Inc.
 
 ;; Keywords: comm, data, processes, hypermedia
 
@@ -352,9 +352,9 @@ to run the `url-cookie-setup-save-timer' function manually."
 ;;; Mode for listing and editing cookies.
 
 (defun url-cookie-list ()
-  "List the URL cookies."
+  "Display a buffer listing the current URL cookies, if there are any.
+Use \\<url-cookie-mode-map>\\\[url-cookie-delete] to remove cookies."
   (interactive)
-
   (when (and (null url-cookie-secure-storage)
 	     (null url-cookie-storage))
     (error "No cookies are defined"))

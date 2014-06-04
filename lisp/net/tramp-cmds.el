@@ -1,6 +1,6 @@
 ;;; tramp-cmds.el --- Interactive commands for Tramp
 
-;; Copyright (C) 2007-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2007-2014 Free Software Foundation, Inc.
 
 ;; Author: Michael Albinus <michael.albinus@gmx.de>
 ;; Keywords: comm, processes
@@ -48,10 +48,7 @@
    nil
    (mapcar
     (lambda (x)
-      (with-current-buffer x
-	(when (and (stringp default-directory)
-		   (file-remote-p default-directory))
-	  x)))
+      (with-current-buffer x (when (tramp-tramp-file-p default-directory) x)))
     (buffer-list))))
 
 ;;;###tramp-autoload
@@ -81,8 +78,7 @@ When called interactively, a Tramp connection has to be selected."
 	      (completing-read
 	       "Enter Tramp connection: " connections nil t
 	       (try-completion "" connections)))
-	(when (and name (file-remote-p name))
-	  (with-parsed-tramp-file-name name nil v))))
+	(and (tramp-tramp-file-p name) (tramp-dissect-file-name name))))
     nil nil))
 
   (if (not vec)
@@ -91,6 +87,11 @@ When called interactively, a Tramp connection has to be selected."
 
     ;; Flush password cache.
     (unless keep-password (tramp-clear-passwd vec))
+
+    ;; Cleanup `tramp-current-connection'.  Otherwise, we would be
+    ;; suppressed in the test suite.  We use `keep-password' as
+    ;; indicator; it is not worth to add a new argument.
+    (when keep-password (setq tramp-current-connection nil))
 
     ;; Flush file cache.
     (tramp-flush-directory-property vec "")
@@ -113,8 +114,7 @@ When called interactively, a Tramp connection has to be selected."
 (defun tramp-cleanup-this-connection ()
   "Flush all connection related objects of the current buffer's connection."
   (interactive)
-  (and (stringp default-directory)
-       (file-remote-p default-directory)
+  (and (tramp-tramp-file-p default-directory)
        (tramp-cleanup-connection
 	(tramp-dissect-file-name default-directory 'noexpand))))
 
@@ -194,7 +194,7 @@ This includes password cache, file cache, connection cache, buffers."
 
        'tramp-load-report-modules	; pre-hook
        'tramp-append-tramp-buffers	; post-hook
-       (funcall
+       (tramp-compat-funcall
 	(if (functionp 'propertize) 'propertize 'progn)
 	"\n" 'display "\
 Enter your bug report in this message, including as much detail
@@ -361,7 +361,7 @@ the debug buffer(s).")
 	      (kill-buffer nil)
 	      (switch-to-buffer curbuf)
 	      (goto-char (point-max))
-	      (insert (propertize "\n" 'display "\n\
+	      (insert (tramp-compat-funcall 'propertize "\n" 'display "\n\
 This is a special notion of the `gnus/message' package.  If you
 use another mail agent (by copying the contents of this buffer)
 please ensure that the buffers are attached to your email.\n\n"))

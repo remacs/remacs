@@ -1,6 +1,6 @@
 ;;; ede/emacs.el --- Special project for Emacs
 
-;; Copyright (C) 2008-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2008-2014 Free Software Foundation, Inc.
 
 ;; Author: Eric M. Ludlam <eric@siege-engine.com>
 
@@ -116,7 +116,7 @@ m4_define(\\[SXEM4CS_BETA_VERSION\\], \\[\\([0-9]+\\)\\])")
        (t
 	(insert-file-contents configure_ac)
 	(goto-char (point-min))
-	(re-search-forward "AC_INIT(emacs,\\s-*\\([0-9.]+\\)\\s-*)")
+	(re-search-forward "AC_INIT(\\(?:GNU \\)?[eE]macs,\\s-*\\([0-9.]+\\)\\s-*[,)]")
 	(setq ver (match-string 1))
 	)
        )

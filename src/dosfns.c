@@ -1,6 +1,6 @@
 /* MS-DOS specific Lisp utilities.  Coded by Manabu Higashida, 1991.
    Major changes May-July 1993 Morten Welinder (only 10% original code left)
-   Copyright (C) 1991, 1993, 1996-1998, 2001-2013 Free Software
+   Copyright (C) 1991, 1993, 1996-1998, 2001-2014 Free Software
    Foundation, Inc.
 
 This file is part of GNU Emacs.
@@ -402,7 +402,7 @@ msdos_stdcolor_idx (const char *name)
 {
   int i;
 
-  for (i = 0; i < sizeof (vga_colors) / sizeof (vga_colors[0]); i++)
+  for (i = 0; i < ARRAYELTS (vga_colors); i++)
     if (xstrcasecmp (name, vga_colors[i]) == 0)
       return i;
 
@@ -422,7 +422,7 @@ msdos_stdcolor_name (int idx)
     return build_string (unspecified_fg);
   else if (idx == FACE_TTY_DEFAULT_BG_COLOR)
     return build_string (unspecified_bg);
-  else if (idx >= 0 && idx < sizeof (vga_colors) / sizeof (vga_colors[0]))
+  else if (idx >= 0 && idx < ARRAYELTS (vga_colors))
     return build_string (vga_colors[idx]);
   else
     return Qunspecified;	/* meaning the default */
@@ -472,7 +472,7 @@ x_set_title (struct frame *f, Lisp_Object name)
   if (EQ (name, f->title))
     return;
 
-  update_mode_lines = 1;
+  update_mode_lines = 13;
 
   fset_title (f, name);
 

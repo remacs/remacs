@@ -1,10 +1,10 @@
 ;;; sql.el --- specialized comint.el for SQL interpreters  -*- lexical-binding: t -*-
 
-;; Copyright (C) 1998-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1998-2014 Free Software Foundation, Inc.
 
 ;; Author: Alex Schroeder <alex@gnu.org>
 ;; Maintainer: Michael Mauger <michael@mauger.com>
-;; Version: 3.3
+;; Version: 3.4
 ;; Keywords: comm languages processes
 ;; URL: http://savannah.gnu.org/projects/emacs/
 
@@ -724,6 +724,8 @@ it automatically."
 Globally should be set to nil; it will be non-nil in `sql-mode',
 `sql-interactive-mode' and list all buffers.")
 
+(defvar sql-login-delay 7.5 ;; Secs
+  "Maximum number of seconds you are willing to wait for a login connection.")
 
 (defcustom sql-pop-to-buffer-after-send-region nil
   "When non-nil, pop to the buffer SQL statements are sent to.
@@ -849,10 +851,10 @@ You will find the file in your Orant\\bin directory."
   :type 'file
   :group 'SQL)
 
-(defcustom sql-oracle-options nil
+(defcustom sql-oracle-options '("-L")
   "List of additional options for `sql-oracle-program'."
   :type '(repeat string)
-  :version "20.8"
+  :version "24.4"
   :group 'SQL)
 
 (defcustom sql-oracle-login-params '(user password database)
@@ -1601,6 +1603,7 @@ to add functions and PL/SQL keywords.")
 
        "\\)\\(?:\\s-.*\\)?\\(?:[-]\n.*\\)*$")
       0 'font-lock-doc-face t)
+     '("&?&\\(?:\\sw\\|\\s_\\)+[.]?" 0 font-lock-preprocessor-face t)
 
      ;; Oracle Functions
      (sql-font-lock-keywords-builder 'font-lock-builtin-face nil
@@ -2439,7 +2442,7 @@ configuration."
       (user-error "Product `%s' is already defined" product)
 
     ;; Add product to the alist
-    (add-to-list 'sql-product-alist `((,product :name ,display . ,plist)))
+    (add-to-list 'sql-product-alist `(,product :name ,display . ,plist))
     ;; Add a menu item to the SQL->Product menu
     (easy-menu-add-item sql-mode-menu '("Product")
 			;; Each product is represented by a radio
@@ -2826,14 +2829,14 @@ each line with INDENT."
 		      "]\n"))))
     doc))
 
-;;;###autoload
-(eval
- ;; FIXME: This dynamic-docstring-function trick doesn't work for byte-compiled
- ;; functions, because of the lazy-loading of docstrings, which strips away
- ;; text properties.
- '(defun sql-help ()
-  #("Show short help for the SQL modes.
+(defun sql-help ()
+  "Show short help for the SQL modes."
+  (interactive)
+  (describe-function 'sql-help))
+(put 'sql-help 'function-documentation '(sql--make-help-docstring))
 
+(defvar sql--help-docstring
+  "Show short help for the SQL modes.
 Use an entry function to open an interactive SQL buffer.  This buffer is
 usually named `*SQL*'.  The name of the major mode is SQLi.
 
@@ -2862,24 +2865,20 @@ anything.  The name of the major mode is SQL.
 
 In this SQL buffer (SQL mode), you can send the region or the entire
 buffer to the interactive SQL buffer (SQLi mode).  The results are
-appended to the SQLi buffer without disturbing your SQL buffer."
-    0 1 (dynamic-docstring-function sql--make-help-docstring))
-  (interactive)
-  (describe-function 'sql-help)))
+appended to the SQLi buffer without disturbing your SQL buffer.")
 
-(defun sql--make-help-docstring (doc _fun)
-  "Insert references to loaded products into the help buffer string."
-
-  ;; Insert FREE software list
-  (when (string-match "^\\(\\s-*\\)[\\\\][\\\\]FREE\\s-*\n" doc 0)
-    (setq doc (replace-match (sql-help-list-products (match-string 1 doc) t)
-                             t t doc 0)))
-
-  ;; Insert non-FREE software list
-  (when (string-match "^\\(\\s-*\\)[\\\\][\\\\]NONFREE\\s-*\n" doc 0)
-    (setq doc (replace-match (sql-help-list-products (match-string 1 doc) nil)
-                             t t doc 0)))
-  doc)
+(defun sql--make-help-docstring ()
+  "Return a docstring for `sql-help' listing loaded SQL products."
+  (let ((doc sql--help-docstring))
+    ;; Insert FREE software list
+    (when (string-match "^\\(\\s-*\\)[\\\\][\\\\]FREE\\s-*$" doc 0)
+      (setq doc (replace-match (sql-help-list-products (match-string 1 doc) t)
+			       t t doc 0)))
+    ;; Insert non-FREE software list
+    (when (string-match "^\\(\\s-*\\)[\\\\][\\\\]NONFREE\\s-*$" doc 0)
+      (setq doc (replace-match (sql-help-list-products (match-string 1 doc) nil)
+			       t t doc 0)))
+    doc))
 
 (defun sql-default-value (var)
   "Fetch the value of a variable.
@@ -3212,7 +3211,7 @@ Inserts SELECT or commas if appropriate."
 Placeholders are words starting with an ampersand like &this."
 
   (when sql-oracle-scan-on
-    (while (string-match "&\\(\\sw+\\)" string)
+    (while (string-match "&?&\\(\\(?:\\sw\\|\\s_\\)+\\)[.]?" string)
       (setq string (replace-match
 		    (read-from-minibuffer
 		     (format "Enter value for %s: " (match-string 1 string))
@@ -3685,13 +3684,16 @@ The list is maintained in SQL interactive buffers.")
                (buffer-substring-no-properties (match-beginning 0)
                                                (match-end 0))))
          (sql-completion-sqlbuf (sql-find-sqli-buffer))
-         (product (with-current-buffer sql-completion-sqlbuf sql-product))
+         (product (when sql-completion-sqlbuf
+                    (with-current-buffer sql-completion-sqlbuf sql-product)))
          (completion-ignore-case t))
 
-    (if (sql-get-product-feature product :completion-object)
-        (completing-read prompt #'sql--completion-table
-                         nil nil tname)
-      (read-from-minibuffer prompt tname))))
+    (if product
+        (if (sql-get-product-feature product :completion-object)
+            (completing-read prompt #'sql--completion-table
+                             nil nil tname)
+          (read-from-minibuffer prompt tname))
+      (user-error "There is no active SQLi buffer"))))
 
 (defun sql-list-all (&optional enhanced)
   "List all database objects.
@@ -3926,8 +3928,8 @@ you entered, right above the output it created.
   ;; People wanting a different history file for each
   ;; buffer/process/client/whatever can change separator and file-name
   ;; on the sql-interactive-mode-hook.
-  (setq comint-input-ring-separator sql-input-ring-separator
-	comint-input-ring-file-name sql-input-ring-file-name)
+  (setq-local comint-input-ring-separator sql-input-ring-separator)
+  (setq comint-input-ring-file-name sql-input-ring-file-name)
   ;; Calling the hook before calling comint-read-input-ring allows users
   ;; to set comint-input-ring-file-name in sql-interactive-mode-hook.
   (comint-read-input-ring t))
@@ -4149,14 +4151,15 @@ the call to \\[sql-product-interactive] with
             ;; We have a new name or sql-buffer doesn't exist or match
             ;; Start by remembering where we start
             (let ((start-buffer (current-buffer))
-                  new-sqli-buffer)
+                  new-sqli-buffer rpt)
 
               ;; Get credentials.
               (apply #'sql-get-login
                      (sql-get-product-feature product :sqli-login))
 
               ;; Connect to database.
-              (message "Login...")
+              (setq rpt (make-progress-reporter "Login"))
+
               (let ((sql-user       (default-value 'sql-user))
                     (sql-password   (default-value 'sql-password))
                     (sql-server     (default-value 'sql-server))
@@ -4186,15 +4189,25 @@ the call to \\[sql-product-interactive] with
               ;; Make sure the connection is complete
               ;; (Sometimes start up can be slow)
               ;;  and call the login hook
-              (let ((proc (get-buffer-process new-sqli-buffer)))
+              (let ((proc (get-buffer-process new-sqli-buffer))
+                    (secs sql-login-delay)
+                    (step 0.3))
                 (while (and (memq (process-status proc) '(open run))
-                            (accept-process-output proc 2.5)
+                            (or (accept-process-output proc step)
+                                (<= 0.0 (setq secs (- secs step))))
                             (progn (goto-char (point-max))
-                                   (not (looking-back sql-prompt-regexp))))))
-              (run-hooks 'sql-login-hook)
+                                   (not (re-search-backward sql-prompt-regexp 0 t))))
+                  (progress-reporter-update rpt)))
+
+              (goto-char (point-max))
+              (when (re-search-backward sql-prompt-regexp nil t)
+                (run-hooks 'sql-login-hook))
+
               ;; All done.
-              (message "Login...done")
-              (pop-to-buffer new-sqli-buffer)))))
+              (progress-reporter-done rpt)
+              (pop-to-buffer new-sqli-buffer)
+              (goto-char (point-max))
+              (current-buffer)))))
     (user-error "No default SQL product defined.  Set `sql-product'.")))
 
 (defun sql-comint (product params)
@@ -4266,8 +4279,9 @@ The default comes from `process-coding-system-alist' and
 	  (setq parameter sql-user)))
     (if (and parameter (not (string= "" sql-database)))
 	(setq parameter (concat parameter "@" sql-database)))
+    ;; options must appear before the logon parameters
     (if parameter
-	(setq parameter (nconc (list parameter) options))
+	(setq parameter (append options (list parameter)))
       (setq parameter options))
     (sql-comint product parameter)
     ;; Set process coding system to agree with the interpreter

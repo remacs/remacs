@@ -1,6 +1,6 @@
 ;;; doc-view.el --- View PDF/PostScript/DVI files in Emacs -*- lexical-binding: t -*-
 
-;; Copyright (C) 2007-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2007-2014 Free Software Foundation, Inc.
 ;;
 ;; Author: Tassilo Horn <tsdh@gnu.org>
 ;; Maintainer: Tassilo Horn <tsdh@gnu.org>
@@ -198,6 +198,7 @@ Higher values result in larger images."
 If nil, the document is re-rendered every time the scaling factor is modified.
 This only has an effect if the image libraries linked with Emacs support
 scaling."
+  :version "24.4"
   :type 'boolean)
 
 (defcustom doc-view-image-width 850
@@ -335,7 +336,7 @@ of the page moves to the previous page."
       ;; Don't do it if there's a conversion is running, since in that case, it
       ;; will be done later.
       (with-selected-window (car winprops)
-        (doc-view-goto-page 1)))))
+        (doc-view-goto-page (image-mode-window-get 'page t))))))
 
 (defvar-local doc-view--current-files nil
   "Only used internally.")
@@ -405,7 +406,10 @@ Typically \"page-%s.png\".")
     (define-key map (kbd "RET")       'image-next-line)
     ;; Zoom in/out.
     (define-key map "+"               'doc-view-enlarge)
+    (define-key map "="               'doc-view-enlarge)
     (define-key map "-"               'doc-view-shrink)
+    (define-key map "0"               'doc-view-scale-reset)
+    (define-key map [remap text-scale-adjust] 'doc-view-scale-adjust)
     ;; Fit the image to the window
     (define-key map "W"               'doc-view-fit-width-to-window)
     (define-key map "H"               'doc-view-fit-height-to-window)
@@ -496,6 +500,7 @@ Typically \"page-%s.png\".")
                  ;; how many pages will be available.
                  (null doc-view--current-converter-processes))
 	(setq page len)))
+    (force-mode-line-update)            ;To update `current-page'.
     (setf (doc-view-current-page) page
 	  (doc-view-current-info)
 	  (concat
@@ -649,16 +654,10 @@ at the top edge of the page moves to the previous page."
 
 (defun doc-view-make-safe-dir (dir)
   (condition-case nil
-      (let ((umask (default-file-modes)))
-	(unwind-protect
-	    (progn
-	      ;; Create temp files with strict access rights.  It's easy to
-	      ;; loosen them later, whereas it's impossible to close the
-	      ;; time-window of loose permissions otherwise.
-	      (set-default-file-modes #o0700)
-	      (make-directory dir))
-	  ;; Reset the umask.
-	  (set-default-file-modes umask)))
+      ;; Create temp files with strict access rights.  It's easy to
+      ;; loosen them later, whereas it's impossible to close the
+      ;; time-window of loose permissions otherwise.
+      (with-file-modes #o0700 (make-directory dir))
     (file-already-exists
      (when (file-symlink-p dir)
        (error "Danger: %s points to a symbolic link" dir))
@@ -752,6 +751,38 @@ OpenDocument format)."
   "Shrink the document."
   (interactive (list doc-view-shrink-factor))
   (doc-view-enlarge (/ 1.0 factor)))
+
+(defun doc-view-scale-reset ()
+  "Reset the document size/zoom level to the initial one."
+  (interactive)
+  (if (and doc-view-scale-internally
+           (eq (plist-get (cdr (doc-view-current-image)) :type)
+               'imagemagick))
+      (progn
+	(kill-local-variable 'doc-view-image-width)
+	(doc-view-insert-image
+	 (plist-get (cdr (doc-view-current-image)) :file)
+	 :width doc-view-image-width))
+    (kill-local-variable 'doc-view-resolution)
+    (doc-view-reconvert-doc)))
+
+(defun doc-view-scale-adjust (factor)
+  "Adjust the scale of the DocView page images by FACTOR.
+FACTOR defaults to `doc-view-shrink-factor'.
+
+The actual adjustment made depends on the final component of the
+key-binding used to invoke the command, with all modifiers removed:
+
+   +, =   Increase the image scale by FACTOR
+   -      Decrease the image scale by FACTOR
+   0      Reset the image scale to the initial scale"
+  (interactive (list doc-view-shrink-factor))
+  (let ((ev last-command-event)
+	(echo-keystrokes nil))
+    (pcase (event-basic-type ev)
+      ((or ?+ ?=) (doc-view-enlarge factor))
+      (?-         (doc-view-shrink factor))
+      (?0         (doc-view-scale-reset)))))
 
 (defun doc-view-fit-width-to-window ()
   "Fit the image width to the window width."
@@ -1584,24 +1615,25 @@ If BACKWARD is non-nil, jump to the previous match."
   "Figure out the current document type (`doc-view-doc-type')."
   (let ((name-types
 	 (when buffer-file-name
-	   (cdr (assoc (file-name-extension buffer-file-name)
-		       '(
-			 ;; DVI
-			 ("dvi" dvi)
-			 ;; PDF
-			 ("pdf" pdf) ("epdf" pdf)
-			 ;; PostScript
-			 ("ps" ps) ("eps" ps)
-			 ;; DjVu
-			 ("djvu" djvu)
-			 ;; OpenDocument formats
-			 ("odt" odf) ("ods" odf) ("odp" odf) ("odg" odf)
-			 ("odc" odf) ("odi" odf) ("odm" odf) ("ott" odf)
-			 ("ots" odf) ("otp" odf) ("otg" odf)
-			 ;; Microsoft Office formats (also handled
-			 ;; by the odf conversion chain)
-			 ("doc" odf) ("docx" odf) ("xls" odf) ("xlsx" odf)
-			 ("ppt" odf) ("pptx" odf))))))
+	   (cdr (assoc-ignore-case
+                 (file-name-extension buffer-file-name)
+                 '(
+                   ;; DVI
+                   ("dvi" dvi)
+                   ;; PDF
+                   ("pdf" pdf) ("epdf" pdf)
+                   ;; PostScript
+                   ("ps" ps) ("eps" ps)
+                   ;; DjVu
+                   ("djvu" djvu)
+                   ;; OpenDocument formats.
+                   ("odt" odf) ("ods" odf) ("odp" odf) ("odg" odf)
+                   ("odc" odf) ("odi" odf) ("odm" odf) ("ott" odf)
+                   ("ots" odf) ("otp" odf) ("otg" odf)
+                   ;; Microsoft Office formats (also handled by the odf
+                   ;; conversion chain).
+                   ("doc" odf) ("docx" odf) ("xls" odf) ("xlsx" odf)
+                   ("ppt" odf) ("pps" odf) ("pptx" odf))))))
 	(content-types
 	 (save-excursion
 	   (goto-char (point-min))
@@ -1733,9 +1765,12 @@ toggle between displaying the document or editing it as text.
                   "/" (:eval (number-to-string (doc-view-last-page-number)))))
     ;; Don't scroll unless the user specifically asked for it.
     (setq-local auto-hscroll-mode nil)
-    (setq-local mwheel-scroll-up-function #'doc-view-scroll-up-or-next-page)
-    (setq-local mwheel-scroll-down-function
-                #'doc-view-scroll-down-or-previous-page)
+    (if (boundp 'mwheel-scroll-up-function) ; not --without-x build
+        (setq-local mwheel-scroll-up-function
+                    #'doc-view-scroll-up-or-next-page))
+    (if (boundp 'mwheel-scroll-down-function)
+        (setq-local mwheel-scroll-down-function
+                    #'doc-view-scroll-down-or-previous-page))
     (setq-local cursor-type nil)
     (use-local-map doc-view-mode-map)
     (add-hook 'after-revert-hook 'doc-view-reconvert-doc nil t)
@@ -1822,20 +1857,23 @@ See the command `doc-view-mode' for more information on this mode."
          `((page     . ,(doc-view-current-page))
            (handler  . doc-view-bookmark-jump))))
 
-
 ;;;###autoload
 (defun doc-view-bookmark-jump (bmk)
   ;; This implements the `handler' function interface for record type
   ;; returned by `doc-view-bookmark-make-record', which see.
-  (prog1 (bookmark-default-handler bmk)
-    (let ((page (bookmark-prop-get bmk 'page)))
-      (when (not (eq major-mode 'doc-view-mode))
-        (doc-view-toggle-display))
-      (with-selected-window
-       (or (get-buffer-window (current-buffer) 0)
-	   (selected-window))
-       (doc-view-goto-page page)))))
-
+  (let ((page (bookmark-prop-get bmk 'page))
+	(show-fn-sym (make-symbol "doc-view-bookmark-after-jump-hook")))
+    (fset show-fn-sym
+	  (lambda ()
+	    (remove-hook 'bookmark-after-jump-hook show-fn-sym)
+	    (when (not (eq major-mode 'doc-view-mode))
+	      (doc-view-toggle-display))
+	    (with-selected-window
+		(or (get-buffer-window (current-buffer) 0)
+		    (selected-window))
+	      (doc-view-goto-page page))))
+    (add-hook 'bookmark-after-jump-hook show-fn-sym)
+    (bookmark-default-handler bmk)))
 
 (provide 'doc-view)
 

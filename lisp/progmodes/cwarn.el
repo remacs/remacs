@@ -1,6 +1,6 @@
 ;;; cwarn.el --- highlight suspicious C and C++ constructions
 
-;; Copyright (C) 1999-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1999-2014 Free Software Foundation, Inc.
 
 ;; Author: Anders Lindgren <andersl@andersl.com>
 ;; Keywords: c, languages, faces
@@ -188,7 +188,7 @@ and disable it otherwise.  If called from Lisp, enable the mode
 if ARG is omitted or nil."
   :group 'cwarn :lighter cwarn-mode-text
   (cwarn-font-lock-keywords cwarn-mode)
-  (if font-lock-mode (font-lock-fontify-buffer)))
+  (font-lock-flush))
 
 ;;;###autoload
 (define-obsolete-function-alias 'turn-on-cwarn-mode 'cwarn-mode "24.1")

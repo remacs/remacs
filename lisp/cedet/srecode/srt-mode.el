@@ -1,6 +1,6 @@
 ;;; srecode/srt-mode.el --- Major mode for writing screcode macros
 
-;; Copyright (C) 2005, 2007-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2005, 2007-2014 Free Software Foundation, Inc.
 
 ;; This file is part of GNU Emacs.
 
@@ -188,6 +188,7 @@ we can tell font lock about them.")
 
 ;;;###autoload
 (define-derived-mode srecode-template-mode fundamental-mode "SRecode"
+  ;; FIXME: Shouldn't it derive from prog-mode?
   "Major-mode for writing SRecode macros."
   (set (make-local-variable 'comment-start) ";;")
   (set (make-local-variable 'comment-end) "")

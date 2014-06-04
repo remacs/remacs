@@ -1,6 +1,6 @@
 @c -*-texinfo-*-
 @c This is part of the GNU Emacs Lisp Reference Manual.
-@c Copyright (C) 1990-1995, 1998-1999, 2001-2013 Free Software
+@c Copyright (C) 1990-1995, 1998-1999, 2001-2014 Free Software
 @c Foundation, Inc.
 @c See the file elisp.texi for copying conditions.
 @node Frames
@@ -266,10 +266,6 @@ that X server.  When you use two or more screens belonging to one
 server, Emacs knows by the similarity in their names that they share a
 single keyboard.
 
-  On some ``multi-monitor'' setups, a single X display outputs to more
-than one physical monitor.  Currently, there is no way for Emacs to
-distinguish between the different physical monitors.
-
 @deffn Command make-frame-on-display display &optional parameters
 This function creates and returns a new frame on @var{display}, taking
 the other frame parameters from the alist @var{parameters}.
@@ -314,6 +310,61 @@ terminates Emacs.  Otherwise, it is an ordinary Lisp error.
 This function closes the connection to display @var{display}.  Before
 you can do this, you must first delete all the frames that were open
 on that display (@pxref{Deleting Frames}).
+@end defun
+
+@cindex multi-monitor
+  On some ``multi-monitor'' setups, a single X display outputs to more
+than one physical monitor.  @code{display-monitor-attributes-list} and
+@code{frame-monitor-attributes} can be used to obtain information
+about each physical monitor on multi-monitor setups.
+
+@defun display-monitor-attributes-list &optional display
+This function returns a list of physical monitor attributes on
+@var{display}.  Each element of the list is an association list,
+representing the attributes of each physical monitor.  The first
+element corresponds to the primary monitor.
+
+Attributes for a physical monitor are:
+
+@table @samp
+@item geometry
+Position and size in pixels in the form of @samp{(X Y WIDTH HEIGHT)}
+
+@item workarea
+Position and size of the workarea in pixels in the form of @samp{(X Y
+WIDTH HEIGHT)}
+
+@item mm-size
+Width and height in millimeters in the form of @samp{(WIDTH HEIGHT)}
+
+@item frames
+List of frames dominated by the physical monitor
+
+@item name
+Name of the physical monitor as a string
+@end table
+
+where X, Y, WIDTH, and HEIGHT are integers.  @samp{name} is optional.
+
+A frame is dominated by a physical monitor when either the
+largest area of the frame resides in the monitor, or the monitor
+is the closest to the frame if the frame does not intersect any
+physical monitors.  Every non-tip frame (including invisible one)
+in a graphical display is dominated by exactly one physical
+monitor at a time, though it can span multiple (or no) physical
+monitors.
+
+@var{display} defaults to the selected frame's display.
+@end defun
+
+@defun frame-monitor-attributes &optional frame
+This function returns the attributes of the physical monitor
+dominating @var{frame}, which defaults to the selected frame.
+
+A frame is dominated by a physical monitor when either the
+largest area of the frame resides in the monitor, or the monitor
+is the closest to the frame if the frame does not intersect any
+physical monitors.
 @end defun
 
 @node Frame Parameters
@@ -694,6 +745,18 @@ right fringe.  However, you can force one fringe or the other to a
 precise width by specifying that width as a negative integer.  If both
 widths are negative, only the left fringe gets the specified width.
 
+@vindex right-divider-width, a frame parameter
+@item right-divider-width
+The width (thickness) reserved for the right divider (@pxref{Window
+Dividers}) of any window on the frame, in pixels.  A value of zero means
+to not draw right dividers.
+
+@vindex bottom-divider-width, a frame parameter
+@item bottom-divider-width
+The width (thickness) reserved for the bottom divider (@pxref{Window
+Dividers}) of any window on the frame, in pixels.  A value of zero means
+to not draw bottom dividers.
+
 @vindex menu-bar-lines frame parameter
 @item menu-bar-lines
 The number of lines to allocate at the top of the frame for a menu
@@ -935,7 +998,7 @@ used instead.
 @cindex gamma correction
 If this is a number, Emacs performs ``gamma correction'' which adjusts
 the brightness of all colors.  The value should be the screen gamma of
-your display, a floating point number.
+your display.
 
 Usual PC monitors have a screen gamma of 2.2, so color values in
 Emacs, and in X windows generally, are calibrated to display properly
@@ -1084,21 +1147,43 @@ font.  If you don't supply @var{frame}, these functions use the selected
 frame.
 @end defun
 
-@defun set-frame-size frame cols rows
-This function sets the size of @var{frame}, measured in characters;
-@var{cols} and @var{rows} specify the new width and height.
+@defopt frame-resize-pixelwise
+If this option is @code{nil}, a frame's size is usually rounded to a
+multiple of the current values of that frame's @code{frame-char-height}
+and @code{frame-char-width}.  If this is non-@code{nil}, no rounding
+occurs, hence frame sizes can increase/decrease by one pixel.
 
-To set the size based on values measured in pixels, use
-@code{frame-char-height} and @code{frame-char-width} to convert
-them to units of characters.
+Setting this causes the next resize operation to pass the corresponding
+size hints to the window manager.  This means that this variable should
+be set only in a user's initial file; applications should never bind it
+temporarily.
+
+The precise semantics of a value of @code{nil} for this option depends
+on the toolkit used: Dragging the frame border with the mouse is usually
+always done character-wise.  Calling @code{set-frame-size} (see below)
+with arguments that do not specify the frame size as an integer multiple
+of its character size may be, however, either ignored or cause a
+rounding (GTK+, Windows) or get accepted (Lucid, Motif).
+@end defopt
+
+@defun set-frame-size frame width height pixelwise
+This function sets the size of @var{frame}, measured in characters;
+@var{width} and @var{height} specify the new width in columns and the
+new height in lines.
+
+The optional argument @var{pixelwise} non-@code{nil} means to measure
+the new width and height in units of pixels instead.  Note that if
+@code{frame-resize-pixelwise} is @code{nil}, some toolkits may refuse to
+fully honor the request if it does not increase/decrease the frame size
+to a multiple of its character size.
 @end defun
 
-@defun set-frame-height frame lines &optional pretend
-This function resizes @var{frame} to a height of @var{lines} lines.  The
+@defun set-frame-height frame height &optional pretend pixelwise
+This function resizes @var{frame} to a height of @var{height} lines.  The
 sizes of existing windows in @var{frame} are altered proportionally to
 fit.
 
-If @var{pretend} is non-@code{nil}, then Emacs displays @var{lines}
+If @var{pretend} is non-@code{nil}, then Emacs displays @var{height}
 lines of output in @var{frame}, but does not change its value for the
 actual height of the frame.  This is only useful on text terminals.
 Using a smaller height than the terminal actually implements may be
@@ -1107,28 +1192,69 @@ terminal malfunctions when using its whole screen.  Setting the frame
 height ``for real'' does not always work, because knowing the correct
 actual size may be necessary for correct cursor positioning on
 text terminals.
+
+The optional fourth argument @var{pixelwise} non-@code{nil} means that
+@var{frame} should be @var{height} pixels high.  Note that if
+@code{frame-resize-pixelwise} is @code{nil}, some toolkits may refuse to
+fully honor the request if it does not increase/decrease the frame
+height to a multiple of its character height.
 @end defun
 
-@defun set-frame-width frame width &optional pretend
+@defun set-frame-width frame width &optional pretend pixelwise
 This function sets the width of @var{frame}, measured in characters.
 The argument @var{pretend} has the same meaning as in
 @code{set-frame-height}.
+
+The optional fourth argument @var{pixelwise} non-@code{nil} means that
+@var{frame} should be @var{width} pixels wide.  Note that if
+@code{frame-resize-pixelwise} is @code{nil}, some toolkits may refuse to
+fully honor the request if it does not increase/decrease the frame width
+to a multiple of its character width.
 @end defun
 
 @c FIXME?  Belongs more in Emacs manual than here?
 @c But, e.g., fit-window-to-buffer is in this manual.
-@deffn Command fit-frame-to-buffer &optional frame max-height min-height
-This command adjusts the height of @var{frame} (the default is the
-selected frame) to fit its contents.  The optional arguments
-@var{max-height} and @var{min-height} specify the maximum and minimum
-new frame heights, respectively.
+If you have a frame that displays only one window, you can fit that
+frame to its buffer using the command @code{fit-frame-to-buffer}.
 
-@vindex fit-frame-to-buffer-bottom-margin
-The default minimum height corresponds to @code{window-min-height}.
-The default maximum height is the screen height below the current top
-position of the frame, minus any margin specified by the option
-@code{fit-frame-to-buffer-bottom-margin}.
+@deffn Command fit-frame-to-buffer &optional frame max-height min-height max-width min-width only
+This command adjusts the size of @var{frame} to display the contents of
+its buffer exactly.  @var{frame} can be any live frame and defaults to
+the selected one.  Fitting is done only if @var{frame}'s root window is
+live.  The arguments @var{max-height}, @var{min-height}, @var{max-width}
+and @var{min-width} specify bounds on the new total size of
+@var{frame}'s root window.  @var{min-height} and @var{min-width} default
+to the values of @code{window-min-height} and @code{window-min-width}
+respectively.
+
+If the optional argument @var{only} is @code{vertically}, this function
+may resize the frame vertically only.  If @var{only} is
+@code{horizontally}, it may resize the frame horizontally only.
 @end deffn
+
+The behavior of @code{fit-frame-to-buffer} can be controlled with the
+help of the two options listed next.
+
+@defopt fit-frame-to-buffer-margins
+This option can be used to specify margins around frames to be fit by
+@code{fit-frame-to-buffer}.  Such margins can be useful to avoid, for
+example, that such frames overlap the taskbar.
+
+It specifies the numbers of pixels to be left free on the left, above,
+the right, and below a frame that shall be fit.  The default specifies
+@code{nil} for each which means to use no margins.  The value specified
+here can be overridden for a specific frame by that frame's
+@code{fit-frame-to-buffer-margins} parameter, if present.
+@end defopt
+
+@defopt fit-frame-to-buffer-sizes
+This option specifies size boundaries for @code{fit-frame-to-buffer}.
+It specifies the total maximum and minimum lines and maximum and minimum
+columns of the root window of any frame that shall be fit to its buffer.
+If any of these values is non-@code{nil}, it overrides the corresponding
+argument of @code{fit-frame-to-buffer}.
+@end defopt
+
 
 @node Geometry
 @subsection Geometry
@@ -1208,6 +1334,18 @@ terminal.  @xref{DEL Does Not Delete,,, emacs, The Emacs Manual}.
 @item terminal-initted
 After the terminal is initialized, this is set to the
 terminal-specific initialization function.
+@item tty-mode-set-strings
+When present, a list of strings containing escape sequences that Emacs
+will output while configuring a tty for rendering.  Emacs emits these
+strings only when configuring a terminal: if you want to enable a mode
+on a terminal that is already active (for example, while in
+@code{tty-setup-hook}), explicitly output the necessary escape
+sequence using @code{send-string-to-terminal} in addition to adding
+the sequence to @code{tty-mode-set-strings}.
+@item tty-mode-reset-strings
+When present, a list of strings that undo the effects of the strings
+in @code{tty-mode-set-strings}.  Emacs emits these strings when
+exiting, deleting a terminal, or suspending itself.
 @end table
 
 @node Frame Titles
@@ -1479,6 +1617,14 @@ The redirection lasts until @code{redirect-frame-focus} is called to
 change it.
 @end defun
 
+@defvar focus-in-hook
+This is a normal hook run when an Emacs frame gains input focus.
+@end defvar
+
+@defvar focus-out-hook
+This is a normal hook run when an Emacs frame loses input focus.
+@end defvar
+
 @defopt focus-follows-mouse
 This option is how you inform Emacs whether the window manager transfers
 focus when the user moves the mouse.  Non-@code{nil} says that it does.
@@ -1741,8 +1887,10 @@ allows to know if the pointer has been hidden.
 @node Pop-Up Menus
 @section Pop-Up Menus
 
-  When using a window system, a Lisp program can pop up a menu so that
-the user can choose an alternative with the mouse.
+  A Lisp program can pop up a menu so that the user can choose an
+alternative with the mouse.  On a text terminal, if the mouse is not
+available, the user can choose an alternative using the keyboard
+motion keys---@kbd{C-n}, @kbd{C-p}, or up- and down-arrow keys.
 
 @defun x-popup-menu position menu
 This function displays a pop-up menu and returns an indication of
@@ -1763,20 +1911,22 @@ pixels, counting from the top left corner of @var{window}.  @var{window}
 may be a window or a frame.
 
 If @var{position} is @code{t}, it means to use the current mouse
-position.  If @var{position} is @code{nil}, it means to precompute the
-key binding equivalents for the keymaps specified in @var{menu},
-without actually displaying or popping up the menu.
+position (or the top-left corner of the frame if the mouse is not
+available on a text terminal).  If @var{position} is @code{nil}, it
+means to precompute the key binding equivalents for the keymaps
+specified in @var{menu}, without actually displaying or popping up the
+menu.
 
 The argument @var{menu} says what to display in the menu.  It can be a
 keymap or a list of keymaps (@pxref{Menu Keymaps}).  In this case, the
 return value is the list of events corresponding to the user's choice.
 This list has more than one element if the choice occurred in a
 submenu.  (Note that @code{x-popup-menu} does not actually execute the
-command bound to that sequence of events.)  On toolkits that support
-menu titles, the title is taken from the prompt string of @var{menu}
-if @var{menu} is a keymap, or from the prompt string of the first
-keymap in @var{menu} if it is a list of keymaps (@pxref{Defining
-Menus}).
+command bound to that sequence of events.)  On text terminals and
+toolkits that support menu titles, the title is taken from the prompt
+string of @var{menu} if @var{menu} is a keymap, or from the prompt
+string of the first keymap in @var{menu} if it is a list of keymaps
+(@pxref{Defining Menus}).
 
 Alternatively, @var{menu} can have the following form:
 
@@ -1800,7 +1950,7 @@ cell; this makes a non-selectable menu item.
 
 If the user gets rid of the menu without making a valid choice, for
 instance by clicking the mouse away from a valid choice or by typing
-keyboard input, then this normally results in a quit and
+@kbd{C-g}, then this normally results in a quit and
 @code{x-popup-menu} does not return.  But if @var{position} is a mouse
 button event (indicating that the user invoked the menu with the
 mouse) then no quit occurs and @code{x-popup-menu} returns @code{nil}.
@@ -1872,7 +2022,8 @@ window don't matter; only the frame matters.
 
 If @var{header} is non-@code{nil}, the frame title for the box is
 @samp{Information}, otherwise it is @samp{Question}.  The former is used
-for @code{message-box} (@pxref{message-box}).
+for @code{message-box} (@pxref{message-box}).  (On text terminals, the
+box title is not displayed.)
 
 In some configurations, Emacs cannot display a real dialog box; so
 instead it displays the same items in a pop-up menu in the center of the
@@ -2284,9 +2435,9 @@ obtain information about displays.
 
 @defun display-popup-menus-p &optional display
 This function returns @code{t} if popup menus are supported on
-@var{display}, @code{nil} if not.  Support for popup menus requires that
-the mouse be available, since the user cannot choose menu items without
-a mouse.
+@var{display}, @code{nil} if not.  Support for popup menus requires
+that the mouse be available, since the menu is popped up by clicking
+the mouse on some portion of the Emacs display.
 @end defun
 
 @defun display-graphic-p &optional display
@@ -2362,7 +2513,7 @@ This function returns the height of the screen in pixels.
 On a character terminal, it gives the height in characters.
 
 For graphical terminals, note that on ``multi-monitor'' setups this
-refers to the pixel width for all physical monitors associated with
+refers to the pixel height for all physical monitors associated with
 @var{display}.  @xref{Multiple Terminals}.
 @end defun
 
@@ -2378,11 +2529,19 @@ refers to the pixel width for all physical monitors associated with
 @defun display-mm-height &optional display
 This function returns the height of the screen in millimeters,
 or @code{nil} if Emacs cannot get that information.
+
+For graphical terminals, note that on ``multi-monitor'' setups this
+refers to the height for all physical monitors associated with
+@var{display}.  @xref{Multiple Terminals}.
 @end defun
 
 @defun display-mm-width &optional display
 This function returns the width of the screen in millimeters,
 or @code{nil} if Emacs cannot get that information.
+
+For graphical terminals, note that on ``multi-monitor'' setups this
+refers to the width for all physical monitors associated with
+@var{display}.  @xref{Multiple Terminals}.
 @end defun
 
 @defopt display-mm-dimensions-alist

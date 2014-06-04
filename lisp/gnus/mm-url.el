@@ -1,6 +1,6 @@
 ;;; mm-url.el --- a wrapper of url functions/commands for Gnus
 
-;; Copyright (C) 2001-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2001-2014 Free Software Foundation, Inc.
 
 ;; Author: Shenghuo Zhu <zsh@cs.rochester.edu>
 
@@ -21,7 +21,7 @@
 
 ;;; Commentary:
 
-;; Some codes are stolen from w3 and url packages. Some are moved from
+;; Some code is stolen from w3 and url packages. Some are moved from
 ;; nnweb.
 
 ;; TODO: Support POST, cookie.
@@ -264,8 +264,6 @@ This is taken from RFC 2396.")
 		(require 'url-parse)
 		(require 'url-vars))
 	    (error nil))
-    ;; w3-4.0pre0.46 or earlier version.
-    (require 'w3-vars)
     (require 'url)))
 
 ;;;###autoload

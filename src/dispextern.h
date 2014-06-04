@@ -1,6 +1,6 @@
 /* Interface definitions for display code.
 
-Copyright (C) 1985, 1993-1994, 1997-2013 Free Software Foundation, Inc.
+Copyright (C) 1985, 1993-1994, 1997-2014 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -33,7 +33,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #else /* !HAVE_X_WINDOWS */
 
-/* X-related stuff used by non-X gui code. */
+/* X-related stuff used by non-X gui code.  */
 
 typedef struct {
   unsigned long pixel;
@@ -49,18 +49,16 @@ typedef struct {
 #endif
 
 INLINE_HEADER_BEGIN
-#ifndef DISPEXTERN_INLINE
-# define DISPEXTERN_INLINE INLINE
-#endif
 
 #include <c-strcase.h>
-DISPEXTERN_INLINE int
+INLINE int
 xstrcasecmp (char const *a, char const *b)
 {
   return c_strcasecmp (a, b);
 }
 
 #ifdef HAVE_X_WINDOWS
+#include <X11/Xresource.h> /* for XrmDatabase */
 typedef struct x_display_info Display_Info;
 typedef XImage * XImagePtr;
 typedef XImagePtr XImagePtr_or_DC;
@@ -120,7 +118,9 @@ enum window_part
   ON_RIGHT_FRINGE,
   ON_LEFT_MARGIN,
   ON_RIGHT_MARGIN,
-  ON_SCROLL_BAR
+  ON_SCROLL_BAR,
+  ON_RIGHT_DIVIDER,
+  ON_BOTTOM_DIVIDER
 };
 
 /* Number of bits allocated to store fringe bitmap numbers.  */
@@ -139,9 +139,9 @@ enum window_part
 /* Macros to include code only if GLYPH_DEBUG is defined.  */
 
 #ifdef GLYPH_DEBUG
-#define IF_DEBUG(X)	X
+#define IF_DEBUG(X)	((void) (X))
 #else
-#define IF_DEBUG(X)	(void) 0
+#define IF_DEBUG(X)	((void) 0)
 #endif
 
 /* Macro for displaying traces of redisplay.  If Emacs was compiled
@@ -150,18 +150,18 @@ enum window_part
 
 #ifdef GLYPH_DEBUG
 
-extern int trace_redisplay_p EXTERNALLY_VISIBLE;
+extern bool trace_redisplay_p EXTERNALLY_VISIBLE;
 #include <stdio.h>
 
 #define TRACE(X)				\
+   do {						\
      if (trace_redisplay_p)			\
        fprintf X;				\
-     else					\
-       (void) 0
+   } while (false)
 
 #else /* not GLYPH_DEBUG */
 
-#define TRACE(X)	(void) 0
+#define TRACE(X)	((void) 0)
 
 #endif /* GLYPH_DEBUG */
 
@@ -205,7 +205,7 @@ struct text_pos
 	 else					\
 	   ++(POS).bytepos;			\
        }					\
-     while (0)
+     while (false)
 
 /* Decrement text position POS.  */
 
@@ -218,7 +218,7 @@ struct text_pos
 	 else					\
 	   --(POS).bytepos;			\
        }					\
-     while (0)
+     while (false)
 
 /* Set text position POS from marker MARKER.  */
 
@@ -288,10 +288,10 @@ typedef struct {
 } GLYPH;
 
 /* Return a glyph's character code.  */
-DISPEXTERN_INLINE int GLYPH_CHAR (GLYPH glyph) { return glyph.ch; }
+INLINE int GLYPH_CHAR (GLYPH glyph) { return glyph.ch; }
 
 /* Return a glyph's face ID.  */
-DISPEXTERN_INLINE int GLYPH_FACE (GLYPH glyph) { return glyph.face_id; }
+INLINE int GLYPH_FACE (GLYPH glyph) { return glyph.face_id; }
 
 #define SET_GLYPH_CHAR(glyph, char) ((glyph).ch = (char))
 #define SET_GLYPH_FACE(glyph, face) ((glyph).face_id = (face))
@@ -300,7 +300,7 @@ DISPEXTERN_INLINE int GLYPH_FACE (GLYPH glyph) { return glyph.face_id; }
 
 /* The following are valid only if GLYPH_CODE_P (gc).  */
 
-DISPEXTERN_INLINE int
+INLINE int
 GLYPH_CODE_CHAR (Lisp_Object gc)
 {
   return (CONSP (gc)
@@ -308,7 +308,7 @@ GLYPH_CODE_CHAR (Lisp_Object gc)
 	  : XINT (gc) & MAX_CHAR);
 }
 
-DISPEXTERN_INLINE int
+INLINE int
 GLYPH_CODE_FACE (Lisp_Object gc)
 {
   return CONSP (gc) ? XINT (XCDR (gc)) : XINT (gc) >> CHARACTERBITS;
@@ -323,7 +323,7 @@ GLYPH_CODE_FACE (Lisp_Object gc)
 	SET_GLYPH (glyph, (XINT (gc) & ((1 << CHARACTERBITS)-1)),	\
 		   (XINT (gc) >> CHARACTERBITS));			\
     }									\
-  while (0)
+  while (false)
 
 /* The ID of the mode line highlighting face.  */
 enum { GLYPH_MODE_LINE_FACE = 1 };
@@ -412,41 +412,41 @@ struct glyph
      should be an enumerator of type enum glyph_type.  */
   unsigned type : 3;
 
-  /* 1 means this glyph was produced from multibyte text.  Zero
+  /* True means this glyph was produced from multibyte text.  False
      means it was produced from unibyte text, i.e. charsets aren't
      applicable, and encoding is not performed.  */
-  unsigned multibyte_p : 1;
+  bool_bf multibyte_p : 1;
 
-  /* Non-zero means draw a box line at the left or right side of this
+  /* True means draw a box line at the left or right side of this
      glyph.  This is part of the implementation of the face attribute
      `:box'.  */
-  unsigned left_box_line_p : 1;
-  unsigned right_box_line_p : 1;
+  bool_bf left_box_line_p : 1;
+  bool_bf right_box_line_p : 1;
 
-  /* Non-zero means this glyph's physical ascent or descent is greater
+  /* True means this glyph's physical ascent or descent is greater
      than its logical ascent/descent, i.e. it may potentially overlap
      glyphs above or below it.  */
-  unsigned overlaps_vertically_p : 1;
+  bool_bf overlaps_vertically_p : 1;
 
-  /* For terminal frames, 1 means glyph is a padding glyph.  Padding
+  /* For terminal frames, true means glyph is a padding glyph.  Padding
      glyphs are used for characters whose visual shape consists of
      more than one glyph (e.g. Asian characters).  All but the first
      glyph of such a glyph sequence have the padding_p flag set.  This
      flag is used only to minimize code changes.  A better way would
      probably be to use the width field of glyphs to express padding.
 
-     For graphic frames, 1 means the pixel width of the glyph in a
+     For graphic frames, true means the pixel width of the glyph in a
      font is 0, but 1-pixel is padded on displaying for correct cursor
      displaying.  The member `pixel_width' above is set to 1.  */
-  unsigned padding_p : 1;
+  bool_bf padding_p : 1;
 
-  /* 1 means the actual glyph is not available, draw using `struct
+  /* True means the actual glyph is not available, draw using `struct
      glyphless' below instead.  This can happen when a font couldn't
      be loaded, or a character doesn't have a glyph in a font.  */
-  unsigned glyph_not_available_p : 1;
+  bool_bf glyph_not_available_p : 1;
 
-  /* Non-zero means don't display cursor here.  */
-  unsigned avoid_cursor_p : 1;
+  /* True means don't display cursor here.  */
+  bool_bf avoid_cursor_p : 1;
 
   /* Resolved bidirectional level of this character [0..63].  */
   unsigned resolved_level : 5;
@@ -495,7 +495,7 @@ struct glyph
     struct
     {
       /* Flag to tell if the composition is automatic or not.  */
-      unsigned automatic : 1;
+      bool_bf automatic : 1;
       /* ID of the composition.  */
       unsigned id    : 31;
     } cmp;
@@ -522,8 +522,8 @@ struct glyph
     {
       /* Value is an enum of the type glyphless_display_method.  */
       unsigned method : 2;
-      /* 1 iff this glyph is for a character of no font. */
-      unsigned for_no_font : 1;
+      /* True iff this glyph is for a character of no font. */
+      bool_bf for_no_font : 1;
       /* Length of acronym or hexadecimal code string (at most 8).  */
       unsigned len : 4;
       /* Character to display.  Actually we need only 22 bits.  */
@@ -591,7 +591,7 @@ struct glyph
          (GLYPH).face_id = (FACE_ID);			\
          (GLYPH).padding_p = (PADDING_P);		\
        }						\
-     while (0)
+     while (false)
 
 /* Fill a character type glyph GLYPH from a glyph typedef FROM as
    defined in lisp.h.  */
@@ -600,7 +600,7 @@ struct glyph
      SET_CHAR_GLYPH ((GLYPH),					\
 	 	     GLYPH_CHAR ((FROM)),			\
 		     GLYPH_FACE ((FROM)),			\
-		     0)
+		     false)
 
 /* Construct a glyph code from a character glyph GLYPH.  If the
    character is multibyte, return -1 as we can't use glyph table for a
@@ -614,7 +614,7 @@ struct glyph
       else							\
 	SET_GLYPH ((G), -1, 0);					\
     }								\
-  while (0)
+  while (false)
 
 #define GLYPH_INVALID_P(GLYPH) (GLYPH_CHAR (GLYPH) < 0)
 
@@ -676,7 +676,7 @@ struct glyph_pool
    glyph memory, which is allocated in the form of a glyph_pool structure.
    Glyph rows in such a window matrix are slices of frame matrix rows.
 
-   2. Free-standing window glyph matrices managing their own glyph
+   3. Free-standing window glyph matrices managing their own glyph
    storage.  This form is used in window-based redisplay which
    includes variable width and height fonts etc.
 
@@ -713,12 +713,12 @@ struct glyph_matrix
   int matrix_w, matrix_h;
 
   /* If this structure describes a window matrix of window W,
-     window_left_col is the value of W->left_col, window_top_line the
-     value of W->top_line, window_height and window_width are width and
-     height of W, as returned by window_box, and window_vscroll is the
-     value of W->vscroll at the time the matrix was last adjusted.
+     window_pixel_left is the value of W->pixel_left, window_pixel_top
+     the value of W->pixel_top, window_height and window_width are width
+     and height of W, as returned by window_box, and window_vscroll is
+     the value of W->vscroll at the time the matrix was last adjusted.
      Only set for window-based redisplay.  */
-  int window_left_col, window_top_line;
+  int window_pixel_left, window_pixel_top;
   int window_height, window_width;
   int window_vscroll;
 
@@ -729,11 +729,11 @@ struct glyph_matrix
   /* Flag indicating that scrolling should not be tried in
      update_window.  This flag is set by functions like try_window_id
      which do their own scrolling.  */
-  unsigned no_scrolling_p : 1;
+  bool_bf no_scrolling_p : 1;
 
-  /* Non-zero means window displayed in this matrix has a top mode
+  /* True means window displayed in this matrix has a header
      line.  */
-  unsigned header_line_p : 1;
+  bool_bf header_line_p : 1;
 
 #ifdef GLYPH_DEBUG
   /* A string identifying the method used to display the matrix.  */
@@ -757,7 +757,7 @@ struct glyph_matrix
 void check_matrix_pointer_lossage (struct glyph_matrix *);
 #define CHECK_MATRIX(MATRIX) check_matrix_pointer_lossage ((MATRIX))
 #else
-#define CHECK_MATRIX(MATRIX) (void) 0
+#define CHECK_MATRIX(MATRIX) ((void) 0)
 #endif
 
 
@@ -801,7 +801,10 @@ enum glyph_row_area
    Rows in window matrices on frames having no frame matrices point to
    glyphs allocated from the heap via xmalloc;
    glyphs[LEFT_MARGIN_AREA] is the start address of the allocated
-   glyph structure array.  */
+   glyph structure array.
+
+   NOTE: layout of first four members of this structure is important,
+   see clear_glyph_row and copy_row_except_pointers to check why.  */
 
 struct glyph_row
 {
@@ -821,8 +824,13 @@ struct glyph_row
      removed some day, so don't use it in new code.  */
   struct glyph *glyphs[1 + LAST_AREA];
 
-  /* Number of glyphs actually filled in areas.  */
-  short used[LAST_AREA];
+  /* Number of glyphs actually filled in areas.  This could have size
+     LAST_AREA, but it's 1 + LAST_AREA to simplify offset calculations.  */
+  short used[1 + LAST_AREA];
+
+  /* Hash code.  This hash code is available as soon as the row
+     is constructed, i.e. after a call to display_line.  */
+  unsigned hash;
 
   /* Window-relative x and y-position of the top-left corner of this
      row.  If y < 0, this means that eabs (y) pixels of the row are
@@ -854,10 +862,6 @@ struct glyph_row
   /* Extra line spacing added after this row.  Do not consider this
      in last row when checking if row is fully visible.  */
   int extra_line_spacing;
-
-  /* Hash code.  This hash code is available as soon as the row
-     is constructed, i.e. after a call to display_line.  */
-  unsigned hash;
 
   /* First position in this row.  This is the text position, including
      overlay position information etc, where the display of this row
@@ -919,107 +923,107 @@ struct glyph_row
   /* Vertical offset of the right fringe bitmap.  */
   signed right_fringe_offset : FRINGE_HEIGHT_BITS;
 
-  /* 1 means that at least one of the left and right fringe bitmaps is
+  /* True means that at least one of the left and right fringe bitmaps is
      periodic and thus depends on the y-position of the row.  */
-  unsigned fringe_bitmap_periodic_p : 1;
+  bool_bf fringe_bitmap_periodic_p : 1;
 
-  /* 1 means that we must draw the bitmaps of this row.  */
-  unsigned redraw_fringe_bitmaps_p : 1;
+  /* True means that we must draw the bitmaps of this row.  */
+  bool_bf redraw_fringe_bitmaps_p : 1;
 
-  /* In a desired matrix, 1 means that this row must be updated.  In a
-     current matrix, 0 means that the row has been invalidated, i.e.
+  /* In a desired matrix, true means that this row must be updated.  In a
+     current matrix, false means that the row has been invalidated, i.e.
      the row's contents do not agree with what is visible on the
      screen.  */
-  unsigned enabled_p : 1;
+  bool_bf enabled_p : 1;
 
-  /* 1 means row displays a text line that is truncated on the left or
+  /* True means row displays a text line that is truncated on the left or
      right side.  */
-  unsigned truncated_on_left_p : 1;
-  unsigned truncated_on_right_p : 1;
+  bool_bf truncated_on_left_p : 1;
+  bool_bf truncated_on_right_p : 1;
 
-  /* 1 means that this row displays a continued line, i.e. it has a
+  /* True means that this row displays a continued line, i.e. it has a
      continuation mark at the right side.  */
-  unsigned continued_p : 1;
+  bool_bf continued_p : 1;
 
-  /* 0 means that this row does not contain any text, i.e. it is
+  /* False means that this row does not contain any text, i.e., it is
      a blank line at the window and buffer end.  */
-  unsigned displays_text_p : 1;
+  bool_bf displays_text_p : 1;
 
-  /* 1 means that this line ends at ZV.  */
-  unsigned ends_at_zv_p : 1;
+  /* True means that this line ends at ZV.  */
+  bool_bf ends_at_zv_p : 1;
 
-  /* 1 means the face of the last glyph in the text area is drawn to
+  /* True means the face of the last glyph in the text area is drawn to
      the right end of the window.  This flag is used in
      update_text_area to optimize clearing to the end of the area.  */
-  unsigned fill_line_p : 1;
+  bool_bf fill_line_p : 1;
 
-  /* Non-zero means display a bitmap on X frames indicating that this
+  /* True means display a bitmap on X frames indicating that this
      line contains no text and ends in ZV.  */
-  unsigned indicate_empty_line_p : 1;
+  bool_bf indicate_empty_line_p : 1;
 
-  /* 1 means this row contains glyphs that overlap each other because
+  /* True means this row contains glyphs that overlap each other because
      of lbearing or rbearing.  */
-  unsigned contains_overlapping_glyphs_p : 1;
+  bool_bf contains_overlapping_glyphs_p : 1;
 
-  /* 1 means this row is as wide as the window it is displayed in, including
+  /* True means this row is as wide as the window it is displayed in, including
      scroll bars, fringes, and internal borders.  This also
      implies that the row doesn't have marginal areas.  */
-  unsigned full_width_p : 1;
+  bool_bf full_width_p : 1;
 
-  /* Non-zero means row is a mode or header-line.  */
-  unsigned mode_line_p : 1;
+  /* True means row is a mode or header-line.  */
+  bool_bf mode_line_p : 1;
 
-  /* 1 in a current row means this row is overlapped by another row.  */
-  unsigned overlapped_p : 1;
+  /* True in a current row means this row is overlapped by another row.  */
+  bool_bf overlapped_p : 1;
 
-  /* 1 means this line ends in the middle of a character consisting
+  /* True means this line ends in the middle of a character consisting
      of more than one glyph.  Some glyphs have been put in this row,
      the rest are put in rows below this one.  */
-  unsigned ends_in_middle_of_char_p : 1;
+  bool_bf ends_in_middle_of_char_p : 1;
 
-  /* 1 means this line starts in the middle of a character consisting
+  /* True means this line starts in the middle of a character consisting
      of more than one glyph.  Some glyphs have been put in the
      previous row, the rest are put in this row.  */
-  unsigned starts_in_middle_of_char_p : 1;
+  bool_bf starts_in_middle_of_char_p : 1;
 
-  /* 1 in a current row means this row overlaps others.  */
-  unsigned overlapping_p : 1;
+  /* True in a current row means this row overlaps others.  */
+  bool_bf overlapping_p : 1;
 
-  /* 1 means some glyphs in this row are displayed in mouse-face.  */
-  unsigned mouse_face_p : 1;
+  /* True means some glyphs in this row are displayed in mouse-face.  */
+  bool_bf mouse_face_p : 1;
 
-  /* 1 means this row was ended by a newline from a string.  */
-  unsigned ends_in_newline_from_string_p : 1;
+  /* True means this row was ended by a newline from a string.  */
+  bool_bf ends_in_newline_from_string_p : 1;
 
-  /* 1 means this row width is exactly the width of the window, and the
+  /* True means this row width is exactly the width of the window, and the
      final newline character is hidden in the right fringe.  */
-  unsigned exact_window_width_line_p : 1;
+  bool_bf exact_window_width_line_p : 1;
 
-  /* 1 means this row currently shows the cursor in the right fringe.  */
-  unsigned cursor_in_fringe_p : 1;
+  /* True means this row currently shows the cursor in the right fringe.  */
+  bool_bf cursor_in_fringe_p : 1;
 
-  /* 1 means the last glyph in the row is part of an ellipsis.  */
-  unsigned ends_in_ellipsis_p : 1;
+  /* True means the last glyph in the row is part of an ellipsis.  */
+  bool_bf ends_in_ellipsis_p : 1;
 
-  /* Non-zero means display a bitmap on X frames indicating that this
+  /* True means display a bitmap on X frames indicating that this
      the first line of the buffer.  */
-  unsigned indicate_bob_p : 1;
+  bool_bf indicate_bob_p : 1;
 
-  /* Non-zero means display a bitmap on X frames indicating that this
+  /* True means display a bitmap on X frames indicating that this
      the top line of the window, but not start of the buffer.  */
-  unsigned indicate_top_line_p : 1;
+  bool_bf indicate_top_line_p : 1;
 
-  /* Non-zero means display a bitmap on X frames indicating that this
+  /* True means display a bitmap on X frames indicating that this
      the last line of the buffer.  */
-  unsigned indicate_eob_p : 1;
+  bool_bf indicate_eob_p : 1;
 
-  /* Non-zero means display a bitmap on X frames indicating that this
+  /* True means display a bitmap on X frames indicating that this
      the bottom line of the window, but not end of the buffer.  */
-  unsigned indicate_bottom_line_p : 1;
+  bool_bf indicate_bottom_line_p : 1;
 
-  /* Non-zero means the row was reversed to display text in a
+  /* True means the row was reversed to display text in a
      right-to-left paragraph.  */
-  unsigned reversed_p : 1;
+  bool_bf reversed_p : 1;
 
   /* Continuation lines width at the start of the row.  */
   int continuation_lines_width;
@@ -1110,10 +1114,10 @@ struct glyph_row *matrix_row (struct glyph_matrix *, int);
 /* Set and query the enabled_p flag of glyph row ROW in MATRIX.  */
 
 #define SET_MATRIX_ROW_ENABLED_P(MATRIX, ROW, VALUE) \
-     (MATRIX_ROW ((MATRIX), (ROW))->enabled_p = (VALUE) != 0)
+     (MATRIX_ROW (MATRIX, ROW)->enabled_p = (VALUE))
 
 #define MATRIX_ROW_ENABLED_P(MATRIX, ROW) \
-     (MATRIX_ROW ((MATRIX), (ROW))->enabled_p)
+     (MATRIX_ROW (MATRIX, ROW)->enabled_p)
 
 /* Non-zero if ROW displays text.  Value is non-zero if the row is
    blank but displays a line end.  */
@@ -1191,12 +1195,12 @@ struct glyph_row *matrix_row (struct glyph_matrix *, int);
       || ((ROW)->start.overlay_string_index >= 0	\
 	  && (ROW)->start.string_pos.charpos > 0))
 
-/* Non-zero means ROW overlaps its predecessor.  */
+/* True means ROW overlaps its predecessor.  */
 
 #define MATRIX_ROW_OVERLAPS_PRED_P(ROW) \
      ((ROW)->phys_ascent > (ROW)->ascent)
 
-/* Non-zero means ROW overlaps its successor.  */
+/* True means ROW overlaps its successor.  */
 
 #define MATRIX_ROW_OVERLAPS_SUCC_P(ROW)		\
       ((ROW)->phys_height - (ROW)->phys_ascent	\
@@ -1206,8 +1210,7 @@ struct glyph_row *matrix_row (struct glyph_matrix *, int);
 
 extern struct glyph space_glyph;
 
-/* Non-zero means last display completed.  Zero means it was
-   preempted.  */
+/* True means last display completed.  False means it was preempted.  */
 
 extern bool display_completed;
 
@@ -1303,24 +1306,24 @@ struct glyph_string
   /* Start and end glyph indices in a glyph-string.  */
   int cmp_from, cmp_to;
 
-  /* 1 means this glyph strings face has to be drawn to the right end
+  /* True means this glyph strings face has to be drawn to the right end
      of the window's drawing area.  */
-  unsigned extends_to_end_of_line_p : 1;
+  bool_bf extends_to_end_of_line_p : 1;
 
-  /* 1 means the background of this string has been drawn.  */
-  unsigned background_filled_p : 1;
+  /* True means the background of this string has been drawn.  */
+  bool_bf background_filled_p : 1;
 
-  /* 1 means glyph string must be drawn with 16-bit functions.  */
-  unsigned two_byte_p : 1;
+  /* True means glyph string must be drawn with 16-bit functions.  */
+  bool_bf two_byte_p : 1;
 
-  /* 1 means that the original font determined for drawing this glyph
+  /* True means that the original font determined for drawing this glyph
      string could not be loaded.  The member `font' has been set to
      the frame's default font in this case.  */
-  unsigned font_not_found_p : 1;
+  bool_bf font_not_found_p : 1;
 
-  /* 1 means that the face in which this glyph string is drawn has a
+  /* True means that the face in which this glyph string is drawn has a
      stipple pattern.  */
-  unsigned stippled_p : 1;
+  bool_bf stippled_p : 1;
 
 #define OVERLAPS_PRED		(1 << 0)
 #define OVERLAPS_SUCC		(1 << 1)
@@ -1335,10 +1338,10 @@ struct glyph_string
      respectively.  */
   unsigned for_overlaps : 3;
 
-  /* 1 means that all glyphs in this glyph string has the flag
+  /* True means that all glyphs in this glyph string has the flag
      padding_p set, and thus must be drawn one by one to have 1-pixel
      width even though the logical width in the font is zero.  */
-  unsigned padding_p : 1;
+  bool_bf padding_p : 1;
 
   /* The GC to use for drawing this glyph string.  */
 #if defined (HAVE_X_WINDOWS)
@@ -1351,7 +1354,7 @@ struct glyph_string
 
   /* A pointer to the first glyph in the string.  This glyph
      corresponds to char2b[0].  Needed to draw rectangles if
-     font_not_found_p is 1.  */
+     font_not_found_p is true.  */
   struct glyph *first_glyph;
 
   /* Image, if any.  */
@@ -1468,27 +1471,39 @@ struct glyph_string
 #define DESIRED_HEADER_LINE_HEIGHT(W) \
      MATRIX_HEADER_LINE_HEIGHT ((W)->desired_matrix)
 
-/* Value is non-zero if window W wants a mode line.  */
+/* PXW: The height checks below serve to show at least one text line
+   instead of a mode- and/or header line when a window gets very small.
+   But (1) the check fails when the mode- or header-line is taller than
+   the associated frame's line height and (2) we don't care much about
+   text visibility anyway when shrinking a frame containing a toolbar.
 
-#define WINDOW_WANTS_MODELINE_P(W)				\
-  (!MINI_WINDOW_P ((W))						\
-   && !(W)->pseudo_window_p					\
-   && FRAME_WANTS_MODELINE_P (XFRAME (WINDOW_FRAME ((W))))	\
-   && BUFFERP ((W)->contents)					\
-   && !NILP (BVAR (XBUFFER ((W)->contents), mode_line_format))	\
-   && WINDOW_TOTAL_LINES (W) > 1)
+   So maybe these checks should be removed and any clipping left to the
+   window manager.  */
 
-/* Value is true if window W wants a header line.  */
-
-#define WINDOW_WANTS_HEADER_LINE_P(W)					\
+/* Value is true if window W wants a mode line and is large enough
+   to accommodate it.  */
+#define WINDOW_WANTS_MODELINE_P(W)					\
   (BUFFERP ((W)->contents)						\
-   ? (!MINI_WINDOW_P ((W))						\
+   ? (!MINI_WINDOW_P (W)						\
       && !(W)->pseudo_window_p						\
-      && FRAME_WANTS_MODELINE_P (XFRAME (WINDOW_FRAME ((W))))		\
-      && !NILP (BVAR (XBUFFER ((W)->contents), header_line_format))	\
-      && WINDOW_TOTAL_LINES (W) >					\
-          (1 + !NILP (BVAR (XBUFFER ((W)->contents), mode_line_format)))) \
-   : 0)
+      && FRAME_WANTS_MODELINE_P (XFRAME (WINDOW_FRAME (W)))		\
+      && !NILP (BVAR (XBUFFER ((W)->contents), mode_line_format))	\
+      && WINDOW_PIXEL_HEIGHT (W) > WINDOW_FRAME_LINE_HEIGHT (W))	\
+   : false)
+
+/* Value is true if window W wants a header line and is large enough
+   to accommodate it.  */
+#define WINDOW_WANTS_HEADER_LINE_P(W)					\
+     (BUFFERP ((W)->contents)						\
+      ? (!MINI_WINDOW_P (W)						\
+	 && !(W)->pseudo_window_p					\
+	 && FRAME_WANTS_MODELINE_P (XFRAME (WINDOW_FRAME (W)))		\
+	 && !NILP (BVAR (XBUFFER ((W)->contents), header_line_format))	\
+	 && (WINDOW_PIXEL_HEIGHT (W)					\
+	     > (WINDOW_WANTS_MODELINE_P (W)				\
+		? (2 * WINDOW_FRAME_LINE_HEIGHT (W))			\
+		: WINDOW_FRAME_LINE_HEIGHT (W))))			\
+      : false)
 
 /* Return proper value to be used as baseline offset of font that has
    ASCENT and DESCENT to draw characters by the font at the vertical
@@ -1551,6 +1566,7 @@ enum lface_attribute_index
   LFACE_FONT_INDEX,
   LFACE_INHERIT_INDEX,
   LFACE_FONTSET_INDEX,
+  LFACE_DISTANT_FOREGROUND_INDEX,
   LFACE_VECTOR_SIZE
 };
 
@@ -1589,6 +1605,10 @@ enum face_underline_type
 
 struct face
 {
+  /* The Lisp face attributes this face realizes.  All attributes
+     in this vector are non-nil.  */
+  Lisp_Object lface[LFACE_VECTOR_SIZE];
+
   /* The id of this face.  The id equals the index of this face in the
      vector faces_by_id of its face cache.  */
   int id;
@@ -1601,11 +1621,6 @@ struct face
 
   /* Background stipple or bitmap used for this face.  This is
      an id as returned from load_pixmap.  */
-  ptrdiff_t stipple;
-
-#else /* not HAVE_WINDOW_SYSTEM */
-
-  /* Dummy.  */
   ptrdiff_t stipple;
 
 #endif /* not HAVE_WINDOW_SYSTEM */
@@ -1632,9 +1647,6 @@ struct face
      from the same ASCII face have the same fontset.  */
   int fontset;
 
-  /* Pixmap width and height.  */
-  unsigned int pixmap_w, pixmap_h;
-
   /* Non-zero means characters in this face have a box of that
      thickness around them.  If this value is negative, its absolute
      value indicates the thickness, and the horizontal (top and
@@ -1648,64 +1660,60 @@ struct face
      of width box_line_width is drawn in color box_color.  A value of
      FACE_RAISED_BOX or FACE_SUNKEN_BOX means a 3D box is drawn with
      shadow colors derived from the background color of the face.  */
-  enum face_box_type box;
+  ENUM_BF (face_box_type) box : 2;
 
   /* Style of underlining. */
-  enum face_underline_type underline_type;
+  ENUM_BF (face_underline_type) underline_type : 1;
 
-  /* If `box' above specifies a 3D type, 1 means use box_color for
+  /* If `box' above specifies a 3D type, true means use box_color for
      drawing shadows.  */
-  unsigned use_box_color_for_shadows_p : 1;
+  bool_bf use_box_color_for_shadows_p : 1;
 
   /* Non-zero if text in this face should be underlined, overlined,
      strike-through or have a box drawn around it.  */
-  unsigned underline_p : 1;
-  unsigned overline_p : 1;
-  unsigned strike_through_p : 1;
+  bool_bf underline_p : 1;
+  bool_bf overline_p : 1;
+  bool_bf strike_through_p : 1;
 
-  /* 1 means that the colors specified for this face could not be
+  /* True means that the colors specified for this face could not be
      loaded, and were replaced by default colors, so they shouldn't be
      freed.  */
-  unsigned foreground_defaulted_p : 1;
-  unsigned background_defaulted_p : 1;
+  bool_bf foreground_defaulted_p : 1;
+  bool_bf background_defaulted_p : 1;
 
-  /* 1 means that either no color is specified for underlining or that
+  /* True means that either no color is specified for underlining or that
      the specified color couldn't be loaded.  Use the foreground
      color when drawing in that case. */
-  unsigned underline_defaulted_p : 1;
+  bool_bf underline_defaulted_p : 1;
 
-  /* 1 means that either no color is specified for the corresponding
+  /* True means that either no color is specified for the corresponding
      attribute or that the specified color couldn't be loaded.
      Use the foreground color when drawing in that case. */
-  unsigned overline_color_defaulted_p : 1;
-  unsigned strike_through_color_defaulted_p : 1;
-  unsigned box_color_defaulted_p : 1;
+  bool_bf overline_color_defaulted_p : 1;
+  bool_bf strike_through_color_defaulted_p : 1;
+  bool_bf box_color_defaulted_p : 1;
 
   /* TTY appearances.  Colors are found in `lface' with empty color
      string meaning the default color of the TTY.  */
-  unsigned tty_bold_p : 1;
-  unsigned tty_italic_p : 1;
-  unsigned tty_underline_p : 1;
-  unsigned tty_reverse_p : 1;
+  bool_bf tty_bold_p : 1;
+  bool_bf tty_italic_p : 1;
+  bool_bf tty_underline_p : 1;
+  bool_bf tty_reverse_p : 1;
 
-  /* 1 means that colors of this face may not be freed because they
+  /* True means that colors of this face may not be freed because they
      have been copied bitwise from a base face (see
      realize_x_face).  */
-  unsigned colors_copied_bitwise_p : 1;
+  bool_bf colors_copied_bitwise_p : 1;
 
   /* If non-zero, use overstrike (to simulate bold-face).  */
-  unsigned overstrike : 1;
+  bool_bf overstrike : 1;
 
 /* NOTE: this is not used yet, but eventually this impl should be done
          similarly to overstrike */
 #ifdef HAVE_NS
   /* If non-zero, use geometric rotation (to simulate italic).  */
-  unsigned synth_ital : 1;
+  bool_bf synth_ital : 1;
 #endif
-
-  /* The Lisp face attributes this face realizes.  All attributes
-     in this vector are non-nil.  */
-  Lisp_Object lface[LFACE_VECTOR_SIZE];
 
   /* The hash value of this face.  */
   unsigned hash;
@@ -1735,6 +1743,15 @@ struct face
 
 #define FACE_TTY_DEFAULT_BG_COLOR ((unsigned long) -3)
 
+/* True if COLOR is a specified (i.e., nondefault) foreground or
+   background color for a tty face.  */
+
+INLINE bool
+face_tty_specified_color (unsigned long color)
+{
+  return color < FACE_TTY_DEFAULT_BG_COLOR;
+}
+
 /* Non-zero if FACE was realized for unibyte use.  */
 
 #define FACE_UNIBYTE_P(FACE) ((FACE)->charset < 0)
@@ -1757,6 +1774,9 @@ enum face_id
   MOUSE_FACE_ID,
   MENU_FACE_ID,
   VERTICAL_BORDER_FACE_ID,
+  WINDOW_DIVIDER_FACE_ID,
+  WINDOW_DIVIDER_FIRST_PIXEL_FACE_ID,
+  WINDOW_DIVIDER_LAST_PIXEL_FACE_ID,
   BASIC_FACE_ID_SENTINEL
 };
 
@@ -1782,7 +1802,7 @@ struct face_cache
 
   /* Flag indicating that attributes of the `menu' face have been
      changed.  */
-  unsigned menu_face_changed_p : 1;
+  bool_bf menu_face_changed_p : 1;
 };
 
 
@@ -1790,10 +1810,10 @@ struct face_cache
    using X resources of FACE.  */
 
 #define PREPARE_FACE_FOR_DISPLAY(F, FACE)	\
+  do {						\
      if ((FACE)->gc == 0)			\
        prepare_face_for_display ((F), (FACE));	\
-     else					\
-       (void) 0
+  } while (false)
 
 /* Return a pointer to the face with ID on frame F, or null if such a
    face doesn't exist.  */
@@ -1810,30 +1830,22 @@ struct face_cache
 #define FACE_SUITABLE_FOR_ASCII_CHAR_P(FACE, CHAR)	\
   ((FACE) == (FACE)->ascii_face)
 
-#define FACE_SUITABLE_FOR_CHAR_P(FACE, CHAR)	\
-  (ASCII_CHAR_P (CHAR)				\
-   ? FACE_SUITABLE_FOR_ASCII_CHAR_P(FACE)	\
-   : face_suitable_for_char_p ((FACE), (CHAR)))
-
 /* Return the id of the realized face on frame F that is like the face
    with id ID but is suitable for displaying character CHAR.
    This macro is only meaningful for multibyte character CHAR.  */
 
 #define FACE_FOR_CHAR(F, FACE, CHAR, POS, OBJECT)	\
-  ((ASCII_CHAR_P (CHAR) || CHAR_BYTE8_P (CHAR))		\
-   ? (FACE)->ascii_face->id				\
-   : face_for_char ((F), (FACE), (CHAR), (POS), (OBJECT)))
+  face_for_char ((F), (FACE), (CHAR), (POS), (OBJECT))
 
 #else /* not HAVE_WINDOW_SYSTEM */
 
-#define FACE_SUITABLE_FOR_ASCII_CHAR_P(FACE, CHAR) 1
-#define FACE_SUITABLE_FOR_CHAR_P(FACE, CHAR) 1
+#define FACE_SUITABLE_FOR_ASCII_CHAR_P(FACE, CHAR) true
 #define FACE_FOR_CHAR(F, FACE, CHAR, POS, OBJECT) ((FACE)->id)
 
 #endif /* not HAVE_WINDOW_SYSTEM */
 
 /* Return true if G contains a valid character code.  */
-DISPEXTERN_INLINE bool
+INLINE bool
 GLYPH_CHAR_VALID_P (GLYPH g)
 {
   return CHAR_VALID_P (GLYPH_CHAR (g));
@@ -1843,7 +1855,7 @@ GLYPH_CHAR_VALID_P (GLYPH g)
    encodes a char code in the lower CHARACTERBITS bits and a (very small)
    face-id in the upper bits, or it may be a cons (CHAR . FACE-ID).  */
 
-DISPEXTERN_INLINE bool
+INLINE bool
 GLYPH_CODE_P (Lisp_Object gc)
 {
   return (CONSP (gc)
@@ -1886,6 +1898,10 @@ typedef enum {
   RLE,		/* right-to-left embedding */
   RLO,		/* right-to-left override */
   PDF,		/* pop directional format */
+  LRI,		/* left-to-right isolate */
+  RLI,		/* right-to-left isolate */
+  FSI,		/* first strong isolate */
+  PDI,		/* pop directional isolate */
   WEAK_ES,	/* european number separator */
   WEAK_ET,	/* european number terminator */
   WEAK_CS,	/* common separator */
@@ -1921,9 +1937,9 @@ struct bidi_string_data {
   ptrdiff_t schars;		/* the number of characters in the string,
 				   excluding the terminating null */
   ptrdiff_t bufpos;		/* buffer position of lstring, or 0 if N/A */
-  unsigned from_disp_str : 1;	/* 1 means the string comes from a
+  bool_bf from_disp_str : 1;	/* True means the string comes from a
 				   display property */
-  unsigned unibyte : 1;		/* 1 means the string is unibyte */
+  bool_bf unibyte : 1;		/* True means the string is unibyte */
 };
 
 /* Data type for reordering bidirectional text.  */
@@ -1966,10 +1982,10 @@ struct bidi_it {
   struct window *w;		/* the window being displayed */
   bidi_dir_t paragraph_dir;	/* current paragraph direction */
   ptrdiff_t separator_limit;	/* where paragraph separator should end */
-  unsigned prev_was_pdf : 1;	/* if non-zero, previous char was PDF */
-  unsigned first_elt : 1;	/* if non-zero, examine current char first */
-  unsigned new_paragraph : 1;	/* if non-zero, we expect a new paragraph */
-  unsigned frame_window_p : 1;	/* non-zero if displaying on a GUI frame */
+  bool_bf prev_was_pdf : 1;	/* if true, previous char was PDF */
+  bool_bf first_elt : 1;	/* if true, examine current char first */
+  bool_bf new_paragraph : 1;	/* if true, we expect a new paragraph */
+  bool_bf frame_window_p : 1;	/* true if displaying on a GUI frame */
 };
 
 /* Value is non-zero when the bidi iterator is at base paragraph
@@ -1997,8 +2013,8 @@ struct draw_fringe_bitmap_params
   int wd, h, dh;
   int x, y;
   int bx, nx, by, ny;
-  unsigned cursor_p : 1;
-  unsigned overlay_p : 1;
+  bool_bf cursor_p : 1;
+  bool_bf overlay_p : 1;
   struct face *face;
 };
 
@@ -2193,9 +2209,8 @@ struct composition_it
   int nchars, nbytes;
   /* Indices of the glyphs for the current grapheme cluster.  */
   int from, to;
-  /* Width of the current grapheme cluster in units of pixels on a
-     graphic display and in units of canonical characters on a
-     terminal display.  */
+  /* Width of the current grapheme cluster in units of columns it will
+     occupy on display; see CHAR_WIDTH.  */
   int width;
 };
 
@@ -2237,37 +2252,33 @@ struct it
      used for overlay strings and strings from display properties.  */
   ptrdiff_t string_nchars;
 
-  /* Start and end of a visible region; -1 if the region is not
-     visible in the window.  */
-  ptrdiff_t region_beg_charpos, region_end_charpos;
-
   /* Position at which redisplay end trigger functions should be run.  */
   ptrdiff_t redisplay_end_trigger_charpos;
 
-  /* 1 means multibyte characters are enabled.  */
-  unsigned multibyte_p : 1;
+  /* True means multibyte characters are enabled.  */
+  bool_bf multibyte_p : 1;
 
-  /* 1 means window has a mode line at its top.  */
-  unsigned header_line_p : 1;
+  /* True means window has a mode line at its top.  */
+  bool_bf header_line_p : 1;
 
-  /* 1 means `string' is the value of a `display' property.
+  /* True means `string' is the value of a `display' property.
      Don't handle some `display' properties in these strings.  */
-  unsigned string_from_display_prop_p : 1;
+  bool_bf string_from_display_prop_p : 1;
 
-  /* 1 means `string' comes from a `line-prefix' or `wrap-prefix'
+  /* True means `string' comes from a `line-prefix' or `wrap-prefix'
      property.  */
-  unsigned string_from_prefix_prop_p : 1;
+  bool_bf string_from_prefix_prop_p : 1;
 
-  /* 1 means we are iterating an object that came from a value of a
+  /* True means we are iterating an object that came from a value of a
      `display' property.  */
-  unsigned from_disp_prop_p : 1;
+  bool_bf from_disp_prop_p : 1;
 
   /* When METHOD == next_element_from_display_vector,
-     this is 1 if we're doing an ellipsis.  Otherwise meaningless.  */
-  unsigned ellipsis_p : 1;
+     this is true if we're doing an ellipsis.  Otherwise meaningless.  */
+  bool_bf ellipsis_p : 1;
 
   /* True means cursor shouldn't be displayed here.  */
-  unsigned avoid_cursor_p : 1;
+  bool_bf avoid_cursor_p : 1;
 
   /* Display table in effect or null for none.  */
   struct Lisp_Char_Table *dp;
@@ -2381,23 +2392,24 @@ struct it
 #endif
     } u;
 
-    /* current text and display positions.  */
+    /* Current text and display positions.  */
     struct text_pos position;
     struct display_pos current;
     Lisp_Object from_overlay;
     enum glyph_row_area area;
     enum it_method method;
     bidi_dir_t paragraph_embedding;
-    unsigned multibyte_p : 1;
-    unsigned string_from_display_prop_p : 1;
-    unsigned string_from_prefix_prop_p : 1;
-    unsigned display_ellipsis_p : 1;
-    unsigned avoid_cursor_p : 1;
-    unsigned bidi_p:1;
-    unsigned from_disp_prop_p : 1;
+    bool_bf multibyte_p : 1;
+    bool_bf string_from_display_prop_p : 1;
+    bool_bf string_from_prefix_prop_p : 1;
+    bool_bf display_ellipsis_p : 1;
+    bool_bf avoid_cursor_p : 1;
+    bool_bf bidi_p : 1;
+    bool_bf from_disp_prop_p : 1;
     enum line_wrap_method line_wrap;
 
-    /* properties from display property that are reset by another display property. */
+    /* Properties from display property that are reset by another display
+       property.  */
     short voffset;
     Lisp_Object space_width;
     Lisp_Object font_height;
@@ -2419,46 +2431,46 @@ struct it
   int face_id;
 
   /* Setting of buffer-local variable selective-display-ellipsis.  */
-  unsigned selective_display_ellipsis_p : 1;
+  bool_bf selective_display_ellipsis_p : 1;
 
-  /* 1 means control characters are translated into the form `^C'
+  /* True means control characters are translated into the form `^C'
      where the `^' can be replaced by a display table entry.  */
-  unsigned ctl_arrow_p : 1;
+  bool_bf ctl_arrow_p : 1;
 
-  /* Non-zero means that the current face has a box.  */
-  unsigned face_box_p : 1;
+  /* True means that the current face has a box.  */
+  bool_bf face_box_p : 1;
 
   /* Non-null means that the current character is the first in a run
      of characters with box face.  */
-  unsigned start_of_box_run_p : 1;
+  bool_bf start_of_box_run_p : 1;
 
-  /* Non-zero means that the current character is the last in a run
+  /* True means that the current character is the last in a run
      of characters with box face.  */
-  unsigned end_of_box_run_p : 1;
+  bool_bf end_of_box_run_p : 1;
 
-  /* 1 means overlay strings at end_charpos have been processed.  */
-  unsigned overlay_strings_at_end_processed_p : 1;
+  /* True means overlay strings at end_charpos have been processed.  */
+  bool_bf overlay_strings_at_end_processed_p : 1;
 
-  /* 1 means to ignore overlay strings at current pos, as they have
+  /* True means to ignore overlay strings at current pos, as they have
      already been processed.  */
-  unsigned ignore_overlay_strings_at_pos_p : 1;
+  bool_bf ignore_overlay_strings_at_pos_p : 1;
 
-  /* 1 means the actual glyph is not available in the current
+  /* True means the actual glyph is not available in the current
      system.  */
-  unsigned glyph_not_available_p : 1;
+  bool_bf glyph_not_available_p : 1;
 
-  /* 1 means the next line in display_line continues a character
+  /* True means the next line in display_line continues a character
      consisting of more than one glyph, and some glyphs of this
      character have been put on the previous line.  */
-  unsigned starts_in_middle_of_char_p : 1;
+  bool_bf starts_in_middle_of_char_p : 1;
 
-  /* If 1, saved_face_id contains the id of the face in front of text
+  /* If true, saved_face_id contains the id of the face in front of text
      skipped due to selective display.  */
-  unsigned face_before_selective_p : 1;
+  bool_bf face_before_selective_p : 1;
 
-  /* If 1, adjust current glyph so it does not increase current row
+  /* If true, adjust current glyph so it does not increase current row
      descent/ascent (line-height property).  Reset after this glyph.  */
-  unsigned constrain_row_ascent_descent_p : 1;
+  bool_bf constrain_row_ascent_descent_p : 1;
 
   enum line_wrap_method line_wrap;
 
@@ -2630,9 +2642,9 @@ struct it
   /* Face of the right fringe glyph.  */
   unsigned right_user_fringe_face_id : FACE_ID_BITS;
 
-  /* Non-zero means we need to reorder bidirectional text for display
+  /* True means we need to reorder bidirectional text for display
      in the visual order.  */
-  unsigned bidi_p : 1;
+  bool_bf bidi_p : 1;
 
   /* For iterating over bidirectional text.  */
   struct bidi_it bidi_it;
@@ -2652,7 +2664,7 @@ struct it
 
 #define ITERATOR_AT_END_P(IT) ((IT)->what == IT_EOB)
 
-/* Non-zero means IT is at the end of a line.  This is the case if it
+/* True means IT is at the end of a line.  This is the case if it
    is either on a newline or on a carriage return and selective
    display hides the rest of the line.  */
 
@@ -2667,19 +2679,14 @@ struct it
 #define PRODUCE_GLYPHS(IT)                              \
   do {                                                  \
     if ((IT)->glyph_row != NULL && (IT)->bidi_p)	\
-      {							\
-        if ((IT)->bidi_it.paragraph_dir == R2L)		\
-	  (IT)->glyph_row->reversed_p = 1;		\
-	else						\
-	  (IT)->glyph_row->reversed_p = 0;		\
-      }							\
+      (IT)->glyph_row->reversed_p = (IT)->bidi_it.paragraph_dir == R2L; \
     if (FRAME_RIF ((IT)->f) != NULL)                    \
       FRAME_RIF ((IT)->f)->produce_glyphs ((IT));       \
     else                                                \
       produce_glyphs ((IT));                            \
     if ((IT)->glyph_row != NULL)                        \
-      inhibit_free_realized_faces = 1;                  \
-  } while (0)
+      inhibit_free_realized_faces = true;		\
+  } while (false)
 
 /* Bit-flags indicating what operation move_it_to should perform.  */
 
@@ -2723,16 +2730,16 @@ typedef struct {
 
   /* Nonzero if part of the text currently shown in
      its mouse-face is beyond the window end.  */
-  unsigned mouse_face_past_end : 1;
+  bool_bf mouse_face_past_end : 1;
 
-  /* Nonzero means defer mouse-motion highlighting.  */
-  unsigned mouse_face_defer : 1;
+  /* True means defer mouse-motion highlighting.  */
+  bool_bf mouse_face_defer : 1;
 
-  /* Nonzero means that the mouse highlight should not be shown.  */
-  unsigned mouse_face_hidden : 1;
+  /* True means that the mouse highlight should not be shown.  */
+  bool_bf mouse_face_hidden : 1;
 } Mouse_HLInfo;
 
-DISPEXTERN_INLINE void
+INLINE void
 reset_mouse_highlight (Mouse_HLInfo *hlinfo)
 {
 
@@ -2744,9 +2751,9 @@ reset_mouse_highlight (Mouse_HLInfo *hlinfo)
     hlinfo->mouse_face_mouse_frame = NULL;
     hlinfo->mouse_face_window = Qnil;
     hlinfo->mouse_face_overlay = Qnil;
-    hlinfo->mouse_face_past_end = 0;
-    hlinfo->mouse_face_hidden = 0;
-    hlinfo->mouse_face_defer = 0;
+    hlinfo->mouse_face_past_end = false;
+    hlinfo->mouse_face_hidden = false;
+    hlinfo->mouse_face_defer = false;
 }
 
 /***********************************************************************
@@ -2814,8 +2821,8 @@ struct redisplay_interface
   void (*update_window_begin_hook) (struct window *w);
 
   /* Function to call after window W has been updated in window-based
-     redisplay.  CURSOR_ON_P non-zero means switch cursor on.
-     MOUSE_FACE_OVERWRITTEN_P non-zero means that some lines in W
+     redisplay.  CURSOR_ON_P true means switch cursor on.
+     MOUSE_FACE_OVERWRITTEN_P true means that some lines in W
      that contained glyphs in mouse-face were overwritten, so we
      have to update the mouse highlight.  */
   void (*update_window_end_hook) (struct window *w, bool cursor_on_p,
@@ -2864,8 +2871,8 @@ struct redisplay_interface
                             int width, int height);
 
 /* Draw specified cursor CURSOR_TYPE of width CURSOR_WIDTH
-   at row GLYPH_ROW on window W if ON_P is 1.  If ON_P is
-   0, don't draw cursor.  If ACTIVE_P is 1, system caret
+   at row GLYPH_ROW on window W if ON_P is true.  If ON_P is
+   false, don't draw cursor.  If ACTIVE_P is true, system caret
    should track this cursor (when applicable).  */
   void (*draw_window_cursor) (struct window *w,
 			      struct glyph_row *glyph_row,
@@ -2876,6 +2883,10 @@ struct redisplay_interface
 /* Draw vertical border for window W from (X,Y_0) to (X,Y_1).  */
   void (*draw_vertical_window_border) (struct window *w,
                                        int x, int y_0, int y_1);
+
+/* Draw window divider for window W from (X_0, Y_0) to (X_1, ,Y_1).  */
+  void (*draw_window_divider) (struct window *w,
+			       int x_0, int x_1, int y_0, int y_1);
 
 /* Shift display of frame F to make room for inserted glyphs.
    The area at pixel (X,Y) of width WIDTH and height HEIGHT is
@@ -2961,11 +2972,11 @@ struct image
   /* True if this image has a `transparent' background -- that is, is
      uses an image mask.  The accessor macro for this is
      `IMAGE_BACKGROUND_TRANSPARENT'.  */
-  unsigned background_transparent : 1;
+  bool_bf background_transparent : 1;
 
   /* True if the `background' and `background_transparent' fields are
      valid, respectively. */
-  unsigned background_valid : 1, background_transparent_valid : 1;
+  bool_bf background_valid : 1, background_transparent_valid : 1;
 
   /* Width and height of the image.  */
   int width, height;
@@ -3008,8 +3019,8 @@ struct image
   /* Reference to the type of the image.  */
   struct image_type *type;
 
-  /* 1 means that loading the image failed.  Don't try again.  */
-  unsigned load_failed_p;
+  /* True means that loading the image failed.  Don't try again.  */
+  bool load_failed_p;
 
   /* A place for image types to store additional data.  It is marked
      during GC.  */
@@ -3194,6 +3205,7 @@ int window_box_left_offset (struct window *, enum glyph_row_area);
 int window_box_right (struct window *, enum glyph_row_area);
 int window_box_right_offset (struct window *, enum glyph_row_area);
 int estimate_mode_line_height (struct frame *, enum face_id);
+int move_it_to (struct it *, ptrdiff_t, int, int, int, int);
 void pixel_to_glyph_coords (struct frame *, int, int, int *, int *,
                             NativeRectangle *, int);
 void remember_mouse_glyph (struct frame *, int, int, NativeRectangle *);
@@ -3205,7 +3217,6 @@ void init_iterator (struct it *, struct window *, ptrdiff_t,
 void init_iterator_to_row_start (struct it *, struct window *,
                                  struct glyph_row *);
 void start_display (struct it *, struct window *, struct text_pos);
-void move_it_to (struct it *, ptrdiff_t, int, int, int, int);
 void move_it_vertically (struct it *, int);
 void move_it_vertically_backward (struct it *, int);
 void move_it_by_lines (struct it *, ptrdiff_t);
@@ -3213,15 +3224,14 @@ void move_it_past_eol (struct it *);
 void move_it_in_display_line (struct it *it,
 			      ptrdiff_t to_charpos, int to_x,
 			      enum move_operation_enum op);
-int in_display_vector_p (struct it *);
+bool in_display_vector_p (struct it *);
 int frame_mode_line_height (struct frame *);
 extern Lisp_Object Qtool_bar;
 extern bool redisplaying_p;
-extern int help_echo_showing_p;
+extern bool help_echo_showing_p;
 extern Lisp_Object help_echo_string, help_echo_window;
 extern Lisp_Object help_echo_object, previous_help_echo_string;
 extern ptrdiff_t help_echo_pos;
-extern struct frame *last_mouse_frame;
 extern int last_tool_bar_item;
 extern void reseat_at_previous_visible_line_start (struct it *);
 extern Lisp_Object lookup_glyphless_char_display (int, struct it *);
@@ -3256,11 +3266,14 @@ extern void draw_phys_cursor_glyph (struct window *,
                                     enum draw_glyphs_face);
 extern void get_phys_cursor_geometry (struct window *, struct glyph_row *,
                                       struct glyph *, int *, int *, int *);
+#if HAVE_NTGUI
 extern void erase_phys_cursor (struct window *);
+#endif
 extern void display_and_set_cursor (struct window *, bool, int, int, int, int);
 extern void x_update_cursor (struct frame *, bool);
 extern void x_clear_cursor (struct window *);
 extern void x_draw_vertical_border (struct window *w);
+extern void x_draw_right_divider (struct window *w);
 
 extern int get_glyph_string_clip_rects (struct glyph_string *,
                                         NativeRectangle *, int);
@@ -3280,9 +3293,10 @@ extern void note_mouse_highlight (struct frame *, int, int);
 extern void x_clear_window_mouse_face (struct window *);
 extern void cancel_mouse_face (struct frame *);
 extern int clear_mouse_face (Mouse_HLInfo *);
-extern int cursor_in_mouse_face_p (struct window *w);
+extern bool cursor_in_mouse_face_p (struct window *w);
 extern void tty_draw_row_with_mouse_face (struct window *, struct glyph_row *,
 					  int, int, enum draw_glyphs_face);
+extern void display_tty_menu_item (const char *, int, int, int, int, int);
 
 /* Flags passed to try_window.  */
 #define TRY_WINDOW_CHECK_MARGINS	(1 << 0)
@@ -3306,8 +3320,6 @@ extern unsigned row_hash (struct glyph_row *);
 
 #ifdef HAVE_WINDOW_SYSTEM
 
-extern int x_bitmap_height (struct frame *, ptrdiff_t);
-extern int x_bitmap_width (struct frame *, ptrdiff_t);
 extern ptrdiff_t x_bitmap_pixmap (struct frame *, ptrdiff_t);
 extern void x_reference_bitmap (struct frame *, ptrdiff_t);
 extern ptrdiff_t x_create_bitmap_from_data (struct frame *, char *,
@@ -3359,9 +3371,10 @@ void init_baud_rate (int);
 void init_sigio (int);
 void ignore_sigio (void);
 
-/* Defined in xfaces.c */
+/* Defined in xfaces.c.  */
 
 #ifdef HAVE_X_WINDOWS
+void unload_color (struct frame *, unsigned long);
 void x_free_colors (struct frame *, unsigned long *, int);
 #endif
 
@@ -3369,9 +3382,10 @@ void update_face_from_frame_parameter (struct frame *, Lisp_Object,
                                        Lisp_Object);
 Lisp_Object tty_color_name (struct frame *, int);
 void clear_face_cache (int);
+#ifdef MSDOS
 unsigned long load_color (struct frame *, struct face *, Lisp_Object,
                           enum lface_attribute_index);
-void unload_color (struct frame *, unsigned long);
+#endif
 char *choose_face_font (struct frame *, Lisp_Object *, Lisp_Object,
                         int *);
 void prepare_face_for_display (struct frame *, struct face *);
@@ -3384,16 +3398,13 @@ void init_frame_faces (struct frame *);
 void free_frame_faces (struct frame *);
 void recompute_basic_faces (struct frame *);
 int face_at_buffer_position (struct window *w, ptrdiff_t pos,
-                             ptrdiff_t region_beg, ptrdiff_t region_end,
                              ptrdiff_t *endptr, ptrdiff_t limit,
                              int mouse, int base_face_id);
 int face_for_overlay_string (struct window *w, ptrdiff_t pos,
-                             ptrdiff_t region_beg, ptrdiff_t region_end,
                              ptrdiff_t *endptr, ptrdiff_t limit,
                              int mouse, Lisp_Object overlay);
 int face_at_string_position (struct window *w, Lisp_Object string,
                              ptrdiff_t pos, ptrdiff_t bufpos,
-                             ptrdiff_t region_beg, ptrdiff_t region_end,
                              ptrdiff_t *endptr, enum face_id, int mouse);
 int merge_faces (struct frame *, Lisp_Object, int, int);
 int compute_char_face (struct frame *, int, Lisp_Object);
@@ -3401,7 +3412,7 @@ void free_all_realized_faces (Lisp_Object);
 extern Lisp_Object Qforeground_color, Qbackground_color;
 extern char unspecified_fg[], unspecified_bg[];
 
-/* Defined in xfns.c  */
+/* Defined in xfns.c.  */
 
 #ifdef HAVE_X_WINDOWS
 void gamma_correct (struct frame *, XColor *);
@@ -3420,7 +3431,7 @@ extern frame_parm_handler x_frame_parm_handlers[];
 
 extern void start_hourglass (void);
 extern void cancel_hourglass (void);
-extern int hourglass_shown_p;
+extern bool hourglass_shown_p;
 /* If non-null, an asynchronous timer that, when it expires, displays
    an hourglass cursor on all frames.  */
 extern struct atimer *hourglass_atimer;
@@ -3454,6 +3465,8 @@ extern void hide_hourglass (void);
 
 int popup_activated (void);
 
+/* Defined in dispnew.c */
+
 extern Lisp_Object buffer_posn_from_coords (struct window *,
                                             int *, int *,
                                             struct display_pos *,
@@ -3468,9 +3481,8 @@ extern Lisp_Object marginal_area_string (struct window *, enum window_part,
                                          Lisp_Object *,
                                          int *, int *, int *, int *);
 extern void redraw_frame (struct frame *);
-extern void cancel_line (int, struct frame *);
-extern void init_desired_glyphs (struct frame *);
 extern bool update_frame (struct frame *, bool, bool);
+extern void update_frame_with_menu (struct frame *);
 extern void bitch_at_user (void);
 extern void adjust_frame_glyphs (struct frame *);
 void free_glyphs (struct frame *);
@@ -3489,14 +3501,14 @@ void blank_row (struct window *, struct glyph_row *, int);
 void clear_glyph_matrix_rows (struct glyph_matrix *, int, int);
 void clear_glyph_row (struct glyph_row *);
 void prepare_desired_row (struct glyph_row *);
-void set_window_update_flags (struct window *, bool);
 void update_single_window (struct window *, bool);
 void do_pending_window_change (bool);
-void change_frame_size (struct frame *, int, int, bool, bool, bool);
+void change_frame_size (struct frame *, int, int, bool, bool, bool, bool);
 void init_display (void);
 void syms_of_display (void);
 extern Lisp_Object Qredisplay_dont_pause;
-void spec_glyph_lookup_face (struct window *, GLYPH *);
+extern void spec_glyph_lookup_face (struct window *, GLYPH *);
+extern void fill_up_frame_row_with_spaces (struct glyph_row *, int);
 
 /* Defined in terminal.c */
 
@@ -3524,8 +3536,7 @@ extern int string_cost (const char *);
 extern int per_line_cost (const char *);
 extern void calculate_costs (struct frame *);
 extern void produce_glyphs (struct it *);
-extern bool tty_capable_p (struct tty_display_info *, unsigned,
-			   unsigned long, unsigned long);
+extern bool tty_capable_p (struct tty_display_info *, unsigned);
 extern void set_tty_color_mode (struct tty_display_info *, struct frame *);
 extern struct terminal *get_named_tty (const char *);
 extern void create_tty_output (struct frame *);
@@ -3558,6 +3569,7 @@ enum resource_types
   RES_TYPE_BOOLEAN_NUMBER
 };
 
+extern Display_Info *check_x_display_info (Lisp_Object);
 extern Lisp_Object x_get_arg (Display_Info *, Lisp_Object,
                               Lisp_Object, const char *, const char *class,
                               enum resource_types);
@@ -3569,6 +3581,13 @@ extern Lisp_Object x_default_parameter (struct frame *, Lisp_Object,
                                         Lisp_Object, Lisp_Object,
                                         const char *, const char *,
                                         enum resource_types);
+extern char *x_get_string_resource (XrmDatabase, const char *,
+				    const char *);
+
+#ifndef HAVE_NS /* These both used on W32 and X only.  */
+extern bool x_mouse_grabbed (Display_Info *);
+extern void x_redo_mouse_highlight (Display_Info *);
+#endif /* HAVE_NS */
 
 #endif /* HAVE_WINDOW_SYSTEM */
 

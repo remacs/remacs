@@ -1,9 +1,9 @@
 ;;; cus-edit.el --- tools for customizing Emacs and Lisp packages -*- lexical-binding:t -*-
 ;;
-;; Copyright (C) 1996-1997, 1999-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1996-1997, 1999-2014 Free Software Foundation, Inc.
 ;;
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: help, faces
 ;; Package: emacs
 
@@ -699,7 +699,7 @@ If `last', order groups after non-groups."
 
 (defun custom-sort-items (items sort-alphabetically order-groups)
   "Return a sorted copy of ITEMS.
-ITEMS should be a `custom-group' property.
+ITEMS should be a list of `custom-group' properties.
 If SORT-ALPHABETICALLY non-nil, sort alphabetically.
 If ORDER-GROUPS is `first' order groups before non-groups, if `last' order
 groups after non-groups, if nil do not order groups at all."
@@ -1450,7 +1450,10 @@ If TYPE is `groups', include only groups."
                           (custom-variable-p symbol)))
                  (push (list symbol 'custom-variable) found))))))
     (unless found
-      (error "No customizable %s matching %s" (symbol-name type) pattern))
+      (error "No customizable %s matching %s" (if (not type)
+						  "group, face, or option"
+						(symbol-name type))
+	     pattern))
     (custom-buffer-create
      (custom-sort-items found t custom-buffer-order-groups)
      "*Customize Apropos*")))
@@ -1527,7 +1530,8 @@ not for everybody."
 Optional NAME is the name of the buffer.
 OPTIONS should be an alist of the form ((SYMBOL WIDGET)...), where
 SYMBOL is a customization option, and WIDGET is a widget for editing
-that option."
+that option.
+DESCRIPTION is unused."
   (pop-to-buffer-same-window (custom-get-fresh-buffer (or name "*Customization*")))
   (custom-buffer-create-internal options description))
 
@@ -1931,7 +1935,7 @@ SAVED and set." "\
 something in this group has been set and saved.")
     (themed "o" custom-themed "\
 THEMED." "\
-visible group members are all at standard values.")
+visible group members are set by enabled themes.")
     (rogue "@" custom-rogue "\
 NO CUSTOMIZATION DATA; not intended to be customized." "\
 something in this group is not prepared for customization.")
@@ -1961,6 +1965,8 @@ STATE is one of the following symbols:
    This item is marked for saving.
 `rogue'
    This item has no customization information.
+`themed'
+   This item was set by an enabled Custom theme.
 `standard'
    This item is unchanged from the standard setting.
 

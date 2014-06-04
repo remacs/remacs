@@ -1,3 +1,35 @@
+2014-05-30  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	Use common string allocation and freeing functions where applicable.
+	* lwlib.h (safe_strdup): Remove prototype.
+	* lwlib.c (safe_strdup, safe_free_str): Remove.
+	(copy_widget_value_tree, allocate_widget_info, free_widget_info):
+	(merge_widget_value): Prefer xstrdup, xfree and dupstring.
+	* lwlib-Xm.c (make_destroyed_instance, xm_update_one_value): Ditto.
+
+2013-12-14  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Use bool for boolean, focusing on headers.
+	* xlwmenuP.h (XlwMenu_part): Use bool_bf for boolean bit-fields.
+
+2013-11-14  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* lwlib.c (safe_strdup): Prefer tail calls.
+
+2013-11-02  Glenn Morris  <rgm@gnu.org>
+
+	Use relative filenames in TAGS files.
+	* Makefile.in (abs_srcdir): Remove it again.
+	(ctagsfiles, TAGS): Use relative filenames.
+
+	* Makefile.in (abs_srcdir): New, set by configure.
+	(ETAGS, ctagsfiles): New variables.
+	(TAGS): Use ETAGS, ctagsfiles.  Use absolute filenames again.
+
+2013-10-24  Glenn Morris  <rgm@gnu.org>
+
+	* Makefile.in (abs_top_srcdir): New, set by configure.
+
 2013-09-04  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Makefile improvements.
@@ -274,8 +306,7 @@
 	(lw_create_widget, lw_pop_all_widgets, lw_show_busy)
 	(lw_refigure_widget, lw_allow_resizing): Remove alternative K&R
 	declarations.
-	* lwlib-Xlw.c (xlw_update_one_widget):
-	(xlw_pop_instance): Likewise.
+	* lwlib-Xlw.c (xlw_update_one_widget, xlw_pop_instance): Likewise.
 	* lwlib-Xaw.c (xaw_update_one_widget, xaw_pop_instance):
 	Likewise.
 	* lwlib-Xm.c (P_): Remove.
@@ -378,7 +409,7 @@
 	Add eventhandler for expose to expose_cb.  Remove creation of xft_draw.
 	(create_pixmap_for_menu): New function.
 	(remap_menubar): Pop down menus that aren't the same as in old_stack.
-	Set width, heigh, x, y on widget with XtVaSetValues.
+	Set width, height, x, y on widget with XtVaSetValues.
 	Call create_pixmap_for_menu.
 	Replace XUnmapWindow with XtPopdown.
 	Remowe two last parameters to display_menu.
@@ -451,7 +482,7 @@
 	XtCDefaultFace): New.
 
 	* xlwmenuP.h (_window_state): Add max_rest_width and xft_draw.
-	(_XlwMenu_part): Add faceName,xft_fg, xft_bg, xft_disabled_fg and
+	(_XlwMenu_part): Add faceName, xft_fg, xft_bg, xft_disabled_fg and
 	xft_font.
 
 2010-03-10  Chong Yidong  <cyd@stupidchicken.com>
@@ -573,8 +604,7 @@
 
 	* xlwmenuP.h (_XlwMenu_part): Add fontSet resource.
 
-	* xlwmenu.c (string_width):
-	(MENU_FONT_HEIGHT, MENU_FONT_ASCENT): Ditto.
+	* xlwmenu.c (string_width, MENU_FONT_HEIGHT, MENU_FONT_ASCENT): Ditto.
 	(display_menu_item, make_drawing_gcs, XlwMenuInitialize)
 	(XlwMenuSetValues): Use font if fontSet is NULL, use only
 	font for !HAVE_X_I18N.
@@ -819,8 +849,8 @@
 	* lwlib.h (_widget_value): `help' has type Lisp_Object.
 
 	* xlwmenu.c, lwlib-Xaw.c, lwlib-Xlw.c: Include ../src/lisp.h.
-	* lwlib-Xm.c, lwlib-Xol.c, lwlib/lwlib-Xolmb.c: Include ../src/lisp.h.
-	* lwlib/lwlib-utils.c: Include ../src/lisp.h.
+	* lwlib-Xm.c, lwlib-Xol.c, lwlib-Xolmb.c: Include ../src/lisp.h.
+	* lwlib-utils.c: Include ../src/lisp.h.
 
 	* lwlib.c: Include ../src/lisp.h.  Don't declare xmalloc.
 	(free_widget_value_tree): Don't free `help' field.
@@ -1211,7 +1241,7 @@
 
 1998-07-30  Paul Eggert  <eggert@twinsun.com>
 
-	* lwlib/Makefile.in (lwlib-utils.o, lwlib.o, lwlib-Xlw.o)
+	* Makefile.in (lwlib-utils.o, lwlib.o, lwlib-Xlw.o)
 	(lwlib-Xaw.o, lwlib-Xm.o, lwlib-Xol.o, lwlib-Xolmb.o):
 	Add dependencies to corresponding .c files for Solaris 2.x VPATH make.
 
@@ -1835,7 +1865,7 @@
 ;; coding: utf-8
 ;; End:
 
-  Copyright (C) 1995-1999, 2001-2013 Free Software Foundation, Inc.
+  Copyright (C) 1995-1999, 2001-2014 Free Software Foundation, Inc.
 
   This file is part of GNU Emacs.
 

@@ -1,6 +1,6 @@
 /* Implementation of GUI terminal on the Microsoft Windows API.
 
-Copyright (C) 1989, 1993-2013 Free Software Foundation, Inc.
+Copyright (C) 1989, 1993-2014 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -52,6 +52,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "keymap.h"
 
 #ifdef WINDOWSNT
+#include "w32.h"	/* for filename_from_utf16, filename_from_ansi */
 #include "w32heap.h"
 #endif
 
@@ -99,13 +100,6 @@ extern Cursor w32_load_cursor (LPCTSTR name);
 struct w32_display_info one_w32_display_info;
 struct w32_display_info *x_display_list;
 
-/* This is a list of cons cells, each of the form (NAME . FONT-LIST-CACHE),
-   one for each element of w32_display_list and in the same order.
-   NAME is the name of the frame.
-   FONT-LIST-CACHE records previous values returned by x-list-fonts.  */
-Lisp_Object w32_display_name_list;
-
-
 #if _WIN32_WINNT < 0x0500 && !defined(_W64)
 /* Pre Windows 2000, this was not available, but define it here so
    that Emacs compiled on such a platform will run on newer versions.
@@ -149,9 +143,6 @@ BOOL (WINAPI *pfnSetLayeredWindowAttributes) (HWND, COLORREF, BYTE, DWORD);
 #define SM_CYVIRTUALSCREEN 79
 #endif
 
-/* This is a frame waiting to be autoraised, within w32_read_socket.  */
-struct frame *pending_autoraise_frame;
-
 /* The handle of the frame that currently owns the system caret.  */
 HWND w32_system_caret_hwnd;
 int w32_system_caret_height;
@@ -174,31 +165,6 @@ int last_scroll_bar_drag_pos;
 /* Keyboard code page - may be changed by language-change events.  */
 int w32_keyboard_codepage;
 
-/* Mouse movement. */
-
-/* Where the mouse was last time we reported a mouse event.  */
-static RECT last_mouse_glyph;
-static struct frame *last_mouse_glyph_frame;
-
-/* The scroll bar in which the last motion event occurred.
-
-   If the last motion event occurred in a scroll bar, we set this
-   so w32_mouse_position can know whether to report a scroll bar motion or
-   an ordinary motion.
-
-   If the last motion event didn't occur in a scroll bar, we set this
-   to Qnil, to tell w32_mouse_position to return an ordinary motion event.  */
-static Lisp_Object last_mouse_scroll_bar;
-static int last_mouse_scroll_bar_pos;
-
-/* This is a hack.  We would really prefer that w32_mouse_position would
-   return the time associated with the position it returns, but there
-   doesn't seem to be any way to wrest the time-stamp from the server
-   along with the position query.  So, we just keep track of the time
-   of the last movement we received, and return that in hopes that
-   it's somewhat accurate.  */
-static Time last_mouse_movement_time;
-
 /* Incremented by w32_read_socket whenever it really tries to read
    events.  */
 static int volatile input_signal_count;
@@ -215,7 +181,7 @@ void x_lower_frame (struct frame *);
 void x_scroll_bar_clear (struct frame *);
 void x_wm_set_size_hint (struct frame *, long, bool);
 void x_raise_frame (struct frame *);
-void x_set_window_size (struct frame *, int, int, int);
+void x_set_window_size (struct frame *, int, int, int, bool);
 void x_wm_set_window_state (struct frame *, int);
 void x_wm_set_icon_pixmap (struct frame *, int);
 static void w32_initialize (void);
@@ -656,6 +622,44 @@ w32_draw_vertical_window_border (struct window *w, int x, int y0, int y1)
 }
 
 
+/* Draw a window divider from (x0, y0) to (x1, y1)  */
+
+static void
+w32_draw_window_divider (struct window *w, int x0, int x1, int y0, int y1)
+{
+  struct frame *f = XFRAME (WINDOW_FRAME (w));
+  HDC hdc = get_frame_dc (f);
+  struct face *face = FACE_FROM_ID (f, WINDOW_DIVIDER_FACE_ID);
+  struct face *face_first = FACE_FROM_ID (f, WINDOW_DIVIDER_FIRST_PIXEL_FACE_ID);
+  struct face *face_last = FACE_FROM_ID (f, WINDOW_DIVIDER_LAST_PIXEL_FACE_ID);
+  unsigned long color = face ? face->foreground : FRAME_FOREGROUND_PIXEL (f);
+  unsigned long color_first = (face_first
+			       ? face_first->foreground
+			       : FRAME_FOREGROUND_PIXEL (f));
+  unsigned long color_last = (face_last
+			      ? face_last->foreground
+			      : FRAME_FOREGROUND_PIXEL (f));
+
+  if (y1 - y0 > x1 - x0 && x1 - x0 > 2)
+    /* Vertical.  */
+    {
+      w32_fill_area_abs (f, hdc, color_first, x0, y0, x0 + 1, y1);
+      w32_fill_area_abs (f, hdc, color, x0 + 1, y0, x1 - 1, y1);
+      w32_fill_area_abs (f, hdc, color_last, x1 - 1, y0, x1, y1);
+    }
+  else if (x1 - x0 > y1 - y0 && y1 - y0 > 3)
+    /* Horizontal.  */
+    {
+      w32_fill_area_abs (f, hdc, color_first, x0, y0, x1, y0 + 1);
+      w32_fill_area_abs (f, hdc, color, x0, y0 + 1, x1, y1 - 1);
+      w32_fill_area_abs (f, hdc, color_last, x0, y1 - 1, x1, y1);
+    }
+  else
+    w32_fill_area_abs (f, hdc, color, x0, y0, x1, y1);
+
+  release_frame_dc (f, hdc);
+}
+
 /* End update of window W.
 
    Draw vertical borders between horizontally adjacent windows, and
@@ -683,7 +687,12 @@ x_update_window_end (struct window *w, bool cursor_on_p,
 				w->output_cursor.x, w->output_cursor.y);
 
       if (draw_window_fringes (w, 1))
-	x_draw_vertical_border (w);
+	{
+	  if (WINDOW_RIGHT_DIVIDER_WIDTH (w))
+	    x_draw_right_divider (w);
+	  else
+	    x_draw_vertical_border (w);
+	}
 
       unblock_input ();
     }
@@ -691,7 +700,13 @@ x_update_window_end (struct window *w, bool cursor_on_p,
   /* If a row with mouse-face was overwritten, arrange for
      XTframe_up_to_date to redisplay the mouse highlight.  */
   if (mouse_face_overwritten_p)
-    reset_mouse_highlight (MOUSE_HL_INFO (XFRAME (w->frame)));
+    {
+      Mouse_HLInfo *hlinfo = MOUSE_HL_INFO (XFRAME (w->frame));
+
+      hlinfo->mouse_face_beg_row = hlinfo->mouse_face_beg_col = -1;
+      hlinfo->mouse_face_end_row = hlinfo->mouse_face_end_col = -1;
+      hlinfo->mouse_face_window = Qnil;
+    }
 
   /* Unhide the caret.  This won't actually show the cursor, unless it
      was visible before the corresponding call to HideCaret in
@@ -789,62 +804,12 @@ w32_draw_fringe_bitmap (struct window *w, struct glyph_row *row,
 
   hdc = get_frame_dc (f);
 
-  if (!p->overlay_p)
-    {
-      int bx = p->bx, by = p->by, nx = p->nx, ny = p->ny;
-
-      /* If the fringe is adjacent to the left (right) scroll bar of a
-	 leftmost (rightmost, respectively) window, then extend its
-	 background to the gap between the fringe and the bar.  */
-      if ((WINDOW_LEFTMOST_P (w)
-	   && WINDOW_HAS_VERTICAL_SCROLL_BAR_ON_LEFT (w))
-	  || (WINDOW_RIGHTMOST_P (w)
-	      && WINDOW_HAS_VERTICAL_SCROLL_BAR_ON_RIGHT (w)))
-	{
-	  int sb_width = WINDOW_CONFIG_SCROLL_BAR_WIDTH (w);
-
-	  if (sb_width > 0)
-	    {
-	      int bar_area_x = WINDOW_SCROLL_BAR_AREA_X (w);
-	      int bar_area_width = (WINDOW_CONFIG_SCROLL_BAR_COLS (w)
-				    * FRAME_COLUMN_WIDTH (f));
-
-	      if (bx < 0)
-		{
-		  /* Bitmap fills the fringe.  */
-		  if (bar_area_x + bar_area_width == p->x)
-		    bx = bar_area_x + sb_width;
-		  else if (p->x + p->wd == bar_area_x)
-		    bx = bar_area_x;
-		  if (bx >= 0)
-		    {
-		      int header_line_height = WINDOW_HEADER_LINE_HEIGHT (w);
-
-		      nx = bar_area_width - sb_width;
-		      by = WINDOW_TO_FRAME_PIXEL_Y (w, max (header_line_height,
-							    row->y));
-		      ny = row->visible_height;
-		    }
-		}
-	      else
-		{
-		  if (bar_area_x + bar_area_width == bx)
-		    {
-		      bx = bar_area_x + sb_width;
-		      nx += bar_area_width - sb_width;
-		    }
-		  else if (bx + nx == bar_area_x)
-		    nx += bar_area_width - sb_width;
-		}
-	    }
-	}
-
-      if (bx >= 0 && nx > 0)
-	w32_fill_area (f, hdc, face->background, bx, by, nx, ny);
-    }
-
   /* Must clip because of partially visible lines.  */
   w32_clip_to_row (w, row, ANY_AREA, hdc);
+
+  if (p->bx >= 0 && !p->overlay_p)
+    w32_fill_area (f, hdc, face->background,
+		   p->bx, p->by, p->nx, p->ny);
 
   if (p->which && p->which < max_fringe_bmp)
     {
@@ -1113,10 +1078,7 @@ x_set_glyph_string_gc (struct glyph_string *s)
       s->stippled_p = s->face->stipple != 0;
     }
   else
-    {
-      s->gc = s->face->gc;
-      s->stippled_p = s->face->stipple != 0;
-    }
+    emacs_abort ();
 
   /* GC must have been set.  */
   eassert (s->gc != 0);
@@ -1631,10 +1593,7 @@ w32_setup_relief_color (struct frame *f, struct relief *relief, double factor,
   xgcv.foreground = default_pixel;
   pixel = background;
   if (w32_alloc_lighter_color (f, &pixel, factor, delta))
-    {
-      relief->allocated_p = 1;
-      xgcv.foreground = relief->pixel = pixel;
-    }
+    xgcv.foreground = relief->pixel = pixel;
 
   if (relief->gc == 0)
     {
@@ -1930,6 +1889,7 @@ static void
 x_draw_image_relief (struct glyph_string *s)
 {
   int x1, y1, thick, raised_p, top_p, bot_p, left_p, right_p;
+  int extra_x, extra_y;
   RECT r;
   int x = s->x;
   int y = s->ybase - image_ascent (s->img, s->face, &s->slice);
@@ -1963,16 +1923,31 @@ x_draw_image_relief (struct glyph_string *s)
 
   x1 = x + s->slice.width - 1;
   y1 = y + s->slice.height - 1;
+
+  extra_x = extra_y = 0;
+  if (s->face->id == TOOL_BAR_FACE_ID)
+    {
+      if (CONSP (Vtool_bar_button_margin)
+	  && INTEGERP (XCAR (Vtool_bar_button_margin))
+	  && INTEGERP (XCDR (Vtool_bar_button_margin)))
+	{
+	  extra_x = XINT (XCAR (Vtool_bar_button_margin));
+	  extra_y = XINT (XCDR (Vtool_bar_button_margin));
+	}
+      else if (INTEGERP (Vtool_bar_button_margin))
+	extra_x = extra_y = XINT (Vtool_bar_button_margin);
+    }
+
   top_p = bot_p = left_p = right_p = 0;
 
   if (s->slice.x == 0)
-    x -= thick, left_p = 1;
+    x -= thick + extra_x, left_p = 1;
   if (s->slice.y == 0)
-    y -= thick, top_p = 1;
+    y -= thick + extra_y, top_p = 1;
   if (s->slice.x + s->slice.width == s->img->width)
-    x1 += thick, right_p = 1;
+    x1 += thick + extra_x, right_p = 1;
   if (s->slice.y + s->slice.height == s->img->height)
-    y1 += thick, bot_p = 1;
+    y1 += thick + extra_y, bot_p = 1;
 
   x_setup_relief_colors (s);
   get_glyph_string_clip_rect (s, &r);
@@ -2107,10 +2082,14 @@ x_draw_image_glyph_string (struct glyph_string *s)
   int x, y;
   int box_line_hwidth = eabs (s->face->box_line_width);
   int box_line_vwidth = max (s->face->box_line_width, 0);
-  int height;
+  int height, width;
   HBITMAP pixmap = 0;
 
-  height = s->height - 2 * box_line_vwidth;
+  height = s->height;
+  if (s->slice.y == 0)
+    height -= box_line_vwidth;
+  if (s->slice.y + s->slice.height >= s->img->height)
+    height -= box_line_vwidth;
 
   /* Fill background with face under the image.  Do it only if row is
      taller than image or if image has a clip mask to reduce
@@ -2123,10 +2102,14 @@ x_draw_image_glyph_string (struct glyph_string *s)
       || s->img->pixmap == 0
       || s->width != s->background_width)
     {
+      width = s->background_width;
       x = s->x;
       if (s->first_glyph->left_box_line_p
 	  && s->slice.x == 0)
-	x += box_line_hwidth;
+	{
+	  x += box_line_hwidth;
+	  width -= box_line_hwidth;
+	}
 
       y = s->y;
       if (s->slice.y == 0)
@@ -2172,7 +2155,7 @@ x_draw_image_glyph_string (struct glyph_string *s)
 	}
       else
 #endif
-	x_draw_glyph_string_bg_rect (s, x, y, s->background_width, height);
+	x_draw_glyph_string_bg_rect (s, x, y, width, height);
 
       s->background_filled_p = 1;
     }
@@ -2694,32 +2677,6 @@ x_scroll_run (struct window *w, struct run *run)
      fringes of W.  */
   window_box (w, ANY_AREA, &x, &y, &width, &height);
 
-  /* If the fringe is adjacent to the left (right) scroll bar of a
-     leftmost (rightmost, respectively) window, then extend its
-     background to the gap between the fringe and the bar.  */
-  if ((WINDOW_LEFTMOST_P (w)
-       && WINDOW_HAS_VERTICAL_SCROLL_BAR_ON_LEFT (w))
-      || (WINDOW_RIGHTMOST_P (w)
-	  && WINDOW_HAS_VERTICAL_SCROLL_BAR_ON_RIGHT (w)))
-    {
-      int sb_width = WINDOW_CONFIG_SCROLL_BAR_WIDTH (w);
-
-      if (sb_width > 0)
-	{
-	  int bar_area_x = WINDOW_SCROLL_BAR_AREA_X (w);
-	  int bar_area_width = (WINDOW_CONFIG_SCROLL_BAR_COLS (w)
-				* FRAME_COLUMN_WIDTH (f));
-
-	  if (bar_area_x + bar_area_width == x)
-	    {
-	      x = bar_area_x + sb_width;
-	      width += bar_area_width - sb_width;
-	    }
-	  else if (x + width == bar_area_x)
-	    width += bar_area_width - sb_width;
-	}
-    }
-
   from_y = WINDOW_TO_FRAME_PIXEL_Y (w, run->current_y);
   to_y = WINDOW_TO_FRAME_PIXEL_Y (w, run->desired_y);
   bottom_y = y + height;
@@ -2823,9 +2780,9 @@ x_new_focus_frame (struct w32_display_info *dpyinfo, struct frame *frame)
 	x_lower_frame (old_focus);
 
       if (dpyinfo->w32_focus_frame && dpyinfo->w32_focus_frame->auto_raise)
-	pending_autoraise_frame = dpyinfo->w32_focus_frame;
+	dpyinfo->w32_pending_autoraise_frame = dpyinfo->w32_focus_frame;
       else
-	pending_autoraise_frame = 0;
+	dpyinfo->w32_pending_autoraise_frame = NULL;
     }
 
   x_frame_rehighlight (dpyinfo);
@@ -3131,8 +3088,15 @@ construct_drag_n_drop (struct input_event *result, W32Msg *msg, struct frame *f)
   HDROP hdrop;
   POINT p;
   WORD num_files;
-  guichar_t *name;
-  int i, len;
+  wchar_t name_w[MAX_PATH];
+#ifdef NTGUI_UNICODE
+  const int use_unicode = 1;
+#else
+  int use_unicode = w32_unicode_filenames;
+  char name_a[MAX_PATH];
+  char file[MAX_UTF8_PATH];
+#endif
+  int i;
 
   result->kind = DRAG_N_DROP_EVENT;
   result->code = 0;
@@ -3156,17 +3120,30 @@ construct_drag_n_drop (struct input_event *result, W32Msg *msg, struct frame *f)
 
   for (i = 0; i < num_files; i++)
     {
-      len = GUI_FN (DragQueryFile) (hdrop, i, NULL, 0);
-      if (len <= 0)
-	continue;
-
-      name = alloca ((len + 1) * sizeof (*name));
-      GUI_FN (DragQueryFile) (hdrop, i, name, len + 1);
+      if (use_unicode)
+	{
+	  eassert (DragQueryFileW (hdrop, i, NULL, 0) < MAX_PATH);
+	  /* If DragQueryFile returns zero, it failed to fetch a file
+	     name.  */
+	  if (DragQueryFileW (hdrop, i, name_w, MAX_PATH) == 0)
+	    continue;
 #ifdef NTGUI_UNICODE
-      files = Fcons (from_unicode_buffer (name), files);
+	  files = Fcons (from_unicode_buffer (name_w), files);
 #else
-      files = Fcons (DECODE_FILE (build_string (name)), files);
+	  filename_from_utf16 (name_w, file);
+	  files = Fcons (DECODE_FILE (build_unibyte_string (file)), files);
 #endif /* NTGUI_UNICODE */
+	}
+#ifndef NTGUI_UNICODE
+      else
+	{
+	  eassert (DragQueryFileA (hdrop, i, NULL, 0) < MAX_PATH);
+	  if (DragQueryFileA (hdrop, i, name_a, MAX_PATH) == 0)
+	    continue;
+	  filename_from_ansi (name_a, file);
+	  files = Fcons (DECODE_FILE (build_unibyte_string (file)), files);
+	}
+#endif
     }
 
   DragFinish (hdrop);
@@ -3307,47 +3284,47 @@ queue_notifications (struct input_event *event, W32Msg *msg, struct frame *f,
    the mainstream emacs code by setting mouse_moved.  If not, ask for
    another motion event, so we can check again the next time it moves.  */
 
-static MSG last_mouse_motion_event;
-static Lisp_Object last_mouse_motion_frame;
-
 static int
 note_mouse_movement (struct frame *frame, MSG *msg)
 {
+  struct w32_display_info *dpyinfo;
   int mouse_x = LOWORD (msg->lParam);
   int mouse_y = HIWORD (msg->lParam);
-
-  last_mouse_movement_time = msg->time;
-  memcpy (&last_mouse_motion_event, msg, sizeof (last_mouse_motion_event));
-  XSETFRAME (last_mouse_motion_frame, frame);
+  RECT *r;
 
   if (!FRAME_X_OUTPUT (frame))
     return 0;
 
+  dpyinfo = FRAME_DISPLAY_INFO (frame);
+  dpyinfo->last_mouse_movement_time = msg->time;
+  dpyinfo->last_mouse_motion_frame = frame;
+  dpyinfo->last_mouse_motion_x = mouse_x;
+  dpyinfo->last_mouse_motion_y = mouse_y;
+
   if (msg->hwnd != FRAME_W32_WINDOW (frame))
     {
       frame->mouse_moved = 1;
-      last_mouse_scroll_bar = Qnil;
+      dpyinfo->last_mouse_scroll_bar = NULL;
       note_mouse_highlight (frame, -1, -1);
-      last_mouse_glyph_frame = 0;
+      dpyinfo->last_mouse_glyph_frame = NULL;
       return 1;
     }
 
   /* Has the mouse moved off the glyph it was on at the last sighting?  */
-  if (frame != last_mouse_glyph_frame
-      || mouse_x < last_mouse_glyph.left
-      || mouse_x >= last_mouse_glyph.right
-      || mouse_y < last_mouse_glyph.top
-      || mouse_y >= last_mouse_glyph.bottom)
+  r = &dpyinfo->last_mouse_glyph;
+  if (frame != dpyinfo->last_mouse_glyph_frame
+      || mouse_x < r->left || mouse_x >= r->right
+      || mouse_y < r->top  || mouse_y >= r->bottom)
     {
       frame->mouse_moved = 1;
-      last_mouse_scroll_bar = Qnil;
+      dpyinfo->last_mouse_scroll_bar = NULL;
       note_mouse_highlight (frame, mouse_x, mouse_y);
       /* Remember the mouse position here, as w32_mouse_position only
 	 gets called when mouse tracking is enabled but we also need
 	 to keep track of the mouse for help_echo and highlighting at
 	 other times.  */
-      remember_mouse_glyph (frame, mouse_x, mouse_y, &last_mouse_glyph);
-      last_mouse_glyph_frame = frame;
+      remember_mouse_glyph (frame, mouse_x, mouse_y, r);
+      dpyinfo->last_mouse_glyph_frame = frame;
       return 1;
     }
 
@@ -3365,16 +3342,6 @@ static void x_scroll_bar_report_motion (struct frame **, Lisp_Object *,
 					Lisp_Object *, Lisp_Object *,
 					unsigned long *);
 static void x_check_fullscreen (struct frame *);
-
-static void
-redo_mouse_highlight (void)
-{
-  if (!NILP (last_mouse_motion_frame)
-      && FRAME_LIVE_P (XFRAME (last_mouse_motion_frame)))
-    note_mouse_highlight (XFRAME (last_mouse_motion_frame),
-			  LOWORD (last_mouse_motion_event.lParam),
-			  HIWORD (last_mouse_motion_event.lParam));
-}
 
 static void
 w32_define_cursor (Window window, Cursor cursor)
@@ -3407,10 +3374,11 @@ w32_mouse_position (struct frame **fp, int insist, Lisp_Object *bar_window,
 		    unsigned long *time)
 {
   struct frame *f1;
+  struct w32_display_info *dpyinfo = FRAME_DISPLAY_INFO (*fp);
 
   block_input ();
 
-  if (! NILP (last_mouse_scroll_bar) && insist == 0)
+  if (dpyinfo->last_mouse_scroll_bar && insist == 0)
     x_scroll_bar_report_motion (fp, bar_window, part, x, y, time);
   else
     {
@@ -3422,26 +3390,18 @@ w32_mouse_position (struct frame **fp, int insist, Lisp_Object *bar_window,
       FOR_EACH_FRAME (tail, frame)
 	XFRAME (frame)->mouse_moved = 0;
 
-      last_mouse_scroll_bar = Qnil;
+      dpyinfo->last_mouse_scroll_bar = NULL;
 
       GetCursorPos (&pt);
 
       /* Now we have a position on the root; find the innermost window
 	 containing the pointer.  */
       {
-	if (FRAME_DISPLAY_INFO (*fp)->grabbed && last_mouse_frame
-	    && FRAME_LIVE_P (last_mouse_frame))
-	  {
-	    /* If mouse was grabbed on a frame, give coords for that frame
-	       even if the mouse is now outside it.  */
-	    f1 = last_mouse_frame;
-	  }
-	else
-	  {
-	    /* Is window under mouse one of our frames?  */
-	    f1 = x_any_window_to_frame (FRAME_DISPLAY_INFO (*fp),
-                                    WindowFromPoint (pt));
-	  }
+	/* If mouse was grabbed on a frame, give coords for that
+	   frame even if the mouse is now outside it.  Otherwise
+	   check for window under mouse on one of our frames.  */
+	f1 = (x_mouse_grabbed (dpyinfo) ? dpyinfo->last_mouse_frame
+	      : x_any_window_to_frame (dpyinfo, WindowFromPoint (pt)));
 
 	/* If not, is it one of our scroll bars?  */
 	if (! f1)
@@ -3450,9 +3410,7 @@ w32_mouse_position (struct frame **fp, int insist, Lisp_Object *bar_window,
               = x_window_to_scroll_bar (WindowFromPoint (pt));
 
 	    if (bar)
-	      {
-		f1 = XFRAME (WINDOW_FRAME (XWINDOW (bar->window)));
-	      }
+	      f1 = XFRAME (WINDOW_FRAME (XWINDOW (bar->window)));
 	  }
 
 	if (f1 == 0 && insist > 0)
@@ -3468,16 +3426,17 @@ w32_mouse_position (struct frame **fp, int insist, Lisp_Object *bar_window,
 	       on it, i.e. into the same rectangles that matrices on
 	       the frame are divided into.  */
 
+	    dpyinfo = FRAME_DISPLAY_INFO (f1);
 	    ScreenToClient (FRAME_W32_WINDOW (f1), &pt);
-	    remember_mouse_glyph (f1, pt.x, pt.y, &last_mouse_glyph);
-	    last_mouse_glyph_frame = f1;
+	    remember_mouse_glyph (f1, pt.x, pt.y, &dpyinfo->last_mouse_glyph);
+	    dpyinfo->last_mouse_glyph_frame = f1;
 
 	    *bar_window = Qnil;
 	    *part = 0;
 	    *fp = f1;
 	    XSETINT (*x, pt.x);
 	    XSETINT (*y, pt.y);
-	    *time = last_mouse_movement_time;
+	    *time = dpyinfo->last_mouse_movement_time;
 	  }
       }
     }
@@ -3558,10 +3517,10 @@ w32_set_scroll_bar_thumb (struct scroll_bar *bar,
   /* We use the whole scroll-bar height in the calculations below, to
      avoid strange effects like scrolling backwards when just clicking
      on the handle (without moving it).  */
-  double range = VERTICAL_SCROLL_BAR_TOP_RANGE (f, XINT (bar->height))
+  double range = VERTICAL_SCROLL_BAR_TOP_RANGE (f, bar->height)
                  + VERTICAL_SCROLL_BAR_MIN_HANDLE;
   int sb_page, sb_pos;
-  BOOL draggingp = !NILP (bar->dragging) ? TRUE : FALSE;
+  BOOL draggingp = bar->dragging ? TRUE : FALSE;
   SCROLLINFO si;
 
   /* We used to change the nPage setting while dragging the handle,
@@ -3706,20 +3665,19 @@ x_scroll_bar_create (struct window *w, int top, int left, int width, int height)
   HWND hwnd;
   SCROLLINFO si;
   struct scroll_bar *bar
-    = ALLOCATE_PSEUDOVECTOR (struct scroll_bar, fringe_extended_p, PVEC_OTHER);
+    = ALLOCATE_PSEUDOVECTOR (struct scroll_bar, top, PVEC_OTHER);
   Lisp_Object barobj;
 
   block_input ();
 
   XSETWINDOW (bar->window, w);
-  XSETINT (bar->top, top);
-  XSETINT (bar->left, left);
-  XSETINT (bar->width, width);
-  XSETINT (bar->height, height);
-  XSETINT (bar->start, 0);
-  XSETINT (bar->end, 0);
-  bar->dragging = Qnil;
-  bar->fringe_extended_p = 0;
+  bar->top = top;
+  bar->left = left;
+  bar->width = width;
+  bar->height = height;
+  bar->start = 0;
+  bar->end = 0;
+  bar->dragging = 0;
 
   /* Requires geometry to be set before call to create the real window */
 
@@ -3781,33 +3739,17 @@ w32_set_vertical_scroll_bar (struct window *w,
   struct frame *f = XFRAME (w->frame);
   Lisp_Object barobj;
   struct scroll_bar *bar;
-  int top, height, left, sb_left, width, sb_width;
+  int top, height, left, width;
   int window_y, window_height;
-  bool fringe_extended_p;
 
   /* Get window dimensions.  */
   window_box (w, ANY_AREA, 0, &window_y, 0, &window_height);
   top  = window_y;
-  width = WINDOW_CONFIG_SCROLL_BAR_COLS (w) * FRAME_COLUMN_WIDTH (f);
   height = window_height;
 
-  /* Compute the left edge of the scroll bar area.  */
+  /* Compute the left edge and the width of the scroll bar area.  */
   left = WINDOW_SCROLL_BAR_AREA_X (w);
-
-  /* Compute the width of the scroll bar which might be less than
-     the width of the area reserved for the scroll bar.  */
-  if (WINDOW_CONFIG_SCROLL_BAR_WIDTH (w) > 0)
-    sb_width = WINDOW_CONFIG_SCROLL_BAR_WIDTH (w);
-  else
-    sb_width = width;
-
-  /* Compute the left edge of the scroll bar.  */
-  if (WINDOW_HAS_VERTICAL_SCROLL_BAR_ON_RIGHT (w))
-    sb_left = left + (WINDOW_RIGHTMOST_P (w) ? width - sb_width : 0);
-  else
-    sb_left = left + (WINDOW_LEFTMOST_P (w) ? 0 : width - sb_width);
-
-  fringe_extended_p = WINDOW_FRINGE_EXTENDED_P (w);
+  width = WINDOW_SCROLL_BAR_AREA_WIDTH (w);
 
   /* Does the scroll bar exist yet?  */
   if (NILP (w->vertical_scroll_bar))
@@ -3817,15 +3759,12 @@ w32_set_vertical_scroll_bar (struct window *w,
       if (width > 0 && height > 0)
 	{
 	  hdc = get_frame_dc (f);
-	  if (fringe_extended_p)
-	    w32_clear_area (f, hdc, sb_left, top, sb_width, height);
-	  else
-	    w32_clear_area (f, hdc, left, top, width, height);
+	  w32_clear_area (f, hdc, left, top, width, height);
 	  release_frame_dc (f, hdc);
 	}
       unblock_input ();
 
-      bar = x_scroll_bar_create (w, top, sb_left, sb_width, height);
+      bar = x_scroll_bar_create (w, top, left, width, height);
     }
   else
     {
@@ -3836,11 +3775,10 @@ w32_set_vertical_scroll_bar (struct window *w,
       hwnd = SCROLL_BAR_W32_WINDOW (bar);
 
       /* If already correctly positioned, do nothing.  */
-      if (XINT (bar->left) == sb_left
-	  && XINT (bar->top) == top
-	  && XINT (bar->width) == sb_width
-	  && XINT (bar->height) == height
-	  && bar->fringe_extended_p == fringe_extended_p)
+      if (bar->left == left
+	  && bar->top == top
+	  && bar->width == width
+	  && bar->height == height)
         {
           /* Redraw after clear_frame. */
           if (!my_show_window (f, hwnd, SW_NORMAL))
@@ -3857,17 +3795,13 @@ w32_set_vertical_scroll_bar (struct window *w,
 	      hdc = get_frame_dc (f);
 	      /* Since Windows scroll bars are smaller than the space reserved
 		 for them on the frame, we have to clear "under" them.  */
-	      if (fringe_extended_p)
-		w32_clear_area (f, hdc, sb_left, top, sb_width, height);
-	      else
-		w32_clear_area (f, hdc, left, top, width, height);
+	      w32_clear_area (f, hdc, left, top, width, height);
 	      release_frame_dc (f, hdc);
 	    }
           /* Make sure scroll bar is "visible" before moving, to ensure the
              area of the parent window now exposed will be refreshed.  */
           my_show_window (f, hwnd, SW_HIDE);
-          MoveWindow (hwnd, sb_left, top, sb_width,
-		      max (height, 1), TRUE);
+          MoveWindow (hwnd, left, top, width, max (height, 1), TRUE);
 
 	  si.cbSize = sizeof (si);
 	  si.fMask = SIF_RANGE;
@@ -3881,16 +3815,14 @@ w32_set_vertical_scroll_bar (struct window *w,
           /* InvalidateRect (w, NULL, FALSE);  */
 
           /* Remember new settings.  */
-          XSETINT (bar->left, sb_left);
-          XSETINT (bar->top, top);
-          XSETINT (bar->width, sb_width);
-          XSETINT (bar->height, height);
+          bar->left = left;
+          bar->top = top;
+          bar->width = width;
+          bar->height = height;
 
           unblock_input ();
         }
     }
-  bar->fringe_extended_p = fringe_extended_p;
-
   w32_set_scroll_bar_thumb (bar, portion, position, whole);
   XSETVECTOR (barobj, bar);
   wset_vertical_scroll_bar (w, barobj);
@@ -4024,9 +3956,9 @@ w32_scroll_bar_handle_click (struct scroll_bar *bar, W32Msg *msg,
   emacs_event->timestamp = msg->msg.time;
 
   {
-    int top_range = VERTICAL_SCROLL_BAR_TOP_RANGE (f, XINT (bar->height));
+    int top_range = VERTICAL_SCROLL_BAR_TOP_RANGE (f, bar->height);
     int y;
-    int dragging = !NILP (bar->dragging);
+    int dragging = bar->dragging;
     SCROLLINFO si;
 
     si.cbSize = sizeof (si);
@@ -4035,10 +3967,8 @@ w32_scroll_bar_handle_click (struct scroll_bar *bar, W32Msg *msg,
     GetScrollInfo ((HWND) msg->msg.lParam, SB_CTL, &si);
     y = si.nPos;
 
-    bar->dragging = Qnil;
-
-
-    last_mouse_scroll_bar_pos = msg->msg.wParam;
+    bar->dragging = 0;
+    FRAME_DISPLAY_INFO (f)->last_mouse_scroll_bar_pos = msg->msg.wParam;
 
     switch (LOWORD (msg->msg.wParam))
       {
@@ -4064,9 +3994,9 @@ w32_scroll_bar_handle_click (struct scroll_bar *bar, W32Msg *msg,
 	break;
       case SB_THUMBTRACK:
       case SB_THUMBPOSITION:
-	if (VERTICAL_SCROLL_BAR_TOP_RANGE (f, XINT (bar->height)) <= 0xffff)
+	if (VERTICAL_SCROLL_BAR_TOP_RANGE (f, bar->height) <= 0xffff)
           y = HIWORD (msg->msg.wParam);
-	bar->dragging = Qt;
+	bar->dragging = 1; /* ??????? */
 	emacs_event->part = scroll_bar_handle;
 
 	/* "Silently" update current position.  */
@@ -4090,8 +4020,8 @@ w32_scroll_bar_handle_click (struct scroll_bar *bar, W32Msg *msg,
 	if (dragging)
 	  {
 	    SCROLLINFO si;
-	    int start = XINT (bar->start);
-	    int end = XINT (bar->end);
+	    int start = bar->start;
+	    int end = bar->end;
 
 	    si.cbSize = sizeof (si);
 	    si.fMask = SIF_PAGE | SIF_POS;
@@ -4121,11 +4051,12 @@ x_scroll_bar_report_motion (struct frame **fp, Lisp_Object *bar_window,
 			    Lisp_Object *x, Lisp_Object *y,
 			    unsigned long *time)
 {
-  struct scroll_bar *bar = XSCROLL_BAR (last_mouse_scroll_bar);
+  struct w32_display_info *dpyinfo = FRAME_DISPLAY_INFO (*fp);
+  struct scroll_bar *bar = dpyinfo->last_mouse_scroll_bar;
   Window w = SCROLL_BAR_W32_WINDOW (bar);
   struct frame *f = XFRAME (WINDOW_FRAME (XWINDOW (bar->window)));
   int pos;
-  int top_range = VERTICAL_SCROLL_BAR_TOP_RANGE (f, XINT (bar->height));
+  int top_range = VERTICAL_SCROLL_BAR_TOP_RANGE (f, bar->height);
   SCROLLINFO si;
 
   block_input ();
@@ -4140,13 +4071,13 @@ x_scroll_bar_report_motion (struct frame **fp, Lisp_Object *bar_window,
   pos = si.nPos;
   top_range = si.nMax - si.nPage + 1;
 
-  switch (LOWORD (last_mouse_scroll_bar_pos))
+  switch (LOWORD (dpyinfo->last_mouse_scroll_bar_pos))
   {
   case SB_THUMBPOSITION:
   case SB_THUMBTRACK:
       *part = scroll_bar_handle;
-      if (VERTICAL_SCROLL_BAR_TOP_RANGE (f, XINT (bar->height)) <= 0xffff)
-	  pos = HIWORD (last_mouse_scroll_bar_pos);
+      if (VERTICAL_SCROLL_BAR_TOP_RANGE (f, bar->height) <= 0xffff)
+	pos = HIWORD (dpyinfo->last_mouse_scroll_bar_pos);
       break;
   case SB_LINEDOWN:
       *part = scroll_bar_handle;
@@ -4161,9 +4092,9 @@ x_scroll_bar_report_motion (struct frame **fp, Lisp_Object *bar_window,
   XSETINT (*y, top_range);
 
   f->mouse_moved = 0;
-  last_mouse_scroll_bar = Qnil;
+  dpyinfo->last_mouse_scroll_bar = NULL;
 
-  *time = last_mouse_movement_time;
+  *time = dpyinfo->last_mouse_movement_time;
 
   unblock_input ();
 }
@@ -4244,7 +4175,6 @@ w32_read_socket (struct terminal *terminal,
   struct frame *f;
   struct w32_display_info *dpyinfo = &one_w32_display_info;
   Mouse_HLInfo *hlinfo = &dpyinfo->mouse_highlight;
-  static char buf[1];
 
   block_input ();
 
@@ -4482,11 +4412,8 @@ w32_read_socket (struct terminal *terminal,
           previous_help_echo_string = help_echo_string;
 	  help_echo_string = Qnil;
 
-	  if (dpyinfo->grabbed && last_mouse_frame
-	      && FRAME_LIVE_P (last_mouse_frame))
-	    f = last_mouse_frame;
-	  else
-	    f = x_window_to_frame (dpyinfo, msg.msg.hwnd);
+	  f = (x_mouse_grabbed (dpyinfo) ? dpyinfo->last_mouse_frame
+	       : x_window_to_frame (dpyinfo, msg.msg.hwnd));
 
 	  if (hlinfo->mouse_face_hidden)
 	    {
@@ -4562,11 +4489,8 @@ w32_read_socket (struct terminal *terminal,
 	    int button;
 	    int up;
 
-	    if (dpyinfo->grabbed && last_mouse_frame
-		&& FRAME_LIVE_P (last_mouse_frame))
-	      f = last_mouse_frame;
-	    else
-	      f = x_window_to_frame (dpyinfo, msg.msg.hwnd);
+	    f = (x_mouse_grabbed (dpyinfo) ? dpyinfo->last_mouse_frame
+		 : x_window_to_frame (dpyinfo, msg.msg.hwnd));
 
 	    if (f)
 	      {
@@ -4605,7 +4529,7 @@ w32_read_socket (struct terminal *terminal,
 	    else
 	      {
 		dpyinfo->grabbed |= (1 << button);
-		last_mouse_frame = f;
+		dpyinfo->last_mouse_frame = f;
                 /* Ignore any mouse motion that happened
                    before this event; any subsequent mouse-movement
                    Emacs events should reflect only motion after
@@ -4622,11 +4546,8 @@ w32_read_socket (struct terminal *terminal,
 	case WM_MOUSEWHEEL:
         case WM_MOUSEHWHEEL:
 	  {
-	    if (dpyinfo->grabbed && last_mouse_frame
-		&& FRAME_LIVE_P (last_mouse_frame))
-	      f = last_mouse_frame;
-	    else
-	      f = x_window_to_frame (dpyinfo, msg.msg.hwnd);
+	    f = (x_mouse_grabbed (dpyinfo) ? dpyinfo->last_mouse_frame
+		 : x_window_to_frame (dpyinfo, msg.msg.hwnd));
 
 	    if (f)
 	      {
@@ -4643,7 +4564,7 @@ w32_read_socket (struct terminal *terminal,
 		   ButtonPress.  */
 		f->mouse_moved = 0;
 	      }
-	    last_mouse_frame = f;
+	    dpyinfo->last_mouse_frame = f;
 	    last_tool_bar_item = -1;
 	  }
 	  break;
@@ -4690,13 +4611,7 @@ w32_read_socket (struct terminal *terminal,
 	  f = x_window_to_frame (dpyinfo, msg.msg.hwnd);
 
 	  if (f && !FRAME_ICONIFIED_P (f))
-	    {
-	      int x, y;
-
-	      x_real_positions (f, &x, &y);
-	      f->left_pos = x;
-	      f->top_pos = y;
-	    }
+	    x_real_positions (f, &f->left_pos, &f->top_pos);
 
 	  check_visibility = 1;
 	  break;
@@ -4708,7 +4623,7 @@ w32_read_socket (struct terminal *terminal,
 	  if (!msg.msg.wParam && msg.msg.hwnd == tip_window)
 	    {
 	      tip_window = NULL;
-	      redo_mouse_highlight ();
+	      x_redo_mouse_highlight (dpyinfo);
 	    }
 
 	  /* If window has been obscured or exposed by another window
@@ -4745,12 +4660,10 @@ w32_read_socket (struct terminal *terminal,
 		  break;
 
 		case SIZE_MAXIMIZED:
-		case SIZE_RESTORED:
 		  {
 		    bool iconified = FRAME_ICONIFIED_P (f);
 
-		    if (iconified)
-		      SET_FRAME_VISIBLE (f, 1);
+		    SET_FRAME_VISIBLE (f, 1);
 		    SET_FRAME_ICONIFIED (f, 0);
 
 		    /* wait_reading_process_output will notice this
@@ -4780,6 +4693,55 @@ w32_read_socket (struct terminal *terminal,
 			 in case this is the second frame.  */
 		      record_asynch_buffer_change ();
 		  }
+
+		  if (EQ (get_frame_param (f, Qfullscreen), Qnil))
+		    set_frame_param (f, Qfullscreen, Qmaximized);
+		  else if (! EQ (get_frame_param (f, Qfullscreen), Qmaximized))
+		    set_frame_param (f, Qmaximized, Qmaximized);
+
+		  break;
+
+		case SIZE_RESTORED:
+		  {
+		    bool iconified = FRAME_ICONIFIED_P (f);
+
+		    /* The following was made unconditional in a
+		       pathetic attempt to fix bug#16967 in revision
+		       116716 but, considered counterproductive was made
+		       conditional again in revision 116727.  martin */
+		    if (iconified)
+		      SET_FRAME_VISIBLE (f, 1);
+		    SET_FRAME_ICONIFIED (f, 0);
+
+		    /* wait_reading_process_output will notice this
+		       and update the frame's display structures.  */
+		    SET_FRAME_GARBAGED (f);
+
+		    if (iconified)
+		      {
+			/* Reset top and left positions of the Window
+			   here since Windows sends a WM_MOVE message
+			   BEFORE telling us the Window is minimized
+			   when the Window is iconified, with 3000,3000
+			   as the co-ords.  */
+			x_real_positions (f, &f->left_pos, &f->top_pos);
+
+			inev.kind = DEICONIFY_EVENT;
+			XSETFRAME (inev.frame_or_window, f);
+		      }
+		    else if (! NILP (Vframe_list)
+			     && ! NILP (XCDR (Vframe_list)))
+		      /* Force a redisplay sooner or later
+			 to update the frame titles
+			 in case this is the second frame.  */
+		      record_asynch_buffer_change ();
+		  }
+
+		  if (EQ (get_frame_param (f, Qfullscreen), Qmaximized))
+		    set_frame_param (f, Qfullscreen, Qnil);
+		  else if (! EQ (get_frame_param (f, Qmaximized), Qnil))
+		    set_frame_param (f, Qmaximized, Qnil);
+
 		  break;
 		}
 	    }
@@ -4787,18 +4749,16 @@ w32_read_socket (struct terminal *terminal,
 	  if (f && !FRAME_ICONIFIED_P (f) && msg.msg.wParam != SIZE_MINIMIZED)
 	    {
 	      RECT rect;
-	      int rows;
-	      int columns;
-	      int width;
-	      int height;
+	      int rows, columns, width, height, text_width, text_height;
 
 	      GetClientRect (msg.msg.hwnd, &rect);
 
 	      height = rect.bottom - rect.top;
 	      width = rect.right - rect.left;
-
-	      rows = FRAME_PIXEL_HEIGHT_TO_TEXT_LINES (f, height);
-	      columns = FRAME_PIXEL_WIDTH_TO_TEXT_COLS (f, width);
+	      text_width = FRAME_PIXEL_TO_TEXT_WIDTH (f, width);
+	      text_height = FRAME_PIXEL_TO_TEXT_HEIGHT (f, height);
+	      /* rows = FRAME_PIXEL_HEIGHT_TO_TEXT_LINES (f, height); */
+	      /* columns = FRAME_PIXEL_WIDTH_TO_TEXT_COLS (f, width); */
 
 	      /* TODO: Clip size to the screen dimensions.  */
 
@@ -4806,16 +4766,18 @@ w32_read_socket (struct terminal *terminal,
 		 not changed, the font size may have changed, so we need
 		 to check the pixel dimensions as well.  */
 
-	      if (columns != FRAME_COLS (f)
-		  || rows != FRAME_LINES (f)
-		  || width != FRAME_PIXEL_WIDTH (f)
-		  || height != FRAME_PIXEL_HEIGHT (f))
+	      if (width != FRAME_PIXEL_WIDTH (f)
+		  || height != FRAME_PIXEL_HEIGHT (f)
+		  || text_width != FRAME_TEXT_WIDTH (f)
+		  || text_height != FRAME_TEXT_HEIGHT (f))
 		{
-		  change_frame_size (f, rows, columns, 0, 1, 0);
+		  change_frame_size (f, text_width, text_height, 0, 1, 0, 1);
 		  SET_FRAME_GARBAGED (f);
 		  cancel_mouse_face (f);
-		  FRAME_PIXEL_WIDTH (f) = width;
-		  FRAME_PIXEL_HEIGHT (f) = height;
+		  /* Do we want to set these here ????  */
+/** 		  FRAME_PIXEL_WIDTH (f) = width; **/
+/** 		  FRAME_TEXT_WIDTH (f) = text_width; **/
+/** 		  FRAME_PIXEL_HEIGHT (f) = height; **/
 		  f->win_gravity = NorthWestGravity;
 		}
 	    }
@@ -4916,6 +4878,10 @@ w32_read_socket (struct terminal *terminal,
 	  if (f)
 	    {
 	      dpyinfo->n_cbits = msg.msg.wParam;
+	      /* The new display could have a different resolution, in
+		 which case we must reconsider what fullscreen
+		 means.  */
+	      x_check_fullscreen (f);
 	      DebPrint (("display change: %d %d\n",
 			 (short) LOWORD (msg.msg.lParam),
 			 (short) HIWORD (msg.msg.lParam)));
@@ -4981,12 +4947,11 @@ w32_read_socket (struct terminal *terminal,
     }
 
   /* If the focus was just given to an autoraising frame,
-     raise it now.  */
-  /* ??? This ought to be able to handle more than one such frame.  */
-  if (pending_autoraise_frame)
+     raise it now.  FIXME: handle more than one such frame.  */
+  if (dpyinfo->w32_pending_autoraise_frame)
     {
-      x_raise_frame (pending_autoraise_frame);
-      pending_autoraise_frame = 0;
+      x_raise_frame (dpyinfo->w32_pending_autoraise_frame);
+      dpyinfo->w32_pending_autoraise_frame = NULL;
     }
 
   /* Check which frames are still visible, if we have enqueued any user
@@ -5437,6 +5402,7 @@ Lisp_Object
 x_new_font (struct frame *f, Lisp_Object font_object, int fontset)
 {
   struct font *font = XFONT_OBJECT (font_object);
+  int unit;
 
   if (fontset < 0)
     fontset = fontset_from_font (font_object);
@@ -5448,22 +5414,21 @@ x_new_font (struct frame *f, Lisp_Object font_object, int fontset)
 
   FRAME_FONT (f) = font;
   FRAME_BASELINE_OFFSET (f) = font->baseline_offset;
-  FRAME_COLUMN_WIDTH (f) = font->average_width;
+  FRAME_COLUMN_WIDTH (f) = unit = font->average_width;
   FRAME_LINE_HEIGHT (f) = font->height;
 
   compute_fringe_widths (f, 1);
 
-  /* Compute the scroll bar width in character columns.  */
+  /* Compute number of scrollbar columns.  */
+  unit = FRAME_COLUMN_WIDTH (f);
   if (FRAME_CONFIG_SCROLL_BAR_WIDTH (f) > 0)
-    {
-      int wid = FRAME_COLUMN_WIDTH (f);
-      FRAME_CONFIG_SCROLL_BAR_COLS (f)
-	= (FRAME_CONFIG_SCROLL_BAR_WIDTH (f) + wid - 1) / wid;
-    }
+    FRAME_CONFIG_SCROLL_BAR_COLS (f)
+      = (FRAME_CONFIG_SCROLL_BAR_WIDTH (f) + unit - 1) / unit;
   else
     {
-      int wid = FRAME_COLUMN_WIDTH (f);
-      FRAME_CONFIG_SCROLL_BAR_COLS (f) = (14 + wid - 1) / wid;
+      FRAME_CONFIG_SCROLL_BAR_COLS (f) = (14 + unit - 1) / unit;
+      FRAME_CONFIG_SCROLL_BAR_WIDTH (f) =
+	FRAME_CONFIG_SCROLL_BAR_COLS (f) * unit;
     }
 
   /* Now make the frame display the given font.  */
@@ -5473,7 +5438,8 @@ x_new_font (struct frame *f, Lisp_Object font_object, int fontset)
 	 doing it because it's done in Fx_show_tip, and it leads to
 	 problems because the tip frame has no widget.  */
       if (NILP (tip_frame) || XFRAME (tip_frame) != f)
-	x_set_window_size (f, 0, FRAME_COLS (f), FRAME_LINES (f));
+	x_set_window_size (f, 0, FRAME_COLS (f) * FRAME_COLUMN_WIDTH (f),
+			   FRAME_LINES (f) * FRAME_LINE_HEIGHT (f), 1);
     }
 
   /* X version sets font of input methods here also.  */
@@ -5611,7 +5577,7 @@ x_check_fullscreen (struct frame *f)
          when setting WM manager hints.  */
       if (FRAME_COLS (f) != width || FRAME_LINES (f) != height)
         {
-          change_frame_size (f, height, width, 0, 1, 0);
+          change_frame_size (f, width, height, 0, 1, 0, 0);
           SET_FRAME_GARBAGED (f);
           cancel_mouse_face (f);
 
@@ -5639,18 +5605,22 @@ w32fullscreen_hook (struct frame *f)
       if (FRAME_PREV_FSMODE (f) == FULLSCREEN_BOTH)
         {
           SetWindowLong (hwnd, GWL_STYLE, dwStyle | WS_OVERLAPPEDWINDOW);
-          SetWindowPos (hwnd, NULL, 0, 0, 0, 0,
-                        SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER |
-                        SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
-        }
+	  SetWindowPlacement (hwnd, &FRAME_NORMAL_PLACEMENT (f));
+	}
+      else if (FRAME_PREV_FSMODE (f) == FULLSCREEN_HEIGHT
+	       || FRAME_PREV_FSMODE (f) == FULLSCREEN_WIDTH)
+	SetWindowPlacement (hwnd, &FRAME_NORMAL_PLACEMENT (f));
 
-      w32_fullscreen_rect (hwnd, f->want_fullscreen,
-                           FRAME_NORMAL_PLACEMENT (f).rcNormalPosition, &rect);
       FRAME_PREV_FSMODE (f) = f->want_fullscreen;
-      if (f->want_fullscreen == FULLSCREEN_MAXIMIZED)
-	PostMessage (FRAME_W32_WINDOW (f), WM_SYSCOMMAND, 0xf030, 0);
+
+      if (f->want_fullscreen == FULLSCREEN_NONE)
+	ShowWindow (hwnd, SW_SHOWNORMAL);
+      else if (f->want_fullscreen == FULLSCREEN_MAXIMIZED)
+	ShowWindow (hwnd, SW_MAXIMIZE);
       else if (f->want_fullscreen == FULLSCREEN_BOTH)
         {
+	  w32_fullscreen_rect (hwnd, f->want_fullscreen,
+			       FRAME_NORMAL_PLACEMENT (f).rcNormalPosition, &rect);
           SetWindowLong (hwnd, GWL_STYLE, dwStyle & ~WS_OVERLAPPEDWINDOW);
           SetWindowPos (hwnd, HWND_TOP, rect.left, rect.top,
                         rect.right - rect.left, rect.bottom - rect.top,
@@ -5658,6 +5628,9 @@ w32fullscreen_hook (struct frame *f)
         }
       else
         {
+	  ShowWindow (hwnd, SW_SHOWNORMAL);
+	  w32_fullscreen_rect (hwnd, f->want_fullscreen,
+			       FRAME_NORMAL_PLACEMENT (f).rcNormalPosition, &rect);
           SetWindowPos (hwnd, HWND_TOP, rect.left, rect.top,
                         rect.right - rect.left, rect.bottom - rect.top, 0);
         }
@@ -5675,20 +5648,52 @@ w32fullscreen_hook (struct frame *f)
    Otherwise we leave the window gravity unchanged.  */
 
 void
-x_set_window_size (struct frame *f, int change_gravity, int cols, int rows)
+x_set_window_size (struct frame *f, int change_gravity, int width, int height, bool pixelwise)
 {
   int pixelwidth, pixelheight;
 
   block_input ();
 
-  check_frame_size (f, &rows, &cols);
-  f->scroll_bar_actual_width
-    = FRAME_SCROLL_BAR_COLS (f) * FRAME_COLUMN_WIDTH (f);
+  check_frame_size (f, &width, &height, pixelwise);
 
   compute_fringe_widths (f, 0);
 
-  pixelwidth = FRAME_TEXT_COLS_TO_PIXEL_WIDTH (f, cols);
-  pixelheight = FRAME_TEXT_LINES_TO_PIXEL_HEIGHT (f, rows);
+  if (frame_resize_pixelwise)
+    {
+      if (pixelwise)
+	{
+	  pixelwidth = FRAME_TEXT_TO_PIXEL_WIDTH (f, width);
+	  pixelheight = FRAME_TEXT_TO_PIXEL_HEIGHT (f, height);
+	}
+      else
+	{
+	  pixelwidth = FRAME_TEXT_COLS_TO_PIXEL_WIDTH (f, width);
+	  pixelheight = FRAME_TEXT_LINES_TO_PIXEL_HEIGHT (f, height);
+	}
+    }
+  else
+    {
+      /* If we don't resize frames pixelwise, round sizes to multiples
+	 of character sizes here.  Otherwise, when enforcing size hints
+	 while processing WM_WINDOWPOSCHANGING in w32_wnd_proc, we might
+	 clip our frame rectangle to a multiple of the frame's character
+	 size and subsequently lose our mode line or scroll bar.
+	 Bug#16923 could be one possible consequence of this.  Carefully
+	 reverse-engineer what WM_WINDOWPOSCHANGING does here since
+	 otherwise we might make our frame too small, see Bug#17077.  */
+      int unit_width = FRAME_COLUMN_WIDTH (f);
+      int unit_height = FRAME_LINE_HEIGHT (f);
+
+      pixelwidth = (((((pixelwise ? width : (width * FRAME_COLUMN_WIDTH (f)))
+		       + FRAME_TOTAL_FRINGE_WIDTH (f))
+		      / unit_width) * unit_width)
+		    + FRAME_SCROLL_BAR_AREA_WIDTH (f)
+		    + 2 * FRAME_INTERNAL_BORDER_WIDTH (f));
+
+      pixelheight = ((((pixelwise ? height : (height * FRAME_LINE_HEIGHT (f)))
+		       / unit_height) * unit_height)
+		     + 2 * FRAME_INTERNAL_BORDER_WIDTH (f));
+    }
 
   f->win_gravity = NorthWestGravity;
   x_wm_set_size_hint (f, (long) 0, 0);
@@ -5711,80 +5716,59 @@ x_set_window_size (struct frame *f, int change_gravity, int cols, int rows)
 		       SWP_NOZORDER | SWP_NOMOVE | SWP_NOACTIVATE);
   }
 
-#if 0
-  /* The following mirrors what is done in xterm.c. It appears to be
-     for informing lisp of the new size immediately, while the actual
-     resize will happen asynchronously. But on Windows, the menu bar
-     automatically wraps when the frame is too narrow to contain it,
-     and that causes any calculations made here to come out wrong. The
-     end is some nasty buggy behavior, including the potential loss
-     of the minibuffer.
+  /* If w32_enable_frame_resize_hack is non-nil, immediately apply the
+     new pixel sizes to the frame and its subwindows.
+
+     Jason Rumney earlier refused to call change_frame_size right here
+     with the following argument:
+
+     The following mirrors what is done in xterm.c. It appears to be for
+     informing lisp of the new size immediately, while the actual resize
+     will happen asynchronously. But on Windows, the menu bar
+     automatically wraps when the frame is too narrow to contain it, and
+     that causes any calculations made here to come out wrong.  The end
+     is some nasty buggy behavior, including the potential loss of the
+     minibuffer.
 
      Disabling this code is either not sufficient to fix the problems
      completely, or it causes fresh problems, but at least it removes
      the most problematic symptom of the minibuffer becoming unusable.
 
-     -----------------------------------------------------------------
+     However, as the discussion about how to handle frame size
+     parameters on Windows (Bug#1348, Bug#16028) shows, that cure seems
+     worse than the disease.  In particular, menu bar wrapping looks
+     like a non-issue - maybe so because Windows eventually gets back to
+     us with the correct client rectangle anyway.  But we have to avoid
+     calling change_frame_size with a delta of less than one canoncial
+     character size when frame_resize_pixelwise is nil, as explained in
+     the comment above.  */
 
-     Now, strictly speaking, we can't be sure that this is accurate,
-     but the window manager will get around to dealing with the size
-     change request eventually, and we'll hear how it went when the
-     ConfigureNotify event gets here.
+  if (w32_enable_frame_resize_hack)
 
-     We could just not bother storing any of this information here,
-     and let the ConfigureNotify event set everything up, but that
-     might be kind of confusing to the Lisp code, since size changes
-     wouldn't be reported in the frame parameters until some random
-     point in the future when the ConfigureNotify event arrives.
+    {
+      change_frame_size (f, FRAME_PIXEL_TO_TEXT_WIDTH (f, pixelwidth),
+			 FRAME_PIXEL_TO_TEXT_HEIGHT (f, pixelheight),
+			 0, 1, 0, 1);
+      SET_FRAME_GARBAGED (f);
 
-     We pass 1 for DELAY since we can't run Lisp code inside of
-     a BLOCK_INPUT.  */
-  change_frame_size (f, rows, cols, 0, 1, 0);
-  FRAME_PIXEL_WIDTH (f) = pixelwidth;
-  FRAME_PIXEL_HEIGHT (f) = pixelheight;
+      /* If cursor was outside the new size, mark it as off.  */
+      mark_window_cursors_off (XWINDOW (f->root_window));
 
-  /* We've set {FRAME,PIXEL}_{WIDTH,HEIGHT} to the values we hope to
-     receive in the ConfigureNotify event; if we get what we asked
-     for, then the event won't cause the screen to become garbaged, so
-     we have to make sure to do it here.  */
-  SET_FRAME_GARBAGED (f);
-
-  /* If cursor was outside the new size, mark it as off.  */
-  mark_window_cursors_off (XWINDOW (f->root_window));
-
-  /* Clear out any recollection of where the mouse highlighting was,
-     since it might be in a place that's outside the new frame size.
-     Actually checking whether it is outside is a pain in the neck,
-     so don't try--just let the highlighting be done afresh with new size.  */
-  cancel_mouse_face (f);
-#endif
+      /* Clear out any recollection of where the mouse highlighting was,
+	 since it might be in a place that's outside the new frame size.
+	 Actually checking whether it is outside is a pain in the neck,
+	 so don't try--just let the highlighting be done afresh with new
+	 size.  */
+      cancel_mouse_face (f);
+    }
 
   unblock_input ();
 }
 
 /* Mouse warping.  */
 
-void x_set_mouse_pixel_position (struct frame *f, int pix_x, int pix_y);
-
 void
-x_set_mouse_position (struct frame *f, int x, int y)
-{
-  int pix_x, pix_y;
-
-  pix_x = FRAME_COL_TO_PIXEL_X (f, x) + FRAME_COLUMN_WIDTH (f) / 2;
-  pix_y = FRAME_LINE_TO_PIXEL_Y (f, y) + FRAME_LINE_HEIGHT (f) / 2;
-
-  if (pix_x < 0) pix_x = 0;
-  if (pix_x > FRAME_PIXEL_WIDTH (f)) pix_x = FRAME_PIXEL_WIDTH (f);
-
-  if (pix_y < 0) pix_y = 0;
-  if (pix_y > FRAME_PIXEL_HEIGHT (f)) pix_y = FRAME_PIXEL_HEIGHT (f);
-
-  x_set_mouse_pixel_position (f, pix_x, pix_y);
-}
-
-void
-x_set_mouse_pixel_position (struct frame *f, int pix_x, int pix_y)
+frame_set_mouse_pixel_position (struct frame *f, int pix_x, int pix_y)
 {
   RECT rect;
   POINT pt;
@@ -5807,7 +5791,9 @@ x_set_mouse_pixel_position (struct frame *f, int pix_x, int pix_y)
 void
 x_focus_frame (struct frame *f)
 {
+#if 0
   struct w32_display_info *dpyinfo = &one_w32_display_info;
+#endif
 
   /* Give input focus to frame.  */
   block_input ();
@@ -5919,13 +5905,9 @@ w32_frame_raise_lower (struct frame *f, int raise_flag)
 void
 x_make_frame_visible (struct frame *f)
 {
-  Lisp_Object type;
-
   block_input ();
 
-  type = x_icon_type (f);
-  if (!NILP (type))
-    x_bitmap_icon (f, type);
+  x_set_bitmap_icon (f);
 
   if (! FRAME_VISIBLE_P (f))
     {
@@ -6035,8 +6017,6 @@ x_make_frame_invisible (struct frame *f)
 void
 x_iconify_frame (struct frame *f)
 {
-  Lisp_Object type;
-
   /* Don't keep the highlight on an invisible frame.  */
   if (FRAME_DISPLAY_INFO (f)->x_highlight_frame == f)
     FRAME_DISPLAY_INFO (f)->x_highlight_frame = 0;
@@ -6046,9 +6026,7 @@ x_iconify_frame (struct frame *f)
 
   block_input ();
 
-  type = x_icon_type (f);
-  if (!NILP (type))
-    x_bitmap_icon (f, type);
+  x_set_bitmap_icon (f);
 
   /* Simulate the user minimizing the frame.  */
   SendMessage (FRAME_W32_WINDOW (f), WM_SYSCOMMAND, SC_MINIMIZE, 0);
@@ -6073,27 +6051,12 @@ x_free_frame_resources (struct frame *f)
   /* We must free faces before destroying windows because some
      font-driver (e.g. xft) access a window while finishing a
      face.  */
-  if (FRAME_FACE_CACHE (f))
-    free_frame_faces (f);
+  free_frame_faces (f);
 
   if (FRAME_W32_WINDOW (f))
     my_destroy_window (f, FRAME_W32_WINDOW (f));
 
   free_frame_menubar (f);
-
-  unload_color (f, FRAME_FOREGROUND_PIXEL (f));
-  unload_color (f, FRAME_BACKGROUND_PIXEL (f));
-  unload_color (f, f->output_data.w32->cursor_pixel);
-  unload_color (f, f->output_data.w32->cursor_foreground_pixel);
-  unload_color (f, f->output_data.w32->border_pixel);
-  unload_color (f, f->output_data.w32->mouse_pixel);
-  if (f->output_data.w32->white_relief.allocated_p)
-    unload_color (f, f->output_data.w32->white_relief.pixel);
-  if (f->output_data.w32->black_relief.allocated_p)
-    unload_color (f, f->output_data.w32->black_relief.pixel);
-
-  if (FRAME_FACE_CACHE (f))
-    free_frame_faces (f);
 
   xfree (f->output_data.w32);
   f->output_data.w32 = NULL;
@@ -6139,7 +6102,7 @@ x_wm_set_size_hint (struct frame *f, long flags, bool user_position)
   SetWindowLong (window, WND_FONTWIDTH_INDEX, FRAME_COLUMN_WIDTH (f));
   SetWindowLong (window, WND_LINEHEIGHT_INDEX, FRAME_LINE_HEIGHT (f));
   SetWindowLong (window, WND_BORDER_INDEX, FRAME_INTERNAL_BORDER_WIDTH (f));
-  SetWindowLong (window, WND_SCROLLBAR_INDEX, f->scroll_bar_actual_width);
+  SetWindowLong (window, WND_SCROLLBAR_INDEX, FRAME_SCROLL_BAR_AREA_WIDTH (f));
 
   leave_crit ();
 }
@@ -6178,11 +6141,7 @@ w32_initialize_display_info (Lisp_Object display_name)
 
   memset (dpyinfo, 0, sizeof (*dpyinfo));
 
-  /* Put it on w32_display_name_list.  */
-  w32_display_name_list = Fcons (Fcons (display_name, Qnil),
-                                 w32_display_name_list);
-  dpyinfo->name_list_element = XCAR (w32_display_name_list);
-
+  dpyinfo->name_list_element = Fcons (display_name, Qnil);
   dpyinfo->w32_id_name = xmalloc (SCHARS (Vinvocation_name)
 				  + SCHARS (Vsystem_name) + 2);
   sprintf (dpyinfo->w32_id_name, "%s@%s",
@@ -6283,6 +6242,7 @@ static struct redisplay_interface w32_redisplay_interface =
   w32_clear_frame_area,
   w32_draw_window_cursor,
   w32_draw_vertical_window_border,
+  w32_draw_window_divider,
   w32_shift_glyphs_for_insert
 };
 
@@ -6293,9 +6253,8 @@ w32_create_terminal (struct w32_display_info *dpyinfo)
 {
   struct terminal *terminal;
 
-  terminal = create_terminal ();
+  terminal = create_terminal (output_w32, &w32_redisplay_interface);
 
-  terminal->type = output_w32;
   terminal->display_info.w32 = dpyinfo;
   dpyinfo->terminal = terminal;
 
@@ -6305,11 +6264,8 @@ w32_create_terminal (struct w32_display_info *dpyinfo)
   terminal->ins_del_lines_hook = x_ins_del_lines;
   terminal->delete_glyphs_hook = x_delete_glyphs;
   terminal->ring_bell_hook = w32_ring_bell;
-  terminal->reset_terminal_modes_hook = NULL;
-  terminal->set_terminal_modes_hook = NULL;
   terminal->update_begin_hook = x_update_begin;
   terminal->update_end_hook = x_update_end;
-  terminal->set_terminal_window_hook = NULL;
   terminal->read_socket_hook = w32_read_socket;
   terminal->frame_up_to_date_hook = w32_frame_up_to_date;
   terminal->mouse_position_hook = w32_mouse_position;
@@ -6320,26 +6276,14 @@ w32_create_terminal (struct w32_display_info *dpyinfo)
   terminal->condemn_scroll_bars_hook = w32_condemn_scroll_bars;
   terminal->redeem_scroll_bar_hook = w32_redeem_scroll_bar;
   terminal->judge_scroll_bars_hook = w32_judge_scroll_bars;
-
   terminal->delete_frame_hook = x_destroy_window;
   terminal->delete_terminal_hook = x_delete_terminal;
-
-  terminal->rif = &w32_redisplay_interface;
-  terminal->scroll_region_ok = 1;    /* We'll scroll partial frames. */
-  terminal->char_ins_del_ok = 1;
-  terminal->line_ins_del_ok = 1;         /* We'll just blt 'em. */
-  terminal->fast_clear_end_of_line = 1;  /* X does this well. */
-  terminal->memory_below_frame = 0;   /* We don't remember what scrolls
-                                        off the bottom. */
+  /* Other hooks are NULL by default.  */
 
   /* We don't yet support separate terminals on W32, so don't try to share
      keyboards between virtual terminals that are on the same physical
      terminal like X does.  */
-  terminal->kboard = xmalloc (sizeof (KBOARD));
-  init_kboard (terminal->kboard);
-  kset_window_system (terminal->kboard, Qw32);
-  terminal->kboard->next_kboard = all_kboards;
-  all_kboards = terminal->kboard;
+  terminal->kboard = allocate_kboard (Qw32);
   /* Don't let the initial kboard remain current longer than necessary.
      That would cause problems if a file loaded on startup tries to
      prompt in the mini-buffer.  */
@@ -6440,27 +6384,7 @@ w32_term_init (Lisp_Object display_name, char *xrm_option, char *resource_name)
 void
 x_delete_display (struct w32_display_info *dpyinfo)
 {
-  /* Discard this display from w32_display_name_list and w32_display_list.
-     We can't use Fdelq because that can quit.  */
-  if (! NILP (w32_display_name_list)
-      && EQ (XCAR (w32_display_name_list), dpyinfo->name_list_element))
-    w32_display_name_list = XCDR (w32_display_name_list);
-  else
-    {
-      Lisp_Object tail;
-
-      tail = w32_display_name_list;
-      while (CONSP (tail) && CONSP (XCDR (tail)))
-	{
-	  if (EQ (XCAR (XCDR (tail)), dpyinfo->name_list_element))
-	    {
-	      XSETCDR (tail, XCDR (XCDR (tail)));
-	      break;
-	    }
-	  tail = XCDR (tail);
-	}
-    }
-
+  /* FIXME: the only display info apparently can't be deleted.  */
   /* free palette table */
   {
     struct w32_palette_entry * plist;
@@ -6476,8 +6400,6 @@ x_delete_display (struct w32_display_info *dpyinfo)
     if (dpyinfo->palette)
       DeleteObject (dpyinfo->palette);
   }
-  xfree (dpyinfo->w32_id_name);
-
   w32_reset_fringes ();
 }
 
@@ -6490,7 +6412,7 @@ static void
 w32_initialize (void)
 {
   HANDLE shell;
-  HRESULT (WINAPI * set_user_model) (wchar_t * id);
+  HRESULT (WINAPI * set_user_model) (const wchar_t * id);
 
   baud_rate = 19200;
 
@@ -6537,9 +6459,8 @@ w32_initialize (void)
   Fset_input_mode (Qnil, Qnil, make_number (2), Qnil);
 
   {
-    DWORD input_locale_id = ((DWORD_PTR) GetKeyboardLayout (0) & 0xffffffff);
-    w32_keyboard_codepage =
-      codepage_for_locale ((LCID) (input_locale_id & 0xffff));
+    LCID input_locale_id = LOWORD (GetKeyboardLayout (0));
+    w32_keyboard_codepage = codepage_for_locale (input_locale_id);
   }
 
   /* Create the window thread - it will terminate itself when the app
@@ -6598,12 +6519,6 @@ w32_initialize (void)
 void
 syms_of_w32term (void)
 {
-  staticpro (&w32_display_name_list);
-  w32_display_name_list = Qnil;
-
-  staticpro (&last_mouse_scroll_bar);
-  last_mouse_scroll_bar = Qnil;
-
   DEFSYM (Qvendor_specific_keysyms, "vendor-specific-keysyms");
 
   DEFSYM (Qadded, "added");
@@ -6687,8 +6602,27 @@ X toolkit.  Possible values are: gtk, motif, xaw, or xaw3d.
 With MS Windows or Nextstep, the value is t.  */);
   Vx_toolkit_scroll_bars = Qt;
 
-  staticpro (&last_mouse_motion_frame);
-  last_mouse_motion_frame = Qnil;
+  DEFVAR_BOOL ("w32-unicode-filenames",
+	       w32_unicode_filenames,
+     doc: /* Non-nil means use Unicode APIs when passing file names to the OS.
+A value of nil means file names passed to the OS APIs and returned
+from those APIs are encoded/decoded using the ANSI codepage
+specified by `file-name-coding-system'.
+
+This variable is set to non-nil by default when Emacs runs on Windows
+systems of the NT family, including W2K, XP, Vista, Windows 7 and
+Windows 8.  It is set to nil on Windows 9X.  */);
+  w32_unicode_filenames = 0;
+
+  DEFVAR_BOOL ("w32-enable-frame-resize-hack",
+	       w32_enable_frame_resize_hack,
+     doc: /* Non-nil means enable hack for frame resizing on Windows.
+A value of nil means to resize frames by sending a corresponding request
+to the Windows API and changing the pixel sizes of the frame and its
+windows after the latter calls back.  If this is non-nil, Emacs changes
+the pixel sizes of the frame and its windows at the time it sends the
+resize request to the API.  */);
+  w32_enable_frame_resize_hack = 1;
 
   /* Tell Emacs about this window system.  */
   Fprovide (Qw32, Qnil);

@@ -1,6 +1,6 @@
 ;;; conf-mode.el --- Simple major mode for editing conf/ini/properties files -*- coding: utf-8 -*-
 
-;; Copyright (C) 2004-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2004-2014 Free Software Foundation, Inc.
 
 ;; Author: Daniel Pfeiffer <occitan@esperanto.org>
 ;; Keywords: conf ini windows java
@@ -311,8 +311,7 @@ unbalanced, but hey...)"
     (when (or (not arg) (= (prefix-numeric-value arg) 2))
       (modify-syntax-entry ?\" "." table))
     (set-syntax-table table)
-    (when font-lock-mode
-      (font-lock-fontify-buffer))))
+    (font-lock-flush)))
 
 
 (defun conf-outline-level ()

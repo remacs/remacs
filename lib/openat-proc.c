@@ -1,6 +1,6 @@
 /* Create /proc/self/fd-related names for subfiles of open directories.
 
-   Copyright (C) 2006, 2009-2013 Free Software Foundation, Inc.
+   Copyright (C) 2006, 2009-2014 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -31,14 +31,6 @@
 #include <unistd.h>
 
 #include "intprops.h"
-
-/* The results of open() in this file are not used with fchdir,
-   and we do not leak fds to any single-threaded code that could use stdio,
-   therefore save some unnecessary work in fchdir.c.
-   FIXME - if the kernel ever adds support for multi-thread safety for
-   avoiding standard fds, then we should use open_safer.  */
-#undef open
-#undef close
 
 #define PROC_SELF_FD_FORMAT "/proc/self/fd/%d/%s"
 

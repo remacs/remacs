@@ -1,5 +1,5 @@
 /* Definitions and headers for communication on the Microsoft Windows API.
-   Copyright (C) 1995, 2001-2013 Free Software Foundation, Inc.
+   Copyright (C) 1995, 2001-2014 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -26,22 +26,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #define BLACK_PIX_DEFAULT(f) PALETTERGB(0,0,0)
 #define WHITE_PIX_DEFAULT(f) PALETTERGB(255,255,255)
 
-#define FONT_WIDTH(f)     ((f)->max_width)
-#define FONT_HEIGHT(f)    ((f)->height)
-#define FONT_BASE(f)      ((f)->ascent)
-#define FONT_DESCENT(f)   ((f)->descent)
-
 #define CP_DEFAULT 1004
-
-#define CHECK_W32_FRAME(f, frame)		\
-  if (NILP (frame))				\
-    f = SELECTED_FRAME ();			\
-  else						\
-    {						\
-      CHECK_LIVE_FRAME (frame, 0);		\
-      f = XFRAME (frame);			\
-    }						\
-  if (! FRAME_W32_P (f))
 
 /* Indicates whether we are in the readsocket call and the message we
    are processing in the current loop */
@@ -86,8 +71,7 @@ struct w32_display_info
   /* The generic display parameters corresponding to this w32 display.  */
   struct terminal *terminal;
 
-  /* This is a cons cell of the form (NAME . FONT-LIST-CACHE).
-     The same cons cell also appears in x_display_name_list.  */
+  /* This is a cons cell of the form (NAME . FONT-LIST-CACHE).  */
   Lisp_Object name_list_element;
 
   /* Number of frames that are on this display.  */
@@ -179,17 +163,42 @@ struct w32_display_info
      frame.  It differs from w32_focus_frame when we're using a global
      minibuffer.  */
   struct frame *x_highlight_frame;
+
+  /* The frame waiting to be auto-raised in w32_read_socket.  */
+  struct frame *w32_pending_autoraise_frame;
+
+  /* The frame where the mouse was last time we reported a mouse event.  */
+  struct frame *last_mouse_frame;
+
+  /* The frame where the mouse was last time we reported a mouse motion.  */
+  struct frame *last_mouse_motion_frame;
+
+  /* The frame where the mouse was last time we reported a mouse position.  */
+  struct frame *last_mouse_glyph_frame;
+
+  /* Position where the mouse was last time we reported a motion.
+     This is a position on last_mouse_motion_frame.  */
+  int last_mouse_motion_x;
+  int last_mouse_motion_y;
+
+  /* Where the mouse was last time we reported a mouse position.
+     This is a rectangle on last_mouse_glyph_frame.  */
+  RECT last_mouse_glyph;
+
+  /* The scroll bar in which the last motion event occurred.  */
+  struct scroll_bar *last_mouse_scroll_bar;
+
+  /* Mouse position on the scroll bar above.
+     FIXME: shouldn't it be a member of struct scroll_bar?  */
+  int last_mouse_scroll_bar_pos;
+
+  /* Time of last mouse movement.  */
+  Time last_mouse_movement_time;
 };
 
 /* This is a chain of structures for all the displays currently in use.  */
 extern struct w32_display_info *x_display_list;
 extern struct w32_display_info one_w32_display_info;
-
-/* This is a list of cons cells, each of the form (NAME . FONT-LIST-CACHE),
-   one for each element of w32_display_list and in the same order.
-   NAME is the name of the frame.
-   FONT-LIST-CACHE records previous values returned by x-list-fonts.  */
-extern Lisp_Object w32_display_name_list;
 
 extern struct frame *x_window_to_frame (struct w32_display_info *, HWND);
 
@@ -206,12 +215,10 @@ extern struct w32_display_info *w32_term_init (Lisp_Object,
 extern int w32_defined_color (struct frame *f, const char *color,
                               XColor *color_def, int alloc);
 extern void x_set_window_size (struct frame *f, int change_grav,
-                              int cols, int rows);
+			       int width, int height, bool pixelwise);
 extern int x_display_pixel_height (struct w32_display_info *);
 extern int x_display_pixel_width (struct w32_display_info *);
 extern Lisp_Object x_get_focus_frame (struct frame *);
-extern void x_set_mouse_position (struct frame *f, int h, int v);
-extern void x_set_mouse_pixel_position (struct frame *f, int pix_x, int pix_y);
 extern void x_make_frame_visible (struct frame *f);
 extern void x_make_frame_invisible (struct frame *f);
 extern void x_iconify_frame (struct frame *f);
@@ -232,6 +239,10 @@ extern int w32_kbd_mods_to_emacs (DWORD mods, WORD key);
 
 
 extern Lisp_Object x_get_focus_frame (struct frame *);
+
+/* w32console.c */
+extern void w32con_hide_cursor (void);
+extern void w32con_show_cursor (void);
 
 
 #define PIX_TYPE COLORREF
@@ -321,6 +332,7 @@ struct w32_output
   Cursor hand_cursor;
   Cursor hourglass_cursor;
   Cursor horizontal_drag_cursor;
+  Cursor vertical_drag_cursor;
 
   /* Non-zero means hourglass cursor is currently displayed.  */
   unsigned hourglass_p : 1;
@@ -348,7 +360,6 @@ struct w32_output
   {
     XGCValues *gc;
     unsigned long pixel;
-    int allocated_p;
   }
   black_relief, white_relief;
 
@@ -416,7 +427,7 @@ struct scroll_bar {
 
   /* The position and size of the scroll bar in pixels, relative to the
      frame.  */
-  Lisp_Object top, left, width, height;
+  int top, left, width, height;
 
   /* The starting and ending positions of the handle, relative to the
      handle area (i.e. zero is the top position, not
@@ -429,19 +440,13 @@ struct scroll_bar {
      drawing handle bottoms VERTICAL_SCROLL_BAR_MIN_HANDLE pixels below
      where they would be normally; the bottom and top are in a
      different co-ordinate system.  */
-  Lisp_Object start, end;
+  int start, end;
 
   /* If the scroll bar handle is currently being dragged by the user,
      this is the number of pixels from the top of the handle to the
      place where the user grabbed it.  If the handle isn't currently
      being dragged, this is Qnil.  */
-  Lisp_Object dragging;
-
-  /* 1 if the background of the fringe that is adjacent to a scroll
-     bar is extended to the gap between the fringe and the bar.  */
-  /* Note: this could be a bit field, but we need to take its address
-     in ALLOCATE_PSEUDOVECTOR (see x_scroll_bar_create).  */
-  bool fringe_extended_p;
+  int dragging;
 };
 
 /* Turning a lisp vector value into a pointer to a struct scroll_bar.  */
@@ -527,6 +532,16 @@ do { \
     rect.top = y; \
     rect.right = x + nx; \
     rect.bottom = y + ny; \
+    w32_fill_rect (f,hdc,pix,&rect); \
+} while (0)
+
+#define w32_fill_area_abs(f,hdc,pix,x0,y0,x1,y1) \
+do { \
+    RECT rect; \
+    rect.left = x0; \
+    rect.top = y0; \
+    rect.right = x1; \
+    rect.bottom = y1; \
     w32_fill_rect (f,hdc,pix,&rect); \
 } while (0)
 
@@ -653,6 +668,7 @@ extern DWORD notifications_size;
 extern void *notifications_desc;
 extern Lisp_Object w32_get_watch_object (void *);
 extern Lisp_Object lispy_file_action (DWORD);
+extern int handle_file_notifications (struct input_event *);
 
 extern void w32_initialize_display_info (Lisp_Object);
 extern void initialize_w32_display (struct terminal *, int *, int *);
@@ -762,6 +778,8 @@ typedef char guichar_t;
 #endif /* NTGUI_UNICODE */
 
 #define GUI_SDATA(x) ((guichar_t*) SDATA (x))
+
+extern Lisp_Object w32_popup_dialog (struct frame *, Lisp_Object, Lisp_Object);
 
 extern void syms_of_w32term (void);
 extern void syms_of_w32menu (void);

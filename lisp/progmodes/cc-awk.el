@@ -1,10 +1,10 @@
 ;;; cc-awk.el --- AWK specific code within cc-mode.
 
-;; Copyright (C) 1988, 1994, 1996, 2000-2013 Free Software Foundation,
+;; Copyright (C) 1988, 1994, 1996, 2000-2014 Free Software Foundation,
 ;; Inc.
 
 ;; Author: Alan Mackenzie <acm@muc.de> (originally based on awk-mode.el)
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: AWK, cc-mode, unix, languages
 ;; Package: cc-mode
 

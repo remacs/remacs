@@ -2,6 +2,7 @@
 @c %**start of header
 @setfilename ../../info/epa
 @settitle EasyPG Assistant User's Manual
+@documentencoding UTF-8
 @c %**end of header
 
 @set VERSION 1.0.0
@@ -9,13 +10,13 @@
 @copying
 This file describes EasyPG Assistant @value{VERSION}.
 
-Copyright @copyright{} 2007--2013 Free Software Foundation, Inc.
+Copyright @copyright{} 2007--2014 Free Software Foundation, Inc.
 
 @quotation
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
 any later version published by the Free Software Foundation; with no
-Invariant Sections, with the Front-Cover texts being ``A GNU Manual,''
+Invariant Sections, with the Front-Cover Texts being ``A GNU Manual,''
 and with the Back-Cover Texts as in (a) below.  A copy of the license
 is included in the section entitled ``GNU Free Documentation License''.
 
@@ -62,6 +63,9 @@ called EasyPG Library.
 * Caching Passphrases::
 * Bug Reports::
 * GNU Free Documentation License::  The license for this documentation.
+* Key Index::
+* Function Index::
+* Variable Index::
 @end menu
 
 @node  Overview
@@ -93,7 +97,7 @@ EasyPG Assistant commands are prefixed by @samp{epa-}.  For example,
 
 EasyPG Assistant provides several cryptographic features which can be
 integrated into other Emacs functionalities.  For example, automatic
-encryption/decryption of @samp{*.gpg} files.
+encryption/decryption of @file{*.gpg} files.
 
 @node Commands
 @chapter Commands
@@ -157,7 +161,7 @@ Show all keys matched with @var{name} from the private keyring.
 @end deffn
 
 @noindent
-In @samp{*Keys*} buffer, several commands are available.  The common
+In @file{*Keys*} buffer, several commands are available.  The common
 use case is to export some keys to a file.  To do that, type @kbd{m}
 to select keys, type @kbd{o}, and then supply the filename.
 
@@ -338,20 +342,23 @@ Compose a signed message from the current buffer.
 @kindex @kbd{C-c C-e C-e}
 @kindex @kbd{C-c C-e e}
 @findex epa-mail-encrypt
+@vindex epa-mail-aliases
 Compose an encrypted message from the current buffer.
 By default it tries to build the recipient list from @samp{to},
 @samp{cc}, and @samp{bcc} fields of the mail header.  To include your
 key in the recipient list, use @samp{encrypt-to} option in
-@file{~/.gnupg/gpg.conf}.
+@file{~/.gnupg/gpg.conf}.  This function translates recipient
+addresses using the @code{epa-mail-aliases} list.  You can also
+use that option to ignore specific recipients for encryption purposes.
 
 @end table
 
 @node Encrypting/decrypting gpg files
 @section Encrypting/decrypting gpg files
-By default, every file whose name ends with @samp{.gpg} will be
+By default, every file whose name ends with @file{.gpg} will be
 treated as encrypted.  That is, when you open such a file, the
 decrypted text is inserted in the buffer rather than encrypted one.
-Similarly, when you save the buffer to a @samp{foo.gpg} file,
+Similarly, when you save the buffer to a @file{foo.gpg} file,
 encrypted data is written.
 
 The file name pattern for encrypted files can be controlled by
@@ -396,7 +403,7 @@ which encryption method should be used through @xref{File Variables, ,
 variable for this.
 @vindex epa-file-encrypt-to
 
-For example, if you want an Elisp file should be encrypted with a
+For example, if you want an Elisp file to be encrypted with a
 public key associated with an email address @samp{ueno@@unixuser.org},
 add the following line to the beginning of the file.
 
@@ -485,12 +492,24 @@ collect necessary information to fix the bug, such as:
 
 Before reporting the bug, you should set @code{epg-debug} in the
 @file{~/.emacs} file and repeat the bug.  Then, include the contents
-of the @samp{ *epg-debug*} buffer.  Note that the first letter of the
+of the @file{ *epg-debug*} buffer.  Note that the first letter of the
 buffer name is a whitespace.
 
 @node GNU Free Documentation License
 @appendix GNU Free Documentation License
 @include doclicense.texi
+
+@node Key Index
+@unnumbered Key Index
+@printindex ky
+
+@node Function Index
+@unnumbered Function Index
+@printindex fn
+
+@node Variable Index
+@unnumbered Variable Index
+@printindex vr
 
 @bye
 

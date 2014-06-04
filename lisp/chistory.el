@@ -1,9 +1,9 @@
 ;;; chistory.el --- list command history
 
-;; Copyright (C) 1985, 2001-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1985, 2001-2014 Free Software Foundation, Inc.
 
 ;; Author: K. Shane Hartman
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: convenience
 
 ;; This file is part of GNU Emacs.

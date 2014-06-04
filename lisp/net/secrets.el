@@ -1,6 +1,6 @@
 ;;; secrets.el --- Client interface to gnome-keyring and kwallet.
 
-;; Copyright (C) 2010-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2010-2014 Free Software Foundation, Inc.
 
 ;; Author: Michael Albinus <michael.albinus@gmx.de>
 ;; Keywords: comm password passphrase
@@ -189,6 +189,7 @@ It returns t if not."
 ;;   </method>
 ;;   <method name="CreateCollection">
 ;;     <arg name="props"      type="a{sv}" direction="in"/>
+;;     <arg name="alias"      type="s"     direction="in"/>   ;; Added 2011/3/1
 ;;     <arg name="collection" type="o"     direction="out"/>
 ;;     <arg name="prompt"     type="o"     direction="out"/>
 ;;   </method>
@@ -491,9 +492,10 @@ If there is no such COLLECTION, return nil."
 	      (secrets-get-collection-property collection-path "Label"))
 	 (throw 'collection-found collection-path))))))
 
-(defun secrets-create-collection (collection)
+(defun secrets-create-collection (collection &optional alias)
   "Create collection labeled COLLECTION if it doesn't exist.
-Return the D-Bus object path for collection."
+Set ALIAS as alias of the collection.  Return the D-Bus object
+path for collection."
   (let ((collection-path (secrets-collection-path collection)))
     ;; Create the collection.
     (when (secrets-empty-path collection-path)
@@ -504,7 +506,10 @@ Return the D-Bus object path for collection."
 	      (dbus-call-method
 	       :session secrets-service secrets-path
 	       secrets-interface-service "CreateCollection"
-	       `(:array (:dict-entry "Label" (:variant ,collection))))))))
+	       `(:array
+		 (:dict-entry ,(concat secrets-interface-collection ".Label")
+			      (:variant ,collection)))
+	       (or alias ""))))))
     ;; Return object path of the collection.
     collection-path))
 
@@ -604,6 +609,8 @@ The object paths of the found items are returned as list."
       (while (consp (cdr attributes))
 	(unless (keywordp (car attributes))
 	  (error 'wrong-type-argument (car attributes)))
+        (unless (stringp (cadr attributes))
+          (error 'wrong-type-argument (cadr attributes)))
 	(setq props (add-to-list
 		     'props
 		     (list :dict-entry
@@ -642,6 +649,8 @@ The object path of the created item is returned."
 	(while (consp (cdr attributes))
 	  (unless (keywordp (car attributes))
 	    (error 'wrong-type-argument (car attributes)))
+          (unless (stringp (cadr attributes))
+            (error 'wrong-type-argument (cadr attributes)))
 	  (setq props (add-to-list
 		       'props
 		       (list :dict-entry

@@ -1,6 +1,6 @@
 ;;; em-cmpl.el --- completion using the TAB key  -*- lexical-binding:t -*-
 
-;; Copyright (C) 1999-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1999-2014 Free Software Foundation, Inc.
 
 ;; Author: John Wiegley <johnw@gnu.org>
 
@@ -370,7 +370,7 @@ to writing a completion function."
     (cl-assert (= (length args) (length posns)))
     (let ((a args)
 	  (i 0)
-	  l final)
+	  l)
       (while a
 	(if (and (consp (car a))
 		 (eq (caar a) 'eshell-operator))

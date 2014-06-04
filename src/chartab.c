@@ -141,7 +141,8 @@ static Lisp_Object
 make_sub_char_table (int depth, int min_char, Lisp_Object defalt)
 {
   Lisp_Object table;
-  int size = CHAR_TABLE_STANDARD_SLOTS + chartab_size[depth];
+  int size = (PSEUDOVECSIZE (struct Lisp_Sub_Char_Table, contents)
+	      + chartab_size[depth]);
 
   table = Fmake_vector (make_number (size), defalt);
   XSETPVECTYPE (XVECTOR (table), PVEC_SUB_CHAR_TABLE);
@@ -1220,9 +1221,7 @@ uniprop_decode_value_run_length (Lisp_Object table, Lisp_Object value)
 static uniprop_decoder_t uniprop_decoder [] =
   { uniprop_decode_value_run_length };
 
-static int uniprop_decoder_count
-  = (sizeof uniprop_decoder) / sizeof (uniprop_decoder[0]);
-
+static const int uniprop_decoder_count = ARRAYELTS (uniprop_decoder);
 
 /* Return the decoder of char-table TABLE or nil if none.  */
 
@@ -1271,7 +1270,7 @@ uniprop_encode_value_run_length (Lisp_Object table, Lisp_Object value)
 
 
 /* Encode VALUE as an element of char-table TABLE which adopts RUN-LENGTH
-   compression and contains numbers as elements .  */
+   compression and contains numbers as elements.  */
 
 static Lisp_Object
 uniprop_encode_value_numeric (Lisp_Object table, Lisp_Object value)
@@ -1300,9 +1299,7 @@ static uniprop_encoder_t uniprop_encoder[] =
     uniprop_encode_value_run_length,
     uniprop_encode_value_numeric };
 
-static int uniprop_encoder_count
-  = (sizeof uniprop_encoder) / sizeof (uniprop_encoder[0]);
-
+static const int uniprop_encoder_count = ARRAYELTS (uniprop_encoder);
 
 /* Return the encoder of char-table TABLE or nil if none.  */
 

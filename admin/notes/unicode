@@ -1,6 +1,6 @@
                                             -*-mode: text; coding: utf-8;-*-
 
-Copyright (C) 2002-2013 Free Software Foundation, Inc.
+Copyright (C) 2002-2014 Free Software Foundation, Inc.
 See the end of the file for license conditions.
 
 Problems, fixmes and other unicode-related issues
@@ -180,13 +180,6 @@ nontrivial changes to the build process.
      It hasn't been converted to UTF-8.
 
 	admin/charsets/mapfiles/cns2ucsdkw.txt
-
- * no-conversion
-
-     This file purposely contains arbitrary bytes interspersed within text,
-     to test whether the Emacs distribution is corrupted.
-
-	lib-src/testfile
 
  * iso-2022-7bit
 

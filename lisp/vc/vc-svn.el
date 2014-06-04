@@ -1,6 +1,6 @@
 ;;; vc-svn.el --- non-resident support for Subversion version-control  -*- lexical-binding:t -*-
 
-;; Copyright (C) 2003-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2003-2014 Free Software Foundation, Inc.
 
 ;; Author:      FSF (see vc.el for full credits)
 ;; Maintainer:  Stefan Monnier <monnier@gnu.org>
@@ -293,8 +293,10 @@ RESULT is a list of conses (FILE . STATE) for directory DIR."
 (defun vc-svn-create-repo ()
   "Create a new SVN repository."
   (vc-do-command "*vc*" 0 "svnadmin" '("create" "SVN"))
+  ;; Expand default-directory because svn gets confused by eg
+  ;; file://~/path/to/file.  (Bug#15446).
   (vc-svn-command "*vc*" 0 "." "checkout"
-                  (concat "file://" default-directory "SVN")))
+                  (concat "file://" (expand-file-name default-directory) "SVN")))
 
 (autoload 'vc-switches "vc")
 
@@ -360,6 +362,10 @@ FILE is a file wildcard, relative to the root directory of DIRECTORY."
 (defun vc-svn-ignore-completion-table (_file)
   "Return the list of ignored files."
   )
+
+(defun vc-svn-find-admin-dir (file)
+  "Return the administrative directory of FILE."
+  (expand-file-name vc-svn-admin-directory (vc-svn-root file)))
 
 (defun vc-svn-checkout (file &optional editable rev)
   (message "Checking out %s..." file)

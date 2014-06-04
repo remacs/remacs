@@ -1,6 +1,6 @@
 /* Functions for creating and updating GTK widgets.
 
-Copyright (C) 2003-2013 Free Software Foundation, Inc.
+Copyright (C) 2003-2014 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -78,6 +78,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #define remove_submenu(w) gtk_menu_item_remove_submenu ((w))
 #endif
 
+#ifdef HAVE_FREETYPE
 #if GTK_CHECK_VERSION (3, 2, 0)
 #define USE_NEW_GTK_FONT_CHOOSER 1
 #else
@@ -89,6 +90,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #define  gtk_font_chooser_set_font(x, y) \
   gtk_font_selection_dialog_set_font_name (x, y)
 #endif
+#endif /* HAVE_FREETYPE */
 
 #ifndef HAVE_GTK3
 #ifdef USE_GTK_TOOLTIP
@@ -598,14 +600,17 @@ xg_check_special_colors (struct frame *f,
     GtkStyleContext *gsty
       = gtk_widget_get_style_context (FRAME_GTK_OUTER_WIDGET (f));
     GdkRGBA col;
-    char buf[sizeof "rgbi://" + 3 * (DBL_MAX_10_EXP + sizeof "-1.000000" - 1)];
+    char buf[sizeof "rgb://rrrr/gggg/bbbb"];
     int state = GTK_STATE_FLAG_SELECTED|GTK_STATE_FLAG_FOCUSED;
     if (get_fg)
       gtk_style_context_get_color (gsty, state, &col);
     else
       gtk_style_context_get_background_color (gsty, state, &col);
 
-    sprintf (buf, "rgbi:%lf/%lf/%lf", col.red, col.green, col.blue);
+    sprintf (buf, "rgb:%04x/%04x/%04x",
+             (int)(col.red * 65535),
+             (int)(col.green * 65535),
+             (int)(col.blue * 65535));
     success_p = (XParseColor (FRAME_X_DISPLAY (f), FRAME_X_COLORMAP (f),
 			      buf, color)
 		 != 0);
@@ -901,7 +906,7 @@ xg_clear_under_internal_border (struct frame *f)
 void
 xg_frame_resized (struct frame *f, int pixelwidth, int pixelheight)
 {
-  int rows, columns;
+  int width, height;
 
   if (pixelwidth == -1 && pixelheight == -1)
     {
@@ -913,11 +918,11 @@ xg_frame_resized (struct frame *f, int pixelwidth, int pixelheight)
     }
 
 
-  rows = FRAME_PIXEL_HEIGHT_TO_TEXT_LINES (f, pixelheight);
-  columns = FRAME_PIXEL_WIDTH_TO_TEXT_COLS (f, pixelwidth);
+  width = FRAME_PIXEL_TO_TEXT_WIDTH (f, pixelwidth);
+  height = FRAME_PIXEL_TO_TEXT_HEIGHT (f, pixelheight);
 
-  if (columns != FRAME_COLS (f)
-      || rows != FRAME_LINES (f)
+  if (width != FRAME_TEXT_WIDTH (f)
+      || height != FRAME_TEXT_HEIGHT (f)
       || pixelwidth != FRAME_PIXEL_WIDTH (f)
       || pixelheight != FRAME_PIXEL_HEIGHT (f))
     {
@@ -925,7 +930,7 @@ xg_frame_resized (struct frame *f, int pixelwidth, int pixelheight)
       FRAME_PIXEL_HEIGHT (f) = pixelheight;
 
       xg_clear_under_internal_border (f);
-      change_frame_size (f, rows, columns, 0, 1, 0);
+      change_frame_size (f, width, height, 0, 1, 0, 1);
       SET_FRAME_GARBAGED (f);
       cancel_mouse_face (f);
     }
@@ -935,30 +940,13 @@ xg_frame_resized (struct frame *f, int pixelwidth, int pixelheight)
    COLUMNS/ROWS is the size the edit area shall have after the resize.  */
 
 void
-xg_frame_set_char_size (struct frame *f, int cols, int rows)
+xg_frame_set_char_size (struct frame *f, int width, int height)
 {
-  int pixelheight = FRAME_TEXT_LINES_TO_PIXEL_HEIGHT (f, rows)
-    + FRAME_MENUBAR_HEIGHT (f) + FRAME_TOOLBAR_HEIGHT (f);
-  int pixelwidth;
+  int pixelwidth = FRAME_TEXT_TO_PIXEL_WIDTH (f, width);
+  int pixelheight = FRAME_TEXT_TO_PIXEL_HEIGHT (f, height);
 
   if (FRAME_PIXEL_HEIGHT (f) == 0)
     return;
-
-  /* Take into account the size of the scroll bar.  Always use the
-     number of columns occupied by the scroll bar here otherwise we
-     might end up with a frame width that is not a multiple of the
-     frame's character width which is bad for vertically split
-     windows.  */
-  f->scroll_bar_actual_width
-    = FRAME_SCROLL_BAR_COLS (f) * FRAME_COLUMN_WIDTH (f);
-
-  compute_fringe_widths (f, 0);
-
-  /* FRAME_TEXT_COLS_TO_PIXEL_WIDTH uses scroll_bar_actual_width, so call it
-     after calculating that value.  */
-  pixelwidth = FRAME_TEXT_COLS_TO_PIXEL_WIDTH (f, cols)
-    + FRAME_TOOLBAR_WIDTH (f);
-
 
   /* Do this before resize, as we don't know yet if we will be resized.  */
   xg_clear_under_internal_border (f);
@@ -966,7 +954,9 @@ xg_frame_set_char_size (struct frame *f, int cols, int rows)
   /* Must resize our top level widget.  Font size may have changed,
      but not rows/cols.  */
   gtk_window_resize (GTK_WINDOW (FRAME_GTK_OUTER_WIDGET (f)),
-                     pixelwidth, pixelheight);
+                     pixelwidth + FRAME_TOOLBAR_WIDTH (f),
+		     pixelheight + FRAME_TOOLBAR_HEIGHT (f)
+		     + FRAME_MENUBAR_HEIGHT (f));
   x_wm_set_size_hint (f, 0, 0);
 
   SET_FRAME_GARBAGED (f);
@@ -987,11 +977,7 @@ xg_frame_set_char_size (struct frame *f, int cols, int rows)
       x_wait_for_event (f, ConfigureNotify);
     }
   else
-    {
-      change_frame_size (f, rows, cols, 0, 1, 0);
-      FRAME_PIXEL_WIDTH (f) = pixelwidth;
-      FRAME_PIXEL_HEIGHT (f) = pixelheight;
-     }
+    change_frame_size (f, width, height, 0, 1, 0, 1);
 }
 
 /* Handle height/width changes (i.e. add/remove/move menu/toolbar).
@@ -1038,7 +1024,7 @@ xg_win_to_widget (Display *dpy, Window wdesc)
 /* Set the background of widget W to PIXEL.  */
 
 static void
-xg_set_widget_bg (struct frame *f, GtkWidget *w, long unsigned int pixel)
+xg_set_widget_bg (struct frame *f, GtkWidget *w, unsigned long pixel)
 {
 #ifdef HAVE_GTK3
   GdkRGBA bg;
@@ -1095,7 +1081,7 @@ style_changed_cb (GObject *go,
               && FRAME_X_DISPLAY (f) == dpy)
             {
               x_set_scroll_bar_default_width (f);
-              xg_frame_set_char_size (f, FRAME_COLS (f), FRAME_LINES (f));
+              xg_frame_set_char_size (f, FRAME_TEXT_WIDTH (f), FRAME_TEXT_HEIGHT (f));
             }
         }
     }
@@ -1368,8 +1354,8 @@ x_wm_set_size_hint (struct frame *f, long int flags, bool user_position)
   hint_flags = f->output_data.x->hint_flags;
 
   hint_flags |= GDK_HINT_RESIZE_INC | GDK_HINT_MIN_SIZE;
-  size_hints.width_inc = FRAME_COLUMN_WIDTH (f);
-  size_hints.height_inc = FRAME_LINE_HEIGHT (f);
+  size_hints.width_inc = frame_resize_pixelwise ? 1 : FRAME_COLUMN_WIDTH (f);
+  size_hints.height_inc = frame_resize_pixelwise ? 1 : FRAME_LINE_HEIGHT (f);
 
   hint_flags |= GDK_HINT_BASE_SIZE;
   /* Use one row/col here so base_height/width does not become zero.
@@ -1378,14 +1364,14 @@ x_wm_set_size_hint (struct frame *f, long int flags, bool user_position)
   base_height = FRAME_TEXT_LINES_TO_PIXEL_HEIGHT (f, 1)
     + FRAME_MENUBAR_HEIGHT (f) + FRAME_TOOLBAR_HEIGHT (f);
 
-  check_frame_size (f, &min_rows, &min_cols);
+  check_frame_size (f, &min_cols, &min_rows, 0);
   if (min_cols > 0) --min_cols; /* We used one col in base_width = ... 1); */
   if (min_rows > 0) --min_rows; /* We used one row in base_height = ... 1); */
 
   size_hints.base_width = base_width;
   size_hints.base_height = base_height;
-  size_hints.min_width  = base_width + min_cols * size_hints.width_inc;
-  size_hints.min_height = base_height + min_rows * size_hints.height_inc;
+  size_hints.min_width  = base_width + min_cols * FRAME_COLUMN_WIDTH (f);;
+  size_hints.min_height = base_height + min_rows * FRAME_LINE_HEIGHT (f);
 
   /* These currently have a one to one mapping with the X values, but I
      don't think we should rely on that.  */
@@ -1439,7 +1425,7 @@ x_wm_set_size_hint (struct frame *f, long int flags, bool user_position)
    BG is the pixel value to change to.  */
 
 void
-xg_set_background_color (struct frame *f, long unsigned int bg)
+xg_set_background_color (struct frame *f, unsigned long bg)
 {
   if (FRAME_GTK_WIDGET (f))
     {
@@ -2120,8 +2106,7 @@ xg_get_font (struct frame *f, const char *default_name)
 	  font = Ffont_spec (8, args);
 
 	  pango_font_description_free (desc);
-	  xfree (x_last_font_name);
-	  x_last_font_name = xstrdup (name);
+	  dupstring (&x_last_font_name, name);
 	}
 
 #else /* Use old font selector, which just returns the font name.  */
@@ -2428,9 +2413,12 @@ static int xg_detached_menus;
 /* Return true if there are detached menus.  */
 
 bool
-xg_have_tear_offs (void)
+xg_have_tear_offs (struct frame *f)
 {
-  return xg_detached_menus > 0;
+  /* If the frame's menubar height is zero, the menu bar is probably
+     being redirected outside the window to some kind of global menu;
+     this situation is the moral equivalent of a tear-off.  */
+  return FRAME_MENUBAR_HEIGHT (f) == 0 || xg_detached_menus > 0;
 }
 
 /* Callback invoked when a detached menu window is removed.  Here we
@@ -2463,9 +2451,9 @@ tearoff_activate (GtkWidget *widget, gpointer client_data)
 }
 #else /* ! HAVE_GTK_TEAROFF_MENU_ITEM_NEW */
 bool
-xg_have_tear_offs (void)
+xg_have_tear_offs (struct frame *f)
 {
-  return false;
+  return FRAME_MENUBAR_HEIGHT (f) == 0;
 }
 #endif /* ! HAVE_GTK_TEAROFF_MENU_ITEM_NEW */
 
@@ -2911,7 +2899,13 @@ xg_update_menubar (GtkWidget *menubar,
           char *utf8_label = get_utf8_string (val->name);
           GtkWidget *submenu = gtk_menu_item_get_submenu (witem);
 
+          /* GTK menu items don't notice when their labels have been
+             changed from underneath them, so we have to explicitly
+             use g_object_notify to tell listeners (e.g., a GMenuModel
+             bridge that might be loaded) that the item's label has
+             changed.  */
           gtk_label_set_text (wlabel, utf8_label);
+          g_object_notify (G_OBJECT (witem), "label");
 
 #ifdef HAVE_GTK_TEAROFF_MENU_ITEM_NEW
           /* If this item has a submenu that has been detached, change
@@ -2948,6 +2942,7 @@ xg_update_menubar (GtkWidget *menubar,
                                              select_cb, deactivate_cb,
                                              highlight_cb,
                                              0, 0, 0, 0, cl_data, 0);
+
           gtk_widget_set_name (w, MENU_ITEM_NAME);
           gtk_menu_shell_insert (GTK_MENU_SHELL (menubar), w, pos);
           gtk_menu_item_set_submenu (GTK_MENU_ITEM (w), submenu);
@@ -3007,6 +3002,7 @@ xg_update_menu_item (widget_value *val,
   const char *old_label = 0;
   const char *old_key = 0;
   xg_menu_item_cb_data *cb_data;
+  bool label_changed = false;
 
   wchild = XG_BIN_CHILD (w);
   utf8_label = get_utf8_string (val->name);
@@ -3051,15 +3047,20 @@ xg_update_menu_item (widget_value *val,
         }
     }
 
-
   if (wkey) old_key = gtk_label_get_label (wkey);
   if (wlbl) old_label = gtk_label_get_label (wlbl);
 
   if (wkey && utf8_key && (! old_key || strcmp (utf8_key, old_key) != 0))
-    gtk_label_set_text (wkey, utf8_key);
+    {
+      label_changed = true;
+      gtk_label_set_text (wkey, utf8_key);
+    }
 
   if (! old_label || strcmp (utf8_label, old_label) != 0)
-    gtk_label_set_text (wlbl, utf8_label);
+    {
+      label_changed = true;
+      gtk_label_set_text (wlbl, utf8_label);
+    }
 
   if (utf8_key) g_free (utf8_key);
   if (utf8_label) g_free (utf8_label);
@@ -3091,6 +3092,9 @@ xg_update_menu_item (widget_value *val,
           cb_data->select_id = 0;
         }
     }
+
+  if (label_changed) /* See comment in xg_update_menubar.  */
+    g_object_notify (G_OBJECT (w), "label");
 }
 
 /* Update the toggle menu item W so it corresponds to VAL.  */
@@ -3373,11 +3377,6 @@ xg_update_frame_menubar (struct frame *f)
   gtk_widget_show_all (x->menubar_widget);
   gtk_widget_get_preferred_size (x->menubar_widget, NULL, &req);
 
-  /* If menu bar doesn't know its height yet, cheat a little so the frame
-     doesn't jump so much when resized later in menubar_map_cb.  */
-  if (req.height == 0)
-    req.height = 23;
-
   if (FRAME_MENUBAR_HEIGHT (f) != req.height)
     {
       FRAME_MENUBAR_HEIGHT (f) = req.height;
@@ -3409,7 +3408,7 @@ free_frame_menubar (struct frame *f)
 }
 
 bool
-xg_event_is_for_menubar (struct frame *f, const XEvent * const event)
+xg_event_is_for_menubar (struct frame *f, const XEvent *event)
 {
   struct x_output *x = f->output_data.x;
   GList *iter;
@@ -3861,7 +3860,7 @@ xg_set_toolkit_scroll_bar_thumb (struct scroll_bar *bar,
    frame.  This function does additional checks.  */
 
 bool
-xg_event_is_for_scrollbar (struct frame *f, const XEvent * const event)
+xg_event_is_for_scrollbar (struct frame *f, const XEvent *event)
 {
   bool retval = 0;
 
@@ -4366,7 +4365,7 @@ tb_size_cb (GtkWidget    *widget,
      size hints if tool bar size changes.  Seen on Fedora 18 at least.  */
   struct frame *f = user_data;
   if (xg_update_tool_bar_sizes (f))
-    x_wm_set_size_hint (f, 0, 0);
+    xg_height_or_width_changed (f);
 }
 
 /* Create a tool bar for frame F.  */

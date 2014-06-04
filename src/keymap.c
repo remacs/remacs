@@ -1,5 +1,5 @@
 /* Manipulation of keymaps
-   Copyright (C) 1985-1988, 1993-1995, 1998-2013 Free Software
+   Copyright (C) 1985-1988, 1993-1995, 1998-2014 Free Software
    Foundation, Inc.
 
 This file is part of GNU Emacs.
@@ -1894,7 +1894,7 @@ struct accessible_keymaps_data {
 
 static void
 accessible_keymaps_1 (Lisp_Object key, Lisp_Object cmd, Lisp_Object args, void *data)
-/* Use void* data to be compatible with map_keymap_function_t.  */
+/* Use void * data to be compatible with map_keymap_function_t.  */
 {
   struct accessible_keymaps_data *d = data; /* Cast! */
   Lisp_Object maps = d->maps;
@@ -3383,9 +3383,12 @@ describe_map (Lisp_Object map, Lisp_Object prefix,
 
       if (vect[i].shadowed)
 	{
-	  SET_PT (PT - 1);
+	  ptrdiff_t pt = max (PT - 1, BEG);
+
+	  SET_PT (pt);
 	  insert_string ("\n  (that binding is currently shadowed by another mode)");
-	  SET_PT (PT + 1);
+	  pt = min (PT + 1, Z);
+	  SET_PT (pt);
 	}
     }
 
@@ -3750,7 +3753,7 @@ it is provided for major modes to bind locally.  */);
   Vminor_mode_overriding_map_alist = Qnil;
 
   DEFVAR_LISP ("emulation-mode-map-alists", Vemulation_mode_map_alists,
-	       doc: /* List of keymap alists to use for emulations modes.
+	       doc: /* List of keymap alists to use for emulation modes.
 It is intended for modes or packages using multiple minor-mode keymaps.
 Each element is a keymap alist just like `minor-mode-map-alist', or a
 symbol with a variable binding which is a keymap alist, and it is used

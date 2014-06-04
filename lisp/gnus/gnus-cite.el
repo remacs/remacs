@@ -1,6 +1,6 @@
 ;;; gnus-cite.el --- parse citations in articles for Gnus
 
-;; Copyright (C) 1995-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1995-2014 Free Software Foundation, Inc.
 
 ;; Author: Per Abhiddenware
 
@@ -1096,7 +1096,7 @@ See also the documentation for `gnus-article-highlight-citation'."
 	(skip-chars-backward " \t")
 	(setq to (point))
 	(when (< from to)
-	  (push (setq overlay (gnus-make-overlay from to))
+	  (push (setq overlay (gnus-make-overlay from to nil t))
 		gnus-cite-overlay-list)
 	  (gnus-overlay-put overlay 'evaporate t)
 	  (gnus-overlay-put overlay 'face face))))))
@@ -1204,7 +1204,8 @@ When enabled, it automatically turns on `font-lock-mode'."
   nil ;; init-value
   "" ;; lighter
   nil ;; keymap
-  (when (eq major-mode 'message-mode)
+  (when (eq major-mode 'message-mode)   ;FIXME: Use derived-mode-p.
+    ;; FIXME: Use font-lock-add-keywords!
     (let ((defaults (car (if (featurep 'xemacs)
 			     (get 'message-mode 'font-lock-defaults)
 			   font-lock-defaults)))
@@ -1233,8 +1234,10 @@ When enabled, it automatically turns on `font-lock-mode'."
 		font-lock-keywords nil))
       (setq font-lock-set-defaults nil))
     (font-lock-set-defaults)
-    (cond ((symbol-value 'font-lock-mode)
-	   (font-lock-fontify-buffer))
+    (cond (font-lock-mode
+           (if (fboundp 'font-lock-flush)
+               (font-lock-flush)
+             (font-lock-fontify-buffer)))
 	  (gnus-message-citation-mode
 	   (font-lock-mode 1)))))
 

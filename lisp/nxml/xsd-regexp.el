@@ -1,9 +1,9 @@
 ;;; xsd-regexp.el --- translate W3C XML Schema regexps to Emacs regexps
 
-;; Copyright (C) 2003, 2007-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2003, 2007-2014 Free Software Foundation, Inc.
 
 ;; Author: James Clark
-;; Keywords: XML, regexp
+;; Keywords: wp, hypermedia, languages, XML, regexp
 
 ;; This file is part of GNU Emacs.
 

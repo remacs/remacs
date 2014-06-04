@@ -1,6 +1,6 @@
 /* ebrowse.c --- parsing files for the ebrowse C++ browser
 
-Copyright (C) 1992-2013 Free Software Foundation, Inc.
+Copyright (C) 1992-2014 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -514,7 +514,7 @@ static char *
 xstrdup (char *s)
 {
   if (s)
-    s = strcpy (xmalloc (strlen (s) + 1), s);
+    return strcpy (xmalloc (strlen (s) + 1), s);
   return s;
 }
 

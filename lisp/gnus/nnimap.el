@@ -1,6 +1,6 @@
 ;;; nnimap.el --- IMAP interface for Gnus
 
-;; Copyright (C) 2010-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2010-2014 Free Software Foundation, Inc.
 
 ;; Author: Lars Magne Ingebrigtsen <larsi@gnus.org>
 ;;         Simon Josefsson <simon@josefsson.org>
@@ -25,10 +25,6 @@
 ;; nnimap interfaces Gnus with IMAP servers.
 
 ;;; Code:
-
-;; For Emacs <22.2 and XEmacs.
-(eval-and-compile
-  (unless (fboundp 'declare-function) (defmacro declare-function (&rest r))))
 
 (eval-and-compile
   (require 'nnheader)
@@ -95,7 +91,7 @@ Uses the same syntax as `nnmail-split-methods'.")
 (defvoo nnimap-unsplittable-articles '(%Deleted %Seen)
   "Articles with the flags in the list will not be considered when splitting.")
 
-(make-obsolete-variable 'nnimap-split-rule "see `nnimap-split-methods'"
+(make-obsolete-variable 'nnimap-split-rule "see `nnimap-split-methods'."
 			"Emacs 24.1")
 
 (defvoo nnimap-authenticator nil
@@ -255,7 +251,9 @@ textual parts.")
 	  (insert (format "Chars: %s\n" size)))
 	(when lines
 	  (insert (format "Lines: %s\n" lines)))
-	(unless (re-search-forward "^\r$" nil t)
+	;; Most servers have a blank line after the headers, but
+	;; Davmail doesn't.
+	(unless (re-search-forward "^\r$\\|^)\r?$" nil t)
 	  (goto-char (point-max)))
 	(delete-region (line-beginning-position) (line-end-position))
 	(insert ".")
@@ -456,8 +454,8 @@ textual parts.")
                                (nnimap-credentials
 				(gnus-delete-duplicates
 				 (list
-				  nnimap-address
-				  (nnoo-current-server 'nnimap)))
+                                  (nnoo-current-server 'nnimap)
+				  nnimap-address))
                                 ports
                                 nnimap-user))))
 		  (setq nnimap-object nil)
@@ -625,6 +623,26 @@ textual parts.")
 	    (insert-buffer-substring buffer)
 	    (nnheader-ms-strip-cr)
 	    (cons group article)))))))
+
+(deffoo nnimap-request-articles (articles &optional group server)
+  (when group
+    (setq group (nnimap-decode-gnus-group group)))
+  (with-current-buffer nntp-server-buffer
+    (let ((result (nnimap-change-group group server)))
+      (when result
+	(erase-buffer)
+	(with-current-buffer (nnimap-buffer)
+	  (erase-buffer)
+	  (when (nnimap-command
+		 (if (nnimap-ver4-p)
+		     "UID FETCH %s BODY.PEEK[]"
+		   "UID FETCH %s RFC822.PEEK")
+		 (nnimap-article-ranges (gnus-compress-sequence articles)))
+	    (let ((buffer (current-buffer)))
+	      (with-current-buffer nntp-server-buffer
+		(nnheader-insert-buffer-substring buffer)
+		(nnheader-ms-strip-cr)))
+	    t))))))
 
 (defun nnimap-get-whole-article (article &optional command)
   (let ((result
@@ -1097,6 +1115,14 @@ If LIMIT, first try to limit the search to the N last articles."
 	  (nnimap-wait-for-response sequence))))))
 
 (deffoo nnimap-request-accept-article (group &optional server last)
+  (unless group
+    ;; We're respooling.  Find out where mail splitting would place
+    ;; this article.
+    (setq group
+	  (caar
+	   (nnmail-article-group
+	    `(lambda (group)
+	       (nnml-active-number group ,server))))))
   (setq group (nnimap-decode-gnus-group group))
   (when (nnimap-change-group nil server)
     (nnmail-check-syntax)

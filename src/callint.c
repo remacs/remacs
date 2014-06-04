@@ -1,5 +1,5 @@
 /* Call a Lisp function interactively.
-   Copyright (C) 1985-1986, 1993-1995, 1997, 2000-2013 Free Software
+   Copyright (C) 1985-1986, 1993-1995, 1997, 2000-2014 Free Software
    Foundation, Inc.
 
 This file is part of GNU Emacs.
@@ -29,7 +29,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "keymap.h"
 
 Lisp_Object Qminus, Qplus;
-static Lisp_Object Qcall_interactively;
+static Lisp_Object Qfuncall_interactively;
 static Lisp_Object Qcommand_debug_status;
 static Lisp_Object Qenable_recursive_minibuffers;
 
@@ -38,8 +38,8 @@ static Lisp_Object Qread_number;
 
 Lisp_Object Qmouse_leave_buffer_hook;
 
-static Lisp_Object Qlist, Qlet, Qletx, Qsave_excursion, Qprogn, Qif;
-Lisp_Object Qwhen;
+static Lisp_Object Qlist, Qlet, Qletx, Qsave_excursion, Qif;
+Lisp_Object Qwhen, Qprogn;
 static Lisp_Object preserved_fns;
 
 /* Marker used within call-interactively to refer to point.  */
@@ -233,6 +233,22 @@ fix_command (Lisp_Object input, Lisp_Object values)
     }
 }
 
+/* BEWARE: Calling this directly from C would defeat the purpose!  */
+DEFUN ("funcall-interactively", Ffuncall_interactively, Sfuncall_interactively,
+       1, MANY, 0, doc: /* Like `funcall' but marks the call as interactive.
+I.e. arrange that within the called function `called-interactively-p' will
+return non-nil.  */)
+     (ptrdiff_t nargs, Lisp_Object *args)
+{
+  ptrdiff_t speccount = SPECPDL_INDEX ();
+  temporarily_switch_to_single_kboard (NULL);
+
+  /* Nothing special to do here, all the work is inside
+     `called-interactively-p'.  Which will look for us as a marker in the
+     backtrace.  */
+  return unbind_to (speccount, Ffuncall (nargs, args));
+}
+
 DEFUN ("call-interactively", Fcall_interactively, Scall_interactively, 1, 3, 0,
        doc: /* Call FUNCTION, providing args according to its interactive calling specs.
 Return the value FUNCTION returns.
@@ -308,7 +324,7 @@ invoke it.  If KEYS is omitted or nil, the return value of
 
   specs = Qnil;
   string = 0;
-  /* The idea of FILTER_SPECS is to provide away to
+  /* The idea of FILTER_SPECS is to provide a way to
      specify how to represent the arguments in command history.
      The feature is not fully implemented.  */
   filter_specs = Qnil;
@@ -374,8 +390,13 @@ invoke it.  If KEYS is omitted or nil, the return value of
       Vreal_this_command = save_real_this_command;
       kset_last_command (current_kboard, save_last_command);
 
-      temporarily_switch_to_single_kboard (NULL);
-      return unbind_to (speccount, apply1 (function, specs));
+      {
+	Lisp_Object args[3];
+	args[0] = Qfuncall_interactively;
+	args[1] = function;
+	args[2] = specs;
+	return unbind_to (speccount, Fapply (3, args));
+      }
     }
 
   /* Here if function specifies a string to control parsing the defaults.  */
@@ -446,10 +467,11 @@ invoke it.  If KEYS is omitted or nil, the return value of
       else break;
     }
 
-  /* Count the number of arguments, which is one plus the number of arguments
-     the interactive spec would have us give to the function.  */
+  /* Count the number of arguments, which is two (the function itself and
+     `funcall-interactively') plus the number of arguments the interactive spec
+     would have us give to the function.  */
   tem = string;
-  for (nargs = 1; *tem; )
+  for (nargs = 2; *tem; )
     {
       /* 'r' specifications ("point and mark as 2 numeric args")
 	 produce *two* arguments.  */
@@ -488,13 +510,13 @@ invoke it.  If KEYS is omitted or nil, the return value of
     specbind (Qenable_recursive_minibuffers, Qt);
 
   tem = string;
-  for (i = 1; *tem; i++)
+  for (i = 2; *tem; i++)
     {
-      visargs[0] = make_string (tem + 1, strcspn (tem + 1, "\n"));
-      if (strchr (SSDATA (visargs[0]), '%'))
+      visargs[1] = make_string (tem + 1, strcspn (tem + 1, "\n"));
+      if (strchr (SSDATA (visargs[1]), '%'))
 	callint_message = Fformat (i, visargs);
       else
-	callint_message = visargs[0];
+	callint_message = visargs[1];
 
       switch (*tem)
 	{
@@ -789,21 +811,22 @@ invoke it.  If KEYS is omitted or nil, the return value of
 
   QUIT;
 
-  args[0] = function;
+  args[0] = Qfuncall_interactively;
+  args[1] = function;
 
   if (arg_from_tty || !NILP (record_flag))
     {
       /* We don't need `visargs' any more, so let's recycle it since we need
 	 an array of just the same size.  */
-      visargs[0] = function;
-      for (i = 1; i < nargs; i++)
+      visargs[1] = function;
+      for (i = 2; i < nargs; i++)
 	{
 	  if (varies[i] > 0)
 	    visargs[i] = list1 (intern (callint_argfuns[varies[i]]));
 	  else
 	    visargs[i] = quotify_arg (args[i]);
 	}
-      Vcommand_history = Fcons (Flist (nargs, visargs),
+      Vcommand_history = Fcons (Flist (nargs - 1, visargs + 1),
 				Vcommand_history);
       /* Don't keep command history around forever.  */
       if (INTEGERP (Vhistory_length) && XINT (Vhistory_length) > 0)
@@ -816,7 +839,7 @@ invoke it.  If KEYS is omitted or nil, the return value of
 
   /* If we used a marker to hold point, mark, or an end of the region,
      temporarily, convert it to an integer now.  */
-  for (i = 1; i < nargs; i++)
+  for (i = 2; i < nargs; i++)
     if (varies[i] >= 1 && varies[i] <= 4)
       XSETINT (args[i], marker_position (args[i]));
 
@@ -829,11 +852,7 @@ invoke it.  If KEYS is omitted or nil, the return value of
   kset_last_command (current_kboard, save_last_command);
 
   {
-    Lisp_Object val;
-    specbind (Qcommand_debug_status, Qnil);
-
-    temporarily_switch_to_single_kboard (NULL);
-    val = Ffuncall (nargs, args);
+    Lisp_Object val = Ffuncall (nargs, args);
     UNGCPRO;
     return unbind_to (speccount, val);
   }
@@ -888,7 +907,7 @@ syms_of_callint (void)
   DEFSYM (Qplus, "+");
   DEFSYM (Qhandle_shift_selection, "handle-shift-selection");
   DEFSYM (Qread_number, "read-number");
-  DEFSYM (Qcall_interactively, "call-interactively");
+  DEFSYM (Qfuncall_interactively, "funcall-interactively");
   DEFSYM (Qcommand_debug_status, "command-debug-status");
   DEFSYM (Qenable_recursive_minibuffers, "enable-recursive-minibuffers");
   DEFSYM (Qmouse_leave_buffer_hook, "mouse-leave-buffer-hook");
@@ -946,5 +965,6 @@ a way to turn themselves off when a mouse command switches windows.  */);
 
   defsubr (&Sinteractive);
   defsubr (&Scall_interactively);
+  defsubr (&Sfuncall_interactively);
   defsubr (&Sprefix_numeric_value);
 }

@@ -1,5 +1,5 @@
 /* Functions related to terminal devices.
-   Copyright (C) 2005-2013 Free Software Foundation, Inc.
+   Copyright (C) 2005-2014 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -17,8 +17,6 @@ You should have received a copy of the GNU General Public License
 along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include <config.h>
-
-#define TERMHOOKS_INLINE EXTERN_INLINE
 
 #include <stdio.h>
 
@@ -226,19 +224,19 @@ get_terminal (Lisp_Object terminal, bool throw)
   return result;
 }
 
-
-
-/* Create a new terminal object and add it to the terminal list. */
+/* Create a new terminal object of TYPE and add it to the terminal list.  RIF
+   may be NULL if this terminal type doesn't support window-based redisplay.  */
 
 struct terminal *
-create_terminal (void)
+create_terminal (enum output_method type, struct redisplay_interface *rif)
 {
   struct terminal *terminal = allocate_terminal ();
   Lisp_Object terminal_coding, keyboard_coding;
 
   terminal->next_terminal = terminal_list;
   terminal_list = terminal;
-
+  terminal->type = type;
+  terminal->rif = rif;
   terminal->id = next_terminal_id++;
 
   terminal->keyboard_coding = xmalloc (sizeof (struct coding_system));
@@ -502,7 +500,15 @@ selected frame's terminal).  */)
   return store_terminal_param (t, parameter, value);
 }
 
-
+/* Initial frame has no device-dependent output data, but has
+   face cache which should be freed when the frame is deleted.  */
+
+static void
+initial_free_frame_resources (struct frame *f)
+{
+  eassert (FRAME_INITIAL_P (f));
+  free_frame_faces (f);
+}
 
 /* Create the bootstrap display terminal for the initial frame.
    Returns a terminal of type output_initial.  */
@@ -513,12 +519,12 @@ init_initial_terminal (void)
   if (initialized || terminal_list || tty_list)
     emacs_abort ();
 
-  initial_terminal = create_terminal ();
-  initial_terminal->type = output_initial;
+  initial_terminal = create_terminal (output_initial, NULL);
   initial_terminal->name = xstrdup ("initial_terminal");
   initial_terminal->kboard = initial_kboard;
   initial_terminal->delete_terminal_hook = &delete_initial_terminal;
-  /* All other hooks are NULL. */
+  initial_terminal->delete_frame_hook = &initial_free_frame_resources;
+  /* Other hooks are NULL by default.  */
 
   return initial_terminal;
 }

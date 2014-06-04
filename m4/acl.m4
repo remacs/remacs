@@ -1,7 +1,7 @@
 # acl.m4 - check for access control list (ACL) primitives
-# serial 15
+# serial 17
 
-# Copyright (C) 2002, 2004-2013 Free Software Foundation, Inc.
+# Copyright (C) 2002, 2004-2014 Free Software Foundation, Inc.
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
 # with or without modifications, as long as this notice is preserved.
@@ -14,6 +14,7 @@ AC_DEFUN([gl_FUNC_ACL],
     AS_HELP_STRING([--disable-acl], [do not support ACLs]),
     , [enable_acl=auto])
 
+  AC_CHECK_FUNCS_ONCE([fchmod])
   LIB_ACL=
   use_acl=0
   if test "x$enable_acl" != "xno"; then
@@ -141,12 +142,14 @@ int type = ACL_TYPE_EXTENDED;]])],
 # -------------------------------------
 # If 'acl_get_file' works (does not have a particular bug),
 # run IF-WORKS, otherwise, IF-NOT.
-# This tests for a Darwin 8.7.0 bug, whereby acl_get_file returns NULL,
-# but sets errno = ENOENT for an existing file or directory.
+# When building natively, test for a Darwin 8.7.0 bug, whereby acl_get_file
+# returns NULL, but sets errno = ENOENT for an existing file or directory.
+# When cross-compiling, assume that this old bug no longer applies.
 AC_DEFUN([gl_ACL_GET_FILE],
 [
   AC_CACHE_CHECK([for working acl_get_file], [gl_cv_func_working_acl_get_file],
-    [AC_RUN_IFELSE(
+    [gl_cv_func_working_acl_get_file=no
+     AC_LINK_IFELSE(
        [AC_LANG_PROGRAM(
           [[#include <sys/types.h>
            #include <sys/acl.h>
@@ -156,9 +159,10 @@ AC_DEFUN([gl_ACL_GET_FILE],
               return 1;
             return 0;
           ]])],
-       [gl_cv_func_working_acl_get_file=yes],
-       [gl_cv_func_working_acl_get_file=no],
-       [gl_cv_func_working_acl_get_file=cross-compiling])])
-
-  AS_IF([test $gl_cv_func_working_acl_get_file = yes], [$1], [$2])
+       [if test $cross_compiling = yes; then
+          gl_cv_func_working_acl_get_file="guessing yes"
+        elif ./conftest$ac_exeext; then
+          gl_cv_func_working_acl_get_file=yes
+        fi])])
+  AS_IF([test "$gl_cv_func_working_acl_get_file" != no], [$1], [$2])
 ])

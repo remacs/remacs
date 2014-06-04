@@ -1,6 +1,6 @@
 ;;; vc-dispatcher.el -- generic command-dispatcher facility.  -*- lexical-binding: t -*-
 
-;; Copyright (C) 2008-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2008-2014 Free Software Foundation, Inc.
 
 ;; Author:     FSF (see below for full credits)
 ;; Maintainer: Eric S. Raymond <esr@thyrsus.com>
@@ -596,7 +596,7 @@ NOT-URGENT means it is ok to continue if the user says not to save."
   (setq default-directory
 	(buffer-local-value 'default-directory vc-parent-buffer))
   (log-edit 'vc-finish-logentry
-	    nil
+	    t
 	    `((log-edit-listfun . (lambda ()
                                     ;; FIXME: Should expand the list
                                     ;; for directories.

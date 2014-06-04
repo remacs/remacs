@@ -1,6 +1,6 @@
 ;;; idle.el --- Schedule parsing tasks in idle time
 
-;; Copyright (C) 2003-2006, 2008-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2003-2006, 2008-2014 Free Software Foundation, Inc.
 
 ;; Author: Eric M. Ludlam <zappo@gnu.org>
 ;; Keywords: syntax
@@ -830,8 +830,14 @@ turned on in every Semantic-supported buffer."
 ;; of all uses of the symbol that is under the cursor.
 ;;
 ;; This is to mimic the Eclipse tool of a similar nature.
-(defvar semantic-idle-symbol-highlight-face 'region
+(defface semantic-idle-symbol-highlight
+  '((t :inherit region))
+  "Face used for highlighting local symbols."
+  :group 'semantic-faces)
+(defvar semantic-idle-symbol-highlight-face 'semantic-idle-symbol-highlight
   "Face used for highlighting local symbols.")
+(make-obsolete-variable 'semantic-idle-symbol-highlight-face
+    "customize the face `semantic-idle-symbol-highlight' instead" "24.4" 'set)
 
 (defun semantic-idle-symbol-maybe-highlight (tag)
   "Perhaps add highlighting to the symbol represented by TAG.

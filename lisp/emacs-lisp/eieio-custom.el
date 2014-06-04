@@ -1,6 +1,6 @@
 ;;; eieio-custom.el -- eieio object customization
 
-;; Copyright (C) 1999-2001, 2005, 2007-2013 Free Software Foundation,
+;; Copyright (C) 1999-2001, 2005, 2007-2014 Free Software Foundation,
 ;; Inc.
 
 ;; Author: Eric M. Ludlam <zappo@gnu.org>
@@ -472,5 +472,9 @@ Return the symbol for the group, or nil"
 	    g)))))
 
 (provide 'eieio-custom)
+
+;; Local variables:
+;; generated-autoload-file: "eieio.el"
+;; End:
 
 ;;; eieio-custom.el ends here

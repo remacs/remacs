@@ -1,6 +1,6 @@
 ;;; ispell.el --- interface to International Ispell Versions 3.1 and 3.2
 
-;; Copyright (C) 1994-1995, 1997-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1994-1995, 1997-2014 Free Software Foundation, Inc.
 
 ;; Author:           Ken Stevens <k.stevens@ieee.org>
 ;; Maintainer:       Ken Stevens <k.stevens@ieee.org>
@@ -931,16 +931,14 @@ Otherwise returns the library directory name, if that is defined."
 (defun ispell-call-process (&rest args)
   "Like `call-process' but defend against bad `default-directory'."
   (let ((default-directory default-directory))
-    (unless (and (file-directory-p default-directory)
-		 (file-readable-p default-directory))
+    (unless (file-accessible-directory-p default-directory)
       (setq default-directory (expand-file-name "~/")))
     (apply 'call-process args)))
 
 (defun ispell-call-process-region (&rest args)
   "Like `call-process-region' but defend against bad `default-directory'."
   (let ((default-directory default-directory))
-    (unless (and (file-directory-p default-directory)
-		 (file-readable-p default-directory))
+    (unless (file-accessible-directory-p default-directory)
       (setq default-directory (expand-file-name "~/")))
     (apply 'call-process-region args)))
 
@@ -2407,7 +2405,7 @@ Global `ispell-quit' set to start location to continue spell session."
 					    "  --  word-list: "
 					    (or ispell-complete-word-dict
 						ispell-alternate-dictionary))
-				    miss (lookup-words new-word)
+				    miss (ispell-lookup-words new-word)
 				    choices miss
 				    line ispell-choices-win-default-height)
 			      (while (and choices ; adjust choices window.
@@ -2613,8 +2611,9 @@ SPC:   Accept word this time.
 		(sit-for 5))
 	    (erase-buffer)))))))
 
+(define-obsolete-function-alias 'lookup-words 'ispell-lookup-words "24.4")
 
-(defun lookup-words (word &optional lookup-dict)
+(defun ispell-lookup-words (word &optional lookup-dict)
   "Look up WORD in optional word-list dictionary LOOKUP-DICT.
 A `*' serves as a wild card.  If no wild cards, `look' is used if it exists.
 Otherwise the variable `ispell-grep-command' contains the command used to
@@ -2648,8 +2647,12 @@ if defined."
       (message "Starting \"%s\" process..." (file-name-nondirectory prog))
       (if look-p
           nil
+        (insert "^" word)
+        ;; When there are no wildcards, append one, for consistency
+        ;; with `look' behavior.
+        (unless wild-p (insert "*"))
+        (insert "$")
         ;; Convert * to .*
-        (insert "^" word "$")
         (while (search-backward "*" nil t) (insert "."))
         (setq word (buffer-string))
         (erase-buffer))
@@ -2934,8 +2937,7 @@ Keeps argument list for future Ispell invocations for no async support."
 	  (ispell-hunspell-fill-dictionary-entry ispell-current-dictionary)))
 
   (let* ((default-directory
-           (if (and (file-directory-p default-directory)
-                    (file-readable-p default-directory))
+           (if (file-accessible-directory-p default-directory)
                default-directory
              ;; Defend against bad `default-directory'.
              (expand-file-name "~/")))
@@ -2993,8 +2995,7 @@ Keeps argument list for future Ispell invocations for no async support."
 	   (if (or ispell-really-aspell
 		   ispell-really-hunspell
 		   ;; Protect against bad default-directory
-		   (not (and (file-directory-p default-directory)
-			     (file-readable-p default-directory)))
+		   (not (file-accessible-directory-p default-directory))
 		   ;; Ispell and per-dir personal dicts available
 		   (not (or (file-readable-p (concat default-directory
 						     ".ispell_words"))
@@ -3020,7 +3021,7 @@ Keeps argument list for future Ispell invocations for no async support."
 	(setq ispell-filter nil ispell-filter-continue nil)
       ;; may need to restart to select new personal dictionary.
       (ispell-kill-ispell t)
-      (message "Starting new Ispell process [%s::%s] ..."
+      (message "Starting new Ispell process %s with %s dictionary..."
 	       ispell-program-name
 	       (or ispell-local-dictionary ispell-dictionary "default"))
       (sit-for 0)
@@ -3300,7 +3301,8 @@ ispell-region: Search for first region to skip after (ispell-begin-skip-region-r
                    ispell-start ispell-end (point-at-eol) in-comment add-comment string)
 		  (if add-comment		; account for comment chars added
 		      (setq ispell-start (- ispell-start (length add-comment))
-			    add-comment nil))
+			    ;; Reset `in-comment' (and indirectly `add-comment') for new line
+			    in-comment nil))
 		  (setq ispell-end (point)) ; "end" tracks region retrieved.
 		  (if string		; there is something to spell check!
 		      ;; (special start end)
@@ -3766,7 +3768,7 @@ Use APPEND to append the info to previous buffer if exists."
 
 ;;;###autoload
 (defun ispell-complete-word (&optional interior-frag)
-  "Try to complete the word before or under point (see `lookup-words').
+  "Try to complete the word before or under point.
 If optional INTERIOR-FRAG is non-nil then the word may be a character
 sequence inside of a word.
 
@@ -3782,11 +3784,11 @@ Standard ispell choices are then available."
 	  word (car word)
 	  possibilities
 	  (or (string= word "")		; Will give you every word
-	      (lookup-words (concat (and interior-frag "*") word
-				    (if (or interior-frag (null ispell-look-p))
-					"*"))
-			    (or ispell-complete-word-dict
-				ispell-alternate-dictionary))))
+	      (ispell-lookup-words
+	       (concat (and interior-frag "*") word
+		       (and interior-frag "*"))
+	       (or ispell-complete-word-dict
+		   ispell-alternate-dictionary))))
     (cond ((eq possibilities t)
 	   (message "No word to complete"))
 	  ((null possibilities)

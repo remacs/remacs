@@ -1,6 +1,6 @@
 ;;; network-stream.el --- open network processes, possibly with encryption
 
-;; Copyright (C) 2010-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2010-2014 Free Software Foundation, Inc.
 
 ;; Author: Lars Magne Ingebrigtsen <larsi@gnus.org>
 ;; Keywords: network
@@ -242,7 +242,8 @@ a greeting from the server.
 	(delete-process stream)
 	(setq start (with-current-buffer buffer (point-max)))
 	(let* ((starttls-extra-arguments
-		(if require-tls
+		(if (or require-tls
+			(member "--insecure" starttls-extra-arguments))
 		    starttls-extra-arguments
 		  ;; For opportunistic TLS upgrades, we don't really
 		  ;; care about the identity of the peer.

@@ -1,6 +1,6 @@
 ;;; eieio-tests.el -- eieio tests routines
 
-;; Copyright (C) 1999-2003, 2005-2010, 2012-2013 Free Software
+;; Copyright (C) 1999-2003, 2005-2010, 2012-2014 Free Software
 ;; Foundation, Inc.
 
 ;; Author: Eric M. Ludlam <zappo@gnu.org>
@@ -884,9 +884,6 @@ Subclasses to override slot attributes.")
 (ert-deftest eieio-test-36-build-class-alist ()
   (should (= (length (eieio-build-class-alist opt-test1 nil)) 2))
   (should (= (length (eieio-build-class-alist opt-test1 t)) 1)))
-
-(ert-deftest eieio-test-37-persistent-classes ()
-  (load-file "eieio-test-persist.el"))
 
 (provide 'eieio-tests)
 

@@ -1,6 +1,6 @@
 ;;; apropos.el --- apropos commands for users and programmers
 
-;; Copyright (C) 1989, 1994-1995, 2001-2013 Free Software Foundation,
+;; Copyright (C) 1989, 1994-1995, 2001-2014 Free Software Foundation,
 ;; Inc.
 
 ;; Author: Joe Wells <jbw@bigbird.bu.edu>
@@ -99,7 +99,7 @@ include key-binding information in its output."
 
 (defface apropos-property
   '((t (:inherit font-lock-builtin-face)))
-  "Face for property name in apropos output, or nil for none."
+  "Face for property name in Apropos output, or nil for none."
   :group 'apropos
   :version "24.3")
 
@@ -131,6 +131,7 @@ include key-binding information in its output."
   "Face for matching text in Apropos documentation/value, or nil for none.
 This applies when you look for matches in the documentation or variable value
 for the pattern; the part that matches gets displayed in this font."
+  :type '(choice (const nil) face)
   :group 'apropos
   :version "24.3")
 
@@ -181,7 +182,7 @@ If value is `verbose', the computed score is shown for each match."
   "Regexp used in current apropos run.")
 
 (defvar apropos-all-words-regexp nil
-  "Regexp matching apropos-all-words.")
+  "Regexp matching `apropos-all-words'.")
 
 (defvar apropos-files-scanned ()
   "List of elc files already scanned in current run of `apropos-documentation'.")
@@ -341,16 +342,21 @@ before finding a label."
 
 
 (defun apropos-words-to-regexp (words wild)
-  "Make regexp matching any two of the words in WORDS."
-  (concat "\\("
-	  (mapconcat 'identity words "\\|")
-	  "\\)"
-	  (if (cdr words)
-	      (concat wild
-		      "\\("
-		      (mapconcat 'identity words "\\|")
-		      "\\)")
-	    "")))
+  "Make regexp matching any two of the words in WORDS.
+WILD should be a subexpression matching wildcards between matches."
+  (setq words (delete-dups (copy-sequence words)))
+  (if (null (cdr words))
+      (car words)
+    (mapconcat
+     (lambda (w)
+       (concat "\\(?:" w "\\)" ;; parens for synonyms
+               wild "\\(?:"
+               (mapconcat 'identity
+			  (delq w (copy-sequence words))
+			  "\\|")
+               "\\)"))
+     words
+     "\\|")))
 
 ;;;###autoload
 (defun apropos-read-pattern (subject)
@@ -364,7 +370,8 @@ kind of objects to search."
 	 (read-string (concat "Search for " subject " (word list or regexp): "))))
     (if (string-equal (regexp-quote pattern) pattern)
 	;; Split into words
-	(split-string pattern "[ \t]+" t)
+	(or (split-string pattern "[ \t]+" t)
+	    (user-error "No word list given"))
       pattern)))
 
 (defun apropos-parse-pattern (pattern)
@@ -403,7 +410,6 @@ This updates variables `apropos-pattern', `apropos-pattern-quoted',
 	  apropos-all-words-regexp pattern
 	  apropos-pattern pattern
 	  apropos-regexp pattern)))
-
 
 (defun apropos-calc-scores (str words)
   "Return apropos scores for string STR matching WORDS.
@@ -448,7 +454,7 @@ Value is a list of offsets of the words into the string."
 (defun apropos-true-hit (str words)
   "Return t if STR is a genuine hit.
 This may fail if only one of the keywords is matched more than once.
-This requires that at least 2 keywords (unless only one was given)."
+This requires at least two keywords (unless only one was given)."
   (or (not str)
       (not words)
       (not (cdr words))
@@ -499,7 +505,7 @@ variables, not just user options."
 ;;;###autoload
 (defun apropos-variable (pattern &optional do-not-all)
   "Show variables that match PATTERN.
-When DO-NOT-ALL is not-nil, show user options only, i.e. behave
+When DO-NOT-ALL is non-nil, show user options only, i.e. behave
 like `apropos-user-option'."
   (interactive (list (apropos-read-pattern
 		      (if current-prefix-arg "user option" "variable"))
@@ -1000,8 +1006,7 @@ Returns list of symbols and documentation found."
   "Like `documentation', except it avoids calling `get_doc_string'.
 Will return nil instead."
   (while (and function (symbolp function))
-    (setq function (if (fboundp function)
-		       (symbol-function function))))
+    (setq function (symbol-function function)))
   (if (eq (car-safe function) 'macro)
       (setq function (cdr function)))
   (setq function (if (byte-code-function-p function)
@@ -1032,14 +1037,12 @@ alphabetically by symbol name; but this function also sets
 `apropos-accumulator' to nil before returning.
 
 If SPACING is non-nil, it should be a string; separate items with that string.
-If non-nil TEXT is a string that will be printed as a heading."
+If non-nil, TEXT is a string that will be printed as a heading."
   (if (null apropos-accumulator)
       (message "No apropos matches for `%s'" apropos-pattern)
     (setq apropos-accumulator
 	  (sort apropos-accumulator
 		(lambda (a b)
-		  ;; Don't sort by score if user can't see the score.
-		  ;; It would be confusing.  -- rms.
 		  (if apropos-sort-by-scores
 		      (or (> (cadr a) (cadr b))
 			  (and (= (cadr a) (cadr b))
@@ -1049,6 +1052,7 @@ If non-nil TEXT is a string that will be printed as a heading."
       (let ((p apropos-accumulator)
 	    (old-buffer (current-buffer))
 	    (inhibit-read-only t)
+	    (button-end 0)
 	    symbol item)
 	(set-buffer standard-output)
 	(apropos-mode)
@@ -1066,10 +1070,12 @@ If non-nil TEXT is a string that will be printed as a heading."
 	      (setq apropos-item
 		    (cons (car apropos-item)
 			  (cons nil (cdr apropos-item)))))
+	  (when (= (point) button-end) (terpri))
 	  (insert-text-button (symbol-name symbol)
 			      'type 'apropos-symbol
 			      'skip apropos-multi-type
 			      'face 'apropos-symbol)
+	  (setq button-end (point))
 	  (if (and (eq apropos-sort-by-scores 'verbose)
 		   (cadr apropos-item))
 	      (insert " (" (number-to-string (cadr apropos-item)) ") "))

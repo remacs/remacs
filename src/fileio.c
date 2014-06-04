@@ -1,6 +1,6 @@
 /* File IO for GNU Emacs.
 
-Copyright (C) 1985-1988, 1993-2013 Free Software Foundation, Inc.
+Copyright (C) 1985-1988, 1993-2014 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -49,6 +49,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "coding.h"
 #include "window.h"
 #include "blockinput.h"
+#include "region-cache.h"
 #include "frame.h"
 #include "dispextern.h"
 
@@ -93,6 +94,9 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 /* True during writing of auto-save files.  */
 static bool auto_saving;
+
+/* Emacs's real umask.  */
+static mode_t realmask;
 
 /* Nonzero umask during creation of auto-save directories.  */
 static mode_t auto_saving_dir_umask;
@@ -143,8 +147,7 @@ static Lisp_Object Qcopy_directory;
 /* Lisp function for recursively deleting directories.  */
 static Lisp_Object Qdelete_directory;
 
-#ifdef WINDOWSNT
-#endif
+static Lisp_Object Qsubstitute_env_in_file_name;
 
 Lisp_Object Qfile_error, Qfile_notify_error;
 static Lisp_Object Qfile_already_exists, Qfile_date_error;
@@ -158,6 +161,56 @@ static bool a_write (int, Lisp_Object, ptrdiff_t, ptrdiff_t,
 static bool e_write (int, Lisp_Object, ptrdiff_t, ptrdiff_t,
 		     struct coding_system *);
 
+
+/* Return true if FILENAME exists.  */
+
+static bool
+check_existing (const char *filename)
+{
+  return faccessat (AT_FDCWD, filename, F_OK, AT_EACCESS) == 0;
+}
+
+/* Return true if file FILENAME exists and can be executed.  */
+
+static bool
+check_executable (char *filename)
+{
+  return faccessat (AT_FDCWD, filename, X_OK, AT_EACCESS) == 0;
+}
+
+/* Return true if file FILENAME exists and can be accessed
+   according to AMODE, which should include W_OK.
+   On failure, return false and set errno.  */
+
+static bool
+check_writable (const char *filename, int amode)
+{
+#ifdef MSDOS
+  /* FIXME: an faccessat implementation should be added to the
+     DOS/Windows ports and this #ifdef branch should be removed.  */
+  struct stat st;
+  if (stat (filename, &st) < 0)
+    return 0;
+  errno = EPERM;
+  return (st.st_mode & S_IWRITE || S_ISDIR (st.st_mode));
+#else /* not MSDOS */
+  bool res = faccessat (AT_FDCWD, filename, amode, AT_EACCESS) == 0;
+#ifdef CYGWIN
+  /* faccessat may have returned failure because Cygwin couldn't
+     determine the file's UID or GID; if so, we return success. */
+  if (!res)
+    {
+      int faccessat_errno = errno;
+      struct stat st;
+      if (stat (filename, &st) < 0)
+        return 0;
+      res = (st.st_uid == -1 || st.st_gid == -1);
+      errno = faccessat_errno;
+    }
+#endif /* CYGWIN */
+  return res;
+#endif /* not MSDOS */
+}
 
 /* Signal a file-access failure.  STRING describes the failure,
    NAME the file involved, and ERRORNO the errno value.
@@ -407,7 +460,7 @@ Given a Unix syntax file name, returns a string ending in slash.  */)
 	    strcat (res, "/");
 	  beg = res;
 	  p = beg + strlen (beg);
-	  dostounix_filename (beg, 0);
+	  dostounix_filename (beg);
 	  tem_fn = make_specified_string (beg, -1, p - beg,
 					  STRING_MULTIBYTE (filename));
 	}
@@ -418,7 +471,7 @@ Given a Unix syntax file name, returns a string ending in slash.  */)
   else if (STRING_MULTIBYTE (filename))
     {
       tem_fn = make_specified_string (beg, -1, p - beg, 1);
-      dostounix_filename (SSDATA (tem_fn), 1);
+      dostounix_filename (SSDATA (tem_fn));
 #ifdef WINDOWSNT
       if (!NILP (Vw32_downcase_file_names))
 	tem_fn = Fdowncase (tem_fn);
@@ -426,7 +479,7 @@ Given a Unix syntax file name, returns a string ending in slash.  */)
     }
   else
     {
-      dostounix_filename (beg, 0);
+      dostounix_filename (beg);
       tem_fn = make_specified_string (beg, -1, p - beg, 0);
     }
   return tem_fn;
@@ -530,7 +583,7 @@ file_name_as_directory (char *dst, const char *src, ptrdiff_t srclen,
     dst[srclen++] = DIRECTORY_SEP;
   dst[srclen] = 0;
 #ifdef DOS_NT
-  dostounix_filename (dst, multibyte);
+  dostounix_filename (dst);
 #endif
   return srclen;
 }
@@ -599,7 +652,7 @@ directory_file_name (char *dst, char *src, ptrdiff_t srclen, bool multibyte)
   memcpy (dst, src, srclen);
   dst[srclen] = 0;
 #ifdef DOS_NT
-  dostounix_filename (dst, multibyte);
+  dostounix_filename (dst);
 #endif
   return srclen;
 }
@@ -680,8 +733,8 @@ static unsigned make_temp_name_count, make_temp_name_count_initialized_p;
 Lisp_Object
 make_temp_name (Lisp_Object prefix, bool base64_p)
 {
-  Lisp_Object val;
-  int len, clen;
+  Lisp_Object val, encoded_prefix;
+  int len;
   printmax_t pid;
   char *p, *data;
   char pidbuf[INT_BUFSIZE_BOUND (printmax_t)];
@@ -715,12 +768,11 @@ make_temp_name (Lisp_Object prefix, bool base64_p)
 #endif
     }
 
-  len = SBYTES (prefix); clen = SCHARS (prefix);
-  val = make_uninit_multibyte_string (clen + 3 + pidlen, len + 3 + pidlen);
-  if (!STRING_MULTIBYTE (prefix))
-    STRING_SET_UNIBYTE (val);
+  encoded_prefix = ENCODE_FILE (prefix);
+  len = SBYTES (encoded_prefix);
+  val = make_uninit_string (len + 3 + pidlen);
   data = SSDATA (val);
-  memcpy (data, SSDATA (prefix), len);
+  memcpy (data, SSDATA (encoded_prefix), len);
   p = data + len;
 
   memcpy (p, pidbuf, pidlen);
@@ -758,7 +810,7 @@ make_temp_name (Lisp_Object prefix, bool base64_p)
 	{
 	  /* We want to return only if errno is ENOENT.  */
 	  if (errno == ENOENT)
-	    return val;
+	    return DECODE_FILE (val);
 	  else
 	    /* The error here is dubious, but there is little else we
 	       can do.  The alternatives are to return nil, which is
@@ -935,7 +987,26 @@ filesystem tree, not (expand-file-name ".."  dirname).  */)
   if (multibyte != STRING_MULTIBYTE (default_directory))
     {
       if (multibyte)
-	default_directory = string_to_multibyte (default_directory);
+	{
+	  unsigned char *p = SDATA (name);
+
+	  while (*p && ASCII_BYTE_P (*p))
+	    p++;
+	  if (*p == '\0')
+	    {
+	      /* NAME is a pure ASCII string, and DEFAULT_DIRECTORY is
+		 unibyte.  Do not convert DEFAULT_DIRECTORY to
+		 multibyte; instead, convert NAME to a unibyte string,
+		 so that the result of this function is also a unibyte
+		 string.  This is needed during bootstrapping and
+		 dumping, when Emacs cannot decode file names, because
+		 the locale environment is not set up.  */
+	      name = make_unibyte_string (SSDATA (name), SBYTES (name));
+	      multibyte = 0;
+	    }
+	  else
+	    default_directory = string_to_multibyte (default_directory);
+	}
       else
 	{
 	  name = string_to_multibyte (name);
@@ -976,10 +1047,9 @@ filesystem tree, not (expand-file-name ".."  dirname).  */)
     nm++;
 
   /* Discard any previous drive specifier if nm is now in UNC format.  */
-  if (IS_DIRECTORY_SEP (nm[0]) && IS_DIRECTORY_SEP (nm[1]))
-    {
-      drive = 0;
-    }
+  if (IS_DIRECTORY_SEP (nm[0]) && IS_DIRECTORY_SEP (nm[1])
+      && !IS_DIRECTORY_SEP (nm[2]))
+    drive = 0;
 #endif /* WINDOWSNT */
 #endif /* DOS_NT */
 
@@ -1030,7 +1100,7 @@ filesystem tree, not (expand-file-name ".."  dirname).  */)
 #ifdef DOS_NT
 	  /* Make sure directories are all separated with /, but
 	     avoid allocation of a new string when not required. */
-	  dostounix_filename (nm, multibyte);
+	  dostounix_filename (nm);
 #ifdef WINDOWSNT
 	  if (IS_DIRECTORY_SEP (nm[1]))
 	    {
@@ -1091,7 +1161,17 @@ filesystem tree, not (expand-file-name ".."  dirname).  */)
 	  nm++;
 	  /* `egetenv' may return a unibyte string, which will bite us since
 	     we expect the directory to be multibyte.  */
-	  tem = build_string (newdir);
+#ifdef WINDOWSNT
+	  if (newdir[0])
+	    {
+	      char newdir_utf8[MAX_UTF8_PATH];
+
+	      filename_from_ansi (newdir, newdir_utf8);
+	      tem = build_string (newdir_utf8);
+	    }
+	  else
+#endif
+	    tem = build_string (newdir);
 	  if (multibyte && !STRING_MULTIBYTE (tem))
 	    {
 	      hdir = DECODE_FILE (tem);
@@ -1180,7 +1260,8 @@ filesystem tree, not (expand-file-name ".."  dirname).  */)
       && !IS_DIRECTORY_SEP (nm[0])
 #endif
 #ifdef WINDOWSNT
-      && !(IS_DIRECTORY_SEP (nm[0]) && IS_DIRECTORY_SEP (nm[1]))
+      && !(IS_DIRECTORY_SEP (nm[0]) && IS_DIRECTORY_SEP (nm[1])
+	   && !IS_DIRECTORY_SEP (nm[2]))
 #endif
       && !newdir)
     {
@@ -1205,7 +1286,8 @@ filesystem tree, not (expand-file-name ".."  dirname).  */)
 	     && IS_DEVICE_SEP (newdir[1]) && IS_DIRECTORY_SEP (newdir[2]))
 #ifdef WINDOWSNT
 	  /* Detect Windows file names in UNC format.  */
-	  && ! (IS_DIRECTORY_SEP (newdir[0]) && IS_DIRECTORY_SEP (newdir[1]))
+	  && ! (IS_DIRECTORY_SEP (newdir[0]) && IS_DIRECTORY_SEP (newdir[1])
+		&& !IS_DIRECTORY_SEP (newdir[2]))
 #endif
 	  )
 	{
@@ -1215,6 +1297,11 @@ filesystem tree, not (expand-file-name ".."  dirname).  */)
 	     indirectly by prepending newdir to nm if necessary, and using
 	     cwd (or the wd of newdir's drive) as the new newdir.  */
 	  char *adir;
+#ifdef WINDOWSNT
+	  const int adir_size = MAX_UTF8_PATH;
+#else
+	  const int adir_size = MAXPATHLEN + 1;
+#endif
 
 	  if (IS_DRIVE (newdir[0]) && IS_DEVICE_SEP (newdir[1]))
 	    {
@@ -1230,14 +1317,14 @@ filesystem tree, not (expand-file-name ".."  dirname).  */)
 	      strcat (tmp, nm);
 	      nm = tmp;
 	    }
-	  adir = alloca (MAXPATHLEN + 1);
+	  adir = alloca (adir_size);
 	  if (drive)
 	    {
 	      if (!getdefdir (c_toupper (drive) - 'A' + 1, adir))
 		strcpy (adir, "/");
 	    }
 	  else
-	    getcwd (adir, MAXPATHLEN + 1);
+	    getcwd (adir, adir_size);
 	  if (multibyte)
 	    {
 	      Lisp_Object tem = build_string (adir);
@@ -1260,7 +1347,8 @@ filesystem tree, not (expand-file-name ".."  dirname).  */)
       if (IS_DIRECTORY_SEP (nm[0]) && collapse_newdir)
 	{
 #ifdef WINDOWSNT
-	  if (IS_DIRECTORY_SEP (newdir[0]) && IS_DIRECTORY_SEP (newdir[1]))
+	  if (IS_DIRECTORY_SEP (newdir[0]) && IS_DIRECTORY_SEP (newdir[1])
+	      && !IS_DIRECTORY_SEP (newdir[2]))
 	    {
 	      char *adir = strcpy (alloca (strlen (newdir) + 1), newdir);
 	      char *p = adir + 2;
@@ -1408,7 +1496,7 @@ filesystem tree, not (expand-file-name ".."  dirname).  */)
 	target[1] = ':';
       }
     result = make_specified_string (target, -1, o - target, multibyte);
-    dostounix_filename (SSDATA (result), multibyte);
+    dostounix_filename (SSDATA (result));
 #ifdef WINDOWSNT
     if (!NILP (Vw32_downcase_file_names))
       result = Fdowncase (result);
@@ -1664,10 +1752,8 @@ If `//' appears, everything up to and including the first of
 those `/' is discarded.  */)
   (Lisp_Object filename)
 {
-  char *nm, *s, *p, *o, *x, *endp;
-  char *target = NULL;
-  ptrdiff_t total = 0;
-  bool substituted = 0;
+  char *nm, *p, *x, *endp;
+  bool substituted = false;
   bool multibyte;
   char *xnm;
   Lisp_Object handler;
@@ -1694,7 +1780,7 @@ those `/' is discarded.  */)
   nm = xlispstrdupa (filename);
 
 #ifdef DOS_NT
-  dostounix_filename (nm, multibyte);
+  dostounix_filename (nm);
   substituted = (memcmp (nm, SDATA (filename), SBYTES (filename)) != 0);
 #endif
   endp = nm + SBYTES (filename);
@@ -1708,66 +1794,19 @@ those `/' is discarded.  */)
     return Fsubstitute_in_file_name
       (make_specified_string (p, -1, endp - p, multibyte));
 
-  /* See if any variables are substituted into the string
-     and find the total length of their values in `total'.  */
+  /* See if any variables are substituted into the string.  */
 
-  for (p = nm; p != endp;)
-    if (*p != '$')
-      p++;
-    else
-      {
-	p++;
-	if (p == endp)
-	  goto badsubst;
-	else if (*p == '$')
-	  {
-	    /* "$$" means a single "$".  */
-	    p++;
-	    total -= 1;
-	    substituted = 1;
-	    continue;
-	  }
-	else if (*p == '{')
-	  {
-	    o = ++p;
-	    p = memchr (p, '}', endp - p);
-	    if (! p)
-	      goto missingclose;
-	    s = p;
-	  }
-	else
-	  {
-	    o = p;
-	    while (p != endp && (c_isalnum (*p) || *p == '_')) p++;
-	    s = p;
-	  }
-
-	/* Copy out the variable name.  */
-	target = alloca (s - o + 1);
-	memcpy (target, o, s - o);
-	target[s - o] = 0;
-#ifdef DOS_NT
-	strupr (target); /* $home == $HOME etc.  */
-#endif /* DOS_NT */
-
-	/* Get variable value.  */
-	o = egetenv (target);
-	if (o)
-	  {
-	    /* Don't try to guess a maximum length - UTF8 can use up to
-	       four bytes per character.  This code is unlikely to run
-	       in a situation that requires performance, so decoding the
-	       env variables twice should be acceptable. Note that
-	       decoding may cause a garbage collect.  */
-	    Lisp_Object orig, decoded;
-	    orig = build_unibyte_string (o);
-	    decoded = DECODE_FILE (orig);
-	    total += SBYTES (decoded);
-	    substituted = 1;
-	  }
-	else if (*p == '}')
-	  goto badvar;
-      }
+  if (!NILP (Ffboundp (Qsubstitute_env_in_file_name)))
+    {
+      Lisp_Object name
+	= (!substituted ? filename
+	   : make_specified_string (nm, -1, endp - nm, multibyte));
+      Lisp_Object tmp = call1 (Qsubstitute_env_in_file_name, name);
+      CHECK_STRING (tmp);
+      if (!EQ (tmp, name))
+	substituted = true;
+      filename = tmp;
+    }
 
   if (!substituted)
     {
@@ -1778,72 +1817,8 @@ those `/' is discarded.  */)
       return filename;
     }
 
-  /* If substitution required, recopy the string and do it.  */
-  /* Make space in stack frame for the new copy.  */
-  xnm = alloca (SBYTES (filename) + total + 1);
-  x = xnm;
-
-  /* Copy the rest of the name through, replacing $ constructs with values.  */
-  for (p = nm; *p;)
-    if (*p != '$')
-      *x++ = *p++;
-    else
-      {
-	p++;
-	if (p == endp)
-	  goto badsubst;
-	else if (*p == '$')
-	  {
-	    *x++ = *p++;
-	    continue;
-	  }
-	else if (*p == '{')
-	  {
-	    o = ++p;
-	    p = memchr (p, '}', endp - p);
-	    if (! p)
-	      goto missingclose;
-	    s = p++;
-	  }
-	else
-	  {
-	    o = p;
-	    while (p != endp && (c_isalnum (*p) || *p == '_')) p++;
-	    s = p;
-	  }
-
-	/* Copy out the variable name.  */
-	target = alloca (s - o + 1);
-	memcpy (target, o, s - o);
-	target[s - o] = 0;
-
-	/* Get variable value.  */
-	o = egetenv (target);
-	if (!o)
-	  {
-	    *x++ = '$';
-	    strcpy (x, target); x+= strlen (target);
-	  }
-	else
-	  {
-	    Lisp_Object orig, decoded;
-	    ptrdiff_t orig_length, decoded_length;
-	    orig_length = strlen (o);
-	    orig = make_unibyte_string (o, orig_length);
-	    decoded = DECODE_FILE (orig);
-	    decoded_length = SBYTES (decoded);
-	    memcpy (x, SDATA (decoded), decoded_length);
-	    x += decoded_length;
-
-	    /* If environment variable needed decoding, return value
-	       needs to be multibyte.  */
-	    if (decoded_length != orig_length
-		|| memcmp (SDATA (decoded), o, orig_length))
-	      multibyte = 1;
-	  }
-      }
-
-  *x = 0;
+  xnm = SSDATA (filename);
+  x = xnm + SBYTES (filename);
 
   /* If /~ or // appears, discard everything through first slash.  */
   while ((p = search_embedded_absfilename (xnm, x)) != NULL)
@@ -1862,14 +1837,9 @@ those `/' is discarded.  */)
     }
   else
 #endif
-  return make_specified_string (xnm, -1, x - xnm, multibyte);
-
- badsubst:
-  error ("Bad format environment-variable substitution");
- missingclose:
-  error ("Missing \"}\" in environment-variable substitution");
- badvar:
-  error ("Substituting nonexistent environment variable \"%s\"", target);
+  return (xnm == SSDATA (filename)
+	  ? filename
+	  : make_specified_string (xnm, -1, x - xnm, multibyte));
 }
 
 /* A slightly faster and more convenient way to get
@@ -1893,20 +1863,16 @@ expand_and_dir_to_file (Lisp_Object filename, Lisp_Object defdir)
 }
 
 /* Signal an error if the file ABSNAME already exists.
-   If INTERACTIVE, ask the user whether to proceed,
-   and bypass the error if the user says to go ahead.
+   If KNOWN_TO_EXIST, the file is known to exist.
    QUERYSTRING is a name for the action that is being considered
    to alter the file.
-
-   *STATPTR is used to store the stat information if the file exists.
-   If the file does not exist, STATPTR->st_mode is set to 0.
-   If STATPTR is null, we don't store into it.
-
+   If INTERACTIVE, ask the user whether to proceed,
+   and bypass the error if the user says to go ahead.
    If QUICK, ask for y or n, not yes or no.  */
 
 static void
-barf_or_query_if_file_exists (Lisp_Object absname, const char *querystring,
-			      bool interactive, struct stat *statptr,
+barf_or_query_if_file_exists (Lisp_Object absname, bool known_to_exist,
+			      const char *querystring, bool interactive,
 			      bool quick)
 {
   Lisp_Object tem, encoded_filename;
@@ -1915,14 +1881,16 @@ barf_or_query_if_file_exists (Lisp_Object absname, const char *querystring,
 
   encoded_filename = ENCODE_FILE (absname);
 
-  /* `stat' is a good way to tell whether the file exists,
-     regardless of what access permissions it has.  */
-  if (lstat (SSDATA (encoded_filename), &statbuf) >= 0)
+  if (! known_to_exist && lstat (SSDATA (encoded_filename), &statbuf) == 0)
     {
       if (S_ISDIR (statbuf.st_mode))
 	xsignal2 (Qfile_error,
 		  build_string ("File is a directory"), absname);
+      known_to_exist = true;
+    }
 
+  if (known_to_exist)
+    {
       if (! interactive)
 	xsignal2 (Qfile_already_exists,
 		  build_string ("File already exists"), absname);
@@ -1937,15 +1905,7 @@ barf_or_query_if_file_exists (Lisp_Object absname, const char *querystring,
       if (NILP (tem))
 	xsignal2 (Qfile_already_exists,
 		  build_string ("File already exists"), absname);
-      if (statptr)
-	*statptr = statbuf;
     }
-  else
-    {
-      if (statptr)
-	statptr->st_mode = 0;
-    }
-  return;
 }
 
 DEFUN ("copy-file", Fcopy_file, Scopy_file, 2, 6,
@@ -1972,15 +1932,15 @@ A prefix arg makes KEEP-TIME non-nil.
 If PRESERVE-UID-GID is non-nil, we try to transfer the
 uid and gid of FILE to NEWNAME.
 
-If PRESERVE-EXTENDED-ATTRIBUTES is non-nil, we try to copy additional
-attributes of FILE to NEWNAME, such as its SELinux context and ACL
-entries (depending on how Emacs was built).  */)
-  (Lisp_Object file, Lisp_Object newname, Lisp_Object ok_if_already_exists, Lisp_Object keep_time, Lisp_Object preserve_uid_gid, Lisp_Object preserve_extended_attributes)
+If PRESERVE-PERMISSIONS is non-nil, copy permissions of FILE to NEWNAME;
+this includes the file modes, along with ACL entries and SELinux
+context if present.  Otherwise, if NEWNAME is created its file
+permission bits are those of FILE, masked by the default file
+permissions.  */)
+  (Lisp_Object file, Lisp_Object newname, Lisp_Object ok_if_already_exists,
+   Lisp_Object keep_time, Lisp_Object preserve_uid_gid,
+   Lisp_Object preserve_permissions)
 {
-  int ifd, ofd;
-  int n;
-  char buf[16 * 1024];
-  struct stat st, out_st;
   Lisp_Object handler;
   struct gcpro gcpro1, gcpro2, gcpro3, gcpro4;
   ptrdiff_t count = SPECPDL_INDEX ();
@@ -1990,7 +1950,14 @@ entries (depending on how Emacs was built).  */)
   int conlength = 0;
 #endif
 #ifdef WINDOWSNT
-  acl_t acl = NULL;
+  int result;
+#else
+  bool already_exists = false;
+  mode_t new_mask;
+  int ifd, ofd;
+  int n;
+  char buf[16 * 1024];
+  struct stat st;
 #endif
 
   encoded_file = encoded_newname = Qnil;
@@ -2014,65 +1981,31 @@ entries (depending on how Emacs was built).  */)
   if (!NILP (handler))
     RETURN_UNGCPRO (call7 (handler, Qcopy_file, file, newname,
 			   ok_if_already_exists, keep_time, preserve_uid_gid,
-			   preserve_extended_attributes));
+			   preserve_permissions));
 
   encoded_file = ENCODE_FILE (file);
   encoded_newname = ENCODE_FILE (newname);
 
+#ifdef WINDOWSNT
   if (NILP (ok_if_already_exists)
       || INTEGERP (ok_if_already_exists))
-    barf_or_query_if_file_exists (newname, "copy to it",
-				  INTEGERP (ok_if_already_exists), &out_st, 0);
-  else if (stat (SSDATA (encoded_newname), &out_st) < 0)
-    out_st.st_mode = 0;
+    barf_or_query_if_file_exists (newname, false, "copy to it",
+				  INTEGERP (ok_if_already_exists), false);
 
-#ifdef WINDOWSNT
-  if (!NILP (preserve_extended_attributes))
+  result = w32_copy_file (SSDATA (encoded_file), SSDATA (encoded_newname),
+			  !NILP (keep_time), !NILP (preserve_uid_gid),
+			  !NILP (preserve_permissions));
+  switch (result)
     {
-      acl = acl_get_file (SDATA (encoded_file), ACL_TYPE_ACCESS);
-      if (acl == NULL && acl_errno_valid (errno))
-	report_file_error ("Getting ACL", file);
-    }
-  if (!CopyFile (SDATA (encoded_file),
-		 SDATA (encoded_newname),
-		 FALSE))
-    {
-      /* CopyFile doesn't set errno when it fails.  By far the most
-	 "popular" reason is that the target is read-only.  */
-      report_file_errno ("Copying file", list2 (file, newname),
-			 GetLastError () == 5 ? EACCES : EPERM);
-    }
-  /* CopyFile retains the timestamp by default.  */
-  else if (NILP (keep_time))
-    {
-      struct timespec now;
-      DWORD attributes;
-      char * filename;
-
-      filename = SDATA (encoded_newname);
-
-      /* Ensure file is writable while its modified time is set.  */
-      attributes = GetFileAttributes (filename);
-      SetFileAttributes (filename, attributes & ~FILE_ATTRIBUTE_READONLY);
-      now = current_timespec ();
-      if (set_file_times (-1, filename, now, now))
-	{
-	  /* Restore original attributes.  */
-	  SetFileAttributes (filename, attributes);
-	  xsignal2 (Qfile_date_error,
-		    build_string ("Cannot set file date"), newname);
-	}
-      /* Restore original attributes.  */
-      SetFileAttributes (filename, attributes);
-    }
-  if (acl != NULL)
-    {
-      bool fail =
-	acl_set_file (SDATA (encoded_newname), ACL_TYPE_ACCESS, acl) != 0;
-      if (fail && acl_errno_valid (errno))
-	report_file_error ("Setting ACL", newname);
-
-      acl_free (acl);
+    case -1:
+      report_file_error ("Copying file", list2 (file, newname));
+    case -2:
+      report_file_error ("Copying permissions from", file);
+    case -3:
+      xsignal2 (Qfile_date_error,
+		build_string ("Resetting file times"), newname);
+    case -4:
+      report_file_error ("Copying permissions to", newname);
     }
 #else /* not WINDOWSNT */
   immediate_quit = 1;
@@ -2087,7 +2020,7 @@ entries (depending on how Emacs was built).  */)
   if (fstat (ifd, &st) != 0)
     report_file_error ("Input file status", file);
 
-  if (!NILP (preserve_extended_attributes))
+  if (!NILP (preserve_permissions))
     {
 #if HAVE_LIBSELINUX
       if (is_selinux_enabled ())
@@ -2099,31 +2032,43 @@ entries (depending on how Emacs was built).  */)
 #endif
     }
 
-  if (out_st.st_mode != 0
-      && st.st_dev == out_st.st_dev && st.st_ino == out_st.st_ino)
-    report_file_errno ("Input and output files are the same",
-		       list2 (file, newname), 0);
-
   /* We can copy only regular files.  */
   if (!S_ISREG (st.st_mode))
     report_file_errno ("Non-regular file", file,
 		       S_ISDIR (st.st_mode) ? EISDIR : EINVAL);
 
-  {
 #ifndef MSDOS
-    int new_mask = st.st_mode & (!NILP (preserve_uid_gid) ? 0600 : 0666);
+  new_mask = st.st_mode & (!NILP (preserve_uid_gid) ? 0700 : 0777);
 #else
-    int new_mask = S_IREAD | S_IWRITE;
+  new_mask = S_IREAD | S_IWRITE;
 #endif
-    ofd = emacs_open (SSDATA (encoded_newname),
-		      (O_WRONLY | O_TRUNC | O_CREAT
-		       | (NILP (ok_if_already_exists) ? O_EXCL : 0)),
-		      new_mask);
-  }
+
+  ofd = emacs_open (SSDATA (encoded_newname), O_WRONLY | O_CREAT | O_EXCL,
+		    new_mask);
+  if (ofd < 0 && errno == EEXIST)
+    {
+      if (NILP (ok_if_already_exists) || INTEGERP (ok_if_already_exists))
+	barf_or_query_if_file_exists (newname, true, "copy to it",
+				      INTEGERP (ok_if_already_exists), false);
+      already_exists = true;
+      ofd = emacs_open (SSDATA (encoded_newname), O_WRONLY, 0);
+    }
   if (ofd < 0)
     report_file_error ("Opening output file", newname);
 
   record_unwind_protect_int (close_file_unwind, ofd);
+
+  if (already_exists)
+    {
+      struct stat out_st;
+      if (fstat (ofd, &out_st) != 0)
+	report_file_error ("Output file status", newname);
+      if (st.st_dev == out_st.st_dev && st.st_ino == out_st.st_ino)
+	report_file_errno ("Input and output files are the same",
+			   list2 (file, newname), 0);
+      if (ftruncate (ofd, 0) != 0)
+	report_file_error ("Truncating output file", newname);
+    }
 
   immediate_quit = 1;
   QUIT;
@@ -2136,26 +2081,41 @@ entries (depending on how Emacs was built).  */)
   /* Preserve the original file permissions, and if requested, also its
      owner and group.  */
   {
-    mode_t mode_mask = 07777;
+    mode_t preserved_permissions = st.st_mode & 07777;
+    mode_t default_permissions = st.st_mode & 0777 & ~realmask;
     if (!NILP (preserve_uid_gid))
       {
 	/* Attempt to change owner and group.  If that doesn't work
 	   attempt to change just the group, as that is sometimes allowed.
 	   Adjust the mode mask to eliminate setuid or setgid bits
-	   that are inappropriate if the owner and group are wrong.  */
+	   or group permissions bits that are inappropriate if the
+	   owner or group are wrong.  */
 	if (fchown (ofd, st.st_uid, st.st_gid) != 0)
 	  {
-	    mode_mask &= ~06000;
 	    if (fchown (ofd, -1, st.st_gid) == 0)
-	      mode_mask |= 02000;
+	      preserved_permissions &= ~04000;
+	    else
+	      {
+		preserved_permissions &= ~06000;
+
+		/* Copy the other bits to the group bits, since the
+		   group is wrong.  */
+		preserved_permissions &= ~070;
+		preserved_permissions |= (preserved_permissions & 7) << 3;
+		default_permissions &= ~070;
+		default_permissions |= (default_permissions & 7) << 3;
+	      }
 	  }
       }
 
-    switch (!NILP (preserve_extended_attributes)
+    switch (!NILP (preserve_permissions)
 	    ? qcopy_acl (SSDATA (encoded_file), ifd,
 			 SSDATA (encoded_newname), ofd,
-			 st.st_mode & mode_mask)
-	    : fchmod (ofd, st.st_mode & mode_mask))
+			 preserved_permissions)
+	    : (already_exists
+	       || (new_mask & ~realmask) == default_permissions)
+	    ? 0
+	    : fchmod (ofd, default_permissions))
       {
       case -2: report_file_error ("Copying permissions from", file);
       case -1: report_file_error ("Copying permissions to", newname);
@@ -2180,7 +2140,7 @@ entries (depending on how Emacs was built).  */)
     {
       struct timespec atime = get_stat_atime (&st);
       struct timespec mtime = get_stat_mtime (&st);
-      if (set_file_times (ofd, SSDATA (encoded_newname), atime, mtime))
+      if (set_file_times (ofd, SSDATA (encoded_newname), atime, mtime) != 0)
 	xsignal2 (Qfile_date_error,
 		  build_string ("Cannot set file date"), newname);
     }
@@ -2372,8 +2332,8 @@ This is what happens in interactive use with M-x.  */)
 #endif
   if (NILP (ok_if_already_exists)
       || INTEGERP (ok_if_already_exists))
-    barf_or_query_if_file_exists (newname, "rename to it",
-				  INTEGERP (ok_if_already_exists), 0, 0);
+    barf_or_query_if_file_exists (newname, false, "rename to it",
+				  INTEGERP (ok_if_already_exists), false);
   if (rename (SSDATA (encoded_file), SSDATA (encoded_newname)) < 0)
     {
       int rename_errno = errno;
@@ -2452,8 +2412,8 @@ This is what happens in interactive use with M-x.  */)
 
   if (NILP (ok_if_already_exists)
       || INTEGERP (ok_if_already_exists))
-    barf_or_query_if_file_exists (newname, "make it a new name",
-				  INTEGERP (ok_if_already_exists), 0, 0);
+    barf_or_query_if_file_exists (newname, false, "make it a new name",
+				  INTEGERP (ok_if_already_exists), false);
 
   unlink (SSDATA (newname));
   if (link (SSDATA (encoded_file), SSDATA (encoded_newname)) < 0)
@@ -2514,8 +2474,8 @@ This happens for interactive use with M-x.  */)
 
   if (NILP (ok_if_already_exists)
       || INTEGERP (ok_if_already_exists))
-    barf_or_query_if_file_exists (linkname, "make it a link",
-				  INTEGERP (ok_if_already_exists), 0, 0);
+    barf_or_query_if_file_exists (linkname, false, "make it a link",
+				  INTEGERP (ok_if_already_exists), false);
   if (symlink (SSDATA (encoded_filename), SSDATA (encoded_linkname)) < 0)
     {
       /* If we didn't complain already, silently delete existing file.  */
@@ -2556,55 +2516,6 @@ On Unix, this is a name starting with a `/' or a `~'.  */)
   return file_name_absolute_p (SSDATA (filename)) ? Qt : Qnil;
 }
 
-/* Return true if FILENAME exists.  */
-bool
-check_existing (const char *filename)
-{
-  return faccessat (AT_FDCWD, filename, F_OK, AT_EACCESS) == 0;
-}
-
-/* Return true if file FILENAME exists and can be executed.  */
-
-static bool
-check_executable (char *filename)
-{
-  return faccessat (AT_FDCWD, filename, X_OK, AT_EACCESS) == 0;
-}
-
-/* Return true if file FILENAME exists and can be accessed
-   according to AMODE, which should include W_OK.
-   On failure, return false and set errno.  */
-
-static bool
-check_writable (const char *filename, int amode)
-{
-#ifdef MSDOS
-  /* FIXME: an faccessat implementation should be added to the
-     DOS/Windows ports and this #ifdef branch should be removed.  */
-  struct stat st;
-  if (stat (filename, &st) < 0)
-    return 0;
-  errno = EPERM;
-  return (st.st_mode & S_IWRITE || S_ISDIR (st.st_mode));
-#else /* not MSDOS */
-  bool res = faccessat (AT_FDCWD, filename, amode, AT_EACCESS) == 0;
-#ifdef CYGWIN
-  /* faccessat may have returned failure because Cygwin couldn't
-     determine the file's UID or GID; if so, we return success. */
-  if (!res)
-    {
-      int faccessat_errno = errno;
-      struct stat st;
-      if (stat (filename, &st) < 0)
-        return 0;
-      res = (st.st_uid == -1 || st.st_gid == -1);
-      errno = faccessat_errno;
-    }
-#endif /* CYGWIN */
-  return res;
-#endif /* not MSDOS */
-}
-
 DEFUN ("file-exists-p", Ffile_exists_p, Sfile_exists_p, 1, 1, 0,
        doc: /* Return t if file FILENAME exists (whether or not you can read it.)
 See also `file-readable-p' and `file-attributes'.
@@ -2630,12 +2541,14 @@ Use `file-symlink-p' to test for such links.  */)
 
   absname = ENCODE_FILE (absname);
 
-  return (check_existing (SSDATA (absname))) ? Qt : Qnil;
+  return check_existing (SSDATA (absname)) ? Qt : Qnil;
 }
 
 DEFUN ("file-executable-p", Ffile_executable_p, Sfile_executable_p, 1, 1, 0,
        doc: /* Return t if FILENAME can be executed by you.
-For a directory, this means you can access files in that directory.  */)
+For a directory, this means you can access files in that directory.
+\(It is generally better to use `file-accessible-directory-p' for that
+purpose, though.)  */)
   (Lisp_Object filename)
 {
   Lisp_Object absname;
@@ -2757,9 +2670,9 @@ emacs_readlinkat (int fd, char const *filename)
   if (!buf)
     return Qnil;
 
-  val = build_string (buf);
+  val = build_unibyte_string (buf);
   if (buf[0] == '/' && strchr (buf, ':'))
-    val = concat2 (build_string ("/:"), val);
+    val = concat2 (build_unibyte_string ("/:"), val);
   if (buf != readlink_buf)
     xfree (buf);
   val = DECODE_FILE (val);
@@ -2771,8 +2684,7 @@ DEFUN ("file-symlink-p", Ffile_symlink_p, Sfile_symlink_p, 1, 1, 0,
 The value is the link target, as a string.
 Otherwise it returns nil.
 
-This function returns t when given the name of a symlink that
-points to a nonexistent file.  */)
+This function does not check whether the link target exists.  */)
   (Lisp_Object filename)
 {
   Lisp_Object handler;
@@ -2999,7 +2911,7 @@ or if SELinux is disabled, or if Emacs lacks SELinux support.  */)
     }
 #endif
 
-  return Flist (sizeof (values) / sizeof (values[0]), values);
+  return Flist (ARRAYELTS (values), values);
 }
 
 DEFUN ("set-file-selinux-context", Fset_file_selinux_context,
@@ -3251,10 +3163,17 @@ The argument MODE should be an integer; only the low 9 bits are used.
 This setting is inherited by subprocesses.  */)
   (Lisp_Object mode)
 {
+  mode_t oldrealmask, oldumask, newumask;
   CHECK_NUMBER (mode);
+  oldrealmask = realmask;
+  newumask = ~ XINT (mode) & 0777;
 
-  umask ((~ XINT (mode)) & 0777);
+  block_input ();
+  realmask = newumask;
+  oldumask = umask (newumask);
+  unblock_input ();
 
+  eassert (oldumask == oldrealmask);
   return Qnil;
 }
 
@@ -3263,14 +3182,7 @@ DEFUN ("default-file-modes", Fdefault_file_modes, Sdefault_file_modes, 0, 0, 0,
 The value is an integer.  */)
   (void)
 {
-  mode_t realmask;
   Lisp_Object value;
-
-  block_input ();
-  realmask = umask (0);
-  umask (realmask);
-  unblock_input ();
-
   XSETINT (value, (~ realmask) & 0777);
   return value;
 }
@@ -3299,7 +3211,7 @@ Use the current time if TIMESTAMP is nil.  TIMESTAMP is in the format of
   encoded_absname = ENCODE_FILE (absname);
 
   {
-    if (set_file_times (-1, SSDATA (encoded_absname), t, t))
+    if (set_file_times (-1, SSDATA (encoded_absname), t, t) != 0)
       {
 #ifdef MSDOS
         /* Setting times on a directory always fails.  */
@@ -3954,6 +3866,9 @@ by calling `format-decode', which see.  */)
 	  beg_offset += same_at_start - BEGV_BYTE;
 	  end_offset -= ZV_BYTE - same_at_end;
 
+	  invalidate_buffer_caches (current_buffer,
+				    BYTE_TO_CHAR (same_at_start),
+				    BYTE_TO_CHAR (same_at_end));
 	  del_range_byte (same_at_start, same_at_end, 0);
 	  /* Insert from the file at the proper position.  */
 	  temp = BYTE_TO_CHAR (same_at_start);
@@ -4064,7 +3979,12 @@ by calling `format-decode', which see.  */)
 	{
 	  /* Truncate the buffer to the size of the file.  */
 	  if (same_at_start != same_at_end)
-	    del_range_byte (same_at_start, same_at_end, 0);
+	    {
+	      invalidate_buffer_caches (current_buffer,
+					BYTE_TO_CHAR (same_at_start),
+					BYTE_TO_CHAR (same_at_end));
+	      del_range_byte (same_at_start, same_at_end, 0);
+	    }
 	  inserted = 0;
 
 	  unbind_to (this_count, Qnil);
@@ -4112,6 +4032,9 @@ by calling `format-decode', which see.  */)
 
       if (same_at_end != same_at_start)
 	{
+	  invalidate_buffer_caches (current_buffer,
+				    BYTE_TO_CHAR (same_at_start),
+				    BYTE_TO_CHAR (same_at_end));
 	  del_range_byte (same_at_start, same_at_end, 0);
 	  temp = GPT;
 	  eassert (same_at_start == GPT_BYTE);
@@ -4157,13 +4080,11 @@ by calling `format-decode', which see.  */)
 
   if (NILP (visit) && total > 0)
     {
-#ifdef CLASH_DETECTION
       if (!NILP (BVAR (current_buffer, file_truename))
 	  /* Make binding buffer-file-name to nil effective.  */
 	  && !NILP (BVAR (current_buffer, filename))
 	  && SAVE_MODIFF >= MODIFF)
 	we_locked_file = 1;
-#endif /* CLASH_DETECTION */
       prepare_to_modify_buffer (GPT, GPT, NULL);
     }
 
@@ -4263,10 +4184,8 @@ by calling `format-decode', which see.  */)
 
   if (inserted == 0)
     {
-#ifdef CLASH_DETECTION
       if (we_locked_file)
 	unlock_file (BVAR (current_buffer, file_truename));
-#endif
       Vdeactivate_mark = old_Vdeactivate_mark;
     }
   else
@@ -4415,14 +4334,12 @@ by calling `format-decode', which see.  */)
       SAVE_MODIFF = MODIFF;
       BUF_AUTOSAVE_MODIFF (current_buffer) = MODIFF;
       XSETFASTINT (BVAR (current_buffer, save_length), Z - BEG);
-#ifdef CLASH_DETECTION
       if (NILP (handler))
 	{
 	  if (!NILP (BVAR (current_buffer, file_truename)))
 	    unlock_file (BVAR (current_buffer, file_truename));
 	  unlock_file (filename);
 	}
-#endif /* CLASH_DETECTION */
       if (not_regular)
 	xsignal2 (Qfile_error,
 		  build_string ("not a regular file"), orig_filename);
@@ -4572,6 +4489,18 @@ by calling `format-decode', which see.  */)
       /* If visiting nonexistent file, return nil.  */
       report_file_errno ("Opening input file", orig_filename, save_errno);
     }
+
+  /* We made a lot of deletions and insertions above, so invalidate
+     the newline cache for the entire region of the inserted
+     characters.  */
+  if (current_buffer->base_buffer && current_buffer->base_buffer->newline_cache)
+    invalidate_region_cache (current_buffer->base_buffer,
+                             current_buffer->base_buffer->newline_cache,
+                             PT - BEG, Z - PT - inserted);
+  else if (current_buffer->newline_cache)
+    invalidate_region_cache (current_buffer,
+                             current_buffer->newline_cache,
+                             PT - BEG, Z - PT - inserted);
 
   if (read_quit)
     Fsignal (Qquit, Qnil);
@@ -4792,7 +4721,7 @@ write_region (Lisp_Object start, Lisp_Object end, Lisp_Object filename,
   filename = Fexpand_file_name (filename, Qnil);
 
   if (!NILP (mustbenew) && !EQ (mustbenew, Qexcl))
-    barf_or_query_if_file_exists (filename, "overwrite", 1, 0, 1);
+    barf_or_query_if_file_exists (filename, false, "overwrite", true, true);
 
   if (STRINGP (visit))
     visit_file = Fexpand_file_name (visit, Qnil);
@@ -4880,13 +4809,11 @@ write_region (Lisp_Object start, Lisp_Object end, Lisp_Object filename,
   if (!STRINGP (start) && !NILP (BVAR (current_buffer, selective_display)))
     coding.mode |= CODING_MODE_SELECTIVE_DISPLAY;
 
-#ifdef CLASH_DETECTION
   if (open_and_close_file && !auto_saving)
     {
       lock_file (lockname);
       file_locked = 1;
     }
-#endif /* CLASH_DETECTION */
 
   encoded_filename = ENCODE_FILE (filename);
   fn = SSDATA (encoded_filename);
@@ -4908,10 +4835,8 @@ write_region (Lisp_Object start, Lisp_Object end, Lisp_Object filename,
       if (desc < 0)
 	{
 	  int open_errno = errno;
-#ifdef CLASH_DETECTION
 	  if (file_locked)
 	    unlock_file (lockname);
-#endif /* CLASH_DETECTION */
 	  UNGCPRO;
 	  report_file_errno ("Opening output file", filename, open_errno);
 	}
@@ -4926,10 +4851,8 @@ write_region (Lisp_Object start, Lisp_Object end, Lisp_Object filename,
       if (ret < 0)
 	{
 	  int lseek_errno = errno;
-#ifdef CLASH_DETECTION
 	  if (file_locked)
 	    unlock_file (lockname);
-#endif /* CLASH_DETECTION */
 	  UNGCPRO;
 	  report_file_errno ("Lseek error", filename, lseek_errno);
 	}
@@ -5072,10 +4995,8 @@ write_region (Lisp_Object start, Lisp_Object end, Lisp_Object filename,
 
   unbind_to (count, Qnil);
 
-#ifdef CLASH_DETECTION
   if (file_locked)
     unlock_file (lockname);
-#endif /* CLASH_DETECTION */
 
   /* Do this before reporting IO error
      to avoid a "file has changed on disk" warning on
@@ -5094,7 +5015,7 @@ write_region (Lisp_Object start, Lisp_Object end, Lisp_Object filename,
       SAVE_MODIFF = MODIFF;
       XSETFASTINT (BVAR (current_buffer, save_length), Z - BEG);
       bset_filename (current_buffer, visit_file);
-      update_mode_lines++;
+      update_mode_lines = 14;
     }
   else if (quietly)
     {
@@ -5121,7 +5042,9 @@ DEFUN ("car-less-than-car", Fcar_less_than_car, Scar_less_than_car, 2, 2, 0,
        doc: /* Return t if (car A) is numerically less than (car B).  */)
   (Lisp_Object a, Lisp_Object b)
 {
-  Lisp_Object args[2] = { Fcar (a), Fcar (b), };
+  Lisp_Object args[2];
+  args[0] = Fcar (a);
+  args[1] = Fcar (b);
   return Flss (2, args);
 }
 
@@ -5263,6 +5186,10 @@ a_write (int desc, Lisp_Object string, ptrdiff_t pos,
   return 1;
 }
 
+/* Maximum number of characters that the next
+   function encodes per one loop iteration.  */
+
+enum { E_WRITE_MAX = 8 * 1024 * 1024 };
 
 /* Write text in the range START and END into descriptor DESC,
    encoding them with coding system CODING.  If STRING is nil, START
@@ -5289,9 +5216,16 @@ e_write (int desc, Lisp_Object string, ptrdiff_t start, ptrdiff_t end,
 	  coding->src_multibyte = SCHARS (string) < SBYTES (string);
 	  if (CODING_REQUIRE_ENCODING (coding))
 	    {
-	      encode_coding_object (coding, string,
-				    start, string_char_to_byte (string, start),
-				    end, string_char_to_byte (string, end), Qt);
+	      ptrdiff_t nchars = min (end - start, E_WRITE_MAX);
+
+	      /* Avoid creating huge Lisp string in encode_coding_object.  */
+	      if (nchars == E_WRITE_MAX)
+		coding->raw_destination = 1;
+
+	      encode_coding_object
+		(coding, string, start, string_char_to_byte (string, start),
+		 start + nchars, string_char_to_byte (string, start + nchars),
+		 Qt);
 	    }
 	  else
 	    {
@@ -5308,8 +5242,15 @@ e_write (int desc, Lisp_Object string, ptrdiff_t start, ptrdiff_t end,
 	  coding->src_multibyte = (end - start) < (end_byte - start_byte);
 	  if (CODING_REQUIRE_ENCODING (coding))
 	    {
-	      encode_coding_object (coding, Fcurrent_buffer (),
-				    start, start_byte, end, end_byte, Qt);
+	      ptrdiff_t nchars = min (end - start, E_WRITE_MAX);
+
+	      /* Likewise.  */
+	      if (nchars == E_WRITE_MAX)
+		coding->raw_destination = 1;
+
+	      encode_coding_object
+		(coding, Fcurrent_buffer (), start, start_byte,
+		 start + nchars, CHAR_TO_BYTE (start + nchars), Qt);
 	    }
 	  else
 	    {
@@ -5330,11 +5271,19 @@ e_write (int desc, Lisp_Object string, ptrdiff_t start, ptrdiff_t end,
 
       if (coding->produced > 0)
 	{
-	  char *buf = (STRINGP (coding->dst_object)
-		       ? SSDATA (coding->dst_object)
-		       : (char *) BYTE_POS_ADDR (coding->dst_pos_byte));
+	  char *buf = (coding->raw_destination ? (char *) coding->destination
+		       : (STRINGP (coding->dst_object)
+			  ? SSDATA (coding->dst_object)
+			  : (char *) BYTE_POS_ADDR (coding->dst_pos_byte)));
 	  coding->produced -= emacs_write_sig (desc, buf, coding->produced);
 
+	  if (coding->raw_destination)
+	    {
+	      /* We're responsible for freeing this, see
+		 encode_coding_object to check why.  */
+	      xfree (coding->destination);
+	      coding->raw_destination = 0;
+	    }
 	  if (coding->produced)
 	    return 0;
 	}
@@ -5834,7 +5783,28 @@ Fread_file_name (Lisp_Object prompt, Lisp_Object dir, Lisp_Object default_filena
 void
 init_fileio (void)
 {
+  realmask = umask (0);
+  umask (realmask);
+
   valid_timestamp_file_system = 0;
+
+  /* fsync can be a significant performance hit.  Often it doesn't
+     suffice to make the file-save operation survive a crash.  For
+     batch scripts, which are typically part of larger shell commands
+     that don't fsync other files, its effect on performance can be
+     significant so its utility is particularly questionable.
+     Hence, for now by default fsync is used only when interactive.
+
+     For more on why fsync often fails to work on today's hardware, see:
+     Zheng M et al. Understanding the robustness of SSDs under power fault.
+     11th USENIX Conf. on File and Storage Technologies, 2013 (FAST '13), 271-84
+     http://www.usenix.org/system/files/conference/fast13/fast13-final80.pdf
+
+     For more on why fsync does not suffice even if it works properly, see:
+     Roche X. Necessary step(s) to synchronize filename operations on disk.
+     Austin Group Defect 672, 2013-03-19
+     http://austingroupbugs.net/view.php?id=672  */
+  write_region_inhibit_fsync = noninteractive;
 }
 
 void
@@ -5891,7 +5861,11 @@ syms_of_fileio (void)
 
   DEFVAR_LISP ("file-name-coding-system", Vfile_name_coding_system,
 	       doc: /* Coding system for encoding file names.
-If it is nil, `default-file-name-coding-system' (which see) is used.  */);
+If it is nil, `default-file-name-coding-system' (which see) is used.
+
+On MS-Windows, the value of this variable is largely ignored if
+\`w32-unicode-filenames' (which see) is non-nil.  Emacs on Windows
+behaves as if file names were encoded in `utf-8'.  */);
   Vfile_name_coding_system = Qnil;
 
   DEFVAR_LISP ("default-file-name-coding-system",
@@ -5902,7 +5876,11 @@ This variable is used only when `file-name-coding-system' is nil.
 This variable is set/changed by the command `set-language-environment'.
 User should not set this variable manually,
 instead use `file-name-coding-system' to get a constant encoding
-of file names regardless of the current language environment.  */);
+of file names regardless of the current language environment.
+
+On MS-Windows, the value of this variable is largely ignored if
+\`w32-unicode-filenames' (which see) is non-nil.  Emacs on Windows
+behaves as if file names were encoded in `utf-8'.  */);
   Vdefault_file_name_coding_system = Qnil;
 
   DEFSYM (Qformat_decode, "format-decode");
@@ -6047,28 +6025,12 @@ in the buffer; this is the default behavior, because the auto-save
 file is usually more useful if it contains the deleted text.  */);
   Vauto_save_include_big_deletions = Qnil;
 
-  /* fsync can be a significant performance hit.  Often it doesn't
-     suffice to make the file-save operation survive a crash.  For
-     batch scripts, which are typically part of larger shell commands
-     that don't fsync other files, its effect on performance can be
-     significant so its utility is particularly questionable.
-     Hence, for now by default fsync is used only when interactive.
-
-     For more on why fsync often fails to work on today's hardware, see:
-     Zheng M et al. Understanding the robustness of SSDs under power fault.
-     11th USENIX Conf. on File and Storage Technologies, 2013 (FAST '13), 271-84
-     http://www.usenix.org/system/files/conference/fast13/fast13-final80.pdf
-
-     For more on why fsync does not suffice even if it works properly, see:
-     Roche X. Necessary step(s) to synchronize filename operations on disk.
-     Austin Group Defect 672, 2013-03-19
-     http://austingroupbugs.net/view.php?id=672  */
   DEFVAR_BOOL ("write-region-inhibit-fsync", write_region_inhibit_fsync,
 	       doc: /* Non-nil means don't call fsync in `write-region'.
 This variable affects calls to `write-region' as well as save commands.
 Setting this to nil may avoid data loss if the system loses power or
 the operating system crashes.  */);
-  write_region_inhibit_fsync = noninteractive;
+  write_region_inhibit_fsync = 0; /* See also `init_fileio' above.  */
 
   DEFVAR_BOOL ("delete-by-moving-to-trash", delete_by_moving_to_trash,
                doc: /* Specifies whether to use the system's trash can.
@@ -6082,6 +6044,7 @@ This includes interactive calls to `delete-file' and
   DEFSYM (Qmove_file_to_trash, "move-file-to-trash");
   DEFSYM (Qcopy_directory, "copy-directory");
   DEFSYM (Qdelete_directory, "delete-directory");
+  DEFSYM (Qsubstitute_env_in_file_name, "substitute-env-in-file-name");
 
   defsubr (&Sfind_file_name_handler);
   defsubr (&Sfile_name_directory);

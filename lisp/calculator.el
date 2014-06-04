@@ -1,6 +1,6 @@
 ;;; calculator.el --- a [not so] simple calculator for Emacs  -*- lexical-binding: t -*-
 
-;; Copyright (C) 1998, 2000-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1998, 2000-2014 Free Software Foundation, Inc.
 
 ;; Author: Eli Barzilay <eli@barzilay.org>
 ;; Keywords: tools, convenience
@@ -139,6 +139,7 @@ of digits displayed).
 An exception to the above is the case of the list (std C) where C is a
 character, in this case the `calculator-standard-displayer' function
 will be used with this character for a format string."
+  :type '(choice (function) (string) (list (const std) character) (sexp))
   :group 'calculator)
 
 (defcustom calculator-displayers
@@ -1617,6 +1618,8 @@ Optional string argument KEYS will force using it as the keys entered."
              (setq s (match-string 1 s)))
            (kill-new s)))))
 
+;; FIXME this should use register-read-with-preview, but it
+;; uses calculator-registers rather than register-alist.
 (defun calculator-set-register (reg)
   "Set a register value for REG."
   (interactive "cRegister to store into: ")
@@ -1659,6 +1662,8 @@ Used by `calculator-paste' and `get-register'."
                             (or (match-string 3 str) ""))))
      (ignore-errors (calculator-string-to-number str)))))
 
+;; FIXME this should use register-read-with-preview, but it
+;; uses calculator-registers rather than register-alist.
 (defun calculator-get-register (reg)
   "Get a value from a register REG."
   (interactive "cRegister to get value from: ")

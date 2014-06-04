@@ -1,5 +1,5 @@
 /* Interface definition for Mac OSX Core text font backend.
-   Copyright (C) 2009-2013 Free Software Foundation, Inc.
+   Copyright (C) 2009-2014 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -134,6 +134,9 @@ enum {
 
 #define mac_nsctfont_copy_font_descriptor CTFontCopyFontDescriptor
 
+#ifndef kCTVersionNumber10_9
+#define kCTVersionNumber10_9 0x00060000
+#endif
 #define MAC_FONT_CHARACTER_SET_STRING_ATTRIBUTE \
   (CFSTR ("MAC_FONT_CHARACTER_SET_STRING_ATTRIBUTE"))
 

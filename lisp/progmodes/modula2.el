@@ -2,7 +2,7 @@
 
 ;; Author: Michael Schmidt <michael@pbinfo.UUCP>
 ;;	Tom Perrine <Perrin@LOGICON.ARPA>
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: languages
 
 ;; This file is part of GNU Emacs.
@@ -104,7 +104,7 @@
   "Keymap used in Modula-2 mode.")
 
 (defcustom m2-indent 5
-  "This variable gives the indentation in Modula-2-Mode."
+  "This variable gives the indentation in Modula-2 mode."
   :type 'integer
   :group 'modula2)
 (put 'm2-indent 'safe-local-variable

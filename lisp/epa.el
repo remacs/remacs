@@ -1,6 +1,6 @@
 ;;; epa.el --- the EasyPG Assistant -*- lexical-binding: t -*-
 
-;; Copyright (C) 2006-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2006-2014 Free Software Foundation, Inc.
 
 ;; Author: Daiki Ueno <ueno@unixuser.org>
 ;; Keywords: PGP, GnuPG
@@ -31,6 +31,7 @@
 (defgroup epa nil
   "The EasyPG Assistant"
   :version "23.1"
+  :link '(custom-manual "(epa) Top")
   :group 'epg)
 
 (defcustom epa-popup-info-window t
@@ -50,13 +51,16 @@
 
 (defcustom epa-mail-aliases nil
   "Alist of aliases of email addresses that stand for encryption keys.
-Each element is (ALIAS EXPANSIONS...).
-It means that when a message is addressed to ALIAS,
+Each element is a list of email addresses (ALIAS EXPANSIONS...).
+When one of the recipients of a message being encrypted is ALIAS,
 instead of encrypting it for ALIAS, encrypt it for EXPANSIONS...
+
 If EXPANSIONS is empty, ignore ALIAS as regards encryption.
-That is a handy way to avoid warnings about addresses
-that you don't have any key for."
-  :type '(repeat (cons (string :tag "Alias") (repeat '(string :tag "Expansion"))))
+This is a handy way to avoid warnings about addresses that you don't
+have any key for.
+
+The command `epa-mail-encrypt' uses this."
+  :type '(repeat (cons (string :tag "Alias") (repeat (string :tag "Expansion"))))
   :group 'epa
   :version "24.4")
 
@@ -830,6 +834,7 @@ For example:
 
 Don't use this command in Lisp programs!
 See the reason described in the `epa-decrypt-region' documentation."
+  (declare (interactive-only t))
   (interactive "r")
   (save-excursion
     (save-restriction
@@ -869,6 +874,7 @@ For example:
   (decode-coding-string
     (epg-verify-string context (buffer-substring start end))
     'utf-8))"
+  (declare (interactive-only t))
   (interactive "r")
   (let ((context (epg-make-context epa-protocol))
 	plain)
@@ -910,6 +916,7 @@ between START and END.
 
 Don't use this command in Lisp programs!
 See the reason described in the `epa-verify-region' documentation."
+  (declare (interactive-only t))
   (interactive "r")
   (save-excursion
     (save-restriction
@@ -952,6 +959,7 @@ For example:
   (epg-sign-string
     context
     (encode-coding-string (buffer-substring start end) 'utf-8)))"
+  (declare (interactive-only t))
   (interactive
    (let ((verbose current-prefix-arg))
      (setq epa-last-coding-system-specified
@@ -1033,6 +1041,7 @@ For example:
     context
     (encode-coding-string (buffer-substring start end) 'utf-8)
     nil))"
+  (declare (interactive-only t))
   (interactive
    (let ((verbose current-prefix-arg)
 	 (context (epg-make-context epa-protocol))
@@ -1201,6 +1210,7 @@ If no one is selected, default public key is exported.  ")))
 ;; If a prefix-arg is specified, the signature is marked as non exportable.
 
 ;; Don't use this command in Lisp programs!"
+;;   (declare (interactive-only t))
 ;;   (interactive
 ;;    (let ((keys (epa--marked-keys)))
 ;;      (unless keys

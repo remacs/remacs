@@ -1,6 +1,6 @@
 ;;; ob-screen.el --- org-babel support for interactive terminal
 
-;; Copyright (C) 2009-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2009-2014 Free Software Foundation, Inc.
 
 ;; Author: Benjamin Andresen
 ;; Keywords: literate programming, interactive shell
@@ -34,7 +34,6 @@
 
 ;;; Code:
 (require 'ob)
-(require 'ob-ref)
 
 (defvar org-babel-screen-location "screen"
   "The command location for screen.
@@ -107,7 +106,7 @@ In case you want to use a different screen than one selected by your $PATH")
 
 (defun org-babel-screen-session-write-temp-file (session body)
   "Save BODY in a temp file that is named after SESSION."
-  (let ((tmpfile (concat "/tmp/screen.org-babel-session-" session)))
+  (let ((tmpfile (org-babel-temp-file "screen-")))
     (with-temp-file tmpfile
       (insert body)
 
@@ -122,7 +121,7 @@ The terminal should shortly flicker."
   (interactive)
   (let* ((session "org-babel-testing")
          (random-string (format "%s" (random 99999)))
-         (tmpfile "/tmp/org-babel-screen.test")
+         (tmpfile (org-babel-temp-file "ob-screen-test-"))
          (body (concat "echo '" random-string "' > " tmpfile "\nexit\n"))
          process tmp-string)
     (org-babel-execute:screen body org-babel-default-header-args:screen)

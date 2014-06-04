@@ -1,13 +1,15 @@
 /* Basic character set support.
-   Copyright (C) 2001-2013 Free Software Foundation, Inc.
-   Copyright (C) 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004,
-     2005, 2006, 2007, 2008, 2009, 2010, 2011
-     National Institute of Advanced Industrial Science and Technology (AIST)
-     Registration Number H14PRO021
 
-   Copyright (C) 2003, 2004
-     National Institute of Advanced Industrial Science and Technology (AIST)
-     Registration Number H13PRO009
+Copyright (C) 2001-2014 Free Software Foundation, Inc.
+
+Copyright (C) 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004,
+  2005, 2006, 2007, 2008, 2009, 2010, 2011
+  National Institute of Advanced Industrial Science and Technology (AIST)
+  Registration Number H14PRO021
+
+Copyright (C) 2003, 2004
+  National Institute of Advanced Industrial Science and Technology (AIST)
+  Registration Number H13PRO009
 
 This file is part of GNU Emacs.
 
@@ -25,8 +27,6 @@ You should have received a copy of the GNU General Public License
 along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include <config.h>
-
-#define CHARSET_INLINE EXTERN_INLINE
 
 #include <errno.h>
 #include <stdio.h>
@@ -495,7 +495,7 @@ load_charset_map_from_file (struct charset *charset, Lisp_Object mapfile,
   count = SPECPDL_INDEX ();
   record_unwind_protect_nothing ();
   specbind (Qfile_name_handler_alist, Qnil);
-  fd = openp (Vcharset_map_path, mapfile, suffixes, NULL, Qnil);
+  fd = openp (Vcharset_map_path, mapfile, suffixes, NULL, Qnil, false);
   fp = fd < 0 ? 0 : fdopen (fd, "r");
   if (!fp)
     {
@@ -1862,10 +1862,7 @@ DEFUN ("decode-char", Fdecode_char, Sdecode_char, 2, 3, 0,
        doc: /* Decode the pair of CHARSET and CODE-POINT into a character.
 Return nil if CODE-POINT is not valid in CHARSET.
 
-CODE-POINT may be a cons (HIGHER-16-BIT-VALUE . LOWER-16-BIT-VALUE).
-
-Optional argument RESTRICTION specifies a way to map the pair of CCS
-and CODE-POINT to a character.  Currently not supported and just ignored.  */)
+CODE-POINT may be a cons (HIGHER-16-BIT-VALUE . LOWER-16-BIT-VALUE).  */)
   (Lisp_Object charset, Lisp_Object code_point, Lisp_Object restriction)
 {
   int c, id;
@@ -1882,10 +1879,7 @@ and CODE-POINT to a character.  Currently not supported and just ignored.  */)
 
 DEFUN ("encode-char", Fencode_char, Sencode_char, 2, 3, 0,
        doc: /* Encode the character CH into a code-point of CHARSET.
-Return nil if CHARSET doesn't include CH.
-
-Optional argument RESTRICTION specifies a way to map CH to a
-code-point in CCS.  Currently not supported and just ignored.  */)
+Return nil if CHARSET doesn't include CH.  */)
   (Lisp_Object ch, Lisp_Object charset, Lisp_Object restriction)
 {
   int c, id;
@@ -2311,9 +2305,11 @@ init_charset (void)
          obscure problem (eg bug#6401), so better abort.  */
       fprintf (stderr, "Error: charsets directory not found:\n\
 %s\n\
-Emacs will not function correctly without the character map files.\n\
+Emacs will not function correctly without the character map files.\n%s\
 Please check your installation!\n",
-                   SDATA (tempdir));
+               SDATA (tempdir),
+               egetenv("EMACSDATA") ? "The EMACSDATA environment \
+variable is set, maybe it has the wrong value?\n" : "");
       exit (1);
     }
 
@@ -2390,7 +2386,7 @@ syms_of_charset (void)
   }
 
   charset_table = charset_table_init;
-  charset_table_size = sizeof charset_table_init / sizeof *charset_table_init;
+  charset_table_size = ARRAYELTS (charset_table_init);
   charset_table_used = 0;
 
   defsubr (&Scharsetp);
@@ -2436,19 +2432,19 @@ the value may be a list of mnemonics.  */);
   Vcurrent_iso639_language = Qnil;
 
   charset_ascii
-    = define_charset_internal (Qascii, 1, "\x00\x7F\x00\x00\x00\x00",
+    = define_charset_internal (Qascii, 1, "\x00\x7F\0\0\0\0\0",
 			       0, 127, 'B', -1, 0, 1, 0, 0);
   charset_iso_8859_1
-    = define_charset_internal (Qiso_8859_1, 1, "\x00\xFF\x00\x00\x00\x00",
+    = define_charset_internal (Qiso_8859_1, 1, "\x00\xFF\0\0\0\0\0",
 			       0, 255, -1, -1, -1, 1, 0, 0);
   charset_unicode
-    = define_charset_internal (Qunicode, 3, "\x00\xFF\x00\xFF\x00\x10",
+    = define_charset_internal (Qunicode, 3, "\x00\xFF\x00\xFF\x00\x10\0",
 			       0, MAX_UNICODE_CHAR, -1, 0, -1, 1, 0, 0);
   charset_emacs
-    = define_charset_internal (Qemacs, 3, "\x00\xFF\x00\xFF\x00\x3F",
+    = define_charset_internal (Qemacs, 3, "\x00\xFF\x00\xFF\x00\x3F\0",
 			       0, MAX_5_BYTE_CHAR, -1, 0, -1, 1, 1, 0);
   charset_eight_bit
-    = define_charset_internal (Qeight_bit, 1, "\x80\xFF\x00\x00\x00\x00",
+    = define_charset_internal (Qeight_bit, 1, "\x80\xFF\0\0\0\0\0",
 			       128, 255, -1, 0, -1, 0, 1,
 			       MAX_5_BYTE_CHAR + 1);
   charset_unibyte = charset_iso_8859_1;

@@ -1,6 +1,6 @@
 ;;; dframe --- dedicate frame support modes  -*- lexical-binding:t -*-
 
-;; Copyright (C) 1996-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1996-2014 Free Software Foundation, Inc.
 
 ;; Author: Eric M. Ludlam <zappo@gnu.org>
 ;; Keywords: file, tags, tools
@@ -242,6 +242,9 @@ Local to those buffers, as a function called that created it.")
 (defun dframe-live-p (frame)
   "Return non-nil if FRAME is currently available."
   (and frame (frame-live-p frame) (frame-visible-p frame)))
+
+(defvar x-sensitive-text-pointer-shape)
+(defvar x-pointer-shape)
 
 (defun dframe-frame-mode (arg frame-var cache-var buffer-var frame-name
 			      local-mode-fn
@@ -527,7 +530,7 @@ LOCATION can be one of 'random, 'left-right, or 'top-bottom."
 
 (defun dframe-detach (frame-var cache-var buffer-var)
   "Detach the frame in symbol FRAME-VAR.
-CACHE-VAR and BUFFER-VAR are symbols as in `dframe-frame-mode'"
+CACHE-VAR and BUFFER-VAR are symbols as in `dframe-frame-mode'."
   (with-current-buffer (symbol-value buffer-var)
     (rename-buffer (buffer-name) t)
     (let ((oldframe (symbol-value frame-var)))
@@ -603,13 +606,12 @@ Argument E is the event deleting the frame."
 
 ;;; Utilities
 ;;
-(defun dframe-get-focus (frame-var activator &optional hook)
+(defun dframe-get-focus (frame-var activator)
   "Change frame focus to or from a dedicated frame.
 If the selected frame is not in the symbol FRAME-VAR, then FRAME-VAR
 frame is selected.  If the FRAME-VAR is active, then select the
 attached frame.  If FRAME-VAR is nil, ACTIVATOR is called to
-created it.  HOOK is an optional hook to run when
-selecting FRAME-VAR."
+created it."
   (interactive)
   (if (eq (selected-frame) (symbol-value frame-var))
       (if (frame-live-p dframe-attached-frame)
@@ -620,9 +622,7 @@ selecting FRAME-VAR."
     ;; go there
     (select-frame (symbol-value frame-var))
     )
-  (other-frame 0)
-  ;; If updates are off, then refresh the frame (they want it now...)
-  (run-hooks hook))
+  (other-frame 0))
 
 
 (defun dframe-close-frame ()

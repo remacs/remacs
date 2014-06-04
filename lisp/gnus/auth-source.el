@@ -1,6 +1,6 @@
 ;;; auth-source.el --- authentication sources for Gnus and Emacs
 
-;; Copyright (C) 2008-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2008-2014 Free Software Foundation, Inc.
 
 ;; Author: Ted Zlatanov <tzz@lifelogs.com>
 ;; Keywords: news
@@ -233,16 +233,14 @@ If the value is a function, debug messages are logged by calling
 
 (defcustom auth-sources '("~/.authinfo" "~/.authinfo.gpg" "~/.netrc")
   "List of authentication sources.
-
-The default will get login and password information from
-\"~/.authinfo.gpg\", which you should set up with the EPA/EPG
-packages to be encrypted.  If that file doesn't exist, it will
-try the unencrypted version \"~/.authinfo\" and the famous
-\"~/.netrc\" file.
-
-See the auth.info manual for details.
-
 Each entry is the authentication type with optional properties.
+Entries are tried in the order in which they appear.
+See Info node `(auth)Help for users' for details.
+
+If an entry names a file with the \".gpg\" extension and you have
+EPA/EPG set up, the file will be encrypted and decrypted
+automatically.  See Info node `(epa)Encrypting/decrypting gpg files'
+for details.
 
 It's best to customize this with `M-x customize-variable' because the choices
 can get pretty complex."
@@ -251,7 +249,7 @@ can get pretty complex."
   :type `(repeat :tag "Authentication Sources"
                  (choice
                   (string :tag "Just a file")
-                  (const :tag "Default Secrets API Collection" 'default)
+                  (const :tag "Default Secrets API Collection" default)
                   (const :tag "Login Secrets API Collection" "secrets:Login")
                   (const :tag "Temp Secrets API Collection" "secrets:session")
 
@@ -270,7 +268,7 @@ can get pretty complex."
                                  (const :format "" :value :secrets)
                                  (choice :tag "Collection to use"
                                          (string :tag "Collection name")
-                                         (const :tag "Default" 'default)
+                                         (const :tag "Default" default)
                                          (const :tag "Login" "Login")
                                          (const
                                           :tag "Temporary" "session")))
@@ -280,14 +278,14 @@ can get pretty complex."
                                         :value :macos-keychain-internet)
                                  (choice :tag "Collection to use"
                                          (string :tag "internet Keychain path")
-                                         (const :tag "default" 'default)))
+                                         (const :tag "default" default)))
                                 (list
                                  :tag "Mac OS generic Keychain"
                                  (const :format ""
                                         :value :macos-keychain-generic)
                                  (choice :tag "Collection to use"
                                          (string :tag "generic Keychain path")
-                                         (const :tag "default" 'default))))
+                                         (const :tag "default" default))))
                         (repeat :tag "Extra Parameters" :inline t
                                 (choice :tag "Extra parameter"
                                         (list
@@ -656,9 +654,11 @@ Use `auth-source-delete' in ELisp code instead of calling
 'secrets are the only ones supported right now.
 
 :max N means to try to return at most N items (defaults to 1).
-When 0 the function will return just t or nil to indicate if any
-matches were found.  More than N items may be returned, depending
-on the search and the backend.
+More than N items may be returned, depending on the search and
+the backend.
+
+When :max is 0 the function will return just t or nil to indicate
+if any matches were found.
 
 :host (X Y Z) means to match only hosts X, Y, or Z according to
 the match rules above.  Defaults to t.
@@ -759,18 +759,22 @@ must call it to obtain the actual value."
       (when auth-source-do-cache
         (auth-source-remember spec found)))
 
-    found))
+    (if (zerop max)
+        (not (null found))
+      found)))
 
 (defun auth-source-search-backends (backends spec max create delete require)
-  (let (matches)
+  (let ((max (if (zerop max) 1 max)) ; stop with 1 match if we're asked for zero
+        matches)
     (dolist (backend backends)
-      (when (> max (length matches))   ; when we need more matches...
+      (when (> max (length matches)) ; if we need more matches...
         (let* ((bmatches (apply
                           (slot-value backend 'search-function)
                           :backend backend
                           :type (slot-value backend :type)
                           ;; note we're overriding whatever the spec
-                          ;; has for :require, :create, and :delete
+                          ;; has for :max, :require, :create, and :delete
+                          :max max
                           :require require
                           :create create
                           :delete delete
@@ -785,6 +789,7 @@ must call it to obtain the actual value."
             (setq matches (append matches bmatches))))))
     matches))
 
+;; (auth-source-search :max 0)
 ;; (auth-source-search :max 1)
 ;; (funcall (plist-get (nth 0 (auth-source-search :max 1)) :secret))
 ;; (auth-source-search :host "nonesuch" :type 'netrc :K 1)
@@ -1508,6 +1513,31 @@ Respects `auth-source-save-behavior'.  Uses
 ;; (let ((auth-sources '("secrets:Login"))) (auth-source-search :max 1))
 ;; (let ((auth-sources '("secrets:Login"))) (auth-source-search :max 1 :signon_realm "https://git.gnus.org/Git"))
 
+(defun auth-source-secrets-listify-pattern (pattern)
+  "Convert a pattern with lists to a list of string patterns.
+
+auth-source patterns can have values of the form :foo (\"bar\"
+\"qux\"), which means to match any secret with :foo equal to
+\"bar\" or :foo equal to \"qux\".  The secrets backend supports
+only string values for patterns, so this routine returns a list
+of patterns that is equivalent to the single original pattern
+when interpreted such that if a secret matches any pattern in the
+list, it matches the original pattern."
+  (if (null pattern)
+      '(nil)
+    (let* ((key (pop pattern))
+           (value (pop pattern))
+           (tails (auth-source-secrets-listify-pattern pattern))
+           (heads (if (stringp value)
+                      (list (list key value))
+                    (mapcar (lambda (v) (list key v)) value))))
+      (loop
+         for h in heads
+         nconc
+           (loop
+              for tl in tails
+              collect (append h tl))))))
+
 (defun* auth-source-secrets-search (&rest
                                     spec
                                     &key backend create delete label
@@ -1560,21 +1590,25 @@ authentication tokens:
                             collect (nth i spec)))
          ;; build a search spec without the ignored keys
          ;; if a search key is nil or t (match anything), we skip it
-         (search-spec (apply 'append (mapcar
+         (search-specs (auth-source-secrets-listify-pattern
+                        (apply 'append (mapcar
                                       (lambda (k)
                                         (if (or (null (plist-get spec k))
                                                 (eq t (plist-get spec k)))
                                             nil
                                           (list k (plist-get spec k))))
-                                      search-keys)))
+                                      search-keys))))
          ;; needed keys (always including host, login, port, and secret)
          (returned-keys (mm-delete-duplicates (append
                                                '(:host :login :port :secret)
                                                search-keys)))
-         (items (loop for item in (apply 'secrets-search-items coll search-spec)
-                      unless (and (stringp label)
-                                  (not (string-match label item)))
-                      collect item))
+         (items
+          (loop for search-spec in search-specs
+               nconc
+               (loop for item in (apply 'secrets-search-items coll search-spec)
+                  unless (and (stringp label)
+                              (not (string-match label item)))
+                  collect item)))
          ;; TODO: respect max in `secrets-search-items', not after the fact
          (items (butlast items (- (length items) max)))
          ;; convert the item name to a full plist
@@ -1626,6 +1660,7 @@ authentication tokens:
 
 ;; (let ((auth-sources '("macos-keychain-internet:/Users/tzz/Library/Keychains/login.keychain"))) (auth-source-search :max 1))
 ;; (let ((auth-sources '("macos-keychain-generic:Login"))) (auth-source-search :max 1 :host "git.gnus.org"))
+;; (let ((auth-sources '("macos-keychain-generic:Login"))) (auth-source-search :max 1))
 
 (defun* auth-source-macos-keychain-search (&rest
                                     spec

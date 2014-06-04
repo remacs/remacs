@@ -1,9 +1,9 @@
 ;;; help-fns.el --- Complex help functions -*- lexical-binding: t -*-
 
-;; Copyright (C) 1985-1986, 1993-1994, 1998-2013 Free Software
-;; Foundation, Inc.
+;; Copyright (C) 1985-1986, 1993-1994, 1998-2014
+;;   Free Software Foundation, Inc.
 
-;; Maintainer: FSF
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: help, internal
 ;; Package: emacs
 
@@ -31,6 +31,12 @@
 ;; are in help.el
 
 ;;; Code:
+
+(defvar help-fns-describe-function-functions nil
+  "List of functions to run in help buffer in `describe-function'.
+Those functions will be run after the header line and argument
+list was inserted, and before the documentation will be inserted.
+The functions will receive the function name as argument.")
 
 ;; Functions
 
@@ -63,109 +69,6 @@
 	  ;; Return the text we displayed.
 	  (buffer-string))))))
 
-(defun help-split-fundoc (docstring def)
-  "Split a function DOCSTRING into the actual doc and the usage info.
-Return (USAGE . DOC) or nil if there's no usage info, where USAGE info
-is a string describing the argument list of DEF, such as
-\"(apply FUNCTION &rest ARGUMENTS)\".
-DEF is the function whose usage we're looking for in DOCSTRING."
-  ;; Functions can get the calling sequence at the end of the doc string.
-  ;; In cases where `function' has been fset to a subr we can't search for
-  ;; function's name in the doc string so we use `fn' as the anonymous
-  ;; function name instead.
-  (when (and docstring (string-match "\n\n(fn\\(\\( .*\\)?)\\)\\'" docstring))
-    (cons (format "(%s%s"
-		  ;; Replace `fn' with the actual function name.
-		  (if (symbolp def) def "anonymous")
-		  (match-string 1 docstring))
-	  (unless (zerop (match-beginning 0))
-            (substring docstring 0 (match-beginning 0))))))
-
-;; FIXME: Move to subr.el?
-(defun help-add-fundoc-usage (docstring arglist)
-  "Add the usage info to DOCSTRING.
-If DOCSTRING already has a usage info, then just return it unchanged.
-The usage info is built from ARGLIST.  DOCSTRING can be nil.
-ARGLIST can also be t or a string of the form \"(FUN ARG1 ARG2 ...)\"."
-  (unless (stringp docstring) (setq docstring ""))
-  (if (or (string-match "\n\n(fn\\(\\( .*\\)?)\\)\\'" docstring)
-          (eq arglist t))
-      docstring
-    (concat docstring
-	    (if (string-match "\n?\n\\'" docstring)
-		(if (< (- (match-end 0) (match-beginning 0)) 2) "\n" "")
-	      "\n\n")
-	    (if (and (stringp arglist)
-		     (string-match "\\`([^ ]+\\(.*\\))\\'" arglist))
-		(concat "(fn" (match-string 1 arglist) ")")
-	      (format "%S" (help-make-usage 'fn arglist))))))
-
-;; FIXME: Move to subr.el?
-(defun help-function-arglist (def &optional preserve-names)
-  "Return a formal argument list for the function DEF.
-IF PRESERVE-NAMES is non-nil, return a formal arglist that uses
-the same names as used in the original source code, when possible."
-  ;; Handle symbols aliased to other symbols.
-  (if (and (symbolp def) (fboundp def)) (setq def (indirect-function def)))
-  ;; If definition is a macro, find the function inside it.
-  (if (eq (car-safe def) 'macro) (setq def (cdr def)))
-  (cond
-   ((and (byte-code-function-p def) (listp (aref def 0))) (aref def 0))
-   ((eq (car-safe def) 'lambda) (nth 1 def))
-   ((eq (car-safe def) 'closure) (nth 2 def))
-   ((or (and (byte-code-function-p def) (integerp (aref def 0)))
-        (subrp def))
-    (or (when preserve-names
-          (let* ((doc (condition-case nil (documentation def) (error nil)))
-                 (docargs (if doc (car (help-split-fundoc doc nil))))
-                 (arglist (if docargs
-                              (cdar (read-from-string (downcase docargs)))))
-                 (valid t))
-            ;; Check validity.
-            (dolist (arg arglist)
-              (unless (and (symbolp arg)
-                           (let ((name (symbol-name arg)))
-                             (if (eq (aref name 0) ?&)
-                                 (memq arg '(&rest &optional))
-                               (not (string-match "\\." name)))))
-                (setq valid nil)))
-            (when valid arglist)))
-        (let* ((args-desc (if (not (subrp def))
-                              (aref def 0)
-                            (let ((a (subr-arity def)))
-                              (logior (car a)
-                                      (if (numberp (cdr a))
-                                          (lsh (cdr a) 8)
-                                        (lsh 1 7))))))
-               (max (lsh args-desc -8))
-               (min (logand args-desc 127))
-               (rest (logand args-desc 128))
-               (arglist ()))
-          (dotimes (i min)
-            (push (intern (concat "arg" (number-to-string (1+ i)))) arglist))
-          (when (> max min)
-            (push '&optional arglist)
-            (dotimes (i (- max min))
-              (push (intern (concat "arg" (number-to-string (+ 1 i min))))
-                    arglist)))
-          (unless (zerop rest) (push '&rest arglist) (push 'rest arglist))
-          (nreverse arglist))))
-   ((and (autoloadp def) (not (eq (nth 4 def) 'keymap)))
-    "[Arg list not available until function definition is loaded.]")
-   (t t)))
-
-;; FIXME: Move to subr.el?
-(defun help-make-usage (function arglist)
-  (cons (if (symbolp function) function 'anonymous)
-	(mapcar (lambda (arg)
-		  (if (not (symbolp arg)) arg
-		    (let ((name (symbol-name arg)))
-		      (cond
-                       ((string-match "\\`&" name) arg)
-                       ((string-match "\\`_" name)
-                        (intern (upcase (substring name 1))))
-                       (t (intern (upcase name)))))))
-		arglist)))
 
 ;; Could be this, if we make symbol-file do the work below.
 ;; (defun help-C-file-name (subr-or-var kind)
@@ -181,7 +84,7 @@ KIND should be `var' for a variable or `subr' for a subroutine."
   (let ((docbuf (get-buffer-create " *DOC*"))
 	(name (if (eq 'var kind)
 		  (concat "V" (symbol-name subr-or-var))
-		(concat "F" (subr-name subr-or-var)))))
+		(concat "F" (subr-name (advice--cd*r subr-or-var))))))
     (with-current-buffer docbuf
       (goto-char (point-min))
       (if (eobp)
@@ -382,8 +285,6 @@ suitable file is found, return nil."
 			    (match-string 1 str))))
 	(and src-file (file-readable-p src-file) src-file))))))
 
-(declare-function ad-get-advice-info "advice" (function))
-
 (defun help-fns--key-bindings (function)
   (when (commandp function)
     (let ((pt2 (with-current-buffer standard-output (point)))
@@ -529,29 +430,54 @@ FILE is the file where FUNCTION was probably defined."
       (setq load-hist (cdr load-hist)))
     found))
 
+(defun help-fns--interactive-only (function)
+  "Insert some help blurb if FUNCTION should only be used interactively."
+  ;; Ignore lambda constructs, keyboard macros, etc.
+  (and (symbolp function)
+       (not (eq (car-safe (symbol-function function)) 'macro))
+       (let* ((interactive-only
+               (or (get function 'interactive-only)
+                   (if (boundp 'byte-compile-interactive-only-functions)
+                       (memq function
+                             byte-compile-interactive-only-functions)))))
+         (when interactive-only
+           (insert "\nThis function is for interactive use only"
+                   ;; Cf byte-compile-form.
+                   (cond ((stringp interactive-only)
+                          (format ";\nin Lisp code %s" interactive-only))
+                         ((and (symbolp 'interactive-only)
+                               (not (eq interactive-only t)))
+                          (format ";\nin Lisp code use `%s' instead."
+                                  interactive-only))
+                         (t "."))
+                   "\n")))))
+
 ;;;###autoload
 (defun describe-function-1 (function)
-  (let* ((advised (and (symbolp function) (featurep 'advice)
-		       (ad-get-advice-info function)))
+  (let* ((advised (and (symbolp function)
+		       (featurep 'nadvice)
+		       (advice--p (advice--symbol-function function))))
 	 ;; If the function is advised, use the symbol that has the
 	 ;; real definition, if that symbol is already set up.
 	 (real-function
 	  (or (and advised
-		   (let ((origname (cdr (assq 'origname advised))))
-		     (and (fboundp origname) origname)))
+                   (advice--cd*r (advice--symbol-function function)))
 	      function))
 	 ;; Get the real definition.
 	 (def (if (symbolp real-function)
 		  (symbol-function real-function)
-		function))
-	 (aliased (symbolp def))
-	 (real-def (if aliased
-		       (let ((f def))
-			 (while (and (fboundp f)
-				     (symbolp (symbol-function f)))
-			   (setq f (symbol-function f)))
-			 f)
-		     def))
+		real-function))
+	 (aliased (or (symbolp def)
+		      ;; Advised & aliased function.
+		      (and advised (symbolp real-function))))
+	 (real-def (cond
+		    (aliased (let ((f real-function))
+			       (while (and (fboundp f)
+					   (symbolp (symbol-function f)))
+				 (setq f (symbol-function f)))
+			       f))
+		    ((subrp def) (intern (subr-name def)))
+		    (t def)))
 	 (file-name (find-lisp-object-file-name function def))
          (pt1 (with-current-buffer (help-buffer) (point)))
 	 (beg (if (and (or (byte-code-function-p def)
@@ -571,21 +497,27 @@ FILE is the file where FUNCTION was probably defined."
 		  (if (eq 'unevalled (cdr (subr-arity def)))
 		      (concat beg "special form")
 		    (concat beg "built-in function")))
-		 ((byte-code-function-p def)
-		  (concat beg "compiled Lisp function"))
+		 ;; Aliases are Lisp functions, so we need to check
+		 ;; aliases before functions.
 		 (aliased
 		  (format "an alias for `%s'" real-def))
-		 ((eq (car-safe def) 'lambda)
-		  (concat beg "Lisp function"))
-		 ((eq (car-safe def) 'macro)
-		  (concat beg "Lisp macro"))
-		 ((eq (car-safe def) 'closure)
-		  (concat beg "Lisp closure"))
 		 ((autoloadp def)
 		  (format "%s autoloaded %s"
 			  (if (commandp def) "an interactive" "an")
 			  (if (eq (nth 4 def) 'keymap) "keymap"
 			    (if (nth 4 def) "Lisp macro" "Lisp function"))))
+		 ((or (eq (car-safe def) 'macro)
+		      ;; For advised macros, def is a lambda
+		      ;; expression or a byte-code-function-p, so we
+		      ;; need to check macros before functions.
+		      (macrop function))
+		  (concat beg "Lisp macro"))
+		 ((byte-code-function-p def)
+		  (concat beg "compiled Lisp function"))
+		 ((eq (car-safe def) 'lambda)
+		  (concat beg "Lisp function"))
+		 ((eq (car-safe def) 'closure)
+		  (concat beg "Lisp closure"))
 		 ((keymapp def)
 		  (let ((is-full nil)
 			(elts (cdr-safe def)))
@@ -638,13 +570,15 @@ FILE is the file where FUNCTION was probably defined."
         (help-fns--key-bindings function)
         (with-current-buffer standard-output
           (setq doc (help-fns--signature function doc real-def real-function))
-
-          (help-fns--compiler-macro function)
-          (help-fns--parent-mode function)
-          (help-fns--obsolete function)
-
+	  (run-hook-with-args 'help-fns-describe-function-functions function)
           (insert "\n"
                   (or doc "Not documented.")))))))
+
+;; Add defaults to `help-fns-describe-function-functions'.
+(add-hook 'help-fns-describe-function-functions #'help-fns--obsolete)
+(add-hook 'help-fns-describe-function-functions #'help-fns--interactive-only)
+(add-hook 'help-fns-describe-function-functions #'help-fns--parent-mode)
+(add-hook 'help-fns-describe-function-functions #'help-fns--compiler-macro)
 
 
 ;; Variables
@@ -897,13 +831,18 @@ if it is given a local binding.\n")))
 			     (t ".")))
                 (terpri))
 
-	      (when (member (cons variable val) file-local-variables-alist)
+	      (when (member (cons variable val)
+                            (with-current-buffer buffer
+                              file-local-variables-alist))
 		(setq extra-line t)
-		(if (member (cons variable val) dir-local-variables-alist)
-		    (let ((file (and (buffer-file-name)
-                                      (not (file-remote-p (buffer-file-name)))
+		(if (member (cons variable val)
+                             (with-current-buffer buffer
+                               dir-local-variables-alist))
+		    (let ((file (and (buffer-file-name buffer)
+                                      (not (file-remote-p
+                                            (buffer-file-name buffer)))
                                       (dir-locals-find-file
-                                       (buffer-file-name))))
+                                       (buffer-file-name buffer))))
                           (dir-file t))
 		      (princ "  This variable's value is directory-local")
 		      (if (null file)
@@ -916,7 +855,8 @@ if it is given a local binding.\n")))
                                 (setq file (expand-file-name
                                             dir-locals-file (car file)))
                               ;; Otherwise, assume it was set directly.
-                              (setq dir-file nil)))
+                              (setq file (car file)
+                                    dir-file nil)))
 			(princ (if dir-file
 				   "by the file\n  `"
 				 "for the directory\n  `"))

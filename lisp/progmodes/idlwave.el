@@ -1,6 +1,6 @@
 ;; idlwave.el --- IDL editing mode for GNU Emacs
 
-;; Copyright (C) 1999-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1999-2014 Free Software Foundation, Inc.
 
 ;; Authors: J.D. Smith <jdsmith@as.arizona.edu>
 ;;          Carsten Dominik <dominik@science.uva.nl>
@@ -381,7 +381,7 @@ current   Scan only the current buffer, but no other buffers."
   :type '(choice
 	  (const :tag "No buffer" nil)
 	  (const :tag "All buffers" t)
-	  (const :tag "Current buffer only" 'current)))
+	  (const :tag "Current buffer only" current)))
 
 (defcustom idlwave-query-shell-for-routine-info t
   "Non-nil means query the shell for info about compiled routines.
@@ -449,6 +449,7 @@ value of `!DIR'.  See also `idlwave-library-path'."
 (defcustom idlwave-config-directory
   (locate-user-emacs-file "idlwave" ".idlwave")
   "Directory for configuration files and user-library catalog."
+  :version "24.4"			; added locate-user-emacs-file
   :group 'idlwave-routine-info
   :type 'file)
 
@@ -776,7 +777,7 @@ spaces are left unchanged."
   :type '(choice
 	  (const :tag "Pad like assignments" t)
 	  (const :tag "Remove space near `='" nil)
-	  (const :tag "Keep space near `='" 'keep)))
+	  (other :tag "Keep space near `='" keep)))
 
 (defcustom idlwave-show-block t
   "Non-nil means point blinks to block beginning for `idlwave-show-begin'."
@@ -7169,7 +7170,7 @@ If these don't exist, a letter in the string is automatically selected."
 
 (defun idlwave-choose-completion (&rest args)
   "Choose the completion that point is in or next to."
-  (interactive)
+  (interactive (list last-nonmenu-event))
   (apply 'idlwave-choose 'choose-completion args))
 
 (defun idlwave-mouse-choose-completion (&rest args)
