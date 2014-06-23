@@ -606,7 +606,8 @@ xwidget_osr_event_forward (GtkWidget *widget,
 }
 
 GIRepository *girepository ;
-DEFUN( "xwgir-require-namespace",Fxwgir_require_namespace, Sxwgir_require_namespace, 2,2,0,
+
+DEFUN ("xwgir-require-namespace", Fxwgir_require_namespace, Sxwgir_require_namespace, 2,2,0,
        doc: /*require a namespace. must be done for all namespaces we want to use, before using other xwgir functions.*/)
   (Lisp_Object lnamespace, Lisp_Object lnamespace_version)  
 {

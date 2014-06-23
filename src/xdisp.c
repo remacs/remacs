@@ -25347,7 +25347,7 @@ produce_xwidget_glyph (struct it *it)
   face = FACE_FROM_ID (it->f, it->face_id);
   eassert (face);
   /* Make sure X resources of the face is loaded.  */
-  PREPARE_FACE_FOR_DISPLAY (it->f, face);
+  prepare_face_for_display (it->f, face);
 
   xw = it->xwidget;
   it->ascent = it->phys_ascent = glyph_ascent = xw->height/2;
