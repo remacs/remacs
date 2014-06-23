@@ -28,6 +28,9 @@ EMACSOPT = -batch --no-site-file --no-site-lisp
 
 CC=@CC@
 CFLAGS=@CFLAGS@
+CPPFLAGS = @CPPFLAGS@
+LDFLAGS = @LDFLAGS@
+
 version=@version@
 ## Used in $archlibdir.
 configuration=@configuration@
@@ -192,6 +195,7 @@ BASE_CFLAGS = $(C_SWITCH_SYSTEM) $(C_SWITCH_MACHINE) \
 	      -I${srcdir} -I${srcdir}/../src -I${srcdir}/../lib
 
 ALL_CFLAGS = ${BASE_CFLAGS} ${PROFILING_CFLAGS} ${LDFLAGS} ${CPPFLAGS} ${CFLAGS}
+## Unused.
 LINK_CFLAGS = ${BASE_CFLAGS} ${LDFLAGS} ${CFLAGS}
 CPP_CFLAGS = ${BASE_CFLAGS} ${PROFILING_CFLAGS} ${CPPFLAGS} ${CFLAGS}
 
@@ -255,7 +259,7 @@ $(DESTDIR)${archlibdir}: all
 	fi
 
 .PHONY: install uninstall mostlyclean clean distclean maintainer-clean
-.PHONY: extraclean check tags
+.PHONY: bootstrap-clean extraclean check tags
 
 install: $(DESTDIR)${archlibdir}
 	@echo
@@ -289,7 +293,7 @@ distclean: clean
 	-rm -f TAGS
 	-rm -f Makefile blessmail
 
-maintainer-clean: distclean
+bootstrap-clean maintainer-clean: distclean
 	true
 
 extraclean: maintainer-clean
@@ -304,7 +308,7 @@ TAGS: etags${EXEEXT}
 	etags *.[ch]
 
 ../lib/libgnu.a: $(config_h)
-	cd ../lib && $(MAKE) $(MFLAGS) libgnu.a
+	$(MAKE) -C ../lib libgnu.a
 
 regex.o: $(srcdir)/../src/regex.c $(srcdir)/../src/regex.h $(config_h)
 	${CC} -c ${CPP_CFLAGS} ${srcdir}/../src/regex.c

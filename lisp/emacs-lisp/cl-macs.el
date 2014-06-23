@@ -1886,13 +1886,13 @@ This is like `cl-flet', but for macros instead of functions.
              cl-declarations body)))
   (if (cdr bindings)
       `(cl-macrolet (,(car bindings)) (cl-macrolet ,(cdr bindings) ,@body))
-    (if (null bindings) (cons 'progn body)
+    (if (null bindings) (macroexp-progn body)
       (let* ((name (caar bindings))
 	     (res (cl--transform-lambda (cdar bindings) name)))
 	(eval (car res))
-	(macroexpand-all (cons 'progn body)
-                         (cons (cons name `(lambda ,@(cdr res)))
-                               macroexpand-all-environment))))))
+	(macroexpand-all (macroexp-progn body)
+			 (cons (cons name `(lambda ,@(cdr res)))
+			       macroexpand-all-environment))))))
 
 (defconst cl--old-macroexpand
   (if (and (boundp 'cl--old-macroexpand)

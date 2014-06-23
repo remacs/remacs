@@ -25,22 +25,6 @@ AC_PREREQ(2.65)
 dnl Note this is parsed by (at least) make-dist and lisp/cedet/ede/emacs.el.
 AC_INIT(GNU Emacs, 24.4.50, bug-gnu-emacs@gnu.org)
 
-dnl We get MINGW64 with MSYS2
-if test "x$MSYSTEM" = "xMINGW32" -o "x$MSYSTEM" = "xMINGW64"
-then
-  . $srcdir/nt/mingw-cfg.site
-
-  case $srcdir in
-    /* | ?:*)
-      # srcdir is an absolute path.  In this case, force the format
-      # "/c/foo/bar", to simplify later conversions to native Windows
-      # format ("c:/foo/bar")
-      srcdir=`cd "${srcdir}" && pwd -W`
-      srcdir="/${srcdir:0:1}${srcdir:2}"
-      ;;
-  esac
-fi
-
 dnl Set emacs_config_options to the options of 'configure', quoted for the shell,
 dnl and then quoted again for a C string.  Separate options with spaces.
 dnl Add some environment variables, if they were passed via the environment
@@ -92,7 +76,7 @@ AC_CHECK_PROGS(XCRUN, [xcrun])
 if test -n "$XCRUN"; then
   if test -z "$MAKE"; then
     dnl Call the variable MAKE_PROG, not MAKE, to avoid confusion with
-    dnl SET_MAKE and with the usual MAKE variable that 'make' itself uses.
+    dnl the usual MAKE variable that 'make' itself uses.
     AC_CHECK_PROG([MAKE_PROG], [make], [yes])
     if test -z "$MAKE_PROG"; then
       MAKE="$XCRUN MAKE"
@@ -102,8 +86,74 @@ if test -n "$XCRUN"; then
   fi
 fi
 
+dnl GNU Make is required, so don't test for its individual features.
+am_cv_make_support_nested_variables=yes
+AC_DEFUN([AC_PROG_MAKE_SET],
+  [SET_MAKE=
+   AC_SUBST([SET_MAKE])])
+
+dnl Check for GNU Make and possibly set MAKE before running AM_INIT_AUTOMAKE.
+[emacs_check_gnu_make ()
+{
+  emacs_makeout=`($1 --version) 2>/dev/null` &&
+  case $emacs_makeout in
+    'GNU Make '3.8[1-9]* | 'GNU Make '3.9[0-9]* | \
+    'GNU Make '3.[1-9][0-9][0-9]* | 'GNU Make '[4-9]* | 'GNU Make '[1-9][0-9]* )
+       ac_path_MAKE_found=:;;
+  esac
+}]
+AC_CACHE_CHECK([for GNU Make], [ac_cv_path_MAKE],
+  [ac_path_MAKE_found=false
+   if test -n "$MAKE"; then
+     emacs_check_gnu_make "$MAKE"
+     ac_cv_path_MAKE=$MAKE
+   else
+     emacs_tried_make=false
+     emacs_tried_gmake=false
+     emacs_tried_gnumake=false
+     AC_PATH_PROGS_FEATURE_CHECK([MAKE], [make gmake gnumake],
+       [[emacs_check_gnu_make "$ac_path_MAKE"
+	 if $ac_path_MAKE_found; then
+	   # Use the fully-qualified program name only if the basename
+	   # would not resolve to it.
+	   if eval \$emacs_tried_$ac_prog; then
+	     ac_cv_path_MAKE=$ac_path_MAKE
+	   else
+	     ac_cv_path_MAKE=$ac_prog
+	   fi
+	 fi
+	 eval emacs_tried_$ac_prog=:]])
+   fi])
+$ac_path_MAKE_found || {
+AC_MSG_ERROR([[Building Emacs requires GNU Make, at least version 3.81.
+If you have it installed under another name, configure with 'MAKE=...'.
+For example, run '$0 MAKE=gnu-make'.]])
+}
+MAKE=$ac_cv_path_MAKE
+
 dnl Fairly arbitrary, older versions might work too.
 AM_INIT_AUTOMAKE(1.11)
+
+dnl Canonicalize the configuration name.
+AC_CANONICAL_HOST
+canonical=$host
+configuration=${host_alias-${build_alias-$host}}
+
+dnl We get MINGW64 with MSYS2.
+case $canonical in
+ *-mingw*)
+  . $srcdir/nt/mingw-cfg.site
+
+  case $srcdir in
+    /* | ?:*)
+      # srcdir is an absolute path.  In this case, force the format
+      # "/c/foo/bar", to simplify later conversions to native Windows
+      # format ("c:/foo/bar").
+      srcdir=`cd "${srcdir}" && pwd -W`
+      srcdir="/${srcdir:0:1}${srcdir:2}"
+      ;;
+  esac;;
+esac
 
 dnl Support for --program-prefix, --program-suffix and
 dnl --program-transform-name options
@@ -246,6 +296,7 @@ fi
 
 dnl _ON results in a '--without' option in the --help output, so
 dnl the help text should refer to "don't compile", etc.
+with_xpm_set=${with_xpm+set}
 OPTION_DEFAULT_ON([xpm],[don't compile with XPM image support])
 OPTION_DEFAULT_ON([jpeg],[don't compile with JPEG image support])
 OPTION_DEFAULT_ON([tiff],[don't compile with TIFF image support])
@@ -448,12 +499,6 @@ AC_ARG_ENABLE(gtk-deprecation-warnings,
 [AS_HELP_STRING([--enable-gtk-deprecation-warnings],
 		[Show Gtk+/Gdk deprecation warnings for Gtk+ >= 3.0])],
 [ac_enable_gtk_deprecation_warnings="${enableval}"],[])
-
-### Canonicalize the configuration name.
-
-AC_CANONICAL_HOST
-canonical=$host
-configuration=${host_alias-${build_alias-$host}}
 
 dnl This used to use changequote, but, apart from `changequote is evil'
 dnl per the autoconf manual, we can speed up autoconf somewhat by quoting
@@ -661,18 +706,6 @@ Check `etc/MACHINES' for recognized configuration names.])
 fi
 
 
-AC_MSG_CHECKING([whether we are using GNU Make])
-testval=`${MAKE-make} --version 2>/dev/null | grep 'GNU Make'`
-if test "x$testval" != x; then
-  AC_MSG_RESULT([yes])
-else
-  AC_MSG_RESULT([no])
-  AC_MSG_ERROR([Building Emacs requires GNU make.
-If you have it installed under another name, configure with 'MAKE=...'.
-For example, run './configure MAKE=gmake'.])
-fi
-
-
 #### Choose a compiler.
 
 dnl Don't bother to test for C89.
@@ -851,6 +884,7 @@ else
   for w in $ws; do
     gl_WARN_ADD([$w])
   done
+  gl_WARN_ADD([-Wredundant-decls])     # Prefer this, as we don't use Bison.
   gl_WARN_ADD([-Wno-missing-field-initializers]) # We need this one
   gl_WARN_ADD([-Wno-sign-compare])     # Too many warnings for now
   gl_WARN_ADD([-Wno-type-limits])      # Too many warnings for now
@@ -899,8 +933,11 @@ edit_cflags="
 AC_ARG_ENABLE(link-time-optimization,
 [AS_HELP_STRING([--enable-link-time-optimization],
                 [build emacs with link-time optimization.
-		 This is supported for gcc since 4.5.0 and clang.
-		 Note that clang support is experimental - see INSTALL])],
+		 This requires GCC 4.5.0 or later, or clang.
+		 (Note that clang support is experimental - see INSTALL.)
+		 It also makes Emacs harder to debug, and when we tried it
+		 with GCC 4.9.0 x86-64 it made Emacs slower, so it's not
+		 recommended for typical use.])],
 if test "${enableval}" != "no"; then
    ac_lto_supported=no
    if test $emacs_cv_clang = yes; then
@@ -938,6 +975,13 @@ if test "${enableval}" != "no"; then
 	 # command, so plugin name is appended to ARFLAGS.
 	 ARFLAGS="cru --plugin $GOLD_PLUGIN"
 	 RANLIB="$RANLIB --plugin $GOLD_PLUGIN"
+      else
+        dnl The following is needed for GCC 4.9.0.  The GCC 4.9.0 release notes
+        dnl suggest that instead of -ffat-lto-objects we should use gcc-ar and
+        dnl gcc-ranlib in place of ar and ranlib, but gcc-ar makes /usr/bin/ar
+        dnl dump core on Fedora 20, so play it safe for now.
+        gl_COMPILER_OPTION_IF([-ffat-lto-objects],
+          [CFLAGS="$CFLAGS -ffat-lto-objects"])
       fi
    fi
 fi)
@@ -1084,12 +1128,6 @@ with the `--without-makeinfo' option to build without the manuals.] )
   fi
 fi
 AC_SUBST(HAVE_MAKEINFO)
-
-dnl Just so that there is only a single place we need to edit.
-INFO_EXT=.info
-INFO_OPTS=--no-split
-AC_SUBST(INFO_EXT)
-AC_SUBST(INFO_OPTS)
 
 if test $opsys = mingw32; then
    DOCMISC_W32=efaq-w32
@@ -1533,7 +1571,6 @@ dnl Check for endianness.
 dnl AC_C_BIGENDIAN is done by gnulib.
 
 dnl check for Make feature
-dnl AC_PROG_MAKE_SET is done by Automake.
 
 DEPFLAGS=
 MKDEPDIR=":"
@@ -2063,8 +2100,19 @@ if test "$ac_cv_header_pthread_h"; then
   OLD_LIBS=$LIBS
   AC_SEARCH_LIBS([$emacs_pthread_function], [pthread],
     [AC_DEFINE([HAVE_PTHREAD], [1],
-       [Define to 1 if you have pthread (-lpthread).])])
-  if test "X$LIBS" != "X$OLD_LIBS"; then
+       [Define to 1 if you have pthread (-lpthread).])
+     # Some systems optimize for single-threaded programs by default, and
+     # need special flags to disable these optimizations. For example, the
+     # definition of 'errno' in <errno.h>.
+     case $opsys in
+       sol*)
+         AC_DEFINE([_REENTRANT], 1,
+   	[Define to 1 if your system requires this in multithreaded code.]);;
+       aix4-2)
+         AC_DEFINE([_THREAD_SAFE], 1,
+   	[Define to 1 if your system requires this in multithreaded code.]);;
+     esac])
+ if test "X$LIBS" != "X$OLD_LIBS"; then
     eval LIB_PTHREAD=\$ac_cv_search_$emacs_pthread_function
   fi
   LIBS=$OLD_LIBS
@@ -2855,14 +2903,17 @@ fi
 
 ### Start of font-backend (under X11) section.
 if test "${HAVE_X11}" = "yes"; then
-   EMACS_CHECK_MODULES([FONTCONFIG], [fontconfig >= 2.2.0],
-     [HAVE_FC=yes], [HAVE_FC=no])
-
-   ## Use -lXft if available, unless `--with-xft=no'.
-   HAVE_XFT=maybe
-    if test "${HAVE_FC}" = "no" || test "x${with_x}" = "xno"; then
+    ## Use -lXft if available, unless `--with-xft=no'.
+    HAVE_XFT=maybe
+    if test "x${with_x}" = "xno"; then
       with_xft="no";
     fi
+
+    if test "$with_xft" != no; then
+      EMACS_CHECK_MODULES([FONTCONFIG], [fontconfig >= 2.2.0])
+      with_xft=$HAVE_FONTCONFIG
+    fi
+
     if test "x${with_xft}" != "xno"; then
 
       EMACS_CHECK_MODULES([XFT], [xft >= 0.13.0], [], [HAVE_XFT=no])
@@ -2996,6 +3047,9 @@ no_return_alloc_pixels
 fi
 
 if test "${HAVE_X11}" = "yes"; then
+  dnl Avoid Xpm on AIX unless requested, as it crashes; see Bug#17598.
+  test "$opsys$with_xpm_set" = aix4-2 && with_xpm=no
+
   if test "${with_xpm}" != "no"; then
     AC_CHECK_HEADER(X11/xpm.h,
       [AC_CHECK_LIB(Xpm, XpmReadFileToPixmap, HAVE_XPM=yes, , -lX11)])
@@ -3018,6 +3072,9 @@ no_return_alloc_pixels
 
   if test "${HAVE_XPM}" = "yes"; then
     AC_DEFINE(HAVE_XPM, 1, [Define to 1 if you have the Xpm library (-lXpm).])
+    LIBXPM=-lXpm
+  elif test "$opsys,$LUCID_LIBW" = aix4-2,-lXaw; then
+    dnl AIX -lXaw needs -lXpm linked too; see Bug#17598 Message#152.
     LIBXPM=-lXpm
   fi
 fi
@@ -4370,7 +4427,7 @@ if test x$GCC = xyes; then
 else
   case $opsys in
     dnl irix: Tested on Irix 6.5.  SCM worked on earlier versions.
-    dragonfly | freebsd | netbsd | openbsd | irix6-5 | sol2* )
+    aix* | dragonfly | freebsd | netbsd | openbsd | irix6-5 | sol2* )
       AC_DEFINE(GC_SETJMP_WORKS, 1)
       ;;
   esac
@@ -4789,6 +4846,12 @@ AH_VERBATIM([FORTIFY_SOUR],
 #endif
 ])
 
+# If user asks to omit features, disable optional features that gnulib
+# might otherwise enable.
+if test "$with_features" = no && test "$enable_acl" != yes; then
+  enable_acl=no
+fi
+
 # Configure gnulib.  Although this does not affect CFLAGS or LIBS permanently.
 # it temporarily reverts them to their pre-pkg-config values,
 # because gnulib needs to work with both src (which uses the
@@ -4873,21 +4936,10 @@ LD_SWITCH_SYSTEM_TEMACS="$LDFLAGS_NOCOMBRELOC $LD_SWITCH_SYSTEM_TEMACS"
 
 AC_SUBST(LD_SWITCH_SYSTEM_TEMACS)
 
-## MinGW-specific compilation switch.
-C_HEAP_SWITCH=
-if test "${opsys}" = "mingw32"; then
-  ## Preload heap size of temacs.exe in MB.
-  case "$canonical" in
-    x86_64-*-*) C_HEAP_SWITCH="-DHEAPSIZE=18" ;;
-    *) C_HEAP_SWITCH="-DHEAPSIZE=10" ;;
-  esac
-fi
-
-AC_SUBST(C_HEAP_SWITCH)
-
 ## Common for all window systems
 if test "$window_system" != "none"; then
   AC_DEFINE(HAVE_WINDOW_SYSTEM, 1, [Define if you have a window system.])
+  AC_DEFINE(POLL_FOR_INPUT, 1, [Define if you poll periodically to detect C-g.])
   WINDOW_SYSTEM_OBJ="fontset.o fringe.o image.o"
 fi
 
@@ -5121,7 +5173,7 @@ if test "${opsys}" = "mingw32"; then
   ${MAKE-make} MAKEFILE_NAME=do-not-make-Makefile epaths-force-w32
 else
   ${MAKE-make} MAKEFILE_NAME=do-not-make-Makefile epaths-force
-fi
+fi || AC_MSG_ERROR(['src/epaths.h' could not be made.])
 ], [GCC="$GCC" CPPFLAGS="$CPPFLAGS" opsys="$opsys"])
 
 dnl NB we have to cheat and use the ac_... version because abs_top_srcdir
@@ -5134,3 +5186,5 @@ fi
 ])
 
 AC_OUTPUT
+
+test "$MAKE" = make || AC_MSG_NOTICE([Now you can run '$MAKE'.])

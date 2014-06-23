@@ -1,3 +1,70 @@
+2014-06-23  Glenn Morris  <rgm@gnu.org>
+
+	* Makefile.in (%.texi): Disable implicit rules.
+	(mkinfodir): Remove.
+	(.dvi.ps): Replace with pattern rule.
+	(${buildinfodir}): New rule.
+	($(buildinfodir)/emacs.info): Use order-only prereq for output dir.
+	Use $<.
+	(emacs.dvi, emacs.pdf, emacs.html, emacs-xtra.dvi, emacs-xtra.pdf):
+	Use $<.
+	(%.ps): New rule.
+
+2014-06-15  Glenn Morris  <rgm@gnu.org>
+
+	* Makefile.in (bootstrap-clean): New.
+
+2014-06-10  Glenn Morris  <rgm@gnu.org>
+
+	* Makefile.in (INFO_EXT): Remove and replace by ".info" throughout.
+	(INFO_OPTS): Set directly rather than with configure.
+
+2014-06-08  Glenn Morris  <rgm@gnu.org>
+
+	* entering.texi (Entering Emacs): Small fix re initial-buffer-choice.
+	* misc.texi (emacsclient Options): Copyedit.
+
+	* buffers.texi (Uniquify): Copyedits.
+	* files.texi (Visiting): Update for uniquify changes.
+
+	* dired.texi (Marks vs Flags):
+	* rmail.texi (Rmail Scrolling): Markup fixes re SPC.
+
+	* help.texi (Help, Misc Help): Copyedits.
+
+	* screen.texi (Menu Bar): Copyedits.
+	* msdog.texi (Windows Keyboard): F10 menus are now a general feature.
+
+	* frames.texi (Frame Commands): Copyedits re M-F10, F11.
+	* cmdargs.texi (Window Size X): Copyedits.
+
+	* ack.texi (Acknowledgments):
+	* emacs.texi (Acknowledgments): Updates.
+
+2014-06-08  Glenn Morris  <rgm@gnu.org>
+
+	* ack.texi (Acknowledgments):
+	* emacs.texi (Acknowledgments): Updates.
+
+	* programs.texi (Prettifying Symbols): Remove node.
+	(Misc for Programs): Mention more briefly here.
+	* emacs.texi (Top): Update menu.
+
+	* package.texi (Package Menu, Package Installation):
+	Mention signed packages.
+	(Package Installation): Mention package-pinned-packages.
+
+2014-06-02  Glenn Morris  <rgm@gnu.org>
+
+	* ack.texi (Acknowledgments): Remove some obsolete items.
+	* misc.texi [iftex]: Update chapter summary.
+	(Emulation): Remove section.
+
+	* macos.texi (Mac / GNUstep Customization): Mention ns custom group.
+	(Customization options specific to Mac OS / GNUstep): Remove section.
+
+	* abbrevs.texi (Expanding Abbrevs): Update re abbrev-expand-function.
+
 2014-05-26  Eli Zaretskii  <eliz@gnu.org>
 
 	* frames.texi (Fonts): Clarify which frames are affected by

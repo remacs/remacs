@@ -222,7 +222,9 @@ discard_tty_input (void)
 void
 stuff_char (char c)
 {
-  if (! FRAME_TERMCAP_P (SELECTED_FRAME ()))
+  if (! (FRAMEP (selected_frame)
+	 && FRAME_LIVE_P (XFRAME (selected_frame))
+	 && FRAME_TERMCAP_P (XFRAME (selected_frame))))
     return;
 
 /* Should perhaps error if in batch mode */
@@ -659,7 +661,29 @@ ignore_sigio (void)
   signal (SIGIO, SIG_IGN);
 #endif
 }
+
+#ifndef MSDOS
+/* Block SIGCHLD.  */
 
+void
+block_child_signal (sigset_t *oldset)
+{
+  sigset_t blocked;
+  sigemptyset (&blocked);
+  sigaddset (&blocked, SIGCHLD);
+  sigaddset (&blocked, SIGINT);
+  pthread_sigmask (SIG_BLOCK, &blocked, oldset);
+}
+
+/* Unblock SIGCHLD.  */
+
+void
+unblock_child_signal (sigset_t const *oldset)
+{
+  pthread_sigmask (SIG_SETMASK, oldset, 0);
+}
+
+#endif	/* !MSDOS */
 
 /* Saving and restoring the process group of Emacs's terminal.  */
 
@@ -1248,7 +1272,7 @@ reset_sys_modes (struct tty_display_info *tty_out)
       int i;
       tty_turn_off_insert (tty_out);
 
-      for (i = curX (tty_out); i < FrameCols (tty_out) - 1; i++)
+      for (i = cursorX (tty_out); i < FrameCols (tty_out) - 1; i++)
         {
           fputc (' ', tty_out->output);
         }

@@ -405,7 +405,7 @@
      `(lambda ()
 	(let ((inhibit-read-only t))
 	  (delete-region ,(copy-marker b t)
-			 ,(copy-marker (point))))))))
+			 ,(point-marker)))))))
 
 (defun mm-inline-audio (handle)
   (message "Not implemented"))

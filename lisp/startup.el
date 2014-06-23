@@ -42,20 +42,21 @@
   "Buffer to show after starting Emacs.
 If the value is nil and `inhibit-startup-screen' is nil, show the
 startup screen.  If the value is a string, switch to a buffer
-visiting the file or directory specified by that string.  If the
-value is a function, switch to the buffer returned by that
-function.  If t, open the `*scratch*' buffer.
+visiting the file or directory that the string specifies.  If the
+value is a function, call it with no arguments and switch to the buffer
+that it returns.  If t, open the `*scratch*' buffer.
 
-A string value also causes emacsclient to open the specified file
-or directory when no target file is specified."
+If you use `emacsclient' with no target file, then it obeys any
+string or function value that this variable has."
   :type '(choice
 	  (const     :tag "Startup screen" nil)
 	  (directory :tag "Directory" :value "~/")
 	  (file      :tag "File" :value "~/.emacs")
-	  (const     :tag "Notes buffer" remember-notes)
+	  ;; Note sure about hard-coding this as an option...
+	  (const     :tag "Remember Mode notes buffer" remember-notes)
 	  (function  :tag "Function")
 	  (const     :tag "Lisp scratch buffer" t))
-  :version "24.4"
+  :version "23.1"
   :group 'initialization)
 
 (defcustom inhibit-startup-screen nil
@@ -303,9 +304,12 @@ keys for use under X.  It is used in a fashion analogous to the
 environment variable TERM.")
 
 (defvar window-setup-hook nil
-  "Normal hook run to initialize window system display.
-Emacs runs this hook after processing the command line arguments and loading
-the user's init file.")
+  "Normal hook run after loading init files and handling the command line.
+This is very similar to `emacs-startup-hook'.  The only difference
+is that this hook runs after frame parameters have been set up in
+response to any settings from your init file.  Unless this matters
+to you, use `emacs-startup-hook' instead.  (The name of this hook
+is due to historical reasons, and does not reflect its purpose very well.)")
 
 (defcustom initial-major-mode 'lisp-interaction-mode
   "Major mode command symbol to use for the initial `*scratch*' buffer."

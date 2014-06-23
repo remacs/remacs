@@ -100,7 +100,7 @@ typedef float EmacsCGFloat;
 /* We override sendEvent: as a means to stop/start the event loop */
 @interface EmacsApp : NSApplication
 {
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_9
+#ifdef NS_IMPL_COCOA
   BOOL shouldKeepRunning;
   BOOL isFirst;
 #endif
@@ -855,7 +855,7 @@ extern void find_and_call_menu_selection (struct frame *f,
 extern Lisp_Object find_and_return_menu_selection (struct frame *f,
                                                    bool keymaps,
                                                    void *client_data);
-extern Lisp_Object ns_popup_dialog (Lisp_Object position, Lisp_Object header,
+extern Lisp_Object ns_popup_dialog (struct frame *, Lisp_Object header,
                                     Lisp_Object contents);
 
 #define NSAPP_DATA2_RUNASSCRIPT 10

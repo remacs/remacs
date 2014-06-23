@@ -1,3 +1,33 @@
+2014-06-21  Glenn Morris  <rgm@gnu.org>
+
+	* unidata/BidiMirroring.txt: Update to 7.0.0 (only comment changes).
+	* unidata/UnicodeData.txt: Update to 7.0.0.
+	* unidata/IVD_Sequences.txt: Update to 2014-05-16 version.
+
+2014-06-21  Stephen Berman  <Stephen.Berman@gmx.net>
+
+	* notes/elpa: Use "git" instead of "bzr" in the name of machine to
+	clone the repository from.
+
+2014-06-13  Glenn Morris  <rgm@gnu.org>
+
+	* unidata/Makefile.in (${DSTDIR}/charprop.el):
+	GNU make automatically passes command-line arguments to sub-makes.
+
+2014-06-02  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Include sources used to create macuvs.h.
+	* unidata/IVD_Sequences.txt: New file.
+	* unidata/Makefile.in (${top_srcdir}/src/macuvs.h): New rule.
+	(all): Build it.
+	(extraclean): Remove it.
+	* unidata/README: Mention BidiMirroring.txt and IVD_Sequences.txt.
+	* unidata/copyright.html: Update to current version from Unicode
+	Consortium.
+	* unidata/uvs.el: Rename from ../mac/uvs.el.
+	(uvs-print-table-ivd): Output a header in the form that
+	unidata-gen.el generates.
+
 2014-05-25  YAMAMOTO Mitsuharu  <mituharu@math.s.chiba-u.ac.jp>
 
 	* mac/uvs.el: New file from Mac port.  Generates src/macuvs.h.

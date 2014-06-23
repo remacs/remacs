@@ -5966,7 +5966,7 @@ live."
 ;; FIXME: By the way, there could be more levels of dedication:
 ;; - `barely' dedicated doesn't prevent reuse of the window, only records that
 ;;   the window hasn't been used for something else yet.
-;; - `softly' dedicated only allows reuse when asked explicitly.
+;; - `soft' (`softly') dedicated only allows reuse when asked explicitly.
 ;; - `strongly' never allows reuse.
 (defvar display-buffer-mark-dedicated nil
   "If non-nil, `display-buffer' marks the windows it creates as dedicated.
@@ -6497,7 +6497,7 @@ that frame."
       ;; resize it to its old height but don't signal an error.
       (when (and (listp quad)
 		 (integerp (nth 3 quad))
-		 (/= (nth 3 quad) (window-total-height window)))
+		 (> (nth 3 quad) (window-total-height window)))
 	(condition-case nil
 	    (window-resize window (- (nth 3 quad) (window-total-height window)))
 	  (error nil)))

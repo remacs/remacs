@@ -108,11 +108,21 @@ typedef struct _RTL_HEAP_PARAMETERS {
    be freed anyway), and we use a new private heap for all new
    allocations.  */
 
-unsigned char dumped_data[DUMPED_HEAP_SIZE];
+/* FIXME: Most of the space reserved for dumped_data[] is only used by
+   the 1st bootstrap-emacs.exe built while bootstrapping.  Once the
+   preloaded Lisp files are byte-compiled, the next loadup uses less
+   than half of the size stated below.  It would be nice to find a way
+   to build only the first bootstrap-emacs.exe with the large size,
+   and reset that to a lower value afterwards.  */
+#ifdef _WIN64
+# define DUMPED_HEAP_SIZE (18*1024*1024)
+#else
+# define DUMPED_HEAP_SIZE (11*1024*1024)
+#endif
 
-/* Info for managing our preload heap, which is essentially a fixed size
-   data area in the executable. */
-/* Info for keeping track of our heap. */
+static unsigned char dumped_data[DUMPED_HEAP_SIZE];
+
+/* Info for keeping track of our dynamic heap used after dumping. */
 unsigned char *data_region_base = NULL;
 unsigned char *data_region_end = NULL;
 static DWORD_PTR committed = 0;
@@ -143,7 +153,9 @@ static DWORD_PTR committed = 0;
                   + committed
 
 */
-#define HEAP_ENTRY_SHIFT 3
+
+/* Info for managing our preload heap, which is essentially a fixed size
+   data area in the executable. */
 #define PAGE_SIZE 0x1000
 #define MaxBlockSize (0x80000 - PAGE_SIZE)
 
@@ -201,7 +213,7 @@ dumped_data_commit (PVOID Base, PVOID *CommitAddress, PSIZE_T CommitSize)
 
 /* Heap creation.  */
 
-/* Under MinGW32, we want to turn on Low Fragmentation Heap for XP.
+/* We want to turn on Low Fragmentation Heap for XP and older systems.
    MinGW32 lacks those definitions.  */
 #ifndef _W64
 typedef enum _HEAP_INFORMATION_CLASS {
@@ -219,9 +231,9 @@ init_heap (void)
       unsigned long enable_lfh = 2;
 
       /* After dumping, use a new private heap.  We explicitly enable
-         the low fragmentation heap here, for the sake of pre Vista
-         versions.  Note: this will harnlessly fail on Vista and
-         later, whyere the low fragmentation heap is enabled by
+         the low fragmentation heap (LFH) here, for the sake of pre
+         Vista versions.  Note: this will harmlessly fail on Vista and
+         later, where the low-fragmentation heap is enabled by
          default.  It will also fail on pre-Vista versions when Emacs
          is run under a debugger; set _NO_DEBUG_HEAP=1 in the
          environment before starting GDB to get low fragmentation heap
@@ -234,8 +246,7 @@ init_heap (void)
       heap = HeapCreate(0, 0, 0);
 
 #ifndef _W64
-      /* Set the low-fragmentation heap for OS before XP and Windows
-	 Server 2003.  */
+      /* Set the low-fragmentation heap for OS before Vista.  */
       HMODULE hm_kernel32dll = LoadLibrary("kernel32.dll");
       HeapSetInformation_Proc s_pfn_Heap_Set_Information = (HeapSetInformation_Proc) GetProcAddress(hm_kernel32dll, "HeapSetInformation");
       if (s_pfn_Heap_Set_Information != NULL)
@@ -285,7 +296,6 @@ init_heap (void)
 
 #undef malloc
 #undef realloc
-#undef calloc
 #undef free
 
 /* FREEABLE_P checks if the block can be safely freed.  */
@@ -299,9 +309,14 @@ malloc_after_dump (size_t size)
   /* Use the new private heap.  */
   void *p = HeapAlloc (heap, 0, size);
 
-  /* After dump, keep track of the last allocated byte for sbrk(0).  */
+  /* After dump, keep track of the "brk value" for sbrk(0).  */
   if (p)
-    data_region_end = p + size - 1;
+    {
+      unsigned char *new_brk = (unsigned char *)p + size;
+
+      if (new_brk > data_region_end)
+	data_region_end = new_brk;
+    }
   else
     errno = ENOMEM;
   return p;
@@ -391,9 +406,14 @@ realloc_after_dump (void *ptr, size_t size)
       else
 	errno = ENOMEM;
     }
-  /* After dump, keep track of the last allocated byte for sbrk(0).  */
+  /* After dump, keep track of the "brk value" for sbrk(0).  */
   if (p)
-    data_region_end = p + size - 1;
+    {
+      unsigned char *new_brk = (unsigned char *)p + size;
+
+      if (new_brk > data_region_end)
+	data_region_end = new_brk;
+    }
   return p;
 }
 
@@ -417,6 +437,12 @@ realloc_before_dump (void *ptr, size_t size)
          malloc_before_dump() and free_before_dump() will take care of
          reallocation.  */
       p = malloc_before_dump (size);
+      /* If SIZE is below MaxBlockSize, malloc_before_dump will try to
+	 allocate it in the fixed heap.  If that fails, we could have
+	 kept the block in its original place, above bc_limit, instead
+	 of failing the call as below.  But this doesn't seem to be
+	 worth the added complexity, as loadup allocates only a very
+	 small number of large blocks, and never reallocates them.  */
       if (p)
 	{
 	  CopyMemory (p, ptr, size);
@@ -453,7 +479,7 @@ free_before_dump (void *ptr)
       /* Look for the big chunk.  */
       int i;
 
-      for(i = 0; i < blocks_number; i++)
+      for (i = 0; i < blocks_number; i++)
 	{
 	  if (blocks[i].address == ptr)
 	    {
@@ -472,11 +498,23 @@ free_before_dump (void *ptr)
 void
 report_temacs_memory_usage (void)
 {
+  DWORD blocks_used = 0;
+  size_t large_mem_used = 0;
+  int i;
+
+  for (i = 0; i < blocks_number; i++)
+    if (blocks[i].occupied)
+      {
+	blocks_used++;
+	large_mem_used += blocks[i].size;
+      }
+
   /* Emulate 'message', which writes to stderr in non-interactive
      sessions.  */
   fprintf (stderr,
-	   "Dump memory usage: Heap: %" PRIu64 "  Large blocks(%lu): %" PRIu64 "\n",
-	   (unsigned long long)committed, blocks_number,
+	   "Dump memory usage: Heap: %" PRIu64 "  Large blocks(%lu/%lu): %" PRIu64 "/%" PRIu64 "\n",
+	   (unsigned long long)committed, blocks_used, blocks_number,
+	   (unsigned long long)large_mem_used,
 	   (unsigned long long)(dumped_data + DUMPED_HEAP_SIZE - bc_limit));
 }
 #endif
@@ -491,10 +529,11 @@ getpagesize (void)
 void *
 sbrk (ptrdiff_t increment)
 {
-  /* The data_region_end address is the one of the last byte
-     allocated.  The sbrk() function is not emulated at all, except
-     for a 0 value of its parameter.  This is needed by the emacs lisp
-     function `memory-limit'.   */
+  /* data_region_end is the address beyond the last allocated byte.
+     The sbrk() function is not emulated at all, except for a 0 value
+     of its parameter.  This is needed by the Emacs Lisp function
+     `memory-limit'.  */
+  eassert (increment == 0);
   return data_region_end;
 }
 

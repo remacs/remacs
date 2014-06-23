@@ -1,3 +1,153 @@
+2014-06-21  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* configure.ac: Warn about --enable-link-time-optimization's issues
+	in --help message (Bug#17806).
+
+	Port to GCC 4.9.0 with link time optimization (Bug#17806).
+	* configure.ac (CFLAGS): With link time optimization,
+	use -ffat-lto-objects if supported; otherwise Emacs won't
+	build with GCC 4.9.0.
+
+2014-06-20  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Diagnose failures due to colons in directory names (Bug#17278).
+	* Makefile.in (epaths-force): Don't allow ':' in directories whose
+	names go into a colon-separated path.
+	* configure.ac: Fail if submake fails.
+
+2014-06-17  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Omit redundant extern decls.
+	Most of this patch is from Dmitry Antipov, in:
+	http://lists.gnu.org/archive/html/emacs-devel/2014-06/msg00263.html
+	* configure.ac (WERROR_CFLAGS): Add -Wredundant-decls.
+
+	Merge from gnulib, incorporating:
+	2014-06-17 acl: port to gcc -Wredundant-decls
+	2014-06-01 gnulib-common.m4: Fix typo in _GL_UNUSED_LABEL.
+	* lib/acl.h, m4/gnulib-common.m4: Update from gnulib.
+
+2014-06-15  Glenn Morris  <rgm@gnu.org>
+
+	* Makefile.in: Use `make -C' rather than `cd && make' throughout.
+
+	* Makefile.in: Parallelize clean rules using GNU make features.
+	(submake_template): New definition.
+	(mostlyclean_dirs, clean_dirs, distclean_dirs, maintainer_clean_dirs):
+	New variables.
+	(mostlyclean, clean, distclean, bootstrap-clean, maintainer-clean)
+	(extraclean): Define using each subdirectory as a prequisite.
+	* lib/Makefile.am (bootstrap-clean): New.
+
+2014-06-15  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Port part of the AIX fix to Solaris (Bug#17598).
+	* configure.ac (_REENTRANT): Define on Solaris if HAVE_PTHREAD.
+	This ports part of the recent AIX fixes to Solaris.  It is needed
+	for the same reason that _THREAD_SAFE is needed on AIX, e.g., to
+	make sure that each thread has its own 'errno'.
+
+2014-06-13  Glenn Morris  <rgm@gnu.org>
+
+	* Makefile.in (CC, CFLAGS, LDFLAGS, CPPFLAGS, abs_top_srcdir):
+	Remove, no longer used.
+	(lib, lib-src, lisp, nt, src, blessmail, install-arch-dep)
+	(install-nt, install-strip, uninstall, uninstall-nt)
+	(mostlyclean, clean, distclean, bootstrap-clean)
+	(maintainer-clean, extraclean, TAGS, tags, check, $(DOCS)):
+	($(INSTALL_DOC), $(UNINSTALL_DOC), info, bootstrap, check-declare):
+	GNU make automatically passes command-line arguments to sub-makes.
+
+2014-06-11  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Use a shell function in configure.ac to cut down on code duplication.
+	* configure.ac (emacs_check_gnu_make): New shell function.
+	Use it to avoid duplication when checking for GNU Make.
+	It's OK for 'configure' to use shell functions these days,
+	as long as we follow the advice in the 'Shell Functions'
+	section of the Autoconf manual.
+
+2014-06-11  Glenn Morris  <rgm@gnu.org>
+
+	* configure.ac: Require at least version 3.81 of GNU make.
+
+2014-06-10  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Rely on AC_CANONICAL_HOST to detect whether we're using mingw.
+	See the thread containing:
+	http://lists.gnu.org/archive/html/emacs-devel/2014-06/msg00206.html
+	* configure.ac (AC_CANONICAL_HOST): Invoke this as early as we
+	can, which is just after AM_INIT_AUTOMAKE.  Then check for mingw
+	just after that.
+
+2014-06-10  Glenn Morris  <rgm@gnu.org>
+
+	* Makefile.in (AUTOCONF, AUTOMAKE, AUTOHEADER, ACLOCAL):
+	New, set by configure.  Use throughout where appropriate.
+
+	* Makefile.in (INFO_EXT): Remove and replace by ".info" throughout.
+	* configure.ac (INFO_EXT, INFO_OPTS): Remove output variables.
+
+2014-06-08  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Port better to AIX (Bug#17598).
+	* configure.ac (with_xpm_set): New shell var.
+	(_THREAD_SAFE): Define on AIX if HAVE_PTHREAD.
+	(with_xpm): Default to 'no' on AIX.
+	(LIBXPM): Append -lXpm if -lXaw is also used, as the latter
+	requires the former on AIX.
+
+2014-06-05  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Try harder to find GNU Make when configuring.
+	* configure.ac (AC_PROG_MAKE_SET): Define a dummy.
+	(MAKE): Set it to GNU Make, if one can be found.
+	Search PATH for 'make', 'gmake', 'gnumake'.
+	This works better on platforms like AIX, where GNU Make
+	might be in /opt/freeware/bin/make, and reside
+	behind /usr/bin/make in the PATH.
+
+2014-06-05  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	* configure.ac (POLL_FOR_INPUT): Define with HAVE_WINDOW_SYSTEM.
+	* INSTALL: Mention SVG image support.
+
+2014-06-05  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* configure.ac: --without-all now implies --without-xft, --disable-acl.
+	* INSTALL: Remove apparently unmaintained documentation about what
+	--without-all exactly means.
+
+2014-06-03  Eli Zaretskii  <eliz@gnu.org>
+
+	* configure.ac (C_HEAP_SWITCH): Remove.
+
+2014-06-02  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Fix port to 32-bit AIX with xlc (Bug#17598).
+	This doesn't fix Bug#17598, but it does fix a regression since Emacs
+	built with xlc until recently, and perhaps it'll help us fix Bug#17598.
+	* configure.ac (GC_SETJMP_WORKS): Define for AIX, too.
+	Merge from gnulib, incorporating:
+	2014-05-30 ftoastr: work around compiler bug in IBM xlc 12.1
+	* lib/ftoastr.c: Update from gnulib.
+
+2014-06-01  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Merge from gnulib, incorporating:
+	2014-06-02 acl: apply pure attribute to two functions
+	2014-06-01 gnulib-common.m4: add _GL_UNUSED_LABEL
+	2014-05-31 dup2, fcntl, fcntl-h: port to AIX 7.1
+	2014-05-30 ftoastr: work around compiler bug in IBM xlc 12.1
+	* lib/acl-internal.h, lib/fcntl.in.h, lib/ftoastr.h:
+	* m4/dup2.m4, m4/fcntl.m4, m4/gnulib-common.m4:
+	Update from gnulib.
+
+2014-06-01  Juanma Barranquero  <lekktu@gmail.com>
+
+	* configure.ac (C_HEAP_SWITCH): Raise HEAPSIZE value for 32-bit
+	builds on Windows.
+
 2014-05-29  Paul Eggert  <eggert@cs.ucla.edu>
 
 	* configure.ac (pthread_sigmask): Look in LIB_PTHREAD too (Bug#17561).
@@ -23,7 +173,7 @@
 
 2014-05-27  Fabrice Popineau  <fabrice.popineau@gmail.com>
 
-	* configure.ac (C_HEAP_SWITCH) define for different values of
+	* configure.ac (C_HEAP_SWITCH): Define for different values of
 	dumped heap size depending on 32/64bits arch on Windows.
 	Don't check for pthreads.h on MinGW32/64, it gets in the way.
 	Use mmap(2) for buffers and system malloc for MinGW32/64.

@@ -54,7 +54,7 @@ GNUstep port and post-20 update by Adrian Robert (arobert@cogsci.ucsd.edu)
 
 #include "termhooks.h"
 #include "termchar.h"
-
+#include "menu.h"
 #include "window.h"
 #include "keyboard.h"
 #include "buffer.h"
@@ -4164,6 +4164,8 @@ ns_create_terminal (struct ns_display_info *dpyinfo)
   terminal->frame_rehighlight_hook = ns_frame_rehighlight;
   terminal->frame_raise_lower_hook = ns_frame_raise_lower;
   terminal->fullscreen_hook = ns_fullscreen_hook;
+  terminal->menu_show_hook = ns_menu_show;
+  terminal->popup_dialog_hook = ns_popup_dialog;
   terminal->set_vertical_scroll_bar_hook = ns_set_vertical_scroll_bar;
   terminal->condemn_scroll_bars_hook = ns_condemn_scroll_bars;
   terminal->redeem_scroll_bar_hook = ns_redeem_scroll_bar;
@@ -4451,7 +4453,7 @@ ns_term_shutdown (int sig)
 {
   if (self = [super init])
     {
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_9
+#ifdef NS_IMPL_COCOA
       self->isFirst = YES;
 #endif
 #ifdef NS_IMPL_GNUSTEP
@@ -4462,30 +4464,40 @@ ns_term_shutdown (int sig)
   return self;
 }
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_9
+#ifdef NS_IMPL_COCOA
 - (void)run
 {
-    NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+#ifndef NSAppKitVersionNumber10_8
+#define NSAppKitVersionNumber10_8 1187
+#endif
 
-    if (isFirst) [self finishLaunching];
-    isFirst = NO;
+  if (NSAppKitVersionNumber <= NSAppKitVersionNumber10_8) 
+    {
+      [super run];
+      return;
+    }
 
-    shouldKeepRunning = YES;
-    do
-      {
-        [pool release];
-        pool = [[NSAutoreleasePool alloc] init];
+  NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
 
-        NSEvent *event =
-          [self nextEventMatchingMask:NSAnyEventMask
-                            untilDate:[NSDate distantFuture]
-                               inMode:NSDefaultRunLoopMode
-                              dequeue:YES];
-        [self sendEvent:event];
-        [self updateWindows];
+  if (isFirst) [self finishLaunching];
+  isFirst = NO;
+
+  shouldKeepRunning = YES;
+  do
+    {
+      [pool release];
+      pool = [[NSAutoreleasePool alloc] init];
+
+      NSEvent *event =
+        [self nextEventMatchingMask:NSAnyEventMask
+                          untilDate:[NSDate distantFuture]
+                             inMode:NSDefaultRunLoopMode
+                            dequeue:YES];
+      [self sendEvent:event];
+      [self updateWindows];
     } while (shouldKeepRunning);
-
-    [pool release];
+  
+  [pool release];
 }
 
 - (void)stop: (id)sender
@@ -4495,7 +4507,7 @@ ns_term_shutdown (int sig)
     // The file dialog still leaks 7k - 10k on 10.9 though.
     [super stop:sender];
 }
-#endif
+#endif /* NS_IMPL_COCOA */
 
 - (void)logNotification: (NSNotification *)notification
 {

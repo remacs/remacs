@@ -105,30 +105,6 @@ enum
 
 static Lisp_Object call_process (ptrdiff_t, Lisp_Object *, int, ptrdiff_t);
 
-
-#ifndef MSDOS
-/* Block SIGCHLD.  */
-
-void
-block_child_signal (sigset_t *oldset)
-{
-  sigset_t blocked;
-  sigemptyset (&blocked);
-  sigaddset (&blocked, SIGCHLD);
-  sigaddset (&blocked, SIGINT);
-  pthread_sigmask (SIG_BLOCK, &blocked, oldset);
-}
-
-/* Unblock SIGCHLD.  */
-
-void
-unblock_child_signal (sigset_t const *oldset)
-{
-  pthread_sigmask (SIG_SETMASK, oldset, 0);
-}
-
-#endif	/* !MSDOS */
-
 /* Return the current buffer's working directory, or the home
    directory if it's unreachable, as a string suitable for a system call.
    Signal an error if the result would not be an accessible directory.  */
@@ -829,8 +805,10 @@ call_process (ptrdiff_t nargs, Lisp_Object *args, int filefd,
 	  /* Now NREAD is the total amount of data in the buffer.  */
 	  immediate_quit = 0;
 
-	  if (NILP (BVAR (current_buffer, enable_multibyte_characters))
-	      && ! CODING_MAY_REQUIRE_DECODING (&process_coding))
+	  if (!nread)
+	    ;
+	  else if (NILP (BVAR (current_buffer, enable_multibyte_characters))
+		   && ! CODING_MAY_REQUIRE_DECODING (&process_coding))
 	    insert_1_both (buf, nread, nread, 0, 1, 0);
 	  else
 	    {			/* We have to decode the input.  */
@@ -838,6 +816,7 @@ call_process (ptrdiff_t nargs, Lisp_Object *args, int filefd,
 	      ptrdiff_t count1 = SPECPDL_INDEX ();
 
 	      XSETBUFFER (curbuf, current_buffer);
+	      /* FIXME: Call signal_after_change!  */
 	      prepare_to_modify_buffer (PT, PT, NULL);
 	      /* We cannot allow after-change-functions be run
 		 during decoding, because that might modify the

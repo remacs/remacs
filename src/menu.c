@@ -66,9 +66,6 @@ Lisp_Object menu_items;
 
 /* If non-nil, means that the global vars defined here are already in use.
    Used to detect cases where we try to re-enter this non-reentrant code.  */
-#if ! (defined USE_GTK || defined USE_MOTIF)
-static
-#endif
 Lisp_Object menu_items_inuse;
 
 /* Number of slots currently allocated in menu_items.  */
@@ -576,21 +573,26 @@ parse_single_submenu (Lisp_Object item_key, Lisp_Object item_name,
 
 #if defined (USE_X_TOOLKIT) || defined (USE_GTK) || defined (HAVE_NS) || defined (HAVE_NTGUI)
 
-/* Allocate a widget_value, blocking input.  */
+/* Allocate and basically initialize widget_value, blocking input.  */
 
 widget_value *
-xmalloc_widget_value (void)
+make_widget_value (const char *name, char *value,
+		   bool enabled, Lisp_Object help)
 {
-  widget_value *value;
+  widget_value *wv;
 
   block_input ();
-  value = malloc_widget_value ();
+  wv = xzalloc (sizeof (widget_value));
   unblock_input ();
 
-  return value;
+  wv->name = (char *) name;
+  wv->value = value;
+  wv->enabled = enabled;
+  wv->help = help;
+  return wv;
 }
 
-/* This recursively calls free_widget_value on the tree of widgets.
+/* This recursively calls xfree on the tree of widgets.
    It must free all data that was malloc'ed for these widget_values.
    In Emacs, many slots are pointers into the data of Lisp_Strings, and
    must be left alone.  */
@@ -613,7 +615,7 @@ free_menubar_widget_value_tree (widget_value *wv)
       wv->next = (widget_value *) 0xDEADBEEF;
     }
   block_input ();
-  free_widget_value (wv);
+  xfree (wv);
   unblock_input ();
 }
 
@@ -632,12 +634,8 @@ digest_single_submenu (int start, int end, bool top_level_items)
   struct frame *f = XFRAME (Vmenu_updating_frame);
 
   submenu_stack = alloca (menu_items_used * sizeof *submenu_stack);
-  wv = xmalloc_widget_value ();
-  wv->name = "menu";
-  wv->value = 0;
-  wv->enabled = 1;
+  wv = make_widget_value ("menu", NULL, true, Qnil);
   wv->button_type = BUTTON_TYPE_NONE;
-  wv->help = Qnil;
   first_wv = wv;
   save_wv = 0;
   prev_wv = 0;
@@ -721,17 +719,14 @@ digest_single_submenu (int start, int end, bool top_level_items)
 	     with its items as a submenu beneath it.  */
 	  if (strcmp (pane_string, ""))
 	    {
-	      wv = xmalloc_widget_value ();
+	      /* Set value to 1 so update_submenu_strings can handle '@'.  */
+	      wv = make_widget_value (NULL, (char *) 1, true, Qnil);
 	      if (save_wv)
 		save_wv->next = wv;
 	      else
 		first_wv->contents = wv;
 	      wv->lname = pane_name;
-              /* Set value to 1 so update_submenu_strings can handle '@'  */
-	      wv->value = (char *)1;
-	      wv->enabled = 1;
 	      wv->button_type = BUTTON_TYPE_NONE;
-	      wv->help = Qnil;
 	      save_wv = wv;
 	    }
 	  else
@@ -805,7 +800,8 @@ digest_single_submenu (int start, int end, bool top_level_items)
 #endif
 	    }
 
-	  wv = xmalloc_widget_value ();
+	  wv = make_widget_value (NULL, NULL, !NILP (enable),
+				  STRINGP (help) ? help : Qnil);
 	  if (prev_wv)
 	    prev_wv->next = wv;
 	  else
@@ -814,11 +810,9 @@ digest_single_submenu (int start, int end, bool top_level_items)
 	  wv->lname = item_name;
 	  if (!NILP (descrip))
 	    wv->lkey = descrip;
-	  wv->value = 0;
 	  /* The intptr_t cast avoids a warning.  There's no problem
 	     as long as pointers have enough bits to hold small integers.  */
 	  wv->call_data = (!NILP (def) ? (void *) (intptr_t) i : 0);
-	  wv->enabled = !NILP (enable);
 
 	  if (NILP (type))
 	    wv->button_type = BUTTON_TYPE_NONE;
@@ -830,10 +824,6 @@ digest_single_submenu (int start, int end, bool top_level_items)
 	    emacs_abort ();
 
 	  wv->selected = !NILP (selected);
-	  if (! STRINGP (help))
-	    help = Qnil;
-
-	  wv->help = help;
 
 	  prev_wv = wv;
 
@@ -846,7 +836,7 @@ digest_single_submenu (int start, int end, bool top_level_items)
   if (top_level_items && first_wv->contents && first_wv->contents->next == 0)
     {
       wv = first_wv->contents;
-      free_widget_value (first_wv);
+      xfree (first_wv);
       return wv;
     }
 
@@ -1168,9 +1158,7 @@ no quit occurs and `x-popup-menu' returns nil.  */)
   Lisp_Object selection = Qnil;
   struct frame *f = NULL;
   Lisp_Object x, y, window;
-  bool keymaps = 0;
-  bool for_click = 0;
-  bool kbd_menu_navigation = 0;
+  int menuflags = 0;
   ptrdiff_t specpdl_count = SPECPDL_INDEX ();
   struct gcpro gcpro1;
 
@@ -1200,12 +1188,12 @@ no quit occurs and `x-popup-menu' returns nil.  */)
 	  }
 	else
 	  {
-	    for_click = 1;
+	    menuflags |= MENU_FOR_CLICK;
 	    tem = Fcar (Fcdr (position));  /* EVENT_START (position) */
 	    window = Fcar (tem);	     /* POSN_WINDOW (tem) */
 	    tem2 = Fcar (Fcdr (tem));	     /* POSN_POSN (tem) */
-	    /* The kbd_menu_navigation flag is set when the menu was
-	       invoked by F10, which probably means they have no
+	    /* The MENU_KBD_NAVIGATION field is set when the menu
+	       was invoked by F10, which probably means they have no
 	       mouse.  In that case, we let them switch between
 	       top-level menu-bar menus by using C-f/C-b and
 	       horizontal arrow keys, since they cannot click the
@@ -1218,7 +1206,7 @@ no quit occurs and `x-popup-menu' returns nil.  */)
 	    if (!EQ (POSN_POSN (last_nonmenu_event),
 		     POSN_POSN (position))
 		&& CONSP (tem2) && EQ (Fcar (tem2), Qmenu_bar))
-	      kbd_menu_navigation = 1;
+	      menuflags |= MENU_KBD_NAVIGATION;
 	    tem = Fcar (Fcdr (Fcdr (tem))); /* POSN_WINDOW_POSN (tem) */
 	    x = Fcar (tem);
 	    y = Fcdr (tem);
@@ -1245,7 +1233,7 @@ no quit occurs and `x-popup-menu' returns nil.  */)
 	  {
 	    int cur_x, cur_y;
 
-	    mouse_position_for_popup (new_f, &cur_x, &cur_y);
+	    x_relative_mouse_position (new_f, &cur_x, &cur_y);
 	    /* cur_x/y may be negative, so use make_number.  */
 	    x = make_number (cur_x);
 	    y = make_number (cur_y);
@@ -1347,7 +1335,7 @@ no quit occurs and `x-popup-menu' returns nil.  */)
       if (!NILP (prompt) && menu_items_n_panes >= 0)
 	ASET (menu_items, MENU_ITEMS_PANE_NAME, prompt);
 
-      keymaps = 1;
+      menuflags |= MENU_KEYMAPS;
     }
   else if (CONSP (menu) && KEYMAPP (XCAR (menu)))
     {
@@ -1380,7 +1368,7 @@ no quit occurs and `x-popup-menu' returns nil.  */)
       if (!NILP (title) && menu_items_n_panes >= 0)
 	ASET (menu_items, MENU_ITEMS_PANE_NAME, title);
 
-      keymaps = 1;
+      menuflags |= MENU_KEYMAPS;
 
       SAFE_FREE ();
     }
@@ -1392,7 +1380,7 @@ no quit occurs and `x-popup-menu' returns nil.  */)
 
       list_of_panes (Fcdr (menu));
 
-      keymaps = 0;
+      menuflags &= ~MENU_KEYMAPS;
     }
 
   unbind_to (specpdl_count, Qnil);
@@ -1422,40 +1410,12 @@ no quit occurs and `x-popup-menu' returns nil.  */)
   record_unwind_protect_void (discard_menu_items);
 #endif
 
-  /* Display them in a menu.  */
-
-  /* FIXME: Use a terminal hook!  */
-#if defined HAVE_NTGUI
-  if (FRAME_W32_P (f))
-    selection = w32_menu_show (f, xpos, ypos, for_click,
-			       keymaps, title, &error_name);
-  else
-#endif
-#if defined HAVE_NS
-  if (FRAME_NS_P (f))
-    selection = ns_menu_show (f, xpos, ypos, for_click,
-			      keymaps, title, &error_name);
-  else
-#endif
-#if (defined (HAVE_X_WINDOWS) || defined (MSDOS))
-  if (FRAME_X_P (f) || FRAME_MSDOS_P (f))
-    selection = xmenu_show (f, xpos, ypos, for_click,
-			    keymaps, title, &error_name);
-  else
-#endif
-#ifndef MSDOS
-  if (FRAME_TERMCAP_P (f))
-    {
-      ptrdiff_t count1 = SPECPDL_INDEX ();
-
-      /* Avoid crashes if, e.g., another client will connect while we
-	 are in a menu.  */
-      temporarily_switch_to_single_kboard (f);
-      selection = tty_menu_show (f, xpos, ypos, for_click, keymaps, title,
-				 kbd_menu_navigation, &error_name);
-      unbind_to (count1, Qnil);
-    }
-#endif
+  /* Display them in a menu, but not if F is the initial frame that
+     doesn't have its hooks set (e.g., in a batch session), because
+     such a frame cannot display menus.  */
+  if (!FRAME_INITIAL_P (f))
+    selection = FRAME_TERMINAL (f)->menu_show_hook (f, xpos, ypos, menuflags,
+						    title, &error_name);
 
 #ifdef HAVE_NS
   unbind_to (specpdl_count, Qnil);
@@ -1472,6 +1432,38 @@ no quit occurs and `x-popup-menu' returns nil.  */)
 
   if (error_name) error ("%s", error_name);
   return selection;
+}
+
+/* If F's terminal is not capable of displaying a popup dialog,
+   emulate it with a menu.  */
+
+static Lisp_Object
+emulate_dialog_with_menu (struct frame *f, Lisp_Object contents)
+{
+  Lisp_Object x, y, frame, newpos, prompt = Fcar (contents);
+  int x_coord, y_coord;
+
+  if (FRAME_WINDOW_P (f))
+    {
+      x_coord = FRAME_PIXEL_WIDTH (f);
+      y_coord = FRAME_PIXEL_HEIGHT (f);
+    }
+  else
+    {
+      x_coord = FRAME_COLS (f);
+      /* Center the title at frame middle.  (TTY menus have
+	 their upper-left corner at the given position.)  */
+      if (STRINGP (prompt))
+	x_coord -= SCHARS (prompt);
+      y_coord = FRAME_LINES (f);
+    }
+
+  XSETFRAME (frame, f);
+  XSETINT (x, x_coord / 2);
+  XSETINT (y, y_coord / 2);
+  newpos = list2 (list2 (x, y), frame);
+
+  return Fx_popup_menu (newpos, list2 (prompt, contents));
 }
 
 DEFUN ("x-popup-dialog", Fx_popup_dialog, Sx_popup_dialog, 2, 3, 0,
@@ -1506,24 +1498,7 @@ for instance using the window manager, then this produces a quit and
   if (EQ (position, Qt)
       || (CONSP (position) && (EQ (XCAR (position), Qmenu_bar)
 			       || EQ (XCAR (position), Qtool_bar))))
-    {
-#if 0 /* Using the frame the mouse is on may not be right.  */
-      /* Use the mouse's current position.  */
-      struct frame *new_f = SELECTED_FRAME ();
-      Lisp_Object bar_window;
-      enum scroll_bar_part part;
-      Time time;
-      Lisp_Object x, y;
-
-      (*mouse_position_hook) (&new_f, 1, &bar_window, &part, &x, &y, &time);
-
-      if (new_f != 0)
-	XSETFRAME (window, new_f);
-      else
-	window = selected_window;
-#endif
-      window = selected_window;
-    }
+    window = selected_window;
   else if (CONSP (position))
     {
       Lisp_Object tem = XCAR (position);
@@ -1565,51 +1540,21 @@ for instance using the window manager, then this produces a quit and
      string contents, because Fredisplay may GC and relocate them.  */
   Fredisplay (Qt);
 
-#if defined USE_X_TOOLKIT || defined USE_GTK
-  if (FRAME_WINDOW_P (f))
-    return xw_popup_dialog (f, header, contents);
-#endif
-#ifdef HAVE_NTGUI
-  if (FRAME_W32_P (f))
+  /* Display the popup dialog by a terminal-specific hook ... */
+  if (FRAME_TERMINAL (f)->popup_dialog_hook)
     {
-      Lisp_Object selection = w32_popup_dialog (f, header, contents);
-
+      Lisp_Object selection
+	= FRAME_TERMINAL (f)->popup_dialog_hook (f, header, contents);
+#ifdef HAVE_NTGUI
+      /* NTGUI supports only simple dialogs with Yes/No choices.  For
+	 other dialogs, it returns the symbol 'unsupported--w32-dialog',
+	 as a signal for the caller to fall back to the emulation code.  */
       if (!EQ (selection, Qunsupported__w32_dialog))
+#endif
 	return selection;
     }
-#endif
-#ifdef HAVE_NS
-  if (FRAME_NS_P (f))
-    return ns_popup_dialog (position, header, contents);
-#endif
-  /* Display a menu with these alternatives
-     in the middle of frame F.  */
-  {
-    Lisp_Object x, y, frame, newpos, prompt;
-    int x_coord, y_coord;
-
-    prompt = Fcar (contents);
-    if (FRAME_WINDOW_P (f))
-      {
-	x_coord = FRAME_PIXEL_WIDTH (f);
-	y_coord = FRAME_PIXEL_HEIGHT (f);
-      }
-    else
-      {
-	x_coord = FRAME_COLS (f);
-	/* Center the title at frame middle.  (TTY menus have their
-	   upper-left corner at the given position.)  */
-	if (STRINGP (prompt))
-	  x_coord -= SCHARS (prompt);
-	y_coord = FRAME_LINES (f);
-      }
-    XSETFRAME (frame, f);
-    XSETINT (x, x_coord / 2);
-    XSETINT (y, y_coord / 2);
-    newpos = list2 (list2 (x, y), frame);
-
-    return Fx_popup_menu (newpos, list2 (prompt, contents));
-  }
+  /* ... or emulate it with a menu.  */
+  return emulate_dialog_with_menu (f, contents);
 }
 
 void

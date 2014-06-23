@@ -1,18 +1,17 @@
 @c This is part of the Emacs manual.
-@c Copyright (C) 1985-1987, 1993-1995, 1997, 2000-2014 Free Software
-@c Foundation, Inc.
+@c Copyright (C) 1985-1987, 1993-1995, 1997, 2000-2014
+@c   Free Software Foundation, Inc.
 @c See file emacs.texi for copying conditions.
 @iftex
 @chapter Miscellaneous Commands
 
   This chapter contains several brief topics that do not fit anywhere
-else: viewing ``document files'', reading Usenet news, running shell
-commands and shell subprocesses, using a single shared Emacs for
-utilities that expect to run an editor as a subprocess, printing
-hardcopy, sorting text, narrowing display to part of the buffer,
-editing binary files, saving an Emacs session for later resumption,
-following hyperlinks, browsing images, emulating other editors, and
-various diversions and amusements.
+else: reading Usenet news, viewing PDFs and other such documents, web
+browsing, running shell commands and shell subprocesses, using a
+single shared Emacs for utilities that expect to run an editor as a
+subprocess, printing, sorting text, editing binary files, saving an
+Emacs session for later resumption, recursive editing level, following
+hyperlinks, and various diversions and amusements.
 
 @end iftex
 
@@ -1561,9 +1560,9 @@ option, like the @samp{-t} option, creates a new frame in the server's
 current text terminal.  @xref{Windows Startup}.
 
 If you omit a filename argument while supplying the @samp{-c} option,
-the new frame displays the @file{*scratch*} buffer by default.  This
-behavior can be customized using the variable
-@code{initial-buffer-choice} (@pxref{Entering Emacs}).
+the new frame displays the @file{*scratch*} buffer by default.  You
+can customize this behavior with the variable @code{initial-buffer-choice}
+(@pxref{Entering Emacs}).
 
 @item -F @var{alist}
 @itemx --frame-parameters=@var{alist}
@@ -2269,17 +2268,17 @@ new major mode which provides a command to switch back.  These
 approaches give you more flexibility to go back to unfinished tasks in
 the order you choose.
 
+@ignore
+@c Apart from edt and viper, this is all obsolete.
+@c (Can't believe we were saying ``most other editors'' into 2014!)
+@c There seems no point having a node just for those, which both have
+@c their own manuals.
 @node Emulation
 @section Emulation
 @cindex emulating other editors
 @cindex other editors
 @cindex EDT
 @cindex vi
-@cindex PC key bindings
-@cindex scrolling all windows
-@cindex PC selection
-@cindex Motif key bindings
-@cindex Macintosh key bindings
 @cindex WordStar
 
   GNU Emacs can be programmed to emulate (more or less) most other
@@ -2319,7 +2318,7 @@ buffers or major modes while in EDT emulation.
 
 @item vi (Berkeley editor)
 @findex viper-mode
-Viper is the newest emulator for vi.  It implements several levels of
+Viper is an emulator for vi.  It implements several levels of
 emulation; level 1 is closest to vi itself, while level 5 departs
 somewhat from strict emulation to take advantage of the capabilities of
 Emacs.  To invoke Viper, type @kbd{M-x viper-mode}; it will guide you
@@ -2360,6 +2359,8 @@ not use it.
 @kbd{M-x wordstar-mode} provides a major mode with WordStar-like
 key bindings.
 @end table
+@end ignore
+
 
 @node Hyperlinking
 @section Hyperlinking and Navigation Features

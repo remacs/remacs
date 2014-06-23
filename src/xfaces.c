@@ -1248,9 +1248,6 @@ load_color2 (struct frame *f, struct face *face, Lisp_Object name,
    record that fact in flags of the face so that we don't try to free
    these colors.  */
 
-#ifndef MSDOS
-static
-#endif
 unsigned long
 load_color (struct frame *f, struct face *face, Lisp_Object name,
 	    enum lface_attribute_index target_index)
@@ -4101,15 +4098,15 @@ free_realized_face (struct frame *f, struct face *face)
     }
 }
 
+#ifdef HAVE_WINDOW_SYSTEM
 
-/* Prepare face FACE for subsequent display on frame F.  This
-   allocated GCs if they haven't been allocated yet or have been freed
-   by clearing the face cache.  */
+/* Prepare face FACE for subsequent display on frame F.  This must be called
+   before using X resources of FACE to allocate GCs if they haven't been
+   allocated yet or have been freed by clearing the face cache.  */
 
 void
 prepare_face_for_display (struct frame *f, struct face *face)
 {
-#ifdef HAVE_WINDOW_SYSTEM
   eassert (FRAME_WINDOW_P (f));
 
   if (face->gc == 0)
@@ -4137,10 +4134,10 @@ prepare_face_for_display (struct frame *f, struct face *face)
 	font_prepare_for_face (f, face);
       unblock_input ();
     }
-#endif /* HAVE_WINDOW_SYSTEM */
 }
 
-
+#endif /* HAVE_WINDOW_SYSTEM */
+
 /* Returns the `distance' between the colors X and Y.  */
 
 static int
@@ -5486,7 +5483,6 @@ realize_non_ascii_face (struct frame *f, Lisp_Object font_object,
   face = xmalloc (sizeof *face);
   *face = *base_face;
   face->gc = 0;
-  face->extra = NULL;
   face->overstrike
     = (! NILP (font_object)
        && FONT_WEIGHT_NAME_NUMERIC (face->lface[LFACE_WEIGHT_INDEX]) > 100

@@ -322,16 +322,6 @@ xftfont_open (struct frame *f, Lisp_Object entity, int pixel_size)
 
 
   block_input ();
-  /* Make sure that the Xrender extension is added before the Xft one.
-     Otherwise, the close-display hook set by Xft is called after the
-     one for Xrender, and the former tries to re-add the latter.  This
-     results in inconsistency of internal states and leads to X
-     protocol error when one reconnects to the same X server.
-     (Bug#1696)  */
-  {
-    int event_base, error_base;
-    XRenderQueryExtension (display, &event_base, &error_base);
-  }
 
   /* Substitute in values from X resources and XftDefaultSet.  */
   XftDefaultSubstitute (display, FRAME_X_SCREEN_NUMBER (f), pat);
@@ -507,7 +497,7 @@ xftfont_close (struct font *font)
     }
 }
 
-static int
+static void
 xftfont_prepare_face (struct frame *f, struct face *face)
 {
   struct xftface_info *xftface_info;
@@ -517,17 +507,14 @@ xftfont_prepare_face (struct frame *f, struct face *face)
   if (face != face->ascii_face)
     {
       face->extra = face->ascii_face->extra;
-      return 0;
+      return;
     }
 #endif
 
-  xftface_info = malloc (sizeof *xftface_info);
-  if (! xftface_info)
-    return -1;
+  xftface_info = xmalloc (sizeof *xftface_info);
   xftfont_get_colors (f, face, face->gc, NULL,
 		      &xftface_info->xft_fg, &xftface_info->xft_bg);
   face->extra = xftface_info;
-  return 0;
 }
 
 static void
@@ -545,7 +532,7 @@ xftfont_done_face (struct frame *f, struct face *face)
   xftface_info = (struct xftface_info *) face->extra;
   if (xftface_info)
     {
-      free (xftface_info);
+      xfree (xftface_info);
       face->extra = NULL;
     }
 }

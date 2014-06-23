@@ -224,8 +224,9 @@ static EMACS_INT update_tick;
 /* Only W32 has this, it really means that select can't take write mask.  */
 #ifdef BROKEN_NON_BLOCKING_CONNECT
 #undef NON_BLOCKING_CONNECT
-#define SELECT_CANT_DO_WRITE_MASK
+enum { SELECT_CAN_DO_WRITE_MASK = false };
 #else
+enum { SELECT_CAN_DO_WRITE_MASK = true };
 #ifndef NON_BLOCKING_CONNECT
 #ifdef HAVE_SELECT
 #if defined (HAVE_GETPEERNAME) || defined (GNU_LINUX)
@@ -281,16 +282,10 @@ static void create_process (Lisp_Object, char **, Lisp_Object);
 static bool keyboard_bit_set (fd_set *);
 #endif
 static void deactivate_process (Lisp_Object);
-static void status_notify (struct Lisp_Process *);
+static int status_notify (struct Lisp_Process *, struct Lisp_Process *);
 static int read_process_output (Lisp_Object, int);
 static void handle_child_signal (int);
 static void create_pty (Lisp_Object);
-
-/* If we support a window system, turn on the code to poll periodically
-   to detect C-g.  It isn't actually used when doing interrupt input.  */
-#ifdef HAVE_WINDOW_SYSTEM
-#define POLL_FOR_INPUT
-#endif
 
 static Lisp_Object get_process (register Lisp_Object name);
 static void exec_sentinel (Lisp_Object proc, Lisp_Object reason);
@@ -468,7 +463,6 @@ static struct fd_callback_data
 void
 add_read_fd (int fd, fd_callback func, void *data)
 {
-  eassert (fd < FD_SETSIZE);
   add_keyboard_wait_descriptor (fd);
 
   fd_callback_info[fd].func = func;
@@ -481,7 +475,6 @@ add_read_fd (int fd, fd_callback func, void *data)
 void
 delete_read_fd (int fd)
 {
-  eassert (fd < FD_SETSIZE);
   delete_keyboard_wait_descriptor (fd);
 
   fd_callback_info[fd].condition &= ~FOR_READ;
@@ -498,7 +491,6 @@ delete_read_fd (int fd)
 void
 add_write_fd (int fd, fd_callback func, void *data)
 {
-  eassert (fd < FD_SETSIZE);
   FD_SET (fd, &write_mask);
   if (fd > max_input_desc)
     max_input_desc = fd;
@@ -529,7 +521,6 @@ delete_input_desc (int fd)
 void
 delete_write_fd (int fd)
 {
-  eassert (fd < FD_SETSIZE);
   FD_CLR (fd, &write_mask);
   fd_callback_info[fd].condition &= ~FOR_WRITE;
   if (fd_callback_info[fd].condition == 0)
@@ -870,7 +861,7 @@ nil, indicating the current buffer's process.  */)
     {
       pset_status (p, list2 (Qexit, make_number (0)));
       p->tick = ++process_tick;
-      status_notify (p);
+      status_notify (p, NULL);
       redisplay_preserve_echo_area (13);
     }
   else
@@ -890,7 +881,7 @@ nil, indicating the current buffer's process.  */)
 	    pset_status (p, list2 (Qsignal, make_number (SIGKILL)));
 
 	  p->tick = ++process_tick;
-	  status_notify (p);
+	  status_notify (p, NULL);
 	  redisplay_preserve_echo_area (13);
 	}
     }
@@ -1967,9 +1958,6 @@ create_pty (Lisp_Object process)
 /* Convert an internal struct sockaddr to a lisp object (vector or string).
    The address family of sa is not included in the result.  */
 
-#ifndef WINDOWSNT
-static
-#endif
 Lisp_Object
 conv_sockaddr_to_lisp (struct sockaddr *sa, int len)
 {
@@ -3934,19 +3922,20 @@ DEFUN ("accept-process-output", Faccept_process_output, Saccept_process_output,
        0, 4, 0,
        doc: /* Allow any pending output from subprocesses to be read by Emacs.
 It is given to their filter functions.
-Non-nil arg PROCESS means do not return until some output has been received
-from PROCESS.
+Optional argument PROCESS means do not return until output has been
+received from PROCESS.
 
-Non-nil second arg SECONDS and third arg MILLISEC are number of seconds
-and milliseconds to wait; return after that much time whether or not
-there is any subprocess output.  If SECONDS is a floating point number,
+Optional second argument SECONDS and third argument MILLISEC
+specify a timeout; return after that much time even if there is
+no subprocess output.  If SECONDS is a floating point number,
 it specifies a fractional number of seconds to wait.
 The MILLISEC argument is obsolete and should be avoided.
 
-If optional fourth arg JUST-THIS-ONE is non-nil, only accept output
-from PROCESS, suspending reading output from other processes.
+If optional fourth argument JUST-THIS-ONE is non-nil, accept output
+from PROCESS only, suspending reading output from other processes.
 If JUST-THIS-ONE is an integer, don't run any timers either.
-Return non-nil if we received any output before the timeout expired.  */)
+Return non-nil if we received any output from PROCESS (or, if PROCESS
+is nil, from any process) before the timeout expired.  */)
   (register Lisp_Object process, Lisp_Object seconds, Lisp_Object millisec, Lisp_Object just_this_one)
 {
   intmax_t secs;
@@ -3998,12 +3987,13 @@ Return non-nil if we received any output before the timeout expired.  */)
     nsecs = 0;
 
   return
-    (wait_reading_process_output (secs, nsecs, 0, 0,
+    ((wait_reading_process_output (secs, nsecs, 0, 0,
 				  Qnil,
 				  !NILP (process) ? XPROCESS (process) : NULL,
 				  NILP (just_this_one) ? 0 :
 				  !INTEGERP (just_this_one) ? 1 : -1)
-     ? Qt : Qnil);
+      <= 0)
+     ? Qnil : Qt);
 }
 
 /* Accept a connection for server process SERVER on CHANNEL.  */
@@ -4268,18 +4258,17 @@ wait_reading_process_output_1 (void)
      (and gobble terminal input into the buffer if any arrives).
 
    If WAIT_PROC is specified, wait until something arrives from that
-     process.  The return value is true if we read some input from
-     that process.
+     process.
 
    If JUST_WAIT_PROC is nonzero, handle only output from WAIT_PROC
      (suspending output from other processes).  A negative value
      means don't run any timers either.
 
-   If WAIT_PROC is specified, then the function returns true if we
-     received input from that process before the timeout elapsed.
-   Otherwise, return true if we received input from any process.  */
+   Return positive if we received input from WAIT_PROC (or from any
+   process if WAIT_PROC is null), zero if we attempted to receive
+   input but got none, and negative if we didn't even try.  */
 
-bool
+int
 wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 			     bool do_display,
 			     Lisp_Object wait_for_cell,
@@ -4294,8 +4283,7 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
   int xerrno;
   Lisp_Object proc;
   struct timespec timeout, end_time;
-  int wait_channel = -1;
-  bool got_some_input = 0;
+  int got_some_input = -1;
   ptrdiff_t count = SPECPDL_INDEX ();
 
   FD_ZERO (&Available);
@@ -4305,10 +4293,6 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
       && !(CONSP (wait_proc->status)
 	   && EQ (XCAR (wait_proc->status), Qexit)))
     message1 ("Blocking call to accept-process-output with quit inhibited!!");
-
-  /* If wait_proc is a process to watch, set wait_channel accordingly.  */
-  if (wait_proc != NULL)
-    wait_channel = wait_proc->infd;
 
   record_unwind_protect_int (wait_reading_process_output_unwind,
 			     waiting_for_user_input_p);
@@ -4345,6 +4329,10 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
       /* Exit now if the cell we're waiting for became non-nil.  */
       if (! NILP (wait_for_cell) && ! NILP (XCAR (wait_for_cell)))
 	break;
+
+      /* After reading input, vacuum up any leftovers without waiting.  */
+      if (0 <= got_some_input)
+	nsecs = -1;
 
       /* Compute time from now till when time limit is up.  */
       /* Exit if already run out.  */
@@ -4464,7 +4452,7 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 	      /* It's okay for us to do this and then continue with
 		 the loop, since timeout has already been zeroed out.  */
 	      clear_waiting_for_input ();
-	      status_notify (NULL);
+	      got_some_input = status_notify (NULL, wait_proc);
 	      if (do_display) redisplay_preserve_echo_area (13);
 	    }
 	}
@@ -4486,18 +4474,23 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 	  while (wait_proc->infd >= 0)
 	    {
 	      int nread = read_process_output (proc, wait_proc->infd);
-
-	      if (nread == 0)
-		break;
-
-	      if (nread > 0)
-		got_some_input = read_some_bytes = 1;
-	      else if (nread == -1 && (errno == EIO || errno == EAGAIN))
-		break;
+	      if (nread < 0)
+		{
+		  if (errno == EIO || errno == EAGAIN)
+		    break;
 #ifdef EWOULDBLOCK
-	      else if (nread == -1 && EWOULDBLOCK == errno)
-		break;
+		  if (errno == EWOULDBLOCK)
+		    break;
 #endif
+		}
+	      else
+		{
+		  if (got_some_input < nread)
+		    got_some_input = nread;
+		  if (nread == 0)
+		    break;
+		  read_some_bytes = true;
+		}
 	    }
 	  if (read_some_bytes && do_display)
 	    redisplay_preserve_echo_area (10);
@@ -4528,12 +4521,8 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 	  else
 	    Available = input_wait_mask;
           Writeok = write_mask;
-#ifdef SELECT_CANT_DO_WRITE_MASK
-          check_write = 0;
-#else
-          check_write = 1;
-#endif
- 	  check_delay = wait_channel >= 0 ? 0 : process_output_delay_count;
+ 	  check_delay = wait_proc ? 0 : process_output_delay_count;
+	  check_write = SELECT_CAN_DO_WRITE_MASK;
 	}
 
       /* If frame size has changed or the window is newly mapped,
@@ -4559,6 +4548,7 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 	{
 	  nfds = read_kbd ? 0 : 1;
 	  no_avail = 1;
+	  FD_ZERO (&Available);
 	}
 
       if (!no_avail)
@@ -4568,7 +4558,7 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 	  /* Set the timeout for adaptive read buffering if any
 	     process has non-zero read_output_skip and non-zero
 	     read_output_delay, and we are not reading output for a
-	     specific wait_channel.  It is not executed if
+	     specific process.  It is not executed if
 	     Vprocess_adaptive_read_buffering is nil.  */
 	  if (process_output_skip && check_delay > 0)
 	    {
@@ -4630,12 +4620,13 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 		      {
 			struct Lisp_Process *p =
 			  XPROCESS (chan_process[channel]);
-			if (p && p->gnutls_p && p->gnutls_state && p->infd
+			if (p && p->gnutls_p && p->gnutls_state
 			    && ((emacs_gnutls_record_check_pending
 				 (p->gnutls_state))
 				> 0))
 			  {
 			    nfds++;
+			    eassert (p->infd == channel);
 			    FD_SET (p->infd, &Available);
 			  }
 		      }
@@ -4678,12 +4669,6 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 	    emacs_abort ();
 	  else
 	    report_file_errno ("Failed select", Qnil, xerrno);
-	}
-
-      if (no_avail)
-	{
-	  FD_ZERO (&Available);
-	  check_write = 0;
 	}
 
       /* Check for keyboard input */
@@ -4752,9 +4737,6 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 	handle_input_available_signal (SIGIO);
 #endif
 
-      if (! wait_proc)
-	got_some_input |= nfds > 0;
-
       /* If checking input just got us a size-change event from X,
 	 obey it now if we should.  */
       if (read_kbd || ! NILP (wait_for_cell))
@@ -4786,12 +4768,6 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 	      /* If waiting for this channel, arrange to return as
 		 soon as no more input to be processed.  No more
 		 waiting.  */
-	      if (wait_channel == channel)
-		{
-		  wait_channel = -1;
-		  nsecs = -1;
-		  got_some_input = 1;
-		}
 	      proc = chan_process[channel];
 	      if (NILP (proc))
 		continue;
@@ -4807,6 +4783,8 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 		 buffered-ahead character if we have one.  */
 
 	      nread = read_process_output (proc, channel);
+	      if ((!wait_proc || wait_proc == XPROCESS (proc)) && got_some_input < nread)
+		got_some_input = nread;
 	      if (nread > 0)
 		{
 		  /* Since read_process_output can run a filter,
@@ -5827,7 +5805,7 @@ process_send_signal (Lisp_Object process, int signo, Lisp_Object current_group,
       p->tick = ++process_tick;
       if (!nomsg)
 	{
-	  status_notify (NULL);
+	  status_notify (NULL, NULL);
 	  redisplay_preserve_echo_area (13);
 	}
     }
@@ -6350,14 +6328,20 @@ exec_sentinel (Lisp_Object proc, Lisp_Object reason)
 /* Report all recent events of a change in process status
    (either run the sentinel or output a message).
    This is usually done while Emacs is waiting for keyboard input
-   but can be done at other times.  */
+   but can be done at other times.
 
-static void
-status_notify (struct Lisp_Process *deleting_process)
+   Return positive if any input was received from WAIT_PROC (or from
+   any process if WAIT_PROC is null), zero if input was attempted but
+   none received, and negative if we didn't even try.  */
+
+static int
+status_notify (struct Lisp_Process *deleting_process,
+	       struct Lisp_Process *wait_proc)
 {
-  register Lisp_Object proc;
+  Lisp_Object proc;
   Lisp_Object tail, msg;
   struct gcpro gcpro1, gcpro2;
+  int got_some_input = -1;
 
   tail = Qnil;
   msg = Qnil;
@@ -6387,8 +6371,14 @@ status_notify (struct Lisp_Process *deleting_process)
 		 /* Network or serial process not stopped:  */
 		 && ! EQ (p->command, Qt)
 		 && p->infd >= 0
-		 && p != deleting_process
-		 && read_process_output (proc, p->infd) > 0);
+		 && p != deleting_process)
+	    {
+	      int nread = read_process_output (proc, p->infd);
+	      if (got_some_input < nread)
+		got_some_input = nread;
+	      if (nread <= 0)
+		break;
+	    }
 
 	  /* Get the text to use for the message.  */
 	  if (p->raw_status_new)
@@ -6420,6 +6410,7 @@ status_notify (struct Lisp_Process *deleting_process)
 
   update_mode_lines = 24;  /* In case buffers use %s in mode-line-format.  */
   UNGCPRO;
+  return got_some_input;
 }
 
 DEFUN ("internal-default-process-sentinel", Finternal_default_process_sentinel,
@@ -6631,9 +6622,11 @@ extern int sys_select (int, fd_set *, fd_set *, fd_set *,
    DO_DISPLAY means redisplay should be done to show subprocess
    output that arrives.
 
-   Return true if we received input from any process.  */
+   Return positive if we received input from WAIT_PROC (or from any
+   process if WAIT_PROC is null), zero if we attempted to receive
+   input but got none, and negative if we didn't even try.  */
 
-bool
+int
 wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 			     bool do_display,
 			     Lisp_Object wait_for_cell,
@@ -6821,7 +6814,7 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 
   start_polling ();
 
-  return 0;
+  return -1;
 }
 
 #endif	/* not subprocesses */
@@ -7060,9 +7053,6 @@ integer or floating point values.
    futz with the SIGCHLD handler, but before Emacs forks any children.
    This function's caller should block SIGCHLD.  */
 
-#ifndef NS_IMPL_GNUSTEP
-static
-#endif
 void
 catch_child_signal (void)
 {

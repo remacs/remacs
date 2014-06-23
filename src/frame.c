@@ -50,6 +50,9 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "msdos.h"
 #include "dosfns.h"
 #endif
+#ifdef USE_X_TOOLKIT
+#include "widget.h"
+#endif
 
 #ifdef HAVE_NS
 Lisp_Object Qns_parse_geometry;
@@ -162,18 +165,15 @@ decode_any_frame (register Lisp_Object frame)
   return XFRAME (frame);
 }
 
+#ifdef HAVE_WINDOW_SYSTEM
+
 bool
 window_system_available (struct frame *f)
 {
-  if (f)
-    return FRAME_WINDOW_P (f) || FRAME_MSDOS_P (f);
-  else
-#ifdef HAVE_WINDOW_SYSTEM
-    return x_display_list != NULL;
-#else
-    return 0;
-#endif
+  return f ? FRAME_WINDOW_P (f) || FRAME_MSDOS_P (f) : x_display_list != NULL;
 }
+
+#endif /* HAVE_WINDOW_SYSTEM */
 
 struct frame *
 decode_window_system_frame (Lisp_Object frame)
@@ -352,6 +352,9 @@ make_frame (bool mini_p)
   f->line_height = 1;  /* !FRAME_WINDOW_P value.  */
 #ifdef HAVE_WINDOW_SYSTEM
   f->want_fullscreen = FULLSCREEN_NONE;
+#if ! defined (USE_GTK) && ! defined (HAVE_NS)
+  f->last_tool_bar_item = -1;
+#endif
 #endif
 
   root_window = make_window ();
@@ -1965,9 +1968,6 @@ If there is no window system support, this function does nothing.  */)
 /* Return the value of frame parameter PROP in frame FRAME.  */
 
 #ifdef HAVE_WINDOW_SYSTEM
-#if !HAVE_NS && !HAVE_NTGUI
-static
-#endif
 Lisp_Object
 get_frame_param (register struct frame *frame, Lisp_Object prop)
 {
@@ -2830,7 +2830,7 @@ x_set_frame_parameters (struct frame *f, Lisp_Object alist)
   /* If both of these parameters are present, it's more efficient to
      set them both at once.  So we wait until we've looked at the
      entire list before we set them.  */
-  int width, height;
+  int width = 0, height = 0;
   bool width_change = 0, height_change = 0;
 
   /* Same here.  */

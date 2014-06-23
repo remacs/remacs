@@ -527,9 +527,6 @@ static ptrdiff_t encode_terminal_dst_size;
    Set CODING->produced to the byte-length of the resulting byte
    sequence, and return a pointer to that byte sequence.  */
 
-#ifndef DOS_NT
-static
-#endif
 unsigned char *
 encode_terminal_code (struct glyph *src, int src_len,
 		      struct coding_system *coding)
@@ -1864,7 +1861,7 @@ produce_glyphless_glyph (struct it *it, Lisp_Object acronym)
 	    acronym = XCDR (acronym);
 	  buf[0] = '[';
 	  str = STRINGP (acronym) ? SSDATA (acronym) : "";
-	  for (len = 0; len < 6 && str[len] && ASCII_BYTE_P (str[len]); len++)
+	  for (len = 0; len < 6 && str[len] && ASCII_CHAR_P (str[len]); len++)
 	    buf[1 + len] = str[len];
 	  buf[1 + len] = ']';
 	  len += 2;
@@ -2934,8 +2931,7 @@ tty_menu_display (tty_menu *menu, int x, int y, int pn, int *faces,
       display_tty_menu_item (menu->text[j], max_width, face, x, y + i,
 			     menu->submenu[j] != NULL);
     }
-  update_frame_with_menu (sf);
-  cursor_to (sf, row, col);
+  update_frame_with_menu (sf, row, col);
 }
 
 /* --------------------------- X Menu emulation ---------------------- */
@@ -3106,7 +3102,7 @@ static void
 screen_update (struct frame *f, struct glyph_matrix *mtx)
 {
   restore_desired_matrix (f, mtx);
-  update_frame_with_menu (f);
+  update_frame_with_menu (f, -1, -1);
 }
 
 typedef enum {
@@ -3255,7 +3251,7 @@ tty_menu_activate (tty_menu *menu, int *pane, int *selidx,
 
   /* Force update of the current frame, so that the desired and the
      current matrices are identical.  */
-  update_frame_with_menu (sf);
+  update_frame_with_menu (sf, -1, -1);
   state[0].menu = menu;
   state[0].screen_behind = save_and_enable_current_matrix (sf);
 
@@ -3400,8 +3396,6 @@ tty_menu_activate (tty_menu *menu, int *pane, int *selidx,
 			    state[statecount - 1].y,
 			    state[statecount - 1].pane,
 			    faces, x, y, first_item, 1);
-	  tty_hide_cursor (tty);
-	  fflush (tty->output);
 	  /* The call to display help-echo below will move the cursor,
 	     so remember its current position as computed by
 	     tty_menu_display.  */
@@ -3420,10 +3414,13 @@ tty_menu_activate (tty_menu *menu, int *pane, int *selidx,
 	     item, so that screen readers and other accessibility aids
 	     know where the active region is.  */
 	  cursor_to (sf, row, col);
-	  tty_hide_cursor (tty);
-	  fflush (tty->output);
 	  prev_menu_help_message = menu_help_message;
 	}
+      /* Both tty_menu_display and help_callback invoke update_end,
+	 which calls tty_show_cursor.  Re-hide it, so it doesn't show
+	 through the menus.  */
+      tty_hide_cursor (tty);
+      fflush (tty->output);
     }
 
   sf->mouse_moved = 0;
@@ -3582,9 +3579,10 @@ tty_menu_new_item_coords (struct frame *f, int which, int *x, int *y)
     }
 }
 
+/* WINDOWSNT uses this as menu_show_hook, see w32console.c.  */
 Lisp_Object
-tty_menu_show (struct frame *f, int x, int y, bool for_click, bool keymaps,
-	       Lisp_Object title, bool kbd_navigation, const char **error_name)
+tty_menu_show (struct frame *f, int x, int y, int menuflags,
+	       Lisp_Object title, const char **error_name)
 {
   tty_menu *menu;
   int pane, selidx, lpane, status;
@@ -3621,6 +3619,10 @@ tty_menu_show (struct frame *f, int x, int y, bool for_click, bool keymaps,
      menu functions pointers to the contents of strings.  */
   specpdl_count = inhibit_garbage_collection ();
 
+  /* Avoid crashes if, e.g., another client will connect while we
+     are in a menu.  */
+  temporarily_switch_to_single_kboard (f);
+
   /* Adjust coordinates to be root-window-relative.  */
   item_x = x += f->left_pos;
   item_y = y += f->top_pos;
@@ -3642,7 +3644,7 @@ tty_menu_show (struct frame *f, int x, int y, bool for_click, bool keymaps,
 	  prefix = AREF (menu_items, i + MENU_ITEMS_PANE_PREFIX);
 	  pane_string = (NILP (pane_name)
 			 ? "" : SSDATA (pane_name));
-	  if (keymaps && !NILP (prefix))
+	  if ((menuflags & MENU_KEYMAPS) && !NILP (prefix))
 	    pane_string++;
 
 	  lpane = tty_menu_add_pane (menu, pane_string);
@@ -3782,7 +3784,8 @@ tty_menu_show (struct frame *f, int x, int y, bool for_click, bool keymaps,
   specbind (Qoverriding_terminal_local_map,
 	    Fsymbol_value (Qtty_menu_navigation_map));
   status = tty_menu_activate (menu, &pane, &selidx, x, y, &datap,
-			      tty_menu_help_callback, kbd_navigation);
+			      tty_menu_help_callback,
+			      menuflags & MENU_KBD_NAVIGATION);
   entry = pane_prefix = Qnil;
 
   switch (status)
@@ -3808,7 +3811,7 @@ tty_menu_show (struct frame *f, int x, int y, bool for_click, bool keymaps,
 		    {
 		      entry
 			= AREF (menu_items, i + MENU_ITEMS_ITEM_VALUE);
-		      if (keymaps != 0)
+		      if (menuflags & MENU_KEYMAPS)
 			{
 			  entry = Fcons (entry, Qnil);
 			  if (!NILP (pane_prefix))
@@ -3841,7 +3844,7 @@ tty_menu_show (struct frame *f, int x, int y, bool for_click, bool keymaps,
 	Ftop_level ();
       /* Make "Cancel" equivalent to C-g unless FOR_CLICK (which means
 	 the menu was invoked with a mouse event as POSITION).  */
-      if (! for_click)
+      if (!(menuflags & MENU_FOR_CLICK))
         Fsignal (Qquit, Qnil);
       break;
     }
@@ -3922,6 +3925,7 @@ clear_tty_hooks (struct terminal *terminal)
   terminal->frame_rehighlight_hook = 0;
   terminal->frame_raise_lower_hook = 0;
   terminal->fullscreen_hook = 0;
+  terminal->menu_show_hook = 0;
   terminal->set_vertical_scroll_bar_hook = 0;
   terminal->condemn_scroll_bars_hook = 0;
   terminal->redeem_scroll_bar_hook = 0;
@@ -3953,6 +3957,7 @@ set_tty_hooks (struct terminal *terminal)
   terminal->reset_terminal_modes_hook = &tty_reset_terminal_modes;
   terminal->set_terminal_modes_hook = &tty_set_terminal_modes;
   terminal->update_end_hook = &tty_update_end;
+  terminal->menu_show_hook = &tty_menu_show;
   terminal->set_terminal_window_hook = &tty_set_terminal_window;
   terminal->read_socket_hook = &tty_read_avail_input; /* keyboard.c */
   terminal->delete_frame_hook = &tty_free_frame_resources;

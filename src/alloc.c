@@ -2974,9 +2974,16 @@ cleanup_vector (struct Lisp_Vector *vector)
       && ((vector->header.size & PSEUDOVECTOR_SIZE_MASK)
 	  == FONT_OBJECT_MAX))
     {
-      /* Attempt to catch subtle bugs like Bug#16140.  */
-      eassert (valid_font_driver (((struct font *) vector)->driver));
-      ((struct font *) vector)->driver->close ((struct font *) vector);
+      struct font_driver *drv = ((struct font *) vector)->driver;
+
+      /* The font driver might sometimes be NULL, e.g. if Emacs was
+	 interrupted before it had time to set it up.  */
+      if (drv)
+	{
+	  /* Attempt to catch subtle bugs like Bug#16140.  */
+	  eassert (valid_font_driver (drv));
+	  drv->close ((struct font *) vector);
+	}
     }
 }
 
@@ -4556,7 +4563,7 @@ maybe_lisp_pointer (void *p)
 {
   return !((intptr_t) p % (USE_LSB_TAG ? GCALIGNMENT : 2));
 }
-  
+
 /* If P points to Lisp data, mark that as live if it isn't already
    marked.  */
 
@@ -5023,7 +5030,7 @@ relocatable_string_data_p (const char *str)
 {
   if (PURE_POINTER_P (str))
     return 0;
-#if GC_MARK_STACK  
+#if GC_MARK_STACK
   if (str)
     {
       struct sdata *sdata
@@ -5037,7 +5044,7 @@ relocatable_string_data_p (const char *str)
 		&& (const char *) sdata->string->data == str);
     }
   return 0;
-#endif /* GC_MARK_STACK */  
+#endif /* GC_MARK_STACK */
   return -1;
 }
 
@@ -5882,9 +5889,9 @@ See Info node `(elisp)Garbage Collection'.  */)
 #elif (GC_MARK_STACK == GC_USE_GCPROS_AS_BEFORE)
   /* Old GCPROs-based method without stack marking.  */
   return garbage_collect_1 (NULL);
-#else  
+#else
   emacs_abort ();
-#endif /* GC_MARK_STACK */  
+#endif /* GC_MARK_STACK */
 }
 
 /* Mark Lisp objects in glyph matrix MATRIX.  Currently the
@@ -5974,6 +5981,19 @@ mark_char_table (struct Lisp_Vector *ptr)
     }
 }
 
+NO_INLINE /* To reduce stack depth in mark_object.  */
+static Lisp_Object
+mark_compiled (struct Lisp_Vector *ptr)
+{
+  int i, size = ptr->header.size & PSEUDOVECTOR_SIZE_MASK;
+
+  VECTOR_MARK (ptr);
+  for (i = 0; i < size; i++)
+    if (i != COMPILED_CONSTANTS)
+      mark_object (ptr->contents[i]);
+  return size > COMPILED_CONSTANTS ? ptr->contents[COMPILED_CONSTANTS] : Qnil;
+}
+
 /* Mark the chain of overlays starting at PTR.  */
 
 static void
@@ -6014,6 +6034,7 @@ mark_buffer (struct buffer *buffer)
 
 /* Mark Lisp faces in the face cache C.  */
 
+NO_INLINE /* To reduce stack depth in mark_object.  */
 static void
 mark_face_cache (struct face_cache *c)
 {
@@ -6033,6 +6054,48 @@ mark_face_cache (struct face_cache *c)
 		mark_object (face->lface[j]);
 	    }
 	}
+    }
+}
+
+NO_INLINE /* To reduce stack depth in mark_object.  */
+static void
+mark_localized_symbol (struct Lisp_Symbol *ptr)
+{
+  struct Lisp_Buffer_Local_Value *blv = SYMBOL_BLV (ptr);
+  Lisp_Object where = blv->where;
+  /* If the value is set up for a killed buffer or deleted
+     frame, restore its global binding.  If the value is
+     forwarded to a C variable, either it's not a Lisp_Object
+     var, or it's staticpro'd already.  */
+  if ((BUFFERP (where) && !BUFFER_LIVE_P (XBUFFER (where)))
+      || (FRAMEP (where) && !FRAME_LIVE_P (XFRAME (where))))
+    swap_in_global_binding (ptr);
+  mark_object (blv->where);
+  mark_object (blv->valcell);
+  mark_object (blv->defcell);
+}
+
+NO_INLINE /* To reduce stack depth in mark_object.  */
+static void
+mark_save_value (struct Lisp_Save_Value *ptr)
+{
+  /* If `save_type' is zero, `data[0].pointer' is the address
+     of a memory area containing `data[1].integer' potential
+     Lisp_Objects.  */
+  if (GC_MARK_STACK && ptr->save_type == SAVE_TYPE_MEMORY)
+    {
+      Lisp_Object *p = ptr->data[0].pointer;
+      ptrdiff_t nelt;
+      for (nelt = ptr->data[1].integer; nelt > 0; nelt--, p++)
+	mark_maybe_object (*p);
+    }
+  else
+    {
+      /* Find Lisp_Objects in `data[N]' slots and mark them.  */
+      int i;
+      for (i = 0; i < SAVE_VALUE_SLOTS; i++)
+	if (save_type (ptr, i) == SAVE_OBJECT)
+	  mark_object (ptr->data[i].object);
     }
 }
 
@@ -6063,7 +6126,13 @@ mark_discard_killed_buffers (Lisp_Object list)
   return list;
 }
 
-/* Determine type of generic Lisp_Object and mark it accordingly.  */
+/* Determine type of generic Lisp_Object and mark it accordingly.
+
+   This function implements a straightforward depth-first marking
+   algorithm and so the recursion depth may be very high (a few
+   tens of thousands is not uncommon).  To minimize stack usage,
+   a few cold paths are moved out to NO_INLINE functions above.
+   In general, inlining them doesn't help you to gain more speed.  */
 
 void
 mark_object (Lisp_Object arg)
@@ -6180,22 +6249,13 @@ mark_object (Lisp_Object arg)
 	    break;
 
 	  case PVEC_COMPILED:
-	    { /* We could treat this just like a vector, but it is better
-		 to save the COMPILED_CONSTANTS element for last and avoid
-		 recursion there.  */
-	      int size = ptr->header.size & PSEUDOVECTOR_SIZE_MASK;
-	      int i;
-
-	      VECTOR_MARK (ptr);
-	      for (i = 0; i < size; i++)
-		if (i != COMPILED_CONSTANTS)
-		  mark_object (ptr->contents[i]);
-	      if (size > COMPILED_CONSTANTS)
-		{
-		  obj = ptr->contents[COMPILED_CONSTANTS];
-		  goto loop;
-		}
-	    }
+	    /* Although we could treat this just like a vector, mark_compiled
+	       returns the COMPILED_CONSTANTS element, which is marked at the
+	       next iteration of goto-loop here.  This is done to avoid a few
+	       recursive calls to mark_object.  */
+	    obj = mark_compiled (ptr);
+	    if (!NILP (obj))
+	      goto loop;
 	    break;
 
 	  case PVEC_FRAME:
@@ -6283,8 +6343,7 @@ mark_object (Lisp_Object arg)
     case Lisp_Symbol:
       {
 	register struct Lisp_Symbol *ptr = XSYMBOL (obj);
-	struct Lisp_Symbol *ptrx;
-
+      nextsym:
 	if (ptr->gcmarkbit)
 	  break;
 	CHECK_ALLOCATED_AND_LIVE (live_symbol_p);
@@ -6304,21 +6363,8 @@ mark_object (Lisp_Object arg)
 	      break;
 	    }
 	  case SYMBOL_LOCALIZED:
-	    {
-	      struct Lisp_Buffer_Local_Value *blv = SYMBOL_BLV (ptr);
-	      Lisp_Object where = blv->where;
-	      /* If the value is set up for a killed buffer or deleted
-		 frame, restore it's global binding.  If the value is
-		 forwarded to a C variable, either it's not a Lisp_Object
-		 var, or it's staticpro'd already.  */
-	      if ((BUFFERP (where) && !BUFFER_LIVE_P (XBUFFER (where)))
-		  || (FRAMEP (where) && !FRAME_LIVE_P (XFRAME (where))))
-		swap_in_global_binding (ptr);
-	      mark_object (blv->where);
-	      mark_object (blv->valcell);
-	      mark_object (blv->defcell);
-	      break;
-	    }
+	    mark_localized_symbol (ptr);
+	    break;
 	  case SYMBOL_FORWARDED:
 	    /* If the value is forwarded to a buffer or keyboard field,
 	       these are marked when we see the corresponding object.
@@ -6330,14 +6376,10 @@ mark_object (Lisp_Object arg)
 	if (!PURE_POINTER_P (XSTRING (ptr->name)))
 	  MARK_STRING (XSTRING (ptr->name));
 	MARK_INTERVAL_TREE (string_intervals (ptr->name));
-
+	/* Inner loop to mark next symbol in this bucket, if any.  */
 	ptr = ptr->next;
 	if (ptr)
-	  {
-	    ptrx = ptr;		/* Use of ptrx avoids compiler bug on Sun.  */
-	    XSETSYMBOL (obj, ptrx);
-	    goto loop;
-	  }
+	  goto nextsym;
       }
       break;
 
@@ -6358,27 +6400,7 @@ mark_object (Lisp_Object arg)
 
 	case Lisp_Misc_Save_Value:
 	  XMISCANY (obj)->gcmarkbit = 1;
-	  {
-	    struct Lisp_Save_Value *ptr = XSAVE_VALUE (obj);
-	    /* If `save_type' is zero, `data[0].pointer' is the address
-	       of a memory area containing `data[1].integer' potential
-	       Lisp_Objects.  */
-	    if (GC_MARK_STACK && ptr->save_type == SAVE_TYPE_MEMORY)
-	      {
-		Lisp_Object *p = ptr->data[0].pointer;
-		ptrdiff_t nelt;
-		for (nelt = ptr->data[1].integer; nelt > 0; nelt--, p++)
-		  mark_maybe_object (*p);
-	      }
-	    else
-	      {
-		/* Find Lisp_Objects in `data[N]' slots and mark them.  */
-		int i;
-		for (i = 0; i < SAVE_VALUE_SLOTS; i++)
-		  if (save_type (ptr, i) == SAVE_OBJECT)
-		    mark_object (ptr->data[i].object);
-	      }
-	  }
+	  mark_save_value (XSAVE_VALUE (obj));
 	  break;
 
 	case Lisp_Misc_Overlay:
@@ -7200,7 +7222,6 @@ union
   enum char_bits char_bits;
   enum CHECK_LISP_OBJECT_TYPE CHECK_LISP_OBJECT_TYPE;
   enum DEFAULT_HASH_SIZE DEFAULT_HASH_SIZE;
-  enum FLOAT_TO_STRING_BUFSIZE FLOAT_TO_STRING_BUFSIZE;
   enum Lisp_Bits Lisp_Bits;
   enum Lisp_Compiled Lisp_Compiled;
   enum maxargs maxargs;

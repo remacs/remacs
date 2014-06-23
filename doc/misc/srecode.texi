@@ -1,6 +1,6 @@
 \input texinfo
 @c %**start of header
-@setfilename ../../info/srecode
+@setfilename ../../info/srecode.info
 @set TITLE SRecoder Manual
 @set AUTHOR Eric M. Ludlam
 @settitle @value{TITLE}
@@ -1175,7 +1175,7 @@ The following built-in simple arguments are available:
 
 @subsubsection Argument :indent
 
-Supplies the @code{INDENT} macro.  When @code{INDENT} is non-nil, then
+Supplies the @code{INDENT} macro.  When @code{INDENT} is non-@code{nil}, then
 each line is individually indented with
 @code{indent-according-to-mode} during macro processing.
 
@@ -1191,7 +1191,7 @@ If there is an active region via @code{transient-mark-mode}, or
 @code{mouse-drag-region}, then the @code{REGION} section will be
 enabled.
 
-In addition, @code{REGIONTEXT} will be set the the text in the region,
+In addition, @code{REGIONTEXT} will be set to the text in the region,
 and that region of text will be ``killed'' from the current buffer.
 
 If standard-output is NOT the current buffer, then the region will not
@@ -1577,7 +1577,7 @@ start with the main entry point.
 @defun srecode-insert-fcn template dictionary &optional stream
 @anchor{srecode-insert-fcn}
 Insert @var{template} using @var{dictionary} into @var{stream}.
-If @var{stream} is nil, then use the current buffer.
+If @var{stream} is @code{nil}, then use the current buffer.
 @end defun
 
 @node Template Naming Conventions

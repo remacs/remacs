@@ -1637,6 +1637,8 @@ killed."
 	(let (kill-buffer-query-functions kill-buffer-hook)
 	  (kill-buffer obuf))))))
 
+;; FIXME we really need to fold the uniquify stuff in here by default,
+;; not using advice, and add it to the doc string.
 (defun create-file-buffer (filename)
   "Create a suitably named buffer for visiting FILENAME, and return it.
 FILENAME (sans directory) is used unchanged if that name is free;
@@ -2438,7 +2440,7 @@ ARC\\|ZIP\\|LZH\\|LHA\\|ZOO\\|[JEW]AR\\|XPI\\|RAR\\|7Z\\)\\'" . archive-mode)
      ("/\\.\\(?:enigma\\|gltron\\|gtk\\|hxplayer\\|net\\|neverball\\|qt/.+\\|realplayer\\|scummvm\\|sversion\\|sylpheed/.+\\|xmp\\)rc\\'" . conf-mode)
      ("/\\.\\(?:gdbtkinit\\|grip\\|orbital/.+txt\\|rhosts\\|tuxracer/options\\)\\'" . conf-mode)
      ("/\\.?X\\(?:default\\|resource\\|re\\)s\\>" . conf-xdefaults-mode)
-     ("/X11.+app-defaults/" . conf-xdefaults-mode)
+     ("/X11.+app-defaults/\\|\\.ad\\'" . conf-xdefaults-mode)
      ("/X11.+locale/.+/Compose\\'" . conf-colon-mode)
      ;; this contains everything twice, with space and with colon :-(
      ("/X11.+locale/compose\\.dir\\'" . conf-javaprop-mode)

@@ -4987,7 +4987,6 @@ and `gnus-mime-delete-part', and not provided at run-time normally."
     (gnus-article-edit-article
      `(lambda ()
 	(buffer-disable-undo)
-	(erase-buffer)
 	(let ((mail-parse-charset (or gnus-article-charset
 				      ',gnus-newsgroup-charset))
 	      (mail-parse-ignored-charsets
@@ -4995,7 +4994,14 @@ and `gnus-mime-delete-part', and not provided at run-time normally."
 		   ',gnus-newsgroup-ignored-charsets))
 	      (mbl mml-buffer-list))
 	  (setq mml-buffer-list nil)
-	  (insert-buffer-substring gnus-original-article-buffer)
+	  ;; A new text must be inserted before deleting existing ones
+	  ;; at the end so as not to move existing markers of which
+	  ;; the insertion type is t.
+	  (delete-region
+	   (point-min)
+	   (prog1
+	       (goto-char (point-max))
+	     (insert-buffer-substring gnus-original-article-buffer)))
 	  (mime-to-mml ',handles)
 	  (setq gnus-article-mime-handles nil)
 	  (let ((mbl1 mml-buffer-list))
@@ -6367,7 +6373,7 @@ in the body.  Use `gnus-header-face-alist' to highlight buttons."
 			(setcar handle (caar handle))))
 		    flat)
 	      flat))))
-      (let ((case-fold-search t) buttons st handle)
+      (let ((case-fold-search t) buttons handle type st)
 	(save-excursion
 	  (save-restriction
 	    (widen)
@@ -6387,14 +6393,24 @@ in the body.  Use `gnus-header-face-alist' to highlight buttons."
 	    (unless (and interactive buttons)
 	      ;; Find buttons.
 	      (setq buttons nil)
-	      (dolist (handle (flattened-alist))
-		(when (and (not (stringp (cadr handle)))
-			   (or (equal (car (mm-handle-disposition
-					    (cdr handle)))
-				      "attachment")
-			       (not (and (mm-inlinable-p (cdr handle))
-					 (mm-inlined-p (cdr handle))))))
-		  (push handle buttons)))
+	      (dolist (button (flattened-alist))
+		(setq handle (cdr button)
+		      type (mm-handle-media-type handle))
+		(when (or (and (if (gnus-buffer-live-p gnus-summary-buffer)
+				   (with-current-buffer gnus-summary-buffer
+				     gnus-inhibit-images)
+				 gnus-inhibit-images)
+			       (string-match "\\`image/" type))
+			  (mm-inline-override-p handle)
+			  (and (mm-handle-disposition handle)
+			       (not (equal (car (mm-handle-disposition handle))
+					   "inline"))
+			       (not (mm-attachment-override-p handle)))
+			  (not (mm-automatic-display-p handle))
+			  (not (or (and (mm-inlinable-p handle)
+					(mm-inlined-p handle))
+				   (mm-automatic-external-display-p type))))
+		  (push button buttons)))
 	      (when buttons
 		;; Add header buttons.
 		(article-goto-body)
@@ -6790,7 +6806,7 @@ not have a face in `gnus-article-boring-faces'."
 			(when (eq obuf (current-buffer))
 			  (set-buffer in-buffer)
 			  t))
-		(setq selected (gnus-summary-select-article))
+		(setq selected (ignore-errors (gnus-summary-select-article)))
 		(set-buffer obuf)
 		(unless not-restore-window
 		  (set-window-configuration owin))

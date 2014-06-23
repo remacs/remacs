@@ -49,9 +49,8 @@ GZIP_PROG = @GZIP_PROG@
 
 HTML_OPTS = --no-split --html
 
-INFO_EXT=@INFO_EXT@
 # Options used only when making info output.
-INFO_OPTS=@INFO_OPTS@
+INFO_OPTS= --no-split
 
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
@@ -125,36 +124,36 @@ srcs = \
   $(srcdir)/gpl.texi \
   $(srcdir)/doclicense.texi
 
-mkinfodir = @${MKDIR_P} ${buildinfodir}
+## Disable implicit rules.
+%.texi: ;
 
-.PHONY: info dvi pdf ps
+.PHONY: info dvi html pdf ps
 
-.SUFFIXES: .ps .dvi
-
-.dvi.ps:
-	$(DVIPS) -o $@ $<
-
-info: $(buildinfodir)/elisp$(INFO_EXT)
+info: $(buildinfodir)/elisp.info
 dvi: $(DVI_TARGETS)
 html: $(HTML_TARGETS)
 pdf: $(PDF_TARGETS)
 ps: $(PS_TARGETS)
 
-## Note: "<" is not portable in ordinary make rules.
-$(buildinfodir)/elisp$(INFO_EXT): $(srcs)
-	$(mkinfodir)
-	$(MAKEINFO) $(MAKEINFO_OPTS) $(INFO_OPTS) -o $@ $(srcdir)/elisp.texi
+${buildinfodir}:
+	${MKDIR_P} $@
+
+$(buildinfodir)/elisp.info: $(srcs) | ${buildinfodir}
+	$(MAKEINFO) $(MAKEINFO_OPTS) $(INFO_OPTS) -o $@ $<
 
 elisp.dvi: $(srcs)
-	$(ENVADD) $(TEXI2DVI) $(srcdir)/elisp.texi
+	$(ENVADD) $(TEXI2DVI) $<
 
 elisp.html: $(srcs)
-	$(MAKEINFO) $(MAKEINFO_OPTS) $(HTML_OPTS) -o $@ $(srcdir)/elisp.texi
+	$(MAKEINFO) $(MAKEINFO_OPTS) $(HTML_OPTS) -o $@ $<
 
 elisp.pdf: $(srcs)
-	$(ENVADD) $(TEXI2PDF) $(srcdir)/elisp.texi
+	$(ENVADD) $(TEXI2PDF) $<
 
-.PHONY: mostlyclean clean distclean maintainer-clean infoclean
+elisp.ps: elisp.dvi
+	$(DVIPS) -o $@ $<
+
+.PHONY: mostlyclean clean distclean bootstrap-clean maintainer-clean infoclean
 
 ## [12] stuff is from two-volume.make.
 mostlyclean:
@@ -172,11 +171,11 @@ distclean: clean
 
 infoclean:
 	rm -f \
-	  $(buildinfodir)/elisp$(INFO_EXT) \
-	  $(buildinfodir)/elisp$(INFO_EXT)-[1-9] \
-	  $(buildinfodir)/elisp$(INFO_EXT)-[1-9][0-9]
+	  $(buildinfodir)/elisp.info \
+	  $(buildinfodir)/elisp.info-[1-9] \
+	  $(buildinfodir)/elisp.info-[1-9][0-9]
 
-maintainer-clean: distclean infoclean
+bootstrap-clean maintainer-clean: distclean infoclean
 
 .PHONY: dist
 
@@ -193,7 +192,6 @@ dist:
 	  -e 's/^\(clean:.*\)/\1 infoclean/' \
 	  -e "s/@ver[s]ion@/${version}/" \
 	  -e 's/@MAKE[I]NFO@/makeinfo/' -e 's/@MK[D]IR_P@/mkdir -p/' \
-	  -e 's/@IN[F]O_EXT@/.info/' -e 's/@IN[F]O_OPTS@//' \
 	  ${srcdir}/Makefile.in > emacs-lispref-${version}/Makefile
 	@if grep '@[a-zA-Z_]*@' emacs-lispref-${version}/Makefile; then \
 	  echo "Unexpanded configure variables in Makefile?" 1>&2; exit 1; \

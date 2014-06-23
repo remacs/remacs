@@ -194,11 +194,16 @@ It processes any command-line options that were not handled earlier.
 It now exits if the option @code{--batch} was specified.
 
 @item
-If @code{initial-buffer-choice} is a string, it visits the file with
-that name.  If it is a function, it calls the function and selects the
-buffer returned by the function.  It it is @code{t}, it selects the
-@file{*scratch*} buffer.  If the @file{*scratch*} buffer exists and is
-empty, it inserts @code{initial-scratch-message} into that buffer.
+If @code{initial-buffer-choice} is a string, it visits the file (or
+directory) with that name.  If it is a function, it calls the function
+with no arguments and selects the buffer that it returns.
+@ignore
+@c I do not think this should be mentioned.  AFAICS it is just a dodge
+@c around inhibit-startup-screen not being settable on a site-wide basis.
+If it is @code{t}, it selects the @file{*scratch*} buffer.
+@end ignore
+If the @file{*scratch*} buffer exists and is empty, it inserts
+@code{initial-scratch-message} into that buffer.
 
 @c To make things nice and confusing, the next three items can be
 @c called from two places.  If displaying a startup screen, they are
@@ -218,7 +223,9 @@ parameters of the selected frame according to whatever the init files
 specify.
 
 @item
-It runs @code{window-setup-hook}.  @xref{Window Systems}.
+It runs @code{window-setup-hook}.  The only difference between this
+hook and @code{emacs-startup-hook} is that this one runs after the
+previously mentioned modifications to the frame parameters.
 
 @item
 @cindex startup screen
@@ -411,6 +418,12 @@ This normal hook is run, once, just after handling the command line
 arguments.  In batch mode, Emacs does not run this hook.
 @end defvar
 
+@defvar window-setup-hook
+This normal hook is very similar to @code{emacs-startup-hook}.
+The only difference is that it runs slightly later, after setting
+of the frame parameters.  @xref{Startup Summary, window-setup-hook}.
+@end defvar
+
 @defvar user-init-file
 This variable holds the absolute file name of the user's init file.  If the
 actual init file loaded is a compiled file, such as @file{.emacs.elc},
@@ -497,7 +510,7 @@ hook runs after loading your init file (if applicable) and the
 terminal-specific Lisp file, so you can use it to adjust the
 definitions made by that file.
 
-For a related feature, @pxref{Window Systems, window-setup-hook}.
+For a related feature, @pxref{Init File, window-setup-hook}.
 @end defvar
 
 @node Command-Line Arguments
@@ -745,7 +758,7 @@ Here is an example of how you could use these hooks:
 (add-hook 'suspend-resume-hook (lambda () (message "Resumed!")
                                  (sit-for 2)))
 @end smallexample
-@c The sit-for prevents the ``nil'' that suspend-emacs returns
+@c The sit-for prevents the @code{nil} that suspend-emacs returns
 @c hiding the message.
 
 Here is what you would see upon evaluating @code{(suspend-emacs "pwd")}:

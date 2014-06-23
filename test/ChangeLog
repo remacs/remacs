@@ -1,3 +1,61 @@
+2014-06-21  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	* automated/python-tests.el (python-util-strip-string-1): New test.
+
+2014-06-15  Michael Albinus  <michael.albinus@gmx.de>
+
+	Sync with Tramp 2.2.10.
+
+	* automated/tramp-tests.el (tramp--test-enabled): Ignore errors.
+	(tramp--instrument-test-case): Extend docstring.
+	(tramp-test15-copy-directory): Skip for tramp-smb.el.
+	(tramp-test21-file-links): Use `file-truename' for directories.
+	(tramp-test27-start-file-process, tramp-test28-shell-command):
+	Retrieve process output more robustly.
+	(tramp--test-check-files): Extend test.
+	(tramp-test30-special-characters): Skip for tramp-adb.el,
+	tramp-gvfs.el and tramp-smb.el.  Add further file names.
+
+2014-06-13  Glenn Morris  <rgm@gnu.org>
+
+	* automated/Makefile.in (compile-main):
+	GNU make automatically passes command-line arguments to sub-makes.
+
+2014-06-05  Michal Nazarewicz  <mina86@mina86.com>
+
+	* automated/tildify-tests.el (tildify-test--test): Optimise the test
+	slightly by reusing the same temporary buffer across multiple test
+	cases.
+
+	* automated/tildify-tests.el (tildify-test-find-env-end-re-bug)
+	(tildify-test-find-env-group-index-bug): Update to support new
+	signature of the `tildify-foreach-region-outside-env' function.
+	Namely, it now takes pairs as an argument instead of looking it up in
+	`tildify-ignored-environments-alist'.
+
+	* automated/tildify-tests.el (tildify-test--example-html): Add support
+	for generating XML code, so that…
+	(tildify-test-xml) …test can be added to check handling of XML
+	documents.
+
+	* automated/tildify-tests.el (tildify-test-find-env-group-index-bug):
+	New test checking end-regex building when multiple environment pairs
+	use integers to refer to capture groups.
+
+	* automated/tildify-tests.el (tildify-test-find-env-end-re-bug): New
+	test checking end-regex building in `tildify-find-env' function when
+	integers (denoting capture groups) and strings are mixed together.
+
+2014-06-02  Michael Albinus  <michael.albinus@gmx.de>
+
+	* automated/tramp-tests.el (tramp-remote-process-environment): Declare.
+	(tramp-test29-vc-registered): Set $BZR_HOME.  Remove instrumentation.
+
+2014-06-01  Michael Albinus  <michael.albinus@gmx.de>
+
+	* automated/tramp-tests.el (tramp-test29-vc-registered):
+	Instrument failed test case.
+
 2014-05-29  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* automated/ruby-mode-tests.el (ruby-assert-face): Use font-lock-ensure.

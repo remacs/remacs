@@ -8,8 +8,11 @@
 ;; Author: Neal Ziring <nz@rsch.wisc.edu>
 ;;	Felix S. T. Wu <wu@crys.wisc.edu>
 ;; Keywords: emulations
+;; Obsolete-since: 24.5
 
 ;;; Commentary:
+
+;; This file is obsolete.  Consider using viper instead.
 
 ;; Originally written by : seismo!wucs!nz@rsch.wisc.edu (Neal Ziring)
 ;; Extensively redesigned and rewritten by wu@crys.wisc.edu (Felix S.T. Wu)
@@ -1197,7 +1200,7 @@ SPECIAL FEATURE: char argument can be used to specify shift amount(1-9)."
     (let ((aelt (assq char vi-mark-alist)))
       (if aelt
 	  (move-marker (cdr aelt) (point)) ; fixed 6/12/86
-	(setq aelt (cons char (copy-marker (point))))
+	(setq aelt (cons char (point-marker)))
 	(setq vi-mark-alist (cons aelt vi-mark-alist))))))
 
 (defun vi-find-matching-paren ()

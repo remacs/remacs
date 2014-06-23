@@ -359,7 +359,6 @@ static Lisp_Object Qecho_keystrokes;
 static void recursive_edit_unwind (Lisp_Object buffer);
 static Lisp_Object command_loop (void);
 static Lisp_Object Qcommand_execute;
-struct timespec timer_check (void);
 
 static void echo_now (void);
 static ptrdiff_t echo_length (void);
@@ -379,12 +378,6 @@ bool interrupt_input;
 
 /* Nonzero while interrupts are temporarily deferred during redisplay.  */
 bool interrupts_deferred;
-
-/* If we support a window system, turn on the code to poll periodically
-   to detect C-g.  It isn't actually used when doing interrupt input.  */
-#ifdef HAVE_WINDOW_SYSTEM
-#define POLL_FOR_INPUT
-#endif
 
 /* The time when Emacs started being idle.  */
 
@@ -1225,7 +1218,7 @@ user_error (const char *msg)
   xsignal1 (Quser_error, build_string (msg));
 }
 
-_Noreturn
+/* _Noreturn will be added to prototype by make-docfile.  */
 DEFUN ("exit-recursive-edit", Fexit_recursive_edit, Sexit_recursive_edit, 0, 0, "",
        doc: /* Exit from the innermost recursive edit or minibuffer.  */)
   (void)
@@ -1236,7 +1229,7 @@ DEFUN ("exit-recursive-edit", Fexit_recursive_edit, Sexit_recursive_edit, 0, 0, 
   user_error ("No recursive edit is in progress");
 }
 
-_Noreturn
+/* _Noreturn will be added to prototype by make-docfile.  */
 DEFUN ("abort-recursive-edit", Fabort_recursive_edit, Sabort_recursive_edit, 0, 0, "",
        doc: /* Abort the command that requested this recursive edit or minibuffer input.  */)
   (void)
@@ -1295,9 +1288,6 @@ usage: (track-mouse BODY...)  */)
    If ignore_mouse_drag_p is non-zero, ignore (implicit) mouse movement
    after resizing the tool-bar window.  */
 
-#if !defined HAVE_WINDOW_SYSTEM || defined USE_GTK || defined HAVE_NS
-static
-#endif
 bool ignore_mouse_drag_p;
 
 static struct frame *
@@ -1326,13 +1316,10 @@ some_mouse_moved (void)
 
 static int read_key_sequence (Lisp_Object *, int, Lisp_Object,
                               bool, bool, bool, bool);
-void safe_run_hooks (Lisp_Object);
 static void adjust_point_for_property (ptrdiff_t, bool);
 
 /* The last boundary auto-added to buffer-undo-list.  */
 Lisp_Object last_undo_boundary;
-
-extern Lisp_Object Qregion_extract_function;
 
 /* FIXME: This is wrong rather than test window-system, we should call
    a new set-selection, which will then dispatch to x-set-selection, or
@@ -2094,16 +2081,13 @@ bind_polling_period (int n)
 
 /* Apply the control modifier to CHARACTER.  */
 
-#ifndef HAVE_NTGUI
-static
-#endif
 int
 make_ctrl_char (int c)
 {
   /* Save the upper bits here.  */
   int upper = c & ~0177;
 
-  if (! ASCII_BYTE_P (c))
+  if (! ASCII_CHAR_P (c))
     return c |= ctrl_modifier;
 
   c &= 0177;
@@ -2200,7 +2184,7 @@ show_help_echo (Lisp_Object help, Lisp_Object window, Lisp_Object object,
 
 
 
-/* Input of single characters from keyboard */
+/* Input of single characters from keyboard.  */
 
 static Lisp_Object kbd_buffer_get_event (KBOARD **kbp, bool *used_mouse_menu,
 					 struct timespec *end_time);
@@ -2443,7 +2427,6 @@ read_char (int commandflag, Lisp_Object map,
 
  retry:
 
-  reread = 0;
   if (CONSP (Vunread_post_input_method_events))
     {
       c = XCAR (Vunread_post_input_method_events);
@@ -2457,9 +2440,12 @@ read_char (int commandflag, Lisp_Object map,
 	  && NILP (XCDR (c)))
 	c = XCAR (c);
 
-      reread = 1;
+      reread = true;
       goto reread_first;
     }
+  else
+    reread = false;
+
 
   if (CONSP (Vunread_command_events))
     {
@@ -2468,17 +2454,13 @@ read_char (int commandflag, Lisp_Object map,
       c = XCAR (Vunread_command_events);
       Vunread_command_events = XCDR (Vunread_command_events);
 
-      reread = 1;
-
       /* Undo what sit-for did when it unread additional keys
 	 inside universal-argument.  */
 
-      if (CONSP (c)
-	  && EQ (XCAR (c), Qt))
-	{
-	  reread = 0;
-	  c = XCDR (c);
-	}
+      if (CONSP (c) && EQ (XCAR (c), Qt))
+	c = XCDR (c);
+      else
+	reread = true;
 
       /* Undo what read_char_x_menu_prompt did when it unread
 	 additional keys returned by Fx_popup_menu.  */
@@ -2512,7 +2494,7 @@ read_char (int commandflag, Lisp_Object map,
 	  && (SYMBOLP (XCAR (c)) || INTEGERP (XCAR (c)))
 	  && NILP (XCDR (c)))
 	c = XCAR (c);
-      reread = 1;
+      reread = true;
       goto reread_for_input_method;
     }
 
@@ -2853,6 +2835,11 @@ read_char (int commandflag, Lisp_Object map,
     {
       c = XCAR (Vunread_command_events);
       Vunread_command_events = XCDR (Vunread_command_events);
+
+      if (CONSP (c) && EQ (XCAR (c), Qt))
+	c = XCDR (c);
+      else
+	reread = true;
     }
 
   /* Read something from current KBOARD's side queue, if possible.  */
@@ -2906,8 +2893,8 @@ read_char (int commandflag, Lisp_Object map,
     {
       c = read_decoded_event_from_main_queue (end_time, local_getcjmp,
                                               prev_event, used_mouse_menu);
-      if (NILP(c) && end_time &&
-          timespec_cmp (*end_time, current_timespec ()) <= 0)
+      if (NILP (c) && end_time
+	  && timespec_cmp (*end_time, current_timespec ()) <= 0)
         {
           goto exit;
         }
@@ -3666,7 +3653,8 @@ kbd_buffer_store_event_hold (register struct input_event *event,
       *kbd_store_ptr = *event;
       ++kbd_store_ptr;
 #ifdef subprocesses
-      if (kbd_buffer_nr_stored () > KBD_BUFFER_SIZE/2 && ! kbd_on_hold_p ())
+      if (kbd_buffer_nr_stored () > KBD_BUFFER_SIZE / 2
+	  && ! kbd_on_hold_p ())
         {
           /* Don't read keyboard input until we have processed kbd_buffer.
              This happens when pasting text longer than KBD_BUFFER_SIZE/2.  */
@@ -5248,7 +5236,7 @@ make_lispy_position (struct frame *f, Lisp_Object x, Lisp_Object y,
       /* It's a click in window WINDOW at frame coordinates (X,Y)  */
       struct window *w = XWINDOW (window);
       Lisp_Object string_info = Qnil;
-      ptrdiff_t textpos = -1;
+      ptrdiff_t textpos = 0;
       int col = -1, row = -1;
       int dx  = -1, dy  = -1;
       int width = -1, height = -1;
@@ -5283,9 +5271,7 @@ make_lispy_position (struct frame *f, Lisp_Object x, Lisp_Object y,
 				     &object, &dx, &dy, &width, &height);
 	  if (STRINGP (string))
 	    string_info = Fcons (string, make_number (charpos));
-	  textpos = (w == XWINDOW (selected_window)
-		     && current_buffer == XBUFFER (w->contents))
-	    ? PT : marker_position (w->pointm);
+	  textpos = -1;
 
 	  xret = wx;
 	  yret = wy;
@@ -5353,7 +5339,7 @@ make_lispy_position (struct frame *f, Lisp_Object x, Lisp_Object y,
       /* For clicks in the text area, fringes, or margins, call
 	 buffer_posn_from_coords to extract TEXTPOS, the buffer
 	 position nearest to the click.  */
-      if (textpos < 0)
+      if (!textpos)
 	{
 	  Lisp_Object string2, object2 = Qnil;
 	  struct display_pos p;
@@ -5404,15 +5390,15 @@ make_lispy_position (struct frame *f, Lisp_Object x, Lisp_Object y,
 	}
 #endif
 
-      /* Object info */
+      /* Object info.  */
       extra_info
 	= list3 (object,
 		 Fcons (make_number (dx), make_number (dy)),
 		 Fcons (make_number (width), make_number (height)));
 
-      /* String info */
+      /* String info.  */
       extra_info = Fcons (string_info,
-			  Fcons (make_number (textpos),
+			  Fcons (textpos < 0 ? Qnil : make_number (textpos),
 				 Fcons (Fcons (make_number (col),
 					       make_number (row)),
 					extra_info)));
@@ -7518,8 +7504,8 @@ menu_bar_items (Lisp_Object old)
   {
     int i = menu_bar_items_index;
     if (i + 4 > ASIZE (menu_bar_items_vector))
-      menu_bar_items_vector =
-	larger_vector (menu_bar_items_vector, 4, -1);
+      menu_bar_items_vector
+	= larger_vector (menu_bar_items_vector, 4, -1);
     /* Add this item.  */
     ASET (menu_bar_items_vector, i, Qnil); i++;
     ASET (menu_bar_items_vector, i, Qnil); i++;
@@ -9422,16 +9408,6 @@ read_key_sequence (Lisp_Object *keybuf, int bufsize, Lisp_Object prompt,
 	  first_unbound = min (t, first_unbound);
 
 	  head = EVENT_HEAD (key);
-	  if (help_char_p (head) && t > 0)
-	    {
-	      read_key_sequence_cmd = Vprefix_help_command;
-	      keybuf[t++] = key;
-	      last_nonmenu_event = key;
-	      /* The Microsoft C compiler can't handle the goto that
-		 would go here.  */
-	      dummyflag = 1;
-	      break;
-	    }
 
 	  if (SYMBOLP (head))
 	    {
@@ -9689,6 +9665,17 @@ read_key_sequence (Lisp_Object *keybuf, int bufsize, Lisp_Object prompt,
 
 	  goto replay_sequence;
 	}
+
+      if (NILP (current_binding)
+	  && help_char_p (EVENT_HEAD (key)) && t > 1)
+	    {
+	      read_key_sequence_cmd = Vprefix_help_command;
+	      /* The Microsoft C compiler can't handle the goto that
+		 would go here.  */
+	      dummyflag = 1;
+	      break;
+	    }
+
       /* If KEY is not defined in any of the keymaps,
 	 and cannot be part of a function key or translation,
 	 and is a shifted function key,

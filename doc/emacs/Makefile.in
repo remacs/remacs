@@ -54,12 +54,11 @@ GZIP_PROG = @GZIP_PROG@
 
 HTML_OPTS = --no-split --html
 
-INFO_EXT=@INFO_EXT@
 # Options used only when making info output.
 # --no-split is only needed because of MS-DOS.
 # For a possible alternative, see
 # http://lists.gnu.org/archive/html/emacs-devel/2011-01/msg01182.html
-INFO_OPTS=@INFO_OPTS@
+INFO_OPTS= --no-split
 
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
@@ -143,46 +142,46 @@ EMACSSOURCES= \
 	${srcdir}/kmacro.texi \
 	$(EMACS_XTRA)
 
-## The info/ directory exists in release tarfiles but not the repository.
-mkinfodir = @${MKDIR_P} ${buildinfodir}
+## Disable implicit rules.
+%.texi: ;
 
 .PHONY: info dvi html pdf ps
 
-.SUFFIXES: .ps .dvi
-
-.dvi.ps:
-	$(DVIPS) -o $@ $<
-
-info: $(buildinfodir)/emacs$(INFO_EXT)
+info: $(buildinfodir)/emacs.info
 dvi: $(DVI_TARGETS)
 html: $(HTML_TARGETS)
 pdf: $(PDF_TARGETS)
 ps: $(PS_TARGETS)
 
+## The info/ directory exists in release tarfiles but not the repository.
+${buildinfodir}:
+	${MKDIR_P} $@
+
 # Note that all the Info targets build the Info files in srcdir.
 # There is no provision for Info files to exist in the build directory.
 # In a distribution of Emacs, the Info files should be up to date.
-# Note: "<" is not portable in ordinary make rules.
-$(buildinfodir)/emacs$(INFO_EXT): ${EMACSSOURCES}
-	$(mkinfodir)
-	$(MAKEINFO) $(MAKEINFO_OPTS) $(INFO_OPTS) -o $@ ${srcdir}/emacs.texi
+$(buildinfodir)/emacs.info: ${EMACSSOURCES} | ${buildinfodir}
+	$(MAKEINFO) $(MAKEINFO_OPTS) $(INFO_OPTS) -o $@ $<
 
 emacs.dvi: ${EMACSSOURCES}
-	$(ENVADD) $(TEXI2DVI) ${srcdir}/emacs.texi
+	$(ENVADD) $(TEXI2DVI) $<
 
 emacs.pdf: ${EMACSSOURCES}
-	$(ENVADD) $(TEXI2PDF) ${srcdir}/emacs.texi
+	$(ENVADD) $(TEXI2PDF) $<
 
 emacs.html: ${EMACSSOURCES}
-	$(MAKEINFO) $(MAKEINFO_OPTS) $(HTML_OPTS) -o $@ ${srcdir}/emacs.texi
+	$(MAKEINFO) $(MAKEINFO_OPTS) $(HTML_OPTS) -o $@ $<
 
 emacs-xtra.dvi: $(EMACS_XTRA)
-	$(ENVADD) $(TEXI2DVI) ${srcdir}/emacs-xtra.texi
+	$(ENVADD) $(TEXI2DVI) $<
 
 emacs-xtra.pdf: $(EMACS_XTRA)
-	$(ENVADD) $(TEXI2PDF) ${srcdir}/emacs-xtra.texi
+	$(ENVADD) $(TEXI2PDF) $<
 
-.PHONY: mostlyclean clean distclean maintainer-clean infoclean
+%.ps: %.dvi
+	$(DVIPS) -o $@ $<
+
+.PHONY: mostlyclean clean distclean bootstrap-clean maintainer-clean infoclean
 
 ## Temp files.
 mostlyclean:
@@ -200,11 +199,11 @@ distclean: clean
 ## In the standalone tarfile, the clean rule runs this.
 infoclean:
 	rm -f \
-	  $(buildinfodir)/emacs$(INFO_EXT) \
-	  $(buildinfodir)/emacs$(INFO_EXT)-[1-9] \
-	  $(buildinfodir)/emacs$(INFO_EXT)-[1-9][0-9]
+	  $(buildinfodir)/emacs.info \
+	  $(buildinfodir)/emacs.info-[1-9] \
+	  $(buildinfodir)/emacs.info-[1-9][0-9]
 
-maintainer-clean: distclean infoclean
+bootstrap-clean maintainer-clean: distclean infoclean
 
 .PHONY: dist
 
@@ -220,7 +219,6 @@ dist:
 	  -e 's/^\(clean:.*\)/\1 infoclean/' \
 	  -e "s/@ver[s]ion@/${version}/" \
 	  -e 's/@MAKE[I]NFO@/makeinfo/' -e 's/@MK[D]IR_P@/mkdir -p/' \
-	  -e 's/@IN[F]O_EXT@/.info/' -e 's/@IN[F]O_OPTS@//' \
 	  ${srcdir}/Makefile.in > emacs-manual-${version}/Makefile
 	@if grep '@[a-zA-Z_]*@' emacs-manual-${version}/Makefile; then \
 	  echo "Unexpanded configure variables in Makefile?" 1>&2; exit 1; \

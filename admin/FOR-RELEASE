@@ -2,12 +2,18 @@ Tasks needed before the next release.
 
 * TO BE DONE SHORTLY BEFORE RELEASE
 
-** Either update, test, and support the old w32 build method, or remove it.
+** Make sure the necessary sources and scripts for any generated files
+are included in the source tarfile.  (They don't need to be installed,
+so eg admin/ is fine.)
 
 ** Manuals
 Check for node names using problematic characters:
   find doc -name '*.texi' -exec grep '^@node[^,]*[:.()]' {} +
 Sadly makeinfo does not warn about such characters.
+
+Check for major new features added since the last release (e.g. new
+lisp files), and add the relevant authors to the Acknowledgments in
+doc/emacs/ack.texi and emacs.texi.
 
 Check cross-references between the manuals (eg from emacs to elisp)
 are correct.  You can use something like the following in the info

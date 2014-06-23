@@ -2538,7 +2538,7 @@ current buffer is cleared.  */)
 	      p = GAP_END_ADDR;
 	      stop = Z;
 	    }
-	  if (ASCII_BYTE_P (*p))
+	  if (ASCII_CHAR_P (*p))
 	    p++, pos++;
 	  else if (CHAR_BYTE8_HEAD_P (*p))
 	    {
@@ -2610,7 +2610,7 @@ current buffer is cleared.  */)
 	      stop = Z;
 	    }
 
-	  if (ASCII_BYTE_P (*p))
+	  if (ASCII_CHAR_P (*p))
 	    p++, pos++;
 	  else if (EQ (flag, Qt)
 		   && ! CHAR_BYTE8_HEAD_P (*p)

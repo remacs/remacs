@@ -37,6 +37,11 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <X11/extensions/Xfixes.h>
 #endif
 
+/* Using Xft implies that XRender is available.  */
+#ifdef HAVE_XFT
+#include <X11/extensions/Xrender.h>
+#endif
+
 /* Load sys/types.h if not already loaded.
    In some systems loading it twice is suicidal.  */
 #ifndef makedev
@@ -78,6 +83,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "xsettings.h"
 #include "xgselect.h"
 #include "sysselect.h"
+#include "menu.h"
 
 #ifdef USE_X_TOOLKIT
 #include <X11/Shell.h>
@@ -223,7 +229,6 @@ static void x_lower_frame (struct frame *);
 static const XColor *x_color_cells (Display *, int *);
 static int x_io_error_quitter (Display *);
 static struct terminal *x_create_terminal (struct x_display_info *);
-void x_delete_terminal (struct terminal *);
 static void x_update_end (struct frame *);
 static void XTframe_up_to_date (struct frame *);
 static void x_clear_frame (struct frame *);
@@ -356,8 +361,10 @@ x_find_topmost_parent (struct frame *f)
       unsigned int nchildren;
 
       win = wi;
-      XQueryTree (dpy, win, &root, &wi, &children, &nchildren);
-      XFree (children);
+      if (XQueryTree (dpy, win, &root, &wi, &children, &nchildren))
+	XFree (children);
+      else
+	break;
     }
 
   return win;
@@ -605,7 +612,13 @@ x_update_window_end (struct window *w, bool cursor_on_p,
   /* If a row with mouse-face was overwritten, arrange for
      XTframe_up_to_date to redisplay the mouse highlight.  */
   if (mouse_face_overwritten_p)
-    reset_mouse_highlight (MOUSE_HL_INFO (XFRAME (w->frame)));
+    {
+      Mouse_HLInfo *hlinfo = MOUSE_HL_INFO (XFRAME (w->frame));
+
+      hlinfo->mouse_face_beg_row = hlinfo->mouse_face_beg_col = -1;
+      hlinfo->mouse_face_end_row = hlinfo->mouse_face_end_col = -1;
+      hlinfo->mouse_face_window = Qnil;
+    }
 }
 
 
@@ -899,7 +912,7 @@ x_set_mouse_face_gc (struct glyph_string *s)
   else
     face_id = FACE_FOR_CHAR (s->f, face, 0, -1, Qnil);
   s->face = FACE_FROM_ID (s->f, face_id);
-  PREPARE_FACE_FOR_DISPLAY (s->f, s->face);
+  prepare_face_for_display (s->f, s->face);
 
   if (s->font == s->face->font)
     s->gc = s->face->gc;
@@ -947,7 +960,7 @@ x_set_mode_line_face_gc (struct glyph_string *s)
 static void
 x_set_glyph_string_gc (struct glyph_string *s)
 {
-  PREPARE_FACE_FOR_DISPLAY (s->f, s->face);
+  prepare_face_for_display (s->f, s->face);
 
   if (s->hl == DRAW_NORMAL_TEXT)
     {
@@ -4437,14 +4450,11 @@ xg_scroll_callback (GtkRange     *range,
                     gpointer      user_data)
 {
   struct scroll_bar *bar = user_data;
-  gdouble position;
   int part = -1, whole = 0, portion = 0;
   GtkAdjustment *adj = GTK_ADJUSTMENT (gtk_range_get_adjustment (range));
   struct frame *f = g_object_get_data (G_OBJECT (range), XG_FRAME_DATA);
 
   if (xg_ignore_gtk_scrollbar) return FALSE;
-  position = gtk_adjustment_get_value (adj);
-
 
   switch (scroll)
     {
@@ -4456,7 +4466,7 @@ xg_scroll_callback (GtkRange     *range,
           part = scroll_bar_handle;
           whole = gtk_adjustment_get_upper (adj) -
             gtk_adjustment_get_page_size (adj);
-          portion = min ((int)position, whole);
+          portion = min ((int)value, whole);
           bar->dragging = portion;
         }
       break;
@@ -6459,7 +6469,7 @@ handle_one_xevent (struct x_display_info *dpyinfo,
 
 	    for (i = 0, nchars = 0; i < nbytes; i++)
 	      {
-		if (ASCII_BYTE_P (copy_bufptr[i]))
+		if (ASCII_CHAR_P (copy_bufptr[i]))
 		  nchars++;
 		STORE_KEYSYM_FOR_DEBUG (copy_bufptr[i]);
 	      }
@@ -6814,9 +6824,10 @@ handle_one_xevent (struct x_display_info *dpyinfo,
           {
             dpyinfo->grabbed |= (1 << event->xbutton.button);
             dpyinfo->last_mouse_frame = f;
-
-            if (!tool_bar_p)
-              last_tool_bar_item = -1;
+#if ! defined (USE_GTK)
+            if (f && !tool_bar_p)
+              f->last_tool_bar_item = -1;
+#endif /* not USE_GTK */
           }
         else
           dpyinfo->grabbed &= ~(1 << event->xbutton.button);
@@ -7862,11 +7873,6 @@ xim_destroy_callback (XIM xim, XPointer client_data, XPointer call_data)
 }
 
 #endif /* HAVE_X11R6 */
-
-#ifdef HAVE_X11R6
-/* This isn't prototyped in OSF 5.0 or 5.1a.  */
-extern char *XSetIMValues (XIM, ...);
-#endif
 
 /* Open the connection to the XIM server on display DPYINFO.
    RESOURCE_NAME is the resource name Emacs uses.  */
@@ -9783,7 +9789,7 @@ x_toggle_visible_pointer (struct frame *f, bool invisible)
   else
     XDefineCursor (FRAME_X_DISPLAY (f), FRAME_X_WINDOW (f),
 		   f->output_data.x->current_cursor);
-  f->pointer_invisible = invisible;  
+  f->pointer_invisible = invisible;
 }
 
 /* Setup pointer blanking, prefer Xfixes if available.  */
@@ -9791,7 +9797,9 @@ x_toggle_visible_pointer (struct frame *f, bool invisible)
 static void
 x_setup_pointer_blanking (struct x_display_info *dpyinfo)
 {
-  if (x_probe_xfixes_extension (dpyinfo->display))
+  /* FIXME: the brave tester should set EMACS_XFIXES because we're suspecting
+     X server bug, see http://debbugs.gnu.org/cgi/bugreport.cgi?bug=17609.  */
+  if (egetenv ("EMACS_XFIXES") && x_probe_xfixes_extension (dpyinfo->display))
     dpyinfo->toggle_visible_pointer = xfixes_toggle_visible_pointer;
   else
     {
@@ -10097,14 +10105,27 @@ x_term_init (Lisp_Object display_name, char *xrm_option, char *resource_name)
 
 #ifdef HAVE_XFT
   {
-    /* If we are using Xft, check dpi value in X resources.
-       It is better we use it as well, since Xft will use it, as will all
-       Gnome applications.  If our real DPI is smaller or larger than the
-       one Xft uses, our font will look smaller or larger than other
-       for other applications, even if it is the same font name (monospace-10
-       for example).  */
-    char *v = XGetDefault (dpyinfo->display, "Xft", "dpi");
+    /* If we are using Xft, the following precautions should be made:
+
+       1. Make sure that the Xrender extension is added before the Xft one.
+       Otherwise, the close-display hook set by Xft is called after the one
+       for Xrender, and the former tries to re-add the latter.  This results
+       in inconsistency of internal states and leads to X protocol error when
+       one reconnects to the same X server (Bug#1696).
+
+       2. Check dpi value in X resources.  It is better we use it as well,
+       since Xft will use it, as will all Gnome applications.  If our real DPI
+       is smaller or larger than the one Xft uses, our font will look smaller
+       or larger than other for other applications, even if it is the same
+       font name (monospace-10 for example).  */
+
+    int event_base, error_base;
+    char *v;
     double d;
+
+    XRenderQueryExtension (dpyinfo->display, &event_base, &error_base);
+
+    v = XGetDefault (dpyinfo->display, "Xft", "dpi");
     if (v != NULL && sscanf (v, "%lf", &d) == 1)
       dpyinfo->resy = dpyinfo->resx = d;
   }
@@ -10233,7 +10254,7 @@ x_term_init (Lisp_Object display_name, char *xrm_option, char *resource_name)
 				   1, 0, 1);
 
   x_setup_pointer_blanking (dpyinfo);
-  
+
 #ifdef HAVE_X_I18N
   xim_initialize (dpyinfo, resource_name);
 #endif
@@ -10546,6 +10567,10 @@ x_create_terminal (struct x_display_info *dpyinfo)
   terminal->frame_rehighlight_hook = XTframe_rehighlight;
   terminal->frame_raise_lower_hook = XTframe_raise_lower;
   terminal->fullscreen_hook = XTfullscreen_hook;
+  terminal->menu_show_hook = x_menu_show;
+#if defined (USE_X_TOOLKIT) || defined (USE_GTK)
+  terminal->popup_dialog_hook = xw_popup_dialog;
+#endif
   terminal->set_vertical_scroll_bar_hook = XTset_vertical_scroll_bar;
   terminal->condemn_scroll_bars_hook = XTcondemn_scroll_bars;
   terminal->redeem_scroll_bar_hook = XTredeem_scroll_bar;
@@ -10557,13 +10582,12 @@ x_create_terminal (struct x_display_info *dpyinfo)
   return terminal;
 }
 
-void
+static void
 x_initialize (void)
 {
   baud_rate = 19200;
 
   x_noop_count = 0;
-  last_tool_bar_item = -1;
   any_help_event_p = 0;
   ignore_next_mouse_click_timeout = 0;
 
