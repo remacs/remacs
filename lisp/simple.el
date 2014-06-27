@@ -3742,14 +3742,34 @@ argument should still be a \"useful\" string for such uses."
   (if interprogram-cut-function
       (funcall interprogram-cut-function string)))
 
+;; It has been argued that this should work similar to `self-insert-command'
+;; which merges insertions in undo-list in groups of 20 (hard-coded in cmds.c).
+(defcustom kill-append-merge-undo nil
+  "Whether appending to kill ring also makes \\[undo] restore both pieces of text simultaneously."
+  :type 'boolean
+  :group 'killing
+  :version "24.5")
+
 (defun kill-append (string before-p)
   "Append STRING to the end of the latest kill in the kill ring.
 If BEFORE-P is non-nil, prepend STRING to the kill.
+Also removes the last undo boundary in the current buffer,
+ depending on `kill-append-merge-undo'.
 If `interprogram-cut-function' is set, pass the resulting kill to it."
   (let* ((cur (car kill-ring)))
     (kill-new (if before-p (concat string cur) (concat cur string))
 	      (or (= (length cur) 0)
-		  (equal nil (get-text-property 0 'yank-handler cur))))))
+		  (equal nil (get-text-property 0 'yank-handler cur))))
+    (when (and kill-append-merge-undo (not buffer-read-only))
+      (let ((prev buffer-undo-list)
+            (next (cdr buffer-undo-list)))
+        ;; find the next undo boundary
+        (while (car next)
+          (pop next)
+          (pop prev))
+        ;; remove this undo boundary
+        (when prev
+          (setcdr prev (cdr next)))))))
 
 (defcustom yank-pop-change-selection nil
   "Whether rotating the kill ring changes the window system selection.
@@ -4522,7 +4542,7 @@ If NO-TMM is non-nil, leave `transient-mark-mode' alone."
       (force-mode-line-update) ;Refresh toolbar (bug#16382).
       (setq mark-active t)
       (unless (or transient-mark-mode no-tmm)
-        (setq transient-mark-mode 'lambda))
+        (setq-local transient-mark-mode 'lambda))
       (run-hooks 'activate-mark-hook))))
 
 (defun set-mark (pos)
@@ -4828,7 +4848,7 @@ mode temporarily."
     (set-mark (point))
     (goto-char omark)
     (cond (temp-highlight
-	   (setq transient-mark-mode (cons 'only transient-mark-mode)))
+	   (setq-local transient-mark-mode (cons 'only transient-mark-mode)))
 	  ((or (and arg (region-active-p)) ; (xor arg (not (region-active-p)))
 	       (not (or arg (region-active-p))))
 	   (deactivate-mark))
@@ -4867,10 +4887,10 @@ its earlier value."
   (cond ((and shift-select-mode this-command-keys-shift-translated)
          (unless (and mark-active
 		      (eq (car-safe transient-mark-mode) 'only))
-	   (setq transient-mark-mode
-                 (cons 'only
-                       (unless (eq transient-mark-mode 'lambda)
-                         transient-mark-mode)))
+	   (setq-local transient-mark-mode
+                       (cons 'only
+                             (unless (eq transient-mark-mode 'lambda)
+                               transient-mark-mode)))
            (push-mark nil nil t)))
         ((eq (car-safe transient-mark-mode) 'only)
          (setq transient-mark-mode (cdr transient-mark-mode))
@@ -4901,7 +4921,7 @@ Transient Mark mode, invoke \\[apropos-documentation] and type \"transient\"
 or \"mark.*active\" at the prompt."
   :global t
   ;; It's defined in C/cus-start, this stops the d-m-m macro defining it again.
-  :variable transient-mark-mode)
+  :variable (default-value 'transient-mark-mode))
 
 (defvar widen-automatically t
   "Non-nil means it is ok for commands to call `widen' when they want to.
