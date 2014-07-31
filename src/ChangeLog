@@ -1,3 +1,1126 @@
+2014-07-31  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Simplify timerfd configuration and fix some minor glitches.
+	* atimer.c (TIMERFD_CREATE_FLAGS): Remove; we now assume TFD_CLOEXEC.
+	(alarm_timer, alarm_timer_ok, set_alarm, init_atimer):
+	Fall back on timer_create if timerfd_create fails at runtime.
+	(resolution) [HAVE_CLOCK_GETRES]: Remove; we now rely on the
+	kernel primitives to do resolution.  All uses removed.
+	(timerfd) [!HAVE_TIMERFD]: Define to be -1, for convenience.
+	(turn_on_atimers): Clear timer_create-based timers too,
+	for consistency.
+
+	* frame.c (x_set_frame_parameters): Don't use uninitialized locals.
+	Without this change, the code can access the local variable 'width'
+	even when it has not been initialized, and likewise for 'height';
+	in either case this leads to undefined behavior.
+
+2014-07-30  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	* xrdb.c (x_load_resources) [USE_MOTIF]: Although not strictly
+	necessary, put horizontal scroll bar resources as well.  See
+	<http://lists.gnu.org/archive/html/emacs-devel/2014-07/msg00430.html>.
+	* xterm.c (x_sync_with_move): Really wait 0.5s, not 0.0005s.
+
+2014-07-29  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	* xrdb.c (x_load_resources) [!USE_MOTIF]: Put horizontal scroll bar
+	background value to match the resource of its vertical counterpart.
+
+2014-07-29  Martin Rudalics  <rudalics@gmx.at>
+
+	* frame.c (adjust_frame_size): Use FRAME_WINDOW_P instead of
+	FRAME_X_WINDOW when calling x_set_window_size (Bug#18138).
+
+2014-07-28  Martin Rudalics  <rudalics@gmx.at>
+
+	* frame.c (x_set_frame_parameters): Revert part of 2014-07-24
+	change that added the top margin height to the requested height
+	and revert (undocumented) part of 2014-07-28 change that changed
+	the logic of whether a size change occurred.
+
+2014-07-28  Eli Zaretskii  <eliz@gnu.org>
+
+	* .gdbinit (xwindow): The members total_cols, total_lines,
+	left_col, and top_line are C integers (and has been so for the
+	last 1.5 years).
+
+	* .gdbinit (xsubchartable): The members 'depth' and 'min_char' are
+	now C integers.
+
+2014-07-28  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	On GNU/Linux, use timerfd for asynchronous timers.
+	* atimer.c (toplevel) [HAVE_TIMERFD]: Include sys/timerfd.h.
+	(toplevel): Rename alarm_timer_ok to special_timer_available.
+	[HAVE_TIMERFD]: Declare timerfd.
+	[HAVE_CLOCK_GETRES]: Declare resolution.
+	(start_atimer) [HAVE_CLOCK_GETRES]: Round up timestamp to
+	system timer resolution.
+	(set_alarm) [HAVE_TIMERFD]: Use timerfd_settime.
+	(timerfd_callback) [HAVE_TIMERFD]: New function.
+	(atimer_result, debug_timer_callback, Fdebug_timer_check)
+	[ENABLE_CHECKING]: New function for the sake of automated tests.
+	(init_atimer) [HAVE_TIMERFD]: Setup timerfd.
+	[HAVE_CLOCK_GETRES]: Likewise for system timer resolution.
+	[ENABLE_CHECKING]: Defsubr test function.
+	* atimer.h (timerfd_callback) [HAVE_TIMERFD]: Add prototype.
+	* lisp.h (add_timer_wait_descriptor) [HAVE_TIMERFD]: Likewise.
+	* process.c (add_timer_wait_descriptor) [HAVE_TIMERFD]: New function.
+
+	Fix --without-x build and pacify --enable-gcc-warnings.
+	Problems reported in Bug#18122 and Bug#18124.
+	* frame.c (get_frame_param): Define even if !HAVE_WINDOW_SYSTEM.
+	(frame_windows_min_size): Now static.
+	* frame.h (FRAME_HAS_HORIZONTAL_SCROLL_BARS) [!HAVE_WINDOW_SYSTEM]:
+	Define as no-op.
+	(adjust_frame_size): Always declare prototype.
+
+	Fix Gnus-related issues reported by David Kastrup <dak@gnu.org> in
+	<http://lists.gnu.org/archive/html/emacs-devel/2014-07/msg00370.html>.
+	* atimer.c (timerfd_callback): Always read expiration data.
+	Add comment.
+	(turn_on_atimers) [HAVE_TIMERFD]: Disarm timerfd timer.
+	* process.c (add_timer_wait_descriptor): Add timer descriptor
+	to input_wait_mask and non_process_wait_mask as well.
+
+2014-07-28  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* frame.c (x_set_frame_parameters): Don't use uninitialized locals.
+
+2014-07-27  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* nsterm.m (applicationDidFinishLaunching antialiasThresholdDidChange):
+	Reinstate code removed by the prevoius commit to this file.
+
+2014-07-27  Martin Rudalics  <rudalics@gmx.at>
+
+	* buffer.h (struct buffer): New fields scroll_bar_height and
+	horizontal_scroll_bar_type.
+	* buffer.c (bset_scroll_bar_height)
+	(bset_horizontal_scroll_bar_type): New functions.
+	(Fbuffer_swap_text): Handle old_pointm field.
+	(init_buffer_once): Set defaults for scroll_bar_height and
+	horizontal_scroll_bar_type.
+	(syms_of_buffer): New variables scroll_bar_height and
+	horizontal_scroll_bar_type.
+	* dispextern.h (window_part): Rename ON_SCROLL_BAR to
+	ON_VERTICAL_SCROLL_BAR.  Add ON_HORIZONTAL_SCROLL_BAR.
+	(set_vertical_scroll_bar): Remove prototype.
+	(x_change_tool_bar_height): Add prototype.
+	* dispnew.c (adjust_frame_glyphs_for_frame_redisplay)
+	(window_to_frame_vpos, update_frame_1, scrolling, init_display):
+	Use FRAME_TOTAL_COLS and FRAME_TOTAL_LINES instead of FRAME_COLS
+	and FRAME_LINES.
+	(adjust_frame_glyphs_for_window_redisplay): Rearrange lines.
+	(update_window): Start mode_line_row->y after horizontal scroll
+	bar.
+	(change_frame_size_1): Call adjust_frame_size.
+	(init_display): When changing the size of a tty frame do not
+	pass height of menu bar.
+	(Qframe_windows_min_size): New symbol.
+	* frame.h (struct frame): List tool bar fields after menu bar
+	fields.  Add official, total_lines, horizontal_scroll_bars,
+	config_scroll_bar_height and config_scroll_bar_lines fields.
+	(FRAME_HAS_HORIZONTAL_SCROLL_BARS)
+	(FRAME_CONFIG_SCROLL_BAR_HEIGHT, FRAME_CONFIG_SCROLL_BAR_LINES)
+	(FRAME_SCROLL_BAR_AREA_HEIGHT, FRAME_SCROLL_BAR_COLS)
+	(FRAME_SCROLL_BAR_LINES, FRAME_TOTAL_LINES, SET_FRAME_LINES)
+	(FRAME_WINDOWS_HEIGHT): New macros.
+	(SET_FRAME_HEIGHT, FRAME_TEXT_LINES_TO_PIXEL_HEIGHT)
+	(FRAME_PIXEL_Y_TO_LINE, FRAME_PIXEL_HEIGHT_TO_TEXT_LINES)
+	(FRAME_TEXT_TO_PIXEL_HEIGHT): Separately count top margin and
+	horizontal scroll bar.
+	(frame_inhibit_resize, adjust_frame_size)
+	(frame_windows_min_size): Add declarations.
+	(Qscroll_bar_height, Qhorizontal_scroll_bars)
+	(x_set_scroll_bar_default_height, x_set_left_fringe)
+	(x_set_right_fringe, x_set_vertical_scroll_bars)
+	(x_set_horizontal_scroll_bars, x_set_scroll_bar_width)
+	(x_set_scroll_bar_height): Add external declarations.
+	* frame.c: (frame_inhibit_resize, frame_windows_min_size)
+	(adjust_frame_size): New functions.
+	(make_frame): Initial horizontal_scroll_bars field.  Use
+	SET_FRAME_LINES.  Don't allow horizontal scroll bar in
+	minibuffer window.
+	(make_initial_frame, make_terminal_frame): No horizontal scroll
+	bar in initial and terminal frames.  Use adjust_frame_size.
+	(Fframe_total_cols): Fix doc-string.
+	(Fframe_total_lines, Fscroll_bar_height): New Lisp functions.
+	(Fset_frame_height, Fset_frame_width, Fset_frame_size): Rewrite
+	using adjust_frame_size.
+	(Qscroll_bar_height, Qhorizontal_scroll_bars)
+	(Qframe_windows_min_size): New symbols.
+	(x_set_frame_parameters): Remove call of check_frame_size.
+	(x_report_frame_params): Return scroll_bar_height value.
+	(x_set_left_fringe, x_set_right_fringe): New functions.
+	(adjust_frame_height, x_set_internal_border_width)
+	(x_set_fringe_width): Remove.
+	(x_set_internal_border_width, x_set_vertical_scroll_bars)
+	(x_set_scroll_bar_width, x_set_right_divider_width)
+	(x_set_bottom_divider_width): Rewrite using adjust_frame_size.
+	(x_set_horizontal_scroll_bars, x_set_scroll_bar_height): New
+	functions.
+	(x_figure_window_size): Rewrite to make frame display the
+	expected number of lines.
+	(Vdefault_frame_scroll_bars): Rewrite doc-string.
+	(Vdefault_frame_horizontal_scroll_bars)
+	(Vframe_initial_frame_tool_bar_height)
+	(frame_inhibit_implied_resize): New variables.
+	* fringe.c (compute_fringe_widths): Remove.
+	* gtkutil.h (YG_SB_MIN, YG_SB_MAX, YG_SB_RANGE): Define.
+	(xg_create_horizontal_scroll_bar)
+	(xg_update_horizontal_scrollbar_pos)
+	(xg_set_toolkit_horizontal_scroll_bar_thumb)
+	(xg_get_default_scrollbar_height)
+	(xg_clear_under_internal_border): Extern.
+	* gtkutil.c (xg_frame_resized): Don't call
+	do_pending_window_change.
+	(xg_frame_set_char_size): Use adjust_frame_size.
+	(style_changed_cb): Call update_theme_scrollbar_height and
+	x_set_scroll_bar_default_height.
+	(x_wm_set_size_hint): Don't call check_frame_size.
+	(update_theme_scrollbar_height)
+	(xg_get_default_scrollbar_height)
+	(xg_create_horizontal_scroll_bar)
+	(xg_update_horizontal_scrollbar_pos)
+	(xg_set_toolkit_horizontal_scroll_bar_thumb): New functions.
+	(xg_create_scroll_bar): Set horizontal slot of bar.
+	(xg_initialize): Call update_theme_scrollbar_height.
+	(xg_clear_under_internal_border): No more static.
+	* insdel.c (adjust_suspend_auto_hscroll): New function.
+	(adjust_markers_for_delete, adjust_markers_for_insert)
+	(adjust_markers_for_replace): Call adjust_suspend_auto_hscroll.
+	* keyboard.c (readable_events, discard_mouse_events)
+	(make_lispy_event): Handle horizontal scroll bar click events.
+	(Fsuspend_emacs): When changing the size of a tty frame do not
+	pass height of menu bar.
+	(Qbefore_handle, Qhorizontal_handle, Qafter_handle, Qleft)
+	(Qright, Qleftmost, Qrightmost): New symbols.
+	* menu.c (Fx_popup_dialog): Use FRAME_TOTAL_LINES instead of
+	FRAME_LINES.
+	* minibuf.c (read_minibuf): Initialize suspend_auto_hscroll.
+	* nsfns.m (x_set_internal_border_width): New function.
+	* nsterm.m (ns_draw_fringe_bitmap, ns_set_vertical_scroll_bar):
+	Remove extended fringe code.
+	(x_set_window_size, x_new_font): Don't call
+	compute_fringe_widths.
+	* term.c (Fresume_tty): When changing the size of a tty frame do
+	not pass height of menu bar.
+	(clear_tty_hooks, set_tty_hooks): Clear
+	horizontal_scroll_bar_hook.
+	(init_tty): Frame has no horizontal scroll bars.
+	* termhooks.h (enum scroll_bar_part): Add scroll_bar_move_ratio,
+	scroll_bar_before_handle, scroll_bar_horizontal_handle,
+	scroll_bar_after_handle, scroll_bar_left_arrow,
+	scroll_bar_right_arrow, scroll_bar_to_leftmost and
+	scroll_bar_to_rightmost entries.
+	(enum event_kind): Add HORIZONTAL_SCROLL_BAR_CLICK_EVENT
+	(struct terminal): Add set_horizontal_scroll_bar_hook.
+	* w32console.c (initialize_w32_display): Clear
+	horizontal_scroll_bar_hook.
+	* w32fns.c (x_set_mouse_color): Use FRAME_W32_DISPLAY instead of
+	FRAME_X_DISPLAY.
+	(x_clear_under_internal_border, x_set_internal_border_width):
+	New functions.
+	(x_set_menu_bar_lines): Rewrite using frame_inhibit_resize.  Set
+	windows_or_buffers_changed when adding the menu bar.
+	(x_set_tool_bar_lines): Rewrite using adjust_frame_size.
+	(x_change_tool_bar_height, x_set_scroll_bar_default_height)
+	(w32_createhscrollbar): New functions.
+	(w32_createscrollbar): Rename to w32_createvscrollbar.
+	(w32_createwindow): Init WND_HSCROLLBAR_INDEX.
+	(w32_name_of_message): Replace WM_EMACS_CREATESCROLLBAR by
+	WM_EMACS_CREATEVSCROLLBAR and WM_EMACS_CREATEHSCROLLBAR.  Add
+	WM_EMACS_SHOWCURSOR.
+	(w32_wnd_proc): Handle WM_HSCROLL case.  In WM_WINDOWPOSCHANGING
+	case do not artificially impose WM size hints.  Handle
+	WM_EMACS_SHOWCURSOR case.  Replace WM_EMACS_CREATESCROLLBAR case
+	by WM_EMACS_CREATEVSCROLLBAR and WM_EMACS_CREATEHSCROLLBAR
+	cases.
+	(my_create_tip_window): Replace WND_SCROLLBAR_INDEX by
+	WND_VSCROLLBAR_INDEX and WND_HSCROLLBAR_INDEX.
+	(unwind_create_frame_1): Remove.
+	(Fx_create_frame): Make both scrollbars the system standard
+	width and height.  Use official field of frame structure to
+	inhibit running window-configuration-change-hook.
+	(x_create_tip_frame): Call SET_FRAME_LINES and change_frame_size
+	pixelwise.  Handle frame's official field.
+	(w32_frame_parm_handlers): Remove x_set_fringe_width
+	entries. Add x_set_scroll_bar_height,
+	x_set_horizontal_scroll_bars, x_set_left_fringe and
+	x_set_right_fringe.
+	* w32inevt.c (resize_event, maybe_generate_resize_event): Do not
+	pass height of menu bar to change_frame_size.
+	* w32menu.c (set_frame_menubar): Rewrite using
+	frame_inhibit_resize.
+	* w32term.h (struct w32_display_info): Add
+	horizontal_scroll_bar_cursor and cursor_display_counter.
+	(struct scroll_bar): Add horizontal.
+	(HORIZONTAL_SCROLL_BAR_INSIDE_HEIGHT)
+	(HORIZONTAL_SCROLL_BAR_LEFT_RANGE)
+	(HORIZONTAL_SCROLL_BAR_INSIDE_WIDTH)
+	(HORIZONTAL_SCROLL_BAR_LEFT_BORDER)
+	(HORIZONTAL_SCROLL_BAR_RIGHT_BORDER)
+	(HORIZONTAL_SCROLL_BAR_TOP_BORDER)
+	(HORIZONTAL_SCROLL_BAR_BOTTOM_BORDER)
+	(HORIZONTAL_SCROLL_BAR_MIN_HANDLE): New macros.
+	(WM_EMACS_CREATEVSCROLLBAR, WM_EMACS_CREATEHSCROLLBAR): Define
+	instead of WM_EMACS_CREATESCROLLBAR.
+	(WND_VSCROLLBAR_INDEX, WND_HSCROLLBAR_INDEX): Define instead of
+	WND_SCROLLBAR_INDEX.
+	* w32term.c (horizontal_scroll_bar_min_handle)
+	(horizontal_scroll_bar_left_border)
+	(horizontal_scroll_bar_right_border): New integers.
+	(x_set_frame_alpha): Replace x_highlight_frame by
+	w32_focus_frame.
+	(x_window_to_scroll_bar): New argument "type".  Update callers
+	accordingly.
+	(w32_set_horizontal_scroll_bar_thumb)
+	(x_horizontal_scroll_bar_report_motion)
+	(w32_set_horizontal_scroll_bar)
+	(w32_horizontal_scroll_bar_handle_click)
+	(x_horizontal_scroll_bar_report_motion): New functions.
+	(w32_mouse_position): Discriminate horizontal and vertical
+	scrollbar cases.
+	(my_create_scrollbar): Replace with two new functions
+	my_create_vscrollbar and my_create_hscrollbar.
+	(x_scroll_bar_create): New argument "horizontal".  Update
+	callers accordingly.
+	(x_scroll_bar_remove, w32_condemn_scroll_bars)
+	(w32_redeem_scroll_bar, x_scroll_bar_clear): Handle horizontal
+	scroll bar case.
+	(w32_read_socket): Handle WM_HSCROLL cae.
+	(x_new_font): Don't recompute fringe widths.  Use
+	frame_inhibit_resize.  Calculate new menu bar height iff we
+	build without toolkit.  Always clear under internal border.
+	(x_set_window_size): Don't check frame size or recompute
+	fringes.  Reset fullscreen status before applying sizes.  Always
+	resize as requested by pixelwise argument.  Don't call
+	do_pending_window_change.
+	(x_wm_set_size_hint): Add call for FRAME_SCROLL_BAR_AREA_HEIGHT.
+	(w32_initialize_display_info): Initialize dpyinfo's
+	horizontal_scroll_bar_cursor entry.
+	(w32_create_terminal): Add set_horizontal_scroll_bar_hook.
+	(w32_initialize): Init horizontal_scroll_bar_min_handle and
+	horizontal_scroll_bar_left_border.
+	(w32fullscreen_hook): Intermittently resize window to normal
+	when switching from fullscreen to maximized state.
+	(run_window_configuration_change_hook): Don't run it if frame is
+	not official yet.
+	(unwind_change_frame): Remove.
+	(Fset_window_configuration): Rewrite using frame's official field.
+	* widget.c (set_frame_size): Don't call compute_fringe_widths.
+	(EmacsFrameSetCharSize): Obey frame_inhibit_resize.
+	* window.h (struct window): New fields old_pointm,
+	horizontal_scroll_bar, horizontal_scroll_bar_type, hscroll_whole,
+	scroll_bar_height and suspend_auto_hscroll.
+	(wset_horizontal_scroll_bar, wset_horizontal_scroll_bar_type):
+	New functions.
+	(sanitize_window_sizes): Extern.
+	(MINI_NON_ONLY_WINDOW_P, MINI_ONLY_WINDOW_P, WINDOW_PSEUDO_P)
+	(WINDOW_TOPMOST_P, WINDOW_HAS_HORIZONTAL_SCROLL_BAR)
+	(WINDOW_CONFIG_SCROLL_BAR_HEIGHT)
+	(WINDOW_CONFIG_SCROLL_BAR_LINES)
+	(WINDOW_SCROLL_BAR_LINES, WINDOW_SCROLL_BAR_AREA_HEIGHT): New
+	macros.
+	(WINDOW_LEFT_FRINGE_COLS, WINDOW_RIGHT_FRINGE_COLS)
+	(WINDOW_FRINGE_COLS, WINDOW_FRINGE_EXTENDED_P): Remove macros.
+	(WINDOW_VERTICAL_SCROLL_BAR_TYPE)
+	(WINDOW_HAS_VERTICAL_SCROLL_BAR_ON_LEFT)
+	(WINDOW_HAS_VERTICAL_SCROLL_BAR_ON_RIGHT)
+	(WINDOW_HAS_VERTICAL_SCROLL_BAR): Minor rewrite.
+	(WINDOW_BOX_HEIGHT_NO_MODE_LINE, WINDOW_BOX_TEXT_HEIGHT)
+	(WINDOW_SCROLL_BAR_AREA_Y): Count in scroll bar height.
+	* window.c (wset_old_pointm, Fwindow_scroll_bar_height)
+	(Fwindow_old_point, sanitize_window_sizes): New functions.
+	(Qwindow_sanitize_window_sizes): New symbol.
+	(window_body_height): Count in horizontal scroll bar.
+	(set_window_hscroll, Fscroll_left, Fscroll_right): Set
+	suspend_auto_hscroll slot.
+	(Fwindow_inside_edges): Count fringes pixelwise.
+	(coordinates_in_window, Fcoordinates_in_window_p): Consider
+	horizontal scroll bar.
+	(check_frame_size, adjust_window_margins): Remove functions and
+	corresponding calls.
+	(set_window_buffer): Initialize old_pointm and horizontal scroll
+	bars.
+	(temp_output_buffer_show): Reset hscroll related fields.
+	Initialize old_pointm.
+	(make_parent_window): Initialize old_pointm.
+	(make_window): Initialize old_pointm, horizontal scroll bar type,
+	and scroll bar height.
+	(resize_frame_windows): Don't count top margin in new sizes.
+	Don't use safe sizes when shrinking a frame; let the window
+	manager do the clipping.
+	(Fsplit_window_internal): Inherit horizontal scroll bar type and
+	height.
+	(Fdelete_window_internal): Unchain old_pointm marker.
+	(window_scroll_pixel_based, Fscroll_other_window): Adjust
+	old_pointm.
+	(Fwindow_text_width, Fwindow_text_height): New argument
+	"pixelwise".
+	(struct saved_window): New fields, old_pointm, hscroll_whole,
+	suspend_auto_hscroll, scroll_bar_height and
+	horizontal_scroll_bar_type.
+	(Fset_window_configuration, save_window_save): Set new fields of
+	saved_window.
+	(apply_window_adjustment): Don't call adjust_window_margins.
+	(set_window_margins): Don't change margins if new sizes don't
+	fit into window.
+	(set_window_scroll_bars): New argument "horizontal_type".
+	Handle horizontal scroll bars.  Don't change scroll bars if they
+	don't fit into window.
+	(Fset_window_scroll_bars): New argument "horizontal_type".
+	(Fwindow_scroll_bars): Return values for horizontal scroll bars.
+	(compare_window_configurations): Compare horizontal scroll bar
+	settings.
+	* xdisp.c (window_text_bottom_y, window_box_height): Count in
+	horizontal scroll bar height.
+	(pixel_to_glyph_coords, init_xdisp): Use FRAME_TOTAL_LINES
+	instead of FRAME_LINES.
+	(remember_mouse_glyph): Case ON_SCROLL_BAR changed to
+	ON_VERTICAL_SCROLL_BAR.
+	(with_echo_area_buffer): Initialize old_pointm.
+	(with_echo_area_buffer_unwind_data): Store old_pointm values in
+	vector.
+	(unwind_with_echo_area_buffer): Handle old_pointm.
+	(update_tool_bar): Set do_update when the tool bar window has at
+	least one line (since this is what the user sets).
+	(MAX_FRAME_TOOL_BAR_HEIGHT): Remove macro.
+	(redisplay_tool_bar): Return early when toolbar has zero lines.
+	Call x_change_tool_bar_height.  Don't use max_tool_bar_height.
+	(hscroll_window_tree): Handle suspension of auto_hscroll and
+	old_pointm.
+	(set_horizontal_scroll_bar): New function.
+	(redisplay_window): Set ignore_mouse_drag_p when tool bar has
+	more than one line.  Handle horizontal scroll bars.
+	(note_mouse_highlight): Handle horizontal scrol bars.
+	(expose_frame): Set dimensions of XRectangle from frame's text
+	sizes.
+	(Vvoid_text_area_pointer): Update doc-string.
+	* xfns.c (x_set_menu_bar_lines): Use adjust_frame_size.
+	(x_change_tool_bar_height, x_set_scroll_bar_default_height)
+	(x_set_internal_border_width): New functions.
+	(x_set_tool_bar_lines): Call x_change_tool_bar_height.
+	(unwind_create_frame_1): Remove.
+	(Fx_create_frame): Handle horizontal scroll bars.  Use official
+	field of frame structure to inhibit running
+	window-configuration-change-hook.
+	(x_create_tip_frame): Call SET_FRAME_LINES and change_frame_size
+	pixelwise.  Handle frame's official field.
+	(x_frame_parm_handlers): Add x_set_scroll_bar_height,
+	x_set_horizontal_scroll_bars, x_set_left_fringe,
+	x_set_right_fringe.
+	* xmenu.c (update_frame_menubar, free_frame_menubar): Use
+	adjust_frame_size.
+	* xterm.h (struct x_display_info): Add
+	horizontal_scroll_bar_cursor and Xatom_Horizontal_Scrollbar
+	slots.
+	(struct scroll_bar): Add horizontal slot.
+	(HORIZONTAL_SCROLL_BAR_INSIDE_HEIGHT)
+	(HORIZONTAL_SCROLL_BAR_LEFT_RANGE)
+	(HORIZONTAL_SCROLL_BAR_INSIDE_WIDTH): New macros.
+	(HORIZONTAL_SCROLL_BAR_LEFT_BORDER)
+	(HORIZONTAL_SCROLL_BAR_RIGHT_BORDER)
+	(HORIZONTAL_SCROLL_BAR_TOP_BORDER)
+	(HORIZONTAL_SCROLL_BAR_BOTTOM_BORDER)
+	(HORIZONTAL_SCROLL_BAR_MIN_HANDLE): Define.
+	(x_clear_under_internal_border): Remove.
+	* xterm.c (XTmouse_position): Handle horizontal scroll bars.
+	(x_window_to_scroll_bar): New argument TYPE.  Update callers.
+	(x_send_scroll_bar_event, x_scroll_bar_create): New arguments
+	HORIZONTAL.  Update callers.
+	(horizontal_action_hook_id): New action hook id.
+	(x_horizontal_scroll_bar_to_input_event)
+	(x_create_horizontal_toolkit_scroll_bar)
+	(xt_horizontal_action_hook)
+	(x_set_toolkit_horizontal_scroll_bar_thumb)
+	(XTset_horizontal_scroll_bar, x_net_wm_state)
+	(x_horizontal_scroll_bar_report_motion): New functions.
+	(xg_scroll_callback, x_scroll_bar_handle_click): Handle
+	horizontal scroll bars.
+	(SCROLL_BAR_HORIZONTAL_NAME): Define.
+	(XTset_vertical_scroll_bar): Attempt to clear areas not covered
+	by scroll bar.
+	(XTcondemn_scroll_bars, XTredeem_scroll_bar): Rewrite.  Handle
+	horizontal scroll bars.
+	(handle_one_xevent): Handle horizontal scroll bar events.  Call
+	x_net_wm_state.
+	(x_set_window_size_1, x_wm_set_size_hint): Don't call
+	check_frame_size.
+	(x_set_window_size): Don't call check_frame_size and
+	do_pending_window_change.
+	(x_term_init): Init horizontal_scroll_bar_cursor display info.
+	(x_create_terminal): Add set_horizontal_scroll_bar_hook.
+	(x_scroll_bar_set_handle): Add some checks when calling
+	x_clear_area.
+
+2014-07-26  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Revert previous change.
+	There is certainly nothing wrong with writing code like 'lo <= i
+	&& i <= hi', even if LO happens to a constant.  There isn't even
+	anything wrong in general with writing 'a <= b' if A happens to
+	be a constant.  At any rate stylistic changes shouldn't
+	be done like this without discussion.
+
+2014-07-26  Andreas Schwab  <schwab@linux-m68k.org>
+
+	* alloc.c (xnmalloc, xnrealloc, xpalloc, make_save_value)
+	(Fgarbage_collect): Reorder conditions that are written backwards.
+	* data.c (cons_to_unsigned): Likewise.
+	* dispnew.c (update_frame_1, sit_for): Likewise.
+	* fileio.c (file_offset): Likewise.
+	* filelock.c (read_lock_data, lock_file): Likewise.
+	* fns.c (larger_vector, make_hash_table, Fmake_hash_table):
+	Likewise.
+	* font.c (font_intern_prop, font_style_symbolic): Likewise.
+	* lisp.h (FIXNUM_OVERFLOW_P): Likewise.
+	* lread.c (read1): Likewise.
+	* minibuf.c (read_minibuf_noninteractive): Likewise.
+	* nsterm.m (x_set_frame_alpha): Likewise.
+	* process.c (wait_reading_process_output): Likewise.
+	* region-cache.c (delete_cache_boundaries): Likewise.
+	* xterm.c (x_set_frame_alpha): Likewise.
+
+2014-07-25  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* dispextern.h, xdisp.c (hourglass_shown_p, hourglass_atimer):
+	Now static.
+
+2014-07-26  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	* atimer.c (set_alarm) [HAVE_ITIMERSPEC]: Use TIMER_ABSTIME
+	because atimer expiration is absolute rather than relative.
+
+2014-07-25  Eli Zaretskii  <eliz@gnu.org>
+
+	* w32term.h (current_popup_menu, menubar_in_use): Move
+	declarations from w32term.c.
+
+2014-07-25  Martin Rudalics  <rudalics@gmx.at>
+
+	* w32fns.c (menubar_in_use): No more static.
+	* w32term.c (current_popup_menu, menubar_in_use): Declare.
+
+2014-07-25  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	Move hourglass machinery to RIF.
+	* dispextern.h (struct redisplay_interface): New members
+	show_hourglass and hide_hourglass.  Indent comments.
+	(show_hourglass, hide_hourglass): Remove prototypes.
+	* nsterm.m (show_hourgass, hide_hourglass): Refactor to ...
+	(ns_show_hourglass, ns_hide_hourglass): ... new no-ops.
+	(ns_redisplay_interface): Add them.
+	* w32fns.c (show_hourglass, hide_hourglass): Refactor to ...
+	* w32term.c (w32_show_hourglass, w32_hide_hourglass): ... these.
+	(w32_arrow_cursor): New function to hack around non-GUI frames.
+	(w32_redisplay_interface): Add new functions.
+	* w32term.h (w32_arror_cursor): Add prototype.
+	* xdisp.c (show_hourglass): New function, refactored out from
+	platform-dependent code.
+	(cancel_hourglass): Now call to RIF function.
+	* xfns.c (show_hourglass, hide_hourglass): Refactor to ...
+	* xterm.c (x_show_hourglass, x_hide_hourglass): ... these.
+	(x_redisplay_interface): Add new functions.
+
+2014-07-24  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	Fix error reported by Angelo Graziosi <angelo.graziosi@alice.it> in
+	<http://lists.gnu.org/archive/html/emacs-devel/2014-07/msg00274.html>
+	and complete previous change.
+	* frame.c (adjust_frame_height): New function.
+	(Fset_frame_height, Fset_frame_size): Use it.
+	(x_set_frame_parameters): Take frame top margin into account.
+
+2014-07-23  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	* frame.c (Fset_frame_height): Take frame top margin into account.
+	Incorrect behavior was reported by Martin Rudalics <rudalics@gmx.at> in
+	<http://lists.gnu.org/archive/html/emacs-devel/2014-07/msg00258.html>
+
+2014-07-22  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	* xterm.h (struct x_output) [USE_X_TOOLKIT || USE_GTK]: Define
+	menubar_height as such.  Tweak comment.
+	[USE_LUCID && USE_TOOLKIT_SCROLL_BARS]: Likewise for
+	scroll_bar_top_shadow_pixel and scroll_bar_bottom_shadow_pixel.
+	All related users changed.
+	(FRAME_MENUBAR_HEIGHT) [!USE_X_TOOLKIT && !USE_GTK]: No-op.
+	* xterm.c (handle_one_xevent):
+	* gtkutil.c (xg_event_is_for_menubar):
+	* xfns.c (x_window) [USE_X_TOOLKIT]:
+	* xmenu.c (set_frame_menubar, free_frame_menubar): Prefer
+	to use FRAME_MENUBAR_HEIGHT.
+
+2014-07-21  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	* frame.c (Fframe_parameters): Always report frame height without
+	menu and tool bar lines.
+
+2014-07-21  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* nsterm.m (applicationDidFinishLaunching:): Call
+	antialiasThresholdDidChange, register for antialias changes (Bug#17534).
+	(antialiasThresholdDidChange:): New method for EmacsApp.
+
+	* nsterm.h (EmacsApp): Add antialiasThresholdDidChange.
+
+	* macfont.m (macfont_update_antialias_threshold): Remove static.
+
+	* macfont.h (macfont_update_antialias_threshold): Declare.
+
+2014-07-21  Eli Zaretskii  <eliz@gnu.org>
+
+	* w32select.c (setup_windows_coding_system): Apply
+	CODING_ANNOTATION_MASK to the common_flags member of struct
+	coding_system.  Reported by martin rudalics <rudalics@gmx.at>.
+
+	* w16select.c (Fw16_get_clipboard_data): Apply
+	CODING_ANNOTATION_MASK to the common_flags member of struct
+	coding_system.
+
+	* xdisp.c (init_iterator): Initialize it->stop_charpos to the
+	buffer position where we are to start the iteration.
+	(handle_invisible_prop): Record in it->stop_charpos the position
+	where the invisible text ends.  (Bug#18035)
+	(hscroll_window_tree): Don't try hscrolling windows whose cursor
+	row has zero buffer position as their start position.  Reported by
+	martin rudalics <rudalics@gmx.at>.
+
+	* xdisp.c (move_it_vertically_backward, move_it_by_lines): Prevent
+	infinite looping in redisplay when display lines don't have enough
+	space to display even a single character.  (Bug#18036)
+
+2014-07-20  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	* frame.h (struct frame) [USE_X_TOOLKIT]: New member shell_position.
+	* xfns.c (x_window): Use it to allow xfree later.
+	(x_encode_text): Drop 3rd arg; unused.  Tweak comment and adjust users
+	where appropriate.  Use bool for booleans and remove redundant checks.
+	(Fx_backspace_delete_keys_p): Use XkbFreeKeyboard; explain why.
+	* xterm.c (x_free_frame_resources): Free shell_position.
+
+2014-07-19  K. Handa  <handa@gnu.org>
+
+	* xfaces.c (realize_x_face): Call font_load_for_lface with no
+	mandatory font spec (Bug#17973).
+
+2014-07-19  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* font.c (font_score): Return the worst score if the size of
+	ENTITY is wrong by more than a factor 2 (Bug#17973).
+
+2014-07-18  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	* frame.c (frame_unspecified_color): New function
+	refactored out from ...
+	(Fframe_parameters, Fframe_parameter): ... adjusted users.
+	(x_fullscreen_adjust, set_frame_param): Move Windows-specific
+	function to ...
+	* w32term.c (x_fullscreen_adjust, set_frame_param): ... static here.
+	* frame.h (x_fullscreen_adjust) [HAVE_NTGUI]:
+	* lisp.h (set_frame_param): Remove prototype.
+	* xterm.c (x_display_pixel_width, x_display_pixel_height): Now ...
+	* xterm.h (x_display_pixel_width, x_display_pixel_height): ...
+	inlined from here.
+
+	Prefer 'x_display_info *' to 'Display *' in X selection code.
+	This helps to avoid unneeded calls to x_display_info_for_display.
+	* xterm.h (struct selection_input_event): Record 'x_display_info *'
+	instead of 'Display *'.
+	(SELECTION_EVENT_DPYINFO): New macro.
+	(SELECTION_EVENT_DISPLAY): Now inline function to prohibit using
+	it as an lvalue.  Mention this in comment.
+	* xterm.c (handle_one_xevent): Use SELECTION_EVENT_DPYINFO.
+	* xselect.c (x_get_window_property_as_lisp_data, x_atom_to_symbol)
+	(selection_data_to_lisp_data, receive_incremental_selection):
+	Convert to use 'x_display_info *'.  Adjust users where appropriate.
+	(lisp_data_to_selection_data): Likewise.  Also pass 'struct
+	selection data *' as last arg to not return values in args.
+	(unexpect_property_change): Use common removal technique.
+
+2014-07-17  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	* print.c (print_preprocess): Adjust to match changed
+	sub char-table structure and avoid crash (Bug#18038).
+
+	* data.c (wrong_choice): Not static any more.
+	* lisp.h (wrong_choice): Add prototype.
+	* frame.h (struct frame) [USE_X_TOOLKIT || HAVE_NTGUI]:
+	Declare namebuf as such.  Tweak comment.
+	[USE_GTK]: Likewise for tool_bar_position.
+	(fset_tool_bar_position) [USE_GTK]: Ditto.
+	(FRAME_TOOL_BAR_POSITION): New macro.
+	* frame.c (x_report_frame_params):
+	* gtkutil.c (update_frame_tool_bar):
+	* xfns.c (Fx_create_frame): Use it.
+	(x_set_tool_bar_position): Add meaningful diagnostic messages.
+
+2014-07-16  Eli Zaretskii  <eliz@gnu.org>
+
+	* xdisp.c (decode_mode_spec): Call file-remote-p on the current
+	buffer's default-directory only if it is a string.  (Bug#17986)
+
+2014-07-16  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	More precise control over values of some buffer-local variables.
+	* keyboard.c (Qvertical_scroll_bar):
+	* frame.c (Qleft, Qright): Move to ...
+	* buffer.c (Qleft, Qright, Qvertical_scroll_bar): ... here.
+	* buffer.c (Qchoice, Qrange, Qoverwrite_mode, Qfraction): New symbols.
+	(syms_of_buffer): DEFSYM all of the above, attach special properties.
+	Use special symbols to DEFVAR_PER_BUFFER overwrite-mode,
+	vertical-scroll-bar, scroll-up-aggressively
+	and scroll-down-aggressively.
+	* buffer.h (Qchoice, Qrange, Qleft, Qright, Qvertical_scroll_bar):
+	Add declarations.
+	* nsfns.m, frame.h (Qleft, Qright):
+	* nsterm.m (Qleft): Remove declarations.
+	* gtkutil.c (toplevel): Include buffer.h.
+	* data.c (wrong_choice, wrong_range): New functions.
+	(store_symval_forwarding): Handle special properties of buffer-local
+	variables and use functions from the above to signal error, if any.
+
+	* frame.h (enum fullscreen_type) [HAVE_WINDOW_SYSTEM]: Use more natural
+	values.  Add comment.
+	(struct frame): Re-arrange layout to avoid extra padding and use bit
+	fields for output_method, want_fullscreen and vertical_scroll_bar_type.
+	(FRAME_VERTICAL_SCROLL_BAR_TYPE, FRAME_HAS_VERTICAL_SCROLL_BARS)
+	(FRAME_HAS_VERTICAL_SCROLL_BARS_ON_LEFT)
+	(FRAME_HAS_VERTICAL_SCROLL_BARS_ON_RIGHT) [!HAVE_WINDOW_SYSTEM]:
+	Define as no-ops because there are no scroll bars anyway.
+	* frame.c (make_frame, make_terminal_frame, make_initial_frame):
+	Adjust users.
+
+	* font.c (fset_font_data) [HAVE_XFT || HAVE_FREETYPE]:
+	Add convenient setter.
+	(font_put_frame_data, font_get_frame_data): Use it.
+
+2014-07-15  Daiki Ueno  <ueno@gnu.org>
+
+	* nsgui.h (XCHAR2B_BYTE1): Add missing parentheses around
+	pointer argument, before dereferencing.
+	(XCHAR2B_BYTE2): Likewise.
+
+2014-07-15  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	* xmenu.c (toplevel): Use LWLIB_ID for next_menubar_widget_id.
+	(pop_down_menu) [USE_X_TOOLKIT]: Accept integer arg.
+	(create_and_show_popup_menu, create_and_show_dialog) [USE_X_TOOLKIT]:
+	Use record_unwind_protect_int and avoid consing.
+	(syms_of_xmenu) [USE_X_TOOLKIT]: Declare WIDGET_ID_TICK_START.
+
+	* regex.c (re_search_2): Use ssize_t to avoid integer overflow.
+
+2014-07-14  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Use binary-io module, O_BINARY, and "b" flag (Bug#18006).
+	* callproc.c (create_temp_file): Use mkostemp's O_BINARY flag.
+	* emacs.c [MSDOS]:
+	* emacs.c (main) [DOS_NT]: Don't mess with _fmode.
+	(main) [MSDOS]: Use SET_BINARY instead of setmode.
+	* minibuf.c: Include binary-io.h instead of fcntl.h.
+	(read_minibuf_noninteractive):
+	Use set_binary_mode instead of handcrafted code.
+	Don't call emacs_set_tty if emacs_get_tty failed.
+	* sysdep.c, systty.h (emacs_get_tty): Return int, not void.
+	* sysdep.c (emacs_open, emacs_pipe): Use O_BINARY.
+	* w32.c (pipe2): Adjust eassert to include O_BINARY.
+
+	* macros.c (Fstart_kbd_macro): Avoid need for overflow check.
+	This works around a GCC compiler bug when Emacs is configured with
+	--enable-gcc-warnings.
+
+2014-07-14  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	* lisp.h (CHECK_VECTOR_OR_STRING): Return number of elements
+	or characters in string, respectively.  Add comment.
+	* fringe.c (Fdefine_fringe_bitmap):
+	* fns.c (Fsubstring, substring_both): Use it.
+	* keymap.c (Fdefine_key, Flookup_key):
+	* macros.c (Fstart_kbd_macro): Likewise.  Avoid call to Flength.
+
+	* term.c (tty_menu_add_pane, tty_menu_add_selection):
+	Use menu_item_width.
+	(tty_menu_show): Simplify because tty_menu_create never return NULL.
+
+2014-07-13  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Improve behavior of 'bzr up; cd src; make -k'.
+	* Makefile.in (top_srcdir): New var.
+	(ntsource, lispsource, ALL_CFLAGS, gl-stamp, emacs.res):
+	Use '$(top_srcdir)' instead of '$(srcdir)/..';
+	its expansion is a bit shorter.
+	(../config.status): Actually build config.status instead of
+	just complaining.
+	(ACLOCAL_INPUTS, AUTOCONF_INPUTS):
+	New macros, copied and relocated from ../Makefile.in.
+	($(top_srcdir)/aclocal.m4, $(top_srcdir)/configure, config.in)
+	(../config.status, Makefile): New dependencies and rules,
+	copied with relocation from ../Makefile.in.  This should be more
+	likely to rebuild the build machinery properly if you do a 'make'
+	in the src directory.
+
+2014-07-12  Eli Zaretskii  <eliz@gnu.org>
+
+	* xdisp.c (display_line): Don't call FETCH_BYTE with argument less
+	than 1.  (Bug#17962)
+
+	* w32fns.c (Fx_file_dialog): Mention in the doc string the
+	behavior on Windows 7 and later when the function is repeatedly
+	invoked with the same value of DIR.  (Bug#17950)
+
+	* xfns.c (Fx_file_dialog) [USE_MOTIF, USE_GTK]: Update the doc
+	string to match the one in w32fns.c.
+
+	* minibuf.c (read_minibuf_noninteractive) [WINDOWSNT]: Switch
+	stdin to binary mode only if it is connected to a terminal.
+
+2014-07-11  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Coalesce extern decls.
+	* minibuf.c (emacs_get_tty, emacs_set_tty, suppress_echo_on_tty):
+	* sysdep.c (emacs_get_tty, emacs_set_tty):
+	Move duplicate extern decls from here ...
+	* systty.h: ... to here, so that there's just one copy.
+
+2014-07-11  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* nsterm.m (changeFont:): Add ifdef NS_IMPL_COCOA.
+
+	* nsfns.m (Fns_popup_font_panel): Ditto.
+
+2014-07-11  Eli Zaretskii  <eliz@gnu.org>
+
+	* minibuf.c (read_minibuf_noninteractive): Finish reading on '\r',
+	not only on '\n'.
+	[WINDOWSNT]: Switch stdin to binary mode when not echoing input.
+
+	* sysdep.c (emacs_get_tty, emacs_set_tty, suppress_echo_on_tty)
+	[DOS_NT]: Implement for WINDOWSNT.
+
+	* systty.h (struct emacs_tty) [DOS_NT]: The struct member is now
+	unsigned.
+
+2014-07-11  Michael Albinus  <michael.albinus@gmx.de>
+
+	* sysdep.c (suppress_echo_on_tty): New function.
+	* minibuf.c (read_minibuf_noninteractive): Use it.
+
+2014-07-11  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	* alloc.c (Fmemory_info) [HAVE_LINUX_SYSINFO]: Return nil if
+	sysinfo failed.  Adjust docstring.
+
+2014-07-11  Eli Zaretskii  <eliz@gnu.org>
+
+	Implement memory-info for MS-DOS.
+	* dosfns.c (dos_memory_info): New function.
+	* dosfns.h (dos_memory_info): Add prototype.
+	* alloc.c (Fmemory_info) [MSDOS]: Call dos_memory_info.
+	* vm-limit.c (get_lim_data) [MSDOS]: Call dos_memory_info, instead
+	of doing some of its job.
+
+	* minibuf.c (read_minibuf_noninteractive) [WINDOWSNT]: Don't
+	reference termios structure members.
+
+2014-07-11  Michael Albinus  <michael.albinus@gmx.de>
+
+	* sysdep.c (emacs_get_tty, emacs_set_tty): Make them externally visible.
+
+	* minibuf.c (top): Include systty.h.  Declare external
+	emacs_get_tty and emacs_set_tty.
+	(Vread_hide_char): New lisp variable.
+	(read_minibuf_noninteractive): Hide characters with
+	Vread_hide_char if it is a character.  (Bug#17839)
+
+2014-07-10  Eli Zaretskii  <eliz@gnu.org>
+
+	Implement memory-info for MS-Windows.
+	* w32.c (w32_memory_info): New function.
+	* w32.h (w32_memory_info): Prototype it.
+	* alloc.c (Fmemory_info) [WINDOWSNT]: Call it.
+
+2014-07-10  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	* coding.h (struct coding_system): Remove 'error_positions' (unused)
+	and 'errors' (set but unused) fields.  Use bitfields for 'eol_seen',
+	'mode', 'common_flags' and 'result' fields, adjust layout to avoid
+	extra padding and shrink struct coding_system by 56 bytes (x86_64).
+	* coding.c (decode_coding_utf_8, decode_coding_utf_16)
+	(decode_coding_emacs_mule, decode_coding_iso_2022, decode_coding_sjis)
+	(decode_coding_big5, decode_coding_charset, decode_coding)
+	(encode_coding): Adjust users.
+
+	* alloc.c (Fmemory_info): New function.
+
+2014-07-09  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* syntax.c (back_comment): Use more-natural location for label.
+
+	* font.c, font.h (font_unparse_fcname): Now static.
+	Define only if HAVE_XFT || HAVE_FREETYPE || HAVE_NS.
+
+2014-07-09  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	Next minor cleanup of font subsystem.
+	* font.h (enum font_property_index): Remove FONT_ENTITY_INDEX (no
+	users) and FONT_FORMAT_INDEX (set by a few font drivers but never
+	really used).
+	(FONT_ENTITY_NOT_LOADABLE, FONT_ENTITY_SET_NOT_LOADABLE): Remove;
+	unused.
+	* ftfont.h (ftfont_font_format): Remove prototype.
+	* ftfont.c (ftfont_font_format): Remove; now unused.
+	(ftfont_open):
+	* nsfont.m (nsfont_open):
+	* w32font.c (w32font_open_internal):
+	* w32uniscribe.c (uniscribe_open):
+	* xfont.c (xfont_open):
+	* xftfont.c (xftfont_open): All users changed.
+
+	* coding.c (ALLOC_CONVERSION_WORK_AREA): Prefer ptrdiff_t to int and
+	so avoid integer overflow if decoded gap size exceeds INT_MAX bytes.
+
+2014-07-09  Eli Zaretskii  <eliz@gnu.org>
+
+	* xdisp.c (move_it_to): Adjust calculation of line_start_x to what
+	x_produce_glyphs does when it generates a stretch glyph that
+	represents a TAB.  (Bug#17969)
+
+	* xdisp.c (pos_visible_p): If CHARPOS is at beginning of window,
+	and there is a display property at that position, don't call
+	move_it_to to move to a position before window start.  (Bug#17942)
+	Fix condition for finding CHARPOS by the first call to move_it_to.
+	(Bug#17944)
+
+2014-07-09  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* syntax.c (find_defun_start): Try the cache even
+	if !open_paren_in_column_0_is_defun_start.
+	(back_comment): If find_defun_start was pessimistic, use the
+	scan_sexps_forward result to improve the cache (bug#16526).
+
+2014-07-09  Eli Zaretskii  <eliz@gnu.org>
+
+	* xdisp.c (redisplay_window): If redisplay of a window ends up
+	with point in a partially visible line at end of the window, make
+	sure the amended position of point actually has smaller Y
+	coordinate; if not, give up and scroll the display.  (Bug#17905)
+
+	* window.c (window_scroll_pixel_based): When point ends up at the
+	last fully visible line, don't let move_it_to stop at the left
+	edge of the line and dupe us into thinking point is inside the
+	scroll margin.
+
+	* w32.c (network_interface_info): Make sure the argument is a
+	Lisp string.
+
+2014-07-08  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* process.c (read_and_dispose_of_process_output): Fix typo
+	in previous patch: we want nonnegative fds, not nonzero fds.
+
+2014-07-08  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	* chartab.c (char_table_translate): Move to...
+	* character.h (char_table_translate): ... inline function here.
+	Avoid Faref and assume that args are always valid.  This helps to
+	speedup search, which is especially important for a huge buffers.
+	* lisp.h (char_table_translate): Remove prototype.
+
+	* nsfont.m (nsfont_close): Free glyphs and metrics arrays as well.
+	* font.c (font_build_object) [HAVE_XFT || HAVE_FREETYPE || HAVE_NS]:
+	New function, with an intention to avoid code duplication between
+	a few font drivers.
+	* font.h (font_build_object) [HAVE_XFT || HAVE_FREETYPE || HAVE_NS]:
+	Add prototype.
+	* ftfont.c (ftfont_open):
+	* macfont.m (macfont_open):
+	* xftfont.c (xftfont_open): Use it.
+
+2014-07-08  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* process.c: Add sanity checks for file descriptors (Bug#17844).
+	(wait_reading_process_output, Fprocess_filter_multibyte_p):
+	Check that infd is nonnegative before using it as an fd.
+	(read_and_dispose_of_process_output, Fprocess_send_eof):
+	Likewise, for outfd.
+	(wait_reading_process_output): Omit unnecessary check of infd.
+
+2014-07-07  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Minor fixups related to usage of the 'long' type.
+	* gnutls.c (emacs_gnutls_handshake):
+	* xfaces.c (dump_realized_face):
+	Work even if 'long' is narrower than 'void *'.
+	* termcap.c (scan_file):
+	* xselect.c (x_decline_selection_request)
+	(x_reply_selection_request, x_get_window_property):
+	* xterm.c (x_set_frame_alpha):
+	Remove unnecessary 'L' suffixes of integer constants.
+	* xfns.c (hack_wm_protocols):
+	* xselect.c (x_fill_property_data):
+	* xterm.c (x_set_offset, x_set_window_size_1, x_make_frame_invisible):
+	Remove unnecessary casts to 'long'.
+	(set_machine_and_pid_properties): Don't assume pid_t fits in 32 bits.
+
+	Minor ImageMagick safety fixes.
+	* image.c (imagemagick_compute_animated_image):
+	Remove useless assignment to local.  Avoid problems if dest_width is 0.
+	(imagemagick_load_image): Use int for pixel counts that can't
+	exceed INT_MAX.  Avoid problem if PixelGetNextIteratorRow returns
+	a row width greater than the image width (or greater than LONG_MAX!).
+
+2014-07-04  K. Handa  <handa@gnu.org>
+
+	* coding.c (MIN_CHARBUF_SIZE): Delete it.
+	(MAX_CHARBUF_EXTRA_SIZE): New macro.
+	(ALLOC_CONVERSION_WORK_AREA): Use MAX_CHARBUF_EXTRA_SIZE.
+
+2014-07-04  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	* font.h (struct font_driver): Remove get_outline and free_outline;
+	not used by any font driver.
+	* ftfont.c (ftfont_driver):
+	* macfont.m (macfont_driver):
+	* nsfont.m (nsfont_driver):
+	* w32font.c (w32font_driver):
+	* w32uniscribe.c (uniscribe_font_driver):
+	* xfont.c (xfont_driver): Related users changed.
+	* xselect.c (x_get_window_property): Use convenient xmalloc.
+	Call to xfree only if some data was really allocated.
+
+2014-07-03  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	On MS-Windows, display busy cursor on all GUI frames.
+	This is similar to what we have on X.  Quickly tested by Dani Moncayo.
+	* w32fns.c (toplevel): Remove hourglass_hwnd; no longer used.
+	(w32_show_hourglass, w32_hide_hourglass, w32_note_current_window):
+	Likewise.
+	(hide_hourglass, show_hourglass): Redesign to match X counterparts.
+	* xdisp.c (start_hourglass): Remove Windows-specific bits.
+
+2014-07-03  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	Use convenient alists to manage per-frame font driver-specific data.
+	* frame.h (struct frame): Rename font_data_list to...
+	[HAVE_XFT || HAVE_FREETYPE]: ... font_data, which is a Lisp_Object now.
+	* font.h (struct font_data_list): Remove; no longer need a special
+	data type.
+	(font_put_frame_data, font_get_frame_data) [HAVE_XFT || HAVE_FREETYPE]:
+	Adjust prototypes.
+	* font.c (font_put_frame_data, font_get_frame_data)
+	[HAVE_XFT || HAVE_FREETYPE]: Prefer alist functions to ad-hoc list
+	management.
+	* xftfont.c (xftfont_get_xft_draw, xftfont_end_for_frame):
+	Related users changed.
+	* ftxfont.c (ftxfont_get_gcs, ftxfont_end_for_frame): Likewise.
+	Prefer convenient xmalloc and xfree.
+
+2014-07-03  Eli Zaretskii  <eliz@gnu.org>
+
+	* dispnew.c (prepare_desired_row): Accept 2 additional arguments:
+	the window whose glyph row is being prepared and a flag whether it
+	is for mode/header line.  Make sure the glyph row's marginal areas
+	are in sync with what the window wants.
+	(Bug#17892)
+
+	* xdisp.c (display_line, display_mode_line): Call
+	prepare_desired_row with additional arguments, as appropriate.
+
+	* dispextern.h (prepare_desired_row): Adjust prototype.
+
+2014-07-03  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	* xfaces.c (init_frame_faces): Always realize basic faces (Bug#17889).
+	* menu.c (Fx_popup_dialog): Set Vmenu_updating_frame to avoid crash
+	caused by xw_popup_dialog in daemon mode (Bug#17891).
+
+2014-07-03  Eli Zaretskii  <eliz@gnu.org>
+
+	* frame.c (do_switch_frame): When switching to another TTY frame,
+	make sure FrameCols and FrameRows are in sync with the new frame's
+	data.  (Bug#17875)
+
+2014-07-02  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	Shrink Lisp_Sub_Char_Table by preferring C integers to Lisp_Objects.
+	* lisp.h (struct Lisp_Sub_Char_Table): Use C integers for depth and
+	min_char slots.  Adjust comment.
+	(enum char_table_specials): Rename from CHAR_TABLE_STANDARD_SLOTS.
+	Add SUB_CHAR_TABLE_OFFSET member.
+	(make_uninit_sub_char_table): New function.
+	(toplevel): Add compile-time assert to verify suitable member layout
+	in Lisp_Sub_Char_Table.
+	* alloc.c (mark_char_table): Add extra argument to denote char table
+	subtype.  Adjust to match new layout of sub char-table.
+	(mark_object): Always mark sub char-tables with mark_char_table.
+	* chartab.c (make_sub_char_table, copy_sub_char_table)
+	(sub_char_table_ref, sub_char_table_ref_and_range, sub_char_table_set)
+	(sub_char_table_set_range, optimize_sub_char_table, map_sub_char_table)
+	(map_sub_char_table_for_charset, uniprop_table_uncompress):
+	All related users changed.
+	* lread.c (read1): Adjust to match new layout of sub char-table.
+	* print.c (print_object): Likewise (Bug#17898).
+
+2014-07-02  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* keymap.c (get_keyelt): Simplify.
+	(copy_keymap_item): Remove left-over code for when we had
+	key-shortcut caches.
+
+2014-06-30  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* nsterm.m (judge): EmacsScroller: Move dealloc code here.
+	(dealloc): Remove for EmacsScroller.
+
+	* nsterm.h (EmacsScroller): Remove dealloc.
+
+2014-06-30  Eli Zaretskii  <eliz@gnu.org>
+
+	* coding.c (MIN_CHARBUF_SIZE): Enlarge to 32.  (Bug#17881)
+
+2014-06-30  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* nsmenu.m (update_frame_tool_bar): Set wait_for_tool_bar to NO
+	when setNeedsDisplay is called so we don't trigger redisplay for every
+	tool bar update.
+
+	* nsterm.m (any_help_event_p): New variable.
+	(mouseMoved:): Set any_help_event_p to YES if help event is
+	generated.  Remove else with empty help event that triggered redisplay
+	for every mouse move.
+	(windowDidResignKey:): If any_help_event_p, generate empty help event.
+
+2014-06-29  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	* xfns.c (Qsuppress_icon): Remove; no real users.
+	(syms_of_xfns): Don't DEFSYM it.  Remove ancient comments.
+	* w32fns.c (Qsuppress_icon): Remove, for the same reason.
+	(syms_of_w32fns): Don't DEFSYM it.
+
+2014-06-29  Glenn Morris  <rgm@gnu.org>
+
+	* Makefile.in (ns-app): Mark as PHONY.
+
+2014-06-28  Glenn Morris  <rgm@gnu.org>
+
+	* Makefile.in (mostlyclean): There are no libXMenu11.a,
+	liblw.a in this directory.
+
+2014-06-28  Andreas Schwab  <schwab@linux-m68k.org>
+
+	* coding.c (encode_coding_utf_8): Correctly count produced_chars
+	also in unibyte case.  (Bug#17865)
+
+2014-06-28  K. Handa  <handa@gnu.org>
+
+	* coding.c (MAX_CHARBUF_SIZE): Renamed from CHARBUF_SIZE.
+	(MIN_CHARBUF_SIZE): New macro.
+	(ALLOC_CONVERSION_WORK_AREA): New arg SIZE.  Callers changed.
+
 2014-06-27  Glenn Morris  <rgm@gnu.org>
 
 	* Makefile.in: Replace BOOTSTRAPEMACS sleight-of-hand
@@ -3409,7 +4532,7 @@
 	Avoid undefined behavior with huge regexp interval counts.
 	* regex.c (GET_INTERVAL_COUNT): Rename from 'GET_UNSIGNED_NUMBER',
 	since it's now specialized to interval counts.  All uses changed.
-	Do not assume wrapraound on signed integer overflow.
+	Do not assume wraparound on signed integer overflow.
 	(regex_compile): Simplify based on the above changes.
 
 2013-12-12  Eli Zaretskii  <eliz@gnu.org>

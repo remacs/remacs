@@ -49,6 +49,14 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <verify.h>
 #include <execinfo.h>           /* For backtrace.  */
 
+#ifdef HAVE_LINUX_SYSINFO
+#include <sys/sysinfo.h>
+#endif
+
+#ifdef MSDOS
+#include "dosfns.h"		/* For dos_memory_info.  */
+#endif
+
 #if (defined ENABLE_CHECKING			\
      && defined HAVE_VALGRIND_VALGRIND_H	\
      && !defined USE_VALGRIND)
@@ -5958,14 +5966,15 @@ mark_vectorlike (struct Lisp_Vector *ptr)
    symbols.  */
 
 static void
-mark_char_table (struct Lisp_Vector *ptr)
+mark_char_table (struct Lisp_Vector *ptr, enum pvec_type pvectype)
 {
   int size = ptr->header.size & PSEUDOVECTOR_SIZE_MASK;
-  int i;
+  /* Consult the Lisp_Sub_Char_Table layout before changing this.  */
+  int i, idx = (pvectype == PVEC_SUB_CHAR_TABLE ? SUB_CHAR_TABLE_OFFSET : 0);
 
   eassert (!VECTOR_MARKED_P (ptr));
   VECTOR_MARK (ptr);
-  for (i = 0; i < size; i++)
+  for (i = idx; i < size; i++)
     {
       Lisp_Object val = ptr->contents[i];
 
@@ -5974,7 +5983,7 @@ mark_char_table (struct Lisp_Vector *ptr)
       if (SUB_CHAR_TABLE_P (val))
 	{
 	  if (! VECTOR_MARKED_P (XVECTOR (val)))
-	    mark_char_table (XVECTOR (val));
+	    mark_char_table (XVECTOR (val), PVEC_SUB_CHAR_TABLE);
 	}
       else
 	mark_object (val);
@@ -6320,7 +6329,8 @@ mark_object (Lisp_Object arg)
 	    break;
 
 	  case PVEC_CHAR_TABLE:
-	    mark_char_table (ptr);
+	  case PVEC_SUB_CHAR_TABLE:
+	    mark_char_table (ptr, (enum pvec_type) pvectype);
 	    break;
 
 	  case PVEC_BOOL_VECTOR:
@@ -6863,7 +6873,55 @@ gc_sweep (void)
   check_string_bytes (!noninteractive);
 }
 
-
+DEFUN ("memory-info", Fmemory_info, Smemory_info, 0, 0, 0,
+       doc: /* Return a list of (TOTAL-RAM FREE-RAM TOTAL-SWAP FREE-SWAP).
+All values are in Kbytes.  If there is no swap space,
+last two values are zero.  If the system is not supported
+or memory information can't be obtained, return nil.  */)
+  (void)
+{
+#if defined HAVE_LINUX_SYSINFO
+  struct sysinfo si;
+  uintmax_t units;
+
+  if (sysinfo (&si))
+    return Qnil;
+#ifdef LINUX_SYSINFO_UNIT
+  units = si.mem_unit;
+#else
+  units = 1;
+#endif
+  return list4i ((uintmax_t) si.totalram * units / 1024,
+		 (uintmax_t) si.freeram * units / 1024,
+		 (uintmax_t) si.totalswap * units / 1024,
+		 (uintmax_t) si.freeswap * units / 1024);
+#elif defined WINDOWSNT
+  unsigned long long totalram, freeram, totalswap, freeswap;
+
+  if (w32_memory_info (&totalram, &freeram, &totalswap, &freeswap) == 0)
+    return list4i ((uintmax_t) totalram / 1024,
+		   (uintmax_t) freeram / 1024,
+		   (uintmax_t) totalswap / 1024,
+		   (uintmax_t) freeswap / 1024);
+  else
+    return Qnil;
+#elif defined MSDOS
+  unsigned long totalram, freeram, totalswap, freeswap;
+
+  if (dos_memory_info (&totalram, &freeram, &totalswap, &freeswap) == 0)
+    return list4i ((uintmax_t) totalram / 1024,
+		   (uintmax_t) freeram / 1024,
+		   (uintmax_t) totalswap / 1024,
+		   (uintmax_t) freeswap / 1024);
+  else
+    return Qnil;
+}
+#else /* not HAVE_LINUX_SYSINFO, not WINDOWSNT, not MSDOS */
+  /* FIXME: add more systems.  */
+  return Qnil;
+#endif /* HAVE_LINUX_SYSINFO, not WINDOWSNT, not MSDOS */
+}
+
 /* Debugging aids.  */
 
 DEFUN ("memory-limit", Fmemory_limit, Smemory_limit, 0, 0, 0,
@@ -7202,6 +7260,7 @@ The time is in seconds as a floating point value.  */);
   defsubr (&Spurecopy);
   defsubr (&Sgarbage_collect);
   defsubr (&Smemory_limit);
+  defsubr (&Smemory_info);
   defsubr (&Smemory_use_counts);
   defsubr (&Ssuspicious_object);
 
@@ -7218,7 +7277,7 @@ The time is in seconds as a floating point value.  */);
 union
 {
   enum CHARTAB_SIZE_BITS CHARTAB_SIZE_BITS;
-  enum CHAR_TABLE_STANDARD_SLOTS CHAR_TABLE_STANDARD_SLOTS;
+  enum char_table_specials char_table_specials;
   enum char_bits char_bits;
   enum CHECK_LISP_OBJECT_TYPE CHECK_LISP_OBJECT_TYPE;
   enum DEFAULT_HASH_SIZE DEFAULT_HASH_SIZE;

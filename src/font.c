@@ -225,7 +225,35 @@ font_make_object (int size, Lisp_Object entity, int pixelsize)
   return font_object;
 }
 
-
+#if defined (HAVE_XFT) || defined (HAVE_FREETYPE) || defined (HAVE_NS)
+
+static int font_unparse_fcname (Lisp_Object, int, char *, int);
+
+/* Like above, but also set `type', `name' and `fullname' properties
+   of font-object.  */
+
+Lisp_Object
+font_build_object (int vectorsize, Lisp_Object type,
+		   Lisp_Object entity, double pixelsize)
+{
+  int len;
+  char name[256];
+  Lisp_Object font_object = font_make_object (vectorsize, entity, pixelsize);
+
+  ASET (font_object, FONT_TYPE_INDEX, type);
+  len = font_unparse_xlfd (entity, pixelsize, name, sizeof name);
+  if (len > 0)
+    ASET (font_object, FONT_NAME_INDEX, make_string (name, len));
+  len = font_unparse_fcname (entity, pixelsize, name, sizeof name);
+  if (len > 0)
+    ASET (font_object, FONT_FULLNAME_INDEX, make_string (name, len));
+  else
+    ASET (font_object, FONT_FULLNAME_INDEX,
+	  AREF (font_object, FONT_NAME_INDEX));
+  return font_object;
+}
+
+#endif /* HAVE_XFT || HAVE_FREETYPE || HAVE_NS */
 
 static int font_pixel_size (struct frame *f, Lisp_Object);
 static Lisp_Object font_open_entity (struct frame *, Lisp_Object, int);
@@ -1573,11 +1601,14 @@ font_parse_fcname (char *name, ptrdiff_t len, Lisp_Object font)
   return 0;
 }
 
+#if defined HAVE_XFT || defined HAVE_FREETYPE || defined HAVE_NS
+
 /* Store fontconfig's font name of FONT (font-spec or font-entity) in
    NAME (NBYTES length), and return the name length.  If
-   FONT_SIZE_INDEX of FONT is 0, use PIXEL_SIZE instead.  */
+   FONT_SIZE_INDEX of FONT is 0, use PIXEL_SIZE instead.
+   Return a negative value on error.  */
 
-int
+static int
 font_unparse_fcname (Lisp_Object font, int pixel_size, char *name, int nbytes)
 {
   Lisp_Object family, foundry;
@@ -1697,6 +1728,8 @@ font_unparse_fcname (Lisp_Object font, int pixel_size, char *name, int nbytes)
 
   return (p - name);
 }
+
+#endif
 
 /* Parse NAME (null terminated) and store information in FONT
    (font-spec or font-entity).  If NAME is successfully parsed, return
@@ -2125,10 +2158,14 @@ font_score (Lisp_Object entity, Lisp_Object *spec_prop)
 	 lowest bit is set if the DPI is different.  */
       EMACS_INT diff;
       EMACS_INT pixel_size = XINT (spec_prop[FONT_SIZE_INDEX]);
+      EMACS_INT entity_size = XINT (AREF (entity, FONT_SIZE_INDEX));
 
       if (CONSP (Vface_font_rescale_alist))
 	pixel_size *= font_rescale_ratio (entity);
-      diff = eabs (pixel_size - XINT (AREF (entity, FONT_SIZE_INDEX))) << 1;
+      if (pixel_size * 2 < entity_size || entity_size * 2 < pixel_size)
+	/* This size is wrong by more than a factor 2: reject it!  */
+	return 0xFFFFFFFF;
+      diff = eabs (pixel_size - entity_size) << 1;
       if (! NILP (spec_prop[FONT_DPI_INDEX])
 	  && ! EQ (spec_prop[FONT_DPI_INDEX], AREF (entity, FONT_DPI_INDEX)))
 	diff |= 1;
@@ -3539,53 +3576,40 @@ font_update_drivers (struct frame *f, Lisp_Object new_drivers)
   return active_drivers;
 }
 
-int
-font_put_frame_data (struct frame *f, struct font_driver *driver, void *data)
+#if defined (HAVE_XFT) || defined (HAVE_FREETYPE)
+
+static void
+fset_font_data (struct frame *f, Lisp_Object val)
 {
-  struct font_data_list *list, *prev;
-
-  for (prev = NULL, list = f->font_data_list; list;
-       prev = list, list = list->next)
-    if (list->driver == driver)
-      break;
-  if (! data)
-    {
-      if (list)
-	{
-	  if (prev)
-	    prev->next = list->next;
-	  else
-	    f->font_data_list = list->next;
-	  xfree (list);
-	}
-      return 0;
-    }
-
-  if (! list)
-    {
-      list = xmalloc (sizeof *list);
-      list->driver = driver;
-      list->next = f->font_data_list;
-      f->font_data_list = list;
-    }
-  list->data = data;
-  return 0;
+  f->font_data = val;
 }
 
+void
+font_put_frame_data (struct frame *f, Lisp_Object driver, void *data)
+{
+  Lisp_Object val = assq_no_quit (driver, f->font_data);
+
+  if (!data)
+    fset_font_data (f, Fdelq (val, f->font_data));
+  else
+    {
+      if (NILP (val))
+	fset_font_data (f, Fcons (Fcons (driver, make_save_ptr (data)),
+				  f->font_data));
+      else
+	XSETCDR (val, make_save_ptr (data));
+    }
+}
 
 void *
-font_get_frame_data (struct frame *f, struct font_driver *driver)
+font_get_frame_data (struct frame *f, Lisp_Object driver)
 {
-  struct font_data_list *list;
+  Lisp_Object val = assq_no_quit (driver, f->font_data);
 
-  for (list = f->font_data_list; list; list = list->next)
-    if (list->driver == driver)
-      break;
-  if (! list)
-    return NULL;
-  return list->data;
+  return NILP (val) ? NULL : XSAVE_POINTER (XCDR (val), 0);
 }
 
+#endif /* HAVE_XFT || HAVE_FREETYPE */
 
 /* Sets attributes on a font.  Any properties that appear in ALIST and
    BOOLEAN_PROPERTIES or NON_BOOLEAN_PROPERTIES are set on the font.

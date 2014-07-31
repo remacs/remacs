@@ -127,8 +127,6 @@ uniscribe_open (struct frame *f, Lisp_Object font_entity, int pixel_size)
   /* Uniscribe backend uses glyph indices.  */
   uniscribe_font->w32_font.glyph_idx = ETO_GLYPH_INDEX;
 
-  /* Mark the format as opentype  */
-  uniscribe_font->w32_font.font.props[FONT_FORMAT_INDEX] = Qopentype;
   uniscribe_font->w32_font.font.driver = &uniscribe_font_driver;
 
   return font_object;
@@ -604,8 +602,6 @@ uniscribe_encode_char (struct font *font, int c)
    int uniscribe_get_bitmap (struct font *font, unsigned code,
                              struct font_bitmap *bitmap, int bits_per_pixel);
    void uniscribe_free_bitmap (struct font *font, struct font_bitmap *bitmap);
-   void * uniscribe_get_outline (struct font *font, unsigned code);
-   void uniscribe_free_outline (struct font *font, void *outline);
    int uniscribe_anchor_point (struct font *font, unsigned code,
                                int index, int *x, int *y);
    int uniscribe_start_for_frame (struct frame *f);
@@ -981,8 +977,6 @@ struct font_driver uniscribe_font_driver =
     w32font_draw,
     NULL, /* get_bitmap */
     NULL, /* free_bitmap */
-    NULL, /* get_outline */
-    NULL, /* free_outline */
     NULL, /* anchor_point */
     uniscribe_otf_capability, /* Defined so (font-get FONTOBJ :otf) works.  */
     NULL, /* otf_drive - use shape instead.  */

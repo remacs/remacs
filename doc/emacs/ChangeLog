@@ -1,3 +1,18 @@
+2014-07-21  Glenn Morris  <rgm@gnu.org>
+
+	* emacs.texi (Intro): Workaround makeinfo 4 @acronym bug.  (Bug#18040)
+
+2014-07-09  Juri Linkov  <juri@jurta.org>
+
+	* search.texi (Regexp Search): Update lax space matching that is
+	not active in regexp search by default now.  (Bug#17901)
+
+2014-07-03  Glenn Morris  <rgm@gnu.org>
+
+	* help.texi (Misc Help):
+	* trouble.texi (Checklist): "Online" help doesn't mean what it
+	used to any more.
+
 2014-06-23  Glenn Morris  <rgm@gnu.org>
 
 	* Makefile.in (%.texi): Disable implicit rules.

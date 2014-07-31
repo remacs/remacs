@@ -313,13 +313,14 @@ This command must be bound to a mouse click."
     (or (eq frame oframe)
 	(set-mouse-position (selected-frame) (1- (frame-width)) 0))))
 
-(defun mouse-tear-off-window (click)
-  "Delete the window clicked on, and create a new frame displaying its buffer."
+(define-obsolete-function-alias 'mouse-tear-off-window 'tear-off-window "24.4")
+(defun tear-off-window (click)
+  "Delete the selected window, and create a new frame displaying its buffer."
   (interactive "e")
   (mouse-minibuffer-check click)
   (let* ((window (posn-window (event-start click)))
 	 (buf (window-buffer window))
-	 (frame (make-frame)))
+	 (frame (make-frame)))          ;FIXME: Use pop-to-buffer.
     (select-frame frame)
     (switch-to-buffer buf)
     (delete-window window)))
@@ -1079,7 +1080,7 @@ regardless of where you click."
     (unless primary
       (error "No selection is available"))
     (push-mark (point))
-    (insert primary)))
+    (insert-for-yank primary)))
 
 (defun mouse-kill-ring-save (click)
   "Copy the region between point and the mouse click in the kill ring.
@@ -1361,7 +1362,7 @@ regardless of where you click."
   (or mouse-yank-at-point (mouse-set-point click))
   (let ((secondary (x-get-selection 'SECONDARY)))
     (if secondary
-        (insert secondary)
+        (insert-for-yank secondary)
       (error "No secondary selection"))))
 
 (defun mouse-kill-secondary ()

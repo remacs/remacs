@@ -903,7 +903,7 @@ file, @file{cl.el}, that adds many Common Lisp features to Emacs Lisp.)
 If you don't know GNU Emacs, you can still read this document
 profitably.  However, I recommend you learn Emacs, if only to learn to
 move around your computer screen.  You can teach yourself how to use
-Emacs with the on-line tutorial.  To use it, type @kbd{C-h t}.  (This
+Emacs with the built-in tutorial.  To use it, type @kbd{C-h t}.  (This
 means you press and release the @key{CTRL} key and the @kbd{h} at the
 same time, and then press and release @kbd{t}.)
 
@@ -1700,7 +1700,7 @@ Another way to think about this is to imagine a symbol as being a chest
 of drawers.  The function definition is put in one drawer, the value in
 another, and so on.  What is put in the drawer holding the value can be
 changed without affecting the contents of the drawer holding the
-function definition, and vice-verse.
+function definition, and vice versa.
 
 @menu
 * fill-column Example::
@@ -2653,7 +2653,7 @@ functions; without the parentheses, the interpreter would attempt to
 evaluate the symbols as variables.  @xref{Variables}.)
 
 In spite of the distinction between files and buffers, you will often
-find that people refer to a file when they mean a buffer and vice-verse.
+find that people refer to a file when they mean a buffer and vice versa.
 Indeed, most people say, ``I am editing a file,'' rather than saying,
 ``I am editing a buffer which I will soon save to a file.''  It is
 almost always clear from context what people mean.  When dealing with
@@ -4657,7 +4657,7 @@ specialized library, such as a law library or an engineering library,
 rather than a general library.  Each library, or file, contains
 functions that relate to a particular topic or activity, such as
 @file{abbrev.el} for handling abbreviations and other typing
-shortcuts, and @file{help.el} for on-line help.  (Sometimes several
+shortcuts, and @file{help.el} for help.  (Sometimes several
 libraries provide code for a single activity, as the various
 @file{rmail@dots{}} files provide code for reading electronic mail.)
 In @cite{The GNU Emacs Manual}, you will see sentences such as ``The
@@ -5756,7 +5756,7 @@ so the true-or-false-test looks like this:
 @noindent
 @code{not} is a function that returns true if its argument is false
 and false if its argument is true.  So if @code{(bufferp buffer)}
-returns true, the @code{not} expression returns false and vice-verse:
+returns true, the @code{not} expression returns false and vice versa:
 what is ``not true'' is false and what is ``not false'' is true.
 
 Using this test, the @code{if} expression works as follows: when the
@@ -9805,7 +9805,7 @@ In an earlier section, I suggested that you might imagine a symbol as
 being a chest of drawers.  The function definition is put in one
 drawer, the value in another, and so on.  What is put in the drawer
 holding the value can be changed without affecting the contents of the
-drawer holding the function definition, and vice-verse.
+drawer holding the function definition, and vice versa.
 
 Actually, what is put in each drawer is the address of the value or
 function definition.  It is as if you found an old chest in the attic,
@@ -13235,7 +13235,7 @@ Consider what happens when there is no fill prefix.
 @noindent
 This @code{while} loop has us searching forward for
 @code{sp-parstart}, which is the combination of possible whitespace
-with a the local value of the start of a paragraph or of a paragraph
+with the local value of the start of a paragraph or of a paragraph
 separator.  (The latter two are within an expression starting
 @code{\(?:} so that they are not referenced by the
 @code{match-beginning} function.)
@@ -18685,9 +18685,9 @@ easy-to-read description of Emacs Lisp.  It is written not only for
 experts, but for people who know what you know.  (The @cite{Reference
 Manual} comes with the standard GNU Emacs distribution.  Like this
 introduction, it comes as a Texinfo source file, so you can read it
-on-line and as a typeset, printed book.)
+on your computer and as a typeset, printed book.)
 
-Go to the other on-line help that is part of GNU Emacs: the on-line
+Go to the other built-in help that is part of GNU Emacs: the built-in
 documentation for all functions and variables, and @code{find-tag},
 the program that takes you to sources.
 

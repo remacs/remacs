@@ -36,7 +36,7 @@ corresponding to the mode line clicked."
 
 
 (defun mode-line-toggle-read-only (event)
-  "Like `toggle-read-only', for the mode-line."
+  "Like toggling `read-only-mode', for the mode-line."
   (interactive "e")
   (with-selected-window (posn-window (event-start event))
     (read-only-mode 'toggle)))
@@ -229,11 +229,13 @@ mnemonics of the following coding systems:
 	 'help-echo (purecopy (lambda (window _object _point)
  				(format "%s"
 					(with-selected-window window
-					  (concat
-					   (if (file-remote-p default-directory)
-					       "Current directory is remote: "
-					     "Current directory is local: ")
-					   default-directory)))))))
+					  (if (stringp default-directory)
+					      (concat
+					       (if (file-remote-p default-directory)
+						   "Current directory is remote: "
+						 "Current directory is local: ")
+					       default-directory)
+					    "Current directory is nil")))))))
   "Mode line construct to indicate a remote buffer.")
 ;;;###autoload
 (put 'mode-line-remote 'risky-local-variable t)

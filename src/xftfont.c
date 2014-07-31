@@ -270,8 +270,7 @@ xftfont_open (struct frame *f, Lisp_Object entity, int pixel_size)
   double size = 0;
   XftFont *xftfont = NULL;
   int spacing;
-  char name[256];
-  int len, i;
+  int i;
   XGlyphInfo extents;
   FT_Face ft_face;
   FcMatrix *matrix;
@@ -341,20 +340,9 @@ xftfont_open (struct frame *f, Lisp_Object entity, int pixel_size)
 
   /* We should not destroy PAT here because it is kept in XFTFONT and
      destroyed automatically when XFTFONT is closed.  */
-  font_object = font_make_object (VECSIZE (struct xftfont_info), entity, size);
-  ASET (font_object, FONT_TYPE_INDEX, Qxft);
-  len = font_unparse_xlfd (entity, size, name, 256);
-  if (len > 0)
-    ASET (font_object, FONT_NAME_INDEX, make_string (name, len));
-  len = font_unparse_fcname (entity, size, name, 256);
-  if (len > 0)
-    ASET (font_object, FONT_FULLNAME_INDEX, make_string (name, len));
-  else
-    ASET (font_object, FONT_FULLNAME_INDEX,
-	  AREF (font_object, FONT_NAME_INDEX));
+  font_object = font_build_object (VECSIZE (struct xftfont_info),
+				   Qxft, entity, size);
   ASET (font_object, FONT_FILE_INDEX, filename);
-  ASET (font_object, FONT_FORMAT_INDEX,
-	ftfont_font_format (xftfont->pattern, filename));
   font = XFONT_OBJECT (font_object);
   font->pixel_size = size;
   font->driver = &xftfont_driver;
@@ -593,7 +581,7 @@ xftfont_text_extents (struct font *font, unsigned int *code, int nglyphs, struct
 static XftDraw *
 xftfont_get_xft_draw (struct frame *f)
 {
-  XftDraw *xft_draw = font_get_frame_data (f, &xftfont_driver);
+  XftDraw *xft_draw = font_get_frame_data (f, Qxft);
 
   if (! xft_draw)
     {
@@ -604,7 +592,7 @@ xftfont_get_xft_draw (struct frame *f)
 			       FRAME_X_COLORMAP (f));
       unblock_input ();
       eassert (xft_draw != NULL);
-      font_put_frame_data (f, &xftfont_driver, xft_draw);
+      font_put_frame_data (f, Qxft, xft_draw);
     }
   return xft_draw;
 }
@@ -680,14 +668,14 @@ xftfont_end_for_frame (struct frame *f)
   /* Don't do anything if display is dead */
   if (FRAME_X_DISPLAY (f) == NULL) return 0;
 
-  xft_draw = font_get_frame_data (f, &xftfont_driver);
+  xft_draw = font_get_frame_data (f, Qxft);
 
   if (xft_draw)
     {
       block_input ();
       XftDrawDestroy (xft_draw);
       unblock_input ();
-      font_put_frame_data (f, &xftfont_driver, NULL);
+      font_put_frame_data (f, Qxft, NULL);
     }
   return 0;
 }

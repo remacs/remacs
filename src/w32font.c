@@ -757,19 +757,6 @@ w32font_get_bitmap (struct font *font, unsigned code,
 static void
 w32font_free_bitmap (struct font *font, struct font_bitmap *bitmap);
   */
-/* w32 implementation of get_outline for font backend.
-   Optional.
-   Return an outline data for glyph-code CODE of FONT.  The format
-   of the outline data depends on the font-driver.
-static void *
-w32font_get_outline (struct font *font, unsigned code);
-  */
-/* w32 implementation of free_outline for font backend.
-   Optional.
-   Free OUTLINE (that is obtained by the above method).
-static void
-w32font_free_outline (struct font *font, void *outline);
-  */
 /* w32 implementation of anchor_point for font backend.
    Optional.
    Get coordinates of the INDEXth anchor point of the glyph whose
@@ -899,7 +886,7 @@ w32font_open_internal (struct frame *f, Lisp_Object font_entity,
   LOGFONT logfont;
   HDC dc;
   HFONT hfont, old_font;
-  Lisp_Object val, extra;
+  Lisp_Object val;
   struct w32font_info *w32_font;
   struct font * font;
   OUTLINETEXTMETRICW* metrics = NULL;
@@ -992,21 +979,6 @@ w32font_open_internal (struct frame *f, Lisp_Object font_entity,
   font->default_ascent = w32_font->metrics.tmAscent;
   font->pixel_size = size;
   font->driver = &w32font_driver;
-  /* Use format cached during list, as the information we have access to
-     here is incomplete.  */
-  extra = AREF (font_entity, FONT_EXTRA_INDEX);
-  if (CONSP (extra))
-    {
-      val = assq_no_quit (QCformat, extra);
-      if (CONSP (val))
-        font->props[FONT_FORMAT_INDEX] = XCDR (val);
-      else
-        font->props[FONT_FORMAT_INDEX] = Qunknown;
-    }
-  else
-    font->props[FONT_FORMAT_INDEX] = Qunknown;
-
-  font->props[FONT_FILE_INDEX] = Qnil;
   font->encoding_charset = -1;
   font->repertory_charset = -1;
   /* TODO: do we really want the minimum width here, which could be negative? */
@@ -2557,8 +2529,6 @@ struct font_driver w32font_driver =
     w32font_draw,
     NULL, /* get_bitmap */
     NULL, /* free_bitmap */
-    NULL, /* get_outline */
-    NULL, /* free_outline */
     NULL, /* anchor_point */
     NULL, /* otf_capability */
     NULL, /* otf_drive */

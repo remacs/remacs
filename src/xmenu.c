@@ -117,7 +117,7 @@ static int popup_activated_flag;
 
 #ifdef USE_X_TOOLKIT
 
-static int next_menubar_widget_id;
+static LWLIB_ID next_menubar_widget_id;
 
 /* Return the frame whose ->output_data.x->id equals ID, or 0 if none.  */
 
@@ -627,7 +627,7 @@ update_frame_menubar (struct frame *f)
   xg_update_frame_menubar (f);
 #else
   struct x_output *x;
-  int columns, rows;
+/**   int columns, rows; **/
 
   eassert (FRAME_X_P (f));
 
@@ -639,8 +639,8 @@ update_frame_menubar (struct frame *f)
   block_input ();
   /* Save the size of the frame because the pane widget doesn't accept
      to resize itself. So force it.  */
-  columns = FRAME_COLS (f);
-  rows = FRAME_LINES (f);
+/**   columns = FRAME_COLS (f); **/
+/**   rows = FRAME_LINES (f); **/
 
   /* Do the voodoo which means "I'm changing lots of things, don't try
      to refigure sizes until I'm done."  */
@@ -662,7 +662,8 @@ update_frame_menubar (struct frame *f)
   lw_refigure_widget (x->column_widget, True);
 
   /* Force the pane widget to resize itself with the right values.  */
-  EmacsFrameSetCharSize (x->edit_widget, columns, rows);
+/**   EmacsFrameSetCharSize (x->edit_widget, columns, rows); **/
+  adjust_frame_size (f, FRAME_TEXT_WIDTH (f), FRAME_TEXT_HEIGHT (f), 2, 0);
   unblock_input ();
 #endif
 }
@@ -705,7 +706,7 @@ apply_systemfont_to_menu (struct frame *f, Widget w)
 void
 set_frame_menubar (struct frame *f, bool first_time, bool deep_p)
 {
-  xt_or_gtk_widget menubar_widget;
+  xt_or_gtk_widget menubar_widget, old_widget;
 #ifdef USE_X_TOOLKIT
   LWLIB_ID id;
 #endif
@@ -718,7 +719,7 @@ set_frame_menubar (struct frame *f, bool first_time, bool deep_p)
 
   eassert (FRAME_X_P (f));
 
-  menubar_widget = f->output_data.x->menubar_widget;
+  menubar_widget = old_widget = f->output_data.x->menubar_widget;
 
   XSETFRAME (Vmenu_updating_frame, f);
 
@@ -1023,7 +1024,7 @@ set_frame_menubar (struct frame *f, bool first_time, bool deep_p)
 #endif /* USE_LUCID */
 #endif /* 1 */
 
-    f->output_data.x->menubar_height = menubar_size;
+    FRAME_MENUBAR_HEIGHT (f) = menubar_size;
   }
 #endif /* not USE_GTK */
 
@@ -1066,7 +1067,7 @@ free_frame_menubar (struct frame *f)
 
   menubar_widget = f->output_data.x->menubar_widget;
 
-  f->output_data.x->menubar_height = 0;
+  FRAME_MENUBAR_HEIGHT (f) = 0;
 
   if (menubar_widget)
     {
@@ -1099,7 +1100,15 @@ free_frame_menubar (struct frame *f)
 	  if (x1 == 0 && y1 == 0)
 	    XtVaSetValues (f->output_data.x->widget, XtNx, x0, XtNy, y0, NULL);
 #endif
-	  x_set_window_size (f, 0, FRAME_TEXT_WIDTH (f), FRAME_TEXT_HEIGHT (f), 1);
+	  adjust_frame_size (f, FRAME_TEXT_WIDTH (f),
+			     FRAME_TEXT_HEIGHT (f), 2, 0);
+	  /*
+	    if (frame_inhibit_resize (f, 0))
+	    change_frame_size (f, 0, 0, 0, 0, 0, 1);
+	  else
+	    x_set_window_size (f, 0, FRAME_TEXT_WIDTH (f),
+	    FRAME_TEXT_HEIGHT (f), 1);
+	  */
 	}
       unblock_input ();
     }
@@ -1273,8 +1282,8 @@ create_and_show_popup_menu (struct frame *f, widget_value *first_wv,
 /* We need a unique id for each widget handled by the Lucid Widget
    library.
 
-   For the main windows, and popup menus, we use this counter,
-   which we increment each time after use.  This starts from 1<<16.
+   For the main windows, and popup menus, we use this counter, which we
+   increment each time after use.  This starts from WIDGET_ID_TICK_START.
 
    For menu bars, we use numbers starting at 0, counted in
    next_menubar_widget_id.  */
@@ -1286,17 +1295,13 @@ popup_selection_callback (Widget widget, LWLIB_ID id, XtPointer client_data)
   menu_item_selection = client_data;
 }
 
-/* ARG is the LWLIB ID of the dialog box, represented
-   as a Lisp object as (HIGHPART . LOWPART).  */
+/* ID is the LWLIB ID of the dialog box.  */
 
 static void
-pop_down_menu (Lisp_Object arg)
+pop_down_menu (int id)
 {
-  LWLIB_ID id = (XINT (XCAR (arg)) << 4 * sizeof (LWLIB_ID)
-                 | XINT (XCDR (arg)));
-
   block_input ();
-  lw_destroy_all_widgets (id);
+  lw_destroy_all_widgets ((LWLIB_ID) id);
   unblock_input ();
   popup_activated_flag = 0;
 }
@@ -1362,11 +1367,9 @@ create_and_show_popup_menu (struct frame *f, widget_value *first_wv,
   x_activate_timeout_atimer ();
 
   {
-    int fact = 4 * sizeof (LWLIB_ID);
     ptrdiff_t specpdl_count = SPECPDL_INDEX ();
-    record_unwind_protect (pop_down_menu,
-                           Fcons (make_number (menu_id >> (fact)),
-                                  make_number (menu_id & ~(-1 << (fact)))));
+
+    record_unwind_protect_int (pop_down_menu, (int) menu_id);
 
     /* Process events that apply to the menu.  */
     popup_get_selection (0, FRAME_DISPLAY_INFO (f), menu_id, 1);
@@ -1732,12 +1735,10 @@ create_and_show_dialog (struct frame *f, widget_value *first_wv)
      Also handle timers.  */
   {
     ptrdiff_t count = SPECPDL_INDEX ();
-    int fact = 4 * sizeof (LWLIB_ID);
 
     /* xdialog_show_unwind is responsible for popping the dialog box down.  */
-    record_unwind_protect (pop_down_menu,
-                           Fcons (make_number (dialog_id >> (fact)),
-                                  make_number (dialog_id & ~(-1 << (fact)))));
+
+    record_unwind_protect_int (pop_down_menu, (int) dialog_id);
 
     popup_get_selection (0, FRAME_DISPLAY_INFO (f), dialog_id, 1);
 
@@ -2330,13 +2331,13 @@ DEFUN ("menu-or-popup-active-p", Fmenu_or_popup_active_p, Smenu_or_popup_active_
 void
 syms_of_xmenu (void)
 {
-  DEFSYM (Qdebug_on_next_call, "debug-on-next-call");
-
 #ifdef USE_X_TOOLKIT
-  widget_id_tick = (1<<16);
+  enum { WIDGET_ID_TICK_START = 1 << 16 };
+  widget_id_tick = WIDGET_ID_TICK_START;
   next_menubar_widget_id = 1;
 #endif
 
+  DEFSYM (Qdebug_on_next_call, "debug-on-next-call");
   defsubr (&Smenu_or_popup_active_p);
 
 #if defined (USE_GTK) || defined (USE_X_TOOLKIT)

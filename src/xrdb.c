@@ -452,6 +452,10 @@ x_load_resources (Display *display, const char *xrm_string,
   XrmPutLineResource (&rdb, line);
   sprintf (line, "%s*verticalScrollBar.troughColor: grey75", myclass);
   XrmPutLineResource (&rdb, line);
+  sprintf (line, "%s*horizontalScrollBar.background: grey75", myclass);
+  XrmPutLineResource (&rdb, line);
+  sprintf (line, "%s*horizontalScrollBar.troughColor: grey75", myclass);
+  XrmPutLineResource (&rdb, line);
   sprintf (line, "%s.dialog*.background: grey75", myclass);
   XrmPutLineResource (&rdb, line);
   sprintf (line, "%s*fsb.Text.background: white", myclass);
@@ -498,6 +502,8 @@ x_load_resources (Display *display, const char *xrm_string,
   sprintf (line, "*XlwMenu*background: grey75");
   XrmPutLineResource (&rdb, line);
   sprintf (line, "Emacs*verticalScrollBar.background: grey75");
+  XrmPutLineResource (&rdb, line);
+  sprintf (line, "Emacs*horizontalScrollBar.background: grey75");
   XrmPutLineResource (&rdb, line);
 
 #endif /* not USE_MOTIF */

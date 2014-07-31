@@ -887,8 +887,35 @@ by \"Save Options\" in Custom buffers.")
   (interactive)
   (customize-set-variable 'scroll-bar-mode nil))
 
+(defun menu-bar-horizontal-scroll-bar ()
+  "Display horizontal scroll bars on each window."
+  (interactive)
+  (customize-set-variable 'horizontal-scroll-bar-mode t))
+
+(defun menu-bar-no-horizontal-scroll-bar ()
+  "Turn off horizontal scroll bars."
+  (interactive)
+  (customize-set-variable 'horizontal-scroll-bar-mode nil))
+
 (defvar menu-bar-showhide-scroll-bar-menu
   (let ((menu (make-sparse-keymap "Scroll-bar")))
+    (bindings--define-key menu [horizontal]
+      '(menu-item "Horizontal"
+                  menu-bar-horizontal-scroll-bar
+                  :help "Horizontal scroll bar"
+                  :visible (display-graphic-p)
+                  :button (:radio . (eq (cdr (assq 'horizontal-scroll-bars
+                                                   (frame-parameters)))
+					t))))
+
+    (bindings--define-key menu [none-horizontal]
+      '(menu-item "None-horizontal"
+                  menu-bar-no-horizontal-scroll-bar
+                  :help "Turn off horizontal scroll bars"
+                  :visible (display-graphic-p)
+                  :button (:radio . (eq (cdr (assq 'horizontal-scroll-bars
+                                                   (frame-parameters)))
+					nil))))
 
     (bindings--define-key menu [right]
       '(menu-item "On the Right"
@@ -896,7 +923,8 @@ by \"Save Options\" in Custom buffers.")
                   :help "Scroll-bar on the right side"
                   :visible (display-graphic-p)
                   :button (:radio . (eq (cdr (assq 'vertical-scroll-bars
-                                                   (frame-parameters))) 'right))))
+                                                   (frame-parameters)))
+					'right))))
 
     (bindings--define-key menu [left]
       '(menu-item "On the Left"
@@ -904,7 +932,8 @@ by \"Save Options\" in Custom buffers.")
                   :help "Scroll-bar on the left side"
                   :visible (display-graphic-p)
                   :button (:radio . (eq (cdr (assq 'vertical-scroll-bars
-                                                   (frame-parameters))) 'left))))
+                                                   (frame-parameters)))
+					'left))))
 
     (bindings--define-key menu [none]
       '(menu-item "None"
@@ -912,7 +941,8 @@ by \"Save Options\" in Custom buffers.")
                   :help "Turn off scroll-bar"
                   :visible (display-graphic-p)
                   :button (:radio . (eq (cdr (assq 'vertical-scroll-bars
-                                                   (frame-parameters))) nil))))
+                                                   (frame-parameters)))
+					nil))))
     menu))
 
 (defun menu-bar-frame-for-menubar ()
@@ -1958,11 +1988,10 @@ It must accept a buffer as its only required argument.")
                    (dolist (pair alist)
                      (setq i (1- i))
                      (aset buffers-vec i
-			   (nconc (list (car pair)
-					(cons nil nil))
-				  `(lambda ()
-                                     (interactive)
-                                     (funcall menu-bar-select-buffer-function ,(cdr pair))))))
+			   (cons (car pair)
+                                 `(lambda ()
+                                    (interactive)
+                                    (funcall menu-bar-select-buffer-function ,(cdr pair))))))
                    (list buffers-vec))))
 
 	 ;; Make a Frames menu if we have more than one frame.
@@ -1974,10 +2003,8 @@ It must accept a buffer as its only required argument.")
                   (i 0))
              (dolist (frame frames)
                (aset frames-vec i
-                     (nconc
-                      (list
-                       (frame-parameter frame 'name)
-                       (cons nil nil))
+                     (cons
+                      (frame-parameter frame 'name)
                       `(lambda ()
                          (interactive) (menu-bar-select-frame ,frame))))
                (setq i (1+ i)))

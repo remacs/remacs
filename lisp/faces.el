@@ -2746,8 +2746,6 @@ If PATTERN is nil, return the name of the frame's base font, which never
 contains wildcards.
 Given optional arguments FACE and FRAME, return a font which is
 also the same size as FACE on FRAME, or fail."
-  (or (symbolp face)
-      (setq face (face-name face)))
   (and (eq frame t)
        (setq frame nil))
   (if pattern

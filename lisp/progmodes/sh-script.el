@@ -910,7 +910,7 @@ See `sh-feature'.")
      (:foreground "tan1" ))
     (t
      (:weight bold)))
-  "Face to show a here-document"
+  "Face to show a here-document."
   :group 'sh-indentation)
 
 ;; These colors are probably icky.  It's just a placeholder though.
@@ -921,7 +921,7 @@ See `sh-feature'.")
      (:foreground "magenta"))
     (t
      (:weight bold)))
-  "Face to show quoted execs like ``"
+  "Face to show quoted execs like `blabla`."
   :group 'sh-indentation)
 (define-obsolete-face-alias 'sh-heredoc-face 'sh-heredoc "22.1")
 (defvar sh-heredoc-face 'sh-heredoc)
@@ -2012,9 +2012,10 @@ May return nil if the line should not be treated as continued."
                         (<= indent initial)))))
      `(column . ,(+ initial sh-indentation)))
     (`(:before . ,(or `"(" `"{" `"["))
-     (when (smie-rule-hanging-p)
-       (if (not (smie-rule-prev-p "&&" "||" "|"))
-	   (smie-rule-parent)
+     (if (not (smie-rule-prev-p "&&" "||" "|"))
+         (when (smie-rule-hanging-p)
+           (smie-rule-parent))
+       (unless (smie-rule-bolp)
 	 (smie-backward-sexp 'halfexp)
 	 `(column . ,(smie-indent-virtual)))))
     ;; FIXME: Maybe this handling of ;; should be made into

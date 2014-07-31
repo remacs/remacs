@@ -1,3 +1,20 @@
+2014-07-21  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	* TODO: remove frame height remark.
+
+2014-07-11  Michael Albinus  <michael.albinus@gmx.de>
+
+	* NEWS: Passwords in batch mode are hidden.
+
+2014-07-03  Glenn Morris  <rgm@gnu.org>
+
+	* refcards/calccard.tex (section{Getting Help}):
+	Meaning of "on-line" has changed.
+
+2014-06-28  Glenn Morris  <rgm@gnu.org>
+
+	* publicsuffix.txt: Update from source.
+
 2014-06-24  Eli Barzilay  <eli@barzilay.org>
 
 	* NEWS: calculator.el user-visible changes.

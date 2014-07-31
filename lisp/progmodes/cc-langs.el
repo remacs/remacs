@@ -213,7 +213,6 @@ the evaluated constant value at compile time."
 ;; These are defined in cl as aliases to the cl- versions.
 ;(declare-function delete-duplicates "cl-seq" (cl-seq &rest cl-keys) t)
 ;(declare-function mapcan "cl-extra" (cl-func cl-seq &rest cl-rest) t)
-;(declare-function cl-macroexpand-all "cl" (form &optional env))
 
 (eval-and-compile
   ;; Some helper functions used when building the language constants.
@@ -394,7 +393,9 @@ The syntax tables aren't stored directly since they're quite large."
   ;; lists are parsed.  Note that this encourages incorrect parsing of
   ;; templates since they might contain normal operators that uses the
   ;; '<' and '>' characters.  Therefore this syntax table might go
-  ;; away when CC Mode handles templates correctly everywhere.
+  ;; away when CC Mode handles templates correctly everywhere.  WHILE
+  ;; THIS SYNTAX TABLE IS CURRENT, `c-parse-state' MUST _NOT_ BE
+  ;; CALLED!!!
   t   nil
   (java c++) `(lambda ()
 	 (let ((table (funcall ,(c-lang-const c-make-mode-syntax-table))))
@@ -3183,7 +3184,7 @@ accomplish that conveniently."
       `(lambda ()
 
 	 ;; This let sets up the context for `c-mode-var' and similar
-	 ;; that could be in the result from `cl-macroexpand-all'.
+	 ;; that could be in the result from `macroexpand-all'.
 	 (let ((c-buffer-is-cc-mode ',mode)
 	       current-var source-eval)
 	   (c-make-emacs-variables-local)
@@ -3193,7 +3194,7 @@ accomplish that conveniently."
 		   (setq ,@(let ((c-buffer-is-cc-mode mode)
 				 (c-lang-const-expansion 'immediate))
 			     ;; `c-lang-const' will expand to the evaluated
-			     ;; constant immediately in `cl-macroexpand-all'
+			     ;; constant immediately in `macroexpand-all'
 			     ;; below.
 			      (cl-mapcan
 			       (lambda (init)

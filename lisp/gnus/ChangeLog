@@ -1,3 +1,19 @@
+2014-07-22  Katsumi Yamaoka  <yamaoka@jpl.org>
+
+	* gnus-utils.el (gnus-recursive-directory-files):
+	Unify hard or symbolic links (bug#18063).
+
+2013-07-17  Albert Krewinkel  <albert@zeitkraut.de>
+
+	* gnus-msg.el (gnus-configure-posting-style):
+	Allow string replacements in values when matching against a header.
+
+2014-07-07  Katsumi Yamaoka  <yamaoka@jpl.org>
+
+	* gnus-start.el (gnus-dribble-read-file): Don't stop the auto-saving of
+	the dribble buffer even when it is shrunk a lot.
+	<http://thread.gmane.org/gmane.emacs.gnus.user/16923>
+
 2014-06-26  Glenn Morris  <rgm@gnu.org>
 
 	* mm-util.el (help-function-arglist): Remove outdated declaration.

@@ -4462,6 +4462,7 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
       if (wait_proc && wait_proc->raw_status_new)
 	update_status (wait_proc);
       if (wait_proc
+	  && wait_proc->infd >= 0
 	  && ! EQ (wait_proc->status, Qrun)
 	  && ! EQ (wait_proc->status, Qconnect))
 	{
@@ -4471,7 +4472,7 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 	  XSETPROCESS (proc, wait_proc);
 
 	  /* Read data from the process, until we exhaust it.  */
-	  while (wait_proc->infd >= 0)
+	  while (true)
 	    {
 	      int nread = read_process_output (proc, wait_proc->infd);
 	      if (nread < 0)
@@ -4642,6 +4643,7 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 			  > 0))
 		    {
 		      nfds = 1;
+		      eassert (0 <= wait_proc->infd);
 		      /* Set to Available.  */
 		      FD_SET (wait_proc->infd, &Available);
 		    }
@@ -4909,7 +4911,8 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 		     status_notify to do it later, it will read input
 		     from the process before calling the sentinel.  */
 		  exec_sentinel (proc, build_string ("open\n"));
-		  if (!EQ (p->filter, Qt) && !EQ (p->command, Qt))
+		  if (0 <= p->infd && !EQ (p->filter, Qt)
+		      && !EQ (p->command, Qt))
 		    {
 		      FD_SET (p->infd, &input_wait_mask);
 		      FD_SET (p->infd, &non_keyboard_wait_mask);
@@ -5131,7 +5134,7 @@ read_and_dispose_of_process_output (struct Lisp_Process *p, char *chars,
 	 proc_encode_coding_system[p->outfd] surely points to a
 	 valid memory because p->outfd will be changed once EOF is
 	 sent to the process.  */
-      if (NILP (p->encode_coding_system)
+      if (NILP (p->encode_coding_system) && p->outfd >= 0
 	  && proc_encode_coding_system[p->outfd])
 	{
 	  pset_encode_coding_system
@@ -6071,8 +6074,8 @@ process has been transmitted to the serial port.  */)
 	 for communication with the subprocess, call shutdown to cause EOF.
 	 (In some old system, shutdown to socketpair doesn't work.
 	 Then we just can't win.)  */
-      if (EQ (p->type, Qnetwork)
-	  || p->infd == old_outfd)
+      if (0 <= old_outfd
+	  && (EQ (p->type, Qnetwork) || p->infd == old_outfd))
 	shutdown (old_outfd, 1);
 #endif
       close_process_fd (&p->open_fd[WRITE_TO_SUBPROCESS]);
@@ -6546,6 +6549,8 @@ DEFUN ("process-filter-multibyte-p", Fprocess_filter_multibyte_p,
 
   CHECK_PROCESS (process);
   p = XPROCESS (process);
+  if (p->infd < 0)
+    return Qnil;
   coding = proc_decode_coding_system[p->infd];
   return (CODING_FOR_UNIBYTE (coding) ? Qnil : Qt);
 }
@@ -6821,6 +6826,26 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 
 /* The following functions are needed even if async subprocesses are
    not supported.  Some of them are no-op stubs in that case.  */
+
+#ifdef HAVE_TIMERFD
+
+/* Add FD, which is a descriptor returned by timerfd_create,
+   to the set of non-keyboard input descriptors.  */
+
+void
+add_timer_wait_descriptor (int fd)
+{
+  FD_SET (fd, &input_wait_mask);
+  FD_SET (fd, &non_keyboard_wait_mask);
+  FD_SET (fd, &non_process_wait_mask);  
+  fd_callback_info[fd].func = timerfd_callback;
+  fd_callback_info[fd].data = NULL;
+  fd_callback_info[fd].condition |= FOR_READ;
+  if (fd > max_input_desc)
+    max_input_desc = fd;
+}
+
+#endif /* HAVE_TIMERFD */
 
 /* Add DESC to the set of keyboard input descriptors.  */
 

@@ -528,6 +528,8 @@ Furthermore the major mode function must be autoloaded.")
 
 (defcustom desktop-minor-mode-table
   '((auto-fill-function auto-fill-mode)
+    (defining-kbd-macro nil)
+    (isearch-mode nil)
     (vc-mode nil)
     (vc-dired-mode nil)
     (erc-track-minor-mode nil)
@@ -942,12 +944,13 @@ Frames with a non-nil `desktop-dont-save' parameter are not saved."
 			    :predicate #'desktop--check-dont-save))))
 
 ;;;###autoload
-(defun desktop-save (dirname &optional release auto-save)
+(defun desktop-save (dirname &optional release only-if-changed)
   "Save the desktop in a desktop file.
 Parameter DIRNAME specifies where to save the desktop file.
 Optional parameter RELEASE says whether we're done with this desktop.
-If AUTO-SAVE is non-nil, compare the saved contents to the one last saved,
-and don't save the buffer if they are the same."
+If ONLY-IF-CHANGED is non-nil, compare the current desktop information
+to that in the desktop file, and if the desktop information has not
+changed since it was last saved then do not rewrite the file."
   (interactive (list
                 ;; Or should we just use (car desktop-path)?
                 (let ((default (if (member "." desktop-path)
@@ -1020,7 +1023,7 @@ and don't save the buffer if they are the same."
 
 	  (setq default-directory desktop-dirname)
 	  ;; When auto-saving, avoid writing if nothing has changed since the last write.
-	  (let* ((beg (and auto-save
+	  (let* ((beg (and only-if-changed
 			   (save-excursion
 			     (goto-char (point-min))
 			     ;; Don't check the header with changing timestamp
@@ -1513,8 +1516,15 @@ If there are no buffers left to create, kill the timer."
         (setq command-line-args (delete key command-line-args))
         (desktop-save-mode 0)))
     (when desktop-save-mode
-      (desktop-read)
-      (setq inhibit-startup-screen t))))
+      ;; People don't expect emacs -nw, or --daemon,
+      ;; to create graphical frames (bug#17693).
+      ;; TODO perhaps there should be a separate value
+      ;; for desktop-restore-frames to control this startup behavior?
+      (let ((desktop-restore-frames (and desktop-restore-frames
+                                         initial-window-system
+                                         (not (daemonp)))))
+        (desktop-read)
+        (setq inhibit-startup-screen t)))))
 
 (provide 'desktop)
 

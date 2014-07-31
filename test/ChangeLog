@@ -1,3 +1,141 @@
+2014-07-30  Ulf Jasper  <ulf.jasper@web.de>
+
+	* automated/icalendar-tests.el (icalendar--decode-isodatetime): New test.
+
+2014-07-28  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	* automated/timer-tests.el (timer-tests-debug-timer-check): New test.
+
+2014-07-26  Ulf Jasper  <ulf.jasper@web.de>
+
+	* automated/icalendar-tests.el (icalendar-tests--do-test-import):
+	Work around the failures in icalendar-tests which occasionally occur on
+	hydra.nixos.org.
+
+2014-07-21  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	* automated/python-tests.el:
+	(python-util-clone-local-variables-1): Fix test.
+
+	* automated/python-tests.el (python-shell-make-comint-1):
+	(python-shell-make-comint-2): Fix indentation.
+	(python-shell-make-comint-3)
+	(python-shell-make-comint-4): New tests.
+	(python-shell-get-or-create-process-1): Fix test.
+	(python-shell-get-or-create-process-2)
+	(python-shell-get-or-create-process-3): New tests.
+	(python-shell-internal-get-or-create-process-1): Fix test.
+	(python-shell-prompt-detect-1): New test.
+	(python-shell-prompt-detect-2): New test.  (Bug#17370)
+	(python-shell-prompt-detect-3)
+	(python-shell-prompt-detect-4)
+	(python-shell-prompt-detect-5)
+	(python-shell-prompt-detect-6)
+	(python-shell-prompt-validate-regexps-1)
+	(python-shell-prompt-validate-regexps-2)
+	(python-shell-prompt-validate-regexps-3)
+	(python-shell-prompt-validate-regexps-4)
+	(python-shell-prompt-validate-regexps-5)
+	(python-shell-prompt-validate-regexps-6)
+	(python-shell-prompt-validate-regexps-7)
+	(python-shell-prompt-set-calculated-regexps-1)
+	(python-shell-prompt-set-calculated-regexps-2)
+	(python-shell-prompt-set-calculated-regexps-3)
+	(python-shell-prompt-set-calculated-regexps-4)
+	(python-shell-prompt-set-calculated-regexps-5)
+	(python-shell-prompt-set-calculated-regexps-6)
+	(python-util-valid-regexp-p-1): New tests.
+
+2014-07-21  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* automated/advice-tests.el (advice-test-call-interactively): Make sure
+	the function's definition is fully restored at the end.
+
+2014-07-12  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	* automated/python-tests.el (python-indent-block-enders-1)
+	(python-indent-block-enders-2): Fix tests.
+	(python-indent-block-enders-3, python-indent-block-enders-4)
+	(python-indent-block-enders-5, python-indent-dedenters-1)
+	(python-indent-dedenters-2): Remove tests.
+	(python-indent-dedenters-1, python-indent-dedenters-2)
+	(python-indent-dedenters-3, python-indent-dedenters-4)
+	(python-indent-dedenters-5, python-indent-dedenters-6)
+	(python-indent-dedenters-7)
+	(python-info-dedenter-opening-block-position-1)
+	(python-info-dedenter-opening-block-position-2)
+	(python-info-dedenter-opening-block-position-3)
+	(python-info-dedenter-opening-block-positions-1)
+	(python-info-dedenter-opening-block-positions-2)
+	(python-info-dedenter-opening-block-positions-3)
+	(python-info-dedenter-opening-block-positions-4)
+	(python-info-dedenter-opening-block-positions-5)
+	(python-info-dedenter-opening-block-message-1)
+	(python-info-dedenter-opening-block-message-2)
+	(python-info-dedenter-opening-block-message-3)
+	(python-info-dedenter-opening-block-message-4)
+	(python-info-dedenter-opening-block-message-5)
+	(python-info-dedenter-statement-p-1)
+	(python-info-dedenter-statement-p-2)
+	(python-info-dedenter-statement-p-3)
+	(python-info-dedenter-statement-p-4)
+	(python-info-dedenter-statement-p-5): New tests.
+
+2014-07-08  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* indent/perl.perl: Add indentation pattern for hash-table entries.
+
+2014-07-04  Michael Albinus  <michael.albinus@gmx.de>
+
+	* automated/dbus-tests.el (dbus-test02-register-service-session)
+	(dbus-test02-register-service-system): Fix docstring.
+	(dbus-test02-register-service-own-bus)
+	(dbus-test03-peer-interface): New tests.
+
+2014-07-03  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	* automated/python-tests.el (python-tests-self-insert): New function.
+	(python-triple-quote-pairing): Use it.
+	(python-parens-electric-indent-1): New test. (Bug#17658)
+
+2014-06-30  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	* automated/subr-x-tests.el: New file.
+
+2014-06-29  Michael Albinus  <michael.albinus@gmx.de>
+
+	* automated/tramp-tests.el (tramp--instrument-test-case):
+	Print debug buffer in any case.
+
+2014-06-28  Leo Liu  <sdl.web@gmail.com>
+
+	* automated/calc-tests.el: New file and add tests for math-bignum.
+	(Bug#17556)
+
+2014-06-28  Michael Albinus  <michael.albinus@gmx.de>
+
+	* automated/dbus-tests.el (dbus--test-register-service)
+	(dbus-test02-register-service-session): Replace `dbus-ping' calls
+	by `dbus-list-known-names'.  (Bug#17858)
+
+2014-06-28  Glenn Morris  <rgm@gnu.org>
+
+	* automated/Makefile.in (GDB): New variable.
+	(emacs): Use $GDB.  (Bug#15991)
+
+	* automated/Makefile.in (WRITE_LOG): New variable.
+	(%.log): Use WRITE_LOG.
+	(test_template): Disable logging.
+
+	* automated/Makefile.in (TESTS): New list of short PHONY aliases.
+	(test_template): New definition.  Apply to TESTS.
+
+2014-06-27  Glenn Morris  <rgm@gnu.org>
+
+	* automated/Makefile.in (check-maybe): Rename from check.
+	(check): Re-run all the tests, every time.
+	(clean, mostlyclean): Also delete *.log~.
+
 2014-06-26  Glenn Morris  <rgm@gnu.org>
 
 	* automated/package-x-test.el: Do not mess with load-path.

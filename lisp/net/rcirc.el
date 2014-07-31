@@ -679,7 +679,8 @@ When 0, do not auto-reconnect."
 		       (format "%s: %s (%S)"
 			       (process-name process)
 			       sentinel
-			       (process-status process)) (not rcirc-target))
+			       (process-status process))
+                       (not rcirc-target))
 	  (rcirc-disconnect-buffer)))
       (when (and (string= sentinel "deleted")
                  (< 0 rcirc-reconnect-delay))
@@ -802,11 +803,11 @@ Function is called with PROCESS, COMMAND, SENDER, ARGS and LINE.")
 (defun rcirc-buffer-process (&optional buffer)
   "Return the process associated with channel BUFFER.
 With no argument or nil as argument, use the current buffer."
-  (let ((buffer (or buffer (if (buffer-live-p rcirc-server-buffer)
-			       rcirc-server-buffer
-			     (error "Server buffer deleted")))))
-    (or (with-current-buffer buffer rcirc-process)
-	rcirc-process)))
+  (let ((buffer (or buffer (and (buffer-live-p rcirc-server-buffer)
+				rcirc-server-buffer))))
+    (if buffer
+        (with-current-buffer buffer rcirc-process)
+      rcirc-process)))
 
 (defun rcirc-server-name (process)
   "Return PROCESS server name, given by the 001 response."

@@ -1,3 +1,42 @@
+2014-07-31  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Simplify timerfd configuration and fix some minor glitches.
+	* configure.ac (HAVE_TIMERFD): Define only if TFD_CLOEXEC works,
+	since the code leaked file descriptors to children when !TFD_CLOEXEC.
+	(HAVE_TIMERFD_CLOEXEC): Remove; no longer used.
+	* m4/clock_time.m4 (gl_CLOCK_TIME): Don't check for clock_getres.
+	This reverts the previous change to this file, so it matches
+	gnulib again.
+
+2014-07-28  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	* configure.ac (toplevel): Check whether GNU/Linux-specific
+	timerfd functions and macros are available.
+	* m4/clock_time.m4 (gl_CLOCK_TIME): Check for clock_getres as well.
+
+2014-07-13  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Improve behavior of 'bzr up; cd src; make -k'.
+	* Makefile.in (ACLOCAL_INPUTS): Add all m4/*.m4 files.
+
+2014-07-12  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Merge from gnulib, incorporating:
+	2014-06-27 mktime: merge #if/#ifdef usage from glibc
+	* lib/mktime.c: Update from gnulib.
+
+	* Makefile.in (install-arch-indep): Avoid readdir race (Bug#17971).
+
+2014-07-10  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	* configure.ac: Check whether sys/sysinfo.h provides
+	Linux 'sysinfo' function and 'struct sysinfo' type.
+
+2014-06-28  Glenn Morris  <rgm@gnu.org>
+
+	* configure.ac (lwlib_deps_frag, oldxmenu_deps_frag): New output files.
+	* make-dist (lwlib, oldXMenu): Distribute *.mk.
+
 2014-06-27  Glenn Morris  <rgm@gnu.org>
 
 	* Makefile.in (src): No more need to pass BOOTSTRAPEMACS.

@@ -564,7 +564,7 @@ A value of nil means ignore them; anything else means query."
 In fact, this means that all read-only buffers normally have
 View mode enabled, including buffers that are read-only because
 you visit a file you cannot alter, and buffers you make read-only
-using \\[toggle-read-only]."
+using \\[read-only-mode]."
   :type 'boolean
   :group 'view)
 
@@ -1382,14 +1382,16 @@ called additional times).
 This macro actually adds an auxiliary function that calls FUN,
 rather than FUN itself, to `minibuffer-setup-hook'."
   (declare (indent 1) (debug t))
-  (let ((hook (make-symbol "setup-hook")))
-    `(let (,hook)
+  (let ((hook (make-symbol "setup-hook"))
+        (funsym (make-symbol "fun")))
+    `(let ((,funsym ,fun)
+           ,hook)
        (setq ,hook
 	     (lambda ()
 	       ;; Clear out this hook so it does not interfere
 	       ;; with any recursive minibuffer usage.
 	       (remove-hook 'minibuffer-setup-hook ,hook)
-	       (funcall ,fun)))
+	       (funcall ,funsym)))
        (unwind-protect
 	   (progn
 	     (add-hook 'minibuffer-setup-hook ,hook)
@@ -1500,7 +1502,7 @@ file names with wildcards."
 (defun find-file-read-only (filename &optional wildcards)
   "Edit file FILENAME but don't allow changes.
 Like \\[find-file], but marks buffer as read-only.
-Use \\[toggle-read-only] to permit editing."
+Use \\[read-only-mode] to permit editing."
   (interactive
    (find-file-read-args "Find file read-only: "
                         (confirm-nonexistent-file-or-buffer)))
@@ -1509,7 +1511,7 @@ Use \\[toggle-read-only] to permit editing."
 (defun find-file-read-only-other-window (filename &optional wildcards)
   "Edit file FILENAME in another window but don't allow changes.
 Like \\[find-file-other-window], but marks buffer as read-only.
-Use \\[toggle-read-only] to permit editing."
+Use \\[read-only-mode] to permit editing."
   (interactive
    (find-file-read-args "Find file read-only other window: "
                         (confirm-nonexistent-file-or-buffer)))
@@ -1518,7 +1520,7 @@ Use \\[toggle-read-only] to permit editing."
 (defun find-file-read-only-other-frame (filename &optional wildcards)
   "Edit file FILENAME in another frame but don't allow changes.
 Like \\[find-file-other-frame], but marks buffer as read-only.
-Use \\[toggle-read-only] to permit editing."
+Use \\[read-only-mode] to permit editing."
   (interactive
    (find-file-read-args "Find file read-only other frame: "
                         (confirm-nonexistent-file-or-buffer)))
@@ -1784,6 +1786,14 @@ When nil, never request confirmation."
   :version "22.1"
   :type '(choice integer (const :tag "Never request confirmation" nil)))
 
+(defcustom out-of-memory-warning-percentage 50
+  "Warn if file size exceeds this percentage of available free memory.
+When nil, never issue warning."
+  :group 'files
+  :group 'find-file
+  :version "24.4"
+  :type '(choice integer (const :tag "Never issue warning" nil)))
+
 (defun abort-if-file-too-large (size op-type filename)
   "If file SIZE larger than `large-file-warning-threshold', allow user to abort.
 OP-TYPE specifies the file operation being performed (for message to user)."
@@ -1793,6 +1803,25 @@ OP-TYPE specifies the file operation being performed (for message to user)."
 				    (file-name-nondirectory filename)
 				    (file-size-human-readable size) op-type))))
     (error "Aborted")))
+
+(defun warn-maybe-out-of-memory (size)
+  "Warn if an attempt to open file of SIZE bytes may run out of memory."
+  (when (and (numberp size) (not (zerop size))
+	     (integerp out-of-memory-warning-percentage))
+    (let ((meminfo (memory-info)))
+      (when (consp meminfo)
+	(let ((total-free-memory (float (+ (nth 1 meminfo) (nth 3 meminfo)))))
+	  (when (> (/ size 1024)
+		   (/ (* total-free-memory out-of-memory-warning-percentage)
+		      100.0))
+	    (warn
+	     "You are trying to open a file whose size (%s)
+exceeds the %S%% of currently available free memory (%s).
+If that fails, try to open it with `find-file-literally'
+\(but note that some characters might be displayed incorrectly)."
+	     (file-size-human-readable size)
+	     out-of-memory-warning-percentage
+	     (file-size-human-readable (* total-free-memory 1024)))))))))
 
 (defun find-file-noselect (filename &optional nowarn rawfile wildcards)
   "Read file FILENAME into a buffer and return the buffer.
@@ -1846,7 +1875,8 @@ the various files."
 		  (setq buf other))))
 	;; Check to see if the file looks uncommonly large.
 	(when (not (or buf nowarn))
-	  (abort-if-file-too-large (nth 7 attributes) "open" filename))
+	  (abort-if-file-too-large (nth 7 attributes) "open" filename)
+	  (warn-maybe-out-of-memory (nth 7 attributes)))
 	(if buf
 	    ;; We are using an existing buffer.
 	    (let (nonexistent)
@@ -4987,6 +5017,7 @@ prints a message in the minibuffer.  Instead, use `set-buffer-modified-p'."
   (set-buffer-modified-p arg))
 
 (defun toggle-read-only (&optional arg interactive)
+  "Change whether this buffer is read-only."
   (declare (obsolete read-only-mode "24.3"))
   (interactive (list current-prefix-arg t))
   (if interactive

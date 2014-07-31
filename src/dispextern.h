@@ -118,7 +118,8 @@ enum window_part
   ON_RIGHT_FRINGE,
   ON_LEFT_MARGIN,
   ON_RIGHT_MARGIN,
-  ON_SCROLL_BAR,
+  ON_VERTICAL_SCROLL_BAR,
+  ON_HORIZONTAL_SCROLL_BAR,
   ON_RIGHT_DIVIDER,
   ON_BOTTOM_DIVIDER
 };
@@ -1729,7 +1730,7 @@ struct face
 #ifdef HAVE_XFT
   /* Extra member that a font-driver uses privately.  */
   void *extra;
-#endif  
+#endif
 };
 
 
@@ -2849,44 +2850,50 @@ struct redisplay_interface
                                 int h, int wd);
   void (*destroy_fringe_bitmap) (int which);
 
-/* Compute left and right overhang of glyph string S.
-   A NULL pointer if platform does not support this. */
+  /* Compute left and right overhang of glyph string S.
+     A NULL pointer if platform does not support this. */
   void (*compute_glyph_string_overhangs) (struct glyph_string *s);
 
-/* Draw a glyph string S.  */
+  /* Draw a glyph string S.  */
   void (*draw_glyph_string) (struct glyph_string *s);
 
-/* Define cursor CURSOR on frame F.  */
+  /* Define cursor CURSOR on frame F.  */
   void (*define_frame_cursor) (struct frame *f, Cursor cursor);
 
-/* Clear the area at (X,Y,WIDTH,HEIGHT) of frame F.  */
+  /* Clear the area at (X,Y,WIDTH,HEIGHT) of frame F.  */
   void (*clear_frame_area) (struct frame *f, int x, int y,
                             int width, int height);
 
-/* Draw specified cursor CURSOR_TYPE of width CURSOR_WIDTH
-   at row GLYPH_ROW on window W if ON_P is true.  If ON_P is
-   false, don't draw cursor.  If ACTIVE_P is true, system caret
-   should track this cursor (when applicable).  */
+  /* Draw specified cursor CURSOR_TYPE of width CURSOR_WIDTH
+     at row GLYPH_ROW on window W if ON_P is true.  If ON_P is
+     false, don't draw cursor.  If ACTIVE_P is true, system caret
+     should track this cursor (when applicable).  */
   void (*draw_window_cursor) (struct window *w,
 			      struct glyph_row *glyph_row,
 			      int x, int y,
 			      enum text_cursor_kinds cursor_type,
 			      int cursor_width, bool on_p, bool active_p);
 
-/* Draw vertical border for window W from (X,Y_0) to (X,Y_1).  */
+  /* Draw vertical border for window W from (X,Y_0) to (X,Y_1).  */
   void (*draw_vertical_window_border) (struct window *w,
                                        int x, int y_0, int y_1);
 
-/* Draw window divider for window W from (X_0, Y_0) to (X_1, ,Y_1).  */
+  /* Draw window divider for window W from (X_0, Y_0) to (X_1, ,Y_1).  */
   void (*draw_window_divider) (struct window *w,
 			       int x_0, int x_1, int y_0, int y_1);
 
-/* Shift display of frame F to make room for inserted glyphs.
-   The area at pixel (X,Y) of width WIDTH and height HEIGHT is
-   shifted right by SHIFT_BY pixels.  */
+  /* Shift display of frame F to make room for inserted glyphs.
+     The area at pixel (X,Y) of width WIDTH and height HEIGHT is
+     shifted right by SHIFT_BY pixels.  */
   void (*shift_glyphs_for_insert) (struct frame *f,
                                    int x, int y, int width,
                                    int height, int shift_by);
+
+  /* Start display hourglass cursor on frame F.  */
+  void (*show_hourglass) (struct frame *f);
+
+  /* Cancel hourglass cursor on frame F.  */
+  void (*hide_hourglass) (struct frame *f);
 
 #endif /* HAVE_WINDOW_SYSTEM */
 };
@@ -3185,6 +3192,7 @@ int display_prop_intangible_p (Lisp_Object, Lisp_Object, ptrdiff_t, ptrdiff_t);
 void resize_echo_area_exactly (void);
 int resize_mini_window (struct window *, int);
 void set_vertical_scroll_bar (struct window *);
+void set_horizontal_scroll_bar (struct window *);
 int try_window (Lisp_Object, struct text_pos, int);
 void window_box (struct window *, enum glyph_row_area,
 		 int *, int *, int *, int *);
@@ -3223,6 +3231,7 @@ extern bool help_echo_showing_p;
 extern Lisp_Object help_echo_string, help_echo_window;
 extern Lisp_Object help_echo_object, previous_help_echo_string;
 extern ptrdiff_t help_echo_pos;
+extern int last_tool_bar_item;
 extern void reseat_at_previous_visible_line_start (struct it *);
 extern Lisp_Object lookup_glyphless_char_display (int, struct it *);
 extern ptrdiff_t compute_display_string_pos (struct text_pos *,
@@ -3295,7 +3304,6 @@ void draw_fringe_bitmap (struct window *, struct glyph_row *, int);
 void draw_row_fringe_bitmaps (struct window *, struct glyph_row *);
 bool draw_window_fringes (struct window *, bool);
 bool update_window_fringes (struct window *, bool);
-void compute_fringe_widths (struct frame *, bool);
 
 #ifdef HAVE_NTGUI
 void w32_init_fringe (struct redisplay_interface *);
@@ -3412,6 +3420,7 @@ void gamma_correct (struct frame *, COLORREF *);
 #ifdef HAVE_WINDOW_SYSTEM
 
 void x_implicitly_set_name (struct frame *, Lisp_Object, Lisp_Object);
+void x_change_tool_bar_height (struct frame *f, int);
 
 extern Lisp_Object tip_frame;
 extern Window tip_window;
@@ -3419,14 +3428,6 @@ extern frame_parm_handler x_frame_parm_handlers[];
 
 extern void start_hourglass (void);
 extern void cancel_hourglass (void);
-extern bool hourglass_shown_p;
-/* If non-null, an asynchronous timer that, when it expires, displays
-   an hourglass cursor on all frames.  */
-extern struct atimer *hourglass_atimer;
-
-/* Each GUI implements these.  FIXME: move into RIF. */
-extern void show_hourglass (struct atimer *);
-extern void hide_hourglass (void);
 
 /* Returns the background color of IMG, calculating one heuristically if
    necessary.  If non-zero, XIMG is an existing XImage object to use for
@@ -3488,7 +3489,7 @@ void increment_matrix_positions (struct glyph_matrix *,
 void blank_row (struct window *, struct glyph_row *, int);
 void clear_glyph_matrix_rows (struct glyph_matrix *, int, int);
 void clear_glyph_row (struct glyph_row *);
-void prepare_desired_row (struct glyph_row *);
+void prepare_desired_row (struct window *, struct glyph_row *, bool);
 void update_single_window (struct window *, bool);
 void do_pending_window_change (bool);
 void change_frame_size (struct frame *, int, int, bool, bool, bool, bool);

@@ -1,3 +1,804 @@
+2014-07-30  Christophe Deleuze  <christophe.deleuze@free.fr>  (tiny change)
+
+	* calendar/icalendar.el (icalendar--decode-isodatetime): Use
+	actual current-time-zone when converting to local time. (Bug#15408)
+
+2014-07-29  Martin Rudalics  <rudalics@gmx.at>
+
+	* window.el (window--state-put-2): Handle horizontal scroll
+	bars, if present.
+
+2014-07-29  Rüdiger Sonderfeld  <ruediger@c-plusplus.de>
+
+	* menu-bar.el (menu-bar-update-buffers): Update item list format
+	in `buffers-menu' to confirm with changes to `get_keyelt'
+	(r117463).  (Bug#18016)
+
+2014-07-28  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	* progmodes/python.el (inferior-python-mode): Make input prompts
+	read-only.
+
+2014-07-28  Emilio C. Lopes  <eclig@gmx.net>
+
+	* net/tramp-sh.el (tramp-get-remote-python): Also search for
+	executables named "python2" or "python3".
+	(tramp-get-remote-uid-with-python): Use parentheses around
+	arguments to `print' to make it compatible with Python 3.
+	(tramp-get-remote-gid-with-python): Ditto.  (Bug#18118)
+
+2014-07-28  Eli Zaretskii  <eliz@gnu.org>
+
+	* window.el (window--pixel-to-total): Use FRAME's root window, not
+	that of the selected frame.  (Bug#18112, Bug#16674)
+
+2014-07-28  Andreas Schwab  <schwab@linux-m68k.org>
+
+	* textmodes/tex-mode.el (tex-font-lock-verb): Doc fix.
+	(Bug#18117)
+
+2014-07-28  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	* progmodes/python.el (inferior-python-mode): Doc fix.
+
+2014-07-28  Stephen Berman  <stephen.berman@gmx.net>
+
+	* calendar/todo-mode.el (todo-edit-item--next-key): If next key is
+	not a character, ignore it instead of raising an error.
+
+	* calendar/todo-mode.el: Fix handling of marked items and make
+	minor code improvements.
+	(todo-edit-item): If there are marked items, ensure user can only
+	invoke editing commands that work with marked items.
+	(todo-edit-item--text): When there are marked items, make it a
+	noop if invoked with point not on an item; otherwise, ensure it
+	applies only to item at point.
+	(todo-item-undone): If there are marked not-done items, return
+	point to its original position before signaling user error.
+	(todo--user-error-if-marked-done-item): New function.
+	(todo-edit-item--header, todo-edit-item--diary-inclusion)
+	(todo-item-done): Use it.
+
+2014-07-28  Glenn Morris  <rgm@gnu.org>
+
+	* files.el (toggle-read-only): Re-add basic doc-string.
+	* vc/vc-hooks.el (vc-toggle-read-only): Tweak obsolescence mesage.
+
+	* progmodes/prolog.el (prolog-mode-keybindings-edit):
+	Replace missing `switch-to-prolog' with `run-prolog'.
+	(switch-to-prolog): Define as (obsolete) alias, as in 23.4.
+
+2014-07-28  Stephen Berman  <stephen.berman@gmx.net>
+
+	* calendar/todo-mode.el (todo-set-top-priorities): Fix overwriting
+	of file-wide setting when changing category-wide setting.
+
+2014-07-28  Stephen Berman  <stephen.berman@gmx.net>
+
+	* doc-view.el (doc-view-open-text): Don't require that the
+	document is saved in a file (e.g., email attachment).
+
+2014-07-28  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	Parse completion input in a iPython friendly way.  (Bug#18084)
+	* progmodes/python.el
+	(python-shell-completion-at-point): Rename from
+	python-shell-completion-complete-at-point.
+	(inferior-python-mode): Use it.
+	(python-completion-at-point): Rename from
+	python-completion-complete-at-point.  Parse input up to first
+	backward occurrence of whitespace, open-paren, close-paren or
+	string delimiter.
+	(python-mode): Use it.
+
+2014-07-28  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	Prevent Python process shell buffer to pop twice.
+	* progmodes/python.el (python-shell-switch-to-shell): Do not call
+	pop-to-buffer.
+
+2014-07-28  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	* progmodes/python.el
+	(python-shell-with-shell-buffer): New macro.
+	(python-shell-font-lock-get-or-create-buffer)
+	(python-shell-font-lock-kill-buffer)
+	(python-shell-font-lock-with-font-lock-buffer)
+	(python-shell-font-lock-cleanup-buffer)
+	(python-shell-font-lock-toggle): Use it.
+	(python-shell-font-lock-turn-on)
+	(python-shell-font-lock-turn-off): Use it.  Make command.
+
+2014-07-28  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	Grab all Python process output before inferior-python-mode hooks.
+	* progmodes/python.el (inferior-python-mode): Call
+	accept-process-output and sit-for to ensure all output for process
+	has been received before running hooks.
+	(python-shell-internal-get-or-create-process): Cleanup
+	accept-process-output and sit-for calls.
+
+2014-07-28  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	More robust shell startup and code setup.
+	* progmodes/python.el (python-shell-make-comint): Remove
+	accept-process-output call.
+	(python-shell-get-buffer): Return current buffer if major-mode is
+	inferior-python-mode.
+	(python-shell-get-or-create-process): Use it.
+	(python-shell-send-setup-code): Send all setup code in one string,
+	output success message and accept-process-output.
+
+2014-07-27  Eli Zaretskii  <eliz@gnu.org>
+
+	* scroll-bar.el (scroll-bar-toolkit-horizontal-scroll): Add
+	rudimentary support for bidirectional text.
+
+2014-07-27  Martin Rudalics  <rudalics@gmx.at>
+
+	* frame.el (frame-notice-user-settings): Rewrite using
+	frame-initial-frame-tool-bar-height.
+	* menu-bar.el (menu-bar-horizontal-scroll-bar)
+	(menu-bar-no-horizontal-scroll-bar): New functions.
+	(menu-bar-showhide-scroll-bar-menu): Add bindings for horizontal
+	scroll bars.
+	* scroll-bar.el (scroll-bar-lines)
+	(set-horizontal-scroll-bar-mode)
+	(get-horizontal-scroll-bar-mode, horizontal-scroll-bar-mode)
+	(scroll-bar-horizontal-drag-1, scroll-bar-horizontal-drag)
+	(scroll-bar-toolkit-horizontal-scroll): New functions.
+	(horizontal-scroll-bar-mode)
+	(previous-horizontal-scroll-bar-mode)
+	(horizontal-scroll-bar-mode-explicit): New variables.
+	(horizontal-scroll-bar-mode): New option.
+	(toggle-horizontal-scroll-bar): Do something.
+	(top-level): Bind horizontal-scroll-bar mouse-1.
+	* startup.el (tool-bar-originally-present): Remove variable.
+	(command-line): Don't set tool-bar-originally-present.
+	* window.el (window-min-height): Update doc-string.
+	(window--dump-frame): Dump horizontal scroll bar values.
+	(window--min-size-1): Handle minibuffer window separately.
+	Count in margins and horizontal scroll bar.  Return safe value
+	iff IGNORE equals 'safe.
+	(frame-windows-min-size): New function (used by frame resizing
+	routines).
+	(fit-frame-to-buffer, fit-window-to-buffer): Count in horizontal
+	scroll bars.
+	(window--sanitize-window-sizes): New function.
+	(window-split-min-size): Remove.
+	(split-window): Count divider-width.  Don't use
+	`window-split-min-size' any more.  Reword error messages.
+	Sanitize windows sizes after splitting.
+
+2014-07-27  Thien-Thi Nguyen  <ttn@gnu.org>
+
+	Use `defvar-local' more.
+	* progmodes/hideshow.el
+	(hs-c-start-regexp, hs-block-start-regexp)
+	(hs-block-start-mdata-select, hs-block-end-regexp)
+	(hs-forward-sexp-func, hs-adjust-block-beginning): ...here;
+	remove corresponding `make-variable-buffer-local' top-level calls.
+
+2014-07-27  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	Cleanup error signals.  (Bug#18067)
+	* progmodes/python.el
+	(python-indent-shift-left): Use user-error instead.
+	(python-shell-prompt-detect): Use lwarn with python group.
+	(python-completion-complete-at-point)
+	(python-eldoc--get-doc-at-point): Don't signal error.
+
+2014-07-27  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	Support for packages in Python shell.  (Bug#13570)
+	* progmodes/python.el (python-shell--package-depth): New var.
+	(python-shell-package-enable): New command.
+	(python-util-list-directories, python-util-list-files)
+	(python-util-list-packages): New functions.
+
+2014-07-27  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	Faster comint output.  (Bug#16875)
+	* progmodes/python.el:
+	(python-comint-output-filter-function): Make obsolete.
+	(python-comint-postoutput-scroll-to-bottom): New function.
+	(inferior-python-mode): Set comint-output-filter-functions to a
+	minimum.
+
+2014-07-27  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	* progmodes/python.el (python-shell-font-lock-post-command-hook):
+	Safeguard current point and undo history.
+
+2014-07-26  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	Robust shell syntax highlighting.  (Bug#18084, Bug#16875)
+	* progmodes/python.el:
+	(python-shell-prompt-input-regexps): Add iPython block prompt.
+	(python-shell-output-syntax-table): Delete var.
+	(python-shell-font-lock-with-font-lock-buffer): New macro.
+	(python-shell-font-lock-get-or-create-buffer)
+	(python-shell-font-lock-kill-buffer)
+	(python-shell-font-lock-cleanup-buffer)
+	(python-shell-font-lock-post-command-hook)
+	(python-shell-font-lock-turn-off): New functions.
+	(python-shell-font-lock-turn-on): New function.
+	(inferior-python-mode): Use it.
+	(python-shell-font-lock-toggle): New command.
+	(python-shell-font-lock-enable): Rename from
+	python-shell-enable-font-lock.
+	(run-python-internal): Use it.
+	(python-shell-font-lock-comint-output-filter-function): New function.
+	(python-shell-comint-end-of-output-p): New function.
+	(python-shell-output-filter): Use it.
+	(python-util-comint-last-prompt): New function.
+	(python-util-text-properties-replace-name): New function.
+
+2014-07-25  Glenn Morris  <rgm@gnu.org>
+
+	* vc/ediff-init.el (ediff-toggle-read-only-function):
+	* vc/ediff-util.el (ediff-toggle-read-only):
+	Replace obsolete toggle-read-only with read-only-mode.
+
+2014-07-24  Michael Albinus  <michael.albinus@gmx.de>
+
+	* net/tramp-cache.el (tramp-flush-file-function): Wrap the code
+	with `save-match-data'.  (Bug#18095)
+
+2014-07-21  Vincent Belaïche  <vincentb1@users.sourceforge.net>
+
+	* ses.el (ses-truncate-cell): Use cl-progv instead of eval in
+	order to ensure that row and col are lexically bound inside the
+	evaluated sexp.
+
+2014-07-21  Glenn Morris  <rgm@gnu.org>
+
+	* progmodes/hideif.el (hide-ifdef-mode-submap):
+	Also substitute read-only-mode.
+	* bindings.el (mode-line-toggle-read-only):
+	* bs.el (bs-toggle-readonly):
+	* buff-menu.el (Buffer-menu-toggle-read-only):
+	* dired.el (dired-toggle-read-only):
+	* files.el (view-read-only, find-file-read-only)
+	(find-file-read-only-other-window)
+	(find-file-read-only-other-frame):
+	* progmodes/hideif.el (hide-ifdef-toggle-outside-read-only):
+	Doc fixes re toggle-read-only.
+
+2014-07-21  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	* progmodes/python.el: Add comment about pipe buffering and
+	solutions for missing/delayed output in inferior Python shells.
+	(Bug#17304)
+
+	* progmodes/python.el (python-mode): Don't set
+	mode-require-final-newline.  (Bug#17990)
+
+	Make python.el work with IPython automatically.  (Bug#15510)
+	* progmodes/python.el:
+	(python-shell-completion-setup-code): New value supporting iPython.
+	(python-shell-completion-string-code): New value supporting iPython.
+	(python-shell-completion-get-completions): Use them.
+	(python-shell-completion-module-string-code): Make obsolete.
+	(python-shell-prompt-input-regexps)
+	(python-shell-prompt-output-regexps): Add safeguard for ipdb.
+	(python-shell-output-filter): Fix comment typo.
+
+	Fix Python shell prompts detection for remote hosts.
+	* progmodes/python.el (python-shell-prompt-detect): Replace
+	call-process with process-file and make it more robust.
+
+	Autodetect Python shell prompts.  (Bug#17370)
+	* progmodes/python.el:
+	(python-shell-interpreter-interactive-arg)
+	(python-shell-prompt-detect-enabled)
+	(python-shell-prompt-detect-failure-warning)
+	(python-shell-prompt-input-regexps)
+	(python-shell-prompt-output-regexps): New vars.
+	(python-shell-prompt-calculated-input-regexp)
+	(python-shell-prompt-calculated-output-regexp): New vars.
+	(python-shell-get-process-name)
+	(python-shell-internal-get-process-name)
+	(python-shell-output-filter)
+	(python-shell-completion-get-completions): Use them.
+	(python-shell-prompt-detect)
+	(python-shell-prompt-validate-regexps): New functions.
+	(python-shell-prompt-set-calculated-regexps): New function.
+	(inferior-python-mode): Use it.  Also honor overriden
+	python-shell-interpreter and python-shell-interpreter-args.
+	(python-shell-make-comint): Honor overriden
+	python-shell-interpreter and python-shell-interpreter-args.
+	(python-shell-get-or-create-process): Make it testable by allowing
+	to call run-python non-interactively.
+	(python-util-valid-regexp-p): New function.
+	(python-shell-prompt-regexp, python-shell-prompt-block-regexp)
+	(python-shell-prompt-output-regexp)
+	(python-shell-prompt-pdb-regexp): Use it as defcustom :safe.
+
+2014-07-21  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* emacs-lisp/smie.el (smie-config--guess-1): Split from
+	smie-config--guess.
+	(smie-config--guess): Use it.
+
+	* emacs-lisp/edebug.el: Use nadvice.
+	(edebug-original-read): Remove.
+	(edebug--read): Rename from edebug-read and add `orig' arg.
+	(edebug-uninstall-read-eval-functions)
+	(edebug-install-read-eval-functions): Use nadvice.
+	(edebug-read-sexp, edebug-read-storing-offsets, edebug-read-symbol)
+	(edebug-read-and-maybe-wrap-form1, edebug-instrument-callee)
+	(edebug-read-string, edebug-read-function): Use just `read'.
+	(edebug-original-debug-on-entry): Remove.
+	(edebug--debug-on-entry): Rename from edebug-debug-on-entry and add
+	`orig' arg.
+	(debug-on-entry): Override with nadvice.
+
+	* mouse.el (tear-off-window): Rename from mouse-tear-off-window since
+	it also makes sense to bind it to a non-mouse event.
+
+	* vc/vc-bzr.el (vc-bzr-shelve): Make it operate on fileset.
+
+2014-07-19  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* xt-mouse.el (xterm-mouse-event): Don't assume last-click is non-nil
+	(bug#18015).
+
+	* rect.el (rectangle--string-preview): Don't assume there
+	a non-nil default (bug#17984).
+
+2014-07-16  Glenn Morris  <rgm@gnu.org>
+
+	* desktop.el (after-init-hook): Disable startup frame restoration
+	in non-graphical situations.  (Bug#17693)
+
+	* vc/vc-dispatcher.el (vc-log-edit): Do set up the log buffer
+	if it was "empty", or used for a different set of files.  (Bug#17884)
+
+2014-07-16  Eli Zaretskii  <eliz@gnu.org>
+
+	* bindings.el (mode-line-remote): If default-directory is not a
+	string, don't call file-remote-p on it; instead state in the
+	help-echo that it is nil.  (Bug#17986)
+
+2014-07-14  Daniel Colascione  <dancol@dancol.org>
+
+	* progmodes/cc-langs.el: Change comments from `cl-macroexpand-all'
+	to `macroexpand-all'
+
+	* progmodes/cc-defs.el (c-lang-defconst-eval-immediately):
+	Use `macroexpand-all' instead of `cl-macroexpand-all'.
+
+2014-07-12  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Fix bug: C-x v v discarded existing log message (Bug#17884).
+	* vc/vc-dispatcher.el (vc-log-edit):
+	Don't clobber an already-existing log message.
+
+2014-07-12  Glenn Morris  <rgm@gnu.org>
+
+	* vc/log-edit.el (log-edit-changelog-entries):
+	Check for a visited-but-never-saved ChangeLog.
+
+2014-07-12  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* vc/log-edit.el (log-edit-changelog-entries): Don't both visiting
+	a non-existing file (bug#17970).
+
+	* faces.el (face-name): Undo last change.
+	(x-resolve-font-name): Don't call face-name (bug#17956).
+
+2014-07-12  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	Fix dedenters and electric colon handling. (Bug#15163)
+	* progmodes/python.el
+	(python-rx-constituents): Add dedenter and block-ender.
+	(python-indent-dedenters, python-indent-block-enders): Delete.
+	(python-indent-context): Return new case for dedenter-statement.
+	(python-indent-calculate-indentation): Handle new case.
+	(python-indent-calculate-levels): Fix levels calculation for
+	dedenter statements.
+	(python-indent-post-self-insert-function): Fix colon handling.
+	(python-info-dedenter-opening-block-message): New function.
+	(python-indent-line): Use it.
+	(python-info-closing-block)
+	(python-info-closing-block-message): Remove.
+	(python-info-dedenter-opening-block-position)
+	(python-info-dedenter-opening-block-positions)
+	(python-info-dedenter-statement-p): New functions.
+
+2014-07-11  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	* files.el (out-of-memory-warning-percentage): New defcustom.
+	(warn-maybe-out-of-memory): Use it.
+
+2014-07-11  Michael Albinus  <michael.albinus@gmx.de>
+
+	* subr.el (read-passwd): Use `read-hide-char' if non-nil.  Bind it
+	when calling `read-string'.  (Bug#17839)
+
+2014-07-10  Eli Zaretskii  <eliz@gnu.org>
+
+	* files.el (warn-maybe-out-of-memory): Fix the wording of the
+	warning.
+
+2014-07-10  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	* files.el (warn-maybe-out-of-memory): New function.
+	(find-file-noselect): Use it.
+
+2014-07-09  Sam Steingold  <sds@gnu.org>
+
+	* progmodes/cperl-mode.el (cperl-block-p): Treat the perl keyword
+	`constant' like `bless', `return' &c
+
+2014-07-09  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* rect.el (apply-on-rectangle): Check forward-line really moved to the
+	next line.
+
+2014-07-09  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* progmodes/sh-script.el (sh-smie-sh-rules): Don't align with a && in
+	the middle of a line (bug#17896).
+
+2014-07-09  Juri Linkov  <juri@jurta.org>
+
+	* startup.el (command-line): Append displaying the warning about
+	the errors in the init file to the end of `after-init-hook'.
+	(Bug#17927)
+
+	* faces.el (face-name): Return input arg `face' as-is
+	when it's not a symbol.
+	(x-resolve-font-name): Don't check if the face is a symbol.
+	(Bug#17956)
+
+	* facemenu.el (list-colors-print): In help-echo format use %.2f
+	instead of %d because now HSV values are floating-point components
+	between 0.0 and 1.0.
+
+2014-07-09  Glenn Morris  <rgm@gnu.org>
+
+	* emulation/cua-rect.el (cua--activate-rectangle):
+	Avoid setting cua--rectangle to nil.  (Bug#17877)
+
+2014-07-09  Stephen Berman  <stephen.berman@gmx.net>
+
+	* calendar/todo-mode.el: Fix wrong-type-argument error when
+	marking multiple consecutive items.
+	(todo-toggle-mark-item): Don't try to mark the empty lines at the
+	end of the todo and done items sections.  Note in doc string that
+	items marked by passing a numeric prefix argument can include the
+	last todo and first done items.
+	(todo-mark-category): Don't try to mark the empty line between the
+	todo and done items sections.
+
+2014-07-09  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* emacs-lisp/edebug.el (edebug-eval-defun): Print result using
+	proper Lisp quoting (bug#17934).
+
+	* progmodes/ruby-mode.el (ruby-mode-variables): Don't meddle with
+	require-final-newline since prog-mode already took care of it (bug#17947).
+
+2014-07-09  Stephen Berman  <stephen.berman@gmx.net>
+
+	* calendar/todo-mode.el: Fix two bugs.  Shorten Commentary and
+	refer to the Todo mode Info manual.  Update the comment on
+	requiring cl-lib.
+	(todo-find-filtered-items-file): Add todo-prefix overlays.
+	(todo-filter-items): Reorder a let-bound variable to avoid a
+	wrong-type-argument error on canceling the file choice dialog.
+
+2014-07-09  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* progmodes/octave.el (inferior-octave-mode):
+	Set comint-input-ring-size to a number (bug#17912).
+
+2014-07-09  Juri Linkov  <juri@jurta.org>
+
+	* desktop.el (desktop-minor-mode-table): Add `defining-kbd-macro'
+	and `isearch-mode' associated with nil.  (Bug#17849)
+
+2014-07-08  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* linum.el (linum--face-height): New function (bug#17813).
+	(linum-update-window): Use it to adjust margin to linum's width.
+
+	* leim/quail/sisheng.el (sisheng-list): Don't bother with-case-table.
+	* eshell/em-smart.el (eshell-smart-scroll-window): Use
+	with-selected-window.
+
+	* xt-mouse.el (xterm-mouse-translate-1): Intern drag event (bug#17894).
+	Remove also pointless window&mark manipulation.
+
+	* progmodes/perl-mode.el: Use syntax-ppss; fix one indentation case.
+	(perl-indent-line): Use syntax-ppss to detect we're in a doc-section.
+	(perl-continuation-line-p): Don't skip over anything else than labels.
+	Return the previous char.
+	(perl-calculate-indent): Use syntax-ppss instead of parse-start
+	and update callers accordingly.  For continuation lines, check the
+	the case of array hashes.
+	(perl-backward-to-noncomment): Make it non-interactive.
+	(perl-backward-to-start-of-continued-exp): Rewrite.
+
+2014-07-08  Sam Steingold  <sds@gnu.org>
+
+	* progmodes/inf-lisp.el (lisp-eval-paragraph, lisp-eval-form-and-next):
+	New user commands.
+
+2014-07-08  Juri Linkov  <juri@jurta.org>
+
+	* vc/vc-annotate.el (vc-annotate-background-mode): New defcustom.
+	(vc-annotate-color-map): Use less saturated colors (20%) for
+	background-mode.
+	(vc-annotate-very-old-color): Add default value for background-mode.
+	(vc-annotate-background): Set default value to nil since now text on
+	the default backgrounds should be legible in light and dark modes.
+	(vc-annotate-lines): Use `vc-annotate-background-mode'.  Doc fix.
+	(Bug#17808)
+
+2014-07-08  Juri Linkov  <juri@jurta.org>
+
+	* simple.el (transpose-chars): Don't move point into read-only area.
+	(Bug#17829)
+
+2014-07-08  Juri Linkov  <juri@jurta.org>
+
+	* window.el (with-displayed-buffer-window): New macro.
+	(with-temp-buffer-window, with-current-buffer-window):
+	Use `macroexp-let2' to evaluate and bind variables
+	in the same order as macro arguments.
+	(display-buffer--action-function-custom-type):
+	Add `display-buffer-below-selected' and `display-buffer-at-bottom'.
+
+	* minibuffer.el (minibuffer-completion-help): Replace
+	`with-output-to-temp-buffer' with `with-displayed-buffer-window'
+	with actions that display *Completions* at-bottom when called
+	from the minibuffer, or below-selected in a normal buffer.
+	Associate `window-height' with `fit-window-to-buffer'.
+	Let-bind `pop-up-windows' to nil.
+
+	* dired.el (dired-mark-pop-up): Use `with-displayed-buffer-window'
+	instead of `with-current-buffer-window'.  (Bug#17809)
+
+2014-07-07  Luke Lee  <luke.yx.lee@gmail.com>
+
+	* progmodes/hideif.el (hide-ifdef-env): Change to global.
+	(hide-ifdef-env-backup): New variable.
+	(hide-ifdef-expand-reinclusion-protection, hide-ifdef-header-regexp):
+	New customizable variables.
+	(hif-clear-all-ifdef-defined): New defun.
+	(hif-merge-ifdef-region, hide-ifdef-region-internal, hide-ifdef-region)
+	(hif-show-ifdef-region): Merge hidden regions to prevent continuous "...".
+	(hif-tokenize): Fix for MS-DOS/Win EOL style.
+	(hif-endif-to-ifdef, hif-make-range, hif-find-range, hif-possibly-hide):
+	Fix bug to hide the correct #elif region(s).
+	(hif-range-elif): New defun.
+	(hif-recurse-level): New var.
+	(hif-evaluate-region, hif-evaluate-macro): New defun.
+	(hide-ifdef-guts): Prevent reinclusion protected C/C++ headers from
+	fully hidden.
+	(hide-ifdef-define, hide-ifdefs, hide-ifdef-block, show-ifdef-block):
+	Better interaction.
+
+2014-07-04  Michael Albinus  <michael.albinus@gmx.de>
+
+	* net/dbus.el (dbus-peer-handler): New defun.
+	(dbus-register-service): Register it.  (Bug#17858)
+	(dbus-managed-objects-handler): Fix docstring.
+
+2014-07-04  Phil Sainty  <psainty@orcon.net.nz>  (tiny change)
+
+	* emacs-lisp/lisp.el (narrow-to-defun-include-comments): New var.
+	(narrow-to-defun): New arg include-comments, defaulting to it
+	(bug#16328).
+
+2014-07-03  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* rect.el (rectangle--highlight-for-redisplay): Don't pass `orig' with
+	different calling convention to rectangle--unhighlight-for-redisplay.
+
+2014-07-03  Michael Albinus  <michael.albinus@gmx.de>
+
+	* net/tramp.el (tramp-call-process): Handle error strings.
+
+	* net/tramp-adb.el (tramp-adb-sh-fix-ls-output): Use `bolp'.
+
+	* net/tramp-sh.el (tramp-sh-handle-set-visited-file-modtime)
+	(tramp-sh-handle-verify-visited-file-modtime): Use `point-at-eol'.
+
+	* net/trampver.el: Update release number.
+
+2014-07-03  Juri Linkov  <juri@jurta.org>
+
+	* desktop.el (desktop-save): Rename arg `auto-save' to
+	`only-if-changed'.  Doc fix.  (Bug#17873)
+
+2014-07-03  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* mouse.el (mouse-yank-primary, mouse-yank-secondary):
+	Use insert-for-yank (bug#17271).
+
+2014-07-03  Leo Liu  <sdl.web@gmail.com>
+
+	* emacs-lisp/pp.el (pp-eval-expression, pp-eval-last-sexp):
+	Support lexical-binding.
+
+2014-07-03  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* vc/log-edit.el (log-edit-goto-eoh): New function.
+	(log-edit--match-first-line): Use it (bug#17861).
+
+2014-07-03  Glenn Morris  <rgm@gnu.org>
+
+	* vc/log-edit.el (log-edit-hook): Add missing :version.
+
+2014-07-03  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	* progmodes/python.el (python-indent-post-self-insert-function):
+	Enhancements to electric indentation behavior inside
+	parens. (Bug#17658)
+
+2014-07-03  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* ps-def.el (ps-generate-postscript-with-faces1): Don't mess with
+	buffer-invisibility-spec (bug#17867).
+
+2014-07-03  Andreas Schwab  <schwab@linux-m68k.org>
+
+	* vc/vc-git.el (vc-git-checkin): When operating on the whole tree
+	pass "-a".
+
+2014-07-03  Glenn Morris  <rgm@gnu.org>
+
+	* cus-edit.el (help):
+	* finder.el (finder-known-keywords):
+	* help.el (help-for-help-internal):
+	* vc/ediff-mult.el (ediff-meta-buffer-verbose-message)
+	(ediff-redraw-registry-buffer):
+	* vc/ediff-ptch.el (ediff-patch-file-internal):
+	Doc fixes re "online" help.  (Bug#17803)
+
+	* progmodes/idlwave.el (idlwave): Update url-link for custom group.
+	(idlwave-mode): Doc URL update.
+
+2014-07-01  Juri Linkov  <juri@jurta.org>
+
+	* man.el: Display man pages immediately and use process-filter
+	to format them asynchronously.
+	(Man-width): Doc fix.
+	(man): Doc fix.
+	(Man-start-calling): Use `with-selected-window' to get
+	`frame-width' and `window-width'.
+	(Man-getpage-in-background): Call `Man-notify-when-ready'
+	immediately after creating a new buffer.  Call `Man-mode' and set
+	`mode-line-process' in the created buffer.  Set process-filter to
+	`Man-bgproc-filter' in start-process branch.  In call-process branch
+	call either `Man-fontify-manpage' or `Man-cleanup-manpage'.
+	Use `Man-start-calling' inside `with-current-buffer'.
+	(Man-fontify-manpage): Don't print messages.  Fix boundary condition.
+	(Man-cleanup-manpage): Don't print messages.
+	(Man-bgproc-filter): New function.
+	(Man-bgproc-sentinel): Add `save-excursion' to keep point when
+	user moved it during asynchronous formatting.  Move calls of
+	`Man-fontify-manpage' and `Man-cleanup-manpage' to
+	`Man-bgproc-filter'.  Move the call of `Man-mode' to
+	`Man-getpage-in-background'.  Use `quit-restore-window'
+	instead of `kill-buffer'.  Use `message' instead of `error'
+	because errors are caught by process sentinel.
+	(Man-mode): Move calls of `Man-build-page-list',
+	`Man-strip-page-headers', `Man-unindent', `Man-goto-page' to
+	`Man-bgproc-sentinel'.  Doc fix.  (Bug#2588, bug#5054, bug#9084, bug#17831)
+
+	* man.el (Man-bgproc-sentinel): Use `Man-page-from-arguments'
+	for the message about the man page cleaned up.
+
+2014-07-01  Mario Lang  <mlang@delysid.org>
+
+	* net/gnutls.el (gnutls-negotiate): Prevent destructive modification of
+	cosutomization option `gnutls-verify-error'.
+
+2014-07-01  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* simple.el (deactivate-mark, set-mark-command, handle-shift-selection):
+	Don't keep transient-mark-mode buffer-local when not needed (bug#6316).
+
+	* xt-mouse.el (turn-on-xterm-mouse-tracking-on-terminal)
+	(turn-off-xterm-mouse-tracking-on-terminal): Don't burp if the terminal
+	is suspended (bug#17857).
+
+2014-07-01  Michael Albinus  <michael.albinus@gmx.de>
+
+	* net/tramp-sh.el (tramp-open-connection-setup-interactive-shell):
+	Prefer utf-8 coding.  (Bug#17859)
+
+2014-06-30  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	* emacs-lisp/subr-x.el (string-reverse): Define as obsolete alias
+	for `reverse'.
+
+2014-06-30  Glenn Morris  <rgm@gnu.org>
+
+	* emacs-lisp/autoload.el (autoload-ensure-writable): New variable.
+	(autoload-ensure-default-file): Maybe make existing output writable.
+	* Makefile.in (AUTOGEN_VCS): Remove.
+	(autoloads): Use autoload-ensure-writable rather than AUTOGEN_VCS.
+
+2014-06-30  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	* emacs-lisp/subr-x.el (string-reverse): Use `reverse'.
+
+2014-06-30  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	New if-let, when-let, thread-first and thread-last macros.
+
+	* emacs-lisp/subr-x.el
+	(internal--listify, internal--check-binding)
+	(internal--build-binding-value-form, internal--build-binding)
+	(internal--build-bindings): New functions.
+	(internal--thread-argument, thread-first, thread-last)
+	(if-let, when-let): New macros.
+
+2014-06-30  Grégoire Jadi  <daimrod@gmail.com>
+
+	* net/rcirc.el (rcirc-buffer-process): Restore previous
+	behaviour.  (Bug#17772)
+
+2014-06-29  Alan Mackenzie  <acm@muc.de>
+
+	Don't call c-parse-state when c++-template-syntax-table is active.
+	* progmodes/cc-engine.el (c-guess-continued-construct CASE G)
+	(c-guess-basic-syntax CASE 5D.3): Rearrange so that
+	c-syntactic-skip-backwards isn't called with the pertinent syntax table.
+
+2014-06-28  Stephen Berman  <stephen.berman@gmx.net>
+
+	* calendar/todo-mode.el (todo-set-top-priorities): Fix logic to
+	account for file-wide setting of todo-top-priorities-overrides.
+	Make code a bit cleaner.
+
+2014-06-28  Glenn Morris  <rgm@gnu.org>
+
+	* net/eww.el (eww-mode) <eww-current-title>: Make local.  (Bug#17860)
+
+2014-06-28  Stephen Berman  <stephen.berman@gmx.net>
+
+	* calendar/todo-mode.el (todo-prefix-overlays): If there is no
+	category-wide setting of todo-top-priorities-overrides, check for
+	a file-wide setting and fontify accordingly.
+
+2014-06-28  Glenn Morris  <rgm@gnu.org>
+
+	* subr.el (read-passwd): Warn about batch mode.  (Bug#17839)
+
+2014-06-28  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* progmodes/hideif.el: Use lexical-binding.  Fix up cl-lib usage.
+
+2014-06-28  K. Handa  <handa@gnu.org>
+
+	Fix Bug#17739.
+
+	* composite.el: Setup composition-function-table for dotted circle.
+	(compose-gstring-for-dotted-circle): New function.
+
+	* international/characters.el: Add category "^" to all
+	non-spacing characters.
+
+2014-06-28  Glenn Morris  <rgm@gnu.org>
+
+	* Makefile.in (doit): Remove force rule.
+	(custom-deps, finder-data, autoloads, update-subdirs)
+	(compile-one-process): PHONY targets do not need force rules.
+
+	* Makefile.in (compile-main, compile, compile-always):
+	No need to explicitly pass variables to ourself in recursive calls.
+
+2014-06-28  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* files.el (minibuffer-with-setup-hook): Evaluate the first arg eagerly.
+
 2014-06-26  Glenn Morris  <rgm@gnu.org>
 
 	* Makefile.in (update-authors): Update for moved authors.el.
@@ -15,8 +816,8 @@
 
 2014-06-26  Daiki Ueno  <ueno@gnu.org>
 
-	* emacs-lisp/package.el (package--check-signature): If
-	package-check-signature is allow-unsigned, don't signal error when
+	* emacs-lisp/package.el (package--check-signature):
+	If package-check-signature is allow-unsigned, don't signal error when
 	we can't verify signature because of missing public key
 	(bug#17625).
 
@@ -34,8 +835,8 @@
 	* ruler-mode.el (ruler-mode-mouse-add-tab-stop)
 	(ruler-mode-ruler): Fix to work with nil tab-stop-list.
 
-	* progmodes/asm-mode.el (asm-calculate-indentation): Use
-	indent-next-tab-stop.
+	* progmodes/asm-mode.el (asm-calculate-indentation):
+	Use indent-next-tab-stop.
 
 	* indent.el (indent-accumulate-tab-stops): New function.
 
@@ -97,6 +898,32 @@
 	* emacs-lisp/authors.el: Move to ../admin.
 
 	* emacs-lisp/ert.el (ert-summarize-tests-batch-and-exit): New.
+
+2014-06-26  Luke Lee  <luke.yx.lee@gmail.com>
+
+	* progmodes/hideif.el (hif-string-to-number): Fix return value bug.
+	(hif-simple-token-only, hif-tokenize): Comment in detail mainly for
+	performance enhancements.
+	(hif-parse-if-exp): Rename to `hif-parse-exp'.  Enhance for macro
+	expansion.
+	(hif-factor, hif-string-concatenation, intern-safe): Support string
+	concatenation and argumented macro expansion.
+	(hif-if-valid-identifier-p, hif-define-operator, hif-flatten)
+	(hif-expand-token-list, hif-get-argument-list, hif-define-macro)
+	(hif-delimit, hif-macro-supply-arguments, hif-invoke, hif-canonicalize)
+	(hif-canonicalize-tokens, hif-place-macro-invocation)
+	(hif-parse-macro-arglist): Mostly new functions for supporting
+	argumented macro expansion.
+	(hif-string-concatenation, hif-stringify, hif-token-concat)
+	(hif-token-stringification, hif-token-concatenation):
+	Stringification and concatenation.
+	(hif-find-next-relevant): Fix comments.
+	(hif-ifdef-to-endif, hif-looking-at-elif, hif-hide-line): Bug fix for
+	some cases involving #elif.
+	(hif-find-define, hif-add-new-defines): New functions for automatically
+	scanning of defined symbols.
+	(hide-ifdef-guts): Fix for defined symbol auto scanning.
+	(hide-ifdef-undef): Fix behavior to match CPP.
 
 2014-06-25  Glenn Morris  <rgm@gnu.org>
 
@@ -1525,7 +2352,7 @@
 	Remove HISTFILE and HISTSIZE; it's too late to set them here.
 	Add :version entry.
 	(tramp-open-shell): Do not let-bind `tramp-end-of-output'.
-	Add "HISTSIZE=/dev/null" to the shell's env arguments.  Do not send
+	Add "HISTFILE=/dev/null" to the shell's env arguments.  Do not send
 	extra "PSx=..." commands.
 	(tramp-maybe-open-connection): Setenv HISTFILE to /dev/null.
 	(Bug#17295)
@@ -3225,7 +4052,7 @@
 2014-03-10  Michael Albinus  <michael.albinus@gmx.de>
 
 	* net/tramp-sh.el (tramp-open-connection-setup-interactive-shell):
-	Do not add `nil' to the environment, when there's no remote `locale'.
+	Do not add nil to the environment, when there's no remote `locale'.
 	(tramp-find-inline-encoding): Check, that the remote host has
 	installed perl, before sending scripts.
 

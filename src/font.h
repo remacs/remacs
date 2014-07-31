@@ -162,9 +162,6 @@ enum font_property_index
     /* List of font-objects opened from the font-entity.  */
     FONT_OBJLIST_INDEX = FONT_SPEC_MAX,
 
-    /* Font-entity from which the font-object is opened.  */
-    FONT_ENTITY_INDEX = FONT_SPEC_MAX,
-
     /* This value is the length of font-entity vector.  */
     FONT_ENTITY_MAX,
 
@@ -181,9 +178,6 @@ enum font_property_index
     /* File name of the font or nil if a file associated with the font
        is not available.  */
     FONT_FILE_INDEX,
-
-    /* Format of the font (symbol) or nil if unknown.  */
-    FONT_FORMAT_INDEX,
 
     /* This value is the length of font-object vector.  */
     FONT_OBJECT_MAX
@@ -442,15 +436,6 @@ struct font_bitmap
 #define FONT_OBJECT_P(x)	\
   (FONTP (x) && (ASIZE (x) & PSEUDOVECTOR_SIZE_MASK) == FONT_OBJECT_MAX)
 
-/* True iff ENTITY can't be loaded.  */
-#define FONT_ENTITY_NOT_LOADABLE(entity)	\
-  EQ (AREF (entity, FONT_OBJLIST_INDEX), Qt)
-
-/* Flag ENTITY not loadable.  */
-#define FONT_ENTITY_SET_NOT_LOADABLE(entity)	\
-  ASET (entity, FONT_OBJLIST_INDEX, Qt)
-
-
 /* Check macros for various font-related objects.  */
 
 #define CHECK_FONT(x)	\
@@ -614,15 +599,6 @@ struct font_driver
 #endif /* HAVE_WINDOW_SYSTEM */
 
   /* Optional.
-     Return an outline data for glyph-code CODE of FONT.  The format
-     of the outline data depends on the font-driver.  */
-  void *(*get_outline) (struct font *font, unsigned code);
-
-  /* Optional.
-     Free OUTLINE (that is obtained by the above method).  */
-  void (*free_outline) (struct font *font, void *outline);
-
-  /* Optional.
      Get coordinates of the INDEXth anchor point of the glyph whose
      code is CODE.  Store the coordinates in *X and *Y.  Return 0 if
      the operations was successful.  Otherwise return -1.  */
@@ -723,25 +699,14 @@ struct font_driver_list
   struct font_driver_list *next;
 };
 
-
-/* Chain of arbitrary data specific to each font driver.
-   Each frame has its own font data list at F->font_data_list.  */
-
-struct font_data_list
-{
-  /* Pointer to the font driver.  */
-  struct font_driver *driver;
-  /* Data specific to the font driver.  */
-  void *data;
-  /* Pointer to the next element of the chain.  */
-  struct font_data_list *next;
-};
-
 extern Lisp_Object copy_font_spec (Lisp_Object);
 extern Lisp_Object merge_font_spec (Lisp_Object, Lisp_Object);
 
 extern Lisp_Object font_make_entity (void);
 extern Lisp_Object font_make_object (int, Lisp_Object, int);
+#if defined (HAVE_XFT) || defined (HAVE_FREETYPE) || defined (HAVE_NS)
+extern Lisp_Object font_build_object (int, Lisp_Object, Lisp_Object, double);
+#endif
 
 extern Lisp_Object find_font_encoding (Lisp_Object);
 extern int font_registry_charsets (Lisp_Object, struct charset **,
@@ -787,8 +752,6 @@ extern void font_parse_family_registry (Lisp_Object family,
 extern int font_parse_xlfd (char *name, ptrdiff_t len, Lisp_Object font);
 extern ptrdiff_t font_unparse_xlfd (Lisp_Object font, int pixel_size,
 				    char *name, int bytes);
-extern int font_unparse_fcname (Lisp_Object font, int pixel_size,
-                                char *name, int bytes);
 extern void register_font_driver (struct font_driver *driver, struct frame *f);
 extern void free_font_driver_list (struct frame *f);
 #ifdef ENABLE_CHECKING
@@ -809,11 +772,10 @@ extern void font_fill_lglyph_metrics (Lisp_Object, Lisp_Object);
 extern Lisp_Object font_put_extra (Lisp_Object font, Lisp_Object prop,
                                    Lisp_Object val);
 
-extern int font_put_frame_data (struct frame *f,
-                                struct font_driver *driver,
-                                void *data);
-extern void *font_get_frame_data (struct frame *f,
-                                  struct font_driver *driver);
+#if defined (HAVE_XFT) || defined (HAVE_FREETYPE)
+extern void font_put_frame_data (struct frame *, Lisp_Object, void *);
+extern void *font_get_frame_data (struct frame *f, Lisp_Object);
+#endif /* HAVE_XFT || HAVE_FREETYPE */
 
 extern void font_filter_properties (Lisp_Object font,
 				    Lisp_Object alist,

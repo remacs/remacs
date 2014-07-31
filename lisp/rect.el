@@ -163,7 +163,7 @@ The final point after the last operation will be returned."
           (progn
             (apply function startcol endcol args)
             (setq final-point (point))
-            (and (zerop (forward-line 1))
+            (and (zerop (forward-line 1)) (bolp)
                  (<= (point) endpt))))
       final-point)))
 
@@ -396,7 +396,7 @@ With a prefix (or a FILL) argument, also fill too short lines."
     (when (equal str "")
       (setq str (or (car-safe minibuffer-default)
                     (if (stringp minibuffer-default) minibuffer-default))))
-    (setq str (propertize str 'face 'region))
+    (when str (setq str (propertize str 'face 'region)))
     (with-selected-window rectangle--string-preview-window
       (unless (or (null rectangle--string-preview-state)
                   (equal str (car rectangle--string-preview-state)))
@@ -719,7 +719,7 @@ Ignores `line-move-visual'."
    ((not rectangle-mark-mode)
     (funcall orig start end window rol))
    (rectangle--inhibit-region-highlight
-    (rectangle--unhighlight-for-redisplay orig rol)
+    (funcall redisplay-unhighlight-region-function rol)
     nil)
    ((and (eq 'rectangle (car-safe rol))
          (eq (nth 1 rol) (buffer-chars-modified-tick))

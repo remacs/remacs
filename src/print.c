@@ -1230,7 +1230,8 @@ print_preprocess (Lisp_Object obj)
 	  size = ASIZE (obj);
 	  if (size & PSEUDOVECTOR_FLAG)
 	    size &= PSEUDOVECTOR_SIZE_MASK;
-	  for (i = 0; i < size; i++)
+	  for (i = (SUB_CHAR_TABLE_P (obj)
+		    ? SUB_CHAR_TABLE_OFFSET : 0); i < size; i++)
 	    print_preprocess (AREF (obj, i));
 	  if (HASH_TABLE_P (obj))
 	    { /* For hash tables, the key_and_value slot is past
@@ -1982,7 +1983,7 @@ print_object (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag)
 		 Otherwise we'll make a line extremely long, which
 		 results in slow redisplay.  */
 	      if (SUB_CHAR_TABLE_P (obj)
-		  && XINT (XSUB_CHAR_TABLE (obj)->depth) == 3)
+		  && XSUB_CHAR_TABLE (obj)->depth == 3)
 		PRINTCHAR ('\n');
 	      PRINTCHAR ('#');
 	      PRINTCHAR ('^');
@@ -1995,16 +1996,24 @@ print_object (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag)
 
 	  PRINTCHAR ('[');
 	  {
-	    register int i;
+	    int i, idx = SUB_CHAR_TABLE_P (obj) ? SUB_CHAR_TABLE_OFFSET : 0;
 	    register Lisp_Object tem;
 	    ptrdiff_t real_size = size;
+
+	    /* For a sub char-table, print heading non-Lisp data first.  */
+	    if (SUB_CHAR_TABLE_P (obj))
+	      {
+		i = sprintf (buf, "%d %d", XSUB_CHAR_TABLE (obj)->depth,
+			     XSUB_CHAR_TABLE (obj)->min_char);
+		strout (buf, i, i, printcharfun);
+	      }
 
 	    /* Don't print more elements than the specified maximum.  */
 	    if (NATNUMP (Vprint_length)
 		&& XFASTINT (Vprint_length) < size)
 	      size = XFASTINT (Vprint_length);
 
-	    for (i = 0; i < size; i++)
+	    for (i = idx; i < size; i++)
 	      {
 		if (i) PRINTCHAR (' ');
 		tem = AREF (obj, i);

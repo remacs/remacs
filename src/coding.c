@@ -1486,7 +1486,6 @@ decode_coding_utf_8 (struct coding_system *coding)
       consumed_chars = consumed_chars_base;
       ONE_MORE_BYTE (c);
       *charbuf++ = ASCII_CHAR_P (c) ? c : BYTE8_TO_CHAR (c);
-      coding->errors++;
     }
 
  no_more_source:
@@ -1549,8 +1548,8 @@ encode_coding_utf_8 (struct coding_system *coding)
 	    *dst++ = CHAR_TO_BYTE8 (c);
 	  else
 	    CHAR_STRING_ADVANCE_NO_UNIFY (c, dst);
-	  produced_chars++;
 	}
+      produced_chars = dst - (coding->destination + coding->produced);
     }
   record_conversion_result (coding, CODING_RESULT_SUCCESS);
   coding->produced_char += produced_chars;
@@ -1685,7 +1684,6 @@ decode_coding_utf_16 (struct coding_system *coding)
 	  /* The first two bytes are not BOM.  Treat them as bytes
 	     for a normal character.  */
 	  src = src_base;
-	  coding->errors++;
 	}
       CODING_UTF_16_BOM (coding) = utf_without_bom;
     }
@@ -1742,7 +1740,6 @@ decode_coding_utf_16 (struct coding_system *coding)
 		c1 = surrogate & 0xFF, c2 = surrogate >> 8;
 	      *charbuf++ = c1;
 	      *charbuf++ = c2;
-	      coding->errors++;
 	      if (UTF_16_HIGH_SURROGATE_P (c))
 		CODING_UTF_16_SURROGATE (coding) = surrogate = c;
 	      else
@@ -2598,7 +2595,6 @@ decode_coding_emacs_mule (struct coding_system *coding)
       ONE_MORE_BYTE (c);
       *charbuf++ = ASCII_CHAR_P (c) ? c : BYTE8_TO_CHAR (c);
       char_offset++;
-      coding->errors++;
     }
 
  no_more_source:
@@ -4006,7 +4002,6 @@ decode_coding_iso_2022 (struct coding_system *coding)
       ONE_MORE_BYTE (c);
       *charbuf++ = c < 0 ? -c : ASCII_CHAR_P (c) ? c : BYTE8_TO_CHAR (c);
       char_offset++;
-      coding->errors++;
       /* Reset the invocation and designation status to the safest
 	 one; i.e. designate ASCII to the graphic register 0, and
 	 invoke that register to the graphic plane 0.  This typically
@@ -4837,7 +4832,6 @@ decode_coding_sjis (struct coding_system *coding)
       ONE_MORE_BYTE (c);
       *charbuf++ = c < 0 ? -c : BYTE8_TO_CHAR (c);
       char_offset++;
-      coding->errors++;
     }
 
  no_more_source:
@@ -4933,7 +4927,6 @@ decode_coding_big5 (struct coding_system *coding)
       ONE_MORE_BYTE (c);
       *charbuf++ = c < 0 ? -c : BYTE8_TO_CHAR (c);
       char_offset++;
-      coding->errors++;
     }
 
  no_more_source:
@@ -5642,7 +5635,6 @@ decode_coding_charset (struct coding_system *coding)
       ONE_MORE_BYTE (c);
       *charbuf++ = c < 0 ? -c : ASCII_CHAR_P (c) ? c : BYTE8_TO_CHAR (c);
       char_offset++;
-      coding->errors++;
     }
 
  no_more_source:
@@ -7265,15 +7257,19 @@ produce_charset (struct coding_system *coding, int *charbuf, ptrdiff_t pos)
 		      coding->dst_object);
 }
 
+#define MAX_CHARBUF_SIZE 0x4000
+/* How many units decoding functions expect in coding->charbuf at
+   most.  Currently, decode_coding_emacs_mule expects the following
+   size, and that is the largest value.  */
+#define MAX_CHARBUF_EXTRA_SIZE ((MAX_ANNOTATION_LENGTH * 3) + 1)
 
-#define CHARBUF_SIZE 0x4000
-
-#define ALLOC_CONVERSION_WORK_AREA(coding)				\
-  do {									\
-    coding->charbuf = SAFE_ALLOCA (CHARBUF_SIZE * sizeof (int));	\
-    coding->charbuf_size = CHARBUF_SIZE;				\
+#define ALLOC_CONVERSION_WORK_AREA(coding, size)		\
+  do {								\
+    ptrdiff_t units = min ((size) + MAX_CHARBUF_EXTRA_SIZE,	\
+			   MAX_CHARBUF_SIZE);			\
+    coding->charbuf = SAFE_ALLOCA (units * sizeof (int));	\
+    coding->charbuf_size = units;				\
   } while (0)
-
 
 static void
 produce_annotation (struct coding_system *coding, ptrdiff_t pos)
@@ -7371,9 +7367,8 @@ decode_coding (struct coding_system *coding)
   coding->produced = coding->produced_char = 0;
   coding->chars_at_source = 0;
   record_conversion_result (coding, CODING_RESULT_SUCCESS);
-  coding->errors = 0;
 
-  ALLOC_CONVERSION_WORK_AREA (coding);
+  ALLOC_CONVERSION_WORK_AREA (coding, coding->src_bytes);
 
   attrs = CODING_ID_ATTRS (coding->id);
   translation_table = get_translation_table (attrs, 0, NULL);
@@ -7767,9 +7762,8 @@ encode_coding (struct coding_system *coding)
   coding->consumed = coding->consumed_char = 0;
   coding->produced = coding->produced_char = 0;
   record_conversion_result (coding, CODING_RESULT_SUCCESS);
-  coding->errors = 0;
 
-  ALLOC_CONVERSION_WORK_AREA (coding);
+  ALLOC_CONVERSION_WORK_AREA (coding, coding->src_chars);
 
   if (coding->encoder == encode_coding_ccl)
     {

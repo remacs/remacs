@@ -820,15 +820,7 @@ define xwindow
   xgetptr $
   print (struct window *) $ptr
   set $window = (struct window *) $ptr
-  xgetint $window->total_cols
-  set $width=$int
-  xgetint $window->total_lines
-  set $height=$int
-  xgetint $window->left_col
-  set $left=$int
-  xgetint $window->top_line
-  set $top=$int
-  printf "%dx%d+%d+%d\n", $width, $height, $left, $top
+  printf "%dx%d+%d+%d\n", $window->total_cols, $window->total_lines, $window->left_col, $window->top_line
 end
 document xwindow
 Print $ as a window pointer, assuming it is an Emacs Lisp window value.
@@ -870,10 +862,8 @@ end
 define xsubchartable
   xgetptr $
   print (struct Lisp_Sub_Char_Table *) $ptr
-  xgetint $->depth
-  set $depth = $int
-  xgetint $->min_char
-  printf "Depth: %d, Min char: %d (0x%x)\n", $depth, $int, $int
+  set $subchartab = (struct Lisp_Sub_Char_Table *) $ptr
+  printf "Depth: %d, Min char: %d (0x%x)\n", $subchartab->depth, $subchartab->min_char, $subchartab->min_char
 end
 document xsubchartable
 Print the address of the sub-char-table $, its depth and min-char.

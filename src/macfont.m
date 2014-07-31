@@ -728,7 +728,7 @@ static const struct
 
 static CGFloat macfont_antialias_threshold;
 
-static void
+void
 macfont_update_antialias_threshold (void)
 {
   int threshold;
@@ -1580,8 +1580,6 @@ static struct font_driver macfont_driver =
     macfont_draw,
     NULL,			/* get_bitmap */
     NULL,			/* free_bitmap */
-    NULL,			/* get_outline */
-    NULL,			/* free_outline */
     NULL,			/* anchor_point */
     NULL,			/* otf_capability */
     NULL,			/* otf_drive */
@@ -2446,8 +2444,7 @@ macfont_open (struct frame * f, Lisp_Object entity, int pixel_size)
   int size;
   FontRef macfont;
   FontSymbolicTraits sym_traits;
-  char name[256];
-  int len, i, total_width;
+  int i, total_width;
   CGGlyph glyph;
   CGFloat ascent, descent, leading;
 
@@ -2474,17 +2471,8 @@ macfont_open (struct frame * f, Lisp_Object entity, int pixel_size)
   if (! macfont)
     return Qnil;
 
-  font_object = font_make_object (VECSIZE (struct macfont_info), entity, size);
-  ASET (font_object, FONT_TYPE_INDEX, macfont_driver.type);
-  len = font_unparse_xlfd (entity, size, name, 256);
-  if (len > 0)
-    ASET (font_object, FONT_NAME_INDEX, make_string (name, len));
-  len = font_unparse_fcname (entity, size, name, 256);
-  if (len > 0)
-    ASET (font_object, FONT_FULLNAME_INDEX, make_string (name, len));
-  else
-    ASET (font_object, FONT_FULLNAME_INDEX,
-	  AREF (font_object, FONT_NAME_INDEX));
+  font_object = font_build_object (VECSIZE (struct macfont_info),
+				   Qmac_ct, entity, size);
   font = XFONT_OBJECT (font_object);
   font->pixel_size = size;
   font->driver = &macfont_driver;

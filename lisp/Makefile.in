@@ -70,18 +70,6 @@ AUTOGENEL = loaddefs.el \
 	cedet/srecode/loaddefs.el \
 	org/org-loaddefs.el
 
-# Versioned files that are the value of someone's `generated-autoload-file'.
-# Note that update_loaddefs parses this.
-AUTOGEN_VCS = \
-	ps-print.el \
-	obsolete/tpu-edt.el \
-	mail/rmail.el \
-	dired.el \
-	ibuffer.el \
-	htmlfontify.el \
-	emacs-lisp/eieio.el \
-	textmodes/reftex.el
-
 # Value of max-lisp-eval-depth when compiling initially.
 # During bootstrapping the byte-compiler is run interpreted when compiling
 # itself, and uses more stack than usual.
@@ -149,9 +137,7 @@ setwins_for_subdirs=for file in `find ${srcdir} -type d -print`; do \
 # we add them here to make sure they get built.
 all: compile-main $(lisp)/cus-load.el $(lisp)/finder-inf.el
 
-doit:
-
-.PHONY: all doit custom-deps finder-data autoloads update-subdirs
+.PHONY: all custom-deps finder-data autoloads update-subdirs
 
 # custom-deps and finder-data both used to scan _all_ the *.el files.
 # This could lead to problems in parallel builds if automatically
@@ -169,7 +155,7 @@ doit:
 # (see finder-no-scan-regexp and custom-dependencies-no-scan-regexp).
 $(lisp)/cus-load.el:
 	$(MAKE) custom-deps
-custom-deps: doit
+custom-deps:
 	$(setwins_almost); \
 	echo Directories: $$wins; \
 	$(emacs) -l cus-dep \
@@ -178,25 +164,24 @@ custom-deps: doit
 
 $(lisp)/finder-inf.el:
 	$(MAKE) finder-data
-finder-data: doit
+finder-data:
 	$(setwins_finder); \
 	echo Directories: $$wins; \
 	$(emacs) -l finder \
 	  --eval '(setq generated-finder-keywords-file (unmsys--file-name "$(srcdir)/finder-inf.el"))' \
 	  -f finder-compile-keywords-make-dist $$wins
 
-# The chmod +w is to handle env var CVSREAD=1.
 # Use expand-file-name rather than $abs_scrdir so that Emacs does not
 # get confused when it compares file-names for equality.
 #
 # Note that we set no-update-autoloads in _generated_ leim files.
 # If you want to allow autoloads in such files, remove that,
 # and make this depend on leim.
-autoloads: $(LOADDEFS) doit
-	cd $(lisp) && chmod +w $(AUTOGEN_VCS)
+autoloads: $(LOADDEFS)
 	$(setwins_almost); \
 	echo Directories: $$wins; \
 	$(emacs) -l autoload \
+	    --eval '(setq autoload-ensure-writable t)' \
 	    --eval '(setq autoload-builtin-package-versions t)' \
 	    --eval '(setq generated-autoload-file (expand-file-name (unmsys--file-name "$(srcdir)/loaddefs.el")))' \
 	    -f batch-update-autoloads $$wins
@@ -216,7 +201,7 @@ obsolete-autoloads: ${lisp}/obsolete/*.el
 # we know that if we have an emacs executable, we also have a subdirs.el.
 $(lisp)/subdirs.el:
 	$(MAKE) update-subdirs
-update-subdirs: doit
+update-subdirs:
 	$(setwins_for_subdirs); \
 	for file in $$wins; do \
 	   $(srcdir)/../build-aux/update-subdirs $$file; \
@@ -308,7 +293,7 @@ compile-onefile:
 compile-first: $(COMPILE_FIRST)
 
 # In `compile-main' we could directly do
-#    ... | xargs $(MAKE) EMACS="$(EMACS)"
+#    ... | xargs $(MAKE)
 # and it works, but it generates a lot of messages like
 #    make[2]: gnus/gnus-mlspl.elc is up to date.
 # so instead, we use "xargs echo" to split the list of file into manageable
@@ -332,7 +317,7 @@ compile-main: leim semantic compile-clean
 	  echo "$${el}c"; \
 	done | xargs $(XARGS_LIMIT) echo) | \
 	while read chunk; do \
-	  $(MAKE) compile-targets EMACS="$(EMACS)" TARGETS="$$chunk"; \
+	  $(MAKE) compile-targets TARGETS="$$chunk"; \
 	done
 
 .PHONY: compile-clean
@@ -363,17 +348,15 @@ semantic:
 # date.  Some .el files don't get compiled because they set the
 # local variable no-byte-compile.
 # Calling make recursively because suffix rule cannot have prerequisites.
-# Explicitly pass EMACS (sometimes ../src/bootstrap-emacs) to those
-# sub-makes that run rules that use it, for the sake of some non-GNU makes.
 compile: $(LOADDEFS) autoloads compile-first
-	$(MAKE) compile-main EMACS="$(EMACS)"
+	$(MAKE) compile-main
 
 # Compile all Lisp files.  This is like `compile' but compiles files
 # unconditionally.  Some files don't actually get compiled because they
 # set the local variable no-byte-compile.
-compile-always: doit
+compile-always:
 	cd $(lisp) && rm -f *.elc */*.elc */*/*.elc */*/*/*.elc
-	$(MAKE) compile EMACS="$(EMACS)"
+	$(MAKE) compile
 
 .PHONY: backup-compiled-files compile-after-backup
 
@@ -404,7 +387,7 @@ compile-after-backup: backup-compiled-files compile-always
 # There is no reason to use this rule unless you only have a single
 # core and CPU time is an issue.
 .PHONY: compile-one-process
-compile-one-process: doit $(LOADDEFS) compile-first $(lisp)/progmodes/cc-mode.elc
+compile-one-process: $(LOADDEFS) compile-first $(lisp)/progmodes/cc-mode.elc
 	$(emacs) $(BYTE_COMPILE_FLAGS) \
 	    --eval "(batch-byte-recompile-directory 0)" $(lisp)
 

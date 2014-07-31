@@ -676,19 +676,9 @@ init_frame_faces (struct frame *f)
     }
 #endif /* HAVE_WINDOW_SYSTEM */
 
-  /* Realize basic faces.  Must have enough information in frame
-     parameters to realize basic faces at this point.  */
-#ifdef HAVE_X_WINDOWS
-  if (!FRAME_X_P (f) || FRAME_X_WINDOW (f))
-#endif
-#ifdef HAVE_NTGUI
-  if (!FRAME_WINDOW_P (f) || FRAME_W32_WINDOW (f))
-#endif
-#ifdef HAVE_NS
-  if (!FRAME_NS_P (f) || FRAME_NS_WINDOW (f))
-#endif
-    if (!realize_basic_faces (f))
-	emacs_abort ();
+  /* Realize faces early (Bug#17889).  */
+  if (!realize_basic_faces (f))
+    emacs_abort ();
 }
 
 
@@ -5557,7 +5547,7 @@ realize_x_face (struct face_cache *cache, Lisp_Object attrs[LFACE_VECTOR_SIZE])
 	}
       if (! FONT_OBJECT_P (attrs[LFACE_FONT_INDEX]))
 	attrs[LFACE_FONT_INDEX]
-	  = font_load_for_lface (f, attrs, attrs[LFACE_FONT_INDEX]);
+	  = font_load_for_lface (f, attrs, Ffont_spec (0, NULL));
       if (FONT_OBJECT_P (attrs[LFACE_FONT_INDEX]))
 	{
 	  face->font = XFONT_OBJECT (attrs[LFACE_FONT_INDEX]);
@@ -6309,7 +6299,7 @@ dump_realized_face (struct face *face)
 {
   fprintf (stderr, "ID: %d\n", face->id);
 #ifdef HAVE_X_WINDOWS
-  fprintf (stderr, "gc: %ld\n", (long) face->gc);
+  fprintf (stderr, "gc: %p\n", face->gc);
 #endif
   fprintf (stderr, "foreground: 0x%lx (%s)\n",
 	   face->foreground,
