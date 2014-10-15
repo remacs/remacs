@@ -494,6 +494,11 @@ As a result of the above, these commands are now obsolete:
 ** let-alist is a new macro (and a package) that allows one to easily
 let-bind the values stored in an alist.
 
+** `tildify-mode' allows to automatically insert hard spaces as one
+types the text.  Breaking line after a single-character words is
+forbidden by Czech and Polish typography (and may be discouraged in
+other languages), so `auto-tildify-mode' makes it easier to create
+a typographically-correct documents.
 
 * Incompatible Lisp Changes in Emacs 25.1
 

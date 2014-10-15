@@ -1,3 +1,18 @@
+2014-01-20  Michal Nazarewicz  <mina86@mina86.com>
+
+	* textmodes/tildify.el (tildify-space): A new function
+	which can be used as a `post-self-insert-hook' to automatically
+	convert spaces into hard spaces.
+	(tildify-space-pattern): A new variable specifying pattern where
+	`tildify-space' should take effect.
+	(tildify-space-predicates): A new variable specifying list of
+	predicate functions that all must return non-nil for
+	`tildify-space' to take effect.
+	(tildify-space-region-predicate): A new functions meant to be
+	used as a predicate in `tildify-space-predicates' list.
+	(tildify-mode): A new minor mode enabling `tildify-space' as a
+	`post-self-insert-hook'
+
 2015-01-20  Daniel Colascione  <dancol@dancol.org>
 
 	* vc/vc-dir.el (vc-dir): Default to repository root, not

@@ -1,3 +1,11 @@
+2014-01-20  Michal Nazarewicz  <mina86@mina86.com>
+
+	* automated/tildify-tests.el (tildify-space-test--test):
+	A new helper function for testing `tildify-space' function.
+	(tildify-space-test-html, tildify-space-test-html-nbsp)
+	(tildify-space-test-xml, tildify-space-test-tex): New tests for
+	`tildify-space' function.
+
 2015-01-18  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* automated/Makefile.in (EMACS_EXTRAOPT): New var.
