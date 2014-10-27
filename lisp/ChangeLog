@@ -1,5 +1,11 @@
 2015-01-20  Michal Nazarewicz  <mina86@mina86.com>
 
+	* textmodes/paragraphs.el (sentence-end-base): Include an
+	ellipsis (…) and interrobang (‽) characters as end of a sentence,
+	and a closing single quote (’) as an end of a quote.
+
+2015-01-20  Michal Nazarewicz  <mina86@mina86.com>
+
 	* textmodes/tildify.el (tildify-double-space-undos): A new
 	variable specifying whether pressing space in `tildify-mode' after
 	a space has been replaced with hard space undos the substitution.
