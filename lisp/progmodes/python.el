@@ -2224,7 +2224,7 @@ Signals an error if no shell buffer is available for current buffer."
     (when (and python-shell--font-lock-buffer
                (buffer-live-p python-shell--font-lock-buffer))
       (kill-buffer python-shell--font-lock-buffer)
-      (when (eq major-mode 'inferior-python-mode)
+      (when (derived-mode-p 'inferior-python-mode)
         (setq python-shell--font-lock-buffer nil)))))
 
 (defmacro python-shell-font-lock-with-font-lock-buffer (&rest body)
@@ -2241,7 +2241,7 @@ also `with-current-buffer'."
        (set-buffer python-shell--font-lock-buffer)
        (set (make-local-variable 'delay-mode-hooks) t)
        (let ((python-indent-guess-indent-offset nil))
-         (when (not (eq major-mode 'python-mode))
+         (when (not (derived-mode-p 'python-mode))
            (python-mode))
          ,@body))))
 
@@ -2504,7 +2504,7 @@ startup."
 (defun python-shell-get-buffer ()
   "Return inferior Python buffer for current buffer.
 If current buffer is in `inferior-python-mode', return it."
-  (if (eq major-mode 'inferior-python-mode)
+  (if (derived-mode-p 'inferior-python-mode)
       (current-buffer)
     (let* ((dedicated-proc-name (python-shell-get-process-name t))
            (dedicated-proc-buffer-name (format "*%s*" dedicated-proc-name))
@@ -3481,7 +3481,7 @@ The skeleton will be bound to python-skeleton-NAME."
 (defun python-ffap-module-path (module)
   "Function for `ffap-alist' to return path for MODULE."
   (let ((process (or
-                  (and (eq major-mode 'inferior-python-mode)
+                  (and (derived-mode-p 'inferior-python-mode)
                        (get-buffer-process (current-buffer)))
                   (python-shell-get-process))))
     (if (not process)
