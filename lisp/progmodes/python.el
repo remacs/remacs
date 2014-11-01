@@ -3281,7 +3281,7 @@ The skeleton will be bound to python-skeleton-NAME."
 (defun python-ffap-module-path (module)
   "Function for `ffap-alist' to return path for MODULE."
   (let ((process (or
-                  (and (eq major-mode 'inferior-python-mode)
+                  (and (derived-mode-p 'inferior-python-mode)
                        (get-buffer-process (current-buffer)))
                   (python-shell-get-process))))
     (if (not process)
