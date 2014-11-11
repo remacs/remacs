@@ -47,9 +47,7 @@ cd $PD
 cd ../
 [ -d admin ] || die "Could not locate admin directory"
 
-if [ -d .bzr ]; then
-    vcs=bzr
-elif [ -d .git ]; then
+if [ -d .git ]; then
     vcs=git
 else
     die "Cannot determine vcs"
@@ -304,9 +302,6 @@ EOF
     echo "Checking status of generated files..."
 
     modified=$(status $basegen) || die
-
-    ## bzr status output is always relative to top-level, not PWD.
-    [ "$vcs" = "bzr" ] && cd $oldpwd
 
     commit "generated" $modified || die "commit error"
 

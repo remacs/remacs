@@ -1,3 +1,9 @@
+2014-11-11  Eric S. Raymond  <esr@thyrsus.com>
+
+	* make-tarball.txt, update-copyright, admin/notes/bugtracker,
+	admin/notes/tags, admin/update-copyright, admin/update_autogen:
+	admin/repo.notes: git transition.
+
 2014-11-10  Eli Zaretskii  <eliz@gnu.org>
 
 	* unidata/Makefile.in (${top_srcdir}/src/macuvs.h): Use

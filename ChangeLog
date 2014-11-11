@@ -1,3 +1,20 @@
+2014-11-11  Eric S. Raymond  <esr@thyrsus.com>
+
+	* Makefile.in: git transition - set VCWITNESS appropriately for git.
+
+	All bzr revision IDS, and all CVS revision IDs for which a commit
+	could be identified, were changed to time-date!committer version
+	stamps. All .cvsignore files in the history became .gitignore
+	files. Fixes-bug annotations from bzr were copied into the
+	corresponding commit comments.
+
+	(The first .cvsignore commit was 1999-09-30T14:07:54Z!fx@gnu.org.
+	The last CVS commit was	2009-12-27T08:11:12Z!cyd@stupidchicken.com.)
+
+	Committer/author email addresses are generally correct for the
+	transition day, not necessarily when the comit was originally
+	made.
+
 2014-11-10  Glenn Morris  <rgm@gnu.org>
 
 	* configure.ac (doc/man/emacs.1): Generate it.

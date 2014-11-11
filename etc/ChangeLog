@@ -1,3 +1,7 @@
+2014-11-11  Eric S. Raymond  <esr@thyrsus.com>
+
+	* CONTRIBUTE: git transition.
+
 2014-11-10  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
 	* NEWS: Mention that you can have several eww buffers (bug#16211).

@@ -120,9 +120,9 @@ Manual, for how to write good log entries.
 
 ** The patch itself.
 
-If you are accessing the Bazaar repository, make sure your copy is
-up-to-date (e.g. with `bzr pull'), then use
-        bzr diff --no-aliases --diff-options=-cp
+If you are accessing the Emacs repository, make sure your copy is
+up-to-date (e.g. with `git pull'), then use
+        git diff
 Else, use
 	diff -cp OLD NEW
 
