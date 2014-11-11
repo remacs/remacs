@@ -45,8 +45,7 @@ sed 's/\\def\\year[{][0-9]*[}]/\\def\\year{'"$UPDATE_COPYRIGHT_YEAR"'}'/g \
 } &&
 rm $emacsver.aux &&
 
-# FIXME: command will soon need to be replaced with "git ls-files"
-repo_files=$(bzr ls -RV --kind file) &&
+repo_files=$(git ls-files) &&
 
 # Do not update the copyright of files that have one or more of the
 # following problems:
