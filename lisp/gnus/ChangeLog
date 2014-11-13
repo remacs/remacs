@@ -1,7 +1,12 @@
+2014-11-13  Julien Danjou  <jd@abydos>
+
+	* gnus-notifications.el (gnus-notifications-notify): Provide both
+	app-icon and image-path.
+
 2014-11-10  Kenjiro NAKAYAMA  <nakayamakenjiro@gmail.com>
 
-        * gnus/mm-url.el (mm-url-encode-multipart-form-data):
-        Restore to handle "multipart/form-data" by eww.
+	* gnus/mm-url.el (mm-url-encode-multipart-form-data):
+	Restore to handle "multipart/form-data" by eww.
 
 2014-11-07  Tassilo Horn  <tsdh@gnu.org>
 
