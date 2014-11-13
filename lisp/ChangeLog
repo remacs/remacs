@@ -1,5 +1,9 @@
 2014-11-13  Thomas Fitzsimmons  <fitzsim@fitzsim.org>
 
+	* net/ldap.el (ldap-search-internal): Support new-style LDAP URIs.
+
+2014-11-13  Thomas Fitzsimmons  <fitzsim@fitzsim.org>
+
 	* net/eudc-vars.el (eudc-server): Adjust docstring to mention
 	eudc-server-hotlist.
 	(eudc-server-hotlist): Move from eudc.el and make defcustom.

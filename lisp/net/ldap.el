@@ -559,7 +559,13 @@ an alist of attribute/value pairs."
       (erase-buffer)
       (if (and host
 	       (not (equal "" host)))
-	  (setq arglist (nconc arglist (list (format "-h%s" host)))))
+	  (setq arglist (nconc arglist
+			       (list (format
+				      ;; Use -H if host is a new-style LDAP URI.
+				      (if (string-match "^[a-zA-Z]+://" host)
+					  "-H%s"
+					"-h%s")
+				      host)))))
       (if (and attrsonly
 	       (not (equal "" attrsonly)))
 	  (setq arglist (nconc arglist (list "-A"))))
