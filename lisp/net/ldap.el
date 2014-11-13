@@ -667,7 +667,8 @@ an alist of attribute/value pairs."
 		;; Handle invalid credentials exit status specially
 		;; for ldap-password-read.
 		(if (eq status 49)
-		    (error "Incorrect LDAP password")
+		    (error (concat "Incorrect LDAP password or"
+				   " bind distinguished name (binddn)"))
 		  (error "Failed ldapsearch invocation: %s \"%s\""
 			 ldap-ldapsearch-prog
 			 (mapconcat 'identity proc-args "\" \""))))))

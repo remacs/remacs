@@ -1,5 +1,10 @@
 2014-11-13  Thomas Fitzsimmons  <fitzsim@fitzsim.org>
 
+	* net/ldap.el (ldap-search-internal): Mention binddn in invalid
+	credentials error message.
+
+2014-11-13  Thomas Fitzsimmons  <fitzsim@fitzsim.org>
+
 	* net/ldap.el (ldap-password-read): Validate password before
 	caching it.
 	(ldap-search-internal): Handle ldapsearch error conditions.
