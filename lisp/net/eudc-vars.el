@@ -41,13 +41,36 @@
   "The name or IP address of the directory server.
 A port number may be specified by appending a colon and a
 number to the name of the server.  Use `localhost' if the directory
-server resides on your computer (BBDB backend)."
+server resides on your computer (BBDB backend).
+
+To specify multiple servers, customize eudc-server-hotlist
+instead."
   :type  '(choice (string :tag "Server") (const :tag "None" nil))
   :group 'eudc)
 
 ;; Known protocols (used in completion)
 ;; Not to be mistaken with `eudc-supported-protocols'
 (defvar eudc-known-protocols '(bbdb ph ldap))
+
+(defcustom eudc-server-hotlist nil
+"Directory servers to query.
+This is an alist of the form (SERVER . PROTOCOL).  SERVER is the
+host name or URI of the server, PROTOCOL is a symbol representing
+the EUDC backend with which to access the server.
+
+The BBDB backend ignores SERVER; `localhost' can be used as a
+placeholder string."
+  :tag   "Directory Servers to Query"
+  :type  `(repeat (cons :tag "Directory Server"
+			(string :tag "Server Host Name or URI")
+			(choice :tag "Protocol"
+				:menu-tag "Protocol"
+				,@(mapcar (lambda (s)
+					    (list 'const
+						  ':tag (symbol-name s) s))
+					  eudc-known-protocols)
+				(const :tag "None" nil))))
+  :group 'eudc)
 
 (defvar eudc-supported-protocols nil
   "Protocols currently supported by EUDC.

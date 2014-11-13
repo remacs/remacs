@@ -1,3 +1,13 @@
+2014-11-13  Thomas Fitzsimmons  <fitzsim@fitzsim.org>
+
+	* net/eudc-vars.el (eudc-server): Adjust docstring to mention
+	eudc-server-hotlist.
+	(eudc-server-hotlist): Move from eudc.el and make defcustom.
+	* net/eudc.el (eudc-server-hotlist): Move to eudc-vars.el.
+	(eudc-set-server): Allow setting protocol to nil.
+	(eudc-expand-inline): Support hotlist-only expansions when server
+	is not set.
+
 2014-10-20  Glenn Morris  <rgm@gnu.org>
 
 	* Version 24.4 released.

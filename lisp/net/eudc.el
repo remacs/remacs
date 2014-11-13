@@ -76,10 +76,6 @@
 
 (defvar mode-popup-menu)
 
-;; List of known servers
-;; Alist of (SERVER . PROTOCOL)
-(defvar eudc-server-hotlist nil)
-
 ;; List of variables that have server- or protocol-local bindings
 (defvar eudc-local-vars nil)
 
@@ -688,7 +684,8 @@ server for future sessions."
 						    (cons (symbol-name elt)
 							  elt))
 						 eudc-known-protocols)))))
-  (unless (or (member protocol
+  (unless (or (null protocol)
+	      (member protocol
 		      eudc-supported-protocols)
 	      (load (concat "eudcb-" (symbol-name protocol)) t))
     (error "Unsupported protocol: %s" protocol))
@@ -812,12 +809,21 @@ If REPLACE is non-nil, then this expansion replaces the name in the buffer.
 Multiple servers can be tried with the same query until one finds a match,
 see `eudc-inline-expansion-servers'"
   (interactive)
-  (if (memq eudc-inline-expansion-servers
-	    '(current-server server-then-hotlist))
-      (or eudc-server
-	  (call-interactively 'eudc-set-server))
+  (cond
+   ((eq eudc-inline-expansion-servers 'current-server)
+    (or eudc-server
+	(call-interactively 'eudc-set-server)))
+   ((eq eudc-inline-expansion-servers 'server-then-hotlist)
+    (or eudc-server
+	;; Allow server to be nil if hotlist is set.
+	eudc-server-hotlist
+	(call-interactively 'eudc-set-server)))
+   ((eq eudc-inline-expansion-servers 'hotlist)
     (or eudc-server-hotlist
 	(error "No server in the hotlist")))
+   (t
+    (error "Wrong value for `eudc-inline-expansion-servers': %S"
+	   eudc-inline-expansion-servers)))
   (let* ((end (point))
 	 (beg (save-excursion
 		(if (re-search-backward "\\([:,]\\|^\\)[ \t]*"
@@ -840,13 +846,12 @@ see `eudc-inline-expansion-servers'"
 	   ((eq eudc-inline-expansion-servers 'hotlist)
 	    eudc-server-hotlist)
 	   ((eq eudc-inline-expansion-servers 'server-then-hotlist)
-	    (cons (cons eudc-server eudc-protocol)
-		  (delete (cons eudc-server eudc-protocol) servers)))
+	    (if eudc-server
+		(cons (cons eudc-server eudc-protocol)
+		      (delete (cons eudc-server eudc-protocol) servers))
+	      eudc-server-hotlist))
 	   ((eq eudc-inline-expansion-servers 'current-server)
-	    (list (cons eudc-server eudc-protocol)))
-	   (t
-	    (error "Wrong value for `eudc-inline-expansion-servers': %S"
-		   eudc-inline-expansion-servers))))
+	    (list (cons eudc-server eudc-protocol)))))
     (if (and eudc-max-servers-to-query
 	     (> (length servers) eudc-max-servers-to-query))
 	(setcdr (nthcdr (1- eudc-max-servers-to-query) servers) nil))
