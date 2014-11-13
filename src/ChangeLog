@@ -1,3 +1,10 @@
+2014-11-13  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Avoid undefined behavior in color table hashing.
+	* image.c (CT_HASH_RGB) [COLOR_TABLE_SUPPORT]: Remove, replacing with ...
+	(ct_hash_rgb) [COLOR_TABLE_SUPPORT]: New function.  All uses changed.
+	This function avoids undefined behavior with signed shift overflow.
+
 2014-11-10  Eli Zaretskii  <eliz@gnu.org>
 
 	* fileio.c (Finsert_file_contents): Invalidate buffer caches also
