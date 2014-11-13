@@ -1,5 +1,7 @@
 2014-11-13  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
+	* net/shr.el (shr-inhibit-images): Add a doc string.
+
 	* net/eww.el (eww-after-render-hook): New variable.
 	(eww-render): Use it.
 

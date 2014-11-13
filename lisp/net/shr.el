@@ -123,13 +123,15 @@ cid: URL as the argument.")
   "Font for link elements."
   :group 'shr)
 
+(defvar shr-inhibit-images nil
+  "If non-nil, inhibit loading images.")
+
 ;;; Internal variables.
 
 (defvar shr-folding-mode nil)
 (defvar shr-state nil)
 (defvar shr-start nil)
 (defvar shr-indentation 0)
-(defvar shr-inhibit-images nil)
 (defvar shr-internal-width (or shr-width (1- (window-width))))
 (defvar shr-list-mode nil)
 (defvar shr-content-cache nil)
