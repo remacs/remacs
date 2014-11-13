@@ -1,3 +1,7 @@
+2014-11-13  Eli Zaretskii  <eliz@gnu.org>
+
+	* .gitignore: Add more ignorables.
+
 2014-11-13  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
 	* .gitignore: Copy over sufficient ignorable files from the old
