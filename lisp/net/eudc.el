@@ -763,7 +763,6 @@ otherwise a list of symbols is returned."
 		  format (cdr format)))
 	  ;; If the same attribute appears more than once, merge
 	  ;; the corresponding values
-	  (setq query-alist (nreverse query-alist))
 	  (while query-alist
 	    (setq key (eudc-caar query-alist)
 		  val (eudc-cdar query-alist)

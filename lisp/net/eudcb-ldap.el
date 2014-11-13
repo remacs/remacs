@@ -174,14 +174,16 @@ attribute names are returned. Default to `person'"
 
 (defun eudc-ldap-format-query-as-rfc1558 (query)
   "Format the EUDC QUERY list as a RFC1558 LDAP search filter."
-  (format "(&%s)"
-	  (apply 'concat
-		 (mapcar (lambda (item)
-                           (format "(%s=%s)"
-                                   (car item)
-                                   (eudc-ldap-escape-query-special-chars (cdr item))))
-			 query))))
-
+  (let ((formatter (lambda (item &optional wildcard)
+		     (format "(%s=%s)"
+			     (car item)
+			     (concat
+			      (eudc-ldap-escape-query-special-chars
+			       (cdr item)) (if wildcard "*" ""))))))
+    (format "(&%s)"
+	    (concat
+	     (mapconcat formatter (butlast query) "")
+	     (funcall formatter (car (last query)) t)))))
 
 ;;}}}
 

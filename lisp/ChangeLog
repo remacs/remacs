@@ -1,5 +1,13 @@
 2014-11-13  Thomas Fitzsimmons  <fitzsim@fitzsim.org>
 
+	* net/eudc.el (eudc-format-query): Preserve the
+	eudc-inline-query-format ordering of attributes in the returned
+	list.
+	* net/eudcb-ldap.el (eudc-ldap-format-query-as-rfc1558): Append
+	the LDAP wildcard character to the last attribute value.
+
+2014-11-13  Thomas Fitzsimmons  <fitzsim@fitzsim.org>
+
 	* net/eudcb-ldap.el (eudc-ldap-cleanup-record-simple): Downcase
 	field names of LDAP results.
 	(eudc-ldap-cleanup-record-filtering-addresses): Likewise.
