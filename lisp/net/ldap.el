@@ -159,6 +159,12 @@ Valid properties include:
 		 (string :tag "Argument"))
   :group 'ldap)
 
+(defcustom ldap-ldapsearch-password-prompt-regexp "Enter LDAP Password: "
+  "A regular expression used to recognize the `ldapsearch'
+program's password prompt."
+  :type 'regexp
+  :group 'ldap)
+
 (defcustom ldap-ignore-attribute-codings nil
   "If non-nil, do not encode/decode LDAP attribute values."
   :type 'boolean
@@ -569,7 +575,7 @@ an alist of attribute/value pairs."
 	(sizelimit (plist-get search-plist 'sizelimit))
 	(withdn (plist-get search-plist 'withdn))
 	(numres 0)
-	arglist dn name value record result)
+	arglist dn name value record result proc)
     (if (or (null filter)
 	    (equal "" filter))
 	(error "No search filter"))
@@ -600,9 +606,9 @@ an alist of attribute/value pairs."
       (if (and auth
 	       (equal 'simple auth))
 	  (setq arglist (nconc arglist (list "-x"))))
-      (if (and passwd
-	       (not (equal "" passwd)))
-	  (setq arglist (nconc arglist (list (format "-w%s" passwd)))))
+      ;; Allow passwd to be set to "", representing a blank password.
+      (if passwd
+	  (setq arglist (nconc arglist (list "-W"))))
       (if (and deref
 	       (not (equal "" deref)))
 	  (setq arglist (nconc arglist (list (format "-a%s" deref)))))
@@ -612,14 +618,32 @@ an alist of attribute/value pairs."
       (if (and sizelimit
 	       (not (equal "" sizelimit)))
 	  (setq arglist (nconc arglist (list (format "-z%s" sizelimit)))))
-      (apply #'call-process ldap-ldapsearch-prog
-	     ;; Ignore stderr, which can corrupt results
-	     nil (list buf nil) nil
-	     (append arglist ldap-ldapsearch-args filter))
+      (if passwd
+	  (let* ((process-connection-type nil)
+		 (proc (apply #'start-process "ldapsearch" buf
+			      ldap-ldapsearch-prog
+			      (append arglist ldap-ldapsearch-args
+				      filter))))
+	    (while (null (progn
+			   (goto-char (point-min))
+			   (re-search-forward
+			    ldap-ldapsearch-password-prompt-regexp
+			    (point-max) t)))
+	      (accept-process-output proc 1))
+	    (process-send-string proc passwd)
+	    (process-send-string proc "\n")
+	    (while (not (memq (process-status proc) '(exit signal)))
+	      (sit-for 0.1)))
+	(apply #'call-process ldap-ldapsearch-prog
+	       ;; Ignore stderr, which can corrupt results
+	       nil (list buf nil) nil
+	       (append arglist ldap-ldapsearch-args filter)))
       (insert "\n")
       (goto-char (point-min))
 
-      (while (re-search-forward "[\t\n\f]+ " nil t)
+      (while (re-search-forward (concat "[\t\n\f]+ \\|"
+					ldap-ldapsearch-password-prompt-regexp)
+				nil t)
 	(replace-match "" nil nil))
       (goto-char (point-min))
 

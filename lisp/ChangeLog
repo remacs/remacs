@@ -1,5 +1,11 @@
 2014-11-13  Thomas Fitzsimmons  <fitzsim@fitzsim.org>
 
+	* net/ldap.el (ldap-ldapsearch-password-prompt): New defcustom.
+	(ldap-search-internal): Send password to ldapsearch through a pipe
+	instead of via the command line.
+
+2014-11-13  Thomas Fitzsimmons  <fitzsim@fitzsim.org>
+
 	* net/ldap.el: Require password-cache.
 	(ldap-password-read): New function.
 	(ldap-search-internal): Call ldap-password-read when it is
