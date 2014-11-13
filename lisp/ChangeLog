@@ -1,5 +1,12 @@
 2014-11-13  Thomas Fitzsimmons  <fitzsim@fitzsim.org>
 
+	* net/ldap.el: Require password-cache.
+	(ldap-password-read): New function.
+	(ldap-search-internal): Call ldap-password-read when it is
+	configured to be called.
+
+2014-11-13  Thomas Fitzsimmons  <fitzsim@fitzsim.org>
+
 	* net/eudc-vars.el (eudc-expansion-overwrites-query): Change
 	default to nil.
 

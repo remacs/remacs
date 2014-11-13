@@ -34,6 +34,7 @@
 ;;; Code:
 
 (require 'custom)
+(require 'password-cache)
 
 (autoload 'auth-source-search "auth-source")
 
@@ -476,6 +477,20 @@ Additional search parameters can be specified through
 		(mapcar 'ldap-decode-attribute record))
 	      result))))
 
+(defun ldap-password-read (host)
+  "Read LDAP password for HOST.  If the password is cached, it is
+read from the cache, otherwise the user is prompted for the
+password and the password is cached.  The cache can be cleared
+with `password-reset`."
+  ;; Add ldap: namespace to allow empty string for default host.
+  (let ((host-key (concat "ldap:" host)))
+    (when (not (password-in-cache-p host-key))
+      (password-cache-add host-key (password-read
+				    (format "Enter LDAP Password%s: "
+					    (if (equal host "")
+						""
+					      (format " for %s" host))))))
+    (password-read-from-cache host-key)))
 
 (defun ldap-search-internal (search-plist)
   "Perform a search on a LDAP server.
@@ -531,7 +546,11 @@ an alist of attribute/value pairs."
          (passwd (or (plist-get search-plist 'passwd)
                      (plist-get asfound :secret)))
          ;; convert the password from a function call if needed
-         (passwd (if (functionp passwd) (funcall passwd) passwd))
+         (passwd (if (functionp passwd)
+		     (if (eq passwd 'ldap-password-read)
+			 (funcall passwd host)
+		       (funcall passwd))
+		   passwd))
          ;; get the binddn from the search-list or from the
          ;; auth-source user or binddn tokens
          (binddn (or (plist-get search-plist 'binddn)
