@@ -191,7 +191,7 @@ must be set in a protocol/server-local fashion, see `eudc-server-set' and
   :type  'boolean
   :group 'eudc)
 
-(defcustom eudc-inline-expansion-format '("%s" email)
+(defcustom eudc-inline-expansion-format '("%s %s <%s>" firstname name email)
   "A list specifying the format of the expansion of inline queries.
 This variable controls what `eudc-expand-inline' actually inserts in
 the buffer.  First element is a string passed to `format'.  Remaining

@@ -1,5 +1,10 @@
 2014-11-13  Thomas Fitzsimmons  <fitzsim@fitzsim.org>
 
+	* net/eudc-vars.el (eudc-inline-expansion-format): Default to a
+	format that includes first name and surname.
+
+2014-11-13  Thomas Fitzsimmons  <fitzsim@fitzsim.org>
+
 	* net/eudc-vars.el (eudc-inline-query-format): Change default to
 	query email and first name instead of surname.
 
