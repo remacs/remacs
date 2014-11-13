@@ -70,9 +70,6 @@
 		     ("mail" . eudc-display-mail)
 		     ("url" . eudc-display-url))
 		   'ldap)
-(eudc-protocol-set 'eudc-switch-to-server-hook
-		   '(eudc-ldap-check-base)
-		   'ldap)
 
 (defun eudc-ldap-cleanup-record-simple (record)
   "Do some cleanup in a RECORD to make it suitable for EUDC."

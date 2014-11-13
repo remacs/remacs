@@ -1,5 +1,10 @@
 2014-11-13  Thomas Fitzsimmons  <fitzsim@fitzsim.org>
 
+	* net/eudcb-ldap.el: Don't nag the user in case a default base is
+	provided by the LDAP system configuration file.
+
+2014-11-13  Thomas Fitzsimmons  <fitzsim@fitzsim.org>
+
 	* net/eudc.el (eudc-format-query): Preserve the
 	eudc-inline-query-format ordering of attributes in the returned
 	list.
