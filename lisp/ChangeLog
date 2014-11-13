@@ -1,5 +1,10 @@
 2014-11-13  Thomas Fitzsimmons  <fitzsim@fitzsim.org>
 
+	* net/eudc-vars.el (eudc-expansion-overwrites-query): Change
+	default to nil.
+
+2014-11-13  Thomas Fitzsimmons  <fitzsim@fitzsim.org>
+
 	* net/eudc.el (eudc-expand-inline): Ignore text properties of
 	string-to-expand.
 

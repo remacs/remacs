@@ -186,7 +186,9 @@ must be set in a protocol/server-local fashion, see `eudc-server-set' and
 	     (symbol :menu-tag "Other" :tag "Attribute name"))))
   :group 'eudc)
 
-(defcustom eudc-expansion-overwrites-query t
+;; Default to nil so that the most common use of eudc-expand-inline,
+;; where replace is nil, does not affect the kill ring.
+(defcustom eudc-expansion-overwrites-query nil
   "If non-nil, expanding a query overwrites the query string."
   :type  'boolean
   :group 'eudc)
