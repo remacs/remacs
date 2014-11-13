@@ -487,16 +487,16 @@ Additional search parameters can be specified through
   "Read LDAP password for HOST.  If the password is cached, it is
 read from the cache, otherwise the user is prompted for the
 password and the password is cached.  The cache can be cleared
-with `password-reset`."
-  ;; Add ldap: namespace to allow empty string for default host.
-  (let ((host-key (concat "ldap:" host)))
-    (when (not (password-in-cache-p host-key))
-      (password-cache-add host-key (password-read
-				    (format "Enter LDAP Password%s: "
-					    (if (equal host "")
-						""
-					      (format " for %s" host))))))
-    (password-read-from-cache host-key)))
+with the `password-reset' function and the
+`password-cache-expiry' variable controls how long the password
+is cached for."
+  (password-read-and-add
+   (format "Enter LDAP Password%s: "
+				(if (equal host "")
+				    ""
+				  (format " for %s" host)))
+   ;; Add ldap: namespace to allow empty string for default host.
+   (concat "ldap:" host)))
 
 (defun ldap-search-internal (search-plist)
   "Perform a search on a LDAP server.

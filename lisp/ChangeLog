@@ -1,5 +1,10 @@
 2014-11-13  Thomas Fitzsimmons  <fitzsim@fitzsim.org>
 
+	* net/ldap.el (ldap-password-read): Handle password-cache being
+	nil.
+
+2014-11-13  Thomas Fitzsimmons  <fitzsim@fitzsim.org>
+
 	* net/eudc.el (eudc-expand-inline): Always restore former server
 	and protocol.
 
