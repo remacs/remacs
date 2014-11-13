@@ -1,3 +1,10 @@
+2014-11-13  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* net/shr.el (shr-parse-image-data): Remove blocked bits from
+	external SVG images.
+	(shr-tag-object): Display images in <object> forms (bug#16244).
+	(shr-tag-table): Also insert <objects> after the tables.
+
 2014-11-13  Michael Albinus  <michael.albinus@gmx.de>
 
 	* vc/vc-hg.el (vc-hg-state): Disable pager.  (Bug#18940)
