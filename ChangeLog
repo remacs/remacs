@@ -1,3 +1,8 @@
+2014-11-13  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Backport fix for minor Bazaar leftovers.
+	* .dir-locals.el: Remove reference to bzr commit --fixes debbugs.
+
 2014-11-13  Eli Zaretskii  <eliz@gnu.org>
 
 	* .gitignore: Add more ignorables.
