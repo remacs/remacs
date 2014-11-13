@@ -160,6 +160,7 @@ word(s) will be searched for via `eww-search-prefix'."
   (interactive "sEnter URL or keywords: ")
   (setq url (string-trim url))
   (cond ((string-match-p "\\`file:/" url))
+	;; Don't mangle file: URLs at all.
         ((string-match-p "\\`ftp://" url)
          (user-error "FTP is not supported."))
         (t

@@ -1,5 +1,7 @@
 2014-11-13  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
+	* net/eww.el (eww): Add comment to clarify.
+
 	* net/shr.el (shr-parse-image-data): Remove blocked bits from
 	external SVG images.
 	(shr-tag-object): Display images in <object> forms (bug#16244).
