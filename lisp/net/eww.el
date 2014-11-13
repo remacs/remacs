@@ -105,7 +105,7 @@ See also `eww-form-checkbox-selected-symbol'."
      :box (:line-width 2 :style released-button)
      :background "#808080" :foreground "black"))
   "Face for eww buffer buttons."
-  :version "24.4"
+  :version "25.1"
   :group 'eww)
 
 (defface eww-form-checkbox
