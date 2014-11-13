@@ -79,7 +79,11 @@
   (mapcar
    (function
     (lambda (field)
-      (cons (intern (car field))
+      ;; Some servers return case-sensitive names (e.g. givenName
+      ;; instead of givenname); downcase the field's name so that it
+      ;; can be matched against
+      ;; eudc-ldap-attributes-translation-alist.
+      (cons (intern (downcase (car field)))
 	    (if (cdr (cdr field))
 		(cdr field)
 	      (car (cdr field))))))
@@ -95,7 +99,7 @@
   (mapcar
    (function
     (lambda (field)
-      (let ((name (intern (car field)))
+      (let ((name (intern (downcase (car field))))
 	    (value (cdr field)))
 	(if (memq name '(postaladdress registeredaddress))
 	    (setq value (mapcar 'eudc-filter-$ value)))

@@ -1,5 +1,11 @@
 2014-11-13  Thomas Fitzsimmons  <fitzsim@fitzsim.org>
 
+	* net/eudcb-ldap.el (eudc-ldap-cleanup-record-simple): Downcase
+	field names of LDAP results.
+	(eudc-ldap-cleanup-record-filtering-addresses): Likewise.
+
+2014-11-13  Thomas Fitzsimmons  <fitzsim@fitzsim.org>
+
 	* net/ldap.el (ldap-ldapsearch-password-prompt): New defcustom.
 	(ldap-search-internal): Send password to ldapsearch through a pipe
 	instead of via the command line.
