@@ -1,5 +1,8 @@
 2014-11-13  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
+	* net/eww.el (eww-after-render-hook): New variable.
+	(eww-render): Use it.
+
 	* net/shr.el (shr-descend): Don't descend further than
 	`max-specpdl-size' allows (bug#16587).
 	(shr-depth): New variable.

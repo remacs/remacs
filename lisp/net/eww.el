@@ -73,6 +73,12 @@
   :type '(choice (const :tag "Never" nil)
                  regexp))
 
+(defcustom eww-after-render-hook nil
+  "A hook called after eww has finished rendering the buffer."
+  :version "25.1"
+  :group 'eww
+  :type 'hook)
+
 (defcustom eww-form-checkbox-selected-symbol "[X]"
   "Symbol used to represent a selected checkbox.
 See also `eww-form-checkbox-symbol'."
@@ -227,7 +233,8 @@ word(s) will be searched for via `eww-search-prefix'."
 	    (eww-display-raw buffer)
 	    (eww-update-header-line-format)))
 	  (plist-put eww-data :title url)
-	  (setq eww-history-position 0))
+	  (setq eww-history-position 0)
+	  (run-hooks 'eww-after-render-hook))
       (kill-buffer data-buffer))))
 
 (defun eww-parse-headers ()

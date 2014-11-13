@@ -156,6 +156,9 @@ the like off the page.
 *** You can now use several eww buffers in parallel by renaming eww
 buffers you want to keep separate.
 
+*** `eww-after-render-hook' is now called after eww has rendered
+the data in the buffer.
+
 ** Message mode
 
 *** text/html messages that contain inline image parts will be

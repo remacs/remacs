@@ -235,6 +235,11 @@ developers started contributing to it as well.
 @node Variable Index
 @unnumbered Variable Index
 
+@vindex eww-after-render-hook
+After eww has rendered the data in the buffer,
+@code{eww-after-render-hook} is called.  It can be used to alter the
+contents, for instance.
+
 @printindex vr
 
 @node Lisp Function Index
