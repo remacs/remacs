@@ -75,7 +75,7 @@ patches) over all your contributions.
 
 * Getting the Source Code
 
-The latest version of Emacs can be downloaded using Bazaar from the
+The latest version of the Emacs source code can be downloaded from the
 Savannah web site.  It is important to write your patch based on the
 latest version.  If you start from an older version, your patch may be
 outdated (so that maintainers will have a hard time applying it), or
@@ -215,4 +215,3 @@ Local variables:
 mode: outline
 paragraph-separate: "[ 	]*$"
 end:
-

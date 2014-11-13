@@ -1,3 +1,10 @@
+2014-11-13  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Fix minor Bazaar leftovers.
+	Reported by Perry E. Metzger in:
+	http://lists.gnu.org/archive/html/emacs-devel/2014-11/msg00745.html
+	* CONTRIBUTE: More git transition.
+
 2014-11-11  Eric S. Raymond  <esr@thyrsus.com>
 
 	* CONTRIBUTE: git transition.
