@@ -4294,7 +4294,11 @@ struct ct_color
 
 /* Value is a hash of the RGB color given by R, G, and B.  */
 
-#define CT_HASH_RGB(R, G, B) (((R) << 16) ^ ((G) << 8) ^ (B))
+static unsigned
+ct_hash_rgb (unsigned r, unsigned g, unsigned b)
+{
+  return (r << 16) ^ (g << 8) ^ b;
+}
 
 /* The color hash table.  */
 
@@ -4349,7 +4353,7 @@ free_color_table (void)
 static unsigned long
 lookup_rgb_color (struct frame *f, int r, int g, int b)
 {
-  unsigned hash = CT_HASH_RGB (r, g, b);
+  unsigned hash = ct_hash_rgb (r, g, b);
   int i = hash % CT_SIZE;
   struct ct_color *p;
   Display_Info *dpyinfo;
