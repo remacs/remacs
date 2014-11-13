@@ -156,7 +156,8 @@ different values."
 				       (const :menu-tag "Duplicate" duplicate)))))
   :group 'eudc)
 
-(defcustom eudc-inline-query-format '((name)
+(defcustom eudc-inline-query-format '((email)
+				      (firstname)
 				      (firstname name))
   "Format of an inline expansion query.
 This is a list of FORMATs.  A FORMAT is itself a list of one or more
