@@ -1,3 +1,10 @@
+2014-11-13  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* net/shr.el (shr-descend): Don't descend further than
+	`max-specpdl-size' allows (bug#16587).
+	(shr-depth): New variable.
+	(shr-warning): New variable.
+
 2014-11-13  Ivan Shmakov  <ivan@siamics.net>
 
 	* net/shr.el (shr-parse-base): Handle <base href=""> correctly.
