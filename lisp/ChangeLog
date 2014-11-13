@@ -1,3 +1,8 @@
+2014-11-13  Ivan Shmakov  <ivan@siamics.net>
+
+	* net/shr.el (shr-parse-base): Handle <base href=""> correctly.
+	(shr-expand-url): Expand absolute URLs correctly (bug#17958).
+
 2014-11-13  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
 	* net/eww.el (eww): Add comment to clarify.

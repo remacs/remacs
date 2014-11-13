@@ -594,6 +594,8 @@ size, and full-buffer size."
   ;; Always chop off anchors.
   (when (string-match "#.*" url)
     (setq url (substring url 0 (match-beginning 0))))
+  ;; NB: <base href="" > URI may itself be relative to the document s URI
+  (setq url (shr-expand-url url))
   (let* ((parsed (url-generic-parse-url url))
 	 (local (url-filename parsed)))
     (setf (url-filename parsed) "")
@@ -616,6 +618,7 @@ size, and full-buffer size."
 (defun shr-expand-url (url &optional base)
   (setq base
 	(if base
+	    ;; shr-parse-base should never call this with non-nil base!
 	    (shr-parse-base base)
 	  ;; Bound by the parser.
 	  shr-base))
@@ -624,8 +627,8 @@ size, and full-buffer size."
   (cond ((or (not url)
 	     (not base)
 	     (string-match "\\`[a-z]*:" url))
-	 ;; Absolute URL.
-	 (or url (car base)))
+	 ;; Absolute or empty URI
+	 (or url (nth 3 base)))
 	((eq (aref url 0) ?/)
 	 (if (and (> (length url) 1)
 		  (eq (aref url 1) ?/))
