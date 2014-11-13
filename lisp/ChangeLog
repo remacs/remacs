@@ -1,5 +1,10 @@
 2014-11-13  Thomas Fitzsimmons  <fitzsim@fitzsim.org>
 
+	* net/eudc.el (eudc-expand-inline): Always restore former server
+	and protocol.
+
+2014-11-13  Thomas Fitzsimmons  <fitzsim@fitzsim.org>
+
 	* net/eudcb-ldap.el: Don't nag the user in case a default base is
 	provided by the LDAP system configuration file.
 
