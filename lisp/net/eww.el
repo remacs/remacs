@@ -420,11 +420,12 @@ word(s) will be searched for via `eww-search-prefix'."
   (let ((buf (get-buffer-create "*eww-source*"))
         (source (plist-get eww-data :source)))
     (with-current-buffer buf
-      (delete-region (point-min) (point-max))
-      (insert (or source "no source"))
-      (goto-char (point-min))
-      (when (fboundp 'html-mode)
-        (html-mode)))
+      (let ((inhibit-read-only t))
+	(delete-region (point-min) (point-max))
+	(insert (or source "no source"))
+	(goto-char (point-min))
+	(when (fboundp 'html-mode)
+	  (html-mode))))
     (view-buffer buf)))
 
 (defun eww-readable ()

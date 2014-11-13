@@ -783,6 +783,8 @@ element is the data blob and the second element is the content-type."
 		     ((eq size 'original)
 		      (create-image data nil t :ascent 100
 				    :format content-type))
+		     ((eq content-type 'image/svg+xml)
+		      (create-image data 'svg t :ascent 100))
 		     ((eq size 'full)
 		      (ignore-errors
 			(shr-rescale-image data content-type)))
@@ -845,14 +847,25 @@ Return a string with image data."
 	(shr-parse-image-data)))))
 
 (defun shr-parse-image-data ()
-  (list
-   (buffer-substring (point) (point-max))
-   (save-excursion
-     (save-restriction
-       (narrow-to-region (point-min) (point))
-       (let ((content-type (mail-fetch-field "content-type")))
-	 (and content-type
-	      (intern content-type obarray)))))))
+  (let ((data (buffer-substring (point) (point-max)))
+	(content-type
+	 (save-excursion
+	   (save-restriction
+	     (narrow-to-region (point-min) (point))
+	     (let ((content-type (mail-fetch-field "content-type")))
+	       (and content-type
+		    ;; Remove any comments in the type string.
+		    (intern (replace-regexp-in-string ";.*" "" content-type)
+			    obarray)))))))
+    ;; SVG images may contain references to further images that we may
+    ;; want to block.  So special-case these by parsing the XML data
+    ;; and remove the blocked bits.
+    (when (eq content-type 'image/svg+xml)
+      (setq data
+	    (shr-dom-to-xml
+	     (shr-transform-dom
+	      (libxml-parse-xml-region (point) (point-max))))))
+    (list data content-type)))
 
 (defun shr-image-displayer (content-function)
   "Return a function to display an image.
@@ -1130,18 +1143,32 @@ ones, in case fg and bg are nil."
       (shr-urlify (or shr-start start) (shr-expand-url url) title))))
 
 (defun shr-tag-object (cont)
-  (let ((start (point))
-	url)
-    (dolist (elem cont)
-      (when (eq (car elem) 'embed)
-	(setq url (or url (cdr (assq :src (cdr elem))))))
-      (when (and (eq (car elem) 'param)
-		 (equal (cdr (assq :name (cdr elem))) "movie"))
-	(setq url (or url (cdr (assq :value (cdr elem)))))))
-    (when url
-      (shr-insert " [multimedia] ")
-      (shr-urlify start (shr-expand-url url)))
-    (shr-generic cont)))
+  (unless shr-inhibit-images
+    (let ((start (point))
+	  url multimedia image)
+      (dolist (elem cont)
+	(cond
+	 ((eq (car elem) 'embed)
+	  (setq url (or url (cdr (assq :src (cdr elem))))
+		multimedia t))
+	 ((and (eq (car elem) 'param)
+	       (equal (cdr (assq :name (cdr elem))) "movie"))
+	  (setq url (or url (cdr (assq :value (cdr elem))))
+		multimedia t))
+	 ((and (eq (car elem) :type)
+	       (string-match "\\`image/svg" (cdr elem)))
+	  (setq url (cdr (assq :data cont))
+		image t))))
+      (when url
+	(cond
+	 (image
+	  (shr-tag-img cont url)
+	  (setq cont nil))
+	 (multimedia
+	  (shr-insert " [multimedia] ")
+	  (shr-urlify start (shr-expand-url url)))))
+      (when cont
+	(shr-generic cont)))))
 
 (defcustom shr-prefer-media-type-alist '(("webm" . 1.0)
                                          ("ogv"  . 1.0)
@@ -1483,6 +1510,8 @@ The preference is a float determined from `shr-prefer-media-type'."
     ;; model isn't strong enough to allow us to put the images actually
     ;; into the tables.
     (when (zerop shr-table-depth)
+      (dolist (elem (shr-find-elements cont 'object))
+	(shr-tag-object (cdr elem)))
       (dolist (elem (shr-find-elements cont 'img))
 	(shr-tag-img (cdr elem))))))
 
