@@ -486,17 +486,44 @@ Additional search parameters can be specified through
 (defun ldap-password-read (host)
   "Read LDAP password for HOST.  If the password is cached, it is
 read from the cache, otherwise the user is prompted for the
-password and the password is cached.  The cache can be cleared
-with the `password-reset' function and the
-`password-cache-expiry' variable controls how long the password
-is cached for."
-  (password-read-and-add
-   (format "Enter LDAP Password%s: "
-				(if (equal host "")
-				    ""
-				  (format " for %s" host)))
-   ;; Add ldap: namespace to allow empty string for default host.
-   (concat "ldap:" host)))
+password.  If `password-cache' is non-nil the password is
+verified and cached.  The `password-cache-expiry' variable
+controls for how long the password is cached.
+
+This function can be specified for the `passwd' property in
+`ldap-host-parameters-alist' when interactive password prompting
+is desired for HOST."
+  ;; Add ldap: namespace to allow empty string for default host.
+  (let* ((host-key (concat "ldap:" host))
+	 (password (password-read
+		    (format "Enter LDAP Password%s: "
+			    (if (equal host "")
+				""
+			      (format " for %s" host)))
+		    host-key)))
+    (when (and password-cache
+	       (not (password-in-cache-p host-key))
+	       ;; Confirm the password is valid before adding it to
+	       ;; the password cache.  ldap-search-internal will throw
+	       ;; an error if the password is invalid.
+	       (not (ldap-search-internal
+		     `(host ,host
+			    ;; Specify an arbitrary filter that should
+			    ;; produce no results, since only
+			    ;; authentication success is of interest.
+			    filter "emacs-test-password="
+			    attributes nil
+			    attrsonly nil
+			    withdn nil
+			    ;; Preempt passwd ldap-password-read
+			    ;; setting in ldap-host-parameters-alist.
+			    passwd ,password
+			    ,@(cdr
+			       (assoc
+				host
+				ldap-host-parameters-alist))))))
+      (password-cache-add host-key password))
+    password))
 
 (defun ldap-search-internal (search-plist)
   "Perform a search on a LDAP server.
@@ -620,10 +647,11 @@ an alist of attribute/value pairs."
 	  (setq arglist (nconc arglist (list (format "-z%s" sizelimit)))))
       (if passwd
 	  (let* ((process-connection-type nil)
+		 (proc-args (append arglist ldap-ldapsearch-args
+				    filter))
 		 (proc (apply #'start-process "ldapsearch" buf
 			      ldap-ldapsearch-prog
-			      (append arglist ldap-ldapsearch-args
-				      filter))))
+			      proc-args)))
 	    (while (null (progn
 			   (goto-char (point-min))
 			   (re-search-forward
@@ -633,7 +661,16 @@ an alist of attribute/value pairs."
 	    (process-send-string proc passwd)
 	    (process-send-string proc "\n")
 	    (while (not (memq (process-status proc) '(exit signal)))
-	      (sit-for 0.1)))
+	      (sit-for 0.1))
+	    (let ((status (process-exit-status proc)))
+	      (when (not (eq status 0))
+		;; Handle invalid credentials exit status specially
+		;; for ldap-password-read.
+		(if (eq status 49)
+		    (error "Incorrect LDAP password")
+		  (error "Failed ldapsearch invocation: %s \"%s\""
+			 ldap-ldapsearch-prog
+			 (mapconcat 'identity proc-args "\" \""))))))
 	(apply #'call-process ldap-ldapsearch-prog
 	       ;; Ignore stderr, which can corrupt results
 	       nil (list buf nil) nil
