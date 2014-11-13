@@ -1,3 +1,9 @@
+2014-11-13  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* .gitignore: Copy over sufficient ignorable files from the old
+	.bzrignore that a simple build doesn't list lots of unregistered
+	files.
+
 2014-11-11  Eric S. Raymond  <esr@thyrsus.com>
 
 	* Makefile.in: git transition - set VCWITNESS appropriately for git.
