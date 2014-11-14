@@ -386,7 +386,7 @@ xfont_list_pattern (Display *display, const char *pattern,
     {
       char **indices = alloca (sizeof (char *) * num_fonts);
       Lisp_Object *props = XVECTOR (xfont_scratch_props)->contents;
-      Lisp_Object scripts = Qnil;
+      Lisp_Object scripts = Qnil, entity = Qnil;
 
       for (i = 0; i < ASIZE (xfont_scratch_props); i++)
 	ASET (xfont_scratch_props, i, Qnil);
@@ -397,11 +397,11 @@ xfont_list_pattern (Display *display, const char *pattern,
       for (i = 0; i < num_fonts; i++)
 	{
 	  ptrdiff_t len;
-	  Lisp_Object entity;
 
 	  if (i > 0 && xstrcasecmp (indices[i - 1], indices[i]) == 0)
 	    continue;
-	  entity = font_make_entity ();
+	  if (NILP (entity))
+	    entity = font_make_entity ();
 	  len = xfont_decode_coding_xlfd (indices[i], -1, buf);
 	  if (font_parse_xlfd (buf, len, entity) < 0)
 	    continue;
@@ -459,7 +459,7 @@ xfont_list_pattern (Display *display, const char *pattern,
 	    {
 	      if (NILP (script)
 		  || xfont_chars_supported (chars, NULL, encoding, repertory))
-		list = Fcons (entity, list);
+		list = Fcons (entity, list), entity = Qnil;
 	      continue;
 	    }
 	  if (memcmp (props, aref_addr (entity, FONT_FOUNDRY_INDEX),
@@ -474,7 +474,7 @@ xfont_list_pattern (Display *display, const char *pattern,
 	    }
 	  if (NILP (script)
 	      || ! NILP (Fmemq (script, scripts)))
-	    list = Fcons (entity, list);
+	    list = Fcons (entity, list), entity = Qnil;
 	}
       XFreeFontNames (names);
     }
