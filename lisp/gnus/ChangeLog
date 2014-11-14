@@ -1,3 +1,8 @@
+2014-11-14  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* ietf-drums.el (ietf-drums-parse-address): Don't issue warnings about
+	things the user isn't interested in.
+
 2014-11-13  Julien Danjou  <jd@abydos>
 
 	* gnus-notifications.el (gnus-notifications-notify): Provide both
