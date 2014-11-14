@@ -1,3 +1,12 @@
+2015-01-17  Ulrich Müller  <ulm@gentoo.org>
+
+	* version.el (emacs-bzr-version-dirstate, emacs-bzr-version-bzr):
+	Remove.
+	(emacs-repository-get-version): Discard the Bazaar case.
+	* vc/vc-bzr.el (vc-bzr-version-dirstate): Rename from
+	emacs-bzr-version-dirstate and move from version.el to here.
+	(vc-bzr-working-revision): Use it.
+
 2015-01-17  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* emacs-lisp/eieio-generic.el (call-next-method): Don't bother checking

@@ -493,6 +493,22 @@ in the branch repository (or whose status not be determined)."
     (add-hook 'after-save-hook 'vc-bzr-resolve-when-done nil t)
     (message "There are unresolved conflicts in this file")))
 
+(defun vc-bzr-workfile-unchanged-p (file)
+  (eq 'unchanged (car (vc-bzr-status file))))
+
+(defun vc-bzr-version-dirstate (dir)
+  "Try to return as a string the bzr revision ID of directory DIR.
+This uses the dirstate file's parent revision entry.
+Returns nil if unable to find this information."
+  (let ((file (expand-file-name ".bzr/checkout/dirstate" dir)))
+    (when (file-readable-p file)
+      (with-temp-buffer
+        (insert-file-contents file)
+        (and (looking-at "#bazaar dirstate flat format 3")
+             (forward-line 3)
+             (looking-at "[0-9]+\0\\([^\0\n]+\\)\0")
+             (match-string 1))))))
+
 (defun vc-bzr-working-revision (file)
   (let* ((rootdir (vc-bzr-root file))
          (branch-format-file (expand-file-name vc-bzr-admin-branch-format-file
@@ -538,8 +554,8 @@ in the branch repository (or whose status not be determined)."
 			 ;; files exist.
 			 (and (file-exists-p branch-format-file)
 			      (file-exists-p lastrev-file)
-			      (equal (emacs-bzr-version-dirstate l-c-parent-dir)
-				     (emacs-bzr-version-dirstate rootdir))))))
+			      (equal (vc-bzr-version-dirstate l-c-parent-dir)
+				     (vc-bzr-version-dirstate rootdir))))))
 		 t)))
         (with-temp-buffer
           (insert-file-contents branch-format-file)
