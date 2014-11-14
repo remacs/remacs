@@ -1,3 +1,9 @@
+2014-11-14  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* nsfns.m (x_set_foreground_color, x_set_background_color)
+	(x_set_cursor_color, Fxw_color_values): Block/unblock input,
+	use SET_FRAME_GARBAGED instead of redraw_frame (Bug#19036).
+
 2014-11-09  Eli Zaretskii  <eliz@gnu.org>
 
 	* fileio.c (Finsert_file_contents): Invalidate buffer caches also
