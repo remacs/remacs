@@ -926,6 +926,7 @@ if `inhibit-field-text-motion' is non-nil."
 (define-key esc-map "s" search-map)
 
 (define-key search-map "o"  'occur)
+(define-key search-map (kbd "M-s")  'eww-search-words)
 (define-key search-map "hr" 'highlight-regexp)
 (define-key search-map "hp" 'highlight-phrase)
 (define-key search-map "hl" 'highlight-lines-matching-regexp)

@@ -51,6 +51,9 @@ Use './configure PKG_CONFIG=/full/name/of/pkg-config' if you need to.
 
 ** C-h l now also lists the commands that were run.
 
+** The new M-s M-s key binding uses eww to search the web for the
+text in the region.
+
 ** M-x suggests shorthands and ignores obsolete commands for completion.
 ** x-select-enable-clipboard is renamed select-enable-clipboard.
 x-select-enable-primary and renamed select-enable-primary.

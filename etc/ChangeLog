@@ -1,3 +1,7 @@
+2014-11-14  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* NEWS: Mention the new `M-s M-s' keystroke.
+
 2014-11-13  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Fix minor Bazaar leftovers.

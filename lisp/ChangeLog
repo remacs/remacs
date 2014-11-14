@@ -1,3 +1,11 @@
+2014-11-14  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* bindings.el (search-map): Bind M-s M-s to `eww-search-words'.
+
+2014-11-14  Kenjiro NAKAYAMA  <nakayamakenjiro@gmail.com>
+
+	* net/eww.el (eww-search-words): New command (bug#16258).
+
 2014-11-13  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
 	* net/shr.el (shr-inhibit-images): Add a doc string.

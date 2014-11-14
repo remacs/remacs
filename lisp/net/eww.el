@@ -198,6 +198,12 @@ word(s) will be searched for via `eww-search-prefix'."
 		    "/")
 	       (expand-file-name file))))
 
+;;;###autoload
+(defun eww-search-words (&optional beg end)
+  "Search the web for the text between the point and marker."
+  (interactive "r")
+  (eww (buffer-substring beg end)))
+
 (defun eww-render (status url &optional point buffer)
   (let ((redirect (plist-get status :redirect)))
     (when redirect
