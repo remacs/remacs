@@ -4511,15 +4511,6 @@ ns_term_shutdown (int sig)
 #ifdef NS_IMPL_COCOA
 - (void)run
 {
-#ifndef NSAppKitVersionNumber10_9
-#define NSAppKitVersionNumber10_9 1265
-#endif
-
-    if ((int)NSAppKitVersionNumber != NSAppKitVersionNumber10_9)
-      {
-        [super run];
-        return;
-      }
 
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
 
@@ -4532,12 +4523,22 @@ ns_term_shutdown (int sig)
       [pool release];
       pool = [[NSAutoreleasePool alloc] init];
 
+      /* OSX 10.10.1 swallows the AppDefined event we are sending ourselves
+	 in certain situations (rapid incoming events).
+	 The timeout we set with untilDate is necessary to prevent a hang.
+	 Bug #18993 */
+
       NSEvent *event =
         [self nextEventMatchingMask:NSAnyEventMask
-                          untilDate:[NSDate distantFuture]
+                          untilDate:[NSDate dateWithTimeIntervalSinceNow:0.5]
                              inMode:NSDefaultRunLoopMode
                             dequeue:YES];
-      [self sendEvent:event];
+
+      if (event == nil) // timeout
+	shouldKeepRunning = NO;
+      else
+	[self sendEvent:event];
+
       [self updateWindows];
     } while (shouldKeepRunning);
 
