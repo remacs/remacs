@@ -158,13 +158,13 @@
 ;; (python-shell-exec-path . ("/path/to/env/bin/"))
 
 ;; Since the above is cumbersome and can be programmatically
-;; calculated, the variable `python-shell-virtualenv-path' is
+;; calculated, the variable `python-shell-virtualenv-root' is
 ;; provided.  When this variable is set with the path of the
 ;; virtualenv to use, `process-environment' and `exec-path' get proper
 ;; values in order to run shells inside the specified virtualenv.  So
 ;; the following will achieve the same as the previous example:
 
-;; (setq python-shell-virtualenv-path "/path/to/env/")
+;; (setq python-shell-virtualenv-root "/path/to/env/")
 
 ;; Also the `python-shell-extra-pythonpaths' variable have been
 ;; introduced as simple way of adding paths to the PYTHONPATH without
@@ -1838,7 +1838,7 @@ default `exec-path'."
   :group 'python
   :safe 'listp)
 
-(defcustom python-shell-virtualenv-path nil
+(defcustom python-shell-virtualenv-root nil
   "Path to virtualenv root.
 This variable, when set to a string, makes the values stored in
 `python-shell-process-environment' and `python-shell-exec-path'
@@ -1847,6 +1847,9 @@ virtualenv."
   :type '(choice (const nil) string)
   :group 'python
   :safe 'stringp)
+
+(define-obsolete-variable-alias
+  'python-shell-virtualenv-path 'python-shell-virtualenv-root "25.1")
 
 (defcustom python-shell-setup-codes '(python-shell-completion-setup-code
                                       python-ffap-setup-code
@@ -2064,7 +2067,7 @@ uniqueness for different types of configurations."
             (mapconcat #'identity python-shell-process-environment "")
             (mapconcat #'identity python-shell-extra-pythonpaths "")
             (mapconcat #'identity python-shell-exec-path "")
-            (or python-shell-virtualenv-path "")
+            (or python-shell-virtualenv-root "")
             (mapconcat #'identity python-shell-exec-path "")))))
 
 (defun python-shell-parse-command ()    ;FIXME: why name it "parse"?
@@ -2089,12 +2092,12 @@ uniqueness for different types of configurations."
       extra)))
 
 (defun python-shell-calculate-process-environment ()
-  "Calculate process environment given `python-shell-virtualenv-path'."
+  "Calculate process environment given `python-shell-virtualenv-root'."
   (let ((process-environment (append
                               python-shell-process-environment
                               process-environment nil))
-        (virtualenv (if python-shell-virtualenv-path
-                        (directory-file-name python-shell-virtualenv-path)
+        (virtualenv (if python-shell-virtualenv-root
+                        (directory-file-name python-shell-virtualenv-root)
                       nil)))
     (when python-shell-extra-pythonpaths
       (setenv "PYTHONPATH" (python-new-pythonpath)))
@@ -2108,12 +2111,12 @@ uniqueness for different types of configurations."
     process-environment))
 
 (defun python-shell-calculate-exec-path ()
-  "Calculate exec path given `python-shell-virtualenv-path'."
+  "Calculate exec path given `python-shell-virtualenv-root'."
   (let ((path (append python-shell-exec-path
                       exec-path nil)))  ;FIXME: Why nil?
-    (if (not python-shell-virtualenv-path)
+    (if (not python-shell-virtualenv-root)
         path
-      (cons (expand-file-name "bin" python-shell-virtualenv-path)
+      (cons (expand-file-name "bin" python-shell-virtualenv-root)
             path))))
 
 (defvar python-shell--package-depth 10)

@@ -1,3 +1,11 @@
+2014-11-14  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	* progmodes/python.el (python-shell-virtualenv-root): Rename from
+	python-shell-virtualenv-path.
+	(python-shell-internal-get-process-name)
+	(python-shell-calculate-process-environment)
+	(python-shell-calculate-exec-path): Use it.
+
 2014-11-14  Eli Zaretskii  <eliz@gnu.org>
 
 	* bindings.el (search-map): Fix last change: don't use 'kbd' in
