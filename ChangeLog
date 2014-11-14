@@ -1,3 +1,14 @@
+2014-11-14  Paul Eggert  <eggert@cs.ucla.edu>
+
+	build: port to GCC 4.6.4 + glibc 2.5
+	On platforms this old, building with _FORTIFY_SOURCE equal to 2
+	results in duplicate definitions of standard library functions.
+	Problem reported by Nelson H. F. Beebe.
+	* configure.ac (_FORTIFY_SOURCE): Sort after GNULIB_PORTCHECK.
+	By default, do not enable this unless GNULIB_PORTCHECK is defined.
+	This better matches the original intent, which as I recall was to
+	enable these extra checks only with --enable-gcc-warnings.
+
 2014-11-14  David Reitter  <david.reitter@gmail.com>
 
 	* Makefile.in (install-arch-indep): Compress publicsuffix.txt file.

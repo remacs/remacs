@@ -899,14 +899,15 @@ else
   fi
 
   AC_DEFINE([lint], [1], [Define to 1 if the compiler is checking for lint.])
-  AH_VERBATIM([FORTIFY_SOURCE],
+  AC_DEFINE([GNULIB_PORTCHECK], [1], [enable some gnulib portability checks])
+  AH_VERBATIM([GNULIB_PORTCHECK_FORTIFY_SOURCE],
   [/* Enable compile-time and run-time bounds-checking, and some warnings,
       without upsetting glibc 2.15+. */
-   #if !defined _FORTIFY_SOURCE && defined __OPTIMIZE__ && __OPTIMIZE__
+   #if (defined GNULIB_PORTCHECK && !defined _FORTIFY_SOURCE \
+        && defined __OPTIMIZE__ && __OPTIMIZE__)
    # define _FORTIFY_SOURCE 2
    #endif
   ])
-  AC_DEFINE([GNULIB_PORTCHECK], [1], [enable some gnulib portability checks])
 
   # We use a slightly smaller set of warning options for lib/.
   # Remove the following and save the result in GNULIB_WARN_CFLAGS.
