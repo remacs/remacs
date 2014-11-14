@@ -13,6 +13,7 @@ makefile
 TAGS
 *~
 /README.W32
+.gitattributes
 
 /bin/
 /site-lisp/
@@ -60,8 +61,7 @@ lib/warn-on-use.h
 src/bootstrap-emacs
 src/deps/
 src/emacs
-src/emacs-25.0.50.1
-src/emacs-25.0.50.2
+src/emacs-[0-9]*
 src/gl-stamp
 src/globals.h
 src/stamp-h1
@@ -77,5 +77,3 @@ lwlib/deps/
 lwlib/liblw.a
 leim/changed.misc
 leim/changed.tit
-
-
