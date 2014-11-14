@@ -5947,7 +5947,7 @@ sep 15        @result{} @b{2006}-09-15
 feb 15        @result{} @b{2007}-02-15
 sep 12 9      @result{} 2009-09-12
 12:45         @result{} @b{2006}-@b{06}-@b{13} 12:45
-22 sept 0:34  @result{} @b{2006}-09-22 0:34
+22 sept 0:34  @result{} @b{2006}-09-22 00:34
 w4            @result{} ISO week for of the current year @b{2006}
 2012 w4 fri   @result{} Friday of ISO week 4 in 2012
 2012-w04-5    @result{} Same as above
@@ -8122,7 +8122,7 @@ brackets (like @samp{DEADLINE<="<2008-12-24 18:30>"}), both values are
 assumed to be date/time specifications in the standard Org way, and the
 comparison will be done accordingly.  Special values that will be recognized
 are @code{"<now>"} for now (including time), and @code{"<today>"}, and
-@code{"<tomorrow>"} for these days at 0:00 hours, i.e., without a time
+@code{"<tomorrow>"} for these days at 00:00 hours, i.e., without a time
 specification.  Also strings like @code{"<+5d>"} or @code{"<-2m>"} with units
 @code{d}, @code{w}, @code{m}, and @code{y} for day, week, month, and year,
 respectively, can be used.

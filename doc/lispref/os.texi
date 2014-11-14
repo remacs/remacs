@@ -1226,7 +1226,7 @@ integer number of seconds.  This integer,
 @tex
 $high*2^{16}+low$,
 @end tex
-is the number of seconds from the @dfn{epoch} (0:00 January 1, 1970
+is the number of seconds from the @dfn{epoch} (January 1, 1970 at 00:00
 UTC) to the specified time.  The third list element @var{microsec}, if
 present, gives the number of microseconds from the start of that
 second to the specified time.

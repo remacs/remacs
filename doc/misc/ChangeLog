@@ -1,3 +1,8 @@
+2014-11-14  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* org.texi (The date/time prompt, Matching tags and properties):
+	Use leading zero with 24-hour times less than 10:00.
+
 2014-11-13  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
 	* eww.texi (Variable Index): Mention `eww-after-render-hook'.
