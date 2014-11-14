@@ -238,7 +238,7 @@ word(s) will be searched for via `eww-search-prefix'."
 	   (t
 	    (eww-display-raw buffer)
 	    (eww-update-header-line-format)))
-	  (plist-put eww-data :title url)
+	  (plist-put eww-data :url url)
 	  (setq eww-history-position 0)
 	  (run-hooks 'eww-after-render-hook))
       (kill-buffer data-buffer))))
