@@ -1,5 +1,8 @@
 2014-11-14  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
+	* gnus-sum.el (gnus-summary-exit-no-update): Don't query about
+	discarding changes in ephemeral groups.
+
 	* ietf-drums.el (ietf-drums-parse-address): Don't issue warnings about
 	things the user isn't interested in.
 

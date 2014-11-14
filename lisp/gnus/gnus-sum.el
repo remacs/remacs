@@ -7334,6 +7334,7 @@ If FORCE (the prefix), also save the .newsrc file(s)."
 	 (gnus-group-is-exiting-without-update-p t)
 	 (quit-config (gnus-group-quit-config group)))
     (when (or no-questions
+	      (gnus-ephemeral-group-p group)
 	      gnus-expert-user
 	      (gnus-y-or-n-p "Discard changes to this group and exit? "))
       (gnus-async-halt-prefetch)
