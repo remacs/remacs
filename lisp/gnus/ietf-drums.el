@@ -206,7 +206,6 @@ backslash and doublequote.")
 		   (1+ (point))
 		   (progn (forward-sexp 1) (1- (point))))))))
 	 (t
-	  (message "Unknown symbol: %c" c)
 	  (forward-char 1))))
       ;; If we found no display-name, then we look for comments.
       (if display-name
