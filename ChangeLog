@@ -1,3 +1,7 @@
+2014-11-14  David Reitter  <david.reitter@gmail.com>
+
+	* Makefile.in (install-arch-indep): Compress publicsuffix.txt file.
+
 2014-11-13  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
 	* .gitignore: Copy over sufficient ignorable files from the old

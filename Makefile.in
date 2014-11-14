@@ -259,7 +259,7 @@ MKDIR_P = @MKDIR_P@
 # Create a link to a file in the same directory as the target.
 LN_S_FILEONLY = @LN_S_FILEONLY@
 
-# We use gzip to compress installed .el files.
+# We use gzip to compress installed .el and some .txt files.
 GZIP_PROG = @GZIP_PROG@
 
 # ============================= Targets ==============================
@@ -600,11 +600,12 @@ install-arch-indep: lisp install-info install-man ${INSTALL_ARCH_INDEP_EXTRA}
 	subdir="$(DESTDIR)${datadir}/emacs/site-lisp" ; \
 	  ${write_subdir} || true
 	[ -z "${GZIP_PROG}" ] || { \
-	  echo "Compressing *.el ..." && \
+	  echo "Compressing *.el etc. ..." && \
 	  cd "$(DESTDIR)${lispdir}" && \
 	  for f in `find . -name "*.elc" -print | sed 's/.elc$$/.el/'`; do \
 	    ${GZIP_PROG} -9n "$$f"; \
 	  done; \
+	  ${GZIP_PROG} -9n "../etc/publicsuffix.txt"; \
 	}
 	-chmod -R a+r "$(DESTDIR)${datadir}/emacs/${version}" ${COPYDESTS}
 

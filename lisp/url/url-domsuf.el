@@ -32,8 +32,12 @@
 
 (defun url-domsuf-parse-file ()
   (with-temp-buffer
-    (insert-file-contents
-     (expand-file-name "publicsuffix.txt" data-directory))
+    (with-auto-compression-mode
+      (insert-file-contents
+       (let* ((suffixfile (expand-file-name "publicsuffix.txt" data-directory))
+	      (compressed-file (concat suffixfile ".gz")))
+	 (or (and (file-readable-p compressed-file) compressed-file)
+	     suffixfile))))
     (let ((domains nil)
 	  domain exception)
       (while (not (eobp))
