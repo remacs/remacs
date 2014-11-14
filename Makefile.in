@@ -408,7 +408,7 @@ $(MAKEFILE_NAME): config.status $(srcdir)/src/config.in \
 # Don't erase these files if make is interrupted while refreshing them.
 .PRECIOUS: Makefile config.status
 
-config.status: ${srcdir}/configure ${srcdir}/lisp/version.el
+config.status: ${srcdir}/configure
 	if [ -x ./config.status ]; then	\
 	    $(CFG) ./config.status --recheck;	\
 	else				\

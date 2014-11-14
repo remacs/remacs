@@ -1,3 +1,8 @@
+2014-11-14  Andreas Schwab  <schwab@linux-m68k.org>
+
+	* Makefile.in (config.status): Don't depend on
+	${srcdir}/lisp/version.el.
+
 2014-11-14  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Merge from gnulib.
