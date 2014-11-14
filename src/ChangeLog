@@ -1,3 +1,7 @@
+2014-11-14  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* .gitignore: Add emacs-[1-9]*, to ignore files like emacs-25.0.50.1.
+
 2014-11-14  Dmitry Antipov  <dmantipov@yandex.ru>
 
 	* xfont.c (xfont_list_pattern): Do not allocate font entity object

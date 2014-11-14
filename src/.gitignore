@@ -1,5 +1,6 @@
 buildobj.h
 config.h
+emacs-[1-9]*
 epaths.h
 stamp_BLD
 stamp-h.in
