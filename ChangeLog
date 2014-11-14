@@ -1,5 +1,12 @@
 2014-11-14  Paul Eggert  <eggert@cs.ucla.edu>
 
+	Merge from gnulib.
+	2014-11-14 extern-inline: update commentary about GCC bugs
+	2014-11-06 unistd: port to iOS
+	2014-11-04 update from texinfo
+	* doc/misc/texinfo.tex, lib/unistd.in.h, m4/extern-inline.m4:
+	Update from gnulib.
+
 	build: port to GCC 4.6.4 + glibc 2.5
 	On platforms this old, building with _FORTIFY_SOURCE equal to 2
 	results in duplicate definitions of standard library functions.
