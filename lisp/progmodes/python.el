@@ -2886,13 +2886,9 @@ When IMPORT is non-nil takes precedence over INPUT for
 completion."
   (with-current-buffer (process-buffer process)
     (let* ((prompt
-            ;; Get last prompt of the inferior process buffer (this
-            ;; intentionally avoids using `comint-last-prompt' because
-            ;; of incompatibilities with Emacs 24.x).
-            (save-excursion
+            (let ((prompt-boundaries (python-util-comint-last-prompt)))
               (buffer-substring-no-properties
-               (line-beginning-position) ;End of prompt.
-               (re-search-backward "^"))))
+               (car prompt-boundaries) (cdr prompt-boundaries))))
            (completion-code
             ;; Check whether a prompt matches a pdb string, an import
             ;; statement or just the standard prompt and use the
