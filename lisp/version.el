@@ -188,7 +188,7 @@ only ask the VCS if we cannot find any information ourselves."
 	     (and (eq 0
 		      (condition-case nil
 			  (call-process "git" nil '(t nil) nil "log"
-					"-1" "--pretty=format:%N")
+					"-1" "--pretty=format:%H")
 			(error nil)))
 		  (not (zerop (buffer-size)))
 		  (replace-regexp-in-string "\n" "" (buffer-string))))))))

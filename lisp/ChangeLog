@@ -1,3 +1,8 @@
+2014-11-13  Ulrich Müller  <ulm@gentoo.org>
+
+	* version.el (emacs-repository-get-version): Call `git log'
+	command with proper format argument (bug#19049).
+
 2014-11-14  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
 	* bindings.el (search-map): Bind M-s M-s to `eww-search-words'.
