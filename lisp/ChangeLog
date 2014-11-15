@@ -1,9 +1,8 @@
-2014-10-28  Peder O. Klingenberg  <peder@klingenberg.no>  (tiny change)
-2014-11-13  Michael Albinus  <michael.albinus@gmx.de>
+2014-11-15  Michael Albinus  <michael.albinus@gmx.de>
 
 	* vc/vc-hg.el (vc-hg-state): Disable pager.  (Bug#18940)
 
-2014-11-10  Kenjiro NAKAYAMA  <nakayamakenjiro@gmail.com>
+2014-10-28  Peder O. Klingenberg  <peder@klingenberg.no>  (tiny change)
 
 	* mail/emacsbug.el (report-emacs-bug): Make a better guess at
 	  envelope-from when reporting through sendmail (bug#19054).
