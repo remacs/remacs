@@ -503,6 +503,15 @@ END:VEVENT
       ;; restore time-zone even if something went terribly wrong
       (setenv "TZ" tz)))  )
 
+(ert-deftest icalendar--create-ical-alarm ()
+  "Test `icalendar--create-ical-alarms'."
+  (let ((icalendar-export-alarms))
+    ;; testcase: no alarms
+    (setq icalendar-export-alarm nil)
+    (should (equal nil
+                   (icalendar--create-ical-alarm "sumsum")))))
+
+
 ;; ======================================================================
 ;; Export tests
 ;; ======================================================================
@@ -519,7 +528,8 @@ European style input data must use german month names.  American
 and ISO style input data must use english month names."
   (let ((tz (getenv "TZ"))
 	(calendar-date-style 'iso)
-	(icalendar-recurring-start-year 2000))
+	(icalendar-recurring-start-year 2000)
+        (icalendar-export-alarms nil))
     (unwind-protect
 	(progn
 ;;;	  (message "Current time zone: %s" (current-time-zone))
@@ -1286,7 +1296,8 @@ Argument INPUT icalendar event string."
           (icalendar-import-format-status "\n Status: %s")
           (icalendar-import-format-url "\n URL: %s")
           (icalendar-import-format-class "\n Class: %s")
-          (icalendar-import-format-class "\n UID: %s"))
+          (icalendar-import-format-class "\n UID: %s")
+          (icalendar-export-alarms nil))
       (dolist (calendar-date-style '(iso european american))
         (icalendar-tests--do-test-cycle)))))
 

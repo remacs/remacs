@@ -270,28 +270,22 @@ other sexp entries are enumerated in any case."
 (defcustom icalendar-export-alarms
   nil
   "Determine if and how alarms are included in exported diary events.
-FIXME
-... appt-display-format
-... appt-audible
-.... appt-message-warning-time
-... appt-warning-time-regexp
-"
+FIXME"
   :version "25.1"
-  :type '(choice (const :tag "Do not include alarms in export" nil)
-                 (const :tag "Apply emacs defaults FIXME" 'default)
+  :type '(choice (const :tag "Do not include alarms in export"
+                        nil)
                  (list :tag "Create alarms in exported diary entries"
                        (integer :tag "Advance time (minutes)"
-                                ;; FIXME
-                                :value appt-message-warning-time)
-                       (choice :tag "Alarm type"
-                               (list :tag "Audio"
-                                     (string :tag "Audio file"))
-                               (cons :tag "Display"
-                                     (string :tag "Description"))
-                               (list :tag "Email"
-                                     (string :tag "Description")
-                                     (string :tag "Summary")
-                                     (string :tag "Attendees")))))
+                                :value 10)
+                       (set :tag "Alarm type"
+                            (list :tag "Audio"
+                                  (const audio :tag "Audio"))
+                            (list :tag "Display"
+                                  (const display :tag "Display"))
+                            (list :tag "Email"
+                                  (const email)
+                                  (repeat :tag "Attendees"
+                                          (string :tag "Email"))))))
   :group 'icalendar)
 
 
@@ -1055,6 +1049,7 @@ FExport diary data into iCalendar file: ")
         (header "")
         (contents-n-summary)
         (contents)
+        (alarm)
         (found-error nil)
         (nonmarker (concat "^" (regexp-quote diary-nonmarking-symbol)
                            "?"))
@@ -1117,8 +1112,10 @@ FExport diary data into iCalendar file: ")
                         (setq header (concat "\nBEGIN:VEVENT\nUID:"
                                              (or uid
                                                  (icalendar--create-uid
-                                                  entry-full contents)))))
-                      (setq result (concat result header contents
+                                                  entry-full contents))))
+                        (setq alarm (icalendar--create-ical-alarm
+                                     (car contents-n-summary))))
+                      (setq result (concat result header contents alarm
                                            "\nEND:VEVENT")))
                     (if (consp cns-cons-or-list)
                         (list cns-cons-or-list)
@@ -1292,6 +1289,35 @@ Returns an alist."
                     ;;(if sum (cons 'sum sum) nil)
                     (if url (cons 'url url) nil)
                     (if uid (cons 'uid uid) nil))))))))
+
+(defun icalendar--create-ical-alarm (summary)
+  (when icalendar-export-alarms
+    (let* ((advance-time (car icalendar-export-alarms))
+           (alarm-specs (cadr icalendar-export-alarms))
+           (fun (lambda (spec)
+                  (icalendar--do-create-ical-alarm advance-time spec summary))))
+      (mapconcat fun alarm-specs "\n"))))
+
+(defun icalendar--do-create-ical-alarm (advance-time alarm-spec summary)
+  (let* ((action (car alarm-spec))
+         (act (format "ACTION:%s\n"
+                      (cdr (assoc action '((audio . "AUDIO")
+                                           (display . "DISPLAY")
+                                           (email . "EMAIL"))))))
+         (tri (format "TRIGGER:-PT%dM\n" advance-time))
+         (des (if (memq action '(display email))
+                  (format "DESCRIPTION:%s\n" summary)
+                ""))
+         (sum (if (eq action 'email)
+                  (format "SUMMARY:%s\n" summary)
+                ""))
+         (att (if (eq action 'email)
+                  (mapconcat (lambda (i)
+                               (format "ATTENDEE:MAILTO:%s\n" i))
+                             (cadr alarm-spec) "")
+                "")))
+
+    (concat "BEGIN:VALARM\n" act tri des sum att "END:VALARM")))
 
 ;; subroutines for icalendar-export-region
 (defun icalendar--convert-ordinary-to-ical (nonmarker entry-main)
