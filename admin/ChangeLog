@@ -1,3 +1,9 @@
+2014-11-15  Glenn Morris  <rgm@gnu.org>
+
+	* update_autogen: Auto-detect VCS in use.
+	(vcs): New variable.
+	(status, commit, main): Handle git.
+
 2014-11-11  Eric S. Raymond  <esr@thyrsus.com>
 
 	* make-tarball.txt, update-copyright, admin/notes/bugtracker,
