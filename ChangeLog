@@ -1,3 +1,7 @@
+2014-11-15  Christoph Scholtes  <cschol2112@gmail.com>
+
+	* .gitignore: Ignore generated file lib/stdalign.h.
+
 2014-11-13  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Backport fix for minor Bazaar leftovers.

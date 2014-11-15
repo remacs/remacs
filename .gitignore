@@ -57,6 +57,7 @@ lib/libgnu.a
 lib/signal.h
 lib/stdio.h
 lib/stdlib.h
+lib/stdalign.h
 lib/string.h
 lib/sys/
 lib/time.h
