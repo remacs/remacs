@@ -267,6 +267,34 @@ other sexp entries are enumerated in any case."
   :type 'boolean
   :group 'icalendar)
 
+(defcustom icalendar-export-alarms
+  nil
+  "Determine if and how alarms are included in exported diary events.
+FIXME
+... appt-display-format
+... appt-audible
+.... appt-message-warning-time
+... appt-warning-time-regexp
+"
+  :version "25.1"
+  :type '(choice (const :tag "Do not include alarms in export" nil)
+                 (const :tag "Apply emacs defaults FIXME" 'default)
+                 (list :tag "Create alarms in exported diary entries"
+                       (integer :tag "Advance time (minutes)"
+                                ;; FIXME
+                                :value appt-message-warning-time)
+                       (choice :tag "Alarm type"
+                               (list :tag "Audio"
+                                     (string :tag "Audio file"))
+                               (cons :tag "Display"
+                                     (string :tag "Description"))
+                               (list :tag "Email"
+                                     (string :tag "Description")
+                                     (string :tag "Summary")
+                                     (string :tag "Attendees")))))
+  :group 'icalendar)
+
+
 (defvar icalendar-debug nil
   "Enable icalendar debug messages.")
 
@@ -281,6 +309,7 @@ other sexp entries are enumerated in any case."
 ;; ======================================================================
 (require 'calendar)
 (require 'diary-lib)
+(require 'appt)
 
 ;; ======================================================================
 ;; misc
@@ -1053,7 +1082,7 @@ FExport diary data into iCalendar file: ")
         (condition-case error-val
             (progn
               (setq cns-cons-or-list
-                    (icalendar--convert-to-ical nonmarker entry-main))
+                     (icalendar--convert-to-ical nonmarker entry-main))
               (setq other-elements (icalendar--parse-summary-and-rest
 				    entry-full))
               (mapc (lambda (contents-n-summary)
