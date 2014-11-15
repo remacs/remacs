@@ -1,3 +1,8 @@
+2014-11-15  Jan Djärv  <jan.h.d@swipnet.se>
+
+        * nsterm.m (ns_send_appdefined): Check for application defined
+        event on Cocoa (Bug#18993).  Backport from trunk.
+
 2014-11-15  Eli Zaretskii  <eliz@gnu.org>
 
 	* window.c (window_scroll_pixel_based): Avoid truncation/rounding
