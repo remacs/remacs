@@ -1,3 +1,8 @@
+2014-11-15  Andreas Schwab  <schwab@linux-m68k.org>
+
+	* version.el (emacs-repository-get-version): Use git rev-parse
+	instead of git log.
+
 2014-11-15  Fabián Ezequiel Gallina  <fgallina@gnu.org>
 
 	* progmodes/python.el (python-indent-calculate-levels): Fix
