@@ -1,5 +1,10 @@
 2014-11-15  Fabián Ezequiel Gallina  <fgallina@gnu.org>
 
+	* automated/python-tests.el (python-indent-dedenters-8): New test
+	for Bug#18432.
+
+2014-11-15  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
 	* automated/python-tests.el (python-indent-region-1)
 	(python-indent-region-2, python-indent-region-3)
 	(python-indent-region-4, python-indent-region-5): New tests.

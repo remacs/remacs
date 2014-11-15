@@ -711,6 +711,21 @@ if a:
     (should (= (python-indent-calculate-indentation) 0))
     (should (equal (python-indent-calculate-levels) '(0)))))
 
+(ert-deftest python-indent-dedenters-8 ()
+  "Test indentation for Bug#18432."
+  (python-tests-with-temp-buffer
+   "
+if (a == 1 or
+    a == 2):
+    pass
+elif (a == 3 or
+a == 4):
+"
+   (python-tests-look-at "a == 4):\n")
+   (should (eq (car (python-indent-context)) 'inside-paren))
+   (should (= (python-indent-calculate-indentation) 6))
+   (should (equal (python-indent-calculate-levels) '(0 4 6)))))
+
 (ert-deftest python-indent-electric-colon-1 ()
   "Test indentation case from Bug#18228."
   (python-tests-with-temp-buffer

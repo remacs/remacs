@@ -955,7 +955,11 @@ START is the buffer position where the sexp starts."
 
 (defun python-indent-calculate-levels ()
   "Calculate `python-indent-levels' and reset `python-indent-current-level'."
-  (if (not (python-info-dedenter-statement-p))
+  (if (or (python-info-continuation-line-p)
+          (not (python-info-dedenter-statement-p)))
+      ;; XXX: This asks for a refactor.  Even if point is on a
+      ;; dedenter statement, it could be multiline and in that case
+      ;; the continuation lines should be indented with normal rules.
       (let* ((indentation (python-indent-calculate-indentation))
              (remainder (% indentation python-indent-offset))
              (steps (/ (- indentation remainder) python-indent-offset)))

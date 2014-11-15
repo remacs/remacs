@@ -1,5 +1,10 @@
 2014-11-15  Fabián Ezequiel Gallina  <fgallina@gnu.org>
 
+	* progmodes/python.el (python-indent-calculate-levels): Fix
+	indentation behavior multiline dedenter statement.  (Bug#18432)
+
+2014-11-15  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
 	* progmodes/python.el (python-indent-region): Use
 	python-indent-line and skip special cases.  (Bug#18843)
 
