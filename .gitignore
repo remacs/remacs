@@ -12,6 +12,7 @@ autom4te.cache
 makefile
 TAGS
 *~
+.#* 
 /README.W32
 .gitattributes
 
@@ -27,6 +28,7 @@ test/biditest.txt
 Makefile
 config.log
 config.status
+config.cache
 lib-src/ctags
 lib-src/ebrowse
 lib-src/emacsclient
@@ -35,6 +37,7 @@ lib-src/hexl
 lib-src/make-docfile
 lib-src/movemail
 lib-src/profile
+lib-src/test-distrib
 lib-src/update-game-score
 *.o
 *.exe
