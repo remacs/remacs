@@ -59,8 +59,7 @@ which will look like
 commit 958b768a6534ae6e77a8547a56fc31b46b63710b
 
 cd ~/emacs/emacs-24
-git cherry-pick 958b768a6534ae6e77a8547a56fc31b46b63710b
-git commit --amend
+git cherry-pick -xe 958b768a6534ae6e77a8547a56fc31b46b63710b
 
 and add "Backport:" to the commit string.  Then
 
