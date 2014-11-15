@@ -1,4 +1,4 @@
-2014-10-28  Peder O. Klingenberg  <peder@klingenberg.no>
+2014-10-28  Peder O. Klingenberg  <peder@klingenberg.no>  (tiny change)
 
 	* mail/emacsbug.el (report-emacs-bug): Make a better guess at
 	  envelope-from when reporting through sendmail (bug#19054).
