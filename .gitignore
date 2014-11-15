@@ -29,6 +29,7 @@ Makefile
 config.log
 config.status
 config.cache
+lib-src/blessmail
 lib-src/ctags
 lib-src/ebrowse
 lib-src/emacsclient
