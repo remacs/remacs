@@ -1,3 +1,7 @@
+2014-11-18  Ivan Andrus  <darthandrus@gmail.com>
+
+	* .gitignore: Add some nextstep/mac ignorables.
+
 2014-11-18  Paul Eggert  <eggert@cs.ucla.edu>
 
 	.gitignore cleanup.

@@ -17,6 +17,8 @@ makefile
 /config.status
 src/config.h
 src/epaths.h
+Info.plist
+InfoPlist.strings
 
 # C-level sources built by 'make'.
 lib/alloca.h
@@ -32,6 +34,7 @@ lib/inttypes.h
 lib/libgnu.a
 lib/signal.h
 lib/stdalign.h
+lib/stdint.h
 lib/stdio.h
 lib/stdlib.h
 lib/string.h
@@ -101,6 +104,7 @@ src/stamp-h1
 oo/
 oo-spd/
 src/*.map
+*.dSYM/
 
 # Executables.
 lib-src/blessmail
@@ -118,6 +122,7 @@ src/bootstrap-emacs
 src/emacs
 src/emacs-[0-9]*
 src/temacs
+nextstep/Emacs.app/
 
 # Character-set info.
 admin/charsets/*.el
