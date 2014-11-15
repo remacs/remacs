@@ -3377,6 +3377,21 @@ ns_send_appdefined (int value)
   /* Only post this event if we haven't already posted one.  This will end
        the [NXApp run] main loop after having processed all events queued at
        this moment.  */
+
+#ifdef NS_IMPL_COCOA
+  if (! send_appdefined)
+    {
+      /* OSX 10.10.1 swallows the AppDefined event we are sending ourselves
+         in certain situations (rapid incoming events).
+         So check if we have one, if not add one.  */
+      NSEvent *appev = [NSApp nextEventMatchingMask:NSApplicationDefinedMask
+                                          untilDate:[NSDate distantPast]
+                                             inMode:NSDefaultRunLoopMode
+                                            dequeue:NO];
+      if (! appev) send_appdefined = YES;
+    }
+#endif
+
   if (send_appdefined)
     {
       NSEvent *nxev;
@@ -4511,6 +4526,15 @@ ns_term_shutdown (int sig)
 #ifdef NS_IMPL_COCOA
 - (void)run
 {
+#ifndef NSAppKitVersionNumber10_9
+#define NSAppKitVersionNumber10_9 1265
+#endif
+
+    if ((int)NSAppKitVersionNumber != NSAppKitVersionNumber10_9)
+      {
+        [super run];
+        return;
+      }
 
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
 
@@ -4523,22 +4547,13 @@ ns_term_shutdown (int sig)
       [pool release];
       pool = [[NSAutoreleasePool alloc] init];
 
-      /* OSX 10.10.1 swallows the AppDefined event we are sending ourselves
-	 in certain situations (rapid incoming events).
-	 The timeout we set with untilDate is necessary to prevent a hang.
-	 Bug #18993 */
-
       NSEvent *event =
         [self nextEventMatchingMask:NSAnyEventMask
-                          untilDate:[NSDate dateWithTimeIntervalSinceNow:0.5]
+                          untilDate:[NSDate distantFuture]
                              inMode:NSDefaultRunLoopMode
                             dequeue:YES];
 
-      if (event == nil) // timeout
-	shouldKeepRunning = NO;
-      else
-	[self sendEvent:event];
-
+      [self sendEvent:event];
       [self updateWindows];
     } while (shouldKeepRunning);
 

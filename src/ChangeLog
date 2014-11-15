@@ -1,3 +1,9 @@
+2014-11-15  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* nsterm.m (ns_send_appdefined): Check for application defined
+	event on Cocoa (Bug#18993).
+	(run): Restore code before the previous 18993 fix.
+
 2014-11-14  David Reitter  <david.reitter@gmail.com>
 
 	* nsterm.m (run): set timeout for event loop to prevent hang.
