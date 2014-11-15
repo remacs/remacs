@@ -4955,9 +4955,14 @@ window_scroll_pixel_based (Lisp_Object window, int n, bool whole, int noerror)
 	{
 	  int px;
 	  int dy = frame_line_height;
+	  /* In the below we divide the window box height by the
+	     frame's line height to make the result predictable when
+	     the window box is not an integral multiple of the line
+	     height.  This is important to ensure we get back to the
+	     same position when scrolling up, then down.  */
 	  if (whole)
-	    dy = max ((window_box_height (w)
-		       - next_screen_context_lines * dy),
+	    dy = max ((window_box_height (w) / dy
+		       - next_screen_context_lines) * dy,
 		      dy);
 	  dy *= n;
 
@@ -5039,8 +5044,12 @@ window_scroll_pixel_based (Lisp_Object window, int n, bool whole, int noerror)
     {
       ptrdiff_t start_pos = IT_CHARPOS (it);
       int dy = frame_line_height;
-      dy = max ((window_box_height (w)
-		 - next_screen_context_lines * dy),
+      /* In the below we divide the window box height by the frame's
+	 line height to make the result predictable when the window
+	 box is not an integral multiple of the line height.  This is
+	 important to ensure we get back to the same position when
+	 scrolling up, then down.  */
+      dy = max ((window_box_height (w) / dy - next_screen_context_lines) * dy,
 		dy) * n;
 
       /* Note that move_it_vertically always moves the iterator to the
