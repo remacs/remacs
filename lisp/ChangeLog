@@ -1,3 +1,8 @@
+2014-11-15  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	* progmodes/python.el (python-eldoc-setup-code): Enhance string
+	type checks, simplify printing.  (Bug#18962)
+
 2014-11-14  Ivan Andrus  <darthandrus@gmail.com>
 
 	* progmodes/python.el (python-shell-font-lock-kill-buffer):

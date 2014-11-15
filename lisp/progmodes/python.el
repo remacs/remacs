@@ -3546,7 +3546,11 @@ See `python-check-command' for the default."
   "def __PYDOC_get_help(obj):
     try:
         import inspect
-        if hasattr(obj, 'startswith'):
+        try:
+            str_type = basestring
+        except NameError:
+            str_type = str
+        if isinstance(obj, str_type):
             obj = eval(obj, globals())
         doc = inspect.getdoc(obj)
         if not doc and callable(obj):
@@ -3569,10 +3573,7 @@ See `python-check-command' for the default."
             doc = doc.splitlines()[0]
     except:
         doc = ''
-    try:
-        exec('print doc')
-    except SyntaxError:
-        print(doc)"
+    print (doc)"
   "Python code to setup documentation retrieval."
   :type 'string
   :group 'python)
