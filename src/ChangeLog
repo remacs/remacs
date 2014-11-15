@@ -1,5 +1,8 @@
 2014-11-15  Jan Djärv  <jan.h.d@swipnet.se>
 
+	* nsmenu.m (update_frame_tool_bar): If tool bar changes height,
+	call updateFrameSize.
+
 	* nsterm.m (setFrame:): Remove call to display (Bug#18757).
 
 2014-11-14  Jan Djärv  <jan.h.d@swipnet.se>
