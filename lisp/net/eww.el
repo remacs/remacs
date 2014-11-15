@@ -200,7 +200,8 @@ word(s) will be searched for via `eww-search-prefix'."
 
 ;;;###autoload
 (defun eww-search-words (&optional beg end)
-  "Search the web for the text between the point and marker."
+  "Search the web for the text between the point and marker.
+See the `eww-search-prefix' variable for the search engine used."
   (interactive "r")
   (eww (buffer-substring beg end)))
 

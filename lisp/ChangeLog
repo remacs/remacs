@@ -1,3 +1,7 @@
+2014-11-15  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* net/eww.el (eww-search-words): Mention `eww-search-prefix'.
+
 2014-11-15  Fabián Ezequiel Gallina  <fgallina@gnu.org>
 
 	* progmodes/python.el (python-eldoc-setup-code): Enhance string
