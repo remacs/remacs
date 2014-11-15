@@ -1,0 +1,73 @@
+(This is a draft.  The method here won't actually work yet, because
+neither git-new-workdir nor merge-changelog are in the Emacs
+distribution yet.)
+
+Setting up and using git for normal, simple bugfixing
+=====================================================
+
+If you haven't configured git before you should first do:
+
+git config --global user.name "Frank Chu"
+git config --global user.email "fchu@example.com"
+
+Initial setup
+=============
+
+Then we want to clone the repository.  We normally want to have both
+the current trunk and the emacs-24 branch.
+
+mkdir ~/emacs
+cd ~/emacs
+git clone <membername>@git.sv.gnu.org:/srv/git/emacs.git
+mv emacs trunk
+./trunk/admin/git-new-workdir trunk emacs-24
+cd emacs-24
+git checkout emacs-24
+
+You now have both branches conveniently accessible, and you can do
+"git pull" in them once in a while to keep updated.
+
+
+Fixing bugs
+===========
+
+You edit the files in either branch, `M-x vc-dir', and check in your
+changes.  Then you need to push the data to the main repository.  This
+will usually fail, since somebody else has pushed other changes in the
+meantime.  To fix this, say
+
+git pull --rebase
+
+which will update your repository, and then re-apply your changes on
+top of that.  Then say
+
+git push
+
+
+Backporting to emacs-24
+=======================
+
+If you have applied a fix to the trunk, but then decide that it should
+be applied to the emacs-24 branch, too, then
+
+cd ~/emacs/trunk
+git log
+
+and find the commit you're looking for.  Then find the commit ID,
+which will look like
+
+commit 958b768a6534ae6e77a8547a56fc31b46b63710b
+
+cd ~/emacs/emacs-24
+git cherry-pick 958b768a6534ae6e77a8547a56fc31b46b63710b
+git commit --amend
+
+and add "Backport:" to the commit string.  Then
+
+git push
+
+
+Merging emacs-24 to trunk
+=========================
+
+This has yet to be written.
