@@ -1,3 +1,8 @@
+2014-10-28  Peder O. Klingenberg  <peder@klingenberg.no>
+
+	* mail/emacsbug.el (report-emacs-bug): Make a better guess at
+	  envelope-from when reporting through sendmail (bug#19054).
+
 2014-11-14  Ivan Andrus  <darthandrus@gmail.com>
 
 	* progmodes/python.el (python-ffap-module-path): Use

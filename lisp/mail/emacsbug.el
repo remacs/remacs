@@ -142,6 +142,12 @@ This requires either the OS X \"open\" command, or the freedesktop
 			   (concat "mailto:" to)))
 	(error "Subject, To or body not found")))))
 
+;; It's the default mail mode, so it seems OK to use its features.
+(autoload 'message-bogus-recipient-p "message")
+(autoload 'message-make-address "message")
+(defvar message-send-mail-function)
+(defvar message-sendmail-envelope-from)
+
 ;;;###autoload
 (defun report-emacs-bug (topic &optional unused)
   "Report a bug in GNU Emacs.
@@ -169,7 +175,12 @@ Prompts for bug subject.  Leaves you in a mail buffer."
       ;; that report-emacs-bug-orig-text remains valid.  (Bug#5178)
       (message-sort-headers)
       ;; Stop message-mode stealing the properties we will add.
-      (set (make-local-variable 'message-strip-special-text-properties) nil))
+      (set (make-local-variable 'message-strip-special-text-properties) nil)
+      ;; Make sure we default to the From: address as envelope when sending
+      ;; through sendmail.
+      (when (and (not message-sendmail-envelope-from)
+		 (message-bogus-recipient-p (message-make-address)))
+	(set (make-local-variable 'message-sendmail-envelope-from) 'header)))
     (rfc822-goto-eoh)
     (forward-line 1)
     ;; Move the mail signature to the proper place.
@@ -348,10 +359,6 @@ usually do not have translators for other languages.\n\n")))
     (goto-char user-point)))
 
 (define-obsolete-function-alias 'report-emacs-bug-info 'info-emacs-bug "24.3")
-
-;; It's the default mail mode, so it seems OK to use its features.
-(autoload 'message-bogus-recipient-p "message")
-(defvar message-send-mail-function)
 
 (defun report-emacs-bug-hook ()
   "Do some checking before sending a bug report."
