@@ -14,7 +14,6 @@ TAGS
 *~
 .#* 
 /README.W32
-.gitattributes
 
 /bin/
 /site-lisp/
