@@ -1061,24 +1061,34 @@ Called from a program, START and END specify the region to indent."
       (or (bolp) (forward-line 1))
       (while (< (point) end)
         (or (and (bolp) (eolp))
-            (let (word)
-              (forward-line -1)
-              (back-to-indentation)
-              (setq word (current-word))
-              (forward-line 1)
-              (when (and word
-                         ;; Don't mess with strings, unless it's the
-                         ;; enclosing set of quotes.
-                         (or (not (python-syntax-context 'string))
-                             (eq
-                              (syntax-after
-                               (+ (1- (point))
-                                  (current-indentation)
-                                  (python-syntax-count-quotes (char-after) (point))))
-                              (string-to-syntax "|"))))
-                (beginning-of-line)
-                (delete-horizontal-space)
-                (indent-to (python-indent-calculate-indentation)))))
+            (when (and
+                   ;; Skip if previous line is empty or a comment.
+                   (save-excursion
+                     (let ((line-is-comment-p
+                            (python-info-current-line-comment-p)))
+                       (forward-line -1)
+                       (not
+                        (or (and (python-info-current-line-comment-p)
+                                 ;; Unless this line is a comment too.
+                                 (not line-is-comment-p))
+                            (python-info-current-line-empty-p)))))
+                   ;; Don't mess with strings, unless it's the
+                   ;; enclosing set of quotes.
+                   (or (not (python-syntax-context 'string))
+                       (eq
+                        (syntax-after
+                         (+ (1- (point))
+                            (current-indentation)
+                            (python-syntax-count-quotes (char-after) (point))))
+                        (string-to-syntax "|")))
+                   ;; Skip if current line is a block start, a
+                   ;; dedenter or block ender.
+                   (save-excursion
+                     (back-to-indentation)
+                     (not (looking-at
+                           (python-rx
+                            (or block-start dedenter block-ender))))))
+              (python-indent-line)))
         (forward-line 1))
       (move-marker end nil))))
 

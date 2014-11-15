@@ -725,6 +725,110 @@ def b()
    (python-tests-self-insert ":")
    (should (= (current-indentation) 0))))
 
+(ert-deftest python-indent-region-1 ()
+  "Test indentation case from Bug#18843."
+  (let ((contents "
+def foo ():
+    try:
+        pass
+    except:
+        pass
+"))
+    (python-tests-with-temp-buffer
+     contents
+     (python-indent-region (point-min) (point-max))
+     (should (string= (buffer-substring-no-properties (point-min) (point-max))
+                      contents)))))
+
+(ert-deftest python-indent-region-2 ()
+  "Test region indentation on comments."
+  (let ((contents "
+def f():
+    if True:
+        pass
+
+# This is
+# some multiline
+# comment
+"))
+    (python-tests-with-temp-buffer
+     contents
+     (python-indent-region (point-min) (point-max))
+     (should (string= (buffer-substring-no-properties (point-min) (point-max))
+                      contents)))))
+
+(ert-deftest python-indent-region-3 ()
+  "Test region indentation on comments."
+  (let ((contents "
+def f():
+    if True:
+        pass
+# This is
+# some multiline
+# comment
+")
+        (expected "
+def f():
+    if True:
+        pass
+    # This is
+    # some multiline
+    # comment
+"))
+    (python-tests-with-temp-buffer
+     contents
+     (python-indent-region (point-min) (point-max))
+     (should (string= (buffer-substring-no-properties (point-min) (point-max))
+                      expected)))))
+
+(ert-deftest python-indent-region-4 ()
+  "Test region indentation block starts, dedenders and enders."
+  (let ((contents "
+def f():
+    if True:
+a  = 5
+    else:
+            a = 10
+    return a
+")
+        (expected "
+def f():
+    if True:
+        a  = 5
+    else:
+        a = 10
+    return a
+"))
+    (python-tests-with-temp-buffer
+     contents
+     (python-indent-region (point-min) (point-max))
+     (should (string= (buffer-substring-no-properties (point-min) (point-max))
+                      expected)))))
+
+(ert-deftest python-indent-region-5 ()
+  "Test region indentation leaves strings untouched (start delimiter)."
+  (let ((contents "
+def f():
+'''
+this is
+a multiline
+string
+'''
+")
+        (expected "
+def f():
+    '''
+this is
+a multiline
+string
+'''
+"))
+    (python-tests-with-temp-buffer
+     contents
+     (python-indent-region (point-min) (point-max))
+     (should (string= (buffer-substring-no-properties (point-min) (point-max))
+                      expected)))))
+
 
 ;;; Navigation
 
