@@ -1,3 +1,8 @@
+2014-11-16  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* simple.el (execute-extended-command--shorter): Cut search here.
+	(execute-extended-command): Instead of here.
+
 2014-11-16  Fabián Ezequiel Gallina  <fgallina@gnu.org>
 
 	* progmodes/python.el (python-mode): Avoid use of set-local to
@@ -15,8 +20,8 @@
 
 2014-11-16  Ulf Jasper  <ulf.jasper@web.de>
 
-	* calendar/icalendar.el (icalendar--convert-tz-offset): Return
-	complete cons when offsets of standard time and daylight saving
+	* calendar/icalendar.el (icalendar--convert-tz-offset):
+	Return complete cons when offsets of standard time and daylight saving
 	time are equal.
 	(icalendar-export-region): Fix unbound variable warning.
 
@@ -27,8 +32,8 @@
 
 2014-11-16  Fabián Ezequiel Gallina  <fgallina@gnu.org>
 
-	* progmodes/python.el (python-shell-calculate-command): Rename
-	from python-shell-parse-command.  Cleanup.
+	* progmodes/python.el (python-shell-calculate-command):
+	Rename from python-shell-parse-command.  Cleanup.
 	(run-python, run-python-internal): Use it.
 	(python-shell-calculate-pythonpath): Rename from
 	python-new-pythonpath.

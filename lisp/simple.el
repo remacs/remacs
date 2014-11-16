@@ -1621,7 +1621,9 @@ If the value is non-nil and not a number, we wait 2 seconds."
                     (setq len (1+ len))
                     (setq candidates (execute-extended-command--shorter-1
                                       name len)))
-                  (< len max)))
+                  ;; Don't show the help message if the binding isn't
+                  ;; significantly shorter than the M-x command the user typed.
+                  (< len (- max 5))))
       (let ((candidate (pop candidates)))
         (when (equal name
                        (car-safe (completion-try-completion
@@ -1686,13 +1688,7 @@ invoking, give a prefix argument to `execute-extended-command'."
           (while-no-input
             (setq binding (execute-extended-command--shorter
                            (symbol-name function) typed))))
-        (when (and binding
-		   (or (not (stringp binding))
-		       (> (- (length (symbol-name function)) (length binding))
-			  ;; Don't show the help message if the
-			  ;; binding isn't significantly shorter than
-			  ;; the M-x command the user typed.
-			  5)))
+        (when binding
           (with-temp-message
               (format "You can run the command `%s' with %s"
                       function
