@@ -70,3 +70,18 @@ Merging emacs-24 to trunk
 =========================
 
 This has yet to be written.
+
+
+Warnings about X11 forwarding
+=============================
+
+If you get warnings like
+
+Warning: No xauth data; using fake authentication data for X11 forwarding.
+X11 forwarding request failed on channel 0
+
+when pulling or pushing data, add the following to the start of
+~/.ssh/config:
+
+Host git.sv.gnu.org
+   ForwardX11 no
