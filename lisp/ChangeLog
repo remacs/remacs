@@ -1,3 +1,12 @@
+2014-11-13 Oscar Fuentes <ofv@wanadoo.es>
+
+	Add faces for the VC modeline state indicator.
+	* lisp/vc/vc-hooks.el: (vc-state-faces, vc-state-base-face
+	vc-up-to-date-state, vc-needs-update-state, vc-locked-state)
+	vc-locally-added-state, vc-conflict-state, vc-removed-state,
+	vc-missing-state, vc-edited-state): New faces.
+	(vc-default-mode-line-string): Use them (bug#19043).
+
 2014-11-16  Fabián Ezequiel Gallina  <fgallina@gnu.org>
 
 	* progmodes/python.el (python-shell-calculate-command): Rename
