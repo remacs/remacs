@@ -1,5 +1,9 @@
 2014-11-16  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
+	* net/shr.el (shr): Move to the new defgroup `web'.
+
+	* net/eww.el (eww): Ditto.
+
 	* simple.el (execute-extended-command): Don't show the help
 	message if the binding isn't significantly shorter than the
 	M-x command the user typed (bug#19013).

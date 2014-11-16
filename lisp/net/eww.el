@@ -34,9 +34,9 @@
 
 (defgroup eww nil
   "Emacs Web Wowser"
-  :version "24.4"
+  :version "25.1"
   :link '(custom-manual "(eww) Top")
-  :group 'hypermedia
+  :group 'web
   :prefix "eww-")
 
 (defcustom eww-header-line-format "%t: %u"

@@ -36,8 +36,8 @@
 
 (defgroup shr nil
   "Simple HTML Renderer"
-  :version "24.1"
-  :group 'hypermedia)
+  :version "25.1"
+  :group 'web)
 
 (defcustom shr-max-image-proportion 0.9
   "How big pictures displayed are in relation to the window they're in.
