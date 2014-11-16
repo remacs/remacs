@@ -148,16 +148,19 @@ LEVEL is only used internally and indicates the nesting level:
 		 (t
 		  (list 'apply '(function vector) (cdr n))))))))
    ((atom s)
+    ;; FIXME: Use macroexp-quote!
     (cons 0 (if (or (null s) (eq s t) (not (symbolp s)))
 		s
 	      (list 'quote s))))
    ((eq (car s) backquote-unquote-symbol)
     (if (<= level 0)
-        (if (> (length s) 2)
-            ;; We could support it with: (cons 2 `(list . ,(cdr s)))
-            ;; But let's not encourage such uses.
-            (error "Multiple args to , are not supported: %S" s)
-          (cons 1 (nth 1 s)))
+        (cond
+         ((> (length s) 2)
+          ;; We could support it with: (cons 2 `(list . ,(cdr s)))
+          ;; But let's not encourage such uses.
+          (error "Multiple args to , are not supported: %S" s))
+         (t (cons (if (eq (car-safe (nth 1 s)) 'quote) 0 1)
+                  (nth 1 s))))
       (backquote-delay-process s (1- level))))
    ((eq (car s) backquote-splice-symbol)
     (if (<= level 0)
@@ -215,9 +218,7 @@ LEVEL is only used internally and indicates the nesting level:
       ;; Tack on any initial elements.
       (if firstlist
 	  (setq expression (backquote-listify firstlist (cons 1 expression))))
-      (if (eq (car-safe expression) 'quote)
-	  (cons 0 (list 'quote s))
-	(cons 1 expression))))))
+      (cons (if (eq (car-safe expression) 'quote) 0 1) expression)))))
 
 ;; backquote-listify takes (tag . structure) pairs from backquote-process
 ;; and decides between append, list, backquote-list*, and cons depending

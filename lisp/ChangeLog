@@ -1,3 +1,7 @@
+2014-11-16  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* emacs-lisp/backquote.el (backquote-process): Optimize away the ,' case.
+
 2014-11-15  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
 	* net/eww.el (eww-search-words): Mention `eww-search-prefix'.
@@ -11,8 +15,8 @@
 
 	* progmodes/python.el (python-shell-font-lock-kill-buffer):
 	(python-shell-font-lock-with-font-lock-buffer)
-	(python-shell-get-buffer, python-ffap-module-path): Use
-	`derived-mode-p' instead of equality test on `major-mode'.
+	(python-shell-get-buffer, python-ffap-module-path):
+	Use `derived-mode-p' instead of equality test on `major-mode'.
 
 2014-11-14  Fabián Ezequiel Gallina  <fgallina@gnu.org>
 
