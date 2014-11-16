@@ -1686,7 +1686,13 @@ invoking, give a prefix argument to `execute-extended-command'."
           (while-no-input
             (setq binding (execute-extended-command--shorter
                            (symbol-name function) typed))))
-        (when binding
+        (when (and binding
+		   (or (not (stringp binding))
+		       (> (- (length (symbol-name function)) (length binding))
+			  ;; Don't show the help message if the
+			  ;; binding isn't significantly shorter than
+			  ;; the M-x command the user typed.
+			  5)))
           (with-temp-message
               (format "You can run the command `%s' with %s"
                       function
