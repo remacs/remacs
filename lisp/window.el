@@ -7715,7 +7715,7 @@ is active.  This function is run by `mouse-autoselect-window-timer'."
 
 (defun handle-select-window (event)
   "Handle select-window events."
-  (interactive "e")
+  (interactive "^e")
   (let ((window (posn-window (event-start event))))
     (unless (or (not (window-live-p window))
 		;; Don't switch if we're currently in the minibuffer.

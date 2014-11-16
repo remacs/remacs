@@ -1,3 +1,7 @@
+2014-11-16  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* window.el (handle-select-window): Deactivate shift-region (bug#19003).
+
 2014-11-15  Andreas Schwab  <schwab@linux-m68k.org>
 
 	* version.el (emacs-repository-get-version): Use git rev-parse
