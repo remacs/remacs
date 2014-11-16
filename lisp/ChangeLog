@@ -1,3 +1,8 @@
+2014-11-16  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	* progmodes/python.el (python-eldoc--get-doc-at-point): Strip
+	shell output before returning.  (bug#18794)
+
 2014-11-16  Dmitry Gutov  <dgutov@yandex.ru>
 
 	Fix indentation before `!=' and after `+='.  Originally reported

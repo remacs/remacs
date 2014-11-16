@@ -3408,9 +3408,12 @@ returns will be used.  If not FORCE-PROCESS is passed what
       (let ((input (or force-input
                        (python-info-current-symbol t))))
         (and input
-             (python-shell-send-string-no-output
-              (format python-eldoc-string-code input)
-              process))))))
+             ;; Prevent resizing the echo area when iPython is
+             ;; enabled.  Bug#18794.
+             (python-util-strip-string
+              (python-shell-send-string-no-output
+               (format python-eldoc-string-code input)
+               process)))))))
 
 (defun python-eldoc-function ()
   "`eldoc-documentation-function' for Python.
