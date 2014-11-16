@@ -1,3 +1,22 @@
+2014-11-16  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* intervals.h (INTERVAL_WRITABLE_P): Check the `inhibit-read-only'
+	text property.
+
+	* callint.c (Fcall_interactively): Pass in nil as argument to
+	Fbarf_if_buffer_read_only.
+
+	* fileio.c (Finsert_file_contents): Ditto.
+
+	* insdel.c (prepare_to_modify_buffer_1): Pass start region in.
+
+	* textprop.c (verify_interval_modification): Check buffer
+	readedness after the last interval.
+
+	* buffer.c (Fbarf_if_buffer_read_only): Don't raise an error if
+	the text at POSITION (new optional argument) has the
+	`inhibit-read-only' text property set.
+
 2014-11-16  Eli Zaretskii  <eliz@gnu.org>
 
 	* window.c (window_scroll_pixel_based): Avoid truncation/rounding

@@ -2298,6 +2298,11 @@ verify_interval_modification (struct buffer *buf,
 		}
 	    }
 
+	  if (i->position + LENGTH (i) < end
+	      && (!NILP (BVAR (current_buffer, read_only))
+		  && NILP (Vinhibit_read_only)))
+	    xsignal1 (Qbuffer_read_only, Fcurrent_buffer ());
+
 	  i = next_interval (i);
 	}
       /* Keep going thru the interval containing the char before END.  */

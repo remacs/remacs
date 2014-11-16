@@ -3241,6 +3241,11 @@ possible to remove a @code{read-only} property unless you know the
 special trick: bind @code{inhibit-read-only} to a non-@code{nil} value
 and then remove the property.  @xref{Read Only Buffers}.
 
+@item inhibit-read-only
+@kindex inhibit-read-only @r{(text property)}
+If a character has the property @code{inhibit-read-only}, and the
+buffer is read-only, editing the character in question is allowed.
+
 @item invisible
 @kindex invisible @r{(text property)}
 A non-@code{nil} @code{invisible} property can make a character invisible

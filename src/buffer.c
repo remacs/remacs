@@ -2184,12 +2184,20 @@ set_buffer_if_live (Lisp_Object buffer)
 }
 
 DEFUN ("barf-if-buffer-read-only", Fbarf_if_buffer_read_only,
-				   Sbarf_if_buffer_read_only, 0, 0, 0,
-       doc: /* Signal a `buffer-read-only' error if the current buffer is read-only.  */)
-  (void)
+				   Sbarf_if_buffer_read_only, 0, 1, 0,
+       doc: /* Signal a `buffer-read-only' error if the current buffer is read-only.
+If the text under POSITION (which defaults to point) has the
+`inhibit-read-only' text property set, the error will not be raised.  */)
+  (Lisp_Object pos)
 {
+  if (NILP (pos))
+    XSETFASTINT (pos, PT);
+  else
+    CHECK_NUMBER (pos);
+
   if (!NILP (BVAR (current_buffer, read_only))
-      && NILP (Vinhibit_read_only))
+      && NILP (Vinhibit_read_only)
+      && NILP (Fget_text_property (pos, Qinhibit_read_only, Qnil)))
     xsignal1 (Qbuffer_read_only, Fcurrent_buffer ());
   return Qnil;
 }

@@ -448,13 +448,13 @@ invoke it.  If KEYS is omitted or nil, the return value of
 		    {
 		      if (! (*p == 'r' || *p == 'p' || *p == 'P'
 			     || *p == '\n'))
-			Fbarf_if_buffer_read_only ();
+			Fbarf_if_buffer_read_only (Qnil);
 		      p++;
 		    }
 		  record_then_fail = 1;
 		}
 	      else
-		Fbarf_if_buffer_read_only ();
+		Fbarf_if_buffer_read_only (Qnil);
 	    }
 	}
       /* Ignore this for semi-compatibility with Lucid.  */
@@ -865,7 +865,7 @@ invoke it.  If KEYS is omitted or nil, the return value of
       XSETINT (args[i], marker_position (args[i]));
 
   if (record_then_fail)
-    Fbarf_if_buffer_read_only ();
+    Fbarf_if_buffer_read_only (Qnil);
 
   Vthis_command = save_this_command;
   Vthis_original_command = save_this_original_command;

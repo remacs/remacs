@@ -1797,9 +1797,11 @@ prepare_to_modify_buffer_1 (ptrdiff_t start, ptrdiff_t end,
 			    ptrdiff_t *preserve_ptr)
 {
   struct buffer *base_buffer;
+  Lisp_Object temp;
 
+  XSETFASTINT (temp, start);
   if (!NILP (BVAR (current_buffer, read_only)))
-    Fbarf_if_buffer_read_only ();
+    Fbarf_if_buffer_read_only (temp);
 
   bset_redisplay (current_buffer);
 

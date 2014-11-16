@@ -1,3 +1,7 @@
+2014-11-16  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* text.texi (Special Properties): Mention `inhibit-read-only'.
+
 2014-11-14  Paul Eggert  <eggert@cs.ucla.edu>
 
 	* os.texi (Time of Day):

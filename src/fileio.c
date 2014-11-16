@@ -3471,7 +3471,7 @@ by calling `format-decode', which see.  */)
     error ("Cannot do file visiting in an indirect buffer");
 
   if (!NILP (BVAR (current_buffer, read_only)))
-    Fbarf_if_buffer_read_only ();
+    Fbarf_if_buffer_read_only (Qnil);
 
   val = Qnil;
   p = Qnil;
