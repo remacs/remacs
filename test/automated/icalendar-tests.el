@@ -232,6 +232,27 @@ END:VTIMEZONE
     (should (string= "anothername, with a comma" (car result)))
     (message (cdr result))
     (should (string= "STD-02:00DST-03:00,M3.2.1/03:00:00,M10.2.1/04:00:00"
+                     (cdr result)))
+    ;; offsetfrom = offsetto
+    (setq vtimezone (icalendar-tests--get-ical-event "BEGIN:VTIMEZONE
+TZID:Kolkata\, Chennai\, Mumbai\, New Delhi
+X-MICROSOFT-CDO-TZID:23
+BEGIN:STANDARD
+DTSTART:16010101T000000
+TZOFFSETFROM:+0530
+TZOFFSETTO:+0530
+END:STANDARD
+BEGIN:DAYLIGHT
+DTSTART:16010101T000000
+TZOFFSETFROM:+0530
+TZOFFSETTO:+0530
+END:DAYLIGHT
+END:VTIMEZONE
+"))
+    (setq result (icalendar--parse-vtimezone vtimezone))
+    (should (string= "Kolkata, Chennai, Mumbai, New Delhi" (car result)))
+    (message (cdr result))
+    (should (string= "STD-05:30DST-05:30,M1.1.1/00:00:00,M1.1.1/00:00:00"
                      (cdr result)))))
 
 (ert-deftest icalendar--convert-ordinary-to-ical ()
@@ -1389,14 +1410,14 @@ END:VALARM
 END:VEVENT
 END:VCALENDAR"
    nil
-   "&9/5/2003 10:30-15:30 On-Site Interview
+   "&9/5/2003 07:00-12:00 On-Site Interview
  Desc: 10:30am - Blah
  Location: Cccc
  Organizer: MAILTO:aaaaaaa@aaaaaaa.com
  Status: CONFIRMED
  UID: 040000008200E00074C5B7101A82E0080000000080B6DE661216C301000000000000000010000000DB823520692542408ED02D7023F9DFF9
 "
-   "&5/9/2003 10:30-15:30 On-Site Interview
+   "&5/9/2003 07:00-12:00 On-Site Interview
  Desc: 10:30am - Blah
  Location: Cccc
  Organizer: MAILTO:aaaaaaa@aaaaaaa.com

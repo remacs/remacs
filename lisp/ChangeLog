@@ -1,3 +1,10 @@
+2014-11-16  Ulf Jasper  <ulf.jasper@web.de>
+
+	* calendar/icalendar.el (icalendar--convert-tz-offset): Return
+	complete cons when offsets of standard time and daylight saving
+	time are equal.
+	(icalendar-export-region): Fix unbound variable warning.
+
 2014-11-16  Fabián Ezequiel Gallina  <fgallina@gnu.org>
 
 	* progmodes/python.el (run-python): Allow CMD to be optional and

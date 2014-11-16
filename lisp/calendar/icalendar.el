@@ -509,15 +509,19 @@ The strings are suitable for assembling into a TZ variable."
 	      ":"
 	      (substring offsetto 3 5))
 	     ;; The start time.
-	     (unless no-dst
-	       (let* ((day (icalendar--get-weekday-number (substring byday -2)))
-		      (week (if (eq day -1)
+             (let* ((day (if no-dst
+                             1
+                           (icalendar--get-weekday-number (substring byday -2))))
+                    (week (if no-dst
+                              "1"
+                            (if (eq day -1)
 				byday
-			      (substring byday 0 -2))))
+			      (substring byday 0 -2)))))
 		 ;; "Translate" the iCalendar way to specify the last
 		 ;; (sun|mon|...)day in month to the tzset way.
 		 (if (string= week "-1")  ; last day as iCalendar calls it
 		     (setq week "5"))     ; last day as tzset calls it
+                 (when no-dst (setq bymonth "1"))
 		 (concat "M" bymonth "." week "." (if (eq day -1) "0"
 						    (int-to-string day))
 			 ;; Start time.
@@ -526,7 +530,7 @@ The strings are suitable for assembling into a TZ variable."
 			 ":"
 			 (substring dtstart -4 -2)
 			 ":"
-			 (substring dtstart -2))))))))))
+			 (substring dtstart -2)))))))))
 
 (defun icalendar--parse-vtimezone (alist)
   "Turn a VTIMEZONE ALIST into a cons (ID . TZ-STRING).
@@ -1025,7 +1029,8 @@ FExport diary data into iCalendar file: ")
         (found-error nil)
         (nonmarker (concat "^" (regexp-quote diary-nonmarking-symbol)
                            "?"))
-        (other-elements nil))
+        (other-elements nil)
+        (cns-cons-or-list nil))
     ;; prepare buffer with error messages
     (save-current-buffer
       (set-buffer (get-buffer-create "*icalendar-errors*"))

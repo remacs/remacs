@@ -1,3 +1,12 @@
+2014-11-16  Ulf Jasper  <ulf.jasper@web.de>
+
+	* automated/icalendar-tests.el (icalendar--parse-vtimezone): Add
+	testcase where offsets of standard time and daylight saving time
+	are equal.
+	(icalendar-real-world): Fix error in test case.  Expected result
+	was wrong when offsets of standard time and daylight saving time
+	were equal.
+
 2014-11-16  Fabián Ezequiel Gallina  <fgallina@gnu.org>
 
 	* automated/python-tests.el
