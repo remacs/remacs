@@ -1,3 +1,9 @@
+2014-11-25  Ulrich Müller  <ulm@gentoo.org>
+
+	* Makefile.in (temacs$(EXEEXT)): Use consistent flag settings
+	for paxctl and setfattr. Fixes temacs startup failure with
+	grsecurity/PaX enabled Linux kernel (bug#19067).
+
 2014-11-17  Oscar Fuentes  <ofv@wanadoo.es>
 
 	* src/w32.c: Use MINGW_W64 instead of _W64.
