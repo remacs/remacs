@@ -22,7 +22,6 @@
 
 	* mail/emacsbug.el (report-emacs-bug): Make a better guess at
 	  envelope-from when reporting through sendmail (bug#19054).
->>>>>>> 1a713024a012f574d16084cf42703e6ef49473cf
 
 2014-11-16  Oscar Fuentes <ofv@wanadoo.es>
 
