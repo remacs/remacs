@@ -1,3 +1,11 @@
+2014-11-16  Dmitry Gutov  <dgutov@yandex.ru>
+
+	Fix indentation before `!=' and after `+='.  Originally reported
+	in https://github.com/mooz/js2-mode/issues/174.
+	* progmodes/js.el (js--indent-operator-re): Make assignments and
+	(in)equality operator a separate case.
+	(js--continued-expression-p): Escape the second `+' in the regexp.
+
 2014-11-16  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* window.el (handle-select-window): Deactivate shift-region (bug#19003).
