@@ -1,3 +1,8 @@
+2014-11-16  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	* progmodes/python.el (python-mode): Avoid use of set-local to
+	keep Emacs 24.x compatibility.
+
 2014-11-16  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
 	* net/shr.el (shr): Move to the new defgroup `web'.

@@ -4301,8 +4301,9 @@ Arguments START and END narrow the buffer region to work on."
        #'python-indent-line-function)
   (set (make-local-variable 'indent-region-function) #'python-indent-region)
   ;; Because indentation is not redundant, we cannot safely reindent code.
-  (setq-local electric-indent-inhibit t)
-  (setq-local electric-indent-chars (cons ?: electric-indent-chars))
+  (set (make-local-variable 'electric-indent-inhibit) t)
+  (set (make-local-variable 'electric-indent-chars)
+       (cons ?: electric-indent-chars))
 
   ;; Add """ ... """ pairing to electric-pair-mode.
   (add-hook 'post-self-insert-hook
