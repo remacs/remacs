@@ -2473,16 +2473,17 @@ killed."
       proc-buffer-name)))
 
 ;;;###autoload
-(defun run-python (cmd &optional dedicated show)
+(defun run-python (&optional cmd dedicated show)
   "Run an inferior Python process.
 Input and output via buffer named after
 `python-shell-buffer-name'.  If there is a process already
 running in that buffer, just switch to it.
 
-With argument, allows you to define CMD so you can edit the
-command used to call the interpreter and define DEDICATED, so a
-dedicated process for the current buffer is open.  When numeric
-prefix arg is other than 0 or 4 do not SHOW.
+Argument CMD defaults to `python-shell-calculate-command' return
+value.  When called interactively with `prefix-arg', it allows
+the user to edit such value and choose whether the interpreter
+should be DEDICATED for the current buffer.  When numeric prefix
+arg is other than 0 or 4 do not SHOW.
 
 Runs the hook `inferior-python-mode-hook' after
 `comint-mode-hook' is run.  (Type \\[describe-mode] in the
@@ -2495,7 +2496,8 @@ process buffer for a list of commands.)"
         (= (prefix-numeric-value current-prefix-arg) 4))
      (list (python-shell-calculate-command) nil t)))
   (python-shell-make-comint
-   cmd (python-shell-get-process-name dedicated) show)
+   (or cmd (python-shell-calculate-command))
+   (python-shell-get-process-name dedicated) show)
   dedicated)
 
 (defun run-python-internal ()

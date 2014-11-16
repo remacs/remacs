@@ -1,3 +1,8 @@
+2014-11-16  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	* progmodes/python.el (run-python): Allow CMD to be optional and
+	default it to a safe command, even for Windows.  (bug#18596)
+
 2014-11-13 Oscar Fuentes <ofv@wanadoo.es>
 
 	Add faces for the VC modeline state indicator.
