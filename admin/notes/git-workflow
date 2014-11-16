@@ -20,9 +20,11 @@ mkdir ~/emacs
 cd ~/emacs
 git clone <membername>@git.sv.gnu.org:/srv/git/emacs.git
 mv emacs trunk
+(cd trunk; git config push.default current)
 ./trunk/admin/git-new-workdir trunk emacs-24
 cd emacs-24
 git checkout emacs-24
+git config push.default current
 
 You now have both branches conveniently accessible, and you can do
 "git pull" in them once in a while to keep updated.
