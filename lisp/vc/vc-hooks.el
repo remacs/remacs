@@ -32,6 +32,69 @@
 
 (eval-when-compile (require 'cl-lib))
 
+;; Faces
+
+(defgroup vc-state-faces nil
+  "Faces used in the mode line by the VC state indicator."
+  :group 'vc-faces
+  :group 'mode-line
+  :version "25.1")
+
+(defface vc-state-base-face
+  '((default :inherit mode-line))
+  "Base face for VC state indicator."
+  :group 'vc-faces
+  :group 'mode-line
+  :version "25.1")
+
+(defface vc-up-to-date-state
+  '((default :inherit vc-state-base-face))
+  "Face for VC modeline state when the file is up to date."
+  :version "25.1"
+  :group 'vc-faces)
+
+(defface vc-needs-update-state
+  '((default :inherit vc-state-base-face))
+  "Face for VC modeline state when the file needs update."
+  :version "25.1"
+  :group 'vc-faces)
+
+(defface vc-locked-state
+  '((default :inherit vc-state-base-face))
+  "Face for VC modeline state when the file locked."
+  :version "25.1"
+  :group 'vc-faces)
+
+(defface vc-locally-added-state
+  '((default :inherit vc-state-base-face))
+  "Face for VC modeline state when the file is locally added."
+  :version "25.1"
+  :group 'vc-faces)
+
+(defface vc-conflict-state
+  '((default :inherit vc-state-base-face))
+  "Face for VC modeline state when the file contains merge conflicts."
+  :version "25.1"
+  :group 'vc-faces)
+
+(defface vc-removed-state
+  '((default :inherit vc-state-base-face))
+  "Face for VC modeline state when the file was removed from the VC system."
+  :version "25.1"
+  :group 'vc-faces)
+
+(defface vc-missing-state
+  '((default :inherit vc-state-base-face))
+  "Face for VC modeline state when the file is missing from the file system."
+  :version "25.1"
+  :group 'vc-faces)
+
+(defface vc-edited-state
+  '((default :inherit vc-state-base-face))
+  "Face for VC modeline state when the file is up to date."
+  :version "25.1"
+  :group 'vc-faces)
+
 ;; Customization Variables (the rest is in vc.el)
 
 (defcustom vc-ignore-dir-regexp
@@ -800,33 +863,42 @@ This function assumes that the file is registered."
   (let* ((backend-name (symbol-name backend))
 	 (state   (vc-state file backend))
 	 (state-echo nil)
+	 (face nil)
 	 (rev     (vc-working-revision file backend)))
     (propertize
      (cond ((or (eq state 'up-to-date)
 		(eq state 'needs-update))
 	    (setq state-echo "Up to date file")
+	    (setq face 'vc-up-to-date-state)
 	    (concat backend-name "-" rev))
 	   ((stringp state)
 	    (setq state-echo (concat "File locked by" state))
+	    (setq face 'vc-locked-state)
 	    (concat backend-name ":" state ":" rev))
            ((eq state 'added)
             (setq state-echo "Locally added file")
+	    (setq face 'vc-locally-added-state)
             (concat backend-name "@" rev))
            ((eq state 'conflict)
             (setq state-echo "File contains conflicts after the last merge")
+	    (setq face 'vc-conflict-state)
             (concat backend-name "!" rev))
            ((eq state 'removed)
             (setq state-echo "File removed from the VC system")
+	    (setq face 'vc-removed-state)
             (concat backend-name "!" rev))
            ((eq state 'missing)
             (setq state-echo "File tracked by the VC system, but missing from the file system")
+	    (setq face 'vc-missing-state)
             (concat backend-name "?" rev))
 	   (t
 	    ;; Not just for the 'edited state, but also a fallback
 	    ;; for all other states.  Think about different symbols
 	    ;; for 'needs-update and 'needs-merge.
 	    (setq state-echo "Locally modified file")
+	    (setq face 'vc-edited-state)
 	    (concat backend-name ":" rev)))
+     'face face
      'help-echo (concat state-echo " under the " backend-name
 			" version control system"))))
 

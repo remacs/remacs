@@ -1,3 +1,15 @@
+2014-11-16  Oscar Fuentes <ofv@wanadoo.es>
+
+	Add faces for the VC modeline state indicator.
+	* lisp/vc/vc-hooks.el:
+	(vc-state-faces, vc-state-base-face)
+	(vc-up-to-date-state, vc-needs-update-state)
+	(vc-locked-state, vc-locally-added-state)
+	(vc-conflict-state, vc-removed-state)
+	(vc-missing-state, vc-edited-state):
+	New faces.
+	(vc-default-mode-line-string): Use them
+
 2014-11-16  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* emacs-lisp/backquote.el (backquote-process): Optimize away the ,' case.
