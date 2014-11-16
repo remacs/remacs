@@ -1,5 +1,12 @@
 2014-11-16  Fabián Ezequiel Gallina  <fgallina@gnu.org>
 
+	* automated/python-tests.el
+	(python-shell-calculate-process-environment-2): Fix test.
+	(python-shell-calculate-process-environment-1)
+	(python-shell-calculate-process-environment-3): Cleanup.
+
+2014-11-16  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
 	* automated/python-tests.el (python-indent-dedenters-8): New test
 	for Bug#18432.
 

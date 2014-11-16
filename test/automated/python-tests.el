@@ -1836,8 +1836,7 @@ Using `python-shell-interpreter' and
 
 (ert-deftest python-shell-calculate-process-environment-1 ()
   "Test `python-shell-process-environment' modification."
-  (let* ((original-process-environment process-environment)
-         (python-shell-process-environment
+  (let* ((python-shell-process-environment
           '("TESTVAR1=value1" "TESTVAR2=value2"))
          (process-environment
           (python-shell-calculate-process-environment)))
@@ -1846,8 +1845,8 @@ Using `python-shell-interpreter' and
 
 (ert-deftest python-shell-calculate-process-environment-2 ()
   "Test `python-shell-extra-pythonpaths' modification."
-  (let* ((original-process-environment process-environment)
-         (original-pythonpath (getenv "PYTHONPATH"))
+  (let* ((process-environment process-environment)
+         (original-pythonpath (setenv "PYTHONPATH" "path3"))
          (paths '("path1" "path2"))
          (python-shell-extra-pythonpaths paths)
          (process-environment
@@ -1859,8 +1858,7 @@ Using `python-shell-interpreter' and
 
 (ert-deftest python-shell-calculate-process-environment-3 ()
   "Test `python-shell-virtualenv-path' modification."
-  (let* ((original-process-environment process-environment)
-         (original-path (or (getenv "PATH") ""))
+  (let* ((original-path (or (getenv "PATH") ""))
          (python-shell-virtualenv-path
           (directory-file-name user-emacs-directory))
          (process-environment

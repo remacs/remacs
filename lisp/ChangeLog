@@ -1,3 +1,13 @@
+2014-11-16  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	* progmodes/python.el (python-shell-calculate-command): Rename
+	from python-shell-parse-command.  Cleanup.
+	(run-python, run-python-internal): Use it.
+	(python-shell-calculate-pythonpath): Rename from
+	python-new-pythonpath.
+	(python-shell-calculate-process-environment): Use it.
+	(python-shell-calculate-exec-path): Add comment.
+
 2014-11-16  Thierry Banel <tbanelwebmin@free.fr>  (tiny change)
 
 	* calc/calc-arith.el (math-max-list, math-min-list): Fix bug

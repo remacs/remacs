@@ -2084,19 +2084,22 @@ uniqueness for different types of configurations."
             (or python-shell-virtualenv-root "")
             (mapconcat #'identity python-shell-exec-path "")))))
 
-(defun python-shell-parse-command ()    ;FIXME: why name it "parse"?
+(defun python-shell-calculate-command ()
   "Calculate the string used to execute the inferior Python process."
-  ;; FIXME: process-environment doesn't seem to be used anywhere within
-  ;; this let.
-  (let ((process-environment (python-shell-calculate-process-environment))
-        (exec-path (python-shell-calculate-exec-path)))
+  (let ((exec-path (python-shell-calculate-exec-path)))
+    ;; `exec-path' gets tweaked so that virtualenv's specific
+    ;; `python-shell-interpreter' absolute path can be found by
+    ;; `executable-find'.
     (format "%s %s"
-            ;; FIXME: Why executable-find?
             (executable-find python-shell-interpreter)
             python-shell-interpreter-args)))
 
-(defun python-new-pythonpath ()
-  "Calculate the new PYTHONPATH value from `python-shell-extra-pythonpaths'."
+(define-obsolete-function-alias
+  'python-shell-parse-command
+  #'python-shell-calculate-command "25.1")
+
+(defun python-shell-calculate-pythonpath ()
+  "Calculate the PYTHONPATH using `python-shell-extra-pythonpaths'."
   (let ((pythonpath (getenv "PYTHONPATH"))
         (extra (mapconcat 'identity
                           python-shell-extra-pythonpaths
@@ -2114,7 +2117,7 @@ uniqueness for different types of configurations."
                         (directory-file-name python-shell-virtualenv-root)
                       nil)))
     (when python-shell-extra-pythonpaths
-      (setenv "PYTHONPATH" (python-new-pythonpath)))
+      (setenv "PYTHONPATH" (python-shell-calculate-pythonpath)))
     (if (not virtualenv)
         process-environment
       (setenv "PYTHONHOME" nil)
@@ -2126,8 +2129,10 @@ uniqueness for different types of configurations."
 
 (defun python-shell-calculate-exec-path ()
   "Calculate exec path given `python-shell-virtualenv-root'."
-  (let ((path (append python-shell-exec-path
-                      exec-path nil)))  ;FIXME: Why nil?
+  (let ((path (append
+               ;; Use nil as the tail so that the list is a full copy,
+               ;; this is a paranoid safeguard for side-effects.
+               python-shell-exec-path exec-path nil)))
     (if (not python-shell-virtualenv-root)
         path
       (cons (expand-file-name "bin" python-shell-virtualenv-root)
@@ -2485,10 +2490,10 @@ process buffer for a list of commands.)"
   (interactive
    (if current-prefix-arg
        (list
-        (read-shell-command "Run Python: " (python-shell-parse-command))
+        (read-shell-command "Run Python: " (python-shell-calculate-command))
         (y-or-n-p "Make dedicated process? ")
         (= (prefix-numeric-value current-prefix-arg) 4))
-     (list (python-shell-parse-command) nil t)))
+     (list (python-shell-calculate-command) nil t)))
   (python-shell-make-comint
    cmd (python-shell-get-process-name dedicated) show)
   dedicated)
@@ -2512,7 +2517,7 @@ startup."
         (inferior-python-mode-hook nil))
     (get-buffer-process
      (python-shell-make-comint
-      (python-shell-parse-command)
+      (python-shell-calculate-command)
       (python-shell-internal-get-process-name) nil t))))
 
 (defun python-shell-get-buffer ()
