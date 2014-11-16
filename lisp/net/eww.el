@@ -584,8 +584,7 @@ the like."
   (when (boundp 'tool-bar-map)
    (setq-local tool-bar-map eww-tool-bar-map))
   (buffer-disable-undo)
-  ;;(setq buffer-read-only t)
-  )
+  (setq buffer-read-only t))
 
 ;;;###autoload
 (defun eww-browse-url (url &optional _new-window)
@@ -837,6 +836,7 @@ appears in a <link> or <a> tag."
     (when (< (length value) width)
       (insert (make-string (- width (length value)) ? )))
     (put-text-property start (point) 'face 'eww-form-text)
+    (put-text-property start (point) 'inhibit-read-only t)
     (put-text-property start (point) 'local-map eww-text-map)
     (put-text-property start (point) readonly-property t)
     (put-text-property start (point) 'eww-form
@@ -920,6 +920,7 @@ See URL `https://developer.mozilla.org/en-US/docs/Web/HTML/Element/Input'.")
 	  (insert (make-string pad ? ))))
       (add-face-text-property (line-beginning-position)
 			      (point) 'eww-form-textarea)
+      (put-text-property (line-beginning-position) (point) 'inhibit-read-only t)
       (put-text-property (line-beginning-position) (point)
 			 'local-map eww-textarea-map)
       (forward-line 1))

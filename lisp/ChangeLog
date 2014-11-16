@@ -1,3 +1,9 @@
+2014-11-16  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* net/eww.el (eww-mode): Make the buffer read-only.
+	(eww-form-text): Inhibit read-only-ness in text input fields
+	(bug#16476).
+
 2014-11-16  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* simple.el (execute-extended-command--shorter): Cut search here.
