@@ -1,3 +1,8 @@
+2014-11-16  Thierry Banel <tbanelwebmin@free.fr>  (tiny change)
+
+	* calc/calc-arith.el (math-max-list, math-min-list): Fix bug
+	for date handling.
+
 2014-11-16  Oscar Fuentes <ofv@wanadoo.es>
 
 	Add faces for the VC modeline state indicator.
