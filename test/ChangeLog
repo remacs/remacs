@@ -1,3 +1,8 @@
+2014-11-17  Michal Nazarewicz  <mina86@mina86.com>
+
+	* automated/tildify-tests.el (tildify-test-html, tildify-test-xml):
+	HTML and XML now use no-break space as hard space.  Update tests.
+
 2014-11-17  Glenn Morris  <rgm@gnu.org>
 
 	* automated/occur-tests.el (occur-test-case, occur-test-create):
