@@ -12,6 +12,7 @@ autom4te.cache
 makefile
 TAGS
 *~
+.#*
 /README.W32
 
 /bin/
@@ -26,6 +27,8 @@ test/biditest.txt
 Makefile
 config.log
 config.status
+config.cache
+lib-src/blessmail
 lib-src/ctags
 lib-src/ebrowse
 lib-src/emacsclient
@@ -34,12 +37,18 @@ lib-src/hexl
 lib-src/make-docfile
 lib-src/movemail
 lib-src/profile
+lib-src/test-distrib
 lib-src/update-game-score
 *.o
+*.exe
+*.res
 lib/alloca.h
 lib/arg-nonnull.h
+lib/byteswap.h
 lib/c++defs.h
 lib/dirent.h
+lib/errno.h
+lib/execinfo.h
 lib/fcntl.h
 lib/getopt.h
 lib/inttypes.h
@@ -47,6 +56,7 @@ lib/libgnu.a
 lib/signal.h
 lib/stdio.h
 lib/stdlib.h
+lib/stdalign.h
 lib/string.h
 lib/sys/
 lib/time.h
@@ -55,12 +65,13 @@ lib/warn-on-use.h
 src/bootstrap-emacs
 src/deps/
 src/emacs
-src/emacs-25.0.50.1
-src/emacs-25.0.50.2
+src/emacs-[0-9]*
 src/gl-stamp
 src/globals.h
 src/stamp-h1
 src/temacs
+src/temacs.map
+src/temacs.tmp
 doc/emacs/emacsver.texi
 doc/man/emacs.1
 etc/refcards/emacsver.tex
@@ -68,4 +79,5 @@ lib/.deps/
 lisp/international/uni-brackets.el
 lwlib/deps/
 lwlib/liblw.a
-
+leim/changed.misc
+leim/changed.tit

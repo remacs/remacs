@@ -7213,7 +7213,6 @@ if (cols > 0 && rows > 0)
   if (pixel_height == 0) pixel_height = 1;
   min_portion = 20 / pixel_height;
   [super setFrame: newRect];
-  [self display];
 /*  unblock_input (); */
 }
 

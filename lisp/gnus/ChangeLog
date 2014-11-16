@@ -1,3 +1,7 @@
+2014-11-16  Adam Sjøgren  <asjo@koldfront.dk>
+
+	* mml2015.el (mml2015-display-key-image): New variable.
+
 2014-11-14  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
 	* gnus-sum.el (gnus-summary-exit-no-update): Don't query about

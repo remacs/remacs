@@ -519,7 +519,7 @@ wset_next_buffers (struct window *w, Lisp_Object val)
 #define WINDOW_FRAME_COLUMN_WIDTH(W) \
   (FRAME_COLUMN_WIDTH (WINDOW_XFRAME ((W))))
 
-/* Return the canonical column width of the frame of window W.  */
+/* Return the canonical line height of the frame of window W.  */
 #define WINDOW_FRAME_LINE_HEIGHT(W) \
   (FRAME_LINE_HEIGHT (WINDOW_XFRAME ((W))))
 

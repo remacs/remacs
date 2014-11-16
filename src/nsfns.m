@@ -280,9 +280,14 @@ x_set_foreground_color (struct frame *f, Lisp_Object arg, Lisp_Object oldval)
   NSColor *col;
   EmacsCGFloat r, g, b, alpha;
 
+  /* Must block_input, because ns_lisp_to_color does block/unblock_input
+     which means that col may be deallocated in its unblock_input if there
+     is user input, unless we also block_input.  */
+  block_input ();
   if (ns_lisp_to_color (arg, &col))
     {
       store_frame_param (f, Qforeground_color, oldval);
+      unblock_input ();
       error ("Unknown color");
     }
 
@@ -299,8 +304,9 @@ x_set_foreground_color (struct frame *f, Lisp_Object arg, Lisp_Object oldval)
       update_face_from_frame_parameter (f, Qforeground_color, arg);
       /*recompute_basic_faces (f); */
       if (FRAME_VISIBLE_P (f))
-        redraw_frame (f);
+        SET_FRAME_GARBAGED (f);
     }
+  unblock_input ();
 }
 
 
@@ -312,9 +318,11 @@ x_set_background_color (struct frame *f, Lisp_Object arg, Lisp_Object oldval)
   NSView *view = FRAME_NS_VIEW (f);
   EmacsCGFloat r, g, b, alpha;
 
+  block_input ();
   if (ns_lisp_to_color (arg, &col))
     {
       store_frame_param (f, Qbackground_color, oldval);
+      unblock_input ();
       error ("Unknown color");
     }
 
@@ -351,8 +359,9 @@ x_set_background_color (struct frame *f, Lisp_Object arg, Lisp_Object oldval)
         }
 
       if (FRAME_VISIBLE_P (f))
-        redraw_frame (f);
+        SET_FRAME_GARBAGED (f);
     }
+  unblock_input ();
 }
 
 
@@ -361,9 +370,11 @@ x_set_cursor_color (struct frame *f, Lisp_Object arg, Lisp_Object oldval)
 {
   NSColor *col;
 
+  block_input ();
   if (ns_lisp_to_color (arg, &col))
     {
       store_frame_param (f, Qcursor_color, oldval);
+      unblock_input ();
       error ("Unknown color");
     }
 
@@ -376,6 +387,7 @@ x_set_cursor_color (struct frame *f, Lisp_Object arg, Lisp_Object oldval)
       x_update_cursor (f, 1);
     }
   update_face_from_frame_parameter (f, Qcursor_color, arg);
+  unblock_input ();
 }
 
 
@@ -2331,11 +2343,16 @@ DEFUN ("xw-color-values", Fxw_color_values, Sxw_color_values, 1, 2, 0,
   check_window_system (NULL);
   CHECK_STRING (color);
 
+  block_input ();
   if (ns_lisp_to_color (color, &col))
-    return Qnil;
+    {
+      unblock_input ();
+      return Qnil;
+    }
 
   [[col colorUsingDefaultColorSpace]
         getRed: &red green: &green blue: &blue alpha: &alpha];
+  unblock_input ();
   return list3i (lrint (red * 65280), lrint (green * 65280),
 		 lrint (blue * 65280));
 }
