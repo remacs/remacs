@@ -1,3 +1,22 @@
+2014-11-16  Eli Zaretskii  <eliz@gnu.org>
+
+	* window.c (window_scroll_pixel_based): Avoid truncation/rounding
+	errors in computing the number of pixels to scroll.  Suggested by
+	Kelly Dean <kelly@prtime.org>.  (Bug#19060)
+
+2014-11-16  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* nsmenu.m (update_frame_tool_bar): If tool bar changes height,
+	call updateFrameSize.
+
+	* nsterm.m (setFrame:): Remove call to display (Bug#18757).
+
+2014-11-16  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* nsfns.m (x_set_foreground_color, x_set_background_color)
+	(x_set_cursor_color, Fxw_color_values): Block/unblock input,
+	use SET_FRAME_GARBAGED instead of redraw_frame (Bug#19036).
+
 2014-11-15  Jan Djärv  <jan.h.d@swipnet.se>
 
 	* nsterm.m (ns_send_appdefined): Check for application defined
@@ -6,7 +25,7 @@
 
 2014-11-14  David Reitter  <david.reitter@gmail.com>
 
-	* nsterm.m (run): set timeout for event loop to prevent hang.
+	* nsterm.m (run): Set timeout for event loop to prevent hang.
 	(Bug#18993)
 
 2014-11-14  Paul Eggert  <eggert@cs.ucla.edu>
@@ -2856,8 +2875,7 @@
 	Consider horizontal scroll bar.
 	(check_frame_size, adjust_window_margins): Remove functions and
 	corresponding calls.
-	(set_window_buffer): Initialize old_pointm and horizontal scroll
-	bars.
+	(set_window_buffer): Initialize old_pointm and horizontal scroll bars.
 	(temp_output_buffer_show): Reset hscroll related fields.
 	Initialize old_pointm.
 	(make_parent_window): Initialize old_pointm.

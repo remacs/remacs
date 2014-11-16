@@ -1,3 +1,16 @@
+2014-11-16  Christoph Scholtes  <cschol2112@gmail.com>
+
+	* .gitignore: Ignore generated file lib/stdalign.h.
+
+2014-11-16  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Backport fix for minor Bazaar leftovers.
+	* .dir-locals.el: Remove reference to bzr commit --fixes debbugs.
+
+2014-11-16  Eli Zaretskii  <eliz@gnu.org>
+
+	* .gitignore: Add more ignorables.
+
 2014-11-14  Andreas Schwab  <schwab@linux-m68k.org>
 
 	* Makefile.in (config.status): Don't depend on
@@ -28,8 +41,7 @@
 2014-11-13  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
 	* .gitignore: Copy over sufficient ignorable files from the old
-	.bzrignore that a simple build doesn't list lots of unregistered
-	files.
+	.bzrignore that a simple build doesn't list lots of unregistered files.
 
 2014-11-11  Eric S. Raymond  <esr@thyrsus.com>
 
@@ -45,8 +57,7 @@
 	The last CVS commit was	2009-12-27T08:11:12Z!cyd@stupidchicken.com.)
 
 	Committer/author email addresses are generally correct for the
-	transition day, not necessarily when the comit was originally
-	made.
+	transition day, not necessarily when the comit was originally made.
 
 2014-11-10  Glenn Morris  <rgm@gnu.org>
 

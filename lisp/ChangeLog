@@ -3,6 +3,27 @@
 	* calc/calc-arith.el (math-max-list, math-min-list): Fix bug
 	for date handling.
 
+2014-11-16  Andreas Schwab  <schwab@linux-m68k.org>
+
+	* version.el (emacs-repository-get-version): Use git rev-parse
+	instead of git log.
+
+2014-11-16  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	* progmodes/python.el (python-indent-calculate-levels):
+	Fix indentation behavior multiline dedenter statement.  (Bug#18432)
+
+2014-11-16  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	* progmodes/python.el (python-indent-region):
+	Use python-indent-line and skip special cases.  (Bug#18843)
+
+2014-11-16  Peder O. Klingenberg  <peder@klingenberg.no>  (tiny change)
+
+	* mail/emacsbug.el (report-emacs-bug): Make a better guess at
+	  envelope-from when reporting through sendmail (bug#19054).
+>>>>>>> 1a713024a012f574d16084cf42703e6ef49473cf
+
 2014-11-16  Oscar Fuentes <ofv@wanadoo.es>
 
 	Add faces for the VC modeline state indicator.
@@ -17,7 +38,7 @@
 
 2014-11-16  Stefan Monnier  <monnier@iro.umontreal.ca>
 
-	* emacs-lisp/backquote.el (backquote-process): Optimize away the ,' case.
+	* emacs-lisp/backquote.el (backquote-process): Optimize away ",'".
 
 2014-11-15  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
@@ -111,13 +132,13 @@
 
 2014-11-10  Kenjiro NAKAYAMA  <nakayamakenjiro@gmail.com>
 
-        * net/eww.el(eww-form-file(defface)): New defface of file upload form.
-        (eww-submit-file): New key map of file upload.
-        (eww-form-file): New file upload button and file name context.
-        (eww-select-file): Select file and display selected file name.
-        (eww-tag-input): Handle input tag of file type.
-        (eww-update-field): Add point offset.
-        (eww-submit): Add submit with multipart/form-data.
+	* net/eww.el(eww-form-file(defface)): New defface of file upload form.
+	(eww-submit-file): New key map of file upload.
+	(eww-form-file): New file upload button and file name context.
+	(eww-select-file): Select file and display selected file name.
+	(eww-tag-input): Handle input tag of file type.
+	(eww-update-field): Add point offset.
+	(eww-submit): Add submit with multipart/form-data.
 
 2014-11-10  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 

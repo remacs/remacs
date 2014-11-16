@@ -1,3 +1,9 @@
+2014-11-16  Glenn Morris  <rgm@gnu.org>
+
+	* update_autogen: Auto-detect VCS in use.
+	(vcs): New variable.
+	(status, commit, main): Handle git.
+
 2014-11-13  Andreas Schwab  <schwab@suse.de>
 
 	* make-tarball.txt: Make annotated tag and push it out.
@@ -10,8 +16,8 @@
 
 2014-11-10  Eli Zaretskii  <eliz@gnu.org>
 
-	* unidata/Makefile.in (${top_srcdir}/src/macuvs.h): Use
-	unmsys--file-name.  (Bug#18955)
+	* unidata/Makefile.in (${top_srcdir}/src/macuvs.h):
+	Use unmsys--file-name.  (Bug#18955)
 
 2014-11-10  Glenn Morris  <rgm@gnu.org>
 
@@ -28,7 +34,7 @@
 
 	* grammars/c.by (template-type): Add :template-specifier and
 	:typevar to capture extra details about the template.
-        (opt-post-fcn-modifiers): Splice in the found symbol into the
+	(opt-post-fcn-modifiers): Splice in the found symbol into the
 	return value correctly.
 	(QUESTION): New punctuation.
 	(expression): Add ternary conditional support.
@@ -36,8 +42,8 @@
 	* grammars/scheme.by (MODULE): New token.
 	(scheme): Handle expanding the MODULE tag.
 	(scheme-list): Remove closeparen required match.
-	(scheme-in-list): Remove extraneous matches for DEFINE.  Add
-	support for MODULE Simplify matching for code & make work.
+	(scheme-in-list): Remove extraneous matches for DEFINE.
+	Add support for MODULE Simplify matching for code & make work.
 	(name-args, name-arg-list, name-arg-expand): Make it work.
 
 2014-11-09  David Engster <dengste@eml.cc>
