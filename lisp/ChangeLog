@@ -107,7 +107,7 @@
 	* progmodes/python.el (python-indent-region):
 	Use python-indent-line and skip special cases.  (Bug#18843)
 
-2014-11-16  Peder O. Klingenberg  <peder@klingenberg.no>  (tiny change)
+2014-11-16  Peder O. Klingenberg  <peder@klingenberg.no>
 
 	* mail/emacsbug.el (report-emacs-bug): Make a better guess at
 	  envelope-from when reporting through sendmail (bug#19054).
