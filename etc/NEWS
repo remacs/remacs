@@ -51,7 +51,7 @@ Use './configure PKG_CONFIG=/full/name/of/pkg-config' if you need to.
 
 ** C-h l now also lists the commands that were run.
 
-** The new M-s M-s key binding uses eww to search the web for the
+** The new M-s M-w key binding uses eww to search the web for the
 text in the region.
 
 ** M-x suggests shorthands and ignores obsolete commands for completion.

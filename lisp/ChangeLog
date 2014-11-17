@@ -1,3 +1,7 @@
+2014-11-17  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* bindings.el (search-map): Move `eww-search-words' to `M-s M-w'.
+
 2014-11-17  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Port new time stamp handling to old Emacs and to XEmacs.
