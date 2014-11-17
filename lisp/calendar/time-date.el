@@ -30,10 +30,9 @@
 ;; value equal to HIGH * 2^16 + LOW + USEC * 10^-6 + PSEC * 10^-12
 ;; seconds, where missing components are treated as zero.  HIGH can be
 ;; negative, either because the value is a time difference, or because
-;; the machine supports negative time stamps that fall before the epoch.
-;; The macro `with-decoded-time-value' and the function
-;; `encode-time-value' make it easier to deal with these formats.
-;; See `time-subtract' for an example of how to use them.
+;; it represents a time stamp before the epoch.  Typically, there are
+;; more time values than the underlying system time type supports,
+;; but the reverse can also be true.
 
 ;;; Code:
 
@@ -71,6 +70,7 @@ list (HIGH LOW MICRO PICO)."
 			  ,low ,micro)
 			(when pico `(,pico))
 			(when type `(,type)))
+	   (or ,gensym (setq ,gensym (current-time)))
 	   (if (consp ,gensym)
 	       (progn
 		 (setq ,low (pop ,gensym))
@@ -107,6 +107,10 @@ it is assumed that PICO was omitted and should be treated as zero."
    ((eq type 2) (list high low micro))
    ((eq type 3) (list high low micro pico))
    ((null type) (encode-time-value high low micro 0 pico))))
+
+(when (featurep 'emacs)
+  (make-obsolete 'encode-time-value nil "25.1")
+  (make-obsolete 'with-decoded-time-value nil "25.1"))
 
 (autoload 'parse-time-string "parse-time")
 (autoload 'timezone-make-date-arpa-standard "timezone")
@@ -158,47 +162,17 @@ TIME defaults to the current time."
 
 ;;;###autoload
 (defun seconds-to-time (seconds)
-  "Convert SECONDS (a floating point number) to a time value."
-  (let* ((usec (* 1000000 (mod seconds 1)))
-	 (ps (round (* 1000000 (mod usec 1))))
-	 (us (floor usec))
-	 (lo (floor (mod seconds 65536)))
-	 (hi (floor seconds 65536)))
-    (if (eq ps 1000000)
-	(progn
-	  (setq ps 0)
-	  (setq us (1+ us))
-	  (if (eq us 1000000)
-	      (progn
-		(setq us 0)
-		(setq lo (1+ lo))
-		(if (eq lo 65536)
-		    (progn
-		      (setq lo 0)
-		      (setq hi (1+ hi))))))))
-    (list hi lo us ps)))
-
-;;;###autoload
-(defun time-less-p (t1 t2)
-  "Return non-nil if time value T1 is earlier than time value T2."
-  (with-decoded-time-value ((high1 low1 micro1 pico1 type1 t1)
-			    (high2 low2 micro2 pico2 type2 t2))
-    (or (< high1 high2)
-	(and (= high1 high2)
-	     (or (< low1 low2)
-		 (and (= low1 low2)
-		      (or (< micro1 micro2)
-			  (and (= micro1 micro2)
-			       (< pico1 pico2)))))))))
+  "Convert SECONDS to a time value."
+  (time-add 0 seconds))
 
 ;;;###autoload
 (defun days-to-time (days)
   "Convert DAYS into a time value."
-  (let* ((seconds (* 1.0 days 60 60 24))
-	 (high (condition-case nil (floor (/ seconds 65536))
-		 (range-error most-positive-fixnum))))
-    (list high (condition-case nil (floor (- seconds (* 1.0 high 65536)))
-		 (range-error 65535)))))
+  (let ((time (condition-case nil (seconds-to-time (* 86400.0 days))
+		(range-error (list most-positive-fixnum 65535)))))
+    (if (integerp days)
+	(setcdr (cdr time) nil))
+    time))
 
 ;;;###autoload
 (defun time-since (time)
@@ -207,53 +181,71 @@ TIME should be either a time value or a date-time string."
   (when (stringp time)
     ;; Convert date strings to internal time.
     (setq time (date-to-time time)))
-  (time-subtract (current-time) time))
+  (time-subtract nil time))
 
 ;;;###autoload
 (defalias 'subtract-time 'time-subtract)
 
-;;;###autoload
-(defun time-subtract (t1 t2)
-  "Subtract two time values, T1 minus T2.
-Return the difference in the format of a time value."
-  (with-decoded-time-value ((high low micro pico type t1)
-			    (high2 low2 micro2 pico2 type2 t2))
-    (setq high (- high high2)
-	  low (- low low2)
-	  micro (- micro micro2)
-	  pico (- pico pico2)
-	  type (max type type2))
-    (when (< pico 0)
-      (setq micro (1- micro)
-	    pico (+ pico 1000000)))
-    (when (< micro 0)
-      (setq low (1- low)
-	    micro (+ micro 1000000)))
-    (when (< low 0)
-      (setq high (1- high)
-	    low (+ low 65536)))
-    (encode-time-value high low micro pico type)))
+;; These autoloads do nothing in Emacs 25, where the functions are builtin.
+;;;###autoload(autoload 'time-add "time-date")
+;;;###autoload(autoload 'time-subtract "time-date")
+;;;###autoload(autoload 'time-less-p "time-date")
 
-;;;###autoload
-(defun time-add (t1 t2)
-  "Add two time values T1 and T2.  One should represent a time difference."
-  (with-decoded-time-value ((high low micro pico type t1)
-			    (high2 low2 micro2 pico2 type2 t2))
-    (setq high (+ high high2)
-	  low (+ low low2)
-	  micro (+ micro micro2)
-	  pico (+ pico pico2)
-	  type (max type type2))
-    (when (>= pico 1000000)
-      (setq micro (1+ micro)
-	    pico (- pico 1000000)))
-    (when (>= micro 1000000)
-      (setq low (1+ low)
-	    micro (- micro 1000000)))
-    (when (>= low 65536)
-      (setq high (1+ high)
-	    low (- low 65536)))
-    (encode-time-value high low micro pico type)))
+(eval-when-compile
+  (when (not (featurep 'emacs))
+
+    (defun time-add (t1 t2)
+      "Add two time values T1 and T2.  One should represent a time difference."
+      (with-decoded-time-value ((high low micro pico type t1)
+				(high2 low2 micro2 pico2 type2 t2))
+	(setq high (+ high high2)
+	      low (+ low low2)
+	      micro (+ micro micro2)
+	      pico (+ pico pico2)
+	      type (max type type2))
+	(when (>= pico 1000000)
+	  (setq micro (1+ micro)
+		pico (- pico 1000000)))
+	(when (>= micro 1000000)
+	  (setq low (1+ low)
+		micro (- micro 1000000)))
+	(when (>= low 65536)
+	  (setq high (1+ high)
+		low (- low 65536)))
+	(encode-time-value high low micro pico type)))
+
+    (defun time-subtract (t1 t2)
+      "Subtract two time values, T1 minus T2.
+Return the difference in the format of a time value."
+      (with-decoded-time-value ((high low micro pico type t1)
+				(high2 low2 micro2 pico2 type2 t2))
+	(setq high (- high high2)
+	      low (- low low2)
+	      micro (- micro micro2)
+	      pico (- pico pico2)
+	      type (max type type2))
+	(when (< pico 0)
+	  (setq micro (1- micro)
+		pico (+ pico 1000000)))
+	(when (< micro 0)
+	  (setq low (1- low)
+		micro (+ micro 1000000)))
+	(when (< low 0)
+	  (setq high (1- high)
+		low (+ low 65536)))
+	(encode-time-value high low micro pico type)))
+
+    (defun time-less-p (t1 t2)
+      "Return non-nil if time value T1 is earlier than time value T2."
+      (with-decoded-time-value ((high1 low1 micro1 pico1 type1 t1)
+				(high2 low2 micro2 pico2 type2 t2))
+	(or (< high1 high2)
+	    (and (= high1 high2)
+		 (or (< low1 low2)
+		     (and (= low1 low2)
+			  (or (< micro1 micro2)
+			      (and (= micro1 micro2)
+				   (< pico1 pico2)))))))))))
 
 ;;;###autoload
 (defun date-to-day (date)

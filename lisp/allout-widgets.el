@@ -2342,9 +2342,9 @@ We use a caching strategy, so the caller doesn't need to do so."
       got)))
 
 ;;;_ : Miscellaneous
-;;;_  > allout-elapsed-time-seconds (triple)
+;;;_  > allout-elapsed-time-seconds (time-value time-value)
 (defun allout-elapsed-time-seconds (end start)
-  "Return seconds between `current-time' style time START/END triples."
+  "Return seconds between START/END time values."
   (let ((elapsed (time-subtract end start)))
     (float-time elapsed)))
 ;;;_  > allout-frame-property (frame property)

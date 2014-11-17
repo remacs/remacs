@@ -64,6 +64,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 extern Lisp_Object w32_get_internal_run_time (void);
 #endif
 
+static struct lisp_time lisp_time_struct (Lisp_Object, int *);
 static void set_time_zone_rule (char const *);
 static Lisp_Object format_time_string (char const *, ptrdiff_t, struct timespec,
 				       bool, struct tm *);
@@ -1392,6 +1393,12 @@ time_overflow (void)
   error ("Specified time is not representable");
 }
 
+static void
+invalid_time (void)
+{
+  error ("Invalid time specification");
+}
+
 /* A substitute for mktime_z on platforms that lack it.  It's not
    thread-safe, but should be good enough for Emacs in typical use.  */
 #ifndef HAVE_TZALLOC
@@ -1420,26 +1427,26 @@ mktime_z (timezone_t tz, struct tm *tm)
 static EMACS_INT
 hi_time (time_t t)
 {
-  time_t hi = t >> 16;
+  time_t hi = t >> LO_TIME_BITS;
 
   /* Check for overflow, helping the compiler for common cases where
      no runtime check is needed, and taking care not to convert
      negative numbers to unsigned before comparing them.  */
   if (! ((! TYPE_SIGNED (time_t)
-	  || MOST_NEGATIVE_FIXNUM <= TIME_T_MIN >> 16
+	  || MOST_NEGATIVE_FIXNUM <= TIME_T_MIN >> LO_TIME_BITS
 	  || MOST_NEGATIVE_FIXNUM <= hi)
-	 && (TIME_T_MAX >> 16 <= MOST_POSITIVE_FIXNUM
+	 && (TIME_T_MAX >> LO_TIME_BITS <= MOST_POSITIVE_FIXNUM
 	     || hi <= MOST_POSITIVE_FIXNUM)))
     time_overflow ();
 
   return hi;
 }
 
-/* Return the bottom 16 bits of the time T.  */
+/* Return the bottom bits of the time T.  */
 static int
 lo_time (time_t t)
 {
-  return t & ((1 << 16) - 1);
+  return t & ((1 << LO_TIME_BITS) - 1);
 }
 
 DEFUN ("current-time", Fcurrent_time, Scurrent_time, 0, 0, 0,
@@ -1452,6 +1459,96 @@ picosecond counts.  */)
 {
   return make_lisp_time (current_timespec ());
 }
+
+static struct lisp_time
+time_add (struct lisp_time ta, struct lisp_time tb)
+{
+  EMACS_INT hi = ta.hi + tb.hi;
+  int lo = ta.lo + tb.lo;
+  int us = ta.us + tb.us;
+  int ps = ta.ps + tb.ps;
+  us += (1000000 <= ps);
+  ps -= (1000000 <= ps) * 1000000;
+  lo += (1000000 <= us);
+  us -= (1000000 <= us) * 1000000;
+  hi += (1 << LO_TIME_BITS <= lo);
+  lo -= (1 << LO_TIME_BITS <= lo) << LO_TIME_BITS;
+  return (struct lisp_time) { hi, lo, us, ps };
+}
+
+static struct lisp_time
+time_subtract (struct lisp_time ta, struct lisp_time tb)
+{
+  EMACS_INT hi = ta.hi - tb.hi;
+  int lo = ta.lo - tb.lo;
+  int us = ta.us - tb.us;
+  int ps = ta.ps - tb.ps;
+  us -= (ps < 0);
+  ps += (ps < 0) * 1000000;
+  lo -= (us < 0);
+  us += (us < 0) * 1000000;
+  hi -= (lo < 0);
+  lo += (lo < 0) << LO_TIME_BITS;
+  return (struct lisp_time) { hi, lo, us, ps };
+}
+
+static Lisp_Object
+time_arith (Lisp_Object a, Lisp_Object b,
+	    struct lisp_time (*op) (struct lisp_time, struct lisp_time))
+{
+  int alen, blen;
+  struct lisp_time ta = lisp_time_struct (a, &alen);
+  struct lisp_time tb = lisp_time_struct (b, &blen);
+  struct lisp_time t = op (ta, tb);
+  if (! (MOST_NEGATIVE_FIXNUM <= t.hi && t.hi <= MOST_POSITIVE_FIXNUM))
+    time_overflow ();
+  Lisp_Object val = Qnil;
+
+  switch (max (alen, blen))
+    {
+    default:
+      val = Fcons (make_number (t.ps), val);
+      /* Fall through.  */
+    case 3:
+      val = Fcons (make_number (t.us), val);
+      /* Fall through.  */
+    case 2:
+      val = Fcons (make_number (t.lo), val);
+      val = Fcons (make_number (t.hi), val);
+      break;
+    }
+
+  return val;
+}
+
+DEFUN ("time-add", Ftime_add, Stime_add, 2, 2, 0,
+       doc: /* Return the sum of two time values A and B, as a time value.  */)
+  (Lisp_Object a, Lisp_Object b)
+{
+  return time_arith (a, b, time_add);
+}
+
+DEFUN ("time-subtract", Ftime_subtract, Stime_subtract, 2, 2, 0,
+       doc: /* Return the difference between two time values A and B, as a time value.  */)
+  (Lisp_Object a, Lisp_Object b)
+{
+  return time_arith (a, b, time_subtract);
+}
+
+DEFUN ("time-less-p", Ftime_less_p, Stime_less_p, 2, 2, 0,
+       doc: /* Return non-nil if time value T1 is earlier than time value T2.  */)
+  (Lisp_Object t1, Lisp_Object t2)
+{
+  int t1len, t2len;
+  struct lisp_time a = lisp_time_struct (t1, &t1len);
+  struct lisp_time b = lisp_time_struct (t2, &t2len);
+  return ((a.hi != b.hi ? a.hi < b.hi
+	   : a.lo != b.lo ? a.lo < b.lo
+	   : a.us != b.us ? a.us < b.us
+	   : a.ps < b.ps)
+	  ? Qt : Qnil);
+}
+
 
 DEFUN ("get-internal-run-time", Fget_internal_run_time, Sget_internal_run_time,
        0, 0, 0,
@@ -1491,21 +1588,6 @@ does the same thing as `current-time'.  */)
 }
 
 
-/* Make a Lisp list that represents the time T with fraction TAIL.  */
-static Lisp_Object
-make_time_tail (time_t t, Lisp_Object tail)
-{
-  return Fcons (make_number (hi_time (t)),
-		Fcons (make_number (lo_time (t)), tail));
-}
-
-/* Make a Lisp list that represents the system time T.  */
-static Lisp_Object
-make_time (time_t t)
-{
-  return make_time_tail (t, Qnil);
-}
-
 /* Make a Lisp list that represents the Emacs time T.  T may be an
    invalid time, with a slightly negative tv_nsec value such as
    UNKNOWN_MODTIME_NSECS; in that case, the Lisp list contains a
@@ -1513,23 +1595,30 @@ make_time (time_t t)
 Lisp_Object
 make_lisp_time (struct timespec t)
 {
+  time_t s = t.tv_sec;
   int ns = t.tv_nsec;
-  return make_time_tail (t.tv_sec, list2i (ns / 1000, ns % 1000 * 1000));
+  return list4i (hi_time (s), lo_time (s), ns / 1000, ns % 1000 * 1000);
 }
 
 /* Decode a Lisp list SPECIFIED_TIME that represents a time.
    Set *PHIGH, *PLOW, *PUSEC, *PPSEC to its parts; do not check their values.
-   Return true if successful.  */
-static bool
+   Return 2, 3, or 4 to indicate the effective length of SPECIFIED_TIME
+   if successful, 0 if unsuccessful.  */
+static int
 disassemble_lisp_time (Lisp_Object specified_time, Lisp_Object *phigh,
 		       Lisp_Object *plow, Lisp_Object *pusec,
 		       Lisp_Object *ppsec)
 {
+  Lisp_Object high = make_number (0);
+  Lisp_Object low = specified_time;
+  Lisp_Object usec = make_number (0);
+  Lisp_Object psec = make_number (0);
+  int len = 4;
+
   if (CONSP (specified_time))
     {
-      Lisp_Object low = XCDR (specified_time);
-      Lisp_Object usec = make_number (0);
-      Lisp_Object psec = make_number (0);
+      high = XCAR (specified_time);
+      low = XCDR (specified_time);
       if (CONSP (low))
 	{
 	  Lisp_Object low_tail = XCDR (low);
@@ -1540,40 +1629,119 @@ disassemble_lisp_time (Lisp_Object specified_time, Lisp_Object *phigh,
 	      low_tail = XCDR (low_tail);
 	      if (CONSP (low_tail))
 		psec = XCAR (low_tail);
+	      else
+		len = 3;
 	    }
 	  else if (!NILP (low_tail))
-	    usec = low_tail;
+	    {
+	      usec = low_tail;
+	      len = 3;
+	    }
+	  else
+	    len = 2;
 	}
+      else
+	len = 2;
 
-      *phigh = XCAR (specified_time);
-      *plow = low;
-      *pusec = usec;
-      *ppsec = psec;
-      return 1;
+      /* When combining components, require LOW to be an integer,
+	 as otherwise it would be a pain to add up times.  */
+      if (! INTEGERP (low))
+	return 0;
     }
+  else if (INTEGERP (specified_time))
+    len = 2;
 
-  return 0;
+  *phigh = high;
+  *plow = low;
+  *pusec = usec;
+  *ppsec = psec;
+  return len;
+}
+
+/* Convert T into an Emacs time *RESULT, truncating toward minus infinity.
+   Return true if T is in range, false otherwise.  */
+static bool
+decode_float_time (double t, struct lisp_time *result)
+{
+  double lo_multiplier = 1 << LO_TIME_BITS;
+  double emacs_time_min = MOST_NEGATIVE_FIXNUM * lo_multiplier;
+  if (! (emacs_time_min <= t && t < -emacs_time_min))
+    return false;
+
+  double small_t = t / lo_multiplier;
+  EMACS_INT hi = small_t;
+  double t_sans_hi = t - hi * lo_multiplier;
+  int lo = t_sans_hi;
+  long double fracps = (t_sans_hi - lo) * 1e12L;
+#ifdef INT_FAST64_MAX
+  int_fast64_t ifracps = fracps;
+  int us = ifracps / 1000000;
+  int ps = ifracps % 1000000;
+#else
+  int us = fracps / 1e6L;
+  int ps = fracps - us * 1e6L;
+#endif
+  us -= (ps < 0);
+  ps += (ps < 0) * 1000000;
+  lo -= (us < 0);
+  us += (us < 0) * 1000000;
+  hi -= (lo < 0);
+  lo += (lo < 0) << LO_TIME_BITS;
+  result->hi = hi;
+  result->lo = lo;
+  result->us = us;
+  result->ps = ps;
+  return true;
 }
 
 /* From the time components HIGH, LOW, USEC and PSEC taken from a Lisp
    list, generate the corresponding time value.
+   If LOW is floating point, the other components should be zero.
 
-   If RESULT is not null, store into *RESULT the converted time;
-   if the converted time does not fit into struct timespec,
-   store an invalid timespec to indicate the overflow.
+   If RESULT is not null, store into *RESULT the converted time.
    If *DRESULT is not null, store into *DRESULT the number of
    seconds since the start of the POSIX Epoch.
 
-   Return true if successful.  */
+   Return true if successful, false if the components are of the
+   wrong type or represent a time out of range.  */
 bool
 decode_time_components (Lisp_Object high, Lisp_Object low, Lisp_Object usec,
 			Lisp_Object psec,
-			struct timespec *result, double *dresult)
+			struct lisp_time *result, double *dresult)
 {
   EMACS_INT hi, lo, us, ps;
-  if (! (INTEGERP (high) && INTEGERP (low)
+  if (! (INTEGERP (high)
 	 && INTEGERP (usec) && INTEGERP (psec)))
     return false;
+  if (! INTEGERP (low))
+    {
+      if (FLOATP (low))
+	{
+	  double t = XFLOAT_DATA (low);
+	  if (result && ! decode_float_time (t, result))
+	    return false;
+	  if (dresult)
+	    *dresult = t;
+	  return true;
+	}
+      else if (NILP (low))
+	{
+	  struct timespec now = current_timespec ();
+	  if (result)
+	    {
+	      result->hi = hi_time (now.tv_sec);
+	      result->lo = lo_time (now.tv_sec);
+	      result->us = now.tv_nsec / 1000;
+	      result->ps = now.tv_nsec % 1000 * 1000;
+	    }
+	  if (dresult)
+	    *dresult = now.tv_sec + now.tv_nsec / 1e9;
+	  return true;
+	}
+      else
+	return false;
+    }
+
   hi = XINT (high);
   lo = XINT (low);
   us = XINT (usec);
@@ -1583,53 +1751,68 @@ decode_time_components (Lisp_Object high, Lisp_Object low, Lisp_Object usec,
      each overflow into the next higher-order component.  */
   us += ps / 1000000 - (ps % 1000000 < 0);
   lo += us / 1000000 - (us % 1000000 < 0);
-  hi += lo >> 16;
+  hi += lo >> LO_TIME_BITS;
   ps = ps % 1000000 + 1000000 * (ps % 1000000 < 0);
   us = us % 1000000 + 1000000 * (us % 1000000 < 0);
-  lo &= (1 << 16) - 1;
+  lo &= (1 << LO_TIME_BITS) - 1;
 
   if (result)
     {
-      if ((TYPE_SIGNED (time_t) ? TIME_T_MIN >> 16 <= hi : 0 <= hi)
-	  && hi <= TIME_T_MAX >> 16)
-	{
-	  /* Return the greatest representable time that is not greater
-	     than the requested time.  */
-	  time_t sec = hi;
-	  *result = make_timespec ((sec << 16) + lo, us * 1000 + ps / 1000);
-	}
-      else
-	*result = invalid_timespec ();
+      if (! (MOST_NEGATIVE_FIXNUM <= hi && hi <= MOST_POSITIVE_FIXNUM))
+	return false;
+      result->hi = hi;
+      result->lo = lo;
+      result->us = us;
+      result->ps = ps;
     }
 
   if (dresult)
-    *dresult = (us * 1e6 + ps) / 1e12 + lo + hi * 65536.0;
+    {
+      double dhi = hi;
+      *dresult = (us * 1e6 + ps) / 1e12 + lo + dhi * (1 << LO_TIME_BITS);
+    }
 
   return true;
 }
 
-/* Decode a Lisp list SPECIFIED_TIME that represents a time.
-   If SPECIFIED_TIME is nil, use the current time.
+struct timespec
+lisp_to_timespec (struct lisp_time t)
+{
+  if (! ((TYPE_SIGNED (time_t) ? TIME_T_MIN >> LO_TIME_BITS <= t.hi : 0 <= t.hi)
+	 && t.hi <= TIME_T_MAX >> LO_TIME_BITS))
+    return invalid_timespec ();
+  time_t s = (t.hi << LO_TIME_BITS) + t.lo;
+  int ns = t.us * 1000 + t.ps / 1000;
+  return make_timespec (s, ns);
+}
 
-   Round the time down to the nearest struct timespec value.
-   Return seconds since the Epoch.
-   Signal an error if unsuccessful.  */
+/* Decode a Lisp list SPECIFIED_TIME that represents a time.
+   Store its effective length into *PLEN.
+   If SPECIFIED_TIME is nil, use the current time.
+   Signal an error if SPECIFIED_TIME does not represent a time.  */
+static struct lisp_time
+lisp_time_struct (Lisp_Object specified_time, int *plen)
+{
+  Lisp_Object high, low, usec, psec;
+  struct lisp_time t;
+  int len = disassemble_lisp_time (specified_time, &high, &low, &usec, &psec);
+  if (! (len && decode_time_components (high, low, usec, psec, &t, 0)))
+    invalid_time ();
+  *plen = len;
+  return t;
+}
+
+/* Like lisp_time_struct, except return a struct timespec.
+   Discard any low-order digits.  */
 struct timespec
 lisp_time_argument (Lisp_Object specified_time)
 {
-  if (NILP (specified_time))
-    return current_timespec ();
-  else
-    {
-      Lisp_Object high, low, usec, psec;
-      struct timespec t;
-      if (! (disassemble_lisp_time (specified_time, &high, &low, &usec, &psec)
-	     && decode_time_components (high, low, usec, psec, &t, 0)))
-	error ("Invalid time specification");
-      if (! timespec_valid_p (t))
-	time_overflow ();
-      return t;
-    }
+  int len;
+  struct lisp_time lt = lisp_time_struct (specified_time, &len);
+  struct timespec t = lisp_to_timespec (lt);
+  if (! timespec_valid_p (t))
+    time_overflow ();
+  return t;
 }
 
 /* Like lisp_time_argument, except decode only the seconds part,
@@ -1637,20 +1820,16 @@ lisp_time_argument (Lisp_Object specified_time)
 static time_t
 lisp_seconds_argument (Lisp_Object specified_time)
 {
-  if (NILP (specified_time))
-    return time (NULL);
-  else
-    {
-      Lisp_Object high, low, usec, psec;
-      struct timespec t;
-      if (! (disassemble_lisp_time (specified_time, &high, &low, &usec, &psec)
-	     && decode_time_components (high, low, make_number (0),
-					make_number (0), &t, 0)))
-	error ("Invalid time specification");
-      if (! timespec_valid_p (t))
-	time_overflow ();
-      return t.tv_sec;
-    }
+  Lisp_Object high, low, usec, psec;
+  struct lisp_time t;
+  if (! (disassemble_lisp_time (specified_time, &high, &low, &usec, &psec)
+	 && decode_time_components (high, low, make_number (0),
+				    make_number (0), &t, 0)))
+    invalid_time ();
+  if (! ((TYPE_SIGNED (time_t) ? TIME_T_MIN >> LO_TIME_BITS <= t.hi : 0 <= t.hi)
+	 && t.hi <= TIME_T_MAX >> LO_TIME_BITS))
+    time_overflow ();
+  return (t.hi << LO_TIME_BITS) + t.lo;
 }
 
 DEFUN ("float-time", Ffloat_time, Sfloat_time, 0, 1, 0,
@@ -1668,18 +1847,10 @@ or (if you need time as a string) `format-time-string'.  */)
   (Lisp_Object specified_time)
 {
   double t;
-  if (NILP (specified_time))
-    {
-      struct timespec now = current_timespec ();
-      t = now.tv_sec + now.tv_nsec / 1e9;
-    }
-  else
-    {
-      Lisp_Object high, low, usec, psec;
-      if (! (disassemble_lisp_time (specified_time, &high, &low, &usec, &psec)
-	     && decode_time_components (high, low, usec, psec, 0, &t)))
-	error ("Invalid time specification");
-    }
+  Lisp_Object high, low, usec, psec;
+  if (! (disassemble_lisp_time (specified_time, &high, &low, &usec, &psec)
+	 && decode_time_components (high, low, usec, psec, 0, &t)))
+    invalid_time ();
   return make_float (t);
 }
 
@@ -1969,7 +2140,7 @@ usage: (encode-time SECOND MINUTE HOUR DAY MONTH YEAR &optional ZONE)  */)
   if (value == (time_t) -1)
     time_overflow ();
 
-  return make_time (value);
+  return list2i (hi_time (value), lo_time (value));
 }
 
 DEFUN ("current-time-string", Fcurrent_time_string, Scurrent_time_string, 0, 1, 0,
@@ -4874,6 +5045,9 @@ functions if all the text being accessed has this property.  */);
   defsubr (&Suser_full_name);
   defsubr (&Semacs_pid);
   defsubr (&Scurrent_time);
+  defsubr (&Stime_add);
+  defsubr (&Stime_subtract);
+  defsubr (&Stime_less_p);
   defsubr (&Sget_internal_run_time);
   defsubr (&Sformat_time_string);
   defsubr (&Sfloat_time);

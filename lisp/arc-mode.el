@@ -2181,11 +2181,7 @@ This doesn't recover lost files, it just undoes changes in the buffer itself."
             (size (string-to-number (match-string 6))))
         ;; Move to the beginning of the data.
         (goto-char (match-end 0))
-        (setq time
-              (format-time-string
-               "%Y-%m-%d %H:%M"
-               (let ((high (truncate (/ time 65536))))
-                 (list high (truncate (- time (* 65536.0 high)))))))
+        (setq time (format-time-string "%Y-%m-%d %H:%M" time))
         (setq extname
               (cond ((equal name "//              ")
                      (propertize ".<ExtNamesTable>." 'face 'italic))

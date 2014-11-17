@@ -1,3 +1,11 @@
+2014-11-17  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Improve time stamp handling, and be more consistent about it.
+	* os.texi (Time of Day, Time Conversion, Time Parsing)
+	(Processor Run Time, Time Calculations):
+	Document the new behavior, plus be clearer about the old behavior.
+	(Idle Timers): Take advantage of new functionality.
+
 2014-11-16  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
 	* text.texi (Special Properties): Mention `inhibit-read-only'.

@@ -27478,14 +27478,9 @@ If DATE lacks timezone information, GMT is assumed.
  (autoload 'time-to-seconds "time-date"))
 
 (autoload 'seconds-to-time "time-date" "\
-Convert SECONDS (a floating point number) to a time value.
+Convert SECONDS to a time value.
 
 \(fn SECONDS)" nil nil)
-
-(autoload 'time-less-p "time-date" "\
-Return non-nil if time value T1 is earlier than time value T2.
-
-\(fn T1 T2)" nil nil)
 
 (autoload 'days-to-time "time-date" "\
 Convert DAYS into a time value.
@@ -27499,17 +27494,9 @@ TIME should be either a time value or a date-time string.
 \(fn TIME)" nil nil)
 
 (defalias 'subtract-time 'time-subtract)
-
-(autoload 'time-subtract "time-date" "\
-Subtract two time values, T1 minus T2.
-Return the difference in the format of a time value.
-
-\(fn T1 T2)" nil nil)
-
-(autoload 'time-add "time-date" "\
-Add two time values T1 and T2.  One should represent a time difference.
-
-\(fn T1 T2)" nil nil)
+(autoload 'time-add "time-date")
+(autoload 'time-subtract "time-date")
+(autoload 'time-less-p "time-date")
 
 (autoload 'date-to-day "time-date" "\
 Return the number of days between year 1 and DATE.

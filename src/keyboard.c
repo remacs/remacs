@@ -4429,10 +4429,15 @@ decode_timer (Lisp_Object timer, struct timespec *result)
   vector = XVECTOR (timer)->contents;
   if (! NILP (vector[0]))
     return 0;
+  if (! INTEGERP (vector[2]))
+    return false;
 
-  return (decode_time_components (vector[1], vector[2], vector[3], vector[8],
-				  result, 0)
-	  && timespec_valid_p (*result));
+  struct lisp_time t;
+  if (! decode_time_components (vector[1], vector[2], vector[3], vector[8],
+				&t, 0))
+    return false;
+  *result = lisp_to_timespec (t);
+  return timespec_valid_p (*result);
 }
 
 

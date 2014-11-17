@@ -1,3 +1,8 @@
+2014-11-17  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Improve time stamp handling, and be more consistent about it.
+	* NEWS: Document the changes.
+
 2014-11-14  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
 	* NEWS: Mention the new `M-s M-s' keystroke.

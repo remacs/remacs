@@ -4236,25 +4236,15 @@ Invokes `password-read' if available, `read-passwd' else."
     ("oct" . 10) ("nov" . 11) ("dec" . 12))
   "Alist mapping month names to integers.")
 
-;; FIXME: Shouldn't this also look at any subseconds parts of T1 and T2?
 ;;;###tramp-autoload
 (defun tramp-time-less-p (t1 t2)
   "Say whether time value T1 is less than time value T2."
-  (unless t1 (setq t1 '(0 0)))
-  (unless t2 (setq t2 '(0 0)))
-  (or (< (car t1) (car t2))
-      (and (= (car t1) (car t2))
-	   (< (nth 1 t1) (nth 1 t2)))))
+  (time-less-p (or t1 0) (or t2 0)))
 
-;; FIXME: Shouldn't this also look at any subseconds parts of T1 and T2?
 (defun tramp-time-subtract (t1 t2)
   "Subtract two time values.
 Return the difference in the format of a time value."
-  (unless t1 (setq t1 '(0 0)))
-  (unless t2 (setq t2 '(0 0)))
-  (let ((borrow (< (cadr t1) (cadr t2))))
-    (list (- (car t1) (car t2) (if borrow 1 0))
-	  (- (+ (if borrow 65536 0) (cadr t1)) (cadr t2)))))
+  (time-subtract (or t1 0) (or t2 0)))
 
 ;;;###tramp-autoload
 (defun tramp-time-diff (t1 t2)

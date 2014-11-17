@@ -1,3 +1,31 @@
+2014-11-17  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Improve time stamp handling, and be more consistent about it.
+	This implements a suggestion made in:
+	http://lists.gnu.org/archive/html/emacs-devel/2014-10/msg00587.html
+	Among other things, this means timer.el no longer needs to
+	autoload the time-date module.
+	* allout-widgets.el (allout-elapsed-time-seconds): Doc fix.
+	* arc-mode.el (archive-ar-summarize):
+	* calendar/time-date.el (seconds-to-time, days-to-time, time-since):
+	* emacs-lisp/timer.el (timer-relative-time, timer-event-handler)
+	(run-at-time, with-timeout-suspend, with-timeout-unsuspend):
+	* net/tramp.el (tramp-time-less-p, tramp-time-subtract):
+	* proced.el (proced-time-lessp):
+	* timezone.el (timezone-time-from-absolute):
+	* type-break.el (type-break-schedule, type-break-time-sum):
+	Simplify by using new functionality.
+	* calendar/cal-dst.el (calendar-next-time-zone-transition):
+	Do not return time values in obsolete and undocumented (HI . LO)
+	format; use (HI LO) instead.
+	* calendar/time-date.el (with-decoded-time-value):
+	Treat 'nil' as current time.  This is mostly for XEmacs.
+	(encode-time-value, with-decoded-time-value): Obsolete.
+	(time-add, time-subtract, time-less-p): Use no-op autoloads, for
+	XEmacs.  Define only if XEmacs, as they're now C builtins in Emacs.
+	* ldefs-boot.el: Update to match new time-date.el
+	* proced.el: Do not require time-date.
+
 2014-11-16  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
 	* net/eww.el (eww-mode): Make the buffer read-only.

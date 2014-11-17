@@ -1,3 +1,31 @@
+2014-11-17  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Improve time stamp handling, and be more consistent about it.
+	* editfns.c (invalid_time): New function.
+	Use it instead of 'error ("Invalid time specification")'.
+	(time_add, time_subtract, time_arith, Ftime_add, Ftime_less_p)
+	(decode_float_time, lisp_to_timespec, lisp_time_struct):
+	New functions.
+	(make_time_tail, make_time): Remove.  All uses changed to use
+	new functions or plain list4i.
+	(disassemble_lisp_time): Return effective length if successful.
+	Check that LOW is an integer, if it's combined with other components.
+	(decode_time_components): Decode into struct lisp_time, not
+	struct timespec, so that we can support a wide set of times
+	regardless of whether time_t is signed.  Decode plain numbers
+	as seconds since the Epoch, and nil as the current time.
+	(lisp_time_argument, lisp_seconds_argument, Ffloat_time):
+	Reimplement in terms of new functions.
+	(Fencode_time): Just use list2i.
+	(syms_of_editfns): Add time-add, time-subtract, time-less-p.
+	* keyboard.c (decode_timer): Don't allow the new formats (floating
+	point or nil) in timers.
+	* systime.h (LO_TIME_BITS): New constant.  Use it everywhere in
+	place of the magic number '16'.
+	(struct lisp_time): New type.
+	(decode_time_components): Use it.
+	(lisp_to_timespec): New decl.
+
 2014-11-16  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
 	* intervals.h (INTERVAL_WRITABLE_P): Check the `inhibit-read-only'
