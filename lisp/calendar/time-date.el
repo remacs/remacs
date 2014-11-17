@@ -65,12 +65,36 @@ list (HIGH LOW MICRO PICO)."
 		     (pop elt)))
 	     (time-value (car elt))
 	     (gensym (make-symbol "time")))
-	`(let* ,(append `((,gensym ,time-value)
+	`(let* ,(append `((,gensym (or ,time-value (current-time)))
+			  (,gensym
+			   (cond
+			    ((integerp ,gensym)
+			     (list (ash ,gensym -16)
+				   (logand ,gensym 65535)))
+			    ((floatp ,gensym)
+			     (let* ((usec (* 1000000 (mod ,gensym 1)))
+				    (ps (round (* 1000000 (mod usec 1))))
+				    (us (floor usec))
+				    (lo (floor (mod ,gensym 65536)))
+				    (hi (floor ,gensym 65536)))
+			       (if (eq ps 1000000)
+				   (progn
+				     (setq ps 0)
+				     (setq us (1+ us))
+				     (if (eq us 1000000)
+					 (progn
+					   (setq us 0)
+					   (setq lo (1+ lo))
+					   (if (eq lo 65536)
+					       (progn
+						 (setq lo 0)
+						 (setq hi (1+ hi))))))))
+			       (list hi lo us ps)))
+			    (t ,gensym)))
 			  (,high (pop ,gensym))
 			  ,low ,micro)
 			(when pico `(,pico))
 			(when type `(,type)))
-	   (or ,gensym (setq ,gensym (current-time)))
 	   (if (consp ,gensym)
 	       (progn
 		 (setq ,low (pop ,gensym))
@@ -108,7 +132,7 @@ it is assumed that PICO was omitted and should be treated as zero."
    ((eq type 3) (list high low micro pico))
    ((null type) (encode-time-value high low micro 0 pico))))
 
-(when (featurep 'emacs)
+(when (and (fboundp 'time-add) (subrp (symbol-function 'time-add)))
   (make-obsolete 'encode-time-value nil "25.1")
   (make-obsolete 'with-decoded-time-value nil "25.1"))
 
@@ -192,7 +216,7 @@ TIME should be either a time value or a date-time string."
 ;;;###autoload(autoload 'time-less-p "time-date")
 
 (eval-when-compile
-  (when (not (featurep 'emacs))
+  (when (not (and (fboundp 'time-add) (subrp (symbol-function 'time-add))))
 
     (defun time-add (t1 t2)
       "Add two time values T1 and T2.  One should represent a time difference."
