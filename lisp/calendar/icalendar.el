@@ -267,6 +267,7 @@ other sexp entries are enumerated in any case."
   :type 'boolean
   :group 'icalendar)
 
+
 (defcustom icalendar-export-alarms
   nil
   "Determine if and how alarms are included in exported diary events.
