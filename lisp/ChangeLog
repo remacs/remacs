@@ -7,6 +7,10 @@
 	(icalendar--create-ical-alarm, icalendar--do-create-ical-alarm):
 	New functions for exporting alarms.
 
+2014-11-17  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* bindings.el (search-map): Move `eww-search-words' to `M-s M-w'.
+
 2014-11-17  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Port new time stamp handling to old Emacs and to XEmacs.
@@ -112,7 +116,7 @@
 	* progmodes/python.el (python-indent-region):
 	Use python-indent-line and skip special cases.  (Bug#18843)
 
-2014-11-16  Peder O. Klingenberg  <peder@klingenberg.no>  (tiny change)
+2014-11-16  Peder O. Klingenberg  <peder@klingenberg.no>
 
 	* mail/emacsbug.el (report-emacs-bug): Make a better guess at
 	  envelope-from when reporting through sendmail (bug#19054).

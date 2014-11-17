@@ -1,3 +1,9 @@
+2014-11-17  Glenn Morris  <rgm@gnu.org>
+
+	* automated/occur-tests.el (occur-test-case, occur-test-create):
+	In case of failure, show the actual string, rather than just nil.
+	(occur-tests): Update for apparent change in output re control-chars.
+
 2014-11-17  Ulf Jasper  <ulf.jasper@web.de>
 
 	* automated/icalendar-tests.el (icalendar-tests--test-export): New
