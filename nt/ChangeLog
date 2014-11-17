@@ -1,3 +1,13 @@
+2014-11-17  Oscar Fuentes  <ofv@wanadoo.es>
+
+	* inc/ms-w32.h: Define MINGW_W64.
+
+	* nt/addpm.c: Use it.
+
+	* nt/addsection.c: Use it.
+
+	* nt/preprep.c: Use it.
+
 2014-10-31  Eric S. Raymond  <esr@thyrsus.com>
 
 	* Neutralize language specific to a repository type.

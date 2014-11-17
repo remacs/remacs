@@ -1,3 +1,7 @@
+2014-11-17  Oscar Fuentes  <ofv@wanadoo.es>
+
+	* admin/CPP-DEFINES: Mention MINGW_W64.
+
 2014-11-15  Glenn Morris  <rgm@gnu.org>
 
 	* update_autogen: Auto-detect VCS in use.
