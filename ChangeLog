@@ -1,3 +1,16 @@
+2014-11-17  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Simplify and fix doc-related .gitignore files.
+	This fixes some unwanted 'git status' output after 'make docs'.
+	* .gitignore: Add **/Makefile, **/makefile.
+	Remove Makefile, makefile.
+	Add doc/*/*.xxx rules for the usual kinds of documentation outputs
+	and temporaries.  Add doc/misc/cc-mode.ss.
+	* doc/emacs/.gitignore, doc/lispintro/.gitignore, doc/misc/.gitignore:
+	* lwlib/.gitignore, oldXMenu/.gitignore:
+	Remove, as these .gitignore files are no longer needed.
+	* doc/lispintro/.gitignore: Replace with list of exceptional PDF files.
+
 2014-11-15  Christoph Scholtes  <cschol2112@gmail.com>
 
 	* .gitignore: Ignore generated file lib/stdalign.h.
