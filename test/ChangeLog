@@ -1,3 +1,11 @@
+2014-11-17  Ulf Jasper  <ulf.jasper@web.de>
+
+	* automated/icalendar-tests.el (icalendar-tests--test-export): New
+	optional parameter `alarms'.
+	(icalendar-export-alarms): New test for exporting icalendar
+	alarms.
+	(icalendar-tests--test-cycle): Let `icalendar-export-alarms' be nil.
+
 2014-11-16  Ulf Jasper  <ulf.jasper@web.de>
 
 	* automated/icalendar-tests.el (icalendar--parse-vtimezone): Add

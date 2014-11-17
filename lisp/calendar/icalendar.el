@@ -270,8 +270,7 @@ other sexp entries are enumerated in any case."
 
 (defcustom icalendar-export-alarms
   nil
-  "Determine if and how alarms are included in exported diary events.
-FIXME"
+  "Determine if and how alarms are included in exported diary events."
   :version "25.1"
   :type '(choice (const :tag "Do not include alarms in export"
                         nil)
@@ -304,7 +303,6 @@ FIXME"
 ;; ======================================================================
 (require 'calendar)
 (require 'diary-lib)
-(require 'appt)
 
 ;; ======================================================================
 ;; misc
@@ -1115,7 +1113,7 @@ FExport diary data into iCalendar file: ")
                                                  (icalendar--create-uid
                                                   entry-full contents))))
                         (setq alarm (icalendar--create-ical-alarm
-                                     (car contents-n-summary))))
+                                     (cdr contents-n-summary))))
                       (setq result (concat result header contents alarm
                                            "\nEND:VEVENT")))
                     (if (consp cns-cons-or-list)
@@ -1292,33 +1290,41 @@ Returns an alist."
                     (if uid (cons 'uid uid) nil))))))))
 
 (defun icalendar--create-ical-alarm (summary)
+  "Return VALARM blocks for the given SUMMARY."
   (when icalendar-export-alarms
     (let* ((advance-time (car icalendar-export-alarms))
            (alarm-specs (cadr icalendar-export-alarms))
            (fun (lambda (spec)
                   (icalendar--do-create-ical-alarm advance-time spec summary))))
-      (mapconcat fun alarm-specs "\n"))))
+      (mapconcat fun alarm-specs ""))))
 
 (defun icalendar--do-create-ical-alarm (advance-time alarm-spec summary)
+  "Return a VALARM block.
+Argument ADVANCE-TIME is a number giving the time when the alarm
+fires (minutes before the respective event).  Argument ALARM-SPEC
+is a list which must be one of '(audio), '(display) or
+'(email (ADDRESS1 ...)), see `icalendar-export-alarms'.  Argument
+SUMMARY is a string which contains a short description for the
+alarm."
   (let* ((action (car alarm-spec))
-         (act (format "ACTION:%s\n"
+         (act (format "\nACTION:%s"
                       (cdr (assoc action '((audio . "AUDIO")
                                            (display . "DISPLAY")
                                            (email . "EMAIL"))))))
-         (tri (format "TRIGGER:-PT%dM\n" advance-time))
+         (tri (format "\nTRIGGER:-PT%dM" advance-time))
          (des (if (memq action '(display email))
-                  (format "DESCRIPTION:%s\n" summary)
+                  (format "\nDESCRIPTION:%s" summary)
                 ""))
          (sum (if (eq action 'email)
-                  (format "SUMMARY:%s\n" summary)
+                  (format "\nSUMMARY:%s" summary)
                 ""))
          (att (if (eq action 'email)
                   (mapconcat (lambda (i)
-                               (format "ATTENDEE:MAILTO:%s\n" i))
+                               (format "\nATTENDEE:MAILTO:%s" i))
                              (cadr alarm-spec) "")
                 "")))
 
-    (concat "BEGIN:VALARM\n" act tri des sum att "END:VALARM")))
+    (concat "\nBEGIN:VALARM" act tri des sum att "\nEND:VALARM")))
 
 ;; subroutines for icalendar-export-region
 (defun icalendar--convert-ordinary-to-ical (nonmarker entry-main)

@@ -1,3 +1,12 @@
+2014-11-17  Ulf Jasper  <ulf.jasper@web.de>
+
+	* calendar/icalendar.el (icalendar-export-alarms): New
+	customizable variable.
+	(icalendar-export-region): Export alarms as specified in
+	`icalendar-export-alarms'.
+	(icalendar--create-ical-alarm, icalendar--do-create-ical-alarm):
+	New functions for exporting alarms.
+
 2014-11-16  Ulf Jasper  <ulf.jasper@web.de>
 
 	* calendar/icalendar.el (icalendar--convert-tz-offset): Return
