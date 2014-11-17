@@ -52,7 +52,7 @@ a
 a
 a
 " "\
-2 matches for \"a^Ja\" in buffer:  *test-occur*
+2 matches for \"a\na\" in buffer:  *test-occur*
       1:a
        :a
       3:a
@@ -68,7 +68,7 @@ c
 a
 b
 " "\
-2 matches for \"a^Jb\" in buffer:  *test-occur*
+2 matches for \"a\nb\" in buffer:  *test-occur*
       1:a
        :b
       4:a
@@ -82,7 +82,7 @@ c
 a
 
 " "\
-2 matches for \"a^J\" in buffer:  *test-occur*
+2 matches for \"a\n\" in buffer:  *test-occur*
       1:a
        :
       4:a
@@ -97,7 +97,7 @@ d
 ex
 fx
 " "\
-2 matches for \"x^J.x^J\" in buffer:  *test-occur*
+2 matches for \"x\n.x\n\" in buffer:  *test-occur*
       1:ax
        :bx
        :c
@@ -232,7 +232,7 @@ i
 jx
 kx
 " "\
-3 matches for \"x^J.x\" in buffer:  *test-occur*
+3 matches for \"x\n.x\" in buffer:  *test-occur*
       1:ax
        :bx
        :c
@@ -256,7 +256,7 @@ f
 gx
 hx
 " "\
-2 matches for \"x^J.x\" in buffer:  *test-occur*
+2 matches for \"x\n.x\" in buffer:  *test-occur*
       1:ax
        :bx
        :c
