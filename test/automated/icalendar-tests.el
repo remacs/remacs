@@ -508,18 +508,20 @@ END:VEVENT
 ;; ======================================================================
 
 (defun icalendar-tests--test-export (input-iso input-european input-american
-                                               expected-output)
+                                               expected-output &optional alarms)
   "Perform an export test.
 Argument INPUT-ISO iso style diary string.
 Argument INPUT-EUROPEAN european style diary string.
 Argument INPUT-AMERICAN american style diary string.
 Argument EXPECTED-OUTPUT expected iCalendar result string.
+Optional argument ALARMS the value of `icalendar-export-alarms' for this test.
 
 European style input data must use german month names.  American
 and ISO style input data must use english month names."
   (let ((tz (getenv "TZ"))
 	(calendar-date-style 'iso)
-	(icalendar-recurring-start-year 2000))
+	(icalendar-recurring-start-year 2000)
+        (icalendar-export-alarms alarms))
     (unwind-protect
 	(progn
 ;;;	  (message "Current time zone: %s" (current-time-zone))
@@ -752,6 +754,97 @@ DTEND;VALUE=DATE-TIME:20010618T140000
 RRULE:FREQ=DAILY;INTERVAL=1;UNTIL=20010706
 SUMMARY:block no end time
 "))
+
+(ert-deftest icalendar-export-alarms ()
+  "Perform export test with different settings for exporting alarms."
+  ;; no alarm
+  (icalendar-tests--test-export
+   "2014 Nov 17 19:30 no alarm"
+   "17 Nov 2014 19:30 no alarm"
+   "Nov 17 2014 19:30 no alarm"
+   "DTSTART;VALUE=DATE-TIME:20141117T193000
+DTEND;VALUE=DATE-TIME:20141117T203000
+SUMMARY:no alarm
+"
+   nil)
+
+    ;; 10 minutes in advance, audio
+    (icalendar-tests--test-export
+     "2014 Nov 17 19:30 audio alarm"
+     "17 Nov 2014 19:30 audio alarm"
+     "Nov 17 2014 19:30 audio alarm"
+     "DTSTART;VALUE=DATE-TIME:20141117T193000
+DTEND;VALUE=DATE-TIME:20141117T203000
+SUMMARY:audio alarm
+BEGIN:VALARM
+ACTION:AUDIO
+TRIGGER:-PT10M
+END:VALARM
+"
+     '(10 ((audio))))
+
+    ;; 20 minutes in advance, display
+    (icalendar-tests--test-export
+     "2014 Nov 17 19:30 display alarm"
+     "17 Nov 2014 19:30 display alarm"
+     "Nov 17 2014 19:30 display alarm"
+     "DTSTART;VALUE=DATE-TIME:20141117T193000
+DTEND;VALUE=DATE-TIME:20141117T203000
+SUMMARY:display alarm
+BEGIN:VALARM
+ACTION:DISPLAY
+TRIGGER:-PT20M
+DESCRIPTION:display alarm
+END:VALARM
+"
+     '(20 ((display))))
+
+    ;; 66 minutes in advance, email
+    (icalendar-tests--test-export
+     "2014 Nov 17 19:30 email alarm"
+     "17 Nov 2014 19:30 email alarm"
+     "Nov 17 2014 19:30 email alarm"
+     "DTSTART;VALUE=DATE-TIME:20141117T193000
+DTEND;VALUE=DATE-TIME:20141117T203000
+SUMMARY:email alarm
+BEGIN:VALARM
+ACTION:EMAIL
+TRIGGER:-PT66M
+DESCRIPTION:email alarm
+SUMMARY:email alarm
+ATTENDEE:MAILTO:att.one@email.com
+ATTENDEE:MAILTO:att.two@email.com
+END:VALARM
+"
+     '(66 ((email ("att.one@email.com" "att.two@email.com")))))
+
+    ;; 2 minutes in advance, all alarms
+    (icalendar-tests--test-export
+     "2014 Nov 17 19:30 all alarms"
+     "17 Nov 2014 19:30 all alarms"
+     "Nov 17 2014 19:30 all alarms"
+     "DTSTART;VALUE=DATE-TIME:20141117T193000
+DTEND;VALUE=DATE-TIME:20141117T203000
+SUMMARY:all alarms
+BEGIN:VALARM
+ACTION:EMAIL
+TRIGGER:-PT2M
+DESCRIPTION:all alarms
+SUMMARY:all alarms
+ATTENDEE:MAILTO:att.one@email.com
+ATTENDEE:MAILTO:att.two@email.com
+END:VALARM
+BEGIN:VALARM
+ACTION:AUDIO
+TRIGGER:-PT2M
+END:VALARM
+BEGIN:VALARM
+ACTION:DISPLAY
+TRIGGER:-PT2M
+DESCRIPTION:all alarms
+END:VALARM
+"
+     '(2 ((email ("att.one@email.com" "att.two@email.com")) (audio) (display)))))
 
 ;; ======================================================================
 ;; Import tests
@@ -1285,7 +1378,8 @@ Argument INPUT icalendar event string."
           (icalendar-import-format-status "\n Status: %s")
           (icalendar-import-format-url "\n URL: %s")
           (icalendar-import-format-class "\n Class: %s")
-          (icalendar-import-format-class "\n UID: %s"))
+          (icalendar-import-format-class "\n UID: %s")
+          (icalendar-export-alarms nil))
       (dolist (calendar-date-style '(iso european american))
         (icalendar-tests--do-test-cycle)))))
 

@@ -267,6 +267,28 @@ other sexp entries are enumerated in any case."
   :type 'boolean
   :group 'icalendar)
 
+
+(defcustom icalendar-export-alarms
+  nil
+  "Determine if and how alarms are included in exported diary events."
+  :version "25.1"
+  :type '(choice (const :tag "Do not include alarms in export"
+                        nil)
+                 (list :tag "Create alarms in exported diary entries"
+                       (integer :tag "Advance time (minutes)"
+                                :value 10)
+                       (set :tag "Alarm type"
+                            (list :tag "Audio"
+                                  (const audio :tag "Audio"))
+                            (list :tag "Display"
+                                  (const display :tag "Display"))
+                            (list :tag "Email"
+                                  (const email)
+                                  (repeat :tag "Attendees"
+                                          (string :tag "Email"))))))
+  :group 'icalendar)
+
+
 (defvar icalendar-debug nil
   "Enable icalendar debug messages.")
 
@@ -1026,6 +1048,7 @@ FExport diary data into iCalendar file: ")
         (header "")
         (contents-n-summary)
         (contents)
+        (alarm)
         (found-error nil)
         (nonmarker (concat "^" (regexp-quote diary-nonmarking-symbol)
                            "?"))
@@ -1088,8 +1111,10 @@ FExport diary data into iCalendar file: ")
                         (setq header (concat "\nBEGIN:VEVENT\nUID:"
                                              (or uid
                                                  (icalendar--create-uid
-                                                  entry-full contents)))))
-                      (setq result (concat result header contents
+                                                  entry-full contents))))
+                        (setq alarm (icalendar--create-ical-alarm
+                                     (cdr contents-n-summary))))
+                      (setq result (concat result header contents alarm
                                            "\nEND:VEVENT")))
                     (if (consp cns-cons-or-list)
                         (list cns-cons-or-list)
@@ -1263,6 +1288,43 @@ Returns an alist."
                     ;;(if sum (cons 'sum sum) nil)
                     (if url (cons 'url url) nil)
                     (if uid (cons 'uid uid) nil))))))))
+
+(defun icalendar--create-ical-alarm (summary)
+  "Return VALARM blocks for the given SUMMARY."
+  (when icalendar-export-alarms
+    (let* ((advance-time (car icalendar-export-alarms))
+           (alarm-specs (cadr icalendar-export-alarms))
+           (fun (lambda (spec)
+                  (icalendar--do-create-ical-alarm advance-time spec summary))))
+      (mapconcat fun alarm-specs ""))))
+
+(defun icalendar--do-create-ical-alarm (advance-time alarm-spec summary)
+  "Return a VALARM block.
+Argument ADVANCE-TIME is a number giving the time when the alarm
+fires (minutes before the respective event).  Argument ALARM-SPEC
+is a list which must be one of '(audio), '(display) or
+'(email (ADDRESS1 ...)), see `icalendar-export-alarms'.  Argument
+SUMMARY is a string which contains a short description for the
+alarm."
+  (let* ((action (car alarm-spec))
+         (act (format "\nACTION:%s"
+                      (cdr (assoc action '((audio . "AUDIO")
+                                           (display . "DISPLAY")
+                                           (email . "EMAIL"))))))
+         (tri (format "\nTRIGGER:-PT%dM" advance-time))
+         (des (if (memq action '(display email))
+                  (format "\nDESCRIPTION:%s" summary)
+                ""))
+         (sum (if (eq action 'email)
+                  (format "\nSUMMARY:%s" summary)
+                ""))
+         (att (if (eq action 'email)
+                  (mapconcat (lambda (i)
+                               (format "\nATTENDEE:MAILTO:%s" i))
+                             (cadr alarm-spec) "")
+                "")))
+
+    (concat "\nBEGIN:VALARM" act tri des sum att "\nEND:VALARM")))
 
 ;; subroutines for icalendar-export-region
 (defun icalendar--convert-ordinary-to-ical (nonmarker entry-main)
