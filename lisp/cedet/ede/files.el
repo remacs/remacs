@@ -85,7 +85,7 @@ of the anchor file for the project."
 
 
 ;; Why INODEs?
-;; An inode represents is a unique id that trancends symlinks, hardlinks, etc
+;; An inode represents a unique ID that transcends symlinks, hardlinks, etc.
 ;; so when we cache an inode in a project, and hash directories to inodes, we
 ;; can avoid costly filesystem queries and regex matches.
 
@@ -196,7 +196,7 @@ If optional EXACT is non-nil, only return exact matches for DIR."
 	       (let ((pin (ede--project-inode (car all)))
 		     (inode (ede--inode-for-dir dir)))
 		 (and (not (eql pin 0)) (equal pin inode))))
-	  (setq ans (car all))) 
+	  (setq ans (car all)))
 	 ;; Subdir via truename - slower by far, but faster than a traditional lookup.
 	 ;; Note that we must resort to truename in order to resolve issues such as
 	 ;; cross-symlink projects.
@@ -339,7 +339,7 @@ Optional FORCE means to ignore the hash of known directories."
 	  (ede--directory-project-add-description-to-hash dirtest (or detect 'nomatch))
 	  detect)
 	)))))
-  
+
 
 ;;; TOPLEVEL
 ;;

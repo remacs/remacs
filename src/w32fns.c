@@ -7434,7 +7434,7 @@ title bar and decorations.  */)
 }
 
 DEFUN ("x-frame-geometry", Fx_frame_geometry, Sx_frame_geometry, 0, 1, 0,
-       doc: /* Return geometric atributes of frame FRAME.
+       doc: /* Return geometric attributes of frame FRAME.
 FRAME must be a live frame and defaults to the selected one.
 
 The return value is an association list containing the following

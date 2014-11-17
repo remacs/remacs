@@ -797,7 +797,7 @@ def f():
                       expected)))))
 
 (ert-deftest python-indent-region-4 ()
-  "Test region indentation block starts, dedenders and enders."
+  "Test region indentation block starts, dedenters and enders."
   (let ((contents "
 def f():
     if True:

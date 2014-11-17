@@ -1136,7 +1136,7 @@ Semantic mode.
 		  'semantic-analyze-notc-completion-at-point-function)
 	(add-hook 'completion-at-point-functions
 		  'semantic-analyze-completion-at-point-function)
-	
+
 	(if global-ede-mode
 	    (define-key cedet-menu-map [cedet-menu-separator] '("--")))
 	(dolist (b (buffer-list))
@@ -1171,7 +1171,7 @@ Semantic mode.
 
 ;;; Completion At Point functions
 (defun semantic-analyze-completion-at-point-function ()
-  "Return possible analasis completions at point.
+  "Return possible analysis completions at point.
 The completions provided are via `semantic-analyze-possible-completions'.
 This function can be used by `completion-at-point-functions'."
   (let* ((ctxt (semantic-analyze-current-context))
@@ -1187,7 +1187,7 @@ This function can be used by `completion-at-point-functions'."
     ))
 
 (defun semantic-analyze-notc-completion-at-point-function ()
-  "Return possible analasis completions at point.
+  "Return possible analysis completions at point.
 The completions provided are via `semantic-analyze-possible-completions',
 but with the 'no-tc option passed in, which means constraints based
 on what is being assigned to are ignored.
@@ -1202,7 +1202,7 @@ This function can be used by `completion-at-point-functions'."
     ))
 
 (defun semantic-analyze-nolongprefix-completion-at-point-function ()
-  "Return possible analasis completions at point.
+  "Return possible analysis completions at point.
 The completions provided are via `semantic-analyze-possible-completions',
 but with the 'no-tc and 'no-longprefix option passed in, which means
 constraints resulting in a long multi-symbol dereference are ignored.

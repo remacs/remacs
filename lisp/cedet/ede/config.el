@@ -25,7 +25,7 @@
 ;; can be enhanced by also saving a configuration file that is EDE
 ;; specific.  EDE will be able to load that configuration from the save
 ;; file as a way of augmenting what is normally already detected.
-;; 
+;;
 ;; How To Use:
 ;;
 ;; Subclass `ede-extra-config', and add the features you want to use.
@@ -74,7 +74,7 @@
 was ignored.  Use this to warn the user that they might want to load in
 an on-disk version.")
    )
-  "Baseclass for auxilliary configuration files for EDE.
+  "Baseclass for auxiliary configuration files for EDE.
 This should be subclassed by projects that auto detect a project
 and also want to save some extra level of configuration.")
 
@@ -93,7 +93,7 @@ and also want to save some extra level of configuration.")
     :documentation
     "The filename to use for saving the configuration.
 This filename excludes the directory name and is used to
-initalize the :file slot of the persistent baseclass.")
+initialize the :file slot of the persistent baseclass.")
    (config-class
     :initform ede-extra-config
     :allocation :class
@@ -109,7 +109,7 @@ initalize the :file slot of the persistent baseclass.")
 
 (defclass ede-target-with-config (ede-target)
   ()
-  "Baseclass for targetes of classes that use a config object.")
+  "Baseclass for targets of classes that use a config object.")
 
 ;;; Rescanning
 
@@ -141,8 +141,8 @@ the directory isn't on the `safe' list, ask to add it to the safe list."
       (let* ((top (oref proj :directory))
 	     (fname (expand-file-name (oref proj config-file-basename) top))
 	     (class (oref proj config-class))
-	     (ignore-type nil))	
-	(if (and (file-exists-p fname) 
+	     (ignore-type nil))
+	(if (and (file-exists-p fname)
 		 (or (ede-directory-safe-p top)
 		     ;; Only force the load if someone asked.
 		     (and loadask (ede-check-project-directory top))))
@@ -217,13 +217,13 @@ the new configuration."
 
 ;;; PROJECT MIXINS
 ;;
-;; These are project part mixins.  Use multiple inheritence for each
-;; piece of these configuration optiosn you would like to have as part
+;; These are project part mixins.  Use multiple inheritance for each
+;; piece of these configuration options you would like to have as part
 ;; of your project.
 
 ;;; PROGRAM
 ;; If there is a program that can be run or debugged that is unknown
-;; and needs to be configured. 
+;; and needs to be configured.
 (defclass ede-extra-config-program ()
   ((debug-command :initarg :debug-command
 		  :initform "gdb "
@@ -332,7 +332,7 @@ The include path is used when searching for symbols.")
 			 :documentation
 			 "Preprocessor Symbols for this project.
 When files within this project are parsed by CEDET, these symbols will be
-used to resolve macro occurrences in source fies.
+used to resolve macro occurrences in source files.
 If you modify this slot, you will need to force your source files to be
 parsed again.")
    (c-preprocessor-files :initarg :c-preprocessor-files
@@ -343,7 +343,7 @@ parsed again.")
 			 :documentation
 			 "Files parsed and used to populate preprocessor tables.
 When files within this project are parsed by CEDET, these symbols will be used to
-resolve macro occurences in source files.
+resolve macro occurrences in source files.
 If you modify this slot, you will need to force your source files to be
 parsed again."))
   "Class to mix into a configuration for compilation.")

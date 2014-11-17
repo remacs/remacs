@@ -128,7 +128,7 @@ If the buffer is not in memory, load it with `find-file-noselect'."
 ;; functions treat "table" as something that could be a buffer,
 ;; file name, or other.  This makes use of table more robust.
 (defmethod semanticdb-full-filename (buffer-or-string)
-  "Fetch the full filename that BUFFER-OR-STRING referrs to.
+  "Fetch the full filename that BUFFER-OR-STRING refers to.
 This uses semanticdb to get a better file name."
   (cond ((bufferp buffer-or-string)
 	 (with-current-buffer buffer-or-string

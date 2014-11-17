@@ -298,7 +298,7 @@ Each directory needs a project file to control it.")
     (oset this :directory (file-name-directory f))
     (ede-project-directory-remove-hash (file-name-directory f))
     ;; NOTE: We must add to global list here because these classes are not
-    ;;       created via the typial loader, but instead via calls from a .emacs
+    ;;       created via the typical loader, but instead via calls from a .emacs
     ;;       file.
     (ede-add-project-to-global-list this)
 

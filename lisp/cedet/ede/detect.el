@@ -28,7 +28,7 @@
 ;; `ede-detect-scan-directory-for-project' -
 ;;        Scan for a project via the file system.
 ;; `ede-detect-directory-for-project' -
-;;        Check our file cache for a project.  If that failes, use
+;;        Check our file cache for a project.  If that fails, use
 ;;        the scan fcn above.
 
 ;;; Code:
@@ -57,7 +57,7 @@
 ;;stop))
 
 (defvar ede--detect-found-project nil
-  "When searching for a project, temporarilly save that file.")
+  "When searching for a project, temporarily save that file.")
 
 (defun ede--detect-ldf-predicate (dir)
   "Non-nil if DIR contain any known EDE project types."
@@ -81,7 +81,7 @@ use any file caches.
 Return a cons cell:
   ( ROOTDIR . PROJECT-AUTOLOAD)"
   (let* ((ede--detect-found-project nil)
-	 (root 
+	 (root
 	  (catch 'stopscan
 	    (locate-dominating-file directory
 				    'ede--detect-ldf-predicate))))
@@ -90,7 +90,7 @@ Return a cons cell:
 
 ;;; Root Only project detect
 ;;
-;; For projects that only have a detectible ROOT file, but may in fact
+;; For projects that only have a detectable ROOT file, but may in fact
 ;; contain a generic file such as a Makefile, we need to do a second scan
 ;; to make sure we don't miss-match.
 (defun ede--detect-ldf-rootonly-predicate (dir)
@@ -117,7 +117,7 @@ use any file caches.
 Return a cons cell:
   ( ROOTDIR . PROJECT-AUTOLOAD)"
   (let* ((ede--detect-found-project nil)
-	 (root 
+	 (root
 	  (catch 'stopscan
 	    (locate-dominating-file directory
 				    'ede--detect-ldf-rootonly-predicate))))
@@ -149,7 +149,7 @@ Return a cons cell:
   "If DIRECTORY has already been detected with AUTO, find the root.
 Some projects have their dominating file in all their directories, such
 as Project.ede.  In that case we will detect quickly, but then need
-to scan upward to find the topmost occurance of that file."
+to scan upward to find the topmost occurrence of that file."
   (let* ((ede--detect-nomatch-auto auto)
 	 (root (locate-dominating-file directory
 				       'ede--detect-ldf-root-predicate)))
@@ -179,7 +179,7 @@ Return a cons cell:
 	      (if moreroot
 		  moreroot
 
-		;; If we didn't find a root from the generic project, then 
+		;; If we didn't find a root from the generic project, then
 		;; we need to rescan upward.
 		(cons (ede--detect-scan-directory-for-project-root root auto) auto)))
 
@@ -203,7 +203,7 @@ Return a cons cell:
 		 (car ans)
 		 (eieio-object-name-string (cdr ans)))
       (message "No Project found.") )))
-  
+
 
 (provide 'ede/detect)
 
