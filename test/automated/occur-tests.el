@@ -321,7 +321,6 @@ Each element has the format:
   (let ((regexp (nth 0 test))
         (nlines (nth 1 test))
         (input-buffer-string (nth 2 test))
-        (output-buffer-string (nth 3 test))
         (temp-buffer (get-buffer-create " *test-occur*")))
     (unwind-protect
         (save-window-excursion
@@ -329,9 +328,8 @@ Each element has the format:
             (erase-buffer)
             (insert input-buffer-string)
             (occur regexp nlines)
-            (equal output-buffer-string
-                   (with-current-buffer "*Occur*"
-                     (buffer-string)))))
+            (with-current-buffer "*Occur*"
+              (buffer-substring-no-properties (point-min) (point-max)))))
       (and (buffer-name temp-buffer)
            (kill-buffer temp-buffer)))))
 
@@ -343,7 +341,8 @@ Each element has the format:
      `(ert-deftest ,testname ()
         ,testdoc
         (let (occur-hook)
-          (should (occur-test-case (nth ,n occur-tests))))))))
+          (should (equal (occur-test-case (nth ,n occur-tests))
+                         (nth 3 (nth ,n occur-tests)))))))))
 
 (dotimes (i (length occur-tests))
   (occur-test-create i))
