@@ -1,5 +1,6 @@
 2014-11-17  Ulf Jasper  <ulf.jasper@web.de>
 
+	Fix bug#5433.
 	* calendar/icalendar.el (icalendar-export-alarms): New
 	customizable variable.
 	(icalendar-export-region): Export alarms as specified in
