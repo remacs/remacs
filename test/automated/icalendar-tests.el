@@ -763,15 +763,14 @@ SUMMARY:block no end time
 Argument INPUT icalendar event string.
 Argument EXPECTED-ISO expected iso style diary string.
 Argument EXPECTED-EUROPEAN expected european style diary string.
-Argument EXPECTED-AMERICAN expected american style diary string."
+Argument EXPECTED-AMERICAN expected american style diary string.
+During import test the timezone is set to Central European Time."
   (let ((timezone (getenv "TZ")))
     (unwind-protect
 	(progn
-;;;	  (message "Current time zone: %s" (current-time-zone))
 	  ;; Use this form so as not to rely on system tz database.
 	  ;; Eg hydra.nixos.org.
 	  (setenv "TZ" "CET-1CEST,M3.5.0/2,M10.5.0/3")
-;;;	  (message "Current time zone: %s" (current-time-zone))
 	  (with-temp-buffer
 	    (if (string-match "^BEGIN:VCALENDAR" input)
 		(insert input)
@@ -1424,6 +1423,47 @@ END:VCALENDAR"
  Status: CONFIRMED
  UID: 040000008200E00074C5B7101A82E0080000000080B6DE661216C301000000000000000010000000DB823520692542408ED02D7023F9DFF9
 ")
+
+  ;; created with http://apps.marudot.com/ical/
+  (icalendar-tests--test-import
+   "BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//www.marudot.com//iCal Event Maker
+X-WR-CALNAME:Test
+CALSCALE:GREGORIAN
+BEGIN:VTIMEZONE
+TZID:Asia/Tehran
+TZURL:http://tzurl.org/zoneinfo-outlook/Asia/Tehran
+X-LIC-LOCATION:Asia/Tehran
+BEGIN:STANDARD
+TZOFFSETFROM:+0330
+TZOFFSETTO:+0330
+TZNAME:IRST
+DTSTART:19700101T000000
+END:STANDARD
+END:VTIMEZONE
+BEGIN:VEVENT
+DTSTAMP:20141116T171439Z
+UID:20141116T171439Z-678877132@marudot.com
+DTSTART;TZID=\"Asia/Tehran\":20141116T070000
+DTEND;TZID=\"Asia/Tehran\":20141116T080000
+SUMMARY:NoDST
+DESCRIPTION:Test event from timezone without DST
+LOCATION:Everywhere
+END:VEVENT
+END:VCALENDAR"
+   nil
+   "&16/11/2014 04:30-05:30 NoDST
+ Desc: Test event from timezone without DST
+ Location: Everywhere
+ UID: 20141116T171439Z-678877132@marudot.com
+"
+   "&11/16/2014 04:30-05:30 NoDST
+ Desc: Test event from timezone without DST
+ Location: Everywhere
+ UID: 20141116T171439Z-678877132@marudot.com
+")
+
 
   ;; 2003-06-18 a
   (icalendar-tests--test-import

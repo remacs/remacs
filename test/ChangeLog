@@ -1,3 +1,10 @@
+2014-11-17  Ulf Jasper  <ulf.jasper@web.de>
+
+	* automated/icalendar-tests.el (icalendar-tests--test-import):
+	Mention timezone in doc string.  Clean up.
+	(icalendar-real-world): Add another test case for no-dst
+	timezones.
+
 2014-11-16  Ulf Jasper  <ulf.jasper@web.de>
 
 	* automated/icalendar-tests.el (icalendar--parse-vtimezone): Add
