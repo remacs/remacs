@@ -722,7 +722,7 @@ If LIMIT is non-nil, show no more than this many entries."
   (with-current-buffer buffer
     (apply 'vc-bzr-command "log" buffer 'async files
 	   (append
-	    (when shortlog '("--line"))
+	    (if shortlog '("--line") '("--long"))
 	    ;; The extra complications here when start-revision and limit
 	    ;; are set are due to bzr log's --forward argument, which
 	    ;; could be enabled via an alias in bazaar.conf.
@@ -757,7 +757,7 @@ If LIMIT is non-nil, show no more than this many entries."
 (defun vc-bzr-expanded-log-entry (revision)
   (with-temp-buffer
     (apply 'vc-bzr-command "log" t nil nil
-	   (list (format "-r%s" revision)))
+	   (list "--long" (format "-r%s" revision)))
     (goto-char (point-min))
     (when (looking-at "^-+\n")
       ;; Indent the expanded log entry.

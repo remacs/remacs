@@ -1,3 +1,10 @@
+2014-11-17  Eli Zaretskii  <eliz@gnu.org>
+
+	* vc/vc-bzr.el (vc-bzr-print-log, vc-bzr-expanded-log-entry):
+	Don't assume --long is the default for "bzr log", always specify
+	it explicitly, in case the user defined an alias for 'log' that
+	uses some other format.
+
 2014-11-16  Fabián Ezequiel Gallina  <fgallina@gnu.org>
 
 	* progmodes/python.el (python-eldoc--get-doc-at-point): Strip
