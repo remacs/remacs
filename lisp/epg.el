@@ -252,9 +252,9 @@ installing GnuPG 1.x _along with_ GnuPG 2.x, which does passphrase
 query by itself and Emacs can intercept them."
   ;; (declare (obsolete setf "25.1"))
   (setf (epg-context-passphrase-callback context)
-        (if (consp passphrase-callback) ;FIXME: functions can also be consp!
-            passphrase-callback
-          (list passphrase-callback))))
+        (if (functionp passphrase-callback)
+	    (list passphrase-callback)
+	  passphrase-callback)))
 
 (defun epg-context-set-progress-callback (context
 					  progress-callback)
@@ -268,9 +268,9 @@ description, the character to display a progress unit, the
 current amount done, the total amount to be done, and the
 callback data (if any)."
   (setf (epg-context-progress-callback context)
-        (if (consp progress-callback) ;FIXME: could be a function!
-            progress-callback
-          (list progress-callback))))
+        (if (functionp progress-callback)
+            (list progress-callback)
+          progress-callback)))
 
 (defun epg-context-set-signers (context signers)
   "Set the list of key-id for signing."

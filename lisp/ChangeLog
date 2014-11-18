@@ -1,5 +1,11 @@
 2014-11-18  Daiki Ueno  <ueno@gnu.org>
 
+	* epg.el (epg-context-set-passphrase-callback)
+	(epg-context-set-progress-callback): Check if the CALLBACK
+	argument is a function, instead of a cons.
+
+2014-11-18  Daiki Ueno  <ueno@gnu.org>
+
 	* epa-file.el (epa-file-insert-file-contents)
 	(epa-file-write-region): Remove redundant check of
 	epa-pinentry-mode.
