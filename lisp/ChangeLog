@@ -1,5 +1,10 @@
 2014-11-18  Juri Linkov  <juri@linkov.net>
 
+	* progmodes/grep.el (grep-compute-defaults):
+	Compute grep-highlight-matches before its use.
+
+2014-11-18  Juri Linkov  <juri@linkov.net>
+
 	* replace.el (query-replace-from-to-separator): Turn defvar into
 	defcustom.  Wrap char-displayable-p in ignore-errors because an
 	attempt to autoload char-displayable-p fails during pre-loading.
