@@ -215,7 +215,7 @@ TIME should be either a time value or a date-time string."
 ;;;###autoload(autoload 'time-subtract "time-date")
 ;;;###autoload(autoload 'time-less-p "time-date")
 
-(eval-when-compile
+(eval-and-compile
   (when (not (and (fboundp 'time-add) (subrp (symbol-function 'time-add))))
 
     (defun time-add (t1 t2)
