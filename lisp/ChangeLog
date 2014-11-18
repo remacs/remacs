@@ -44,6 +44,7 @@
 2014-11-18  Paul Pogonyshev  <pogonyshev@gmail.com>
 	    Rüdiger Sonderfeld  <ruediger@c-plusplus.net>
 
+	Fix bug#13871 (an alternative version of the patch).
 	* progmodes/cc-langs.el: Support some of the new keywords in
 	C++11.
 	(c-operators): Add "alignof".
