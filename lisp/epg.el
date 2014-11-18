@@ -205,6 +205,7 @@
   compress-algorithm
   (passphrase-callback (list #'epg-passphrase-callback-function))
   progress-callback
+  edit-callback
   signers
   sig-notations
   process
@@ -668,15 +669,27 @@ callback data (if any)."
               (beginning-of-line)
               (while (looking-at ".*\n") ;the input line finished
                 (if (looking-at "\\[GNUPG:] \\([A-Z_]+\\) ?\\(.*\\)")
-                    (let* ((status (match-string 1))
-                           (string (match-string 2))
-                           (symbol (intern-soft (concat "epg--status-"
-                                                        status))))
+                    (let ((status (match-string 1))
+			  (string (match-string 2))
+			  symbol)
                       (if (member status epg-pending-status-list)
                           (setq epg-pending-status-list nil))
-                      (if (and symbol
-                               (fboundp symbol))
-                          (funcall symbol epg-context string))
+		      ;; When editing a key, delegate all interaction
+		      ;; to edit-callback.
+		      (if (eq (epg-context-operation epg-context) 'edit-key)
+			  (funcall (car (epg-context-edit-callback
+					 epg-context))
+				   epg-context
+				   status
+				   string
+				   (cdr (epg-context-edit-callback
+					 epg-context)))
+			;; Otherwise call epg--status-STATUS function.
+			(setq symbol (intern-soft (concat "epg--status-"
+							  status)))
+			(if (and symbol
+				 (fboundp symbol))
+			    (funcall symbol epg-context string)))
                       (setq epg-last-status (cons status string)))
 		  ;; Record other lines sent to stderr.  This assumes
 		  ;; that the process-filter receives output only from
@@ -736,7 +749,8 @@ callback data (if any)."
   (if (and (epg-context-process context)
 	   (buffer-live-p (process-buffer (epg-context-process context))))
       (kill-buffer (process-buffer (epg-context-process context))))
-  (setf (epg-context-process context) nil))
+  (setf (epg-context-process context) nil)
+  (setf (epg-context-edit-callback context) nil))
 
 (defun epg-delete-output-file (context)
   "Delete the output file of CONTEXT."
@@ -2081,6 +2095,38 @@ PARAMETERS is a string which tells how to create the key."
 	  (if errors
 	      (signal 'epg-error
 		      (list "Generate key failed"
+			    (epg-errors-to-string errors))))))
+    (epg-reset context)))
+
+(defun epg-start-edit-key (context key edit-callback handback)
+  "Initiate an edit operation on KEY.
+
+EDIT-CALLBACK is called from process filter and takes 3
+arguments: the context, a status, an argument string, and the
+handback argument.
+
+If you use this function, you will need to wait for the completion of
+`epg-gpg-program' by using `epg-wait-for-completion' and call
+`epg-reset' to clear a temporary output file.
+If you are unsure, use synchronous version of this function
+`epg-edit-key' instead."
+  (setf (epg-context-operation context) 'edit-key)
+  (setf (epg-context-result context) nil)
+  (setf (epg-context-edit-callback context) (cons edit-callback handback))
+  (epg--start context (list "--edit-key"
+			    (epg-sub-key-id
+			     (car (epg-key-sub-key-list key))))))
+
+(defun epg-edit-key (context key edit-callback handback)
+  "Edit KEY in the keyring."
+  (unwind-protect
+      (progn
+	(epg-start-edit-key context key edit-callback handback)
+	(epg-wait-for-completion context)
+	(let ((errors (epg-context-result-for context 'error)))
+	  (if errors
+	      (signal 'epg-error
+		      (list "Edit key failed"
 			    (epg-errors-to-string errors))))))
     (epg-reset context)))
 

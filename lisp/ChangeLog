@@ -1,3 +1,11 @@
+2014-11-18  Daiki Ueno  <ueno@gnu.org>
+
+	* epg.el (epg-context): New slot EDIT-CALLBACK.
+	(epg--process-filter): Call EDIT-CALLBACK when editing a key.
+	(epg-reset): Reset EDIT-CALLBACK of the context.
+	(epg-start-edit-key): New function.
+	(epg-edit-key): New function.
+
 2014-11-18  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Port new time stamp handling to Emacs 23.2.
