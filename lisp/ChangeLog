@@ -1,5 +1,17 @@
 2014-11-18  Juri Linkov  <juri@linkov.net>
 
+	* replace.el (query-replace-from-to-separator): Turn defvar into
+	defcustom.  Wrap char-displayable-p in ignore-errors because an
+	attempt to autoload char-displayable-p fails during pre-loading.
+	Move (propertize "\0" ... 'separator t) out of customizable part
+	to query-replace-read-from.
+	(query-replace-read-from): Call custom-reevaluate-setting on
+	query-replace-from-to-separator to reevaluate the separator
+	depending on the return value of char-displayable-p.
+	http://lists.gnu.org/archive/html/emacs-devel/2014-11/msg00466.html
+
+2014-11-18  Juri Linkov  <juri@linkov.net>
+
 	* bindings.el (minibuffer-local-map): Rebind [down] from
 	next-history-element to next-line-or-history-element, and [up]
 	from previous-history-element to previous-line-or-history-element.
