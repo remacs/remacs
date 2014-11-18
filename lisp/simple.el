@@ -1992,7 +1992,8 @@ next element of the minibuffer history in the minibuffer."
   (or arg (setq arg 1))
   (let ((old-point (point)))
     (condition-case nil
-	(next-line arg)
+	(with-no-warnings
+	  (next-line arg))
       (end-of-buffer
        ;; Restore old position since `line-move-visual' moves point to
        ;; the end of the line when it fails to go to the next line.
@@ -2007,7 +2008,8 @@ previous element of the minibuffer history in the minibuffer."
   (or arg (setq arg 1))
   (let ((old-point (point)))
     (condition-case nil
-	(previous-line arg)
+	(with-no-warnings
+	  (previous-line arg))
       (beginning-of-buffer
        ;; Restore old position since `line-move-visual' moves point to
        ;; the beginning of the line when it fails to go to the previous line.

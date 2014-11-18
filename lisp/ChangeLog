@@ -1,5 +1,12 @@
 2014-11-18  Juri Linkov  <juri@linkov.net>
 
+	* simple.el (next-line-or-history-element): Wrap next-line
+	in with-no-warnings.
+	(previous-line-or-history-element): Wrap previous-line
+	in with-no-warnings.
+
+2014-11-18  Juri Linkov  <juri@linkov.net>
+
 	* progmodes/grep.el (grep-compute-defaults):
 	Compute grep-highlight-matches before its use.
 
