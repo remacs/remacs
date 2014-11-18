@@ -1360,6 +1360,13 @@ called directly from C, and such calls ignore advice; hence, one ends
 up in a confusing situation where some calls (occurring from Lisp
 code) obey the advice and other calls (from C code) do not.
 
+@defmac define-advice symbol (where lambda-list &optional name depth) &rest body
+This macro defines an advice and adds it to the function named
+@var{symbol}.  The advice is an anonymous function if @var{name} is
+nil or a function named @code{symbol@@name}.  See @code{advice-add}
+for explanation of other arguments.
+@end defmac
+
 @defun advice-add symbol where function &optional props
 Add the advice @var{function} to the named function @var{symbol}.
 @var{where} and @var{props} have the same meaning as for @code{add-function}

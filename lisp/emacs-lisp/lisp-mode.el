@@ -96,7 +96,7 @@
 			      '("defun" "defmacro"
                                 ;; Elisp.
                                 "defun*" "defsubst"
-				"defadvice" "define-skeleton"
+				"define-advice" "defadvice" "define-skeleton"
 				"define-compilation-mode" "define-minor-mode"
 				"define-global-minor-mode"
 				"define-globalized-minor-mode"
@@ -195,7 +195,7 @@
                          "ignore-errors" "dotimes" "dolist" "declare"))
               (lisp-errs '("warn" "error" "signal"))
               ;; Elisp constructs.  FIXME: update dynamically from obarray.
-              (el-fdefs '("defadvice" "defalias"
+              (el-fdefs '("define-advice" "defadvice" "defalias"
                           "define-derived-mode" "define-minor-mode"
                           "define-generic-mode" "define-global-minor-mode"
                           "define-globalized-minor-mode" "define-skeleton"

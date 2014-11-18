@@ -1,3 +1,8 @@
+2014-11-18  Leo Liu  <sdl.web@gmail.com>
+
+	* functions.texi (Advising Named Functions): Document
+	define-advice.
+
 2014-11-17  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Improve time stamp handling, and be more consistent about it.
