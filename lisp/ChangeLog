@@ -1,5 +1,14 @@
 2014-11-18  Daiki Ueno  <ueno@gnu.org>
 
+	* epa-file.el (epa-file-insert-file-contents)
+	(epa-file-write-region): Remove redundant check of
+	epa-pinentry-mode.
+	* epa.el (epa-sign-file, epa-encrypt-file, epa-decrypt-region)
+	(epa-sign-region, epa-encrypt-region): Remove redundant check of
+	epa-pinentry-mode.
+
+2014-11-18  Daiki Ueno  <ueno@gnu.org>
+
 	* epa-file.el (epa-file-insert-file-contents): Don't show
 	"*Error*" buffer if input file does not exist.
 	Reported by Herbert J. Skuhra.
