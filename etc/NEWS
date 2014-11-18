@@ -133,6 +133,14 @@ Unicode standards.
 
 * Changes in Specialized Modes and Packages in Emacs 25.1
 
+** Minibuffer
+
+*** You can use <up> and <down> keys to move point in the multi-line
+minibuffer just as in an ordinary buffer.  Only when point moves over
+the bottom/top of the minibuffer it goes to the next/previous history
+element.  The new commands bound to <up> and <down> in the minibuffer:
+`next-line-or-history-element' and `previous-line-or-history-element'.
+
 ** Search and Replace
 
 *** Query-replace history is enhanced.

@@ -1984,6 +1984,36 @@ With argument N, it uses the Nth previous element."
   (or (zerop n)
       (goto-history-element (+ minibuffer-history-position n))))
 
+(defun next-line-or-history-element (&optional arg)
+  "Move cursor vertically down ARG lines, or to the next history element.
+When point moves over the bottom line of multi-line minibuffer, puts ARGth
+next element of the minibuffer history in the minibuffer."
+  (interactive "^p")
+  (or arg (setq arg 1))
+  (let ((old-point (point)))
+    (condition-case nil
+	(next-line arg)
+      (end-of-buffer
+       ;; Restore old position since `line-move-visual' moves point to
+       ;; the end of the line when it fails to go to the next line.
+       (goto-char old-point)
+       (next-history-element arg)))))
+
+(defun previous-line-or-history-element (&optional arg)
+  "Move cursor vertically up ARG lines, or to the previous history element.
+When point moves over the top line of multi-line minibuffer, puts ARGth
+previous element of the minibuffer history in the minibuffer."
+  (interactive "^p")
+  (or arg (setq arg 1))
+  (let ((old-point (point)))
+    (condition-case nil
+	(previous-line arg)
+      (beginning-of-buffer
+       ;; Restore old position since `line-move-visual' moves point to
+       ;; the beginning of the line when it fails to go to the previous line.
+       (goto-char old-point)
+       (previous-history-element arg)))))
+
 (defun next-complete-history-element (n)
   "Get next history element which completes the minibuffer before the point.
 The contents of the minibuffer after the point are deleted, and replaced
