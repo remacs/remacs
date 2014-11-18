@@ -153,7 +153,6 @@ encryption is used."
 	  (condition-case error
 	      (setq string (epg-decrypt-file context local-file nil))
 	    (error
-	     (epa-display-error context)
 	     (if (setq entry (assoc file epa-file-passphrase-alist))
 		 (setcdr entry nil))
 	     ;; If the decryption program can't be found,
@@ -164,15 +163,16 @@ encryption is used."
 		      (equal (cadr error) "Searching for program"))
 		 (error "Decryption program `%s' not found"
 			(nth 3 error)))
-	     ;; Hack to prevent find-file from opening empty buffer
-	     ;; when decryption failed (bug#6568).  See the place
-	     ;; where `find-file-not-found-functions' are called in
-	     ;; `find-file-noselect-1'.
 	     (when (file-exists-p local-file)
+	       ;; Hack to prevent find-file from opening empty buffer
+	       ;; when decryption failed (bug#6568).  See the place
+	       ;; where `find-file-not-found-functions' are called in
+	       ;; `find-file-noselect-1'.
 	       (setq-local epa-file-error error)
 	       (add-hook 'find-file-not-found-functions
 			 'epa-file--find-file-not-found-function
-			 nil t))
+			 nil t)
+	       (epa-display-error context))
 	     (signal 'file-error
 		     (cons "Opening input file" (cdr error)))))
           (set-buffer buf) ;In case timer/filter changed/killed it (bug#16029)!

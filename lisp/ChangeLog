@@ -1,3 +1,9 @@
+2014-11-18  Daiki Ueno  <ueno@gnu.org>
+
+	* epa-file.el (epa-file-insert-file-contents): Don't show
+	"*Error*" buffer if input file does not exist.
+	Reported by Herbert J. Skuhra.
+
 2014-11-18  Paul Pogonyshev  <pogonyshev@gmail.com>
 	    Rüdiger Sonderfeld  <ruediger@c-plusplus.net>
 
