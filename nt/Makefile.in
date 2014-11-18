@@ -214,17 +214,16 @@ TAGS: ${EXE_FILES:${EXEEXT}=.c}
 
 ## Build the programs
 addpm${EXEEXT}: ${srcdir}/addpm.c ../src/epaths.h
-	$(CC) ${ALL_CFLAGS} ${srcdir}/addpm.c $(LIBS_ADDPM) -o addpm${EXEEXT}
+	$(CC) ${ALL_CFLAGS} $< $(LIBS_ADDPM) -o $@
 
 ddeclient${EXEEXT}: ${srcdir}/ddeclient.c
-	$(CC) ${ALL_CFLAGS} ${srcdir}/ddeclient.c -o ddeclient${EXEEXT}
+	$(CC) ${ALL_CFLAGS} $< -o $@
 
 cmdproxy${EXEEXT}: ${srcdir}/cmdproxy.c
-	$(CC) ${ALL_CFLAGS} ${srcdir}/cmdproxy.c -o cmdproxy${EXEEXT}
+	$(CC) ${ALL_CFLAGS} $< -o $@
 
 runemacs${EXEEXT}: ${srcdir}/runemacs.c $(EMACSRES)
-	$(CC) ${ALL_CFLAGS} ${srcdir}/runemacs.c $(EMACSRES) -mwindows \
-         -o runemacs${EXEEXT}
+	$(CC) ${ALL_CFLAGS} $^ -mwindows -o $@
 
 emacs.res: ${srcdir}/emacs.rc ${srcdir}/icons/emacs.ico ${srcdir}/$(EMACS_MANIFEST)
-	${WINDRES} -I ${srcdir} -O coff -o emacs.res ${srcdir}/emacs.rc
+	${WINDRES} -I ${srcdir} -O coff -o $@ $<
