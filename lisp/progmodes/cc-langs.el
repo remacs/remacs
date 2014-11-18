@@ -970,7 +970,8 @@ since CC Mode treats every identifier as an expression."
       ,@(when (c-major-mode-is 'c++-mode)
 	  ;; The following need special treatment.
 	  `((prefix "dynamic_cast" "static_cast"
-		    "reinterpret_cast" "const_cast" "typeid")))
+		    "reinterpret_cast" "const_cast" "typeid"
+                    "alignof")))
       (left-assoc "."
 		  ,@(unless (c-major-mode-is 'java-mode)
 		      '("->")))
@@ -1648,7 +1649,7 @@ the appropriate place for that."
 	'("_Bool" "_Complex" "_Imaginary") ; Conditionally defined in C99.
 	(c-lang-const c-primitive-type-kwds))
   c++  (append
-	'("bool" "wchar_t")
+	'("bool" "wchar_t" "char16_t" "char32_t")
 	(c-lang-const c-primitive-type-kwds))
   ;; Objective-C extends C, but probably not the new stuff in C99.
   objc (append
@@ -1730,7 +1731,7 @@ but they don't build a type of themselves.  Unlike the keywords on
 not the type face."
   t    nil
   c    '("const" "restrict" "volatile")
-  c++  '("const" "volatile" "throw")
+  c++  '("const" "constexpr" "noexcept" "volatile" "throw")
   objc '("const" "volatile"))
 
 (c-lang-defconst c-opt-type-modifier-key
@@ -1932,7 +1933,8 @@ If any of these also are on `c-type-list-kwds', `c-ref-list-kwds',
 will be handled."
   t    nil
   (c c++) '("auto" "extern" "inline" "register" "static")
-  c++  (append '("explicit" "friend" "mutable" "template" "using" "virtual")
+  c++  (append '("explicit" "friend" "mutable" "template" "thread_local"
+                 "using" "virtual")
 	       (c-lang-const c-modifier-kwds))
   objc '("auto" "bycopy" "byref" "extern" "in" "inout" "oneway" "out" "static")
   ;; FIXME: Some of those below ought to be on `c-other-decl-kwds' instead.
@@ -2384,8 +2386,11 @@ This construct is \"<keyword> <expression> :\"."
 (c-lang-defconst c-constant-kwds
   "Keywords for constants."
   t       nil
-  (c c++) '("NULL" ;; Not a keyword, but practically works as one.
+  c       '("NULL" ;; Not a keyword, but practically works as one.
 	    "false" "true")		; Defined in C99.
+  c++     (append
+           '("nullptr")
+           (c-lang-const c-constant-kwds))
   objc    '("nil" "Nil" "YES" "NO" "NS_DURING" "NS_HANDLER" "NS_ENDHANDLER")
   idl     '("TRUE" "FALSE")
   java    '("true" "false" "null") ; technically "literals", not keywords
