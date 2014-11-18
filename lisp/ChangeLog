@@ -2731,7 +2731,8 @@
 	(c-typeless-decl-kwds): Append "auto" onto the C++ value.
 	(c-not-decl-init-keywords): Also exclude c-typeof-kwds from value.
 
-	Make ">>" act as double template ender in C++ Mode.
+	Make ">>" act as double template ender in C++ Mode.  Fix
+	bug#11386.
 	* progmodes/cc-langs.el (c->-op-cont-tokens): New lang-const split
 	off from c->-op-cont-re.
 	(c->-op-cont-tokens): Change to use the above.
