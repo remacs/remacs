@@ -32,14 +32,7 @@ written to the standard output after performing these transformations:
 
 1. Discard empty paths.
 2. Replace: '\' with '/', '//' with '/' and ':' with ';'.
-3. Translate each path to Windows-native format.
-
-Relative paths or paths starting with '%emacs_dir%' will be passed
-verbatim to the standard output.
-
-Each non existing absolute path will be translated by looking for its
-deepest existing directory, which will be translated and the remainder
-appended.
+3. Translate absolute paths to Windows-native format.
 
 Options:
   --help     display this help and exit
@@ -78,10 +71,7 @@ for p
 do
     [ -z "$p" ] && continue
 
-    if [ "${p:0:11}" = "%emacs_dir%" ]
-    then
-	w32p=$p
-    elif [ "${p:0:1}" != "/" ]
+    if [ "${p:0:1}" != "/" ]
     then
 	w32p=$p
     elif [ -d "$p" ]

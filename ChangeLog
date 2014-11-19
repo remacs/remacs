@@ -1,3 +1,8 @@
+2014-11-19  Dani Moncayo  <dmoncayo@gmail.com>
+
+	* build-aux/msys-to-w32: Simplify implementation and docstring;
+	Paths starting with '%emacs_dir%' are just considered relative.
+
 2014-11-16  Christoph Scholtes  <cschol2112@gmail.com>
 
 	* .gitignore: Ignore generated file lib/stdalign.h.
