@@ -1,3 +1,7 @@
+2014-11-19  Ivan Shmakov  <ivan@siamics.net>
+
+	* eww.texi (Basics): Document `eww-history-limit'.
+
 2014-11-14  Paul Eggert  <eggert@cs.ucla.edu>
 
 	* org.texi (The date/time prompt, Matching tags and properties):

@@ -126,6 +126,15 @@ history press @kbd{H} (@code{eww-list-histories}) to open the history
 buffer @file{*eww history*}.  The history is lost when EWW is quit.
 If you want to remember websites you can use bookmarks.
 
+@vindex eww-history-limit
+  Along with the URLs visited, EWW also remembers both the rendered
+page (as it appears in the buffer) and its source.  This can take a
+considerable amount of memory, so EWW discards the history entries to
+keep their number within a set limit, as specified by
+@code{eww-history-limit}; the default being 50.  This variable could
+also be set to @code{nil} to allow for the history list to grow
+indefinitely.
+
 @findex eww-add-bookmark
 @findex eww-list-bookmarks
 @kindex b
