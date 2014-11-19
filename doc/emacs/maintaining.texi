@@ -1474,9 +1474,11 @@ different revision with @kbd{C-u C-x v v}.
 @cindex change log
   Many software projects keep a @dfn{change log}.  This is a file,
 normally named @file{ChangeLog}, containing a chronological record of
-when and how the program was changed.  Sometimes, there are several
-change log files, each recording the changes in one directory or
-directory tree.
+when and how the program was changed.  Sometimes, these files are
+automatically generated from the change log entries stored in version
+control systems, or are used to generate these change log entries.
+Sometimes, there are several change log files, each recording the
+changes in one directory or directory tree.
 
 @menu
 * Change Log Commands:: Commands for editing change log files.

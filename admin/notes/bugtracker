@@ -463,10 +463,10 @@ time, rather than by increasing bug number
 
 "raw" = ?
 
-** ChangeLog issues
+** Change log issues
 
 *** When you fix a bug, it can be helpful to put the bug number in the
-ChangeLog entry, for example:
+change log entry, for example:
 
    * foo.el (foofunc): Fix the `foo' case.  (Bug#123)
 
@@ -475,7 +475,7 @@ obvious fix (e.g. a typo), there's no need to clutter the log with the
 bug number.
 
 Similarly, when you close a bug, it can be helpful to include the
-relevant ChangeLog entry in the message to the bug tracker, so people
+relevant change log entry in the message to the bug tracker, so people
 can see exactly what the fix was.
 
 *** bug-reference-mode

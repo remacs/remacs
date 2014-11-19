@@ -1,3 +1,9 @@
+2014-11-19  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Lessen focus on ChangeLog files, as opposed to change log entries.
+	* intro.texi (Acknowledgments): ChangeLog file -> change log entries.
+	* tips.texi (Library Headers): Emacs uses a version control system.
+
 2014-11-09  Glenn Morris  <rgm@gnu.org>
 
 	* Makefile.in (version): Remove variable.

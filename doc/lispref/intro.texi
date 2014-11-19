@@ -552,4 +552,4 @@ Trost, Rickard Westman, Jean White, Eduard Wiebe, Matthew Wilding,
 Carl Witty, Dale Worley, Rusty Wright, and David D. Zuhn.
 
   For a more complete list of contributors, please see the relevant
-ChangeLog file in the Emacs sources.
+change log entries in the Emacs source repository.

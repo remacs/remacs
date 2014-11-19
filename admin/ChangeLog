@@ -1,3 +1,13 @@
+2014-11-19  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Lessen focus on ChangeLog files, as opposed to change log entries.
+	This is in preparation for generating the former automatically
+	from the latter.
+	* notes/bugtracker, notes/copyright, notes/newfile:
+	ChangeLog -> change log
+	* notes/changelogs: Remove, merging old contents to ...
+	* notes/repo: ... here.
+
 2014-11-17  Oscar Fuentes  <ofv@wanadoo.es>
 
 	* admin/CPP-DEFINES: Mention MINGW_W64.

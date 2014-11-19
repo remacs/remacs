@@ -118,13 +118,23 @@ documentation, i.e. Texinfo files.
 Ref: "Change Log Concepts" node of the GNU Coding Standards Info
 Manual, for how to write good log entries.
 
+When using git, commit messages should use ChangeLog format, with a
+single short line explaining the change, then an empty line, then
+unindented ChangeLog entries.  (Essentially, a commit message should
+be a duplicate of what the patch adds to the ChangeLog files.  We are
+planning to automate this better, to avoid the duplication.)
+
 ** The patch itself.
 
 If you are accessing the Emacs repository, make sure your copy is
-up-to-date (e.g. with `git pull'), then use
+up-to-date (e.g. with 'git pull').  You can commit your changes
+to a private branch and generate a patch from the master version
+by using
+	git format-patch master
+Or you can leave your changes uncommitted and use
         git diff
-Else, use
-	diff -cp OLD NEW
+With no repository, you can use
+	diff -u OLD NEW
 
 ** Mail format.
 

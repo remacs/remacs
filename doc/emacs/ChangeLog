@@ -1,3 +1,10 @@
+2014-11-19  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Lessen focus on ChangeLog files, as opposed to change log entries.
+	* maintaining.texi (Change Log): Mention that ChangeLog files may
+	be copied to or from a version control system.
+	* trouble.texi (Sending Patches): Point to the commit messages.
+
 2014-11-19  Eli Zaretskii  <eliz@gnu.org>
 
 	* maintaining.texi (Switching Branches): Mention "C-x v r".

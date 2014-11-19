@@ -1,3 +1,9 @@
+2014-11-19  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Lessen focus on ChangeLog files, as opposed to change log entries.
+	* CONTRIBUTE: Give advice about git commit messages and how
+	to generate proposed patches containing them.
+
 2014-11-13  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Backport fix for minor Bazaar leftovers.
