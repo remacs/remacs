@@ -259,7 +259,6 @@ See the `eww-search-prefix' variable for the search engine used."
 	 (data-buffer (current-buffer)))
     (unwind-protect
 	(progn
-          (plist-put eww-data :title "")
 	  (cond
            ((and eww-use-external-browser-for-content-type
                  (string-match-p eww-use-external-browser-for-content-type
