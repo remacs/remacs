@@ -65,6 +65,9 @@ have the equivalent of a primary selection.
 +++
 ** terpri gets an optional arg ENSURE to conditionally output a newline.
 
++++
+** New macro `define-advice'.
+
 ** `insert-register' now leaves point after the inserted text
 when called interactively.  A prefix argument toggles this behavior.
 

@@ -1,3 +1,7 @@
+2014-11-19  Leo Liu  <sdl.web@gmail.com>
+
+	* NEWS: Mention new macro define-advice.
+
 2014-11-17  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Improve time stamp handling, and be more consistent about it.
