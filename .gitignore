@@ -102,6 +102,7 @@ src/stamp-h1
 *.dSYM/
 *.elc
 *.o
+*.res
 oo/
 oo-spd/
 src/*.map
@@ -123,6 +124,7 @@ src/bootstrap-emacs
 src/emacs
 src/emacs-[0-9]*
 src/temacs
+*.exe
 
 # Character-set info.
 admin/charsets/*.el

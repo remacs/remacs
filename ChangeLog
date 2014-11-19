@@ -1,3 +1,8 @@
+2014-11-19  Eli Zaretskii  <eliz@gnu.org>
+
+	* .gitignore: Resurrect Windows-specific ignorables lost in last
+	changes.
+
 2014-11-19  Paul Eggert  <eggert@cs.ucla.edu>
 
 	* .gitignore: Add /emacs-[1-9]*/, and sort better.
