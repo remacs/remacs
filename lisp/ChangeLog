@@ -5,7 +5,7 @@
 2014-11-19  Ivan Shmakov  <ivan@siamics.net>
 
 	* net/eww.el (eww-history-limit): New variable.
-	(eww-save-history): Use it.
+	(eww-save-history): Use it (bug#19105).
 	(eww-reload): Reload the page in the right buffer.
 
 2014-11-19  Lars Magne Ingebrigtsen  <larsi@gnus.org>
@@ -16,7 +16,7 @@
 
 	* net/eww.el (eww-desktop-remove-duplicates)
 	(eww-restore-desktop, eww-restore-reload-prompt): New variables.
-	(eww-mode): Set up desktop mode.
+	(eww-mode): Set up desktop mode (bug#18010).
 	(eww-desktop-data-save, eww-desktop-data-1)
 	(eww-desktop-history-duplicate, eww-desktop-misc-data)
 	(eww-restore-desktop): New functions.
