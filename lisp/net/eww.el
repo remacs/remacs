@@ -705,7 +705,8 @@ appears in a <link> or <a> tag."
   "Reload the current page."
   (interactive)
   (let ((url (plist-get eww-data :url)))
-    (url-retrieve url 'eww-render (list url (point)))))
+    (url-retrieve url 'eww-render
+		  (list url (point) (current-buffer)))))
 
 ;; Form support.
 

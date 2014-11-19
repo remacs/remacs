@@ -2,6 +2,7 @@
 
 	* net/eww.el (eww-history-limit): New variable.
 	(eww-save-history): Use it.
+	(eww-reload): Reload the page in the right buffer.
 
 2014-11-19  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
