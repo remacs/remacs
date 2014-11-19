@@ -1,3 +1,7 @@
+2014-11-19  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* net/eww.el (eww-desktop-misc-data): Use `cl-remove-duplicates'.
+
 2014-11-19  Ivan Shmakov  <ivan@siamics.net>
 
 	* net/eww.el (eww-desktop-remove-duplicates)

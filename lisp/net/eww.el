@@ -1597,7 +1597,7 @@ Generally, the list should not include the (usually overly large)
   (let ((history  (mapcar 'eww-desktop-data-1
 			  (cons eww-data eww-history))))
     (list :history  (if eww-desktop-remove-duplicates
-			(remove-duplicates
+			(cl-remove-duplicates
 			 history :test 'eww-desktop-history-duplicate)
 		      history))))
 
