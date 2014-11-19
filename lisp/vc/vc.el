@@ -2273,17 +2273,18 @@ earlier revisions.  Show up to LIMIT entries (non-nil means unlimited)."
     (with-current-buffer (get-buffer-create buffer-name)
       (set (make-local-variable 'vc-log-view-type) type))
     (setq retval (funcall backend-func backend buffer-name type files))
-    (let ((inhibit-read-only t))
-      ;; log-view-mode used to be called with inhibit-read-only bound
-      ;; to t, so let's keep doing it, just in case.
-      (vc-call-backend backend 'log-view-mode)
-      (set (make-local-variable 'log-view-vc-backend) backend)
-      (set (make-local-variable 'log-view-vc-fileset) files)
-      (set (make-local-variable 'revert-buffer-function)
-	   rev-buff-func))
+    (with-current-buffer (get-buffer buffer-name)
+      (let ((inhibit-read-only t))
+	;; log-view-mode used to be called with inhibit-read-only bound
+	;; to t, so let's keep doing it, just in case.
+	(vc-call-backend backend 'log-view-mode)
+	(set (make-local-variable 'log-view-vc-backend) backend)
+	(set (make-local-variable 'log-view-vc-fileset) files)
+	(set (make-local-variable 'revert-buffer-function)
+	     rev-buff-func)))
     ;; Display after setting up major-mode, so display-buffer-alist can know
     ;; the major-mode.
-    (pop-to-buffer buffer-name)         
+    (pop-to-buffer buffer-name)
     (vc-run-delayed
      (let ((inhibit-read-only t))
        (funcall setup-buttons-func backend files retval)

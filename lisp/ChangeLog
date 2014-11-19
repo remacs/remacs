@@ -1,3 +1,8 @@
+2014-11-19  Eli Zaretskii  <eliz@gnu.org>
+
+	* vc/vc.el (vc-log-internal-common): Turn on log-view-mode in the
+	correct buffer.  (Bug#19101)
+
 2014-11-19  Rüdiger Sonderfeld  <ruediger@c-plusplus.net>
 
 	Fix bug#19099.
