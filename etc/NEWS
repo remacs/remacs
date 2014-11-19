@@ -132,6 +132,10 @@ Unicode standards.
 
 
 * Changes in Specialized Modes and Packages in Emacs 25.1
+** ido
+*** New command `ido-bury-buffer-at-head' bound to C-S-b
+Bury the buffer at the head of `ido-matches', analogous to how C-k
+kills the buffer at head.
 
 ** Minibuffer
 
