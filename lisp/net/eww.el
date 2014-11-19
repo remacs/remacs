@@ -95,6 +95,12 @@ The string will be passed through `substitute-command-keys'."
   :group 'eww
   :type 'string)
 
+(defcustom eww-history-limit 50
+  "Maximum number of entries to retain in the history."
+  :version "25.1"
+  :group 'eww
+  :type '(choice (const :tag "Unlimited" nil)
+                 integer))
 (defcustom eww-use-external-browser-for-content-type
   "\\`\\(video/\\|audio/\\|application/ogg\\)"
   "Always use external browser for specified content-type."
@@ -1487,7 +1493,8 @@ Differences in #targets are ignored."
   (setq eww-data (list :title ""))
   ;; Don't let the history grow infinitely.  We store quite a lot of
   ;; data per page.
-  (when-let (tail (nthcdr 50 eww-history))
+  (when-let (tail (and eww-history-limit
+		       (nthcdr eww-history-limit eww-history)))
     (setcdr tail nil)))
 
 (defun eww-list-histories ()

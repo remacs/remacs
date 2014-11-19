@@ -1,3 +1,8 @@
+2014-11-19  Ivan Shmakov  <ivan@siamics.net>
+
+	* net/eww.el (eww-history-limit): New variable.
+	(eww-save-history): Use it.
+
 2014-11-19  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
 	* net/eww.el (eww-desktop-misc-data): Use `cl-remove-duplicates'.
