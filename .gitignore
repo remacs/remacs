@@ -11,14 +11,14 @@ lib/Makefile.in
 src/config.in
 
 # Built by 'configure'.
+Info.plist
+InfoPlist.strings
 Makefile
 makefile
 /*.cache
 /config.status
 src/config.h
 src/epaths.h
-Info.plist
-InfoPlist.strings
 
 # C-level sources built by 'make'.
 lib/alloca.h
@@ -99,12 +99,12 @@ src/stamp-h1
 
 # Object files and debugging.
 *.a
+*.dSYM/
 *.elc
 *.o
 oo/
 oo-spd/
 src/*.map
-*.dSYM/
 
 # Executables.
 lib-src/blessmail
@@ -118,11 +118,11 @@ lib-src/movemail
 lib-src/profile
 lib-src/test-distrib
 lib-src/update-game-score
+nextstep/Emacs.app/
 src/bootstrap-emacs
 src/emacs
 src/emacs-[0-9]*
 src/temacs
-nextstep/Emacs.app/
 
 # Character-set info.
 admin/charsets/*.el
@@ -176,3 +176,6 @@ info/dir
 
 # Git output.
 [0-9]*.patch
+
+# Distribution directories.
+/emacs-[1-9]*/
