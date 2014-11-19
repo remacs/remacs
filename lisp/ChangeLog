@@ -1,3 +1,12 @@
+2014-11-19  Ivan Shmakov  <ivan@siamics.net>
+
+	* net/eww.el (eww-desktop-remove-duplicates)
+	(eww-restore-desktop, eww-restore-reload-prompt): New variables.
+	(eww-mode): Set up desktop mode.
+	(eww-desktop-data-save, eww-desktop-data-1)
+	(eww-desktop-history-duplicate, eww-desktop-misc-data)
+	(eww-restore-desktop): New functions.
+
 2014-11-19  Eli Zaretskii  <eliz@gnu.org>
 
 	* vc/vc.el (vc-log-internal-common): Turn on log-view-mode in the

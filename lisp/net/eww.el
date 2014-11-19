@@ -65,6 +65,36 @@
   :group 'eww
   :type 'string)
 
+(defcustom eww-desktop-remove-duplicates t
+  "Whether to remove duplicates from the history when saving desktop data.
+If non-nil, repetitive EWW history entries (comprising of the URI, the
+title, and the point position) will not be saved as part of the Emacs
+desktop.  Otherwise, such entries will be retained."
+  :version "25.1"
+  :group 'eww
+  :type 'boolean)
+
+(defcustom eww-restore-desktop nil
+  "How to restore EWW buffers on `desktop-restore'.
+If t or 'auto, the buffers will be reloaded automatically.
+If nil, buffers will require manual reload, and will contain the text
+specified in `eww-restore-reload-prompt' instead of the actual Web
+page contents."
+  :version "25.1"
+  :group 'eww
+  :type '(choice (const :tag "Restore all automatically" t)
+                 (const :tag "Require manual reload" nil)))
+
+(defcustom eww-restore-reload-prompt
+  "\n\n *** Use \\[eww-reload] to reload this buffer. ***\n"
+  "The string to put in the buffers not reloaded on `desktop-restore'.
+This prompt will be used if `eww-restore-desktop' is nil.
+
+The string will be passed through `substitute-command-keys'."
+  :version "25.1"
+  :group 'eww
+  :type 'string)
+
 (defcustom eww-use-external-browser-for-content-type
   "\\`\\(video/\\|audio/\\|application/ogg\\)"
   "Always use external browser for specified content-type."
@@ -583,6 +613,8 @@ the like."
   (setq-local eww-history-position 0)
   (when (boundp 'tool-bar-map)
    (setq-local tool-bar-map eww-tool-bar-map))
+  ;; desktop support
+  (setq-local desktop-save-buffer 'eww-desktop-misc-data)
   (buffer-disable-undo)
   (setq buffer-read-only t))
 
@@ -611,12 +643,15 @@ the like."
   (eww-restore-history (elt eww-history (1- eww-history-position))))
 
 (defun eww-restore-history (elem)
-  (let ((inhibit-read-only t))
-    (erase-buffer)
-    (insert (plist-get elem :text))
-    (goto-char (plist-get elem :point))
+  (let ((inhibit-read-only t)
+	(text (plist-get elem :text)))
     (setq eww-data elem)
-    (eww-update-header-line-format)))
+    (if (null text)
+	(eww-reload)			; FIXME: restore :point?
+      (erase-buffer)
+      (insert text)
+      (goto-char (plist-get elem :point))
+      (eww-update-header-line-format))))
 
 (defun eww-next-url ()
   "Go to the page marked `next'.
@@ -1517,6 +1552,82 @@ Differences in #targets are ignored."
   (buffer-disable-undo)
   (setq buffer-read-only t
 	truncate-lines t))
+
+;;; Desktop support
+
+(defvar eww-desktop-data-save
+  '(:url :title :point)
+  "List of `eww-data' properties to preserve in the desktop file.
+Also used when saving `eww-history'.")
+
+(defun eww-desktop-data-1 (alist)
+  (let ((acc  nil)
+        (tail alist))
+    (while tail
+      (let ((k (car  tail))
+            (v (cadr tail)))
+        (when (memq k eww-desktop-data-save)
+          (setq acc (cons k (cons v acc)))))
+      (setq tail  (cddr tail)))
+    acc))
+
+(defun eww-desktop-history-duplicate (a b)
+  (let ((tail a) (r t))
+    (while tail
+      (if (or (memq (car tail) '(:point)) ; ignore :point
+	      (equal (cadr tail)
+		     (plist-get b (car tail))))
+	  (setq tail (cddr tail))
+	(setq tail nil
+	      r    nil)))
+    ;; .
+    r))
+
+(defun eww-desktop-misc-data (directory)
+  "Return a property list with data used to restore eww buffers.
+This list will contain, as :history, the list, whose first element is
+the value of `eww-data', and the tail is `eww-history'.
+
+If `eww-desktop-remove-duplicates' is non-nil, duplicate
+entries (if any) will be removed from the list.
+
+Only the properties listed in `eww-desktop-data-save' are included.
+Generally, the list should not include the (usually overly large)
+:dom, :source and :text properties."
+  (let ((history  (mapcar 'eww-desktop-data-1
+			  (cons eww-data eww-history))))
+    (list :history  (if eww-desktop-remove-duplicates
+			(remove-duplicates
+			 history :test 'eww-desktop-history-duplicate)
+		      history))))
+
+(defun eww-restore-desktop (file-name buffer-name misc-data)
+  "Restore an eww buffer from its desktop file record.
+If `eww-restore-desktop' is t or 'auto, this function will also
+initiate the retrieval of the respective URI in the background.
+Otherwise, the restored buffer will contain a prompt to do so by using
+\\[eww-reload]."
+  (with-current-buffer (get-buffer-create buffer-name)
+    (eww-mode)
+    ;; NB: eww-history, eww-data are buffer-local per (eww-mode)
+    (setq eww-history       (cdr (plist-get misc-data :history))
+	  eww-data      (or (car (plist-get misc-data :history))
+			    ;; backwards compatibility
+			    (list :url (plist-get misc-data :uri))))
+    (unless file-name
+      (when (plist-get eww-data :url)
+	(case eww-restore-desktop
+	  ((t auto) (eww (plist-get eww-data :url)))
+	  ((zerop (buffer-size))
+	   (insert (substitute-command-keys
+		    eww-restore-reload-prompt))))))
+    ;; .
+    (current-buffer)))
+
+(add-to-list 'desktop-locals-to-save
+	     'eww-history-position)
+(add-to-list 'desktop-buffer-mode-handlers
+             '(eww-mode . eww-restore-desktop))
 
 (provide 'eww)
 
