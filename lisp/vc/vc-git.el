@@ -994,11 +994,18 @@ or BRANCH^ (where \"^\" can be repeated)."
 (defun vc-git-diff (files &optional rev1 rev2 buffer)
   "Get a difference report using Git between two revisions of FILES."
   (let (process-file-side-effects)
-    (apply #'vc-git-command (or buffer "*vc-diff*") 1 files
-	   (if (and rev1 rev2) "diff-tree" "diff-index")
-	   "--exit-code"
-	   (append (vc-switches 'git 'diff)
-		   (list "-p" (or rev1 "HEAD") rev2 "--")))))
+    (if vc-git-diff-switches
+        (apply #'vc-git-command (or buffer "*vc-diff*") 1 files
+               (if (and rev1 rev2) "diff-tree" "diff-index")
+               "--exit-code"
+               (append (vc-switches 'git 'diff)
+                       (list "-p" (or rev1 "HEAD") rev2 "--")))
+      (vc-git-command (or buffer "*vc-diff*") 1 files
+                      "difftool" "--exit-code" "--no-prompt" "-x"
+                      (concat "diff "
+                              (mapconcat 'identity
+                                         (vc-switches nil 'diff) " "))
+                      (or rev1 "HEAD") rev2 "--"))))
 
 (defun vc-git-revision-table (_files)
   ;; What about `files'?!?  --Stef
