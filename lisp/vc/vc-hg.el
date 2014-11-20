@@ -63,7 +63,7 @@
 ;; - unregister (file)                         OK
 ;; * checkin (files rev comment)               OK
 ;; * find-revision (file rev buffer)           OK
-;; * checkout (file &optional editable rev)    OK
+;; * checkout (file &optional rev)             OK
 ;; * revert (file &optional contents-done)     OK
 ;; - rollback (files)                          ?? PROBABLY NOT NEEDED
 ;; - merge (file rev1 rev2)                    NEEDED
@@ -499,7 +499,7 @@ REV is ignored."
 		    (vc-hg-root file)))
 
 ;; Modeled after the similar function in vc-bzr.el
-(defun vc-hg-checkout (file &optional _editable rev)
+(defun vc-hg-checkout (file &optional rev)
   "Retrieve a revision of FILE.
 EDITABLE is ignored.
 REV is the revision to check out into WORKFILE."

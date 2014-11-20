@@ -66,7 +66,7 @@
 ;; - unregister (file)                             OK
 ;; * checkin (files rev comment)                   OK
 ;; * find-revision (file rev buffer)               OK
-;; * checkout (file &optional editable rev)        OK
+;; * checkout (file &optional rev)                 OK
 ;; * revert (file &optional contents-done)         OK
 ;; - rollback (files)                              COULD BE SUPPORTED
 ;; - merge (file rev1 rev2)                   It would be possible to merge
@@ -709,7 +709,7 @@ It is based on `log-edit-mode', and has Git-specific extensions.")
   (expand-file-name ".gitignore"
 		    (vc-git-root file)))
 
-(defun vc-git-checkout (file &optional _editable rev)
+(defun vc-git-checkout (file &optional rev)
   (vc-git-command nil 0 file "checkout" (or rev "HEAD")))
 
 (defun vc-git-revert (file &optional contents-done)

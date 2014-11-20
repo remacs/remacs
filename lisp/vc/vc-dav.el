@@ -87,7 +87,7 @@ See `vc-checkout-model' for a list of possible values."
   ;; This should PUT the resource and release any locks that we hold.
   )
 
-(defun vc-dav-checkout (url &optional editable rev destfile)
+(defun vc-dav-checkout (url &optional rev destfile)
   "Check out revision REV of URL into the working area.
 
 If EDITABLE is non-nil URL should be writable by the user and if

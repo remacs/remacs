@@ -281,16 +281,17 @@
 ;;   The implementation should pass the value of vc-checkout-switches
 ;;   to the backend command.
 ;;
-;; * checkout (file &optional editable rev)
+;; * checkout (file &optional rev)
 ;;
-;;   Check out revision REV of FILE into the working area.  If EDITABLE
-;;   is non-nil, FILE should be writable by the user and if locking is
-;;   used for FILE, a lock should also be set.  If REV is non-nil, that
-;;   is the revision to check out (default is the working revision).
-;;   If REV is t, that means to check out the head of the current branch;
-;;   if it is the empty string, check out the head of the trunk.
-;;   The implementation should pass the value of vc-checkout-switches
-;;   to the backend command.
+;;   Check out revision REV of FILE into the working area.  FILE
+;;   should be writable by the user and if locking is used for FILE, a
+;;   lock should also be set.  If REV is non-nil, that is the revision
+;;   to check out (default is the working revision).  If REV is t,
+;;   that means to check out the head of the current branch; if it is
+;;   the empty string, check out the head of the trunk.  The
+;;   implementation should pass the value of vc-checkout-switches to
+;;   the backend command. The 'editable' argument of older VC versions
+;;   is gone; all files are checked out editable.
 ;;
 ;; * revert (file &optional contents-done)
 ;;
@@ -1138,10 +1139,10 @@ For old-style locking-based version control systems, like RCS:
 	      (let ((vsym (intern-soft revision-downcase)))
 		(dolist (file files) (vc-transfer-file file vsym)))
 	    (dolist (file files)
-              (vc-checkout file (eq model 'implicit) revision)))))
+              (vc-checkout file revision)))))
        ((not (eq model 'implicit))
 	;; check the files out
-	(dolist (file files) (vc-checkout file t)))
+	(dolist (file files) (vc-checkout file)))
        (t
         ;; do nothing
         (message "Fileset is up-to-date"))))
@@ -1227,10 +1228,10 @@ For old-style locking-based version control systems, like RCS:
 	(if (yes-or-no-p (format
 			  "%s is not up-to-date.  Get latest revision? "
 			  (file-name-nondirectory file)))
-	    (vc-checkout file (eq model 'implicit) t)
+	    (vc-checkout file t)
 	  (when (and (not (eq model 'implicit))
 		     (yes-or-no-p "Lock this revision? "))
-	    (vc-checkout file t)))))
+	    (vc-checkout file)))))
      ;; needs-merge
      ((eq state 'needs-merge)
       (dolist (file files)
@@ -1267,7 +1268,7 @@ For old-style locking-based version control systems, like RCS:
 		    "Revert to checked-in revision, instead? "))
 	      (error "Checkout aborted")
 	    (vc-revert-buffer-internal t t)
-	    (vc-checkout file t)))))
+	    (vc-checkout file)))))
      ;; Unknown fileset state
      (t
       (error "Fileset is in an unknown state %s" state)))))
@@ -1426,29 +1427,27 @@ Argument BACKEND is the backend you are using."
       (replace-match ""))
     (write-region (point-min) (point-max) file)))
 
-(defun vc-checkout (file &optional writable rev)
+(defun vc-checkout (file &optional rev)
   "Retrieve a copy of the revision REV of FILE.
-If WRITABLE is non-nil, make sure the retrieved file is writable.
 REV defaults to the latest revision.
 
 After check-out, runs the normal hook `vc-checkout-hook'."
-  (and writable
-       (not rev)
+  (and (not rev)
        (vc-call make-version-backups-p file)
        (vc-up-to-date-p file)
        (vc-make-version-backup file))
   (let ((backend (vc-backend file)))
     (with-vc-properties (list file)
       (condition-case err
-          (vc-call-backend backend 'checkout file writable rev)
+          (vc-call-backend backend 'checkout file rev)
         (file-error
          ;; Maybe the backend is not installed ;-(
-         (when writable
+         (when t
            (let ((buf (get-file-buffer file)))
              (when buf (with-current-buffer buf (read-only-mode -1)))))
          (signal (car err) (cdr err))))
       `((vc-state . ,(if (or (eq (vc-checkout-model backend (list file)) 'implicit)
-                             (not writable))
+                             nil)
                          (if (vc-call-backend backend 'latest-on-branch-p file)
                              'up-to-date
                            'needs-update)
@@ -2544,14 +2543,14 @@ tip revision are merged into the working file."
 		    (and file (member file files))))))
       (dolist (file files)
 	(if (vc-up-to-date-p file)
-	    (vc-checkout file nil t)
+	    (vc-checkout file t)
 	  (vc-maybe-resolve-conflicts
 	   file (vc-call-backend backend 'merge-news file)))))
      ;; For a locking VCS, check out each file.
      ((eq (vc-checkout-model backend files) 'locking)
       (dolist (file files)
 	(if (vc-up-to-date-p file)
-	    (vc-checkout file nil t))))
+	    (vc-checkout file t))))
      (t
       (error "VC update is unsupported for `%s'" backend)))))
 
@@ -2673,7 +2672,7 @@ backend to NEW-BACKEND, and unregister FILE from the current backend.
 	  (when modified-file
 	    (vc-switch-backend file new-backend)
 	    (unless (eq (vc-checkout-model new-backend (list file)) 'implicit)
-	      (vc-checkout file t nil))
+	      (vc-checkout file))
 	    (rename-file modified-file file 'ok-if-already-exists)
 	    (vc-file-setprop file 'vc-checkout-time nil)))))
     (when move

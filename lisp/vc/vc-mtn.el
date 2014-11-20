@@ -197,7 +197,7 @@ If nil, use the value of `vc-diff-switches'.  If t, use no switches."
 (defun vc-mtn-find-revision (file rev buffer)
   (vc-mtn-command buffer 0 file "cat" "-r" rev))
 
-;; (defun vc-mtn-checkout (file &optional editable rev)
+;; (defun vc-mtn-checkout (file &optional rev)
 ;;   )
 
 (defun vc-mtn-revert (file &optional contents-done)

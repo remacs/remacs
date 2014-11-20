@@ -272,7 +272,7 @@ expanded if `vc-keep-workfiles' is non-nil, otherwise, delete the workfile."
 		      (vc-sccs-lookup-triple file rev)))
 	 (vc-switches 'SCCS 'checkout)))
 
-(defun vc-sccs-checkout (file &optional editable rev)
+(defun vc-sccs-checkout (file &optional rev)
   "Retrieve a copy of a saved revision of SCCS controlled FILE.
 If FILE is a directory, all version-controlled files beneath are checked out.
 EDITABLE non-nil means that the file should be writable and
@@ -299,7 +299,7 @@ locked.  REV is the revision to check out."
 			 (not (stringp rev)))
 		 (setq rev nil))
 	    (apply 'vc-sccs-do-command nil 0 "get" (vc-name file)
-		   (if editable "-e")
+		   "-e"
 		   (and rev (concat "-r" (vc-sccs-lookup-triple file rev)))
 		   switches))))
       (message "Checking out %s...done" file))))

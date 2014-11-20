@@ -655,7 +655,7 @@ or a superior directory.")
   (expand-file-name ".bzrignore"
 		    (vc-bzr-root file)))
 
-(defun vc-bzr-checkout (_file &optional _editable rev)
+(defun vc-bzr-checkout (_file &optional rev)
   (if rev (error "Operation not supported")
     ;; Else, there's nothing to do.
     nil))

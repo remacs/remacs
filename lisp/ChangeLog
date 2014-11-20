@@ -1,5 +1,13 @@
 2014-11-20  Eric S. Raymond  <esr@snark>
 
+	* vc/vc-bzr.el, vc/vc-cvs.el, vc/vc-dav.el, vc/vc-git.el,
+	vc/vc-hg.el, vc/vc-mtn.el, vc/vc-rcs.el, vc/vc-sccs.el,
+	vc/vc-svn.el, vc/vc.el: Remove editable argument from the backend
+	checkout methods; where it matters (which is only in SCCS and RCS)
+	files are always checked out editable. This may actually have
+	been dynamically true already - it looks like the vc-next-action
+	code evolved past visiting the other case. Tested with RCS.
+
 	* vc/vc-arch.el, vc/vc-bzr.el, vc/vc-cvs.el, vc/vc-dav.el,
 	vc/vc-git.el, vc/vc-hg.el, vc/vc-mtn.el, vc/vc-rcs.el,
 	vc/vc-sccs.el, vc/vc-svn.el, vc/vc.el: Remove never-used rev

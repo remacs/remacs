@@ -421,7 +421,7 @@ whether to remove it."
 	 (concat "-p" rev)
 	 (vc-switches 'RCS 'checkout)))
 
-(defun vc-rcs-checkout (file &optional editable rev)
+(defun vc-rcs-checkout (file &optional rev)
   "Retrieve a copy of a saved version of FILE.  If FILE is a directory,
 attempt the checkout for all registered files beneath it."
   (if (file-directory-p file)
@@ -452,7 +452,7 @@ attempt the checkout for all registered files beneath it."
 		     ;; If locking is not strict, force to overwrite
 		     ;; the writable workfile.
 		     (if (eq (vc-rcs-checkout-model (list file)) 'implicit) "-f")
-		     (if editable "-l")
+		     "-l"
 		     (if (stringp rev)
 			 ;; a literal revision was specified
 			 (concat "-r" rev)

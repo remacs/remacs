@@ -395,9 +395,8 @@ its parents."
 	 "-p"
 	 (vc-switches 'CVS 'checkout)))
 
-(defun vc-cvs-checkout (file &optional editable rev)
+(defun vc-cvs-checkout (file &optional rev)
   "Checkout a revision of FILE into the working area.
-EDITABLE non-nil means that the file should be writable.
 REV is the revision to check out."
   (message "Checking out %s..." file)
   ;; Change buffers to get local value of vc-checkout-switches.
@@ -405,7 +404,7 @@ REV is the revision to check out."
     (if (and (file-exists-p file) (not rev))
         ;; If no revision was specified, just make the file writable
         ;; if necessary (using `cvs-edit' if requested).
-        (and editable (not (eq (vc-cvs-checkout-model (list file)) 'implicit))
+        (and (not (eq (vc-cvs-checkout-model (list file)) 'implicit))
              (if vc-cvs-use-edit
                  (vc-cvs-command nil 0 file "edit")
                (set-file-modes file (logior (file-modes file) 128))
@@ -413,7 +412,7 @@ REV is the revision to check out."
       ;; Check out a particular revision (or recreate the file).
       (vc-file-setprop file 'vc-working-revision nil)
       (apply 'vc-cvs-command nil 0 file
-             (and editable "-w")
+             "-w"
              "update"
              (when rev
                (unless (eq rev t)

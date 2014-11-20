@@ -375,14 +375,14 @@ FILE is a file wildcard, relative to the root directory of DIRECTORY."
   "Return the administrative directory of FILE."
   (expand-file-name vc-svn-admin-directory (vc-svn-root file)))
 
-(defun vc-svn-checkout (file &optional editable rev)
+(defun vc-svn-checkout (file &optional rev)
   (message "Checking out %s..." file)
   (with-current-buffer (or (get-file-buffer file) (current-buffer))
-    (vc-svn-update file editable rev (vc-switches 'SVN 'checkout)))
+    (vc-svn-update file rev (vc-switches 'SVN 'checkout)))
   (vc-mode-line file 'SVN)
   (message "Checking out %s...done" file))
 
-(defun vc-svn-update (file _editable rev switches)
+(defun vc-svn-update (file rev switches)
   (if (and (file-exists-p file) (not rev))
       ;; If no revision was specified, there's nothing to do.
       nil
