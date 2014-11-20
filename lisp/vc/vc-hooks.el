@@ -107,8 +107,8 @@ interpreted as hostnames."
   :type 'regexp
   :group 'vc)
 
-(defcustom vc-handled-backends '(RCS CVS SVN SCCS Bzr Git Hg Mtn Arch)
-  ;; RCS, CVS, SVN and SCCS come first because they are per-dir
+(defcustom vc-handled-backends '(RCS CVS SVN SCCS SRC Bzr Git Hg Mtn Arch)
+  ;; RCS, CVS, SVN, SCCS, and SRC come first because they are per-dir
   ;; rather than per-tree.  RCS comes first because of the multibackend
   ;; support intended to use RCS for local commits (with a remote CVS server).
   "List of version control backends for which VC will be used.
@@ -124,7 +124,7 @@ An empty list disables VC altogether."
 ;; Note: we don't actually have a darcs back end yet.
 ;; Also, Meta-CVS (corresponding to MCVS) is unsupported.
 (defcustom vc-directory-exclusion-list (purecopy '("SCCS" "RCS" "CVS" "MCVS"
-					 ".svn" ".git" ".hg" ".bzr"
+					 ".src", ".svn" ".git" ".hg" ".bzr"
 					 "_MTN" "_darcs" "{arch}"))
   "List of directory names to be ignored when walking directory trees."
   :type '(repeat string)

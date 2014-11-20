@@ -1,4 +1,7 @@
-2014-11-20  Eric S. Raymond  <esr@snark>
+2014-11-20  Eric S. Raymond  <esr@snark.thyrsus.com>
+
+	* vc/vc-src.el, vc/vc.el: Added support for SRC. Needs more
+	testing and a real log-view mode.
 
 	* vc/vc-bzr.el, vc/vc-cvs.el, vc/vc-dav.el, vc/vc-git.el,
 	vc/vc-hg.el, vc/vc-mtn.el, vc/vc-rcs.el, vc/vc-sccs.el,

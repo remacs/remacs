@@ -52,7 +52,7 @@
 
 ;; This mode is fully documented in the Emacs user's manual.
 ;;
-;; Supported version-control systems presently include CVS, RCS, GNU
+;; Supported version-control systems presently include CVS, RCS, SCR, GNU
 ;; Arch, Subversion, Bzr, Git, Mercurial, Monotone and SCCS
 ;; (or its free replacement, CSSC).
 ;;
@@ -73,6 +73,9 @@
 ;; *through the VCS tools* should safely interlock with VC
 ;; operations. Under these VC does little state caching, because local
 ;; operations are assumed to be fast.
+;;
+;; The 'assumed to be fast' category includes SRC, even though it's
+;; a wrapper around RCS.
 ;;
 ;; ADDING SUPPORT FOR OTHER BACKENDS
 ;;
