@@ -3971,9 +3971,10 @@ process to set up.  VEC specifies the connection."
     (if (featurep 'mule)
 	;; Use MULE to select the right EOL convention for communicating
 	;; with the process.
-	(let ((cs (or (when (string-match
-			     "utf8" (or (tramp-get-remote-locale vec) ""))
-			(cons 'utf-8 'utf-8))
+	(let ((cs (or (and (memq 'utf-8 (coding-system-list))
+			   (string-match
+			    "utf8" (or (tramp-get-remote-locale vec) ""))
+			   (cons 'utf-8 'utf-8))
 		      (tramp-compat-funcall 'process-coding-system proc)
 		      (cons 'undecided 'undecided)))
 	      cs-decode cs-encode)
