@@ -1,3 +1,12 @@
+2014-11-20  Eric S. Raymond  <esr@snark>
+
+	* vc/vc-arch.el, vc/vc-bzr.el, vc/vc-cvs.el, vc/vc-dav.el,
+	vc/vc-git.el, vc/vc-hg.el, vc/vc-mtn.el, vc/vc-rcs.el,
+	vc/vc-sccs.el, vc/vc-svn.el, vc/vc.el: Remove never-used rev
+	argument from the backend checkin methods. Only the RCS, SCCS, and
+	CVS back ends tried to do anything with it, and that code was
+	never exercised. Chiseling away the cruft of decades...
+
 2014-11-19  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
 	* net/eww.el (eww-render): Remove a no-op :title setting.

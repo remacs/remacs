@@ -441,8 +441,7 @@ CALLBACK expects (ENTRIES &optional MORE-TO-COME); see
 
 (autoload 'vc-switches "vc")
 
-(defun vc-arch-checkin (files rev comment)
-  (if rev (error "Committing to a specific revision is unsupported"))
+(defun vc-arch-checkin (files comment)
   ;; FIXME: This implementation probably only works for singleton filesets
   (let ((summary (file-relative-name (car files) (vc-arch-root (car files)))))
     ;; Extract a summary from the comment.

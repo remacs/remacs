@@ -187,7 +187,7 @@ If nil, use the value of `vc-diff-switches'.  If t, use no switches."
 
 (declare-function log-edit-extract-headers "log-edit" (headers string))
 
-(defun vc-mtn-checkin (files _rev comment)
+(defun vc-mtn-checkin (files comment)
   (apply 'vc-mtn-command nil 0 files
 	 (nconc (list "commit" "-m")
 		(log-edit-extract-headers '(("Author" . "--author")

@@ -634,10 +634,8 @@ or a superior directory.")
                                            "" (replace-regexp-in-string
                                                "\n[ \t]?" " " str)))))
 
-(defun vc-bzr-checkin (files rev comment)
-  "Check FILES in to bzr with log message COMMENT.
-REV non-nil gets an error."
-  (if rev (error "Can't check in a specific revision with bzr"))
+(defun vc-bzr-checkin (files comment)
+  "Check FILES in to bzr with log message COMMENT."
   (apply 'vc-bzr-command "commit" nil 0 files
          (cons "-m" (log-edit-extract-headers
                      `(("Author" . ,(vc-bzr--sanitize-header "--author"))

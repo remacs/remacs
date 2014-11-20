@@ -358,23 +358,27 @@ whether to remove it."
 	 (yes-or-no-p (format "Directory %s is empty; remove it? " dir))
 	 (delete-directory dir))))
 
-(defun vc-rcs-checkin (files rev comment)
+;; It used to be possible to pass in a value for the variable rev, but
+;; nothing in the rest of VC used this capability.  Removing it makes the
+;; backend interface simpler for all modes.
+;;
+(defun vc-rcs-checkin (files comment)
   "RCS-specific version of `vc-backend-checkin'."
-  (let ((switches (vc-switches 'RCS 'checkin)))
+  (let (rev (switches (vc-switches 'RCS 'checkin)))
     ;; Now operate on the files
     (dolist (file (vc-expand-dirs files))
       (let ((old-version (vc-working-revision file)) new-version
 	    (default-branch (vc-file-getprop file 'vc-rcs-default-branch)))
 	;; Force branch creation if an appropriate
 	;; default branch has been set.
-	(and (not rev)
-	     default-branch
+	(and default-branch
 	     (string-match (concat "^" (regexp-quote old-version) "\\.")
 			   default-branch)
 	     (setq rev default-branch)
 	     (setq switches (cons "-f" switches)))
-	(if (and (not rev) old-version)
-	    (setq rev (vc-branch-part old-version)))
+	(if old-version
+	    (setq rev (vc-branch-part old-version))
+	  (error "can't find current branch"))
 	(apply #'vc-do-command "*vc*" 0 "ci" (vc-name file)
 	       ;; if available, use the secure check-in option
 	       (and (vc-rcs-release-p "5.6.4") "-j")

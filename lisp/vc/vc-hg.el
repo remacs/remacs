@@ -407,7 +407,7 @@ Optional arg REVISION is a revision to annotate from."
     (and (vc-hg-command nil 0 nil "status")
          (vc-hg-command nil 0 nil (if branchp "bookmark" "tag") name))))
 
-(defun vc-hg-retrieve-tag (dir name update)
+(defun vc-hg-retrieve-tag (dir name _update)
   "Retrieve the version tagged by NAME of all registered files at or below DIR."
   (let ((default-directory dir))
     (vc-hg-command nil 0 nil "update" name)
@@ -477,7 +477,7 @@ COMMENT is ignored."
 
 (declare-function log-edit-extract-headers "log-edit" (headers string))
 
-(defun vc-hg-checkin (files _rev comment)
+(defun vc-hg-checkin (files comment)
   "Hg-specific version of `vc-backend-checkin'.
 REV is ignored."
   (apply 'vc-hg-command nil 0 files

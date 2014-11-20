@@ -72,7 +72,7 @@
 ;; When using Subversion or a later system, anything you do outside VC
 ;; *through the VCS tools* should safely interlock with VC
 ;; operations. Under these VC does little state caching, because local
-;; operations are assumed to be fast.  The dividing line is
+;; operations are assumed to be fast.
 ;;
 ;; ADDING SUPPORT FOR OTHER BACKENDS
 ;;
@@ -267,12 +267,12 @@
 ;;   Unregister FILE from this backend.  This is only needed if this
 ;;   backend may be used as a "more local" backend for temporary editing.
 ;;
-;; * checkin (files rev comment)
+;; * checkin (files comment)
 ;;
-;;   Commit changes in FILES to this backend.  REV is a historical artifact
-;;   and should be ignored.  COMMENT is used as a check-in comment.
-;;   The implementation should pass the value of vc-checkin-switches to
-;;   the backend command.
+;;   Commit changes in FILES to this backend. COMMENT is used as a
+;;   check-in comment.  The implementation should pass the value of
+;;   vc-checkin-switches to the backend command.  The revision argument
+;;   of some older VC versions is no longer supported.
 ;;
 ;; * find-revision (file rev buffer)
 ;;
@@ -1498,13 +1498,11 @@ Type \\[vc-next-action] to check in changes.")
      ".\n")
     (message "Please explain why you stole the lock.  Type C-c C-c when done.")))
 
-(defun vc-checkin (files backend &optional rev comment initial-contents)
-  "Check in FILES.
-The optional argument REV may be a string specifying the new revision
-level (strongly deprecated).  COMMENT is a comment
-string; if omitted, a buffer is popped up to accept a comment.  If
-INITIAL-CONTENTS is non-nil, then COMMENT is used as the initial contents
-of the log entry buffer.
+(defun vc-checkin (files backend &optional comment initial-contents)
+  "Check in FILES. COMMENT is a comment string; if omitted, a
+buffer is popped up to accept a comment.  If INITIAL-CONTENTS is
+non-nil, then COMMENT is used as the initial contents of the log
+entry buffer.
 
 If `vc-keep-workfiles' is nil, FILE is deleted afterwards, provided
 that the version control system supports this mode of operation.
@@ -1530,7 +1528,7 @@ Runs the normal hooks `vc-before-checkin-hook' and `vc-checkin-hook'."
        ;; vc-checkin-switches, but 'the' local buffer is
        ;; not a well-defined concept for filesets.
        (progn
-         (vc-call-backend backend 'checkin files rev comment)
+         (vc-call-backend backend 'checkin files comment)
          (mapc 'vc-delete-automatic-version-backups files))
        `((vc-state . up-to-date)
          (vc-checkout-time . ,(nth 5 (file-attributes file)))
@@ -2686,7 +2684,7 @@ backend to NEW-BACKEND, and unregister FILE from the current backend.
     (when (or move edited)
       (vc-file-setprop file 'vc-state 'edited)
       (vc-mode-line file new-backend)
-      (vc-checkin file new-backend nil comment (stringp comment)))))
+      (vc-checkin file new-backend comment (stringp comment)))))
 
 (defun vc-rename-master (oldmaster newfile templates)
   "Rename OLDMASTER to be the master file for NEWFILE based on TEMPLATES."
