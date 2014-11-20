@@ -1,3 +1,12 @@
+2014-11-20  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Add a.out to .gitignore.
+	Suggested by Lee Duhem in:
+	http://lists.gnu.org/archive/html/emacs-devel/2014-11/msg01665.html
+	* .gitignore: Add a.out.
+	Move *.log next to *.tmp, since it's generic.
+	Put *.exe before non-generics.
+
 2014-11-19  Eli Zaretskii  <eliz@gnu.org>
 
 	* .gitignore: Resurrect Windows-specific ignorables lost in last
