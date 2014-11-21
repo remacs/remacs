@@ -1,3 +1,7 @@
+2014-11-21  Eric S. Raymond  <esr@snark>
+
+	* vc/vc-src.el (vc-src-state): Fix bug that produced spurious nil state.
+
 2014-11-21  Eli Zaretskii  <eliz@gnu.org>
 
 	* vc/vc.el (vc-deduce-fileset): Support invocation from

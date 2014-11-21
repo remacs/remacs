@@ -159,6 +159,7 @@ For a description of possible values, see `vc-check-master-templates'."
   "SRC-specific version of `vc-state'."
   (let*
       ((status nil)
+       (default-directory (file-name-directory file))
        (out
 	(with-output-to-string
 	  (with-current-buffer
@@ -168,7 +169,7 @@ For a description of possible values, see `vc-check-master-templates'."
 		  (condition-case nil
 		      (process-file
 		       vc-src-program nil t nil
-		       "status" "-a" file)
+		       "status" "-a" (file-relative-name file))
 		    (error nil)))))))
     (when (eq 0 status)
       (when (null (string-match "does not exist or is unreadable" out))
