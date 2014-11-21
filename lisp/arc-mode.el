@@ -147,6 +147,15 @@ A local copy of the archive will be used when updating."
   "Hook run when an archive member has been extracted."
   :type 'hook
   :group 'archive)
+
+(defcustom archive-visit-single-files nil
+  "If non-nil, opening an archive with a single file visits that file.
+
+  If this option's value is nil, visiting such archives will
+  display the archive summary."
+  :type '(choice (const :tag "Visit the single file" t)
+                 (const :tag "Show the archive summary" nil))
+  :group 'archive)
 ;; ------------------------------
 ;; Arc archive configuration
 
@@ -742,7 +751,12 @@ archive.
       (if (default-value 'enable-multibyte-characters)
 	  (set-buffer-multibyte 'to))
       (archive-summarize nil)
-      (setq buffer-read-only t))))
+      (setq buffer-read-only t)
+      (when (and archive-visit-single-files
+                 auto-compression-mode
+                 (= (length archive-files) 1))
+        (rename-buffer (concat " " (buffer-name)))
+        (archive-extract)))))
 
 ;; Archive mode is suitable only for specially formatted data.
 (put 'archive-mode 'mode-class 'special)
