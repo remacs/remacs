@@ -1,3 +1,9 @@
+2014-11-21  Eli Zaretskii  <eliz@gnu.org>
+
+	* vc/vc-git.el (vc-git-command, vc-git--call): Bind
+	coding-system-for-read and coding-system-for-write to
+	vc-git-commits-coding-system.
+
 2014-11-20  Michael Albinus  <michael.albinus@gmx.de>
 
         Improve XEmacs compatibility.
