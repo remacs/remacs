@@ -1,3 +1,23 @@
+2014-11-21  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Add more of the old .bzrignore to .gitignore.
+	Plus a few more .gitignore improvements.
+	* .gitignore: Add copyright notice, since it's big enough.
+	Put exceptions immediately after the patterns they're exceptions
+	to, to make them easier to follow.
+	Give four exceptions for the Makefile pattern.
+	Ignore /confdefs.h, test/indent/*.new, TAGS, GPATH, GSYMS, GRTAGS,
+	GTAGS, ID, *.exe, some nextstep-related files,
+	jisx2131-filter, *.orig, *.rej, etc/emacs.tmpdesktop, *.in-h
+	_* (except for build-aux/snippet/_Noreturn.h), /bin/, /BIN/,
+	/data/, etc/icons/, lib/cxxdefs.h, lib/SYS/, /libexec/, /lock/,
+	/README.W32, /share/, /site-lisp/, src/gdb.ini, /var/.
+	Ignore /configure.lineno, since POSIX requires
+	LINENO only with the User Portability Utilities option.
+	Ignore *cust-load.el and *loaddefs.el only under lisp.
+	Ignore core files of various flavors.
+	Do not ignore etc/refcards/gnus-logo.pdf.
+
 2014-11-21  Eli Zaretskii  <eliz@gnu.org>
 
 	* .gitignore: Add back src/_gdbinit, which is a temporary file
