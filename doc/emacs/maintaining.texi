@@ -191,7 +191,6 @@ exception of repository sync operations.
 Bazaar (bzr) is a decentralized version control system that supports
 both repository-based and decentralized versioning.  VC supports most
 basic editing operations under Bazaar.
-@end itemize
 
 @cindex SRC
 @cindex src
@@ -199,11 +198,12 @@ basic editing operations under Bazaar.
 SRC (src) is RCS, reloaded - a specialized version-control system
 designed for single-file projects worked on by only one person. It
 allows multiple files with independent version-control histories to
-exisr in one directory, and is thus particularly well suited for
+exist in one directory, and is thus particularly well suited for
 maintaining small documents, scripts, and dotfiles.  While it uses RCS
 for revision storage, it presents a modern user interface featuring
 lockless operation and integer sequential version numbers.  VC
 supports almost all SRC operations.
+@end itemize
 
 @node VCS Concepts
 @subsubsection Concepts of Version Control
