@@ -1,3 +1,8 @@
+2014-11-21  Rüdiger Sonderfeld  <ruediger@c-plusplus.net>
+
+	* play/morse.el (nato-alphabet): Mark URL in docstring in a way
+	that is recognized by `help-mode'.
+
 2014-11-21  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* desktop.el (desktop-create-buffer): Use activate-mark to set
