@@ -118,7 +118,7 @@ Removing an entry from the list prevents VC from being activated
 when visiting a file managed by that backend.
 An empty list disables VC altogether."
   :type '(repeat symbol)
-  :version "23.1"
+  :version "25.1"
   :group 'vc)
 
 ;; Note: we don't actually have a darcs back end yet.

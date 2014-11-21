@@ -142,7 +142,7 @@ For a description of possible values, see `vc-check-master-templates'."
 ;;; Properties of the backend
 
 (defun vc-src-revision-granularity () 'file)
-(defun vc-hg-checkout-model (_files) 'implicit)
+(defun vc-src-checkout-model (_files) 'implicit)
 
 ;;;
 ;;; State-querying functions
@@ -302,7 +302,7 @@ If LIMIT is non-nil, show no more than this many entries."
       (apply 'vc-src-command buffer files (if shortlog "list" "log")
 	     (nconc
 	      ;;(when start-revision (list (format "%s-1" start-revision)))
-	      ;;(when limit (list "-l" (format "%s" limit)))
+	      (when limit (list "-l" (format "%s" limit)))
 	      vc-src-log-switches)))))
 
 (defun vc-src-diff (files &optional oldvers newvers buffer)
