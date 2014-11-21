@@ -999,6 +999,9 @@ current buffer."
       (if observer
 	  (vc-dired-deduce-fileset)
 	(error "State changing VC operations not supported in `dired-mode'")))
+     ((and (derived-mode-p 'log-view-mode)
+	   (setq backend (vc-responsible-backend default-directory)))
+      (list backend default-directory))
      ((setq backend (vc-backend buffer-file-name))
       (if state-model-only-files
 	(list backend (list buffer-file-name)
