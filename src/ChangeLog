@@ -1,3 +1,10 @@
+2014-11-21  Ulf Jasper  <ulf.jasper@web.de>
+
+	* xml.c (parse_region): Take care of new optional parameter
+	'discard-comments' of 'libxml-parse(html|xml)-region'.
+	(Flibxml_parse_html_region, Flibxml_parse_xml_region): New
+	optional parameter 'discard-comments'.
+
 2014-11-17  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Improve time stamp handling, and be more consistent about it.

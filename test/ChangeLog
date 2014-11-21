@@ -1,3 +1,12 @@
+2014-11-21  Ulf Jasper  <ulf.jasper@web.de>
+
+	* automated/libxml-tests.el
+	(libxml-tests--data-comments-preserved): Renamed from
+	'libxml-tests--data'.
+	(libxml-tests--data-comments-discarded): New.
+	(libxml-tests): Check whether 'libxml-parse-xml-region' is
+	discarding comments correctly.
+
 2014-11-17  Michal Nazarewicz  <mina86@mina86.com>
 
 	* automated/tildify-tests.el (tildify-test-html, tildify-test-xml):

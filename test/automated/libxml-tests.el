@@ -27,7 +27,7 @@
 
 (require 'ert)
 
-(defvar libxml-tests--data
+(defvar libxml-tests--data-comments-preserved
   `(;; simple case
     ("<?xml version=\"1.0\"?><foo baz=\"true\">bar</foo>"
      . (foo ((baz . "true")) "bar"))
@@ -40,17 +40,35 @@
 	      "<bar>blub</bar></foo><!--comment-b--><!--comment-c-->")
      . (top nil (comment nil "comment-a") (foo ((a . "b")) (bar nil "blub"))
             (comment nil "comment-b") (comment nil "comment-c"))))
-  "Alist of XML strings and their expected parse trees.")
+  "Alist of XML strings and their expected parse trees for preserved comments.")
+
+(defvar libxml-tests--data-comments-discarded
+  `(;; simple case
+    ("<?xml version=\"1.0\"?><foo baz=\"true\">bar</foo>"
+     . (foo ((baz . "true")) "bar"))
+    ;; toplevel comments -- first document child must not get lost
+    (,(concat "<?xml version=\"1.0\"?><foo>bar</foo><!--comment-1-->"
+	      "<!--comment-2-->")
+     . (foo nil "bar"))
+    (,(concat "<?xml version=\"1.0\"?><!--comment-a--><foo a=\"b\">"
+	      "<bar>blub</bar></foo><!--comment-b--><!--comment-c-->")
+     . (foo ((a . "b")) (bar nil "blub"))))
+  "Alist of XML strings and their expected parse trees for discarded comments.")
 
 
 (ert-deftest libxml-tests ()
   "Test libxml."
   (when (fboundp 'libxml-parse-xml-region)
     (with-temp-buffer
-      (dolist (test libxml-tests--data)
+      (dolist (test libxml-tests--data-comments-preserved)
         (erase-buffer)
         (insert (car test))
         (should (equal (cdr test)
-                       (libxml-parse-xml-region (point-min) (point-max))))))))
+                       (libxml-parse-xml-region (point-min) (point-max)))))
+      (dolist (test libxml-tests--data-comments-discarded)
+        (erase-buffer)
+        (insert (car test))
+        (should (equal (cdr test)
+                       (libxml-parse-xml-region (point-min) (point-max) nil t)))))))
 
 ;;; libxml-tests.el ends here
