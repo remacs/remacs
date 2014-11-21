@@ -3,6 +3,8 @@
 	* vc/vc-git.el (vc-git-command, vc-git--call): Bind
 	coding-system-for-read and coding-system-for-write to
 	vc-git-commits-coding-system.
+	(vc-git-previous-revision): Use "~1" instead of "^", since the
+	latter is a special character for MS-Windows system shells.
 
 2014-11-20  Michael Albinus  <michael.albinus@gmx.de>
 

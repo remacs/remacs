@@ -987,7 +987,11 @@ or BRANCH^ (where \"^\" can be repeated)."
                            (point)
                            (1- (point-max)))))))
         (or (vc-git-symbolic-commit prev-rev) prev-rev))
-    (vc-git--rev-parse (concat rev "^"))))
+    ;; We used to use "^" here, but that fails on MS-Windows if git is
+    ;; invoked via a batch file, in which case cmd.exe strips the "^"
+    ;; because it is a special character for cmd which process-file
+    ;; does not (and cannot) quote.
+    (vc-git--rev-parse (concat rev "~1"))))
 
 (defun vc-git--rev-parse (rev)
   (with-temp-buffer
