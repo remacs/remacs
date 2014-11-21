@@ -52,7 +52,7 @@
 
 ;; This mode is fully documented in the Emacs user's manual.
 ;;
-;; Supported version-control systems presently include CVS, RCS, SCR, GNU
+;; Supported version-control systems presently include CVS, RCS, SRC, GNU
 ;; Arch, Subversion, Bzr, Git, Mercurial, Monotone and SCCS
 ;; (or its free replacement, CSSC).
 ;;
