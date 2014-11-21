@@ -1,6 +1,12 @@
+2014-11-21  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* desktop.el (desktop-create-buffer): Use activate-mark to set
+	`mark-active' (bug#19058).
+
 2014-11-21  Eric S. Raymond  <esr@snark>
 
-	* vc/vc-src.el (vc-src-state): Fix bug that produced spurious nil state.
+	* vc/vc-src.el (vc-src-state): Fix bug that produced spurious
+	nil state.
 
 2014-11-21  Eli Zaretskii  <eliz@gnu.org>
 
@@ -108,8 +114,8 @@
 2014-11-18  Leo Liu  <sdl.web@gmail.com>
 
 	* emacs-lisp/nadvice.el (define-advice): New macro.
-	* emacs-lisp/lisp-mode.el (lisp-imenu-generic-expression): Add
-	define-advice.
+	* emacs-lisp/lisp-mode.el (lisp-imenu-generic-expression):
+	Add define-advice.
 	(lisp-font-lock-keywords-1): Add define-advice.
 
 2014-11-18  Daiki Ueno  <ueno@gnu.org>
@@ -188,26 +194,26 @@
 	immediately marked as obsolete, used to handle deprecated
 	`tildify-ignored-environments-alist'.
 
-	* textmodes/tex-mode.el (tex-common-initialization): Set
-	`tildify-space-string' and `tildify-foreach-region-function'
+	* textmodes/tex-mode.el (tex-common-initialization):
+	Set `tildify-space-string' and `tildify-foreach-region-function'
 	variables in all variants of TeX mode since `tildify-string-alist'
 	and `tildify-ignored-environments-alist' are now empty by default.
 
-	* nxml/nxml-mode.el (nxml-mode): Ditto in `nxml-mode'.  If
-	encoding supports it use no-break space instead of character
+	* nxml/nxml-mode.el (nxml-mode): Ditto in `nxml-mode'.
+	If encoding supports it use no-break space instead of character
 	entity; this changes previous default which used a numeric
 	reference.
 
-	* textmodes/sgml-mode.el (sgml-mode): ditto in `sgml-mode'.  If
-	encoding does not support no-break space, use numeric reference;
+	* textmodes/sgml-mode.el (sgml-mode): ditto in `sgml-mode'.
+	If encoding does not support no-break space, use numeric reference;
 	this changes previous default which used named entity (“&nbsp;”)
 	in HTML mode.
 
 2014-11-17  Ulf Jasper  <ulf.jasper@web.de>
 
 	Fix bug#5433.
-	* calendar/icalendar.el (icalendar-export-alarms): New
-	customizable variable.
+	* calendar/icalendar.el (icalendar-export-alarms):
+	New customizable variable.
 	(icalendar-export-region): Export alarms as specified in
 	`icalendar-export-alarms'.
 	(icalendar--create-ical-alarm, icalendar--do-create-ical-alarm):
@@ -2838,8 +2844,8 @@
 	(c-typeless-decl-kwds): Append "auto" onto the C++ value.
 	(c-not-decl-init-keywords): Also exclude c-typeof-kwds from value.
 
-	Make ">>" act as double template ender in C++ Mode.  Fix
-	bug#11386.
+	Make ">>" act as double template ender in C++ Mode.
+	Fix bug#11386.
 	* progmodes/cc-langs.el (c->-op-cont-tokens): New lang-const split
 	off from c->-op-cont-re.
 	(c->-op-cont-tokens): Change to use the above.

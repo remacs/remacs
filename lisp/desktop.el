@@ -1413,8 +1413,8 @@ after that many seconds of idle time."
             (if (consp desktop-buffer-mark)
                 (progn
                   (move-marker (mark-marker) (car desktop-buffer-mark))
-                  ;; FIXME: Should we call (de)activate-mark instead?
-                  (setq mark-active (car (cdr desktop-buffer-mark))))
+                  (if (car (cdr desktop-buffer-mark))
+                      (activate-mark 'dont-touch-tmm)))
               (move-marker (mark-marker) desktop-buffer-mark)))
 	  ;; Never override file system if the file really is read-only marked.
 	  (when desktop-buffer-read-only (setq buffer-read-only desktop-buffer-read-only))
