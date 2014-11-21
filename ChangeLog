@@ -1,3 +1,8 @@
+2014-11-21  Eli Zaretskii  <eliz@gnu.org>
+
+	* .gitignore: Add back src/_gdbinit, which is a temporary file
+	created by the MS-DOS build.
+
 2014-11-20  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Add a.out to .gitignore.
