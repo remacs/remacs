@@ -1,3 +1,7 @@
+2014-11-22  Glenn Morris  <rgm@gnu.org>
+
+	* Makefile.in (emacsclient.res): Add dependency on icons/emacs.ico.
+
 2014-10-20  Glenn Morris  <rgm@gnu.org>
 
 	* Merge in all changes up to 24.4 release.

@@ -225,5 +225,6 @@ cmdproxy${EXEEXT}: ${srcdir}/cmdproxy.c
 runemacs${EXEEXT}: ${srcdir}/runemacs.c $(EMACSRES)
 	$(CC) ${ALL_CFLAGS} $^ -mwindows -o $@
 
-emacs.res: ${srcdir}/emacs.rc ${srcdir}/icons/emacs.ico ${srcdir}/$(EMACS_MANIFEST)
+emacs.res: ${srcdir}/emacs.rc ${srcdir}/icons/emacs.ico \
+  ${srcdir}/icons/hand.cur ${srcdir}/$(EMACS_MANIFEST)
 	${WINDRES} -I ${srcdir} -O coff -o $@ $<
