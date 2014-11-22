@@ -1,3 +1,7 @@
+2014-11-22  Glenn Morris  <rgm@gnu.org>
+
+	* templates/Info-gnustep.plist.in: Let configure set URL.
+
 2014-11-03  Jan Djärv  <jan.h.d@swipnet.se>
 
 	* INSTALL: Remove univeral binary section.
