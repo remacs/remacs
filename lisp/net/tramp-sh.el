@@ -2835,16 +2835,27 @@ the result will be a local, non-Tramp, file name."
 			(list (replace-match " \\\\\n" nil nil (cadr args))))
 		       (setq i (+ i 250))))
 		   (cdr args)))
+	   ;; Use a human-friendly prompt, for example for `shell'.
+	   (prompt (format "PS1=%s"
+			   (format "%s %s"
+				   (file-remote-p default-directory)
+				   tramp-initial-end-of-output)))
+	   ;; We use as environment the difference to toplevel
+	   ;; `process-environment'.
+	   env
+	   (env
+	    (dolist
+		(elt
+		 (cons prompt (nreverse (copy-sequence process-environment)))
+		 env)
+	      (or (member elt (default-toplevel-value 'process-environment))
+		  (setq env (cons elt env)))))
 	   (command
 	    (when (stringp program)
-	      (format "cd %s && exec %s env PS1=%s %s"
+	      (format "cd %s && exec %s env %s %s"
 		      (tramp-shell-quote-argument localname)
 		      (if heredoc (format "<<'%s'" tramp-end-of-heredoc) "")
-		      ;; Use a human-friendly prompt, for example for `shell'.
-		      (tramp-shell-quote-argument
-		       (format "%s %s"
-			       (file-remote-p default-directory)
-			       tramp-initial-end-of-output))
+		      (mapconcat 'tramp-shell-quote-argument env " ")
 		      (if heredoc
 			  (format "%s\n(\n%s\n) </dev/tty\n%s"
 				  program (car args) tramp-end-of-heredoc)
@@ -2931,10 +2942,20 @@ the result will be a local, non-Tramp, file name."
     (error "Implementation does not handle immediate return"))
 
   (with-parsed-tramp-file-name default-directory nil
-    (let (command input tmpinput stderr tmpstderr outbuf ret)
+    (let (command env input tmpinput stderr tmpstderr outbuf ret)
       ;; Compute command.
       (setq command (mapconcat 'tramp-shell-quote-argument
 			       (cons program args) " "))
+      ;; We use as environment the difference to toplevel `process-environment'.
+      (setq env
+	    (dolist (elt (nreverse (copy-sequence process-environment)) env)
+	      (or (member elt (default-toplevel-value 'process-environment))
+		  (setq env (cons elt env)))))
+      (when env
+	(setq command
+	      (format
+	       "env %s %s"
+	       (mapconcat 'tramp-shell-quote-argument env " ") command)))
       ;; Determine input.
       (if (null infile)
 	  (setq input "/dev/null")

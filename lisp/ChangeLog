@@ -1,10 +1,18 @@
+2014-11-22  Michael Albinus  <michael.albinus@gmx.de>
+
+        * net/tramp-sh.el (tramp-sh-handle-start-file-process)
+	(tramp-sh-handle-process-file): Propagate `process-environment'.
+
+	* vc/vc-hg.el (vc-hg-state): No special handling for remote files;
+	Tramp propagates environment variables now.
+
 2014-11-22  Eric S. Raymond  <esr@snark>
 
-	* vc-filewise.el: New file to isolate code used only by the
+	* vc/vc-filewise.el: New file to isolate code used only by the
 	file-oriented back ends (SCCS/RCS/CVS/SRC) which should not
 	live in vc.el and certainly not in vc-hooks.el.
 
-	* vc-hooks.el, vc-rcs.el, vc-sccs.el: vc-name  -> vc-master-name.
+	* vc/vc-hooks.el, vc-rcs.el, vc-sccs.el: vc-name  -> vc-master-name.
 	This is preaparatory to isolating all the 'master' functions
 	used only by the file-oriented back ends.  With this done first,
 	the substantive diffs will be easier to read.

@@ -211,18 +211,11 @@ highlighting the Log View buffer."
 			     (append
 			      (list "TERM=dumb" "LANGUAGE=C" "HGPLAIN=1")
 			      process-environment)))
-			(if (file-remote-p file)
-			    (process-file
-			     "env" nil t nil
-			     "HGPLAIN=1" vc-hg-program
-			     "--config" "alias.status=status"
-			     "--config" "defaults.status="
-			     "status" "-A" (file-relative-name file))
-			  (process-file
-			   vc-hg-program nil t nil
-			   "--config" "alias.status=status"
-			   "--config" "defaults.status="
-			   "status" "-A" (file-relative-name file))))
+			(process-file
+			 vc-hg-program nil t nil
+			 "--config" "alias.status=status"
+			 "--config" "defaults.status="
+			 "status" "-A" (file-relative-name file)))
                     ;; Some problem happened.  E.g. We can't find an `hg'
                     ;; executable.
                     (error nil)))))))
