@@ -123,7 +123,7 @@ If nil, use the value of `vc-diff-switches'.  If t, use no switches."
   :group 'vc-src)
 
 ;; This needs to be autoloaded because vc-src-registered uses it (via
-;; vc-master-registered), and vc-hooks needs to be able to check
+;; vc-default-registered), and vc-hooks needs to be able to check
 ;; for a registered backend without loading every backend.
 ;;;###autoload
 (defcustom vc-src-master-templates
@@ -153,7 +153,7 @@ For a description of possible values, see `vc-check-master-templates'."
 ;; every file that is visited.
 ;;;###autoload
 (progn
-(defun vc-src-registered (f) (vc-master-registered 'src f)))
+(defun vc-src-registered (f) (vc-default-registered 'src f)))
 
 (defun vc-src-state (file)
   "SRC-specific version of `vc-state'."

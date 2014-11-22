@@ -75,7 +75,7 @@ If nil, use the value of `vc-diff-switches'.  If t, use no switches."
   :group 'vc-sccs)
 
 ;; This needs to be autoloaded because vc-sccs-registered uses it (via
-;; vc-master-registered), and vc-hooks needs to be able to check
+;; vc-default-registered), and vc-hooks needs to be able to check
 ;; for a registered backend without loading every backend.
 ;;;###autoload
 (defcustom vc-sccs-master-templates
@@ -112,7 +112,7 @@ For a description of possible values, see `vc-check-master-templates'."
 ;; every file that is visited.
 ;;;###autoload
 (progn
-(defun vc-sccs-registered (f) (vc-master-registered 'SCCS f)))
+(defun vc-sccs-registered (f) (vc-default-registered 'SCCS f)))
 
 (defun vc-sccs-state (file)
   "SCCS-specific function to compute the version control state."
