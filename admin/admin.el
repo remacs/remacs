@@ -109,15 +109,15 @@ Root must be the root of an Emacs source tree."
   (set-version-in-file root "nt/makefile.w32-in" version
 		       (rx (and "VERSION" (0+ space) "=" (0+ space)
 				(submatch (1+ (in "0-9."))))))
-    ;; Major version only.
-    (when (string-match "\\([0-9]\\{2,\\}\\)" version)
-      (setq version (match-string 1 version))
-      (set-version-in-file root "src/msdos.c" version
-			   (rx (and "Vwindow_system_version" (1+ not-newline)
-				    ?\( (submatch (1+ (in "0-9"))) ?\))))
-      (set-version-in-file root "etc/refcards/ru-refcard.tex" version
-			   "\\\\newcommand{\\\\versionemacs}\\[0\\]\
-{\\([0-9]\\{2,\\}\\)}.+%.+version of Emacs")))
+  ;; Major version only.
+  (when (string-match "\\([0-9]\\{2,\\}\\)" version)
+    (setq version (match-string 1 version))
+    (set-version-in-file root "src/msdos.c" version
+			 (rx (and "Vwindow_system_version" (1+ not-newline)
+				  ?\( (submatch (1+ (in "0-9"))) ?\))))
+    (set-version-in-file root "etc/refcards/ru-refcard.tex" version
+			 "\\\\newcommand{\\\\versionemacs}\\[0\\]\
+{\\([0-9]\\{2,\\}\\)}.+%.+version of Emacs"))
   (message "Setting version numbers...done"))
 
 ;; Note this makes some assumptions about form of short copyright.
