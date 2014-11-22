@@ -1,3 +1,8 @@
+2014-11-22  Ulf Jasper  <ulf.jasper@web.de>
+
+	* net/newst-backend.el (newsticker--sentinel-work): Tell
+	`libxml-parse-xml-region' to discard comments. Fixes bug#18787.
+
 2014-11-22  Michael Albinus  <michael.albinus@gmx.de>
 
         * net/tramp-sh.el (tramp-sh-handle-start-file-process)
