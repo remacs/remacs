@@ -90,7 +90,7 @@ to use --brief and sets this variable to remember whether it worked."
   :group 'vc-rcs)
 
 ;; This needs to be autoloaded because vc-rcs-registered uses it (via
-;; vc-master-registered), and vc-hooks needs to be able to check
+;; vc-default-registered), and vc-hooks needs to be able to check
 ;; for a registered backend without loading every backend.
 ;;;###autoload
 (defcustom vc-rcs-master-templates
@@ -131,7 +131,7 @@ For a description of possible values, see `vc-check-master-templates'."
 ;; every file that is visited.
 ;;;###autoload
 (progn
-(defun vc-rcs-registered (f) (vc-master-registered 'RCS f)))
+(defun vc-rcs-registered (f) (vc-default-registered 'RCS f)))
 
 (defun vc-rcs-state (file)
   "Implementation of `vc-state' for RCS."

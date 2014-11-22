@@ -627,8 +627,7 @@ If FILE is not registered, this function always returns nil."
    "`working-revision' not found: using the old `workfile-version' instead")
   (vc-call-backend backend 'workfile-version file))
 
-;;;autoload
-(defun vc-master-registered (backend file)
+(defun vc-default-registered (backend file)
   "Check if FILE is registered in BACKEND using vc-BACKEND-master-templates."
   (let ((sym (vc-make-backend-sym backend 'master-templates)))
     (unless (get backend 'vc-templates-grabbed)
@@ -637,6 +636,41 @@ If FILE is not registered, this function always returns nil."
       (if (stringp result)
 	  (vc-file-setprop file 'vc-master-name result)
 	nil))))				; Not registered
+
+(defun vc-check-master-templates (file templates)
+  "Return non-nil if there is a master corresponding to FILE.
+
+TEMPLATES is a list of strings or functions.  If an element is a
+string, it must be a control string as required by `format', with two
+string placeholders, such as \"%sRCS/%s,v\".  The directory part of
+FILE is substituted for the first placeholder, the basename of FILE
+for the second.  If a file with the resulting name exists, it is taken
+as the master of FILE, and returned.
+
+If an element of TEMPLATES is a function, it is called with the
+directory part and the basename of FILE as arguments.  It should
+return non-nil if it finds a master; that value is then returned by
+this function."
+  (let ((dirname (or (file-name-directory file) ""))
+        (basename (file-name-nondirectory file)))
+    (catch 'found
+      (mapcar
+       (lambda (s)
+	 (let ((trial (vc-possible-master s dirname basename)))
+	   (when (and trial (file-exists-p trial)
+		      ;; Make sure the file we found with name
+		      ;; TRIAL is not the source file itself.
+		      ;; That can happen with RCS-style names if
+		      ;; the file name is truncated (e.g. to 14
+		      ;; chars).  See if either directory or
+		      ;; attributes differ.
+		      (or (not (string= dirname
+					(file-name-directory trial)))
+			  (not (equal (file-attributes file)
+				      (file-attributes trial)))))
+	       (throw 'found trial))))
+       templates))))
+
 
 ;; toggle-read-only is obsolete since 24.3, but since vc-t-r-o was made
 ;; obsolete earlier, it is ok for the latter to be an alias to the former,
