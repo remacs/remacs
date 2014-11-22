@@ -1,3 +1,10 @@
+2014-11-22  Eric S. Raymond  <esr@snark>
+
+	* vc-hooks.el, vc-rcs.el, vc-sccs.el: vc-name  -> vc-master-name.
+	This is preaparatory to isolating all the 'master' functions
+	used only by the file-oriented back ends.  With this done first,
+	the substantive diffs will be easier to read.
+
 2014-11-21  Rüdiger Sonderfeld  <ruediger@c-plusplus.net>
 
 	* play/morse.el (nato-alphabet): Mark URL in docstring in a way

@@ -454,18 +454,18 @@ If the argument is a list, the files must all have the same back end."
   "Return where the repository for the current directory is kept."
   (symbol-name (vc-backend file)))
 
-(defun vc-name (file)
+(defun vc-master-name (file)
   "Return the master name of FILE.
 If the file is not registered, or the master name is not known, return nil."
   ;; TODO: This should ultimately become obsolete, at least up here
   ;; in vc-hooks.
-  (or (vc-file-getprop file 'vc-name)
+  (or (vc-file-getprop file 'vc-master-name)
       ;; force computation of the property by calling
       ;; vc-BACKEND-registered explicitly
       (let ((backend (vc-backend file)))
 	(if (and backend
 		 (vc-call-backend backend 'registered file))
-	    (vc-file-getprop file 'vc-name)))))
+	    (vc-file-getprop file 'vc-master-name)))))
 
 (defun vc-checkout-model (backend files)
   "Indicate how FILES are checked out.
@@ -647,7 +647,7 @@ If FILE is not registered, this function always returns nil."
       (put backend 'vc-templates-grabbed t))
     (let ((result (vc-check-master-templates file (symbol-value sym))))
       (if (stringp result)
-	  (vc-file-setprop file 'vc-name result)
+	  (vc-file-setprop file 'vc-master-name result)
 	nil))))				; Not registered
 
 (defun vc-possible-master (s dirname basename)

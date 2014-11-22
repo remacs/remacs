@@ -238,11 +238,11 @@ When VERSION is given, perform check for that version."
 	     (if (vc-rcs-trunk-p version)
 		 (progn
 		   ;; Compare VERSION to the head version number.
-		   (vc-insert-file (vc-name file) "^[0-9]")
+		   (vc-insert-file (vc-master-name file) "^[0-9]")
 		   (vc-parse-buffer "^head[ \t\n]+\\([^;]+\\);" 1))
 	       ;; If we are not on the trunk, we need to examine the
 	       ;; whole current branch.
-	       (vc-insert-file (vc-name file) "^desc")
+	       (vc-insert-file (vc-master-name file) "^desc")
 	       (vc-rcs-find-most-recent-rev (vc-branch-part version))))))
 
 (defun vc-rcs-workfile-unchanged-p (file)
@@ -309,9 +309,9 @@ expanded if `vc-keep-workfiles' is non-nil, otherwise, delete the workfile."
 			   (match-string 1))))
 	    ;; if we couldn't find the master name,
 	    ;; run vc-rcs-registered to get it
-	    ;; (will be stored into the vc-name property)
+	    ;; (will be stored into the vc-master-name property)
 	    (vc-rcs-registered file)
-	  (vc-file-setprop file 'vc-name
+	  (vc-file-setprop file 'vc-master-name
 			   (if (file-name-absolute-p name)
 			       name
 			     (expand-file-name
@@ -343,7 +343,7 @@ expanded if `vc-keep-workfiles' is non-nil, otherwise, delete the workfile."
   "Unregister FILE from RCS.
 If this leaves the RCS subdirectory empty, ask the user
 whether to remove it."
-  (let* ((master (vc-name file))
+  (let* ((master (vc-master-name file))
 	 (dir (file-name-directory master))
 	 (backup-info (find-backup-file-name master)))
     (if (not backup-info)
@@ -379,7 +379,7 @@ whether to remove it."
 	(if old-version
 	    (setq rev (vc-branch-part old-version))
 	  (error "can't find current branch"))
-	(apply #'vc-do-command "*vc*" 0 "ci" (vc-name file)
+	(apply #'vc-do-command "*vc*" 0 "ci" (vc-master-name file)
 	       ;; if available, use the secure check-in option
 	       (and (vc-rcs-release-p "5.6.4") "-j")
 	       (concat (if vc-keep-workfiles "-u" "-r") rev)
@@ -411,12 +411,12 @@ whether to remove it."
 	  (if (not (vc-rcs-release-p "5.6.2"))
 	      ;; exit status of 1 is also accepted.
 	      ;; It means that the lock was removed before.
-	      (vc-do-command "*vc*" 1 "rcs" (vc-name file)
+	      (vc-do-command "*vc*" 1 "rcs" (vc-master-name file)
 			     (concat "-u" old-version)))))))))
 
 (defun vc-rcs-find-revision (file rev buffer)
   (apply #'vc-do-command
-	 (or buffer "*vc*") 0 "co" (vc-name file)
+	 (or buffer "*vc*") 0 "co" (vc-master-name file)
 	 "-q" ;; suppress diagnostic output
 	 (concat "-p" rev)
 	 (vc-switches 'RCS 'checkout)))
@@ -448,7 +448,7 @@ attempt the checkout for all registered files beneath it."
 		   (vc-rcs-set-default-branch file nil))
 	      ;; now do the checkout
 	      (apply #'vc-do-command
-		     "*vc*" 0 "co" (vc-name file)
+		     "*vc*" 0 "co" (vc-master-name file)
 		     ;; If locking is not strict, force to overwrite
 		     ;; the writable workfile.
 		     (if (eq (vc-rcs-checkout-model (list file)) 'implicit) "-f")
@@ -501,7 +501,7 @@ expanded to all registered subfiles in them."
 					   discard file)))
 		(error "Aborted"))
 	    (message "Removing revision %s from %s." discard file)
-	    (vc-do-command "*vc*" 0 "rcs" (vc-name file) (concat "-o" discard))
+	    (vc-do-command "*vc*" 0 "rcs" (vc-master-name file) (concat "-o" discard))
 	    ;; Check out the most recent remaining version.  If it
 	    ;; fails, because the whole branch got deleted, do a
 	    ;; double-take and check out the version where the branch
@@ -509,7 +509,7 @@ expanded to all registered subfiles in them."
 	    (while (not done)
 	      (condition-case err
 		  (progn
-		    (vc-do-command "*vc*" 0 "co" (vc-name file) "-f"
+		    (vc-do-command "*vc*" 0 "co" (vc-master-name file) "-f"
 				   (concat "-u" previous))
 		    (setq done t))
 		(error (set-buffer "*vc*")
@@ -529,14 +529,14 @@ expanded to all registered subfiles in them."
 revert all registered files beneath it."
   (if (file-directory-p file)
       (mapc 'vc-rcs-revert (vc-expand-dirs (list file)))
-    (vc-do-command "*vc*" 0 "co" (vc-name file) "-f"
+    (vc-do-command "*vc*" 0 "co" (vc-master-name file) "-f"
 		   (concat (if (eq (vc-state file) 'edited) "-u" "-r")
 			   (vc-working-revision file)))))
 
 (defun vc-rcs-merge (file first-version &optional second-version)
   "Merge changes into current working copy of FILE.
 The changes are between FIRST-VERSION and SECOND-VERSION."
-  (vc-do-command "*vc*" 1 "rcsmerge" (vc-name file)
+  (vc-do-command "*vc*" 1 "rcsmerge" (vc-master-name file)
 		 "-kk"			; ignore keyword conflicts
 		 (concat "-r" first-version)
 		 (if second-version (concat "-r" second-version))))
@@ -547,16 +547,16 @@ If FILE is a directory, steal the lock on all registered files beneath it.
 Needs RCS 5.6.2 or later for -M."
   (if (file-directory-p file)
       (mapc 'vc-rcs-steal-lock (vc-expand-dirs (list file)))
-    (vc-do-command "*vc*" 0 "rcs" (vc-name file) "-M" (concat "-u" rev))
+    (vc-do-command "*vc*" 0 "rcs" (vc-master-name file) "-M" (concat "-u" rev))
     ;; Do a real checkout after stealing the lock, so that we see
     ;; expanded headers.
-    (vc-do-command "*vc*" 0 "co" (vc-name file) "-f" (concat "-l" rev))))
+    (vc-do-command "*vc*" 0 "co" (vc-master-name file) "-f" (concat "-l" rev))))
 
 (defun vc-rcs-modify-change-comment (files rev comment)
   "Modify the change comments change on FILES on a specified REV.  If FILE is a
 directory the operation is applied to all registered files beneath it."
   (dolist (file (vc-expand-dirs files))
-    (vc-do-command "*vc*" 0 "rcs" (vc-name file)
+    (vc-do-command "*vc*" 0 "rcs" (vc-master-name file)
 		   (concat "-m" rev ":" comment))))
 
 
@@ -582,7 +582,7 @@ Remaining arguments are ignored.
 If FILE is a directory the operation is applied to all registered
 files beneath it."
   (vc-do-command (or buffer "*vc*") 0 "rlog"
-                 (mapcar 'vc-name (vc-expand-dirs files)))
+                 (mapcar 'vc-master-name (vc-expand-dirs files)))
   (with-current-buffer (or buffer "*vc*")
     (vc-rcs-print-log-cleanup))
   (when limit 'limit-unsupported))
@@ -845,7 +845,7 @@ systime, or nil if there is none.  Also, reposition point."
       (vc-file-tree-walk
        dir
        (lambda (f)
-	 (vc-do-command "*vc*" 0 "rcs" (vc-name f) (concat "-n" name ":")))))))
+	 (vc-do-command "*vc*" 0 "rcs" (vc-master-name f) (concat "-n" name ":")))))))
 
 
 ;;;
@@ -978,7 +978,7 @@ Uses `rcs2log' which only works for RCS and CVS."
 
 (defun vc-rcs-rename-file (old new)
   ;; Just move the master file (using vc-rcs-master-templates).
-  (vc-rename-master (vc-name old) new vc-rcs-master-templates))
+  (vc-rename-master (vc-master-name old) new vc-rcs-master-templates))
 
 (defun vc-rcs-find-file-hook ()
   ;; If the file is locked by some other user, make
@@ -997,7 +997,7 @@ Uses `rcs2log' which only works for RCS and CVS."
 This likely means that FILE has been changed with respect
 to its master version."
   (let ((file-time (nth 5 (file-attributes file)))
-	(master-time (nth 5 (file-attributes (vc-name file)))))
+	(master-time (nth 5 (file-attributes (vc-master-name file)))))
     (or (> (nth 0 file-time) (nth 0 master-time))
 	(and (= (nth 0 file-time) (nth 0 master-time))
 	     (> (nth 1 file-time) (nth 1 master-time))))))
@@ -1024,10 +1024,10 @@ This function sets the properties `vc-working-revision' and
 `vc-checkout-model' to their correct values, based on the master
 file."
   (with-temp-buffer
-    (if (or (not (vc-insert-file (vc-name file) "^[0-9]"))
+    (if (or (not (vc-insert-file (vc-master-name file) "^[0-9]"))
             (progn (goto-char (point-min))
                    (not (looking-at "^head[ \t\n]+[^;]+;$"))))
-        (error "File %s is not an RCS master file" (vc-name file)))
+        (error "File %s is not an RCS master file" (vc-master-name file)))
     (let ((workfile-is-latest nil)
 	  (default-branch (vc-parse-buffer "^branch[ \t\n]+\\([^;]*\\);" 1)))
       (vc-file-setprop file 'vc-rcs-default-branch default-branch)
@@ -1047,7 +1047,7 @@ file."
 			default-branch)
 	  (setq working-revision default-branch))
 	 ;; else, search for the head of the default branch
-	 (t (vc-insert-file (vc-name file) "^desc")
+	 (t (vc-insert-file (vc-master-name file) "^desc")
 	    (setq working-revision
 		  (vc-rcs-find-most-recent-rev default-branch))
 	    (setq workfile-is-latest t)))
@@ -1238,7 +1238,7 @@ variable `vc-rcs-release' is set to the returned value."
   (set-file-modes file (logior (file-modes file) 128)))
 
 (defun vc-rcs-set-default-branch (file branch)
-  (vc-do-command "*vc*" 0 "rcs" (vc-name file) (concat "-b" branch))
+  (vc-do-command "*vc*" 0 "rcs" (vc-master-name file) (concat "-b" branch))
   (vc-file-setprop file 'vc-rcs-default-branch branch))
 
 (defun vc-rcs-parse (&optional buffer)
