@@ -3445,9 +3445,9 @@ of."
       ;; Let's check whether a wrong password has been sent already.
       ;; Sometimes, the process returns a new password request
       ;; immediately after rejecting the previous (wrong) one.
-      (goto-char (point-min))
-      (when (search-forward-regexp tramp-wrong-passwd-regexp nil t)
+      (unless (tramp-get-connection-property vec "first-password-request" nil)
 	(tramp-clear-passwd vec))
+      (goto-char (point-min))
       (tramp-check-for-regexp proc tramp-password-prompt-regexp)
       (tramp-message vec 3 "Sending %s" (match-string 1))
       ;; We don't call `tramp-send-string' in order to hide the
