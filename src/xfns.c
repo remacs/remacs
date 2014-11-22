@@ -1075,19 +1075,7 @@ x_set_tool_bar_lines (struct frame *f, Lisp_Object value, Lisp_Object oldval)
   else
     nlines = 0;
 
-#ifdef USE_GTK
   x_change_tool_bar_height (f, nlines * FRAME_LINE_HEIGHT (f));
-#else /* !USE_GTK */
-  if (nlines == 0)
-    x_change_tool_bar_height (f, nlines * FRAME_LINE_HEIGHT (f));
-  else
-    {
-      f->n_tool_bar_rows = 0;
-      FRAME_TOOL_BAR_LINES (f) = nlines;
-      adjust_frame_glyphs (f);
-      SET_FRAME_GARBAGED (f);
-    }
-#endif /* USE_GTK */
 }
 
 
@@ -1124,10 +1112,6 @@ x_change_tool_bar_height (struct frame *f, int height)
   /* Recalculate tool bar and frame text sizes.  */
   FRAME_TOOL_BAR_HEIGHT (f) = height;
   FRAME_TOOL_BAR_LINES (f) = lines;
-/**   FRAME_TEXT_HEIGHT (f) **/
-/**     = FRAME_PIXEL_TO_TEXT_HEIGHT (f, FRAME_PIXEL_HEIGHT (f)); **/
-/**   FRAME_LINES (f) **/
-/**     = FRAME_PIXEL_HEIGHT_TO_TEXT_LINES (f, FRAME_PIXEL_HEIGHT (f)); **/
   /* Store the `tool-bar-lines' and `height' frame parameters.  */
   store_frame_param (f, Qtool_bar_lines, make_number (lines));
   store_frame_param (f, Qheight, make_number (FRAME_LINES (f)));
@@ -1153,6 +1137,10 @@ x_change_tool_bar_height (struct frame *f, int height)
   adjust_frame_size (f, -1, -1, (old_height == 0 || height == 0) ? 2 : 4, 0,
 		     Qtool_bar_lines);
 
+  /* adjust_frame_size might not have done anything, garbage frame
+     here.  */
+  adjust_frame_glyphs (f);
+  SET_FRAME_GARBAGED (f);
   if (FRAME_X_WINDOW (f))
     x_clear_under_internal_border (f);
 

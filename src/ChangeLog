@@ -1,3 +1,15 @@
+2014-11-22  Martin Rudalics  <rudalics@gmx.at>
+
+	Don't shrink frame when using desktop-save-mode (Bug#19048).
+	* w32fns.c (x_set_tool_bar_lines): Always call
+	x_change_tool_bar_height (Bug#19048).
+	(x_change_tool_bar_height): Mark frame as garbaged since
+	adjust_frame_size might not have done that.
+	* xfns.c (x_set_tool_bar_lines): Always call
+	x_change_tool_bar_height (Bug#19048).
+	(x_change_tool_bar_height): Mark frame as garbaged since
+	adjust_frame_size might not have done that.
+
 2014-11-21  Ulf Jasper  <ulf.jasper@web.de>
 
 	* xml.c (parse_region): Take care of new optional parameter
