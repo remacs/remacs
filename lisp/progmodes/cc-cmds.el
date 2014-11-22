@@ -1417,12 +1417,15 @@ No indentation or other \"electric\" behavior is performed."
 	      (car (c-beginning-of-decl-1
 		    ;; NOTE: If we're in a K&R region, this might be the start
 		    ;; of a parameter declaration, not the actual function.
+		    ;; It might also leave us at a label or "label" like
+		    ;; "private:".
 		    (and least-enclosing ; LIMIT for c-b-of-decl-1
 			 (c-safe-position least-enclosing paren-state)))))
 
 	;; Has the declaration we've gone back to got braces?
-	(setq brace-decl-p
-	      (save-excursion
+	(or (eq decl-result 'label)
+	    (setq brace-decl-p
+		  (save-excursion
 		    (and (c-syntactic-re-search-forward "[;{]" nil t t)
 			 (or (eq (char-before) ?\{)
 			     (and c-recognize-knr-p
@@ -1430,10 +1433,11 @@ No indentation or other \"electric\" behavior is performed."
 				  ;; ';' in a K&R argdecl.  In
 				  ;; that case the declaration
 				  ;; should contain a block.
-				  (c-in-knr-argdecl))))))
+				  (c-in-knr-argdecl)))))))
 
 	(cond
-	 ((= (point) kluge-start)	; might be BOB or unbalanced parens.
+	 ((or (eq decl-result 'label)	; e.g. "private:" or invalid syntax.
+	      (= (point) kluge-start))	; might be BOB or unbalanced parens.
 	  'outwith-function)
 	 ((eq decl-result 'same)
 	  (if brace-decl-p

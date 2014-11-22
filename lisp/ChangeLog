@@ -1,3 +1,11 @@
+2014-11-22  Alan Mackenzie  <acm@muc.de>
+
+	Fix error with `mark-defun' and "protected:" in C++ Mode.
+	Fixes: debbugs:19134.
+
+	* progmodes/cc-cmds.el (c-where-wrt-brace-construct): Handle a
+	return code of (label) from c-beginning-of-decl-1.
+
 2014-11-22  Ulf Jasper  <ulf.jasper@web.de>
 
 	* net/newst-backend.el (newsticker--sentinel-work): Tell
