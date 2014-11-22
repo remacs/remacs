@@ -1872,6 +1872,23 @@ Using `python-shell-interpreter' and
                            python-shell-virtualenv-path
                            path-separator original-path)))))
 
+(ert-deftest python-shell-calculate-process-environment-4 ()
+  "Test `python-shell-unbuffered' modification."
+  (setenv "PYTHONUNBUFFERED")
+  (let* ((process-environment
+          (python-shell-calculate-process-environment)))
+    ;; Defaults to t
+    (should python-shell-unbuffered)
+    (should (string= (getenv "PYTHONUNBUFFERED") "1"))))
+
+(ert-deftest python-shell-calculate-process-environment-5 ()
+  (setenv "PYTHONUNBUFFERED")
+  "Test `python-shell-unbuffered' modification."
+  (let* ((python-shell-unbuffered nil)
+         (process-environment
+          (python-shell-calculate-process-environment)))
+    (should (not (getenv "PYTHONUNBUFFERED")))))
+
 (ert-deftest python-shell-calculate-exec-path-1 ()
   "Test `python-shell-exec-path' modification."
   (let* ((original-exec-path exec-path)
@@ -1961,8 +1978,9 @@ and `python-shell-interpreter-args' in the new shell buffer."
           (should (process-live-p process))
           (with-current-buffer shell-buffer
             (should (eq major-mode 'inferior-python-mode))
-            (should (string= python-shell-interpreter
-                             (executable-find python-tests-shell-interpreter)))
+            (should (file-equal-p
+                     python-shell-interpreter
+                     (executable-find python-tests-shell-interpreter)))
             (should (string= python-shell-interpreter-args "-i"))))
       (kill-buffer shell-buffer))))
 
@@ -2050,12 +2068,11 @@ and `python-shell-interpreter-args' in the new shell buffer."
   (skip-unless (executable-find python-tests-shell-interpreter))
   (python-tests-with-temp-file
    ""
-   (let* ((python-shell-interpreter
-           (executable-find python-tests-shell-interpreter))
+   (let* ((cmd
+           (concat (executable-find python-tests-shell-interpreter) " -i"))
           (use-dialog-box)
           (dedicated-process-name (python-shell-get-process-name t))
-          (dedicated-process
-           (python-shell-get-or-create-process python-shell-interpreter t))
+          (dedicated-process (python-shell-get-or-create-process cmd t))
           (dedicated-shell-buffer (process-buffer dedicated-process)))
      (unwind-protect
          (progn
@@ -2073,12 +2090,11 @@ and `python-shell-interpreter-args' in the new shell buffer."
   (skip-unless (executable-find python-tests-shell-interpreter))
   (python-tests-with-temp-file
    ""
-   (let* ((python-shell-interpreter
-           (executable-find python-tests-shell-interpreter))
+   (let* ((cmd
+           (concat (executable-find python-tests-shell-interpreter) " -i"))
           (use-dialog-box)
           (process-name (python-shell-get-process-name nil))
-          (process
-           (python-shell-get-or-create-process python-shell-interpreter))
+          (process (python-shell-get-or-create-process cmd))
           (shell-buffer (process-buffer process)))
      (unwind-protect
          (progn
@@ -2088,43 +2104,42 @@ and `python-shell-interpreter-args' in the new shell buffer."
            (kill-buffer shell-buffer)
            ;; Check there are no processes for current buffer.
            (should (not (python-shell-get-process))))
-       (ignore-errors (kill-buffer dedicated-shell-buffer))))))
+       (ignore-errors (kill-buffer shell-buffer))))))
 
 (ert-deftest python-shell-get-or-create-process-3 ()
   "Check shell dedicated/global process preference."
   (skip-unless (executable-find python-tests-shell-interpreter))
   (python-tests-with-temp-file
    ""
-   (let* ((python-shell-interpreter
-           (executable-find python-tests-shell-interpreter))
+   (let* ((cmd
+           (concat (executable-find python-tests-shell-interpreter) " -i"))
+          (python-shell-interpreter python-tests-shell-interpreter)
           (use-dialog-box)
           (dedicated-process-name (python-shell-get-process-name t))
           (global-process)
           (dedicated-process))
-     (unwind-protect
-         (progn
-           ;; Create global process
-           (run-python python-shell-interpreter nil)
-           (setq global-process (get-buffer-process "*Python*"))
-           (should global-process)
-           (set-process-query-on-exit-flag global-process nil)
-           ;; Create dedicated process
-           (run-python python-shell-interpreter t)
-           (setq dedicated-process (get-process dedicated-process-name))
-           (should dedicated-process)
-           (set-process-query-on-exit-flag dedicated-process nil)
-           ;; Prefer dedicated.
-           (should (equal (python-shell-get-or-create-process)
-                          dedicated-process))
-           ;; Kill the dedicated so the global takes over.
-           (kill-buffer (process-buffer dedicated-process))
-           ;; Detect global.
-           (should (equal (python-shell-get-or-create-process) global-process))
-           ;; Kill the global.
-           (kill-buffer (process-buffer global-process))
-           ;; Check there are no processes for current buffer.
-           (should (not (python-shell-get-process))))
-       (ignore-errors (kill-buffer dedicated-shell-buffer))))))
+     (progn
+       ;; Create global process
+       (run-python cmd nil)
+       (setq global-process (get-buffer-process "*Python*"))
+       (should global-process)
+       (set-process-query-on-exit-flag global-process nil)
+       ;; Create dedicated process
+       (run-python cmd t)
+       (setq dedicated-process (get-process dedicated-process-name))
+       (should dedicated-process)
+       (set-process-query-on-exit-flag dedicated-process nil)
+       ;; Prefer dedicated.
+       (should (equal (python-shell-get-or-create-process)
+                      dedicated-process))
+       ;; Kill the dedicated so the global takes over.
+       (kill-buffer (process-buffer dedicated-process))
+       ;; Detect global.
+       (should (equal (python-shell-get-or-create-process) global-process))
+       ;; Kill the global.
+       (kill-buffer (process-buffer global-process))
+       ;; Check there are no processes for current buffer.
+       (should (not (python-shell-get-process)))))))
 
 (ert-deftest python-shell-internal-get-or-create-process-1 ()
   "Check internal shell process creation fallback."

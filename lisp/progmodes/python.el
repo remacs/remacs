@@ -94,13 +94,13 @@
 ;;       python-shell-interpreter-args
 ;;       "-i C:\\Python27\\Scripts\\ipython-script.py")
 
-;; If you are experiencing missing or delayed output in your shells,
-;; that's likely caused by your Operating System's pipe buffering
-;; (e.g. this is known to happen running CPython 3.3.4 in Windows 7.
+;; Missing or delayed output used to happen due to differences between
+;; Operating Systems' pipe buffering (e.g. CPython 3.3.4 in Windows 7.
 ;; See URL `http://debbugs.gnu.org/cgi/bugreport.cgi?bug=17304').  To
-;; fix this, using CPython's "-u" commandline argument or setting the
-;; "PYTHONUNBUFFERED" environment variable should help: See URL
-;; `https://docs.python.org/3/using/cmdline.html#cmdoption-u'.
+;; avoid this, the `python-shell-unbuffered' defaults to non-nil and
+;; controls whether `python-shell-calculate-process-environment'
+;; should set the "PYTHONUNBUFFERED" environment variable on startup:
+;; See URL `https://docs.python.org/3/using/cmdline.html#cmdoption-u'.
 
 ;; The interaction relies upon having prompts for input (e.g. ">>> "
 ;; and "... " in standard Python shell) and output (e.g. "Out[1]: " in
@@ -1813,6 +1813,14 @@ Restart the Python shell after changing this variable for it to take effect."
   :group 'python
   :safe 'booleanp)
 
+(defcustom python-shell-unbuffered t
+  "Should shell output be unbuffered?.
+When non-nil, this may prevent delayed and missing output in the
+Python shell.  See commentary for details."
+  :type 'boolean
+  :group 'python
+  :safe 'booleanp)
+
 (defcustom python-shell-process-environment nil
   "List of environment variables for Python shell.
 This variable follows the same rules as `process-environment'
@@ -2087,6 +2095,8 @@ uniqueness for different types of configurations."
         (virtualenv (if python-shell-virtualenv-path
                         (directory-file-name python-shell-virtualenv-path)
                       nil)))
+    (when python-shell-unbuffered
+      (setenv "PYTHONUNBUFFERED" "1"))
     (when python-shell-extra-pythonpaths
       (setenv "PYTHONPATH"
               (format "%s%s%s"
