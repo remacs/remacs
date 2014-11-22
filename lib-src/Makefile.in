@@ -388,7 +388,7 @@ update-game-score${EXEEXT}: ${srcdir}/update-game-score.c $(NTLIB) $(config_h)
 	  -DHAVE_SHARED_GAME_DIR="\"$(gamedir)\"" \
 	  $< $(LOADLIBES) $(NTLIB) -o $@
 
-emacsclient.res: $(NTINC)/../emacsclient.rc ${srcdir}/icons/emacs.ico
+emacsclient.res: ../nt/emacsclient.rc ${srcdir}/icons/emacs.ico
 	$(WINDRES) -O coff --include-dir=$(NTINC)/.. -o $@ $<
 
 ## Makefile ends here.

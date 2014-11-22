@@ -392,10 +392,10 @@ echo "Making links to \`m4'"
 
 echo "Making links to \`nt'"
 (cd nt
- ln emacs-x86.manifest emacs-x64.manifest emacs.rc ../${tempdir}/nt
- ln config.nt emacsclient.rc emacs-src.tags ../${tempdir}/nt
+ ln emacs-x86.manifest emacs-x64.manifest ../${tempdir}/nt
+ ln config.nt emacs-src.tags ../${tempdir}/nt
  ln nmake.defs gmake.defs subdirs.el [a-z]*.bat [a-z]*.[ch] ../${tempdir}/nt
- ln Makefile.in gnulib.mk ../${tempdir}/nt
+ ln *.in gnulib.mk ../${tempdir}/nt
  ln mingw-cfg.site epaths.nt INSTALL.OLD ../${tempdir}/nt
  ln ChangeLog INSTALL README README.W32 makefile.w32-in ../${tempdir}/nt)
 

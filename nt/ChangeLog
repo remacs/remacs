@@ -1,5 +1,11 @@
 2014-11-22  Glenn Morris  <rgm@gnu.org>
 
+	* emacs.rc.in, emacsclient.rc.in: Rename from emacs.rc, emacsclient.rc.
+	Let configure generate the real files, and set the version numbers.
+	* Makefile.in (distclean): Delete *.rc.
+	(emacs.res): Update deps for nt/emacsclient.rc now being in the
+	build directory, not the source directory.
+
 	* Makefile.in (emacs.res): Add dependency on icons/hand.cur.
 
 2014-11-18  Glenn Morris  <rgm@gnu.org>

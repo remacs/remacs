@@ -1,3 +1,8 @@
+2014-11-22  Glenn Morris  <rgm@gnu.org>
+
+	* admin.el (set-version): No more need to update nt/*.rc.
+	* authors.el (authors-renamed-files-alist): Add .rc.in files.
+
 2014-11-16  Glenn Morris  <rgm@gnu.org>
 
 	* update_autogen: Auto-detect VCS in use.

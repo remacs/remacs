@@ -195,8 +195,7 @@ clean: mostlyclean
 	-rm -f ${EXE_FILES}
 
 distclean: clean
-	-rm -f TAGS
-	-rm -f Makefile
+	-rm -f TAGS Makefile *.rc
 
 bootstrap-clean maintainer-clean: distclean
 	true
@@ -225,6 +224,7 @@ cmdproxy${EXEEXT}: ${srcdir}/cmdproxy.c
 runemacs${EXEEXT}: ${srcdir}/runemacs.c $(EMACSRES)
 	$(CC) ${ALL_CFLAGS} $^ -mwindows -o $@
 
-emacs.res: ${srcdir}/emacs.rc ${srcdir}/icons/emacs.ico \
+## This rule (and file) is duplicated in src/: why?
+emacs.res: emacs.rc ${srcdir}/icons/emacs.ico \
   ${srcdir}/icons/hand.cur ${srcdir}/$(EMACS_MANIFEST)
 	${WINDRES} -I ${srcdir} -O coff -o $@ $<

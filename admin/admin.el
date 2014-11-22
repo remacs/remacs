@@ -99,6 +99,8 @@ Root must be the root of an Emacs source tree."
 		       (rx (and bol "#" (0+ blank) "define" (1+ blank)
 				"VERSION" (1+ blank) "\""
 				(submatch (1+ (in "0-9."))))))
+  ;; TODO: msdos could easily extract the version number from
+  ;; configure.ac with sed, rather than duplicating the information.
   (set-version-in-file root "msdos/sed2v2.inp" version
 		       (rx (and bol "/^#undef " (1+ not-newline)
 				"define VERSION" (1+ space) "\""
@@ -107,49 +109,6 @@ Root must be the root of an Emacs source tree."
   (set-version-in-file root "nt/makefile.w32-in" version
 		       (rx (and "VERSION" (0+ space) "=" (0+ space)
 				(submatch (1+ (in "0-9."))))))
-  ;; nt/emacs.rc also contains the version number, but in an awkward
-  ;; format. It must contain four components, separated by commas, and
-  ;; in two places those commas are followed by space, in two other
-  ;; places they are not.
-  (let* ((version-components (append (split-string version "\\.")
-				     '("0" "0")))
-	 (comma-version
-	  (concat (car version-components) ","
-		  (cadr version-components) ","
-		  (cadr (cdr version-components)) ","
-		  (cadr (cdr (cdr version-components)))))
-	 (comma-space-version
-	  (concat (car version-components) ", "
-		  (cadr version-components) ", "
-		  (cadr (cdr version-components)) ", "
-		  (cadr (cdr (cdr version-components))))))
-    (set-version-in-file root "nt/emacs.rc" comma-version
-			 (rx (and "FILEVERSION" (1+ space)
-				  (submatch (1+ (in "0-9,"))))))
-    (set-version-in-file root "nt/emacs.rc" comma-version
-			 (rx (and "PRODUCTVERSION" (1+ space)
-				  (submatch (1+ (in "0-9,"))))))
-    (set-version-in-file root "nt/emacs.rc" comma-space-version
-			 (rx (and "\"FileVersion\"" (0+ space) ?, (0+ space)
-				  ?\" (submatch (1+ (in "0-9, "))) "\\0\"")))
-    (set-version-in-file root "nt/emacs.rc" comma-space-version
-			 (rx (and "\"ProductVersion\"" (0+ space) ?,
-				  (0+ space) ?\" (submatch (1+ (in "0-9, ")))
-				  "\\0\"")))
-    ;; Likewise for emacsclient.rc
-    (set-version-in-file root "nt/emacsclient.rc" comma-version
-			 (rx (and "FILEVERSION" (1+ space)
-				  (submatch (1+ (in "0-9,"))))))
-    (set-version-in-file root "nt/emacsclient.rc" comma-version
-			 (rx (and "PRODUCTVERSION" (1+ space)
-				  (submatch (1+ (in "0-9,"))))))
-    (set-version-in-file root "nt/emacsclient.rc" comma-space-version
-			 (rx (and "\"FileVersion\"" (0+ space) ?, (0+ space)
-				  ?\" (submatch (1+ (in "0-9, "))) "\\0\"")))
-    (set-version-in-file root "nt/emacsclient.rc" comma-space-version
-			 (rx (and "\"ProductVersion\"" (0+ space) ?,
-				  (0+ space) ?\" (submatch (1+ (in "0-9, ")))
-				  "\\0\"")))
     ;; Major version only.
     (when (string-match "\\([0-9]\\{2,\\}\\)" version)
       (setq version (match-string 1 version))

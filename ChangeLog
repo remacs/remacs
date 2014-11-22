@@ -1,3 +1,11 @@
+2014-11-22  Glenn Morris  <rgm@gnu.org>
+
+	Further reduce number of versioned files storing Emacs version number.
+	* configure.ac (comma_version, comma_space_version) [mingw32]:
+	New output variables.
+	(nt/emacs.rc, nt/emacsclient.rc) [mingw32]: New output files.
+	* make-dist: Update nt/ for *.rc -> *.rc.in changes.
+
 2014-11-19  Dani Moncayo  <dmoncayo@gmail.com>
 
 	* build-aux/msys-to-w32: Simplify implementation and docstring;

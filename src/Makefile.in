@@ -549,7 +549,7 @@ $(top_srcdir)/aclocal.m4 $(top_srcdir)/configure config.in ../config.status \
 doc.o: buildobj.h
 
 ## This rule (and file) is duplicated in nt/: why?
-emacs.res: $(ntsource)/emacs.rc \
+emacs.res: ../nt/emacs.rc \
 	   $(ntsource)/icons/emacs.ico \
 	   $(ntsource)/icons/hand.cur \
 	   $(ntsource)/$(EMACS_MANIFEST)
