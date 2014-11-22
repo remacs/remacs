@@ -637,6 +637,19 @@ If FILE is not registered, this function always returns nil."
 	  (vc-file-setprop file 'vc-master-name result)
 	nil))))				; Not registered
 
+;;;###autoload
+(defun vc-possible-master (s dirname basename)
+  (cond
+   ((stringp s) (format s dirname basename))
+   ((functionp s)
+    ;; The template is a function to invoke.  If the
+    ;; function returns non-nil, that means it has found a
+    ;; master.  For backward compatibility, we also handle
+    ;; the case that the function throws a 'found atom
+    ;; and a pair (cons MASTER-FILE BACKEND).
+    (let ((result (catch 'found (funcall s dirname basename))))
+      (if (consp result) (car result) result)))))
+
 (defun vc-check-master-templates (file templates)
   "Return non-nil if there is a master corresponding to FILE.
 
