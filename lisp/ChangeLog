@@ -1,5 +1,12 @@
 2014-01-20  Michal Nazarewicz  <mina86@mina86.com>
 
+	* textmodes/tildify.el (tildify-double-space-undos): A new
+	variable specifying whether pressing space in `tildify-mode' after
+	a space has been replaced with hard space undos the substitution.
+	(tildify-space): Add code branch for handling `tildify-doule-space'.
+
+2014-01-20  Michal Nazarewicz  <mina86@mina86.com>
+
 	* textmodes/tildify.el (tildify-space): A new function
 	which can be used as a `post-self-insert-hook' to automatically
 	convert spaces into hard spaces.

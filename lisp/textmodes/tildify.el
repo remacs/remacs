@@ -4,7 +4,7 @@
 
 ;; Author:     Milan Zamazal <pdm@zamazal.org>
 ;;             Michal Nazarewicz <mina86@mina86.com>
-;; Version:    4.6
+;; Version:    4.6.1
 ;; Keywords:   text, TeX, SGML, wp
 
 ;; This file is part of GNU Emacs.
@@ -419,6 +419,11 @@ current `case-fold-search' setting."
   :group 'tildify
   :type '(repeat 'function))
 
+(defcustom tildify-double-space-undos t
+  "Weather `tildify-space' should undo hard space when space is typed again."
+  :version "25.1"
+  :group 'tildify
+  :type 'boolean)
 
 ;;;###autoload
 (defun tildify-space ()
@@ -431,27 +436,39 @@ If
  * `tildify-space-pattern' matches when `looking-back' (no more than 10
    characters) from before the space character, and
  * all predicates in `tildify-space-predicates' return non-nil,
-replace the space character with a hard space specified by
-`tildify-space-string' (note that the function does not take
-`tildify-string-alist' into consideration).
+replace the space character with value of `tildify-space-string' and
+return t.
 
-Return t if conversion happened, nil otherwise.
+Otherwise, if
+ * `tildify-double-space-undos' variable is non-nil,
+ * character before point is a space character, and
+ * text before that is a hard space as defined by
+   `tildify-space-string' variable,
+remove the hard space and leave only the space character.
 
 This function is meant to be used as a `post-self-insert-hook'."
   (interactive)
-  (let ((p (point)) case-fold-search)
-    (when (and (> (- p (point-min)) 2)
-               (eq (preceding-char) ?\s)
-               (eq (char-syntax (char-before (1- p))) ?w)
-               (not (string-equal " " tildify-space-string))
-               (save-excursion
-                 (goto-char (1- p))
-                 (looking-back tildify-space-pattern
-                               (max (point-min) (- p 10))))
-               (run-hook-with-args-until-failure 'tildify-space-predicates))
-      (delete-char -1)
-      (insert tildify-space-string)
-      t)))
+  (let* ((p (point)) (p-1 (1- p)) (n (- p (point-min)))
+         (l (length tildify-space-string)) (l+1 (1+ l))
+         case-fold-search)
+    (when (and (> n 2) (eq (preceding-char) ?\s))
+      (cond
+       ((and (eq (char-syntax (char-before p-1)) ?w)
+             (save-excursion
+               (goto-char p-1)
+               (looking-back tildify-space-pattern (max (point-min) (- p 10))))
+             (run-hook-with-args-until-failure 'tildify-space-predicates))
+        (delete-char -1)
+        (insert tildify-space-string)
+        t)
+       ((and tildify-double-space-undos
+             (> n l+1)
+             (string-equal tildify-space-string
+                           (buffer-substring (- p l+1) p-1)))
+        (goto-char p-1)
+        (delete-char (- l))
+        (goto-char (1+ (point)))
+        nil)))))
 
 (defun tildify-space-region-predicate ()
   "Check whether character before point should be tildified.
