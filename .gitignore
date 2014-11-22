@@ -81,3 +81,5 @@ lwlib/deps/
 lwlib/liblw.a
 leim/changed.misc
 leim/changed.tit
+nt/emacs.rc
+nt/emacsclient.rc
