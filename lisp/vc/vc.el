@@ -2691,33 +2691,6 @@ backend to NEW-BACKEND, and unregister FILE from the current backend.
       (vc-mode-line file new-backend)
       (vc-checkin file new-backend comment (stringp comment)))))
 
-(defun vc-rename-master (oldmaster newfile templates)
-  "Rename OLDMASTER to be the master file for NEWFILE based on TEMPLATES."
-  (let* ((dir (file-name-directory (expand-file-name oldmaster)))
-	 (newdir (or (file-name-directory newfile) ""))
-	 (newbase (file-name-nondirectory newfile))
-	 (masters
-	  ;; List of potential master files for `newfile'
-	  (mapcar
-	   (lambda (s) (vc-possible-master s newdir newbase))
-	   templates)))
-    (when (or (file-symlink-p oldmaster)
-	      (file-symlink-p (file-name-directory oldmaster)))
-      (error "This is unsafe in the presence of symbolic links"))
-    (rename-file
-     oldmaster
-     (catch 'found
-       ;; If possible, keep the master file in the same directory.
-       (dolist (f masters)
-	 (when (and f (string= (file-name-directory (expand-file-name f)) dir))
-	   (throw 'found f)))
-       ;; If not, just use the first possible place.
-       (dolist (f masters)
-	 (and f (or (not (setq dir (file-name-directory f)))
-		    (file-directory-p dir))
-	      (throw 'found f)))
-       (error "New file lacks a version control directory")))))
-
 ;;;###autoload
 (defun vc-delete-file (file)
   "Delete file and mark it as such in the version control system.

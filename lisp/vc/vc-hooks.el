@@ -454,19 +454,6 @@ If the argument is a list, the files must all have the same back end."
   "Return where the repository for the current directory is kept."
   (symbol-name (vc-backend file)))
 
-(defun vc-master-name (file)
-  "Return the master name of FILE.
-If the file is not registered, or the master name is not known, return nil."
-  ;; TODO: This should ultimately become obsolete, at least up here
-  ;; in vc-hooks.
-  (or (vc-file-getprop file 'vc-master-name)
-      ;; force computation of the property by calling
-      ;; vc-BACKEND-registered explicitly
-      (let ((backend (vc-backend file)))
-	(if (and backend
-		 (vc-call-backend backend 'registered file))
-	    (vc-file-getprop file 'vc-master-name)))))
-
 (defun vc-checkout-model (backend files)
   "Indicate how FILES are checked out.
 
@@ -649,18 +636,6 @@ If FILE is not registered, this function always returns nil."
       (if (stringp result)
 	  (vc-file-setprop file 'vc-master-name result)
 	nil))))				; Not registered
-
-(defun vc-possible-master (s dirname basename)
-  (cond
-   ((stringp s) (format s dirname basename))
-   ((functionp s)
-    ;; The template is a function to invoke.  If the
-    ;; function returns non-nil, that means it has found a
-    ;; master.  For backward compatibility, we also handle
-    ;; the case that the function throws a 'found atom
-    ;; and a pair (cons MASTER-FILE BACKEND).
-    (let ((result (catch 'found (funcall s dirname basename))))
-      (if (consp result) (car result) result)))))
 
 (defun vc-check-master-templates (file templates)
   "Return non-nil if there is a master corresponding to FILE.
