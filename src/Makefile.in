@@ -548,11 +548,12 @@ $(top_srcdir)/aclocal.m4 $(top_srcdir)/configure config.in ../config.status \
 
 doc.o: buildobj.h
 
+## This rule (and file) is duplicated in nt/: why?
 emacs.res: $(ntsource)/emacs.rc \
 	   $(ntsource)/icons/emacs.ico \
+	   $(ntsource)/icons/hand.cur \
 	   $(ntsource)/$(EMACS_MANIFEST)
-	$(WINDRES) -O COFF --include-dir=$(top_srcdir)/nt \
-	  -o $@ $(ntsource)/emacs.rc
+	$(WINDRES) -O COFF --include-dir=$(top_srcdir)/nt -o $@ $<
 
 .PHONY: ns-app
 ns-app: emacs$(EXEEXT)

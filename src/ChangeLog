@@ -1,3 +1,7 @@
+2014-11-22  Glenn Morris  <rgm@gnu.org>
+
+	* Makefile.in (emacs.res): Add dependency on icons/hand.cur.  Use $<.
+
 2014-11-22  Martin Rudalics  <rudalics@gmx.at>
 
 	Don't shrink frame when using desktop-save-mode (Bug#19048).
