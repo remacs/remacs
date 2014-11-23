@@ -48,7 +48,7 @@
 
 (defcustom erc-notifications-bus :session
   "D-Bus bus to use for notification."
-  :version "24.5"
+  :version "25.1"
   :group 'erc-notifications
   :type '(choice (const :tag "Session bus" :session) string))
 
