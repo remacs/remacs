@@ -356,7 +356,8 @@ See the `eww-search-prefix' variable for the search engine used."
 	      (progn
 		(unless (eq charset encode)
 		  (condition-case nil
-		      (decode-coding-region (point) (point-max) encode)
+		      (decode-coding-region (point) (point-max)
+					    (or encode charset))
 		    (coding-system-error nil)))
 		(libxml-parse-html-region (point) (point-max))))))
 	(source (and (null document)

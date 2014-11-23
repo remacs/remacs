@@ -1,3 +1,7 @@
+2014-11-23  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* net/eww.el (eww-display-html): Decode the document-defined charset.
+
 2014-11-23  Ivan Shmakov  <ivan@siamics.net>
 
 	* net/eww.el (eww-suggest-uris): New variable.
