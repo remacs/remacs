@@ -80,16 +80,16 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #endif
 
 #if ! GTK_CHECK_VERSION (2, 14, 0)
-#define gtk_adjustment_configure(adj, value, lower,           \
-                                 upper, step_increment,       \
-                                 page_increment, pagesize)    \
-  do {                                                        \
-    gtk_adjustment_set_lower (adj, lower);                    \
-    gtk_adjustment_set_upper (adj, upper);                    \
-    gtk_adjustment_set_page_size (adj, pagesize);             \
-    gtk_adjustment_set_value (adj, value);                    \
-    gtk_adjustment_set_page_increment (adj, page_increment);  \
-    gtk_adjustment_set_step_increment (adj, step_increment);  \
+#define gtk_adjustment_configure(adj, xvalue, xlower,            \
+                                 xupper, xstep_increment,        \
+                                 xpage_increment, xpagesize)     \
+  do {                                                           \
+    adj->lower = xlower;                                         \
+    adj->upper = xupper;                                         \
+    adj->page_size = xpagesize;                                  \
+    gtk_adjustment_set_value (adj, xvalue);                      \
+    adj->page_increment = xpage_increment;                       \
+    adj->step_increment = xstep_increment;                       \
   } while (0)
 #endif /* < Gtk+ 2.14 */
 

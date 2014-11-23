@@ -3,6 +3,7 @@
 	* gtkutil.c (gtk_adjustment_configure): Define for Gtk+ < 2.14.
 	(xg_set_toolkit_horizontal_scroll_bar_thumb): Remove wrong version
 	check for gtk_adjustment_configure (Bug#19149).
+	(gtk_adjustment_configure): Don't use 2.14 functions (Bug#19149).
 
 2014-11-22  Glenn Morris  <rgm@gnu.org>
 
