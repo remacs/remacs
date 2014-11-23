@@ -693,10 +693,18 @@ the like."
   (setq buffer-read-only t))
 
 ;;;###autoload
-(defun eww-browse-url (url &optional _new-window)
-  (when (and (equal major-mode 'eww-mode)
-	     (plist-get eww-data :url))
-    (eww-save-history))
+(defun eww-browse-url (url &optional new-window)
+  (cond (new-window
+         (let ((new-buffer "*eww*")
+               (num 0))
+           (while (get-buffer new-buffer)
+             (setq num (1+ num)
+                   new-buffer (format "*eww*<%d>" num)))
+           (switch-to-buffer new-buffer))
+         (eww-mode))
+        ((and (equal major-mode 'eww-mode)
+              (plist-get eww-data :url))
+         (eww-save-history)))
   (eww url))
 
 (defun eww-back-url ()
@@ -1307,7 +1315,8 @@ The browser to used is specified by the `shr-external-browser' variable."
 
 (defun eww-follow-link (&optional external mouse-event)
   "Browse the URL under point.
-If EXTERNAL, browse the URL using `shr-external-browser'."
+If EXTERNAL is single prefix, browse in new buffer.
+If EXTERNAL is double prefix, browse the URL using `shr-external-browser'."
   (interactive (list current-prefix-arg last-nonmenu-event))
   (mouse-set-point mouse-event)
   (let ((url (get-text-property (point) 'shr-url)))
@@ -1316,7 +1325,7 @@ If EXTERNAL, browse the URL using `shr-external-browser'."
       (message "No link under point"))
      ((string-match "^mailto:" url)
       (browse-url-mail url))
-     (external
+     ((and (consp external) (< 4 (car external)))
       (funcall shr-external-browser url))
      ;; This is a #target url in the same page as the current one.
      ((and (url-target (url-generic-parse-url url))
@@ -1325,7 +1334,7 @@ If EXTERNAL, browse the URL using `shr-external-browser'."
 	(eww-save-history)
 	(eww-display-html 'utf-8 url dom nil (current-buffer))))
      (t
-      (eww-browse-url url)))))
+      (eww-browse-url url external)))))
 
 (defun eww-same-page-p (url1 url2)
   "Return non-nil if both URLs represent the same page.
