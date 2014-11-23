@@ -555,6 +555,7 @@ the like."
     (define-key map "g" 'eww-reload)
     (define-key map [?\t] 'shr-next-link)
     (define-key map [?\M-\t] 'shr-previous-link)
+    (define-key map [backtab] 'shr-previous-link)
     (define-key map [delete] 'scroll-down-command)
     (define-key map [?\S-\ ] 'scroll-down-command)
     (define-key map "\177" 'scroll-down-command)
