@@ -2041,6 +2041,12 @@ Regular expression matching a successful @acronym{STARTTLS} negotiation.
 If non-@code{nil}, do opportunistic @acronym{STARTTLS} upgrades even if Emacs
 doesn't have built-in @acronym{TLS} support.
 
+@item :warn-unless-encrypted @var{boolean}
+If non-@code{nil}, and @code{:return-value} is also non-@code{nil},
+Emacs will warn if the connection isn't encrypted.  This is useful for
+protocols like @acronym{IMAP} and the like, where most users would
+expect the network traffic to be encrypted.
+
 @item :client-certificate @var{list-or-t}
 Either a list of the form @code{(@var{key-file} @var{cert-file})},
 naming the certificate key file and certificate file itself, or
@@ -2065,6 +2071,27 @@ The connection type: @samp{plain} or @samp{tls}.
 @end table
 
 @end defun
+
+@cindex Network Security Manager
+After establishing the connection, the connection is then passed on to
+the Network Security Manager (@acronym{NSM}).  If the connection is a
+@acronym{TLS} or @acronym{STARTTLS} connection, the @acronym{NSM} will
+check whether the certificate used to establish the identity of the
+server we're connecting to can be verified.  If this can't be done,
+the @acronym{NSM} will query the user whether to proceed with the
+connection.
+
+The user is given the choice of registering a permanent security
+exception, a temporary one, or whether to refuse the connection
+entirely.
+
+If the connection is unencrypted, but it was encrypted in previous
+sessions, the user will also be notified about this.
+
+@vindex nsm-security-level
+The @code{nsm-security-level} variable determines the security level.
+If this is @code{low}, no security checks are performed.
+
 
 @node Network Servers
 @section Network Servers

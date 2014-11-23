@@ -45,6 +45,7 @@
 (require 'tls)
 (require 'starttls)
 (require 'auth-source)
+(require 'nsm)
 
 (autoload 'gnutls-negotiate "gnutls")
 (autoload 'open-gnutls-stream "gnutls")
@@ -128,11 +129,14 @@ values:
 :use-starttls-if-possible is a boolean that says to do opportunistic
 STARTTLS upgrades even if Emacs doesn't have built-in TLS functionality.
 
+:warn-unless-encrypted is a boolean which, if :return-list is
+non-nil, is used warn the user if the connection isn't encrypted.
+
 :nogreeting is a boolean that can be used to inhibit waiting for
 a greeting from the server.
 
 :nowait is a boolean that says the connection should be made
-  asynchronously, if possible."
+asynchronously, if possible."
   (unless (featurep 'make-network-process)
     (error "Emacs was compiled without networking support"))
   (let ((type (plist-get parameters :type))
@@ -196,6 +200,8 @@ a greeting from the server.
 	(stream (make-network-process :name name :buffer buffer
 				      :host host :service service
 				      :nowait (plist-get parameters :nowait))))
+    (when (plist-get parameters :warn-unless-encrypted)
+      (setq stream (nsm-verify-connection stream host service nil t)))
     (list stream
 	  (network-stream-get-response stream start
 				       (plist-get parameters :end-of-command))
@@ -319,6 +325,12 @@ a greeting from the server.
 			"' program was found"))))
       (delete-process stream)
       (setq stream nil))
+    ;; Check certificate validity etc.
+    (when builtin-starttls
+      (setq stream (nsm-verify-connection
+		    stream host service
+		    (eq resulting-type 'tls)
+		    (plist-get parameters :warn-unless-encrypted))))
     ;; Return value:
     (list stream greeting capabilities resulting-type error)))
 
@@ -352,6 +364,9 @@ a greeting from the server.
 		       'open-tls-stream)
 		     name buffer host service))
 	   (eoc (plist-get parameters :end-of-command)))
+      ;; Check certificate validity etc.
+      (when (and use-builtin-gnutls stream)
+	(setq stream (nsm-verify-connection stream host service)))
       (if (null stream)
 	  (list nil nil nil 'plain)
 	;; If we're using tls.el, we have to delete the output from

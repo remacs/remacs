@@ -1,3 +1,9 @@
+2014-11-23  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* processes.texi (Network): Mention the new :warn-unless-encrypted
+	parameter to `open-network-stream'.
+	(Network): Mention the Network Security Manager.
+
 2014-11-21  Ulf Jasper  <ulf.jasper@web.de>
 
 	* text.texi (Parsing HTML/XML): Document new optional parameter

@@ -1,3 +1,13 @@
+2014-11-23  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* net/nsm.el: New file that implements a Network Security Manager.
+
+	* net/network-stream.el (open-network-stream): Add a new
+	:warn-unless-encrypted parameter.
+	(network-stream-open-plain): Allow warning unless encrypted.
+	(network-stream-open-starttls): Call the Network Security Manager.
+	(network-stream-open-tls): Ditto.
+
 2014-11-23  Leo Liu  <sdl.web@gmail.com>
 
 	* calendar/cal-china.el (calendar-chinese-from-absolute-for-diary)
