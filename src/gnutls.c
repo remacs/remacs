@@ -169,7 +169,8 @@ DEF_GNUTLS_FN (int, gnutls_x509_crt_get_dn,
 	       (gnutls_x509_crt_t, char *, size_t *));
 DEF_GNUTLS_FN (int, gnutls_x509_crt_get_pk_algorithm,
 	       (gnutls_x509_crt_t, unsigned int *));
-DEF_GNUTLS_FN (int, gnutls_pk_algorithm_get_name, (gnutls_pk_algorithm_t));
+DEF_GNUTLS_FN (const char*, gnutls_pk_algorithm_get_name,
+	       (gnutls_pk_algorithm_t));
 DEF_GNUTLS_FN (int, gnutls_pk_bits_to_sec_param,
 	       (gnutls_pk_algorithm_t, unsigned int));
 DEF_GNUTLS_FN (int, gnutls_x509_crt_get_issuer_unique_id,
