@@ -1,3 +1,9 @@
+2014-11-23  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* pop3.el (pop3-open-server): Warn unless encrypted.
+
+	* nnimap.el (nnimap-open-connection-1): Warn unless encrypted.
+
 2014-11-17  Albert Krewinkel  <albert@zeitkraut.de>
 
 	* message.el (message-valid-fqdn-regexp): Add non-internaional new

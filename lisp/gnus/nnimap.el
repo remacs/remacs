@@ -405,6 +405,7 @@ textual parts.")
 	       "*nnimap*" (current-buffer) nnimap-address
 	       (nnimap-map-port (car ports))
 	       :type nnimap-stream
+	       :warn-unless-encrypted t
 	       :return-list t
 	       :shell-command nnimap-shell-program
 	       :capability-command "1 CAPABILITY\r\n"
