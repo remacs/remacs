@@ -1,6 +1,11 @@
 2014-11-23  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
 	* net/eww.el (eww-display-html): Decode the document-defined charset.
+	(eww): Pop to the *eww* buffer immediately after executing the
+	`M-x eww' command to avoid having buffers pop up later.
+	(eww-display-html): Don't pop the *eww* buffer.
+	(eww-display-raw): Ditto.
+	(eww-display-image): Ditto.
 
 2014-11-23  Ivan Shmakov  <ivan@siamics.net>
 

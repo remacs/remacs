@@ -253,10 +253,13 @@ word(s) will be searched for via `eww-search-prefix'."
                  (setq url (concat url "/"))))
            (setq url (concat eww-search-prefix
                              (replace-regexp-in-string " " "+" url))))))
+  (unless (eq major-mode 'eww-mode)
+    (eww-setup-buffer)
+    (eww-update-header-line-format)
+    (let ((inhibit-read-only t))
+      (insert (format "Loading %s..." url))))
   (url-retrieve url 'eww-render
-		(list url nil
-		      (and (eq major-mode 'eww-mode)
-			   (current-buffer)))))
+		(list url nil (current-buffer))))
 
 ;;;###autoload (defalias 'browse-web 'eww)
 
@@ -344,8 +347,10 @@ See the `eww-search-prefix' variable for the search engine used."
 		  (start end &optional base-url))
 
 (defun eww-display-html (charset url &optional document point buffer encode)
-  (or (fboundp 'libxml-parse-html-region)
-      (error "This function requires Emacs to be compiled with libxml2"))
+  (unless (fboundp 'libxml-parse-html-region)
+    (error "This function requires Emacs to be compiled with libxml2"))
+  (unless (buffer-live-p buffer)
+    (error "Buffer %s doesn't exist" buffer))
   ;; There should be a better way to abort loading images
   ;; asynchronously.
   (setq url-queue nil)
@@ -362,41 +367,42 @@ See the `eww-search-prefix' variable for the search engine used."
 		(libxml-parse-html-region (point) (point-max))))))
 	(source (and (null document)
 		     (buffer-substring (point) (point-max)))))
-    (eww-setup-buffer buffer)
-    (plist-put eww-data :source source)
-    (plist-put eww-data :dom document)
-    (let ((inhibit-read-only t)
-	  (after-change-functions nil)
-	  (shr-target-id (url-target (url-generic-parse-url url)))
-	  (shr-external-rendering-functions
-	   '((title . eww-tag-title)
-	     (form . eww-tag-form)
-	     (input . eww-tag-input)
-	     (textarea . eww-tag-textarea)
-	     (body . eww-tag-body)
-	     (select . eww-tag-select)
-	     (link . eww-tag-link)
-	     (a . eww-tag-a))))
-      (shr-insert-document document)
-      (cond
-       (point
-	(goto-char point))
-       (shr-target-id
-	(goto-char (point-min))
-	(let ((point (next-single-property-change
-		      (point-min) 'shr-target-id)))
-	  (when point
-	    (goto-char point))))
-       (t
-	(goto-char (point-min))
-	;; Don't leave point inside forms, because the normal eww
-	;; commands aren't available there.
-	(while (and (not (eobp))
-		    (get-text-property (point) 'eww-form))
-	  (forward-line 1)))))
-    (plist-put eww-data :url url)
-    (setq eww-history-position 0)
-    (eww-update-header-line-format)))
+    (with-current-buffer buffer
+      (plist-put eww-data :source source)
+      (plist-put eww-data :dom document)
+      (let ((inhibit-read-only t)
+	    (after-change-functions nil)
+	    (shr-target-id (url-target (url-generic-parse-url url)))
+	    (shr-external-rendering-functions
+	     '((title . eww-tag-title)
+	       (form . eww-tag-form)
+	       (input . eww-tag-input)
+	       (textarea . eww-tag-textarea)
+	       (body . eww-tag-body)
+	       (select . eww-tag-select)
+	       (link . eww-tag-link)
+	       (a . eww-tag-a))))
+	(erase-buffer)
+	(shr-insert-document document)
+	(cond
+	 (point
+	  (goto-char point))
+	 (shr-target-id
+	  (goto-char (point-min))
+	  (let ((point (next-single-property-change
+			(point-min) 'shr-target-id)))
+	    (when point
+	      (goto-char point))))
+	 (t
+	  (goto-char (point-min))
+	  ;; Don't leave point inside forms, because the normal eww
+	  ;; commands aren't available there.
+	  (while (and (not (eobp))
+		      (get-text-property (point) 'eww-form))
+	    (forward-line 1)))))
+      (plist-put eww-data :url url)
+      (setq eww-history-position 0)
+      (eww-update-header-line-format))))
 
 (defun eww-handle-link (cont)
   (let* ((rel (assq :rel cont))
@@ -440,7 +446,7 @@ See the `eww-search-prefix' variable for the search engine used."
 	     ;; FIXME?  Title can be blank.  Default to, eg, last component
 	     ;; of url?
 	     (format-spec eww-header-line-format
-			  `((?u . ,(plist-get eww-data :url))
+			  `((?u . ,(or (plist-get eww-data :url) ""))
 			    (?t . ,(or (plist-get eww-data :title) ""))))))
     (setq header-line-format nil)))
 
@@ -465,24 +471,30 @@ See the `eww-search-prefix' variable for the search engine used."
     (shr-generic cont)
     (shr-colorize-region start (point) fgcolor bgcolor)))
 
-(defun eww-display-raw (&optional buffer encode)
+(defun eww-display-raw (buffer &optional encode)
   (let ((data (buffer-substring (point) (point-max))))
-    (eww-setup-buffer buffer)
-    (let ((inhibit-read-only t))
-      (insert data)
-      (unless (eq encode 'utf-8)
-       (encode-coding-region (point-min) (1+ (length data)) 'utf-8)
-       (condition-case nil
-	   (decode-coding-region (point-min) (1+ (length data)) encode)
-	 (coding-system-error nil))))
-    (goto-char (point-min))))
+    (unless (buffer-live-p buffer)
+      (error "Buffer %s doesn't exist" buffer))
+    (with-current-buffer buffer
+      (let ((inhibit-read-only t))
+	(erase-buffer)
+	(insert data)
+	(unless (eq encode 'utf-8)
+	  (encode-coding-region (point-min) (1+ (length data)) 'utf-8)
+	  (condition-case nil
+	      (decode-coding-region (point-min) (1+ (length data)) encode)
+	    (coding-system-error nil))))
+      (goto-char (point-min)))))
 
-(defun eww-display-image (&optional buffer)
+(defun eww-display-image (buffer)
   (let ((data (shr-parse-image-data)))
-    (eww-setup-buffer buffer)
-    (let ((inhibit-read-only t))
-      (shr-put-image data nil))
-    (goto-char (point-min))))
+    (unless (buffer-live-p buffer)
+      (error "Buffer %s doesn't exist" buffer))
+    (with-current-buffer buffer
+      (let ((inhibit-read-only t))
+	(erase-buffer)
+	(shr-put-image data nil))
+      (goto-char (point-min)))))
 
 (defun eww-display-pdf ()
   (let ((data (buffer-substring (point) (point-max))))
