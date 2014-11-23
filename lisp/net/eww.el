@@ -241,7 +241,7 @@ See the `eww-search-prefix' variable for the search engine used."
   (interactive "r")
   (eww (buffer-substring beg end)))
 
-(defun eww-render (status url &optional point buffer)
+(defun eww-render (status url &optional point buffer encode)
   (let ((redirect (plist-get status :redirect)))
     (when redirect
       (setq url redirect)))
@@ -255,7 +255,7 @@ See the `eww-search-prefix' variable for the search engine used."
 		    (or (cdr (assq 'charset (cdr content-type)))
 			(eww-detect-charset (equal (car content-type)
 						   "text/html"))
-			"utf8"))))
+			"utf-8"))))
 	 (data-buffer (current-buffer)))
     (unwind-protect
 	(progn
@@ -265,14 +265,14 @@ See the `eww-search-prefix' variable for the search engine used."
                                  (car content-type)))
             (eww-browse-with-external-browser url))
 	   ((equal (car content-type) "text/html")
-	    (eww-display-html charset url nil point buffer))
+	    (eww-display-html charset url nil point buffer encode))
 	   ((equal (car content-type) "application/pdf")
 	    (eww-display-pdf))
 	   ((string-match-p "\\`image/" (car content-type))
 	    (eww-display-image buffer)
 	    (eww-update-header-line-format))
 	   (t
-	    (eww-display-raw buffer)
+	    (eww-display-raw buffer encode)
 	    (eww-update-header-line-format)))
 	  (plist-put eww-data :url url)
 	  (setq eww-history-position 0)
@@ -308,7 +308,7 @@ See the `eww-search-prefix' variable for the search engine used."
 (declare-function libxml-parse-html-region "xml.c"
 		  (start end &optional base-url))
 
-(defun eww-display-html (charset url &optional document point buffer)
+(defun eww-display-html (charset url &optional document point buffer encode)
   (or (fboundp 'libxml-parse-html-region)
       (error "This function requires Emacs to be compiled with libxml2"))
   ;; There should be a better way to abort loading images
@@ -319,9 +319,9 @@ See the `eww-search-prefix' variable for the search engine used."
 	     (list
 	      'base (list (cons 'href url))
 	      (progn
-		(unless (eq charset 'utf-8)
+		(unless (eq charset encode)
 		  (condition-case nil
-		      (decode-coding-region (point) (point-max) charset)
+		      (decode-coding-region (point) (point-max) encode)
 		    (coding-system-error nil)))
 		(libxml-parse-html-region (point) (point-max))))))
 	(source (and (null document)
@@ -429,11 +429,16 @@ See the `eww-search-prefix' variable for the search engine used."
     (shr-generic cont)
     (shr-colorize-region start (point) fgcolor bgcolor)))
 
-(defun eww-display-raw (&optional buffer)
+(defun eww-display-raw (&optional buffer encode)
   (let ((data (buffer-substring (point) (point-max))))
     (eww-setup-buffer buffer)
     (let ((inhibit-read-only t))
-      (insert data))
+      (insert data)
+      (unless (eq encode 'utf-8)
+       (encode-coding-region (point-min) (1+ (length data)) 'utf-8)
+       (condition-case nil
+	   (decode-coding-region (point-min) (1+ (length data)) encode)
+	 (coding-system-error nil))))
     (goto-char (point-min))))
 
 (defun eww-display-image (&optional buffer)
@@ -567,6 +572,7 @@ the like."
     (define-key map "v" 'eww-view-source)
     (define-key map "R" 'eww-readable)
     (define-key map "H" 'eww-list-histories)
+    (define-key map "E" 'eww-set-character-encoding)
 
     (define-key map "b" 'eww-add-bookmark)
     (define-key map "B" 'eww-list-bookmarks)
@@ -589,7 +595,8 @@ the like."
 	["List histories" eww-list-histories t]
 	["Add bookmark" eww-add-bookmark t]
 	["List bookmarks" eww-list-bookmarks t]
-	["List cookies" url-cookie-list t]))
+	["List cookies" url-cookie-list t]
+       ["Character Encoding" eww-set-character-encoding]))
     map))
 
 (defvar eww-tool-bar-map
@@ -700,12 +707,12 @@ appears in a <link> or <a> tag."
 	(eww-browse-url (shr-expand-url best-url (plist-get eww-data :url)))
       (user-error "No `top' for this page"))))
 
-(defun eww-reload ()
+(defun eww-reload (&optional encode)
   "Reload the current page."
   (interactive)
   (let ((url (plist-get eww-data :url)))
     (url-retrieve url 'eww-render
-		  (list url (point) (current-buffer)))))
+		  (list url (point) (current-buffer) encode))))
 
 ;; Form support.
 
@@ -1306,6 +1313,16 @@ Differences in #targets are ignored."
 		(format "%s(%d)" file count)))
 	(setq count (1+ count)))
       (expand-file-name file directory)))
+
+(defun eww-set-character-encoding (encode)
+  "Set character encoding."
+  (interactive "sSet Character Encoding (default utf-8): ")
+  (cond ((zerop (length encode))
+	(eww-reload 'utf-8))
+       (t
+	(if (not (coding-system-p (intern encode)))
+	    (user-error "Invalid encodeing type.")
+	  (eww-reload (intern encode))))))
 
 ;;; Bookmarks code
 

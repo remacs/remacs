@@ -1,3 +1,8 @@
+2014-11-23  Kenjiro Nakayama  <nakayamakenjiro@gmail.com>
+
+	* net/eww.el (eww-set-character-encoding): New command and keystroke.
+	(eww-display-raw): Use it (bug#16225).
+
 2014-11-23  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
 	* net/nsm.el (network-security-level): Rename from
