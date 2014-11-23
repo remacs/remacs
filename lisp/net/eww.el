@@ -359,7 +359,9 @@ See the `eww-search-prefix' variable for the search engine used."
 	     (list
 	      'base (list (cons 'href url))
 	      (progn
-		(unless (eq charset encode)
+		(when (or (and encode
+			       (not (eq charset encode)))
+			  (not (eq charset 'utf-8)))
 		  (condition-case nil
 		      (decode-coding-region (point) (point-max)
 					    (or encode charset))
@@ -1319,9 +1321,9 @@ If EXTERNAL, browse the URL using `shr-external-browser'."
      ;; This is a #target url in the same page as the current one.
      ((and (url-target (url-generic-parse-url url))
 	   (eww-same-page-p url (plist-get eww-data :url)))
-      (eww-save-history)
-      (eww-display-html 'utf-8 url (plist-get eww-data :url)
-			nil (current-buffer)))
+      (let ((dom (plist-get eww-data :dom)))
+	(eww-save-history)
+	(eww-display-html 'utf-8 url dom nil (current-buffer))))
      (t
       (eww-browse-url url)))))
 
