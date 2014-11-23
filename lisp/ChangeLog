@@ -1,3 +1,10 @@
+2014-11-23  Leo Liu  <sdl.web@gmail.com>
+
+	* calendar/cal-china.el (calendar-chinese-from-absolute-for-diary)
+	(calendar-chinese-to-absolute-for-diary)
+	(calendar-chinese-mark-date-pattern, diary-chinese-anniversary):
+	Handle leap months in Chinese calendar.  (Bug#18953)
+
 2014-11-22  Alan Mackenzie  <acm@muc.de>
 
 	Fix error with `mark-defun' and "protected:" in C++ Mode.
