@@ -1,3 +1,8 @@
+2014-11-23  Michael Albinus  <michael.albinus@gmx.de>
+
+	* textmodes/makeinfo.el (makeinfo-buffer): Make it work also for
+	remote `buffer-file-name'.
+
 2014-11-23  Leo Liu  <sdl.web@gmail.com>
 
 	* calendar/diary-lib.el (calendar-mark-1): Fix thinko.
