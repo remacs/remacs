@@ -177,6 +177,9 @@ the like off the page.
 *** You can now use several eww buffers in parallel by renaming eww
 buffers you want to keep separate.
 
+*** Partial state of the eww buffers (the URIs and the titles of the
+pages visited) is now preserved in the desktop file.
+
 *** `eww-after-render-hook' is now called after eww has rendered
 the data in the buffer.
 

@@ -1,3 +1,7 @@
+2014-11-23  Ivan Shmakov  <ivan@siamics.net>
+
+	* eww.texi (Advanced): Mention the Desktop stuff (bug#18010).
+
 2014-11-23  Michael Albinus  <michael.albinus@gmx.de>
 
 	* tramp.texi (Remote processes): Let-bind environment variables to
