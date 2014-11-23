@@ -1,5 +1,8 @@
 2014-11-23  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
+	* gnutls.c: Fixed Windows function definition of
+	gnutls_x509_crt_get_fingerprint.
+
 	* gnutls.c (Fgnutls_boot): Save certificate for later inspection.
 
 	* process.h: Added more fields to Lisp_Process to track

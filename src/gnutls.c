@@ -153,8 +153,8 @@ DEF_GNUTLS_FN (int, gnutls_x509_crt_import,
 		gnutls_x509_crt_fmt_t));
 DEF_GNUTLS_FN (int, gnutls_x509_crt_init, (gnutls_x509_crt_t *));
 DEF_GNUTLS_FN (int, gnutls_x509_crt_get_fingerprint,
-	       (gnutls_digest_algorithm_t,
-		const gnutls_datum_t*, void *, size_t *));
+	       (gnutls_x509_crt_t,
+		gnutls_digest_algorithm_t, void *, size_t *_buf));
 DEF_GNUTLS_FN (int, gnutls_x509_crt_get_version,
 	       (gnutls_x509_crt_t));
 DEF_GNUTLS_FN (int, gnutls_x509_crt_get_serial,
