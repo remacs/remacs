@@ -1,3 +1,10 @@
+2014-11-23  Michael Albinus  <michael.albinus@gmx.de>
+
+	* erc-desktop-notifications.el (erc-notifications-bus):
+	New customer option.  Supports cases when Emacs hasn't been
+	invoked in the same environment where the notifications shall go to.
+	(erc-notifications-notify): Use it.
+
 2014-11-10  Kelvin White  <kwhite@gnu.org>
 
 	* erc-stamp.el (erc-timestamp-intangible): Change version tag to 24.5.
