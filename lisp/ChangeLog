@@ -1,5 +1,8 @@
 2014-11-23  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
+	* net/nsm.el (network-security-level): Rename from
+	`nsm-security-level' and documented.
+
 	* mail/smtpmail.el (smtpmail-via-smtp): Warn unless encrypted and
 	we're sending a password.
 

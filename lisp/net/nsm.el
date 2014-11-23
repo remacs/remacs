@@ -34,8 +34,31 @@
   :version "25.1"
   :group 'comm)
 
-(defcustom nsm-security-level 'medium
-  "How secure the network should be."
+(defcustom network-security-level 'low
+  "How secure the network should be.
+If a potential problem with the security of the network
+connection is found, the user is asked to give input into how the
+connection should be handled.
+
+The following values are possible:
+
+`low': Absolutely no checks are performed.
+
+`medium': This is the default level, and the following things will
+be prompted for.
+
+* invalid, self-signed or otherwise unverifiable certificates
+* whether a previously accepted unverifiable certificate has changed
+* when a connection that was previously protected by STARTTLS is
+  now unencrypted
+
+`high': In addition to the above.
+
+* any certificate that changes its public key
+
+`paranoid': In addition to the above.
+
+* any new certificate that you haven't seen before"
   :version "25.1"
   :group 'nsm
   :type '(choice (const :tag "Low" low)
@@ -80,7 +103,7 @@ to keep track of the TLS status of STARTTLS servers.
 
 If WARN-UNENCRYPTED, query the user if the connection is
 unencrypted."
-  (if (eq nsm-security-level 'low)
+  (if (eq network-security-level 'low)
       process
     (let* ((status (gnutls-peer-status process))
 	   (id (nsm-id host port))
@@ -108,21 +131,21 @@ unencrypted."
      ;; certificate pinning.
      ((null warnings)
       (cond
-       ((< (nsm-level nsm-security-level) (nsm-level 'high))
+       ((< (nsm-level network-security-level) (nsm-level 'high))
 	process)
        ;; The certificate is fine, but if we're paranoid, we might
        ;; want to check whether it's changed anyway.
-       ((and (>= (nsm-level nsm-security-level) (nsm-level 'high))
+       ((and (>= (nsm-level network-security-level) (nsm-level 'high))
 	     (not (nsm-fingerprint-ok-p host port status settings)))
 	(delete-process process)
 	nil)
        ;; We haven't seen this before, and we're paranoid.
-       ((and (eq nsm-security-level 'paranoid)
+       ((and (eq network-security-level 'paranoid)
 	     (null settings)
 	     (not (nsm-new-fingerprint-ok-p host port status)))
 	(delete-process process)
 	nil)
-       ((>= (nsm-level nsm-security-level) (nsm-level 'high))
+       ((>= (nsm-level network-security-level) (nsm-level 'high))
 	;; Save the host fingerprint so that we can check it the
 	;; next time we connect.
 	(nsm-save-host host port status 'fingerprint 'always)
@@ -131,7 +154,7 @@ unencrypted."
 	process)))
 
      ;; The certificate did not validate.
-     ((not (equal nsm-security-level 'low))
+     ((not (equal network-security-level 'low))
       ;; We always want to pin the certificate of invalid connections
       ;; to track man-in-the-middle or the like.
       (if (not (nsm-fingerprint-ok-p host port status settings))

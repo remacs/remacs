@@ -2088,8 +2088,8 @@ entirely.
 If the connection is unencrypted, but it was encrypted in previous
 sessions, the user will also be notified about this.
 
-@vindex nsm-security-level
-The @code{nsm-security-level} variable determines the security level.
+@vindex network-security-level
+The @code{network-security-level} variable determines the security level.
 If this is @code{low}, no security checks are performed.
 
 
