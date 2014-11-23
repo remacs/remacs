@@ -2,7 +2,7 @@
 
 	* net/eww.el (eww-browse-url): Optionally create new eww buffer.
 	(eww-follow-link): Follow in new buffer in case of prefix
-	argument, open externally with double prefix.
+	argument, open externally with double prefix (bug#19130).
 
 2014-11-23  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
