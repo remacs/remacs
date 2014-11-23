@@ -1,3 +1,14 @@
+2014-11-23  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* gnutls.c (Fgnutls_boot): Save certificate for later inspection.
+
+	* process.h: Added more fields to Lisp_Process to track
+	certificate details.
+
+	* gnutls.c (gnutls_hex_string, gnutls_certificate_details)
+	(Fgnutls_peer_status): New functions to export TLS certificate
+	details to Emacs Lisp.
+
 2014-11-23  Jan Djärv  <jan.h.d@swipnet.se>
 
 	* gtkutil.c (gtk_adjustment_configure): Define for Gtk+ < 2.14.
