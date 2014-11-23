@@ -40,6 +40,7 @@
 (defvar url-http-data)
 (defvar url-http-end-of-headers)
 (defvar url-http-extra-headers)
+(defvar url-http-noninteractive)
 (defvar url-http-method)
 (defvar url-http-no-retry)
 (defvar url-http-process)
@@ -1201,6 +1202,9 @@ overriding the value of `url-gateway-method'."
   (cl-check-type url vector "Need a pre-parsed URL.")
   (let* ((host (url-host (or url-using-proxy url)))
 	 (port (url-port (or url-using-proxy url)))
+	 (nsm-noninteractive (or url-request-noninteractive
+				 (and (boundp 'url-http-noninteractive)
+				      url-http-noninteractive)))
 	 (connection (url-http-find-free-connection host port gateway-method))
 	 (buffer (or retry-buffer
 		     (generate-new-buffer
@@ -1232,6 +1236,7 @@ overriding the value of `url-gateway-method'."
 		       url-http-process
 		       url-http-method
 		       url-http-extra-headers
+		       url-http-noninteractive
 		       url-http-data
 		       url-http-target-url
 		       url-http-no-retry
@@ -1241,6 +1246,7 @@ overriding the value of `url-gateway-method'."
 
 	(setq url-http-method (or url-request-method "GET")
 	      url-http-extra-headers url-request-extra-headers
+	      url-http-noninteractive url-request-noninteractive
 	      url-http-data url-request-data
 	      url-http-process connection
 	      url-http-chunked-length nil

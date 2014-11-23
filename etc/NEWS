@@ -262,13 +262,19 @@ plain text parts, if display of HTML email is possible; customize the
 ** In sh-mode, you can now use `sh-shell' as a file-local variable to
 specify the type of shell in use (bash, csh, etc).
 
-** The URL package accepts now the protocols "ssh", "scp" and "rsync".
+** URL
+
+*** The URL package accepts now the protocols "ssh", "scp" and "rsync".
 When `url-handler-mode' is enabled, file operations for these
 protocols as well as for "telnet" and "ftp" are passed to Tramp.
 
-** The URL package allows customizing the `url-user-agent' string.
+*** The URL package allows customizing the `url-user-agent' string.
 The new `url-user-agent' variable can be customized to be a string or
 a function.
+
+*** The new interface variable `url-request-noninteractive' can be used
+to specify that we're running in a noninteractive context, and that
+we should not be queried about things like TLS certificate validity.
 
 ** Tramp
 

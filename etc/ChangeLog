@@ -1,3 +1,7 @@
+2014-11-23  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* NEWS: Mention `url-request-noninteractive'.
+
 2014-11-19  Leo Liu  <sdl.web@gmail.com>
 
 	* NEWS: Mention new macro define-advice.

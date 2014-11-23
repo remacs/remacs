@@ -1,3 +1,12 @@
+2014-11-23  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* url-http.el (url-http): Respect `url-request-noninteractive'.
+
+	* url-queue.el (url-queue-start-retrieve): Fetching through
+	url-queue should always be noninteractive.
+
+	* url-vars.el (url-request-noninteractive): New variable.
+
 2014-11-14  David Reitter  <david.reitter@gmail.com>
 
 	* url-domsuf.el (url-domsuf-parse-file): Read compressed
