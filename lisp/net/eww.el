@@ -1339,7 +1339,7 @@ Differences in #targets are ignored."
   (if (y-or-n-p "bookmark this page? ")
       (progn
 	(let ((title (replace-regexp-in-string "[\n\t\r]" " "
-					       (plist-get eww-data :url))))
+					       (plist-get eww-data :title))))
 	  (setq title (replace-regexp-in-string "\\` +\\| +\\'" "" title))
 	  (push (list :url (plist-get eww-data :url)
 		      :title title

@@ -1,6 +1,10 @@
+2014-11-20  Mark Oteiza  <mvoteiza@udel.edu>  (tiny change)
+
+	* net/eww.el (eww-add-bookmark): Fix bookmark titles.
+
 2014-11-17  Mark Oteiza  <mvoteiza@udel.edu>  (tiny change)
 
-	* net/eww.el (eww-mode-map): Bind backtab to shr-previous-link
+	* net/eww.el (eww-mode-map): Bind backtab to shr-previous-link.
 
 2014-11-23  Kenjiro Nakayama  <nakayamakenjiro@gmail.com>
 
