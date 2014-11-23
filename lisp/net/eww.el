@@ -29,6 +29,7 @@
 (require 'shr)
 (require 'url)
 (require 'url-queue)
+(require 'url-util)			; for url-get-url-at-point
 (require 'mm-url)
 (eval-when-compile (require 'subr-x)) ;; for string-trim
 
@@ -58,6 +59,21 @@
   :version "24.4"
   :group 'eww
   :type 'string)
+
+(defcustom eww-suggest-uris
+  '(eww-links-at-point
+    url-get-url-at-point
+    eww-current-url)
+  "List of functions called to form the list of default URIs for `eww'.
+Each of the elements is a function returning either a string or a list
+of strings.  The results will be joined into a single list with
+duplicate entries (if any) removed."
+  :version "25.1"
+  :group 'eww
+  :type 'hook
+  :options '(eww-links-at-point
+	     url-get-url-at-point
+	     eww-current-url))
 
 (defcustom eww-bookmarks-directory user-emacs-directory
   "Directory where bookmark files will be stored."
@@ -101,6 +117,7 @@ The string will be passed through `substitute-command-keys'."
   :group 'eww
   :type '(choice (const :tag "Unlimited" nil)
                  integer))
+
 (defcustom eww-use-external-browser-for-content-type
   "\\`\\(video/\\|audio/\\|application/ogg\\)"
   "Always use external browser for specified content-type."
@@ -194,12 +211,30 @@ See also `eww-form-checkbox-selected-symbol'."
     (define-key map "\r" 'eww-follow-link)
     map))
 
+(defun eww-suggested-uris nil
+  "Return the list of URIs to suggest at the `eww' prompt.
+This list can be customized via `eww-suggest-uris'."
+  (let ((obseen (make-vector 42 0))
+	(uris nil))
+    (dolist (fun eww-suggest-uris)
+      (let ((ret (funcall fun)))
+	(dolist (uri (if (stringp ret) (list ret) ret))
+	  (when (and uri (not (intern-soft uri obseen)))
+	    (intern uri obseen)
+	    (push   uri uris)))))
+    (nreverse uris)))
+
 ;;;###autoload
 (defun eww (url)
   "Fetch URL and render the page.
 If the input doesn't look like an URL or a domain name, the
 word(s) will be searched for via `eww-search-prefix'."
-  (interactive "sEnter URL or keywords: ")
+  (interactive
+   (let* ((uris (eww-suggested-uris))
+	  (prompt (concat "Enter URL or keywords"
+			  (if uris (format " (default %s)" (car uris)) "")
+			  ": ")))
+     (list (read-string prompt nil nil uris))))
   (setq url (string-trim url))
   (cond ((string-match-p "\\`file:/" url))
 	;; Don't mangle file: URLs at all.
@@ -469,6 +504,16 @@ See the `eww-search-prefix' variable for the search engine used."
   (unless (eq major-mode 'eww-mode)
     (eww-mode)))
 
+(defun eww-current-url nil
+  "Return URI of the Web page the current EWW buffer is visiting."
+  (plist-get eww-data :url))
+
+(defun eww-links-at-point (&optional pt)
+  "Return list of URIs, if any, linked at point."
+  (remq nil
+	(list (get-text-property (point) 'shr-url)
+	      (get-text-property (point) 'image-url))))
+
 (defun eww-view-source ()
   "View the HTML source code of the current page."
   (interactive)
@@ -553,6 +598,7 @@ the like."
     (suppress-keymap map)
     (define-key map "q" 'quit-window)
     (define-key map "g" 'eww-reload)
+    (define-key map "G" 'eww)
     (define-key map [?\t] 'shr-next-link)
     (define-key map [?\M-\t] 'shr-previous-link)
     (define-key map [backtab] 'shr-previous-link)
