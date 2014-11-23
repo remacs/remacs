@@ -1668,8 +1668,7 @@ COLOR is passed to `calendar-mark-visible-date' as MARK."
                     (setq date (calendar-gregorian-from-absolute
                                 (funcall toabs (list month day y)))))
                    (calendar-mark-visible-date date color)))))
-      (calendar-mark-complex month day year
-                             'calendar-bahai-from-absolute color))))
+      (calendar-mark-complex month day year fromabs color))))
 
 
 (defun diary-entry-time (s)

@@ -1,3 +1,7 @@
+2014-11-23  Leo Liu  <sdl.web@gmail.com>
+
+	* calendar/diary-lib.el (calendar-mark-1): Fix thinko.
+
 2014-11-22  Fabián Ezequiel Gallina  <fgallina@gnu.org>
 
 	Set PYTHONUNBUFFERED on shell startup.
