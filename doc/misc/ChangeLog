@@ -1,3 +1,9 @@
+2014-11-23  Michael Albinus  <michael.albinus@gmx.de>
+
+	* tramp.texi (Remote processes): Let-bind environment variables to
+	`process-environment' when running `process-file' or
+	`start-file-process'.
+
 2014-11-19  Ivan Shmakov  <ivan@siamics.net>
 
 	* eww.texi (Basics): Document `eww-history-limit'.
