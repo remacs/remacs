@@ -185,19 +185,19 @@ argument replaces this)."
   (let ((buffer (make-symbol "buffer"))
 	(window (make-symbol "window"))
 	(value (make-symbol "value")))
-    (macroexp-let2 nil vbuffer-or-name buffer-or-name
-      (macroexp-let2 nil vaction action
-	(macroexp-let2 nil vquit-function quit-function
-	  `(let* ((,buffer (temp-buffer-window-setup ,vbuffer-or-name))
-		  (standard-output ,buffer)
-		  ,window ,value)
-	     (setq ,value (progn ,@body))
-	     (with-current-buffer ,buffer
-	       (setq ,window (temp-buffer-window-show ,buffer ,vaction)))
+    (macroexp-let2* nil ((vbuffer-or-name buffer-or-name)
+			 (vaction action)
+			 (vquit-function quit-function))
+      `(let* ((,buffer (temp-buffer-window-setup ,vbuffer-or-name))
+	      (standard-output ,buffer)
+	      ,window ,value)
+	 (setq ,value (progn ,@body))
+	 (with-current-buffer ,buffer
+	   (setq ,window (temp-buffer-window-show ,buffer ,vaction)))
 
-	     (if (functionp ,vquit-function)
-		 (funcall ,vquit-function ,window ,value)
-	       ,value)))))))
+	 (if (functionp ,vquit-function)
+	     (funcall ,vquit-function ,window ,value)
+	   ,value)))))
 
 (defmacro with-current-buffer-window (buffer-or-name action quit-function &rest body)
   "Evaluate BODY with a buffer BUFFER-OR-NAME current and show that buffer.
@@ -208,19 +208,19 @@ BODY."
   (let ((buffer (make-symbol "buffer"))
 	(window (make-symbol "window"))
 	(value (make-symbol "value")))
-    (macroexp-let2 nil vbuffer-or-name buffer-or-name
-      (macroexp-let2 nil vaction action
-	(macroexp-let2 nil vquit-function quit-function
-	  `(let* ((,buffer (temp-buffer-window-setup ,vbuffer-or-name))
-		  (standard-output ,buffer)
-		  ,window ,value)
-	     (with-current-buffer ,buffer
-	       (setq ,value (progn ,@body))
-	       (setq ,window (temp-buffer-window-show ,buffer ,vaction)))
+    (macroexp-let2* nil ((vbuffer-or-name buffer-or-name)
+			 (vaction action)
+			 (vquit-function quit-function))
+      `(let* ((,buffer (temp-buffer-window-setup ,vbuffer-or-name))
+	      (standard-output ,buffer)
+	      ,window ,value)
+	 (with-current-buffer ,buffer
+	   (setq ,value (progn ,@body))
+	   (setq ,window (temp-buffer-window-show ,buffer ,vaction)))
 
-	     (if (functionp ,vquit-function)
-		 (funcall ,vquit-function ,window ,value)
-	       ,value)))))))
+	 (if (functionp ,vquit-function)
+	     (funcall ,vquit-function ,window ,value)
+	   ,value)))))
 
 (defmacro with-displayed-buffer-window (buffer-or-name action quit-function &rest body)
   "Show a buffer BUFFER-OR-NAME and evaluate BODY in that buffer.
@@ -230,28 +230,28 @@ displays the buffer specified by BUFFER-OR-NAME before running BODY."
   (let ((buffer (make-symbol "buffer"))
 	(window (make-symbol "window"))
 	(value (make-symbol "value")))
-    (macroexp-let2 nil vbuffer-or-name buffer-or-name
-      (macroexp-let2 nil vaction action
-	(macroexp-let2 nil vquit-function quit-function
-	  `(let* ((,buffer (temp-buffer-window-setup ,vbuffer-or-name))
-		  (standard-output ,buffer)
-		  ,window ,value)
-	     (with-current-buffer ,buffer
-	       (setq ,window (temp-buffer-window-show ,buffer ,vaction)))
+    (macroexp-let2* nil ((vbuffer-or-name buffer-or-name)
+			 (vaction action)
+			 (vquit-function quit-function))
+      `(let* ((,buffer (temp-buffer-window-setup ,vbuffer-or-name))
+	      (standard-output ,buffer)
+	      ,window ,value)
+	 (with-current-buffer ,buffer
+	   (setq ,window (temp-buffer-window-show ,buffer ,vaction)))
 
-	     (let ((inhibit-read-only t)
-		   (inhibit-modification-hooks t))
-	       (setq ,value (progn ,@body)))
+	 (let ((inhibit-read-only t)
+	       (inhibit-modification-hooks t))
+	   (setq ,value (progn ,@body)))
 
-	     (set-window-point ,window (point-min))
+	 (set-window-point ,window (point-min))
 
-	     (when (functionp (cdr (assq 'window-height (cdr ,vaction))))
-	       (ignore-errors
-		 (funcall (cdr (assq 'window-height (cdr ,vaction))) ,window)))
+	 (when (functionp (cdr (assq 'window-height (cdr ,vaction))))
+	   (ignore-errors
+	     (funcall (cdr (assq 'window-height (cdr ,vaction))) ,window)))
 
-	     (if (functionp ,vquit-function)
-		 (funcall ,vquit-function ,window ,value)
-	       ,value)))))))
+	 (if (functionp ,vquit-function)
+	     (funcall ,vquit-function ,window ,value)
+	   ,value)))))
 
 ;; The following two functions are like `window-next-sibling' and
 ;; `window-prev-sibling' but the WINDOW argument is _not_ optional (so

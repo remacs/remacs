@@ -606,15 +606,14 @@ PROPLIST is a list of the sort returned by `symbol-plist'.
   (declare (gv-expander
             (lambda (do)
               (gv-letplace (getter setter) plist
-                (macroexp-let2 nil k tag
-                  (macroexp-let2 nil d def
-                    (funcall do `(cl-getf ,getter ,k ,d)
-                             (lambda (v)
-                               (macroexp-let2 nil val v
-                                 `(progn
-                                    ,(funcall setter
-                                              `(cl--set-getf ,getter ,k ,val))
-                                    ,val))))))))))
+                (macroexp-let2* nil ((k tag) (d def))
+                  (funcall do `(cl-getf ,getter ,k ,d)
+			   (lambda (v)
+			     (macroexp-let2 nil val v
+			       `(progn
+				  ,(funcall setter
+					    `(cl--set-getf ,getter ,k ,val))
+				  ,val)))))))))
   (setplist '--cl-getf-symbol-- plist)
   (or (get '--cl-getf-symbol-- tag)
       ;; Originally we called cl-get here,

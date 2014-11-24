@@ -2906,9 +2906,8 @@ The function's arguments should be treated as immutable.
 ;;;###autoload
 (defun cl--compiler-macro-adjoin (form a list &rest keys)
   (if (memq :key keys) form
-    (macroexp-let2 macroexp-copyable-p va a
-      (macroexp-let2 macroexp-copyable-p vlist list
-        `(if (cl-member ,va ,vlist ,@keys) ,vlist (cons ,va ,vlist))))))
+    (macroexp-let2* macroexp-copyable-p ((va a) (vlist list))
+      `(if (cl-member ,va ,vlist ,@keys) ,vlist (cons ,va ,vlist)))))
 
 (defun cl--compiler-macro-get (_form sym prop &optional def)
   (if def

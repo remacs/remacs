@@ -344,6 +344,15 @@ be skipped; if nil, as is usual, `macroexp-const-p' is used."
          (macroexp-let* (list (list ,var ,expsym))
                         ,bodysym)))))
 
+(defmacro macroexp-let2* (test bindings &rest body)
+  "Bind each binding in BINDINGS as `macroexp-let2' does."
+  (declare (indent 2) (debug (sexp (&rest (sexp form)) body)))
+  (pcase-exhaustive bindings
+    (`nil (macroexp-progn body))
+    (`((,var ,exp) . ,tl)
+     `(macroexp-let2 ,test ,var ,exp
+        (macroexp-let2* ,test ,tl ,@body)))))
+
 (defun macroexp--maxsize (exp size)
   (cond ((< size 0) size)
         ((symbolp exp) (1- size))
