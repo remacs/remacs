@@ -803,10 +803,10 @@ main (int argc, char **argv)
 	  version = emacs_version;
 	  copyright = emacs_copyright;
 	}
-      printf ("GNU Emacs %s\n", version);
+      printf ("%s %s\n", PACKAGE_NAME, version);
       printf ("%s\n", copyright);
-      printf ("GNU Emacs comes with ABSOLUTELY NO WARRANTY.\n");
-      printf ("You may redistribute copies of Emacs\n");
+      printf ("%s comes with ABSOLUTELY NO WARRANTY.\n", PACKAGE_NAME);
+      printf ("You may redistribute copies of %s\n", PACKAGE_NAME);
       printf ("under the terms of the GNU General Public License.\n");
       printf ("For more information about these matters, ");
       printf ("see the file named COPYING.\n");

@@ -1,5 +1,7 @@
 2014-11-24  Glenn Morris  <rgm@gnu.org>
 
+	* emacs.c (main) <--version>: Make use of PACKAGE_NAME.
+
 	* Makefile.in (emacs.res): Use ../nt rule, rather than duplicating it.
 	(ntsource, WINDRES, EMACS_MANIFEST): Remove, now unused.
 
