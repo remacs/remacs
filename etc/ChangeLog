@@ -1,3 +1,7 @@
+2014-11-24  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* NEWS: Mention NSM.
+
 2014-11-23  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
 	* NEWS: Mention `url-request-noninteractive'.

@@ -3,6 +3,8 @@
 	* processes.texi (Network Security): Made into its own section and
 	fleshed out.
 	(Network Security): Mention more NSM variables.
+	(Processes): Moved the Network Security Manager stuff to the Emacs
+	manual.
 
 2014-11-23  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 

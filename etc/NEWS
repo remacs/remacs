@@ -49,6 +49,10 @@ Use './configure PKG_CONFIG=/full/name/of/pkg-config' if you need to.
 
 * Changes in Emacs 25.1
 
+** Network security (TLS/SSL certificate validity and the like) is
+added via the new Network Security Manager (NSM) and controlled via
+the `network-security-level' variable.
+
 ** C-h l now also lists the commands that were run.
 
 ** The new M-s M-w key binding uses eww to search the web for the

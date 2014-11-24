@@ -1,3 +1,8 @@
+2014-11-24  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* misc.texi (Gnus Summary Buffer): Move the Network Security
+	Manager stuff here from the lispref manual.
+
 2014-11-21  Eli Zaretskii  <eliz@gnu.org>
 
 	* maintaining.texi (Version Control Systems): Move "@end itemize"

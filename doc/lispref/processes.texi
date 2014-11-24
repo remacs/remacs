@@ -52,7 +52,6 @@ Processes}.
 * System Processes::         Accessing other processes running on your system.
 * Transaction Queues::       Transaction-based communication with subprocesses.
 * Network::                  Opening network connections.
-* Network Security::         Managing the network security.
 * Network Servers::          Network servers let Emacs accept net connections.
 * Datagrams::                UDP network connections.
 * Low-Level Network::        Lower-level but more general function
@@ -2072,108 +2071,6 @@ The connection type: @samp{plain} or @samp{tls}.
 @end table
 
 @end defun
-
-
-@node Network Security
-@section Network Security
-@cindex Network Security Manager
-@cindex encryption
-@cindex SSL
-@cindex TLS
-@cindex STARTTLS
-
-After establishing a network connection, the connection is then passed
-on to the Network Security Manager (@acronym{NSM}).
-
-@vindex network-security-level
-The @code{network-security-level} variable determines the security
-level.  If this is @code{low}, no security checks are performed.
-
-If this variable is @code{medium} (which is the default), a number of
-checks will be performed.  If the @acronym{NSM} determines that the
-network connection might be unsafe, the user is made aware of this,
-and the @acronym{NSM} will ask the user what to do about the network
-connection.
-
-The user is given the choice of registering a permanent security
-exception, a temporary one, or whether to refuse the connection
-entirely.
-
-Below is a list of the checks done on the @code{medium} level.
-
-@table @asis
-
-@item unable to verify a @acronym{TLS} certificate
-If the connection is a @acronym{TLS}, @acronym{SSL} or
-@acronym{STARTTLS} connection, the @acronym{NSM} will check whether
-the certificate used to establish the identity of the server we're
-connecting to can be verified.
-
-While an invalid certificate is often the cause for concern (there may
-be a Man-in-the-Middle hijacking your network connection and stealing
-your password), there may be valid reasons for going ahead with the
-connection anyway.
-
-For instance, the server may be using a self-signed certificate, or
-the certificate may have expired.  It's up to the user to determine
-whether it's acceptable to continue the connection.
-
-@item a self-signed certificate has changed
-If you've previously accepted a self-signed certificate, but it has
-now changed, that either means that the server has just changed the
-certificate, or this might mean that the network connection has been
-hijacked.
-
-@item previously encrypted connection now unencrypted
-If the connection is unencrypted, but it was encrypted in previous
-sessions, this might mean that there is a proxy between you and the
-server that strips away @acronym{STARTTLS} announcements, leaving the
-connection unencrypted.  This is usually very suspicious.
-
-@item talking to an unencrypted service when sending a password
-When connecting to an @acronym{IMAP} or @acronym{POP3} server, these
-should usually be encrypted, because it's common to send passwords
-over these connections.  Similarly, if you're sending email via
-@acronym{SMTP} that requires a password, you usually want that
-connection to be encrypted.  If the connection isn't encrypted, the
-@acronym{NSM} will warn you.
-
-@end table
-
-If @code{network-security-level} is @code{high}, the following checks
-will be made:
-
-@table @asis
-@item a validated certificate changes the public key
-Servers change their keys occasionally, and that is normally nothing
-to be concerned about.  However, if you are worried that your network
-connections are being hijacked by agencies who have access to pliable
-Certificate Authorities that issue new certificates for third-party
-services, you may want to keep track of these changes.
-@end table
-
-Finally, if @code{network-security-level} is @code{paranoid}, you will
-also be notified the first time the @acronym{NSM} sees any new
-certificate.  This will allow you to inspect all the certificates from
-all the connections that Emacs makes.
-
-The following additional variables can be used to control
-@acronym{NSM} details.
-
-@table @code
-@item nsm-settings-file
-@vindex nsm-settings-file
-The @acronym{NSM} stores details on the connections in this file.  It
-defaults to @file{~/.emacs.d/network-security.data}.
-
-@item nsm-save-host-names
-@vindex nsm-save-host-names
-By default, host names will not be saved per non-@code{STARTTLS}
-connection.  Instead a host/port hash is used to identify connections.
-This means that one can't casually read the settings file to see what
-servers the user has connected to.  If this variable is @code{t}, host
-names will be saved in the file, too.
-@end table
 
 
 @node Network Servers
