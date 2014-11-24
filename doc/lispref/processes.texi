@@ -2157,6 +2157,24 @@ also be notified the first time the @acronym{NSM} sees any new
 certificate.  This will allow you to inspect all the certificates from
 all the connections that Emacs makes.
 
+The following additional variables can be used to control
+@acronym{NSM} details.
+
+@table @code
+@item nsm-settings-file
+@vindex nsm-settings-file
+The @acronym{NSM} stores details on the connections in this file.  It
+defaults to @file{~/.emacs.d/network-security.data}.
+
+@item nsm-save-host-names
+@vindex nsm-save-host-names
+By default, host names will not be saved per non-@code{STARTTLS}
+connection.  Instead a host/port hash is used to identify connections.
+This means that one can't casually read the settings file to see what
+servers the user has connected to.  If this variable is @code{t}, host
+names will be saved in the file, too.
+@end table
+
 
 @node Network Servers
 @section Network Servers
