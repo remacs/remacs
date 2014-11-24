@@ -4679,7 +4679,10 @@ AH_TEMPLATE(config_opsysfile, [Some platforms that do not use configure
 case $opsys in
   mingw32)
     AC_DEFINE(config_opsysfile, <ms-w32.h>, [])
+    ;;
+esac
 
+if test "${HAVE_W32}" = "yes"; then
     dnl Construct something of the form "24,4,0,0" with 4 components.
     comma_version=`echo "$version.0.0" | sed -e 's/\./,/g' -e 's/^\([[^,]]*,[[^,]]*,[[^,]]*,[[^,]]*\).*/\1/'`
 
@@ -4688,8 +4691,8 @@ case $opsys in
     AC_SUBST(comma_version)
     AC_SUBST(comma_space_version)
     AC_CONFIG_FILES([nt/emacs.rc nt/emacsclient.rc])
-    ;;
-esac
+fi
+
 
 XMENU_OBJ=
 XOBJ=

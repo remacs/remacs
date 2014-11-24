@@ -1,3 +1,8 @@
+2014-11-24  Glenn Morris  <rgm@gnu.org>
+
+	* configure.ac [HAVE_W32]: Generate nt/*.rc files when HAVE_W32,
+	not just when using mingw32.
+
 2014-11-22  Glenn Morris  <rgm@gnu.org>
 
 	Further reduce number of versioned files storing Emacs version number.
