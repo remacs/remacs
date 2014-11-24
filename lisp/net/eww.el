@@ -1385,15 +1385,12 @@ Differences in #targets are ignored."
 	(setq count (1+ count)))
       (expand-file-name file directory)))
 
-(defun eww-set-character-encoding (encode)
+(defun eww-set-character-encoding (charset)
   "Set character encoding."
-  (interactive "sSet Character Encoding (default utf-8): ")
-  (cond ((zerop (length encode))
-	(eww-reload 'utf-8))
-       (t
-	(if (not (coding-system-p (intern encode)))
-	    (user-error "Invalid encodeing type.")
-	  (eww-reload (intern encode))))))
+  (interactive "zUse character set (default utf-8): ")
+  (if (null charset)
+      (eww-reload 'utf-8)
+    (eww-reload charset)))
 
 ;;; Bookmarks code
 
