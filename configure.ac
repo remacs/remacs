@@ -1885,6 +1885,13 @@ if test "${HAVE_W32}" = "yes"; then
     x86_64-*-*) EMACS_MANIFEST="emacs-x64.manifest" ;;
     *) EMACS_MANIFEST="emacs-x86.manifest" ;;
   esac
+  dnl Construct something of the form "24,4,0,0" with 4 components.
+  comma_version=`echo "$version.0.0" | sed -e 's/\./,/g' -e 's/^\([[^,]]*,[[^,]]*,[[^,]]*,[[^,]]*\).*/\1/'`
+
+  comma_space_version=`echo "$comma_version" | sed 's/,/, /g'`
+  AC_SUBST(comma_version)
+  AC_SUBST(comma_space_version)
+  AC_CONFIG_FILES([nt/emacs.rc nt/emacsclient.rc])
   if test "${opsys}" = "cygwin"; then
     W32_LIBS="$W32_LIBS -lkernel32 -luser32 -lgdi32 -lole32 -lcomdlg32"
     W32_LIBS="$W32_LIBS -lusp10 -lcomctl32 -lwinspool"
@@ -4681,18 +4688,6 @@ case $opsys in
     AC_DEFINE(config_opsysfile, <ms-w32.h>, [])
     ;;
 esac
-
-if test "${HAVE_W32}" = "yes"; then
-    dnl Construct something of the form "24,4,0,0" with 4 components.
-    comma_version=`echo "$version.0.0" | sed -e 's/\./,/g' -e 's/^\([[^,]]*,[[^,]]*,[[^,]]*,[[^,]]*\).*/\1/'`
-
-    comma_space_version=`echo "$comma_version" | sed 's/,/, /g'`
-
-    AC_SUBST(comma_version)
-    AC_SUBST(comma_space_version)
-    AC_CONFIG_FILES([nt/emacs.rc nt/emacsclient.rc])
-fi
-
 
 XMENU_OBJ=
 XOBJ=
