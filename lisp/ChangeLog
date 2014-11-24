@@ -1,3 +1,9 @@
+2014-11-24  Eli Zaretskii  <eliz@gnu.org>
+
+	* isearch.el (isearch-update): Don't assume
+	pos-visible-in-window-p will return nil when point is hscrolled
+	out of view.  (Bug#19157)
+
 2014-11-20  Andrey Kotlarski  <m00naticus@gmail.com>
 
 	* net/eww.el (eww-browse-url): Optionally create new eww buffer.

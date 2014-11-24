@@ -974,10 +974,17 @@ The last thing it does is to run `isearch-update-post-hook'."
                 (other-window 1))
               (goto-char found-point))
 	  ;; Keep same hscrolling as at the start of the search when possible
-	  (let ((current-scroll (window-hscroll)))
+	  (let ((current-scroll (window-hscroll))
+		visible-p)
 	    (set-window-hscroll (selected-window) isearch-start-hscroll)
-	    (unless (pos-visible-in-window-p)
-	      (set-window-hscroll (selected-window) current-scroll))))
+	    (setq visible-p (pos-visible-in-window-p nil nil t))
+	    (if (or (not visible-p)
+		    ;; When point is not visible because of hscroll,
+		    ;; pos-visible-in-window-p returns non-nil, but
+		    ;; the X coordinate it returns is 1 pixel beyond
+		    ;; the last visible one.
+		    (>= (car visible-p) (window-body-width nil t)))
+		(set-window-hscroll (selected-window) current-scroll))))
 	(if isearch-other-end
             (if (< isearch-other-end (point)) ; isearch-forward?
                 (isearch-highlight isearch-other-end (point))
