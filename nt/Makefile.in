@@ -224,7 +224,7 @@ cmdproxy${EXEEXT}: ${srcdir}/cmdproxy.c
 runemacs${EXEEXT}: ${srcdir}/runemacs.c $(EMACSRES)
 	$(CC) ${ALL_CFLAGS} $^ -mwindows -o $@
 
-## This rule (and file) is duplicated in src/: why?
-emacs.res: emacs.rc ${srcdir}/icons/emacs.ico \
+## Also used in ../src/Makefile.
+emacs.res ../src/emacs.res: emacs.rc ${srcdir}/icons/emacs.ico \
   ${srcdir}/icons/hand.cur ${srcdir}/$(EMACS_MANIFEST)
 	${WINDRES} -I ${srcdir} -O coff -o $@ $<

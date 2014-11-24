@@ -1,3 +1,7 @@
+2014-11-24  Glenn Morris  <rgm@gnu.org>
+
+	* Makefile.in (../src/emacs.res): New target.
+
 2014-11-22  Glenn Morris  <rgm@gnu.org>
 
 	* emacs.rc.in, emacsclient.rc.in: Rename from emacs.rc, emacsclient.rc.

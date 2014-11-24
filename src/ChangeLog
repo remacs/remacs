@@ -1,3 +1,8 @@
+2014-11-24  Glenn Morris  <rgm@gnu.org>
+
+	* Makefile.in (emacs.res): Use ../nt rule, rather than duplicating it.
+	(ntsource, WINDRES, EMACS_MANIFEST): Remove, now unused.
+
 2014-11-23  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
 	* gnutls.c: Fix Windows function definition of

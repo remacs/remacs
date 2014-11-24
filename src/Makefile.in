@@ -31,10 +31,8 @@ srcdir = @srcdir@
 top_srcdir = @top_srcdir@
 # MinGW CPPFLAGS may use this.
 abs_top_srcdir=@abs_top_srcdir@
-ntsource = $(top_srcdir)/nt
 VPATH = $(srcdir)
 CC = @CC@
-WINDRES = @WINDRES@
 CFLAGS = @CFLAGS@
 CPPFLAGS = @CPPFLAGS@
 LDFLAGS = @LDFLAGS@
@@ -264,8 +262,6 @@ W32_LIBS=@W32_LIBS@
 
 ## emacs.res if HAVE_W32
 EMACSRES = @EMACSRES@
-## emacs-*.manifest if HAVE_W32
-EMACS_MANIFEST = @EMACS_MANIFEST@
 ## If HAVE_W32, compiler arguments for including
 ## the resource file in the binary.
 ## Cygwin: -Wl,emacs.res
@@ -548,12 +544,8 @@ $(top_srcdir)/aclocal.m4 $(top_srcdir)/configure config.in ../config.status \
 
 doc.o: buildobj.h
 
-## This rule (and file) is duplicated in nt/: why?
-emacs.res: ../nt/emacs.rc \
-	   $(ntsource)/icons/emacs.ico \
-	   $(ntsource)/icons/hand.cur \
-	   $(ntsource)/$(EMACS_MANIFEST)
-	$(WINDRES) -O COFF --include-dir=$(top_srcdir)/nt -o $@ $<
+emacs.res: FORCE
+	$(MAKE) -C ../nt ../src/emacs.res
 
 .PHONY: ns-app
 ns-app: emacs$(EXEEXT)
