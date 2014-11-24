@@ -1,6 +1,8 @@
 2014-11-24  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
 	* net/eww.el (eww-set-character-encoding): Use `read-coding-system'.
+	(eww-process-text-input): Inhibit read only so that input fields
+	don't get shortened (bug#19085).
 
 2014-11-24  Leo Liu  <sdl.web@gmail.com>
 

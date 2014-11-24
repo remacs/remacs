@@ -973,6 +973,7 @@ See URL `https://developer.mozilla.org/en-US/docs/Web/HTML/Element/Input'.")
 
 (defun eww-process-text-input (beg end length)
   (let* ((form (get-text-property (min (1+ end) (point-max)) 'eww-form))
+	 (inhibit-read-only t)
 	 (properties (text-properties-at end))
 	 (type (plist-get form :type)))
     (when (and form
