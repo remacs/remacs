@@ -41,7 +41,7 @@
   :version "25.1")
 
 (defface vc-state-base-face
-  '((default :inherit mode-line))
+  '((default))
   "Base face for VC state indicator."
   :group 'vc-faces
   :group 'mode-line

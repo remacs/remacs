@@ -1,3 +1,8 @@
+2014-11-24  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* vc/vc-hooks.el (vc-state-base-face): Don't override
+	mode-line-inactive.
+
 2014-11-24  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
 	* net/eww.el (eww-set-character-encoding): Use `read-coding-system'.
