@@ -1,3 +1,7 @@
+2014-11-24  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* gnutls.c: Fix compilation warnings given fix --enable-gcc-warnings.
+
 2014-11-24  Glenn Morris  <rgm@gnu.org>
 
 	* emacs.c (main) <--version>: Make use of PACKAGE_NAME.

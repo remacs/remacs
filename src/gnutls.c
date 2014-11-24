@@ -62,10 +62,10 @@ static void gnutls_log_function2 (int, const char *, const char *);
 static void gnutls_audit_log_function (gnutls_session_t, const char *);
 #endif
 
-static enum
-  {
-    CERTIFICATE_NOT_MATCHING = 2,
-  } extra_peer_verification_t;
+enum extra_peer_verification
+{
+    CERTIFICATE_NOT_MATCHING = 2
+};
 
 
 #ifdef WINDOWSNT
@@ -768,8 +768,8 @@ DEFUN ("gnutls-available-p", Fgnutls_available_p, Sgnutls_available_p, 0, 0, 0,
 #endif
 }
 
-Lisp_Object
-gnutls_hex_string (char *buf, size_t buf_size, char *prefix) {
+static Lisp_Object
+gnutls_hex_string (char *buf, size_t buf_size, const char *prefix) {
   size_t prefix_length = strlen (prefix);
   char *string = malloc (buf_size * 3 + prefix_length);
   Lisp_Object ret;
@@ -786,7 +786,7 @@ gnutls_hex_string (char *buf, size_t buf_size, char *prefix) {
   return ret;
 }
 
-Lisp_Object
+static Lisp_Object
 gnutls_certificate_details (gnutls_x509_crt_t cert)
 {
   Lisp_Object res = Qnil;
