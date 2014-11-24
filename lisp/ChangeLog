@@ -1,3 +1,8 @@
+2014-11-24  Dmitry Gutov  <dgutov@yandex.ru>
+
+	* vc/vc-bzr.el (vc-bzr-after-dir-status): Don't skip ignored
+	files.  (Bug#18579)
+
 2014-11-23  Michael Albinus  <michael.albinus@gmx.de>
 
 	* textmodes/makeinfo.el (makeinfo-buffer): Make it work also for
