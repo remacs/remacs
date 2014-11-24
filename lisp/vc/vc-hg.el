@@ -628,7 +628,7 @@ REV is the revision to check out into WORKFILE."
    (vc-hg-after-dir-status update-function)))
 
 (defun vc-hg-dir-status-files (dir files _default-state update-function)
-  (apply 'vc-hg-command (current-buffer) 'async dir "status" "-C" files)
+  (apply 'vc-hg-command (current-buffer) 'async dir "status" "-mardui" "-C" files)
   (vc-run-delayed
    (vc-hg-after-dir-status update-function)))
 

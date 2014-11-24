@@ -1,5 +1,8 @@
 2014-11-24  Dmitry Gutov  <dgutov@yandex.ru>
 
+	* vc/vc-hg.el (vc-hg-dir-status-files): Include ignored files.
+	(Bug#18579)
+
 	* vc/vc-bzr.el (vc-bzr-after-dir-status): Don't skip ignored
 	files.  (Bug#18579)
 
