@@ -1299,6 +1299,7 @@ Processes
 * System Processes::        Accessing other processes running on your system.
 * Transaction Queues::      Transaction-based communication with subprocesses.
 * Network::                 Opening network connections.
+* Network Security::        Managing the network security.
 * Network Servers::         Network servers let Emacs accept net connections.
 * Datagrams::               UDP network connections.
 * Low-Level Network::       Lower-level but more general function
