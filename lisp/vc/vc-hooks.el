@@ -124,7 +124,7 @@ An empty list disables VC altogether."
 ;; Note: we don't actually have a darcs back end yet.
 ;; Also, Meta-CVS (corresponding to MCVS) is unsupported.
 (defcustom vc-directory-exclusion-list (purecopy '("SCCS" "RCS" "CVS" "MCVS"
-					 ".src", ".svn" ".git" ".hg" ".bzr"
+					 ".src" ".svn" ".git" ".hg" ".bzr"
 					 "_MTN" "_darcs" "{arch}"))
   "List of directory names to be ignored when walking directory trees."
   :type '(repeat string)

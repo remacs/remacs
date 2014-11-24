@@ -1,3 +1,8 @@
+2014-11-24  Sam Steingold  <sds@gnu.org>
+
+	* vc/vc-hooks.el (vc-directory-exclusion-list):
+	Fix a trivial typo (bug#19171).
+
 2014-11-24  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* vc/vc-hooks.el (vc-state-base-face): Don't override
