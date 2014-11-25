@@ -145,6 +145,34 @@ case $canonical in
  *-mingw*)
   . $srcdir/nt/mingw-cfg.site
 
+  # When we build with MinGW under MSYS, we are cross-compiling. Hence
+  # we can't rely on the output of MSYS `uname' for the architecture
+  # (32 bit MinGW compiler with 64 bit MSYS2, for instance) and must
+  # use the compiler's target, unless when the user explicitly
+  # provides one:
+  if test -z $target_alias; then
+      AC_MSG_CHECKING([the compiler's target])
+      if test -z $CC; then
+	  cc=gcc
+      else
+	  cc=$CC
+      fi
+      t=`$cc -v 2>&1 | sed -n 's/Target: //p'`
+      case "$t" in
+          *-*) canonical=$t
+	      ;;
+          "") AC_MSG_ERROR([Impossible to obtain $cc compiler target.
+Please explicitly provide --target])
+              ;;
+	  *) AC_MSG_WARN([Compiler reported non-standard target.
+Defaulting to $canonical.])
+              ;;
+      esac
+      AC_MSG_RESULT([$canonical])
+  else
+      canonical=$target_alias
+  fi
+
   case $srcdir in
     /* | ?:*)
       # srcdir is an absolute path.  In this case, force the format
