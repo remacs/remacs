@@ -42,7 +42,7 @@
 
 2014-11-20  Michael Albinus  <michael.albinus@gmx.de>
 
-        Improve XEmacs compatibility.
+	Improve XEmacs compatibility.
 
 	* net/tramp.el (tramp-autoload-file-name-handler):
 	Wrap `temporary-file-directory' by `symbol-value', it doesn't
@@ -52,8 +52,8 @@
 	(tramp-time-less-p, tramp-time-subtract): Remove functions.
 	(tramp-handle-file-newer-than-file-p, tramp-time-diff):
 	* net/tramp-adb.el (tramp-adb-ls-output-time-less-p):
-        * net/tramp-cache.el (tramp-get-file-property):
-        * net/tramp-smb.el (tramp-smb-handle-insert-directory):
+	* net/tramp-cache.el (tramp-get-file-property):
+	* net/tramp-smb.el (tramp-smb-handle-insert-directory):
 	Use `time-less-p' and `time-subtract, respectively.
 
 	* net/tramp-adb.el (top): Do not require time-date.el.
@@ -190,9 +190,9 @@
 
 2014-11-04  Michael Albinus  <michael.albinus@gmx.de>
 
-        * net/tramp-sh.el (tramp-do-copy-or-rename-file-via-buffer): Don't use
-        a local copy; setting `inhibit-file-name-handlers' proper might be
-        more performant.  (Bug#18751)
+	* net/tramp-sh.el (tramp-do-copy-or-rename-file-via-buffer): Don't use
+	a local copy; setting `inhibit-file-name-handlers' proper might be
+	more performant.  (Bug#18751)
 
 2014-11-04  Glenn Morris  <rgm@gnu.org>
 
@@ -1203,7 +1203,7 @@
 	(bug#17818).
 
 	* mouse.el (mouse-drag-line): Don't re-add to unread-comment-events,
-	since it's already done inside the loop	(bug#17819).
+	since it's already done inside the loop (bug#17819).
 
 2014-06-20  Martin Rudalics  <rudalics@gmx.at>
 
@@ -1575,7 +1575,7 @@
 	methods which do not have a doc string.  (Bug#17490)
 
 2014-05-14  Stephen Berman <stephen.berman@gmx.net>
-            Stefan Monnier  <monnier@iro.umontreal.ca>
+	    Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* minibuffer.el (completion-pcm--merge-try): Merge trailing / with
 	suffix (bug#15419).

@@ -4464,7 +4464,7 @@
 	(texinputdir, $(infodir)/elisp): Use $(MAKEINFO_OPTS).
 
 2011-01-25  Chong Yidong  <cyd@stupidchicken.com>
-            Richard Kim  <emacs18@gmail.com>
+	    Richard Kim  <emacs18@gmail.com>
 
 	* loading.texi (Library Search): Document list-load-path-shadows
 	(Bug#7757).

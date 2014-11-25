@@ -323,7 +323,7 @@
 
 	* erc.el(erc-modules): Add some more symbols to the set
 
-	* erc.el(erc-modules):	* erc.el(erc-modules): Add :greedy t to the set in
+	* erc.el(erc-modules): Add :greedy t to the set in
 
 	* erc-dcc.el:
 	More autoloads which make dcc autoload upon ctcp dcc query received.
@@ -714,7 +714,7 @@
 			 defcustom `erc-log-insert-log-on-open'
 			 defcustom `erc-generate-log-file-name-function'
 			 defun `erc-save-buffer-in-logs' (autoloads from erc-log.el)
-	 		 defuns `erc-generate-log-file-name-*'
+			 defuns `erc-generate-log-file-name-*'
 			 defun `erc-current-logfile'
 			 defun `erc-logging-enabled' (autoloads from erc-log.el)
 		- erc-truncate-buffer-to-size: fix for double-saving bug when
@@ -744,7 +744,7 @@
 
 2003-04-27  Damien Elmes  <erc@repose.cx>
 
-	* erc.el:	* erc.el: erc-modules: added
+	* erc.el: erc-modules: added
 
 2003-04-27  Alex Schroeder  <alex@gnu.org>
 
@@ -1567,7 +1567,7 @@
 	* (erc-cmd-NAMES): Ditto.
 	* (erc-cmd-ME): Put 'do-not-parse-args property.
 
-	* erc-dcc.el:nick:	* erc-dcc.el: * erc-dcc-list: Renamed
+	* erc-dcc-list: Renamed
 	* (erc-dcc-member). Treat :nick as either a nick!user@host or nick,
 	do appropriate comparisons, simplified.
 	* (erc-dcc-list-add): New functions
@@ -1692,12 +1692,12 @@
 
 2003-01-11  Mario Lang  <mlang@delysid.org>
 
-	* erc-dcc.el:	* erc-dcc.el: * (erc-dcc-do-LIST-command): Fix
+	* erc-dcc.el (erc-dcc-do-LIST-command): Fix
 
 	* erc-dcc.el:
 	* buffer-local variables erc-dcc-sent-marker and erc-dcc-send-confirmed marker removed
 	  Keep This info in erc-dcc-member :sent and :confirmed plist values
-	* :	* :buffer plist for :type 'SEND removed, since we can get this with (marker-buffer
+	:buffer plist for :type 'SEND removed, since we can get this with (marker-buffer
 	* erc-dcc-send-connect-hook: New hook, defaults to erc-dcc-send-block and erc-dcc-send-connected, which now prints a msg...
 
 	* erc-dcc.el:

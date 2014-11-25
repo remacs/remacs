@@ -2091,7 +2091,7 @@
 
 	* erc.el 2002-07-15T00:01:34Z!raeburn@raeburn.org: silly typo corrected
 
-	* erc.el:	* erc.el: * New variable: erc-common-server-name-suffixes
+	* erc.el: New variable: erc-common-server-name-suffixes
 	  This alist can be used to change the server names displayed in mode-line
 	  to a shorter version..
 	* New function: erc-shorten-server-name (uses var above)
