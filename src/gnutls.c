@@ -1218,6 +1218,8 @@ one trustfile (usually a CA bundle).  */)
       XPROCESS (proc)->gnutls_log_level = max_log_level;
     }
 
+  GNUTLS_LOG2 (1, max_log_level, "connecting to host:", c_hostname);
+
   /* always initialize globals.  */
   global_init = emacs_gnutls_global_init ();
   if (! NILP (Fgnutls_errorp (global_init)))
@@ -1420,13 +1422,12 @@ one trustfile (usually a CA bundle).  */)
   if ( !NILP (warnings) )
     {
       Lisp_Object tail;
-
       for (tail = warnings; CONSP (tail); tail = XCDR (tail))
         {
           Lisp_Object warning = XCAR (tail);
           Lisp_Object message = Fgnutls_peer_status_warning_describe (warning);
           if ( !NILP (message) )
-            GNUTLS_LOG2 (1, max_log_level, "verification: %s", SDATA(message));
+            GNUTLS_LOG2 (1, max_log_level, "verification:", SDATA(message));
         }
     }
 

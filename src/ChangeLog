@@ -4,7 +4,7 @@
 	(Fgnutls_peer_status_warning_describe): Add function to describe a
 	peer verification warning symbol.
 	(Fgnutls_peer_status): Use it.
-	(Fgnutls_boot): Use it.
+	(Fgnutls_boot): Use it.  Minor logging fixes.
 
 2014-11-24  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
