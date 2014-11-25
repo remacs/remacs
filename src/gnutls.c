@@ -864,7 +864,7 @@ gnutls_certificate_details (gnutls_x509_crt_t cert)
   }
 
   /* Versions older than 2.11 doesn't have these four functions. */
-#if GNUTLS_VERSION_NUMBER < 0x020b00
+#if GNUTLS_VERSION_NUMBER >= 0x020b00
   /* SubjectPublicKeyInfo. */
   {
     unsigned int bits;
