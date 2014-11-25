@@ -978,7 +978,7 @@ The return value is a property list.  */)
 
   CHECK_PROCESS (proc);
 
-  if (XPROCESS (proc)->gnutls_p == 0)
+  if ( GNUTLS_INITSTAGE (proc) < GNUTLS_STAGE_INIT )
     return Qnil;
 
   /* Then collect any warnings already computed by the handshake. */
