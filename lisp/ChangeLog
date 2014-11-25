@@ -1,3 +1,8 @@
+2014-11-25  Teodor Zlatanov  <tzz@lifelogs.com>
+
+	* net/nsm.el (nsm-check-tls-connection, nsm-save-host)
+	(nsm-warnings-ok-p): Use `gnutls-peer-status-warning-describe'.
+
 2014-11-20  Nicolas Richard  <theonewiththeevillook@yahoo.fr>
 
 	* emacs-lisp/byte-run.el (function-put): Match argument names to

@@ -169,7 +169,9 @@ unencrypted."
 		       host port
 		       (if (> (length warnings) 1)
 			   "s" "")
-		       (mapconcat 'cadr warnings "\n"))))
+		       (mapconcat #'gnutls-peer-status-warning-describe
+                                  warnings
+                                  "\n"))))
 	    (progn
 	      (delete-process process)
 	      nil)
@@ -298,7 +300,7 @@ unencrypted."
 	(nconc saved `(:conditions (:unencrypted))))
        ((plist-get status :warnings)
 	(nconc saved
-	       `(:conditions ,(mapcar 'car (plist-get status :warnings)))))))
+	       `(:conditions ,(plist-get status :warnings))))))
     (if (eq permanency 'always)
 	(progn
 	  (nsm-remove-temporary-setting id)
@@ -340,12 +342,9 @@ unencrypted."
     result))
 
 (defun nsm-warnings-ok-p (status settings)
-  (let ((not-ok nil)
-	(conditions (plist-get settings :conditions)))
-    (dolist (warning (plist-get status :warnings))
-      (when (memq (car warning) conditions)
-	(setq not-ok t)))
-    not-ok))
+  (null (cl-intersection
+         (plist-get settings :conditions)
+         (plist-get status :warnings))))
 
 (defun nsm-remove-permanent-setting (id)
   (setq nsm-permanent-host-settings
