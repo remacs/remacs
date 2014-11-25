@@ -1185,7 +1185,6 @@ one trustfile (usually a CA bundle).  */)
   Lisp_Object verify_error;
   Lisp_Object prime_bits;
   Lisp_Object warnings;
-  Lisp_Object warning;
 
   CHECK_PROCESS (proc);
   CHECK_SYMBOL (type);
@@ -1441,7 +1440,7 @@ one trustfile (usually a CA bundle).  */)
           Lisp_Object warning = XCAR (tail);
           Lisp_Object message = Fgnutls_peer_status_warning_describe (warning);
           if (!NILP (message))
-            GNUTLS_LOG2 (1, max_log_level, "verification:", SDATA (message));
+            GNUTLS_LOG2 (1, max_log_level, "verification:", SSDATA (message));
         }
     }
 

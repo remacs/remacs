@@ -1,3 +1,9 @@
+2014-11-25  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Fix gnutls problems caught by static checking.
+	* gnutls.c (Fgnutls_boot): Remove unused local.
+	(Fgnutls_boot): Fix pointer signedness.
+
 2014-11-25  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
 	* gnutls.c (gnutls_certificate_details): Don't include certain
