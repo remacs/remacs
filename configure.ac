@@ -1914,7 +1914,7 @@ if test "${HAVE_W32}" = "yes"; then
     *) EMACS_MANIFEST="emacs-x86.manifest" ;;
   esac
   dnl Construct something of the form "24,4,0,0" with 4 components.
-  comma_version=`echo "$version.0.0" | sed -e 's/\./,/g' -e 's/^\([[^,]]*,[[^,]]*,[[^,]]*,[[^,]]*\).*/\1/'`
+  comma_version=`echo "${PACKAGE_VERSION}.0.0" | sed -e 's/\./,/g' -e 's/^\([[^,]]*,[[^,]]*,[[^,]]*,[[^,]]*\).*/\1/'`
 
   comma_space_version=`echo "$comma_version" | sed 's/,/, /g'`
   AC_SUBST(comma_version)

@@ -1,3 +1,7 @@
+2014-11-25  Glenn Morris  <rgm@gnu.org>
+
+	* configure.ac: Fix yesterday's use of uninitialised $version.
+
 2014-11-25  Oscar Fuentes  <ofv@wanadoo.es>
 
 	* configure.ac [MINGW]: Set $canonical default value as per the
