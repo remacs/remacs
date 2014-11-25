@@ -271,11 +271,12 @@ security checks are performed.
 
 If this variable is @code{medium} (which is the default), a number of
 checks will be performed.  If as result @acronym{NSM} determines that
-the network connection might be unsafe, it will make you aware of
-that, and will ask you what to do about the network connection.
+the network connection might not be trustworthy, it will make you
+aware of that, and will ask you what to do about the network
+connection.
 
 You can decide to register a permanent security exception for an
-unsafe connection, a temporary exception, or refuse the connection
+unverified connection, a temporary exception, or refuse the connection
 entirely.
 
 Below is a list of the checks done on the @code{medium} level.

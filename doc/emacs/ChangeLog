@@ -1,3 +1,8 @@
+2014-11-25  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* misc.texi (Network Security): Use "untrustworthy" instead of
+	"unsafe".
+
 2014-11-24  Eli Zaretskii  <eliz@gnu.org>
 
 	* misc.texi (Network Security): Improve wording and indexing of
