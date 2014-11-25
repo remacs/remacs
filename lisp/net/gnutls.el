@@ -41,7 +41,7 @@
   "Emacs interface to the GnuTLS library."
   :version "24.1"
   :prefix "gnutls-"
-  :group 'net-utils)
+  :group 'comm)
 
 (defcustom gnutls-algorithm-priority nil
   "If non-nil, this should be a TLS priority string.

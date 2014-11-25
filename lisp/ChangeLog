@@ -7,6 +7,8 @@
 
 2014-11-25  Teodor Zlatanov  <tzz@lifelogs.com>
 
+	* net/gnutls.el (gnutls): Set :group to 'comm so it's near NSM.
+
 	* net/nsm.el (nsm-check-tls-connection, nsm-save-host)
 	(nsm-warnings-ok-p): Use `gnutls-peer-status-warning-describe'.
 
