@@ -2,6 +2,8 @@
 
 	* net/nsm.el (nsm-format-certificate): Don't bug out on missing
 	elements.
+	(nsm-warnings-ok-p): The new version of this function always
+	returned nil when everything was OK.
 
 2014-11-25  Teodor Zlatanov  <tzz@lifelogs.com>
 

@@ -342,9 +342,12 @@ unencrypted."
     result))
 
 (defun nsm-warnings-ok-p (status settings)
-  (null (cl-intersection
-         (plist-get settings :conditions)
-         (plist-get status :warnings))))
+  (let ((ok t)
+	(conditions (plist-get settings :conditions)))
+    (dolist (warning (plist-get status :warnings))
+      (unless (memq warning conditions)
+	(setq ok nil)))
+    ok))
 
 (defun nsm-remove-permanent-setting (id)
   (setq nsm-permanent-host-settings
