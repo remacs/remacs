@@ -1,6 +1,10 @@
 2014-11-25  Teodor Zlatanov  <tzz@lifelogs.com>
 
 	* gnutls.c (Fgnutls_peer_status): Check GNUTLS_INITSTAGE, not gnutls_p.
+	(Fgnutls_peer_status_warning_describe): Add function to describe a
+	peer verification warning symbol.
+	(Fgnutls_peer_status): Use it.
+	(Fgnutls_boot): Use it.
 
 2014-11-24  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 

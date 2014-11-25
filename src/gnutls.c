@@ -968,9 +968,44 @@ gnutls_certificate_details (gnutls_x509_crt_t cert)
   return res;
 }
 
+DEFUN ("gnutls-peer-status-warning-describe", Fgnutls_peer_status_warning_describe, Sgnutls_peer_status_warning_describe, 1, 1, 0,
+       doc: /* Describe the warning of a GnuTLS peer status from `gnutls-peer-status'.*/)
+  (Lisp_Object status_symbol)
+{
+  CHECK_SYMBOL (status_symbol);
+
+  if ( EQ (status_symbol, intern (":invalid")))
+    return build_string ("certificate could not be verified");
+
+  if ( EQ (status_symbol, intern (":revoked")) )
+    return build_string ("certificate was revoked (CRL)");
+
+  if ( EQ (status_symbol, intern (":self-signed")) )
+    return build_string ("certificate signer was not found (self-signed)");
+
+  if ( EQ (status_symbol, intern (":not-ca")) )
+    return build_string ("certificate signer is not a CA");
+
+  if ( EQ (status_symbol, intern (":insecure")) )
+    return build_string ("certificate was signed with an insecure algorithm");
+
+  if ( EQ (status_symbol, intern (":not-activated")) )
+    return build_string ("certificate is not yet activated");
+
+  if ( EQ (status_symbol, intern (":expired")) )
+    return build_string ("certificate has expired");
+
+  if ( EQ (status_symbol, intern (":no-host-match")) )
+    return build_string ("certificate host does not match hostname");
+
+  return Qnil;
+}
+
 DEFUN ("gnutls-peer-status", Fgnutls_peer_status, Sgnutls_peer_status, 1, 1, 0,
-       doc: /* Return the status of the gnutls PROC peer certificate.
-The return value is a property list.  */)
+       doc: /* Describe a GnuTLS PROC peer certificate and any warnings about it.
+The return value is a property list with top-level keys :warnings and
+:certificate.  The :warnings entry is a list of symbols you can describe with
+`gnutls-peer-status-warning-describe'. */)
   (Lisp_Object proc)
 {
   Lisp_Object warnings = Qnil, result = Qnil;
@@ -985,52 +1020,39 @@ The return value is a property list.  */)
   verification = XPROCESS (proc)->gnutls_peer_verification;
 
   if (verification & GNUTLS_CERT_INVALID)
-    warnings = Fcons (list2 (intern (":invalid"),
-			     build_string("certificate could not be verified")),
-		      warnings);
+    warnings = Fcons (intern (":invalid"), warnings);
 
   if (verification & GNUTLS_CERT_REVOKED)
-    warnings = Fcons (list2 (intern (":revoked"),
-			     build_string("certificate was revoked (CRL)")),
-		      warnings);
+    warnings = Fcons (intern (":revoked"), warnings);
 
   if (verification & GNUTLS_CERT_SIGNER_NOT_FOUND)
-    warnings = Fcons (list2 (intern (":self-signed"),
-			     build_string("certificate signer was not found (self-signed)")),
-		      warnings);
+    warnings = Fcons (intern (":self-signed"), warnings);
 
   if (verification & GNUTLS_CERT_SIGNER_NOT_CA)
-    warnings = Fcons (list2 (intern (":not-ca"),
-			     build_string("certificate signer is not a CA")),
-		      warnings);
+    warnings = Fcons (intern (":not-ca"), warnings);
 
   if (verification & GNUTLS_CERT_INSECURE_ALGORITHM)
-    warnings = Fcons (list2 (intern (":insecure"),
-			     build_string("certificate was signed with an insecure algorithm")),
-		      warnings);
+    warnings = Fcons (intern (":insecure"), warnings);
 
   if (verification & GNUTLS_CERT_NOT_ACTIVATED)
-    warnings = Fcons (list2 (intern (":not-activated"),
-			     build_string("certificate is not yet activated")),
-		      warnings);
+    warnings = Fcons (intern (":not-activated"), warnings);
 
   if (verification & GNUTLS_CERT_EXPIRED)
-    warnings = Fcons (list2 (intern (":expired"),
-			     build_string("certificate has expired")),
-		      warnings);
+    warnings = Fcons (intern (":expired"), warnings);
 
   if (XPROCESS (proc)->gnutls_extra_peer_verification &
       CERTIFICATE_NOT_MATCHING)
-    warnings = Fcons (list2 (intern (":no-host-match"),
-			     build_string("certificate host does not match hostname")),
-		      warnings);
+    warnings = Fcons (intern (":no-host-match"), warnings);
 
   if (!NILP (warnings))
     result = list2 (intern (":warnings"), warnings);
 
-  result = nconc2 (result, list2
-		   (intern (":certificate"),
-		    gnutls_certificate_details(XPROCESS (proc)->gnutls_certificate)));
+  /* This could get called in the INIT stage, when the certificate is
+     not yet set. */
+  if ( XPROCESS (proc)->gnutls_certificate != NULL )
+    result = nconc2 (result, list2
+                     (intern (":certificate"),
+                      gnutls_certificate_details (XPROCESS (proc)->gnutls_certificate)));
 
   return result;
 }
@@ -1148,6 +1170,8 @@ one trustfile (usually a CA bundle).  */)
   Lisp_Object hostname;
   Lisp_Object verify_error;
   Lisp_Object prime_bits;
+  Lisp_Object warnings;
+  Lisp_Object warning;
 
   CHECK_PROCESS (proc);
   CHECK_SYMBOL (type);
@@ -1392,33 +1416,19 @@ one trustfile (usually a CA bundle).  */)
 
   XPROCESS (proc)->gnutls_peer_verification = peer_verification;
 
-  if (XINT (loglevel) > 0 && peer_verification & GNUTLS_CERT_INVALID)
-    message ("%s certificate could not be verified.", c_hostname);
+  warnings = Fplist_get (Fgnutls_peer_status (proc), intern (":warnings"));
+  if ( !NILP (warnings) )
+    {
+      Lisp_Object tail;
 
-  if (peer_verification & GNUTLS_CERT_REVOKED)
-    GNUTLS_LOG2 (1, max_log_level, "certificate was revoked (CRL):",
-		 c_hostname);
-
-  if (peer_verification & GNUTLS_CERT_SIGNER_NOT_FOUND)
-    GNUTLS_LOG2 (1, max_log_level, "certificate signer was not found:",
-		 c_hostname);
-
-  if (peer_verification & GNUTLS_CERT_SIGNER_NOT_CA)
-    GNUTLS_LOG2 (1, max_log_level, "certificate signer is not a CA:",
-		 c_hostname);
-
-  if (peer_verification & GNUTLS_CERT_INSECURE_ALGORITHM)
-    GNUTLS_LOG2 (1, max_log_level,
-		 "certificate was signed with an insecure algorithm:",
-		 c_hostname);
-
-  if (peer_verification & GNUTLS_CERT_NOT_ACTIVATED)
-    GNUTLS_LOG2 (1, max_log_level, "certificate is not yet activated:",
-		 c_hostname);
-
-  if (peer_verification & GNUTLS_CERT_EXPIRED)
-    GNUTLS_LOG2 (1, max_log_level, "certificate has expired:",
-		 c_hostname);
+      for (tail = warnings; CONSP (tail); tail = XCDR (tail))
+        {
+          Lisp_Object warning = XCAR (tail);
+          Lisp_Object message = Fgnutls_peer_status_warning_describe (warning);
+          if ( !NILP (message) )
+            GNUTLS_LOG2 (1, max_log_level, "verification: %s", SDATA(message));
+        }
+    }
 
   if (peer_verification != 0)
     {
