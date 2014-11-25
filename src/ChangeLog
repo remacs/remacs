@@ -1,3 +1,8 @@
+2014-11-25  Eli Zaretskii  <eliz@gnu.org>
+
+	* w32fns.c (Fw32_shell_execute): Convert forward slashes in
+	DOCUMENT to backslashes, if DOCUMENT is a file.  (Bug#19141)
+
 2014-11-25  Ulrich Müller  <ulm@gentoo.org>
 
 	* Makefile.in (temacs$(EXEEXT)): Use consistent flag settings
