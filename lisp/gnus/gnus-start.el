@@ -447,6 +447,7 @@ See also `gnus-before-startup-hook'."
 When the newsrc.eld file is updated by multiple machines,
 checking the file's modification time is a good way to avoid
 overwriting updated data."
+  :version "25.1"
   :group 'gnus-newsrc
   :type 'boolean)
 
