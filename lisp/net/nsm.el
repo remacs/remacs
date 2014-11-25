@@ -373,13 +373,19 @@ unencrypted."
 	     (nsm-certificate-part (plist-get cert :subject) "OU" t))
 	 "\n"
 	 "Hostname:"
-	 (nsm-certificate-part (plist-get cert :subject) "CN" t) "\n"
-	 "Public key:" (plist-get cert :public-key-algorithm)
-	 ", signature: " (plist-get cert :signature-algorithm) "\n"
-	 "Security level:"
-	 (propertize (plist-get cert :certificate-security-level)
-		     'face 'bold)
-	 "\n"
+	 (nsm-certificate-part (plist-get cert :subject) "CN" t) "\n")
+	(when (and (plist-get cert :public-key-algorithm)
+		   (plist-get cert :signature-algorithm))
+	  (insert
+	   "Public key:" (plist-get cert :public-key-algorithm)
+	   ", signature: " (plist-get cert :signature-algorithm) "\n"))
+	(when (plist-get cert :certificate-security-level)
+	  (insert
+	   "Security level:"
+	   (propertize (plist-get cert :certificate-security-level)
+		       'face 'bold)
+	   "\n"))
+	(insert
 	 "Valid:From " (plist-get cert :valid-from)
 	 " to " (plist-get cert :valid-to) "\n\n")
 	(goto-char (point-min))
