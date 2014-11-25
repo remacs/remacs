@@ -3,7 +3,7 @@
 ;; Copyright (C) 1992-2014 Free Software Foundation, Inc.
 
 ;; Author:     FSF (see vc.el for full credits)
-;; Maintainer: Eric S. Raymond <esr@ythyrsus.com>
+;; Maintainer: Eric S. Raymond <esr@thyrsus.com>
 ;; Package: vc
 
 ;; This file is part of GNU Emacs.
@@ -236,7 +236,7 @@ REV is ignored.
 COMMENT is ignored."
   (vc-src-command nil files "add"))
 
-(defun vc-rcs-responsible-p (file)
+(defun vc-src-responsible-p (file)
   "Return non-nil if SRC thinks it would be responsible for registering FILE."
   (file-directory-p (expand-file-name ".src"
                                       (if (file-directory-p file)
