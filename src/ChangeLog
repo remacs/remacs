@@ -1,3 +1,9 @@
+2014-11-25  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* gnutls.c (gnutls_certificate_details): Don't include certain
+	certificate details on older gnutls versions (bug#19168).
+	(syms_of_gnutls): Export gnutls_peer_status_warning_describe.
+
 2014-11-25  Teodor Zlatanov  <tzz@lifelogs.com>
 
 	* gnutls.c (Fgnutls_peer_status): Check GNUTLS_INITSTAGE, not gnutls_p.

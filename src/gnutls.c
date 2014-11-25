@@ -863,6 +863,8 @@ gnutls_certificate_details (gnutls_x509_crt_t cert)
     }
   }
 
+  /* Versions older than 2.11 doesn't have these four functions. */
+#if GNUTLS_VERSION_NUMBER < 0x020b00
   /* SubjectPublicKeyInfo. */
   {
     unsigned int bits;
@@ -906,6 +908,7 @@ gnutls_certificate_details (gnutls_x509_crt_t cert)
       free (buf);
     }
   }
+#endif
 
   /* Signature. */
   {
@@ -1585,6 +1588,7 @@ syms_of_gnutls (void)
   defsubr (&Sgnutls_bye);
   defsubr (&Sgnutls_available_p);
   defsubr (&Sgnutls_peer_status);
+  defsubr (&Sgnutls_peer_status_warning_describe);
 
   DEFVAR_INT ("gnutls-log-level", global_gnutls_log_level,
 	      doc: /* Logging level used by the GnuTLS functions.
