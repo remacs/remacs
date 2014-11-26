@@ -5194,6 +5194,15 @@ Overrides `diary-goto-entry'."
 
 (add-function :override diary-goto-entry-function #'todo-diary-goto-entry)
 
+(defun todo-revert-buffer (&optional ignore-auto noconfirm)
+  "Call `revert-buffer', preserving buffer's current modes.
+Also preserve category display, if applicable."
+  (interactive (list (not current-prefix-arg)))
+  (let ((revert-buffer-function nil))
+    (revert-buffer ignore-auto noconfirm 'preserve-modes)
+    (when (memq major-mode '(todo-mode todo-archive-mode))
+      (todo-category-select))))
+
 (defun todo-desktop-save-buffer (_dir)
   `((catnum . ,(todo-category-number (todo-current-category)))))
 
@@ -6540,6 +6549,7 @@ Added to `window-configuration-change-hook' in Todo mode."
 (defun todo-modes-set-1 ()
   "Make some settings that apply to multiple Todo modes."
   (setq-local font-lock-defaults '(todo-font-lock-keywords t))
+  (setq-local revert-buffer-function 'todo-revert-buffer)
   (setq-local tab-width todo-indent-to-here)
   (setq-local indent-line-function 'todo-indent)
   (when todo-wrap-lines

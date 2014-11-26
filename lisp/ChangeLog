@@ -1,5 +1,12 @@
 2014-11-26  Stephen Berman  <stephen.berman@gmx.net>
 
+	* calendar/todo-mode.el: Handle calling revert-buffer (bug#19187).
+	(todo-revert-buffer): New function.
+	(todo-modes-set-1): Use it as the buffer-local value of
+	revert-buffer-function.
+
+2014-11-26  Stephen Berman  <stephen.berman@gmx.net>
+
 	* calendar/todo-mode.el (todo-mode): If called interactively, just
 	display a message saying to call todo-show to enter Todo mode
 	(Bug#19112).
