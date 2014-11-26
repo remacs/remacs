@@ -41,7 +41,7 @@ If the file is not registered, or the master name is not known, return nil."
       ;; vc-BACKEND-registered explicitly
       (let ((backend (vc-backend file)))
 	(if (and backend
-		 (vc-call-backend backend 'registered file))
+		 (vc-filewise-registered backend file))
 	    (vc-file-getprop file 'vc-name)))))
 
 (defun vc-rename-master (oldmaster newfile templates)
