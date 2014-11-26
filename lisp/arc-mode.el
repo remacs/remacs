@@ -1,7 +1,6 @@
 ;;; arc-mode.el --- simple editing of archives
 
-;; Copyright (C) 1995, 1997-1998, 2001-2014 Free Software Foundation,
-;; Inc.
+;; Copyright (C) 1995, 1997-1998, 2001-2014 Free Software Foundation, Inc.
 
 ;; Author: Morten Welinder <terra@gnu.org>
 ;; Keywords: files archives ms-dos editing major-mode
@@ -150,9 +149,8 @@ A local copy of the archive will be used when updating."
 
 (defcustom archive-visit-single-files nil
   "If non-nil, opening an archive with a single file visits that file.
-
-  If this option's value is nil, visiting such archives will
-  display the archive summary."
+If nil, visiting such an archive displays the archive summary."
+  :version "25.1"
   :type '(choice (const :tag "Visit the single file" t)
                  (const :tag "Show the archive summary" nil))
   :group 'archive)
