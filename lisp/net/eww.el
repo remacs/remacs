@@ -590,12 +590,13 @@ the like."
   (let ((result node)
 	highest)
     (dolist (elem (dom-children node))
-      (when (> (or (dom-attr
-		    (setq highest (eww-highest-readability elem))
-		    :eww-readability-score)
-		   most-negative-fixnum)
-	       (or (dom-attr (cdr result) :eww-readability-score)
-		   most-negative-fixnum))
+      (when (and (not (stringp elem))
+		 (> (or (dom-attr
+			 (setq highest (eww-highest-readability elem))
+			 :eww-readability-score)
+			most-negative-fixnum)
+		    (or (dom-attr result :eww-readability-score)
+			most-negative-fixnum)))
 	(setq result highest)))
     result))
 

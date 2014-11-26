@@ -1,3 +1,7 @@
+2014-11-26  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* net/eww.el (eww-highest-readability): More dom.el fixes.
+
 2014-11-26  Ulf Jasper  <ulf.jasper@web.de>
 
 	* net/newst-backend.el (newsticker--parse-generic-items): Take
