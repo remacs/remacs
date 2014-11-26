@@ -2240,8 +2240,7 @@ comment at the start of cc-engine.el for more info."
        ((and (not not-in-delimiter)	; inside a comment starter
 	     (not (bobp))
 	     (progn (backward-char)
-		    (and (not (and (memq 'category-properties c-emacs-features)
-				   (looking-at "\\s!")))
+		    (and (not (looking-at "\\s!"))
 			 (looking-at c-comment-start-regexp))))
 	(setq ty (if (looking-at c-block-comment-start-regexp) 'c 'c++)
 	      co-st (point))

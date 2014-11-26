@@ -1,3 +1,8 @@
+2014-11-26  Alan Mackenzie  <acm@muc.de>
+
+	Remove spurious reference to symbol category_properties.
+	* progmodes/cc-engine.el (c-state-pp-to-literal): Fix here.
+
 2014-11-26  Glenn Morris  <rgm@gnu.org>
 
 	* arc-mode.el (archive-visit-single-files): Add :version.
