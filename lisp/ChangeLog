@@ -1,5 +1,8 @@
 2014-11-26  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
+	* net/nsm.el (nsm-new-fingerprint-ok-p): Display the certificate
+	when querying about new certificates.
+
 	* net/shr.el (shr-make-table-1): dom.el changes for table rendering.
 
 	* dom.el (dom-by-tag): Use `equal' for comparisons so that tags

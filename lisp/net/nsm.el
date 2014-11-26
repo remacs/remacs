@@ -204,7 +204,7 @@ unencrypted."
 
 (defun nsm-new-fingerprint-ok-p (host port status)
   (nsm-query
-   host port nil 'fingerprint
+   host port status 'fingerprint
    "The fingerprint for the connection to %s:%s is new:\n%s"
    host port
    (nsm-fingerprint status)))
