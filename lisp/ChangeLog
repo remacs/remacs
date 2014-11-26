@@ -1,5 +1,7 @@
 2014-11-26  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
+	* net/shr.el (shr-make-table-1): dom.el changes for table rendering.
+
 	* dom.el (dom-by-tag): Use `equal' for comparisons so that tags
 	can be strings.
 	(dom-elements): Protect against non-text nodes.
