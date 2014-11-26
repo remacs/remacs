@@ -453,14 +453,10 @@ See the `eww-search-prefix' variable for the search engine used."
     (setq header-line-format nil)))
 
 (defun eww-tag-title (dom)
-  (let ((title ""))
-    (dolist (sub (dom-children dom))
-      (when (stringp sub)
-	(setq title (concat title sub))))
-    (plist-put eww-data :title
-	       (replace-regexp-in-string
-		"^ \\| $" ""
-		(replace-regexp-in-string "[ \t\r\n]+" " " title))))
+  (plist-put eww-data :title
+	     (replace-regexp-in-string
+	      "^ \\| $" ""
+	      (replace-regexp-in-string "[ \t\r\n]+" " " (dom-text dom))))
   (eww-update-header-line-format))
 
 (defun eww-tag-body (dom)
@@ -589,14 +585,13 @@ the like."
 (defun eww-highest-readability (node)
   (let ((result node)
 	highest)
-    (dolist (elem (dom-children node))
-      (when (and (not (stringp elem))
-		 (> (or (dom-attr
-			 (setq highest (eww-highest-readability elem))
-			 :eww-readability-score)
-			most-negative-fixnum)
-		    (or (dom-attr result :eww-readability-score)
-			most-negative-fixnum)))
+    (dolist (elem (dom-non-text-children node))
+      (when (> (or (dom-attr
+		    (setq highest (eww-highest-readability elem))
+		    :eww-readability-score)
+		   most-negative-fixnum)
+	       (or (dom-attr result :eww-readability-score)
+		   most-negative-fixnum))
 	(setq result highest)))
     result))
 

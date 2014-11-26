@@ -1,3 +1,12 @@
+2014-11-26  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* dom.el (dom-by-tag): Use `equal' for comparisons so that tags
+	can be strings.
+	(dom-elements): Protect against non-text nodes.
+	(dom-non-text-children): New function.
+
+	* net/eww.el (eww-tag-title): Use `dom-text'.
+
 2014-11-26  Sam Steingold  <sds@gnu.org>
 
 	* textmodes/sgml-mode.el (sgml-validate-command): Pass -utf8 to tidy.

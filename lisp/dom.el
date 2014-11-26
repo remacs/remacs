@@ -47,6 +47,12 @@
       (cddr (car node))
     (cddr node)))
 
+(defun dom-non-text-children (node)
+  "Return all non-text-node children of NODE."
+  (cl-loop for child in (dom-children node)
+	   unless (stringp child)
+	   collect child))
+
 (defun dom-set-attributes (node attributes)
   "Set the attributes of NODE to ATTRIBUTES."
   (setq node (dom-ensure-node node))
@@ -93,7 +99,7 @@ A name is a symbol like `td'."
 					     (dom-by-tag child tag))
 			  when matches
 			  append matches)))
-    (if (eq (dom-tag dom) tag)
+    (if (equal (dom-tag dom) tag)
 	(cons dom matches)
       matches)))
 
@@ -113,7 +119,9 @@ A name is a symbol like `td'."
   "Find elements matching MATCH (a regexp) in ATTRIBUTE.
 ATTRIBUTE would typically be `class', `id' or the like."
   (let ((matches (cl-loop for child in (dom-children dom)
-			  for matches = (dom-elements child attribute match)
+			  for matches = (and (not (stringp child))
+					     (dom-elements child attribute
+							   match))
 			  when matches
 			  append matches))
 	(attr (dom-attr dom attribute)))
