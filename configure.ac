@@ -137,41 +137,40 @@ AM_INIT_AUTOMAKE(1.11)
 
 dnl Canonicalize the configuration name.
 AC_CANONICAL_HOST
-canonical=$host
-configuration=${host_alias-${build_alias-$host}}
 
-dnl We get MINGW64 with MSYS2, MINGW32 with MSYS.
-case $canonical in
+case $host in
  *-mingw*)
-  . $srcdir/nt/mingw-cfg.site
 
-  # When we build with MinGW under MSYS, we are cross-compiling. Hence
-  # we can't rely on the output of MSYS `uname' for the architecture
-  # (32 bit MinGW compiler with 64 bit MSYS2, for instance) and must
-  # use the compiler's target, unless when the user explicitly
-  # provides one:
-  if test -z $target_alias; then
+  if test -z "$host_alias"; then
+
+      # No --host argument was given to 'configure'; therefore $host
+      # was set to a default value based on the build platform.  But
+      # this default value may be wrong if we are building from a
+      # 64-bit MSYS[2] pre-configured to build 32-bit MinGW programs.
+      # Therefore, we'll try to get the right host platform from the
+      # compiler's target.
+
       AC_MSG_CHECKING([the compiler's target])
-      if test -z $CC; then
+      if test -z "$CC"; then
 	  cc=gcc
       else
 	  cc=$CC
       fi
-      t=`$cc -v 2>&1 | sed -n 's/Target: //p'`
-      case "$t" in
-          *-*) canonical=$t
+      cc_target=`$cc -v 2>&1 | sed -n 's/Target: //p'`
+      case "$cc_target" in
+          *-*) host=$cc_target
 	      ;;
           "") AC_MSG_ERROR([Impossible to obtain $cc compiler target.
-Please explicitly provide --target])
+Please explicitly provide --host.])
               ;;
 	  *) AC_MSG_WARN([Compiler reported non-standard target.
-Defaulting to $canonical.])
+Defaulting to $host.])
               ;;
       esac
-      AC_MSG_RESULT([$canonical])
-  else
-      canonical=$target_alias
+      AC_MSG_RESULT([$host])
   fi
+
+  . $srcdir/nt/mingw-cfg.site
 
   case $srcdir in
     /* | ?:*)
@@ -184,6 +183,9 @@ Defaulting to $canonical.])
       ;;
   esac;;
 esac
+
+canonical=$host
+configuration=${host_alias-${build_alias-$host}}
 
 dnl Support for --program-prefix, --program-suffix and
 dnl --program-transform-name options

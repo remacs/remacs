@@ -1,3 +1,8 @@
+2014-11-26  Dani Moncayo  <dmoncayo@gmail.com>
+
+	* configure.ac [MINGW]: Fix the way of getting the right host
+	platform.
+
 2014-11-25  Glenn Morris  <rgm@gnu.org>
 
 	* configure.ac: Fix yesterday's use of uninitialised $version.
