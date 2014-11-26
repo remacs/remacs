@@ -406,38 +406,38 @@ See the `eww-search-prefix' variable for the search engine used."
       (setq eww-history-position 0)
       (eww-update-header-line-format))))
 
-(defun eww-handle-link (cont)
-  (let* ((rel (assq :rel cont))
-  	(href (assq :href cont))
-	(where (assoc
-		;; The text associated with :rel is case-insensitive.
-		(if rel (downcase (cdr rel)))
-		      '(("next" . :next)
-			;; Texinfo uses "previous", but HTML specifies
-			;; "prev", so recognize both.
-			("previous" . :previous)
-			("prev" . :previous)
-			;; HTML specifies "start" but also "contents",
-			;; and Gtk seems to use "home".  Recognize
-			;; them all; but store them in different
-			;; variables so that we can readily choose the
-			;; "best" one.
-			("start" . :start)
-			("home" . :home)
-			("contents" . :contents)
-			("up" . up)))))
+(defun eww-handle-link (dom)
+  (let* ((rel (dom-attr dom 'rel))
+	 (href (dom-attr dom 'href))
+	 (where (assoc
+		 ;; The text associated with :rel is case-insensitive.
+		 (if rel (downcase rel))
+		 '(("next" . :next)
+		   ;; Texinfo uses "previous", but HTML specifies
+		   ;; "prev", so recognize both.
+		   ("previous" . :previous)
+		   ("prev" . :previous)
+		   ;; HTML specifies "start" but also "contents",
+		   ;; and Gtk seems to use "home".  Recognize
+		   ;; them all; but store them in different
+		   ;; variables so that we can readily choose the
+		   ;; "best" one.
+		   ("start" . :start)
+		   ("home" . :home)
+		   ("contents" . :contents)
+		   ("up" . up)))))
     (and href
 	 where
-	 (plist-put eww-data (cdr where) (cdr href)))))
+	 (plist-put eww-data (cdr where) href))))
 
-(defun eww-tag-link (cont)
-  (eww-handle-link cont)
-  (shr-generic cont))
+(defun eww-tag-link (dom)
+  (eww-handle-link dom)
+  (shr-generic dom))
 
-(defun eww-tag-a (cont)
-  (eww-handle-link cont)
+(defun eww-tag-a (dom)
+  (eww-handle-link dom)
   (let ((start (point)))
-    (shr-tag-a cont)
+    (shr-tag-a dom)
     (put-text-property start (point) 'keymap eww-link-keymap)))
 
 (defun eww-update-header-line-format ()
@@ -452,25 +452,24 @@ See the `eww-search-prefix' variable for the search engine used."
 			    (?t . ,(or (plist-get eww-data :title) ""))))))
     (setq header-line-format nil)))
 
-(defun eww-tag-title (cont)
+(defun eww-tag-title (dom)
   (let ((title ""))
-    (dolist (sub cont)
-      (when (eq (car sub) 'text)
-	(setq title (concat title (cdr sub)))))
+    (dolist (sub (dom-children dom))
+      (when (stringp sub)
+	(setq title (concat title sub))))
     (plist-put eww-data :title
 	       (replace-regexp-in-string
 		"^ \\| $" ""
 		(replace-regexp-in-string "[ \t\r\n]+" " " title))))
   (eww-update-header-line-format))
 
-(defun eww-tag-body (cont)
+(defun eww-tag-body (dom)
   (let* ((start (point))
-	 (fgcolor (cdr (or (assq :fgcolor cont)
-                           (assq :text cont))))
-	 (bgcolor (cdr (assq :bgcolor cont)))
+	 (fgcolor (or (dom-attr dom 'fgcolor) (dom-attr dom 'text)))
+	 (bgcolor (dom-attr dom 'bgcolor))
 	 (shr-stylesheet (list (cons 'color fgcolor)
 			       (cons 'background-color bgcolor))))
-    (shr-generic cont)
+    (shr-generic dom)
     (shr-colorize-region start (point) fgcolor bgcolor)))
 
 (defun eww-display-raw (buffer &optional encode)
@@ -550,18 +549,16 @@ contains the main textual portion, leaving out navigation menus and
 the like."
   (interactive)
   (let* ((old-data eww-data)
-	 (dom (shr-transform-dom
-	       (with-temp-buffer
-		 (insert (plist-get old-data :source))
-		 (condition-case nil
-		     (decode-coding-region (point-min) (point-max) 'utf-8)
-		   (coding-system-error nil))
-		 (libxml-parse-html-region (point-min) (point-max))))))
+	 (dom (with-temp-buffer
+		(insert (plist-get old-data :source))
+		(condition-case nil
+		    (decode-coding-region (point-min) (point-max) 'utf-8)
+		  (coding-system-error nil))
+		(libxml-parse-html-region (point-min) (point-max)))))
     (eww-score-readability dom)
     (eww-save-history)
     (eww-display-html nil nil
-		      (shr-retransform-dom
-		       (eww-highest-readability dom))
+		      (eww-highest-readability dom)
 		      nil (current-buffer))
     (dolist (elem '(:source :url :title :next :previous :up))
       (plist-put eww-data elem (plist-get old-data elem)))
@@ -570,41 +567,35 @@ the like."
 (defun eww-score-readability (node)
   (let ((score -1))
     (cond
-     ((memq (car node) '(script head comment))
+     ((memq (dom-tag node) '(script head comment))
       (setq score -2))
-     ((eq (car node) 'meta)
+     ((eq (dom-tag node) 'meta)
       (setq score -1))
-     ((eq (car node) 'img)
+     ((eq (dom-tag node) 'img)
       (setq score 2))
-     ((eq (car node) 'a)
-      (setq score (- (length (split-string
-			      (or (cdr (assoc 'text (cdr node))) ""))))))
+     ((eq (dom-tag node) 'a)
+      (setq score (- (length (split-string (dom-text node))))))
      (t
-      (dolist (elem (cdr node))
-	(cond
-	 ((and (stringp (cdr elem))
-	       (eq (car elem) 'text))
-	  (setq score (+ score (length (split-string (cdr elem))))))
-	 ((consp (cdr elem))
+      (dolist (elem (dom-children node))
+	(if (stringp elem)
+	    (setq score (+ score (length (split-string elem))))
 	  (setq score (+ score
 			 (or (cdr (assoc :eww-readability-score (cdr elem)))
-			     (eww-score-readability elem)))))))))
+			     (eww-score-readability elem))))))))
     ;; Cache the score of the node to avoid recomputing all the time.
-    (setcdr node (cons (cons :eww-readability-score score) (cdr node)))
+    (dom-set-attribute node :eww-readability-score score)
     score))
 
 (defun eww-highest-readability (node)
   (let ((result node)
 	highest)
-    (dolist (elem (cdr node))
-      (when (and (consp (cdr elem))
-		 (> (or (cdr (assoc
-			      :eww-readability-score
-			      (setq highest
-				    (eww-highest-readability elem))))
-			most-negative-fixnum)
-		    (or (cdr (assoc :eww-readability-score (cdr result)))
-			most-negative-fixnum)))
+    (dolist (elem (dom-children node))
+      (when (> (or (dom-attr
+		    (setq highest (eww-highest-readability elem))
+		    :eww-readability-score)
+		   most-negative-fixnum)
+	       (or (dom-attr (cdr result) :eww-readability-score)
+		   most-negative-fixnum))
 	(setq result highest)))
     result))
 
@@ -864,13 +855,12 @@ appears in a <link> or <a> tag."
   (1- (next-single-property-change
        (point) 'eww-form nil (point-max))))
 
-(defun eww-tag-form (cont)
-  (let ((eww-form
-	 (list (assq :method cont)
-	       (assq :action cont)))
+(defun eww-tag-form (dom)
+  (let ((eww-form (list (cons :method (dom-attr dom 'method))
+			(cons :action (dom-attr dom 'action))))
 	(start (point)))
     (shr-ensure-paragraph)
-    (shr-generic cont)
+    (shr-generic dom)
     (unless (bolp)
       (insert "\n"))
     (insert "\n")
@@ -878,9 +868,9 @@ appears in a <link> or <a> tag."
       (put-text-property start (1+ start)
 			 'eww-form eww-form))))
 
-(defun eww-form-submit (cont)
+(defun eww-form-submit (dom)
   (let ((start (point))
-	(value (cdr (assq :value cont))))
+	(value (dom-attr dom 'value)))
     (setq value
 	  (if (zerop (length value))
 	      "Submit"
@@ -891,28 +881,28 @@ appears in a <link> or <a> tag."
 		       (list :eww-form eww-form
 			     :value value
 			     :type "submit"
-			     :name (cdr (assq :name cont))))
+			     :name (dom-attr dom 'name)))
     (put-text-property start (point) 'keymap eww-submit-map)
     (insert " ")))
 
-(defun eww-form-checkbox (cont)
+(defun eww-form-checkbox (dom)
   (let ((start (point)))
-    (if (cdr (assq :checked cont))
+    (if (dom-attr dom 'checked)
 	(insert eww-form-checkbox-selected-symbol)
       (insert eww-form-checkbox-symbol))
     (add-face-text-property start (point) 'eww-form-checkbox)
     (put-text-property start (point) 'eww-form
 		       (list :eww-form eww-form
-			     :value (cdr (assq :value cont))
-			     :type (downcase (cdr (assq :type cont)))
-			     :checked (cdr (assq :checked cont))
-			     :name (cdr (assq :name cont))))
+			     :value (dom-attr dom 'value)
+			     :type (downcase (dom-attr dom 'type))
+			     :checked (dom-attr dom 'checked)
+			     :name (dom-attr dom 'name)))
     (put-text-property start (point) 'keymap eww-checkbox-map)
     (insert " ")))
 
-(defun eww-form-file (cont)
+(defun eww-form-file (dom)
   (let ((start (point))
-	(value (cdr (assq :value cont))))
+	(value (dom-attr dom 'value)))
     (setq value
 	  (if (zerop (length value))
 	      " No file selected"
@@ -922,9 +912,9 @@ appears in a <link> or <a> tag."
     (insert value)
     (put-text-property start (point) 'eww-form
 		       (list :eww-form eww-form
-			     :value (cdr (assq :value cont))
-			     :type (downcase (cdr (assq :type cont)))
-			     :name (cdr (assq :name cont))))
+			     :value (dom-attr dom 'value)
+			     :type (downcase (dom-attr dom 'type))
+			     :name (dom-attr dom 'name)))
     (put-text-property start (point) 'keymap eww-submit-file)
     (insert " ")))
 
@@ -938,16 +928,13 @@ appears in a <link> or <a> tag."
       (eww-update-field filename (length "Browse"))
               (plist-put input :filename filename))))
 
-(defun eww-form-text (cont)
+(defun eww-form-text (dom)
   (let ((start (point))
-	(type (downcase (or (cdr (assq :type cont))
-			    "text")))
-	(value (or (cdr (assq :value cont)) ""))
-	(width (string-to-number
-		(or (cdr (assq :size cont))
-		    "40")))
-        (readonly-property (if (or (cdr (assq :disabled cont))
-                                   (cdr (assq :readonly cont)))
+	(type (downcase (or (dom-attr dom 'type) "text")))
+	(value (or (dom-attr dom 'value) ""))
+	(width (string-to-number (or (dom-attr dom 'size) "40")))
+        (readonly-property (if (or (dom-attr dom 'disabled)
+				   (dom-attr dom 'readonly))
                                'read-only
                              'inhibit-read-only)))
     (insert value)
@@ -961,7 +948,7 @@ appears in a <link> or <a> tag."
                        (list :eww-form eww-form
                              :value value
                              :type type
-                             :name (cdr (assq :name cont))))
+                             :name (dom-attr dom 'name)))
     (insert " ")))
 
 (defconst eww-text-input-types '("text" "password" "textarea"
@@ -1014,15 +1001,11 @@ See URL `https://developer.mozilla.org/en-US/docs/Web/HTML/Element/Input'.")
 	    (put-text-property start (+ start (length value))
 			       'display (make-string (length value) ?*))))))))
 
-(defun eww-tag-textarea (cont)
+(defun eww-tag-textarea (dom)
   (let ((start (point))
-	(value (or (cdr (assq :value cont)) ""))
-	(lines (string-to-number
-		(or (cdr (assq :rows cont))
-		    "10")))
-	(width (string-to-number
-		(or (cdr (assq :cols cont))
-		    "10")))
+	(value (or (dom-attr dom 'value) ""))
+	(lines (string-to-number (or (dom-attr dom 'rows) "10")))
+	(width (string-to-number (or (dom-attr dom 'cols) "10")))
 	end)
     (shr-ensure-newline)
     (insert value)
@@ -1047,23 +1030,22 @@ See URL `https://developer.mozilla.org/en-US/docs/Web/HTML/Element/Input'.")
 		       (list :eww-form eww-form
 			     :value value
 			     :type "textarea"
-			     :name (cdr (assq :name cont))))))
+			     :name (dom-attr dom 'name)))))
 
-(defun eww-tag-input (cont)
-  (let ((type (downcase (or (cdr (assq :type cont))
-			     "text")))
+(defun eww-tag-input (dom)
+  (let ((type (downcase (or (dom-attr dom 'type) "text")))
 	(start (point)))
     (cond
      ((or (equal type "checkbox")
 	  (equal type "radio"))
-      (eww-form-checkbox cont))
+      (eww-form-checkbox dom))
      ((equal type "file")
-      (eww-form-file cont))
+      (eww-form-file dom))
      ((equal type "submit")
-      (eww-form-submit cont))
+      (eww-form-submit dom))
      ((equal type "hidden")
       (let ((form eww-form)
-	    (name (cdr (assq :name cont))))
+	    (name (dom-attr dom 'name)))
 	;; Don't add <input type=hidden> elements repeatedly.
 	(while (and form
 		    (or (not (consp (car form)))
@@ -1075,34 +1057,33 @@ See URL `https://developer.mozilla.org/en-US/docs/Web/HTML/Element/Input'.")
 	  (nconc eww-form (list
 			   (list 'hidden
 				 :name name
-				 :value (cdr (assq :value cont))))))))
+				 :value (dom-attr dom 'value)))))))
      (t
-      (eww-form-text cont)))
+      (eww-form-text dom)))
     (unless (= start (point))
       (put-text-property start (1+ start) 'help-echo "Input field"))))
 
-(defun eww-tag-select (cont)
+(defun eww-tag-select (dom)
   (shr-ensure-paragraph)
-  (let ((menu (list :name (cdr (assq :name cont))
+  (let ((menu (list :name (dom-attr dom 'name)
 		    :eww-form eww-form))
 	(options nil)
 	(start (point))
 	(max 0)
 	opelem)
-    (if (eq (car (car cont)) 'optgroup)
-	(dolist (groupelem cont)
-	  (unless (cdr (assq :disabled (cdr groupelem)))
-	    (setq opelem (append opelem (cdr (cdr groupelem))))))
-      (setq opelem cont))
+    (if (eq (dom-tag dom) 'optgroup)
+	(dolist (groupelem (dom-children dom))
+	  (unless (dom-attr groupelem 'disabled)
+	    (setq opelem (append opelem (list groupelem)))))
+      (setq opelem (list dom)))
     (dolist (elem opelem)
-      (when (eq (car elem) 'option)
-	(when (cdr (assq :selected (cdr elem)))
-	  (nconc menu (list :value
-			    (cdr (assq :value (cdr elem))))))
-	(let ((display (or (cdr (assq 'text (cdr elem))) "")))
+      (when (eq (dom-tag elem) 'option)
+	(when (dom-attr elem 'selected)
+	  (nconc menu (list :value (dom-attr elem 'value))))
+	(let ((display (dom-text elem)))
 	  (setq max (max max (length display)))
 	  (push (list 'item
-		      :value (cdr (assq :value (cdr elem)))
+		      :value (dom-attr elem 'value)
 		      :display display)
 		options))))
     (when options
@@ -1302,8 +1283,7 @@ See URL `https://developer.mozilla.org/en-US/docs/Web/HTML/Element/Input'.")
       (eww-browse-url
        (concat
 	(if (cdr (assq :action form))
-	    (shr-expand-url (cdr (assq :action form))
-			    (plist-get eww-data :url))
+	    (shr-expand-url (cdr (assq :action form)) (plist-get eww-data :url))
 	  (plist-get eww-data :url))
 	"?"
 	(mm-url-encode-www-form-urlencoded values))))))
