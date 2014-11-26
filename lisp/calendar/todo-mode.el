@@ -6573,23 +6573,24 @@ Added to `window-configuration-change-hook' in Todo mode."
   "Major mode for displaying, navigating and editing todo lists.
 
 \\{todo-mode-map}"
-  ;; (easy-menu-add todo-menu)
-  (todo-modes-set-1)
-  (todo-modes-set-2)
-  (todo-modes-set-3)
-  ;; Initialize todo-current-todo-file.
-  (when (member (file-truename (buffer-file-name))
-		(funcall todo-files-function))
-    (setq-local todo-current-todo-file (file-truename (buffer-file-name))))
-  (setq-local todo-show-done-only nil)
-  (setq-local todo-categories-with-marks nil)
-  ;; (add-hook 'find-file-hook 'todo-add-to-buffer-list nil t)
-  (add-hook 'post-command-hook 'todo-update-buffer-list nil t)
-  (when todo-show-current-file
-    (add-hook 'pre-command-hook 'todo-show-current-file nil t))
-  (add-hook 'window-configuration-change-hook
-	    'todo-reset-and-enable-done-separator nil t)
-  (add-hook 'kill-buffer-hook 'todo-reset-global-current-todo-file nil t))
+  (if (called-interactively-p 'any)
+      (message "Type `M-x todo-show' to enter Todo mode")
+    (todo-modes-set-1)
+    (todo-modes-set-2)
+    (todo-modes-set-3)
+    ;; Initialize todo-current-todo-file.
+    (when (member (file-truename (buffer-file-name))
+		  (funcall todo-files-function))
+      (setq-local todo-current-todo-file (file-truename (buffer-file-name))))
+    (setq-local todo-show-done-only nil)
+    (setq-local todo-categories-with-marks nil)
+    ;; (add-hook 'find-file-hook 'todo-add-to-buffer-list nil t)
+    (add-hook 'post-command-hook 'todo-update-buffer-list nil t)
+    (when todo-show-current-file
+      (add-hook 'pre-command-hook 'todo-show-current-file nil t))
+    (add-hook 'window-configuration-change-hook
+	      'todo-reset-and-enable-done-separator nil t)
+    (add-hook 'kill-buffer-hook 'todo-reset-global-current-todo-file nil t)))
 
 (put 'todo-archive-mode 'mode-class 'special)
 

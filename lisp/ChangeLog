@@ -1,3 +1,9 @@
+2014-11-26  Stephen Berman  <stephen.berman@gmx.net>
+
+	* calendar/todo-mode.el (todo-mode): If called interactively, just
+	display a message saying to call todo-show to enter Todo mode
+	(Bug#19112).
+
 2014-11-24  Dmitry Gutov  <dgutov@yandex.ru>
 
 	* vc/vc-hg.el (vc-hg-dir-status-files): Include ignored files.
