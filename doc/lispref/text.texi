@@ -4422,8 +4422,8 @@ Simple accessors:
 @item dom-tag @var{node}
 Return the @dfn{tag} (also called ``node name'') of the node.
 
-@item dom-attr @var{node} @var{attributes}
-Return the value of @var{attributes} in the node.  A common usage
+@item dom-attr @var{node} @var{attribute}
+Return the value of @var{attribute} in the node.  A common usage
 would be:
 
 @lisp
