@@ -1,3 +1,8 @@
+2014-11-26  Ulf Jasper  <ulf.jasper@web.de>
+
+	* net/newst-backend.el (newsticker--parse-generic-items): Take
+	care of UIDs when adding elements to cache.
+
 2014-11-26  Alan Mackenzie  <acm@muc.de>
 
 	Remove spurious reference to symbol category_properties.
