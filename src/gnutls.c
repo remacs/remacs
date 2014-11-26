@@ -1095,6 +1095,18 @@ emacs_gnutls_global_init (void)
   return gnutls_make_error (ret);
 }
 
+static bool
+gnutls_ip_address_p (char *string)
+{
+  char c;
+
+  while ((c = *string++) != 0)
+    if (! ((c == '.' || c == ':' || (c >= '0' && c <= '9'))))
+      return false;
+
+  return true;
+}
+
 #if 0
 /* Deinitializes global GnuTLS state.
 See also `gnutls-global-init'.  */
@@ -1418,10 +1430,13 @@ one trustfile (usually a CA bundle).  */)
   if (ret < GNUTLS_E_SUCCESS)
     return gnutls_make_error (ret);
 
-  ret = fn_gnutls_server_name_set (state, GNUTLS_NAME_DNS, c_hostname,
-				   strlen(c_hostname));
-  if (ret < GNUTLS_E_SUCCESS)
-    return gnutls_make_error (ret);
+  if (!gnutls_ip_address_p (c_hostname))
+    {
+      ret = fn_gnutls_server_name_set (state, GNUTLS_NAME_DNS, c_hostname,
+				       strlen (c_hostname));
+      if (ret < GNUTLS_E_SUCCESS)
+	return gnutls_make_error (ret);
+    }
 
   GNUTLS_INITSTAGE (proc) = GNUTLS_STAGE_CRED_SET;
   ret = emacs_gnutls_handshake (XPROCESS (proc));

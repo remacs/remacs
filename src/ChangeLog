@@ -1,3 +1,8 @@
+2014-11-26  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* gnutls.c (gnutls_ip_address_p): New function.
+	(Fgnutls_boot): Only send SNI if the host name is not an IP address.
+
 2014-11-26  Toke Høiland-Jørgensen  <toke@toke.dk>  (tiny change)
 
 	* gnutls.c (Fgnutls_boot): Send the server name over (bug#18208).
