@@ -229,6 +229,8 @@ For a description of possible values, see `vc-check-master-templates'."
         (vc-rcs-fetch-master-state file)
         (vc-file-getprop file 'vc-working-revision))))
 
+(autoload 'vc-master-name "vc-filewise")
+
 (defun vc-rcs-latest-on-branch-p (file &optional version)
   "Return non-nil if workfile version of FILE is the latest on its branch.
 When VERSION is given, perform check for that version."
@@ -974,7 +976,7 @@ Uses `rcs2log' which only works for RCS and CVS."
             nil t)
       (replace-match "$\\1$"))))
 
-(autoload 'vc-rename-master "vc")
+(autoload 'vc-rename-master "vc-filewise")
 
 (defun vc-rcs-rename-file (old new)
   ;; Just move the master file (using vc-rcs-master-templates).

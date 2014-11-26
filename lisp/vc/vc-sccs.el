@@ -174,6 +174,8 @@ For a description of possible values, see `vc-check-master-templates'."
 	  (push (list frel state) result))))
     (funcall update-function result)))
 
+(autoload 'vc-master-name "vc-filewise")
+
 (defun vc-sccs-working-revision (file)
   "SCCS-specific version of `vc-working-revision'."
   (with-temp-buffer
@@ -471,7 +473,7 @@ Remaining arguments are ignored."
     (goto-char (point-min))
     (re-search-forward  "%[A-Z]%" nil t)))
 
-(autoload 'vc-rename-master "vc")
+(autoload 'vc-rename-master "vc-filewise")
 
 (defun vc-sccs-rename-file (old new)
   ;; Move the master file (using vc-rcs-master-templates).
