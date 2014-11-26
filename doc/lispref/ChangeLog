@@ -1,3 +1,7 @@
+2014-11-26  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* text.texi (Document Object Model): New node to document dom.el.
+
 2014-11-24  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
 	* processes.texi (Network Security): Made into its own section and
