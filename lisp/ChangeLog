@@ -10,6 +10,10 @@
 
 2014-11-26  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
+	* net/eww.el: Use the new dom.el accessors throughout.
+
+	* net/shr.el: Ditto.
+
 	* dom.el: New file.
 
 2014-11-26  Glenn Morris  <rgm@gnu.org>
