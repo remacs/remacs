@@ -245,7 +245,7 @@ Currently, only Latin-1 characters are supported.")
   ;; which makes it next to useless
   (cond ((executable-find "tidy")
          ;; tidy is available from http://tidy.sourceforge.net/
-         "tidy --gnu-emacs yes -e -q")
+         "tidy --gnu-emacs yes -utf8 -e -q")
         ((executable-find "nsgmls")
          ;; nsgmls is a free SGML parser in the SP suite available from
          ;; ftp.jclark.com, replaced old `sgmls'.

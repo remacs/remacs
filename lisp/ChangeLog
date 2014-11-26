@@ -1,3 +1,7 @@
+2014-11-26  Sam Steingold  <sds@gnu.org>
+
+	* textmodes/sgml-mode.el (sgml-validate-command): Pass -utf8 to tidy.
+
 2014-11-26  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
 	* net/eww.el (eww-highest-readability): More dom.el fixes.
