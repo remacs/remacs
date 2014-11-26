@@ -187,6 +187,9 @@ DEF_GNUTLS_FN (int, gnutls_x509_crt_get_key_id,
 DEF_GNUTLS_FN (const char*, gnutls_sec_param_get_name, (gnutls_sec_param_t));
 DEF_GNUTLS_FN (const char*, gnutls_sign_algorithm_get_name,
 	       (gnutls_sign_algorithm_t));
+DEF_GNUTLS_FN (int, gnutls_server_name_set, (gnutls_session_t,
+					     gnutls_server_name_type_t,
+					     const void *, size_t));
 
 static bool
 init_gnutls_functions (void)
@@ -335,6 +338,7 @@ init_gnutls_functions (void)
 #define fn_gnutls_x509_crt_get_key_id           gnutls_x509_crt_get_key_id
 #define fn_gnutls_sec_param_get_name            gnutls_sec_param_get_name
 #define fn_gnutls_sign_algorithm_get_name       gnutls_sign_algorithm_get_name
+#define fn_gnutls_server_name_set		gnutls_server_name_set
 
 #endif /* !WINDOWSNT */
 
@@ -1411,6 +1415,11 @@ one trustfile (usually a CA bundle).  */)
   ret = EQ (type, Qgnutls_x509pki)
     ? fn_gnutls_credentials_set (state, GNUTLS_CRD_CERTIFICATE, x509_cred)
     : fn_gnutls_credentials_set (state, GNUTLS_CRD_ANON, anon_cred);
+  if (ret < GNUTLS_E_SUCCESS)
+    return gnutls_make_error (ret);
+
+  ret = fn_gnutls_server_name_set (state, GNUTLS_NAME_DNS, c_hostname,
+				   strlen(c_hostname));
   if (ret < GNUTLS_E_SUCCESS)
     return gnutls_make_error (ret);
 

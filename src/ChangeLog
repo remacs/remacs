@@ -1,3 +1,7 @@
+2014-11-26  Toke Høiland-Jørgensen  <toke@toke.dk>  (tiny change)
+
+	* gnutls.c (Fgnutls_boot): Send the server name over (bug#18208).
+
 2014-11-25  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Fix gnutls problems caught by static checking.
