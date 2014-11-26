@@ -1,3 +1,8 @@
+2014-11-26  John Mastro <john.b.mastro@gmail.com>  (tiny change)
+
+	* auth-source.el (auth-source-macos-keychain-search-items): Return
+	result of `auth-source-macos-keychain-result-append' (bug#19074).
+
 2014-11-10  Adam Sjøgren  <asjo@koldfront.dk>
 
 	* mml2015.el (mml2015-display-key-image): New variable.
