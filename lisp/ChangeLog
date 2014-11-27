@@ -1,3 +1,9 @@
+2014-11-27  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	* progmodes/python.el (python-shell-completion-setup-code): Use
+	__builtin__ module (or builtins in Python 3) and catch all errors
+	when importing readline and rlcompleter.
+
 2014-11-26  Stephen Berman  <stephen.berman@gmx.net>
 
 	* calendar/todo-mode.el: Handle calling revert-buffer (bug#19187).

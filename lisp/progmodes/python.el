@@ -2653,25 +2653,30 @@ This function takes the list of setup code to send from the
 
 (defcustom python-shell-completion-setup-code
   "try:
-    import readline, rlcompleter
+    import __builtin__
 except ImportError:
+    # Python 3
+    import builtins as __builtin__
+try:
+    import readline, rlcompleter
+except:
     def __PYTHON_EL_get_completions(text):
         return []
 else:
     def __PYTHON_EL_get_completions(text):
+        builtins = dir(__builtin__)
         completions = []
         try:
             splits = text.split()
             is_module = splits and splits[0] in ('from', 'import')
-            is_ipython = getattr(
-                __builtins__, '__IPYTHON__',
-                getattr(__builtins__, '__IPYTHON__active', False))
+            is_ipython = ('__IPYTHON__' in builtins or
+                          '__IPYTHON__active' in builtins)
             if is_module:
                 from IPython.core.completerlib import module_completion
                 completions = module_completion(text.strip())
-            elif is_ipython and getattr(__builtins__, '__IP', None):
+            elif is_ipython and '__IP' in builtins:
                 completions = __IP.complete(text)
-            elif is_ipython and getattr(__builtins__, 'get_ipython', None):
+            elif is_ipython and 'get_ipython' in builtins:
                 completions = get_ipython().Completer.all_completions(text)
             else:
                 i = 0
