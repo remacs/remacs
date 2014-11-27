@@ -2303,7 +2303,8 @@ If FRAME is nil or not given, use the selected frame."
                       global-map (vector 'menu-bar menu))
 		     (lookup-key-ignore-too-long
                       (current-local-map) (vector 'menu-bar menu))
-		     (cdar (minor-mode-key-binding (vector 'menu-bar menu))))
+		     (cdar (minor-mode-key-binding (vector 'menu-bar menu)))
+                     (mouse-menu-bar-map))
 		    (posn-at-x-y x 0 nil t) nil t)))
      (t (with-selected-frame (or frame (selected-frame))
           (tmm-menubar))))))
