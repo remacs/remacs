@@ -953,9 +953,9 @@ appears in a <link> or <a> tag."
 See URL `https://developer.mozilla.org/en-US/docs/Web/HTML/Element/Input'.")
 
 (defun eww-process-text-input (beg end length)
-  (let* ((form (get-text-property (min (1+ end) (point-max)) 'eww-form))
+  (let* ((form (get-text-property (min (1- end) (point-max)) 'eww-form))
 	 (inhibit-read-only t)
-	 (properties (text-properties-at end))
+	 (properties (text-properties-at (1- end)))
 	 (type (plist-get form :type)))
     (when (and form
 	       (member type eww-text-input-types))
@@ -976,10 +976,11 @@ See URL `https://developer.mozilla.org/en-US/docs/Web/HTML/Element/Input'.")
        ((> length 0)
 	;; Add padding.
 	(save-excursion
+	  (goto-char (1- end))
 	  (goto-char
 	   (if (equal type "textarea")
 	       (1- (line-end-position))
-	     (eww-end-of-field)))
+	     (1+ (eww-end-of-field))))
 	  (let ((start (point)))
 	    (insert (make-string length ? ))
 	    (set-text-properties start (point) properties)))))

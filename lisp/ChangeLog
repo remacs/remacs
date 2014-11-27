@@ -2,6 +2,8 @@
 
 	* net/eww.el (eww): Record the new URL immediately, so that if the
 	HTTP fetch fails, we have the right URL in the buffer.
+	(eww-process-text-input): Don't shorten the input field if
+	deleting at the last character (bug#19085).
 
 	* dom.el (dom-pp): New function.
 
