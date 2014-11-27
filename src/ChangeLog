@@ -1,3 +1,10 @@
+2014-11-27  Eli Zaretskii  <eliz@gnu.org>
+
+	* xdisp.c (handle_single_display_spec): When ignoring a fringe
+	bitmap display, reset the ignore_overlay_strings_at_pos_p flag.
+	(next_element_from_buffer): When done with overlays, reset the
+	ignore_overlay_strings_at_pos_p flag.  (Bug#19201)
+
 2014-11-25  Eli Zaretskii  <eliz@gnu.org>
 
 	* w32fns.c (Fw32_shell_execute): Convert forward slashes in
