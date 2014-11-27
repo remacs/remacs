@@ -1,3 +1,7 @@
+2014-11-27  David Engster  <deng@randomsample.de>
+
+	* gitmerge.el: New file.
+
 2014-11-17  Oscar Fuentes  <ofv@wanadoo.es>
 
 	* admin/CPP-DEFINES: Mention MINGW_W64.
