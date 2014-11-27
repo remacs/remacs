@@ -674,6 +674,7 @@ the like."
    (setq-local tool-bar-map eww-tool-bar-map))
   ;; desktop support
   (setq-local desktop-save-buffer 'eww-desktop-misc-data)
+  (buffer-disable-undo)
   (setq buffer-read-only t))
 
 ;;;###autoload
