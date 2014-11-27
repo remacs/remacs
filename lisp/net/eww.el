@@ -405,6 +405,7 @@ See the `eww-search-prefix' variable for the search engine used."
 	    (forward-line 1)))))
       (plist-put eww-data :url url)
       (setq eww-history-position 0)
+      (eww-size-text-inputs)
       (eww-update-header-line-format))))
 
 (defun eww-handle-link (dom)
@@ -953,7 +954,7 @@ appears in a <link> or <a> tag."
   "List of input types which represent a text input.
 See URL `https://developer.mozilla.org/en-US/docs/Web/HTML/Element/Input'.")
 
-(defun eww-process-text-input (beg end length)
+(defun eww-process-text-input (beg end replace-length)
   (when-let (pos (and (< (1+ end) (point-max))
 		      (> (1- end) (point-min))
 		      (cond
@@ -964,24 +965,23 @@ See URL `https://developer.mozilla.org/en-US/docs/Web/HTML/Element/Input'.")
     (let* ((form (get-text-property pos 'eww-form))
 	   (properties (text-properties-at pos))
 	   (inhibit-read-only t)
+	   (length (- end beg replace-length))
 	   (type (plist-get form :type)))
       (when (and form
 		 (member type eww-text-input-types))
 	(cond
-	 ((zerop length)
+	 ((> length 0)
 	  ;; Delete some space at the end.
 	  (save-excursion
 	    (goto-char
 	     (if (equal type "textarea")
 		 (1- (line-end-position))
 	       (eww-end-of-field)))
-	    (let ((new (- end beg)))
-	      (while (and (> new 0)
-			  (eql (following-char) ? ))
-		(delete-region (point) (1+ (point)))
-		(setq new (1- new))))
-	    (set-text-properties beg end properties)))
-	 ((> length 0)
+	    (while (and (> length 0)
+			(eql (following-char) ? ))
+	      (delete-region (1- (point)) (point))
+	      (cl-decf length))))
+	 ((< length 0)
 	  ;; Add padding.
 	  (save-excursion
 	    (goto-char (1- end))
@@ -990,8 +990,11 @@ See URL `https://developer.mozilla.org/en-US/docs/Web/HTML/Element/Input'.")
 		 (1- (line-end-position))
 	       (1+ (eww-end-of-field))))
 	    (let ((start (point)))
-	      (insert (make-string length ? ))
-	      (set-text-properties start (point) properties)))))
+	      (insert (make-string (abs length) ? ))
+	      (set-text-properties start (point) properties))
+	    (goto-char (1- end)))))
+	(set-text-properties (plist-get form :start) (plist-get form :end)
+			     properties)
 	(let ((value (buffer-substring-no-properties
 		      (eww-beginning-of-field)
 		      (eww-end-of-field))))
@@ -1189,6 +1192,19 @@ See URL `https://developer.mozilla.org/en-US/docs/Web/HTML/Element/Input'.")
 		inputs))
 	(setq start (next-single-property-change start 'eww-form))))
     (nreverse inputs)))
+
+(defun eww-size-text-inputs ()
+  (let ((start (point-min)))
+    (while (and start
+		(< start (point-max)))
+      (when (or (get-text-property start 'eww-form)
+		(setq start (next-single-property-change start 'eww-form)))
+	(let ((props (get-text-property start 'eww-form)))
+	  (plist-put props :start (set-marker (make-marker) start))
+	  (setq start (next-single-property-change
+		       start 'eww-form nil (point-max)))
+	  (plist-put props
+		     :end (set-marker (make-marker) start)))))))
 
 (defun eww-input-value (input)
   (let ((type (plist-get input :type))

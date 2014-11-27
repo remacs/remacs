@@ -27,6 +27,7 @@
 	the history.
 	(eww-process-text-input): Fix deletion at the start of the field, too.
 	(eww-mode): Revert mistanken removal of `buffer-disable-undo'.
+	(eww-process-text-input): Try to keep track of the size more reliably.
 
 	* dom.el (dom-pp): New function.
 
