@@ -1,3 +1,9 @@
+2014-11-27  Oscar Fuentes  <ofv@wanadoo.es>
+
+	* src/w32.c: Use MINGW_W64 instead of _W64.
+
+	* src/w32heap.c: Likewise.
+
 2014-11-17  Oscar Fuentes  <ofv@wanadoo.es>
 
 	* src/w32.c: Use MINGW_W64 instead of _W64.

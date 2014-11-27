@@ -72,7 +72,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <pwd.h>
 #include <grp.h>
 
-/* MinGW64 (_W64) defines these in its _mingw.h.  */
+/* MinGW64 defines these in its _mingw.h.  */
 #ifndef _ANONYMOUS_UNION
 # define _ANONYMOUS_UNION
 #endif
