@@ -953,53 +953,55 @@ appears in a <link> or <a> tag."
 See URL `https://developer.mozilla.org/en-US/docs/Web/HTML/Element/Input'.")
 
 (defun eww-process-text-input (beg end length)
-  (let* ((pos (cond
-	       ((get-text-property (1- end) 'eww-form)
-		(1- end))
-	       ((get-text-property (1+ end) 'eww-form)
-		(1+ end))))
-	 (form (get-text-property pos 'eww-form))
-	 (properties (text-properties-at pos))
-	 (inhibit-read-only t)
-	 (type (plist-get form :type)))
-    (when (and form
-	       (member type eww-text-input-types))
-      (cond
-       ((zerop length)
-	;; Delete some space at the end.
-	(save-excursion
-	  (goto-char
-	   (if (equal type "textarea")
-	       (1- (line-end-position))
-	     (eww-end-of-field)))
-	  (let ((new (- end beg)))
-	    (while (and (> new 0)
-			(eql (following-char) ? ))
-	      (delete-region (point) (1+ (point)))
-	      (setq new (1- new))))
-	  (set-text-properties beg end properties)))
-       ((> length 0)
-	;; Add padding.
-	(save-excursion
-	  (goto-char (1- end))
-	  (goto-char
-	   (if (equal type "textarea")
-	       (1- (line-end-position))
-	     (1+ (eww-end-of-field))))
-	  (let ((start (point)))
-	    (insert (make-string length ? ))
-	    (set-text-properties start (point) properties)))))
-      (let ((value (buffer-substring-no-properties
-		    (eww-beginning-of-field)
-		    (eww-end-of-field))))
-	(when (string-match " +\\'" value)
-	  (setq value (substring value 0 (match-beginning 0))))
-	(plist-put form :value value)
-	(when (equal type "password")
-	  ;; Display passwords as asterisks.
-	  (let ((start (eww-beginning-of-field)))
-	    (put-text-property start (+ start (length value))
-			       'display (make-string (length value) ?*))))))))
+  (when-let (pos (and (< (1+ end) (point-max))
+		      (> (1- end) (point-min))
+		      (cond
+		       ((get-text-property (1- end) 'eww-form)
+			(1- end))
+		       ((get-text-property (1+ end) 'eww-form)
+			(1+ end)))))
+    (let* ((form (get-text-property pos 'eww-form))
+	   (properties (text-properties-at pos))
+	   (inhibit-read-only t)
+	   (type (plist-get form :type)))
+      (when (and form
+		 (member type eww-text-input-types))
+	(cond
+	 ((zerop length)
+	  ;; Delete some space at the end.
+	  (save-excursion
+	    (goto-char
+	     (if (equal type "textarea")
+		 (1- (line-end-position))
+	       (eww-end-of-field)))
+	    (let ((new (- end beg)))
+	      (while (and (> new 0)
+			  (eql (following-char) ? ))
+		(delete-region (point) (1+ (point)))
+		(setq new (1- new))))
+	    (set-text-properties beg end properties)))
+	 ((> length 0)
+	  ;; Add padding.
+	  (save-excursion
+	    (goto-char (1- end))
+	    (goto-char
+	     (if (equal type "textarea")
+		 (1- (line-end-position))
+	       (1+ (eww-end-of-field))))
+	    (let ((start (point)))
+	      (insert (make-string length ? ))
+	      (set-text-properties start (point) properties)))))
+	(let ((value (buffer-substring-no-properties
+		      (eww-beginning-of-field)
+		      (eww-end-of-field))))
+	  (when (string-match " +\\'" value)
+	    (setq value (substring value 0 (match-beginning 0))))
+	  (plist-put form :value value)
+	  (when (equal type "password")
+	    ;; Display passwords as asterisks.
+	    (let ((start (eww-beginning-of-field)))
+	      (put-text-property start (+ start (length value))
+				 'display (make-string (length value) ?*)))))))))
 
 (defun eww-tag-textarea (dom)
   (let ((start (point))
