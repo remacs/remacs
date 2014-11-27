@@ -187,6 +187,11 @@ pages visited) is now preserved in the desktop file.
 *** `eww-after-render-hook' is now called after eww has rendered
 the data in the buffer.
 
+*** The DOM shr and eww uses has been changed to the general Emacs
+xml.el/libxml2 DOM, and a new package dom.el has been added to
+interact with this DOM.  See the Emacs Lisp manual for interface
+details.
+
 ** Message mode
 
 *** text/html messages that contain inline image parts will be

@@ -1,3 +1,7 @@
+2014-11-27  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* NEWS: Mention dom.el.
+
 2014-11-24  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
 	* NEWS: Mention NSM.
