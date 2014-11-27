@@ -1756,13 +1756,17 @@ no, only reply back to the author."
   :type '(radio (const :format "%v  " nil)
 		(string :format "FQDN: %v")))
 
-(defcustom message-use-idna (and (condition-case nil (require 'idna)
-				   (file-error))
-				 (mm-coding-system-p 'utf-8)
-				 (executable-find idna-program)
-				 (string= (idna-to-ascii "räksmörgås")
-					  "xn--rksmrgs-5wao1o")
-				 t)
+(defcustom message-use-idna
+  (and (or (mm-coding-system-p 'utf-8)
+	   (condition-case nil
+	       (let (mucs-ignore-version-incompatibilities)
+		 (require 'un-define))
+	     (error)))
+       (condition-case nil (require 'idna) (file-error))
+       idna-program
+       (executable-find idna-program)
+       (string= (idna-to-ascii "räksmörgås") "xn--rksmrgs-5wao1o")
+       t)
   "Whether to encode non-ASCII in domain names into ASCII according to IDNA.
 GNU Libidn, and in particular the elisp package \"idna.el\" and
 the external program \"idn\", must be installed for this

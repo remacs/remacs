@@ -9870,6 +9870,7 @@ installed for this command to work."
   (if (not (and (condition-case nil (require 'idna)
 		  (file-error))
 		(mm-coding-system-p 'utf-8)
+		(symbol-value 'idna-program)
 		(executable-find (symbol-value 'idna-program))))
       (gnus-message
        5 "GNU Libidn not installed properly (`idn' or `idna.el' missing)")
