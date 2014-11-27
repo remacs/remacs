@@ -374,7 +374,7 @@ See the `eww-search-prefix' variable for the search engine used."
       (plist-put eww-data :source source)
       (plist-put eww-data :dom document)
       (let ((inhibit-read-only t)
-	    (after-change-functions nil)
+	    (inhibit-modification-hooks nil)
 	    (shr-target-id (url-target (url-generic-parse-url url)))
 	    (shr-external-rendering-functions
 	     '((title . eww-tag-title)
@@ -712,7 +712,7 @@ the like."
 
 (defun eww-restore-history (elem)
   (let ((inhibit-read-only t)
-	(after-change-functions nil)
+	(inhibit-modification-hooks nil)
 	(text (plist-get elem :text)))
     (setq eww-data elem)
     (if (null text)
