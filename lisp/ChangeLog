@@ -1,3 +1,10 @@
+2014-11-27  Stephen Berman  <stephen.berman@gmx.net>
+	    Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* outline.el (outline-move-subtree-down): Make sure we can move
+	forward to find the end of the subtree and the insertion point
+	(bug#19102).
+
 2014-11-27  Leonard Randall  <leonard.a.randall@gmail.com>
 
 	* textmodes/reftex-parse.el (reftex-using-biblatex-p): Make search
