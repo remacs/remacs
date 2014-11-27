@@ -711,6 +711,7 @@ the like."
 
 (defun eww-restore-history (elem)
   (let ((inhibit-read-only t)
+	(after-change-functions nil)
 	(text (plist-get elem :text)))
     (setq eww-data elem)
     (if (null text)

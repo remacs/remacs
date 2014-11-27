@@ -4,6 +4,8 @@
 	HTTP fetch fails, we have the right URL in the buffer.
 	(eww-process-text-input): Don't shorten the input field if
 	deleting at the last character (bug#19085).
+	(eww-restore-history): Inhibit change functions while restoring
+	the history.
 
 	* dom.el (dom-pp): New function.
 
