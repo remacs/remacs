@@ -1,3 +1,21 @@
+2014-11-17  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Restore 'Bug#' -> 'debbugs:' rewrite in log-edit-mode.
+	* .dir-locals.el (log-edit-mode): Restore the (log-edit-rewrite-fixes
+	"[ \n](bug#\\([0-9]+\\))" . "debbugs:\\1").  See Glenn Morris in:
+	http://lists.gnu.org/archive/html/emacs-devel/2014-11/msg01187.html
+
+	Simplify and fix doc-related .gitignore files.
+	This fixes some unwanted 'git status' output after 'make docs'.
+	* .gitignore: Add **/Makefile, **/makefile.
+	Remove Makefile, makefile.
+	Add doc/*/*.xxx rules for the usual kinds of documentation outputs
+	and temporaries.  Add doc/misc/cc-mode.ss.
+	* doc/emacs/.gitignore, doc/lispintro/.gitignore, doc/misc/.gitignore:
+	* lwlib/.gitignore, oldXMenu/.gitignore:
+	Remove, as these .gitignore files are no longer needed.
+	* doc/lispintro/.gitignore: Replace with list of exceptional PDF files.
+
 2014-11-26  Dani Moncayo  <dmoncayo@gmail.com>
 
 	* configure.ac [MINGW]: Fix the way of getting the right host

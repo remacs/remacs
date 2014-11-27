@@ -151,7 +151,7 @@ typedef struct _PROCESS_MEMORY_COUNTERS_EX {
 #define SDDL_REVISION_1	1
 #endif	/* SDDL_REVISION_1 */
 
-#if defined(_MSC_VER) || defined(_W64)
+#if defined(_MSC_VER) || defined(MINGW_W64)
 /* MSVC and MinGW64 don't provide the definition of
    REPARSE_DATA_BUFFER and the associated macros, except on ntifs.h,
    which cannot be included because it triggers conflicts with other

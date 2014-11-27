@@ -1,3 +1,9 @@
+2014-11-16  Tassilo Horn  <tsdh@gnu.org>
+
+	* misc.texi (DocView Slicing): Describe how to slice with the
+	mouse.  Fix command mentioned by slice by BoundingBox paragraph.
+	(Bug#18040)
+
 2014-11-25  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
 	* misc.texi (Network Security): Use "untrustworthy" instead of

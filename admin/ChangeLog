@@ -1,3 +1,7 @@
+2014-11-17  Oscar Fuentes  <ofv@wanadoo.es>
+
+	* admin/CPP-DEFINES: Mention MINGW_W64.
+
 2014-11-22  Glenn Morris  <rgm@gnu.org>
 
 	* admin.el (set-version): No more need to update nt/*.rc.

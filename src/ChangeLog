@@ -1,3 +1,13 @@
+2014-11-17  Oscar Fuentes  <ofv@wanadoo.es>
+
+	* src/w32.c: Use MINGW_W64 instead of _W64.
+
+	* src/w32term.c: Likewise.
+
+2014-11-16  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* frame.c (Fhandle_switch_frame): Deactivate shift-region (bug#19003).
+
 2014-11-26  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
 	* gnutls.c (gnutls_ip_address_p): New function.

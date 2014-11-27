@@ -1685,7 +1685,7 @@ This performs fontification according to `js--class-styles'."
   "Regular expression matching variable declaration keywords.")
 
 (defconst js--indent-operator-re
-  (concat "[-+*/%<>=&^|?:.]\\([^-+*/]\\|$\\)\\|"
+  (concat "[-+*/%<>&^|?:.]\\([^-+*/]\\|$\\)\\|!?=\\|"
           (js--regexp-opt-symbol '("in" "instanceof")))
   "Regexp matching operators that affect indentation of continued expressions.")
 
@@ -1712,7 +1712,7 @@ This performs fontification according to `js--class-styles'."
                     (save-excursion (backward-char) (not (looking-at "[/*]/")))
                     (js--looking-at-operator-p)
 		    (and (progn (backward-char)
-				(not (looking-at "++\\|--\\|/[/*]"))))))))))
+				(not (looking-at "+\\+\\|--\\|/[/*]"))))))))))
 
 
 (defun js--end-of-do-while-loop-p ()

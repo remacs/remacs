@@ -47,3 +47,11 @@ var p = {
 
 var evens = [e for each (e in range(0, 21))
                if (ed % 2 == 0)];
+
+!b
+  !=b
+  !==b
+
+a++
+b +=
+  c
