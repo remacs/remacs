@@ -1216,13 +1216,17 @@ URL `http://www.atompub.org/2005/08/17/draft-ietf-atompub-format-11.html'"
                             (car (xml-get-children node 'title)))))
                     ;; desc-fn
                     (lambda (node)
-                      ;; unxml the content node. Atom allows for
-                      ;; integrating (x)html into the atom structure
-                      ;; but we need the raw html string.
+                      ;; unxml the content or the summary node. Atom
+                      ;; allows for integrating (x)html into the atom
+                      ;; structure but we need the raw html string.
                       ;; e.g. http://www.heise.de/open/news/news-atom.xml
-                  (or (newsticker--unxml
+                      ;; http://feeds.feedburner.com/ru_nix_blogs
+                      (or (newsticker--unxml
                            (car (xml-node-children
-                                (car (xml-get-children node 'content)))))
+                                 (car (xml-get-children node 'content)))))
+                          (newsticker--unxml
+                           (car (xml-node-children
+                                 (car (xml-get-children node 'summary)))))
                           (car (xml-node-children
                                 (car (xml-get-children node 'summary))))))
                     ;; link-fn
