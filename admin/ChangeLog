@@ -1,6 +1,7 @@
 2014-11-27  David Engster  <deng@randomsample.de>
 
 	* gitmerge.el: New file.
+	* notes/git-workflow: Add documentation for using it.
 
 2014-11-17  Oscar Fuentes  <ofv@wanadoo.es>
 
