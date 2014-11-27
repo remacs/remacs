@@ -1,3 +1,12 @@
+2014-11-27  Ulf Jasper  <ulf.jasper@web.de>
+
+	* net/newst-treeview.el (newsticker-groups-filename): Change
+	default value to nil.  Point out that variable is obsolete in doc
+	string.
+	(newsticker--treeview-load): Change wording of the questions the
+	user is asked when `newsticker-groups-filename' is found to be
+	used and we offer to read and remove the groups file. (bug#19165)
+
 2014-11-27  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
 	* net/eww.el (eww): Record the new URL immediately, so that if the
