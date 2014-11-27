@@ -179,6 +179,44 @@ If BEFORE is nil, make CHILD NODE's first child."
     (setcdr node (list nil)))
   node)
 
+(defun dom-pp (dom &optional remove-empty)
+  "Pretty-print DOM at point.
+If REMOVE-EMPTY, ignore textual nodes that contain just
+white-space."
+  (let ((column (current-column)))
+    (insert (format "(%S " (dom-tag dom)))
+    (let* ((attr (dom-attributes dom))
+	   (times (length attr))
+	   (column (1+ (current-column))))
+      (if (null attr)
+	  (insert "nil")
+	(insert "(")
+	(dolist (elem attr)
+	  (insert (format "(%S . %S)" (car elem) (cdr elem)))
+	  (if (zerop (cl-decf times))
+	      (insert ")")
+	    (insert "\n" (make-string column ? ))))))
+    (let* ((children (if remove-empty
+			 (cl-remove-if
+			  (lambda (child)
+			    (and (stringp child)
+				 (string-match "\\`[\n\r\t  ]*\\'" child)))
+			  (dom-children dom))
+		       (dom-children dom)))
+	   (times (length children)))
+      (if (null children)
+	  (insert ")")
+	(insert "\n" (make-string (1+ column) ? ))
+	(dolist (child children)
+	  (if (stringp child)
+	      (if (or (not remove-empty)
+		      (not (string-match "\\`[\n\r\t  ]*\\'" child)))
+		  (insert (format "%S" child)))
+	    (dom-pp child remove-empty))
+	  (if (zerop (cl-decf times))
+	      (insert ")")
+	    (insert "\n" (make-string (1+ column) ? ))))))))
+
 (provide 'dom)
 
 ;;; dom.el ends here

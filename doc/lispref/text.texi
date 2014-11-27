@@ -4353,13 +4353,13 @@ A call to @code{libxml-parse-html-region} returns this @acronym{DOM}
 (document object model):
 
 @example
-(html ()
-  (head ())
-  (body ((width . "101"))
-   (div ((class . "thing"))
-    "Foo"
-    (div ()
-      "Yes"))))
+(html nil
+ (head nil)
+ (body ((width . "101"))
+  (div ((class . "thing"))
+   "Foo"
+   (div nil
+    "Yes"))))
 @end example
 @end defun
 
@@ -4396,13 +4396,10 @@ node has a node name (called a @dfn{tag}), and optional key/value
 nodes are either strings or @acronym{DOM} objects.
 
 @example
-(body
- ((width . "101"))
- (div
-  ((class . "thing"))
+(body ((width . "101"))
+ (div ((class . "thing"))
   "Foo"
-  (div
-   nil
+  (div nil
    "Yes")))
 @end example
 
@@ -4433,6 +4430,9 @@ would be:
 
 @item dom-children @var{node}
 Return all the children of the node.
+
+@item dom-non-text-children @var{node}
+Return all the non-string children of the node.
 
 @item dom-attributes @var{node}
 Return the key/value pair list of attributes of the node.
@@ -4492,6 +4492,14 @@ which is a regular expression.
 Return all nodes in @var{dom} that have IDs that match @var{match},
 which is a regular expression.
 
+@end table
+
+Utility functions:
+
+@table @code
+@item dom-pp @var{dom} &optional @var{remove-empty}
+Pretty-print @var{dom} at point.  If @var{remove-empty}, don't print
+textual nodes that just contain white-space.
 @end table
 
 

@@ -1,3 +1,7 @@
+2014-11-27  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* text.texi (Document Object Model): Mention `dom-pp'.
+
 2014-11-26  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
 	* text.texi (Document Object Model): New node to document dom.el.

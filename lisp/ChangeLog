@@ -1,3 +1,7 @@
+2014-11-27  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* dom.el (dom-pp): New function.
+
 2014-11-17  Eli Zaretskii  <eliz@gnu.org>
 
 	* vc/vc-bzr.el (vc-bzr-print-log, vc-bzr-expanded-log-entry):
