@@ -674,7 +674,6 @@ the like."
    (setq-local tool-bar-map eww-tool-bar-map))
   ;; desktop support
   (setq-local desktop-save-buffer 'eww-desktop-misc-data)
-  (buffer-disable-undo)
   (setq buffer-read-only t))
 
 ;;;###autoload
@@ -954,9 +953,14 @@ appears in a <link> or <a> tag."
 See URL `https://developer.mozilla.org/en-US/docs/Web/HTML/Element/Input'.")
 
 (defun eww-process-text-input (beg end length)
-  (let* ((form (get-text-property (min (1- end) (point-max)) 'eww-form))
+  (let* ((pos (cond
+	       ((get-text-property (1- end) 'eww-form)
+		(1- end))
+	       ((get-text-property (1+ end) 'eww-form)
+		(1+ end))))
+	 (form (get-text-property pos 'eww-form))
+	 (properties (text-properties-at pos))
 	 (inhibit-read-only t)
-	 (properties (text-properties-at (1- end)))
 	 (type (plist-get form :type)))
     (when (and form
 	       (member type eww-text-input-types))

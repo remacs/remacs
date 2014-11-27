@@ -6,6 +6,7 @@
 	deleting at the last character (bug#19085).
 	(eww-restore-history): Inhibit change functions while restoring
 	the history.
+	(eww-process-text-input): Fix deletion at the start of the field, too.
 
 	* dom.el (dom-pp): New function.
 
