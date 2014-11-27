@@ -1,5 +1,8 @@
 2014-11-27  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
+	* net/eww.el (eww): Record the new URL immediately, so that if the
+	HTTP fetch fails, we have the right URL in the buffer.
+
 	* dom.el (dom-pp): New function.
 
 2014-11-17  Eli Zaretskii  <eliz@gnu.org>

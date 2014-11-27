@@ -255,6 +255,7 @@ word(s) will be searched for via `eww-search-prefix'."
                              (replace-regexp-in-string " " "+" url))))))
   (unless (eq major-mode 'eww-mode)
     (eww-setup-buffer)
+    (plist-put eww-data :url url)
     (eww-update-header-line-format)
     (let ((inhibit-read-only t))
       (insert (format "Loading %s..." url))))
@@ -503,11 +504,8 @@ See the `eww-search-prefix' variable for the search engine used."
       (doc-view-mode)))
   (goto-char (point-min)))
 
-(defun eww-setup-buffer (&optional buffer)
-  (switch-to-buffer
-   (if (buffer-live-p buffer)
-       buffer
-     (get-buffer-create "*eww*")))
+(defun eww-setup-buffer ()
+  (switch-to-buffer (get-buffer-create "*eww*"))
   (let ((inhibit-read-only t))
     (remove-overlays)
     (erase-buffer))
