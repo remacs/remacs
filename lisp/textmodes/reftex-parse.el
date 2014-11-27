@@ -357,7 +357,7 @@ of master file."
       (member "biblatex" TeX-active-styles)
     ;; poor-man's check...
     (save-excursion
-      (re-search-forward "^[^%]*\\\\usepackage.*{biblatex}" nil t))))
+      (re-search-forward "^[^%\n]*?\\\\usepackage.*{biblatex}" nil t))))
 
 (defun reftex-locate-bibliography-files (master-dir &optional files)
   "Scan buffer for bibliography macros and return file list."
