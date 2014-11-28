@@ -1,3 +1,8 @@
+2014-11-28  Ulf Jasper  <ulf.jasper@web.de>
+
+	* net/newst-treeview.el (newsticker--treeview-load): Take care of
+	nil value for `newsticker-groups-filename'.
+
 2014-11-28  Daiki Ueno  <ueno@gnu.org>
 
 	* epa.el (epa-sign-file, epa-encrypt-file, epa-decrypt-region)

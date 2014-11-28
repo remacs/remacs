@@ -1275,7 +1275,8 @@ Note: does not update the layout."
               (concat newsticker-dir "/groups")))
          (buf (and (file-exists-p filename)
                    (find-file-noselect filename))))
-    (and (file-exists-p newsticker-groups-filename)
+    (and newsticker-groups-filename
+         (file-exists-p newsticker-groups-filename)
 	 (y-or-n-p (format
                     (concat "Delete the file \"%s\",\nto which the obsolete "
                             "variable `newsticker-groups-filename' points ? ")
