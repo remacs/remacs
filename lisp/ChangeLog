@@ -1,9 +1,14 @@
+2014-11-28  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* simple.el (execute-extended-command--shorter): Fix the "M-p" case
+	(bug#19152).
+
 2014-11-28  Martin Rudalics  <rudalics@gmx.at>
 
 	Fix two issues around help-window-select.  (Bug#11039) (Bug#19012)
 	* help.el (help-window-old-frame): New variable.
-	(help-window-select): Default to nil (Bug#11039).  Rewrite
-	doc-string.
+	(help-window-select): Default to nil (Bug#11039).
+	Rewrite doc-string.
 	(help-window-setup): When the help window appears on another
 	frame and `help-window-select' is non-nil, give that frame input
 	focus too (Bug#19012).
@@ -18,20 +23,20 @@
 2014-11-28  Daiki Ueno  <ueno@gnu.org>
 
 	* epa.el (epa-sign-file, epa-encrypt-file, epa-decrypt-region)
-	(epa-sign-region, epa-encrypt-region): Use
-	`epg-context-set-{passphrase,progress}-callback', instead of
+	(epa-sign-region, epa-encrypt-region):
+	Use `epg-context-set-{passphrase,progress}-callback', instead of
 	`setf'.  This partially reverts commit 9e48a95c (bug#19150).
 	Reported by José A. Romero L.
 
 2014-11-27  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
-	* net/eww.el (eww-restore-history): Bind
-	`inhibit-modification-hooks' instead of `after-change-functions'.
+	* net/eww.el (eww-restore-history):
+	Bind `inhibit-modification-hooks' instead of `after-change-functions'.
 
 2014-11-27  Ulf Jasper  <ulf.jasper@web.de>
 
-	* net/newst-backend.el (newsticker--parse-atom-1.0): Handle
-	embedded (x)html in summary node.
+	* net/newst-backend.el (newsticker--parse-atom-1.0):
+	Handle embedded (x)html in summary node.
 
 2014-11-27  Sam Steingold  <sds@gnu.org>
 
@@ -40,8 +45,8 @@
 
 2014-11-27  Ulf Jasper  <ulf.jasper@web.de>
 
-	* net/newst-treeview.el (newsticker-groups-filename): Change
-	default value to nil.  Point out that variable is obsolete in doc
+	* net/newst-treeview.el (newsticker-groups-filename):
+	Change default value to nil.  Point out that variable is obsolete in doc
 	string.
 	(newsticker--treeview-load): Change wording of the questions the
 	user is asked when `newsticker-groups-filename' is found to be
@@ -70,8 +75,8 @@
 
 2014-11-16  Fabián Ezequiel Gallina  <fgallina@gnu.org>
 
-	* progmodes/python.el (python-eldoc--get-doc-at-point): Strip
-	shell output before returning.  (bug#18794)
+	* progmodes/python.el (python-eldoc--get-doc-at-point):
+	Strip shell output before returning.  (bug#18794)
 
 2014-11-16  Dmitry Gutov  <dgutov@yandex.ru>
 
@@ -109,8 +114,8 @@
 
 2014-11-26  Ulf Jasper  <ulf.jasper@web.de>
 
-	* net/newst-backend.el (newsticker--parse-generic-items): Take
-	care of UIDs when adding elements to cache.
+	* net/newst-backend.el (newsticker--parse-generic-items):
+	Take care of UIDs when adding elements to cache.
 
 2014-11-26  Alan Mackenzie  <acm@muc.de>
 
@@ -249,8 +254,8 @@
 
 2014-11-22  Ulf Jasper  <ulf.jasper@web.de>
 
-	* net/newst-backend.el (newsticker--sentinel-work): Tell
-	`libxml-parse-xml-region' to discard comments. Fixes bug#18787.
+	* net/newst-backend.el (newsticker--sentinel-work):
+	Tell `libxml-parse-xml-region' to discard comments. Fixes bug#18787.
 
 2014-11-22  Michael Albinus  <michael.albinus@gmx.de>
 

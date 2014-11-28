@@ -1612,7 +1612,7 @@ If the value is non-nil and not a number, we wait 2 seconds."
 
 (defun execute-extended-command--shorter (name typed)
   (let ((candidates '())
-        (max (length (or typed name)))
+        (max (length typed))
         (len 1)
         binding)
     (while (and (not binding)
