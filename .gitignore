@@ -113,3 +113,8 @@ leim/changed.misc
 leim/changed.tit
 nt/emacs.rc
 nt/emacsclient.rc
+
+# Auto-generated from the corresponding *.in file.
+doc/emacs/emacsver.texi
+doc/man/emacs.1
+etc/refcards/emacsver.tex

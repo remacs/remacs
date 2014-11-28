@@ -1,3 +1,7 @@
+2014-11-28  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* .gitignore: Add entries for emacsvers files.
+
 2014-11-17  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Restore 'Bug#' -> 'debbugs:' rewrite in log-edit-mode.
