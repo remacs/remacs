@@ -776,13 +776,13 @@ If no one is selected, default secret key is used.  "
     (setf (epg-context-armor context) epa-armor)
     (setf (epg-context-textmode context) epa-textmode)
     (setf (epg-context-signers context) signers)
-    (setf (epg-context-passphrase-callback context)
-	  #'epa-passphrase-callback-function)
-    (setf (epg-context-progress-callback context)
-	  (cons
-	   #'epa-progress-callback-function
-	   (format "Signing %s..."
-		   (file-name-nondirectory file))))
+    (epg-context-set-passphrase-callback context
+					 #'epa-passphrase-callback-function)
+    (epg-context-set-progress-callback context
+				       (cons
+					#'epa-progress-callback-function
+					(format "Signing %s..."
+						(file-name-nondirectory file))))
     (setf (epg-context-pinentry-mode context) epa-pinentry-mode)
     (message "Signing %s..." (file-name-nondirectory file))
     (condition-case error
@@ -807,13 +807,13 @@ If no one is selected, symmetric encryption will be performed.  ")))
 	(context (epg-make-context epa-protocol)))
     (setf (epg-context-armor context) epa-armor)
     (setf (epg-context-textmode context) epa-textmode)
-    (setf (epg-context-passphrase-callback context)
-	  #'epa-passphrase-callback-function)
-    (setf (epg-context-progress-callback context)
-	  (cons
-	   #'epa-progress-callback-function
-	   (format "Encrypting %s..."
-		   (file-name-nondirectory file))))
+    (epg-context-set-passphrase-callback context
+					 #'epa-passphrase-callback-function)
+    (epg-context-set-progress-callback context
+				       (cons
+					#'epa-progress-callback-function
+					(format "Encrypting %s..."
+						(file-name-nondirectory file))))
     (setf (epg-context-pinentry-mode context) epa-pinentry-mode)
     (message "Encrypting %s..." (file-name-nondirectory file))
     (condition-case error
@@ -851,12 +851,12 @@ For example:
   (save-excursion
     (let ((context (epg-make-context epa-protocol))
 	  plain)
-      (setf (epg-context-passphrase-callback context)
-	    #'epa-passphrase-callback-function)
-      (setf (epg-context-progress-callback context)
-	    (cons
-	     #'epa-progress-callback-function
-	     "Decrypting..."))
+      (epg-context-set-passphrase-callback context
+					   #'epa-passphrase-callback-function)
+      (epg-context-set-progress-callback context
+					 (cons
+					  #'epa-progress-callback-function
+					  "Decrypting..."))
       (setf (epg-context-pinentry-mode context) epa-pinentry-mode)
       (message "Decrypting...")
       (condition-case error
@@ -1058,12 +1058,12 @@ If no one is selected, default secret key is used.  "
       ;;(setf (epg-context-textmode context) epa-textmode)
       (setf (epg-context-textmode context) t)
       (setf (epg-context-signers context) signers)
-      (setf (epg-context-passphrase-callback context)
-	    #'epa-passphrase-callback-function)
-      (setf (epg-context-progress-callback context)
-	    (cons
-	     #'epa-progress-callback-function
-	     "Signing..."))
+      (epg-context-set-passphrase-callback context
+					   #'epa-passphrase-callback-function)
+      (epg-context-set-progress-callback context
+					 (cons
+					  #'epa-progress-callback-function
+					  "Signing..."))
       (setf (epg-context-pinentry-mode context) epa-pinentry-mode)
       (message "Signing...")
       (condition-case error
@@ -1147,12 +1147,12 @@ If no one is selected, symmetric encryption will be performed.  ")
       (setf (epg-context-textmode context) t)
       (if sign
 	  (setf (epg-context-signers context) signers))
-      (setf (epg-context-passphrase-callback context)
-	    #'epa-passphrase-callback-function)
-      (setf (epg-context-progress-callback context)
-	    (cons
-	     #'epa-progress-callback-function
-	     "Encrypting..."))
+      (epg-context-set-passphrase-callback context
+					   #'epa-passphrase-callback-function)
+      (epg-context-set-progress-callback context
+					 (cons
+					  #'epa-progress-callback-function
+					  "Encrypting..."))
       (setf (epg-context-pinentry-mode context) epa-pinentry-mode)
       (message "Encrypting...")
       (condition-case error
@@ -1316,12 +1316,12 @@ If no one is selected, default public key is exported.  ")))
 ;;        (error "No keys selected"))
 ;;      (list keys current-prefix-arg)))
 ;;   (let ((context (epg-make-context epa-protocol)))
-;;     (setf (epg-context-passphrase-callback context)
-;; 	     #'epa-passphrase-callback-function)
-;;     (setf (epg-context-progress-callback context)
-;; 	     (cons
-;; 	       #'epa-progress-callback-function
-;; 	       "Signing keys..."))
+;;     (epg-context-set-passphrase-callback context
+;; 	                                    #'epa-passphrase-callback-function)
+;;     (epg-context-set-progress-callback context
+;; 	                                  (cons
+;; 	                                    #'epa-progress-callback-function
+;; 	                                    "Signing keys..."))
 ;;     (setf (epg-context-pinentry-mode context) epa-pinentry-mode)
 ;;     (message "Signing keys...")
 ;;     (epg-sign-keys context keys local)

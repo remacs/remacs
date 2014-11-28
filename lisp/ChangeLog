@@ -1,3 +1,11 @@
+2014-11-28  Daiki Ueno  <ueno@gnu.org>
+
+	* epa.el (epa-sign-file, epa-encrypt-file, epa-decrypt-region)
+	(epa-sign-region, epa-encrypt-region): Use
+	`epg-context-set-{passphrase,progress}-callback', instead of
+	`setf'.  This partially reverts commit 9e48a95c (bug#19150).
+	Reported by José A. Romero L.
+
 2014-11-27  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
 	* net/eww.el (eww-restore-history): Bind
