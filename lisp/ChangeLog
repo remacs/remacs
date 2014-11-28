@@ -1,3 +1,15 @@
+2014-11-28  Martin Rudalics  <rudalics@gmx.at>
+
+	Fix two issues around help-window-select.  (Bug#11039) (Bug#19012)
+	* help.el (help-window-old-frame): New variable.
+	(help-window-select): Default to nil (Bug#11039).  Rewrite
+	doc-string.
+	(help-window-setup): When the help window appears on another
+	frame and `help-window-select' is non-nil, give that frame input
+	focus too (Bug#19012).
+	(with-help-window): Store selected frame in
+	help-window-old-frame.
+
 2014-11-28  Ulf Jasper  <ulf.jasper@web.de>
 
 	* net/newst-treeview.el (newsticker--treeview-load): Take care of
