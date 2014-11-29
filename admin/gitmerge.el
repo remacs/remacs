@@ -157,7 +157,7 @@ Auto-commit"
 	  (delete-char 1)
 	  (insert (if skip "M" " "))
 	  (setq buffer-read-only t))))))
-	  
+
 (defun gitmerge-highlight-skip-regexp ()
   "Highlight strings that match `gitmerge-skip-regexp'."
   (save-excursion
@@ -361,7 +361,7 @@ Throw an user-error if we cannot resolve automatically."
 	(goto-char (point-min))
 	(while (not (eobp))
 	  (push (buffer-substring (point) (line-end-position)) files)
-	  (forward-line))      
+	  (forward-line))
 	(dolist (file files)
 	  (if (gitmerge-resolve file)
 	      ;; File still has conflicts
@@ -393,7 +393,7 @@ Throw an user-error if we cannot resolve automatically."
       (call-process "git" nil t nil
 		    "diff" "--name-only")
       (zerop (buffer-size))))
-  
+
 (defun gitmerge-maybe-resume ()
   "Check if we have to resume a merge.
 If so, add no longer conflicted files and commit."
@@ -420,7 +420,7 @@ If so, add no longer conflicted files and commit."
 	    (unless (zerop (call-process "git" nil t nil
 					 "commit" "--no-edit"))
 	      (error "Git error during merge - fix it manually"))))
-	;; Sucesfully resumed.
+	;; Successfully resumed.
 	t))))
 
 (defun gitmerge-get-all-branches ()
