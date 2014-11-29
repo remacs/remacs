@@ -460,9 +460,8 @@
 
 2014-11-19  Rüdiger Sonderfeld  <ruediger@c-plusplus.net>
 
-	Fix bug#19099.
 	* vc/vc-git.el (vc-git-diff): Use "difftool -x diff" with
-	`diff-switches' if `vc-git-diff-switches' is nil.
+	`diff-switches' if `vc-git-diff-switches' is nil.  (Bug#19099)
 
 2014-11-19  Artur Malabarba  <bruce.connor.am@gmail.com>
 
@@ -549,9 +548,8 @@
 2014-11-18  Paul Pogonyshev  <pogonyshev@gmail.com>
 	    Rüdiger Sonderfeld  <ruediger@c-plusplus.net>
 
-	Fix bug#13871 (an alternative version of the patch).
-	* progmodes/cc-langs.el: Support some of the new keywords in
-	C++11.
+	* progmodes/cc-langs.el: Support some of the new keywords in C++11.
+	An alternative version of the patch from bug#13871.
 	(c-operators): Add "alignof".
 	(c-primitive-type-kwds): Add "char16_t", "char32_t".
 	(c-type-modifier-kwds): Add "constexpr", "noexcept".
@@ -603,9 +601,8 @@
 
 2014-11-17  Ulf Jasper  <ulf.jasper@web.de>
 
-	Fix bug#5433.
 	* calendar/icalendar.el (icalendar-export-alarms):
-	New customizable variable.
+	New customizable variable.  (Bug#5433)
 	(icalendar-export-region): Export alarms as specified in
 	`icalendar-export-alarms'.
 	(icalendar--create-ical-alarm, icalendar--do-create-ical-alarm):
@@ -3236,8 +3233,7 @@
 	(c-typeless-decl-kwds): Append "auto" onto the C++ value.
 	(c-not-decl-init-keywords): Also exclude c-typeof-kwds from value.
 
-	Make ">>" act as double template ender in C++ Mode.
-	Fix bug#11386.
+	Make ">>" act as double template ender in C++ Mode.  (Bug#11386)
 	* progmodes/cc-langs.el (c->-op-cont-tokens): New lang-const split
 	off from c->-op-cont-re.
 	(c->-op-cont-tokens): Change to use the above.
