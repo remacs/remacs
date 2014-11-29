@@ -142,7 +142,7 @@
 
 	* vc/vc-hg.el (vc-hg-state): Disable pager.  (Bug#18940)
 
-2014-10-28  Peder O. Klingenberg  <peder@klingenberg.no>  (tiny change)
+2014-11-15  Peder O. Klingenberg  <peder@klingenberg.no>
 
 	* mail/emacsbug.el (report-emacs-bug): Make a better guess at
 	  envelope-from when reporting through sendmail (bug#19054).
