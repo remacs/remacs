@@ -9,12 +9,6 @@
 	forward to find the end of the subtree and the insertion point
 	(bug#19102).
 
-2014-11-29  Leonard Randall  <leonard.a.randall@gmail.com>
-
-	* textmodes/reftex-parse.el (reftex-using-biblatex-p): Make search
-	for comment lines non-greedy and stopping at newlines to fix stack
-	overflows with large files. [Backport]
-
 2014-11-29  Fabián Ezequiel Gallina  <fgallina@gnu.org>
 
 	* progmodes/python.el (python-shell-completion-setup-code): Use
@@ -171,19 +165,19 @@
 
 	* dom.el (dom-pp): New function.
 
-2014-11-17  Eli Zaretskii  <eliz@gnu.org>
+2014-11-27  Eli Zaretskii  <eliz@gnu.org>
 
 	* vc/vc-bzr.el (vc-bzr-print-log, vc-bzr-expanded-log-entry):
 	Don't assume --long is the default for "bzr log", always specify
 	it explicitly, in case the user defined an alias for 'log' that
 	uses some other format.
 
-2014-11-16  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+2014-11-27  Fabián Ezequiel Gallina  <fgallina@gnu.org>
 
 	* progmodes/python.el (python-eldoc--get-doc-at-point):
 	Strip shell output before returning.  (bug#18794)
 
-2014-11-16  Dmitry Gutov  <dgutov@yandex.ru>
+2014-11-27  Dmitry Gutov  <dgutov@yandex.ru>
 
 	Fix indentation before `!=' and after `+='.  Originally reported
 	in https://github.com/mooz/js2-mode/issues/174.
@@ -191,7 +185,7 @@
 	(in)equality operator a separate case.
 	(js--continued-expression-p): Escape the second `+' in the regexp.
 
-2014-11-16  Stefan Monnier  <monnier@iro.umontreal.ca>
+2014-11-27  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* window.el (handle-select-window): Deactivate shift-region (bug#19003).
 

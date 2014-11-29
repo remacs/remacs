@@ -73,7 +73,7 @@
 
 	* .gitignore: Add entries for emacsvers files.
 
-2014-11-17  Paul Eggert  <eggert@cs.ucla.edu>
+2014-11-27  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Restore 'Bug#' -> 'debbugs:' rewrite in log-edit-mode.
 	* .dir-locals.el (log-edit-mode): Restore the (log-edit-rewrite-fixes

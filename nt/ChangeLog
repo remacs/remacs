@@ -1,12 +1,7 @@
-2014-11-17  Oscar Fuentes  <ofv@wanadoo.es>
+2014-11-27  Oscar Fuentes  <ofv@wanadoo.es>
 
 	* inc/ms-w32.h: Define MINGW_W64.
-
-	* nt/addpm.c: Use it.
-
-	* nt/addsection.c: Use it.
-
-	* nt/preprep.c: Use it.
+	* nt/addpm.c, nt/addsection.c, nt/preprep.c: Use it.
 
 2014-11-24  Glenn Morris  <rgm@gnu.org>
 

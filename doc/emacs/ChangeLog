@@ -10,7 +10,7 @@
 	* maintaining.texi (Switching Branches): Mention "C-x v r".
 	Correct commands for switching branches in various VCSs.
 
-2014-11-16  Tassilo Horn  <tsdh@gnu.org>
+2014-11-27  Tassilo Horn  <tsdh@gnu.org>
 
 	* misc.texi (DocView Slicing): Describe how to slice with the
 	mouse.  Fix command mentioned by slice by BoundingBox paragraph.

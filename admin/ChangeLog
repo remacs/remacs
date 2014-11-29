@@ -13,7 +13,7 @@
 	* gitmerge.el: New file.
 	* notes/git-workflow: Add documentation for using it.
 
-2014-11-17  Oscar Fuentes  <ofv@wanadoo.es>
+2014-11-27  Oscar Fuentes  <ofv@wanadoo.es>
 
 	* admin/CPP-DEFINES: Mention MINGW_W64.
 
@@ -21,12 +21,6 @@
 
 	* admin.el (set-version): No more need to update nt/*.rc.
 	* authors.el (authors-renamed-files-alist): Add .rc.in files.
-
-2014-11-16  Glenn Morris  <rgm@gnu.org>
-
-	* update_autogen: Auto-detect VCS in use.
-	(vcs): New variable.
-	(status, commit, main): Handle git.
 
 2014-11-13  Andreas Schwab  <schwab@suse.de>
 
