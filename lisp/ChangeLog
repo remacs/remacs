@@ -1,3 +1,7 @@
+2014-11-29  Paul Rankin  <paul@tilk.co>  (tiny change)
+
+	* outline.el (outline-move-subtree-down): Refactor and improve code.
+
 2014-11-29  Stephen Berman  <stephen.berman@gmx.net>
 	    Stefan Monnier  <monnier@iro.umontreal.ca>
 
