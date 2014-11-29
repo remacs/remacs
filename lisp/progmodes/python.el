@@ -209,11 +209,13 @@
 ;; `python-imenu-format-parent-item-jump-label-function' variables for
 ;; changing the way labels are formatted in the tree version.
 
-;; If you used python-mode.el you probably will miss auto-indentation
-;; when inserting newlines.  To achieve the same behavior you have
-;; two options:
+;; If you used python-mode.el you may miss auto-indentation when
+;; inserting newlines.  To achieve the same behavior you have two
+;; options:
 
-;; 1) Use GNU/Emacs' standard binding for `newline-and-indent': C-j.
+;; 1) Enable the minor-mode `electric-indent-mode' (enabled by
+;;    default) and use RET.  If this mode is disabled use
+;;    `newline-and-indent', bound to C-j.
 
 ;; 2) Add the following hook in your .emacs:
 
