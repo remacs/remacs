@@ -23,7 +23,7 @@
 
 ;;; Commentary:
 
-;; See vc.el.  SRC requires an underlying RCS version of 4.0 or greater. 
+;; See vc.el.  SRC requires an underlying RCS version of 4.0 or greater.
 
 ;; FUNCTION NAME                               STATUS
 ;; BACKEND PROPERTIES
@@ -96,7 +96,7 @@
 
 (defgroup vc-src nil
   "VC SRC backend."
-  :version "24.1"
+  :version "25.1"
   :group 'vc)
 
 (defcustom vc-src-release nil
@@ -119,7 +119,6 @@ If nil, use the value of `vc-diff-switches'.  If t, use no switches."
                  (const :tag "None" t)
 		 (string :tag "Argument String")
 		 (repeat :tag "Argument List" :value ("") string))
-  :version "21.1"
   :group 'vc-src)
 
 ;; This needs to be autoloaded because vc-src-registered uses it (via
@@ -135,7 +134,6 @@ For a description of possible values, see `vc-check-master-templates'."
 		 (repeat :tag "User-specified"
 			 (choice string
 				 function)))
-  :version "21.1"
   :group 'vc-src)
 
 

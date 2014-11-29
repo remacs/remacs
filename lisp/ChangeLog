@@ -1,3 +1,8 @@
+2014-11-29  Glenn Morris  <rgm@gnu.org>
+
+	* vc/vc-src.el (vc-src, vc-src-diff-switches)
+	(vc-src-master-templates): Fix :version tags.
+
 2014-11-29  Paul Rankin  <paul@tilk.co>  (tiny change)
 
 	* outline.el (outline-move-subtree-down): Refactor and improve code.
