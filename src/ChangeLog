@@ -1,3 +1,12 @@
+2014-11-29  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Improve clarity of USE_LSB_TAG definition.
+	Problem reported by Lee Duhem.  Suggestion by Andreas Schwab in:
+	http://lists.gnu.org/archive/html/emacs-devel/2014-11/msg02222.html
+	* lisp.h (USE_LSB_TAG): Define in terms of the (simpler)
+	VAL_MAX / 2 rather than in terms of the (more complicated)
+	EMACS_INT_MAX >> GCTYPEBITS, and adjust commentary to match.
+
 2014-11-29  Eli Zaretskii  <eliz@gnu.org>
 
 	* xdisp.c (handle_single_display_spec): When ignoring a fringe

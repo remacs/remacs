@@ -257,16 +257,17 @@ enum Lisp_Bits
 
 /* The maximum value that can be stored in a EMACS_INT, assuming all
    bits other than the type bits contribute to a nonnegative signed value.
-   This can be used in #if, e.g., '#if VAL_MAX < UINTPTR_MAX' below.  */
+   This can be used in #if, e.g., '#if USB_TAG' below expands to an
+   expression involving VAL_MAX.  */
 #define VAL_MAX (EMACS_INT_MAX >> (GCTYPEBITS - 1))
 
 /* Whether the least-significant bits of an EMACS_INT contain the tag.
-   On hosts where pointers-as-ints do not exceed VAL_MAX, USE_LSB_TAG is:
+   On hosts where pointers-as-ints do not exceed VAL_MAX / 2, USE_LSB_TAG is:
     a. unnecessary, because the top bits of an EMACS_INT are unused, and
     b. slower, because it typically requires extra masking.
    So, USE_LSB_TAG is true only on hosts where it might be useful.  */
 DEFINE_GDB_SYMBOL_BEGIN (bool, USE_LSB_TAG)
-#define USE_LSB_TAG (EMACS_INT_MAX >> GCTYPEBITS < INTPTR_MAX)
+#define USE_LSB_TAG (VAL_MAX / 2 < INTPTR_MAX)
 DEFINE_GDB_SYMBOL_END (USE_LSB_TAG)
 
 #if !USE_LSB_TAG && !defined WIDE_EMACS_INT
