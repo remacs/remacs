@@ -1,3 +1,7 @@
+2014-11-29  Glenn Morris  <rgm@gnu.org>
+
+	* configure.ac: Simplify gnutls tests.
+
 2014-11-28  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* .gitignore: Add entries for emacsvers files.

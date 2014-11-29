@@ -2599,19 +2599,13 @@ fi
 AC_SUBST(LIBSELINUX_LIBS)
 
 HAVE_GNUTLS=no
-HAVE_GNUTLS3=no
 if test "${with_gnutls}" = "yes" ; then
-  EMACS_CHECK_MODULES([LIBGNUTLS], [gnutls >= 3.0.0],
-    [HAVE_GNUTLS3=yes], [HAVE_GNUTLS3=no])
-  if test "${HAVE_GNUTLS3}" = "yes"; then
-    AC_DEFINE(HAVE_GNUTLS3, 1, [Define if using GnuTLS v3.])
-    HAVE_GNUTLS="yes"
-  else
-    EMACS_CHECK_MODULES([LIBGNUTLS], [gnutls >= 2.6.6],
-      [HAVE_GNUTLS=yes], [HAVE_GNUTLS=no])
-  fi
+  EMACS_CHECK_MODULES([LIBGNUTLS], [gnutls >= 2.6.6],
+    [HAVE_GNUTLS=yes], [HAVE_GNUTLS=no])
   if test "${HAVE_GNUTLS}" = "yes"; then
     AC_DEFINE(HAVE_GNUTLS, 1, [Define if using GnuTLS.])
+    EMACS_CHECK_MODULES([LIBGNUTLS3], [gnutls >= 3.0.0],
+      [AC_DEFINE(HAVE_GNUTLS3, 1, [Define if using GnuTLS v3.])], [])
   fi
 
   # Windows loads GnuTLS dynamically
