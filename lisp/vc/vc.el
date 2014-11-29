@@ -2161,8 +2161,12 @@ checked out in that new branch."
 
 ;;;###autoload
 (defun vc-retrieve-tag (dir name)
-  "Descending recursively from DIR, retrieve the tag called NAME.
-If NAME is empty, it refers to the latest revisions.
+  "For each file in or below DIR, retrieve their tagged version NAME.
+NAME can name a branch, in which case this command will switch to the
+named branch in the directory DIR.
+Interactively, prompt for DIR only for VCS that works at file level;
+otherwise use the default directory of the current buffer.
+If NAME is empty, it refers to the latest revisions of the current branch.
 If locking is used for the files in DIR, then there must not be any
 locked files at or below DIR (but if NAME is empty, locked files are
 allowed and simply skipped)."

@@ -981,7 +981,7 @@ stream.  Standard error output is discarded."
               (push (list new-name 'edited
                           (vc-bzr-create-extra-fileinfo old-name)) result)))
            ;; do nothing for non existent files
-           ((memq translated '(not-found ignored)))
+           ((eq translated 'not-found))
            (t
             (push (list (file-relative-name
                          (buffer-substring-no-properties

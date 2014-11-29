@@ -136,7 +136,7 @@ Returns DEFAULT if not set."
 		       (tramp-time-diff (current-time) (car value))
 		       remote-file-name-inhibit-cache))
 		 (and (consp remote-file-name-inhibit-cache)
-		      (tramp-time-less-p
+		      (time-less-p
 		       remote-file-name-inhibit-cache (car value)))))
 	(setq value (cdr value))
       (setq value default))

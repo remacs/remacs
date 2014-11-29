@@ -1,3 +1,9 @@
+2014-11-29  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Lessen focus on ChangeLog files, as opposed to change log entries.
+	* intro.texi (Acknowledgments): ChangeLog file -> change log entries.
+	* tips.texi (Library Headers): Emacs uses a version control system.
+
 2014-11-27  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
 	* text.texi (Document Object Model): Mention `dom-pp'.
@@ -4725,7 +4731,7 @@
 	(texinputdir, $(infodir)/elisp): Use $(MAKEINFO_OPTS).
 
 2011-01-25  Chong Yidong  <cyd@stupidchicken.com>
-            Richard Kim  <emacs18@gmail.com>
+	    Richard Kim  <emacs18@gmail.com>
 
 	* loading.texi (Library Search): Document list-load-path-shadows
 	(Bug#7757).

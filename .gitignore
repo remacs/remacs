@@ -1,48 +1,52 @@
-**/Makefile
-**/makefile
+# Files that Git should ignore in the Emacs source directory.
 
-configure
-aclocal.m4
-compile
-config.guess
-config.sub
-depcomp
-install-sh
-missing
+# Copyright 2009-2014 Free Software Foundation, Inc.
+
+# This file is part of GNU Emacs.
+
+# GNU Emacs is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# GNU Emacs is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+
+
+# Built by 'autogen.sh'.
+/aclocal.m4
+/configure
+build-aux/compile
+build-aux/config.guess
+build-aux/config.sub
+build-aux/depcomp
+build-aux/install-sh
+build-aux/missing
 lib/Makefile.in
 src/config.in
-autom4te.cache
-TAGS
-*~
-.#*
-/README.W32
 
-/bin/
-/site-lisp/
-/leim/ja-dic/
-etc/refcards/*.aux
-etc/refcards/*.log
-info/dir
-info/*.info
-test/biditest.txt
+# Built by 'configure'.
+Info.plist
+InfoPlist.strings
+Makefile
+!admin/charsets/Makefile
+!etc/refcards/Makefile
+!test/automated/flymake/warnpred/Makefile
+!test/indent/Makefile
+makefile
+/*.cache
+/confdefs.h
+/config.status
+/configure.lineno
+src/config.h
+src/epaths.h
 
-config.log
-config.status
-config.cache
-lib-src/blessmail
-lib-src/ctags
-lib-src/ebrowse
-lib-src/emacsclient
-lib-src/etags
-lib-src/hexl
-lib-src/make-docfile
-lib-src/movemail
-lib-src/profile
-lib-src/test-distrib
-lib-src/update-game-score
-*.o
-*.exe
-*.res
+# C-level sources built by 'make'.
 lib/alloca.h
 lib/arg-nonnull.h
 lib/byteswap.h
@@ -55,66 +59,202 @@ lib/getopt.h
 lib/inttypes.h
 lib/libgnu.a
 lib/signal.h
+lib/stdalign.h
+lib/stdint.h
 lib/stdio.h
 lib/stdlib.h
-lib/stdalign.h
 lib/string.h
 lib/sys/
 lib/time.h
 lib/unistd.h
 lib/warn-on-use.h
-src/bootstrap-emacs
-src/deps/
-src/emacs
-src/emacs-[0-9]*
-src/gl-stamp
+src/buildobj.h
 src/globals.h
-src/stamp-h1
-src/temacs
-src/temacs.map
-src/temacs.tmp
-doc/*/*.aux
-doc/*/*.cm
-doc/*/*.cms
-doc/*/*.cp
-doc/*/*.cps
-doc/*/*.dvi
-doc/*/*.fn
-doc/*/*.fns
-doc/*/*.html
-doc/*/*.ky
-doc/*/*.kys
-doc/*/*.log
-doc/*/*.op
-doc/*/*.ops
-doc/*/*.pdf
-doc/*/*.pg
-doc/*/*.pgs
-doc/*/*.pj
-doc/*/*.pjs
-doc/*/*.ps
-doc/*/*.sc
-doc/*/*.scs
-doc/*/*.tg
-doc/*/*.tgs
-doc/*/*.tmp
-doc/*/*.toc
-doc/*/*.tp
-doc/*/*.tps
-doc/*/*.vr
-doc/*/*.vrs
-doc/*/texput.log
-doc/misc/cc-mode.ss
-lib/.deps/
-lisp/international/uni-brackets.el
-lwlib/deps/
-lwlib/liblw.a
+
+# Lisp-level sources built by 'make'.
 leim/changed.misc
 leim/changed.tit
-nt/emacs.rc
-nt/emacsclient.rc
+lisp/**/*cus-load.el
+lisp/**/*loaddefs.el
+lisp/cedet/semantic/bovine/c-by.el
+lisp/cedet/semantic/bovine/make-by.el
+lisp/cedet/semantic/bovine/scm-by.el
+lisp/cedet/semantic/wisent/javat-wy.el
+lisp/cedet/semantic/wisent/js-wy.el
+lisp/cedet/semantic/wisent/python-wy.el
+lisp/cedet/srecode/srt-wy.el
+lisp/eshell/esh-groups.el
+lisp/finder-inf.el
+lisp/leim/ja-dic/
+lisp/leim/leim-list.el
+lisp/leim/quail/4Corner.el
+lisp/leim/quail/ARRAY30.el
+lisp/leim/quail/CCDOSPY.el
+lisp/leim/quail/CTLau.el
+lisp/leim/quail/CTLau-b5.el
+lisp/leim/quail/ECDICT.el
+lisp/leim/quail/ETZY.el
+lisp/leim/quail/PY-b5.el
+lisp/leim/quail/PY.el
+lisp/leim/quail/Punct.el
+lisp/leim/quail/Punct-b5.el
+lisp/leim/quail/QJ.el
+lisp/leim/quail/QJ-b5.el
+lisp/leim/quail/SW.el
+lisp/leim/quail/TONEPY.el
+lisp/leim/quail/ZIRANMA.el
+lisp/leim/quail/ZOZY.el
+lisp/leim/quail/quick-b5.el
+lisp/leim/quail/quick-cns.el
+lisp/leim/quail/tsang-b5.el
+lisp/leim/quail/tsang-cns.el
+lisp/subdirs.el
 
-# Auto-generated from the corresponding *.in file.
+# Dependencies.
+.deps/
+deps/
+
+# Logs and temporaries.
+*.log
+*.tmp
+
+# Time stamps.
+stamp_BLD
+src/gl-stamp
+src/stamp-h.in
+src/stamp-h1
+
+# Object files and debugging.
+*.a
+*.dSYM/
+*.core
+*.elc
+*.o
+*.res
+[0-9]*.core
+core
+core.*[0-9]
+oo/
+oo-spd/
+src/*.map
+
+# Tests.
+test/indent/*.new
+
+# ctags, etags.
+TAGS
+
+# GNU global.
+GPATH
+GSYMS
+GRTAGS
+GTAGS
+
+# GNU idutils.
+ID
+
+# Executables.
+*.exe
+a.out
+lib-src/blessmail
+lib-src/ctags
+lib-src/ebrowse
+lib-src/emacsclient
+lib-src/etags
+lib-src/hexl
+lib-src/make-docfile
+lib-src/movemail
+lib-src/profile
+lib-src/test-distrib
+lib-src/update-game-score
+nextstep/Cocoa/Emacs.base/Contents/Info.plist
+nextstep/Cocoa/Emacs.base/Contents/Resources/English.lproj
+nextstep/Emacs.app/
+nextstep/GNUstep/Emacs.base/Resources/Emacs.desktop
+nextstep/GNUstep/Emacs.base/Resources/Info-gnustep.plist
+src/bootstrap-emacs
+src/emacs
+src/emacs-[0-9]*
+src/temacs
+
+# Character-set info.
+admin/charsets/*.el
+admin/charsets/*.map
+admin/charsets/jisx2131-filter
+admin/unidata/unidata.txt
+lisp/international/charprop.el
+lisp/international/uni-*.el
+
+# Documentation.
+*.aux
+*.cm
+*.cms
+*.cp
+*.cps
+*.dvi
+*.fn
+*.fns
+*.html
+*.info
+*.ky
+*.kys
+*.op
+*.ops
+*.pdf
+!doc/lispintro/cons-*.pdf
+!doc/lispintro/drawers.pdf
+!doc/lispintro/lambda-*.pdf
+!etc/refcards/gnus-logo.pdf
+*.pg
+*.pgs
+*.pj
+*.pjs
+*.ps
+*.sc
+*.scs
+*.tg
+*.tgs
+*.toc
+*.tp
+*.tps
+*.vr
+*.vrs
 doc/emacs/emacsver.texi
 doc/man/emacs.1
+doc/misc/cc-mode.ss
+etc/DOC
 etc/refcards/emacsver.tex
+info/dir
+
+# Version control and locks.
+*.orig
+*.rej
+*~
+.#*
+[0-9]*.patch
+
+# Built by 'make install'.
+etc/emacs.tmpdesktop
+
+# Distribution directories.
+/emacs-[1-9]*/
+
+# Microsoft-related builds and installations.
+*.in-h
+_*
+!build-aux/snippet/_Noreturn.h
+/bin/
+/BIN/
+/data/
+etc/icons/
+lib/cxxdefs.h
+lib/SYS/
+/libexec/
+/lock/
+/README.W32
+/share/
+/site-lisp/
+nt/emacs.rc
+nt/emacsclient.rc
+src/gdb.ini
+/var/

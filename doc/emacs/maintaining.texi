@@ -1329,11 +1329,18 @@ implemented, and these differences cannot be entirely concealed by VC.
   On some decentralized version control systems, including Bazaar and
 Mercurial in its normal mode of operation, each branch has its own
 working directory tree, so switching between branches just involves
-switching directories.  On Git, switching between branches is done
-using the @command{git branch} command, which changes the contents of
-the working tree itself.
+switching directories.  On Git, branches are normally @dfn{co-located}
+in the same directory, and switching between branches is done using
+the @command{git checkout} command, which changes the contents of the
+working tree to match the branch you switch to.  Bazaar also supports
+co-located branches, in which case the @command{bzr switch} command
+will switch branches in the current directory.  With Subversion, you
+switch to another branch using the @command{svn switch} command.
 
-  On centralized version control systems, you can switch between
+  The VC command to switch to another branch in the current directory
+is @kbd{C-x v r @var{branch-name} @key{RET}} (@code{vc-retrieve-tag}).
+
+  On centralized version control systems, you can also switch between
 branches by typing @kbd{C-u C-x v v} in an up-to-date work file
 (@pxref{Advanced C-x v v}), and entering the revision ID for a
 revision on another branch.  On CVS, for instance, revisions on the
@@ -1479,9 +1486,11 @@ different revision with @kbd{C-u C-x v v}.
 @cindex change log
   Many software projects keep a @dfn{change log}.  This is a file,
 normally named @file{ChangeLog}, containing a chronological record of
-when and how the program was changed.  Sometimes, there are several
-change log files, each recording the changes in one directory or
-directory tree.
+when and how the program was changed.  Sometimes, these files are
+automatically generated from the change log entries stored in version
+control systems, or are used to generate these change log entries.
+Sometimes, there are several change log files, each recording the
+changes in one directory or directory tree.
 
 @menu
 * Change Log Commands:: Commands for editing change log files.

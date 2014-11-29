@@ -520,7 +520,7 @@ temacs$(EXEEXT): $(LIBXMENU) $(ALLOBJS) \
 	test "$(CANNOT_DUMP)" = "yes" || \
 	  test "X$(PAXCTL)" = X || $(PAXCTL) -r temacs$(EXEEXT)
 	test "$(CANNOT_DUMP)" = "yes" || test -z "$(SETFATTR)" || \
-	  $(SETFATTR) -n user.pax.flags -v r $@
+	  $(SETFATTR) -n user.pax.flags -v er $@
 
 ## The following oldxmenu-related rules are only (possibly) used if
 ## HAVE_X11 && !USE_GTK, but there is no harm in always defining them.

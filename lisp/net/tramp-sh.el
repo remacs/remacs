@@ -3992,9 +3992,9 @@ process to set up.  VEC specifies the connection."
     (if (featurep 'mule)
 	;; Use MULE to select the right EOL convention for communicating
 	;; with the process.
-	(let ((cs (or (when (string-match
-			     "utf8" (or (tramp-get-remote-locale vec) ""))
-			(cons 'utf-8 'utf-8))
+	(let ((cs (or (and (memq 'utf-8 (coding-system-list))
+			   (string-match "utf8" (tramp-get-remote-locale vec))
+			   (cons 'utf-8 'utf-8))
 		      (tramp-compat-funcall 'process-coding-system proc)
 		      (cons 'undecided 'undecided)))
 	      cs-decode cs-encode)
@@ -4100,8 +4100,7 @@ process to set up.  VEC specifies the connection."
   ;; Set the environment.
   (tramp-message vec 5 "Setting default environment")
 
-  (let ((env (append (when (tramp-get-remote-locale vec) ; Discard `(nil)'.
-		       `(,(tramp-get-remote-locale vec)))
+  (let ((env (append `(,(tramp-get-remote-locale vec))
 		     (copy-sequence tramp-remote-process-environment)))
 	unset vars item)
     (while env
@@ -5097,7 +5096,7 @@ Return ATTR."
 (defun tramp-get-remote-locale (vec)
   (with-tramp-connection-property vec "locale"
     (tramp-send-command vec "locale -a")
-    (let ((candidates '("en_US.utf8" "C.utf8" "C"))
+    (let ((candidates '("en_US.utf8" "C.utf8"))
 	  locale)
       (with-current-buffer (tramp-get-connection-buffer vec)
 	(while candidates
@@ -5107,7 +5106,7 @@ Return ATTR."
 		    candidates nil)
 	    (setq candidates (cdr candidates)))))
       ;; Return value.
-      (when locale (format "LC_ALL=%s" locale)))))
+      (format "LC_ALL=%s" (or locale "C")))))
 
 (defun tramp-get-ls-command (vec)
   (with-tramp-connection-property vec "ls"

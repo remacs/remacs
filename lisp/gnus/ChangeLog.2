@@ -15652,12 +15652,12 @@
 	* mm-util.el, message.el, rfc2047.el, gnus-sum.el, gnus-score.el:
 	Sync with Emacs 21 (tag EMACS_PRETEST_21_0_100).
 
-;;Has been fixed -- zsh.
-;;2001-03-05  Dave Love  <fx@gnu.org>
-;;
-;;	* mm-util.el (mm-mime-mule-charset-alist): Fix utf-8 case.
-;;	Move it after definition of mm-coding-system-p.
-;;
+	;;Has been fixed -- zsh.
+	;;2001-03-05  Dave Love  <fx@gnu.org>
+	;;
+	;; * mm-util.el (mm-mime-mule-charset-alist): Fix utf-8 case.
+	;; Move it after definition of mm-coding-system-p.
+	;;
 2001-03-01  Dave Love  <fx@gnu.org>
 
 	* mm-util.el (mm-inhibit-file-name-handlers):
@@ -16129,9 +16129,9 @@
 
 	* mm-util.el (mm-multibyte-string-p): New.
 
-;;	* qp.el: Remove un-logged bogus changes from 2000-12-20.
-;;	(quoted-printable-encode-region): Doc fix.  Don't call
-;;	string-as-multibyte on class.  Clarify line-folding.
+	;; * qp.el: Remove un-logged bogus changes from 2000-12-20.
+	;; (quoted-printable-encode-region): Doc fix.  Don't call
+	;; string-as-multibyte on class.  Clarify line-folding.
 	(quoted-printable-encode-string): Make temp buffer inherit
 	string's multibyteness.
 
@@ -16972,10 +16972,10 @@
 	* nnlistserv.el: Ignore errors when requiring nnweb and avoid a
 	compiler warning.
 
-;2000-11-26  Dave Love  <fx@gnu.org>
-;
-;	* mm-uu.el (mm-uu-configure-list): Fix typo in :type.
-;
+	;2000-11-26  Dave Love  <fx@gnu.org>
+	;
+	; * mm-uu.el (mm-uu-configure-list): Fix typo in :type.
+	;
 2000-11-23  Dave Love  <fx@gnu.org>
 
 	* uu-post.pbm, uu-decode.pbm: New files from XPMs.
@@ -17008,7 +17008,7 @@
 
 	* gnus-art.el (gnus-mime-button-map): Don't inherit from
 	gnus-article-mode-map.
-;	(gnus-mime-button-menu): Use mouse-set-point.
+	; (gnus-mime-button-menu): Use mouse-set-point.
 	(gnus-insert-mime-button, gnus-mime-display-alternative)
 	(gnus-mime-display-alternative): Don't use local-map property.
 
@@ -17072,9 +17072,9 @@
 	* time-date.el (timezone-make-date-arpa-standard): Autoload.
 	(date-to-time): Use it.
 
-;	* message.el (message-mode) <adaptive-fill-regexp>:
-;	<adaptive-fill-first-line-regexp>: Use [:alnum:] in regexp range.
-;	(message-newline-and-reformat): Likewise.
+	; * message.el (message-mode) <adaptive-fill-regexp>:
+	; <adaptive-fill-first-line-regexp>: Use [:alnum:] in regexp range.
+	; (message-newline-and-reformat): Likewise.
 	(message-forward-as-mime, message-forward-ignored-headers)
 	(message-buffer-naming-style, message-default-charset)
 	(message-dont-reply-to-names, message-send-mail-partially-limit):
@@ -17179,16 +17179,16 @@
 	(uudecode-char-int): New alias, replacing char-int.
 	(uudecode-decode-region): Don't call buffer-disable-undo.
 
-;	* mm-uu.el (mm-uu-configure): Unquote lambda.
-;	(mm-uu-configure-list): Doc fix.
-;
-;	* earcon.el (running-xemacs): Don't define.
-;
-;2000-11-03  Stefan Monnier  <monnier@cs.yale.edu>
-;
-;	* message.el (message-font-lock-keywords): Match a final newline
-;	to help font-lock's multiline support.
-;
+	; * mm-uu.el (mm-uu-configure): Unquote lambda.
+	; (mm-uu-configure-list): Doc fix.
+	;
+	; * earcon.el (running-xemacs): Don't define.
+	;
+	;2000-11-03  Stefan Monnier  <monnier@cs.yale.edu>
+	;
+	; * message.el (message-font-lock-keywords): Match a final newline
+	; to help font-lock's multiline support.
+	;
 2000-11-03  Dave Love  <fx@gnu.org>
 
 	* gnus-nocem.el (gnus-nocem-check-article-limit): Default to 500.
@@ -17202,10 +17202,10 @@
 	* mm-decode.el (mm-display-external): Space-prefix temp buffer
 	name.  Don't disable undo explicitly.
 
-;2000-11-02  Dave Love  <fx@gnu.org>
-;
-;	* message.el (message-font-lock-keywords): Use [:alpha:] for
-;	cite-prefix.
+	;2000-11-02  Dave Love  <fx@gnu.org>
+	;
+	; * message.el (message-font-lock-keywords): Use [:alpha:] for
+	; cite-prefix.
 
 2000-11-01  Dave Love  <fx@gnu.org>
 

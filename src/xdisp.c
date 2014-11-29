@@ -5106,6 +5106,11 @@ handle_single_display_spec (struct it *it, Lisp_Object spec, Lisp_Object object,
 		  iterate_out_of_display_property (it);
 		  *position = it->position;
 		}
+	      /* If we were to display this fringe bitmap,
+		 next_element_from_image would have reset this flag.
+		 Do the same, to avoid affecting overlays that
+		 follow.  */
+	      it->ignore_overlay_strings_at_pos_p = 0;
 	      return 1;
 	    }
 	}
@@ -5125,6 +5130,9 @@ handle_single_display_spec (struct it *it, Lisp_Object spec, Lisp_Object object,
 	      iterate_out_of_display_property (it);
 	      *position = it->position;
 	    }
+	  if (it)
+	    /* Reset this flag like next_element_from_image would.  */
+	    it->ignore_overlay_strings_at_pos_p = 0;
 	  return 1;
 	}
 
@@ -8328,6 +8336,10 @@ next_element_from_buffer (struct it *it)
 	 character from current_buffer.  */
       unsigned char *p;
       ptrdiff_t stop;
+
+      /* We moved to the next buffer position, so any info about
+	 previously seen overlays is no longer valid.  */
+      it->ignore_overlay_strings_at_pos_p = 0;
 
       /* Maybe run the redisplay end trigger hook.  Performance note:
 	 This doesn't seem to cost measurable time.  */

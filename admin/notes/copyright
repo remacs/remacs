@@ -22,7 +22,7 @@ author to make a non-trivial total. If so, make sure they have an
 assignment. If adding a whole file adjust the copyright statements in
 the file.
 
-2. When installing code written by someone else, the ChangeLog entry
+2. When installing code written by someone else, the commit
 should be in the name of the author of the code, not the person who
 installs it.  Also use commit's "--author" option.
 Do not install any of your own changes in the same commit.
@@ -115,8 +115,8 @@ else it is possible the file should not be in Emacs at all (please
 report!).
 
 Note that it seems painfully clear that one cannot rely on commit logs,
-or even ChangeLogs, for older changes. People often installed changes
-from others, without recording the true authorship.
+or even change log entries, for older changes. People often installed
+changes from others, without recording the true authorship.
 
 [For reference, most of these points were established via email with
 rms, 2007/1, "Copyright years".

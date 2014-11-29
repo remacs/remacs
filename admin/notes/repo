@@ -1,9 +1,16 @@
 NOTES ON COMMITTING TO EMACS'S REPOSITORY    -*- outline -*-
 
-* Use DVCS commenting conventions
+* Commit metainformation
 
-Commits should follow the conventions used in all modern distributed
-version-control systems. That is, they should consist of
+** Commit in the author's name
+
+If installing changes written by someone else, commit them in their
+name, not yours.
+
+** Commit message format
+
+Commit messages should follow the conventions used in all modern
+distributed version-control systems. That is, they should consist of
 
 - A self-contained topic line, preferably no more than 75 chars long.
 
@@ -14,6 +21,28 @@ version-control systems. That is, they should consist of
   changes you made, if any.  (As long as Emacs maintains ChangeLog
   files, just copy the entries you made in them to the commit message
   after the blank line.)
+
+- Preferred form for several entries with the same content:
+
+   * help.el (view-lossage):
+   * kmacro.el (kmacro-edit-lossage):
+   * edmacro.el (edit-kbd-macro): Fix docstring, lossage is now 300 keys.
+
+  (Rather than anything involving "ditto" and suchlike.)
+
+- Emacs generally follows the GNU coding standards when it comes to ChangeLogs:
+  http://www.gnu.org/prep/standards/html_node/Change-Logs.html
+  One exception is that we still sometimes quote `like-this' (as the
+  standards used to recommend) rather than 'like-this' (as they do now),
+  because `...' is so widely used elsewhere in Emacs.
+  http://lists.gnu.org/archive/html/emacs-devel/2014-05/msg00514.html
+
+** Unnecessary metainformation
+
+There is no need to make separate change log entries for files such as
+NEWS, MAINTAINERS, and FOR-RELEASE, or to indicate regeneration of
+files such as 'configure'.  "There is no need" means you don't have
+to, but you can if you want to.
 
 * Commit to the right branch
 
@@ -112,9 +141,9 @@ http://lists.gnu.org/archive/html/emacs-devel/2010-05/msg00262.html
 
 [The section on git merge procedure has not yet been written]
 
-Inspect the ChangeLog entries (e.g. in case too many entries have been
+Inspect the change log entries (e.g. in case too many entries have been
 included or whitespace between entries needs fixing). If someone made
-multiple ChangeLog entries on different days in the branch, you may
+multiple change log entries on different days in the branch, you may
 wish to collapse them all to a single entry for that author in the
 trunk (because in the trunk they all appear under the same date).
 Obviously, if there are multiple changes to the same file by different
@@ -166,4 +195,3 @@ again.
 
 This is a semi-automated way to find the revision that introduced a bug.
 Browse `git help bisect' for technical instructions.
-

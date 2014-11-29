@@ -1,3 +1,8 @@
+2014-11-29  John Mastro <john.b.mastro@gmail.com>  (tiny change)
+
+	* auth-source.el (auth-source-macos-keychain-search-items): Return
+	result of `auth-source-macos-keychain-result-append' (bug#19074).
+
 2014-11-27  Katsumi Yamaoka  <yamaoka@jpl.org>
 
 	* gnus-art.el (gnus-use-idna):

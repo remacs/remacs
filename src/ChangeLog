@@ -1,3 +1,26 @@
+2014-11-29  Eli Zaretskii  <eliz@gnu.org>
+
+	* xdisp.c (handle_single_display_spec): When ignoring a fringe
+	bitmap display, reset the ignore_overlay_strings_at_pos_p flag.
+	(next_element_from_buffer): When done with overlays, reset the
+	ignore_overlay_strings_at_pos_p flag.  (Bug#19201)
+
+2014-11-29  Eli Zaretskii  <eliz@gnu.org>
+
+	* w32fns.c (Fw32_shell_execute): Convert forward slashes in
+	DOCUMENT to backslashes, if DOCUMENT is a file.  (Bug#19141)
+
+2014-11-29  Ulrich Müller  <ulm@gentoo.org>
+
+	* Makefile.in (temacs$(EXEEXT)): Use consistent flag settings
+	for paxctl and setfattr. Fixes temacs startup failure with
+	grsecurity/PaX enabled Linux kernel (bug#19067).
+
+2014-11-29  Ulf Jasper  <ulf.jasper@web.de>
+
+	* nsterm.m (ns_send_appdefined): Check for application defined
+	event on Cocoa (Bug#18993).  Backport from trunk.
+
 2014-11-27  Oscar Fuentes  <ofv@wanadoo.es>
 
 	* src/w32.c: Use MINGW_W64 instead of _W64.

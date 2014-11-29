@@ -1,3 +1,13 @@
+2014-11-29  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Lessen focus on ChangeLog files, as opposed to change log entries.
+	This is in preparation for generating the former automatically
+	from the latter.
+	* notes/bugtracker, notes/copyright, notes/newfile:
+	ChangeLog -> change log
+	* notes/changelogs: Remove, merging old contents to ...
+	* notes/repo: ... here.
+
 2014-11-27  David Engster  <deng@randomsample.de>
 
 	* gitmerge.el: New file.

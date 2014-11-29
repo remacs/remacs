@@ -11868,7 +11868,7 @@ keys_of_keyboard (void)
      - we enter the second prompt.
        current-prefix-arg is non-nil, prefix-arg is nil.
      - before running the first real event, we run the special iconify-frame
-       event, but we pass the `special' arg to execute-command so
+       event, but we pass the `special' arg to command-execute so
        current-prefix-arg and prefix-arg are left untouched.
      - here we foolishly copy the non-nil current-prefix-arg to prefix-arg.
      - the next key event will have a spuriously non-nil current-prefix-arg.  */

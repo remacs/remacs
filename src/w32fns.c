@@ -7011,7 +7011,14 @@ a ShowWindow flag:
       Lisp_Object absdoc_encoded = ENCODE_FILE (absdoc);
 
       if (faccessat (AT_FDCWD, SSDATA (absdoc_encoded), F_OK, AT_EACCESS) == 0)
-	document = absdoc_encoded;
+	{
+	  /* ShellExecute fails if DOCUMENT is a UNC with forward
+	     slashes (expand-file-name above converts all backslashes
+	     to forward slashes).  Now that we know DOCUMENT is a
+	     file, we can mirror all forward slashes into backslashes.  */
+	  unixtodos_filename (SSDATA (absdoc_encoded));
+	  document = absdoc_encoded;
+	}
       else
 	document = ENCODE_FILE (document);
     }

@@ -1084,7 +1084,11 @@ or BRANCH^ (where \"^\" can be repeated)."
                            (point)
                            (1- (point-max)))))))
         (or (vc-git-symbolic-commit prev-rev) prev-rev))
-    (vc-git--rev-parse (concat rev "^"))))
+    ;; We used to use "^" here, but that fails on MS-Windows if git is
+    ;; invoked via a batch file, in which case cmd.exe strips the "^"
+    ;; because it is a special character for cmd which process-file
+    ;; does not (and cannot) quote.
+    (vc-git--rev-parse (concat rev "~1"))))
 
 (defun vc-git--rev-parse (rev)
   (with-temp-buffer
@@ -1306,16 +1310,18 @@ This command shares argument histories with \\[rgrep] and \\[grep]."
   "A wrapper around `vc-do-command' for use in vc-git.el.
 The difference to vc-do-command is that this function always invokes
 `vc-git-program'."
-  (apply 'vc-do-command (or buffer "*vc*") okstatus vc-git-program
-         ;; http://debbugs.gnu.org/16897
-         (unless (and (not (cdr-safe file-or-list))
-                      (let ((file (or (car-safe file-or-list)
-                                      file-or-list)))
-                        (and file
-                             (eq ?/ (aref file (1- (length file))))
-                             (equal file (vc-git-root file)))))
-           file-or-list)
-         (cons "--no-pager" flags)))
+  (let ((coding-system-for-read vc-git-commits-coding-system)
+	(coding-system-for-write vc-git-commits-coding-system))
+    (apply 'vc-do-command (or buffer "*vc*") okstatus vc-git-program
+	   ;; http://debbugs.gnu.org/16897
+	   (unless (and (not (cdr-safe file-or-list))
+			(let ((file (or (car-safe file-or-list)
+					file-or-list)))
+			  (and file
+			       (eq ?/ (aref file (1- (length file))))
+			       (equal file (vc-git-root file)))))
+	     file-or-list)
+	   (cons "--no-pager" flags))))
 
 (defun vc-git--empty-db-p ()
   "Check if the git db is empty (no commit done yet)."
@@ -1328,6 +1334,8 @@ The difference to vc-do-command is that this function always invokes
   ;; directories.  We enable `inhibit-null-byte-detection', otherwise
   ;; Tramp's eol conversion might be confused.
   (let ((inhibit-null-byte-detection t)
+	(coding-system-for-read vc-git-commits-coding-system)
+	(coding-system-for-write vc-git-commits-coding-system)
 	(process-environment (cons "PAGER=" process-environment)))
     (apply 'process-file vc-git-program nil buffer nil command args)))
 

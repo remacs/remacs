@@ -106,7 +106,7 @@
 	(erc-channel-user): Add members for new modes.
 	(erc-channel-member-halfop-p, erc-channel-user-admin-p)
 	(erc-channel-user-owner-p): Use new struct members.
-	(erc-format-nick, erc-format-@nick): Display user modes as nick	prefix.
+	(erc-format-nick, erc-format-@nick): Display user modes as nick prefix.
 	(erc-nick-prefix-face, erc-my-nick-prefix-face): Add new faces
 	(erc-get-user-mode-prefix): Return symbol for mode prefix.
 	(erc-update-channel-member, erc-update-current-channel-member)

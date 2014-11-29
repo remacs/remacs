@@ -1137,9 +1137,9 @@ new function, all you need to say about it is that it is new.  If you
 feel that the purpose needs explaining, it probably does---but put the
 explanation in comments in the code.  It will be more useful there.
 
-Please read the @file{ChangeLog} files in the @file{src} and
-@file{lisp} directories to see what sorts of information to put in,
-and to learn the style that we use.  @xref{Change Log}.
+Please look at the change log entries of recent commits to see what
+sorts of information to put in, and to learn the style that we use.
+@xref{Change Log}.
 
 @item
 When you write the fix, keep in mind that we can't install a change that

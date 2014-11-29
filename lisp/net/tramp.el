@@ -2253,8 +2253,9 @@ Falls back to normal file name handler if no Tramp file name handler exists."
 ;;;###autoload
 (progn (defun tramp-autoload-file-name-handler (operation &rest args)
   "Load Tramp file name handler, and perform OPERATION."
-  ;; Avoid recursive loading of tramp.el.
-  (let ((default-directory temporary-file-directory))
+  ;; Avoid recursive loading of tramp.el.  `temporary-file-directory'
+  ;; does not exist in XEmacs, so we must use something else.
+  (let ((default-directory (or (symbol-value 'temporary-file-directory) "/")))
     (load "tramp" nil t))
   (apply operation args)))
 
@@ -2968,8 +2969,8 @@ User is always nil."
   (cond
    ((not (file-exists-p file1)) nil)
    ((not (file-exists-p file2)) t)
-   (t (tramp-time-less-p (nth 5 (file-attributes file2))
-			 (nth 5 (file-attributes file1))))))
+   (t (time-less-p (nth 5 (file-attributes file2))
+		   (nth 5 (file-attributes file1))))))
 
 (defun tramp-handle-file-regular-p (filename)
   "Like `file-regular-p' for Tramp files."
@@ -3444,9 +3445,9 @@ of."
       ;; Let's check whether a wrong password has been sent already.
       ;; Sometimes, the process returns a new password request
       ;; immediately after rejecting the previous (wrong) one.
-      (goto-char (point-min))
-      (when (search-forward-regexp tramp-wrong-passwd-regexp nil t)
+      (unless (tramp-get-connection-property vec "first-password-request" nil)
 	(tramp-clear-passwd vec))
+      (goto-char (point-min))
       (tramp-check-for-regexp proc tramp-password-prompt-regexp)
       (tramp-message vec 3 "Sending %s" (match-string 1))
       ;; We don't call `tramp-send-string' in order to hide the
@@ -4171,7 +4172,8 @@ Invokes `password-read' if available, `read-passwd' else."
 		(tramp-check-for-regexp proc tramp-password-prompt-regexp)
 		(format "%s for %s " (capitalize (match-string 1)) key))))
 	 ;; We suspend the timers while reading the password.
-         (stimers (with-timeout-suspend))
+         (stimers (and (functionp 'with-timeout-suspend)
+		       (tramp-compat-funcall 'with-timeout-suspend)))
 	 auth-info auth-passwd)
 
     (unwind-protect
@@ -4211,7 +4213,8 @@ Invokes `password-read' if available, `read-passwd' else."
 	       (read-passwd pw-prompt))
 	    (tramp-set-connection-property v "first-password-request" nil)))
       ;; Reenable the timers.
-      (with-timeout-unsuspend stimers))))
+      (and (functionp 'with-timeout-unsuspend)
+	   (tramp-compat-funcall 'with-timeout-unsuspend stimers)))))
 
 ;;;###tramp-autoload
 (defun tramp-clear-passwd (vec)
@@ -4237,16 +4240,6 @@ Invokes `password-read' if available, `read-passwd' else."
   "Alist mapping month names to integers.")
 
 ;;;###tramp-autoload
-(defun tramp-time-less-p (t1 t2)
-  "Say whether time value T1 is less than time value T2."
-  (time-less-p (or t1 0) (or t2 0)))
-
-(defun tramp-time-subtract (t1 t2)
-  "Subtract two time values.
-Return the difference in the format of a time value."
-  (time-subtract (or t1 0) (or t2 0)))
-
-;;;###tramp-autoload
 (defun tramp-time-diff (t1 t2)
   "Return the difference between the two times, in seconds.
 T1 and T2 are time values (as returned by `current-time' for example)."
@@ -4264,7 +4257,7 @@ T1 and T2 are time values (as returned by `current-time' for example)."
 	  (if (< (length t1) 3) (append t1 '(0)) t1)
 	  (if (< (length t2) 3) (append t2 '(0)) t2)))
         (t
-	 (let ((time (tramp-time-subtract t1 t2)))
+	 (let ((time (time-subtract t1 t2)))
 	   (+ (* (car time) 65536.0)
 	      (cadr time)
 	      (/ (or (nth 2 time) 0) 1000000.0))))))

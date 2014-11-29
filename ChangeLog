@@ -1,3 +1,70 @@
+2014-11-29  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Add more of the old .bzrignore to .gitignore.
+	Plus a few more .gitignore improvements.
+	* .gitignore: Add copyright notice, since it's big enough.
+	Put exceptions immediately after the patterns they're exceptions
+	to, to make them easier to follow.
+	Give four exceptions for the Makefile pattern.
+	Ignore /confdefs.h, test/indent/*.new, TAGS, GPATH, GSYMS, GRTAGS,
+	GTAGS, ID, *.exe, some nextstep-related files,
+	jisx2131-filter, *.orig, *.rej, etc/emacs.tmpdesktop, *.in-h
+	_* (except for build-aux/snippet/_Noreturn.h), /bin/, /BIN/,
+	/data/, etc/icons/, lib/cxxdefs.h, lib/SYS/, /libexec/, /lock/,
+	/README.W32, /share/, /site-lisp/, src/gdb.ini, /var/.
+	Ignore /configure.lineno, since POSIX requires
+	LINENO only with the User Portability Utilities option.
+	Ignore *cust-load.el and *loaddefs.el only under lisp.
+	Ignore core files of various flavors.
+	Do not ignore etc/refcards/gnus-logo.pdf.
+
+2014-11-29  Eli Zaretskii  <eliz@gnu.org>
+
+	* .gitignore: Add back src/_gdbinit, which is a temporary file
+	created by the MS-DOS build.
+
+2014-11-29  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Add a.out to .gitignore.
+	Suggested by Lee Duhem in:
+	http://lists.gnu.org/archive/html/emacs-devel/2014-11/msg01665.html
+	* .gitignore: Add a.out.
+	Move *.log next to *.tmp, since it's generic.
+	Put *.exe before non-generics.
+
+2014-11-29  Eli Zaretskii  <eliz@gnu.org>
+
+	* .gitignore: Resurrect Windows-specific ignorables lost in last
+	changes.
+
+2014-11-29  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* .gitignore: Add /emacs-[1-9]*/, and sort better.
+
+2014-11-29  Ivan Andrus  <darthandrus@gmail.com>
+
+	* .gitignore: Add some nextstep/mac ignorables.
+
+2014-11-29  Paul Eggert  <eggert@cs.ucla.edu>
+
+	.gitignore cleanup.
+	* .gitignore: Merge contents of subsidiary files and organize the
+	result so as to avoid duplication.  Remove no-longer needed entries.
+	* admin/charsets/.gitignore, admin/unidata/.gitignore:
+	* doc/lispintro/.gitignore, etc/.gitignore, leim/.gitignore:
+	* leim/ja-dic/.gitignore, lib-src/.gitignore, lisp/.gitignore:
+	* lisp/calc/.gitignore, lisp/calendar/.gitignore:
+	* lisp/cedet/.gitignore, lisp/emulation/.gitignore:
+	* lisp/erc/.gitignore, lisp/eshell/.gitignore, lisp/gnus/.gitignore:
+	* lisp/international/.gitignore, lisp/language/.gitignore:
+	* lisp/leim/.gitignore, lisp/leim/quail/.gitignore:
+	* lisp/mail/.gitignore, lisp/mh-e/.gitignore, lisp/net/.gitignore:
+	* lisp/nxml/.gitignore, lisp/obsolete/.gitignore:
+	* lisp/play/.gitignore, lisp/progmodes/.gitignore:
+	* lisp/term/.gitignore, lisp/textmodes/.gitignore:
+	* lisp/url/.gitignore, nt/.gitignore, src/.gitignore:
+	Remove; no longer needed.
+
 2014-11-29  Glenn Morris  <rgm@gnu.org>
 
 	* configure.ac: Simplify gnutls tests.
@@ -112,7 +179,7 @@
 	corresponding commit comments.
 
 	(The first .cvsignore commit was 1999-09-30T14:07:54Z!fx@gnu.org.
-	The last CVS commit was	2009-12-27T08:11:12Z!cyd@stupidchicken.com.)
+	The last CVS commit was 2009-12-27T08:11:12Z!cyd@stupidchicken.com.)
 
 	Committer/author email addresses are generally correct for the
 	transition day, not necessarily when the commit was originally made.

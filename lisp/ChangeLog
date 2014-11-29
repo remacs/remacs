@@ -1,3 +1,104 @@
+2014-11-29  Stephen Berman  <stephen.berman@gmx.net>
+	    Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* outline.el (outline-move-subtree-down): Make sure we can move
+	forward to find the end of the subtree and the insertion point
+	(bug#19102).
+
+2014-11-29  Leonard Randall  <leonard.a.randall@gmail.com>
+
+	* textmodes/reftex-parse.el (reftex-using-biblatex-p): Make search
+	for comment lines non-greedy and stopping at newlines to fix stack
+	overflows with large files. [Backport]
+
+2014-11-29  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	* progmodes/python.el (python-shell-completion-setup-code): Use
+	__builtin__ module (or builtins in Python 3) and catch all errors
+	when importing readline and rlcompleter.
+
+2014-11-29  Stephen Berman  <stephen.berman@gmx.net>
+
+	* calendar/todo-mode.el: Handle calling revert-buffer (bug#19187).
+	(todo-revert-buffer): New function.
+	(todo-modes-set-1): Use it as the buffer-local value of
+	revert-buffer-function.
+
+2014-11-29  Stephen Berman  <stephen.berman@gmx.net>
+
+	* calendar/todo-mode.el (todo-mode): If called interactively, just
+	display a message saying to call todo-show to enter Todo mode
+	(Bug#19112).
+
+2014-11-29  Dmitry Gutov  <dgutov@yandex.ru>
+
+	* vc/vc-hg.el (vc-hg-dir-status-files): Include ignored files.
+	(Bug#18579)
+
+	* vc/vc-bzr.el (vc-bzr-after-dir-status): Don't skip ignored
+	files.  (Bug#18579)
+
+2014-11-29  Michael Albinus  <michael.albinus@gmx.de>
+
+	* textmodes/makeinfo.el (makeinfo-buffer): Make it work also for
+	remote `buffer-file-name'.
+
+2014-11-29  Leo Liu  <sdl.web@gmail.com>
+
+	* calendar/diary-lib.el (calendar-mark-1): Fix thinko.
+
+2014-11-29  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	Set PYTHONUNBUFFERED on shell startup.
+
+	* progmodes/python.el (python-shell-unbuffered): New var.
+	(python-shell-calculate-process-environment): Use it.
+
+2014-11-29  Michael Albinus  <michael.albinus@gmx.de>
+
+	* net/tramp.el (tramp-action-password): Clean password on subsequent
+	attempts even if there was no wrong password indication.  (Bug#19047)
+
+	* net/tramp-sh.el (tramp-get-remote-locale): Return "LC_ALL=C" as
+	fallback.
+	(tramp-open-connection-setup-interactive-shell): No need to check
+	for nil as `tramp-get-remote-locale' return value.
+
+2014-11-29  Eli Zaretskii  <eliz@gnu.org>
+
+	* vc/vc-git.el (vc-git-command, vc-git--call): Bind
+	coding-system-for-read and coding-system-for-write to
+	vc-git-commits-coding-system.
+	(vc-git-previous-revision): Use "~1" instead of "^", since the
+	latter is a special character for MS-Windows system shells.
+
+2014-11-29  Michael Albinus  <michael.albinus@gmx.de>
+
+	Improve XEmacs compatibility.
+
+	* net/tramp.el (tramp-autoload-file-name-handler):
+	Wrap `temporary-file-directory' by `symbol-value', it doesn't
+	exist in XEmacs.
+	(tramp-read-passwd): Don't use `with-timeout-suspend' and
+	`with-timeout-unsuspend' if they don't exist, like in XEmacs.
+	(tramp-time-less-p, tramp-time-subtract): Remove functions.
+	(tramp-handle-file-newer-than-file-p, tramp-time-diff):
+	* net/tramp-adb.el (tramp-adb-ls-output-time-less-p):
+	* net/tramp-cache.el (tramp-get-file-property):
+	* net/tramp-smb.el (tramp-smb-handle-insert-directory):
+	Use `time-less-p' and `time-subtract, respectively.
+
+	* net/tramp-adb.el (top): Do not require time-date.el.
+
+	* net/tramp-compat.el (top): Require time-date.el for XEmacs.
+
+	* net/tramp-sh.el (tramp-open-connection-setup-interactive-shell):
+	Check, whether `utf-8' is a valid coding system.
+
+2014-11-29  Eli Zaretskii  <eliz@gnu.org>
+
+	* vc/vc.el (vc-retrieve-tag): Doc fix.
+
 2014-11-28  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* simple.el (execute-extended-command--shorter): Fix the "M-p" case
@@ -4561,7 +4662,7 @@
 	(bug#17818).
 
 	* mouse.el (mouse-drag-line): Don't re-add to unread-comment-events,
-	since it's already done inside the loop	(bug#17819).
+	since it's already done inside the loop (bug#17819).
 
 2014-06-21  Martin Rudalics  <rudalics@gmx.at>
 
@@ -5669,7 +5770,7 @@
 	* vc/emerge.el (emerge-make-temp-file): Simplify.
 
 2014-05-14  Stephen Berman <stephen.berman@gmx.net>
-            Stefan Monnier  <monnier@iro.umontreal.ca>
+	    Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* minibuffer.el (completion-pcm--merge-try): Merge trailing / with
 	suffix (bug#15419).

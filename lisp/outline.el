@@ -649,27 +649,32 @@ the match data is set appropriately."
 		   'outline-get-last-sibling))
 	(ins-point (make-marker))
 	(cnt (abs arg))
+	;; Make sure we can move forward to find the end of the
+	;; subtree and the insertion point.
+	(maybe-forward-char (lambda ()
+			      (if (eq (char-after) ?\n) (forward-char 1)
+				(if (and (eobp) (not (bolp))) (insert "\n")))))
 	beg end folded)
-    ;; Select the tree
+    ;; Select the tree.
     (outline-back-to-heading)
     (setq beg (point))
     (save-match-data
       (save-excursion (outline-end-of-heading)
 		      (setq folded (outline-invisible-p)))
       (outline-end-of-subtree))
-    (if (= (char-after) ?\n) (forward-char 1))
+    (funcall maybe-forward-char)
     (setq end (point))
-    ;; Find insertion point, with error handling
+    ;; Find insertion point, with error handling.
     (goto-char beg)
     (while (> cnt 0)
       (or (funcall movfunc)
 	  (progn (goto-char beg)
-		 (error "Cannot move past superior level")))
+		 (user-error "Cannot move past superior level")))
       (setq cnt (1- cnt)))
     (if (> arg 0)
-	;; Moving forward - still need to move over subtree
+	;; Moving forward - still need to move over subtree.
 	(progn (outline-end-of-subtree)
-	       (if (= (char-after) ?\n) (forward-char 1))))
+	       (funcall maybe-forward-char)))
     (move-marker ins-point (point))
     (insert (delete-and-extract-region beg end))
     (goto-char ins-point)

@@ -2508,7 +2508,7 @@
 	If `suspend-emacs-hook' returns t don't suspend
 	-- assume the hook did the equivalent of `suspending' for us
 	(including calling suspend-resume-hook if necessary.)
-        Otherwise, call sys_suspend and so forth normally.
+	Otherwise, call sys_suspend and so forth normally.
 
 1986-12-20  Richard M. Stallman  (rms@prep)
 
@@ -4050,7 +4050,7 @@
 
 1986-08-21  Richard Mlynarik  (mly@prep)
 
-        * process.c (handle_process_output):
+	* process.c (handle_process_output):
 	do a set-buffer back to original buffer
 	after calling a process' filter function so that
 	all filter functions needn't save-excursion.
@@ -4221,7 +4221,7 @@
 
 	* unexec.c (write_segment):
 	Kludgy coercions ("(int)") to get this line to compile:
-         nwrite = (((int) ptr + 128) & ~127) - (int) ptr;
+	 nwrite = (((int) ptr + 128) & ~127) - (int) ptr;
 	Also changed incorrect ~128 to ~127.
 
 	* process.c:

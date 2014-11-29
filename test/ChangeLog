@@ -1,3 +1,14 @@
+2014-11-29  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	* automated/python-tests.el
+	(python-shell-calculate-process-environment-4)
+	(python-shell-calculate-process-environment-5): New tests.
+	(python-shell-make-comint-3): Use file-equal-p.
+	(python-shell-get-or-create-process-1)
+	(python-shell-get-or-create-process-2)
+	(python-shell-get-or-create-process-3): Fix interpreter for
+	Windows (Bug#18595).
+
 2014-11-21  Ulf Jasper  <ulf.jasper@web.de>
 
 	* automated/libxml-tests.el

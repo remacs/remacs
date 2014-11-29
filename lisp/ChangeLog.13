@@ -3984,7 +3984,7 @@
 	* ibuffer.el (ibuffer-mode): Fix typo in previous change.
 
 2008-01-17  Vinicius Jose Latorre  <viniciusjl@ig.com.br>
-            Miles Bader  <miles@gnu.org>
+	    Miles Bader  <miles@gnu.org>
 
 	* blank-mode.el: New file.  Minor mode to visualize (HARD) SPACE,
 	TAB, NEWLINE.  Miles Bader <miles@gnu.org> wrote the original code
@@ -5480,7 +5480,7 @@
 	(verilog-insert-indices): Escape braces in doc strings.
 
 2007-12-08  Michael McNamara  <mac@verilog.com>
-            Wilson Snyder  <wsnyder@wsnyder.org>
+	    Wilson Snyder  <wsnyder@wsnyder.org>
 
 	* progmodes/verilog-mode.el: New file.
 
@@ -13486,7 +13486,7 @@
 	Use native Emacs functions, when appropriate.
 
 2007-08-01  Dan Nicolaescu  <dann@ics.uci.edu>
-            Stefan Monnier  <monnier@iro.umontreal.ca>
+	    Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* vc.el: Document new VC operation `extra-menu'.
 
