@@ -464,6 +464,11 @@
 	* vc/vc-git.el (vc-git-diff): Use "difftool -x diff" with
 	`diff-switches' if `vc-git-diff-switches' is nil.
 
+2014-11-19  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* lisp/ido.el (ido-bury-buffer-at-head): New command.
+	(ido-buffer-completion-map): Bind it to C-S-b.
+
 2014-11-18  Juri Linkov  <juri@linkov.net>
 
 	* simple.el (next-line-or-history-element): Wrap next-line
