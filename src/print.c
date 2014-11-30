@@ -2098,14 +2098,16 @@ print_object (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag)
 		for (i = 0; i < limit; i++)
 		  {
 		    Lisp_Object maybe = area[i];
+		    int valid = valid_lisp_object_p (maybe);
 
-		    if (valid_lisp_object_p (maybe) > 0)
+		    if (0 < valid)
 		      {
 			PRINTCHAR (' ');
 			print_object (maybe, printcharfun, escapeflag);
 		      }
 		    else
-		      strout (" <invalid>", -1, -1, printcharfun);
+		      strout (valid ? " <some>" : " <invalid>",
+			      -1, -1, printcharfun);
 		  }
 		if (i == limit && i < amount)
 		  strout (" ...", 4, 4, printcharfun);

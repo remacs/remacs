@@ -4934,6 +4934,10 @@ valid_pointer_p (void *p)
 #ifdef WINDOWSNT
   return w32_valid_pointer_p (p, 16);
 #else
+
+  if (ADDRESS_SANITIZER)
+    return p ? -1 : 0;
+
   int fd[2];
 
   /* Obviously, we cannot just access it (we would SEGV trying), so we
@@ -4949,7 +4953,7 @@ valid_pointer_p (void *p)
       return valid;
     }
 
-    return -1;
+  return -1;
 #endif
 }
 
@@ -5048,8 +5052,8 @@ relocatable_string_data_p (const char *str)
       struct sdata *sdata
 	= (struct sdata *) (str - offsetof (struct sdata, data));
 
-      if (valid_pointer_p (sdata)
-	  && valid_pointer_p (sdata->string)
+      if (0 < valid_pointer_p (sdata)
+	  && 0 < valid_pointer_p (sdata->string)
 	  && maybe_lisp_pointer (sdata->string))
 	return (valid_lisp_object_p
 		(make_lisp_ptr (sdata->string, Lisp_String))
@@ -6364,7 +6368,7 @@ mark_object (Lisp_Object arg)
 	CHECK_ALLOCATED_AND_LIVE (live_symbol_p);
 	ptr->gcmarkbit = 1;
 	/* Attempt to catch bogus objects.  */
-        eassert (valid_lisp_object_p (ptr->function) >= 1);
+        eassert (valid_lisp_object_p (ptr->function));
 	mark_object (ptr->function);
 	mark_object (ptr->plist);
 	switch (ptr->redirect)
@@ -6749,7 +6753,7 @@ sweep_symbols (void)
               ++num_used;
               sym->s.gcmarkbit = 0;
               /* Attempt to catch bogus objects.  */
-              eassert (valid_lisp_object_p (sym->s.function) >= 1);
+              eassert (valid_lisp_object_p (sym->s.function));
             }
         }
 

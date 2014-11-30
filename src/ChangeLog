@@ -1,3 +1,21 @@
+2014-11-30  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Port better to AddressSanitizer.
+	These changes suffice for temacs on x86-64 with GCC 4.9.2 and
+	-fsanitize=address.
+	* alloc.c (valid_pointer_p) [ADDRESS_SANITIZER]:
+	Return -1 or 0, as the pipe trick doesn't work.
+	* alloc.c (relocatable_string_data_p, mark_object, sweep_symbols):
+	* data.c (Ffset):
+	* print.c (print_object):
+	When a pointer-check primitive returns -1, do not assume this
+	means the pointer is valid or that the underlying system has failed.
+	It could just be that addresses are being sanitized so Emacs can't
+	test for pointer validity.
+	* lisp.h (defined_GC_CHECK_STRING_BYTES): New constant.
+	(USE_STACK_STRING) [GC_CHECK_STRING_BYTES]: Now false, since the
+	string validity checker doesn't work on stack-based strings.
+
 2014-11-29  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Improve clarity of USE_LSB_TAG definition.

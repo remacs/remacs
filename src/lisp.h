@@ -4604,6 +4604,12 @@ lisp_word_count (ptrdiff_t nbytes)
 # define USE_STACK_LISP_OBJECTS false
 #endif
 
+#ifdef GC_CHECK_STRING_BYTES
+enum { defined_GC_CHECK_STRING_BYTES = true };
+#else
+enum { defined_GC_CHECK_STRING_BYTES = false };
+#endif
+
 /* Struct inside unions that are typically no larger and aligned enough.  */
 
 union Aligned_Cons
@@ -4628,6 +4634,7 @@ enum
     USE_STACK_CONS = (USE_STACK_LISP_OBJECTS
 		      && alignof (union Aligned_Cons) % GCALIGNMENT == 0),
     USE_STACK_STRING = (USE_STACK_CONS
+			&& !defined_GC_CHECK_STRING_BYTES
 			&& alignof (union Aligned_String) % GCALIGNMENT == 0)
   };
 
