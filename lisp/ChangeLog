@@ -1,3 +1,10 @@
+2014-11-30  Eli Zaretskii  <eliz@gnu.org>
+
+	* simple.el (line-move): If noninteractive, call line-move-1, not
+	forward-line, since the former is compatible with line-move-visual
+	both in terms of the column to which it moves and the return
+	value.  (Bug#19211)
+
 2014-11-27  Stephen Berman  <stephen.berman@gmx.net>
 	    Stefan Monnier  <monnier@iro.umontreal.ca>
 
