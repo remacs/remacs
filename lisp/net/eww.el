@@ -258,7 +258,8 @@ word(s) will be searched for via `eww-search-prefix'."
     (plist-put eww-data :url url)
     (eww-update-header-line-format)
     (let ((inhibit-read-only t))
-      (insert (format "Loading %s..." url))))
+      (insert (format "Loading %s..." url))
+      (goto-char (point-min))))
   (url-retrieve url 'eww-render
 		(list url nil (current-buffer))))
 

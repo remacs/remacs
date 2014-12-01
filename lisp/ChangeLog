@@ -1,3 +1,8 @@
+2014-12-01  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* net/eww.el (eww): Leave point in a place that doesn't cause
+	scrolling when displaying "Loading...".
+
 2014-12-01  Eric S. Raymond  <esr@snark.thyrsus.com>
 
 	* vc/vc.el, vc-hooks.el, and all backends: API simplification;
