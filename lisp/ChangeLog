@@ -1,7 +1,13 @@
+2014-12-01  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* vc/smerge-mode.el (smerge-swap): New command.
+
+	* vc/diff-mode.el (diff-kill-applied-hunks): New command.
+
 2014-12-01  Ulf Jasper  <ulf.jasper@web.de>
 
-	* net/newst-treeview.el (newsticker--treeview-item-show): Check
-	window liveliness before measuring its width.
+	* net/newst-treeview.el (newsticker--treeview-item-show):
+	Check window liveliness before measuring its width.
 
 	* net/newst-backend.el (newsticker--get-news-by-url-callback):
 	Pass correct status to `newsticker--sentinel-work'.
@@ -25,13 +31,13 @@
 
 	* vc/vc.el, vc/vc-cvs.el, vc/vc-rcs.el, vc/vc-svn.el: The 'merge'
 	backend method of RCS/CVS/SVN is now 'merge-file', to contrast with
-	'merge-branch'. Prompting for merge revisions is pushed down to
+	'merge-branch'.  Prompting for merge revisions is pushed down to
 	the back ends; this fixes a layering violation that caused bad
 	behavior with SVN.
 
 	* vc/vc.el, vc-hooks.el, and all backends: API simplification;
 	vc-stay-local-p and repository-hostname are no longer public
-	methods. Only the CVS and SVN backends used these, and the SVN
+	methods.  Only the CVS and SVN backends used these, and the SVN
 	support was conditioned out because svn status -v is too slow.
 	The CVS back end retains this machibery and the vc-stay-local
 	configuration variable now only affects it.

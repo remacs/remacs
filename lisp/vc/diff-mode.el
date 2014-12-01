@@ -1817,6 +1817,16 @@ With a prefix argument, try to REVERSE the hunk."
     (diff-hunk-status-msg line-offset (diff-xor reverse switched) t)))
 
 
+(defun diff-kill-applied-hunks ()
+  "Kill all hunks that have already been applied starting at point."
+  (interactive)
+  (while (not (eobp))
+    (pcase-let ((`(,buf ,line-offset ,pos ,src ,_dst ,switched)
+                 (diff-find-source-location nil nil)))
+      (if (and line-offset switched)
+          (diff-hunk-kill)
+        (diff-hunk-next)))))
+
 (defalias 'diff-mouse-goto-source 'diff-goto-source)
 
 (defun diff-goto-source (&optional other-file event)
