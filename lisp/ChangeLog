@@ -1,5 +1,8 @@
 2014-12-01  Stefan Monnier  <monnier@iro.umontreal.ca>
 
+	* simple.el (newline): Place the hook buffer-locally,
+	to make sure it's first.
+
 	* progmodes/prog-mode.el (prettify-symbols--compose-symbol):
 	Fix handling of symbols with different syntax at beginning/end or with
 	symbol rather than word syntax.
