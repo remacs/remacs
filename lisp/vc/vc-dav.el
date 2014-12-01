@@ -77,7 +77,7 @@ See `vc-checkout-model' for a list of possible values."
   "Return the current workfile version of URL."
   "Unknown")
 
-(defun vc-dav-register (url &optional rev comment)
+(defun vc-dav-register (url &optional comment)
   "Register URL in the DAV backend."
   ;; Do we need to do anything here?  FIXME?
   )

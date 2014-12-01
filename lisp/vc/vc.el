@@ -228,21 +228,16 @@
 ;;   it so VC mode can add files to it.  For file-oriented systems, this
 ;;   need do no more than create a subdirectory with the right name.
 ;;
-;; * register (files &optional rev comment)
+;; * register (files &optional comment)
 ;;
-;;   Register FILES in this backend.  Optionally, an initial revision REV
-;;   and an initial description of the file, COMMENT, may be specified,
-;;   but it is not guaranteed that the backend will do anything with this.
-;;   The implementation should pass the value of vc-register-switches
-;;   to the backend command.  (Note: in older versions of VC, this
-;;   command took a single file argument and not a list.)
-;;   The REV argument is a historical leftover and is never used.
-;;
-;; - init-revision (file)
-;;
-;;   The initial revision to use when registering FILE if one is not
-;;   specified by the user.  If not provided, the variable
-;;   vc-default-init-revision is used instead.
+;;   Register FILES in this backend.  Optionally, an initial
+;;   description of the file, COMMENT, may be specified, but it is not
+;;   guaranteed that the backend will do anything with this.  The
+;;   implementation should pass the value of vc-register-switches to
+;;   the backend command.  (Note: in older versions of VC, this
+;;   command had an optional revision first argument that was
+;;   not used; in still older ones it took a single file argument and
+;;   not a list.)
 ;;
 ;; - responsible-p (file)
 ;;
@@ -599,6 +594,22 @@
 ;;   the project that contains DIR.
 ;;   FIXME: what should it do with non-text conflicts?
 
+;;; Changes from the pre-25.1 API:
+;;
+;; - The 'editable' optional argument of vc-checkout is gone. The
+;;   upper level assumes that all files are checked out editable. This
+;;   moves closer to emulating modern non-locking behavior even on very
+;;   old VCSes.
+;;
+;; - The init-revision function and the default-initial-revision
+;;   variable are gone.  These have't made sense on anything shipped
+;;   since RCS, and using them was a dumb stunt even on RCS.
+;;
+;; - The vc-register function and its backend implementations no longer
+;;   take a first optional revision argument, since on no system since
+;;   RCS has setting the initial revision been even possible, let alone
+;;   sane.
+
 ;;; Todo:
 
 ;; - Get rid of the "master file" terminology.
@@ -714,14 +725,6 @@
   :group 'vc)
 
 (make-obsolete-variable 'vc-initial-comment "it has no effect." "23.2")
-
-(defcustom vc-default-init-revision "1.1"
-  "A string used as the default revision number when a new file is registered.
-This can be overridden by giving a prefix argument to \\[vc-register].  This
-can also be overridden by a particular VC backend."
-  :type 'string
-  :group 'vc
-  :version "20.3")
 
 (defcustom vc-checkin-switches nil
   "A string or list of strings specifying extra switches for checkin.
@@ -1294,12 +1297,11 @@ For old-style locking-based version control systems, like RCS:
 (declare-function vc-dir-move-to-goal-column "vc-dir" ())
 
 ;;;###autoload
-(defun vc-register (&optional set-revision vc-fileset comment)
+(defun vc-register (&optional vc-fileset comment)
   "Register into a version control system.
 If VC-FILESET is given, register the files in that fileset.
 Otherwise register the current file.
-With prefix argument SET-REVISION, allow user to specify initial revision
-level.  If COMMENT is present, use that as an initial comment.
+If COMMENT is present, use that as an initial comment.
 
 The version control system to use is found by cycling through the list
 `vc-handled-backends'.  The first backend in that list which declares
@@ -1331,11 +1333,7 @@ first backend that could register the file is used."
 	    (vc-buffer-sync)))))
     (message "Registering %s... " files)
     (mapc 'vc-file-clearprops files)
-    (vc-call-backend backend 'register files
-		     (if set-revision
-			 (read-string (format "Initial revision level for %s: " files))
-		       (vc-call-backend backend 'init-revision))
-		     comment)
+    (vc-call-backend backend 'register files comment)
     (mapc
      (lambda (file)
        (vc-file-setprop file 'vc-backend backend)
@@ -2838,8 +2836,6 @@ The default implementation returns t for all files."
 This default implementation always returns non-nil, which means that
 editing non-current revisions is not supported by default."
   t)
-
-(defun vc-default-init-revision (_backend) vc-default-init-revision)
 
 (defun vc-default-find-revision (backend file rev buffer)
   "Provide the new `find-revision' op based on the old `checkout' op.

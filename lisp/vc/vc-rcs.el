@@ -276,18 +276,15 @@ When VERSION is given, perform check for that version."
 
 (autoload 'vc-switches "vc")
 
-(defun vc-rcs-register (files &optional rev comment)
+(defun vc-rcs-register (files &optional comment)
   "Register FILES into the RCS version-control system.
-REV is the optional revision number for the files.  COMMENT can be used
-to provide an initial description for each FILES.
+COMMENT can be used to provide an initial description for each FILES.
 Passes either `vc-rcs-register-switches' or `vc-register-switches'
 to the RCS command.
 
 Automatically retrieve a read-only version of the file with keywords
 expanded if `vc-keep-workfiles' is non-nil, otherwise, delete the workfile."
   (let (subdir name)
-    ;; When REV is specified, we need to force using "-t-".
-    (when rev (unless comment (setq comment "")))
     (dolist (file files)
       (and (not (file-exists-p
 		 (setq subdir (expand-file-name "RCS"
@@ -299,7 +296,6 @@ expanded if `vc-keep-workfiles' is non-nil, otherwise, delete the workfile."
       (apply #'vc-do-command "*vc*" 0 "ci" file
 	     ;; if available, use the secure registering option
 	     (and (vc-rcs-release-p "5.6.4") "-i")
-	     (concat (if vc-keep-workfiles "-u" "-r") rev)
 	     (and comment (concat "-t-" comment))
 	     (vc-switches 'RCS 'register))
       ;; parse output to find master file name and workfile version
@@ -336,7 +332,7 @@ expanded if `vc-keep-workfiles' is non-nil, otherwise, delete the workfile."
 (defun vc-rcs-receive-file (file rev)
   "Implementation of receive-file for RCS."
   (let ((checkout-model (vc-rcs-checkout-model (list file))))
-    (vc-rcs-register file rev "")
+    (vc-rcs-register file "")
     (when (eq checkout-model 'implicit)
       (vc-rcs-set-non-strict-locking file))
     (vc-rcs-set-default-branch file (concat rev ".1"))))

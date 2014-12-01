@@ -222,10 +222,9 @@ Optional string REV is a revision."
 
 (autoload 'vc-switches "vc")
 
-(defun vc-sccs-register (files &optional rev comment)
+(defun vc-sccs-register (files &optional comment)
   "Register FILES into the SCCS version-control system.
-REV is the optional revision number for the file.  COMMENT can be used
-to provide an initial description of FILES.
+COMMENT can be used to provide an initial description of FILES.
 Passes either `vc-sccs-register-switches' or `vc-register-switches'
 to the SCCS command.
 
@@ -239,7 +238,6 @@ expanded if `vc-keep-workfiles' is non-nil, otherwise, delete the workfile."
 	     (or project-file
 		 (format (car vc-sccs-master-templates) dirname basename))))
 	(apply 'vc-sccs-do-command nil 0 "admin" vc-master-name
-	       (and rev (not (string= rev "")) (concat "-r" rev))
 	       "-fb"
 	       (concat "-i" (file-relative-name file))
 	       (and comment (concat "-y" comment))

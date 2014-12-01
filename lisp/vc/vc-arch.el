@@ -231,8 +231,7 @@ Only the value `maybe' can be trusted :-(."
   "Return the administrative directory of FILE."
   (expand-file-name "{arch}" (vc-arch-root file)))
 
-(defun vc-arch-register (files &optional rev _comment)
-  (if rev (error "Explicit initial revision not supported for Arch"))
+(defun vc-arch-register (files &optional _comment)
   (dolist (file files)
     (let ((tagmet (vc-arch-tagging-method file)))
       (if (and (memq tagmet '(tagline implicit)) comment-start)
@@ -495,8 +494,6 @@ CALLBACK expects (ENTRIES &optional MORE-TO-COME); see
 (defun vc-arch-command (buffer okstatus file &rest flags)
   "A wrapper around `vc-do-command' for use in vc-arch.el."
   (apply 'vc-do-command (or buffer "*vc*") okstatus vc-arch-program file flags))
-
-(defun vc-arch-init-revision () nil)
 
 ;;; Completion of versions and revisions.
 

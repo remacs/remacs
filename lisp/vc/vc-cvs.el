@@ -282,7 +282,7 @@ committed and support display of sticky tags."
 
 (autoload 'vc-switches "vc")
 
-(defun vc-cvs-register (files &optional _rev comment)
+(defun vc-cvs-register (files &optional comment)
   "Register FILES into the CVS version-control system.
 COMMENT can be used to provide an initial description of FILES.
 Passes either `vc-cvs-register-switches' or `vc-register-switches'

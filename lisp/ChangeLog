@@ -1,3 +1,9 @@
+2014-12-01  Eric S. Raymond  <esr@snark.thyrsus.com>
+
+	* vc/vc.el and all backends: API simplification; init-revision is
+	gone, and vc-registered functions no longer take an
+	initial-revision argument.
+
 2014-11-29  Glenn Morris  <rgm@gnu.org>
 
 	* vc/vc-src.el (vc-src, vc-src-diff-switches)

@@ -441,10 +441,8 @@ Optional arg REVISION is a revision to annotate from."
   "Rename file from OLD to NEW using `hg mv'."
   (vc-hg-command nil 0 new "mv" old))
 
-(defun vc-hg-register (files &optional _rev _comment)
-  "Register FILES under hg.
-REV is ignored.
-COMMENT is ignored."
+(defun vc-hg-register (files &optional _comment)
+  "Register FILES under hg. COMMENT is ignored."
   (vc-hg-command nil 0 files "add"))
 
 (defun vc-hg-create-repo ()

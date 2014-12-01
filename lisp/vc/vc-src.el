@@ -44,7 +44,6 @@
 ;; STATE-CHANGING FUNCTIONS
 ;; * register (files &optional rev comment)    OK
 ;; * create-repo ()                            OK
-;; - init-revision ()                          NOT NEEDED
 ;; * responsible-p (file)                      OK
 ;; * could-register (file)                     OK
 ;; - receive-file (file rev)                   NOT NEEDED
@@ -228,10 +227,8 @@ This function differs from vc-do-command in that it invokes `vc-src-program'."
 
 (autoload 'vc-switches "vc")
 
-(defun vc-src-register (files &optional _rev _comment)
-  "Register FILES under src.
-REV is ignored.
-COMMENT is ignored."
+(defun vc-src-register (files &optional _comment)
+  "Register FILES under src. COMMENT is ignored."
   (vc-src-command nil files "add"))
 
 (defun vc-src-responsible-p (file)

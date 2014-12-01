@@ -580,10 +580,6 @@ in the branch repository (or whose status not be determined)."
   "Create a new Bzr repository."
   (vc-bzr-command "init" nil 0 nil))
 
-(defun vc-bzr-init-revision (&optional _file)
-  "Always return nil, as Bzr cannot register explicit versions."
-  nil)
-
 (defun vc-bzr-previous-revision (_file rev)
   (if (string-match "\\`[0-9]+\\'" rev)
       (number-to-string (1- (string-to-number rev)))
@@ -594,11 +590,8 @@ in the branch repository (or whose status not be determined)."
       (number-to-string (1+ (string-to-number rev)))
     (error "Don't know how to compute the next revision of %s" rev)))
 
-(defun vc-bzr-register (files &optional rev _comment)
-  "Register FILES under bzr.
-Signal an error unless REV is nil.
-COMMENT is ignored."
-  (if rev (error "Can't register explicit revision with bzr"))
+(defun vc-bzr-register (files &optional _comment)
+  "Register FILES under bzr. COMMENT is ignored."
   (vc-bzr-command "add" nil 0 files))
 
 ;; Could run `bzr status' in the directory and see if it succeeds, but

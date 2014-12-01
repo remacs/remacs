@@ -605,7 +605,7 @@ The car of the list is the current branch."
   "Create a new Git repository."
   (vc-git-command nil 0 nil "init"))
 
-(defun vc-git-register (files &optional _rev _comment)
+(defun vc-git-register (files &optional _comment)
   "Register FILES into the git version-control system."
   (let (flist dlist)
     (dolist (crt files)
