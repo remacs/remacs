@@ -5,6 +5,12 @@
 
 2014-12-01  Eric S. Raymond  <esr@snark.thyrsus.com>
 
+	* vc/vc.el, vc/vc-cvs.el, vc/vc-rcs.el, vc/vc-svn.el: The 'merge'
+	backend method of RCS/CVS/SVN is now 'merge-file', to contrast with
+	'merge-branch'. Prompting for merge revisions is pushed down to
+	the back ends; this fixes a layering violation that caused bad
+	behavior with SVN.
+
 	* vc/vc.el, vc-hooks.el, and all backends: API simplification;
 	vc-stay-local-p and repository-hostname are no longer public
 	methods. Only the CVS and SVN backends used these, and the SVN

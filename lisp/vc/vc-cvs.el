@@ -440,6 +440,35 @@ REV is the revision to check out."
       ;; Make the file read-only by switching off all w-bits
       (set-file-modes file (logand (file-modes file) 3950)))))
 
+(defun vc-cvs-merge-file (file)
+  "Accept a file merge request, prompting for revisions."
+  (let* ((first-revision
+        (vc-read-revision
+         (concat "Merge " file
+                 " from branch or revision "
+                 "(default news on current branch): ")
+         (list file)
+         'CVS))
+        second-revision
+        status)
+    (cond
+     ((string= first-revision "")
+      (setq status (vc-cvs-merge-news file)))
+     (t
+      (if (not (vc-branch-p first-revision))
+         (setq second-revision
+               (vc-read-revision
+                "Second revision: "
+                (list file) 'CVS nil
+                (concat (vc-branch-part first-revision) ".")))
+       ;; We want to merge an entire branch.  Set revisions
+       ;; accordingly, so that vc-cvs-merge understands us.
+       (setq second-revision first-revision)
+       ;; first-revision must be the starting point of the branch
+       (setq first-revision (vc-branch-part first-revision)))
+      (setq status (vc-cvs-merge file first-revision second-revision))))
+    status))
+
 (defun vc-cvs-merge (file first-revision &optional second-revision)
   "Merge changes into current working copy of FILE.
 The changes are between FIRST-REVISION and SECOND-REVISION."

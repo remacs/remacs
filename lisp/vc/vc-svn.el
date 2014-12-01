@@ -379,6 +379,29 @@ FILE is a file wildcard, relative to the root directory of DIRECTORY."
   (unless contents-done
     (vc-svn-command nil 0 file "revert")))
 
+(defun vc-svn-merge-file (file)
+  "Accept a file merge request, prompting for revisions."
+  (let* ((first-revision
+        (vc-read-revision
+         (concat "Merge " file
+                 " from SVN revision "
+                 "(default news on current branch): ")
+         (list file)
+         'SVN))
+        second-revision
+        status)
+    (cond
+     ((string= first-revision "")
+      (setq status (vc-svn-merge-news file)))
+     (t
+      (setq second-revision
+           (vc-read-revision
+            "Second SVN revision: "
+            (list file) 'SVN nil
+            first-revision))
+      (setq status (vc-svn-merge file first-revision second-revision))))
+    status))
+
 (defun vc-svn-merge (file first-version &optional second-version)
   "Merge changes into current working copy of FILE.
 The changes are between FIRST-VERSION and SECOND-VERSION."

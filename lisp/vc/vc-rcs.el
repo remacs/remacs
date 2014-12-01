@@ -486,6 +486,31 @@ revert all registered files beneath it."
 		   (concat (if (eq (vc-state file) 'edited) "-u" "-r")
 			   (vc-working-revision file)))))
 
+(defun vc-rcs-merge-file (file)
+  "Accept a file merge request, prompting for revisions."
+  (let* ((first-revision
+        (vc-read-revision
+         (concat "Merge " file " from branch or revision: ")
+         (list file)
+         'RCS))
+        second-revision)
+    (cond
+     ((string= first-revision "")
+      (error "A starting RCS revision is required"))
+     (t
+      (if (not (vc-branch-p first-revision))
+         (setq second-revision
+               (vc-read-revision
+                "Second RCS revision: "
+                (list file) 'RCS nil
+                (concat (vc-branch-part first-revision) ".")))
+       ;; We want to merge an entire branch.  Set revisions
+       ;; accordingly, so that vc-rcs-merge understands us.
+       (setq second-revision first-revision)
+       ;; first-revision must be the starting point of the branch
+       (setq first-revision (vc-branch-part first-revision)))))
+    (vc-rcs-merge file first-revision second-revision)))
+
 (defun vc-rcs-merge (file first-version &optional second-version)
   "Merge changes into current working copy of FILE.
 The changes are between FIRST-VERSION and SECOND-VERSION."

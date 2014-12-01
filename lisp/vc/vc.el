@@ -289,10 +289,11 @@
 ;;   'cancel-version' and took a single file arg, not a list of
 ;;   files.)
 ;;
-;; - merge (file rev1 rev2)
+;; - merge-file (file rev1 rev2)
 ;;
-;;   Merge the changes between REV1 and REV2 into the current working file
-;;   (for non-distributed VCS).
+;;   Merge the changes between REV1 and REV2 into the current working
+;;   file (for non-distributed VCS).  It is expected that with an
+;;   empty first revision this will behave like the merge-news method.
 ;;
 ;; - merge-branch ()
 ;;
@@ -593,6 +594,11 @@
 ;;   take a first optional revision argument, since on no system since
 ;;   RCS has setting the initial revision been even possible, let alone
 ;;   sane.
+;;
+;; - The backend operation for non-distributed VCSes formerly called
+;;   "merge" is now "merge-file" (to contrast with merge-branch), and
+;;   does its own prompting for revisions.  (This fixes a layer violation
+;;   that produced bad behavior under SVN.)
 ;;
 ;;   workfile-unchanged-p is no longer a public back-end method.  It
 ;;   was redundant with vc-state and usually implemented with a trivial
@@ -2060,41 +2066,16 @@ changes from the current branch."
       (vc-buffer-sync)
       (dolist (file files)
 	(let* ((state (vc-state file))
-	       first-revision second-revision status)
+	       status)
 	  (cond
 	   ((stringp state)	;; Locking VCses only
 	    (error "File %s is locked by %s" file state))
 	   ((not (vc-editable-p file))
 	    (vc-checkout file t)))
-	  (setq first-revision
-		(vc-read-revision
-		 (concat "Merge " file
-			 " from branch or revision "
-			 "(default news on current branch): ")
-		 (list file)
-		 backend))
-	  (cond
-	   ((string= first-revision "")
-	    (setq status (vc-call-backend backend 'merge-news file)))
-	   (t
-	    (if (not (vc-branch-p first-revision))
-		(setq second-revision
-		      (vc-read-revision
-		       "Second revision: "
-		       (list file) backend nil
-		       ;; FIXME: This is CVS/RCS/SCCS specific.
-		       (concat (vc-branch-part first-revision) ".")))
-	      ;; We want to merge an entire branch.  Set revisions
-	      ;; accordingly, so that vc-BACKEND-merge understands us.
-	      (setq second-revision first-revision)
-	      ;; first-revision must be the starting point of the branch
-	      (setq first-revision (vc-branch-part first-revision)))
-	    (setq status (vc-call-backend backend 'merge file
-					  first-revision second-revision))))
+	  (setq status (vc-call-backend backend 'merge-file file))
 	  (vc-maybe-resolve-conflicts file status "WORKFILE" "MERGE SOURCE"))))
      (t
       (error "Sorry, merging is not implemented for %s" backend)))))
-
 
 (defun vc-maybe-resolve-conflicts (file status &optional _name-A _name-B)
   (vc-resynch-buffer file t (not (buffer-modified-p)))
