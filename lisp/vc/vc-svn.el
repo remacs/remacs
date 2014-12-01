@@ -156,7 +156,6 @@ If you want to force an empty list of arguments, use t."
 (defun vc-svn-state (file &optional localp)
   "SVN-specific version of `vc-state'."
   (let (process-file-side-effects)
-    (setq localp (or localp (vc-stay-local-p file 'SVN)))
     (with-temp-buffer
       (cd (file-name-directory file))
       (vc-svn-command t 0 file "status" (if localp "-v" "-u"))
@@ -199,21 +198,13 @@ If you want to force an empty list of arguments, use t."
 ;; -dir-status called from vc-dir, which loads vc, which loads vc-dispatcher.
 (declare-function vc-exec-after "vc-dispatcher" (code))
 
-(defun vc-svn-dir-status (dir callback)
+(defun vc-svn-dir-status (_dir callback)
   "Run 'svn status' for DIR and update BUFFER via CALLBACK.
 CALLBACK is called as (CALLBACK RESULT BUFFER), where
 RESULT is a list of conses (FILE . STATE) for directory DIR."
   ;; FIXME should this rather be all the files in dir?
-  ;; FIXME: the vc-stay-local-p logic below is disabled, it ends up
-  ;; calling synchronously (vc-svn-registered DIR) => calling svn status -v DIR
-  ;; which is VERY SLOW for big trees and it makes emacs
-  ;; completely unresponsive during that time.
-  (let* ((local (and nil (vc-stay-local-p dir 'SVN)))
-	 (remote (or t (not local) (eq local 'only-file))))
-    (vc-svn-command (current-buffer) 'async nil "status"
-		    (if remote "-u"))
-  (vc-run-delayed
-   (vc-svn-after-dir-status callback remote))))
+    (vc-svn-command (current-buffer) 'async nil "status" "-u")
+  (vc-run-delayed (vc-svn-after-dir-status callback)))
 
 (defun vc-svn-dir-status-files (_dir files _default-state callback)
   (apply 'vc-svn-command (current-buffer) 'async nil "status" files)
