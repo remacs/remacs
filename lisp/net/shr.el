@@ -1009,18 +1009,23 @@ ones, in case fg and bg are nil."
   "Convert DOM into a string containing the xml representation."
   (insert (format "<%s" (dom-tag dom)))
   (dolist (attr (dom-attributes dom))
-    ;; Ignore attributes that start with a colon.
+    ;; Ignore attributes that start with a colon because they are
+    ;; private elements.
     (unless (= (aref (format "%s" (car attr)) 0) ?:)
       (insert (format " %s=\"%s\"" (car attr) (cdr attr)))))
   (insert ">")
   (let (url)
     (dolist (elem (dom-children dom))
-      (when (or (not (eq (dom-tag elem) 'image))
-		(not (setq url (dom-attr elem ':xlink:href)))
-		(not shr-blocked-images)
-		(not (string-match shr-blocked-images url)))
+      (cond
+       ((stringp elem)
+	(insert elem))
+       ((or (not (eq (dom-tag elem) 'image))
+	    ;; Filter out blocked elements inside the SVG image.
+	    (not (setq url (dom-attr elem ':xlink:href)))
+	    (not shr-blocked-images)
+	    (not (string-match shr-blocked-images url)))
 	(insert " ")
-	(shr-dom-print elem))))
+	(shr-dom-print elem)))))
   (insert (format "</%s>" (dom-tag dom))))
 
 (defun shr-tag-svg (dom)
