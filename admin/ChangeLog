@@ -1,3 +1,7 @@
+2014-12-01  Glenn Morris  <rgm@gnu.org>
+
+	* update_autogen: Fix bogosity introduced in 2014-11-16 merge.
+
 2014-11-29  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Lessen focus on ChangeLog files, as opposed to change log entries.

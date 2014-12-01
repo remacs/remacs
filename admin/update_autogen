@@ -305,9 +305,6 @@ EOF
 
     modified=$(status $basegen) || die
 
-    ## bzr status output is always relative to top-level, not PWD.
-    [ "$vcs" = "bzr" ] && cd $oldpwd
-
     commit "generated" $modified || die "commit error"
 
     exit 0
@@ -379,11 +376,7 @@ echo "Checking status of loaddef files..."
 ## It probably would be fine to just check+commit lisp/, since
 ## making autoloads should not effect any other files.  But better
 ## safe than sorry.
-modified=$(status $genfiles ${ldefs_out#lisp/}) || die
-
-
-## bzr status output is always relative to top-level, not PWD.
-[ "$vcs" = "bzr" ] && cd ../
+modified=$(status $genfiles $ldefs_out) || die
 
 
 commit "loaddefs" $modified || die "commit error"
