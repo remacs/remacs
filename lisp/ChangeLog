@@ -59,6 +59,11 @@
 
 	* progmodes/cc-align.el (c-lineup-respect-col-0): New function.
 
+2014-12-01  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* net/shr.el (shr-dom-print): Fix up `shr-dom-print' after the
+	dom.el changes.
+
 2014-12-01  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* vc/vc.el (vc-find-conflicted-file): Look for conflicted files in the
