@@ -30,6 +30,7 @@
 
 (defgroup gnus-cloud nil
   "Syncing Gnus data via IMAP."
+  :version "25.1"
   :group 'gnus)
 
 (defcustom gnus-cloud-synced-files
@@ -39,6 +40,7 @@
     (:directory "~/News" :match ".*.SCORE\\'"))
   "List of file regexps that should be kept up-to-date via the cloud."
   :group 'gnus-cloud
+  ;; FIXME this type does not match the default.  Nor does the documentation.
   :type '(repeat regexp))
 
 (defvar gnus-cloud-group-name "*Emacs Cloud*")
