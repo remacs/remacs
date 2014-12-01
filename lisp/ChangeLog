@@ -1,9 +1,13 @@
+2014-12-01  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* emacs-lisp/inline.el: New file.
+
 2014-12-01  Eric S. Raymond  <esr@snark.thyrsus.com>
 
 	* vc/vc.el, vc-hooks.el, and all backends: API simplification;
 	vc-state-heuristic is no longer a public method, having been
-	removed where it is redundant, unnecessary, or known buggy. This
-	eliminated all backends except CVS.  Eliminates bug#7850.
+	removed where it is redundant, unnecessary, or known buggy.
+	This eliminated all backends except CVS.  Eliminates bug#7850.
 
 	* vc/vc-cvs.el, vc/vc-hooks.el, vc/vc-rcs.el, vc/vc-sccs.el:
 	Eliminate vc-mistrust-permissions.  It was only relevant to the
@@ -41,8 +45,8 @@
 
 2014-11-29  Fabián Ezequiel Gallina  <fgallina@gnu.org>
 
-	* progmodes/python.el (python-shell-completion-setup-code): Use
-	__builtin__ module (or builtins in Python 3) and catch all errors
+	* progmodes/python.el (python-shell-completion-setup-code):
+	Use __builtin__ module (or builtins in Python 3) and catch all errors
 	when importing readline and rlcompleter.
 
 2014-11-29  Stephen Berman  <stephen.berman@gmx.net>
@@ -94,8 +98,8 @@
 
 2014-11-29  Eli Zaretskii  <eliz@gnu.org>
 
-	* vc/vc-git.el (vc-git-command, vc-git--call): Bind
-	coding-system-for-read and coding-system-for-write to
+	* vc/vc-git.el (vc-git-command, vc-git--call):
+	Bind coding-system-for-read and coding-system-for-write to
 	vc-git-commits-coding-system.
 	(vc-git-previous-revision): Use "~1" instead of "^", since the
 	latter is a special character for MS-Windows system shells.

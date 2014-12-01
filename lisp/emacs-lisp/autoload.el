@@ -120,7 +120,8 @@ expression, in which case we want to handle forms differently."
            ;; Look for an interactive spec.
            (interactive (pcase body
                           ((or `((interactive . ,_) . ,_)
-                               `(,_ (interactive . ,_) . ,_)) t))))
+                               `(,_ (interactive . ,_) . ,_))
+                           t))))
         ;; Add the usage form at the end where describe-function-1
         ;; can recover it.
         (when (listp args) (setq doc (help-add-fundoc-usage doc args)))
@@ -140,11 +141,9 @@ expression, in which case we want to handle forms differently."
      ;; For complex cases, try again on the macro-expansion.
      ((and (memq car '(easy-mmode-define-global-mode define-global-minor-mode
                        define-globalized-minor-mode defun defmacro
-                       ;; FIXME: we'd want `defmacro*' here as well, so as
-                       ;; to handle its `declare', but when autoload is run
-                       ;; CL is not loaded so macroexpand doesn't know how
-                       ;; to expand it!
-		       easy-mmode-define-minor-mode define-minor-mode))
+		       easy-mmode-define-minor-mode define-minor-mode
+                       define-inline cl-defun cl-defmacro))
+           (macrop car)
 	   (setq expand (let ((load-file-name file)) (macroexpand form)))
 	   (memq (car expand) '(progn prog1 defalias)))
       (make-autoload expand file 'expansion)) ;Recurse on the expansion.
