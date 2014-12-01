@@ -4,6 +4,9 @@
 	takes an explicit async flag.  This eliminates a particularly ugly
 	global.
 
+	vc-bzr.el: Restore vc-bzr-state-heuristic as a private method.
+	VC randomly/unpredictable fails without it; cause not yet established.
+
 2014-12-01  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	Merge some of the differences from the standalone CC-mode.
