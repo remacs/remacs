@@ -1,3 +1,8 @@
+2014-12-01  Ivan Shmakov  <ivan@siamics.net>
+
+	* net/eww.el (eww-render): Call `eww-after-render-hook' in the
+	correct buffer (bug#19225).
+
 2014-12-01  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
 	* net/nsm.el (network-security-level): Change the default to `medium'.

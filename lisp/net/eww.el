@@ -309,14 +309,14 @@ See the `eww-search-prefix' variable for the search engine used."
 	   ((equal (car content-type) "application/pdf")
 	    (eww-display-pdf))
 	   ((string-match-p "\\`image/" (car content-type))
-	    (eww-display-image buffer)
-	    (eww-update-header-line-format))
+	    (eww-display-image buffer))
 	   (t
-	    (eww-display-raw buffer encode)
-	    (eww-update-header-line-format)))
-	  (plist-put eww-data :url url)
-	  (setq eww-history-position 0)
-	  (run-hooks 'eww-after-render-hook))
+	    (eww-display-raw buffer encode)))
+	  (with-current-buffer buffer
+	    (plist-put eww-data :url url)
+	    (eww-update-header-line-format)
+	    (setq eww-history-position 0)
+	    (run-hooks 'eww-after-render-hook)))
       (kill-buffer data-buffer))))
 
 (defun eww-parse-headers ()
@@ -404,10 +404,7 @@ See the `eww-search-prefix' variable for the search engine used."
 	  (while (and (not (eobp))
 		      (get-text-property (point) 'eww-form))
 	    (forward-line 1)))))
-      (plist-put eww-data :url url)
-      (setq eww-history-position 0)
-      (eww-size-text-inputs)
-      (eww-update-header-line-format))))
+      (eww-size-text-inputs))))
 
 (defun eww-handle-link (dom)
   (let* ((rel (dom-attr dom 'rel))
