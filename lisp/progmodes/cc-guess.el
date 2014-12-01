@@ -572,4 +572,9 @@ WITH-NAME is asked to the user."
 
 
 (cc-provide 'cc-guess)
+
+;;; Local Variables:
+;;; indent-tabs-mode: t
+;;; tab-width: 8
+;;; End:
 ;;; cc-guess.el ends here

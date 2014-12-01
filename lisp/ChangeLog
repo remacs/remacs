@@ -1,7 +1,63 @@
-2014-12-01  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+2014-12-01  Stefan Monnier  <monnier@iro.umontreal.ca>
 
-	* net/shr.el (shr-dom-print): Fix up `shr-dom-print' after the
-	dom.el changes.
+	Merge some of the differences from the standalone CC-mode.
+	The main change is to only use the `category' text-property only when
+	available.  For that many calls are changed to use c-get-char-property,
+	c-next-single-property-change, c-sc-scan-lists,
+	c-sc-parse-partial-sexp, c-unmark-<->-as-paren.
+
+	* progmodes/cc-mode.el (c-just-done-before-change): New var.
+	(c-basic-common-init): Initialize it.
+	(c-common-init): Only use mode-require-final-newline when available.
+	(c-before-change): Check and set c-just-done-before-change.
+	(c-after-change): Re-set c-just-done-before-change.
+	(c-advise-fl-for-region): New macro.
+	(lazy-lock-defer-rest-after-change, lazy-lock-defer-line-after-change)
+	(font-lock-after-change-function, jit-lock-after-change):
+	Advise if needed.
+
+	* progmodes/cc-langs.el (c-modified-constant): New lang var.
+	(c-known-type-key): Don't make a list just to throw it away.
+
+	* progmodes/cc-engine.el (c-invalidate-state-cache, c-parse-state):
+	Handle the case where categories are not available.
+	(c-record-parse-state-state, c-replay-parse-state-state):
+	Handle marker values.
+	(c-before-change-check-<>-operators): Look for the `syntax-table'
+	property rather than for the corresponding `category'.
+	(c-looking-at-decl-block): Remove unused var
+	`c-disallow-comma-in-<>-arglists'.
+	(c-forward-<>-arglist-recur): Remove unused var
+	`orig-record-found-types'.
+
+	* progmodes/cc-defs.el (c-version): Bump up to 5.33.
+	(c-use-category): New const.
+	(c-next-single-property-change): New macro.
+	(c-region-is-active-p): Prefer region-active-p when available.
+	(c-search-backward-char-property): Fix old min/max typo; probably
+	a copy/paste error.
+	(c-mark-<-as-paren, c-mark->-as-paren, c-unmark-<->-as-paren):
+	Turn them into macros that obey c-use-category.
+	(c-sc-scan-lists-no-category+1+1, c-sc-scan-lists-no-category+1-1)
+	(c-sc-scan-lists-no-category-1+1, c-sc-scan-lists-no-category-1-1)
+	(c-sc-scan-lists, c-sc-parse-partial-sexp)
+	(c-looking-at-non-alphnumspace): New macros.
+	(c-sc-parse-partial-sexp-no-category): New function.
+	(c-emacs-features): Add `category-properties' element.
+
+	* progmodes/cc-cmds.el (c-forward-into-nomenclature)
+	(c-backward-into-nomenclature): Use cc-subword if subword-mode is
+	not available.
+	(c-beginning-of-defun, c-end-of-defun, c-mark-function)
+	(c-indent-line-or-region): Use c-region-is-active-p.
+
+	* progmodes/cc-bytecomp.el (cc-bytecomp-unbound-variables)
+	(cc-bytecomp-original-functions, cc-bytecomp-original-properties)
+	(cc-bytecomp-loaded-files): Re-set each time the file is loaded.
+	(cc-bytecomp-obsolete-var, cc-bytecomp-ignore-obsolete)
+	(cc-bytecomp-obsolete-fun): Delete unused functions.
+
+	* progmodes/cc-align.el (c-lineup-respect-col-0): New function.
 
 2014-12-01  Stefan Monnier  <monnier@iro.umontreal.ca>
 

@@ -266,7 +266,7 @@
     ;; This function might do hidden buffer changes.
     (when (c-got-face-at (point) c-literal-faces)
       (while (progn
-	       (goto-char (next-single-property-change
+	       (goto-char (c-next-single-property-change
 			   (point) 'face nil limit))
 	       (and (< (point) limit)
 		    (c-got-face-at (point) c-literal-faces))))
@@ -559,8 +559,7 @@ stuff.  Used on level 1 and higher."
 				   (progn
 				     (c-mark-<-as-paren beg)
 				     (c-mark->-as-paren end))
-				 ;; (c-clear-char-property beg 'syntax-table)
-				 (c-clear-char-property beg 'category)))
+				 (c-unmark-<->-as-paren beg)))
 			     nil)))))))
 
 	      ;; #define.
@@ -2702,4 +2701,8 @@ need for `pike-font-lock-extra-types'.")
 ;; 2006-07-10:  awk-font-lock-keywords has been moved back to cc-awk.el.
 (cc-provide 'cc-fonts)
 
+;;; Local Variables:
+;;; indent-tabs-mode: t
+;;; tab-width: 8
+;;; End:
 ;;; cc-fonts.el ends here

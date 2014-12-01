@@ -65,8 +65,7 @@
 ;; elsewhere in the load path.
 ;;
 ;; To suppress byte compiler warnings, use the macros
-;; `cc-bytecomp-defun', `cc-bytecomp-defvar',
-;; `cc-bytecomp-obsolete-fun', and `cc-bytecomp-obsolete-var'.
+;; `cc-bytecomp-defun' and `cc-bytecomp-defvar'.
 ;;
 ;; This file is not used at all after the package has been byte
 ;; compiled.  It is however necessary when running uncompiled.
@@ -78,6 +77,12 @@
 (defvar cc-bytecomp-original-functions nil)
 (defvar cc-bytecomp-original-properties nil)
 (defvar cc-bytecomp-loaded-files nil)
+
+(setq cc-bytecomp-unbound-variables nil)
+(setq cc-bytecomp-original-functions nil)
+(setq cc-bytecomp-original-properties nil)
+(setq cc-bytecomp-loaded-files nil)
+
 (defvar cc-bytecomp-environment-set nil)
 
 (defmacro cc-bytecomp-debug-msg (&rest args)
@@ -370,33 +375,6 @@ the file.  Don't use outside `eval-when-compile'."
       "cc-bytecomp-put: Bound property %s for %s to %s"
       ,propname ,symbol ,value)))
 
-(defmacro cc-bytecomp-obsolete-var (symbol)
-  "Suppress warnings that the given symbol is an obsolete variable.
-Don't use within `eval-when-compile'."
-  `(eval-when-compile
-     (if (get ',symbol 'byte-obsolete-variable)
-	 (cc-bytecomp-put ',symbol 'byte-obsolete-variable nil)
-       ;; This avoids a superfluous compiler warning
-       ;; about calling `get' for effect.
-       t)))
-
-(defun cc-bytecomp-ignore-obsolete (form)
-  ;; Wraps a call to `byte-compile-obsolete' that suppresses the warning.
-  (let ((byte-compile-warnings byte-compile-warnings))
-    (byte-compile-disable-warning 'obsolete)
-    (byte-compile-obsolete form)))
-
-(defmacro cc-bytecomp-obsolete-fun (symbol)
-  "Suppress warnings that the given symbol is an obsolete function.
-Don't use within `eval-when-compile'."
-  `(eval-when-compile
-     (if (eq (get ',symbol 'byte-compile) 'byte-compile-obsolete)
-	 (cc-bytecomp-put ',symbol 'byte-compile
-			  'cc-bytecomp-ignore-obsolete)
-       ;; This avoids a superfluous compiler warning
-       ;; about calling `get' for effect.
-       t)))
-
 (defmacro cc-bytecomp-boundp (symbol)
   "Return non-nil if the given symbol is bound as a variable outside
 the compilation.  This is the same as using `boundp' but additionally
@@ -423,4 +401,8 @@ exclude any functions that have been bound during compilation with
 
 (provide 'cc-bytecomp)
 
+;;; Local Variables:
+;;; indent-tabs-mode: t
+;;; tab-width: 8
+;;; End:
 ;;; cc-bytecomp.el ends here

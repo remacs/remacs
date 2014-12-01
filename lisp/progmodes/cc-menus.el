@@ -269,7 +269,7 @@ nested angle brackets constructs."
        "\\("				      ; method name which gets captured
 					      ; into index
          "[" c-alpha "_]"
-         "[" c-alnum "_]*"
+	 "[" c-alnum "_]*"
        "\\)"
        "[ \t\n\r]*"
        ;; An argument list that contains zero or more arguments.
@@ -521,4 +521,8 @@ Example:
 
 (cc-provide 'cc-menus)
 
+;;; Local Variables:
+;;; indent-tabs-mode: t
+;;; tab-width: 8
+;;; End:
 ;;; cc-menus.el ends here

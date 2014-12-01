@@ -271,12 +271,13 @@ nil."
   :group 'c)
 ;;;###autoload(put 'c-basic-offset 'safe-local-variable 'integerp)
 
+
 (defcustom c-tab-always-indent t
   "*Controls the operation of the TAB key.
 If t, hitting TAB always just indents the current line.  If nil, hitting
 TAB indents the current line if point is at the left margin or in the
 line's indentation, otherwise it inserts a `real' tab character \(see
-note\).	 If some other value (not nil or t), then tab is inserted only
+note\).  If some other value (not nil or t), then tab is inserted only
 within literals \(comments and strings), but the line is always
 reindented.
 
@@ -540,7 +541,7 @@ variable in a mode hook."
 		  (const :format "IDL   " idl-mode) (regexp :format "%v"))
 	    (cons :format "%v"
 		  (const :format "Pike  " pike-mode) (regexp :format "%v"))
-            (cons :format "%v"
+	    (cons :format "%v"
 		  (const :format "AWK   " awk-mode) (regexp :format "%v")))
 	   (cons :format "    %v"
 		 (const :format "Other " other) (regexp :format "%v"))))
@@ -1175,7 +1176,7 @@ can always override the use of `c-default-style' by making calls to
        (objc-method-args-cont . c-lineup-ObjC-method-args)
        ;; Anchor pos: At the method start (always at boi).
        (objc-method-call-cont . (c-lineup-ObjC-method-call-colons
-			        c-lineup-ObjC-method-call +))
+				c-lineup-ObjC-method-call +))
        ;; Anchor pos: At the open bracket.
        (extern-lang-open      . 0)
        (namespace-open        . 0)
@@ -1771,4 +1772,8 @@ It treats escaped EOLs as whitespace.")
 
 (cc-provide 'cc-vars)
 
+;;; Local Variables:
+;;; indent-tabs-mode: t
+;;; tab-width: 8
+;;; End:
 ;;; cc-vars.el ends here

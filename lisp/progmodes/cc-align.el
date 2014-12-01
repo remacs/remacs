@@ -1229,6 +1229,18 @@ Works with: Any syntactic symbol."
     (back-to-indentation)
     (vector (current-column))))
 
+(defun c-lineup-respect-col-0 (langelem)
+  "If the current line starts at column 0, return [0].  Otherwise return nil.
+
+This can be used for comments (in conjunction with, say,
+`c-lineup-comment'), to keep comments already at column 0
+anchored there, but reindent other comments."
+  (save-excursion
+    (back-to-indentation)
+    (if (eq (current-column) 0)
+	[0]
+      nil)))
+
 
 (defun c-snug-do-while (syntax pos)
   "Dynamically calculate brace hanginess for do-while statements.
@@ -1333,4 +1345,8 @@ For other semicolon contexts, no determination is made."
 
 (cc-provide 'cc-align)
 
+;;; Local Variables:
+;;; indent-tabs-mode: t
+;;; tab-width: 8
+;;; End:
 ;;; cc-align.el ends here

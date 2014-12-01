@@ -165,8 +165,8 @@
      (c-offsets-alist . ((topmost-intro        . 0)
 			 (substatement         . +)
 			 (substatement-open    . 0)
-                         (case-label           . +)
-                         (access-label         . -)
+			 (case-label           . +)
+			 (access-label         . -)
 			 (inclass              . +)
 			 (inline-open          . 0))))
     ("linux"
@@ -209,15 +209,15 @@
      (c-offsets-alist . ((inline-open . 0)
 			 (topmost-intro-cont    . +)
 			 (statement-block-intro . +)
- 			 (knr-argdecl-intro     . 5)
+			 (knr-argdecl-intro     . 5)
 			 (substatement-open     . +)
 			 (substatement-label    . +)
- 			 (label                 . +)
- 			 (statement-case-open   . +)
- 			 (statement-cont        . +)
- 			 (arglist-intro  . c-lineup-arglist-intro-after-paren)
- 			 (arglist-close  . c-lineup-arglist)
- 			 (access-label   . 0)
+			 (label                 . +)
+			 (statement-case-open   . +)
+			 (statement-cont        . +)
+			 (arglist-intro  . c-lineup-arglist-intro-after-paren)
+			 (arglist-close  . c-lineup-arglist)
+			 (access-label   . 0)
 			 (inher-cont     . c-lineup-java-inher)
 			 (func-decl-cont . c-lineup-java-throws))))
 
@@ -663,4 +663,8 @@ DEFAULT-STYLE has the same format as `c-default-style'."
 
 (cc-provide 'cc-styles)
 
+;;; Local Variables:
+;;; indent-tabs-mode: t
+;;; tab-width: 8
+;;; End:
 ;;; cc-styles.el ends here

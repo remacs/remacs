@@ -1308,16 +1308,28 @@ keyword on the line, the keyword is not inserted inside a literal, and
 (defun c-forward-into-nomenclature (&optional arg)
   "Compatibility alias for `c-forward-subword'."
   (interactive "p")
-  (require 'subword)
-  (subword-forward arg))
-(make-obsolete 'c-forward-into-nomenclature 'subword-forward "23.2")
+  (if (fboundp 'subword-mode)
+      (progn
+        (require 'subword)
+        (subword-forward arg))
+    (require 'cc-subword)
+    (c-forward-subword arg)))
+(make-obsolete 'c-forward-into-nomenclature
+               (if (fboundp 'subword-mode) 'subword-forward 'c-forward-subword)
+               "23.2")
 
 (defun c-backward-into-nomenclature (&optional arg)
   "Compatibility alias for `c-backward-subword'."
   (interactive "p")
-  (require 'subword)
-  (subword-backward arg))
-(make-obsolete 'c-backward-into-nomenclature 'subword-backward "23.2")
+  (if (fboundp 'subword-mode)
+      (progn
+        (require 'subword)
+        (subword-backward arg))
+    (require 'cc-subword)
+    (c-backward-subword arg)))
+(make-obsolete
+ 'c-backward-into-nomenclature
+ (if (fboundp 'subword-mode) 'subword-backward 'c-backward-subword) "23.2")
 
 (defun c-scope-operator ()
   "Insert a double colon scope operator at point.
@@ -1585,7 +1597,7 @@ defun."
 
   (or (not (eq this-command 'c-beginning-of-defun))
       (eq last-command 'c-beginning-of-defun)
-      (and transient-mark-mode mark-active)
+      (c-region-is-active-p)
       (push-mark))
 
   (c-save-buffer-state
@@ -1709,7 +1721,7 @@ the open-parenthesis that starts a defun; see `beginning-of-defun'."
 
   (or (not (eq this-command 'c-end-of-defun))
       (eq last-command 'c-end-of-defun)
-      (and transient-mark-mode mark-active)
+      (c-region-is-active-p)
       (push-mark))
 
   (c-save-buffer-state
@@ -1813,7 +1825,7 @@ with a brace block."
 	      (looking-at c-symbol-key))
 	    (match-string-no-properties 0))
 
-	   ((looking-at "DEFUN\\_>")
+	   ((looking-at "DEFUN\\s-*(") ;"DEFUN\\_>") think of XEmacs!
 	    ;; DEFUN ("file-name-directory", Ffile_name_directory, Sfile_name_directory, ...) ==> Ffile_name_directory
 	    ;; DEFUN(POSIX::STREAM-LOCK, stream lockp &key BLOCK SHARED START LENGTH) ==> POSIX::STREAM-LOCK
 	    (down-list 1)
@@ -2006,7 +2018,7 @@ function does not require the declaration to contain a brace block."
 		   (eq last-command 'c-mark-function)))
 	     (push-mark-p (and (eq this-command 'c-mark-function)
 			       (not extend-region-p)
-			       (not (and transient-mark-mode mark-active)))))
+			       (not (c-region-is-active-p)))))
 	(if push-mark-p (push-mark (point)))
 	(if extend-region-p
 	    (progn
@@ -3343,7 +3355,7 @@ Otherwise, with a prefix argument, rigidly reindent the expression
 starting on the current line.
 Otherwise reindent just the current line."
   (interactive
-   (list current-prefix-arg (use-region-p)))
+   (list current-prefix-arg (c-region-is-active-p)))
   (if region
       (c-indent-region (region-beginning) (region-end))
     (c-indent-command arg)))
@@ -4732,4 +4744,8 @@ normally bound to C-o.  See `c-context-line-break' for the details."
 
 (cc-provide 'cc-cmds)
 
+;;; Local Variables:
+;;; indent-tabs-mode: t
+;;; tab-width: 8
+;;; End:
 ;;; cc-cmds.el ends here
