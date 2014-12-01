@@ -481,14 +481,6 @@
 ;;
 ;;   Return the root of the VC controlled hierarchy for file.
 ;;
-;; - repository-hostname (dirname)
-;;
-;;   Return the hostname that the backend will have to contact
-;;   in order to operate on a file in DIRNAME.  If the return value
-;;   is nil, it means that the repository is local.
-;;   This function is used in `vc-stay-local-p' which backends can use
-;;   for their convenience.
-;;
 ;; - ignore (file &optional directory)
 ;;
 ;;   Ignore FILE under the VCS of DIRECTORY (default is `default-directory').
@@ -629,9 +621,6 @@
 ;;   vc-cvs-sticky-tag with that.
 ;;
 ;;;; Internal cleanups:
-;;
-;; - backends that care about vc-stay-local should try to take it into
-;;   account for vc-dir.  Is this likely to be useful???  YES!
 ;;
 ;; - vc-expand-dirs should take a backend parameter and only look for
 ;;   files managed by that backend.

@@ -511,7 +511,6 @@ If LIMIT is non-nil, show no more than this many entries."
 		   'vc-svn-command
 		   buffer
 		   'async
-		   ;; (if (and (= (length files) 1) (vc-stay-local-p file 'SVN)) 'async 0)
 		   (list file)
 		   "log"
 		   (append
@@ -552,7 +551,6 @@ If LIMIT is non-nil, show no more than this many entries."
 	      (list (concat "--diff-cmd=" diff-command) "-x"
 		    (mapconcat 'identity (vc-switches nil 'diff) " "))))
 	   (async (and (not vc-disable-async-diff)
-                       (vc-stay-local-p files 'SVN)
 		       (or oldvers newvers)))) ; Svn diffs those locally.
       (apply 'vc-svn-command buffer
 	     (if async 'async 0)
@@ -595,7 +593,7 @@ NAME is assumed to be a URL."
 ;; Subversion makes backups for us, so don't bother.
 ;; (defun vc-svn-make-version-backups-p (file)
 ;;   "Return non-nil if version backups should be made for FILE."
-;;  (vc-stay-local-p file 'SVN))
+;;  nil)
 
 (defun vc-svn-check-headers ()
   "Check if the current file has any headers in it."
@@ -617,17 +615,6 @@ and that it passes `vc-svn-global-switches' to it before FLAGS."
          (if (stringp vc-svn-global-switches)
              (cons vc-svn-global-switches flags)
            (append vc-svn-global-switches flags))))
-
-(defun vc-svn-repository-hostname (dirname)
-  (with-temp-buffer
-    (let (process-file-side-effects)
-      (vc-svn-command t t dirname "info" "--xml"))
-    (goto-char (point-min))
-    (when (re-search-forward "<url>\\(.*\\)</url>" nil t)
-      ;; This is not a hostname but a URL.  This may actually be considered
-      ;; as a feature since it allows vc-svn-stay-local to specify different
-      ;; behavior for different modules on the same server.
-      (match-string 1))))
 
 (defun vc-svn-resolve-when-done ()
   "Call \"svn resolved\" if the conflict markers have been removed."
