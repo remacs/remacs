@@ -1,3 +1,7 @@
+2014-12-01  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* .gitignore: Remove redundant pattern (subsumed by _*).
+
 2014-11-21  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Add more of the old .bzrignore to .gitignore.

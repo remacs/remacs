@@ -117,8 +117,6 @@ deps/
 # Logs and temporaries.
 *.log
 *.tmp
-# Created by MS-DOS builds
-src/_gdbinit
 
 # Time stamps.
 stamp_BLD
