@@ -71,7 +71,6 @@
 ;; - retrieve-tag (dir name update)            ??
 ;; MISCELLANEOUS
 ;; - make-version-backups-p (file)             ??
-;; - repository-hostname (dirname)             NOT NEEDED
 ;; - previous-revision (file rev)              ??
 ;; - next-revision (file rev)                  ??
 ;; - check-headers ()                          ??

@@ -601,13 +601,11 @@
 
 ;;; Todo:
 
-;; - Get rid of the "master file" terminology.
-
 ;; - Add key-binding for vc-delete-file.
 
 ;;;; New Primitives:
 ;;
-;; - deal with push/pull operations.
+;; - deal with push operations.
 ;;
 ;;;; Primitives that need changing:
 ;;
@@ -620,9 +618,15 @@
 ;;
 ;;;; Improved branch and tag handling:
 ;;
+;; - Make sure the *vc-dir* buffer is updated after merge-branch operations.
+;;
 ;; - add a generic mechanism for remembering the current branch names,
 ;;   display the branch name in the mode-line. Replace
 ;;   vc-cvs-sticky-tag with that.
+;;
+;; - Add a primitives for switching to a branch (creating it if required.
+;;
+;; - Add the ability to list tags and branches.
 ;;
 ;;;; Internal cleanups:
 ;;
@@ -636,7 +640,33 @@
 ;;   (or nil if it worked synchronously).  Hopefully we can define the old
 ;;   4 operations in term of this one.
 ;;
+;;;; Unify two different versions of the amend capability
+;;
+;; - Some back ends (SCCS/RCS/SVN/SRC), have an amend capability that can
+;;   be invoked from log-view.
+;;
+;; - The git backend supports amending, but in a different
+;;   way (press `C-c C-e' in log-edit buffer, when making a new commit).
+;;
+;; - Second, `log-view-modify-change-comment' doesn't seem to support
+;;   modern backends at all because `log-view-extract-comment'
+;;   unconditionally calls `log-view-current-file'. This should be easy to
+;;   fix.
+;;
+;; - Third, doing message editing in log-view might be a natural way to go
+;;   about it, but editing any but the last commit (and even it, if it's
+;;   been pushed) is a dangerous operation in Git, which we shouldn't make
+;;   too easy for users to perform.
+;;
+;;   There should be a check that the given comment is not reachable
+;;   from any of the "remote" refs?
+;;
 ;;;; Other
+;;
+;; - asynchronous checkin and commit, so you can keep working in other
+;;   buffers while the repo operation happens.
+;;
+;; - Direct support for stash/shelve.
 ;;
 ;; - when a file is in `conflict' state, turn on smerge-mode.
 ;;
@@ -1154,7 +1184,7 @@ For old-style locking-based version control systems, like RCS:
 	    ;; state of each individual file in the fileset, it seems
 	    ;; simplest to just check if the file exists.	 Bug#9781.
 	    (when (and (file-exists-p file) (not (file-writable-p file)))
-	      ;; Make the file+buffer read-write.
+	      ;; Make the file-buffer read-write.
 	      (unless (y-or-n-p (format "%s is edited but read-only; make it writable and continue? " file))
 		(error "Aborted"))
 	      ;; Maybe we somehow lost permissions on the directory.

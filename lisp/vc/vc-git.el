@@ -57,7 +57,6 @@
 ;; STATE-CHANGING FUNCTIONS
 ;; * create-repo ()                                OK
 ;; * register (files &optional rev comment)        OK
-;; - init-revision (file)                          NOT NEEDED
 ;; - responsible-p (file)                          OK
 ;; - could-register (file)                         NOT NEEDED, DEFAULT IS GOOD
 ;; - receive-file (file rev)                       NOT NEEDED
@@ -92,7 +91,6 @@
 ;; - retrieve-tag (dir name update)                OK
 ;; MISCELLANEOUS
 ;; - make-version-backups-p (file)                 NOT NEEDED
-;; - repository-hostname (dirname)                 NOT NEEDED
 ;; - previous-revision (file rev)                  OK
 ;; - next-revision (file rev)                      OK
 ;; - check-headers ()                              COULD BE SUPPORTED
