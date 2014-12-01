@@ -1,3 +1,9 @@
+2014-12-01  Eric S. Raymond  <esr@snark.thyrsus.com>
+
+	* vc/vc.el, and all backends: API cleanup; the backend diff method
+	takes an explicit async flag.  This eliminates a particularly ugly
+	global.
+
 2014-12-01  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	Merge some of the differences from the standalone CC-mode.

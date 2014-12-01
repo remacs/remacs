@@ -342,7 +342,7 @@ Remaining arguments are ignored."
 (defvar w32-quote-process-args)
 
 ;; FIXME use sccsdiff if present?
-(defun vc-sccs-diff (files &optional oldvers newvers buffer)
+(defun vc-sccs-diff (files &optional _async oldvers newvers buffer)
   "Get a difference report using SCCS between two filesets."
   (setq files (vc-expand-dirs files))
   (setq oldvers (vc-sccs-lookup-triple (car files) oldvers))

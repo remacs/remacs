@@ -984,11 +984,13 @@ or BRANCH^ (where \"^\" can be repeated)."
 
 (autoload 'vc-switches "vc")
 
-(defun vc-git-diff (files &optional rev1 rev2 buffer)
+(defun vc-git-diff (files &optional async rev1 rev2 buffer)
   "Get a difference report using Git between two revisions of FILES."
   (let (process-file-side-effects)
     (if vc-git-diff-switches
-        (apply #'vc-git-command (or buffer "*vc-diff*") 1 files
+        (apply #'vc-git-command (or buffer "*vc-diff*")
+	       (if async 'async 1)
+	       files
                (if (and rev1 rev2) "diff-tree" "diff-index")
                "--exit-code"
                (append (vc-switches 'git 'diff)

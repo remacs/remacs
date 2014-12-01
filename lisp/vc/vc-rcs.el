@@ -565,10 +565,10 @@ files beneath it."
     (vc-rcs-print-log-cleanup))
   (when limit 'limit-unsupported))
 
-(defun vc-rcs-diff (files &optional oldvers newvers buffer)
+(defun vc-rcs-diff (files &optional async oldvers newvers buffer)
   "Get a difference report using RCS between two sets of files."
   (apply #'vc-do-command (or buffer "*vc-diff*")
-	 1		;; Always go synchronous, the repo is local
+	 (if async 'async 1)
 	 "rcsdiff" (vc-expand-dirs files)
          (append (list "-q"
                        (and oldvers (concat "-r" oldvers))

@@ -779,7 +779,7 @@ If LIMIT is non-nil, show no more than this many entries."
 
 (autoload 'vc-switches "vc")
 
-(defun vc-bzr-diff (files &optional rev1 rev2 buffer)
+(defun vc-bzr-diff (files &optional async rev1 rev2 buffer)
   "VC bzr backend for diff."
   (let* ((switches (vc-switches 'bzr 'diff))
          (args
@@ -795,7 +795,7 @@ If LIMIT is non-nil, show no more than this many entries."
                                 (or rev2 "")))))))
     ;; `bzr diff' exits with code 1 if diff is non-empty.
     (apply #'vc-bzr-command "diff" (or buffer "*vc-diff*")
-           (if vc-disable-async-diff 1 'async) files
+           (if async 1 'async) files
            args)))
 
 

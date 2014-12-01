@@ -573,8 +573,7 @@ If LIMIT is non-nil, show no more than this many entries."
 		(vc-switches 'SVN 'diff)
 	      (list (concat "--diff-cmd=" diff-command) "-x"
 		    (mapconcat 'identity (vc-switches nil 'diff) " "))))
-	   (async (and (not vc-disable-async-diff)
-		       (or oldvers newvers)))) ; Svn diffs those locally.
+	   (async (or oldvers newvers))) ; Svn diffs those locally.
       (apply 'vc-svn-command buffer
 	     (if async 'async 0)
 	     files "diff"

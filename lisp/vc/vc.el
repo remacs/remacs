@@ -382,17 +382,19 @@
 ;;   default implementation runs rcs2log, which handles RCS- and
 ;;   CVS-style logs.
 ;;
-;; * diff (files &optional rev1 rev2 buffer)
+;; * diff (files &optional async rev1 rev2 buffer)
 ;;
 ;;   Insert the diff for FILE into BUFFER, or the *vc-diff* buffer if
-;;   BUFFER is nil.  If REV1 and REV2 are non-nil, report differences
-;;   from REV1 to REV2.  If REV1 is nil, use the working revision (as
-;;   found in the repository) as the older revision; if REV2 is nil,
-;;   use the current working-copy contents as the newer revision.  This
+;;   BUFFER is nil.  If ASYNC is non-nil, run asynchronously.If REV1
+;;   and REV2 are non-nil, report differences from REV1 to REV2.  If
+;;   REV1 is nil, use the working revision (as found in the
+;;   repository) as the older revision; if REV2 is nil, use the
+;;   current working-copy contents as the newer revision.  This
 ;;   function should pass the value of (vc-switches BACKEND 'diff) to
 ;;   the backend command.  It should return a status of either 0 (no
 ;;   differences found), or 1 (either non-empty diff or the diff is
 ;;   run asynchronously).
+
 ;;
 ;; - revision-completion-table (files)
 ;;
@@ -569,10 +571,25 @@
 
 ;;; Changes from the pre-25.1 API:
 ;;
-;; - The 'editable' optional argument of vc-checkout is gone. The
-;;   upper level assumes that all files are checked out editable. This
-;;   moves closer to emulating modern non-locking behavior even on very
-;;   old VCSes.
+;; - INCOMPATIBLE CHANGE: The 'editable' optional argument of
+;;   vc-checkout is gone. The upper level assumes that all files are
+;;   checked out editable. This moves closer to emulating modern
+;;   non-locking behavior even on very old VCSes.
+;;
+;; - INCOMPATIBLE CHANGE: The vc-register function and its backend
+;;   implementations no longer take a first optional revision
+;;   argument, since on no system since RCS has setting the initial
+;;   revision been even possible, let alone sane.
+;;
+;;   INCOMPATIBLE CHANGE: In older versions of the API, vc-diff did
+;;   not take an async-mode flag as a first optional argument.  (This
+;;   change eliminated a particularly ugly global.)
+;;
+;; - INCOMPATIBLE CHANGE: The backend operation for non-distributed
+;;   VCSes formerly called "merge" is now "merge-file" (to contrast
+;;   with merge-branch), and does its own prompting for revisions.
+;;   (This fixes a layer violation that produced bad behavior under
+;;   SVN.)
 ;;
 ;; - vc-state-heuristic is no longer a public method (the CVS backend
 ;;   retains it as a private one).
@@ -590,20 +607,11 @@
 ;;   variable are gone.  These have't made sense on anything shipped
 ;;   since RCS, and using them was a dumb stunt even on RCS.
 ;;
-;; - The vc-register function and its backend implementations no longer
-;;   take a first optional revision argument, since on no system since
-;;   RCS has setting the initial revision been even possible, let alone
-;;   sane.
-;;
-;; - The backend operation for non-distributed VCSes formerly called
-;;   "merge" is now "merge-file" (to contrast with merge-branch), and
-;;   does its own prompting for revisions.  (This fixes a layer violation
-;;   that produced bad behavior under SVN.)
-;;
 ;;   workfile-unchanged-p is no longer a public back-end method.  It
 ;;   was redundant with vc-state and usually implemented with a trivial
 ;;   call to it.  A few older back ends retain versions for internal use in
 ;;   their vc-state functions.
+;;
 
 ;;; Todo:
 
@@ -865,13 +873,6 @@ is sensitive to blank lines."
   :group 'vc)
 
 
-;; Variables users don't need to see
-
-(defvar vc-disable-async-diff nil
-  "VC sets this to t locally to disable some async diff operations.
-Backends that offer asynchronous diffs should respect this variable
-in their implementation of vc-BACKEND-diff.")
-
 ;; File property caching
 
 (defun vc-clear-context ()
@@ -1717,11 +1718,10 @@ Return t if the buffer had changes, nil otherwise."
               ;; We regard this as "changed".
               ;; Diff it against /dev/null.
               (apply 'vc-do-command buffer
-                     1 "diff" file
+                     (async 'async 1) "diff" file
                      (append (vc-switches nil 'diff) '("/dev/null"))))))
         (setq files (nreverse filtered))))
-    (let ((vc-disable-async-diff (not async)))
-      (vc-call-backend (car vc-fileset) 'diff files rev1 rev2 buffer))
+    (vc-call-backend (car vc-fileset) 'diff files async rev1 rev2 buffer)
     (set-buffer buffer)
     (diff-mode)
     (set (make-local-variable 'diff-vc-backend) (car vc-fileset))

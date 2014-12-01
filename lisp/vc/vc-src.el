@@ -295,7 +295,7 @@ If LIMIT is non-nil, show no more than this many entries."
 	      (when limit (list "-l" (format "%s" limit)))
 	      vc-src-log-switches)))))
 
-(defun vc-src-diff (files &optional oldvers newvers buffer)
+(defun vc-src-diff (files &optional _async oldvers newvers buffer)
   "Get a difference report using src between two revisions of FILES."
   (let* ((firstfile (car files))
          (working (and firstfile (vc-working-revision firstfile))))
