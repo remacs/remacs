@@ -128,16 +128,7 @@
 ;;   Return the current version control state of FILE.  For a list of
 ;;   possible values, see `vc-state'.  This function should do a full and
 ;;   reliable state computation; it is usually called immediately after
-;;   C-x v v.  If you want to use a faster heuristic when visiting a
-;;   file, put that into `state-heuristic' below.  Note that under most
-;;   VCSes this won't be called at all, dir-status is used instead.
-;;
-;; - state-heuristic (file)
-;;
-;;   If provided, this function is used to estimate the version control
-;;   state of FILE at visiting time.  It should be considerably faster
-;;   than the implementation of `state'.  For a list of possible values,
-;;   see the doc string of `vc-state'.
+;;   C-x v v.
 ;;
 ;; - dir-status (dir update-function)
 ;;
@@ -589,6 +580,9 @@
 ;;   upper level assumes that all files are checked out editable. This
 ;;   moves closer to emulating modern non-locking behavior even on very
 ;;   old VCSes.
+;;
+;; - vc-state-heuristic is no longer a public method (the CVS backend
+;;   retains it as a private one).
 ;;
 ;; - the vc-mistrust-permissions configuration variable is gone; the
 ;;   code no longer relies on permissions except in one corner case where

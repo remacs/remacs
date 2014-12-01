@@ -133,10 +133,6 @@ It should return a status of either 0 (no differences found), or
 
 
 ;;; Optional functions
-;; Should be faster than vc-dav-state - but how?
-(defun vc-dav-state-heuristic (url)
-  "Estimate the version control state of URL at visiting time."
-  (vc-dav-state url))
 
 ;; This should use url-dav-get-properties with a depth of `1' to get
 ;; all the properties.

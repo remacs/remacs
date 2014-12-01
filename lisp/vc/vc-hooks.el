@@ -548,17 +548,11 @@ status of this file.  Otherwise, the value returned is one of:
   "Quickly recompute the `state' of FILE."
   (vc-file-setprop
    file 'vc-state
-   (vc-call-backend backend 'state-heuristic file)))
+   (vc-call-backend backend 'state file)))
 
 (defsubst vc-up-to-date-p (file)
   "Convenience function that checks whether `vc-state' of FILE is `up-to-date'."
   (eq (vc-state file) 'up-to-date))
-
-(defun vc-default-state-heuristic (backend file)
-  "Default implementation of vc-BACKEND-state-heuristic.
-It simply calls the real state computation function `vc-BACKEND-state'
-and does not employ any heuristic at all."
-   (vc-call-backend backend 'state file))
 
 (defun vc-working-revision (file &optional backend)
   "Return the repository version from which FILE was checked out.

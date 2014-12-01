@@ -1,5 +1,10 @@
 2014-12-01  Eric S. Raymond  <esr@snark.thyrsus.com>
 
+	* vc/vc.el, vc-hooks.el, and all backends: API simplification;
+	vc-state-heuristic is no longer a public method, having been
+	removed where it is redundant, unnecessary, or known buggy. This
+	eliminated all backends except CVS.  Eliminates bug#7850.
+
 	* vc/vc-cvs.el, vc/vc-hooks.el, vc/vc-rcs.el, vc/vc-sccs.el:
 	Eliminate vc-mistrust-permissions.  It was only relevant to the
 	RCS and SCCS back ends and defaulted to t. Code now always

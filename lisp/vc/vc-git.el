@@ -50,7 +50,6 @@
 ;; STATE-QUERYING FUNCTIONS
 ;; * registered (file)                             OK
 ;; * state (file)                                  OK
-;; - state-heuristic (file)                        NOT NEEDED
 ;; * working-revision (file)                       OK
 ;; - latest-on-branch-p (file)                     NOT NEEDED
 ;; * checkout-model (files)                        OK

@@ -43,7 +43,6 @@
 ;; STATE-QUERYING FUNCTIONS
 ;; * registered (file)                         OK
 ;; * state (file)                              OK
-;; - state-heuristic (file)                    NOT NEEDED
 ;; - dir-status (dir update-function)          OK
 ;; - dir-status-files (dir files ds uf)        OK
 ;; - dir-extra-headers (dir)                   OK
