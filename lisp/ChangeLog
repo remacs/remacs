@@ -1,5 +1,7 @@
 2014-12-01  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
+	* net/nsm.el (network-security-level): Change the default to `medium'.
+
 	* net/eww.el (eww): Leave point in a place that doesn't cause
 	scrolling when displaying "Loading...".
 

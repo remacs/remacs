@@ -34,7 +34,7 @@
   :version "25.1"
   :group 'comm)
 
-(defcustom network-security-level 'low
+(defcustom network-security-level 'medium
   "How secure the network should be.
 If a potential problem with the security of the network
 connection is found, the user is asked to give input into how the
