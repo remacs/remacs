@@ -39,7 +39,6 @@
 ;; * working-revision (file)                   OK
 ;; - latest-on-branch-p (file)                 ??
 ;; * checkout-model (files)                    OK
-;; * workfile-unchanged-p (file)               OK
 ;; - mode-line-string (file)                   NOT NEEDED
 ;; STATE-CHANGING FUNCTIONS
 ;; * register (files &optional rev comment)    OK
@@ -212,9 +211,6 @@ This function differs from vc-do-command in that it invokes `vc-src-program'."
         (with-output-to-string
           (vc-src-command standard-output file "list" "-f{1}" "@")))
       "0"))
-
-(defun vc-src-workfile-unchanged-p (file)
-  (eq 'up-to-date (vc-src-state file)))
 
 ;;;
 ;;; State-changing functions

@@ -154,9 +154,6 @@ If nil, use the value of `vc-diff-switches'.  If t, use no switches."
       (re-search-forward "\\(?:Current b\\|B\\)ranch:  *\\(.*\\)\n?\nChanges against parent \\(.*\\)")
       (match-string 1))))
 
-(defun vc-mtn-workfile-unchanged-p (file)
-  (not (eq (vc-mtn-state file) 'edited)))
-
 ;; Mode-line rewrite code copied from vc-arch.el.
 
 (defcustom vc-mtn-mode-line-rewrite

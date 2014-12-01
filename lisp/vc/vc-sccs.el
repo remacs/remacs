@@ -124,7 +124,7 @@ For a description of possible values, see `vc-check-master-templates'."
 		 (working-revision (vc-working-revision file))
 		 (locking-user (cdr (assoc working-revision locks))))
 	    (if (not locking-user)
-		(if (vc-workfile-unchanged-p file)
+		(if (vc-sccs-workfile-unchanged-p file)
 		    'up-to-date
 		  'unlocked-changes)
 	      (if (string= locking-user (vc-user-login-name file))
@@ -197,7 +197,7 @@ Optional string REV is a revision."
     (write-region nil nil outfile nil 'silent)))
 
 (defun vc-sccs-workfile-unchanged-p (file)
-  "SCCS-specific implementation of `vc-workfile-unchanged-p'."
+  "Has FILE remained unchanged since last checkout?"
   (let ((tempfile (make-temp-file "vc-sccs")))
     (unwind-protect
 	(progn

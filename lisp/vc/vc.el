@@ -200,17 +200,6 @@
 ;;   Indicate whether FILES need to be "checked out" before they can be
 ;;   edited.  See `vc-checkout-model' for a list of possible values.
 ;;
-;; - workfile-unchanged-p (file)
-;;
-;;   Return non-nil if FILE is unchanged from the working revision.
-;;   This function should do a brief comparison of FILE's contents
-;;   with those of the repository copy of the working revision.  If
-;;   the backend does not have such a brief-comparison feature, the
-;;   default implementation of this function can be used, which
-;;   delegates to a full vc-BACKEND-diff.  (Note that vc-BACKEND-diff
-;;   must not run asynchronously in this case, see variable
-;;   `vc-disable-async-diff'.)
-;;
 ;; - mode-line-string (file)
 ;;
 ;;   If provided, this function should return the VC-specific mode
@@ -609,6 +598,11 @@
 ;;   take a first optional revision argument, since on no system since
 ;;   RCS has setting the initial revision been even possible, let alone
 ;;   sane.
+;;
+;;   workfile-unchanged-p is no longer a public back-end method.  It
+;;   was redundant with vc-state and usually implemented with a trivial
+;;   call to it.  A few older back ends retain versions for internal use in
+;;   their vc-state functions.
 
 ;;; Todo:
 
@@ -1186,7 +1180,7 @@ For old-style locking-based version control systems, like RCS:
               ;; For files with locking, if the file does not contain
               ;; any changes, just let go of the lock, i.e. revert.
               (when (and (not (eq model 'implicit))
-			 (vc-workfile-unchanged-p file)
+			 (eq state 'up-to-date)
 			 ;; If buffer is modified, that means the user just
 			 ;; said no to saving it; in that case, don't revert,
 			 ;; because the user might intend to save after

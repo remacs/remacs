@@ -51,7 +51,6 @@
 ;; * working-revision (file)                   OK
 ;; - latest-on-branch-p (file)                 ??
 ;; * checkout-model (files)                    OK
-;; - workfile-unchanged-p (file)               OK
 ;; - mode-line-string (file)                   NOT NEEDED
 ;; STATE-CHANGING FUNCTIONS
 ;; * register (files &optional rev comment)    OK
@@ -529,10 +528,6 @@ REV is the revision to check out into WORKFILE."
     (add-hook 'after-save-hook 'vc-hg-resolve-when-done nil t)
     (message "There are unresolved conflicts in this file")))
 
-
-;; Modeled after the similar function in vc-bzr.el
-(defun vc-hg-workfile-unchanged-p (file)
-  (eq 'up-to-date (vc-hg-state file)))
 
 ;; Modeled after the similar function in vc-bzr.el
 (defun vc-hg-revert (file &optional contents-done)

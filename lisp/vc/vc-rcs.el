@@ -149,7 +149,7 @@ For a description of possible values, see `vc-check-master-templates'."
 						       'vc-working-revision))))
       (if (not (eq state 'up-to-date))
 	  state
-	(if (vc-workfile-unchanged-p file)
+	(if (vc-rcs-workfile-unchanged-p file)
 	    'up-to-date
 	  (if (eq (vc-rcs-checkout-model (list file)) 'locking)
 	      'unlocked-changes
@@ -248,7 +248,7 @@ When VERSION is given, perform check for that version."
 	       (vc-rcs-find-most-recent-rev (vc-branch-part version))))))
 
 (defun vc-rcs-workfile-unchanged-p (file)
-  "RCS-specific implementation of `vc-workfile-unchanged-p'."
+  "Has FILE remained unchanged since last checkout?"
   ;; Try to use rcsdiff --brief.  If rcsdiff does not understand that,
   ;; do a double take and remember the fact for the future
   (let* ((version (concat "-r" (vc-working-revision file)))

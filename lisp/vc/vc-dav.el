@@ -144,11 +144,6 @@ It should return a status of either 0 (no differences found), or
   "find the version control state of all files in DIR in a fast way."
   )
 
-(defun vc-dav-workfile-unchanged-p (url)
-  "Return non-nil if URL is unchanged from its current workfile version."
-  ;; Probably impossible with webdav
-  )
-
 (defun vc-dav-responsible-p (url)
   "Return non-nil if DAV considers itself `responsible' for URL."
   ;; Check for DAV support on the web server.

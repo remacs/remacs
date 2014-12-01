@@ -576,39 +576,6 @@ It simply calls the real state computation function `vc-BACKEND-state'
 and does not employ any heuristic at all."
    (vc-call-backend backend 'state file))
 
-(defun vc-workfile-unchanged-p (file)
-  "Return non-nil if FILE has not changed since the last checkout."
-  (let ((checkout-time (vc-file-getprop file 'vc-checkout-time))
-        (lastmod (nth 5 (file-attributes file))))
-    ;; This is a shortcut for determining when the workfile is
-    ;; unchanged.  It can fail under some circumstances; see the
-    ;; discussion in bug#694.
-    (if (and checkout-time
-	     ;; Tramp and Ange-FTP return this when they don't know the time.
-	     (not (equal lastmod '(0 0))))
-	(equal checkout-time lastmod)
-      (let ((unchanged (vc-call workfile-unchanged-p file)))
-	(vc-file-setprop file 'vc-checkout-time (if unchanged lastmod 0))
-	unchanged))))
-
-(defun vc-default-workfile-unchanged-p (backend file)
-  "Check if FILE is unchanged by diffing against the repository version.
-Return non-nil if FILE is unchanged."
-  (zerop (condition-case err
-             ;; If the implementation supports it, let the output
-             ;; go to *vc*, not *vc-diff*, since this is an internal call.
-             (vc-call-backend backend 'diff (list file) nil nil "*vc*")
-           (wrong-number-of-arguments
-            ;; If this error came from the above call to vc-BACKEND-diff,
-            ;; try again without the optional buffer argument (for
-            ;; backward compatibility).  Otherwise, resignal.
-            (if (or (not (eq (cadr err)
-                             (indirect-function
-                              (vc-find-backend-function backend 'diff))))
-                    (not (eq (cl-caddr err) 4)))
-                (signal (car err) (cdr err))
-              (vc-call-backend backend 'diff (list file)))))))
-
 (defun vc-working-revision (file &optional backend)
   "Return the repository version from which FILE was checked out.
 If FILE is not registered, this function always returns nil."

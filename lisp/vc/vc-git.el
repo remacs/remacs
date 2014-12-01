@@ -54,7 +54,6 @@
 ;; * working-revision (file)                       OK
 ;; - latest-on-branch-p (file)                     NOT NEEDED
 ;; * checkout-model (files)                        OK
-;; - workfile-unchanged-p (file)                   OK
 ;; - mode-line-string (file)                       OK
 ;; STATE-CHANGING FUNCTIONS
 ;; * create-repo ()                                OK
@@ -247,9 +246,6 @@ matching the resulting Git log output, and KEYWORDS is a list of
             (match-string 2 str)
           str)
       (vc-git--rev-parse "HEAD"))))
-
-(defun vc-git-workfile-unchanged-p (file)
-  (eq 'up-to-date (vc-git-state file)))
 
 (defun vc-git-mode-line-string (file)
   "Return a string for `vc-mode-line' to put in the mode line for FILE."

@@ -261,10 +261,6 @@ Only the value `maybe' can be trusted :-(."
 	       ;; Strip the terminating newline.
 	       (buffer-substring (point-min) (1- (point-max)))))))))
 
-(defun vc-arch-workfile-unchanged-p (_file)
-  "Stub: arch workfiles are always considered to be in a changed state,"
-  nil)
-
 (defun vc-arch-state (file)
   ;; There's no checkout operation and merging is not done from VC
   ;; so the only operation that's state dependent that VC supports is commit

@@ -1,5 +1,12 @@
 2014-12-01  Eric S. Raymond  <esr@snark.thyrsus.com>
 
+	* vc/vc.el, vc-hooks.el, and all backends: API simplification;
+	vc-workfile-unchanged-p is no longer a public method (but the RCS
+	and SCCS back ends retain it as a private method used in state
+	computation). This method was redundant with vc-state and usually
+	implemented as a trivial call to same. Fixes the failure mode
+	described in bug#694.
+
 	* vc/vc.el and all backends: API simplification; init-revision is
 	gone, and vc-registered functions no longer take an
 	initial-revision argument.

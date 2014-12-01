@@ -493,9 +493,6 @@ in the branch repository (or whose status not be determined)."
     (add-hook 'after-save-hook 'vc-bzr-resolve-when-done nil t)
     (message "There are unresolved conflicts in this file")))
 
-(defun vc-bzr-workfile-unchanged-p (file)
-  (eq 'unchanged (car (vc-bzr-status file))))
-
 (defun vc-bzr-working-revision (file)
   ;; Together with the code in vc-state-heuristic, this makes it possible
   ;; to get the initial VC state of a Bzr file even if Bzr is not installed.
