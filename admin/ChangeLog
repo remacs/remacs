@@ -1,3 +1,7 @@
+2014-12-01  Glenn Morris  <rgm@gnu.org>
+
+	* update_autogen (commit): With git, call "add" before "commit".
+
 2014-11-19  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Lessen focus on ChangeLog files, as opposed to change log entries.
