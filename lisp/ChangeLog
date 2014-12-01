@@ -1,3 +1,14 @@
+2014-12-01  Ulf Jasper  <ulf.jasper@web.de>
+
+	* net/newst-treeview.el (newsticker--treeview-item-show): Check
+	window liveliness before measuring its width.
+
+	* net/newst-backend.el (newsticker--get-news-by-url-callback):
+	Pass correct status to `newsticker--sentinel-work'.
+	(newsticker--sentinel-work): Use "newsticker--download-error" as
+	guid in order to prevent multiple "Could not download..."
+	messages.  Fixes bug#19166.
+
 2014-12-01  Ivan Shmakov  <ivan@siamics.net>
 
 	* net/eww.el (eww-render): Call `eww-after-render-hook' in the

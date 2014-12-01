@@ -717,7 +717,9 @@ for the button."
       (remove-overlays)
 
       (when (and item feed-name-symbol)
-        (let ((wwidth (1- (window-width (newsticker--treeview-item-window)))))
+        (let ((wwidth (1- (if (window-live-p (newsticker--treeview-item-window))
+                              (window-width (newsticker--treeview-item-window))
+                            fill-column))))
           (if newsticker-use-full-width
               (set (make-local-variable 'fill-column) wwidth))
           (set (make-local-variable 'fill-column) (min fill-column

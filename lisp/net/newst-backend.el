@@ -745,10 +745,14 @@ from."
     (insert result)
     ;; remove MIME header
     (goto-char (point-min))
-    (search-forward "\n\n")
+    (search-forward "\n\n" nil t)
     (delete-region (point-min) (point))
     ;; read the rss/atom contents
-    (newsticker--sentinel-work nil t feed-name "url-retrieve" (current-buffer))
+    (newsticker--sentinel-work nil
+                               (or (not status)
+                                   (not (eq (car status) :error)))
+                               feed-name "url-retrieve"
+                               (current-buffer))
     (when status
       (let ((status-type (car status))
             (status-details (cdr status)))
@@ -831,7 +835,8 @@ Argument COMMAND is the command of the retrieval process.
 Argument BUFFER is the buffer of the retrieval process."
   (let ((time (current-time))
         (name-symbol (intern feed-name))
-        (something-was-added nil))
+        (something-was-added nil)
+        (ct (current-time)))
     ;; catch known errors (zombie processes, rubbish-xml etc.
     ;; if an error occurs the news feed is not updated!
     (catch 'oops
@@ -848,9 +853,10 @@ Argument BUFFER is the buffer of the retrieval process."
                 (format-time-string "%A, %H:%M")
                 feed-name event command)
                ""
-               (current-time)
+               ct
                'new
-               0 nil))
+               0 '((guid nil "newsticker--download-error"))
+               ct))
         (message "%s: Error while retrieving news from %s"
                  (format-time-string "%A, %H:%M")
                  feed-name)
