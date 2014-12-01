@@ -15,7 +15,7 @@
 	vc-stay-local-p and repository-hostname are no longer public
 	methods. Only the CVS and SVN backends used these, and the SVN
 	support was conditioned out because svn status -v is too slow.
-	The CVS back end retaiin this machibery and the vc-stay-local
+	The CVS back end retains this machibery and the vc-stay-local
 	configuration variable now only affects it.
 
 2014-12-01  Stefan Monnier  <monnier@iro.umontreal.ca>
