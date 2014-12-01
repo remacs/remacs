@@ -36,8 +36,9 @@
 
 2014-11-11  Eric S. Raymond  <esr@thyrsus.com>
 
-	* make-tarball.txt, update-copyright, notes/bugtracker, notes/tags:
-	* repo.notes: Git transition.
+	* make-tarball.txt, notes/bugtracker, notes/repo, notes/tags:
+	Git transition.
+	* update-copyright: Use git ls-files.
 	* update_autogen: Remove some bzr conditionals.
 
 2014-11-10  Eli Zaretskii  <eliz@gnu.org>
