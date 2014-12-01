@@ -777,7 +777,7 @@ This prompts for a branch to merge from."
           ;; See git-status(1).
           (when (member state '("AU" "UD" "UA" ;; "DD"
                                 "DU" "AA" "UU"))
-            (push file files)))))))
+            (push (expand-file-name file directory) files)))))))
 
 (defun vc-git-resolve-when-done ()
   "Call \"git add\" if the conflict markers have been removed."

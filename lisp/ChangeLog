@@ -1,5 +1,10 @@
 2014-12-01  Stefan Monnier  <monnier@iro.umontreal.ca>
 
+	* vc/vc.el (vc-find-conflicted-file): Look for conflicted files in the
+	current "project" rather than just the current directory.
+	* vc/vc-git.el (vc-git-conflicted-files): Clarify in which directory
+	the file names make sense.
+
 	* vc/smerge-mode.el (smerge-swap): New command.
 
 	* vc/diff-mode.el (diff-kill-applied-hunks): New command.

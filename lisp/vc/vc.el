@@ -2101,8 +2101,9 @@ changes from the current branch."
   (let* ((backend (or (if buffer-file-name (vc-backend buffer-file-name))
                       (vc-responsible-backend default-directory)
                       (error "No VC backend")))
+         (root (vc-root-dir))
          (files (vc-call-backend backend
-                                 'conflicted-files default-directory)))
+                                 'conflicted-files (or root default-directory))))
     ;; Don't try and visit the current file.
     (if (equal (car files) buffer-file-name) (pop files))
     (if (null files)
