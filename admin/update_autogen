@@ -228,10 +228,6 @@ commit ()
 
     echo "Committing..."
 
-    [ "$vcs" = "git" ] && {
-        $vcs add "$@" || return $?
-    }
-
     $vcs commit -m "Auto-commit of $type files." "$@" || return $?
 
     [ "$vcs" = "git" ] && {
