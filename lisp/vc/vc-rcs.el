@@ -155,51 +155,6 @@ For a description of possible values, see `vc-check-master-templates'."
 	      'unlocked-changes
 	    'edited))))))
 
-(defun vc-rcs-state-heuristic (file)
-  "State heuristic for RCS."
-  (let (vc-rcs-headers-result)
-    (if (and vc-consult-headers
-             (setq vc-rcs-headers-result
-                   (vc-rcs-consult-headers file))
-             (eq vc-rcs-headers-result 'rev-and-lock))
-        (let ((state (vc-file-getprop file 'vc-state)))
-          ;; If the headers say that the file is not locked, the
-          ;; permissions can tell us whether locking is used for
-          ;; the file or not.
-          (if (and (eq state 'up-to-date)
-                   (not (vc-mistrust-permissions file))
-                   (file-exists-p file))
-              (cond
-               ((string-match ".rw..-..-." (nth 8 (file-attributes file)))
-                (vc-file-setprop file 'vc-checkout-model 'implicit)
-		(setq state
-		      (if (vc-rcs-workfile-is-newer file)
-			  'edited
-			'up-to-date)))
-               ((string-match ".r-..-..-." (nth 8 (file-attributes file)))
-                (vc-file-setprop file 'vc-checkout-model 'locking))))
-          state)
-      (if (not (vc-mistrust-permissions file))
-          (let* ((attributes  (file-attributes file 'string))
-                 (owner-name  (nth 2 attributes))
-                 (permissions (nth 8 attributes)))
-            (cond ((and permissions (string-match ".r-..-..-." permissions))
-                   (vc-file-setprop file 'vc-checkout-model 'locking)
-                   'up-to-date)
-                  ((and permissions (string-match ".rw..-..-." permissions))
-		   (if (eq (vc-rcs-checkout-model file) 'locking)
-		       (if (file-ownership-preserved-p file)
-			   'edited
-			 owner-name)
-		     (if (vc-rcs-workfile-is-newer file)
-			 'edited
-		       'up-to-date)))
-                  (t
-                   ;; Strange permissions.  Fall through to
-                   ;; expensive state computation.
-                   (vc-rcs-state file))))
-        (vc-rcs-state file)))))
-
 (autoload 'vc-expand-dirs "vc")
 
 (defun vc-rcs-dir-status (dir update-function)
@@ -1098,7 +1053,7 @@ Returns: nil            if no headers were found
          'rev-and-lock  if revision and lock info was found"
   (cond
    ((not (get-file-buffer file)) nil)
-   ((let (status version locking-user)
+   ((let (status version)
       (with-current-buffer (get-file-buffer file)
         (save-excursion
           (goto-char (point-min))
@@ -1124,11 +1079,11 @@ Returns: nil            if no headers were found
               (cond
                ;; unlocked revision
                ((looking-at "\\$")
-                (setq locking-user 'none)
+                ;;(setq locking-user 'none)
                 (setq status 'rev-and-lock))
                ;; revision is locked by some user
                ((looking-at "\\([^ ]+\\) \\$")
-                (setq locking-user (match-string-no-properties 1))
+                ;;(setq locking-user (match-string-no-properties 1))
                 (setq status 'rev-and-lock))
                ;; everything else: false
                (nil)))
@@ -1146,39 +1101,19 @@ Returns: nil            if no headers were found
             (goto-char (point-min))
             (if (re-search-forward (concat "\\$" "Locker:") nil t)
                 (cond ((looking-at " \\([^ ]+\\) \\$")
-                       (setq locking-user (match-string-no-properties 1))
+                       ;;(setq locking-user (match-string-no-properties 1))
                        (setq status 'rev-and-lock))
                       ((looking-at " *\\$")
-                       (setq locking-user 'none)
+                       ;;(setq locking-user 'none)
                        (setq status 'rev-and-lock))
                       (t
-                       (setq locking-user 'none)
+                       ;;(setq locking-user 'none)
                        (setq status 'rev-and-lock)))
               (setq status 'rev)))
            ;; else: nothing found
            ;; -------------------
            (t nil))))
      (if status (vc-file-setprop file 'vc-working-revision version))
-     (and (eq status 'rev-and-lock)
-	  (vc-file-setprop file 'vc-state
-			   (cond
-			    ((eq locking-user 'none) 'up-to-date)
-			    ((string= locking-user (vc-user-login-name file))
-                             'edited)
-			    (t locking-user)))
-	  ;; If the file has headers, we don't want to query the
-	  ;; master file, because that would eliminate all the
-	  ;; performance gain the headers brought us.  We therefore
-	  ;; use a heuristic now to find out whether locking is used
-	  ;; for this file.  If we trust the file permissions, and the
-	  ;; file is not locked, then if the file is read-only we
-          ;; assume that locking is used for the file, otherwise
-          ;; locking is not used.
-	  (not (vc-mistrust-permissions file))
-	  (vc-up-to-date-p file)
-	  (if (string-match ".r-..-..-." (nth 8 (file-attributes file)))
-	      (vc-file-setprop file 'vc-checkout-model 'locking)
-	    (vc-file-setprop file 'vc-checkout-model 'implicit)))
      status))))
 
 (defun vc-release-greater-or-equal (r1 r2)

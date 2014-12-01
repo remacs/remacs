@@ -1,5 +1,12 @@
 2014-12-01  Eric S. Raymond  <esr@snark.thyrsus.com>
 
+	* vc/vc-cvs.el, vc/vc-hooks.el, vc/vc-rcs.el, vc/vc-sccs.el:
+	Eliminate vc-mistrust-permissions.  It was only relevant to the
+	RCS and SCCS back ends and defaulted to t. Code now always
+	mistrusts permissions - by actual measurement the effect on
+	performance is negligible. As a side effect bug#11490 is now
+	irrelevant.
+
 	* vc/vc.el, vc-hooks.el, and all backends: API simplification;
 	vc-workfile-unchanged-p is no longer a public method (but the RCS
 	and SCCS back ends retain it as a private method used in state

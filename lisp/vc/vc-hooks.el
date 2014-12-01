@@ -170,22 +170,6 @@ control systems."
   :type 'boolean
   :group 'vc)
 
-;; If you fix bug#11490, probably you can set this back to nil.
-(defcustom vc-mistrust-permissions t
-  "If non-nil, don't assume permissions/ownership track version-control status.
-If nil, do rely on the permissions.
-See also variable `vc-consult-headers'."
-  :version "24.3"                       ; nil->t, bug#11490
-  :type 'boolean
-  :group 'vc)
-
-(defun vc-mistrust-permissions (file)
-  "Internal access function to variable `vc-mistrust-permissions' for FILE."
-  (or (eq vc-mistrust-permissions 't)
-      (and vc-mistrust-permissions
-	   (funcall vc-mistrust-permissions
-		    (vc-backend-subdirectory-name file)))))
-
 (defcustom vc-stay-local 'only-file
   "Non-nil means use local operations when possible for remote repositories.
 This avoids slow queries over the network and instead uses heuristics

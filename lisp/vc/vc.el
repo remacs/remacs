@@ -590,6 +590,11 @@
 ;;   moves closer to emulating modern non-locking behavior even on very
 ;;   old VCSes.
 ;;
+;; - the vc-mistrust-permissions configuration variable is gone; the
+;;   code no longer relies on permissions except in one corner case where
+;;   CVS leaves no alternative (which was not gated by this variable).  The
+;;   only affected back ends were SCCS and RCS.
+;;
 ;; - The init-revision function and the default-initial-revision
 ;;   variable are gone.  These have't made sense on anything shipped
 ;;   since RCS, and using them was a dumb stunt even on RCS.

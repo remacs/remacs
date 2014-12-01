@@ -132,29 +132,6 @@ For a description of possible values, see `vc-check-master-templates'."
 		locking-user)))
 	'up-to-date))))
 
-(defun vc-sccs-state-heuristic (file)
-  "SCCS-specific state heuristic."
-  (if (not (vc-mistrust-permissions file))
-      ;;   This implementation assumes that any file which is under version
-      ;; control and has -rw-r--r-- is locked by its owner.  This is true
-      ;; for both RCS and SCCS, which keep unlocked files at -r--r--r--.
-      ;; We have to be careful not to exclude files with execute bits on;
-      ;; scripts can be under version control too.  Also, we must ignore the
-      ;; group-read and other-read bits, since paranoid users turn them off.
-      (let* ((attributes  (file-attributes file 'string))
-             (owner-name  (nth 2 attributes))
-             (permissions (nth 8 attributes)))
-	(if (string-match ".r-..-..-." permissions)
-            'up-to-date
-          (if (string-match ".rw..-..-." permissions)
-              (if (file-ownership-preserved-p file)
-                  'edited
-                owner-name)
-            ;; Strange permissions.
-            ;; Fall through to real state computation.
-            (vc-sccs-state file))))
-    (vc-sccs-state file)))
-
 (autoload 'vc-expand-dirs "vc")
 
 (defun vc-sccs-dir-status (dir update-function)
