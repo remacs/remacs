@@ -1,3 +1,9 @@
+2014-12-01  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* progmodes/prog-mode.el (prettify-symbols--compose-symbol):
+	Fix handling of symbols with different syntax at beginning/end or with
+	symbol rather than word syntax.
+
 2014-11-30  Eli Zaretskii  <eliz@gnu.org>
 
 	* simple.el (line-move): If noninteractive, call line-move-1, not
