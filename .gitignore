@@ -18,6 +18,11 @@
 # along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
 
 
+# Currently we assume only Git 1.7.1 (April 2010) or later, so this
+# file does not rely on "**" in patterns.  The "**" feature was added
+# in Git 1.8.2 (March 2013).
+
+
 # Built by 'autogen.sh'.
 /aclocal.m4
 /configure
@@ -72,10 +77,10 @@ src/buildobj.h
 src/globals.h
 
 # Lisp-level sources built by 'make'.
+*cus-load.el
+*loaddefs.el
 leim/changed.misc
 leim/changed.tit
-lisp/**/*cus-load.el
-lisp/**/*loaddefs.el
 lisp/cedet/semantic/bovine/c-by.el
 lisp/cedet/semantic/bovine/make-by.el
 lisp/cedet/semantic/bovine/scm-by.el

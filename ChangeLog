@@ -1,6 +1,7 @@
 2014-12-01  Paul Eggert  <eggert@cs.ucla.edu>
 
 	* .gitignore: Remove redundant pattern (subsumed by _*).
+	Avoid "**", as it requires Git 1.8.2 or later.
 
 2014-11-21  Paul Eggert  <eggert@cs.ucla.edu>
 
