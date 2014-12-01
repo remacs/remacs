@@ -55,7 +55,6 @@
 ;; * register (files &optional rev comment)    OK
 ;; * create-repo ()                            OK
 ;; - responsible-p (file)                      OK
-;; - could-register (file)                     OK
 ;; - receive-file (file rev)                   ?? PROBABLY NOT NEEDED
 ;; - unregister (file)                         OK
 ;; * checkin (files rev comment)               OK
@@ -449,17 +448,6 @@ Optional arg REVISION is a revision to annotate from."
   (vc-hg-command nil 0 nil "init"))
 
 (defalias 'vc-hg-responsible-p 'vc-hg-root)
-
-;; Modeled after the similar function in vc-bzr.el
-(defun vc-hg-could-register (file)
-  "Return non-nil if FILE could be registered under hg."
-  (and (vc-hg-responsible-p file)      ; shortcut
-       (condition-case ()
-           (with-temp-buffer
-             (vc-hg-command t nil file "add" "--dry-run"))
-             ;; The command succeeds with no output if file is
-             ;; registered.
-         (error))))
 
 (defun vc-hg-unregister (file)
   "Unregister FILE from hg."

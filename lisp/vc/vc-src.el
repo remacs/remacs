@@ -43,7 +43,6 @@
 ;; * register (files &optional rev comment)    OK
 ;; * create-repo ()                            OK
 ;; * responsible-p (file)                      OK
-;; * could-register (file)                     OK
 ;; - receive-file (file rev)                   NOT NEEDED
 ;; - unregister (file)                         NOT NEEDED
 ;; * checkin (files comment)                   OK
@@ -231,8 +230,6 @@ This function differs from vc-do-command in that it invokes `vc-src-program'."
                                       (if (file-directory-p file)
                                           file
                                         (file-name-directory file)))))
-
-(defalias 'vc-could-register 'vc-src-responsible-p)
 
 (defun vc-src-checkin (files comment)
   "SRC-specific version of `vc-backend-checkin'.

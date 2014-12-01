@@ -284,10 +284,6 @@ to the SVN command."
 
 (defalias 'vc-svn-responsible-p 'vc-svn-root)
 
-(defalias 'vc-svn-could-register 'vc-svn-root
-  "Return non-nil if FILE could be registered in SVN.
-This is only possible if SVN is responsible for FILE's directory.")
-
 (defun vc-svn-checkin (files comment &optional _extra-args-ignored)
   "SVN-specific version of `vc-backend-checkin'."
   (let ((status (apply

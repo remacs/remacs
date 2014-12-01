@@ -227,11 +227,6 @@
 ;;   like change log generation.  The default implementation always
 ;;   returns nil.
 ;;
-;; - could-register (file)
-;;
-;;   Return non-nil if FILE could be registered under this backend.  The
-;;   default implementation always returns t.
-;;
 ;; - receive-file (file rev)
 ;;
 ;;   Let this backend "receive" a file that is already registered under
@@ -612,6 +607,7 @@
 ;;   call to it.  A few older back ends retain versions for internal use in
 ;;   their vc-state functions.
 ;;
+;;   could-register is no longer a public method.  Only vc-cvs ever used it
 
 ;;; Todo:
 
@@ -2823,11 +2819,6 @@ log entries should be gathered."
   "Indicate whether BACKEND is responsible for FILE.
 The default is to return nil always."
   nil)
-
-(defun vc-default-could-register (_backend _file)
-  "Return non-nil if BACKEND could be used to register FILE.
-The default implementation returns t for all files."
-  t)
 
 (defun vc-default-latest-on-branch-p (_backend _file)
   "Return non-nil if FILE is the latest on its branch.

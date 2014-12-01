@@ -145,11 +145,6 @@ It should return a status of either 0 (no differences found), or
   ;; Check for DAV support on the web server.
   t)
 
-(defun vc-dav-could-register (url)
-  "Return non-nil if URL could be registered under this backend."
-  ;; Check for DAV support on the web server.
-  t)
-
 ;;; Unimplemented functions
 ;;
 ;; vc-dav-latest-on-branch-p(URL)

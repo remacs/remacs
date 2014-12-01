@@ -596,18 +596,6 @@ in the branch repository (or whose status not be determined)."
 The criterion is that there is a `.bzr' directory in the same
 or a superior directory.")
 
-(defun vc-bzr-could-register (file)
-  "Return non-nil if FILE could be registered under bzr."
-  (and (vc-bzr-responsible-p file)      ; shortcut
-       (condition-case ()
-           (with-temp-buffer
-             (vc-bzr-command "add" t 0 file "--dry-run")
-             ;; The command succeeds with no output if file is
-             ;; registered (in bzr 0.8).
-             (goto-char (point-min))
-             (looking-at "added "))
-         (error))))
-
 (defun vc-bzr-unregister (file)
   "Unregister FILE from bzr."
   (vc-bzr-command "remove" nil 0 file "--keep"))

@@ -1,10 +1,14 @@
 2014-12-01  Eric S. Raymond  <esr@snark.thyrsus.com>
 
-	* vc/vc.el, and all backends: API cleanup; the backend diff method
+	* vc/vc.el and all backends: API simplification; could-register
+	is no longer a public method.  (vc-cvs.el still has a private
+	implementation.)
+
+	* vc/vc.el and all backends: API cleanup; the backend diff method
 	takes an explicit async flag.  This eliminates a particularly ugly
 	global.
 
-	vc-bzr.el: Restore vc-bzr-state-heuristic as a private method.
+	* vc-bzr.el: Restore vc-bzr-state-heuristic as a private method.
 	VC randomly/unpredictable fails without it; cause not yet established.
 
 2014-12-01  Stefan Monnier  <monnier@iro.umontreal.ca>

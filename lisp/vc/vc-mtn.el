@@ -180,7 +180,6 @@ If nil, use the value of `vc-diff-switches'.  If t, use no switches."
   (vc-mtn-command nil 0 files "add"))
 
 (defun vc-mtn-responsible-p (file) (vc-mtn-root file))
-(defun vc-mtn-could-register (file) (vc-mtn-root file))
 
 (declare-function log-edit-extract-headers "log-edit" (headers string))
 

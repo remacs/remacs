@@ -58,7 +58,6 @@
 ;; * create-repo ()                                OK
 ;; * register (files &optional rev comment)        OK
 ;; - responsible-p (file)                          OK
-;; - could-register (file)                         NOT NEEDED, DEFAULT IS GOOD
 ;; - receive-file (file rev)                       NOT NEEDED
 ;; - unregister (file)                             OK
 ;; * checkin (files rev comment)                   OK
