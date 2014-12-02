@@ -514,15 +514,6 @@
 ;;
 ;;   Return non-nil if the current buffer contains any version headers.
 ;;
-;; - clear-headers ()
-;;
-;;   In the current buffer, reset all version headers to their unexpanded
-;;   form.  This function should be provided if the state-querying code
-;;   for this backend uses the version headers to determine the state of
-;;   a file.  This function will then be called whenever VC changes the
-;;   version control state in such a way that the headers would give
-;;   wrong information.
-;;
 ;; - delete-file (file)
 ;;
 ;;   Delete FILE and mark it as deleted in the repository.  If this
@@ -1287,9 +1278,6 @@ For old-style locking-based version control systems, like RCS:
 				   "Claim lock retaining changes? ")))
 	    (progn (vc-call-backend backend 'steal-lock file)
 		   (clear-visited-file-modtime)
-		   ;; Must clear any headers here because they wouldn't
-		   ;; show that the file is locked now.
-		   (vc-clear-headers file)
 		   (write-file buffer-file-name)
 		   (vc-mode-line file backend))
 	  (if (not (yes-or-no-p
@@ -2000,25 +1988,6 @@ the variable `vc-BACKEND-header'."
 	    (dolist (f vc-static-header-alist)
 	      (when (string-match (car f) buffer-file-name)
 		(insert (format (cdr f) (car hdstrings)))))))))))
-
-(defun vc-clear-headers (&optional file)
-  "Clear all version headers in the current buffer (or FILE).
-The headers are reset to their non-expanded form."
-  (let* ((filename (or file buffer-file-name))
-	 (visited (find-buffer-visiting filename))
-	 (backend (vc-backend filename)))
-    (when (vc-find-backend-function backend 'clear-headers)
-	(if visited
-	    (let ((context (vc-buffer-context)))
-	      ;; save-excursion may be able to relocate point and mark
-	      ;; properly.  If it fails, vc-restore-buffer-context
-	      ;; will give it a second try.
-	      (save-excursion
-		(vc-call-backend backend 'clear-headers))
-	      (vc-restore-buffer-context context))
-	  (set-buffer (find-file-noselect filename))
-	  (vc-call-backend backend 'clear-headers)
-	  (kill-buffer filename)))))
 
 (defun vc-modify-change-comment (files rev oldcomment)
   "Edit the comment associated with the given files and revision."

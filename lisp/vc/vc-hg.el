@@ -85,7 +85,6 @@
 ;; - previous-revision (file rev)              OK
 ;; - next-revision (file rev)                  OK
 ;; - check-headers ()                          ??
-;; - clear-headers ()                          ??
 ;; - delete-file (file)                        TEST IT
 ;; - rename-file (old new)                     OK
 ;; - find-file-hook ()                         added for bug#10709

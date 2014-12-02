@@ -528,7 +528,22 @@ Needs RCS 5.6.2 or later for -M."
     (vc-do-command "*vc*" 0 "rcs" (vc-master-name file) "-M" (concat "-u" rev))
     ;; Do a real checkout after stealing the lock, so that we see
     ;; expanded headers.
-    (vc-do-command "*vc*" 0 "co" (vc-master-name file) "-f" (concat "-l" rev))))
+    (vc-do-command "*vc*" 0 "co" (vc-master-name file) "-f" (concat "-l" rev))
+    ;; Must clear any headers here because they wouldn't
+    ;; show that the file is locked now.
+    (let* ((filename (or file buffer-file-name))
+	   (visited (find-buffer-visiting filename)))
+      (if visited
+	  (let ((context (vc-buffer-context)))
+	    ;; save-excursion may be able to relocate point and mark
+	    ;; properly.  If it fails, vc-restore-buffer-context
+	    ;; will give it a second try.
+	    (save-excursion
+	      (vc-rcs-clear-headers))
+	    (vc-restore-buffer-context context))
+	(set-buffer (find-file-noselect filename))
+	(vc-rcs-clear-headers)
+	(kill-buffer filename)))))
 
 (defun vc-rcs-modify-change-comment (files rev comment)
   "Modify the change comments change on FILES on a specified REV.  If FILE is a
@@ -943,7 +958,7 @@ Uses `rcs2log' which only works for RCS and CVS."
 \\(: [\t -#%-\176\240-\377]*\\)?\\$" nil t)))
 
 (defun vc-rcs-clear-headers ()
-  "Implementation of vc-clear-headers for RCS."
+  "Clear RCS header value parts."
   (let ((case-fold-search nil))
     (goto-char (point-min))
     (while (re-search-forward

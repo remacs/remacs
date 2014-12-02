@@ -1,3 +1,9 @@
+2014-12-02  Eric S. Raymond  <esr@snark.thyrsus.com>
+
+	* vc/vc.el and all backends: API simplification; clear-headers
+	is no longer a public method.  It is now local to the one place
+	it's used, in the RCS steal-lock method.
+
 2014-12-01  Eric S. Raymond  <esr@snark.thyrsus.com>
 
 	* vc/vc.el and all backends: API simplification; could-register

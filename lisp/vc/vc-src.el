@@ -73,7 +73,6 @@
 ;; - previous-revision (file rev)              ??
 ;; - next-revision (file rev)                  ??
 ;; - check-headers ()                          ??
-;; - clear-headers ()                          ??
 ;; - delete-file (file)                        ??
 ;; * rename-file (old new)                     OK
 ;; - find-file-hook ()                         NOT NEEDED

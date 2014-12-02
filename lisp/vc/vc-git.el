@@ -95,7 +95,6 @@
 ;; - previous-revision (file rev)                  OK
 ;; - next-revision (file rev)                      OK
 ;; - check-headers ()                              COULD BE SUPPORTED
-;; - clear-headers ()                              NOT NEEDED
 ;; - delete-file (file)                            OK
 ;; - rename-file (old new)                         OK
 ;; - find-file-hook ()                             OK
