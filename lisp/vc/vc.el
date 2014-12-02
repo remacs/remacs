@@ -1714,7 +1714,7 @@ Return t if the buffer had changes, nil otherwise."
               ;; We regard this as "changed".
               ;; Diff it against /dev/null.
               (apply 'vc-do-command buffer
-                     (async 'async 1) "diff" file
+                     (if async 'async 1) "diff" file
                      (append (vc-switches nil 'diff) '("/dev/null"))))))
         (setq files (nreverse filtered))))
     (vc-call-backend (car vc-fileset) 'diff files async rev1 rev2 buffer)
