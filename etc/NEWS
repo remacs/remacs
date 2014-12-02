@@ -98,6 +98,13 @@ environment.  For the time being this is implemented for modern POSIX
 systems and for MS-Windows, for other systems they fall back to their
 counterparts `string-lessp' and `string-equal'.
 
++++
+** The new function `bidi-find-overridden-directionality' allows to
+find characters whose directionality was, perhaps maliciously,
+overridden by directional override control characters.  Lisp programs
+can use this to detect potential phishing of URLs and other links that
+exploits bidirectional display reordering.
+
 *** The ls-lisp package uses `string-collate-lessp' to sort file names.
 If you want the old, locale-independent sorting, customize the new
 option `ls-lisp-use-string-collate' to a nil value.

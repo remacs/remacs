@@ -1,3 +1,12 @@
+2014-12-02  Eli Zaretskii  <eliz@gnu.org>
+
+	* bidi.c (bidi_find_first_overridden): New function.
+
+	* xdisp.c (Fbidi_find_overridden_directionality): New function.
+	(syms_of_xdisp): Defsubr it.
+
+	* dispextern.h (bidi_find_first_overridden): Add prototype.
+
 2014-12-02  Jan Djärv  <jan.h.d@swipnet.se>
 
 	* nsimage.m (initFromSkipXBM:width:height:flip:length:): Set bmRep

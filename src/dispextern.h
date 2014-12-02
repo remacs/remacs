@@ -3173,6 +3173,7 @@ extern void bidi_push_it (struct bidi_it *);
 extern void bidi_pop_it (struct bidi_it *);
 extern void *bidi_shelve_cache (void);
 extern void bidi_unshelve_cache (void *, bool);
+extern ptrdiff_t bidi_find_first_overridden (struct bidi_it *);
 
 /* Defined in xdisp.c */
 

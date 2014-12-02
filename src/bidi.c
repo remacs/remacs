@@ -3376,6 +3376,33 @@ bidi_move_to_visually_next (struct bidi_it *bidi_it)
     UNGCPRO;
 }
 
+/* Utility function for looking for strong directional characters
+   whose bidi type was overridden by a directional override.  */
+ptrdiff_t
+bidi_find_first_overridden (struct bidi_it *bidi_it)
+{
+  ptrdiff_t found_pos = ZV;
+
+  do
+    {
+      /* Need to call bidi_resolve_weak, not bidi_resolve_explicit,
+	 because the directional overrides are applied by the
+	 former.  */
+      bidi_type_t type = bidi_resolve_weak (bidi_it);
+
+      if ((type == STRONG_R && bidi_it->orig_type == STRONG_L)
+	  || (type == STRONG_L
+	      && (bidi_it->orig_type == STRONG_R
+		  || bidi_it->orig_type == STRONG_AL)))
+	found_pos = bidi_it->charpos;
+    } while (found_pos == ZV
+	     && bidi_it->charpos < ZV
+	     && bidi_it->ch != BIDI_EOB
+	     && bidi_it->ch != '\n');
+
+  return found_pos;
+}
+
 /* This is meant to be called from within the debugger, whenever you
    wish to examine the cache contents.  */
 void bidi_dump_cached_states (void) EXTERNALLY_VISIBLE;

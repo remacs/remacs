@@ -6800,3 +6800,57 @@ affect all Emacs frames and windows.
 appropriate mirrored character in the reordered text.  Lisp programs
 can affect the mirrored display by changing this property.  Again, any
 such changes affect all of Emacs display.
+
+@cindex overriding bidirectional properties
+@cindex directional overrides
+@cindex LRO
+@cindex RLO
+  The bidirectional properties of characters can be overridden by
+inserting into the text special directional control characters,
+LEFT-TO-RIGHT OVERRIDE (@acronym{LRO}) and RIGHT-TO-LEFT OVERRIDE
+(@acronym{RLO}).  Any characters between a @acronym{RLO} and the
+following newline or POP DIRECTIONAL FORMATTING (@acronym{PDF})
+control character, whichever comes first, will be displayed as if they
+were strong right-to-left characters, i.e.@: they will be reversed on
+display.  Similarly, any characters between @acronym{LRO} and
+@acronym{PDF} or newline will display as if they were strong
+left-to-right, and will @emph{not} be reversed even if they are strong
+right-to-left characters.
+
+@cindex phishing using directional overrides
+@cindex malicious use of directional overrides
+  These overrides are useful when you want to make some text
+unaffected by the reordering algorithm, and instead directly control
+the display order.  But they can also be used for malicious purposes,
+known as @dfn{phishing}.  Specifically, a URL on a Web page or a link
+in an email message can be manipulated to make its visual appearance
+unrecognizable, or similar to some popular benign location, while the
+real location, interpreted by a browser in the logical order, is very
+different.
+
+  Emacs provides a primitive that applications can use to detect
+instances of text whose bidirectional properties were overridden so as
+to make a left-to-right character display as if it were a
+right-to-left character, or vise versa.
+
+@defun bidi-find-overridden-directionality from to &optional object
+This function looks at the text of the specified @var{object} between
+positions @var{from} (inclusive) and @var{to} (exclusive), and returns
+the first position where it finds a strong left-to-right character
+whose directional properties were forced to display the character as
+right-to-left, or for a strong right-to-left character that was forced
+to display as left-to-right.  If it finds no such characters in the
+specified region of text, it returns @code{nil}.
+
+The optional argument @var{object} specifies which text to search, and
+defaults to the current buffer.  If @var{object} is non-@code{nil}, it
+can be some other buffer, or it can be a string or a window.  If it is
+a string, the function searches that string.  If it is a window, the
+function searches the buffer displayed in that window.  If a buffer
+whose text you want to examine is displayed in some window, we
+recommend to specify it by that window, rather than pass the buffer to
+the function.  This is because telling the function about the window
+allows it to correctly account for window-specific overlays, which
+might change the result of the function if some text in the buffer is
+covered by overlays.
+@end defun
