@@ -180,13 +180,8 @@ For a description of possible values, see `vc-check-master-templates'."
 (autoload 'vc-expand-dirs "vc")
 
 (defun vc-src-dir-status (dir update-function)
-  ;; FIXME: this function should be rewritten or `vc-expand-dirs'
-  ;; should be changed to take a backend parameter.  Using
-  ;; `vc-expand-dirs' is not TRTD because it returns files from
-  ;; multiple backends.  It should also return 'unregistered files.
-
   ;; FIXME: Use one src status -a call for this
-  (let ((flist (vc-expand-dirs (list dir)))
+  (let ((flist (vc-expand-dirs (list dir) 'SRC))
 	(result nil))
     (dolist (file flist)
       (let ((state (vc-state file))
@@ -253,13 +248,13 @@ REV is the revision to check out into WORKFILE."
   "Revert FILE to the version it was based on.  If FILE is a directory,
 revert all registered files beneath it."
   (if (file-directory-p file)
-      (mapc 'vc-src-revert (vc-expand-dirs (list file)))
+      (mapc 'vc-src-revert (vc-expand-dirs (list file) 'SRC))
     (vc-src-command nil file "co")))
 
 (defun vc-src-modify-change-comment (files rev comment)
   "Modify the change comments change on FILES on a specified REV.  If FILE is a
 directory the operation is applied to all registered files beneath it."
-  (dolist (file (vc-expand-dirs files))
+  (dolist (file (vc-expand-dirs files 'SRC))
     (vc-src-command nil file "amend" "-m" comment rev)))
 
 ;; History functions
@@ -271,7 +266,7 @@ directory the operation is applied to all registered files beneath it."
                  (repeat :tag "Argument List" :value ("") string))
   :group 'vc-src)
 
-(defun vc-src-print-log (files buffer &optional shortlog start-revision limit)
+(defun vc-src-print-log (files buffer &optional shortlog _start-revision limit)
   "Print commit log associated with FILES into specified BUFFER.
 If SHORTLOG is non-nil, use the list method.
 If START-REVISION is non-nil, it is the newest revision to show.

@@ -135,13 +135,9 @@ For a description of possible values, see `vc-check-master-templates'."
 (autoload 'vc-expand-dirs "vc")
 
 (defun vc-sccs-dir-status (dir update-function)
-  ;; FIXME: this function should be rewritten, using `vc-expand-dirs'
-  ;; is not TRTD because it returns files from multiple backends.
-  ;; It should also return 'unregistered files.
-
   ;; Doing lots of individual VC-state calls is painful, but
   ;; there is no better option in SCCS-land.
-  (let ((flist (vc-expand-dirs (list dir)))
+  (let ((flist (vc-expand-dirs (list dir) 'SCCS))
 	(result nil))
     (dolist (file flist)
       (let ((state (vc-state file))
@@ -232,7 +228,7 @@ expanded if `vc-keep-workfiles' is non-nil, otherwise, delete the workfile."
 
 (defun vc-sccs-checkin (files comment)
   "SCCS-specific version of `vc-backend-checkin'."
-  (dolist (file (vc-expand-dirs files))
+  (dolist (file (vc-expand-dirs files 'SCCS))
     (apply 'vc-sccs-do-command nil 0 "delta" (vc-master-name file)
 	   (concat "-y" comment)
 	   (vc-switches 'SCCS 'checkin))
@@ -255,7 +251,7 @@ If FILE is a directory, all version-controlled files beneath are checked out.
 EDITABLE non-nil means that the file should be writable and
 locked.  REV is the revision to check out."
   (if (file-directory-p file)
-      (mapc 'vc-sccs-checkout (vc-expand-dirs (list file)))
+      (mapc 'vc-sccs-checkout (vc-expand-dirs (list file) 'SCCS))
     (let ((file-buffer (get-file-buffer file))
 	  switches)
       (message "Checking out %s..." file)
@@ -284,7 +280,7 @@ locked.  REV is the revision to check out."
 (defun vc-sccs-rollback (files)
   "Roll back, undoing the most recent checkins of FILES.  Directories
 are expanded to all version-controlled subfiles."
-  (setq files (vc-expand-dirs files))
+  (setq files (vc-expand-dirs files 'SCCS))
   (if (not files)
       (error "SCCS backend doesn't support directory-level rollback"))
   (dolist (file files)
@@ -301,7 +297,7 @@ are expanded to all version-controlled subfiles."
   "Revert FILE to the version it was based on. If FILE is a directory,
 revert all subfiles."
   (if (file-directory-p file)
-      (mapc 'vc-sccs-revert (vc-expand-dirs (list file)))
+      (mapc 'vc-sccs-revert (vc-expand-dirs (list file) 'SCCS))
     (vc-sccs-do-command nil 0 "unget" (vc-master-name file))
     (vc-sccs-do-command nil 0 "get" (vc-master-name file))
     ;; Checking out explicit revisions is not supported under SCCS, yet.
@@ -312,7 +308,7 @@ revert all subfiles."
 (defun vc-sccs-steal-lock (file &optional rev)
   "Steal the lock on the current workfile for FILE and revision REV."
   (if (file-directory-p file)
-      (mapc 'vc-sccs-steal-lock (vc-expand-dirs (list file)))
+      (mapc 'vc-sccs-steal-lock (vc-expand-dirs (list file) 'SCCS))
     (vc-sccs-do-command nil 0 "unget"
 			(vc-master-name file) "-n" (if rev (concat "-r" rev)))
     (vc-sccs-do-command nil 0 "get"
@@ -320,7 +316,7 @@ revert all subfiles."
 
 (defun vc-sccs-modify-change-comment (files rev comment)
   "Modify (actually, append to) the change comments for FILES on a specified REV."
-  (dolist (file (vc-expand-dirs files))
+  (dolist (file (vc-expand-dirs files 'SCCS))
     (vc-sccs-do-command nil 0 "cdc" (vc-master-name file)
                         (concat "-y" comment) (concat "-r" rev))))
 
@@ -332,7 +328,7 @@ revert all subfiles."
 (defun vc-sccs-print-log (files buffer &optional _shortlog _start-revision-ignored limit)
   "Print commit log associated with FILES into specified BUFFER.
 Remaining arguments are ignored."
-  (setq files (vc-expand-dirs files))
+  (setq files (vc-expand-dirs files 'SCCS))
   (vc-sccs-do-command buffer 0 "prs" (mapcar 'vc-master-name files))
   (when limit 'limit-unsupported))
 
@@ -344,7 +340,7 @@ Remaining arguments are ignored."
 ;; FIXME use sccsdiff if present?
 (defun vc-sccs-diff (files &optional _async oldvers newvers buffer)
   "Get a difference report using SCCS between two filesets."
-  (setq files (vc-expand-dirs files))
+  (setq files (vc-expand-dirs files 'SCCS))
   (setq oldvers (vc-sccs-lookup-triple (car files) oldvers))
   (setq newvers (vc-sccs-lookup-triple (car files) newvers))
   (or buffer (setq buffer "*vc-diff*"))

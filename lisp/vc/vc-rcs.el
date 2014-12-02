@@ -158,14 +158,9 @@ For a description of possible values, see `vc-check-master-templates'."
 (autoload 'vc-expand-dirs "vc")
 
 (defun vc-rcs-dir-status (dir update-function)
-  ;; FIXME: this function should be rewritten or `vc-expand-dirs'
-  ;; should be changed to take a backend parameter.  Using
-  ;; `vc-expand-dirs' is not TRTD because it returns files from
-  ;; multiple backends.  It should also return 'unregistered files.
-
   ;; Doing individual vc-state calls is painful but there
   ;; is no better way in RCS-land.
-  (let ((flist (vc-expand-dirs (list dir)))
+  (let ((flist (vc-expand-dirs (list dir) 'RCS))
 	(result nil))
     (dolist (file flist)
       (let ((state (vc-state file))
@@ -319,7 +314,7 @@ whether to remove it."
   "RCS-specific version of `vc-backend-checkin'."
   (let (rev (switches (vc-switches 'RCS 'checkin)))
     ;; Now operate on the files
-    (dolist (file (vc-expand-dirs files))
+    (dolist (file (vc-expand-dirs files 'RCS))
       (let ((old-version (vc-working-revision file)) new-version
 	    (default-branch (vc-file-getprop file 'vc-rcs-default-branch)))
 	;; Force branch creation if an appropriate
@@ -378,7 +373,7 @@ whether to remove it."
   "Retrieve a copy of a saved version of FILE.  If FILE is a directory,
 attempt the checkout for all registered files beneath it."
   (if (file-directory-p file)
-      (mapc 'vc-rcs-checkout (vc-expand-dirs (list file)))
+      (mapc 'vc-rcs-checkout (vc-expand-dirs (list file) 'RCS))
     (let ((file-buffer (get-file-buffer file))
 	  switches)
       (message "Checking out %s..." file)
@@ -445,7 +440,7 @@ attempt the checkout for all registered files beneath it."
 expanded to all registered subfiles in them."
   (if (not files)
       (error "RCS backend doesn't support directory-level rollback"))
-  (dolist (file (vc-expand-dirs files))
+  (dolist (file (vc-expand-dirs files 'RCS))
 	  (let* ((discard (vc-working-revision file))
 		 (previous (if (vc-rcs-trunk-p discard) "" (vc-branch-part discard)))
 		 (config (current-window-configuration))
@@ -481,7 +476,7 @@ expanded to all registered subfiles in them."
   "Revert FILE to the version it was based on.  If FILE is a directory,
 revert all registered files beneath it."
   (if (file-directory-p file)
-      (mapc 'vc-rcs-revert (vc-expand-dirs (list file)))
+      (mapc 'vc-rcs-revert (vc-expand-dirs (list file) 'RCS))
     (vc-do-command "*vc*" 0 "co" (vc-master-name file) "-f"
 		   (concat (if (eq (vc-state file) 'edited) "-u" "-r")
 			   (vc-working-revision file)))))
@@ -524,7 +519,7 @@ The changes are between FIRST-VERSION and SECOND-VERSION."
 If FILE is a directory, steal the lock on all registered files beneath it.
 Needs RCS 5.6.2 or later for -M."
   (if (file-directory-p file)
-      (mapc 'vc-rcs-steal-lock (vc-expand-dirs (list file)))
+      (mapc 'vc-rcs-steal-lock (vc-expand-dirs (list file) 'RCS))
     (vc-do-command "*vc*" 0 "rcs" (vc-master-name file) "-M" (concat "-u" rev))
     ;; Do a real checkout after stealing the lock, so that we see
     ;; expanded headers.
@@ -548,7 +543,7 @@ Needs RCS 5.6.2 or later for -M."
 (defun vc-rcs-modify-change-comment (files rev comment)
   "Modify the change comments change on FILES on a specified REV.  If FILE is a
 directory the operation is applied to all registered files beneath it."
-  (dolist (file (vc-expand-dirs files))
+  (dolist (file (vc-expand-dirs files 'RCS))
     (vc-do-command "*vc*" 0 "rcs" (vc-master-name file)
 		   (concat "-m" rev ":" comment))))
 
@@ -575,7 +570,7 @@ Remaining arguments are ignored.
 If FILE is a directory the operation is applied to all registered
 files beneath it."
   (vc-do-command (or buffer "*vc*") 0 "rlog"
-                 (mapcar 'vc-master-name (vc-expand-dirs files)))
+                 (mapcar 'vc-master-name (vc-expand-dirs files 'RCS)))
   (with-current-buffer (or buffer "*vc*")
     (vc-rcs-print-log-cleanup))
   (when limit 'limit-unsupported))
@@ -584,7 +579,7 @@ files beneath it."
   "Get a difference report using RCS between two sets of files."
   (apply #'vc-do-command (or buffer "*vc-diff*")
 	 (if async 'async 1)
-	 "rcsdiff" (vc-expand-dirs files)
+	 "rcsdiff" (vc-expand-dirs files 'RCS)
          (append (list "-q"
                        (and oldvers (concat "-r" oldvers))
                        (and newvers (concat "-r" newvers)))

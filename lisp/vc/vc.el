@@ -631,9 +631,6 @@
 ;;
 ;;;; Internal cleanups:
 ;;
-;; - vc-expand-dirs should take a backend parameter and only look for
-;;   files managed by that backend.
-;;
 ;; - Another important thing: merge all the status-like backend operations.
 ;;   We should remove dir-status, state, and dir-status-files, and
 ;;   replace them with just `status' which takes a fileset and a continuation
@@ -955,14 +952,14 @@ responsible for FILE is returned."
 	       (throw 'found backend))))
       (error "No VC backend is responsible for %s" file)))
 
-(defun vc-expand-dirs (file-or-dir-list)
+(defun vc-expand-dirs (file-or-dir-list backend)
   "Expands directories in a file list specification.
 Within directories, only files already under version control are noticed."
   (let ((flattened '()))
     (dolist (node file-or-dir-list)
       (when (file-directory-p node)
 	(vc-file-tree-walk
-	 node (lambda (f) (when (vc-backend f) (push f flattened)))))
+	 node (lambda (f) (when (eq (vc-backend f) backend) (push f flattened)))))
       (unless (file-directory-p node) (push node flattened)))
     (nreverse flattened)))
 
@@ -1000,8 +997,8 @@ Otherwise, throw an error.
 STATE-MODEL-ONLY-FILES if non-nil, means that the caller needs
 the FILESET-ONLY-FILES STATE and MODEL info.  Otherwise, that
 part may be skipped.
-BEWARE: this function may change the
-current buffer."
+
+BEWARE: this function may change the current buffer."
   ;; FIXME: OBSERVER is unused.  The name is not intuitive and is not
   ;; documented.  It's set to t when called from diff and print-log.
   (let (backend)
