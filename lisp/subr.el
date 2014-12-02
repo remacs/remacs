@@ -222,6 +222,11 @@ Then evaluate RESULT to get return value, default nil.
          ,@(if (cdr (cdr spec))
                `((setq ,(car spec) nil) ,@(cdr (cdr spec))))))))
 
+(defmacro filter (condp lst)
+  "Return the list consisting of elements in LST for which CONDP is not nil."
+  `(delq nil
+	 (mapcar (lambda (x) (and (funcall ,condp x) x)) ,lst)))
+
 (defmacro dotimes (spec &rest body)
   "Loop a certain number of times.
 Evaluate BODY with VAR bound to successive integers running from 0,

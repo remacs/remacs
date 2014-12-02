@@ -1,6 +1,9 @@
 2014-12-02  Eric S. Raymond  <esr@snark.thyrsus.com>
 
-	*  vc.el, all backends: API simplification: Abolish dir-status.
+	* subr.el (filter): New macro. Because it's just silly for a Lisp
+	not to have this in 2014.  And VC needs it.
+
+	* vc.el, all backends: API simplification: Abolish dir-status.
 	It's replaced by dir-status-files.
 
 	* vc.el, all backends: API simplification: Remove 4th
