@@ -50,6 +50,8 @@
 ;; STATE-QUERYING FUNCTIONS
 ;; * registered (file)                             OK
 ;; * state (file)                                  OK
+;; * dir-status (dir update-function)              OK
+;; - dir-status-files (dir files ds uf)            NOT NEEDED
 ;; * working-revision (file)                       OK
 ;; - latest-on-branch-p (file)                     NOT NEEDED
 ;; * checkout-model (files)                        OK
@@ -65,13 +67,13 @@
 ;; * checkout (file &optional rev)                 OK
 ;; * revert (file &optional contents-done)         OK
 ;; - rollback (files)                              COULD BE SUPPORTED
-;; - merge (file rev1 rev2)                   It would be possible to merge
+;; - merge-file (file rev1 rev2)            It would be possible to merge
 ;;                                          changes into a single file, but
 ;;                                          when committing they wouldn't
 ;;                                          be identified as a merge
 ;;                                          by git, so it's probably
 ;;                                          not a good idea.
-;; - merge-news (file)                     see `merge'
+;; - merge-news (file)                      see `merge-file'
 ;; - steal-lock (file &optional revision)          NOT NEEDED
 ;; HISTORY FUNCTIONS
 ;; * print-log (files buffer &optional shortlog start-revision limit)   OK
