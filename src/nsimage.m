@@ -247,6 +247,7 @@ ns_set_alpha (void *img, int x, int y, unsigned char a)
               if (s >= bits + length)
                 {
                   [bmRep release];
+                  bmRep = nil;
                   return nil;
                 }
 #define hexchar(x) ('0' <= (x) && (x) <= '9' ? (x) - '0' : (x) - 'a' + 10)
