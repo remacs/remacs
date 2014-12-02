@@ -602,15 +602,13 @@
 
 ;;; Todo:
 
-;; - Add key-binding for vc-delete-file.
-
 ;;;; New Primitives:
 ;;
 ;; - deal with push operations.
 ;;
 ;;;; Primitives that need changing:
 ;;
-;; - vc-update/vc-merge should deal with VC systems that don't
+;; - vc-update/vc-merge should deal with VC systems that don't do
 ;;   update/merge on a file basis, but on a whole repository basis.
 ;;   vc-update and vc-merge assume the arguments are always files,
 ;;   they don't deal with directories.  Make sure the *vc-dir* buffer

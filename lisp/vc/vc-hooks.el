@@ -893,6 +893,7 @@ current, and kill the buffer that visits the link."
     (define-key map "=" 'vc-diff)
     (define-key map "D" 'vc-root-diff)
     (define-key map "~" 'vc-revision-other-window)
+    (define-key map "[delete]" 'vc-delete-file)
     map))
 (fset 'vc-prefix-map vc-prefix-map)
 (define-key ctl-x-map "v" 'vc-prefix-map)

@@ -1,5 +1,11 @@
 2014-12-02  Eric S. Raymond  <esr@snark.thyrsus.com>
 
+	* vc-hooks.el: Bind vc-delete-file to Ctrl-x v delete.
+
+	* vc.el (vc-expand-dirs): Now takes a second BACKEND argument,
+	improving behavior on directories using multiple file-oriented
+	VCSes.
+
 	* vc/vc.el and all backends: API simplification; clear-headers
 	is no longer a public method.  It is now local to the one place
 	it's used, in the RCS steal-lock method.
