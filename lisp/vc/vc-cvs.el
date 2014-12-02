@@ -1084,7 +1084,7 @@ state."
       (vc-run-delayed
        (vc-cvs-after-dir-status update-function)))))
 
-(defun vc-cvs-dir-status-files (dir files _default-state update-function)
+(defun vc-cvs-dir-status-files (dir files update-function)
   "Create a list of conses (file . state) for DIR."
   (apply 'vc-cvs-command (current-buffer) 'async dir "-f" "status" files)
   (vc-run-delayed

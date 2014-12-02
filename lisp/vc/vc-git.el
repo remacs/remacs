@@ -51,7 +51,7 @@
 ;; * registered (file)                             OK
 ;; * state (file)                                  OK
 ;; * dir-status (dir update-function)              OK
-;; - dir-status-files (dir files ds uf)            NOT NEEDED
+;; - dir-status-files (dir files uf)               NOT NEEDED
 ;; * working-revision (file)                       OK
 ;; - latest-on-branch-p (file)                     NOT NEEDED
 ;; * checkout-model (files)                        OK
@@ -481,7 +481,7 @@ or an empty string if none."
   ;; - how to support vc-dir on a subdir of the project tree
   (vc-git-dir-status-goto-stage 'update-index nil update-function))
 
-(defun vc-git-dir-status-files (_dir files _default-state update-function)
+(defun vc-git-dir-status-files (_dir files update-function)
   "Return a list of (FILE STATE EXTRA) entries for FILES in DIR."
   (vc-git-dir-status-goto-stage 'update-index files update-function))
 

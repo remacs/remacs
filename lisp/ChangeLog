@@ -1,5 +1,11 @@
 2014-12-02  Eric S. Raymond  <esr@snark.thyrsus.com>
 
+	* vc.el, all backends: API simplification: Remove 4th
+	'default-state' argument from vc-dir-status files and its backend
+	methods - no backend method ever set it.  It was used only in the
+	fallback method to to set a default of 'up-to-date, though a
+	convoluted call chain obscured this.
+
 	* vc-hooks.el: Bind vc-delete-file to Ctrl-x v delete.
 
 	* vc.el (vc-expand-dirs): Now takes a second BACKEND argument,
@@ -21,7 +27,7 @@
 	global.
 
 	* vc-bzr.el: Restore vc-bzr-state-heuristic as a private method.
-	VC randomly/unpredictable fails without it; cause not yet established.
+	VC randomly/unpredictably fails without it; cause not yet established.
 
 2014-12-01  Stefan Monnier  <monnier@iro.umontreal.ca>
 

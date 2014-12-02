@@ -981,7 +981,7 @@ stream.  Standard error output is discarded."
                             ;; frob the results accordingly.
                             (file-relative-name dir (vc-bzr-root dir)))))
 
-(defun vc-bzr-dir-status-files (dir files _default-state update-function)
+(defun vc-bzr-dir-status-files (dir files update-function)
   "Return a list of conses (file . state) for DIR."
   (apply 'vc-bzr-command "status" (current-buffer) 'async dir "-v" "-S" files)
   (vc-run-delayed

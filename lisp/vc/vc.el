@@ -148,13 +148,13 @@
 ;;   the following functions might be needed: `dir-extra-headers',
 ;;   `dir-printer', `extra-dir-menu' and `dir-status-files'.
 ;;
-;; - dir-status-files (dir files default-state update-function)
+;; - dir-status-files (dir files update-function)
 ;;
 ;;   This function is identical to dir-status except that it should
 ;;   only report status for the specified FILES. Also it needs to
 ;;   report on all requested files, including up-to-date or ignored
 ;;   files. If not provided, the default is to consider that the files
-;;   are in DEFAULT-STATE.
+;;   are in 'up-to-date state.
 ;;
 ;; - dir-extra-headers (dir)
 ;;
@@ -576,6 +576,9 @@
 ;;   with merge-branch), and does its own prompting for revisions.
 ;;   (This fixes a layer violation that produced bad behavior under
 ;;   SVN.)
+;;
+;; - INCOMPATIBLE CHANGE: The old fourth 'default-state' argument of
+;;   vc-dir-status-files is gone; none of the back ends actually used it.
 ;;
 ;; - vc-state-heuristic is no longer a public method (the CVS backend
 ;;   retains it as a private one).
@@ -2884,9 +2887,9 @@ to provide the `find-revision' operation instead."
 (defalias 'vc-default-revision-completion-table 'ignore)
 (defalias 'vc-default-mark-resolved 'ignore)
 
-(defun vc-default-dir-status-files (_backend _dir files default-state update-function)
+(defun vc-default-dir-status-files (_backend _dir files update-function)
   (funcall update-function
-           (mapcar (lambda (file) (list file default-state)) files)))
+           (mapcar (lambda (file) (list file 'up-to-date)) files)))
 
 (defun vc-check-headers ()
   "Check if the current file has any headers in it."

@@ -206,7 +206,7 @@ RESULT is a list of conses (FILE . STATE) for directory DIR."
     (vc-svn-command (current-buffer) 'async nil "status" "-u")
   (vc-run-delayed (vc-svn-after-dir-status callback)))
 
-(defun vc-svn-dir-status-files (_dir files _default-state callback)
+(defun vc-svn-dir-status-files (_dir files callback)
   (apply 'vc-svn-command (current-buffer) 'async nil "status" files)
   (vc-run-delayed
    (vc-svn-after-dir-status callback)))

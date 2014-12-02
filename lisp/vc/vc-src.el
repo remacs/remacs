@@ -32,7 +32,7 @@
 ;; * registered (file)                         OK
 ;; * state (file)                              OK
 ;; * dir-status (dir update-function)          OK
-;; - dir-status-files (dir files ds uf)        ??
+;; - dir-status-files (dir files uf)           ??
 ;; - dir-extra-headers (dir)                   NOT NEEDED
 ;; - dir-printer (fileinfo)                    ??
 ;; * working-revision (file)                   OK

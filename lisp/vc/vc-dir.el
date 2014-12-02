@@ -1014,8 +1014,8 @@ specific headers."
    (vc-call-backend backend 'dir-extra-headers dir)
    "\n"))
 
-(defun vc-dir-refresh-files (files default-state)
-  "Refresh some files in the *VC-dir* buffer."
+(defun vc-dir-refresh-files (files)
+  "Refresh some fies in the *VC-dir* buffer."
   (let ((def-dir default-directory)
 	(backend vc-dir-backend))
     (vc-set-mode-line-busy-indicator)
@@ -1032,7 +1032,7 @@ specific headers."
         (setq default-directory def-dir)
         (erase-buffer)
         (vc-call-backend
-         backend 'dir-status-files def-dir files default-state
+         backend 'dir-status-files def-dir files
          (lambda (entries &optional more-to-come)
            ;; ENTRIES is a list of (FILE VC_STATE EXTRA) items.
            ;; If MORE-TO-COME is true, then more updates will come from
@@ -1110,8 +1110,7 @@ Throw an error if another update process is in progress."
                          vc-ewoc 'vc-dir-fileinfo->needs-update)))
                    (if remaining
                        (vc-dir-refresh-files
-                        (mapcar 'vc-dir-fileinfo->name remaining)
-                        'up-to-date)
+                        (mapcar 'vc-dir-fileinfo->name remaining))
                      (setq mode-line-process nil))))))))))))
 
 (defun vc-dir-show-fileentry (file)

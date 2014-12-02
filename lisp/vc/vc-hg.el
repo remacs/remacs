@@ -44,7 +44,7 @@
 ;; * registered (file)                         OK
 ;; * state (file)                              OK
 ;; - dir-status (dir update-function)          OK
-;; - dir-status-files (dir files ds uf)        OK
+;; - dir-status-files (dir files uf)           OK
 ;; - dir-extra-headers (dir)                   OK
 ;; - dir-printer (fileinfo)                    OK
 ;; * working-revision (file)                   OK
@@ -618,7 +618,7 @@ REV is the revision to check out into WORKFILE."
   (vc-run-delayed
    (vc-hg-after-dir-status update-function)))
 
-(defun vc-hg-dir-status-files (dir files _default-state update-function)
+(defun vc-hg-dir-status-files (dir files update-function)
   (apply 'vc-hg-command (current-buffer) 'async dir "status" "-mardui" "-C" files)
   (vc-run-delayed
    (vc-hg-after-dir-status update-function)))
