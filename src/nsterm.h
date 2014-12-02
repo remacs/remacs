@@ -895,11 +895,15 @@ extern int ns_select (int nfds, fd_set *readfds, fd_set *writefds,
 extern unsigned long ns_get_rgb_color (struct frame *f,
                                        float r, float g, float b, float a);
 
-/* From nsterm.m, needed in nsfont.m. */
 #ifdef __OBJC__
+/* From nsterm.m, needed in nsfont.m. */
 extern void
 ns_draw_text_decoration (struct glyph_string *s, struct face *face,
                          NSColor *defaultCol, CGFloat width, CGFloat x);
+/* Needed in nsfns.m.  */
+extern void
+ns_set_represented_filename (NSString* fstr, struct frame *f);
+
 #endif
 
 #ifdef NS_IMPL_GNUSTEP
