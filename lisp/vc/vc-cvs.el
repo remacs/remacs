@@ -1069,13 +1069,14 @@ state."
     (if basedir result
       (funcall update-function result))))
 
-(defun vc-cvs-dir-status (dir update-function)
-  "Create a list of conses (file . state) for DIR."
-  ;; FIXME check all files in DIR instead?
+(defun vc-cvs-dir-status-files (dir files update-function)
+  "Create a list of conses (file . state) for FILES in DIR.
+Query all files in DIR if files is nil."
   (let ((local (vc-cvs-stay-local-p dir)))
-    (if (and local (not (eq local 'only-file)))
+    (if (and (not files) local (not (eq local 'only-file)))
 	(vc-cvs-dir-status-heuristic dir update-function)
-      (vc-cvs-command (current-buffer) 'async dir "-f" "status")
+      (if (not files) (setq files (vc-expand-dirs (list dir) 'CVS)))
+      (vc-cvs-command (current-buffer) 'async dir "-f" "status" files)
       ;; Alternative implementation: use the "update" command instead of
       ;; the "status" command.
       ;; (vc-cvs-command (current-buffer) 'async
@@ -1083,12 +1084,6 @@ state."
       ;; 		  "-f" "-n" "update" "-d" "-P")
       (vc-run-delayed
        (vc-cvs-after-dir-status update-function)))))
-
-(defun vc-cvs-dir-status-files (dir files update-function)
-  "Create a list of conses (file . state) for DIR."
-  (apply 'vc-cvs-command (current-buffer) 'async dir "-f" "status" files)
-  (vc-run-delayed
-   (vc-cvs-after-dir-status update-function)))
 
 (defun vc-cvs-file-to-string (file)
   "Read the content of FILE and return it as a string."

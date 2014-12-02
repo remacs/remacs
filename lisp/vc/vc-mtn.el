@@ -126,10 +126,11 @@ If nil, use the value of `vc-diff-switches'.  If t, use no switches."
 	     ((match-end 2) (push (list (match-string 3) 'added) result))))
     (funcall update-function result)))
 
-;; -dir-status called from vc-dir, which loads vc, which loads vc-dispatcher.
+;; dir-status-files called from vc-dir, which loads vc,
+;; which loads vc-dispatcher.
 (declare-function vc-exec-after "vc-dispatcher" (code))
 
-(defun vc-mtn-dir-status (dir update-function)
+(defun vc-mtn-dir-status-files (dir _files update-function)
   (vc-mtn-command (current-buffer) 'async dir "status")
   (vc-run-delayed
    (vc-mtn-after-dir-status update-function)))

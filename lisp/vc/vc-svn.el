@@ -195,21 +195,19 @@ If you want to force an empty list of arguments, use t."
          (setq result (cons (list filename state) result)))))
     (funcall callback result)))
 
-;; -dir-status called from vc-dir, which loads vc, which loads vc-dispatcher.
+;; dir-status-files called from vc-dir, which loads vc,
+;; which loads vc-dispatcher.
 (declare-function vc-exec-after "vc-dispatcher" (code))
 
-(defun vc-svn-dir-status (_dir callback)
+(autoload 'vc-expand-dirs "vc")
+
+(defun vc-svn-dir-status-files (dir files callback)
   "Run 'svn status' for DIR and update BUFFER via CALLBACK.
 CALLBACK is called as (CALLBACK RESULT BUFFER), where
 RESULT is a list of conses (FILE . STATE) for directory DIR."
-  ;; FIXME should this rather be all the files in dir?
-    (vc-svn-command (current-buffer) 'async nil "status" "-u")
+  (if (not files) (setq files (vc-expand-dirs (list dir) 'SVN)))
+  (vc-svn-command (current-buffer) 'async nil "status" "-u" files)
   (vc-run-delayed (vc-svn-after-dir-status callback)))
-
-(defun vc-svn-dir-status-files (_dir files callback)
-  (apply 'vc-svn-command (current-buffer) 'async nil "status" files)
-  (vc-run-delayed
-   (vc-svn-after-dir-status callback)))
 
 (defun vc-svn-dir-extra-headers (_dir)
   "Generate extra status headers for a Subversion working copy."

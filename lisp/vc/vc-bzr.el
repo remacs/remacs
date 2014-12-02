@@ -967,9 +967,9 @@ stream.  Standard error output is discarded."
         (forward-line))
       (funcall update-function result)))
 
-(defun vc-bzr-dir-status (dir update-function)
+(defun vc-bzr-dir-status-files (dir files update-function)
   "Return a list of conses (file . state) for DIR."
-  (vc-bzr-command "status" (current-buffer) 'async dir "-v" "-S")
+  (apply 'vc-bzr-command "status" (current-buffer) 'async dir "-v" "-S" files)
   (vc-run-delayed
    (vc-bzr-after-dir-status update-function
                             ;; "bzr status" results are relative to
@@ -979,13 +979,6 @@ stream.  Standard error output is discarded."
                             ;; We pass the relative directory here so
                             ;; that `vc-bzr-after-dir-status' can
                             ;; frob the results accordingly.
-                            (file-relative-name dir (vc-bzr-root dir)))))
-
-(defun vc-bzr-dir-status-files (dir files update-function)
-  "Return a list of conses (file . state) for DIR."
-  (apply 'vc-bzr-command "status" (current-buffer) 'async dir "-v" "-S" files)
-  (vc-run-delayed
-   (vc-bzr-after-dir-status update-function
                             (file-relative-name dir (vc-bzr-root dir)))))
 
 (defvar vc-bzr-shelve-map

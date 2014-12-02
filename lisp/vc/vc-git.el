@@ -50,8 +50,7 @@
 ;; STATE-QUERYING FUNCTIONS
 ;; * registered (file)                             OK
 ;; * state (file)                                  OK
-;; * dir-status (dir update-function)              OK
-;; - dir-status-files (dir files uf)               NOT NEEDED
+;; - dir-status-files (dir files uf)               OK
 ;; * working-revision (file)                       OK
 ;; - latest-on-branch-p (file)                     NOT NEEDED
 ;; * checkout-model (files)                        OK
@@ -474,15 +473,11 @@ or an empty string if none."
   (vc-run-delayed
    (vc-git-after-dir-status-stage stage files update-function)))
 
-(defun vc-git-dir-status (_dir update-function)
+(defun vc-git-dir-status-files (_dir files update-function)
   "Return a list of (FILE STATE EXTRA) entries for DIR."
   ;; Further things that would have to be fixed later:
   ;; - how to handle unregistered directories
   ;; - how to support vc-dir on a subdir of the project tree
-  (vc-git-dir-status-goto-stage 'update-index nil update-function))
-
-(defun vc-git-dir-status-files (_dir files update-function)
-  "Return a list of (FILE STATE EXTRA) entries for FILES in DIR."
   (vc-git-dir-status-goto-stage 'update-index files update-function))
 
 (defvar vc-git-stash-map

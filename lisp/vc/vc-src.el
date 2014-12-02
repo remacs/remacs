@@ -31,8 +31,7 @@
 ;; STATE-QUERYING FUNCTIONS
 ;; * registered (file)                         OK
 ;; * state (file)                              OK
-;; * dir-status (dir update-function)          OK
-;; - dir-status-files (dir files uf)           ??
+;; - dir-status-files (dir files uf)           OK
 ;; - dir-extra-headers (dir)                   NOT NEEDED
 ;; - dir-printer (fileinfo)                    ??
 ;; * working-revision (file)                   OK
@@ -179,11 +178,11 @@ For a description of possible values, see `vc-check-master-templates'."
 
 (autoload 'vc-expand-dirs "vc")
 
-(defun vc-src-dir-status (dir update-function)
+(defun vc-src-dir-status-files (dir files update-function)
   ;; FIXME: Use one src status -a call for this
-  (let ((flist (vc-expand-dirs (list dir) 'SRC))
-	(result nil))
-    (dolist (file flist)
+  (if (not files) (setq files (vc-expand-dirs (list dir) 'RCS)))
+  (let ((result nil))
+    (dolist (file files)
       (let ((state (vc-state file))
 	    (frel (file-relative-name file)))
 	(when (and (eq (vc-backend file) 'SRC)

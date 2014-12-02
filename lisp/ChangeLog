@@ -1,5 +1,8 @@
 2014-12-02  Eric S. Raymond  <esr@snark.thyrsus.com>
 
+	*  vc.el, all backends: API simplification: Abolish dir-status.
+	It's replaced by dir-status-files.
+
 	* vc.el, all backends: API simplification: Remove 4th
 	'default-state' argument from vc-dir-status files and its backend
 	methods - no backend method ever set it.  It was used only in the

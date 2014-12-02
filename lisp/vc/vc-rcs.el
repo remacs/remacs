@@ -157,12 +157,10 @@ For a description of possible values, see `vc-check-master-templates'."
 
 (autoload 'vc-expand-dirs "vc")
 
-(defun vc-rcs-dir-status (dir update-function)
-  ;; Doing individual vc-state calls is painful but there
-  ;; is no better way in RCS-land.
-  (let ((flist (vc-expand-dirs (list dir) 'RCS))
-	(result nil))
-    (dolist (file flist)
+(defun vc-rcs-dir-status-files (dir files update-function)
+  (if (not files) (setq files (vc-expand-dirs (list dir) 'RCS)))
+  (let ((result nil))
+    (dolist (file files)
       (let ((state (vc-state file))
 	    (frel (file-relative-name file)))
 	(when (and (eq (vc-backend file) 'RCS)

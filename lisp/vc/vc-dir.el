@@ -1097,7 +1097,7 @@ Throw an error if another update process is in progress."
           (setq default-directory def-dir)
           (erase-buffer)
           (vc-call-backend
-           backend 'dir-status def-dir
+           backend 'dir-status-files def-dir nil
            (lambda (entries &optional more-to-come)
              ;; ENTRIES is a list of (FILE VC_STATE EXTRA) items.
              ;; If MORE-TO-COME is true, then more updates will come from

@@ -43,7 +43,6 @@
 ;; STATE-QUERYING FUNCTIONS
 ;; * registered (file)                         OK
 ;; * state (file)                              OK
-;; - dir-status (dir update-function)          OK
 ;; - dir-status-files (dir files uf)           OK
 ;; - dir-extra-headers (dir)                   OK
 ;; - dir-printer (fileinfo)                    OK
@@ -612,11 +611,6 @@ REV is the revision to check out into WORKFILE."
 (declare-function vc-exec-after "vc-dispatcher" (code))
 ;; Follows vc-exec-after.
 (declare-function vc-set-async-update "vc-dispatcher" (process-buffer))
-
-(defun vc-hg-dir-status (dir update-function)
-  (vc-hg-command (current-buffer) 'async dir "status" "-C")
-  (vc-run-delayed
-   (vc-hg-after-dir-status update-function)))
 
 (defun vc-hg-dir-status-files (dir files update-function)
   (apply 'vc-hg-command (current-buffer) 'async dir "status" "-mardui" "-C" files)

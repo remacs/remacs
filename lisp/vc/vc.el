@@ -130,31 +130,32 @@
 ;;   reliable state computation; it is usually called immediately after
 ;;   C-x v v.
 ;;
-;; - dir-status (dir update-function)
+;; - dir-status-files (dir files update-function)
 ;;
 ;;   Produce RESULT: a list of lists of the form (FILE VC-STATE EXTRA)
-;;   for the files in DIR.
+;;   for FILES in DIR.  If FILES is nil. report on all files in DIR.
+;;   (It is OK, though possibly inefficient, to ignore the FILES argument
+;;   and always report on all files in DIR.)
+;;
 ;;   EXTRA can be used for backend specific information about FILE.
 ;;   If a command needs to be run to compute this list, it should be
 ;;   run asynchronously using (current-buffer) as the buffer for the
-;;   command.  When RESULT is computed, it should be passed back by
-;;   doing: (funcall UPDATE-FUNCTION RESULT nil).
-;;   If the backend uses a process filter, hence it produces partial results,
-;;   they can be passed back by doing:
-;;      (funcall UPDATE-FUNCTION RESULT t)
-;;   and then do a (funcall UPDATE-FUNCTION RESULT nil)
-;;   when all the results have been computed.
+;;   command.
+;;
+;;   When RESULT is computed, it should be passed back by doing:
+;;   (funcall UPDATE-FUNCTION RESULT nil).  If the backend uses a
+;;   process filter, hence it produces partial results, they can be
+;;   passed back by doing: (funcall UPDATE-FUNCTION RESULT t) and then
+;;   do a (funcall UPDATE-FUNCTION RESULT nil) when all the results
+;;   have been computed.
+;;
 ;;   To provide more backend specific functionality for `vc-dir'
 ;;   the following functions might be needed: `dir-extra-headers',
-;;   `dir-printer', `extra-dir-menu' and `dir-status-files'.
+;;   `dir-printer', and `extra-dir-menu'.
 ;;
-;; - dir-status-files (dir files update-function)
-;;
-;;   This function is identical to dir-status except that it should
-;;   only report status for the specified FILES. Also it needs to
-;;   report on all requested files, including up-to-date or ignored
-;;   files. If not provided, the default is to consider that the files
-;;   are in 'up-to-date state.
+;;   This function should report on all requested files, including
+;;   up-to-date or ignored files. If it is not provided, the default is to
+;;   consider that all files are in 'up-to-date state.
 ;;
 ;; - dir-extra-headers (dir)
 ;;
@@ -389,7 +390,6 @@
 ;;   the backend command.  It should return a status of either 0 (no
 ;;   differences found), or 1 (either non-empty diff or the diff is
 ;;   run asynchronously).
-
 ;;
 ;; - revision-completion-table (files)
 ;;
@@ -580,6 +580,9 @@
 ;; - INCOMPATIBLE CHANGE: The old fourth 'default-state' argument of
 ;;   vc-dir-status-files is gone; none of the back ends actually used it.
 ;;
+;; - vc-dir-status is no longer a public method; it has been replaced
+;;   by vc-dir-status-files.
+;;
 ;; - vc-state-heuristic is no longer a public method (the CVS backend
 ;;   retains it as a private one).
 ;;
@@ -632,12 +635,13 @@
 ;;
 ;;;; Internal cleanups:
 ;;
-;; - Another important thing: merge all the status-like backend operations.
-;;   We should remove dir-status, state, and dir-status-files, and
-;;   replace them with just `status' which takes a fileset and a continuation
-;;   (like dir-status) and returns a buffer in which the process(es) are run
-;;   (or nil if it worked synchronously).  Hopefully we can define the old
-;;   4 operations in term of this one.
+;; - Another important thing: merge all the status-like backend
+;;   operations.  We should remove dir-status-files and state and
+;;   replace them with just `status' which takes a fileset and a
+;;   continuation (like dir-status-files) and returns a buffer in
+;;   which the process(es) are run (or nil if it worked
+;;   synchronously).  Hopefully we can define the old operations in
+;;   term of this one.
 ;;
 ;;;; Unify two different versions of the amend capability
 ;;
