@@ -866,6 +866,7 @@ NOTE: Enclose always by \\\\( and \\\\) the elements to highlight.
       Use exactly one pair of enclosing \\\\( and \\\\).
 
 Used when `whitespace-style' includes `big-indent'."
+  :version "25.1"
   :type '(regexp :tag "Detect too much indentation at the beginning of a line")
   :group 'whitespace)
 

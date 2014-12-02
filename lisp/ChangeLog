@@ -1,3 +1,7 @@
+2014-12-02  Glenn Morris  <rgm@gnu.org>
+
+	* whitespace.el (whitespace-big-indent-regexp): Add :version.
+
 2014-12-02  Eric S. Raymond  <esr@snark.thyrsus.com>
 
 	* subr.el (filter): New macro. Because it's just silly for a Lisp
