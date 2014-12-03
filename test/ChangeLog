@@ -1,5 +1,11 @@
 2015-01-20  Michal Nazarewicz  <mina86@mina86.com>
 
+	* automated/descr-text-test.el: New file with tests for
+	`describe-char-eldoc--truncate', `describe-char-eldoc--format',
+	and `describe-char-eldoc'.
+
+2015-01-20  Michal Nazarewicz  <mina86@mina86.com>
+
 	* automated/tildify-tests.el (tildify-space-undo-test--test):
 	A new helper function for testing `tildify-double-space-undos'
 	behaviour in the `tildify-space' function.

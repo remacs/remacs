@@ -1,5 +1,14 @@
 2015-01-20  Michal Nazarewicz  <mina86@mina86.com>
 
+	* descr-text.el (describe-char-eldoc): New function returning
+	basic Unicode codepoint information (e.g. name) about character
+	at point.  It is meant to be used as a default value of the
+	`eldoc-documentation-function' variable.
+	(describe-char-eldoc--format, describe-char-eldoc--truncate):
+	New helper functions for `describe-char-eldoc' function.
+
+2015-01-20  Michal Nazarewicz  <mina86@mina86.com>
+
 	* textmodes/paragraphs.el (sentence-end-base): Include an
 	ellipsis (…) and interrobang (‽) characters as end of a sentence,
 	and a closing single quote (’) as an end of a quote.

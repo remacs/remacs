@@ -238,8 +238,12 @@ typing RET.
 result of the calculation into the current buffer.
 
 ** ElDoc
-*** New minor mode global-eldoc-mode
-*** eldoc-documentation-function now defaults to nil
+*** New minor mode `global-eldoc-mode'
+*** `eldoc-documentation-function' now defaults to `ignore'
+*** `describe-char-eldoc' displays information about character at point,
+and can be used as a default value of `eldoc-documentation-function'.  It is
+useful when, for example, one needs to distinguish various spaces (e.g. ] [,
+] [, ] [, etc.) while using mono-spaced font.
 
 ** eww
 
