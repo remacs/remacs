@@ -1470,8 +1470,8 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	    ;; The structure of VC-FILESET is not documented.  Let's
 	    ;; hope it won't change.
 	    (vc-register
-	     nil (list (car vc-handled-backends)
-		       (list (file-name-nondirectory tmp-name2)))))
+	     (list (car vc-handled-backends)
+		   (list (file-name-nondirectory tmp-name2)))))
 	  (should (vc-registered tmp-name2)))
 
 	(ignore-errors (delete-directory tmp-name1 'recursive)))))

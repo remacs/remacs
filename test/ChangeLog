@@ -1,3 +1,8 @@
+2014-12-03  Glenn Morris  <rgm@gnu.org>
+
+	* automated/tramp-tests.el (tramp-test29-vc-registered):
+	Update for recent incompatible change in vc-register.
+
 2014-11-29  Fabián Ezequiel Gallina  <fgallina@gnu.org>
 
 	* automated/python-tests.el
