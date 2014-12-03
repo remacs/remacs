@@ -1,3 +1,7 @@
+2014-12-03  Eric S. Raymond  <esr@snark.thyrsus.com>
+
+	* files.el (file-tree-walk): Fix docstring.
+
 2014-12-03  Karl Fogel  <kfogel@red-bean.com>
 
 	Fix bug whereby saving files hung in VC hook.

@@ -730,11 +730,11 @@ The path separator is colon in GNU and GNU-like systems."
        (error "No such directory found via CDPATH environment variable"))))
 
 (defun file-tree-walk (dir action &rest args)
-  "Walk DIR executing ACTION.  Each call gets as arguments DIR, a file path,
-and optional ARGS. The ACTION is applied to each subdirectory
-before descending into it, and if nil is returned at that point
-the descent will be prevented.  Directory entries are sorted with
-string-lessp"
+  "Walk DIR executing ACTION on each path, with ARGS as additional arguments.
+Each call gets as arguments DIR, a file path, and optional ARGS.
+The ACTION is applied to each subdirectory before descending into
+it, and if nil is returned at that point the descent will be
+prevented.  Directory entries are sorted with string-lessp."
   (cond ((file-directory-p dir)
 	 (or (char-equal ?/ (aref dir (1- (length dir))))
 	     (setq dir (file-name-as-directory dir)))
