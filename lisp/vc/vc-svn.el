@@ -153,12 +153,12 @@ If you want to force an empty list of arguments, use t."
 	  (let ((parsed (vc-svn-parse-status file)))
 	    (and parsed (not (memq parsed '(ignored unregistered))))))))))
 
-(defun vc-svn-state (file &optional localp)
+(defun vc-svn-state (file)
   "SVN-specific version of `vc-state'."
   (let (process-file-side-effects)
     (with-temp-buffer
       (cd (file-name-directory file))
-      (vc-svn-command t 0 file "status" (if localp "-v" "-u"))
+      (vc-svn-command t 0 file "status" "-v")
       (vc-svn-parse-status file))))
 
 ;; FIXME it would be better not to have the "remote" argument,
