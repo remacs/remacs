@@ -8,12 +8,12 @@
 ## it under the terms of the GNU General Public License as published by
 ## the Free Software Foundation, either version 3 of the License, or
 ## (at your option) any later version.
-## 
+##
 ## GNU Emacs is distributed in the hope that it will be useful,
 ## but WITHOUT ANY WARRANTY; without even the implied warranty of
 ## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ## GNU General Public License for more details.
-## 
+##
 ## You should have received a copy of the GNU General Public License
 ## along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -50,10 +50,23 @@ ${ns_appbindir}/Emacs: ${ns_appdir} ${ns_check_file} ../src/emacs${EXEEXT} | \
   ${ns_appbindir}
 	cp -f ../src/emacs${EXEEXT} $@
 
-.PHONY: all
+.PHONY: all links
 
 all: ${ns_appdir} ${ns_appbindir}/Emacs
 
+# create a fake installation pointing back to the source tree
+# to run GUI Emacs in-place
+links : ../src/emacs${EXEEXT} | ${ns_appbindir}
+	for d in $(shell cd ${srcdir}/${ns_appsrc}; find . -type d); do ${MKDIR_P} ${ns_appdir}/$$d; done
+	for f in $(shell cd ${srcdir}/${ns_appsrc}; find . -type f); do ln -s $(shell cd ${srcdir}; pwd -P)/${ns_appsrc}/$$f ${ns_appdir}/$$f; done
+	for d in $(shell cd ${ns_appsrc}; find . -type d); do ${MKDIR_P} ${ns_appdir}/$$d; done
+	for f in $(shell cd ${ns_appsrc}; find . -type f); do ln -s $(shell pwd -P)/${ns_appsrc}/$$f ${ns_appdir}/$$f; done
+	ln -s ../../../../../lisp ${ns_appdir}/Contents/Resources
+	ln -s ../../../../../etc ${ns_appdir}/Contents/Resources
+	ln -s ../../../../../info ${ns_appdir}/Contents/Resources
+	ln -s ../../../../src/emacs${EXEEXT} ${ns_appbindir}/Emacs
+	ln -s ../../../../lib-src ${ns_appbindir}/bin
+	ln -s ../../../../lib-src ${ns_appbindir}/libexec
 
 .PHONY: clean distclean bootstrap-clean maintainer-clean
 

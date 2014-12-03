@@ -1,3 +1,9 @@
+2014-12-03  Sam Steingold  <sds@gnu.org>
+
+	* Makefile.in (links): New phony target to create a fake
+	installation pointing back to the source tree to run GUI Emacs
+	in-place (http://article.gmane.org/gmane.emacs.devel:178330).
+
 2014-11-22  Glenn Morris  <rgm@gnu.org>
 
 	* templates/Info-gnustep.plist.in: Let configure set URL.
