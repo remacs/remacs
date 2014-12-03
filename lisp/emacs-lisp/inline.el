@@ -1,21 +1,23 @@
 ;;; inline.el --- Define functions by their inliner  -*- lexical-binding:t; -*-
 
-;; Copyright (C) 2014  Stefan Monnier
+;; Copyright (C) 2014  Free Software Foundation, Inc.
 
 ;; Author: Stefan Monnier <monnier@iro.umontreal.ca>
 
-;; This program is free software; you can redistribute it and/or modify
+;; This file is part of GNU Emacs.
+
+;; GNU Emacs is free software: you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
 ;; the Free Software Foundation, either version 3 of the License, or
 ;; (at your option) any later version.
 
-;; This program is distributed in the hope that it will be useful,
+;; GNU Emacs is distributed in the hope that it will be useful,
 ;; but WITHOUT ANY WARRANTY; without even the implied warranty of
 ;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -67,22 +69,22 @@
 
 (require 'macroexp)
 
-(defmacro inline-quote (exp)
+(defmacro inline-quote (_exp)
   "Similar to backquote, but quotes code and only accepts , and not ,@."
   (declare (debug t))
   (error "inline-quote can only be used within define-inline"))
 
-(defmacro inline-const-p (exp)
+(defmacro inline-const-p (_exp)
   "Return non-nil if the value of EXP is already known."
   (declare (debug t))
   (error "inline-const-p can only be used within define-inline"))
 
-(defmacro inline-const-val (exp)
+(defmacro inline-const-val (_exp)
   "Return the value of EXP."
   (declare (debug t))
   (error "inline-const-val can only be used within define-inline"))
 
-(defmacro inline-error (format &rest args)
+(defmacro inline-error (_format &rest _args)
   "Signal an error."
   (declare (debug t))
   (error "inline-error can only be used within define-inline"))
@@ -104,14 +106,21 @@ of arguments,in which case each argument is evaluated and the resulting
 new list is re-bound to VAR.
 
 After VARS is handled, BODY is evaluated in the new environment."
-  (declare (indent 1) (debug (sexp &rest body)))
+  (declare (indent 1) (debug (sexp &rest form)))
   (cond
    ((consp vars)
     `(inline--leteval ,(pop vars) (inline-letevals ,vars ,@body)))
    (vars
     `(inline--letlisteval ,vars ,@body))
    (t (macroexp-progn body))))
-    
+
+;; (defmacro inline-if (testfun testexp then else)
+;;   (declare (indent 2) (debug (sexp symbolp form form)))
+;;   (macroexp-let2 macroexp-copyable-p testsym testexp
+;;     `(if (inline-const-p ,testexp)
+;;          (if (,testfun (inline-const-val ,testexp)) ,then ,else)
+;;        (inline-quote (if (,testfun ,testexp) ,(list '\, then)
+;;                         ,(list '\, else))))))
 
 ;;;###autoload
 (defmacro define-inline (name args &rest body)
@@ -220,7 +229,9 @@ After VARS is handled, BODY is evaluated in the new environment."
   (macroexp-progn body))
 
 (defun inline--testconst-p (exp)
-  `(macroexp-const-p ,exp))
+  (macroexp-let2 macroexp-copyable-p exp exp
+    `(or (macroexp-const-p ,exp)
+         (eq (car-safe ,exp) 'function))))
 
 (defun inline--alwaysconst-p (_exp)
   t)
@@ -228,7 +239,7 @@ After VARS is handled, BODY is evaluated in the new environment."
 (defun inline--getconst-val (exp)
   (macroexp-let2 macroexp-copyable-p exp exp
     `(cond
-      ((not (macroexp-const-p ,exp))
+      ((not ,(inline--testconst-p exp))
        (throw 'inline--just-use inline--form))
       ((consp ,exp) (cadr ,exp))
       (t ,exp))))

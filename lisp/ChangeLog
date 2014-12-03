@@ -1,5 +1,12 @@
 2014-12-03  Stefan Monnier  <monnier@iro.umontreal.ca>
 
+	* emacs-lisp/inline.el: Fix up copyright header.
+	(inline-quote, inline-const-p, inline-const-val, inline-error):
+	Silence compiler warnings.
+	(inline-letevals): Fix edebug spec.
+	(inline--testconst-p): Consider lambda expressions as const-p.
+	(inline--getconst-val): Use inline--testconst-p.
+
 	* minibuffer.el (completion-table-dynamic): Add arg `switch-buffer'
 	and change default to stay in the minibuffer when called from
 	the minibuffer (bug#19250).
