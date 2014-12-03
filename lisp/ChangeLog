@@ -1,3 +1,14 @@
+2014-12-03  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* minibuffer.el (completion-table-dynamic): Add arg `switch-buffer'
+	and change default to stay in the minibuffer when called from
+	the minibuffer (bug#19250).
+	(lazy-completion-table): Use this new argument to preserve the
+	old behavior.
+
+	* progmodes/elisp-mode.el (elisp--local-variables): Don't burp on
+	incorrect lexical elements (bug#19250).
+
 2014-12-03  Eric S. Raymond  <esr@snark.thyrsus.com>
 
 	* files.el (file-tree-walk): Lisp translation of ANSI ftw(3).
@@ -23,8 +34,7 @@
 	* vc-hooks.el: Bind vc-delete-file to Ctrl-x v delete.
 
 	* vc.el (vc-expand-dirs): Now takes a second BACKEND argument,
-	improving behavior on directories using multiple file-oriented
-	VCSes.
+	improving behavior on directories using multiple file-oriented VCSes.
 
 	* vc/vc.el and all backends: API simplification; clear-headers
 	is no longer a public method.  It is now local to the one place

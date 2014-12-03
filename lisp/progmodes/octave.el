@@ -45,13 +45,13 @@
     (defun completion-table-with-cache (fun &optional ignore-case)
       ;; See eg bug#11906.
       (let* (last-arg last-result
-                      (new-fun
-                       (lambda (arg)
-                         (if (and last-arg (string-prefix-p last-arg arg ignore-case))
-                             last-result
-                           (prog1
-                               (setq last-result (funcall fun arg))
-                             (setq last-arg arg))))))
+             (new-fun
+              (lambda (arg)
+                (if (and last-arg (string-prefix-p last-arg arg ignore-case))
+                    last-result
+                  (prog1
+                      (setq last-result (funcall fun arg))
+                    (setq last-arg arg))))))
         (completion-table-dynamic new-fun)))))
 (eval-when-compile
   (unless (fboundp 'setq-local)

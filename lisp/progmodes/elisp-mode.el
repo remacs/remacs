@@ -293,7 +293,7 @@ Blank lines separate paragraphs.  Semicolons start comments.
       (let* ((sexp (condition-case nil
                        (car (read-from-string
                              (concat txt "elisp--witness--lisp" closer)))
-                     (end-of-file nil)))
+                     ((invalid-read-syntax end-of-file) nil)))
              (macroexpand-advice (lambda (expander form &rest args)
                                    (condition-case nil
                                        (apply expander form args)

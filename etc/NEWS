@@ -363,6 +363,11 @@ helper functions) obsolete.
 
 * Incompatible Lisp Changes in Emacs 25.1
 
+** completion-table-dynamic stays in the minibuffer.
+If you want the old behavior of calling the function in the buffer
+from which the minibuffer was entered, call it with the new argument
+`switch-buffer'.
+
 ** window-configurations no longer record the buffers's marks.
 
 ** inhibit-modification-hooks now also inhibits lock-file checks, as well as
