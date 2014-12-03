@@ -1,3 +1,10 @@
+2014-12-03  Chris Zheng  <chriszheng99@gmail.com>  (tiny change)
+
+	* gnutls.c (init_gnutls_functions, gnutls_certificate_details):
+	Use gnutls_sign_get_name directly because
+	gnutls_sign_algorithm_get_name is a macro on MinGW (bug#19231).
+	(init_gnutls_functions): Load missing gnutls_server_name_set.
+
 2014-12-02  Eli Zaretskii  <eliz@gnu.org>
 
 	* bidi.c (bidi_find_first_overridden): New function.

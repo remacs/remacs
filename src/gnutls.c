@@ -185,7 +185,7 @@ DEF_GNUTLS_FN (int, gnutls_x509_crt_get_key_id,
 	       (gnutls_x509_crt_t, unsigned int,
 		unsigned char *, size_t *_size));
 DEF_GNUTLS_FN (const char*, gnutls_sec_param_get_name, (gnutls_sec_param_t));
-DEF_GNUTLS_FN (const char*, gnutls_sign_algorithm_get_name,
+DEF_GNUTLS_FN (const char*, gnutls_sign_get_name,
 	       (gnutls_sign_algorithm_t));
 DEF_GNUTLS_FN (int, gnutls_server_name_set, (gnutls_session_t,
 					     gnutls_server_name_type_t,
@@ -265,7 +265,8 @@ init_gnutls_functions (void)
   LOAD_GNUTLS_FN (library, gnutls_x509_crt_get_signature);
   LOAD_GNUTLS_FN (library, gnutls_x509_crt_get_key_id);
   LOAD_GNUTLS_FN (library, gnutls_sec_param_get_name);
-  LOAD_GNUTLS_FN (library, gnutls_sign_algorithm_get_name);
+  LOAD_GNUTLS_FN (library, gnutls_sign_get_name);
+  LOAD_GNUTLS_FN (library, gnutls_server_name_set);
 
   max_log_level = global_gnutls_log_level;
 
@@ -337,7 +338,7 @@ init_gnutls_functions (void)
 #define fn_gnutls_x509_crt_get_signature        gnutls_x509_crt_get_signature
 #define fn_gnutls_x509_crt_get_key_id           gnutls_x509_crt_get_key_id
 #define fn_gnutls_sec_param_get_name            gnutls_sec_param_get_name
-#define fn_gnutls_sign_algorithm_get_name       gnutls_sign_algorithm_get_name
+#define fn_gnutls_sign_get_name                 gnutls_sign_get_name
 #define fn_gnutls_server_name_set		gnutls_server_name_set
 
 #endif /* !WINDOWSNT */
@@ -928,7 +929,7 @@ gnutls_certificate_details (gnutls_x509_crt_t cert)
     err = fn_gnutls_x509_crt_get_signature_algorithm (cert);
     if (err >= GNUTLS_E_SUCCESS)
       {
-	const char *name = fn_gnutls_sign_algorithm_get_name (err);
+	const char *name = fn_gnutls_sign_get_name (err);
 	if (name)
 	  res = nconc2 (res, list2 (intern (":signature-algorithm"),
 				    build_string (name)));
