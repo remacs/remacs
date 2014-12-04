@@ -6854,3 +6854,27 @@ allows it to correctly account for window-specific overlays, which
 might change the result of the function if some text in the buffer is
 covered by overlays.
 @end defun
+
+@cindex copying bidirectional text, preserve visual order
+@cindex visual order, preserve when copying bidirectional text
+  When text that includes mixed right-to-left and left-to-right
+characters and bidirectional controls is copied into a different
+location, it can change its visual appearance, and also can affect the
+visual appearance of the surrounding text at destination.  This is
+because reordering of bidirectional text specified by the
+@acronym{UBA} has non-trivial context-dependent effects both on the
+copied text and on the text at copy destination that will surround it.
+
+  Sometimes, a Lisp program may need to preserve the exact visual
+appearance of the copied text at destination, and of the text that
+surrounds the copy.  Lisp programs can use the following function to
+achieve that effect.
+
+@defun buffer-substring-with-bidi-context start end &optional no-properties
+This function works similar to @code{buffer-substring} (@pxref{Buffer
+Contents}), but it prepends and appends to the copied text bidi
+directional control characters necessary to preserve the visual
+appearance of the text when it is inserted at another place.  Optional
+argument @var{no-properties}, if non-@code{nil}, means remove the text
+properties from the copy of the text.
+@end defun

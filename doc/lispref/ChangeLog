@@ -1,3 +1,11 @@
+2014-12-04  Eli Zaretskii  <eliz@gnu.org>
+
+	* display.texi (Bidirectional Display): Document
+	'buffer-substring-with-bidi-context'.
+
+	* text.texi (Buffer Contents): Mention
+	'buffer-substring-with-bidi-context' with a cross-reference.
+
 2014-12-02  Eli Zaretskii  <eliz@gnu.org>
 
 	* display.texi (Bidirectional Display): Document

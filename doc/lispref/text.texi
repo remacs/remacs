@@ -219,6 +219,12 @@ This function returns the contents of the entire accessible portion of
 the current buffer, as a string.
 @end defun
 
+  If you need to make sure the resulting string, when copied to a
+different location, will not change its visual appearance due to
+reordering of bidirectional text, use the
+@code{buffer-substring-with-bidi-context} function
+(@pxref{Bidirectional Display, buffer-substring-with-bidi-context}).
+
 @defun filter-buffer-substring start end &optional delete
 This function filters the buffer text between @var{start} and @var{end}
 using a function specified by the variable

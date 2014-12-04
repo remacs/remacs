@@ -105,6 +105,13 @@ overridden by directional override control characters.  Lisp programs
 can use this to detect potential phishing of URLs and other links that
 exploits bidirectional display reordering.
 
++++
+** The new function `buffer-substring-with-bidi-context' allows to
+copy a portion of a buffer into a different location while preserving
+the visual appearance both of the copied text and the text at
+destination, even when the copied text includes mixed bidirectional
+text and directional control characters.
+
 *** The ls-lisp package uses `string-collate-lessp' to sort file names.
 If you want the old, locale-independent sorting, customize the new
 option `ls-lisp-use-string-collate' to a nil value.

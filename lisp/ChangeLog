@@ -1,5 +1,12 @@
 2014-12-04  Eli Zaretskii  <eliz@gnu.org>
 
+	Implement copying of a buffer portion while preserving visual order.
+	* simple.el (bidi-directional-controls-chars)
+	(bidi-directional-non-controls-chars): New variables.
+	(squeeze-bidi-context-1, squeeze-bidi-context)
+	(line-substring-with-bidi-context)
+	(buffer-substring-with-bidi-context): New functions.
+
 	* files.el (file-tree-walk): Doc fix.
 
 2014-12-04  Rupert Swarbrick  <ruperts@broadcom.com> (tiny change)
