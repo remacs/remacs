@@ -1,3 +1,7 @@
+2014-12-04  Eli Zaretskii  <eliz@gnu.org>
+
+	* files.el (file-tree-walk): Doc fix.
+
 2014-12-04  Rupert Swarbrick  <ruperts@broadcom.com> (tiny change)
 	    Rüdiger Sonderfeld  <ruediger@c-plusplus.net>
 
