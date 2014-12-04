@@ -54,6 +54,17 @@ filter_3 ()                     # bug#17842
 	grep -v "^," | sort -t, -k2,2
 }
 
+foo | bar | {
+    toto
+}
+
+grep -e "^$userregexp:" /etc/passwd | cut -d :  -f 1 | while read user ; do
+    print -u2 "user=$user"      # bug#18031
+    sudo -U $user -ll | while read line ; do
+        :
+    done
+done
+
 echo -n $(( 5 << 2 ))
 # This should not be treated as a heredoc (bug#12770).
 2
