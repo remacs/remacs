@@ -1184,7 +1184,7 @@ The preference is a float determined from `shr-prefer-media-type'."
   "Extract the best `:src' property from <source> blocks in DOM."
   (setq pref (or pref -1.0))
   (let (new-pref)
-    (dolist (elem (dom-children dom))
+    (dolist (elem (dom-non-text-children dom))
       (when (and (eq (dom-tag elem) 'source)
 		 (< pref
 		    (setq new-pref
@@ -1193,7 +1193,7 @@ The preference is a float determined from `shr-prefer-media-type'."
 	      url (dom-attr elem 'src))
         ;; libxml's html parser isn't HTML5 compliant and non terminated
         ;; source tags might end up as children.  So recursion it is...
-        (dolist (child (dom-children elem))
+        (dolist (child (dom-non-text-children elem))
           (when (eq (dom-tag child) 'source)
             (let ((ret (shr--extract-best-source (list child) url pref)))
               (when (< pref (cdr ret))

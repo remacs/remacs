@@ -1,3 +1,7 @@
+2014-12-04  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* net/shr.el (shr--extract-best-source): Ignore non-text children.
+
 2014-12-04  Eli Zaretskii  <eliz@gnu.org>
 
 	Implement copying of a buffer portion while preserving visual order.
