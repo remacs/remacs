@@ -1,3 +1,8 @@
+2014-12-04  Lee Duhem  <lee.duhem@gmail.com>  (tiny change)
+
+	* eval.c (Fsignal): Remove duplicate test.
+	(Fautoload_do_load): Fix up docstring.
+
 2014-12-02  Jan Djärv  <jan.h.d@swipnet.se>
 
 	* nsterm.m (represented_filename, represented_frame): New variables.
