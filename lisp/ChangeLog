@@ -1,3 +1,12 @@
+2014-12-04  Rupert Swarbrick  <ruperts@broadcom.com> (tiny change)
+	    Rüdiger Sonderfeld  <ruediger@c-plusplus.net>
+
+	* autoinsert.el (auto-insert-alist): Update C/C++ header and
+	program support to match more extensions.  Replace non-alnum
+	characters when generating include guards (headers) and check for
+	more extensions when generating includes (programs)
+	(bug#19254).
+
 2014-12-03  Eric S. Raymond  <esr@snark.thyrsus.com>
 
 	* files.el (file-tree-walk): Fix docstring.
