@@ -27,6 +27,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "commands.h"
 #include "keyboard.h"
 #include "dispextern.h"
+#include "buffer.h"
 
 /* Chain of condition and catch handlers currently in effect.  */
 
@@ -2272,14 +2273,12 @@ usage: (apply FUNCTION &rest ARGUMENTS)  */)
   (ptrdiff_t nargs, Lisp_Object *args)
 {
   ptrdiff_t i, numargs, funcall_nargs;
-  register Lisp_Object spread_arg;
-  register Lisp_Object *funcall_args;
-  Lisp_Object fun, retval;
+  register Lisp_Object *funcall_args = NULL;
+  register Lisp_Object spread_arg = args[nargs - 1];
+  Lisp_Object fun = args[0];
+  Lisp_Object retval;
   USE_SAFE_ALLOCA;
 
-  fun = args [0];
-  funcall_args = 0;
-  spread_arg = args [nargs - 1];
   CHECK_LIST (spread_arg);
 
   numargs = XINT (Flength (spread_arg));
@@ -2297,34 +2296,27 @@ usage: (apply FUNCTION &rest ARGUMENTS)  */)
   /* Optimize for no indirection.  */
   if (SYMBOLP (fun) && !NILP (fun)
       && (fun = XSYMBOL (fun)->function, SYMBOLP (fun)))
-    fun = indirect_function (fun);
-  if (NILP (fun))
     {
-      /* Let funcall get the error.  */
-      fun = args[0];
-      goto funcall;
+      fun = indirect_function (fun);
+      if (NILP (fun))
+	/* Let funcall get the error.  */
+	fun = args[0];
     }
 
-  if (SUBRP (fun))
+  if (SUBRP (fun) && XSUBR (fun)->max_args > numargs
+      /* Don't hide an error by adding missing arguments.  */
+      && numargs >= XSUBR (fun)->min_args)
     {
-      if (numargs < XSUBR (fun)->min_args
-	  || (XSUBR (fun)->max_args >= 0 && XSUBR (fun)->max_args < numargs))
-	goto funcall;		/* Let funcall get the error.  */
-      else if (XSUBR (fun)->max_args >= 0 && XSUBR (fun)->max_args > numargs)
-	{
-	  /* Avoid making funcall cons up a yet another new vector of arguments
-	     by explicitly supplying nil's for optional values.  */
-	  SAFE_ALLOCA_LISP (funcall_args, 1 + XSUBR (fun)->max_args);
-	  for (i = numargs; i < XSUBR (fun)->max_args; /* nothing */)
-	    funcall_args[++i] = Qnil;
-	  funcall_nargs = 1 + XSUBR (fun)->max_args;
-	}
+      /* Avoid making funcall cons up a yet another new vector of arguments
+	 by explicitly supplying nil's for optional values.  */
+      SAFE_ALLOCA_LISP (funcall_args, 1 + XSUBR (fun)->max_args);
+      for (i = numargs; i < XSUBR (fun)->max_args; /* nothing */)
+	funcall_args[++i] = Qnil;
+      funcall_nargs = 1 + XSUBR (fun)->max_args;
     }
- funcall:
-  /* We add 1 to numargs because funcall_args includes the
-     function itself as well as its arguments.  */
-  if (!funcall_args)
-    {
+  else
+    { /* We add 1 to numargs because funcall_args includes the
+	 function itself as well as its arguments.  */
       SAFE_ALLOCA_LISP (funcall_args, 1 + numargs);
       funcall_nargs = 1 + numargs;
     }
@@ -3420,6 +3412,18 @@ backtrace_eval_unrewind (int distance)
 	     unwind_protect, but the problem is that we don't know how to
 	     rewind them afterwards.  */
 	case SPECPDL_UNWIND:
+	  {
+	    Lisp_Object oldarg = tmp->unwind.arg;
+	    if (tmp->unwind.func == set_buffer_if_live)
+	      tmp->unwind.arg = Fcurrent_buffer ();
+	    else if (tmp->unwind.func == save_excursion_restore)
+	      tmp->unwind.arg = save_excursion_save ();
+	    else
+	      break;
+	    tmp->unwind.func (oldarg);
+	    break;
+	  }
+
 	case SPECPDL_UNWIND_PTR:
 	case SPECPDL_UNWIND_INT:
 	case SPECPDL_UNWIND_VOID:

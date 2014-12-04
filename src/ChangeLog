@@ -1,3 +1,8 @@
+2014-12-04  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* eval.c (backtrace_eval_unrewind): Rewind also the excursions.
+	(Fapply): Try and simplify the control flow.
+
 2014-12-03  Chris Zheng  <chriszheng99@gmail.com>  (tiny change)
 
 	* gnutls.c (init_gnutls_functions, gnutls_certificate_details):
