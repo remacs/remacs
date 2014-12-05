@@ -3820,6 +3820,10 @@ that suppresses all warnings during execution of BODY."
 	 ;; If things not being bound at all is ok, so must them being
 	 ;; obsolete.  Note that we add to the existing lists since Tramp
 	 ;; (ab)uses this feature.
+         ;; FIXME: If `foo' is obsoleted by `bar', the code below
+         ;; correctly arranges to silence the warnings after testing
+         ;; existence of `foo', but the warning should also be
+         ;; silenced after testing the existence of `bar'.
 	 (let ((byte-compile-not-obsolete-vars
 		(append byte-compile-not-obsolete-vars bound-list))
 	       (byte-compile-not-obsolete-funcs

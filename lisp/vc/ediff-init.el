@@ -24,6 +24,8 @@
 
 ;;; Code:
 
+(require 'cl-lib)
+
 ;; Start compiler pacifier
 (defvar ediff-metajob-name)
 (defvar ediff-meta-buffer)
@@ -118,11 +120,8 @@ It needs to be killed when we quit the session.")
     (?C . ediff-buffer-C)))
 
 ;;; Macros
-(defmacro ediff-odd-p (arg)
-  `(eq (logand ,arg 1) 1))
-
-(defmacro ediff-buffer-live-p (buf)
-  `(and ,buf (get-buffer ,buf) (buffer-name (get-buffer ,buf))))
+(defsubst ediff-buffer-live-p (buf)
+  (and buf (get-buffer buf) (buffer-name (get-buffer buf))))
 
 (defmacro ediff-get-buffer (arg)
   `(cond ((eq ,arg 'A) ediff-buffer-A)
@@ -1456,7 +1455,7 @@ This default should work without changes."
   ;; The value of dif-num is always 1- the one that user sees.
   ;; This is why even face is used when dif-num is odd.
   (ediff-get-symbol-from-alist
-   buf-type (if (ediff-odd-p dif-num)
+   buf-type (if (cl-oddp dif-num)
 		ediff-even-diff-face-alist
 	      ediff-odd-diff-face-alist)
    ))

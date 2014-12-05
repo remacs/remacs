@@ -1,3 +1,9 @@
+2014-12-05  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* url-future.el (url-future-done-p, url-future-completed-p)
+	(url-future-errored-p, url-future-cancelled-p):
+	* url-dav.el (url-dav-http-success-p): Use define-inline.
+
 2014-11-23  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
 	* url-http.el (url-http): Respect `url-request-noninteractive'.

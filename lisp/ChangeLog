@@ -1,5 +1,16 @@
 2014-12-05  Stefan Monnier  <monnier@iro.umontreal.ca>
 
+	* vc/ediff-init.el (ediff-odd-p): Remove.
+	(ediff-background-face): Use cl-oddp instead.
+	(ediff-buffer-live-p): Make it a defsubst.
+
+	* tooltip.el (tooltip-region-active-p): Remove.
+
+	* net/shr.el (shr-char-breakable-p, shr-char-kinsoku-bol-p)
+	(shr-char-kinsoku-eol-p, shr-char-nospace-p): Use define-inline.
+
+	* fringe.el (fringe-bitmap-p): Make it a plain function.
+
 	* emacs-lisp/eieio-core.el: Prefer inlinable functions over macros.
 	(class-p, generic-p, eieio-object-p, class-abstract-p):
 	Make them defsubst, so as to avoid corner case problems where
