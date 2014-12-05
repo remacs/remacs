@@ -210,6 +210,8 @@ xml.el/libxml2 DOM, and a new package dom.el has been added to
 interact with this DOM.  See the Emacs Lisp manual for interface
 details.
 
+*** `mailcap-mime-data' is now consulted when displaying PDF files.
+
 ** Message mode
 
 *** text/html messages that contain inline image parts will be

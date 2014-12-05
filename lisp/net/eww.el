@@ -493,6 +493,7 @@ See the `eww-search-prefix' variable for the search engine used."
 	(shr-put-image data nil))
       (goto-char (point-min)))))
 
+(declare-function mailcap-view-mime "mailcap" (type))
 (defun eww-display-pdf ()
   (let ((data (buffer-substring (point) (point-max))))
     (switch-to-buffer (get-buffer-create "*eww pdf*"))
@@ -500,7 +501,7 @@ See the `eww-search-prefix' variable for the search engine used."
 	  (inhibit-read-only t))
       (erase-buffer)
       (insert data)
-      (doc-view-mode)))
+      (mailcap-view-mime "application/pdf")))
   (goto-char (point-min)))
 
 (defun eww-setup-buffer ()

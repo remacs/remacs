@@ -1,3 +1,8 @@
+2014-12-05  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* net/eww.el (eww-display-pdf): Let mailcap determine how to
+	display PDF files (bug#19270).
+
 2014-12-05  Juri Linkov  <juri@linkov.net>
 
 	Compare with the most recent window by default.
