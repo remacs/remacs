@@ -49,12 +49,14 @@ Use './configure PKG_CONFIG=/full/name/of/pkg-config' if you need to.
 
 * Changes in Emacs 25.1
 
++++
 ** Network security (TLS/SSL certificate validity and the like) is
 added via the new Network Security Manager (NSM) and controlled via
 the `network-security-level' variable.
 
 ** C-h l now also lists the commands that were run.
 
+---
 ** The new M-s M-w key binding uses eww to search the web for the
 text in the region.
 
@@ -192,24 +194,30 @@ result of the calculation into the current buffer.
 
 ** eww
 
++++
 *** A new command `R' (`eww-readable') will try do identify the main
 textual parts of a web page and display only that, leaving menus and
 the like off the page.
 
+---
 *** You can now use several eww buffers in parallel by renaming eww
 buffers you want to keep separate.
 
++++
 *** Partial state of the eww buffers (the URIs and the titles of the
 pages visited) is now preserved in the desktop file.
 
++++
 *** `eww-after-render-hook' is now called after eww has rendered
 the data in the buffer.
 
++++
 *** The DOM shr and eww uses has been changed to the general Emacs
 xml.el/libxml2 DOM, and a new package dom.el has been added to
 interact with this DOM.  See the Emacs Lisp manual for interface
 details.
 
++++
 *** `mailcap-mime-data' is now consulted when displaying PDF files.
 
 ** Message mode
