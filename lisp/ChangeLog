@@ -1,5 +1,14 @@
 2014-12-05  Juri Linkov  <juri@linkov.net>
 
+	* comint.el (comint-history-isearch-search)
+	(comint-history-isearch-wrap): Use field-beginning instead of
+	comint-line-beginning-position.
+	(comint-send-input): Go to the end of the field instead of the end
+	of the line to accept whole multi-line input.
+	http://lists.gnu.org/archive/html/emacs-devel/2014-12/msg00305.html
+
+2014-12-05  Juri Linkov  <juri@linkov.net>
+
 	* minibuffer.el (minibuffer-completion-help): Compare
 	selected-window with minibuffer-window to check whether
 	completions should be displayed near the minibuffer.  (Bug#17809)
