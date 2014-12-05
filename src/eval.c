@@ -1533,8 +1533,7 @@ See also the function `condition-case'.  */)
 	  || NILP (clause)
 	  /* A `debug' symbol in the handler list disables the normal
 	     suppression of the debugger.  */
-	  || (CONSP (clause) && CONSP (clause)
-	      && !NILP (Fmemq (Qdebug, clause)))
+	  || (CONSP (clause) && !NILP (Fmemq (Qdebug, clause)))
 	  /* Special handler that means "print a message and run debugger
 	     if requested".  */
 	  || EQ (h->tag_or_ch, Qerror)))
@@ -1918,7 +1917,7 @@ DEFUN ("autoload-do-load", Fautoload_do_load, Sautoload_do_load, 1, 3, 0,
 If non-nil, FUNNAME should be the symbol whose function value is FUNDEF,
 in which case the function returns the new autoloaded function value.
 If equal to `macro', MACRO-ONLY specifies that FUNDEF should only be loaded if
-it is defines a macro.  */)
+it defines a macro.  */)
   (Lisp_Object fundef, Lisp_Object funname, Lisp_Object macro_only)
 {
   ptrdiff_t count = SPECPDL_INDEX ();
@@ -3405,7 +3404,6 @@ backtrace_eval_unrewind (int distance)
   for (; distance > 0; distance--)
     {
       tmp += step;
-      /*  */
       switch (tmp->kind)
 	{
 	  /* FIXME: Ideally we'd like to "temporarily unwind" (some of) those

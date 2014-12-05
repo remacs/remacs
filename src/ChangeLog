@@ -1,3 +1,21 @@
+2014-12-05  Lee Duhem  <lee.duhem@gmail.com>  (tiny change)
+
+	* eval.c (Fsignal): Remove duplicate test.
+	(Fautoload_do_load): Fix up docstring.
+
+2014-12-05  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* nsterm.m (represented_filename, represented_frame): New variables.
+	(ns_set_represented_filename): New function.
+	(sendEvent:): Set represented filename here to avoid flicker,
+	related to Bug#18757.
+
+	* nsterm.h: Declare ns_set_represented_filename.
+
+	* nsfns.m (ns_set_name_as_filename): Don't set represented filename
+	at once, call ns_set_represented_filename instead.
+
+2014-12-05  Eli Zaretskii  <eliz@gnu.org>
 2014-12-05  Eli Zaretskii  <eliz@gnu.org>
 
 	* dispextern.h (enum bidi_dir_t): Force NEUTRAL_DIR to be zero.

@@ -619,18 +619,11 @@ ns_set_name_as_filename (struct frame *f)
 
           fstr = [NSString stringWithUTF8String: SSDATA (encoded_filename)];
           if (fstr == nil) fstr = @"";
-#ifdef NS_IMPL_COCOA
-          /* work around a bug observed on 10.3 and later where
-             setTitleWithRepresentedFilename does not clear out previous state
-             if given filename does not exist */
-          if (! [[NSFileManager defaultManager] fileExistsAtPath: fstr])
-            [[view window] setRepresentedFilename: @""];
-#endif
         }
       else
         fstr = @"";
 
-      [[view window] setRepresentedFilename: fstr];
+      ns_set_represented_filename (fstr, f);
       [[view window] setTitle: str];
       fset_name (f, name);
     }

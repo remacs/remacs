@@ -440,12 +440,12 @@ A non-nil INTERACTIVE argument means to run the `post-self-insert-hook'."
           (self-insert-command (prefix-numeric-value arg)))
       (unwind-protect
           (progn
-            (add-hook 'post-self-insert-hook postproc)
+            (add-hook 'post-self-insert-hook postproc nil t)
             (self-insert-command (prefix-numeric-value arg)))
         ;; We first used let-binding to protect the hook, but that was naive
         ;; since add-hook affects the symbol-default value of the variable,
         ;; whereas the let-binding might only protect the buffer-local value.
-        (remove-hook 'post-self-insert-hook postproc)))
+        (remove-hook 'post-self-insert-hook postproc t)))
       (cl-assert (not (member postproc post-self-insert-hook)))
       (cl-assert (not (member postproc (default-value 'post-self-insert-hook))))))
   nil)

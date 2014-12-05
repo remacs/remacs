@@ -1,5 +1,15 @@
 2014-12-05  Stefan Monnier  <monnier@iro.umontreal.ca>
 
+	* progmodes/sh-script.el (sh-smie-sh-rules): Go back to the beginning
+	of the whole pipe when indenting an opening keyword after a |.
+	Generalize this treatment to opening keywords like "while" (bug#18031).
+
+2014-12-05  Stefan Monnier  <monnier@iro.umontreal.ca>
+2014-12-05  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* simple.el (newline): Place the hook buffer-locally,
+	to make sure it's first.
+
 	* progmodes/prog-mode.el (prettify-symbols--compose-symbol):
 	Fix handling of symbols with different syntax at beginning/end or with
 	symbol rather than word syntax.
