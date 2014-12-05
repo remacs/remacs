@@ -1815,13 +1815,9 @@ variables.")
              ;; Use `display-buffer-below-selected' for inline completions,
              ;; but not in the minibuffer (e.g. in `eval-expression')
              ;; for which `display-buffer-at-bottom' is used.
-             ;; Compare `this-command' with `completion-at-point'
-             ;; since `completion--in-region-1' sets `this-command'
-             ;; to this value for region completion commands.
-             ,(if (and (eq this-command 'completion-at-point)
-                       (not (minibuffer-selected-window)))
-                  'display-buffer-below-selected
-                'display-buffer-at-bottom))
+             ,(if (eq (selected-window) (minibuffer-window))
+                  'display-buffer-at-bottom
+                'display-buffer-below-selected))
             (window-height . fit-window-to-buffer))
           nil
           ;; Remove the base-size tail because `sort' requires a properly

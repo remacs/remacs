@@ -1,3 +1,10 @@
+2014-12-05  Juri Linkov  <juri@linkov.net>
+
+	* minibuffer.el (minibuffer-completion-help): Compare
+	selected-window with minibuffer-window to check whether
+	completions should be displayed near the minibuffer.  (Bug#17809)
+	http://lists.gnu.org/archive/html/emacs-devel/2014-12/msg00311.html
+
 2014-12-05  Michael Albinus  <michael.albinus@gmx.de>
 
 	* vc/vc-mtn.el (vc-mtn-root):
