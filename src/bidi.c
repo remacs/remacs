@@ -433,6 +433,9 @@ bidi_set_sos_type (struct bidi_it *bidi_it, int level_before, int level_after)
     = bidi_it->next_for_neutral.orig_type = UNKNOWN_BT;
 }
 
+#define ISOLATE_STATUS(BIDI_IT, IDX)  ((BIDI_IT)->level_stack[IDX].flags & 1)
+#define OVERRIDE(BIDI_IT, IDX)  (((BIDI_IT)->level_stack[IDX].flags >> 1) & 3)
+
 /* Push the current embedding level and override status; reset the
    current level to LEVEL and the current override status to OVERRIDE.  */
 static void
@@ -447,14 +450,14 @@ bidi_push_embedding_level (struct bidi_it *bidi_it,
   st = &bidi_it->level_stack[bidi_it->stack_idx];
   eassert (level <= (1 << 7));
   st->level = level;
-  st->override = override;
-  st->isolate_status = isolate_status;
+  st->flags = (((override & 3) << 1) | (isolate_status != 0));
   if (isolate_status)
     {
-      st->last_strong = bidi_it->last_strong;
-      st->prev_for_neutral = bidi_it->prev_for_neutral;
-      st->next_for_neutral = bidi_it->next_for_neutral;
-      st->sos = bidi_it->sos;
+      st->last_strong_type = bidi_it->last_strong.type;
+      st->prev_for_neutral_type = bidi_it->prev_for_neutral.type;
+      st->next_for_neutral_type = bidi_it->next_for_neutral.type;
+      st->next_for_neutral_pos = bidi_it->next_for_neutral.charpos;
+      st->flags |= ((bidi_it->sos == L2R ? 0 : 1) << 3);
     }
   /* We've got a new isolating sequence, compute the directional type
      of sos and initialize per-sequence variables (UAX#9, clause X10).  */
@@ -473,8 +476,7 @@ bidi_pop_embedding_level (struct bidi_it *bidi_it)
      and PDIs (X6a, 2nd bullet).  */
   if (bidi_it->stack_idx > 0)
     {
-      bool isolate_status
-	= bidi_it->level_stack[bidi_it->stack_idx].isolate_status;
+      bool isolate_status = ISOLATE_STATUS (bidi_it, bidi_it->stack_idx);
       int old_level = bidi_it->level_stack[bidi_it->stack_idx].level;
 
       struct bidi_stack st;
@@ -482,6 +484,7 @@ bidi_pop_embedding_level (struct bidi_it *bidi_it)
       st = bidi_it->level_stack[bidi_it->stack_idx];
       if (isolate_status)
 	{
+	  bidi_dir_t sos = ((st.flags >> 3) & 1);
 	  /* PREV is used in W1 for resolving WEAK_NSM.  By the time
 	     we get to an NSM, we must have gotten past at least one
 	     character: the PDI that ends the isolate from which we
@@ -490,10 +493,11 @@ bidi_pop_embedding_level (struct bidi_it *bidi_it)
 	     UNKNOWN_BT to be able to catch any blunders in this
 	     logic.  */
 	  bidi_it->prev.orig_type = bidi_it->prev.type = UNKNOWN_BT;
-	  bidi_it->last_strong = st.last_strong;
-	  bidi_it->prev_for_neutral = st.prev_for_neutral;
-	  bidi_it->next_for_neutral = st.next_for_neutral;
-	  bidi_it->sos = st.sos;
+	  bidi_it->last_strong.type = st.last_strong_type;
+	  bidi_it->prev_for_neutral.type = st.prev_for_neutral_type;
+	  bidi_it->next_for_neutral.type = st.next_for_neutral_type;
+	  bidi_it->next_for_neutral.charpos = st.next_for_neutral_pos;
+	  bidi_it->sos = (sos == 0 ? L2R : R2L);
 	}
       else
 	bidi_set_sos_type (bidi_it, old_level,
@@ -1104,8 +1108,7 @@ bidi_line_init (struct bidi_it *bidi_it)
   bidi_it->scan_dir = 1; /* FIXME: do we need to have control on this? */
   bidi_it->stack_idx = 0;
   bidi_it->resolved_level = bidi_it->level_stack[0].level;
-  bidi_it->level_stack[0].override = NEUTRAL_DIR; /* X1 */
-  bidi_it->level_stack[0].isolate_status = false; /* X1 */
+  bidi_it->level_stack[0].flags = 0; /* NEUTRAL_DIR, false per X1 */
   bidi_it->invalid_levels = 0;
   bidi_it->isolate_level = 0;	 /* X1 */
   bidi_it->invalid_isolates = 0; /* X1 */
@@ -1858,8 +1861,8 @@ bidi_resolve_explicit (struct bidi_it *bidi_it)
     prev_type = NEUTRAL_B;
 
   current_level = bidi_it->level_stack[bidi_it->stack_idx].level; /* X1 */
-  override = bidi_it->level_stack[bidi_it->stack_idx].override;
-  isolate_status = bidi_it->level_stack[bidi_it->stack_idx].isolate_status;
+  isolate_status = ISOLATE_STATUS (bidi_it, bidi_it->stack_idx);
+  override = OVERRIDE (bidi_it, bidi_it->stack_idx);
   new_level = current_level;
 
   if (bidi_it->charpos >= (string_p ? bidi_it->string.schars : ZV))
@@ -2033,7 +2036,7 @@ bidi_resolve_explicit (struct bidi_it *bidi_it)
       else if (bidi_it->isolate_level > 0)
 	{
 	  bidi_it->invalid_levels = 0;
-	  while (!bidi_it->level_stack[bidi_it->stack_idx].isolate_status)
+	  while (!ISOLATE_STATUS (bidi_it, bidi_it->stack_idx))
 	    bidi_pop_embedding_level (bidi_it);
 	  eassert (bidi_it->stack_idx > 0);
 	  new_level = bidi_pop_embedding_level (bidi_it);
@@ -2041,12 +2044,15 @@ bidi_resolve_explicit (struct bidi_it *bidi_it)
 	}
       bidi_it->resolved_level = new_level;
       /* Unicode 8.0 correction.  */
-      if (bidi_it->level_stack[bidi_it->stack_idx].override == L2R)
-	bidi_it->type_after_wn = STRONG_L;
-      else if (bidi_it->level_stack[bidi_it->stack_idx].override == R2L)
-	bidi_it->type_after_wn = STRONG_R;
-      else
-	bidi_it->type_after_wn = type;
+      {
+	bidi_dir_t stack_override = OVERRIDE (bidi_it, bidi_it->stack_idx);
+	if (stack_override == L2R)
+	  bidi_it->type_after_wn = STRONG_L;
+	else if (stack_override == R2L)
+	  bidi_it->type_after_wn = STRONG_R;
+	else
+	  bidi_it->type_after_wn = type;
+      }
       break;
     case PDF:	/* X7 */
       bidi_it->type_after_wn = type;
@@ -2089,7 +2095,7 @@ bidi_resolve_weak (struct bidi_it *bidi_it)
        ? bidi_it->string.schars : ZV);
 
   type = bidi_it->type;
-  override = bidi_it->level_stack[bidi_it->stack_idx].override;
+  override = OVERRIDE (bidi_it, bidi_it->stack_idx);
 
   eassert (!(type == UNKNOWN_BT
 	     || type == LRE
@@ -2557,9 +2563,9 @@ bidi_find_bracket_pairs (struct bidi_it *bidi_it)
 	  /* Skip level runs excluded from this isolating run sequence.  */
 	  new_sidx = bidi_it->stack_idx;
 	  if (bidi_it->level_stack[new_sidx].level > current_level
-	      && (bidi_it->level_stack[new_sidx].isolate_status
+	      && (ISOLATE_STATUS (bidi_it, new_sidx)
 		  || (new_sidx > old_sidx + 1
-		      && bidi_it->level_stack[new_sidx - 1].isolate_status)))
+		      && ISOLATE_STATUS (bidi_it, new_sidx - 1))))
 	    {
 	      while (bidi_it->level_stack[bidi_it->stack_idx].level
 		     > current_level)
@@ -2729,7 +2735,7 @@ bidi_resolve_brackets (struct bidi_it *bidi_it)
 	 the prev_for_neutral and next_for_neutral information, so
 	 that it will be picked up when we advance to that next run.  */
       if (bidi_it->level_stack[bidi_it->stack_idx].level > prev_level
-	  && bidi_it->level_stack[bidi_it->stack_idx].isolate_status)
+	  && ISOLATE_STATUS (bidi_it, bidi_it->stack_idx))
 	{
 	  bidi_record_type_for_neutral (&prev_for_neutral, prev_level, 0);
 	  bidi_record_type_for_neutral (&next_for_neutral, prev_level, 1);
@@ -2919,14 +2925,14 @@ bidi_resolve_neutral (struct bidi_it *bidi_it)
 	    /* Skip level runs excluded from this isolating run sequence.  */
 	    new_sidx = bidi_it->stack_idx;
 	    if (bidi_it->level_stack[new_sidx].level > current_level
-		&& (bidi_it->level_stack[new_sidx].isolate_status
+		&& (ISOLATE_STATUS (bidi_it, new_sidx)
 		    /* This is for when we have an isolate initiator
 		       immediately followed by an embedding or
 		       override initiator, in which case we get the
 		       level stack pushed twice by the single call to
 		       bidi_resolve_weak above.  */
 		    || (new_sidx > old_sidx + 1
-			&& bidi_it->level_stack[new_sidx - 1].isolate_status)))
+			&& ISOLATE_STATUS (bidi_it, new_sidx - 1))))
 	      {
 		while (bidi_it->level_stack[bidi_it->stack_idx].level
 		       > current_level)

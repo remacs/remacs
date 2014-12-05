@@ -1,3 +1,21 @@
+2014-12-05  Eli Zaretskii  <eliz@gnu.org>
+
+	* dispextern.h (enum bidi_dir_t): Force NEUTRAL_DIR to be zero.
+	(struct bidi_stack): Reduce size by using bit fields and by
+	packing sos, override, and isolate_status into a single 8-bit
+	byte called 'flags'.
+
+	* bidi.c (ISOLATE_STATUS, OVERRIDE): New macros.
+	(bidi_push_embedding_level): Construct flags from individual
+	bits.  Adapt to changes in prev_for_neutral and next_for_neutral
+	members.
+	(bidi_pop_embedding_level): Use ISOLATE_STATUS.  Extract 'sos'
+	from flags.  Adapt to changes in prev_for_neutral,
+	next_for_neutral, and last_strong members.
+	(bidi_line_init): Initialize flags to zero.
+	(bidi_resolve_explicit, bidi_resolve_weak, bidi_resolve_brackets)
+	(bidi_resolve_neutral): Use ISOLATE_STATUS and OVERRIDE.
+
 2014-12-04  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* eval.c (backtrace_eval_unrewind): Rewind also the excursions.

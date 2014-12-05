@@ -1908,7 +1908,7 @@ typedef enum {
 } bidi_bracket_type_t;
 
 /* The basic directionality data type.  */
-typedef enum { NEUTRAL_DIR, L2R, R2L } bidi_dir_t;
+typedef enum { NEUTRAL_DIR = 0, L2R, R2L } bidi_dir_t;
 
 /* Data type for storing information about characters we need to
    remember.  */
@@ -1920,15 +1920,16 @@ struct bidi_saved_info {
 
 /* Data type for keeping track of information about saved embedding
    levels, override status, isolate status, and isolating sequence
-   runs.  */
+   runs.  This should be as tightly packed as possible, because there
+   are 127 such entries in each iterator state, and so the size of
+   cache is directly affected by the size of this struct.  */
 struct bidi_stack {
-  struct bidi_saved_info last_strong;
-  struct bidi_saved_info next_for_neutral;
-  struct bidi_saved_info prev_for_neutral;
-  unsigned level : 7;
-  bool_bf isolate_status : 1;
-  unsigned override : 2;
-  unsigned sos : 2;
+  ptrdiff_t next_for_neutral_pos;
+  unsigned next_for_neutral_type : 3;
+  unsigned last_strong_type : 3;
+  unsigned prev_for_neutral_type : 3;
+  unsigned char level;
+  unsigned char flags;		/* sos, override, isolate_status */
 };
 
 /* Data type for storing information about a string being iterated on.  */
