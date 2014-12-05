@@ -1,3 +1,8 @@
+2014-12-05  Nicolas Richard  <theonewiththeevillook@yahoo.fr>
+
+	* wid-edit.el (widget-choose): Let numeric keypad work (bug#19268)
+	and remove old menu-related code.
+
 2014-12-05  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
 	* net/eww.el (eww-display-pdf): Let mailcap determine how to

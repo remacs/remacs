@@ -232,23 +232,20 @@ minibuffer."
 	(t
 	 ;; Construct a menu of the choices
 	 ;; and then use it for prompting for a single character.
-	 (let* ((overriding-terminal-local-map (make-sparse-keymap))
-		(next-digit ?0)
-		map choice some-choice-enabled value)
-	   ;; Define SPC as a prefix char to get to this menu.
-	   (define-key overriding-terminal-local-map " "
-	     (setq map (make-sparse-keymap title)))
+	 (let* ((next-digit ?0)
+		(map (make-sparse-keymap))
+                choice some-choice-enabled value)
 	   (with-current-buffer (get-buffer-create " widget-choose")
 	     (erase-buffer)
 	     (insert "Available choices:\n\n")
 	     (while items
-	       (setq choice (car items) items (cdr items))
-	       (if (consp choice)
-		   (let* ((name (car choice))
-			 (function (cdr choice)))
-		     (insert (format "%c = %s\n" next-digit name))
-		     (define-key map (vector next-digit) function)
-		     (setq some-choice-enabled t)))
+	       (setq choice (pop items))
+	       (when (consp choice)
+                 (let* ((name (car choice))
+                        (function (cdr choice)))
+                   (insert (format "%c = %s\n" next-digit name))
+                   (define-key map (vector next-digit) function)
+                   (setq some-choice-enabled t)))
 	       ;; Allocate digits to disabled alternatives
 	       ;; so that the digit of a given alternative never varies.
 	       (setq next-digit (1+ next-digit)))
@@ -257,43 +254,29 @@ minibuffer."
 	     (forward-line))
 	   (or some-choice-enabled
 	       (error "None of the choices is currently meaningful"))
-	   (define-key map [?\C-g] 'keyboard-quit)
-	   (define-key map [t] 'keyboard-quit)
 	   (define-key map [?\M-\C-v] 'scroll-other-window)
 	   (define-key map [?\M--] 'negative-argument)
-	   (setcdr map (nreverse (cdr map)))
-	   ;; Read a char with the menu, and return the result
-	   ;; that corresponds to it.
 	   (save-window-excursion
 	     (let ((buf (get-buffer " widget-choose")))
 	       (fit-window-to-buffer (display-buffer buf))
 	       (let ((cursor-in-echo-area t)
-		     keys
-		     (char 0)
 		     (arg 1))
-		 (while (not (or (and (integerp char)
-				      (>= char ?0) (< char next-digit))
-				 (eq value 'keyboard-quit)))
-		   ;; Unread a SPC to lead to our new menu.
-		   (setq unread-command-events (cons ?\s unread-command-events))
-		   (setq keys (read-key-sequence title))
-		   (setq value
-			 (lookup-key overriding-terminal-local-map keys t)
-			 char (aref keys 1))
-		   (cond ((eq value 'scroll-other-window)
-			  (let ((minibuffer-scroll-window
-				 (get-buffer-window buf)))
-			    (if (> 0 arg)
-				(scroll-other-window-down
-				 (window-height minibuffer-scroll-window))
-			      (scroll-other-window))
-			    (setq arg 1)))
-			 ((eq value 'negative-argument)
-			  (setq arg -1))
-			 (t
-			  (setq arg 1)))))))
-	   (when (eq value 'keyboard-quit)
-	     (error "Canceled"))
+                 (while (not value)
+                   (setq value (lookup-key map (read-key-sequence (format "%s: " title))))
+                   (unless value
+                     (user-error "Canceled"))
+                   (when
+                       (cond ((eq value 'scroll-other-window)
+                               (let ((minibuffer-scroll-window
+                                      (get-buffer-window buf)))
+                                 (if (> 0 arg)
+                                     (scroll-other-window-down
+                                      (window-height minibuffer-scroll-window))
+                                   (scroll-other-window))
+                                 (setq arg 1)))
+                              ((eq value 'negative-argument)
+                               (setq arg -1)))
+                     (setq value nil))))))
 	   value))))
 
 ;;; Widget text specifications.
