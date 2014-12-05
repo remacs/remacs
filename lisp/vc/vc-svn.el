@@ -135,6 +135,7 @@ If you want to force an empty list of arguments, use t."
 
 (defun vc-svn-registered (file)
   "Check if FILE is SVN registered."
+  (setq file (expand-file-name file))
   (when (vc-svn-root file)
     (with-temp-buffer
       (cd (file-name-directory file))

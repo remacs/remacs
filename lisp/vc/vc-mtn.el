@@ -79,7 +79,8 @@ If nil, use the value of `vc-diff-switches'.  If t, use no switches."
 (defun vc-mtn-checkout-model (_files) 'implicit)
 
 (defun vc-mtn-root (file)
-  (setq file (if (file-directory-p file)
+  (setq file (expand-file-name file)
+	file (if (file-directory-p file)
                  (file-name-as-directory file)
                (file-name-directory file)))
   (or (vc-file-getprop file 'vc-mtn-root)
