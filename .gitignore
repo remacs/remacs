@@ -143,6 +143,7 @@ src/*.map
 
 # Tests.
 test/indent/*.new
+test/biditest.txt
 
 # ctags, etags.
 TAGS

@@ -1,3 +1,7 @@
+2014-12-05  Eli Zaretskii  <eliz@gnu.org>
+
+	* .gitignore: Ignore test/biditest.txt.
+
 2014-12-01  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
 	* .gitignore: Ignore loaddefs directly under lisp, and in
