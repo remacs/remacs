@@ -1,3 +1,7 @@
+2014-12-05  Sam Steingold  <sds@gnu.org>
+
+	* Makefile.in (links): Use abs_top_builddir et al; link over DOC.
+
 2014-12-03  Sam Steingold  <sds@gnu.org>
 
 	* Makefile.in (links): New phony target to create a fake
