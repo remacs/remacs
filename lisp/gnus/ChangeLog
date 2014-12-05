@@ -1,3 +1,9 @@
+2014-12-05  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* mailcap.el (mailcap-mime-data): Add doc-view-mode as a viewer for
+	PDFs.
+	(mailcap-view-mime): New function.
+
 2014-12-01  Glenn Morris  <rgm@gnu.org>
 
 	* gnus-cloud.el (gnus-cloud): Add :version tag.
