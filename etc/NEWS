@@ -329,6 +329,10 @@ and comments.
 the color range from `vc-annotate-color-map' is applied to the
 background or to the foreground.
 
+*** compare-windows now compares text with the most recently used window
+instead of the next window.  The new option `compare-windows-get-window-function'
+allows to customize this.
+
 ** Calculator: decimal display mode uses "," groups, so it's more
 fitting for use in money calculations; factorial works with
 non-integer inputs.

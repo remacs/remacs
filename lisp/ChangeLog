@@ -1,3 +1,14 @@
+2014-12-05  Juri Linkov  <juri@linkov.net>
+
+	Compare with the most recent window by default.
+	* vc/compare-w.el (compare-windows-get-window-function): New defcustom.
+	(compare-windows-get-recent-window)
+	(compare-windows-get-next-window): New functions.
+	(compare-windows, compare-windows-sync-default-function):
+	Use `compare-windows-get-window-function' instead of `next-window'.
+	(compare-windows): Add diff/match messages with region boundaries.
+	(Bug#19170)
+
 2014-12-04  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* subr.el (filter): Remove.  Use `cl-remove-if-not' or `seq-filter'.
