@@ -90,6 +90,14 @@ Auto-commit"
     map)
   "Keymap for gitmerge major mode.")
 
+
+(defvar gitmerge-mode-font-lock-keywords
+  `((,gitmerge-log-regexp
+     (1 font-lock-warning-face)
+     (2 font-lock-constant-face)
+     (3 font-lock-builtin-face)
+     (4 font-lock-comment-face))))
+
 (defvar gitmerge--commits nil)
 (defvar gitmerge--from nil)
 
@@ -459,23 +467,12 @@ Branch FROM will be prepended to the list."
       (prog1 (read (buffer-string))
 	(kill-buffer)))))
 
-(defun gitmerge-mode ()
+(define-derived-mode gitmerge-mode special-mode "gitmerge"
   "Major mode for Emacs branch merging."
-  (interactive)
-  (kill-all-local-variables)
-  (setq major-mode 'gitmerge-mode)
-  (setq mode-name "gitmerge")
   (set-syntax-table text-mode-syntax-table)
-  (use-local-map gitmerge-mode-map)
-  (make-local-variable 'font-lock-defaults)
-  (setq gitmerge-mode-font-lock-keywords
-	(list (list gitmerge-log-regexp
-		    '(1 font-lock-warning-face)
-		    '(2 font-lock-constant-face)
-		    '(3 font-lock-builtin-face)
-		    '(4 font-lock-comment-face))))
   (setq buffer-read-only t)
-  (setq font-lock-defaults '(gitmerge-mode-font-lock-keywords)))
+  (setq-local truncate-lines t)
+  (setq-local font-lock-defaults '(gitmerge-mode-font-lock-keywords)))
 
 (defun gitmerge (from)
   "Merge from branch FROM into `default-directory'."

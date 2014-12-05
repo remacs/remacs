@@ -1,5 +1,19 @@
 2014-12-05  Stefan Monnier  <monnier@iro.umontreal.ca>
 
+	* progmodes/prog-mode.el (prettify-symbols--compose-symbol):
+	Fix handling of symbols with different syntax at beginning/end or with
+	symbol rather than word syntax.
+
+2014-12-05  Eli Zaretskii  <eliz@gnu.org>
+
+	* simple.el (line-move): If noninteractive, call line-move-1, not
+	forward-line, since the former is compatible with line-move-visual
+	both in terms of the column to which it moves and the return
+	value.  (Bug#19211)
+
+2014-12-05  Stephen Berman  <stephen.berman@gmx.net>
+2014-12-05  Stefan Monnier  <monnier@iro.umontreal.ca>
+
 	* vc/ediff-init.el (ediff-odd-p): Remove.
 	(ediff-background-face): Use cl-oddp instead.
 	(ediff-buffer-live-p): Make it a defsubst.
