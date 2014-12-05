@@ -1,3 +1,7 @@
+2014-12-05  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* .gitignore: Ignore autosave files.
+
 2014-12-01  Paul Eggert  <eggert@cs.ucla.edu>
 
 	* .gitignore: Remove redundant pattern (subsumed by _*).

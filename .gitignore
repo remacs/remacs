@@ -233,6 +233,7 @@ info/dir
 *.rej
 *~
 .#*
+\#*\#
 [0-9]*.patch
 
 # Built by 'make install'.
