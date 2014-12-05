@@ -231,8 +231,8 @@ Blank lines separate paragraphs.  Semicolons start comments.
   (defvar xref-identifier-completion-table-function)
   (lisp-mode-variables nil nil 'elisp)
   (setq imenu-case-fold-search nil)
-  (setq-local eldoc-documentation-function
-              #'elisp-eldoc-documentation-function)
+  (add-function :before-until (local 'eldoc-documentation-function)
+                #'elisp-eldoc-documentation-function)
   (setq-local xref-find-function #'elisp-xref-find)
   (setq-local xref-identifier-completion-table-function
               #'elisp--xref-identifier-completion-table)

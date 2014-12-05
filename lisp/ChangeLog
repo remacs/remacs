@@ -1,5 +1,28 @@
 2015-01-20  Michal Nazarewicz  <mina86@mina86.com>
 
+	* emacs-lisp/eldoc.el (eldoc-documentation-function): Describe how
+	major modes should use `add-function' to alter value of the variable.
+
+	* hexl.el (hexl-mode): Set `eldoc-documentation-function' using
+	`add-function' so the default value is always used.
+	* ielm.el (inferior-emacs-lisp-mode): Set
+	`eldoc-documentation-function' using `add-function' so the default
+	value is always used.
+	* progmodes/cfengine.el (cfengine3-mode): Set
+	`eldoc-documentation-function' using `add-function' so the default
+	value is always used.
+	* progmodes/elisp-mode (emacs-lisp-mode): Set
+	`eldoc-documentation-function' using `add-function' so the default
+	value is always used.
+	* progmodes/octave.el (octave-mode): Set
+	`eldoc-documentation-function' using `add-function' so the default
+	value is always used.
+	* progmodes/python.el (python-mode): Set
+	`eldoc-documentation-function' using `add-function' so the default
+	value is always used.
+	* simple.el (read--expression): Set `eldoc-documentation-function'
+	using `add-function' so the default value is always used.
+
 	* descr-text.el (describe-char-eldoc): New function returning
 	basic Unicode codepoint information (e.g. name) about character
 	at point.  It is meant to be used as a default value of the
