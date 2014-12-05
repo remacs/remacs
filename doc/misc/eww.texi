@@ -135,6 +135,12 @@ keep their number within a set limit, as specified by
 also be set to @code{nil} to allow for the history list to grow
 indefinitely.
 
+@cindex PDF
+  PDFs are viewed inline, by default, with @code{doc-view-mode}, but
+this can be customized by using the mailcap (@pxref{mailcap,,,
+emacs-mime, Emacs MIME Manual})
+mechanism, in particular @code{mailcap-mime-data}.
+
 @findex eww-add-bookmark
 @findex eww-list-bookmarks
 @kindex b
