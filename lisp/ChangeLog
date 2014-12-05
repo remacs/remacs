@@ -1,3 +1,11 @@
+2014-12-05  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* emacs-lisp/eieio-core.el: Prefer inlinable functions over macros.
+	(class-p, generic-p, eieio-object-p, class-abstract-p):
+	Make them defsubst, so as to avoid corner case problems where
+	the arg might be evaluated in the condition-case, or it can't be passed
+	to higher-order functions like `cl-some'.
+
 2014-12-05  Nicolas Richard  <theonewiththeevillook@yahoo.fr>
 
 	* wid-edit.el (widget-choose): Let numeric keypad work (bug#19268)

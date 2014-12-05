@@ -206,14 +206,14 @@ Stored outright without modifications or stripping.")))
   ;; No check: If eieio gets this far, it has probably been checked already.
   `(get ,class 'eieio-class-definition))
 
-(defmacro class-p (class)
-  "Return t if CLASS is a valid class vector.
+(defsubst class-p (class)
+  "Return non-nil if CLASS is a valid class vector.
 CLASS is a symbol."
   ;; this new method is faster since it doesn't waste time checking lots of
   ;; things.
-  `(condition-case nil
-       (eq (aref (class-v ,class) 0) 'defclass)
-     (error nil)))
+  (condition-case nil
+      (eq (aref (class-v class) 0) 'defclass)
+    (error nil)))
 
 (defun eieio-class-name (class) "Return a Lisp like symbol name for CLASS."
   (eieio--check-type class-p class)
@@ -237,11 +237,11 @@ CLASS is a symbol."
   "Return the symbol representing the constructor of CLASS."
   `(eieio--class-symbol (class-v ,class)))
 
-(defmacro generic-p (method)
-  "Return t if symbol METHOD is a generic function.
+(defsubst generic-p (method)
+  "Return non-nil if symbol METHOD is a generic function.
 Only methods have the symbol `eieio-method-obarray' as a property
 \(which contains a list of all bindings to that method type.)"
-  `(and (fboundp ,method) (get ,method 'eieio-method-obarray)))
+  (and (fboundp method) (get method 'eieio-method-obarray)))
 
 (defun generic-primary-only-p (method)
   "Return t if symbol METHOD is a generic function with only primary methods.
@@ -284,19 +284,18 @@ Methods with only primary implementations are executed in an optimized way."
 Return nil if that option doesn't exist."
   `(class-option-assoc (eieio--class-options (class-v ,class)) ',option))
 
-(defmacro eieio-object-p (obj)
+(defsubst eieio-object-p (obj)
   "Return non-nil if OBJ is an EIEIO object."
-  `(condition-case nil
-       (let ((tobj ,obj))
-	 (and (eq (aref tobj 0) 'object)
-	      (class-p (eieio--object-class tobj))))
-     (error nil)))
+  (condition-case nil
+      (and (eq (aref obj 0) 'object)
+           (class-p (eieio--object-class obj)))
+    (error nil)))
 (defalias 'object-p 'eieio-object-p)
 
-(defmacro class-abstract-p (class)
+(defsubst class-abstract-p (class)
   "Return non-nil if CLASS is abstract.
 Abstract classes cannot be instantiated."
-  `(class-option ,class :abstract))
+  (class-option class :abstract))
 
 (defmacro class-method-invocation-order (class)
   "Return the invocation order of CLASS.
