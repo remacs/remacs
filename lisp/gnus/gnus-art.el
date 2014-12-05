@@ -3082,7 +3082,7 @@ images if any to the browser, and deletes them when exiting the group
 	(gnus-summary-show-article)))))
 
 (defun article-hide-list-identifiers ()
-  "Remove list identifies from the Subject header.
+  "Remove list identifiers from the Subject header.
 The `gnus-list-identifiers' variable specifies what to do."
   (interactive)
   (let ((inhibit-point-motion-hooks t)
