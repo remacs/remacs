@@ -1,6 +1,13 @@
-2014-12-05  Stephen Leake  <stephen_leake@stephe-leake.org>
+2014-12-06  Stephen Leake  <stephen_leake@stephe-leake.org>
 
-	* CONTRIBUTE: improve, move some info from admin/notes/* here.
+	* CONTRIBUTE: improve; add explicit web references, move some info
+	from admin/notes/* here.
+
+	* INSTALL.REPO: You can't "just run make" after a clean checkout.
+
+        * admin/notes/commits: deleted; merged into ./CONTRIBUTE
+
+	* admin/notes/repo: move commit, branch info into ./CONTRIBUTE
 
 2014-12-05  Stephen Leake  <stephen_leake@stephe-leake.org>
 
