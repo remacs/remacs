@@ -1,3 +1,14 @@
+2014-12-06  Ulf Jasper  <ulf.jasper@web.de>
+
+	* net/newst-treeview.el (newsticker--treeview-list-add-item)
+	(newsticker--treeview-propertize-tag): Bind tree menu to mouse-3.
+	(newsticker--treeview-create-groups-menu)
+	(newsticker--treeview-create-tree-menu): Removed.
+	(newsticker--treeview-tree-open-menu): New.
+	(newsticker-treeview-tree-click): Pass event to
+	`newsticker-treeview-tree-do-click'.
+	(newsticker-treeview-tree-do-click): Open treemenu on mouse-3.
+
 2014-12-05  Juri Linkov  <juri@linkov.net>
 
 	* comint.el (comint-history-isearch-search)

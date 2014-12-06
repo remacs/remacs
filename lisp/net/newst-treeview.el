@@ -328,7 +328,8 @@ If string SHOW-FEED is non-nil it is shown in the item string."
       (while (search-forward "\n" nil t)
         (replace-match " "))
       (let ((map (make-sparse-keymap)))
-        (define-key map [mouse-1] 'newsticker-treeview-tree-click)
+        (dolist (key'([mouse-1] [mouse-3]))
+                    (define-key map key 'newsticker-treeview-tree-click))
         (define-key map "\n" 'newsticker-treeview-show-item)
         (define-key map "\C-m" 'newsticker-treeview-show-item)
         (add-text-properties pos1 (point-max)
@@ -945,7 +946,8 @@ arguments NT-ID, FEED, and VFEED are added as properties."
         (map (make-sparse-keymap)))
     (if (and num-new (> num-new 0))
         (setq face 'newsticker-treeview-new-face))
-    (define-key map [mouse-1] 'newsticker-treeview-tree-click)
+    (dolist (key '([mouse-1] [mouse-3]))
+                 (define-key map key 'newsticker-treeview-tree-click))
     (define-key map "\n" 'newsticker-treeview-tree-do-click)
     (define-key map "\C-m" 'newsticker-treeview-tree-do-click)
     (propertize tag 'face face 'keymap map
@@ -1960,37 +1962,22 @@ Return t if groups have changed, nil otherwise."
 ;; ======================================================================
 ;;; Modes
 ;; ======================================================================
-(defun newsticker--treeview-create-groups-menu (group-list
-                                                excluded-group)
-  "Create menu for GROUP-LIST omitting EXCLUDED-GROUP."
-  (let ((menu (make-sparse-keymap (if (stringp (car group-list))
-                                      (car group-list)
-                                    "Move to group..."))))
-    (mapc (lambda (g)
-            (when (listp g)
-              (let ((title (if (stringp (car g))
-                               (car g)
-                             "Move to group...")))
-                (unless (eq g excluded-group)
-                  (define-key menu (vector (intern title))
-                    (list 'menu-item title
-                          (newsticker--treeview-create-groups-menu
-                           (cdr g) excluded-group)))))))
-          (reverse group-list))
-    menu))
-
-(defun newsticker--treeview-create-tree-menu (feed-name)
-  "Create tree menu for FEED-NAME."
-  (let ((menu (make-sparse-keymap feed-name)))
+(defun newsticker--treeview-tree-open-menu (event)
+  "Open tree menu at position of EVENT."
+  (let* ((feed-name newsticker--treeview-current-feed)
+         (menu (make-sparse-keymap feed-name)))
     (define-key menu [newsticker-treeview-mark-list-items-old]
       (list 'menu-item "Mark all items old"
             'newsticker-treeview-mark-list-items-old))
-    (define-key menu [move]
-      (list 'menu-item "Move to group..."
-            (newsticker--treeview-create-groups-menu
-             newsticker-groups
-             (newsticker--group-get-group feed-name))))
-    menu))
+    (define-key menu [newsticker-treeview-get-news]
+      (list 'menu-item (concat "Get news for " feed-name)
+            'newsticker-treeview-get-news))
+    (define-key menu [newsticker-get-all-news]
+      (list 'menu-item "Get news for all feeds"
+            'newsticker-get-all-news))
+    (let ((choice (x-popup-menu event menu)))
+      (when choice
+        (funcall (car choice))))))
 
 (defvar newsticker-treeview-list-menu
   (let ((menu (make-sparse-keymap "Newsticker List")))
@@ -2099,7 +2086,7 @@ Return t if groups have changed, nil otherwise."
   (newsticker--treeview-restore-layout)
   (save-excursion
     (switch-to-buffer (window-buffer (posn-window (event-end event))))
-    (newsticker-treeview-tree-do-click (posn-point (event-end event)))))
+    (newsticker-treeview-tree-do-click (posn-point (event-end event)) event)))
 
 (defun newsticker-treeview-tree-do-click (&optional pos event)
   "Actually handle click event.
@@ -2119,7 +2106,11 @@ POS gives the position where EVENT occurred."
                (setq w (newsticker--treeview-get-node-by-id nt-id))
                (widget-put w :nt-selected t)
                (widget-apply w :action event)
-               (newsticker--treeview-set-current-node w))))))
+               (newsticker--treeview-set-current-node w)
+               (and event
+                    (eq 'mouse-3 (car event))
+                    (sit-for 0)
+                    (newsticker--treeview-tree-open-menu event)))))))
   (newsticker--treeview-tree-update-highlight))
 
 (defun newsticker--treeview-restore-layout ()
