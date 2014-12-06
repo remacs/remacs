@@ -63,9 +63,9 @@ all: ${ns_appdir} ${ns_appbindir}/Emacs
 # to run GUI Emacs in-place
 links : ../src/emacs${EXEEXT} | ${ns_appbindir}
 	for d in $(shell cd ${srcdir}/${ns_appsrc}; find . -type d); do ${MKDIR_P} ${ns_appdir}/$$d; done
-	for f in $(shell cd ${srcdir}/${ns_appsrc}; find . -type f); do ln -s $(abs_builddir)/${ns_appsrc}/$$f ${ns_appdir}; done
+	for f in $(shell cd ${srcdir}/${ns_appsrc}; find . -type f); do ln -s $(shell cd ${srcdir}; pwd -P)/${ns_appsrc}/$$f ${ns_appdir}/$$f; done
 	for d in $(shell cd ${ns_appsrc}; find . -type d); do ${MKDIR_P} ${ns_appdir}/$$d; done
-	for f in $(shell cd ${ns_appsrc}; find . -type f); do ln -s $(shell pwd -P)/${ns_appsrc}/$$f ${ns_appdir}; done
+	for f in $(shell cd ${ns_appsrc}; find . -type f); do ln -s $(shell cd ${ns_appsrc}; pwd -P)/$$f ${ns_appdir}/$$f; done
 	ln -s $(top_srcdir_abs)/lisp ${ns_appdir}/Contents/Resources
 	ln -s $(top_srcdir_abs)/info ${ns_appdir}/Contents/Resources
 	ln -s $(abs_top_builddir)/src/emacs${EXEEXT} ${ns_appbindir}/Emacs
@@ -74,6 +74,8 @@ links : ../src/emacs${EXEEXT} | ${ns_appbindir}
 	${MKDIR_P} ${ns_appdir}/Contents/Resources/etc
 	for f in $(shell cd $(top_srcdir_abs)/etc; ls); do ln -s $(top_srcdir_abs)/etc/$$f ${ns_appdir}/Contents/Resources/etc; done
 	ln -s $(abs_top_builddir)/etc/DOC ${ns_appdir}/Contents/Resources/etc
+	@echo if the next find prints something, the installation failed
+	find ${ns_appdir} -exec test \! -e {} \; -ls
 
 .PHONY: clean distclean bootstrap-clean maintainer-clean
 
