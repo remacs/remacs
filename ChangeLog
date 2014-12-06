@@ -1,3 +1,12 @@
+2014-12-05  Stephen Leake  <stephen_leake@stephe-leake.org>
+
+	* CONTRIBUTE: improve, move some info from admin/notes/* here.
+
+2014-12-05  Stephen Leake  <stephen_leake@stephe-leake.org>
+
+	* etc/CONTRIBUTE: renamed to ./CONTRIBUTE, preparatory to further
+	changes/cleanup
+
 2014-12-05  Paul Eggert  <eggert@cs.ucla.edu>
 
 	* .gitignore: Remove redundant pattern (subsumed by _*).
