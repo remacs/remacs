@@ -1,3 +1,7 @@
+2014-12-06  Michael Albinus  <michael.albinus@gmx.de>
+
+	* automated/vc-tests.el: New file.
+
 2014-12-03  Michael Albinus  <michael.albinus@gmx.de>
 
 	* automated/tramp-tests.el (tramp-test29-vc-registered):
