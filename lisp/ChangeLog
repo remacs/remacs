@@ -1,3 +1,14 @@
+2015-01-16  Jorgen Schaefer  <contact@jorgenschaefer.de>
+
+	* lisp/package.el: Provide repository priorities.
+	(package-archive-priorities): New variable.
+	(package--add-to-alist): New function.
+	(package--add-to-archive-contents): Use it.
+	(package-menu--find-upgrades): Use it as well. Small clean up to
+	make the use of the package name here explicit.
+	(package-archive-priority): New function.
+	(package-desc-priority-version): New function.
+
 2015-01-16  Daniel Colascione  <dancol@dancol.org>
 
 	* cus-start.el (all): Make `ring-bell-function' customizable.
