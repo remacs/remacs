@@ -763,12 +763,19 @@ appears in a <link> or <a> tag."
 	(eww-browse-url (shr-expand-url best-url (plist-get eww-data :url)))
       (user-error "No `top' for this page"))))
 
-(defun eww-reload (&optional encode)
-  "Reload the current page."
-  (interactive)
+(defun eww-reload (&optional local encode)
+  "Reload the current page.
+If LOCAL (the command prefix), don't reload the page from the
+network, but just re-display the HTML already fetched."
+  (interactive "P")
   (let ((url (plist-get eww-data :url)))
-    (url-retrieve url 'eww-render
-		  (list url (point) (current-buffer) encode))))
+    (if local
+	(if (null (plist-get eww-data :dom))
+	    (error "No current HTML data")
+	  (eww-display-html 'utf-8 url (plist-get eww-data :dom)
+			    (point) (current-buffer)))
+      (url-retrieve url 'eww-render
+		    (list url (point) (current-buffer) encode)))))
 
 ;; Form support.
 
@@ -1387,8 +1394,8 @@ Differences in #targets are ignored."
   "Set character encoding."
   (interactive "zUse character set (default utf-8): ")
   (if (null charset)
-      (eww-reload 'utf-8)
-    (eww-reload charset)))
+      (eww-reload nil 'utf-8)
+    (eww-reload nil charset)))
 
 ;;; Bookmarks code
 

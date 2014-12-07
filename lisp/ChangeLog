@@ -1,3 +1,7 @@
+2014-12-07  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* net/eww.el (eww-reload): Take a prefix to work locally (bug#19086).
+
 2014-12-07  Ivan Shmakov  <ivan@siamics.net>
 
 	* net/eww.el (eww-list-histories): Restore the history in the
