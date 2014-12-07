@@ -2,6 +2,7 @@
 
 	* net/eww.el (eww-follow-link): Revert prefix behaviour to
 	previous behavior.
+	(eww-copy-page-url): Add doc string.
 
 2014-12-07  Ivan Shmakov  <ivan@siamics.net>
 

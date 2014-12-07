@@ -1346,6 +1346,7 @@ Differences in #targets are ignored."
     (equal (url-recreate-url obj1) (url-recreate-url obj2))))
 
 (defun eww-copy-page-url ()
+  "Copy the URL of the current page into the kill ring."
   (interactive)
   (message "%s" (plist-get eww-data :url))
   (kill-new (plist-get eww-data :url)))
