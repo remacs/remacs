@@ -1315,8 +1315,8 @@ The browser to used is specified by the `shr-external-browser' variable."
 
 (defun eww-follow-link (&optional external mouse-event)
   "Browse the URL under point.
-If EXTERNAL is single prefix, browse in new buffer.
-If EXTERNAL is double prefix, browse the URL using `shr-external-browser'."
+If EXTERNAL is single prefix, browse the URL using `shr-external-browser'.
+If EXTERNAL is double prefix, browse in new buffer."
   (interactive (list current-prefix-arg last-nonmenu-event))
   (mouse-set-point mouse-event)
   (let ((url (get-text-property (point) 'shr-url)))
@@ -1325,7 +1325,7 @@ If EXTERNAL is double prefix, browse the URL using `shr-external-browser'."
       (message "No link under point"))
      ((string-match "^mailto:" url)
       (browse-url-mail url))
-     ((and (consp external) (< 4 (car external)))
+     ((and (consp external) (<= (car external) 4))
       (funcall shr-external-browser url))
      ;; This is a #target url in the same page as the current one.
      ((and (url-target (url-generic-parse-url url))

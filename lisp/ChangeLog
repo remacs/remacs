@@ -1,3 +1,8 @@
+2014-12-07  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* net/eww.el (eww-follow-link): Revert prefix behaviour to
+	previous behavior.
+
 2014-12-07  Ivan Shmakov  <ivan@siamics.net>
 
 	* net/eww.el (eww): Moved history recording here...
