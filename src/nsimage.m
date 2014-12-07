@@ -351,7 +351,7 @@ ns_set_alpha (void *img, int x, int y, unsigned char a)
     {
       if ([rep respondsToSelector: @selector (getBitmapDataPlanes:)])
         {
-          bmRep = (NSBitmapImageRep *) rep;
+          NSBitmapImageRep *bmRep = (NSBitmapImageRep *) rep;
 
           if ([bmRep numberOfPlanes] >= 3)
               [bmRep getBitmapDataPlanes: pixmapData];

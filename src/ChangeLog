@@ -1,3 +1,8 @@
+2014-12-07  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* nsimage.m (setPixmapData): Make bmRep local so class member is not
+	set (Bug#19133).
+
 2014-12-05  Lee Duhem  <lee.duhem@gmail.com>  (tiny change)
 
 	* eval.c (Fsignal): Remove duplicate test.
