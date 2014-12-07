@@ -1584,9 +1584,11 @@ Differences in #targets are ignored."
   (interactive)
   (when (null eww-history)
     (error "No eww-histories are defined"))
-  (let ((eww-history-trans eww-history))
+  (let ((eww-history-trans eww-history)
+	(buffer (current-buffer)))
     (set-buffer (get-buffer-create "*eww history*"))
     (eww-history-mode)
+    (setq-local eww-current-buffer buffer)
     (let ((inhibit-read-only t)
 	  (domain-length 0)
 	  (title-length 0)
@@ -1615,7 +1617,10 @@ Differences in #targets are ignored."
   (let ((history (get-text-property (line-beginning-position) 'eww-history)))
     (unless history
       (error "No history on the current line"))
-    (quit-window)
+    (let ((buffer eww-current-buffer))
+      (quit-window)
+      (when buffer
+	(switch-to-buffer buffer)))
     (eww-restore-history history)))
 
 (defvar eww-history-mode-map
