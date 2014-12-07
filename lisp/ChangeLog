@@ -1,6 +1,7 @@
 2014-12-07  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
 	* net/eww.el (eww-reload): Take a prefix to work locally (bug#19086).
+	(eww-current-buffer): Compilation fix for bug#18550 patch.
 
 2014-12-07  Ivan Shmakov  <ivan@siamics.net>
 

@@ -1586,6 +1586,8 @@ Differences in #targets are ignored."
 		       (nthcdr eww-history-limit eww-history)))
     (setcdr tail nil)))
 
+(defvar eww-current-buffer)
+
 (defun eww-list-histories ()
   "List the eww-histories."
   (interactive)
