@@ -1,3 +1,11 @@
+2014-12-07  Ivan Shmakov  <ivan@siamics.net>
+
+	* net/eww.el (eww): Moved history recording here...
+	(eww-browse-url): ... from here (bug#19253).
+
+	* net/eww.el (eww-browse-url): Use generate-new-buffer (was:
+	iterating over possible buffer names.)
+
 2014-12-07  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
 	* net/eww.el (eww-reload): Take a prefix to work locally (bug#19086).

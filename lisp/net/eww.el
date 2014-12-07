@@ -253,7 +253,10 @@ word(s) will be searched for via `eww-search-prefix'."
                  (setq url (concat url "/"))))
            (setq url (concat eww-search-prefix
                              (replace-regexp-in-string " " "+" url))))))
-  (unless (eq major-mode 'eww-mode)
+  (if (eq major-mode 'eww-mode)
+      (when (or (plist-get eww-data :url)
+		(plist-get eww-data :dom))
+	(eww-save-history))
     (eww-setup-buffer)
     (plist-put eww-data :url url)
     (eww-update-header-line-format)
@@ -680,16 +683,8 @@ the like."
 ;;;###autoload
 (defun eww-browse-url (url &optional new-window)
   (cond (new-window
-         (let ((new-buffer "*eww*")
-               (num 0))
-           (while (get-buffer new-buffer)
-             (setq num (1+ num)
-                   new-buffer (format "*eww*<%d>" num)))
-           (switch-to-buffer new-buffer))
-         (eww-mode))
-        ((and (equal major-mode 'eww-mode)
-              (plist-get eww-data :url))
-         (eww-save-history)))
+	 (switch-to-buffer (generate-new-buffer "*eww*"))
+         (eww-mode)))
   (eww url))
 
 (defun eww-back-url ()
