@@ -1,9 +1,16 @@
+2014-12-07  Tom Willemse  <tom@ryuslash.org>  (tiny change)
+
+	* progmodes/python.el: Recognize docstrings.
+	(python-docstring-at-p, python-font-lock-syntactic-face-function):
+	New functions.
+	(python-mode): Use them.
+
 2014-12-06  Ulf Jasper  <ulf.jasper@web.de>
 
 	* net/newst-treeview.el (newsticker--treeview-list-add-item)
 	(newsticker--treeview-propertize-tag): Bind tree menu to mouse-3.
 	(newsticker--treeview-create-groups-menu)
-	(newsticker--treeview-create-tree-menu): Removed.
+	(newsticker--treeview-create-tree-menu): Remove.
 	(newsticker--treeview-tree-open-menu): New.
 	(newsticker-treeview-tree-click): Pass event to
 	`newsticker-treeview-tree-do-click'.
@@ -20,8 +27,8 @@
 
 2014-12-05  Juri Linkov  <juri@linkov.net>
 
-	* minibuffer.el (minibuffer-completion-help): Compare
-	selected-window with minibuffer-window to check whether
+	* minibuffer.el (minibuffer-completion-help):
+	Compare selected-window with minibuffer-window to check whether
 	completions should be displayed near the minibuffer.  (Bug#17809)
 	http://lists.gnu.org/archive/html/emacs-devel/2014-12/msg00311.html
 
@@ -52,7 +59,6 @@
 	both in terms of the column to which it moves and the return
 	value.  (Bug#19211)
 
-2014-12-05  Stephen Berman  <stephen.berman@gmx.net>
 2014-12-05  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* vc/ediff-init.el (ediff-odd-p): Remove.
