@@ -1,3 +1,8 @@
+2014-12-07  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* net/eww.el (eww-bookmark-prepare): Display URLs in first by
+	displaying shortened titles first (bug#16398).
+
 2014-12-07  Tom Willemse  <tom@ryuslash.org>  (tiny change)
 
 	* progmodes/python.el: Recognize docstrings.
