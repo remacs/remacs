@@ -1,3 +1,8 @@
+2014-12-07  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* message.el (message-change-subject): Really check whether the subject
+	changed.
+
 2014-12-05  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
 	* mailcap.el (mailcap-mime-data): Add doc-view-mode as a viewer for

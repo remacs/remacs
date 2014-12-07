@@ -2306,7 +2306,7 @@ Leading \"Re: \" is not stripped by this function.  Use the function
 		   ((not (string-match
 			  (concat "^[ \t]*"
 				  (regexp-quote new-subject)
-				  " \t]*$")
+				  "[ \t]*$")
 			  old-subject))  ; yes, it really is a new subject
 		    ;; delete eventual Re: prefix
 		    (setq old-subject
