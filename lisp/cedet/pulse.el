@@ -227,13 +227,15 @@ Optional argument FACE specifies the face to do the highlighting."
 (defun pulse-momentary-highlight-one-line (point &optional face)
   "Highlight the line around POINT, unhighlighting before next command.
 Optional argument FACE specifies the face to do the highlighting."
-  (let ((start (point-at-bol))
-	(end (save-excursion
-	       (end-of-line)
-	       (when (not (eobp))
-		 (forward-char 1))
-	       (point))))
-    (pulse-momentary-highlight-region start end face)))
+  (save-excursion
+    (goto-char point)
+    (let ((start (point-at-bol))
+          (end (save-excursion
+                 (end-of-line)
+                 (when (not (eobp))
+                   (forward-char 1))
+                 (point))))
+      (pulse-momentary-highlight-region start end face))))
 
 (defun pulse-momentary-highlight-region (start end &optional face)
   "Highlight between START and END, unhighlighting before next command.

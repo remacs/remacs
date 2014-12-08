@@ -1,3 +1,8 @@
+2014-12-08  Matt Curtis  <matt.r.curtis@gmail.com>  (tiny change)
+
+	* pulse.el (pulse-momentary-highlight-one-line): Respect the POINT
+	argument (bug#17260).
+
 2014-11-09  Eric Ludlam  <zappo@gnu.org>
 
 	* semantic.el (semantic-mode): Add/remove 3
