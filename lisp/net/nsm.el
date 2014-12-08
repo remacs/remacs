@@ -43,22 +43,13 @@ connection should be handled.
 The following values are possible:
 
 `low': Absolutely no checks are performed.
+`medium': This is the default level, should be reasonable for most usage.
+`high': This warns about additional things that many people would
+not find useful.
+`paranoid': On this level, the user is queried for most new connections.
 
-`medium': This is the default level, and the following things will
-be prompted for.
-
-* invalid, self-signed or otherwise unverifiable certificates
-* whether a previously accepted unverifiable certificate has changed
-* when a connection that was previously protected by STARTTLS is
-  now unencrypted
-
-`high': In addition to the above.
-
-* any certificate that changes its public key
-
-`paranoid': In addition to the above.
-
-* any new certificate that you haven't seen before"
+See the Emacs manual for a description of all things that are
+checked and warned against."
   :version "25.1"
   :group 'nsm
   :type '(choice (const :tag "Low" low)
