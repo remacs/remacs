@@ -186,11 +186,22 @@ DEF_GNUTLS_FN (int, gnutls_x509_crt_get_key_id,
 	       (gnutls_x509_crt_t, unsigned int,
 		unsigned char *, size_t *_size));
 DEF_GNUTLS_FN (const char*, gnutls_sec_param_get_name, (gnutls_sec_param_t));
-DEF_GNUTLS_FN (const char*, gnutls_sign_get_name,
-	       (gnutls_sign_algorithm_t));
+DEF_GNUTLS_FN (const char*, gnutls_sign_get_name, (gnutls_sign_algorithm_t));
 DEF_GNUTLS_FN (int, gnutls_server_name_set, (gnutls_session_t,
 					     gnutls_server_name_type_t,
 					     const void *, size_t));
+DEF_GNUTLS_FN (gnutls_kx_algorithm_t, gnutls_kx_get, (gnutls_session_t));
+DEF_GNUTLS_FN (const char*, gnutls_kx_get_name, (gnutls_kx_algorithm_t));
+DEF_GNUTLS_FN (gnutls_protocol_t, gnutls_protocol_get_version,
+	       (gnutls_session_t));
+DEF_GNUTLS_FN (const char*, gnutls_protocol_get_version, (gnutls_protocol_t));
+DEF_GNUTLS_FN (gnutls_cipher_algorithm_t, gnutls_cipher_get,
+	       (gnutls_session_t));
+DEF_GNUTLS_FN (const char*, gnutls_cipher_get_name,
+	       (gnutls_cipher_algorithm_t));
+DEF_GNUTLS_FN (gnutls_mac_algorithm_t, gnutls_mac_get, (gnutls_session_t));
+DEF_GNUTLS_FN (const char*, gnutls_mac_get_name, (gnutls_mac_algorithm_t));
+
 
 static bool
 init_gnutls_functions (void)
@@ -269,6 +280,14 @@ init_gnutls_functions (void)
   LOAD_GNUTLS_FN (library, gnutls_sec_param_get_name);
   LOAD_GNUTLS_FN (library, gnutls_sign_get_name);
   LOAD_GNUTLS_FN (library, gnutls_server_name_set);
+  LOAD_GNUTLS_FN (library, gnutls_kx_get);
+  LOAD_GNUTLS_FN (library, gnutls_kx_get_name);
+  LOAD_GNUTLS_FN (library, gnutls_protocol_get_version);
+  LOAD_GNUTLS_FN (library, gnutls_protocol_get_name);
+  LOAD_GNUTLS_FN (library, gnutls_cipher_get);
+  LOAD_GNUTLS_FN (library, gnutls_cipher_get_name);
+  LOAD_GNUTLS_FN (library, gnutls_mac_get);
+  LOAD_GNUTLS_FN (library, gnutls_mac_get_name);
 
   max_log_level = global_gnutls_log_level;
 
@@ -342,7 +361,15 @@ init_gnutls_functions (void)
 #define fn_gnutls_x509_crt_get_key_id           gnutls_x509_crt_get_key_id
 #define fn_gnutls_sec_param_get_name            gnutls_sec_param_get_name
 #define fn_gnutls_sign_get_name                 gnutls_sign_get_name
-#define fn_gnutls_server_name_set		gnutls_server_name_set
+#define fn_gnutls_server_name_set               gnutls_server_name_set
+#define fn_gnutls_kx_get                        gnutls_kx_get
+#define fn_gnutls_kx_get_name                   gnutls_kx_get_name
+#define fn_gnutls_protocol_get_version          gnutls_protocol_get_version
+#define fn_gnutls_protocol_get_name             gnutls_protocol_get_name
+#define fn_gnutls_cipher_get                    gnutls_cipher_get
+#define fn_gnutls_cipher_get_name               gnutls_cipher_get_name
+#define fn_gnutls_mac_get                       gnutls_mac_get
+#define fn_gnutls_mac_get_name                  gnutls_mac_get_name
 
 #endif /* !WINDOWSNT */
 
@@ -998,6 +1025,7 @@ The return value is a property list with top-level keys :warnings and
 {
   Lisp_Object warnings = Qnil, result = Qnil;
   unsigned int verification;
+  gnutls_session_t state;
 
   CHECK_PROCESS (proc);
 
@@ -1042,14 +1070,40 @@ The return value is a property list with top-level keys :warnings and
                      (intern (":certificate"),
                       gnutls_certificate_details (XPROCESS (proc)->gnutls_certificate)));
 
+  state = XPROCESS (proc)->gnutls_state;
+
   /* Diffie-Hellman prime bits. */
   {
-    int bits = fn_gnutls_dh_get_prime_bits (XPROCESS (proc)->gnutls_state);
+    int bits = fn_gnutls_dh_get_prime_bits (state);
     if (bits > 0)
-      result = nconc2 (result, list2
-		       (intern (":diffie-hellman-prime-bits"),
-			make_number (bits)));
+      result = nconc2 (result, list2 (intern (":diffie-hellman-prime-bits"),
+				      make_number (bits)));
   }
+
+  /* Key exchange. */
+  result = nconc2
+    (result, list2 (intern (":key-exchange"),
+		    build_string (fn_gnutls_kx_get_name
+				  (fn_gnutls_kx_get (state)))));
+
+  /* Protocol name. */
+  result = nconc2
+    (result, list2 (intern (":protocol"),
+		    build_string (fn_gnutls_protocol_get_name
+				  (fn_gnutls_protocol_get_version (state)))));
+
+  /* Cipler name. */
+  result = nconc2
+    (result, list2 (intern (":cipher"),
+		    build_string (fn_gnutls_cipher_get_name
+				  (fn_gnutls_cipher_get (state)))));
+
+  /* MAC name. */
+  result = nconc2
+    (result, list2 (intern (":mac"),
+		    build_string (fn_gnutls_mac_get_name
+				  (fn_gnutls_mac_get (state)))));
+
 
   return result;
 }

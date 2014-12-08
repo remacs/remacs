@@ -1,3 +1,8 @@
+2014-12-08  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* gnutls.c (Fgnutls_peer_status): Return the key exchange, cipher
+	and MAC algorithms.
+
 2014-12-08  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* process.c: Whitespace and line-break nitpicks.
