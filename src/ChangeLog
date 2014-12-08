@@ -3,6 +3,8 @@
 	* gnutls.c (gnutls_certificate_details): The :signature isn't
 	that useful, so remove it.
 	(gnutls_certificate_details): Clean up whitespace slightly.
+	(Fgnutls_peer_status): Return the Diffie-Hellman prime bits for
+	the connection.
 
 2014-12-07  Jan Djärv  <jan.h.d@swipnet.se>
 

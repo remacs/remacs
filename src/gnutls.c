@@ -1029,6 +1029,15 @@ The return value is a property list with top-level keys :warnings and
                      (intern (":certificate"),
                       gnutls_certificate_details (XPROCESS (proc)->gnutls_certificate)));
 
+  /* Diffie-Hellman prime bits. */
+  {
+    int bits = gnutls_dh_get_prime_bits (XPROCESS (proc)->gnutls_state);
+    if (bits > 0)
+      result = nconc2 (result, list2
+		       (intern (":diffie-hellman-prime-bits"),
+			make_number (bits)));
+  }
+
   return result;
 }
 
