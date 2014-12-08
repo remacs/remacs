@@ -164,7 +164,7 @@ unencrypted."
 	(if (and (not (nsm-warnings-ok-p status settings))
 		 (not (nsm-query
 		       host port status 'conditions
-		       "The TLS connection to %s:%s is insecure\nfor the following reason%s:\n\n%s"
+		       "The TLS connection to %s:%s is insecure for the following reason%s:\n\n%s"
 		       host port
 		       (if (> (length warnings) 1)
 			   "s" "")
@@ -190,7 +190,7 @@ unencrypted."
 	   (not
 	    (nsm-query
 	     host port status :diffie-hellman-prime-bits
-	     "The Diffie-Hellman prime bits (%s) used for this connection to\n%s:%s\nis less than what is considered safe (%s)."
+	     "The Diffie-Hellman prime bits (%s) used for this connection to %s:%s is less than what is considered safe (%s)."
 	     prime-bits host port 1024)))
       (delete-process process)
       nil)
@@ -200,7 +200,9 @@ unencrypted."
 	    (nsm-query
 	     host port status :rc4
 	     "The connection to %s:%s uses the RC4 algorithm (%s), which is believed to be unsafe."
-	     host port encryption))))
+	     host port encryption)))
+      (delete-process process)
+      nil)
      (t
       process))))
 
@@ -217,7 +219,7 @@ unencrypted."
 	      (setq did-query
 		    (nsm-query
 		     host port status 'fingerprint
-		     "The fingerprint for the connection to %s:%s has changed from\n%s to\n%s"
+		     "The fingerprint for the connection to %s:%s has changed from %s to %s"
 		     host port
 		     (plist-get settings :fingerprint)
 		     (nsm-fingerprint status)))))
@@ -232,7 +234,7 @@ unencrypted."
 (defun nsm-new-fingerprint-ok-p (host port status)
   (nsm-query
    host port status 'fingerprint
-   "The fingerprint for the connection to %s:%s is new:\n%s"
+   "The fingerprint for the connection to %s:%s is new: %s"
    host port
    (nsm-fingerprint status)))
 
@@ -246,7 +248,7 @@ unencrypted."
 	 (not
 	  (nsm-query
 	   host port nil 'conditions
-	   "The connection to %s:%s used to be an encrypted\nconnection, but is now unencrypted.  This might mean that there's a\nman-in-the-middle tapping this connection."
+	   "The connection to %s:%s used to be an encrypted connection, but is now unencrypted.  This might mean that there's a man-in-the-middle tapping this connection."
 	   host port)))
     (delete-process process)
     nil)
@@ -285,7 +287,12 @@ unencrypted."
 	(erase-buffer)
 	(when (> (length cert) 0)
 	  (insert cert "\n"))
-	(insert (apply 'format message args))))
+	(let ((start (point)))
+	  (insert (apply 'format message args))
+	  (goto-char start)
+	  ;; Fill the first line of the message, which usually
+	  ;; contains lots of explanatory text.
+	  (fill-region (point) (line-end-position)))))
     (let ((responses '((?n . no)
 		       (?s . session)
 		       (?a . always)))
@@ -418,6 +425,15 @@ unencrypted."
 	  (insert
 	   "Public key:" (plist-get cert :public-key-algorithm)
 	   ", signature: " (plist-get cert :signature-algorithm) "\n"))
+	(when (and (plist-get status :key-exchange)
+		   (plist-get status :cipher)
+		   (plist-get status :mac)
+		   (plist-get status :protocol))
+	  (insert
+	   "Protocol:" (plist-get status :protocol)
+	   ", key: " (plist-get status :key-exchange)
+	   ", cipher: " (plist-get status :cipher)
+	   ", mac: " (plist-get status :mac) "\n"))
 	(when (plist-get cert :certificate-security-level)
 	  (insert
 	   "Security level:"
