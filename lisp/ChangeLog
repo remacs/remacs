@@ -3,6 +3,8 @@
 	* net/nsm.el (network-security-level): Remove the detailed
 	description, which was already outdated, and refer the users to
 	the manual.
+	(nsm-check-protocol): Check for weak Diffie-Hellman prime bits
+	(bug#19153).
 
 2014-12-06  Andrey Kotlarski  <m00naticus@gmail.com>
 

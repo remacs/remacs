@@ -115,6 +115,14 @@ unencrypted."
 	  process))))))
 
 (defun nsm-check-tls-connection (process host port status settings)
+  (let ((process (nsm-check-certificate process host port status settings)))
+    (if (and process
+	     (>= (nsm-level network-security-level) (nsm-level 'high)))
+	;; Do further protocol-level checks if the security is high.
+	(nsm-check-protocol process host port status settings)
+      process)))
+
+(defun nsm-check-certificate (process host port status settings)
   (let ((warnings (plist-get status :warnings)))
     (cond
 
@@ -167,6 +175,23 @@ unencrypted."
 	      (delete-process process)
 	      nil)
 	  process))))))
+
+(defun nsm-check-protocol (process host port status settings)
+  (let ((prime-bits (plist-get status :diffie-hellman-prime-bits)))
+    (cond
+     ((and prime-bits
+	   (< prime-bits 1024)
+	   (not (memq :diffie-hellman-prime-bits
+		      (plist-get settings :conditions)))
+	   (not
+	    (nsm-query
+	     host port status :diffie-hellman-prime-bits
+	     "The Diffie-Hellman prime bits (%s) used for this connection to\n%s:%s\nis less than what is considerer safe (%s)."
+	     prime-bits host port 1024)))
+      (delete-process process)
+      nil)
+     (t
+      process))))
 
 (defun nsm-fingerprint (status)
   (plist-get (plist-get status :certificate) :public-key-id))
@@ -284,14 +309,23 @@ unencrypted."
       (nconc saved (list :host (format "%s:%s" host port))))
     ;; We either want to save/update the fingerprint or the conditions
     ;; of the certificate/unencrypted connection.
-    (when (eq what 'conditions)
+    (cond
+     ((eq what 'conditions)
       (nconc saved (list :host (format "%s:%s" host port)))
       (cond
        ((not status)
-	(nconc saved `(:conditions (:unencrypted))))
+	(nconc saved '(:conditions (:unencrypted))))
        ((plist-get status :warnings)
 	(nconc saved
-	       `(:conditions ,(plist-get status :warnings))))))
+	       (list :conditions (plist-get status :warnings))))))
+     ((not (eq what 'fingerprint))
+      ;; Store additional protocol settings.
+      (let ((settings (nsm-host-settings id)))
+	(when settings
+	  (setq saved settings))
+	(if (plist-get saved :conditions)
+	    (nconc (plist-get saved :conditions) (list what))
+	  (nconc saved (list :conditions (list what)))))))
     (if (eq permanency 'always)
 	(progn
 	  (nsm-remove-temporary-setting id)
