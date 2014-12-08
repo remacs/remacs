@@ -1,3 +1,7 @@
+2014-12-08  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* net/nsm.el (nsm-check-protocol): Test for RC4 on `high'.
+
 2014-12-08  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* progmodes/gud.el (gud-gdb-completions): Remove unused var `start'.

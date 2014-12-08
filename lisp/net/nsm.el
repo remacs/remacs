@@ -177,7 +177,11 @@ unencrypted."
 	  process))))))
 
 (defun nsm-check-protocol (process host port status settings)
-  (let ((prime-bits (plist-get status :diffie-hellman-prime-bits)))
+  (let ((prime-bits (plist-get status :diffie-hellman-prime-bits))
+	(encryption (format "%s-%s-%s"
+			    (plist-get status :key-exchange)
+			    (plist-get status :cipher)
+			    (plist-get status :mac))))
     (cond
      ((and prime-bits
 	   (< prime-bits 1024)
@@ -186,10 +190,17 @@ unencrypted."
 	   (not
 	    (nsm-query
 	     host port status :diffie-hellman-prime-bits
-	     "The Diffie-Hellman prime bits (%s) used for this connection to\n%s:%s\nis less than what is considerer safe (%s)."
+	     "The Diffie-Hellman prime bits (%s) used for this connection to\n%s:%s\nis less than what is considered safe (%s)."
 	     prime-bits host port 1024)))
       (delete-process process)
       nil)
+     ((and (string-match "\\bRC4\\b" encryption)
+	   (not (memq :rc4 (plist-get settings :conditions)))
+	   (not
+	    (nsm-query
+	     host port status :rc4
+	     "The connection to %s:%s uses the RC4 algorithm (%s), which is believed to be unsafe."
+	     host port encryption))))
      (t
       process))))
 
