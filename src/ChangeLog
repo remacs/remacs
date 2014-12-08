@@ -21,7 +21,6 @@
 	at once, call ns_set_represented_filename instead.
 
 2014-12-05  Eli Zaretskii  <eliz@gnu.org>
-2014-12-05  Eli Zaretskii  <eliz@gnu.org>
 
 	* dispextern.h (enum bidi_dir_t): Force NEUTRAL_DIR to be zero.
 	(struct bidi_stack): Reduce size by using bit fields and by

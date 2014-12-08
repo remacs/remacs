@@ -19,7 +19,6 @@
 	* .gitignore: Remove redundant pattern (subsumed by _*).
 	Avoid "**", as it requires Git 1.8.2 or later.
 
-2014-12-05  Paul Eggert  <eggert@cs.ucla.edu>
 2014-12-05  Eli Zaretskii  <eliz@gnu.org>
 
 	* .gitignore: Ignore test/biditest.txt.
