@@ -797,6 +797,7 @@ gnutls_certificate_details (gnutls_x509_crt_t cert)
 {
   Lisp_Object res = Qnil;
   int err;
+  size_t buf_size;
 
   /* Version. */
   {
@@ -807,37 +808,30 @@ gnutls_certificate_details (gnutls_x509_crt_t cert)
   }
 
   /* Serial. */
-  {
-    size_t serial_size = 0;
-
-    err = fn_gnutls_x509_crt_get_serial (cert, NULL, &serial_size);
-    if (err == GNUTLS_E_SHORT_MEMORY_BUFFER)
-      {
-	char *serial = malloc (serial_size);
-	err = fn_gnutls_x509_crt_get_serial (cert, serial, &serial_size);
-	if (err >= GNUTLS_E_SUCCESS)
-	  res = nconc2 (res, list2 (intern (":serial-number"),
-				    gnutls_hex_string (serial, serial_size,
-						       "")));
-	free (serial);
-      }
-  }
+  buf_size = 0;
+  err = fn_gnutls_x509_crt_get_serial (cert, NULL, &buf_size);
+  if (err == GNUTLS_E_SHORT_MEMORY_BUFFER)
+    {
+      char *serial = malloc (buf_size);
+      err = fn_gnutls_x509_crt_get_serial (cert, serial, &buf_size);
+      if (err >= GNUTLS_E_SUCCESS)
+	res = nconc2 (res, list2 (intern (":serial-number"),
+				  gnutls_hex_string (serial, buf_size, "")));
+      free (serial);
+    }
 
   /* Issuer. */
-  {
-    size_t dn_size = 0;
-
-    err = fn_gnutls_x509_crt_get_issuer_dn (cert, NULL, &dn_size);
-    if (err == GNUTLS_E_SHORT_MEMORY_BUFFER)
-      {
-	char *dn = malloc (dn_size);
-	err = fn_gnutls_x509_crt_get_issuer_dn (cert, dn, &dn_size);
-	if (err >= GNUTLS_E_SUCCESS)
-	  res = nconc2 (res, list2 (intern (":issuer"),
-				    make_string (dn, dn_size)));
-	free (dn);
-      }
-  }
+  buf_size = 0;
+  err = fn_gnutls_x509_crt_get_issuer_dn (cert, NULL, &buf_size);
+  if (err == GNUTLS_E_SHORT_MEMORY_BUFFER)
+    {
+      char *dn = malloc (buf_size);
+      err = fn_gnutls_x509_crt_get_issuer_dn (cert, dn, &buf_size);
+      if (err >= GNUTLS_E_SUCCESS)
+	res = nconc2 (res, list2 (intern (":issuer"),
+				  make_string (dn, buf_size)));
+      free (dn);
+    }
 
   /* Validity. */
   {
@@ -857,20 +851,17 @@ gnutls_certificate_details (gnutls_x509_crt_t cert)
   }
 
   /* Subject. */
-  {
-    size_t dn_size = 0;
-
-    err = fn_gnutls_x509_crt_get_dn (cert, NULL, &dn_size);
-    if (err == GNUTLS_E_SHORT_MEMORY_BUFFER)
-      {
-	char *dn = malloc (dn_size);
-	err = fn_gnutls_x509_crt_get_dn (cert, dn, &dn_size);
-	if (err >= GNUTLS_E_SUCCESS)
-	  res = nconc2 (res, list2 (intern (":subject"),
-				    make_string (dn, dn_size)));
-	free (dn);
-      }
-  }
+  buf_size = 0;
+  err = fn_gnutls_x509_crt_get_dn (cert, NULL, &buf_size);
+  if (err == GNUTLS_E_SHORT_MEMORY_BUFFER)
+    {
+      char *dn = malloc (buf_size);
+      err = fn_gnutls_x509_crt_get_dn (cert, dn, &buf_size);
+      if (err >= GNUTLS_E_SUCCESS)
+	res = nconc2 (res, list2 (intern (":subject"),
+				  make_string (dn, buf_size)));
+      free (dn);
+    }
 
   /* Versions older than 2.11 doesn't have these four functions. */
 #if GNUTLS_VERSION_NUMBER >= 0x020b00
@@ -894,69 +885,60 @@ gnutls_certificate_details (gnutls_x509_crt_t cert)
   }
 
   /* Unique IDs. */
-  {
-    size_t buf_size = 0;
+  buf_size = 0;
+  err = fn_gnutls_x509_crt_get_issuer_unique_id (cert, NULL, &buf_size);
+  if (err == GNUTLS_E_SHORT_MEMORY_BUFFER)
+    {
+      char *buf = malloc (buf_size);
+      err = fn_gnutls_x509_crt_get_issuer_unique_id (cert, buf, &buf_size);
+      if (err >= GNUTLS_E_SUCCESS)
+	res = nconc2 (res, list2 (intern (":issuer-unique-id"),
+				  make_string (buf, buf_size)));
+      free (buf);
+    }
 
-    err = fn_gnutls_x509_crt_get_issuer_unique_id (cert, NULL, &buf_size);
-    if (err == GNUTLS_E_SHORT_MEMORY_BUFFER)
-      {
-	char *buf = malloc (buf_size);
-	err = fn_gnutls_x509_crt_get_issuer_unique_id (cert, buf, &buf_size);
-	if (err >= GNUTLS_E_SUCCESS)
-	  res = nconc2 (res, list2 (intern (":issuer-unique-id"),
-				    make_string (buf, buf_size)));
-	free (buf);
-      }
-
-    buf_size = 0;
-    err = fn_gnutls_x509_crt_get_subject_unique_id (cert, NULL, &buf_size);
-    if (err == GNUTLS_E_SHORT_MEMORY_BUFFER)
-      {
-	char *buf = malloc (buf_size);
-	err = fn_gnutls_x509_crt_get_subject_unique_id (cert, buf, &buf_size);
-	if (err >= GNUTLS_E_SUCCESS)
-	  res = nconc2 (res, list2 (intern (":subject-unique-id"),
-				    make_string (buf, buf_size)));
-	free (buf);
-      }
-  }
+  buf_size = 0;
+  err = fn_gnutls_x509_crt_get_subject_unique_id (cert, NULL, &buf_size);
+  if (err == GNUTLS_E_SHORT_MEMORY_BUFFER)
+    {
+      char *buf = malloc (buf_size);
+      err = fn_gnutls_x509_crt_get_subject_unique_id (cert, buf, &buf_size);
+      if (err >= GNUTLS_E_SUCCESS)
+	res = nconc2 (res, list2 (intern (":subject-unique-id"),
+				  make_string (buf, buf_size)));
+      free (buf);
+    }
 #endif
 
   /* Public key ID. */
-  {
-    size_t buf_size = 0;
-
-    err = fn_gnutls_x509_crt_get_key_id (cert, 0, NULL, &buf_size);
-    if (err == GNUTLS_E_SHORT_MEMORY_BUFFER)
-      {
-	unsigned char *buf = malloc (buf_size);
-	err = fn_gnutls_x509_crt_get_key_id (cert, 0, buf, &buf_size);
-	if (err >= GNUTLS_E_SUCCESS)
-	  res = nconc2 (res, list2 (intern (":public-key-id"),
-				    gnutls_hex_string ((char *)buf,
-						       buf_size, "sha1:")));
-	free (buf);
-      }
-  }
+  buf_size = 0;
+  err = fn_gnutls_x509_crt_get_key_id (cert, 0, NULL, &buf_size);
+  if (err == GNUTLS_E_SHORT_MEMORY_BUFFER)
+    {
+      unsigned char *buf = malloc (buf_size);
+      err = fn_gnutls_x509_crt_get_key_id (cert, 0, buf, &buf_size);
+      if (err >= GNUTLS_E_SUCCESS)
+	res = nconc2 (res, list2 (intern (":public-key-id"),
+				  gnutls_hex_string ((char *)buf,
+						     buf_size, "sha1:")));
+      free (buf);
+    }
 
   /* Certificate fingerprint. */
-  {
-    size_t buf_size = 0;
-
-    err = fn_gnutls_x509_crt_get_fingerprint (cert, GNUTLS_DIG_SHA1,
-					      NULL, &buf_size);
-    if (err == GNUTLS_E_SHORT_MEMORY_BUFFER)
-      {
-	unsigned char *buf = malloc (buf_size);
-	err = fn_gnutls_x509_crt_get_fingerprint (cert, GNUTLS_DIG_SHA1,
-						  buf, &buf_size);
-	if (err >= GNUTLS_E_SUCCESS)
-	  res = nconc2 (res, list2 (intern (":certificate-id"),
-				    gnutls_hex_string ((char *)buf,
-						       buf_size, "sha1:")));
-	free (buf);
-      }
-  }
+  buf_size = 0;
+  err = fn_gnutls_x509_crt_get_fingerprint (cert, GNUTLS_DIG_SHA1,
+					    NULL, &buf_size);
+  if (err == GNUTLS_E_SHORT_MEMORY_BUFFER)
+    {
+      unsigned char *buf = malloc (buf_size);
+      err = fn_gnutls_x509_crt_get_fingerprint (cert, GNUTLS_DIG_SHA1,
+						buf, &buf_size);
+      if (err >= GNUTLS_E_SUCCESS)
+	res = nconc2 (res, list2 (intern (":certificate-id"),
+				  gnutls_hex_string ((char *)buf,
+						     buf_size, "sha1:")));
+      free (buf);
+    }
 
   return res;
 }

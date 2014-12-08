@@ -2,6 +2,7 @@
 
 	* gnutls.c (gnutls_certificate_details): The :signature isn't
 	that useful, so remove it.
+	(gnutls_certificate_details): Clean up whitespace slightly.
 
 2014-12-07  Jan Djärv  <jan.h.d@swipnet.se>
 
