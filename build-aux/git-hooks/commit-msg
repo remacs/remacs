@@ -20,25 +20,32 @@
 
 # Written by Paul Eggert.
 
+# Prefer gawk if available, as it handles NUL bytes properly.
+if type gawk >/dev/null 2>&1; then
+  awk=gawk
+else
+  awk=awk
+fi
+
 # Use a UTF-8 locale if available, so that the UTF-8 check works.
 # Use U+00A2 CENT SIGN to test whether the locale works.
 cent_sign_utf8_octal='\302\242'
 at_sign=`
   printf "${cent_sign_utf8_octal}@" |
-  awk '{print substr($0, 2)}' 2>/dev/null
+  $awk '{print substr($0, 2)}' 2>/dev/null
 `
 if test "$at_sign" != @; then
   at_sign=`
     printf "${cent_sign_utf8_octal}@" |
-    LC_ALL=en_US.utf8 awk '{print substr($0, 2)}' 2>/dev/null
+    LC_ALL=en_US.UTF-8 $awk '{print substr($0, 2)}' 2>/dev/null
   `
   if test "$at_sign" = @; then
-    LC_ALL=en_US.utf8; export LC_ALL
+    LC_ALL=en_US.UTF-8; export LC_ALL
   fi
 fi
 
 # Check the log entry.
-exec awk '
+exec $awk '
   /^#/ { next }
 
   !/^.*$/ {
@@ -60,8 +67,8 @@ exec awk '
     status = 1
   }
 
-  /[[:cntrl:]]/ {
-    print "Text contains control character; please use spaces instead of tabs"
+  /[^[:print:]]/ {
+    print "Unprintable character; please use spaces instead of tabs"
     status = 1
   }
 
@@ -76,7 +83,7 @@ exec awk '
   }
 
   /^Signed-off-by: / {
-    print "'Signed-off-by:' present"
+    print "'\''Signed-off-by:'\'' present"
     status = 1
   }
 

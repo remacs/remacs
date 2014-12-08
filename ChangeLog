@@ -1,3 +1,15 @@
+2014-12-08  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Port commit-message checking to FreeBSD 9.
+	This fixes a bug reported by Jan Djärv in:
+	http://lists.gnu.org/archive/html/emacs-devel/2014-12/msg00704.html
+	along with some other issues I noticed while testing with FreeBSD.
+	* build-aux/git-hooks/commit-msg: Prefer gawk if available.
+	Prefer en_US.UTF-8 to en_US.utf8, as it's more portable.
+	Work around bug in FreeBSD 9 awk, where /[[:cntrl:]]/ matches
+	ordinary text characters.
+	Be less tricky about quoting "'" in a shell script.
+
 2014-12-05  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* .gitignore: Ignore autosave files.
