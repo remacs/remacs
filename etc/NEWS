@@ -310,6 +310,10 @@ plain text parts, if display of HTML email is possible; customize the
 ** In sh-mode, you can now use `sh-shell' as a file-local variable to
 specify the type of shell in use (bash, csh, etc).
 
+** TLS
+---
+*** Fatal TLS errors are now silent by default.
+
 ** URL
 
 *** The URL package accepts now the protocols "ssh", "scp" and "rsync".

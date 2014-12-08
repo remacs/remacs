@@ -7,6 +7,8 @@
 	the connection.
 	(gnutls_certificate_details): Put :signature-algorithm back again,
 	which was removed by mistake.
+	(emacs_gnutls_handle_error): Fatal errors should be on level 1, so
+	that they are not messaged by default (bug#16253).
 
 	* gnutls.c: Add Windows specs for gnutls_dh_get_prime_bits.
 

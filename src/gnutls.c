@@ -571,7 +571,7 @@ emacs_gnutls_handle_error (gnutls_session_t session, int err)
   if (fn_gnutls_error_is_fatal (err))
     {
       ret = 0;
-      GNUTLS_LOG2 (0, max_log_level, "fatal error:", str);
+      GNUTLS_LOG2 (1, max_log_level, "fatal error:", str);
     }
   else
     {
