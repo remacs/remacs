@@ -13,6 +13,7 @@
 	which was removed by mistake.
 	(emacs_gnutls_handle_error): Fatal errors should be on level 1, so
 	that they are not messaged by default (bug#16253).
+	(Fgnutls_error_fatalp): Doc fix (bug#18210).
 
 	* gnutls.c: Add Windows specs for gnutls_dh_get_prime_bits.
 

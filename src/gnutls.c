@@ -688,9 +688,9 @@ usage: (gnutls-errorp ERROR)  */)
 }
 
 DEFUN ("gnutls-error-fatalp", Fgnutls_error_fatalp, Sgnutls_error_fatalp, 1, 1, 0,
-       doc: /* Check if ERROR is fatal.
+       doc: /* Return non-nil if ERROR is fatal.
 ERROR is an integer or a symbol with an integer `gnutls-code' property.
-usage: (gnutls-error-fatalp ERROR)  */)
+Usage: (gnutls-error-fatalp ERROR)  */)
   (Lisp_Object err)
 {
   Lisp_Object code;
