@@ -1,3 +1,9 @@
+2014-12-08  Eric S. Raymond  <esr@snark.thyrsus.com>
+
+	* vc/vc-arch.el: Moved to obsolete directory so a test framework
+	won't trip over bit-rot in it.  There has been no Arch snapshot
+	for nine years.
+
 2014-12-07  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
 	* net/eww.el (eww-follow-link): Revert prefix behaviour to
