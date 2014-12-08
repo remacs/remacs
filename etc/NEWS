@@ -224,6 +224,10 @@ details.
 +++
 *** `mailcap-mime-data' is now consulted when displaying PDF files.
 
++++
+*** The new `S' command will list all eww buffers, and allow managing
+them.
+
 ** Message mode
 
 *** text/html messages that contain inline image parts will be
