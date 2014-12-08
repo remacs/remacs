@@ -623,6 +623,7 @@ the like."
     (define-key map "R" 'eww-readable)
     (define-key map "H" 'eww-list-histories)
     (define-key map "E" 'eww-set-character-encoding)
+    (define-key map "S" 'eww-list-buffers)
 
     (define-key map "b" 'eww-add-bookmark)
     (define-key map "B" 'eww-list-bookmarks)
@@ -643,6 +644,7 @@ the like."
 	["View page source" eww-view-source]
 	["Copy page URL" eww-copy-page-url t]
 	["List histories" eww-list-histories t]
+	["List buffers" eww-list-buffers t]
 	["Add bookmark" eww-add-bookmark t]
 	["List bookmarks" eww-list-bookmarks t]
 	["List cookies" url-cookie-list t]
@@ -1648,6 +1650,134 @@ Differences in #targets are ignored."
   "Mode for listing eww-histories.
 
 \\{eww-history-mode-map}"
+  (buffer-disable-undo)
+  (setq buffer-read-only t
+	truncate-lines t))
+
+;;; eww buffers list
+
+(defun eww-list-buffers ()
+  "Enlist eww buffers."
+  (interactive)
+  (let (buffers-info
+        (current (current-buffer)))
+    (dolist (buffer (buffer-list))
+      (with-current-buffer buffer
+        (when (derived-mode-p 'eww-mode)
+          (push (vector buffer (plist-get eww-data :title)
+                        (plist-get eww-data :url))
+                buffers-info))))
+    (unless buffers-info
+      (error "No eww buffers"))
+    (setq buffers-info (nreverse buffers-info)) ;more recent on top
+    (set-buffer (get-buffer-create "*eww buffers*"))
+    (eww-buffers-mode)
+    (let ((inhibit-read-only t)
+          (domain-length 0)
+          (title-length 0)
+          url title format start)
+      (erase-buffer)
+      (dolist (buffer-info buffers-info)
+        (setq title-length (max title-length
+                                (length (elt buffer-info 1)))
+              domain-length (max domain-length
+                                 (length (elt buffer-info 2)))))
+      (setq format (format "%%-%ds %%-%ds" title-length domain-length)
+            header-line-format
+            (concat " " (format format "Title" "URL")))
+      (let ((line 0)
+            (current-buffer-line 1))
+        (dolist (buffer-info buffers-info)
+          (setq start (point)
+                title (elt buffer-info 1)
+                url (elt buffer-info 2)
+                line (1+ line))
+          (insert (format format title url))
+          (insert "\n")
+          (let ((buffer (elt buffer-info 0)))
+            (put-text-property start (1+ start) 'eww-buffer
+                               buffer)
+            (when (eq current buffer)
+              (setq current-buffer-line line))))
+        (goto-char (point-min))
+        (forward-line (1- current-buffer-line)))))
+  (pop-to-buffer "*eww buffers*"))
+
+(defun eww-buffer-select ()
+  "Switch to eww buffer."
+  (interactive)
+  (let ((buffer (get-text-property (line-beginning-position)
+                                   'eww-buffer)))
+    (unless buffer
+      (error "No buffer on current line"))
+    (quit-window)
+    (switch-to-buffer buffer)))
+
+(defun eww-buffer-show ()
+  "Display buffer under point in eww buffer list."
+  (let ((buffer (get-text-property (line-beginning-position)
+                                   'eww-buffer)))
+    (unless buffer
+      (error "No buffer on current line"))
+    (other-window -1)
+    (switch-to-buffer buffer)
+    (other-window 1)))
+
+(defun eww-buffer-show-next ()
+  "Move to next eww buffer in the list and display it."
+  (interactive)
+  (forward-line)
+  (when (eobp)
+    (goto-char (point-min)))
+  (eww-buffer-show))
+
+(defun eww-buffer-show-previous ()
+  "Move to previous eww buffer in the list and display it."
+  (interactive)
+  (beginning-of-line)
+  (when (bobp)
+    (goto-char (point-max)))
+  (forward-line -1)
+  (eww-buffer-show))
+
+(defun eww-buffer-kill ()
+  "Kill buffer from eww list."
+  (interactive)
+  (let* ((start (line-beginning-position))
+	 (buffer (get-text-property start 'eww-buffer))
+	 (inhibit-read-only t))
+    (unless buffer
+      (user-error "No buffer on the current line"))
+    (kill-buffer buffer)
+    (forward-line 1)
+    (delete-region start (point)))
+  (when (eobp)
+    (forward-line -1))
+  (eww-buffer-show))
+
+(defvar eww-buffers-mode-map
+  (let ((map (make-sparse-keymap)))
+    (suppress-keymap map)
+    (define-key map "q" 'quit-window)
+    (define-key map [(control k)] 'eww-buffer-kill)
+    (define-key map "\r" 'eww-buffer-select)
+    (define-key map "n" 'eww-buffer-show-next)
+    (define-key map "p" 'eww-buffer-show-previous)
+
+    (easy-menu-define nil map
+      "Menu for `eww-buffers-mode-map'."
+      '("Eww Buffers"
+        ["Exit" quit-window t]
+        ["Select" eww-buffer-select
+         :active (get-text-property (line-beginning-position) 'eww-buffer)]
+        ["Kill" eww-buffer-kill
+         :active (get-text-property (line-beginning-position) 'eww-buffer)]))
+    map))
+
+(define-derived-mode eww-buffers-mode nil "eww buffers"
+  "Mode for listing buffers.
+
+\\{eww-buffers-mode-map}"
   (buffer-disable-undo)
   (setq buffer-read-only t
 	truncate-lines t))

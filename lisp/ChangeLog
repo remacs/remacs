@@ -1,3 +1,10 @@
+2014-12-06  Andrey Kotlarski  <m00naticus@gmail.com>
+
+	* net/eww.el (eww-buffers-mode): New major mode.
+	(eww-list-buffers, eww-buffer-select, eww-buffer-show-next)
+	(eww-buffer-show-previous, eww-buffer-kill, eww-buffer-show): New
+	commands/functions (bug#19131).
+
 2014-12-08  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
 	* net/gnutls.el (gnutls-negotiate): Ignore files found via
