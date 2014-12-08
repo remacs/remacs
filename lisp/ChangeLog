@@ -1,3 +1,9 @@
+2014-12-08  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* net/gnutls.el (gnutls-negotiate): Ignore files found via
+	'file-name-handler-alist' since the gnutls library can't use those
+	(bug#15866).
+
 2014-12-08  Dmitry Gutov  <dgutov@yandex.ru>
 
 	* vc/vc-hg.el (vc-hg-dir-status-files): Only include ignores files

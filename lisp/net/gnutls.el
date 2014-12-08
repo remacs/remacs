@@ -189,6 +189,9 @@ here's a recent version of the list.
 It must be omitted, a number, or nil; if omitted or nil it
 defaults to GNUTLS_VERIFY_ALLOW_X509_V1_CA_CRT."
   (let* ((type (or type 'gnutls-x509pki))
+	 ;; The gnutls library doesn't understand files delivered via
+	 ;; the special handlers, so ignore all files found via those.
+	 (file-name-handler-alist nil)
          (trustfiles (or trustfiles
                          (delq nil
                                (mapcar (lambda (f) (and f (file-exists-p f) f))
