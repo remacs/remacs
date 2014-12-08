@@ -5,7 +5,7 @@
 
 2014-12-08  Eric S. Raymond  <esr@snark.thyrsus.com>
 
-	* maintaining.texi: Suopport fo Arch has been moved to obolte,
+	* maintaining.texi: Suopport fo Arch has been moved to obosolete,
 	remove references that imply otherwise.
 
 2014-11-29  Paul Eggert  <eggert@cs.ucla.edu>
