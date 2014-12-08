@@ -613,9 +613,11 @@ REV is the revision to check out into WORKFILE."
 (declare-function vc-set-async-update "vc-dispatcher" (process-buffer))
 
 (defun vc-hg-dir-status-files (dir files update-function)
-  (apply 'vc-hg-command (current-buffer) 'async dir "status" "-mardui" "-C" files)
+  (apply 'vc-hg-command (current-buffer) 'async dir "status"
+         (concat "-mardu" (if files "i"))
+         "-C" files)
   (vc-run-delayed
-   (vc-hg-after-dir-status update-function)))
+    (vc-hg-after-dir-status update-function)))
 
 (defun vc-hg-dir-extra-header (name &rest commands)
   (concat (propertize name 'face 'font-lock-type-face)

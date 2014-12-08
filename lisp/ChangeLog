@@ -1,3 +1,8 @@
+2014-12-08  Dmitry Gutov  <dgutov@yandex.ru>
+
+	* vc/vc-hg.el (vc-hg-dir-status-files): Only include ignores files
+	when FILES is non-nil (bug#19304).
+
 2014-12-08  Eric S. Raymond  <esr@snark.thyrsus.com>
 
 	* vc/vc-arch.el: Moved to obsolete directory so a test framework
