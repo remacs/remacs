@@ -329,6 +329,20 @@ to be concerned about.  However, if you are worried that your network
 connections are being hijacked by agencies who have access to pliable
 Certificate Authorities which issue new certificates for third-party
 services, you may want to keep track of these changes.
+
+@item Diffie-Hellman low prime bits
+When doing the public key exchange, the number of ``prime bits''
+should be high to ensure that the channel can't be eavesdropped on by
+third parties.  If this number is too low, you will be warned.
+
+@item @acronym{RC4} stream cipher
+The @acronym{RC4} stream cipher is believed to be of low quality and
+may allow eavesdropping by third parties.
+
+@item @acronym{SSL1}, @acronym{SSL2} and @acronym{SSL3}
+The protocols older than @acronym{TLS1.0} are believed to be
+vulnerable to a variety of attacks, and you may want to avoid using
+these if what you're doing requires higher security.
 @end table
 
 Finally, if @code{network-security-level} is @code{paranoid}, you will

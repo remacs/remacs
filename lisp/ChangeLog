@@ -3,6 +3,7 @@
 	* net/nsm.el (nsm-check-protocol): Test for RC4 on `high'.
 	(nsm-format-certificate): Include more data about the connection.
 	(nsm-query): Fill the text to that it looks nicer.
+	(nsm-check-protocol): Also warn if using SSL3 or older.
 
 2014-12-08  Stefan Monnier  <monnier@iro.umontreal.ca>
 

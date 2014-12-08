@@ -181,7 +181,8 @@ unencrypted."
 	(encryption (format "%s-%s-%s"
 			    (plist-get status :key-exchange)
 			    (plist-get status :cipher)
-			    (plist-get status :mac))))
+			    (plist-get status :mac)))
+	(protocol (plist-get status :protocol)))
     (cond
      ((and prime-bits
 	   (< prime-bits 1024)
@@ -201,6 +202,16 @@ unencrypted."
 	     host port status :rc4
 	     "The connection to %s:%s uses the RC4 algorithm (%s), which is believed to be unsafe."
 	     host port encryption)))
+      (delete-process process)
+      nil)
+     ((and protocol
+	   (string-match "SSL" protocol)
+	   (not (memq :ssl (plist-get settings :conditions)))
+	   (not
+	    (nsm-query
+	     host port status :ssl
+	     "The connection to %s:%s uses the %s protocol, which is believed to be unsafe."
+	     host port protocol)))
       (delete-process process)
       nil)
      (t
