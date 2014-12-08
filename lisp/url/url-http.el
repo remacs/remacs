@@ -892,7 +892,8 @@ should be shown to the user."
   (url-http-mark-connection-as-free (url-host url-current-object)
 				    (url-port url-current-object)
 				    url-http-process)
-  (url-http-debug "Activating callback in buffer (%s)" (buffer-name))
+  (url-http-debug "Activating callback in buffer (%s): %S %S"
+		  (buffer-name) url-callback-function url-callback-arguments)
   (apply url-callback-function url-callback-arguments))
 
 ;; )

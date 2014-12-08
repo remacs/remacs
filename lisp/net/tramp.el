@@ -3226,7 +3226,7 @@ User is always nil."
       t)))
 
 (defun tramp-handle-make-symbolic-link
-  (filename linkname &optional ok-if-already-exists)
+  (filename linkname &optional _ok-if-already-exists)
   "Like `make-symbolic-link' for Tramp files."
   (with-parsed-tramp-file-name
       (if (tramp-tramp-file-p filename) filename linkname) nil

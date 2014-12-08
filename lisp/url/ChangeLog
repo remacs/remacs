@@ -1,3 +1,7 @@
+2014-12-08  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* url-http.el (url-http-activate-callback): Make debug more verbose.
+
 2014-12-05  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* url-future.el (url-future-done-p, url-future-completed-p)
@@ -21,8 +25,8 @@
 2014-11-05  Teodor Zlatanov  <tzz@lifelogs.com>
 
 	* url-http.el (url-user-agent): New variable, can be function or
-	string.  Suggested by Vibhav Pant <vibhavp@ubuntu.com>.  Add
-	:version.  (Bug#16498)
+	string.  Suggested by Vibhav Pant <vibhavp@ubuntu.com>.
+	Add :version.  (Bug#16498)
 
 	(url-http-user-agent-string): Use it.
 

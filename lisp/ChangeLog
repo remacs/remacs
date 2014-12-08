@@ -1,5 +1,13 @@
 2014-12-08  Stefan Monnier  <monnier@iro.umontreal.ca>
 
+	* progmodes/gud.el (gud-gdb-completions): Remove unused var `start'.
+
+	* obsolete/gulp.el (gulp-create-m-p-alist): Remove unused var `mnt-tm'.
+
+	* net/tramp.el (tramp-handle-make-symbolic-link): Mark unused arg.
+
+	* info.el (Info-mode-map): Remove left-over binding.
+
 	* emacs-lisp/avl-tree.el: Use lexical-binding and cl-lib.
 	(avl-tree--root): Remove redundant defsetf.
 

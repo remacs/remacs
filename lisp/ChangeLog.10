@@ -8452,7 +8452,7 @@
 
 	* vc-sccs.el (vc-sccs-registered): Improve comment.
 
-2002-11-13  Tim Van Holder  <tim.vanholder@anubex.com>  (tiny change)
+2002-11-13  Tim Van Holder  <tim.vanholder@anubex.com>
 
 	* progmodes/compile.el (compilation-error-regexp-alist):
 	Don't include colon and space after a file name as part of the name.

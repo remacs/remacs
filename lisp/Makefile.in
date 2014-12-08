@@ -472,6 +472,11 @@ maintainer-clean: distclean bootstrap-clean
 check-declare:
 	$(emacs) -l check-declare --eval '(check-declare-directory "$(lisp)")'
 
+check-defun-dups:
+	sed -n -e '/^(defun /s/\(.\)(.*/\1/p' \
+	        $$(find . -name '*.el' -print | grep -v 'loaddefs\.el') \
+	    | sort | uniq -d
+
 # Dependencies
 
 ## None of the following matters for bootstrap, which is the only way

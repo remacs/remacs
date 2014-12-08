@@ -3011,7 +3011,7 @@
 	filter), show help instead of blindingly dumping every single
 	ChangeLog available.  Doc fix.  Update version.
 
-2006-11-02  Tim Van Holder  <tim.vanholder@gmail.com>  (tiny change)
+2006-11-02  Tim Van Holder  <tim.vanholder@gmail.com>
 
 	* emacsclient.c [WINDOWSNT]: Define HAVE_INET_SOCKETS.
 	[!WINDOWSNT]: Include <netinet/in.h> if available.
@@ -3036,7 +3036,7 @@
 	(set_tcp_socket): Prefer O_NONBLOCK, then O_NDELAY, then FIONBIO
 	to set the socket in non-blocking mode.
 
-2006-10-31  Tim Van Holder  <tim.vanholder@gmail.com>  (tiny change)
+2006-10-31  Tim Van Holder  <tim.vanholder@gmail.com>
 
 	* emacsclient.c [!WINDOWSNT]: Include <netinet/in.h> and <sys/ioctl.h>.
 	(INVALID_SOCKET): Define.
