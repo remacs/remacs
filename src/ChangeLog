@@ -8,6 +8,8 @@
 	(gnutls_certificate_details): Put :signature-algorithm back again,
 	which was removed by mistake.
 
+	* gnutls.c: Add Windows specs for gnutls_dh_get_prime_bits.
+
 2014-12-07  Jan Djärv  <jan.h.d@swipnet.se>
 
 	* nsimage.m (setPixmapData): Make bmRep local so class member is not

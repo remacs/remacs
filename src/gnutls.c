@@ -115,6 +115,7 @@ DEF_GNUTLS_FN (int, gnutls_credentials_set,
 DEF_GNUTLS_FN (void, gnutls_deinit, (gnutls_session_t));
 DEF_GNUTLS_FN (void, gnutls_dh_set_prime_bits,
 	       (gnutls_session_t, unsigned int));
+DEF_GNUTLS_FN (int, gnutls_dh_get_prime_bits, (gnutls_session_t));
 DEF_GNUTLS_FN (int, gnutls_error_is_fatal, (int));
 DEF_GNUTLS_FN (int, gnutls_global_init, (void));
 DEF_GNUTLS_FN (void, gnutls_global_set_log_function, (gnutls_log_func));
@@ -221,6 +222,7 @@ init_gnutls_functions (void)
   LOAD_GNUTLS_FN (library, gnutls_credentials_set);
   LOAD_GNUTLS_FN (library, gnutls_deinit);
   LOAD_GNUTLS_FN (library, gnutls_dh_set_prime_bits);
+  LOAD_GNUTLS_FN (library, gnutls_dh_get_prime_bits);
   LOAD_GNUTLS_FN (library, gnutls_error_is_fatal);
   LOAD_GNUTLS_FN (library, gnutls_global_init);
   LOAD_GNUTLS_FN (library, gnutls_global_set_log_function);
@@ -299,6 +301,7 @@ init_gnutls_functions (void)
 #define fn_gnutls_credentials_set		gnutls_credentials_set
 #define fn_gnutls_deinit			gnutls_deinit
 #define fn_gnutls_dh_set_prime_bits		gnutls_dh_set_prime_bits
+#define fn_gnutls_dh_get_prime_bits		gnutls_dh_get_prime_bits
 #define fn_gnutls_error_is_fatal		gnutls_error_is_fatal
 #define fn_gnutls_global_init			gnutls_global_init
 #define fn_gnutls_global_set_log_function	gnutls_global_set_log_function
@@ -1041,7 +1044,7 @@ The return value is a property list with top-level keys :warnings and
 
   /* Diffie-Hellman prime bits. */
   {
-    int bits = gnutls_dh_get_prime_bits (XPROCESS (proc)->gnutls_state);
+    int bits = fn_gnutls_dh_get_prime_bits (XPROCESS (proc)->gnutls_state);
     if (bits > 0)
       result = nconc2 (result, list2
 		       (intern (":diffie-hellman-prime-bits"),
