@@ -1,3 +1,8 @@
+2014-12-08  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* emacs-lisp/avl-tree.el: Use lexical-binding and cl-lib.
+	(avl-tree--root): Remove redundant defsetf.
+
 2014-12-08  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
 	* net/nsm.el (network-security-level): Remove the detailed
@@ -10,8 +15,8 @@
 
 	* net/eww.el (eww-buffers-mode): New major mode.
 	(eww-list-buffers, eww-buffer-select, eww-buffer-show-next)
-	(eww-buffer-show-previous, eww-buffer-kill, eww-buffer-show): New
-	commands/functions (bug#19131).
+	(eww-buffer-show-previous, eww-buffer-kill, eww-buffer-show):
+	New commands/functions (bug#19131).
 
 2014-12-08  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
@@ -38,7 +43,7 @@
 
 2014-12-07  Ivan Shmakov  <ivan@siamics.net>
 
-	* net/eww.el (eww): Moved history recording here...
+	* net/eww.el (eww): Move history recording here...
 	(eww-browse-url): ... from here (bug#19253).
 
 	* net/eww.el (eww-browse-url): Use generate-new-buffer (was:
