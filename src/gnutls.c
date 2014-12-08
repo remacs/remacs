@@ -922,32 +922,6 @@ gnutls_certificate_details (gnutls_x509_crt_t cert)
   }
 #endif
 
-  /* Signature. */
-  {
-    size_t buf_size = 0;
-
-    err = fn_gnutls_x509_crt_get_signature_algorithm (cert);
-    if (err >= GNUTLS_E_SUCCESS)
-      {
-	const char *name = fn_gnutls_sign_get_name (err);
-	if (name)
-	  res = nconc2 (res, list2 (intern (":signature-algorithm"),
-				    build_string (name)));
-
-	err = fn_gnutls_x509_crt_get_signature (cert, NULL, &buf_size);
-	if (err == GNUTLS_E_SHORT_MEMORY_BUFFER)
-	  {
-	    char *buf = malloc (buf_size);
-	    err = fn_gnutls_x509_crt_get_signature (cert, buf, &buf_size);
-	    if (err >= GNUTLS_E_SUCCESS) {
-	      res = nconc2 (res, list2 (intern (":signature"),
-					gnutls_hex_string (buf, buf_size, "")));
-	    }
-	    free (buf);
-	  }
-      }
-  }
-
   /* Public key ID. */
   {
     size_t buf_size = 0;
