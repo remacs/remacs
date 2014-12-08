@@ -910,6 +910,16 @@ gnutls_certificate_details (gnutls_x509_crt_t cert)
     }
 #endif
 
+  /* Signature. */
+  err = fn_gnutls_x509_crt_get_signature_algorithm (cert);
+  if (err >= GNUTLS_E_SUCCESS)
+    {
+      const char *name = fn_gnutls_sign_get_name (err);
+      if (name)
+	res = nconc2 (res, list2 (intern (":signature-algorithm"),
+				  build_string (name)));
+    }
+
   /* Public key ID. */
   buf_size = 0;
   err = fn_gnutls_x509_crt_get_key_id (cert, 0, NULL, &buf_size);
