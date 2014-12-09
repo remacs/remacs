@@ -1,5 +1,7 @@
 2014-12-09  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
+	* files.el (find-files): New function.
+
 	* net/shr.el (shr-dom-print): Don't print comments.
 	(shr-tag-svg): Give inline SVG images the right type.
 

@@ -137,6 +137,9 @@ buffers to allow certain parts of the text to be writable.
 to all the files and subdirectories of a directory, similarly to the C
 library function `ftw'.
 
+** A new function `directory-files-recursively' returns all matching
+files (recursively) under a directory.
+
 
 * Editing Changes in Emacs 25.1
 

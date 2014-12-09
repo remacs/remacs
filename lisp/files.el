@@ -762,6 +762,27 @@ prevented.  Directory entries are sorted with string-lessp."
 		(file-name-nondirectory dir)
 		args))))
 
+(defun directory-files-recursively (dir match &optional include-directories)
+  "Return all files under DIR that have file names matching MATCH (a regexp).
+This function works recursively.  Files are returned in \"depth first\"
+and alphabetical order.
+If INCLUDE-DIRECTORIES, also include directories that have matching names."
+  (let ((result nil)
+	(files nil))
+    (dolist (file (directory-files dir t))
+      (let ((leaf (file-name-nondirectory file)))
+	(unless (member leaf '("." ".."))
+	  (if (file-directory-p file)
+	      (progn
+		(when (and include-directories
+			   (string-match match leaf))
+		  (push file files))
+		(setq result (nconc result (directory-files-recursively
+					    file match include-directories))))
+	    (when (string-match match leaf)
+	      (push file files))))))
+    (nconc result (nreverse files))))
+
 (defun load-file (file)
   "Load the Lisp file named FILE."
   ;; This is a case where .elc makes a lot of sense.
