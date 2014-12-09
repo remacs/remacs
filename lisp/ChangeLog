@@ -2,6 +2,8 @@
 
 	* progmodes/ruby-mode.el (auto-mode-alist): Add .rabl, Berksfile
 	and Puppetfile.
+	(ruby-toggle-string-quotes): New command that allows you to quickly
+	toggle between single-quoted and double-quoted string literals.
 
 2014-12-09  Eric S. Raymond  <esr@snark.thyrsus.com>
 
