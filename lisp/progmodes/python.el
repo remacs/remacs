@@ -2441,8 +2441,8 @@ variable.
   (set (make-local-variable 'python-shell--prompt-calculated-input-regexp) nil)
   (set (make-local-variable 'python-shell--prompt-calculated-output-regexp) nil)
   (python-shell-prompt-set-calculated-regexps)
-  (setq comint-prompt-regexp python-shell--prompt-calculated-input-regexp
-        comint-prompt-read-only t)
+  (setq comint-prompt-regexp python-shell--prompt-calculated-input-regexp)
+  (set (make-local-variable 'comint-prompt-read-only) t)
   (setq mode-line-process '(":%s"))
   (set (make-local-variable 'comint-output-filter-functions)
        '(ansi-color-process-output

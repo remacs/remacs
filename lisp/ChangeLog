@@ -1,3 +1,8 @@
+2014-12-09  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	* progmodes/python.el (inferior-python-mode): Set
+	`comint-prompt-read-only` to `t` only locally.
+
 2014-12-08  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
 	* net/nsm.el (nsm-check-protocol): Test for RC4 on `high'.
