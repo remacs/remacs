@@ -257,7 +257,7 @@
 	* progmodes/elisp-mode.el (elisp--local-variables): Don't burp on
 	incorrect lexical elements (bug#19250).
 
-2014-12-03  Eric S. Raymond  <esr@snark.thyrsus.com>
+2014-12-03  A. N. Other  <none@example.com>
 
 	* files.el (file-tree-walk): Lisp translation of ANSI ftw(3).
 
