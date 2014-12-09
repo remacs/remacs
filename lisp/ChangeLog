@@ -1,3 +1,46 @@
+2014-12-09  Wilson Snyder  <wsnyder@wsnyder.org>
+
+	Sync with upstream verilog-mode revision aa4b777.
+	* progmodes/verilog-mode.el (verilog-mode-version): Update.
+	(verilog-auto-end-comment-lines-re, verilog-end-block-ordered-re)
+	(verilog-set-auto-endcomments): Automatically comment property/
+	endproperty blocks to match other similar blocks like sequence/
+	endsequence, function/endfunction, etc.  Reported by Alex Reed.
+	(verilog-set-auto-endcomments): Fix end comments for functions of
+	type void, etc.  Detect the function- or task-name when
+	auto-commenting blocks that lack an explicit portlist.
+	Reported by Alex Reed.
+	(verilog-nameable-item-re): Fix nameable items that can have an
+	end-identifier to include endchecker, endgroup, endprogram,
+	endproperty, and endsequence.  Reported by Alex Reed.
+	(verilog-preprocessor-re, verilog-beg-of-statement):
+	Fix indentation of property/endproperty around pre-processor
+	directives.  Reported by Alex Reed.
+	(verilog-label-be): When auto-commenting a buffer, consider
+	auto-comments on all known keywords (not just a subset thereof).
+	Reported by Alex Reed.
+	(verilog-beg-of-statement): Fix labeling do-while blocks, bug842.
+	Reported by Alex Reed.
+	(verilog-beg-of-statement-1, verilog-at-constraint-p):
+	Fix hanging with many curly-bracket pairs, bug663.
+	(verilog-do-indent): Fix electric tab deleting form-feeds.
+	Note caused by indent-line-to deleting tabls pre 24.5.
+	(verilog-auto-output, verilog-auto-input, verilog-auto-inout)
+	(verilog-auto-inout-module, verilog-auto-inout-in): Doc fixes.
+	(verilog-read-always-signals, verilog-auto-sense-sigs)
+	(verilog-auto-reset): Fix AUTORESET with always_comb and always_latch,
+	bug844.  Reported by Greg Hilton.
+
+2014-12-09  Alex Reed  <acreed4@gmail.com>  (tiny change)
+
+	* progmodes/verilog-mode.el (verilog-no-indent-begin-re):
+	Fix `verilog-indent-begin-after-if' nil not honoring 'forever',
+	'foreach', and 'do' keywords.
+	(verilog-endcomment-reason-re, verilog-beg-of-statement):
+	Fix labeling do-while blocks, bug842.
+	(verilog-backward-token): Fix indenting sensitivity lists with
+	named events, bug840.
+
 2014-12-09  Reto Zimmermann  <reto@gnu.org>
 
 	Sync with upstream vhdl mode v3.36.1.
