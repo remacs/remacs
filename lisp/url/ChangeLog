@@ -1,3 +1,8 @@
+2014-12-09  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* url-http.el (url-http-parse-headers): Pass the GnuTLS status of
+	the connection to the caller.
+
 2014-12-08  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* url-http.el (url-http-activate-callback): Make debug more verbose.
