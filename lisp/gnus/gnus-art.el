@@ -6335,6 +6335,40 @@ Provided for backwards compatibility."
     (when image
       (gnus-add-image 'shr image))))
 
+(defun gnus-article-mime-handles (&optional alist id all)
+  (if alist
+      (let ((i 1) newid flat)
+	(dolist (handle alist flat)
+	  (setq newid (append id (list i))
+		i (1+ i))
+	  (if (stringp (car handle))
+	      (setq flat (nconc flat (gnus-article-mime-handles
+				      (cdr handle) newid all)))
+	    (delq (rassq handle all) all)
+	    (setq flat (nconc flat (list (cons newid handle)))))))
+    (let ((flat (list nil)))
+      ;; Assume that elements of `gnus-article-mime-handle-alist'
+      ;; are in the decreasing order, but unnumbered subsidiaries
+      ;; in each element are in the increasing order.
+      (dolist (handle (reverse gnus-article-mime-handle-alist))
+	(if (stringp (cadr handle))
+	    (setq flat (nconc flat (gnus-article-mime-handles
+				    (cddr handle) (list (car handle)) flat)))
+	  (delq (rassq (cdr handle) flat) flat)
+	  (setq flat (nconc flat (list (cons (list (car handle))
+					     (cdr handle)))))))
+      (setq flat (cdr flat))
+      (mapc (lambda (handle)
+	      (if (cdar handle)
+		  ;; This is a hidden (i.e. unnumbered) handle.
+		  (progn
+		    (setcar handle
+			    (1+ (caar gnus-article-mime-handle-alist)))
+		    (push handle gnus-article-mime-handle-alist))
+		(setcar handle (caar handle))))
+	    flat)
+      flat)))
+
 (defun gnus-mime-buttonize-attachments-in-header (&optional interactive)
   "Show attachments as buttons in the end of the header of an article.
 This function toggles the display when called interactively.  Note that
@@ -6342,108 +6376,70 @@ buttons to be added to the header are only the ones that aren't inlined
 in the body.  Use `gnus-header-face-alist' to highlight buttons."
   (interactive (list t))
   (gnus-with-article-buffer
-    (gmm-labels
-	;; Function that returns a flattened version of
-	;; `gnus-article-mime-handle-alist'.
-	((flattened-alist
-	  (&optional alist id all)
-	  (if alist
-	      (let ((i 1) newid flat)
-		(dolist (handle alist flat)
-		  (setq newid (append id (list i))
-			i (1+ i))
-		  (if (stringp (car handle))
-		      (setq flat (nconc flat (flattened-alist (cdr handle)
-							      newid all)))
-		    (delq (rassq handle all) all)
-		    (setq flat (nconc flat (list (cons newid handle)))))))
-	    (let ((flat (list nil)))
-	      ;; Assume that elements of `gnus-article-mime-handle-alist'
-	      ;; are in the decreasing order, but unnumbered subsidiaries
-	      ;; in each element are in the increasing order.
-	      (dolist (handle (reverse gnus-article-mime-handle-alist))
-		(if (stringp (cadr handle))
-		    (setq flat (nconc flat (flattened-alist (cddr handle)
-							    (list (car handle))
-							    flat)))
-		  (delq (rassq (cdr handle) flat) flat)
-		  (setq flat (nconc flat (list (cons (list (car handle))
-						     (cdr handle)))))))
-	      (setq flat (cdr flat))
-	      (mapc (lambda (handle)
-		      (if (cdar handle)
-			  ;; This is a hidden (i.e. unnumbered) handle.
-			  (progn
-			    (setcar handle
-				    (1+ (caar gnus-article-mime-handle-alist)))
-			    (push handle gnus-article-mime-handle-alist))
-			(setcar handle (caar handle))))
-		    flat)
-	      flat))))
-      (let ((case-fold-search t) buttons handle type st)
-	(save-excursion
-	  (save-restriction
-	    (widen)
-	    (article-narrow-to-head)
-	    ;; Header buttons exist?
-	    (while (and (not buttons)
-			(re-search-forward "^attachments?:[\n ]+" nil t))
-	      (when (get-char-property (match-end 0)
-				       'gnus-button-attachment-extra)
-		(setq buttons (match-beginning 0))))
-	    (widen)
+    (let ((case-fold-search t) buttons handle type st)
+      (save-excursion
+	(save-restriction
+	  (widen)
+	  (article-narrow-to-head)
+	  ;; Header buttons exist?
+	  (while (and (not buttons)
+		      (re-search-forward "^attachments?:[\n ]+" nil t))
+	    (when (get-char-property (match-end 0)
+				     'gnus-button-attachment-extra)
+	      (setq buttons (match-beginning 0))))
+	  (widen)
+	  (when buttons
+	    ;; Delete header buttons.
+	    (delete-region buttons (if (re-search-forward "^[^ ]" nil t)
+				       (match-beginning 0)
+				     (point-max))))
+	  (unless (and interactive buttons)
+	    ;; Find buttons.
+	    (setq buttons nil)
+	    (dolist (button (gnus-article-mime-handles))
+	      (setq handle (cdr button)
+		    type (mm-handle-media-type handle))
+	      (when (or (and (if (gnus-buffer-live-p gnus-summary-buffer)
+				 (with-current-buffer gnus-summary-buffer
+				   gnus-inhibit-images)
+			       gnus-inhibit-images)
+			     (string-match "\\`image/" type))
+			(mm-inline-override-p handle)
+			(and (mm-handle-disposition handle)
+			     (not (equal (car (mm-handle-disposition handle))
+					 "inline"))
+			     (not (mm-attachment-override-p handle)))
+			(not (mm-automatic-display-p handle))
+			(not (or (and (mm-inlinable-p handle)
+				      (mm-inlined-p handle))
+				 (mm-automatic-external-display-p type))))
+		(push button buttons)))
 	    (when buttons
-	      ;; Delete header buttons.
-	      (delete-region buttons (if (re-search-forward "^[^ ]" nil t)
-					 (match-beginning 0)
-				       (point-max))))
-	    (unless (and interactive buttons)
-	      ;; Find buttons.
-	      (setq buttons nil)
-	      (dolist (button (flattened-alist))
-		(setq handle (cdr button)
-		      type (mm-handle-media-type handle))
-		(when (or (and (if (gnus-buffer-live-p gnus-summary-buffer)
-				   (with-current-buffer gnus-summary-buffer
-				     gnus-inhibit-images)
-				 gnus-inhibit-images)
-			       (string-match "\\`image/" type))
-			  (mm-inline-override-p handle)
-			  (and (mm-handle-disposition handle)
-			       (not (equal (car (mm-handle-disposition handle))
-					   "inline"))
-			       (not (mm-attachment-override-p handle)))
-			  (not (mm-automatic-display-p handle))
-			  (not (or (and (mm-inlinable-p handle)
-					(mm-inlined-p handle))
-				   (mm-automatic-external-display-p type))))
-		  (push button buttons)))
-	      (when buttons
-		;; Add header buttons.
-		(article-goto-body)
-		(forward-line -1)
-		(narrow-to-region (point) (point))
-		(insert "Attachment" (if (cdr buttons) "s" "") ":")
-		(dolist (button (nreverse buttons))
-		  (setq st (point))
-		  (insert " ")
-		  (mm-handle-set-undisplayer
-		   (setq handle (copy-sequence (cdr button))) nil)
-		  (gnus-insert-mime-button handle (car button))
-		  (skip-chars-backward "\t\n ")
-		  (delete-region (point) (point-max))
-		  (when (> (current-column) (window-width))
-		    (goto-char st)
-		    (insert "\n")
-		    (end-of-line)))
-		(insert "\n")
-		(dolist (ovl (gnus-overlays-in (point-min) (point)))
-		  (gnus-overlay-put ovl 'gnus-button-attachment-extra t)
-		  (gnus-overlay-put ovl 'face nil))
-		(let ((gnus-treatment-function-alist
-		       '((gnus-treat-highlight-headers
-			  gnus-article-highlight-headers))))
-		  (gnus-treat-article 'head))))))))))
+	      ;; Add header buttons.
+	      (article-goto-body)
+	      (forward-line -1)
+	      (narrow-to-region (point) (point))
+	      (insert "Attachment" (if (cdr buttons) "s" "") ":")
+	      (dolist (button (nreverse buttons))
+		(setq st (point))
+		(insert " ")
+		(mm-handle-set-undisplayer
+		 (setq handle (copy-sequence (cdr button))) nil)
+		(gnus-insert-mime-button handle (car button))
+		(skip-chars-backward "\t\n ")
+		(delete-region (point) (point-max))
+		(when (> (current-column) (window-width))
+		  (goto-char st)
+		  (insert "\n")
+		  (end-of-line)))
+	      (insert "\n")
+	      (dolist (ovl (gnus-overlays-in (point-min) (point)))
+		(gnus-overlay-put ovl 'gnus-button-attachment-extra t)
+		(gnus-overlay-put ovl 'face nil))
+	      (let ((gnus-treatment-function-alist
+		     '((gnus-treat-highlight-headers
+			gnus-article-highlight-headers))))
+		(gnus-treat-article 'head)))))))))
 
 ;;; Article savers.
 
