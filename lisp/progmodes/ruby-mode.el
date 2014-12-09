@@ -2206,9 +2206,10 @@ See `font-lock-syntax-table'.")
 (add-to-list 'auto-mode-alist
              (cons (purecopy (concat "\\(?:\\."
                                      "rb\\|ru\\|rake\\|thor"
-                                     "\\|jbuilder\\|gemspec\\|podspec"
+                                     "\\|jbuilder\\|rabl\\|gemspec\\|podspec"
                                      "\\|/"
                                      "\\(?:Gem\\|Rake\\|Cap\\|Thor"
+                                     "\\|Puppet\\|Berks"
                                      "\\|Vagrant\\|Guard\\|Pod\\)file"
                                      "\\)\\'")) 'ruby-mode))
 

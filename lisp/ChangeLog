@@ -1,3 +1,8 @@
+2014-12-09  Bozhidar Batsov  <bozhidar@batsov.com>
+
+	* progmodes/ruby-mode.el (auto-mode-alist): Add .rabl, Berksfile
+	and Puppetfile.
+
 2014-12-09  Eric S. Raymond  <esr@snark.thyrsus.com>
 
 	* vc/vc-src.el (vc-src-do-comand): Prepend -- to file argument
