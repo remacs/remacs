@@ -1019,6 +1019,8 @@ ones, in case fg and bg are nil."
       (cond
        ((stringp elem)
 	(insert elem))
+       ((eq (dom-tag elem) 'comment)
+	)
        ((or (not (eq (dom-tag elem) 'image))
 	    ;; Filter out blocked elements inside the SVG image.
 	    (not (setq url (dom-attr elem ':xlink:href)))
@@ -1031,7 +1033,8 @@ ones, in case fg and bg are nil."
 (defun shr-tag-svg (dom)
   (when (and (image-type-available-p 'svg)
 	     (not shr-inhibit-images))
-    (funcall shr-put-image-function (shr-dom-to-xml dom) "SVG Image")))
+    (funcall shr-put-image-function (list (shr-dom-to-xml dom) 'image/svg+xml)
+	     "SVG Image")))
 
 (defun shr-tag-sup (dom)
   (let ((start (point)))

@@ -1,5 +1,8 @@
 2014-12-09  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
+	* net/shr.el (shr-dom-print): Don't print comments.
+	(shr-tag-svg): Give inline SVG images the right type.
+
 	* net/eww.el (eww-update-header-line-format): Mark valid/invalid
 	certificates in the header line.
 	(eww-invalid-certificate, eww-valid-certificate): New faces.
