@@ -194,7 +194,7 @@ DEF_GNUTLS_FN (gnutls_kx_algorithm_t, gnutls_kx_get, (gnutls_session_t));
 DEF_GNUTLS_FN (const char*, gnutls_kx_get_name, (gnutls_kx_algorithm_t));
 DEF_GNUTLS_FN (gnutls_protocol_t, gnutls_protocol_get_version,
 	       (gnutls_session_t));
-DEF_GNUTLS_FN (const char*, gnutls_protocol_get_version, (gnutls_protocol_t));
+DEF_GNUTLS_FN (const char*, gnutls_protocol_get_name, (gnutls_protocol_t));
 DEF_GNUTLS_FN (gnutls_cipher_algorithm_t, gnutls_cipher_get,
 	       (gnutls_session_t));
 DEF_GNUTLS_FN (const char*, gnutls_cipher_get_name,

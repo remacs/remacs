@@ -1,3 +1,7 @@
+2014-12-09  Andy Moreton  <andrewjmoreton@gmail.com>  (tiny change)
+
+	* gnutls.c (gnutls_protocol_get_name): Fix a copy/paste typo.
+
 2014-12-08  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
 	* gnutls.c (Fgnutls_peer_status): Return the key exchange, cipher
