@@ -199,6 +199,20 @@ See also `eww-form-checkbox-selected-symbol'."
   :version "24.4"
   :group 'eww)
 
+(defface eww-invalid-certificate
+  '((default :weight bold)
+    (((class color)) :foreground "red"))
+  "Face for web pages with invalid certificates."
+  :version "25.1"
+  :group 'eww)
+
+(defface eww-valid-certificate
+  '((default :weight bold)
+    (((class color)) :foreground "ForestGreen"))
+  "Face for web pages with valid certificates."
+  :version "25.1"
+  :group 'eww)
+
 (defvar eww-data nil)
 (defvar eww-history nil)
 (defvar eww-history-position 0)
@@ -300,6 +314,9 @@ See the `eww-search-prefix' variable for the search engine used."
 						   "text/html"))
 			"utf-8"))))
 	 (data-buffer (current-buffer)))
+    ;; Save the https peer status.
+    (with-current-buffer buffer
+      (plist-put eww-data :peer (plist-get status :peer)))
     (unwind-protect
 	(progn
 	  (cond
@@ -444,16 +461,25 @@ See the `eww-search-prefix' variable for the search engine used."
     (put-text-property start (point) 'keymap eww-link-keymap)))
 
 (defun eww-update-header-line-format ()
-  (if eww-header-line-format
-      (setq header-line-format
-	    (replace-regexp-in-string
-	     "%" "%%"
-	     ;; FIXME?  Title can be blank.  Default to, eg, last component
-	     ;; of url?
-	     (format-spec eww-header-line-format
-			  `((?u . ,(or (plist-get eww-data :url) ""))
-			    (?t . ,(or (plist-get eww-data :title) ""))))))
-    (setq header-line-format nil)))
+  (setq header-line-format
+	(and eww-header-line-format
+	     (let ((title (plist-get eww-data :title))
+		   (peer (plist-get eww-data :peer)))
+	       (when (zerop (length title))
+		 (setq title "[untitled]"))
+	       ;; This connection has is https.
+	       (when peer
+		 (setq title
+		       (propertize title 'face
+				   (if (plist-get peer :warnings)
+				       'eww-invalid-certificate
+				     'eww-valid-certificate))))
+	       (replace-regexp-in-string
+		"%" "%%"
+		(format-spec
+		 eww-header-line-format
+		 `((?u . ,(or (plist-get eww-data :url) ""))
+		   (?t . ,title))))))))
 
 (defun eww-tag-title (dom)
   (plist-put eww-data :title

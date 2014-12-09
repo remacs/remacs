@@ -1,3 +1,9 @@
+2014-12-09  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* net/eww.el (eww-update-header-line-format): Mark valid/invalid
+	certificates in the header line.
+	(eww-invalid-certificate, eww-valid-certificate): New faces.
+
 2014-12-09  Fabián Ezequiel Gallina  <fgallina@gnu.org>
 
 	* progmodes/python.el (inferior-python-mode): Set

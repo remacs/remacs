@@ -228,6 +228,10 @@ details.
 *** The new `S' command will list all eww buffers, and allow managing
 them.
 
+---
+*** https pages with valid certificates have headers marked in green, while
+invalid certificates are marked in red.
+
 ** Message mode
 
 *** text/html messages that contain inline image parts will be
