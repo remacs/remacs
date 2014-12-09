@@ -2,6 +2,8 @@
 
 	* url-http.el (url-http-parse-headers): Pass the GnuTLS status of
 	the connection to the caller.
+	(url-http-parse-headers): When being redirected, make sure we
+	flush the previous certificate.
 
 2014-12-08  Stefan Monnier  <monnier@iro.umontreal.ca>
 

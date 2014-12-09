@@ -494,12 +494,14 @@ should be shown to the user."
   (url-http-mark-connection-as-free (url-host url-current-object)
 				    (url-port url-current-object)
 				    url-http-process)
-  ;; Pass the certificate on to the caller.
+  ;; Pass the https certificate on to the caller.
   (when (gnutls-available-p)
-    (when-let (status (gnutls-peer-status url-http-process))
-      (setcar url-callback-arguments
-	      (plist-put (car url-callback-arguments)
-			 :peer status))))
+    (let ((status (gnutls-peer-status url-http-process)))
+      (when (or status
+		(plist-get (car url-callback-arguments) :peer))
+	(setcar url-callback-arguments
+		(plist-put (car url-callback-arguments)
+			   :peer status)))))
   (if (or (not (boundp 'url-http-end-of-headers))
 	  (not url-http-end-of-headers))
       (error "Trying to parse headers in odd buffer: %s" (buffer-name)))
