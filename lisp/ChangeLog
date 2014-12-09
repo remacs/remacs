@@ -1,3 +1,8 @@
+2014-12-09  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	* progmodes/python.el (python-shell-parse-command): Quote
+	`python-shell-interpreter`.  (Bug#19289)
+
 2014-12-04  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* progmodes/sh-script.el (sh-smie-sh-rules): Go back to the beginning

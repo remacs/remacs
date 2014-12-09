@@ -2086,7 +2086,8 @@ uniqueness for different types of configurations."
         (exec-path (python-shell-calculate-exec-path)))
     (format "%s %s"
             ;; FIXME: Why executable-find?
-            (executable-find python-shell-interpreter)
+            (shell-quote-argument
+             (executable-find python-shell-interpreter))
             python-shell-interpreter-args)))
 
 (defun python-shell-calculate-process-environment ()
