@@ -1,3 +1,14 @@
+2014-12-09  Reto Zimmermann  <reto@gnu.org>
+
+	Sync with upstream vhdl mode v3.36.1.
+	* progmodes/vhdl-mode.el (vhdl-version, vhdl-time-stamp): Update.
+	(vhdl-compiler-alist): Anchor all error regexps.
+	(vhdl-compile-use-local-error-regexp): Change default to nil.
+	(vhdl-asort, vhdl-anot-head-p): Remove.
+	(vhdl-aput, vhdl-adelete, vhdl-aget): Simplify.
+	Remove optional argument of vhdl-aget and update all callers.
+	(vhdl-import-project): Also set `vhdl-compiler'.
+
 2014-12-09  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
 	* files.el (find-files): New function.
