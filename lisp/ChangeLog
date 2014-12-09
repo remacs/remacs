@@ -1,3 +1,8 @@
+2014-12-09  Eric S. Raymond  <esr@snark.thyrsus.com>
+
+	* vc/vc-src.el (vc-src-do-comand): Prepend -- to file argument
+	list, avoids problems witth names containing hyphens.
+
 2014-12-09  Wilson Snyder  <wsnyder@wsnyder.org>
 
 	Sync with upstream verilog-mode revision aa4b777.

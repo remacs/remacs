@@ -193,7 +193,12 @@ For a description of possible values, see `vc-check-master-templates'."
 (defun vc-src-command (buffer file-or-list &rest flags)
   "A wrapper around `vc-do-command' for use in vc-src.el.
 This function differs from vc-do-command in that it invokes `vc-src-program'."
-  (apply 'vc-do-command (or buffer "*vc*") 0 vc-src-program file-or-list flags))
+  (let (file-list)
+    (cond ((stringp file-or-list)
+	   (setq file-list (list "--" file-or-list)))
+	  (file-or-list
+	   (setq file-list (cons "--" file-or-list))))
+    (apply 'vc-do-command (or buffer "*vc*") 0 vc-src-program file-list flags)))
 
 (defun vc-src-working-revision (file)
   "SRC-specific version of `vc-working-revision'."
