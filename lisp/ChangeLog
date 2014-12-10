@@ -1,3 +1,7 @@
+2014-12-10  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* let-alist.el: Add new package and macro.
+
 2014-12-10  Eric S. Raymond  <esr@snark.thyrsus.com>
 
 	* vc/vc-dispatcher.el, vc/vc-hooks.el, vc/vc-rcs.el,
