@@ -1,3 +1,9 @@
+2014-12-10  Rasmus Pank Roulund  <emacs@pank.eu>
+
+	* net/ange-ftp.el (ange-ftp-switches-ok): Disallow flags causing
+	trouble with ls over ftp.  These flags result in ls returning no
+	output, causing Tramp-breakage.  (bug#19192)
+
 2014-12-10  Andreas Schwab  <schwab@suse.de>
 
 	* files.el (file-tree-walk): Use file-name-as-directory
