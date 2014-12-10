@@ -1,3 +1,33 @@
+2014-12-10  Eli Zaretskii  <eliz@gnu.org>
+
+	* bidi.c (BIDI_CACHE_MAX_ELTS_PER_SLOT): New macro.
+	(bidi_cache_max_elts): New global variable.
+	(bidi_shelve_header_size): Add the sizeof bidi_cache_max_elts.
+	(bidi_cache_shrink, bidi_initialize): Reset bidi_cache_max_elts to
+	its initial value.
+	(bidi_cache_search): Handle overflown cache.  Improve commentary.
+	(bidi_cache_ensure_space): Limit allocations to the current value
+	of bidi_cache_max_elts.  Force xpalloc not to over-allocate.  If
+	less than a full BIDI_CACHE_CHUNK is left to the limit, decrease
+	the increment to not exceed the limit.
+	(bidi_cache_iterator_state): Now returns non-zero if succeeded to
+	cache, zero otherwise (meaning the cache overflowed).  In the
+	latter case, set bidi_cache_last_idx to -1.
+	(bidi_peek_at_next_level): Handle overflown cache.
+	(bidi_push_it): Increase the cache limit for iterating the new
+	object.
+	(bidi_pop_it): Decrease the cache limit back to previous value.
+	(bidi_shelve_cache): Shelve the current value of the cache limit.
+	(bidi_unshelve_cache): Restore the value of cache limit.
+	(bidi_find_bracket_pairs): If the cache overflows while looking
+	for the paired bracket, give up and let bidi_resolve_neutrals
+	process the bracket as a simple neutral.  (Bug#19322)
+	(bidi_find_other_level_edge): If the cache overflows, fall back on
+	Plan B, which effectively stops the reordering and restarts it on
+	the next character (after resetting the cache).
+	(bidi_move_to_visually_next): When the cache overflows, reset it
+	after processing the last cached character.
+
 2014-12-10  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Fix glitches in gnutls.c, mostly memory-related
