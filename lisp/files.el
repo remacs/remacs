@@ -769,18 +769,21 @@ and alphabetical order.
 If INCLUDE-DIRECTORIES, also include directories that have matching names."
   (let ((result nil)
 	(files nil))
-    (dolist (file (directory-files dir t))
-      (let ((leaf (file-name-nondirectory file)))
-	(unless (member leaf '("." ".."))
-	  (if (file-directory-p file)
-	      (progn
-		(when (and include-directories
-			   (string-match match leaf))
-		  (push file files))
-		(setq result (nconc result (directory-files-recursively
-					    file match include-directories))))
-	    (when (string-match match leaf)
-	      (push file files))))))
+    (dolist (file (sort (file-name-all-completions "" dir)
+			'string<))
+      (unless (member file '("./" "../"))
+	(if (= (aref file (1- (length file))) ?/)
+	    (progn
+	      (setq result (nconc result (directory-files-recursively
+					  (expand-file-name file dir)
+					  match include-directories)))
+	      (when (and include-directories
+			 (string-match match
+				       (substring file 0 (1- (length file)))))
+		(setq result (nconc result (list
+					    (expand-file-name file dir))))))
+	  (when (string-match match file)
+	    (push (expand-file-name file dir) files)))))
     (nconc result (nreverse files))))
 
 (defun load-file (file)

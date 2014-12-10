@@ -1,5 +1,9 @@
 2014-12-10  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
+	* files.el (directory-files-recursively): Use
+	`file-name-all-completions' instead of `directory-files' for
+	greater speed.
+
 	* net/shr.el (shr-tag-object): Don't bug out on text elements in
 	<object>.
 
