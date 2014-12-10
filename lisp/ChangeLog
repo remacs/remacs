@@ -1,3 +1,8 @@
+2014-12-10  Michael Albinus  <michael.albinus@gmx.de>
+
+	* net/tramp-sh.el (tramp-get-remote-path): Use a login shell in
+	order to determine `tramp-own-remote-path'.
+
 2014-12-09  Fabián Ezequiel Gallina  <fgallina@gnu.org>
 
 	* progmodes/python.el (python-shell-parse-command): Quote
