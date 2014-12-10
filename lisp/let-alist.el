@@ -1,4 +1,4 @@
-;;; let-alist.el --- Easily let-bind values of an assoc-list by their names.
+;;; let-alist.el --- Easily let-bind values of an assoc-list by their names
 
 ;; Copyright (C) 2014 Free Software Foundation, Inc.
 
@@ -9,8 +9,23 @@
 ;; Prefix: let-alist
 ;; Separator: -
 
+;; This file is part of GNU Emacs.
+
+;; GNU Emacs is free software: you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+
+;; GNU Emacs is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+
 ;;; Commentary:
-;;
+
 ;; This package offers a single macro, `let-alist'.  This macro takes a
 ;; first argument (whose value must be an alist) and a body.
 ;;
@@ -39,28 +54,11 @@
 ;; invocations, the inner one can't access the variables of the outer
 ;; one.
 
-;;; License:
-;;
-;; This file is part of GNU Emacs.
-;;
-;; GNU Emacs is free software: you can redistribute it and/or modify
-;; it under the terms of the GNU General Public License as published by
-;; the Free Software Foundation, either version 3 of the License, or
-;; (at your option) any later version.
-;;
-;; GNU Emacs is distributed in the hope that it will be useful,
-;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;; GNU General Public License for more details.
-;;
-;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
-
 ;;; Code:
 
 
 (defun let-alist--deep-dot-search (data)
-  "Return alist of symbols inside DATA which start with a `.'.
+  "Return alist of symbols inside DATA that start with a `.'.
 Perform a deep search and return an alist where each car is the
 symbol, and each cdr is the same symbol without the `.'."
   (cond
@@ -77,9 +75,8 @@ symbol, and each cdr is the same symbol without the `.'."
 ;;;###autoload
 (defmacro let-alist (alist &rest body)
   "Let-bind dotted symbols to their cdrs in ALIST and execute BODY.
-Dotted symbol is any symbol starting with a `.'.  Only those
-present in BODY are let-bound and this search is done at compile
-time.
+Dotted symbol is any symbol starting with a `.'.  Only those present
+in BODY are let-bound and this search is done at compile time.
 
 For instance, the following code
 
@@ -102,9 +99,5 @@ expands to
      ,@body))
 
 (provide 'let-alist)
-
-;; Local Variables:
-;; sentence-end-double-space: t
-;; End:
 
 ;;; let-alist.el ends here
