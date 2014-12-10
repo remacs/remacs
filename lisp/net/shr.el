@@ -1134,7 +1134,7 @@ ones, in case fg and bg are nil."
 	(when (string-match "\\`image/svg" type)
 	  (setq url (dom-attr dom 'data)
 		image t)))
-      (dolist (child (dom-children dom))
+      (dolist (child (dom-non-text-children dom))
 	(cond
 	 ((eq (dom-tag child) 'embed)
 	  (setq url (or url (dom-attr child 'src))

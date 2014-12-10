@@ -1,3 +1,8 @@
+2014-12-10  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* net/shr.el (shr-tag-object): Don't bug out on text elements in
+	<object>.
+
 2014-12-09  Bozhidar Batsov  <bozhidar@batsov.com>
 
 	* progmodes/ruby-mode.el (auto-mode-alist): Add .rabl, Berksfile
