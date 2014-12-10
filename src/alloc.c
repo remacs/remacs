@@ -2226,7 +2226,7 @@ make_string (const char *contents, ptrdiff_t nbytes)
   return val;
 }
 
-/* Make an unibyte string from LENGTH bytes at CONTENTS.  */
+/* Make a unibyte string from LENGTH bytes at CONTENTS.  */
 
 Lisp_Object
 make_unibyte_string (const char *contents, ptrdiff_t length)
@@ -2295,7 +2295,7 @@ make_specified_string (const char *contents,
 }
 
 
-/* Return an unibyte Lisp_String set up to hold LENGTH characters
+/* Return a unibyte Lisp_String set up to hold LENGTH characters
    occupying LENGTH bytes.  */
 
 Lisp_Object

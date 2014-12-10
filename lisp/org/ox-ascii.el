@@ -185,7 +185,7 @@ original Org buffer at the same place."
   :package-version '(Org . "8.0")
   :type '(choice
 	  (const :tag "Replicate original spacing" nil)
-	  (cons :tag "Set an uniform spacing"
+	  (cons :tag "Set a uniform spacing"
 		(integer :tag "Number of blank lines before contents")
 		(integer :tag "Number of blank lines after contents"))))
 

@@ -20348,7 +20348,7 @@ This command does many different things, depending on context:
 	  (item
 	   ;; At an item: a double C-u set checkbox to "[-]"
 	   ;; unconditionally, whereas a single one will toggle its
-	   ;; presence.  Without an universal argument, if the item
+	   ;; presence.  Without a universal argument, if the item
 	   ;; has a checkbox, toggle it.  Otherwise repair the list.
 	   (let* ((box (org-element-property :checkbox context))
 		  (struct (org-element-property :structure context))

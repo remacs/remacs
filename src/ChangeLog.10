@@ -20769,7 +20769,7 @@
 
 	* fontset.c (syms_of_fontset): Setup Vfont_encoding_alist here.
 
-	* editfns.c (Fformat): Convert an unibyte char argument that is
+	* editfns.c (Fformat): Convert a unibyte char argument that is
 	formatted by "%c" to multibyte if the total result must be a
 	multibyte string.
 

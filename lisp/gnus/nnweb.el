@@ -438,7 +438,7 @@ Valid types include `google', `dejanews', and `gmane'.")
   t)
 
 (defun nnweb-google-identity (url)
-  "Return an unique identifier based on URL."
+  "Return a unique identifier based on URL."
   (if (string-match "selm=\\([^ &>]+\\)" url)
       (match-string 1 url)
     url))

@@ -439,7 +439,7 @@ current_column (void)
 	    /* With a display table entry, C is displayed as is, and
 	       not displayed as \NNN or as ^N.  If C is a single-byte
 	       character, it takes one column.  If C is multi-byte in
-	       an unibyte buffer, it's translated to unibyte, so it
+	       a unibyte buffer, it's translated to unibyte, so it
 	       also takes one column.  */
 	    ++col;
 	  else

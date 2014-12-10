@@ -1649,7 +1649,7 @@ aren't they and how to fix it?
 
 @subsubheading Answer
 
-The message-ID is an unique identifier for messages you
+The message-ID is a unique identifier for messages you
 send. To make it unique, Gnus need to know which machine
 name to put after the "@@". If the name of the machine
 where Gnus is running isn't suitable (it probably isn't

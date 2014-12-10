@@ -2843,7 +2843,7 @@ uid=0(root) gid=0(root) groups=0(root)
 @cindex gdb
 @cindex perldb
 
-@file{gud.el} offers an unified interface to several symbolic
+@file{gud.el} offers a unified interface to several symbolic
 debuggers
 @ifset emacs
 @ifinfo

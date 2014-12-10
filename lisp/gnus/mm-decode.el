@@ -647,7 +647,7 @@ MIME-Version header before proceeding."
 	  (unless from
 	    (setq from (mail-fetch-field "from")))
 	  ;; FIXME: In some circumstances, this code is running within
-	  ;; an unibyte macro.  mail-extract-address-components
+	  ;; a unibyte macro.  mail-extract-address-components
 	  ;; creates unibyte buffers. This `if', though not a perfect
 	  ;; solution, avoids most of them.
 	  (if from
