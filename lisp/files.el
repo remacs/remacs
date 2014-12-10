@@ -743,8 +743,7 @@ The ACTION is applied to each subdirectory before descending into
 it, and if nil is returned at that point, the descent will be
 prevented.  Directory entries are sorted with string-lessp."
   (cond ((file-directory-p dir)
-	 (or (char-equal ?/ (aref dir (1- (length dir))))
-	     (setq dir (file-name-as-directory dir)))
+	 (setq dir (file-name-as-directory dir))
 	 (let ((lst (directory-files dir nil nil t))
 	       fullname file)
 	   (while lst
