@@ -1,3 +1,8 @@
+2014-12-10  Michael Albinus  <michael.albinus@gmx.de>
+
+	* automated/vc-tests.el (vc-test--register): Check, that the file
+	still exists after register and unregister operations.
+
 2014-12-06  Michael Albinus  <michael.albinus@gmx.de>
 
 	* automated/vc-tests.el: New file.

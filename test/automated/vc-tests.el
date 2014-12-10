@@ -225,10 +225,12 @@ Don't set it globally, the functions shall be let-bound.")
 	    (should-not (vc-registered tmp-name2))
 	    (vc-register
 	     (list backend (list tmp-name1 tmp-name2)))
+	    (should (file-exists-p tmp-name1))
 	    (should (vc-registered tmp-name1))
+	    (should (file-exists-p tmp-name2))
 	    (should (vc-registered tmp-name2))
 
-	    ;; Unregister the file2.  Why isn't there `vc-unregister'?
+	    ;; Unregister the files.  Why isn't there `vc-unregister'?
 	    (condition-case err
 		(progn
 		  (funcall (vc-test--unregister-function backend) tmp-name1)
@@ -236,7 +238,9 @@ Don't set it globally, the functions shall be let-bound.")
 		  (funcall (vc-test--unregister-function backend) tmp-name2)
 		  (should-not (vc-registered tmp-name2)))
 	      ;; CVS, SVN, SCCS, SRC and Mtn are not supported.
-	      (vc-not-supported (message "%s" (error-message-string err))))))
+	      (vc-not-supported (message "%s" (error-message-string err))))
+	    (should (file-exists-p tmp-name1))
+	    (should (file-exists-p tmp-name2))))
 
       ;; Save exit.
       (ignore-errors (run-hooks 'vc-test--cleanup-hook)))))
