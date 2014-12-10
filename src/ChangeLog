@@ -1,3 +1,9 @@
+2014-12-10  Eli Zaretskii  <eliz@gnu.org>
+
+	* xdisp.c (move_it_in_display_line_to, display_line): Don't
+	disallow overflow-newline-into-fringe when word-wrap is in
+	effect.  (Bug#19300)
+
 2014-12-04  Lee Duhem  <lee.duhem@gmail.com>  (tiny change)
 
 	* eval.c (Fsignal): Remove duplicate test.

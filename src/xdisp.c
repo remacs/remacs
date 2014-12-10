@@ -8792,12 +8792,7 @@ move_it_in_display_line_to (struct it *it,
 			 doesn't fit on the line, e.g. a wide image.  */
 		      it->hpos == 0
 		      || (new_x == it->last_visible_x
-			  && FRAME_WINDOW_P (it->f)
-			  /* When word-wrap is ON and we have a valid
-			     wrap point, we don't allow the last glyph
-			     to "just barely fit" on the line.  */
-			  && (it->line_wrap != WORD_WRAP
-			      || wrap_it.sp < 0)))
+			  && FRAME_WINDOW_P (it->f)))
 		    {
 		      ++it->hpos;
 		      it->current_x = new_x;
@@ -8864,7 +8859,8 @@ move_it_in_display_line_to (struct it *it,
 				}
 			      if (ITERATOR_AT_END_OF_LINE_P (it)
 				  && (it->line_wrap != WORD_WRAP
-				      || wrap_it.sp < 0))
+				      || wrap_it.sp < 0
+				      || IT_OVERFLOW_NEWLINE_INTO_FRINGE (it)))
 				{
 				  result = MOVE_NEWLINE_OR_CR;
 				  break;
@@ -20389,7 +20385,8 @@ display_line (struct it *it)
 			{
 			  /* If line-wrap is on, check if a previous
 			     wrap point was found.  */
-			  if (wrap_row_used > 0
+			  if (!IT_OVERFLOW_NEWLINE_INTO_FRINGE (it)
+			      && wrap_row_used > 0
 			      /* Even if there is a previous wrap
 				 point, continue the line here as
 				 usual, if (i) the previous character
@@ -20419,6 +20416,18 @@ display_line (struct it *it)
 				  row->continued_p = 0;
 				  row->exact_window_width_line_p = 1;
 				}
+			      /* If line-wrap is on, check if a
+				 previous wrap point was found.  */
+			      else if (wrap_row_used > 0
+				       /* Even if there is a previous wrap
+					  point, continue the line here as
+					  usual, if (i) the previous character
+					  was a space or tab AND (ii) the
+					  current character is not.  */
+				       && (!may_wrap
+					   || IT_DISPLAYING_WHITESPACE (it)))
+				goto back_to_wrap;
+
 			    }
 			}
 		      else if (it->bidi_p)
