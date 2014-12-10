@@ -6,6 +6,10 @@
 
 	* NEWS: Mention the new eww `S' command.
 
+2014-12-05  Stephen Leake  <stephen_leake@stephe-leake.org>
+
+	* CONTRIBUTE: Move to ../.
+
 2014-12-05  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
 	* NEWS: Add some doc markers to the eww stuff.

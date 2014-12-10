@@ -1,3 +1,9 @@
+2014-12-06  Stephen Leake  <stephen_leake@stephe-leake.org>
+
+	* notes/commits: Delete; merge into ./CONTRIBUTE.
+
+	* notes/repo: Move commit, branch info into ./CONTRIBUTE.
+
 2014-12-01  Glenn Morris  <rgm@gnu.org>
 
 	* update_autogen: Fix bogosity introduced in 2014-11-16 merge.

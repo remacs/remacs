@@ -1,18 +1,14 @@
 2014-12-06  Stephen Leake  <stephen_leake@stephe-leake.org>
 
-	* CONTRIBUTE: improve; add explicit web references, move some info
+	* CONTRIBUTE: Improve; add explicit web references, move some info
 	from admin/notes/* here.
 
 	* INSTALL.REPO: You can't "just run make" after a clean checkout.
 
-        * admin/notes/commits: deleted; merged into ./CONTRIBUTE
-
-	* admin/notes/repo: move commit, branch info into ./CONTRIBUTE
-
 2014-12-05  Stephen Leake  <stephen_leake@stephe-leake.org>
 
-	* etc/CONTRIBUTE: renamed to ./CONTRIBUTE, preparatory to further
-	changes/cleanup
+	* CONTRIBUTE: Move here from etc/, preparatory to further
+	changes/cleanup.
 
 2014-12-05  Paul Eggert  <eggert@cs.ucla.edu>
 
