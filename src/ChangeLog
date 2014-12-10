@@ -1,3 +1,17 @@
+2014-12-10  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Fix glitches in gnutls.c, mostly memory-related
+	* gnutls.c: Sort macro definitions by name.
+	(fn_gnutls_transport_set_errno): Omit unreachable definition.
+	(fn_gnutls_x509_crt_get_signature): Omit unused symbol.
+	(gnutls_hex_string): Arg is now unsigned char *, to avoid a cast.
+	Prefer ptrdiff_t for sizes.  Check for arithmetic overflow when
+	calculating string length.  Use make_uninit_string, to avoid
+	copying the string.  Cast the char, not the pointer.
+	(gnutls_certificate_details): Use xmalloc and xfree, not malloc
+	and free.  Work even for dates past the year 9999.  Use void *
+	for buffers, to avoid casts.
+
 2014-12-09  Andy Moreton  <andrewjmoreton@gmail.com>  (tiny change)
 
 	* gnutls.c (gnutls_protocol_get_name): Fix a copy/paste typo.
