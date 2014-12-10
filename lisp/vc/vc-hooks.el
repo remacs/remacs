@@ -164,13 +164,6 @@ Otherwise, not displayed."
   :type 'boolean
   :group 'vc)
 
-(defcustom vc-keep-workfiles t
-  "Whether to keep work files on disk after commits, on a locking VCS.
-This variable has no effect on modern merging-based version
-control systems."
-  :type 'boolean
-  :group 'vc)
-
 ;;; This is handled specially now.
 ;; Tell Emacs about this new kind of minor mode
 ;; (add-to-list 'minor-mode-alist '(vc-mode vc-mode))

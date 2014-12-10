@@ -1,3 +1,10 @@
+2014-12-10  Eric S. Raymond  <esr@snark.thyrsus.com>
+
+	* vc/vc-dispatcher.el, vc/vc-hooks.el, vc/vc-rcs.el,
+	vc/vc-sccs.el, vc/vc.el: Righteous featurectomy of
+	vc-keep-workfiles, it's a shoot-self-in-foot archaism.
+	Workfiles are always kept.
+
 2014-12-10  Rasmus Pank Roulund  <emacs@pank.eu>
 
 	* net/ange-ftp.el (ange-ftp-switches-ok): Disallow flags causing

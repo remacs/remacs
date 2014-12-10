@@ -702,7 +702,7 @@ the buffer contents as a comment."
     ;; Now make sure we see the expanded headers
     (when log-fileset
       (mapc
-       (lambda (file) (vc-resynch-buffer file vc-keep-workfiles t))
+       (lambda (file) (vc-resynch-buffer file t t))
        log-fileset))
     (when (vc-dispatcher-browsing)
       (vc-dir-move-to-goal-column))

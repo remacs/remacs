@@ -195,12 +195,10 @@ Optional string REV is a revision."
 
 (defun vc-sccs-register (files &optional comment)
   "Register FILES into the SCCS version-control system.
+Automatically retrieve a read-only version of the files with keywords expanded.
 COMMENT can be used to provide an initial description of FILES.
 Passes either `vc-sccs-register-switches' or `vc-register-switches'
-to the SCCS command.
-
-Automatically retrieve a read-only version of the files with keywords
-expanded if `vc-keep-workfiles' is non-nil, otherwise, delete the workfile."
+to the SCCS command."
   (dolist (file files)
     (let* ((dirname (or (file-name-directory file) ""))
 	   (basename (file-name-nondirectory file))
@@ -214,8 +212,7 @@ expanded if `vc-keep-workfiles' is non-nil, otherwise, delete the workfile."
 	       (and comment (concat "-y" comment))
 	       (vc-switches 'SCCS 'register)))
       (delete-file file)
-      (if vc-keep-workfiles
-	  (vc-sccs-do-command nil 0 "get" (vc-master-name file))))))
+      (vc-sccs-do-command nil 0 "get" (vc-master-name file)))))
 
 (defun vc-sccs-responsible-p (file)
   "Return non-nil if SCCS thinks it would be responsible for registering FILE."
@@ -230,8 +227,7 @@ expanded if `vc-keep-workfiles' is non-nil, otherwise, delete the workfile."
     (apply 'vc-sccs-do-command nil 0 "delta" (vc-master-name file)
 	   (concat "-y" comment)
 	   (vc-switches 'SCCS 'checkin))
-    (if vc-keep-workfiles
-	(vc-sccs-do-command nil 0 "get" (vc-master-name file)))))
+	(vc-sccs-do-command nil 0 "get" (vc-master-name file))))
 
 (defun vc-sccs-find-revision (file rev buffer)
   (apply 'vc-sccs-do-command

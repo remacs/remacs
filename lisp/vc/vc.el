@@ -1111,8 +1111,7 @@ For old-style locking-based version control systems, like RCS:
   If every file is registered and unlocked, check out (lock)
    the file(s) for editing.
   If every file is locked by you and has changes, pop up a
-   *vc-log* buffer to check in the changes.  If the variable
-   `vc-keep-workfiles' is non-nil (the default), leave a
+   *vc-log* buffer to check in the changes.  Leave a
    read-only copy of each changed file after checking in.
   If every file is locked by you and unchanged, unlock them.
   If every file is locked by someone else, offer to steal the lock."
@@ -1353,7 +1352,7 @@ first backend that could register the file is used."
        ;;   (make-local-variable 'backup-inhibited)
        ;;   (setq backup-inhibited t))
 
-       (vc-resynch-buffer file vc-keep-workfiles t))
+       (vc-resynch-buffer file t t))
      files)
     (when (derived-mode-p 'vc-dir-mode)
       (vc-dir-move-to-goal-column))
@@ -1515,9 +1514,6 @@ Type \\[vc-next-action] to check in changes.")
 buffer is popped up to accept a comment.  If INITIAL-CONTENTS is
 non-nil, then COMMENT is used as the initial contents of the log
 entry buffer.
-
-If `vc-keep-workfiles' is nil, FILE is deleted afterwards, provided
-that the version control system supports this mode of operation.
 
 Runs the normal hooks `vc-before-checkin-hook' and `vc-checkin-hook'."
   (when vc-before-checkin-hook

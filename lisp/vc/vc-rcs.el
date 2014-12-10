@@ -226,12 +226,10 @@ When VERSION is given, perform check for that version."
 
 (defun vc-rcs-register (files &optional comment)
   "Register FILES into the RCS version-control system.
+Automatically retrieve a read-only version of the file with keywords expanded.
 COMMENT can be used to provide an initial description for each FILES.
 Passes either `vc-rcs-register-switches' or `vc-register-switches'
-to the RCS command.
-
-Automatically retrieve a read-only version of the file with keywords
-expanded if `vc-keep-workfiles' is non-nil, otherwise, delete the workfile."
+to the RCS command."
   (let (subdir name)
     (dolist (file files)
       (and (not (file-exists-p
@@ -244,6 +242,7 @@ expanded if `vc-keep-workfiles' is non-nil, otherwise, delete the workfile."
       (apply #'vc-do-command "*vc*" 0 "ci" file
 	     ;; if available, use the secure registering option
 	     (and (vc-rcs-release-p "5.6.4") "-i")
+	     "-u"
 	     (and comment (concat "-t-" comment))
 	     (vc-switches 'RCS 'register))
       ;; parse output to find master file name and workfile version
@@ -328,7 +327,7 @@ whether to remove it."
 	(apply #'vc-do-command "*vc*" 0 "ci" (vc-master-name file)
 	       ;; if available, use the secure check-in option
 	       (and (vc-rcs-release-p "5.6.4") "-j")
-	       (concat (if vc-keep-workfiles "-u" "-r") rev)
+	       (concat "-u" rev)
 	       (concat "-m" comment)
 	       switches)
 	(vc-file-setprop file 'vc-working-revision nil)
