@@ -1,3 +1,15 @@
+2014-12-11  Michael Albinus  <michael.albinus@gmx.de>
+
+	* automated/vc-tests.el (vc-test--revision-granularity-function):
+	New defun.
+	(vc-test--create-repo-function): Rename from
+	`vc-test--create-repo-if-not-supported'.  Adapt all callees.
+	(vc-test--create-repo): Check also for revision-granularity.
+	(vc-test--unregister-function): Additional argument FILE.  Adapt
+	all callees.
+	(vc-test--working-revision): New defun.
+	(vc-test-*-working-revision): New tests.
+
 2014-12-10  Michael Albinus  <michael.albinus@gmx.de>
 
 	* automated/vc-tests.el (vc-test--register): Check, that the file

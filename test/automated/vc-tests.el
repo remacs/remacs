@@ -115,8 +115,13 @@
   "Functions for cleanup at the end of an ert test.
 Don't set it globally, the functions shall be let-bound.")
 
-(defun vc-test--create-repo-if-not-supported (backend)
-  "Create a local repository for backends which don't support `vc-create-repo'."
+(defun vc-test--revision-granularity-function (backend)
+  "Run the `vc-revision-granularity' backend function."
+  (funcall (intern (downcase (format "vc-%s-revision-granularity" backend)))))
+
+(defun vc-test--create-repo-function (backend)
+  "Run the `vc-create-repo' backend function.
+For backends which dont support it, it is emulated."
 
   (cond
    ((eq backend 'CVS)
@@ -152,7 +157,7 @@ Don't set it globally, the functions shall be let-bound.")
       (shell-command-to-string
        (format "mtn --db=%s --branch=foo setup ." archive-name))))
 
-   (t (signal 'vc-not-supported (list 'create-repo backend)))))
+   (t (vc-create-repo backend))))
 
 (defun vc-test--create-repo (backend)
   "Create a test repository in `default-directory', a temporary directory."
@@ -171,23 +176,27 @@ Don't set it globally, the functions shall be let-bound.")
 	   'vc-test--cleanup-hook
 	   `(lambda () (delete-directory ,default-directory 'recursive)))
 
+	  ;; Check the revision granularity.
+	  (should (memq (vc-test--revision-granularity-function backend)
+		 '(file repository)))
+
 	  ;; Create empty repository.
 	  (make-directory default-directory)
 	  (should (file-directory-p default-directory))
-	  (condition-case err
-	      (vc-create-repo backend)
-	    ;; CVS, Mtn and Arch need special handling.
-	    (vc-not-supported (vc-test--create-repo-if-not-supported backend))))
+	  (vc-test--create-repo-function backend))
 
       ;; Save exit.
       (ignore-errors (run-hooks 'vc-test--cleanup-hook)))))
 
-(defun vc-test--unregister-function (backend)
-  "Return the `vc-unregister' backend function."
+;; Why isn't there `vc-unregister'?
+(defun vc-test--unregister-function (backend file)
+  "Run the `vc-unregister' backend function.
+For backends which dont support it, `vc-not-supported' is signalled."
 
   (let ((symbol (intern (downcase (format "vc-%s-unregister" backend)))))
     (if (functionp symbol)
-	symbol
+	(funcall symbol file)
+      ;; CVS, SVN, SCCS, SRC and Mtn are not supported.
       (signal 'vc-not-supported (list 'unregister backend)))))
 
 (defun vc-test--register (backend)
@@ -209,10 +218,7 @@ Don't set it globally, the functions shall be let-bound.")
 
 	  ;; Create empty repository.
 	  (make-directory default-directory)
-	  (condition-case err
-	      (vc-create-repo backend)
-	    ;; CVS, Mtn and Arch need special handling.
-	    (vc-not-supported (vc-test--create-repo-if-not-supported backend)))
+	  (vc-test--create-repo-function backend)
 
 	  (let ((tmp-name1 (expand-file-name "foo" default-directory))
 		(tmp-name2 "bla"))
@@ -230,12 +236,12 @@ Don't set it globally, the functions shall be let-bound.")
 	    (should (file-exists-p tmp-name2))
 	    (should (vc-registered tmp-name2))
 
-	    ;; Unregister the files.  Why isn't there `vc-unregister'?
+	    ;; Unregister the files.
 	    (condition-case err
 		(progn
-		  (funcall (vc-test--unregister-function backend) tmp-name1)
+		  (vc-test--unregister-function backend tmp-name1)
 		  (should-not (vc-registered tmp-name1))
-		  (funcall (vc-test--unregister-function backend) tmp-name2)
+		  (vc-test--unregister-function backend tmp-name2)
 		  (should-not (vc-registered tmp-name2)))
 	      ;; CVS, SVN, SCCS, SRC and Mtn are not supported.
 	      (vc-not-supported (message "%s" (error-message-string err))))
@@ -266,10 +272,7 @@ Don't set it globally, the functions shall be let-bound.")
 
 	  ;; Create empty repository.
 	  (make-directory default-directory)
-	  (condition-case err
-	      (vc-create-repo backend)
-	    ;; CVS, Mtn and Arch need special handling.
-	    (vc-not-supported (vc-test--create-repo-if-not-supported backend)))
+	  (vc-test--create-repo-function backend)
 
 	  (message "%s" (vc-state default-directory backend))
 	  ;(should (eq (vc-state default-directory backend) 'up-to-date))
@@ -293,10 +296,62 @@ Don't set it globally, the functions shall be let-bound.")
 	    ;; Unregister the file.  Check for state.
 	    (condition-case nil
 		(progn
-		  (funcall (vc-test--unregister-function backend) tmp-name)
+		  (vc-test--unregister-function backend tmp-name)
 		  (message "%s" (vc-state tmp-name backend))
 		  );(should (eq (vc-state tmp-name backend) 'unregistered)))
-	      ;; CVS, SVN, SCCS, SRC and Mtn are not supported.
+	      (vc-not-supported (message "%s" 'unsupported)))))
+
+      ;; Save exit.
+      (ignore-errors (run-hooks 'vc-test--cleanup-hook)))))
+
+(defun vc-test--working-revision (backend)
+  "Check the working revision of a repository."
+
+  (let ((vc-handled-backends `(,backend))
+	(default-directory
+	  (file-name-as-directory
+	   (expand-file-name
+	    (make-temp-name "vc-test") temporary-file-directory)))
+	vc-test--cleanup-hook errors)
+
+    (unwind-protect
+	(progn
+	  ;; Cleanup.
+	  (add-hook
+	   'vc-test--cleanup-hook
+	   `(lambda () (delete-directory ,default-directory 'recursive)))
+
+	  ;; Create empty repository.
+	  (make-directory default-directory)
+	  (vc-test--create-repo-function backend)
+
+	  (should
+	   (member
+	    (vc-working-revision default-directory backend) '("0" "master")))
+
+	  (let ((tmp-name (expand-file-name "foo" default-directory)))
+	    ;; Check for initial state.
+	    (should
+	     (member (vc-working-revision tmp-name backend) '("0" "master")))
+
+	    ;; Write a new file.  Check for state.
+	    (write-region "foo" nil tmp-name nil 'nomessage)
+	    (should
+	     (member (vc-working-revision tmp-name backend) '("0" "master")))
+
+	    ;; Register a file.  Check for state.
+	    (vc-register
+	     (list backend (list (file-name-nondirectory tmp-name))))
+	    (should
+	     (member (vc-working-revision tmp-name backend) '("0" "master")))
+
+	    ;; Unregister the file.  Check for working-revision.
+	    (condition-case nil
+		(progn
+		  (vc-test--unregister-function backend tmp-name)
+		  (should
+		   (member
+		    (vc-working-revision tmp-name backend) '("0" "master"))))
 	      (vc-not-supported (message "%s" 'unsupported)))))
 
       ;; Save exit.
@@ -383,7 +438,18 @@ Don't set it globally, the functions shall be let-bound.")
 	       (ert-get-test
 		',(intern
 		   (format "vc-test-%s01-register" backend-string))))))
-	    (vc-test--state ',backend)))))))
+	    (vc-test--state ',backend))
+
+	  (ert-deftest
+	      ,(intern (format "vc-test-%s03-working-revision" backend-string)) ()
+	    ,(format "Check `vc-working-revision' for the %s backend." backend-string)
+	    (skip-unless
+	     (ert-test-passed-p
+	      (ert-test-most-recent-result
+	       (ert-get-test
+		',(intern
+		   (format "vc-test-%s01-register" backend-string))))))
+	    (vc-test--working-revision ',backend)))))))
 
 (provide 'vc-tests)
 ;;; vc-tests.el ends here
