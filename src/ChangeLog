@@ -1,3 +1,9 @@
+2014-12-11  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	* xterm.c (x_delete_terminal): Call emacs_close for X connection
+	descriptor if called from x_connection_closed and always delete
+	this descriptor from keyboard waiting set (Bug#19147).
+
 2014-12-10  Eli Zaretskii  <eliz@gnu.org>
 
 	* bidi.c (BIDI_CACHE_MAX_ELTS_PER_SLOT): New macro.

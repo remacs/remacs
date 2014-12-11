@@ -11318,8 +11318,7 @@ x_delete_terminal (struct terminal *terminal)
     xim_close_dpy (dpyinfo);
 #endif
 
-  /* If called from x_connection_closed, the display may already be closed
-     and dpyinfo->display was set to 0 to indicate that.  */
+  /* Normally, the display is available...  */
   if (dpyinfo->display)
     {
       x_destroy_all_bitmaps (dpyinfo);
@@ -11360,16 +11359,22 @@ x_delete_terminal (struct terminal *terminal)
       XCloseDisplay (dpyinfo->display);
 #endif
 #endif /* ! USE_GTK */
-
-      /* No more input on this descriptor.  Do not close it because
-	 it's already closed by X(t)CloseDisplay (Bug#18403).  */
-      eassert (0 <= dpyinfo->connection);
-      delete_keyboard_wait_descriptor (dpyinfo->connection);
-
-      /* Mark as dead. */
+      /* Do not close the connection here because it's already closed
+	 by X(t)CloseDisplay (Bug#18403).  */
       dpyinfo->display = NULL;
-      dpyinfo->connection = -1;
     }
+
+  /* ...but if called from x_connection_closed, the display may already
+     be closed and dpyinfo->display was set to 0 to indicate that.  Since
+     X server is most likely gone, explicit close is the only reliable
+     way to continue and avoid Bug#19147.  */
+  else if (dpyinfo->connection >= 0)
+    emacs_close (dpyinfo->connection);
+
+  /* No more input on this descriptor.  */
+  delete_keyboard_wait_descriptor (dpyinfo->connection);
+  /* Mark as dead. */
+  dpyinfo->connection = -1;
 
   x_delete_display (dpyinfo);
   unblock_input ();
