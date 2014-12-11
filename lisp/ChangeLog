@@ -1,3 +1,8 @@
+2014-12-11  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* emacs-lisp/eldoc.el (eldoc-documentation-function): Change default.
+	(eldoc-mode, eldoc-schedule-timer): Adjust to new default.
+
 2014-12-10  Artur Malabarba  <bruce.connor.am@gmail.com>
 
 	* let-alist.el: Add new package and macro.
@@ -17,13 +22,12 @@
 
 2014-12-10  Andreas Schwab  <schwab@suse.de>
 
-	* files.el (file-tree-walk): Use file-name-as-directory
-	unconditionally.
+	* files.el (file-tree-walk): Use file-name-as-directory unconditionally.
 
 2014-12-10  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
-	* files.el (directory-files-recursively): Use
-	`file-name-all-completions' instead of `directory-files' for
+	* files.el (directory-files-recursively):
+	Use `file-name-all-completions' instead of `directory-files' for
 	greater speed.
 
 	* net/shr.el (shr-tag-object): Don't bug out on text elements in
@@ -108,8 +112,8 @@
 
 2014-12-09  Fabián Ezequiel Gallina  <fgallina@gnu.org>
 
-	* progmodes/python.el (inferior-python-mode): Set
-	`comint-prompt-read-only` to `t` only locally.
+	* progmodes/python.el (inferior-python-mode):
+	Set `comint-prompt-read-only` to `t` only locally.
 
 2014-12-08  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
