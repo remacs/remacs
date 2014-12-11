@@ -188,6 +188,7 @@ highlighting the Log View buffer."
 
 (defun vc-hg-state (file)
   "Hg-specific version of `vc-state'."
+  (setq file (expand-file-name file))
   (let*
       ((status nil)
        (default-directory (file-name-directory file))
@@ -212,19 +213,20 @@ highlighting the Log View buffer."
                     ;; Some problem happened.  E.g. We can't find an `hg'
                     ;; executable.
                     (error nil)))))))
-    (when (eq 0 status)
-        (when (null (string-match ".*: No such file or directory$" out))
-          (let ((state (aref out 0)))
-            (cond
-             ((eq state ?=) 'up-to-date)
-             ((eq state ?A) 'added)
-             ((eq state ?M) 'edited)
-             ((eq state ?I) 'ignored)
-             ((eq state ?R) 'removed)
-             ((eq state ?!) 'missing)
-             ((eq state ??) 'unregistered)
-             ((eq state ?C) 'up-to-date) ;; Older mercurial versions use this.
-             (t 'up-to-date)))))))
+    (when (and (eq 0 status)
+	       (> (length out) 0)
+	       (null (string-match ".*: No such file or directory$" out)))
+      (let ((state (aref out 0)))
+	(cond
+	 ((eq state ?=) 'up-to-date)
+	 ((eq state ?A) 'added)
+	 ((eq state ?M) 'edited)
+	 ((eq state ?I) 'ignored)
+	 ((eq state ?R) 'removed)
+	 ((eq state ?!) 'missing)
+	 ((eq state ??) 'unregistered)
+	 ((eq state ?C) 'up-to-date) ;; Older mercurial versions use this.
+	 (t 'up-to-date))))))
 
 (defun vc-hg-working-revision (file)
   "Hg-specific version of `vc-working-revision'."
