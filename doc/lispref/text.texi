@@ -343,10 +343,10 @@ This function ignores case when comparing characters
 if @code{case-fold-search} is non-@code{nil}.  It always ignores
 text properties.
 
-Suppose the current buffer contains the text @samp{foobarbar
-haha!rara!}; then in this example the two substrings are @samp{rbar }
-and @samp{rara!}.  The value is 2 because the first substring is greater
-at the second character.
+Suppose you have the text @w{@samp{foobarbar haha!rara!}} in the
+current buffer; then in this example the two substrings are @samp{rbar
+} and @samp{rara!}.  The value is 2 because the first substring is
+greater at the second character.
 
 @example
 (compare-buffer-substrings nil 6 11 nil 16 21)
