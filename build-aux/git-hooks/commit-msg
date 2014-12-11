@@ -46,6 +46,20 @@ fi
 
 # Check the log entry.
 exec $awk '
+  BEGIN {
+    if (" " ~ /[[:space:]]/) {
+      space = "[[:space:]]"
+      non_space = "[^[:space:]]"
+      non_print = "[^[:print:]]"
+    } else {
+      # mawk 1.3.3 does not support POSIX bracket expressions.
+      # Approximate them as best we can.
+      space = "[ \f\n\r\t\v]"
+      non_space = "[^ \f\n\r\t\v]"
+      non_print = "[\1-\37\177]"
+    }
+  }
+
   /^#/ { next }
 
   !/^.*$/ {
@@ -53,7 +67,7 @@ exec $awk '
     status = 1
   }
 
-  nlines == 0 && !/[^[:space:]]/ { next }
+  nlines == 0 && $0 !~ non_space { next }
 
   { nlines++ }
 
@@ -62,18 +76,18 @@ exec $awk '
     if (! sub(/^fixup! /, ""))
       sub(/^squash! /, "")
 
-    if (/^[[:space:]]/) {
+    if ($0 ~ "^" space) {
       print "White space at start of commit message'\''s first line"
       status = 1
     }
   }
 
-  nlines == 2 && /[^[:space:]]/ {
+  nlines == 2 && $0 ~ non_space {
     print "Nonempty second line in commit message"
     status = 1
   }
 
-  72 < length && /[[:space:]]/ {
+  72 < length && $0 ~ space {
     print "Line longer than 72 characters in commit message"
     status = 1
   }
@@ -88,11 +102,11 @@ exec $awk '
     status = 1
   }
 
-  /[^[:print:]]/ {
+  $0 ~ non_print {
     if (gsub(/\t/, "")) {
       print "Tab in commit message; please use spaces instead"
     }
-    if (/[^[:print:]]/) {
+    if ($0 ~ non_print) {
       print "Unprintable character in commit message"
     }
     status = 1

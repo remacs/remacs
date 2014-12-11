@@ -1,5 +1,12 @@
 2014-12-11  Paul Eggert  <eggert@cs.ucla.edu>
 
+	Port commit-msg to mawk
+	Problem reported by Ted Zlatanov in:
+	http://lists.gnu.org/archive/html/emacs-devel/2014-12/msg01093.html
+	* build-aux/git-hooks/commit-msg (space, non_space, non_print):
+	New vars.  Use them as approximations to POSIX bracket expressions,
+	on implementations like mawk that do not support POSIX regexps.
+
 	Improve commit-msg messages and autosquash
 	Problem reported by Michal Nazarewicz in Bug#19337.
 	* build-aux/git-hooks/commit-msg: Add "commit message" to
