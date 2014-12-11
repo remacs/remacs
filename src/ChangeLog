@@ -1,3 +1,10 @@
+2014-12-11  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* fileio.c: Better preserve window-points during revert (bug#19161).
+	(Qget_buffer_window_list): New var.
+	(get_window_points_and_markers, restore_window_points): New functions.
+	(Finsert_file_contents): Use them to save and restore window-points.
+
 2014-12-11  Dmitry Antipov  <dmantipov@yandex.ru>
 
 	* xterm.c (x_delete_terminal): Call emacs_close for X connection
@@ -13,15 +20,14 @@
 	its initial value.
 	(bidi_cache_search): Handle overflown cache.  Improve commentary.
 	(bidi_cache_ensure_space): Limit allocations to the current value
-	of bidi_cache_max_elts.  Force xpalloc not to over-allocate.  If
-	less than a full BIDI_CACHE_CHUNK is left to the limit, decrease
+	of bidi_cache_max_elts.  Force xpalloc not to over-allocate.
+	If less than a full BIDI_CACHE_CHUNK is left to the limit, decrease
 	the increment to not exceed the limit.
 	(bidi_cache_iterator_state): Now returns non-zero if succeeded to
 	cache, zero otherwise (meaning the cache overflowed).  In the
 	latter case, set bidi_cache_last_idx to -1.
 	(bidi_peek_at_next_level): Handle overflown cache.
-	(bidi_push_it): Increase the cache limit for iterating the new
-	object.
+	(bidi_push_it): Increase the cache limit for iterating the new object.
 	(bidi_pop_it): Decrease the cache limit back to previous value.
 	(bidi_shelve_cache): Shelve the current value of the cache limit.
 	(bidi_unshelve_cache): Restore the value of cache limit.
@@ -280,8 +286,8 @@
 
 	* xml.c (parse_region): Take care of new optional parameter
 	'discard-comments' of 'libxml-parse(html|xml)-region'.
-	(Flibxml_parse_html_region, Flibxml_parse_xml_region): New
-	optional parameter 'discard-comments'.
+	(Flibxml_parse_html_region, Flibxml_parse_xml_region):
+	New optional parameter 'discard-comments'.
 
 2014-11-17  Paul Eggert  <eggert@cs.ucla.edu>
 
@@ -333,8 +339,8 @@
 2014-11-16  Eli Zaretskii  <eliz@gnu.org>
 
 	* window.c (window_scroll_pixel_based): Avoid truncation/rounding
-	errors in computing the number of pixels to scroll.  Suggested by
-	Kelly Dean <kelly@prtime.org>.  (Bug#19060)
+	errors in computing the number of pixels to scroll.
+	Suggested by Kelly Dean <kelly@prtime.org>.  (Bug#19060)
 
 2014-11-16  Jan Djärv  <jan.h.d@swipnet.se>
 
@@ -444,15 +450,15 @@
 	* frame.h (frame): Split `official' into `can_x_set_window_size'
 	and `can_run_window_configuration_change_hook'.
 	* nsfns.m (Fx_create_frame): Set f->can_x_set_window_size.
-	* w32fns.c (Fx_create_frame, x_create_tip_frame): Set
-	f->can_x_set_window_size.
-	* window.c (run_window_configuration_change_hook): Return
-	immediately if either f->can_x_set_window_size or
+	* w32fns.c (Fx_create_frame, x_create_tip_frame):
+	Set f->can_x_set_window_size.
+	* window.c (run_window_configuration_change_hook):
+	Return immediately if either f->can_x_set_window_size or
 	f->can_run_window_configuration_change_hook are false.
 	(Fset_window_configuration): Instead of f->official set
 	f->can_x_set_window_size.
-	* xfns.c (Fx_create_frame, x_create_tip_frame): Set
-	f->can_x_set_window_size.
+	* xfns.c (Fx_create_frame, x_create_tip_frame):
+	Set f->can_x_set_window_size.
 
 2014-11-08  Jan Djärv  <jan.h.d@swipnet.se>
 

@@ -148,6 +148,7 @@ static Lisp_Object Qcopy_directory;
 static Lisp_Object Qdelete_directory;
 
 static Lisp_Object Qsubstitute_env_in_file_name;
+static Lisp_Object Qget_buffer_window_list;
 
 Lisp_Object Qfile_error, Qfile_notify_error;
 static Lisp_Object Qfile_already_exists, Qfile_date_error;
@@ -197,7 +198,7 @@ check_writable (const char *filename, int amode)
   bool res = faccessat (AT_FDCWD, filename, amode, AT_EACCESS) == 0;
 #ifdef CYGWIN
   /* faccessat may have returned failure because Cygwin couldn't
-     determine the file's UID or GID; if so, we return success. */
+     determine the file's UID or GID; if so, we return success.  */
   if (!res)
     {
       int faccessat_errno = errno;
@@ -3410,6 +3411,56 @@ time_error_value (int errnum)
   return make_timespec (0, ns);
 }
 
+static Lisp_Object
+get_window_points_and_markers (void)
+{
+  Lisp_Object pt_marker = Fpoint_marker ();
+  Lisp_Object windows
+    = call3 (Qget_buffer_window_list, Fcurrent_buffer (), Qnil, Qt);
+  Lisp_Object window_markers = windows;
+  /* Window markers (and point) are handled specially: rather than move to
+     just before or just after the modified text, we try to keep the
+     markers at the same distance (bug#19161).
+     In general, this is wrong, but for window-markers, this should be harmless
+     and is convenient for the end user when most of the file is unmodified,
+     except for a few minor details near the beginning and near the end.  */
+  for (; CONSP (windows); windows = XCDR (windows))
+    if (WINDOWP (XCAR (windows)))
+      {
+	Lisp_Object window_marker = XWINDOW (XCAR (windows))->pointm;
+	XSETCAR (windows,
+		 Fcons (window_marker, Fmarker_position (window_marker)));
+      }
+  return Fcons (Fcons (pt_marker, Fpoint ()), window_markers);
+}
+
+static void
+restore_window_points (Lisp_Object window_markers, ptrdiff_t inserted,
+		       ptrdiff_t same_at_start, ptrdiff_t same_at_end)
+{
+  for (; CONSP (window_markers); window_markers = XCDR (window_markers))
+    if (CONSP (XCAR (window_markers)))
+      {
+	Lisp_Object car = XCAR (window_markers);
+	Lisp_Object marker = XCAR (car);
+	Lisp_Object oldpos = XCDR (car);
+	if (MARKERP (marker) && INTEGERP (oldpos)
+	    && XINT (oldpos) > same_at_start
+	    && XINT (oldpos) < same_at_end)
+	  {
+	    ptrdiff_t oldsize = same_at_end - same_at_start;
+	    ptrdiff_t newsize = inserted;
+	    double growth = newsize / (double)oldsize;
+	    ptrdiff_t newpos
+	      = same_at_start + growth * (XINT (oldpos) - same_at_start);
+	    Fset_marker (marker, make_number (newpos), Qnil);
+	  }
+      }
+}
+
+/* FIXME: insert-file-contents should be split with the top-level moved to
+   Elisp and only the core kept in C.  */
+
 DEFUN ("insert-file-contents", Finsert_file_contents, Sinsert_file_contents,
        1, 5, 0,
        doc: /* Insert contents of file FILENAME after point.
@@ -3454,18 +3505,23 @@ by calling `format-decode', which see.  */)
   int save_errno = 0;
   char read_buf[READ_BUF_SIZE];
   struct coding_system coding;
-  bool replace_handled = 0;
-  bool set_coding_system = 0;
+  bool replace_handled = false;
+  bool set_coding_system = false;
   Lisp_Object coding_system;
-  bool read_quit = 0;
+  bool read_quit = false;
   /* If the undo log only contains the insertion, there's no point
      keeping it.  It's typically when we first fill a file-buffer.  */
   bool empty_undo_list_p
     = (!NILP (visit) && NILP (BVAR (current_buffer, undo_list))
        && BEG == Z);
   Lisp_Object old_Vdeactivate_mark = Vdeactivate_mark;
-  bool we_locked_file = 0;
+  bool we_locked_file = false;
   ptrdiff_t fd_index;
+  Lisp_Object window_markers = Qnil;
+  /* same_at_start and same_at_end count bytes, because file access counts
+     bytes and BEG and END count bytes.  */
+  ptrdiff_t same_at_start = BEGV_BYTE;
+  ptrdiff_t same_at_end = ZV_BYTE;
 
   if (current_buffer->base_buffer && ! NILP (visit))
     error ("Cannot do file visiting in an indirect buffer");
@@ -3521,7 +3577,11 @@ by calling `format-decode', which see.  */)
 
   /* Replacement should preserve point as it preserves markers.  */
   if (!NILP (replace))
-    record_unwind_protect (restore_point_unwind, Fpoint_marker ());
+    {
+      window_markers = get_window_points_and_markers ();
+      record_unwind_protect (restore_point_unwind,
+			     XCAR (XCAR (window_markers)));
+    }
 
   if (fstat (fd, &st) != 0)
     report_file_error ("Input file status", orig_filename);
@@ -3599,14 +3659,14 @@ by calling `format-decode', which see.  */)
     }
 
   /* Prevent redisplay optimizations.  */
-  current_buffer->clip_changed = 1;
+  current_buffer->clip_changed = true;
 
   if (EQ (Vcoding_system_for_read, Qauto_save_coding))
     {
       coding_system = coding_inherit_eol_type (Qutf_8_emacs, Qunix);
       setup_coding_system (coding_system, &coding);
       /* Ensure we set Vlast_coding_system_used.  */
-      set_coding_system = 1;
+      set_coding_system = true;
     }
   else if (BEG < Z)
     {
@@ -3712,7 +3772,7 @@ by calling `format-decode', which see.  */)
 
       setup_coding_system (coding_system, &coding);
       /* Ensure we set Vlast_coding_system_used.  */
-      set_coding_system = 1;
+      set_coding_system = true;
     }
 
   /* If requested, replace the accessible part of the buffer
@@ -3734,16 +3794,11 @@ by calling `format-decode', which see.  */)
       && (NILP (coding_system)
 	  || ! CODING_REQUIRE_DECODING (&coding)))
     {
-      /* same_at_start and same_at_end count bytes,
-	 because file access counts bytes
-	 and BEG and END count bytes.  */
-      ptrdiff_t same_at_start = BEGV_BYTE;
-      ptrdiff_t same_at_end = ZV_BYTE;
       ptrdiff_t overlap;
       /* There is still a possibility we will find the need to do code
 	 conversion.  If that happens, set this variable to
 	 give up on handling REPLACE in the optimized way.  */
-      bool giveup_match_end = 0;
+      bool giveup_match_end = false;
 
       if (beg_offset != 0)
 	{
@@ -3777,7 +3832,7 @@ by calling `format-decode', which see.  */)
 	    /* We found that the file should be decoded somehow.
                Let's give up here.  */
 	    {
-	      giveup_match_end = 1;
+	      giveup_match_end = true;
 	      break;
 	    }
 
@@ -3790,7 +3845,7 @@ by calling `format-decode', which see.  */)
 	  if (bufpos != nread)
 	    break;
 	}
-      immediate_quit = 0;
+      immediate_quit = false;
       /* If the file matches the buffer completely,
 	 there's no need to replace anything.  */
       if (same_at_start - BEGV_BYTE == end_offset - beg_offset)
@@ -3802,7 +3857,7 @@ by calling `format-decode', which see.  */)
 	  del_range_1 (same_at_start, same_at_end, 0, 0);
 	  goto handled;
 	}
-      immediate_quit = 1;
+      immediate_quit = true;
       QUIT;
       /* Count how many chars at the end of the file
 	 match the text at the end of the buffer.  But, if we have
@@ -3853,7 +3908,7 @@ by calling `format-decode', which see.  */)
 		  && FETCH_BYTE (same_at_end - 1) >= 0200
 		  && ! NILP (BVAR (current_buffer, enable_multibyte_characters))
 		  && (CODING_MAY_REQUIRE_DECODING (&coding)))
-		giveup_match_end = 1;
+		giveup_match_end = true;
 	      break;
 	    }
 
@@ -3906,7 +3961,7 @@ by calling `format-decode', which see.  */)
 	  if (XBUFFER (XWINDOW (selected_window)->contents) == current_buffer)
 	    XWINDOW (selected_window)->start_at_line_beg = !NILP (Fbolp ());
 
-	  replace_handled = 1;
+	  replace_handled = true;
 	}
     }
 
@@ -3921,8 +3976,6 @@ by calling `format-decode', which see.  */)
      in a more optimized way.  */
   if (!NILP (replace) && ! replace_handled && BEGV < ZV)
     {
-      ptrdiff_t same_at_start = BEGV_BYTE;
-      ptrdiff_t same_at_end = ZV_BYTE;
       ptrdiff_t same_at_start_charpos;
       ptrdiff_t inserted_chars;
       ptrdiff_t overlap;
@@ -3986,7 +4039,7 @@ by calling `format-decode', which see.  */)
 	}
 
       coding_system = CODING_ID_NAME (coding.id);
-      set_coding_system = 1;
+      set_coding_system = true;
       decoded = BUF_BEG_ADDR (XBUFFER (conversion_buffer));
       inserted = (BUF_Z_BYTE (XBUFFER (conversion_buffer))
 		  - BUF_BEG_BYTE (XBUFFER (conversion_buffer)));
@@ -4111,7 +4164,7 @@ by calling `format-decode', which see.  */)
 	  /* Make binding buffer-file-name to nil effective.  */
 	  && !NILP (BVAR (current_buffer, filename))
 	  && SAVE_MODIFF >= MODIFF)
-	we_locked_file = 1;
+	we_locked_file = true;
       prepare_to_modify_buffer (PT, PT, NULL);
     }
 
@@ -4141,7 +4194,7 @@ by calling `format-decode', which see.  */)
 
     while (how_much < total)
       {
-	/* try is reserved in some compilers (Microsoft C) */
+	/* `try' is reserved in some compilers (Microsoft C).  */
 	ptrdiff_t trytry = min (total - how_much, READ_BUF_SIZE);
 	ptrdiff_t this;
 
@@ -4166,7 +4219,7 @@ by calling `format-decode', which see.  */)
 
 	    if (NILP (nbytes))
 	      {
-		read_quit = 1;
+		read_quit = true;
 		break;
 	      }
 
@@ -4299,7 +4352,7 @@ by calling `format-decode', which see.  */)
 	coding_system = raw_text_coding_system (coding_system);
       setup_coding_system (coding_system, &coding);
       /* Ensure we set Vlast_coding_system_used.  */
-      set_coding_system = 1;
+      set_coding_system = true;
     }
 
   if (!NILP (visit))
@@ -4310,7 +4363,7 @@ by calling `format-decode', which see.  */)
 	  /* Can't do this if part of the buffer might be preserved.  */
 	  && NILP (replace))
 	/* Visiting a file with these coding system makes the buffer
-	   unibyte. */
+	   unibyte.  */
 	bset_enable_multibyte_characters (current_buffer, Qnil);
     }
 
@@ -4348,6 +4401,11 @@ by calling `format-decode', which see.  */)
   /* Now INSERTED is measured in characters.  */
 
  handled:
+
+  if (inserted > 0)
+    restore_window_points (window_markers, inserted,
+			   BYTE_TO_CHAR (same_at_start),
+			   BYTE_TO_CHAR (same_at_end));
 
   if (!NILP (visit))
     {
@@ -6037,6 +6095,7 @@ This includes interactive calls to `delete-file' and
   DEFSYM (Qcopy_directory, "copy-directory");
   DEFSYM (Qdelete_directory, "delete-directory");
   DEFSYM (Qsubstitute_env_in_file_name, "substitute-env-in-file-name");
+  DEFSYM (Qget_buffer_window_list, "get-buffer-window-list");
 
   defsubr (&Sfind_file_name_handler);
   defsubr (&Sfile_name_directory);
