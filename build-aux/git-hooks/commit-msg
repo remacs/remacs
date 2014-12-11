@@ -49,7 +49,7 @@ exec $awk '
   /^#/ { next }
 
   !/^.*$/ {
-    print "Invalid character (not UTF-8)"
+    print "Invalid character (not UTF-8) in commit message"
     status = 1
   }
 
@@ -57,39 +57,50 @@ exec $awk '
 
   { nlines++ }
 
-  nlines == 1 && /^[[:space:]]/ {
-    print "White space at start of first line"
-    status = 1
+  nlines == 1 {
+    # Ignore special markers used by "git rebase --autosquash".
+    if (! sub(/^fixup! /, ""))
+      sub(/^squash! /, "")
+
+    if (/^[[:space:]]/) {
+      print "White space at start of commit message'\''s first line"
+      status = 1
+    }
   }
 
   nlines == 2 && /[^[:space:]]/ {
-    print "Nonempty second line"
-    status = 1
-  }
-
-  /[^[:print:]]/ {
-    print "Unprintable character; please use spaces instead of tabs"
+    print "Nonempty second line in commit message"
     status = 1
   }
 
   72 < length && /[[:space:]]/ {
-    print "Line longer than 72 characters"
+    print "Line longer than 72 characters in commit message"
     status = 1
   }
 
   140 < length {
-    print "Word longer than 140 characters"
+    print "Word longer than 140 characters in commit message"
     status = 1
   }
 
   /^Signed-off-by: / {
-    print "'\''Signed-off-by:'\'' present"
+    print "'\''Signed-off-by:'\'' in commit message"
+    status = 1
+  }
+
+  /[^[:print:]]/ {
+    if (gsub(/\t/, "")) {
+      print "Tab in commit message; please use spaces instead"
+    }
+    if (/[^[:print:]]/) {
+      print "Unprintable character in commit message"
+    }
     status = 1
   }
 
   END {
     if (nlines == 0) {
-      print "Empty change log entry"
+      print "Empty commit message"
       status = 1
     }
     exit status

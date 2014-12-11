@@ -1,3 +1,12 @@
+2014-12-11  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Improve commit-msg messages and autosquash
+	Problem reported by Michal Nazarewicz in Bug#19337.
+	* build-aux/git-hooks/commit-msg: Add "commit message" to
+	diagnostics.  Distinguish better between tabs and other
+	unprintable chars in diagnostics.  Don't complain if a prefix
+	"fixup! " or "squash! " makes a summary line too long.
+
 2014-12-08  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Port commit-message checking to FreeBSD 9.
