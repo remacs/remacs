@@ -673,27 +673,6 @@ See also `gnutls-init'.  */)
   return emacs_gnutls_deinit (proc);
 }
 
-DEFUN ("gnutls-available-p", Fgnutls_available_p, Sgnutls_available_p, 0, 0, 0,
-       doc: /* Return t if GnuTLS is available in this instance of Emacs.  */)
-     (void)
-{
-#ifdef WINDOWSNT
-  Lisp_Object found = Fassq (Qgnutls_dll, Vlibrary_cache);
-  if (CONSP (found))
-    return XCDR (found);
-  else
-    {
-      Lisp_Object status;
-      status = init_gnutls_functions () ? Qt : Qnil;
-      Vlibrary_cache = Fcons (Fcons (Qgnutls_dll, status), Vlibrary_cache);
-      return status;
-    }
-#else
-  return Qt;
-#endif
-}
-
-
 /* Initializes global GnuTLS state to defaults.
 Call `gnutls-global-deinit' when GnuTLS usage is no longer needed.
 Returns zero on success.  */
@@ -1179,6 +1158,26 @@ This function may also return `gnutls-e-again', or
   return gnutls_make_error (ret);
 }
 
+DEFUN ("gnutls-available-p", Fgnutls_available_p, Sgnutls_available_p, 0, 0, 0,
+       doc: /* Return t if GnuTLS is available in this instance of Emacs.  */)
+     (void)
+{
+#ifdef WINDOWSNT
+  Lisp_Object found = Fassq (Qgnutls_dll, Vlibrary_cache);
+  if (CONSP (found))
+    return XCDR (found);
+  else
+    {
+      Lisp_Object status;
+      status = init_gnutls_functions () ? Qt : Qnil;
+      Vlibrary_cache = Fcons (Fcons (Qgnutls_dll, status), Vlibrary_cache);
+      return status;
+    }
+#else
+  return Qt;
+#endif
+}
+
 void
 syms_of_gnutls (void)
 {
@@ -1231,6 +1230,21 @@ Set this larger than 0 to get debug output in the *Messages* buffer.
 1 is for important messages, 2 is for debug data, and higher numbers
 are as per the GnuTLS logging conventions.  */);
   global_gnutls_log_level = 0;
+}
+
+#else
+
+DEFUN ("gnutls-available-p", Fgnutls_available_p, Sgnutls_available_p, 0, 0, 0,
+       doc: /* Return t if GnuTLS is available in this instance of Emacs.  */)
+     (void)
+{
+  return Qnil;
+}
+
+void
+syms_of_gnutls (void)
+{
+  defsubr (&Sgnutls_available_p);
 }
 
 #endif /* HAVE_GNUTLS */

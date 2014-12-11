@@ -82,9 +82,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "syntax.h"
 #include "systime.h"
 
-#ifdef HAVE_GNUTLS
 #include "gnutls.h"
-#endif
 
 #if (defined PROFILING \
      && (defined __FreeBSD__ || defined GNU_LINUX || defined __MINGW32__))
@@ -1502,9 +1500,7 @@ Using an Emacs configured with --with-x-toolkit=lucid does not have this problem
       syms_of_fontset ();
 #endif /* HAVE_NS */
 
-#ifdef HAVE_GNUTLS
       syms_of_gnutls ();
-#endif
 
 #ifdef HAVE_GFILENOTIFY
       syms_of_gfilenotify ();
