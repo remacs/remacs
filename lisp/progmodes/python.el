@@ -689,7 +689,8 @@ It makes underscores and dots word constituent chars.")
   "Current indentation level `python-indent-line-function' is using.")
 
 (defvar python-indent-levels '(0)
-  "Levels of indentation available for `python-indent-line-function'.")
+  "Levels of indentation available for `python-indent-line-function'.
+Can also be `noindent' if automatic indentation can't be used.")
 
 (defun python-indent-guess-indent-offset ()
   "Guess and set `python-indent-offset' for the current buffer."
@@ -810,7 +811,9 @@ START is the buffer position where the sexp starts."
        start))))
 
 (defun python-indent-calculate-indentation ()
-  "Calculate correct indentation offset for the current line."
+  "Calculate correct indentation offset for the current line.
+Returns `noindent' if the indentation does not depend on Python syntax,
+such as in strings."
   (let* ((indentation-context (python-indent-context))
          (context-status (car indentation-context))
          (context-start (cdr indentation-context)))
@@ -860,9 +863,7 @@ START is the buffer position where the sexp starts."
           ;; When inside of a string, do nothing. just use the current
           ;; indentation.  XXX: perhaps it would be a good idea to
           ;; invoke standard text indentation here
-          (`inside-string
-           (goto-char context-start)
-           (current-indentation))
+          (`inside-string 'noindent)
           ;; After backslash we have several possibilities.
           (`after-backslash
            (cond
@@ -988,14 +989,17 @@ START is the buffer position where the sexp starts."
       ;; XXX: This asks for a refactor.  Even if point is on a
       ;; dedenter statement, it could be multiline and in that case
       ;; the continuation lines should be indented with normal rules.
-      (let* ((indentation (python-indent-calculate-indentation))
-             (remainder (% indentation python-indent-offset))
-             (steps (/ (- indentation remainder) python-indent-offset)))
-        (setq python-indent-levels (list 0))
-        (dotimes (step steps)
-          (push (* python-indent-offset (1+ step)) python-indent-levels))
-        (when (not (eq 0 remainder))
-          (push (+ (* python-indent-offset steps) remainder) python-indent-levels)))
+      (let* ((indentation (python-indent-calculate-indentation)))
+        (if (not (numberp indentation))
+            (setq python-indent-levels indentation)
+          (let* ((remainder (% indentation python-indent-offset))
+                 (steps (/ (- indentation remainder) python-indent-offset)))
+            (setq python-indent-levels (list 0))
+            (dotimes (step steps)
+              (push (* python-indent-offset (1+ step)) python-indent-levels))
+            (when (not (eq 0 remainder))
+              (push (+ (* python-indent-offset steps) remainder)
+                    python-indent-levels)))))
     (setq python-indent-levels
           (or
            (mapcar (lambda (pos)
@@ -1004,8 +1008,9 @@ START is the buffer position where the sexp starts."
                        (current-indentation)))
                    (python-info-dedenter-opening-block-positions))
            (list 0))))
-  (setq python-indent-current-level (1- (length python-indent-levels))
-        python-indent-levels (nreverse python-indent-levels)))
+  (when (listp python-indent-levels)
+    (setq python-indent-current-level (1- (length python-indent-levels))
+          python-indent-levels (nreverse python-indent-levels))))
 
 (defun python-indent-toggle-levels ()
   "Toggle `python-indent-current-level' over `python-indent-levels'."
@@ -1033,28 +1038,30 @@ in the variable `python-indent-levels'.  Afterwards it sets the
 variable `python-indent-current-level' correctly so offset is
 equal to
    (nth python-indent-current-level python-indent-levels)"
-  (or
-   (and (or (and (memq this-command python-indent-trigger-commands)
-                 (eq last-command this-command))
-            force-toggle)
-        (not (equal python-indent-levels '(0)))
-        (or (python-indent-toggle-levels) t))
-   (python-indent-calculate-levels))
-  (let* ((starting-pos (point-marker))
-         (indent-ending-position
-          (+ (line-beginning-position) (current-indentation)))
-         (follow-indentation-p
-          (or (bolp)
-              (and (<= (line-beginning-position) starting-pos)
-                   (>= indent-ending-position starting-pos))))
-         (next-indent (nth python-indent-current-level python-indent-levels)))
-    (unless (= next-indent (current-indentation))
-      (beginning-of-line)
-      (delete-horizontal-space)
-      (indent-to next-indent)
-      (goto-char starting-pos))
-    (and follow-indentation-p (back-to-indentation)))
-  (python-info-dedenter-opening-block-message))
+  (if (and (or (and (memq this-command python-indent-trigger-commands)
+                    (eq last-command this-command))
+               force-toggle)
+           (not (equal python-indent-levels '(0))))
+      (if (listp python-indent-levels)
+          (python-indent-toggle-levels))
+    (python-indent-calculate-levels))
+  (if (eq python-indent-levels 'noindent)
+      python-indent-levels
+    (let* ((starting-pos (point-marker))
+           (indent-ending-position
+            (+ (line-beginning-position) (current-indentation)))
+           (follow-indentation-p
+            (or (bolp)
+                (and (<= (line-beginning-position) starting-pos)
+                     (>= indent-ending-position starting-pos))))
+           (next-indent (nth python-indent-current-level python-indent-levels)))
+      (unless (= next-indent (current-indentation))
+        (beginning-of-line)
+        (delete-horizontal-space)
+        (indent-to next-indent)
+        (goto-char starting-pos))
+      (and follow-indentation-p (back-to-indentation)))
+    (python-info-dedenter-opening-block-message)))
 
 (defun python-indent-line-function ()
   "`indent-line-function' for Python mode.
@@ -1189,7 +1196,7 @@ the line will be re-indented automatically if needed."
       (save-excursion
         (goto-char (line-beginning-position))
         (let ((indentation (python-indent-calculate-indentation)))
-          (when (< (current-indentation) indentation)
+          (when (and (numberp indentation) (< (current-indentation) indentation))
             (indent-line-to indentation)))))
      ;; Electric colon
      ((and (eq ?: last-command-event)

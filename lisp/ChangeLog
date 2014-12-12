@@ -1,3 +1,11 @@
+2014-12-12  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* progmodes/python.el (python-indent-line): Use `noindent' in strings.
+	(python-indent-levels): Document extra value.
+	(python-indent-calculate-indentation): Return `noindent' in strings.
+	(python-indent-post-self-insert-function)
+	(python-indent-calculate-levels): Handle new value.
+
 2014-12-12  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
 	* net/network-stream.el (network-stream-open-starttls): No need to
@@ -12,8 +20,8 @@
 	vc/vc.el: latest-on-branch-p is no longer a public method.
 
 	* vc/vc.el, vc/vc-hg.el, vc/vc-git.el, vc/vc-hooks.el,
-	vc/vc-mtn.el, vc/vc-rcs.el, vc/vc-sccs.el, vc/vc-src.el: rrollback
-	method removed, to be replaced in the future by uncommit.
+	vc/vc-mtn.el, vc/vc-rcs.el, vc/vc-sccs.el, vc/vc-src.el: Remove `rollback'
+	method, to be replaced in the future by uncommit.
 
 2014-12-11  Michael Albinus  <michael.albinus@gmx.de>
 
