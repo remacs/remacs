@@ -1158,11 +1158,14 @@ This function may also return `gnutls-e-again', or
   return gnutls_make_error (ret);
 }
 
+#endif	/* HAVE_GNUTLS */
+
 DEFUN ("gnutls-available-p", Fgnutls_available_p, Sgnutls_available_p, 0, 0, 0,
        doc: /* Return t if GnuTLS is available in this instance of Emacs.  */)
      (void)
 {
-#ifdef WINDOWSNT
+#ifdef HAVE_GNUTLS
+# ifdef WINDOWSNT
   Lisp_Object found = Fassq (Qgnutls_dll, Vlibrary_cache);
   if (CONSP (found))
     return XCDR (found);
@@ -1173,14 +1176,18 @@ DEFUN ("gnutls-available-p", Fgnutls_available_p, Sgnutls_available_p, 0, 0, 0,
       Vlibrary_cache = Fcons (Fcons (Qgnutls_dll, status), Vlibrary_cache);
       return status;
     }
-#else
+# else	/* !WINDOWSNT */
   return Qt;
-#endif
+# endif	 /* !WINDOWSNT */
+#else  /* !HAVE_GNUTLS */
+  return Qnil;
+#endif	/* !HAVE_GNUTLS */
 }
 
 void
 syms_of_gnutls (void)
 {
+#ifdef HAVE_GNUTLS
   gnutls_global_initialized = 0;
 
   DEFSYM (Qgnutls_dll, "gnutls");
@@ -1222,7 +1229,6 @@ syms_of_gnutls (void)
   defsubr (&Sgnutls_boot);
   defsubr (&Sgnutls_deinit);
   defsubr (&Sgnutls_bye);
-  defsubr (&Sgnutls_available_p);
 
   DEFVAR_INT ("gnutls-log-level", global_gnutls_log_level,
 	      doc: /* Logging level used by the GnuTLS functions.
@@ -1230,21 +1236,8 @@ Set this larger than 0 to get debug output in the *Messages* buffer.
 1 is for important messages, 2 is for debug data, and higher numbers
 are as per the GnuTLS logging conventions.  */);
   global_gnutls_log_level = 0;
-}
 
-#else
+#endif	/* HAVE_GNUTLS */
 
-DEFUN ("gnutls-available-p", Fgnutls_available_p, Sgnutls_available_p, 0, 0, 0,
-       doc: /* Return t if GnuTLS is available in this instance of Emacs.  */)
-     (void)
-{
-  return Qnil;
-}
-
-void
-syms_of_gnutls (void)
-{
   defsubr (&Sgnutls_available_p);
 }
-
-#endif /* HAVE_GNUTLS */

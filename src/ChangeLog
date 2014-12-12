@@ -1,3 +1,9 @@
+2014-12-12  Eli Zaretskii  <eliz@gnu.org>
+
+	* gnutls.c (Fgnutls_available_p, syms_of_gnutls): Move
+	gnutls-available-p out of the HAVE_GNUTLS conditional, and define
+	them only once.
+
 2014-12-11  Teodor Zlatanov  <tzz@lifelogs.com>
 
 	* emacs.c (main): Always include gnutls.h and run syms_of_gnutls.
