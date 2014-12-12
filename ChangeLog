@@ -1,3 +1,9 @@
+2014-12-12  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Git ignore lib/std*.h
+	* .gitignore: Add lib/std*.h, to ignore stdarg.h, stdbool.h, and
+	stddef.h.  Remove subsumed entries.
+
 2014-12-11  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Port commit-msg to mawk
