@@ -3,6 +3,7 @@
 	Git ignore lib/std*.h
 	* .gitignore: Add lib/std*.h, to ignore stdarg.h, stdbool.h, and
 	stddef.h.  Remove subsumed entries.
+	Add !lib/std*.in.h, so as to not ignore the .in.h files.
 
 2014-12-11  Paul Eggert  <eggert@cs.ucla.edu>
 

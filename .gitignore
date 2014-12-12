@@ -65,6 +65,7 @@ lib/inttypes.h
 lib/libgnu.a
 lib/signal.h
 lib/std*.h
+!lib/std*.in.h
 lib/string.h
 lib/sys/
 lib/time.h
