@@ -3,7 +3,7 @@
 % Load plain if necessary, i.e., if running under initex.
 \expandafter\ifx\csname fmtname\endcsname\relax\input plain\fi
 %
-\def\texinfoversion{2014-10-29.10}
+\def\texinfoversion{2014-11-14.07}
 %
 % Copyright 1985, 1986, 1988, 1990, 1991, 1992, 1993, 1994, 1995,
 % 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006,
@@ -1010,24 +1010,15 @@ where each line of input produces a line of output.}
 % paragraph.
 %
 \gdef\dosuppressfirstparagraphindent{%
-  \gdef\indent{%
-    \restorefirstparagraphindent
-    \indent
-  }%
-  \gdef\noindent{%
-    \restorefirstparagraphindent
-    \noindent
-  }%
-  \global\everypar = {%
-    \kern -\parindent
-    \restorefirstparagraphindent
-  }%
+  \gdef\indent  {\restorefirstparagraphindent \indent}%
+  \gdef\noindent{\restorefirstparagraphindent \noindent}%
+  \global\everypar = {\kern -\parindent \restorefirstparagraphindent}%
 }
-
+%
 \gdef\restorefirstparagraphindent{%
-  \global \let \indent = \ptexindent
-  \global \let \noindent = \ptexnoindent
-  \global \everypar = {}%
+  \global\let\indent = \ptexindent
+  \global\let\noindent = \ptexnoindent
+  \global\everypar = {}%
 }
 
 
@@ -5801,6 +5792,7 @@ end
   %
   {%
     \chapfonts \rmisbold
+    \let\footnote=\errfootnoteheading % give better error message
     %
     % Have to define \lastsection before calling \donoderef, because the
     % xref code eventually uses it.  On the other hand, it has to be called
@@ -5912,6 +5904,7 @@ end
     \ifx\temptype\Yomitfromtockeyword\else
       \checkenv{}% non-@*heading should not be in an environment.
     \fi
+    \let\footnote=\errfootnoteheading
     %
     % Switch to the right set of fonts.
     \csname #2fonts\endcsname \rmisbold
@@ -8368,9 +8361,6 @@ end
 %
 % Auto-number footnotes.  Otherwise like plain.
 \gdef\footnote{%
-  \let\indent=\ptexindent
-  \let\noindent=\ptexnoindent
-  %
   \global\advance\footnoteno by \@ne
   \edef\thisfootno{$^{\the\footnoteno}$}%
   %
@@ -8397,7 +8387,7 @@ end
   %
   % Nested footnotes are not supported in TeX, that would take a lot
   % more work.  (\startsavinginserts does not suffice.)
-  \let\footnote=\errfootnote
+  \let\footnote=\errfootnotenest
   %
   % We want to typeset this text as a normal paragraph, even if the
   % footnote reference occurs in (for example) a display environment.
@@ -8436,10 +8426,15 @@ end
 }
 }%end \catcode `\@=11
 
-\def\errfootnote{%
+\def\errfootnotenest{%
   \errhelp=\EMsimple
   \errmessage{Nested footnotes not supported in texinfo.tex,
     even though they work in makeinfo; sorry}
+}
+
+\def\errfootnoteheading{%
+  \errhelp=\EMsimple
+  \errmessage{Footnotes in chapters, sections, etc., are not supported}
 }
 
 % In case a @footnote appears in a vbox, save the footnote text and create

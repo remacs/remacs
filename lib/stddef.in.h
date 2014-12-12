@@ -39,7 +39,6 @@
 
 # if !(defined _@GUARD_PREFIX@_STDDEF_H && defined _GL_STDDEF_WINT_T)
 #  ifdef __need_wint_t
-#   undef _@GUARD_PREFIX@_STDDEF_H
 #   define _GL_STDDEF_WINT_T
 #  endif
 #  @INCLUDE_NEXT@ @NEXT_STDDEF_H@
@@ -54,31 +53,43 @@
 
 #  @INCLUDE_NEXT@ @NEXT_STDDEF_H@
 
-#  ifndef _@GUARD_PREFIX@_STDDEF_H
-#   define _@GUARD_PREFIX@_STDDEF_H
-
 /* On NetBSD 5.0, the definition of NULL lacks proper parentheses.  */
-#if @REPLACE_NULL@
-# undef NULL
-# ifdef __cplusplus
+#  if (@REPLACE_NULL@ \
+       && (!defined _@GUARD_PREFIX@_STDDEF_H || defined _GL_STDDEF_WINT_T))
+#   undef NULL
+#   ifdef __cplusplus
    /* ISO C++ says that the macro NULL must expand to an integer constant
       expression, hence '((void *) 0)' is not allowed in C++.  */
-#  if __GNUG__ >= 3
+#    if __GNUG__ >= 3
     /* GNU C++ has a __null macro that behaves like an integer ('int' or
        'long') but has the same size as a pointer.  Use that, to avoid
        warnings.  */
-#   define NULL __null
-#  else
-#   define NULL 0L
+#     define NULL __null
+#    else
+#     define NULL 0L
+#    endif
+#   else
+#    define NULL ((void *) 0)
+#   endif
 #  endif
-# else
-#  define NULL ((void *) 0)
-# endif
-#endif
+
+#  ifndef _@GUARD_PREFIX@_STDDEF_H
+#   define _@GUARD_PREFIX@_STDDEF_H
 
 /* Some platforms lack wchar_t.  */
 #if !@HAVE_WCHAR_T@
 # define wchar_t int
+#endif
+
+/* Some platforms lack max_align_t.  */
+#if !@HAVE_MAX_ALIGN_T@
+typedef union
+{
+  char *__p;
+  double __d;
+  long double __ld;
+  long int __i;
+} max_align_t;
 #endif
 
 #  endif /* _@GUARD_PREFIX@_STDDEF_H */

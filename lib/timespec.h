@@ -74,7 +74,7 @@ make_timespec (time_t s, long int ns)
 
    The (int) cast avoids a gcc -Wconversion warning.  */
 
-_GL_TIMESPEC_INLINE int
+_GL_TIMESPEC_INLINE int _GL_ATTRIBUTE_PURE
 timespec_cmp (struct timespec a, struct timespec b)
 {
   return (a.tv_sec < b.tv_sec ? -1
@@ -84,7 +84,7 @@ timespec_cmp (struct timespec a, struct timespec b)
 
 /* Return -1, 0, 1, depending on the sign of A.  A.tv_nsec must be
    nonnegative.  */
-_GL_TIMESPEC_INLINE int
+_GL_TIMESPEC_INLINE int _GL_ATTRIBUTE_PURE
 timespec_sign (struct timespec a)
 {
   return a.tv_sec < 0 ? -1 : a.tv_sec || a.tv_nsec;

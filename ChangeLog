@@ -1,3 +1,14 @@
+2014-12-12  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Merge from gnulib
+	2014-12-12 stddef: support C11's max_align_t
+	2014-12-08 apply _GL_ATTRIBUTE_PURE to some inline functions
+	2014-12-02 support GNU format printf and scanf on mingw
+	* doc/misc/texinfo.tex, lib/stat-time.h, lib/stddef.in.h:
+	* lib/timespec.h, m4/extensions.m4, m4/stddef_h.m4, m4/stdio_h.m4:
+	Update from gnulib.
+	* lib/gnulib.mk: Regenerate.
+
 2014-12-06  Stephen Leake  <stephen_leake@stephe-leake.org>
 
 	* CONTRIBUTE: Improve; add explicit web references, move some info
