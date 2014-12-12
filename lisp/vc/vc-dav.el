@@ -147,10 +147,6 @@ It should return a status of either 0 (no differences found), or
 
 ;;; Unimplemented functions
 ;;
-;; vc-dav-latest-on-branch-p(URL)
-;;    Return non-nil if the current workfile version of FILE is the
-;;    latest on its branch.  There are no branches in webdav yet.
-;;
 ;; vc-dav-mode-line-string(url)
 ;;    Return a dav-specific mode line string for URL. Are there any
 ;;    specific states that we want exposed?

@@ -52,9 +52,9 @@
 
 ;; This mode is fully documented in the Emacs user's manual.
 ;;
-;; Supported version-control systems presently include CVS, RCS, SRC, GNU
-;; Arch, Subversion, Bzr, Git, Mercurial, Monotone and SCCS
-;; (or its free replacement, CSSC).
+;; Supported version-control systems presently include CVS, RCS, SRC,
+;; GNU Subversion, Bzr, Git, Mercurial, Monotone and SCCS (or its free
+;; replacement, CSSC).
 ;;
 ;; If your site uses the ChangeLog convention supported by Emacs, the
 ;; function `log-edit-comment-to-change-log' could prove a useful checkin hook,
@@ -179,13 +179,6 @@
 ;;   by the last checkout or update, not necessarily the same thing as the
 ;;   head or tip revision.  Should return "0" for a file added but not yet
 ;;   committed.
-;;
-;; - latest-on-branch-p (file)
-;;
-;;   Return non-nil if the working revision of FILE is the latest revision
-;;   on its branch (many VCSes call this the 'tip' or 'head' revision).
-;;   The default implementation always returns t, which means that
-;;   working with non-current revisions is not supported by default.
 ;;
 ;; * checkout-model (files)
 ;;
@@ -604,6 +597,11 @@
 ;;
 ;; - The rollback method (implemented by RCS and SCCS only) is gone. See
 ;;   the to-do note on uncommit.
+;;
+;; - latest-on-branch-p is no longer a public method. It was to be used
+;;   for implementing rollback. RCS keeps its implementation (the only one)
+;;   for internal use.
+
 
 ;;; Todo:
 
@@ -634,16 +632,6 @@
 ;; - Add a primitives for switching to a branch (creating it if required.
 ;;
 ;; - Add the ability to list tags and branches.
-;;
-;;;; Internal cleanups:
-;;
-;; - Another important thing: merge all the status-like backend
-;;   operations.  We should remove dir-status-files and state and
-;;   replace them with just `status' which takes a fileset and a
-;;   continuation (like dir-status-files) and returns a buffer in
-;;   which the process(es) are run (or nil if it worked
-;;   synchronously).  Hopefully we can define the old operations in
-;;   term of this one.
 ;;
 ;;;; Unify two different versions of the amend capability
 ;;
@@ -1462,9 +1450,7 @@ After check-out, runs the normal hook `vc-checkout-hook'."
          (signal (car err) (cdr err))))
       `((vc-state . ,(if (or (eq (vc-checkout-model backend (list file)) 'implicit)
                              nil)
-                         (if (vc-call-backend backend 'latest-on-branch-p file)
-                             'up-to-date
-                           'needs-update)
+			 'up-to-date
                        'edited))
         (vc-checkout-time . ,(nth 5 (file-attributes file))))))
   (vc-resynch-buffer file t t)
@@ -2736,12 +2722,6 @@ log entries should be gathered."
   "Indicate whether BACKEND is responsible for FILE.
 The default is to return nil always."
   nil)
-
-(defun vc-default-latest-on-branch-p (_backend _file)
-  "Return non-nil if FILE is the latest on its branch.
-This default implementation always returns non-nil, which means that
-editing non-current revisions is not supported by default."
-  t)
 
 (defun vc-default-find-revision (backend file rev buffer)
   "Provide the new `find-revision' op based on the old `checkout' op.

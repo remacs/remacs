@@ -52,7 +52,6 @@
 ;; * state (file)                                  OK
 ;; - dir-status-files (dir files uf)               OK
 ;; * working-revision (file)                       OK
-;; - latest-on-branch-p (file)                     NOT NEEDED
 ;; * checkout-model (files)                        OK
 ;; - mode-line-string (file)                       OK
 ;; STATE-CHANGING FUNCTIONS

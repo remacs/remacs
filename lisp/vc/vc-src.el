@@ -35,7 +35,6 @@
 ;; - dir-extra-headers (dir)                   NOT NEEDED
 ;; - dir-printer (fileinfo)                    ??
 ;; * working-revision (file)                   OK
-;; - latest-on-branch-p (file)                 ??
 ;; * checkout-model (files)                    OK
 ;; - mode-line-string (file)                   NOT NEEDED
 ;; STATE-CHANGING FUNCTIONS
