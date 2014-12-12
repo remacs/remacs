@@ -1,5 +1,8 @@
 2014-12-12  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
+	* net/network-stream.el (network-stream-open-starttls): No need to
+	check for the availability of `gnutls-available-p'.
+
 	* files.el (directory-files-recursively): Don't follow symlinks to
 	other directories.
 

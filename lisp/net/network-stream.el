@@ -225,8 +225,6 @@ asynchronously, if possible."
 	 (capabilities (network-stream-command stream capability-command
 					       eo-capa))
 	 (resulting-type 'plain)
-	 (builtin-starttls (and (fboundp 'gnutls-available-p)
-				(gnutls-available-p)))
 	 starttls-available starttls-command error)
 
     ;; First check whether the server supports STARTTLS at all.
@@ -237,14 +235,14 @@ asynchronously, if possible."
     ;; connection.
     (when (and starttls-command
 	       (setq starttls-available
-		     (or builtin-starttls
+		     (or (gnutls-available-p)
 			 (and (or require-tls
 				  (plist-get parameters :use-starttls-if-possible))
 			      (starttls-available-p))))
 	       (not (eq (plist-get parameters :type) 'plain)))
       ;; If using external STARTTLS, drop this connection and start
       ;; anew with `starttls-open-stream'.
-      (unless builtin-starttls
+      (unless (gnutls-available-p)
 	(delete-process stream)
 	(setq start (with-current-buffer buffer (point-max)))
 	(let* ((starttls-extra-arguments
@@ -277,7 +275,7 @@ asynchronously, if possible."
 		   (network-stream-command stream starttls-command eoc)))
 	      (and response (string-match success-string response)))
 	;; The server said it was OK to begin STARTTLS negotiations.
-	(if builtin-starttls
+	(if (gnutls-available-p)
 	    (let ((cert (network-stream-certificate host service parameters)))
 	      (condition-case nil
 		  (gnutls-negotiate :process stream :hostname host
@@ -326,7 +324,7 @@ asynchronously, if possible."
       (delete-process stream)
       (setq stream nil))
     ;; Check certificate validity etc.
-    (when builtin-starttls
+    (when (gnutls-available-p)
       (setq stream (nsm-verify-connection
 		    stream host service
 		    (eq resulting-type 'tls)
@@ -356,22 +354,20 @@ asynchronously, if possible."
 (defun network-stream-open-tls (name buffer host service parameters)
   (with-current-buffer buffer
     (let* ((start (point-max))
-	   (use-builtin-gnutls (and (fboundp 'gnutls-available-p)
-				    (gnutls-available-p)))
 	   (stream
-	    (funcall (if use-builtin-gnutls
+	    (funcall (if (gnutls-available-p)
 			 'open-gnutls-stream
 		       'open-tls-stream)
 		     name buffer host service))
 	   (eoc (plist-get parameters :end-of-command)))
       ;; Check certificate validity etc.
-      (when (and use-builtin-gnutls stream)
+      (when (and (gnutls-available-p) stream)
 	(setq stream (nsm-verify-connection stream host service)))
       (if (null stream)
 	  (list nil nil nil 'plain)
 	;; If we're using tls.el, we have to delete the output from
 	;; openssl/gnutls-cli.
-	(when (and (null use-builtin-gnutls)
+	(when (and (not (gnutls-available-p))
 		   eoc)
 	  (network-stream-get-response stream start eoc)
 	  (goto-char (point-min))
