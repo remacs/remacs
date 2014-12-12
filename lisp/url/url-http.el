@@ -495,8 +495,7 @@ should be shown to the user."
 				    (url-port url-current-object)
 				    url-http-process)
   ;; Pass the https certificate on to the caller.
-  (when (and (fboundp 'gnutls-available-p)
-	     (gnutls-available-p))
+  (when (gnutls-available-p)
     (let ((status (gnutls-peer-status url-http-process)))
       (when (or status
 		(plist-get (car url-callback-arguments) :peer))

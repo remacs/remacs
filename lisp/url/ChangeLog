@@ -1,3 +1,8 @@
+2014-12-12  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* url-http.el (url-http-parse-headers): `gnutls-available-p' is
+	now always available.
+
 2014-12-11  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
 	* url-http.el (url-http-parse-headers): Check that
