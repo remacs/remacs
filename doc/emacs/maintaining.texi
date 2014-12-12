@@ -1018,8 +1018,6 @@ Revert the work file(s) in the current VC fileset to the last revision
 (@code{vc-revert}).
 @end table
 
-@c `C-x v c' (vc-rollback) was removed, since it's RCS/SCCS specific.
-
 @kindex C-x v u
 @findex vc-revert
 @vindex vc-revert-show-diff

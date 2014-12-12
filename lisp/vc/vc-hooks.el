@@ -868,7 +868,6 @@ current, and kill the buffer that visits the link."
   (let ((map (make-sparse-keymap)))
     (define-key map "a" 'vc-update-change-log)
     (define-key map "b" 'vc-switch-backend)
-    (define-key map "c" 'vc-rollback)
     (define-key map "d" 'vc-dir)
     (define-key map "g" 'vc-annotate)
     (define-key map "G" 'vc-ignore)
@@ -938,13 +937,6 @@ current, and kill the buffer that visits the link."
       '(menu-item "Insert Header" vc-insert-headers
 		  :help "Insert headers into a file for use with a version control system.
 "))
-    (bindings--define-key map [undo]
-      '(menu-item "Undo Last Check-In" vc-rollback
-                  :enable (let ((backend (if buffer-file-name
-                                             (vc-backend buffer-file-name))))
-                            (or (not backend)
-                                (vc-find-backend-function backend 'rollback)))
-		  :help "Remove the most recent changeset committed to the repository"))
     (bindings--define-key map [vc-revert]
       '(menu-item "Revert to Base Version" vc-revert
 		  :help "Revert working copies of the selected file set to their repository contents"))

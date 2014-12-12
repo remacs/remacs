@@ -432,43 +432,6 @@ attempt the checkout for all registered files beneath it."
 		    new-version)))))
 	(message "Checking out %s...done" file))))))
 
-(defun vc-rcs-rollback (files)
-  "Roll back, undoing the most recent checkins of FILES.  Directories are
-expanded to all registered subfiles in them."
-  (if (not files)
-      (error "RCS backend doesn't support directory-level rollback"))
-  (dolist (file (vc-expand-dirs files 'RCS))
-	  (let* ((discard (vc-working-revision file))
-		 (previous (if (vc-rcs-trunk-p discard) "" (vc-branch-part discard)))
-		 (config (current-window-configuration))
-		 (done nil))
-	    (if (null (yes-or-no-p (format "Remove version %s from %s history? "
-					   discard file)))
-		(error "Aborted"))
-	    (message "Removing revision %s from %s." discard file)
-	    (vc-do-command "*vc*" 0 "rcs" (vc-master-name file) (concat "-o" discard))
-	    ;; Check out the most recent remaining version.  If it
-	    ;; fails, because the whole branch got deleted, do a
-	    ;; double-take and check out the version where the branch
-	    ;; started.
-	    (while (not done)
-	      (condition-case err
-		  (progn
-		    (vc-do-command "*vc*" 0 "co" (vc-master-name file) "-f"
-				   (concat "-u" previous))
-		    (setq done t))
-		(error (set-buffer "*vc*")
-		       (goto-char (point-min))
-		       (if (search-forward "no side branches present for" nil t)
-			   (progn (setq previous (vc-branch-part previous))
-				  (vc-rcs-set-default-branch file previous)
-				  ;; vc-do-command popped up a window with
-				  ;; the error message.  Get rid of it, by
-				  ;; restoring the old window configuration.
-				  (set-window-configuration config))
-			 ;; No, it was some other error: re-signal it.
-			 (signal (car err) (cdr err)))))))))
-
 (defun vc-rcs-revert (file &optional _contents-done)
   "Revert FILE to the version it was based on.  If FILE is a directory,
 revert all registered files beneath it."

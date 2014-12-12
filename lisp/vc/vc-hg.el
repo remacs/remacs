@@ -60,7 +60,6 @@
 ;; * find-revision (file rev buffer)           OK
 ;; * checkout (file &optional rev)             OK
 ;; * revert (file &optional contents-done)     OK
-;; - rollback (files)                          ?? PROBABLY NOT NEEDED
 ;; - merge (file rev1 rev2)                    NEEDED
 ;; - merge-news (file)                         NEEDED
 ;; - steal-lock (file &optional revision)      NOT NEEDED

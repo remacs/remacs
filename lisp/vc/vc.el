@@ -46,7 +46,7 @@
 ;; If you maintain a client of the mode or customize it in your .emacs,
 ;; note that some backend functions which formerly took single file arguments
 ;; now take a list of files.  These include: register, checkin, print-log,
-;; rollback, and diff.
+;; and diff.
 
 ;;; Commentary:
 
@@ -275,15 +275,6 @@
 ;;   only needs to update the status of FILE within the backend.
 ;;   If FILE is in the `added' state it should be returned to the
 ;;   `unregistered' state.
-;;
-;; - rollback (files)
-;;
-;;   Remove the tip revision of each of FILES from the repository.  If
-;;   this function is not provided, trying to cancel a revision is
-;;   caught as an error.  (Most backends don't provide it.)  (Also
-;;   note that older versions of this backend command were called
-;;   'cancel-version' and took a single file arg, not a list of
-;;   files.)
 ;;
 ;; - merge-file (file rev1 rev2)
 ;;
@@ -599,16 +590,27 @@
 ;;   variable are gone.  These have't made sense on anything shipped
 ;;   since RCS, and using them was a dumb stunt even on RCS.
 ;;
-;;   workfile-unchanged-p is no longer a public back-end method.  It
+;; - workfile-unchanged-p is no longer a public back-end method.  It
 ;;   was redundant with vc-state and usually implemented with a trivial
 ;;   call to it.  A few older back ends retain versions for internal use in
 ;;   their vc-state functions.
 ;;
-;;   could-register is no longer a public method.  Only vc-cvs ever used it
+;; - could-register is no longer a public method.  Only vc-cvs ever used it
+;;
+;;   The vc-keep-workfiles configuration variable is gone.  Used only by
+;;   the RCS and SCCS backends, it was an invitation to shoot self in foot
+;;   when set to the (non-default) value nil.  The original justication
+;;   for it (saving disk space) is long obsolete.
+;;
+;; - The rollback method (implemented by RCS and SCCS only) is gone. See
+;;   the to-do note on uncommit.
 
 ;;; Todo:
 
 ;;;; New Primitives:
+;;
+;; - uncommit: undo last checkin, leave changes in place in the workfile,
+;;   stash the commit comment for re-use.
 ;;
 ;; - deal with push operations.
 ;;
@@ -2426,58 +2428,6 @@ to the working revision (except for keyword expansion)."
       (message "Reverting %s..." (vc-delistify files))
       (vc-revert-file file)
       (message "Reverting %s...done" (vc-delistify files)))))
-
-;;;###autoload
-(defun vc-rollback ()
-  "Roll back (remove) the most recent changeset committed to the repository.
-This may be either a file-level or a repository-level operation,
-depending on the underlying version-control system."
-  (interactive)
-  (let* ((vc-fileset (vc-deduce-fileset))
-	 (backend (car vc-fileset))
-	 (files (cadr vc-fileset))
-	 (granularity (vc-call-backend backend 'revision-granularity)))
-    (unless (vc-find-backend-function backend 'rollback)
-      (error "Rollback is not supported in %s" backend))
-    (when (and (not (eq granularity 'repository)) (/= (length files) 1))
-      (error "Rollback requires a singleton fileset or repository versioning"))
-    ;; FIXME: latest-on-branch-p should take the fileset.
-    (when (not (vc-call-backend backend 'latest-on-branch-p (car files)))
-      (error "Rollback is only possible at the tip revision"))
-    ;; If any of the files is visited by the current buffer, make
-    ;; sure buffer is saved.  If the user says `no', abort since
-    ;; we cannot show the changes and ask for confirmation to
-    ;; discard them.
-    (when (or (not files) (memq (buffer-file-name) files))
-      (vc-buffer-sync nil))
-    (dolist (file files)
-      (when (buffer-modified-p (get-file-buffer file))
-	(error "Please kill or save all modified buffers before rollback"))
-      (when (not (vc-up-to-date-p file))
-	(error "Please revert all modified workfiles before rollback")))
-    ;; Accumulate changes associated with the fileset
-    (vc-setup-buffer "*vc-diff*")
-    (set-buffer-modified-p nil)
-    (message "Finding changes...")
-    (let* ((tip (vc-working-revision (car files)))
-           ;; FIXME: `previous-revision' should take the fileset.
-	   (previous (vc-call-backend backend 'previous-revision
-                                      (car files) tip)))
-      (vc-diff-internal nil vc-fileset previous tip))
-    ;; Display changes
-    (unless (yes-or-no-p "Discard these revisions? ")
-      (error "Rollback canceled"))
-    (quit-windows-on "*vc-diff*")
-    ;; Do the actual reversions
-    (message "Rolling back %s..." (vc-delistify files))
-    (with-vc-properties
-     files
-     (vc-call-backend backend 'rollback files)
-     `((vc-state . ,'up-to-date)
-       (vc-checkout-time . , (nth 5 (file-attributes file)))
-       (vc-working-revision . nil)))
-    (dolist (f files) (vc-resynch-buffer f t t))
-    (message "Rolling back %s...done" (vc-delistify files))))
 
 ;;;###autoload
 (define-obsolete-function-alias 'vc-revert-buffer 'vc-revert "23.1")

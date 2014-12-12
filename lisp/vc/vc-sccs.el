@@ -271,22 +271,6 @@ locked.  REV is the revision to check out."
 		   switches))))
       (message "Checking out %s...done" file))))
 
-(defun vc-sccs-rollback (files)
-  "Roll back, undoing the most recent checkins of FILES.  Directories
-are expanded to all version-controlled subfiles."
-  (setq files (vc-expand-dirs files 'SCCS))
-  (if (not files)
-      (error "SCCS backend doesn't support directory-level rollback"))
-  (dolist (file files)
-	  (let ((discard (vc-working-revision file)))
-	    (if (null (yes-or-no-p (format "Remove version %s from %s history? "
-					   discard file)))
-		(error "Aborted"))
-	    (message "Removing revision %s from %s..." discard file)
-	    (vc-sccs-do-command nil 0 "rmdel"
-                                (vc-master-name file) (concat "-r" discard))
-	    (vc-sccs-do-command nil 0 "get" (vc-master-name file) nil))))
-
 (defun vc-sccs-revert (file &optional _contents-done)
   "Revert FILE to the version it was based on. If FILE is a directory,
 revert all subfiles."

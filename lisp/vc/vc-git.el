@@ -65,7 +65,6 @@
 ;; * find-revision (file rev buffer)               OK
 ;; * checkout (file &optional rev)                 OK
 ;; * revert (file &optional contents-done)         OK
-;; - rollback (files)                              COULD BE SUPPORTED
 ;; - merge-file (file rev1 rev2)            It would be possible to merge
 ;;                                          changes into a single file, but
 ;;                                          when committing they wouldn't
