@@ -6,14 +6,14 @@
 	* src/alloc.c (XMALLOC_BASE_ALIGNMENT): Use max_align_t instead of
 	a hack involving a union.
 
-2014-12-12  Paul Eggert  <eggert@cs.ucla.edu>
+2014-12-13  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Git ignore lib/std*.h
 	* .gitignore: Add lib/std*.h, to ignore stdarg.h, stdbool.h, and
 	stddef.h.  Remove subsumed entries.
 	Add !lib/std*.in.h, so as to not ignore the .in.h files.
 
-2014-12-11  Paul Eggert  <eggert@cs.ucla.edu>
+2014-12-13  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Port commit-msg to mawk
 	Problem reported by Ted Zlatanov in:
@@ -29,7 +29,7 @@
 	unprintable chars in diagnostics.  Don't complain if a prefix
 	"fixup! " or "squash! " makes a summary line too long.
 
-2014-12-08  Paul Eggert  <eggert@cs.ucla.edu>
+2014-12-13  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Port commit-message checking to FreeBSD 9.
 	This fixes a bug reported by Jan Djärv in:
@@ -41,7 +41,7 @@
 	ordinary text characters.
 	Be less tricky about quoting "'" in a shell script.
 
-2014-12-05  Stefan Monnier  <monnier@iro.umontreal.ca>
+2014-12-13  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* .gitignore: Ignore autosave files.
 
