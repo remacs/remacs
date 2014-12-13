@@ -548,7 +548,7 @@ If LIMIT is non-nil, show no more than this many entries."
 		 (if start-revision (format "-r%s" start-revision) "-rHEAD:0"))
 		(when limit (list "--limit" (format "%s" limit)))))))))
 
-(defun vc-svn-diff (files &optional oldvers newvers buffer)
+(defun vc-svn-diff (files &optional async oldvers newvers buffer)
   "Get a difference report using SVN between two revisions of fileset FILES."
   (and oldvers
        (not newvers)
@@ -563,12 +563,12 @@ If LIMIT is non-nil, show no more than this many entries."
        ;; has a different revision, we fetch the lot, which is
        ;; obviously sub-optimal.
        (setq oldvers nil))
+  (setq async (and async (or oldvers newvers)))	; Svn diffs those locally.
   (let* ((switches
 	    (if vc-svn-diff-switches
 		(vc-switches 'SVN 'diff)
 	      (list (concat "--diff-cmd=" diff-command) "-x"
-		    (mapconcat 'identity (vc-switches nil 'diff) " "))))
-	   (async (or oldvers newvers))) ; Svn diffs those locally.
+		    (mapconcat 'identity (vc-switches nil 'diff) " ")))))
       (apply 'vc-svn-command buffer
 	     (if async 'async 0)
 	     files "diff"
