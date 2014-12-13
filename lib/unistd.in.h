@@ -402,7 +402,7 @@ _GL_WARN_ON_USE (dup3, "dup3 is unportable - "
    "VARIABLE=VALUE", terminated with a NULL.  */
 #  if defined __APPLE__ && defined __MACH__
 #   include <TargetConditionals.h>
-#   if !defined TARGET_OS_IPHONE && !defined TARGET_IPHONE_SIMULATOR
+#   if !TARGET_OS_IPHONE && !TARGET_IPHONE_SIMULATOR
 #    define _GL_USE_CRT_EXTERNS
 #   endif
 #  endif

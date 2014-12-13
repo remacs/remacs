@@ -3,7 +3,7 @@
 % Load plain if necessary, i.e., if running under initex.
 \expandafter\ifx\csname fmtname\endcsname\relax\input plain\fi
 %
-\def\texinfoversion{2014-11-14.07}
+\def\texinfoversion{2014-12-03.16}
 %
 % Copyright 1985, 1986, 1988, 1990, 1991, 1992, 1993, 1994, 1995,
 % 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006,
@@ -96,7 +96,9 @@
 \let\ptexraggedright=\raggedright
 \let\ptexrbrace=\}
 \let\ptexslash=\/
+\let\ptexsp=\sp
 \let\ptexstar=\*
+\let\ptexsup=\sup
 \let\ptext=\t
 \let\ptextop=\top
 {\catcode`\'=\active \global\let\ptexquoteright'}% active in plain's math mode
@@ -2081,12 +2083,9 @@ end
  \endgroup
 }
 
-
 % In order for the font changes to affect most math symbols and letters,
-% we have to define the \textfont of the standard families.  Since
-% texinfo doesn't allow for producing subscripts and superscripts except
-% in the main text, we don't bother to reset \scriptfont and
-% \scriptscriptfont (which would also require loading a lot more fonts).
+% we have to define the \textfont of the standard families.  We don't
+% bother to reset \scriptfont and \scriptscriptfont; awaiting user need.
 %
 \def\resetmathfonts{%
   \textfont0=\tenrm \textfont1=\teni \textfont2=\tensy
@@ -2100,8 +2099,8 @@ end
 % \tenSTYLE to set the current font.
 %
 % Each font-changing command also sets the names \lsize (one size lower)
-% and \lllsize (three sizes lower).  These relative commands are used in
-% the LaTeX logo and acronyms.
+% and \lllsize (three sizes lower).  These relative commands are used
+% in, e.g., the LaTeX logo and acronyms.
 %
 % This all needs generalizing, badly.
 %
@@ -2842,6 +2841,8 @@ end
   \let\v=\check
   \let\~=\tilde
   \let\dotaccent=\dot
+  % have to provide another name for sup operator
+  \let\mathopsup=\sup
   $\finishmath
 }
 \def\finishmath#1{#1$\endgroup}  % Close the group opened by \tex.
@@ -2864,6 +2865,18 @@ end
     \let' = \ptexquoteright
   }
 }
+
+% for @sub and @sup, if in math mode, just do a normal sub/superscript.
+% If in text, use math to place as sub/superscript, but switch
+% into text mode, with smaller fonts.  This is a different font than the
+% one used for real math sub/superscripts (8pt vs. 7pt), but let's not
+% fix it (significant additions to font machinery) until someone notices.
+%
+\def\sub{\ifmmode \expandafter\sb \else \expandafter\finishsub\fi}
+\def\finishsub#1{$\sb{\hbox{\selectfonts\lllsize #1}}$}%
+%
+\def\sup{\ifmmode \expandafter\ptexsp \else \expandafter\finishsup\fi}
+\def\finishsup#1{$\ptexsp{\hbox{\selectfonts\lllsize #1}}$}%
 
 % ctrl is no longer a Texinfo command, but leave this definition for fun.
 \def\ctrl #1{{\tt \rawbackslash \hat}#1}
@@ -6335,6 +6348,7 @@ end
   % other math active characters (just in case), to plain's definitions.
   \mathactive
   %
+  % Inverse of the list at the beginning of the file.
   \let\b=\ptexb
   \let\bullet=\ptexbullet
   \let\c=\ptexc
@@ -6350,7 +6364,9 @@ end
   \let\+=\tabalign
   \let\}=\ptexrbrace
   \let\/=\ptexslash
+  \let\sp=\ptexsp
   \let\*=\ptexstar
+  %\let\sup=\ptexsup % do not redefine, we want @sup to work in math mode
   \let\t=\ptext
   \expandafter \let\csname top\endcsname=\ptextop  % we've made it outer
   \let\frenchspacing=\plainfrenchspacing
@@ -7416,7 +7432,6 @@ end
 %
 % \anythingelse will almost certainly be an error of some kind.
 
-
 % \mbodybackslash is the definition of \ in @macro bodies.
 % It maps \foo\ => \csname macarg.foo\endcsname => #N
 % where N is the macro parameter number.
@@ -7525,8 +7540,7 @@ end
 % the catcode regime underwhich the body was input).
 %
 % If you compile with TeX (not eTeX), and you have macros with 10 or more
-% arguments, you need that no macro has more than 256 arguments, otherwise an
-% error is produced.
+% arguments, no macro can have more than 256 arguments (else error).
 \def\parsemargdef#1;{%
   \paramno=0\def\paramlist{}%
   \let\hash\relax
@@ -9283,6 +9297,18 @@ directory should work if nowhere else does.}
   \UTFviiiLoop
 \endgroup
 
+\def\globallet{\global\let} % save some \expandafter's below
+
+% @U{xxxx} to produce U+xxxx, if we support it.
+\def\U#1{%
+  \expandafter\ifx\csname uni:#1\endcsname \relax
+    \errhelp = \EMsimple	
+    \errmessage{Unicode character U+#1 not supported, sorry}%
+  \else
+    \csname uni:#1\endcsname
+  \fi
+}
+
 \begingroup
   \catcode`\"=12
   \catcode`\<=12
@@ -9291,7 +9317,6 @@ directory should work if nowhere else does.}
   \catcode`\;=12
   \catcode`\!=12
   \catcode`\~=13
-
   \gdef\DeclareUnicodeCharacter#1#2{%
     \countUTFz = "#1\relax
     %\wlog{\space\space defining Unicode char U+#1 (decimal \the\countUTFz)}%
@@ -9306,6 +9331,8 @@ directory should work if nowhere else does.}
       \expandafter\expandafter\expandafter\expandafter
        \expandafter\expandafter\expandafter
        \gdef\UTFviiiTmp{#2}%
+      % define an additional control sequence for this code point.
+      \expandafter\globallet\csname uni:#1\endcsname \UTFviiiTmp
     \endgroup}
 
   \gdef\parseXMLCharref{%

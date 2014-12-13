@@ -41,6 +41,7 @@
 
 	Merge from gnulib
 	2014-12-12 stddef: support C11's max_align_t
+	2014-12-11 unistd: fix iOS check conditional
 	2014-12-08 apply _GL_ATTRIBUTE_PURE to some inline functions
 	2014-12-02 support GNU format printf and scanf on mingw
 	* doc/misc/texinfo.tex, lib/stat-time.h, lib/stddef.in.h:
