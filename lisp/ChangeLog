@@ -1,3 +1,8 @@
+2014-12-13  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* files.el (directory-files-recursively): Really check whether
+	files are symlinks.
+
 2014-12-13  Artur Malabarba  <bruce.connor.am@gmail.com>
 
 	* emacs-lisp/package.el (package--list-loaded-files): New function

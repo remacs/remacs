@@ -772,14 +772,14 @@ If INCLUDE-DIRECTORIES, also include directories that have matching names."
 			'string<))
       (unless (member file '("./" "../"))
 	(if (= (aref file (1- (length file))) ?/)
-	    (let ((path (expand-file-name file dir)))
+	    (let* ((leaf (substring file 0 (1- (length file))))
+		   (path (expand-file-name leaf dir)))
 	      ;; Don't follow symlinks to other directories.
 	      (unless (file-symlink-p path)
 		(setq result (nconc result (directory-files-recursively
 					    path match include-directories))))
 	      (when (and include-directories
-			 (string-match match
-				       (substring file 0 (1- (length file)))))
+			 (string-match match leaf))
 		(setq result (nconc result (list path)))))
 	  (when (string-match match file)
 	    (push (expand-file-name file dir) files)))))
