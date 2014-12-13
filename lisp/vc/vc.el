@@ -592,7 +592,7 @@
 ;;
 ;;   The vc-keep-workfiles configuration variable is gone.  Used only by
 ;;   the RCS and SCCS backends, it was an invitation to shoot self in foot
-;;   when set to the (non-default) value nil.  The original justication
+;;   when set to the (non-default) value nil.  The original justification
 ;;   for it (saving disk space) is long obsolete.
 ;;
 ;; - The rollback method (implemented by RCS and SCCS only) is gone. See

@@ -6159,7 +6159,7 @@ Return >0 for nested struct."
 		(or (equal (char-before) ?\{) ;; empty case
                     (equal (char-before) ?\;)
                     (equal (char-before) ?\}))
-                    ;; skip what looks like bus repitition operator {#{
+                    ;; skip what looks like bus repetition operator {#{
                     (not (string-match "^{\\s-*[0-9]+\\s-*{" (buffer-substring p (point)))))))))
       (progn
         (let ( (pt (point)) (pass 0))

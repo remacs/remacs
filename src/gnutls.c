@@ -1065,7 +1065,7 @@ The return value is a property list with top-level keys :warnings and
 		    build_string (fn_gnutls_protocol_get_name
 				  (fn_gnutls_protocol_get_version (state)))));
 
-  /* Cipler name. */
+  /* Cipher name. */
   result = nconc2
     (result, list2 (intern (":cipher"),
 		    build_string (fn_gnutls_cipher_get_name

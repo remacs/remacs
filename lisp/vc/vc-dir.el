@@ -1015,7 +1015,7 @@ specific headers."
    "\n"))
 
 (defun vc-dir-refresh-files (files)
-  "Refresh some fies in the *VC-dir* buffer."
+  "Refresh some files in the *VC-dir* buffer."
   (let ((def-dir default-directory)
 	(backend vc-dir-backend))
     (vc-set-mode-line-busy-indicator)
