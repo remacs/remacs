@@ -301,7 +301,7 @@ redirects somewhere else."
   (let ((text (get-text-property (point) 'shr-alt)))
     (if (not text)
 	(message "No image under point")
-      (message "%s" text))))
+      (message "%s" (shr-fold-text text)))))
 
 (defun shr-browse-image (&optional copy-url)
   "Browse the image under point.
@@ -411,6 +411,13 @@ size, and full-buffer size."
 	   start (point)
 	   (cdr (assq 'color shr-stylesheet))
 	   (cdr (assq 'background-color shr-stylesheet))))))))
+
+(defun shr-fold-text (text)
+  (with-temp-buffer
+    (let ((shr-indentation 0)
+	  (shr-internal-width (window-width)))
+      (shr-insert text)
+      (buffer-string))))
 
 (define-inline shr-char-breakable-p (char)
   "Return non-nil if a line can be broken before and after CHAR."
@@ -881,7 +888,7 @@ START, and END.  Note that START and END should be markers."
   (add-text-properties
    start (point)
    (list 'shr-url url
-	 'help-echo (if title (format "%s (%s)" url title) url)
+	 'help-echo (if title (shr-fold-text (format "%s (%s)" url title)) url)
 	 'follow-link t
 	 'mouse-face 'highlight
 	 'keymap shr-map)))
@@ -1283,7 +1290,7 @@ The preference is a float determined from `shr-prefer-media-type'."
 	  (put-text-property start (point) 'image-displayer
 			     (shr-image-displayer shr-content-function))
 	  (put-text-property start (point) 'help-echo
-			     (or (dom-attr dom 'title) alt)))
+			     (shr-fold-text (or (dom-attr dom 'title) alt))))
 	(setq shr-state 'image)))))
 
 (defun shr-tag-pre (dom)
