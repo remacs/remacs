@@ -1,3 +1,7 @@
+2014-12-13  Andreas Schwab  <schwab@linux-m68k.org>
+
+	* net/shr.el (shr-next-link): Don't error out at eob.
+
 2014-12-05  Nicolas Richard  <theonewiththeevillook@yahoo.fr>
 
 	* isearch.el (isearch-open-necessary-overlays): Open overlay

@@ -265,8 +265,9 @@ redirects somewhere else."
   "Skip to the next link."
   (interactive)
   (let ((skip (text-property-any (point) (point-max) 'help-echo nil)))
-    (if (not (setq skip (text-property-not-all skip (point-max)
-					       'help-echo nil)))
+    (if (or (eobp)
+	    (not (setq skip (text-property-not-all skip (point-max)
+						   'help-echo nil))))
 	(message "No next link")
       (goto-char skip)
       (message "%s" (get-text-property (point) 'help-echo)))))
