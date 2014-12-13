@@ -2796,7 +2796,7 @@ which is defined in the `warnings' library.\n")
     t))
 
 (defcustom password-word-equivalents
-  '("password" "passphrase" "pass phrase"
+  '("password" "passcode" "passphrase" "pass phrase"
     ; These are sorted according to the GNU en_US locale.
     "암호"		; ko
     "パスワード"	; ja

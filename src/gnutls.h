@@ -82,8 +82,8 @@ extern void emacs_gnutls_transport_set_errno (gnutls_session_t state, int err);
 #endif
 extern Lisp_Object emacs_gnutls_deinit (Lisp_Object);
 
-extern void syms_of_gnutls (void);
-
 #endif
+
+extern void syms_of_gnutls (void);
 
 #endif

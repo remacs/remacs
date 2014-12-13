@@ -64,10 +64,8 @@ lib/getopt.h
 lib/inttypes.h
 lib/libgnu.a
 lib/signal.h
-lib/stdalign.h
-lib/stdint.h
-lib/stdio.h
-lib/stdlib.h
+lib/std*.h
+!lib/std*.in.h
 lib/string.h
 lib/sys/
 lib/time.h
@@ -237,6 +235,7 @@ info/dir
 *.rej
 *~
 .#*
+\#*\#
 [0-9]*.patch
 
 # Built by 'make install'.

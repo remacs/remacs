@@ -779,26 +779,6 @@ See also `gnutls-init'.  */)
   return emacs_gnutls_deinit (proc);
 }
 
-DEFUN ("gnutls-available-p", Fgnutls_available_p, Sgnutls_available_p, 0, 0, 0,
-       doc: /* Return t if GnuTLS is available in this instance of Emacs.  */)
-     (void)
-{
-#ifdef WINDOWSNT
-  Lisp_Object found = Fassq (Qgnutls_dll, Vlibrary_cache);
-  if (CONSP (found))
-    return XCDR (found);
-  else
-    {
-      Lisp_Object status;
-      status = init_gnutls_functions () ? Qt : Qnil;
-      Vlibrary_cache = Fcons (Fcons (Qgnutls_dll, status), Vlibrary_cache);
-      return status;
-    }
-#else
-  return Qt;
-#endif
-}
-
 static Lisp_Object
 gnutls_hex_string (unsigned char *buf, ptrdiff_t buf_size, const char *prefix)
 {
@@ -1100,7 +1080,6 @@ The return value is a property list with top-level keys :warnings and
 
   return result;
 }
-
 
 /* Initialize global GnuTLS state to defaults.
    Call `gnutls-global-deinit' when GnuTLS usage is no longer needed.
@@ -1602,9 +1581,36 @@ This function may also return `gnutls-e-again', or
   return gnutls_make_error (ret);
 }
 
+#endif	/* HAVE_GNUTLS */
+
+DEFUN ("gnutls-available-p", Fgnutls_available_p, Sgnutls_available_p, 0, 0, 0,
+       doc: /* Return t if GnuTLS is available in this instance of Emacs.  */)
+     (void)
+{
+#ifdef HAVE_GNUTLS
+# ifdef WINDOWSNT
+  Lisp_Object found = Fassq (Qgnutls_dll, Vlibrary_cache);
+  if (CONSP (found))
+    return XCDR (found);
+  else
+    {
+      Lisp_Object status;
+      status = init_gnutls_functions () ? Qt : Qnil;
+      Vlibrary_cache = Fcons (Fcons (Qgnutls_dll, status), Vlibrary_cache);
+      return status;
+    }
+# else	/* !WINDOWSNT */
+  return Qt;
+# endif	 /* !WINDOWSNT */
+#else  /* !HAVE_GNUTLS */
+  return Qnil;
+#endif	/* !HAVE_GNUTLS */
+}
+
 void
 syms_of_gnutls (void)
 {
+#ifdef HAVE_GNUTLS
   gnutls_global_initialized = 0;
 
   DEFSYM (Qgnutls_dll, "gnutls");
@@ -1646,7 +1652,6 @@ syms_of_gnutls (void)
   defsubr (&Sgnutls_boot);
   defsubr (&Sgnutls_deinit);
   defsubr (&Sgnutls_bye);
-  defsubr (&Sgnutls_available_p);
   defsubr (&Sgnutls_peer_status);
   defsubr (&Sgnutls_peer_status_warning_describe);
 
@@ -1656,6 +1661,8 @@ Set this larger than 0 to get debug output in the *Messages* buffer.
 1 is for important messages, 2 is for debug data, and higher numbers
 are as per the GnuTLS logging conventions.  */);
   global_gnutls_log_level = 0;
-}
 
-#endif /* HAVE_GNUTLS */
+#endif	/* HAVE_GNUTLS */
+
+  defsubr (&Sgnutls_available_p);
+}

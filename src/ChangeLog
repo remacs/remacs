@@ -1,3 +1,26 @@
+2014-12-12  Eli Zaretskii  <eliz@gnu.org>
+
+	* gnutls.c (Fgnutls_available_p, syms_of_gnutls): Move
+	gnutls-available-p out of the HAVE_GNUTLS conditional, and define
+	them only once.
+
+2014-12-11  Teodor Zlatanov  <tzz@lifelogs.com>
+
+	* emacs.c (main): Always include gnutls.h and run syms_of_gnutls.
+
+	* gnutls.h: Always declare syms_of_gnutls.
+
+	* gnutls.c (Fgnutls_available_p syms_of_gnutls): Move later for
+	clarity.  Let the availability check return Qnil when the GnuTLS
+	integration is not available, instead of erroring out.
+	(Bug#19346)
+
+2014-12-10  Eli Zaretskii  <eliz@gnu.org>
+
+	* xdisp.c (move_it_in_display_line_to, display_line): Don't
+	disallow overflow-newline-into-fringe when word-wrap is in
+	effect.  (Bug#19300)
+
 2014-12-11  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* fileio.c: Better preserve window-points during revert (bug#19161).

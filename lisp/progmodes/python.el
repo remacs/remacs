@@ -2125,7 +2125,9 @@ uniqueness for different types of configurations."
     ;; `python-shell-interpreter' absolute path can be found by
     ;; `executable-find'.
     (format "%s %s"
-            (executable-find python-shell-interpreter)
+            ;; FIXME: Why executable-find?
+            (shell-quote-argument
+             (executable-find python-shell-interpreter))
             python-shell-interpreter-args)))
 
 (define-obsolete-function-alias
