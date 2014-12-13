@@ -1,3 +1,11 @@
+2014-12-13  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Replace union hack with C11-style max_align_t
+	* admin/merge-gnulib (GNULIB_MODULES): Add stddef, for max_align_t.
+	* lib/gnulib.mk: Regenerate.
+	* src/alloc.c (XMALLOC_BASE_ALIGNMENT): Use max_align_t instead of
+	a hack involving a union.
+
 2014-12-12  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Git ignore lib/std*.h
