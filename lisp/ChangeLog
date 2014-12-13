@@ -3,6 +3,7 @@
 	* net/shr.el (shr-fold-text): New function.
 	(shr-show-alt-text, shr-urlify, shr-tag-img): Use it to fold long
 	alt/title texts.
+	(shr-fold-text): Inhibit state from being altered.
 
 	* files.el (directory-files-recursively): Really check whether
 	files are symlinks.

@@ -415,6 +415,8 @@ size, and full-buffer size."
 (defun shr-fold-text (text)
   (with-temp-buffer
     (let ((shr-indentation 0)
+	  (shr-state nil)
+	  (shr-start nil)
 	  (shr-internal-width (window-width)))
       (shr-insert text)
       (buffer-string))))
