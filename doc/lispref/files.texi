@@ -2020,6 +2020,11 @@ form.
 @end example
 @end defun
 
+@defun directory-name-p filename
+This function returns non-@code{nil} if @var{filename} ends with a
+forward slash (@samp{/}) character.
+@end defun
+
 @node Directory Names
 @subsection Directory Names
 @cindex directory name

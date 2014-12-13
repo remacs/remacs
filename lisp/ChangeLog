@@ -2,6 +2,8 @@
 
 	* files.el (directory-files-recursively): Really check whether
 	files are symlinks.
+	(directory-name-p): New function.
+	(directory-files-recursively): Use it.
 
 2014-12-13  Artur Malabarba  <bruce.connor.am@gmail.com>
 

@@ -140,6 +140,11 @@ library function `ftw'.
 ** A new function `directory-files-recursively' returns all matching
 files (recursively) under a directory.
 
+** The new `directory-name-p' can be used to check whether a file
+name (as returned from, for instance, `file-name-all-completions' is
+a directory file name.  It returns non-nil if the last character in
+the name is a forward slash.
+
 
 * Editing Changes in Emacs 25.1
 
