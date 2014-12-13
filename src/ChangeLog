@@ -1,3 +1,7 @@
+2014-12-13  Eli Zaretskii  <eliz@gnu.org>
+
+	* gnutls.c (gnutls_init): Fix deprecation warning from GCC.
+
 2014-12-12  Eli Zaretskii  <eliz@gnu.org>
 
 	* gnutls.c (Fgnutls_available_p, syms_of_gnutls): Move
