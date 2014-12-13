@@ -187,19 +187,6 @@ nontrivial changes to the build process.
 
 	leim/MISC-DIC/cangjie-table.cns
 
- * iso-latin-2
-
-     These files are processed by csplain, a program that requires
-     Latin-2 input.  In 2012 the csplain maintainers started
-     recommending UTF-8, but these files haven't been converted yet.
-
-	etc/refcards/cs-dired-ref.tex
-	etc/refcards/cs-refcard.tex
-	etc/refcards/cs-survival.tex
-	etc/refcards/sk-dired-ref.tex
-	etc/refcards/sk-refcard.tex
-	etc/refcards/sk-survival.tex
-
  * japanese-iso-8bit
 
      SKK-JISYO.L is a verbatim copy of a file taken from an external source.

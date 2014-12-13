@@ -1,5 +1,15 @@
 2014-12-13  Paul Eggert  <eggert@cs.ucla.edu>
 
+	Convert Czech and Slovakian refcards to UTF-8
+	* admin/notes/unicode: Don't mention Czech and Slovakian refcards.
+	* etc/refcards/cs-dired-ref.tex, etc/refcards/cs-refcard.tex:
+	* etc/refcards/cs-survival.tex, etc/refcards/sk-dired-ref.tex:
+	* etc/refcards/sk-refcard.tex, etc/refcards/sk-survival.tex:
+	Convert from iso-latin-2 to utf-8.  Remove no-longer-necessary
+	coding comments and "\input utf8off" directives.
+
+2014-12-13  Paul Eggert  <eggert@cs.ucla.edu>
+
 	Replace union hack with C11-style max_align_t
 	* admin/merge-gnulib (GNULIB_MODULES): Add stddef, for max_align_t.
 	* lib/gnulib.mk: Regenerate.

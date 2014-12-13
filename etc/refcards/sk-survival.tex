@@ -3,7 +3,7 @@
 % Copyright (C) 2000-2014 Free Software Foundation, Inc.
 
 % Author: Wlodek Bzyl <matwb@univ.gda.pl>
-% Czech translation: Pavel Janík <Pavel@Janik.cz>, March 2001
+% Czech translation: Pavel JanÃ­k <Pavel@Janik.cz>, March 2001
 % Slovak translation: Miroslav Vasko <vasko@debian.cz>, March 2001
 
 % This file is part of GNU Emacs.
@@ -55,11 +55,6 @@
 % Slovak hyphenation rules applied
 \shyph
 
-% Without this, pdfTeX 3.1415926-2.5-1.40.14 (TeX Live 2013/Debian)
-% aborts with: "! UTF-8 INPUT IS CORRUPTED !
-% May be you are using another input encoding"
-\input utf8off
-
 \input emacsver.tex
 
 \def\copyrightnotice{\penalty-1\vfill
@@ -67,12 +62,12 @@
     Copyright \copyright\ \year\ Free Software Foundation, Inc.\break
     Pre GNU Emacs \versionemacs\break
     W{\l}odek Bzyl (matwb@univ.gda.pl)\break
-    Do èe¹tiny prelo¾il Pavel Janík (Pavel@Janik.cz)\break
-    Do slovenèiny prelo¾il Miroslav Va¹ko (vasko@debian.cz)
+    Do ÄeÅ¡tiny preloÅ¾il Pavel JanÃ­k (Pavel@Janik.cz)\break
+    Do slovenÄiny preloÅ¾il Miroslav VaÅ¡ko (vasko@debian.cz)
 
-    Kópie tohto dokumentu mô¾ete vytvára» a ¹íri»
-    za predpokladu, ¾e budú obsahova» túto poznámku
-    o autorskıch právach.\par}}
+    KÃ³pie tohto dokumentu mÃ´Å¾ete vytvÃ¡raÅ¥ a Å¡Ã­riÅ¥
+    za predpokladu, Å¾e budÃº obsahovaÅ¥ tÃºto poznÃ¡mku
+    o autorskÃ½ch prÃ¡vach.\par}}
 
 \hsize 3.2in
 \vsize 7.95in
@@ -175,244 +170,244 @@
 %**end of header
 
 
-\title{Karta\ \ pre\ \ pre¾itie\ \ s\ \ GNU\ \ Emacsom}{pre verziu \versionemacs}
+\title{Karta\ \ pre\ \ preÅ¾itie\ \ s\ \ GNU\ \ Emacsom}{pre verziu \versionemacs}
 
-V~nasledujúcom texte \kbd{C-z} znamená: stlaète klávesu {\it Ctrl}, dr¾te ju
-a súèasne stlaète klávesu `\kbd{z}'. \kbd{M-z} znamená, ¾e
-súèasne s klávesou {\it Meta\/} stlaèíte klávesu `\kbd{z}' ({\it Meta\/} je
-väè¹inou oznaèená ako {\it Alt\/}) alebo mô¾ete pou¾i» stlaèenie
-klávesy {\it Esc\/} a potom `\kbd{z}'.
+V~nasledujÃºcom texte \kbd{C-z} znamenÃ¡: stlaÄte klÃ¡vesu {\it Ctrl}, drÅ¾te ju
+a sÃºÄasne stlaÄte klÃ¡vesu `\kbd{z}'. \kbd{M-z} znamenÃ¡, Å¾e
+sÃºÄasne s klÃ¡vesou {\it Meta\/} stlaÄÃ­te klÃ¡vesu `\kbd{z}' ({\it Meta\/} je
+vÃ¤ÄÅ¡inou oznaÄenÃ¡ ako {\it Alt\/}) alebo mÃ´Å¾ete pouÅ¾iÅ¥ stlaÄenie
+klÃ¡vesy {\it Esc\/} a potom `\kbd{z}'.
 
 
 \section{Spustenie Emacsu}
 
-Pre spustenie GNU Emacsu jednoducho napí¹te jeho meno: \kbd{emacs}.
-Emacs rozdeµuje rámec na niekoµko èastí:
+Pre spustenie GNU Emacsu jednoducho napÃ­Å¡te jeho meno: \kbd{emacs}.
+Emacs rozdeÄ¾uje rÃ¡mec na niekoÄ¾ko ÄastÃ­:
   riadok menu,
-  buffer s editovanım textom,
-  tzv. mode line popisujúca buffer nad òou
+  buffer s editovanÃ½m textom,
+  tzv. mode line popisujÃºca buffer nad Åˆou
   a minibuffer v poslednom riadku.
 \askip
-\key{C-x C-c} ukonèenie Emacsu
-\key{C-x C-f} editovanie súboru; tento príkaz vyu¾íva minibuffer na preèítanie
-              mena súboru; tento príkaz pou¾ite aj vtedy, ak chcete
-              vytvori» novı súbor zadaného mena
-\key{C-x C-s} ulo¾i» súbor
-\key{C-x k} zatvori» buffer
-\key{C-g} vo väè¹ine situácií: zastavenie práve vykonávanej èinnosti,
-              zru¹enie zadávania príkazu a~pod.
-\key{C-x u} obnovi»
+\key{C-x C-c} ukonÄenie Emacsu
+\key{C-x C-f} editovanie sÃºboru; tento prÃ­kaz vyuÅ¾Ã­va minibuffer na preÄÃ­tanie
+              mena sÃºboru; tento prÃ­kaz pouÅ¾ite aj vtedy, ak chcete
+              vytvoriÅ¥ novÃ½ sÃºbor zadanÃ©ho mena
+\key{C-x C-s} uloÅ¾iÅ¥ sÃºbor
+\key{C-x k} zatvoriÅ¥ buffer
+\key{C-g} vo vÃ¤ÄÅ¡ine situÃ¡ciÃ­: zastavenie prÃ¡ve vykonÃ¡vanej Äinnosti,
+              zruÅ¡enie zadÃ¡vania prÃ­kazu a~pod.
+\key{C-x u} obnoviÅ¥
 
 \section{Pohyb}
 
-\key{C-l} presun aktuálneho riadku do stredu okna
-\key{C-x b} prepnutie do iného bufferu
-\key{M-<} presun na zaèiatok bufferu
+\key{C-l} presun aktuÃ¡lneho riadku do stredu okna
+\key{C-x b} prepnutie do inÃ©ho bufferu
+\key{M-<} presun na zaÄiatok bufferu
 \key{M->} presun na koniec bufferu
-\key{M-x goto-line} presun na riadok zadaného èísla
+\key{M-x goto-line} presun na riadok zadanÃ©ho ÄÃ­sla
 
 \section{Viac okien}
 
-\key{C-x 0} odstránenie aktuálneho okna
-\key{C-x 1} aktuálne okno sa stane jedinım oknom
-\key{C-x 2} rozdelenie okna horizontálne
-\key{C-x 3} rozdelenie okna vertikálne
-\key{C-x o} presun do iného okna
+\key{C-x 0} odstrÃ¡nenie aktuÃ¡lneho okna
+\key{C-x 1} aktuÃ¡lne okno sa stane jedinÃ½m oknom
+\key{C-x 2} rozdelenie okna horizontÃ¡lne
+\key{C-x 3} rozdelenie okna vertikÃ¡lne
+\key{C-x o} presun do inÃ©ho okna
 
-\section{Regióny}
+\section{RegiÃ³ny}
 
-Emacs definuje `región' ako priestor medzi {\it znaèkou\/} a
-{\it bodom}. Znaèka je nastavená pomocou \kbd{C-{\it space}}.
-Bod je v mieste aktuálnej pozície kurzoru.
+Emacs definuje `regiÃ³n' ako priestor medzi {\it znaÄkou\/} a
+{\it bodom}. ZnaÄka je nastavenÃ¡ pomocou \kbd{C-{\it space}}.
+Bod je v mieste aktuÃ¡lnej pozÃ­cie kurzoru.
 \askip
-\key{M-h} oznaè celı odstavec
-\key{C-x h} oznaè celı buffer
+\key{M-h} oznaÄ celÃ½ odstavec
+\key{C-x h} oznaÄ celÃ½ buffer
 
-\section{Vystrihnutie a kopírovanie}
+\section{Vystrihnutie a kopÃ­rovanie}
 
-\key{C-w} vystrihni región
-\key{M-w} skopíruj región do kill-ringu
+\key{C-w} vystrihni regiÃ³n
+\key{M-w} skopÃ­ruj regiÃ³n do kill-ringu
 \key{C-k} vystrihni text od kurzora do konca riadku
 \key{M-DEL} vystrihni slovo
-\key{C-y} vlo¾ spä» poslednı vystrihnutı text (kombinácia kláves \kbd{C-w C-y}
-          mô¾e by» pou¾itá pre presuny textov)
-\key{M-y} nahraï naposledy vlo¾enı text predchádzajúcim vystrihnutım textom
+\key{C-y} vloÅ¾ spÃ¤Å¥ poslednÃ½ vystrihnutÃ½ text (kombinÃ¡cia klÃ¡ves \kbd{C-w C-y}
+          mÃ´Å¾e byÅ¥ pouÅ¾itÃ¡ pre presuny textov)
+\key{M-y} nahraÄ naposledy vloÅ¾enÃ½ text predchÃ¡dzajÃºcim vystrihnutÃ½m textom
 
-\section{Vyhµadávanie}
+\section{VyhÄ¾adÃ¡vanie}
 
-\key{C-s} hµadaj re»azec
-\key{C-r} hµadaj re»azec smerom vzad
-\key{RET} ukonèi hµadanie
-\key{M-C-s} hµadaj regulárny vıraz
-\key{M-C-r} hµadaj regulárny vıraz smerom vzad
+\key{C-s} hÄ¾adaj reÅ¥azec
+\key{C-r} hÄ¾adaj reÅ¥azec smerom vzad
+\key{RET} ukonÄi hÄ¾adanie
+\key{M-C-s} hÄ¾adaj regulÃ¡rny vÃ½raz
+\key{M-C-r} hÄ¾adaj regulÃ¡rny vÃ½raz smerom vzad
 \askip
-Kombináciu \kbd{C-s} alebo \kbd{C-r} mô¾ete pou¾i» aj na opakované hµadanie
-tım istım smerom.
+KombinÃ¡ciu \kbd{C-s} alebo \kbd{C-r} mÃ´Å¾ete pouÅ¾iÅ¥ aj na opakovanÃ© hÄ¾adanie
+tÃ½m istÃ½m smerom.
 
-\section{Znaèky (tags)}
+\section{ZnaÄky (tags)}
 
-Tabuµky znaèiek (tags) zaznamenávajú polohu funkcií a procedúr, globálnych
-premennıch, dátovıch typov a inıch. Pre vytvorenie tabuµky znaèiek spustite
-príkaz `{\tt etags} {\it vstupné\_súbory}' v príkazovom interprétereri.
+TabuÄ¾ky znaÄiek (tags) zaznamenÃ¡vajÃº polohu funkciÃ­ a procedÃºr, globÃ¡lnych
+premennÃ½ch, dÃ¡tovÃ½ch typov a inÃ½ch. Pre vytvorenie tabuÄ¾ky znaÄiek spustite
+prÃ­kaz `{\tt etags} {\it vstupnÃ©\_sÃºbory}' v prÃ­kazovom interprÃ©tereri.
 \askip
-\key{M-.} nájdi definícu
-\key{C-u M-.} nájdi ïal¹í vıskyt definície
-\key{M-*} choï tam, odkiaµ bola volaná posledná \kbd{M-.}
-\mkey{M-x tags-query-replace} spusti query-replace na v¹etkıch súboroch
-zaznamenanıch v tabuµke znaèiek.
-\key{M-,} pokraèuj v poslednom hµadaní znaèky alebo query-replace
+\key{M-.} nÃ¡jdi definÃ­cu
+\key{C-u M-.} nÃ¡jdi ÄalÅ¡Ã­ vÃ½skyt definÃ­cie
+\key{M-*} choÄ tam, odkiaÄ¾ bola volanÃ¡ poslednÃ¡ \kbd{M-.}
+\mkey{M-x tags-query-replace} spusti query-replace na vÅ¡etkÃ½ch sÃºboroch
+zaznamenanÃ½ch v tabuÄ¾ke znaÄiek.
+\key{M-,} pokraÄuj v poslednom hÄ¾adanÃ­ znaÄky alebo query-replace
 
 \section{Preklady}
 
-\key{M-x compile} prelo¾ kód v aktívnom okne
-\key{C-c C-c} choï na poslednú chybu prekladaèa, v okne prekladu
-\key{C-x `} v okne so zdrojovım textom
+\key{M-x compile} preloÅ¾ kÃ³d v aktÃ­vnom okne
+\key{C-c C-c} choÄ na poslednÃº chybu prekladaÄa, v okne prekladu
+\key{C-x `} v okne so zdrojovÃ½m textom
 
-\section{Dired, editor adresárov}
+\section{Dired, editor adresÃ¡rov}
 
 \key{C-x d} spusti Dired
-\key{d} oznaè tento súbor na zmazanie
-\key{\~{}} oznaè v¹etky zálohy na zmazanie
-\key{u} odstráò v¹etky znaèky na zmazanie
-\key{x} zma¾ súbory oznaèené na zmazanie
-\key{C} kopíruj súbor
+\key{d} oznaÄ tento sÃºbor na zmazanie
+\key{\~{}} oznaÄ vÅ¡etky zÃ¡lohy na zmazanie
+\key{u} odstrÃ¡Åˆ vÅ¡etky znaÄky na zmazanie
+\key{x} zmaÅ¾ sÃºbory oznaÄenÃ© na zmazanie
+\key{C} kopÃ­ruj sÃºbor
 \key{g} obnov buffer Diredu
-\key{f} otvorí súbor v aktuálnom riadku
-\key{s} prepni medzi triedením podµa abecedy a dátumu/èasu
+\key{f} otvorÃ­ sÃºbor v aktuÃ¡lnom riadku
+\key{s} prepni medzi triedenÃ­m podÄ¾a abecedy a dÃ¡tumu/Äasu
 
-\section{Èítanie a posielanie po¹ty}
+\section{ÄŒÃ­tanie a posielanie poÅ¡ty}
 
-\key{M-x rmail} zaèni èíta» po¹tu
-\key{q} skonèi èítanie po¹ty
-\key{h} uká¾ hlavièky
-\key{d} oznaè aktuálnu správu na zmazanie
-\key{x} zma¾ v¹etky správy oznaèené na zmazanie
+\key{M-x rmail} zaÄni ÄÃ­taÅ¥ poÅ¡tu
+\key{q} skonÄi ÄÃ­tanie poÅ¡ty
+\key{h} ukÃ¡Å¾ hlaviÄky
+\key{d} oznaÄ aktuÃ¡lnu sprÃ¡vu na zmazanie
+\key{x} zmaÅ¾ vÅ¡etky sprÃ¡vy oznaÄenÃ© na zmazanie
 
-\key{C-x m} nová správa
-\key{C-c C-c} po¹li správu a prepni sa do iného bufferu
-\key{C-c C-f C-c} presuò sa na hlavièku `CC', a ak neexistuje, tak ju
+\key{C-x m} novÃ¡ sprÃ¡va
+\key{C-c C-c} poÅ¡li sprÃ¡vu a prepni sa do inÃ©ho bufferu
+\key{C-c C-f C-c} presuÅˆ sa na hlaviÄku `CC', a ak neexistuje, tak ju
 vytvor
 
-\section{Rôzne}
+\section{RÃ´zne}
 
 \key{M-q} zarovnaj odstavec
-\key{M-/} doplò dynamicky predchádzajúce slovo
-\key{C-z} ikonizuj (preru¹) Emacs
-\mkey{M-x revert-buffer} nahraï text editovaného súboru tım istım súborom z~disku
+\key{M-/} doplÅˆ dynamicky predchÃ¡dzajÃºce slovo
+\key{C-z} ikonizuj (preruÅ¡) Emacs
+\mkey{M-x revert-buffer} nahraÄ text editovanÃ©ho sÃºboru tÃ½m istÃ½m sÃºborom z~disku
 
 \section{Nahradzovanie}
 
-\key{M-\%} interaktívne hµadaj a nahradzuj
-\key{M-C-\%} s pou¾itím regulárnych vırazov
+\key{M-\%} interaktÃ­vne hÄ¾adaj a nahradzuj
+\key{M-C-\%} s pouÅ¾itÃ­m regulÃ¡rnych vÃ½razov
 \askip
-Mo¾né odpovede v móde hµadania sú
+MoÅ¾nÃ© odpovede v mÃ³de hÄ¾adania sÃº
 \askip
-\key{SPC} nahraï tento vıskyt; choï na ïal¹í
-\key{,} nahraï tento vıskyt a skonèi
-\key{DEL} tento vıskyt nenahradzuj a choï ïalej
-\key{!} nahraï v¹etky ïal¹ie vıskyty
-\key{\^{}} spä» na predchádzajúci vıskyt
-\key{RET} skonèi query-replace
-\key{C-r} zaèni rekurzívne editovanie (\kbd{M-C-c} ho skonèí)
+\key{SPC} nahraÄ tento vÃ½skyt; choÄ na ÄalÅ¡Ã­
+\key{,} nahraÄ tento vÃ½skyt a skonÄi
+\key{DEL} tento vÃ½skyt nenahradzuj a choÄ Äalej
+\key{!} nahraÄ vÅ¡etky ÄalÅ¡ie vÃ½skyty
+\key{\^{}} spÃ¤Å¥ na predchÃ¡dzajÃºci vÃ½skyt
+\key{RET} skonÄi query-replace
+\key{C-r} zaÄni rekurzÃ­vne editovanie (\kbd{M-C-c} ho skonÄÃ­)
 
-\section{Regulárne vırazy}
+\section{RegulÃ¡rne vÃ½razy}
 
-\key{. {\rm(teèka)}} µubovoµnı znak okrem znaku nového riadku
-\key{*} ¾iadne alebo viac opakovaní
-\key{+} jedno alebo viac opakovaní
-\key{?} ¾iadne alebo jedno opakovanie
-\key{[$\ldots$]} oznaèuje triedu znakov
+\key{. {\rm(teÄka)}} Ä¾ubovoÄ¾nÃ½ znak okrem znaku novÃ©ho riadku
+\key{*} Å¾iadne alebo viac opakovanÃ­
+\key{+} jedno alebo viac opakovanÃ­
+\key{?} Å¾iadne alebo jedno opakovanie
+\key{[$\ldots$]} oznaÄuje triedu znakov
 \key{[\^{}$\ldots$]} neguje triedu znakov
 
-\key{\\{\it c}} uvedenie znaku, ktorı by mal inak ¹peciálny vıznam
-v~regulárnom vıraze
+\key{\\{\it c}} uvedenie znaku, ktorÃ½ by mal inak Å¡peciÃ¡lny vÃ½znam
+v~regulÃ¡rnom vÃ½raze
 
-\key{$\ldots$\\|$\ldots$\\|$\ldots$} vyhovuje jednej z alternatív (\uv{alebo})
-\key{\\( $\ldots$ \\)} zoskupenie niekoµkıch vzorkov do jedného
-\key{\\{\it n}} to isté ako {\it n\/}-tá skupina
+\key{$\ldots$\\|$\ldots$\\|$\ldots$} vyhovuje jednej z alternatÃ­v (\uv{alebo})
+\key{\\( $\ldots$ \\)} zoskupenie niekoÄ¾kÃ½ch vzorkov do jednÃ©ho
+\key{\\{\it n}} to istÃ© ako {\it n\/}-tÃ¡ skupina
 
-\key{\^{}} vyhovuje na zaèiatku riadku
+\key{\^{}} vyhovuje na zaÄiatku riadku
 \key{\$} vyhovuje na konci riadku
 
-\key{\\w} vyhovuje znaku, ktorı mô¾e by» súèas»ou slova
-\key{\\W} vyhovuje znaku, ktorı nemô¾e by» súèas»ou slova
-\key{\\<} vyhovuje na zaèiatku slova
+\key{\\w} vyhovuje znaku, ktorÃ½ mÃ´Å¾e byÅ¥ sÃºÄasÅ¥ou slova
+\key{\\W} vyhovuje znaku, ktorÃ½ nemÃ´Å¾e byÅ¥ sÃºÄasÅ¥ou slova
+\key{\\<} vyhovuje na zaÄiatku slova
 \key{\\>} vyhovuje na konci slova
-\key{\\b} vyhovuje medzislovnım medzerám
-\key{\\B} vyhovuje medzerám, ktoré nie sú medzislovné
+\key{\\b} vyhovuje medzislovnÃ½m medzerÃ¡m
+\key{\\B} vyhovuje medzerÃ¡m, ktorÃ© nie sÃº medzislovnÃ©
 
 \section{Registre}
 
-\key{C-x r s} ulo¾ región do registra
-\key{C-x r i} vlo¾ obsah registra do bufferu
+\key{C-x r s} uloÅ¾ regiÃ³n do registra
+\key{C-x r i} vloÅ¾ obsah registra do bufferu
 
-\key{C-x r SPC} ulo¾ aktuálnu pozíciu kurzora do registra
-\key{C-x r j} skoè na pozíciu kurzoru ulo¾enú v registri
+\key{C-x r SPC} uloÅ¾ aktuÃ¡lnu pozÃ­ciu kurzora do registra
+\key{C-x r j} skoÄ na pozÃ­ciu kurzoru uloÅ¾enÃº v registri
 
-\section{Obdå¾niky}
+\section{ObdÄºÅ¾niky}
 
-\key{C-x r r} skopíruj obdå¾nik do registra
-\key{C-x r k} vystrihni obdå¾nik
-\key{C-x r y} vlo¾ obdå¾nik
-\key{C-x r t} uvedenie ka¾dého riadku re»azcom
+\key{C-x r r} skopÃ­ruj obdÄºÅ¾nik do registra
+\key{C-x r k} vystrihni obdÄºÅ¾nik
+\key{C-x r y} vloÅ¾ obdÄºÅ¾nik
+\key{C-x r t} uvedenie kaÅ¾dÃ©ho riadku reÅ¥azcom
 
-\key{C-x r o} otvor obdå¾nik, posuò text vpravo
-\key{C-x r c} vyprázdni obdå¾nik
+\key{C-x r o} otvor obdÄºÅ¾nik, posuÅˆ text vpravo
+\key{C-x r c} vyprÃ¡zdni obdÄºÅ¾nik
 
-\section{Príkazovı interpréter}
+\section{PrÃ­kazovÃ½ interprÃ©ter}
 
-\key{M-x shell} spusti príkazovı interpréter v Emacsu
-\key{M-!} spusti príkaz príkazového interprétera
-\key{M-|} spusti príkaz príkazového interprétera na regióne
-\key{C-u M-|} filtruj región cez príkaz príkazového interprétera
+\key{M-x shell} spusti prÃ­kazovÃ½ interprÃ©ter v Emacsu
+\key{M-!} spusti prÃ­kaz prÃ­kazovÃ©ho interprÃ©tera
+\key{M-|} spusti prÃ­kaz prÃ­kazovÃ©ho interprÃ©tera na regiÃ³ne
+\key{C-u M-|} filtruj regiÃ³n cez prÃ­kaz prÃ­kazovÃ©ho interprÃ©tera
 
 \section{Kontrola pravopisu}
 
 \key{M-\$} skontroluj pravopis slova pod kurzorom
-\mkey{M-x ispell-region} skontroluj pravopis v¹etkıch slov v regióne
+\mkey{M-x ispell-region} skontroluj pravopis vÅ¡etkÃ½ch slov v regiÃ³ne
 \mkey{M-x ispell-buffer} skontroluj pravopis v bufferi
 
-\section{Mezinárodné znakové sady}
+\section{MezinÃ¡rodnÃ© znakovÃ© sady}
 
-\key{C-x RET C-\\} zvoµ a aktivuj vstupnú metódu pre aktuálny buffer
-\key{C-\\} aktivuj alebo deaktivuj vstupnú metódu
-\mkey{M-x list-input-methods} zobraz zoznam v¹etkıch vstupnıch metód
-\mkey{M-x set-language-environment} ¹pecifikuj hlavnı jazyk
+\key{C-x RET C-\\} zvoÄ¾ a aktivuj vstupnÃº metÃ³du pre aktuÃ¡lny buffer
+\key{C-\\} aktivuj alebo deaktivuj vstupnÃº metÃ³du
+\mkey{M-x list-input-methods} zobraz zoznam vÅ¡etkÃ½ch vstupnÃ½ch metÃ³d
+\mkey{M-x set-language-environment} Å¡pecifikuj hlavnÃ½ jazyk
 
-\key{C-x RET c} nastav kódovací systém pre nasledujúci príkaz
-\mkey{M-x find-file-literally} edituj súbor bez akıchkoµvek konverzií
+\key{C-x RET c} nastav kÃ³dovacÃ­ systÃ©m pre nasledujÃºci prÃ­kaz
+\mkey{M-x find-file-literally} edituj sÃºbor bez akÃ½chkoÄ¾vek konverziÃ­
 
-\mkey{M-x list-coding-systems} uká¾ v¹etky kódovacie systémy
-\mkey{M-x prefer-coding-system} zvoµ preferovanı kódovací systém
+\mkey{M-x list-coding-systems} ukÃ¡Å¾ vÅ¡etky kÃ³dovacie systÃ©my
+\mkey{M-x prefer-coding-system} zvoÄ¾ preferovanÃ½ kÃ³dovacÃ­ systÃ©m
 
-\section{Klávesové makrá}
+\section{KlÃ¡vesovÃ© makrÃ¡}
 
-\key{C-x (} zaèni definíciu klávesového makra
-\key{C-x )} ukonèi definíciu klávesového makra
-\key{C-x e} spusti naposledy definované klávesové makro
-\key{C-u C-x (} pridaj do naposledy definovaného klávesového makra
-\mkey{M-x name-last-kbd-macro} pomenuj naposledy definované makro
+\key{C-x (} zaÄni definÃ­ciu klÃ¡vesovÃ©ho makra
+\key{C-x )} ukonÄi definÃ­ciu klÃ¡vesovÃ©ho makra
+\key{C-x e} spusti naposledy definovanÃ© klÃ¡vesovÃ© makro
+\key{C-u C-x (} pridaj do naposledy definovanÃ©ho klÃ¡vesovÃ©ho makra
+\mkey{M-x name-last-kbd-macro} pomenuj naposledy definovanÃ© makro
 
-\section{Jednoduché nastavenie}
+\section{JednoduchÃ© nastavenie}
 
-\key{M-x customize} jednoduché nastavenie
+\key{M-x customize} jednoduchÃ© nastavenie
 
-\section{Nápoveda}
+\section{NÃ¡poveda}
 
-Emacs dopåòa príkazy. Ak stlaèíte \kbd{M-x} {\it tab\/} alebo {\it
-space\/}, dostanete zoznam príkazov Emacsu.
+Emacs dopÄºÅˆa prÃ­kazy. Ak stlaÄÃ­te \kbd{M-x} {\it tab\/} alebo {\it
+space\/}, dostanete zoznam prÃ­kazov Emacsu.
 \askip
-\key{C-h} nápoveda Emacsu
-\key{C-h t} spustí tútorial Emacsu
-\key{C-h i} spustí Info, prezeraè dokumentácie
-\key{C-h a} uká¾e príkazy vyhovujúce zadanému re»azcu (apropos)
-\key{C-h k} zobrazí dokumentáciu funkcie spustenej pomocou zadanej klávesy
+\key{C-h} nÃ¡poveda Emacsu
+\key{C-h t} spustÃ­ tÃºtorial Emacsu
+\key{C-h i} spustÃ­ Info, prezeraÄ dokumentÃ¡cie
+\key{C-h a} ukÃ¡Å¾e prÃ­kazy vyhovujÃºce zadanÃ©mu reÅ¥azcu (apropos)
+\key{C-h k} zobrazÃ­ dokumentÃ¡ciu funkcie spustenej pomocou zadanej klÃ¡vesy
 \askip
-Emacs pracuje v rôznych {\it módoch}, ktoré upravujú chovanie
-Emacsu pre editovanı text daného typu. Mode line obsahuje mená aktuálnych
-módov v zátvorkách.
+Emacs pracuje v rÃ´znych {\it mÃ³doch}, ktorÃ© upravujÃº chovanie
+Emacsu pre editovanÃ½ text danÃ©ho typu. Mode line obsahuje menÃ¡ aktuÃ¡lnych
+mÃ³dov v zÃ¡tvorkÃ¡ch.
 \askip
-\key{C-h m} zobraz dokumentáciu aktuálnych módov.
+\key{C-h m} zobraz dokumentÃ¡ciu aktuÃ¡lnych mÃ³dov.
 
 \copyrightnotice
 
@@ -420,5 +415,4 @@ módov v zátvorkách.
 
 % Local variables:
 % compile-command: "csplain sk-survival"
-% coding: iso-latin-2
 % End:
