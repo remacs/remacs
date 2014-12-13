@@ -1,3 +1,7 @@
+2014-12-13  Eli Zaretskii  <eliz@gnu.org>
+
+	* gnulib.mk (stddef.h): Sync with the latest change in lib/gnulib.mk.
+
 2014-11-27  Oscar Fuentes  <ofv@wanadoo.es>
 
 	* inc/ms-w32.h: Define MINGW_W64.
