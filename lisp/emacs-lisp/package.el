@@ -524,15 +524,27 @@ Return the max version (as a string) if the package is held at a lower version."
       (error "Internal error: unable to find directory for `%s'"
 	     (package-desc-full-name pkg-desc)))
     ;; Add to load path, add autoloads, and activate the package.
-    (let ((old-lp load-path))
-      (with-demoted-errors
-        (load (expand-file-name (format "%s-autoloads" name) pkg-dir) nil t))
+    (let* ((old-lp load-path)
+           (autoloads-file (expand-file-name
+                            (format "%s-autoloads" name) pkg-dir))
+           (loaded-files-list (package--list-loaded-files pkg-dir)))
+      (with-demoted-errors (format "Error loading %s: %%s" name)
+        (load autoloads-file nil t))
       (when (and (eq old-lp load-path)
                  (not (or (member pkg-dir load-path)
                           (member pkg-dir-dir load-path))))
         ;; Old packages don't add themselves to the `load-path', so we have to
         ;; do it ourselves.
-        (push pkg-dir load-path)))
+        (push pkg-dir load-path))
+      ;; Call `load' on all files in `pkg-dir' already present in
+      ;; `load-history'.  This is done so that macros in these files are updated
+      ;; to their new definitions.  If another package is being installed which
+      ;; depends on this new definition, not doing this update would cause
+      ;; compilation errors and break the installation.
+      (with-demoted-errors (format "Error loading %s: %%s" name)
+	(mapc (lambda (feature) (load feature nil t))
+              ;; Skip autoloads file since we already evaluated it above.
+              (remove (file-truename autoloads-file) loaded-files-list))))
     ;; Add info node.
     (when (file-exists-p (expand-file-name "dir" pkg-dir))
       ;; FIXME: not the friendliest, but simple.

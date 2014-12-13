@@ -3,6 +3,8 @@
 	* emacs-lisp/package.el (package--list-loaded-files): New function
 	to list files in a given directory which correspond to already
 	loaded files.
+	(package-activate-1): Reload files given by `package--list-loaded-files'.
+	Fix bug#10125, bug#18443, and bug#18448.
 
 2014-12-13  Eric S. Raymond  <esr@snark.thyrsus.com>
 
