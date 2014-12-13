@@ -1,3 +1,8 @@
+2014-12-13  Glenn Morris  <rgm@gnu.org>
+
+	* automated/flymake/warnpred/test.pl: Tweak format, since the
+	previous one seems to have stopped giving a warning with perl 5.20.1.
+
 2014-11-22  Fabián Ezequiel Gallina  <fgallina@gnu.org>
 
 	* automated/python-tests.el
