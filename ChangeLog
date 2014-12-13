@@ -147,7 +147,8 @@
 
 2014-11-11  Eric S. Raymond  <esr@thyrsus.com>
 
-	* Makefile.in: git transition - set VCWITNESS appropriately for git.
+	Git transition.
+	* Makefile.in (src): Set VCSWITNESS appropriately for git.
 
 	All bzr revision IDS, and all CVS revision IDs for which a commit
 	could be identified, were changed to time-date!committer version
