@@ -2734,7 +2734,7 @@ update the match data, and return point."
 ;; in any of these overlays, se we are safe in this case too.
 (defun isearch-open-necessary-overlays (ov)
   (let ((inside-overlay (and  (> (point) (overlay-start ov))
-			      (< (point) (overlay-end ov))))
+			      (<= (point) (overlay-end ov))))
 	;; If this exists it means that the overlay was opened using
 	;; this function, not by us tweaking the overlay properties.
 	(fct-temp (overlay-get ov 'isearch-open-invisible-temporary)))

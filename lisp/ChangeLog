@@ -1,3 +1,8 @@
+2014-12-05  Nicolas Richard  <theonewiththeevillook@yahoo.fr>
+
+	* isearch.el (isearch-open-necessary-overlays): Open overlay
+	ending at point (bug#19333).
+
 2014-12-13  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
 	* net/shr.el (shr-fold-text): New function.
