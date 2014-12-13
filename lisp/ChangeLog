@@ -1,3 +1,9 @@
+2014-12-13  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* emacs-lisp/package.el (package--list-loaded-files): New function
+	to list files in a given directory which correspond to already
+	loaded files.
+
 2014-12-13  Eric S. Raymond  <esr@snark.thyrsus.com>
 
 	* vc/vc-svn.el (vc-svn-diff): Fix bug #19312.

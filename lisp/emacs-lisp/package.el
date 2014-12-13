@@ -543,6 +543,38 @@ Return the max version (as a string) if the package is held at a lower version."
     ;; Don't return nil.
     t))
 
+(defun package--list-loaded-files (dir)
+  "Recursively list all files in DIR which correspond to loaded features.
+Returns the `file-name-sans-extension' of each file, relative to
+DIR, sorted by most recently loaded last."
+  (let* ((history (mapcar (lambda (x) (file-name-sans-extension
+                                  (file-truename (car x))))
+                    load-history))
+         (dir (file-truename dir))
+         ;; List all files that have already been loaded.
+         (list-of-conflicts
+          (remove
+           nil
+           (mapcar
+               (lambda (x) (let* ((file (file-relative-name x dir))
+                             ;; Previously loaded file, if any.
+                             (previous
+                              (ignore-errors
+                                (file-name-sans-extension
+                                 (file-truename (find-library-name file)))))
+                             (pos (when previous (member previous history))))
+                        ;; Return (RELATIVE-FILENAME . HISTORY-POSITION)
+                        (when pos
+                          (cons (file-name-sans-extension file) (length pos)))))
+             (directory-files-recursively dir "\\`[^\\.].*\\.el\\'")))))
+    ;; Turn the list of (FILENAME . POS) back into a list of features.  Files in
+    ;; subdirectories are returned relative to DIR (so not actually features).
+    (let ((default-directory (file-name-as-directory dir)))
+      (mapcar (lambda (x) (file-truename (car x)))
+        (sort list-of-conflicts
+              ;; Sort the files by ascending HISTORY-POSITION.
+              (lambda (x y) (< (cdr x) (cdr y))))))))
+
 (defun package-built-in-p (package &optional min-version)
   "Return true if PACKAGE is built-in to Emacs.
 Optional arg MIN-VERSION, if non-nil, should be a version list
