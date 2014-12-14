@@ -103,6 +103,11 @@ DEF_GNUTLS_FN (int, gnutls_certificate_set_x509_crl_file,
 DEF_GNUTLS_FN (int, gnutls_certificate_set_x509_key_file,
 	       (gnutls_certificate_credentials_t, const char *, const char *,
 		gnutls_x509_crt_fmt_t));
+#if GNUTLS_VERSION_MAJOR +					\
+  (GNUTLS_VERSION_MINOR > 0 || GNUTLS_VERSION_PATCH >= 20) > 3
+DEF_GNUTLS_FN (int, gnutls_certificate_set_x509_system_trust,
+	       (gnutls_certificate_credentials_t));
+#endif
 DEF_GNUTLS_FN (int, gnutls_certificate_set_x509_trust_file,
 	       (gnutls_certificate_credentials_t, const char *,
 		gnutls_x509_crt_fmt_t));
@@ -227,6 +232,10 @@ init_gnutls_functions (void)
   LOAD_GNUTLS_FN (library, gnutls_certificate_set_verify_flags);
   LOAD_GNUTLS_FN (library, gnutls_certificate_set_x509_crl_file);
   LOAD_GNUTLS_FN (library, gnutls_certificate_set_x509_key_file);
+#if GNUTLS_VERSION_MAJOR +					\
+  (GNUTLS_VERSION_MINOR > 0 || GNUTLS_VERSION_PATCH >= 20) > 3
+  LOAD_GNUTLS_FN (library, gnutls_certificate_set_x509_system_trust);
+#endif
   LOAD_GNUTLS_FN (library, gnutls_certificate_set_x509_trust_file);
   LOAD_GNUTLS_FN (library, gnutls_certificate_type_get);
   LOAD_GNUTLS_FN (library, gnutls_certificate_verify_peers2);
@@ -314,6 +323,10 @@ init_gnutls_functions (void)
 #define fn_gnutls_certificate_set_verify_flags	gnutls_certificate_set_verify_flags
 #define fn_gnutls_certificate_set_x509_crl_file	gnutls_certificate_set_x509_crl_file
 #define fn_gnutls_certificate_set_x509_key_file gnutls_certificate_set_x509_key_file
+#if GNUTLS_VERSION_MAJOR +					\
+  (GNUTLS_VERSION_MINOR > 0 || GNUTLS_VERSION_PATCH >= 20) > 3
+#define fn_gnutls_certificate_set_x509_system_trust gnutls_certificate_set_x509_system_trust
+#endif
 #define fn_gnutls_certificate_set_x509_trust_file gnutls_certificate_set_x509_trust_file
 #define fn_gnutls_certificate_type_get		gnutls_certificate_type_get
 #define fn_gnutls_certificate_verify_peers2	gnutls_certificate_verify_peers2
@@ -1307,6 +1320,14 @@ one trustfile (usually a CA bundle).  */)
       /* TODO: GNUTLS_X509_FMT_DER is also an option.  */
       int file_format = GNUTLS_X509_FMT_PEM;
       Lisp_Object tail;
+
+#if GNUTLS_VERSION_MAJOR +					\
+  (GNUTLS_VERSION_MINOR > 0 || GNUTLS_VERSION_PATCH >= 20) > 3
+      ret = fn_gnutls_certificate_set_x509_system_trust (x509_cred);
+      if (ret < GNUTLS_E_SUCCESS)
+	GNUTLS_LOG2i (4, max_log_level,
+		      "setting system trust failed with code ", ret);
+#endif
 
       for (tail = trustfiles; CONSP (tail); tail = XCDR (tail))
 	{

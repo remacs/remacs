@@ -1,3 +1,16 @@
+2014-12-14  Eli Zaretskii  <eliz@gnu.org>
+
+	Load system's default trusted Certificate Authorities if available.
+	* gnutls.c (gnutls_certificate_set_x509_system_trust)
+	[GNUTLS >= 3.0.20]: Declare for WINDOWSNT.
+	(init_gnutls_functions)(gnutls_certificate_set_x509_system_trust)
+	[GNUTLS >= 3.0.20]: Load from shared library for WINDOWSNT.
+	(fn_gnutls_certificate_set_x509_system_trust) [!WINDOWSNT]: Define
+	new macro.
+	(Fgnutls_boot) [GNUTLS >= 3.0.20]: Call
+	gnutls_certificate_set_x509_system_trust.  Log an error message if
+	it fails.
+
 2014-12-13  Paul Eggert  <eggert@cs.ucla.edu>
 
 	* alloc.c (XMALLOC_BASE_ALIGNMENT): Use max_align_t instead of
