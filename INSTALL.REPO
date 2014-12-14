@@ -1,5 +1,10 @@
 	     Building and Installing Emacs from the Repository
 
+Simply run 'make'.  This should work if your files are freshly checked
+out from the repository, and if you have the proper tools installed.
+If it doesn't work, or if you have special build requirements, the
+following information may be helpful.
+
 Building Emacs from the source-code repository requires some tools
 that are not needed when building from a release.  You will need:
 
@@ -28,12 +33,6 @@ can invoke './configure -C'.  After configuring, build Emacs as follows:
 
 If you want to install Emacs, type 'make install' instead of 'make' in
 the last command.
-
-After your first build, you can usually just run 'make' after any
-updates from the Savannah repository or local edits; the makefile
-contains logic to re-run configure as needed. However, if the autoconf
-input files have changed, or in some other situations, you will need
-to run 'make bootstrap' (more below).
 
 Occasionally the file 'lisp/loaddefs.el' (and similar automatically
 generated files, such as 'esh-groups.el', and '*-loaddefs.el' in some
