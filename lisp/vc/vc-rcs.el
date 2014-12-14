@@ -535,7 +535,7 @@ files beneath it."
     (vc-rcs-print-log-cleanup))
   (when limit 'limit-unsupported))
 
-(defun vc-rcs-diff (files &optional async oldvers newvers buffer)
+(defun vc-rcs-diff (files &optional oldvers newvers buffer async)
   "Get a difference report using RCS between two sets of files."
   (apply #'vc-do-command (or buffer "*vc-diff*")
 	 (if async 'async 1)

@@ -362,10 +362,10 @@
 ;;   default implementation runs rcs2log, which handles RCS- and
 ;;   CVS-style logs.
 ;;
-;; * diff (files &optional async rev1 rev2 buffer)
+;; * diff (files &optional rev1 rev2 buffer async)
 ;;
 ;;   Insert the diff for FILE into BUFFER, or the *vc-diff* buffer if
-;;   BUFFER is nil.  If ASYNC is non-nil, run asynchronously.If REV1
+;;   BUFFER is nil.  If ASYNC is non-nil, run asynchronously.  If REV1
 ;;   and REV2 are non-nil, report differences from REV1 to REV2.  If
 ;;   REV1 is nil, use the working revision (as found in the
 ;;   repository) as the older revision; if REV2 is nil, use the
@@ -552,7 +552,7 @@
 ;;   revision been even possible, let alone sane.
 ;;
 ;;   INCOMPATIBLE CHANGE: In older versions of the API, vc-diff did
-;;   not take an async-mode flag as a first optional argument.  (This
+;;   not take an async-mode flag as a fourth optional argument.  (This
 ;;   change eliminated a particularly ugly global.)
 ;;
 ;; - INCOMPATIBLE CHANGE: The backend operation for non-distributed
@@ -1691,7 +1691,7 @@ Return t if the buffer had changes, nil otherwise."
                      (if async 'async 1) "diff" file
                      (append (vc-switches nil 'diff) '("/dev/null"))))))
         (setq files (nreverse filtered))))
-    (vc-call-backend (car vc-fileset) 'diff files async rev1 rev2 buffer)
+    (vc-call-backend (car vc-fileset) 'diff files rev1 rev2 buffer async)
     (set-buffer buffer)
     (diff-mode)
     (set (make-local-variable 'diff-vc-backend) (car vc-fileset))

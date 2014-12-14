@@ -1,3 +1,24 @@
+2014-12-14  Dmitry Gutov  <dgutov@yandex.ru>
+
+	Move ASYNC argument to the `diff' VC command to the fifth
+	position, for better compatibility with existing third-party code,
+	and document it.
+
+	* vc/vc.el (vc-diff-internal): Pass `async' argument to the
+	backend `diff' command in the last position.
+
+	* vc/vc-svn.el (vc-svn-diff):
+	* vc/vc-src.el (vc-src-diff):
+	* vc/vc-sccs.el (vc-sccs-diff):
+	* vc/vc-rcs.el (vc-rcs-diff):
+	* vc/vc-mtn.el (vc-mtn-diff):
+	* vc/vc-hg.el (vc-hg-diff):
+	* vc/vc-git.el (vc-git-diff):
+	* vc/vc-dav.el (vc-dav-diff):
+	* vc/vc-cvs.el (vc-cvs-diff):
+	* vc/vc-bzr.el (vc-bzr-diff):
+	* obsolete/vc-arch.el (vc-arch-diff): Move ASYNC argument to the end.
+
 2014-12-13  Andreas Schwab  <schwab@linux-m68k.org>
 
 	* net/shr.el (shr-next-link): Don't error out at eob.

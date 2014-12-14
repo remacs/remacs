@@ -569,7 +569,7 @@ Remaining arguments are ignored."
 (autoload 'vc-version-backup-file "vc")
 (declare-function vc-coding-system-for-diff "vc" (file))
 
-(defun vc-cvs-diff (files &optional async oldvers newvers buffer)
+(defun vc-cvs-diff (files &optional oldvers newvers buffer async)
   "Get a difference report using CVS between two revisions of FILE."
   (let* (process-file-side-effects
 	 (async (and async (vc-cvs-stay-local-p files)))

@@ -236,7 +236,7 @@ If LIMIT is non-nil, show no more than this many entries."
 
 (autoload 'vc-switches "vc")
 
-(defun vc-mtn-diff (files &optional async rev1 rev2 buffer)
+(defun vc-mtn-diff (files &optional rev1 rev2 buffer async)
   "Get a difference report using monotone between two revisions of FILES."
   (apply 'vc-mtn-command (or buffer "*vc-diff*")
 	 (if async 'async 1)

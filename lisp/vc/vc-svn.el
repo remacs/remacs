@@ -548,7 +548,7 @@ If LIMIT is non-nil, show no more than this many entries."
 		 (if start-revision (format "-r%s" start-revision) "-rHEAD:0"))
 		(when limit (list "--limit" (format "%s" limit)))))))))
 
-(defun vc-svn-diff (files &optional async oldvers newvers buffer)
+(defun vc-svn-diff (files &optional oldvers newvers buffer async)
   "Get a difference report using SVN between two revisions of fileset FILES."
   (and oldvers
        (not newvers)

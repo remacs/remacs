@@ -78,7 +78,7 @@
 ;; - show-log-entry (revision)                     OK
 ;; - comment-history (file)                        ??
 ;; - update-changelog (files)                      COULD BE SUPPORTED
-;; * diff (file &optional rev1 rev2 buffer)        OK
+;; * diff (file &optional rev1 rev2 buffer async)  OK
 ;; - revision-completion-table (files)             OK
 ;; - annotate-command (file buf &optional rev)     OK
 ;; - annotate-time ()                              OK
@@ -977,7 +977,7 @@ or BRANCH^ (where \"^\" can be repeated)."
 
 (autoload 'vc-switches "vc")
 
-(defun vc-git-diff (files &optional async rev1 rev2 buffer)
+(defun vc-git-diff (files &optional rev1 rev2 buffer async)
   "Get a difference report using Git between two revisions of FILES."
   (let (process-file-side-effects)
     (if vc-git-diff-switches

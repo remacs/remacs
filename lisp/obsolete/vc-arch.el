@@ -448,7 +448,7 @@ CALLBACK expects (ENTRIES &optional MORE-TO-COME); see
     (vc-arch-command nil 0 files "commit" "-s" summary "-L" comment "--"
 		     (vc-switches 'Arch 'checkin))))
 
-(defun vc-arch-diff (files &optional async oldvers newvers buffer)
+(defun vc-arch-diff (files &optional oldvers newvers buffer async)
   "Get a difference report using Arch between two versions of FILES."
   ;; FIXME: This implementation only works for singleton filesets.  To make
   ;; it work for more cases, we have to either call `file-diffs' manually on

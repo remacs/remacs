@@ -117,7 +117,7 @@ only needs to update the status of URL within the backend.
   "Insert the revision log of URL into the *vc* buffer."
   )
 
-(defun vc-dav-diff (url &optional async rev1 rev2)
+(defun vc-dav-diff (url &optional rev1 rev2 buffer async)
   "Insert the diff for URL into the *vc-diff* buffer.
 If REV1 and REV2 are non-nil report differences from REV1 to REV2.
 If REV1 is nil, use the current workfile version as the older version.
