@@ -1356,12 +1356,10 @@ suggest to customize that face, if it's customizable."
                                      (or (face-at-point t t) "all faces") t)))
   (customize-face face t))
 
-(defalias 'customize-customized 'customize-unsaved)
-
-;;;###autoload
-(defun customize-unsaved ()
-  "Customize all options and faces set in this session but not saved."
-  (interactive)
+(defun custom-unsaved-options ()
+  "List of options and faces set in this session but not saved.
+Each entry is of the form (SYMBOL TYPE), where TYPE is one of the
+symbols `custom-face' or `custom-variable'."
   (let ((found nil))
     (mapatoms (lambda (symbol)
 		(and (or (get symbol 'customized-face)
@@ -1372,6 +1370,15 @@ suggest to customize that face, if it's customizable."
 			 (get symbol 'customized-variable-comment))
 		     (boundp symbol)
 		     (push (list symbol 'custom-variable) found))))
+    found))
+
+(defalias 'customize-customized 'customize-unsaved)
+
+;;;###autoload
+(defun customize-unsaved ()
+  "Customize all options and faces set in this session but not saved."
+  (interactive)
+  (let ((found (custom-unsaved-options)))
     (if (not found)
 	(error "No user options are set but unsaved")
       (custom-buffer-create (custom-sort-items found t nil)
@@ -1476,6 +1483,16 @@ If TYPE is `groups', include only groups."
   "Customize all loaded groups matching REGEXP."
   (interactive (list (apropos-read-pattern "groups")))
   (customize-apropos regexp 'groups))
+
+;;;###autoload
+(defun custom-prompt-customize-unsaved-options ()
+  "Prompt user to customize any unsaved customization options.
+Return non-nil if user chooses to customize, for use in
+`kill-emacs-query-functions'."
+  (not (and (custom-unsaved-options)
+	    (yes-or-no-p "Some customized options have not been saved; Examine? ")
+	    (customize-unsaved)
+	    t)))
 
 ;;; Buffer.
 

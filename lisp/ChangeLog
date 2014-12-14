@@ -1,3 +1,9 @@
+2014-12-14  Cameron Desautels  <camdez@gmail.com>
+
+	* cus-edit.el (custom-prompt-customize-unsaved-options): Add a
+	mechanism for prompting user about unsaved customizations.
+	(Bug#19328)
+
 2014-12-14  Dmitry Gutov  <dgutov@yandex.ru>
 
 	* fringe.el (fringe-bitmap-p): Fix 2014-12-05 breakage.

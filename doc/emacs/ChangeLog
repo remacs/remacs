@@ -1,3 +1,8 @@
+2014-12-14  Cameron Desautels  <camdez@gmail.com>
+
+	* custom.texi (Saving Customizations): Mention
+	`custom-prompt-customize-unsaved-options'.
+
 2014-12-08  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
 	* misc.texi (Network Security): Mention the new protocol-level

@@ -419,12 +419,6 @@ rather than interactively.  This a trivial one-liner in easy-mode.el.
 
 ** Make byte-optimization warnings issue accurate line numbers.
 
-** A function to check for customizable options that have been
-  set but not saved, and ask the user whether to save them.
-  This could go in kill-emacs-query-functions, to remind people
-  to save their changes. If the user says yes, show them
-  in a Custom buffer using customize-customized.
-
 ** Record the sxhash of the default value for customized variables
   and notify the user (maybe by adding a menu item or toolbar button,
   as the detection can occur during autoload time) when the default
