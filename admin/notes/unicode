@@ -214,11 +214,6 @@ nontrivial changes to the build process.
      operating in some other language environment.
 
 	etc/tutorials/TUTORIAL.ja
-	leim/quail/cyril-jis.el
-	leim/quail/hanja-jis.el
-	leim/quail/japanese.el
-	leim/quail/py-punct.el
-	leim/quail/pypunct-b5.el
 	lisp/international/ja-dic-cnv.el
 	lisp/international/ja-dic-utl.el
 	lisp/international/kinsoku.el
@@ -226,18 +221,23 @@ nontrivial changes to the build process.
 	lisp/international/titdic-cnv.el
 	lisp/language/japan-util.el
 	lisp/language/japanese.el
+	lisp/leim/quail/cyril-jis.el
+	lisp/leim/quail/hanja-jis.el
+	lisp/leim/quail/japanese.el
+	lisp/leim/quail/py-punct.el
+	lisp/leim/quail/pypunct-b5.el
 	lisp/term/x-win.el
 
  * utf-8-emacs
 
      These files contain characters that cannot be encoded in UTF-8.
 
-	leim/quail/tibetan.el
-	leim/quail/ethiopic.el
 	lisp/international/titdic-cnv.el
 	lisp/language/tibetan.el
 	lisp/language/tibet-util.el
 	lisp/language/ind-util.el
+	lisp/leim/quail/ethiopic.el
+	lisp/leim/quail/tibetan.el
 
 
 This file is part of GNU Emacs.

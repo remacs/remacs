@@ -1,3 +1,7 @@
+2014-12-14  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* notes/unicode: Track leim/quail file renames.
+
 2014-12-14  Glenn Morris  <rgm@gnu.org>
 
 	* quick-install-emacs (PUBLIC_LIBSRC_SCRIPTS): Remove, and all uses.
