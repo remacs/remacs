@@ -1,3 +1,7 @@
+2014-12-14  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* SKK-DIC/SKK-JISYO.L: Update to version 1.1216.
+
 2014-10-20  Glenn Morris  <rgm@gnu.org>
 
 	* Merge in all changes up to 24.4 release.
