@@ -1,3 +1,7 @@
+2014-12-14  Alan Mackenzie  <acm@muc.de>
+
+	* NEWS: Add entry for fast-but-imprecise-scrolling.
+
 2014-12-14  Cameron Desautels  <camdez@gmail.com>
 
 	* NEWS: Mention `custom-prompt-customize-unsaved-options'.

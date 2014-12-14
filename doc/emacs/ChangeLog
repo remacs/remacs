@@ -1,3 +1,8 @@
+2014-12-14  Alan Mackenzie  <acm@muc.de>
+
+	* display.texi (Scrolling): fast-but-imprecise-scrolling.
+	Describe new variable.
+
 2014-12-14  Cameron Desautels  <camdez@gmail.com>
 
 	* custom.texi (Saving Customizations): Mention

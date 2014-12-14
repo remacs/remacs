@@ -127,6 +127,19 @@ the mouse wheel (@pxref{Mouse Commands}); in general, it affects any
 command that has a non-@code{nil} @code{scroll-command} property.
 @xref{Property Lists,,, elisp, The Emacs Lisp Reference Manual}.
 
+@vindex fast-but-imprecise-scrolling
+  Sometimes, particularly when you hold down keys such as @kbd{C-v}
+and @kbd{M-v}, activating keyboard auto-repeat, Emacs fails to keep up
+with the rapid rate of scrolling requested; the display doesn't update
+and Emacs can become unresponsive to input for quite a long time.  You
+can counter this sluggishness by setting the variable
+@code{fast-but-imprecise-scrolling} to a non-@code{nil} value.  This
+instructs the scrolling commands not to fontify (@pxref{Font Lock})
+any unfontified text they scroll over, instead to assume it has the
+default face.  This can cause Emacs to scroll to somewhat wrong buffer
+positions when the faces in use are not all the same size, even with
+single (i.e. without auto-repeat) scrolling operations.
+
 @vindex scroll-up
 @vindex scroll-down
 @findex scroll-up-line

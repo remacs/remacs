@@ -830,6 +830,7 @@ extern Lisp_Object Qwindowp;
 
 /* Defined in xdisp.c.  */
 extern Lisp_Object Qimage;
+extern Lisp_Object Qfontification_functions;
 
 
 /* Extract a value or address from a Lisp_Object.  */

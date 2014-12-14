@@ -347,7 +347,7 @@ Lisp_Object Qtext;
 /* Holds the list (error).  */
 static Lisp_Object list_of_error;
 
-static Lisp_Object Qfontification_functions;
+Lisp_Object Qfontification_functions;
 
 static Lisp_Object Qwrap_prefix;
 static Lisp_Object Qline_prefix;

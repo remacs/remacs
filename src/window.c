@@ -4869,10 +4869,15 @@ window_internal_height (struct window *w)
 static void
 window_scroll (Lisp_Object window, EMACS_INT n, bool whole, int noerror)
 {
+  ptrdiff_t count = SPECPDL_INDEX ();
+
   immediate_quit = 1;
   n = clip_to_bounds (INT_MIN, n, INT_MAX);
 
   wset_redisplay (XWINDOW (window));
+
+  if (whole && Vfast_but_imprecise_scrolling)
+    specbind (Qfontification_functions, Qnil);
 
   /* If we must, use the pixel-based version which is much slower than
      the line-based one but can handle varying line heights.  */
@@ -4880,6 +4885,8 @@ window_scroll (Lisp_Object window, EMACS_INT n, bool whole, int noerror)
     window_scroll_pixel_based (window, n, whole, noerror);
   else
     window_scroll_line_based (window, n, whole, noerror);
+
+  unbind_to (count, Qnil);
 
   /* Bug#15957.  */
   XWINDOW (window)->window_end_valid = 0;
@@ -7477,6 +7484,17 @@ Note that when a frame's pixel size is not a multiple of the
 frame's character size, at least one window may get resized
 pixelwise even if this option is nil.  */);
   window_resize_pixelwise = 0;
+
+  DEFVAR_BOOL ("fast-but-imprecise-scrolling",
+               Vfast_but_imprecise_scrolling,
+               doc: /* When non-nil, accelerate scrolling operations.
+This comes into play when scrolling rapidly over previously
+unfontified buffer regions.  Only those portions of the buffer which
+are actually going to be displayed get fontified.
+
+Note that this optimization can cause the portion of the buffer
+displayed after a scrolling operation to be somewhat inaccurate.  */);
+  Vfast_but_imprecise_scrolling = 0;
 
   defsubr (&Sselected_window);
   defsubr (&Sminibuffer_window);

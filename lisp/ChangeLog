@@ -1,3 +1,7 @@
+2014-12-14  Alan Mackenzie  <acm@muc.de>
+
+	* lisp/cus-start.el (all): Add fast-but-imprecise-scrolling.
+
 2014-12-14  Artur Malabarba  <bruce.connor.am@gmail.com>
 
 	* let-alist.el: Add lexical binding.

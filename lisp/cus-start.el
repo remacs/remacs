@@ -460,6 +460,7 @@ since it could result in memory overflow and make Emacs crash."
 			      :value display-buffer)
 		       (other :tag "Always (t)" :value t))
 	      "24.3")
+	     (fast-but-imprecise-scrolling scrolling boolean "25.1")
 	     (window-resize-pixelwise windows boolean "24.4")
 	     ;; xdisp.c
 	     ;; The whitespace group is for whitespace.el.
