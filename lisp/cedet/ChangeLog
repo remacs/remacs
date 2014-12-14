@@ -1,3 +1,10 @@
+2014-12-14  Dmitry Gutov  <dgutov@yandex.ru>
+
+	* semantic.el (semantic-analyze-completion-at-point-function)
+	(semantic-analyze-notc-completion-at-point-function)
+	(semantic-analyze-nolongprefix-completion-at-point-function): Do
+	nothing if the current buffer is not using Semantic (bug#19077).
+
 2014-12-08  Matt Curtis  <matt.r.curtis@gmail.com>  (tiny change)
 
 	* pulse.el (pulse-momentary-highlight-one-line): Respect the POINT
