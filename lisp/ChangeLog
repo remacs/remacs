@@ -1,5 +1,9 @@
 2014-12-14  Dmitry Gutov  <dgutov@yandex.ru>
 
+	* fringe.el (fringe-bitmap-p): Fix 2014-12-05 breakage.
+
+2014-12-14  Dmitry Gutov  <dgutov@yandex.ru>
+
 	Move ASYNC argument to the `diff' VC command to the fifth
 	position, for better compatibility with existing third-party code,
 	and document it.

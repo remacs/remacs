@@ -85,7 +85,7 @@
 
 (defun fringe-bitmap-p (symbol)
   "Return non-nil if SYMBOL is a fringe bitmap."
-  `(get ,symbol 'fringe))
+  (get symbol 'fringe))
 
 
 ;; Control presence of fringes
