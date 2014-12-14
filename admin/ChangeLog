@@ -1,6 +1,8 @@
 2014-12-14  Paul Eggert  <eggert@cs.ucla.edu>
 
 	* notes/unicode: Track leim/quail file renames.
+	Correct coding system
+	of lisp/international/titdic-cnv.el.
 
 2014-12-14  Glenn Morris  <rgm@gnu.org>
 
