@@ -1702,7 +1702,7 @@ Letters do not insert themselves; instead, they are commands.
 \\{package-menu-mode-map}"
   (setq tabulated-list-format
         `[("Package" 18 package-menu--name-predicate)
-          ("Version" 12 nil)
+          ("Version" 13 nil)
           ("Status"  10 package-menu--status-predicate)
           ,@(if (cdr package-archives)
                 '(("Archive" 10 package-menu--archive-predicate)))
