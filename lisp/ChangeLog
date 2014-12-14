@@ -1,3 +1,7 @@
+2014-12-14  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* let-alist.el: Add lexical binding.
+
 2014-12-14  Steve Purcell  <steve@sanityinc.com>  (tiny change)
 
 	* emacs-lisp/package.el (package-menu-mode): Use an extra column

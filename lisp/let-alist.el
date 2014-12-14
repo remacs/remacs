@@ -1,4 +1,4 @@
-;;; let-alist.el --- Easily let-bind values of an assoc-list by their names
+;;; let-alist.el --- Easily let-bind values of an assoc-list by their names -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2014 Free Software Foundation, Inc.
 
