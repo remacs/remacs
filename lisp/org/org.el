@@ -19148,7 +19148,7 @@ BEG and END default to the buffer boundaries."
 (org-defkey org-mode-map "\C-c\M-f" 'org-next-block)
 (org-defkey org-mode-map "\C-c\M-b" 'org-previous-block)
 (org-defkey org-mode-map "\C-c$"    'org-archive-subtree)
-(org-defkey org-mode-map "\C-c\C-x\C-s" 'org-advertized-archive-subtree)
+(org-defkey org-mode-map "\C-c\C-x\C-s" 'org-archive-subtree)
 (org-defkey org-mode-map "\C-c\C-x\C-a" 'org-archive-subtree-default)
 (org-defkey org-mode-map "\C-c\C-xd" 'org-insert-drawer)
 (org-defkey org-mode-map "\C-c\C-xa" 'org-toggle-archive-tag)
@@ -20943,7 +20943,7 @@ on context.  See the individual commands for more information."
     ("Archive"
      ["Archive (default method)" org-archive-subtree-default (org-in-subtree-not-table-p)]
      "--"
-     ["Move Subtree to Archive file" org-advertized-archive-subtree (org-in-subtree-not-table-p)]
+     ["Move Subtree to Archive file" org-archive-subtree (org-in-subtree-not-table-p)]
      ["Toggle ARCHIVE tag" org-toggle-archive-tag (org-in-subtree-not-table-p)]
      ["Move subtree to Archive sibling" org-archive-to-archive-sibling (org-in-subtree-not-table-p)]
      )

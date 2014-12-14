@@ -1,3 +1,17 @@
+2014-12-14  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Spelling fixes
+	All uses changed.
+	* lib-src/etags.c (analyze_regex): Rename from analyse_regex.
+	* lisp/cedet/semantic/lex-spp.el:
+	(semantic-lex-spp-analyzer-do-replace):
+	Rename from semantic-lex-spp-anlyzer-do-replace.
+	* lisp/emacs-lisp/cconv.el (cconv--analyze-use):
+	Rename from cconv--analyse-use.
+	(cconv--analyze-function): Rename from cconv--analyse-function.
+	(cconv-analyze-form): Rename from cconv-analyse-form.
+	* src/regex.c (analyze_first): Rename from analyze_first.
+
 2014-12-14  Glenn Morris  <rgm@gnu.org>
 
 	* make-dist: No more lib-src/grep-changelog.

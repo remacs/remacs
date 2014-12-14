@@ -515,7 +515,7 @@ init_syntax_once (void)
 
 #define STREQ(s1, s2) ((strcmp (s1, s2) == 0))
 
-#ifndef emacs  
+#ifndef emacs
 # undef max
 # undef min
 # define max(a, b) ((a) > (b) ? (a) : (b))
@@ -1632,7 +1632,7 @@ static boolean at_begline_loc_p (re_char *pattern, re_char *p,
 static boolean at_endline_loc_p (re_char *p, re_char *pend,
 				 reg_syntax_t syntax);
 static re_char *skip_one_char (re_char *p);
-static int analyse_first (re_char *p, re_char *pend,
+static int analyze_first (re_char *p, re_char *pend,
 			  char *fastmap, const int multibyte);
 
 /* Fetch the next character in the uncompiled pattern, with no
@@ -2688,7 +2688,7 @@ regex_compile (const_re_char *pattern, size_t size, reg_syntax_t syntax,
 		    size_t startoffset = 0;
 		    re_opcode_t ofj =
 		      /* Check if the loop can match the empty string.  */
-		      (simple || !analyse_first (laststart, b, NULL, 0))
+		      (simple || !analyze_first (laststart, b, NULL, 0))
 		      ? on_failure_jump : on_failure_jump_loop;
 		    assert (skip_one_char (laststart) <= b);
 
@@ -2735,7 +2735,7 @@ regex_compile (const_re_char *pattern, size_t size, reg_syntax_t syntax,
 		GET_BUFFER_SPACE (7); /* We might use less.  */
 		if (many_times_ok)
 		  {
-		    boolean emptyp = analyse_first (laststart, b, NULL, 0);
+		    boolean emptyp = analyze_first (laststart, b, NULL, 0);
 
 		    /* The non-greedy multiple match looks like
 		       a repeat..until: we only need a conditional jump
@@ -3836,7 +3836,7 @@ group_in_compile_stack (compile_stack_type compile_stack, regnum_t regnum)
   return false;
 }
 
-/* analyse_first.
+/* analyze_first.
    If fastmap is non-NULL, go through the pattern and fill fastmap
    with all the possible leading chars.  If fastmap is NULL, don't
    bother filling it up (obviously) and only return whether the
@@ -3847,7 +3847,7 @@ group_in_compile_stack (compile_stack_type compile_stack, regnum_t regnum)
    Return -1 if fastmap was not updated accurately.  */
 
 static int
-analyse_first (const_re_char *p, const_re_char *pend, char *fastmap,
+analyze_first (const_re_char *p, const_re_char *pend, char *fastmap,
 	       const int multibyte)
 {
   int j, k;
@@ -4089,7 +4089,7 @@ analyse_first (const_re_char *p, const_re_char *pend, char *fastmap,
 	    { /* We have to look down both arms.
 		 We first go down the "straight" path so as to minimize
 		 stack usage when going through alternatives.  */
-	      int r = analyse_first (p, pend, fastmap, multibyte);
+	      int r = analyze_first (p, pend, fastmap, multibyte);
 	      if (r) return r;
 	      p += j;
 	    }
@@ -4139,7 +4139,7 @@ analyse_first (const_re_char *p, const_re_char *pend, char *fastmap,
   /* We reached the end without matching anything.  */
   return 1;
 
-} /* analyse_first */
+} /* analyze_first */
 
 /* re_compile_fastmap computes a ``fastmap'' for the compiled pattern in
    BUFP.  A fastmap records which of the (1 << BYTEWIDTH) possible
@@ -4169,7 +4169,7 @@ re_compile_fastmap (struct re_pattern_buffer *bufp)
   memset (fastmap, 0, 1 << BYTEWIDTH);  /* Assume nothing's valid.  */
   bufp->fastmap_accurate = 1;	    /* It will be when we're done.  */
 
-  analysis = analyse_first (bufp->buffer, bufp->buffer + bufp->used,
+  analysis = analyze_first (bufp->buffer, bufp->buffer + bufp->used,
 			    fastmap, RE_MULTIBYTE_P (bufp));
   bufp->can_be_null = (analysis != 0);
   return 0;

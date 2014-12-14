@@ -314,7 +314,7 @@ static long readline_internal (linebuffer *, FILE *);
 static bool nocase_tail (const char *);
 static void get_tag (char *, char **);
 
-static void analyse_regex (char *);
+static void analyze_regex (char *);
 static void free_regexps (void);
 static void regex_tag_multiline (void);
 static void error (const char *, ...) ATTRIBUTE_FORMAT_PRINTF (1, 2);
@@ -1207,7 +1207,7 @@ main (int argc, char **argv)
 	  lang = argbuffer[i].lang;
 	  break;
 	case at_regexp:
-	  analyse_regex (argbuffer[i].what);
+	  analyze_regex (argbuffer[i].what);
 	  break;
 	case at_filename:
 	      this_file = argbuffer[i].what;
@@ -5573,7 +5573,7 @@ scan_separators (char *name)
 /* Look at the argument of --regex or --no-regex and do the right
    thing.  Same for each line of a regexp file. */
 static void
-analyse_regex (char *regex_arg)
+analyze_regex (char *regex_arg)
 {
   if (regex_arg == NULL)
     {
@@ -5604,7 +5604,7 @@ analyse_regex (char *regex_arg)
 	  pfatal (regexfile);
 	linebuffer_init (&regexbuf);
 	while (readline_internal (&regexbuf, regexfp) > 0)
-	  analyse_regex (regexbuf.buffer);
+	  analyze_regex (regexbuf.buffer);
 	free (regexbuf.buffer);
 	fclose (regexfp);
       }

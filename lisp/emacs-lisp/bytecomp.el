@@ -417,7 +417,7 @@ specify different fields to sort on."
 This list lives partly on the stack.")
 (defvar byte-compile-lexical-variables nil
   "List of variables that have been treated as lexical.
-Filled in `cconv-analyse-form' but initialized and consulted here.")
+Filled in `cconv-analyze-form' but initialized and consulted here.")
 (defvar byte-compile-const-variables nil
   "List of variables declared as constants during compilation of this file.")
 (defvar byte-compile-free-references)

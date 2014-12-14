@@ -251,7 +251,7 @@ So the cdr of each bookmark is an alist too.")
   (interactive)
   (save-excursion
     (save-window-excursion
-      ;; Avoir warnings?
+      ;; Avoid warnings?
       ;; (message "Saving Gnus bookmarks to file %s..." gnus-bookmark-default-file)
       (set-buffer (get-buffer-create  " *Gnus bookmarks*"))
       (erase-buffer)

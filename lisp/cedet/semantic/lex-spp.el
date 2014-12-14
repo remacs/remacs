@@ -823,7 +823,7 @@ ARGVALUES are values for any arg list, or nil."
 ;; An analyzer that will push tokens from a macro in place
 ;; of the macro symbol.
 ;;
-(defun semantic-lex-spp-anlyzer-do-replace (sym val beg end)
+(defun semantic-lex-spp-analyzer-do-replace (sym val beg end)
   "Do the lexical replacement for SYM with VAL.
 Argument BEG and END specify the bounds of SYM in the buffer."
   (if (not val)
@@ -863,6 +863,9 @@ Argument BEG and END specify the bounds of SYM in the buffer."
       (setq semantic-lex-end-point end)
       )
     ))
+(define-obsolete-function-alias
+  'semantic-lex-spp-anlyzer-do-replace
+  'semantic-lex-spp-analyzer-do-replace "25.1")
 
 (defvar semantic-lex-spp-replacements-enabled t
   "Non-nil means do replacements when finding keywords.
