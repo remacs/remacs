@@ -137,8 +137,6 @@ CLIENTW = @CLIENTW@
 INSTALLABLES = etags${EXEEXT} ctags${EXEEXT} emacsclient${EXEEXT} $(CLIENTW) \
                ebrowse${EXEEXT}
 
-INSTALLABLE_SCRIPTS = grep-changelog
-
 # Things that Emacs runs internally, or during the build process,
 #  which should not be installed in bindir.
 UTILITIES = profile${EXEEXT} movemail${EXEEXT} hexl${EXEEXT} \
@@ -215,7 +213,7 @@ CPP_CFLAGS = ${BASE_CFLAGS} ${PROFILING_CFLAGS} ${CPPFLAGS} ${CFLAGS}
 # Configuration files for .o files to depend on.
 config_h = ../src/config.h $(srcdir)/../src/conf_post.h
 
-all: ${EXE_FILES} ${SCRIPTS} ${INSTALLABLE_SCRIPTS}
+all: ${EXE_FILES} ${SCRIPTS}
 
 .PHONY: all need-blessmail maybe-blessmail
 
@@ -281,16 +279,10 @@ install: $(DESTDIR)${archlibdir}
 	for file in ${INSTALLABLES} ; do \
 	  $(INSTALL_PROGRAM) $(INSTALL_STRIP) $${file} "$(DESTDIR)${bindir}"/`echo $${file} | sed -e 's/${EXEEXT}$$//' -e '$(TRANSFORM)'`${EXEEXT} ; \
 	done
-	for file in ${INSTALLABLE_SCRIPTS} ; do \
-	  $(INSTALL_SCRIPT) ${srcdir}/$${file} "$(DESTDIR)${bindir}"/`echo $${file} | sed '$(TRANSFORM)'`  ; \
-	done
 
 uninstall:
 	for file in ${INSTALLABLES}; do \
 	  rm -f "$(DESTDIR)${bindir}"/`echo $${file} | sed -e 's/${EXEEXT}$$//' -e '$(TRANSFORM)'`${EXEEXT} ; \
-	done
-	for file in ${INSTALLABLE_SCRIPTS}; do \
-	  rm -f "$(DESTDIR)${bindir}"/`echo $${file} | sed '$(TRANSFORM)'` ; \
 	done
 	if [ -d "$(DESTDIR)${archlibdir}" ]; then \
 	  (cd "$(DESTDIR)${archlibdir}" && rm -f ${UTILITIES} ${SCRIPTS}) \

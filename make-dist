@@ -382,7 +382,7 @@ echo "Making links to \`lib-src'"
 (cd lib-src
  ln [a-zA-Z]*.[ch] ../${tempdir}/lib-src
  ln ChangeLog Makefile.in README ../${tempdir}/lib-src
- ln grep-changelog rcs2log ../${tempdir}/lib-src
+ ln rcs2log ../${tempdir}/lib-src
  ln makefile.w32-in ../${tempdir}/lib-src
  ln update-game-score.exe.manifest ../${tempdir}/lib-src)
 

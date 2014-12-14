@@ -1,5 +1,7 @@
 2014-12-14  Glenn Morris  <rgm@gnu.org>
 
+	* make-dist: No more lib-src/grep-changelog.
+
 	* INSTALL.REPO: Revert 2014-12-06 change.
 
 2014-12-13  Paul Eggert  <eggert@cs.ucla.edu>

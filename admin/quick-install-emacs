@@ -28,7 +28,6 @@
 
 
 PUBLIC_LIBSRC_BINARIES='emacsclient etags ctags ebrowse'
-PUBLIC_LIBSRC_SCRIPTS='grep-changelog'
 
 AVOID="CVS -DIC README COPYING ChangeLog ~ [.]orig$ [.]rej$ Makefile$ Makefile.in$ makefile$ makefile.w32-in$ stamp-subdir [.]cvsignore [.]arch-ids [{]arch[}] [.][cho]$ make-docfile"
 
@@ -230,9 +229,6 @@ maybe_emit_copy $BUILD/src/emacs $DST_BIN/emacs-$VERSION
 for F in $PUBLIC_LIBSRC_BINARIES; do
   maybe_emit_copy $BUILD/lib-src/$F $DST_BIN/$F
 done
-for F in $PUBLIC_LIBSRC_SCRIPTS; do
-  maybe_emit_copy $SRC/lib-src/$F $DST_BIN/$F
-done
 
 if test x"$SRC" = x"$BUILD"; then
   PFXS="$BUILD"
@@ -259,7 +255,7 @@ for SUBDIR in lisp leim etc lib-src info; do
       ;;
     lib-src)
       DST="$DST_LIBEXEC"
-      AVOID_PAT="`echo "($AVOID ($PUBLIC_LIBSRC_BINARIES $PUBLIC_LIBSRC_SCRIPTS)\$)" | tr ' ' '|'`"
+      AVOID_PAT="`echo "($AVOID ($PUBLIC_LIBSRC_BINARIES)\$)" | tr ' ' '|'`"
       ;;
     info)
       DST="$DST_INFO"

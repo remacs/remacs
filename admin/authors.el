@@ -691,7 +691,7 @@ Changes to files in this list are not listed.")
     "etags-vmslib.c" "fakemail.c" "getdate.c" "getopt.h" "getopt1.c"
     "getopt_.h" "getopt_int.h" "gettext.h" "leditcfns.c" "loadst.c"
     "make-path.c" "qsort.c" "sorted-doc.c" "tcp.c" "timer.c" "wakeup.c"
-    "yow.c"
+    "yow.c" "grep-changelog"
     ;; etc/
     "emacsclient.c" "etags.c" "hexl.c" "make-docfile.c" "movemail.c"
     "test-distrib.c" "testfile"

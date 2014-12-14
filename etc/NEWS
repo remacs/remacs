@@ -43,6 +43,11 @@ Use './configure PKG_CONFIG=/full/name/of/pkg-config' if you need to.
 ** The configure option '--enable-silent-rules' and the command
 'make V=0' now do a better job of suppressing chatter.
 
+---
+** The `grep-changelog' script (and its manual page) are no longer included.
+It has no particular connection to Emacs and has not changed in years,
+so if you want to use it, you can always take a copy from an older Emacs.
+
 
 * Startup Changes in Emacs 25.1
 
