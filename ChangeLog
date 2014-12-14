@@ -1,20 +1,6 @@
 2014-12-13  Paul Eggert  <eggert@cs.ucla.edu>
 
-	Convert Czech and Slovakian refcards to UTF-8
-	* admin/notes/unicode: Don't mention Czech and Slovakian refcards.
-	* etc/refcards/cs-dired-ref.tex, etc/refcards/cs-refcard.tex:
-	* etc/refcards/cs-survival.tex, etc/refcards/sk-dired-ref.tex:
-	* etc/refcards/sk-refcard.tex, etc/refcards/sk-survival.tex:
-	Convert from iso-latin-2 to utf-8.  Remove no-longer-necessary
-	coding comments and "\input utf8off" directives.
-
-2014-12-13  Paul Eggert  <eggert@cs.ucla.edu>
-
-	Replace union hack with C11-style max_align_t
-	* admin/merge-gnulib (GNULIB_MODULES): Add stddef, for max_align_t.
 	* lib/gnulib.mk: Regenerate.
-	* src/alloc.c (XMALLOC_BASE_ALIGNMENT): Use max_align_t instead of
-	a hack involving a union.
 
 2014-12-13  Paul Eggert  <eggert@cs.ucla.edu>
 
@@ -62,9 +48,8 @@
 	2014-12-11 unistd: fix iOS check conditional
 	2014-12-08 apply _GL_ATTRIBUTE_PURE to some inline functions
 	2014-12-02 support GNU format printf and scanf on mingw
-	* doc/misc/texinfo.tex, lib/stat-time.h, lib/stddef.in.h:
-	* lib/timespec.h, m4/extensions.m4, m4/stddef_h.m4, m4/stdio_h.m4:
-	Update from gnulib.
+	* lib/stat-time.h, lib/stddef.in.h, lib/timespec.h:
+	* m4/extensions.m4, m4/stddef_h.m4, m4/stdio_h.m4: Update from gnulib.
 	* lib/gnulib.mk: Regenerate.
 
 2014-12-06  Stephen Leake  <stephen_leake@stephe-leake.org>

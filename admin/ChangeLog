@@ -1,3 +1,9 @@
+2014-12-13  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* notes/unicode: Don't mention Czech and Slovakian refcards.
+
+	* merge-gnulib (GNULIB_MODULES): Add stddef, for max_align_t.
+
 2014-12-06  Stephen Leake  <stephen_leake@stephe-leake.org>
 
 	* notes/commits: Delete; merge into ./CONTRIBUTE.
