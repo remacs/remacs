@@ -10,8 +10,10 @@
 
 2014-12-14  Cameron Desautels  <camdez@gmail.com>
 
-	* cus-edit.el (custom-prompt-customize-unsaved-options): Add a
-	mechanism for prompting user about unsaved customizations.
+	* cus-edit.el (custom-unsaved-options): New function, extracted
+	from `customize-unsaved'.
+	(custom-unsaved): Use it.
+	(custom-prompt-customize-unsaved-options): New function.
 	(Bug#19328)
 
 2014-12-14  Dmitry Gutov  <dgutov@yandex.ru>
