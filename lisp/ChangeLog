@@ -1,3 +1,8 @@
+2014-12-14  João Távora  <joaotavora@gmail.com>
+
+	* textmodes/tex-mode.el (tex-insert-quote): Consider and respect
+	`electric-pair-mode' (bug#19356).
+
 2014-12-12  Michael Albinus  <michael.albinus@gmx.de>
 
 	* simple.el (password-word-equivalents): Add "passcode", used for

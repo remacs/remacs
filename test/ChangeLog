@@ -1,3 +1,8 @@
+2014-12-14  João Távora  <joaotavora@gmail.com>
+
+	* automated/electric-tests.el (autowrapping-7): Tests for
+	tex-mode.
+
 2014-12-13  Glenn Morris  <rgm@gnu.org>
 
 	* automated/flymake/warnpred/test.pl: Tweak format, since the
