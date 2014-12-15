@@ -1,3 +1,7 @@
+2014-12-15  Artur Malabarba <bruce.connor.am@gmail.com>
+
+	* NEWS: Mention `let-alist.
+
 2014-12-14  Alan Mackenzie  <acm@muc.de>
 
 	* NEWS: Add entry for fast-but-imprecise-scrolling.
