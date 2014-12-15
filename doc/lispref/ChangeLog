@@ -1,3 +1,10 @@
+2014-12-15  Alan Mackenzie  <acm@muc.de>
+
+	"Advice" is a mass noun.  Amend text accordingly.
+	* functions.texi: (Advising Functions, Core Advising Primitives)
+	(Advising Named Functions, Advice combinators)
+	(Porting old advice): Replace, e.g., "an advice" with "advice".
+
 2014-12-13  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
 	* files.texi (Relative File Names): Mention `directory-name-p'.
