@@ -3371,7 +3371,7 @@ void x_free_colors (struct frame *, unsigned long *, int);
 void update_face_from_frame_parameter (struct frame *, Lisp_Object,
                                        Lisp_Object);
 Lisp_Object tty_color_name (struct frame *, int);
-void clear_face_cache (int);
+void clear_face_cache (bool);
 unsigned long load_color (struct frame *, struct face *, Lisp_Object,
                           enum lface_attribute_index);
 char *choose_face_font (struct frame *, Lisp_Object *, Lisp_Object,
@@ -3444,11 +3444,11 @@ extern void cancel_hourglass (void);
 #endif /* HAVE_WINDOW_SYSTEM */
 
 
-/* Defined in xmenu.c  */
+/* Defined in xmenu.c.  */
 
 int popup_activated (void);
 
-/* Defined in dispnew.c */
+/* Defined in dispnew.c.  */
 
 extern Lisp_Object buffer_posn_from_coords (struct window *,
                                             int *, int *,
@@ -3484,7 +3484,7 @@ void blank_row (struct window *, struct glyph_row *, int);
 void clear_glyph_matrix_rows (struct glyph_matrix *, int, int);
 void clear_glyph_row (struct glyph_row *);
 void prepare_desired_row (struct window *, struct glyph_row *, bool);
-void update_single_window (struct window *, bool);
+void update_single_window (struct window *);
 void do_pending_window_change (bool);
 void change_frame_size (struct frame *, int, int, bool, bool, bool, bool);
 void init_display (void);
@@ -3493,7 +3493,7 @@ extern Lisp_Object Qredisplay_dont_pause;
 extern void spec_glyph_lookup_face (struct window *, GLYPH *);
 extern void fill_up_frame_row_with_spaces (struct glyph_row *, int);
 
-/* Defined in terminal.c */
+/* Defined in terminal.c.  */
 
 extern void ring_bell (struct frame *);
 extern void update_begin (struct frame *);

@@ -4323,7 +4323,7 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 
   while (1)
     {
-      bool timeout_reduced_for_timers = 0;
+      bool timeout_reduced_for_timers = false;
 
       /* If calling from keyboard input, do not quit
 	 since we want to return C-g as an input character.
@@ -4410,7 +4410,7 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 		  if (timespec_cmp (timer_delay, timeout) < 0)
 		    {
 		      timeout = timer_delay;
- 		      timeout_reduced_for_timers = 1;
+		      timeout_reduced_for_timers = true;
 		    }
 		}
 	      else
@@ -6669,7 +6669,7 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 
   while (1)
     {
-      bool timeout_reduced_for_timers = 0;
+      bool timeout_reduced_for_timers = false;
       fd_set waitchannels;
       int xerrno;
 
@@ -6736,7 +6736,7 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 	      if (timespec_cmp (timer_delay, timeout) < 0)
 		{
 		  timeout = timer_delay;
-		  timeout_reduced_for_timers = 1;
+		  timeout_reduced_for_timers = true;
 		}
 	    }
 	}

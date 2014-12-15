@@ -905,7 +905,7 @@ static void iterate_out_of_display_property (struct it *);
 static void pop_it (struct it *);
 static void sync_frame_with_window_matrix_rows (struct window *);
 static void redisplay_internal (void);
-static int echo_area_display (int);
+static bool echo_area_display (bool);
 static void redisplay_windows (Lisp_Object);
 static void redisplay_window (Lisp_Object, bool);
 static Lisp_Object redisplay_window_error (Lisp_Object);
@@ -10275,9 +10275,9 @@ message3_nolog (Lisp_Object m)
       else
 	clear_message (true, true);
 
-      do_pending_window_change (0);
-      echo_area_display (1);
-      do_pending_window_change (0);
+      do_pending_window_change (false);
+      echo_area_display (true);
+      do_pending_window_change (false);
       if (FRAME_TERMINAL (f)->frame_up_to_date_hook)
 	(*FRAME_TERMINAL (f)->frame_up_to_date_hook) (f);
     }
@@ -11248,13 +11248,13 @@ clear_garbaged_frames (void)
    is non-zero update selected_frame.  Value is non-zero if the
    mini-windows height has been changed.  */
 
-static int
-echo_area_display (int update_frame_p)
+static bool
+echo_area_display (bool update_frame_p)
 {
   Lisp_Object mini_window;
   struct window *w;
   struct frame *f;
-  int window_height_changed_p = 0;
+  bool window_height_changed_p = false;
   struct frame *sf = SELECTED_FRAME ();
 
   mini_window = FRAME_MINIBUF_WINDOW (sf);
@@ -11317,11 +11317,11 @@ echo_area_display (int update_frame_p)
 	      /* Window configuration is the same as before.
 		 Can do with a display update of the echo area,
 		 unless we displayed some mode lines.  */
-	      update_single_window (w, 1);
+	      update_single_window (w);
 	      flush_frame (f);
 	    }
 	  else
-	    update_frame (f, 1, 1);
+	    update_frame (f, true, true);
 
 	  /* If cursor is in the echo area, make sure that the next
 	     redisplay displays the minibuffer, so that the cursor will
@@ -13435,7 +13435,7 @@ redisplay_internal (void)
   struct window *w = XWINDOW (selected_window);
   struct window *sw;
   struct frame *fr;
-  int pending;
+  bool pending;
   bool must_finish = 0, match_p;
   struct text_pos tlbufpos, tlendpos;
   int number_of_visible_frames;
@@ -13495,7 +13495,7 @@ redisplay_internal (void)
   /* Remember the currently selected window.  */
   sw = w;
 
-  pending = 0;
+  pending = false;
   last_escape_glyph_frame = NULL;
   last_escape_glyph_face_id = (1 << FACE_ID_BITS);
   last_glyphless_glyph_frame = NULL;
@@ -13547,7 +13547,7 @@ redisplay_internal (void)
     }
 
   /* Notice any pending interrupt request to change frame size.  */
-  do_pending_window_change (1);
+  do_pending_window_change (true);
 
   /* do_pending_window_change could change the selected_window due to
      frame resizing which makes the selected window too small.  */
@@ -13594,7 +13594,7 @@ redisplay_internal (void)
 	     echo-area doesn't show through.  */
 	  && !MINI_WINDOW_P (XWINDOW (selected_window))))
     {
-      int window_height_changed_p = echo_area_display (0);
+      int window_height_changed_p = echo_area_display (false);
 
       if (message_cleared_p)
 	update_miniwindow_p = true;
@@ -13802,7 +13802,7 @@ redisplay_internal (void)
 	{
 	  if (!must_finish)
 	    {
-	      do_pending_window_change (1);
+	      do_pending_window_change (true);
 	      /* If selected_window changed, redisplay again.  */
 	      if (WINDOWP (selected_window)
 		  && (w = XWINDOW (selected_window)) != sw)
@@ -13919,14 +13919,14 @@ redisplay_internal (void)
 		  if (f->fonts_changed)
 		    {
 		      adjust_frame_glyphs (f);
-		      f->fonts_changed = 0;
+		      f->fonts_changed = false;
 		      goto retry_frame;
 		    }
 
 		  /* See if we have to hscroll.  */
 		  if (!f->already_hscrolled_p)
 		    {
-		      f->already_hscrolled_p = 1;
+		      f->already_hscrolled_p = true;
 		      if (hscroll_windows (f->root_window))
 			goto retry_frame;
 		    }
@@ -13938,9 +13938,9 @@ redisplay_internal (void)
 		    unrequest_sigio ();
 		  STOP_POLLING;
 
-		  pending |= update_frame (f, 0, 0);
-		  f->cursor_type_changed = 0;
-		  f->updated_p = 1;
+		  pending |= update_frame (f, false, false);
+		  f->cursor_type_changed = false;
+		  f->updated_p = true;
 		}
 	    }
 	}
@@ -14001,8 +14001,8 @@ redisplay_internal (void)
 	    goto retry;
 
 	  XWINDOW (selected_window)->must_be_updated_p = true;
-	  pending = update_frame (sf, 0, 0);
-	  sf->cursor_type_changed = 0;
+	  pending = update_frame (sf, false, false);
+	  sf->cursor_type_changed = false;
 	}
 
       /* We may have called echo_area_display at the top of this
@@ -14016,8 +14016,8 @@ redisplay_internal (void)
       if (mini_frame != sf && FRAME_WINDOW_P (mini_frame))
 	{
 	  XWINDOW (mini_window)->must_be_updated_p = true;
-	  pending |= update_frame (mini_frame, 0, 0);
-	  mini_frame->cursor_type_changed = 0;
+	  pending |= update_frame (mini_frame, false, false);
+	  mini_frame->cursor_type_changed = false;
 	  if (!pending && hscroll_windows (mini_window))
 	    goto retry;
 	}
@@ -14094,7 +14094,7 @@ redisplay_internal (void)
     }
 
   /* Change frame size now if a change is pending.  */
-  do_pending_window_change (1);
+  do_pending_window_change (true);
 
   /* If we just did a pending size change, or have additional
      visible frames, or selected_window changed, redisplay again.  */
@@ -14110,7 +14110,7 @@ redisplay_internal (void)
 
   if (clear_face_cache_count > CLEAR_FACE_CACHE_COUNT)
     {
-      clear_face_cache (0);
+      clear_face_cache (false);
       clear_face_cache_count = 0;
     }
 
@@ -14154,9 +14154,9 @@ redisplay_preserve_echo_area (int from_where)
     {
       /* We have a previously displayed message, but no current
 	 message.  Redisplay the previous message.  */
-      display_last_displayed_message_p = 1;
+      display_last_displayed_message_p = true;
       redisplay_internal ();
-      display_last_displayed_message_p = 0;
+      display_last_displayed_message_p = false;
     }
   else
     redisplay_internal ();

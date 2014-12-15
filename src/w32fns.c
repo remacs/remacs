@@ -6252,8 +6252,8 @@ Text larger than the specified size is clipped.  */)
   }
 
   /* Draw into the window.  */
-  w->must_be_updated_p = 1;
-  update_single_window (w, 1);
+  w->must_be_updated_p = true;
+  update_single_window (w);
 
   unblock_input ();
 

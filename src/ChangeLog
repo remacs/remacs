@@ -1,3 +1,10 @@
+2014-12-15  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	Various fixes to use bool type and constants.
+	* dispnew.c (update_single_window): Remove arg `force_p' since it's
+	always true.
+	* xfaces.c (clear_face_cache): Use bool for the argument type.
+
 2014-12-15  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Correct same_at_end when restoring window points
@@ -10,14 +17,12 @@
 
 	New feature optionally to accelerate auto-repeated scrolling.
 
-	* xdisp.c: Remove "static" from declaration of
-	Qfontification_functions.
+	* xdisp.c: Remove "static" from declaration of Qfontification_functions.
 
-	* window.c (window_scroll): bind fontification-functions to nil
+	* window.c (window_scroll): Bind fontification-functions to nil
 	when scrolling by whole screens and
 	fast-but-imprecise-scrolling is non-nil.
-	(syms_of_window): New DEFVAR_BOOL
-	fast-but-imprecise-scrolling.
+	(syms_of_window): New DEFVAR_BOOL fast-but-imprecise-scrolling.
 
 	* lisp.h (bool): Declare Qfontification_functions extern.
 
@@ -28,10 +33,10 @@
 	[GNUTLS >= 3.0.20]: Declare for WINDOWSNT.
 	(init_gnutls_functions)(gnutls_certificate_set_x509_system_trust)
 	[GNUTLS >= 3.0.20]: Load from shared library for WINDOWSNT.
-	(fn_gnutls_certificate_set_x509_system_trust) [!WINDOWSNT]: Define
-	new macro.
-	(Fgnutls_boot) [GNUTLS >= 3.0.20]: Call
-	gnutls_certificate_set_x509_system_trust.  Log an error message if
+	(fn_gnutls_certificate_set_x509_system_trust) [!WINDOWSNT]:
+	Define new macro.
+	(Fgnutls_boot) [GNUTLS >= 3.0.20]:
+	Call gnutls_certificate_set_x509_system_trust.  Log an error message if
 	it fails.
 
 2014-12-13  Paul Eggert  <eggert@cs.ucla.edu>
@@ -41,8 +46,8 @@
 
 2014-12-13  Eli Zaretskii  <eliz@gnu.org>
 
-	* gnutls.c (Fgnutls_available_p, syms_of_gnutls): Move
-	gnutls-available-p out of the HAVE_GNUTLS conditional, and define
+	* gnutls.c (Fgnutls_available_p, syms_of_gnutls):
+	Move gnutls-available-p out of the HAVE_GNUTLS conditional, and define
 	them only once.
 
 2014-12-13  Teodor Zlatanov  <tzz@lifelogs.com>
@@ -58,8 +63,8 @@
 
 2014-12-13  Eli Zaretskii  <eliz@gnu.org>
 
-	* xdisp.c (move_it_in_display_line_to, display_line): Don't
-	disallow overflow-newline-into-fringe when word-wrap is in
+	* xdisp.c (move_it_in_display_line_to, display_line):
+	Don't disallow overflow-newline-into-fringe when word-wrap is in
 	effect.  (Bug#19300)
 
 2014-12-11  Stefan Monnier  <monnier@iro.umontreal.ca>

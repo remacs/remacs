@@ -270,7 +270,7 @@ static Lisp_Object Qhelp_form_show;
 /* File in which we write all commands we read.  */
 static FILE *dribble;
 
-/* Nonzero if input is available.  */
+/* True if input is available.  */
 bool input_pending;
 
 /* Circular buffer for pre-read keyboard input.  */
@@ -2403,9 +2403,9 @@ echo_keystrokes_p (void)
 /* commandflag 0 means do not autosave, but do redisplay.
    -1 means do not redisplay, but do autosave.
    -2 means do neither.
-   1 means do both.  */
+   1 means do both.
 
-/* The argument MAP is a keymap for menu prompting.
+   The argument MAP is a keymap for menu prompting.
 
    PREV_EVENT is the previous input event, or nil if we are reading
    the first event of a key sequence (or not reading a key sequence).
@@ -3878,7 +3878,7 @@ kbd_buffer_get_event (KBOARD **kbp,
   Lisp_Object obj;
 
 #ifdef subprocesses
-  if (kbd_on_hold_p () && kbd_buffer_nr_stored () < KBD_BUFFER_SIZE/4)
+  if (kbd_on_hold_p () && kbd_buffer_nr_stored () < KBD_BUFFER_SIZE / 4)
     {
       /* Start reading input again because we have processed enough to
          be able to accept new events again.  */

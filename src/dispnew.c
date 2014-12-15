@@ -3051,10 +3051,10 @@ update_frame (struct frame *f, bool force_p, bool inhibit_hairy_id_p)
   struct window *root_window = XWINDOW (f->root_window);
 
   if (redisplay_dont_pause)
-    force_p = 1;
+    force_p = true;
   else if (!force_p && detect_input_pending_ignore_squeezables ())
     {
-      paused_p = 1;
+      paused_p = true;
       goto do_pause;
     }
 
@@ -3074,7 +3074,7 @@ update_frame (struct frame *f, bool force_p, bool inhibit_hairy_id_p)
       /* Update the menu bar on X frames that don't have toolkit
 	 support.  */
       if (WINDOWP (f->menu_bar_window))
-	update_window (XWINDOW (f->menu_bar_window), 1);
+	update_window (XWINDOW (f->menu_bar_window), true);
 #endif
 
 #if defined (HAVE_WINDOW_SYSTEM) && ! defined (USE_GTK) && ! defined (HAVE_NS)
@@ -3088,7 +3088,7 @@ update_frame (struct frame *f, bool force_p, bool inhibit_hairy_id_p)
 	    {
 	      Lisp_Object tem;
 
-	      update_window (w, 1);
+	      update_window (w, true);
 	      w->must_be_updated_p = false;
 
 	      /* Swap tool-bar strings.  We swap because we want to
@@ -3113,7 +3113,7 @@ update_frame (struct frame *f, bool force_p, bool inhibit_hairy_id_p)
       /* Build F's desired matrix from window matrices.  */
       build_frame_matrix (f);
 
-      /* Update the display  */
+      /* Update the display.  */
       update_begin (f);
       paused_p = update_frame_1 (f, force_p, inhibit_hairy_id_p, 1);
       update_end (f);
@@ -3225,7 +3225,7 @@ update_window_tree (struct window *w, bool force_p)
    If FORCE_P, don't stop updating if input is pending.  */
 
 void
-update_single_window (struct window *w, bool force_p)
+update_single_window (struct window *w)
 {
   if (w->must_be_updated_p)
     {
@@ -3234,12 +3234,9 @@ update_single_window (struct window *w, bool force_p)
       /* Record that this is not a frame-based redisplay.  */
       set_frame_matrix_frame (NULL);
 
-      if (redisplay_dont_pause)
-	force_p = 1;
-
       /* Update W.  */
       update_begin (f);
-      update_window (w, force_p);
+      update_window (w, true);
       update_end (f);
 
       /* Reset flag in W.  */
@@ -6267,8 +6264,15 @@ See `buffer-display-table' for more information.  */);
   Vstandard_display_table = Qnil;
 
   DEFVAR_BOOL ("redisplay-dont-pause", redisplay_dont_pause,
-	       doc: /* Non-nil means display update isn't paused when input is detected.  */);
-  redisplay_dont_pause = 1;
+	       doc: /* Nil means display update is paused when input is detected.  */);
+  /* Contrary to expectations, a value of "false" can be detrimental to
+     responsiveness since aborting a redisplay throws away some of the
+     work already performed.  It's usually more efficient (and gives
+     more prompt feedback to the user) to let the redisplay terminate,
+     and just completely skip the next command's redisplay (which is
+     done regardless of this setting if there's pending input at the
+     beginning of the next redisplay).  */
+  redisplay_dont_pause = true;
 
 #ifdef CANNOT_DUMP
   if (noninteractive)

@@ -713,8 +713,8 @@ read_minibuf (Lisp_Object map, Lisp_Object initial, Lisp_Object prompt,
     {
       XWINDOW (minibuf_window)->cursor.hpos = 0;
       XWINDOW (minibuf_window)->cursor.x = 0;
-      XWINDOW (minibuf_window)->must_be_updated_p = 1;
-      update_frame (XFRAME (selected_frame), 1, 1);
+      XWINDOW (minibuf_window)->must_be_updated_p = true;
+      update_frame (XFRAME (selected_frame), true, true);
       flush_frame (XFRAME (XWINDOW (minibuf_window)->frame));
     }
 

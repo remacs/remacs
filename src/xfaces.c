@@ -732,7 +732,7 @@ recompute_basic_faces (struct frame *f)
    try to free unused fonts, too.  */
 
 void
-clear_face_cache (int clear_fonts_p)
+clear_face_cache (bool clear_fonts_p)
 {
 #ifdef HAVE_WINDOW_SYSTEM
   Lisp_Object tail, frame;

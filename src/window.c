@@ -7352,7 +7352,7 @@ the buffer; `temp-buffer-show-hook' is not run unless this function runs it.  */
 	       doc: /* Non-nil means to use `mode-line-inactive' face in non-selected windows.
 If the minibuffer is active, the `minibuffer-scroll-window' mode line
 is displayed in the `mode-line' face.  */);
-  mode_line_in_non_selected_windows = 1;
+  mode_line_in_non_selected_windows = true;
 
   DEFVAR_LISP ("other-window-scroll-buffer", Vother_window_scroll_buffer,
 	       doc: /* If this is a live buffer, \\[scroll-other-window] should scroll its window.  */);
@@ -7360,7 +7360,7 @@ is displayed in the `mode-line' face.  */);
 
   DEFVAR_BOOL ("auto-window-vscroll", auto_window_vscroll_p,
 	       doc: /* Non-nil means to automatically adjust `window-vscroll' to view tall lines.  */);
-  auto_window_vscroll_p = 1;
+  auto_window_vscroll_p = true;
 
   DEFVAR_INT ("next-screen-context-lines", next_screen_context_lines,
 	      doc: /* Number of lines of continuity when scrolling by screenfuls.  */);
@@ -7483,7 +7483,7 @@ all functions that symmetrically resize a parent window.
 Note that when a frame's pixel size is not a multiple of the
 frame's character size, at least one window may get resized
 pixelwise even if this option is nil.  */);
-  window_resize_pixelwise = 0;
+  window_resize_pixelwise = false;
 
   DEFVAR_BOOL ("fast-but-imprecise-scrolling",
                Vfast_but_imprecise_scrolling,
@@ -7494,7 +7494,7 @@ are actually going to be displayed get fontified.
 
 Note that this optimization can cause the portion of the buffer
 displayed after a scrolling operation to be somewhat inaccurate.  */);
-  Vfast_but_imprecise_scrolling = 0;
+  Vfast_but_imprecise_scrolling = false;
 
   defsubr (&Sselected_window);
   defsubr (&Sminibuffer_window);

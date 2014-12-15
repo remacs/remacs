@@ -852,7 +852,7 @@ call_process (ptrdiff_t nargs, Lisp_Object *args, int filefd,
 				 (process_coding.dst_pos_byte
 				  + process_coding.produced),
 				 0);
-		  display_on_the_fly = 0;
+		  display_on_the_fly = false;
 		  process_coding = saved_coding;
 		  carryover = nread;
 		  /* Make the above condition always fail in the future.  */
@@ -884,9 +884,9 @@ call_process (ptrdiff_t nargs, Lisp_Object *args, int filefd,
 	      /* This variable might have been set to 0 for code
 		 detection.  In that case, set it back to 1 because
 		 we should have already detected a coding system.  */
-	      display_on_the_fly = 1;
+	      display_on_the_fly = true;
 	    }
-	  immediate_quit = 1;
+	  immediate_quit = true;
 	  QUIT;
 	}
     give_up: ;
