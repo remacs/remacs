@@ -1,3 +1,7 @@
+2014-12-15  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* net/shr.el (shr-fold-text): Don't bug out on zero-length text.
+
 2014-12-14  Alan Mackenzie  <acm@muc.de>
 
 	* lisp/cus-start.el (all): Add fast-but-imprecise-scrolling.
