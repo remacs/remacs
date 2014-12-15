@@ -1,3 +1,7 @@
+2014-12-15  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* subr.el (sit-for): Tweak docstring (bug#19381).
+
 2014-12-15  Dmitry Gutov  <dgutov@yandex.ru>
 
 	* vc/vc-git.el (vc-git-after-dir-status-stage): Move `up-to-date'
@@ -20,8 +24,8 @@
 
 2014-12-09  Fabián Ezequiel Gallina  <fgallina@gnu.org>
 
-	* progmodes/python.el (python-shell-parse-command): Quote
-	`python-shell-interpreter`.  (Bug#19289)
+	* progmodes/python.el (python-shell-parse-command):
+	Quote `python-shell-interpreter`.  (Bug#19289)
 
 2014-12-04  Stefan Monnier  <monnier@iro.umontreal.ca>
 
@@ -60,8 +64,8 @@
 
 2014-11-27  Fabián Ezequiel Gallina  <fgallina@gnu.org>
 
-	* progmodes/python.el (python-shell-completion-setup-code): Use
-	__builtin__ module (or builtins in Python 3) and catch all errors
+	* progmodes/python.el (python-shell-completion-setup-code):
+	Use __builtin__ module (or builtins in Python 3) and catch all errors
 	when importing readline and rlcompleter.
 
 2014-11-26  Stephen Berman  <stephen.berman@gmx.net>
@@ -113,8 +117,8 @@
 
 2014-11-21  Eli Zaretskii  <eliz@gnu.org>
 
-	* vc/vc-git.el (vc-git-command, vc-git--call): Bind
-	coding-system-for-read and coding-system-for-write to
+	* vc/vc-git.el (vc-git-command, vc-git--call):
+	Bind coding-system-for-read and coding-system-for-write to
 	vc-git-commits-coding-system.
 	(vc-git-previous-revision): Use "~1" instead of "^", since the
 	latter is a special character for MS-Windows system shells.
@@ -155,8 +159,8 @@
 
 2014-11-16  Fabián Ezequiel Gallina  <fgallina@gnu.org>
 
-	* progmodes/python.el (python-eldoc--get-doc-at-point): Strip
-	shell output before returning.  (bug#18794)
+	* progmodes/python.el (python-eldoc--get-doc-at-point):
+	Strip shell output before returning.  (bug#18794)
 
 2014-11-16  Dmitry Gutov  <dgutov@yandex.ru>
 
@@ -177,13 +181,13 @@
 
 2014-11-15  Fabián Ezequiel Gallina  <fgallina@gnu.org>
 
-	* progmodes/python.el (python-indent-calculate-levels): Fix
-	indentation behavior multiline dedenter statement.  (Bug#18432)
+	* progmodes/python.el (python-indent-calculate-levels):
+	Fix indentation behavior multiline dedenter statement.  (Bug#18432)
 
 2014-11-15  Fabián Ezequiel Gallina  <fgallina@gnu.org>
 
-	* progmodes/python.el (python-indent-region): Use
-	python-indent-line and skip special cases.  (Bug#18843)
+	* progmodes/python.el (python-indent-region):
+	Use python-indent-line and skip special cases.  (Bug#18843)
 
 2014-11-15  Michael Albinus  <michael.albinus@gmx.de>
 
@@ -196,8 +200,8 @@
 
 2014-11-14  Ivan Andrus  <darthandrus@gmail.com>
 
-	* progmodes/python.el (python-ffap-module-path): Use
-	`derived-mode-p' instead of equality test on `major-mode'.
+	* progmodes/python.el (python-ffap-module-path):
+	Use `derived-mode-p' instead of equality test on `major-mode'.
 
 2014-11-13  Ulrich Müller  <ulm@gentoo.org>
 
@@ -247,8 +251,8 @@
 2014-11-05  Alan Mackenzie  <acm@muc.de>
 
 	Fix wrong bound to c-font-lock-declarators.  Fixes bug #18948.
-	* progmodes/cc-fonts.el (c-font-lock-declarations): Pass
-	"(point-max)" as bound to c-font-lock-declarators, not "limit", as
+	* progmodes/cc-fonts.el (c-font-lock-declarations):
+	Pass "(point-max)" as bound to c-font-lock-declarators, not "limit", as
 	the buffer is sometimes narrowed to less than "limit" (e.g., in
 	the presence of macros).
 

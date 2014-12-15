@@ -1,11 +1,15 @@
+2014-12-15  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* buffer.c (syms_of_buffer) <Vafter_change_functions>: fix docstring.
+
 2014-12-13  Eli Zaretskii  <eliz@gnu.org>
 
 	* gnutls.c (gnutls_init): Fix deprecation warning from GCC.
 
 2014-12-12  Eli Zaretskii  <eliz@gnu.org>
 
-	* gnutls.c (Fgnutls_available_p, syms_of_gnutls): Move
-	gnutls-available-p out of the HAVE_GNUTLS conditional, and define
+	* gnutls.c (Fgnutls_available_p, syms_of_gnutls):
+	Move gnutls-available-p out of the HAVE_GNUTLS conditional, and define
 	them only once.
 
 2014-12-11  Teodor Zlatanov  <tzz@lifelogs.com>
@@ -21,8 +25,8 @@
 
 2014-12-10  Eli Zaretskii  <eliz@gnu.org>
 
-	* xdisp.c (move_it_in_display_line_to, display_line): Don't
-	disallow overflow-newline-into-fringe when word-wrap is in
+	* xdisp.c (move_it_in_display_line_to, display_line):
+	Don't disallow overflow-newline-into-fringe when word-wrap is in
 	effect.  (Bug#19300)
 
 2014-12-04  Lee Duhem  <lee.duhem@gmail.com>  (tiny change)
@@ -78,8 +82,8 @@
 2014-11-15  Eli Zaretskii  <eliz@gnu.org>
 
 	* window.c (window_scroll_pixel_based): Avoid truncation/rounding
-	errors in computing the number of pixels to scroll.  Suggested by
-	Kelly Dean <kelly@prtime.org>.  (Bug#19060)
+	errors in computing the number of pixels to scroll.
+	Suggested by Kelly Dean <kelly@prtime.org>.  (Bug#19060)
 
 2014-11-15  Jan Djärv  <jan.h.d@swipnet.se>
 
@@ -190,8 +194,8 @@
 
 2014-10-26  Eli Zaretskii  <eliz@gnu.org>
 
-	* dispnew.c (buffer_posn_from_coords): Use
-	WINDOW_WANTS_HEADER_LINE_P, not WINDOW_WANTS_MODELINE_P, to
+	* dispnew.c (buffer_posn_from_coords):
+	Use WINDOW_WANTS_HEADER_LINE_P, not WINDOW_WANTS_MODELINE_P, to
 	account for the header-line height.  (Bug#18839)
 
 2014-10-22  YAMAMOTO Mitsuharu  <mituharu@math.s.chiba-u.ac.jp>
