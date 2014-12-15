@@ -1,3 +1,8 @@
+2014-12-15  Dmitry Gutov  <dgutov@yandex.ru>
+
+	* vc/vc-git.el (vc-git-after-dir-status-stage): Move `up-to-date'
+	stage to after `diff-index' (bug#19386).
+
 2014-12-14  João Távora  <joaotavora@gmail.com>
 
 	* textmodes/tex-mode.el (tex-insert-quote): Consider and respect
