@@ -3063,11 +3063,15 @@ Attempt to do the search exactly the way the pending Isearch would."
 	    (bound (if isearch-lazy-highlight-forward
 		       (min (or isearch-lazy-highlight-end-limit (point-max))
 			    (if isearch-lazy-highlight-wrapped
-				isearch-lazy-highlight-start
+				(+ isearch-lazy-highlight-start
+				   ;; Extend bound to match whole string at point
+				   (1- (length isearch-lazy-highlight-last-string)))
 			      (window-end)))
 		     (max (or isearch-lazy-highlight-start-limit (point-min))
 			  (if isearch-lazy-highlight-wrapped
-			      isearch-lazy-highlight-end
+			      (- isearch-lazy-highlight-end
+				 ;; Extend bound to match whole string at point
+				 (1- (length isearch-lazy-highlight-last-string)))
 			    (window-start))))))
 	;; Use a loop like in `isearch-search'.
 	(while retry

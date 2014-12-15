@@ -1,3 +1,9 @@
+2014-12-15  Juri Linkov  <juri@linkov.net>
+
+	* isearch.el (isearch-lazy-highlight-search): Extend the bound of
+	the wrapped search by the length of the search string to be able
+	to lazy-highlight the whole search string at point (bug#19353).
+
 2014-12-15  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
 	* net/shr.el (shr-fold-text): Don't bug out on zero-length text.
