@@ -1,3 +1,8 @@
+2014-12-15  Alan Mackenzie  <acm@muc.de>
+
+	"Advice" is a mass noun.  Amend text accordingly.
+	* cl.texi (Obsolete Macros): Replace "an advice" with "advice".
+
 2014-12-12  Paul Eggert  <eggert@cs.ucla.edu>
 
 	* texinfo.tex: Update from gnulib.

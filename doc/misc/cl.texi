@@ -4914,7 +4914,7 @@ through the Lisp @code{message} function.
 For those cases where the dynamic scoping of @code{flet} is desired,
 @code{cl-flet} is clearly not a substitute.  The most direct replacement would
 be instead to use @code{cl-letf} to temporarily rebind @code{(symbol-function
-'@var{fun})}.  But in most cases, a better substitute is to use an advice, such
+'@var{fun})}.  But in most cases, a better substitute is to use advice, such
 as:
 
 @example
@@ -4930,7 +4930,7 @@ binding of @code{my-fun-advice-enable}.
 
 @c Bug#411.
 Note that many primitives (e.g., @code{+}) have special byte-compile handling.
-Attempts to redefine such functions using @code{flet}, @code{cl-letf}, or an
+Attempts to redefine such functions using @code{flet}, @code{cl-letf}, or
 advice will fail when byte-compiled.
 @c Or cl-flet.
 @c In such cases, use @code{labels} instead.
