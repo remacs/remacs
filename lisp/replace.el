@@ -70,6 +70,8 @@ from Isearch by using a key sequence like `C-s C-s M-%'." "24.3")
 (defcustom query-replace-from-to-separator
   (propertize
    (or (ignore-errors
+	 ;; Ignore errors when attempt to autoload char-displayable-p
+	 ;; fails while preparing to dump.
 	 (if (char-displayable-p ?\u2192) " \u2192 " " -> "))
        " -> ")
    'face 'minibuffer-prompt)
@@ -142,6 +144,8 @@ The return value can also be a pair (FROM . TO) indicating that the user
 wants to replace FROM with TO."
   (if query-replace-interactive
       (car (if regexp-flag regexp-search-ring search-ring))
+    ;; Reevaluating will check char-displayable-p that is
+    ;; unavailable while preparing to dump.
     (custom-reevaluate-setting 'query-replace-from-to-separator)
     (let* ((history-add-new-input nil)
 	   (separator
@@ -179,8 +183,7 @@ wants to replace FROM with TO."
 		 (cdar query-replace-defaults) regexp-flag))
 	(let* ((to (if (and (string-match separator from)
 			    (get-text-property (match-beginning 0) 'separator from))
-		       (query-replace-compile-replacement
-			(substring-no-properties from (match-end 0)) regexp-flag)))
+		       (substring-no-properties from (match-end 0))))
 	       (from (if to (substring-no-properties from 0 (match-beginning 0))
 		       (substring-no-properties from))))
 	  (add-to-history query-replace-from-history-variable from nil t)
@@ -198,7 +201,7 @@ wants to replace FROM with TO."
 	      from
 	    (add-to-history query-replace-to-history-variable to nil t)
 	    (add-to-history 'query-replace-defaults (cons from to) nil t)
-	    (cons from to)))))))
+	    (cons from (query-replace-compile-replacement to regexp-flag))))))))
 
 (defun query-replace-compile-replacement (to regexp-flag)
   "Maybe convert a regexp replacement TO to Lisp.
