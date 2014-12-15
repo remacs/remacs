@@ -3522,6 +3522,9 @@ by calling `format-decode', which see.  */)
      bytes and BEG and END count bytes.  */
   ptrdiff_t same_at_start = BEGV_BYTE;
   ptrdiff_t same_at_end = ZV_BYTE;
+  /* SAME_AT_END_CHARPOS counts characters, because
+     restore_window_points needs the old character count.  */
+  ptrdiff_t same_at_end_charpos = ZV;
 
   if (current_buffer->base_buffer && ! NILP (visit))
     error ("Cannot do file visiting in an indirect buffer");
@@ -3943,6 +3946,7 @@ by calling `format-decode', which see.  */)
 			+ (! NILP (end) ? end_offset : st.st_size) - ZV_BYTE));
 	  if (overlap > 0)
 	    same_at_end += overlap;
+	  same_at_end_charpos = BYTE_TO_CHAR (same_at_end);
 
 	  /* Arrange to read only the nonmatching middle part of the file.  */
 	  beg_offset += same_at_start - BEGV_BYTE;
@@ -3950,7 +3954,7 @@ by calling `format-decode', which see.  */)
 
 	  invalidate_buffer_caches (current_buffer,
 				    BYTE_TO_CHAR (same_at_start),
-				    BYTE_TO_CHAR (same_at_end));
+				    same_at_end_charpos);
 	  del_range_byte (same_at_start, same_at_end, 0);
 	  /* Insert from the file at the proper position.  */
 	  temp = BYTE_TO_CHAR (same_at_start);
@@ -4099,6 +4103,7 @@ by calling `format-decode', which see.  */)
       overlap = same_at_start - BEGV_BYTE - (same_at_end + inserted - ZV_BYTE);
       if (overlap > 0)
 	same_at_end += overlap;
+      same_at_end_charpos = BYTE_TO_CHAR (same_at_end);
 
       /* If display currently starts at beginning of line,
 	 keep it that way.  */
@@ -4114,7 +4119,7 @@ by calling `format-decode', which see.  */)
 	{
 	  invalidate_buffer_caches (current_buffer,
 				    BYTE_TO_CHAR (same_at_start),
-				    BYTE_TO_CHAR (same_at_end));
+				    same_at_end_charpos);
 	  del_range_byte (same_at_start, same_at_end, 0);
 	  temp = GPT;
 	  eassert (same_at_start == GPT_BYTE);
@@ -4122,7 +4127,7 @@ by calling `format-decode', which see.  */)
 	}
       else
 	{
-	  temp = BYTE_TO_CHAR (same_at_start);
+	  temp = same_at_end_charpos;
 	}
       /* Insert from the file at the proper position.  */
       SET_PT_BOTH (temp, same_at_start);
@@ -4405,7 +4410,7 @@ by calling `format-decode', which see.  */)
   if (inserted > 0)
     restore_window_points (window_markers, inserted,
 			   BYTE_TO_CHAR (same_at_start),
-			   BYTE_TO_CHAR (same_at_end));
+			   same_at_end_charpos);
 
   if (!NILP (visit))
     {
