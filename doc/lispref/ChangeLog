@@ -1,3 +1,7 @@
+2014-12-16  Nicolas Petton  <petton.nicolas@gmail.com>
+
+	* sequences.texi (Seq Library): Add documentation for seq.el.
+
 2014-12-15  Alan Mackenzie  <acm@muc.de>
 
 	"Advice" is a mass noun.  Amend text accordingly.
@@ -16,21 +20,21 @@
 
 2014-12-09  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
-	* files.texi (Contents of Directories): Document
-	directory-files-recursively.
+	* files.texi (Contents of Directories):
+	Document directory-files-recursively.
 
 2014-12-04  Eli Zaretskii  <eliz@gnu.org>
 
-	* display.texi (Bidirectional Display): Document
-	'buffer-substring-with-bidi-context'.
+	* display.texi (Bidirectional Display):
+	Document 'buffer-substring-with-bidi-context'.
 
-	* text.texi (Buffer Contents): Mention
-	'buffer-substring-with-bidi-context' with a cross-reference.
+	* text.texi (Buffer Contents):
+	Mention 'buffer-substring-with-bidi-context' with a cross-reference.
 
 2014-12-02  Eli Zaretskii  <eliz@gnu.org>
 
-	* display.texi (Bidirectional Display): Document
-	'bidi-find-overridden-directionality'.
+	* display.texi (Bidirectional Display):
+	Document 'bidi-find-overridden-directionality'.
 
 2014-11-29  Paul Eggert  <eggert@cs.ucla.edu>
 
@@ -51,7 +55,7 @@
 	* processes.texi (Network Security): Made into its own section and
 	fleshed out.
 	(Network Security): Mention more NSM variables.
-	(Processes): Moved the Network Security Manager stuff to the Emacs
+	(Processes): Move the Network Security Manager stuff to the Emacs
 	manual.
 
 2014-11-23  Lars Magne Ingebrigtsen  <larsi@gnus.org>
@@ -67,8 +71,8 @@
 
 2014-11-18  Leo Liu  <sdl.web@gmail.com>
 
-	* functions.texi (Advising Named Functions): Document
-	define-advice.
+	* functions.texi (Advising Named Functions):
+	Document define-advice.
 
 2014-11-17  Paul Eggert  <eggert@cs.ucla.edu>
 
@@ -233,8 +237,8 @@
 
 2014-08-29  Dmitry Antipov  <dmantipov@yandex.ru>
 
-	* lists.texi (Functions that Rearrange Lists): Remove
-	description of sort ...
+	* lists.texi (Functions that Rearrange Lists):
+	Remove description of sort ...
 	* sequences.texi (Sequence Functions): ... and generalize
 	it for sequences.  Add an example.
 
@@ -382,8 +386,8 @@
 
 2014-05-15  Dmitry Antipov  <dmantipov@yandex.ru>
 
-	* lists.texi (Building Cons Cells and Lists): Remove
-	description of `reverse' and `'nreverse' to generalize them...
+	* lists.texi (Building Cons Cells and Lists):
+	Remove description of `reverse' and `'nreverse' to generalize them...
 	* sequences.texi (Sequences): ...for sequences here.
 
 2014-05-14  Glenn Morris  <rgm@gnu.org>
@@ -13525,7 +13529,7 @@
 
 1998-01-30  Richard Stallman  <rms@psilocin.gnu.org>
 
-	* Makefile (SHELL): Defined.
+	* Makefile (SHELL): Define.
 
 1998-01-27  Richard Stallman  <rms@psilocin.gnu.org>
 

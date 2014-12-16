@@ -1,3 +1,7 @@
+2014-12-16  Nicolas Petton <petton.nicolas@gmail.com>
+
+	* emacs-lisp/seq.el: New file.
+
 2014-12-16  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* jit-lock.el (jit-lock-function): Don't defer if jit-lock-defer-time

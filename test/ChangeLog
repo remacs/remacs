@@ -1,3 +1,7 @@
+2014-12-16  Nicolas Petton <petton.nicolas@gmail.com>
+
+	* automated/seq-tests.el: New file.
+
 2014-12-16  Glenn Morris  <rgm@gnu.org>
 
 	* automated/data/flymake/Makefile (check-syntax):
