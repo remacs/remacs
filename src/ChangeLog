@@ -1,3 +1,9 @@
+2014-12-16  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* lread.c (init_obarray): Declare Qt as special.
+	This fixes a typo in the 2012-05-15 patch that
+	tried to declare Qt as special.
+
 2014-12-15  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	Various fixes to use bool type and constants.

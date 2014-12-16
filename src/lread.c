@@ -4072,14 +4072,14 @@ init_obarray (void)
   set_symbol_plist (Qunbound, Qnil);
   SET_SYMBOL_VAL (XSYMBOL (Qnil), Qnil);
   XSYMBOL (Qnil)->constant = 1;
-  XSYMBOL (Qnil)->declared_special = 1;
+  XSYMBOL (Qnil)->declared_special = true;
   set_symbol_plist (Qnil, Qnil);
   set_symbol_function (Qnil, Qnil);
 
   Qt = intern_c_string ("t");
   SET_SYMBOL_VAL (XSYMBOL (Qt), Qt);
-  XSYMBOL (Qnil)->declared_special = 1;
   XSYMBOL (Qt)->constant = 1;
+  XSYMBOL (Qt)->declared_special = true;
 
   /* Qt is correct even if CANNOT_DUMP.  loadup.el will set to nil at end.  */
   Vpurify_flag = Qt;
