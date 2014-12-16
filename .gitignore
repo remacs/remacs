@@ -41,7 +41,7 @@ InfoPlist.strings
 Makefile
 !admin/charsets/Makefile
 !etc/refcards/Makefile
-!test/automated/flymake/warnpred/Makefile
+!test/automated/data/flymake/Makefile
 !test/indent/Makefile
 makefile
 /*.cache

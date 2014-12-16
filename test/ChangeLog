@@ -1,3 +1,8 @@
+2014-12-16  Glenn Morris  <rgm@gnu.org>
+
+	* automated/flymake-tests.el (flymake-tests-data-directory):
+	Change from flymake/warnpred to more standard data/flymake.
+
 2014-12-11  Michael Albinus  <michael.albinus@gmx.de>
 
 	* automated/vc-tests.el (vc-test--revision-granularity-function):
