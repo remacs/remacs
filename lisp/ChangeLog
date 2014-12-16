@@ -1,3 +1,8 @@
+2014-12-16  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* jit-lock.el (jit-lock-function): Don't defer if jit-lock-defer-time
+	is 0 and there is no input pending.
+
 2014-12-15  Juri Linkov  <juri@linkov.net>
 
 	* replace.el (query-replace-read-from): Use query-replace-compile-replacement
