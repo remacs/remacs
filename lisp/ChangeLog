@@ -1,3 +1,8 @@
+2014-12-17  Teodor Zlatanov  <tzz@lifelogs.com>
+
+	* net/tramp-sh.el (tramp-histfile-override): New variable.
+	(tramp-open-shell, tramp-maybe-open-connection): Use it.
+
 2014-12-17  Dmitry Gutov  <dgutov@yandex.ru>
 
 	* vc/vc.el: Improve `dir-status-files' description.
