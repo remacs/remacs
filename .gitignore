@@ -48,6 +48,7 @@ makefile
 /confdefs.h
 /config.status
 /configure.lineno
+/conftest*
 src/config.h
 src/epaths.h
 
