@@ -559,12 +559,15 @@ Return the max version (as a string) if the package is held at a lower version."
   "Recursively list all files in DIR which correspond to loaded features.
 Returns the `file-name-sans-extension' of each file, relative to
 DIR, sorted by most recently loaded last."
-  (let* ((history (mapcar (lambda (x) (file-name-sans-extension (car x)))
-                    load-history))
+  (let* ((history (delq nil
+                        (mapcar (lambda (x)
+                                  (let ((f (car x)))
+                                    (and f (file-name-sans-extension f))))
+                                load-history)))
          (dir (file-truename dir))
          ;; List all files that have already been loaded.
          (list-of-conflicts
-          (remove
+          (delq
            nil
            (mapcar
                (lambda (x) (let* ((file (file-relative-name x dir))
