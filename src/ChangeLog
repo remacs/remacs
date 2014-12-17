@@ -1,3 +1,17 @@
+2014-12-17  Ulf Jasper  <ulf.jasper@web.de>
+
+	Fix problem with images referenced within svg files. (bug#19373)
+
+	* image.c: Additional parameter 'filename' for
+	svg_load_image. Include "buffer.h".  Define library function
+	rsvg_handle_set_base_uri for WINDOWSNT.
+	(init_svg_functions): Initialize rsvg_handle_set_base_uri.
+	(fn_rsvg_handle_set_base_uri): Define fn_rsvg_handle_set_base_uri.
+	(svg_load): Pass a filename to svg_load_image: either name of
+	actual file or of current buffer's file.
+	(svg_load_image): New parameter 'filename', used for setting
+	base_uri, necessary for loading referenced images. (bug#19373)
+
 2014-12-16  Paul Eggert  <eggert@cs.ucla.edu>
 
 	* lread.c (init_obarray): Declare Qt as special.

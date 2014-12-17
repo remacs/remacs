@@ -33,6 +33,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "lisp.h"
 #include "frame.h"
 #include "window.h"
+#include "buffer.h"
 #include "dispextern.h"
 #include "blockinput.h"
 #include "systime.h"
@@ -8600,7 +8601,7 @@ static bool svg_image_p (Lisp_Object object);
 static bool svg_load (struct frame *f, struct image *img);
 
 static bool svg_load_image (struct frame *, struct image *,
-			    unsigned char *, ptrdiff_t);
+			    unsigned char *, ptrdiff_t, char*);
 
 /* The symbol `svg' identifying images of this type. */
 
@@ -8688,6 +8689,7 @@ DEF_IMGLIB_FN (void, rsvg_handle_get_dimensions, (RsvgHandle *, RsvgDimensionDat
 DEF_IMGLIB_FN (gboolean, rsvg_handle_write, (RsvgHandle *, const guchar *, gsize, GError **));
 DEF_IMGLIB_FN (gboolean, rsvg_handle_close, (RsvgHandle *, GError **));
 DEF_IMGLIB_FN (GdkPixbuf *, rsvg_handle_get_pixbuf, (RsvgHandle *));
+DEF_IMGLIB_FN (void, rsvg_handle_set_base_uri, (RsvgHandle *, const char *));
 
 DEF_IMGLIB_FN (int, gdk_pixbuf_get_width, (const GdkPixbuf *));
 DEF_IMGLIB_FN (int, gdk_pixbuf_get_height, (const GdkPixbuf *));
@@ -8727,6 +8729,7 @@ init_svg_functions (void)
   LOAD_IMGLIB_FN (library, rsvg_handle_write);
   LOAD_IMGLIB_FN (library, rsvg_handle_close);
   LOAD_IMGLIB_FN (library, rsvg_handle_get_pixbuf);
+  LOAD_IMGLIB_FN (library, rsvg_handle_set_base_uri);
 
   LOAD_IMGLIB_FN (gdklib, gdk_pixbuf_get_width);
   LOAD_IMGLIB_FN (gdklib, gdk_pixbuf_get_height);
@@ -8754,6 +8757,7 @@ init_svg_functions (void)
 #define fn_rsvg_handle_write		rsvg_handle_write
 #define fn_rsvg_handle_close		rsvg_handle_close
 #define fn_rsvg_handle_get_pixbuf	rsvg_handle_get_pixbuf
+#define fn_rsvg_handle_set_base_uri	rsvg_handle_set_base_uri
 
 #define fn_gdk_pixbuf_get_width		  gdk_pixbuf_get_width
 #define fn_gdk_pixbuf_get_height	  gdk_pixbuf_get_height
@@ -8803,14 +8807,14 @@ svg_load (struct frame *f, struct image *img)
 	  return 0;
 	}
       /* If the file was slurped into memory properly, parse it.  */
-      success_p = svg_load_image (f, img, contents, size);
+      success_p = svg_load_image (f, img, contents, size, SSDATA(file));
       xfree (contents);
     }
   /* Else its not a file, its a lisp object.  Load the image from a
      lisp object rather than a file.  */
   else
     {
-      Lisp_Object data;
+      Lisp_Object data, original_filename;
 
       data = image_spec_value (img->spec, QCdata, NULL);
       if (!STRINGP (data))
@@ -8818,7 +8822,9 @@ svg_load (struct frame *f, struct image *img)
 	  image_error ("Invalid image data `%s'", data, Qnil);
 	  return 0;
 	}
-      success_p = svg_load_image (f, img, SDATA (data), SBYTES (data));
+      original_filename = BVAR (current_buffer, filename);
+      success_p = svg_load_image (f, img, SDATA (data), SBYTES (data),
+                                  SDATA(original_filename));
     }
 
   return success_p;
@@ -8835,7 +8841,8 @@ static bool
 svg_load_image (struct frame *f,         /* Pointer to emacs frame structure.  */
 		struct image *img,       /* Pointer to emacs image structure.  */
 		unsigned char *contents, /* String containing the SVG XML data to be parsed.  */
-		ptrdiff_t size)          /* Size of data in bytes.  */
+		ptrdiff_t size,          /* Size of data in bytes.  */
+                char *filename)          /* Name of SVG file being loaded. */
 {
   RsvgHandle *rsvg_handle;
   RsvgDimensionData dimension_data;
@@ -8859,6 +8866,12 @@ svg_load_image (struct frame *f,         /* Pointer to emacs frame structure.  *
 
   /* Make a handle to a new rsvg object.  */
   rsvg_handle = fn_rsvg_handle_new ();
+
+  /* Set base_uri for properly handling referenced images (via 'href').
+     See rsvg bug 596114 - "image refs are relative to curdir, not .svg file"
+     (https://bugzilla.gnome.org/show_bug.cgi?id=596114). */
+  if (filename)
+    fn_rsvg_handle_set_base_uri(rsvg_handle, filename);
 
   /* Parse the contents argument and fill in the rsvg_handle.  */
   fn_rsvg_handle_write (rsvg_handle, contents, size, &err);
