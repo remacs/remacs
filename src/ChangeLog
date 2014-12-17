@@ -1,3 +1,7 @@
+2014-12-17  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* keyboard.c (swallow_events): Don't redisplay if there's input pending.
+
 2014-12-17  Ulf Jasper  <ulf.jasper@web.de>
 
 	* image.c (svg_load): Watch out for nil value of current buffer's

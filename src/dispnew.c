@@ -5785,7 +5785,7 @@ immediately by pending input.  */)
 {
   ptrdiff_t count;
 
-  swallow_events (1);
+  swallow_events (true);
   if ((detect_input_pending_run_timers (1)
        && NILP (force) && !redisplay_dont_pause)
       || !NILP (Vexecuting_kbd_macro))

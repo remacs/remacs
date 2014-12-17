@@ -4473,7 +4473,7 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 	  && ! EQ (wait_proc->status, Qrun)
 	  && ! EQ (wait_proc->status, Qconnect))
 	{
-	  bool read_some_bytes = 0;
+	  bool read_some_bytes = false;
 
 	  clear_waiting_for_input ();
 	  XSETPROCESS (proc, wait_proc);
@@ -4689,13 +4689,13 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 	  unsigned old_timers_run = timers_run;
 	  struct buffer *old_buffer = current_buffer;
 	  Lisp_Object old_window = selected_window;
-	  bool leave = 0;
+	  bool leave = false;
 
 	  if (detect_input_pending_run_timers (do_display))
 	    {
 	      swallow_events (do_display);
 	      if (detect_input_pending_run_timers (do_display))
-		leave = 1;
+		leave = true;
 	    }
 
 	  /* If a timer has run, this might have changed buffers

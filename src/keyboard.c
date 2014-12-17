@@ -2582,7 +2582,7 @@ read_char (int commandflag, Lisp_Object map,
 	   user-visible, such as X selection_request events.  */
       if (input_pending
 	  || detect_input_pending_run_timers (0))
-	swallow_events (0);		/* May clear input_pending.  */
+	swallow_events (false);		/* May clear input_pending.  */
 
       /* Redisplay if no pending input.  */
       while (!input_pending)
@@ -2598,7 +2598,7 @@ read_char (int commandflag, Lisp_Object map,
 
 	  /* Input arrived and pre-empted redisplay.
 	     Process any events which are not user-visible.  */
-	  swallow_events (0);
+	  swallow_events (false);
 	  /* If that cleared input_pending, try again to redisplay.  */
 	}
 
@@ -4370,7 +4370,7 @@ swallow_events (bool do_display)
   old_timers_run = timers_run;
   get_input_pending (READABLE_EVENTS_DO_TIMERS_NOW);
 
-  if (timers_run != old_timers_run && do_display)
+  if (!input_pending && timers_run != old_timers_run && do_display)
     redisplay_preserve_echo_area (7);
 }
 
