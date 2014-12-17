@@ -1,5 +1,10 @@
 2014-12-17  Ulf Jasper  <ulf.jasper@web.de>
 
+	* image.c (svg_load): Watch out for nil value of current buffer's
+	filename.  Re-enable filename thing for not-a-file case.
+
+2014-12-17  Ulf Jasper  <ulf.jasper@web.de>
+
 	Partially disabled previous change.
 
 	* image.c (svg_load): Temporarily disabled filename thing for

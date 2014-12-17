@@ -8823,10 +8823,9 @@ svg_load (struct frame *f, struct image *img)
 	  return 0;
 	}
       original_filename = BVAR (current_buffer, filename);
-      /* FIXME: disabled the filename thing for the time being as it
-         can cause crashs. */
       success_p = svg_load_image (f, img, SDATA (data), SBYTES (data),
-                                  NULL /* SDATA(original_filename) */);
+                                  NILP(original_filename) ?
+                                  NULL : SDATA(original_filename));
     }
 
   return success_p;
