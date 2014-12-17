@@ -1,5 +1,7 @@
 2014-12-17  Dmitry Gutov  <dgutov@yandex.ru>
 
+	* vc/vc.el: Improve `dir-status-files' description.
+
 	* emacs-lisp/package.el (package--list-loaded-files): Don't call
 	file-truename on load-history elements (bug#19390).
 

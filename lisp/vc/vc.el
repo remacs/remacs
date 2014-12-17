@@ -133,9 +133,12 @@
 ;; - dir-status-files (dir files update-function)
 ;;
 ;;   Produce RESULT: a list of lists of the form (FILE VC-STATE EXTRA)
-;;   for FILES in DIR.  If FILES is nil. report on all files in DIR.
+;;   for FILES in DIR.  If FILES is nil, report on all files in DIR.
 ;;   (It is OK, though possibly inefficient, to ignore the FILES argument
 ;;   and always report on all files in DIR.)
+;;
+;;   If FILES is non-nil, this function should report on all requested
+;;   files, including up-to-date or ignored files.
 ;;
 ;;   EXTRA can be used for backend specific information about FILE.
 ;;   If a command needs to be run to compute this list, it should be
@@ -152,10 +155,6 @@
 ;;   To provide more backend specific functionality for `vc-dir'
 ;;   the following functions might be needed: `dir-extra-headers',
 ;;   `dir-printer', and `extra-dir-menu'.
-;;
-;;   This function should report on all requested files, including
-;;   up-to-date or ignored files. If it is not provided, the default is to
-;;   consider that all files are in 'up-to-date state.
 ;;
 ;; - dir-extra-headers (dir)
 ;;
