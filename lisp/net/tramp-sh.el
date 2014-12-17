@@ -4470,7 +4470,8 @@ Gateway hops are already opened."
 	;; Therefore, we must remember the gateway vector.  But we
 	;; cannot do it as connection property, because it shouldn't
 	;; be persistent.  And we have no started process yet either.
-	(tramp-set-file-property (car target-alist) "" "gateway" hop)))
+	(let ((tramp-verbose 0))
+	  (tramp-set-file-property (car target-alist) "" "gateway" hop))))
 
     ;; Foreign and out-of-band methods are not supported for multi-hops.
     (when (cdr target-alist)
@@ -4646,7 +4647,8 @@ connection if a previous connection has died for some reason."
 			   l-method 'tramp-connection-timeout))
 			 (gw-args
 			  (tramp-get-method-parameter l-method 'tramp-gw-args))
-			 (gw (tramp-get-file-property hop "" "gateway" nil))
+			 (gw (let ((tramp-verbose 0))
+			       (tramp-get-file-property hop "" "gateway" nil)))
 			 (g-method (and gw (tramp-file-name-method gw)))
 			 (g-user (and gw (tramp-file-name-user gw)))
 			 (g-host (and gw (tramp-file-name-real-host gw)))
@@ -4674,8 +4676,10 @@ connection if a previous connection has died for some reason."
 		      (setq login-args (append async-args login-args)))
 
 		    ;; Add gateway arguments if necessary.
-		    (when (and gw gw-args)
-		      (setq login-args (append gw-args login-args)))
+		    (when gw
+		      (tramp-set-connection-property p "gateway" t)
+		      (when gw-args
+			(setq login-args (append gw-args login-args))))
 
 		    ;; Check for port number.  Until now, there's no
 		    ;; need for handling like method, user, host.
