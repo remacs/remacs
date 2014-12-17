@@ -559,8 +559,7 @@ Return the max version (as a string) if the package is held at a lower version."
   "Recursively list all files in DIR which correspond to loaded features.
 Returns the `file-name-sans-extension' of each file, relative to
 DIR, sorted by most recently loaded last."
-  (let* ((history (mapcar (lambda (x) (file-name-sans-extension
-                                  (file-truename (car x))))
+  (let* ((history (mapcar (lambda (x) (file-name-sans-extension (car x)))
                     load-history))
          (dir (file-truename dir))
          ;; List all files that have already been loaded.
