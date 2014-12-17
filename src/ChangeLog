@@ -1,5 +1,12 @@
 2014-12-17  Ulf Jasper  <ulf.jasper@web.de>
 
+	Partially disabled previous change.
+
+	* image.c (svg_load): Temporarily disabled filename thing for
+	not-a-file case as it can cause crashs.
+
+2014-12-17  Ulf Jasper  <ulf.jasper@web.de>
+
 	Fix problem with images referenced within svg files. (bug#19373)
 
 	* image.c: Additional parameter 'filename' for
