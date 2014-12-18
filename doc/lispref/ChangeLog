@@ -1,3 +1,7 @@
+2014-12-18  Eli Zaretskii  <eliz@gnu.org>
+
+	* display.texi (Low-Level Font): Document font-info and query-font.
+
 2014-12-16  Nicolas Petton  <petton.nicolas@gmail.com>
 
 	* sequences.texi (Seq Library): Add documentation for seq.el.

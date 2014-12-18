@@ -108,6 +108,17 @@ environment.  For the time being this is implemented for modern POSIX
 systems and for MS-Windows, for other systems they fall back to their
 counterparts `string-lessp' and `string-equal'.
 
+*** The ls-lisp package uses `string-collate-lessp' to sort file names.
+If you want the old, locale-independent sorting, customize the new
+option `ls-lisp-use-string-collate' to a nil value.
+
+*** The MS-Windows specific variable `w32-collate-ignore-punctuation',
+if set to a non-nil value, causes the above 2 functions to ignore
+symbol and punctuation characters when collating strings.  This
+emulates the behavior of modern Posix platforms when the locale's
+codeset is "UTF-8" (as in "en_US.UTF-8").  This is needed because
+MS-Windows doesn't support UTF-8 as codeset in its locales.
+
 +++
 ** The new function `bidi-find-overridden-directionality' allows to
 find characters whose directionality was, perhaps maliciously,
@@ -121,17 +132,6 @@ copy a portion of a buffer into a different location while preserving
 the visual appearance both of the copied text and the text at
 destination, even when the copied text includes mixed bidirectional
 text and directional control characters.
-
-*** The ls-lisp package uses `string-collate-lessp' to sort file names.
-If you want the old, locale-independent sorting, customize the new
-option `ls-lisp-use-string-collate' to a nil value.
-
-*** The MS-Windows specific variable `w32-collate-ignore-punctuation',
-if set to a non-nil value, causes the above 2 functions to ignore
-symbol and punctuation characters when collating strings.  This
-emulates the behavior of modern Posix platforms when the locale's
-codeset is "UTF-8" (as in "en_US.UTF-8").  This is needed because
-MS-Windows doesn't support UTF-8 as codeset in its locales.
 
 ** New variable `ns-use-fullscreen-animation' controls animation for
 non-native NS fullscreen.  The default is nil.  Set to t to enable
@@ -158,6 +158,10 @@ the name is a forward slash.
 fontification during full screen scrolling operations, giving less
 hesitant operation during auto-repeat of C-v, M-v at the cost of
 possible inaccuracies in the end position.
+
+** The function `font-info' now returns more details about a font.
+In particular, it now returns the average width of the font's
+characters, which can be used for geometry-related calculations.
 
 
 * Editing Changes in Emacs 25.1

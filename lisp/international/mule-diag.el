@@ -825,10 +825,18 @@ but still contains full information about each coding system."
 The IGNORED argument is ignored."
   (print-list "name (opened by):" (aref font-info 0))
   (print-list "       full name:" (aref font-info 1))
+  (and (aref font-info 12)
+       (print-list "       file name:" (aref font-info 12)))
   (print-list "            size:" (format "%2d" (aref font-info 2)))
   (print-list "          height:" (format "%2d" (aref font-info 3)))
   (print-list " baseline-offset:" (format "%2d" (aref font-info 4)))
-  (print-list "relative-compose:" (format "%2d" (aref font-info 5))))
+  (print-list "relative-compose:" (format "%2d" (aref font-info 5)))
+  (print-list "  default-ascent:" (format "%2d" (aref font-info 6)))
+  (print-list "          ascent:" (format "%2d" (aref font-info 8)))
+  (print-list "         descent:" (format "%2d" (aref font-info 9)))
+  (print-list "   average-width:" (format "%2d" (aref font-info 11)))
+  (print-list "     space-width:" (format "%2d" (aref font-info 10)))
+  (print-list "       max-width:" (format "%2d" (aref font-info 7))))
 
 ;;;###autoload
 (defun describe-font (fontname)

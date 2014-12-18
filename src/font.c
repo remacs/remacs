@@ -4921,8 +4921,11 @@ If FRAME is omitted or nil, use the selected frame.  */)
 DEFUN ("font-info", Ffont_info, Sfont_info, 1, 2, 0,
        doc: /* Return information about a font named NAME on frame FRAME.
 If FRAME is omitted or nil, use the selected frame.
-The returned value is a vector of OPENED-NAME, FULL-NAME, SIZE,
-  HEIGHT, BASELINE-OFFSET, RELATIVE-COMPOSE, and DEFAULT-ASCENT,
+
+The returned value is a vector:
+  [ OPENED-NAME FULL-NAME SIZE HEIGHT BASELINE-OFFSET RELATIVE-COMPOSE
+    DEFAULT-ASCENT MAX-WIDTH ASCENT DESCENT SPACE-WIDTH AVERAGE-WIDTH
+    CAPABILITY ]
 where
   OPENED-NAME is the name used for opening the font,
   FULL-NAME is the full name of the font,
@@ -4930,7 +4933,33 @@ where
   HEIGHT is the pixel-height of the font (i.e., ascent + descent),
   BASELINE-OFFSET is the upward offset pixels from ASCII baseline,
   RELATIVE-COMPOSE and DEFAULT-ASCENT are the numbers controlling
-    how to compose characters.
+    how to compose characters,
+  MAX-WIDTH is the maximum advance width of the font,
+  ASCENT, DESCENT, SPACE-WIDTH, AVERAGE-WIDTH are metrics of the font
+    in pixels,
+  FILENAME is the font file name, a string (or nil if the font backend
+    doesn't provide a file name).
+  CAPABILITY is a list whose first element is a symbol representing the
+    font format, one of x, opentype, truetype, type1, pcf, or bdf.
+    The remaining elements describe the details of the font capabilities,
+    as follows:
+
+      If the font is OpenType font, the form of the list is
+        \(opentype GSUB GPOS)
+      where GSUB shows which "GSUB" features the font supports, and GPOS
+      shows which "GPOS" features the font supports.  Both GSUB and GPOS are
+      lists of the form:
+	\((SCRIPT (LANGSYS FEATURE ...) ...) ...)
+
+      where
+        SCRIPT is a symbol representing OpenType script tag.
+        LANGSYS is a symbol representing OpenType langsys tag, or nil
+         representing the default langsys.
+        FEATURE is a symbol representing OpenType feature tag.
+
+      If the font is not an OpenType font, there are no elements
+      in CAPABILITY except the font format symbol.
+
 If the named font is not yet loaded, return nil.  */)
   (Lisp_Object name, Lisp_Object frame)
 {
@@ -4966,7 +4995,7 @@ If the named font is not yet loaded, return nil.  */)
     return Qnil;
   font = XFONT_OBJECT (font_object);
 
-  info = make_uninit_vector (7);
+  info = make_uninit_vector (14);
   ASET (info, 0, AREF (font_object, FONT_NAME_INDEX));
   ASET (info, 1, AREF (font_object, FONT_FULLNAME_INDEX));
   ASET (info, 2, make_number (font->pixel_size));
@@ -4974,6 +5003,16 @@ If the named font is not yet loaded, return nil.  */)
   ASET (info, 4, make_number (font->baseline_offset));
   ASET (info, 5, make_number (font->relative_compose));
   ASET (info, 6, make_number (font->default_ascent));
+  ASET (info, 7, make_number (font->max_width));
+  ASET (info, 8, make_number (font->ascent));
+  ASET (info, 9, make_number (font->descent));
+  ASET (info, 10, make_number (font->space_width));
+  ASET (info, 11, make_number (font->average_width));
+  ASET (info, 12, AREF (font_object, FONT_FILE_INDEX));
+  if (font->driver->otf_capability)
+    ASET (info, 13, Fcons (Qopentype, font->driver->otf_capability (font)));
+  else
+    ASET (info, 13, Qnil);
 
 #if 0
   /* As font_object is still in FONT_OBJLIST of the entity, we can't

@@ -1,3 +1,9 @@
+2014-12-18  Eli Zaretskii  <eliz@gnu.org>
+
+	* font.c (Ffont_info): Add more font information to the vector
+	returned by the function, inspired by query-font.  Doc fix.
+	(Bug#19395)
+
 2014-12-18  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* keyboard.c (input_was_pending): New var.

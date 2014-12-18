@@ -1,3 +1,13 @@
+2014-12-18  Eli Zaretskii  <eliz@gnu.org>
+
+	* international/mule-diag.el (describe-font-internal): Display
+	additional info returned by font-info.
+
+	* linum.el (linum--face-width): Rename from linum--face-height,
+	and use the new functionality of font-info.
+	(linum-update-window): Use linum--face-width and frame-char-width,
+	instead of approximating with height.
+
 2014-12-18  Dmitry Gutov  <dgutov@yandex.ru>
 
 	* vc/vc-svn.el (vc-svn-dir-status-files): Revert the 2014-12-02

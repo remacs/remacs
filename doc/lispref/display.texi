@@ -3349,9 +3349,9 @@ The script that the font must support (a symbol).
 @item :otf
 @cindex OpenType font
 The font must be an OpenType font that supports these OpenType
-features, provided Emacs is compiled with support for @samp{libotf} (a
-library for performing complex text layout in certain scripts).  The
-value must be a list of the form
+features, provided Emacs is compiled with a library, such as
+@samp{libotf} on GNU/Linux, that supports complex text layout for
+scripts which need that.  The value must be a list of the form
 
 @smallexample
 @code{(@var{script-tag} @var{langsys-tag} @var{gsub} @var{gpos})}
@@ -3448,6 +3448,124 @@ can contain at most 255 characters), the function returns @code{nil}.
 
 If the optional argument @var{fold-wildcards} is non-@code{nil},
 consecutive wildcards in the XLFD are folded into one.
+@end defun
+
+The following two functions return important information about a font.
+
+@defun font-info name &optional frame
+This function returns information about a font specified by its
+@var{name}, a string, as it is used on @var{frame}.  If @var{frame} is
+omitted or @code{nil}, it defaults to the selected frame.
+
+The value returned by the function is a vector of the form
+@code{[@var{opened-name} @var{full-name} @var{size} @var{height}
+@var{baseline-offset} @var{relative-compose} @var{default-ascent}
+@var{max-width} @var{ascent} @var{descent} @var{space-width}
+@var{average-width} @var{filename} @var{capability}]}.  Here's the
+description of each components of this vector:
+
+@table @var
+@item opened-name
+The name used to open the font, a string.
+
+@item full-name
+The full name of the font, a string.
+
+@item size
+The pixel size of the font.
+
+@item height
+The height of the font in pixels.
+
+@item baseline-offset
+The offset in pixels from the @acronym{ASCII} baseline, positive
+upward.
+
+@item relative-compose
+@itemx default-ascent
+Numbers controlling how to compose characters.
+
+@item ascent
+@itemx descent
+The ascent and descent of this font.  The sum of these two numbers
+should be equal to the value of @var{height} above.
+
+@item space-width
+The width, in pixels, of the font's space character.
+
+@item average-width
+The average width of the font characters.  If this is zero, Emacs uses
+the value of @var{space-width} instead, when it calculates text layout
+on display.
+
+@item filename
+The file name of the font as a string.  This can be @code{nil} if the
+font back-end does not provide a way to find out the font's file name.
+
+@item capability
+A list whose first element is a symbol representing the font type, one
+of @code{x}, @code{opentype}, @code{truetype}, @code{type1},
+@code{pcf}, or @code{bdf}.  For OpenType fonts, the list includes 2
+additional elements describing the @sc{gsub} and @sc{gpos} features
+supported by the font.  Each of these elements is a list of the form
+@code{((@var{script} (@var{langsys} @var{feature} @dots{}) @dots{})
+@dots{})}, where @var{script} is a symbol representing an OpenType
+script tag, @var{langsys} is a symbol representing an OpenType langsys
+tag (or @code{nil}, which stands for the default langsys), and each
+@var{feature} is a symbol representing an OpenType feature tag.
+@end table
+@end defun
+
+@defun query-font font-object
+This function returns information about a @var{font-object}.  (This is
+in contrast to @code{font-info}, which takes the font name, a string,
+as its argument.)
+
+The value returned by the function is a vector of the form
+@code{[@var{name} @var{filename} @var{pixel-size} @var{max-width}
+@var{ascent} @var{descent} @var{space-width} @var{average-width}
+@var{capability}]}.  Here's the description of each components of this
+vector:
+
+@table @var
+@item name
+The font name, a string.
+
+@item filename
+The file name of the font as a string.  This can be @code{nil} if the
+font back-end does not provide a way to find out the font's file name.
+
+@item pixel-size
+The pixel size of the font used to open the font.
+
+@item max-width
+The maximum advance width of the font.
+
+@item ascent
+@itemx descent
+The ascent and descent of this font.  The sum of these two numbers
+gives the font height.
+
+@item space-width
+The width, in pixels, of the font's space character.
+
+@item average-width
+The average width of the font characters.  If this is zero, Emacs uses
+the value of @var{space-width} instead, when it calculates text layout
+on display.
+
+@item capability
+A list whose first element is a symbol representing the font type, one
+of @code{x}, @code{opentype}, @code{truetype}, @code{type1},
+@code{pcf}, or @code{bdf}.  For OpenType fonts, the list includes 2
+additional elements describing the @sc{gsub} and @sc{gpos} features
+supported by the font.  Each of these elements is a list of the form
+@code{((@var{script} (@var{langsys} @var{feature} @dots{}) @dots{})
+@dots{})}, where @var{script} is a symbol representing an OpenType
+script tag, @var{langsys} is a symbol representing an OpenType langsys
+tag (or @code{nil}, which stands for the default langsys), and each
+@var{feature} is a symbol representing an OpenType feature tag.
+@end table
 @end defun
 
 @node Fringes
