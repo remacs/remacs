@@ -532,7 +532,7 @@ correspond to previously loaded files (those returned by
            (autoloads-file (expand-file-name
                             (format "%s-autoloads" name) pkg-dir))
            (loaded-files-list (and reload (package--list-loaded-files pkg-dir))))
-      (with-demoted-errors (format "Error loading %s: %%s" name)
+      (with-demoted-errors "Error in package-activate-1: %s"
         (load autoloads-file nil t))
       (when (and (eq old-lp load-path)
                  (not (or (member pkg-dir load-path)
@@ -545,7 +545,7 @@ correspond to previously loaded files (those returned by
       ;; to their new definitions.  If another package is being installed which
       ;; depends on this new definition, not doing this update would cause
       ;; compilation errors and break the installation.
-      (with-demoted-errors (format "Error loading %s: %%s" name)
+      (with-demoted-errors "Error in package-activate-1: %s"
 	(mapc (lambda (feature) (load feature nil t))
               ;; Skip autoloads file since we already evaluated it above.
               (remove (file-truename autoloads-file) loaded-files-list))))

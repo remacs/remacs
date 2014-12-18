@@ -2,6 +2,8 @@
 
 	* emacs-lisp/package.el: Avoid compilation warning by declaring
 	the `find-library-name' function.
+	(package-activate-1): Fix the `with-demoted-errors' calls:
+	the first argument must be a string literal.
 
 2014-12-18  Martin Rudalics  <rudalics@gmx.at>
 
