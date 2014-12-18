@@ -108,11 +108,6 @@
 ;; with your version of Emacs, you are incompatible!
 (cc-external-require 'easymenu)
 
-;; Autoload directive for emacsen that doesn't have an older CC Mode
-;; version in the dist.
-(autoload 'subword-mode "subword"
-  "Mode enabling subword movement and editing keys." t)
-
 ;; Load cc-fonts first after font-lock is loaded, since it isn't
 ;; necessary until font locking is requested.
 ; (eval-after-load "font-lock" ; 2006-07-09: font-lock is now preloaded.
@@ -379,7 +374,7 @@ control).  See \"cc-mode.el\" for more info."
   ;; conflicts with OOBR
   ;;(define-key c-mode-base-map "\C-c\C-v"  'c-version)
   ;; (define-key c-mode-base-map "\C-c\C-y"  'c-toggle-hungry-state)  Commented out by ACM, 2005-11-22.
-  (define-key c-mode-base-map "\C-c\C-w" 'subword-mode)
+  (define-key c-mode-base-map "\C-c\C-w" 'c-subword-mode)
   )
 
 ;; We don't require the outline package, but we configure it a bit anyway.

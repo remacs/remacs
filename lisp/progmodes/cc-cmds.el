@@ -258,9 +258,11 @@ With universal argument, inserts the analysis as a comment on that line."
 			 "a" "")
 		     (if c-hungry-delete-key "h" "")
 		     (if (and
-			  ;; subword might not be loaded.
-			  (boundp 'subword-mode)
-			  (symbol-value 'subword-mode))
+			  ;; (cc-)subword might not be loaded.
+			  (boundp 'c-subword-mode)
+			  (symbol-value 'c-subword-mode))
+                         ;; FIXME: subword-mode already comes with its
+                         ;; own lighter!
 			 "w"
 		       "")))
         ;; FIXME: Derived modes might want to use something else
@@ -1303,6 +1305,17 @@ keyword on the line, the keyword is not inserted inside a literal, and
 
 (declare-function subword-forward "subword" (&optional arg))
 (declare-function subword-backward "subword" (&optional arg))
+
+(cond
+ ((and (fboundp 'subword-mode) (not (fboundp 'c-subword-mode)))
+  ;; Recent Emacsen come with their own subword support.  Use that.
+  (define-obsolete-function-alias 'c-subword-mode 'subword-mode "24.3")
+  (define-obsolete-variable-alias 'c-subword-mode 'subword-mode "24.3"))
+ (t
+  ;; Autoload directive for emacsen that doesn't have an older CC Mode
+  ;; version in the dist.
+  (autoload 'c-subword-mode "cc-subword"
+    "Mode enabling subword movement and editing keys." t)))
 
 ;; "nomenclature" functions + c-scope-operator.
 (defun c-forward-into-nomenclature (&optional arg)

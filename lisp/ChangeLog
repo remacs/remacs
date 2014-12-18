@@ -1,7 +1,15 @@
+2014-12-18  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* progmodes/cc-cmds.el (c-subword-mode): Alias to subword-mode.
+	(c-update-modeline):
+	* progmodes/cc-langs.el (c-mode-menu): Use c-subword-mode.
+	* progmodes/cc-mode.el (subword-mode): Move autoload to cc-cmds.el.
+	(c-mode-base-map): Use c-subword-mode.
+
 2014-12-18  Eli Zaretskii  <eliz@gnu.org>
 
-	* international/mule-diag.el (describe-font-internal): Display
-	additional info returned by font-info.
+	* international/mule-diag.el (describe-font-internal):
+	Display additional info returned by font-info.
 
 	* linum.el (linum--face-width): Rename from linum--face-height,
 	and use the new functionality of font-info.
@@ -21,8 +29,8 @@
 
 2014-12-17  Sam Steingold  <sds@gnu.org>
 
-	* emacs-lisp/package.el (package--list-loaded-files): Handle
-	`(nil ...)' elements in `load-history'.
+	* emacs-lisp/package.el (package--list-loaded-files):
+	Handle `(nil ...)' elements in `load-history'.
 
 2014-12-17  Teodor Zlatanov  <tzz@lifelogs.com>
 
@@ -152,8 +160,8 @@
 
 2014-12-13  Fabián Ezequiel Gallina  <fgallina@gnu.org>
 
-	* progmodes/python.el (python-shell-parse-command): Quote
-	`python-shell-interpreter`.  (Bug#19289)
+	* progmodes/python.el (python-shell-parse-command):
+	Quote `python-shell-interpreter`.  (Bug#19289)
 
 2014-12-12  Stefan Monnier  <monnier@iro.umontreal.ca>
 
