@@ -4135,11 +4135,7 @@ values.  */)
 
 /* Resize frame F's windows when number of lines of F is set to SIZE.
    HORFLAG 1 means resize windows when number of columns of F is set to
-   SIZE.  PIXELWISE 1 means to interpret SIZE as pixels.
-
-   This function can delete all windows but the selected one in order to
-   satisfy the request.  The result will be meaningful if and only if
-   F's windows have meaningful sizes when you call this.  */
+   SIZE.  PIXELWISE 1 means to interpret SIZE as pixels.  */
 void
 resize_frame_windows (struct frame *f, int size, bool horflag, bool pixelwise)
 {

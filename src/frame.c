@@ -335,9 +335,9 @@ predicates which report frame's specific UI-related capabilities.  */)
 }
 
 static int
-frame_windows_min_size (Lisp_Object frame, Lisp_Object horizontal, Lisp_Object pixelwise)
+frame_windows_min_size (Lisp_Object frame, Lisp_Object horizontal, Lisp_Object ignore, Lisp_Object pixelwise)
 {
-  return XINT (call3 (Qframe_windows_min_size, frame, horizontal, pixelwise));
+  return XINT (call4 (Qframe_windows_min_size, frame, horizontal, ignore, pixelwise));
 }
 
 
@@ -419,8 +419,10 @@ adjust_frame_size (struct frame *f, int new_width, int new_height, int inhibit,
   /* The following two values are calculated from the old window body
      sizes and any "new" settings for scroll bars, dividers, fringes and
      margins (though the latter should have been processed already).  */
-  min_windows_width = frame_windows_min_size (frame, Qt, Qt);
-  min_windows_height = frame_windows_min_size (frame, Qnil, Qt);
+  min_windows_width
+    = frame_windows_min_size (frame, Qt, (inhibit == 5) ? Qt : Qnil, Qt);
+  min_windows_height
+    = frame_windows_min_size (frame, Qnil, (inhibit == 5) ? Qt : Qnil, Qt);
 
   if (inhibit >= 2 && inhibit <= 4)
     /* If INHIBIT is in [2..4] inhibit if the "old" window sizes stay

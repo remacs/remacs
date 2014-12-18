@@ -249,6 +249,12 @@ displays the buffer specified by BUFFER-OR-NAME before running BODY."
 	   (ignore-errors
 	     (funcall (cdr (assq 'window-height (cdr ,vaction))) ,window)))
 
+	 (when (consp (cdr (assq 'preserve-size (cdr ,vaction))))
+	   (window-preserve-size
+	    ,window t (cadr (assq 'preserve-size (cdr ,vaction))))
+	  (window-preserve-size
+	    ,window nil (cddr (assq 'preserve-size (cdr ,vaction)))))
+
 	 (if (functionp ,vquit-function)
 	     (funcall ,vquit-function ,window ,value)
 	   ,value)))))
@@ -434,6 +440,14 @@ minimum pixel width of WINDOW."
   (if horizontal
       (window-safe-min-pixel-width window)
     (window-safe-min-pixel-height window)))
+
+(defun window-min-pixel-size (&optional window horizontal)
+  "Return the minimum pixel height of WINDOW.
+Optional argument HORIZONTAL non-nil means return the minimum
+pixel width of WINDOW."
+  (if horizontal
+      (window-min-pixel-width window)
+    (window-min-pixel-height window)))
 
 (defun window-combined-p (&optional window horizontal)
   "Return non-nil if WINDOW has siblings in a given direction.
@@ -1215,9 +1229,73 @@ unless it has no other choice (like when deleting a neighboring
 window).")
 (make-variable-buffer-local 'window-size-fixed)
 
-(defun window--size-ignore-p (window ignore)
-  "Return non-nil if IGNORE says to ignore size restrictions for WINDOW."
-  (if (window-valid-p ignore) (eq window ignore) ignore))
+(defun window--preservable-size (window &optional horizontal)
+  "Return height of WINDOW as `window-preserve-size' would preserve it.
+Optional argument HORIZONTAL non-nil means to return the width of
+WINDOW as `window-preserve-size' would preserve it."
+  (if horizontal
+      (window-body-width window t)
+    (+ (window-body-height window t)
+       (window-header-line-height window)
+       (window-mode-line-height window))))
+
+(defun window-preserve-size (&optional window horizontal preserve)
+  "Preserve height of window WINDOW.
+WINDOW must be a live window and defaults to the selected one.
+Optional argument HORIZONTAL non-nil means preserve the width of
+WINDOW.
+
+PRESERVE t means to preserve the current height/width of WINDOW's
+body in frame and window resizing operations whenever possible.
+The height/width of WINDOW will change only if Emacs has no other
+choice.  Resizing a window whose height/width is preserved never
+throws an error.
+
+PRESERVE nil means to stop preserving the height/width of WINDOW,
+lifting the respective restraint induced by a previous call of
+`window-preserve-size' for WINDOW.  Calling `enlarge-window',
+`shrink-window', `split-window' or `fit-window-to-buffer' with
+WINDOW as argument also removes the respective restraint.
+
+Other values of PRESERVE are reserved for future use."
+  (setq window (window-normalize-window window t))
+  (let* ((parameter (window-parameter window 'window-preserved-size))
+	 (width (nth 1 parameter))
+	 (height (nth 2 parameter)))
+    (if horizontal
+	(set-window-parameter
+	 window 'window-preserved-size
+	 (list
+	  (window-buffer window)
+	  (and preserve (window--preservable-size window t))
+	  height))
+      (set-window-parameter
+       window 'window-preserved-size
+       (list
+	(window-buffer window)
+	width
+	(and preserve (window--preservable-size window)))))))
+
+(defun window-preserved-size (&optional window horizontal)
+  "Return preserved height of window WINDOW.
+WINDOW must be a live window and defaults to the selected one.
+Optional argument HORIZONTAL non-nil means to return preserved
+width of WINDOW."
+  (setq window (window-normalize-window window t))
+  (let* ((parameter (window-parameter window 'window-preserved-size))
+	 (buffer (nth 0 parameter))
+	 (width (nth 1 parameter))
+	 (height (nth 2 parameter)))
+    (when (eq buffer (window-buffer window))
+      (if horizontal width height))))
+
+(defun window--preserve-size (window horizontal)
+  "Return non-nil when the height of WINDOW shall be preserved.
+Optional argument HORIZONTAL non-nil means to return non-nil when
+the width of WINDOW shall be preserved."
+  (let ((size (window-preserved-size window horizontal)))
+    (and (numberp size)
+	 (= size (window--preservable-size window horizontal)))))
 
 (defun window-safe-min-size (&optional window horizontal pixelwise)
   "Return safe minimum size of WINDOW.
@@ -1244,18 +1322,19 @@ Optional argument HORIZONTAL non-nil means return the minimum
 number of columns of WINDOW; otherwise return the minimum number
 of WINDOW's lines.
 
-Optional argument IGNORE, if non-nil, means ignore restrictions
-imposed by fixed size windows, `window-min-height' or
-`window-min-width' settings.  If IGNORE equals `safe', live
-windows may get as small as `window-safe-min-height' lines and
-`window-safe-min-width' columns.  If IGNORE is a window, ignore
-restrictions for that window only.  Any other non-nil value
-means ignore all of the above restrictions for all windows.
-
-Optional argument PIXELWISE non-nil means return the minimum pixel-size
-of WINDOW."
+The optional argument IGNORE has the same meaning as for
+`window-resizable'.  Optional argument PIXELWISE non-nil means
+return the minimum pixel-size of WINDOW."
   (window--min-size-1
    (window-normalize-window window) horizontal ignore pixelwise))
+
+(defun window--min-size-ignore-p (window horizontal ignore)
+  "Return non-nil if IGNORE says to ignore height restrictions for WINDOW.
+HORIZONTAL non-nil means to return non-nil if IGNORE says to
+ignore width restrictions for WINDOW."
+  (if (window-valid-p ignore)
+      (eq window ignore)
+    (not (memq ignore '(nil preserved)))))
 
 (defun window--min-size-1 (window horizontal ignore pixelwise)
   "Internal function of `window-min-size'."
@@ -1283,8 +1362,7 @@ of WINDOW."
 	(cond
 	 ((window-minibuffer-p window)
 	  (if pixelwise (frame-char-height (window-frame window)) 1))
-	 ((and (not (window--size-ignore-p window ignore))
-	       (window-size-fixed-p window horizontal))
+	 ((window-size-fixed-p window horizontal ignore)
 	  ;; The minimum size of a fixed size window is its size.
 	  (window-size window horizontal pixelwise))
 	 ((eq ignore 'safe)
@@ -1313,12 +1391,12 @@ of WINDOW."
 		     pixel-width
 		   ;; Round up to next integral of columns.
 		   (* (ceiling pixel-width char-size) char-size))
-		 (if (window--size-ignore-p window ignore)
+		 (if (window--min-size-ignore-p window horizontal ignore)
 		     0
 		   (window-min-pixel-width window)))
 	      (max
 	       (ceiling pixel-width char-size)
-	       (if (window--size-ignore-p window ignore)
+	       (if (window--min-size-ignore-p window horizontal ignore)
 		   0
 		 window-min-width)))))
 	 ((let ((char-size (frame-char-size window))
@@ -1334,11 +1412,11 @@ of WINDOW."
 		     pixel-height
 		   ;; Round up to next integral of lines.
 		   (* (ceiling pixel-height char-size) char-size))
-		 (if (window--size-ignore-p window ignore)
+		 (if (window--min-size-ignore-p window horizontal ignore)
 		     0
 		   (window-min-pixel-height window)))
 	      (max (ceiling pixel-height char-size)
-		   (if (window--size-ignore-p window ignore)
+		   (if (window--min-size-ignore-p window horizontal ignore)
 		       0
 		     window-min-height))))))))))
 
@@ -1363,26 +1441,17 @@ columns.  If WINDOW cannot be shrunk by -DELTA lines or columns,
 return the minimum value in the range DELTA..0 by which WINDOW
 can be shrunk.
 
-Optional argument IGNORE non-nil means ignore restrictions
-imposed by fixed size windows, `window-min-height' or
-`window-min-width' settings.  If IGNORE equals `safe', live
-windows may get as small as `window-safe-min-height' lines and
-`window-safe-min-width' columns.  If IGNORE is a window, ignore
-restrictions for that window only.  Any other non-nil value means
-ignore all of the above restrictions for all windows.
-
-Optional argument PIXELWISE non-nil means interpret DELTA as
-pixels."
+The optional argument IGNORE has the same meaning as for
+`window-resizable'.  Optional argument PIXELWISE non-nil means
+interpret DELTA as pixels."
   (setq window (window-normalize-window window))
   (cond
    ((< delta 0)
     (max (- (window-min-size window horizontal ignore pixelwise)
 	    (window-size window horizontal pixelwise))
 	 delta))
-   ((window--size-ignore-p window ignore)
-    delta)
    ((> delta 0)
-    (if (window-size-fixed-p window horizontal)
+    (if (window-size-fixed-p window horizontal ignore)
 	0
       delta))
    (t 0)))
@@ -1399,7 +1468,7 @@ doc-string of `window-sizable'."
     (<= (window-sizable window delta horizontal ignore pixelwise)
 	delta)))
 
-(defun window--size-fixed-1 (window horizontal)
+(defun window--size-fixed-1 (window horizontal ignore)
   "Internal function for `window-size-fixed-p'."
   (let ((sub (window-child window)))
     (catch 'fixed
@@ -1410,7 +1479,7 @@ doc-string of `window-sizable'."
 	      ;; windows are fixed-size.
 	      (progn
 		(while sub
-		  (unless (window--size-fixed-1 sub horizontal)
+		  (unless (window--size-fixed-1 sub horizontal ignore)
 		    ;; We found a non-fixed-size child window, so
 		    ;; WINDOW's size is not fixed.
 		    (throw 'fixed nil))
@@ -1421,28 +1490,33 @@ doc-string of `window-sizable'."
 	    ;; An ortho-combination is fixed-size if at least one of its
 	    ;; child windows is fixed-size.
 	    (while sub
-	      (when (window--size-fixed-1 sub horizontal)
+	      (when (window--size-fixed-1 sub horizontal ignore)
 		;; We found a fixed-size child window, so WINDOW's size
 		;; is fixed.
 		(throw 'fixed t))
 	      (setq sub (window-right sub))))
 	;; WINDOW is a live window.
-	(with-current-buffer (window-buffer window)
-	  (if horizontal
-	      (memq window-size-fixed '(width t))
-	    (memq window-size-fixed '(height t))))))))
+	(and (or (not (windowp ignore)) (not (eq window ignore)))
+	     (or (and (not (eq ignore 'preserved))
+		      (window--preserve-size window horizontal))
+		 (with-current-buffer (window-buffer window)
+		   (if horizontal
+		       (memq window-size-fixed '(width t))
+		     (memq window-size-fixed '(height t))))))))))
 
-(defun window-size-fixed-p (&optional window horizontal)
+(defun window-size-fixed-p (&optional window horizontal ignore)
   "Return non-nil if WINDOW's height is fixed.
 WINDOW must be a valid window and defaults to the selected one.
 Optional argument HORIZONTAL non-nil means return non-nil if
-WINDOW's width is fixed.
+WINDOW's width is fixed.  The optional argument IGNORE has the
+same meaning as for `window-resizable'.
 
 If this function returns nil, this does not necessarily mean that
 WINDOW can be resized in the desired direction.  The function
 `window-resizable' can tell that."
-  (window--size-fixed-1
-   (window-normalize-window window) horizontal))
+  (when (or (windowp ignore) (memq ignore '(nil preserved)))
+    (window--size-fixed-1
+     (window-normalize-window window) horizontal ignore)))
 
 (defun window--min-delta-1 (window delta &optional horizontal ignore trail noup pixelwise)
   "Internal function for `window-min-delta'."
@@ -1463,8 +1537,7 @@ WINDOW can be resized in the desired direction.  The function
 		 ((eq sub window)
 		  (setq skip (eq trail 'before)))
 		 (skip)
-		 ((and (not (window--size-ignore-p window ignore))
-		       (window-size-fixed-p sub horizontal)))
+		 ((window-size-fixed-p sub horizontal ignore))
 		 (t
 		  ;; We found a non-fixed-size child window.
 		  (throw 'done delta)))
@@ -1493,25 +1566,18 @@ Return zero if WINDOW cannot be shrunk.
 Optional argument HORIZONTAL non-nil means return number of
 columns by which WINDOW can be shrunk.
 
-Optional argument IGNORE non-nil means ignore restrictions
-imposed by fixed size windows, `window-min-height' or
-`window-min-width' settings.  If IGNORE is a window, ignore
-restrictions for that window only.  If IGNORE equals `safe',
-live windows may get as small as `window-safe-min-height' lines
-and `window-safe-min-width' columns.  Any other non-nil value
-means ignore all of the above restrictions for all windows.
-
-Optional argument TRAIL restricts the windows that can be enlarged.
-If its value is `before', only windows to the left of or above WINDOW
-can be enlarged.  If it is `after', only windows to the right of or
-below WINDOW can be enlarged.
+The optional argument IGNORE has the same meaning as for
+`window-resizable'.  Optional argument TRAIL restricts the
+windows that can be enlarged.  If its value is `before', only
+windows to the left of or above WINDOW can be enlarged.  If it is
+`after', only windows to the right of or below WINDOW can be
+enlarged.
 
 Optional argument NOUP non-nil means don't go up in the window
-tree, but try to enlarge windows within WINDOW's combination only.
-
-Optional argument NODOWN non-nil means don't check whether WINDOW
-itself (and its child windows) can be shrunk; check only whether
-at least one other window can be enlarged appropriately.
+tree, but try to enlarge windows within WINDOW's combination
+only.  Optional argument NODOWN non-nil means don't check whether
+WINDOW itself (and its child windows) can be shrunk; check only
+whether at least one other window can be enlarged appropriately.
 
 Optional argument PIXELWISE non-nil means return number of pixels
 by which WINDOW can be shrunk."
@@ -1533,14 +1599,16 @@ by which WINDOW can be shrunk."
       (window--min-delta-1
        window (- size minimum) horizontal ignore trail noup pixelwise)))))
 
-(defun frame-windows-min-size (&optional frame horizontal pixelwise)
+(defun frame-windows-min-size (&optional frame horizontal ignore pixelwise)
   "Return minimum number of lines of FRAME's windows.
 HORIZONTAL non-nil means return number of columns of FRAME's
-windows.  PIXELWISE non-nil means return sizes in pixels."
+windows.  The optional argument IGNORE has the same meaning as
+for `window-resizable'.  PIXELWISE non-nil means return sizes in
+pixels."
   (setq frame (window-normalize-frame frame))
   (let* ((root (frame-root-window frame))
 	 (mini (window-next-sibling root)))
-    (+ (window-min-size root horizontal nil pixelwise)
+    (+ (window-min-size root horizontal ignore pixelwise)
        (if (and mini (not horizontal))
 	   (window-min-size mini horizontal nil pixelwise)
 	 0))))
@@ -1575,8 +1643,7 @@ windows.  PIXELWISE non-nil means return sizes in pixels."
 	  ;; child window is fixed-size.
 	  (while sub
 	    (when (and (not (eq sub window))
-		       (not (window--size-ignore-p sub ignore))
-		       (window-size-fixed-p sub horizontal))
+		       (window-size-fixed-p sub horizontal ignore))
 	      (throw 'fixed delta))
 	    (setq sub (window-right sub))))
 	(if noup
@@ -1595,32 +1662,24 @@ The return value is zero if WINDOW cannot be enlarged.
 Optional argument HORIZONTAL non-nil means return maximum number
 of columns by which WINDOW can be enlarged.
 
-Optional argument IGNORE non-nil means ignore restrictions
-imposed by fixed size windows, `window-min-height' or
-`window-min-width' settings.  If IGNORE is a window, ignore
-restrictions for that window only.  If IGNORE equals `safe',
-live windows may get as small as `window-safe-min-height' lines
-and `window-safe-min-width' columns.  Any other non-nil value means
-ignore all of the above restrictions for all windows.
-
-Optional argument TRAIL restricts the windows that can be enlarged.
-If its value is `before', only windows to the left of or above WINDOW
-can be enlarged.  If it is `after', only windows to the right of or
-below WINDOW can be enlarged.
+The optional argument IGNORE has the same meaning as for
+`window-resizable'.  Optional argument TRAIL restricts the
+windows that can be enlarged.  If its value is `before', only
+windows to the left of or above WINDOW can be enlarged.  If it is
+`after', only windows to the right of or below WINDOW can be
+enlarged.
 
 Optional argument NOUP non-nil means don't go up in the window
 tree but try to obtain the entire space from windows within
-WINDOW's combination.
-
-Optional argument NODOWN non-nil means do not check whether
-WINDOW itself (and its child windows) can be enlarged; check
-only whether other windows can be shrunk appropriately.
+WINDOW's combination.  Optional argument NODOWN non-nil means do
+not check whether WINDOW itself (and its child windows) can be
+enlarged; check only whether other windows can be shrunk
+appropriately.
 
 Optional argument PIXELWISE non-nil means return number of
 pixels by which WINDOW can be enlarged."
   (setq window (window-normalize-window window))
-  (if (and (not (window--size-ignore-p window ignore))
-	   (not nodown) (window-size-fixed-p window horizontal))
+  (if (and (not nodown) (window-size-fixed-p window horizontal ignore))
       ;; With IGNORE and NOWDON nil return zero if WINDOW has fixed
       ;; size.
       0
@@ -1645,26 +1704,18 @@ columns.  If WINDOW cannot be shrunk by -DELTA lines or columns,
 return the minimum value in the range DELTA..0 that can be used
 for shrinking WINDOW.
 
-Optional argument IGNORE non-nil means ignore restrictions
-imposed by fixed size windows, `window-min-height' or
-`window-min-width' settings.  If IGNORE is a window, ignore
-restrictions for that window only.  If IGNORE equals `safe',
-live windows may get as small as `window-safe-min-height' lines
-and `window-safe-min-width' columns.  Any other non-nil value
-means ignore all of the above restrictions for all windows.
-
-Optional argument TRAIL `before' means only windows to the left
-of or below WINDOW can be shrunk.  Optional argument TRAIL
-`after' means only windows to the right of or above WINDOW can be
-shrunk.
+The optional argument IGNORE has the same meaning as for
+`window-resizable'.  Optional argument TRAIL `before' means only
+windows to the left of or below WINDOW can be shrunk.  Optional
+argument TRAIL `after' means only windows to the right of or
+above WINDOW can be shrunk.
 
 Optional argument NOUP non-nil means don't go up in the window
 tree but check only whether space can be obtained from (or given
-to) WINDOW's siblings.
-
-Optional argument NODOWN non-nil means don't go down in the
-window tree.  This means do not check whether resizing would
-violate size restrictions of WINDOW or its child windows.
+to) WINDOW's siblings.  Optional argument NODOWN non-nil means
+don't go down in the window tree.  This means do not check
+whether resizing would violate size restrictions of WINDOW or its
+child windows.
 
 Optional argument PIXELWISE non-nil means interpret DELTA as
 number of pixels."
@@ -1714,13 +1765,14 @@ columns.  If WINDOW cannot be shrunk by -DELTA lines or columns,
 return the minimum value in the range DELTA..0 that can be used
 for shrinking WINDOW.
 
-Optional argument IGNORE non-nil means ignore restrictions
-imposed by fixed size windows, `window-min-height' or
-`window-min-width' settings.  If IGNORE is a window, ignore
-restrictions for that window only.  If IGNORE equals `safe',
-live windows may get as small as `window-safe-min-height' lines
-and `window-safe-min-width' columns.  Any other non-nil value
-means ignore all of the above restrictions for all windows.
+Optional argument IGNORE, if non-nil, means to ignore restraints
+induced by fixed size windows or the values of the variables
+`window-min-height' and `window-min-width'.  The following values
+have special meanings: `safe' means that in addition live windows
+are allowed to get as small as `window-safe-min-height' lines and
+`window-safe-min-width' columns.  `preserved' means to ignore
+only restrictions induced by `window-preserve-size'.  If IGNORE
+is a window, then ignore restrictions for that window only.
 
 Optional argument PIXELWISE non-nil means interpret DELTA as
 pixels."
@@ -2419,13 +2471,14 @@ horizontally by DELTA columns.  In this case a positive DELTA
 means enlarge WINDOW by DELTA columns.  DELTA negative means
 WINDOW shall be shrunk by -DELTA columns.
 
-Optional argument IGNORE non-nil means ignore restrictions
-imposed by fixed size windows, `window-min-height' or
-`window-min-width' settings.  If IGNORE is a window, ignore
-restrictions for that window only.  If IGNORE equals `safe',
-live windows may get as small as `window-safe-min-height' lines
-and `window-safe-min-width' columns.  Any other non-nil value
-means ignore all of the above restrictions for all windows.
+Optional argument IGNORE, if non-nil, means to ignore restraints
+induced by fixed size windows or the values of the variables
+`window-min-height' and `window-min-width'.  The following values
+have special meanings: `safe' means that in addition live windows
+are allowed to get as small as `window-safe-min-height' lines and
+`window-safe-min-width' columns.  `preserved' means to ignore
+only restrictions induced by `window-preserve-size'.  If IGNORE
+is a window, then ignore restrictions for that window only.
 
 Optional argument PIXELWISE non-nil means resize WINDOW by DELTA
 pixels.
@@ -2456,8 +2509,12 @@ instead."
       ;; nil or the minibuffer window is active, resize the minibuffer
       ;; window.
       (window--resize-mini-window minibuffer-window (- delta)))
-     ((window--resizable-p
-       window delta horizontal ignore nil nil nil t)
+     ((or (window--resizable-p
+	   window delta horizontal ignore nil nil nil t)
+	  (and (not ignore)
+	       (setq ignore 'preserved)
+	       (window--resizable-p
+		window delta horizontal ignore nil nil nil t)))
       (window--resize-reset frame horizontal)
       (window--resize-this-window window delta horizontal ignore t)
       (if (and (not window-combination-resize)
@@ -2615,13 +2672,8 @@ be a horizontally combined internal window.
 WINDOW, if specified, must denote a child window of PARENT that
 is resized by DELTA pixels.
 
-Optional argument IGNORE non-nil means ignore restrictions
-imposed by fixed size windows, `window-min-height' or
-`window-min-width' settings.  If IGNORE equals `safe', live
-windows may get as small as `window-safe-min-height' lines and
-`window-safe-min-width' columns.  If IGNORE is a window, ignore
-restrictions for that window only.  Any other non-nil value means
-ignore all of the above restrictions for all windows.
+The optional argument IGNORE has the same meaning as for
+`window-resizable'.
 
 Optional arguments TRAIL and EDGE, when non-nil, restrict the set
 of windows that shall be resized.  If TRAIL equals `before',
@@ -2692,7 +2744,7 @@ already set by this routine."
 	      ;; Ignore windows to skip and fixed-size child windows -
 	      ;; in the latter case make it a window to skip.
 	      (and (not ignore)
-		   (window-size-fixed-p sub horizontal)
+		   (window-size-fixed-p sub horizontal ignore)
 		   (set-window-new-normal sub 'ignore))))
 	 ((< delta 0)
 	  ;; When shrinking store the number of lines/cols we can get
@@ -2798,13 +2850,8 @@ Optional argument HORIZONTAL non-nil means resize other windows
 when WINDOW is resized horizontally by DELTA pixels.  WINDOW
 itself is not resized by this function.
 
-Optional argument IGNORE non-nil means ignore restrictions
-imposed by fixed size windows, `window-min-height' or
-`window-min-width' settings.  If IGNORE equals `safe', live
-windows may get as small as `window-safe-min-height' lines and
-`window-safe-min-width' columns.  If IGNORE is a window, ignore
-restrictions for that window only.  Any other non-nil value means
-ignore all of the above restrictions for all windows.
+The optional argument IGNORE has the same meaning as for
+`window-resizable'.
 
 Optional arguments TRAIL and EDGE, when non-nil, refine the set
 of windows that shall be resized.  If TRAIL equals `before',
@@ -2831,8 +2878,7 @@ preferably only resize windows adjacent to EDGE."
 		;; Make sure this sibling is left alone when
 		;; resizing its siblings.
 		(set-window-new-normal sub 'ignore))
-	       ((or (window--size-ignore-p sub ignore)
-		    (not (window-size-fixed-p sub horizontal)))
+	       ((not (window-size-fixed-p sub horizontal ignore))
 		;; Set this-delta to t to signal that we found a sibling
 		;; of WINDOW whose size is not fixed.
 		(setq this-delta t)))
@@ -2902,16 +2948,9 @@ preferably only resize windows adjacent to EDGE."
 Optional argument HORIZONTAL non-nil means resize WINDOW
 horizontally by DELTA pixels.
 
-Optional argument IGNORE non-nil means ignore restrictions
-imposed by fixed size windows, `window-min-height' or
-`window-min-width' settings.  If IGNORE equals `safe', live
-windows may get as small as `window-safe-min-height' lines and
-`window-safe-min-width' columns.  If IGNORE is a window, ignore
-restrictions for that window only.  Any other non-nil value
-means ignore all of the above restrictions for all windows.
-
-Optional argument ADD non-nil means add DELTA to the new total
-size of WINDOW.
+The optional argument IGNORE has the same meaning as for
+`window-resizable'.  Optional argument ADD non-nil means add
+DELTA to the new total size of WINDOW.
 
 Optional arguments TRAIL and EDGE, when non-nil, refine the set
 of windows that shall be resized.  If TRAIL equals `before',
@@ -3057,7 +3096,7 @@ move it as far as possible in the desired direction."
   (let* ((frame (window-frame window))
 	 (minibuffer-window (minibuffer-window frame))
 	 (right window)
-	 left this-delta min-delta max-delta)
+	 left this-delta min-delta max-delta ignore)
 
     (unless pixelwise
       (setq pixelwise t)
@@ -3080,12 +3119,16 @@ move it as far as possible in the desired direction."
       (window--resize-mini-window minibuffer-window (- delta)))
      ((or (not (setq left right)) (not (setq right (window-right right))))
       (if horizontal
-	  (error "No window on the right of this one")
-	(error "No window below this one")))
+	  (user-error "No window on the right of this one")
+	(user-error "No window below this one")))
      (t
       ;; Set LEFT to the first resizable window on the left.  This step is
       ;; needed to handle fixed-size windows.
-      (while (and left (window-size-fixed-p left horizontal))
+      (while (and left
+		  (or (window-size-fixed-p left horizontal)
+		      (and (< delta 0)
+			   (<= (window-size left horizontal t)
+			       (window-min-size left horizontal nil t)))))
 	(setq left
 	      (or (window-left left)
 		  (progn
@@ -3093,13 +3136,31 @@ move it as far as possible in the desired direction."
 				(not (window-combined-p left horizontal))))
 		    (window-left left)))))
       (unless left
-	(if horizontal
-	    (error "No resizable window on the left of this one")
-	  (error "No resizable window above this one")))
+	(setq ignore 'preserved)
+	(setq left window)
+	(while (and left
+		    (or (window-size-fixed-p left horizontal 'preserved)
+			(<= (window-size left horizontal t)
+			    (window-min-size left horizontal 'preserved t))))
+	  (setq left
+		(or (window-left left)
+		    (progn
+		      (while (and (setq left (window-parent left))
+				  (not (window-combined-p left horizontal))))
+		      (window-left left)))))
+
+	(unless left
+	  (if horizontal
+	      (user-error "No resizable window on the left of this one")
+	    (user-error "No resizable window above this one"))))
 
       ;; Set RIGHT to the first resizable window on the right.  This step
       ;; is needed to handle fixed-size windows.
-      (while (and right (window-size-fixed-p right horizontal))
+      (while (and right
+		  (or (window-size-fixed-p right horizontal)
+		      (and (> delta 0)
+			   (<= (window-size right horizontal t)
+			       (window-min-size right horizontal 'preserved t)))))
 	(setq right
 	      (or (window-right right)
 		  (progn
@@ -3107,9 +3168,22 @@ move it as far as possible in the desired direction."
 				(not (window-combined-p right horizontal))))
 		    (window-right right)))))
       (unless right
-	(if horizontal
-	    (error "No resizable window on the right of this one")
-	  (error "No resizable window below this one")))
+	(setq ignore 'preserved)
+	(setq right (window-right window))
+	(while (and right
+		    (or (window-size-fixed-p right horizontal 'preserved))
+		    (<= (window-size right horizontal t)
+			(window-min-size right horizontal nil t)))
+	  (setq right
+		(or (window-right right)
+		    (progn
+		      (while (and (setq right (window-parent right))
+				  (not (window-combined-p right horizontal))))
+		      (window-right right)))))
+	(unless right
+	  (if horizontal
+	      (user-error "No resizable window on the right of this one")
+	    (user-error "No resizable window below this one"))))
 
       ;; LEFT and RIGHT (which might be both internal windows) are now the
       ;; two windows we want to resize.
@@ -3117,10 +3191,10 @@ move it as far as possible in the desired direction."
        ((> delta 0)
 	(setq max-delta
 	      (window--max-delta-1
-	       left 0 horizontal nil 'after nil pixelwise))
+	       left 0 horizontal ignore 'after nil pixelwise))
 	(setq min-delta
 	      (window--min-delta-1
-	       right (- delta) horizontal nil 'before nil pixelwise))
+	       right (- delta) horizontal ignore 'before nil pixelwise))
 	(when (or (< max-delta delta) (> min-delta (- delta)))
 	  ;; We can't get the whole DELTA - move as far as possible.
 	  (setq delta (min max-delta (- min-delta))))
@@ -3129,26 +3203,26 @@ move it as far as possible in the desired direction."
 	  (window--resize-reset frame horizontal)
 	  ;; Try to enlarge LEFT first.
 	  (setq this-delta (window--resizable
-			    left delta horizontal nil 'after nil nil pixelwise))
+			    left delta horizontal ignore 'after nil nil pixelwise))
 	  (unless (zerop this-delta)
 	    (window--resize-this-window
-	     left this-delta horizontal nil t 'before
+	     left this-delta horizontal ignore t 'before
 	     (if horizontal
 		 (+ (window-pixel-left left) (window-pixel-width left))
 	       (+ (window-pixel-top left) (window-pixel-height left)))))
 	  ;; Shrink windows on right of LEFT.
 	  (window--resize-siblings
-	   left delta horizontal nil 'after
+	   left delta horizontal ignore 'after
 	   (if horizontal
 	       (window-pixel-left right)
 	     (window-pixel-top right)))))
        ((< delta 0)
 	(setq max-delta
 	      (window--max-delta-1
-	       right 0 horizontal nil 'before nil pixelwise))
+	       right 0 horizontal ignore 'before nil pixelwise))
 	(setq min-delta
 	      (window--min-delta-1
-	       left delta horizontal nil 'after nil pixelwise))
+	       left delta horizontal ignore 'after nil pixelwise))
 	(when (or (< max-delta (- delta)) (> min-delta delta))
 	  ;; We can't get the whole DELTA - move as far as possible.
 	  (setq delta (max (- max-delta) min-delta)))
@@ -3158,16 +3232,16 @@ move it as far as possible in the desired direction."
 	  ;; Try to enlarge RIGHT.
 	  (setq this-delta
 		(window--resizable
-		 right (- delta) horizontal nil 'before nil nil pixelwise))
+		 right (- delta) horizontal ignore 'before nil nil pixelwise))
 	  (unless (zerop this-delta)
 	    (window--resize-this-window
-	     right this-delta horizontal nil t 'after
+	     right this-delta horizontal ignore t 'after
 	     (if horizontal
 		 (window-pixel-left right)
 	       (window-pixel-top right))))
 	  ;; Shrink windows on left of RIGHT.
 	  (window--resize-siblings
-	   right (- delta) horizontal nil 'before
+	   right (- delta) horizontal ignore 'before
 	   (if horizontal
 	       (+ (window-pixel-left left) (window-pixel-width left))
 	     (+ (window-pixel-top left) (window-pixel-height left)))))))
@@ -3189,6 +3263,8 @@ make selected window wider by DELTA columns.  If DELTA is
 negative, shrink selected window by -DELTA lines or columns."
   (interactive "p")
   (let ((minibuffer-window (minibuffer-window)))
+    (when (window-preserved-size nil horizontal)
+      (window-preserve-size nil horizontal))
     (cond
      ((zerop delta))
      ((window-size-fixed-p nil horizontal)
@@ -3222,6 +3298,8 @@ negative, enlarge selected window by -DELTA lines or columns.
 Also see the `window-min-height' variable."
   (interactive "p")
   (let ((minibuffer-window (minibuffer-window)))
+    (when (window-preserved-size nil horizontal)
+      (window-preserve-size nil horizontal))
     (cond
      ((zerop delta))
      ((window-size-fixed-p nil horizontal)
@@ -4363,7 +4441,7 @@ frame.  The selected window is not changed by this function."
 	 (divider-width (if horizontal
 			    (frame-right-divider-width frame)
 			  (frame-bottom-divider-width frame)))
-	 atom-root)
+	 atom-root ignore)
     (window--check frame)
     (catch 'done
       (cond
@@ -4427,10 +4505,11 @@ frame.  The selected window is not changed by this function."
 		(if resize
 		    ;; When resizing try to give the new window the
 		    ;; average size of a window in its combination.
-		    (min (- parent-pixel-size
-			    (window-min-size parent horizontal nil t))
-			 (/ parent-pixel-size
-			    (1+ (window-combinations parent horizontal))))
+		    (max (min (- parent-pixel-size
+				 (window-min-size parent horizontal nil t))
+			      (/ parent-pixel-size
+				 (1+ (window-combinations parent horizontal))))
+			 (window-min-pixel-size))
 		  ;; Else try to give the new window half the size
 		  ;; of WINDOW (plus an eventual odd pixel).
 		  (/ old-pixel-size 2)))
@@ -4459,12 +4538,20 @@ frame.  The selected window is not changed by this function."
 	  (cond
 	   (resize
 	    ;; SIZE unspecified, resizing.
-	    (unless (window-sizable-p
-		     parent (- new-pixel-size divider-width) horizontal nil t)
+	    (unless (or (window-sizable-p
+			 parent (- (+ new-pixel-size divider-width)) horizontal
+			 nil t)
+			(window-sizable-p
+			 parent (- (+ new-pixel-size divider-width)) horizontal
+			 (setq ignore 'preserved) t))
 	      (error "Window %s too small for splitting (1)" parent)))
-	   ((> (+ new-pixel-size divider-width
-		  (window-min-size window horizontal nil t))
-	       old-pixel-size)
+	   ((and (> (+ new-pixel-size divider-width
+		       (window-min-size window horizontal nil t))
+		    old-pixel-size)
+		 (> (+ new-pixel-size divider-width
+		       (window-min-size
+			window horizontal (setq ignore 'preserved) t))
+		    old-pixel-size))
 	    ;; SIZE unspecified, no resizing.
 	    (error "Window %s too small for splitting (2)" window))))
 	 ((and (>= pixel-size 0)
@@ -4477,8 +4564,12 @@ frame.  The selected window is not changed by this function."
 	  (error "Window %s too small for splitting (3)" window))
 	 (resize
 	  ;; SIZE specified, resizing.
-	  (unless (window-sizable-p
-		   parent (- new-pixel-size divider-width) horizontal nil t)
+	  (unless (or (window-sizable-p
+		       parent (- (+ new-pixel-size divider-width)) horizontal
+		       nil t)
+		      (window-sizable-p
+		       parent (- (+ new-pixel-size divider-width)) horizontal
+		       (setq ignore 'preserved) t))
 	    ;; If we cannot resize the parent give up.
 	    (error "Window %s too small for splitting (4)" parent)))
 	 ((or (< new-pixel-size
@@ -4512,7 +4603,7 @@ frame.  The selected window is not changed by this function."
 	    ;; delete the one we create here.  Hence we do not go up.
 	    (progn
 	      (window--resize-child-windows
-	       parent (- new-pixel-size) horizontal)
+	       parent (- new-pixel-size) horizontal nil ignore)
 	      (let* ((normal (- 1.0 new-normal))
 		     (sub (window-child parent)))
 		(while sub
@@ -4522,10 +4613,8 @@ frame.  The selected window is not changed by this function."
 	  ;; Get entire space from WINDOW.
 	  (set-window-new-pixel
 	   window (- old-pixel-size new-pixel-size))
-;; 	  (set-window-new-pixel window (- old-pixel-size new-pixel-size))
-;; 	  (set-window-new-total
-;; 	   window (- old-size new-size))
-	  (window--resize-this-window window (- new-pixel-size) horizontal)
+	  (window--resize-this-window
+	   window (- new-pixel-size) horizontal ignore)
 	  (set-window-new-normal
 	   window (- (if new-parent 1.0 (window-normal-size window horizontal))
 		     new-normal)))
@@ -4579,7 +4668,7 @@ the original point in both windows."
 (defun split-window-below (&optional size)
   "Split the selected window into two windows, one above the other.
 The selected window is above.  The newly split-off window is
-below, and displays the same buffer.  Return the new window.
+below and displays the same buffer.  Return the new window.
 
 If optional argument SIZE is omitted or nil, both windows get the
 same height, or close to it.  If SIZE is positive, the upper
@@ -4633,7 +4722,7 @@ amount of redisplay; this is convenient on slow terminals."
 (defun split-window-right (&optional size)
   "Split the selected window into two side-by-side windows.
 The selected window is on the left.  The newly split-off window
-is on the right, and displays the same buffer.  Return the new
+is on the right and displays the same buffer.  Return the new
 window.
 
 If optional argument SIZE is omitted or nil, both windows get the
@@ -5131,7 +5220,7 @@ value can be also stored on disk and read back in a new session."
 		(let ((scroll-bars (cdr (assq 'scroll-bars state))))
 		  (set-window-scroll-bars
 		   window (car scroll-bars) (nth 2 scroll-bars)
-		   (or (nth 3 scroll-bars) 0) (nth 5 scroll-bars)))
+		   (nth 3 scroll-bars) (nth 5 scroll-bars)))
 		(set-window-vscroll window (cdr (assq 'vscroll state)))
 		;; Adjust vertically.
 		(if (memq window-size-fixed '(t height))
@@ -5967,7 +6056,8 @@ live."
     (let ((parameter (window-parameter window 'quit-restore))
 	  (height (cdr (assq 'window-height alist)))
 	  (width (cdr (assq 'window-width alist)))
-	  (size (cdr (assq 'window-size alist))))
+	  (size (cdr (assq 'window-size alist)))
+	  (preserve-size (cdr (assq 'preserve-size alist))))
       (cond
        ((or (eq type 'frame)
 	    (and (eq (car parameter) 'same)
@@ -6022,7 +6112,11 @@ live."
 		       (window-combined-p window t))
 	      (window-resize window delta t 'safe))))
 	 ((functionp width)
-	  (ignore-errors (funcall width window)))))))
+	  (ignore-errors (funcall width window))))
+	;; Preserve window size if asked for.
+	(when (consp preserve-size)
+	  (window-preserve-size window t (car preserve-size))
+	  (window-preserve-size window nil (cdr preserve-size))))))
 
     window))
 
@@ -6240,6 +6334,10 @@ Recognized alist entries include:
  `allow-no-window' -- A non-nil value indicates readiness for the case
     of not displaying the buffer and FUNCTION can safely return
     a non-window value to suppress displaying.
+
+ `preserve-size' -- Value should be either '(t . nil)' to
+    preserve the width of the window, '(nil . t)' to preserve its
+    height or '(t . t)' to preserve both.
 
 The ACTION argument to `display-buffer' can also have a non-nil
 and non-list value.  This means to display the buffer in a window
@@ -7242,7 +7340,7 @@ FRAME."
 	   (frame-text-height))
 	 frame-resize-pixelwise)))))
 
-(defun fit-window-to-buffer (&optional window max-height min-height max-width min-width)
+(defun fit-window-to-buffer (&optional window max-height min-height max-width min-width preserve-size)
   "Adjust size of WINDOW to display its buffer's contents exactly.
 WINDOW must be a live window and defaults to the selected one.
 
@@ -7265,6 +7363,9 @@ frame.  The optional argument MIN-WIDTH specifies a minimum width
 and defaults to `window-min-width'.  Both MAX-WIDTH and MIN-WIDTH
 are specified in columns and include fringes, margins, a
 scrollbar and a vertical divider, if any.
+
+If the optional argument `preserve-size' is non-nil, preserve the
+size of WINDOW (see `window-preserve-size').
 
 Fit pixelwise if the option `window-resize-pixelwise' is non-nil.
 If WINDOW is its frame's root window and the option
@@ -7307,25 +7408,25 @@ accessible position."
 		(max (if pixelwise
 			 (* char-height window-min-height)
 		       window-min-height)
-		     (window-min-size nil nil t pixelwise))))
+		     (window-min-size window nil window pixelwise))))
 	     (max-height
 	      ;; Sanitize MAX-HEIGHT.
 	      (if (numberp max-height)
 		  (min
 		   (+ total-height
 		      (window-max-delta
-		       window nil nil nil nil nil pixelwise))
+		       window nil window nil nil nil pixelwise))
 		   (if pixelwise
 		       (* char-height max-height)
 		     max-height))
 		(+ total-height (window-max-delta
-				 window nil nil nil nil nil pixelwise))))
+				 window nil window nil nil nil pixelwise))))
 	     height)
 	(cond
 	 ;; If WINDOW is vertically combined, try to resize it
 	 ;; vertically.
 	 ((and (not (eq fit-window-to-buffer-horizontally 'only))
-	       (not (window-size-fixed-p window))
+	       (not (window-size-fixed-p window 'preserved))
 	       (window-combined-p))
 	  ;; Vertically we always want to fit the entire buffer.
 	  ;; WINDOW'S height can't get larger than its frame's pixel
@@ -7338,14 +7439,17 @@ accessible position."
 	  (unless pixelwise
 	    (setq height (/ (+ height char-height -1) char-height)))
 	  (unless (= height total-height)
+	    (window-preserve-size window)
 	    (window-resize-no-error
 	     window
 	     (- (max min-height (min max-height height)) total-height)
-	     nil window pixelwise)))
+	     nil window pixelwise)
+	    (when preserve-size
+	      (window-preserve-size window nil t))))
 	 ;; If WINDOW is horizontally combined, try to resize it
 	 ;; horizontally.
 	 ((and fit-window-to-buffer-horizontally
-	       (not (window-size-fixed-p window t))
+	       (not (window-size-fixed-p window t 'preserved))
 	       (window-combined-p nil t))
 	  (let* ((total-width (window-size window t pixelwise))
 		 (min-width
@@ -7362,18 +7466,18 @@ accessible position."
 		    (max (if pixelwise
 			     (* char-width window-min-width)
 			   window-min-width)
-			 (window-min-size nil nil t pixelwise))))
+			 (window-min-size nil nil window pixelwise))))
 		 (max-width
 		  ;; Sanitize MAX-WIDTH.
 		  (if (numberp max-width)
 		      (min (+ total-width
 			      (window-max-delta
-			       nil t nil nil nil nil pixelwise))
+			       window t window nil nil nil pixelwise))
 			   (if pixelwise
 			       (* char-width max-width)
 			     max-width))
 		    (+ total-width (window-max-delta
-				    nil t nil nil nil nil pixelwise))))
+				    window t window nil nil nil pixelwise))))
 		 ;; When fitting horizontally, assume that WINDOW's
 		 ;; start position remains unaltered.  WINDOW can't get
 		 ;; wider than its frame's pixel width, its height
@@ -7391,13 +7495,16 @@ accessible position."
 	    (unless pixelwise
 	      (setq width (/ (+ width char-width -1) char-width)))
 	    (unless (= width body-width)
+	      (window-preserve-size window t)
 	      (window-resize-no-error
 	       window
 	       (- (max min-width
 		       (min max-width
 			    (+ total-width (- width body-width))))
 		  total-width)
-	       t window pixelwise)))))))))
+	       t window pixelwise)
+	      (when preserve-size
+		(window-preserve-size window t t))))))))))
 
 (defun window-safely-shrinkable-p (&optional window)
   "Return t if WINDOW can be shrunk without shrinking other windows.

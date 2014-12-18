@@ -575,6 +575,10 @@ fullwidth frames, the behavior may depend on the toolkit used.
    specific frame does not resize that frame in order to preserve the
    number of columns or lines it displays.
 
+** New function `window-preserve-size' allows to preserve the size of
+windows without "fixing" it.  It's supported by `fit-window-to-buffer',
+`temp-buffer-resize-mode' and `display-buffer'.
+
 ** Tearoff menus and detachable toolbars for Gtk+ has been removed.
 Those features have been deprecated in Gtk+ for a long time.
 

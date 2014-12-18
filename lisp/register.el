@@ -135,7 +135,8 @@ Format of each entry is controlled by the variable `register-preview-function'."
     (with-current-buffer-window
      buffer
      (cons 'display-buffer-below-selected
-	   '((window-height . fit-window-to-buffer)))
+	   '((window-height . fit-window-to-buffer)
+	     (preserve-size . (nil . t))))
      nil
      (with-current-buffer standard-output
        (setq cursor-in-non-selected-windows nil)

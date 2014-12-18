@@ -371,7 +371,6 @@ Stores a list of all the shortcuts in the free variable `tmm-short-cuts'."
   (unless tmm-c-prompt
     (error "No active menu entries"))
   (setq tmm-old-mb-map (tmm-define-keys t))
-  ;; Get window and hide it for electric mode to get correct size
   (or tmm-completion-prompt
       (add-hook 'completion-setup-hook
                 'tmm-completion-delete-prompt 'append))
@@ -381,9 +380,15 @@ Stores a list of all the shortcuts in the free variable `tmm-short-cuts'."
   (with-current-buffer "*Completions*"
     (tmm-remove-inactive-mouse-face)
     (when tmm-completion-prompt
-      (let ((inhibit-read-only t))
+      (let ((inhibit-read-only t)
+	    (window (get-buffer-window "*Completions*")))
 	(goto-char (point-min))
-	(insert tmm-completion-prompt))))
+	(insert tmm-completion-prompt)
+	(when window
+	  ;; Try to show everything just inserted and preserve height of
+	  ;; *Completions* window.  This should fix a behavior described
+	  ;; in Bug#1291.
+	  (fit-window-to-buffer window nil nil nil nil t)))))
   (insert tmm-c-prompt))
 
 (defun tmm-shortcut ()

@@ -1818,7 +1818,10 @@ variables.")
              ,(if (eq (selected-window) (minibuffer-window))
                   'display-buffer-at-bottom
                 'display-buffer-below-selected))
-            (window-height . fit-window-to-buffer))
+	    ,(when temp-buffer-resize-mode
+	       '(window-height . resize-temp-buffer-window))
+	    ,(when temp-buffer-resize-mode
+	       '(preserve-size . (nil . t))))
           nil
           ;; Remove the base-size tail because `sort' requires a properly
           ;; nil-terminated list.

@@ -1,3 +1,44 @@
+2014-12-18  Martin Rudalics  <rudalics@gmx.at>
+
+	Add code for "preserving" window sizes.
+	* dired.el (dired-pop-to-buffer): Call fit-window-to-buffer with
+	`preserve-size' t.
+	(dired-mark-pop-up): Preserve size of window showing marked
+	files.
+	* electric.el (Electric-pop-up-window):
+	* help.el (resize-temp-buffer-window): Call fit-window-to-buffer
+	with `preserve-size' t.
+	* minibuffer.el (minibuffer-completion-help): Use
+	`resize-temp-buffer-window' instead of `fit-window-to-buffer'
+	(Bug#19355).  Preserve size of completions window.
+	* register.el (register-preview): Preserve size of register
+	preview window.
+	* tmm.el (tmm-add-prompt): Call fit-window-to-buffer
+	with `preserve-size' t (Bug#1291).
+	* window.el (with-displayed-buffer-window): Add calls to
+	`window-preserve-size'.
+	(window-min-pixel-size, window--preservable-size)
+	(window-preserve-size, window-preserved-size)
+	(window--preserve-size, window--min-size-ignore-p): New
+	functions.
+	(window-min-size, window-min-delta, window--resizable)
+	(window--resize-this-window, split-window-below)
+	(split-window-right): Amend doc-string.
+	(window--min-size-1, window-sizable, window--size-fixed-1)
+	(window-size-fixed-p, window--min-delta-1)
+	(frame-windows-min-size, window--max-delta-1, window-resize)
+	(window--resize-child-windows, window--resize-siblings)
+	(enlarge-window, shrink-window, split-window): Handle preserving
+	window sizes.
+	(adjust-window-trailing-edge): Handle preserving window
+	sizes.  Signal user-error instead of an error when there's no
+	window above or below.
+	(window--state-put-2): Handle horizontal scroll bars.
+	(window--display-buffer): Call `preserve-size' if asked for.
+	(display-buffer): Mention `preserve-size' alist member in
+	doc-string.
+	(fit-window-to-buffer): New argument PRESERVE-SIZE.
+
 2014-12-18  Dmitry Gutov  <dgutov@yandex.ru>
 
 	* emacs-lisp/package.el (package-activate): Do not re-activate or
