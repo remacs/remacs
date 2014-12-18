@@ -1,5 +1,8 @@
 2014-12-18  Dmitry Gutov  <dgutov@yandex.ru>
 
+	* vc/vc-svn.el (vc-svn-dir-status-files): Revert the 2014-12-02
+	change (bug#19387).  Use `apply' on `vc-dir-command'  (bug#19405).
+
 	* emacs-lisp/package.el (package-activate-1): Add RELOAD argument
 	and a docstring.
 	(package-activate): Call itself on dependencies on PACKAGE with
