@@ -27,7 +27,7 @@
 
 ;; version: a float
 
-;; max-size: an integer, default 50000
+;; max-size: an integer, default most-positive-fixnum
 
 ;; prune-factor: a float between 0 and 1, default 0.1
 
