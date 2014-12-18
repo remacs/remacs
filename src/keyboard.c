@@ -273,6 +273,54 @@ static FILE *dribble;
 /* True if input is available.  */
 bool input_pending;
 
+/* True if more input was available last time we read an event.
+
+   Since redisplay can take a significant amount of time and is not
+   indispensible to perform the user's commands, when input arrives
+   "too fast", Emacs skips redisplay.  More specifically, if the next
+   command has already been input when we finish the previous command,
+   we skip the intermediate redisplay.
+
+   This is useful to try and make sure Emacs keeps up with fast input
+   rates, such as auto-repeating keys.  But in some cases, this proves
+   too conservative: we may end up disabling redisplay for the whole
+   duration of a key repetition, even though we could afford to
+   redisplay every once in a while.
+
+   So we "sample" the input_pending flag before running a command and
+   use *that* value after running the command to decide whether to
+   skip redisplay or not.  This way, we only skip redisplay if we
+   really can't keep up with the repeat rate.
+
+   This only makes a difference if the next input arrives while running the
+   command, which is very unlikely if the command is executed quickly.
+   IOW this tends to avoid skipping redisplay after a long running command
+   (which is a case where skipping redisplay is not very useful since the
+   redisplay time is small compared to the time it took to run the command).
+
+   A typical use case is when scrolling.  Scrolling time can be split into:
+   - Time to do jit-lock on the newly displayed portion of buffer.
+   - Time to run the actual scroll command.
+   - Time to perform the redisplay.
+   Jit-lock can happen either during the command or during the redisplay.
+   In the most painful cases, the jit-lock time is the one that dominates.
+   Also jit-lock can be tweaked (via jit-lock-defer) to delay its job, at the
+   cost of temporary inaccuracy in display and scrolling.
+   So without input_was_pending, what typically happens is the following:
+   - when the command starts, there's no pending input (yet).
+   - the scroll command triggers jit-lock.
+   - during the long jit-lock time the next input arrives.
+   - at the end of the command, we check input_pending and hence decide to
+     skip redisplay.
+   - we read the next input and start over.
+   End result: all the hard work of jit-locking is "wasted" since redisplay
+   doesn't actually happens (at least not before the input rate slows down).
+   With input_was_pending redisplay is still skipped if Emacs can't keep up
+   with the input rate, but if it can keep up just enough that there's no
+   input_pending when we begin the command, then redisplay is not skipped
+   which results in better feedback to the user.  */
+static bool input_was_pending;
+
 /* Circular buffer for pre-read keyboard input.  */
 
 static struct input_event kbd_buffer[KBD_BUFFER_SIZE];
@@ -2585,8 +2633,10 @@ read_char (int commandflag, Lisp_Object map,
 	swallow_events (false);		/* May clear input_pending.  */
 
       /* Redisplay if no pending input.  */
-      while (!input_pending)
+      while (!(input_pending
+	       && (input_was_pending || !redisplay_dont_pause)))
 	{
+	  input_was_pending = input_pending;
 	  if (help_echo_showing_p && !EQ (selected_window, minibuf_window))
 	    redisplay_preserve_echo_area (5);
 	  else
@@ -3255,6 +3305,7 @@ read_char (int commandflag, Lisp_Object map,
 
  exit:
   RESUME_POLLING;
+  input_was_pending = input_pending;
   RETURN_UNGCPRO (c);
 }
 
