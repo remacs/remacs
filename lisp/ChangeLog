@@ -38,6 +38,14 @@
 	(display-buffer): Mention `preserve-size' alist member in
 	doc-string.
 	(fit-window-to-buffer): New argument PRESERVE-SIZE.
+	* textmodes/ispell.el (ispell-command-loop): Suppress horizontal
+	scroll bar on ispell's windows.  Don't count window lines and
+	don't deal with dedicated windows.
+	(ispell-show-choices, ispell-help): Let `ispell-display-buffer'
+	do the window handling.
+	(ispell-adjusted-window-height, ispell-overlay-window): Remove.
+	(ispell-display-buffer): New function to reuse, create and fit
+	window to ispell's buffers. (Bug#3413)
 
 2014-12-18  Dmitry Gutov  <dgutov@yandex.ru>
 
