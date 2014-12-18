@@ -1,3 +1,11 @@
+2014-12-18  Dmitry Gutov  <dgutov@yandex.ru>
+
+	* emacs-lisp/package.el (package-activate-1): Add RELOAD argument
+	and a docstring.
+	(package-activate): Call itself on dependencies on PACKAGE with
+	the same FORCE argument.  Pass FORCE as RELOAD into
+	`package-activate-1'  (bug#19390).
+
 2014-12-17  Sam Steingold  <sds@gnu.org>
 
 	* emacs-lisp/package.el (package--list-loaded-files): Handle
