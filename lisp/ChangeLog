@@ -1,3 +1,17 @@
+2014-12-18  Sam Steingold  <sds@gnu.org>
+
+	Keyboard interface (C-f10) to `mouse-buffer-menu' (C-down-mouse-1).
+	* mouse.el (mouse-buffer-menu-map): Extract from `mouse-buffer-menu'.
+	(mouse-buffer-menu): Use `mouse-buffer-menu-map'.
+	* menu-bar.el (menu-bar-buffer-vector): Extract from
+	`menu-bar-update-buffers'.
+	(menu-bar-update-buffers): Use `menu-bar-buffer-vector'.
+	(buffer-menu-open): New user command, bound globally to C-f10,
+	provides a keyboard interface to `mouse-buffer-menu' (C-down-mouse-1).
+	(mouse-buffer-menu-keymap): Use `menu-bar-buffer-vector' to
+	convert the value returned by `mouse-buffer-menu-map' to a list
+	acceptable to `popup-menu' for `buffer-menu-open'.
+
 2014-12-18  Artur Malabarba  <bruce.connor.am@gmail.com>
 
 	* let-alist.el (let-alist): Evaluate the `alist' argument only

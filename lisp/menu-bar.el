@@ -1938,6 +1938,19 @@ Buffers menu is regenerated."
   "Function to select the buffer chosen from the `Buffers' menu-bar menu.
 It must accept a buffer as its only required argument.")
 
+(defun menu-bar-buffer-vector (alist)
+  ;; turn ((name . buffer) ...) into a menu
+  (let ((buffers-vec (make-vector (length alist) nil))
+        (i (length alist)))
+    (dolist (pair alist)
+      (setq i (1- i))
+      (aset buffers-vec i
+            (cons (car pair)
+                  `(lambda ()
+                     (interactive)
+                     (funcall menu-bar-select-buffer-function ,(cdr pair))))))
+    buffers-vec))
+
 (defun menu-bar-update-buffers (&optional force)
   ;; If user discards the Buffers item, play along.
   (and (lookup-key (current-global-map) [menu-bar buffer])
@@ -1973,17 +1986,7 @@ It must accept a buffer as its only required argument.")
 				      name)
                                     ))
                              alist))))
-		 ;; Now make the actual list of items.
-                 (let ((buffers-vec (make-vector (length alist) nil))
-                       (i (length alist)))
-                   (dolist (pair alist)
-                     (setq i (1- i))
-                     (aset buffers-vec i
-			   (cons (car pair)
-                                 `(lambda ()
-                                    (interactive)
-                                    (funcall menu-bar-select-buffer-function ,(cdr pair))))))
-                   (list buffers-vec))))
+		 (list (menu-bar-buffer-vector alist))))
 
 	 ;; Make a Frames menu if we have more than one frame.
 	 (when (cdr frames)
@@ -2310,6 +2313,25 @@ If FRAME is nil or not given, use the selected frame."
           (tmm-menubar))))))
 
 (global-set-key [f10] 'menu-bar-open)
+
+(defun buffer-menu-open ()
+  "Start key navigation of the buffer menu.
+This is the keyboard interface to \\[mouse-buffer-menu]."
+  (interactive)
+  (popup-menu (mouse-buffer-menu-keymap)
+              (posn-at-x-y 0 0 nil t)))
+
+(global-set-key [C-f10] 'buffer-menu-open)
+
+(defun mouse-buffer-menu-keymap ()
+  (let* ((menu (mouse-buffer-menu-map))
+         (km (make-sparse-keymap (pop menu))))
+    (dolist (item (nreverse menu))
+      (let* ((name (pop item)))
+        (define-key km (vector (intern name))
+          (list name 'keymap name
+                (menu-bar-buffer-vector item)))))
+    km))
 
 (defvar tty-menu-navigation-map
   (let ((map (make-sparse-keymap)))

@@ -1516,8 +1516,17 @@ This switches buffers in the window that you clicked on,
 and selects that window."
   (interactive "e")
   (mouse-minibuffer-check event)
-  (let ((buffers (buffer-list))  alist menu split-by-major-mode sum-of-squares)
-    ;; Make an alist of elements that look like (MENU-ITEM . BUFFER).
+  (let ((buf (x-popup-menu event (mouse-buffer-menu-map)))
+        (window (posn-window (event-start event))))
+    (when buf
+      (select-window
+       (if (framep window) (frame-selected-window window)
+         window))
+      (switch-to-buffer buf))))
+
+(defun mouse-buffer-menu-map ()
+  ;; Make an alist of elements that look like (MENU-ITEM . BUFFER).
+  (let ((buffers (buffer-list)) split-by-major-mode sum-of-squares)
     (dolist (buf buffers)
       ;; Divide all buffers into buckets for various major modes.
       ;; Each bucket looks like (MODE NAMESTRING BUFFERS...).
@@ -1581,18 +1590,10 @@ and selects that window."
 		     (setq subdivided-menus
 			   (cons (cons "Others" others-list)
 				 subdivided-menus)))))
-	  (setq menu (cons "Buffer Menu" (nreverse subdivided-menus))))
-      (progn
-	(setq alist (mouse-buffer-menu-alist buffers))
-	(setq menu (cons "Buffer Menu"
-			 (mouse-buffer-menu-split "Select Buffer" alist)))))
-    (let ((buf (x-popup-menu event menu))
-	  (window (posn-window (event-start event))))
-      (when buf
-	(select-window
-	 (if (framep window) (frame-selected-window window)
-	   window))
-	(switch-to-buffer buf)))))
+          (cons "Buffer Menu" (nreverse subdivided-menus)))
+      (cons "Buffer Menu"
+            (mouse-buffer-menu-split "Select Buffer"
+                                     (mouse-buffer-menu-alist buffers))))))
 
 (defun mouse-buffer-menu-alist (buffers)
   (let (tail
