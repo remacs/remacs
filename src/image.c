@@ -8601,7 +8601,7 @@ static bool svg_image_p (Lisp_Object object);
 static bool svg_load (struct frame *f, struct image *img);
 
 static bool svg_load_image (struct frame *, struct image *,
-			    unsigned char *, ptrdiff_t, char*);
+			    unsigned char *, ptrdiff_t, char *);
 
 /* The symbol `svg' identifying images of this type. */
 
@@ -8807,7 +8807,7 @@ svg_load (struct frame *f, struct image *img)
 	  return 0;
 	}
       /* If the file was slurped into memory properly, parse it.  */
-      success_p = svg_load_image (f, img, contents, size, SSDATA(file));
+      success_p = svg_load_image (f, img, contents, size, SSDATA (file));
       xfree (contents);
     }
   /* Else its not a file, its a lisp object.  Load the image from a
@@ -8824,8 +8824,8 @@ svg_load (struct frame *f, struct image *img)
 	}
       original_filename = BVAR (current_buffer, filename);
       success_p = svg_load_image (f, img, SDATA (data), SBYTES (data),
-                                  NILP(original_filename) ?
-                                  NULL : SDATA(original_filename));
+                                  (NILP (original_filename) ? NULL
+				   : SSDATA (original_filename)));
     }
 
   return success_p;
@@ -8843,7 +8843,7 @@ svg_load_image (struct frame *f,         /* Pointer to emacs frame structure.  *
 		struct image *img,       /* Pointer to emacs image structure.  */
 		unsigned char *contents, /* String containing the SVG XML data to be parsed.  */
 		ptrdiff_t size,          /* Size of data in bytes.  */
-                char *filename)          /* Name of SVG file being loaded. */
+		char *filename)          /* Name of SVG file being loaded.  */
 {
   RsvgHandle *rsvg_handle;
   RsvgDimensionData dimension_data;

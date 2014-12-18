@@ -1,3 +1,7 @@
+2014-12-18  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* image.c (svg_load): Fix pointer signedness.
+
 2014-12-18  Martin Rudalics  <rudalics@gmx.at>
 
 	* frame.c (frame_windows_min_size): New argument IGNORE.
