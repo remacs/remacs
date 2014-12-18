@@ -1,3 +1,27 @@
+2014-12-18  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* mm-util.el (mm-with-unibyte-current-buffer): Mark obsolete and
+	add warning.
+
+	* gnus-art.el: Fix up compiler warnings.
+	(article-display-face, article-display-x-face): Remove unused `face'.
+	(gnus-article-browse-html-save-cid-content): Remove unused var `type'.
+	(article-date-ut): Remove unused var `first'.
+	(gnus-article-prepare): Remove unused var `gnus-article'.
+	(gnus-mime-save-part-and-strip): Remove unused var `param'.
+	(gnus-mime-inline-part): Remove unused vars `charset', `contents', and
+	`coding-system' along with corresponding dead code.
+	(gnus-mime-view-part-externally): Remove unused var
+	`mm-user-display-methods'.
+	(gnus-insert-mime-button): Let-bind gnus-tmp-id explicitly.
+	(gnus-display-mime): Remove unused var `handle'.
+	(gnus-mime-display-alternative): Remove unused var `props'.
+	(gnus-article-read-summary-keys): Remove unused var `up-to-top'.
+	(gnus-article-edit-done): Remove unused var `p'.
+	(gnus-url-mailto): Remove unused var `to'.
+	(gnus-treat-article): Let-bind gnus-treat-condition, part-number,
+	total-parts, and gnus-treat-type explicitly.  Remove unused var `elem'.
+
 2014-12-18  Eric Abrahamsen  <eric@ericabrahamsen.net>
 
 	* registry.el (registry-db): Consolidate the :max-hard and :max-soft
