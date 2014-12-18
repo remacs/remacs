@@ -642,7 +642,7 @@ If FORCE is true, (re-)activate it if it's already activated."
              (fail (catch 'dep-failure
                      ;; Activate its dependencies recursively.
                      (dolist (req (package-desc-reqs pkg-vec))
-                       (unless (package-activate (car req) force)
+                       (unless (package-activate (car req))
                          (throw 'dep-failure req))))))
 	(if fail
 	    (warn "Unable to activate package `%s'.
