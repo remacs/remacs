@@ -85,38 +85,13 @@ waiting for input.
 @defun redisplay &optional force
 This function tries immediately to redisplay.  The optional argument
 @var{force}, if non-@code{nil}, forces the redisplay to be performed,
-instead of being preempted, even if input is pending and the variable
-@code{redisplay-dont-pause} is @code{nil} (see below).  If
-@code{redisplay-dont-pause} is non-@code{nil} (the default), this
-function redisplays in any case, i.e., @var{force} does nothing.
+instead of being preempted if input is pending.
 
 The function returns @code{t} if it actually tried to redisplay, and
 @code{nil} otherwise.  A value of @code{t} does not mean that
 redisplay proceeded to completion; it could have been preempted by
 newly arriving input.
 @end defun
-
-@defvar redisplay-dont-pause
-If this variable is @code{nil}, arriving input events preempt
-redisplay; Emacs avoids starting a redisplay, and stops any redisplay
-that is in progress, until the input has been processed.  In
-particular, @code{(redisplay)} returns @code{nil} without actually
-redisplaying, if there is pending input.
-
-The default value is @code{t}, which means that pending input does not
-preempt redisplay.
-@end defvar
-
-@defvar redisplay-preemption-period
-If @code{redisplay-dont-pause} is @code{nil}, this variable specifies
-how many seconds Emacs waits between checks for new input during
-redisplay; if input arrives during this interval, redisplay stops and
-the input is processed.  The default value is 0.1; if the value is
-@code{nil}, Emacs does not check for input during redisplay.
-
-This variable has no effect when @code{redisplay-dont-pause} is
-non-@code{nil} (the default).
-@end defvar
 
 @defvar pre-redisplay-function
 A function run just before redisplay.  It is called with one argument,
