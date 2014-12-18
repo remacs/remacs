@@ -1,3 +1,7 @@
+2014-12-18  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* automated/let-alist.el: New file.
+
 2014-12-16  Nicolas Petton <petton.nicolas@gmail.com>
 
 	* automated/seq-tests.el: New file.
