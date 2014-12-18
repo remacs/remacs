@@ -1,3 +1,29 @@
+2014-12-18  Eric Abrahamsen  <eric@ericabrahamsen.net>
+
+	* registry.el (registry-db): Consolidate the :max-hard and :max-soft
+	slots into a :max-size slot.
+	(registry-db-version): Add new variable for database version number.
+	(registry-prune): Use :max-size slot. Accept and use a sort-function
+	argument.
+	(registry-collect-prune-candidates): Add new function for finding
+	non-precious pruning candidates.
+	(registry-prune-hard-candidates, registry-prune-soft-candidates):
+	Remove obsolete functions.
+	(initialize-instance): Upgrade registry version when starting.
+
+	* gnus-registry.el (gnus-registry-prune-factor): Add new variable.
+	(gnus-registry-max-pruned-entries): Remove obsolete variable.
+	(gnus-registry-cache-file): Change default
+	filename extension to "eieio".
+	(gnus-registry-read): Add new function, split out from
+	`gnus-registry-load', that does the actual object reading.
+	(gnus-registry-load): Use it. Add condition case handler to check for
+	old filename extension and rename to the new one.
+	(gnus-registry-default-sort-function): New variable to specify a sort
+	function to use when pruning.
+	(gnus-registry-save, gnus-registry-insert): Use it.
+	(gnus-registry-sort-by-creation-time): Define a default sort function.
+
 2014-12-09  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
 	* gnus-art.el (gnus-article-mime-handles): Refactored out into own

@@ -176,6 +176,7 @@ nnmairix groups are specifically excluded because they are ephemeral."
 (make-obsolete-variable 'gnus-registry-max-track-groups nil "23.4")
 (make-obsolete-variable 'gnus-registry-entry-caching nil "23.4")
 (make-obsolete-variable 'gnus-registry-trim-articles-without-groups nil "23.4")
+(make-obsolete-variable 'gnus-registry-max-pruned-entries nil "24.4")
 
 (defcustom gnus-registry-track-extra '(subject sender recipient)
   "Whether the registry should track extra data about a message.
@@ -231,7 +232,7 @@ the Bit Bucket."
 (defcustom gnus-registry-cache-file
   (nnheader-concat
    (or gnus-dribble-directory gnus-home-directory "~/")
-   ".gnus.registry.eioio")
+   ".gnus.registry.eieio")
   "File where the Gnus registry will be stored."
   :group 'gnus-registry
   :type 'file)
@@ -242,12 +243,38 @@ the Bit Bucket."
   :type '(radio (const :format "Unlimited " nil)
                 (integer :format "Maximum number: %v")))
 
-(defcustom gnus-registry-max-pruned-entries nil
-  "Maximum number of pruned entries in the registry, nil for unlimited."
-  :version "24.1"
+(defcustom gnus-registry-prune-factor 0.1
+  "When pruning, try to prune back to this factor less than the maximum size.
+
+In order to prevent constant pruning, we prune back to a number
+somewhat less than the maximum size.  This option controls
+exactly how much less.  For example, given a maximum size of
+50000 and a prune factor of 0.1, the pruning process will try to
+cut the registry back to \(- 50000 \(* 50000 0.1\)\) -> 45000
+entries.  The pruning process is constrained by the presence of
+\"precious\" entries."
+  :version "24.4"
   :group 'gnus-registry
-  :type '(radio (const :format "Unlimited " nil)
-                (integer :format "Maximum number: %v")))
+  :type 'float)
+
+(defcustom gnus-registry-default-sort-function
+  #'gnus-registry-sort-by-creation-time
+  "Sort function to use when pruning the registry.
+
+Entries which sort to the front of the list will be pruned
+first.
+
+This can slow pruning down.  Set to nil to perform no sorting."
+  :version "24.4"
+  :group 'gnus-registry
+  :type 'symbol)
+
+(defun gnus-registry-sort-by-creation-time (l r)
+  "Sort older entries to front of list."
+  ;; Pruning starts from the front of the list.
+  (time-less-p
+   (cadr (assq 'creation-time r))
+   (cadr (assq 'creation-time l))))
 
 (defun gnus-registry-fixup-registry (db)
   (when db
@@ -255,14 +282,12 @@ the Bit Bucket."
       (oset db :precious
             (append gnus-registry-extra-entries-precious
                     '()))
-      (oset db :max-hard
+      (oset db :max-size
             (or gnus-registry-max-entries
                 most-positive-fixnum))
       (oset db :prune-factor
-            0.1)
-      (oset db :max-soft
-            (or gnus-registry-max-pruned-entries
-                most-positive-fixnum))
+            (or gnus-registry-prune-factor
+		0.1))
       (oset db :tracked
             (append gnus-registry-track-extra
                     '(mark group keyword)))
@@ -278,8 +303,8 @@ the Bit Bucket."
     "Gnus Registry"
     :file (or file gnus-registry-cache-file)
     ;; these parameters are set in `gnus-registry-fixup-registry'
-    :max-hard most-positive-fixnum
-    :max-soft most-positive-fixnum
+    :max-size most-positive-fixnum
+    :version registry-db-version
     :precious nil
     :tracked nil)))
 
@@ -295,28 +320,46 @@ This is not required after changing `gnus-registry-cache-file'."
     (gnus-message 4 "Remaking the Gnus registry")
     (setq gnus-registry-db (gnus-registry-make-db))))
 
-(defun gnus-registry-read ()
-  "Read the registry cache file."
+(defun gnus-registry-load ()
+  "Load the registry from the cache file."
   (interactive)
   (let ((file gnus-registry-cache-file))
     (condition-case nil
-        (progn
-          (gnus-message 5 "Reading Gnus registry from %s..." file)
-          (setq gnus-registry-db
-		(gnus-registry-fixup-registry
-		 (condition-case nil
-		     (with-no-warnings
-		       (eieio-persistent-read file 'registry-db))
-		   ;; Older EIEIO versions do not check the class name.
-		   ('wrong-number-of-arguments
-		    (eieio-persistent-read file)))))
-          (gnus-message 5 "Reading Gnus registry from %s...done" file))
+        (gnus-registry-read file)
+      (file-error
+       ;; Fix previous mis-naming of the registry file.
+       (let ((old-file-name
+	      (concat (file-name-sans-extension
+		      gnus-registry-cache-file)
+		     ".eioio")))
+	 (if (and (file-exists-p old-file-name)
+		  (yes-or-no-p
+		   (format "Rename registry file from %s to %s? "
+			   old-file-name file)))
+	     (progn
+	       (gnus-registry-read old-file-name)
+	       (oset gnus-registry-db :file file)
+	       (gnus-message 1 "Registry filename changed to %s" file))
+	   (gnus-registry-remake-db t))))
       (error
        (gnus-message
         1
         "The Gnus registry could not be loaded from %s, creating a new one"
         file)
        (gnus-registry-remake-db t)))))
+
+(defun gnus-registry-read (file)
+  "Do the actual reading of the registry persistence file."
+  (gnus-message 5 "Reading Gnus registry from %s..." file)
+  (setq gnus-registry-db
+	(gnus-registry-fixup-registry
+	 (condition-case nil
+	     (with-no-warnings
+	       (eieio-persistent-read file 'registry-db))
+	   ;; Older EIEIO versions do not check the class name.
+	   ('wrong-number-of-arguments
+	    (eieio-persistent-read file)))))
+  (gnus-message 5 "Reading Gnus registry from %s...done" file))
 
 (defun gnus-registry-save (&optional file db)
   "Save the registry cache file."
@@ -325,7 +368,8 @@ This is not required after changing `gnus-registry-cache-file'."
         (db (or db gnus-registry-db)))
     (gnus-message 5 "Saving Gnus registry (%d entries) to %s..."
                   (registry-size db) file)
-    (registry-prune db)
+    (registry-prune
+     db gnus-registry-default-sort-function)
     ;; TODO: call (gnus-string-remove-all-properties v) on all elements?
     (eieio-persistent-save db file)
     (gnus-message 5 "Saving Gnus registry (size %d) to %s...done"
@@ -1032,7 +1076,8 @@ only the last one's marks are returned."
   "Just like `registry-insert' but tries to prune on error."
   (when (registry-full db)
     (message "Trying to prune the registry because it's full")
-    (registry-prune db))
+    (registry-prune
+     db gnus-registry-default-sort-function))
   (registry-insert db id entry)
   entry)
 
@@ -1090,7 +1135,7 @@ only the last one's marks are returned."
   (gnus-message 5 "Initializing the registry")
   (gnus-registry-install-hooks)
   (gnus-registry-install-shortcuts)
-  (gnus-registry-read))
+  (gnus-registry-load))
 
 ;; FIXME: Why autoload this function?
 ;;;###autoload
@@ -1104,7 +1149,7 @@ only the last one's marks are returned."
   (add-hook 'nnmail-spool-hook 'gnus-registry-spool-action)
 
   (add-hook 'gnus-save-newsrc-hook 'gnus-registry-save)
-  (add-hook 'gnus-read-newsrc-el-hook 'gnus-registry-read)
+  (add-hook 'gnus-read-newsrc-el-hook 'gnus-registry-load)
 
   (add-hook 'gnus-summary-prepare-hook 'gnus-registry-register-message-ids))
 
@@ -1117,7 +1162,7 @@ only the last one's marks are returned."
   (remove-hook 'nnmail-spool-hook 'gnus-registry-spool-action)
 
   (remove-hook 'gnus-save-newsrc-hook 'gnus-registry-save)
-  (remove-hook 'gnus-read-newsrc-el-hook 'gnus-registry-read)
+  (remove-hook 'gnus-read-newsrc-el-hook 'gnus-registry-load)
 
   (remove-hook 'gnus-summary-prepare-hook 'gnus-registry-register-message-ids)
   (setq gnus-registry-enabled nil))
