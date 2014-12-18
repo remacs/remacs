@@ -94,9 +94,11 @@ expands to
         .body
       .site))"
   (declare (indent 1) (debug t))
-  `(let ,(mapcar (lambda (x) `(,(car x) (cdr (assq ',(cdr x) ,alist))))
-                 (delete-dups (let-alist--deep-dot-search body)))
-     ,@body))
+  (let ((var (gensym "let-alist")))
+    `(let ((,var ,alist)
+           (let ,(mapcar (lambda (x) `(,(car x) (cdr (assq ',(cdr x) ,var))))
+                   (delete-dups (let-alist--deep-dot-search body)))
+             ,@body)))))
 
 (provide 'let-alist)
 

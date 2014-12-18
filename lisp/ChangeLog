@@ -1,3 +1,8 @@
+2014-12-18  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* let-alist.el (let-alist): Evaluate the `alist' argument only
+	once.
+
 2014-12-18  Sam Steingold  <sds@gnu.org>
 
 	* emacs-lisp/package.el: Avoid compilation warning by declaring
