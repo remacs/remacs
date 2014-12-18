@@ -282,6 +282,12 @@ appending FUN to `minibuffer-setup-hook'.
 ** cl-lib
 *** New functions cl-fresh-line, cl-digit-char-p and cl-parse-integer.
 
+** seq
+*** New seq library:
+The seq library adds sequence manipulation functions and macros that
+complement basic functions provided by subr.el. All functions are
+prefixed with `seq-' and work on lists, strings and vectors.
+
 ** Calendar and diary
 
 +++
