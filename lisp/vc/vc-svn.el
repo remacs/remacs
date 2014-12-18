@@ -206,7 +206,7 @@ If you want to force an empty list of arguments, use t."
   "Run 'svn status' for DIR and update BUFFER via CALLBACK.
 CALLBACK is called as (CALLBACK RESULT BUFFER), where
 RESULT is a list of conses (FILE . STATE) for directory DIR."
-  ;; ;; FIXME shouldn't this rather default to all the files in dir?
+  ;; FIXME shouldn't this rather default to all the files in dir?
   (apply #'vc-svn-command (current-buffer) 'async nil "status" "-u" files)
   (vc-run-delayed (vc-svn-after-dir-status callback)))
 
