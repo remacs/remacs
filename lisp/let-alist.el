@@ -70,7 +70,7 @@ symbol, and each cdr is the same symbol without the `.'."
         (list (cons data (intern (replace-match "" nil nil name)))))))
    ((not (listp data)) nil)
    (t (apply #'append
-        (remove nil (mapcar #'let-alist--deep-dot-search data))))))
+        (mapcar #'let-alist--deep-dot-search data)))))
 
 ;;;###autoload
 (defmacro let-alist (alist &rest body)
@@ -95,10 +95,10 @@ expands to
       .site))"
   (declare (indent 1) (debug t))
   (let ((var (gensym "let-alist")))
-    `(let ((,var ,alist)
-           (let ,(mapcar (lambda (x) `(,(car x) (cdr (assq ',(cdr x) ,var))))
-                   (delete-dups (let-alist--deep-dot-search body)))
-             ,@body)))))
+    `(let ((,var ,alist))
+       (let ,(mapcar (lambda (x) `(,(car x) (cdr (assq ',(cdr x) ,var))))
+               (delete-dups (let-alist--deep-dot-search body)))
+         ,@body))))
 
 (provide 'let-alist)
 
