@@ -1,5 +1,7 @@
 2014-12-18  Paul Eggert  <eggert@cs.ucla.edu>
 
+	* gnutls.c: Include gnutls.h.
+	This to check syms_of_gnutls's API even when !HAVE_GNUTLS.
 	* image.c (svg_load): Fix pointer signedness.
 
 2014-12-18  Martin Rudalics  <rudalics@gmx.at>

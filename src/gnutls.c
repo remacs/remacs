@@ -22,6 +22,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "lisp.h"
 #include "process.h"
+#include "gnutls.h"
 #include "coding.h"
 
 #ifdef HAVE_GNUTLS
