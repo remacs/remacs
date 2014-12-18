@@ -559,6 +559,7 @@ correspond to previously loaded files (those returned by
     ;; Don't return nil.
     t))
 
+(declare-function find-library-name "find-func" (library))
 (defun package--list-loaded-files (dir)
   "Recursively list all files in DIR which correspond to loaded features.
 Returns the `file-name-sans-extension' of each file, relative to

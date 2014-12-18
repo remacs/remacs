@@ -1,3 +1,8 @@
+2014-12-18  Sam Steingold  <sds@gnu.org>
+
+	* emacs-lisp/package.el: Avoid compilation warning by declaring
+	the `find-library-name' function.
+
 2014-12-18  Martin Rudalics  <rudalics@gmx.at>
 
 	Add code for "preserving" window sizes.
