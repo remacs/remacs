@@ -2856,7 +2856,7 @@ the result will be a local, non-Tramp, file name."
 	   (name1 name)
 	   (i 0)
 	   ;; We do not want to raise an error when
-	   ;; `start-file-process' has been started several time in
+	   ;; `start-file-process' has been started several times in
 	   ;; `eshell' and friends.
 	   (tramp-current-connection nil))
 
@@ -4865,8 +4865,9 @@ FMT and ARGS which are passed to `error'."
   (or (tramp-send-command-and-check vec command)
       (apply 'tramp-error vec 'file-error fmt args)))
 
-(defun tramp-send-command-and-read (vec command &optional noerror)
+(defun tramp-send-command-and-read (vec command &optional noerror marker)
   "Run COMMAND and return the output, which must be a Lisp expression.
+If MARKER is a regexp, read the output after that string.
 In case there is no valid Lisp expression and NOERROR is nil, it
 raises an error."
   (when (if noerror
@@ -4874,8 +4875,17 @@ raises an error."
 	  (tramp-barf-unless-okay
 	   vec command "`%s' returns with error" command))
     (with-current-buffer (tramp-get-connection-buffer vec)
-      ;; Read the expression.
       (goto-char (point-min))
+      ;; Read the marker.
+      (when (stringp marker)
+	(condition-case nil
+	    (re-search-forward marker)
+	  (error (unless noerror
+		   (tramp-error
+		    vec 'file-error
+		    "`%s' does not return the marker `%s': `%s'"
+		    command marker (buffer-string))))))
+      ;; Read the expression.
       (condition-case nil
 	  (prog1 (read (current-buffer))
 	    ;; Error handling.
@@ -5027,25 +5037,22 @@ Return ATTR."
 		   "/bin:/usr/bin")
 		  "/bin:/usr/bin"))))
 	   (own-remote-path
-	    ;; We cannot apply `tramp-send-command-and-read' because
-	    ;; the login shell could return more than just the $PATH
-	    ;; string.  So we emulate that function.
+	    ;; The login shell could return more than just the $PATH
+	    ;; string.  So we use `tramp-end-of-heredoc' as marker.
 	    (when elt2
-	      (tramp-send-command
+	      (tramp-send-command-and-read
 	       vec
 	       (format
-		"%s -l %s 'echo \\\"$PATH\\\"'"
+		"%s -l %s 'echo %s \\\"$PATH\\\"'"
 		(tramp-get-method-parameter
 		 (tramp-file-name-method vec) 'tramp-remote-shell)
 		(mapconcat
 		 'identity
 		 (tramp-get-method-parameter
 		  (tramp-file-name-method vec) 'tramp-remote-shell-args)
-		 " ")))
-	      (with-current-buffer (tramp-get-connection-buffer vec)
-		(goto-char (point-max))
-		(forward-line -1)
-		(read (current-buffer))))))
+		 " ")
+		(tramp-shell-quote-argument tramp-end-of-heredoc))
+	       nil (regexp-quote tramp-end-of-heredoc)))))
 
       ;; Replace place holder `tramp-default-remote-path'.
       (when elt1
