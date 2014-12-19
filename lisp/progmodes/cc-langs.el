@@ -1741,7 +1741,7 @@ but they don't build a type of themselves.  Unlike the keywords on
 not the type face."
   t    nil
   c    '("const" "restrict" "volatile")
-  c++  '("const" "constexpr" "noexcept" "volatile" "throw")
+  c++  '("const" "constexpr" "noexcept" "volatile" "throw" "final" "override")
   objc '("const" "volatile"))
 
 (c-lang-defconst c-opt-type-modifier-key

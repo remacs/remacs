@@ -1,3 +1,19 @@
+2014-12-19  Alan Mackenzie  <acm@muc.de>
+
+	Make C++11 uniform init syntax work.  New keywords "final" and "override"
+
+	* progmodes/cc-engine.el (c-back-over-member-initializer-braces):
+	New function.
+	(c-guess-basic-syntax): Set `containing-sex' and `lim' using the
+	new function.
+
+	* progmodes/cc-fonts.el (c-font-lock-declarations): Check more
+	carefully for "are we at a declarator?" using
+	c-back-over-member-initializers.
+
+	* progmodes/cc-langs.el (c-type-modifier-kwds): include "final"
+	and "override" in the C++ value.
+
 2014-12-19  Martin Rudalics  <rudalics@gmx.at>
 
 	* textmodes/ispell.el (ispell-command-loop): Don't use

@@ -6588,6 +6588,36 @@ comment at the start of cc-engine.el for more info."
      (prog1 (car ,ps)
        (setq ,ps (cdr ,ps)))))
 
+(defun c-back-over-member-initializer-braces ()
+  ;; Point is just after a closing brace/parenthesis.  Try to parse this as a
+  ;; C++ member initializer list, going back to just after the introducing ":"
+  ;; and returning t.  Otherwise return nil, leaving point unchanged.
+  (let ((here (point)) res)
+    (setq res
+	(catch 'done
+	  (when (not (c-go-list-backward))
+	    (throw 'done nil))
+	  (c-backward-syntactic-ws)
+	  (when (not (c-simple-skip-symbol-backward))
+	    (throw 'done nil))
+	  (c-backward-syntactic-ws)
+
+	  (while (eq (char-before) ?,)
+	    (backward-char)
+	    (c-backward-syntactic-ws)
+	    (when (not (memq (char-before) '(?\) ?})))
+	      (throw 'done nil))
+	    (when (not (c-go-list-backward))
+	      (throw 'done nil))
+	    (c-backward-syntactic-ws)
+	    (when (not (c-simple-skip-symbol-backward))
+	      (throw 'done nil))
+	    (c-backward-syntactic-ws))
+
+	  (eq (char-before) ?:)))
+    (or res (goto-char here))
+    res))
+
 (defun c-back-over-member-initializers ()
   ;; Test whether we are in a C++ member initializer list, and if so, go back
   ;; to the introducing ":", returning the position of the opening paren of
@@ -9588,22 +9618,26 @@ comment at the start of cc-engine.el for more info."
 				       (c-keyword-sym (match-string 1)))))
 
       ;; Init some position variables.
-      (if c-state-cache
+      (if paren-state
 	  (progn
 	    (setq containing-sexp (car paren-state)
 		  paren-state (cdr paren-state))
 	    (if (consp containing-sexp)
-		(progn
-		  (setq lim (cdr containing-sexp))
-		  (if (cdr c-state-cache)
-		      ;; Ignore balanced paren.  The next entry
-		      ;; can't be another one.
-		      (setq containing-sexp (car (cdr c-state-cache))
-			    paren-state (cdr paren-state))
-		    ;; If there is no surrounding open paren then
-		    ;; put the last balanced pair back on paren-state.
-		    (setq paren-state (cons containing-sexp paren-state)
-			  containing-sexp nil)))
+	      (save-excursion
+		(goto-char (cdr containing-sexp))
+		(if (and (c-major-mode-is 'c++-mode)
+			 (c-back-over-member-initializer-braces))
+		      (c-syntactic-skip-backward "^}" nil t))
+		(setq lim (point))
+		(if paren-state
+		    ;; Ignore balanced paren.	 The next entry
+		    ;; can't be another one.
+		    (setq containing-sexp (car paren-state)
+			  paren-state (cdr paren-state))
+		  ;; If there is no surrounding open paren then
+		  ;; put the last balanced pair back on paren-state.
+		  (setq paren-state (cons containing-sexp paren-state)
+			containing-sexp nil)))
 	      (setq lim (1+ containing-sexp))))
 	(setq lim (point-min)))
 
