@@ -2265,8 +2265,9 @@ Global `ispell-quit' set to start location to continue spell session."
 	(sit-for 0))
 
     ;; Display choices for misspelled word.
+    (setq textwin (selected-window))
     (ispell-show-choices)
-    (select-window (setq textwin (next-window)))
+    (select-window textwin)
 
     ;; highlight word, protecting current buffer status
     (unwind-protect
@@ -2408,8 +2409,9 @@ Global `ispell-quit' set to start location to continue spell session."
 				      count (ispell-int-char (1+ count))))
 			      (setq count (ispell-int-char
 					   (- count ?0 skipped))))
+			    (setq textwin (selected-window))
 			    (ispell-show-choices)
-			    (select-window (next-window)))))
+			    (select-window textwin))))
 		    (and (eq 'block ispell-highlight-p)
 			 (ispell-highlight-spelling-error start end nil
 							  'block))

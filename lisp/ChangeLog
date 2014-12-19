@@ -1,3 +1,8 @@
+2014-12-19  Martin Rudalics  <rudalics@gmx.at>
+
+	* textmodes/ispell.el (ispell-command-loop): Don't use
+	`next-window'.
+
 2014-12-18  Sam Steingold  <sds@gnu.org>
 
 	Keyboard interface (C-f10) to `mouse-buffer-menu' (C-down-mouse-1).
