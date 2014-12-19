@@ -4,7 +4,7 @@
 
 ;; Author: Artur Malabarba <bruce.connor.am@gmail.com>
 ;; Maintainer: Artur Malabarba <bruce.connor.am@gmail.com>
-;; Version: 1.0.1
+;; Version: 1.0.2
 ;; Keywords: extensions lisp
 ;; Prefix: let-alist
 ;; Separator: -
@@ -39,21 +39,25 @@
 ;;   (let-alist alist
 ;;     (if (and .title .body)
 ;;         .body
-;;       .site))
+;;       .site
+;;       .site.contents))
 ;;
-;; expands to
+;; essentially expands to
 ;;
 ;;   (let ((.title (cdr (assq 'title alist)))
-;;         (.body (cdr (assq 'body alist)))
-;;         (.site (cdr (assq 'site alist))))
+;;         (.body  (cdr (assq 'body alist)))
+;;         (.site  (cdr (assq 'site alist)))
+;;         (.site.contents (cdr (assq 'contents (cdr (assq 'site alist))))))
 ;;     (if (and .title .body)
 ;;         .body
-;;       .site))
+;;       .site
+;;       .site.contents))
 ;;
-;; Note that only one level is supported.  If you nest `let-alist'
-;; invocations, the inner one can't access the variables of the outer
-;; one.
-
+;; If you nest `let-alist' invocations, the inner one can't access
+;; the variables of the outer one. You can, however, access alists
+;; inside the original alist by using dots inside the symbol, as
+;; displayed in the example above by the `.site.contents'.
+;;
 ;;; Code:
 
 
@@ -72,6 +76,31 @@ symbol, and each cdr is the same symbol without the `.'."
    (t (apply #'append
         (mapcar #'let-alist--deep-dot-search data)))))
 
+(defun let-alist--access-sexp (symbol variable)
+  "Return a sexp used to acess SYMBOL inside VARIABLE."
+  (let* ((clean (let-alist--remove-dot symbol))
+         (name (symbol-name clean)))
+    (if (string-match "\\`\\." name)
+        clean
+      (let-alist--list-to-sexp
+       (mapcar #'intern (nreverse (split-string name "\\.")))
+       variable))))
+
+(defun let-alist--list-to-sexp (list var)
+  "Turn symbols LIST into recursive calls to `cdr' `assq' on VAR."
+  `(cdr (assq ',(car list)
+              ,(if (cdr list) (let-alist--list-to-sexp (cdr list) var)
+                 var))))
+
+(defun let-alist--remove-dot (symbol)
+  "Return SYMBOL, sans an initial dot."
+  (let ((name (symbol-name symbol)))
+    (if (string-match "\\`\\." name)
+        (intern (replace-match "" nil nil name))
+      symbol)))
+
+
+;;; The actual macro.
 ;;;###autoload
 (defmacro let-alist (alist &rest body)
   "Let-bind dotted symbols to their cdrs in ALIST and execute BODY.
@@ -83,20 +112,28 @@ For instance, the following code
   (let-alist alist
     (if (and .title .body)
         .body
-      .site))
+      .site
+      .site.contents))
 
-expands to
+essentially expands to
 
   (let ((.title (cdr (assq 'title alist)))
-        (.body (cdr (assq 'body alist)))
-        (.site (cdr (assq 'site alist))))
+        (.body  (cdr (assq 'body alist)))
+        (.site  (cdr (assq 'site alist)))
+        (.site.contents (cdr (assq 'contents (cdr (assq 'site alist))))))
     (if (and .title .body)
         .body
-      .site))"
+      .site
+      .site.contents))
+
+If you nest `let-alist' invocations, the inner one can't access
+the variables of the outer one. You can, however, access alists
+inside the original alist by using dots inside the symbol, as
+displayed in the example above."
   (declare (indent 1) (debug t))
-  (let ((var (gensym "let-alist")))
+  (let ((var (gensym "alist")))
     `(let ((,var ,alist))
-       (let ,(mapcar (lambda (x) `(,(car x) (cdr (assq ',(cdr x) ,var))))
+       (let ,(mapcar (lambda (x) `(,(car x) ,(let-alist--access-sexp (car x) var)))
                (delete-dups (let-alist--deep-dot-search body)))
          ,@body))))
 

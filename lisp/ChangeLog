@@ -1,3 +1,8 @@
+2014-12-19  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* let-alist.el (let-alist): Enable access to deeper alists by
+	using dots inside the dotted symbols.
+
 2014-12-19  Alan Mackenzie  <acm@muc.de>
 
 	Make C++11 uniform init syntax work.  New keywords "final" and "override"
