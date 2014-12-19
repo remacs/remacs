@@ -20,6 +20,7 @@
 ;;; Code:
 
 (require 'ert)
+(require 'cl-lib)
 
 (ert-deftest let-alist-surface-test ()
   "Tests basic macro expansion for `let-alist'."

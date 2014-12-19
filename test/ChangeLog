@@ -1,3 +1,7 @@
+2014-12-19  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* automated/let-alist.el: require `cl-lib'
+
 2014-12-18  Artur Malabarba  <bruce.connor.am@gmail.com>
 
 	* automated/let-alist.el: New file.
