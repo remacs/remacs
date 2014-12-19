@@ -89,7 +89,8 @@ static Lisp_Object Qdefun;
 Lisp_Object Qinteractive_form;
 static Lisp_Object Qdefalias_fset_function;
 
-static void swap_in_symval_forwarding (struct Lisp_Symbol *, struct Lisp_Buffer_Local_Value *);
+static void swap_in_symval_forwarding (struct Lisp_Symbol *,
+				       struct Lisp_Buffer_Local_Value *);
 
 static bool
 BOOLFWDP (union Lisp_Fwd *a)

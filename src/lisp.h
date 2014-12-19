@@ -44,12 +44,13 @@ INLINE_HEADER_BEGIN
    definitions or enums visible to the debugger.  It's used for symbols
    that .gdbinit needs.  */
 
+#define DECLARE_GDB_SYM(type, id) type const id EXTERNALLY_VISIBLE
 #ifdef MAIN_PROGRAM
-# define DEFINE_GDB_SYMBOL_BEGIN(type, id) type const id EXTERNALLY_VISIBLE
+# define DEFINE_GDB_SYMBOL_BEGIN(type, id) DECLARE_GDB_SYM (type, id)
 # define DEFINE_GDB_SYMBOL_END(id) = id;
 #else
-# define DEFINE_GDB_SYMBOL_BEGIN(type, id)
-# define DEFINE_GDB_SYMBOL_END(val)
+# define DEFINE_GDB_SYMBOL_BEGIN(type, id) extern DECLARE_GDB_SYM (type, id)
+# define DEFINE_GDB_SYMBOL_END(val) ;
 #endif
 
 /* The ubiquitous max and min macros.  */
@@ -337,7 +338,7 @@ error !;
 #define lisp_h_CONSP(x) (XTYPE (x) == Lisp_Cons)
 #define lisp_h_EQ(x, y) (XLI (x) == XLI (y))
 #define lisp_h_FLOATP(x) (XTYPE (x) == Lisp_Float)
-#define lisp_h_INTEGERP(x) ((XTYPE (x) & ~Lisp_Int1) == 0)
+#define lisp_h_INTEGERP(x) ((XTYPE (x) & (Lisp_Int0 | ~Lisp_Int1)) == Lisp_Int0)
 #define lisp_h_MARKERP(x) (MISCP (x) && XMISCTYPE (x) == Lisp_Misc_Marker)
 #define lisp_h_MISCP(x) (XTYPE (x) == Lisp_Misc)
 #define lisp_h_NILP(x) EQ (x, Qnil)
@@ -361,7 +362,7 @@ error !;
 #endif
 #if USE_LSB_TAG
 # define lisp_h_make_number(n) \
-    XIL ((EMACS_INT) ((EMACS_UINT) (n) << INTTYPEBITS))
+    XIL ((EMACS_INT) (((EMACS_UINT) (n) << INTTYPEBITS) + Lisp_Int0))
 # define lisp_h_XFASTINT(a) XINT (a)
 # define lisp_h_XINT(a) (XLI (a) >> INTTYPEBITS)
 # define lisp_h_XTYPE(a) ((enum Lisp_Type) (XLI (a) & ~VALMASK))
@@ -573,7 +574,73 @@ typedef EMACS_INT Lisp_Object;
 #define LISP_INITIALLY_ZERO 0
 enum CHECK_LISP_OBJECT_TYPE { CHECK_LISP_OBJECT_TYPE = false };
 #endif /* CHECK_LISP_OBJECT_TYPE */
+
+/* Forward declarations.  */
 
+/* Defined in this file.  */
+union Lisp_Fwd;
+INLINE bool BOOL_VECTOR_P (Lisp_Object);
+INLINE bool BUFFER_OBJFWDP (union Lisp_Fwd *);
+INLINE bool BUFFERP (Lisp_Object);
+INLINE bool CHAR_TABLE_P (Lisp_Object);
+INLINE Lisp_Object CHAR_TABLE_REF_ASCII (Lisp_Object, ptrdiff_t);
+INLINE bool (CONSP) (Lisp_Object);
+INLINE bool (FLOATP) (Lisp_Object);
+INLINE bool functionp (Lisp_Object);
+INLINE bool (INTEGERP) (Lisp_Object);
+INLINE bool (MARKERP) (Lisp_Object);
+INLINE bool (MISCP) (Lisp_Object);
+INLINE bool (NILP) (Lisp_Object);
+INLINE bool OVERLAYP (Lisp_Object);
+INLINE bool PROCESSP (Lisp_Object);
+INLINE bool PSEUDOVECTORP (Lisp_Object, int);
+INLINE bool SAVE_VALUEP (Lisp_Object);
+INLINE void set_sub_char_table_contents (Lisp_Object, ptrdiff_t,
+					      Lisp_Object);
+INLINE bool STRINGP (Lisp_Object);
+INLINE bool SUB_CHAR_TABLE_P (Lisp_Object);
+INLINE bool SUBRP (Lisp_Object);
+INLINE bool (SYMBOLP) (Lisp_Object);
+INLINE bool (VECTORLIKEP) (Lisp_Object);
+INLINE bool WINDOWP (Lisp_Object);
+INLINE struct Lisp_Save_Value *XSAVE_VALUE (Lisp_Object);
+
+/* Defined in chartab.c.  */
+extern Lisp_Object char_table_ref (Lisp_Object, int);
+extern void char_table_set (Lisp_Object, int, Lisp_Object);
+
+/* Defined in data.c.  */
+extern Lisp_Object Qarrayp, Qbufferp, Qbuffer_or_string_p, Qchar_table_p;
+extern Lisp_Object Qconsp, Qfloatp, Qintegerp, Qlambda, Qlistp, Qmarkerp, Qnil;
+extern Lisp_Object Qnumberp, Qstringp, Qsymbolp, Qt, Qvectorp;
+extern Lisp_Object Qbool_vector_p;
+extern Lisp_Object Qvector_or_char_table_p, Qwholenump;
+extern Lisp_Object Qwindow;
+extern _Noreturn Lisp_Object wrong_type_argument (Lisp_Object, Lisp_Object);
+extern _Noreturn void wrong_choice (Lisp_Object, Lisp_Object);
+
+/* Defined in emacs.c.  */
+extern bool might_dump;
+/* True means Emacs has already been initialized.
+   Used during startup to detect startup of dumped Emacs.  */
+extern bool initialized;
+
+/* Defined in eval.c.  */
+extern Lisp_Object Qautoload;
+
+/* Defined in floatfns.c.  */
+extern double extract_float (Lisp_Object);
+
+/* Defined in process.c.  */
+extern Lisp_Object Qprocessp;
+
+/* Defined in window.c.  */
+extern Lisp_Object Qwindowp;
+
+/* Defined in xdisp.c.  */
+extern Lisp_Object Qimage;
+extern Lisp_Object Qfontification_functions;
+
 /* Convert a Lisp_Object to the corresponding EMACS_INT and vice versa.
    At the machine level, these operations are no-ops.  */
 LISP_MACRO_DEFUN (XLI, EMACS_INT, (Lisp_Object o), (o))
@@ -673,13 +740,18 @@ LISP_MACRO_DEFUN (XUNTAG, void *, (Lisp_Object a, int type), (a, type))
 INLINE Lisp_Object
 make_number (EMACS_INT n)
 {
+  EMACS_INT int0 = Lisp_Int0;
   if (USE_LSB_TAG)
     {
       EMACS_UINT u = n;
       n = u << INTTYPEBITS;
+      n += int0;
     }
   else
-    n &= INTMASK;
+    {
+      n &= INTMASK;
+      n += (int0 << VALBITS);
+    }
   return XIL (n);
 }
 
@@ -702,7 +774,8 @@ XINT (Lisp_Object a)
 INLINE EMACS_INT
 XFASTINT (Lisp_Object a)
 {
-  EMACS_INT n = USE_LSB_TAG ? XINT (a) : XLI (a);
+  EMACS_INT int0 = Lisp_Int0;
+  EMACS_INT n = USE_LSB_TAG ? XINT (a) : XLI (a) - (int0 << VALBITS);
   eassert (0 <= n);
   return n;
 }
@@ -747,7 +820,8 @@ INLINE Lisp_Object
 make_natnum (EMACS_INT n)
 {
   eassert (0 <= n && n <= MOST_POSITIVE_FIXNUM);
-  return USE_LSB_TAG ? make_number (n) : XIL (n);
+  EMACS_INT int0 = Lisp_Int0;
+  return USE_LSB_TAG ? make_number (n) : XIL (n + (int0 << VALBITS));
 }
 
 /* Return true if X and Y are the same object.  */
@@ -765,72 +839,6 @@ clip_to_bounds (ptrdiff_t lower, EMACS_INT num, ptrdiff_t upper)
 {
   return num < lower ? lower : num <= upper ? num : upper;
 }
-
-/* Forward declarations.  */
-
-/* Defined in this file.  */
-union Lisp_Fwd;
-INLINE bool BOOL_VECTOR_P (Lisp_Object);
-INLINE bool BUFFER_OBJFWDP (union Lisp_Fwd *);
-INLINE bool BUFFERP (Lisp_Object);
-INLINE bool CHAR_TABLE_P (Lisp_Object);
-INLINE Lisp_Object CHAR_TABLE_REF_ASCII (Lisp_Object, ptrdiff_t);
-INLINE bool (CONSP) (Lisp_Object);
-INLINE bool (FLOATP) (Lisp_Object);
-INLINE bool functionp (Lisp_Object);
-INLINE bool (INTEGERP) (Lisp_Object);
-INLINE bool (MARKERP) (Lisp_Object);
-INLINE bool (MISCP) (Lisp_Object);
-INLINE bool (NILP) (Lisp_Object);
-INLINE bool OVERLAYP (Lisp_Object);
-INLINE bool PROCESSP (Lisp_Object);
-INLINE bool PSEUDOVECTORP (Lisp_Object, int);
-INLINE bool SAVE_VALUEP (Lisp_Object);
-INLINE void set_sub_char_table_contents (Lisp_Object, ptrdiff_t,
-					      Lisp_Object);
-INLINE bool STRINGP (Lisp_Object);
-INLINE bool SUB_CHAR_TABLE_P (Lisp_Object);
-INLINE bool SUBRP (Lisp_Object);
-INLINE bool (SYMBOLP) (Lisp_Object);
-INLINE bool (VECTORLIKEP) (Lisp_Object);
-INLINE bool WINDOWP (Lisp_Object);
-INLINE struct Lisp_Save_Value *XSAVE_VALUE (Lisp_Object);
-
-/* Defined in chartab.c.  */
-extern Lisp_Object char_table_ref (Lisp_Object, int);
-extern void char_table_set (Lisp_Object, int, Lisp_Object);
-
-/* Defined in data.c.  */
-extern Lisp_Object Qarrayp, Qbufferp, Qbuffer_or_string_p, Qchar_table_p;
-extern Lisp_Object Qconsp, Qfloatp, Qintegerp, Qlambda, Qlistp, Qmarkerp, Qnil;
-extern Lisp_Object Qnumberp, Qstringp, Qsymbolp, Qt, Qvectorp;
-extern Lisp_Object Qbool_vector_p;
-extern Lisp_Object Qvector_or_char_table_p, Qwholenump;
-extern Lisp_Object Qwindow;
-extern _Noreturn Lisp_Object wrong_type_argument (Lisp_Object, Lisp_Object);
-extern _Noreturn void wrong_choice (Lisp_Object, Lisp_Object);
-
-/* Defined in emacs.c.  */
-extern bool might_dump;
-/* True means Emacs has already been initialized.
-   Used during startup to detect startup of dumped Emacs.  */
-extern bool initialized;
-
-/* Defined in eval.c.  */
-extern Lisp_Object Qautoload;
-
-/* Defined in floatfns.c.  */
-extern double extract_float (Lisp_Object);
-
-/* Defined in process.c.  */
-extern Lisp_Object Qprocessp;
-
-/* Defined in window.c.  */
-extern Lisp_Object Qwindowp;
-
-/* Defined in xdisp.c.  */
-extern Lisp_Object Qimage;
-extern Lisp_Object Qfontification_functions;
 
 
 /* Extract a value or address from a Lisp_Object.  */

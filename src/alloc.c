@@ -2719,13 +2719,13 @@ DEFUN ("make-list", Fmake_list, Smake_list, 2, 2, 0,
 static struct Lisp_Vector *
 next_vector (struct Lisp_Vector *v)
 {
-  return XUNTAG (v->contents[0], 0);
+  return XUNTAG (v->contents[0], Lisp_Int0);
 }
 
 static void
 set_next_vector (struct Lisp_Vector *v, struct Lisp_Vector *p)
 {
-  v->contents[0] = make_lisp_ptr (p, 0);
+  v->contents[0] = make_lisp_ptr (p, Lisp_Int0);
 }
 
 /* This value is balanced well enough to avoid too much internal overhead
@@ -6155,15 +6155,16 @@ void
 mark_object (Lisp_Object arg)
 {
   register Lisp_Object obj = arg;
-#ifdef GC_CHECK_MARKED_OBJECTS
   void *po;
+#ifdef GC_CHECK_MARKED_OBJECTS
   struct mem_node *m;
 #endif
   ptrdiff_t cdr_count = 0;
 
  loop:
 
-  if (PURE_POINTER_P (XPNTR (obj)))
+  po = XPNTR (obj);
+  if (PURE_POINTER_P (po))
     return;
 
   last_marked[last_marked_index++] = obj;
@@ -6174,8 +6175,6 @@ mark_object (Lisp_Object arg)
      we encounter an object we know is bogus.  This increases GC time
      by ~80%, and requires compilation with GC_MARK_STACK != 0.  */
 #ifdef GC_CHECK_MARKED_OBJECTS
-
-  po = (void *) XPNTR (obj);
 
   /* Check that the object pointed to by PO is known to be a Lisp
      structure allocated from the heap.  */
@@ -6203,8 +6202,8 @@ mark_object (Lisp_Object arg)
 
 #else /* not GC_CHECK_MARKED_OBJECTS */
 
-#define CHECK_LIVE(LIVEP)		(void) 0
-#define CHECK_ALLOCATED_AND_LIVE(LIVEP)	(void) 0
+#define CHECK_LIVE(LIVEP)		((void) 0)
+#define CHECK_ALLOCATED_AND_LIVE(LIVEP)	((void) 0)
 
 #endif /* not GC_CHECK_MARKED_OBJECTS */
 

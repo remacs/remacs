@@ -5224,16 +5224,14 @@ init_buffer_once (void)
 
   QSFundamental = build_pure_c_string ("Fundamental");
 
-  Qfundamental_mode = intern_c_string ("fundamental-mode");
+  DEFSYM (Qfundamental_mode, "fundamental-mode");
   bset_major_mode (&buffer_defaults, Qfundamental_mode);
 
-  Qmode_class = intern_c_string ("mode-class");
+  DEFSYM (Qmode_class, "mode-class");
+  DEFSYM (Qprotected_field, "protected-field");
 
-  Qprotected_field = intern_c_string ("protected-field");
-
-  Qpermanent_local = intern_c_string ("permanent-local");
-
-  Qkill_buffer_hook = intern_c_string ("kill-buffer-hook");
+  DEFSYM (Qpermanent_local, "permanent-local");
+  DEFSYM (Qkill_buffer_hook, "kill-buffer-hook");
   Fput (Qkill_buffer_hook, Qpermanent_local, Qt);
 
   /* super-magic invisible buffer */

@@ -2971,8 +2971,7 @@ handlePanelKeys (NSSavePanel *panel, NSEvent *theEvent)
 void
 syms_of_nsfns (void)
 {
-  Qfontsize = intern_c_string ("fontsize");
-  staticpro (&Qfontsize);
+  DEFSYM (Qfontsize, "fontsize");
 
   DEFVAR_LISP ("ns-icon-type-alist", Vns_icon_type_alist,
                doc: /* Alist of elements (REGEXP . IMAGE) for images of icons associated to frames.

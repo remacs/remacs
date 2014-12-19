@@ -504,10 +504,10 @@ nxatoms_of_nsselect (void)
 void
 syms_of_nsselect (void)
 {
-  QCLIPBOARD = intern_c_string ("CLIPBOARD");	staticpro (&QCLIPBOARD);
-  QSECONDARY = intern_c_string ("SECONDARY");	staticpro (&QSECONDARY);
-  QTEXT      = intern_c_string ("TEXT"); 	staticpro (&QTEXT);
-  QFILE_NAME = intern_c_string ("FILE_NAME"); 	staticpro (&QFILE_NAME);
+  DEFSYM (QCLIPBOARD, "CLIPBOARD");
+  DEFSYM (QSECONDARY, "SECONDARY");
+  DEFSYM (QTEXT, "TEXT");
+  DEFSYM (QFILE_NAME, "FILE_NAME");
 
   defsubr (&Sns_disown_selection_internal);
   defsubr (&Sns_get_selection);

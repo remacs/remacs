@@ -1,3 +1,27 @@
+2014-12-19  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Minor cleanups for Lisp objects and symbols
+	* alloc.c (next_vector, set_next_vector):
+	* lisp.h (lisp_h_INTEGERP, make_number, XFASTINT, make_natnum):
+	(lisp_h_make_number) [USE_LSB_TAG]:
+	Use Lisp_Int0 instead of the mystery constant 0.
+	* alloc.c (mark_object): Always set and use po; that's simpler.
+	(CHECK_LIVE, CHECK_ALLOCATED_AND_LIVE):
+	Properly parenthesize definientia.
+	* bidi.c (bidi_initialize):
+	* buffer.c (init_buffer_once):
+	* nsfns.m (syms_of_nsfns):
+	* nsmenu.m (syms_of_nsmenu):
+	* nsselect.m (syms_of_nsselect):
+	Prefer DEFSYM to defining by hand.
+	* data.c: Fix too-long line.
+	* lisp.h (DECLARE_GDB_SYM): New macro.
+	(DEFINE_GDB_SYMBOL_BEGIN): Use it.
+	(DEFINE_GDB_SYMBOL_BEGIN, DEFINE_GDB_SYMBOL_END) [!MAIN_PROGRAM]:
+	Declare the symbol, so it's visible to everywhere lisp.h is included.
+	Move forward decls as far forward as they can go,
+	to allow future changes to use them.
+
 2014-12-18  Paul Eggert  <eggert@cs.ucla.edu>
 
 	* gnutls.c: Include gnutls.h.
