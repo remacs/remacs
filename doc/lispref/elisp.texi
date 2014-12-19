@@ -1006,6 +1006,7 @@ Windows
 * Windows and Frames::      Relating windows to the frame they appear on.
 * Window Sizes::            Accessing a window's size.
 * Resizing Windows::        Changing the sizes of windows.
+* Preserving Window Sizes:: Preserving the size of windows.
 * Splitting Windows::       Splitting one window into two windows.
 * Deleting Windows::        Deleting a window gives its space to other windows.
 * Recombining Windows::     Preserving the frame layout when splitting and

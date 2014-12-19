@@ -1,3 +1,14 @@
+2014-12-19  Martin Rudalics  <rudalics@gmx.at>
+
+	* windows.texi (Resizing Windows): Describe new argument of
+	`fit-window-to-buffer'.  Move description of `window-size-fixed'
+	to new section below.
+	(Preserving Window Sizes): New section describing
+	`window-size-fixed' and `window-preserve-size'.
+	(Display Action Functions): Describe `preserve-size' alist
+	entry.
+	(Window Parameters): Describe `preserved-size' parameter.
+
 2014-12-18  Eli Zaretskii  <eliz@gnu.org>
 
 	* display.texi (Low-Level Font): Document font-info and query-font.
