@@ -973,7 +973,10 @@ or scroll bars.
 If PIXELWISE is nil, return the largest integer smaller than WINDOW's
 pixel width divided by the character width of WINDOW's frame.  This
 means that if a column at the right of the text area is only partially
-visible, that column is not counted.  */)
+visible, that column is not counted.
+
+Note that the returned value includes the column reserved for the
+continuation glyph.  */)
   (Lisp_Object window, Lisp_Object pixelwise)
 {
   return make_number (window_body_width (decode_live_window (window),

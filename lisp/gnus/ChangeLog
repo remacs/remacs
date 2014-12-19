@@ -1,3 +1,9 @@
+2014-12-19  Andreas Schwab  <schwab@linux-m68k.org>
+
+	* gnus-group.el (gnus-read-ephemeral-bug-group): Bind
+	coding-system-for-read and coding-system-for-write only around
+	with-temp-file, and make buffer unibyte.  Don't write temp file twice.
+
 2014-11-26  John Mastro <john.b.mastro@gmail.com>  (tiny change)
 
 	* auth-source.el (auth-source-macos-keychain-search-items): Return

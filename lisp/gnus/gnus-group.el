@@ -2459,27 +2459,27 @@ the bug number, and browsing the URL must return mbox output."
     (setq ids (string-to-number ids)))
   (unless (listp ids)
     (setq ids (list ids)))
-  (let ((tmpfile (mm-make-temp-file "gnus-temp-group-"))
-	(coding-system-for-write 'binary)
-	(coding-system-for-read 'binary))
-    (with-temp-file tmpfile
-      (dolist (id ids)
-	(url-insert-file-contents (format mbox-url id)))
-      (goto-char (point-min))
-      ;; Add the debbugs address so that we can respond to reports easily.
-      (while (re-search-forward "^To: " nil t)
-	(end-of-line)
-	(insert (format ", %s@%s" (car ids)
-			(gnus-replace-in-string
-			 (gnus-replace-in-string mbox-url "^http://" "")
-			 "/.*$" ""))))
-      (write-region (point-min) (point-max) tmpfile)
-      (gnus-group-read-ephemeral-group
-       (format "nndoc+ephemeral:bug#%s"
-	       (mapconcat 'number-to-string ids ","))
-       `(nndoc ,tmpfile
-	       (nndoc-article-type mbox))
-       nil window-conf))
+  (let ((tmpfile (mm-make-temp-file "gnus-temp-group-")))
+    (let ((coding-system-for-write 'binary)
+	  (coding-system-for-read 'binary))
+      (with-temp-file tmpfile
+	(set-buffer-multibyte nil)
+	(dolist (id ids)
+	  (url-insert-file-contents (format mbox-url id)))
+	(goto-char (point-min))
+	;; Add the debbugs address so that we can respond to reports easily.
+	(while (re-search-forward "^To: " nil t)
+	  (end-of-line)
+	  (insert (format ", %s@%s" (car ids)
+			  (gnus-replace-in-string
+			   (gnus-replace-in-string mbox-url "^http://" "")
+			   "/.*$" ""))))))
+    (gnus-group-read-ephemeral-group
+     (format "nndoc+ephemeral:bug#%s"
+	     (mapconcat 'number-to-string ids ","))
+     `(nndoc ,tmpfile
+	     (nndoc-article-type mbox))
+     nil window-conf)
     (delete-file tmpfile)))
 
 (defun gnus-read-ephemeral-debian-bug-group (number)
