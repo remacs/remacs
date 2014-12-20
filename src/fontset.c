@@ -389,7 +389,7 @@ reorder_font_vector (Lisp_Object font_group, struct font *font)
   Lisp_Object vec, font_object;
   int size;
   int i;
-  bool score_changed = 0;
+  bool score_changed = false;
 
   if (font)
     XSETFONT (font_object, font);
@@ -444,14 +444,15 @@ reorder_font_vector (Lisp_Object font_group, struct font *font)
       if (RFONT_DEF_SCORE (rfont_def) != score)
 	{
 	  RFONT_DEF_SET_SCORE (rfont_def, score);
-	  score_changed = 1;
+	  score_changed = true;
 	}
     }
 
   if (score_changed)
     qsort (XVECTOR (vec)->contents, size, word_size,
 	   fontset_compare_rfontdef);
-  XSETCAR (font_group, make_number (charset_ordered_list_tick));
+  EMACS_INT low_tick_bits = charset_ordered_list_tick & MOST_POSITIVE_FIXNUM;
+  XSETCAR (font_group, make_number (low_tick_bits));
 }
 
 /* Return a font-group (actually a cons (-1 . FONT-GROUP-VECTOR)) for

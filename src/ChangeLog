@@ -1,5 +1,11 @@
 2014-12-20  Paul Eggert  <eggert@cs.ucla.edu>
 
+	Let charset tick grow past USHRT_MAX
+	* charset.c, charset.h (charset_ordered_list_tick):
+	Now EMACS_UINT, not unsigned short.
+	* fontset.c (reorder_font_vector): Allow the tick to grow to the
+	maximum representable Emacs integer value before wrapping it around.
+
 	Simplify unexec file mode setting
 	* unexaix.c, unexcoff.c, unexelf.c, unexmacosx.c:
 	Don't include <sys/stat.h> when no longer needed.
