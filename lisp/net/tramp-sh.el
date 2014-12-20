@@ -75,6 +75,7 @@ If you set this variable to nil, however, the *override* is
 disabled, so the history will go to the default storage
 location, e.g. \"$HOME/.sh_history\"."
   :group 'tramp
+  :version "25.1"
   :type '(choice (const :tag "Do not override HISTFILE" nil)
                  (const :tag "Empty the history (/dev/null)" "/dev/null")
                  (string :tag "Redirect to a file")))

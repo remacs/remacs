@@ -1,3 +1,7 @@
+2014-12-20  Michael Albinus  <michael.albinus@gmx.de>
+
+	* net/tramp-sh.el (tramp-histfile-override): Add :version.
+
 2014-12-20  Teodor Zlatanov  <tzz@lifelogs.com>
 
 	* net/tramp-sh.el (tramp-histfile-override): Clarify docstring.
