@@ -55,7 +55,6 @@ what you give them.   Help stamp out software-hoarding!  */
 #include <inttypes.h>
 #include <stdarg.h>
 #include <stdio.h>
-#include <sys/stat.h>
 #include <errno.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -134,7 +133,7 @@ unexec (const char *new_name, const char *a_name)
     {
       PERROR (a_name);
     }
-  if ((new = emacs_open (new_name, O_WRONLY | O_CREAT | O_TRUNC, 0666)) < 0)
+  if ((new = emacs_open (new_name, O_WRONLY | O_CREAT | O_TRUNC, 0777)) < 0)
     {
       PERROR (new_name);
     }
@@ -152,7 +151,6 @@ unexec (const char *new_name, const char *a_name)
   emacs_close (new);
   if (a_out >= 0)
     emacs_close (a_out);
-  mark_x (new_name);
 }
 
 /* ****************************************************************
@@ -464,29 +462,6 @@ copy_sym (int new, int a_out, const char *a_name, const char *new_name)
       PERROR (a_name);
     }
   return 0;
-}
-
-/* ****************************************************************
- * mark_x
- *
- * After successfully building the new a.out, mark it executable
- */
-static void
-mark_x (const char *name)
-{
-  struct stat sbuf;
-  int um;
-  int new = 0;  /* for PERROR */
-
-  um = umask (777);
-  umask (um);
-  if (stat (name, &sbuf) == -1)
-    {
-      PERROR (name);
-    }
-  sbuf.st_mode |= 0111 & ~um;
-  if (chmod (name, sbuf.st_mode) == -1)
-    PERROR (name);
 }
 
 static int

@@ -1267,7 +1267,7 @@ unexec (const char *outfile, const char *infile)
       unexec_error ("cannot open input file `%s'", infile);
     }
 
-  outfd = emacs_open (outfile, O_WRONLY | O_TRUNC | O_CREAT, 0755);
+  outfd = emacs_open (outfile, O_WRONLY | O_TRUNC | O_CREAT, 0777);
   if (outfd < 0)
     {
       emacs_close (infd);

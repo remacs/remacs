@@ -1,3 +1,14 @@
+2014-12-20  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Simplify unexec file mode setting
+	* unexaix.c, unexcoff.c, unexelf.c, unexmacosx.c:
+	Don't include <sys/stat.h> when no longer needed.
+	(unexec): Create file with correct mode in the first place,
+	rather than overwriting the mode later and fiddling with the
+	global umask in the mean time.  Avoid bogus usage like
+	'umask (777)', which should have been 'umask (0777)'.
+	(mark_x): Remove. All callers removed.
+
 2014-12-19  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Minor cleanups for Lisp objects and symbols
