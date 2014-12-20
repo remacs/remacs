@@ -66,8 +66,14 @@ files conditionalize this setup based on the TERM environment variable."
 
 ;;;###tramp-autoload
 (defcustom tramp-histfile-override "/dev/null"
-  "Whether the HISTFILE should be overridden to something.  Set
-to nil to disable the override."
+  "When invoking a shell, override the HISTFILE with this value.
+By default, the HISTFILE is set to the \"/dev/null\" value, which
+is special on Unix systems and indicates the shell history should
+not be logged (this avoids clutter due to Tramp commands).
+
+If you set this variable to nil, however, the *override* is
+disabled, so the history will go to the default storage
+location, e.g. \"$HOME/.sh_history\"."
   :group 'tramp
   :type '(choice (const :tag "Do not override HISTFILE" nil)
                  (const :tag "Empty the history (/dev/null)" "/dev/null")
