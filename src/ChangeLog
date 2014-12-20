@@ -1,5 +1,8 @@
 2014-12-20  Paul Eggert  <eggert@cs.ucla.edu>
 
+	* composite.h (struct composition.width): Now int
+	instead of unsigned short, as we prefer signed integers.
+
 	Let charset tick grow past USHRT_MAX
 	* charset.c, charset.h (charset_ordered_list_tick):
 	Now EMACS_UINT, not unsigned short.
