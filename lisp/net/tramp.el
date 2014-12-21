@@ -3088,7 +3088,8 @@ User is always nil."
     (with-parsed-tramp-file-name filename nil
       (unwind-protect
 	  (if (not (file-exists-p filename))
-	      (tramp-message v 0 "(New file)")
+	      (tramp-error
+	       v 'file-error "File `%s' not found on remote host" filename)
 
 	    (with-tramp-progress-reporter
 		v 3 (format "Inserting `%s'" filename)
