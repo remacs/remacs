@@ -32,6 +32,11 @@
 	* textmodes/ispell.el (ispell-command-loop): Don't use
 	`next-window'.
 
+2014-12-21  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	* net/nsm.el (nsm-save-host): Don't save the host name twice
+	(bug#19269).
+
 2014-12-18  Sam Steingold  <sds@gnu.org>
 
 	Keyboard interface (C-f10) to `mouse-buffer-menu' (C-down-mouse-1).

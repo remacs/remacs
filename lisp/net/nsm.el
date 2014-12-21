@@ -340,7 +340,6 @@ unencrypted."
     ;; of the certificate/unencrypted connection.
     (cond
      ((eq what 'conditions)
-      (nconc saved (list :host (format "%s:%s" host port)))
       (cond
        ((not status)
 	(nconc saved '(:conditions (:unencrypted))))
