@@ -232,7 +232,7 @@ If one doesn't exist, create a new one for this directory."
 	(let* ((classsym (intern (car C)))
 	       (extreg (oref classsym extension)))
 	  (when (and (not (string= extreg ""))
-		     (string-match (concat "^" extreg "$") ext))
+		     (string-match (concat "\\`\\(?:" extreg "\\)\\'") ext))
 	    (setq cls classsym)))))
     (when (not cls) (setq cls 'ede-generic-target-misc))
     ;; find a pre-existing matching target
