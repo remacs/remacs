@@ -1,3 +1,8 @@
+2014-12-22  Bozhidar Batsov  <bozhidar@batsov.com>
+
+	* progmodes/ruby-mode.el (ruby--string-region): Simplify code
+	by leveraging `syntax-ppss'.
+
 2014-12-22  Artur Malabarba  <bruce.connor.am@gmail.com>
 
 	* let-alist.el (let-alist): Use `make-symbol' instead of `gensym'.
