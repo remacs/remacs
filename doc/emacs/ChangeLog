@@ -1,3 +1,7 @@
+2014-12-22  Eli Zaretskii  <eliz@gnu.org>
+
+	* buffers.texi (Kill Buffer): Improve indexing.
+
 2014-11-19  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Lessen focus on ChangeLog files, as opposed to change log entries.
