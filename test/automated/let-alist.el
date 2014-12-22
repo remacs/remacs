@@ -30,7 +30,7 @@
                    (.test-two (cdr (assq 'test-two symbol))))
                (list .test-one .test-two
                      .test-two .test-two)))
-          (cl-letf (((symbol-function #'gensym) (lambda (x) 'symbol)))
+          (cl-letf (((symbol-function #'make-symbol) (lambda (x) 'symbol)))
             (macroexpand
              '(let-alist data (list .test-one .test-two
                                     .test-two .test-two))))))

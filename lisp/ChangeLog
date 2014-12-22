@@ -1,3 +1,7 @@
+2014-12-22  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* let-alist.el (let-alist): Use `make-symbol' instead of `gensym'.
+
 2014-12-20  Michael Albinus  <michael.albinus@gmx.de>
 
 	* net/tramp-sh.el (tramp-histfile-override): Add :version.
