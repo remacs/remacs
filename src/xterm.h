@@ -834,7 +834,7 @@ struct scroll_bar
   int whole;
 #endif
 
-  /* 1 if the scroll bar is horizontal.  */
+  /* True if the scroll bar is horizontal.  */
   bool horizontal;
 };
 
@@ -979,7 +979,7 @@ XrmDatabase x_load_resources (Display *, const char *, const char *,
 
 /* Defined in xterm.c */
 
-extern int x_text_icon (struct frame *, const char *);
+extern bool x_text_icon (struct frame *, const char *);
 extern void x_catch_errors (Display *);
 extern void x_check_errors (Display *, const char *)
   ATTRIBUTE_FORMAT_PRINTF (2, 0);

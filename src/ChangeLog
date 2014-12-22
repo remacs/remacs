@@ -1,3 +1,50 @@
+2014-12-22  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Use bool for boolean in xterm.c
+	* frame.h, nsterm.m, w32term.c, w32term.h, xterm.c:
+	(x_set_window_size, x_bitmap_icon):
+	* nsterm.m (ns_frame_raise_lower, x_new_font):
+	* termhooks.h (struct terminal.toggle_invisible_pointer_hook)
+	(struct terminal.frame_raise_lower_hook):
+	* w32term.c (w32_frame_raise_lower):
+	* xterm.c, xterm.h (x_text_icon):
+	* xterm.c (x_update_window_begin, x_update_window_end)
+	(x_update_end, x_after_update_window_line)
+	(x_set_glyph_string_gc, x_draw_glyph_string_background)
+	(x_draw_glyph_string_foreground)
+	(x_draw_composite_glyph_string_foreground)
+	(x_alloc_lighter_color, x_draw_relief_rect)
+	(x_draw_glyph_string_box, x_draw_image_relief)
+	(x_draw_image_glyph_string, x_draw_stretch_glyph_string)
+	(x_draw_underwave, x_draw_glyph_string, x_show_hourglass)
+	(x_hide_hourglass):
+	(XFillRectangle) [HAVE_GTK3]:
+	(XTtoggle_invisible_pointer, frame_highlight, frame_unhighlight)
+	(x_focus_changed, x_find_modifier_meanings, note_mouse_movement)
+	(XTmouse_position, xt_action_hook, xt_horizontal_action_hook)
+	(x_send_scroll_bar_event, xm_scroll_callback)
+	(xg_scroll_callback, xaw_jump_callback, xaw_scroll_callback)
+	(x_create_toolkit_scroll_bar)
+	(x_create_horizontal_toolkit_scroll_bar)
+	(x_set_toolkit_horizontal_scroll_bar_thumb, x_scroll_bar_create)
+	(x_scroll_bar_set_handle, XTset_vertical_scroll_bar)
+	(XTset_horizontal_scroll_bar, x_scroll_bar_expose)
+	(x_scroll_bar_handle_click, x_scroll_bar_note_movement)
+	(x_scroll_bar_report_motion)
+	(x_horizontal_scroll_bar_report_motion, x_net_wm_state)
+	(handle_one_xevent, XTread_socket, x_draw_bar_cursor)
+	(x_draw_window_cursor, x_clear_errors)
+	(x_trace_wire, x_new_font, x_set_offset, wm_supports)
+	(set_wm_state, x_set_sticky, get_current_wm_state)
+	(do_ewmh_fullscreen, x_handle_net_wm_state)
+	(x_check_expected_move, x_sync_with_move, x_wait_for_event)
+	(x_set_window_size_1, XTframe_raise_lower)
+	(x_make_frame_visible, x_iconify_frame)
+	(x_timeout_atimer_activated_flag, same_x_server, x_display_ok)
+	(x_term_init, x_process_timeouts, x_activate_timeout_atimer)
+	(x_delete_terminal, x_initialize, syms_of_xterm):
+	Use bool for boolean.
+
 2014-12-20  Paul Eggert  <eggert@cs.ucla.edu>
 
 	* composite.h (struct composition.width): Now int

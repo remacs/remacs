@@ -185,7 +185,7 @@ void x_lower_frame (struct frame *);
 void x_scroll_bar_clear (struct frame *);
 void x_wm_set_size_hint (struct frame *, long, bool);
 void x_raise_frame (struct frame *);
-void x_set_window_size (struct frame *, int, int, int, bool);
+void x_set_window_size (struct frame *, bool, int, int, bool);
 void x_wm_set_window_state (struct frame *, int);
 void x_wm_set_icon_pixmap (struct frame *, int);
 static void w32_initialize (void);
@@ -5716,7 +5716,7 @@ w32_draw_window_cursor (struct window *w, struct glyph_row *glyph_row,
 
 /* Icons.  */
 
-int
+bool
 x_bitmap_icon (struct frame *f, Lisp_Object icon)
 {
   HANDLE main_icon;
@@ -6096,12 +6096,13 @@ w32fullscreen_hook (struct frame *f)
 }
 
 /* Call this to change the size of frame F's x-window.
-   If CHANGE_GRAVITY is 1, we change to top-left-corner window gravity
+   If CHANGE_GRAVITY, change to top-left-corner window gravity
    for this size change and subsequent size changes.
    Otherwise we leave the window gravity unchanged.  */
 
 void
-x_set_window_size (struct frame *f, int change_gravity, int width, int height, bool pixelwise)
+x_set_window_size (struct frame *f, bool change_gravity,
+		   int width, int height, bool pixelwise)
 {
   int pixelwidth, pixelheight;
   RECT rect;
@@ -6331,7 +6332,7 @@ x_lower_frame (struct frame *f)
 }
 
 static void
-w32_frame_raise_lower (struct frame *f, int raise_flag)
+w32_frame_raise_lower (struct frame *f, bool raise_flag)
 {
   if (! FRAME_W32_P (f))
     return;

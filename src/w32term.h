@@ -240,7 +240,7 @@ extern struct w32_display_info *w32_term_init (Lisp_Object,
 					       char *, char *);
 extern int w32_defined_color (struct frame *f, const char *color,
                               XColor *color_def, int alloc);
-extern void x_set_window_size (struct frame *f, int change_grav,
+extern void x_set_window_size (struct frame *f, bool change_gravity,
 			       int width, int height, bool pixelwise);
 extern int x_display_pixel_height (struct w32_display_info *);
 extern int x_display_pixel_width (struct w32_display_info *);
@@ -257,7 +257,7 @@ extern void x_set_internal_border_width (struct frame *f,
 					 Lisp_Object value,
 					 Lisp_Object oldval);
 extern void x_activate_menubar (struct frame *);
-extern int x_bitmap_icon (struct frame *, Lisp_Object);
+extern bool x_bitmap_icon (struct frame *, Lisp_Object);
 extern void initialize_frame_menubar (struct frame *);
 extern void x_free_frame_resources (struct frame *);
 extern void x_real_positions (struct frame *, int *, int *);
