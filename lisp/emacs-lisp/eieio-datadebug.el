@@ -1,4 +1,4 @@
-;;; eieio-datadebug.el --- EIEIO extensions to the data debugger.
+;;; eieio-datadebug.el --- EIEIO extensions to the data debugger.  -*- lexical-binding:t -*-
 
 ;; Copyright (C) 2007-2014 Free Software Foundation, Inc.
 
@@ -137,7 +137,7 @@ PREBUTTONTEXT is some text between PREFIX and the object button."
 	 (data
 	  (catch 'moose (eieio-generic-call
 			 method (list class))))
-	 (buf (data-debug-new-buffer "*Method Invocation*"))
+	 (_buf (data-debug-new-buffer "*Method Invocation*"))
 	 (data2 (mapcar (lambda (sym)
 			  (symbol-function (car sym)))
 			  data)))

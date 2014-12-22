@@ -1,4 +1,4 @@
-;;; eieio-custom.el -- eieio object customization
+;;; eieio-custom.el -- eieio object customization  -*- lexical-binding:t -*-
 
 ;; Copyright (C) 1999-2001, 2005, 2007-2014 Free Software Foundation,
 ;; Inc.
@@ -136,7 +136,7 @@ Updates occur regardless of the current customization group.")
 	   ))
     (widget-value-set vc (widget-value vc))))
 
-(defun eieio-custom-toggle-parent (widget &rest ignore)
+(defun eieio-custom-toggle-parent (widget &rest _)
   "Toggle visibility of parent of WIDGET.
 Optional argument IGNORE is an extraneous parameter."
   (eieio-custom-toggle-hide (widget-get widget :parent)))
@@ -154,7 +154,7 @@ Optional argument IGNORE is an extraneous parameter."
   :clone-object-children nil
   )
 
-(defun eieio-object-match (widget value)
+(defun eieio-object-match (_widget _value)
   "Match info for WIDGET against VALUE."
   ;; Write me
   t)
@@ -216,7 +216,7 @@ Optional argument IGNORE is an extraneous parameter."
 	      (widget-insert "*" (capitalize (symbol-name master-group)) "*")
 	    (widget-create 'push-button
 			   :thing (cons obj (car groups))
-			   :notify (lambda (widget &rest stuff)
+			   :notify (lambda (widget &rest _)
 				     (eieio-customize-object
 				      (car (widget-get widget :thing))
 				      (cdr (widget-get widget :thing))))
@@ -389,14 +389,14 @@ These groups are specified with the `:group' slot flag."
   "Insert an Apply and Reset button into the object editor.
 Argument OBJ is the object being customized."
   (widget-create 'push-button
-		 :notify (lambda (&rest ignore)
+		 :notify (lambda (&rest _)
 			   (widget-apply eieio-wo :value-get)
 			   (eieio-done-customizing eieio-co)
 			   (bury-buffer))
 		 "Accept")
   (widget-insert "   ")
   (widget-create 'push-button
-		 :notify (lambda (&rest ignore)
+		 :notify (lambda (&rest _)
 			   ;; I think the act of getting it sets
 			   ;; its value through the get function.
 			   (message "Applying Changes...")
@@ -406,13 +406,13 @@ Argument OBJ is the object being customized."
 		 "Apply")
   (widget-insert "   ")
   (widget-create 'push-button
-		 :notify (lambda (&rest ignore)
+		 :notify (lambda (&rest _)
 			   (message "Resetting")
 			   (eieio-customize-object eieio-co eieio-cog))
 		 "Reset")
   (widget-insert "   ")
   (widget-create 'push-button
-		 :notify (lambda (&rest ignore)
+		 :notify (lambda (&rest _)
 			   (bury-buffer))
 		 "Cancel"))
 
@@ -431,13 +431,11 @@ Must return the created widget."
   :clone-object-children t
   )
 
-(defun eieio-object-value-to-abstract (widget value)
+(defun eieio-object-value-to-abstract (_widget value)
   "For WIDGET, convert VALUE to an abstract /safe/ representation."
-  (if (eieio-object-p value) value
-    (if (null value) value
-      nil)))
+  (if (eieio-object-p value) value))
 
-(defun eieio-object-abstract-to-value (widget value)
+(defun eieio-object-abstract-to-value (_widget value)
   "For WIDGET, convert VALUE from an abstract /safe/ representation."
   value)
 

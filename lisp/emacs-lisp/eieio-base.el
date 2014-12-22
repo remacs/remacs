@@ -375,13 +375,13 @@ Second, any text properties will be stripped from strings."
   )
 
 (defun eieio-persistent-slot-type-is-class-p (type)
-  "Return the class refered to in TYPE.
+  "Return the class referred to in TYPE.
 If no class is referenced there, then return nil."
   (cond ((class-p type)
 	 ;; If the type is a class, then return it.
 	 type)
-
-	((and (symbolp type) (string-match "-child$" (symbol-name type))
+        ;; FIXME: foo-child should not be a valid type!
+	((and (symbolp type) (string-match "-child\\'" (symbol-name type))
 	      (class-p (intern-soft (substring (symbol-name type) 0
 					       (match-beginning 0)))))
 	 ;; If it is the predicate ending with -child, then return
@@ -389,8 +389,8 @@ If no class is referenced there, then return nil."
 	 ;; class is the same as if we used -child, so no further work needed.
 	 (intern-soft (substring (symbol-name type) 0
 				 (match-beginning 0))))
-
-	((and (symbolp type) (string-match "-list$" (symbol-name type))
+        ;; FIXME: foo-list should not be a valid type!
+	((and (symbolp type) (string-match "-list\\'" (symbol-name type))
 	      (class-p (intern-soft (substring (symbol-name type) 0
 					       (match-beginning 0)))))
 	 ;; If it is the predicate ending with -list, then return

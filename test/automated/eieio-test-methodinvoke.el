@@ -61,9 +61,8 @@
   "Store current invocation class symbol in the invocation order list."
   (let* ((keysym (aref [ :STATIC :BEFORE :PRIMARY :AFTER ]
 		       (or eieio-generic-call-key 0)))
-	 (c (list eieio-generic-call-methodname keysym (eieio--scoped-class))))
-    (setq eieio-test-method-order-list
-	  (cons c eieio-test-method-order-list))))
+	 (c (list keysym (eieio--scoped-class))))
+    (push c eieio-test-method-order-list)))
 
 (defun eieio-test-match (rightanswer)
   "Do a test match."
@@ -120,17 +119,17 @@
 (ert-deftest eieio-test-method-order-list-3 ()
   (let ((eieio-test-method-order-list nil)
 	(ans '(
-	       (eitest-F :BEFORE eitest-B)
-	       (eitest-F :BEFORE eitest-B-base1)
-	       (eitest-F :BEFORE eitest-B-base2)
+	       (:BEFORE eitest-B)
+	       (:BEFORE eitest-B-base1)
+	       (:BEFORE eitest-B-base2)
 
-	       (eitest-F :PRIMARY eitest-B)
-	       (eitest-F :PRIMARY eitest-B-base1)
-	       (eitest-F :PRIMARY eitest-B-base2)
+	       (:PRIMARY eitest-B)
+	       (:PRIMARY eitest-B-base1)
+	       (:PRIMARY eitest-B-base2)
 
-	       (eitest-F :AFTER eitest-B-base2)
-	       (eitest-F :AFTER eitest-B-base1)
-	       (eitest-F :AFTER eitest-B)
+	       (:AFTER eitest-B-base2)
+	       (:AFTER eitest-B-base1)
+	       (:AFTER eitest-B)
 	       )))
     (eitest-F (eitest-B nil))
     (setq eieio-test-method-order-list (nreverse eieio-test-method-order-list))
@@ -193,9 +192,9 @@
 (ert-deftest eieio-test-method-order-list-6 ()
   (let ((eieio-test-method-order-list nil)
 	(ans '(
-	       (constructor :STATIC C)
-	       (constructor :STATIC C-base1)
-	       (constructor :STATIC C-base2)
+	       (:STATIC C)
+	       (:STATIC C-base1)
+	       (:STATIC C-base2)
 	       )))
     (C nil)
     (setq eieio-test-method-order-list (nreverse eieio-test-method-order-list))
@@ -238,10 +237,10 @@
 (ert-deftest eieio-test-method-order-list-7 ()
   (let ((eieio-test-method-order-list nil)
 	(ans '(
-	       (eitest-F :PRIMARY D)
-	       (eitest-F :PRIMARY D-base1)
-	       ;; (eitest-F :PRIMARY D-base2)
-	       (eitest-F :PRIMARY D-base0)
+	       (:PRIMARY D)
+	       (:PRIMARY D-base1)
+	       ;; (:PRIMARY D-base2)
+	       (:PRIMARY D-base0)
 	       )))
     (eitest-F (D nil))
     (setq eieio-test-method-order-list (nreverse eieio-test-method-order-list))
@@ -277,10 +276,10 @@
 (ert-deftest eieio-test-method-order-list-8 ()
   (let ((eieio-test-method-order-list nil)
 	(ans '(
-	       (eitest-F :PRIMARY E)
-	       (eitest-F :PRIMARY E-base1)
-	       (eitest-F :PRIMARY E-base2)
-	       (eitest-F :PRIMARY E-base0)
+	       (:PRIMARY E)
+	       (:PRIMARY E-base1)
+	       (:PRIMARY E-base2)
+	       (:PRIMARY E-base0)
 	       )))
     (eitest-F (E nil))
     (setq eieio-test-method-order-list (nreverse eieio-test-method-order-list))

@@ -1,5 +1,45 @@
 2014-12-22  Stefan Monnier  <monnier@iro.umontreal.ca>
 
+	* emacs-lisp/eieio.el (child-of-class-p): Fix case where `class' is
+	`eieio-default-superclass'.
+
+	* emacs-lisp/eieio-datadebug.el: Use lexical-binding.
+
+	* emacs-lisp/eieio-custom.el: Use lexical-binding.
+	(eieio-object-value-to-abstract): Simplify.
+
+	* emacs-lisp/eieio-opt.el (eieio-build-class-list): Use cl-mapcan.
+	(eieio-build-class-alist): Use dolist.
+	(eieio-all-generic-functions): Adjust to use of hashtables.
+
+	* emacs-lisp/eieio-core.el (class): Rename field symbol-obarray to
+	symbol-hashtable.  It contains a hashtable instead of an obarray.
+	(generic-p): Use symbol property `eieio-method-hashtable' instead of
+	`eieio-method-obarray'.
+	(generic-primary-only-p, generic-primary-only-one-p):
+	Slight optimization.
+	(eieio-defclass-autoload-map): Use a hashtable instead of an obarray.
+	(eieio-defclass-autoload, eieio-defclass): Adjust/simplify accordingly.
+	(eieio-class-un-autoload): Use autoload-do-load.
+	(eieio-defclass): Use dolist, cl-pushnew, cl-callf.
+	Use new cl-deftype-satisfies.  Adjust to use of hashtables.
+	Don't hardcode the value of eieio--object-num-slots.
+	(eieio-defgeneric-form-primary-only-one): Remove `doc-string' arg.
+	Use a closure rather than a backquoted lambda.
+	(eieio--defmethod): Adjust call accordingly.  Set doc-string via the
+	function-documentation property.
+	(eieio-slot-originating-class-p, eieio-slot-name-index)
+	(eieiomt--optimizing-hashtable, eieiomt-install, eieiomt-add)
+	(eieio-generic-form): Adjust to use of hashtables.
+	(eieiomt--sym-optimize): Rename from eieiomt-sym-optimize; take
+	additional class argument.
+	(eieio-generic-call-methodname): Remove, unused.
+
+	* emacs-lisp/eieio-base.el (eieio-persistent-slot-type-is-class-p):
+	Prefer \' to $.
+
+2014-12-22  Stefan Monnier  <monnier@iro.umontreal.ca>
+
 	* completion.el: Use post-self-insert-hook (bug#19400).
 	(completion-separator-self-insert-command)
 	(completion-separator-self-insert-autofilling): Remove.
@@ -95,8 +135,8 @@
 	* electric.el (Electric-pop-up-window):
 	* help.el (resize-temp-buffer-window): Call fit-window-to-buffer
 	with `preserve-size' t.
-	* minibuffer.el (minibuffer-completion-help): Use
-	`resize-temp-buffer-window' instead of `fit-window-to-buffer'
+	* minibuffer.el (minibuffer-completion-help):
+	Use `resize-temp-buffer-window' instead of `fit-window-to-buffer'
 	(Bug#19355).  Preserve size of completions window.
 	* register.el (register-preview): Preserve size of register
 	preview window.
@@ -106,8 +146,8 @@
 	`window-preserve-size'.
 	(window-min-pixel-size, window--preservable-size)
 	(window-preserve-size, window-preserved-size)
-	(window--preserve-size, window--min-size-ignore-p): New
-	functions.
+	(window--preserve-size, window--min-size-ignore-p):
+	New functions.
 	(window-min-size, window-min-delta, window--resizable)
 	(window--resize-this-window, split-window-below)
 	(split-window-right): Amend doc-string.

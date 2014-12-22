@@ -343,12 +343,15 @@ The CLOS function `class-direct-subclasses' is aliased to this function."
   "Return non-nil if CHILD class is a subclass of CLASS."
   (eieio--check-type class-p class)
   (eieio--check-type class-p child)
-  (let ((p nil))
-    (while (and child (not (eq child class)))
-      (setq p (append p (eieio--class-parent (class-v child)))
-	    child (car p)
-	    p (cdr p)))
-    (if child t)))
+  ;; `eieio-default-superclass' is never mentioned in eieio--class-parent,
+  ;; so we have to special case it here.
+  (or (eq class 'eieio-default-superclass)
+      (let ((p nil))
+        (while (and child (not (eq child class)))
+          (setq p (append p (eieio--class-parent (class-v child)))
+                child (car p)
+                p (cdr p)))
+        (if child t))))
 
 (defun object-slots (obj)
   "Return list of slots available in OBJ."
@@ -906,7 +909,7 @@ Optional argument GROUP is the sub-group of slots to display.
 
 ;;;***
 
-;;;### (autoloads nil "eieio-opt" "eieio-opt.el" "889c0a935dddf758dbb65488470ffa06")
+;;;### (autoloads nil "eieio-opt" "eieio-opt.el" "e50a67ebd0c6258c615e4bf16714e81f")
 ;;; Generated autoloads from eieio-opt.el
 
 (autoload 'eieio-browse "eieio-opt" "\
