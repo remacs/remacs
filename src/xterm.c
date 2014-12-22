@@ -8234,8 +8234,7 @@ x_bitmap_icon (struct frame *f, Lisp_Object file)
 
 #ifdef USE_GTK
 
-	  if (FRAME_DISPLAY_INFO (f)->icon_bitmap_id == -2
-              || xg_set_icon (f, xg_default_icon_file)
+          if (xg_set_icon (f, xg_default_icon_file)
               || xg_set_icon_from_xpm_data (f, gnu_xpm_bits))
             {
               FRAME_DISPLAY_INFO (f)->icon_bitmap_id = -2;

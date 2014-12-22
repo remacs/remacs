@@ -1,3 +1,8 @@
+2014-12-22  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* xterm.c (x_bitmap_icon): Partly revert change from 2014-03-21 which
+	breaks icon setting for Gtk+ except for initial frame (Bug#19403).
+
 2014-12-22  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Use bool for boolean in xterm.c
