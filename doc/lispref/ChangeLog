@@ -1,3 +1,8 @@
+2014-12-22  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Remove obsolete references to pre-C99 builds
+	* internals.texi (C Integer Types): Don't mention pre-C99 compilers.
+
 2014-12-19  Martin Rudalics  <rudalics@gmx.at>
 
 	* windows.texi (Resizing Windows): Describe new argument of

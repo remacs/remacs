@@ -309,8 +309,8 @@ extern void _DebPrint (const char *fmt, ...);
    Other .c files should not define INLINE.
 
    C99 compilers compile functions like 'incr' as C99-style extern
-   inline functions.  Pre-C99 GCCs do something similar with
-   GNU-specific keywords.  Pre-C99 non-GCC compilers use static
+   inline functions.  Buggy GCC implementations do something similar with
+   GNU-specific keywords.  Buggy non-GCC compilers use static
    functions, which bloats the code but is good enough.  */
 
 #ifndef INLINE

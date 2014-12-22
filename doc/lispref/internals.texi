@@ -1684,8 +1684,7 @@ using @code{int}.  Although it is also OK to use @code{int}, @code{0}
 and @code{1}, this older style is gradually being phased out.  When
 using @code{bool}, respect the limitations of the replacement
 implementation of @code{bool}, as documented in the source file
-@file{lib/stdbool.in.h}, so that Emacs remains portable to pre-C99
-platforms.  In particular, boolean bitfields should be of type
+@file{lib/stdbool.in.h}.  In particular, boolean bitfields should be of type
 @code{bool_bf}, not @code{bool}, so that they work correctly even when
 compiling Objective C with standard GCC.
 
