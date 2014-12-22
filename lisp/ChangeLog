@@ -1,3 +1,16 @@
+2014-12-22  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* completion.el: Use post-self-insert-hook (bug#19400).
+	(completion-separator-self-insert-command)
+	(completion-separator-self-insert-autofilling): Remove.
+	(completion-separator-chars): New var.
+	(completion-c-mode-hook, completion-setup-fortran-mode): Use it instead
+	of changing the keymap.
+	(completion--post-self-insert): New function.
+	(dynamic-completion-mode): Use it instead of rebinding keys.
+	(cmpl--completion-string): Rename from completion-string.
+	(add-completion-to-head, delete-completion): Let-bind it explicitly.
+
 2014-12-22  Bozhidar Batsov  <bozhidar@batsov.com>
 
 	* progmodes/ruby-mode.el (ruby--string-region): Simplify code
