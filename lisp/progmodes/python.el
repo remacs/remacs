@@ -1175,12 +1175,18 @@ the line will be re-indented automatically if needed."
            (eolp)
            ;; Avoid re-indenting on extra colon
            (not (equal ?: (char-before (1- (point)))))
-           (not (python-syntax-comment-or-string-p))
-           ;; Never re-indent at beginning of defun
-           (not (save-excursion
-                  (python-nav-beginning-of-statement)
-                  (python-info-looking-at-beginning-of-defun))))
-      (python-indent-line)))))
+           (not (python-syntax-comment-or-string-p)))
+      ;; Just re-indent dedenters
+      (let ((dedenter-pos (python-info-dedenter-statement-p))
+            (current-pos (point)))
+        (when dedenter-pos
+          (save-excursion
+            (goto-char dedenter-pos)
+            (python-indent-line)
+            (unless (= (line-number-at-pos dedenter-pos)
+                       (line-number-at-pos current-pos))
+              ;; Reindent region if this is a multiline statement
+              (python-indent-region dedenter-pos current-pos)))))))))
 
 
 ;;; Navigation

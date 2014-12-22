@@ -1,3 +1,9 @@
+2014-12-22  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	* progmodes/python.el (python-indent-post-self-insert-function):
+	Make colon to re-indent only for dedenters, handling
+	multiline-statements gracefully.
+
 2014-12-21  Michael Albinus  <michael.albinus@gmx.de>
 
 	* net/tramp.el (tramp-handle-insert-file-contents):

@@ -1,3 +1,8 @@
+2014-12-22  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	* automated/python-tests.el (python-indent-electric-colon-2)
+	(python-indent-electric-colon-3): New tests.
+
 2014-12-14  João Távora  <joaotavora@gmail.com>
 
 	* automated/electric-tests.el (autowrapping-7): Tests for
