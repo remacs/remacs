@@ -171,21 +171,20 @@ Stored outright without modifications or stripping.")))
    name))                               ;FIXME: Get rid of this field!
 
 ;; FIXME: The constants below should have an `eieio-' prefix added!!
-
-(defconst method-static 0 "Index into :static tag on a method.")
-(defconst method-before 1 "Index into :before tag on a method.")
-(defconst method-primary 2 "Index into :primary tag on a method.")
-(defconst method-after 3 "Index into :after tag on a method.")
-(defconst method-num-lists 4 "Number of indexes into methods vector in which groups of functions are kept.")
-(defconst method-generic-before 4 "Index into generic :before tag on a method.")
-(defconst method-generic-primary 5 "Index into generic :primary tag on a method.")
-(defconst method-generic-after 6 "Index into generic :after tag on a method.")
-(defconst method-num-slots 7 "Number of indexes into a method's vector.")
+(defconst eieio--method-static 0 "Index into :static tag on a method.")
+(defconst eieio--method-before 1 "Index into :before tag on a method.")
+(defconst eieio--method-primary 2 "Index into :primary tag on a method.")
+(defconst eieio--method-after 3 "Index into :after tag on a method.")
+(defconst eieio--method-num-lists 4 "Number of indexes into methods vector in which groups of functions are kept.")
+(defconst eieio--method-generic-before 4 "Index into generic :before tag on a method.")
+(defconst eieio--method-generic-primary 5 "Index into generic :primary tag on a method.")
+(defconst eieio--method-generic-after 6 "Index into generic :after tag on a method.")
+(defconst eieio--method-num-slots 7 "Number of indexes into a method's vector.")
 
 (defsubst eieio-specialized-key-to-generic-key (key)
   "Convert a specialized KEY into a generic method key."
-  (cond ((eq key method-static) 0) ;; don't convert
-	((< key method-num-lists) (+ key 3)) ;; The conversion
+  (cond ((eq key eieio--method-static) 0) ;; don't convert
+	((< key eieio--method-num-lists) (+ key 3)) ;; The conversion
 	(t key) ;; already generic.. maybe.
 	))
 
@@ -201,8 +200,9 @@ Stored outright without modifications or stripping.")))
               (t `(,type ,obj))))
        (signal 'wrong-type-argument (list ',type ,obj))))
 
-(defmacro class-v (class)
+(defmacro eieio--class-v (class)
   "Internal: Return the class vector from the CLASS symbol."
+  (declare (debug t))
   ;; No check: If eieio gets this far, it has probably been checked already.
   `(get ,class 'eieio-class-definition))
 
@@ -212,7 +212,7 @@ CLASS is a symbol."
   ;; this new method is faster since it doesn't waste time checking lots of
   ;; things.
   (condition-case nil
-      (eq (aref (class-v class) 0) 'defclass)
+      (eq (aref (eieio--class-v class) 0) 'defclass)
     (error nil)))
 
 (defun eieio-class-name (class) "Return a Lisp like symbol name for CLASS."
@@ -224,10 +224,10 @@ CLASS is a symbol."
 
 (defmacro eieio-class-parents-fast (class)
   "Return parent classes to CLASS with no check."
-  `(eieio--class-parent (class-v ,class)))
+  `(eieio--class-parent (eieio--class-v ,class)))
 
 (defmacro eieio-class-children-fast (class) "Return child classes to CLASS with no check."
-  `(eieio--class-children (class-v ,class)))
+  `(eieio--class-children (eieio--class-v ,class)))
 
 (defmacro same-class-fast-p (obj class)
   "Return t if OBJ is of class-type CLASS with no error checking."
@@ -235,7 +235,8 @@ CLASS is a symbol."
 
 (defmacro class-constructor (class)
   "Return the symbol representing the constructor of CLASS."
-  `(eieio--class-symbol (class-v ,class)))
+  (declare (debug t))
+  `(eieio--class-symbol (eieio--class-v ,class)))
 
 (defsubst generic-p (method)
   "Return non-nil if symbol METHOD is a generic function.
@@ -250,13 +251,13 @@ contains a list of all bindings to that method type.)
 Methods with only primary implementations are executed in an optimized way."
   (and (generic-p method)
        (let ((M (get method 'eieio-method-tree)))
-	 (not (or (>= 0 (length (aref M method-primary)))
-                  (aref M method-static)
-                  (aref M method-before)
-                  (aref M method-after)
-                  (aref M method-generic-before)
-                  (aref M method-generic-primary)
-                  (aref M method-generic-after)))
+	 (not (or (>= 0 (length (aref M eieio--method-primary)))
+                  (aref M eieio--method-static)
+                  (aref M eieio--method-before)
+                  (aref M eieio--method-after)
+                  (aref M eieio--method-generic-before)
+                  (aref M eieio--method-generic-primary)
+                  (aref M eieio--method-generic-after)))
          )))
 
 (defun generic-primary-only-one-p (method)
@@ -266,13 +267,13 @@ contains a list of all bindings to that method type.)
 Methods with only primary implementations are executed in an optimized way."
   (and (generic-p method)
        (let ((M (get method 'eieio-method-tree)))
-	 (not (or (/= 1 (length (aref M method-primary)))
-                  (aref M method-static)
-                  (aref M method-before)
-                  (aref M method-after)
-                  (aref M method-generic-before)
-                  (aref M method-generic-primary)
-                  (aref M method-generic-after)))
+	 (not (or (/= 1 (length (aref M eieio--method-primary)))
+                  (aref M eieio--method-static)
+                  (aref M eieio--method-before)
+                  (aref M eieio--method-after)
+                  (aref M eieio--method-generic-before)
+                  (aref M eieio--method-generic-primary)
+                  (aref M eieio--method-generic-after)))
          )))
 
 (defmacro class-option-assoc (list option)
@@ -282,7 +283,7 @@ Methods with only primary implementations are executed in an optimized way."
 (defmacro class-option (class option)
   "Return the value stored for CLASS' OPTION.
 Return nil if that option doesn't exist."
-  `(class-option-assoc (eieio--class-options (class-v ,class)) ',option))
+  `(class-option-assoc (eieio--class-options (eieio--class-v ,class)) ',option))
 
 (defsubst eieio-object-p (obj)
   "Return non-nil if OBJ is an EIEIO object."
@@ -322,7 +323,7 @@ SUPERCLASSES as children.
 It creates an autoload function for CNAME's constructor."
   ;; Assume we've already debugged inputs.
 
-  (let* ((oldc (when (class-p cname) (class-v cname)))
+  (let* ((oldc (when (class-p cname) (eieio--class-v cname)))
 	 (newc (make-vector eieio--class-num-slots nil))
 	 )
     (if oldc
@@ -350,7 +351,7 @@ It creates an autoload function for CNAME's constructor."
 
           ;; Save the child in the parent.
           (cl-pushnew cname (if (class-p SC)
-                                (eieio--class-children (class-v SC))
+                                (eieio--class-children (eieio--class-v SC))
                               ;; Parent doesn't exist yet.
                               (gethash SC eieio-defclass-autoload-map)))
 
@@ -364,7 +365,7 @@ It creates an autoload function for CNAME's constructor."
 	;; do this first so that we can call defmethod for the accessor.
 	;; The vector will be updated by the following while loop and will not
 	;; need to be stored a second time.
-	(put cname 'eieio-class-definition newc)
+	(setf (eieio--class-v cname) newc)
 
 	;; Clear the parent
 	(if clear-parent (setf (eieio--class-parent newc) nil))
@@ -403,7 +404,7 @@ See `defclass' for more information."
 
   (let* ((pname superclasses)
 	 (newc (make-vector eieio--class-num-slots nil))
-	 (oldc (when (class-p cname) (class-v cname)))
+	 (oldc (when (class-p cname) (eieio--class-v cname)))
 	 (groups nil) ;; list of groups id'd from slots
 	 (options nil)
 	 (clearparent nil))
@@ -448,7 +449,7 @@ See `defclass' for more information."
 		    (error "Given parent class %S is not a class" p)
 		  ;; good parent class...
 		  ;; save new child in parent
-                  (cl-pushnew cname (eieio--class-children (class-v p)))
+                  (cl-pushnew cname (eieio--class-children (eieio--class-v p)))
 		  ;; Get custom groups, and store them into our local copy.
 		  (mapc (lambda (g) (cl-pushnew g groups :test #'equal))
 			(class-option p :custom-groups))
@@ -465,7 +466,7 @@ See `defclass' for more information."
 	(setq clearparent t)
 	;; save new child in parent
         (cl-pushnew cname (eieio--class-children
-                           (class-v 'eieio-default-superclass)))
+                           (eieio--class-v 'eieio-default-superclass)))
 	;; save parent in child
 	(setf (eieio--class-parent newc) '(eieio-default-superclass))))
 
@@ -535,7 +536,7 @@ See `defclass' for more information."
     ;; do this first so that we can call defmethod for the accessor.
     ;; The vector will be updated by the following while loop and will not
     ;; need to be stored a second time.
-    (put cname 'eieio-class-definition newc)
+    (setf (eieio--class-v cname) newc)
 
     ;; Query each slot in the declaration list and mangle into the
     ;; class structure I have defined.
@@ -1019,7 +1020,7 @@ the new child class."
 				':allow-nil-initform)))
     (while ps
       ;; First, duplicate all the slots of the parent.
-      (let ((pcv (class-v (car ps))))
+      (let ((pcv (eieio--class-v (car ps))))
 	(let ((pa (eieio--class-public-a pcv))
 	      (pd (eieio--class-public-d pcv))
 	      (pdoc (eieio--class-public-doc pcv))
@@ -1163,7 +1164,7 @@ IMPL is the symbol holding the method implementation."
         ;; It is ok, do the call.
         ;; Fill in inter-call variables then evaluate the method.
         (let ((eieio-generic-call-next-method-list nil)
-              (eieio-generic-call-key method-primary)
+              (eieio-generic-call-key eieio--method-primary)
               (eieio-generic-call-arglst local-args)
               )
           (eieio--with-scoped-class class
@@ -1173,7 +1174,7 @@ IMPL is the symbol holding the method implementation."
   "Setup METHOD to call the generic form."
   (let* ((doc-string (documentation method 'raw))
 	 (M (get method 'eieio-method-tree))
-	 (entry (car (aref M method-primary)))
+	 (entry (car (aref M eieio--method-primary)))
 	 )
     (put method 'function-documentation doc-string)
     (fset method (eieio-defgeneric-form-primary-only-one
@@ -1190,12 +1191,12 @@ but remove reference to all implementations of METHOD."
   "Work part of the `defmethod' macro defining METHOD with ARGS."
   (let ((key
          ;; Find optional keys.
-         (cond ((memq kind '(:BEFORE :before)) method-before)
-               ((memq kind '(:AFTER :after)) method-after)
-               ((memq kind '(:STATIC :static)) method-static)
-               ((memq kind '(:PRIMARY :primary nil)) method-primary)
+         (cond ((memq kind '(:BEFORE :before)) eieio--method-before)
+               ((memq kind '(:AFTER :after)) eieio--method-after)
+               ((memq kind '(:STATIC :static)) eieio--method-static)
+               ((memq kind '(:PRIMARY :primary nil)) eieio--method-primary)
                ;; Primary key.
-               ;; (t method-primary)
+               ;; (t eieio--method-primary)
                (t (error "Unknown method kind %S" kind)))))
     ;; Make sure there is a generic (when called from defclass).
     (eieio--defalias
@@ -1253,7 +1254,7 @@ an error."
       nil
     ;; Trim off object IDX junk added in for the object index.
     (setq slot-idx (- slot-idx 3))
-    (let ((st (aref (eieio--class-public-type (class-v class)) slot-idx)))
+    (let ((st (aref (eieio--class-public-type (eieio--class-v class)) slot-idx)))
       (if (not (eieio-perform-slot-validation st value))
 	  (signal 'invalid-slot-type (list class slot st value))))))
 
@@ -1264,7 +1265,7 @@ SLOT is the slot that is being checked, and is only used when throwing
 an error."
   (if eieio-skip-typecheck
       nil
-    (let ((st (aref (eieio--class-class-allocation-type (class-v class))
+    (let ((st (aref (eieio--class-class-allocation-type (eieio--class-v class))
 		    slot-idx)))
       (if (not (eieio-perform-slot-validation st value))
 	  (signal 'invalid-slot-type (list class slot st value))))))
@@ -1293,7 +1294,7 @@ Argument FN is the function calling this verifier."
 	;; Let's check that info out.
 	(if (setq c (eieio-class-slot-name-index class slot))
 	    ;; Oref that slot.
-	    (aref (eieio--class-class-allocation-values (class-v class)) c)
+	    (aref (eieio--class-class-allocation-values (eieio--class-v class)) c)
 	  ;; The slot-missing method is a cool way of allowing an object author
 	  ;; to intercept missing slot definitions.  Since it is also the LAST
 	  ;; thing called in this fn, its return value would be retrieved.
@@ -1317,13 +1318,13 @@ Fills in OBJ's SLOT with its default value."
 	(if (setq c
 		  (eieio-class-slot-name-index cl slot))
 	    ;; Oref that slot.
-	    (aref (eieio--class-class-allocation-values (class-v cl))
+	    (aref (eieio--class-class-allocation-values (eieio--class-v cl))
 		  c)
 	  (slot-missing obj slot 'oref-default)
 	  ;;(signal 'invalid-slot-name (list (class-name cl) slot))
 	  )
       (eieio-barf-if-slot-unbound
-       (let ((val (nth (- c 3) (eieio--class-public-d (class-v cl)))))
+       (let ((val (nth (- c 3) (eieio--class-public-d (eieio--class-v cl)))))
 	 (eieio-default-eval-maybe val))
        obj cl 'oref-default))))
 
@@ -1353,7 +1354,7 @@ Fills in OBJ's SLOT with VALUE."
 	    ;; Oset that slot.
 	    (progn
 	      (eieio-validate-class-slot-value (eieio--object-class obj) c value slot)
-	      (aset (eieio--class-class-allocation-values (class-v (eieio--object-class obj)))
+	      (aset (eieio--class-class-allocation-values (eieio--class-v (eieio--object-class obj)))
 		    c value))
 	  ;; See oref for comment on `slot-missing'
 	  (slot-missing obj slot 'oset value)
@@ -1376,15 +1377,15 @@ Fills in the default value in CLASS' in SLOT with VALUE."
 	      (progn
 		;; Oref that slot.
 		(eieio-validate-class-slot-value class c value slot)
-		(aset (eieio--class-class-allocation-values (class-v class)) c
+		(aset (eieio--class-class-allocation-values (eieio--class-v class)) c
 		      value))
 	    (signal 'invalid-slot-name (list (eieio-class-name class) slot)))
 	(eieio-validate-slot-value class c value slot)
 	;; Set this into the storage for defaults.
-	(setcar (nthcdr (- c 3) (eieio--class-public-d (class-v class)))
+	(setcar (nthcdr (- c 3) (eieio--class-public-d (eieio--class-v class)))
 		value)
 	;; Take the value, and put it into our cache object.
-	(eieio-oset (eieio--class-default-object-cache (class-v class))
+	(eieio-oset (eieio--class-default-object-cache (eieio--class-v class))
 		    slot value)
 	))))
 
@@ -1400,7 +1401,7 @@ so that we can protect private slots."
     (if (not par)
 	t
       (while (and par ret)
-	(if (gethash slot (eieio--class-symbol-hashtable (class-v (car par))))
+	(if (gethash slot (eieio--class-symbol-hashtable (eieio--class-v (car par))))
 	    (setq ret nil))
 	(setq par (cdr par)))
       ret)))
@@ -1414,7 +1415,7 @@ scoped class.
 If SLOT is the value created with :initarg instead,
 reverse-lookup that name, and recurse with the associated slot value."
   ;; Removed checks to outside this call
-  (let* ((fsym (gethash slot (eieio--class-symbol-hashtable (class-v class))))
+  (let* ((fsym (gethash slot (eieio--class-symbol-hashtable (eieio--class-v class))))
 	 (fsi (car fsym)))
     (if (integerp fsi)
 	(cond
@@ -1442,7 +1443,7 @@ call.  If SLOT is the value created with :initarg instead,
 reverse-lookup that name, and recurse with the associated slot value."
   ;; This will happen less often, and with fewer slots.  Do this the
   ;; storage cheap way.
-  (let* ((a (eieio--class-class-allocation-a (class-v class)))
+  (let* ((a (eieio--class-class-allocation-a (eieio--class-v class)))
 	 (l1 (length a))
 	 (af (memq slot a))
 	 (l2 (length af)))
@@ -1461,7 +1462,7 @@ reset.  If SET-ALL is nil, the slots are only reset if the default is
 not nil."
   (eieio--with-scoped-class (eieio--object-class obj)
     (let ((eieio-initializing-object t)
-	  (pub (eieio--class-public-a (class-v (eieio--object-class obj)))))
+	  (pub (eieio--class-public-a (eieio--class-v (eieio--object-class obj)))))
       (while pub
 	(let ((df (eieio-oref-default obj (car pub))))
 	  (if (or df set-all)
@@ -1472,7 +1473,7 @@ not nil."
   "For CLASS, convert INITARG to the actual attribute name.
 If there is no translation, pass it in directly (so we can cheat if
 need be... May remove that later...)"
-  (let ((tuple (assoc initarg (eieio--class-initarg-tuples (class-v class)))))
+  (let ((tuple (assoc initarg (eieio--class-initarg-tuples (eieio--class-v class)))))
     (if tuple
 	(cdr tuple)
       nil)))
@@ -1480,7 +1481,7 @@ need be... May remove that later...)"
 (defun eieio-attribute-to-initarg (class attribute)
   "In CLASS, convert the ATTRIBUTE into the corresponding init argument tag.
 This is usually a symbol that starts with `:'."
-  (let ((tuple (rassoc attribute (eieio--class-initarg-tuples (class-v class)))))
+  (let ((tuple (rassoc attribute (eieio--class-initarg-tuples (eieio--class-v class)))))
     (if tuple
 	(car tuple)
       nil)))
@@ -1666,34 +1667,34 @@ This should only be called from a generic function."
       ;; :after methods
       (setq tlambdas
 	    (if mclass
-		(eieiomt-method-list method method-after mclass)
-	      (list (eieio-generic-form method method-after nil)))
-	    ;;(or (and mclass (eieio-generic-form method method-after mclass))
-	    ;;	(eieio-generic-form method method-after nil))
+		(eieiomt-method-list method eieio--method-after mclass)
+	      (list (eieio-generic-form method eieio--method-after nil)))
+	    ;;(or (and mclass (eieio-generic-form method eieio--method-after mclass))
+	    ;;	(eieio-generic-form method eieio--method-after nil))
 	    )
       (setq lambdas (append tlambdas lambdas)
-	    keys (append (make-list (length tlambdas) method-after) keys))
+	    keys (append (make-list (length tlambdas) eieio--method-after) keys))
 
       ;; :primary methods
       (setq tlambdas
-	    (or (and mclass (eieio-generic-form method method-primary mclass))
-		(eieio-generic-form method method-primary nil)))
+	    (or (and mclass (eieio-generic-form method eieio--method-primary mclass))
+		(eieio-generic-form method eieio--method-primary nil)))
       (when tlambdas
 	(setq lambdas (cons tlambdas lambdas)
-	      keys (cons method-primary keys)
+	      keys (cons eieio--method-primary keys)
 	      primarymethodlist
-	      (eieiomt-method-list method method-primary mclass)))
+	      (eieiomt-method-list method eieio--method-primary mclass)))
 
       ;; :before methods
       (setq tlambdas
 	    (if mclass
-		(eieiomt-method-list method method-before mclass)
-	      (list (eieio-generic-form method method-before nil)))
-	    ;;(or (and mclass (eieio-generic-form method method-before mclass))
-	    ;;	(eieio-generic-form method method-before nil))
+		(eieiomt-method-list method eieio--method-before mclass)
+	      (list (eieio-generic-form method eieio--method-before nil)))
+	    ;;(or (and mclass (eieio-generic-form method eieio--method-before mclass))
+	    ;;	(eieio-generic-form method eieio--method-before nil))
 	    )
       (setq lambdas (append tlambdas lambdas)
-	    keys (append (make-list (length tlambdas) method-before) keys))
+	    keys (append (make-list (length tlambdas) eieio--method-before) keys))
       )
 
     (if mclass
@@ -1701,20 +1702,20 @@ This should only be called from a generic function."
 	;; if there were no methods found, then there could be :static methods.
 	(when (not lambdas)
 	  (setq tlambdas
-		(eieio-generic-form method method-static mclass))
+		(eieio-generic-form method eieio--method-static mclass))
 	  (setq lambdas (cons tlambdas lambdas)
-		keys (cons method-static keys)
+		keys (cons eieio--method-static keys)
 		primarymethodlist  ;; Re-use even with bad name here
-		(eieiomt-method-list method method-static mclass)))
+		(eieiomt-method-list method eieio--method-static mclass)))
       ;; For the case of no class (ie - mclass == nil) then there may
       ;; be a primary method.
       (setq tlambdas
-	    (eieio-generic-form method method-primary nil))
+	    (eieio-generic-form method eieio--method-primary nil))
       (when tlambdas
 	(setq lambdas (cons tlambdas lambdas)
-	      keys (cons method-primary keys)
+	      keys (cons eieio--method-primary keys)
 	      primarymethodlist
-	      (eieiomt-method-list method method-primary nil)))
+	      (eieiomt-method-list method eieio--method-primary nil)))
       )
 
     (run-hook-with-args 'eieio-pre-method-execution-functions
@@ -1728,8 +1729,8 @@ This should only be called from a generic function."
 	    (eieio--with-scoped-class (cdr (car lambdas))
 	      (let* ((eieio-generic-call-key (car keys))
 		     (has-return-val
-		      (or (= eieio-generic-call-key method-primary)
-			  (= eieio-generic-call-key method-static)))
+		      (or (= eieio-generic-call-key eieio--method-primary)
+			  (= eieio-generic-call-key eieio--method-static)))
 		     (eieio-generic-call-next-method-list
 		      ;; Use the cdr, as the first element is the fcn
 		      ;; we are calling right now.
@@ -1791,15 +1792,15 @@ for this common case to improve performance."
       )
 
     ;; :primary methods
-    (setq lambdas (eieio-generic-form method method-primary mclass))
+    (setq lambdas (eieio-generic-form method eieio--method-primary mclass))
     (setq primarymethodlist  ;; Re-use even with bad name here
-	  (eieiomt-method-list method method-primary mclass))
+	  (eieiomt-method-list method eieio--method-primary mclass))
 
     ;; Now loop through all occurrences forms which we must execute
     ;; (which are happily sorted now) and execute them all!
     (eieio--with-scoped-class (cdr lambdas)
       (let* ((rval nil) (lastval nil)
-	     (eieio-generic-call-key method-primary)
+	     (eieio-generic-call-key eieio--method-primary)
 	     ;; Use the cdr, as the first element is the fcn
 	     ;; we are calling right now.
 	     (eieio-generic-call-next-method-list (cdr primarymethodlist))
@@ -1850,7 +1851,7 @@ If CLASS is nil, then an empty list of methods should be returned."
 
     ;; Return collected lambda. For :after methods, return in current
     ;; order (most general class last); Otherwise, reverse order.
-    (if (eq key method-after)
+    (if (eq key eieio--method-after)
 	lambdas
       (nreverse lambdas))))
 
@@ -1883,9 +1884,9 @@ Do not do the work if they already exist."
   (unless (and (get method-name 'eieio-method-tree)
                (get method-name 'eieio-method-hashtable))
     (put method-name 'eieio-method-tree
-         (make-vector method-num-slots nil))
+         (make-vector eieio--method-num-slots nil))
     (let ((emto (put method-name 'eieio-method-hashtable
-                     (make-vector method-num-slots nil))))
+                     (make-vector eieio--method-num-slots nil))))
       (aset emto 0 (make-hash-table :test 'eq))
       (aset emto 1 (make-hash-table :test 'eq))
       (aset emto 2 (make-hash-table :test 'eq))
@@ -1899,7 +1900,7 @@ KEY is an integer (see comment in eieio.el near this function) which
 is associated with the :static :before :primary and :after tags.
 It also indicates if CLASS is defined or not.
 CLASS is the class this method is associated with."
-  (if (or (> key method-num-slots) (< key 0))
+  (if (or (> key eieio--method-num-slots) (< key 0))
       (error "eieiomt-add: method key error!"))
   (let ((emtv (get method-name 'eieio-method-tree))
 	(emto (get method-name 'eieio-method-hashtable)))
@@ -1913,7 +1914,7 @@ CLASS is the class this method is associated with."
     ;; Add function definition into newly created symbol, and store
     ;; said symbol in the correct hashtable, otherwise use the
     ;; other array to keep this stuff.
-    (if (< key method-num-lists)
+    (if (< key eieio--method-num-lists)
         (puthash class (list method) (aref emto key)))
     ;; Save the defmethod file location in a symbol property.
     (let ((fname (if load-in-progress
@@ -1925,7 +1926,7 @@ CLASS is the class this method is associated with."
 	(cl-pushnew (list class fname) (get method-name 'method-locations)
                     :test 'equal)))
     ;; Now optimize the entire hashtable.
-    (if (< key method-num-lists)
+    (if (< key eieio--method-num-lists)
 	(let ((eieiomt--optimizing-hashtable (aref emto key)))
 	  ;; @todo - Is this overkill?  Should we just clear the symbol?
 	  (maphash #'eieiomt--sym-optimize eieiomt--optimizing-hashtable)))
@@ -1979,7 +1980,6 @@ is memorized for faster future use."
              (eieiomt--sym-optimize class cs)))
 	 ;; 3) If it's bound return this one.
 	 (if (car cs)
-             ;; FIXME: Why (eieio--class-symbol (class-v class))?
 	     (cons (car cs) class)
 	   ;; 4) If it's not bound then this variable knows something
 	   (if (cdr cs)
@@ -1991,10 +1991,10 @@ is memorized for faster future use."
 		 ;;      function-symbol
 		 ;;(if (car cs)
 		 (cons (car cs) class)
-		   ;;(error "EIEIO optimizer: erratic data loss!"))
+                 ;;(error "EIEIO optimizer: erratic data loss!"))
 		 )
-	       ;; There never will be a funcall...
-	       nil)))
+             ;; There never will be a funcall...
+             nil)))
      ;; for a generic call, what is a list, is the function body we want.
      (let ((emtl (aref (get method 'eieio-method-tree)
  		       (if class key (eieio-specialized-key-to-generic-key key)))))
@@ -2024,18 +2024,18 @@ is memorized for faster future use."
     (setq key
 	  (cond ((memq (car args) '(:BEFORE :before))
 		 (setq args (cdr args))
-		 method-before)
+		 eieio--method-before)
 		((memq (car args) '(:AFTER :after))
 		 (setq args (cdr args))
-		 method-after)
+		 eieio--method-after)
 		((memq (car args) '(:STATIC :static))
 		 (setq args (cdr args))
-		 method-static)
+		 eieio--method-static)
 		((memq (car args) '(:PRIMARY :primary))
 		 (setq args (cdr args))
-		 method-primary)
+		 eieio--method-primary)
 		;; Primary key.
-		(t method-primary)))
+		(t eieio--method-primary)))
     ;; Get body, and fix contents of args to be the arguments of the fn.
     (setq body (cdr args)
 	  args (car args))

@@ -1,5 +1,14 @@
 2014-12-22  Stefan Monnier  <monnier@iro.umontreal.ca>
 
+	* emacs-lisp/eieio-core.el (eieio--class-v): Rename from class-v.
+	(method-*): Add a "eieio--" prefix to those constants.
+
+	* emacs-lisp/eieio.el: Move edebug specs to the corresponding macro.
+
+	* emacs-lisp/eieio-speedbar.el: Use lexical-binding.
+
+2014-12-22  Stefan Monnier  <monnier@iro.umontreal.ca>
+
 	* emacs-lisp/eieio.el (child-of-class-p): Fix case where `class' is
 	`eieio-default-superclass'.
 

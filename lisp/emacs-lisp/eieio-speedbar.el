@@ -1,4 +1,4 @@
-;;; eieio-speedbar.el -- Classes for managing speedbar displays.
+;;; eieio-speedbar.el -- Classes for managing speedbar displays.  -*- lexical-binding:t -*-
 
 ;; Copyright (C) 1999-2002, 2005, 2007-2014 Free Software Foundation,
 ;; Inc.
@@ -200,7 +200,7 @@ that path."
   "Return a string describing OBJECT."
   (eieio-object-name-string object))
 
-(defmethod eieio-speedbar-derive-line-path (object)
+(defmethod eieio-speedbar-derive-line-path (_object)
   "Return the path which OBJECT has something to do with."
   nil)
 
@@ -321,7 +321,7 @@ Argument DEPTH is the depth at which the tag line is inserted."
       (if exp
 	  (eieio-speedbar-expand object (1+ depth))))))
 
-(defmethod eieio-speedbar-child-make-tag-lines ((object eieio-speedbar) depth)
+(defmethod eieio-speedbar-child-make-tag-lines ((object eieio-speedbar) _depth)
   "Base method for creating tag lines for non-object children."
   (error "You must implement `eieio-speedbar-child-make-tag-lines' for %s"
 	 (eieio-object-name object)))
@@ -340,7 +340,7 @@ OBJECT."
 
 ;;; Speedbar specific function callbacks.
 ;;
-(defun eieio-speedbar-object-click (text token indent)
+(defun eieio-speedbar-object-click (_text token _indent)
   "Handle a user click on TEXT representing object TOKEN.
 The object is at indentation level INDENT."
   (eieio-speedbar-handle-click token))
@@ -412,7 +412,7 @@ Optional DEPTH is the depth we start at."
 
 ;;; Methods to the eieio-speedbar-* classes which need to be overridden.
 ;;
-(defmethod eieio-speedbar-object-children ((object eieio-speedbar))
+(defmethod eieio-speedbar-object-children ((_object eieio-speedbar))
   "Return a list of children to be displayed in speedbar.
 If the return value is a list of OBJECTs, then those objects are
 queried for details.  If the return list is made of strings,

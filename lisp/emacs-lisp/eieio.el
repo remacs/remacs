@@ -191,7 +191,16 @@ Summary:
                      ((typearg class-name) arg2 &optional opt &rest rest)
     \"doc-string\"
      body)"
-  (declare (doc-string 3))
+  (declare (doc-string 3)
+           (debug
+            (&define                    ; this means we are defining something
+             [&or name ("setf" :name setf name)]
+             ;; ^^ This is the methods symbol
+             [ &optional symbolp ]                ; this is key :before etc
+             list                                 ; arguments
+             [ &optional stringp ]                ; documentation string
+             def-body                             ; part to be debugged
+             )))
   (let* ((key (if (keywordp (car args)) (pop args)))
 	 (params (car args))
 	 (arg1 (car params))
@@ -213,6 +222,7 @@ Summary:
   "Retrieve the value stored in OBJ in the slot named by SLOT.
 Slot is the name of the slot when created by `defclass' or the label
 created by the :initarg tag."
+  (declare (debug (form symbolp)))
   `(eieio-oref ,obj (quote ,slot)))
 
 (defalias 'slot-value 'eieio-oref)
@@ -223,6 +233,7 @@ created by the :initarg tag."
 The default value is the value installed in a class with the :initform
 tag.  SLOT can be the slot name, or the tag specified by the :initarg
 tag in the `defclass' call."
+  (declare (debug (form symbolp)))
   `(eieio-oref-default ,obj (quote ,slot)))
 
 ;;; Handy CLOS macros
@@ -246,7 +257,7 @@ SPEC-LIST is of a form similar to `let'.  For example:
 Where each VAR is the local variable given to the associated
 SLOT.  A slot specified without a variable name is given a
 variable name of the same name as the slot."
-  (declare (indent 2))
+  (declare (indent 2) (debug (sexp sexp def-body)))
   (require 'cl-lib)
   ;; Transform the spec-list into a cl-symbol-macrolet spec-list.
   (let ((mappings (mapcar (lambda (entry)
@@ -348,7 +359,7 @@ The CLOS function `class-direct-subclasses' is aliased to this function."
   (or (eq class 'eieio-default-superclass)
       (let ((p nil))
         (while (and child (not (eq child class)))
-          (setq p (append p (eieio--class-parent (class-v child)))
+          (setq p (append p (eieio--class-parent (eieio--class-v child)))
                 child (car p)
                 p (cdr p)))
         (if child t))))
@@ -356,11 +367,11 @@ The CLOS function `class-direct-subclasses' is aliased to this function."
 (defun object-slots (obj)
   "Return list of slots available in OBJ."
   (eieio--check-type eieio-object-p obj)
-  (eieio--class-public-a (class-v (eieio--object-class obj))))
+  (eieio--class-public-a (eieio--class-v (eieio--object-class obj))))
 
 (defun class-slot-initarg (class slot) "Fetch from CLASS, SLOT's :initarg."
   (eieio--check-type class-p class)
-  (let ((ia (eieio--class-initarg-tuples (class-v class)))
+  (let ((ia (eieio--class-initarg-tuples (eieio--class-v class)))
 	(f nil))
     (while (and ia (not f))
       (if (eq (cdr (car ia)) slot)
@@ -374,6 +385,7 @@ The CLOS function `class-direct-subclasses' is aliased to this function."
   "Set the value in OBJ for slot SLOT to VALUE.
 SLOT is the slot name as specified in `defclass' or the tag created
 with in the :initarg slot.  VALUE can be any Lisp object."
+  (declare (debug (form symbolp form)))
   `(eieio-oset ,obj (quote ,slot) ,value))
 
 (defmacro oset-default (class slot value)
@@ -381,6 +393,7 @@ with in the :initarg slot.  VALUE can be any Lisp object."
 The default value is usually set with the :initform tag during class
 creation.  This allows users to change the default behavior of classes
 after they are created."
+  (declare (debug (form symbolp form)))
   `(eieio-oset-default ,class (quote ,slot) ,value))
 
 ;;; CLOS queries into classes and slots
@@ -405,7 +418,7 @@ OBJECT can be an instance or a class."
 
 (defun slot-exists-p (object-or-class slot)
   "Return non-nil if OBJECT-OR-CLASS has SLOT."
-  (let ((cv (class-v (cond ((eieio-object-p object-or-class)
+  (let ((cv (eieio--class-v (cond ((eieio-object-p object-or-class)
 			    (eieio-object-class object-or-class))
 			   ((class-p object-or-class)
 			    object-or-class))
@@ -421,7 +434,7 @@ If ERRORP is non-nil, `wrong-argument-type' is signaled."
   (if (not (class-p symbol))
       (if errorp (signal 'wrong-type-argument (list 'class-p symbol))
 	nil)
-    (class-v symbol)))
+    (eieio--class-v symbol)))
 
 ;;; Slightly more complex utility functions for objects
 ;;
@@ -520,8 +533,8 @@ arguments passed in at the top level.
 Use `next-method-p' to find out if there is a next method to call."
   (if (not (eieio--scoped-class))
       (error "`call-next-method' not called within a class specific method"))
-  (if (and (/= eieio-generic-call-key method-primary)
-	   (/= eieio-generic-call-key method-static))
+  (if (and (/= eieio-generic-call-key eieio--method-primary)
+	   (/= eieio-generic-call-key eieio--method-static))
       (error "Cannot `call-next-method' except in :primary or :static methods")
     )
   (let ((newargs (or replacement-args eieio-generic-call-arglst))
@@ -572,7 +585,7 @@ SLOTS are the initialization slots used by `shared-initialize'.
 This static method is called when an object is constructed.
 It allocates the vector used to represent an EIEIO object, and then
 calls `shared-initialize' on that object."
-  (let* ((new-object (copy-sequence (eieio--class-default-object-cache (class-v class)))))
+  (let* ((new-object (copy-sequence (eieio--class-default-object-cache (eieio--class-v class)))))
     ;; Update the name for the newly created object.
     (setf (eieio--object-name new-object) newname)
     ;; Call the initialize method on the new object with the slots
@@ -612,7 +625,7 @@ not taken, then new objects of your class will not have their values
 dynamically set from SLOTS."
   ;; First, see if any of our defaults are `lambda', and
   ;; re-evaluate them and apply the value to our slots.
-  (let* ((this-class (class-v (eieio--object-class this)))
+  (let* ((this-class (eieio--class-v (eieio--object-class this)))
 	 (slot (eieio--class-public-a this-class))
 	 (defaults (eieio--class-public-d this-class)))
     (while slot
@@ -767,7 +780,7 @@ this object."
     (princ comment)
     (princ "\n"))
   (let* ((cl (eieio-object-class this))
-	 (cv (class-v cl)))
+	 (cv (eieio--class-v cl)))
     ;; Now output readable lisp to recreate this object
     ;; It should look like this:
     ;; (<constructor> <name> <slot> <slot> ... )
@@ -870,35 +883,13 @@ variable PRINT-FUNCTION.  Optional argument NOESCAPE is passed to
                  ")"))
 	(t (funcall print-function object noescape))))
 
-(add-hook 'edebug-setup-hook
-	  (lambda ()
-	    (def-edebug-spec defmethod
-	      (&define			; this means we are defining something
-	       [&or name ("setf" :name setf name)]
-	       ;; ^^ This is the methods symbol
-	       [ &optional symbolp ]    ; this is key :before etc
-	       list              ; arguments
-	       [ &optional stringp ]    ; documentation string
-	       def-body	                ; part to be debugged
-	       ))
-	    ;; The rest of the macros
-	    (def-edebug-spec oref (form quote))
-	    (def-edebug-spec oref-default (form quote))
-	    (def-edebug-spec oset (form quote form))
-	    (def-edebug-spec oset-default (form quote form))
-	    (def-edebug-spec class-v form)
-	    (def-edebug-spec class-p form)
-	    (def-edebug-spec eieio-object-p form)
-	    (def-edebug-spec class-constructor form)
-	    (def-edebug-spec generic-p form)
-	    (def-edebug-spec with-slots (list list def-body))
-	    (advice-add 'edebug-prin1-to-string
-			:around #'eieio-edebug-prin1-to-string)))
+(advice-add 'edebug-prin1-to-string
+            :around #'eieio-edebug-prin1-to-string)
 
 
 ;;; Start of automatically extracted autoloads.
 
-;;;### (autoloads nil "eieio-custom" "eieio-custom.el" "ab711689b2bae8a7d8c4b1e99c892306")
+;;;### (autoloads nil "eieio-custom" "eieio-custom.el" "6413249ec10091eb7094238637b40e2c")
 ;;; Generated autoloads from eieio-custom.el
 
 (autoload 'customize-object "eieio-custom" "\
@@ -909,7 +900,7 @@ Optional argument GROUP is the sub-group of slots to display.
 
 ;;;***
 
-;;;### (autoloads nil "eieio-opt" "eieio-opt.el" "e50a67ebd0c6258c615e4bf16714e81f")
+;;;### (autoloads nil "eieio-opt" "eieio-opt.el" "6f114a48de40212413d2776eedc3ec14")
 ;;; Generated autoloads from eieio-opt.el
 
 (autoload 'eieio-browse "eieio-opt" "\

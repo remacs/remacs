@@ -40,7 +40,7 @@
   (let* ((file (oref original :file))
 	 (class (eieio-object-class original))
 	 (fromdisk (eieio-persistent-read file class))
-	 (cv (class-v class))
+	 (cv (eieio--class-v class))
 	 (slot-names  (eieio--class-public-a cv))
 	 (slot-deflt  (eieio--class-public-d cv))
 	 )

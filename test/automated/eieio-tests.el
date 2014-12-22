@@ -794,7 +794,7 @@ Subclasses to override slot attributes.")
   (should (eq (oref-default slotattr-class-ok initform) 'no-init)))
 
 (ert-deftest eieio-test-32-slot-attribute-override-2 ()
-  (let* ((cv (class-v 'slotattr-ok))
+  (let* ((cv (eieio--class-v 'slotattr-ok))
 	 (docs   (eieio--class-public-doc cv))
 	 (names  (eieio--class-public-a cv))
 	 (cust   (eieio--class-public-custom cv))

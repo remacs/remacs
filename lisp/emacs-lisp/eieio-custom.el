@@ -193,7 +193,7 @@ Optional argument IGNORE is an extraneous parameter."
   (let* ((chil nil)
 	 (obj (widget-get widget :value))
 	 (master-group (widget-get widget :eieio-group))
-	 (cv (class-v (eieio--object-class obj)))
+	 (cv (eieio--class-v (eieio--object-class obj)))
 	 (slots (eieio--class-public-a cv))
 	 (flabel (eieio--class-public-custom-label cv))
 	 (fgroup (eieio--class-public-custom-group cv))
@@ -288,7 +288,7 @@ Optional argument IGNORE is an extraneous parameter."
   "Get the value of WIDGET."
   (let* ((obj (widget-get widget :value))
 	 (master-group eieio-cog)
-	 (cv (class-v (eieio--object-class obj)))
+	 (cv (eieio--class-v (eieio--object-class obj)))
 	 (fgroup (eieio--class-public-custom-group cv))
 	 (wids (widget-get widget :children))
 	 (name (if (widget-get widget :eieio-show-name)
@@ -296,7 +296,7 @@ Optional argument IGNORE is an extraneous parameter."
 		 nil))
 	 (chil (if (widget-get widget :eieio-show-name)
 		   (nthcdr 1 wids) wids))
-	 (cv (class-v (eieio--object-class obj)))
+	 (cv (eieio--class-v (eieio--object-class obj)))
 	 (slots (eieio--class-public-a cv))
 	 (fcust (eieio--class-public-custom cv)))
     ;; If there are any prefix widgets, clear them.
@@ -321,7 +321,7 @@ Optional argument IGNORE is an extraneous parameter."
     ;; This is the same object we had before.
     obj))
 
-(defmethod eieio-done-customizing ((obj eieio-default-superclass))
+(defmethod eieio-done-customizing ((_obj eieio-default-superclass))
   "When applying change to a widget, call this method.
 This method is called by the default widget-edit commands.
 User made commands should also call this method when applying changes.
@@ -385,7 +385,7 @@ These groups are specified with the `:group' slot flag."
     (make-local-variable 'eieio-cog)
     (setq eieio-cog g)))
 
-(defmethod eieio-custom-object-apply-reset ((obj eieio-default-superclass))
+(defmethod eieio-custom-object-apply-reset ((_obj eieio-default-superclass))
   "Insert an Apply and Reset button into the object editor.
 Argument OBJ is the object being customized."
   (widget-create 'push-button

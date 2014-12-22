@@ -309,7 +309,7 @@ Second, any text properties will be stripped from strings."
 	       (type nil)
 	       (classtype nil))
 	   (setq slot-idx (- slot-idx 3))
-	   (setq type (aref (eieio--class-public-type (class-v class))
+	   (setq type (aref (eieio--class-public-type (eieio--class-v class))
 			    slot-idx))
 
 	   (setq classtype (eieio-persistent-slot-type-is-class-p
