@@ -1,3 +1,8 @@
+2014-12-23  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* progmodes/sh-script.el (sh-set-shell): Don't change the global value
+	of indent-line-function (bug#19433).
+
 2014-12-23  Fabián Ezequiel Gallina  <fgallina@gnu.org>
 
 	Fix line numbers on Python shell.
