@@ -240,12 +240,21 @@ This takes effect when first loading the `sgml-mode' library.")
   "A table for mapping non-ASCII characters into SGML entity names.
 Currently, only Latin-1 characters are supported.")
 
-;; nsgmls is a free SGML parser in the SP suite available from
-;; ftp.jclark.com and otherwise packaged for GNU systems.
-;; Its error messages can be parsed by next-error.
-;; The -s option suppresses output.
-
-(defcustom sgml-validate-command "nsgmls -s" ; replaced old `sgmls'
+(defcustom sgml-validate-command
+  ;; prefer tidy because (o)nsgmls is often built without --enable-http
+  ;; which makes it next to useless
+  (cond ((executable-find "tidy")
+         ;; tidy is available from http://tidy.sourceforge.net/
+         "tidy --gnu-emacs yes -utf8 -e -q")
+        ((executable-find "nsgmls")
+         ;; nsgmls is a free SGML parser in the SP suite available from
+         ;; ftp.jclark.com, replaced old `sgmls'.
+         "nsgmls -s")
+        ((executable-find "onsgmls")
+         ;; onsgmls is the community version of `nsgmls'
+         ;; hosted on http://openjade.sourceforge.net/
+         "onsgmls -s")
+        (t "Install (o)nsgmls, tidy, or some other SGML validator, and set `sgml-validate-command'"))
   "The command to validate an SGML document.
 The file name of current buffer file name will be appended to this,
 separated by a space."
@@ -447,6 +456,9 @@ This function is designed for use in `fill-nobreak-predicate'.
 	 (skip-chars-backward "/?!")
 	 (eq (char-before) ?<))))
 
+(defvar tildify-space-string)
+(defvar tildify-foreach-region-function)
+
 ;;;###autoload
 (define-derived-mode sgml-mode text-mode '(sgml-xml-mode "XML" "SGML")
   "Major mode for editing SGML documents.
@@ -468,6 +480,27 @@ Do \\[describe-key] on the following bindings to discover what they do.
 \\{sgml-mode-map}"
   (make-local-variable 'sgml-saved-validate-command)
   (make-local-variable 'facemenu-end-add-face)
+  ;; If encoding does not allow non-break space character, use reference.
+  ;; FIXME: Perhaps use &nbsp; if possible (e.g. when we know its HTML)?
+  (setq-local tildify-space-string
+              (if (equal (decode-coding-string
+                          (encode-coding-string " " buffer-file-coding-system)
+                          buffer-file-coding-system) " ")
+                  " " "&#160;"))
+  ;; FIXME: Use the fact that we're parsing the document already
+  ;; rather than using regex-based filtering.
+  (setq-local tildify-foreach-region-function
+              (apply-partially
+               'tildify-foreach-ignore-environments
+               `((,(eval-when-compile
+                     (concat
+                      "<\\("
+                      (regexp-opt '("pre" "dfn" "code" "samp" "kbd" "var"
+                                    "PRE" "DFN" "CODE" "SAMP" "KBD" "VAR"))
+                      "\\)\\>[^>]*>"))
+                  . ("</" 1 ">"))
+                 ("<! *--" . "-- *>")
+                 ("<" . ">"))))
   ;;(make-local-variable 'facemenu-remove-face-function)
   ;; A start or end tag by itself on a line separates a paragraph.
   ;; This is desirable because SGML discards a newline that appears

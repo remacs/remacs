@@ -54,7 +54,13 @@ When nil, the color range from `vc-annotate-color-map' is applied
 to the foreground, and the color from the option `vc-annotate-background'
 is applied to the background."
   :type 'boolean
-  :version "24.5"
+  :set (lambda (symbol value)
+	 (set-default symbol value)
+	 (when (boundp 'vc-annotate-color-map)
+	   (with-demoted-errors
+	     ;; Update the value of the dependent variable.
+	     (custom-reevaluate-setting 'vc-annotate-color-map))))
+  :version "25.1"
   :group 'vc)
 
 (defcustom vc-annotate-color-map
@@ -247,7 +253,7 @@ cover the range from the oldest annotation to the newest."
   (interactive "P")
   (let ((newest 0.0)
 	(oldest 999999.)		;Any CVS users at the founding of Rome?
-	(current (vc-annotate-convert-time (current-time)))
+	(current (vc-annotate-convert-time))
 	date)
     (message "Redisplaying annotation...")
     ;; Run through this file and find the oldest and newest dates annotated.
@@ -658,11 +664,10 @@ nil if no such cell exists."
      (setq i (+ i 1)))
    tmp-cons))				; Return the appropriate value
 
-(defun vc-annotate-convert-time (time)
-  "Convert a time value to a floating-point number of days.
-The argument TIME is a list as returned by `current-time' or
-`encode-time', only the first two elements of that list are considered."
-  (/ (+ (* (float (car time)) (lsh 1 16)) (cadr time)) 24 3600))
+(defun vc-annotate-convert-time (&optional time)
+  "Convert optional value TIME to a floating-point number of days.
+TIME defaults to the current time."
+  (/ (float-time time) 86400))
 
 (defun vc-annotate-difference (&optional offset)
   "Return the time span in days to the next annotation.
@@ -677,7 +682,7 @@ or OFFSET if present."
 
 (defun vc-default-annotate-current-time (_backend)
   "Return the current time, encoded as fractional days."
-  (vc-annotate-convert-time (current-time)))
+  (vc-annotate-convert-time))
 
 (defvar vc-annotate-offset nil)
 

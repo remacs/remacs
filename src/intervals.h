@@ -197,6 +197,7 @@ set_interval_plist (INTERVAL i, Lisp_Object plist)
 /* Is this interval writable?  Replace later with cache access.  */
 #define INTERVAL_WRITABLE_P(i)					\
   (i && (NILP (textget ((i)->plist, Qread_only))		\
+         || !NILP (textget ((i)->plist, Qinhibit_read_only))	\
 	 || ((CONSP (Vinhibit_read_only)			\
 	      ? !NILP (Fmemq (textget ((i)->plist, Qread_only),	\
 			      Vinhibit_read_only))		\

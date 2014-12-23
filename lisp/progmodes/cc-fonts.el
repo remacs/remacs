@@ -266,7 +266,7 @@
     ;; This function might do hidden buffer changes.
     (when (c-got-face-at (point) c-literal-faces)
       (while (progn
-	       (goto-char (next-single-property-change
+	       (goto-char (c-next-single-property-change
 			   (point) 'face nil limit))
 	       (and (< (point) limit)
 		    (c-got-face-at (point) c-literal-faces))))
@@ -366,39 +366,7 @@
 	      (parse-sexp-lookup-properties
 	       (cc-eval-when-compile
 		 (boundp 'parse-sexp-lookup-properties))))
-
-	  ;; (while (re-search-forward ,regexp limit t)
-	  ;;   (unless (progn
-	  ;; 	      (goto-char (match-beginning 0))
-	  ;; 	      (c-skip-comments-and-strings limit))
-	  ;;     (goto-char (match-end 0))
-	  ;;     ,@(mapcar
-	  ;; 	 (lambda (highlight)
-	  ;; 	   (if (integerp (car highlight))
-	  ;; 	       (progn
-	  ;; 		 (unless (eq (nth 2 highlight) t)
-	  ;; 		   (error
-	  ;; 		    "The override flag must currently be t in %s"
-	  ;; 		    highlight))
-	  ;; 		 (when (nth 3 highlight)
-	  ;; 		   (error
-	  ;; 		    "The laxmatch flag may currently not be set in %s"
-	  ;; 		    highlight))
-	  ;; 		 `(save-match-data
-	  ;; 		    (c-put-font-lock-face
-	  ;; 		     (match-beginning ,(car highlight))
-	  ;; 		     (match-end ,(car highlight))
-	  ;; 		     ,(elt highlight 1))))
-	  ;; 	     (when (nth 3 highlight)
-	  ;; 	       (error "Match highlights currently not supported in %s"
-	  ;; 		      highlight))
-	  ;; 	     `(progn
-	  ;; 		,(nth 1 highlight)
-	  ;; 		(save-match-data ,(car highlight))
-	  ;; 		,(nth 2 highlight))))
-	  ;; 	 highlights)))
 	  ,(c-make-font-lock-search-form regexp highlights))
-
 	nil)))
 
   (defun c-make-font-lock-BO-decl-search-function (regexp &rest highlights)
@@ -591,8 +559,7 @@ stuff.  Used on level 1 and higher."
 				   (progn
 				     (c-mark-<-as-paren beg)
 				     (c-mark->-as-paren end))
-				 ;; (c-clear-char-property beg 'syntax-table)
-				 (c-clear-char-property beg 'category)))
+				 (c-unmark-<->-as-paren beg)))
 			     nil)))))))
 
 	      ;; #define.
@@ -716,7 +683,11 @@ stuff.  Used on level 1 and higher."
   (let ((start (1- (point))))
     (save-excursion
       (and (eq (elt (parse-partial-sexp start (c-point 'eol)) 8) start)
-	   (if (integerp c-multiline-string-start-char)
+	   (if (if (eval-when-compile (integerp ?c))
+		   ;; Emacs
+		   (integerp c-multiline-string-start-char)
+		 ;; XEmacs
+		 (characterp c-multiline-string-start-char))
 	       ;; There's no multiline string start char before the
 	       ;; string, so newlines aren't allowed.
 	       (not (eq (char-before start) c-multiline-string-start-char))
@@ -1037,7 +1008,8 @@ casts and declarations are fontified.  Used on level 2 and higher."
        paren-depth
        id-face got-init
        c-last-identifier-range
-       (separator-prop (if types 'c-decl-type-start 'c-decl-id-start)))
+       (separator-prop (if types 'c-decl-type-start 'c-decl-id-start))
+       brackets-after-id)
 
     ;; The following `while' fontifies a single declarator id each time round.
     ;; It loops only when LIST is non-nil.
@@ -1110,17 +1082,21 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	    ;; Search syntactically to the end of the declarator (";",
 	    ;; ",", a closing paren, eob etc) or to the beginning of an
 	    ;; initializer or function prototype ("=" or "\\s\(").
-	    ;; Note that the open paren will match array specs in
-	    ;; square brackets, and we treat them as initializers too.
-	    (c-syntactic-re-search-forward
-	     "[;,]\\|\\s)\\|\\'\\|\\(=\\|\\s(\\)" limit t t))
+	    ;; Note that square brackets are now not also treated as
+	    ;; initializers, since this broke when there were also
+	    ;; initializing brace lists.
+	    (let (found)
+	      (while
+		  (and (setq found (c-syntactic-re-search-forward
+			     "[;,]\\|\\s)\\|\\'\\|\\(=\\|\\s(\\)" limit t t))
+		       (eq (char-before) ?\[)
+		       (c-go-up-list-forward))
+		     (setq brackets-after-id t))
+	      found))
 
       (setq next-pos (match-beginning 0)
 	    id-face (if (and (eq (char-after next-pos) ?\()
-			     (let (c-last-identifier-range)
-			       (save-excursion
-				 (goto-char next-pos)
-				 (c-at-toplevel-p))))
+			     (not brackets-after-id))
 			'font-lock-function-name-face
 		      'font-lock-variable-name-face)
 	    got-init (and (match-beginning 1)
@@ -1146,7 +1122,6 @@ casts and declarations are fontified.  Used on level 2 and higher."
       (when list
 	;; Jump past any initializer or function prototype to see if
 	;; there's a ',' to continue at.
-
 	(cond ((eq id-face 'font-lock-function-name-face)
 	       ;; Skip a parenthesized initializer (C++) or a function
 	       ;; prototype.
@@ -1214,8 +1189,8 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	  ;; o - nil, if not in an arglist at all.  This includes the
 	  ;;   parenthesized condition which follows "if", "while", etc.
 	  context
-	  ;; The position of the next token after the closing paren of
-	  ;; the last detected cast.
+	  ;; A list of starting positions of possible type declarations, or of
+	  ;; the typedef preceding one, if any.
 	  last-cast-end
 	  ;; The result from `c-forward-decl-or-cast-1'.
 	  decl-or-cast
@@ -1279,6 +1254,8 @@ casts and declarations are fontified.  Used on level 2 and higher."
        c-font-lock-maybe-decl-faces
 
        (lambda (match-pos inside-macro)
+	 ;; Note to maintainers: don't use `limit' inside this lambda form;
+	 ;; c-find-decl-spots sometimes narrows to less than `limit'.
 	 (setq start-pos (point))
 	 (when
 	  ;; The result of the form below is true when we don't recognize a
@@ -1301,14 +1278,15 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	      (cond ((not (memq (char-before match-pos) '(?\( ?, ?\[ ?<)))
 		     (setq context nil
 			   c-restricted-<>-arglists nil))
-		    ;; A control flow expression
+		    ;; A control flow expression or a decltype
 		    ((and (eq (char-before match-pos) ?\()
 			  (save-excursion
 			    (goto-char match-pos)
 			    (backward-char)
 			    (c-backward-token-2)
 			    (or (looking-at c-block-stmt-2-key)
-				(looking-at c-block-stmt-1-2-key))))
+				(looking-at c-block-stmt-1-2-key)
+				(looking-at c-typeof-key))))
 		     (setq context nil
 			   c-restricted-<>-arglists t))
 		    ;; Near BOB.
@@ -1486,33 +1464,38 @@ casts and declarations are fontified.  Used on level 2 and higher."
 		    c-recognize-knr-p) ; Strictly speaking, bogus, but it
 				       ; speeds up lisp.h tremendously.
 		(save-excursion
-		  (setq bod-res (car (c-beginning-of-decl-1 decl-search-lim)))
-		  (if (and (eq bod-res 'same)
-			   (progn
-			     (c-backward-syntactic-ws)
-			     (eq (char-before) ?\})))
-		      (c-beginning-of-decl-1 decl-search-lim))
+		  (if (c-back-over-member-initializers)
+		     t			; Can't be at a declarator
+		    (unless (or (eobp)
+				(looking-at "\\s(\\|\\s)"))
+		      (forward-char))
+		    (setq bod-res (car (c-beginning-of-decl-1 decl-search-lim)))
+		    (if (and (eq bod-res 'same)
+			     (save-excursion
+			       (c-backward-syntactic-ws)
+			       (eq (char-before) ?\})))
+			(c-beginning-of-decl-1 decl-search-lim))
 
-		  ;; We're now putatively at the declaration.
-		  (setq paren-state (c-parse-state))
-		  ;; At top level or inside a "{"?
-		  (if (or (not (setq encl-pos
-				     (c-most-enclosing-brace paren-state)))
-			  (eq (char-after encl-pos) ?\{))
-		      (progn
-			(when (looking-at c-typedef-key) ; "typedef"
-			  (setq is-typedef t)
-			  (goto-char (match-end 0))
-			  (c-forward-syntactic-ws))
-			;; At a real declaration?
-			(if (memq (c-forward-type t) '(t known found))
-			    (progn
-			      (c-font-lock-declarators limit t is-typedef)
-			      nil)
-			  ;; False alarm.  Return t to go on to the next check.
-			  (goto-char start-pos)
-			  t))
-		    t))))))
+		    ;; We're now putatively at the declaration.
+		    (setq paren-state (c-parse-state))
+		    ;; At top level or inside a "{"?
+		    (if (or (not (setq encl-pos
+				       (c-most-enclosing-brace paren-state)))
+			    (eq (char-after encl-pos) ?\{))
+			(progn
+			  (when (looking-at c-typedef-key) ; "typedef"
+			    (setq is-typedef t)
+			    (goto-char (match-end 0))
+			    (c-forward-syntactic-ws))
+			  ;; At a real declaration?
+			  (if (memq (c-forward-type t) '(t known found decltype))
+			      (progn
+				(c-font-lock-declarators (point-max) t is-typedef)
+				nil)
+			    ;; False alarm.  Return t to go on to the next check.
+			    (goto-char start-pos)
+			    t))
+		      t)))))))
 
 	  ;; It was a false alarm.  Check if we're in a label (or other
 	  ;; construct with `:' except bitfield) instead.
@@ -1555,9 +1538,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
   ;; Note that this function won't attempt to fontify beyond the end of the
   ;; current enum block, if any.
   (let* ((paren-state (c-parse-state))
-	 (encl-pos (c-most-enclosing-brace paren-state))
-	 (start (point))
-	)
+	 (encl-pos (c-most-enclosing-brace paren-state)))
     (when (and
 	   encl-pos
 	   (eq (char-after encl-pos) ?\{)
@@ -2122,7 +2103,7 @@ need for `c-font-lock-extra-types'.")
 	      ;; Got two parenthesized expressions, so we have to look
 	      ;; closer at them to decide which is the type.  No need to
 	      ;; handle `c-record-ref-identifiers' since all references
-	      ;; has already been handled by other fontification rules.
+	      ;; have already been handled by other fontification rules.
 	      (let (expr1-res expr2-res)
 
 		(goto-char expr1-pos)
@@ -2157,6 +2138,9 @@ need for `c-font-lock-extra-types'.")
 		;; unusual than an initializer.
 		(cond ((memq expr1-res '(t known prefix)))
 		      ((memq expr2-res '(t known prefix)))
+		      ;; Presumably 'decltype's will be fontified elsewhere.
+		      ((eq expr1-res 'decltype))
+		      ((eq expr2-res 'decltype))
 		      ((eq expr1-res 'found)
 		       (let ((c-promote-possible-types t))
 			 (goto-char expr1-pos)
@@ -2719,4 +2703,8 @@ need for `pike-font-lock-extra-types'.")
 ;; 2006-07-10:  awk-font-lock-keywords has been moved back to cc-awk.el.
 (cc-provide 'cc-fonts)
 
+;;; Local Variables:
+;;; indent-tabs-mode: t
+;;; tab-width: 8
+;;; End:
 ;;; cc-fonts.el ends here

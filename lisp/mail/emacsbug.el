@@ -137,13 +137,18 @@ This requires either the OS X \"open\" command, or the freedesktop
 			   (concat "mailto:" to)))
 	(error "Subject, To or body not found")))))
 
+;; It's the default mail mode, so it seems OK to use its features.
+(autoload 'message-bogus-recipient-p "message")
+(autoload 'message-make-address "message")
+(defvar message-send-mail-function)
+(defvar message-sendmail-envelope-from)
+
 ;;;###autoload
-(defun report-emacs-bug (topic &optional recent-keys)
+(defun report-emacs-bug (topic &optional unused)
   "Report a bug in GNU Emacs.
 Prompts for bug subject.  Leaves you in a mail buffer."
-  ;; This strange form ensures that (recent-keys) is the value before
-  ;; the bug subject string is read.
-  (interactive (reverse (list (recent-keys) (read-string "Bug Subject: "))))
+  (declare (advertised-calling-convention (topic) "24.5"))
+  (interactive "sBug Subject: ")
   ;; The syntax `version;' is preferred to `[version]' because the
   ;; latter could be mistakenly stripped by mailing software.
   (if (eq system-type 'ms-dos)
@@ -165,7 +170,12 @@ Prompts for bug subject.  Leaves you in a mail buffer."
       ;; that report-emacs-bug-orig-text remains valid.  (Bug#5178)
       (message-sort-headers)
       ;; Stop message-mode stealing the properties we will add.
-      (set (make-local-variable 'message-strip-special-text-properties) nil))
+      (set (make-local-variable 'message-strip-special-text-properties) nil)
+      ;; Make sure we default to the From: address as envelope when sending
+      ;; through sendmail.
+      (when (and (not message-sendmail-envelope-from)
+		 (message-bogus-recipient-p (message-make-address)))
+	(set (make-local-variable 'message-sendmail-envelope-from) 'header)))
     (rfc822-goto-eoh)
     (forward-line 1)
     ;; Move the mail signature to the proper place.
@@ -273,23 +283,6 @@ usually do not have translators for other languages.\n\n")))
       (and (boundp mode) (buffer-local-value mode from-buffer)
 	   (insert (format "  %s: %s\n" mode
 			   (buffer-local-value mode from-buffer)))))
-    (insert "\n")
-    (insert "Recent input:\n")
-    (let ((before-keys (point)))
-      (insert (mapconcat (lambda (key)
-			   (if (or (integerp key)
-				   (symbolp key)
-				   (listp key))
-			       (single-key-description key)
-			     (prin1-to-string key nil)))
-			 (or recent-keys (recent-keys))
-			 " "))
-      (save-restriction
-	(narrow-to-region before-keys (point))
-	(goto-char before-keys)
-	(while (progn (move-to-column 50) (not (eobp)))
-	  (search-forward " " nil t)
-	  (insert "\n"))))
     (let ((message-buf (get-buffer "*Messages*")))
       (if message-buf
 	  (let (beg-pos
@@ -298,7 +291,7 @@ usually do not have translators for other languages.\n\n")))
 	      (goto-char end-pos)
 	      (forward-line -10)
 	      (setq beg-pos (point)))
-	    (insert "\n\nRecent messages:\n")
+	    (insert "\nRecent messages:\n")
 	    (insert-buffer-substring message-buf beg-pos end-pos))))
     ;; After Recent messages, to avoid the messages produced by
     ;; list-load-path-shadows.
@@ -363,10 +356,6 @@ usually do not have translators for other languages.\n\n")))
     (goto-char user-point)))
 
 (define-obsolete-function-alias 'report-emacs-bug-info 'info-emacs-bug "24.3")
-
-;; It's the default mail mode, so it seems OK to use its features.
-(autoload 'message-bogus-recipient-p "message")
-(defvar message-send-mail-function)
 
 (defun report-emacs-bug-hook ()
   "Do some checking before sending a bug report."

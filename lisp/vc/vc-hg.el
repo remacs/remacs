@@ -43,29 +43,22 @@
 ;; STATE-QUERYING FUNCTIONS
 ;; * registered (file)                         OK
 ;; * state (file)                              OK
-;; - state-heuristic (file)                    NOT NEEDED
-;; - dir-status (dir update-function)          OK
-;; - dir-status-files (dir files ds uf)        OK
+;; - dir-status-files (dir files uf)           OK
 ;; - dir-extra-headers (dir)                   OK
 ;; - dir-printer (fileinfo)                    OK
 ;; * working-revision (file)                   OK
-;; - latest-on-branch-p (file)                 ??
 ;; * checkout-model (files)                    OK
-;; - workfile-unchanged-p (file)               OK
 ;; - mode-line-string (file)                   NOT NEEDED
 ;; STATE-CHANGING FUNCTIONS
 ;; * register (files &optional rev comment)    OK
 ;; * create-repo ()                            OK
-;; - init-revision ()                          NOT NEEDED
 ;; - responsible-p (file)                      OK
-;; - could-register (file)                     OK
 ;; - receive-file (file rev)                   ?? PROBABLY NOT NEEDED
 ;; - unregister (file)                         OK
 ;; * checkin (files rev comment)               OK
 ;; * find-revision (file rev buffer)           OK
-;; * checkout (file &optional editable rev)    OK
+;; * checkout (file &optional rev)             OK
 ;; * revert (file &optional contents-done)     OK
-;; - rollback (files)                          ?? PROBABLY NOT NEEDED
 ;; - merge (file rev1 rev2)                    NEEDED
 ;; - merge-news (file)                         NEEDED
 ;; - steal-lock (file &optional revision)      NOT NEEDED
@@ -86,11 +79,9 @@
 ;; - retrieve-tag (dir name update)            OK FIXME UPDATE BUFFERS
 ;; MISCELLANEOUS
 ;; - make-version-backups-p (file)             ??
-;; - repository-hostname (dirname)             ??
 ;; - previous-revision (file rev)              OK
 ;; - next-revision (file rev)                  OK
 ;; - check-headers ()                          ??
-;; - clear-headers ()                          ??
 ;; - delete-file (file)                        TEST IT
 ;; - rename-file (old new)                     OK
 ;; - find-file-hook ()                         added for bug#10709
@@ -195,6 +186,7 @@ highlighting the Log View buffer."
 
 (defun vc-hg-state (file)
   "Hg-specific version of `vc-state'."
+  (setq file (expand-file-name file))
   (let*
       ((status nil)
        (default-directory (file-name-directory file))
@@ -207,9 +199,10 @@ highlighting the Log View buffer."
                       ;; Ignore all errors.
 		      (let ((process-environment
 			     ;; Avoid localization of messages so we
-			     ;; can parse the output.
-			     (append (list "TERM=dumb" "LANGUAGE=C")
-				     process-environment)))
+			     ;; can parse the output.  Disable pager.
+			     (append
+			      (list "TERM=dumb" "LANGUAGE=C" "HGPLAIN=1")
+			      process-environment)))
 			(process-file
 			 vc-hg-program nil t nil
 			 "--config" "alias.status=status"
@@ -218,19 +211,20 @@ highlighting the Log View buffer."
                     ;; Some problem happened.  E.g. We can't find an `hg'
                     ;; executable.
                     (error nil)))))))
-    (when (eq 0 status)
-        (when (null (string-match ".*: No such file or directory$" out))
-          (let ((state (aref out 0)))
-            (cond
-             ((eq state ?=) 'up-to-date)
-             ((eq state ?A) 'added)
-             ((eq state ?M) 'edited)
-             ((eq state ?I) 'ignored)
-             ((eq state ?R) 'removed)
-             ((eq state ?!) 'missing)
-             ((eq state ??) 'unregistered)
-             ((eq state ?C) 'up-to-date) ;; Older mercurial versions use this.
-             (t 'up-to-date)))))))
+    (when (and (eq 0 status)
+	       (> (length out) 0)
+	       (null (string-match ".*: No such file or directory$" out)))
+      (let ((state (aref out 0)))
+	(cond
+	 ((eq state ?=) 'up-to-date)
+	 ((eq state ?A) 'added)
+	 ((eq state ?M) 'edited)
+	 ((eq state ?I) 'ignored)
+	 ((eq state ?R) 'removed)
+	 ((eq state ?!) 'missing)
+	 ((eq state ??) 'unregistered)
+	 ((eq state ?C) 'up-to-date) ;; Older mercurial versions use this.
+	 (t 'up-to-date))))))
 
 (defun vc-hg-working-revision (file)
   "Hg-specific version of `vc-working-revision'."
@@ -319,7 +313,7 @@ If LIMIT is non-nil, show no more than this many entries."
 
 (autoload 'vc-switches "vc")
 
-(defun vc-hg-diff (files &optional oldvers newvers buffer)
+(defun vc-hg-diff (files &optional oldvers newvers buffer async)
   "Get a difference report using hg between two revisions of FILES."
   (let* ((firstfile (car files))
          (working (and firstfile (vc-working-revision firstfile))))
@@ -327,7 +321,10 @@ If LIMIT is non-nil, show no more than this many entries."
       (setq oldvers nil))
     (when (and (not oldvers) newvers)
       (setq oldvers working))
-    (apply #'vc-hg-command (or buffer "*vc-diff*") nil files "diff"
+    (apply #'vc-hg-command
+	   (or buffer "*vc-diff*")
+	   (if async 'async nil)
+	   files "diff"
            (append
             (vc-switches 'hg 'diff)
             (when oldvers
@@ -399,7 +396,7 @@ Optional arg REVISION is a revision to annotate from."
     (and (vc-hg-command nil 0 nil "status")
          (vc-hg-command nil 0 nil (if branchp "bookmark" "tag") name))))
 
-(defun vc-hg-retrieve-tag (dir name update)
+(defun vc-hg-retrieve-tag (dir name _update)
   "Retrieve the version tagged by NAME of all registered files at or below DIR."
   (let ((default-directory dir))
     (vc-hg-command nil 0 nil "update" name)
@@ -440,10 +437,8 @@ Optional arg REVISION is a revision to annotate from."
   "Rename file from OLD to NEW using `hg mv'."
   (vc-hg-command nil 0 new "mv" old))
 
-(defun vc-hg-register (files &optional _rev _comment)
-  "Register FILES under hg.
-REV is ignored.
-COMMENT is ignored."
+(defun vc-hg-register (files &optional _comment)
+  "Register FILES under hg. COMMENT is ignored."
   (vc-hg-command nil 0 files "add"))
 
 (defun vc-hg-create-repo ()
@@ -452,24 +447,13 @@ COMMENT is ignored."
 
 (defalias 'vc-hg-responsible-p 'vc-hg-root)
 
-;; Modeled after the similar function in vc-bzr.el
-(defun vc-hg-could-register (file)
-  "Return non-nil if FILE could be registered under hg."
-  (and (vc-hg-responsible-p file)      ; shortcut
-       (condition-case ()
-           (with-temp-buffer
-             (vc-hg-command t nil file "add" "--dry-run"))
-             ;; The command succeeds with no output if file is
-             ;; registered.
-         (error))))
-
 (defun vc-hg-unregister (file)
   "Unregister FILE from hg."
   (vc-hg-command nil 0 file "forget"))
 
 (declare-function log-edit-extract-headers "log-edit" (headers string))
 
-(defun vc-hg-checkin (files _rev comment)
+(defun vc-hg-checkin (files comment)
   "Hg-specific version of `vc-backend-checkin'.
 REV is ignored."
   (apply 'vc-hg-command nil 0 files
@@ -491,7 +475,7 @@ REV is ignored."
 		    (vc-hg-root file)))
 
 ;; Modeled after the similar function in vc-bzr.el
-(defun vc-hg-checkout (file &optional _editable rev)
+(defun vc-hg-checkout (file &optional rev)
   "Retrieve a revision of FILE.
 EDITABLE is ignored.
 REV is the revision to check out into WORKFILE."
@@ -530,10 +514,6 @@ REV is the revision to check out into WORKFILE."
     (add-hook 'after-save-hook 'vc-hg-resolve-when-done nil t)
     (message "There are unresolved conflicts in this file")))
 
-
-;; Modeled after the similar function in vc-bzr.el
-(defun vc-hg-workfile-unchanged-p (file)
-  (eq 'up-to-date (vc-hg-state file)))
 
 ;; Modeled after the similar function in vc-bzr.el
 (defun vc-hg-revert (file &optional contents-done)
@@ -632,15 +612,12 @@ REV is the revision to check out into WORKFILE."
 ;; Follows vc-exec-after.
 (declare-function vc-set-async-update "vc-dispatcher" (process-buffer))
 
-(defun vc-hg-dir-status (dir update-function)
-  (vc-hg-command (current-buffer) 'async dir "status" "-C")
+(defun vc-hg-dir-status-files (dir files update-function)
+  (apply 'vc-hg-command (current-buffer) 'async dir "status"
+         (concat "-mardu" (if files "i"))
+         "-C" files)
   (vc-run-delayed
-   (vc-hg-after-dir-status update-function)))
-
-(defun vc-hg-dir-status-files (dir files _default-state update-function)
-  (apply 'vc-hg-command (current-buffer) 'async dir "status" "-C" files)
-  (vc-run-delayed
-   (vc-hg-after-dir-status update-function)))
+    (vc-hg-after-dir-status update-function)))
 
 (defun vc-hg-dir-extra-header (name &rest commands)
   (concat (propertize name 'face 'font-lock-type-face)

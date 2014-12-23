@@ -473,10 +473,10 @@
 
 1995-05-28  Morten Welinder  <terra+@cs.cmu.edu>
 
-        * s/osf1.h (COFF): Define.
-        * m/alpha.h (LD_SWITCH_MACHINE) [!__GNUC__]: Don't define.
-        (r_alloc, r_re_alloc, r_alloc_free) [REL_ALLOC,
-        !_MALLOC_INTERNAL, !NOT_C_CODE]: Prototype.
+	* s/osf1.h (COFF): Define.
+	* m/alpha.h (LD_SWITCH_MACHINE) [!__GNUC__]: Don't define.
+	(r_alloc, r_re_alloc, r_alloc_free) [REL_ALLOC,
+	!_MALLOC_INTERNAL, !NOT_C_CODE]: Prototype.
 
 1995-05-28  Richard Stallman  <rms@gnu.ai.mit.edu>
 
@@ -1281,18 +1281,18 @@
 
 	* ntinevt.c (nt_kdb_patch_event): Created.
 
-        * callproc.c (child_setup) [WINDOWSNT]: Removed syntax errors.
+	* callproc.c (child_setup) [WINDOWSNT]: Removed syntax errors.
 
 	* dired.c (Ffile_attributes) [WINDOWSNT]: Removed syntax errors.
 
 	* fileio.c (Fexpand_file_name) [DOS_NT]: Preserve drive letter case.
 	Fix syntax errors.
-        Check drive letter when expanding ~\.
+	Check drive letter when expanding ~\.
 
 	* sysdep.c (sys_subshell) [WINDOWSNT]: Don't invoke restore_console.
 
 	* ntproc.c (win32_wait): Reap synchronous subprocesses, and place
-        return code in synch_process_retcode.
+	return code in synch_process_retcode.
 
 	* s/windowsnt.h (ctime): Defined to be nt_ctime.
 	(NULL): Defined when missing from included system files.
@@ -1351,7 +1351,7 @@
 	(get_inode_and_device_vals): Handle directories.
 
 	* fileio.c (Fexpand_file_name) [DOS_NT]: Don't strip slash from
-        default dirs like "C:\\"
+	default dirs like "C:\\"
 
 	* makefile.nt (all): Use COMPAT_LIB in library list.
 	Use DEL_TREE instead of delnode.
@@ -1503,9 +1503,9 @@
 
 1995-04-08  Noah Friedman  <friedman@prep.ai.mit.edu>
 
-        * window.c (Fnext_window, Fprevious_window): If all_frames is a
-        frame and window is not on that frame, return the first window on
-        that frame.
+	* window.c (Fnext_window, Fprevious_window): If all_frames is a
+	frame and window is not on that frame, return the first window on
+	that frame.
 
 1995-04-07  Richard Stallman  <rms@mole.gnu.ai.mit.edu>
 
@@ -2899,7 +2899,7 @@
 1995-01-10  Richard Stallman  <rms@mole.gnu.ai.mit.edu>
 
 	* emacs.c (main): Handle SIGABRT, SIGHWE, SIGPRE, SIGORE, SIGDLK,
-        SIGCPULIM, if they are defined.
+	SIGCPULIM, if they are defined.
 
 	* alloc.c (DONT_COPY_FLAG): New bit flag.
 	(mark_object, gc_sweep, compact_strings): Use it.
@@ -3547,7 +3547,7 @@
 1994-11-16  Roland McGrath  <roland@churchy.gnu.ai.mit.edu>
 
 	* xdisp.c (try_window): Don't pass window to Fget_char_property;
-        pass its buffer.
+	pass its buffer.
 	(display_text_line): Likewise.
 
 1994-11-16  Francesco Potortì  (pot@cnuce.cnr.it)
@@ -3770,7 +3770,7 @@
 1994-11-07  Roland McGrath  <roland@churchy.gnu.ai.mit.edu>
 
 	* keyboard.c: Move decl of input_fd outside of #ifdef
-        HAVE_X_WINDOWS.
+	HAVE_X_WINDOWS.
 
 1994-11-03  Karl Heuer  <kwzh@hal.gnu.ai.mit.edu>
 
@@ -3788,7 +3788,7 @@
 	(HAVE_MOUSE): Defined.
 
 	* ntheap.c (sbrk): Allow request sizes to be different than the
-        page size.
+	page size.
 
 	* makefile.nt: Changed references of m\m-windowsnt.h to
 	m\intel386.h and of s\s-windowsnt.h to s\windowsnt.h.
@@ -4087,7 +4087,7 @@
 
 1994-10-25  Karl Fogel  (kfogel@phylo.life.uiuc.edu)
 
-        * window.c (Vtemp_buffer_show_function): Doc fix.
+	* window.c (Vtemp_buffer_show_function): Doc fix.
 
 1994-10-25  Richard Stallman  <rms@mole.gnu.ai.mit.edu>
 
@@ -4780,7 +4780,7 @@
 	* xmenu.c: Delete HAVE_X11 conditionals.
 
 	* xfaces.c (compute_base_face): Use FRAME_FOREGROUND_PIXEL,
-        FRAME_BACKGROUND_PIXEL, FRAME_FONT.
+	FRAME_BACKGROUND_PIXEL, FRAME_FONT.
 
 	* xterm.h (FRAME_FOREGROUND_PIXEL, FRAME_BACKGROUND_PIXEL)
 	(FRAME_FONT): New macros.
@@ -4973,59 +4973,59 @@
 
 1994-10-09  Jim Blandy  <jimb@geech.gnu.ai.mit.edu>
 
-        Cache the results of some scans, to improve performance in buffers
-        containing very long lines.
-        * region-cache.c, region-cache.h: New files.
-        * Makefile.in.in (obj) Add region-cache.o to the list of files.
-        (region-cache.o): New target.
-        (buffer.o, indent.o, search.o): Depend on region-cache.h.
-        * buffer.h (struct buffer): New members: newline_cache,
-        width_run_cache, width_table, and cache_long_line_scans.
-        * buffer.c: #include region-cache.h.
-        (Fget_buffer_create): Initialize new members of struct buffer.
-        (Fkill_buffer): Free memory occupied by caches.
-        (init_buffer_once): Set default value for cache_long_line_scans in
-        buffer_defaults, and give it a bit in buffer_local_flags.
-        (syms_of_buffer): Add DEFVAR_PER_BUFFER for cache_long_line_scans.
-        * insdel.c (prepare_to_modify_buffer): Invalidate width run and
-        newline caches, if they exist.
-        * search.c: #include "region-cache.h".
-        (max, min): Make these functions, not macros; we'd like to pass
-        them arguments that would be bad to evaluate more than once.
-        (newline_cache_on_off): New function.
-        (scan_buffer): New argument END.  Call newline_cache_on_off.  If
-        this buffer's newline cache is enabled, consult it to see if we
-        need to scan a region for newlines, and store information in the
-        cache after doing so.
-        (find_next_newline): Pass new arg to scan_buffer.
-        (find_before_next_newline): New function.
-        * cmds.c (Fforward_line): Call scan_buffer with new args.
-        (Fend_of_line): Replace call to Fforward_line and search loop with
-        call to find_before_next_newline.
-        * syntax.c (find_defun_start): Call scan_buffer with new args.
-        * indent.c: #include "region-cache.h".
-        (character_width, disptab_matches_widthtab, recompute_width_table,
-        width_run_cache_on_off): New functions.
-        (compute_motion): Call width_run_cache_on_off.  If this buffer's
-        width run cache is enabled, consult it to see if we need to
-        traverse a region character-by-character; store information in the
-        cache after doing so.  Call find_before_next_newline instead of
-        writing out an equivalent loop explicitly, to take advantage of
-        the newline cache.
-        Doc fixes.
-        * xdisp.c (redisplay_window): Invalidate width_run_cache, if the
-        buffer's display table doesn't match the width table the cache was
-        built for.
-        (display_text_line): Use compute_motion to skip forward to the
-        left edge of the window when the window is hscrolled; this is
-        faster than rendering all the characters into the bit bucket when
-        the hscroll is large.
-        Doc fixes.
-        (display_count_lines): Call scan_buffer with new args.
-        * disptab.h (window_display_table): Doc fix.
-        (buffer_display_table): New declaration.
-        * indent.h (disptab_matches_widthtab, recompute_width_table): New
-        declarations.
+	Cache the results of some scans, to improve performance in buffers
+	containing very long lines.
+	* region-cache.c, region-cache.h: New files.
+	* Makefile.in.in (obj) Add region-cache.o to the list of files.
+	(region-cache.o): New target.
+	(buffer.o, indent.o, search.o): Depend on region-cache.h.
+	* buffer.h (struct buffer): New members: newline_cache,
+	width_run_cache, width_table, and cache_long_line_scans.
+	* buffer.c: #include region-cache.h.
+	(Fget_buffer_create): Initialize new members of struct buffer.
+	(Fkill_buffer): Free memory occupied by caches.
+	(init_buffer_once): Set default value for cache_long_line_scans in
+	buffer_defaults, and give it a bit in buffer_local_flags.
+	(syms_of_buffer): Add DEFVAR_PER_BUFFER for cache_long_line_scans.
+	* insdel.c (prepare_to_modify_buffer): Invalidate width run and
+	newline caches, if they exist.
+	* search.c: #include "region-cache.h".
+	(max, min): Make these functions, not macros; we'd like to pass
+	them arguments that would be bad to evaluate more than once.
+	(newline_cache_on_off): New function.
+	(scan_buffer): New argument END.  Call newline_cache_on_off.  If
+	this buffer's newline cache is enabled, consult it to see if we
+	need to scan a region for newlines, and store information in the
+	cache after doing so.
+	(find_next_newline): Pass new arg to scan_buffer.
+	(find_before_next_newline): New function.
+	* cmds.c (Fforward_line): Call scan_buffer with new args.
+	(Fend_of_line): Replace call to Fforward_line and search loop with
+	call to find_before_next_newline.
+	* syntax.c (find_defun_start): Call scan_buffer with new args.
+	* indent.c: #include "region-cache.h".
+	(character_width, disptab_matches_widthtab, recompute_width_table,
+	width_run_cache_on_off): New functions.
+	(compute_motion): Call width_run_cache_on_off.  If this buffer's
+	width run cache is enabled, consult it to see if we need to
+	traverse a region character-by-character; store information in the
+	cache after doing so.  Call find_before_next_newline instead of
+	writing out an equivalent loop explicitly, to take advantage of
+	the newline cache.
+	Doc fixes.
+	* xdisp.c (redisplay_window): Invalidate width_run_cache, if the
+	buffer's display table doesn't match the width table the cache was
+	built for.
+	(display_text_line): Use compute_motion to skip forward to the
+	left edge of the window when the window is hscrolled; this is
+	faster than rendering all the characters into the bit bucket when
+	the hscroll is large.
+	Doc fixes.
+	(display_count_lines): Call scan_buffer with new args.
+	* disptab.h (window_display_table): Doc fix.
+	(buffer_display_table): New declaration.
+	* indent.h (disptab_matches_widthtab, recompute_width_table): New
+	declarations.
 
 1994-10-08  Richard Stallman  <rms@mole.gnu.ai.mit.edu>
 
@@ -5194,13 +5194,13 @@
 	independence.  Enable using editres for X11R5.
 
 	* widget.c (EmacsFrameSetCharSize): Use lw_refigure_widget for
-        widget set independence.
+	widget set independence.
 
 	* widget.h: Declare resources showGrip, allowResize, and
-        resizeToPreferred.
+	resizeToPreferred.
 
 	* keyboard.c (make_lispy_event): Do not set item.  Now handled in
-        xmenu.c by popup_get_selection.
+	xmenu.c by popup_get_selection.
 
 1994-10-01  Richard Stallman  <rms@mole.gnu.ai.mit.edu>
 
@@ -5375,7 +5375,7 @@
 
 	* process.c (Fprocess_send_eof): Delete DID_REMOTE conditional.
 
-        * buffer.c (get-file-buffer): Doc fix.
+	* buffer.c (get-file-buffer): Doc fix.
 
 1994-09-23  Richard Stallman  <rms@mole.gnu.ai.mit.edu>
 
@@ -5580,7 +5580,7 @@
 
 1994-09-19  Jim Blandy  <jimb@geech.gnu.ai.mit.edu>
 
-        Add a new element to display tables controlling side-by-side
+	Add a new element to display tables controlling side-by-side
 	window borders.
 	* buffer.c (syms_of_buffer): Update doc string for
 	`buffer-display-table'.
@@ -6207,7 +6207,7 @@
 	* Makefile.in.in (FRAME_SUPPORT): Add faces.elc.
 
 	* search.c (Freplace_match): Treat caseless initial like a
-        lowercase initial.
+	lowercase initial.
 
 	* keymap.c (Fdefine_key): Fix error message.
 	(Fsingle_key_description): Likewise.
@@ -6418,8 +6418,8 @@
 
 1994-07-23  Jim Blandy  (jimb@totoro.bio.indiana.edu)
 
-        * .gdbinit: Set the breakpoint in x_error_quitter instead of
-        _XPrintDefaultError.
+	* .gdbinit: Set the breakpoint in x_error_quitter instead of
+	_XPrintDefaultError.
 
 1994-07-20  Richard Stallman  (rms@mole.gnu.ai.mit.edu)
 
@@ -6910,7 +6910,7 @@
 1994-06-16  Roland McGrath  (roland@geech.gnu.ai.mit.edu)
 
 	* unexec.c: Include <sys/file.h> and [USG5] <fcntl.h> to define
-        O_* macros.
+	O_* macros.
 	(O_RDONLY, O_RDWR): Define if undefined.
 	[emacs] (report_error): Use report_file_error so the user can tell
 	what the errno code was.

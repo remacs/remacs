@@ -1,7 +1,7 @@
 Emacs machines list
 
-Copyright (C) 1989-1990, 1992-1993, 1998, 2001-2014 Free Software
-Foundation, Inc.
+Copyright (C) 1989-1990, 1992-1993, 1998, 2001-2014
+  Free Software Foundation, Inc.
 See the end of the file for license conditions.
 
 This is a list of the status of GNU Emacs on various machines and systems.
@@ -66,6 +66,7 @@ the list at the end of this file.
 
 ** Mac OS X
 
+  Version 10.6 or newer.  PowerPC is not supported.
   For installation instructions see the file nextstep/INSTALL.
 
 ** Microsoft Windows

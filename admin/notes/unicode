@@ -187,19 +187,6 @@ nontrivial changes to the build process.
 
 	leim/MISC-DIC/cangjie-table.cns
 
- * iso-latin-2
-
-     These files are processed by csplain, a program that requires
-     Latin-2 input.  In 2012 the csplain maintainers started
-     recommending UTF-8, but these files haven't been converted yet.
-
-	etc/refcards/cs-dired-ref.tex
-	etc/refcards/cs-refcard.tex
-	etc/refcards/cs-survival.tex
-	etc/refcards/sk-dired-ref.tex
-	etc/refcards/sk-refcard.tex
-	etc/refcards/sk-survival.tex
-
  * japanese-iso-8bit
 
      SKK-JISYO.L is a verbatim copy of a file taken from an external source.
@@ -227,11 +214,6 @@ nontrivial changes to the build process.
      operating in some other language environment.
 
 	etc/tutorials/TUTORIAL.ja
-	leim/quail/cyril-jis.el
-	leim/quail/hanja-jis.el
-	leim/quail/japanese.el
-	leim/quail/py-punct.el
-	leim/quail/pypunct-b5.el
 	lisp/international/ja-dic-cnv.el
 	lisp/international/ja-dic-utl.el
 	lisp/international/kinsoku.el
@@ -239,18 +221,27 @@ nontrivial changes to the build process.
 	lisp/international/titdic-cnv.el
 	lisp/language/japan-util.el
 	lisp/language/japanese.el
+	lisp/leim/quail/cyril-jis.el
+	lisp/leim/quail/hanja-jis.el
+	lisp/leim/quail/japanese.el
+	lisp/leim/quail/py-punct.el
+	lisp/leim/quail/pypunct-b5.el
 	lisp/term/x-win.el
+
+     This file contains just Chinese characters, and has same problem.
+     Also, it contains characters that cannot be encoded in UTF-8.
+
+	lisp/international/titdic-cnv.el
 
  * utf-8-emacs
 
      These files contain characters that cannot be encoded in UTF-8.
 
-	leim/quail/tibetan.el
-	leim/quail/ethiopic.el
-	lisp/international/titdic-cnv.el
 	lisp/language/tibetan.el
 	lisp/language/tibet-util.el
 	lisp/language/ind-util.el
+	lisp/leim/quail/ethiopic.el
+	lisp/leim/quail/tibetan.el
 
 
 This file is part of GNU Emacs.

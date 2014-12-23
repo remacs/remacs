@@ -21,13 +21,16 @@ See the end of the file for license conditions.
 
 * Preliminaries
 
-  Along with this file should be four subdirectories (bin, libexec,
-  share, and var).
+  The binary distribution has these top-level directories:
+  + bin
+  + libexec
+  + share
+  + var
 
 * Setting up Emacs
 
-  To install Emacs, simply unpack all the files into a directory of
-  your choice.  To complete the installation process, you can
+  To install Emacs, simply unpack the binary package into a directory
+  of your choice.  To complete the installation process, you can
   optionally run the program addpm.exe in the bin subdirectory.  This
   will put an icon for Emacs in the Start Menu under
   "Start -> Programs -> Gnu Emacs".
@@ -220,7 +223,7 @@ See the end of the file for license conditions.
   key in HKEY_CURRENT_USER.  Just delete the whole Software\GNU\Emacs
   key.
 
-  The Start menu entry can be removed by right-clicking on the Task bar
+  The Start menu entry can be removed by right-clicking on the Taskbar
   and selecting Properties, then using the Remove option on the Start
   Menu Programs page.  (If you installed under an account with
   administrator privileges, then you need to click the Advanced button

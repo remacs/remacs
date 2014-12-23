@@ -1962,11 +1962,11 @@ accessible by right-clicking "My Computer" or "Computer", selecting
 ** Emacs crashes when exiting the Emacs session
 
 This was reported to happen when some optional DLLs, such as those
-used for displaying images or the GnuTLS library, which are loaded
-on-demand, have a runtime dependency on the libgcc DLL,
-libgcc_s_dw2-1.dll.  The reason seems to be a bug in libgcc which
-rears its ugly head whenever the libgcc DLL is loaded after Emacs has
-started.
+used for displaying images or the GnuTLS library or zlib compression
+library, which are loaded on-demand, have a runtime dependency on the
+libgcc DLL, libgcc_s_dw2-1.dll.  The reason seems to be a bug in
+libgcc which rears its ugly head whenever the libgcc DLL is loaded
+after Emacs has started.
 
 One solution for this problem is to find an alternative build of the
 same optional library that does not depend on the libgcc DLL.
@@ -2849,19 +2849,6 @@ drive, e.g. `c:/dev'.
 This is an unfortunate side-effect of the support for Unix-style
 device names such as /dev/null in the DJGPP runtime library.  A
 work-around is to rename the problem directory to another name.
-
-*** MS-DOS+DJGPP: Problems on MS-DOS if DJGPP v2.0 is used to compile Emacs.
-
-There are two DJGPP library bugs which cause problems:
-
-  * Running `shell-command' (or `compile', or `grep') you get
-    `Searching for program: permission denied (EACCES), c:/command.com';
-  * After you shell to DOS, Ctrl-Break kills Emacs.
-
-To work around these bugs, you can use two files in the msdos
-subdirectory: `is_exec.c' and `sigaction.c'.  Compile them and link
-them into the Emacs executable `temacs'; then they will replace the
-incorrect library functions.
 
 *** MS-DOS: Emacs compiled for MSDOS cannot find some Lisp files, or other
 run-time support files, when long filename support is enabled.

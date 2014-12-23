@@ -186,14 +186,17 @@ it in the buffer."
     (insert (org-timer-value-string))))
 
 (defun org-timer-value-string ()
-  (format org-timer-format (org-timer-secs-to-hms (floor (org-timer-seconds)))))
+  "Set the timer string."
+  (format org-timer-format
+	  (org-timer-secs-to-hms
+	   (abs (floor (org-timer-seconds))))))
 
 (defvar org-timer-timer-is-countdown nil)
 (defun org-timer-seconds ()
   (if org-timer-timer-is-countdown
       (- (org-float-time org-timer-start-time)
-	 (org-float-time (current-time)))
-    (- (org-float-time (or org-timer-pause-time (current-time)))
+	 (org-float-time))
+    (- (org-float-time org-timer-pause-time)
        (org-float-time org-timer-start-time))))
 
 ;;;###autoload

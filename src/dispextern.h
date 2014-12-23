@@ -449,8 +449,8 @@ struct glyph
   /* True means don't display cursor here.  */
   bool_bf avoid_cursor_p : 1;
 
-  /* Resolved bidirectional level of this character [0..63].  */
-  unsigned resolved_level : 5;
+  /* Resolved bidirectional level of this character [0..127].  */
+  unsigned resolved_level : 7;
 
   /* Resolved bidirectional type of this character, see enum
      bidi_type_t below.  Note that according to UAX#9, only some
@@ -1867,7 +1867,9 @@ GLYPH_CODE_P (Lisp_Object gc)
 extern int face_change_count;
 
 /* For reordering of bidirectional text.  */
-#define BIDI_MAXLEVEL 64
+
+/* UAX#9's max_depth value.  */
+#define BIDI_MAXDEPTH 125
 
 /* Data type for describing the bidirectional character types.  The
    first 7 must be at the beginning, because they are the only values
@@ -1904,23 +1906,40 @@ typedef enum {
   NEUTRAL_ON	/* other neutrals */
 } bidi_type_t;
 
+/* Data type for describing the Bidi Paired Bracket Type of a character.
+
+   The order of members must be in sync with the 8th element of the
+   member of unidata-prop-alist (in admin/unidata/unidata-gen.el) for
+   Unicode character property `bracket-type'.  */
+typedef enum {
+  BIDI_BRACKET_NONE = 1,
+  BIDI_BRACKET_OPEN,
+  BIDI_BRACKET_CLOSE
+} bidi_bracket_type_t;
+
 /* The basic directionality data type.  */
-typedef enum { NEUTRAL_DIR, L2R, R2L } bidi_dir_t;
+typedef enum { NEUTRAL_DIR = 0, L2R, R2L } bidi_dir_t;
 
 /* Data type for storing information about characters we need to
    remember.  */
 struct bidi_saved_info {
-  ptrdiff_t bytepos, charpos;	/* character's buffer position */
+  ptrdiff_t charpos;		/* character's buffer position */
   bidi_type_t type;		/* character's resolved bidi type */
-  bidi_type_t type_after_w1;	/* original type of the character, after W1 */
-  bidi_type_t orig_type;	/* type as we found it in the buffer */
+  bidi_type_t orig_type;	/* bidi type as we found it in the buffer */
 };
 
-/* Data type for keeping track of saved embedding levels and override
-   status information.  */
+/* Data type for keeping track of information about saved embedding
+   levels, override status, isolate status, and isolating sequence
+   runs.  This should be as tightly packed as possible, because there
+   are 127 such entries in each iterator state, and so the size of
+   cache is directly affected by the size of this struct.  */
 struct bidi_stack {
-  int level;
-  bidi_dir_t override;
+  ptrdiff_t next_for_neutral_pos;
+  unsigned next_for_neutral_type : 3;
+  unsigned last_strong_type : 3;
+  unsigned prev_for_neutral_type : 3;
+  unsigned char level;
+  unsigned char flags;		/* sos, override, isolate_status */
 };
 
 /* Data type for storing information about a string being iterated on.  */
@@ -1945,22 +1964,24 @@ struct bidi_it {
   ptrdiff_t nchars;		/* its "length", usually 1; it's > 1 for a run
 				   of characters covered by a display string */
   ptrdiff_t ch_len;		/* its length in bytes */
-  bidi_type_t type;		/* bidi type of this character, after
+  bidi_type_t type;		/* final bidi type of this character, after
 				   resolving weak and neutral types */
-  bidi_type_t type_after_w1;	/* original type, after overrides and W1 */
-  bidi_type_t orig_type;	/* original type, as found in the buffer */
-  int resolved_level;		/* final resolved level of this character */
-  int invalid_levels;		/* how many PDFs to ignore */
-  int invalid_rl_levels;	/* how many PDFs from RLE/RLO to ignore */
+  bidi_type_t type_after_wn;	/* bidi type after overrides and Wn */
+  bidi_type_t orig_type;	/* original bidi type, as found in the buffer */
+  char resolved_level;		/* final resolved level of this character */
+  char isolate_level;		/* count of isolate initiators unmatched by PDI */
+  ptrdiff_t invalid_levels;	/* how many PDFs to ignore */
+  ptrdiff_t invalid_isolates;	/* how many PDIs to ignore */
   struct bidi_saved_info prev;	/* info about previous character */
   struct bidi_saved_info last_strong; /* last-seen strong directional char */
   struct bidi_saved_info next_for_neutral; /* surrounding characters for... */
   struct bidi_saved_info prev_for_neutral; /* ...resolving neutrals */
   struct bidi_saved_info next_for_ws; /* character after sequence of ws */
+  ptrdiff_t bracket_pairing_pos;	/* position of pairing bracket */
+  bidi_type_t bracket_enclosed_type;	/* type for bracket resolution */
   ptrdiff_t next_en_pos;	/* pos. of next char for determining ET type */
   bidi_type_t next_en_type;	/* type of char at next_en_pos */
-  ptrdiff_t ignore_bn_limit;	/* position until which to ignore BNs */
-  bidi_dir_t sor;		/* direction of start-of-run in effect */
+  bidi_dir_t sos;		/* direction of start-of-sequence in effect */
   int scan_dir;			/* direction of text scan, 1: forw, -1: back */
   ptrdiff_t disp_pos;		/* position of display string after ch */
   int disp_prop;		/* if non-zero, there really is a
@@ -1970,12 +1991,11 @@ struct bidi_it {
   /* Note: Everything from here on is not copied/saved when the bidi
      iterator state is saved, pushed, or popped.  So only put here
      stuff that is not part of the bidi iterator's state!  */
-  struct bidi_stack level_stack[BIDI_MAXLEVEL]; /* stack of embedding levels */
+  struct bidi_stack level_stack[BIDI_MAXDEPTH+2+1]; /* directional status stack */
   struct bidi_string_data string;	/* string to reorder */
   struct window *w;		/* the window being displayed */
   bidi_dir_t paragraph_dir;	/* current paragraph direction */
   ptrdiff_t separator_limit;	/* where paragraph separator should end */
-  bool_bf prev_was_pdf : 1;	/* if true, previous char was PDF */
   bool_bf first_elt : 1;	/* if true, examine current char first */
   bool_bf new_paragraph : 1;	/* if true, we expect a new paragraph */
   bool_bf frame_window_p : 1;	/* true if displaying on a GUI frame */
@@ -2551,7 +2571,9 @@ struct it
 
   /* First and last visible x-position in the display area.  If window
      is hscrolled by n columns, first_visible_x == n * FRAME_COLUMN_WIDTH
-     (f), and last_visible_x == pixel width of W + first_visible_x.  */
+     (f), and last_visible_x == pixel width of W + first_visible_x.
+     When truncation or continuation glyphs are produced due to lack of
+     fringes, last_visible_x excludes the space required for these glyphs.  */
   int first_visible_x, last_visible_x;
 
   /* Last visible y-position + 1 in the display area without a mode
@@ -3180,6 +3202,7 @@ extern void bidi_push_it (struct bidi_it *);
 extern void bidi_pop_it (struct bidi_it *);
 extern void *bidi_shelve_cache (void);
 extern void bidi_unshelve_cache (void *, bool);
+extern ptrdiff_t bidi_find_first_overridden (struct bidi_it *);
 
 /* Defined in xdisp.c */
 
@@ -3202,7 +3225,6 @@ int window_box_width (struct window *, enum glyph_row_area);
 int window_box_left (struct window *, enum glyph_row_area);
 int window_box_left_offset (struct window *, enum glyph_row_area);
 int window_box_right (struct window *, enum glyph_row_area);
-int window_box_right_offset (struct window *, enum glyph_row_area);
 int estimate_mode_line_height (struct frame *, enum face_id);
 int move_it_to (struct it *, ptrdiff_t, int, int, int, int);
 void pixel_to_glyph_coords (struct frame *, int, int, int *, int *,
@@ -3377,7 +3399,7 @@ void x_free_colors (struct frame *, unsigned long *, int);
 void update_face_from_frame_parameter (struct frame *, Lisp_Object,
                                        Lisp_Object);
 Lisp_Object tty_color_name (struct frame *, int);
-void clear_face_cache (int);
+void clear_face_cache (bool);
 unsigned long load_color (struct frame *, struct face *, Lisp_Object,
                           enum lface_attribute_index);
 char *choose_face_font (struct frame *, Lisp_Object *, Lisp_Object,
@@ -3450,11 +3472,11 @@ extern void cancel_hourglass (void);
 #endif /* HAVE_WINDOW_SYSTEM */
 
 
-/* Defined in xmenu.c  */
+/* Defined in xmenu.c.  */
 
 int popup_activated (void);
 
-/* Defined in dispnew.c */
+/* Defined in dispnew.c.  */
 
 extern Lisp_Object buffer_posn_from_coords (struct window *,
                                             int *, int *,
@@ -3490,7 +3512,7 @@ void blank_row (struct window *, struct glyph_row *, int);
 void clear_glyph_matrix_rows (struct glyph_matrix *, int, int);
 void clear_glyph_row (struct glyph_row *);
 void prepare_desired_row (struct window *, struct glyph_row *, bool);
-void update_single_window (struct window *, bool);
+void update_single_window (struct window *);
 void do_pending_window_change (bool);
 void change_frame_size (struct frame *, int, int, bool, bool, bool, bool);
 void init_display (void);
@@ -3499,7 +3521,7 @@ extern Lisp_Object Qredisplay_dont_pause;
 extern void spec_glyph_lookup_face (struct window *, GLYPH *);
 extern void fill_up_frame_row_with_spaces (struct glyph_row *, int);
 
-/* Defined in terminal.c */
+/* Defined in terminal.c.  */
 
 extern void ring_bell (struct frame *);
 extern void update_begin (struct frame *);
@@ -3527,7 +3549,6 @@ extern void calculate_costs (struct frame *);
 extern void produce_glyphs (struct it *);
 extern bool tty_capable_p (struct tty_display_info *, unsigned);
 extern void set_tty_color_mode (struct tty_display_info *, struct frame *);
-extern struct terminal *get_named_tty (const char *);
 extern void create_tty_output (struct frame *);
 extern struct terminal *init_tty (const char *, const char *, bool);
 extern void tty_append_glyph (struct it *);
@@ -3535,13 +3556,13 @@ extern void tty_append_glyph (struct it *);
 
 /* Defined in scroll.c */
 
-extern int scrolling_max_lines_saved (int, int, int *, int *, int *);
+extern int scrolling_max_lines_saved (int, int, unsigned *, unsigned *, int *);
 extern void do_line_insertion_deletion_costs (struct frame *, const char *,
                                               const char *, const char *,
 					      const char *, const char *,
 					      const char *, int);
-void scrolling_1 (struct frame *, int, int, int, int *, int *, int *,
-                  int *, int);
+void scrolling_1 (struct frame *, int, int, int, int *, int *, unsigned *,
+                  unsigned *, int);
 
 /* Defined in frame.c */
 

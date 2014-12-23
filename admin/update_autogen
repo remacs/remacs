@@ -305,9 +305,6 @@ EOF
 
     modified=$(status $basegen) || die
 
-    ## bzr status output is always relative to top-level, not PWD.
-    [ "$vcs" = "bzr" ] && cd $oldpwd
-
     commit "generated" $modified || die "commit error"
 
     exit 0

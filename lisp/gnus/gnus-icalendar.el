@@ -141,12 +141,13 @@
 (defmethod gnus-icalendar-event:start ((event gnus-icalendar-event))
   (format-time-string "%Y-%m-%d %H:%M" (gnus-icalendar-event:start-time event)))
 
-(defun gnus-icalendar-event--decode-datefield (ical field)
-  (let* ((date (icalendar--get-event-property ical field))
-         (date-props (icalendar--get-event-property-attributes ical field))
-         (tz (plist-get date-props 'TZID)))
-
-    (date-to-time (timezone-make-date-arpa-standard date nil tz))))
+(defun gnus-icalendar-event--decode-datefield (event field zone-map)
+  (let* ((dtdate (icalendar--get-event-property event field))
+         (dtdate-zone (icalendar--find-time-zone
+                       (icalendar--get-event-property-attributes
+                        event field) zone-map))
+         (dtdate-dec (icalendar--decode-isodatetime dtdate nil dtdate-zone)))
+    (apply 'encode-time dtdate-dec)))
 
 (defun gnus-icalendar-event--find-attendee (ical name-or-email)
   (let* ((event (car (icalendar--all-events ical)))
@@ -204,10 +205,11 @@
                               ("REQ-PARTICIPANT" 'required)
                               ("OPT-PARTICIPANT" 'optional)
                               (_                 'non-participant)))
+         (zone-map (icalendar--convert-all-timezones ical))
          (args (list :method method
                      :organizer organizer
-                     :start-time (gnus-icalendar-event--decode-datefield event 'DTSTART)
-                     :end-time (gnus-icalendar-event--decode-datefield event 'DTEND)
+                     :start-time (gnus-icalendar-event--decode-datefield event 'DTSTART zone-map)
+                     :end-time (gnus-icalendar-event--decode-datefield event 'DTEND zone-map)
                      :rsvp (string= (plist-get (cadr attendee) 'RSVP) "TRUE")
                      :participation-type participation-type
                      :req-participants (car attendee-names)
@@ -676,8 +678,9 @@ Gnus will only offer you the Accept/Tentative/Decline buttons for
 calendar events if any of your identities matches at least one
 RSVP participant.
 
-Your identity is guessed automatically from the variables `user-full-name',
-`user-mail-address', and `gnus-ignored-from-addresses'.
+Your identity is guessed automatically from the variables
+`user-full-name', `user-mail-address',
+`gnus-ignored-from-addresses' and `message-alternative-emails'.
 
 If you need even more aliases you can define them here.  It really
 only makes sense to define names or email addresses."
@@ -703,6 +706,7 @@ These will be used to retrieve the RSVP information from ical events."
                  (list user-full-name (regexp-quote user-mail-address)
                        ; NOTE: these can be lists
                        gnus-ignored-from-addresses ; already regexp-quoted
+                       message-alternative-emails  ;
                        (mapcar #'regexp-quote gnus-icalendar-additional-identities)))))
 
 ;; TODO: make the template customizable

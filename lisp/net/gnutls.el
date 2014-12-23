@@ -41,7 +41,7 @@
   "Emacs interface to the GnuTLS library."
   :version "24.1"
   :prefix "gnutls-"
-  :group 'net-utils)
+  :group 'comm)
 
 (defcustom gnutls-algorithm-priority nil
   "If non-nil, this should be a TLS priority string.
@@ -189,6 +189,9 @@ here's a recent version of the list.
 It must be omitted, a number, or nil; if omitted or nil it
 defaults to GNUTLS_VERIFY_ALLOW_X509_V1_CA_CRT."
   (let* ((type (or type 'gnutls-x509pki))
+	 ;; The gnutls library doesn't understand files delivered via
+	 ;; the special handlers, so ignore all files found via those.
+	 (file-name-handler-alist nil)
          (trustfiles (or trustfiles
                          (delq nil
                                (mapcar (lambda (f) (and f (file-exists-p f) f))
@@ -211,11 +214,13 @@ defaults to GNUTLS_VERIFY_ALLOW_X509_V1_CA_CRT."
                              t)
                             ;; if a list, look for hostname matches
                             ((listp gnutls-verify-error)
-                             (cl-mapcan
-                              (lambda (check)
-                                (when (string-match (car check) hostname)
-                                  (copy-sequence (cdr check))))
-                              gnutls-verify-error))
+                             (apply 'append
+                                    (mapcar
+                                     (lambda (check)
+                                       (when (string-match (nth 0 check)
+                                                           hostname)
+                                         (nth 1 check)))
+                                     gnutls-verify-error)))
                             ;; else it's nil
                             (t nil))))
          (min-prime-bits (or min-prime-bits gnutls-min-prime-bits))

@@ -25,7 +25,6 @@
 ;; This file contains macro-expansions functions that are not defined in
 ;; the Lisp core, namely `macroexpand-all', which expands all macros in
 ;; a form, not just a top-level one.
-;;
 
 ;;; Code:
 
@@ -98,8 +97,6 @@ each clause."
   (condition-case err
       (apply handler form (cdr form))
     (error
-     (message "--------------------------------------------------")
-     (backtrace)
      (message "Compiler-macro error for %S: %S" (car form) err)
            form)))
 
@@ -147,11 +144,35 @@ and also to avoid outputting the warning during normal execution."
                   (instead (format "; use `%s' instead." instead))
                   (t ".")))))
 
+(defun macroexpand-1 (form &optional environment)
+  "Perform (at most) one step of macroexpansion."
+  (cond
+   ((consp form)
+    (let* ((head (car form))
+           (env-expander (assq head environment)))
+      (if env-expander
+          (if (cdr env-expander)
+              (apply (cdr env-expander) (cdr form))
+            form)
+        (if (not (and (symbolp head) (fboundp head)))
+            form
+          (let ((def (autoload-do-load (symbol-function head) head 'macro)))
+            (cond
+             ;; Follow alias, but only for macros, otherwise we may end up
+             ;; skipping an important compiler-macro (e.g. cl--block-wrapper).
+             ((and (symbolp def) (macrop def)) (cons def (cdr form)))
+             ((not (consp def)) form)
+             (t
+              (if (eq 'macro (car def))
+                  (apply (cdr def) (cdr form))
+                form))))))))
+   (t form)))
+
 (defun macroexp--expand-all (form)
   "Expand all macros in FORM.
 This is an internal version of `macroexpand-all'.
 Assumes the caller has bound `macroexpand-all-environment'."
-  (if (and (listp form) (eq (car form) 'backquote-list*))
+  (if (eq (car-safe form) 'backquote-list*)
       ;; Special-case `backquote-list*', as it is normally a macro that
       ;; generates exceedingly deep expansions from relatively shallow input
       ;; forms.  We just process it `in reverse' -- first we expand all the
@@ -228,6 +249,10 @@ Assumes the caller has bound `macroexpand-all-environment'."
         (format "%s quoted with ' rather than with #'"
                 (list 'lambda (nth 1 f) '...))
         (macroexp--expand-all `(,fun ,arg1 ,f . ,args))))
+      (`(funcall (,(or 'quote 'function) ,(and f (pred symbolp)) . ,_) . ,args)
+       ;; Rewrite (funcall #'foo bar) to (foo bar), in case `foo'
+       ;; has a compiler-macro.
+       (macroexp--expand-all `(,f . ,args)))
       (`(,func . ,_)
        ;; Macro expand compiler macros.  This cannot be delayed to
        ;; byte-optimize-form because the output of the compiler-macro can
@@ -241,7 +266,7 @@ Assumes the caller has bound `macroexpand-all-environment'."
            ;; If the handler is not loaded yet, try (auto)loading the
            ;; function itself, which may in turn load the handler.
            (unless (functionp handler)
-             (ignore-errors
+             (with-demoted-errors "macroexp--expand-all: %S"
                (autoload-do-load (indirect-function func) func)))
            (let ((newform (macroexp--compiler-macro handler form)))
              (if (eq form newform)
@@ -319,6 +344,15 @@ be skipped; if nil, as is usual, `macroexp-const-p' is used."
          (macroexp-let* (list (list ,var ,expsym))
                         ,bodysym)))))
 
+(defmacro macroexp-let2* (test bindings &rest body)
+  "Bind each binding in BINDINGS as `macroexp-let2' does."
+  (declare (indent 2) (debug (sexp (&rest (sexp form)) body)))
+  (pcase-exhaustive bindings
+    (`nil (macroexp-progn body))
+    (`((,var ,exp) . ,tl)
+     `(macroexp-let2 ,test ,var ,exp
+        (macroexp-let2* ,test ,tl ,@body)))))
+
 (defun macroexp--maxsize (exp size)
   (cond ((< size 0) size)
         ((symbolp exp) (1- size))
@@ -369,6 +403,18 @@ symbol itself."
 (defun macroexp-copyable-p (exp)
   "Return non-nil if EXP can be copied without extra cost."
   (or (symbolp exp) (macroexp-const-p exp)))
+
+(defun macroexp-quote (v)
+  "Return an expression E such that `(eval E)' is V.
+
+E is either V or (quote V) depending on whether V evaluates to
+itself or not."
+  (if (and (not (consp v))
+	   (or (keywordp v)
+	       (not (symbolp v))
+	       (memq v '(nil t))))
+      v
+    (list 'quote v)))
 
 ;;; Load-time macro-expansion.
 

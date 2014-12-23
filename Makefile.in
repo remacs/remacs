@@ -67,10 +67,6 @@ CDPATH=
 # If Make doesn't predefine MAKE, set it here.
 @SET_MAKE@
 
-# Prevent submakes from outputting "Entering directory ..." and
-# "Leaving directory..." diagnostics that would mess up 'make echo-info'.
-QUIET_SUBMAKE = MAKELEVEL=0
-
 # ==================== Things `configure' Might Edit ====================
 
 cache_file = @cache_file@
@@ -80,6 +76,7 @@ AUTOCONF = @AUTOCONF@
 AUTOMAKE = @AUTOMAKE@
 AUTOHEADER = @AUTOHEADER@
 ACLOCAL = @ACLOCAL@
+AWK = @AWK@
 
 EXEEXT=@EXEEXT@
 
@@ -179,6 +176,9 @@ x_default_search_path=@x_default_search_path@
 # Where the etc/emacs.desktop file is to be installed.
 desktopdir=$(datarootdir)/applications
 
+# Where the etc/emacs.appdata.xml file is to be installed.
+appdatadir=$(datarootdir)/appdata
+
 # Where the etc/images/icons/hicolor directory is to be installed.
 icondir=$(datarootdir)/icons
 
@@ -259,7 +259,7 @@ MKDIR_P = @MKDIR_P@
 # Create a link to a file in the same directory as the target.
 LN_S_FILEONLY = @LN_S_FILEONLY@
 
-# We use gzip to compress installed .el files.
+# We use gzip to compress installed .el and some .txt files.
 GZIP_PROG = @GZIP_PROG@
 
 # ============================= Targets ==============================
@@ -288,7 +288,18 @@ COPYDESTS = "$(DESTDIR)${etcdir}" "$(DESTDIR)${lispdir}"
 
 all: ${SUBDIR} info
 
-.PHONY: all ${SUBDIR} blessmail epaths-force epaths-force-w32
+.PHONY: all ${SUBDIR} blessmail epaths-force epaths-force-w32 etc-emacsver
+
+# If configure were to just generate emacsver.tex from emacsver.tex.in
+# in the normal way, the timestamp of emacsver.tex would always be
+# newer than that of the pdf files, which are prebuilt in release tarfiles.
+# So we use this rule, and move-if-change, to avoid that.
+etc-emacsver:
+	majorversion=`echo ${version} | sed 's/\..*//'`; \
+	sed "s/[@]majorversion@/$${majorversion}/" \
+	  ${srcdir}/etc/refcards/emacsver.tex.in > emacsver.tex.$$$$ && \
+	  ${srcdir}/build-aux/move-if-change emacsver.tex.$$$$ \
+	  ${srcdir}/etc/refcards/emacsver.tex
 
 removenullpaths=sed -e 's/^:*//' -e 's/:*$$//g' -e 's/::*/:/g'
 
@@ -323,14 +334,6 @@ epaths-force:
 	  -e 's;\(#.*PATH_DOC\).*$$;\1 "${etcdocdir}";') &&		\
 	${srcdir}/build-aux/move-if-change epaths.h.$$$$ src/epaths.h
 
-# Replace "${w32prefix}" with '%emacs_dir%' (which expands to install
-# directory at runtime).
-msys_w32prefix_subst=sed -e 's!\(^\|;\)'"$${w32prefixpattern}"'\([;/]\|$$\)!\1%emacs_dir%\2!g'
-
-# Quote Sed special characters (except backslash and newline) with
-# a double backslash.
-msys_sed_sh_escape=sed -e 's/[];$$*.^[]/\\\\&/g'
-
 # The w32 build needs a slightly different editing, and it uses
 # nt/epaths.nt as the template.
 #
@@ -342,12 +345,12 @@ msys_sed_sh_escape=sed -e 's/[];$$*.^[]/\\\\&/g'
 # program that doesn't support MSYS-style paths (e.g. '/c/foo/bar' or
 # '/foo/bar').
 epaths-force-w32:
-	@(w32srcdir=`${srcdir}/build-aux/msys-to-w32 "${srcdir}"`; \
-	  w32prefix=`${srcdir}/build-aux/msys-to-w32 "${prefix}" N`; \
-	  w32prefixpattern=`echo "$${w32prefix}" | ${msys_sed_sh_escape}` ; \
-	  w32locallisppath=`${srcdir}/build-aux/msys-to-w32 "${locallisppath}" N ":" "\\;" | ${msys_w32prefix_subst}` ; \
+	@(w32srcdir=`${srcdir}/build-aux/msys-to-w32 "${abs_srcdir}"`; \
+	  w32prefix=`${srcdir}/build-aux/msys-to-w32 "${prefix}"`; \
+	  w32locallisppath=`${srcdir}/build-aux/msys-to-w32 "${locallisppath}"` ; \
+	  w32locallisppath=$${w32locallisppath//$${w32prefix}/"%emacs_dir%"} ; \
 	  sed < ${srcdir}/nt/epaths.nt > epaths.h.$$$$		\
-	  -e 's;\(#.*PATH_SITELOADSEARCH\).*$$;\1 "'"$${w32locallisppath}"'";' \
+	  -e 's;\(#.*PATH_SITELOADSEARCH\).*$$;\1 "'"$${w32locallisppath//;/\\;}"'";' \
 	  -e '/^.*#/s/@VER@/${version}/g' 			\
 	  -e '/^.*#/s/@CFG@/${configuration}/g' 		\
 	  -e "/^.*#/s|@SRC@|$${w32srcdir}|g") &&		\
@@ -368,12 +371,17 @@ lisp: src
 lib lib-src lisp nt: Makefile
 	$(MAKE) -C $@ all
 
+# Ideally, VCSWITNESS should be a file that is modified whenever the
+# repository registers a commit from either a local checkin or a
+# repository pull. In git there is no single file that guarantees
+# this, but the local log for the current head should be close enough.
+#
 # Note the use of single quotes in the value of vcswitness.
 # This passes an unexpanded $srcdir to src's Makefile, which then
 # expands it using its own value of srcdir (which points to the
 # source directory of src/).
 src: Makefile
-	dirstate='.bzr/checkout/dirstate';				\
+	dirstate='.git/logs/HEAD';				\
 	vcswitness='$$(srcdir)/../'$$dirstate;				\
 	[ -r "$(srcdir)/$$dirstate" ] || vcswitness='';			\
 	$(MAKE) -C $@ all VCSWITNESS="$$vcswitness"
@@ -400,7 +408,7 @@ $(MAKEFILE_NAME): config.status $(srcdir)/src/config.in \
 # Don't erase these files if make is interrupted while refreshing them.
 .PRECIOUS: Makefile config.status
 
-config.status: ${srcdir}/configure ${srcdir}/lisp/version.el
+config.status: ${srcdir}/configure
 	if [ -x ./config.status ]; then	\
 	    $(CFG) ./config.status --recheck;	\
 	else				\
@@ -413,7 +421,7 @@ $(srcdir)/configure: $(AUTOCONF_INPUTS)
 	cd ${srcdir} && ${AUTOCONF}
 
 ACLOCAL_PATH = @ACLOCAL_PATH@
-ACLOCAL_INPUTS = $(srcdir)/configure.ac $(wildcard $(srcdir)/m4/*.m4)
+ACLOCAL_INPUTS = $(srcdir)/configure.ac $(srcdir)/m4/*.m4
 $(srcdir)/aclocal.m4: $(ACLOCAL_INPUTS)
 	cd $(srcdir) && ACLOCAL_PATH='$(ACLOCAL_PATH)' $(ACLOCAL) -I m4
 
@@ -592,11 +600,12 @@ install-arch-indep: lisp install-info install-man ${INSTALL_ARCH_INDEP_EXTRA}
 	subdir="$(DESTDIR)${datadir}/emacs/site-lisp" ; \
 	  ${write_subdir} || true
 	[ -z "${GZIP_PROG}" ] || { \
-	  echo "Compressing *.el ..." && \
+	  echo "Compressing *.el etc. ..." && \
 	  cd "$(DESTDIR)${lispdir}" && \
 	  for f in `find . -name "*.elc" -print | sed 's/.elc$$/.el/'`; do \
 	    ${GZIP_PROG} -9n "$$f"; \
 	  done; \
+	  ${GZIP_PROG} -9n "../etc/publicsuffix.txt"; \
 	}
 	-chmod -R a+r "$(DESTDIR)${datadir}/emacs/${version}" ${COPYDESTS}
 
@@ -637,7 +646,7 @@ install-info: info
 	   [ -f "$(DESTDIR)${infodir}/dir" ] || \
 	      [ ! -f ${srcdir}/info/dir ] || \
 	      ${INSTALL_DATA} ${srcdir}/info/dir "$(DESTDIR)${infodir}/dir"; \
-	   info_misc=`$(QUIET_SUBMAKE) $(MAKE) -s -C doc/misc echo-info`; \
+	   info_misc=`$(MAKE) --no-print-directory -s -C doc/misc echo-info`; \
 	   cd ${srcdir}/info ; \
 	   for elt in ${INFO_NONMISC} $${info_misc}; do \
 	      test "$(HAVE_MAKEINFO)" = "no" && test ! -f $$elt && continue; \
@@ -687,6 +696,12 @@ install-etc:
 	  ${srcdir}/etc/emacs.desktop > $${tmp}; \
 	${INSTALL_DATA} $${tmp} "$(DESTDIR)${desktopdir}/${EMACS_NAME}.desktop"; \
 	rm -f $${tmp}
+	umask 022; ${MKDIR_P} "$(DESTDIR)${appdatadir}"
+	tmp=etc/emacs.tmpappdata; rm -f $${tmp}; \
+	sed -e "s/emacs\.desktop/${EMACS_NAME}.desktop/" \
+	  ${srcdir}/etc/emacs.appdata.xml > $${tmp}; \
+	${INSTALL_DATA} $${tmp} "$(DESTDIR)${appdatadir}/${EMACS_NAME}.appdata.xml"; \
+	rm -f $${tmp}
 	thisdir=`/bin/pwd`; \
 	cd ${iconsrcdir} || exit 1; umask 022 ; \
 	for dir in */*/apps */*/mimetypes; do \
@@ -728,7 +743,7 @@ uninstall: uninstall-$(NTDIR) uninstall-doc
 	done
 	-rm -rf "$(DESTDIR)${libexecdir}/emacs/${version}"
 	thisdir=`/bin/pwd`; \
-	(info_misc=`$(QUIET_SUBMAKE) $(MAKE) -s -C doc/misc echo-info`; \
+	(info_misc=`$(MAKE) --no-print-directory -s -C doc/misc echo-info`; \
 	 if cd "$(DESTDIR)${infodir}"; then \
 	   for elt in ${INFO_NONMISC} $${info_misc}; do \
 	     (cd "$${thisdir}"; \
@@ -751,6 +766,7 @@ uninstall: uninstall-$(NTDIR) uninstall-doc
 	     hicolor/scalable/mimetypes/`echo emacs-document | sed '$(TRANSFORM)'`.svg; \
 	fi)
 	-rm -f "$(DESTDIR)${desktopdir}/${EMACS_NAME}.desktop"
+	-rm -f "$(DESTDIR)${appdatadir}/${EMACS_NAME}.appdata.xml"
 	for file in snake-scores tetris-scores; do \
 	  file="$(DESTDIR)${gamedir}/$${file}"; \
 	  [ -s "$${file}" ] || rm -f "$$file"; \
@@ -806,12 +822,13 @@ clean: $(clean_dirs:=_clean)
 	for dir in test/automated; do \
 	  [ ! -d $$dir ] || $(MAKE) -C $$dir clean; \
 	done
-	-rm -f etc/emacs.tmpdesktop
+	-rm -f etc/emacs.tmpdesktop etc/emacs.tmpappdata
+	-rm -rf info-dir.*
 
 ### `bootclean'
 ###      Delete all files that need to be remade for a clean bootstrap.
 top_bootclean=\
-	rm -f config.cache config.log
+	rm -f config.cache config.log ${srcdir}/doc/man/emacs.1
 
 ### `distclean'
 ###      Delete all files from the current directory that are created by
@@ -844,6 +861,7 @@ bootstrap-clean: $(distclean_dirs:=_bootstrap-clean)
 	done
 	[ ! -f config.log ] || mv -f config.log config.log~
 	rm -rf ${srcdir}/info
+	rm -f ${srcdir}/etc/refcards/emacsver.tex
 	${top_bootclean}
 
 ### `maintainer-clean'
@@ -925,13 +943,19 @@ ps: $(PSS)
 
 info-dir: ${srcdir}/info/dir
 
-## Not strictly necessary, but speeds things up a bit by stopping
-## the info-dir rule from running when not needed.
 ## Hopefully doc/misc/*.texi is not too long for some systems?
-info_dir_deps = ${srcdir}/build-aux/dir_top \
-	${srcdir}/doc/emacs/emacs.texi \
-	${srcdir}/doc/lispintro/emacs-lisp-intro.texi \
-	${srcdir}/doc/lispref/elisp.texi ${srcdir}/doc/misc/*.texi
+srcdir_doc_info_dir_inputs = \
+  ${srcdir}/doc/emacs/emacs.texi \
+  ${srcdir}/doc/lispintro/emacs-lisp-intro.texi \
+  ${srcdir}/doc/lispref/elisp.texi \
+  $(sort $(wildcard ${srcdir}/doc/misc/*.texi))
+info_dir_inputs = \
+  ../build-aux/dir_top \
+  $(subst ${srcdir}/doc/,,${srcdir_doc_info_dir_inputs})
+info_dir_deps = \
+  ${srcdir}/build-aux/make-info-dir \
+  ${srcdir}/build-aux/dir_top \
+  ${srcdir_doc_info_dir_inputs}
 
 ## It would be much simpler if info/dir was only created in the
 ## installation location by the install-info rule, but we also
@@ -940,10 +964,12 @@ info_dir_deps = ${srcdir}/build-aux/dir_top \
 ## but then we would need to depend on info-real, which would
 ## slow down parallelization.
 ${srcdir}/info/dir: ${info_dir_deps}
+	${MKDIR_P} ${srcdir}/info
 	tempfile=info-dir.$$$$; \
 	rm -f $${tempfile}; \
-	thisdir=`pwd`; \
-	(cd ${srcdir} && ./build-aux/make-info-dir $${thisdir}/$${tempfile}); \
+	(cd ${srcdir}/doc && \
+	 AWK='${AWK}' ../build-aux/make-info-dir ${info_dir_inputs} \
+	) >$$tempfile && \
 	${srcdir}/build-aux/move-if-change $${tempfile} ${srcdir}/info/dir
 
 INSTALL_DVI = install-emacs-dvi install-lispref-dvi \

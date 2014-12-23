@@ -2209,16 +2209,12 @@ indicates whether the dictionary has been modified when option `a'
 or `i' is used.
 Global `ispell-quit' set to start location to continue spell session."
   (let ((count ?0)
-	(line ispell-choices-win-default-height)
-	;; ensure 4 context lines.
-	(max-lines (- (ispell-adjusted-window-height) 4))
 	(choices miss)
 	(window-min-height (min window-min-height
 				ispell-choices-win-default-height))
 	(command-characters '( ?  ?i ?a ?A ?r ?R ?? ?x ?X ?q ?l ?u ?m ))
-	(dedicated (window-dedicated-p))
 	(skipped 0)
-	char num result textwin dedicated-win)
+	char num result textwin)
 
     ;; setup the *Choices* buffer with valid data.
     (with-current-buffer (get-buffer-create ispell-choices-buffer)
@@ -2233,30 +2229,27 @@ Global `ispell-quit' set to start location to continue spell session."
 	    (boundp 'horizontal-scrollbar-visible-p)
 	    (set-specifier horizontal-scrollbar-visible-p nil
 			   (cons (current-buffer) nil))))
+      (ispell-with-no-warnings
+       (and (boundp 'horizontal-scroll-bar)
+	    (setq horizontal-scroll-bar nil)))
       (erase-buffer)
       (if guess
 	  (progn
 	    (insert "Affix rules generate and capitalize "
 		    "this word as shown below:\n\t")
 	    (while guess
-	      (if (> (+ 4 (current-column) (length (car guess)))
-		     (window-width))
-		  (progn
-		    (insert "\n\t")
-		    (setq line (1+ line))))
+	      (when (> (+ 4 (current-column) (length (car guess)))
+		       (window-width))
+		(insert "\n\t"))
 	      (insert (car guess) "    ")
 	      (setq guess (cdr guess)))
-	    (insert "\nUse option `i' to accept this spelling and put it in your private dictionary.\n")
-	    (setq line (+ line (if choices 3 2)))))
-      (while (and choices
-		  (< (if (> (+ 7 (current-column) (length (car choices))
-			       (if (> count ?~) 3 0))
-			    (window-width))
-			 (progn
-			   (insert "\n")
-			   (setq line (1+ line)))
-		       line)
-		     max-lines))
+	    (insert "\nUse option `i' to accept this spelling and put it in your private dictionary.\n")))
+      (while choices
+	(when (> (+ 7 (current-column)
+		    (length (car choices))
+		    (if (> count ?~) 3 0))
+		 (window-width))
+	  (insert "\n"))
 	;; not so good if there are over 20 or 30 options, but then, if
 	;; there are that many you don't want to scan them all anyway...
 	(while (memq count command-characters) ; skip command characters.
@@ -2271,15 +2264,10 @@ Global `ispell-quit' set to start location to continue spell session."
     (if (not (pos-visible-in-window-p end))
 	(sit-for 0))
 
-    ;; allow temporary split of dedicated windows...
-    (if dedicated
-	(progn
-	  (setq dedicated-win (selected-window))
-	  (set-window-dedicated-p dedicated-win nil)))
-
     ;; Display choices for misspelled word.
-    (ispell-show-choices line end)
-    (select-window (setq textwin (next-window)))
+    (setq textwin (selected-window))
+    (ispell-show-choices)
+    (select-window textwin)
 
     ;; highlight word, protecting current buffer status
     (unwind-protect
@@ -2406,18 +2394,13 @@ Global `ispell-quit' set to start location to continue spell session."
 					    (or ispell-complete-word-dict
 						ispell-alternate-dictionary))
 				    miss (ispell-lookup-words new-word)
-				    choices miss
-				    line ispell-choices-win-default-height)
-			      (while (and choices ; adjust choices window.
-					  (< (if (> (+ 7 (current-column)
-						       (length (car choices))
-						       (if (> count ?~) 3 0))
-						    (window-width))
-						 (progn
-						   (insert "\n")
-						   (setq line (1+ line)))
-					       line)
-					     max-lines))
+				    choices miss)
+			      (while choices
+				(when (> (+ 7 (current-column)
+					    (length (car choices))
+					    (if (> count ?~) 3 0))
+					 (window-width))
+				  (insert "\n"))
 				(while (memq count command-characters)
 				  (setq count (ispell-int-char (1+ count))
 					skipped (1+ skipped)))
@@ -2426,8 +2409,9 @@ Global `ispell-quit' set to start location to continue spell session."
 				      count (ispell-int-char (1+ count))))
 			      (setq count (ispell-int-char
 					   (- count ?0 skipped))))
-			    (ispell-show-choices line end)
-			    (select-window (next-window)))))
+			    (setq textwin (selected-window))
+			    (ispell-show-choices)
+			    (select-window textwin))))
 		    (and (eq 'block ispell-highlight-p)
 			 (ispell-highlight-spelling-error start end nil
 							  'block))
@@ -2487,44 +2471,19 @@ Global `ispell-quit' set to start location to continue spell session."
       (and ispell-highlight-p		; unhighlight
 	   (save-window-excursion
 	     (select-window textwin)
-	     (ispell-highlight-spelling-error start end)))
-      (if dedicated
-	  (set-window-dedicated-p dedicated-win t)))))
+	     (ispell-highlight-spelling-error start end))))))
 
 
 
-(defun ispell-show-choices (line end)
+(defun ispell-show-choices ()
   "Show the choices in another buffer or frame."
   (if (and ispell-use-framepop-p (fboundp 'framepop-display-buffer))
       (progn
 	(framepop-display-buffer (get-buffer ispell-choices-buffer))
         ;; (get-buffer-window ispell-choices-buffer t)
 	(select-window (previous-window))) ; *Choices* window
-    ;; standard selection by splitting a small buffer out of this window.
-    (let ((choices-window (get-buffer-window ispell-choices-buffer)))
-      (if choices-window
-	  (if (= line (ispell-adjusted-window-height choices-window))
-	      (select-window choices-window)
-	    ;; *Choices* window changed size.  Adjust the choices window
-	    ;; without scrolling the spelled window when possible
-	    (let ((window-line
-		   (- line (ispell-adjusted-window-height choices-window)))
-		  (visible (progn (vertical-motion -1) (point))))
-	      (if (< line ispell-choices-win-default-height)
-		  (setq window-line (+ window-line
-				       (- ispell-choices-win-default-height
-					  line))))
-	      (move-to-window-line 0)
-	      (vertical-motion window-line)
-	      (set-window-start (selected-window)
-				(if (> (point) visible) visible (point)))
-	      (goto-char end)
-	      (select-window choices-window)
-	      (enlarge-window window-line)))
-	;; Overlay *Choices* window when it isn't showing
-	(ispell-overlay-window (max line ispell-choices-win-default-height)))
-      (switch-to-buffer ispell-choices-buffer)
-      (goto-char (point-min)))))
+    ;; Display choices above selected window.
+    (ispell-display-buffer (get-buffer-create ispell-choices-buffer))))
 
 
 ;;;###autoload
@@ -2594,10 +2553,10 @@ SPC:   Accept word this time.
 			  "Type 'x C-h f ispell-help' for more help")))
       (save-window-excursion
 	(if ispell-help-in-bufferp
-	    (progn
-	      (ispell-overlay-window 4)
-	      (switch-to-buffer (get-buffer-create "*Ispell Help*"))
-	      (insert (concat help-1 "\n" help-2 "\n" help-3))
+	    (let ((buffer (get-buffer-create "*Ispell Help*")))
+	      (with-current-buffer buffer
+		(insert (concat help-1 "\n" help-2 "\n" help-3)))
+	      (ispell-display-buffer buffer)
 	      (sit-for 5)
 	      (kill-buffer "*Ispell Help*"))
 	  (unwind-protect
@@ -2816,49 +2775,35 @@ The variable `ispell-highlight-face' selects the face to use for highlighting."
     (ispell-highlight-spelling-error-overlay start end highlight))
    (t (ispell-highlight-spelling-error-generic start end highlight refresh))))
 
-(defun ispell-adjusted-window-height (&optional window)
-  "Like `window-height', adjusted to correct for the effect of tall mode-lines.
-The value returned is actually the nominal number of text-lines in the
-window plus 1.  On a terminal, this is the same value returned by
-`window-height', but if the window has a mode-line is taller than a normal
-text line, the returned value may be smaller than that from
-`window-height'."
-  (cond ((fboundp 'window-text-height)
-	 (1+ (window-text-height window)))
-	((or (and (fboundp 'display-graphic-p) (display-graphic-p))
-	     (and (featurep 'xemacs) window-system))
-	 (1- (window-height window)))
-	(t
-	 (window-height window))))
-
-(defun ispell-overlay-window (height)
-  "Create a window covering the top HEIGHT lines of the current window.
-Ensure that the line above point is still visible but otherwise avoid
-scrolling the current window.  Leave the new window selected."
-  (save-excursion
-    (let ((oldot (save-excursion (vertical-motion -1) (point)))
-	  (top (save-excursion (move-to-window-line height) (point))))
-      ;; If line above old point (line starting at oldot) would be
-      ;; hidden by new window, scroll it to just below new win
-      ;; otherwise set top line of other win so it doesn't scroll.
-      (if (< oldot top) (setq top oldot))
-      ;; if frame is unsplittable, temporarily disable that...
-      (if (cdr (assq 'unsplittable (frame-parameters (selected-frame))))
-	  (let ((frame (selected-frame)))
-	    (modify-frame-parameters frame '((unsplittable . nil)))
-	    (split-window nil height)
-	    (modify-frame-parameters frame '((unsplittable . t))))
-	(split-window nil height))
-      (let ((deficit (- height (ispell-adjusted-window-height))))
-	(when (> deficit 0)
-	  ;; Number of lines the window is still too short.  We ensure that
-	  ;; there are at least (1- HEIGHT) lines visible in the window.
-	  (enlarge-window deficit)
-	  (goto-char top)
-	  (vertical-motion deficit)
-	  (setq top (min (point) oldot))))
-      (set-window-start (next-window) top))))
-
+(defun ispell-display-buffer (buffer)
+  "Show BUFFER in new window above selected one.
+Also position fit window to BUFFER and select it."
+  (let* ((unsplittable
+	  (cdr (assq 'unsplittable (frame-parameters (selected-frame)))))
+	 (window
+	  (or (get-buffer-window buffer)
+	      (and unsplittable
+		   ;; If frame is unsplittable, temporarily disable that...
+		   (let ((frame (selected-frame)))
+		     (modify-frame-parameters frame '((unsplittable . nil)))
+		     (prog1
+			 (condition-case nil
+			     (split-window
+			      nil (- ispell-choices-win-default-height) 'above)
+			   (error nil))
+		       (modify-frame-parameters frame '((unsplittable . t))))))
+	      (and (not unsplittable)
+		   (condition-case nil
+		       (split-window
+			nil (- ispell-choices-win-default-height) 'above)
+		     (error nil)))
+	      (display-buffer buffer))))
+    (if (not window)
+	(error "Couldn't make window for *Choices*")
+      (select-window window)
+      (set-window-buffer window buffer)
+      (set-window-point window (point-min))
+      (fit-window-to-buffer window nil nil nil nil t))))
 
 ;; Should we add a compound word match return value?
 (defun ispell-parse-output (output &optional accept-list shift)

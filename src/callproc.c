@@ -127,9 +127,17 @@ encode_current_directory (void)
 
   dir = expand_and_dir_to_file (dir, Qnil);
 
+  if (NILP (Ffile_accessible_directory_p (dir)))
+    report_file_error ("Setting current directory",
+		       BVAR (current_buffer, directory));
+
+  /* Remove "/:" from dir.  */
+  if (! NILP (Fstring_match (build_string ("^/:"), dir, Qnil)))
+    dir = Fsubstring (dir, make_number (2), Qnil);
+
   if (STRING_MULTIBYTE (dir))
     dir = ENCODE_FILE (dir);
-  if (! file_accessible_directory_p (SSDATA (dir)))
+  if (! file_accessible_directory_p (dir))
     report_file_error ("Setting current directory",
 		       BVAR (current_buffer, directory));
 
@@ -466,7 +474,7 @@ call_process (ptrdiff_t nargs, Lisp_Object *args, int filefd,
       && SREF (path, 1) == ':')
     path = Fsubstring (path, make_number (2), Qnil);
 
-  new_argv = SAFE_ALLOCA ((nargs > 4 ? nargs - 2 : 2) * sizeof *new_argv);
+  SAFE_NALLOCA (new_argv, 1, nargs < 4 ? 2 : nargs - 2);
 
   {
     struct gcpro gcpro1, gcpro2, gcpro3, gcpro4;
@@ -632,6 +640,7 @@ call_process (ptrdiff_t nargs, Lisp_Object *args, int filefd,
     int volatile fd_error_volatile = fd_error;
     int volatile filefd_volatile = filefd;
     ptrdiff_t volatile count_volatile = count;
+    ptrdiff_t volatile sa_avail_volatile = sa_avail;
     ptrdiff_t volatile sa_count_volatile = sa_count;
     char **volatile new_argv_volatile = new_argv;
     int volatile callproc_fd_volatile[CALLPROC_FDS];
@@ -648,6 +657,7 @@ call_process (ptrdiff_t nargs, Lisp_Object *args, int filefd,
     fd_error = fd_error_volatile;
     filefd = filefd_volatile;
     count = count_volatile;
+    sa_avail = sa_avail_volatile;
     sa_count = sa_count_volatile;
     new_argv = new_argv_volatile;
 
@@ -842,7 +852,7 @@ call_process (ptrdiff_t nargs, Lisp_Object *args, int filefd,
 				 (process_coding.dst_pos_byte
 				  + process_coding.produced),
 				 0);
-		  display_on_the_fly = 0;
+		  display_on_the_fly = false;
 		  process_coding = saved_coding;
 		  carryover = nread;
 		  /* Make the above condition always fail in the future.  */
@@ -874,9 +884,9 @@ call_process (ptrdiff_t nargs, Lisp_Object *args, int filefd,
 	      /* This variable might have been set to 0 for code
 		 detection.  In that case, set it back to 1 because
 		 we should have already detected a coding system.  */
-	      display_on_the_fly = 1;
+	      display_on_the_fly = true;
 	    }
-	  immediate_quit = 1;
+	  immediate_quit = true;
 	  QUIT;
 	}
     give_up: ;
@@ -1151,6 +1161,39 @@ add_env (char **env, char **new_env, char *string)
   return new_env;
 }
 
+#ifndef DOS_NT
+
+/* 'exec' failed inside a child running NAME, with error number ERR.
+   Possibly a vforked child needed to allocate a large vector on the
+   stack; such a child cannot fall back on malloc because that might
+   mess up the allocator's data structures in the parent.
+   Report the error and exit the child.  */
+
+static _Noreturn void
+exec_failed (char const *name, int err)
+{
+  /* Avoid deadlock if the child's perror writes to a full pipe; the
+     pipe's reader is the parent, but with vfork the parent can't
+     run until the child exits.  Truncate the diagnostic instead.  */
+  fcntl (STDERR_FILENO, F_SETFL, O_NONBLOCK);
+
+  errno = err;
+  emacs_perror (name);
+  _exit (err == ENOENT ? EXIT_ENOENT : EXIT_CANNOT_INVOKE);
+}
+
+#else
+
+/* Do nothing.  There is no need to fail, as DOS_NT platforms do not
+   fork and exec, and handle alloca exhaustion in a different way.  */
+
+static void
+exec_failed (char const *name, int err)
+{
+}
+
+#endif
+
 /* This is the last thing run in a newly forked inferior
    either synchronous or asynchronous.
    Copy descriptors IN, OUT and ERR as descriptors 0, 1 and 2.
@@ -1174,8 +1217,6 @@ child_setup (int in, int out, int err, char **new_argv, bool set_pgrp,
   int cpid;
   HANDLE handles[3];
 #else
-  int exec_errno;
-
   pid_t pid = getpid ();
 #endif /* WINDOWSNT */
 
@@ -1196,11 +1237,13 @@ child_setup (int in, int out, int err, char **new_argv, bool set_pgrp,
        on that.  */
     pwd_var = xmalloc (i + 5);
 #else
+    if (MAX_ALLOCA - 5 < i)
+      exec_failed (new_argv[0], ENOMEM);
     pwd_var = alloca (i + 5);
 #endif
     temp = pwd_var + 4;
     memcpy (pwd_var, "PWD=", 4);
-    strcpy (temp, SSDATA (current_dir));
+    lispstpcpy (temp, current_dir);
 
 #ifndef DOS_NT
     /* We can't signal an Elisp error here; we're in a vfork.  Since
@@ -1262,6 +1305,8 @@ child_setup (int in, int out, int err, char **new_argv, bool set_pgrp,
       }
 
     /* new_length + 2 to include PWD and terminating 0.  */
+    if (MAX_ALLOCA / sizeof *env - 2 < new_length)
+      exec_failed (new_argv[0], ENOMEM);
     env = new_env = alloca ((new_length + 2) * sizeof *env);
     /* If we have a PWD envvar, pass one down,
        but with corrected value.  */
@@ -1270,7 +1315,11 @@ child_setup (int in, int out, int err, char **new_argv, bool set_pgrp,
 
     if (STRINGP (display))
       {
-	char *vdata = alloca (sizeof "DISPLAY=" + SBYTES (display));
+	char *vdata;
+
+	if (MAX_ALLOCA - sizeof "DISPLAY=" < SBYTES (display))
+	  exec_failed (new_argv[0], ENOMEM);
+	vdata = alloca (sizeof "DISPLAY=" + SBYTES (display));
 	strcpy (vdata, "DISPLAY=");
 	strcat (vdata, SSDATA (display));
 	new_env = add_env (env, new_env, vdata);
@@ -1345,16 +1394,7 @@ child_setup (int in, int out, int err, char **new_argv, bool set_pgrp,
   tcsetpgrp (0, pid);
 
   execve (new_argv[0], new_argv, env);
-  exec_errno = errno;
-
-  /* Avoid deadlock if the child's perror writes to a full pipe; the
-     pipe's reader is the parent, but with vfork the parent can't
-     run until the child exits.  Truncate the diagnostic instead.  */
-  fcntl (STDERR_FILENO, F_SETFL, O_NONBLOCK);
-
-  errno = exec_errno;
-  emacs_perror (new_argv[0]);
-  _exit (exec_errno == ENOENT ? EXIT_ENOENT : EXIT_CANNOT_INVOKE);
+  exec_failed (new_argv[0], errno);
 
 #else /* MSDOS */
   pid = run_msdos_command (new_argv, pwd_var + 4, in, out, err, env);
@@ -1488,14 +1528,14 @@ If optional parameter ENV is a list, then search this list instead of
 }
 
 /* A version of getenv that consults the Lisp environment lists,
-   easily callable from C.  */
+   easily callable from C.  This is usually called from egetenv.  */
 char *
-egetenv (const char *var)
+egetenv_internal (const char *var, ptrdiff_t len)
 {
   char *value;
   ptrdiff_t valuelen;
 
-  if (getenv_internal (var, strlen (var), &value, &valuelen, Qnil))
+  if (getenv_internal (var, len, &value, &valuelen, Qnil))
     return value;
   else
     return 0;
@@ -1543,20 +1583,13 @@ init_callproc_1 (void)
 void
 init_callproc (void)
 {
-  char *data_dir = egetenv ("EMACSDATA");
+  bool data_dir = egetenv ("EMACSDATA") != 0;
 
-  register char * sh;
+  char *sh;
   Lisp_Object tempdir;
 #ifdef HAVE_NS
   if (data_dir == 0)
-    {
-      const char *etc_dir = ns_etc_directory ();
-      if (etc_dir)
-        {
-          data_dir = alloca (strlen (etc_dir) + 1);
-          strcpy (data_dir, etc_dir);
-        }
-    }
+    data_dir = ns_etc_directory () != 0;
 #endif
 
   if (!NILP (Vinstallation_directory))
@@ -1625,12 +1658,12 @@ init_callproc (void)
 #endif
     {
       tempdir = Fdirectory_file_name (Vexec_directory);
-      if (! file_accessible_directory_p (SSDATA (tempdir)))
+      if (! file_accessible_directory_p (tempdir))
 	dir_warning ("arch-dependent data dir", Vexec_directory);
     }
 
   tempdir = Fdirectory_file_name (Vdata_directory);
-  if (! file_accessible_directory_p (SSDATA (tempdir)))
+  if (! file_accessible_directory_p (tempdir))
     dir_warning ("arch-independent data dir", Vdata_directory);
 
   sh = getenv ("SHELL");

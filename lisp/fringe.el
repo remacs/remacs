@@ -83,9 +83,9 @@
 		  (hollow-small . hollow-square))))
 
 
-(defmacro fringe-bitmap-p (symbol)
+(defun fringe-bitmap-p (symbol)
   "Return non-nil if SYMBOL is a fringe bitmap."
-  `(get ,symbol 'fringe))
+  (get symbol 'fringe))
 
 
 ;; Control presence of fringes

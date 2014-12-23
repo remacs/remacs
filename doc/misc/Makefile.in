@@ -23,8 +23,6 @@ SHELL = @SHELL@
 # of the source tree.  This is set by configure's `--srcdir' option.
 srcdir=@srcdir@
 
-version=@version@
-
 ## Where the output files go.
 ## Note that all the Info targets build the Info files in srcdir.
 ## There is no provision for Info files to exist in the build directory.
@@ -176,12 +174,12 @@ $(buildinfodir)/semantic.info semantic.dvi semantic.pdf semantic.html: ${srcdir}
 
 
 ## Please can we just rename cc-mode.texi to ccmode.texi...
-${buildinfodir}/ccmode.info: ${srcdir}/cc-mode.texi ${gfdl}
+${buildinfodir}/ccmode.info: ${srcdir}/cc-mode.texi ${gfdl} | ${buildinfodir}
 	$(MAKEINFO) $(MAKEINFO_OPTS) $(INFO_OPTS) -o $@ $<
 
 ## efaq, efaq_w32 do not depend on gfdl.
 ## Maybe we can use .SECONDEXPANSION for this.
-${buildinfodir}/efaq%.info: ${srcdir}/efaq%.texi
+${buildinfodir}/efaq%.info: ${srcdir}/efaq%.texi | ${buildinfodir}
 	$(MAKEINFO) $(MAKEINFO_OPTS) $(INFO_OPTS) -o $@ $<
 
 efaq%.dvi: ${srcdir}/efaq%.texi
@@ -221,9 +219,7 @@ mostlyclean:
 	rm -f gnustmp*
 
 clean: mostlyclean
-	rm -f $(DVI_TARGETS) $(HTML_TARGETS) $(PDF_TARGETS) $(PS_TARGETS)
-	rm -f efaq-w32.dvi efaq-w32.html efaq-w32.pdf efaq-w32.ps
-	rm -f emacs-misc-${version}.tar*
+	rm -f *.dvi *.html *.pdf *.ps
 
 distclean: clean
 	rm -f Makefile
@@ -239,26 +235,6 @@ infoclean:
 	done
 
 bootstrap-clean maintainer-clean: distclean infoclean
-
-dist:
-	rm -rf emacs-misc-${version}
-	mkdir emacs-misc-${version}
-	cp ${srcdir}/*.texi ${srcdir}/texinfo.tex \
-	  $(emacsdir)/emacsver.texi ${srcdir}/ChangeLog* \
-	  emacs-misc-${version}/
-	sed -e 's/@sr[c]dir@/./' \
-	  -e 's/^\(emacsdir *=\).*/\1 ./' \
-	  -e 's/^\(buildinfodir *=\).*/\1 ./' \
-	  -e 's/^\(clean:.*\)/\1 infoclean/' \
-	  -e "s/@ver[s]ion@/${version}/" \
-	  -e 's/@MAKE[I]NFO@/makeinfo/' -e 's/@MK[D]IR_P@/mkdir -p/' \
-	  ${srcdir}/Makefile.in > emacs-misc-${version}/Makefile
-	@if grep '@[a-zA-Z_]*@' emacs-misc-${version}/Makefile; then \
-	  echo "Unexpanded configure variables in Makefile?" 1>&2; exit 1; \
-	fi
-	tar -cf emacs-misc-${version}.tar emacs-misc-${version}
-	rm -rf emacs-misc-${version}
-
 
 .PHONY: install-dvi install-html install-pdf install-ps install-doc
 

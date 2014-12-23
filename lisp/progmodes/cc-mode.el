@@ -108,11 +108,6 @@
 ;; with your version of Emacs, you are incompatible!
 (cc-external-require 'easymenu)
 
-;; Autoload directive for emacsen that doesn't have an older CC Mode
-;; version in the dist.
-(autoload 'subword-mode "subword"
-  "Mode enabling subword movement and editing keys." t)
-
 ;; Load cc-fonts first after font-lock is loaded, since it isn't
 ;; necessary until font locking is requested.
 ; (eval-after-load "font-lock" ; 2006-07-09: font-lock is now preloaded.
@@ -185,8 +180,7 @@ control).  See \"cc-mode.el\" for more info."
 	    (run-hooks 'c-initialization-hook)
 	    ;; Fix obsolete variables.
 	    (if (boundp 'c-comment-continuation-stars)
-		(setq c-block-comment-prefix
-		      (symbol-value 'c-comment-continuation-stars)))
+		(setq c-block-comment-prefix c-comment-continuation-stars))
 	    (add-hook 'change-major-mode-hook 'c-leave-cc-mode-mode)
 	    (setq c-initialization-ok t)
 	    ;; Connect up with Emacs's electric-indent-mode, for >= Emacs 24.4
@@ -380,7 +374,7 @@ control).  See \"cc-mode.el\" for more info."
   ;; conflicts with OOBR
   ;;(define-key c-mode-base-map "\C-c\C-v"  'c-version)
   ;; (define-key c-mode-base-map "\C-c\C-y"  'c-toggle-hungry-state)  Commented out by ACM, 2005-11-22.
-  (define-key c-mode-base-map "\C-c\C-w" 'subword-mode)
+  (define-key c-mode-base-map "\C-c\C-w" 'c-subword-mode)
   )
 
 ;; We don't require the outline package, but we configure it a bit anyway.
@@ -472,6 +466,14 @@ preferably use the `c-mode-menu' language constant directly."
 (defvar c-maybe-stale-found-type nil)
 (make-variable-buffer-local 'c-maybe-stale-found-type)
 
+(defvar c-just-done-before-change nil)
+(make-variable-buffer-local 'c-just-done-before-change)
+;; This variable is set to t by `c-before-change' and to nil by
+;; `c-after-change'.  It is used to detect a spurious invocation of
+;; `before-change-functions' directly following on from a correct one.  This
+;; happens in some Emacsen, for example when `basic-save-buffer' does (insert
+;; ?\n) when `require-final-newline' is non-nil.
+
 (defun c-basic-common-init (mode default-style)
   "Do the necessary initialization for the syntax handling routines
 and the line breaking/filling code.  Intended to be used by other
@@ -542,10 +544,11 @@ that requires a literal mode spec at compile time."
   ;; Use this in Emacs 21+ to avoid meddling with the rear-nonsticky
   ;; property on each character.
   (when (boundp 'text-property-default-nonsticky)
+    (make-local-variable 'text-property-default-nonsticky)
     (mapc (lambda (tprop)
 	    (unless (assq tprop text-property-default-nonsticky)
-	      (set (make-local-variable 'text-property-default-nonsticky)
-                   (cons `(,tprop . t) text-property-default-nonsticky))))
+	      (setq text-property-default-nonsticky
+                    (cons `(,tprop . t) text-property-default-nonsticky))))
 	  '(syntax-table category c-type)))
 
   ;; In Emacs 21 and later it's possible to turn off the ad-hoc
@@ -605,10 +608,12 @@ that requires a literal mode spec at compile time."
     (make-local-hook 'before-change-functions)
     (make-local-hook 'after-change-functions))
   (add-hook 'before-change-functions 'c-before-change nil t)
+  (setq c-just-done-before-change nil)
   (add-hook 'after-change-functions 'c-after-change nil t)
-  (set (make-local-variable 'font-lock-extend-after-change-region-function)
- 	'c-extend-after-change-region))	; Currently (2009-05) used by all
-			; languages with #define (C, C++,; ObjC), and by AWK.
+  (when (boundp 'font-lock-extend-after-change-region-function)
+    (set (make-local-variable 'font-lock-extend-after-change-region-function)
+         'c-extend-after-change-region))) ; Currently (2009-05) used by all
+                          ; languages with #define (C, C++,; ObjC), and by AWK.
 
 (defun c-setup-doc-comment-style ()
   "Initialize the variables that depend on the value of `c-doc-comment-style'."
@@ -669,9 +674,11 @@ compatible with old code; callers should always specify it."
 	 (or (c-cpp-define-name) (c-defun-name))))
   (let ((rfn (assq mode c-require-final-newline)))
     (when rfn
-      (and (cdr rfn)
-	   (set (make-local-variable 'require-final-newline)
-                mode-require-final-newline)))))
+      (if (boundp 'mode-require-final-newline)
+          (and (cdr rfn)
+               (set (make-local-variable 'require-final-newline)
+                    mode-require-final-newline))
+        (set (make-local-variable 'require-final-newline) (cdr rfn))))))
 
 (defun c-count-cfss (lv-alist)
   ;; LV-ALIST is an alist like `file-local-variables-alist'.  Count how many
@@ -948,7 +955,11 @@ Note that the style variables are always made local to the buffer."
 	  c-new-END (min (cdr new-bounds) (c-determine-+ve-limit 500 endd)))
     ;; Clear all old relevant properties.
     (c-clear-char-property-with-value c-new-BEG c-new-END 'syntax-table '(1))
-    (c-clear-char-property-with-value c-new-BEG c-new-END 'category 'c-cpp-delimiter)
+
+    ;; CPP "comment" markers:
+    (if (eval-when-compile (memq 'category-properties c-emacs-features));Emacs.
+	(c-clear-char-property-with-value
+	 c-new-BEG c-new-END 'category 'c-cpp-delimiter))
     ;; FIXME!!!  What about the "<" and ">" category properties?  2009-11-16
 
     ;; Add needed properties to each CPP construct in the region.
@@ -967,8 +978,10 @@ Note that the style variables are always made local to the buffer."
 	  (setq mbeg (point))
 	  (if (> (c-syntactic-end-of-macro) mbeg)
 	      (progn
-		(c-neutralize-CPP-line mbeg (point))
-		(c-set-cpp-delimiters mbeg (point)))
+		(c-neutralize-CPP-line mbeg (point)) ; "punctuation" properties
+		(if (eval-when-compile
+                      (memq 'category-properties c-emacs-features)) ;Emacs.
+		    (c-set-cpp-delimiters mbeg (point)))) ; "comment" markers
 	    (forward-line))	      ; no infinite loop with, e.g., "#//"
 	  )))))
 
@@ -988,64 +1001,71 @@ Note that the style variables are always made local to the buffer."
   ;; it/them from the cache.  Don't worry about being inside a string
   ;; or a comment - "wrongly" removing a symbol from `c-found-types'
   ;; isn't critical.
-  (setq c-maybe-stale-found-type nil)
-  (save-restriction
-    (save-match-data
-      (widen)
-      (save-excursion
-	;; Are we inserting/deleting stuff in the middle of an identifier?
-	(c-unfind-enclosing-token beg)
-	(c-unfind-enclosing-token end)
-	;; Are we coalescing two tokens together, e.g. "fo o" -> "foo"?
-	(when (< beg end)
-	  (c-unfind-coalesced-tokens beg end))
-	;; Are we (potentially) disrupting the syntactic context which
-	;; makes a type a type?  E.g. by inserting stuff after "foo" in
-	;; "foo bar;", or before "foo" in "typedef foo *bar;"?
-	;;
-	;; We search for appropriate c-type properties "near" the change.
-	;; First, find an appropriate boundary for this property search.
-	(let (lim
-	      type type-pos
-	      marked-id term-pos
-	      (end1
-	       (or (and (eq (get-text-property end 'face) 'font-lock-comment-face)
-			(previous-single-property-change end 'face))
-		   end)))
-	  (when (>= end1 beg) ; Don't hassle about changes entirely in comments.
-	    ;; Find a limit for the search for a `c-type' property
-	    (while
-		(and (/= (skip-chars-backward "^;{}") 0)
-		     (> (point) (point-min))
-		     (memq (c-get-char-property (1- (point)) 'face)
-			   '(font-lock-comment-face font-lock-string-face))))
-	    (setq lim (max (point-min) (1- (point))))
+  (unless c-just-done-before-change  ; Guard against a spurious second
+			      ; invocation of before-change-functions.
+    (setq c-just-done-before-change t)
+    (setq c-maybe-stale-found-type nil)
+    (save-restriction
+      (save-match-data
+	(widen)
+	(save-excursion
+	  ;; Are we inserting/deleting stuff in the middle of an identifier?
+	  (c-unfind-enclosing-token beg)
+	  (c-unfind-enclosing-token end)
+	  ;; Are we coalescing two tokens together, e.g. "fo o" -> "foo"?
+	  (when (< beg end)
+	    (c-unfind-coalesced-tokens beg end))
+	  ;; Are we (potentially) disrupting the syntactic context which
+	  ;; makes a type a type?  E.g. by inserting stuff after "foo" in
+	  ;; "foo bar;", or before "foo" in "typedef foo *bar;"?
+	  ;;
+	  ;; We search for appropriate c-type properties "near" the change.
+	  ;; First, find an appropriate boundary for this property search.
+	  (let (lim
+		type type-pos
+		marked-id term-pos
+		(end1
+		 (or (and (eq (get-text-property end 'face)
+			      'font-lock-comment-face)
+			  (previous-single-property-change end 'face))
+		     end)))
+	    (when (>= end1 beg) ; Don't hassle about changes entirely in comments.
+	      ;; Find a limit for the search for a `c-type' property
+	      (while
+		  (and (/= (skip-chars-backward "^;{}") 0)
+		       (> (point) (point-min))
+		       (memq (c-get-char-property (1- (point)) 'face)
+			     '(font-lock-comment-face font-lock-string-face))))
+	      (setq lim (max (point-min) (1- (point))))
 
-	    ;; Look for the latest `c-type' property before end1
-	    (when (and (> end1 (point-min))
-		       (setq type-pos
-			     (if (get-text-property (1- end1) 'c-type)
-				 end1
-			       (previous-single-property-change end1 'c-type nil lim))))
-	      (setq type (get-text-property (max (1- type-pos) lim) 'c-type))
+	      ;; Look for the latest `c-type' property before end1
+	      (when (and (> end1 (point-min))
+			 (setq type-pos
+			       (if (get-text-property (1- end1) 'c-type)
+				   end1
+				 (previous-single-property-change end1 'c-type
+								  nil lim))))
+		(setq type (get-text-property (max (1- type-pos) lim) 'c-type))
 
-	      (when (memq type '(c-decl-id-start c-decl-type-start))
-		;; Get the identifier, if any, that the property is on.
-		(goto-char (1- type-pos))
-		(setq marked-id
-		      (when (looking-at "\\(\\sw\\|\\s_\\)")
-			(c-beginning-of-current-token)
-			(buffer-substring-no-properties (point) type-pos)))
+		(when (memq type '(c-decl-id-start c-decl-type-start))
+		  ;; Get the identifier, if any, that the property is on.
+		  (goto-char (1- type-pos))
+		  (setq marked-id
+			(when (looking-at "\\(\\sw\\|\\s_\\)")
+			  (c-beginning-of-current-token)
+			  (buffer-substring-no-properties (point) type-pos)))
 
-		(goto-char end1)
-		(skip-chars-forward "^;{}") ; FIXME!!!  loop for comment, maybe
-		(setq lim (point))
-		(setq term-pos
-		      (or (next-single-property-change end 'c-type nil lim) lim))
-		(setq c-maybe-stale-found-type
-		      (list type marked-id
-			    type-pos term-pos
-			    (buffer-substring-no-properties type-pos term-pos)
+		  (goto-char end1)
+		  (skip-chars-forward "^;{}") ;FIXME!!! loop for comment, maybe
+		  (setq lim (point))
+		  (setq term-pos
+			(or (c-next-single-property-change end 'c-type nil lim)
+			    lim))
+		  (setq c-maybe-stale-found-type
+			(list type marked-id
+			      type-pos term-pos
+			      (buffer-substring-no-properties type-pos
+							      term-pos)
 			      (buffer-substring-no-properties beg end)))))))
 
 	  (if c-get-state-before-change-functions
@@ -1056,7 +1076,7 @@ Note that the style variables are always made local to the buffer."
 	  )))
     ;; The following must be done here rather than in `c-after-change' because
     ;; newly inserted parens would foul up the invalidation algorithm.
-  (c-invalidate-state-cache beg))
+    (c-invalidate-state-cache beg)))
 
 (defvar c-in-after-change-fontification nil)
 (make-variable-buffer-local 'c-in-after-change-fontification)
@@ -1077,6 +1097,7 @@ Note that the style variables are always made local to the buffer."
   ;; This calls the language variable c-before-font-lock-functions, if non nil.
   ;; This typically sets `syntax-table' properties.
 
+  (setq c-just-done-before-change nil)
   (c-save-buffer-state (case-fold-search open-paren-in-column-0-is-defun-start)
     ;; When `combine-after-change-calls' is used we might get calls
     ;; with regions outside the current narrowing.  This has been
@@ -1097,11 +1118,12 @@ Note that the style variables are always made local to the buffer."
 	;; C-y is capable of spuriously converting category properties
 	;; c-</>-as-paren-syntax and c-cpp-delimiter into hard syntax-table
 	;; properties.  Remove these when it happens.
-	(c-clear-char-property-with-value beg end 'syntax-table
-					  c-<-as-paren-syntax)
-	(c-clear-char-property-with-value beg end 'syntax-table
-					  c->-as-paren-syntax)
-	(c-clear-char-property-with-value beg end 'syntax-table nil)
+	(when (eval-when-compile (memq 'category-properties c-emacs-features))
+	  (c-clear-char-property-with-value beg end 'syntax-table
+					    c-<-as-paren-syntax)
+	  (c-clear-char-property-with-value beg end 'syntax-table
+					    c->-as-paren-syntax)
+	  (c-clear-char-property-with-value beg end 'syntax-table nil))
 
 	(c-trim-found-types beg end old-len) ; maybe we don't need all of these.
 	(c-invalidate-sws-region-after beg end)
@@ -1245,6 +1267,7 @@ This function is called from `c-common-init', once per mode initialization."
       (make-local-hook 'font-lock-mode-hook))
   (add-hook 'font-lock-mode-hook 'c-after-font-lock-init nil t))
 
+;; Emacs 22 and later.
 (defun c-extend-after-change-region (_beg _end _old-len)
   "Extend the region to be fontified, if necessary."
   ;; Note: the parameters are ignored here.  This somewhat indirect
@@ -1257,6 +1280,21 @@ This function is called from `c-common-init', once per mode initialization."
   ;; (the languages with #define) and AWK Mode make non-null use of this
   ;; function.
   (cons c-new-BEG c-new-END))
+
+;; Emacs < 22 and XEmacs
+(defmacro c-advise-fl-for-region (function)
+  `(defadvice ,function (before get-awk-region activate)
+     ;; Make sure that any string/regexp is completely font-locked.
+     (when c-buffer-is-cc-mode
+       (save-excursion
+	 (ad-set-arg 1 c-new-END)   ; end
+	 (ad-set-arg 0 c-new-BEG)))))	; beg
+
+(unless (boundp 'font-lock-extend-after-change-region-function)
+  (c-advise-fl-for-region font-lock-after-change-function)
+  (c-advise-fl-for-region jit-lock-after-change)
+  (c-advise-fl-for-region lazy-lock-defer-rest-after-change)
+  (c-advise-fl-for-region lazy-lock-defer-line-after-change))
 
 ;; Connect up to `electric-indent-mode' (Emacs 24.4 and later).
 (defun c-electric-indent-mode-hook ()
@@ -1328,6 +1366,7 @@ This function is called from `c-common-init', once per mode initialization."
 ;;;###autoload (add-to-list 'auto-mode-alist '("\\.i\\'" . c-mode))
 ;;;###autoload (add-to-list 'auto-mode-alist '("\\.ii\\'" . c++-mode))
 
+(unless (fboundp 'prog-mode) (defalias 'prog-mode 'fundamental-mode))
 
 ;;;###autoload
 (define-derived-mode c-mode prog-mode "C"
@@ -1785,4 +1824,8 @@ Key bindings:
 
 (cc-provide 'cc-mode)
 
+;;; Local Variables:
+;;; indent-tabs-mode: t
+;;; tab-width: 8
+;;; End:
 ;;; cc-mode.el ends here

@@ -1202,10 +1202,10 @@ adjust_after_replace (ptrdiff_t from, ptrdiff_t from_byte,
 
   /* Update various buffer positions for the new text.  */
   GAP_SIZE -= len_byte;
-  ZV += len; Z+= len;
+  ZV += len; Z += len;
   ZV_BYTE += len_byte; Z_BYTE += len_byte;
   GPT += len; GPT_BYTE += len_byte;
-  if (GAP_SIZE > 0) *(GPT_ADDR) = 0; /* Put an anchor. */
+  if (GAP_SIZE > 0) *(GPT_ADDR) = 0; /* Put an anchor.  */
 
   if (nchars_del > 0)
     adjust_markers_for_replace (from, from_byte, nchars_del, nbytes_del,
@@ -1228,7 +1228,7 @@ adjust_after_replace (ptrdiff_t from, ptrdiff_t from_byte,
   if (from < PT)
     adjust_point (len - nchars_del, len_byte - nbytes_del);
 
-  /* As byte combining will decrease Z, we must check this again. */
+  /* As byte combining will decrease Z, we must check this again.  */
   if (Z - GPT < END_UNCHANGED)
     END_UNCHANGED = Z - GPT;
 
@@ -1599,7 +1599,7 @@ del_range_byte (ptrdiff_t from_byte, ptrdiff_t to_byte, bool prepare)
 {
   ptrdiff_t from, to;
 
-  /* Make args be valid */
+  /* Make args be valid.  */
   if (from_byte < BEGV_BYTE)
     from_byte = BEGV_BYTE;
   if (to_byte > ZV_BYTE)
@@ -1681,7 +1681,7 @@ del_range_both (ptrdiff_t from, ptrdiff_t from_byte,
 /* Delete a range of text, specified both as character positions
    and byte positions.  FROM and TO are character positions,
    while FROM_BYTE and TO_BYTE are byte positions.
-   If RET_STRING, the deleted area is returned as a string. */
+   If RET_STRING, the deleted area is returned as a string.  */
 
 Lisp_Object
 del_range_2 (ptrdiff_t from, ptrdiff_t from_byte,
@@ -1797,9 +1797,11 @@ prepare_to_modify_buffer_1 (ptrdiff_t start, ptrdiff_t end,
 			    ptrdiff_t *preserve_ptr)
 {
   struct buffer *base_buffer;
+  Lisp_Object temp;
 
+  XSETFASTINT (temp, start);
   if (!NILP (BVAR (current_buffer, read_only)))
-    Fbarf_if_buffer_read_only ();
+    Fbarf_if_buffer_read_only (temp);
 
   bset_redisplay (current_buffer);
 

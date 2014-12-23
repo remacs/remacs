@@ -2062,6 +2062,32 @@ fi
 @end ifset
 @end ifinfo
 
+@item @command{busybox} / @command{nc}
+@cindex Unix command nc
+@cindex nc Unix command
+
+The @command{nc} command will be used with the @option{nc} method.  On
+the remote host, a listener will be installed.  Unfortunately, the
+command line syntax for this has been changed with the different
+@command{busybox} versions.  @value{tramp} uses the following syntax
+(see @code{tramp-methods}):
+
+@example
+# nc -l -p 42
+@end example
+
+If your remote @command{nc} refuses to accept the @command{-p}
+parameter, you could overwrite the syntax with the following form:
+
+@lisp
+(add-to-list
+ 'tramp-connection-properties
+ `(,(regexp-quote "192.168.0.1") "remote-copy-args" (("-l") ("%r"))))
+@end lisp
+
+@noindent
+with @samp{192.168.0.1} being the IP address of your remote host
+(@pxref{Predefined connection information}).
 @end table
 
 
@@ -2685,6 +2711,21 @@ following code in your @file{.emacs}:
   (setq tramp-remote-process-environment process-environment))
 @end lisp
 
+When running @code{process-file} or @code{start-file-process} on a
+remote @code{default-directory}, the default settings in
+@code{process-environment} are not used as it is the case for local
+processes.  However, if you need environment variables other than set
+in @code{tramp-remote-process-environment}, you can let-bind them to
+@code{process-environment}. Only those variables will be set then:
+
+@lisp
+(let ((process-environment (cons "HGPLAIN=1" process-environment)))
+  (process-file @dots{}))
+@end lisp
+
+This works only for environment variables which are not set already in
+@code{process-environment}.
+
 If you use other @value{emacsname} packages which do not run
 out-of-the-box on a remote host, please let us know.  We will try to
 integrate them as well.  @xref{Bug Reports}.
@@ -2802,7 +2843,7 @@ uid=0(root) gid=0(root) groups=0(root)
 @cindex gdb
 @cindex perldb
 
-@file{gud.el} offers an unified interface to several symbolic
+@file{gud.el} offers a unified interface to several symbolic
 debuggers
 @ifset emacs
 @ifinfo

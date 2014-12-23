@@ -457,17 +457,28 @@ init_syntax_once (void)
 
 # endif /* not alloca */
 
-# define REGEX_ALLOCATE alloca
+# ifdef emacs
+#  define REGEX_USE_SAFE_ALLOCA USE_SAFE_ALLOCA
+#  define REGEX_SAFE_FREE() SAFE_FREE ()
+#  define REGEX_ALLOCATE SAFE_ALLOCA
+# else
+#  define REGEX_ALLOCATE alloca
+# endif
 
 /* Assumes a `char *destination' variable.  */
 # define REGEX_REALLOCATE(source, osize, nsize)				\
-  (destination = alloca (nsize),					\
+  (destination = REGEX_ALLOCATE (nsize),				\
    memcpy (destination, source, osize))
 
 /* No need to do anything to free, after alloca.  */
 # define REGEX_FREE(arg) ((void)0) /* Do nothing!  But inhibit gcc warning.  */
 
 #endif /* not REGEX_MALLOC */
+
+#ifndef REGEX_USE_SAFE_ALLOCA
+# define REGEX_USE_SAFE_ALLOCA ((void) 0)
+# define REGEX_SAFE_FREE() ((void) 0)
+#endif
 
 /* Define how to allocate the failure stack.  */
 
@@ -482,22 +493,10 @@ init_syntax_once (void)
 
 #else /* not using relocating allocator */
 
-# ifdef REGEX_MALLOC
+# define REGEX_ALLOCATE_STACK(size) REGEX_ALLOCATE (size)
+# define REGEX_REALLOCATE_STACK(source, o, n) REGEX_REALLOCATE (source, o, n)
+# define REGEX_FREE_STACK(ptr) REGEX_FREE (ptr)
 
-#  define REGEX_ALLOCATE_STACK malloc
-#  define REGEX_REALLOCATE_STACK(source, osize, nsize) realloc (source, nsize)
-#  define REGEX_FREE_STACK free
-
-# else /* not REGEX_MALLOC */
-
-#  define REGEX_ALLOCATE_STACK alloca
-
-#  define REGEX_REALLOCATE_STACK(source, osize, nsize)			\
-   REGEX_REALLOCATE (source, osize, nsize)
-/* No need to explicitly free anything.  */
-#  define REGEX_FREE_STACK(arg) ((void)0)
-
-# endif /* not REGEX_MALLOC */
 #endif /* not using relocating allocator */
 
 
@@ -516,10 +515,12 @@ init_syntax_once (void)
 
 #define STREQ(s1, s2) ((strcmp (s1, s2) == 0))
 
-#undef MAX
-#undef MIN
-#define MAX(a, b) ((a) > (b) ? (a) : (b))
-#define MIN(a, b) ((a) < (b) ? (a) : (b))
+#ifndef emacs
+# undef max
+# undef min
+# define max(a, b) ((a) > (b) ? (a) : (b))
+# define min(a, b) ((a) < (b) ? (a) : (b))
+#endif
 
 /* Type of source-pattern and string chars.  */
 #ifdef _MSC_VER
@@ -1395,14 +1396,14 @@ typedef struct
    : ((fail_stack).stack						\
       = REGEX_REALLOCATE_STACK ((fail_stack).stack,			\
 	  (fail_stack).size * sizeof (fail_stack_elt_t),		\
-	  MIN (re_max_failures * TYPICAL_FAILURE_SIZE,			\
+	  min (re_max_failures * TYPICAL_FAILURE_SIZE,			\
 	       ((fail_stack).size * sizeof (fail_stack_elt_t)		\
 		* FAIL_STACK_GROWTH_FACTOR))),				\
 									\
       (fail_stack).stack == NULL					\
       ? 0								\
       : ((fail_stack).size						\
-	 = (MIN (re_max_failures * TYPICAL_FAILURE_SIZE,		\
+	 = (min (re_max_failures * TYPICAL_FAILURE_SIZE,		\
 		 ((fail_stack).size * sizeof (fail_stack_elt_t)		\
 		  * FAIL_STACK_GROWTH_FACTOR))				\
 	    / sizeof (fail_stack_elt_t)),				\
@@ -1631,7 +1632,7 @@ static boolean at_begline_loc_p (re_char *pattern, re_char *p,
 static boolean at_endline_loc_p (re_char *p, re_char *pend,
 				 reg_syntax_t syntax);
 static re_char *skip_one_char (re_char *p);
-static int analyse_first (re_char *p, re_char *pend,
+static int analyze_first (re_char *p, re_char *pend,
 			  char *fastmap, const int multibyte);
 
 /* Fetch the next character in the uncompiled pattern, with no
@@ -2310,8 +2311,8 @@ set_image_of_range (struct range_table_work_area *work_area,
 		cmin = c, cmax = c;
 	      else
 		{
-		  cmin = MIN (cmin, c);
-		  cmax = MAX (cmax, c);
+		  cmin = min (cmin, c);
+		  cmax = max (cmax, c);
 		}
 	    }
 	}
@@ -2687,7 +2688,7 @@ regex_compile (const_re_char *pattern, size_t size, reg_syntax_t syntax,
 		    size_t startoffset = 0;
 		    re_opcode_t ofj =
 		      /* Check if the loop can match the empty string.  */
-		      (simple || !analyse_first (laststart, b, NULL, 0))
+		      (simple || !analyze_first (laststart, b, NULL, 0))
 		      ? on_failure_jump : on_failure_jump_loop;
 		    assert (skip_one_char (laststart) <= b);
 
@@ -2734,7 +2735,7 @@ regex_compile (const_re_char *pattern, size_t size, reg_syntax_t syntax,
 		GET_BUFFER_SPACE (7); /* We might use less.  */
 		if (many_times_ok)
 		  {
-		    boolean emptyp = analyse_first (laststart, b, NULL, 0);
+		    boolean emptyp = analyze_first (laststart, b, NULL, 0);
 
 		    /* The non-greedy multiple match looks like
 		       a repeat..until: we only need a conditional jump
@@ -2990,7 +2991,7 @@ regex_compile (const_re_char *pattern, size_t size, reg_syntax_t syntax,
 #else  /* emacs */
 		    if (c < 128)
 		      {
-			ch = MIN (127, c1);
+			ch = min (127, c1);
 			SETUP_ASCII_RANGE (range_table_work, c, ch);
 			c = ch + 1;
 			if (CHAR_BYTE8_P (c1))
@@ -3835,7 +3836,7 @@ group_in_compile_stack (compile_stack_type compile_stack, regnum_t regnum)
   return false;
 }
 
-/* analyse_first.
+/* analyze_first.
    If fastmap is non-NULL, go through the pattern and fill fastmap
    with all the possible leading chars.  If fastmap is NULL, don't
    bother filling it up (obviously) and only return whether the
@@ -3846,7 +3847,7 @@ group_in_compile_stack (compile_stack_type compile_stack, regnum_t regnum)
    Return -1 if fastmap was not updated accurately.  */
 
 static int
-analyse_first (const_re_char *p, const_re_char *pend, char *fastmap,
+analyze_first (const_re_char *p, const_re_char *pend, char *fastmap,
 	       const int multibyte)
 {
   int j, k;
@@ -4088,7 +4089,7 @@ analyse_first (const_re_char *p, const_re_char *pend, char *fastmap,
 	    { /* We have to look down both arms.
 		 We first go down the "straight" path so as to minimize
 		 stack usage when going through alternatives.  */
-	      int r = analyse_first (p, pend, fastmap, multibyte);
+	      int r = analyze_first (p, pend, fastmap, multibyte);
 	      if (r) return r;
 	      p += j;
 	    }
@@ -4138,7 +4139,7 @@ analyse_first (const_re_char *p, const_re_char *pend, char *fastmap,
   /* We reached the end without matching anything.  */
   return 1;
 
-} /* analyse_first */
+} /* analyze_first */
 
 /* re_compile_fastmap computes a ``fastmap'' for the compiled pattern in
    BUFP.  A fastmap records which of the (1 << BYTEWIDTH) possible
@@ -4168,7 +4169,7 @@ re_compile_fastmap (struct re_pattern_buffer *bufp)
   memset (fastmap, 0, 1 << BYTEWIDTH);  /* Assume nothing's valid.  */
   bufp->fastmap_accurate = 1;	    /* It will be when we're done.  */
 
-  analysis = analyse_first (bufp->buffer, bufp->buffer + bufp->used,
+  analysis = analyze_first (bufp->buffer, bufp->buffer + bufp->used,
 			    fastmap, RE_MULTIBYTE_P (bufp));
   bufp->can_be_null = (analysis != 0);
   return 0;
@@ -4579,6 +4580,7 @@ static int bcmp_translate (re_char *s1, re_char *s2,
     FREE_VAR (regend);							\
     FREE_VAR (best_regstart);						\
     FREE_VAR (best_regend);						\
+    REGEX_SAFE_FREE ();							\
   } while (0)
 #else
 # define FREE_VARIABLES() ((void)0) /* Do nothing!  But inhibit gcc warning.  */
@@ -5018,6 +5020,8 @@ re_match_2_internal (struct re_pattern_buffer *bufp, const_re_char *string1,
 
   DEBUG_PRINT ("\n\nEntering re_match_2.\n");
 
+  REGEX_USE_SAFE_ALLOCA;
+
   INIT_FAIL_STACK ();
 
 #ifdef MATCH_MAY_ALLOCATE
@@ -5208,7 +5212,7 @@ re_match_2_internal (struct re_pattern_buffer *bufp, const_re_char *string1,
 		{ /* No.  So allocate them with malloc.  We need one
 		     extra element beyond `num_regs' for the `-1' marker
 		     GNU code uses.  */
-		  regs->num_regs = MAX (RE_NREGS, num_regs + 1);
+		  regs->num_regs = max (RE_NREGS, num_regs + 1);
 		  regs->start = TALLOC (regs->num_regs, regoff_t);
 		  regs->end = TALLOC (regs->num_regs, regoff_t);
 		  if (regs->start == NULL || regs->end == NULL)
@@ -5252,7 +5256,7 @@ re_match_2_internal (struct re_pattern_buffer *bufp, const_re_char *string1,
 
 	      /* Go through the first `min (num_regs, regs->num_regs)'
 		 registers, since that is all we initialized.  */
-	      for (reg = 1; reg < MIN (num_regs, regs->num_regs); reg++)
+	      for (reg = 1; reg < min (num_regs, regs->num_regs); reg++)
 		{
 		  if (REG_UNSET (regstart[reg]) || REG_UNSET (regend[reg]))
 		    regs->start[reg] = regs->end[reg] = -1;

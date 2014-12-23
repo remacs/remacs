@@ -1,3 +1,48 @@
+2014-12-14  Glenn Morris  <rgm@gnu.org>
+
+	* grep-changelog: Remove file.
+	* Makefile.in (INSTALLABLE_SCRIPTS): Remove.
+	(all, install, uninstall): Remove INSTALLABLE_SCRIPTS.
+
+2014-11-23  Glenn Morris  <rgm@gnu.org>
+
+	* Makefile.in (emacsclient.res): Fix yesterday's thinko.
+
+2014-11-22  Glenn Morris  <rgm@gnu.org>
+
+	* Makefile.in (emacsclient.res): Update deps for nt/emacsclient.rc
+	now being in the build directory, not the source directory.
+
+	* Makefile.in (emacsclient.res): Add dependency on icons/emacs.ico.
+
+2014-10-20  Glenn Morris  <rgm@gnu.org>
+
+	* Merge in all changes up to 24.4 release.
+
+2014-09-23  Paul Eggert  <eggert@cs.ucla.edu>
+
+	movemail: don't dump core if the current time is outlandish
+	* movemail.c (popmail): Check for mbx_delimit_begin failure.
+	(mbx_delimit_begin): Fail if the current time is so outlandish
+	that localtime would fail or asctime would have undefined
+	behavior.  Use strftime to avoid asctime undefined behavior.
+
+2014-09-01  Paul Eggert  <eggert@cs.ucla.edu>
+
+	--enable-silent-rules now suppresses more chatter.
+	* Makefile.in (AM_DEFAULT_VERBOSITY, AM_V_CC, am__v_CC_)
+	(am__v_CC_0, am__v_CC_1, AM_V_CCLD, am__v_CCLD_, am__v_CCLD_0)
+	(am__v_CCLD_1): New macros, taken from Automake.
+	(regex.o, etags${EXEEXT}, ctags${EXEEXT}, ebrowse${EXEEXT})
+	(profile${EXEEXT}, make-docfile${EXEEXT}, movemail${EXEEXT})
+	(pop.o, emacsclient${EXEEXT}, emacsclientw${EXEEXT})
+	(emacsclientw${EXEEXT}, ntlib.o, hexl${EXEEXT})
+	(update-game-score${EXEEXT}): Use them.
+
+	* etags.c (emacs_strchr, emacs_strrchr): Remove.
+	All uses replaced by strchr and strrchr, which are on all
+	target platforms now.
+
 2014-07-15  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Use "b" flag more consistently; avoid "t" (Bug#18006).
@@ -2972,7 +3017,7 @@
 	filter), show help instead of blindingly dumping every single
 	ChangeLog available.  Doc fix.  Update version.
 
-2006-11-02  Tim Van Holder  <tim.vanholder@gmail.com>  (tiny change)
+2006-11-02  Tim Van Holder  <tim.vanholder@gmail.com>
 
 	* emacsclient.c [WINDOWSNT]: Define HAVE_INET_SOCKETS.
 	[!WINDOWSNT]: Include <netinet/in.h> if available.
@@ -2997,7 +3042,7 @@
 	(set_tcp_socket): Prefer O_NONBLOCK, then O_NDELAY, then FIONBIO
 	to set the socket in non-blocking mode.
 
-2006-10-31  Tim Van Holder  <tim.vanholder@gmail.com>  (tiny change)
+2006-10-31  Tim Van Holder  <tim.vanholder@gmail.com>
 
 	* emacsclient.c [!WINDOWSNT]: Include <netinet/in.h> and <sys/ioctl.h>.
 	(INVALID_SOCKET): Define.
@@ -7711,7 +7756,7 @@
 	(consider_token): DEFUNs now treated like funcs in ctags mode.
 
 	* etags.c (LEVEL_OK_FOR_FUNCDEF): Remove.
-	(C_entries): Optimized the test that used LEVEL_OK_FOR_FUNCDEF.
+	(C_entries): Optimize the test that used LEVEL_OK_FOR_FUNCDEF.
 	(C_entries): Remove a piece of useless code.
 	(C_entries): Making typedef tags is delayed until a semicolon
 	is met.  This handles "typedef int X, Y, Z;" correctly.
@@ -8111,7 +8156,7 @@
 	* Makefile.in (prefix, bindir, libdir, srcdir): New variables, as
 	described in the top-level Makefile.
 	(UTILITIES): Add make-path to the list of utility programs.
-	(../arch-lib): Replaced by the ${archlibdir} target, which places
+	(../arch-lib): Replace by the ${archlibdir} target, which places
 	the executables in their permanent home.
 	(install, install.sysv, install.xenix): Consolidated into one
 	target which should work under all circumstances, modulo a few

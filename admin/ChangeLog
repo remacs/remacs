@@ -1,3 +1,241 @@
+2014-12-14  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* notes/unicode: Track leim/quail file renames.
+	Correct coding system
+	of lisp/international/titdic-cnv.el.
+
+2014-12-14  Glenn Morris  <rgm@gnu.org>
+
+	* quick-install-emacs (PUBLIC_LIBSRC_SCRIPTS): Remove, and all uses.
+	* authors.el (authors-valid-file-names): Add grep-changelog.
+
+2014-12-13  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* notes/unicode: Don't mention Czech and Slovakian refcards.
+
+	* merge-gnulib (GNULIB_MODULES): Add stddef, for max_align_t.
+
+2014-12-06  Stephen Leake  <stephen_leake@stephe-leake.org>
+
+	* notes/commits: Delete; merge into ./CONTRIBUTE.
+
+	* notes/repo: Move commit, branch info into ./CONTRIBUTE.
+
+2014-12-01  Glenn Morris  <rgm@gnu.org>
+
+	* update_autogen: Fix bogosity introduced in 2014-11-16 merge.
+
+2014-11-29  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Lessen focus on ChangeLog files, as opposed to change log entries.
+	This is in preparation for generating the former automatically
+	from the latter.
+	* notes/bugtracker, notes/copyright, notes/newfile:
+	ChangeLog -> change log
+	* notes/changelogs: Remove, merging old contents to ...
+	* notes/repo: ... here.
+
+2014-11-27  David Engster  <deng@randomsample.de>
+
+	* gitmerge.el: New file.
+	* notes/git-workflow: Add documentation for using it.
+
+2014-11-27  Oscar Fuentes  <ofv@wanadoo.es>
+
+	* CPP-DEFINES: Mention MINGW_W64.
+
+2014-11-22  Glenn Morris  <rgm@gnu.org>
+
+	* admin.el (set-version): No more need to update nt/*.rc.
+	* authors.el (authors-renamed-files-alist): Add .rc.in files.
+
+2014-11-16  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* update_autogen: Merge from emacs-24 (restoring bzr conditionals).
+
+2014-11-13  Andreas Schwab  <schwab@suse.de>
+
+	* make-tarball.txt: Make annotated tag and push it out.
+
+2014-11-11  Eric S. Raymond  <esr@thyrsus.com>
+
+	* make-tarball.txt, notes/bugtracker, notes/repo, notes/tags:
+	Git transition.
+	* update-copyright: Use git ls-files.
+	* update_autogen: Remove some bzr conditionals.
+
+2014-11-10  Eli Zaretskii  <eliz@gnu.org>
+
+	* unidata/Makefile.in (${top_srcdir}/src/macuvs.h):
+	Use unmsys--file-name.  (Bug#18955)
+
+2014-11-10  Glenn Morris  <rgm@gnu.org>
+
+	* admin.el (set-version): No need to update doc/man/emacs.1.
+
+	* admin.el (set-version): No need to update etc/refcards/emacsver.tex.
+	(set-copyright): Update etc/refcards/emacsver.tex.in.
+
+	* admin.el (set-version): No need to update doc/emacs/emacsver.texi.
+	(make-manuals-dist-output-variables): Add top_srcdir.
+	(make-manuals-dist--1): Handle @version@ specially.
+
+2014-11-09  Eric Ludlam <zappo@gnu.org>
+
+	* grammars/c.by (template-type): Add :template-specifier and
+	:typevar to capture extra details about the template.
+	(opt-post-fcn-modifiers): Splice in the found symbol into the
+	return value correctly.
+	(QUESTION): New punctuation.
+	(expression): Add ternary conditional support.
+
+	* grammars/scheme.by (MODULE): New token.
+	(scheme): Handle expanding the MODULE tag.
+	(scheme-list): Remove closeparen required match.
+	(scheme-in-list): Remove extraneous matches for DEFINE.
+	Add support for MODULE Simplify matching for code & make work.
+	(name-args, name-arg-list, name-arg-expand): Make it work.
+
+2014-11-09  David Engster <dengste@eml.cc>
+
+	* grammars/c.by (opt-brackets-after-symbol): New.
+	(multi-stage-dereference): Use it.  Add rules for explicit
+	matching the last dereference.  We cannot just juse
+	'namespace-symbol' as a single rule, since this would match too
+	greedy and mess with parsing default values of variables.
+
+2014-11-09  Glenn Morris  <rgm@gnu.org>
+
+	* admin.el (make-manuals-dist-output-variables)
+	(make-manuals-dist--1, make-manuals-dist): New.
+	Replaces doc/*/Makefile.in `dist' rules.
+
+2014-11-04  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Spelling fixes; tweak explanation of commit messages.
+	* notes/repo: Avoid "DVCS" acronym without first explaining it.
+	Mention using the first line of a ChangeLog as the topic line,
+	and that commit messages should use UTF-8.
+
+2014-11-01  Eli Zaretskii  <eliz@gnu.org>
+
+	* notes/repo (Notes): Reword the stylistic guidance for commit log
+	messages so that they are in line with Emacs development practices
+	and style guidance.
+
+2014-10-27  Eric S. Raymond  <esr@thyrsus.com>
+
+	* notes/bzr: Rename to notes/repo, reorganize to separate
+	VCS-dependent from VCS-independent stuff.  Add guidance about
+	commit-comment format under DVCSes.
+
+	* notes/BRANCH: Merged into notes/repo.
+
+2014-10-20  Glenn Morris  <rgm@gnu.org>
+
+	* Merge in all changes up to 24.4 release.
+
+2014-10-15  Eli Zaretskii  <eliz@gnu.org>
+
+	* unidata/unidata-gen.el (unidata-prop-alist): New properties
+	'paired-bracket' and 'bracket-type', in support of the UBA 6.3.
+	(unidata-gen-table): Support PROP-IDX being a function.
+	(unidata-describe-bidi-bracket-type, unidata-gen-brackets-list)
+	(unidata-gen-bracket-type-list): New functions.
+	(unidata-check): Support checking the 'bracket-type' attribute.
+	(unidata-gen-files): Don't create backups for uni-*.el files.
+
+	* unidata/Makefile.in (${unidir}/charprop.el): Depend on
+	BidiMirroring.txt and BidiBrackets.txt.
+
+	* unidata/BidiBrackets.txt: New file, from Unicode.
+
+2014-10-13  Glenn Morris  <rgm@gnu.org>
+
+	* authors.el (authors-aliases, authors-fixed-case)
+	(authors-obsolete-files-regexps): Additions.
+	(authors-no-scan-regexps): New constant.
+	(authors-no-scan-file-p): New function.
+	(authors): Respect authors-no-scan-file-p.
+
+2014-10-12  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Fix putenv race conditions with undefined behavior (Bug#8705).
+	* merge-gnulib (GNULIB_MODULES): Add time_r, since Emacs now
+	calls localtime_r and gmtime_r directly.
+
+2014-10-07  Glenn Morris  <rgm@gnu.org>
+
+	* unidata/Makefile.in: Check for deleted uni- files.  (Bug#18489)
+	(all): Use unifiles rather than charprop.el.
+	(FORCE): New variable and phony rule.
+	(${unidir}/charprop.el): Respect FORCE.
+	(unifiles): New rule.
+
+	* unidata/Makefile.in (unidir): Rename from DSTDIR.  Change all uses.
+	(charprop.el, install): Remove rules.
+	(clean): Simplify.
+
+2014-10-04  Glenn Morris  <rgm@gnu.org>
+
+	* authors.el (authors-renamed-files-alist): Add package-x-test.el
+
+2014-10-01  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* unidata/unidata-gen.el (unidata-gen-table-word-list): Use alist-get
+	and cl-incf.
+
+2014-09-08  Eli Zaretskii  <eliz@gnu.org>
+
+	* unidata/unidata-gen.el (unidata-check): Bring this function up
+	to date with the currently supported methods of generating Unicode
+	property tables.  Add a comment with a description how to invoke
+	the check.  Update the copyright years in the reference to the
+	Unicode data files we use.
+
+2014-08-30  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Vector-sorting fixes (Bug#18361).
+	* merge-gnulib (GNULIB_MODULES): Add vla.
+
+2014-08-30  Eli Zaretskii  <eliz@gnu.org>
+
+	* authors.el (authors): Fix last change so it works for MS-Windows
+	as well.
+
+2014-08-29  Michael Albinus  <michael.albinus@gmx.de>
+
+	* authors.el (authors): Use LOCALE argument of `string-collate-lessp'.
+
+2014-08-28  Michael Albinus  <michael.albinus@gmx.de>
+
+	* authors.el (authors-aliases): Addition.
+
+2014-08-26  Glenn Morris  <rgm@gnu.org>
+
+	* authors.el (authors-ignored-files, authors-valid-file-names)
+	(authors-renamed-files-alist): Additions.
+	(authors-renamed-files-alist): Revert 2014-08-09 change.
+	(authors): Sort authors in utf-8 order.  (Bug#2263)
+
+2014-08-09  Reuben Thomas  <rrt@sc3d.org>
+
+	* notes/copyright: Remove mention of msdos/is_exec.c and
+	sigaction.c.
+	* authors.el (authors-renamed-files-alist): Remove is_exec.c.
+
+2014-08-07  Reuben Thomas  <rrt@sc3d.org>
+
+	* notes/exit-value: Remove specific discussion of VMS.
+
+2014-08-07  Reuben Thomas  <rrt@sc3d.org>
+
+	Refer to MS-DOS using the same name everywhere.
+
+	* FOR-RELEASE: ``MS-DOG'', ``MSDOG'' and ``msdog'' become
+	``MS-DOS''.
+	* MAINTAINERS: ditto.
+
 2014-07-14  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Use binary-io module, O_BINARY, and "b" flag (Bug#18006).
@@ -1934,7 +2172,7 @@
 
 2006-04-17  Ramprasad B  <ramprasad_i82@yahoo.com>
 
-	* ./* (Copyright): Updated Copyright year(s).
+	* ./* (Copyright): Update Copyright year(s).
 
 2006-02-24  Reiner Steib  <Reiner.Steib@gmx.de>
 

@@ -1,6 +1,277 @@
+2014-12-19  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* automated/let-alist.el: require `cl-lib'
+	New tests for accessing alists inside alists.
+
+2014-12-18  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* automated/let-alist.el: New file.
+
+2014-12-16  Nicolas Petton <petton.nicolas@gmail.com>
+
+	* automated/seq-tests.el: New file.
+
+2014-12-16  Glenn Morris  <rgm@gnu.org>
+
+	* automated/data/flymake/Makefile (check-syntax):
+	Prevent colorized gcc output from confusing flymake.
+
+	* automated/flymake-tests.el (flymake-tests-data-directory):
+	Change from flymake/warnpred to more standard data/flymake.
+	* automated/flymake/warnpred/: Rename to automated/data/flymake/.
+
+2014-12-11  Michael Albinus  <michael.albinus@gmx.de>
+
+	* automated/vc-tests.el (vc-test--revision-granularity-function):
+	New defun.
+	(vc-test--create-repo-function): Rename from
+	`vc-test--create-repo-if-not-supported'.  Adapt all callees.
+	(vc-test--create-repo): Check also for revision-granularity.
+	(vc-test--unregister-function): Additional argument FILE.  Adapt
+	all callees.
+	(vc-test--working-revision): New defun.
+	(vc-test-*-working-revision): New tests.
+
+2014-12-10  Michael Albinus  <michael.albinus@gmx.de>
+
+	* automated/vc-tests.el (vc-test--register): Check, that the file
+	still exists after register and unregister operations.
+
+2014-12-06  Michael Albinus  <michael.albinus@gmx.de>
+
+	* automated/vc-tests.el: New file.
+
+2014-12-03  Michael Albinus  <michael.albinus@gmx.de>
+
+	* automated/tramp-tests.el (tramp-test29-vc-registered):
+	Fallback for changed `vc-register' argument list.
+
+2014-12-03  Glenn Morris  <rgm@gnu.org>
+
+	* automated/tramp-tests.el (tramp-test29-vc-registered):
+	Update for recent incompatible change in vc-register.
+
+2014-11-29  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	* automated/python-tests.el
+	(python-shell-calculate-process-environment-4)
+	(python-shell-calculate-process-environment-5): New tests.
+	(python-shell-make-comint-3): Use file-equal-p.
+	(python-shell-get-or-create-process-1)
+	(python-shell-get-or-create-process-2)
+	(python-shell-get-or-create-process-3): Fix interpreter for
+	Windows (Bug#18595).
+
+2014-11-21  Ulf Jasper  <ulf.jasper@web.de>
+
+	* automated/libxml-tests.el
+	(libxml-tests--data-comments-preserved): Renamed from
+	'libxml-tests--data'.
+	(libxml-tests--data-comments-discarded): New.
+	(libxml-tests): Check whether 'libxml-parse-xml-region' is
+	discarding comments correctly.
+
+2014-11-17  Michal Nazarewicz  <mina86@mina86.com>
+
+	* automated/tildify-tests.el (tildify-test-html, tildify-test-xml):
+	HTML and XML now use no-break space as hard space.  Update tests.
+	(tildify-test-foreach-ignore-environments)
+	(tildify-test-foreach-ignore-environments-early-return,
+	(tildify-test-foreach-region)
+	(tildify-test-foreach-region-early-return)
+	(tildify-test-foreach-region-limit-region): New tests of
+	`tildify-foreach-ignore-environments' and
+	`tildify--foreach-region' functions.
+	(with-test-foreach): New helper macro for the above tests.
+
+2014-11-17  Glenn Morris  <rgm@gnu.org>
+
+	* automated/occur-tests.el (occur-test-case, occur-test-create):
+	In case of failure, show the actual string, rather than just nil.
+	(occur-tests): Update for apparent change in output re control-chars.
+
+2014-11-17  Ulf Jasper  <ulf.jasper@web.de>
+
+	* automated/icalendar-tests.el (icalendar-tests--test-export): New
+	optional parameter `alarms'.
+	(icalendar-export-alarms): New test for exporting icalendar
+	alarms.
+	(icalendar-tests--test-cycle): Let `icalendar-export-alarms' be nil.
+
+2014-11-17  Ulf Jasper  <ulf.jasper@web.de>
+
+	* automated/icalendar-tests.el (icalendar-tests--test-import):
+	Mention timezone in doc string.  Clean up.
+	(icalendar-real-world): Add another test case for no-dst
+	timezones.
+
+2014-11-16  Ulf Jasper  <ulf.jasper@web.de>
+
+	* automated/icalendar-tests.el (icalendar--parse-vtimezone): Add
+	testcase where offsets of standard time and daylight saving time
+	are equal.
+	(icalendar-real-world): Fix error in test case.  Expected result
+	was wrong when offsets of standard time and daylight saving time
+	were equal.
+
+2014-11-16  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	* automated/python-tests.el
+	(python-shell-calculate-process-environment-2): Fix test.
+	(python-shell-calculate-process-environment-1)
+	(python-shell-calculate-process-environment-3): Cleanup.
+
+2014-11-16  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	* automated/python-tests.el (python-indent-dedenters-8): New test
+	for Bug#18432.
+
+2014-11-16  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	* automated/python-tests.el (python-indent-region-1)
+	(python-indent-region-2, python-indent-region-3)
+	(python-indent-region-4, python-indent-region-5): New tests.
+
+2014-11-08  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* automated/bytecomp-tests.el (bytecomp-tests--warnings): New tests.
+	* automated/cl-lib-tests.el: Rename from cl-lib.el.
+
+2014-10-28  Ulf Jasper  <ulf.jasper@web.de>
+
+	* automated/libxml-tests.el: New file.
+
+2014-10-22  Noam Postavsky  <npostavs@users.sourceforget.net>
+
+	* test/automated/process-tests.el (process-test-quoted-batfile):
+	New test.
+
+2014-10-20  Glenn Morris  <rgm@gnu.org>
+
+	* Merge in all changes up to 24.4 release.
+
+2014-10-20  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* indent/scss-mode.scss: New file.
+	* indent/css-mode.css: Add a few uneventful examples.
+
+2014-10-15  Eli Zaretskii  <eliz@gnu.org>
+
+	* BidiCharacterTest.txt: New file, from Unicode.
+
+	* biditest.el: New file.
+
+2014-10-08  Leo Liu  <sdl.web@gmail.com>
+
+	* automated/print-tests.el: New file.
+	(terpri): Tests for terpri.  (Bug#18652)
+
+2014-10-06  Glenn Morris  <rgm@gnu.org>
+
+	* automated/icalendar-tests.el (icalendar--calendar-style):
+	Remove test, no longer relevant.
+
+2014-10-04  Glenn Morris  <rgm@gnu.org>
+
+	* automated/package-x-test.el: Remove file...
+	* automated/package-test.el: ... merge package-x-test.el.  (Bug#18574)
+
+2014-10-02  Glenn Morris  <rgm@gnu.org>
+
+	* automated/package-test.el (with-package-test, package-test-signed):
+	Also set HOME to a temp value, in case the real one is absent (e.g.
+	hydra) or read-only.  (Bug#18575)
+	(package-test-signed): Use skip-unless rather than expected-result.
+
+2014-09-26  Leo Liu  <sdl.web@gmail.com>
+
+	* automated/cl-lib.el (cl-digit-char-p, cl-parse-integer):
+	New tests.  (Bug#18557)
+
+2014-09-24  Ulf Jasper  <ulf.jasper@web.de>
+
+	* automated/newsticker-tests.el
+	(newsticker--group-find-parent-group),
+	(newsticker--group-do-rename-group): New tests.
+
+2014-09-09  Eli Zaretskii  <eliz@gnu.org>
+
+	* automated/fns-tests.el (fns-tests-collate-sort):
+	Bind w32-collate-ignore-punctuation to t when sorting according to
+	UTS#10 rules.
+
+2014-09-07  Michael Albinus  <michael.albinus@gmx.de>
+
+	* automated/fns-tests.el (fns-tests--collate-enabled-p): New function.
+	(fns-tests-collate-strings, fns-tests-collate-sort): Use it.
+
+2014-09-05  Michael Albinus  <michael.albinus@gmx.de>
+
+	* automated/fns-tests.el (fns-tests-compare-strings): In case
+	`compare-strings' shall return t, check for this.
+	(fns-tests-collate-strings, fns-tests-collate-sort): New tests.
+
+2014-09-03  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	* automated/python-tests.el (python-indent-electric-colon-1):
+	New test.  (Bug#18228)
+
+2014-08-29  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	* automated/fns-tests.el (fns-tests-sort): New test.
+
+2014-08-28  Glenn Morris  <rgm@gnu.org>
+
+	* automated/python-tests.el (python-shell-calculate-exec-path-2):
+	Update test for today's python.el changes.
+
+2014-08-13  Jan Nieuwenhuizen  <janneke@gnu.org>
+
+	* automated/compile-tests.el (compile--test-error-line): Grok FILE
+	being nil.  Allows for Guile tests to pass.
+	(compile-tests--test-regexps-data): Add Guile tests.
+
+2014-08-11  Glenn Morris  <rgm@gnu.org>
+
+	* automated/data/files-bug18141.el.gz: New file.
+	* automated/files.el (files-test-bug-18141-file):
+	New variable and test.  (Bug#18141)
+
+2014-08-10  Ulf Jasper  <ulf.jasper@web.de>
+
+	Enumerate evaluated sexp diary entries (Bug#7911).
+	* automated/icalendar-tests.el (icalendar--convert-anniversary-to-ical)
+	(icalendar--convert-cyclic-to-ical, icalendar--convert-block-to-ical)
+	(icalendar--convert-yearly-to-ical, icalendar--convert-weekly-to-ical)
+	(icalendar--convert-ordinary-to-ical): Returns cons cell now.
+	(icalendar--convert-to-ical, icalendar--convert-sexp-to-ical):
+	New tests.
+
+2014-08-07  Glenn Morris  <rgm@gnu.org>
+
+	* automated/Makefile.in (check-tar): Remove, hydra recipe does it now.
+
+2014-08-06  Ulf Jasper  <ulf.jasper@web.de>
+
+	* automated/icalendar-tests.el (icalendar--convert-ordinary-to-ical)
+	(icalendar--diarytime-to-isotime): More testcases (Bug#13750).
+
+2014-08-03  Glenn Morris  <rgm@gnu.org>
+
+	* automated/Makefile.in (check-tar): New rule.
+
+2014-08-02  Glenn Morris  <rgm@gnu.org>
+
+	* automated/fns-tests.el (fns-tests-compare-strings):
+	Update test.  (Bug#17903)
+
+	* automated/icalendar-tests.el (icalendar--decode-isodatetime):
+	Use more precise TZ specification, as per 2013-08-04.
+
 2014-07-30  Ulf Jasper  <ulf.jasper@web.de>
 
-	* automated/icalendar-tests.el (icalendar--decode-isodatetime): New test.
+	* automated/icalendar-tests.el (icalendar--decode-isodatetime):
+	New test.
 
 2014-07-28  Dmitry Antipov  <dmantipov@yandex.ru>
 
@@ -205,7 +476,7 @@
 
 2014-06-05  Michal Nazarewicz  <mina86@mina86.com>
 
-	* automated/tildify-tests.el (tildify-test--test): Optimise the test
+	* automated/tildify-tests.el (tildify-test--test): Optimize the test
 	slightly by reusing the same temporary buffer across multiple test
 	cases.
 
@@ -441,8 +712,8 @@
 
 	* automated/subword-tests.el (subword-tests2): More subword tests.
 
-	* automated/cl-lib.el (cl-lib-keyword-names-versus-values): New
-	test: correct parsing of keyword arguments.
+	* automated/cl-lib.el (cl-lib-keyword-names-versus-values):
+	New test: correct parsing of keyword arguments.
 
 2014-03-22  Dmitry Gutov  <dgutov@yandex.ru>
 
@@ -537,8 +808,8 @@
 
 2014-02-17  Michael Albinus  <michael.albinus@gmx.de>
 
-	* automated/tramp-tests.el (tramp-test28-shell-command): Perform
-	an initial `sit-for' prior the while loop.
+	* automated/tramp-tests.el (tramp-test28-shell-command):
+	Perform an initial `sit-for' prior the while loop.
 
 2014-02-16  Michael Albinus  <michael.albinus@gmx.de>
 
@@ -560,8 +831,8 @@
 
 	* automated/tramp-tests.el (tramp-test26-process-file): Improve test.
 	(tramp-test27-start-file-process): Use "_p" as argument of lambda.
-	(tramp-test28-shell-command): Improve `shell-command' test.  Add
-	`async-shell-command' tests.
+	(tramp-test28-shell-command): Improve `shell-command' test.
+	Add `async-shell-command' tests.
 
 2014-02-04  Michael Albinus  <michael.albinus@gmx.de>
 
@@ -617,8 +888,8 @@
 
 2014-01-13  Michael Albinus  <michael.albinus@gmx.de>
 
-	* automated/ert-tests.el (ert-test-record-backtrace): Reenable
-	test case with adapted test string.  (Bug#13064)
+	* automated/ert-tests.el (ert-test-record-backtrace):
+	Reenable test case with adapted test string.  (Bug#13064)
 
 2013-12-28  Glenn Morris  <rgm@gnu.org>
 

@@ -1,4 +1,4 @@
-;;; avl-tree.el --- balanced binary trees, AVL-trees
+;;; avl-tree.el --- balanced binary trees, AVL-trees  -*- lexical-binding:t -*-
 
 ;; Copyright (C) 1995, 2007-2014 Free Software Foundation, Inc.
 
@@ -27,23 +27,23 @@
 
 ;;; Commentary:
 
-;; An AVL tree is a self-balancing binary tree. As such, inserting,
+;; An AVL tree is a self-balancing binary tree.  As such, inserting,
 ;; deleting, and retrieving data from an AVL tree containing n elements
-;; is O(log n). It is somewhat more rigidly balanced than other
+;; is O(log n).  It is somewhat more rigidly balanced than other
 ;; self-balancing binary trees (such as red-black trees and AA trees),
 ;; making insertion slightly slower, deletion somewhat slower, and
 ;; retrieval somewhat faster (the asymptotic scaling is of course the
-;; same for all types). Thus it may be a good choice when the tree will
+;; same for all types).  Thus it may be a good choice when the tree will
 ;; be relatively static, i.e. data will be retrieved more often than
 ;; they are modified.
 ;;
 ;; Internally, a tree consists of two elements, the root node and the
-;; comparison function. The actual tree has a dummy node as its root
+;; comparison function.  The actual tree has a dummy node as its root
 ;; with the real root in the left pointer, which allows the root node to
 ;; be treated on a par with all other nodes.
 ;;
 ;; Each node of the tree consists of one data element, one left
-;; sub-tree, one right sub-tree, and a balance count. The latter is the
+;; sub-tree, one right sub-tree, and a balance count.  The latter is the
 ;; difference in depth of the left and right sub-trees.
 ;;
 ;; The functions with names of the form "avl-tree--" are intended for
@@ -51,7 +51,7 @@
 
 ;;; Code:
 
-(eval-when-compile (require 'cl))
+(eval-when-compile (require 'cl-lib))
 
 
 
@@ -62,7 +62,7 @@
 ;; ----------------------------------------------------------------
 ;; Functions and macros handling an AVL tree.
 
-(defstruct (avl-tree-
+(cl-defstruct (avl-tree-
             ;; A tagged list is the pre-defstruct representation.
             ;; (:type list)
             :named
@@ -77,15 +77,10 @@
   ;; Return the root node for an AVL tree.  INTERNAL USE ONLY.
   `(avl-tree--node-left (avl-tree--dummyroot ,tree)))
 
-(defsetf avl-tree--root (tree) (node)
-  `(setf (avl-tree--node-left (avl-tree--dummyroot ,tree)) ,node))
-
-
-
 ;; ----------------------------------------------------------------
 ;; Functions and macros handling an AVL tree node.
 
-(defstruct (avl-tree--node
+(cl-defstruct (avl-tree--node
             ;; We force a representation without tag so it matches the
             ;; pre-defstruct representation. Also we use the underlying
             ;; representation in the implementation of
@@ -97,7 +92,7 @@
   left right data balance)
 
 
-(defalias 'avl-tree--node-branch 'aref
+(defalias 'avl-tree--node-branch #'aref
   ;; This implementation is efficient but breaks the defstruct
   ;; abstraction.  An alternative could be (funcall (aref [avl-tree-left
   ;; avl-tree-right avl-tree-data] branch) node)
@@ -109,7 +104,7 @@ NODE is the node, and BRANCH is the branch.
 ;; The funcall/aref trick wouldn't work for the setf method, unless we
 ;; tried to access the underlying setter function, but this wouldn't be
 ;; portable either.
-(defsetf avl-tree--node-branch aset)
+(gv-define-simple-setter avl-tree--node-branch aset)
 
 
 
@@ -297,7 +292,8 @@ Return t if the height of the tree has grown."
 	        (if (< (* sgn b2) 0) sgn 0)
                 (avl-tree--node-branch node branch) p2))
       (setf (avl-tree--node-balance
-             (avl-tree--node-branch node branch)) 0)
+             (avl-tree--node-branch node branch))
+            0)
       nil))))
 
 (defun avl-tree--do-enter (cmpfun root branch data &optional updatefun)
@@ -346,7 +342,7 @@ inserted data."
   (if (null node) 0
     (let ((dl (avl-tree--check-node (avl-tree--node-left node)))
 	  (dr (avl-tree--check-node (avl-tree--node-right node))))
-      (assert (= (- dr dl) (avl-tree--node-balance node)))
+      (cl-assert (= (- dr dl) (avl-tree--node-balance node)))
       (1+ (max dl dr)))))
 
 ;; ----------------------------------------------------------------
@@ -391,7 +387,7 @@ itself."
      (avl-tree--node-data root)
      (avl-tree--node-balance root))))
 
-(defstruct (avl-tree--stack
+(cl-defstruct (avl-tree--stack
 	    (:constructor nil)
 	    (:constructor avl-tree--stack-create
 			  (tree &optional reverse
@@ -403,7 +399,7 @@ itself."
 	    (:copier nil))
   reverse store)
 
-(defalias 'avl-tree-stack-p 'avl-tree--stack-p
+(defalias 'avl-tree-stack-p #'avl-tree--stack-p
   "Return t if argument is an avl-tree-stack, nil otherwise.")
 
 (defun avl-tree--stack-repopulate (stack)
@@ -420,12 +416,12 @@ itself."
 ;;; The public functions which operate on AVL trees.
 
 ;; define public alias for constructors so that we can set docstring
-(defalias 'avl-tree-create 'avl-tree--create
+(defalias 'avl-tree-create #'avl-tree--create
   "Create an empty AVL tree.
 COMPARE-FUNCTION is a function which takes two arguments, A and B,
 and returns non-nil if A is less than B, and nil otherwise.")
 
-(defalias 'avl-tree-compare-function 'avl-tree--cmpfun
+(defalias 'avl-tree-compare-function #'avl-tree--cmpfun
   "Return the comparison function for the AVL tree TREE.
 
 \(fn TREE)")
@@ -505,7 +501,7 @@ previously specified in `avl-tree-create' when TREE was created."
     (not (eq (avl-tree-member tree data flag) flag))))
 
 
-(defun avl-tree-map (__map-function__ tree &optional reverse)
+(defun avl-tree-map (fun tree &optional reverse)
   "Modify all elements in the AVL tree TREE by applying FUNCTION.
 
 Each element is replaced by the return value of FUNCTION applied
@@ -516,12 +512,12 @@ descending order if REVERSE is non-nil."
   (avl-tree--mapc
    (lambda (node)
      (setf (avl-tree--node-data node)
-           (funcall __map-function__ (avl-tree--node-data node))))
+           (funcall fun (avl-tree--node-data node))))
    (avl-tree--root tree)
    (if reverse 1 0)))
 
 
-(defun avl-tree-mapc (__map-function__ tree &optional reverse)
+(defun avl-tree-mapc (fun tree &optional reverse)
   "Apply FUNCTION to all elements in AVL tree TREE,
 for side-effect only.
 
@@ -529,13 +525,13 @@ FUNCTION is applied to the elements in ascending order, or
 descending order if REVERSE is non-nil."
   (avl-tree--mapc
    (lambda (node)
-     (funcall __map-function__ (avl-tree--node-data node)))
+     (funcall fun (avl-tree--node-data node)))
    (avl-tree--root tree)
    (if reverse 1 0)))
 
 
 (defun avl-tree-mapf
-  (__map-function__ combinator tree &optional reverse)
+  (fun combinator tree &optional reverse)
   "Apply FUNCTION to all elements in AVL tree TREE,
 and combine the results using COMBINATOR.
 
@@ -546,7 +542,7 @@ order, or descending order if REVERSE is non-nil."
      (lambda (node)
        (setq avl-tree-mapf--accumulate
 	     (funcall combinator
-		      (funcall __map-function__
+		      (funcall fun
 			       (avl-tree--node-data node))
 		      avl-tree-mapf--accumulate)))
      (avl-tree--root tree)
@@ -554,7 +550,7 @@ order, or descending order if REVERSE is non-nil."
     (nreverse avl-tree-mapf--accumulate)))
 
 
-(defun avl-tree-mapcar (__map-function__ tree &optional reverse)
+(defun avl-tree-mapcar (fun tree &optional reverse)
   "Apply FUNCTION to all elements in AVL tree TREE,
 and make a list of the results.
 
@@ -568,7 +564,7 @@ then
   (avl-tree-mapf function 'cons tree (not reverse))
 
 is more efficient."
-  (nreverse (avl-tree-mapf __map-function__ 'cons tree reverse)))
+  (nreverse (avl-tree-mapf fun 'cons tree reverse)))
 
 
 (defun avl-tree-first (tree)
@@ -605,7 +601,7 @@ is more efficient."
   "Return the number of elements in TREE."
   (let ((treesize 0))
     (avl-tree--mapc
-     (lambda (data) (setq treesize (1+ treesize)))
+     (lambda (_) (setq treesize (1+ treesize)))
      (avl-tree--root tree) 0)
     treesize))
 

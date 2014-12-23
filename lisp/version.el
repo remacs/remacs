@@ -187,8 +187,8 @@ only ask the VCS if we cannot find any information ourselves."
 	   (let ((default-directory (file-name-as-directory dir)))
 	     (and (eq 0
 		      (condition-case nil
-			  (call-process "git" nil '(t nil) nil "log"
-					"-1" "--pretty=format:%N")
+			  (call-process "git" nil '(t nil) nil "rev-parse"
+					"HEAD")
 			(error nil)))
 		  (not (zerop (buffer-size)))
 		  (replace-regexp-in-string "\n" "" (buffer-string))))))))

@@ -442,6 +442,15 @@ See also `gnus-before-startup-hook'."
   :group 'gnus-newsrc
   :type 'hook)
 
+(defcustom gnus-save-newsrc-file-check-timestamp nil
+  "Check the modification time of the newsrc.eld file before saving it.
+When the newsrc.eld file is updated by multiple machines,
+checking the file's modification time is a good way to avoid
+overwriting updated data."
+  :version "25.1"
+  :group 'gnus-newsrc
+  :type 'boolean)
+
 (defcustom gnus-save-newsrc-hook nil
   "A hook called before saving any of the newsrc files."
   :group 'gnus-newsrc
@@ -1467,7 +1476,7 @@ newsgroup."
   "Check whether a group has been activated or not.
 If SCAN, request a scan of that group as well.  If METHOD, use
 that select method instead of determining the method based on the
-group name.  If DONT-CHECK, don't check check whether the group
+group name.  If DONT-CHECK, don't check whether the group
 actually exists.  If DONT-SUB-CHECK or DONT-CHECK, don't let the
 backend check whether the group actually exists."
   (let ((method (or method (inline (gnus-find-method-for-group group))))
@@ -2783,6 +2792,7 @@ If FORCE is non-nil, the .newsrc file is read."
       'msdos-long-file-names
       (lambda () t))))
 
+(defvar gnus-save-newsrc-file-last-timestamp nil)
 (defun gnus-save-newsrc-file (&optional force)
   "Save .newsrc file."
   ;; Note: We cannot save .newsrc file if all newsgroups are removed
@@ -2821,12 +2831,30 @@ If FORCE is non-nil, the .newsrc file is read."
 	  (erase-buffer)
           (gnus-message 5 "Saving %s.eld..." gnus-current-startup-file)
 
+          ;; check timestamp of `gnus-current-startup-file'.eld against
+          ;; `gnus-save-newsrc-file-last-timestamp'
+          (when gnus-save-newsrc-file-check-timestamp
+            (let* ((checkfile (concat gnus-current-startup-file ".eld"))
+                   (mtime (nth 5 (file-attributes checkfile))))
+              (when (and gnus-save-newsrc-file-last-timestamp
+                         (time-less-p gnus-save-newsrc-file-last-timestamp
+                                      mtime))
+                (unless (y-or-n-p
+                         (format "%s was updated externally after %s, save?"
+                                 checkfile
+                                 (format-time-string
+                                  "%c"
+                                  gnus-save-newsrc-file-last-timestamp)))
+                (error "Couldn't save %s: updated externally" checkfile)))))
+
           (if gnus-save-startup-file-via-temp-buffer
               (let ((coding-system-for-write gnus-ding-file-coding-system)
                     (standard-output (current-buffer)))
                 (gnus-gnus-to-quick-newsrc-format)
                 (gnus-run-hooks 'gnus-save-quick-newsrc-hook)
-                (save-buffer))
+                (save-buffer)
+                (setq gnus-save-newsrc-file-last-timestamp
+                            (nth 5 (file-attributes buffer-file-name))))
             (let ((coding-system-for-write gnus-ding-file-coding-system)
                   (version-control gnus-backup-startup-file)
                   (startup-file (concat gnus-current-startup-file ".eld"))
@@ -2861,7 +2889,9 @@ If FORCE is non-nil, the .newsrc file is read."
 
                       ;; Replace the existing startup file with the temp file.
                       (rename-file working-file startup-file t)
-                      (gnus-set-file-modes startup-file setmodes)))
+                      (gnus-set-file-modes startup-file setmodes)
+                      (setq gnus-save-newsrc-file-last-timestamp
+                            (nth 5 (file-attributes startup-file)))))
                 (condition-case nil
                     (delete-file working-file)
                   (file-error nil)))))

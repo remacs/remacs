@@ -1213,37 +1213,34 @@ return value is @code{nil}.
 zone.
 
 @cindex epoch
-  Most of these functions represent time as a list of either four
-integers, @code{(@var{sec-high} @var{sec-low} @var{microsec}
-@var{picosec})}, or of three
-integers, @code{(@var{sec-high} @var{sec-low} @var{microsec})}, or of
-two integers, @code{(@var{sec-high} @var{sec-low})}.  The integers
-@var{sec-high} and @var{sec-low} give the high and low bits of an
-integer number of seconds.  This integer,
+  Most of these functions represent time as a list of four integers
+@code{(@var{sec-high} @var{sec-low} @var{microsec} @var{picosec})}.
+This represents the number of seconds from the @dfn{epoch} (January
+1, 1970 at 00:00 UTC), using the formula:
 @ifnottex
-@var{high} * 2**16 + @var{low},
+@var{high} * 2**16 + @var{low} + @var{micro} * 10**@minus{}6 +
+@var{pico} * 10**@minus{}12.
 @end ifnottex
 @tex
-$high*2^{16}+low$,
+$high*2^{16} + low + micro*10^{-6} + pico*10^{-12}$.
 @end tex
-is the number of seconds from the @dfn{epoch} (0:00 January 1, 1970
-UTC) to the specified time.  The third list element @var{microsec}, if
-present, gives the number of microseconds from the start of that
-second to the specified time.
-Similarly, the fourth list element @var{picosec}, if present, gives
-the number of picoseconds from the start of that microsecond to the
-specified time.
+The return value of @code{current-time} represents time using this
+form, as do the timestamps in the return values of other functions
+such as @code{file-attributes} (@pxref{Definition of
+file-attributes}).  In some cases, functions may return two- or
+three-element lists, with omitted @var{microsec} and @var{picosec}
+components defaulting to zero.
 
-  The return value of @code{current-time} represents time using four
-integers, as do the timestamps in the return value of
-@code{file-attributes} (@pxref{Definition of
-file-attributes}).  In function arguments, e.g., the @var{time-value}
-argument to @code{current-time-string}, two-, three-, and four-integer
-lists are accepted.  You can convert times from the list
-representation into standard human-readable strings using
-@code{current-time-string}, or to other forms using the
-@code{decode-time} and @code{format-time-string} functions documented
-in the following sections.
+@cindex time value
+  Function arguments, e.g., the @var{time-value} argument to
+@code{current-time-string}, accept a more-general @dfn{time value}
+format, which can be a list of integers as above, or a single number
+for seconds since the epoch, or @code{nil} for the current time.  You
+can convert a time value into a human-readable string using
+@code{current-time-string} and @code{format-time-string}, into a list
+of integers using @code{seconds-to-time}, and into other forms using
+@code{decode-time} and @code{float-time}.  These functions are
+described in the following sections.
 
 @defun current-time-string &optional time-value
 This function returns the current time and date as a human-readable
@@ -1256,8 +1253,8 @@ characters from the beginning of the string rather than from the end,
 as the year might not have exactly four digits, and additional
 information may some day be added at the end.
 
-The argument @var{time-value}, if given, specifies a time to format
-(represented as a list of integers), instead of the current time.
+The argument @var{time-value}, if given, specifies a time to format,
+instead of the current time.
 
 @example
 @group
@@ -1279,11 +1276,19 @@ become available.
 @defun float-time &optional time-value
 This function returns the current time as a floating-point number of
 seconds since the epoch.  The optional argument @var{time-value}, if
-given, specifies a time (represented as a list of integers) to convert
-instead of the current time.
+given, specifies a time to convert instead of the current time.
 
 @emph{Warning}: Since the result is floating point, it may not be
 exact.  Do not use this function if precise time stamps are required.
+
+@code{time-to-seconds} is an alias for this function.
+@end defun
+
+@defun seconds-to-time time-value
+This function converts a time value to list-of-integer form.
+For example, if @var{time-value} is a number, @code{(time-to-seconds
+(seconds-to-time @var{time-value}))} equals the number unless overflow
+or rounding errors occur.
 @end defun
 
 @defun current-time-zone &optional time-value
@@ -1302,8 +1307,8 @@ adjustment, then the value is constant through time.
 If the operating system doesn't supply all the information necessary to
 compute the value, the unknown elements of the list are @code{nil}.
 
-The argument @var{time-value}, if given, specifies a time (represented
-as a list of integers) to analyze instead of the current time.
+The argument @var{time-value}, if given, specifies a time value to
+analyze instead of the current time.
 @end defun
 
 The current time zone is determined by the @env{TZ} environment
@@ -1316,15 +1321,15 @@ time zone.
 @section Time Conversion
 @cindex calendrical information
 
-  These functions convert time values (lists of two to four integers,
-as explained in the previous section) into calendrical information and
-vice versa.
+  These functions convert time values (@pxref{Time of Day}) into
+calendrical information and vice versa.
 
-  Many 32-bit operating systems are limited to time values containing
-32 bits of information; these systems typically handle only the times
-from 1901-12-13 20:45:52 UTC through 2038-01-19 03:14:07 UTC@.
-However, 64-bit and some 32-bit operating systems have larger time
-values, and can represent times far in the past or future.
+  Many 32-bit operating systems are limited to system times containing
+32 bits of information in their seconds component; these systems
+typically handle only the times from 1901-12-13 20:45:52 UTC through
+2038-01-19 03:14:07 UTC@.  However, 64-bit and some 32-bit operating
+systems have larger seconds components, and can represent times far in
+the past or future.
 
   Time conversion functions always use the Gregorian calendar, even
 for dates before the Gregorian calendar was introduced.  Year numbers
@@ -1332,9 +1337,9 @@ count the number of years since the year 1 B.C., and do not skip zero
 as traditional Gregorian years do; for example, the year number
 @minus{}37 represents the Gregorian year 38 B.C@.
 
-@defun decode-time &optional time
+@defun decode-time &optional time-value
 This function converts a time value into calendrical information.  If
-you don't specify @var{time}, it decodes the current time.  The return
+you don't specify @var{time-value}, it decodes the current time.  The return
 value is a list of nine elements, as follows:
 
 @example
@@ -1373,8 +1378,9 @@ Greenwich.
 
 @defun encode-time seconds minutes hour day month year &optional zone
 This function is the inverse of @code{decode-time}.  It converts seven
-items of calendrical data into a time value.  For the meanings of the
-arguments, see the table above under @code{decode-time}.
+items of calendrical data into a list-of-integer time value.  For the
+meanings of the arguments, see the table above under
+@code{decode-time}.
 
 Year numbers less than 100 are not treated specially.  If you want them
 to stand for years above 1900, or years above 2000, you must alter them
@@ -1418,9 +1424,11 @@ This function parses the time-string @var{string} and returns the
 corresponding time value.
 @end defun
 
-@defun format-time-string format-string &optional time universal
-This function converts @var{time} (or the current time, if @var{time} is
-omitted) to a string according to @var{format-string}.  The argument
+@defun format-time-string format-string &optional time-value universal
+
+This function converts @var{time-value} (or the current time, if
+@var{time-value} is omitted) to a string according to
+@var{format-string}.  The argument
 @var{format-string} may contain @samp{%}-sequences which say to
 substitute parts of the time.  Here is a table of what the
 @samp{%}-sequences mean:
@@ -1540,12 +1548,6 @@ specified by @code{locale-coding-system} (@pxref{Locales}); after
 system.
 @end defun
 
-@defun seconds-to-time seconds
-This function converts @var{seconds}, the number of seconds since the
-epoch, to a time value and returns that.  To convert back, use
-@code{float-time} (@pxref{Time of Day}).
-@end defun
-
 @defun format-seconds format-string seconds
 This function converts its argument @var{seconds} into a string of
 years, days, hours, etc., according to @var{format-string}.  The
@@ -1619,7 +1621,7 @@ When called interactively, it prints the uptime in the echo area.
 
 @defun get-internal-run-time
 This function returns the processor run time used by Emacs as a list
-of four integers: @code{(@var{high} @var{low} @var{microsec}
+of four integers: @code{(@var{sec-high} @var{sec-low} @var{microsec}
 @var{picosec})}, using the same format as @code{current-time}
 (@pxref{Time of Day}).
 
@@ -1643,7 +1645,7 @@ interactively, it prints the duration in the echo area.
 @section Time Calculations
 
   These functions perform calendrical computations using time values
-(the kind of list that @code{current-time} returns).
+(@pxref{Time of Day}).
 
 @defun time-less-p t1 t2
 This returns @code{t} if time value @var{t1} is less than time value
@@ -1652,26 +1654,26 @@ This returns @code{t} if time value @var{t1} is less than time value
 
 @defun time-subtract t1 t2
 This returns the time difference @var{t1} @minus{} @var{t2} between
-two time values, in the same format as a time value.
+two time values, as a time value.
 @end defun
 
 @defun time-add t1 t2
-This returns the sum of two time values, one of which ought to
-represent a time difference rather than a point in time.
+This returns the sum of two time values, as a time value.
+One argument should represent a time difference rather than a point in time.
 Here is how to add a number of seconds to a time value:
 
 @example
-(time-add @var{time} (seconds-to-time @var{seconds}))
+(time-add @var{time} @var{seconds})
 @end example
 @end defun
 
-@defun time-to-days time
+@defun time-to-days time-value
 This function returns the number of days between the beginning of year
-1 and @var{time}.
+1 and @var{time-value}.
 @end defun
 
-@defun time-to-day-in-year time
-This returns the day number within the year corresponding to @var{time}.
+@defun time-to-day-in-year time-value
+This returns the day number within the year corresponding to @var{time-value}.
 @end defun
 
 @defun date-leap-year-p year
@@ -1915,8 +1917,7 @@ idleness.  Here's an example:
           (run-with-idle-timer
             ;; Compute an idle time @var{break-length}
             ;; more than the current value.
-            (time-add (current-idle-time)
-                      (seconds-to-time @var{break-length}))
+            (time-add (current-idle-time) @var{break-length})
             nil
             'my-timer-function))))
 @end example

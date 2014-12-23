@@ -974,10 +974,17 @@ The last thing it does is to run `isearch-update-post-hook'."
                 (other-window 1))
               (goto-char found-point))
 	  ;; Keep same hscrolling as at the start of the search when possible
-	  (let ((current-scroll (window-hscroll)))
+	  (let ((current-scroll (window-hscroll))
+		visible-p)
 	    (set-window-hscroll (selected-window) isearch-start-hscroll)
-	    (unless (pos-visible-in-window-p)
-	      (set-window-hscroll (selected-window) current-scroll))))
+	    (setq visible-p (pos-visible-in-window-p nil nil t))
+	    (if (or (not visible-p)
+		    ;; When point is not visible because of hscroll,
+		    ;; pos-visible-in-window-p returns non-nil, but
+		    ;; the X coordinate it returns is 1 pixel beyond
+		    ;; the last visible one.
+		    (>= (car visible-p) (window-body-width nil t)))
+		(set-window-hscroll (selected-window) current-scroll))))
 	(if isearch-other-end
             (if (< isearch-other-end (point)) ; isearch-forward?
                 (isearch-highlight isearch-other-end (point))
@@ -1968,10 +1975,12 @@ Subword is used when `subword-mode' is activated. "
    (lambda ()
      (if (or (= (char-syntax (or (char-after) 0)) ?w)
              (= (char-syntax (or (char-after (1+ (point))) 0)) ?w))
-	 (if (and (boundp 'subword-mode) subword-mode)
+	 (if (or (and (boundp 'subword-mode) subword-mode)
+		 (and (boundp 'superword-mode) superword-mode))
 	     (subword-forward 1)
 	   (forward-word 1))
-       (forward-char 1)) (point))))
+       (forward-char 1))
+     (point))))
 
 (defun isearch-yank-word (&optional arg)
   "Pull next word from buffer into search string.
@@ -2512,7 +2521,10 @@ If there is no completion possible, say so and continue searching."
 			   "word ")
 		     "")
 		   (if isearch-regexp "regexp " "")
-		   (if multi-isearch-next-buffer-current-function "multi " "")
+		   (cond
+		    (multi-isearch-file-list "multi-file ")
+		    (multi-isearch-buffer-list "multi-buffer ")
+		    (t ""))
 		   (or isearch-message-prefix-add "")
 		   (if nonincremental "search" "I-search")
 		   (if isearch-forward "" " backward")
@@ -2722,7 +2734,7 @@ update the match data, and return point."
 ;; in any of these overlays, se we are safe in this case too.
 (defun isearch-open-necessary-overlays (ov)
   (let ((inside-overlay (and  (> (point) (overlay-start ov))
-			      (< (point) (overlay-end ov))))
+			      (<= (point) (overlay-end ov))))
 	;; If this exists it means that the overlay was opened using
 	;; this function, not by us tweaking the overlay properties.
 	(fct-temp (overlay-get ov 'isearch-open-invisible-temporary)))
@@ -2871,8 +2883,12 @@ since they have special meaning in a regexp."
 
 (defun isearch-text-char-description (c)
   (cond
-   ((< c ?\s) (propertize (format "^%c" (+ c 64)) 'face 'escape-glyph))
-   ((= c ?\^?) (propertize "^?" 'face 'escape-glyph))
+   ((< c ?\s) (propertize
+	       (char-to-string c)
+	       'display (propertize (format "^%c" (+ c 64)) 'face 'escape-glyph)))
+   ((= c ?\^?) (propertize
+		(char-to-string c)
+		'display (propertize "^?" 'face 'escape-glyph)))
    (t (char-to-string c))))
 
 ;; General function to unread characters or events.
@@ -3047,11 +3063,15 @@ Attempt to do the search exactly the way the pending Isearch would."
 	    (bound (if isearch-lazy-highlight-forward
 		       (min (or isearch-lazy-highlight-end-limit (point-max))
 			    (if isearch-lazy-highlight-wrapped
-				isearch-lazy-highlight-start
+				(+ isearch-lazy-highlight-start
+				   ;; Extend bound to match whole string at point
+				   (1- (length isearch-lazy-highlight-last-string)))
 			      (window-end)))
 		     (max (or isearch-lazy-highlight-start-limit (point-min))
 			  (if isearch-lazy-highlight-wrapped
-			      isearch-lazy-highlight-end
+			      (- isearch-lazy-highlight-end
+				 ;; Extend bound to match whole string at point
+				 (1- (length isearch-lazy-highlight-last-string)))
 			    (window-start))))))
 	;; Use a loop like in `isearch-search'.
 	(while retry

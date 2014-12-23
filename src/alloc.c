@@ -80,7 +80,7 @@ static bool valgrind_p;
    marked objects.  */
 
 #if (defined SYSTEM_MALLOC || defined DOUG_LEA_MALLOC \
-     || defined GC_CHECK_MARKED_OBJECTS)
+     || defined HYBRID_MALLOC || defined GC_CHECK_MARKED_OBJECTS)
 #undef GC_MALLOC_CHECK
 #endif
 
@@ -285,7 +285,7 @@ static void gc_sweep (void);
 static Lisp_Object make_pure_vector (ptrdiff_t);
 static void mark_buffer (struct buffer *);
 
-#if !defined REL_ALLOC || defined SYSTEM_MALLOC
+#if !defined REL_ALLOC || defined SYSTEM_MALLOC || defined HYBRID_MALLOC
 static void refill_memory_reserve (void);
 #endif
 static void compact_small_strings (void);
@@ -453,7 +453,7 @@ mmap_lisp_allowed_p (void)
   /* If we can't store all memory addresses in our lisp objects, it's
      risky to let the heap use mmap and give us addresses from all
      over our address space.  We also can't use mmap for lisp objects
-     if we might dump: unexec doesn't preserve the contents of mmaped
+     if we might dump: unexec doesn't preserve the contents of mmapped
      regions.  */
   return pointers_fit_in_lispobj_p () && !might_dump;
 }
@@ -534,8 +534,7 @@ buffer_memory_full (ptrdiff_t nbytes)
 /* Define XMALLOC_OVERRUN_SIZE_SIZE so that (1) it's large enough to
    hold a size_t value and (2) the header size is a multiple of the
    alignment that Emacs needs for C types and for USE_LSB_TAG.  */
-#define XMALLOC_BASE_ALIGNMENT				\
-  alignof (union { long double d; intmax_t i; void *p; })
+#define XMALLOC_BASE_ALIGNMENT alignof (max_align_t)
 
 #if USE_LSB_TAG
 # define XMALLOC_HEADER_ALIGNMENT \
@@ -1014,10 +1013,17 @@ lisp_free (void *block)
    clang 3.3 anyway.  */
 
 #if ! ADDRESS_SANITIZER
-# if !defined SYSTEM_MALLOC && !defined DOUG_LEA_MALLOC
+# if !defined SYSTEM_MALLOC && !defined DOUG_LEA_MALLOC && !defined HYBRID_MALLOC
 #  define USE_ALIGNED_ALLOC 1
 /* Defined in gmalloc.c.  */
 void *aligned_alloc (size_t, size_t);
+# elif defined HYBRID_MALLOC
+#  if defined ALIGNED_ALLOC || defined HAVE_POSIX_MEMALIGN
+#   define USE_ALIGNED_ALLOC 1
+#   define aligned_alloc hybrid_aligned_alloc
+/* Defined in gmalloc.c.  */
+void *aligned_alloc (size_t, size_t);
+#  endif
 # elif defined HAVE_ALIGNED_ALLOC
 #  define USE_ALIGNED_ALLOC 1
 # elif defined HAVE_POSIX_MEMALIGN
@@ -2219,8 +2225,7 @@ make_string (const char *contents, ptrdiff_t nbytes)
   return val;
 }
 
-
-/* Make an unibyte string from LENGTH bytes at CONTENTS.  */
+/* Make a unibyte string from LENGTH bytes at CONTENTS.  */
 
 Lisp_Object
 make_unibyte_string (const char *contents, ptrdiff_t length)
@@ -2289,7 +2294,7 @@ make_specified_string (const char *contents,
 }
 
 
-/* Return an unibyte Lisp_String set up to hold LENGTH characters
+/* Return a unibyte Lisp_String set up to hold LENGTH characters
    occupying LENGTH bytes.  */
 
 Lisp_Object
@@ -2611,29 +2616,28 @@ list5 (Lisp_Object arg1, Lisp_Object arg2, Lisp_Object arg3, Lisp_Object arg4, L
 Lisp_Object
 listn (enum constype type, ptrdiff_t count, Lisp_Object arg, ...)
 {
+  Lisp_Object (*cons) (Lisp_Object, Lisp_Object);
+  switch (type)
+    {
+    case CONSTYPE_PURE: cons = pure_cons; break;
+    case CONSTYPE_HEAP: cons = Fcons; break;
+    default: emacs_abort ();
+    }
+
+  eassume (0 < count);
+  Lisp_Object val = cons (arg, Qnil);
+  Lisp_Object tail = val;
+
   va_list ap;
-  ptrdiff_t i;
-  Lisp_Object val, *objp;
-
-  /* Change to SAFE_ALLOCA if you hit this eassert.  */
-  eassert (count <= MAX_ALLOCA / word_size);
-
-  objp = alloca (count * word_size);
-  objp[0] = arg;
   va_start (ap, arg);
-  for (i = 1; i < count; i++)
-    objp[i] = va_arg (ap, Lisp_Object);
+  for (ptrdiff_t i = 1; i < count; i++)
+    {
+      Lisp_Object elem = cons (va_arg (ap, Lisp_Object), Qnil);
+      XSETCDR (tail, elem);
+      tail = elem;
+    }
   va_end (ap);
 
-  for (val = Qnil, i = count - 1; i >= 0; i--)
-    {
-      if (type == CONSTYPE_PURE)
-	val = pure_cons (objp[i], val);
-      else if (type == CONSTYPE_HEAP)
-	val = Fcons (objp[i], val);
-      else
-	emacs_abort ();
-    }
   return val;
 }
 
@@ -2715,13 +2719,13 @@ DEFUN ("make-list", Fmake_list, Smake_list, 2, 2, 0,
 static struct Lisp_Vector *
 next_vector (struct Lisp_Vector *v)
 {
-  return XUNTAG (v->contents[0], 0);
+  return XUNTAG (v->contents[0], Lisp_Int0);
 }
 
 static void
 set_next_vector (struct Lisp_Vector *v, struct Lisp_Vector *p)
 {
-  v->contents[0] = make_lisp_ptr (p, 0);
+  v->contents[0] = make_lisp_ptr (p, Lisp_Int0);
 }
 
 /* This value is balanced well enough to avoid too much internal overhead
@@ -3282,7 +3286,6 @@ See also the function `vector'.  */)
   return vector;
 }
 
-
 DEFUN ("vector", Fvector, Svector, 0, MANY, 0,
        doc: /* Return a newly created vector with specified arguments as elements.
 Any number of arguments, even zero arguments, are allowed.
@@ -3829,7 +3832,7 @@ memory_full (size_t nbytes)
 void
 refill_memory_reserve (void)
 {
-#ifndef SYSTEM_MALLOC
+#if !defined SYSTEM_MALLOC && !defined HYBRID_MALLOC
   if (spare_memory[0] == 0)
     spare_memory[0] = malloc (SPARE_MEMORY);
   if (spare_memory[1] == 0)
@@ -4930,6 +4933,10 @@ valid_pointer_p (void *p)
 #ifdef WINDOWSNT
   return w32_valid_pointer_p (p, 16);
 #else
+
+  if (ADDRESS_SANITIZER)
+    return p ? -1 : 0;
+
   int fd[2];
 
   /* Obviously, we cannot just access it (we would SEGV trying), so we
@@ -4945,7 +4952,7 @@ valid_pointer_p (void *p)
       return valid;
     }
 
-    return -1;
+  return -1;
 #endif
 }
 
@@ -5044,8 +5051,8 @@ relocatable_string_data_p (const char *str)
       struct sdata *sdata
 	= (struct sdata *) (str - offsetof (struct sdata, data));
 
-      if (valid_pointer_p (sdata)
-	  && valid_pointer_p (sdata->string)
+      if (0 < valid_pointer_p (sdata)
+	  && 0 < valid_pointer_p (sdata->string)
 	  && maybe_lisp_pointer (sdata->string))
 	return (valid_lisp_object_p
 		(make_lisp_ptr (sdata->string, Lisp_String))
@@ -6011,8 +6018,9 @@ mark_overlay (struct Lisp_Overlay *ptr)
   for (; ptr && !ptr->gcmarkbit; ptr = ptr->next)
     {
       ptr->gcmarkbit = 1;
-      mark_object (ptr->start);
-      mark_object (ptr->end);
+      /* These two are always markers and can be marked fast.  */
+      XMARKER (ptr->start)->gcmarkbit = 1;
+      XMARKER (ptr->end)->gcmarkbit = 1;
       mark_object (ptr->plist);
     }
 }
@@ -6147,15 +6155,16 @@ void
 mark_object (Lisp_Object arg)
 {
   register Lisp_Object obj = arg;
-#ifdef GC_CHECK_MARKED_OBJECTS
   void *po;
+#ifdef GC_CHECK_MARKED_OBJECTS
   struct mem_node *m;
 #endif
   ptrdiff_t cdr_count = 0;
 
  loop:
 
-  if (PURE_POINTER_P (XPNTR (obj)))
+  po = XPNTR (obj);
+  if (PURE_POINTER_P (po))
     return;
 
   last_marked[last_marked_index++] = obj;
@@ -6166,8 +6175,6 @@ mark_object (Lisp_Object arg)
      we encounter an object we know is bogus.  This increases GC time
      by ~80%, and requires compilation with GC_MARK_STACK != 0.  */
 #ifdef GC_CHECK_MARKED_OBJECTS
-
-  po = (void *) XPNTR (obj);
 
   /* Check that the object pointed to by PO is known to be a Lisp
      structure allocated from the heap.  */
@@ -6195,8 +6202,8 @@ mark_object (Lisp_Object arg)
 
 #else /* not GC_CHECK_MARKED_OBJECTS */
 
-#define CHECK_LIVE(LIVEP)		(void) 0
-#define CHECK_ALLOCATED_AND_LIVE(LIVEP)	(void) 0
+#define CHECK_LIVE(LIVEP)		((void) 0)
+#define CHECK_ALLOCATED_AND_LIVE(LIVEP)	((void) 0)
 
 #endif /* not GC_CHECK_MARKED_OBJECTS */
 
@@ -6359,7 +6366,7 @@ mark_object (Lisp_Object arg)
 	CHECK_ALLOCATED_AND_LIVE (live_symbol_p);
 	ptr->gcmarkbit = 1;
 	/* Attempt to catch bogus objects.  */
-        eassert (valid_lisp_object_p (ptr->function) >= 1);
+        eassert (valid_lisp_object_p (ptr->function));
 	mark_object (ptr->function);
 	mark_object (ptr->plist);
 	switch (ptr->redirect)
@@ -6744,7 +6751,7 @@ sweep_symbols (void)
               ++num_used;
               sym->s.gcmarkbit = 0;
               /* Attempt to catch bogus objects.  */
-              eassert (valid_lisp_object_p (sym->s.function) >= 1);
+              eassert (valid_lisp_object_p (sym->s.function));
             }
         }
 
@@ -6915,7 +6922,6 @@ or memory information can't be obtained, return nil.  */)
 		   (uintmax_t) freeswap / 1024);
   else
     return Qnil;
-}
 #else /* not HAVE_LINUX_SYSINFO, not WINDOWSNT, not MSDOS */
   /* FIXME: add more systems.  */
   return Qnil;
@@ -7073,7 +7079,7 @@ detect_suspicious_free (void* ptr)
 
 DEFUN ("suspicious-object", Fsuspicious_object, Ssuspicious_object, 1, 1, 0,
        doc: /* Return OBJ, maybe marking it for extra scrutiny.
-If Emacs is compiled with suspicous object checking, capture
+If Emacs is compiled with suspicious object checking, capture
 a stack trace when OBJ is freed in order to help track down
 garbage collection bugs.  Otherwise, do nothing and return OBJ.   */)
    (Lisp_Object obj)
@@ -7101,8 +7107,48 @@ die (const char *msg, const char *file, int line)
 	   file, line, msg);
   terminate_due_to_signal (SIGABRT, INT_MAX);
 }
-#endif
-
+
+#endif /* ENABLE_CHECKING */
+
+#if defined (ENABLE_CHECKING) && USE_STACK_LISP_OBJECTS
+
+/* Debugging check whether STR is ASCII-only.  */
+
+const char *
+verify_ascii (const char *str)
+{
+  const unsigned char *ptr = (unsigned char *) str, *end = ptr + strlen (str);
+  while (ptr < end)
+    {
+      int c = STRING_CHAR_ADVANCE (ptr);
+      if (!ASCII_CHAR_P (c))
+	emacs_abort ();
+    }
+  return str;
+}
+
+/* Stress alloca with inconveniently sized requests and check
+   whether all allocated areas may be used for Lisp_Object.  */
+
+NO_INLINE static void
+verify_alloca (void)
+{
+  int i;
+  enum { ALLOCA_CHECK_MAX = 256 };
+  /* Start from size of the smallest Lisp object.  */
+  for (i = sizeof (struct Lisp_Cons); i <= ALLOCA_CHECK_MAX; i++)
+    {
+      void *ptr = alloca (i);
+      make_lisp_ptr (ptr, Lisp_Cons);
+    }
+}
+
+#else /* not ENABLE_CHECKING && USE_STACK_LISP_OBJECTS */
+
+#define verify_alloca() ((void) 0)
+
+#endif /* ENABLE_CHECKING && USE_STACK_LISP_OBJECTS */
+
 /* Initialization.  */
 
 void
@@ -7111,6 +7157,8 @@ init_alloc_once (void)
   /* Used to do Vpurify_flag = Qt here, but Qt isn't set up yet!  */
   purebeg = PUREBEG;
   pure_size = PURESIZE;
+
+  verify_alloca ();
 
 #if GC_MARK_STACK || defined GC_MALLOC_CHECK
   mem_init ();

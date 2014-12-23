@@ -209,10 +209,10 @@ LEFT and RIGHT are the elements to compare."
                  (symbol-name cx)))))))
 
 (defconst tutorial--default-keys
-  ;; On window system, `suspend-emacs' is replaced in the default
-  ;; keymap
+  ;; On window system, `suspend-emacs' is replaced in the default keymap.
   (let* ((suspend-emacs 'suspend-frame)
          (default-keys
+           ;; The first few are not mentioned but are basic:
            `((ESC-prefix [27])
              (Control-X-prefix [?\C-x])
              (mode-specific-command-prefix [?\C-c])
@@ -548,7 +548,11 @@ with some explanatory links."
 	 (start (point))
 	 (case-fold-search nil)
 	 (keybindings-regexp
-	  (concat "[[:space:]]\\("
+	  ;; Accept either [:space:] or [:punct:] before the key
+	  ;; binding because the Hebrew tutorial uses directional
+	  ;; controls and Hebrew character maqaf, the Hebrew hyphen,
+	  ;; immediately before the binding string.
+	  (concat "\\(?:[[:space:]]\\|[[:punct:]]\\)\\("
 		  (mapconcat (lambda (kdf) (regexp-quote
 					    (tutorial--key-description
 					     (nth 1 kdf))))

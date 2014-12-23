@@ -5194,6 +5194,15 @@ Overrides `diary-goto-entry'."
 
 (add-function :override diary-goto-entry-function #'todo-diary-goto-entry)
 
+(defun todo-revert-buffer (&optional ignore-auto noconfirm)
+  "Call `revert-buffer', preserving buffer's current modes.
+Also preserve category display, if applicable."
+  (interactive (list (not current-prefix-arg)))
+  (let ((revert-buffer-function nil))
+    (revert-buffer ignore-auto noconfirm 'preserve-modes)
+    (when (memq major-mode '(todo-mode todo-archive-mode))
+      (todo-category-select))))
+
 (defun todo-desktop-save-buffer (_dir)
   `((catnum . ,(todo-category-number (todo-current-category)))))
 
@@ -5226,7 +5235,7 @@ Overrides `diary-goto-entry'."
 
 (defun todo--user-error-if-marked-done-item ()
   "Signal user error on marked done items.
-Helper funtion for editing commands that only apply to (possibly
+Helper function for editing commands that apply only to (possibly
 marked) not done todo items."
   (save-excursion
     (save-restriction
@@ -6540,6 +6549,7 @@ Added to `window-configuration-change-hook' in Todo mode."
 (defun todo-modes-set-1 ()
   "Make some settings that apply to multiple Todo modes."
   (setq-local font-lock-defaults '(todo-font-lock-keywords t))
+  (setq-local revert-buffer-function 'todo-revert-buffer)
   (setq-local tab-width todo-indent-to-here)
   (setq-local indent-line-function 'todo-indent)
   (when todo-wrap-lines
@@ -6573,23 +6583,24 @@ Added to `window-configuration-change-hook' in Todo mode."
   "Major mode for displaying, navigating and editing todo lists.
 
 \\{todo-mode-map}"
-  ;; (easy-menu-add todo-menu)
-  (todo-modes-set-1)
-  (todo-modes-set-2)
-  (todo-modes-set-3)
-  ;; Initialize todo-current-todo-file.
-  (when (member (file-truename (buffer-file-name))
-		(funcall todo-files-function))
-    (setq-local todo-current-todo-file (file-truename (buffer-file-name))))
-  (setq-local todo-show-done-only nil)
-  (setq-local todo-categories-with-marks nil)
-  ;; (add-hook 'find-file-hook 'todo-add-to-buffer-list nil t)
-  (add-hook 'post-command-hook 'todo-update-buffer-list nil t)
-  (when todo-show-current-file
-    (add-hook 'pre-command-hook 'todo-show-current-file nil t))
-  (add-hook 'window-configuration-change-hook
-	    'todo-reset-and-enable-done-separator nil t)
-  (add-hook 'kill-buffer-hook 'todo-reset-global-current-todo-file nil t))
+  (if (called-interactively-p 'any)
+      (message "Type `M-x todo-show' to enter Todo mode")
+    (todo-modes-set-1)
+    (todo-modes-set-2)
+    (todo-modes-set-3)
+    ;; Initialize todo-current-todo-file.
+    (when (member (file-truename (buffer-file-name))
+		  (funcall todo-files-function))
+      (setq-local todo-current-todo-file (file-truename (buffer-file-name))))
+    (setq-local todo-show-done-only nil)
+    (setq-local todo-categories-with-marks nil)
+    ;; (add-hook 'find-file-hook 'todo-add-to-buffer-list nil t)
+    (add-hook 'post-command-hook 'todo-update-buffer-list nil t)
+    (when todo-show-current-file
+      (add-hook 'pre-command-hook 'todo-show-current-file nil t))
+    (add-hook 'window-configuration-change-hook
+	      'todo-reset-and-enable-done-separator nil t)
+    (add-hook 'kill-buffer-hook 'todo-reset-global-current-todo-file nil t)))
 
 (put 'todo-archive-mode 'mode-class 'special)
 

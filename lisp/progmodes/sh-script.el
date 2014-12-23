@@ -1051,13 +1051,11 @@ Point is at the beginning of the next line."
   "Search for a subshell embedded in a string.
 Find all the unescaped \" characters within said subshell, remembering that
 subshells can nest."
-  ;; FIXME: This can (and often does) match multiple lines, yet it makes no
-  ;; effort to handle multiline cases correctly, so it ends up being
-  ;; rather flaky.
   (when (eq ?\" (nth 3 (syntax-ppss))) ; Check we matched an opening quote.
     ;; bingo we have a $( or a ` inside a ""
     (let (;; `state' can be: double-quote, backquote, code.
           (state (if (eq (char-before) ?`) 'backquote 'code))
+          (startpos (point))
           ;; Stacked states in the context.
           (states '(double-quote)))
       (while (and state (progn (skip-chars-forward "^'\\\\\"`$()" limit)
@@ -1088,7 +1086,12 @@ subshells can nest."
                  (`double-quote nil)
                  (_ (setq state (pop states)))))
           (_ (error "Internal error in sh-font-lock-quoted-subshell")))
-        (forward-char 1)))))
+        (forward-char 1))
+      (when (< startpos (line-beginning-position))
+        (put-text-property startpos (point) 'syntax-multiline t)
+        (add-hook 'syntax-propertize-extend-region-functions
+                  'syntax-propertize-multiline nil t))
+      )))
 
 
 (defun sh-is-quoted-p (pos)
@@ -2011,12 +2014,12 @@ May return nil if the line should not be treated as continued."
                    (and (numberp indent) (numberp initial)
                         (<= indent initial)))))
      `(column . ,(+ initial sh-indentation)))
-    (`(:before . ,(or `"(" `"{" `"["))
+    (`(:before . ,(or `"(" `"{" `"[" "while" "if" "for" "case"))
      (if (not (smie-rule-prev-p "&&" "||" "|"))
          (when (smie-rule-hanging-p)
            (smie-rule-parent))
        (unless (smie-rule-bolp)
-	 (smie-backward-sexp 'halfexp)
+	 (while (equal "|" (nth 2 (smie-backward-sexp 'halfexp))))
 	 `(column . ,(smie-indent-virtual)))))
     ;; FIXME: Maybe this handling of ;; should be made into
     ;; a smie-rule-terminator function that takes the substitute ";" as arg.

@@ -1685,7 +1685,7 @@ This performs fontification according to `js--class-styles'."
   "Regular expression matching variable declaration keywords.")
 
 (defconst js--indent-operator-re
-  (concat "[-+*/%<>=&^|?:.]\\([^-+*/]\\|$\\)\\|"
+  (concat "[-+*/%<>&^|?:.]\\([^-+*/]\\|$\\)\\|!?=\\|"
           (js--regexp-opt-symbol '("in" "instanceof")))
   "Regexp matching operators that affect indentation of continued expressions.")
 
@@ -1712,7 +1712,7 @@ This performs fontification according to `js--class-styles'."
                     (save-excursion (backward-char) (not (looking-at "[/*]/")))
                     (js--looking-at-operator-p)
 		    (and (progn (backward-char)
-				(not (looking-at "++\\|--\\|/[/*]"))))))))))
+				(not (looking-at "+\\+\\|--\\|/[/*]"))))))))))
 
 
 (defun js--end-of-do-while-loop-p ()
@@ -3478,6 +3478,10 @@ If one hasn't been set, or if it's stale, prompt for a new one."
 (eval-after-load 'folding
   '(when (fboundp 'folding-add-to-marks-list)
      (folding-add-to-marks-list 'js-mode "// {{{" "// }}}" )))
+
+;;;###autoload
+(dolist (name (list "node" "nodejs" "gjs" "rhino"))
+  (add-to-list 'interpreter-mode-alist (cons (purecopy name) 'js-mode)))
 
 (provide 'js)
 

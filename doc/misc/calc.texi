@@ -349,25 +349,12 @@ program by Donald Knuth at Stanford University) as well as the
 @file{texindex} program and @file{texinfo.tex} file, both of which can
 be obtained from the FSF as part of the @code{texinfo} package.
 To print the Calc manual in one huge tome, you will need the
-source code to this manual, @file{calc.texi}, available as part of the
-Emacs source.  Once you have this file, type @kbd{texi2dvi calc.texi}.
-Alternatively, change to the @file{man} subdirectory of the Emacs
-source distribution, and type @kbd{make calc.dvi}. (Don't worry if you
-get some ``overfull box'' warnings while @TeX{} runs.)
-The result will be a device-independent output file called
-@file{calc.dvi}, which you must print in whatever way is right
-for your system.  On many systems, the command is
-
-@example
-lpr -d calc.dvi
-@end example
-
-@noindent
-or
-
-@example
-dvips calc.dvi
-@end example
+Emacs source, which contains the source code to this manual,
+@file{calc.texi}.  Change to the @file{doc/misc} subdirectory of the
+Emacs source distribution, which contains source code for this manual,
+and type @kbd{make calc.pdf}. (Don't worry if you get some ``overfull
+box'' warnings while @TeX{} runs.)   The result will be this entire
+manual as a pdf file.
 @end ifnottex
 @c Printed copies of this manual are also available from the Free Software
 @c Foundation.
@@ -10168,9 +10155,10 @@ to yank the result into the next @kbd{C-x * q} input line as a more
 explicit alternative to @kbd{$} notation, or to yank the result
 into the Calculator stack after typing @kbd{C-x * c}.
 
-If you finish your formula by typing @key{LFD} (or @kbd{C-j}) instead
-of @key{RET}, the result is inserted immediately into the current
-buffer rather than going into the kill ring.
+If you give a prefix argument to @kbd{C-x * q} or finish your formula
+by typing @key{LFD} (or @kbd{C-j}) instead of @key{RET}, the result is
+inserted immediately into the current buffer rather than going into
+the kill ring.
 
 Quick Calculator results are actually evaluated as if by the @kbd{=}
 key (which replaces variable names by their stored values, if any).

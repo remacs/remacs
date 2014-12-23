@@ -1475,7 +1475,7 @@ Intended to be added to `isearch-mode-hook' in `comint-mode'."
       (or
        ;; 1. First try searching in the initial comint text
        (funcall search-fun string
-		(if isearch-forward bound (comint-line-beginning-position))
+		(if isearch-forward bound (field-beginning))
 		noerror)
        ;; 2. If the above search fails, start putting next/prev history
        ;; elements in the comint successively, and search the string
@@ -1491,7 +1491,7 @@ Intended to be added to `isearch-mode-hook' in `comint-mode'."
 			(when (null comint-input-ring-index)
 			  (error "End of history; no next item"))
 			(comint-next-input 1)
-			(goto-char (comint-line-beginning-position)))
+			(goto-char (field-beginning)))
 		       (t
 			;; Signal an error here explicitly, because
 			;; `comint-previous-input' doesn't signal an error.
@@ -1509,7 +1509,7 @@ Intended to be added to `isearch-mode-hook' in `comint-mode'."
 				      (unless isearch-forward
 					;; For backward search, don't search
 					;; in the comint prompt
-					(comint-line-beginning-position))
+					(field-beginning))
 				      noerror)))
 	       ;; Return point of the new search result
 	       (point))
@@ -1557,7 +1557,7 @@ or to the last history element for a backward search."
       (comint-goto-input (1- (ring-length comint-input-ring)))
     (comint-goto-input nil))
   (setq isearch-success t)
-  (goto-char (if isearch-forward (comint-line-beginning-position) (point-max))))
+  (goto-char (if isearch-forward (field-beginning) (point-max))))
 
 (defun comint-history-isearch-push-state ()
   "Save a function restoring the state of input history search.
@@ -1781,7 +1781,7 @@ Similarly for Soar, Scheme, etc."
       (widen)
       (let* ((pmark (process-mark proc))
              (intxt (if (>= (point) (marker-position pmark))
-                        (progn (if comint-eol-on-send (end-of-line))
+                        (progn (if comint-eol-on-send (goto-char (field-end)))
                                (buffer-substring pmark (point)))
                       (let ((copy (funcall comint-get-old-input)))
                         (goto-char pmark)

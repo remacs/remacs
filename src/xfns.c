@@ -159,7 +159,7 @@ check_x_display_info (Lisp_Object object)
     }
   else if (TERMINALP (object))
     {
-      struct terminal *t = get_terminal (object, 1);
+      struct terminal *t = decode_live_terminal (object);
 
       if (t->type != output_x_window)
         error ("Terminal %d is not an X display", t->id);
@@ -965,7 +965,7 @@ x_set_icon_name (struct frame *f, Lisp_Object arg, Lisp_Object oldval)
 }
 
 
-void
+static void
 x_set_menu_bar_lines (struct frame *f, Lisp_Object value, Lisp_Object oldval)
 {
   int nlines;
@@ -1009,7 +1009,7 @@ x_set_menu_bar_lines (struct frame *f, Lisp_Object value, Lisp_Object oldval)
 #else /* not USE_X_TOOLKIT && not USE_GTK */
   FRAME_MENU_BAR_LINES (f) = nlines;
   FRAME_MENU_BAR_HEIGHT (f) = nlines * FRAME_LINE_HEIGHT (f);
-  adjust_frame_size (f, -1, -1, 2, 1);
+  adjust_frame_size (f, -1, -1, 2, 1, Qmenu_bar_lines);
   if (FRAME_X_WINDOW (f))
     x_clear_under_internal_border (f);
 
@@ -1060,7 +1060,7 @@ x_set_menu_bar_lines (struct frame *f, Lisp_Object value, Lisp_Object oldval)
    height of all windows on frame F to match the new tool bar height.
    The frame's height doesn't change.  */
 
-void
+static void
 x_set_tool_bar_lines (struct frame *f, Lisp_Object value, Lisp_Object oldval)
 {
   int nlines;
@@ -1112,10 +1112,6 @@ x_change_tool_bar_height (struct frame *f, int height)
   /* Recalculate tool bar and frame text sizes.  */
   FRAME_TOOL_BAR_HEIGHT (f) = height;
   FRAME_TOOL_BAR_LINES (f) = lines;
-  FRAME_TEXT_HEIGHT (f)
-    = FRAME_PIXEL_TO_TEXT_HEIGHT (f, FRAME_PIXEL_HEIGHT (f));
-  FRAME_LINES (f)
-    = FRAME_PIXEL_HEIGHT_TO_TEXT_LINES (f, FRAME_PIXEL_HEIGHT (f));
   /* Store the `tool-bar-lines' and `height' frame parameters.  */
   store_frame_param (f, Qtool_bar_lines, make_number (lines));
   store_frame_param (f, Qheight, make_number (FRAME_LINES (f)));
@@ -1138,18 +1134,21 @@ x_change_tool_bar_height (struct frame *f, int height)
   /* Recalculate toolbar height.  */
   f->n_tool_bar_rows = 0;
 
-  adjust_frame_size (f, -1, -1, 4, 0);
+  adjust_frame_size (f, -1, -1, (old_height == 0 || height == 0) ? 2 : 4, 0,
+		     Qtool_bar_lines);
 
-/** #if !defined USE_X_TOOLKIT **/
+  /* adjust_frame_size might not have done anything, garbage frame
+     here.  */
+  adjust_frame_glyphs (f);
+  SET_FRAME_GARBAGED (f);
   if (FRAME_X_WINDOW (f))
     x_clear_under_internal_border (f);
-/** #endif **/
 
 #endif /* USE_GTK */
 }
 
 
-void
+static void
 x_set_internal_border_width (struct frame *f, Lisp_Object arg, Lisp_Object oldval)
 {
   int border;
@@ -1168,11 +1167,11 @@ x_set_internal_border_width (struct frame *f, Lisp_Object arg, Lisp_Object oldva
 
       if (FRAME_X_WINDOW (f) != 0)
 	{
-	  adjust_frame_size (f, -1, -1, 3, 0);
+	  adjust_frame_size (f, -1, -1, 3, 0, Qinternal_border_width);
 
 #ifdef USE_GTK
 	  xg_clear_under_internal_border (f);
-#else	  
+#else
 	  x_clear_under_internal_border (f);
 #endif
 	}
@@ -1571,13 +1570,14 @@ x_default_scroll_bar_color_parameter (struct frame *f,
 
       /* See if an X resource for the scroll bar color has been
 	 specified.  */
-      tem = display_x_get_resource (dpyinfo,
-				    build_string (foreground_p
-						  ? "foreground"
-						  : "background"),
-				    empty_unibyte_string,
-				    build_string ("verticalScrollBar"),
-				    empty_unibyte_string);
+      AUTO_STRING (foreground, "foreground");
+      AUTO_STRING (background, "foreground");
+      AUTO_STRING (verticalScrollBar, "verticalScrollBar");
+      tem = (display_x_get_resource
+	     (dpyinfo, foreground_p ? foreground : background,
+	      empty_unibyte_string,
+	      verticalScrollBar,
+	      empty_unibyte_string));
       if (!STRINGP (tem))
 	{
 	  /* If nothing has been specified, scroll bars will use a
@@ -1595,7 +1595,8 @@ x_default_scroll_bar_color_parameter (struct frame *f,
 #endif /* not USE_TOOLKIT_SCROLL_BARS */
     }
 
-  x_set_frame_parameters (f, list1 (Fcons (prop, tem)));
+  AUTO_FRAME_ARG (arg, prop, tem);
+  x_set_frame_parameters (f, arg);
   return tem;
 }
 
@@ -1786,7 +1787,7 @@ xic_create_fontsetname (const char *base_fontname, int motif)
 	  len = p - base_fontname + strlen (allcs) + 1;
 	  font_allcs = alloca (len);
 	  memcpy (font_allcs, base_fontname, p - base_fontname);
-	  strcat (font_allcs, allcs);
+	  strcpy (font_allcs + (p - base_fontname), allcs);
 
 	  /* Build the font spec that matches all families and
 	     add-styles.  */
@@ -1794,7 +1795,7 @@ xic_create_fontsetname (const char *base_fontname, int motif)
 	  font_allfamilies = alloca (len);
 	  strcpy (font_allfamilies, allfamilies);
 	  memcpy (font_allfamilies + strlen (allfamilies), p1, p - p1);
-	  strcat (font_allfamilies, allcs);
+	  strcpy (font_allfamilies + strlen (allfamilies) + (p - p1), allcs);
 
 	  /* Build the font spec that matches all.  */
 	  len = p - p2 + strlen (allcs) + strlen (all) + strlen (allfamilies) + 1;
@@ -1802,7 +1803,8 @@ xic_create_fontsetname (const char *base_fontname, int motif)
 	  strcpy (font_all, allfamilies);
 	  strcat (font_all, all);
 	  memcpy (font_all + strlen (all) + strlen (allfamilies), p2, p - p2);
-	  strcat (font_all, allcs);
+	  strcpy (font_all + strlen (all) + strlen (allfamilies) + (p - p2),
+		  allcs);
 
 	  /* Build the actual font set name.  */
 	  len = strlen (base_fontname) + strlen (font_allcs)
@@ -2846,7 +2848,8 @@ x_default_font_parameter (struct frame *f, Lisp_Object parms)
     {
       /* Remember the explicit font parameter, so we can re-apply it after
 	 we've applied the `default' face settings.  */
-      x_set_frame_parameters (f, list1 (Fcons (Qfont_param, font_param)));
+      AUTO_FRAME_ARG (arg, Qfont_param, font_param);
+      x_set_frame_parameters (f, arg);
     }
 
   /* This call will make X resources override any system font setting.  */
@@ -3112,15 +3115,9 @@ This function is an internal primitive--use `make-frame' instead.  */)
 #endif
 		       "verticalScrollBars", "ScrollBars",
 		       RES_TYPE_SYMBOL);
-  x_default_parameter (f, parms, Qhorizontal_scroll_bars,
-#if defined (USE_GTK) && defined (USE_TOOLKIT_SCROLL_BARS)
-		       Qt,
-#else
-		       Qnil,
-#endif
+  x_default_parameter (f, parms, Qhorizontal_scroll_bars, Qnil,
 		       "horizontalScrollBars", "ScrollBars",
 		       RES_TYPE_SYMBOL);
-
   /* Also do the stuff which must be set before the window exists.  */
   x_default_parameter (f, parms, Qforeground_color, build_string ("black"),
 		       "foreground", "Foreground", RES_TYPE_STRING);
@@ -3167,7 +3164,7 @@ This function is an internal primitive--use `make-frame' instead.  */)
      had one frame line vs one toolbar line which left us with a zero
      root window height which was obviously wrong as well ...  */
   adjust_frame_size (f, FRAME_COLS (f) * FRAME_COLUMN_WIDTH (f),
-		     FRAME_LINES (f) * FRAME_LINE_HEIGHT (f), 5, 1);
+		     FRAME_LINES (f) * FRAME_LINE_HEIGHT (f), 5, 1, Qnil);
 
   /* Set the menu-bar-lines and tool-bar-lines parameters.  We don't
      look up the X resources controlling the menu-bar and tool-bar
@@ -3239,9 +3236,9 @@ This function is an internal primitive--use `make-frame' instead.  */)
 		       "alpha", "Alpha", RES_TYPE_NUMBER);
 
   /* Consider frame official, now.  */
-  f->official = true;
+  f->can_x_set_window_size = true;
 
-  adjust_frame_size (f, FRAME_TEXT_WIDTH (f), FRAME_TEXT_HEIGHT (f), 0, 1);
+  adjust_frame_size (f, FRAME_TEXT_WIDTH (f), FRAME_TEXT_HEIGHT (f), 0, 1, Qnil);
 
 #if defined (USE_X_TOOLKIT) || defined (USE_GTK)
   /* Create the menu bar.  */
@@ -4225,6 +4222,124 @@ Internal use only, use `display-monitor-attributes-list' instead.  */)
   return attributes_list;
 }
 
+DEFUN ("x-frame-geometry", Fx_frame_geometry, Sx_frame_geometry, 0, 1, 0,
+       doc: /* Return geometric attributes of frame FRAME.
+
+FRAME must be a live frame and defaults to the selected one.
+
+The return value is an association list containing the following
+elements (all size values are in pixels).
+
+- `frame-outer-size' is a cons of the outer width and height of FRAME.
+  The outer size include the title bar and the external borders as well
+  as any menu and/or tool bar of frame.
+
+- `border' is a cons of the horizontal and vertical width of FRAME's
+  external borders.
+
+- `title-bar-height' is the height of the title bar of FRAME.
+
+- `menu-bar-external' if `t' means the menu bar is external (not
+  included in the inner edges of FRAME).
+
+- `menu-bar-size' is a cons of the width and height of the menu bar of
+  FRAME.
+
+- `tool-bar-external' if `t' means the tool bar is external (not
+  included in the inner edges of FRAME).
+
+- `tool-bar-side' tells tells on which side the tool bar on FRAME is and
+  can be one of `left', `top', `right' or `bottom'.
+
+- `tool-bar-size' is a cons of the width and height of the tool bar of
+  FRAME.
+
+- `frame-inner-size' is a cons of the inner width and height of FRAME.
+  This excludes FRAME's title bar and external border as well as any
+  external menu and/or tool bar.  */)
+  (Lisp_Object frame)
+{
+  struct frame *f = decode_live_frame (frame);
+  int inner_width = FRAME_PIXEL_WIDTH (f);
+  int inner_height = FRAME_PIXEL_HEIGHT (f);
+  int outer_width, outer_height, border, title;
+  Lisp_Object fullscreen = Fframe_parameter (frame, Qfullscreen);
+  int menu_bar_height, menu_bar_width, tool_bar_height, tool_bar_width;
+
+  border = FRAME_OUTER_TO_INNER_DIFF_X (f);
+  title = FRAME_X_OUTPUT (f)->y_pixels_outer_diff - border;
+
+  outer_width = FRAME_PIXEL_WIDTH (f) + 2 * border;
+  outer_height = (FRAME_PIXEL_HEIGHT (f)
+		  + FRAME_OUTER_TO_INNER_DIFF_Y (f)
+		  + FRAME_OUTER_TO_INNER_DIFF_X (f));
+
+#if defined (USE_GTK)
+  {
+    bool tool_bar_left_right = (EQ (FRAME_TOOL_BAR_POSITION (f), Qleft)
+				|| EQ (FRAME_TOOL_BAR_POSITION (f), Qright));
+
+    tool_bar_width = (tool_bar_left_right
+		      ? FRAME_TOOLBAR_WIDTH (f)
+		      : FRAME_PIXEL_WIDTH (f));
+    tool_bar_height = (tool_bar_left_right
+		       ? FRAME_PIXEL_HEIGHT (f)
+		       : FRAME_TOOLBAR_HEIGHT (f));
+    if (tool_bar_left_right)
+      /* For some reason FRAME_OUTER_TO_INNER_DIFF_X does not count the
+	 width of a tool bar.  */
+      outer_width += FRAME_TOOLBAR_WIDTH (f);
+  }
+#else
+  tool_bar_height = FRAME_TOOL_BAR_HEIGHT (f);
+  tool_bar_width = ((tool_bar_height > 0)
+		    ? outer_width - 2 * FRAME_INTERNAL_BORDER_WIDTH (f)
+		    : 0);
+#endif
+
+#if defined (USE_X_TOOLKIT) || defined (USE_GTK)
+  menu_bar_height = FRAME_MENUBAR_HEIGHT (f);
+#else
+  menu_bar_height = FRAME_MENU_BAR_HEIGHT (f);
+#endif
+
+  menu_bar_width = ((menu_bar_height > 0)
+		    ? outer_width - 2 * border
+		    : 0);
+
+  if (!FRAME_EXTERNAL_MENU_BAR (f))
+    inner_height -= menu_bar_height;
+  if (!FRAME_EXTERNAL_TOOL_BAR (f))
+    inner_height -= tool_bar_height;
+
+  return
+    listn (CONSTYPE_PURE, 10,
+	   Fcons (Qframe_position,
+		  Fcons (make_number (f->left_pos), make_number (f->top_pos))),
+	   Fcons (Qframe_outer_size,
+		  Fcons (make_number (outer_width), make_number (outer_height))),
+	   Fcons (Qexternal_border_size,
+		  ((EQ (fullscreen, Qfullboth) || EQ (fullscreen, Qfullscreen))
+		   ? Fcons (make_number (0), make_number (0))
+		   : Fcons (make_number (border), make_number (border)))),
+ 	   Fcons (Qtitle_height,
+		  ((EQ (fullscreen, Qfullboth) || EQ (fullscreen, Qfullscreen))
+		   ? make_number (0)
+		   : make_number (title))),
+	   Fcons (Qmenu_bar_external, FRAME_EXTERNAL_MENU_BAR (f) ? Qt : Qnil),
+	   Fcons (Qmenu_bar_size,
+		  Fcons (make_number (menu_bar_width),
+			 make_number (menu_bar_height))),
+	   Fcons (Qtool_bar_external, FRAME_EXTERNAL_TOOL_BAR (f) ? Qt : Qnil),
+	   Fcons (Qtool_bar_position, FRAME_TOOL_BAR_POSITION (f)),
+	   Fcons (Qtool_bar_size,
+		  Fcons (make_number (tool_bar_width),
+			 make_number (tool_bar_height))),
+	   Fcons (Qframe_inner_size,
+		  Fcons (make_number (inner_width),
+			 make_number (inner_height))));
+}
+
 /************************************************************************
 			      X Displays
  ************************************************************************/
@@ -4279,13 +4394,13 @@ select_visual (struct x_display_info *dpyinfo)
 {
   Display *dpy = dpyinfo->display;
   Screen *screen = dpyinfo->screen;
-  Lisp_Object value;
 
   /* See if a visual is specified.  */
-  value = display_x_get_resource (dpyinfo,
-				  build_string ("visualClass"),
-				  build_string ("VisualClass"),
-				  Qnil, Qnil);
+  AUTO_STRING (visualClass, "visualClass");
+  AUTO_STRING (VisualClass, "VisualClass");
+  Lisp_Object value = display_x_get_resource (dpyinfo, visualClass,
+					      VisualClass, Qnil, Qnil);
+
   if (STRINGP (value))
     {
       /* VALUE should be of the form CLASS-DEPTH, where CLASS is one
@@ -4296,7 +4411,7 @@ select_visual (struct x_display_info *dpyinfo)
       int i, class = -1;
       XVisualInfo vinfo;
 
-      strcpy (s, SSDATA (value));
+      lispstpcpy (s, value);
       dash = strchr (s, '-');
       if (dash)
 	{
@@ -4833,7 +4948,8 @@ x_create_tip_frame (struct x_display_info *dpyinfo,
   f = make_frame (1);
   XSETFRAME (frame, f);
 
-  buffer = Fget_buffer_create (build_string (" *tip*"));
+  AUTO_STRING (tip, " *tip*");
+  buffer = Fget_buffer_create (tip);
   /* Use set_window_buffer instead of Fset_window_buffer (see
      discussion of bug#11984, bug#12025, bug#12026).  */
   set_window_buffer (FRAME_ROOT_WINDOW (f), buffer, 0, 0);
@@ -5043,7 +5159,10 @@ x_create_tip_frame (struct x_display_info *dpyinfo,
 
   /* Add `tooltip' frame parameter's default value. */
   if (NILP (Fframe_parameter (frame, Qtooltip)))
-    Fmodify_frame_parameters (frame, list1 (Fcons (Qtooltip, Qt)));
+    {
+      AUTO_FRAME_ARG (arg, Qtooltip, Qt);
+      Fmodify_frame_parameters (frame, arg);
+    }
 
   /* FIXME - can this be done in a similar way to normal frames?
      http://lists.gnu.org/archive/html/emacs-devel/2007-10/msg00641.html */
@@ -5061,7 +5180,10 @@ x_create_tip_frame (struct x_display_info *dpyinfo,
       disptype = intern ("color");
 
     if (NILP (Fframe_parameter (frame, Qdisplay_type)))
-      Fmodify_frame_parameters (frame, list1 (Fcons (Qdisplay_type, disptype)));
+      {
+	AUTO_FRAME_ARG (arg, Qdisplay_type, disptype);
+	Fmodify_frame_parameters (frame, arg);
+      }
   }
 
   /* Set up faces after all frame parameters are known.  This call
@@ -5080,7 +5202,10 @@ x_create_tip_frame (struct x_display_info *dpyinfo,
     call2 (Qface_set_after_frame_default, frame, Qnil);
 
     if (!EQ (bg, Fframe_parameter (frame, Qbackground_color)))
-      Fmodify_frame_parameters (frame, list1 (Fcons (Qbackground_color, bg)));
+      {
+	AUTO_FRAME_ARG (arg, Qbackground_color, bg);
+	Fmodify_frame_parameters (frame, arg);
+      }
   }
 
   f->no_split = 1;
@@ -5096,7 +5221,7 @@ x_create_tip_frame (struct x_display_info *dpyinfo,
      below.  And the frame needs to be on Vframe_list or making it
      visible won't work.  */
   Vframe_list = Fcons (frame, Vframe_list);
-  f->official = true;
+  f->can_x_set_window_size = true;
 
   /* Setting attributes of faces of the tooltip frame from resources
      and similar will increment face_change_count, which leads to the
@@ -5452,8 +5577,8 @@ Text larger than the specified size is clipped.  */)
   unblock_input ();
 
   /* Draw into the window.  */
-  w->must_be_updated_p = 1;
-  update_single_window (w, 1);
+  w->must_be_updated_p = true;
+  update_single_window (w);
 
   /* Restore original current buffer.  */
   set_buffer_internal_1 (old_buffer);
@@ -6156,12 +6281,6 @@ If more space for files in the file chooser dialog is wanted, set this to nil
 to turn the additional text off.  */);
   x_gtk_file_dialog_help_text = 1;
 
-  DEFVAR_BOOL ("x-gtk-whole-detached-tool-bar", x_gtk_whole_detached_tool_bar,
-    doc: /* If non-nil, a detached tool bar is shown in full.
-The default is to just show an arrow and pressing on that arrow shows
-the tool bar buttons.  */);
-  x_gtk_whole_detached_tool_bar = 0;
-
   DEFVAR_BOOL ("x-gtk-use-system-tooltips", x_gtk_use_system_tooltips,
     doc: /* If non-nil with a Gtk+ built Emacs, the Gtk+ tooltip is used.
 Otherwise use Emacs own tooltip implementation.
@@ -6224,6 +6343,7 @@ When using Gtk+ tooltips, the tooltip face is not used.  */);
   defsubr (&Sx_display_backing_store);
   defsubr (&Sx_display_save_under);
   defsubr (&Sx_display_monitor_attributes_list);
+  defsubr (&Sx_frame_geometry);
   defsubr (&Sx_wm_set_size_hint);
   defsubr (&Sx_create_frame);
   defsubr (&Sx_open_connection);

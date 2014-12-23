@@ -156,7 +156,7 @@ struct composition {
   /* How many columns the overall glyphs occupy on the screen.  This
      gives an approximate value for column calculation in
      Fcurrent_column, and etc.  */
-  unsigned short width;
+  int width;
 
   /* Method of the composition.  */
   enum composition_method method;

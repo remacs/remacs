@@ -902,7 +902,7 @@ encompassing condition-case."
          (header
           (format "allout-widgets-last-hook-error stored, %s/%s %s %s"
                   this mode args
-                  (format-time-string "%e-%b-%Y %r" (current-time)))))
+                  (format-time-string "%e-%b-%Y %r"))))
     ;; post to *Messages* then immediately replace with more compact notice:
     (message "%s" (setq allout-widgets-last-hook-error
                         (format "%s:\n%s" header bt)))
@@ -2342,9 +2342,9 @@ We use a caching strategy, so the caller doesn't need to do so."
       got)))
 
 ;;;_ : Miscellaneous
-;;;_  > allout-elapsed-time-seconds (triple)
+;;;_  > allout-elapsed-time-seconds (time-value time-value)
 (defun allout-elapsed-time-seconds (end start)
-  "Return seconds between `current-time' style time START/END triples."
+  "Return seconds between START/END time values."
   (let ((elapsed (time-subtract end start)))
     (float-time elapsed)))
 ;;;_  > allout-frame-property (frame property)

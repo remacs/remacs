@@ -304,7 +304,7 @@ well."
 (defface diff-changed
   '((t nil))
   "`diff-mode' face used to highlight changed lines."
-  :version "24.5"
+  :version "25.1"
   :group 'diff-mode)
 (define-obsolete-face-alias 'diff-changed-face 'diff-changed "22.1")
 (defvar diff-changed-face 'diff-changed)
@@ -343,7 +343,7 @@ well."
     (((class color grayscale) (min-colors 88) (background dark))
      :foreground "#dddddd"))
   "`diff-mode' face used to highlight context and other side-information."
-  :version "24.5"
+  :version "25.1"
   :group 'diff-mode)
 (define-obsolete-face-alias 'diff-context-face 'diff-context "22.1")
 (defvar diff-context-face 'diff-context)
@@ -1220,6 +1220,9 @@ else cover the whole buffer."
 		(?- (cl-incf minus))
 		(?! (cl-incf bang))
 		((or ?\\ ?#) nil)
+		(?\n (if diff-valid-unified-empty-line
+			 (cl-incf space)
+		       (setq space 0 plus 0 minus 0 bang 0)))
 		(_  (setq space 0 plus 0 minus 0 bang 0)))
 	    (cond
 	     ((looking-at diff-hunk-header-re-unified)
@@ -1813,6 +1816,16 @@ With a prefix argument, try to REVERSE the hunk."
     (set-window-point (display-buffer buf) (+ (car pos) (cdr src)))
     (diff-hunk-status-msg line-offset (diff-xor reverse switched) t)))
 
+
+(defun diff-kill-applied-hunks ()
+  "Kill all hunks that have already been applied starting at point."
+  (interactive)
+  (while (not (eobp))
+    (pcase-let ((`(,buf ,line-offset ,pos ,src ,_dst ,switched)
+                 (diff-find-source-location nil nil)))
+      (if (and line-offset switched)
+          (diff-hunk-kill)
+        (diff-hunk-next)))))
 
 (defalias 'diff-mouse-goto-source 'diff-goto-source)
 

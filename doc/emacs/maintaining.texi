@@ -31,11 +31,11 @@ versions of a source file, storing information such as the creation
 time of each version, who made it, and a description of what was
 changed.
 
-  The Emacs version control interface is called @dfn{VC}@.  VC commands
-work with several different version control systems; currently, it
-supports GNU Arch, Bazaar, CVS, Git, Mercurial, Monotone, RCS,
+  The Emacs version control interface is called @dfn{VC}@.  VC
+commands work with several different version control systems;
+currently, it supports Bazaar, CVS, Git, Mercurial, Monotone, RCS,
 SCCS/CSSC, and Subversion.  Of these, the GNU project distributes CVS,
-Arch, RCS, and Bazaar.
+RCS, and Bazaar.
 
   VC is enabled automatically whenever you visit a file governed by a
 version control system.  To disable VC entirely, set the customizable
@@ -163,14 +163,6 @@ similar to CVS but without its problems (e.g., it supports atomic
 commits of filesets, and versioning of directories, symbolic links,
 meta-data, renames, copies, and deletes).
 
-@cindex GNU Arch
-@cindex Arch
-@item
-GNU Arch is one of the earliest @dfn{decentralized} version control
-systems (the other being Monotone).  @xref{VCS Concepts}, for a
-description of decentralized version control systems.  It is no longer
-under active development, and has been deprecated in favor of Bazaar.
-
 @cindex git
 @item
 Git is a decentralized version control system originally invented by
@@ -191,6 +183,18 @@ exception of repository sync operations.
 Bazaar (bzr) is a decentralized version control system that supports
 both repository-based and decentralized versioning.  VC supports most
 basic editing operations under Bazaar.
+
+@cindex SRC
+@cindex src
+@item
+SRC (src) is RCS, reloaded - a specialized version-control system
+designed for single-file projects worked on by only one person. It
+allows multiple files with independent version-control histories to
+exist in one directory, and is thus particularly well suited for
+maintaining small documents, scripts, and dotfiles.  While it uses RCS
+for revision storage, it presents a modern user interface featuring
+lockless operation and integer sequential version numbers.  VC
+supports almost all SRC operations.
 @end itemize
 
 @node VCS Concepts
@@ -268,8 +272,8 @@ number and severity of conflicts that actually occur.
   SCCS always uses locking.  RCS is lock-based by default but can be
 told to operate in a merging style.  CVS and Subversion are
 merge-based by default but can be told to operate in a locking mode.
-Decentralized version control systems, such as GNU Arch, Git, and
-Mercurial, are exclusively merging-based.
+Decentralized version control systems, such as Git and Mercurial, are
+exclusively merging-based.
 
   VC mode supports both locking and merging version control.  The
 terms ``commit'' and ``update'' are used in newer version control
@@ -1014,8 +1018,6 @@ Revert the work file(s) in the current VC fileset to the last revision
 (@code{vc-revert}).
 @end table
 
-@c `C-x v c' (vc-rollback) was removed, since it's RCS/SCCS specific.
-
 @kindex C-x v u
 @findex vc-revert
 @vindex vc-revert-show-diff
@@ -1317,11 +1319,18 @@ implemented, and these differences cannot be entirely concealed by VC.
   On some decentralized version control systems, including Bazaar and
 Mercurial in its normal mode of operation, each branch has its own
 working directory tree, so switching between branches just involves
-switching directories.  On Git, switching between branches is done
-using the @command{git branch} command, which changes the contents of
-the working tree itself.
+switching directories.  On Git, branches are normally @dfn{co-located}
+in the same directory, and switching between branches is done using
+the @command{git checkout} command, which changes the contents of the
+working tree to match the branch you switch to.  Bazaar also supports
+co-located branches, in which case the @command{bzr switch} command
+will switch branches in the current directory.  With Subversion, you
+switch to another branch using the @command{svn switch} command.
 
-  On centralized version control systems, you can switch between
+  The VC command to switch to another branch in the current directory
+is @kbd{C-x v r @var{branch-name} @key{RET}} (@code{vc-retrieve-tag}).
+
+  On centralized version control systems, you can also switch between
 branches by typing @kbd{C-u C-x v v} in an up-to-date work file
 (@pxref{Advanced C-x v v}), and entering the revision ID for a
 revision on another branch.  On CVS, for instance, revisions on the
@@ -1467,9 +1476,11 @@ different revision with @kbd{C-u C-x v v}.
 @cindex change log
   Many software projects keep a @dfn{change log}.  This is a file,
 normally named @file{ChangeLog}, containing a chronological record of
-when and how the program was changed.  Sometimes, there are several
-change log files, each recording the changes in one directory or
-directory tree.
+when and how the program was changed.  Sometimes, these files are
+automatically generated from the change log entries stored in version
+control systems, or are used to generate these change log entries.
+Sometimes, there are several change log files, each recording the
+changes in one directory or directory tree.
 
 @menu
 * Change Log Commands:: Commands for editing change log files.

@@ -65,6 +65,22 @@ files conditionalize this setup based on the TERM environment variable."
   :type 'string)
 
 ;;;###tramp-autoload
+(defcustom tramp-histfile-override "/dev/null"
+  "When invoking a shell, override the HISTFILE with this value.
+By default, the HISTFILE is set to the \"/dev/null\" value, which
+is special on Unix systems and indicates the shell history should
+not be logged (this avoids clutter due to Tramp commands).
+
+If you set this variable to nil, however, the *override* is
+disabled, so the history will go to the default storage
+location, e.g. \"$HOME/.sh_history\"."
+  :group 'tramp
+  :version "25.1"
+  :type '(choice (const :tag "Do not override HISTFILE" nil)
+                 (const :tag "Empty the history (/dev/null)" "/dev/null")
+                 (string :tag "Redirect to a file")))
+
+;;;###tramp-autoload
 (defconst tramp-color-escape-sequence-regexp "\e[[;0-9]+m"
   "Escape sequences produced by the \"ls\" command.")
 
@@ -218,7 +234,9 @@ detected as prompt when being sent on echoing hosts, therefore.")
     ;; We use "-v" for better error tracking.
     (tramp-copy-args            (("-w" "1") ("-v") ("%h") ("%r")))
     (tramp-remote-copy-program  "nc")
-    ;; We use "-p" as required for busyboxes.
+    ;; We use "-p" as required for newer busyboxes.  For older
+    ;; busybox/nc versions, the value must be (("-l") ("%r")).  This
+    ;; can be achieved by tweaking `tramp-connection-properties'.
     (tramp-remote-copy-args     (("-l") ("-p" "%r")))
     (tramp-default-port         23)))
 ;;;###tramp-autoload
@@ -1101,23 +1119,24 @@ target of the symlink differ."
 (defun tramp-sh-handle-file-attributes (filename &optional id-format)
   "Like `file-attributes' for Tramp files."
   (unless id-format (setq id-format 'integer))
-  ;; Don't modify `last-coding-system-used' by accident.
-  (let ((last-coding-system-used last-coding-system-used))
-    (with-parsed-tramp-file-name (expand-file-name filename) nil
-      (with-tramp-file-property
-	  v localname (format "file-attributes-%s" id-format)
-	(save-excursion
-	  (tramp-convert-file-attributes
-	   v
-	   (or
-	    (cond
-	     ((tramp-get-remote-stat v)
-	      (tramp-do-file-attributes-with-stat v localname id-format))
-	     ((tramp-get-remote-perl v)
-	      (tramp-do-file-attributes-with-perl v localname id-format))
-	     (t nil))
-	    ;; The scripts could fail, for example with huge file size.
-	    (tramp-do-file-attributes-with-ls v localname id-format))))))))
+  (ignore-errors
+    ;; Don't modify `last-coding-system-used' by accident.
+    (let ((last-coding-system-used last-coding-system-used))
+      (with-parsed-tramp-file-name (expand-file-name filename) nil
+	(with-tramp-file-property
+	    v localname (format "file-attributes-%s" id-format)
+	  (save-excursion
+	    (tramp-convert-file-attributes
+	     v
+	     (or
+	      (cond
+	       ((tramp-get-remote-stat v)
+		(tramp-do-file-attributes-with-stat v localname id-format))
+	       ((tramp-get-remote-perl v)
+		(tramp-do-file-attributes-with-perl v localname id-format))
+	       (t nil))
+	      ;; The scripts could fail, for example with huge file size.
+	      (tramp-do-file-attributes-with-ls v localname id-format)))))))))
 
 (defun tramp-do-file-attributes-with-ls (vec localname &optional id-format)
   "Implement `file-attributes' for Tramp files using the ls(1) command."
@@ -2059,10 +2078,15 @@ FILENAME is the source file, NEWNAME the target file.
 KEEP-DATE is non-nil if NEWNAME should have the same timestamp as FILENAME."
   (with-temp-buffer
     ;; We must disable multibyte, because binary data shall not be
-    ;; converted.
+    ;; converted.  We remove `tramp-file-name-handler' from
+    ;; `inhibit-file-name-handlers'; otherwise the file name handler
+    ;; for `insert-file-contents' might be deactivated in some corner
+    ;; cases.
     (set-buffer-multibyte nil)
     (let ((coding-system-for-read 'binary)
-	  (jka-compr-inhibit t))
+	  (jka-compr-inhibit t)
+	  (inhibit-file-name-handlers
+	   (remq 'tramp-file-name-handler inhibit-file-name-handlers)))
       (insert-file-contents-literally filename))
     ;; We don't want the target file to be compressed, so we let-bind
     ;; `jka-compr-inhibit' to t.
@@ -2334,6 +2358,7 @@ The method used must be an out-of-band method."
 			    method 'tramp-copy-program)
 	      copy-keep-date (tramp-get-method-parameter
 			      method 'tramp-copy-keep-date)
+
 	      copy-args
 	      (delete
 	       ;; " " has either been a replacement of "%k" (when
@@ -2349,6 +2374,7 @@ The method used must be an out-of-band method."
 			copy-args
 			(let ((y (mapcar (lambda (z) (format-spec z spec)) x)))
 			  (if (member "" y) '(" ") y))))))
+
 	      copy-env
 	      (delq
 	       nil
@@ -2357,23 +2383,20 @@ The method used must be an out-of-band method."
 		  (setq x (mapcar (lambda (y) (format-spec y spec)) x))
 		  (unless (member "" x) (mapconcat 'identity x " ")))
 		(tramp-get-method-parameter method 'tramp-copy-env)))
-	      remote-copy-program (tramp-get-method-parameter
-				   method 'tramp-remote-copy-program)
-	      remote-copy-args
-	      (delete
-	       ;; " " has either been a replacement of "%k" (when
-	       ;; keep-date argument is non-nil), or a replacement
-	       ;; for the whole keep-date sublist.
-	       " "
-	       (dolist
-		   (x
-		    (tramp-get-method-parameter method 'tramp-remote-copy-args)
-		    remote-copy-args)
-		 (setq remote-copy-args
-		       (append
-			remote-copy-args
-			(let ((y (mapcar (lambda (z) (format-spec z spec)) x)))
-			  (if (member "" y) '(" ") y)))))))
+
+	      remote-copy-program
+	      (tramp-get-method-parameter method 'tramp-remote-copy-program))
+
+	(dolist
+	    (x
+	     (or
+	      (tramp-get-connection-property v "remote-copy-args" nil)
+	      (tramp-get-method-parameter method 'tramp-remote-copy-args)))
+	  (setq remote-copy-args
+		(append
+		 remote-copy-args
+		 (let ((y (mapcar (lambda (z) (format-spec z spec)) x)))
+		   (if (member "" y) '(" ") y)))))
 
 	;; Check for local copy program.
 	(unless (executable-find copy-program)
@@ -2810,7 +2833,7 @@ the result will be a local, non-Tramp, file name."
 ;; connection has been setup.
 (defun tramp-sh-handle-start-file-process (name buffer program &rest args)
   "Like `start-file-process' for Tramp files."
-  (with-parsed-tramp-file-name default-directory nil
+  (with-parsed-tramp-file-name (expand-file-name default-directory) nil
     (let* (;; When PROGRAM matches "*sh", and the first arg is "-c",
 	   ;; it might be that the arguments exceed the command line
 	   ;; length.  Therefore, we modify the command.
@@ -2828,16 +2851,27 @@ the result will be a local, non-Tramp, file name."
 			(list (replace-match " \\\\\n" nil nil (cadr args))))
 		       (setq i (+ i 250))))
 		   (cdr args)))
+	   ;; Use a human-friendly prompt, for example for `shell'.
+	   (prompt (format "PS1=%s"
+			   (format "%s %s"
+				   (file-remote-p default-directory)
+				   tramp-initial-end-of-output)))
+	   ;; We use as environment the difference to toplevel
+	   ;; `process-environment'.
+	   env
+	   (env
+	    (dolist
+		(elt
+		 (cons prompt (nreverse (copy-sequence process-environment)))
+		 env)
+	      (or (member elt (default-toplevel-value 'process-environment))
+		  (setq env (cons elt env)))))
 	   (command
 	    (when (stringp program)
-	      (format "cd %s && exec %s env PS1=%s %s"
+	      (format "cd %s && exec %s env %s %s"
 		      (tramp-shell-quote-argument localname)
 		      (if heredoc (format "<<'%s'" tramp-end-of-heredoc) "")
-		      ;; Use a human-friendly prompt, for example for `shell'.
-		      (tramp-shell-quote-argument
-		       (format "%s %s"
-			       (file-remote-p default-directory)
-			       tramp-initial-end-of-output))
+		      (mapconcat 'tramp-shell-quote-argument env " ")
 		      (if heredoc
 			  (format "%s\n(\n%s\n) </dev/tty\n%s"
 				  program (car args) tramp-end-of-heredoc)
@@ -2924,10 +2958,20 @@ the result will be a local, non-Tramp, file name."
     (error "Implementation does not handle immediate return"))
 
   (with-parsed-tramp-file-name default-directory nil
-    (let (command input tmpinput stderr tmpstderr outbuf ret)
+    (let (command env input tmpinput stderr tmpstderr outbuf ret)
       ;; Compute command.
       (setq command (mapconcat 'tramp-shell-quote-argument
 			       (cons program args) " "))
+      ;; We use as environment the difference to toplevel `process-environment'.
+      (setq env
+	    (dolist (elt (nreverse (copy-sequence process-environment)) env)
+	      (or (member elt (default-toplevel-value 'process-environment))
+		  (setq env (cons elt env)))))
+      (when env
+	(setq command
+	      (format
+	       "env %s %s"
+	       (mapconcat 'tramp-shell-quote-argument env " ") command)))
       ;; Determine input.
       (if (null infile)
 	  (setq input "/dev/null")
@@ -3463,19 +3507,19 @@ the result will be a local, non-Tramp, file name."
 		     (not (with-tramp-connection-property v vc-bzr-program
 			    (tramp-find-executable
 			     v vc-bzr-program (tramp-get-remote-path v)))))
-	    (setq vc-handled-backends (delq 'Bzr vc-handled-backends)))
+	    (setq vc-handled-backends (remq 'Bzr vc-handled-backends)))
 	  (when (and (memq 'Git vc-handled-backends)
 		     (boundp 'vc-git-program)
 		     (not (with-tramp-connection-property v vc-git-program
 			    (tramp-find-executable
 			     v vc-git-program (tramp-get-remote-path v)))))
-	    (setq vc-handled-backends (delq 'Git vc-handled-backends)))
+	    (setq vc-handled-backends (remq 'Git vc-handled-backends)))
 	  (when (and (memq 'Hg vc-handled-backends)
 		     (boundp 'vc-hg-program)
 		     (not (with-tramp-connection-property v vc-hg-program
 			    (tramp-find-executable
 			     v vc-hg-program (tramp-get-remote-path v)))))
-	    (setq vc-handled-backends (delq 'Hg vc-handled-backends)))
+	    (setq vc-handled-backends (remq 'Hg vc-handled-backends)))
 	  ;; Run.
 	  (ignore-errors
 	    (tramp-run-real-handler 'vc-registered (list file))))))))
@@ -3840,9 +3884,24 @@ file exists and nonzero exit status otherwise."
 	(setq item (pop alist))
 	(when (string-match (car item) shell)
 	  (setq extra-args (cdr item))))
+      ;; It is useful to set the prompt in the following command
+      ;; because some people have a setting for $PS1 which /bin/sh
+      ;; doesn't know about and thus /bin/sh will display a strange
+      ;; prompt.  For example, if $PS1 has "${CWD}" in the value, then
+      ;; ksh will display the current working directory but /bin/sh
+      ;; will display a dollar sign.  The following command line sets
+      ;; $PS1 to a sane value, and works under Bourne-ish shells as
+      ;; well as csh-like shells.  We also unset the variable $ENV
+      ;; because that is read by some sh implementations (eg, bash
+      ;; when called as sh) on startup; this way, we avoid the startup
+      ;; file clobbering $PS1.  $PROMPT_COMMAND is another way to set
+      ;; the prompt in /bin/bash, it must be discarded as well.
       (tramp-send-command
        vec (format
-	    "exec env ENV='' HISTFILE=/dev/null PROMPT_COMMAND='' PS1=%s PS2='' PS3='' %s %s"
+	    "exec env ENV=''%s PROMPT_COMMAND='' PS1=%s PS2='' PS3='' %s %s"
+            (if tramp-histfile-override
+                (concat " HISTFILE=" tramp-histfile-override)
+              "")
 	    (tramp-shell-quote-argument tramp-end-of-output)
 	    shell (or extra-args ""))
        t))
@@ -3916,20 +3975,6 @@ seconds.  If not, it produces an error message with the given ERROR-ARGS."
 Mainly sets the prompt and the echo correctly.  PROC is the shell
 process to set up.  VEC specifies the connection."
   (let ((tramp-end-of-output tramp-initial-end-of-output))
-    ;; It is useful to set the prompt in the following command because
-    ;; some people have a setting for $PS1 which /bin/sh doesn't know
-    ;; about and thus /bin/sh will display a strange prompt.  For
-    ;; example, if $PS1 has "${CWD}" in the value, then ksh will
-    ;; display the current working directory but /bin/sh will display
-    ;; a dollar sign.  The following command line sets $PS1 to a sane
-    ;; value, and works under Bourne-ish shells as well as csh-like
-    ;; shells.  Daniel Pittman reports that the unusual positioning of
-    ;; the single quotes makes it work under `rc', too.  We also unset
-    ;; the variable $ENV because that is read by some sh
-    ;; implementations (eg, bash when called as sh) on startup; this
-    ;; way, we avoid the startup file clobbering $PS1.  $PROMPT_COMMAND
-    ;; is another way to set the prompt in /bin/bash, it must be
-    ;; discarded as well.
     (tramp-open-shell
      vec
      (or (tramp-get-connection-property vec "remote-shell" nil)
@@ -3954,10 +3999,8 @@ process to set up.  VEC specifies the connection."
 
   (tramp-message vec 5 "Setting shell prompt")
   (tramp-send-command
-   vec (format "PS1=%s" (tramp-shell-quote-argument tramp-end-of-output)) t)
-  (tramp-send-command vec "PS2=''" t)
-  (tramp-send-command vec "PS3=''" t)
-  (tramp-send-command vec "PROMPT_COMMAND=''" t)
+   vec (format "PS1=%s PS2='' PS3='' PROMPT_COMMAND=''"
+	       (tramp-shell-quote-argument tramp-end-of-output)) t)
 
   ;; Try to set up the coding system correctly.
   ;; CCC this can't be the right way to do it.  Hm.
@@ -3966,9 +4009,9 @@ process to set up.  VEC specifies the connection."
     (if (featurep 'mule)
 	;; Use MULE to select the right EOL convention for communicating
 	;; with the process.
-	(let ((cs (or (when (string-match
-			     "utf8" (or (tramp-get-remote-locale vec) ""))
-			(cons 'utf-8 'utf-8))
+	(let ((cs (or (and (memq 'utf-8 (coding-system-list))
+			   (string-match "utf8" (tramp-get-remote-locale vec))
+			   (cons 'utf-8 'utf-8))
 		      (tramp-compat-funcall 'process-coding-system proc)
 		      (cons 'undecided 'undecided)))
 	      cs-decode cs-encode)
@@ -4074,18 +4117,24 @@ process to set up.  VEC specifies the connection."
   ;; Set the environment.
   (tramp-message vec 5 "Setting default environment")
 
-  (let ((env (append (when (tramp-get-remote-locale vec) ; Discard `(nil)'.
-		       `(,(tramp-get-remote-locale vec)))
+  (let ((env (append `(,(tramp-get-remote-locale vec))
 		     (copy-sequence tramp-remote-process-environment)))
-	unset item)
+	unset vars item)
     (while env
       (setq item (tramp-compat-split-string (car env) "="))
       (setcdr item (mapconcat 'identity (cdr item) "="))
       (if (and (stringp (cdr item)) (not (string-equal (cdr item) "")))
-	  (tramp-send-command
-	   vec (format "%s=%s; export %s" (car item) (cdr item) (car item)) t)
+	  (push (format "%s %s" (car item) (cdr item)) vars)
 	(push (car item) unset))
       (setq env (cdr env)))
+    (when vars
+      (tramp-send-command
+       vec
+       (format "while read var val; do export $var=$val; done <<'%s'\n%s\n%s"
+	       tramp-end-of-heredoc
+	       (mapconcat 'identity vars "\n")
+	       tramp-end-of-heredoc)
+       t))
     (when unset
       (tramp-send-command
        vec (format "unset %s" (mapconcat 'identity unset " ")) t))))
@@ -4573,7 +4622,8 @@ connection if a previous connection has died for some reason."
 		(delete-process p))
 	      (setenv "TERM" tramp-terminal-type)
 	      (setenv "LC_ALL" "en_US.utf8")
-	      (setenv "HISTFILE" "/dev/null")
+	      (when tramp-histfile-override
+                (setenv "HISTFILE" tramp-histfile-override))
 	      (setenv "PROMPT_COMMAND")
 	      (setenv "PS1" tramp-initial-end-of-output)
 	      (let* ((target-alist (tramp-compute-multi-hops vec))
@@ -4763,6 +4813,17 @@ function waits for output unless NOOUTPUT is set."
     (when (tramp-get-connection-property p "remote-echo" nil)
       ;; We mark the command string that it can be erased in the output buffer.
       (tramp-set-connection-property p "check-remote-echo" t)
+      ;; If we put `tramp-echo-mark' after a trailing newline (which
+      ;; is assumed to be unquoted) `tramp-send-string' doesn't see
+      ;; that newline and adds `tramp-rsh-end-of-line' right after
+      ;; `tramp-echo-mark', so the remote shell sees two consecutive
+      ;; trailing line endings and sends two prompts after executing
+      ;; the command, which confuses `tramp-wait-for-output'.
+      (when (and (not (string= command ""))
+		 (string-equal (substring command -1) "\n"))
+	(setq command (substring command 0 -1)))
+      ;; No need to restore a trailing newline here since `tramp-send-string'
+      ;; makes sure that the string ends in `tramp-rsh-end-of-line', anyway.
       (setq command (format "%s%s%s" tramp-echo-mark command tramp-echo-mark)))
     ;; Send the command.
     (tramp-message vec 6 "%s" command)
@@ -5003,13 +5064,25 @@ Return ATTR."
 		   "/bin:/usr/bin")
 		  "/bin:/usr/bin"))))
 	   (own-remote-path
-	     (when elt2
-	       (condition-case nil
-		   (tramp-send-command-and-read vec "echo \\\"$PATH\\\"")
-		 (error
-		  (tramp-message
-		   vec 3 "$PATH not set, ignoring `tramp-own-remote-path'.")
-		  nil)))))
+	    ;; We cannot apply `tramp-send-command-and-read' because
+	    ;; the login shell could return more than just the $PATH
+	    ;; string.  So we emulate that function.
+	    (when elt2
+	      (tramp-send-command
+	       vec
+	       (format
+		"%s -l %s 'echo \\\"$PATH\\\"'"
+		(tramp-get-method-parameter
+		 (tramp-file-name-method vec) 'tramp-remote-shell)
+		(mapconcat
+		 'identity
+		 (tramp-get-method-parameter
+		  (tramp-file-name-method vec) 'tramp-remote-shell-args)
+		 " ")))
+	      (with-current-buffer (tramp-get-connection-buffer vec)
+		(goto-char (point-max))
+		(forward-line -1)
+		(read (current-buffer))))))
 
       ;; Replace place holder `tramp-default-remote-path'.
       (when elt1
@@ -5053,7 +5126,7 @@ Return ATTR."
 (defun tramp-get-remote-locale (vec)
   (with-tramp-connection-property vec "locale"
     (tramp-send-command vec "locale -a")
-    (let ((candidates '("en_US.utf8" "C.utf8" "C"))
+    (let ((candidates '("en_US.utf8" "C.utf8"))
 	  locale)
       (with-current-buffer (tramp-get-connection-buffer vec)
 	(while candidates
@@ -5063,7 +5136,7 @@ Return ATTR."
 		    candidates nil)
 	    (setq candidates (cdr candidates)))))
       ;; Return value.
-      (when locale (format "LC_ALL=%s" locale)))))
+      (format "LC_ALL=%s" (or locale "C")))))
 
 (defun tramp-get-ls-command (vec)
   (with-tramp-connection-property vec "ls"
@@ -5207,7 +5280,7 @@ Return ATTR."
 	  (format
 	   "%s -t %s %s"
 	   result
-	   (format-time-string "%Y%m%d%H%M.%S" (current-time))
+	   (format-time-string "%Y%m%d%H%M.%S")
 	   (tramp-file-name-handler 'file-remote-p tmpfile 'localname))))
 	(delete-file tmpfile))
       result)))
@@ -5227,13 +5300,14 @@ Return ATTR."
   (with-tramp-connection-property vec "id"
     (tramp-message vec 5 "Finding POSIX `id' command")
     (catch 'id-found
-      (let ((dl (tramp-get-remote-path vec))
-	    result)
-	(while (and dl (setq result (tramp-find-executable vec "id" dl t t)))
-	  ;; Check POSIX parameter.
-	  (when (tramp-send-command-and-check vec (format "%s -u" result))
-	    (throw 'id-found result))
-	  (setq dl (cdr dl)))))))
+      (dolist (cmd '("id" "gid"))
+	(let ((dl (tramp-get-remote-path vec))
+	      result)
+	  (while (and dl (setq result (tramp-find-executable vec cmd dl t t)))
+	    ;; Check POSIX parameter.
+	    (when (tramp-send-command-and-check vec (format "%s -u" result))
+	      (throw 'id-found result))
+	    (setq dl (cdr dl))))))))
 
 (defun tramp-get-remote-uid-with-id (vec id-format)
   (tramp-send-command-and-read
@@ -5271,17 +5345,20 @@ Return ATTR."
 
 (defun tramp-get-remote-uid (vec id-format)
   (with-tramp-connection-property vec (format "uid-%s" id-format)
-    (let ((res (cond
-		((tramp-get-remote-id vec)
-		 (tramp-get-remote-uid-with-id vec id-format))
-		((tramp-get-remote-perl vec)
-		 (tramp-get-remote-uid-with-perl vec id-format))
-		((tramp-get-remote-python vec)
-		 (tramp-get-remote-uid-with-python vec id-format))
-		(t (tramp-error
-		    vec 'file-error "Cannot determine remote uid")))))
-      ;; The command might not always return a number.
-      (if (and (equal id-format 'integer) (not (integerp res))) -1 res))))
+    (let ((res
+	   (ignore-errors
+	     (cond
+	      ((tramp-get-remote-id vec)
+	       (tramp-get-remote-uid-with-id vec id-format))
+	      ((tramp-get-remote-perl vec)
+	       (tramp-get-remote-uid-with-perl vec id-format))
+	      ((tramp-get-remote-python vec)
+	       (tramp-get-remote-uid-with-python vec id-format))))))
+      ;; Ensure there is a valid result.
+      (cond
+       ((and (equal id-format 'integer) (not (integerp res))) -1)
+       ((and (equal id-format 'string) (not (stringp res))) "UNKNOWN")
+       (t res)))))
 
 (defun tramp-get-remote-gid-with-id (vec id-format)
   (tramp-send-command-and-read
@@ -5312,17 +5389,20 @@ Return ATTR."
 
 (defun tramp-get-remote-gid (vec id-format)
   (with-tramp-connection-property vec (format "gid-%s" id-format)
-    (let ((res (cond
-		((tramp-get-remote-id vec)
-		 (tramp-get-remote-gid-with-id vec id-format))
-		((tramp-get-remote-perl vec)
-		 (tramp-get-remote-gid-with-perl vec id-format))
-		((tramp-get-remote-python vec)
-		 (tramp-get-remote-gid-with-python vec id-format))
-		(t (tramp-error
-		    vec 'file-error "Cannot determine remote gid")))))
-      ;; The command might not always return a number.
-      (if (and (equal id-format 'integer) (not (integerp res))) -1 res))))
+    (let ((res
+	   (ignore-errors
+	     (cond
+	      ((tramp-get-remote-id vec)
+	       (tramp-get-remote-gid-with-id vec id-format))
+	      ((tramp-get-remote-perl vec)
+	       (tramp-get-remote-gid-with-perl vec id-format))
+	      ((tramp-get-remote-python vec)
+	       (tramp-get-remote-gid-with-python vec id-format))))))
+      ;; Ensure there is a valid result.
+      (cond
+       ((and (equal id-format 'integer) (not (integerp res))) -1)
+       ((and (equal id-format 'string) (not (stringp res))) "UNKNOWN")
+       (t res)))))
 
 ;; Some predefined connection properties.
 (defun tramp-get-inline-compress (vec prop size)

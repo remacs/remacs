@@ -6,7 +6,7 @@
 % Author: Stephen Gildea <gildea@stop.mail-abuse.org>
 % Czech translation: Jan Buchal <buchal@brailcom.cz>, January 1999
 % 	Milan Zamazal <pdm@zamazal.org>, August 1999
-%	Pavel Janík <Pavel@Janik.cz>, November 2000 (Emacs 21)
+%	Pavel JanÃ­k <Pavel@Janik.cz>, November 2000 (Emacs 21)
 
 % This file is part of GNU Emacs.
 
@@ -49,11 +49,6 @@
 % Czech hyphenation rules applied
 \chyph
 
-% Without this, pdfTeX 3.1415926-2.5-1.40.14 (TeX Live 2013/Debian)
-% aborts with: "! UTF-8 INPUT IS CORRUPTED !
-% May be you are using another input encoding"
-\input utf8off
-
 % This file can be printed with 1, 2, or 3 columns per page.
 % Specify how many you want here.
 \newcount\columnsperpage
@@ -77,7 +72,7 @@
 \centerline{Copyright \copyright\ \year\ Free Software Foundation, Inc.}
 \centerline{For GNU Emacs version \versionemacs}
 \centerline{Designed by Stephen Gildea}
-\centerline{Translated by Jan Buchal, Milan Zamazal, Pavel Janík}
+\centerline{Translated by Jan Buchal, Milan Zamazal, Pavel JanÃ­k}
 
 Permission is granted to make and distribute copies of
 this card provided the copyright notice and this permission notice
@@ -264,68 +259,68 @@ For copies of the GNU Emacs manual, see:
 %**end of header
 
 
-\title{GNU Emacs -- Referenèní karta}
+\title{GNU Emacs -- ReferenÄnÃ­ karta}
 
 \centerline{(pro verzi \versionemacs)}
 
-\section{Spu¹tìní Emacsu}
+\section{SpuÅ¡tÄ›nÃ­ Emacsu}
 
-Pro vstup do GNU~Emacsu~\versionemacs{} napi¹te jeho jméno: \kbd{emacs}
+Pro vstup do GNU~Emacsu~\versionemacs{} napiÅ¡te jeho jmÃ©no: \kbd{emacs}
 
-Jak naèítat a editovat soubory se dozvíte ní¾e v~oddíle Soubory.
+Jak naÄÃ­tat a editovat soubory se dozvÃ­te nÃ­Å¾e v~oddÃ­le Soubory.
 
 
-\section{Opu¹tìní Emacsu}
+\section{OpuÅ¡tÄ›nÃ­ Emacsu}
 
-\key{pozastavení Emacsu (ikonizace v~X11)}{C-z}
-\key{definitivní odchod z~Emacsu}{C-x C-c}
+\key{pozastavenÃ­ Emacsu (ikonizace v~X11)}{C-z}
+\key{definitivnÃ­ odchod z~Emacsu}{C-x C-c}
 
 \section{Soubory}
 
-\key{{\bf naèíst} souboru do Emacsu}{C-x C-f}
-\key{{\bf ulo¾it} soubor zpìt na disk}{C-x C-s}
-\key{ulo¾it {\bf v¹echny} soubory}{C-x s}
-\key{{\bf vlo¾it} obsahu jiného souboru do bufferu}{C-x i}
-\key{zamìnit tento soubor jinım souborem}{C-x C-v}
-\key{zapsat buffer do zadaného souboru}{C-x C-w}
-\key{vlo¾it do systému správy verzí}{C-x C-q}
+\key{{\bf naÄÃ­st} souboru do Emacsu}{C-x C-f}
+\key{{\bf uloÅ¾it} soubor zpÄ›t na disk}{C-x C-s}
+\key{uloÅ¾it {\bf vÅ¡echny} soubory}{C-x s}
+\key{{\bf vloÅ¾it} obsahu jinÃ©ho souboru do bufferu}{C-x i}
+\key{zamÄ›nit tento soubor jinÃ½m souborem}{C-x C-v}
+\key{zapsat buffer do zadanÃ©ho souboru}{C-x C-w}
+\key{vloÅ¾it do systÃ©mu sprÃ¡vy verzÃ­}{C-x C-q}
 
-\section{Pou¾ívání nápovìdy}
+\section{PouÅ¾Ã­vÃ¡nÃ­ nÃ¡povÄ›dy}
 
-Systém nápovìdy je snadnı. Stisknìte \kbd{C-h} (nebo \kbd{F1}) a sledujte
-instrukce. Úvodní {\bf tutoriál} lze spustit pomocí \kbd{C-h t}.
+SystÃ©m nÃ¡povÄ›dy je snadnÃ½. StisknÄ›te \kbd{C-h} (nebo \kbd{F1}) a sledujte
+instrukce. ÃšvodnÃ­ {\bf tutoriÃ¡l} lze spustit pomocÃ­ \kbd{C-h t}.
 
-\key{odstranit okno s~nápovìdou}{C-x 1}
-\key{rolovat okno s~nápovìdou}{C-M-v}
+\key{odstranit okno s~nÃ¡povÄ›dou}{C-x 1}
+\key{rolovat okno s~nÃ¡povÄ›dou}{C-M-v}
 
-\key{apropos: pøíkazy odpovídající øetìzci}{C-h a}
-\key{zobrazit funkci dané klávesy}{C-h c}
+\key{apropos: pÅ™Ã­kazy odpovÃ­dajÃ­cÃ­ Å™etÄ›zci}{C-h a}
+\key{zobrazit funkci danÃ© klÃ¡vesy}{C-h c}
 \key{zobrazit popis funkce}{C-h f}
-\key{zobrazit informace o~aktuálních módech}{C-h m}
+\key{zobrazit informace o~aktuÃ¡lnÃ­ch mÃ³dech}{C-h m}
 
 \section{Opravy chyb}
 
-\key{{\bf pøeru¹it} zadávanı nebo vykonávanı pøíkaz}{C-g}
-\metax{{\bf obnovit} soubor ztracenı pádem systému}{M-x recover-file}
-\key{{\bf zru¹it} nechtìnou zmìnu}{C-x u {\it n.} C-_}
-\metax{vrátit pùvodní obsah bufferu}{M-x revert-buffer}
-\key{pøekreslit \uv{rozpadlou} obrazovku}{C-l}
+\key{{\bf pÅ™eruÅ¡it} zadÃ¡vanÃ½ nebo vykonÃ¡vanÃ½ pÅ™Ã­kaz}{C-g}
+\metax{{\bf obnovit} soubor ztracenÃ½ pÃ¡dem systÃ©mu}{M-x recover-file}
+\key{{\bf zruÅ¡it} nechtÄ›nou zmÄ›nu}{C-x u {\it n.} C-_}
+\metax{vrÃ¡tit pÅ¯vodnÃ­ obsah bufferu}{M-x revert-buffer}
+\key{pÅ™ekreslit \uv{rozpadlou} obrazovku}{C-l}
 
-\section{Pøírùstkové vyhledávání}
+\section{PÅ™Ã­rÅ¯stkovÃ© vyhledÃ¡vÃ¡nÃ­}
 
-\key{vyhledat dopøedu}{C-s}
+\key{vyhledat dopÅ™edu}{C-s}
 \key{vyhledat dozadu}{C-r}
-\key{vyhledat regulární vıraz}{C-M-s}
-\key{vyhledat regulární vıraz dozadu}{C-M-r}
+\key{vyhledat regulÃ¡rnÃ­ vÃ½raz}{C-M-s}
+\key{vyhledat regulÃ¡rnÃ­ vÃ½raz dozadu}{C-M-r}
 
-\key{pøedchozí vyhledávanı øetìzec}{M-p}
-\key{následující novìj¹í vyhledávanı øetìzec}{M-n}
-\key{ukonèit inkrementální vyhledávání}{RET}
-\key{zru¹it efekt posledního zadaného znaku}{DEL}
-\key{pøeru¹it probíhající vyhledávání}{C-g}
+\key{pÅ™edchozÃ­ vyhledÃ¡vanÃ½ Å™etÄ›zec}{M-p}
+\key{nÃ¡sledujÃ­cÃ­ novÄ›jÅ¡Ã­ vyhledÃ¡vanÃ½ Å™etÄ›zec}{M-n}
+\key{ukonÄit inkrementÃ¡lnÃ­ vyhledÃ¡vÃ¡nÃ­}{RET}
+\key{zruÅ¡it efekt poslednÃ­ho zadanÃ©ho znaku}{DEL}
+\key{pÅ™eruÅ¡it probÃ­hajÃ­cÃ­ vyhledÃ¡vÃ¡nÃ­}{C-g}
 
-Dal¹í \kbd{C-s} nebo \kbd{C-r} zopakuje vyhledání v~daném smìru. Pokud
-Emacs vyhledává, \kbd{C-g} zru¹í pouze nenalezenou èást øetìzce.
+DalÅ¡Ã­ \kbd{C-s} nebo \kbd{C-r} zopakuje vyhledÃ¡nÃ­ v~danÃ©m smÄ›ru. Pokud
+Emacs vyhledÃ¡vÃ¡, \kbd{C-g} zruÅ¡Ã­ pouze nenalezenou ÄÃ¡st Å™etÄ›zce.
 
 
 \shortcopyrightnotice
@@ -333,311 +328,311 @@ Emacs vyhledává, \kbd{C-g} zru¹í pouze nenalezenou èást øetìzce.
 \section{Pohyb}
 
 \paralign to \hsize{#\tabskip=10pt plus 1 fil&#\tabskip=0pt&#\cr
-\threecol{{\bf posun o }}{{\bf dozadu}}{{\bf dopøedu}}
+\threecol{{\bf posun o }}{{\bf dozadu}}{{\bf dopÅ™edu}}
 \threecol{znak}{C-b}{C-f}
 \threecol{slovo}{M-b}{M-f}
-\threecol{øádek}{C-p}{C-n}
-\threecol{na zaèátek nebo konec øádku}{C-a}{C-e}
-\threecol{vìtu}{M-a}{M-e}
+\threecol{Å™Ã¡dek}{C-p}{C-n}
+\threecol{na zaÄÃ¡tek nebo konec Å™Ã¡dku}{C-a}{C-e}
+\threecol{vÄ›tu}{M-a}{M-e}
 \threecol{odstavec}{M-\{}{M-\}}
-\threecol{stránku}{C-x [}{C-x ]}
-\threecol{symbolickı vıraz}{C-M-b}{C-M-f}
+\threecol{strÃ¡nku}{C-x [}{C-x ]}
+\threecol{symbolickÃ½ vÃ½raz}{C-M-b}{C-M-f}
 \threecol{funkci}{C-M-a}{C-M-e}
-\threecol{na zaèátek nebo konec bufferu}{M-<}{M->}
+\threecol{na zaÄÃ¡tek nebo konec bufferu}{M-<}{M->}
 }
 
-\key{rolovat na dal¹í obrazovku}{C-v}
-\key{rolovat na pøedchozí obrazovku}{M-v}
+\key{rolovat na dalÅ¡Ã­ obrazovku}{C-v}
+\key{rolovat na pÅ™edchozÃ­ obrazovku}{M-v}
 \key{rolovat vlevo}{C-x <}
 \key{rolovat vpravo}{C-x >}
-\key{aktuální øádek do støedu obrazovky}{C-u C-l}
+\key{aktuÃ¡lnÃ­ Å™Ã¡dek do stÅ™edu obrazovky}{C-u C-l}
 
-\section{Ru¹ení a mazání}
+\section{RuÅ¡enÃ­ a mazÃ¡nÃ­}
 
 \paralign to \hsize{#\tabskip=10pt plus 1 fil&#\tabskip=0pt&#\cr
-\threecol{{\bf ru¹enı objekt }}{{\bf dozadu}}{{\bf dopøedu}}
-\threecol{znak (mazání, ne ru¹ení)}{DEL}{C-d}
+\threecol{{\bf ruÅ¡enÃ½ objekt }}{{\bf dozadu}}{{\bf dopÅ™edu}}
+\threecol{znak (mazÃ¡nÃ­, ne ruÅ¡enÃ­)}{DEL}{C-d}
 \threecol{slovo}{M-DEL}{M-d}
-\threecol{øádek (do konce)}{M-0 C-k}{C-k}
-\threecol{vìta}{C-x DEL}{M-k}
-\threecol{symbolickı vıraz}{M-- C-M-k}{C-M-k}
+\threecol{Å™Ã¡dek (do konce)}{M-0 C-k}{C-k}
+\threecol{vÄ›ta}{C-x DEL}{M-k}
+\threecol{symbolickÃ½ vÃ½raz}{M-- C-M-k}{C-M-k}
 }
 
-\key{zru¹it {\bf oblast}}{C-w}
-\key{zkopírovat oblast do schránky}{M-w}
-\key{zru¹it a¾ po nejbli¾¹í vıskyt znaku {\it znak}}{M-z {\it znak}}
+\key{zruÅ¡it {\bf oblast}}{C-w}
+\key{zkopÃ­rovat oblast do schrÃ¡nky}{M-w}
+\key{zruÅ¡it aÅ¾ po nejbliÅ¾Å¡Ã­ vÃ½skyt znaku {\it znak}}{M-z {\it znak}}
 
-\key{vhodit naposledy zru¹enı objekt}{C-y}
-\key{nahradit vhozenı objekt pøedchozím zru¹enım}{M-y}
+\key{vhodit naposledy zruÅ¡enÃ½ objekt}{C-y}
+\key{nahradit vhozenÃ½ objekt pÅ™edchozÃ­m zruÅ¡enÃ½m}{M-y}
 
-\section{Oznaèování}
+\section{OznaÄovÃ¡nÃ­}
 
-\key{vlo¾it znaèku}{C-@ {\it n.} C-SPC}
-\key{prohodit kurzor a znaèku}{C-x C-x}
+\key{vloÅ¾it znaÄku}{C-@ {\it n.} C-SPC}
+\key{prohodit kurzor a znaÄku}{C-x C-x}
 
-\key{oznaèit zadanı poèet {\bf slov}}{M-@}
-\key{oznaèit {\bf odstavec}}{M-h}
-\key{oznaèit {\bf stránku}}{C-x C-p}
-\key{oznaèit {\bf symbolickı vıraz}}{C-M-@}
-\key{oznaèit {\bf funkci}}{C-M-h}
-\key{oznaèit celı {\bf buffer}}{C-x h}
+\key{oznaÄit zadanÃ½ poÄet {\bf slov}}{M-@}
+\key{oznaÄit {\bf odstavec}}{M-h}
+\key{oznaÄit {\bf strÃ¡nku}}{C-x C-p}
+\key{oznaÄit {\bf symbolickÃ½ vÃ½raz}}{C-M-@}
+\key{oznaÄit {\bf funkci}}{C-M-h}
+\key{oznaÄit celÃ½ {\bf buffer}}{C-x h}
 
-\section{Interaktivní nahrazování}
+\section{InteraktivnÃ­ nahrazovÃ¡nÃ­}
 
-\key{interaktivnì nahradit textovı øetìzec}{M-\%}
-\metax{s~u¾itím regulárního vırazu}{M-x query-replace-regexp}
+\key{interaktivnÄ› nahradit textovÃ½ Å™etÄ›zec}{M-\%}
+\metax{s~uÅ¾itÃ­m regulÃ¡rnÃ­ho vÃ½razu}{M-x query-replace-regexp}
 
-Platné odpovìdi v~módu query-replace jsou
+PlatnÃ© odpovÄ›di v~mÃ³du query-replace jsou
 
-\key{{\bf zámìnu provést} a jít na dal¹í}{SPC}
-\key{zámìnu provést a zùstat na místì}{,}
-\key{{\bf skoèit} na dal¹í bez provedení zámìny}{DEL}
-\key{zamìnit v¹echny zbıvající vıskyty}{!}
-\key{{\bf zpìt} na pøedchozí vıskyt øetìzce}{^}
-\key{{\bf konec} nahrazování}{RET}
-\key{rekurzivní editace (ukonèí se \kbd{C-M-c})}{C-r}
+\key{{\bf zÃ¡mÄ›nu provÃ©st} a jÃ­t na dalÅ¡Ã­}{SPC}
+\key{zÃ¡mÄ›nu provÃ©st a zÅ¯stat na mÃ­stÄ›}{,}
+\key{{\bf skoÄit} na dalÅ¡Ã­ bez provedenÃ­ zÃ¡mÄ›ny}{DEL}
+\key{zamÄ›nit vÅ¡echny zbÃ½vajÃ­cÃ­ vÃ½skyty}{!}
+\key{{\bf zpÄ›t} na pÅ™edchozÃ­ vÃ½skyt Å™etÄ›zce}{^}
+\key{{\bf konec} nahrazovÃ¡nÃ­}{RET}
+\key{rekurzivnÃ­ editace (ukonÄÃ­ se \kbd{C-M-c})}{C-r}
 
 \section{Okna}
 
-Jestli¾e jsou zobrazeny dva pøíkazy, pak ten druhı platí pro X okno.
+JestliÅ¾e jsou zobrazeny dva pÅ™Ã­kazy, pak ten druhÃ½ platÃ­ pro X okno.
 
-\key{zru¹it v¹echna ostatní okna}{C-x 1}
+\key{zruÅ¡it vÅ¡echna ostatnÃ­ okna}{C-x 1}
 
 {\setbox0=\hbox{\kbd{0}}\advance\hsize by 0\wd0
 \paralign to \hsize{#\tabskip=10pt plus 1 fil&#\tabskip=0pt&#\cr
-\threecol{rozdìlit okno na horní a dolní}{C-x 2\ \ \ \ }{C-x 5 2}
-\threecol{zru¹it toto okno}{C-x 0\ \ \ \ }{C-x 5 0}
+\threecol{rozdÄ›lit okno na hornÃ­ a dolnÃ­}{C-x 2\ \ \ \ }{C-x 5 2}
+\threecol{zruÅ¡it toto okno}{C-x 0\ \ \ \ }{C-x 5 0}
 }}
-\key{rozdìlit okno na levé a pravé}{C-x 3}
+\key{rozdÄ›lit okno na levÃ© a pravÃ©}{C-x 3}
 
-\key{rolovat jiné okno}{C-M-v}
+\key{rolovat jinÃ© okno}{C-M-v}
 
 {\setbox0=\hbox{\kbd{0}}\advance\hsize by 2\wd0
 \paralign to \hsize{#\tabskip=10pt plus 1 fil&#\tabskip=0pt&#\cr
-\threecol{pøepnout kurzor do jiného okna}{C-x o}{C-x 5 o}
+\threecol{pÅ™epnout kurzor do jinÃ©ho okna}{C-x o}{C-x 5 o}
 
-\threecol{vybrat buffer v~jiném oknì}{C-x 4 b}{C-x 5 b}
-\threecol{zobrazit buffer v~jiném oknì}{C-x 4 C-o}{C-x 5 C-o}
-\threecol{otevøít soubor v~jiném oknì}{C-x 4 f}{C-x 5 f}
-\threecol{otevøít soubor jen pro ètení v~jiném oknì}{C-x 4 r}{C-x 5 r}
-\threecol{spustit Dired v~jiném oknì}{C-x 4 d}{C-x 5 d}
-\threecol{najít tag v~jiném oknì}{C-x 4 .}{C-x 5 .}
+\threecol{vybrat buffer v~jinÃ©m oknÄ›}{C-x 4 b}{C-x 5 b}
+\threecol{zobrazit buffer v~jinÃ©m oknÄ›}{C-x 4 C-o}{C-x 5 C-o}
+\threecol{otevÅ™Ã­t soubor v~jinÃ©m oknÄ›}{C-x 4 f}{C-x 5 f}
+\threecol{otevÅ™Ã­t soubor jen pro ÄtenÃ­ v~jinÃ©m oknÄ›}{C-x 4 r}{C-x 5 r}
+\threecol{spustit Dired v~jinÃ©m oknÄ›}{C-x 4 d}{C-x 5 d}
+\threecol{najÃ­t tag v~jinÃ©m oknÄ›}{C-x 4 .}{C-x 5 .}
 }}
 
-\key{zvìt¹it okno}{C-x ^}
-\key{zú¾it okno}{C-x \{}
-\key{roz¹íøit okno}{C-x \}}
+\key{zvÄ›tÅ¡it okno}{C-x ^}
+\key{zÃºÅ¾it okno}{C-x \{}
+\key{rozÅ¡Ã­Å™it okno}{C-x \}}
 
-\section{Formátování}
+\section{FormÃ¡tovÃ¡nÃ­}
 
-\key{odsadit aktuální {\bf øádek} (dle módu)}{TAB}
-\key{odsadit {\bf oblast} (dle módu)}{C-M-\\}
-\key{odsadit {\bf symbolickı vıraz} (dle módu)}{C-M-q}
-\key{odsadit oblast napevno o~{\it argument\/} sloupcù}{C-x TAB}
+\key{odsadit aktuÃ¡lnÃ­ {\bf Å™Ã¡dek} (dle mÃ³du)}{TAB}
+\key{odsadit {\bf oblast} (dle mÃ³du)}{C-M-\\}
+\key{odsadit {\bf symbolickÃ½ vÃ½raz} (dle mÃ³du)}{C-M-q}
+\key{odsadit oblast napevno o~{\it argument\/} sloupcÅ¯}{C-x TAB}
 
-\key{vlo¾it znak nového øádku za kurzor}{C-o}
-\key{posunout zbytek øádku svisle dolù}{C-M-o}
-\key{smazat prázdné øádky okolo kurzoru}{C-x C-o}
-\key{spojit øádek s~pøedchozím (s~arg.~s~násl.)}{M-^}
-\key{smazat prázdné místo kolem kurzoru}{M-\\}
-\key{nechat pøesnì jednu mezeru kolem kurzoru}{M-SPC}
+\key{vloÅ¾it znak novÃ©ho Å™Ã¡dku za kurzor}{C-o}
+\key{posunout zbytek Å™Ã¡dku svisle dolÅ¯}{C-M-o}
+\key{smazat prÃ¡zdnÃ© Å™Ã¡dky okolo kurzoru}{C-x C-o}
+\key{spojit Å™Ã¡dek s~pÅ™edchozÃ­m (s~arg.~s~nÃ¡sl.)}{M-^}
+\key{smazat prÃ¡zdnÃ© mÃ­sto kolem kurzoru}{M-\\}
+\key{nechat pÅ™esnÄ› jednu mezeru kolem kurzoru}{M-SPC}
 
 \key{zalomit odstavec}{M-q}
-\key{nastavit sloupec pro zalamování}{C-x f}
-\key{nastavit prefix, kterım zaèínají øádky}{C-x .}
+\key{nastavit sloupec pro zalamovÃ¡nÃ­}{C-x f}
+\key{nastavit prefix, kterÃ½m zaÄÃ­najÃ­ Å™Ã¡dky}{C-x .}
 \key{nastavit font}{M-g}
 
-\section{Zmìna velikosti písmen}
+\section{ZmÄ›na velikosti pÃ­smen}
 
-\key{zmìnit písmena slova na velká}{M-u}
-\key{zmìnit písmena slova na malá}{M-l}
-\key{zmìnit poèáteèní písmeno slova na velké}{M-c}
+\key{zmÄ›nit pÃ­smena slova na velkÃ¡}{M-u}
+\key{zmÄ›nit pÃ­smena slova na malÃ¡}{M-l}
+\key{zmÄ›nit poÄÃ¡teÄnÃ­ pÃ­smeno slova na velkÃ©}{M-c}
 
-\key{zmìnit písmena oblasti na velká}{C-x C-u}
-\key{zmìnit písmena oblasti na malá}{C-x C-l}
+\key{zmÄ›nit pÃ­smena oblasti na velkÃ¡}{C-x C-u}
+\key{zmÄ›nit pÃ­smena oblasti na malÃ¡}{C-x C-l}
 
 \section{Minibuffer}
 
-Následující klávesy jsou platné pro minibuffer.
+NÃ¡sledujÃ­cÃ­ klÃ¡vesy jsou platnÃ© pro minibuffer.
 
-\key{doplnit z~nabídky}{TAB}
-\key{doplnit do nejbli¾¹ího slova}{SPC}
+\key{doplnit z~nabÃ­dky}{TAB}
+\key{doplnit do nejbliÅ¾Å¡Ã­ho slova}{SPC}
 \key{doplnit a vykonat}{RET}
-\key{zobrazit mo¾ná doplnìní}{?}
-\key{pøedchozí pøíkaz z~minibufferu}{M-p}
-\key{novìj¹í nebo implicitní pøíkaz z~minibufferu}{M-n}
-\key{vyhledat regulární vıraz v~historii vzad}{M-r}
-\key{vyhledat regulární vıraz v~historii vpøed}{M-s}
-\key{zru¹it pøíkaz}{C-g}
+\key{zobrazit moÅ¾nÃ¡ doplnÄ›nÃ­}{?}
+\key{pÅ™edchozÃ­ pÅ™Ã­kaz z~minibufferu}{M-p}
+\key{novÄ›jÅ¡Ã­ nebo implicitnÃ­ pÅ™Ã­kaz z~minibufferu}{M-n}
+\key{vyhledat regulÃ¡rnÃ­ vÃ½raz v~historii vzad}{M-r}
+\key{vyhledat regulÃ¡rnÃ­ vÃ½raz v~historii vpÅ™ed}{M-s}
+\key{zruÅ¡it pÅ™Ã­kaz}{C-g}
 
-Stisknìte \kbd{C-x ESC ESC} pro editaci a zopakování posledního pøíkazu
-z~minibufferu.  Stisknìte \kbd{F10} pro aktivaci menu v~minibufferu.
+StisknÄ›te \kbd{C-x ESC ESC} pro editaci a zopakovÃ¡nÃ­ poslednÃ­ho pÅ™Ã­kazu
+z~minibufferu.  StisknÄ›te \kbd{F10} pro aktivaci menu v~minibufferu.
 
 \newcolumn
-\title{GNU Emacs -- Referenèní karta}
+\title{GNU Emacs -- ReferenÄnÃ­ karta}
 
 \section{Buffery}
 
-\key{vybrat jinı buffer}{C-x b}
-\key{seznam v¹ech bufferù}{C-x C-b}
-\key{zru¹it buffer}{C-x k}
+\key{vybrat jinÃ½ buffer}{C-x b}
+\key{seznam vÅ¡ech bufferÅ¯}{C-x C-b}
+\key{zruÅ¡it buffer}{C-x k}
 
-\section{Vımìny}
+\section{VÃ½mÄ›ny}
 
-\key{pøehodit {\bf znaky}}{C-t}
-\key{pøehodit {\bf slova}}{M-t}
-\key{pøehodit {\bf øádky}}{C-x C-t}
-\key{pøehodit {\bf symbolické vırazy}}{C-M-t}
+\key{pÅ™ehodit {\bf znaky}}{C-t}
+\key{pÅ™ehodit {\bf slova}}{M-t}
+\key{pÅ™ehodit {\bf Å™Ã¡dky}}{C-x C-t}
+\key{pÅ™ehodit {\bf symbolickÃ© vÃ½razy}}{C-M-t}
 
 \section{Kontrola pravopisu}
 
-\key{kontrola pravopisu aktuálního slova}{M-\$}
-\metax{kontrola pravopisu v¹ech slov v  oblasti}{M-x ispell-region}
-\metax{kontrola pravopisu celého bufferu}{M-x ispell-buffer}
+\key{kontrola pravopisu aktuÃ¡lnÃ­ho slova}{M-\$}
+\metax{kontrola pravopisu vÅ¡ech slov v  oblasti}{M-x ispell-region}
+\metax{kontrola pravopisu celÃ©ho bufferu}{M-x ispell-buffer}
 
 \section{Tagy}
 
-\key{najít tag (definici)}{M-.}
-\key{najít dal¹í vıskyt tagu}{C-u M-.}
-\metax{zadat soubor s novımi tagy}{M-x visit-tags-table}
+\key{najÃ­t tag (definici)}{M-.}
+\key{najÃ­t dalÅ¡Ã­ vÃ½skyt tagu}{C-u M-.}
+\metax{zadat soubor s novÃ½mi tagy}{M-x visit-tags-table}
 
-\metax{vyhledat reg.\ vıraz v~souborech s~tagy}{M-x tags-search}
-\metax{spustit nahrazování pro ony soubory}{M-x tags-query-replace}
-\key{pokraèovat v~prohledávání nebo nahrazování}{M-,}
+\metax{vyhledat reg.\ vÃ½raz v~souborech s~tagy}{M-x tags-search}
+\metax{spustit nahrazovÃ¡nÃ­ pro ony soubory}{M-x tags-query-replace}
+\key{pokraÄovat v~prohledÃ¡vÃ¡nÃ­ nebo nahrazovÃ¡nÃ­}{M-,}
 
-\section{Pøíkazovı interpret}
+\section{PÅ™Ã­kazovÃ½ interpret}
 
-\key{vykonat shellovı pøíkaz}{M-!}
-\key{vykonat shellovı pøíkaz na oblast}{M-|}
-\key{zfiltrovat oblast shellovım pøíkazem}{C-u M-|}
-\key{spustit shell v oknì \kbd{*shell*}}{M-x shell}
+\key{vykonat shellovÃ½ pÅ™Ã­kaz}{M-!}
+\key{vykonat shellovÃ½ pÅ™Ã­kaz na oblast}{M-|}
+\key{zfiltrovat oblast shellovÃ½m pÅ™Ã­kazem}{C-u M-|}
+\key{spustit shell v oknÄ› \kbd{*shell*}}{M-x shell}
 
-\section{Obdélníky}
+\section{ObdÃ©lnÃ­ky}
 
-\key{zkopírovat obdélník do registru}{C-x r r}
-\key{zru¹it obdélník}{C-x r k}
-\key{vhodit obdélník}{C-x r y}
-\key{vlo¾it obdélník mezer}{C-x r o}
-\key{nahradit obdélník obdélníkem mezer}{C-x r c}
-\key{nahradit øádky obdélníku zadanım øetìzcem}{C-x r t}
+\key{zkopÃ­rovat obdÃ©lnÃ­k do registru}{C-x r r}
+\key{zruÅ¡it obdÃ©lnÃ­k}{C-x r k}
+\key{vhodit obdÃ©lnÃ­k}{C-x r y}
+\key{vloÅ¾it obdÃ©lnÃ­k mezer}{C-x r o}
+\key{nahradit obdÃ©lnÃ­k obdÃ©lnÃ­kem mezer}{C-x r c}
+\key{nahradit Å™Ã¡dky obdÃ©lnÃ­ku zadanÃ½m Å™etÄ›zcem}{C-x r t}
 
 \section{Zkratky}
 
-\key{pøidat globální zkratku}{C-x a g}
-\key{pøidat lokální zkratku}{C-x a l}
-\key{pøidat globální expanzi pro zkratku }{C-x a i g}
-\key{pøidat lokální expanzi pro zkratku}{C-x a i l}
+\key{pÅ™idat globÃ¡lnÃ­ zkratku}{C-x a g}
+\key{pÅ™idat lokÃ¡lnÃ­ zkratku}{C-x a l}
+\key{pÅ™idat globÃ¡lnÃ­ expanzi pro zkratku }{C-x a i g}
+\key{pÅ™idat lokÃ¡lnÃ­ expanzi pro zkratku}{C-x a i l}
 \key{expandovat zkratku}{C-x a e}
 
-\key{dynamická expanze pøedcházejícího slova}{M-/}
+\key{dynamickÃ¡ expanze pÅ™edchÃ¡zejÃ­cÃ­ho slova}{M-/}
 
-\section{Regulární vırazy}
+\section{RegulÃ¡rnÃ­ vÃ½razy}
 
-\key{libovolnı znak kromì nového øádku}{. {\rm(teèka)}}
-\key{¾ádné nebo nìkolik opakování}{*}
-\key{jedno nebo více opakování}{+}
-\key{¾ádné nebo jedno opakování}{?}
-\key{zru¹it zvlá¹tní vıznam znaku {\it c\/} ve vırazu}{\\{\it c}}
+\key{libovolnÃ½ znak kromÄ› novÃ©ho Å™Ã¡dku}{. {\rm(teÄka)}}
+\key{Å¾Ã¡dnÃ© nebo nÄ›kolik opakovÃ¡nÃ­}{*}
+\key{jedno nebo vÃ­ce opakovÃ¡nÃ­}{+}
+\key{Å¾Ã¡dnÃ© nebo jedno opakovÃ¡nÃ­}{?}
+\key{zruÅ¡it zvlÃ¡Å¡tnÃ­ vÃ½znam znaku {\it c\/} ve vÃ½razu}{\\{\it c}}
 \key{alternativa (\uv{nebo})}{\\|}
 \key{skupina}{\\( {\rm$\ldots$} \\)}
-\key{stejnı text jako {\it n\/}-tá skupina}{\\{\it n}}
+\key{stejnÃ½ text jako {\it n\/}-tÃ¡ skupina}{\\{\it n}}
 \key{hranice slova}{\\b}
 \key{nikoliv hranice slova}{\\B}
 
 \paralign to \hsize{#\tabskip=10pt plus 1 fil&#\tabskip=0pt&#\cr
-\threecol{{\bf element}}{{\bf zaèátek}}{{\bf konec}}
-\threecol{øádek}{^}{\$}
+\threecol{{\bf element}}{{\bf zaÄÃ¡tek}}{{\bf konec}}
+\threecol{Å™Ã¡dek}{^}{\$}
 \threecol{slovo}{\\<}{\\>}
 \threecol{buffer}{\\`}{\\'}
 
-\threecol{{\bf tøída znakù}}{{\bf odpovídá}}{{\bf neodpovídá}}
-\threecol{explicitní mno¾ina}{[ {\rm$\ldots$} ]}{[^ {\rm$\ldots$} ]}
-\threecol{slovotvornı znak}{\\w}{\\W}
-\threecol{znak se syntaxí {\it c}}{\\s{\it c}}{\\S{\it c}}
+\threecol{{\bf tÅ™Ã­da znakÅ¯}}{{\bf odpovÃ­dÃ¡}}{{\bf neodpovÃ­dÃ¡}}
+\threecol{explicitnÃ­ mnoÅ¾ina}{[ {\rm$\ldots$} ]}{[^ {\rm$\ldots$} ]}
+\threecol{slovotvornÃ½ znak}{\\w}{\\W}
+\threecol{znak se syntaxÃ­ {\it c}}{\\s{\it c}}{\\S{\it c}}
 }
 
-\section{Mezinárodní znakové sady}
+\section{MezinÃ¡rodnÃ­ znakovÃ© sady}
 
-\metax{zadat hlavní jazyk}{M-x set-language-environment}
-\metax{zobrazit v¹echny vstupní metody}{M-x list-input-methods}
-\key{zapnout nebo vypnout vstupní metodu}{C-\\}
-\key{zadat kódování pro následující pøíkaz}{C-x RET c}
-\metax{zobrazit v¹echna kódování}{M-x list-coding-systems}
-\metax{zmìnit preferované kódování}{M-x prefer-coding-system}
+\metax{zadat hlavnÃ­ jazyk}{M-x set-language-environment}
+\metax{zobrazit vÅ¡echny vstupnÃ­ metody}{M-x list-input-methods}
+\key{zapnout nebo vypnout vstupnÃ­ metodu}{C-\\}
+\key{zadat kÃ³dovÃ¡nÃ­ pro nÃ¡sledujÃ­cÃ­ pÅ™Ã­kaz}{C-x RET c}
+\metax{zobrazit vÅ¡echna kÃ³dovÃ¡nÃ­}{M-x list-coding-systems}
+\metax{zmÄ›nit preferovanÃ© kÃ³dovÃ¡nÃ­}{M-x prefer-coding-system}
 
 \section{Info}
 
 \key{spustit Info}{C-h i}
-\key{najít zadanou funkci nebo promìnnou v~Info}{C-h C-i}
+\key{najÃ­t zadanou funkci nebo promÄ›nnou v~Info}{C-h C-i}
 \beginindentedkeys
 
-Pohyb uvnitø uzlù:
+Pohyb uvnitÅ™ uzlÅ¯:
 
-\key{rolování vpøed}{SPC}
-\key{rolování zpìt}{DEL}
-\key{na zaèátek uzlu}{. {\rm (teèka)}}
+\key{rolovÃ¡nÃ­ vpÅ™ed}{SPC}
+\key{rolovÃ¡nÃ­ zpÄ›t}{DEL}
+\key{na zaÄÃ¡tek uzlu}{. {\rm (teÄka)}}
 
 Pohyb mezi uzly:
 
-\key{{\bf dal¹í} uzel}{n}
-\key{{\bf pøedchozí} uzel}{p}
-\key{{\bf nadøazenı} uzel}{u}
-\key{vybrat z~menu podle názvu}{m}
-\key{vybrat {\it n\/}-tou polo¾ku menu (1--9)}{{\it n}}
-\key{nejbli¾¹í pøí¹tí køí¾ovı odkaz (návrat \kbd{l})}{f}
-\key{vrátit se do naposledy prohlí¾eného uzlu}{l}
-\key{vrátit se do adresáøe uzlù}{d}
-\key{pøejít do kteréhokoliv uzlu podle jména}{g}
+\key{{\bf dalÅ¡Ã­} uzel}{n}
+\key{{\bf pÅ™edchozÃ­} uzel}{p}
+\key{{\bf nadÅ™azenÃ½} uzel}{u}
+\key{vybrat z~menu podle nÃ¡zvu}{m}
+\key{vybrat {\it n\/}-tou poloÅ¾ku menu (1--9)}{{\it n}}
+\key{nejbliÅ¾Å¡Ã­ pÅ™Ã­Å¡tÃ­ kÅ™Ã­Å¾ovÃ½ odkaz (nÃ¡vrat \kbd{l})}{f}
+\key{vrÃ¡tit se do naposledy prohlÃ­Å¾enÃ©ho uzlu}{l}
+\key{vrÃ¡tit se do adresÃ¡Å™e uzlÅ¯}{d}
+\key{pÅ™ejÃ­t do kterÃ©hokoliv uzlu podle jmÃ©na}{g}
 
-Dal¹í:
+DalÅ¡Ã­:
 
-\key{spustit {\bf tutoriál} k~Info}{h}
+\key{spustit {\bf tutoriÃ¡l} k~Info}{h}
 % \key{look up a subject in the indices}{i} % FIXME
-\key{prohledat uzly na øetìzec}{M-s}
-\key{{\bf ukonèit} Info}{q}
+\key{prohledat uzly na Å™etÄ›zec}{M-s}
+\key{{\bf ukonÄit} Info}{q}
 
 \endindentedkeys
 
 \section{Registry}
 
-\key{ulo¾it oblast do registru}{C-x r s}
-\key{vlo¾it obsah registru do bufferu}{C-x r i}
+\key{uloÅ¾it oblast do registru}{C-x r s}
+\key{vloÅ¾it obsah registru do bufferu}{C-x r i}
 
-\key{ulo¾it pozici kurzoru do registru}{C-x r SPC}
-\key{skoèit na pozici ulo¾enou v~registru}{C-x r j}
+\key{uloÅ¾it pozici kurzoru do registru}{C-x r SPC}
+\key{skoÄit na pozici uloÅ¾enou v~registru}{C-x r j}
 
-\section{Klávesová makra}
+\section{KlÃ¡vesovÃ¡ makra}
 
-\key{{\bf zahájit} definování klávesového makra}{C-x (}
-\key{{\bf zakonèit} definování klávesového makra}{C-x )}
-\key{{\bf vykonat} poslední definované makro}{C-x e}
-\key{pøipojit k~poslednímu klávesovému makru}{C-u C-x (}
-\metax{pojmenovat poslední makro}{M-x name-last-kbd-macro}
-\metax{vlo¾it do bufferu lispovou definici}{M-x insert-kbd-macro}
+\key{{\bf zahÃ¡jit} definovÃ¡nÃ­ klÃ¡vesovÃ©ho makra}{C-x (}
+\key{{\bf zakonÄit} definovÃ¡nÃ­ klÃ¡vesovÃ©ho makra}{C-x )}
+\key{{\bf vykonat} poslednÃ­ definovanÃ© makro}{C-x e}
+\key{pÅ™ipojit k~poslednÃ­mu klÃ¡vesovÃ©mu makru}{C-u C-x (}
+\metax{pojmenovat poslednÃ­ makro}{M-x name-last-kbd-macro}
+\metax{vloÅ¾it do bufferu lispovou definici}{M-x insert-kbd-macro}
 
-\section{Pøíkazy související s~Emacs Lispem}
+\section{PÅ™Ã­kazy souvisejÃ­cÃ­ s~Emacs Lispem}
 
-\key{vyhodnotit {\bf vıraz} pøed kurzorem}{C-x C-e}
+\key{vyhodnotit {\bf vÃ½raz} pÅ™ed kurzorem}{C-x C-e}
 \key{vyhodnotit {\bf funkci} pod kurzorem}{C-M-x}
 \metax{vyhodnotit {\bf oblast}}{M-x eval-region}
-\key{naèíst a vyhodnotit vıraz v~minibufferu}{M-:}
-\metax{naèíst soubor ze systémového adresáøe}{M-x load-library}
+\key{naÄÃ­st a vyhodnotit vÃ½raz v~minibufferu}{M-:}
+\metax{naÄÃ­st soubor ze systÃ©movÃ©ho adresÃ¡Å™e}{M-x load-library}
 
-\section{Jednoduchá pøizpùsobení}
+\section{JednoduchÃ¡ pÅ™izpÅ¯sobenÃ­}
 
-\metax{nastavit promìnné a faces}{M-x customize}
+\metax{nastavit promÄ›nnÃ© a faces}{M-x customize}
 
 % The intended audience here is the person who wants to make simple
 % customizations and knows Lisp syntax.
 
-Definice obecné klávesové zkratky v~Emacs Lispu (pøíklad):
+Definice obecnÃ© klÃ¡vesovÃ© zkratky v~Emacs Lispu (pÅ™Ã­klad):
 
 \beginexample%
 (global-set-key "\\C-cg" 'goto-line)
 (global-set-key "\\M-\#" 'query-replace-regexp)
 \endexample
 
-\section{Zápis pøíkazù}
+\section{ZÃ¡pis pÅ™Ã­kazÅ¯}
 
 \beginexample%
 (defun \<command-name> (\<args>)
@@ -645,7 +640,7 @@ Definice obecné klávesové zkratky v~Emacs Lispu (pøíklad):
   \<body>)
 \endexample
 
-Pøíklad:
+PÅ™Ã­klad:
 
 \beginexample%
 (defun this-line-to-top-of-window (line)
@@ -657,8 +652,8 @@ With ARG, put point on line ARG."
               (prefix-numeric-value line))))
 \endexample
 
-Specifikace \kbd{interactive} øíká, jak interaktivnì naèíst ar\-gu\-men\-ty.
-Více se dozvíte po provedení \kbd{C-h f interactive}.
+Specifikace \kbd{interactive} Å™Ã­kÃ¡, jak interaktivnÄ› naÄÃ­st ar\-gu\-men\-ty.
+VÃ­ce se dozvÃ­te po provedenÃ­ \kbd{C-h f interactive}.
 
 \copyrightnotice
 
@@ -666,5 +661,4 @@ Více se dozvíte po provedení \kbd{C-h f interactive}.
 
 % Local variables:
 % compile-command: "csplain cs-refcard"
-% coding: iso-latin-2
 % End:

@@ -35,6 +35,13 @@
   "Generic programming mode, from which others derive."
   :group 'languages)
 
+(defcustom prog-mode-hook nil
+  "Normal hook run when entering programming modes."
+  :type 'hook
+  :options '(flyspell-prog-mode abbrev-mode flymake-mode linum-mode
+                                prettify-symbols-mode)
+  :group 'prog-mode)
+
 (defvar prog-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map [?\C-\M-q] 'prog-indent-sexp)
@@ -66,11 +73,13 @@ Regexp match data 0 points to the chars."
   ;; Check that the chars should really be composed into a symbol.
   (let* ((start (match-beginning 0))
 	 (end (match-end 0))
-	 (syntaxes (if (eq (char-syntax (char-after start)) ?w)
+	 (syntaxes-beg (if (memq (char-syntax (char-after start)) '(?w ?_))
+                           '(?w ?_) '(?. ?\\)))
+	 (syntaxes-end (if (memq (char-syntax (char-before end)) '(?w ?_))
 		       '(?w ?_) '(?. ?\\)))
 	 match)
-    (if (or (memq (char-syntax (or (char-before start) ?\s)) syntaxes)
-	    (memq (char-syntax (or (char-after end) ?\s)) syntaxes)
+    (if (or (memq (char-syntax (or (char-before start) ?\s)) syntaxes-beg)
+	    (memq (char-syntax (or (char-after end) ?\s)) syntaxes-end)
             ;; syntax-ppss could modify the match data (bug#14595)
             (progn (setq match (match-string 0)) (nth 8 (syntax-ppss))))
 	;; No composition for you.  Let's actually remove any composition

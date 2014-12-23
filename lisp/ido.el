@@ -1306,8 +1306,7 @@ Only used if `ido-use-virtual-buffers' is non-nil.")
 
 (defun ido-time-stamp (&optional time)
   ;; Time is a floating point number (fractions of 1 hour)
-  (setq time (or time (current-time)))
-  (/ (+ (* (car time) 65536.0) (car (cdr time))) 3600.0))
+  (/ (float-time time) 3600))
 
 (defun ido-cache-ftp-valid (&optional time)
   (and (numberp ido-cache-ftp-work-directory-time)
@@ -1673,6 +1672,7 @@ This function also adds a hook to the minibuffer."
     (define-key map "\C-x\C-f" 'ido-enter-find-file)
     (define-key map "\C-x\C-b" 'ido-fallback-command)
     (define-key map "\C-k" 'ido-kill-buffer-at-head)
+    (define-key map [?\C-\S-b] 'ido-bury-buffer-at-head)
     (define-key map "\C-o" 'ido-toggle-virtual-buffers)
     (set-keymap-parent map ido-common-completion-map)
     (setq ido-buffer-completion-map map)))
@@ -4026,6 +4026,20 @@ If cursor is not at the end of the user input, delete to end of input."
 	      (delete (cdr (assoc buf ido-virtual-buffers)) recentf-list))
 	(setq ido-cur-list (delete buf ido-cur-list))
 	(setq ido-rescan t))))))
+
+;;; BURY CURRENT BUFFER
+(defun ido-bury-buffer-at-head ()
+  "Bury the buffer at the head of `ido-matches'."
+  (interactive)
+  (let ((enable-recursive-minibuffers t)
+        (buf (ido-name (car ido-matches)))
+        (nextbuf (cadr ido-matches)))
+    (when (get-buffer buf)
+      (bury-buffer buf)
+      (setq ido-default-item nextbuf
+            ido-text-init ido-text
+            ido-exit 'refresh)
+      (exit-minibuffer))))
 
 ;;; DELETE CURRENT FILE
 (defun ido-delete-file-at-head ()

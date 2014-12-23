@@ -383,6 +383,42 @@ With two arguments, return rounding and remainder of their quotient."
   "Return 1 if X is positive, -1 if negative, 0 if zero."
   (cond ((> x 0) 1) ((< x 0) -1) (t 0)))
 
+;;;###autoload
+(cl-defun cl-parse-integer (string &key start end radix junk-allowed)
+  "Parse integer from the substring of STRING from START to END.
+STRING may be surrounded by whitespace chars (chars with syntax ` ').
+Other non-digit chars are considered junk.
+RADIX is an integer between 2 and 36, the default is 10.  Signal
+an error if the substring between START and END cannot be parsed
+as an integer unless JUNK-ALLOWED is non-nil."
+  (cl-check-type string string)
+  (let* ((start (or start 0))
+	 (len	(length string))
+	 (end   (or end len))
+	 (radix (or radix 10)))
+    (or (<= start end len)
+	(error "Bad interval: [%d, %d)" start end))
+    (cl-flet ((skip-whitespace ()
+		(while (and (< start end)
+			    (= 32 (char-syntax (aref string start))))
+		  (setq start (1+ start)))))
+      (skip-whitespace)
+      (let ((sign (cl-case (and (< start end) (aref string start))
+		    (?+ (cl-incf start) +1)
+		    (?- (cl-incf start) -1)
+		    (t  +1)))
+	    digit sum)
+	(while (and (< start end)
+		    (setq digit (cl-digit-char-p (aref string start) radix)))
+	  (setq sum (+ (* (or sum 0) radix) digit)
+		start (1+ start)))
+	(skip-whitespace)
+	(cond ((and junk-allowed (null sum)) sum)
+	      (junk-allowed (* sign sum))
+	      ((or (/= start end) (null sum))
+	       (error "Not an integer string: `%s'" string))
+	      (t (* sign sum)))))))
+
 
 ;; Random numbers.
 
@@ -552,7 +588,7 @@ If START or END is negative, it counts from the end."
   "Return the value of SYMBOL's PROPNAME property, or DEFAULT if none.
 \n(fn SYMBOL PROPNAME &optional DEFAULT)"
   (declare (compiler-macro cl--compiler-macro-get)
-           (gv-setter (lambda (store) `(put ,sym ,tag ,store))))
+           (gv-setter (lambda (store) (ignore def) `(put ,sym ,tag ,store))))
   (or (get sym tag)
       (and def
            ;; Make sure `def' is really absent as opposed to set to nil.
@@ -570,15 +606,14 @@ PROPLIST is a list of the sort returned by `symbol-plist'.
   (declare (gv-expander
             (lambda (do)
               (gv-letplace (getter setter) plist
-                (macroexp-let2 nil k tag
-                  (macroexp-let2 nil d def
-                    (funcall do `(cl-getf ,getter ,k ,d)
-                             (lambda (v)
-                               (macroexp-let2 nil val v
-                                 `(progn
-                                    ,(funcall setter
-                                              `(cl--set-getf ,getter ,k ,val))
-                                    ,val))))))))))
+                (macroexp-let2* nil ((k tag) (d def))
+                  (funcall do `(cl-getf ,getter ,k ,d)
+			   (lambda (v)
+			     (macroexp-let2 nil val v
+			       `(progn
+				  ,(funcall setter
+					    `(cl--set-getf ,getter ,k ,val))
+				  ,val)))))))))
   (setplist '--cl-getf-symbol-- plist)
   (or (get '--cl-getf-symbol-- tag)
       ;; Originally we called cl-get here,
@@ -610,6 +645,13 @@ PROPLIST is a list of the sort returned by `symbol-plist'.
     (if (and plist (eq tag (car plist)))
 	(progn (setplist sym (cdr (cdr plist))) t)
       (cl--do-remf plist tag))))
+
+;;; Streams.
+
+;;;###autoload
+(defun cl-fresh-line (&optional stream)
+  "Output a newline unless already at the beginning of a line."
+  (terpri stream 'ensure))
 
 ;;; Some debugging aids.
 
@@ -677,4 +719,5 @@ including `cl-block' and `cl-eval-when'."
 ;; generated-autoload-file: "cl-loaddefs.el"
 ;; End:
 
+(provide 'cl-extra)
 ;;; cl-extra.el ends here

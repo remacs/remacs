@@ -140,9 +140,43 @@ out all highlighting later with the command `compare-windows-dehighlight'."
 (defvar compare-windows-overlays2 nil)
 (defvar compare-windows-sync-point nil)
 
+(defcustom compare-windows-get-window-function 'compare-windows-get-recent-window
+  "Function that provides the window to compare with."
+  :type '(choice
+	  (function-item :tag "Most recently used window"
+			 compare-windows-get-recent-window)
+	  (function-item :tag "Next window"
+			 compare-windows-get-next-window)
+	  (function :tag "Your function"))
+  :group 'compare-windows
+  :version "25.0")
+
+(defun compare-windows-get-recent-window ()
+  "Return the most recently used window.
+First try to get the most recently used window on a visible frame,
+then try to get a window on an iconified frame, and finally
+consider all existing frames."
+  (or (get-mru-window 'visible t t)
+      (get-mru-window 0 t t)
+      (get-mru-window t t t)))
+
+(defun compare-windows-get-next-window ()
+  "Return the window next in the cyclic ordering of windows.
+In the selected frame contains only one window, consider windows
+on all visible frames."
+  (let ((w2 (next-window)))
+    (if (eq w2 (selected-window))
+	(setq w2 (next-window (selected-window) nil 'visible)))
+    (if (eq w2 (selected-window))
+	(error "No other window"))
+    w2))
+
 ;;;###autoload
 (defun compare-windows (ignore-whitespace)
-  "Compare text in current window with text in next window.
+  "Compare text in current window with text in another window.
+The option `compare-windows-get-window-function' defines how
+to get another window.
+
 Compares the text starting at point in each window,
 moving over text in each one as far as they match.
 
@@ -179,11 +213,7 @@ on third call it again advances points to the next difference and so on."
                            'compare-windows-sync-regexp
                          compare-windows-sync)))
     (setq p1 (point) b1 (current-buffer))
-    (setq w2 (next-window))
-    (if (eq w2 (selected-window))
-	(setq w2 (next-window (selected-window) nil 'visible)))
-    (if (eq w2 (selected-window))
-	(error "No other window"))
+    (setq w2 (funcall compare-windows-get-window-function))
     (setq p2 (window-point w2)
 	  b2 (window-buffer w2))
     (setq opoint2 p2)
@@ -212,7 +242,7 @@ on third call it again advances points to the next difference and so on."
       ;; optionally skip over it.
       (and skip-func-1
 	   (save-excursion
-	     (let (p1a p2a w1 w2 result1 result2)
+	     (let (p1a p2a result1 result2)
 	       (setq result1 (funcall skip-func-1 opoint1))
 	       (setq p1a (point))
 	       (set-buffer b2)
@@ -255,12 +285,15 @@ on third call it again advances points to the next difference and so on."
             (recenter (car compare-windows-recenter))
             (with-selected-window w2 (recenter (cadr compare-windows-recenter))))
           ;; If points are still not synchronized, then ding
-          (when (and (= p1 opoint1) (= p2 opoint2))
-            ;; Display error message when current points in two windows
-            ;; are unmatched and next matching points can't be found.
-            (compare-windows-dehighlight)
-            (ding)
-            (message "No more matching points"))))))
+          (if (and (= p1 opoint1) (= p2 opoint2))
+	      (progn
+		;; Display error message when current points in two windows
+		;; are unmatched and next matching points can't be found.
+		(compare-windows-dehighlight)
+		(ding)
+		(message "No more matches with %s" b2))
+	    (message "Diff -%s,%s +%s,%s with %s" opoint2 p2 opoint1 p1 b2)))
+      (message "Match -%s,%s +%s,%s with %s" opoint2 p2 opoint1 p1 b2))))
 
 ;; Move forward over whatever might be called whitespace.
 ;; compare-windows-whitespace is a regexp that matches whitespace.
@@ -303,7 +336,7 @@ on third call it again advances points to the next difference and so on."
 (defun compare-windows-sync-default-function ()
   (if (not compare-windows-sync-point)
       (let* ((w1 (selected-window))
-             (w2 (next-window w1))
+             (w2 (funcall compare-windows-get-window-function))
              (b2 (window-buffer w2))
              (point-max2 (with-current-buffer b2 (point-max)))
              (op2 (window-point w2))

@@ -249,6 +249,126 @@ Search forward for articles containing a match for @var{regexp}.
 Exit the summary buffer and return to the group buffer.
 @end table
 
+
+@node Network Security
+@section Network Security
+@cindex network security manager
+@cindex NSM
+@cindex encryption
+@cindex SSL
+@cindex TLS
+@cindex STARTTLS
+
+Whenever Emacs establishes any network connection, it passes the
+established connection to the @dfn{Network Security Manager}
+(@acronym{NSM}).  @acronym{NSM} is responsible for enforcing the
+network security under your control.
+
+@vindex network-security-level
+The @code{network-security-level} variable determines the security
+level that @acronym{NSM} enforces.  If its value is @code{low}, no
+security checks are performed.
+
+If this variable is @code{medium} (which is the default), a number of
+checks will be performed.  If as result @acronym{NSM} determines that
+the network connection might not be trustworthy, it will make you
+aware of that, and will ask you what to do about the network
+connection.
+
+You can decide to register a permanent security exception for an
+unverified connection, a temporary exception, or refuse the connection
+entirely.
+
+Below is a list of the checks done on the @code{medium} level.
+
+@table @asis
+
+@item unable to verify a @acronym{TLS} certificate
+If the connection is a @acronym{TLS}, @acronym{SSL} or
+@acronym{STARTTLS} connection, @acronym{NSM} will check whether
+the certificate used to establish the identity of the server we're
+connecting to can be verified.
+
+While an invalid certificate is often the cause for concern (there
+could be a Man-in-the-Middle hijacking your network connection and
+stealing your password), there may be valid reasons for going ahead
+with the connection anyway.  For instance, the server may be using a
+self-signed certificate, or the certificate may have expired.  It's up
+to you to determine whether it's acceptable to continue with the
+connection.
+
+@item a self-signed certificate has changed
+If you've previously accepted a self-signed certificate, but it has
+now changed, that could mean that the server has just changed the
+certificate, but it might also mean that the network connection has
+been hijacked.
+
+@item previously encrypted connection now unencrypted
+If the connection is unencrypted, but it was encrypted in previous
+sessions, this might mean that there is a proxy between you and the
+server that strips away @acronym{STARTTLS} announcements, leaving the
+connection unencrypted.  This is usually very suspicious.
+
+@item talking to an unencrypted service when sending a password
+When connecting to an @acronym{IMAP} or @acronym{POP3} server, these
+should usually be encrypted, because it's common to send passwords
+over these connections.  Similarly, if you're sending email via
+@acronym{SMTP} that requires a password, you usually want that
+connection to be encrypted.  If the connection isn't encrypted,
+@acronym{NSM} will warn you.
+
+@end table
+
+If @code{network-security-level} is @code{high}, the following checks
+will be made, in addition to the above:
+
+@table @asis
+@item a validated certificate changes the public key
+Servers change their keys occasionally, and that is normally nothing
+to be concerned about.  However, if you are worried that your network
+connections are being hijacked by agencies who have access to pliable
+Certificate Authorities which issue new certificates for third-party
+services, you may want to keep track of these changes.
+
+@item Diffie-Hellman low prime bits
+When doing the public key exchange, the number of ``prime bits''
+should be high to ensure that the channel can't be eavesdropped on by
+third parties.  If this number is too low, you will be warned.
+
+@item @acronym{RC4} stream cipher
+The @acronym{RC4} stream cipher is believed to be of low quality and
+may allow eavesdropping by third parties.
+
+@item @acronym{SSL1}, @acronym{SSL2} and @acronym{SSL3}
+The protocols older than @acronym{TLS1.0} are believed to be
+vulnerable to a variety of attacks, and you may want to avoid using
+these if what you're doing requires higher security.
+@end table
+
+Finally, if @code{network-security-level} is @code{paranoid}, you will
+also be notified the first time @acronym{NSM} sees any new
+certificate.  This will allow you to inspect all the certificates from
+all the connections that Emacs makes.
+
+The following additional variables can be used to control details of
+@acronym{NSM} operation:
+
+@table @code
+@item nsm-settings-file
+@vindex nsm-settings-file
+This is the file where @acronym{NSM} stores details about connections.
+It defaults to @file{~/.emacs.d/network-security.data}.
+
+@item nsm-save-host-names
+@vindex nsm-save-host-names
+By default, host names will not be saved for non-@code{STARTTLS}
+connections.  Instead a host/port hash is used to identify connections.
+This means that one can't casually read the settings file to see what
+servers the user has connected to.  If this variable is @code{t},
+@acronym{NSM} will also save host names in the nsm-settings-file.
+@end table
+
+
 @node Document View
 @section Document Viewing
 @cindex DVI file
@@ -266,9 +386,10 @@ Exit the summary buffer and return to the group buffer.
 OpenDocument, and Microsoft Office documents.  It provides features
 such as slicing, zooming, and searching inside documents.  It works by
 converting the document to a set of images using the @command{gs}
-(GhostScript) command and other external tools @footnote{@code{gs} is
-a hard requirement.  For DVI files, @code{dvipdf} or @code{dvipdfm} is
-needed.  For OpenDocument and Microsoft Office documents, the
+(GhostScript) or @command{mudraw}/@command{pdfdraw} (MuPDF) commands
+and other external tools @footnote{For PostScript files, GhostScript
+is a hard requirement.  For DVI files, @code{dvipdf} or @code{dvipdfm}
+is needed.  For OpenDocument and Microsoft Office documents, the
 @code{unoconv} tool is needed.}, and displaying those images.
 
 @findex doc-view-toggle-display
@@ -286,6 +407,17 @@ text; however, it also enables DocView minor mode, so you can type
 mode or DocView minor mode, repeating @kbd{C-c C-c}
 (@code{doc-view-toggle-display}) toggles between DocView and the
 underlying file contents.
+
+@findex doc-view-open-text
+  When you visit a file which would normally be handled by DocView
+mode but some requirement is not met (e.g., you operate in a terminal
+frame or emacs has no PNG support), you are queried if you want to
+view the document's contents as plain text.  If you confirm, the
+buffer is put in text mode and DocView minor mode is activated.  Thus,
+by typing @kbd{C-c C-c} you switch to the fallback mode.  With another
+@kbd{C-c C-c} you return to DocView mode.  The plain text contents can
+also be displayed from within DocView mode by typing @kbd{C-c C-t}
+(@code{doc-view-open-text}).
 
   You can explicitly enable DocView mode with the command @code{M-x
 doc-view-mode}.  You can toggle DocView minor mode with @code{M-x
@@ -407,12 +539,14 @@ and the slice's width and height.
 
   A more convenient graphical way to specify the slice is with @kbd{s
 m} (@code{doc-view-set-slice-using-mouse}), where you use the mouse to
-select the slice.
-@c ??? How does this work?
+select the slice.  Simply press and hold the left mouse button at the
+upper-left corner of the region you want to have in the slice, then
+move the mouse pointer to the lower-right corner and release the
+button.
 
   The most convenient way is to set the optimal slice by using
 BoundingBox information automatically determined from the document by
-typing @kbd{s b} (@code{doc-view-set-slice-using-mouse}).
+typing @kbd{s b} (@code{doc-view-set-slice-from-bounding-box}).
 
 @findex doc-view-reset-slice
   To cancel the selected slice, type @kbd{s r}
@@ -1610,9 +1744,9 @@ all server buffers are finished.  You can take as long as you like to
 edit the server buffers within Emacs, and they are @emph{not} killed
 when you type @kbd{C-x #} in them.
 
-@item --parent-id @var{ID}
+@item --parent-id @var{id}
 Open an @command{emacsclient} frame as a client frame in the parent X
-window with id @var{ID}, via the XEmbed protocol.  Currently, this
+window with id @var{id}, via the XEmbed protocol.  Currently, this
 option is mainly useful for developers.
 
 @item -q
@@ -1935,9 +2069,9 @@ They divide the text of the region into many @dfn{sort records},
 identify a @dfn{sort key} for each record, and then reorder the records
 into the order determined by the sort keys.  The records are ordered so
 that their keys are in alphabetical order, or, for numeric sorting, in
-numeric order.  In alphabetic sorting, all upper-case letters `A' through
-`Z' come before lower-case `a', in accord with the @acronym{ASCII} character
-sequence.
+numeric order.  In alphabetic sorting, all upper-case letters @samp{A}
+through @samp{Z} come before lower-case @samp{a}, in accordance with the
+@acronym{ASCII} character sequence.
 
   The various sort commands differ in how they divide the text into sort
 records and in which part of each record is used as the sort key.  Most of

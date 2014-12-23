@@ -1,6 +1,0 @@
-*.elc
-*-loaddefs.el
-loaddefs.el
-subdirs.el
-finder-inf.el
-cus-load.el

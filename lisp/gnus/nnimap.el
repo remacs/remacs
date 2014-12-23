@@ -405,6 +405,7 @@ textual parts.")
 	       "*nnimap*" (current-buffer) nnimap-address
 	       (nnimap-map-port (car ports))
 	       :type nnimap-stream
+	       :warn-unless-encrypted t
 	       :return-list t
 	       :shell-command nnimap-shell-program
 	       :capability-command "1 CAPABILITY\r\n"
@@ -986,10 +987,10 @@ textual parts.")
 		    (setq target nil))
 		(nnheader-message 7 "Expiring article %s:%d" group article))
 	      (when target
-		(push article deleted-articles))))))))
+		(push article deleted-articles))))))
+      (setq deleted-articles (nreverse deleted-articles))))
     ;; Change back to the current group again.
     (nnimap-change-group group server)
-    (setq deleted-articles (nreverse deleted-articles))
     (nnimap-delete-article (gnus-compress-sequence deleted-articles))
     deleted-articles))
 
@@ -1888,7 +1889,7 @@ Return the server's response to the SELECT or EXAMINE command."
 			(while (and (not (bobp))
 				    (progn
 				      (forward-line -1)
-				      (looking-at "\\*"))))
+				      (looking-at "\\*\\|[0-9]+ OK NOOP"))))
 			(not (looking-at (format "%d .*\n" sequence)))))
 	    (when messagep
 	      (nnheader-message-maybe

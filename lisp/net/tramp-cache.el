@@ -136,7 +136,7 @@ Returns DEFAULT if not set."
 		       (tramp-time-diff (current-time) (car value))
 		       remote-file-name-inhibit-cache))
 		 (and (consp remote-file-name-inhibit-cache)
-		      (tramp-time-less-p
+		      (time-less-p
 		       remote-file-name-inhibit-cache (car value)))))
 	(setq value (cdr value))
       (setq value default))
@@ -144,7 +144,7 @@ Returns DEFAULT if not set."
     (tramp-message key 8 "%s %s %s" file property value)
     (when (>= tramp-verbose 10)
       (let* ((var (intern (concat "tramp-cache-get-count-" property)))
-	     (val (or (ignore-errors (symbol-value var)) 0)))
+	     (val (or (and (boundp var) (symbol-value var)) 0)))
 	(set var (1+ val))))
     value))
 
@@ -161,7 +161,7 @@ Returns VALUE."
     (tramp-message key 8 "%s %s %s" file property value)
     (when (>= tramp-verbose 10)
       (let* ((var (intern (concat "tramp-cache-set-count-" property)))
-	     (val (or (ignore-errors (symbol-value var)) 0)))
+	     (val (or (and (boundp var) (symbol-value var)) 0)))
 	(set var (1+ val))))
     value))
 
@@ -207,10 +207,12 @@ Remove also properties of all files in subdirectories."
   "Flush all Tramp cache properties from `buffer-file-name'.
 This is suppressed for temporary buffers."
   (save-match-data
-    (unless (string-match "^ \\*temp\\*" (or (buffer-name) ""))
+    (unless (or (null (buffer-name))
+		(string-match "^\\( \\|\\*\\)" (buffer-name)))
       (let ((bfn (if (stringp (buffer-file-name))
 		     (buffer-file-name)
-		   default-directory)))
+		   default-directory))
+	    (tramp-verbose 0))
 	(when (tramp-tramp-file-p bfn)
 	  (with-parsed-tramp-file-name bfn nil
 	    (tramp-flush-file-property v localname)))))))

@@ -1203,9 +1203,32 @@ Entering SliTeX mode runs the hook `text-mode-hook', then the hook
   (setq tex-command slitex-run-command)
   (setq tex-start-of-header "\\\\documentstyle{slides}\\|\\\\documentclass{slides}"))
 
+(defvar tildify-space-string)
+(defvar tildify-foreach-region-function)
+
 (defun tex-common-initialization ()
   ;; Regexp isearch should accept newline and formfeed as whitespace.
   (setq-local search-whitespace-regexp "[ \t\r\n\f]+")
+  ;; Use tilde as hard-space character in tildify package.
+  (setq-local tildify-space-string "~")
+  ;; FIXME: Use the fact that we're parsing the document already
+  ;; rather than using regex-based filtering.
+  (setq-local tildify-foreach-region-function
+              (apply-partially
+               'tildify-foreach-ignore-environments
+               `(("\\\\\\\\" . "") ; do not remove this
+                 (,(eval-when-compile
+                     (concat "\\\\begin{\\("
+                             (regexp-opt '("verbatim" "math" "displaymath"
+                                           "equation" "eqnarray" "eqnarray*"))
+                             "\\)}"))
+                  . ("\\\\end{" 1 "}"))
+                 ("\\\\verb\\*?\\(.\\)" . (1))
+                 ("\\$\\$?" . (0))
+                 ("\\\\(" . "\\\\)")
+                 ("\\\\[[]" . "\\\\[]]")
+                 ("\\\\[a-zA-Z]+\\( +\\|{}\\)[a-zA-Z]*" . "")
+                 ("%" . "$"))))
   ;; A line containing just $$ is treated as a paragraph separator.
   (setq-local paragraph-start "[ \t]*$\\|[\f\\\\%]\\|[ \t]*\\$\\$")
   ;; A line starting with $$ starts a paragraph,
@@ -2573,18 +2596,28 @@ line LINE of the window, or centered if LINE is nil."
 		      (prefix-numeric-value linenum)
 		    (/ (window-height) 2)))))))
 
+(defcustom tex-print-file-extension ".dvi"
+  "The TeX-compiled file extension for viewing and printing.
+If you use pdflatex instead of latex, set this to \".pdf\" and modify
+ `tex-dvi-view-command' and `tex-dvi-print-command' appropriately."
+  :type 'string
+  :group 'tex-view
+  :version "25.1")
+
 (defun tex-print (&optional alt)
   "Print the .dvi file made by \\[tex-region], \\[tex-buffer] or \\[tex-file].
 Runs the shell command defined by `tex-dvi-print-command'.  If prefix argument
 is provided, use the alternative command, `tex-alt-dvi-print-command'."
   (interactive "P")
-  (let ((print-file-name-dvi (tex-append tex-print-file ".dvi"))
+  (let ((print-file-name-dvi (tex-append tex-print-file
+                                         tex-print-file-extension))
 	test-name)
     (if (and (not (equal (current-buffer) tex-last-buffer-texed))
 	     (buffer-file-name)
 	     ;; Check that this buffer's printed file is up to date.
 	     (file-newer-than-file-p
-	      (setq test-name (tex-append (buffer-file-name) ".dvi"))
+	      (setq test-name (tex-append (buffer-file-name)
+                                          tex-print-file-extension))
 	      (buffer-file-name)))
 	(setq print-file-name-dvi test-name))
     (if (not (file-exists-p print-file-name-dvi))

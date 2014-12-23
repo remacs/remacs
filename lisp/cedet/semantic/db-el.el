@@ -223,7 +223,9 @@ TOKTYPE is a hint to the type of tag desired."
 	    (symbol-name sym)
 	    "class"
 	    (semantic-elisp-desymbolify
-	     (eieio--class-public-a (class-v semanticdb-project-database))) ;; slots
+             ;; FIXME: This only gives the instance slots and ignores the
+             ;; class-allocated slots.
+	     (eieio--class-public-a (find-class semanticdb-project-database))) ;; slots ;FIXME: eieio--
 	    (semantic-elisp-desymbolify (eieio-class-parents sym)) ;; parents
 	    ))
 	  ((not toktype)

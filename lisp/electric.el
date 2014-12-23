@@ -164,7 +164,10 @@
       ;; Don't shrink the window, but expand it if necessary.
       (goto-char (point-min))
       (unless (= (point-max) (window-end win t))
-	(fit-window-to-buffer win max-height))
+	;; This call is executed even if the window existed before, was
+	;; reused, ... contradicting a claim in the comment before this
+	;; function.
+	(fit-window-to-buffer win max-height nil nil nil t))
       win)))
 
 ;;; Electric keys.

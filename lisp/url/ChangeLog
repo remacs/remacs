@@ -1,3 +1,100 @@
+2014-12-12  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* url-http.el (url-http-parse-headers): `gnutls-available-p' is
+	now always available.
+
+2014-12-11  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* url-http.el (url-http-parse-headers): Check that
+	`gnutls-available-p' is defined (bug#19346).
+
+2014-12-09  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* url-http.el (url-http-parse-headers): Pass the GnuTLS status of
+	the connection to the caller.
+	(url-http-parse-headers): When being redirected, make sure we
+	flush the previous certificate.
+
+2014-12-08  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* url-http.el (url-http-activate-callback): Make debug more verbose.
+
+2014-12-05  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* url-future.el (url-future-done-p, url-future-completed-p)
+	(url-future-errored-p, url-future-cancelled-p):
+	* url-dav.el (url-dav-http-success-p): Use define-inline.
+
+2014-11-23  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* url-http.el (url-http): Respect `url-request-noninteractive'.
+
+	* url-queue.el (url-queue-start-retrieve): Fetching through
+	url-queue should always be noninteractive.
+
+	* url-vars.el (url-request-noninteractive): New variable.
+
+2014-11-14  David Reitter  <david.reitter@gmail.com>
+
+	* url-domsuf.el (url-domsuf-parse-file): Read compressed
+	publicsuffix file if available.
+
+2014-11-05  Teodor Zlatanov  <tzz@lifelogs.com>
+
+	* url-http.el (url-user-agent): New variable, can be function or
+	string.  Suggested by Vibhav Pant <vibhavp@ubuntu.com>.
+	Add :version.  (Bug#16498)
+
+	(url-http-user-agent-string): Use it.
+
+2014-10-29  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Simplify use of current-time and friends.
+	* url-cache.el (url-cache-prune-cache):
+	Rename local var to avoid confusion.
+	* url-util.el (url-get-normalized-date):
+	Omit unnecessary call to current-time.
+
+2014-10-20  Glenn Morris  <rgm@gnu.org>
+
+	* Merge in all changes up to 24.4 release.
+
+2014-10-07  Eli Zaretskii  <eliz@gnu.org>
+
+	* url-http.el (url-http-create-request): Recheck zlib availability
+	on windows-nt each time it might be required.  (Bug#18650)
+
+2014-09-28  Ulf Jasper  <ulf.jasper@web.de>
+
+	* url-gw.el (url-open-stream): New optional parameter
+	`gateway-method'.  If non-nil use it instead of global variable
+	`url-gateway-method'.
+
+	* url/url-http.el (url-http): New optional parameter
+	`gateway-method', pass it to `url-http-find-free-connection'.
+	(url-http-find-free-connection): New optional parameter
+	gateway-method, pass it to `url-open-stream'.
+	(url-https-create-secure-wrapper): Do not modify
+	`url-gateway-method' but explicitly provide 'tls as gateway-method
+	parameter to `url-https'.
+
+2014-09-22  Dmitry Gutov  <dgutov@yandex.ru>
+
+	* url.el (url-retrieve-internal): Clarify the docstring.
+
+	* url-http.el (url-http): Same.  (Bug#18116)
+
+2014-08-07  Reuben Thomas  <rrt@sc3d.org>
+
+	* url-handlers.el: Remove a comment about VMS, which we no longer
+	support.
+
+2014-08-03  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Don't mishandle dates in the year 9999 (Bug#18176).
+	* url-cookie.el (url-cookie-expired-p): Treat out-of-range
+	expiration dates as if they were far in the future.
+
 2014-06-26  Leo Liu  <sdl.web@gmail.com>
 
 	* url-http.el (url-http-end-of-headers): Remove duplicate defvar.
@@ -88,19 +185,19 @@
 
 2013-08-12  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
-	* url-http.el (url-handle-content-transfer-encoding): Renamed
+	* url-http.el (url-handle-content-transfer-encoding): Rename
 	`zlib-decompress-gzipped-region' and check whether it's available,
 	too.
-	(url-handle-content-transfer-encoding): Renamed
-	`zlib-decompress-region' again.
+	(url-handle-content-transfer-encoding):
+	Rename `zlib-decompress-region' again.
 
 2013-08-11  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
 	* url-vars.el (url-mime-encoding-string): If we have built-in gzip
 	support, say that we accept gzipped content.
 
-	* url-http.el (url-handle-content-transfer-encoding): Support
-	decompressing gzipped content.
+	* url-http.el (url-handle-content-transfer-encoding):
+	Support decompressing gzipped content.
 
 2013-07-31  Stefan Monnier  <monnier@iro.umontreal.ca>
 

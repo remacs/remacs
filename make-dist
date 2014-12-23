@@ -169,9 +169,8 @@ fi
 echo Version number is $version
 
 if [ $update = yes ]; then
-  if ! grep -q "@set EMACSVER  *${version}" doc/emacs/emacsver.texi || \
-     ! grep -q "tree holds version  *${version}" README; then
-    echo "WARNING: README and/or emacsver.texi have the wrong version number"
+  if ! grep -q "tree holds version  *${version}" README; then
+    echo "WARNING: README has the wrong version number"
     echo "Consider running M-x set-version from admin/admin.el"
     sleep 5
   fi
@@ -383,7 +382,7 @@ echo "Making links to \`lib-src'"
 (cd lib-src
  ln [a-zA-Z]*.[ch] ../${tempdir}/lib-src
  ln ChangeLog Makefile.in README ../${tempdir}/lib-src
- ln grep-changelog rcs2log ../${tempdir}/lib-src
+ ln rcs2log ../${tempdir}/lib-src
  ln makefile.w32-in ../${tempdir}/lib-src
  ln update-game-score.exe.manifest ../${tempdir}/lib-src)
 
@@ -393,10 +392,10 @@ echo "Making links to \`m4'"
 
 echo "Making links to \`nt'"
 (cd nt
- ln emacs-x86.manifest emacs-x64.manifest emacs.rc ../${tempdir}/nt
- ln config.nt emacsclient.rc emacs-src.tags ../${tempdir}/nt
+ ln emacs-x86.manifest emacs-x64.manifest ../${tempdir}/nt
+ ln config.nt emacs-src.tags ../${tempdir}/nt
  ln nmake.defs gmake.defs subdirs.el [a-z]*.bat [a-z]*.[ch] ../${tempdir}/nt
- ln Makefile.in gnulib.mk ../${tempdir}/nt
+ ln *.in gnulib.mk ../${tempdir}/nt
  ln mingw-cfg.site epaths.nt INSTALL.OLD ../${tempdir}/nt
  ln ChangeLog INSTALL README README.W32 makefile.w32-in ../${tempdir}/nt)
 
@@ -414,7 +413,7 @@ echo "Making links to \`msdos'"
 (cd msdos
  ln ChangeLog INSTALL README emacs.ico emacs.pif ../${tempdir}/msdos
  ln depfiles.bat inttypes.h ../${tempdir}/msdos
- ln is_exec.c sigaction.c mainmake.v2 sed*.inp ../${tempdir}/msdos)
+ ln mainmake.v2 sed*.inp ../${tempdir}/msdos)
 
 echo "Making links to \`nextstep'"
 (cd nextstep
@@ -504,8 +503,9 @@ echo "Making links to \`doc/lispintro'"
 
 echo "Making links to \`doc/man'"
 (cd doc/man
- ln ChangeLog* *.1 ../../${tempdir}/doc/man
- cd ../../${tempdir}/doc/man)
+ ln ChangeLog* *.1 *.in ../../${tempdir}/doc/man
+ cd ../../${tempdir}/doc/man
+ rm -f emacs.1)
 
 ### It would be nice if they could all be symlinks to top-level copy, but
 ### you're not supposed to have any symlinks in distribution tar files.

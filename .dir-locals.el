@@ -3,8 +3,6 @@
          (fill-column . 70)))
  (c-mode . ((c-file-style . "GNU")))
  (objc-mode . ((c-file-style . "GNU")))
- ;; You must set bugtracker_debbugs_url in your bazaar.conf for this to work.
- ;; See admin/notes/bugtracker.
  (log-edit-mode . ((log-edit-rewrite-fixes
                     "[ \n](bug#\\([0-9]+\\))" . "debbugs:\\1")
                    (log-edit-font-lock-gnu-style . t)

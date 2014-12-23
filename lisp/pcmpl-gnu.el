@@ -323,8 +323,8 @@
                 (let ((file (pcomplete-arg 1)))
                   (completion-table-dynamic
                    (lambda (_string)
-                     (pcmpl-gnu-with-file-buffer file
-                       (mapcar #'tar-header-name tar-parse-info)))))
+                     (pcmpl-gnu-with-file-buffer
+                      file (mapcar #'tar-header-name tar-parse-info)))))
 	      (pcomplete-entries))
 	    nil 'identity))))
 

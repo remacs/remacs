@@ -1604,7 +1604,9 @@ an input event arrives.  The other arguments are passed to `tramp-error'."
 	(when (and buf
 		   tramp-message-show-message
 		   (not (zerop tramp-verbose))
-		   (not (tramp-completion-mode-p)))
+		   (not (tramp-completion-mode-p))
+		   ;; Show only when Emacs has started already.
+		   (current-message))
 	  (let ((enable-recursive-minibuffers t))
 	    ;; `tramp-error' does not show messages.  So we must do it
 	    ;; ourselves.
@@ -2148,13 +2150,13 @@ Falls back to normal file name handler if no Tramp file name handler exists."
 		       ((eq result 'non-essential)
 			(tramp-message
 			 v 5 "Non-essential received in operation %s"
-			 (append (list operation) args))
+			 (cons operation args))
 			(tramp-run-real-handler operation args))
 		       ((eq result 'suppress)
 			(let (tramp-message-show-message)
 			  (tramp-message
 			   v 1 "Suppress received in operation %s"
-			   (append (list operation) args))
+			   (cons operation args))
 			  (tramp-cleanup-connection v t)
 			  (tramp-run-real-handler operation args)))
 		       (t result)))
@@ -2164,7 +2166,7 @@ Falls back to normal file name handler if no Tramp file name handler exists."
 		   (let (tramp-message-show-message)
 		     (tramp-message
 		      v 1 "Interrupt received in operation %s"
-		      (append (list operation) args)))
+		      (cons operation args)))
 		   ;; Propagate the quit signal.
 		   (signal (car err) (cdr err)))
 
@@ -2251,8 +2253,9 @@ Falls back to normal file name handler if no Tramp file name handler exists."
 ;;;###autoload
 (progn (defun tramp-autoload-file-name-handler (operation &rest args)
   "Load Tramp file name handler, and perform OPERATION."
-  ;; Avoid recursive loading of tramp.el.
-  (let ((default-directory temporary-file-directory))
+  ;; Avoid recursive loading of tramp.el.  `temporary-file-directory'
+  ;; does not exist in XEmacs, so we must use something else.
+  (let ((default-directory (or (symbol-value 'temporary-file-directory) "/")))
     (load "tramp" nil t))
   (apply operation args)))
 
@@ -2966,8 +2969,8 @@ User is always nil."
   (cond
    ((not (file-exists-p file1)) nil)
    ((not (file-exists-p file2)) t)
-   (t (tramp-time-less-p (nth 5 (file-attributes file2))
-			 (nth 5 (file-attributes file1))))))
+   (t (time-less-p (nth 5 (file-attributes file2))
+		   (nth 5 (file-attributes file1))))))
 
 (defun tramp-handle-file-regular-p (filename)
   "Like `file-regular-p' for Tramp files."
@@ -2998,8 +3001,6 @@ User is always nil."
   (with-parsed-tramp-file-name filename nil
     (let ((x (car (file-attributes filename))))
       (when (stringp x)
-	;; When Tramp is running on VMS, then `file-name-absolute-p'
-	;; might do weird things.
 	(if (file-name-absolute-p x)
 	    (tramp-make-tramp-file-name method user host x)
 	  x)))))
@@ -3225,7 +3226,7 @@ User is always nil."
       t)))
 
 (defun tramp-handle-make-symbolic-link
-  (filename linkname &optional ok-if-already-exists)
+  (filename linkname &optional _ok-if-already-exists)
   "Like `make-symbolic-link' for Tramp files."
   (with-parsed-tramp-file-name
       (if (tramp-tramp-file-p filename) filename linkname) nil
@@ -3291,11 +3292,12 @@ User is always nil."
 	    ;; Run the process.
 	    (setq p (apply 'start-file-process "*Async Shell*" buffer args))
 	  ;; Display output.
-	  (pop-to-buffer output-buffer)
-	  (setq mode-line-process '(":%s"))
-	  (shell-mode)
-	  (set-process-sentinel p 'shell-command-sentinel)
-	  (set-process-filter p 'comint-output-filter))
+	  (with-current-buffer output-buffer
+	    (display-buffer output-buffer '(nil (allow-no-window . t)))
+	    (setq mode-line-process '(":%s"))
+	    (shell-mode)
+	    (set-process-sentinel p 'shell-command-sentinel)
+	    (set-process-filter p 'comint-output-filter)))
 
       (prog1
 	  ;; Run the process.
@@ -3443,9 +3445,9 @@ of."
       ;; Let's check whether a wrong password has been sent already.
       ;; Sometimes, the process returns a new password request
       ;; immediately after rejecting the previous (wrong) one.
-      (goto-char (point-min))
-      (when (search-forward-regexp tramp-wrong-passwd-regexp nil t)
+      (unless (tramp-get-connection-property vec "first-password-request" nil)
 	(tramp-clear-passwd vec))
+      (goto-char (point-min))
       (tramp-check-for-regexp proc tramp-password-prompt-regexp)
       (tramp-message vec 3 "Sending %s" (match-string 1))
       ;; We don't call `tramp-send-string' in order to hide the
@@ -3918,7 +3920,8 @@ be granted."
 		  (tramp-file-name-method vec)
 		  (tramp-file-name-user vec)
 		  (tramp-file-name-host vec)
-		  (tramp-file-name-localname vec))
+		  (tramp-file-name-localname vec)
+		  (tramp-file-name-hop vec))
 		 (intern suffix))))
               (remote-uid
                (tramp-get-connection-property
@@ -4169,7 +4172,8 @@ Invokes `password-read' if available, `read-passwd' else."
 		(tramp-check-for-regexp proc tramp-password-prompt-regexp)
 		(format "%s for %s " (capitalize (match-string 1)) key))))
 	 ;; We suspend the timers while reading the password.
-         (stimers (with-timeout-suspend))
+         (stimers (and (functionp 'with-timeout-suspend)
+		       (tramp-compat-funcall 'with-timeout-suspend)))
 	 auth-info auth-passwd)
 
     (unwind-protect
@@ -4209,7 +4213,8 @@ Invokes `password-read' if available, `read-passwd' else."
 	       (read-passwd pw-prompt))
 	    (tramp-set-connection-property v "first-password-request" nil)))
       ;; Reenable the timers.
-      (with-timeout-unsuspend stimers))))
+      (and (functionp 'with-timeout-unsuspend)
+	   (tramp-compat-funcall 'with-timeout-unsuspend stimers)))))
 
 ;;;###tramp-autoload
 (defun tramp-clear-passwd (vec)
@@ -4234,26 +4239,6 @@ Invokes `password-read' if available, `read-passwd' else."
     ("oct" . 10) ("nov" . 11) ("dec" . 12))
   "Alist mapping month names to integers.")
 
-;; FIXME: Shouldn't this also look at any subseconds parts of T1 and T2?
-;;;###tramp-autoload
-(defun tramp-time-less-p (t1 t2)
-  "Say whether time value T1 is less than time value T2."
-  (unless t1 (setq t1 '(0 0)))
-  (unless t2 (setq t2 '(0 0)))
-  (or (< (car t1) (car t2))
-      (and (= (car t1) (car t2))
-	   (< (nth 1 t1) (nth 1 t2)))))
-
-;; FIXME: Shouldn't this also look at any subseconds parts of T1 and T2?
-(defun tramp-time-subtract (t1 t2)
-  "Subtract two time values.
-Return the difference in the format of a time value."
-  (unless t1 (setq t1 '(0 0)))
-  (unless t2 (setq t2 '(0 0)))
-  (let ((borrow (< (cadr t1) (cadr t2))))
-    (list (- (car t1) (car t2) (if borrow 1 0))
-	  (- (+ (if borrow 65536 0) (cadr t1)) (cadr t2)))))
-
 ;;;###tramp-autoload
 (defun tramp-time-diff (t1 t2)
   "Return the difference between the two times, in seconds.
@@ -4272,7 +4257,7 @@ T1 and T2 are time values (as returned by `current-time' for example)."
 	  (if (< (length t1) 3) (append t1 '(0)) t1)
 	  (if (< (length t2) 3) (append t2 '(0)) t2)))
         (t
-	 (let ((time (tramp-time-subtract t1 t2)))
+	 (let ((time (time-subtract t1 t2)))
 	   (+ (* (car time) 65536.0)
 	      (cadr time)
 	      (/ (or (nth 2 time) 0) 1000000.0))))))

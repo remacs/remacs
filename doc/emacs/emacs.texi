@@ -189,6 +189,7 @@ Advanced Features
 * Sending Mail::        Sending mail in Emacs.
 * Rmail::               Reading mail in Emacs.
 * Gnus::                A flexible mail and news reader.
+* Network Security::    Managing the network security.
 * Document View::       Viewing PDF, PS and DVI files.
 * EWW::                 A web browser in Emacs.
 * Shell::               Executing shell commands from Emacs.
@@ -1574,8 +1575,8 @@ Lisp programming.
 
 @include anti.texi
 @include macos.texi
-@c Includes msdog-xtra.
-@include msdog.texi
+@c Includes msdos-xtra.
+@include msdos.texi
 @include gnu.texi
 @include glossary.texi
 @ifnottex

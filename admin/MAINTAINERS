@@ -31,12 +31,13 @@ Eli Zaretskii
 	    src/msdos.[ch]
 	    src/dosfns.[ch]
 	    src/w16select.c
+	    src/unexcoff.c
 	    lisp/term/internal.el
 	    lisp/term/pc-win.el
 	    lisp/dos-fns.el
 	    lisp/dos-w32.el
 	    lisp/dos-vars.el
-	    doc/emacs/msdog.texi
+	    doc/emacs/msdos.texi
 
 Kenichi Handa
 	Mule
@@ -80,14 +81,18 @@ Bastien Guerry
 Eli Zaretskii
     	doc/*
 	lispref/*
-	info/dir
 
 	src/xfaces.c
 	src/xdisp.c
 	src/term.c
 	src/dispnew.c
+	src/dispextern.h
 	src/frame.c
 	src/dired.c
+	src/unexw32.c
+	src/w32*.[ch]
+	src/window.c
+	nt/*
 
 	lisp/arc-mode.el
 	lisp/menu-bar.el
@@ -96,6 +101,8 @@ Eli Zaretskii
 	lisp/ls-lisp.el
 	lisp/startup.el
 	lisp/w32*.el
+
+	admin/unidata/*
 
 Stefan Monnier
 	src/intervals.c
@@ -181,24 +188,10 @@ src/tparam.c
 src/undo.c
 src/unexaix.c
 src/unexalpha.c
-src/unexcoff.c
 src/unexelf.c
 src/unexhp9k800.c
-src/unexw32.c
 src/vm-limit.c
-src/w32.c
-src/w32console.c
-src/w32fns.c
-src/w32heap.c
-src/w32inevt.c
-src/w32menu.c
-src/w32proc.c
-src/w32reg.c
-src/w32select.c
-src/w32term.c
-src/w32xfns.c
 src/widget.c
-src/window.c
 src/xfns.c
 src/xmenu.c
 src/xrdb.c

@@ -373,7 +373,7 @@ Used to decide whether to save completions.")
 
 (defvar cmpl-preceding-syntax)
 
-(defvar completion-string)
+(defvar cmpl--completion-string)
 
 ;;---------------------------------------------------------------------------
 ;; Low level tools
@@ -435,8 +435,7 @@ Used to decide whether to save completions.")
 
 
 (defun cmpl-hours-since-origin ()
-  (let ((time (current-time)))
-    (floor (+ (* 65536.0 (nth 0 time)) (nth 1 time)) 3600)))
+  (floor (float-time) 3600))
 
 ;;---------------------------------------------------------------------------
 ;; "Symbol" parsing functions
@@ -1083,7 +1082,7 @@ Must be called after `find-exact-completion'."
 	     (cmpl-db-debug-p
 	      ;; not found, error if debug mode
 	      (error "Completion entry exists but not on prefix list - %s"
-		     completion-string))
+		     cmpl--completion-string))
 	     (inside-locate-completion-entry
 	      ;; recursive error: really scrod
 	      (locate-completion-db-error))
@@ -1150,73 +1149,75 @@ COMPLETION-STRING must be longer than `completion-prefix-min-length'.
 Updates the saved string with the supplied string.
 This must be very fast.
 Returns the completion entry."
-  ;; Handle pending acceptance
-  (if completion-to-accept (accept-completion))
-  ;; test if already in database
-  (if (setq cmpl-db-entry (find-exact-completion completion-string))
-      ;; found
-      (let* ((prefix-entry (find-cmpl-prefix-entry
-			     (substring cmpl-db-downcase-string 0
-					completion-prefix-min-length)))
-	     (splice-ptr (locate-completion-entry cmpl-db-entry prefix-entry))
-	     (cmpl-ptr (cdr splice-ptr)))
-	;; update entry
-	(set-completion-string cmpl-db-entry completion-string)
-	;; move to head (if necessary)
-	(cond (splice-ptr
-	       ;; These should all execute atomically but it is not fatal if
-	       ;; they don't.
-	       ;; splice it out
-	       (or (setcdr splice-ptr (cdr cmpl-ptr))
-		   ;; fix up tail if necessary
-		   (set-cmpl-prefix-entry-tail prefix-entry splice-ptr))
-	       ;; splice in at head
-	       (setcdr cmpl-ptr (cmpl-prefix-entry-head prefix-entry))
-	       (set-cmpl-prefix-entry-head prefix-entry cmpl-ptr)))
-	cmpl-db-entry)
-    ;; not there
-    (let (;; create an entry
-	  (entry (list (make-completion completion-string)))
-	  ;; setup the prefix
-	  (prefix-entry (find-cmpl-prefix-entry
-			  (substring cmpl-db-downcase-string 0
-				     completion-prefix-min-length))))
-      (cond (prefix-entry
-	     ;; Splice in at head
-	     (setcdr entry (cmpl-prefix-entry-head prefix-entry))
-	     (set-cmpl-prefix-entry-head prefix-entry entry))
-	    (t
-	     ;; Start new prefix entry
-	     (set cmpl-db-prefix-symbol (make-cmpl-prefix-entry entry))))
-      ;; Add it to the symbol
-      (set cmpl-db-symbol (car entry)))))
+  (let ((cmpl--completion-string completion-string))
+    ;; Handle pending acceptance
+    (if completion-to-accept (accept-completion))
+    ;; test if already in database
+    (if (setq cmpl-db-entry (find-exact-completion completion-string))
+        ;; found
+        (let* ((prefix-entry (find-cmpl-prefix-entry
+                              (substring cmpl-db-downcase-string 0
+                                         completion-prefix-min-length)))
+               (splice-ptr (locate-completion-entry cmpl-db-entry prefix-entry))
+               (cmpl-ptr (cdr splice-ptr)))
+          ;; update entry
+          (set-completion-string cmpl-db-entry completion-string)
+          ;; move to head (if necessary)
+          (cond (splice-ptr
+                 ;; These should all execute atomically but it is not fatal if
+                 ;; they don't.
+                 ;; splice it out
+                 (or (setcdr splice-ptr (cdr cmpl-ptr))
+                     ;; fix up tail if necessary
+                     (set-cmpl-prefix-entry-tail prefix-entry splice-ptr))
+                 ;; splice in at head
+                 (setcdr cmpl-ptr (cmpl-prefix-entry-head prefix-entry))
+                 (set-cmpl-prefix-entry-head prefix-entry cmpl-ptr)))
+          cmpl-db-entry)
+      ;; not there
+      (let ( ;; create an entry
+            (entry (list (make-completion completion-string)))
+            ;; setup the prefix
+            (prefix-entry (find-cmpl-prefix-entry
+                           (substring cmpl-db-downcase-string 0
+                                      completion-prefix-min-length))))
+        (cond (prefix-entry
+               ;; Splice in at head
+               (setcdr entry (cmpl-prefix-entry-head prefix-entry))
+               (set-cmpl-prefix-entry-head prefix-entry entry))
+              (t
+               ;; Start new prefix entry
+               (set cmpl-db-prefix-symbol (make-cmpl-prefix-entry entry))))
+        ;; Add it to the symbol
+        (set cmpl-db-symbol (car entry))))))
 
 (defun delete-completion (completion-string)
   "Delete the completion from the database.
 String must be longer than `completion-prefix-min-length'."
   ;; Handle pending acceptance
-  (if completion-to-accept (accept-completion))
-  (if (setq cmpl-db-entry (find-exact-completion completion-string))
-      ;; found
-      (let* ((prefix-entry (find-cmpl-prefix-entry
-			     (substring cmpl-db-downcase-string 0
-					completion-prefix-min-length)))
-	     (splice-ptr (locate-completion-entry cmpl-db-entry prefix-entry)))
-	 ;; delete symbol reference
-	 (set cmpl-db-symbol nil)
-	 ;; remove from prefix list
-	 (cond (splice-ptr
-		;; not at head
-		(or (setcdr splice-ptr (cdr (cdr splice-ptr)))
-		    ;; fix up tail if necessary
-		    (set-cmpl-prefix-entry-tail prefix-entry splice-ptr)))
-	       (t
-		;; at head
-		(or (set-cmpl-prefix-entry-head
+  (let ((cmpl--completion-string completion-string))
+    (if completion-to-accept (accept-completion))
+    (if (setq cmpl-db-entry (find-exact-completion completion-string))
+        ;; found
+        (let* ((prefix-entry (find-cmpl-prefix-entry
+                              (substring cmpl-db-downcase-string 0
+                                         completion-prefix-min-length)))
+               (splice-ptr (locate-completion-entry cmpl-db-entry prefix-entry)))
+          ;; delete symbol reference
+          (set cmpl-db-symbol nil)
+          ;; remove from prefix list
+          (cond (splice-ptr
+                 ;; not at head
+                 (or (setcdr splice-ptr (cdr (cdr splice-ptr)))
+                     ;; fix up tail if necessary
+                     (set-cmpl-prefix-entry-tail prefix-entry splice-ptr)))
+                (t
+                 ;; at head
+                 (or (set-cmpl-prefix-entry-head
 		      prefix-entry (cdr (cmpl-prefix-entry-head prefix-entry)))
-		    ;; List is now empty
-		    (set cmpl-db-prefix-symbol nil)))))
-      (error "Unknown completion `%s'" completion-string)))
+                     ;; List is now empty
+                     (set cmpl-db-prefix-symbol nil)))))
+      (error "Unknown completion `%s'" completion-string))))
 
 ;; Tests --
 ;;  - Add and Find -
@@ -1312,7 +1313,7 @@ are specified."
   (delete-completion string))
 
 (defun accept-completion ()
-  "Accepts the pending completion in `completion-to-accept'.
+  "Accept the pending completion in `completion-to-accept'.
 This bumps num-uses.  Called by `add-completion-to-head' and
 `completion-search-reset'."
   (let ((string completion-to-accept)
@@ -1950,7 +1951,7 @@ If file name is not specified, use `save-completions-file-name'."
 	       (kept-old-versions 0)
 	       (kept-new-versions completions-file-versions-kept)
 	       last-use-time
-	       (current-time (cmpl-hours-since-origin))
+	       (this-use-time (cmpl-hours-since-origin))
 	       (total-in-db 0)
 	       (total-perm 0)
 	       (total-saved 0)
@@ -1982,13 +1983,13 @@ If file name is not specified, use `save-completions-file-name'."
 		      ;; or if
 		      (if (> (completion-num-uses completion) 0)
 			  ;; it's been used
-			  (setq last-use-time current-time)
+			  (setq last-use-time this-use-time)
 			;; or it was saved before and
 			(and last-use-time
 			     ;; save-completions-retention-time is nil
 			     (or (not save-completions-retention-time)
 				 ;; or time since last use is < ...retention-time*
-				 (< (- current-time last-use-time)
+				 (< (- this-use-time last-use-time)
 				    save-completions-retention-time)))))
 		     ;; write to file
 		     (setq total-saved (1+ total-saved))
@@ -2157,26 +2158,27 @@ Patched to remove the most recent completion."
 ;; to work)
 
 ;; All common separators (eg. space "(" ")" """) characters go through a
-;; function to add new words to the list of words to complete from:
-;;  COMPLETION-SEPARATOR-SELF-INSERT-COMMAND (arg).
+;; function to add new words to the list of words to complete from.
 ;; If the character before this was an alpha-numeric then this adds the
 ;; symbol before point to the completion list (using ADD-COMPLETION).
 
-(defun completion-separator-self-insert-command (arg)
-  (interactive "p")
-  (if (command-remapping 'self-insert-command)
-      (funcall (command-remapping 'self-insert-command) arg)
-    (use-completion-before-separator)
-    (self-insert-command arg)))
+(defvar completion-separator-chars
+  (append " !%^&()=`|{}[];\\'#,?"
+          ;; We include period and colon even though they are symbol
+          ;; chars because :
+          ;;  - in text we want to pick up the last word in a sentence.
+          ;;  - in C pointer refs. we want to pick up the first symbol
+          ;;  - it won't make a difference for lisp mode (package names
+          ;;    are short)
+          ".:" nil))
 
-(defun completion-separator-self-insert-autofilling (arg)
-  (interactive "p")
-  (if (command-remapping 'self-insert-command)
-      (funcall (command-remapping 'self-insert-command) arg)
-    (use-completion-before-separator)
-    (self-insert-command arg)
-    (and auto-fill-function
-	 (funcall auto-fill-function))))
+(defun completion--post-self-insert ()
+  (when (memq last-command-event completion-separator-chars)
+    (let ((after-pos (electric--after-char-pos)))
+      (when after-pos
+        (save-excursion
+          (goto-char (1- after-pos))
+          (use-completion-before-separator))))))
 
 ;;-----------------------------------------------
 ;; Wrapping Macro
@@ -2245,9 +2247,8 @@ TYPE is the type of the wrapper to be added.  Can be :before or :under."
 (completion-def-wrapper 'electric-c-semi :separator)
 (defun completion-c-mode-hook ()
   (setq completion-syntax-table completion-c-syntax-table)
-  (local-set-key "+" 'completion-separator-self-insert-command)
-  (local-set-key "*" 'completion-separator-self-insert-command)
-  (local-set-key "/" 'completion-separator-self-insert-command))
+  (setq-local completion-separator-chars
+              (append "+*/" completion-separator-chars)))
 
 ;; FORTRAN mode diffs. (these are defined when fortran is called)
 
@@ -2260,10 +2261,8 @@ TYPE is the type of the wrapper to be added.  Can be :before or :under."
 
 (defun completion-setup-fortran-mode ()
   (setq completion-syntax-table completion-fortran-syntax-table)
-  (local-set-key "+" 'completion-separator-self-insert-command)
-  (local-set-key "-" 'completion-separator-self-insert-command)
-  (local-set-key "*" 'completion-separator-self-insert-command)
-  (local-set-key "/" 'completion-separator-self-insert-command))
+  (setq-local completion-separator-chars
+              (append "+-*/" completion-separator-chars)))
 
 ;; Enable completion mode.
 
@@ -2282,15 +2281,16 @@ if ARG is omitted or nil."
   ;; This is always good, not specific to dynamic-completion-mode.
   (define-key function-key-map [C-return] [?\C-\r])
 
-  (dolist (x '((find-file-hook		. completion-find-file-hook)
-               (pre-command-hook	. completion-before-command)
+  (dolist (x `((find-file-hook		. ,#'completion-find-file-hook)
+               (pre-command-hook	. ,#'completion-before-command)
                ;; Save completions when killing Emacs.
-               (kill-emacs-hook		. kill-emacs-save-completions)
+               (kill-emacs-hook		. ,#'kill-emacs-save-completions)
+               (post-self-insert-hook	. ,#'completion--post-self-insert)
 
                ;; Install the appropriate mode tables.
-               (lisp-mode-hook		. completion-lisp-mode-hook)
-               (c-mode-hook		. completion-c-mode-hook)
-               (fortran-mode-hook	. completion-setup-fortran-mode)))
+               (lisp-mode-hook		. ,#'completion-lisp-mode-hook)
+               (c-mode-hook		. ,#'completion-c-mode-hook)
+               (fortran-mode-hook	. ,#'completion-setup-fortran-mode)))
     (if dynamic-completion-mode
         (add-hook (car x) (cdr x))
       (remove-hook (car x) (cdr x))))
@@ -2316,44 +2316,7 @@ if ARG is omitted or nil."
                ;; cumb
 
                ;; Patches to standard keymaps insert completions
-               ([remap kill-region] . completion-kill-region)
-
-               ;; Separators
-               ;; We've used the completion syntax table given  as a guide.
-               ;;
-               ;; Global separator chars.
-               ;;  We left out <tab> because there are too many special
-               ;; cases for it.  Also, in normal coding it's rarely typed
-               ;; after a word.
-               (" " . completion-separator-self-insert-autofilling)
-               ("!" . completion-separator-self-insert-command)
-               ("%" . completion-separator-self-insert-command)
-               ("^" . completion-separator-self-insert-command)
-               ("&" . completion-separator-self-insert-command)
-               ("(" . completion-separator-self-insert-command)
-               (")" . completion-separator-self-insert-command)
-               ("=" . completion-separator-self-insert-command)
-               ("`" . completion-separator-self-insert-command)
-               ("|" . completion-separator-self-insert-command)
-               ("{" . completion-separator-self-insert-command)
-               ("}" . completion-separator-self-insert-command)
-               ("[" . completion-separator-self-insert-command)
-               ("]" . completion-separator-self-insert-command)
-               (";" . completion-separator-self-insert-command)
-               ("\"".  completion-separator-self-insert-command)
-               ("'" . completion-separator-self-insert-command)
-               ("#" . completion-separator-self-insert-command)
-               ("," . completion-separator-self-insert-command)
-               ("?" . completion-separator-self-insert-command)
-
-               ;; We include period and colon even though they are symbol
-               ;; chars because :
-               ;;  - in text we want to pick up the last word in a sentence.
-               ;;  - in C pointer refs. we want to pick up the first symbol
-               ;;  - it won't make a difference for lisp mode (package names
-               ;;    are short)
-               ("." . completion-separator-self-insert-command)
-               (":" . completion-separator-self-insert-command)))
+               ([remap kill-region] . completion-kill-region)))
       (push (cons (car binding) (lookup-key global-map (car binding)))
             completion-saved-bindings)
       (global-set-key (car binding) (cdr binding)))

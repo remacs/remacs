@@ -561,6 +561,7 @@ Returns the process associated with the connection."
 		     'tls)
 		    (t
 		     (or pop3-stream-type 'network)))
+	     :warn-unless-encrypted t
 	     :capability-command "CAPA\r\n"
 	     :end-of-command "^\\(-ERR\\|+OK\\).*\n"
 	     :end-of-capability "^\\.\r?\n\\|^-ERR"

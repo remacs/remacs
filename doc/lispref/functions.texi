@@ -1204,30 +1204,21 @@ behavior with:
 
 The arguments @code{:before} and @code{:around} used in the above examples
 specify how the two functions are composed, since there are many different
-ways to do it.  The added function is also called an @emph{advice}.
+ways to do it.  The added function is also called a piece of @emph{advice}.
 
 @menu
 * Core Advising Primitives::    Primitives to manipulate advice.
 * Advising Named Functions::    Advising named functions.
 * Advice combinators::          Ways to compose advice.
-* Porting old advices::         Adapting code using the old defadvice.
+* Porting old advice::          Adapting code using the old defadvice.
 @end menu
 
 @node Core Advising Primitives
-@subsection Primitives to manipulate advices
+@subsection Primitives to manipulate advice
 
 @defmac add-function where place function &optional props
 This macro is the handy way to add the advice @var{function} to the function
 stored in @var{place} (@pxref{Generalized Variables}).
-
-If @var{function} is not interactive, then the combined function will inherit
-the interactive spec, if any, of the original function.  Else, the combined
-function will be interactive and will use the interactive spec of
-@var{function}.  One exception: if the interactive spec of @var{function}
-is a function (rather than an expression or a string), then the interactive
-spec of the combined function will be a call to that function with as sole
-argument the interactive spec of the original function.  To interpret the spec
-received as argument, use @code{advice-eval-interactive-spec}.
 
 @var{where} determines how @var{function} is composed with the
 existing function, e.g. whether @var{function} should be called before, or
@@ -1241,7 +1232,7 @@ global value of @var{place}.  Whereas if @var{place} is of the form
 @code{(local @var{symbol})}, where @var{symbol} is an expression which returns
 the variable name, then @var{function} will only be added in the
 current buffer.  Finally, if you want to modify a lexical variable, you will
-have to use @code{(var @var{VARIABLE})}.
+have to use @code{(var @var{variable})}.
 
 Every function added with @code{add-function} can be accompanied by an
 association list of properties @var{props}.  Currently only two of those
@@ -1254,23 +1245,41 @@ identify which function to remove.  Typically used when @var{function} is an
 anonymous function.
 
 @item depth
-This specifies how to order the advices, in case several advices are present.
-By default, the depth is 0.  A depth of 100 indicates that this advice should
-be kept as deep as possible, whereas a depth of -100 indicates that it
-should stay as the outermost advice.  When two advices specify the same depth,
-the most recently added advice will be outermost.
+This specifies how to order the advice, should several pieces of
+advice be present.  By default, the depth is 0.  A depth of 100
+indicates that this piece of advice should be kept as deep as
+possible, whereas a depth of -100 indicates that it should stay as the
+outermost piece.  When two pieces of advice specify the same depth,
+the most recently added one will be outermost.
 
-For a @code{:before} advice, being outermost means that this advice will be run
-first, before any other advice, whereas being innermost means that it will run
-right before the original function, with no other advice run between itself and
-the original function.  Similarly, for an @code{:after} advice innermost means
-that it will run right after the original function, with no other advice run in
-between, whereas outermost means that it will be run very last after all
-other advices.  An innermost @code{:override} advice will only override the
-original function and other advices will apply to it, whereas an outermost
-@code{:override} advice will override not only the original function but all
-other advices applied to it as well.
+For @code{:before} advice, being outermost means that this advice will
+be run first, before any other advice, whereas being innermost means
+that it will run right before the original function, with no other
+advice run between itself and the original function.  Similarly, for
+@code{:after} advice innermost means that it will run right after the
+original function, with no other advice run in between, whereas
+outermost means that it will be run right at the end after all other
+advice.  An innermost @code{:override} piece of advice will only
+override the original function and other pieces of advice will apply
+to it, whereas an outermost @code{:override} piece of advice will
+override not only the original function but all other advice applied
+to it as well.
 @end table
+
+If @var{function} is not interactive, then the combined function will inherit
+the interactive spec, if any, of the original function.  Else, the combined
+function will be interactive and will use the interactive spec of
+@var{function}.  One exception: if the interactive spec of @var{function}
+is a function (rather than an expression or a string), then the interactive
+spec of the combined function will be a call to that function with as sole
+argument the interactive spec of the original function.  To interpret the spec
+received as argument, use @code{advice-eval-interactive-spec}.
+
+Note: The interactive spec of @var{function} will apply to the combined
+function and should hence obey the calling convention of the combined function
+rather than that of @var{function}.  In many cases, it makes no difference
+since they are identical, but it does matter for @code{:around},
+@code{:filter-args}, and @code{filter-return}, where @var{function}.
 @end defmac
 
 @defmac remove-function place function
@@ -1292,7 +1301,7 @@ function, it can also be the @code{name} of the piece of advice.
 @end defun
 
 @defun advice-function-mapc f function-def
-Call the function @var{f} for every advice that was added to
+Call the function @var{f} for every piece of advice that was added to
 @var{function-def}.  @var{f} is called with two arguments: the advice function
 and its properties.
 @end defun
@@ -1320,7 +1329,7 @@ instead.  This separate set of functions to manipulate pieces of advice applied
 to named functions, offers the following extra features compared to
 @code{add-function}: they know how to deal with macros and autoloaded
 functions, they let @code{describe-function} preserve the original docstring as
-well as document the added advice, and they let you add and remove advices
+well as document the added advice, and they let you add and remove advice
 before a function is even defined.
 
   @code{advice-add} can be useful for altering the behavior of existing calls
@@ -1354,6 +1363,13 @@ called directly from C, and such calls ignore advice; hence, one ends
 up in a confusing situation where some calls (occurring from Lisp
 code) obey the advice and other calls (from C code) do not.
 
+@defmac define-advice symbol (where lambda-list &optional name depth) &rest body
+This macro defines a piece of advice and adds it to the function named
+@var{symbol}.  The advice is an anonymous function if @var{name} is
+nil or a function named @code{symbol@@name}.  See @code{advice-add}
+for explanation of other arguments.
+@end defmac
+
 @defun advice-add symbol where function &optional props
 Add the advice @var{function} to the named function @var{symbol}.
 @var{where} and @var{props} have the same meaning as for @code{add-function}
@@ -1362,23 +1378,23 @@ Add the advice @var{function} to the named function @var{symbol}.
 
 @defun advice-remove symbol function
 Remove the advice @var{function} from the named function @var{symbol}.
-@var{function} can also be the @code{name} of an advice.
+@var{function} can also be the @code{name} of a piece of advice.
 @end defun
 
 @defun advice-member-p function symbol
 Return non-@code{nil} if the advice @var{function} is already in the named
 function @var{symbol}.  @var{function} can also be the @code{name} of
-an advice.
+a piece of advice.
 @end defun
 
 @defun advice-mapc function symbol
-Call @var{function} for every advice that was added to the named function
-@var{symbol}.  @var{function} is called with two arguments: the advice function
-and its properties.
+Call @var{function} for every piece of advice that was added to the
+named function @var{symbol}.  @var{function} is called with two
+arguments: the advice function and its properties.
 @end defun
 
 @node Advice combinators
-@subsection Ways to compose advices
+@subsection Ways to compose advice
 
 Here are the different possible values for the @var{where} argument of
 @code{add-function} and @code{advice-add}, specifying how the advice
@@ -1490,14 +1506,14 @@ More specifically, the composition of the two functions behaves like:
 @end table
 
 
-@node Porting old advices
+@node Porting old advice
 @subsection Adapting code using the old defadvice
 
 A lot of code uses the old @code{defadvice} mechanism, which is largely made
 obsolete by the new @code{advice-add}, whose implementation and semantics is
 significantly simpler.
 
-An old advice such as:
+An old piece of advice such as:
 
 @example
 (defadvice previous-line (before next-line-at-end
@@ -1534,11 +1550,11 @@ whereas the new advice mechanism needs:
 
 Note that @code{ad-activate} had a global effect: it activated all pieces of
 advice enabled for that specified function.  If you wanted to only activate or
-deactivate a particular advice, you needed to @emph{enable} or @emph{disable}
-that advice with @code{ad-enable-advice} and @code{ad-disable-advice}.
+deactivate a particular piece, you needed to @emph{enable} or @emph{disable}
+it with @code{ad-enable-advice} and @code{ad-disable-advice}.
 The new mechanism does away with this distinction.
 
-An around advice such as:
+Around advice such as:
 
 @example
 (defadvice foo (around foo-around)
@@ -1564,12 +1580,12 @@ modify the function's arguments (e.g., with @code{ad-set-arg}), and that would
 affect the argument values seen by the original function, whereas in the new
 @code{:before}, modifying an argument via @code{setq} in the advice has no
 effect on the arguments seen by the original function.
-When porting a @code{before} advice which relied on this behavior, you'll need
-to turn it into a new @code{:around} or @code{:filter-args} advice instead.
+When porting @code{before} advice which relied on this behavior, you'll need
+to turn it into new @code{:around} or @code{:filter-args} advice instead.
 
-Similarly an old @code{after} advice could modify the returned value by
-changing @code{ad-return-value}, whereas a new @code{:after} advice cannot, so
-when porting such an old @code{after} advice, you'll need to turn it into a new
+Similarly old @code{after} advice could modify the returned value by
+changing @code{ad-return-value}, whereas new @code{:after} advice cannot, so
+when porting such old @code{after} advice, you'll need to turn it into new
 @code{:around} or @code{:filter-return} advice instead.
 
 @node Obsolete Functions

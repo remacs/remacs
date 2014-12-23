@@ -539,7 +539,7 @@ Unless optional argument INPLACE is non-nil, return a new string."
 
 (defmacro eshell-with-file-modes (modes &rest forms)
   "Evaluate, with file-modes set to MODES, the given FORMS."
-  (declare (obsolete with-file-modes "24.5"))
+  (declare (obsolete with-file-modes "25.1"))
   `(with-file-modes ,modes ,@forms))
 
 (defmacro eshell-with-private-file-modes (&rest forms)
@@ -653,7 +653,7 @@ If NOSORT is non-nil, the list is not sorted--its order is unpredictable.
 				   (match-string 6))))
 		      (if (nth 0 moment)
 			  (setcar (nthcdr 5 moment)
-				  (nth 5 (decode-time (current-time))))
+				  (nth 5 (decode-time)))
 			(setcar (nthcdr 0 moment) 0)
 			(setcar (nthcdr 1 moment) 0)
 			(setcar (nthcdr 2 moment) 0))

@@ -32,6 +32,10 @@
 ;; or run interpreted, but not when the compiled code is loaded.
 (eval-when-compile (require 'help-macro))
 
+;; This makes `with-output-to-temp-buffer' buffers use `help-mode'.
+(add-hook 'temp-buffer-setup-hook 'help-mode-setup)
+(add-hook 'temp-buffer-show-hook 'help-mode-finish)
+
 ;; `help-window-point-marker' is a marker you can move to a valid
 ;; position of the buffer shown in the help window in order to override
 ;; the standard positioning mechanism (`point-min') chosen by
@@ -41,6 +45,9 @@
 ;; visible.
 (defvar help-window-point-marker (make-marker)
   "Marker to override default `window-point' in help windows.")
+
+(defvar help-window-old-frame nil
+  "Frame selected at the time `with-help-window' is invoked.")
 
 (defvar help-map
   (let ((map (make-sparse-keymap)))
@@ -444,25 +451,32 @@ is specified by the variable `message-log-max'."
   (info "(efaq)Packages that do not come with Emacs"))
 
 (defun view-lossage ()
-  "Display last 300 input keystrokes.
+  "Display last few input keystrokes and the commands run.
 
 To record all your input, use `open-dribble-file'."
   (interactive)
   (help-setup-xref (list #'view-lossage)
 		   (called-interactively-p 'interactive))
   (with-help-window (help-buffer)
+    (princ " ")
     (princ (mapconcat (lambda (key)
-			(if (or (integerp key) (symbolp key) (listp key))
-			    (single-key-description key)
-			  (prin1-to-string key nil)))
-		      (recent-keys)
+			(cond
+			 ((and (consp key) (null (car key)))
+			  (format "[%s]\n" (if (symbolp (cdr key)) (cdr key)
+					   "anonymous-command")))
+			 ((or (integerp key) (symbolp key) (listp key))
+			  (single-key-description key))
+			 (t
+			  (prin1-to-string key nil))))
+		      (recent-keys 'include-cmds)
 		      " "))
     (with-current-buffer standard-output
       (goto-char (point-min))
-      (while (progn (move-to-column 50) (not (eobp)))
-        (when (search-forward " " nil t)
-          (delete-char -1))
-        (insert "\n"))
+      (while (not (eobp))
+	(move-to-column 50)
+	(unless (eolp)
+	  (fill-region (line-beginning-position) (line-end-position)))
+	(forward-line 1))
       ;; jidanni wants to see the last keystrokes immediately.
       (set-marker help-window-point-marker (point)))))
 
@@ -1119,7 +1133,10 @@ of a horizontal combination, restrain its new size by
 `fit-window-to-buffer-horizontally' can inhibit resizing.
 
 If WINDOW is the root window of its frame, resize the frame
-provided `fit-frame-to-buffer' is non-nil."
+provided `fit-frame-to-buffer' is non-nil.
+
+This function may call `preserve-window-size' to preserve the
+size of WINDOW."
   (setq window (window-normalize-window window t))
   (let ((height (if (functionp temp-buffer-max-height)
 		    (with-selected-window window
@@ -1141,20 +1158,30 @@ provided `fit-frame-to-buffer' is non-nil."
 	      (and (eq quit-cadr 'frame)
 		     fit-frame-to-buffer
 		     (eq window (frame-root-window window))))
-	(fit-window-to-buffer window height nil width))))
+	(fit-window-to-buffer window height nil width nil t))))
 
 ;;; Help windows.
-(defcustom help-window-select 'other
-    "Non-nil means select help window for viewing.
+(defcustom help-window-select nil
+  "Non-nil means select help window for viewing.
 Choices are:
+
  never (nil) Select help window only if there is no other window
              on its frame.
- other       Select help window unless the selected window is the
-             only other window on the help window's frame.
+
+ other       Select help window if and only if it appears on the
+             previously selected frame, that frame contains at
+             least two other windows and the help window is
+             either new or showed a different buffer before.
+
  always (t)  Always select the help window.
 
+If this option is non-nil and the help window appears on another
+frame, then give that frame input focus too.  Note also that if
+the help window appears on another frame, it may get selected and
+its frame get input focus even if this option is nil.
+
 This option has effect if and only if the help window was created
-by `with-help-window'"
+by `with-help-window'."
   :type '(choice (const :tag "never (nil)" nil)
 		 (const :tag "other" other)
 		 (const :tag "always (t)" t))
@@ -1201,7 +1228,9 @@ Return VALUE."
   (let* ((help-buffer (when (window-live-p window)
 			(window-buffer window)))
 	 (help-setup (when (window-live-p window)
-		       (car (window-parameter window 'quit-restore)))))
+		       (car (window-parameter window 'quit-restore))))
+	 (frame (window-frame window)))
+
     (when help-buffer
       ;; Handle `help-window-point-marker'.
       (when (eq (marker-buffer help-window-point-marker) help-buffer)
@@ -1209,13 +1238,27 @@ Return VALUE."
 	;; Reset `help-window-point-marker'.
 	(set-marker help-window-point-marker nil))
 
+      ;; If the help window appears on another frame, select it if
+      ;; `help-window-select' is non-nil and give that frame input focus
+      ;; too.  See also Bug#19012.
+      (when (and help-window-select
+		 (frame-live-p help-window-old-frame)
+		 (not (eq frame help-window-old-frame)))
+	(select-window window)
+	(select-frame-set-input-focus frame))
+
       (cond
        ((or (eq window (selected-window))
-	    (and (or (eq help-window-select t)
-		     (eq help-setup 'frame)
+	    ;; If the help window is on the selected frame, select
+	    ;; it if `help-window-select' is t or `help-window-select'
+	    ;; is 'other, the frame contains at least three windows, and
+	    ;; the help window did show another buffer before.  See also
+	    ;; Bug#11039.
+	    (and (eq frame (selected-frame))
+		 (or (eq help-window-select t)
 		     (and (eq help-window-select 'other)
-			  (eq (window-frame window) (selected-frame))
-			  (> (length (window-list nil 'no-mini)) 2)))
+			  (> (length (window-list nil 'no-mini)) 2)
+			  (not (eq help-setup 'same))))
 		 (select-window window)))
 	;; The help window is or gets selected ...
 	(help-window-display-message
@@ -1224,12 +1267,13 @@ Return VALUE."
 	   ;; ... and is new, ...
 	   "Type \"q\" to delete help window")
 	  ((eq help-setup 'frame)
+	   ;; ... on a new frame, ...
 	   "Type \"q\" to quit the help frame")
 	  ((eq help-setup 'other)
 	   ;; ... or displayed some other buffer before.
 	   "Type \"q\" to restore previous buffer"))
 	 window t))
-       ((and (eq (window-frame window) (selected-frame))
+       ((and (eq (window-frame window) help-window-old-frame)
 	     (= (length (window-list nil 'no-mini)) 2))
 	;; There are two windows on the help window's frame and the
 	;; other one is the selected one.
@@ -1286,6 +1330,7 @@ the help window if the current value of the user option
 	    (cons 'help-mode-setup temp-buffer-window-setup-hook))
 	   (temp-buffer-window-show-hook
 	    (cons 'help-mode-finish temp-buffer-window-show-hook)))
+       (setq help-window-old-frame (selected-frame))
        (with-temp-buffer-window
 	,buffer-name nil 'help-window-setup (progn ,@body)))))
 

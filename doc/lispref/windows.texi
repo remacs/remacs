@@ -16,6 +16,7 @@ is displayed in windows.
 * Windows and Frames::      Relating windows to the frame they appear on.
 * Window Sizes::            Accessing a window's size.
 * Resizing Windows::        Changing the sizes of windows.
+* Preserving Window Sizes:: Preserving the size of windows.
 * Splitting Windows::       Creating a new window.
 * Deleting Windows::        Removing a window from its frame.
 * Recombining Windows::     Preserving the frame layout when splitting and
@@ -394,13 +395,14 @@ internal window).  The @var{edges} element is a list @code{(@var{left}
 @group
         ____________________________________________
        |______________ Header Line ______________|RD| ^
-     ^ |LS|LF|LM|                       |RM|RF|RS|  | |
+     ^ |LS|LM|LF|                       |RF|RM|RS|  | |
      | |  |  |  |                       |  |  |  |  | |
 Window |  |  |  |       Text Area       |  |  |  |  | Window
 Body | |  |  |  |     (Window Body)     |  |  |  |  | Total
 Height |  |  |  |                       |  |  |  |  | Height
      | |  |  |  |<- Window Body Width ->|  |  |  |  | |
      v |__|__|__|_______________________|__|__|__|  | |
+       |_________ Horizontal Scroll Bar _________|  | |
        |_______________ Mode Line _______________|__| |
        |_____________ Bottom Divider _______________| v
         <---------- Window Total Width ------------>
@@ -414,15 +416,15 @@ Height |  |  |  |                       |  |  |  |  | Height
   At the center of the window is the @dfn{text area}, or @dfn{body},
 where the buffer text is displayed.  The text area can be surrounded by
 a series of optional areas.  On the left and right, from innermost to
-outermost, these are the left and right margins, denoted by LM and RM in
-the schematic (@pxref{Display Margins}); the left and right fringes,
-denoted by LF and RF (@pxref{Fringes}); the left or right scroll bar,
-only one of which is present at any time, denoted by LS and RS
-(@pxref{Scroll Bars}); and the right divider, denoted by RD
+outermost, these are the left and right fringes, denoted by LF and RF
+(@pxref{Fringes}); the left and right margins, denoted by LM and RM in
+the schematic (@pxref{Display Margins}); the left or right vertical
+scroll bar, only one of which is present at any time, denoted by LS and
+RS (@pxref{Scroll Bars}); and the right divider, denoted by RD
 (@pxref{Window Dividers}).  At the top of the window is the header line
-(@pxref{Header Lines}); at the bottom of the window is the mode line
-(@pxref{Mode Line Format}) followed by the bottom divider (@pxref{Window
-Dividers}).
+(@pxref{Header Lines}).  At the bottom of the window are the horizontal
+scroll bar (@pxref{Scroll Bars}); the mode line (@pxref{Mode Line
+Format}); and the bottom divider (@pxref{Window Dividers}).
 
   Emacs provides miscellaneous functions for finding the height and
 width of a window.  The return value of many of these functions can be
@@ -439,11 +441,8 @@ displayed within it.
 @cindex height of a window
 @cindex total height of a window
   The @dfn{total height} of a window is the number of lines comprising
-the window's body, the header line, the mode line and the bottom divider
-(if any).  Note that the height of a frame is not the same as the height
-of its root window (@pxref{Windows and Frames}), since a frame may also
-contain an echo area, a menu bar, and a tool bar (@pxref{Size and
-Position}).
+the window's body, the header line, the horizontal scroll bar, the mode
+line and the bottom divider (if any).
 
 @defun window-total-height &optional window round
 This function returns the total height, in lines, of the window
@@ -451,24 +450,23 @@ This function returns the total height, in lines, of the window
 the selected window.  If @var{window} is an internal window, the return
 value is the total height occupied by its descendant windows.
 
-   If a window's pixel height is not an integral multiple of its frame's
+  If a window's pixel height is not an integral multiple of its frame's
 default character height, the number of lines occupied by the window is
 rounded internally.  This is done in a way such that, if the window is a
 parent window, the sum of the total heights of all its child windows
 internally equals the total height of their parent.  This means that
 although two windows have the same pixel height, their internal total
-heights may differ by one line.  This means also, that if this window is
-vertically combined and has a right sibling, the topmost row of that
+heights may differ by one line.  This means also, that if window is
+vertically combined and has a next sibling, the topmost row of that
 sibling can be calculated as the sum of this window's topmost row and
 total height (@pxref{Coordinates and Windows})
 
-   If the optional argument @var{round} equals @code{ceiling}, this
+  If the optional argument @var{round} is @code{ceiling}, this
 function returns the smallest integer larger than @var{window}'s pixel
-height divided by the character height of @var{window}'s frame; if it is
-@code{floor}, it returns the largest integer smaller than @var{window}'s
-pixel height divided by the character height of @var{window}'s frame.
-Any other value of @var{round} means to return the internal value of the
-total height of @var{window}.
+height divided by the character height of its frame; if it is
+@code{floor}, it returns the largest integer smaller than said value;
+with any other @var{round} it returns the internal value of
+@var{windows}'s total height.
 @end defun
 
 @cindex window width
@@ -484,24 +482,17 @@ This function returns the total width, in columns, of the window
 the selected window.  If @var{window} is internal, the return value is
 the total width occupied by its descendant windows.
 
-   If a window's pixel width is not an integral multiple of its frame's
+  If a window's pixel width is not an integral multiple of its frame's
 character width, the number of lines occupied by the window is rounded
 internally.  This is done in a way such that, if the window is a parent
 window, the sum of the total widths of all its children internally
 equals the total width of their parent.  This means that although two
 windows have the same pixel width, their internal total widths may
 differ by one column.  This means also, that if this window is
-horizontally combined and has a right sibling, the leftmost column of
+horizontally combined and has a next sibling, the leftmost column of
 that sibling can be calculated as the sum of this window's leftmost
-column and total width (@pxref{Coordinates and Windows}).
-
-If the optional argument @var{round} is @code{ceiling}, this function
-will return the smallest integer larger than @var{window}'s pixel width
-divided by the character width of @var{window}'s frame; if it is
-@code{floor}, it returns the largest integer smaller than @var{window}'s
-pixel width divided by the character width of @var{window}'s frame.  Any
-other value of @var{round} means to return the internal total width of
-@var{window}.
+column and total width (@pxref{Coordinates and Windows}).  The optional
+argument @var{round} behaves as it does for @code{window-total-height}.
 @end defun
 
 @defun window-total-size &optional window horizontal round
@@ -510,8 +501,7 @@ width in columns of the window @var{window}.  If @var{horizontal} is
 omitted or @code{nil}, this is equivalent to calling
 @code{window-total-height} for @var{window}; otherwise it is equivalent
 to calling @code{window-total-width} for @var{window}.  The optional
-argument @code{ROUND} is handled as for @code{window-total-height} and
-@code{window-total-width}.
+argument @var{round} behaves as it does for @code{window-total-height}.
 @end defun
 
 The following two functions can be used to return the total size of a
@@ -525,9 +515,10 @@ window in units of pixels.
 This function returns the total height of window @var{window} in pixels.
 @var{window} must be a valid window and defaults to the selected one.
 
-The return value includes mode and header line and a bottom divider, if
-any.  If @var{window} is an internal window, its pixel height is the
-pixel height of the screen areas spanned by its children.
+The return value includes mode and header line, a horizontal scroll bar
+and a bottom divider, if any.  If @var{window} is an internal window,
+its pixel height is the pixel height of the screen areas spanned by its
+children.
 @end defun
 
 @cindex window pixel height
@@ -550,10 +541,12 @@ the screen areas spanned by its children.
 window has any adjacent windows.
 
 @defun window-full-height-p &optional window
-This function returns non-@code{nil} if @var{window} has no other
-window above or below it in its frame, i.e., its total height equals
-the total height of the root window on that frame.  If @var{window} is
-omitted or @code{nil}, it defaults to the selected window.
+This function returns non-@code{nil} if @var{window} has no other window
+above or below it in its frame.  More precisely, this means that the
+total height of @var{window} equals the total height of the root window
+on that frame.  The minibuffer window does not count in this regard.  If
+@var{window} is omitted or @code{nil}, it defaults to the selected
+window.
 @end defun
 
 @defun window-full-width-p &optional window
@@ -567,7 +560,8 @@ that of the root window on that frame.  If @var{window} is omitted or
 @cindex body height of a window
 @cindex window body width
 The @dfn{body height} of a window is the height of its text area, which
-does not include a mode or header line or a bottom divider.
+does not include a mode or header line, a horizontal scroll bar, or a
+bottom divider.
 
 @defun window-body-height &optional window pixelwise
 This function returns the height, in lines, of the body of window
@@ -654,7 +648,8 @@ size:
 @defopt window-min-height
 This option specifies the minimum total height, in lines, of any window.
 Its value has to accommodate at least one text line as well as a mode
-and header line and a bottom divider, if present.
+and header line, a horizontal scroll bar and a bottom divider, if
+present.
 @end defopt
 
 @defopt window-min-width
@@ -662,22 +657,6 @@ This option specifies the minimum total width, in columns, of any
 window.  Its value has to accommodate two text columns as well as
 margins, fringes, a scroll bar and a right divider, if present.
 @end defopt
-
-@defvar window-size-fixed
-If this buffer-local variable is non-@code{nil}, the size of any
-window displaying the buffer cannot normally be changed.  Deleting a
-window or changing the frame's size may still change its size, if
-there is no choice.
-
-If the value is @code{height}, then only the window's height is fixed;
-if the value is @code{width}, then only the window's width is fixed.
-Any other non-@code{nil} value fixes both the width and the height.
-
-If this variable is @code{nil}, this does not necessarily mean that any
-window showing the buffer can be resized in the desired direction.  To
-determine that, use the function @code{window-resizable}.
-@xref{Resizing Windows}.
-@end defvar
 
 The following function tells how small a specific window can get taking
 into account the sizes of its areas and the values of
@@ -693,10 +672,11 @@ of @var{window}'s lines.
 
 The return value makes sure that all components of @var{window} remain
 fully visible if @var{window}'s size were actually set to it.  With
-@var{horizontal} @code{nil} it includes the mode and header line and the
-bottom divider.  With @var{horizontal} non-@code{nil} it includes the
-fringes, a scroll bar, and a right divider, if present.  It does not,
-however, include the space reserved for the margins.
+@var{horizontal} @code{nil} it includes the mode and header line, the
+horizontal scroll bar and the bottom divider.  With @var{horizontal}
+non-@code{nil} it includes the fringes, a scroll bar, and a right
+divider, if present.  It does not, however, include the space reserved
+for the margins.
 
 The optional argument @var{ignore}, if non-@code{nil}, means ignore
 restrictions imposed by fixed size windows, @code{window-min-height} or
@@ -748,14 +728,14 @@ Normally, the variables @code{window-min-height} and
 (@pxref{Window Sizes}).  However, if the optional argument @var{ignore}
 is non-@code{nil}, this function ignores @code{window-min-height} and
 @code{window-min-width}, as well as @code{window-size-fixed}.  Instead,
-it considers the minimum-height window to be one consisting of a header,
-a mode line and a bottom divider (if any), plus a text area one line
-tall; and a minimum-width window as one consisting of fringes, margins,
-a scroll bar and a right divider (if any), plus a text area two columns
-wide.
+it considers the minimum-height window to be one consisting of a header
+and a mode line, a horizontal scrollbar and a bottom divider (if any),
+plus a text area one line tall; and a minimum-width window as one
+consisting of fringes, margins, a scroll bar and a right divider (if
+any), plus a text area two columns wide.
 
-If the optional argument @code{pixelwise} is non-@code{nil},
-@var{delta} will be interpreted as pixels.
+If the optional argument @var{pixelwise} is non-@code{nil},
+@var{delta} is interpreted as pixels.
 @end defun
 
 @defun window-resize window delta &optional horizontal ignore pixelwise
@@ -779,7 +759,7 @@ values of the option @code{window-combination-resize} and the
 combination limits of the involved windows; in some cases, it may alter
 both edges.  @xref{Recombining Windows}.  To resize by moving only the
 bottom or right edge of a window, use the function
-@code{adjust-window-trailing-edge}, below.
+@code{adjust-window-trailing-edge}.
 @end defun
 
 @c The commands enlarge-window, enlarge-window-horizontally,
@@ -792,8 +772,8 @@ If optional argument @var{horizontal} is non-@code{nil}, it instead
 moves the right edge by @var{delta} columns.  If @var{window} is
 @code{nil}, it defaults to the selected window.
 
-If the optional argument @code{pixelwise} is non-@code{nil},
-@var{delta} will be interpreted as pixels.
+If the optional argument @var{pixelwise} is non-@code{nil},
+@var{delta} is interpreted as pixels.
 
 A positive @var{delta} moves the edge downwards or to the right; a
 negative @var{delta} moves it upwards or to the left.  If the edge
@@ -807,23 +787,22 @@ window is fixed-size), it may resize other windows.
 
 @cindex pixelwise, resizing windows
 @defopt window-resize-pixelwise
-If the value of this option is non-@code{nil}, windows are resized in
+If the value of this option is non-@code{nil}, Emacs resizes windows in
 units of pixels.  This currently affects functions like
 @code{split-window} (@pxref{Splitting Windows}), @code{maximize-window},
 @code{minimize-window}, @code{fit-window-to-buffer},
 @code{shrink-window-if-larger-than-buffer} (all listed below) and
 @code{fit-frame-to-buffer} (@pxref{Size and Position}).
 
-Note that when a frame's pixel size is not a multiple of the frame's
-character size, at least one window may get resized pixelwise even if
-this option is @code{nil}.  The default value of this option is
-@code{nil}.
+Note that when a frame's pixel size is not a multiple of its character
+size, at least one window may get resized pixelwise even if this
+option is @code{nil}.  The default value is @code{nil}.
 @end defopt
 
   The following commands resize windows in more specific ways.  When
 called interactively, they act on the selected window.
 
-@deffn Command fit-window-to-buffer &optional window max-height min-height max-width min-width
+@deffn Command fit-window-to-buffer &optional window max-height min-height max-width min-width preserve-size
 This command adjusts the height or width of @var{window} to fit the text
 in it.  It returns non-@code{nil} if it was able to resize @var{window},
 and @code{nil} otherwise.  If @var{window} is omitted or @code{nil}, it
@@ -850,6 +829,10 @@ defaults to the width of @var{window}'s frame.  The optional argument
 @code{window-min-width}.  Both @var{max-width} and @var{min-width} are
 specified in columns and include fringes, margins and scrollbars, if
 any.
+
+The optional argument @var{preserve-size}, if non-@code{nil}, will
+install a parameter to preserve the size of @var{window} during future
+resize operations (@pxref{Preserving Window Sizes}).
 
 If the option @code{fit-frame-to-buffer} (see below) is non-@code{nil},
 this function will try to resize the frame of @var{window} to fit its
@@ -1083,6 +1066,99 @@ point was previously on.  Note that this only affects
 @code{split-window-below}, not the lower-level @code{split-window}
 function.
 @end defopt
+
+
+@node Preserving Window Sizes
+@section Preserving Window Sizes
+@cindex preserving window sizes
+
+A window can get resized explicitly by using one of the functions from
+the preceding section or implicitly, for example, when resizing an
+adjacent window, when splitting or deleting a window (@pxref{Splitting
+Windows}, @pxref{Deleting Windows}) or when resizing the window's frame
+(@pxref{Size and Position}).
+
+  It is possible to avoid implicit resizing of a specific window when
+there are one or more other resizable windows on the same frame.  For
+this purpose, Emacs must be advised to @dfn{preserve} the size of that
+window.  There are two basic ways to do that.
+
+@defvar window-size-fixed
+If this buffer-local variable is non-@code{nil}, the size of any window
+displaying the buffer cannot normally be changed.  Deleting a window or
+changing the frame's size may still change the window's size, if there
+is no choice.
+
+If the value is @code{height}, then only the window's height is fixed;
+if the value is @code{width}, then only the window's width is fixed.
+Any other non-@code{nil} value fixes both the width and the height.
+
+If this variable is @code{nil}, this does not necessarily mean that any
+window showing the buffer can be resized in the desired direction.  To
+determine that, use the function @code{window-resizable}.
+@xref{Resizing Windows}.
+@end defvar
+
+Often @code{window-size-fixed} is overly aggressive because it inhibits
+any attempt to explicitly resize or split an affected window as well.
+This may even happen after the window has been resized implicitly, for
+example, when deleting an adjacent window or resizing the window's
+frame.  The following function tries hard to never disallow resizing
+such a window explicitly:
+
+@defun window-preserve-size &optional window horizontal preserve
+This function (un-)marks the height of window @var{window} as preserved
+for future resize operations.  @var{window} must be a live window and
+defaults to the selected one.  If the optional argument @var{horizontal}
+is non-@code{nil}, it (un-)marks the width of @var{window} as preserved.
+
+If the optional argument @var{preserve} is @code{t}, this means to
+preserve the current height/width of @var{window}'s body.  The
+height/width of @var{window} will change only if Emacs has no better
+choice.  Resizing a window whose height/width is preserved by this
+function never throws an error.
+
+If @var{preserve} is @code{nil}, this means to stop preserving the
+height/width of @var{window}, lifting any respective restraint induced
+by a previous call of this function for @var{window}.  Calling
+@code{enlarge-window}, @code{shrink-window} or
+@code{fit-window-to-buffer} with @var{window} as argument may also
+remove the respective restraint.
+@end defun
+
+@code{window-preserve-size} is currently invoked by the following
+functions:
+
+@table @code
+@item fit-window-to-buffer
+If the optional argument @var{preserve-size} of that function
+(@pxref{Resizing Windows}) is non-@code{nil}, the size established by
+that function is preserved.
+
+@item display-buffer
+If the @var{alist} argument of that function (@pxref{Choosing Window})
+contains a @code{preserve-size} entry, the size of the window produced
+by that function is preserved.
+@end table
+
+  @code{window-preserve-size} installs a window parameter (@pxref{Window
+Parameters}) called @code{preserved-size} which is consulted by the
+window resizing functions.  This parameter will not prevent resizing the
+window when the window shows another buffer than the one when
+@code{window-preserve-size} was invoked or if its size has changed since
+then.
+
+The following function can be used to check whether the height of a
+particular window is preserved:
+
+@defun window-preserved-size &optional window horizontal
+This function returns the preserved height of window @var{window} in
+pixels.  @var{window} must be a live window and defaults to the selected
+one.  If the optional argument @var{horizontal} is non-@code{nil}, it
+returns the preserved width of @var{window}.  It returns @code{nil} if
+the size of @var{window} is not preserved.
+@end defun
+
 
 @node Deleting Windows
 @section Deleting Windows
@@ -2238,6 +2314,13 @@ If the @sc{cdr} specifies a function, that function is called with one
 argument: the new window.  The function is supposed to adjust the width
 of the window; its return value is ignored.
 @end itemize
+
+If @var{alist} contains a @code{preserve-size} entry, Emacs will try to
+preserve the size of the new window during future resize operations
+(@pxref{Preserving Window Sizes}).  The @sc{cdr} of that entry must be a
+cons cell whose @sc{car}, if non-@code{nil}, means to preserve the width
+of the window and whose @sc{cdr}, if non-@code{nil}, means to preserve
+the height of the window.
 
 This function can fail if no window splitting can be performed for some
 reason (e.g., if the selected frame has an @code{unsplittable} frame
@@ -3905,6 +3988,15 @@ This parameter marks the window as not selectable by @code{other-window}
 This parameter specifies the window that this one has been cloned
 from.  It is installed by @code{window-state-get} (@pxref{Window
 Configurations}).
+
+@item @code{preserved-size}
+This parameter specifies a buffer, a direction where @code{nil} means
+vertical and @code{t} horizontal, and a size in pixels.  If this window
+displays the specified buffer and its size in the indicated direction
+equals the size specified by this parameter, then Emacs will try to
+preserve the size of this window in the indicated direction.  This
+parameter is installed and updated by the function
+@code{window-preserve-size} (@pxref{Preserving Window Sizes}).
 
 @item @code{quit-restore}
 This parameter is installed by the buffer display functions

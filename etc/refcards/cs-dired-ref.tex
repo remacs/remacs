@@ -1,9 +1,9 @@
-% Reference Card for Dired -*- coding: iso-latin-2 -*-
+% Reference Card for Dired
 
 % Copyright (C) 2000-2014 Free Software Foundation, Inc.
 
 % Author: Evgeny Roubinchtein <eroubinc@u.washington.edu>
-% Czech translation: Pavel Janík <Pavel@Janik.cz>, March 2001
+% Czech translation: Pavel JanÃ­k <Pavel@Janik.cz>, March 2001
 
 % This file is part of GNU Emacs.
 
@@ -31,11 +31,6 @@
 % Czech hyphenation rules applied
 \chyph
 
-% Without this, pdfTeX 3.1415926-2.5-1.40.14 (TeX Live 2013/Debian)
-% aborts with: "! UTF-8 INPUT IS CORRUPTED !
-% May be you are using another input encoding"
-\input utf8off
-
 % This file can be printed with 1, 2, or 3 columns per page.
 % Specify how many you want here.
 \newcount\columnsperpage
@@ -60,7 +55,7 @@
 \centerline{For GNU Emacs version \versionemacs}
 \centerline{Originally written May 2000 by Evgeny Roubinchtein,}
 \centerline{using refcard layout designed by Stephen Gildea.}
-\centerline{Translated by Pavel Janík.}
+\centerline{Translated by Pavel JanÃ­k.}
 
 Permission is granted to make and distribute copies of
 this card provided the copyright notice and this permission notice
@@ -252,10 +247,10 @@ For copies of the GNU Emacs manual, see:
 %**end of header
 
 
-\title{Referenèní karta pro Dired}
+\title{ReferenÄnÃ­ karta pro Dired}
 
-\centerline{(urèeno pro Dired v GNU Emacsu \versionemacs)}
-\centerline{Pøíkazy oznaèené \dx{} vy¾adují dired-x}
+\centerline{(urÄeno pro Dired v GNU Emacsu \versionemacs)}
+\centerline{PÅ™Ã­kazy oznaÄenÃ© \dx{} vyÅ¾adujÃ­ dired-x}
 
 % trim this down to fit everything on one page
 % \section{General}
@@ -284,119 +279,119 @@ For copies of the GNU Emacs manual, see:
 % When editing several directories in one buffer, each directory acts as a
 % page, so C-x [ and C-x ] can be used to move between directories.
 
-\section{Spu¹tìní a ukonèení Dired}
+\section{SpuÅ¡tÄ›nÃ­ a ukonÄenÃ­ Dired}
 
-\key{spu¹tìní dired}{C-x d}
-\key{spu¹tìní dired v adresáøi s aktuálním souborem}{C-x C-j \dx}
-\key{ukonèení dired}{q}
+\key{spuÅ¡tÄ›nÃ­ dired}{C-x d}
+\key{spuÅ¡tÄ›nÃ­ dired v adresÃ¡Å™i s aktuÃ¡lnÃ­m souborem}{C-x C-j \dx}
+\key{ukonÄenÃ­ dired}{q}
 
-\section{Pøíkazy pro pøesuny}
+\section{PÅ™Ã­kazy pro pÅ™esuny}
 
-\key{zpìt na pøedchozí øádku}{p}
-\key{vpøed na následující øádku}{n}
-\key{nahoru na pøedchozí adresáø}{<}
-\key{dolù na následující adresáø}{>}
-\key{na dal¹í oznaèenı soubor}{M-\}}
-\key{na pøedchozí oznaèenı soubor}{M-\{}
-\key{zpìt na pøedchozí podadresáø}{M-C-p}
-\key{vpøed na dal¹í podadresáø}{M-C-n}
-\key{na nadøazenı adresáø}{^}
-\key{jdi na první podadresáø}{M-C-d}
+\key{zpÄ›t na pÅ™edchozÃ­ Å™Ã¡dku}{p}
+\key{vpÅ™ed na nÃ¡sledujÃ­cÃ­ Å™Ã¡dku}{n}
+\key{nahoru na pÅ™edchozÃ­ adresÃ¡Å™}{<}
+\key{dolÅ¯ na nÃ¡sledujÃ­cÃ­ adresÃ¡Å™}{>}
+\key{na dalÅ¡Ã­ oznaÄenÃ½ soubor}{M-\}}
+\key{na pÅ™edchozÃ­ oznaÄenÃ½ soubor}{M-\{}
+\key{zpÄ›t na pÅ™edchozÃ­ podadresÃ¡Å™}{M-C-p}
+\key{vpÅ™ed na dalÅ¡Ã­ podadresÃ¡Å™}{M-C-n}
+\key{na nadÅ™azenÃ½ adresÃ¡Å™}{^}
+\key{jdi na prvnÃ­ podadresÃ¡Å™}{M-C-d}
 
-\section{Pøíkazy pomocí my¹i}
-\metax{otevøi soubor}{Mouse_Button_2}
+\section{PÅ™Ã­kazy pomocÃ­ myÅ¡i}
+\metax{otevÅ™i soubor}{Mouse_Button_2}
 \metax{zobraz menu}{Control-Mouse_Button_3}
 
-\section{Okam¾ité akce nad soubory}
+\section{OkamÅ¾itÃ© akce nad soubory}
 
-\key{otevøi aktuální soubor}{f}
-\key{otevøi aktuální soubor pouze pro ètení}{v}
-\key{otevøi aktuální soubor v jiném oknì}{o}
-%%\key{otevøi aktuální soubor v jiném rámci}{w}
-%%\key{zobraz aktuální soubor}{C-u o}
-\key{vytvoø novı podadresáø}{+}
-\key{porovnej soubor pod kurzorem s oznaèenım}{=}
+\key{otevÅ™i aktuÃ¡lnÃ­ soubor}{f}
+\key{otevÅ™i aktuÃ¡lnÃ­ soubor pouze pro ÄtenÃ­}{v}
+\key{otevÅ™i aktuÃ¡lnÃ­ soubor v jinÃ©m oknÄ›}{o}
+%%\key{otevÅ™i aktuÃ¡lnÃ­ soubor v jinÃ©m rÃ¡mci}{w}
+%%\key{zobraz aktuÃ¡lnÃ­ soubor}{C-u o}
+\key{vytvoÅ™ novÃ½ podadresÃ¡Å™}{+}
+\key{porovnej soubor pod kurzorem s oznaÄenÃ½m}{=}
 
-\section{Znaèení a odznaèení souborù}
+\section{ZnaÄenÃ­ a odznaÄenÃ­ souborÅ¯}
 
-\key{oznaè soubor nebo podadresáø pro dal¹í pøíkazy}{m}
-\key{odznaè soubor nebo soubory podadresáøe}{u}
-\key{zru¹ oznaèení v¹ech souborù v bufferu}{M-delete}
-\key{oznaè soubory se zadanou pøíponou}{* .}
-\key{oznaè v¹echny adresáøe}{* /}
-\key{oznaè v¹echny symbolické odkazy}{* @}
-\key{oznaè v¹echny spustitelné soubory}{* *}
-\key{invertuj oznaèení}{* t}
-\key{oznaè v¹echny soubory v aktuálním podadresáøi}{* s}
-\key{oznaè soubory vyhovující regulárnímu vırazu}{* \%}
-\key{zmìò znaèku na jiné písmeno}{* c}
-\key{oznaè soubory, pro které elispovı vıraz vrací t}{* ( \dx}
+\key{oznaÄ soubor nebo podadresÃ¡Å™ pro dalÅ¡Ã­ pÅ™Ã­kazy}{m}
+\key{odznaÄ soubor nebo soubory podadresÃ¡Å™e}{u}
+\key{zruÅ¡ oznaÄenÃ­ vÅ¡ech souborÅ¯ v bufferu}{M-delete}
+\key{oznaÄ soubory se zadanou pÅ™Ã­ponou}{* .}
+\key{oznaÄ vÅ¡echny adresÃ¡Å™e}{* /}
+\key{oznaÄ vÅ¡echny symbolickÃ© odkazy}{* @}
+\key{oznaÄ vÅ¡echny spustitelnÃ© soubory}{* *}
+\key{invertuj oznaÄenÃ­}{* t}
+\key{oznaÄ vÅ¡echny soubory v aktuÃ¡lnÃ­m podadresÃ¡Å™i}{* s}
+\key{oznaÄ soubory vyhovujÃ­cÃ­ regulÃ¡rnÃ­mu vÃ½razu}{* \%}
+\key{zmÄ›Åˆ znaÄku na jinÃ© pÃ­smeno}{* c}
+\key{oznaÄ soubory, pro kterÃ© elispovÃ½ vÃ½raz vracÃ­ t}{* ( \dx}
 
 \section{Modifikace Dired bufferu}
 
-\key{vlo¾ do tohoto bufferu podadresáø}{i}
-\key{odstraò oznaèené soubory z bufferu}{k}
-\key{odstraò z bufferu vıpis podadresáøe}{C-u k}
-\key{znovu naèti adresáøe (znaèky se zachovají)}{g}
-\key{pøepni tøídìní adresáøe podle jména/data}{s}
-\key{uprav volby pøíkazu ls}{C-u s}
-\key{obnov znaèky, skryté øádky apod.}{C-_}
-\key{skryj v¹echny podadresáøe}{M-\$}
-\key{skryj nebo odkryj v¹echny podadresáøe}{\$}
+\key{vloÅ¾ do tohoto bufferu podadresÃ¡Å™}{i}
+\key{odstraÅˆ oznaÄenÃ© soubory z bufferu}{k}
+\key{odstraÅˆ z bufferu vÃ½pis podadresÃ¡Å™e}{C-u k}
+\key{znovu naÄti adresÃ¡Å™e (znaÄky se zachovajÃ­)}{g}
+\key{pÅ™epni tÅ™Ã­dÄ›nÃ­ adresÃ¡Å™e podle jmÃ©na/data}{s}
+\key{uprav volby pÅ™Ã­kazu ls}{C-u s}
+\key{obnov znaÄky, skrytÃ© Å™Ã¡dky apod.}{C-_}
+\key{skryj vÅ¡echny podadresÃ¡Å™e}{M-\$}
+\key{skryj nebo odkryj vÅ¡echny podadresÃ¡Å™e}{\$}
 
-\section{Pøíkazy nad oznaèenımi soubory}
+\section{PÅ™Ã­kazy nad oznaÄenÃ½mi soubory}
 
-\key{kopíruj soubor(y)}{C}
-\key{pøejmenuj soubor nebo pøesuò soubory}{R}
-\key{zmìò vlastníka souboru(ù)}{O}
-\key{zmìò skupinu souboru(ù)}{G}
-\key{zmìò pøístupová práva souboru(ù)}{M}
+\key{kopÃ­ruj soubor(y)}{C}
+\key{pÅ™ejmenuj soubor nebo pÅ™esuÅˆ soubory}{R}
+\key{zmÄ›Åˆ vlastnÃ­ka souboru(Å¯)}{O}
+\key{zmÄ›Åˆ skupinu souboru(Å¯)}{G}
+\key{zmÄ›Åˆ pÅ™Ã­stupovÃ¡ prÃ¡va souboru(Å¯)}{M}
 \key{vytiskni soubor(y)}{P}
-\key{zmìò název souboru(ù) na malá písmena}{\% l}
-\key{zmìò název souboru(ù) na velká písmena}{\% u}
-\key{sma¾ oznaèené soubory}{D}
-%%\key{proveï uuencode nebo uudecode souboru(ù)}{U}
+\key{zmÄ›Åˆ nÃ¡zev souboru(Å¯) na malÃ¡ pÃ­smena}{\% l}
+\key{zmÄ›Åˆ nÃ¡zev souboru(Å¯) na velkÃ¡ pÃ­smena}{\% u}
+\key{smaÅ¾ oznaÄenÃ© soubory}{D}
+%%\key{proveÄ uuencode nebo uudecode souboru(Å¯)}{U}
 \key{zkomprimuj nebo dekomprimuj soubor(y)}{Z}
-\key{spus» info na soubor}{I \dx}
-\key{vytvoø symbolickı(é) odkaz(y)}{S}
-\key{vytvoø relativní symbolické odkazy}{Y}
-\key{vytvoø pevnı odkaz}{H}
-\key{prohledej soubory na regulární vıraz}{A}
-\key{nahraï regulární vırazy}{Q}
-\key{pøelo¾ soubory (byte-compile)}{B}
-\key{naèti soubory (load-file)}{L}
-\key{spus» pøíkaz na soubor(y)}{!}
+\key{spusÅ¥ info na soubor}{I \dx}
+\key{vytvoÅ™ symbolickÃ½(Ã©) odkaz(y)}{S}
+\key{vytvoÅ™ relativnÃ­ symbolickÃ© odkazy}{Y}
+\key{vytvoÅ™ pevnÃ½ odkaz}{H}
+\key{prohledej soubory na regulÃ¡rnÃ­ vÃ½raz}{A}
+\key{nahraÄ regulÃ¡rnÃ­ vÃ½razy}{Q}
+\key{pÅ™eloÅ¾ soubory (byte-compile)}{B}
+\key{naÄti soubory (load-file)}{L}
+\key{spusÅ¥ pÅ™Ã­kaz na soubor(y)}{!}
 
-\section{Oznaèení souborù pro smazání}
-\leftline{\bf Odznaèující pøíkazy ma¾ou znaèku pro smazání}
-\key{oznaè soubor pro smazání}{d}
-%%\key{odstraò znaèku pro smazání}{delete}
-\key{oznaè v¹echny zálohy (soubory konèící na \~{})}{\~{}}
-\key{oznaè v¹echny zálohy (auto-save)}{\#}
-\key{oznaè rùzné doèasné soubory}{\% \&}
-\key{oznaè èíslované zálohy (konèící na .\~{}1\~{} apod.)}{.}
-\key{proveï vımaz souborù oznaèenıch ke smazání}{x}
-\key{oznaè soubory vyhovující regulárnímu vırazu}{\% d}
+\section{OznaÄenÃ­ souborÅ¯ pro smazÃ¡nÃ­}
+\leftline{\bf OdznaÄujÃ­cÃ­ pÅ™Ã­kazy maÅ¾ou znaÄku pro smazÃ¡nÃ­}
+\key{oznaÄ soubor pro smazÃ¡nÃ­}{d}
+%%\key{odstraÅˆ znaÄku pro smazÃ¡nÃ­}{delete}
+\key{oznaÄ vÅ¡echny zÃ¡lohy (soubory konÄÃ­cÃ­ na \~{})}{\~{}}
+\key{oznaÄ vÅ¡echny zÃ¡lohy (auto-save)}{\#}
+\key{oznaÄ rÅ¯znÃ© doÄasnÃ© soubory}{\% \&}
+\key{oznaÄ ÄÃ­slovanÃ© zÃ¡lohy (konÄÃ­cÃ­ na .\~{}1\~{} apod.)}{.}
+\key{proveÄ vÃ½maz souborÅ¯ oznaÄenÃ½ch ke smazÃ¡nÃ­}{x}
+\key{oznaÄ soubory vyhovujÃ­cÃ­ regulÃ¡rnÃ­mu vÃ½razu}{\% d}
 
-\section{Pøíkazy s regulárními vırazy}
+\section{PÅ™Ã­kazy s regulÃ¡rnÃ­mi vÃ½razy}
 
-\key{oznaè soubory vyhovující regulárnímu vırazu}{\% m}
-\key{kopíruj oznaèené soubory obsahující regexp}{\% C}
-\key{pøejmenuj oznaèené soubory vyhovující regexp}{\% R}
-\key{pevnı odkaz}{\% H}
-\key{symbolickı odkaz}{\% S}
-\key{symbolickı odkaz s relativní cestou}{\% Y}
-\key{oznaè pro smazání}{\% d}
+\key{oznaÄ soubory vyhovujÃ­cÃ­ regulÃ¡rnÃ­mu vÃ½razu}{\% m}
+\key{kopÃ­ruj oznaÄenÃ© soubory obsahujÃ­cÃ­ regexp}{\% C}
+\key{pÅ™ejmenuj oznaÄenÃ© soubory vyhovujÃ­cÃ­ regexp}{\% R}
+\key{pevnÃ½ odkaz}{\% H}
+\key{symbolickÃ½ odkaz}{\% S}
+\key{symbolickÃ½ odkaz s relativnÃ­ cestou}{\% Y}
+\key{oznaÄ pro smazÃ¡nÃ­}{\% d}
 
 \section{Dired a Find}
-\metax{otevøi v dired soubory vyhovující vzorku}{M-x find-name-dired}
-\metax{otevøi v dired soubory obsahující vzorek}{M-x find-grep-dired}
-\metax{otevøi v dired soubory podle vıstupu \kbd{find}}{M-x find-dired}
+\metax{otevÅ™i v dired soubory vyhovujÃ­cÃ­ vzorku}{M-x find-name-dired}
+\metax{otevÅ™i v dired soubory obsahujÃ­cÃ­ vzorek}{M-x find-grep-dired}
+\metax{otevÅ™i v dired soubory podle vÃ½stupu \kbd{find}}{M-x find-dired}
 
-\section{Nápovìda}
+\section{NÃ¡povÄ›da}
 
-\key{zobraz nápovìdu}{h}
-\key{pøehled pøíkazù dired}{?}
+\key{zobraz nÃ¡povÄ›du}{h}
+\key{pÅ™ehled pÅ™Ã­kazÅ¯ dired}{?}
 
 \copyrightnotice
 

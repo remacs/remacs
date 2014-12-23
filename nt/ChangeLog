@@ -1,3 +1,66 @@
+2014-12-13  Eli Zaretskii  <eliz@gnu.org>
+
+	* gnulib.mk (stddef.h): Sync with the latest change in lib/gnulib.mk.
+
+2014-11-27  Oscar Fuentes  <ofv@wanadoo.es>
+
+	* inc/ms-w32.h: Define MINGW_W64.
+	* nt/addpm.c, nt/addsection.c, nt/preprep.c: Use it.
+
+2014-11-24  Glenn Morris  <rgm@gnu.org>
+
+	* Makefile.in (../src/emacs.res): New target.
+
+2014-11-22  Glenn Morris  <rgm@gnu.org>
+
+	* emacs.rc.in, emacsclient.rc.in: Rename from emacs.rc, emacsclient.rc.
+	Let configure generate the real files, and set the version numbers.
+	* Makefile.in (distclean): Delete *.rc.
+	(emacs.res): Update deps for nt/emacsclient.rc now being in the
+	build directory, not the source directory.
+
+	* Makefile.in (emacs.res): Add dependency on icons/hand.cur.
+
+2014-11-18  Glenn Morris  <rgm@gnu.org>
+
+	* Makefile.in (addpm${EXEEXT}, ddeclient${EXEEXT})
+	(cmdproxy${EXEEXT}, runemacs${EXEEXT}, emacs.res):
+	Use automatic variables.
+
+2014-10-26  Dani Moncayo <dmoncayo@gmail.com>
+
+	* README.W32 (Preliminaries): Don't assume that this file is at
+	the top level.
+	(Setting up Emacs): Minor rewording to be more accurate.
+
+2014-10-25  Eric S. Raymond  <esr@thyrsus.com>
+
+	* Neutralize language specific to a repository type.
+
+2014-10-22  Noam Postavsky  <npostavs@users.sourceforget.net>
+
+	* nt/cmdproxy.c (batch_file_p): New function.
+	(spawn): If calling a quoted batch file pass NULL for progname.
+	(Bug#18745)
+
+2014-10-20  Glenn Morris  <rgm@gnu.org>
+
+	* Merge in all changes up to 24.4 release.
+
+2014-09-29  Eli Zaretskii  <eliz@gnu.org>
+
+	* makefile.w32-in (VERSION): Bump version to 25.0.50.
+
+	* emacsclient.rc: Bump version to 25.0.50.
+
+	* emacs.rc: Bump version to 25.0.50.
+
+	* config.nt (VERSION): Bump version to 25.0.50.
+
+2014-09-01  Eli Zaretskii  <eliz@gnu.org>
+
+	* gnulib.mk: Synchronize with lib/gnulib.mk.
+
 2014-06-15  Glenn Morris  <rgm@gnu.org>
 
 	* Makefile.in (LDFLAGS): Explicitly set via configure.
@@ -18,8 +81,7 @@
 
 	* Makefile.in (DONT_INSTALL): Now empty.
 	(addsection${EXEEXT}): Remove target.
-
-	* addsection.c: File removed.
+	* addsection.c: Remove file.
 
 2014-05-27  Fabrice Popineau  <fabrice.popineau@gmail.com>
 
@@ -1799,7 +1861,7 @@
 	* config.nt (HAVE_FACES): Remove, unused.
 
 2008-06-26  Juanma Barranquero  <lekktu@gmail.com>
-            Eli Zaretskii  <eliz@gnu.org>
+	    Eli Zaretskii  <eliz@gnu.org>
 
 	* nmake.defs (FONT_CFLAGS):
 	* gmake.defs (FONT_CFLAGS): Remove.
@@ -1815,7 +1877,7 @@
 	* config.nt: Remove reference to UNEXEC_SRC.
 
 2008-06-23  Juanma Barranquero  <lekktu@gmail.com>
-            Eli Zaretskii  <eliz@gnu.org>
+	    Eli Zaretskii  <eliz@gnu.org>
 
 	* gmake.defs (DEBUG_FLAG, DEBUG_LINK) [!NODEBUG]:
 	Don't hardcode -gstabs+, use DEBUG_INFO.

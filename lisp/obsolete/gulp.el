@@ -5,7 +5,7 @@
 ;; Author: Sam Shteingold <shteingd@math.ucla.edu>
 ;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: maint
-;; Obsolete-since: 24.5
+;; Obsolete-since: 25.1
 
 ;; This file is part of GNU Emacs.
 
@@ -137,7 +137,7 @@ is left in the `*gulp*' buffer at the end."
   "Create the maintainer/package alist for files in FLIST in DIR.
 That is a list of elements, each of the form (MAINTAINER PACKAGES...)."
   (save-excursion
-    (let (mplist filen node mnt-tm mnt tm fl-tm)
+    (let (mplist filen node mnt tm fl-tm)
       (get-buffer-create gulp-tmp-buffer)
       (set-buffer gulp-tmp-buffer)
       (setq buffer-undo-list t)

@@ -125,9 +125,7 @@ of SECS seconds since the epoch.  SECS may be a fraction."
   "Advance TIME by SECS seconds and optionally USECS microseconds
 and PSECS picoseconds.  SECS may be either an integer or a
 floating point number."
-  (let ((delta (if (floatp secs)
-		   (seconds-to-time secs)
-		 (list (floor secs 65536) (mod secs 65536)))))
+  (let ((delta secs))
     (if (or usecs psecs)
 	(setq delta (time-add delta (list 0 0 (or usecs 0) (or psecs 0)))))
     (time-add time delta)))
@@ -307,8 +305,8 @@ This function is called, by name, directly by the C code."
               ;; perhaps because Emacs was suspended for a long time,
               ;; limit how many times things get repeated.
               (if (and (numberp timer-max-repeats)
-                       (< 0 (timer-until timer (current-time))))
-                  (let ((repeats (/ (timer-until timer (current-time))
+                       (< 0 (timer-until timer nil)))
+                  (let ((repeats (/ (timer-until timer nil)
                                     (timer--repeat-delay timer))))
                     (if (> repeats timer-max-repeats)
                         (timer-inc-time timer (* (timer--repeat-delay timer)
@@ -374,13 +372,13 @@ This function returns a timer object which you can use in `cancel-timer'."
 
   ;; Handle numbers as relative times in seconds.
   (if (numberp time)
-      (setq time (timer-relative-time (current-time) time)))
+      (setq time (timer-relative-time nil time)))
 
   ;; Handle relative times like "2 hours 35 minutes"
   (if (stringp time)
       (let ((secs (timer-duration time)))
 	(if secs
-	    (setq time (timer-relative-time (current-time) secs)))))
+	    (setq time (timer-relative-time nil secs)))))
 
   ;; Handle "11:23pm" and the like.  Interpret it as meaning today
   ;; which admittedly is rather stupid if we have passed that time
@@ -486,7 +484,7 @@ The value is a list that the debugger can pass to `with-timeout-unsuspend'
 when it exits, to make these timers start counting again."
   (mapcar (lambda (timer)
 	    (cancel-timer timer)
-	    (list timer (time-subtract (timer--time timer) (current-time))))
+	    (list timer (time-subtract (timer--time timer) nil)))
 	  with-timeout-timers))
 
 (defun with-timeout-unsuspend (timer-spec-list)
@@ -495,7 +493,7 @@ The argument should be a value previously returned by `with-timeout-suspend'."
   (dolist (elt timer-spec-list)
     (let ((timer (car elt))
 	  (delay (cadr elt)))
-      (timer-set-time timer (time-add (current-time) delay))
+      (timer-set-time timer (time-add nil delay))
       (timer-activate timer))))
 
 (defun y-or-n-p-with-timeout (prompt seconds default-value)

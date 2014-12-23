@@ -49,6 +49,26 @@
   "Special hook run when image data is requested in a new window.
 It is called with one argument, the initial WINPROPS.")
 
+;; FIXME this doesn't seem mature yet. Document in manual when it is.
+(defvar image-transform-resize nil
+  "The image resize operation.
+Its value should be one of the following:
+ - nil, meaning no resizing.
+ - `fit-height', meaning to fit the image to the window height.
+ - `fit-width', meaning to fit the image to the window width.
+ - A number, which is a scale factor (the default size is 1).")
+
+(defvar image-transform-scale 1.0
+  "The scale factor of the image being displayed.")
+
+(defvar image-transform-rotation 0.0
+  "Rotation angle for the image in the current Image mode buffer.")
+
+(defvar image-transform-right-angle-fudge 0.0001
+  "Snap distance to a multiple of a right angle.
+There's no deep theory behind the default value, it should just
+be somewhat larger than ImageMagick's MagickEpsilon.")
+
 (defun image-mode-winprops (&optional window cleanup)
   "Return winprops of WINDOW.
 A winprops object has the shape (WINDOW . ALIST).
@@ -379,8 +399,6 @@ call."
 	["Show as Text" image-toggle-display :active t
 	 :help "Show image as text"]
 	"--"
-	["Fit Frame to Image" image-mode-fit-frame :active t
-	 :help "Resize frame to match image"]
 	["Fit to Window Height" image-transform-fit-to-height
 	 :visible (eq image-type 'imagemagick)
 	 :help "Resize image to match the window height"]
@@ -390,6 +408,9 @@ call."
 	["Rotate Image..." image-transform-set-rotation
 	 :visible (eq image-type 'imagemagick)
 	 :help "Rotate the image"]
+	["Reset Transformations" image-transform-reset
+	 :visible (eq image-type 'imagemagick)
+	 :help "Reset all image transformations"]
 	"--"
 	["Show Thumbnails"
 	 (lambda ()
@@ -401,6 +422,9 @@ call."
          :help "Move to next image in this directory"]
 	["Previous Image" image-previous-file :active buffer-file-name
          :help "Move to previous image in this directory"]
+	"--"
+	["Fit Frame to Image" image-mode-fit-frame :active t
+	 :help "Resize frame to match image"]
 	"--"
 	["Animate Image" image-toggle-animation :style toggle
 	 :selected (let ((image (image-get-display-property)))
@@ -638,8 +662,19 @@ was inserted."
 			   (string-make-unibyte
 			    (buffer-substring-no-properties (point-min) (point-max)))
 			 filename))
-	 (type (image-type file-or-data nil data-p))
-	 (image (create-image file-or-data type data-p))
+	 ;; If we have a `fit-width' or a `fit-height', don't limit
+	 ;; the size of the image to the window size.
+	 (edges (and (null image-transform-resize)
+		     (window-inside-pixel-edges
+		      (get-buffer-window (current-buffer)))))
+	 (type (if (fboundp 'imagemagick-types)
+		   'imagemagick
+		 (image-type file-or-data nil data-p)))
+	 (image (if (not edges)
+		    (create-image file-or-data type data-p)
+		  (create-image file-or-data type data-p
+				:max-width (- (nth 2 edges) (nth 0 edges))
+				:max-height (- (nth 3 edges) (nth 1 edges)))))
 	 (inhibit-read-only t)
 	 (buffer-undo-list t)
 	 (modified (buffer-modified-p))
@@ -890,26 +925,6 @@ replacing the current Image mode buffer."
 ;;   nil "image-transform" image-transform-minor-mode-map)
 
 
-;; FIXME this doesn't seem mature yet. Document in manual when it is.
-(defvar image-transform-resize nil
-  "The image resize operation.
-Its value should be one of the following:
- - nil, meaning no resizing.
- - `fit-height', meaning to fit the image to the window height.
- - `fit-width', meaning to fit the image to the window width.
- - A number, which is a scale factor (the default size is 1).")
-
-(defvar image-transform-scale 1.0
-  "The scale factor of the image being displayed.")
-
-(defvar image-transform-rotation 0.0
-  "Rotation angle for the image in the current Image mode buffer.")
-
-(defvar image-transform-right-angle-fudge 0.0001
-  "Snap distance to a multiple of a right angle.
-There's no deep theory behind the default value, it should just
-be somewhat larger than ImageMagick's MagickEpsilon.")
-
 (defsubst image-transform-width (width height)
   "Return the bounding box width of a rotated WIDTH x HEIGHT rectangle.
 The rotation angle is the value of `image-transform-rotation' in degrees."
@@ -1089,6 +1104,16 @@ ROTATION should be in degrees.  This command has no effect unless
 Emacs is compiled with ImageMagick support."
   (interactive "nRotation angle (in degrees): ")
   (setq image-transform-rotation (float (mod rotation 360)))
+  (image-toggle-display-image))
+
+(defun image-transform-reset ()
+  "Display the current image with the default size and rotation.
+This command has no effect unless Emacs is compiled with
+ImageMagick support."
+  (interactive)
+  (setq image-transform-resize nil
+	image-transform-rotation 0.0
+	image-transform-scale 1)
   (image-toggle-display-image))
 
 (provide 'image-mode)

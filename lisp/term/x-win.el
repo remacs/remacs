@@ -1,4 +1,4 @@
-;;; x-win.el --- parse relevant switches and set up for X  -*-coding: iso-2022-7bit;-*-
+;;; x-win.el --- parse relevant switches and set up for X  -*-coding: iso-2022-7bit; lexical-binding:t -*-
 
 ;; Copyright (C) 1993-1994, 2001-2014 Free Software Foundation, Inc.
 
@@ -1154,157 +1154,17 @@ as returned by `x-server-vendor'."
 
 ;;;; Selections
 
-;; We keep track of the last text selected here, so we can check the
-;; current selection against it, and avoid passing back our own text
-;; from x-selection-value.  We track both
-;; separately in case another X application only sets one of them
-;; we aren't fooled by the PRIMARY or CLIPBOARD selection staying the same.
-(defvar x-last-selected-text-clipboard nil
-  "The value of the CLIPBOARD X selection last time we selected or
-pasted text.")
-(defvar x-last-selected-text-primary nil
-  "The value of the PRIMARY X selection last time we selected or
-pasted text.")
-
-(defcustom x-select-enable-primary nil
-  "Non-nil means cutting and pasting uses the primary selection."
-  :type 'boolean
-  :group 'killing
-  :version "24.1")
-
-(defcustom x-select-request-type nil
-  "Data type request for X selection.
-The value is one of the following data types, a list of them, or nil:
-  `COMPOUND_TEXT', `UTF8_STRING', `STRING', `TEXT'
-
-If the value is one of the above symbols, try only the specified type.
-
-If the value is a list of them, try each of them in the specified
-order until succeed.
-
-The value nil is the same as the list (UTF8_STRING COMPOUND_TEXT STRING)."
-  :type '(choice (const :tag "Default" nil)
-		 (const COMPOUND_TEXT)
-		 (const UTF8_STRING)
-		 (const STRING)
-		 (const TEXT)
-		 (set :tag "List of values"
-		      (const COMPOUND_TEXT)
-		      (const UTF8_STRING)
-		      (const STRING)
-		      (const TEXT)))
-  :group 'killing)
-
-;; Get a selection value of type TYPE by calling x-get-selection with
-;; an appropriate DATA-TYPE argument decided by `x-select-request-type'.
-;; The return value is already decoded.  If x-get-selection causes an
-;; error, this function return nil.
-
-(defun x-selection-value-internal (type)
-  (let ((request-type (or x-select-request-type
-			  '(UTF8_STRING COMPOUND_TEXT STRING)))
-	text)
-    (if (consp request-type)
-	(while (and request-type (not text))
-	  (condition-case nil
-	      (setq text (x-get-selection type (car request-type)))
-	    (error nil))
-	  (setq request-type (cdr request-type)))
-      (condition-case nil
-	  (setq text (x-get-selection type request-type))
-	(error nil)))
-    (if text
-	(remove-text-properties 0 (length text) '(foreign-selection nil) text))
-    text))
-
-(defvar x-select-enable-clipboard)	; common-win
-
-;; Return the value of the current X selection.
-;; Consult the selection.  Treat empty strings as if they were unset.
-;; If this function is called twice and finds the same text,
-;; it returns nil the second time.  This is so that a single
-;; selection won't be added to the kill ring over and over.
-(defun x-selection-value ()
-  ;; With multi-tty, this function may be called from a tty frame.
-  (when (eq (framep (selected-frame)) 'x)
-    (let (clip-text primary-text)
-      (when x-select-enable-clipboard
-        (setq clip-text (x-selection-value-internal 'CLIPBOARD))
-        (if (string= clip-text "") (setq clip-text nil))
-
-        ;; Check the CLIPBOARD selection for 'newness', is it different
-        ;; from what we remembered them to be last time we did a
-        ;; cut/paste operation.
-        (setq clip-text
-              (cond ;; check clipboard
-               ((or (not clip-text) (string= clip-text ""))
-                (setq x-last-selected-text-clipboard nil))
-               ((eq      clip-text x-last-selected-text-clipboard) nil)
-               ((string= clip-text x-last-selected-text-clipboard)
-                ;; Record the newer string,
-                ;; so subsequent calls can use the `eq' test.
-                (setq x-last-selected-text-clipboard clip-text)
-                nil)
-               (t (setq x-last-selected-text-clipboard clip-text)))))
-
-      (when x-select-enable-primary
-	(setq primary-text (x-selection-value-internal 'PRIMARY))
-	;; Check the PRIMARY selection for 'newness', is it different
-	;; from what we remembered them to be last time we did a
-	;; cut/paste operation.
-	(setq primary-text
-	      (cond ;; check primary selection
-	       ((or (not primary-text) (string= primary-text ""))
-		(setq x-last-selected-text-primary nil))
-	       ((eq      primary-text x-last-selected-text-primary) nil)
-	       ((string= primary-text x-last-selected-text-primary)
-		;; Record the newer string,
-		;; so subsequent calls can use the `eq' test.
-		(setq x-last-selected-text-primary primary-text)
-		nil)
-	       (t
-		(setq x-last-selected-text-primary primary-text)))))
-
-      ;; As we have done one selection, clear this now.
-      (setq next-selection-coding-system nil)
-
-      ;; At this point we have recorded the current values for the
-      ;; selection from clipboard (if we are supposed to) and primary.
-      ;; So return the first one that has changed
-      ;; (which is the first non-null one).
-      ;;
-      ;; NOTE: There will be cases where more than one of these has
-      ;; changed and the new values differ.  This indicates that
-      ;; something like the following has happened since the last time
-      ;; we looked at the selections: Application X set all the
-      ;; selections, then Application Y set only one of them.
-      ;; In this case since we don't have
-      ;; timestamps there is no way to know what the 'correct' value to
-      ;; return is.  The nice thing to do would be to tell the user we
-      ;; saw multiple possible selections and ask the user which was the
-      ;; one they wanted.
-      (or clip-text primary-text)
-      )))
-
 (define-obsolete-function-alias 'x-cut-buffer-or-selection-value
   'x-selection-value "24.1")
 
 ;; Arrange for the kill and yank functions to set and check the clipboard.
-(setq interprogram-cut-function 'x-select-text)
-(setq interprogram-paste-function 'x-selection-value)
-
-;; Make paste from other applications use the decoding in x-select-request-type
-;; and not just STRING.
-(defun x-get-selection-value ()
-  "Get the current value of the PRIMARY selection.
-Request data types in the order specified by `x-select-request-type'."
-  (x-selection-value-internal 'PRIMARY))
 
 (defun x-clipboard-yank ()
   "Insert the clipboard contents, or the last stretch of killed text."
+  (declare (obsolete clipboard-yank "25.1"))
   (interactive "*")
-  (let ((clipboard-text (x-selection-value-internal 'CLIPBOARD))
-	(x-select-enable-clipboard t))
+  (let ((clipboard-text (gui--selection-value-internal 'CLIPBOARD))
+	(select-enable-clipboard t))
     (if (and clipboard-text (> (length clipboard-text) 0))
 	(kill-new clipboard-text))
     (yank)))
@@ -1327,9 +1187,9 @@ Request data types in the order specified by `x-select-request-type'."
 
 (defun x-win-suspend-error ()
   "Report an error when a suspend is attempted.
-This returns an error if any Emacs frames are X frames, or always under W32."
+This returns an error if any Emacs frames are X frames."
   ;; Don't allow suspending if any of the frames are X frames.
-  (if (memq 'x (mapcar 'window-system (frame-list)))
+  (if (memq 'x (mapcar #'window-system (frame-list)))
       (error "Cannot suspend Emacs while running under X")))
 
 (defvar x-initialized nil
@@ -1463,9 +1323,17 @@ This returns an error if any Emacs frames are X frames, or always under W32."
   (setq x-initialized t))
 
 (add-to-list 'display-format-alist '("\\`[^:]*:[0-9]+\\(\\.[0-9]+\\)?\\'" . x))
-(add-to-list 'handle-args-function-alist '(x . x-handle-args))
-(add-to-list 'frame-creation-function-alist '(x . x-create-frame-with-faces))
-(add-to-list 'window-system-initialization-alist '(x . x-initialize-window-system))
+(gui-method-define handle-args-function x #'x-handle-args)
+(gui-method-define frame-creation-function x #'x-create-frame-with-faces)
+(gui-method-define window-system-initialization x #'x-initialize-window-system)
+
+(gui-method-define gui-set-selection x
+                   (lambda (selection value)
+                     (if value (x-own-selection-internal selection value)
+                       (x-disown-selection-internal selection))))
+(gui-method-define gui-selection-owner-p x #'x-selection-owner-p)
+(gui-method-define gui-selection-exists-p x #'x-selection-exists-p)
+(gui-method-define gui-get-selection x #'x-get-selection-internal)
 
 ;; Initiate drag and drop
 (add-hook 'after-make-frame-functions 'x-dnd-init-frame)
@@ -1475,47 +1343,47 @@ This returns an error if any Emacs frames are X frames, or always under W32."
   (mapcar (lambda (arg)
 	    (cons (purecopy (car arg)) (purecopy (cdr arg))))
   '(
-    ("etc/images/new" . "gtk-new")
-    ("etc/images/open" . "gtk-open")
+    ("etc/images/new" . ("document-new" "gtk-new"))
+    ("etc/images/open" . ("document-open" "gtk-open"))
     ("etc/images/diropen" . "n:system-file-manager")
-    ("etc/images/close" . "gtk-close")
-    ("etc/images/save" . "gtk-save")
-    ("etc/images/saveas" . "gtk-save-as")
-    ("etc/images/undo" . "gtk-undo")
-    ("etc/images/cut" . "gtk-cut")
-    ("etc/images/copy" . "gtk-copy")
-    ("etc/images/paste" . "gtk-paste")
-    ("etc/images/search" . "gtk-find")
-    ("etc/images/print" . "gtk-print")
-    ("etc/images/preferences" . "gtk-preferences")
-    ("etc/images/help" . "gtk-help")
-    ("etc/images/left-arrow" . "gtk-go-back")
-    ("etc/images/right-arrow" . "gtk-go-forward")
-    ("etc/images/home" . "gtk-home")
-    ("etc/images/jump-to" . "gtk-jump-to")
+    ("etc/images/close" . ("window-close" "gtk-close"))
+    ("etc/images/save" . ("document-save" "gtk-save"))
+    ("etc/images/saveas" . ("document-save-as" "gtk-save-as"))
+    ("etc/images/undo" . ("edit-undo" "gtk-undo"))
+    ("etc/images/cut" . ("edit-cut" "gtk-cut"))
+    ("etc/images/copy" . ("edit-copy" "gtk-copy"))
+    ("etc/images/paste" . ("edit-paste" "gtk-paste"))
+    ("etc/images/search" . ("edit-find" "gtk-find"))
+    ("etc/images/print" . ("document-print" "gtk-print"))
+    ("etc/images/preferences" . ("preferences-system" "gtk-preferences"))
+    ("etc/images/help" . ("help-browser" "gtk-help"))
+    ("etc/images/left-arrow" . ("go-previous" "gtk-go-back"))
+    ("etc/images/right-arrow" . ("go-next" "gtk-go-forward"))
+    ("etc/images/home" . ("go-home" "gtk-home"))
+    ("etc/images/jump-to" . ("go-jump" "gtk-jump-to"))
     ("etc/images/index" . "gtk-index")
-    ("etc/images/search" . "gtk-find")
-    ("etc/images/exit" . "gtk-quit")
+    ("etc/images/exit" . ("application-exit" "gtk-quit"))
     ("etc/images/cancel" . "gtk-cancel")
-    ("etc/images/info" . "gtk-info")
+    ("etc/images/info" . ("dialog-information" "gtk-info"))
     ("etc/images/bookmark_add" . "n:bookmark_add")
     ;; Used in Gnus and/or MH-E:
     ("etc/images/attach" . "gtk-attach")
     ("etc/images/connect" . "gtk-connect")
     ("etc/images/contact" . "gtk-contact")
-    ("etc/images/delete" . "gtk-delete")
-    ("etc/images/describe" . "gtk-properties")
+    ("etc/images/delete" . ("edit-delete" "gtk-delete"))
+    ("etc/images/describe" . ("ocument-properties" "gtk-properties"))
     ("etc/images/disconnect" . "gtk-disconnect")
     ;; ("etc/images/exit" . "gtk-exit")
     ("etc/images/lock-broken" . "gtk-lock_broken")
     ("etc/images/lock-ok" . "gtk-lock_ok")
     ("etc/images/lock" . "gtk-lock")
     ("etc/images/next-page" . "gtk-next-page")
-    ("etc/images/refresh" . "gtk-refresh")
-    ("etc/images/sort-ascending" . "gtk-sort-ascending")
+    ("etc/images/refresh" . ("view-refresh" "gtk-refresh"))
+    ("etc/images/sort-ascending" . ("view-sort-ascending" "gtk-sort-ascending"))
     ("etc/images/sort-column-ascending" . "gtk-sort-column-ascending")
     ("etc/images/sort-criteria" . "gtk-sort-criteria")
-    ("etc/images/sort-descending" . "gtk-sort-descending")
+    ("etc/images/sort-descending" . ("view-sort-descending"
+				     "gtk-sort-descending"))
     ("etc/images/sort-row-ascending" . "gtk-sort-row-ascending")
     ("images/gnus/toggle-subscription" . "gtk-task-recurring")
     ("images/mail/compose" . "gtk-mail-compose")
@@ -1532,8 +1400,8 @@ This returns an error if any Emacs frames are X frames, or always under W32."
     ("images/mail/spam" . "gtk-spam")
     ;; Used for GDB Graphical Interface
     ("images/gud/break" . "gtk-no")
-    ("images/gud/recstart" . "gtk-media-record")
-    ("images/gud/recstop" . "gtk-media-stop")
+    ("images/gud/recstart" . ("media-record" "gtk-media-record"))
+    ("images/gud/recstop" . ("media-playback-stop" "gtk-media-stop"))
     ;; No themed versions available:
     ;; mail/preview (combining stock_mail and stock_zoom)
     ;; mail/save    (combining stock_mail, stock_save and stock_convert)
@@ -1542,9 +1410,12 @@ This returns an error if any Emacs frames are X frames, or always under W32."
 Emacs must be compiled with the Gtk+ toolkit for this to have any effect.
 A value that begins with n: denotes a named icon instead of a stock icon."
   :version "22.2"
-  :type '(choice (repeat (choice symbol
-				 (cons (string :tag "Emacs icon")
-				       (string :tag "Stock/named")))))
+  :type '(choice (repeat
+		  (choice symbol
+			  (cons (string :tag "Emacs icon")
+				(choice (group (string :tag "Named")
+					       (string :tag "Stock"))
+					(string :tag "Stock/named"))))))
   :group 'x)
 
 (defcustom icon-map-list '(x-gtk-stock-map)

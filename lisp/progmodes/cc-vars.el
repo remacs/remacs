@@ -271,17 +271,23 @@ nil."
   :group 'c)
 ;;;###autoload(put 'c-basic-offset 'safe-local-variable 'integerp)
 
+
 (defcustom c-tab-always-indent t
   "*Controls the operation of the TAB key.
 If t, hitting TAB always just indents the current line.  If nil, hitting
 TAB indents the current line if point is at the left margin or in the
-line's indentation, otherwise it calls `c-insert-tab-function' to
-insert a `real' tab character.  If some other value (neither nil nor t),
-then inserts a tab only within literals (comments and strings), but
-always reindents the line.
+line's indentation, otherwise it inserts a `real' tab character \(see
+note\).  If some other value (not nil or t), then tab is inserted only
+within literals \(comments and strings), but the line is always
+reindented.
 
-Note: the variable `c-comment-only-line-offset' also controls the
-indentation of lines containing only comments."
+Note: The value of `indent-tabs-mode' will determine whether a real
+tab character will be inserted, or the equivalent number of spaces.
+When inserting a tab, actually the function stored in the variable
+`c-insert-tab-function' is called.
+
+Note: indentation of lines containing only comments is also controlled
+by the `c-comment-only-line-offset' variable."
   :type '(radio
 	  (const :tag "TAB key always indents, never inserts TAB" t)
 	  (const :tag "TAB key indents in left margin, otherwise inserts TAB" nil)
@@ -535,7 +541,7 @@ variable in a mode hook."
 		  (const :format "IDL   " idl-mode) (regexp :format "%v"))
 	    (cons :format "%v"
 		  (const :format "Pike  " pike-mode) (regexp :format "%v"))
-            (cons :format "%v"
+	    (cons :format "%v"
 		  (const :format "AWK   " awk-mode) (regexp :format "%v")))
 	   (cons :format "    %v"
 		 (const :format "Other " other) (regexp :format "%v"))))
@@ -920,7 +926,7 @@ Only currently supported behavior is `alignleft'."
 (defcustom c-special-indent-hook nil
   "*Hook for user defined special indentation adjustments.
 This hook gets called after each line is indented by the mode.  It is only
-called if `c-syntactic-indentation' is non-nil."
+called when `c-syntactic-indentation' is non-nil."
   :type 'hook
   :group 'c)
 
@@ -1170,7 +1176,7 @@ can always override the use of `c-default-style' by making calls to
        (objc-method-args-cont . c-lineup-ObjC-method-args)
        ;; Anchor pos: At the method start (always at boi).
        (objc-method-call-cont . (c-lineup-ObjC-method-call-colons
-			        c-lineup-ObjC-method-call +))
+				c-lineup-ObjC-method-call +))
        ;; Anchor pos: At the open bracket.
        (extern-lang-open      . 0)
        (namespace-open        . 0)
@@ -1689,7 +1695,8 @@ as designated in the variable `c-file-style'.")
 ;; It isn't possible to specify a doc-string without specifying an
 ;; initial value with `defvar', so the following two variables have been
 ;; given doc-strings by setting the property `variable-documentation'
-;; directly.  It's really good not to have an initial value for
+;; directly.  C-h v will read this documentation only for versions of GNU
+;; Emacs from 22.1.  It's really good not to have an initial value for
 ;; variables like these that always should be dynamically bound, so it's
 ;; worth the inconvenience.
 
@@ -1765,4 +1772,8 @@ It treats escaped EOLs as whitespace.")
 
 (cc-provide 'cc-vars)
 
+;;; Local Variables:
+;;; indent-tabs-mode: t
+;;; tab-width: 8
+;;; End:
 ;;; cc-vars.el ends here

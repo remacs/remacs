@@ -1787,29 +1787,29 @@ entries for git.gnus.org:
         (while (not (eobp))
           (cond
            ((looking-at "^password: \"\\(.+\\)\"$")
-            (auth-source-macos-keychain-result-append
-             ret
-             keychain-generic
-             "secret"
-             (lexical-let ((v (match-string 1)))
-               (lambda () v))))
+            (setq ret (auth-source-macos-keychain-result-append
+                       ret
+                       keychain-generic
+                       "secret"
+                       (lexical-let ((v (match-string 1)))
+                         (lambda () v)))))
            ;; TODO: check if this is really the label
            ;; match 0x00000007 <blob>="AppleID"
            ((looking-at "^[ ]+0x00000007 <blob>=\"\\(.+\\)\"")
-            (auth-source-macos-keychain-result-append
-             ret
-             keychain-generic
-             "label"
-             (match-string 1)))
+            (setq ret (auth-source-macos-keychain-result-append
+                       ret
+                       keychain-generic
+                       "label"
+                       (match-string 1))))
            ;; match "crtr"<uint32>="aapl"
            ;; match "svce"<blob>="AppleID"
            ((looking-at "^[ ]+\"\\([a-z]+\\)\"[^=]+=\"\\(.+\\)\"")
-            (auth-source-macos-keychain-result-append
-             ret
-             keychain-generic
-             (match-string 1)
-             (match-string 2))))
-            (forward-line)))
+            (setq ret (auth-source-macos-keychain-result-append
+                       ret
+                       keychain-generic
+                       (match-string 1)
+                       (match-string 2)))))
+          (forward-line)))
       ;; return `ret' iff it has the :secret key
       (and (plist-get ret :secret) (list ret))))
 

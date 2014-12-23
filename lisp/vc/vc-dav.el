@@ -77,19 +77,17 @@ See `vc-checkout-model' for a list of possible values."
   "Return the current workfile version of URL."
   "Unknown")
 
-(defun vc-dav-register (url &optional rev comment)
+(defun vc-dav-register (url &optional _comment)
   "Register URL in the DAV backend."
   ;; Do we need to do anything here?  FIXME?
   )
 
-(defun vc-dav-checkin (url rev comment)
-  "Commit changes in URL to WebDAV.
-If REV is non-nil, that should become the new revision number.
-COMMENT is used as a check-in comment."
+(defun vc-dav-checkin (url comment)
+  "Commit changes in URL to WebDAV. COMMENT is used as a check-in comment."
   ;; This should PUT the resource and release any locks that we hold.
   )
 
-(defun vc-dav-checkout (url &optional editable rev destfile)
+(defun vc-dav-checkout (url &optional rev destfile)
   "Check out revision REV of URL into the working area.
 
 If EDITABLE is non-nil URL should be writable by the user and if
@@ -119,7 +117,7 @@ only needs to update the status of URL within the backend.
   "Insert the revision log of URL into the *vc* buffer."
   )
 
-(defun vc-dav-diff (url &optional rev1 rev2)
+(defun vc-dav-diff (url &optional rev1 rev2 buffer async)
   "Insert the diff for URL into the *vc-diff* buffer.
 If REV1 and REV2 are non-nil report differences from REV1 to REV2.
 If REV1 is nil, use the current workfile version as the older version.
@@ -135,10 +133,6 @@ It should return a status of either 0 (no differences found), or
 
 
 ;;; Optional functions
-;; Should be faster than vc-dav-state - but how?
-(defun vc-dav-state-heuristic (url)
-  "Estimate the version control state of URL at visiting time."
-  (vc-dav-state url))
 
 ;; This should use url-dav-get-properties with a depth of `1' to get
 ;; all the properties.
@@ -146,26 +140,12 @@ It should return a status of either 0 (no differences found), or
   "find the version control state of all files in DIR in a fast way."
   )
 
-(defun vc-dav-workfile-unchanged-p (url)
-  "Return non-nil if URL is unchanged from its current workfile version."
-  ;; Probably impossible with webdav
-  )
-
 (defun vc-dav-responsible-p (url)
   "Return non-nil if DAV considers itself `responsible' for URL."
   ;; Check for DAV support on the web server.
   t)
 
-(defun vc-dav-could-register (url)
-  "Return non-nil if URL could be registered under this backend."
-  ;; Check for DAV support on the web server.
-  t)
-
 ;;; Unimplemented functions
-;;
-;; vc-dav-latest-on-branch-p(URL)
-;;    Return non-nil if the current workfile version of FILE is the
-;;    latest on its branch.  There are no branches in webdav yet.
 ;;
 ;; vc-dav-mode-line-string(url)
 ;;    Return a dav-specific mode line string for URL. Are there any

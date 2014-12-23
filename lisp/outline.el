@@ -645,31 +645,35 @@ the match data is set appropriately."
 (defun outline-move-subtree-down (&optional arg)
   "Move the current subtree down past ARG headlines of the same level."
   (interactive "p")
-  (let ((movfunc (if (> arg 0) 'outline-get-next-sibling
-		   'outline-get-last-sibling))
-	(ins-point (make-marker))
-	(cnt (abs arg))
-	beg end folded)
-    ;; Select the tree
-    (outline-back-to-heading)
-    (setq beg (point))
-    (save-match-data
-      (save-excursion (outline-end-of-heading)
-		      (setq folded (outline-invisible-p)))
-      (outline-end-of-subtree))
-    (if (= (char-after) ?\n) (forward-char 1))
-    (setq end (point))
-    ;; Find insertion point, with error handling
+  (outline-back-to-heading)
+  (let* ((movfunc (if (> arg 0) 'outline-get-next-sibling
+		    'outline-get-last-sibling))
+	 ;; Find the end of the subtree to be moved as well as the point to
+	 ;; move it to, adding a newline if necessary, to ensure these points
+	 ;; are at bol on the line below the subtree.
+         (end-point-func (lambda ()
+			   (outline-end-of-subtree)
+			   (if (eq (char-after) ?\n) (forward-char 1)
+				(if (and (eobp) (not (bolp))) (insert "\n")))
+			   (point)))
+         (beg (point))
+         (folded (save-match-data
+		   (outline-end-of-heading)
+		   (outline-invisible-p)))
+         (end (save-match-data
+		(funcall end-point-func)))
+         (ins-point (make-marker))
+         (cnt (abs arg)))
+    ;; Find insertion point, with error handling.
     (goto-char beg)
     (while (> cnt 0)
       (or (funcall movfunc)
 	  (progn (goto-char beg)
-		 (error "Cannot move past superior level")))
+		 (user-error "Cannot move past superior level")))
       (setq cnt (1- cnt)))
     (if (> arg 0)
-	;; Moving forward - still need to move over subtree
-	(progn (outline-end-of-subtree)
-	       (if (= (char-after) ?\n) (forward-char 1))))
+	;; Moving forward - still need to move over subtree.
+	(funcall end-point-func))
     (move-marker ins-point (point))
     (insert (delete-and-extract-region beg end))
     (goto-char ins-point)

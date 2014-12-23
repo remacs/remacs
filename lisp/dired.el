@@ -3059,7 +3059,7 @@ or \"* [3 files]\"."
   (when dired-shrink-to-fit
     ;; Try to not delete window when we want to display less than
     ;; `window-min-height' lines.
-    (fit-window-to-buffer (get-buffer-window buf) nil 1)))
+    (fit-window-to-buffer (get-buffer-window buf) nil 1 nil nil t)))
 
 (defcustom dired-no-confirm nil
   "A list of symbols for commands Dired should not confirm, or t.
@@ -3106,7 +3106,8 @@ argument or confirmation)."
       (with-displayed-buffer-window
        buffer
        (cons 'display-buffer-below-selected
-	     '((window-height . fit-window-to-buffer)))
+	     '((window-height . fit-window-to-buffer)
+	       (preserve-size . (nil . t))))
        #'(lambda (window _value)
 	   (with-selected-window window
 	     (unwind-protect

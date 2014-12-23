@@ -209,6 +209,9 @@ document."
   "A list of extra headers to send with the next request.
 Should be an assoc list of headers/contents.")
 
+(defvar url-request-noninteractive nil
+  "If non-nil, the request is done in a noninteractive context.")
+
 (defvar url-request-method nil "The method to use for the next request.")
 
 (defvar url-mime-encoding-string (and (fboundp 'zlib-available-p)

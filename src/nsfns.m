@@ -46,9 +46,7 @@ GNUstep port and post-20 update by Adrian Robert (arobert@cogsci.ucsd.edu)
 
 #ifdef NS_IMPL_COCOA
 #include <IOKit/graphics/IOGraphicsLib.h>
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_5
 #include "macfont.h"
-#endif
 #endif
 
 #if 0
@@ -135,7 +133,7 @@ check_ns_display_info (Lisp_Object object)
     }
   else if (TERMINALP (object))
     {
-      struct terminal *t = get_terminal (object, 1);
+      struct terminal *t = decode_live_terminal (object);
 
       if (t->type != output_ns)
         error ("Terminal %d is not a Nextstep display", t->id);
@@ -197,7 +195,7 @@ ns_display_info_for_name (Lisp_Object name)
 static NSString *
 ns_filename_from_panel (NSSavePanel *panel)
 {
-#if defined (NS_IMPL_COCOA) && MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_6
+#ifdef NS_IMPL_COCOA
   NSURL *url = [panel URL];
   NSString *str = [url path];
   return str;
@@ -209,7 +207,7 @@ ns_filename_from_panel (NSSavePanel *panel)
 static NSString *
 ns_directory_from_panel (NSSavePanel *panel)
 {
-#if defined (NS_IMPL_COCOA) && MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_6
+#ifdef NS_IMPL_COCOA
   NSURL *url = [panel directoryURL];
   NSString *str = [url path];
   return str;
@@ -282,9 +280,14 @@ x_set_foreground_color (struct frame *f, Lisp_Object arg, Lisp_Object oldval)
   NSColor *col;
   EmacsCGFloat r, g, b, alpha;
 
+  /* Must block_input, because ns_lisp_to_color does block/unblock_input
+     which means that col may be deallocated in its unblock_input if there
+     is user input, unless we also block_input.  */
+  block_input ();
   if (ns_lisp_to_color (arg, &col))
     {
       store_frame_param (f, Qforeground_color, oldval);
+      unblock_input ();
       error ("Unknown color");
     }
 
@@ -301,8 +304,9 @@ x_set_foreground_color (struct frame *f, Lisp_Object arg, Lisp_Object oldval)
       update_face_from_frame_parameter (f, Qforeground_color, arg);
       /*recompute_basic_faces (f); */
       if (FRAME_VISIBLE_P (f))
-        redraw_frame (f);
+        SET_FRAME_GARBAGED (f);
     }
+  unblock_input ();
 }
 
 
@@ -314,9 +318,11 @@ x_set_background_color (struct frame *f, Lisp_Object arg, Lisp_Object oldval)
   NSView *view = FRAME_NS_VIEW (f);
   EmacsCGFloat r, g, b, alpha;
 
+  block_input ();
   if (ns_lisp_to_color (arg, &col))
     {
       store_frame_param (f, Qbackground_color, oldval);
+      unblock_input ();
       error ("Unknown color");
     }
 
@@ -353,8 +359,9 @@ x_set_background_color (struct frame *f, Lisp_Object arg, Lisp_Object oldval)
         }
 
       if (FRAME_VISIBLE_P (f))
-        redraw_frame (f);
+        SET_FRAME_GARBAGED (f);
     }
+  unblock_input ();
 }
 
 
@@ -363,9 +370,11 @@ x_set_cursor_color (struct frame *f, Lisp_Object arg, Lisp_Object oldval)
 {
   NSColor *col;
 
+  block_input ();
   if (ns_lisp_to_color (arg, &col))
     {
       store_frame_param (f, Qcursor_color, oldval);
+      unblock_input ();
       error ("Unknown color");
     }
 
@@ -378,6 +387,7 @@ x_set_cursor_color (struct frame *f, Lisp_Object arg, Lisp_Object oldval)
       x_update_cursor (f, 1);
     }
   update_face_from_frame_parameter (f, Qcursor_color, arg);
+  unblock_input ();
 }
 
 
@@ -609,18 +619,11 @@ ns_set_name_as_filename (struct frame *f)
 
           fstr = [NSString stringWithUTF8String: SSDATA (encoded_filename)];
           if (fstr == nil) fstr = @"";
-#ifdef NS_IMPL_COCOA
-          /* work around a bug observed on 10.3 and later where
-             setTitleWithRepresentedFilename does not clear out previous state
-             if given filename does not exist */
-          if (! [[NSFileManager defaultManager] fileExistsAtPath: fstr])
-            [[view window] setRepresentedFilename: @""];
-#endif
         }
       else
         fstr = @"";
 
-      [[view window] setRepresentedFilename: fstr];
+      ns_set_represented_filename (fstr, f);
       [[view window] setTitle: str];
       fset_name (f, name);
     }
@@ -631,18 +634,30 @@ ns_set_name_as_filename (struct frame *f)
 
 
 void
-ns_set_doc_edited (struct frame *f, Lisp_Object arg)
+ns_set_doc_edited (void)
 {
-  NSView *view = FRAME_NS_VIEW (f);
   NSAutoreleasePool *pool;
-  if (!MINI_WINDOW_P (XWINDOW (f->selected_window)))
+  Lisp_Object tail, frame;
+  block_input ();
+  pool = [[NSAutoreleasePool alloc] init];
+  FOR_EACH_FRAME (tail, frame)
     {
-      block_input ();
-      pool = [[NSAutoreleasePool alloc] init];
-      [[view window] setDocumentEdited: !NILP (arg)];
-      [pool release];
-      unblock_input ();
+      BOOL edited = NO;
+      struct frame *f = XFRAME (frame);
+      struct window *w;
+      NSView *view;
+
+      if (! FRAME_NS_P (f)) continue;
+      w = XWINDOW (FRAME_SELECTED_WINDOW (f));
+      view = FRAME_NS_VIEW (f);
+      if (!MINI_WINDOW_P (w))
+        edited = ! NILP (Fbuffer_modified_p (w->contents)) &&
+          ! NILP (Fbuffer_file_name (w->contents));
+      [[view window] setDocumentEdited: edited];
     }
+
+  [pool release];
+  unblock_input ();
 }
 
 
@@ -721,7 +736,7 @@ x_set_internal_border_width (struct frame *f, Lisp_Object arg, Lisp_Object oldva
     return;
 
   if (FRAME_X_WINDOW (f) != 0)
-    adjust_frame_size (f, -1, -1, 3, 0);
+    adjust_frame_size (f, -1, -1, 3, 0, Qinternal_border_width);
 
   SET_FRAME_GARBAGED (f);
 }
@@ -937,8 +952,8 @@ x_icon (struct frame *f, Lisp_Object parms)
   Lisp_Object icon_x, icon_y;
   struct ns_display_info *dpyinfo = check_ns_display_info (Qnil);
 
-  f->output_data.ns->icon_top = Qnil;
-  f->output_data.ns->icon_left = Qnil;
+  f->output_data.ns->icon_top = -1;
+  f->output_data.ns->icon_left = -1;
 
   /* Set the position of the icon.  */
   icon_x = x_get_arg (dpyinfo, parms, Qicon_left, 0, 0, RES_TYPE_NUMBER);
@@ -947,8 +962,8 @@ x_icon (struct frame *f, Lisp_Object parms)
     {
       CHECK_NUMBER (icon_x);
       CHECK_NUMBER (icon_y);
-      f->output_data.ns->icon_top = icon_y;
-      f->output_data.ns->icon_left = icon_x;
+      f->output_data.ns->icon_top = XINT (icon_y);
+      f->output_data.ns->icon_left = XINT (icon_x);
     }
   else if (!EQ (icon_x, Qunbound) || !EQ (icon_y, Qunbound))
     error ("Both left and top icon corners of icon must be specified");
@@ -1197,13 +1212,10 @@ This function is an internal primitive--use `make-frame' instead.  */)
   block_input ();
 
 #ifdef NS_IMPL_COCOA
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_5
-  if (CTGetCoreTextVersion != NULL
-      && CTGetCoreTextVersion () >= kCTVersionNumber10_5)
     mac_register_font_driver (f);
+#else
+    register_font_driver (&nsfont_driver, f);
 #endif
-#endif
-  register_font_driver (&nsfont_driver, f);
 
   x_default_parameter (f, parms, Qfont_backend, Qnil,
 			"fontBackend", "FontBackend", RES_TYPE_STRING);
@@ -1244,7 +1256,7 @@ This function is an internal primitive--use `make-frame' instead.  */)
 			   "verticalScrollBars", "VerticalScrollBars",
 			   RES_TYPE_SYMBOL);
   }
-  x_default_parameter (f, parms, Qhorizontal_scroll_bars, Qt,
+  x_default_parameter (f, parms, Qhorizontal_scroll_bars, Qnil,
 		       "horizontalScrollBars", "HorizontalScrollBars",
 		       RES_TYPE_SYMBOL);
   x_default_parameter (f, parms, Qforeground_color, build_string ("Black"),
@@ -1267,11 +1279,8 @@ This function is an internal primitive--use `make-frame' instead.  */)
   init_frame_faces (f);
 
   /* Read comment about this code in corresponding place in xfns.c.  */
-  width = FRAME_TEXT_WIDTH (f);
-  height = FRAME_TEXT_HEIGHT (f);
-  FRAME_TEXT_HEIGHT (f) = 0;
-  SET_FRAME_WIDTH (f, 0);
-  change_frame_size (f, width, height, 1, 0, 0, 1);
+  adjust_frame_size (f, FRAME_COLS (f) * FRAME_COLUMN_WIDTH (f),
+		     FRAME_LINES (f) * FRAME_LINE_HEIGHT (f), 5, 1, Qnil);
 
   /* The resources controlling the menu-bar and tool-bar are
      processed specially at startup, and reflected in the mode
@@ -1342,11 +1351,10 @@ This function is an internal primitive--use `make-frame' instead.  */)
   x_default_parameter (f, parms, Qfullscreen, Qnil,
                        "fullscreen", "Fullscreen", RES_TYPE_SYMBOL);
 
-  width = FRAME_TEXT_WIDTH (f);
-  height = FRAME_TEXT_HEIGHT (f);
-  FRAME_TEXT_HEIGHT (f) = 0;
-  SET_FRAME_WIDTH (f, 0);
-  change_frame_size (f, width, height, 1, 0, 0, 1);
+  /* Allow x_set_window_size, now.  */
+  f->can_x_set_window_size = true;
+
+  adjust_frame_size (f, FRAME_TEXT_WIDTH (f), FRAME_TEXT_HEIGHT (f), 0, 1, Qnil);
 
   if (! f->output_data.ns->explicit_parent)
     {
@@ -1418,13 +1426,11 @@ DEFUN ("ns-popup-font-panel", Fns_popup_font_panel, Sns_popup_font_panel,
   id fm = [NSFontManager sharedFontManager];
   struct font *font = f->output_data.ns->font;
   NSFont *nsfont;
-  if (EQ (font->driver->type, Qns))
-    nsfont = ((struct nsfont_info *)font)->nsfont;
-#ifdef NS_IMPL_COCOA
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_5
-  else
-    nsfont = (NSFont *) macfont_get_nsctfont (font);
+#ifdef NS_IMPL_GNUSTEP
+  nsfont = ((struct nsfont_info *)font)->nsfont;
 #endif
+#ifdef NS_IMPL_COCOA
+  nsfont = (NSFont *) macfont_get_nsctfont (font);
 #endif
   [fm setSelectedFont: nsfont isMultiple: NO];
   [fm orderFrontFontPanel: NSApp];
@@ -1446,8 +1452,7 @@ static struct
 {
   id panel;
   BOOL ret;
-#if ! defined (NS_IMPL_COCOA) || \
-  MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_X_VERSION_10_6
+#ifdef NS_IMPL_GNUSTEP
   NSString *dirS, *initS;
   BOOL no_types;
 #endif
@@ -1457,8 +1462,7 @@ void
 ns_run_file_dialog (void)
 {
   if (ns_fd_data.panel == nil) return;
-#if defined (NS_IMPL_COCOA) && \
-  MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_6
+#ifdef NS_IMPL_COCOA
   ns_fd_data.ret = [ns_fd_data.panel runModal];
 #else
   if (ns_fd_data.no_types)
@@ -1538,8 +1542,7 @@ Optional arg DIR_ONLY_P, if non-nil, means choose only directories.  */)
   block_input ();
   ns_fd_data.panel = panel;
   ns_fd_data.ret = NO;
-#if defined (NS_IMPL_COCOA) && \
-  MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_6
+#ifdef NS_IMPL_COCOA
   if (! NILP (mustmatch) || ! NILP (dir_only_p))
     [panel setAllowedFileTypes: nil];
   if (dirS) [panel setDirectoryURL: [NSURL fileURLWithPath: dirS]];
@@ -1999,7 +2002,7 @@ DEFUN ("ns-list-services", Fns_list_services, Sns_list_services, 0, 0, 0,
        doc: /* List available Nextstep services by querying NSApp.  */)
      (void)
 {
-#if defined (NS_IMPL_COCOA) && MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_6
+#ifdef NS_IMPL_COCOA
   /* You can't get services like this in 10.6+.  */
   return Qnil;
 #else
@@ -2333,11 +2336,16 @@ DEFUN ("xw-color-values", Fxw_color_values, Sxw_color_values, 1, 2, 0,
   check_window_system (NULL);
   CHECK_STRING (color);
 
+  block_input ();
   if (ns_lisp_to_color (color, &col))
-    return Qnil;
+    {
+      unblock_input ();
+      return Qnil;
+    }
 
   [[col colorUsingDefaultColorSpace]
         getRed: &red green: &green blue: &blue alpha: &alpha];
+  unblock_input ();
   return list3i (lrint (red * 65280), lrint (green * 65280),
 		 lrint (blue * 65280));
 }
@@ -2555,7 +2563,7 @@ the attributes:
 Internal use only, use `display-monitor-attributes-list' instead.  */)
   (Lisp_Object terminal)
 {
-  struct terminal *term = get_terminal (terminal, 1);
+  struct terminal *term = decode_live_terminal (terminal);
   NSArray *screens;
   NSUInteger i, n_monitors;
   struct MonitorInfo *monitors;
@@ -2963,8 +2971,7 @@ handlePanelKeys (NSSavePanel *panel, NSEvent *theEvent)
 void
 syms_of_nsfns (void)
 {
-  Qfontsize = intern_c_string ("fontsize");
-  staticpro (&Qfontsize);
+  DEFSYM (Qfontsize, "fontsize");
 
   DEFVAR_LISP ("ns-icon-type-alist", Vns_icon_type_alist,
                doc: /* Alist of elements (REGEXP . IMAGE) for images of icons associated to frames.

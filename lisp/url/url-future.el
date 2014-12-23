@@ -44,17 +44,17 @@
 
 (cl-defstruct url-future callback errorback status value)
 
-(defmacro url-future-done-p (url-future)
-  `(url-future-status ,url-future))
+(define-inline url-future-done-p (url-future)
+  (inline-quote (url-future-status ,url-future)))
 
-(defmacro url-future-completed-p (url-future)
-  `(eq (url-future-status ,url-future) t))
+(define-inline url-future-completed-p (url-future)
+  (inline-quote (eq (url-future-status ,url-future) t)))
 
-(defmacro url-future-errored-p (url-future)
-  `(eq (url-future-status ,url-future) 'error))
+(define-inline url-future-errored-p (url-future)
+  (inline-quote (eq (url-future-status ,url-future) 'error)))
 
-(defmacro url-future-cancelled-p (url-future)
-  `(eq (url-future-status ,url-future) 'cancel))
+(define-inline url-future-cancelled-p (url-future)
+  (inline-quote (eq (url-future-status ,url-future) 'cancel)))
 
 (defun url-future-finish (url-future &optional status)
   (if (url-future-done-p url-future)

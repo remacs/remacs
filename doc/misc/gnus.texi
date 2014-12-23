@@ -618,6 +618,7 @@ Article Buffer
 
 * Hiding Headers::              Deciding what headers should be displayed.
 * Using MIME::                  Pushing articles through @acronym{MIME} before reading them.
+* HTML::                        Reading @acronym{HTML} messages.
 * Customizing Articles::        Tailoring the look of the articles.
 * Article Keymap::              Keystrokes available in the article buffer.
 * Misc Article::                Other stuff.
@@ -11761,20 +11762,30 @@ Also @pxref{MIME Commands}.
 @section @acronym{HTML}
 @cindex @acronym{HTML}
 
-If you have @code{w3m} installed on your system, Gnus can display
-@acronym{HTML} articles in the article buffer.  There are many Gnus
-add-ons for doing this, using various approaches, but there's one
-(sort of) built-in method that's used by default.
+Gnus can display @acronym{HTML} articles nicely formatted in the
+article buffer.  There are many methods for doing that, but two of
+them are kind of default methods.
 
-For a complete overview, consult @xref{Display Customization,
-,Display Customization, emacs-mime, The Emacs MIME Manual}.  This
-section only describes the default method.
+If your Emacs copy has been built with libxml2 support, then Gnus uses
+Emacs' built-in, plain elisp Simple HTML Renderer @code{shr}
+@footnote{@code{shr} displays colors as declared in the @acronym{HTML}
+article but tries to adjust them in order to be readable.  If you
+prefer more contrast, @xref{FAQ 4-16}.} which is also used by Emacs'
+browser EWW (@pxref{EWW, ,EWW, emacs, The Emacs Manual}).
+
+If your Emacs copy lacks libxml2 support but you have @code{w3m}
+installed on your system, Gnus uses that to render @acronym{HTML} mail
+and display the results in the article buffer (@code{gnus-w3m}).
+
+For a complete overview, consult @xref{Display Customization, ,Display
+Customization, emacs-mime, The Emacs MIME Manual}.  This section only
+describes the default method.
 
 @table @code
 @item mm-text-html-renderer
 @vindex mm-text-html-renderer
-If set to @code{gnus-article-html}, Gnus will use the built-in method,
-that's based on @code{w3m}.
+If set to @code{shr}, Gnus uses its own simple @acronym{HTML}
+renderer.  If set to @code{gnus-w3m}, it uses @code{w3m}.
 
 @item gnus-blocked-images
 @vindex gnus-blocked-images
@@ -25942,17 +25953,34 @@ the word ``archive'' is not followed.
 
 @defvar gnus-registry-max-entries
 The number (an integer or @code{nil} for unlimited) of entries the
-registry will keep.
+registry will keep.  If the registry has reached or exceeded this
+size, it will reject insertion of new entries.
 @end defvar
 
-@defvar gnus-registry-max-pruned-entries
-The maximum number (an integer or @code{nil} for unlimited) of entries
-the registry will keep after pruning.
+@defvar gnus-registry-prune-factor
+This option (a float between 0 and 1) controls how much the registry
+is cut back during pruning.  In order to prevent constant pruning, the
+registry will be pruned back to less than
+@code{gnus-registry-max-entries}.  This option controls exactly how
+much less: the target is calculated as the maximum number of entries
+minus the maximum number times this factor.  The default is 0.1:
+i.e. if your registry is limited to 50000 entries, pruning will try to
+cut back to 45000 entries.  Entries with keys marked as precious will
+not be pruned.
+@end defvar
+
+@defvar gnus-registry-default-sort-function
+This option specifies how registry entries are sorted during pruning.
+If a function is given, it should sort least valuable entries first,
+as pruning starts from the beginning of the list.  The default value
+is @code{gnus-registry-sort-by-creation-time}, which proposes the
+oldest entries for pruning.  Set to nil to perform no sorting, which
+will speed up the pruning process.
 @end defvar
 
 @defvar gnus-registry-cache-file
 The file where the registry will be stored between Gnus sessions.  By
-default the file name is @code{.gnus.registry.eioio} in the same
+default the file name is @code{.gnus.registry.eieio} in the same
 directory as your @code{.newsrc.eld}.
 @end defvar
 

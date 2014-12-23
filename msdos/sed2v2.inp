@@ -22,10 +22,6 @@
 #include <sys/version.h>\
 /* In DJGPP v2.x almost everything is already defined in a system header.  */\
 #include <sys/config.h>\
-/* For those who still use DJGPP v2.01  */\
-#if __DJGPP__ == 2 && __DJGPP_MINOR__ == 1\
-#define NSIG 320\
-#endif
 
 /^#undef MSDOS *$/c\
 #ifndef MSDOS\
@@ -70,7 +66,7 @@
 /^#undef PACKAGE_TARNAME/s/^.*$/#define PACKAGE_TARNAME ""/
 /^#undef PACKAGE_VERSION/s/^.*$/#define PACKAGE_VERSION ""/
 /^#undef PENDING_OUTPUT_COUNT/s/^.*$/#define PENDING_OUTPUT_COUNT(FILE) ((FILE)->_ptr - (FILE)->_base)/
-/^#undef VERSION/s/^.*$/#define VERSION "24.4.50"/
+/^#undef VERSION/s/^.*$/#define VERSION "25.0.50"/
 /^#undef SYSTEM_TYPE/s/^.*$/#define SYSTEM_TYPE "ms-dos"/
 /^#undef HAVE_DECL_GETENV/s/^.*$/#define HAVE_DECL_GETENV 1/
 /^#undef SYS_SIGLIST_DECLARED/s/^.*$/#define SYS_SIGLIST_DECLARED 1/
@@ -131,6 +127,8 @@ s/^#undef HAVE_STRTOULL *$/#define HAVE_STRTOULL 1/
 #define HAVE_SNPRINTF 1\
 #else\
 #undef HAVE_SNPRINTF\
+#include <sys/types.h>\
+extern int snprintf (char *__restrict, size_t, const char *__restrict, ...);\
 #endif
 s/^#undef PENDING_OUTPUT_N_BYTES *$/#define PENDING_OUTPUT_N_BYTES fp->_ptr - fp->_base/
 

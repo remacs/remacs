@@ -269,7 +269,7 @@ nested angle brackets constructs."
        "\\("				      ; method name which gets captured
 					      ; into index
          "[" c-alpha "_]"
-         "[" c-alnum "_]*"
+	 "[" c-alnum "_]*"
        "\\)"
        "[ \t\n\r]*"
        ;; An argument list that contains zero or more arguments.
@@ -361,7 +361,7 @@ Example:
 	    p (1+ p))
       (cond
        ;; Is CHAR part of a objc token?
-       ((and (not inargvar)     ; Ignore if CHAR is part of an argument variable.
+       ((and (not inargvar)   ; Ignore if CHAR is part of an argument variable.
 	     (eq 0 betweenparen) ; Ignore if CHAR is in parentheses.
 	     (or (and (<= ?a char) (<= char ?z))
 		 (and (<= ?A char) (<= char ?Z))
@@ -521,4 +521,8 @@ Example:
 
 (cc-provide 'cc-menus)
 
+;;; Local Variables:
+;;; indent-tabs-mode: t
+;;; tab-width: 8
+;;; End:
 ;;; cc-menus.el ends here

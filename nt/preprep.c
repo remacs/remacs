@@ -25,7 +25,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
 #include <stdio.h>
 #include <fcntl.h>
 #include <time.h>
-#if defined(__GNUC__) && !defined(_W64)
+#if defined(__GNUC__) && !defined(MINGW_W64)
 #define _ANONYMOUS_UNION
 #define _ANONYMOUS_STRUCT
 #endif

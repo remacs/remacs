@@ -519,7 +519,8 @@ is called with one argument, the guessed style."
       (goto-char (point-min))
       (when (search-forward (concat "("
 				    (symbol-name (car needs-markers))
-				    " ") nil t)
+				    " ")
+                            nil t)
 	(move-end-of-line 1)
 	(comment-dwim nil)
 	(insert " Guessed value"))
@@ -571,4 +572,9 @@ WITH-NAME is asked to the user."
 
 
 (cc-provide 'cc-guess)
+
+;;; Local Variables:
+;;; indent-tabs-mode: t
+;;; tab-width: 8
+;;; End:
 ;;; cc-guess.el ends here

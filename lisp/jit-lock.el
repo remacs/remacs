@@ -125,7 +125,8 @@ The value of this variable is used when JIT Lock mode is turned on."
 
 (defcustom jit-lock-defer-time nil ;; 0.25
   "Idle time after which deferred fontification should take place.
-If nil, fontification is not deferred."
+If nil, fontification is not deferred.
+If 0, then fontification is only deferred while there is input pending."
   :group 'jit-lock
   :type '(choice (const :tag "never" nil)
 	         (number :tag "seconds")))
@@ -333,7 +334,9 @@ Only applies to the current buffer."
 This function is added to `fontification-functions' when `jit-lock-mode'
 is active."
   (when (and jit-lock-mode (not memory-full))
-    (if (null jit-lock-defer-timer)
+    (if (not (and jit-lock-defer-timer
+                  (or (not (eq jit-lock-defer-time 0))
+                      (input-pending-p))))
 	;; No deferral.
 	(jit-lock-fontify-now start (+ start jit-lock-chunk-size))
       ;; Record the buffer for later fontification.
@@ -499,7 +502,10 @@ non-nil in a repeated invocation of this function."
 	  message-log-max
 	  start)
       (if (and jit-lock-stealth-load
-	       (> (car (load-average)) jit-lock-stealth-load))
+	       ;; load-average can return nil.  The w32 emulation does
+	       ;; that during the first few dozens of seconds after
+	       ;; startup.
+	       (> (or (car (load-average)) 0) jit-lock-stealth-load))
 	  ;; Wait a little if load is too high.
 	  (setq delay jit-lock-stealth-time)
 	(if (buffer-live-p buffer)

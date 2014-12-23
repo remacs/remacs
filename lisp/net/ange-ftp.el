@@ -2831,16 +2831,24 @@ match subdirectories as well.")
 		      files ange-ftp-files-hashtable)))
 
 (defun ange-ftp-switches-ok (switches)
-  "Return SWITCHES (a string) if suitable for our use."
+  "Return SWITCHES (a string) if suitable for use with ls over ftp."
   (and (stringp switches)
-       ;; We allow the A switch, which lists all files except "." and
-       ;; "..".  This is OK because we manually insert these entries
-       ;; in the hash table.
+       ;; We allow the --almost-all switch, which lists all files
+       ;; except "." and "..".  This is OK because we manually
+       ;; insert these entries in the hash table.
        (string-match
-	"--\\(almost-\\)?all\\>\\|\\(\\`\\| \\)-[[:alpha:]]*[aA]" switches)
+        "--\\(almost-\\)?all\\>\\|\\(\\`\\| \\)-[[:alpha:]]*[aA]"
+        switches)
+       ;; Disallow other long flags except --(almost-)all.
+       (not (string-match "\\(\\`\\| \\)--\\w+"
+                          (replace-regexp-in-string
+                           "--\\(almost-\\)?all\\>" ""
+                           switches)))
+       ;; Must include 'l'.
        (string-match "\\(\\`\\| \\)-[[:alpha:]]*l" switches)
+       ;; Disallow recursive flag.
        (not (string-match
-	     "--recursive\\>\\|\\(\\`\\| \\)-[[:alpha:]]*R" switches))
+             "\\(\\`\\| \\)-[[:alpha:]]*R" switches))
        switches))
 
 (defun ange-ftp-get-files (directory &optional no-error)

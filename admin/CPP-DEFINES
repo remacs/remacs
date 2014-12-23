@@ -19,8 +19,9 @@ __MSDOS__	Ditto.
 __DJGPP_MINOR__ Minor version number of the DJGPP library; used only in msdos.c and dosfns.c.
 DOS_NT		Compiling for either the MS-DOS or native MS-Windows port.
 WINDOWSNT	Compiling the native MS-Windows (W32) port.
-__MINGW32__	Compiling the W32 port with the MinGW port of GCC.
+__MINGW32__	Compiling the W32 port with the MinGW or MinGW-w64 ports of GCC.
 _MSC_VER	Compiling the W32 port with the Microsoft C compiler.
+MINGW_W64	Compiling the W32 port with the MinGW-w64 port of GCC.
 DARWIN_OS	Compiling on Mac OS X or pure Darwin (and using s/darwin.h).
 SOLARIS2
 USG
@@ -368,7 +369,6 @@ HAVE___FPENDING
 INTERNAL_TERMINAL
 IS_ANY_SEP
 IS_DIRECTORY_SEP
-LOCALTIME_CACHE
 MAIL_USE_FLOCK
 MAIL_USE_LOCKF
 MAIL_USE_POP

@@ -86,6 +86,7 @@ not be the first @samp{F} previously found.  After another @kbd{O},
 the cursor moves to just after the first @samp{FOO}.
 
 @cindex faces for highlighting search matches
+@cindex isearch face
   At each step, Emacs highlights the @dfn{current match}---the buffer
 text that matches the search string---using the @code{isearch} face
 (@pxref{Faces}).  The current search string is also displayed in the
@@ -1280,6 +1281,8 @@ It works like @code{replace-regexp} except that it queries
 like @code{query-replace}.
 
 @cindex faces for highlighting query replace
+@cindex query-replace face
+@cindex lazy-highlight face
   These commands highlight the current match using the face
 @code{query-replace}.  They highlight other matches using
 @code{lazy-highlight} just like incremental search (@pxref{Incremental
@@ -1337,7 +1340,7 @@ to replace all remaining occurrences without asking again.
 
 @item Y @r{(Upper-case)}
 to replace all remaining occurrences in all remaining buffers in
-multi-buffer replacements (like the Dired `Q' command which performs
+multi-buffer replacements (like the Dired @key{Q} command that performs
 query replace on selected files).  It answers this question and all
 subsequent questions in the series with "yes", without further
 user interaction.
@@ -1432,6 +1435,22 @@ matching that regexp.
 @item M-x multi-isearch-buffers-regexp
 This command is just like @code{multi-isearch-buffers}, except it
 performs an incremental regexp search.
+
+@item M-x multi-isearch-files
+Prompt for one or more file names, ending with @key{RET}; then,
+begin a multi-file incremental search in those files.  (If the
+search fails in one file, the next @kbd{C-s} tries searching the
+next specified file, and so forth.)  With a prefix argument, prompt
+for a regexp and begin a multi-file incremental search in files
+matching that regexp.
+
+@item M-x multi-isearch-files-regexp
+This command is just like @code{multi-isearch-files}, except it
+performs an incremental regexp search.
+
+In some modes that set the buffer-local variable
+@code{multi-isearch-next-buffer-function} (e.g., in Change Log mode)
+a multi-file incremental search is activated automatically.
 
 @cindex Occur mode
 @cindex mode, Occur

@@ -1132,6 +1132,19 @@ repeating the command will highlight other two parts."
 			 (unless smerge-use-changed-face
 			   '((smerge . refine) (face . smerge-refined-added))))))
 
+(defun smerge-swap ()
+  "Swap the \"Mine\" and the \"Other\" chunks.
+Can be used before things like `smerge-keep-all' or `smerge-resolve' where the
+ordering can have some subtle influence on the result, such as preferring the
+spacing of the \"Other\" chunk."
+  (interactive)
+  (smerge-match-conflict)
+  (goto-char (match-beginning 3))
+  (let ((txt3 (delete-and-extract-region (point) (match-end 3))))
+    (insert (delete-and-extract-region (match-beginning 1) (match-end 1)))
+    (goto-char (match-beginning 1))
+    (insert txt3)))
+
 (defun smerge-diff (n1 n2)
   (smerge-match-conflict)
   (smerge-ensure-match n1)

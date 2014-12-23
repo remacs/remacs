@@ -179,6 +179,7 @@ Return nil if no such transition can be found."
          (if (eq (car (current-time-zone probe)) hi-utc-diff)
              (setq hi probe)
            (setq lo probe)))
+       (setcdr hi (list (cdr hi)))
        hi))))
 
 (autoload 'calendar-persian-to-absolute "cal-persia")

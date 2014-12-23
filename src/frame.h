@@ -45,9 +45,9 @@ enum fullscreen_type
   FULLSCREEN_HEIGHT    = 0x2,
   FULLSCREEN_BOTH      = 0x3, /* Not a typo but means "width and height".  */
   FULLSCREEN_MAXIMIZED = 0x4,
-#ifdef HAVE_NTGUI  
+#ifdef HAVE_NTGUI
   FULLSCREEN_WAIT      = 0x8
-#endif  
+#endif
 };
 
 #endif /* HAVE_WINDOW_SYSTEM */
@@ -161,7 +161,7 @@ struct frame
   /* Desired and current tool-bar items.  */
   Lisp_Object tool_bar_items;
 
-#ifdef USE_GTK  
+#ifdef USE_GTK
   /* Where tool bar is, can be left, right, top or bottom.
      Except with GTK, the only supported position is `top'.  */
   Lisp_Object tool_bar_position;
@@ -185,7 +185,7 @@ struct frame
   /* Number of elements in `menu_bar_vector' that have meaningful data.  */
   int menu_bar_items_used;
 
-#if defined (USE_X_TOOLKIT) || defined (HAVE_NTGUI)  
+#if defined (USE_X_TOOLKIT) || defined (HAVE_NTGUI)
   /* A buffer to hold the frame's name.  Since this is used by the
      window system toolkit, we can't use the Lisp string's pointer
      (`name', above) because it might get relocated.  */
@@ -328,11 +328,13 @@ struct frame
      in pixels.  */
   bool_bf new_pixelwise : 1;
 
-  /* True if frame has been added to Vframe_list and is henceforth
-     considered official.  For in-official frames we neither process
-     x_set_window_size requests nor do we allow running
-     window-configuration-change-hook when resizing windows.  */
-  bool_bf official : 1;
+  /* True means x_set_window_size requests can be processed for this
+     frame.  */
+  bool_bf can_x_set_window_size : 1;
+
+  /* True means run_window_configuration_change_hook can be processed
+     for this frame.  */
+  bool_bf can_run_window_configuration_change_hook : 1;
 
   /* Bitfield area ends here.  */
 
@@ -852,8 +854,6 @@ default_pixels_per_inch_y (void)
 #define FRAME_VERTICAL_SCROLL_BAR_TYPE(f) ((f)->vertical_scroll_bar_type)
 #define FRAME_HAS_VERTICAL_SCROLL_BARS(f) \
   ((f)->vertical_scroll_bar_type != vertical_scroll_bar_none)
-#define FRAME_HAS_HORIZONTAL_SCROLL_BARS(f) \
-  ((f)->horizontal_scroll_bars)
 #define FRAME_HAS_VERTICAL_SCROLL_BARS_ON_LEFT(f) \
   ((f)->vertical_scroll_bar_type == vertical_scroll_bar_left)
 #define FRAME_HAS_VERTICAL_SCROLL_BARS_ON_RIGHT(f) \
@@ -866,9 +866,16 @@ default_pixels_per_inch_y (void)
 #define FRAME_HAS_VERTICAL_SCROLL_BARS(f) ((void) f, 0)
 #define FRAME_HAS_VERTICAL_SCROLL_BARS_ON_LEFT(f) ((void) f, 0)
 #define FRAME_HAS_VERTICAL_SCROLL_BARS_ON_RIGHT(f) ((void) f, 0)
-#define FRAME_HAS_HORIZONTAL_SCROLL_BARS(f) ((void) f, 0)
 
 #endif /* HAVE_WINDOW_SYSTEM */
+
+/* Whether horizontal scroll bars are currently enabled for frame F.  */
+#if USE_HORIZONTAL_SCROLL_BARS
+#define FRAME_HAS_HORIZONTAL_SCROLL_BARS(f) \
+  ((f)->horizontal_scroll_bars)
+#else
+#define FRAME_HAS_HORIZONTAL_SCROLL_BARS(f) ((void) f, 0)
+#endif
 
 /* Width that a scroll bar in frame F should have, if there is one.
    Measured in pixels.
@@ -1055,6 +1062,11 @@ default_pixels_per_inch_y (void)
       }								\
   } while (false)
 
+/* Handy macro to construct an argument to Fmodify_frame_parameters.  */
+
+#define AUTO_FRAME_ARG(name, parameter, value)	\
+  AUTO_LIST1 (name, AUTO_CONS_EXPR (parameter, value))
+
 /* False means there are no visible garbaged frames.  */
 extern bool frame_garbaged;
 
@@ -1089,7 +1101,6 @@ extern Lisp_Object Qtty_color_mode;
 extern Lisp_Object Qterminal;
 extern Lisp_Object Qnoelisp;
 
-extern void set_menu_bar_lines (struct frame *, Lisp_Object, Lisp_Object);
 extern struct frame *decode_window_system_frame (Lisp_Object);
 extern struct frame *decode_live_frame (Lisp_Object);
 extern struct frame *decode_any_frame (Lisp_Object);
@@ -1108,8 +1119,8 @@ extern void check_window_system (struct frame *);
 extern void frame_make_pointer_invisible (struct frame *);
 extern void frame_make_pointer_visible (struct frame *);
 extern Lisp_Object delete_frame (Lisp_Object, Lisp_Object);
-extern bool frame_inhibit_resize (struct frame *, bool); 
-extern void adjust_frame_size (struct frame *, int, int, int, bool);
+extern bool frame_inhibit_resize (struct frame *, bool, Lisp_Object);
+extern void adjust_frame_size (struct frame *, int, int, int, bool, Lisp_Object);
 
 extern Lisp_Object Vframe_list;
 
@@ -1284,7 +1295,7 @@ extern Lisp_Object Vframe_list;
    / FRAME_LINE_HEIGHT (f))
 
 /* Return the pixel width/height of frame F with a text size of
-   width/heigh.  */
+   width/height.  */
 #define FRAME_TEXT_TO_PIXEL_WIDTH(f, width)	  \
   ((width)					  \
    + FRAME_SCROLL_BAR_AREA_WIDTH (f)		  \
@@ -1309,7 +1320,7 @@ extern Lisp_Object Vframe_list;
   ((height)						\
    - FRAME_TOP_MARGIN_HEIGHT (f)			\
    - FRAME_SCROLL_BAR_AREA_HEIGHT (f)			\
-   - 2 * FRAME_INTERNAL_BORDER_WIDTH (f))		
+   - 2 * FRAME_INTERNAL_BORDER_WIDTH (f))
 
 /* Return the width/height reserved for the windows of frame F.  */
 #define FRAME_WINDOWS_WIDTH(f)			\
@@ -1371,6 +1382,11 @@ extern Lisp_Object Qx_resource_name;
 extern Lisp_Object Qtop, Qbox, Qbottom;
 extern Lisp_Object Qdisplay;
 
+extern Lisp_Object Qframe_position, Qframe_outer_size, Qframe_inner_size;
+extern Lisp_Object Qexternal_border_size, Qtitle_height;
+extern Lisp_Object Qmenu_bar_external, Qmenu_bar_size;
+extern Lisp_Object Qtool_bar_external, Qtool_bar_size;
+
 extern Lisp_Object Qrun_hook_with_args;
 
 #ifdef HAVE_WINDOW_SYSTEM
@@ -1393,8 +1409,6 @@ extern void x_set_font_backend (struct frame *, Lisp_Object, Lisp_Object);
 extern void x_set_left_fringe (struct frame *, Lisp_Object, Lisp_Object);
 extern void x_set_right_fringe (struct frame *, Lisp_Object, Lisp_Object);
 extern void x_set_border_width (struct frame *, Lisp_Object, Lisp_Object);
-extern void x_set_internal_border_width (struct frame *, Lisp_Object,
-                                         Lisp_Object);
 extern void x_set_right_divider_width (struct frame *, Lisp_Object,
 				       Lisp_Object);
 extern void x_set_bottom_divider_width (struct frame *, Lisp_Object,
@@ -1421,7 +1435,7 @@ extern Lisp_Object display_x_get_resource (Display_Info *,
 					   Lisp_Object subclass);
 
 extern void set_frame_menubar (struct frame *f, bool first_time, bool deep_p);
-extern void x_set_window_size (struct frame *f, int change_grav,
+extern void x_set_window_size (struct frame *f, bool change_gravity,
 			       int width, int height, bool pixelwise);
 extern Lisp_Object x_get_focus_frame (struct frame *);
 extern void frame_set_mouse_pixel_position (struct frame *f, int pix_x, int pix_y);
@@ -1429,7 +1443,6 @@ extern void x_make_frame_visible (struct frame *f);
 extern void x_make_frame_invisible (struct frame *f);
 extern void x_iconify_frame (struct frame *f);
 extern void x_set_frame_alpha (struct frame *f);
-extern void x_set_tool_bar_lines (struct frame *, Lisp_Object, Lisp_Object);
 extern void x_activate_menubar (struct frame *);
 extern void x_real_positions (struct frame *, int *, int *);
 extern void free_frame_menubar (struct frame *);
@@ -1449,7 +1462,7 @@ extern void x_focus_frame (struct frame *);
 
 #ifndef HAVE_NS
 
-extern int x_bitmap_icon (struct frame *, Lisp_Object);
+extern bool x_bitmap_icon (struct frame *, Lisp_Object);
 
 /* Set F's bitmap icon, if specified among F's parameters.  */
 
@@ -1497,5 +1510,12 @@ extern Lisp_Object make_monitor_attribute_list (struct MonitorInfo *monitors,
 
 
 INLINE_HEADER_END
+
+/* Suppress -Wsuggest-attribute=const if there are no scroll bars.
+   This is for functions like x_set_horizontal_scroll_bars that have
+   no effect in this case.  */
+#if ! USE_HORIZONTAL_SCROLL_BARS && 4 < __GNUC__ + (6 <= __GNUC_MINOR__)
+# pragma GCC diagnostic ignored "-Wsuggest-attribute=const"
+#endif
 
 #endif /* not EMACS_FRAME_H */

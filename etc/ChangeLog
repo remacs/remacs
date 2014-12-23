@@ -1,3 +1,239 @@
+2014-12-15  Artur Malabarba <bruce.connor.am@gmail.com>
+
+	* NEWS: Mention `let-alist.
+
+2014-12-14  Alan Mackenzie  <acm@muc.de>
+
+	* NEWS: Add entry for fast-but-imprecise-scrolling.
+
+2014-12-14  Cameron Desautels  <camdez@gmail.com>
+
+	* NEWS: Mention `custom-prompt-customize-unsaved-options'.
+
+	* TODO: Remove its entry.
+
+2014-12-13  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Convert Czech and Slovakian refcards to UTF-8
+	* refcards/cs-dired-ref.tex, refcards/cs-refcard.tex:
+	* refcards/cs-survival.tex, refcards/sk-dired-ref.tex:
+	* refcards/sk-refcard.tex, refcards/sk-survival.tex:
+	Convert from iso-latin-2 to utf-8.  Remove no-longer-necessary
+	coding comments and "\input utf8off" directives.
+
+2014-12-13  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* NEWS: Mention directory-name-p.
+
+2014-12-09  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* NEWS: Mention directory-files-recursively.
+
+2014-12-08  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* NEWS: Mention the new eww `S' command.
+
+2014-12-05  Stephen Leake  <stephen_leake@stephe-leake.org>
+
+	* CONTRIBUTE: Move to ../.
+
+2014-12-05  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* NEWS: Add some doc markers to the eww stuff.
+
+2014-12-04  Eli Zaretskii  <eliz@gnu.org>
+
+	* NEWS: Mention 'buffer-substring-with-bidi-context'.
+
+2014-12-02  Eli Zaretskii  <eliz@gnu.org>
+
+	* NEWS: Mention 'bidi-find-overridden-directionality'.
+
+2014-11-29  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Lessen focus on ChangeLog files, as opposed to change log entries.
+	* CONTRIBUTE: Give advice about git commit messages and how
+	to generate proposed patches containing them.
+
+2014-11-27  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* NEWS: Mention dom.el.
+
+2014-11-24  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* NEWS: Mention NSM.
+
+2014-11-23  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* NEWS: Mention `url-request-noninteractive'.
+
+2014-11-19  Leo Liu  <sdl.web@gmail.com>
+
+	* NEWS: Mention new macro define-advice.
+
+2014-11-17  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Improve time stamp handling, and be more consistent about it.
+	* NEWS: Document the changes.
+
+2014-11-14  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* NEWS: Mention the new `M-s M-s' keystroke.
+
+2014-11-13  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Fix minor Bazaar leftovers.
+	Reported by Perry E. Metzger in:
+	http://lists.gnu.org/archive/html/emacs-devel/2014-11/msg00745.html
+	* CONTRIBUTE: More git transition.
+
+2014-11-11  Eric S. Raymond  <esr@thyrsus.com>
+
+	* CONTRIBUTE: git transition.
+
+2014-11-10  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* NEWS: Mention that you can have several eww buffers (bug#16211).
+
+2014-11-10  Glenn Morris  <rgm@gnu.org>
+
+	* refcards/emacsver.tex.in: Rename from emacsver.tex.
+
+2014-11-09  Eric Ludlam <zappo@gnu.org>
+
+	* srecode/doc-cpp.srt (mode): Set to c mode so this works with
+	both C and C++.
+
+2014-11-05  Teodor Zlatanov  <tzz@lifelogs.com>
+
+	* NEWS: Mention `url-user-agent'.  (Bug#16498)
+
+2014-09-13  Christopher Schmidt  <ch@ristopher.com>
+
+	* NEWS: Mention prefix argument of `quick-calc'.
+
+2014-10-20  Glenn Morris  <rgm@gnu.org>
+
+	* Merge in all changes up to 24.4 release.
+
+2014-10-19  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* NEWS: Teroffs and detachable tool bar for Gtk+ is gone.
+
+2014-10-19  Ulf Jasper  <ulf.jasper@web.de>
+
+	* images/newsticker/rss-feed.png: New.
+
+	* images/newsticker/rss-feed.svg: New.
+
+	* images/newsticker/README: Add rss-feed.png, rss-feed.svg.
+
+2014-10-18  Michal Nazarewicz  <mina86@mina86.com>
+
+	* NEWS: Mention new whitespace-mode option: big-indent.
+
+2014-10-15  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* NEWS: Mention multipart/related.
+
+2014-10-15  Eli Zaretskii  <eliz@gnu.org>
+
+	* NEWS: Mention the UBA implementation update.
+
+	* HELLO: Remove now unneeded directional control characters.
+
+2014-10-13  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* NEWS: Move and clarify OSX >= 10.6.
+
+2014-10-12  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* NEWS: OSX required is 10.6 or newer.
+
+2014-10-09  Leo Liu  <sdl.web@gmail.com>
+
+	* NEWS: Mention optional arg to terpri and new cl-lib functions.
+
+2014-10-05  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* NEWS: Mention ns-use-fullscreen-animation.
+
+2014-09-30  Bill Wohler  <wohler@newt.com>
+
+	Release MH-E version 8.6
+
+	* NEWS, MH-E-NEWS: Update for MH-E release 8.6.
+
+2014-09-30  Fabrice Niessen  <fniessen@pirilampo.org>
+
+	* themes/leuven-theme.el: Updates.
+
+2014-09-30  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* package-keyring.gpg: New file.
+
+2014-09-30  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* TODO: Remove char/unsigned char, long long, IRIX unexelf.c.
+	The first two are done, and IRIX support has been dropped.
+
+2014-09-29  Eli Zaretskii  <eliz@gnu.org>
+
+	* refcards/ru-refcard.tex: Bump version to 25.0.50.
+
+	* refcards/emacsver.tex: Bump version to 25.0.50.
+
+2014-09-14  Daniel Colascione  <dancol@dancol.org>
+
+	* NEWS: Mention changes to `insert-register'
+
+2014-09-13  Christopher Schmidt  <ch@ristopher.com>
+
+	* NEWS: Mention nil `calendar-mode-line-format' will not modify
+	the mode line of the calendar buffer.  (Bug#18467)
+
+2014-09-06  Leo Liu  <sdl.web@gmail.com>
+
+	* NEWS: Mention vector qpattern for pcase.  (Bug#18327).
+
+2014-09-01  Eli Zaretskii  <eliz@gnu.org>
+
+	* NEWS: Mention that ls-lisp uses string-collate-lessp.
+
+2014-09-01  Paul Eggert  <eggert@cs.ucla.edu>
+
+	--enable-silent-rules now suppresses more chatter.
+	* NEWS: Document this.
+
+2014-08-29  Leo Liu  <sdl.web@gmail.com>
+
+	* NEWS: Mention (:append FUN) to minibuffer-with-setup-hook.
+
+2014-08-29  Eli Zaretskii  <eliz@gnu.org>
+
+	* NEWS: Mention w32-collate-ignore-punctuation.
+
+2014-08-29  Dmitry Antipov  <dmantipov@yandex.ru>
+
+	* NEWS: Mention that `sort' can handle vectors.
+
+2014-08-28  Glenn Morris  <rgm@gnu.org>
+
+	* emacs.appdata.xml: New file; description from Emacs's homepage.
+
+2014-08-25  Eli Zaretskii  <eliz@gnu.org>
+
+	* NEWS: Mention that string-collate-* functions are supported on
+	MS-Windows as well.
+
+2014-08-08  Jan Nieuwenhuizen  <janneke@gnu.org>
+
+	* compilation.txt (file): Add Guile backtrace example.
+
+2014-08-09  Reuben Thomas  <rrt@sc3d.org>
+
+	* PROBLEMS: Remove msdos/is_exec.c and sigaction.c.
+
 2014-07-21  Dmitry Antipov  <dmantipov@yandex.ru>
 
 	* TODO: remove frame height remark.
@@ -3753,7 +3989,7 @@
 
 	* orgcard.tex (section{Motion}): Add the item navigation commands.
 	(section{Publishing}): New section.
-	(section{Links}): Documented elisp and shell links.
+	(section{Links}): Document elisp and shell links.
 
 2006-05-20  Rodrigo Real  <rreal@ucpel.tche.br>
 

@@ -7,8 +7,7 @@ Steps to take before starting on the first pretest in any release sequence:
 
 0.  The release branch (e.g. emacs-24) should already have been made
     and you should use it for all that follows.  Diffs from this
-    branch should be going to the emacs-diffs mailing list (see
-    admin/notes/bzr section on bzr-email plugin).
+    branch should be going to the emacs-diffs mailing list.
 
 1.  Decide on versions of automake and autoconf, and ensure you will
     have them available for the duration of the release process.
@@ -24,8 +23,8 @@ Steps to take before starting on the first pretest in any release sequence:
 
 General steps (for each step, check for possible errors):
 
-1.  `bzr update' (for a bound branch), or `bzr pull'.
-     bzr status   # check for locally modified files
+1.   git pull     # fetch from the repository
+     git status   # check for locally modified files
 
 2.  Regenerate the etc/AUTHORS file:
       M-: (require 'authors) RET
@@ -66,9 +65,8 @@ General steps (for each step, check for possible errors):
 5.  Copy lisp/loaddefs.el to lisp/ldefs-boot.el.
 
     Commit etc/AUTHORS, lisp/ldefs-boot.el, and the files changed
-    by M-x set-version.  Use a commit log message that bzrmerge.el
-    will ignore (eg "Bump version...").
-    For a release, also commit the ChangeLog files in all directories.
+    by M-x set-version. For a release, also commit the ChangeLog
+    files in all directories.
 
     If someone else made a commit between step 1 and now,
     you need to repeat from step 4 onwards.  (You can commit the files
@@ -84,7 +82,7 @@ General steps (for each step, check for possible errors):
 
     If this is the first pretest of a major release, just comparing
     with the previous release may overlook many new files.  You can try
-    something like `find . | sort' in a clean bzr tree, and compare the
+    something like `find . | sort' in a clean repository, and compare the
     results against the new tar contents.
 
 7.   tar -xf emacs-NEW.tar; cd emacs-NEW
@@ -96,7 +94,7 @@ General steps (for each step, check for possible errors):
     M-x ediff.  Especially check that Info files aren't built, and that
     no autotools (autoconf etc) run.
 
-8.  cd EMACS_ROOT_DIR && bzr tag TAG
+8.  cd EMACS_ROOT_DIR && git tag -a TAG && git push origin tag TAG
     TAG is emacs-XX.Y.ZZ for a pretest, emacs-XX.Y for a release.
 
 9. Decide what compression schemes to offer.
@@ -149,13 +147,15 @@ General steps (for each step, check for possible errors):
 
 11. Send an announcement to: emacs-devel, and bcc: info-gnu-emacs@gnu.org.
     For a pretest, also bcc: platform-testers@gnu.org.
+    For a release, also bcc: info-gnu@gnu.org.
     (The reason for using bcc: is to make it less likely that people
     will followup on the wrong list.)
     See the info-gnu-emacs mailing list archives for the form
     of past announcements.  The first pretest announcement, and the
     release announcement, should have more detail.
 
-12. For a release, update the Emacs homepage in the web repository.
-    Also update history.html, and add the new NEWS file as NEWS.xx.y.
+12. For a release, update the Emacs homepage emacs.html in the web repository.
+    Also update history.html, and add the new NEWS file as news/NEWS.xx.y.
     Regenerate the html manuals (use make-manuals from admin.el).
     If there are new manuals, add appropriate index pages.
+    Delete any old manual pages that are no longer present.

@@ -1469,9 +1469,15 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	    (vc-create-repo (car vc-handled-backends))
 	    ;; The structure of VC-FILESET is not documented.  Let's
 	    ;; hope it won't change.
-	    (vc-register
-	     nil (list (car vc-handled-backends)
-		       (list (file-name-nondirectory tmp-name2)))))
+	    (condition-case nil
+		(vc-register
+		 (list (car vc-handled-backends)
+		       (list (file-name-nondirectory tmp-name2))))
+	      ;; `vc-register' has changed its arguments in Emacs 25.1.
+	      (error
+	       (vc-register
+		nil (list (car vc-handled-backends)
+			  (list (file-name-nondirectory tmp-name2)))))))
 	  (should (vc-registered tmp-name2)))
 
 	(ignore-errors (delete-directory tmp-name1 'recursive)))))

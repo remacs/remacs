@@ -33,6 +33,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "lisp.h"
 #include "frame.h"
 #include "window.h"
+#include "buffer.h"
 #include "dispextern.h"
 #include "blockinput.h"
 #include "systime.h"
@@ -3037,13 +3038,16 @@ xbm_load (struct frame *f, struct image *img)
 				     + SBYTES (data)));
       else
 	{
+	  USE_SAFE_ALLOCA;
+
 	  if (VECTORP (data))
 	    {
 	      int i;
 	      char *p;
 	      int nbytes = (img->width + BITS_PER_CHAR - 1) / BITS_PER_CHAR;
 
-	      p = bits = alloca (nbytes * img->height);
+	      SAFE_NALLOCA (bits, nbytes, img->height);
+	      p = bits;
 	      for (i = 0; i < img->height; ++i, p += nbytes)
 		{
 		  Lisp_Object line = AREF (data, i);
@@ -3064,9 +3068,8 @@ xbm_load (struct frame *f, struct image *img)
             int nbytes, i;
             /* Windows mono bitmaps are reversed compared with X.  */
             invertedBits = bits;
-            nbytes = (img->width + BITS_PER_CHAR - 1) / BITS_PER_CHAR
-              * img->height;
-            bits = alloca (nbytes);
+            nbytes = (img->width + BITS_PER_CHAR - 1) / BITS_PER_CHAR;
+            SAFE_NALLOCA (bits, nbytes, img->height);
             for (i = 0; i < nbytes; i++)
               bits[i] = XBM_BIT_SHUFFLE (invertedBits[i]);
           }
@@ -3088,6 +3091,8 @@ xbm_load (struct frame *f, struct image *img)
 			   img->spec, Qnil);
 	      x_clear_image (f, img);
 	    }
+
+	  SAFE_FREE ();
 	}
     }
 
@@ -3494,6 +3499,8 @@ xpm_load (struct frame *f, struct image *img)
   int rc;
   XpmAttributes attrs;
   Lisp_Object specified_file, color_symbols;
+  USE_SAFE_ALLOCA;
+
 #ifdef HAVE_NTGUI
   HDC hdc;
   xpm_XImage * xpm_image = NULL, * xpm_mask = NULL;
@@ -3536,7 +3543,7 @@ xpm_load (struct frame *f, struct image *img)
     {
       Lisp_Object tail;
       XpmColorSymbol *xpm_syms;
-      int i, size;
+      ptrdiff_t i, size;
 
       attrs.valuemask |= XpmColorSymbols;
 
@@ -3546,8 +3553,8 @@ xpm_load (struct frame *f, struct image *img)
 	++attrs.numsymbols;
 
       /* Allocate an XpmColorSymbol array.  */
+      SAFE_NALLOCA (xpm_syms, 1, attrs.numsymbols);
       size = attrs.numsymbols * sizeof *xpm_syms;
-      xpm_syms = alloca (size);
       memset (xpm_syms, 0, size);
       attrs.colorsymbols = xpm_syms;
 
@@ -3569,17 +3576,11 @@ xpm_load (struct frame *f, struct image *img)
 	  name = XCAR (XCAR (tail));
 	  color = XCDR (XCAR (tail));
 	  if (STRINGP (name))
-	    {
-	      xpm_syms[i].name = alloca (SCHARS (name) + 1);
-	      strcpy (xpm_syms[i].name, SSDATA (name));
-	    }
+	    SAFE_ALLOCA_STRING (xpm_syms[i].name, name);
 	  else
 	    xpm_syms[i].name = empty_string;
 	  if (STRINGP (color))
-	    {
-	      xpm_syms[i].value = alloca (SCHARS (color) + 1);
-	      strcpy (xpm_syms[i].value, SSDATA (color));
-	    }
+	    SAFE_ALLOCA_STRING (xpm_syms[i].value, color);
 	  else
 	    xpm_syms[i].value = empty_string;
 	}
@@ -3610,6 +3611,7 @@ xpm_load (struct frame *f, struct image *img)
 #ifdef ALLOC_XPM_COLORS
 	  xpm_free_color_cache ();
 #endif
+	  SAFE_FREE ();
 	  return 0;
 	}
 
@@ -3640,6 +3642,7 @@ xpm_load (struct frame *f, struct image *img)
 #ifdef ALLOC_XPM_COLORS
 	  xpm_free_color_cache ();
 #endif
+	  SAFE_FREE ();
 	  return 0;
 	}
 #ifdef HAVE_NTGUI
@@ -3782,6 +3785,7 @@ xpm_load (struct frame *f, struct image *img)
 #ifdef ALLOC_XPM_COLORS
   xpm_free_color_cache ();
 #endif
+  SAFE_FREE ();
   return rc == XpmSuccess;
 }
 
@@ -4291,7 +4295,11 @@ struct ct_color
 
 /* Value is a hash of the RGB color given by R, G, and B.  */
 
-#define CT_HASH_RGB(R, G, B) (((R) << 16) ^ ((G) << 8) ^ (B))
+static unsigned
+ct_hash_rgb (unsigned r, unsigned g, unsigned b)
+{
+  return (r << 16) ^ (g << 8) ^ b;
+}
 
 /* The color hash table.  */
 
@@ -4346,7 +4354,7 @@ free_color_table (void)
 static unsigned long
 lookup_rgb_color (struct frame *f, int r, int g, int b)
 {
-  unsigned hash = CT_HASH_RGB (r, g, b);
+  unsigned hash = ct_hash_rgb (r, g, b);
   int i = hash % CT_SIZE;
   struct ct_color *p;
   Display_Info *dpyinfo;
@@ -6580,6 +6588,7 @@ jpeg_load_body (struct frame *f, struct image *img,
      colors generated, and mgr->cinfo.colormap is a two-dimensional array
      of color indices in the range 0..mgr->cinfo.actual_number_of_colors.
      No more than 255 colors will be generated.  */
+  USE_SAFE_ALLOCA;
   {
     int i, ir, ig, ib;
 
@@ -6595,7 +6604,7 @@ jpeg_load_body (struct frame *f, struct image *img,
        a default color, and we don't have to care about which colors
        can be freed safely, and which can't.  */
     init_color_table ();
-    colors = alloca (mgr->cinfo.actual_number_of_colors * sizeof *colors);
+    SAFE_NALLOCA (colors, 1, mgr->cinfo.actual_number_of_colors);
 
     for (i = 0; i < mgr->cinfo.actual_number_of_colors; ++i)
       {
@@ -6638,6 +6647,7 @@ jpeg_load_body (struct frame *f, struct image *img,
 
   /* Put ximg into the image.  */
   image_put_x_image (f, img, ximg, 0);
+  SAFE_FREE ();
   return 1;
 }
 
@@ -8226,6 +8236,12 @@ imagemagick_load_image (struct frame *f, struct image *img,
       return 0;
     }
 
+  if (MagickGetImageDelay (image_wand) > 0)
+    img->lisp_data =
+      Fcons (Qdelay,
+             Fcons (make_float (MagickGetImageDelay (image_wand) / 100.0),
+                    img->lisp_data));
+
   if (MagickGetNumberImages (image_wand) > 1)
     img->lisp_data =
       Fcons (Qcount,
@@ -8585,7 +8601,7 @@ static bool svg_image_p (Lisp_Object object);
 static bool svg_load (struct frame *f, struct image *img);
 
 static bool svg_load_image (struct frame *, struct image *,
-			    unsigned char *, ptrdiff_t);
+			    unsigned char *, ptrdiff_t, char *);
 
 /* The symbol `svg' identifying images of this type. */
 
@@ -8673,6 +8689,7 @@ DEF_IMGLIB_FN (void, rsvg_handle_get_dimensions, (RsvgHandle *, RsvgDimensionDat
 DEF_IMGLIB_FN (gboolean, rsvg_handle_write, (RsvgHandle *, const guchar *, gsize, GError **));
 DEF_IMGLIB_FN (gboolean, rsvg_handle_close, (RsvgHandle *, GError **));
 DEF_IMGLIB_FN (GdkPixbuf *, rsvg_handle_get_pixbuf, (RsvgHandle *));
+DEF_IMGLIB_FN (void, rsvg_handle_set_base_uri, (RsvgHandle *, const char *));
 
 DEF_IMGLIB_FN (int, gdk_pixbuf_get_width, (const GdkPixbuf *));
 DEF_IMGLIB_FN (int, gdk_pixbuf_get_height, (const GdkPixbuf *));
@@ -8712,6 +8729,7 @@ init_svg_functions (void)
   LOAD_IMGLIB_FN (library, rsvg_handle_write);
   LOAD_IMGLIB_FN (library, rsvg_handle_close);
   LOAD_IMGLIB_FN (library, rsvg_handle_get_pixbuf);
+  LOAD_IMGLIB_FN (library, rsvg_handle_set_base_uri);
 
   LOAD_IMGLIB_FN (gdklib, gdk_pixbuf_get_width);
   LOAD_IMGLIB_FN (gdklib, gdk_pixbuf_get_height);
@@ -8739,6 +8757,7 @@ init_svg_functions (void)
 #define fn_rsvg_handle_write		rsvg_handle_write
 #define fn_rsvg_handle_close		rsvg_handle_close
 #define fn_rsvg_handle_get_pixbuf	rsvg_handle_get_pixbuf
+#define fn_rsvg_handle_set_base_uri	rsvg_handle_set_base_uri
 
 #define fn_gdk_pixbuf_get_width		  gdk_pixbuf_get_width
 #define fn_gdk_pixbuf_get_height	  gdk_pixbuf_get_height
@@ -8788,14 +8807,14 @@ svg_load (struct frame *f, struct image *img)
 	  return 0;
 	}
       /* If the file was slurped into memory properly, parse it.  */
-      success_p = svg_load_image (f, img, contents, size);
+      success_p = svg_load_image (f, img, contents, size, SSDATA (file));
       xfree (contents);
     }
   /* Else its not a file, its a lisp object.  Load the image from a
      lisp object rather than a file.  */
   else
     {
-      Lisp_Object data;
+      Lisp_Object data, original_filename;
 
       data = image_spec_value (img->spec, QCdata, NULL);
       if (!STRINGP (data))
@@ -8803,7 +8822,10 @@ svg_load (struct frame *f, struct image *img)
 	  image_error ("Invalid image data `%s'", data, Qnil);
 	  return 0;
 	}
-      success_p = svg_load_image (f, img, SDATA (data), SBYTES (data));
+      original_filename = BVAR (current_buffer, filename);
+      success_p = svg_load_image (f, img, SDATA (data), SBYTES (data),
+                                  (NILP (original_filename) ? NULL
+				   : SSDATA (original_filename)));
     }
 
   return success_p;
@@ -8820,7 +8842,8 @@ static bool
 svg_load_image (struct frame *f,         /* Pointer to emacs frame structure.  */
 		struct image *img,       /* Pointer to emacs image structure.  */
 		unsigned char *contents, /* String containing the SVG XML data to be parsed.  */
-		ptrdiff_t size)          /* Size of data in bytes.  */
+		ptrdiff_t size,          /* Size of data in bytes.  */
+		char *filename)          /* Name of SVG file being loaded.  */
 {
   RsvgHandle *rsvg_handle;
   RsvgDimensionData dimension_data;
@@ -8844,6 +8867,12 @@ svg_load_image (struct frame *f,         /* Pointer to emacs frame structure.  *
 
   /* Make a handle to a new rsvg object.  */
   rsvg_handle = fn_rsvg_handle_new ();
+
+  /* Set base_uri for properly handling referenced images (via 'href').
+     See rsvg bug 596114 - "image refs are relative to curdir, not .svg file"
+     (https://bugzilla.gnome.org/show_bug.cgi?id=596114). */
+  if (filename)
+    fn_rsvg_handle_set_base_uri(rsvg_handle, filename);
 
   /* Parse the contents argument and fill in the rsvg_handle.  */
   fn_rsvg_handle_write (rsvg_handle, contents, size, &err);

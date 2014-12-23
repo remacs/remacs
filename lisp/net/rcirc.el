@@ -145,11 +145,13 @@ for connections using SSL/TLS."
 
 (defcustom rcirc-fill-column nil
   "Column beyond which automatic line-wrapping should happen.
-If nil, use value of `fill-column'.  If 'frame-width, use the
-maximum frame width."
-  :type '(choice (const :tag "Value of `fill-column'")
-		 (const :tag "Full frame width" frame-width)
-		 (integer :tag "Number of columns"))
+If nil, use value of `fill-column'.
+If a function (e.g., `frame-text-width' or `window-text-width'),
+call it to compute the number of columns."
+  :risky t                              ; can get funcalled
+  :type '(choice (const :tag "Value of `fill-column'" nil)
+		 (integer :tag "Number of columns")
+		 (function :tag "Function returning the number of columns"))
   :group 'rcirc)
 
 (defcustom rcirc-fill-prefix nil
@@ -597,10 +599,10 @@ If ARG is non-nil, instead prompt for connection parameters."
   `(with-current-buffer rcirc-server-buffer
      ,@body))
 
-(defun rcirc-float-time ()
+(defalias 'rcirc-float-time
   (if (featurep 'xemacs)
-      (time-to-seconds (current-time))
-    (float-time)))
+      'time-to-seconds
+    'float-time))
 
 (defun rcirc-prompt-for-encryption (server-plist)
   "Prompt the user for the encryption method to use.
@@ -661,7 +663,7 @@ Functions are called with PROCESS and SENTINEL arguments.")
 (defcustom rcirc-reconnect-delay 0
   "The minimum interval in seconds between reconnect attempts.
 When 0, do not auto-reconnect."
-  :version "24.5"
+  :version "25.1"
   :type 'integer
   :group 'rcirc)
 
@@ -2533,11 +2535,10 @@ If ARG is given, opens the URL in a new browser window."
     (let ((fill-prefix
 	   (or rcirc-fill-prefix
 	       (make-string (- (point) (line-beginning-position)) ?\s)))
-	  (fill-column (- (cond ((eq rcirc-fill-column 'frame-width)
-				 (1- (frame-width)))
-				(rcirc-fill-column
-				 rcirc-fill-column)
-				(t fill-column))
+	  (fill-column (- (cond ((null rcirc-fill-column) fill-column)
+                                ((functionp rcirc-fill-column)
+				 (funcall rcirc-fill-column))
+				(t rcirc-fill-column))
 			  ;; make sure ... doesn't cause line wrapping
 			  3)))
       (fill-region (point) (point-max) nil t))))

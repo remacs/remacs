@@ -8,12 +8,12 @@
 ## it under the terms of the GNU General Public License as published by
 ## the Free Software Foundation, either version 3 of the License, or
 ## (at your option) any later version.
-## 
+##
 ## GNU Emacs is distributed in the hope that it will be useful,
 ## but WITHOUT ANY WARRANTY; without even the implied warranty of
 ## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ## GNU General Public License for more details.
-## 
+##
 ## You should have received a copy of the GNU General Public License
 ## along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -23,7 +23,12 @@
 SHELL = @SHELL@
 
 srcdir = @srcdir@
+abs_builddir = @abs_builddir@
+abs_top_builddir = @abs_top_builddir@
 EXEEXT = @EXEEXT@
+
+# abs_top_srcdir may contain ".."
+top_srcdir_abs = $(shell cd @top_srcdir@; pwd -P)
 
 @SET_MAKE@
 MKDIR_P = @MKDIR_P@
@@ -50,10 +55,27 @@ ${ns_appbindir}/Emacs: ${ns_appdir} ${ns_check_file} ../src/emacs${EXEEXT} | \
   ${ns_appbindir}
 	cp -f ../src/emacs${EXEEXT} $@
 
-.PHONY: all
+.PHONY: all links
 
 all: ${ns_appdir} ${ns_appbindir}/Emacs
 
+# create a fake installation pointing back to the source tree
+# to run GUI Emacs in-place
+links : ../src/emacs${EXEEXT} | ${ns_appbindir}
+	for d in $(shell cd ${srcdir}/${ns_appsrc}; find . -type d); do ${MKDIR_P} ${ns_appdir}/$$d; done
+	for f in $(shell cd ${srcdir}/${ns_appsrc}; find . -type f); do ln -s $(shell cd ${srcdir}; pwd -P)/${ns_appsrc}/$$f ${ns_appdir}/$$f; done
+	for d in $(shell cd ${ns_appsrc}; find . -type d); do ${MKDIR_P} ${ns_appdir}/$$d; done
+	for f in $(shell cd ${ns_appsrc}; find . -type f); do ln -s $(shell cd ${ns_appsrc}; pwd -P)/$$f ${ns_appdir}/$$f; done
+	ln -s $(top_srcdir_abs)/lisp ${ns_appdir}/Contents/Resources
+	ln -s $(top_srcdir_abs)/info ${ns_appdir}/Contents/Resources
+	ln -s $(abs_top_builddir)/src/emacs${EXEEXT} ${ns_appbindir}/Emacs
+	ln -s $(abs_top_builddir)/lib-src ${ns_appbindir}/bin
+	ln -s $(abs_top_builddir)/lib-src ${ns_appbindir}/libexec
+	${MKDIR_P} ${ns_appdir}/Contents/Resources/etc
+	for f in $(shell cd $(top_srcdir_abs)/etc; ls); do ln -s $(top_srcdir_abs)/etc/$$f ${ns_appdir}/Contents/Resources/etc; done
+	ln -s $(abs_top_builddir)/etc/DOC ${ns_appdir}/Contents/Resources/etc
+	@echo if the next find prints something, the installation failed
+	find ${ns_appdir} -exec test \! -e {} \; -ls
 
 .PHONY: clean distclean bootstrap-clean maintainer-clean
 

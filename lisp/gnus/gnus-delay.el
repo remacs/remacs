@@ -98,7 +98,7 @@ DELAY is a string, giving the length of the time.  Possible values are:
 	   (setq hour   (string-to-number (match-string 1 delay))
 		 minute (string-to-number (match-string 2 delay)))
 	   ;; Use current time, except...
-	   (setq deadline (apply 'vector (decode-time (current-time))))
+	   (setq deadline (apply 'vector (decode-time)))
 	   ;; ... for minute and hour.
 	   (aset deadline 1 minute)
 	   (aset deadline 2 hour)
@@ -153,7 +153,7 @@ DELAY is a string, giving the length of the time.  Possible values are:
       (when (gnus-group-entry group)
 	(gnus-activate-group group)
 	(add-hook 'message-send-hook
-		  (lambda () (message-remove-header gnus-delay-header)))
+		  (lambda () (message-remove-header gnus-delay-header)) t)
 	(setq articles (nndraft-articles))
 	(while (setq article (pop articles))
 	  (gnus-request-head article group)

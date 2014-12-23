@@ -1,3 +1,19 @@
+2014-12-14  Glenn Morris  <rgm@gnu.org>
+
+	* grep-changelog.1: Remove file.
+
+2014-11-10  Glenn Morris  <rgm@gnu.org>
+
+	* emacs.1.in: Rename from emacs.1.
+
+2014-10-20  Glenn Morris  <rgm@gnu.org>
+
+	* Merge in all changes up to 24.4 release.
+
+2014-09-29  Eli Zaretskii  <eliz@gnu.org>
+
+	* emacs.1: Bump version to 25.0.50.
+
 2014-01-12  Glenn Morris  <rgm@gnu.org>
 
 	* emacs.1: Replace reference to etc/MAILINGLISTS.

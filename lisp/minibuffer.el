@@ -169,13 +169,15 @@ ACTION can be one of nil, t or `lambda'."
       (t 'test-completion))
      string table pred))))
 
-(defun completion-table-dynamic (fun)
+(defun completion-table-dynamic (fun &optional switch-buffer)
   "Use function FUN as a dynamic completion table.
 FUN is called with one argument, the string for which completion is required,
 and it should return an alist containing all the intended possible completions.
 This alist may be a full list of possible completions so that FUN can ignore
-the value of its argument.  If completion is performed in the minibuffer,
-FUN will be called in the buffer from which the minibuffer was entered.
+the value of its argument.
+If SWITCH-BUFFER is non-nil and completion is performed in the
+minibuffer, FUN will be called in the buffer from which the minibuffer
+was entered.
 
 The result of the `completion-table-dynamic' form is a function
 that can be used as the COLLECTION argument to `try-completion' and
@@ -187,9 +189,10 @@ See also the related function `completion-table-with-cache'."
         ;; `fun' is not supposed to return another function but a plain old
         ;; completion table, whose boundaries are always trivial.
         nil
-      (with-current-buffer (let ((win (minibuffer-selected-window)))
-                             (if (window-live-p win) (window-buffer win)
-                               (current-buffer)))
+      (with-current-buffer (if (not switch-buffer) (current-buffer)
+                             (let ((win (minibuffer-selected-window)))
+                               (if (window-live-p win) (window-buffer win)
+                                 (current-buffer))))
         (complete-with-action action (funcall fun string) string pred)))))
 
 (defun completion-table-with-cache (fun &optional ignore-case)
@@ -228,7 +231,8 @@ You should give VAR a non-nil `risky-local-variable' property."
       (lambda (,str)
         (when (functionp ,var)
           (setq ,var (funcall #',fun)))
-        ,var))))
+        ,var)
+      'do-switch-buffer)))
 
 (defun completion-table-case-fold (table &optional dont-fold)
   "Return new completion TABLE that is case insensitive.
@@ -1811,11 +1815,13 @@ variables.")
              ;; Use `display-buffer-below-selected' for inline completions,
              ;; but not in the minibuffer (e.g. in `eval-expression')
              ;; for which `display-buffer-at-bottom' is used.
-             ,(if (and completion-in-region-mode-predicate
-                       (not (minibuffer-selected-window)))
-                  'display-buffer-below-selected
-                'display-buffer-at-bottom))
-            (window-height . fit-window-to-buffer))
+             ,(if (eq (selected-window) (minibuffer-window))
+                  'display-buffer-at-bottom
+                'display-buffer-below-selected))
+	    ,(when temp-buffer-resize-mode
+	       '(window-height . resize-temp-buffer-window))
+	    ,(when temp-buffer-resize-mode
+	       '(preserve-size . (nil . t))))
           nil
           ;; Remove the base-size tail because `sort' requires a properly
           ;; nil-terminated list.
@@ -2106,7 +2112,11 @@ The completion method is determined by `completion-at-point-functions'."
          (completion-in-region start end collection
                                (plist-get plist :predicate))))
       ;; Maybe completion already happened and the function returned t.
-      (_ (cdr res)))))
+      (_
+       (when (cdr res)
+         (message "Warning: %S failed to return valid completion data!"
+                  (car res)))
+       (cdr res)))))
 
 (defun completion-help-at-point ()
   "Display the completions on the text around point.

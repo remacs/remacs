@@ -2041,6 +2041,12 @@ Regular expression matching a successful @acronym{STARTTLS} negotiation.
 If non-@code{nil}, do opportunistic @acronym{STARTTLS} upgrades even if Emacs
 doesn't have built-in @acronym{TLS} support.
 
+@item :warn-unless-encrypted @var{boolean}
+If non-@code{nil}, and @code{:return-value} is also non-@code{nil},
+Emacs will warn if the connection isn't encrypted.  This is useful for
+protocols like @acronym{IMAP} and the like, where most users would
+expect the network traffic to be encrypted.
+
 @item :client-certificate @var{list-or-t}
 Either a list of the form @code{(@var{key-file} @var{cert-file})},
 naming the certificate key file and certificate file itself, or
@@ -2065,6 +2071,7 @@ The connection type: @samp{plain} or @samp{tls}.
 @end table
 
 @end defun
+
 
 @node Network Servers
 @section Network Servers

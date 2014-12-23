@@ -274,7 +274,13 @@ Leaving \"Default\" unchecked is equivalent with specifying a default of
 	     (tool-bar-mode (frames mouse) boolean nil
 ;			    :initialize custom-initialize-default
 			    :set custom-set-minor-mode)
-	     (frame-resize-pixelwise windows boolean "24.4")
+	     (frame-resize-pixelwise frames boolean "24.4")
+	     (frame-inhibit-implied-resize frames
+					   (choice
+					    (const :tag "Never" nil)
+					    (const :tag "Always" t)
+					    (repeat (symbol :tag "Parameter")))
+					   "25.1")
 	     ;; fringe.c
 	     (overflow-newline-into-fringe fringe boolean)
 	     ;; image.c
@@ -404,7 +410,8 @@ Leaving \"Default\" unchecked is equivalent with specifying a default of
 	     (ns-antialias-text ns boolean "23.1")
 	     (ns-auto-hide-menu-bar ns boolean "24.1")
 	     (ns-use-native-fullscreen ns boolean "24.4")
-	     (ns-use-srgb-colorspace ns boolean "24.4")
+             (ns-use-fullscreen-animation ns boolean "25.1")
+             (ns-use-srgb-colorspace ns boolean "24.4")
 	     ;; process.c
 	     (delete-exited-processes processes-basics boolean)
 	     ;; syntax.c
@@ -453,6 +460,7 @@ since it could result in memory overflow and make Emacs crash."
 			      :value display-buffer)
 		       (other :tag "Always (t)" :value t))
 	      "24.3")
+	     (fast-but-imprecise-scrolling scrolling boolean "25.1")
 	     (window-resize-pixelwise windows boolean "24.4")
 	     ;; xdisp.c
 	     ;; The whitespace group is for whitespace.el.
@@ -521,7 +529,6 @@ since it could result in memory overflow and make Emacs crash."
 	     (x-gtk-use-old-file-dialog menu boolean "22.1")
 	     (x-gtk-show-hidden-files menu boolean "22.1")
 	     (x-gtk-file-dialog-help-text menu boolean "22.1")
-	     (x-gtk-whole-detached-tool-bar x boolean "22.1")
 	     (x-gtk-use-system-tooltips tooltip boolean "23.3")
 	     ;; xterm.c
 	     (x-use-underline-position-properties display boolean "22.1")

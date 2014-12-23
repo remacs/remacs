@@ -33,6 +33,8 @@
 
 ;;; Code:
 
+;; FIXME: Clean up namespace usage!
+
 (cl-defstruct
   (registerv (:constructor nil)
 	     (:constructor registerv--make (&optional data print-func
@@ -98,16 +100,12 @@ If nil, do not show register previews, unless `help-char' (or a member of
 
 (defun get-register (register)
   "Return contents of Emacs register named REGISTER, or nil if none."
-  (cdr (assq register register-alist)))
+  (alist-get register register-alist))
 
 (defun set-register (register value)
   "Set contents of Emacs register named REGISTER to VALUE.  Returns VALUE.
 See the documentation of the variable `register-alist' for possible VALUEs."
-  (let ((aelt (assq register register-alist)))
-    (if aelt
-	(setcdr aelt value)
-      (push (cons register value) register-alist))
-    value))
+  (setf (alist-get register register-alist) value))
 
 (defun register-describe-oneline (c)
   "One-line description of register C."
@@ -137,7 +135,8 @@ Format of each entry is controlled by the variable `register-preview-function'."
     (with-current-buffer-window
      buffer
      (cons 'display-buffer-below-selected
-	   '((window-height . fit-window-to-buffer)))
+	   '((window-height . fit-window-to-buffer)
+	     (preserve-size . (nil . t))))
      nil
      (with-current-buffer standard-output
        (setq cursor-in-non-selected-windows nil)
@@ -425,13 +424,14 @@ Interactively, reads the register using `register-read-with-preview'."
   "Insert contents of register REGISTER.  (REGISTER is a character.)
 Normally puts point before and mark after the inserted text.
 If optional second arg is non-nil, puts mark before and point after.
-Interactively, second arg is non-nil if prefix arg is supplied.
+Interactively, second arg is nil if prefix arg is supplied and t
+otherwise.
 
 Interactively, reads the register using `register-read-with-preview'."
   (interactive (progn
 		 (barf-if-buffer-read-only)
 		 (list (register-read-with-preview "Insert register: ")
-		       current-prefix-arg)))
+		       (not current-prefix-arg))))
   (push-mark)
   (let ((val (get-register register)))
     (cond

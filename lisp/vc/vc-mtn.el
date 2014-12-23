@@ -79,7 +79,8 @@ If nil, use the value of `vc-diff-switches'.  If t, use no switches."
 (defun vc-mtn-checkout-model (_files) 'implicit)
 
 (defun vc-mtn-root (file)
-  (setq file (if (file-directory-p file)
+  (setq file (expand-file-name file)
+	file (if (file-directory-p file)
                  (file-name-as-directory file)
                (file-name-directory file)))
   (or (vc-file-getprop file 'vc-mtn-root)
@@ -126,10 +127,11 @@ If nil, use the value of `vc-diff-switches'.  If t, use no switches."
 	     ((match-end 2) (push (list (match-string 3) 'added) result))))
     (funcall update-function result)))
 
-;; -dir-status called from vc-dir, which loads vc, which loads vc-dispatcher.
+;; dir-status-files called from vc-dir, which loads vc,
+;; which loads vc-dispatcher.
 (declare-function vc-exec-after "vc-dispatcher" (code))
 
-(defun vc-mtn-dir-status (dir update-function)
+(defun vc-mtn-dir-status-files (dir _files update-function)
   (vc-mtn-command (current-buffer) 'async dir "status")
   (vc-run-delayed
    (vc-mtn-after-dir-status update-function)))
@@ -154,9 +156,6 @@ If nil, use the value of `vc-diff-switches'.  If t, use no switches."
       (re-search-forward "\\(?:Current b\\|B\\)ranch:  *\\(.*\\)\n?\nChanges against parent \\(.*\\)")
       (match-string 1))))
 
-(defun vc-mtn-workfile-unchanged-p (file)
-  (not (eq (vc-mtn-state file) 'edited)))
-
 ;; Mode-line rewrite code copied from vc-arch.el.
 
 (defcustom vc-mtn-mode-line-rewrite
@@ -179,15 +178,14 @@ If nil, use the value of `vc-diff-switches'.  If t, use no switches."
 	      (_ ?:))
 	    branch)))
 
-(defun vc-mtn-register (files &optional _rev _comment)
+(defun vc-mtn-register (files &optional _comment)
   (vc-mtn-command nil 0 files "add"))
 
 (defun vc-mtn-responsible-p (file) (vc-mtn-root file))
-(defun vc-mtn-could-register (file) (vc-mtn-root file))
 
 (declare-function log-edit-extract-headers "log-edit" (headers string))
 
-(defun vc-mtn-checkin (files _rev comment)
+(defun vc-mtn-checkin (files comment)
   (apply 'vc-mtn-command nil 0 files
 	 (nconc (list "commit" "-m")
 		(log-edit-extract-headers '(("Author" . "--author")
@@ -197,15 +195,12 @@ If nil, use the value of `vc-diff-switches'.  If t, use no switches."
 (defun vc-mtn-find-revision (file rev buffer)
   (vc-mtn-command buffer 0 file "cat" "-r" rev))
 
-;; (defun vc-mtn-checkout (file &optional editable rev)
+;; (defun vc-mtn-checkout (file &optional rev)
 ;;   )
 
 (defun vc-mtn-revert (file &optional contents-done)
   (unless contents-done
     (vc-mtn-command nil 0 file "revert")))
-
-;; (defun vc-mtn-rollback (files)
-;;   )
 
 (defun vc-mtn-print-log (files buffer &optional _shortlog start-revision limit)
   "Print commit logs associated with FILES into specified BUFFER.
@@ -241,9 +236,11 @@ If LIMIT is non-nil, show no more than this many entries."
 
 (autoload 'vc-switches "vc")
 
-(defun vc-mtn-diff (files &optional rev1 rev2 buffer)
+(defun vc-mtn-diff (files &optional rev1 rev2 buffer async)
   "Get a difference report using monotone between two revisions of FILES."
-  (apply 'vc-mtn-command (or buffer "*vc-diff*") 1 files "diff"
+  (apply 'vc-mtn-command (or buffer "*vc-diff*")
+	 (if async 'async 1)
+	 files "diff"
          (append
            (vc-switches 'mtn 'diff)
            (if rev1 (list "-r" rev1)) (if rev2 (list "-r" rev2)))))

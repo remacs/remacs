@@ -477,6 +477,8 @@ File = \\(.+\\), Line = \\([0-9]+\\)\\(?:, Column = \\([0-9]+\\)\\)?"
      ;;
      "^\\([^ \t\r\n(]+\\) (\\([0-9]+\\):\\([0-9]+\\)) "
      1 2 3)
+    (guile-file "^In \\(.+\\):\n" 1)
+    (guile-line "^ *\\([0-9]+\\): *\\([0-9]+\\)" nil 1 2)
     )
   "Alist of values for `compilation-error-regexp-alist'.")
 
@@ -967,19 +969,12 @@ POS and RES.")
                     (cons (copy-marker pos) (if prev (copy-marker prev))))
               prev)
              ((and prev (= prev cache))
-              (if cache
-                  (set-marker (car compilation--previous-directory-cache) pos)
-                (setq compilation--previous-directory-cache
-                      (cons (copy-marker pos) nil)))
+              (set-marker (car compilation--previous-directory-cache) pos)
               (cdr compilation--previous-directory-cache))
              (t
-              (if cache
-                  (progn
-                    (set-marker cache pos)
-                    (setcdr compilation--previous-directory-cache
-                            (copy-marker prev)))
-                (setq compilation--previous-directory-cache
-                      (cons (copy-marker pos) (if prev (copy-marker prev)))))
+              (set-marker cache pos)
+              (setcdr compilation--previous-directory-cache
+                      (copy-marker prev))
               prev))))
       (if (markerp res) (marker-position res) res))))
 
@@ -1681,7 +1676,16 @@ Returns the compilation buffer created."
 	     (list command mode name-function highlight-regexp))
 	(set (make-local-variable 'revert-buffer-function)
 	     'compilation-revert-buffer)
-	(and outwin (set-window-start outwin (point-min)))
+	(and outwin
+	     ;; Forcing the window-start overrides the usual redisplay
+	     ;; feature of bringing point into view, so setting the
+	     ;; window-start to top of the buffer risks losing the
+	     ;; effect of moving point to EOB below, per
+	     ;; compilation-scroll-output, if the command is long
+	     ;; enough to push point outside of the window.  This
+	     ;; could happen, e.g., in `rgrep'.
+	     (not compilation-scroll-output)
+	     (set-window-start outwin (point-min)))
 
 	;; Position point as the user will see it.
 	(let ((desired-visible-point
@@ -1980,6 +1984,12 @@ Runs `compilation-mode-hook' with `run-mode-hooks' (which see).
        compilation-page-delimiter)
   ;; (set (make-local-variable 'compilation-buffer-modtime) nil)
   (compilation-setup)
+  ;; Turn off deferred fontifications in the compilation buffer, if
+  ;; the user turned them on globally.  This is because idle timers
+  ;; aren't re-run after receiving input from a subprocess, so the
+  ;; buffer is left unfontified after the compilation exits, until
+  ;; some other input event happens.
+  (set (make-local-variable 'jit-lock-defer-time) nil)
   (setq buffer-read-only t)
   (run-mode-hooks 'compilation-mode-hook))
 
@@ -2284,6 +2294,7 @@ looking for the next message."
   (or (compilation-buffer-p (current-buffer))
       (error "Not in a compilation buffer"))
   (or pt (setq pt (point)))
+  (compilation--ensure-parse pt)
   (let* ((msg (get-text-property pt 'compilation-message))
          ;; `loc', `msg', and `last' are used by the compilation-loop macro.
 	 (loc (and msg (compilation--message->loc msg)))
@@ -2296,7 +2307,8 @@ looking for the next message."
 						    (line-beginning-position)))
 	  (unless (setq msg (get-text-property (max (1- pt) (point-min))
                                                'compilation-message))
-	    (setq pt (next-single-property-change pt 'compilation-message nil
+	    (setq pt (compilation-next-single-property-change
+                      pt 'compilation-message nil
 						  (line-end-position)))
 	    (or (setq msg (get-text-property pt 'compilation-message))
 		(setq pt (point)))))
@@ -2307,7 +2319,6 @@ looking for the next message."
 				"No more %ss yet"
 			      "Moved past last %s")
 			    (point-max))
-        (compilation--ensure-parse pt)
 	;; Don't move "back" to message at or before point.
 	;; Pass an explicit (point-min) to make sure pt is non-nil.
 	(setq pt (previous-single-property-change

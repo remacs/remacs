@@ -26,6 +26,16 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include <mingw_time.h>
 
+/* MinGW-w64 gcc does not automotically define a macro for
+   differentiating it fom MinGW gcc. We need to test the presence of
+   __MINGW64_VERSION_MAJOR in _mingw.h: */
+#ifdef __MINGW32__
+# include <_mingw.h>
+# ifdef __MINGW64_VERSION_MAJOR
+#  define MINGW_W64
+# endif
+#endif
+
 /* #undef const */
 
 /* Number of chars of output in the buffer of a stdio stream. */
@@ -139,8 +149,7 @@ extern char *getenv ();
    versions we still support.  MinGW64 defines this to a higher value
    in its system headers, and is not really compatible with values
    lower than 0x0500, so leave it alone.  */
-#ifndef _W64
-# undef _WIN32_WINNT
+#ifndef MINGW_W64
 # define _WIN32_WINNT 0x0400
 #endif
 
@@ -167,7 +176,7 @@ extern char *getenv ();
 
 #ifdef emacs
 
-#ifdef _W64
+#ifdef MINGW_W64
 /* MinGW64 specific stuff.  */
 /* Make sure 'struct timespec' and 'struct timezone' are defined.  */
 #include <sys/types.h>
@@ -370,7 +379,7 @@ typedef int sigset_t;
 typedef int ssize_t;
 #endif
 
-#ifdef _W64	/* MinGW64 */
+#ifdef MINGW_W64
 #ifndef _POSIX
 typedef _sigset_t sigset_t;
 #endif

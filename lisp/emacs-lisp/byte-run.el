@@ -34,10 +34,11 @@
   ;; We don't want people to just use `put' because we can't conveniently
   ;; hook into `put' to remap old properties to new ones.  But for now, there's
   ;; no such remapping, so we just call `put'.
-  #'(lambda (f prop value) (put f prop value))
-  "Set function F's property PROP to VALUE.
+  #'(lambda (function prop value)
+      "Set FUNCTION's property PROP to VALUE.
 The namespace for PROP is shared with symbols.
-So far, F can only be a symbol, not a lambda expression.")
+So far, FUNCTION can only be a symbol, not a lambda expression."
+      (put function prop value)))
 (function-put 'defmacro 'doc-string-elt 3)
 (function-put 'defmacro 'lisp-indent-function 2)
 
@@ -112,12 +113,20 @@ This may shift errors from run-time to compile-time.")
 If `error-free', drop calls even if `byte-compile-delete-errors' is nil.")
    (list 'compiler-macro
          #'(lambda (f args compiler-function)
-             `(eval-and-compile
-                (function-put ',f 'compiler-macro
-                              ,(if (eq (car-safe compiler-function) 'lambda)
-                                   `(lambda ,(append (cadr compiler-function) args)
-                                      ,@(cddr compiler-function))
-                                 `#',compiler-function)))))
+             (if (not (eq (car-safe compiler-function) 'lambda))
+                 `(eval-and-compile
+                    (function-put ',f 'compiler-macro #',compiler-function))
+               (let ((cfname (intern (concat (symbol-name f) "--anon-cmacro"))))
+                 `(progn
+                    (eval-and-compile
+                      (function-put ',f 'compiler-macro #',cfname))
+                    ;; Don't autoload the compiler-macro itself, since the
+                    ;; macroexpander will find this file via `f's autoload,
+                    ;; if needed.
+                    :autoload-end
+                    (eval-and-compile
+                      (defun ,cfname (,@(cadr compiler-function) ,@args)
+                        ,@(cddr compiler-function))))))))
    (list 'doc-string
          #'(lambda (f _args pos)
              (list 'function-put (list 'quote f)

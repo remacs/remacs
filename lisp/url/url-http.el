@@ -25,7 +25,9 @@
 
 ;;; Code:
 
-(eval-when-compile (require 'cl-lib))
+(eval-when-compile
+  (require 'cl-lib)
+  (require 'subr-x))
 
 (defvar url-callback-arguments)
 (defvar url-callback-function)
@@ -40,6 +42,7 @@
 (defvar url-http-data)
 (defvar url-http-end-of-headers)
 (defvar url-http-extra-headers)
+(defvar url-http-noninteractive)
 (defvar url-http-method)
 (defvar url-http-no-retry)
 (defvar url-http-process)
@@ -132,6 +135,17 @@ request.")
     (507 insufficient-storage            "Insufficient storage"))
   "The HTTP return codes and their text.")
 
+(defcustom url-user-agent (format "User-Agent: %sURL/%s\r\n"
+				  (if url-package-name
+				      (concat url-package-name "/"
+					      url-package-version " ")
+				    "") url-version)
+  "User Agent used by the URL package."
+  :type '(choice (string :tag "A static User-Agent string")
+                 (function :tag "Call a function to get the User-Agent string"))
+  :version "25.1"
+  :group 'url)
+
 ;(eval-when-compile
 ;; These are all macros so that they are hidden from external sight
 ;; when the file is byte-compiled.
@@ -171,7 +185,7 @@ request.")
 	     url-http-open-connections))
   nil)
 
-(defun url-http-find-free-connection (host port)
+(defun url-http-find-free-connection (host port &optional gateway-method)
   (let ((conns (gethash (cons host port) url-http-open-connections))
 	(connection nil))
     (while (and conns (not connection))
@@ -193,7 +207,7 @@ request.")
 	;; `url-open-stream' needs a buffer in which to do things
 	;; like authentication.  But we use another buffer afterwards.
 	(unwind-protect
-	    (let ((proc (url-open-stream host buf host port)))
+	    (let ((proc (url-open-stream host buf host port gateway-method)))
 	      ;; url-open-stream might return nil.
 	      (when (processp proc)
 		;; Drop the temp buffer link before killing the buffer.
@@ -214,11 +228,9 @@ request.")
 	  (and (listp url-privacy-level)
 	       (memq 'agent url-privacy-level)))
       ""
-    (format "User-Agent: %sURL/%s\r\n"
-	    (if url-package-name
-		(concat url-package-name "/" url-package-version " ")
-	      "")
-	    url-version)))
+    (if (functionp url-user-agent)
+        (funcall url-user-agent)
+      url-user-agent)))
 
 (defun url-http-create-request (&optional ref-url)
   "Create an HTTP request for `url-http-target-url', referred to by REF-URL."
@@ -313,7 +325,14 @@ request.")
                  (concat
                   "From: " url-personal-mail-address "\r\n"))
              ;; Encodings we understand
-             (if url-mime-encoding-string
+             (if (or url-mime-encoding-string
+		     ;; MS-Windows loads zlib dynamically, so recheck
+		     ;; in case they made it available since
+		     ;; initialization in url-vars.el.
+		     (and (eq 'system-type 'windows-nt)
+			  (fboundp 'zlib-available-p)
+			  (zlib-available-p)
+			  (setq url-mime-encoding-string "gzip")))
                  (concat
                   "Accept-encoding: " url-mime-encoding-string "\r\n"))
              (if url-mime-charset-string
@@ -475,7 +494,14 @@ should be shown to the user."
   (url-http-mark-connection-as-free (url-host url-current-object)
 				    (url-port url-current-object)
 				    url-http-process)
-
+  ;; Pass the https certificate on to the caller.
+  (when (gnutls-available-p)
+    (let ((status (gnutls-peer-status url-http-process)))
+      (when (or status
+		(plist-get (car url-callback-arguments) :peer))
+	(setcar url-callback-arguments
+		(plist-put (car url-callback-arguments)
+			   :peer status)))))
   (if (or (not (boundp 'url-http-end-of-headers))
 	  (not url-http-end-of-headers))
       (error "Trying to parse headers in odd buffer: %s" (buffer-name)))
@@ -875,7 +901,8 @@ should be shown to the user."
   (url-http-mark-connection-as-free (url-host url-current-object)
 				    (url-port url-current-object)
 				    url-http-process)
-  (url-http-debug "Activating callback in buffer (%s)" (buffer-name))
+  (url-http-debug "Activating callback in buffer (%s): %S %S"
+		  (buffer-name) url-callback-function url-callback-arguments)
   (apply url-callback-function url-callback-arguments))
 
 ;; )
@@ -1167,22 +1194,28 @@ the end of the document."
     (when (eq process-buffer (current-buffer))
       (goto-char (point-max)))))
 
-(defun url-http (url callback cbargs &optional retry-buffer)
+(defun url-http (url callback cbargs &optional retry-buffer gateway-method)
   "Retrieve URL via HTTP asynchronously.
 URL must be a parsed URL.  See `url-generic-parse-url' for details.
 
-When retrieval is completed, execute the function CALLBACK, using
-the arguments listed in CBARGS.  The first element in CBARGS
+When retrieval is completed, execute the function CALLBACK, passing it
+an updated value of CBARGS as arguments.  The first element in CBARGS
 should be a plist describing what has happened so far during the
 request, as described in the docstring of `url-retrieve' (if in
 doubt, specify nil).
 
 Optional arg RETRY-BUFFER, if non-nil, specifies the buffer of a
-previous `url-http' call, which is being re-attempted."
+previous `url-http' call, which is being re-attempted.
+
+Optional arg GATEWAY-METHOD specifies the gateway to be used,
+overriding the value of `url-gateway-method'."
   (cl-check-type url vector "Need a pre-parsed URL.")
   (let* ((host (url-host (or url-using-proxy url)))
 	 (port (url-port (or url-using-proxy url)))
-	 (connection (url-http-find-free-connection host port))
+	 (nsm-noninteractive (or url-request-noninteractive
+				 (and (boundp 'url-http-noninteractive)
+				      url-http-noninteractive)))
+	 (connection (url-http-find-free-connection host port gateway-method))
 	 (buffer (or retry-buffer
 		     (generate-new-buffer
                       (format " *http %s:%d*" host port)))))
@@ -1213,6 +1246,7 @@ previous `url-http' call, which is being re-attempted."
 		       url-http-process
 		       url-http-method
 		       url-http-extra-headers
+		       url-http-noninteractive
 		       url-http-data
 		       url-http-target-url
 		       url-http-no-retry
@@ -1222,6 +1256,7 @@ previous `url-http' call, which is being re-attempted."
 
 	(setq url-http-method (or url-request-method "GET")
 	      url-http-extra-headers url-request-extra-headers
+	      url-http-noninteractive url-request-noninteractive
 	      url-http-data url-request-data
 	      url-http-process connection
 	      url-http-chunked-length nil
@@ -1440,9 +1475,8 @@ p3p
 (defmacro url-https-create-secure-wrapper (method args)
   `(defun ,(intern (format (if method "url-https-%s" "url-https") method)) ,args
     ,(format "HTTPS wrapper around `%s' call." (or method "url-http"))
-    (let ((url-gateway-method 'tls))
-      (,(intern (format (if method "url-http-%s" "url-http") method))
-       ,@(remove '&rest (remove '&optional args))))))
+    (,(intern (format (if method "url-http-%s" "url-http") method))
+     ,@(remove '&rest (remove '&optional (append args (if method nil '(nil 'tls))))))))
 
 ;;;###autoload (autoload 'url-https "url-http")
 (url-https-create-secure-wrapper nil (url callback cbargs))

@@ -1062,9 +1062,9 @@ context.
 @item ;;; Change Log:
 This begins an optional log of changes to the file over time.  Don't
 put too much information in this section---it is better to keep the
-detailed logs in a separate @file{ChangeLog} file (as Emacs does),
-and/or to use a version control system.  @samp{History} is an
-alternative to @samp{Change Log}.
+detailed logs in a version control system (as Emacs does) or in a
+separate @file{ChangeLog} file.  @samp{History} is an alternative to
+@samp{Change Log}.
 
 @item ;;; Code:
 This begins the actual code of the program.

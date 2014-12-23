@@ -779,7 +779,8 @@ when the action is chosen.")
   "Call function FUN on all widgets in `custom-options'.
 If there is more than one widget, ask user for confirmation using
 the query string QUERY, using `y-or-n-p' if STRONG-QUERY is nil,
-and `yes-or-no-p' otherwise."
+and `yes-or-no-p' otherwise.  Return non-nil if the functionality
+has been executed, nil otherwise."
   (if (or (and (= 1 (length custom-options))
 	       (memq (widget-type (car custom-options))
 		     '(custom-variable custom-face)))
@@ -892,16 +893,16 @@ making them as if they had never been customized at all."
   ;; Bind these temporarily.
   (let ((custom-reset-standard-variables-list '(t))
 	(custom-reset-standard-faces-list '(t)))
-    (custom-command-apply
-     (lambda (widget)
-       (and (or (null (widget-get widget :custom-standard-value))
-		(widget-apply widget :custom-standard-value))
-	    (memq (widget-get widget :custom-state)
-		  '(modified set changed saved rogue))
-	    (widget-apply widget :custom-mark-to-reset-standard)))
-     "The settings will revert to their default values, in this
+    (if (custom-command-apply
+	 (lambda (widget)
+	   (and (or (null (widget-get widget :custom-standard-value))
+		    (widget-apply widget :custom-standard-value))
+		(memq (widget-get widget :custom-state)
+		      '(modified set changed saved rogue))
+		(widget-apply widget :custom-mark-to-reset-standard)))
+	 "The settings will revert to their default values, in this
 and future sessions.  Really erase customizations? " t)
-    (custom-reset-standard-save-and-update)))
+	(custom-reset-standard-save-and-update))))
 
 ;;; The Customize Commands
 
@@ -1355,12 +1356,10 @@ suggest to customize that face, if it's customizable."
                                      (or (face-at-point t t) "all faces") t)))
   (customize-face face t))
 
-(defalias 'customize-customized 'customize-unsaved)
-
-;;;###autoload
-(defun customize-unsaved ()
-  "Customize all options and faces set in this session but not saved."
-  (interactive)
+(defun custom-unsaved-options ()
+  "List of options and faces set in this session but not saved.
+Each entry is of the form (SYMBOL TYPE), where TYPE is one of the
+symbols `custom-face' or `custom-variable'."
   (let ((found nil))
     (mapatoms (lambda (symbol)
 		(and (or (get symbol 'customized-face)
@@ -1371,6 +1370,15 @@ suggest to customize that face, if it's customizable."
 			 (get symbol 'customized-variable-comment))
 		     (boundp symbol)
 		     (push (list symbol 'custom-variable) found))))
+    found))
+
+(defalias 'customize-customized 'customize-unsaved)
+
+;;;###autoload
+(defun customize-unsaved ()
+  "Customize all options and faces set in this session but not saved."
+  (interactive)
+  (let ((found (custom-unsaved-options)))
     (if (not found)
 	(error "No user options are set but unsaved")
       (custom-buffer-create (custom-sort-items found t nil)
@@ -1475,6 +1483,16 @@ If TYPE is `groups', include only groups."
   "Customize all loaded groups matching REGEXP."
   (interactive (list (apropos-read-pattern "groups")))
   (customize-apropos regexp 'groups))
+
+;;;###autoload
+(defun custom-prompt-customize-unsaved-options ()
+  "Prompt user to customize any unsaved customization options.
+Return non-nil if user chooses to customize, for use in
+`kill-emacs-query-functions'."
+  (not (and (custom-unsaved-options)
+	    (yes-or-no-p "Some customized options have not been saved; Examine? ")
+	    (customize-unsaved)
+	    t)))
 
 ;;; Buffer.
 

@@ -162,6 +162,9 @@ struct Lisp_Process
     gnutls_session_t gnutls_state;
     gnutls_certificate_client_credentials gnutls_x509_cred;
     gnutls_anon_client_credentials_t gnutls_anon_cred;
+    gnutls_x509_crt_t gnutls_certificate;
+    unsigned int gnutls_peer_verification;
+    unsigned int gnutls_extra_peer_verification;
     int gnutls_log_level;
     int gnutls_handshakes_tried;
     bool_bf gnutls_p : 1;

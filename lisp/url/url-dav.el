@@ -479,9 +479,9 @@ names (ie: DAV:resourcetype)."
 		     "  <DAV:allprop/>")
 		   depth nil namespaces))
 
-(defmacro url-dav-http-success-p (status)
+(define-inline url-dav-http-success-p (status)
   "Return whether STATUS was the result of a successful DAV request."
-  `(= (/ (or ,status 500) 100) 2))
+  (inline-quote (= (/ (or ,status 500) 100) 2)))
 
 
 ;;; Locking support

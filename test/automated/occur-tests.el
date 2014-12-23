@@ -52,7 +52,7 @@ a
 a
 a
 " "\
-2 matches for \"a^Ja\" in buffer:  *test-occur*
+2 matches for \"a\na\" in buffer:  *test-occur*
       1:a
        :a
       3:a
@@ -68,7 +68,7 @@ c
 a
 b
 " "\
-2 matches for \"a^Jb\" in buffer:  *test-occur*
+2 matches for \"a\nb\" in buffer:  *test-occur*
       1:a
        :b
       4:a
@@ -82,7 +82,7 @@ c
 a
 
 " "\
-2 matches for \"a^J\" in buffer:  *test-occur*
+2 matches for \"a\n\" in buffer:  *test-occur*
       1:a
        :
       4:a
@@ -97,7 +97,7 @@ d
 ex
 fx
 " "\
-2 matches for \"x^J.x^J\" in buffer:  *test-occur*
+2 matches for \"x\n.x\n\" in buffer:  *test-occur*
       1:ax
        :bx
        :c
@@ -232,7 +232,7 @@ i
 jx
 kx
 " "\
-3 matches for \"x^J.x\" in buffer:  *test-occur*
+3 matches for \"x\n.x\" in buffer:  *test-occur*
       1:ax
        :bx
        :c
@@ -256,7 +256,7 @@ f
 gx
 hx
 " "\
-2 matches for \"x^J.x\" in buffer:  *test-occur*
+2 matches for \"x\n.x\" in buffer:  *test-occur*
       1:ax
        :bx
        :c
@@ -321,7 +321,6 @@ Each element has the format:
   (let ((regexp (nth 0 test))
         (nlines (nth 1 test))
         (input-buffer-string (nth 2 test))
-        (output-buffer-string (nth 3 test))
         (temp-buffer (get-buffer-create " *test-occur*")))
     (unwind-protect
         (save-window-excursion
@@ -329,9 +328,8 @@ Each element has the format:
             (erase-buffer)
             (insert input-buffer-string)
             (occur regexp nlines)
-            (equal output-buffer-string
-                   (with-current-buffer "*Occur*"
-                     (buffer-string)))))
+            (with-current-buffer "*Occur*"
+              (buffer-substring-no-properties (point-min) (point-max)))))
       (and (buffer-name temp-buffer)
            (kill-buffer temp-buffer)))))
 
@@ -343,7 +341,8 @@ Each element has the format:
      `(ert-deftest ,testname ()
         ,testdoc
         (let (occur-hook)
-          (should (occur-test-case (nth ,n occur-tests))))))))
+          (should (equal (occur-test-case (nth ,n occur-tests))
+                         (nth 3 (nth ,n occur-tests)))))))))
 
 (dotimes (i (length occur-tests))
   (occur-test-create i))

@@ -12,7 +12,7 @@
 ;;               Kelvin White (kwhite@gnu.org)
 ;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: IRC, chat, client, Internet
-;; Version: 5.3
+
 
 ;; This file is part of GNU Emacs.
 
@@ -63,10 +63,10 @@
 ;;; History:
 ;;
 
-;;; Code:
-
-(defconst erc-version-string "Version 5.3"
+(defconst erc-version-string (format "\C-bERC\C-b (IRC client for Emacs %s)" emacs-version)
   "ERC version.  This is used by function `erc-version'.")
+
+;;; Code:
 
 (eval-when-compile (require 'cl-lib))
 (require 'font-lock)
@@ -195,6 +195,11 @@ parameters and authentication."
                  (function :tag "Get from function"))
   :set (lambda (sym val)
          (set sym (if (functionp val) (funcall val) val))))
+
+(defcustom erc-rename-buffers nil
+  "When this is set to t, buffers will be renamed to network name if available"
+  :group 'erc
+  :type 'boolean)
 
 (defvar erc-password nil
   "Password to use when authenticating to an IRC server.
@@ -1000,7 +1005,7 @@ display of that particular string at all."
   "Hook called first when some text is sent through `erc-send-current-line'.
 It gets called with one argument, STRING.
 
-To change the text that will be sent, set the variable STR which is
+To change the text that will be sent, set the variable `str' which is
 used in `erc-send-current-line'.
 
 To change the text inserted into the buffer without changing the text
@@ -2052,9 +2057,10 @@ Returns the buffer for the given server or channel."
   "Initialize the `erc-last-saved-position' marker to a sensible position.
 BUFFER is the current buffer."
   (with-current-buffer buffer
-    (setq erc-last-saved-position (make-marker))
-    (move-marker erc-last-saved-position
-                 (1- (marker-position erc-insert-marker)))))
+    (unless (markerp erc-last-saved-position)
+      (setq erc-last-saved-position (make-marker))
+      (move-marker erc-last-saved-position
+		   (1- (marker-position erc-insert-marker))))))
 
 ;; interactive startup
 
@@ -3380,14 +3386,16 @@ If USER is omitted, close the current query buffer if one exists
       (signal 'wrong-number-of-arguments ""))))
 (defalias 'erc-cmd-Q 'erc-cmd-QUERY)
 
+(defun erc-quit/part-reason-default ()
+  "Default quit/part message."
+  (format "\C-bERC\C-b (IRC client for Emacs %s)" emacs-version))
+
+
 (defun erc-quit-reason-normal (&optional s)
   "Normal quit message.
 
 If S is non-nil, it will be used as the quit reason."
-  (or s
-      (format "\C-bERC\C-b %s (IRC client for Emacs)"; - \C-b%s\C-b"
-              erc-version-string) ; erc-official-location)
-      ))
+  (or s (erc-quit/part-reason-default)))
 
 (defun erc-quit-reason-zippy (&optional s)
   "Zippy quit message.
@@ -3396,7 +3404,7 @@ If S is non-nil, it will be used as the quit reason."
   (or s
       (if (fboundp 'yow)
           (erc-replace-regexp-in-string "\n" "" (yow))
-        (erc-quit-reason-normal))))
+        (erc-quit/part-reason-default))))
 
 (make-obsolete 'erc-quit-reason-zippy "it will be removed." "24.4")
 
@@ -3409,16 +3417,13 @@ If S is non-nil, it will be used as the quit reason."
      ((functionp res) (funcall res))
      ((stringp res) res)
      (s s)
-     (t (erc-quit-reason-normal)))))
+     (t (erc-quit/part-reason-default)))))
 
 (defun erc-part-reason-normal (&optional s)
   "Normal part message.
 
-If S is non-nil, it will be used as the quit reason."
-  (or s
-      (format "\C-bERC\C-b %s (IRC client for Emacs)"; - \C-b%s\C-b"
-              erc-version-string) ; erc-official-location)
-      ))
+If S is non-nil, it will be used as the part reason."
+  (or s (erc-quit/part-reason-default)))
 
 (defun erc-part-reason-zippy (&optional s)
   "Zippy part message.
@@ -3427,7 +3432,7 @@ If S is non-nil, it will be used as the quit reason."
   (or s
       (if (fboundp 'yow)
           (erc-replace-regexp-in-string "\n" "" (yow))
-        (erc-part-reason-normal))))
+        (erc-quit/part-reason-default))))
 
 (make-obsolete 'erc-part-reason-zippy "it will be removed." "24.4")
 
@@ -3440,7 +3445,7 @@ If S is non-nil, it will be used as the quit reason."
      ((functionp res) (funcall res))
      ((stringp res) res)
      (s s)
-     (t (erc-part-reason-normal)))))
+     (t (erc-quit/part-reason-default)))))
 
 (defun erc-cmd-QUIT (reason)
   "Disconnect from the current server.
@@ -3534,8 +3539,7 @@ the message given by REASON."
 
 (defun erc-cmd-SV ()
   "Say the current ERC and Emacs version into channel."
-  (erc-send-message (format "I'm using ERC %s with %s %s (%s%s) of %s."
-                            erc-version-string
+  (erc-send-message (format "I'm using ERC with %s %s (%s%s) of %s."
                             (if (featurep 'xemacs) "XEmacs" "GNU Emacs")
                             emacs-version
                             system-configuration
@@ -4227,11 +4231,7 @@ and as second argument the event parsed as a vector."
 (defun erc-format-nick (&optional user _channel-data)
   "Return the nickname of USER.
 See also `erc-format-nick-function'."
-  (let ((nick (erc-server-user-nickname user)))
-    (concat (erc-propertize
-             (erc-get-user-mode-prefix nick)
-             'face 'erc-nick-prefix-face)
-	    nick)))
+  (when user (erc-server-user-nickname user)))
 
 (defun erc-get-user-mode-prefix (user)
   (when user
@@ -4247,7 +4247,7 @@ See also `erc-format-nick-function'."
            (erc-propertize "+" 'help-echo "voice"))
           (t ""))))
 
-(defun erc-format-@nick (&optional user channel-data)
+(defun erc-format-@nick (&optional user _channel-data)
   "Format the nickname of USER showing if USER has a voice, is an
 operator, half-op, admin or owner. Owners have \"~\", admins have
 \"&\", operators have \"@\" and users with voice have \"+\" as a
@@ -4594,8 +4594,8 @@ See also `erc-display-message'."
   (unless erc-disable-ctcp-replies
     (erc-send-ctcp-notice
      nick (format
-           "VERSION \C-bERC\C-b %s - an IRC client for emacs (\C-b%s\C-b)"
-           erc-version-string
+           "VERSION \C-bERC\C-b - an IRC client for Emacs %s (\C-b%s\C-b)"
+           emacs-version
            erc-official-location)))
   nil)
 
@@ -4771,22 +4771,24 @@ channel."
          (hop-ch (cdr (assq ?h prefix)))
          (adm-ch (cdr (assq ?a prefix)))
          (own-ch (cdr (assq ?q prefix)))
-         names name op voice halfop admin owner)
-    (setq names (delete "" (split-string names-string)))
+         (names (delete "" (split-string names-string)))
+	 name op voice halfop admin owner)
     (let ((erc-channel-members-changed-hook nil))
       (dolist (item names)
-        (let ((updatep t))
+        (let ((updatep t)
+	      (ch (aref item 0)))
           (setq name item op 'off voice 'off halfop 'off admin 'off owner 'off)
-          (if (rassq (elt item 0) prefix)
+          (if (rassq ch prefix)
               (if (= (length item) 1)
 		  (setq updatep nil)
 		(setq name (substring item 1))
-		(setf (pcase (aref item 0)
+		(setf (pcase ch
 			((pred (eq voice-ch)) voice)
-			((pred (eq hop-ch))   hop)
+			((pred (eq hop-ch))   halfop)
 			((pred (eq op-ch))    op)
-			((pred (eq adm-ch))   adm)
-			((pred (eq own-ch))   own))
+			((pred (eq adm-ch))   admin)
+			((pred (eq own-ch))   owner)
+			(_ (error "Unknown prefix char `%S'" ch) voice))
 		      'on)))
           (when updatep
             (puthash (erc-downcase name) t
@@ -5087,7 +5089,7 @@ arg-modes is a list of triples of the form:
         (list add-modes remove-modes arg-modes))
     nil))
 
-(defun erc-update-modes (tgt mode-string &optional nick host login)
+(defun erc-update-modes (tgt mode-string &optional _nick _host _login)
   "Update the mode information for TGT, provided as MODE-STRING.
 Optional arguments: NICK, HOST and LOGIN - the attributes of the
 person who changed the modes."
@@ -5359,6 +5361,7 @@ This returns non-nil only if we actually send anything."
       (beep))
     nil)
    (t
+    (defvar str) ;; FIXME: Make it obey the "erc-" prefix convention.
     (let ((str input)
           (erc-insert-this t))
       (setq erc-send-this t)
@@ -5377,8 +5380,6 @@ This returns non-nil only if we actually send anything."
                 (or (and erc-flood-protect (erc-split-line line))
                     (list line))))
              (split-string str "\n"))
-          ;; Insert the prompt along with the command.
-          (erc-display-command str)
           (erc-process-input-line (concat str "\n") t nil))
         t)))))
 
@@ -5956,17 +5957,10 @@ Returns a list of the form (HIGH LOW), compatible with Emacs time format."
     (list (truncate (/ n 65536))
           (truncate (mod n 65536)))))
 
-(defun erc-emacs-time-to-erc-time (time)
-  "Convert Emacs TIME to a number of seconds since the epoch."
-  (when time
-    (+ (* (nth 0 time) 65536.0) (nth 1 time))))
-;  (round (+ (* (nth 0 tm) 65536.0) (nth 1 tm))))
+(defalias 'erc-emacs-time-to-erc-time
+  (if (featurep 'xemacs) 'time-to-seconds 'float-time))
 
-(defun erc-current-time ()
-  "Return the `current-time' as a number of seconds since the epoch.
-
-See also `erc-emacs-time-to-erc-time'."
-  (erc-emacs-time-to-erc-time (current-time)))
+(defalias 'erc-current-time 'erc-emacs-time-to-erc-time)
 
 (defun erc-time-diff (t1 t2)
   "Return the time difference in seconds between T1 and T2."
@@ -6086,7 +6080,7 @@ entry of `channel-members'."
                  nick login host
                  (if full-name (format " (%s)" full-name) "")
                  (if (or voice halfop op admin owner)
-                     (format " and is +%s%s on %s"
+                     (format " and is +%s%s%s%s%s on %s"
                              (if voice "v" "")
                              (if halfop "h" "")
                              (if op "o" "")
@@ -6233,7 +6227,11 @@ shortened server name instead."
     (cond ((erc-default-target)
            (concat (erc-string-no-properties (erc-default-target))
                    "@" network-name))
-          (network-name network-name)
+          ((and network-name
+                (not (get-buffer network-name)))
+           (when erc-rename-buffers
+	     (rename-buffer network-name))
+           network-name)
           (t (buffer-name (current-buffer))))))
 
 (defun erc-format-away-status ()
@@ -6372,7 +6370,7 @@ P may be an integer or a service name."
 If optional argument HERE is non-nil, insert version number at point."
   (interactive "P")
   (let ((version-string
-         (format "ERC %s (GNU Emacs %s)" erc-version-string emacs-version)))
+         (format "ERC (IRC client for Emacs %s)" emacs-version)))
     (if here
         (insert version-string)
       (if (called-interactively-p 'interactive)

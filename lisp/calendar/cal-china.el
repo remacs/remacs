@@ -58,9 +58,6 @@
   :prefix "calendar-chinese-"
   :group 'calendar)
 
-(define-obsolete-variable-alias 'chinese-calendar-time-zone
-  'calendar-chinese-time-zone "23.1")
-
 (defcustom calendar-chinese-time-zone
   '(if (< year 1928)
        (+ 465 (/ 40.0 60.0))
@@ -78,17 +75,11 @@ Default is for Beijing.  This is an expression in `year' since it changed at
 (put 'chinese-calendar-time-zone 'risky-local-variable t)
 
 
-(define-obsolete-variable-alias 'chinese-calendar-location-name
-  'calendar-chinese-location-name "23.1")
-
 ;; FIXME unused.
 (defcustom calendar-chinese-location-name "Beijing"
   "Name of location used for calculation of Chinese calendar."
   :type 'string
   :group 'calendar-chinese)
-
-(define-obsolete-variable-alias 'chinese-calendar-daylight-time-offset
-  'calendar-chinese-daylight-time-offset "23.1")
 
 (defcustom calendar-chinese-daylight-time-offset 0
 ;; The correct value is as follows, but the Chinese calendrical
@@ -98,9 +89,6 @@ Default is for Beijing.  This is an expression in `year' since it changed at
 Default is for no daylight saving time."
   :type 'integer
   :group 'calendar-chinese)
-
-(define-obsolete-variable-alias 'chinese-calendar-standard-time-zone-name
-  'calendar-chinese-standard-time-zone-name "23.1")
 
 (defcustom calendar-chinese-standard-time-zone-name
   '(if (< year 1928)
@@ -112,16 +100,10 @@ at 1928-01-01 00:00:00 from `PMT' to `CST'."
   :type 'sexp
   :group 'calendar-chinese)
 
-(define-obsolete-variable-alias 'chinese-calendar-daylight-time-zone-name
-  'calendar-chinese-daylight-time-zone-name "23.1")
-
 (defcustom calendar-chinese-daylight-time-zone-name "CDT"
   "Abbreviated name of daylight saving time zone used for Chinese calendar."
   :type 'string
   :group 'calendar-chinese)
-
-(define-obsolete-variable-alias 'chinese-calendar-daylight-savings-starts
-  'calendar-chinese-daylight-saving-start "23.1")
 
 (defcustom calendar-chinese-daylight-saving-start nil
 ;; The correct value is as follows, but the Chinese calendrical
@@ -135,9 +117,6 @@ Default is for no daylight saving time.  See documentation of
   :type 'sexp
   :group 'calendar-chinese)
 
-(define-obsolete-variable-alias 'chinese-calendar-daylight-savings-ends
-  'calendar-chinese-daylight-saving-end "23.1")
-
 (defcustom calendar-chinese-daylight-saving-end nil
 ;; The correct value is as follows, but the Chinese calendrical
 ;; authorities do NOT use DST in determining astronomical events:
@@ -148,26 +127,17 @@ Default is for no daylight saving time.  See documentation of
   :type 'sexp
   :group 'calendar-chinese)
 
-(define-obsolete-variable-alias 'chinese-calendar-daylight-savings-starts-time
-  'calendar-chinese-daylight-saving-start-time "23.1")
-
 (defcustom calendar-chinese-daylight-saving-start-time 0
   "Number of minutes after midnight that daylight saving time starts.
 Default is for no daylight saving time."
   :type 'integer
   :group 'calendar-chinese)
 
-(define-obsolete-variable-alias 'chinese-calendar-daylight-savings-ends-time
-  'calendar-chinese-daylight-saving-end-time "23.1")
-
 (defcustom calendar-chinese-daylight-saving-end-time 0
   "Number of minutes after midnight that daylight saving time ends.
 Default is for no daylight saving time."
   :type 'integer
   :group 'calendar-chinese)
-
-(define-obsolete-variable-alias 'chinese-calendar-celestial-stem
-  'calendar-chinese-celestial-stem "23.1")
 
 (defcustom calendar-chinese-celestial-stem
   ["Jia" "Yi" "Bing" "Ding" "Wu" "Ji" "Geng" "Xin" "Ren" "Gui"]
@@ -183,9 +153,6 @@ Default is for no daylight saving time."
                  (string :tag "Xin")
                  (string :tag "Ren")
                  (string :tag "Gui")))
-
-(define-obsolete-variable-alias 'chinese-calendar-terrestrial-branch
-  'calendar-chinese-terrestrial-branch "23.1")
 
 (defcustom calendar-chinese-terrestrial-branch
   ["Zi" "Chou" "Yin" "Mao" "Chen" "Si" "Wu" "Wei" "Shen" "You" "Xu" "Hai"]
@@ -432,9 +399,6 @@ Sunday, December 31, 1 BC is imaginary."
                                    (calendar-chinese-year g-year))
                              (calendar-chinese-year (1+ g-year))))))))
 
-(define-obsolete-function-alias 'calendar-absolute-from-chinese
-  'calendar-chinese-to-absolute "23.1")
-
 (defun calendar-chinese-from-absolute (date)
   "Compute Chinese date (cycle year month day) corresponding to absolute DATE.
 The absolute date is the number of days elapsed since the (imaginary)
@@ -599,9 +563,6 @@ Defaults to today's date if DATE is not given."
   (message "Chinese date: %s"
            (calendar-chinese-date-string (calendar-cursor-to-date t))))
 
-(define-obsolete-function-alias 'calendar-print-chinese-date
-  'calendar-chinese-print-date "23.1")
-
 (defun calendar-chinese-months-to-alist (l)
   "Make list of months L into an assoc list."
   (and l (car l)
@@ -671,9 +632,6 @@ Echo Chinese date unless NOECHO is non-nil."
                        (calendar-chinese-to-absolute date)))
   (or noecho (calendar-chinese-print-date)))
 
-(define-obsolete-function-alias 'calendar-goto-chinese-date
-  'calendar-chinese-goto-date "23.1")
-
 (defvar date)
 
 ;; To be called from diary-list-sexp-entries, where DATE is bound.
@@ -704,18 +662,30 @@ Echo Chinese date unless NOECHO is non-nil."
 ;;; These two functions convert to and back from this representation.
 (defun calendar-chinese-from-absolute-for-diary (date)
   (pcase-let ((`(,c ,y ,m ,d) (calendar-chinese-from-absolute date)))
-    (list m d (+ (* c 100) y))))
+    ;; Note: For leap months M is a float.
+    (list (floor m) d (+ (* c 100) y))))
 
-(defun calendar-chinese-to-absolute-for-diary (date)
-  (pcase-let ((`(,m ,d ,y) date))
+(defun calendar-chinese-to-absolute-for-diary (date &optional prefer-leap)
+  (pcase-let* ((`(,m ,d ,y) date)
+               (cycle (floor y 100))
+               (year (mod y 100))
+               (months (calendar-chinese-months cycle year))
+               (lm (+ (floor m) 0.5)))
     (calendar-chinese-to-absolute
-     (list (floor y 100) (mod y 100) m d))))
+     (if (and prefer-leap (memql lm months))
+         (list cycle year lm d)
+       (list cycle year m d)))))
 
 (defun calendar-chinese-mark-date-pattern (month day year &optional color)
   (calendar-mark-1 month day year
                    #'calendar-chinese-from-absolute-for-diary
                    #'calendar-chinese-to-absolute-for-diary
-                   color))
+                   color)
+  (unless (zerop month)
+    (calendar-mark-1 month day year
+                     #'calendar-chinese-from-absolute-for-diary
+                     (lambda (date) (calendar-chinese-to-absolute-for-diary date t))
+                     color)))
 
 ;;;###cal-autoload
 (defun diary-chinese-mark-entries ()
@@ -759,7 +729,10 @@ This function is provided for use with `diary-nongregorian-listing-hook'."
                (diff (if (and dc dy)
                          (+ (* 60 (- cc dc)) (- cy dy))
                        100)))
-    (and (> diff 0) (= dm cm) (= dd cd)
+    (and (> diff 0)
+         ;; The Chinese month can differ by 0.5 in a leap month.
+         (or (= dm cm) (= (+ 0.5 dm) cm))
+         (= dd cd)
          (cons mark (format entry diff (diary-ordinal-suffix diff))))))
 
 ;;;###cal-autoload

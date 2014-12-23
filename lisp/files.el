@@ -729,6 +729,67 @@ The path separator is colon in GNU and GNU-like systems."
                     (lambda (f) (and (file-directory-p f) 'dir-ok)))
        (error "No such directory found via CDPATH environment variable"))))
 
+(defun file-tree-walk (dir action &rest args)
+  "Walk DIR executing ACTION on each file, with ARGS as additional arguments.
+For each file, the function calls ACTION as follows:
+
+   \(ACTION DIRECTORY BASENAME ARGS\)
+
+Where DIRECTORY is the leading directory of the file,
+      BASENAME is the basename of the file,
+      and ARGS are as specified in the call to this function, or nil if omitted.
+
+The ACTION is applied to each subdirectory before descending into
+it, and if nil is returned at that point, the descent will be
+prevented.  Directory entries are sorted with string-lessp."
+  (cond ((file-directory-p dir)
+	 (setq dir (file-name-as-directory dir))
+	 (let ((lst (directory-files dir nil nil t))
+	       fullname file)
+	   (while lst
+	     (setq file (car lst))
+	     (setq lst (cdr lst))
+	     (cond ((member file '("." "..")))
+		   (t
+		    (and (apply action dir file args)
+			 (setq fullname (concat dir file))
+			 (file-directory-p fullname)
+			 (apply 'file-tree-walk fullname action args)))))))
+	(t
+	 (apply action
+		(file-name-directory dir)
+		(file-name-nondirectory dir)
+		args))))
+
+(defsubst directory-name-p (name)
+  "Return non-nil if NAME ends with a slash character."
+  (and (> (length name) 0)
+       (char-equal (aref name (1- (length name))) ?/)))
+
+(defun directory-files-recursively (dir match &optional include-directories)
+  "Return all files under DIR that have file names matching MATCH (a regexp).
+This function works recursively.  Files are returned in \"depth first\"
+and alphabetical order.
+If INCLUDE-DIRECTORIES, also include directories that have matching names."
+  (let ((result nil)
+	(files nil))
+    (dolist (file (sort (file-name-all-completions "" dir)
+			'string<))
+      (unless (member file '("./" "../"))
+	(if (directory-name-p file)
+	    (let* ((leaf (substring file 0 (1- (length file))))
+		   (path (expand-file-name leaf dir)))
+	      ;; Don't follow symlinks to other directories.
+	      (unless (file-symlink-p path)
+		(setq result (nconc result (directory-files-recursively
+					    path match include-directories))))
+	      (when (and include-directories
+			 (string-match match leaf))
+		(setq result (nconc result (list path)))))
+	  (when (string-match match file)
+	    (push (expand-file-name file dir) files)))))
+    (nconc result (nreverse files))))
+
 (defun load-file (file)
   "Load the Lisp file named FILE."
   ;; This is a case where .elc makes a lot of sense.
@@ -1375,6 +1436,9 @@ return value, which may be passed as the REQUIRE-MATCH arg to
 
 (defmacro minibuffer-with-setup-hook (fun &rest body)
   "Temporarily add FUN to `minibuffer-setup-hook' while executing BODY.
+FUN can also be (:append FUN1), in which case FUN1 is appended to
+`minibuffer-setup-hook'.
+
 BODY should use the minibuffer at most once.
 Recursive uses of the minibuffer are unaffected (FUN is not
 called additional times).
@@ -1383,20 +1447,23 @@ This macro actually adds an auxiliary function that calls FUN,
 rather than FUN itself, to `minibuffer-setup-hook'."
   (declare (indent 1) (debug t))
   (let ((hook (make-symbol "setup-hook"))
-        (funsym (make-symbol "fun")))
+        (funsym (make-symbol "fun"))
+        (append nil))
+    (when (eq (car-safe fun) :append)
+      (setq append '(t) fun (cadr fun)))
     `(let ((,funsym ,fun)
            ,hook)
        (setq ,hook
-	     (lambda ()
-	       ;; Clear out this hook so it does not interfere
-	       ;; with any recursive minibuffer usage.
-	       (remove-hook 'minibuffer-setup-hook ,hook)
-	       (funcall ,funsym)))
+             (lambda ()
+               ;; Clear out this hook so it does not interfere
+               ;; with any recursive minibuffer usage.
+               (remove-hook 'minibuffer-setup-hook ,hook)
+               (funcall ,funsym)))
        (unwind-protect
-	   (progn
-	     (add-hook 'minibuffer-setup-hook ,hook)
-	     ,@body)
-	 (remove-hook 'minibuffer-setup-hook ,hook)))))
+           (progn
+             (add-hook 'minibuffer-setup-hook ,hook ,@append)
+             ,@body)
+         (remove-hook 'minibuffer-setup-hook ,hook)))))
 
 (defun find-file-read-args (prompt mustmatch)
   (list (read-file-name prompt nil default-directory mustmatch)
@@ -1786,12 +1853,13 @@ When nil, never request confirmation."
   :version "22.1"
   :type '(choice integer (const :tag "Never request confirmation" nil)))
 
-(defcustom out-of-memory-warning-percentage 50
+(defcustom out-of-memory-warning-percentage nil
   "Warn if file size exceeds this percentage of available free memory.
-When nil, never issue warning."
+When nil, never issue warning.  Beware: This probably doesn't do what you
+think it does, because \"free\" is pretty hard to define in practice."
   :group 'files
   :group 'find-file
-  :version "24.4"
+  :version "25.1"
   :type '(choice integer (const :tag "Never issue warning" nil)))
 
 (defun abort-if-file-too-large (size op-type filename)
@@ -2350,7 +2418,7 @@ since only a single case-insensitive search through the alist is made."
      ("[cC]hange[lL]og[-.][0-9]+\\'" . change-log-mode)
      ("\\$CHANGE_LOG\\$\\.TXT" . change-log-mode)
      ("\\.scm\\.[0-9]*\\'" . scheme-mode)
-     ("\\.[ck]?sh\\'\\|\\.shar\\'\\|/\\.z?profile\\'" . sh-mode)
+     ("\\.[ckz]?sh\\'\\|\\.shar\\'\\|/\\.z?profile\\'" . sh-mode)
      ("\\.bash\\'" . sh-mode)
      ("\\(/\\|\\`\\)\\.\\(bash_\\(profile\\|history\\|log\\(in\\|out\\)\\)\\|z?log\\(in\\|out\\)\\)\\'" . sh-mode)
      ("\\(/\\|\\`\\)\\.\\(shrc\\|[kz]shrc\\|bashrc\\|t?cshrc\\|esrc\\)\\'" . sh-mode)
@@ -2406,17 +2474,16 @@ ARC\\|ZIP\\|LZH\\|LHA\\|ZOO\\|[JEW]AR\\|XPI\\|RAR\\|7Z\\)\\'" . archive-mode)
      ("\\.dbk\\'" . xml-mode)
      ("\\.dtd\\'" . sgml-mode)
      ("\\.ds\\(ss\\)?l\\'" . dsssl-mode)
-     ("\\.js\\'" . javascript-mode)
+     ("\\.jsm?\\'" . javascript-mode)
      ("\\.json\\'" . javascript-mode)
      ("\\.[ds]?vh?\\'" . verilog-mode)
      ("\\.by\\'" . bovine-grammar-mode)
      ("\\.wy\\'" . wisent-grammar-mode)
      ;; .emacs or .gnus or .viper following a directory delimiter in
-     ;; Unix, MSDOG or VMS syntax.
-     ("[]>:/\\]\\..*\\(emacs\\|gnus\\|viper\\)\\'" . emacs-lisp-mode)
+     ;; Unix or MS-DOS syntax.
+     ("[:/\\]\\..*\\(emacs\\|gnus\\|viper\\)\\'" . emacs-lisp-mode)
      ("\\`\\..*emacs\\'" . emacs-lisp-mode)
-     ;; _emacs following a directory delimiter
-     ;; in MsDos syntax
+     ;; _emacs following a directory delimiter in MS-DOS syntax
      ("[:/]_emacs\\'" . emacs-lisp-mode)
      ("/crontab\\.X*[0-9]+\\'" . shell-script-mode)
      ("\\.ml\\'" . lisp-mode)
@@ -2439,7 +2506,7 @@ ARC\\|ZIP\\|LZH\\|LHA\\|ZOO\\|[JEW]AR\\|XPI\\|RAR\\|7Z\\)\\'" . archive-mode)
      ("\\.\\(asn\\|mib\\|smi\\)\\'" . snmp-mode)
      ("\\.\\(as\\|mi\\|sm\\)2\\'" . snmpv2-mode)
      ("\\.\\(diffs?\\|patch\\|rej\\)\\'" . diff-mode)
-     ("\\.\\(dif\\|pat\\)\\'" . diff-mode) ; for MSDOG
+     ("\\.\\(dif\\|pat\\)\\'" . diff-mode) ; for MS-DOS
      ("\\.[eE]?[pP][sS]\\'" . ps-mode)
      ("\\.\\(?:PDF\\|DVI\\|OD[FGPST]\\|DOCX?\\|XLSX?\\|PPTX?\\|pdf\\|djvu\\|dvi\\|od[fgpst]\\|docx?\\|xlsx?\\|pptx?\\)\\'" . doc-view-mode-maybe)
      ("configure\\.\\(ac\\|in\\)\\'" . autoconf-mode)
@@ -3643,10 +3710,7 @@ VARIABLES list of the class.  The list is processed in order.
 * If the element is of the form (DIRECTORY . LIST), and DIRECTORY
   is an initial substring of the file's directory, then LIST is
   applied by recursively following these rules."
-  (let ((elt (assq class dir-locals-class-alist)))
-    (if elt
-	(setcdr elt variables)
-      (push (cons class variables) dir-locals-class-alist))))
+  (setf (alist-get class dir-locals-class-alist) variables))
 
 (defconst dir-locals-file ".dir-locals.el"
   "File that contains directory-local variables.
@@ -4760,7 +4824,7 @@ Before and after saving the buffer, this function runs
 ;; This returns a value (MODES EXTENDED-ATTRIBUTES BACKUPNAME), like
 ;; backup-buffer.
 (defun basic-save-buffer-2 ()
-  (let (tempsetmodes setmodes writecoding)
+  (let (tempsetmodes setmodes)
     (if (not (file-writable-p buffer-file-name))
 	(let ((dir (file-name-directory buffer-file-name)))
 	  (if (not (file-directory-p dir))
@@ -4776,14 +4840,6 @@ Before and after saving the buffer, this function runs
 		     buffer-file-name)))
 		  (setq tempsetmodes t)
 		(error "Attempt to save to a file which you aren't allowed to write"))))))
-    ;; This may involve prompting, so do it now before backing up the file.
-    ;; Otherwise there can be a delay while the user answers the
-    ;; prompt during which the original file has been renamed.  (Bug#13522)
-    (setq writecoding
-	  ;; Args here should match write-region call below around
-	  ;; which we use writecoding.
-	  (choose-write-coding-system nil nil buffer-file-name nil t
-				      buffer-file-truename))
     (or buffer-backed-up
 	(setq setmodes (backup-buffer)))
     (let* ((dir (file-name-directory buffer-file-name))
@@ -4865,11 +4921,10 @@ Before and after saving the buffer, this function runs
 				 (logior (car setmodes) 128))))))
 	(let (success)
 	  (unwind-protect
+	      (progn
                 ;; Pass in nil&nil rather than point-min&max to indicate
                 ;; we're saving the buffer rather than just a region.
                 ;; write-region-annotate-functions may make us of it.
-	      (let ((coding-system-for-write writecoding)
-		    (coding-system-require-warning nil))
 		(write-region nil nil
 			      buffer-file-name nil t buffer-file-truename)
 		(setq success t))
@@ -6676,7 +6731,7 @@ only these files will be asked to be saved."
       (`add (concat "/:" (apply operation arguments)))
       (`insert-file-contents
        (let ((visit (nth 1 arguments)))
-         (prog1
+         (unwind-protect
              (apply operation arguments)
            (when (and visit buffer-file-name)
              (setq buffer-file-name (concat "/:" buffer-file-name))))))

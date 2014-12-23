@@ -27,12 +27,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #ifdef HAVE_NS
 
 #ifdef NS_IMPL_COCOA
-#ifndef MAC_OS_X_VERSION_10_4
-#define MAC_OS_X_VERSION_10_4 1040
-#endif
-#ifndef MAC_OS_X_VERSION_10_5
-#define MAC_OS_X_VERSION_10_5 1050
-#endif
 #ifndef MAC_OS_X_VERSION_10_6
 #define MAC_OS_X_VERSION_10_6 1060
 #endif
@@ -58,21 +52,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
    versions.
    On Cocoa >= 10.5, functions expect CGFloat*. Make compatible type.  */
 #ifdef NS_IMPL_COCOA
-
-#ifndef NS_HAVE_NSINTEGER
-#if defined (__LP64__) && __LP64__
-typedef double CGFloat;
-typedef long NSInteger;
-typedef unsigned long NSUInteger;
-#else
-typedef float CGFloat;
-typedef int NSInteger;
-typedef unsigned int NSUInteger;
-#endif /* not LP64 */
-#endif /* not NS_HAVE_NSINTEGER */
-
 typedef CGFloat EmacsCGFloat;
-
 #elif GNUSTEP_GUI_MAJOR_VERSION > 0 || GNUSTEP_GUI_MINOR_VERSION >= 22
 typedef CGFloat EmacsCGFloat;
 #else
@@ -139,7 +119,7 @@ typedef float EmacsCGFloat;
 
 @class EmacsToolbar;
 
-#if defined (NS_IMPL_COCOA) && MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_6
+#ifdef NS_IMPL_COCOA
 @interface EmacsView : NSView <NSTextInput, NSWindowDelegate>
 #else
 @interface EmacsView : NSView <NSTextInput>
@@ -217,7 +197,7 @@ typedef float EmacsCGFloat;
 
    ========================================================================== */
 
-#if defined (NS_IMPL_COCOA) && MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_6
+#ifdef NS_IMPL_COCOA
 @interface EmacsMenu : NSMenu  <NSMenuDelegate>
 #else
 @interface EmacsMenu : NSMenu
@@ -249,7 +229,7 @@ typedef float EmacsCGFloat;
 
 @class EmacsImage;
 
-#if defined (NS_IMPL_COCOA) && MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_6
+#ifdef NS_IMPL_COCOA
 @interface EmacsToolbar : NSToolbar <NSToolbarDelegate>
 #else
 @interface EmacsToolbar : NSToolbar
@@ -305,7 +285,7 @@ typedef float EmacsCGFloat;
 - (void)timeout_handler: (NSTimer *)timedEntry;
 @end
 
-#if defined (NS_IMPL_COCOA) && MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_6
+#ifdef NS_IMPL_COCOA
 @interface EmacsTooltip : NSObject <NSWindowDelegate>
 #else
 @interface EmacsTooltip : NSObject
@@ -358,16 +338,11 @@ typedef float EmacsCGFloat;
 
 @interface EmacsImage : NSImage
 {
-  id imageListNext;
-  int refCount;
   NSBitmapImageRep *bmRep; /* used for accessing pixel data */
   unsigned char *pixmapData[5]; /* shortcut to access pixel data */
   NSColor *stippleMask;
 }
 + allocInitFromFile: (Lisp_Object)file;
-- reference;
-- imageListSetNext: (id)arg;
-- imageListNext;
 - (void)dealloc;
 - initFromXBM: (unsigned char *)bits width: (int)w height: (int)h
          flip: (BOOL)flip;
@@ -393,7 +368,7 @@ typedef float EmacsCGFloat;
 
 @interface EmacsScroller : NSScroller
   {
-   Lisp_Object win;
+   struct window *window;
    struct frame *frame;
    NSResponder *prevResponder;
 
@@ -401,7 +376,7 @@ typedef float EmacsCGFloat;
    CGFloat last_mouse_offset;
    float min_portion;
    int pixel_height;
-   int last_hit_part;
+   enum scroll_bar_part last_hit_part;
 
    BOOL condemned;
 
@@ -417,13 +392,11 @@ typedef float EmacsCGFloat;
 - setPosition: (int) position portion: (int) portion whole: (int) whole;
 - (int) checkSamePosition: (int)position portion: (int)portion
                     whole: (int)whole;
-- (void) getMouseMotionPart: (int *)part window: (Lisp_Object *)window
-                          x: (Lisp_Object *)x y: ( Lisp_Object *)y;
 - (void) sendScrollEventAtLoc: (float)loc fromEvent: (NSEvent *)e;
 - repeatScroll: (NSTimer *)sender;
 - condemn;
 - reprieve;
-- judge;
+- (bool)judge;
 @end
 
 
@@ -687,8 +660,8 @@ struct ns_output
      value contains an ID of the fontset, else -1.  */
   int fontset; /* only used with font_backend */
 
-  Lisp_Object icon_top;
-  Lisp_Object icon_left;
+  int icon_top;
+  int icon_left;
 
   /* The size of the extra width currently allotted for vertical
      scroll bars, in pixels.  */
@@ -837,7 +810,7 @@ extern void nxatoms_of_nsselect (void);
 extern int ns_lisp_to_cursor_type (Lisp_Object arg);
 extern Lisp_Object ns_cursor_type_to_lisp (int arg);
 extern void ns_set_name_as_filename (struct frame *f);
-extern void ns_set_doc_edited (struct frame *f, Lisp_Object arg);
+extern void ns_set_doc_edited (void);
 
 extern bool
 ns_defined_color (struct frame *f,
@@ -917,11 +890,15 @@ extern unsigned long ns_get_rgb_color (struct frame *f,
 extern void ns_init_events ();
 extern void ns_finish_events ();
 
-/* From nsterm.m, needed in nsfont.m. */
 #ifdef __OBJC__
+/* From nsterm.m, needed in nsfont.m. */
 extern void
 ns_draw_text_decoration (struct glyph_string *s, struct face *face,
                          NSColor *defaultCol, CGFloat width, CGFloat x);
+/* Needed in nsfns.m.  */
+extern void
+ns_set_represented_filename (NSString* fstr, struct frame *f);
+
 #endif
 
 #ifdef NS_IMPL_GNUSTEP

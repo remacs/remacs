@@ -1,3 +1,29 @@
+2014-12-05  Sam Steingold  <sds@gnu.org>
+
+	* Makefile.in (links): Use abs_top_builddir et al; link over DOC.
+
+2014-12-03  Sam Steingold  <sds@gnu.org>
+
+	* Makefile.in (links): New phony target to create a fake
+	installation pointing back to the source tree to run GUI Emacs
+	in-place (http://article.gmane.org/gmane.emacs.devel:178330).
+
+2014-11-22  Glenn Morris  <rgm@gnu.org>
+
+	* templates/Info-gnustep.plist.in: Let configure set URL.
+
+2014-11-03  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* INSTALL: Remove univeral binary section.
+
+2014-10-20  Glenn Morris  <rgm@gnu.org>
+
+	* Merge in all changes up to 24.4 release.
+
+2014-10-12  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* README: Mac OS X 10.6 or later now required.
+
 2014-06-25  Glenn Morris  <rgm@gnu.org>
 
 	* Makefile.in (${ns_appbindir}): New.

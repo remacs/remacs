@@ -72,7 +72,7 @@ is `cS', which I invented.
 	correct parameter conventions from what would make the VT-100's
 	`cs' string work properly.  From an incorrect assumption about
 	%i, I reached an incorrect conclusion about `cs', but the result
-	worked correctly on the VT100 and ANSII terminals.  In Emacs
+	worked correctly on the VT100 and ANSI terminals.  In Emacs
 	version 17, both `cs' and %i work correctly.
 
 	The version 16 convention was to pass, for the second parameter,

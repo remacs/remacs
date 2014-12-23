@@ -1,4 +1,4 @@
-;;; tildify-test.el --- ERT tests for teldify.el
+;;; tildify-test.el --- ERT tests for tildify.el -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2014 Free Software Foundation, Inc.
 
@@ -73,7 +73,7 @@ after `tildify-buffer' is run."
 (ert-deftest tildify-test-html ()
   "Tests tildification in an HTML document"
   (let* ((sentence (tildify-test--example-sentence " "))
-         (with-nbsp (tildify-test--example-sentence "&nbsp;")))
+         (with-nbsp (tildify-test--example-sentence " ")))
     (tildify-test--test '(html-mode sgml-mode)
                         (tildify-test--example-html sentence sentence)
                         (tildify-test--example-html sentence with-nbsp))))
@@ -81,7 +81,7 @@ after `tildify-buffer' is run."
 (ert-deftest tildify-test-xml ()
   "Tests tildification in an XML document"
   (let* ((sentence (tildify-test--example-sentence " "))
-         (with-nbsp (tildify-test--example-sentence "&#160;")))
+         (with-nbsp (tildify-test--example-sentence " ")))
     (tildify-test--test '(nxml-mode)
                         (tildify-test--example-html sentence sentence t)
                         (tildify-test--example-html sentence with-nbsp t))))
@@ -117,8 +117,8 @@ latter is missing, SENTENCE will be used in all placeholder positions."
     (insert "foo whatever end-foo")
     (goto-char (point-min))
     (should (string-equal "end-foo"
-                          (tildify-find-env "foo\\|bar"
-                                            '(("foo\\|bar" . ("end-" 0))))))))
+                          (tildify--find-env "foo\\|bar"
+                                             '(("foo\\|bar" . ("end-" 0))))))))
 
 
 (ert-deftest tildify-test-find-env-group-index-bug ()
@@ -129,7 +129,60 @@ latter is missing, SENTENCE will be used in all placeholder positions."
           (beg-re "start-\\(foo\\|bar\\)\\|open-\\(foo\\|bar\\)"))
       (insert "open-foo whatever close-foo")
       (goto-char (point-min))
-      (should (string-equal "close-foo" (tildify-find-env beg-re pairs))))))
+      (should (string-equal "close-foo" (tildify--find-env beg-re pairs))))))
+
+
+(defmacro with-test-foreach (expected &rest body)
+  "Helper macro for testing foreach functions.
+BODY has access to pairs variable and called lambda."
+  (declare (indent 1))
+  (let ((got (make-symbol "got")))
+    `(with-temp-buffer
+       (insert "1 /- 2 -/ 3 V~ 4 ~ 5 /- 6 -/ 7")
+       (let* ((pairs '(("/-" . "-/") ("V\\(.\\)" . (1))))
+              (,got "")
+              (called (lambda (s e)
+                        (setq ,got (concat ,got (buffer-substring s e))))))
+         (setq-local tildify-foreach-region-function
+                     (apply-partially 'tildify-foreach-ignore-environments
+                                      pairs))
+         ,@body
+         (should (string-equal ,expected ,got))))))
+
+(ert-deftest tildify-test-foreach-ignore-environments ()
+    "Basic test of `tildify-foreach-ignore-environments'"
+  (with-test-foreach "1  3  5  7"
+    (tildify-foreach-ignore-environments pairs called (point-min) (point-max))))
+
+
+(ert-deftest tildify-test-foreach-ignore-environments-early-return ()
+    "Test whether `tildify-foreach-ignore-environments' returns early
+The function must terminate as soon as callback returns nil."
+  (with-test-foreach "1 "
+    (tildify-foreach-ignore-environments
+     pairs (lambda (start end) (funcall called start end) nil)
+     (point-min) (point-max))))
+
+(ert-deftest tildify-test-foreach-region ()
+    "Basic test of `tildify--foreach-region'"
+  (with-test-foreach "1  3  5  7"
+    (tildify--foreach-region called (point-min) (point-max))))
+
+(ert-deftest tildify-test-foreach-region-early-return ()
+    "Test whether `tildify--foreach-ignore' returns early
+The function must terminate as soon as callback returns nil."
+  (with-test-foreach "1 "
+    (tildify--foreach-region (lambda (start end) (funcall called start end) nil)
+      (point-min) (point-max))))
+
+(ert-deftest tildify-test-foreach-region-limit-region ()
+    "Test whether `tildify--foreach-ignore' limits callback to given region"
+  (with-test-foreach "3 "
+    (tildify--foreach-region called
+      (+ (point-min) 10) (+ (point-min) 16))) ; start at "3" end past "4"
+  (with-test-foreach "3  5"
+    (tildify--foreach-region called
+      (+ (point-min) 10) (+ (point-min) 20)))) ; start at "3" end past "5"
 
 
 (provide 'tildify-tests)

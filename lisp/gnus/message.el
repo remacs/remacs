@@ -619,7 +619,7 @@ This may also be a list of regexps."
   "If non-nil, delete non-matching headers when forwarding a message.
 Only headers that match this regexp will be included.  This
 variable should be a regexp or a list of regexps."
-  :version "24.5"
+  :version "25.1"
   :group 'message-forwarding
   :type '(repeat :value-to-internal (lambda (widget value)
 				      (custom-split-regexp-maybe value))
@@ -1756,13 +1756,17 @@ no, only reply back to the author."
   :type '(radio (const :format "%v  " nil)
 		(string :format "FQDN: %v")))
 
-(defcustom message-use-idna (and (condition-case nil (require 'idna)
-				   (file-error))
-				 (mm-coding-system-p 'utf-8)
-				 (executable-find idna-program)
-				 (string= (idna-to-ascii "räksmörgås")
-					  "xn--rksmrgs-5wao1o")
-				 t)
+(defcustom message-use-idna
+  (and (or (mm-coding-system-p 'utf-8)
+	   (condition-case nil
+	       (let (mucs-ignore-version-incompatibilities)
+		 (require 'un-define))
+	     (error)))
+       (condition-case nil (require 'idna) (file-error))
+       idna-program
+       (executable-find idna-program)
+       (string= (idna-to-ascii "räksmörgås") "xn--rksmrgs-5wao1o")
+       t)
   "Whether to encode non-ASCII in domain names into ASCII according to IDNA.
 GNU Libidn, and in particular the elisp package \"idna.el\" and
 the external program \"idn\", must be installed for this
@@ -1919,7 +1923,45 @@ You must have the \"hashcash\" binary installed, see `hashcash-path'."
 	  "cat\\|com\\|coop\\|edu\\|gov\\|"
 	  "info\\|int\\|jobs\\|"
 	  "mil\\|mobi\\|museum\\|name\\|net\\|"
-	  "org\\|pro\\|tel\\|travel\\|uucp\\)")
+	  "org\\|pro\\|tel\\|travel\\|uucp\\|"
+          ;; ICANN-era generic top-level domains
+          "academy\\|actor\\|agency\\|airforce\\|archi\\|associates\\|axa\\|"
+          "bar\\|bargains\\|bayern\\|beer\\|berlin\\|best\\|bid\\|bike\\|"
+          "biz\\|black\\|blackfriday\\|blue\\|boutique\\|build\\|builders\\|"
+          "buzz\\|cab\\|camera\\|camp\\|capital\\|cards\\|care\\|career\\|"
+          "careers\\|cash\\|catering\\|center\\|ceo\\|cheap\\|christmas\\|"
+          "church\\|citic\\|cleaning\\|clinic\\|clothing\\|club\\|codes\\|"
+          "coffee\\|college\\|cologne\\|com\\|community\\|company\\|computer\\|"
+          "construction\\|contractors\\|cooking\\|cool\\|country\\|creditcard\\|"
+          "cruises\\|dance\\|dating\\|democrat\\|dental\\|desi\\|design\\|"
+          "diamonds\\|directory\\|discount\\|domains\\|education\\|email\\|"
+          "engineering\\|enterprises\\|equipment\\|estate\\|eus\\|events\\|"
+          "exchange\\|expert\\|exposed\\|fail\\|farm\\|feedback\\|finance\\|"
+          "financial\\|fish\\|fishing\\|fitness\\|flights\\|florist\\|foo\\|"
+          "foundation\\|frogans\\|fund\\|furniture\\|futbol\\|gal\\|"
+          "gallery\\|gift\\|glass\\|globo\\|gmo\\|gop\\|graphics\\|gratis\\|"
+          "gripe\\|guide\\|guitars\\|guru\\|hamburg\\|haus\\|hiphop\\|"
+          "holdings\\|holiday\\|homes\\|horse\\|house\\|immobilien\\|"
+          "industries\\|info\\|ink\\|institute\\|insure\\|international\\|"
+          "investments\\|jetzt\\|juegos\\|kaufen\\|kim\\|kitchen\\|kiwi\\|"
+          "koeln\\|kred\\|land\\|lat\\|latino\\|lease\\|life\\|lighting\\|"
+          "limited\\|limo\\|link\\|loans\\|london\\|luxe\\|luxury\\|"
+          "management\\|mango\\|marketing\\|media\\|meet\\|menu\\|miami\\|"
+          "moda\\|moe\\|monash\\|moscow\\|motorcycles\\|nagoya\\|name\\|"
+          "net\\|neustar\\|ninja\\|nyc\\|okinawa\\|onl\\|org\\|paris\\|"
+          "partners\\|parts\\|photo\\|photography\\|photos\\|pics\\|"
+          "pictures\\|pink\\|plumbing\\|pro\\|productions\\|properties\\|"
+          "pub\\|qpon\\|quebec\\|recipes\\|red\\|reisen\\|ren\\|rentals\\|"
+          "repair\\|report\\|rest\\|reviews\\|rich\\|rocks\\|rodeo\\|"
+          "ruhr\\|ryukyu\\|saarland\\|schule\\|scot\\|services\\|sexy\\|"
+          "shiksha\\|shoes\\|singles\\|social\\|sohu\\|solar\\|solutions\\|"
+          "soy\\|supplies\\|supply\\|support\\|surgery\\|systems\\|tattoo\\|"
+          "tax\\|technology\\|tienda\\|tips\\|today\\|tokyo\\|tools\\|"
+          "town\\|toys\\|trade\\|training\\|university\\|uno\\|vacations\\|"
+          "vegas\\|ventures\\|viajes\\|villas\\|vision\\|vodka\\|vote\\|"
+          "voting\\|voto\\|voyage\\|wang\\|watch\\|webcam\\|wed\\|wien\\|"
+          "wiki\\|works\\|wtc\\|wtf\\|xyz\\|yachts\\|yokohama\\|you\\|"
+          "zone\\)")
   ;; http://en.wikipedia.org/wiki/List_of_Internet_top-level_domains
   ;; http://en.wikipedia.org/wiki/GTLD
   ;; `approved, but not yet in operation': .xxx
@@ -2264,7 +2306,7 @@ Leading \"Re: \" is not stripped by this function.  Use the function
 		   ((not (string-match
 			  (concat "^[ \t]*"
 				  (regexp-quote new-subject)
-				  " \t]*$")
+				  "[ \t]*$")
 			  old-subject))  ; yes, it really is a new subject
 		    ;; delete eventual Re: prefix
 		    (setq old-subject
@@ -3531,15 +3573,16 @@ Message buffers and is not meant to be called directly."
       (goto-char (point-max))
       ;; Insert the signature.
       (unless (bolp)
-	(insert "\n"))
+	(newline))
       (when message-signature-insert-empty-line
-	(insert "\n"))
-      (insert "-- \n")
+	(newline))
+      (insert "-- ")
+      (newline)
       (if (eq signature t)
 	  (insert-file-contents signature-file)
 	(insert signature))
       (goto-char (point-max))
-      (or (bolp) (insert "\n")))))
+      (or (bolp) (newline)))))
 
 (defun message-insert-importance-high ()
   "Insert header to mark message as important."
@@ -5549,7 +5592,7 @@ If NOW, use that time instead."
   "Make date string for the Expires header.  Expiry in DAYS days.
 
 In posting styles use `(\"Expires\" (make-expires-date 30))'."
-  (let* ((cur (decode-time (current-time)))
+  (let* ((cur (decode-time))
 	 (nday (+ days (nth 3 cur))))
     (setf (nth 3 cur) nday)
     (message-make-date (apply 'encode-time cur))))

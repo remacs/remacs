@@ -44,7 +44,8 @@
     (require 'outline)
     (require 'passwd)
     (require 'pp)
-    (require 'regexp-opt))
+    (require 'regexp-opt)
+    (require 'time-date))
 
   (require 'advice)
   (require 'custom)

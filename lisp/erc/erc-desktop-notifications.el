@@ -46,6 +46,12 @@
   :group 'erc-notifications
   :type '(choice (const :tag "No icon" nil) file))
 
+(defcustom erc-notifications-bus :session
+  "D-Bus bus to use for notification."
+  :version "25.1"
+  :group 'erc-notifications
+  :type '(choice (const :tag "Session bus" :session) string))
+
 (defvar dbus-debug) ; used in the macroexpansion of dbus-ignore-errors
 
 (defun erc-notifications-notify (nick msg)
@@ -53,7 +59,8 @@
 This will replace the last notification sent with this function."
   (dbus-ignore-errors
     (setq erc-notifications-last-notification
-          (notifications-notify :title (xml-escape-string nick)
+          (notifications-notify :bus erc-notifications-bus
+				:title (xml-escape-string nick)
                                 :body (xml-escape-string msg)
                                 :replaces-id erc-notifications-last-notification
                                 :app-icon erc-notifications-icon))))

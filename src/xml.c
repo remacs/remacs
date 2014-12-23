@@ -175,7 +175,7 @@ make_dom (xmlNode *node)
 }
 
 static Lisp_Object
-parse_region (Lisp_Object start, Lisp_Object end, Lisp_Object base_url, int htmlp)
+parse_region (Lisp_Object start, Lisp_Object end, Lisp_Object base_url, Lisp_Object discard_comments, int htmlp)
 {
   xmlDoc *doc;
   Lisp_Object result = Qnil;
@@ -214,21 +214,24 @@ parse_region (Lisp_Object start, Lisp_Object end, Lisp_Object base_url, int html
 
   if (doc != NULL)
     {
-      /* If the document is just comments, then this should get us the
-	 nodes anyway. */
-      xmlNode *n = doc->children->next;
       Lisp_Object r = Qnil;
+      if (NILP(discard_comments))
+        {
+          /* If the document has toplevel comments, then this should
+             get us the nodes and the comments. */
+          xmlNode *n = doc->children;
 
-      while (n) {
-	if (!NILP (r))
-	  result = Fcons (r, result);
-	r = make_dom (n);
-	n = n->next;
-      }
+          while (n) {
+            if (!NILP (r))
+              result = Fcons (r, result);
+            r = make_dom (n);
+            n = n->next;
+          }
+        }
 
       if (NILP (result)) {
-	/* The document isn't just comments, so get the tree the
-	   proper way. */
+	/* The document doesn't have toplevel comments or we discarded
+	   them.  Get the tree the proper way. */
 	xmlNode *node = fn_xmlDocGetRootElement (doc);
 	if (node != NULL)
 	  result = make_dom (node);
@@ -251,25 +254,27 @@ xml_cleanup_parser (void)
 
 DEFUN ("libxml-parse-html-region", Flibxml_parse_html_region,
        Slibxml_parse_html_region,
-       2, 3, 0,
+       2, 4, 0,
        doc: /* Parse the region as an HTML document and return the parse tree.
-If BASE-URL is non-nil, it is used to expand relative URLs.  */)
-  (Lisp_Object start, Lisp_Object end, Lisp_Object base_url)
+If BASE-URL is non-nil, it is used to expand relative URLs.
+If DISCARD-COMMENTS is non-nil, all HTML comments are discarded. */)
+  (Lisp_Object start, Lisp_Object end, Lisp_Object base_url, Lisp_Object discard_comments)
 {
   if (init_libxml2_functions ())
-    return parse_region (start, end, base_url, 1);
+    return parse_region (start, end, base_url, discard_comments, 1);
   return Qnil;
 }
 
 DEFUN ("libxml-parse-xml-region", Flibxml_parse_xml_region,
        Slibxml_parse_xml_region,
-       2, 3, 0,
+       2, 4, 0,
        doc: /* Parse the region as an XML document and return the parse tree.
-If BASE-URL is non-nil, it is used to expand relative URLs.  */)
-  (Lisp_Object start, Lisp_Object end, Lisp_Object base_url)
+If BASE-URL is non-nil, it is used to expand relative URLs.
+If DISCARD-COMMENTS is non-nil, all HTML comments are discarded. */)
+  (Lisp_Object start, Lisp_Object end, Lisp_Object base_url, Lisp_Object discard_comments)
 {
   if (init_libxml2_functions ())
-    return parse_region (start, end, base_url, 0);
+    return parse_region (start, end, base_url, discard_comments, 0);
   return Qnil;
 }
 

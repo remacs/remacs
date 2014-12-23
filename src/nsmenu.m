@@ -492,10 +492,8 @@ void
 x_activate_menubar (struct frame *f)
 {
 #ifdef NS_IMPL_COCOA
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_5
   ns_update_menubar (f, true, nil);
   ns_check_pending_open_menu ();
-#endif
 #endif
 }
 
@@ -542,23 +540,14 @@ x_activate_menubar (struct frame *f)
 }
 
 #ifdef NS_IMPL_COCOA
-#if MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_X_VERSION_10_5
-extern NSString *NSMenuDidBeginTrackingNotification;
-#endif
-#endif
-
-#ifdef NS_IMPL_COCOA
 -(void)trackingNotification:(NSNotification *)notification
 {
   /* Update menu in menuNeedsUpdate only while tracking menus.  */
   trackingMenu = ([notification name] == NSMenuDidBeginTrackingNotification
                   ? 1 : 0);
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_5
   if (! trackingMenu) ns_check_menu_open (nil);
-#endif
 }
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_5
 - (void)menuWillOpen:(NSMenu *)menu
 {
   ++trackingMenu;
@@ -579,7 +568,6 @@ extern NSString *NSMenuDidBeginTrackingNotification;
 {
   --trackingMenu;
 }
-#endif /* OSX >= 10.5 */
 
 #endif /* NS_IMPL_COCOA */
 
@@ -608,8 +596,7 @@ extern NSString *NSMenuDidBeginTrackingNotification;
   if (trackingMenu == 0)
     return;
 /*fprintf (stderr, "Updating menu '%s'\n", [[self title] UTF8String]); NSLog (@"%@\n", event); */
-#if (! defined (NS_IMPL_COCOA) \
-     || MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_X_VERSION_10_5)
+#ifdef NS_IMPL_GNUSTEP
   /* Don't know how to do this for anything other than OSX >= 10.5
      This is wrong, as it might run Lisp code in the event loop.  */
   ns_update_menubar (frame, true, self);
@@ -706,9 +693,7 @@ extern NSString *NSMenuDidBeginTrackingNotification;
     {
       NSMenuItem *item = [self itemAtIndex: n];
       NSString *title = [item title];
-      if (([title length] == 0  /* OSX 10.5 */
-	   || [ns_app_name isEqualToString: title]  /* from 10.6 on */
-	   || [@"Apple" isEqualToString: title]) /* older */
+      if ([ns_app_name isEqualToString: title]
           && ![item isSeparatorItem])
         continue;
       [self removeItemAtIndex: n];
@@ -1041,9 +1026,12 @@ update_frame_tool_bar (struct frame *f)
   EmacsView *view = FRAME_NS_VIEW (f);
   NSWindow *window = [view window];
   EmacsToolbar *toolbar = [view toolbar];
+  int oldh;
 
   if (view == nil || toolbar == nil) return;
   block_input ();
+
+  oldh = FRAME_TOOLBAR_HEIGHT (f);
 
 #ifdef NS_IMPL_COCOA
   [toolbar clearActive];
@@ -1151,6 +1139,8 @@ update_frame_tool_bar (struct frame *f)
   if (FRAME_TOOLBAR_HEIGHT (f) < 0) // happens if frame is fullscreen.
     FRAME_TOOLBAR_HEIGHT (f) = 0;
 
+  if (oldh != FRAME_TOOLBAR_HEIGHT (f))
+    [view updateFrameSize:YES];
   if (view->wait_for_tool_bar && FRAME_TOOLBAR_HEIGHT (f) > 0)
     {
       view->wait_for_tool_bar = NO;
@@ -1886,6 +1876,5 @@ syms_of_nsmenu (void)
   defsubr (&Sns_reset_menu);
   defsubr (&Smenu_or_popup_active_p);
 
-  Qdebug_on_next_call = intern_c_string ("debug-on-next-call");
-  staticpro (&Qdebug_on_next_call);
+  DEFSYM (Qdebug_on_next_call, "debug-on-next-call");
 }

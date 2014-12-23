@@ -1,10 +1,9 @@
 ;;; arc-mode.el --- simple editing of archives
 
-;; Copyright (C) 1995, 1997-1998, 2001-2014 Free Software Foundation,
-;; Inc.
+;; Copyright (C) 1995, 1997-1998, 2001-2014 Free Software Foundation, Inc.
 
 ;; Author: Morten Welinder <terra@gnu.org>
-;; Keywords: files archives msdog editing major-mode
+;; Keywords: files archives ms-dos editing major-mode
 ;; Favorite-brand-of-beer: None, I hate beer.
 
 ;; This file is part of GNU Emacs.
@@ -31,7 +30,7 @@
 ;; understand the directory level of the archives.  For this reason,
 ;; you should expect this code to need more fiddling than tar-mode.el
 ;; (although it at present has fewer bugs :-)  In particular, I have
-;; not tested this under Ms-Dog myself.
+;; not tested this under MS-DOS myself.
 ;; -------------------------------------
 ;; INTERACTION: arc-mode.el should play together with
 ;;
@@ -146,6 +145,14 @@ A local copy of the archive will be used when updating."
 (defcustom archive-extract-hook nil
   "Hook run when an archive member has been extracted."
   :type 'hook
+  :group 'archive)
+
+(defcustom archive-visit-single-files nil
+  "If non-nil, opening an archive with a single file visits that file.
+If nil, visiting such an archive displays the archive summary."
+  :version "25.1"
+  :type '(choice (const :tag "Visit the single file" t)
+                 (const :tag "Show the archive summary" nil))
   :group 'archive)
 ;; ------------------------------
 ;; Arc archive configuration
@@ -742,7 +749,12 @@ archive.
       (if (default-value 'enable-multibyte-characters)
 	  (set-buffer-multibyte 'to))
       (archive-summarize nil)
-      (setq buffer-read-only t))))
+      (setq buffer-read-only t)
+      (when (and archive-visit-single-files
+                 auto-compression-mode
+                 (= (length archive-files) 1))
+        (rename-buffer (concat " " (buffer-name)))
+        (archive-extract)))))
 
 ;; Archive mode is suitable only for specially formatted data.
 (put 'archive-mode 'mode-class 'special)
@@ -2181,11 +2193,7 @@ This doesn't recover lost files, it just undoes changes in the buffer itself."
             (size (string-to-number (match-string 6))))
         ;; Move to the beginning of the data.
         (goto-char (match-end 0))
-        (setq time
-              (format-time-string
-               "%Y-%m-%d %H:%M"
-               (let ((high (truncate (/ time 65536))))
-                 (list high (truncate (- time (* 65536.0 high)))))))
+        (setq time (format-time-string "%Y-%m-%d %H:%M" time))
         (setq extname
               (cond ((equal name "//              ")
                      (propertize ".<ExtNamesTable>." 'face 'italic))

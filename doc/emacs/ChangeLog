@@ -1,3 +1,186 @@
+2014-12-14  Alan Mackenzie  <acm@muc.de>
+
+	* display.texi (Scrolling): fast-but-imprecise-scrolling.
+	Describe new variable.
+
+2014-12-14  Cameron Desautels  <camdez@gmail.com>
+
+	* custom.texi (Saving Customizations): Mention
+	`custom-prompt-customize-unsaved-options'.
+
+2014-12-08  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* misc.texi (Network Security): Mention the new protocol-level
+	`high' NSM checks.
+
+2014-12-08  Eric S. Raymond  <esr@snark.thyrsus.com>
+
+	* maintaining.texi: Suopport fo Arch has been moved to obosolete,
+	remove references that imply otherwise.
+
+2014-11-29  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Lessen focus on ChangeLog files, as opposed to change log entries.
+	* maintaining.texi (Change Log): Mention that ChangeLog files may
+	be copied to or from a version control system.
+	* trouble.texi (Sending Patches): Point to the commit messages.
+
+2014-11-29  Eli Zaretskii  <eliz@gnu.org>
+
+	* maintaining.texi (Switching Branches): Mention "C-x v r".
+	Correct commands for switching branches in various VCSs.
+
+2014-11-27  Tassilo Horn  <tsdh@gnu.org>
+
+	* misc.texi (DocView Slicing): Describe how to slice with the
+	mouse.  Fix command mentioned by slice by BoundingBox paragraph.
+	(Bug#18040)
+
+2014-11-25  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* misc.texi (Network Security): Use "untrustworthy" instead of
+	"unsafe".
+
+2014-11-24  Eli Zaretskii  <eliz@gnu.org>
+
+	* misc.texi (Network Security): Improve wording and indexing of
+	last change.
+
+2014-11-24  Lars Magne Ingebrigtsen  <larsi@gnus.org>
+
+	* misc.texi (Gnus Summary Buffer): Move the Network Security
+	Manager stuff here from the lispref manual.
+
+2014-11-21  Eli Zaretskii  <eliz@gnu.org>
+
+	* maintaining.texi (Version Control Systems): Move "@end itemize"
+	past the last @item.
+
+2014-11-21  H. Dieter Wilhelm  <dieter@duenenhof-wilhelm.de>
+
+	* maintaining.texi (Version Control Systems): Fix a typo.
+
+2014-11-20  Eric S. Raymond  <esr@snark.thyrsus.com>
+
+	* maintaining.texi: Document SRC support.
+
+2014-11-10  Glenn Morris  <rgm@gnu.org>
+
+	* Makefile.in (top_srcdir, version): New, set by configure.
+	(doc-emacsver): New rule.
+	(bootstrap-clean, maintainer-clean): Delete emacsver.texi.
+	(emacsver.texi.in): Rename from emacsver.texi.
+
+2014-11-09  Juri Linkov  <juri@jurta.org>
+
+	* search.texi (Other Repeating Search): Add documentation for
+	multi-isearch-files and multi-isearch-files-regexp.  (Bug#13592)
+
+2014-11-09  Glenn Morris  <rgm@gnu.org>
+
+	* Makefile.in (version): Remove variable.
+	(clean): No longer delete dist tarfile.
+	(dist): Remove rule; replace with code in admin.el.
+
+2014-11-03  Glenn Morris  <rgm@gnu.org>
+
+	* programs.texi (Misc for Programs): Fix typo.
+
+2014-10-30  Eli Zaretskii  <eliz@gnu.org>
+
+	* frames.texi (Scroll Bars): Improve indexing of faces.
+
+	* killing.texi (Secondary Selection): Improve indexing of faces.
+
+	* search.texi (Basic Isearch, Query Replace): Improve indexing of faces.
+
+	* display.texi (Standard Faces, Text Display)
+	(Useless Whitespace): Improve indexing of faces.
+
+	* frames.texi (Frame Commands): Document and index
+	'frame-resize-pixelwise'.
+
+	* windows.texi (Split Window): Document and index
+	'window-resize-pixelwise'.
+
+2014-10-22  Tassilo Horn  <tsdh@gnu.org>
+
+	* misc.texi (Document View): Adapt to latest doc-view changes wrt
+	viewing the document's plain text contents.
+
+2014-10-20  Glenn Morris  <rgm@gnu.org>
+
+	* Merge in all changes up to 24.4 release.
+
+2014-10-13  Glenn Morris  <rgm@gnu.org>
+
+	* Makefile.in (dist): Update for new output variables.
+
+2014-10-12  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* macos.texi (Mac OS / GNUstep, Mac / GNUstep Basics)
+	(Mac / GNUstep Customization): Mac OS X 10.6 or later now required.
+
+2014-10-09  Glenn Morris  <rgm@gnu.org>
+
+	* package.texi (Package Menu): The package list was changed to not
+	say "unsigned" any more.
+
+2014-10-05  Glenn Morris  <rgm@gnu.org>
+
+	* misc.texi (Sorting):
+	* search.texi (Query Replace): Markup fixes.
+
+2014-10-04  Martin Rudalics  <rudalics@gmx.at>
+
+	* frames.texi (Scroll Bars): Describe use of horizontal scroll bars.
+
+2014-10-04  Glenn Morris  <rgm@gnu.org>
+
+	* cmdargs.texi (Misc X):
+	* display.texi (Optional Mode Line):
+	* misc.texi (emacsclient Options):
+	* vc1-xtra.texi (VC Delete/Rename): Small fixes re @var usage.
+
+	* killing.texi (Rectangles): Copyedits re rectangle-mark-mode.
+	(CUA Bindings): Mention rectangle-mark-mode.
+
+2014-10-03  Martin Rudalics  <rudalics@gmx.at>
+
+	* frames.texi (Frame Commands):
+	* cmdargs.texi (Window Size X): Mention the use of
+	`frame-resize-pixelwise' to make frames truly fullscreen or maximized.
+
+2014-10-02  Glenn Morris  <rgm@gnu.org>
+
+	* package.texi (Package Installation): Mention etc/package-keyring.gpg.
+
+2014-09-29  Eli Zaretskii  <eliz@gnu.org>
+
+	* emacsver.texi (EMACSVER): Bump to 20.0.50.
+
+2014-09-15  Daniel Colascione  <dancol@dancol.org>
+
+	* regs.texi (Text Registers): Update end-user documentation
+	to reflect `insert-register' interface change.
+
+2014-08-07  Reuben Thomas  <rrt@sc3d.org>
+
+	* programs.texi (Program Modes): Don't advertise VMS DCL support
+	any more.
+
+2014-08-07  Reuben Thomas  <rrt@sc3d.org>
+
+	Refer to MS-DOS using the same name everywhere.
+
+	* Makefile.in (EMACSSOURCES): ``MS-DOG'', ``MSDOG'' and ``msdog''
+	become ``MS-DOS''; ``msdog'' in filenames becomes ``msdos''.
+	* emacs-xtra.texi: ditto.
+	* emacs.texi: ditto.
+	* makefile.w32-in: ditto.
+	* msdog-xtra.texi: ditto, and rename file.
+	* msdog.texi: ditto, and rename file.
+
 2014-07-21  Glenn Morris  <rgm@gnu.org>
 
 	* emacs.texi (Intro): Workaround makeinfo 4 @acronym bug.  (Bug#18040)
@@ -234,8 +417,8 @@
 
 2014-03-13  Paul Eggert  <eggert@cs.ucla.edu>
 
-	* mule.texi (International, Language Environments): Update
-	the list of language environments to what Emacs currently
+	* mule.texi (International, Language Environments):
+	Update the list of language environments to what Emacs currently
 	supports.  Add the full list to the index.  Suggest C-h L for
 	details rather than trying to give very brief details here.
 
@@ -527,8 +710,8 @@
 
 	* indent.texi (Tab Stops): Mention recent changes about `tab-stop-list'.
 
-	* frames.texi (Scroll Bars): Document
-	`scroll-bar-adjust-thumb-portion'.
+	* frames.texi (Scroll Bars):
+	Document `scroll-bar-adjust-thumb-portion'.
 
 2013-12-21  Chong Yidong  <cyd@gnu.org>
 
@@ -554,8 +737,8 @@
 
 	* entering.texi: Document `initial-buffer-choice' changes.
 
-	* misc.texi (emacsclient Options): Document
-	`initial-buffer-choice' changes.
+	* misc.texi (emacsclient Options):
+	Document `initial-buffer-choice' changes.
 
 	* help.texi: Document that `?' now also shows subcommands of
 	prefix keys.
@@ -1038,8 +1221,8 @@
 
 	* misc.texi (Terminal emulator): Document Term mode faces.
 
-	* mini.texi (Basic Minibuffer): New node.  Document
-	minibuffer-electric-default-mode.
+	* mini.texi (Basic Minibuffer): New node.
+	Document minibuffer-electric-default-mode.
 
 	* display.texi (Visual Line Mode): Fix index entry.
 
@@ -3099,7 +3282,7 @@
 
 	* Makefile.in (MAKEINFO): Now controlled by `configure'.
 	(MAKEINFO_OPTS): New variable.  Use it where appropriate.
-	(ENVADD): Updated.
+	(ENVADD): Update.
 
 2011-01-18  Glenn Morris  <rgm@gnu.org>
 
@@ -8994,7 +9177,7 @@
 
 	* text.texi (Format Faces): Replace old M-g key prefix with M-o.
 
-	* emacs.texi (Acknowledgments): Updated.
+	* emacs.texi (Acknowledgments): Update.
 
 	* anti.texi: Total rewrite.
 
@@ -10101,7 +10284,7 @@
 
 	* frames.texi (Dialog Boxes): Add use-file-dialog.
 
-2003-11-22  Martin Stjernholm  <bug-cc-mode@gnu.org>
+2003-11-22  Martin Stjernholm  <mast@lysator.liu.se>
 
 	* ack.texi: Note that Alan Mackenzie contributed the AWK support
 	in CC Mode.

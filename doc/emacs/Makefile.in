@@ -26,8 +26,9 @@ SHELL = @SHELL@
 # of the source tree.  This is set by configure's `--srcdir' option.
 srcdir=@srcdir@
 
-# Only for make dist.
-version=@version@
+top_srcdir = @top_srcdir@
+
+version = @version@
 
 ## Where the output files go.
 ## Note that the setfilename command in the .texi files assumes this.
@@ -91,7 +92,7 @@ EMACS_XTRA= \
 	$(srcdir)/vc-xtra.texi \
 	$(srcdir)/vc1-xtra.texi \
 	$(srcdir)/fortran-xtra.texi \
-	$(srcdir)/msdog-xtra.texi
+	$(srcdir)/msdos-xtra.texi
 
 EMACSSOURCES= \
 	${srcdir}/emacs.texi \
@@ -135,7 +136,7 @@ EMACSSOURCES= \
 	${srcdir}/xresources.texi \
 	${srcdir}/anti.texi \
 	${srcdir}/macos.texi \
-	${srcdir}/msdog.texi \
+	${srcdir}/msdos.texi \
 	${srcdir}/gnu.texi \
 	${srcdir}/glossary.texi \
 	${srcdir}/ack.texi \
@@ -181,6 +182,18 @@ emacs-xtra.pdf: $(EMACS_XTRA)
 %.ps: %.dvi
 	$(DVIPS) -o $@ $<
 
+.PHONY: doc-emacsver
+
+# If configure were to just generate emacsver.texi from emacsver.texi.in
+# in the normal way, the timestamp of emacsver.texi would always be
+# newer than that of the info files, which are prebuilt in release tarfiles.
+# So we use this rule, and move-if-change, to avoid that.
+doc-emacsver:
+	sed 's/[@]version@/${version}/' \
+	  ${srcdir}/emacsver.texi.in > emacsver.texi.$$$$ && \
+	  ${top_srcdir}/build-aux/move-if-change emacsver.texi.$$$$ \
+	  ${srcdir}/emacsver.texi
+
 .PHONY: mostlyclean clean distclean bootstrap-clean maintainer-clean infoclean
 
 ## Temp files.
@@ -191,7 +204,6 @@ mostlyclean:
 ## Products not in the release tarfiles.
 clean: mostlyclean
 	rm -f $(DVI_TARGETS) $(HTML_TARGETS) $(PDF_TARGETS) $(PS_TARGETS)
-	rm -f emacs-manual-${version}.tar*
 
 distclean: clean
 	rm -f Makefile
@@ -204,28 +216,7 @@ infoclean:
 	  $(buildinfodir)/emacs.info-[1-9][0-9]
 
 bootstrap-clean maintainer-clean: distclean infoclean
-
-.PHONY: dist
-
-## Make a standalone tarfile of the Emacs manual sources.
-## The [c] is a dumb way to prevent configure expanding it.
-dist:
-	rm -rf emacs-manual-${version}
-	mkdir emacs-manual-${version}
-	cp ${srcdir}/*.texi ${texinfodir}/texinfo.tex \
-	  ${srcdir}/ChangeLog* emacs-manual-${version}/
-	sed -e 's/@sr[c]dir@/./' -e 's/^\(texinfodir *=\).*/\1 ./' \
-	  -e 's/^\(buildinfodir *=\).*/\1 ./' \
-	  -e 's/^\(clean:.*\)/\1 infoclean/' \
-	  -e "s/@ver[s]ion@/${version}/" \
-	  -e 's/@MAKE[I]NFO@/makeinfo/' -e 's/@MK[D]IR_P@/mkdir -p/' \
-	  ${srcdir}/Makefile.in > emacs-manual-${version}/Makefile
-	@if grep '@[a-zA-Z_]*@' emacs-manual-${version}/Makefile; then \
-	  echo "Unexpanded configure variables in Makefile?" 1>&2; exit 1; \
-	fi
-	tar -cf emacs-manual-${version}.tar emacs-manual-${version}
-	rm -rf emacs-manual-${version}
-
+	rm -f ${srcdir}/emacsver.texi
 
 .PHONY: install-dvi install-html install-pdf install-ps install-doc
 
