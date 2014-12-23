@@ -24,7 +24,6 @@
 #define _GL_UTIMENS_INLINE _GL_EXTERN_INLINE
 #include "utimens.h"
 
-#include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stdbool.h>
@@ -87,7 +86,6 @@ validate_timespec (struct timespec timespec[2])
 {
   int result = 0;
   int utime_omit_count = 0;
-  assert (timespec);
   if ((timespec[0].tv_nsec != UTIME_NOW
        && timespec[0].tv_nsec != UTIME_OMIT
        && ! (0 <= timespec[0].tv_nsec
