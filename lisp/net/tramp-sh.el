@@ -2455,8 +2455,14 @@ The method used must be an out-of-band method."
 		   (mapconcat 'identity (process-command p) " "))
 		  (tramp-set-connection-property p "vector" orig-vec)
 		  (tramp-compat-set-process-query-on-exit-flag p nil)
-		  (tramp-process-actions
-		   p v nil tramp-actions-copy-out-of-band)
+
+		  ;; When `shell-file-name' is "cmdproxy", we must adapt
+		  ;; `tramp-local-end-of-line' for sending the password.
+		  (let ((tramp-local-end-of-line
+			 (if (string-match "cmdproxy" shell-file-name)
+			     "\n" tramp-local-end-of-line)))
+		    (tramp-process-actions
+		     p v nil tramp-actions-copy-out-of-band))
 
 		  ;; Check the return code.
 		  (goto-char (point-max))

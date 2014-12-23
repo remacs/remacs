@@ -1,3 +1,10 @@
+2014-12-23  Michael Albinus  <michael.albinus@gmx.de>
+
+	* net/tramp.el (tramp-read-passwd): Ignore errors from `auth-source-*'.
+
+	* net/tramp-sh.el (tramp-do-copy-or-rename-file-out-of-band): Use "\n"
+	as end-of-line delimeter for passwords, when running on MS Windows.
+
 2014-12-23  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* progmodes/sh-script.el (sh-set-shell): Don't change the global value
