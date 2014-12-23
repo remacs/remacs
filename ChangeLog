@@ -1,3 +1,7 @@
+2014-12-23  Stephen Leake  <stephen_leake@stephe-leake.org>
+
+	* CONTRIBUTE: add Savannah url, cleanup announcing freeze.
+
 2014-12-19  Stephen Leake  <stephen_leake@stephe-leake.org>
 
 	Move user-level information from CONTRIBUTE to doc/emacs/trouble.texi

@@ -8,7 +8,8 @@ http://www.gnu.org/software/emacs/manual/html_node/emacs/Contributing.html
 
 An "Emacs Developer" is someone who contributes a lot of code or
 documentation to the Emacs repository. Generally, they have write
-access to the Emacs git repository on Savannah.
+access to the Emacs git repository on Savannah
+https://savannah.gnu.org/git/?group=emacs.
 
 ** Write access to the Emacs repository.
 
@@ -123,14 +124,12 @@ Development is discussed on the emacs-devel mailing list.
 Sometime before the release of a new major version of Emacs a "feature
 freeze" is imposed on the trunk, to prepare for creating a release
 branch.  No new features may be added to the trunk after this point,
-until the release branch is created. This freeze is announced on the
-emacs-devel mailing list, and not anywhere else.
+until the release branch is created. Announcements about the freeze
+(and other important events) are made on the info-gnu-emacs mailing
+list, and not anywhere else.
 
 The trunk branch is named "master" in git; release branches are named
 "emacs-nn" where "nn" is the major version.
-
-Announcements about the freeze (and other important events) are made
-on the info-gnu-emacs mailing list.
 
 If you are fixing a bug that exists in the current release, be sure to
 commit it to the release branch; it will be merged to the master
