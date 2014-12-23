@@ -1,3 +1,9 @@
+2014-12-23  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* progmodes/js.el (js--syntax-propertize-regexp-syntax-table): New var.
+	(js-syntax-propertize-regexp): Use it to recognize "slash in
+	a character class" (bug#19397).
+
 2014-12-22  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* completion.el: Use post-self-insert-hook (bug#19400).

@@ -7,6 +7,11 @@ let c = 1,
 var e = 100500,
     + 1;
 
+function test ()
+{
+     return /[/]/.test ('/')     // (bug#19397)
+}
+
 var f = bar('/protocols/')
 baz();
 
