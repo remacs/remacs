@@ -1,3 +1,8 @@
+2014-12-23  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* progmodes/js.el (js-syntax-propertize): "return" can't be divided
+	(bug#19397).
+
 2014-12-23  Michael Albinus  <michael.albinus@gmx.de>
 
 	* net/tramp.el (tramp-read-passwd): Ignore errors from `auth-source-*'.
