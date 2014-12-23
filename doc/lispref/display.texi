@@ -39,6 +39,8 @@ that Emacs presents to the user.
 
 @node Refresh Screen
 @section Refreshing the Screen
+@cindex refresh the screen
+@cindex screen refresh
 
   The function @code{redraw-frame} clears and redisplays the entire
 contents of a given frame (@pxref{Frames}).  This is useful if the
@@ -509,6 +511,7 @@ are logged that share a common prefix ending in @samp{...}.
 
 @node Echo Area Customization
 @subsection Echo Area Customization
+@cindex echo area customization
 
   These variables control details of how the echo area works.
 
@@ -636,6 +639,7 @@ specify a specific warning type.
 
 @node Warning Variables
 @subsection Warning Variables
+@cindex warning variables
 
   Programs can customize how their warnings appear by binding
 the variables described in this section.
@@ -713,6 +717,7 @@ all.
 
 @node Warning Options
 @subsection Warning Options
+@cindex warning options
 
   These variables are used by users to control what happens
 when a Lisp program reports a warning.
@@ -746,6 +751,7 @@ that warning is not logged.
 
 @node Delayed Warnings
 @subsection Delayed Warnings
+@cindex delayed warnings
 
 Sometimes, you may wish to avoid showing a warning while a command is
 running, and only show it only after the end of the command.  You can
@@ -1069,6 +1075,8 @@ You can use a display table to substitute other text for the ellipsis
 
 @node Temporary Displays
 @section Temporary Displays
+@cindex temporary display
+@cindex temporary buffer display
 
   Temporary displays are used by Lisp programs to put output into a
 buffer and then present it to the user for perusal rather than for
@@ -1280,6 +1288,8 @@ inside the overlay or outside, and likewise for the end of the overlay.
 
 @node Managing Overlays
 @subsection Managing Overlays
+@cindex managing overlays
+@cindex overlays, managing
 
   This section describes the functions to create, delete and move
 overlays, and to examine their contents.  Overlay changes are not
@@ -1440,6 +1450,7 @@ faster if you do @code{(overlay-recenter (point-max))} first.
 
 @node Overlay Properties
 @subsection Overlay Properties
+@cindex overlay properties
 
   Overlay properties are like text properties in that the properties that
 alter how a character is displayed can come from either source.  But in
@@ -1692,6 +1703,8 @@ Properties}.
 
 @node Finding Overlays
 @subsection Searching for Overlays
+@cindex searching for overlays
+@cindex overlays, searching for
 
 @defun overlays-at pos &optional sorted
 This function returns a list of all the overlays that cover the character at
@@ -1759,6 +1772,8 @@ changes.
 
 @node Size of Displayed Text
 @section Size of Displayed Text
+@cindex size of text on display
+@cindex character width on display
 
 Since not all characters have the same width, these functions let you
 check the width of a character.  @xref{Primitive Indent}, and
@@ -2249,6 +2264,7 @@ suitable for use with @code{:stipple} (see above).  It returns
 
 @node Defining Faces
 @subsection Defining Faces
+@cindex defining faces
 
 @cindex face spec
   The usual way to define a face is through the @code{defface} macro.
@@ -2423,6 +2439,7 @@ Any other value of @var{spec-type} is reserved for internal use.
 
 @node Attribute Functions
 @subsection Face Attribute Functions
+@cindex face attributes, access and modification
 
   This section describes functions for directly accessing and
 modifying the attributes of a named face.
@@ -2624,6 +2641,8 @@ a non-@code{nil} @code{:inverse-video} attribute.
 
 @node Displaying Faces
 @subsection Displaying Faces
+@cindex displaying faces
+@cindex face merging
 
   When Emacs displays a given piece of text, the visual appearance of
 the text may be determined by faces drawn from different sources.  If
@@ -2679,6 +2698,7 @@ at the next level of face merging.
 
 @node Face Remapping
 @subsection Face Remapping
+@cindex face remapping
 
   The variable @code{face-remapping-alist} is used for buffer-local or
 global changes in the appearance of a face.  For instance, it is used
@@ -2876,6 +2896,7 @@ usually assign faces to around 400 to 600 characters at each call.
 
 @node Basic Faces
 @subsection Basic Faces
+@cindex basic faces
 
 If your Emacs Lisp program needs to assign some faces to text, it is
 often a good idea to use certain existing faces or inherit from them,
@@ -3042,6 +3063,8 @@ nominal heights and widths would suggest.
 
 @node Font Lookup
 @subsection Looking Up Fonts
+@cindex font lookup
+@cindex looking up fonts
 
 @defun x-list-fonts name &optional reference-face frame maximum width
 This function returns a list of available font names that match
@@ -3099,6 +3122,7 @@ encoding of the font.
 
 @node Fontsets
 @subsection Fontsets
+@cindex fontset
 
   A @dfn{fontset} is a list of fonts, each assigned to a range of
 character codes.  An individual font cannot display the whole range of
@@ -4032,6 +4056,7 @@ display specifications and what they mean.
 
 @node Replacing Specs
 @subsection Display Specs That Replace The Text
+@cindex replacing display specs
 
   Some kinds of display specifications specify something to display
 instead of the text that has the property.  These are called
@@ -4908,6 +4933,7 @@ Supports the @code{:index} property.  @xref{Multi-Frame Images}.
 
 @node Defining Images
 @subsection Defining Images
+@cindex define image
 
   The functions @code{create-image}, @code{defimage} and
 @code{find-image} provide convenient ways to create image descriptors.
@@ -5035,6 +5061,7 @@ Here is an example of using @code{image-load-path-for-library}:
 
 @node Showing Images
 @subsection Showing Images
+@cindex show image
 
   You can use an image descriptor by setting up the @code{display}
 property yourself, but it is easier to use the functions in this

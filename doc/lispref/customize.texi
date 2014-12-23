@@ -1227,6 +1227,8 @@ arguments, which will be used when creating the @code{radio-button} or
 
 @node Defining New Types
 @subsection Defining New Types
+@cindex customization types, define new
+@cindex define new customization types
 
 In the previous sections we have described how to construct elaborate
 type specifications for @code{defcustom}.  In some cases you may want
@@ -1296,6 +1298,7 @@ its @code{:type} argument only when needed.
 
 @node Applying Customizations
 @section Applying Customizations
+@cindex applying customizations
 
 The following functions are responsible for installing the user's
 customization settings for variables and faces, respectively.  When
@@ -1353,6 +1356,7 @@ evaluated.  @var{comment} is a string describing the customization.
 @node Custom Themes
 @section Custom Themes
 
+@cindex custom themes
   @dfn{Custom themes} are collections of settings that can be enabled
 or disabled as a unit.  @xref{Custom Themes,,, emacs, The GNU Emacs
 Manual}.  Each Custom theme is defined by an Emacs Lisp source file,

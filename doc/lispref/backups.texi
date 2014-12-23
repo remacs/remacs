@@ -50,6 +50,7 @@ don't want them any more, or Emacs can delete them automatically.
 
 @node Making Backups
 @subsection Making Backup Files
+@cindex making backup files
 
 @defun backup-buffer
   This function makes a backup of the file visited by the current
@@ -238,6 +239,7 @@ The default is 200.
 
 @node Numbered Backups
 @subsection Making and Deleting Numbered Backup Files
+@cindex numbered backups
 
   If a file's name is @file{foo}, the names of its numbered backup
 versions are @file{foo.~@var{v}~}, for various integers @var{v}, like
@@ -299,6 +301,7 @@ file.  The default is@tie{}2.
 
 @node Backup Names
 @subsection Naming Backup Files
+@cindex naming backup files
 
   The functions in this section are documented mainly because you can
 customize the naming conventions for backup files by redefining them.
@@ -668,6 +671,7 @@ not initialize @code{auto-save-list-file-name}.
 
 @node Reverting
 @section Reverting
+@cindex reverting buffers
 
   If you have made extensive changes to a file and then change your mind
 about them, you can get rid of them by reading in the previous version

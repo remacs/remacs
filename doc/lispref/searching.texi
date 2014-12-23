@@ -257,6 +257,8 @@ it easier to verify even very complex regexps.
 
 @node Syntax of Regexps
 @subsection Syntax of Regular Expressions
+@cindex regexp syntax
+@cindex syntax of regular expressions
 
   Regular expressions have a syntax in which a few characters are
 special constructs and the rest are @dfn{ordinary}.  An ordinary
@@ -294,6 +296,7 @@ need to use one of the special regular expression constructs.
 
 @node Regexp Special
 @subsubsection Special Characters in Regular Expressions
+@cindex regexp, special characters in
 
   Here is a list of the characters that are special in a regular
 expression.
@@ -894,6 +897,7 @@ beyond the minimum needed to end a sentence.
 
   These functions operate on regular expressions.
 
+@cindex quote special characters in regexp
 @defun regexp-quote string
 This function returns a regular expression whose only exact match is
 @var{string}.  Using this regular expression in @code{looking-at} will
@@ -924,6 +928,7 @@ whitespace:
 @end example
 @end defun
 
+@cindex optimize regexp
 @defun regexp-opt strings &optional paren
 This function returns an efficient regular expression that will match
 any of the strings in the list @var{strings}.  This is useful when you

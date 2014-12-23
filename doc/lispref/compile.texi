@@ -347,6 +347,7 @@ it does nothing.  It always returns @var{function}.
 
 @node Eval During Compile
 @section Evaluation During Compilation
+@cindex eval during compilation
 
   These features permit you to write code to be evaluated during
 compilation of a program.
