@@ -70,7 +70,7 @@ of these.")
 	     :documentation "A number of thingies."))
   "A class for testing the widget on.")
 
-(defcustom eieio-widget-test (eieio-widget-test-class "Foo")
+(defcustom eieio-widget-test (eieio-widget-test-class)
   "Test variable for editing an object."
   :type 'object
   :group 'eieio)
@@ -317,7 +317,7 @@ Optional argument IGNORE is an extraneous parameter."
 	    fgroup (cdr fgroup)
 	    fcust (cdr fcust)))
     ;; Set any name updates on it.
-    (if name (setf (eieio--object-name obj) name))
+    (if name (eieio-object-set-name-string obj name))
     ;; This is the same object we had before.
     obj))
 

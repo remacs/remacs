@@ -144,12 +144,7 @@ In EIEIO, the class' constructor requires a name for use when printing.
 `make-instance' in CLOS doesn't use names the way Emacs does, so the
 class is used as the name slot instead when INITARGS doesn't start with
 a string."
-  (if (and (car initargs) (stringp (car initargs)))
-      (apply (class-constructor class) initargs)
-    (apply  (class-constructor class)
-	    (cond ((symbolp class) (symbol-name class))
-		  (t (format "%S" class)))
-	    initargs)))
+  (apply (class-constructor class) initargs))
 
 
 ;;; CLOS methods and generics
@@ -279,20 +274,28 @@ variable name of the same name as the slot."
 If EXTRA, include that in the string returned to represent the symbol."
   (eieio--check-type eieio-object-p obj)
   (format "#<%s %s%s>" (symbol-name (eieio--object-class obj))
-	  (eieio--object-name obj) (or extra "")))
+	  (eieio-object-name-string obj) (or extra "")))
 (define-obsolete-function-alias 'object-name #'eieio-object-name "24.4")
 
-(defun eieio-object-name-string (obj) "Return a string which is OBJ's name."
-  (eieio--check-type eieio-object-p obj)
-  (eieio--object-name obj))
+(defconst eieio--object-names (make-hash-table :test #'eq :weakness 'key))
+
+;; In the past, every EIEIO object had a `name' field, so we had the two method
+;; below "for free".  Since this field is very rarely used, we got rid of it
+;; and instead we keep it in a weak hash-tables, for those very rare objects
+;; that use it.
+(defmethod eieio-object-name-string (obj)
+  "Return a string which is OBJ's name."
+  (declare (obsolete eieio-named "25.1"))
+  (or (gethash obj eieio--object-names)
+      (symbol-name (eieio-object-class obj))))
 (define-obsolete-function-alias
   'object-name-string #'eieio-object-name-string "24.4")
 
-(defun eieio-object-set-name-string (obj name)
+(defmethod eieio-object-set-name-string (obj name)
   "Set the string which is OBJ's NAME."
-  (eieio--check-type eieio-object-p obj)
+  (declare (obsolete eieio-named "25.1"))
   (eieio--check-type stringp name)
-  (setf (eieio--object-name obj) name))
+  (setf (gethash obj eieio--object-names) name))
 (define-obsolete-function-alias
   'object-set-name-string 'eieio-object-set-name-string "24.4")
 
@@ -574,20 +577,19 @@ This class is not stored in the `parent' slot of a class vector."
 
 (defalias 'standard-class 'eieio-default-superclass)
 
-(defgeneric constructor (class newname &rest slots)
+(defgeneric eieio-constructor (class &rest slots)
   "Default constructor for CLASS `eieio-default-superclass'.")
 
-(defmethod constructor :static
-  ((class eieio-default-superclass) newname &rest slots)
+(define-obsolete-function-alias 'constructor #'eieio-constructor "25.1")
+
+(defmethod eieio-constructor :static
+  ((class eieio-default-superclass) &rest slots)
   "Default constructor for CLASS `eieio-default-superclass'.
-NEWNAME is the name to be given to the constructed object.
 SLOTS are the initialization slots used by `shared-initialize'.
 This static method is called when an object is constructed.
 It allocates the vector used to represent an EIEIO object, and then
 calls `shared-initialize' on that object."
   (let* ((new-object (copy-sequence (eieio--class-default-object-cache (eieio--class-v class)))))
-    ;; Update the name for the newly created object.
-    (setf (eieio--object-name new-object) newname)
     ;; Call the initialize method on the new object with the slots
     ;; that were passed down to us.
     (initialize-instance new-object slots)
@@ -715,18 +717,10 @@ first and modify the returned object.")
 
 (defmethod clone ((obj eieio-default-superclass) &rest params)
   "Make a copy of OBJ, and then apply PARAMS."
-  (let ((nobj (copy-sequence obj))
-	(nm (eieio--object-name obj))
-	(passname (and params (stringp (car params))))
-	(num 1))
-    (if params (shared-initialize nobj (if passname (cdr params) params)))
-    (if (not passname)
-	(save-match-data
-	  (if (string-match "-\\([0-9]+\\)" nm)
-	      (setq num (1+ (string-to-number (match-string 1 nm)))
-		    nm (substring nm 0 (match-beginning 0))))
-	  (setf (eieio--object-name nobj) (concat nm "-" (int-to-string num))))
-      (setf (eieio--object-name nobj) (car params)))
+  (let ((nobj (copy-sequence obj)))
+    (if (stringp (car params))
+        (message "Obsolete name %S passed to clone" (pop params)))
+    (if params (shared-initialize nobj params))
     nobj))
 
 (defgeneric destructor (this &rest params)
@@ -889,7 +883,7 @@ variable PRINT-FUNCTION.  Optional argument NOESCAPE is passed to
 
 ;;; Start of automatically extracted autoloads.
 
-;;;### (autoloads nil "eieio-custom" "eieio-custom.el" "6413249ec10091eb7094238637b40e2c")
+;;;### (autoloads nil "eieio-custom" "eieio-custom.el" "3a6fffe3af331fe960f967d0da99e8e9")
 ;;; Generated autoloads from eieio-custom.el
 
 (autoload 'customize-object "eieio-custom" "\
@@ -900,7 +894,7 @@ Optional argument GROUP is the sub-group of slots to display.
 
 ;;;***
 
-;;;### (autoloads nil "eieio-opt" "eieio-opt.el" "6f114a48de40212413d2776eedc3ec14")
+;;;### (autoloads nil "eieio-opt" "eieio-opt.el" "2ff7d98da3f84c6af5c873ffb781930e")
 ;;; Generated autoloads from eieio-opt.el
 
 (autoload 'eieio-browse "eieio-opt" "\

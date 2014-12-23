@@ -1,3 +1,37 @@
+2014-12-23  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* emacs-lisp/eieio.el (make-instance): Simplify by not adding an object
+	name argument.
+	(eieio-object-name): Use eieio-object-name-string.
+	(eieio--object-names): New const.
+	(eieio-object-name-string, eieio-object-set-name-string): Re-implement
+	using a hashtable rather than a built-in slot.
+	(eieio-constructor): Rename from `constructor'.  Remove `newname' arg.
+	(clone): Don't mess with the object's "name".
+
+	* emacs-lisp/eieio-custom.el (eieio-widget-test): Remove dummy arg.
+	(eieio-object-value-get): Use eieio-object-set-name-string.
+
+	* emacs-lisp/eieio-core.el (eieio--defalias): Follow aliases.
+	(eieio--object): Remove `name' field.
+	(eieio-defclass): Adjust to new convention where constructors don't
+	take an "object name" any more.
+	(eieio--defgeneric-init-form, eieio--defmethod): Follow aliases.
+	(eieio-validate-slot-value, eieio-oset-default)
+	(eieio-slot-name-index): Don't hardcode eieio--object-num-slots.
+	(eieio-generic-call-primary-only): Simplify.
+
+	* emacs-lisp/eieio-base.el (clone) <eieio-instance-inheritor>:
+	Use call-next-method.
+	(eieio-constructor): Rename from `constructor'.
+	(eieio-persistent-convert-list-to-object): Drop objname.
+	(eieio-persistent-validate/fix-slot-value): Don't hardcode
+	eieio--object-num-slots.
+	(eieio-named): Use a normal slot.
+	(slot-missing) <eieio-named>: Remove.
+	(eieio-object-name-string, eieio-object-set-name-string, clone)
+	<eieio-named>: New methods.
+
 2014-12-22  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* emacs-lisp/eieio-core.el (eieio--class-v): Rename from class-v.

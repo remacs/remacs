@@ -174,17 +174,18 @@
 (defclass C-base2 () ())
 (defclass C (C-base1 C-base2) ())
 
+;; Just use the obsolete name once, to make sure it also works.
 (defmethod constructor :STATIC ((p C-base1) &rest args)
   (eieio-test-method-store)
   (if (next-method-p) (call-next-method))
   )
 
-(defmethod constructor :STATIC ((p C-base2) &rest args)
+(defmethod eieio-constructor :STATIC ((p C-base2) &rest args)
   (eieio-test-method-store)
   (if (next-method-p) (call-next-method))
   )
 
-(defmethod constructor :STATIC ((p C) &rest args)
+(defmethod eieio-constructor :STATIC ((p C) &rest args)
   (eieio-test-method-store)
   (call-next-method)
   )

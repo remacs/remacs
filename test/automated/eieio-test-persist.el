@@ -175,7 +175,7 @@ persistent class.")
 
 (defclass persistent-with-objs-slot-subs (eieio-persistent)
   ((pnp :initarg :pnp
-	:type (or null persist-not-persistent-child)
+	:type (or null persist-not-persistent)
 	:initform nil))
   "Class for testing the saving of slots with objects in them.")
 

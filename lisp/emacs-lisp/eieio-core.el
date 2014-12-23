@@ -39,6 +39,9 @@
   "Like `defalias', but with less side-effects.
 More specifically, it has no side-effects at all when the new function
 definition is the same (`eq') as the old one."
+  (while (and (fboundp name) (symbolp (symbol-function name)))
+    ;; Follow aliases, so methods applied to obsolete aliases still work.
+    (setq name (symbol-function name)))
   (unless (and (fboundp name)
                (eq (symbol-function name) body))
     (defalias name body)))
@@ -167,8 +170,7 @@ Stored outright without modifications or stripping.")))
 
 (eieio--define-field-accessors object
   (-unused-0 ;;Constant slot, set to `object'.
-   (class "class struct defining OBJ")
-   name))                               ;FIXME: Get rid of this field!
+   (class "class struct defining OBJ")))
 
 ;; FIXME: The constants below should have an `eieio-' prefix added!!
 (defconst eieio--method-static 0 "Index into :static tag on a method.")
@@ -480,10 +482,10 @@ See `defclass' for more information."
     ;; Create the test function
     (let ((csym (intern (concat (symbol-name cname) "-p"))))
       (fset csym
-	    (list 'lambda (list 'obj)
-		  (format "Test OBJ to see if it an object of type %s" cname)
-		  (list 'and '(eieio-object-p obj)
-			(list 'same-class-p 'obj cname)))))
+	    `(lambda (obj)
+               ,(format "Test OBJ to see if it an object of type %s" cname)
+               (and (eieio-object-p obj)
+                    (same-class-p obj ',cname)))))
 
     ;; Make sure the method invocation order  is a valid value.
     (let ((io (class-option-assoc options :method-invocation-order)))
@@ -499,7 +501,7 @@ See `defclass' for more information."
                  "Test OBJ to see if it an object is a child of type %s"
                  cname)
 	       (and (eieio-object-p obj)
-		    (object-of-class-p obj ,cname))))
+		    (object-of-class-p obj ',cname))))
 
       ;; When using typep, (typep OBJ 'myclass) returns t for objects which
       ;; are subclasses of myclass.  For our predicates, however, it is
@@ -722,9 +724,14 @@ See `defclass' for more information."
 
       ;; Non-abstract classes need a constructor.
       (fset cname
-	    `(lambda (newname &rest slots)
+	    `(lambda (&rest slots)
 	       ,(format "Create a new object with name NAME of class type %s" cname)
-	       (apply #'constructor ,cname newname slots)))
+               (if (and slots
+                        (let ((x (car slots)))
+                          (or (stringp x) (null x))))
+                   (message "Obsolete name %S passed to %S constructor"
+                            (pop slots) ',cname))
+	       (apply #'eieio-constructor ',cname slots)))
       )
 
     ;; Set up a specialized doc string.
@@ -761,7 +768,6 @@ See `defclass' for more information."
                               nil)))
       (aset cache 0 'object)
       (setf (eieio--object-class cache) cname)
-      (setf (eieio--object-name cache) 'default-cache-object)
       (let ((eieio-skip-typecheck t))
 	;; All type-checking has been done to our satisfaction
 	;; before this call.  Don't waste our time in this call..
@@ -1087,6 +1093,10 @@ the new child class."
 
 (defun eieio--defgeneric-init-form (method doc-string)
   "Form to use for the initial definition of a generic."
+  (while (and (fboundp method) (symbolp (symbol-function method)))
+    ;; Follow aliases, so methods applied to obsolete aliases still work.
+    (setq method (symbol-function method)))
+
   (cond
    ((or (not (fboundp method))
         (eq 'autoload (car-safe (symbol-function method))))
@@ -1198,6 +1208,11 @@ but remove reference to all implementations of METHOD."
                ;; Primary key.
                ;; (t eieio--method-primary)
                (t (error "Unknown method kind %S" kind)))))
+
+    (while (and (fboundp method) (symbolp (symbol-function method)))
+      ;; Follow aliases, so methods applied to obsolete aliases still work.
+      (setq method (symbol-function method)))
+
     ;; Make sure there is a generic (when called from defclass).
     (eieio--defalias
      method (eieio--defgeneric-init-form
@@ -1253,7 +1268,7 @@ an error."
   (if eieio-skip-typecheck
       nil
     ;; Trim off object IDX junk added in for the object index.
-    (setq slot-idx (- slot-idx 3))
+    (setq slot-idx (- slot-idx (eval-when-compile eieio--object-num-slots)))
     (let ((st (aref (eieio--class-public-type (eieio--class-v class)) slot-idx)))
       (if (not (eieio-perform-slot-validation st value))
 	  (signal 'invalid-slot-type (list class slot st value))))))
@@ -1324,7 +1339,8 @@ Fills in OBJ's SLOT with its default value."
 	  ;;(signal 'invalid-slot-name (list (class-name cl) slot))
 	  )
       (eieio-barf-if-slot-unbound
-       (let ((val (nth (- c 3) (eieio--class-public-d (eieio--class-v cl)))))
+       (let ((val (nth (- c (eval-when-compile eieio--object-num-slots))
+                       (eieio--class-public-d (eieio--class-v cl)))))
 	 (eieio-default-eval-maybe val))
        obj cl 'oref-default))))
 
@@ -1382,7 +1398,8 @@ Fills in the default value in CLASS' in SLOT with VALUE."
 	    (signal 'invalid-slot-name (list (eieio-class-name class) slot)))
 	(eieio-validate-slot-value class c value slot)
 	;; Set this into the storage for defaults.
-	(setcar (nthcdr (- c 3) (eieio--class-public-d (eieio--class-v class)))
+	(setcar (nthcdr (- c (eval-when-compile eieio--object-num-slots))
+                        (eieio--class-public-d (eieio--class-v class)))
 		value)
 	;; Take the value, and put it into our cache object.
 	(eieio-oset (eieio--class-default-object-cache (eieio--class-v class))
@@ -1420,18 +1437,18 @@ reverse-lookup that name, and recurse with the associated slot value."
     (if (integerp fsi)
 	(cond
 	 ((not (cdr fsym))
-	  (+ 3 fsi))
+	  (+ (eval-when-compile eieio--object-num-slots) fsi))
 	 ((and (eq (cdr fsym) 'protected)
 	       (eieio--scoped-class)
 	       (or (child-of-class-p class (eieio--scoped-class))
 		   (and (eieio-object-p obj)
 			(child-of-class-p class (eieio--object-class obj)))))
-	  (+ 3 fsi))
+	  (+ (eval-when-compile eieio--object-num-slots) fsi))
 	 ((and (eq (cdr fsym) 'private)
 	       (or (and (eieio--scoped-class)
 			(eieio-slot-originating-class-p (eieio--scoped-class) slot))
 		   eieio-initializing-object))
-	  (+ 3 fsi))
+	  (+ (eval-when-compile eieio--object-num-slots) fsi))
 	 (t nil))
       (let ((fn (eieio-initarg-to-attribute class slot)))
 	(if fn (eieio-slot-name-index class obj fn) nil)))))
@@ -1778,12 +1795,8 @@ for this common case to improve performance."
 	   (setq mclass (eieio--object-class firstarg)))
 	  ((not firstarg)
 	   (error "Method %s called on nil" method))
-	  ((not (eieio-object-p firstarg))
-	   (error "Primary-only method %s called on something not an object" method))
 	  (t
-	   (error "EIEIO Error: Improperly classified method %s as primary only"
-		  method)
-	  ))
+	   (error "Primary-only method %s called on something not an object" method)))
     ;; Make sure the class is a valid class
     ;; mclass can be nil (meaning a generic for should be used.
     ;; mclass cannot have a value that is not a class, however.
