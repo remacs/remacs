@@ -67,11 +67,11 @@ Es útil moverse de una pantalla completa a otra pero, ¿cómo moverse a
 un lugar específico dentro del texto en la pantalla?
 
 Puede hacerlo de diversas formas.  Puede usar las teclas de flechas,
-pero es mas eficiente mantener las manos en la posición estándar y
+pero es más eficiente mantener las manos en la posición estándar y
 usar los comandos C-p, C-b, C-f, y C-n.  Estos caracteres son
 equivalentes a las cuatro teclas de flechas, de esta manera:
 
-		        Línea anterior, C-P
+		        Línea anterior, C-p
 				:
 				:
    Atrás, C-b.... Posición actual del cursor .... Adelante, C-f
@@ -133,10 +133,10 @@ dirección opuesta.
 
 Note el paralelo entre C-f y C-b de un lado y M-f y M-b del otro.  Muy
 frecuentemente los caracteres Meta se usan para operaciones
-relacionadas, con las unidades definidas por el lenguaje (palabras,
+relacionadas con las unidades definidas por el lenguaje (palabras,
 oraciones y párrafos), mientras los caracteres Control operan sobre
 unidades básicas que son independientes de lo que está editando
-(caracteres, líneas, etc).
+(caracteres, líneas, etc.).
 
 Este paralelo se aplica entre líneas y oraciones: C-a y C-e para
 moverse al comienzo o al final de la línea; y M-a y M-e para mover al
@@ -426,7 +426,7 @@ borran.  Con un argumento, eliminan.
 Note que al teclear C-k una sola vez elimina el contenido de la línea,
 y un segundo C-k elimina la línea misma, y hace que todas las otras
 líneas se muevan hacia arriba.  C-k trata un argumento numérico
-especialmente: Elimina ese número de líneas y TAMBIÉN sus
+especialmente: elimina ese número de líneas y TAMBIÉN sus
 contenidos.  Esto no es una simple repetición.  C-u 2 C-k elimina dos
 líneas y sus nuevas líneas, tecleando C-k dos veces no hace esto.
 
@@ -533,7 +533,7 @@ del tutorial de Emacs, que se llama "TUTORIAL.es".  Cuando encuentre
 un archivo con Emacs, el nombre de ese archivo aparecerá en ese mismo
 punto.
 
-Una cosa especial acerca del comando para encontrar un archivo, es que
+Una cosa especial acerca del comando para encontrar un archivo es que
 tendrá que decir qué nombre de archivo desea.  Decimos que el comando
 "lee un argumento" (en este caso, el argumento es el nombre del
 archivo).  Después de teclear el comando:
@@ -649,7 +649,7 @@ guardado.  Le pregunta, por cada buffer, si quiere guardarlo o no.
 
 >> Inserte una línea de texto, luego teclee C-x s.
    Debería preguntarle si desea guardar el buffer llamado TUTORIAL.es.
-   Conteste si a la pregunta tecleando "y".
+   Conteste sí a la pregunta tecleando "y".
 
 
 * EXTENDER EL CONJUNTO DE COMANDOS
@@ -893,7 +893,7 @@ quiere buscar.  <Return> termina una búsqueda.
 >> Ahora teclee <DEL> cuatro veces y vea como se mueve el cursor.
 >> Teclee <Return> para terminar la búsqueda.
 
-¿Vió lo que ocurrió?  Emacs, en una búsqueda incremental, trata de ir
+¿Vio lo que ocurrió?  Emacs, en una búsqueda incremental, trata de ir
 a la ocurrencia de la cadena que ha tecleado hasta el momento.  Para
 ir a la próxima ocurrencia de "cursor" solo teclee C-s de nuevo.  Si
 tal ocurrencia no existe, Emacs pita y le dice que la búsqueda actual
@@ -976,7 +976,7 @@ sí mismo, no es una tecla modificadora.
 
 (Si hubiera tecleado C-x 1 en la ventana inferior, esto eliminaría la
 superior.  Piense en este comando como "mantener sólo una
-ventana--aquella en la cual estoy.")
+ventana --aquella en la cual estoy--".)
 
 No tiene por qué mostrarse el mismo buffer en ambas ventanas.  Si usa
 C-x C-f para encontrar un archivo en una ventana, la otra ventana no
@@ -998,7 +998,7 @@ diferentes:
 ------------------
 
 Emacs puede crear también múltiples "marcos".  Marco es como
-denominamos a un grupo de ventanas, junto con sus menus, barras de
+denominamos a un grupo de ventanas, junto con sus menús, barras de
 desplazamiento, áreas de eco, etc.  En entornos gráficos, lo que Emacs
 denomina "marco" es lo que otras aplicaciones llaman "ventana".  En
 entornos gráficos, es posible mostrar varios marcos al mismo tiempo.
@@ -1040,7 +1040,7 @@ edición".  Esto es porque C-g es usado para cancelar comandos y
 argumentos DENTRO del nivel recursivo de edición.
 
 
-* CONSEGUIR MAS AYUDA
+* CONSEGUIR MÁS AYUDA
 ---------------------
 
 En este tutorial hemos tratado de ofrecer suficiente información para
@@ -1074,7 +1074,7 @@ funciones se eligen para indicar lo que hace el comando, pueden servir
 como una breve documentación: suficiente para recordarle los comandos
 que ha aprendido.
 
-Los comandos de múltiples caracteres tales como C-x C-s y (sí no tiene
+Los comandos de múltiples caracteres tales como C-x C-s y (si no tiene
 las teclas META o EDIT o ALT) <ESC>v también están permitidos después
 de C-h c.
 
@@ -1164,7 +1164,7 @@ Para salir permanentemente de Emacs use C-x C-c.
 
 Este tutorial intenta ser comprensible para todos los usuarios nuevos,
 así que si encuentra algo que no esté claro, no se quede parado
-culpándose a sí mismo: ¡Quéjese!
+culpándose a sí mismo: ¡quéjese!
 
 
 * COPIA
