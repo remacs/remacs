@@ -1,3 +1,11 @@
+2014-12-24  Martin Rudalics  <rudalics@gmx.at>
+
+	* window.el (mouse-autoselect-window-position-1): New variable.
+	(mouse-autoselect-window-cancel)
+	(mouse-autoselect-window-select, handle-select-window): With
+	delayed autoselection select window only if mouse moves after
+	selecting its frame.
+
 2014-12-24  Michael Albinus  <michael.albinus@gmx.de>
 
 	* eshell/esh-ext.el (eshell-find-interpreter): Expand relative
