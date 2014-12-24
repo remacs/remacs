@@ -1082,7 +1082,7 @@ ns_lower_frame (struct frame *f)
 
 
 static void
-ns_frame_raise_lower (struct frame *f, int raise)
+ns_frame_raise_lower (struct frame *f, bool raise)
 /* --------------------------------------------------------------------------
      External (hook)
    -------------------------------------------------------------------------- */
@@ -1322,7 +1322,7 @@ x_set_offset (struct frame *f, int xoff, int yoff, int change_grav)
 
 void
 x_set_window_size (struct frame *f,
-                   int change_grav,
+                   bool change_gravity,
                    int width,
                    int height,
                    bool pixelwise)
@@ -7622,8 +7622,8 @@ x_new_font (struct frame *f, Lisp_Object font_object, int fontset)
 
   /* Now make the frame display the given font.  */
   if (FRAME_NS_WINDOW (f) != 0 && ! [view isFullscreen])
-    x_set_window_size (f, 0, FRAME_COLS (f) * FRAME_COLUMN_WIDTH (f),
-                       FRAME_LINES (f) * FRAME_LINE_HEIGHT (f), 1);
+    x_set_window_size (f, false, FRAME_COLS (f) * FRAME_COLUMN_WIDTH (f),
+                       FRAME_LINES (f) * FRAME_LINE_HEIGHT (f), true);
 
   return font_object;
 }

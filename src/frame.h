@@ -1435,7 +1435,7 @@ extern Lisp_Object display_x_get_resource (Display_Info *,
 					   Lisp_Object subclass);
 
 extern void set_frame_menubar (struct frame *f, bool first_time, bool deep_p);
-extern void x_set_window_size (struct frame *f, int change_grav,
+extern void x_set_window_size (struct frame *f, bool change_gravity,
 			       int width, int height, bool pixelwise);
 extern Lisp_Object x_get_focus_frame (struct frame *);
 extern void frame_set_mouse_pixel_position (struct frame *f, int pix_x, int pix_y);
@@ -1462,7 +1462,7 @@ extern void x_focus_frame (struct frame *);
 
 #ifndef HAVE_NS
 
-extern int x_bitmap_icon (struct frame *, Lisp_Object);
+extern bool x_bitmap_icon (struct frame *, Lisp_Object);
 
 /* Set F's bitmap icon, if specified among F's parameters.  */
 

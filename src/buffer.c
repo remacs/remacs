@@ -5395,13 +5395,8 @@ syms_of_buffer (void)
   last_overlay_modification_hooks
     = Fmake_vector (make_number (10), Qnil);
 
-  staticpro (&Qfundamental_mode);
-  staticpro (&Qmode_class);
   staticpro (&QSFundamental);
   staticpro (&Vbuffer_alist);
-  staticpro (&Qprotected_field);
-  staticpro (&Qpermanent_local);
-  staticpro (&Qkill_buffer_hook);
 
   DEFSYM (Qchoice, "choice");
   DEFSYM (Qleft, "left");

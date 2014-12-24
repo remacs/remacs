@@ -1,3 +1,81 @@
+2014-12-24  Michael Albinus  <michael.albinus@gmx.de>
+
+	* eshell/esh-ext.el (eshell-find-interpreter): Expand relative
+	remote file names.  (Bug#18782)
+
+2014-12-23  Sam Steingold  <sds@gnu.org>
+
+	* shell.el (shell-display-buffer-actions): New user option.
+	(shell): Pass it to `pop-to-buffer' instead of hard-coding
+	`pop-to-buffer-same-window'.
+
+2014-12-23  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* progmodes/js.el (js--syntax-propertize-regexp-syntax-table): New var.
+	(js-syntax-propertize-regexp): Use it to recognize "slash in
+	a character class" (bug#19397).
+
+2014-12-22  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* completion.el: Use post-self-insert-hook (bug#19400).
+	(completion-separator-self-insert-command)
+	(completion-separator-self-insert-autofilling): Remove.
+	(completion-separator-chars): New var.
+	(completion-c-mode-hook, completion-setup-fortran-mode): Use it instead
+	of changing the keymap.
+	(completion--post-self-insert): New function.
+	(dynamic-completion-mode): Use it instead of rebinding keys.
+	(cmpl--completion-string): Rename from completion-string.
+	(add-completion-to-head, delete-completion): Let-bind it explicitly.
+
+2014-12-22  Bozhidar Batsov  <bozhidar@batsov.com>
+
+	* progmodes/ruby-mode.el (ruby--string-region): Simplify code
+	by leveraging `syntax-ppss'.
+
+2014-12-22  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* let-alist.el (let-alist): Use `make-symbol' instead of `gensym'.
+
+2014-12-20  Michael Albinus  <michael.albinus@gmx.de>
+
+	* net/tramp-sh.el (tramp-histfile-override): Add :version.
+
+2014-12-20  Teodor Zlatanov  <tzz@lifelogs.com>
+
+	* net/tramp-sh.el (tramp-histfile-override): Clarify docstring.
+
+2014-12-19  Artur Malabarba  <bruce.connor.am@gmail.com>
+
+	* let-alist.el (let-alist): Enable access to deeper alists by
+	using dots inside the dotted symbols.
+
+2014-12-19  Alan Mackenzie  <acm@muc.de>
+
+	Make C++11 uniform init syntax work.  New keywords "final" and "override"
+
+	* progmodes/cc-engine.el (c-back-over-member-initializer-braces):
+	New function.
+	(c-guess-basic-syntax): Set `containing-sex' and `lim' using the
+	new function.
+
+	* progmodes/cc-fonts.el (c-font-lock-declarations): Check more
+	carefully for "are we at a declarator?" using
+	c-back-over-member-initializers.
+
+	* progmodes/cc-langs.el (c-type-modifier-kwds): include "final"
+	and "override" in the C++ value.
+
+2014-12-19  Martin Rudalics  <rudalics@gmx.at>
+
+	* textmodes/ispell.el (ispell-command-loop): Don't use
+	`next-window'.
+
+2014-12-21  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	* net/nsm.el (nsm-save-host): Don't save the host name twice
+	(bug#19269).
+
 2014-12-18  Sam Steingold  <sds@gnu.org>
 
 	Keyboard interface (C-f10) to `mouse-buffer-menu' (C-down-mouse-1).

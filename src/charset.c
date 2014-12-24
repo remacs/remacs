@@ -101,10 +101,9 @@ Lisp_Object Vcharset_ordered_list;
    charsets.  */
 Lisp_Object Vcharset_non_preferred_head;
 
-/* Incremented everytime we change Vcharset_ordered_list.  This is
-   unsigned short so that it fits in Lisp_Int and never matches
-   -1.  */
-unsigned short charset_ordered_list_tick;
+/* Incremented every time we change the priority of charsets.
+   Wraps around.  */
+EMACS_UINT charset_ordered_list_tick;
 
 /* List of iso-2022 charsets.  */
 Lisp_Object Viso_2022_charset_list;

@@ -30,10 +30,22 @@
                    (.test-two (cdr (assq 'test-two symbol))))
                (list .test-one .test-two
                      .test-two .test-two)))
-          (cl-letf (((symbol-function #'gensym) (lambda (x) 'symbol)))
+          (cl-letf (((symbol-function #'make-symbol) (lambda (x) 'symbol)))
             (macroexpand
              '(let-alist data (list .test-one .test-two
-                                    .test-two .test-two)))))))
+                                    .test-two .test-two))))))
+  (should
+   (equal
+    (let ((.external "ext")
+          (.external.too "et"))
+      (let-alist '((test-two . 0)
+                   (test-three . 1)
+                   (sublist . ((foo . 2)
+                               (bar . 3))))
+        (list .test-one .test-two .test-three
+              .sublist.foo .sublist.bar
+              ..external ..external.too)))
+    (list nil 0 1 2 3 "ext" "et"))))
 
 (defvar let-alist--test-counter 0
   "Used to count number of times a function is called.")
@@ -49,5 +61,17 @@
         (list .test-one .test-two .test-two .test-three .cl-incf))
       '(nil 1 1 2 nil)))))
 
+(ert-deftest let-alist-remove-dot ()
+  "Remove firt dot from symbol."
+  (should (equal (let-alist--remove-dot 'hi) 'hi))
+  (should (equal (let-alist--remove-dot '.hi) 'hi))
+  (should (equal (let-alist--remove-dot '..hi) '.hi)))
+
+(ert-deftest let-alist-list-to-sexp ()
+  "Check that multiple dots are handled correctly."
+  (should (= 1 (eval (let-alist--list-to-sexp '(a b c d) ''((d (c (b (a . 1)))))))))
+  (should (equal (let-alist--access-sexp '.foo.bar.baz 'var)
+                 '(cdr (assq 'baz (cdr (assq 'bar (cdr (assq 'foo var))))))))
+  (should (equal (let-alist--access-sexp '..foo.bar.baz 'var) '.foo.bar.baz)))
 
 ;;; let-alist.el ends here

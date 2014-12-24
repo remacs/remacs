@@ -2,6 +2,14 @@
 
 	* CONTRIBUTE: add Savannah url, cleanup announcing freeze.
 
+2014-12-23  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Merge from gnulib
+	2014-12-20 utimens: remove unnecessary assert
+	2014-12-16 stdalign: port better to HP compilers
+	2014-12-16 stdalign: work around Apple GCC 4.0 bug
+	* lib/stdalign.in.h, lib/utimens.c, m4/stdalign.m4: Update from gnulib.
+
 2014-12-19  Stephen Leake  <stephen_leake@stephe-leake.org>
 
 	Move user-level information from CONTRIBUTE to doc/emacs/trouble.texi

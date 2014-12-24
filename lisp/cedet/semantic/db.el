@@ -481,7 +481,7 @@ other than :table."
   (let ((cache (oref table cache))
 	(obj nil))
     (while (and (not obj) cache)
-      (if (eq (eieio--object-class (car cache)) desired-class)
+      (if (eq (eieio-object-class (car cache)) desired-class)
 	  (setq obj (car cache)))
       (setq cache (cdr cache)))
     (if obj
@@ -532,7 +532,7 @@ other than :table."
   (let ((cache (oref db cache))
 	(obj nil))
     (while (and (not obj) cache)
-      (if (eq (eieio--object-class (car cache)) desired-class)
+      (if (eq (eieio-object-class (car cache)) desired-class)
 	  (setq obj (car cache)))
       (setq cache (cdr cache)))
     (if obj

@@ -1768,17 +1768,12 @@ If the result is do-end block, it will always be multiline."
 
 (defun ruby--string-region ()
   "Return region for string at point."
-  (let ((orig-point (point)) (regex "'\\(\\(\\\\'\\)\\|[^']\\)*'\\|\"\\(\\(\\\\\"\\)\\|[^\"]\\)*\"") beg end)
-    (save-excursion
-      (goto-char (line-beginning-position))
-      (while (and (re-search-forward regex (line-end-position) t) (not (and beg end)))
-        (let ((match-beg (match-beginning 0)) (match-end (match-end 0)))
-          (when (and
-                 (> orig-point match-beg)
-                 (< orig-point match-end))
-            (setq beg match-beg)
-            (setq end match-end))))
-      (and beg end (list beg end)))))
+  (let ((state (syntax-ppss)))
+    (when (memq (nth 3 state) '(?' ?\"))
+      (save-excursion
+        (goto-char (nth 8 state))
+        (forward-sexp)
+        (list (nth 8 state) (point))))))
 
 (defun ruby-string-at-point-p ()
   "Check if cursor is at a string or not."

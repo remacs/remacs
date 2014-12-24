@@ -451,7 +451,7 @@ struct terminal
   void (*delete_glyphs_hook) (struct frame *, int);
 
   void (*ring_bell_hook) (struct frame *f);
-  void (*toggle_invisible_pointer_hook) (struct frame *f, int invisible);
+  void (*toggle_invisible_pointer_hook) (struct frame *f, bool invisible);
 
   void (*reset_terminal_modes_hook) (struct terminal *);
   void (*set_terminal_modes_hook) (struct terminal *);
@@ -496,10 +496,10 @@ struct terminal
      support overlapping frames, so there's no need to raise or lower
      anything.
 
-     If RAISE_FLAG is non-zero, F is brought to the front, before all other
-     windows.  If RAISE_FLAG is zero, F is sent to the back, behind all other
+     If RAISE_FLAG, F is brought to the front, before all other
+     windows.  If !RAISE_FLAG, F is sent to the back, behind all other
      windows.  */
-  void (*frame_raise_lower_hook) (struct frame *f, int raise_flag);
+  void (*frame_raise_lower_hook) (struct frame *f, bool raise_flag);
 
   /* If the value of the frame parameter changed, this hook is called.
      For example, if going from fullscreen to not fullscreen this hook

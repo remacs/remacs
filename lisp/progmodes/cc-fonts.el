@@ -1464,36 +1464,38 @@ casts and declarations are fontified.  Used on level 2 and higher."
 		    c-recognize-knr-p) ; Strictly speaking, bogus, but it
 				       ; speeds up lisp.h tremendously.
 		(save-excursion
-		  (unless (or (eobp)
-			      (looking-at "\\s(\\|\\s)"))
-		    (forward-char))
-		  (setq bod-res (car (c-beginning-of-decl-1 decl-search-lim)))
-		  (if (and (eq bod-res 'same)
-			   (save-excursion
-			     (c-backward-syntactic-ws)
-			     (eq (char-before) ?\})))
-		      (c-beginning-of-decl-1 decl-search-lim))
+		  (if (c-back-over-member-initializers)
+		     t			; Can't be at a declarator
+		    (unless (or (eobp)
+				(looking-at "\\s(\\|\\s)"))
+		      (forward-char))
+		    (setq bod-res (car (c-beginning-of-decl-1 decl-search-lim)))
+		    (if (and (eq bod-res 'same)
+			     (save-excursion
+			       (c-backward-syntactic-ws)
+			       (eq (char-before) ?\})))
+			(c-beginning-of-decl-1 decl-search-lim))
 
-		  ;; We're now putatively at the declaration.
-		  (setq paren-state (c-parse-state))
-		  ;; At top level or inside a "{"?
-		  (if (or (not (setq encl-pos
-				     (c-most-enclosing-brace paren-state)))
-			  (eq (char-after encl-pos) ?\{))
-		      (progn
-			(when (looking-at c-typedef-key) ; "typedef"
-			  (setq is-typedef t)
-			  (goto-char (match-end 0))
-			  (c-forward-syntactic-ws))
-			;; At a real declaration?
-			(if (memq (c-forward-type t) '(t known found decltype))
-			    (progn
-			      (c-font-lock-declarators (point-max) t is-typedef)
-			      nil)
-			  ;; False alarm.  Return t to go on to the next check.
-			  (goto-char start-pos)
-			  t))
-		    t))))))
+		    ;; We're now putatively at the declaration.
+		    (setq paren-state (c-parse-state))
+		    ;; At top level or inside a "{"?
+		    (if (or (not (setq encl-pos
+				       (c-most-enclosing-brace paren-state)))
+			    (eq (char-after encl-pos) ?\{))
+			(progn
+			  (when (looking-at c-typedef-key) ; "typedef"
+			    (setq is-typedef t)
+			    (goto-char (match-end 0))
+			    (c-forward-syntactic-ws))
+			  ;; At a real declaration?
+			  (if (memq (c-forward-type t) '(t known found decltype))
+			      (progn
+				(c-font-lock-declarators (point-max) t is-typedef)
+				nil)
+			    ;; False alarm.  Return t to go on to the next check.
+			    (goto-char start-pos)
+			    t))
+		      t)))))))
 
 	  ;; It was a false alarm.  Check if we're in a label (or other
 	  ;; construct with `:' except bitfield) instead.
