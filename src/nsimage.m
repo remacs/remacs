@@ -174,6 +174,7 @@ ns_set_alpha (void *img, int x, int y, unsigned char a)
   image = [[EmacsImage alloc] initByReferencingFile:
                      [NSString stringWithUTF8String: SSDATA (found)]];
 
+  image->bmRep = nil;
 #if defined (NS_IMPL_COCOA) && MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_6
   imgRep = [NSBitmapImageRep imageRepWithData:[image TIFFRepresentation]];
 #else
@@ -199,6 +200,7 @@ ns_set_alpha (void *img, int x, int y, unsigned char a)
 - (void)dealloc
 {
   [stippleMask release];
+  [bmRep release];
   [super dealloc];
 }
 
@@ -245,6 +247,7 @@ ns_set_alpha (void *img, int x, int y, unsigned char a)
               if (s >= bits + length)
                 {
                   [bmRep release];
+                  bmRep = nil;
                   return nil;
                 }
 #define hexchar(x) ('0' <= (x) && (x) <= '9' ? (x) - '0' : (x) - 'a' + 10)
@@ -348,7 +351,7 @@ ns_set_alpha (void *img, int x, int y, unsigned char a)
     {
       if ([rep respondsToSelector: @selector (getBitmapDataPlanes:)])
         {
-          bmRep = (NSBitmapImageRep *) rep;
+          NSBitmapImageRep *bmRep = (NSBitmapImageRep *) rep;
 
           if ([bmRep numberOfPlanes] >= 3)
               [bmRep getBitmapDataPlanes: pixmapData];
