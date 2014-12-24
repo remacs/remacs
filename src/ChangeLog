@@ -202,6 +202,10 @@
 	Call gnutls_certificate_set_x509_system_trust.  Log an error message if
 	it fails.
 
+2014-12-14  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* regex.c (analyze_first): Rename from analyze_first.
+
 2014-12-13  Paul Eggert  <eggert@cs.ucla.edu>
 
 	* alloc.c (XMALLOC_BASE_ALIGNMENT): Use max_align_t instead of

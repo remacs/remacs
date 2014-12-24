@@ -1,3 +1,8 @@
+2014-12-24  Stephen Leake  <stephen_leake@stephe-leake.org>
+
+	* startup.el (fancy-about-text): Change buttons for etc/CONTRIBUTE
+	to (info "(emacs)Contributing").  (Bug#19299)
+
 2014-12-24  Martin Rudalics  <rudalics@gmx.at>
 
 	* window.el (mouse-autoselect-window-position-1): New variable.
@@ -280,6 +285,13 @@
 	* vc/vc-cvs.el (vc-cvs-diff):
 	* vc/vc-bzr.el (vc-bzr-diff):
 	* obsolete/vc-arch.el (vc-arch-diff): Move ASYNC argument to the end.
+
+2014-12-14  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* emacs-lisp/cconv.el (cconv--analyze-use):
+	Rename from cconv--analyse-use.
+	(cconv--analyze-function): Rename from cconv--analyse-function.
+	(cconv-analyze-form): Rename from cconv-analyse-form.
 
 2014-12-13  Andreas Schwab  <schwab@linux-m68k.org>
 

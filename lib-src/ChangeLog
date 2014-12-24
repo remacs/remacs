@@ -1,3 +1,7 @@
+2014-12-14  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* etags.c (analyze_regex): Rename from analyse_regex.
+
 2014-12-14  Glenn Morris  <rgm@gnu.org>
 
 	* grep-changelog: Remove file.

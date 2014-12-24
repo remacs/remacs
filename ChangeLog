@@ -1,6 +1,13 @@
-2014-12-23  Stephen Leake  <stephen_leake@stephe-leake.org>
+2014-12-24  Stephen Leake  <stephen_leake@stephe-leake.org>
 
-	* CONTRIBUTE: add Savannah url, cleanup announcing freeze.
+	* CONTRIBUTE: Move user-level information to doc/emacs/trouble.texi.
+	Add Savannah url, cleanup announcing freeze.
+	(commit messages): New, gathered from comments on emacs-devel.
+	(Changelog notes): Add reference to GNU coding standards section 5.2;
+	doc 'present tense', bug fix format.
+	(branches): Freeze announcements are made on info-gnu-emacs mailing
+	list.
+	(git vs rename): New.
 
 2014-12-23  Paul Eggert  <eggert@cs.ucla.edu>
 
@@ -10,37 +17,9 @@
 	2014-12-16 stdalign: work around Apple GCC 4.0 bug
 	* lib/stdalign.in.h, lib/utimens.c, m4/stdalign.m4: Update from gnulib.
 
-2014-12-19  Stephen Leake  <stephen_leake@stephe-leake.org>
-
-	Move user-level information from CONTRIBUTE to doc/emacs/trouble.texi
-
-	Fixes bug#19299
-
-	* CONTRIBUTE: Move user-level information to doc/emacs/trouble.texi
-	  (commit messages): new, gathered from comments on emacs-devel
-	  (Changelog notes): add reference to GNU coding standards section 5.2;
-	  doc 'present tense', bug fix format
-	  (branches): freeze announcements are made on info-gnu-emacs mailing
-	  list
-	  (git vs rename): new
-
-	* doc/emacs/trouble.texi: Move user-level information from CONTRIBUTE here
-
-	* lisp/startup.el (fancy-about-text): change buttons for etc/CONTRIBUTE
-	  to (info "(emacs)Contributing")
-
 2014-12-14  Paul Eggert  <eggert@cs.ucla.edu>
 
-	Spelling fixes
-	All uses changed.
-	* lib-src/etags.c (analyze_regex): Rename from analyse_regex.
-	* lisp/cedet/semantic/lex-spp.el:
-	(semantic-lex-spp-analyzer-do-replace):
-	Rename from semantic-lex-spp-anlyzer-do-replace.
-	* lisp/emacs-lisp/cconv.el (cconv--analyze-use):
-	Rename from cconv--analyse-use.
-	(cconv--analyze-function): Rename from cconv--analyse-function.
-	(cconv-analyze-form): Rename from cconv-analyse-form.
+	Spelling fixes.  All uses changed.
 	* src/regex.c (analyze_first): Rename from analyze_first.
 
 2014-12-14  Glenn Morris  <rgm@gnu.org>
