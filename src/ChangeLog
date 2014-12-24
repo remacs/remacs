@@ -12,7 +12,7 @@
 2014-12-22  Jan Djärv  <jan.h.d@swipnet.se>
 
 	* xterm.c (do_ewmh_fullscreen): Don't remove maximized_horz/vert
-	when going to fullscreen (Bug#0x180004f).
+	when going to fullscreen (Bug#19427).
 
 2014-12-18  Eli Zaretskii  <eliz@gnu.org>
 
