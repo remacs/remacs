@@ -4,6 +4,8 @@
 	(dealloc): Release bmRep.
         (setPixmapData): Make bmRep local so class member is not
         set (Bug#19133).
+	(setPixmapData): Rename local variable bmRep to avoid compiler
+	warning.
 
 2014-12-24  Jan Djärv  <jan.h.d@swipnet.se>
 
