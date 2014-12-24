@@ -1,3 +1,14 @@
+2014-11-02  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* nsterm.h (EmacsImage): Remove imageListNext, refCount, reference,
+	imageListSetNext, imageListNext.
+
+	* nsimage.m (ImageList, imageListNext, imageListSetNext:)
+	(reference): Remove.
+	(allocInitFromFile:): Remove searching ImageList and calling
+	reference (Bug#18918).
+	(dealloc): Remove handling if ImageList.
+
 2014-12-22  Jan Djärv  <jan.h.d@swipnet.se>
 
 	* xterm.c (do_ewmh_fullscreen): Don't remove maximized_horz/vert
