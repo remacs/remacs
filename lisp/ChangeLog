@@ -1,3 +1,8 @@
+2014-12-24  Michael Albinus  <michael.albinus@gmx.de>
+
+	* eshell/esh-ext.el (eshell-find-interpreter): Expand relative
+	remote file names.  (Bug#18782)
+
 2014-12-23  Sam Steingold  <sds@gnu.org>
 
 	* shell.el (shell-display-buffer-actions): New user option.
