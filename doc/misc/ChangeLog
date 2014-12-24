@@ -107,11 +107,11 @@
 
 2014-10-26  Eric S. Raymond  <esr@thyrsus.com>
 
-	* efaq-w32.texi: Neutralized language specific to a repository type.
+	* efaq-w32.texi: Neutralize language specific to a repository type.
 
 2014-10-25  Eric S. Raymond  <esr@thyrsus.com>
 
-	* gnus-coding.txt: Neutralized language specific to a repository type.
+	* gnus-coding.texi: Neutralize language specific to a repository type.
 
 2014-10-20  Glenn Morris  <rgm@gnu.org>
 

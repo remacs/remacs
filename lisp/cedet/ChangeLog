@@ -220,7 +220,7 @@
 	(ede-project-autoload): Remove dirmatch entry - it is no longer
 	needed.
 
-	* lisp/cedet/ede/proj.el (project-rescan): Replace direct
+	* ede/proj.el (project-rescan): Replace direct
 	manipulation of `ede-projects' with equivalent and better
 	functions.
 	(ede-proj-load): Replace call to test if dir has project to
@@ -272,11 +272,10 @@
 
 2014-11-09  David Engster  <dengste@eml.cc>
 
-	* lisp/cedet/ede/proj-elisp.el
-	(ede-proj-target-elisp::ede-proj-tweak-autoconf): Kill buffer
-	after saving modified elisp-comp script, as to avoid "file has
-	changed on disk; really edit the buffer" questions when script
-	gets rewritten.
+	* ede/proj-elisp.el (ede-proj-target-elisp::ede-proj-tweak-autoconf):
+	Kill buffer after saving modified elisp-comp script, so as to avoid
+	"file has changed on disk; really edit the buffer" questions when
+	script gets rewritten.
 
 2014-10-29  Paul Eggert  <eggert@cs.ucla.edu>
 

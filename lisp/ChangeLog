@@ -913,7 +913,7 @@
 	implemented as a trivial call to same.  Fixes the failure mode
 	described in bug#694.
 
-	* vc/vc.el and all backends: API simplification; init-revision is
+	* vc/vc.el: All backends: API simplification; init-revision is
 	gone, and vc-registered functions no longer take an
 	initial-revision argument.
 
@@ -1644,7 +1644,7 @@
 2014-11-16  Oscar Fuentes <ofv@wanadoo.es>
 
 	Add faces for the VC modeline state indicator.
-	* lisp/vc/vc-hooks.el:
+	* vc/vc-hooks.el:
 	(vc-state-faces, vc-state-base-face)
 	(vc-up-to-date-state, vc-needs-update-state)
 	(vc-locked-state, vc-locally-added-state)
