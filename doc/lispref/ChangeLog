@@ -1,5 +1,7 @@
 2014-12-25  Glenn Morris  <rgm@gnu.org>
 
+	* sequences.texi (Sequence Functions): Copyedits.
+
 	* control.texi (Pattern matching case statement):
 	* positions.texi (List Motion):
 	* streams.texi (Output Functions):
