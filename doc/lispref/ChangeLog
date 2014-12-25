@@ -1,5 +1,7 @@
 2014-12-25  Glenn Morris  <rgm@gnu.org>
 
+	* windows.texi (Windows): Sync @menu order with @node order.
+
 	* sequences.texi (Sequence Functions): Copyedits.
 
 	* control.texi (Pattern matching case statement):

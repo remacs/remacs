@@ -16,8 +16,8 @@ is displayed in windows.
 * Windows and Frames::      Relating windows to the frame they appear on.
 * Window Sizes::            Accessing a window's size.
 * Resizing Windows::        Changing the sizes of windows.
-* Preserving Window Sizes:: Preserving the size of windows.
 * Splitting Windows::       Creating a new window.
+* Preserving Window Sizes:: Preserving the size of windows.
 * Deleting Windows::        Removing a window from its frame.
 * Recombining Windows::     Preserving the frame layout when splitting and
                               deleting windows.
