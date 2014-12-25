@@ -1,5 +1,7 @@
 2014-12-24  Glenn Morris  <rgm@gnu.org>
 
+	* control.texi (Pattern matching case statement):
+	* os.texi (Desktop Notifications):
 	* modes.texi (Defining Minor Modes, SMIE Lexer): Markup fixes.
 
 2014-12-23  Eli Zaretskii  <eliz@gnu.org>
