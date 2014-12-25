@@ -230,8 +230,7 @@ smc_save_yourself_CB (SmcConn smcConn,
   props[props_idx]->vals[vp_idx++].value = emacs_program;
 
   smid_opt = xmalloc (strlen (SMID_OPT) + strlen (client_id) + 1);
-  strcpy (smid_opt, SMID_OPT);
-  strcat (smid_opt, client_id);
+  strcpy (stpcpy (smid_opt, SMID_OPT), client_id);
 
   props[props_idx]->vals[vp_idx].length = strlen (smid_opt);
   props[props_idx]->vals[vp_idx++].value = smid_opt;
@@ -242,8 +241,7 @@ smc_save_yourself_CB (SmcConn smcConn,
   if (cwd)
     {
       chdir_opt = xmalloc (strlen (CHDIR_OPT) + strlen (cwd) + 1);
-      strcpy (chdir_opt, CHDIR_OPT);
-      strcat (chdir_opt, cwd);
+      strcpy (stpcpy (chdir_opt, CHDIR_OPT), cwd);
 
       props[props_idx]->vals[vp_idx].length = strlen (chdir_opt);
       props[props_idx]->vals[vp_idx++].value = chdir_opt;

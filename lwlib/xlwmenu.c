@@ -439,10 +439,9 @@ resource_widget_value (XlwMenuWidget mw, widget_value *val)
 	  int complete_length =
 	    strlen (resourced_name) + strlen (val->value) + 2;
 	  complete_name = XtMalloc (complete_length);
-	  *complete_name = 0;
-	  strcat (complete_name, resourced_name);
-	  strcat (complete_name, " ");
-	  strcat (complete_name, val->value);
+	  char *z = stpcpy (complete_name, resourced_name);
+	  *z++ = ' ';
+	  strcpy (z, val->value);
 	}
 
       val->toolkit_data = complete_name;

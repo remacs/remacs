@@ -1,3 +1,32 @@
+2014-12-25  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Prefer stpcpy to strcat
+	* admin/merge-gnulib (GNULIB_MODULES): Add stpcpy.
+	* lib/gnulib.mk, m4/gnulib-comp.m4: Regenerate.
+	* lib/stpcpy.c, m4/stpcpy.m4: New files, from gnulib.
+	* lib-src/ebrowse.c (sym_scope_1, operator_name, open_file):
+	* lib-src/emacsclient.c (get_server_config, set_local_socket)
+	(start_daemon_and_retry_set_socket):
+	* lib-src/etags.c (main, C_entries, relative_filename):
+	* lib-src/pop.c (sendline):
+	* lib-src/update-game-score.c (main):
+	* lwlib/xlwmenu.c (resource_widget_value):
+	* src/callproc.c (child_setup):
+	* src/dbusbind.c (xd_signature_cat):
+	* src/doc.c (get_doc_string, Fsnarf_documentation):
+	* src/editfns.c (Fuser_full_name):
+	* src/frame.c (xrdb_get_resource):
+	* src/gtkutil.c (xg_get_file_with_chooser):
+	* src/tparam.c (tparam1):
+	* src/xfns.c (xic_create_fontsetname):
+	* src/xrdb.c (gethomedir, get_user_db, get_environ_db):
+	* src/xsmfns.c (smc_save_yourself_CB):
+	Rewrite to avoid the need for strcat, typically by using stpcpy
+	and/or lispstpcpy.  strcat tends to be part of O(N**2) algorithms.
+	* src/doc.c (sibling_etc):
+	* src/xrdb.c (xdefaults):
+	Now a top-level static constant.
+
 2014-12-24  Stephen Leake  <stephen_leake@stephe-leake.org>
 
 	* CONTRIBUTE: Move user-level information to doc/emacs/trouble.texi.

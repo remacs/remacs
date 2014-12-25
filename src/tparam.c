@@ -255,9 +255,9 @@ tparam1 (const char *string, char *outstring, int len,
     }
   *op = 0;
   while (doup-- > 0)
-    strcat (op, up);
+    op = stpcpy (op, up);
   while (doleft-- > 0)
-    strcat (op, left);
+    op = stpcpy (op, left);
   return outstring;
 }
 
