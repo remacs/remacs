@@ -1,3 +1,11 @@
+2014-12-25  Glenn Morris  <rgm@gnu.org>
+
+	* control.texi (Pattern matching case statement):
+	* positions.texi (List Motion):
+	* streams.texi (Output Functions):
+	* strings.texi (Text Comparison):
+	* text.texi (Document Object Model): Markup fixes.
+
 2014-12-22  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Remove obsolete references to pre-C99 builds
