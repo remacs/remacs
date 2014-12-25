@@ -2218,8 +2218,8 @@ contents of the minibuffer before the point.
 @section Minibuffer Windows
 @cindex minibuffer windows
 
-  These functions access and select minibuffer windows
-and test whether they are active.
+These functions access and select minibuffer windows, test whether they
+are active and control how they get resized.
 
 @defun active-minibuffer-window
 This function returns the currently active minibuffer window, or
@@ -2259,6 +2259,29 @@ frame.
 This function returns non-@code{nil} if @var{window} is the currently
 active minibuffer window.
 @end defun
+
+The following two options control whether minibuffer windows are resized
+automatically and how large they can get in the process.
+
+@defopt resize-mini-windows
+This option specifies whether minibuffer windows are resized
+automatically.  The default value is @code{grow-only}, which means that
+a minibuffer window by default expands automatically to accommodate the
+text it displays and shrinks back to one line as soon as the minibuffer
+gets empty.  If the value is @code{t}, Emacs will always try to fit the
+height of a minibuffer window to the text it displays (with a minimum of
+one line).  If the value is @code{nil}, a minibuffer window never
+changes size automatically.  In that case the window resizing commands
+(@pxref{Resizing Windows}) can be used to adjust its height.
+@end defopt
+
+@defopt max-mini-window-height
+This option provides a maximum height for resizing minibuffer windows
+automatically.  A floating-point number specifies a fraction of the
+frame's height; an integer specifies the maximum number of lines.  The
+default value is 0.25.
+@end defopt
+
 
 @node Minibuffer Contents
 @section Minibuffer Contents
