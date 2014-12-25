@@ -1,3 +1,33 @@
+2014-12-25  Helmut Eller  <eller.helmut@gmail.com>
+            Dmitry Gutov  <dgutov@yandex.ru>
+
+	Consolidate cross-referencing commands.
+
+	Move autoloaded bindings for `M-.', `M-,', `C-x 4 .' and
+	`C-x 5 .' from etags.el to xref.el.
+
+	* progmodes/xref.el: New file.
+
+	* progmodes/elisp-mode.el (elisp--identifier-types): New variable.
+	(elisp--identifier-location): New function, extracted from
+	`elisp--company-location'.
+	(elisp--company-location): Use it.
+	(elisp--identifier-completion-table): New variable.
+	(elisp-completion-at-point): Use it.
+	(emacs-lisp-mode): Set the local values of `xref-find-function'
+	and `xref-identifier-completion-table-function'.
+	(elisp-xref-find, elisp--xref-find-definitions)
+	(elisp--xref-identifier-completion-table): New functions.
+
+	* progmodes/etags.el (find-tag-marker-ring): Mark obsolete in
+	favor of `xref--marker-ring'.
+	(tags-lazy-completion-table): Autoload.
+	(tags-reset-tags-tables): Use `xref-clear-marker-stack'.
+	(find-tag-noselect): Use `xref-push-marker-stack'.
+	(pop-tag-mark): Make an alias for `xref-pop-marker-stack'.
+	(etags--xref-limit): New constant.
+	(etags-xref-find, etags--xref-find-definitions): New functions.
+
 2014-12-25  Martin Rudalics  <rudalics@gmx.at>
 
 	* cus-start.el (resize-mini-windows): Make it customizable.
