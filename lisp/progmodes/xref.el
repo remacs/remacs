@@ -187,7 +187,7 @@ To create an xref object, call `xref-make'.")
 The return value must be a string or nil.  nil means no
 identifier at point found.
 
-If it's hard to determinte the identifier precisely (e.g. because
+If it's hard to determine the identifier precisely (e.g., because
 it's a method call on unknown type), the implementation can
 return a simple string (such as symbol at point) marked with a
 special text property which `xref-find-function' would recognize
@@ -348,7 +348,7 @@ WINDOW controls how the buffer is displayed:
     (xref--pop-to-location loc window)))
 
 (define-derived-mode xref--xref-buffer-mode fundamental-mode "XREF"
-  "Mode for displaying cross-refenences."
+  "Mode for displaying cross-references."
   (setq buffer-read-only t))
 
 (let ((map xref--xref-buffer-mode-map))

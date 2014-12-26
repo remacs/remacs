@@ -7870,7 +7870,7 @@ is active.  This function is run by `mouse-autoselect-window-timer'."
       ((or (eq mouse-autoselect-window-state 'suspend)
 	   ;; When the mouse is at its first recorded position, restart
 	   ;; delayed autoselection.  This works around a scenario with
-	   ;; two two-window frames with identic dimensions: Select the
+	   ;; two two-window frames with identical dimensions: select the
 	   ;; first window of the first frame, switch to the second
 	   ;; frame, move the mouse to its second window, minimize the
 	   ;; second frame.  Now the second window of the first frame

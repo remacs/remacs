@@ -2063,7 +2063,7 @@ for \\[find-tag] (which see)."
 ;;; Xref backend
 
 ;; Stop searching if we find more than xref-limit matches, as the xref
-;; infrastracture is not designed to handle very long lists.
+;; infrastructure is not designed to handle very long lists.
 ;; Switching to some kind of lazy list might be better, but hopefully
 ;; we hit the limit rarely.
 (defconst etags--xref-limit 1000)

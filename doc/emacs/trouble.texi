@@ -1231,7 +1231,7 @@ fix existing bug reports
 @url{http://debbugs.gnu.org/cgi/pkgreport.cgi?which=pkg&data=emacs}.
 
 @item
-@c etc/TOOD not in WWW_GNU_ORG
+@c etc/TODO not in WWW_GNU_ORG
 implement a feature listed in the @file{etc/TODO} file in the Emacs
 distribution, and submit a patch.
 

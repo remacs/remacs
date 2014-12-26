@@ -440,7 +440,7 @@ and move to definitions, as well as pop back to the original location.
 
 *** New key bindings
 `xref-find-definitions' replaces `find-tag' and provides an interface
-to pick one destination among several.  Hence, `tags-toop-continue' is
+to pick one destination among several.  Hence, `tags-loop-continue' is
 unbound.  `xref-pop-marker-stack' replaces `pop-tag-mark', but uses an
 easier binding, which is now unoccupied (`M-,').
 `xref-find-definitions-other-window' replaces `find-tag-other-window'.
