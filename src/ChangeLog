@@ -1,3 +1,13 @@
+2014-12-26  Eli Zaretskii  <eliz@gnu.org>
+
+	* w32proc.c (sys_spawnve, get_lcid_callback): Use strcpy instead
+	of strcat.
+
+	* w32menu.c (add_menu_item): Use stpcpy instead of strcat.
+
+	* w32.c (sys_readdir, stat_worker, symlink): Use strcpy instead of
+	strcat.
+
 2014-12-26  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Use bool for boolean in xsmfns.c

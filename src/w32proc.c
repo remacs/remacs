@@ -1665,10 +1665,7 @@ sys_spawnve (int mode, char *cmdname, char **argv, char **envp)
       if (egetenv ("CMDPROXY"))
 	strcpy (cmdname, egetenv ("CMDPROXY"));
       else
-	{
-	  lispstpcpy (cmdname, Vinvocation_directory);
-	  strcat (cmdname, "cmdproxy.exe");
-	}
+	strcpy (lispstpcpy (cmdname, Vinvocation_directory), "cmdproxy.exe");
 
       /* Can't use unixtodos_filename here, since that needs its file
 	 name argument encoded in UTF-8.  */
@@ -3183,18 +3180,20 @@ get_lcid_callback (LPTSTR locale_num_str)
   if (GetLocaleInfo (try_lcid, LOCALE_SABBREVLANGNAME,
 		     locval, LOCALE_NAME_MAX_LENGTH))
     {
+      size_t locval_len;
+
       /* This is for when they only specify the language, as in "ENU".  */
       if (stricmp (locval, lname) == 0)
 	{
 	  found_lcid = try_lcid;
 	  return FALSE;
 	}
-      strcat (locval, "_");
+      locval_len = strlen (locval);
+      strcpy (locval + locval_len, "_");
       if (GetLocaleInfo (try_lcid, LOCALE_SABBREVCTRYNAME,
-			 locval + strlen (locval), LOCALE_NAME_MAX_LENGTH))
+			 locval + locval_len + 1, LOCALE_NAME_MAX_LENGTH))
 	{
-	  size_t locval_len = strlen (locval);
-
+	  locval_len = strlen (locval);
 	  if (strnicmp (locval, lname, locval_len) == 0
 	      && (lname[locval_len] == '.'
 		  || lname[locval_len] == '\0'))

@@ -1256,9 +1256,9 @@ add_menu_item (HMENU menu, widget_value *wv, HMENU item)
       if (wv->key != NULL)
 	{
 	  out_string = SAFE_ALLOCA (strlen (wv->name) + strlen (wv->key) + 2);
-	  strcpy (out_string, wv->name);
-	  strcat (out_string, "\t");
-	  strcat (out_string, wv->key);
+	  p = stpcpy (out_string, wv->name);
+	  p = stpcpy (p, "\t");
+	  strcpy (p, wv->key);
 	}
       else
 	out_string = (char *)wv->name;
