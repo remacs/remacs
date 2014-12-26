@@ -2087,36 +2087,18 @@ and `python-shell-output-prompt-regexp' using the values from
 
 (defun python-shell-get-process-name (dedicated)
   "Calculate the appropriate process name for inferior Python process.
-If DEDICATED is t and the variable `buffer-file-name' is non-nil
-returns a string with the form
-`python-shell-buffer-name'[variable `buffer-file-name'] else
-returns the value of `python-shell-buffer-name'."
-  (let ((process-name
-         (if (and dedicated
-                  buffer-file-name)
-             (format "%s[%s]" python-shell-buffer-name buffer-file-name)
-           (format "%s" python-shell-buffer-name))))
-    process-name))
+If DEDICATED is t returns a string with the form
+`python-shell-buffer-name'[`buffer-name'] else returns the value
+of `python-shell-buffer-name'."
+  (if dedicated
+      (format "%s[%s]" python-shell-buffer-name (buffer-name))
+    python-shell-buffer-name))
 
 (defun python-shell-internal-get-process-name ()
   "Calculate the appropriate process name for Internal Python process.
 The name is calculated from `python-shell-global-buffer-name' and
-a hash of all relevant global shell settings in order to ensure
-uniqueness for different types of configurations."
-  (format "%s [%s]"
-          python-shell-internal-buffer-name
-          (md5
-           (concat
-            python-shell-interpreter
-            python-shell-interpreter-args
-            python-shell--prompt-calculated-input-regexp
-            python-shell--prompt-calculated-output-regexp
-            (mapconcat #'symbol-value python-shell-setup-codes "")
-            (mapconcat #'identity python-shell-process-environment "")
-            (mapconcat #'identity python-shell-extra-pythonpaths "")
-            (mapconcat #'identity python-shell-exec-path "")
-            (or python-shell-virtualenv-root "")
-            (mapconcat #'identity python-shell-exec-path "")))))
+the `buffer-name'."
+  (format "%s[%s]" python-shell-internal-buffer-name (buffer-name)))
 
 (defun python-shell-calculate-command ()
   "Calculate the string used to execute the inferior Python process."
@@ -2606,12 +2588,10 @@ there for compatibility with CEDET.")
 
 (defun python-shell-internal-get-or-create-process ()
   "Get or create an inferior Internal Python process."
-  (let* ((proc-name (python-shell-internal-get-process-name))
-         (proc-buffer-name (format " *%s*" proc-name)))
-    (when (not (process-live-p proc-name))
-      (run-python-internal)
-      (setq python-shell-internal-buffer proc-buffer-name))
-    (get-buffer-process proc-buffer-name)))
+  (let ((proc-name (python-shell-internal-get-process-name)))
+    (if (process-live-p proc-name)
+        (get-process proc-name)
+      (run-python-internal))))
 
 (define-obsolete-function-alias
   'python-proc 'python-shell-internal-get-or-create-process "24.3")

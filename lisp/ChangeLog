@@ -1,3 +1,11 @@
+2014-12-26  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	python.el: Generate clearer shell buffer names.
+
+	* progmodes/python.el (python-shell-get-process-name)
+	(python-shell-internal-get-process-name): Use `buffer-name`.
+	(python-shell-internal-get-or-create-process): Simplify.
+
 2014-12-26  Dmitry Gutov  <dgutov@yandex.ru>
 
 	Add basic xref apropos implementation to elisp-mode.

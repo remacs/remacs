@@ -1775,52 +1775,41 @@ def f():
 (defvar python-tests-shell-interpreter "python")
 
 (ert-deftest python-shell-get-process-name-1 ()
-  "Check process name calculation on different scenarios."
+  "Check process name calculation sans `buffer-file-name'."
   (python-tests-with-temp-buffer
-      ""
-    (should (string= (python-shell-get-process-name nil)
-                     python-shell-buffer-name))
-    ;; When the `current-buffer' doesn't have `buffer-file-name', even
-    ;; if dedicated flag is non-nil should not include its name.
-    (should (string= (python-shell-get-process-name t)
-                     python-shell-buffer-name)))
+   ""
+   (should (string= (python-shell-get-process-name nil)
+                    python-shell-buffer-name))
+   (should (string= (python-shell-get-process-name t)
+                    (format "%s[%s]" python-shell-buffer-name (buffer-name))))))
+
+(ert-deftest python-shell-get-process-name-2 ()
+  "Check process name calculation with `buffer-file-name'."
   (python-tests-with-temp-file
-      ""
-    ;; `buffer-file-name' is non-nil but the dedicated flag is nil and
-    ;; should be respected.
-    (should (string= (python-shell-get-process-name nil)
-                     python-shell-buffer-name))
-    (should (string=
-             (python-shell-get-process-name t)
-             (format "%s[%s]" python-shell-buffer-name buffer-file-name)))))
+   ""
+   ;; `buffer-file-name' is non-nil but the dedicated flag is nil and
+   ;; should be respected.
+   (should (string= (python-shell-get-process-name nil)
+                    python-shell-buffer-name))
+   (should (string=
+            (python-shell-get-process-name t)
+            (format "%s[%s]" python-shell-buffer-name (buffer-name))))))
 
 (ert-deftest python-shell-internal-get-process-name-1 ()
-  "Check the internal process name is config-unique."
-  (let* ((python-shell-interpreter python-tests-shell-interpreter)
-         (python-shell-interpreter-args "")
-         (python-shell-prompt-regexp ">>> ")
-         (python-shell-prompt-block-regexp "[.][.][.] ")
-         (python-shell-setup-codes "")
-         (python-shell-process-environment "")
-         (python-shell-extra-pythonpaths "")
-         (python-shell-exec-path "")
-         (python-shell-virtualenv-path "")
-         (expected (python-tests-with-temp-buffer
-                       "" (python-shell-internal-get-process-name))))
-    ;; Same configurations should match.
-    (should
-     (string= expected
-              (python-tests-with-temp-buffer
-                  "" (python-shell-internal-get-process-name))))
-    (let ((python-shell-interpreter-args "-B"))
-      ;; A minimal change should generate different names.
-      (should
-       (not (string=
-             expected
-             (python-tests-with-temp-buffer
-                 "" (python-shell-internal-get-process-name))))))))
+  "Check the internal process name is buffer-unique sans `buffer-file-name'."
+  (python-tests-with-temp-buffer
+   ""
+   (should (string= (python-shell-internal-get-process-name)
+                    (format "%s[%s]" python-shell-internal-buffer-name (buffer-name))))))
 
-(ert-deftest python-shell-parse-command-1 ()
+(ert-deftest python-shell-internal-get-process-name-2 ()
+  "Check the internal process name is buffer-unique with `buffer-file-name'."
+  (python-tests-with-temp-file
+   ""
+   (should (string= (python-shell-internal-get-process-name)
+                    (format "%s[%s]" python-shell-internal-buffer-name (buffer-name))))))
+
+(ert-deftest python-shell-calculate-command-1 ()
   "Check the command to execute is calculated correctly.
 Using `python-shell-interpreter' and
 `python-shell-interpreter-args'."
@@ -1832,7 +1821,7 @@ Using `python-shell-interpreter' and
              (format "%s %s"
                      python-shell-interpreter
                      python-shell-interpreter-args)
-             (python-shell-parse-command)))))
+             (python-shell-calculate-command)))))
 
 (ert-deftest python-shell-calculate-process-environment-1 ()
   "Test `python-shell-process-environment' modification."
@@ -1857,17 +1846,17 @@ Using `python-shell-interpreter' and
                     path-separator original-pythonpath)))))
 
 (ert-deftest python-shell-calculate-process-environment-3 ()
-  "Test `python-shell-virtualenv-path' modification."
+  "Test `python-shell-virtualenv-root' modification."
   (let* ((original-path (or (getenv "PATH") ""))
-         (python-shell-virtualenv-path
+         (python-shell-virtualenv-root
           (directory-file-name user-emacs-directory))
          (process-environment
           (python-shell-calculate-process-environment)))
     (should (not (getenv "PYTHONHOME")))
-    (should (string= (getenv "VIRTUAL_ENV") python-shell-virtualenv-path))
+    (should (string= (getenv "VIRTUAL_ENV") python-shell-virtualenv-root))
     (should (equal (getenv "PATH")
                    (format "%s/bin%s%s"
-                           python-shell-virtualenv-path
+                           python-shell-virtualenv-root
                            path-separator original-path)))))
 
 (ert-deftest python-shell-calculate-process-environment-4 ()
@@ -1900,13 +1889,13 @@ Using `python-shell-interpreter' and
 (ert-deftest python-shell-calculate-exec-path-2 ()
   "Test `python-shell-exec-path' modification."
   (let* ((original-exec-path exec-path)
-         (python-shell-virtualenv-path
+         (python-shell-virtualenv-root
           (directory-file-name (expand-file-name user-emacs-directory)))
          (exec-path (python-shell-calculate-exec-path)))
     (should (equal
              exec-path
              (append (cons
-                      (format "%s/bin" python-shell-virtualenv-path)
+                      (format "%s/bin" python-shell-virtualenv-root)
                       original-exec-path))))))
 
 (ert-deftest python-shell-make-comint-1 ()
@@ -1922,7 +1911,7 @@ Using `python-shell-interpreter' and
          (shell-buffer
           (python-tests-with-temp-buffer
            "" (python-shell-make-comint
-               (python-shell-parse-command) proc-name)))
+               (python-shell-calculate-command) proc-name)))
          (process (get-buffer-process shell-buffer)))
     (unwind-protect
         (progn
@@ -1943,7 +1932,7 @@ Using `python-shell-interpreter' and
          (shell-buffer
           (python-tests-with-temp-buffer
            "" (python-shell-make-comint
-               (python-shell-parse-command) proc-name nil t)))
+               (python-shell-calculate-command) proc-name nil t)))
          (process (get-buffer-process shell-buffer)))
     (unwind-protect
         (progn
@@ -2010,7 +1999,7 @@ and `python-shell-interpreter-args' in the new shell buffer."
             (setenv "PYTHONSTARTUP" startup-file)
             (python-tests-with-temp-buffer
              "" (python-shell-make-comint
-                 (python-shell-parse-command) proc-name nil))))
+                 (python-shell-calculate-command) proc-name nil))))
          (process (get-buffer-process shell-buffer)))
     (unwind-protect
         (progn
@@ -2040,10 +2029,10 @@ and `python-shell-interpreter-args' in the new shell buffer."
            (dedicated-proc-name (python-shell-get-process-name t))
            (global-shell-buffer
             (python-shell-make-comint
-             (python-shell-parse-command) global-proc-name))
+             (python-shell-calculate-command) global-proc-name))
            (dedicated-shell-buffer
             (python-shell-make-comint
-             (python-shell-parse-command) dedicated-proc-name))
+             (python-shell-calculate-command) dedicated-proc-name))
            (global-process (get-buffer-process global-shell-buffer))
            (dedicated-process (get-buffer-process dedicated-shell-buffer)))
       (unwind-protect
@@ -3767,7 +3756,7 @@ def foo(a, b, c):
             . "from IPython.core.completerlib import module_completion")
            (python-shell-completion-string-code
             . "';'.join(get_ipython().Completer.all_completions('''%s'''))\n")
-           (python-shell-virtualenv-path
+           (python-shell-virtualenv-root
             . "/home/user/.virtualenvs/project"))))
     (with-current-buffer buffer
       (kill-all-local-variables)
