@@ -1,3 +1,12 @@
+2014-12-26  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Use bool for boolean in xsmfns.c
+	* xsmfns.c, xterm.h (x_session_have_connection):
+	* xsmfns.c (doing_interact, smc_interact_CB, Fhandle_save_session):
+	Use bool for boolean.
+	(x_session_initialize, Fhandle_save_session):
+	Prefer NILP (x) to EQ (x, Qnil).
+
 2014-12-23  Didier Verna  <didier@didierverna.net> (tiny change).
 
 	* nsselect.m (Fns_selection_owner_p): Return a Lisp boolean, not a

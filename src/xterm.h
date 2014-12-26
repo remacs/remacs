@@ -1107,7 +1107,7 @@ extern void initialize_frame_menubar (struct frame *);
 /* Defined in xsmfns.c */
 #ifdef HAVE_X_SM
 extern void x_session_initialize (struct x_display_info *dpyinfo);
-extern int x_session_have_connection (void);
+extern bool x_session_have_connection (void);
 extern void x_session_close (void);
 #endif
 
