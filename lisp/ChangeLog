@@ -1,3 +1,14 @@
+2014-12-26  Dmitry Gutov  <dgutov@yandex.ru>
+
+	Add basic xref apropos implementation to elisp-mode.
+
+	* progmodes/elisp-mode.el (elisp--xref-find-definitions):
+	Filter out nil results.
+	(elisp--xref-find-apropos): New function.
+	(elisp-xref-find): Use it.
+
+	* progmodes/xref.el (xref--show-xrefs): Use `user-error'.
+
 2014-12-25  Helmut Eller  <eller.helmut@gmail.com>
             Dmitry Gutov  <dgutov@yandex.ru>
 

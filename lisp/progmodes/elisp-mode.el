@@ -577,27 +577,39 @@ It can be quoted, or be inside a quoted form."
 (declare-function xref-make "xref" (description location))
 
 (defun elisp-xref-find (action id)
-  (when (eq action 'definitions)
-    (let ((sym (intern-soft id)))
-      (when sym
-        (remove nil (elisp--xref-find-definitions sym))))))
+  (pcase action
+    (`definitions
+      (let ((sym (intern-soft id)))
+        (when sym
+          (elisp--xref-find-definitions sym))))
+    (`apropos
+     (elisp--xref-find-apropos id))))
 
 (defun elisp--xref-find-definitions (symbol)
   (save-excursion
-    (mapcar
-     (lambda (type)
-       (let ((loc
-              (condition-case err
-                  (let ((buf-pos (elisp--identifier-location type symbol)))
-                    (when buf-pos
-                      (xref-make-buffer-location (car buf-pos)
-                                                 (or (cdr buf-pos) 1))))
-                (error
-                 (xref-make-bogus-location (error-message-string err))))))
-         (when loc
-           (xref-make (format "(%s %s)" type symbol)
-                      loc))))
-     elisp--identifier-types)))
+    (let (lst)
+      (dolist (type elisp--identifier-types)
+        (let ((loc
+               (condition-case err
+                   (let ((buf-pos (elisp--identifier-location type symbol)))
+                     (when buf-pos
+                       (xref-make-buffer-location (car buf-pos)
+                                                  (or (cdr buf-pos) 1))))
+                 (error
+                  (xref-make-bogus-location (error-message-string err))))))
+          (when loc
+            (push
+             (xref-make (format "(%s %s)" type symbol)
+                        loc)
+             lst))))
+      lst)))
+
+(defun elisp--xref-find-apropos (regexp)
+  (apply #'nconc
+         (let (lst)
+           (dolist (sym (apropos-internal regexp))
+            (push (elisp--xref-find-definitions sym) lst))
+           (nreverse lst))))
 
 (defun elisp--xref-identifier-completion-table ()
   elisp--identifier-completion-table)

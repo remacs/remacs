@@ -414,7 +414,7 @@ Return an alist of the form ((FILENAME . (XREF ...)) ...)."
 (defun xref--show-xrefs (id kind xrefs window)
   (cond
    ((null xrefs)
-    (error "No known %s for: %s" kind id))
+    (user-error "No known %s for: %s" kind id))
    ((not (cdr xrefs))
     (xref-push-marker-stack)
     (xref--pop-to-location (xref--xref-location (car xrefs)) window))
