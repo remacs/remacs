@@ -1,5 +1,19 @@
 2014-12-28  Paul Eggert  <eggert@Penguin.CS.UCLA.EDU>
 
+	Wrap dll functions more simply
+	* decompress.c, gnutls.c, image.c, xml.c:
+	If WINDOWSNT, use '#define FOO fn_FOO' to wrap dll functions,
+	rather than the inverse when not WINDOWSNT.  This isolates the
+	fn_* business into the WINDOWSNT-specific section of the code,
+	which makes it easier to maintain the generic code.
+	* decompress.c (DEF_ZLIB_FN, LOAD_ZLIB_FN):
+	* gnutls.c (DEF_GNUTLS_FN, LOAD_GNUTLS_FN):
+	* image.c (DEF_IMGLIB_FN, LOAD_IMGLIB_FN):
+	* xml.c (DEF_XML2_FN, LOAD_XML2_FN):
+	Remove.  All uses replaced by DEF_DLL_FN.
+	* decompress.c (inflateInit2): Remove; no longer needed.
+	* w32.h (DEF_DLL_FN, LOAD_DLL_FN): New macros.
+
 	Port memory-full checking to GnuTLS 3.3
 	Instead of using gnutls_global_set_mem_functions, check every call
 	to a GnuTLS function that might return an indication of memory
