@@ -1,3 +1,27 @@
+2014-12-26  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Use bool for boolean in xselect.c, xsettings.c
+	* xselect.c (x_get_local_selection, struct selection_data)
+	(x_selection_request_lisp_error, struct prop_location)
+	(x_handle_selection_request, x_convert_selection)
+	(waiting_for_other_props_on_window, expect_property_change)
+	(wait_for_property_change, x_handle_property_notify)
+	(x_get_foreign_selection, x_get_window_property)
+	(receive_incremental_selection)
+	(x_get_window_property_as_lisp_data)
+	(lisp_data_to_selection_data, Fx_get_selection_internal)
+	(x_send_client_event):
+	* xselect.c, xterm.h (x_handle_dnd_message):
+	* xsettings.c (dpyinfo_valid, parse_settings, read_settings)
+	(apply_xft_settings, read_and_apply_settings)
+	(xft_settings_event, init_gsettings, init_xsettings)
+	(syms_of_xsettings):
+	Use bool for boolean.
+	* xselect.c (x_get_window_property): Omit last arg, which was an
+	unused boolean.
+	* xsettings.c (apply_xft_settings): Remove 2nd arg, which was
+	always true.  All callers changed.
+
 2014-12-26  Eli Zaretskii  <eliz@gnu.org>
 
 	* w32proc.c (sys_spawnve, get_lcid_callback): Use strcpy instead
