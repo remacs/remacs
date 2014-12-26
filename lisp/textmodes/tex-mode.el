@@ -1281,7 +1281,7 @@ inserts \" characters."
   ;;
   (if (or arg (memq (char-syntax (preceding-char)) '(?/ ?\\))
           (eq (get-text-property (point) 'face) 'tex-verbatim)
-          ;; Discover if a preceding occurance of `tex-open-quote'
+          ;; Discover if a preceding occurrence of `tex-open-quote'
           ;; should be morphed to a normal double quote.
           ;;
           (and (>= (point) (+ (point-min) (length tex-open-quote)))
@@ -1298,7 +1298,7 @@ inserts \" characters."
       ;;
       (self-insert-command (prefix-numeric-value arg))
     ;; We'll be inserting fancy TeX quotes, but consider and imitate
-    ;; `electric-pair-mode''s two behaviours: pair-insertion and
+    ;; `electric-pair-mode''s two behaviors: pair-insertion and
     ;; region wrapping.
     ;;
     (if (and electric-pair-mode (use-region-p))
