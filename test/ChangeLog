@@ -1,5 +1,9 @@
 2014-12-27  Fabián Ezequiel Gallina  <fgallina@gnu.org>
 
+	(python-shell-buffer-substring-9): New test.
+
+2014-12-27  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
 	* automated/python-tests.el (python-shell-buffer-substring-1)
 	(python-shell-buffer-substring-2, python-shell-buffer-substring-3)
 	(python-shell-buffer-substring-4, python-shell-buffer-substring-5)

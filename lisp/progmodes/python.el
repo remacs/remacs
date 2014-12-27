@@ -2728,17 +2728,16 @@ the python shell:
   4. Wraps indented regions under an \"if True:\" block so the
      interpreter evaluates them correctly."
   (let* ((substring (buffer-substring-no-properties start end))
-         (buffer-substring-p (save-restriction
-                               (widen)
-                               (not (equal (list (point-min) (point-max))
-                                           (list start end)))))
+         (starts-at-point-min-p (save-restriction
+                                  (widen)
+                                  (= (point-min) start)))
          (encoding (python-info-encoding))
-         (fillstr (concat
-                   (when buffer-substring-p
-                     (format "# -*- coding: %s -*-\n" encoding))
-                   (make-string
-                    (- (line-number-at-pos start)
-                       (if buffer-substring-p 2 1)) ?\n)))
+         (fillstr (when (not starts-at-point-min-p)
+                    (concat
+                     (format "# -*- coding: %s -*-\n" encoding)
+                     (make-string
+                      ;; Substract 2 because of the coding cookie.
+                      (- (line-number-at-pos start) 2) ?\n))))
          (toplevel-block-p (save-excursion
                              (goto-char start)
                              (or (zerop (line-number-at-pos start))
