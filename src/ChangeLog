@@ -1,3 +1,11 @@
+2014-12-27  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Fix parse_settings to match internal documentation
+	* xsettings.c (parse_settings): Return the number of settings seen.
+	Count the settings changes accurately.
+	(read_settings): Don't confuse number of settings changes with
+	the return code from XGetWindowProperty.
+
 2014-12-27  Eli Zaretskii  <eliz@gnu.org>
 
 	* xdisp.c (set_iterator_to_next) <GET_FROM_STRING>: Limit search in

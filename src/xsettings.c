@@ -404,7 +404,7 @@ parse_settings (unsigned char *prop,
 
   /* First 4 bytes is a serial number, skip that.  */
 
-  if (bytes < 12) return BadLength;
+  if (bytes < 12) return settings_seen;
   memcpy (&n_settings, prop+8, 4);
   if (my_bo != that_bo) n_settings = bswap_32 (n_settings);
   bytes_parsed = 12;
@@ -429,8 +429,8 @@ parse_settings (unsigned char *prop,
       memcpy (&nlen, prop+bytes_parsed, 2);
       bytes_parsed += 2;
       if (my_bo != that_bo) nlen = bswap_16 (nlen);
-      if (bytes_parsed+nlen > bytes) return BadLength;
-      to_cpy = nlen > 127 ? 127 : nlen;
+      if (bytes_parsed + nlen > bytes) return settings_seen;
+      to_cpy = min (nlen, sizeof name - 1);
       memcpy (name, prop+bytes_parsed, to_cpy);
       name[to_cpy] = '\0';
 
@@ -438,20 +438,19 @@ parse_settings (unsigned char *prop,
       bytes_parsed = PAD (bytes_parsed);
 
       bytes_parsed += 4; /* Skip serial for this value */
-      if (bytes_parsed > bytes) return BadLength;
+      if (bytes_parsed > bytes) return settings_seen;
 
-      want_this =
+      want_this = strcmp (XSETTINGS_TOOL_BAR_STYLE, name) == 0;
 #ifdef HAVE_XFT
-        (nlen > 6 && strncmp (name, "Xft/", 4) == 0)
-        || strcmp (XSETTINGS_FONT_NAME, name) == 0
-        ||
+      if ((nlen > 6 && memcmp (name, "Xft/", 4) == 0)
+	  || strcmp (XSETTINGS_FONT_NAME, name) == 0)
+	want_this = true;
 #endif
-        strcmp (XSETTINGS_TOOL_BAR_STYLE, name) == 0;
 
       switch (type)
         {
         case 0: /* Integer */
-          if (bytes_parsed+4 > bytes) return BadLength;
+          if (bytes_parsed + 4 > bytes) return settings_seen;
           if (want_this)
             {
               memcpy (&ival, prop+bytes_parsed, 4);
@@ -461,13 +460,13 @@ parse_settings (unsigned char *prop,
           break;
 
         case 1: /* String */
-          if (bytes_parsed+4 > bytes) return BadLength;
+          if (bytes_parsed + 4 > bytes) return settings_seen;
           memcpy (&vlen, prop+bytes_parsed, 4);
           bytes_parsed += 4;
           if (my_bo != that_bo) vlen = bswap_32 (vlen);
           if (want_this)
             {
-              to_cpy = vlen > 127 ? 127 : vlen;
+              to_cpy = min (vlen, sizeof sval - 1);
               memcpy (sval, prop+bytes_parsed, to_cpy);
               sval[to_cpy] = '\0';
             }
@@ -477,17 +476,16 @@ parse_settings (unsigned char *prop,
 
         case 2: /* RGB value */
           /* No need to parse this */
-          if (bytes_parsed+8 > bytes) return BadLength;
+          if (bytes_parsed + 8 > bytes) return settings_seen;
           bytes_parsed += 8; /* 4 values (r, b, g, alpha), 2 bytes each.  */
           break;
 
         default: /* Parse Error */
-          return BadValue;
+          return settings_seen;
         }
 
       if (want_this)
         {
-          ++settings_seen;
           if (strcmp (name, XSETTINGS_TOOL_BAR_STYLE) == 0)
             {
               dupstring (&settings->tb_style, sval);
@@ -557,6 +555,9 @@ parse_settings (unsigned char *prop,
                 settings->seen &= ~SEEN_LCDFILTER;
             }
 #endif /* HAVE_XFT */
+	  else
+	    want_this = false;
+	  settings_seen += want_this;
         }
     }
 
@@ -576,6 +577,7 @@ read_settings (struct x_display_info *dpyinfo, struct xsettings *settings)
   unsigned char *prop = NULL;
   Display *dpy = dpyinfo->display;
   int rc;
+  bool got_settings = false;
 
   x_catch_errors (dpy);
   rc = XGetWindowProperty (dpy,
@@ -587,13 +589,13 @@ read_settings (struct x_display_info *dpyinfo, struct xsettings *settings)
 
   if (rc == Success && prop != NULL && act_form == 8 && nitems > 0
       && act_type == dpyinfo->Xatom_xsettings_prop)
-    rc = parse_settings (prop, nitems, settings);
+    got_settings = parse_settings (prop, nitems, settings) != 0;
 
   XFree (prop);
 
   x_uncatch_errors ();
 
-  return rc != 0;
+  return got_settings;
 }
 
 /* Apply Xft settings in SETTINGS to the Xft library.
