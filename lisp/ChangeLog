@@ -10,8 +10,8 @@
 	python.el: Fix message when sending region.
 
 	* progmodes/python.el (python-shell-send-region): Rename argument
-	send-name from nomain.  Fix message.
-	(python-shell-send-buffer): Rename argument send-name from arg.
+	send-main from nomain.  Fix message.
+	(python-shell-send-buffer): Rename argument send-main from arg.
 
 2014-12-27  Fabián Ezequiel Gallina  <fgallina@gnu.org>
 
