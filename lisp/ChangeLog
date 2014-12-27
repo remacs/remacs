@@ -17,6 +17,11 @@
 
 	* progmodes/xref.el (xref--show-xrefs): Use `user-error'.
 
+2014-12-25  Filipp Gunbin  <fgunbin@fastmail.fm>
+
+	* dired-aux.el (dired-maybe-insert-subdir): Make
+	dired-maybe-insert-subdir always skip trivial files.
+
 2014-12-25  Helmut Eller  <eller.helmut@gmail.com>
             Dmitry Gutov  <dgutov@yandex.ru>
 
