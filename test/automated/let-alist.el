@@ -21,6 +21,7 @@
 
 (require 'ert)
 (require 'cl-lib)
+(require 'let-alist)
 
 (ert-deftest let-alist-surface-test ()
   "Tests basic macro expansion for `let-alist'."

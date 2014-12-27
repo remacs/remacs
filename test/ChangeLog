@@ -1,3 +1,7 @@
+2014-12-27  Glenn Morris  <rgm@gnu.org>
+
+	* automated/let-alist.el: Load dependency.
+
 2014-12-27  Fabián Ezequiel Gallina  <fgallina@gnu.org>
 
 	* automated/python-tests.el (python-shell-get-or-create-process-1)
