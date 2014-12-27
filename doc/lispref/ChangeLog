@@ -5,7 +5,6 @@
 	* modes.texi (Defining Minor Modes, SMIE Lexer): Markup fixes.
 
 2014-12-27  Eli Zaretskii  <eliz@gnu.org>
-2014-12-27  Eli Zaretskii  <eliz@gnu.org>
 
 	* windows.texi (Recombining Windows): Index subject of sections.
 
@@ -106,7 +105,6 @@
 	* os.texi (Time of Day, Time Conversion, Time Parsing)
 	(Time Calculations, Idle Timers): Index subject of sections.
 
-2014-12-27  Stefan Monnier  <monnier@iro.umontreal.ca>
 2014-12-25  Martin Rudalics  <rudalics@gmx.at>
 
 	* windows.texi (Windows): Resync @menu order with @node order.
@@ -145,6 +143,12 @@
 2014-12-18  Eli Zaretskii  <eliz@gnu.org>
 
 	* display.texi (Low-Level Font): Document font-info and query-font.
+
+2014-12-18  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+        * display.texi (Forcing Redisplay): Remove references to
+        redisplay-dont-pause and redisplay-preemption-period (which doesn't
+        even exist).
 
 2014-12-16  Nicolas Petton  <petton.nicolas@gmail.com>
 

@@ -2,7 +2,6 @@
 
 	* buffers.texi (Kill Buffer): Improve indexing.
 
-2014-12-27  Paul Eggert  <eggert@cs.ucla.edu>
 2014-12-24  Stephen Leake  <stephen_leake@stephe-leake.org>
 
 	* trouble.texi: Move user-level information from CONTRIBUTE here.

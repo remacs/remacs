@@ -19,6 +19,7 @@
         set (Bug#19133).
 	(setPixmapData): Rename local variable bmRep to avoid compiler
 	warning.
+
 2014-12-27  Jan Djärv  <jan.h.d@swipnet.se>
 
 	* xterm.c (do_ewmh_fullscreen): Don't remove maximized_horz/vert

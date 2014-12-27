@@ -7,7 +7,6 @@
 	* build-aux/git-hooks/commit-msg (at_sign): Bump up line-length limit
 	to 78.
 
-2014-12-27  Paul Eggert  <eggert@cs.ucla.edu>
 2014-12-25  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Prefer stpcpy to strcat
