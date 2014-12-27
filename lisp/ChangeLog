@@ -1,3 +1,8 @@
+2014-12-27  Dmitry Gutov  <dgutov@yandex.ru>
+
+	* simple.el (execute-extended-command):
+	When `suggest-key-bindings' is nil, don't.
+
 2014-12-27  Fabián Ezequiel Gallina  <fgallina@gnu.org>
 
 	python.el: Enhance shell user interaction and deprecate
