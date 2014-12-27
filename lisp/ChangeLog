@@ -1,3 +1,16 @@
+2014-12-27  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	python.el: Handle file encoding for shell.
+
+	* progmodes/python.el (python-rx-constituents): Add coding-cookie.
+	(python-shell--save-temp-file): Write file with proper encoding.
+	(python-shell-buffer-substring): Add coding cookie for detected
+	encoding to generated content.  Fix blank lines when removing
+	if-name-main block.
+	(python-shell-send-file): Handle file encoding.
+	(python-info-encoding-from-cookie)
+	(python-info-encoding): New functions.
+
 2014-12-24  Michael Albinus  <michael.albinus@gmx.de>
 
 	* net/tramp-sh.el (tramp-do-copy-or-rename-file-out-of-band):
