@@ -2,6 +2,7 @@
 
 	* xterm.c (do_ewmh_fullscreen): Don't remove maximized_horz/vert
 	when going to fullscreen (Bug#0x180004f).
+
 2014-12-27  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* buffer.c (syms_of_buffer) <Vafter_change_functions>: fix docstring.
@@ -9,8 +10,6 @@
 2014-12-27  Eli Zaretskii  <eliz@gnu.org>
 
 	* gnutls.c (gnutls_init): Fix deprecation warning from GCC.
-
-2014-12-27  Eli Zaretskii  <eliz@gnu.org>
 
 2014-12-26  Paul Eggert  <eggert@cs.ucla.edu>
 
