@@ -2538,7 +2538,7 @@ The server's version number.
 The specification version the server is compliant with.
 @end table
 
-If @var{SPEC_VERSION} is @code{nil}, the server supports a
+If @var{spec_version} is @code{nil}, the server supports a
 specification prior to @samp{"1.0"}.
 @end defun
 

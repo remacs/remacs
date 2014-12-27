@@ -395,7 +395,18 @@
                                          (* ?\\ ?\\) (any ?\' ?\")))
                                 (* ?\\ ?\\)
                                 ;; Match single or triple quotes of any kind.
-                                (group (or  "\"" "\"\"\"" "'" "'''"))))))
+                                (group (or  "\"" "\"\"\"" "'" "'''")))))
+      (coding-cookie . ,(rx line-start ?# (* space)
+                            (or
+                             ;; # coding=<encoding name>
+                             (: "coding" (or ?: ?=) (* space) (group-n 1 (+ (or word ?-))))
+                             ;; # -*- coding: <encoding name> -*-
+                             (: "-*-" (* space) "coding:" (* space)
+                                (group-n 1 (+ (or word ?-))) (* space) "-*-")
+                             ;; # vim: set fileencoding=<encoding name> :
+                             (: "vim:" (* space) "set" (+ space)
+                                "fileencoding" (* space) ?= (* space)
+                                (group-n 1 (+ (or word ?-))) (* space) ":")))))
     "Additional Python specific sexps for `python-rx'")
 
   (defmacro python-rx (&rest regexps)
@@ -2614,11 +2625,7 @@ there for compatibility with CEDET.")
               (concat (file-remote-p default-directory) "/tmp")
             temporary-file-directory))
          (temp-file-name (make-temp-file "py"))
-         ;; XXX: Python's built-in compile function accepts utf-8 as
-         ;; input so there's no need to enforce a coding cookie.  In
-         ;; the future making `coding-system-for-write' match the
-         ;; current buffer's coding may be a good idea.
-         (coding-system-for-write 'utf-8))
+         (coding-system-for-write (python-info-encoding)))
     (with-temp-file temp-file-name
       (insert string)
       (delete-trailing-whitespace))
@@ -2716,16 +2723,28 @@ the python shell:
      \"if __name__ == '__main__'\" block will be removed.
   2. When a subregion of the buffer is sent, it takes care of
      appending extra empty lines so tracebacks are correct.
-  3. Wraps indented regions under an \"if True:\" block so the
+  3. When the region sent is a substring of the current buffer, a
+     coding cookie is added.
+  4. Wraps indented regions under an \"if True:\" block so the
      interpreter evaluates them correctly."
-  (let ((substring (buffer-substring-no-properties start end))
-        (fillstr (make-string (1- (line-number-at-pos start)) ?\n))
-        (toplevel-block-p (save-excursion
-                            (goto-char start)
-                            (or (zerop (line-number-at-pos start))
-                                (progn
-                                  (python-util-forward-comment 1)
-                                  (zerop (current-indentation)))))))
+  (let* ((substring (buffer-substring-no-properties start end))
+         (buffer-substring-p (save-restriction
+                               (widen)
+                               (not (equal (list (point-min) (point-max))
+                                           (list start end)))))
+         (encoding (python-info-encoding))
+         (fillstr (concat
+                   (when buffer-substring-p
+                     (format "# -*- coding: %s -*-\n" encoding))
+                   (make-string
+                    (- (line-number-at-pos start)
+                       (if buffer-substring-p 2 1)) ?\n)))
+         (toplevel-block-p (save-excursion
+                             (goto-char start)
+                             (or (zerop (line-number-at-pos start))
+                                 (progn
+                                   (python-util-forward-comment 1)
+                                   (zerop (current-indentation)))))))
     (with-temp-buffer
       (python-mode)
       (if fillstr (insert fillstr))
@@ -2741,36 +2760,52 @@ the python shell:
                        (when (python-nav-if-name-main)
                          (cons (point)
                                (progn (python-nav-forward-sexp-safe)
+                                      ;; Include ending newline
+                                      (forward-line 1)
                                       (point)))))))
                ;; Oh destructuring bind, how I miss you.
                (if-name-main-start (car if-name-main-start-end))
-               (if-name-main-end (cdr if-name-main-start-end)))
+               (if-name-main-end (cdr if-name-main-start-end))
+               (fillstr (make-string
+                         (- (line-number-at-pos if-name-main-end)
+                            (line-number-at-pos if-name-main-start)) ?\n)))
           (when if-name-main-start-end
             (goto-char if-name-main-start)
             (delete-region if-name-main-start if-name-main-end)
-            (insert
-             (make-string
-              (- (line-number-at-pos if-name-main-end)
-                 (line-number-at-pos if-name-main-start)) ?\n)))))
+            (insert fillstr))))
+      ;; Ensure there's only one coding cookie in the generated string.
+      (goto-char (point-min))
+      (when (looking-at-p (python-rx coding-cookie))
+        (forward-line 1)
+        (when (looking-at-p (python-rx coding-cookie))
+          (delete-region
+           (line-beginning-position) (line-end-position))))
       (buffer-substring-no-properties (point-min) (point-max)))))
 
-(defun python-shell-send-region (start end &optional nomain)
-  "Send the region delimited by START and END to inferior Python process."
-  (interactive "r")
-  (let* ((string (python-shell-buffer-substring start end nomain))
+(defun python-shell-send-region (start end &optional send-main)
+  "Send the region delimited by START and END to inferior Python process.
+When optional argument SEND-MAIN is non-nil, allow execution of
+code inside blocks delimited by \"if __name__== '__main__':\".
+When called interactively SEND-MAIN defaults to nil, unless it's
+called with prefix argument."
+  (interactive "r\nP")
+  (let* ((string (python-shell-buffer-substring start end (not send-main)))
          (process (python-shell-get-or-create-process))
-         (_ (string-match "\\`\n*\\(.*\\)" string)))
-    (message "Sent: %s..." (match-string 1 string))
+         (original-string (buffer-substring-no-properties start end))
+         (_ (string-match "\\`\n*\\(.*\\)" original-string)))
+    (message "Sent: %s..." (match-string 1 original-string))
     (python-shell-send-string string process)))
 
-(defun python-shell-send-buffer (&optional arg)
+(defun python-shell-send-buffer (&optional send-main)
   "Send the entire buffer to inferior Python process.
-With prefix ARG allow execution of code inside blocks delimited
-by \"if __name__== '__main__':\"."
+When optional argument SEND-MAIN is non-nil, allow execution of
+code inside blocks delimited by \"if __name__== '__main__':\".
+When called interactively SEND-MAIN defaults to nil, unless it's
+called with prefix argument."
   (interactive "P")
   (save-restriction
     (widen)
-    (python-shell-send-region (point-min) (point-max) (not arg))))
+    (python-shell-send-region (point-min) (point-max) send-main)))
 
 (defun python-shell-send-defun (arg)
   "Send the current defun to inferior Python process.
@@ -2797,30 +2832,33 @@ When argument ARG is non-nil do not include decorators."
                                          delete)
   "Send FILE-NAME to inferior Python PROCESS.
 If TEMP-FILE-NAME is passed then that file is used for processing
-instead, while internally the shell will continue to use FILE-NAME.
-If DELETE is non-nil, delete the file afterwards."
+instead, while internally the shell will continue to use
+FILE-NAME.  If TEMP-FILE-NAME and DELETE are non-nil, then
+TEMP-FILE-NAME is deleted after evaluation is performed."
   (interactive "fFile to send: ")
   (let* ((process (or process (python-shell-get-or-create-process)))
+         (encoding (with-temp-buffer
+                     (insert-file-contents
+                      (or temp-file-name file-name))
+                     (python-info-encoding)))
+         (file-name (expand-file-name
+                     (or (file-remote-p file-name 'localname)
+                         file-name)))
          (temp-file-name (when temp-file-name
                            (expand-file-name
                             (or (file-remote-p temp-file-name 'localname)
-                                temp-file-name))))
-         (file-name (or (when file-name
-                          (expand-file-name
-                           (or (file-remote-p file-name 'localname)
-                               file-name)))
-                        temp-file-name)))
-    (when (not file-name)
-      (error "If FILE-NAME is nil then TEMP-FILE-NAME must be non-nil"))
+                                temp-file-name)))))
     (python-shell-send-string
      (format
-      (concat "__pyfile = open('''%s''');"
-              "exec(compile(__pyfile.read(), '''%s''', 'exec'));"
-              "__pyfile.close()%s")
-      (or temp-file-name file-name) file-name
-      (if delete (format "; import os; os.remove('''%s''')"
-                         (or temp-file-name file-name))
-        ""))
+      (concat
+       "import codecs, os;"
+       "__pyfile = codecs.open('''%s''', encoding='''%s''');"
+       "__code = __pyfile.read().encode('''%s''');"
+       "__pyfile.close();"
+       (when (and delete temp-file-name)
+         (format "os.remove('''%s''');" temp-file-name))
+       "exec(compile(__code, '''%s''', 'exec'));")
+      (or temp-file-name file-name) encoding encoding file-name)
      process)))
 
 (defun python-shell-switch-to-shell ()
@@ -4120,6 +4158,32 @@ operator."
                 (group (* not-newline))
                 (* whitespace) line-end))
     (string-equal "" (match-string-no-properties 1))))
+
+(defun python-info-encoding-from-cookie ()
+  "Detect current buffer's encoding from its coding cookie.
+Returns the enconding as a symbol."
+  (let ((first-two-lines
+         (save-excursion
+           (save-restriction
+             (widen)
+             (goto-char (point-min))
+             (forward-line 2)
+             (buffer-substring-no-properties
+              (point)
+              (point-min))))))
+    (when (string-match (python-rx coding-cookie) first-two-lines)
+      (intern (match-string-no-properties 1 first-two-lines)))))
+
+(defun python-info-encoding ()
+  "Return encoding for file.
+Try `python-info-encoding-from-cookie', if none is found then
+default to utf-8."
+  ;; If no enconding is defined, then it's safe to use UTF-8: Python 2
+  ;; uses ASCII as default while Python 3 uses UTF-8.  This means that
+  ;; in the worst case escenario python.el will make things work for
+  ;; Python 2 files with unicode data and no encoding defined.
+  (or (python-info-encoding-from-cookie)
+      'utf-8))
 
 
 ;;; Utility functions

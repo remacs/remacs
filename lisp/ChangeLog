@@ -1,3 +1,39 @@
+2014-12-27  Eli Zaretskii  <eliz@gnu.org>
+
+	* language/misc-lang.el (composition-function-table): Add Syriac
+	characters and also ZWJ/ZWNJ.  See
+	http://lists.gnu.org/archive/html/help-gnu-emacs/2014-12/msg00248.html
+	for the details.
+
+2014-12-27  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	python.el: Fix message when sending region.
+
+	* progmodes/python.el (python-shell-send-region): Rename argument
+	send-main from nomain.  Fix message.
+	(python-shell-send-buffer): Rename argument send-main from arg.
+
+2014-12-27  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	python.el: Cleanup temp files even with eval errors.
+
+	* progmodes/python.el (python-shell-send-file): Make file-name
+	mandatory.  Fix temp file removal in the majority of cases.
+
+2014-12-27  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	python.el: Handle file encoding for shell.
+
+	* progmodes/python.el (python-rx-constituents): Add coding-cookie.
+	(python-shell--save-temp-file): Write file with proper encoding.
+	(python-shell-buffer-substring): Add coding cookie for detected
+	encoding to generated content.  Fix blank lines when removing
+	if-name-main block.
+	(python-shell-send-file): Handle file encoding.
+	(python-info-encoding-from-cookie)
+	(python-info-encoding): New functions.
+
+2014-12-27  Michael Albinus  <michael.albinus@gmx.de>
 2014-12-27  Michael Albinus  <michael.albinus@gmx.de>
 
 	* net/tramp-sh.el (tramp-do-copy-or-rename-file-out-of-band):

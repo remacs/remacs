@@ -78,7 +78,8 @@ and Italian.")))
 (set-char-table-range
  composition-function-table
  '(#x600 . #x6FF)
- (list ["[\u0600-\u06FF]+" 0 font-shape-gstring]))
+ (list ["\u200D?[\u0600-\u074F]+[\u200D\u200C]*[\u0600-\u074F]+\u200D?"
+	0 font-shape-gstring]))
 
 (provide 'misc-lang)
 

@@ -1,3 +1,24 @@
+2014-12-27  Eli Zaretskii  <eliz@gnu.org>
+
+	* xdisp.c (set_iterator_to_next) <GET_FROM_STRING>: Limit search in
+	composition_compute_stop_pos to the number of characters in the
+	string.  (Bug#19435)
+	<GET_FROM_BUFFER, GET_FROM_STRING>: Simplify code.
+
+	* composite.c (composition_compute_stop_pos): If no composition
+	was found in a string before ENDPOS, and ENDPOS is the string end,
+	no need to back up to a safe point.
+
+	* dispextern.h (struct it) <end_charpos>: Improve commentary.
+
+2014-12-27  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* nsimage.m (allocInitFromFile:): Initialize bmRep.
+	(dealloc): Release bmRep.
+        (setPixmapData): Make bmRep local so class member is not
+        set (Bug#19133).
+	(setPixmapData): Rename local variable bmRep to avoid compiler
+	warning.
 2014-12-27  Jan Djärv  <jan.h.d@swipnet.se>
 
 	* xterm.c (do_ewmh_fullscreen): Don't remove maximized_horz/vert

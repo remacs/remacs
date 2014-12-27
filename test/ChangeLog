@@ -1,9 +1,29 @@
 2014-12-27  Fabián Ezequiel Gallina  <fgallina@gnu.org>
 
+	* automated/python-tests.el (python-shell-buffer-substring-1)
+	(python-shell-buffer-substring-2, python-shell-buffer-substring-3)
+	(python-shell-buffer-substring-4, python-shell-buffer-substring-5)
+	(python-shell-buffer-substring-6, python-shell-buffer-substring-7)
+	(python-shell-buffer-substring-8)
+	(python-info-encoding-from-cookie-1)
+	(python-info-encoding-from-cookie-2)
+	(python-info-encoding-from-cookie-3)
+	(python-info-encoding-from-cookie-4)
+	(python-info-encoding-from-cookie-5)
+	(python-info-encoding-from-cookie-6)
+	(python-info-encoding-from-cookie-7, python-info-encoding-1)
+	(python-info-encoding-2): New tests.
+
+2014-12-27  Michael Albinus  <michael.albinus@gmx.de>
+
+	* automated/tramp-tests.el (tramp-test17-insert-directory): Do not
+	expect a given order of "." and "..".
+
+2014-12-27  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
 	* automated/python-tests.el (python-indent-electric-colon-2)
 	(python-indent-electric-colon-3): New tests.
 
-2014-12-27  João Távora  <joaotavora@gmail.com>
 2014-12-27  João Távora  <joaotavora@gmail.com>
 
 	* automated/electric-tests.el (autowrapping-7): Tests for
@@ -14,7 +34,6 @@
 	* automated/flymake/warnpred/test.pl: Tweak format, since the
 	previous one seems to have stopped giving a warning with perl 5.20.1.
 
-2014-12-27  Fabián Ezequiel Gallina  <fgallina@gnu.org>
 2014-12-26  Fabián Ezequiel Gallina  <fgallina@gnu.org>
 
 	* automated/python-tests.el (python-shell-get-process-name-1)

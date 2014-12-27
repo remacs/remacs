@@ -2446,6 +2446,198 @@ and `python-shell-interpreter-args' in the new shell buffer."
                            "^\\(o\\.t \\|\\)")))
       (ignore-errors (delete-file startup-file)))))
 
+(ert-deftest python-shell-buffer-substring-1 ()
+  "Selecting a substring of the whole buffer must match its contents."
+  (python-tests-with-temp-buffer
+   "
+class Foo(models.Model):
+    pass
+
+
+class Bar(models.Model):
+    pass
+"
+   (should (string= (buffer-string)
+                    (python-shell-buffer-substring (point-min) (point-max))))))
+
+(ert-deftest python-shell-buffer-substring-2 ()
+  "Main block should be removed if NOMAIN is non-nil."
+  (python-tests-with-temp-buffer
+   "
+class Foo(models.Model):
+    pass
+
+class Bar(models.Model):
+    pass
+
+if __name__ == \"__main__\":
+    foo = Foo()
+    print (foo)
+"
+   (should (string= (python-shell-buffer-substring (point-min) (point-max) t)
+                    "
+class Foo(models.Model):
+    pass
+
+class Bar(models.Model):
+    pass
+
+
+
+
+"))))
+
+(ert-deftest python-shell-buffer-substring-3 ()
+  "Main block should be removed if NOMAIN is non-nil."
+  (python-tests-with-temp-buffer
+   "
+class Foo(models.Model):
+    pass
+
+if __name__ == \"__main__\":
+    foo = Foo()
+    print (foo)
+
+class Bar(models.Model):
+    pass
+"
+   (should (string= (python-shell-buffer-substring (point-min) (point-max) t)
+                    "
+class Foo(models.Model):
+    pass
+
+
+
+
+
+class Bar(models.Model):
+    pass
+"))))
+
+(ert-deftest python-shell-buffer-substring-4 ()
+  "Coding cookie should be added for substrings."
+  (python-tests-with-temp-buffer
+   "# coding: latin-1
+
+class Foo(models.Model):
+    pass
+
+if __name__ == \"__main__\":
+    foo = Foo()
+    print (foo)
+
+class Bar(models.Model):
+    pass
+"
+   (should (string= (python-shell-buffer-substring
+                     (python-tests-look-at "class Foo(models.Model):")
+                     (progn (python-nav-forward-sexp) (point)))
+                    "# -*- coding: latin-1 -*-
+
+class Foo(models.Model):
+    pass"))))
+
+(ert-deftest python-shell-buffer-substring-5 ()
+  "The proper amount of blank lines is added for a substring."
+  (python-tests-with-temp-buffer
+   "# coding: latin-1
+
+class Foo(models.Model):
+    pass
+
+if __name__ == \"__main__\":
+    foo = Foo()
+    print (foo)
+
+class Bar(models.Model):
+    pass
+"
+   (should (string= (python-shell-buffer-substring
+                     (python-tests-look-at "class Bar(models.Model):")
+                     (progn (python-nav-forward-sexp) (point)))
+                    "# -*- coding: latin-1 -*-
+
+
+
+
+
+
+
+
+class Bar(models.Model):
+    pass"))))
+
+(ert-deftest python-shell-buffer-substring-6 ()
+  "Handle substring with coding cookie in the second line."
+  (python-tests-with-temp-buffer
+   "
+# coding: latin-1
+
+class Foo(models.Model):
+    pass
+
+if __name__ == \"__main__\":
+    foo = Foo()
+    print (foo)
+
+class Bar(models.Model):
+    pass
+"
+   (should (string= (python-shell-buffer-substring
+                     (python-tests-look-at "# coding: latin-1")
+                     (python-tests-look-at "if __name__ == \"__main__\":"))
+                    "# -*- coding: latin-1 -*-
+
+
+class Foo(models.Model):
+    pass
+
+"))))
+
+(ert-deftest python-shell-buffer-substring-7 ()
+  "Ensure first coding cookie gets precedence."
+  (python-tests-with-temp-buffer
+   "# coding: utf-8
+# coding: latin-1
+
+class Foo(models.Model):
+    pass
+
+if __name__ == \"__main__\":
+    foo = Foo()
+    print (foo)
+
+class Bar(models.Model):
+    pass
+"
+   (should (string= (python-shell-buffer-substring
+                     (python-tests-look-at "# coding: latin-1")
+                     (python-tests-look-at "if __name__ == \"__main__\":"))
+                    "# -*- coding: utf-8 -*-
+
+
+class Foo(models.Model):
+    pass
+
+"))))
+
+(ert-deftest python-shell-buffer-substring-8 ()
+  "Ensure first coding cookie gets precedence when sending whole buffer."
+  (python-tests-with-temp-buffer
+   "# coding: utf-8
+# coding: latin-1
+
+class Foo(models.Model):
+    pass
+"
+   (should (string= (python-shell-buffer-substring (point-min) (point-max))
+                    "# coding: utf-8
+
+
+class Foo(models.Model):
+    pass
+"))))
+
 
 ;;; Shell completion
 
@@ -3759,6 +3951,85 @@ foo = True  # another comment
    (should (not (python-info-current-line-empty-p)))
    (forward-line 1)
    (should (python-info-current-line-empty-p))))
+
+(ert-deftest python-info-encoding-from-cookie-1 ()
+  "Should detect it on first line."
+  (python-tests-with-temp-buffer
+   "# coding=latin-1
+
+foo = True  # another comment
+"
+   (should (eq (python-info-encoding-from-cookie) 'latin-1))))
+
+(ert-deftest python-info-encoding-from-cookie-2 ()
+  "Should detect it on second line."
+  (python-tests-with-temp-buffer
+   "
+# coding=latin-1
+
+foo = True  # another comment
+"
+   (should (eq (python-info-encoding-from-cookie) 'latin-1))))
+
+(ert-deftest python-info-encoding-from-cookie-3 ()
+  "Should not be detected on third line (and following ones)."
+  (python-tests-with-temp-buffer
+   "
+
+# coding=latin-1
+foo = True  # another comment
+"
+   (should (not (python-info-encoding-from-cookie)))))
+
+(ert-deftest python-info-encoding-from-cookie-4 ()
+  "Should detect Emacs style."
+  (python-tests-with-temp-buffer
+   "# -*- coding: latin-1 -*-
+
+foo = True  # another comment"
+   (should (eq (python-info-encoding-from-cookie) 'latin-1))))
+
+(ert-deftest python-info-encoding-from-cookie-5 ()
+  "Should detect Vim style."
+  (python-tests-with-temp-buffer
+   "# vim: set fileencoding=latin-1 :
+
+foo = True  # another comment"
+   (should (eq (python-info-encoding-from-cookie) 'latin-1))))
+
+(ert-deftest python-info-encoding-from-cookie-6 ()
+  "First cookie wins."
+  (python-tests-with-temp-buffer
+   "# -*- coding: iso-8859-1 -*-
+# vim: set fileencoding=latin-1 :
+
+foo = True  # another comment"
+   (should (eq (python-info-encoding-from-cookie) 'iso-8859-1))))
+
+(ert-deftest python-info-encoding-from-cookie-7 ()
+  "First cookie wins."
+  (python-tests-with-temp-buffer
+   "# vim: set fileencoding=latin-1 :
+# -*- coding: iso-8859-1 -*-
+
+foo = True  # another comment"
+   (should (eq (python-info-encoding-from-cookie) 'latin-1))))
+
+(ert-deftest python-info-encoding-1 ()
+  "Should return the detected encoding from cookie."
+  (python-tests-with-temp-buffer
+   "# vim: set fileencoding=latin-1 :
+
+foo = True  # another comment"
+   (should (eq (python-info-encoding) 'latin-1))))
+
+(ert-deftest python-info-encoding-2 ()
+  "Should default to utf-8."
+  (python-tests-with-temp-buffer
+   "# No encoding for you
+
+foo = True  # another comment"
+   (should (eq (python-info-encoding) 'utf-8))))
 
 
 ;;; Utility functions
