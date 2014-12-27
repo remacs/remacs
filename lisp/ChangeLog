@@ -1,5 +1,8 @@
 2014-12-27  Dmitry Gutov  <dgutov@yandex.ru>
 
+	* progmodes/elisp-mode.el (elisp--xref-identifier-file):
+	Skip features that have no sources.
+
 	* simple.el (execute-extended-command):
 	When `suggest-key-bindings' is nil, don't.
 

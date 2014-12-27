@@ -578,7 +578,8 @@ It can be quoted, or be inside a quoted form."
                (or (symbol-file sym 'defvar)
                    (help-C-file-name sym 'var))))
     (`feature (when (featurep sym)
-                (find-library-name (symbol-name sym))))
+                (ignore-errors
+                  (find-library-name (symbol-name sym)))))
     (`defface (when (facep sym)
                 (symbol-file sym 'defface)))))
 
