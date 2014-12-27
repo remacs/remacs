@@ -237,7 +237,12 @@ displays the buffer specified by BUFFER-OR-NAME before running BODY."
 	      (standard-output ,buffer)
 	      ,window ,value)
 	 (with-current-buffer ,buffer
-	   (setq ,window (temp-buffer-window-show ,buffer ,vaction)))
+	   (setq ,window (temp-buffer-window-show
+			  ,buffer
+			  ;; Remove window-height when it's handled below.
+			  (if (functionp (cdr (assq 'window-height (cdr ,vaction))))
+			      (assq-delete-all 'window-height (copy-sequence ,vaction))
+			    ,vaction))))
 
 	 (let ((inhibit-read-only t)
 	       (inhibit-modification-hooks t))

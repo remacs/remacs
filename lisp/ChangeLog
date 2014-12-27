@@ -1,5 +1,15 @@
 2014-12-27  Juri Linkov  <juri@linkov.net>
 
+	* minibuffer.el (minibuffer-completion-help):
+	Use shrink-window-if-larger-than-buffer in window-height
+	when temp-buffer-resize-mode is nil.
+
+	* window.el (with-displayed-buffer-window): Remove window-height
+	from the action alist in the temp-buffer-window-show call
+	when window-height is handled explicitly afterwards (bug#19355).
+
+2014-12-27  Juri Linkov  <juri@linkov.net>
+
 	Support subdirectories when saving places in dired.
 	* saveplace.el (toggle-save-place, save-place-to-alist)
 	(save-places-to-alist, save-place-dired-hook):
