@@ -1,5 +1,12 @@
 2014-12-27  Fabián Ezequiel Gallina  <fgallina@gnu.org>
 
+	python.el: Cleanup temp files even with eval errors.
+
+	* progmodes/python.el (python-shell-send-file): Make file-name
+	mandatory.  Fix temp file removal in the majority of cases.
+
+2014-12-27  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
 	python.el: Handle file encoding for shell.
 
 	* progmodes/python.el (python-rx-constituents): Add coding-cookie.
