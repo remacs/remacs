@@ -740,6 +740,39 @@ def b()
    (python-tests-self-insert ":")
    (should (= (current-indentation) 0))))
 
+(ert-deftest python-indent-electric-colon-2 ()
+  "Test indentation case for dedenter."
+  (python-tests-with-temp-buffer
+   "
+if do:
+    something()
+    else
+"
+   (python-tests-look-at "else")
+   (goto-char (line-end-position))
+   (python-tests-self-insert ":")
+   (should (= (current-indentation) 0))))
+
+(ert-deftest python-indent-electric-colon-3 ()
+  "Test indentation case for multi-line dedenter."
+  (python-tests-with-temp-buffer
+   "
+if do:
+    something()
+    elif (this
+          and
+          that)
+"
+   (python-tests-look-at "that)")
+   (goto-char (line-end-position))
+   (python-tests-self-insert ":")
+   (python-tests-look-at "elif" -1)
+   (should (= (current-indentation) 0))
+   (python-tests-look-at "and")
+   (should (= (current-indentation) 6))
+   (python-tests-look-at "that)")
+   (should (= (current-indentation) 6))))
+
 (ert-deftest python-indent-region-1 ()
   "Test indentation case from Bug#18843."
   (let ((contents "

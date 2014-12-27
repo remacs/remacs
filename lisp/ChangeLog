@@ -1,5 +1,50 @@
 2014-12-27  Michael Albinus  <michael.albinus@gmx.de>
 
+	* net/tramp-sh.el (tramp-do-copy-or-rename-file-out-of-band):
+	Use `tramp-rsh-end-of-line', it ought to be more robust.
+
+2014-12-27  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* progmodes/js.el (js-syntax-propertize): "return" can't be divided
+	(bug#19397).
+
+2014-12-27  Michael Albinus  <michael.albinus@gmx.de>
+
+	* net/tramp.el (tramp-read-passwd): Ignore errors from `auth-source-*'.
+
+	* net/tramp-sh.el (tramp-do-copy-or-rename-file-out-of-band): Use "\n"
+	as end-of-line delimeter for passwords, when running on MS Windows.
+
+2014-12-27  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* progmodes/sh-script.el (sh-set-shell): Don't change the global value
+	of indent-line-function (bug#19433).
+
+2014-12-27  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	Fix line numbers on Python shell.
+	* progmodes/python.el (python-shell--save-temp-file): Do not
+	append coding cookie.
+	(python-shell-send-string): Generalize for
+	python-shell-send-region.
+	(python--use-fake-loc): Delete var.
+	(python-shell-buffer-substring): Cleanup fake-loc logic.
+	(python-shell-send-region): Remove fake-loc logic, simplify.
+
+2014-12-27  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	* progmodes/python.el (python-indent-post-self-insert-function):
+	Make colon to re-indent only for dedenters, handling
+	multiline-statements gracefully.
+
+2014-12-27  Michael Albinus  <michael.albinus@gmx.de>
+
+	* net/tramp.el (tramp-handle-insert-file-contents):
+	Set `find-file-not-found-functions' in case of errors.  (Bug#18623)
+
+2014-12-27  Michael Albinus  <michael.albinus@gmx.de>
+2014-12-27  Michael Albinus  <michael.albinus@gmx.de>
+
 	* net/tramp-sh.el (tramp-send-command-and-read): New optional
 	arg MARKER.
 	(tramp-get-remote-path): Use it.

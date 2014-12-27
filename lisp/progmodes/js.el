@@ -1673,7 +1673,7 @@ This performs fontification according to `js--class-styles'."
     ;; We can probably just add +, -, !, <, >, %, ^, ~, |, &, ?, : at which
     ;; point I think only * and / would be missing which could also be added,
     ;; but need care to avoid affecting the // and */ comment markers.
-    ("\\(?:^\\|[=([{,:;]\\)\\(?:[ \t]\\)*\\(/\\)[^/*]"
+    ("\\(?:^\\|[=([{,:;]\\|\\_<return\\_>\\)\\(?:[ \t]\\)*\\(/\\)[^/*]"
      (1 (ignore
 	 (forward-char -1)
          (when (or (not (memq (char-after (match-beginning 0)) '(?\s ?\t)))

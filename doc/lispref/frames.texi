@@ -106,6 +106,7 @@ for @code{framep} above.
 
 @node Creating Frames
 @section Creating Frames
+@cindex frame creation
 
 To create a new frame, call the function @code{make-frame}.
 
@@ -484,6 +485,7 @@ parameter values to frames that will be created henceforth.
 
 @node Initial Parameters
 @subsection Initial Frame Parameters
+@cindex parameters of initial frame
 
 You can specify the parameters for the initial startup frame by
 setting @code{initial-frame-alist} in your init file (@pxref{Init
@@ -623,6 +625,7 @@ named, this parameter will be @code{nil}.
 @node Position Parameters
 @subsubsection Position Parameters
 @cindex window position on display
+@cindex frame position
 
   Position parameters' values are normally measured in pixels, but on
 text terminals they count characters or lines instead.
@@ -833,6 +836,8 @@ integer).  @xref{Line Height}, for more information.
 
 @node Buffer Parameters
 @subsubsection Buffer Parameters
+@cindex frame, which buffers to display
+@cindex buffers to display on frame
 
   These frame parameters, meaningful on all kinds of terminals, deal
 with which buffers have been, or should, be displayed in the frame.
@@ -1663,6 +1668,7 @@ is used whenever that frame is selected.  If the frame has a minibuffer,
 you can get it with @code{minibuffer-window} (@pxref{Definition of
 minibuffer-window}).
 
+@cindex frame without a minibuffer
 However, you can also create a frame with no minibuffer.  Such a frame
 must use the minibuffer window of some other frame.  When you create the
 frame, you can explicitly specify the minibuffer window to use (in some
@@ -2070,6 +2076,7 @@ allows to know if the pointer has been hidden.
 
 @node Pop-Up Menus
 @section Pop-Up Menus
+@cindex menus, popup
 
   A Lisp program can pop up a menu so that the user can choose an
 alternative with the mouse.  On a text terminal, if the mouse is not
@@ -2334,6 +2341,7 @@ clipboard as empty.
 
 @node Drag and Drop
 @section Drag and Drop
+@cindex drag and drop
 
 @vindex x-dnd-test-function
 @vindex x-dnd-known-types

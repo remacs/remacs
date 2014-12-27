@@ -9230,13 +9230,9 @@ do_ewmh_fullscreen (struct frame *f)
       switch (f->want_fullscreen)
         {
         case FULLSCREEN_BOTH:
-          if (cur == FULLSCREEN_WIDTH || cur == FULLSCREEN_MAXIMIZED
-              || cur == FULLSCREEN_HEIGHT)
-            set_wm_state (frame, false,
-			  dpyinfo->Xatom_net_wm_state_maximized_horz,
-                          dpyinfo->Xatom_net_wm_state_maximized_vert);
-          set_wm_state (frame, true,
-			dpyinfo->Xatom_net_wm_state_fullscreen, None);
+          if (cur != FULLSCREEN_BOTH)
+            set_wm_state (frame, true, dpyinfo->Xatom_net_wm_state_fullscreen,
+                          None);
           break;
         case FULLSCREEN_WIDTH:
           if (cur == FULLSCREEN_BOTH || cur == FULLSCREEN_HEIGHT

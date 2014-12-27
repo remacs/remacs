@@ -1252,6 +1252,8 @@ are the opposite of what they are in those other functions.
 
 @node Recombining Windows
 @section Recombining Windows
+@cindex recombining windows
+@cindex windows, recombining
 
 When deleting the last sibling of a window @var{W}, its parent window
 is deleted too, with @var{W} replacing it in the window tree.  This

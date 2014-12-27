@@ -1214,7 +1214,8 @@ ways to do it.  The added function is also called a piece of @emph{advice}.
 @end menu
 
 @node Core Advising Primitives
-@subsection Primitives to manipulate advice
+@subsection Primitives to manipulate advices
+@cindex advice, add and remove
 
 @defmac add-function where place function &optional props
 This macro is the handy way to add the advice @var{function} to the function
@@ -1316,6 +1317,7 @@ the current prefix argument.
 
 @node Advising Named Functions
 @subsection Advising Named Functions
+@cindex advising named functions
 
 A common use of advice is for named functions and macros.
 You could just use @code{add-function} as in:
@@ -1508,6 +1510,7 @@ More specifically, the composition of the two functions behaves like:
 
 @node Porting old advice
 @subsection Adapting code using the old defadvice
+@cindex old advices, porting
 
 A lot of code uses the old @code{defadvice} mechanism, which is largely made
 obsolete by the new @code{advice-add}, whose implementation and semantics is

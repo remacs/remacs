@@ -1206,12 +1206,18 @@ the line will be re-indented automatically if needed."
            (eolp)
            ;; Avoid re-indenting on extra colon
            (not (equal ?: (char-before (1- (point)))))
-           (not (python-syntax-comment-or-string-p))
-           ;; Never re-indent at beginning of defun
-           (not (save-excursion
-                  (python-nav-beginning-of-statement)
-                  (python-info-looking-at-beginning-of-defun))))
-      (python-indent-line)))))
+           (not (python-syntax-comment-or-string-p)))
+      ;; Just re-indent dedenters
+      (let ((dedenter-pos (python-info-dedenter-statement-p))
+            (current-pos (point)))
+        (when dedenter-pos
+          (save-excursion
+            (goto-char dedenter-pos)
+            (python-indent-line)
+            (unless (= (line-number-at-pos dedenter-pos)
+                       (line-number-at-pos current-pos))
+              ;; Reindent region if this is a multiline statement
+              (python-indent-region dedenter-pos current-pos)))))))))
 
 
 ;;; Navigation
@@ -2608,9 +2614,12 @@ there for compatibility with CEDET.")
               (concat (file-remote-p default-directory) "/tmp")
             temporary-file-directory))
          (temp-file-name (make-temp-file "py"))
+         ;; XXX: Python's built-in compile function accepts utf-8 as
+         ;; input so there's no need to enforce a coding cookie.  In
+         ;; the future making `coding-system-for-write' match the
+         ;; current buffer's coding may be a good idea.
          (coding-system-for-write 'utf-8))
     (with-temp-file temp-file-name
-      (insert "# -*- coding: utf-8 -*-\n") ;Not needed for Python-3.
       (insert string)
       (delete-trailing-whitespace))
     temp-file-name))
@@ -2620,8 +2629,9 @@ there for compatibility with CEDET.")
   (interactive "sPython command: ")
   (let ((process (or process (python-shell-get-or-create-process))))
     (if (string-match ".\n+." string)   ;Multiline.
-        (let* ((temp-file-name (python-shell--save-temp-file string)))
-          (python-shell-send-file temp-file-name process temp-file-name t))
+        (let* ((temp-file-name (python-shell--save-temp-file string))
+               (file-name (or (buffer-file-name) temp-file-name)))
+          (python-shell-send-file file-name process temp-file-name t))
       (comint-send-string process string)
       (when (or (not (string-match "\n\\'" string))
                 (string-match "\n[ \t].*\n?\\'" string))
@@ -2697,12 +2707,6 @@ Returns the output.  See `python-shell-send-string-no-output'."
 (define-obsolete-function-alias
   'python-send-string 'python-shell-internal-send-string "24.3")
 
-(defvar python--use-fake-loc nil
-  "If non-nil, use `compilation-fake-loc' to trace errors back to the buffer.
-If nil, regions of text are prepended by the corresponding number of empty
-lines and Python is told to output error messages referring to the whole
-source file.")
-
 (defun python-shell-buffer-substring (start end &optional nomain)
   "Send buffer substring from START to END formatted for shell.
 This is a wrapper over `buffer-substring' that takes care of
@@ -2715,8 +2719,7 @@ the python shell:
   3. Wraps indented regions under an \"if True:\" block so the
      interpreter evaluates them correctly."
   (let ((substring (buffer-substring-no-properties start end))
-        (fillstr (unless python--use-fake-loc
-                   (make-string (1- (line-number-at-pos start)) ?\n)))
+        (fillstr (make-string (1- (line-number-at-pos start)) ?\n))
         (toplevel-block-p (save-excursion
                             (goto-char start)
                             (or (zerop (line-number-at-pos start))
@@ -2728,11 +2731,6 @@ the python shell:
       (if fillstr (insert fillstr))
       (insert substring)
       (goto-char (point-min))
-      (unless python--use-fake-loc
-        ;; python-shell--save-temp-file adds an extra coding line, which would
-        ;; throw off the line-counts, so let's try to compensate here.
-        (if (looking-at "[ \t]*[#\n]")
-            (delete-region (point) (line-beginning-position 2))))
       (when (not toplevel-block-p)
         (insert "if True:")
         (delete-region (point) (line-end-position)))
@@ -2756,26 +2754,14 @@ the python shell:
                  (line-number-at-pos if-name-main-start)) ?\n)))))
       (buffer-substring-no-properties (point-min) (point-max)))))
 
-(declare-function compilation-fake-loc "compile"
-                  (marker file &optional line col))
-
 (defun python-shell-send-region (start end &optional nomain)
   "Send the region delimited by START and END to inferior Python process."
   (interactive "r")
-  (let* ((python--use-fake-loc
-          (or python--use-fake-loc (not buffer-file-name)))
-         (string (python-shell-buffer-substring start end nomain))
+  (let* ((string (python-shell-buffer-substring start end nomain))
          (process (python-shell-get-or-create-process))
          (_ (string-match "\\`\n*\\(.*\\)" string)))
     (message "Sent: %s..." (match-string 1 string))
-    (let* ((temp-file-name (python-shell--save-temp-file string))
-           (file-name (or (buffer-file-name) temp-file-name)))
-      (python-shell-send-file file-name process temp-file-name t)
-      (unless python--use-fake-loc
-        (with-current-buffer (process-buffer process)
-          (compilation-fake-loc (copy-marker start) temp-file-name
-                                2)) ;; Not 1, because of the added coding line.
-        ))))
+    (python-shell-send-string string process)))
 
 (defun python-shell-send-buffer (&optional arg)
   "Send the entire buffer to inferior Python process.
