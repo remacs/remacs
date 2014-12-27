@@ -2624,6 +2624,10 @@ instead, while internally the shell will continue to use FILE-NAME.
 If DELETE is non-nil, delete the file afterwards."
   (interactive "fFile to send: ")
   (let* ((process (or process (python-shell-get-or-create-process)))
+         (encoding (with-temp-buffer
+                     (insert-file-contents
+                      (or temp-file-name file-name))
+                     (python-info-encoding)))
          (temp-file-name (when temp-file-name
                            (expand-file-name
                             (or (file-remote-p temp-file-name 'localname)
@@ -2632,12 +2636,7 @@ If DELETE is non-nil, delete the file afterwards."
                           (expand-file-name
                            (or (file-remote-p file-name 'localname)
                                file-name)))
-                        temp-file-name))
-         (encoding
-          (with-temp-buffer
-            (insert-file-contents
-             (or temp-file-name file-name))
-            (python-info-encoding))))
+                        temp-file-name)))
     (when (not file-name)
       (error "If FILE-NAME is nil then TEMP-FILE-NAME must be non-nil"))
     (python-shell-send-string
