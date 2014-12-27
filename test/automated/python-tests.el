@@ -2584,6 +2584,13 @@ class Foo(models.Model):
 
 ;;; Shell completion
 
+(ert-deftest python-shell-completion-native-interpreter-disabled-p-1 ()
+  (let* ((python-shell-completion-native-disabled-interpreters (list "pypy"))
+         (python-shell-interpreter "/some/path/to/bin/pypy"))
+    (should (python-shell-completion-native-interpreter-disabled-p))))
+
+
+
 
 ;;; PDB Track integration
 

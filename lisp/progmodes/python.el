@@ -69,7 +69,7 @@
 ;; Besides that only the standard CPython (2.x and 3.x) shell and
 ;; IPython are officially supported out of the box, the interaction
 ;; should support any other readline based Python shells as well
-;; (e.g. Jython and Pypy have been reported to work).  You can change
+;; (e.g. Jython and PyPy have been reported to work).  You can change
 ;; your default interpreter and commandline arguments by setting the
 ;; `python-shell-interpreter' and `python-shell-interpreter-args'
 ;; variables.  This example enables IPython globally:
@@ -119,18 +119,24 @@
 ;; modify its behavior.
 
 ;; Shell completion: hitting tab will try to complete the current
-;; word.  Shell completion is implemented in such way that if you
-;; change the `python-shell-interpreter' it should be possible to
-;; integrate custom logic to calculate completions.  To achieve this
-;; you just need to set `python-shell-completion-setup-code' and
-;; `python-shell-completion-string-code'.  The default provided code,
-;; enables autocompletion for both CPython and IPython (and ideally
-;; any readline based Python shell).  This code depends on the
-;; readline module, so if you are using some Operating System that
-;; bundles Python without it (like Windows), installing pyreadline
-;; from URL `http://ipython.scipy.org/moin/PyReadline/Intro' should
-;; suffice.  To troubleshoot why you are not getting any completions
-;; you can try the following in your Python shell:
+;; word.  The two built-in mechanisms depend on Python's readline
+;; module: the "native" completion is tried first and is activated
+;; when `python-shell-completion-native-enable' is non-nil, the
+;; current `python-shell-interpreter' is not a member of the
+;; `python-shell-completion-native-disabled-interpreters' variable and
+;; `python-shell-completion-native-setup' succeeds; the "fallback" or
+;; "legacy" mechanism works by executing Python code in the background
+;; and enables auto-completion for shells that do not support
+;; receiving escape sequences (with some limitations, i.e. completion
+;; in blocks does not work).  The code executed for the "fallback"
+;; completion can be found in `python-shell-completion-setup-code' and
+;; `python-shell-completion-string-code' variables.  Their default
+;; values enable completion for both CPython and IPython, and probably
+;; any readline based shell (it's known to work with PyPy).  If your
+;; Python installation lacks readline (like CPython for Windows),
+;; installing pyreadline (URL `http://ipython.org/pyreadline.html')
+;; should suffice.  To troubleshoot why you are not getting any
+;; completions, you can try the following in your Python shell:
 
 ;; >>> import readline, rlcompleter
 
@@ -256,6 +262,7 @@
 (defvar outline-heading-end-regexp)
 
 (autoload 'comint-mode "comint")
+(autoload 'help-function-arglist "help-fns")
 
 ;;;###autoload
 (add-to-list 'auto-mode-alist (cons (purecopy "\\.py\\'")  'python-mode))
@@ -2997,6 +3004,194 @@ the full statement in the case of imports."
   "25.1"
   "Completion string code must work for (i)pdb.")
 
+(defcustom python-shell-completion-native-disabled-interpreters
+  ;; PyPy's readline cannot handle some escape sequences yet.
+  (list "pypy")
+  "List of disabled interpreters.
+When a match is found, native completion is disabled."
+  :type '(repeat string))
+
+(defcustom python-shell-completion-native-enable t
+  "Enable readline based native completion."
+  :type 'boolean)
+
+(defcustom python-shell-completion-native-output-timeout 0.01
+  "Time in seconds to wait for completion output before giving up."
+  :type 'float)
+
+(defvar python-shell-completion-native-redirect-buffer
+  " *Python completions redirect*"
+  "Buffer to be used to redirect output of readline commands.")
+
+(defun python-shell-completion-native-interpreter-disabled-p ()
+  "Return non-nil if interpreter has native completion disabled."
+  (when python-shell-completion-native-disabled-interpreters
+    (string-match
+     (regexp-opt python-shell-completion-native-disabled-interpreters)
+     (file-name-nondirectory python-shell-interpreter))))
+
+(defun python-shell-completion-native-try ()
+  "Return non-nil if can trigger native completion."
+  (let ((python-shell-completion-native-enable t))
+    (python-shell-completion-native-get-completions
+     (get-buffer-process (current-buffer))
+     nil "int")))
+
+(defun python-shell-completion-native-setup ()
+  "Try to setup native completion, return non-nil on success."
+  (let ((process (python-shell-get-process)))
+    (python-shell-send-string
+     (funcall
+      'mapconcat
+      #'identity
+      (list
+       "try:"
+       "    import readline, rlcompleter"
+       ;; Remove parens on callables as it breaks completion on
+       ;; arguments (e.g. str(Ari<tab>)).
+       "    class Completer(rlcompleter.Completer):"
+       "        def _callable_postfix(self, val, word):"
+       "            return word"
+       "    readline.set_completer(Completer().complete)"
+       "    if readline.__doc__ and 'libedit' in readline.__doc__:"
+       "        readline.parse_and_bind('bind ^I rl_complete')"
+       "    else:"
+       "        readline.parse_and_bind('tab: complete')"
+       "    print ('python.el: readline is available')"
+       "except:"
+       "    print ('python.el: readline not available')")
+      "\n")
+     process)
+    (python-shell-accept-process-output process)
+    (when (save-excursion
+            (re-search-backward
+             (regexp-quote "python.el: readline is available") nil t 1))
+      (python-shell-completion-native-try))))
+
+(defun python-shell-completion-native-turn-off (&optional msg)
+  "Turn off shell native completions.
+With argument MSG show deactivation message."
+  (interactive "p")
+  (python-shell-with-shell-buffer
+    (set (make-local-variable 'python-shell-completion-native-enable) nil)
+    (when msg
+      (message "Shell native completion is disabled, using fallback"))))
+
+(defun python-shell-completion-native-turn-on (&optional msg)
+  "Turn on shell native completions.
+With argument MSG show deactivation message."
+  (interactive "p")
+  (python-shell-with-shell-buffer
+    (set (make-local-variable 'python-shell-completion-native-enable) t)
+    (python-shell-completion-native-turn-on-maybe msg)))
+
+(defun python-shell-completion-native-turn-on-maybe (&optional msg)
+  "Turn on native completions if enabled and available.
+With argument MSG show activation/deactivation message."
+  (interactive "p")
+  (python-shell-with-shell-buffer
+    (when python-shell-completion-native-enable
+      (cond
+       ((python-shell-completion-native-interpreter-disabled-p)
+        (python-shell-completion-native-turn-off msg))
+       ((python-shell-completion-native-setup)
+        (when msg
+          (message "Shell native completion is enabled.")))
+       (t (lwarn
+           '(python python-shell-completion-native-turn-on-maybe)
+           :warning
+           (concat
+            "Your `python-shell-interpreter' doesn't seem to "
+            "support readline, yet `python-shell-completion-native' "
+            (format "was `t' and %S is not part of the "
+                    (file-name-nondirectory python-shell-interpreter))
+            "`python-shell-completion-native-disabled-interpreters' "
+            "list.  Native completions have been disabled locally. "))
+          (python-shell-completion-native-turn-off msg))))))
+
+(defun python-shell-completion-native-turn-on-maybe-with-msg ()
+  "Like `python-shell-completion-native-turn-on-maybe' but force messages."
+  (python-shell-completion-native-turn-on-maybe t))
+
+(add-hook 'inferior-python-mode-hook
+          #'python-shell-completion-native-turn-on-maybe-with-msg)
+
+(defun python-shell-completion-native-toggle (&optional msg)
+  "Toggle shell native completion.
+With argument MSG show activation/deactivation message."
+  (interactive "p")
+  (python-shell-with-shell-buffer
+    (if python-shell-completion-native-enable
+        (python-shell-completion-native-turn-off msg)
+      (python-shell-completion-native-turn-on msg))
+    python-shell-completion-native-enable))
+
+(defun python-shell-completion-native-get-completions (process import input)
+  "Get completions using native readline for PROCESS.
+When IMPORT is non-nil takes precedence over INPUT for
+completion."
+  (when (and python-shell-completion-native-enable
+             (python-util-comint-last-prompt)
+             (>= (point) (cdr (python-util-comint-last-prompt))))
+    (let* ((input (or import input))
+           (original-filter-fn (process-filter process))
+           (redirect-buffer (get-buffer-create
+                             python-shell-completion-native-redirect-buffer))
+           (separators (python-rx
+                        (or whitespace open-paren close-paren)))
+           (trigger "\t\t\t")
+           (new-input (concat input trigger))
+           (input-length
+            (save-excursion
+              (+ (- (point-max) (comint-bol)) (length new-input))))
+           (delete-line-command (make-string input-length ?\b))
+           (input-to-send (concat new-input delete-line-command)))
+      ;; Ensure restoring the process filter, even if the user quits
+      ;; or there's some other error.
+      (unwind-protect
+          (with-current-buffer redirect-buffer
+            ;; Cleanup the redirect buffer
+            (delete-region (point-min) (point-max))
+            ;; Mimic `comint-redirect-send-command', unfortunately it
+            ;; can't be used here because it expects a newline in the
+            ;; command and that's exactly what we are trying to avoid.
+            (let ((comint-redirect-echo-input nil)
+                  (comint-redirect-verbose nil)
+                  (comint-redirect-perform-sanity-check nil)
+                  (comint-redirect-insert-matching-regexp nil)
+                  ;; Feed it some regex that will never match.
+                  (comint-redirect-finished-regexp "^\\'$")
+                  (comint-redirect-output-buffer redirect-buffer))
+              ;; Compatibility with Emacs 24.x.  Comint changed and
+              ;; now `comint-redirect-filter' gets 3 args.  This
+              ;; checks which version of `comint-redirect-filter' is
+              ;; in use based on its args and uses `apply-partially'
+              ;; to make it up for the 3 args case.
+              (if (= (length
+                      (help-function-arglist 'comint-redirect-filter)) 3)
+                  (set-process-filter
+                   process (apply-partially
+                            #'comint-redirect-filter original-filter-fn))
+                (set-process-filter process #'comint-redirect-filter))
+              (process-send-string process input-to-send)
+              (accept-process-output
+               process
+               python-shell-completion-native-output-timeout)
+              ;; XXX: can't use `python-shell-accept-process-output'
+              ;; here because there are no guarantees on how output
+              ;; ends.  The workaround here is to call
+              ;; `accept-process-output' until we don't find anything
+              ;; else to accept.
+              (while (accept-process-output
+                      process
+                      python-shell-completion-native-output-timeout))
+              (cl-remove-duplicates
+               (split-string
+                (buffer-substring-no-properties
+                 (point-min) (point-max))
+                separators t))))
+        (set-process-filter process original-filter-fn)))))
+
 (defun python-shell-completion-get-completions (process import input)
   "Do completion at point using PROCESS for IMPORT or INPUT.
 When IMPORT is non-nil takes precedence over INPUT for
@@ -3054,11 +3249,15 @@ using that one instead of current buffer's process."
                 last-prompt-end
               (forward-char (length (match-string-no-properties 0)))
               (point))))
-         (end (point)))
+         (end (point))
+         (completion-fn
+          (if python-shell-completion-native-enable
+              #'python-shell-completion-native-get-completions
+            #'python-shell-completion-get-completions)))
     (list start end
           (completion-table-dynamic
            (apply-partially
-            #'python-shell-completion-get-completions
+            completion-fn
             process import-statement)))))
 
 (define-obsolete-function-alias

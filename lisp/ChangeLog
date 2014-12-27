@@ -8,6 +8,24 @@
 
 2014-12-27  Fabián Ezequiel Gallina  <fgallina@gnu.org>
 
+	python.el: Native readline completion.
+
+	* progmodes/python.el (python-shell-completion-native-disabled-interpreters)
+	(python-shell-completion-native-enable)
+	(python-shell-completion-native-output-timeout): New defcustoms.
+	(python-shell-completion-native-interpreter-disabled-p)
+	(python-shell-completion-native-try)
+	(python-shell-completion-native-setup)
+	(python-shell-completion-native-turn-off)
+	(python-shell-completion-native-turn-on)
+	(python-shell-completion-native-turn-on-maybe)
+	(python-shell-completion-native-turn-on-maybe-with-msg)
+	(python-shell-completion-native-toggle): New functions.
+	(python-shell-completion-native-get-completions): New function.
+	(python-shell-completion-at-point): Use it.
+
+2014-12-27  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
 	python.el: Enhance shell user interaction and deprecate
 	python-shell-get-or-create-process.
 
