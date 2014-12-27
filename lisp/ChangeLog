@@ -1,5 +1,13 @@
 2014-12-27  Fabián Ezequiel Gallina  <fgallina@gnu.org>
 
+	python.el: Fix message when sending region.
+
+	* progmodes/python.el (python-shell-send-region): Rename argument
+	send-name from nomain.  Fix message.
+	(python-shell-send-buffer): Rename argument send-name from arg.
+
+2014-12-27  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
 	python.el: Cleanup temp files even with eval errors.
 
 	* progmodes/python.el (python-shell-send-file): Make file-name
