@@ -1,3 +1,23 @@
+2014-12-27  Dmitry Gutov  <dgutov@yandex.ru>
+
+	elisp-xref-find: Don't create buffers eagerly.
+
+	* progmodes/elisp-mode.el (elisp--identifier-location): Fold back
+	into `elisp--company-location'.
+	(elisp--identifier-completion-table): Rename to
+	`elisp--identifier-completion-table', and do not include just any
+	symbols with a property list.
+	(elisp-completion-at-point): Revert the 2014-12-25 change.
+	(elisp--xref-identifier-file): New function.
+	(elisp--xref-find-definitions): Use it.
+
+	* emacs-lisp/find-func.el (find-function-library): New function,
+	extracted from `find-function-noselect'.
+
+	* progmodes/xref.el (xref-elisp-location): New class.
+	(xref-make-elisp-location): New function.
+	(xref-location-marker): New implementation.
+
 2014-12-27  Juri Linkov  <juri@linkov.net>
 
 	* minibuffer.el (minibuffer-completion-help):

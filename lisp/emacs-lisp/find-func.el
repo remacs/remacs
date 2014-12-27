@@ -311,6 +311,39 @@ The search is done in the source for library LIBRARY."
 		  (cons (current-buffer) (point)))
 	      (cons (current-buffer) nil))))))))
 
+(defun find-function-library (function &optional lisp-only verbose)
+  "Return the library FUNCTION is defined in.
+
+If FUNCTION is a built-in function and LISP-ONLY is non-nil,
+signal an error.
+
+If VERBOSE is non-nil, and FUNCTION is an alias, display a
+message about the whole chain of aliases."
+  (let ((def (symbol-function (find-function-advised-original function)))
+        aliases)
+    ;; FIXME for completeness, it might be nice to print something like:
+    ;; foo (which is advised), which is an alias for bar (which is advised).
+    (while (symbolp def)
+      (or (eq def function)
+          (not verbose)
+          (if aliases
+              (setq aliases (concat aliases
+                                    (format ", which is an alias for `%s'"
+                                            (symbol-name def))))
+            (setq aliases (format "`%s' is an alias for `%s'"
+                                  function (symbol-name def)))))
+      (setq function (symbol-function (find-function-advised-original function))
+            def (symbol-function (find-function-advised-original function))))
+    (if aliases
+        (message "%s" aliases))
+    (cond
+     ((autoloadp def) (nth 1 def))
+     ((subrp def)
+      (if lisp-only
+          (error "%s is a built-in function" function))
+      (help-C-file-name def 'subr))
+     ((symbol-file function 'defun)))))
+
 ;;;###autoload
 (defun find-function-noselect (function &optional lisp-only)
   "Return a pair (BUFFER . POINT) pointing to the definition of FUNCTION.
@@ -329,30 +362,8 @@ searched for in `find-function-source-path' if non-nil, otherwise
 in `load-path'."
   (if (not function)
     (error "You didn't specify a function"))
-  (let ((def (symbol-function (find-function-advised-original function)))
-	aliases)
-    ;; FIXME for completeness, it might be nice to print something like:
-    ;; foo (which is advised), which is an alias for bar (which is advised).
-    (while (symbolp def)
-      (or (eq def function)
-	  (if aliases
-	      (setq aliases (concat aliases
-				    (format ", which is an alias for `%s'"
-					    (symbol-name def))))
-	    (setq aliases (format "`%s' is an alias for `%s'"
-				  function (symbol-name def)))))
-      (setq function (symbol-function (find-function-advised-original function))
-	    def (symbol-function (find-function-advised-original function))))
-    (if aliases
-	(message "%s" aliases))
-    (let ((library
-	   (cond ((autoloadp def) (nth 1 def))
-		 ((subrp def)
-		  (if lisp-only
-		      (error "%s is a built-in function" function))
-		  (help-C-file-name def 'subr))
-		 ((symbol-file function 'defun)))))
-      (find-function-search-for-symbol function nil library))))
+  (let ((library (find-function-library function lisp-only t)))
+    (find-function-search-for-symbol function nil library)))
 
 (defun find-function-read (&optional type)
   "Read and return an interned symbol, defaulting to the one near point.
