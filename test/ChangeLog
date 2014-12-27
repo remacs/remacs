@@ -1,5 +1,11 @@
 2014-12-27  Fabián Ezequiel Gallina  <fgallina@gnu.org>
 
+	* automated/python-tests.el (python-shell-get-or-create-process-1)
+	(python-shell-get-or-create-process-2)
+	(python-shell-get-or-create-process-3): Remove tests.
+
+2014-12-27  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
 	(python-shell-buffer-substring-9): New test.
 
 2014-12-27  Fabián Ezequiel Gallina  <fgallina@gnu.org>

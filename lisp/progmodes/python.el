@@ -2255,11 +2255,9 @@ Avoids `recenter' calls until OUTPUT is completely sent."
   "Execute the forms in BODY with the shell buffer temporarily current.
 Signals an error if no shell buffer is available for current buffer."
   (declare (indent 0) (debug t))
-  (let ((shell-buffer (make-symbol "shell-buffer")))
-    `(let ((,shell-buffer (python-shell-get-buffer)))
-       (when (not ,shell-buffer)
-         (error "No inferior Python buffer available."))
-       (with-current-buffer ,shell-buffer
+  (let ((shell-process (make-symbol "shell-process")))
+    `(let ((,shell-process (python-shell-get-process-or-error)))
+       (with-current-buffer (process-buffer ,shell-process)
          ,@body))))
 
 (defvar python-shell--font-lock-buffer nil)
@@ -2471,12 +2469,12 @@ variable.
   (python-shell-accept-process-output
    (get-buffer-process (current-buffer))))
 
-(defun python-shell-make-comint (cmd proc-name &optional pop internal)
+(defun python-shell-make-comint (cmd proc-name &optional show internal)
   "Create a Python shell comint buffer.
 CMD is the Python command to be executed and PROC-NAME is the
 process name the comint buffer will get.  After the comint buffer
 is created the `inferior-python-mode' is activated.  When
-optional argument POP is non-nil the buffer is shown.  When
+optional argument SHOW is non-nil the buffer is shown.  When
 optional argument INTERNAL is non-nil this process is run on a
 buffer with a name that starts with a space, following the Emacs
 convention for temporary/internal buffers, and also makes sure
@@ -2505,22 +2503,24 @@ killed."
                 (mapconcat #'identity args " ")))
           (with-current-buffer buffer
             (inferior-python-mode))
-          (and pop (pop-to-buffer buffer t))
+          (when show (display-buffer buffer))
           (and internal (set-process-query-on-exit-flag process nil))))
       proc-buffer-name)))
 
 ;;;###autoload
 (defun run-python (&optional cmd dedicated show)
   "Run an inferior Python process.
-Input and output via buffer named after
-`python-shell-buffer-name'.  If there is a process already
-running in that buffer, just switch to it.
 
 Argument CMD defaults to `python-shell-calculate-command' return
 value.  When called interactively with `prefix-arg', it allows
 the user to edit such value and choose whether the interpreter
 should be DEDICATED for the current buffer.  When numeric prefix
 arg is other than 0 or 4 do not SHOW.
+
+For a given buffer and same values of DEDICATED, if a process is
+already running for it, it will do nothing.  This means that if
+the current buffer is using a global process, the user is still
+able to switch it to use a dedicated one.
 
 Runs the hook `inferior-python-mode-hook' after
 `comint-mode-hook' is run.  (Type \\[describe-mode] in the
@@ -2532,10 +2532,10 @@ process buffer for a list of commands.)"
         (y-or-n-p "Make dedicated process? ")
         (= (prefix-numeric-value current-prefix-arg) 4))
      (list (python-shell-calculate-command) nil t)))
-  (python-shell-make-comint
-   (or cmd (python-shell-calculate-command))
-   (python-shell-get-process-name dedicated) show)
-  dedicated)
+  (get-buffer-process
+   (python-shell-make-comint
+    (or cmd (python-shell-calculate-command))
+    (python-shell-get-process-name dedicated) show)))
 
 (defun run-python-internal ()
   "Run an inferior Internal Python process.
@@ -2578,6 +2578,21 @@ If current buffer is in `inferior-python-mode', return it."
   "Return inferior Python process for current buffer."
   (get-buffer-process (python-shell-get-buffer)))
 
+(defun python-shell-get-process-or-error (&optional interactivep)
+  "Return inferior Python process for current buffer or signal error.
+When argument INTERACTIVEP is non-nil, use `user-error' instead
+of `error' with a user-friendly message."
+  (or (python-shell-get-process)
+      (if interactivep
+          (user-error
+           "Start a Python process first with `M-x run-python' or `%s'."
+           ;; Get the binding.
+           (key-description
+            (where-is-internal
+             #'run-python overriding-local-map t)))
+        (error
+         "No inferior Python process running."))))
+
 (defun python-shell-get-or-create-process (&optional cmd dedicated show)
   "Get or create an inferior Python process for current buffer and return it.
 Arguments CMD, DEDICATED and SHOW are those of `run-python' and
@@ -2592,6 +2607,11 @@ be asked for their values."
           (call-interactively 'run-python)
         (run-python cmd dedicated show)))
     (or shell-process (python-shell-get-process))))
+
+(make-obsolete
+ #'python-shell-get-or-create-process
+ "Instead call `python-shell-get-process' and create one if returns nil."
+ "25.1")
 
 (defvar python-shell-internal-buffer nil
   "Current internal shell buffer for the current buffer.
@@ -2631,10 +2651,14 @@ there for compatibility with CEDET.")
       (delete-trailing-whitespace))
     temp-file-name))
 
-(defun python-shell-send-string (string &optional process)
-  "Send STRING to inferior Python PROCESS."
-  (interactive "sPython command: ")
-  (let ((process (or process (python-shell-get-or-create-process))))
+(defun python-shell-send-string (string &optional process msg)
+  "Send STRING to inferior Python PROCESS.
+When optional argument MSG is non-nil, forces display of a
+user-friendly message if there's no process running; defaults to
+t when called interactively."
+  (interactive
+   (list (read-string "Python command: ") nil t))
+  (let ((process (or process (python-shell-get-process-or-error msg))))
     (if (string-match ".\n+." string)   ;Multiline.
         (let* ((temp-file-name (python-shell--save-temp-file string))
                (file-name (or (buffer-file-name) temp-file-name)))
@@ -2677,7 +2701,7 @@ detecting a prompt at the end of the buffer."
 (defun python-shell-send-string-no-output (string &optional process)
   "Send STRING to PROCESS and inhibit output.
 Return the output."
-  (let ((process (or process (python-shell-get-or-create-process)))
+  (let ((process (or process (python-shell-get-process-or-error)))
         (comint-preoutput-filter-functions
          '(python-shell-output-filter))
         (python-shell-output-filter-in-progress t)
@@ -2781,35 +2805,43 @@ the python shell:
            (line-beginning-position) (line-end-position))))
       (buffer-substring-no-properties (point-min) (point-max)))))
 
-(defun python-shell-send-region (start end &optional send-main)
+(defun python-shell-send-region (start end &optional send-main msg)
   "Send the region delimited by START and END to inferior Python process.
 When optional argument SEND-MAIN is non-nil, allow execution of
 code inside blocks delimited by \"if __name__== '__main__':\".
 When called interactively SEND-MAIN defaults to nil, unless it's
-called with prefix argument."
-  (interactive "r\nP")
+called with prefix argument.  When optional argument MSG is
+non-nil, forces display of a user-friendly message if there's no
+process running; defaults to t when called interactively."
+  (interactive
+   (list (region-beginning) (region-end) current-prefix-arg t))
   (let* ((string (python-shell-buffer-substring start end (not send-main)))
-         (process (python-shell-get-or-create-process))
+         (process (python-shell-get-process-or-error msg))
          (original-string (buffer-substring-no-properties start end))
          (_ (string-match "\\`\n*\\(.*\\)" original-string)))
     (message "Sent: %s..." (match-string 1 original-string))
     (python-shell-send-string string process)))
 
-(defun python-shell-send-buffer (&optional send-main)
+(defun python-shell-send-buffer (&optional send-main msg)
   "Send the entire buffer to inferior Python process.
 When optional argument SEND-MAIN is non-nil, allow execution of
 code inside blocks delimited by \"if __name__== '__main__':\".
 When called interactively SEND-MAIN defaults to nil, unless it's
-called with prefix argument."
-  (interactive "P")
+called with prefix argument.  When optional argument MSG is
+non-nil, forces display of a user-friendly message if there's no
+process running; defaults to t when called interactively."
+  (interactive (list current-prefix-arg t))
   (save-restriction
     (widen)
-    (python-shell-send-region (point-min) (point-max) send-main)))
+    (python-shell-send-region (point-min) (point-max) send-main msg)))
 
-(defun python-shell-send-defun (arg)
+(defun python-shell-send-defun (&optional arg msg)
   "Send the current defun to inferior Python process.
-When argument ARG is non-nil do not include decorators."
-  (interactive "P")
+When argument ARG is non-nil do not include decorators.  When
+optional argument MSG is non-nil, forces display of a
+user-friendly message if there's no process running; defaults to
+t when called interactively."
+  (interactive (list current-prefix-arg t))
   (save-excursion
     (python-shell-send-region
      (progn
@@ -2825,17 +2857,28 @@ When argument ARG is non-nil do not include decorators."
      (progn
        (or (python-nav-end-of-defun)
            (end-of-line 1))
-       (point-marker)))))
+       (point-marker))
+     nil  ;; noop
+     msg)))
 
 (defun python-shell-send-file (file-name &optional process temp-file-name
-                                         delete)
+                                         delete msg)
   "Send FILE-NAME to inferior Python PROCESS.
 If TEMP-FILE-NAME is passed then that file is used for processing
 instead, while internally the shell will continue to use
 FILE-NAME.  If TEMP-FILE-NAME and DELETE are non-nil, then
-TEMP-FILE-NAME is deleted after evaluation is performed."
-  (interactive "fFile to send: ")
-  (let* ((process (or process (python-shell-get-or-create-process)))
+TEMP-FILE-NAME is deleted after evaluation is performed.  When
+optional argument MSG is non-nil, forces display of a
+user-friendly message if there's no process running; defaults to
+t when called interactively."
+  (interactive
+   (list
+    (read-file-name "File to send: ")   ; file-name
+    nil                                 ; process
+    nil                                 ; temp-file-name
+    nil                                 ; delete
+    t))                                 ; msg
+  (let* ((process (or process (python-shell-get-process-or-error msg)))
          (encoding (with-temp-buffer
                      (insert-file-contents
                       (or temp-file-name file-name))
@@ -2860,10 +2903,14 @@ TEMP-FILE-NAME is deleted after evaluation is performed."
       (or temp-file-name file-name) encoding encoding file-name)
      process)))
 
-(defun python-shell-switch-to-shell ()
-  "Switch to inferior Python process buffer."
-  (interactive)
-  (pop-to-buffer (process-buffer (python-shell-get-or-create-process)) t))
+(defun python-shell-switch-to-shell (&optional msg)
+  "Switch to inferior Python process buffer.
+When optional argument MSG is non-nil, forces display of a
+user-friendly message if there's no process running; defaults to
+t when called interactively."
+  (interactive "p")
+  (pop-to-buffer
+   (process-buffer (python-shell-get-process-or-error msg)) nil t))
 
 (defun python-shell-send-setup-code ()
   "Send all setup code for shell.

@@ -1,5 +1,24 @@
 2014-12-27  Fabián Ezequiel Gallina  <fgallina@gnu.org>
 
+	python.el: Enhance shell user interaction and deprecate
+	python-shell-get-or-create-process.
+
+	* progmodes/python.el
+	(python-shell-get-process-or-error): New function.
+	(python-shell-with-shell-buffer): Use it.
+	(python-shell-send-string, python-shell-send-region)
+	(python-shell-send-buffer, python-shell-send-defun)
+	(python-shell-send-file, python-shell-switch-to-shell): Use it.
+	Add argument MSG to display user-friendly message when no process
+	is running.
+	(python-shell-switch-to-shell): Call pop-to-buffer with NORECORD.
+	(python-shell-make-comint): Rename argument SHOW from POP.  Use
+	display-buffer instead of pop-to-buffer.
+	(run-python): Doc fix.  Return process.
+	(python-shell-get-or-create-process): Make obsolete.
+
+2014-12-27  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
 	* progmodes/python.el (python-shell-buffer-substring): Handle
 	cornercase when region sent starts at point-min.
 
