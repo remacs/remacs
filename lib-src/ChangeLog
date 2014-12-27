@@ -1,3 +1,11 @@
+2014-12-27  Eli Zaretskii  <eliz@gnu.org>
+
+	* Makefile.in (etags_libs, ebrowse${EXEEXT}, profile${EXEEXT})
+	(make-docfile${EXEEXT}, movemail${EXEEXT})
+	(update-game-score${EXEEXT}): Put $(NTLIB) before $(LOADLIBES),
+	since GCC sometimes calls stpcpy when it sees strcpy, under
+	optimization switches.
+
 2014-12-14  Paul Eggert  <eggert@cs.ucla.edu>
 
 	* etags.c (analyze_regex): Rename from analyse_regex.
