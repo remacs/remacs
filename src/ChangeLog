@@ -1,3 +1,13 @@
+2014-12-27  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* buffer.c (syms_of_buffer) <Vafter_change_functions>: fix docstring.
+
+2014-12-27  Eli Zaretskii  <eliz@gnu.org>
+
+	* gnutls.c (gnutls_init): Fix deprecation warning from GCC.
+
+2014-12-27  Eli Zaretskii  <eliz@gnu.org>
+
 2014-12-26  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Use bool for boolean in xselect.c, xsettings.c
@@ -917,6 +927,8 @@
 
 	* fileio.c (Fexpand_file_name): Use make_unibyte_string, not
 	build_string, when importing a home directory.  (Bug#18873)
+
+2014-12-27  Eli Zaretskii  <eliz@gnu.org>
 
 	* dispnew.c (buffer_posn_from_coords):
 	Use WINDOW_WANTS_HEADER_LINE_P, not WINDOW_WANTS_MODELINE_P, to

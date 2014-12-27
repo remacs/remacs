@@ -1,3 +1,39 @@
+2014-12-27  Michael Albinus  <michael.albinus@gmx.de>
+
+	* net/tramp-sh.el (tramp-send-command-and-read): New optional
+	arg MARKER.
+	(tramp-get-remote-path): Use it.
+
+2014-12-27  Michael Albinus  <michael.albinus@gmx.de>
+
+	* net/tramp.el (tramp-error-with-buffer): Call `message' properly.
+	(tramp-accept-process-output): Use nil as argument for
+	`accept-process-output', when there is a gateway prepended.
+
+	* net/tramp-gw.el (tramp-gw-open-connection): Suppress traces in
+	wrong debug buffer.
+	(tramp-gw-open-connection): Set process coding system 'binary.
+	(tramp-gw-open-network-stream): Handle HTTP error 403.
+
+	* net/tramp-sh.el (tramp-compute-multi-hops): Suppress traces in
+	wrong debug buffer.
+	(tramp-maybe-open-connection): Set connection property "gateway".
+
+2014-12-27  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* subr.el (sit-for): Tweak docstring (bug#19381).
+
+2014-12-27  Dmitry Gutov  <dgutov@yandex.ru>
+
+	* vc/vc-git.el (vc-git-after-dir-status-stage): Move `up-to-date'
+	stage to after `diff-index' (bug#19386).
+
+2014-12-27  João Távora  <joaotavora@gmail.com>
+
+	* textmodes/tex-mode.el (tex-insert-quote): Consider and respect
+	`electric-pair-mode' (bug#19356).
+
+2014-12-27  Michael Albinus  <michael.albinus@gmx.de>
 2014-12-27  Dmitry Gutov  <dgutov@yandex.ru>
 
 	elisp-xref-find: Don't create buffers eagerly.

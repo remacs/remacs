@@ -1,3 +1,14 @@
+2014-12-27  João Távora  <joaotavora@gmail.com>
+
+	* automated/electric-tests.el (autowrapping-7): Tests for
+	tex-mode.
+
+2014-12-27  Glenn Morris  <rgm@gnu.org>
+
+	* automated/flymake/warnpred/test.pl: Tweak format, since the
+	previous one seems to have stopped giving a warning with perl 5.20.1.
+
+2014-12-27  Fabián Ezequiel Gallina  <fgallina@gnu.org>
 2014-12-26  Fabián Ezequiel Gallina  <fgallina@gnu.org>
 
 	* automated/python-tests.el (python-shell-get-process-name-1)

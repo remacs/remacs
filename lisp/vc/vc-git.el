@@ -371,8 +371,7 @@ or an empty string if none."
     (goto-char (point-min))
     (pcase stage
       (`update-index
-       (setq next-stage (if (vc-git--empty-db-p) 'ls-files-added
-                          (if files 'ls-files-up-to-date 'diff-index))))
+       (setq next-stage (if (vc-git--empty-db-p) 'ls-files-added 'diff-index)))
       (`ls-files-added
        (setq next-stage 'ls-files-unknown)
        (while (re-search-forward "\\([0-7]\\{6\\}\\) [0-9a-f]\\{40\\} 0\t\\([^\0]+\\)\0" nil t)
@@ -381,7 +380,7 @@ or an empty string if none."
            (push (list name 'added (vc-git-create-extra-fileinfo 0 new-perm))
                  result))))
       (`ls-files-up-to-date
-       (setq next-stage 'diff-index)
+       (setq next-stage 'ls-files-unknown)
        (while (re-search-forward "\\([0-7]\\{6\\}\\) [0-9a-f]\\{40\\} 0\t\\([^\0]+\\)\0" nil t)
          (let ((perm (string-to-number (match-string 1) 8))
                (name (match-string 2)))
@@ -400,7 +399,7 @@ or an empty string if none."
                      (vc-git-create-extra-fileinfo 0 0))
                result)))
       (`diff-index
-       (setq next-stage 'ls-files-unknown)
+       (setq next-stage (if files 'ls-files-up-to-date 'ls-files-unknown))
        (while (re-search-forward
                ":\\([0-7]\\{6\\}\\) \\([0-7]\\{6\\}\\) [0-9a-f]\\{40\\} [0-9a-f]\\{40\\} \\(\\([ADMUT]\\)\0\\([^\0]+\\)\\|\\([CR]\\)[0-9]*\0\\([^\0]+\\)\0\\([^\0]+\\)\\)\0"
                nil t 1)

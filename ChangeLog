@@ -1,3 +1,13 @@
+2014-12-27  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* .gitignore: Ignore /conftest*.
+
+2014-12-27  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* build-aux/git-hooks/commit-msg (at_sign): Bump up line-length limit
+	to 78.
+
+2014-12-27  Paul Eggert  <eggert@cs.ucla.edu>
 2014-12-25  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Prefer stpcpy to strcat
@@ -308,7 +318,8 @@
 
 2014-11-11  Eric S. Raymond  <esr@thyrsus.com>
 
-	* Makefile.in: git transition - set VCWITNESS appropriately for git.
+	Git transition.
+	* Makefile.in (src): Set VCSWITNESS appropriately for git.
 
 	All bzr revision IDS, and all CVS revision IDs for which a commit
 	could be identified, were changed to time-date!committer version

@@ -1610,7 +1610,7 @@ an input event arrives.  The other arguments are passed to `tramp-error'."
 	  (let ((enable-recursive-minibuffers t))
 	    ;; `tramp-error' does not show messages.  So we must do it
 	    ;; ourselves.
-	    (message fmt-string arguments)
+	    (apply 'message fmt-string arguments)
 	    ;; Show buffer.
 	    (pop-to-buffer buf)
 	    (discard-input)
@@ -3609,15 +3609,19 @@ connection buffer."
 This is needed in order to hide `last-coding-system-used', which is set
 for process communication also."
   (with-current-buffer (process-buffer proc)
-    (tramp-message proc 10 "%s %s" proc (process-status proc))
-    (let (buffer-read-only last-coding-system-used)
+    ;; FIXME: If there is a gateway process, we need communication
+    ;; between several processes.  Too complicate to implement, so we
+    ;; read output from all proceeses.
+    (let ((p (if (tramp-get-connection-property proc "gateway" nil) nil proc))
+	  buffer-read-only last-coding-system-used)
       ;; Under Windows XP, accept-process-output doesn't return
       ;; sometimes.  So we add an additional timeout.
       (with-timeout ((or timeout 1))
 	(if (featurep 'xemacs)
-	    (accept-process-output proc timeout timeout-msecs)
-	  (accept-process-output proc timeout timeout-msecs (and proc t)))))
-    (tramp-message proc 10 "\n%s" (buffer-string))))
+	    (accept-process-output p timeout timeout-msecs)
+	  (accept-process-output p timeout timeout-msecs (and proc t))))
+      (tramp-message proc 10 "%s %s %s\n%s"
+		     proc (process-status proc) p (buffer-string)))))
 
 (defun tramp-check-for-regexp (proc regexp)
   "Check, whether REGEXP is contained in process buffer of PROC.

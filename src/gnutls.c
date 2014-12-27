@@ -134,7 +134,7 @@ DEF_GNUTLS_FN (void, gnutls_global_set_mem_functions,
 		gnutls_is_secure_function, gnutls_realloc_function,
 		gnutls_free_function));
 DEF_GNUTLS_FN (int, gnutls_handshake, (gnutls_session_t));
-DEF_GNUTLS_FN (int, gnutls_init, (gnutls_session_t *, gnutls_connection_end_t));
+DEF_GNUTLS_FN (int, gnutls_init, (gnutls_session_t *, unsigned int));
 DEF_GNUTLS_FN (int, gnutls_priority_set_direct,
 	       (gnutls_session_t, const char *, const char **));
 DEF_GNUTLS_FN (size_t, gnutls_record_check_pending, (gnutls_session_t));
