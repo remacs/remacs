@@ -1,3 +1,8 @@
+2014-12-27  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	* progmodes/python.el (python-shell-buffer-substring): Handle
+	cornercase when region sent starts at point-min.
+
 2014-12-27  Eli Zaretskii  <eliz@gnu.org>
 
 	* language/misc-lang.el (composition-function-table): Add Syriac

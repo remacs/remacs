@@ -2651,6 +2651,27 @@ class Foo(models.Model):
     pass
 "))))
 
+(ert-deftest python-shell-buffer-substring-9 ()
+  "Check substring starting from `point-min'."
+  (python-tests-with-temp-buffer
+   "# coding: utf-8
+
+class Foo(models.Model):
+    pass
+
+class Bar(models.Model):
+    pass
+"
+   (should (string= (python-shell-buffer-substring
+                     (point-min)
+                     (python-tests-look-at "class Bar(models.Model):"))
+                    "# coding: utf-8
+
+class Foo(models.Model):
+    pass
+
+"))))
+
 
 ;;; Shell completion
 
