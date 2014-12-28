@@ -593,6 +593,28 @@ as the single-shift area.")
 The remaining arguments must come in pairs ATTRIBUTE VALUE.  ATTRIBUTE
 may be any symbol.
 
+A coding system specifies a rule to decode (i.e. to convert a
+byte sequence to a character sequence) and a rule to encode (the
+opposite of decoding).
+
+The decoding is done by at most 3 steps; the first is to convert
+a byte sequence to a character sequence by one of Emacs'
+internal routines specified by :coding-type attribute.  The
+optional second step is to convert the character sequence (the
+result of the first step) by a translation table specified
+by :decode-translation-table attribute.  The optional third step
+is to convert the above reslut by a Lisp function specified
+by :post-read-conversion attribute.
+
+The encoding is done by at most 3 steps which are reverse of the
+decoding steps.  The optional first step converts a character
+sequence to another character sequence by a Lisp function
+specified by :pre-write-conversion attribute.  The optional
+second step converts the above result by a translation table
+specified by :encode-translation-table attribute..  The third
+step converts the abobe result to a byte sequence by one of
+Emacs' internal routines specified by :coding-type attribute.
+
 The following attributes have special meanings.  Those labeled as
 \"(required)\" should not be omitted.
 
@@ -602,8 +624,42 @@ VALUE is a character to display on mode line for the coding system.
 
 `:coding-type' (required)
 
-VALUE must be one of `charset', `utf-8', `utf-16', `iso-2022',
-`emacs-mule', `shift-jis', `ccl', `raw-text', `undecided'.
+VALUE specifies the format of byte sequence the coding system
+decodes and encodes to.  It must be one of `charset', `utf-8',
+`utf-16', `iso-2022', `emacs-mule', `shift-jis', `ccl',
+`raw-text', `undecided'.
+
+If VALUE is `charset', the coding system is for handling a byte
+sequence in which each byte or each two to four bytes sequence
+represents a character code of a charset specified
+by :charset-list attribute.
+
+If VALUE is `utf-8', the coding system is for handling Unicode
+UTF-8 byte sequence.  See also the documentation of the
+attribute :bom.
+
+If VALUE is `utf-16', the coding system is for handling Unicode
+UTF-16 byte sequence.  See also the documentation of the
+attributes :bom and :endian.
+
+If VALUE is `iso-2022', the coding system is for handling a byte
+sequence conforming to ISO/IEC 2022.  See also the documentation
+of the attributes :charset-list, :flags, and :designation.
+
+If VALUE is `emacs-mule', the coding system is for handling a
+byte sequence which Emacs 20 and 21 used for internal character
+representations.
+
+If VALUE is `shift-jis', the coding system is for handling a byte
+sequence of Shift_JIS format.  See also the
+attribute :charset-list.
+
+If VALUE is `ccl', the coding system uses CCL programs to decodes
+and encodes to a byte sequence.  The CCL programs must be
+specified by the attributes :ccl-decoder and :ccl-encoder.
+
+If VALUE is `raw-text', the coding system decodes a byte sequence
+as is.
 
 `:eol-type'
 
@@ -613,16 +669,28 @@ one of `unix', `dos', `mac'.  The symbol `unix' means Unix-like EOL
 and `mac' means Mac-like EOL \(i.e. single CR).  If omitted, Emacs
 detects the EOL format automatically when decoding.
 
-`:charset-list'
+`:charset-list' (required if :coding-type is `charset' or `shift-jis')
 
-VALUE must be a list of charsets supported by the coding system.  On
-encoding by the coding system, if a character belongs to multiple
-charsets in the list, a charset that comes earlier in the list is
-selected.  If `:coding-type' is `iso-2022', VALUE may be `iso-2022',
-which indicates that the coding system supports all ISO-2022 based
-charsets.  If `:coding-type' is `emacs-mule', VALUE may be
-`emacs-mule', which indicates that the coding system supports all
-charsets that have the `:emacs-mule-id' property.
+VALUE must be a list of charsets supported by the coding system.
+
+If `coding-type:' is `charset', on decoding and encoding by the
+coding system, if a character belongs to multiple charsets in the
+list, a charset that comes earlier in the list is selected.
+
+If `:coding-type' is `iso-2022', VALUE may be `iso-2022', which
+indicates that the coding system supports all ISO-2022 based
+charsets.
+
+If `:coding-type' is `shift-jis', VALUE must be a list of three
+to four charsets supported by Shift_JIS encoding scheme.  The
+first charset (one dimension) is for code space 0x00..0x7F, the
+second (one dimension) for 0xA1..0xDF, the third (two dimension)
+for 0x8140..0xEFFC, the optional fourth (thw dimension) for
+0xF040..0xFCFC.
+
+If `:coding-type' is `emacs-mule', VALUE may be `emacs-mule',
+which indicates that the coding system supports all charsets that
+have the `:emacs-mule-id' property.
 
 `:ascii-compatible-p'
 
@@ -730,17 +798,17 @@ little-endian respectively.  The default value is `big'.
 
 This attribute is meaningful only when `:coding-type' is `utf-16'.
 
-`:ccl-decoder'
+`:ccl-decoder' (required if :coding-type is `ccl')
 
-VALUE is a symbol representing the registered CCL program used for
-decoding.  This attribute is meaningful only when `:coding-type' is
-`ccl'.
+VALUE is a CCL program name defined by `define-ccl-program'.  The
+the CCL program reads a byte sequence and writes a character
+sequence as a decoding result.
 
-`:ccl-encoder'
+`:ccl-encoder' (required if :coding-type is `ccl')
 
-VALUE is a symbol representing the registered CCL program used for
-encoding.  This attribute is meaningful only when `:coding-type' is
-`ccl'.
+VALUE is a CCL program name defined by `define-ccl-program'.  The
+the CCL program reads a character sequence and writes a byte
+sequence as a encoding result.
 
 `:inhibit-null-byte-detection'
 
