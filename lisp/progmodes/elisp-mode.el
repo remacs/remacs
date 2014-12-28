@@ -227,10 +227,15 @@ Blank lines separate paragraphs.  Semicolons start comments.
 
 \\{emacs-lisp-mode-map}"
   :group 'lisp
+  (defvar xref-find-function)
+  (defvar xref-identifier-completion-table-function)
   (lisp-mode-variables nil nil 'elisp)
   (setq imenu-case-fold-search nil)
   (setq-local eldoc-documentation-function
               #'elisp-eldoc-documentation-function)
+  (setq-local xref-find-function #'elisp-xref-find)
+  (setq-local xref-identifier-completion-table-function
+              #'elisp--xref-identifier-completion-table)
   (add-hook 'completion-at-point-functions
             #'elisp-completion-at-point nil 'local))
 
@@ -414,17 +419,39 @@ It can be quoted, or be inside a quoted form."
 
 (declare-function find-library-name "find-func" (library))
 
+(defvar elisp--identifier-types '(defun defvar feature defface))
+
+(defun elisp--identifier-location (type sym)
+  (pcase (cons type sym)
+    (`(defun . ,(pred fboundp))
+     (find-definition-noselect sym nil))
+    (`(defvar . ,(pred boundp))
+     (find-definition-noselect sym 'defvar))
+    (`(defface . ,(pred facep))
+     (find-definition-noselect sym 'defface))
+    (`(feature . ,(pred featurep))
+     (require 'find-func)
+     (cons (find-file-noselect (find-library-name
+                                (symbol-name sym)))
+           1))))
+
 (defun elisp--company-location (str)
-  (let ((sym (intern-soft str)))
-    (cond
-     ((fboundp sym) (find-definition-noselect sym nil))
-     ((boundp sym) (find-definition-noselect sym 'defvar))
-     ((featurep sym)
-      (require 'find-func)
-      (cons (find-file-noselect (find-library-name
-                                 (symbol-name sym)))
-            0))
-     ((facep sym) (find-definition-noselect sym 'defface)))))
+  (catch 'res
+    (let ((sym (intern-soft str)))
+      (when sym
+        (dolist (type elisp--identifier-types)
+          (let ((loc (elisp--identifier-location type sym)))
+            (and loc (throw 'res loc))))))))
+
+(defvar elisp--identifier-completion-table
+  (apply-partially #'completion-table-with-predicate
+                   obarray
+                   (lambda (sym)
+                     (or (boundp sym)
+                         (fboundp sym)
+                         (featurep sym)
+                         (symbol-plist sym)))
+                   'strict))
 
 (defun elisp-completion-at-point ()
   "Function used for `completion-at-point-functions' in `emacs-lisp-mode'."
@@ -466,13 +493,8 @@ It can be quoted, or be inside a quoted form."
                            :company-docsig #'elisp--company-doc-string
                            :company-location #'elisp--company-location))
                     ((elisp--form-quoted-p beg)
-                     (list nil obarray
-                           ;; Don't include all symbols
-                           ;; (bug#16646).
-                           :predicate (lambda (sym)
-                                        (or (boundp sym)
-                                            (fboundp sym)
-                                            (symbol-plist sym)))
+                     ;; Don't include all symbols (bug#16646).
+                     (list nil elisp--identifier-completion-table
                            :annotation-function
                            (lambda (str) (if (fboundp (intern-soft str)) " <f>"))
                            :company-doc-buffer #'elisp--company-doc-buffer
@@ -547,6 +569,50 @@ It can be quoted, or be inside a quoted form."
 
 (define-obsolete-function-alias
   'lisp-completion-at-point 'elisp-completion-at-point "25.1")
+
+;;; Xref backend
+
+(declare-function xref-make-buffer-location "xref" (buffer position))
+(declare-function xref-make-bogus-location "xref" (message))
+(declare-function xref-make "xref" (description location))
+
+(defun elisp-xref-find (action id)
+  (pcase action
+    (`definitions
+      (let ((sym (intern-soft id)))
+        (when sym
+          (elisp--xref-find-definitions sym))))
+    (`apropos
+     (elisp--xref-find-apropos id))))
+
+(defun elisp--xref-find-definitions (symbol)
+  (save-excursion
+    (let (lst)
+      (dolist (type elisp--identifier-types)
+        (let ((loc
+               (condition-case err
+                   (let ((buf-pos (elisp--identifier-location type symbol)))
+                     (when buf-pos
+                       (xref-make-buffer-location (car buf-pos)
+                                                  (or (cdr buf-pos) 1))))
+                 (error
+                  (xref-make-bogus-location (error-message-string err))))))
+          (when loc
+            (push
+             (xref-make (format "(%s %s)" type symbol)
+                        loc)
+             lst))))
+      lst)))
+
+(defun elisp--xref-find-apropos (regexp)
+  (apply #'nconc
+         (let (lst)
+           (dolist (sym (apropos-internal regexp))
+            (push (elisp--xref-find-definitions sym) lst))
+           (nreverse lst))))
+
+(defun elisp--xref-identifier-completion-table ()
+  elisp--identifier-completion-table)
 
 ;;; Elisp Interaction mode
 

@@ -1350,10 +1350,9 @@ name, or nil if there is no such user.  */)
       USE_SAFE_ALLOCA;
       char *r = SAFE_ALLOCA (strlen (p) + SBYTES (login) + 1);
       memcpy (r, p, q - p);
-      r[q - p] = 0;
-      strcat (r, SSDATA (login));
+      char *s = lispstpcpy (&r[q - p], login);
       r[q - p] = upcase ((unsigned char) r[q - p]);
-      strcat (r, q + 1);
+      strcpy (s, q + 1);
       full = build_string (r);
       SAFE_FREE ();
     }

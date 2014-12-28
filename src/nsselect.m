@@ -438,7 +438,8 @@ On Nextstep, TERMINAL is unused.  */)
   if (EQ (selection, Qnil)) selection = QPRIMARY;
   if (EQ (selection, Qt)) selection = QSECONDARY;
   return ns_get_pb_change_count (selection)
-    == ns_get_our_change_count_for (selection);
+    == ns_get_our_change_count_for (selection)
+    ? Qt : Qnil;
 }
 
 

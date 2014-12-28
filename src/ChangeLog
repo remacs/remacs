@@ -1,3 +1,27 @@
+2014-12-26  Eli Zaretskii  <eliz@gnu.org>
+
+	* w32proc.c (sys_spawnve, get_lcid_callback): Use strcpy instead
+	of strcat.
+
+	* w32menu.c (add_menu_item): Use stpcpy instead of strcat.
+
+	* w32.c (sys_readdir, stat_worker, symlink): Use strcpy instead of
+	strcat.
+
+2014-12-26  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Use bool for boolean in xsmfns.c
+	* xsmfns.c, xterm.h (x_session_have_connection):
+	* xsmfns.c (doing_interact, smc_interact_CB, Fhandle_save_session):
+	Use bool for boolean.
+	(x_session_initialize, Fhandle_save_session):
+	Prefer NILP (x) to EQ (x, Qnil).
+
+2014-12-23  Didier Verna  <didier@didierverna.net> (tiny change).
+
+	* nsselect.m (Fns_selection_owner_p): Return a Lisp boolean, not a
+	C one (Bug#19396).
+
 2014-12-22  Jan Djärv  <jan.h.d@swipnet.se>
 
 	* xterm.c (x_bitmap_icon): Partly revert change from 2014-03-21 which
@@ -196,6 +220,10 @@
 	(Fgnutls_boot) [GNUTLS >= 3.0.20]:
 	Call gnutls_certificate_set_x509_system_trust.  Log an error message if
 	it fails.
+
+2014-12-14  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* regex.c (analyze_first): Rename from analyze_first.
 
 2014-12-13  Paul Eggert  <eggert@cs.ucla.edu>
 

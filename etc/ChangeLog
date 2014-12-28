@@ -1,3 +1,9 @@
+2014-12-25  Karl Fogel  <kfogel@red-bean.com>
+
+	* NEWS: Mention new buffer display behavior for `shell'.
+	This follows up to Sam Steingold's change of 2014-12-23
+	in ../lisp/shell.el, in git commit e55a467ec0f758c311d3.
+
 2014-12-15  Artur Malabarba <bruce.connor.am@gmail.com>
 
 	* NEWS: Mention `let-alist.

@@ -276,7 +276,7 @@ bool input_pending;
 /* True if more input was available last time we read an event.
 
    Since redisplay can take a significant amount of time and is not
-   indispensible to perform the user's commands, when input arrives
+   indispensable to perform the user's commands, when input arrives
    "too fast", Emacs skips redisplay.  More specifically, if the next
    command has already been input when we finish the previous command,
    we skip the intermediate redisplay.

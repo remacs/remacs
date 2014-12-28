@@ -221,9 +221,9 @@ main (int argc, char **argv)
   if (!scorefile)
     lose_syserr ("Couldn't allocate score file");
 
-  strcpy (scorefile, prefix);
-  strcat (scorefile, "/");
-  strcat (scorefile, argv[optind]);
+  char *z = stpcpy (scorefile, prefix);
+  *z++ = '/';
+  strcpy (z, argv[optind]);
 
   newscore.score = normalize_integer (argv[optind + 1]);
   if (! newscore.score)
@@ -430,8 +430,7 @@ write_scores (const char *filename, const struct score_entry *scores,
   char *tempfile = malloc (strlen (filename) + strlen (".tempXXXXXX") + 1);
   if (!tempfile)
     return -1;
-  strcpy (tempfile, filename);
-  strcat (tempfile, ".tempXXXXXX");
+  strcpy (stpcpy (tempfile, filename), ".tempXXXXXX");
   fd = mkostemp (tempfile, 0);
   if (fd < 0)
     return -1;
@@ -462,8 +461,7 @@ lock_file (const char *filename, void **state)
   char *lockpath = malloc (strlen (filename) + strlen (lockext) + 60);
   if (!lockpath)
     return -1;
-  strcpy (lockpath, filename);
-  strcat (lockpath, lockext);
+  strcpy (stpcpy (lockpath, filename), lockext);
   *state = lockpath;
 
   while ((fd = open (lockpath, O_CREAT | O_EXCL, 0600)) < 0)

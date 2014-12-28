@@ -1,3 +1,7 @@
+2014-12-24  Stephen Leake  <stephen_leake@stephe-leake.org>
+
+	* trouble.texi: Move user-level information from CONTRIBUTE here.
+
 2014-12-14  Alan Mackenzie  <acm@muc.de>
 
 	* display.texi (Scrolling): fast-but-imprecise-scrolling.

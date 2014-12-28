@@ -62,7 +62,7 @@
       '(nil 1 1 2 nil)))))
 
 (ert-deftest let-alist-remove-dot ()
-  "Remove firt dot from symbol."
+  "Remove first dot from symbol."
   (should (equal (let-alist--remove-dot 'hi) 'hi))
   (should (equal (let-alist--remove-dot '.hi) 'hi))
   (should (equal (let-alist--remove-dot '..hi) '.hi)))

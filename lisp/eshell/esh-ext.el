@@ -296,6 +296,11 @@ line of the form #!<interp>."
       (let ((fullname (if (file-name-directory file) file
 			(eshell-search-path file)))
 	    (suffixes eshell-binary-suffixes))
+	(if (and fullname
+		 (not (file-remote-p fullname))
+		 (file-remote-p default-directory))
+	    (setq fullname (expand-file-name
+			    (concat "./" fullname) default-directory)))
 	(if (and fullname (not (or eshell-force-execution
 				   (file-executable-p fullname))))
 	    (while suffixes

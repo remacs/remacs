@@ -308,6 +308,13 @@ for Shell mode only."
 		 (const :tag "on" t))
   :group 'shell)
 
+(defcustom shell-display-buffer-actions display-buffer-base-action
+  "The `display-buffer' actions for the `*shell*' buffer."
+  :type display-buffer--action-custom-type
+  :risky t
+  :version "25.1"
+  :group 'shell)
+
 (defvar shell-dirstack nil
   "List of directories saved by pushd in this buffer's shell.
 Thus, this does not include the shell's current directory.")
@@ -718,7 +725,7 @@ Otherwise, one argument `-i' is passed to the shell.
 
   ;; The buffer's window must be correctly set when we call comint (so
   ;; that comint sets the COLUMNS env var properly).
-  (pop-to-buffer-same-window buffer)
+  (pop-to-buffer buffer shell-display-buffer-actions)
   (unless (comint-check-proc buffer)
     (let* ((prog (or explicit-shell-file-name
 		     (getenv "ESHELL") shell-file-name))

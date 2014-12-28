@@ -1,3 +1,78 @@
+2014-12-26  Dmitry Gutov  <dgutov@yandex.ru>
+
+	Add basic xref apropos implementation to elisp-mode.
+
+	* progmodes/elisp-mode.el (elisp--xref-find-definitions):
+	Filter out nil results.
+	(elisp--xref-find-apropos): New function.
+	(elisp-xref-find): Use it.
+
+	* progmodes/xref.el (xref--show-xrefs): Use `user-error'.
+
+2014-12-25  Helmut Eller  <eller.helmut@gmail.com>
+            Dmitry Gutov  <dgutov@yandex.ru>
+
+	Consolidate cross-referencing commands.
+
+	Move autoloaded bindings for `M-.', `M-,', `C-x 4 .' and
+	`C-x 5 .' from etags.el to xref.el.
+
+	* progmodes/xref.el: New file.
+
+	* progmodes/elisp-mode.el (elisp--identifier-types): New variable.
+	(elisp--identifier-location): New function, extracted from
+	`elisp--company-location'.
+	(elisp--company-location): Use it.
+	(elisp--identifier-completion-table): New variable.
+	(elisp-completion-at-point): Use it.
+	(emacs-lisp-mode): Set the local values of `xref-find-function'
+	and `xref-identifier-completion-table-function'.
+	(elisp-xref-find, elisp--xref-find-definitions)
+	(elisp--xref-identifier-completion-table): New functions.
+
+	* progmodes/etags.el (find-tag-marker-ring): Mark obsolete in
+	favor of `xref--marker-ring'.
+	(tags-lazy-completion-table): Autoload.
+	(tags-reset-tags-tables): Use `xref-clear-marker-stack'.
+	(find-tag-noselect): Use `xref-push-marker-stack'.
+	(pop-tag-mark): Make an alias for `xref-pop-marker-stack'.
+	(etags--xref-limit): New constant.
+	(etags-xref-find, etags--xref-find-definitions): New functions.
+
+2014-12-25  Martin Rudalics  <rudalics@gmx.at>
+
+	* cus-start.el (resize-mini-windows): Make it customizable.
+
+2014-12-24  Stephen Leake  <stephen_leake@stephe-leake.org>
+
+	* startup.el (fancy-about-text): Change buttons for etc/CONTRIBUTE
+	to (info "(emacs)Contributing").  (Bug#19299)
+
+2014-12-24  Martin Rudalics  <rudalics@gmx.at>
+
+	* window.el (mouse-autoselect-window-position-1): New variable.
+	(mouse-autoselect-window-cancel)
+	(mouse-autoselect-window-select, handle-select-window): With
+	delayed autoselection select window only if mouse moves after
+	selecting its frame.
+
+2014-12-24  Michael Albinus  <michael.albinus@gmx.de>
+
+	* eshell/esh-ext.el (eshell-find-interpreter): Expand relative
+	remote file names.  (Bug#18782)
+
+2014-12-23  Sam Steingold  <sds@gnu.org>
+
+	* shell.el (shell-display-buffer-actions): New user option.
+	(shell): Pass it to `pop-to-buffer' instead of hard-coding
+	`pop-to-buffer-same-window'.
+
+2014-12-23  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* progmodes/js.el (js--syntax-propertize-regexp-syntax-table): New var.
+	(js-syntax-propertize-regexp): Use it to recognize "slash in
+	a character class" (bug#19397).
+
 2014-12-22  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* completion.el: Use post-self-insert-hook (bug#19400).
@@ -35,24 +110,21 @@
 
 2014-12-19  Alan Mackenzie  <acm@muc.de>
 
-	Make C++11 uniform init syntax work.  New keywords "final" and "override"
-
+	Make C++11 uniform init syntax work.
+	New keywords "final" and "override"
 	* progmodes/cc-engine.el (c-back-over-member-initializer-braces):
 	New function.
 	(c-guess-basic-syntax): Set `containing-sex' and `lim' using the
 	new function.
-
 	* progmodes/cc-fonts.el (c-font-lock-declarations): Check more
 	carefully for "are we at a declarator?" using
 	c-back-over-member-initializers.
-
-	* progmodes/cc-langs.el (c-type-modifier-kwds): include "final"
+	* progmodes/cc-langs.el (c-type-modifier-kwds): Include "final"
 	and "override" in the C++ value.
 
 2014-12-19  Martin Rudalics  <rudalics@gmx.at>
 
-	* textmodes/ispell.el (ispell-command-loop): Don't use
-	`next-window'.
+	* textmodes/ispell.el (ispell-command-loop): Don't use `next-window'.
 
 2014-12-21  Lars Ingebrigtsen  <larsi@gnus.org>
 
@@ -132,7 +204,7 @@
 	do the window handling.
 	(ispell-adjusted-window-height, ispell-overlay-window): Remove.
 	(ispell-display-buffer): New function to reuse, create and fit
-	window to ispell's buffers. (Bug#3413)
+	window to ispell's buffers.  (Bug#3413)
 
 2014-12-18  Dmitry Gutov  <dgutov@yandex.ru>
 
@@ -256,6 +328,13 @@
 	* vc/vc-bzr.el (vc-bzr-diff):
 	* obsolete/vc-arch.el (vc-arch-diff): Move ASYNC argument to the end.
 
+2014-12-14  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* emacs-lisp/cconv.el (cconv--analyze-use):
+	Rename from cconv--analyse-use.
+	(cconv--analyze-function): Rename from cconv--analyse-function.
+	(cconv-analyze-form): Rename from cconv-analyse-form.
+
 2014-12-13  Andreas Schwab  <schwab@linux-m68k.org>
 
 	* net/shr.el (shr-next-link): Don't error out at eob.
@@ -322,12 +401,12 @@
 
 2014-12-12  Eric S. Raymond  <esr@snark.thyrsus.com>
 
-	* vc/vc-dav.el, vc/vc-git.el, vc/vc-hg.el, vc/vc-src.el,
-	vc/vc.el: latest-on-branch-p is no longer a public method.
+	* vc/vc-dav.el, vc/vc-git.el, vc/vc-hg.el, vc/vc-src.el:
+	* vc/vc.el: latest-on-branch-p is no longer a public method.
 
-	* vc/vc.el, vc/vc-hg.el, vc/vc-git.el, vc/vc-hooks.el,
-	vc/vc-mtn.el, vc/vc-rcs.el, vc/vc-sccs.el, vc/vc-src.el: Remove `rollback'
-	method, to be replaced in the future by uncommit.
+	* vc/vc.el, vc/vc-hg.el, vc/vc-git.el, vc/vc-hooks.el:
+	* vc/vc-mtn.el, vc/vc-rcs.el, vc/vc-sccs.el, vc/vc-src.el:
+	Remove `rollback' method, to be replaced in the future by uncommit.
 
 2014-12-11  Michael Albinus  <michael.albinus@gmx.de>
 
@@ -345,10 +424,9 @@
 
 2014-12-10  Eric S. Raymond  <esr@snark.thyrsus.com>
 
-	* vc/vc-dispatcher.el, vc/vc-hooks.el, vc/vc-rcs.el,
-	vc/vc-sccs.el, vc/vc.el: Righteous featurectomy of
-	vc-keep-workfiles, it's a shoot-self-in-foot archaism.
-	Workfiles are always kept.
+	* vc/vc-dispatcher.el, vc/vc-hooks.el, vc/vc-rcs.el:
+	* vc/vc-sccs.el, vc/vc.el: Righteous featurectomy of vc-keep-workfiles,
+	it's a shoot-self-in-foot archaism.  Workfiles are always kept.
 
 2014-12-10  Rasmus Pank Roulund  <emacs@pank.eu>
 
@@ -379,7 +457,7 @@
 2014-12-09  Eric S. Raymond  <esr@snark.thyrsus.com>
 
 	* vc/vc-src.el (vc-src-do-comand): Prepend -- to file argument
-	list, avoids problems witth names containing hyphens.
+	list, avoids problems witt names containing hyphens.
 
 2014-12-09  Wilson Snyder  <wsnyder@wsnyder.org>
 
@@ -499,7 +577,7 @@
 
 2014-12-08  Eric S. Raymond  <esr@snark.thyrsus.com>
 
-	* vc/vc-arch.el: Moved to obsolete directory so a test framework
+	* vc/vc-arch.el: Move to obsolete directory so a test framework
 	won't trip over bit-rot in it.  There has been no Arch snapshot
 	for nine years.
 
@@ -706,13 +784,13 @@
 
 2014-12-02  Eric S. Raymond  <esr@snark.thyrsus.com>
 
-	* subr.el (filter): New macro. Because it's just silly for a Lisp
+	* subr.el (filter): New macro.  Because it's just silly for a Lisp
 	not to have this in 2014.  And VC needs it.
 
-	* vc.el, all backends: API simplification: Abolish dir-status.
+	* vc.el: All backends: API simplification: Abolish dir-status.
 	It's replaced by dir-status-files.
 
-	* vc.el, all backends: API simplification: Remove 4th
+	* vc.el: All backends: API simplification: Remove 4th
 	'default-state' argument from vc-dir-status files and its backend
 	methods - no backend method ever set it.  It was used only in the
 	fallback method to to set a default of 'up-to-date, though a
@@ -723,17 +801,17 @@
 	* vc.el (vc-expand-dirs): Now takes a second BACKEND argument,
 	improving behavior on directories using multiple file-oriented VCSes.
 
-	* vc/vc.el and all backends: API simplification; clear-headers
+	* vc/vc.el: All backends: API simplification; clear-headers
 	is no longer a public method.  It is now local to the one place
 	it's used, in the RCS steal-lock method.
 
 2014-12-01  Eric S. Raymond  <esr@snark.thyrsus.com>
 
-	* vc/vc.el and all backends: API simplification; could-register
+	* vc/vc.el: In all backends: API simplification; could-register
 	is no longer a public method.  (vc-cvs.el still has a private
 	implementation.)
 
-	* vc/vc.el and all backends: API cleanup; the backend diff method
+	* vc/vc.el: In all backends: API cleanup; the backend diff method
 	takes an explicit async flag.  This eliminates a particularly ugly
 	global.
 
@@ -848,11 +926,11 @@
 	the back ends; this fixes a layering violation that caused bad
 	behavior with SVN.
 
-	* vc/vc.el, vc-hooks.el, and all backends: API simplification;
+	* vc/vc.el, vc-hooks.el: All backends: API simplification;
 	vc-stay-local-p and repository-hostname are no longer public
 	methods.  Only the CVS and SVN backends used these, and the SVN
 	support was conditioned out because svn status -v is too slow.
-	The CVS back end retains this machibery and the vc-stay-local
+	The CVS back end retains this machinery and the vc-stay-local
 	configuration variable now only affects it.
 
 2014-12-01  Stefan Monnier  <monnier@iro.umontreal.ca>
@@ -861,26 +939,26 @@
 
 2014-12-01  Eric S. Raymond  <esr@snark.thyrsus.com>
 
-	* vc/vc.el, vc-hooks.el, and all backends: API simplification;
+	* vc/vc.el, vc-hooks.el: All backends: API simplification;
 	vc-state-heuristic is no longer a public method, having been
 	removed where it is redundant, unnecessary, or known buggy.
 	This eliminated all backends except CVS.  Eliminates bug#7850.
 
 	* vc/vc-cvs.el, vc/vc-hooks.el, vc/vc-rcs.el, vc/vc-sccs.el:
 	Eliminate vc-mistrust-permissions.  It was only relevant to the
-	RCS and SCCS back ends and defaulted to t. Code now always
+	RCS and SCCS back ends and defaulted to t.  Code now always
 	mistrusts permissions - by actual measurement the effect on
-	performance is negligible. As a side effect bug#11490 is now
+	performance is negligible.  As a side effect bug#11490 is now
 	irrelevant.
 
-	* vc/vc.el, vc-hooks.el, and all backends: API simplification;
+	* vc/vc.el, vc-hooks.el: All backends: API simplification;
 	vc-workfile-unchanged-p is no longer a public method (but the RCS
 	and SCCS back ends retain it as a private method used in state
-	computation). This method was redundant with vc-state and usually
-	implemented as a trivial call to same. Fixes the failure mode
+	computation).  This method was redundant with vc-state and usually
+	implemented as a trivial call to same.  Fixes the failure mode
 	described in bug#694.
 
-	* vc/vc.el and all backends: API simplification; init-revision is
+	* vc/vc.el: All backends: API simplification; init-revision is
 	gone, and vc-registered functions no longer take an
 	initial-revision argument.
 
@@ -1040,7 +1118,7 @@
 	string.
 	(newsticker--treeview-load): Change wording of the questions the
 	user is asked when `newsticker-groups-filename' is found to be
-	used and we offer to read and remove the groups file. (bug#19165)
+	used and we offer to read and remove the groups file.  (Bug#19165)
 
 2014-11-27  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
@@ -1245,7 +1323,7 @@
 2014-11-22  Ulf Jasper  <ulf.jasper@web.de>
 
 	* net/newst-backend.el (newsticker--sentinel-work):
-	Tell `libxml-parse-xml-region' to discard comments. Fixes bug#18787.
+	Tell `libxml-parse-xml-region' to discard comments.  Fixes bug#18787.
 
 2014-11-22  Michael Albinus  <michael.albinus@gmx.de>
 
@@ -1262,7 +1340,7 @@
 	live in vc.el and certainly not in vc-hooks.el.
 
 	* vc/vc-hooks.el, vc-rcs.el, vc-sccs.el: vc-name  -> vc-master-name.
-	This is preaparatory to isolating all the 'master' functions
+	This is preparatory to isolating all the 'master' functions
 	used only by the file-oriented back ends.  With this done first,
 	the substantive diffs will be easier to read.
 
@@ -1611,7 +1689,7 @@
 2014-11-16  Oscar Fuentes <ofv@wanadoo.es>
 
 	Add faces for the VC modeline state indicator.
-	* lisp/vc/vc-hooks.el:
+	* vc/vc-hooks.el:
 	(vc-state-faces, vc-state-base-face)
 	(vc-up-to-date-state, vc-needs-update-state)
 	(vc-locked-state, vc-locally-added-state)
@@ -2305,9 +2383,9 @@
 	* ses.el (macroexp): Add require for this package, so that function
 	`ses--cell gets macroexp-quote.
 	(ses--cell): Makes formula a macroexp-quote of value when formula
-	is nil. The rationale of this changr is to allow in the future
+	is nil.  The rationale of this changr is to allow in the future
 	shorter SES files, e.g. we could have only `(ses-cell A1 1.0)'
-	instead of `(ses-cell A1 1.0 1.0 nil REFLIST)'. In such a case
+	instead of `(ses-cell A1 1.0 1.0 nil REFLIST)'.  In such a case
 	reference list REFLIST would be re-computed after load --- thus
 	trading off load time against file size.
 
@@ -3312,7 +3390,7 @@
 	HTML code has become part of the xml parse tree.
 	(newsticker--parse-rss-1.0, newsticker--parse-rss-2.0): Take care
 	of possibly missing namespace prefixes.
-	(newsticker--parse-generic-items): Code formatting. Typo.
+	(newsticker--parse-generic-items): Code formatting.  Typo.
 	(newsticker--images-dir): Add trailing slash.
 	(newsticker--image-get): Fix error message.
 
@@ -3477,7 +3555,7 @@
 	* vc/add-log.el (change-log-next-buffer): Don't create an empty
 	buffer "ChangeLog" when the current buffer doesn't match ChangeLog.[0-9].
 	Return the current buffer if no files match the default pattern
-	ChangeLog.[0-9].  Signal "end of multi" when file is nil. (Bug#18547)
+	ChangeLog.[0-9].  Signal "end of multi" when file is nil.  (Bug#18547)
 
 2014-09-25  Stefan Monnier  <monnier@iro.umontreal.ca>
 
@@ -3615,7 +3693,7 @@
 	* textmodes/reftex-sel.el (reftex-select-label-mode)
 	(reftex-select-bib-mode, reftex-insert-docstruct): Derive modes
 	from special-mode (instead of fundamental-mode) and propertize
-	with font-lock-face instead of just face. (Bug#18496)
+	with font-lock-face instead of just face.  (Bug#18496)
 
 	* textmodes/reftex-toc.el (reftex-toc-mode, reftex-toc): Ditto.
 
@@ -4009,7 +4087,7 @@
 	of local overrides.
 	(ibuffer): Don't store previous windows configuration.
 	Let `quit-window' handle restoring.
-	(ibuffer-quit): Remove function. Use `quit-window' instead.
+	(ibuffer-quit): Remove function.  Use `quit-window' instead.
 	(ibuffer-restore-window-config-on-quit): Remove variable.
 	(ibuffer-prev-window-config): Remove variable.
 
@@ -4263,10 +4341,10 @@
 
 2014-08-11  Ulf Jasper  <ulf.jasper@web.de>
 
-	Newsticker: introduce `newsticker-treeview-date-format'. (Bug#17227)
-
+	Newsticker: introduce `newsticker-treeview-date-format'.  (Bug#17227)
 	* net/newst-treeview.el (newsticker-treeview-date-format): New.
-	(newsticker--treeview-list-add-item): Use `newsticker-treeview-date-format'.
+	(newsticker--treeview-list-add-item):
+	Use `newsticker-treeview-date-format'.
 
 2014-08-11  Glenn Morris  <rgm@gnu.org>
 
@@ -4475,7 +4553,7 @@
 2014-07-30  Christophe Deleuze  <christophe.deleuze@free.fr>  (tiny change)
 
 	* calendar/icalendar.el (icalendar--decode-isodatetime):
-	Use actual current-time-zone when converting to local time. (Bug#15408)
+	Use actual current-time-zone when converting to local time.  (Bug#15408)
 
 2014-07-29  Martin Rudalics  <rudalics@gmx.at>
 
@@ -4864,7 +4942,7 @@
 
 2014-07-12  Fabián Ezequiel Gallina  <fgallina@gnu.org>
 
-	Fix dedenters and electric colon handling. (Bug#15163)
+	Fix dedenters and electric colon handling.  (Bug#15163)
 	* progmodes/python.el
 	(python-rx-constituents): Add dedenter and block-ender.
 	(python-indent-dedenters, python-indent-block-enders): Delete.
@@ -5112,7 +5190,7 @@
 
 	* progmodes/python.el (python-indent-post-self-insert-function):
 	Enhancements to electric indentation behavior inside
-	parens. (Bug#17658)
+	parens.  (Bug#17658)
 
 2014-07-03  Stefan Monnier  <monnier@iro.umontreal.ca>
 
@@ -5903,7 +5981,7 @@
 	* help.el (help--key-binding-keymap): New function.
 	(help--binding-locus): New function.
 	(describe-key): Mention the keymap in which the binding was
-	found. (bug#13948)
+	found.  (bug#13948)
 
 2014-06-12  Stefan Monnier  <monnier@iro.umontreal.ca>
 
@@ -6584,7 +6662,7 @@
 2014-05-24  Daniel Colascione  <dancol@dancol.org>
 
 	* progmodes/subword.el (subword-find-word-boundary): Move point to
-	correct spot before search. (Bug#17580)
+	correct spot before search.  (Bug#17580)
 
 	* emacs-lisp/nadvice.el (defun): Write in eval-and-compile to avoid
 	breaking the build.
@@ -6613,7 +6691,7 @@
 	mksh. Improve custom spec; allow regular expressions.
 	(sh-shell): Delegate name splitting to `sh-canonicalize-shell'.
 	(sh-after-hack-local-variables): New function.
-	(sh-mode): Use it; respect file-local `sh-shell' variable. (bug#17333)
+	(sh-mode): Use it; respect file-local `sh-shell' variable.  (Bug#17333)
 	(sh-set-shell): Use `sh-canonicalize-shell' instead of open-coding
 	the normalization.
 	(sh-canonicalize-shell): Rewrite to support regexes.
@@ -7601,7 +7679,7 @@
 2014-04-07  João Távora  <joaotavora@gmail.com>
 
 	Fix `electric-pair-delete-adjacent-pairs' in modes binding
-	backspace. (bug#16981)
+	backspace.  (Bug#16981)
 	* elec-pair.el (electric-pair-backward-delete-char): Delete.
 	(electric-pair-backward-delete-char-untabify): Delete.
 	(electric-pair-mode-map): Bind backspace to a menu item filtering

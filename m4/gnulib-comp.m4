@@ -123,6 +123,7 @@ AC_DEFUN([gl_EARLY],
   # Code from module stdint:
   # Code from module stdio:
   # Code from module stdlib:
+  # Code from module stpcpy:
   # Code from module strftime:
   # Code from module string:
   # Code from module strtoimax:
@@ -341,6 +342,12 @@ AC_DEFUN([gl_INIT],
   gl_STDINT_H
   gl_STDIO_H
   gl_STDLIB_H
+  gl_FUNC_STPCPY
+  if test $HAVE_STPCPY = 0; then
+    AC_LIBOBJ([stpcpy])
+    gl_PREREQ_STPCPY
+  fi
+  gl_STRING_MODULE_INDICATOR([stpcpy])
   gl_FUNC_GNU_STRFTIME
   gl_HEADER_STRING_H
   gl_FUNC_STRTOIMAX
@@ -889,6 +896,7 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/stdint.in.h
   lib/stdio.in.h
   lib/stdlib.in.h
+  lib/stpcpy.c
   lib/strftime.c
   lib/strftime.h
   lib/string.in.h
@@ -995,6 +1003,7 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/stdint.m4
   m4/stdio_h.m4
   m4/stdlib_h.m4
+  m4/stpcpy.m4
   m4/strftime.m4
   m4/string_h.m4
   m4/strtoimax.m4

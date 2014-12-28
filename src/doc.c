@@ -42,6 +42,8 @@ static ptrdiff_t get_doc_string_buffer_size;
 
 static unsigned char *read_bytecode_pointer;
 
+static char const sibling_etc[] = "../etc/";
+
 /* `readchar' in lread.c calls back here to fetch the next byte.
    If UNREADFLAG is 1, we unread a byte.  */
 
@@ -80,7 +82,6 @@ get_doc_string (Lisp_Object filepos, bool unibyte, bool definition)
 {
   char *from, *to, *name, *p, *p1;
   int fd;
-  ptrdiff_t minsize;
   int offset;
   EMACS_INT position;
   Lisp_Object file, tem, pos;
@@ -113,21 +114,14 @@ get_doc_string (Lisp_Object filepos, bool unibyte, bool definition)
 
   tem = Ffile_name_absolute_p (file);
   file = ENCODE_FILE (file);
-  if (NILP (tem))
-    {
-      Lisp_Object docdir = ENCODE_FILE (Vdoc_directory);
-      minsize = SCHARS (docdir);
-      /* sizeof ("../etc/") == 8 */
-      if (minsize < 8)
-	minsize = 8;
-      name = SAFE_ALLOCA (minsize + SCHARS (file) + 8);
-      char *z = lispstpcpy (name, docdir);
-      strcpy (z, SSDATA (file));
-    }
-  else
-    {
-      name = SSDATA (file);
-    }
+  Lisp_Object docdir
+    = NILP (tem) ? ENCODE_FILE (Vdoc_directory) : empty_unibyte_string;
+  ptrdiff_t docdir_sizemax = SBYTES (docdir) + 1;
+#ifndef CANNOT_DUMP
+  docdir_sizemax = max (docdir_sizemax, sizeof sibling_etc);
+#endif
+  name = SAFE_ALLOCA (docdir_sizemax + SBYTES (file));
+  lispstpcpy (lispstpcpy (name, docdir), file);
 
   fd = emacs_open (name, O_RDONLY, 0);
   if (fd < 0)
@@ -137,8 +131,7 @@ get_doc_string (Lisp_Object filepos, bool unibyte, bool definition)
 	{
 	  /* Preparing to dump; DOC file is probably not installed.
 	     So check in ../etc.  */
-	  strcpy (name, "../etc/");
-	  strcat (name, SSDATA (file));
+	  lispstpcpy (stpcpy (name, sibling_etc), file);
 
 	  fd = emacs_open (name, O_RDONLY, 0);
 	}
@@ -580,7 +573,6 @@ the same file name is found in the `doc-directory'.  */)
       (0)
 #endif /* CANNOT_DUMP */
     {
-      static char const sibling_etc[] = "../etc/";
       dirname = sibling_etc;
       dirlen = sizeof sibling_etc - 1;
     }
@@ -594,8 +586,7 @@ the same file name is found in the `doc-directory'.  */)
   count = SPECPDL_INDEX ();
   USE_SAFE_ALLOCA;
   name = SAFE_ALLOCA (dirlen + SBYTES (filename) + 1);
-  strcpy (name, dirname);
-  strcat (name, SSDATA (filename)); 	/*** Add this line ***/
+  lispstpcpy (stpcpy (name, dirname), filename); 	/*** Add this line ***/
 
   /* Vbuild_files is nil when temacs is run, and non-nil after that.  */
   if (NILP (Vbuild_files))

@@ -357,7 +357,7 @@ xd_signature_cat (char *signature, char const *x)
   ptrdiff_t xlen = strlen (x);
   if (DBUS_MAXIMUM_SIGNATURE_LENGTH - xlen <= siglen)
     string_overflow ();
-  strcat (signature, x);
+  strcpy (signature + siglen, x);
 }
 
 /* Compute SIGNATURE of OBJECT.  It must have a form that it can be

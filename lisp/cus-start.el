@@ -520,7 +520,12 @@ since it could result in memory overflow and make Emacs crash."
 				      (const :tag "Hourglass" :value hourglass)))
 	     (display-hourglass cursor boolean)
 	     (hourglass-delay cursor number)
-
+	     (resize-mini-windows
+	      windows (choice
+		       (const :tag "Off (nil)" :value nil)
+		       (const :tag "Fit (t)" :value t)
+		       (const :tag "Grow only" :value grow-only))
+	      "25.1")
 	     ;; xfaces.c
 	     (scalable-fonts-allowed display boolean "22.1")
 	     ;; xfns.c

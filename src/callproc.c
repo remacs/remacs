@@ -1315,13 +1315,10 @@ child_setup (int in, int out, int err, char **new_argv, bool set_pgrp,
 
     if (STRINGP (display))
       {
-	char *vdata;
-
 	if (MAX_ALLOCA - sizeof "DISPLAY=" < SBYTES (display))
 	  exec_failed (new_argv[0], ENOMEM);
-	vdata = alloca (sizeof "DISPLAY=" + SBYTES (display));
-	strcpy (vdata, "DISPLAY=");
-	strcat (vdata, SSDATA (display));
+	char *vdata = alloca (sizeof "DISPLAY=" + SBYTES (display));
+	lispstpcpy (stpcpy (vdata, "DISPLAY="), display);
 	new_env = add_env (env, new_env, vdata);
       }
 

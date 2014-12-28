@@ -907,6 +907,98 @@ window.
 @end deffn
 
 
+@node Preserving Window Sizes
+@section Preserving Window Sizes
+@cindex preserving window sizes
+
+A window can get resized explicitly by using one of the functions from
+the preceding section or implicitly, for example, when resizing an
+adjacent window, when splitting or deleting a window (@pxref{Splitting
+Windows}, @pxref{Deleting Windows}) or when resizing the window's frame
+(@pxref{Size and Position}).
+
+  It is possible to avoid implicit resizing of a specific window when
+there are one or more other resizable windows on the same frame.  For
+this purpose, Emacs must be advised to @dfn{preserve} the size of that
+window.  There are two basic ways to do that.
+
+@defvar window-size-fixed
+If this buffer-local variable is non-@code{nil}, the size of any window
+displaying the buffer cannot normally be changed.  Deleting a window or
+changing the frame's size may still change the window's size, if there
+is no choice.
+
+If the value is @code{height}, then only the window's height is fixed;
+if the value is @code{width}, then only the window's width is fixed.
+Any other non-@code{nil} value fixes both the width and the height.
+
+If this variable is @code{nil}, this does not necessarily mean that any
+window showing the buffer can be resized in the desired direction.  To
+determine that, use the function @code{window-resizable}.
+@xref{Resizing Windows}.
+@end defvar
+
+Often @code{window-size-fixed} is overly aggressive because it inhibits
+any attempt to explicitly resize or split an affected window as well.
+This may even happen after the window has been resized implicitly, for
+example, when deleting an adjacent window or resizing the window's
+frame.  The following function tries hard to never disallow resizing
+such a window explicitly:
+
+@defun window-preserve-size &optional window horizontal preserve
+This function (un-)marks the height of window @var{window} as preserved
+for future resize operations.  @var{window} must be a live window and
+defaults to the selected one.  If the optional argument @var{horizontal}
+is non-@code{nil}, it (un-)marks the width of @var{window} as preserved.
+
+If the optional argument @var{preserve} is @code{t}, this means to
+preserve the current height/width of @var{window}'s body.  The
+height/width of @var{window} will change only if Emacs has no better
+choice.  Resizing a window whose height/width is preserved by this
+function never throws an error.
+
+If @var{preserve} is @code{nil}, this means to stop preserving the
+height/width of @var{window}, lifting any respective restraint induced
+by a previous call of this function for @var{window}.  Calling
+@code{enlarge-window}, @code{shrink-window} or
+@code{fit-window-to-buffer} with @var{window} as argument may also
+remove the respective restraint.
+@end defun
+
+@code{window-preserve-size} is currently invoked by the following
+functions:
+
+@table @code
+@item fit-window-to-buffer
+If the optional argument @var{preserve-size} of that function
+(@pxref{Resizing Windows}) is non-@code{nil}, the size established by
+that function is preserved.
+
+@item display-buffer
+If the @var{alist} argument of that function (@pxref{Choosing Window})
+contains a @code{preserve-size} entry, the size of the window produced
+by that function is preserved.
+@end table
+
+  @code{window-preserve-size} installs a window parameter (@pxref{Window
+Parameters}) called @code{preserved-size} which is consulted by the
+window resizing functions.  This parameter will not prevent resizing the
+window when the window shows another buffer than the one when
+@code{window-preserve-size} was invoked or if its size has changed since
+then.
+
+The following function can be used to check whether the height of a
+particular window is preserved:
+
+@defun window-preserved-size &optional window horizontal
+This function returns the preserved height of window @var{window} in
+pixels.  @var{window} must be a live window and defaults to the selected
+one.  If the optional argument @var{horizontal} is non-@code{nil}, it
+returns the preserved width of @var{window}.  It returns @code{nil} if
+the size of @var{window} is not preserved.
+@end defun
+
+
 @node Splitting Windows
 @section Splitting Windows
 @cindex splitting windows
@@ -1066,98 +1158,6 @@ point was previously on.  Note that this only affects
 @code{split-window-below}, not the lower-level @code{split-window}
 function.
 @end defopt
-
-
-@node Preserving Window Sizes
-@section Preserving Window Sizes
-@cindex preserving window sizes
-
-A window can get resized explicitly by using one of the functions from
-the preceding section or implicitly, for example, when resizing an
-adjacent window, when splitting or deleting a window (@pxref{Splitting
-Windows}, @pxref{Deleting Windows}) or when resizing the window's frame
-(@pxref{Size and Position}).
-
-  It is possible to avoid implicit resizing of a specific window when
-there are one or more other resizable windows on the same frame.  For
-this purpose, Emacs must be advised to @dfn{preserve} the size of that
-window.  There are two basic ways to do that.
-
-@defvar window-size-fixed
-If this buffer-local variable is non-@code{nil}, the size of any window
-displaying the buffer cannot normally be changed.  Deleting a window or
-changing the frame's size may still change the window's size, if there
-is no choice.
-
-If the value is @code{height}, then only the window's height is fixed;
-if the value is @code{width}, then only the window's width is fixed.
-Any other non-@code{nil} value fixes both the width and the height.
-
-If this variable is @code{nil}, this does not necessarily mean that any
-window showing the buffer can be resized in the desired direction.  To
-determine that, use the function @code{window-resizable}.
-@xref{Resizing Windows}.
-@end defvar
-
-Often @code{window-size-fixed} is overly aggressive because it inhibits
-any attempt to explicitly resize or split an affected window as well.
-This may even happen after the window has been resized implicitly, for
-example, when deleting an adjacent window or resizing the window's
-frame.  The following function tries hard to never disallow resizing
-such a window explicitly:
-
-@defun window-preserve-size &optional window horizontal preserve
-This function (un-)marks the height of window @var{window} as preserved
-for future resize operations.  @var{window} must be a live window and
-defaults to the selected one.  If the optional argument @var{horizontal}
-is non-@code{nil}, it (un-)marks the width of @var{window} as preserved.
-
-If the optional argument @var{preserve} is @code{t}, this means to
-preserve the current height/width of @var{window}'s body.  The
-height/width of @var{window} will change only if Emacs has no better
-choice.  Resizing a window whose height/width is preserved by this
-function never throws an error.
-
-If @var{preserve} is @code{nil}, this means to stop preserving the
-height/width of @var{window}, lifting any respective restraint induced
-by a previous call of this function for @var{window}.  Calling
-@code{enlarge-window}, @code{shrink-window} or
-@code{fit-window-to-buffer} with @var{window} as argument may also
-remove the respective restraint.
-@end defun
-
-@code{window-preserve-size} is currently invoked by the following
-functions:
-
-@table @code
-@item fit-window-to-buffer
-If the optional argument @var{preserve-size} of that function
-(@pxref{Resizing Windows}) is non-@code{nil}, the size established by
-that function is preserved.
-
-@item display-buffer
-If the @var{alist} argument of that function (@pxref{Choosing Window})
-contains a @code{preserve-size} entry, the size of the window produced
-by that function is preserved.
-@end table
-
-  @code{window-preserve-size} installs a window parameter (@pxref{Window
-Parameters}) called @code{preserved-size} which is consulted by the
-window resizing functions.  This parameter will not prevent resizing the
-window when the window shows another buffer than the one when
-@code{window-preserve-size} was invoked or if its size has changed since
-then.
-
-The following function can be used to check whether the height of a
-particular window is preserved:
-
-@defun window-preserved-size &optional window horizontal
-This function returns the preserved height of window @var{window} in
-pixels.  @var{window} must be a live window and defaults to the selected
-one.  If the optional argument @var{horizontal} is non-@code{nil}, it
-returns the preserved width of @var{window}.  It returns @code{nil} if
-the size of @var{window} is not preserved.
-@end defun
 
 
 @node Deleting Windows

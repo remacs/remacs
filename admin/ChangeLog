@@ -1,8 +1,14 @@
+2014-12-24  Glenn Morris  <rgm@gnu.org>
+
+	* authors.el (authors-obsolete-files-regexps)
+	(authors-ignored-files, authors-valid-file-names)
+	(authors-renamed-files-alist, authors-renamed-files-regexps):
+	Additions.
+
 2014-12-14  Paul Eggert  <eggert@cs.ucla.edu>
 
 	* notes/unicode: Track leim/quail file renames.
-	Correct coding system
-	of lisp/international/titdic-cnv.el.
+	Correct coding system of lisp/international/titdic-cnv.el.
 
 2014-12-14  Glenn Morris  <rgm@gnu.org>
 

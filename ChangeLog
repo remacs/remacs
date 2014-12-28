@@ -1,3 +1,43 @@
+2014-12-25  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Prefer stpcpy to strcat
+	* admin/merge-gnulib (GNULIB_MODULES): Add stpcpy.
+	* lib/gnulib.mk, m4/gnulib-comp.m4: Regenerate.
+	* lib/stpcpy.c, m4/stpcpy.m4: New files, from gnulib.
+	* lib-src/ebrowse.c (sym_scope_1, operator_name, open_file):
+	* lib-src/emacsclient.c (get_server_config, set_local_socket)
+	(start_daemon_and_retry_set_socket):
+	* lib-src/etags.c (main, C_entries, relative_filename):
+	* lib-src/pop.c (sendline):
+	* lib-src/update-game-score.c (main):
+	* lwlib/xlwmenu.c (resource_widget_value):
+	* src/callproc.c (child_setup):
+	* src/dbusbind.c (xd_signature_cat):
+	* src/doc.c (get_doc_string, Fsnarf_documentation):
+	* src/editfns.c (Fuser_full_name):
+	* src/frame.c (xrdb_get_resource):
+	* src/gtkutil.c (xg_get_file_with_chooser):
+	* src/tparam.c (tparam1):
+	* src/xfns.c (xic_create_fontsetname):
+	* src/xrdb.c (gethomedir, get_user_db, get_environ_db):
+	* src/xsmfns.c (smc_save_yourself_CB):
+	Rewrite to avoid the need for strcat, typically by using stpcpy
+	and/or lispstpcpy.  strcat tends to be part of O(N**2) algorithms.
+	* src/doc.c (sibling_etc):
+	* src/xrdb.c (xdefaults):
+	Now a top-level static constant.
+
+2014-12-24  Stephen Leake  <stephen_leake@stephe-leake.org>
+
+	* CONTRIBUTE: Move user-level information to doc/emacs/trouble.texi.
+	Add Savannah url, cleanup announcing freeze.
+	(commit messages): New, gathered from comments on emacs-devel.
+	(Changelog notes): Add reference to GNU coding standards section 5.2;
+	doc 'present tense', bug fix format.
+	(branches): Freeze announcements are made on info-gnu-emacs mailing
+	list.
+	(git vs rename): New.
+
 2014-12-23  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Merge from gnulib
@@ -8,16 +48,7 @@
 
 2014-12-14  Paul Eggert  <eggert@cs.ucla.edu>
 
-	Spelling fixes
-	All uses changed.
-	* lib-src/etags.c (analyze_regex): Rename from analyse_regex.
-	* lisp/cedet/semantic/lex-spp.el:
-	(semantic-lex-spp-analyzer-do-replace):
-	Rename from semantic-lex-spp-anlyzer-do-replace.
-	* lisp/emacs-lisp/cconv.el (cconv--analyze-use):
-	Rename from cconv--analyse-use.
-	(cconv--analyze-function): Rename from cconv--analyse-function.
-	(cconv-analyze-form): Rename from cconv-analyse-form.
+	Spelling fixes.  All uses changed.
 	* src/regex.c (analyze_first): Rename from analyze_first.
 
 2014-12-14  Glenn Morris  <rgm@gnu.org>

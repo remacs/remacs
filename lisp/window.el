@@ -7798,6 +7798,9 @@ With arg N, put point N/10 of the way from the true end."
 (defvar mouse-autoselect-window-timer nil
   "Timer used by delayed window autoselection.")
 
+(defvar mouse-autoselect-window-position-1 nil
+  "First mouse position recorded by delayed window autoselection.")
+
 (defvar mouse-autoselect-window-position nil
   "Last mouse position recorded by delayed window autoselection.")
 
@@ -7822,6 +7825,7 @@ Optional argument FORCE means cancel unconditionally."
 			(memq (nth 4 (event-end last-input-event))
 			      '(handle end-scroll)))))
     (setq mouse-autoselect-window-state nil)
+    (setq mouse-autoselect-window-position-1 nil)
     (when (timerp mouse-autoselect-window-timer)
       (cancel-timer mouse-autoselect-window-timer))
     (remove-hook 'pre-command-hook 'mouse-autoselect-window-cancel)))
@@ -7863,21 +7867,32 @@ is active.  This function is run by `mouse-autoselect-window-timer'."
        ;; A menu / popup dialog is active or the mouse is not on the
        ;; text region of WINDOW: Suspend autoselection temporarily.
        (mouse-autoselect-window-start mouse-position nil t))
-      ((eq mouse-autoselect-window-state 'suspend)
+      ((or (eq mouse-autoselect-window-state 'suspend)
+	   ;; When the mouse is at its first recorded position, restart
+	   ;; delayed autoselection.  This works around a scenario with
+	   ;; two two-window frames with identical dimensions: select the
+	   ;; first window of the first frame, switch to the second
+	   ;; frame, move the mouse to its second window, minimize the
+	   ;; second frame.  Now the second window of the first frame
+	   ;; gets selected although the mouse never really "moved" into
+	   ;; that window.
+	   (and (numberp mouse-autoselect-window)
+		(equal (mouse-position) mouse-autoselect-window-position-1)))
        ;; Delayed autoselection was temporarily suspended, reenable it.
        (mouse-autoselect-window-start mouse-position))
       ((and window (not (eq window (selected-window)))
 	    (or (not (numberp mouse-autoselect-window))
-		(and (> mouse-autoselect-window 0)
-		     ;; If `mouse-autoselect-window' is positive, select
-		     ;; window if the window is the same as before.
+		(and (>= mouse-autoselect-window 0)
+		     ;; If `mouse-autoselect-window' is non-negative,
+		     ;; select window if it's the same as before.
 		     (eq window mouse-autoselect-window-window))
-		;; Otherwise select window if the mouse is at the same
-		;; position as before.  Observe that the first test after
-		;; starting autoselection usually fails since the value of
-		;; `mouse-autoselect-window-position' recorded there is the
-		;; position where the mouse has entered the new window and
-		;; not necessarily where the mouse has stopped moving.
+		;; Otherwise select window iff the mouse is at the same
+		;; position as before.  Observe that the first test
+		;; after starting autoselection usually fails since the
+		;; value of `mouse-autoselect-window-position' recorded
+		;; there is the position where the mouse has entered the
+		;; new window and not necessarily where the mouse has
+		;; stopped moving.
 		(equal mouse-position mouse-autoselect-window-position))
 	    ;; The minibuffer is a candidate window if it's active.
 	    (or (not (window-minibuffer-p window))
@@ -7921,14 +7936,14 @@ is active.  This function is run by `mouse-autoselect-window-timer'."
 		     (not (minibuffer-window-active-p window)))
 		;; Don't switch when autoselection shall be delayed.
 		(and (numberp mouse-autoselect-window)
-		     (not (zerop mouse-autoselect-window))
 		     (not (eq mouse-autoselect-window-state 'select))
-		     (progn
+		     (let ((position (mouse-position)))
 		       ;; Cancel any delayed autoselection.
 		       (mouse-autoselect-window-cancel t)
 		       ;; Start delayed autoselection from current mouse
 		       ;; position and window.
-		       (mouse-autoselect-window-start (mouse-position) window)
+		       (setq mouse-autoselect-window-position-1 position)
+		       (mouse-autoselect-window-start position window)
 		       ;; Executing a command cancels delayed autoselection.
 		       (add-hook
 			'pre-command-hook 'mouse-autoselect-window-cancel))))

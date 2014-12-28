@@ -4467,7 +4467,7 @@ Append @var{child} as the last child of @var{node}.
 
 @item dom-add-child-before @var{node} @var{child} @var{before}
 Add @var{child} to @var{node}'s child list before the @var{before}
-node.  If @var{before} is nil, make @var{child} the first child.
+node.  If @var{before} is @code{nil}, make @var{child} the first child.
 
 @item dom-set-attributes @var{node} @var{attributes}
 Replace all the attributes of the node with a new key/value list.

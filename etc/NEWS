@@ -187,6 +187,14 @@ Unicode standards.
 
 
 * Changes in Specialized Modes and Packages in Emacs 25.1
+** Shell
+
+When you invoke `shell' interactively, the *shell* buffer will now
+display in a new window.  However, you can customize this behavior via
+the new `shell-display-buffer-actions' variable.  For example, to get
+the old behavior -- *shell* buffer displays in current window -- use
+(setq shell-display-buffer-actions '(display-buffer-same-window)).
+
 ** ido
 *** New command `ido-bury-buffer-at-head' bound to C-S-b
 Bury the buffer at the head of `ido-matches', analogous to how C-k
@@ -425,6 +433,25 @@ By default, 32 spaces and four TABs are considered to be too much but
 `tildify-string-alist', `tildify-pattern-alist', and
 `tildify-ignored-environments-alist' variables (as well as a few
 helper functions) obsolete.
+
+** xref
+The new package provides generic framework and new commands to find
+and move to definitions, as well as pop back to the original location.
+
+*** New key bindings
+`xref-find-definitions' replaces `find-tag' and provides an interface
+to pick one destination among several.  Hence, `tags-loop-continue' is
+unbound.  `xref-pop-marker-stack' replaces `pop-tag-mark', but uses an
+easier binding, which is now unoccupied (`M-,').
+`xref-find-definitions-other-window' replaces `find-tag-other-window'.
+`xref-find-definitions-other-frame' replaces `find-tag-other-frame'.
+`xref-find-apropos' replaces `find-tag-regexp'.
+
+*** New variables
+`find-tag-marker-ring-length' is now an obsolete alias for
+`xref-marker-ring-length'.  `find-tag-marker-ring' is now an obsolete
+alias for a private variable.  `xref-push-marker-stack' and
+`xref-pop-marker-stack' should be used to mutate it instead.
 
 ** Obsolete packages
 

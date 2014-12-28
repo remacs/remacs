@@ -1710,13 +1710,14 @@ xic_create_fontsetname (const char *base_fontname, int motif)
 {
   const char *sep = motif ? ";" : ",";
   char *fontsetname;
+  char *z;
 
   /* Make a fontset name from the base font name.  */
   if (xic_default_fontset == base_fontname)
     {
       /* There is no base font name, use the default.  */
       fontsetname = xmalloc (strlen (base_fontname) + 2);
-      strcpy (fontsetname, base_fontname);
+      z = stpcpy (fontsetname, base_fontname);
     }
   else
     {
@@ -1737,9 +1738,9 @@ xic_create_fontsetname (const char *base_fontname, int motif)
 	     Use the specified font plus the default.  */
 	  fontsetname = xmalloc (strlen (base_fontname)
 				 + strlen (xic_default_fontset) + 3);
-	  strcpy (fontsetname, base_fontname);
-	  strcat (fontsetname, sep);
-	  strcat (fontsetname, xic_default_fontset);
+	  z = stpcpy (fontsetname, base_fontname);
+	  z = stpcpy (z, sep);
+	  z = stpcpy (z, xic_default_fontset);
 	}
       else
 	{
@@ -1800,27 +1801,26 @@ xic_create_fontsetname (const char *base_fontname, int motif)
 	  /* Build the font spec that matches all.  */
 	  len = p - p2 + strlen (allcs) + strlen (all) + strlen (allfamilies) + 1;
 	  font_all = alloca (len);
-	  strcpy (font_all, allfamilies);
-	  strcat (font_all, all);
-	  memcpy (font_all + strlen (all) + strlen (allfamilies), p2, p - p2);
-	  strcpy (font_all + strlen (all) + strlen (allfamilies) + (p - p2),
-		  allcs);
+	  z = stpcpy (font_all, allfamilies);
+	  z = stpcpy (z, all);
+	  memcpy (z, p2, p - p2);
+	  strcpy (z + (p - p2), allcs);
 
 	  /* Build the actual font set name.  */
 	  len = strlen (base_fontname) + strlen (font_allcs)
 	    + strlen (font_allfamilies) + strlen (font_all) + 5;
 	  fontsetname = xmalloc (len);
-	  strcpy (fontsetname, base_fontname);
-	  strcat (fontsetname, sep);
-	  strcat (fontsetname, font_allcs);
-	  strcat (fontsetname, sep);
-	  strcat (fontsetname, font_allfamilies);
-	  strcat (fontsetname, sep);
-	  strcat (fontsetname, font_all);
+	  z = stpcpy (fontsetname, base_fontname);
+	  z = stpcpy (z, sep);
+	  z = stpcpy (z, font_allcs);
+	  z = stpcpy (z, sep);
+	  z = stpcpy (z, font_allfamilies);
+	  z = stpcpy (z, sep);
+	  z = stpcpy (z, font_all);
 	}
     }
   if (motif)
-    return strcat (fontsetname, ":");
+    strcpy (z, ":");
   return fontsetname;
 }
 #endif /* HAVE_X_WINDOWS && USE_X_TOOLKIT */
