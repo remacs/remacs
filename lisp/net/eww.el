@@ -445,7 +445,7 @@ See the `eww-search-prefix' variable for the search engine used."
 		   ("start" . :start)
 		   ("home" . :home)
 		   ("contents" . :contents)
-		   ("up" . up)))))
+		   ("up" . :up)))))
     (and href
 	 where
 	 (plist-put eww-data (cdr where) href))))
