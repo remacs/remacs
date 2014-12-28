@@ -138,6 +138,8 @@ disabled, i.e., the position is recorded for all files."
   :version "24.1"
   :type 'regexp :group 'save-place)
 
+(declare-function dired-current-directory "dired" (&optional localp))
+
 (defun toggle-save-place (&optional parg)
   "Toggle whether to save your place in this file between sessions.
 If this mode is enabled, point is recorded when you kill the buffer
