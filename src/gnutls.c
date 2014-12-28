@@ -129,10 +129,6 @@ DEF_GNUTLS_FN (void, gnutls_global_set_log_function, (gnutls_log_func));
 DEF_GNUTLS_FN (void, gnutls_global_set_audit_log_function, (gnutls_audit_log_func));
 #endif
 DEF_GNUTLS_FN (void, gnutls_global_set_log_level, (int));
-DEF_GNUTLS_FN (void, gnutls_global_set_mem_functions,
-	       (gnutls_alloc_function, gnutls_alloc_function,
-		gnutls_is_secure_function, gnutls_realloc_function,
-		gnutls_free_function));
 DEF_GNUTLS_FN (int, gnutls_handshake, (gnutls_session_t));
 DEF_GNUTLS_FN (int, gnutls_init, (gnutls_session_t *, unsigned int));
 DEF_GNUTLS_FN (int, gnutls_priority_set_direct,
@@ -251,7 +247,6 @@ init_gnutls_functions (void)
   LOAD_GNUTLS_FN (library, gnutls_global_set_audit_log_function);
 #endif
   LOAD_GNUTLS_FN (library, gnutls_global_set_log_level);
-  LOAD_GNUTLS_FN (library, gnutls_global_set_mem_functions);
   LOAD_GNUTLS_FN (library, gnutls_handshake);
   LOAD_GNUTLS_FN (library, gnutls_init);
   LOAD_GNUTLS_FN (library, gnutls_priority_set_direct);
@@ -344,7 +339,6 @@ init_gnutls_functions (void)
 #endif
 #define fn_gnutls_global_set_log_function	gnutls_global_set_log_function
 #define fn_gnutls_global_set_log_level		gnutls_global_set_log_level
-#define fn_gnutls_global_set_mem_functions	gnutls_global_set_mem_functions
 #define fn_gnutls_handshake			gnutls_handshake
 #define fn_gnutls_init				gnutls_init
 #define fn_gnutls_kx_get                        gnutls_kx_get
@@ -384,6 +378,17 @@ init_gnutls_functions (void)
 #endif /* !WINDOWSNT */
 
 
+/* Report memory exhaustion if ERR is an out-of-memory indication.  */
+static void
+check_memory_full (int err)
+{
+  /* When GnuTLS exhausts memory, it doesn't say how much memory it
+     asked for, so tell the Emacs allocator that GnuTLS asked for no
+     bytes.  This isn't accurate, but it's good enough.  */
+  if (err == GNUTLS_E_MEMORY_ERROR)
+    memory_full (0);
+}
+
 #ifdef HAVE_GNUTLS3
 /* Log a simple audit message.  */
 static void
@@ -480,7 +485,7 @@ emacs_gnutls_handshake (struct Lisp_Process *proc)
     }
   else
     {
-      fn_gnutls_alert_send_appropriate (state, ret);
+      check_memory_full (fn_gnutls_alert_send_appropriate (state, ret));
     }
   return ret;
 }
@@ -597,6 +602,8 @@ emacs_gnutls_handle_error (gnutls_session_t session, int err)
   if (err >= 0)
     return 1;
 
+  check_memory_full (err);
+
   max_log_level = global_gnutls_log_level;
 
   /* TODO: use gnutls-error-fatalp and gnutls-error-string.  */
@@ -662,6 +669,7 @@ gnutls_make_error (int err)
       return Qgnutls_e_invalid_session;
     }
 
+  check_memory_full (err);
   return make_number (err);
 }
 
@@ -822,6 +830,7 @@ gnutls_certificate_details (gnutls_x509_crt_t cert)
   /* Version. */
   {
     int version = fn_gnutls_x509_crt_get_version (cert);
+    check_memory_full (version);
     if (version >= GNUTLS_E_SUCCESS)
       res = nconc2 (res, list2 (intern (":version"),
 				make_number (version)));
@@ -830,10 +839,12 @@ gnutls_certificate_details (gnutls_x509_crt_t cert)
   /* Serial. */
   buf_size = 0;
   err = fn_gnutls_x509_crt_get_serial (cert, NULL, &buf_size);
+  check_memory_full (err);
   if (err == GNUTLS_E_SHORT_MEMORY_BUFFER)
     {
       void *serial = xmalloc (buf_size);
       err = fn_gnutls_x509_crt_get_serial (cert, serial, &buf_size);
+      check_memory_full (err);
       if (err >= GNUTLS_E_SUCCESS)
 	res = nconc2 (res, list2 (intern (":serial-number"),
 				  gnutls_hex_string (serial, buf_size, "")));
@@ -843,10 +854,12 @@ gnutls_certificate_details (gnutls_x509_crt_t cert)
   /* Issuer. */
   buf_size = 0;
   err = fn_gnutls_x509_crt_get_issuer_dn (cert, NULL, &buf_size);
+  check_memory_full (err);
   if (err == GNUTLS_E_SHORT_MEMORY_BUFFER)
     {
       char *dn = xmalloc (buf_size);
       err = fn_gnutls_x509_crt_get_issuer_dn (cert, dn, &buf_size);
+      check_memory_full (err);
       if (err >= GNUTLS_E_SUCCESS)
 	res = nconc2 (res, list2 (intern (":issuer"),
 				  make_string (dn, buf_size)));
@@ -872,10 +885,12 @@ gnutls_certificate_details (gnutls_x509_crt_t cert)
   /* Subject. */
   buf_size = 0;
   err = fn_gnutls_x509_crt_get_dn (cert, NULL, &buf_size);
+  check_memory_full (err);
   if (err == GNUTLS_E_SHORT_MEMORY_BUFFER)
     {
       char *dn = xmalloc (buf_size);
       err = fn_gnutls_x509_crt_get_dn (cert, dn, &buf_size);
+      check_memory_full (err);
       if (err >= GNUTLS_E_SUCCESS)
 	res = nconc2 (res, list2 (intern (":subject"),
 				  make_string (dn, buf_size)));
@@ -889,6 +904,7 @@ gnutls_certificate_details (gnutls_x509_crt_t cert)
     unsigned int bits;
 
     err = fn_gnutls_x509_crt_get_pk_algorithm (cert, &bits);
+    check_memory_full (err);
     if (err >= GNUTLS_E_SUCCESS)
       {
 	const char *name = fn_gnutls_pk_algorithm_get_name (err);
@@ -906,10 +922,12 @@ gnutls_certificate_details (gnutls_x509_crt_t cert)
   /* Unique IDs. */
   buf_size = 0;
   err = fn_gnutls_x509_crt_get_issuer_unique_id (cert, NULL, &buf_size);
+  check_memory_full (err);
   if (err == GNUTLS_E_SHORT_MEMORY_BUFFER)
     {
       char *buf = xmalloc (buf_size);
       err = fn_gnutls_x509_crt_get_issuer_unique_id (cert, buf, &buf_size);
+      check_memory_full (err);
       if (err >= GNUTLS_E_SUCCESS)
 	res = nconc2 (res, list2 (intern (":issuer-unique-id"),
 				  make_string (buf, buf_size)));
@@ -918,10 +936,12 @@ gnutls_certificate_details (gnutls_x509_crt_t cert)
 
   buf_size = 0;
   err = fn_gnutls_x509_crt_get_subject_unique_id (cert, NULL, &buf_size);
+  check_memory_full (err);
   if (err == GNUTLS_E_SHORT_MEMORY_BUFFER)
     {
       char *buf = xmalloc (buf_size);
       err = fn_gnutls_x509_crt_get_subject_unique_id (cert, buf, &buf_size);
+      check_memory_full (err);
       if (err >= GNUTLS_E_SUCCESS)
 	res = nconc2 (res, list2 (intern (":subject-unique-id"),
 				  make_string (buf, buf_size)));
@@ -931,6 +951,7 @@ gnutls_certificate_details (gnutls_x509_crt_t cert)
 
   /* Signature. */
   err = fn_gnutls_x509_crt_get_signature_algorithm (cert);
+  check_memory_full (err);
   if (err >= GNUTLS_E_SUCCESS)
     {
       const char *name = fn_gnutls_sign_get_name (err);
@@ -942,10 +963,12 @@ gnutls_certificate_details (gnutls_x509_crt_t cert)
   /* Public key ID. */
   buf_size = 0;
   err = fn_gnutls_x509_crt_get_key_id (cert, 0, NULL, &buf_size);
+  check_memory_full (err);
   if (err == GNUTLS_E_SHORT_MEMORY_BUFFER)
     {
       void *buf = xmalloc (buf_size);
       err = fn_gnutls_x509_crt_get_key_id (cert, 0, buf, &buf_size);
+      check_memory_full (err);
       if (err >= GNUTLS_E_SUCCESS)
 	res = nconc2 (res, list2 (intern (":public-key-id"),
 				  gnutls_hex_string (buf, buf_size, "sha1:")));
@@ -956,11 +979,13 @@ gnutls_certificate_details (gnutls_x509_crt_t cert)
   buf_size = 0;
   err = fn_gnutls_x509_crt_get_fingerprint (cert, GNUTLS_DIG_SHA1,
 					    NULL, &buf_size);
+  check_memory_full (err);
   if (err == GNUTLS_E_SHORT_MEMORY_BUFFER)
     {
       void *buf = xmalloc (buf_size);
       err = fn_gnutls_x509_crt_get_fingerprint (cert, GNUTLS_DIG_SHA1,
 						buf, &buf_size);
+      check_memory_full (err);
       if (err >= GNUTLS_E_SUCCESS)
 	res = nconc2 (res, list2 (intern (":certificate-id"),
 				  gnutls_hex_string (buf, buf_size, "sha1:")));
@@ -1062,6 +1087,7 @@ The return value is a property list with top-level keys :warnings and
   /* Diffie-Hellman prime bits. */
   {
     int bits = fn_gnutls_dh_get_prime_bits (state);
+    check_memory_full (bits);
     if (bits > 0)
       result = nconc2 (result, list2 (intern (":diffie-hellman-prime-bits"),
 				      make_number (bits)));
@@ -1104,11 +1130,8 @@ emacs_gnutls_global_init (void)
   int ret = GNUTLS_E_SUCCESS;
 
   if (!gnutls_global_initialized)
-    {
-      fn_gnutls_global_set_mem_functions (xmalloc, xmalloc, NULL,
-					  xrealloc, xfree);
-      ret = fn_gnutls_global_init ();
-    }
+    ret = fn_gnutls_global_init ();
+
   gnutls_global_initialized = 1;
 
   return gnutls_make_error (ret);
@@ -1291,7 +1314,8 @@ one trustfile (usually a CA bundle).  */)
       unsigned int gnutls_verify_flags = GNUTLS_VERIFY_ALLOW_X509_V1_CA_CRT;
 
       GNUTLS_LOG (2, max_log_level, "allocating x509 credentials");
-      fn_gnutls_certificate_allocate_credentials (&x509_cred);
+      check_memory_full ((fn_gnutls_certificate_allocate_credentials
+			  (&x509_cred)));
       XPROCESS (proc)->gnutls_x509_cred = x509_cred;
 
       verify_flags = Fplist_get (proplist, QCgnutls_bootprop_verify_flags);
@@ -1310,7 +1334,8 @@ one trustfile (usually a CA bundle).  */)
   else /* Qgnutls_anon: */
     {
       GNUTLS_LOG (2, max_log_level, "allocating anon credentials");
-      fn_gnutls_anon_allocate_client_credentials (&anon_cred);
+      check_memory_full ((fn_gnutls_anon_allocate_client_credentials
+			  (&anon_cred)));
       XPROCESS (proc)->gnutls_anon_cred = anon_cred;
     }
 
@@ -1326,8 +1351,11 @@ one trustfile (usually a CA bundle).  */)
   (GNUTLS_VERSION_MINOR > 0 || GNUTLS_VERSION_PATCH >= 20) > 3
       ret = fn_gnutls_certificate_set_x509_system_trust (x509_cred);
       if (ret < GNUTLS_E_SUCCESS)
-	GNUTLS_LOG2i (4, max_log_level,
-		      "setting system trust failed with code ", ret);
+	{
+	  check_memory_full (ret);
+	  GNUTLS_LOG2i (4, max_log_level,
+			"setting system trust failed with code ", ret);
+	}
 #endif
 
       for (tail = trustfiles; CONSP (tail); tail = XCDR (tail))
@@ -1547,7 +1575,10 @@ one trustfile (usually a CA bundle).  */)
 
       XPROCESS (proc)->gnutls_certificate = gnutls_verify_cert;
 
-      if (!fn_gnutls_x509_crt_check_hostname (gnutls_verify_cert, c_hostname))
+      int err
+	= fn_gnutls_x509_crt_check_hostname (gnutls_verify_cert, c_hostname);
+      check_memory_full (err);
+      if (!err)
 	{
 	  XPROCESS (proc)->gnutls_extra_peer_verification |=
 	    CERTIFICATE_NOT_MATCHING;

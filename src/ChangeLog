@@ -1,3 +1,20 @@
+2014-12-28  Paul Eggert  <eggert@Penguin.CS.UCLA.EDU>
+
+	Port memory-full checking to GnuTLS 3.3
+	Instead of using gnutls_global_set_mem_functions, check every call
+	to a GnuTLS function that might return an indication of memory
+	exhaustion.  Suggested by Dmitry Antipov in:
+	http://lists.gnu.org/archive/html/emacs-devel/2014-12/msg02056.html
+	* gnutls.c (gnutls_global_set_mem_functions) [WINDOWSNT]: Remove.
+	(init_gnutls_functions): Do not load gnutls_global_set_mem_functions.
+	(fn_gnutls_global_set_mem_functions) [!WINDOWSNT]: Remove.
+	All uses removed.
+	(check_memory_full): New function.
+	(emacs_gnutls_handshake, emacs_gnutls_handle_error)
+	(gnutls_make_error, gnutls_certificate_details, Fgnutls_peer_status)
+	(Fgnutls_boot): Use it.
+	(emacs_gnutls_global_init): Avoid gnutls_global_set_mem_functions.
+
 2014-12-27  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Fix parse_settings to match internal documentation
