@@ -2374,7 +2374,7 @@ Calls the value of `sh-set-shell-hook' if set."
 	    (sh-make-vars-local))
 	(message "Indentation setup for shell type %s" sh-shell))
     (message "No indentation for this shell type.")
-    (setq indent-line-function 'sh-basic-indent-line))
+    (setq-local indent-line-function 'sh-basic-indent-line))
   (when font-lock-mode
     (setq font-lock-set-defaults nil)
     (font-lock-set-defaults)

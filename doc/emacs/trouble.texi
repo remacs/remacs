@@ -1060,19 +1060,44 @@ but using it will take extra work.  Maintaining GNU Emacs is a lot of
 work in the best of circumstances, and we can't keep up unless you do
 your best to help.
 
+Every patch must have several pieces of information before we
+can properly evaluate it.
+
+When you have all these pieces, bundle them up in a mail message and
+send it to the developers.  Sending it to
+@email{bug-gnu-emacs@@gnu.org} (which is the bug/feature list) is
+recommended, because that list is coupled to a tracking system that
+makes it easier to locate patches.  If your patch is not complete and
+you think it needs more discussion, you might want to send it to
+@email{emacs-devel@@gnu@@gnu.org} instead.  If you revise your patch,
+send it as a followup to the initial topic.
+
+We prefer to get the patches as plain text, either inline (be careful
+your mail client does not change line breaks) or as MIME attachments.
+
 @itemize @bullet
 @item
-Send an explanation with your changes of what problem they fix or what
-improvement they bring about.  For a fix for an existing bug, it is
+Include an explanation with your changes of what problem they fix or what
+improvement they bring about.
+
+@itemize
+@item
+For a fix for an existing bug, it is
 best to reply to the relevant discussion on the @samp{bug-gnu-emacs}
 list, or the bug entry in the GNU Bug Tracker at
 @url{http://debbugs.gnu.org}.  Explain why your change fixes the bug.
 
 @item
-Always include a proper bug report for the problem you think you have
-fixed.  We need to convince ourselves that the change is right before
-installing it.  Even if it is correct, we might have trouble
-understanding it if we don't have a way to reproduce the problem.
+For a new feature, include a description of the feature and your
+implementation.
+
+@item
+For a new bug, include a proper bug report for the problem you think
+you have fixed.  We need to convince ourselves that the change is
+right before installing it.  Even if it is correct, we might have
+trouble understanding it if we don't have a way to reproduce the
+problem.
+@end itemize
 
 @item
 Include all the comments that are appropriate to help people reading the
@@ -1104,6 +1129,8 @@ right away.  That gives us the option of installing it immediately if it
 is important.
 
 @item
+The patch itself.
+
 Use @samp{diff -c} to make your diffs.  Diffs without context are hard
 to install reliably.  More than that, they are hard to study; we must
 always study a patch to decide whether we want to install it.  Unidiff
@@ -1113,6 +1140,12 @@ format is better than contextless diffs, but not as easy to read as
 If you have GNU diff, use @samp{diff -c -F'^[_a-zA-Z0-9$]+ *('} when
 making diffs of C code.  This shows the name of the function that each
 change occurs in.
+
+If you are using the Emacs repository, make sure your copy is
+up-to-date (e.g. with @code{git pull}).  You can commit your changes
+to a private branch and generate a patch from the master version by
+using @code{git format-patch master}. Or you can leave your changes
+uncommitted and use @code{git diff}.
 
 @item
 Avoid any ambiguity as to which is the old version and which is the new.
@@ -1138,8 +1171,16 @@ feel that the purpose needs explaining, it probably does---but put the
 explanation in comments in the code.  It will be more useful there.
 
 Please look at the change log entries of recent commits to see what
-sorts of information to put in, and to learn the style that we use.
-@xref{Change Log}.
+sorts of information to put in, and to learn the style that we use. Note that,
+unlike some other projects, we do require change logs for
+documentation, i.e. Texinfo files.
+@xref{Change Log},
+@ifset WWW_GNU_ORG
+see
+@url{http://www.gnu.org/prep/standards/html_node/Change-Log-Concepts.html},
+@end ifset
+@xref{Change Log Concepts, Change Log Concepts,
+Change Log Concepts, gnu-coding-standards, GNU Coding Standards}.
 
 @item
 When you write the fix, keep in mind that we can't install a change that
@@ -1160,10 +1201,51 @@ Please help us keep up with the workload by designing the patch in a
 form that is clearly safe to install.
 @end itemize
 
-@c FIXME: Include the node above?
 @node Contributing
 @section Contributing to Emacs Development
 @cindex contributing to Emacs
+
+Emacs is a collaborative project and we encourage contributions from
+anyone and everyone.
+
+There are many ways to contribute to Emacs:
+
+@itemize
+@item
+find and report bugs; @xref{Bugs}.
+
+@item
+answer questions on the Emacs user mailing list
+@url{https://lists.gnu.org/mailman/listinfo/help-gnu-emacs}.
+
+@item
+write documentation, either on the wiki, or in the Emacs source
+repository (@pxref{Sending Patches}).
+
+@item
+check if existing bug reports are fixed in newer versions of Emacs
+@url{http://debbugs.gnu.org/cgi/pkgreport.cgi?which=pkg&data=emacs}.
+
+@item
+fix existing bug reports
+@url{http://debbugs.gnu.org/cgi/pkgreport.cgi?which=pkg&data=emacs}.
+
+@item
+@c etc/TODO not in WWW_GNU_ORG
+implement a feature listed in the @file{etc/TODO} file in the Emacs
+distribution, and submit a patch.
+
+@item
+implement a new feature, and submit a patch.
+
+@item
+develop a package that works with Emacs, and publish it on your own
+or in Gnu ELPA (@url{https://elpa.gnu.org/}).
+
+@item
+port Emacs to a new platform, but that is not common nowadays.
+
+@end itemize
 
 If you would like to work on improving Emacs, please contact the maintainers at
 @ifnothtml
@@ -1186,24 +1268,148 @@ you have not yet started work, it is useful to contact
 before you start; it might be possible to suggest ways to make your
 extension fit in better with the rest of Emacs.
 
+When implementing a feature, please follow the Emacs coding standards;
+@xref{Coding Standards}. In addition, non-trivial contributions
+require a copyright assignment to the FSF; @xref{Copyright Assignment}.
+
 The development version of Emacs can be downloaded from the
 repository where it is actively maintained by a group of developers.
 See the Emacs project page
-@url{http://savannah.gnu.org/projects/emacs/} for details.
+@url{http://savannah.gnu.org/projects/emacs/} for access details.
 
-For more information on how to contribute, see the
+It is important to write your patch based on the current working
+version.  If you start from an older version, your patch may be
+outdated (so that maintainers will have a hard time applying it), or
+changes in Emacs may have made your patch unnecessary. After you have
+downloaded the repository source, you should read the file
+@file{INSTALL.REPO} for build instructions (they differ to some extent
+from a normal build).
+
+If you would like to make more extensive contributions, see the
+@file{./CONTRIBUTE} file in the Emacs distribution for information on
+how to be an Emacs developer.
+
+For documentation on Emacs (to understand how to implement your
+desired change), refer to:
+
+@itemize
+@item
 @ifset WWW_GNU_ORG
 @ifhtml
-@url{http://gnu.org/software/emacs/CONTRIBUTE, etc/CONTRIBUTE}
+the Emacs Manual
+@url{http://www.gnu.org/software/emacs/manual/emacs.html}.
 @end ifhtml
 @ifnothtml
-@file{etc/CONTRIBUTE}
+@xref{Top, Emacs Manual,,emacs}.
 @end ifnothtml
 @end ifset
 @ifclear WWW_GNU_ORG
-@file{etc/CONTRIBUTE}
+@xref{Top, Emacs Manual,,emacs}.
 @end ifclear
-file in the Emacs distribution.
+
+@item
+@ifset WWW_GNU_ORG
+@ifhtml
+the Emacs Lisp Reference Manual
+@url{http://www.gnu.org/software/emacs/manual/elisp.html}.
+@end ifhtml
+@ifnothtml
+@xref{Top, Emacs Lisp Reference Manual,,elisp}.
+@end ifnothtml
+@end ifset
+@ifclear WWW_GNU_ORG
+@xref{Top, Emacs Lisp Reference Manual,,elisp}.
+@end ifclear
+
+@item
+@url{http://www.gnu.org/software/emacs}
+
+@item
+@url{http://www.emacswiki.org/}
+@end itemize
+
+@menu
+* Coding Standards::        Gnu Emacs coding standards
+* Copyright Assignment::    assigning copyright to the FSF
+@end menu
+
+@node Coding Standards
+@subsection Coding Standards
+@cindex coding standards
+
+Contributed code should follow the GNU Coding Standards
+@url{http://www.gnu.org/prep/standards/}. This may also be available
+in info on your system.
+
+If it doesn't, we'll need to find someone to fix the code before we
+can use it.
+
+Emacs has additional style and coding conventions:
+
+@itemize
+@item
+@ifset WWW_GNU_ORG
+@ifhtml
+the "Tips" Appendix in the Emacs Lisp Reference
+@url{http://www.gnu.org/software/emacs/manual/html_node/elisp/Tips.html}.
+@end ifhtml
+@ifnothtml
+@xref{Tips, "Tips" Appendix in the Emacs Lisp Reference, Tips
+Appendix, elisp, Emacs Lisp Reference}.
+@end ifnothtml
+@end ifset
+@ifclear WWW_GNU_ORG
+@xref{Tips, "Tips" Appendix in the Emacs Lisp Reference, Tips
+Appendix, elisp, Emacs Lisp Reference}.
+@end ifclear
+
+@item
+Avoid using @code{defadvice} or @code{eval-after-load} for Lisp code
+to be included in Emacs.
+
+@item
+Remove all trailing whitespace in all source and text files.
+
+@item
+Emacs has no convention on whether to use tabs in source code; please
+don't change whitespace in the files you edit.
+
+@item
+Use @code{?\s} instead of @code{? } in Lisp code for a space character.
+
+@end itemize
+
+@node Copyright Assignment
+@subsection Copyright Assignment
+@cindex copyright assignment
+
+The FSF (Free Software Foundation) is the copyright holder for GNU Emacs.
+The FSF is a nonprofit with a worldwide mission to promote computer
+user freedom and to defend the rights of all free software users.
+For general information, see the website @url{http://www.fsf.org/}.
+
+Generally speaking, for non-trivial contributions to GNU Emacs we
+require that the copyright be assigned to the FSF.  For the reasons
+behind this, see @url{http://www.gnu.org/licenses/why-assign.html}.
+
+Copyright assignment is a simple process.  Residents of some countries
+can do it entirely electronically.  We can help you get started, and
+answer any questions you may have (or point you to the people with the
+answers), at the @email{emacs-devel@@gnu.org} mailing list.
+
+(Please note: general discussion about why some GNU projects ask
+for a copyright assignment is off-topic for emacs-devel.
+See gnu-misc-discuss instead.)
+
+A copyright disclaimer is also a possibility, but we prefer an assignment.
+Note that the disclaimer, like an assignment, involves you sending
+signed paperwork to the FSF (simply saying "this is in the public domain"
+is not enough).  Also, a disclaimer cannot be applied to future work, it
+has to be repeated each time you want to send something new.
+
+We can accept small changes (roughly, fewer than 15 lines) without
+an assignment.  This is a cumulative limit (e.g. three separate 5 line
+patches) over all your contributions.
 
 @node Service
 @section How To Get Help with GNU Emacs
@@ -1211,8 +1417,8 @@ file in the Emacs distribution.
 @cindex help-gnu-emacs mailing list
 @cindex gnu.emacs.help newsgroup
 
-If you need help installing, using or changing GNU Emacs, there are two
-ways to find it:
+If you need help installing, using or changing GNU Emacs, there are
+two ways to find it:
 
 @itemize @bullet
 @item

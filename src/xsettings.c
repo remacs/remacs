@@ -68,11 +68,11 @@ store_config_changed_event (Lisp_Object arg, Lisp_Object display_name)
   kbd_buffer_store_event (&event);
 }
 
-/* Return non-zero if DPYINFO is still valid.  */
-static int
+/* Return true if DPYINFO is still valid.  */
+static bool
 dpyinfo_valid (struct x_display_info *dpyinfo)
 {
-  int found = 0;
+  bool found = false;
   if (dpyinfo != NULL)
     {
       struct x_display_info *d;
@@ -404,7 +404,7 @@ parse_settings (unsigned char *prop,
 
   /* First 4 bytes is a serial number, skip that.  */
 
-  if (bytes < 12) return BadLength;
+  if (bytes < 12) return settings_seen;
   memcpy (&n_settings, prop+8, 4);
   if (my_bo != that_bo) n_settings = bswap_32 (n_settings);
   bytes_parsed = 12;
@@ -419,7 +419,7 @@ parse_settings (unsigned char *prop,
       CARD32 vlen, ival = 0;
       char name[128]; /* The names we are looking for are not this long.  */
       char sval[128]; /* The values we are looking for are not this long.  */
-      int want_this;
+      bool want_this;
       int to_cpy;
 
       sval[0] = '\0';
@@ -429,8 +429,8 @@ parse_settings (unsigned char *prop,
       memcpy (&nlen, prop+bytes_parsed, 2);
       bytes_parsed += 2;
       if (my_bo != that_bo) nlen = bswap_16 (nlen);
-      if (bytes_parsed+nlen > bytes) return BadLength;
-      to_cpy = nlen > 127 ? 127 : nlen;
+      if (bytes_parsed + nlen > bytes) return settings_seen;
+      to_cpy = min (nlen, sizeof name - 1);
       memcpy (name, prop+bytes_parsed, to_cpy);
       name[to_cpy] = '\0';
 
@@ -438,20 +438,19 @@ parse_settings (unsigned char *prop,
       bytes_parsed = PAD (bytes_parsed);
 
       bytes_parsed += 4; /* Skip serial for this value */
-      if (bytes_parsed > bytes) return BadLength;
+      if (bytes_parsed > bytes) return settings_seen;
 
-      want_this =
+      want_this = strcmp (XSETTINGS_TOOL_BAR_STYLE, name) == 0;
 #ifdef HAVE_XFT
-        (nlen > 6 && strncmp (name, "Xft/", 4) == 0)
-        || strcmp (XSETTINGS_FONT_NAME, name) == 0
-        ||
+      if ((nlen > 6 && memcmp (name, "Xft/", 4) == 0)
+	  || strcmp (XSETTINGS_FONT_NAME, name) == 0)
+	want_this = true;
 #endif
-        strcmp (XSETTINGS_TOOL_BAR_STYLE, name) == 0;
 
       switch (type)
         {
         case 0: /* Integer */
-          if (bytes_parsed+4 > bytes) return BadLength;
+          if (bytes_parsed + 4 > bytes) return settings_seen;
           if (want_this)
             {
               memcpy (&ival, prop+bytes_parsed, 4);
@@ -461,13 +460,13 @@ parse_settings (unsigned char *prop,
           break;
 
         case 1: /* String */
-          if (bytes_parsed+4 > bytes) return BadLength;
+          if (bytes_parsed + 4 > bytes) return settings_seen;
           memcpy (&vlen, prop+bytes_parsed, 4);
           bytes_parsed += 4;
           if (my_bo != that_bo) vlen = bswap_32 (vlen);
           if (want_this)
             {
-              to_cpy = vlen > 127 ? 127 : vlen;
+              to_cpy = min (vlen, sizeof sval - 1);
               memcpy (sval, prop+bytes_parsed, to_cpy);
               sval[to_cpy] = '\0';
             }
@@ -477,17 +476,16 @@ parse_settings (unsigned char *prop,
 
         case 2: /* RGB value */
           /* No need to parse this */
-          if (bytes_parsed+8 > bytes) return BadLength;
+          if (bytes_parsed + 8 > bytes) return settings_seen;
           bytes_parsed += 8; /* 4 values (r, b, g, alpha), 2 bytes each.  */
           break;
 
         default: /* Parse Error */
-          return BadValue;
+          return settings_seen;
         }
 
       if (want_this)
         {
-          ++settings_seen;
           if (strcmp (name, XSETTINGS_TOOL_BAR_STYLE) == 0)
             {
               dupstring (&settings->tb_style, sval);
@@ -557,6 +555,9 @@ parse_settings (unsigned char *prop,
                 settings->seen &= ~SEEN_LCDFILTER;
             }
 #endif /* HAVE_XFT */
+	  else
+	    want_this = false;
+	  settings_seen += want_this;
         }
     }
 
@@ -565,9 +566,9 @@ parse_settings (unsigned char *prop,
 
 /* Read settings from the XSettings property window on display for DPYINFO.
    Store settings read in SETTINGS.
-   Return non-zero if successful, zero if not.  */
+   Return true iff successful.  */
 
-static int
+static bool
 read_settings (struct x_display_info *dpyinfo, struct xsettings *settings)
 {
   Atom act_type;
@@ -576,6 +577,7 @@ read_settings (struct x_display_info *dpyinfo, struct xsettings *settings)
   unsigned char *prop = NULL;
   Display *dpy = dpyinfo->display;
   int rc;
+  bool got_settings = false;
 
   x_catch_errors (dpy);
   rc = XGetWindowProperty (dpy,
@@ -587,27 +589,26 @@ read_settings (struct x_display_info *dpyinfo, struct xsettings *settings)
 
   if (rc == Success && prop != NULL && act_form == 8 && nitems > 0
       && act_type == dpyinfo->Xatom_xsettings_prop)
-    rc = parse_settings (prop, nitems, settings);
+    got_settings = parse_settings (prop, nitems, settings) != 0;
 
   XFree (prop);
 
   x_uncatch_errors ();
 
-  return rc != 0;
+  return got_settings;
 }
 
 /* Apply Xft settings in SETTINGS to the Xft library.
-   If SEND_EVENT_P is non-zero store a Lisp event that Xft settings changed.  */
+   Store a Lisp event that Xft settings changed.  */
 
 static void
 apply_xft_settings (struct x_display_info *dpyinfo,
-                    int send_event_p,
                     struct xsettings *settings)
 {
 #ifdef HAVE_XFT
   FcPattern *pat;
   struct xsettings oldsettings;
-  int changed = 0;
+  bool changed = false;
 
   memset (&oldsettings, 0, sizeof (oldsettings));
   pat = FcPatternCreate ();
@@ -627,7 +628,7 @@ apply_xft_settings (struct x_display_info *dpyinfo,
     {
       FcPatternDel (pat, FC_ANTIALIAS);
       FcPatternAddBool (pat, FC_ANTIALIAS, settings->aa);
-      ++changed;
+      changed = true;
       oldsettings.aa = settings->aa;
     }
 
@@ -636,7 +637,7 @@ apply_xft_settings (struct x_display_info *dpyinfo,
     {
       FcPatternDel (pat, FC_HINTING);
       FcPatternAddBool (pat, FC_HINTING, settings->hinting);
-      ++changed;
+      changed = true;
       oldsettings.hinting = settings->hinting;
     }
   if ((settings->seen & SEEN_RGBA) != 0 && oldsettings.rgba != settings->rgba)
@@ -644,7 +645,7 @@ apply_xft_settings (struct x_display_info *dpyinfo,
       FcPatternDel (pat, FC_RGBA);
       FcPatternAddInteger (pat, FC_RGBA, settings->rgba);
       oldsettings.rgba = settings->rgba;
-      ++changed;
+      changed = true;
     }
 
   /* Older fontconfig versions don't have FC_LCD_FILTER. */
@@ -653,7 +654,7 @@ apply_xft_settings (struct x_display_info *dpyinfo,
     {
       FcPatternDel (pat, FC_LCD_FILTER);
       FcPatternAddInteger (pat, FC_LCD_FILTER, settings->lcdfilter);
-      ++changed;
+      changed = true;
       oldsettings.lcdfilter = settings->lcdfilter;
     }
 
@@ -663,7 +664,7 @@ apply_xft_settings (struct x_display_info *dpyinfo,
     {
       FcPatternDel (pat, FC_HINT_STYLE);
       FcPatternAddInteger (pat, FC_HINT_STYLE, settings->hintstyle);
-      ++changed;
+      changed = true;
       oldsettings.hintstyle = settings->hintstyle;
     }
 #endif
@@ -673,7 +674,7 @@ apply_xft_settings (struct x_display_info *dpyinfo,
     {
       FcPatternDel (pat, FC_DPI);
       FcPatternAddDouble (pat, FC_DPI, settings->dpi);
-      ++changed;
+      changed = true;
       oldsettings.dpi = settings->dpi;
 
       /* Changing the DPI on this display affects all frames on it.
@@ -699,9 +700,8 @@ apply_xft_settings (struct x_display_info *dpyinfo,
       char buf[sizeof format + d_formats * d_growth + lf_formats * lf_growth];
 
       XftDefaultSet (dpyinfo->display, pat);
-      if (send_event_p)
-        store_config_changed_event (Qfont_render,
-                                    XCAR (dpyinfo->name_list_element));
+      store_config_changed_event (Qfont_render,
+				  XCAR (dpyinfo->name_list_element));
       Vxft_settings
 	= make_formatted_string (buf, format,
 				 oldsettings.aa, oldsettings.hinting,
@@ -715,17 +715,17 @@ apply_xft_settings (struct x_display_info *dpyinfo,
 }
 
 /* Read XSettings from the display for DPYINFO.
-   If SEND_EVENT_P is non-zero store a Lisp event settings that changed.  */
+   If SEND_EVENT_P store a Lisp event settings that changed.  */
 
 static void
-read_and_apply_settings (struct x_display_info *dpyinfo, int send_event_p)
+read_and_apply_settings (struct x_display_info *dpyinfo, bool send_event_p)
 {
   struct xsettings settings;
 
   if (!read_settings (dpyinfo, &settings))
     return;
 
-  apply_xft_settings (dpyinfo, True, &settings);
+  apply_xft_settings (dpyinfo, &settings);
   if (settings.seen & SEEN_TB_STYLE)
     {
       if (send_event_p)
@@ -751,27 +751,27 @@ read_and_apply_settings (struct x_display_info *dpyinfo, int send_event_p)
 void
 xft_settings_event (struct x_display_info *dpyinfo, const XEvent *event)
 {
-  bool check_window_p = 0, apply_settings_p = 0;
+  bool check_window_p = false, apply_settings_p = false;
 
   switch (event->type)
     {
     case DestroyNotify:
       if (dpyinfo->xsettings_window == event->xany.window)
-        check_window_p = 1;
+        check_window_p = true;
       break;
 
     case ClientMessage:
       if (event->xclient.message_type == dpyinfo->Xatom_xsettings_mgr
           && event->xclient.data.l[1] == dpyinfo->Xatom_xsettings_sel
           && event->xclient.window == dpyinfo->root_window)
-        check_window_p = 1;
+        check_window_p = true;
       break;
 
     case PropertyNotify:
       if (event->xproperty.window == dpyinfo->xsettings_window
           && event->xproperty.state == PropertyNewValue
           && event->xproperty.atom == dpyinfo->Xatom_xsettings_prop)
-        apply_settings_p = 1;
+        apply_settings_p = true;
       break;
     }
 
@@ -781,11 +781,11 @@ xft_settings_event (struct x_display_info *dpyinfo, const XEvent *event)
       dpyinfo->xsettings_window = None;
       get_prop_window (dpyinfo);
       if (dpyinfo->xsettings_window != None)
-        apply_settings_p = 1;
+        apply_settings_p = true;
     }
 
   if (apply_settings_p)
-    read_and_apply_settings (dpyinfo, True);
+    read_and_apply_settings (dpyinfo, true);
 }
 
 /* Initialize GSettings and read startup values.  */
@@ -795,7 +795,7 @@ init_gsettings (void)
 {
 #ifdef HAVE_GSETTINGS
   GVariant *val;
-  int schema_found = 0;
+  bool schema_found = false;
 
 #if ! GLIB_CHECK_VERSION (2, 36, 0)
   g_type_init ();
@@ -937,7 +937,7 @@ init_xsettings (struct x_display_info *dpyinfo)
 
   get_prop_window (dpyinfo);
   if (dpyinfo->xsettings_window != None)
-    read_and_apply_settings (dpyinfo, False);
+    read_and_apply_settings (dpyinfo, false);
 
   unblock_input ();
 }
@@ -1030,7 +1030,7 @@ syms_of_xsettings (void)
 When this is non-nil and the system defined fixed width font changes, we
 update frames dynamically.
 If this variable is nil, Emacs ignores system font changes.  */);
-  use_system_font = 0;
+  use_system_font = false;
 
   DEFVAR_LISP ("xft-settings", Vxft_settings,
                doc: /* Font settings applied to Xft.  */);

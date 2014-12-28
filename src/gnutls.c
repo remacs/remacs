@@ -71,142 +71,129 @@ enum extra_peer_verification
 
 #ifdef WINDOWSNT
 
-/* Macro for defining functions that will be loaded from the GnuTLS DLL.  */
-#define DEF_GNUTLS_FN(rettype,func,args) static rettype (FAR CDECL *fn_##func)args
-
-/* Macro for loading GnuTLS functions from the library.  */
-#define LOAD_GNUTLS_FN(lib,func) {					\
-    fn_##func = (void *) GetProcAddress (lib, #func);			\
-    if (!fn_##func) return 0;						\
-  }
-
-DEF_GNUTLS_FN (gnutls_alert_description_t, gnutls_alert_get,
-	       (gnutls_session_t));
-DEF_GNUTLS_FN (const char *, gnutls_alert_get_name,
-	       (gnutls_alert_description_t));
-DEF_GNUTLS_FN (int, gnutls_alert_send_appropriate, (gnutls_session_t, int));
-DEF_GNUTLS_FN (int, gnutls_anon_allocate_client_credentials,
-	       (gnutls_anon_client_credentials_t *));
-DEF_GNUTLS_FN (void, gnutls_anon_free_client_credentials,
-	       (gnutls_anon_client_credentials_t));
-DEF_GNUTLS_FN (int, gnutls_bye, (gnutls_session_t, gnutls_close_request_t));
-DEF_GNUTLS_FN (int, gnutls_certificate_allocate_credentials,
-	       (gnutls_certificate_credentials_t *));
-DEF_GNUTLS_FN (void, gnutls_certificate_free_credentials,
-	       (gnutls_certificate_credentials_t));
-DEF_GNUTLS_FN (const gnutls_datum_t *, gnutls_certificate_get_peers,
-	       (gnutls_session_t, unsigned int *));
-DEF_GNUTLS_FN (void, gnutls_certificate_set_verify_flags,
-	       (gnutls_certificate_credentials_t, unsigned int));
-DEF_GNUTLS_FN (int, gnutls_certificate_set_x509_crl_file,
-	       (gnutls_certificate_credentials_t, const char *,
-		gnutls_x509_crt_fmt_t));
-DEF_GNUTLS_FN (int, gnutls_certificate_set_x509_key_file,
-	       (gnutls_certificate_credentials_t, const char *, const char *,
-		gnutls_x509_crt_fmt_t));
-#if GNUTLS_VERSION_MAJOR +					\
-  (GNUTLS_VERSION_MINOR > 0 || GNUTLS_VERSION_PATCH >= 20) > 3
-DEF_GNUTLS_FN (int, gnutls_certificate_set_x509_system_trust,
-	       (gnutls_certificate_credentials_t));
-#endif
-DEF_GNUTLS_FN (int, gnutls_certificate_set_x509_trust_file,
-	       (gnutls_certificate_credentials_t, const char *,
-		gnutls_x509_crt_fmt_t));
-DEF_GNUTLS_FN (gnutls_certificate_type_t, gnutls_certificate_type_get,
-	       (gnutls_session_t));
-DEF_GNUTLS_FN (int, gnutls_certificate_verify_peers2,
-	       (gnutls_session_t, unsigned int *));
-DEF_GNUTLS_FN (int, gnutls_credentials_set,
-	       (gnutls_session_t, gnutls_credentials_type_t, void *));
-DEF_GNUTLS_FN (void, gnutls_deinit, (gnutls_session_t));
-DEF_GNUTLS_FN (void, gnutls_dh_set_prime_bits,
-	       (gnutls_session_t, unsigned int));
-DEF_GNUTLS_FN (int, gnutls_dh_get_prime_bits, (gnutls_session_t));
-DEF_GNUTLS_FN (int, gnutls_error_is_fatal, (int));
-DEF_GNUTLS_FN (int, gnutls_global_init, (void));
-DEF_GNUTLS_FN (void, gnutls_global_set_log_function, (gnutls_log_func));
-#ifdef HAVE_GNUTLS3
-DEF_GNUTLS_FN (void, gnutls_global_set_audit_log_function, (gnutls_audit_log_func));
-#endif
-DEF_GNUTLS_FN (void, gnutls_global_set_log_level, (int));
-DEF_GNUTLS_FN (void, gnutls_global_set_mem_functions,
-	       (gnutls_alloc_function, gnutls_alloc_function,
-		gnutls_is_secure_function, gnutls_realloc_function,
-		gnutls_free_function));
-DEF_GNUTLS_FN (int, gnutls_handshake, (gnutls_session_t));
-DEF_GNUTLS_FN (int, gnutls_init, (gnutls_session_t *, gnutls_connection_end_t));
-DEF_GNUTLS_FN (int, gnutls_priority_set_direct,
-	       (gnutls_session_t, const char *, const char **));
-DEF_GNUTLS_FN (size_t, gnutls_record_check_pending, (gnutls_session_t));
-DEF_GNUTLS_FN (ssize_t, gnutls_record_recv, (gnutls_session_t, void *, size_t));
-DEF_GNUTLS_FN (ssize_t, gnutls_record_send,
-	       (gnutls_session_t, const void *, size_t));
-DEF_GNUTLS_FN (const char *, gnutls_strerror, (int));
-DEF_GNUTLS_FN (void, gnutls_transport_set_errno, (gnutls_session_t, int));
-DEF_GNUTLS_FN (const char *, gnutls_check_version, (const char *));
-DEF_GNUTLS_FN (void, gnutls_transport_set_lowat, (gnutls_session_t, int));
-DEF_GNUTLS_FN (void, gnutls_transport_set_ptr2,
-	       (gnutls_session_t, gnutls_transport_ptr_t,
-		gnutls_transport_ptr_t));
-DEF_GNUTLS_FN (void, gnutls_transport_set_pull_function,
-	       (gnutls_session_t, gnutls_pull_func));
-DEF_GNUTLS_FN (void, gnutls_transport_set_push_function,
-	       (gnutls_session_t, gnutls_push_func));
-DEF_GNUTLS_FN (int, gnutls_x509_crt_check_hostname,
-	       (gnutls_x509_crt_t, const char *));
-DEF_GNUTLS_FN (void, gnutls_x509_crt_deinit, (gnutls_x509_crt_t));
-DEF_GNUTLS_FN (int, gnutls_x509_crt_import,
-	       (gnutls_x509_crt_t, const gnutls_datum_t *,
-		gnutls_x509_crt_fmt_t));
-DEF_GNUTLS_FN (int, gnutls_x509_crt_init, (gnutls_x509_crt_t *));
-DEF_GNUTLS_FN (int, gnutls_x509_crt_get_fingerprint,
-	       (gnutls_x509_crt_t,
-		gnutls_digest_algorithm_t, void *, size_t *));
-DEF_GNUTLS_FN (int, gnutls_x509_crt_get_version,
-	       (gnutls_x509_crt_t));
-DEF_GNUTLS_FN (int, gnutls_x509_crt_get_serial,
-	       (gnutls_x509_crt_t, void *, size_t *));
-DEF_GNUTLS_FN (int, gnutls_x509_crt_get_issuer_dn,
-	       (gnutls_x509_crt_t, char *, size_t *));
-DEF_GNUTLS_FN (time_t, gnutls_x509_crt_get_activation_time,
-	       (gnutls_x509_crt_t));
-DEF_GNUTLS_FN (time_t, gnutls_x509_crt_get_expiration_time,
-	       (gnutls_x509_crt_t));
-DEF_GNUTLS_FN (int, gnutls_x509_crt_get_dn,
-	       (gnutls_x509_crt_t, char *, size_t *));
-DEF_GNUTLS_FN (int, gnutls_x509_crt_get_pk_algorithm,
-	       (gnutls_x509_crt_t, unsigned int *));
-DEF_GNUTLS_FN (const char*, gnutls_pk_algorithm_get_name,
-	       (gnutls_pk_algorithm_t));
-DEF_GNUTLS_FN (int, gnutls_pk_bits_to_sec_param,
-	       (gnutls_pk_algorithm_t, unsigned int));
-DEF_GNUTLS_FN (int, gnutls_x509_crt_get_issuer_unique_id,
-	       (gnutls_x509_crt_t, char *, size_t *));
-DEF_GNUTLS_FN (int, gnutls_x509_crt_get_subject_unique_id,
-	       (gnutls_x509_crt_t, char *, size_t *));
-DEF_GNUTLS_FN (int, gnutls_x509_crt_get_signature_algorithm,
-	       (gnutls_x509_crt_t));
-DEF_GNUTLS_FN (int, gnutls_x509_crt_get_signature,
-	       (gnutls_x509_crt_t, char *, size_t *));
-DEF_GNUTLS_FN (int, gnutls_x509_crt_get_key_id,
-	       (gnutls_x509_crt_t, unsigned int,
-		unsigned char *, size_t *_size));
-DEF_GNUTLS_FN (const char*, gnutls_sec_param_get_name, (gnutls_sec_param_t));
-DEF_GNUTLS_FN (const char*, gnutls_sign_get_name, (gnutls_sign_algorithm_t));
-DEF_GNUTLS_FN (int, gnutls_server_name_set, (gnutls_session_t,
-					     gnutls_server_name_type_t,
-					     const void *, size_t));
-DEF_GNUTLS_FN (gnutls_kx_algorithm_t, gnutls_kx_get, (gnutls_session_t));
-DEF_GNUTLS_FN (const char*, gnutls_kx_get_name, (gnutls_kx_algorithm_t));
-DEF_GNUTLS_FN (gnutls_protocol_t, gnutls_protocol_get_version,
-	       (gnutls_session_t));
-DEF_GNUTLS_FN (const char*, gnutls_protocol_get_name, (gnutls_protocol_t));
-DEF_GNUTLS_FN (gnutls_cipher_algorithm_t, gnutls_cipher_get,
-	       (gnutls_session_t));
-DEF_GNUTLS_FN (const char*, gnutls_cipher_get_name,
-	       (gnutls_cipher_algorithm_t));
-DEF_GNUTLS_FN (gnutls_mac_algorithm_t, gnutls_mac_get, (gnutls_session_t));
-DEF_GNUTLS_FN (const char*, gnutls_mac_get_name, (gnutls_mac_algorithm_t));
+DEF_DLL_FN (gnutls_alert_description_t, gnutls_alert_get,
+	    (gnutls_session_t));
+DEF_DLL_FN (const char *, gnutls_alert_get_name,
+	    (gnutls_alert_description_t));
+DEF_DLL_FN (int, gnutls_alert_send_appropriate, (gnutls_session_t, int));
+DEF_DLL_FN (int, gnutls_anon_allocate_client_credentials,
+	    (gnutls_anon_client_credentials_t *));
+DEF_DLL_FN (void, gnutls_anon_free_client_credentials,
+	    (gnutls_anon_client_credentials_t));
+DEF_DLL_FN (int, gnutls_bye, (gnutls_session_t, gnutls_close_request_t));
+DEF_DLL_FN (int, gnutls_certificate_allocate_credentials,
+	    (gnutls_certificate_credentials_t *));
+DEF_DLL_FN (void, gnutls_certificate_free_credentials,
+	    (gnutls_certificate_credentials_t));
+DEF_DLL_FN (const gnutls_datum_t *, gnutls_certificate_get_peers,
+	    (gnutls_session_t, unsigned int *));
+DEF_DLL_FN (void, gnutls_certificate_set_verify_flags,
+	    (gnutls_certificate_credentials_t, unsigned int));
+DEF_DLL_FN (int, gnutls_certificate_set_x509_crl_file,
+	    (gnutls_certificate_credentials_t, const char *,
+	     gnutls_x509_crt_fmt_t));
+DEF_DLL_FN (int, gnutls_certificate_set_x509_key_file,
+	    (gnutls_certificate_credentials_t, const char *, const char *,
+	     gnutls_x509_crt_fmt_t));
+# if ((GNUTLS_VERSION_MAJOR						\
+       + (GNUTLS_VERSION_MINOR > 0 || GNUTLS_VERSION_PATCH >= 20))	\
+      > 3)
+DEF_DLL_FN (int, gnutls_certificate_set_x509_system_trust,
+	    (gnutls_certificate_credentials_t));
+# endif
+DEF_DLL_FN (int, gnutls_certificate_set_x509_trust_file,
+	    (gnutls_certificate_credentials_t, const char *,
+	     gnutls_x509_crt_fmt_t));
+DEF_DLL_FN (gnutls_certificate_type_t, gnutls_certificate_type_get,
+	    (gnutls_session_t));
+DEF_DLL_FN (int, gnutls_certificate_verify_peers2,
+	    (gnutls_session_t, unsigned int *));
+DEF_DLL_FN (int, gnutls_credentials_set,
+	    (gnutls_session_t, gnutls_credentials_type_t, void *));
+DEF_DLL_FN (void, gnutls_deinit, (gnutls_session_t));
+DEF_DLL_FN (void, gnutls_dh_set_prime_bits,
+	    (gnutls_session_t, unsigned int));
+DEF_DLL_FN (int, gnutls_dh_get_prime_bits, (gnutls_session_t));
+DEF_DLL_FN (int, gnutls_error_is_fatal, (int));
+DEF_DLL_FN (int, gnutls_global_init, (void));
+DEF_DLL_FN (void, gnutls_global_set_log_function, (gnutls_log_func));
+# ifdef HAVE_GNUTLS3
+DEF_DLL_FN (void, gnutls_global_set_audit_log_function, (gnutls_audit_log_func));
+# endif
+DEF_DLL_FN (void, gnutls_global_set_log_level, (int));
+DEF_DLL_FN (int, gnutls_handshake, (gnutls_session_t));
+DEF_DLL_FN (int, gnutls_init, (gnutls_session_t *, unsigned int));
+DEF_DLL_FN (int, gnutls_priority_set_direct,
+	    (gnutls_session_t, const char *, const char **));
+DEF_DLL_FN (size_t, gnutls_record_check_pending, (gnutls_session_t));
+DEF_DLL_FN (ssize_t, gnutls_record_recv, (gnutls_session_t, void *, size_t));
+DEF_DLL_FN (ssize_t, gnutls_record_send,
+	    (gnutls_session_t, const void *, size_t));
+DEF_DLL_FN (const char *, gnutls_strerror, (int));
+DEF_DLL_FN (void, gnutls_transport_set_errno, (gnutls_session_t, int));
+DEF_DLL_FN (const char *, gnutls_check_version, (const char *));
+DEF_DLL_FN (void, gnutls_transport_set_lowat, (gnutls_session_t, int));
+DEF_DLL_FN (void, gnutls_transport_set_ptr2,
+	    (gnutls_session_t, gnutls_transport_ptr_t,
+	     gnutls_transport_ptr_t));
+DEF_DLL_FN (void, gnutls_transport_set_pull_function,
+	    (gnutls_session_t, gnutls_pull_func));
+DEF_DLL_FN (void, gnutls_transport_set_push_function,
+	    (gnutls_session_t, gnutls_push_func));
+DEF_DLL_FN (int, gnutls_x509_crt_check_hostname,
+	    (gnutls_x509_crt_t, const char *));
+DEF_DLL_FN (void, gnutls_x509_crt_deinit, (gnutls_x509_crt_t));
+DEF_DLL_FN (int, gnutls_x509_crt_import,
+	    (gnutls_x509_crt_t, const gnutls_datum_t *,
+	     gnutls_x509_crt_fmt_t));
+DEF_DLL_FN (int, gnutls_x509_crt_init, (gnutls_x509_crt_t *));
+DEF_DLL_FN (int, gnutls_x509_crt_get_fingerprint,
+	    (gnutls_x509_crt_t,
+	     gnutls_digest_algorithm_t, void *, size_t *));
+DEF_DLL_FN (int, gnutls_x509_crt_get_version,
+	    (gnutls_x509_crt_t));
+DEF_DLL_FN (int, gnutls_x509_crt_get_serial,
+	    (gnutls_x509_crt_t, void *, size_t *));
+DEF_DLL_FN (int, gnutls_x509_crt_get_issuer_dn,
+	    (gnutls_x509_crt_t, char *, size_t *));
+DEF_DLL_FN (time_t, gnutls_x509_crt_get_activation_time,
+	    (gnutls_x509_crt_t));
+DEF_DLL_FN (time_t, gnutls_x509_crt_get_expiration_time,
+	    (gnutls_x509_crt_t));
+DEF_DLL_FN (int, gnutls_x509_crt_get_dn,
+	    (gnutls_x509_crt_t, char *, size_t *));
+DEF_DLL_FN (int, gnutls_x509_crt_get_pk_algorithm,
+	    (gnutls_x509_crt_t, unsigned int *));
+DEF_DLL_FN (const char*, gnutls_pk_algorithm_get_name,
+	    (gnutls_pk_algorithm_t));
+DEF_DLL_FN (int, gnutls_pk_bits_to_sec_param,
+	    (gnutls_pk_algorithm_t, unsigned int));
+DEF_DLL_FN (int, gnutls_x509_crt_get_issuer_unique_id,
+	    (gnutls_x509_crt_t, char *, size_t *));
+DEF_DLL_FN (int, gnutls_x509_crt_get_subject_unique_id,
+	    (gnutls_x509_crt_t, char *, size_t *));
+DEF_DLL_FN (int, gnutls_x509_crt_get_signature_algorithm,
+	    (gnutls_x509_crt_t));
+DEF_DLL_FN (int, gnutls_x509_crt_get_signature,
+	    (gnutls_x509_crt_t, char *, size_t *));
+DEF_DLL_FN (int, gnutls_x509_crt_get_key_id,
+	    (gnutls_x509_crt_t, unsigned int, unsigned char *, size_t *_size));
+DEF_DLL_FN (const char*, gnutls_sec_param_get_name, (gnutls_sec_param_t));
+DEF_DLL_FN (const char*, gnutls_sign_get_name, (gnutls_sign_algorithm_t));
+DEF_DLL_FN (int, gnutls_server_name_set,
+	    (gnutls_session_t, gnutls_server_name_type_t,
+	     const void *, size_t));
+DEF_DLL_FN (gnutls_kx_algorithm_t, gnutls_kx_get, (gnutls_session_t));
+DEF_DLL_FN (const char*, gnutls_kx_get_name, (gnutls_kx_algorithm_t));
+DEF_DLL_FN (gnutls_protocol_t, gnutls_protocol_get_version,
+	    (gnutls_session_t));
+DEF_DLL_FN (const char*, gnutls_protocol_get_name, (gnutls_protocol_t));
+DEF_DLL_FN (gnutls_cipher_algorithm_t, gnutls_cipher_get,
+	    (gnutls_session_t));
+DEF_DLL_FN (const char*, gnutls_cipher_get_name,
+	    (gnutls_cipher_algorithm_t));
+DEF_DLL_FN (gnutls_mac_algorithm_t, gnutls_mac_get, (gnutls_session_t));
+DEF_DLL_FN (const char*, gnutls_mac_get_name, (gnutls_mac_algorithm_t));
 
 
 static bool
@@ -221,83 +208,83 @@ init_gnutls_functions (void)
       return 0;
     }
 
-  LOAD_GNUTLS_FN (library, gnutls_alert_get);
-  LOAD_GNUTLS_FN (library, gnutls_alert_get_name);
-  LOAD_GNUTLS_FN (library, gnutls_alert_send_appropriate);
-  LOAD_GNUTLS_FN (library, gnutls_anon_allocate_client_credentials);
-  LOAD_GNUTLS_FN (library, gnutls_anon_free_client_credentials);
-  LOAD_GNUTLS_FN (library, gnutls_bye);
-  LOAD_GNUTLS_FN (library, gnutls_certificate_allocate_credentials);
-  LOAD_GNUTLS_FN (library, gnutls_certificate_free_credentials);
-  LOAD_GNUTLS_FN (library, gnutls_certificate_get_peers);
-  LOAD_GNUTLS_FN (library, gnutls_certificate_set_verify_flags);
-  LOAD_GNUTLS_FN (library, gnutls_certificate_set_x509_crl_file);
-  LOAD_GNUTLS_FN (library, gnutls_certificate_set_x509_key_file);
-#if GNUTLS_VERSION_MAJOR +					\
-  (GNUTLS_VERSION_MINOR > 0 || GNUTLS_VERSION_PATCH >= 20) > 3
-  LOAD_GNUTLS_FN (library, gnutls_certificate_set_x509_system_trust);
-#endif
-  LOAD_GNUTLS_FN (library, gnutls_certificate_set_x509_trust_file);
-  LOAD_GNUTLS_FN (library, gnutls_certificate_type_get);
-  LOAD_GNUTLS_FN (library, gnutls_certificate_verify_peers2);
-  LOAD_GNUTLS_FN (library, gnutls_credentials_set);
-  LOAD_GNUTLS_FN (library, gnutls_deinit);
-  LOAD_GNUTLS_FN (library, gnutls_dh_set_prime_bits);
-  LOAD_GNUTLS_FN (library, gnutls_dh_get_prime_bits);
-  LOAD_GNUTLS_FN (library, gnutls_error_is_fatal);
-  LOAD_GNUTLS_FN (library, gnutls_global_init);
-  LOAD_GNUTLS_FN (library, gnutls_global_set_log_function);
-#ifdef HAVE_GNUTLS3
-  LOAD_GNUTLS_FN (library, gnutls_global_set_audit_log_function);
-#endif
-  LOAD_GNUTLS_FN (library, gnutls_global_set_log_level);
-  LOAD_GNUTLS_FN (library, gnutls_global_set_mem_functions);
-  LOAD_GNUTLS_FN (library, gnutls_handshake);
-  LOAD_GNUTLS_FN (library, gnutls_init);
-  LOAD_GNUTLS_FN (library, gnutls_priority_set_direct);
-  LOAD_GNUTLS_FN (library, gnutls_record_check_pending);
-  LOAD_GNUTLS_FN (library, gnutls_record_recv);
-  LOAD_GNUTLS_FN (library, gnutls_record_send);
-  LOAD_GNUTLS_FN (library, gnutls_strerror);
-  LOAD_GNUTLS_FN (library, gnutls_transport_set_errno);
-  LOAD_GNUTLS_FN (library, gnutls_check_version);
+  LOAD_DLL_FN (library, gnutls_alert_get);
+  LOAD_DLL_FN (library, gnutls_alert_get_name);
+  LOAD_DLL_FN (library, gnutls_alert_send_appropriate);
+  LOAD_DLL_FN (library, gnutls_anon_allocate_client_credentials);
+  LOAD_DLL_FN (library, gnutls_anon_free_client_credentials);
+  LOAD_DLL_FN (library, gnutls_bye);
+  LOAD_DLL_FN (library, gnutls_certificate_allocate_credentials);
+  LOAD_DLL_FN (library, gnutls_certificate_free_credentials);
+  LOAD_DLL_FN (library, gnutls_certificate_get_peers);
+  LOAD_DLL_FN (library, gnutls_certificate_set_verify_flags);
+  LOAD_DLL_FN (library, gnutls_certificate_set_x509_crl_file);
+  LOAD_DLL_FN (library, gnutls_certificate_set_x509_key_file);
+# if ((GNUTLS_VERSION_MAJOR						\
+       + (GNUTLS_VERSION_MINOR > 0 || GNUTLS_VERSION_PATCH >= 20))	\
+      > 3)
+  LOAD_DLL_FN (library, gnutls_certificate_set_x509_system_trust);
+# endif
+  LOAD_DLL_FN (library, gnutls_certificate_set_x509_trust_file);
+  LOAD_DLL_FN (library, gnutls_certificate_type_get);
+  LOAD_DLL_FN (library, gnutls_certificate_verify_peers2);
+  LOAD_DLL_FN (library, gnutls_credentials_set);
+  LOAD_DLL_FN (library, gnutls_deinit);
+  LOAD_DLL_FN (library, gnutls_dh_set_prime_bits);
+  LOAD_DLL_FN (library, gnutls_dh_get_prime_bits);
+  LOAD_DLL_FN (library, gnutls_error_is_fatal);
+  LOAD_DLL_FN (library, gnutls_global_init);
+  LOAD_DLL_FN (library, gnutls_global_set_log_function);
+# ifdef HAVE_GNUTLS3
+  LOAD_DLL_FN (library, gnutls_global_set_audit_log_function);
+# endif
+  LOAD_DLL_FN (library, gnutls_global_set_log_level);
+  LOAD_DLL_FN (library, gnutls_handshake);
+  LOAD_DLL_FN (library, gnutls_init);
+  LOAD_DLL_FN (library, gnutls_priority_set_direct);
+  LOAD_DLL_FN (library, gnutls_record_check_pending);
+  LOAD_DLL_FN (library, gnutls_record_recv);
+  LOAD_DLL_FN (library, gnutls_record_send);
+  LOAD_DLL_FN (library, gnutls_strerror);
+  LOAD_DLL_FN (library, gnutls_transport_set_errno);
+  LOAD_DLL_FN (library, gnutls_check_version);
   /* We don't need to call gnutls_transport_set_lowat in GnuTLS 2.11.1
      and later, and the function was removed entirely in 3.0.0.  */
   if (!fn_gnutls_check_version ("2.11.1"))
-    LOAD_GNUTLS_FN (library, gnutls_transport_set_lowat);
-  LOAD_GNUTLS_FN (library, gnutls_transport_set_ptr2);
-  LOAD_GNUTLS_FN (library, gnutls_transport_set_pull_function);
-  LOAD_GNUTLS_FN (library, gnutls_transport_set_push_function);
-  LOAD_GNUTLS_FN (library, gnutls_x509_crt_check_hostname);
-  LOAD_GNUTLS_FN (library, gnutls_x509_crt_deinit);
-  LOAD_GNUTLS_FN (library, gnutls_x509_crt_import);
-  LOAD_GNUTLS_FN (library, gnutls_x509_crt_init);
-  LOAD_GNUTLS_FN (library, gnutls_x509_crt_get_fingerprint);
-  LOAD_GNUTLS_FN (library, gnutls_x509_crt_get_version);
-  LOAD_GNUTLS_FN (library, gnutls_x509_crt_get_serial);
-  LOAD_GNUTLS_FN (library, gnutls_x509_crt_get_issuer_dn);
-  LOAD_GNUTLS_FN (library, gnutls_x509_crt_get_activation_time);
-  LOAD_GNUTLS_FN (library, gnutls_x509_crt_get_expiration_time);
-  LOAD_GNUTLS_FN (library, gnutls_x509_crt_get_dn);
-  LOAD_GNUTLS_FN (library, gnutls_x509_crt_get_pk_algorithm);
-  LOAD_GNUTLS_FN (library, gnutls_pk_algorithm_get_name);
-  LOAD_GNUTLS_FN (library, gnutls_pk_bits_to_sec_param);
-  LOAD_GNUTLS_FN (library, gnutls_x509_crt_get_issuer_unique_id);
-  LOAD_GNUTLS_FN (library, gnutls_x509_crt_get_subject_unique_id);
-  LOAD_GNUTLS_FN (library, gnutls_x509_crt_get_signature_algorithm);
-  LOAD_GNUTLS_FN (library, gnutls_x509_crt_get_signature);
-  LOAD_GNUTLS_FN (library, gnutls_x509_crt_get_key_id);
-  LOAD_GNUTLS_FN (library, gnutls_sec_param_get_name);
-  LOAD_GNUTLS_FN (library, gnutls_sign_get_name);
-  LOAD_GNUTLS_FN (library, gnutls_server_name_set);
-  LOAD_GNUTLS_FN (library, gnutls_kx_get);
-  LOAD_GNUTLS_FN (library, gnutls_kx_get_name);
-  LOAD_GNUTLS_FN (library, gnutls_protocol_get_version);
-  LOAD_GNUTLS_FN (library, gnutls_protocol_get_name);
-  LOAD_GNUTLS_FN (library, gnutls_cipher_get);
-  LOAD_GNUTLS_FN (library, gnutls_cipher_get_name);
-  LOAD_GNUTLS_FN (library, gnutls_mac_get);
-  LOAD_GNUTLS_FN (library, gnutls_mac_get_name);
+    LOAD_DLL_FN (library, gnutls_transport_set_lowat);
+  LOAD_DLL_FN (library, gnutls_transport_set_ptr2);
+  LOAD_DLL_FN (library, gnutls_transport_set_pull_function);
+  LOAD_DLL_FN (library, gnutls_transport_set_push_function);
+  LOAD_DLL_FN (library, gnutls_x509_crt_check_hostname);
+  LOAD_DLL_FN (library, gnutls_x509_crt_deinit);
+  LOAD_DLL_FN (library, gnutls_x509_crt_import);
+  LOAD_DLL_FN (library, gnutls_x509_crt_init);
+  LOAD_DLL_FN (library, gnutls_x509_crt_get_fingerprint);
+  LOAD_DLL_FN (library, gnutls_x509_crt_get_version);
+  LOAD_DLL_FN (library, gnutls_x509_crt_get_serial);
+  LOAD_DLL_FN (library, gnutls_x509_crt_get_issuer_dn);
+  LOAD_DLL_FN (library, gnutls_x509_crt_get_activation_time);
+  LOAD_DLL_FN (library, gnutls_x509_crt_get_expiration_time);
+  LOAD_DLL_FN (library, gnutls_x509_crt_get_dn);
+  LOAD_DLL_FN (library, gnutls_x509_crt_get_pk_algorithm);
+  LOAD_DLL_FN (library, gnutls_pk_algorithm_get_name);
+  LOAD_DLL_FN (library, gnutls_pk_bits_to_sec_param);
+  LOAD_DLL_FN (library, gnutls_x509_crt_get_issuer_unique_id);
+  LOAD_DLL_FN (library, gnutls_x509_crt_get_subject_unique_id);
+  LOAD_DLL_FN (library, gnutls_x509_crt_get_signature_algorithm);
+  LOAD_DLL_FN (library, gnutls_x509_crt_get_signature);
+  LOAD_DLL_FN (library, gnutls_x509_crt_get_key_id);
+  LOAD_DLL_FN (library, gnutls_sec_param_get_name);
+  LOAD_DLL_FN (library, gnutls_sign_get_name);
+  LOAD_DLL_FN (library, gnutls_server_name_set);
+  LOAD_DLL_FN (library, gnutls_kx_get);
+  LOAD_DLL_FN (library, gnutls_kx_get_name);
+  LOAD_DLL_FN (library, gnutls_protocol_get_version);
+  LOAD_DLL_FN (library, gnutls_protocol_get_name);
+  LOAD_DLL_FN (library, gnutls_cipher_get);
+  LOAD_DLL_FN (library, gnutls_cipher_get_name);
+  LOAD_DLL_FN (library, gnutls_mac_get);
+  LOAD_DLL_FN (library, gnutls_mac_get_name);
 
   max_log_level = global_gnutls_log_level;
 
@@ -310,80 +297,89 @@ init_gnutls_functions (void)
   return 1;
 }
 
-#else /* !WINDOWSNT */
+# define gnutls_alert_get fn_gnutls_alert_get
+# define gnutls_alert_get_name fn_gnutls_alert_get_name
+# define gnutls_alert_send_appropriate fn_gnutls_alert_send_appropriate
+# define gnutls_anon_allocate_client_credentials fn_gnutls_anon_allocate_client_credentials
+# define gnutls_anon_free_client_credentials fn_gnutls_anon_free_client_credentials
+# define gnutls_bye fn_gnutls_bye
+# define gnutls_certificate_allocate_credentials fn_gnutls_certificate_allocate_credentials
+# define gnutls_certificate_free_credentials fn_gnutls_certificate_free_credentials
+# define gnutls_certificate_get_peers fn_gnutls_certificate_get_peers
+# define gnutls_certificate_set_verify_flags fn_gnutls_certificate_set_verify_flags
+# define gnutls_certificate_set_x509_crl_file fn_gnutls_certificate_set_x509_crl_file
+# define gnutls_certificate_set_x509_key_file fn_gnutls_certificate_set_x509_key_file
+# define gnutls_certificate_set_x509_system_trust fn_gnutls_certificate_set_x509_system_trust
+# define gnutls_certificate_set_x509_trust_file fn_gnutls_certificate_set_x509_trust_file
+# define gnutls_certificate_type_get fn_gnutls_certificate_type_get
+# define gnutls_certificate_verify_peers2 fn_gnutls_certificate_verify_peers2
+# define gnutls_check_version fn_gnutls_check_version
+# define gnutls_cipher_get fn_gnutls_cipher_get
+# define gnutls_cipher_get_name fn_gnutls_cipher_get_name
+# define gnutls_credentials_set fn_gnutls_credentials_set
+# define gnutls_deinit fn_gnutls_deinit
+# define gnutls_dh_get_prime_bits fn_gnutls_dh_get_prime_bits
+# define gnutls_dh_set_prime_bits fn_gnutls_dh_set_prime_bits
+# define gnutls_error_is_fatal fn_gnutls_error_is_fatal
+# define gnutls_global_init fn_gnutls_global_init
+# define gnutls_global_set_audit_log_function fn_gnutls_global_set_audit_log_function
+# define gnutls_global_set_log_function fn_gnutls_global_set_log_function
+# define gnutls_global_set_log_level fn_gnutls_global_set_log_level
+# define gnutls_handshake fn_gnutls_handshake
+# define gnutls_init fn_gnutls_init
+# define gnutls_kx_get fn_gnutls_kx_get
+# define gnutls_kx_get_name fn_gnutls_kx_get_name
+# define gnutls_mac_get fn_gnutls_mac_get
+# define gnutls_mac_get_name fn_gnutls_mac_get_name
+# define gnutls_pk_algorithm_get_name fn_gnutls_pk_algorithm_get_name
+# define gnutls_pk_bits_to_sec_param fn_gnutls_pk_bits_to_sec_param
+# define gnutls_priority_set_direct fn_gnutls_priority_set_direct
+# define gnutls_protocol_get_name fn_gnutls_protocol_get_name
+# define gnutls_protocol_get_version fn_gnutls_protocol_get_version
+# define gnutls_record_check_pending fn_gnutls_record_check_pending
+# define gnutls_record_recv fn_gnutls_record_recv
+# define gnutls_record_send fn_gnutls_record_send
+# define gnutls_sec_param_get_name fn_gnutls_sec_param_get_name
+# define gnutls_server_name_set fn_gnutls_server_name_set
+# define gnutls_sign_get_name fn_gnutls_sign_get_name
+# define gnutls_strerror fn_gnutls_strerror
+# define gnutls_transport_set_errno fn_gnutls_transport_set_errno
+# define gnutls_transport_set_lowat fn_gnutls_transport_set_lowat
+# define gnutls_transport_set_ptr2 fn_gnutls_transport_set_ptr2
+# define gnutls_transport_set_pull_function fn_gnutls_transport_set_pull_function
+# define gnutls_transport_set_push_function fn_gnutls_transport_set_push_function
+# define gnutls_x509_crt_check_hostname fn_gnutls_x509_crt_check_hostname
+# define gnutls_x509_crt_deinit fn_gnutls_x509_crt_deinit
+# define gnutls_x509_crt_get_activation_time fn_gnutls_x509_crt_get_activation_time
+# define gnutls_x509_crt_get_dn fn_gnutls_x509_crt_get_dn
+# define gnutls_x509_crt_get_expiration_time fn_gnutls_x509_crt_get_expiration_time
+# define gnutls_x509_crt_get_fingerprint fn_gnutls_x509_crt_get_fingerprint
+# define gnutls_x509_crt_get_issuer_dn fn_gnutls_x509_crt_get_issuer_dn
+# define gnutls_x509_crt_get_issuer_unique_id fn_gnutls_x509_crt_get_issuer_unique_id
+# define gnutls_x509_crt_get_key_id fn_gnutls_x509_crt_get_key_id
+# define gnutls_x509_crt_get_pk_algorithm fn_gnutls_x509_crt_get_pk_algorithm
+# define gnutls_x509_crt_get_serial fn_gnutls_x509_crt_get_serial
+# define gnutls_x509_crt_get_signature fn_gnutls_x509_crt_get_signature
+# define gnutls_x509_crt_get_signature_algorithm fn_gnutls_x509_crt_get_signature_algorithm
+# define gnutls_x509_crt_get_subject_unique_id fn_gnutls_x509_crt_get_subject_unique_id
+# define gnutls_x509_crt_get_version fn_gnutls_x509_crt_get_version
+# define gnutls_x509_crt_import fn_gnutls_x509_crt_import
+# define gnutls_x509_crt_init fn_gnutls_x509_crt_init
 
-#define fn_gnutls_alert_get			gnutls_alert_get
-#define fn_gnutls_alert_get_name		gnutls_alert_get_name
-#define fn_gnutls_alert_send_appropriate	gnutls_alert_send_appropriate
-#define fn_gnutls_anon_allocate_client_credentials gnutls_anon_allocate_client_credentials
-#define fn_gnutls_anon_free_client_credentials	gnutls_anon_free_client_credentials
-#define fn_gnutls_bye				gnutls_bye
-#define fn_gnutls_certificate_allocate_credentials gnutls_certificate_allocate_credentials
-#define fn_gnutls_certificate_free_credentials	gnutls_certificate_free_credentials
-#define fn_gnutls_certificate_get_peers		gnutls_certificate_get_peers
-#define fn_gnutls_certificate_set_verify_flags	gnutls_certificate_set_verify_flags
-#define fn_gnutls_certificate_set_x509_crl_file	gnutls_certificate_set_x509_crl_file
-#define fn_gnutls_certificate_set_x509_key_file gnutls_certificate_set_x509_key_file
-#if GNUTLS_VERSION_MAJOR +					\
-  (GNUTLS_VERSION_MINOR > 0 || GNUTLS_VERSION_PATCH >= 20) > 3
-#define fn_gnutls_certificate_set_x509_system_trust gnutls_certificate_set_x509_system_trust
 #endif
-#define fn_gnutls_certificate_set_x509_trust_file gnutls_certificate_set_x509_trust_file
-#define fn_gnutls_certificate_type_get		gnutls_certificate_type_get
-#define fn_gnutls_certificate_verify_peers2	gnutls_certificate_verify_peers2
-#define fn_gnutls_cipher_get                    gnutls_cipher_get
-#define fn_gnutls_cipher_get_name               gnutls_cipher_get_name
-#define fn_gnutls_credentials_set		gnutls_credentials_set
-#define fn_gnutls_deinit			gnutls_deinit
-#define fn_gnutls_dh_get_prime_bits		gnutls_dh_get_prime_bits
-#define fn_gnutls_dh_set_prime_bits		gnutls_dh_set_prime_bits
-#define fn_gnutls_error_is_fatal		gnutls_error_is_fatal
-#define fn_gnutls_global_init			gnutls_global_init
-#ifdef HAVE_GNUTLS3
-#define fn_gnutls_global_set_audit_log_function	gnutls_global_set_audit_log_function
-#endif
-#define fn_gnutls_global_set_log_function	gnutls_global_set_log_function
-#define fn_gnutls_global_set_log_level		gnutls_global_set_log_level
-#define fn_gnutls_global_set_mem_functions	gnutls_global_set_mem_functions
-#define fn_gnutls_handshake			gnutls_handshake
-#define fn_gnutls_init				gnutls_init
-#define fn_gnutls_kx_get                        gnutls_kx_get
-#define fn_gnutls_kx_get_name                   gnutls_kx_get_name
-#define fn_gnutls_mac_get                       gnutls_mac_get
-#define fn_gnutls_mac_get_name                  gnutls_mac_get_name
-#define fn_gnutls_pk_algorithm_get_name         gnutls_pk_algorithm_get_name
-#define fn_gnutls_pk_bits_to_sec_param          gnutls_pk_bits_to_sec_param
-#define fn_gnutls_priority_set_direct		gnutls_priority_set_direct
-#define fn_gnutls_protocol_get_name             gnutls_protocol_get_name
-#define fn_gnutls_protocol_get_version          gnutls_protocol_get_version
-#define fn_gnutls_record_check_pending		gnutls_record_check_pending
-#define fn_gnutls_record_recv			gnutls_record_recv
-#define fn_gnutls_record_send			gnutls_record_send
-#define fn_gnutls_sec_param_get_name            gnutls_sec_param_get_name
-#define fn_gnutls_server_name_set               gnutls_server_name_set
-#define fn_gnutls_sign_get_name                 gnutls_sign_get_name
-#define fn_gnutls_strerror			gnutls_strerror
-#define fn_gnutls_transport_set_ptr2		gnutls_transport_set_ptr2
-#define fn_gnutls_x509_crt_check_hostname	gnutls_x509_crt_check_hostname
-#define fn_gnutls_x509_crt_deinit		gnutls_x509_crt_deinit
-#define fn_gnutls_x509_crt_get_activation_time  gnutls_x509_crt_get_activation_time
-#define fn_gnutls_x509_crt_get_dn               gnutls_x509_crt_get_dn
-#define fn_gnutls_x509_crt_get_expiration_time  gnutls_x509_crt_get_expiration_time
-#define fn_gnutls_x509_crt_get_fingerprint	gnutls_x509_crt_get_fingerprint
-#define fn_gnutls_x509_crt_get_issuer_dn        gnutls_x509_crt_get_issuer_dn
-#define fn_gnutls_x509_crt_get_issuer_unique_id gnutls_x509_crt_get_issuer_unique_id
-#define fn_gnutls_x509_crt_get_key_id           gnutls_x509_crt_get_key_id
-#define fn_gnutls_x509_crt_get_pk_algorithm     gnutls_x509_crt_get_pk_algorithm
-#define fn_gnutls_x509_crt_get_serial           gnutls_x509_crt_get_serial
-#define fn_gnutls_x509_crt_get_signature_algorithm gnutls_x509_crt_get_signature_algorithm
-#define fn_gnutls_x509_crt_get_subject_unique_id gnutls_x509_crt_get_subject_unique_id
-#define fn_gnutls_x509_crt_get_version          gnutls_x509_crt_get_version
-#define fn_gnutls_x509_crt_import		gnutls_x509_crt_import
-#define fn_gnutls_x509_crt_init			gnutls_x509_crt_init
-
-#endif /* !WINDOWSNT */
 
 
+/* Report memory exhaustion if ERR is an out-of-memory indication.  */
+static void
+check_memory_full (int err)
+{
+  /* When GnuTLS exhausts memory, it doesn't say how much memory it
+     asked for, so tell the Emacs allocator that GnuTLS asked for no
+     bytes.  This isn't accurate, but it's good enough.  */
+  if (err == GNUTLS_E_MEMORY_ERROR)
+    memory_full (0);
+}
+
 #ifdef HAVE_GNUTLS3
 /* Log a simple audit message.  */
 static void
@@ -432,11 +428,11 @@ emacs_gnutls_handshake (struct Lisp_Process *proc)
       /* On W32 we cannot transfer socket handles between different runtime
 	 libraries, so we tell GnuTLS to use our special push/pull
 	 functions.  */
-      fn_gnutls_transport_set_ptr2 (state,
-				    (gnutls_transport_ptr_t) proc,
-				    (gnutls_transport_ptr_t) proc);
-      fn_gnutls_transport_set_push_function (state, &emacs_gnutls_push);
-      fn_gnutls_transport_set_pull_function (state, &emacs_gnutls_pull);
+      gnutls_transport_set_ptr2 (state,
+				 (gnutls_transport_ptr_t) proc,
+				 (gnutls_transport_ptr_t) proc);
+      gnutls_transport_set_push_function (state, &emacs_gnutls_push);
+      gnutls_transport_set_pull_function (state, &emacs_gnutls_pull);
 
       /* For non blocking sockets or other custom made pull/push
 	 functions the gnutls_transport_set_lowat must be called, with
@@ -449,15 +445,15 @@ emacs_gnutls_handshake (struct Lisp_Process *proc)
 	 zero by default in version 2.11.1, and the function
 	 gnutls_transport_set_lowat was removed from the library in
 	 version 2.99.0.  */
-      if (!fn_gnutls_check_version ("2.11.1"))
-	fn_gnutls_transport_set_lowat (state, 0);
+      if (!gnutls_check_version ("2.11.1"))
+	gnutls_transport_set_lowat (state, 0);
 #else
       /* This is how GnuTLS takes sockets: as file descriptors passed
 	 in.  For an Emacs process socket, infd and outfd are the
 	 same but we use this two-argument version for clarity.  */
-      fn_gnutls_transport_set_ptr2 (state,
-				    (void *) (intptr_t) proc->infd,
-				    (void *) (intptr_t) proc->outfd);
+      gnutls_transport_set_ptr2 (state,
+				 (void *) (intptr_t) proc->infd,
+				 (void *) (intptr_t) proc->outfd);
 #endif
 
       proc->gnutls_initstage = GNUTLS_STAGE_TRANSPORT_POINTERS_SET;
@@ -465,11 +461,11 @@ emacs_gnutls_handshake (struct Lisp_Process *proc)
 
   do
     {
-      ret = fn_gnutls_handshake (state);
+      ret = gnutls_handshake (state);
       emacs_gnutls_handle_error (state, ret);
       QUIT;
     }
-  while (ret < 0 && fn_gnutls_error_is_fatal (ret) == 0);
+  while (ret < 0 && gnutls_error_is_fatal (ret) == 0);
 
   proc->gnutls_initstage = GNUTLS_STAGE_HANDSHAKE_TRIED;
 
@@ -480,7 +476,7 @@ emacs_gnutls_handshake (struct Lisp_Process *proc)
     }
   else
     {
-      fn_gnutls_alert_send_appropriate (state, ret);
+      check_memory_full (gnutls_alert_send_appropriate (state, ret));
     }
   return ret;
 }
@@ -488,14 +484,14 @@ emacs_gnutls_handshake (struct Lisp_Process *proc)
 ptrdiff_t
 emacs_gnutls_record_check_pending (gnutls_session_t state)
 {
-  return fn_gnutls_record_check_pending (state);
+  return gnutls_record_check_pending (state);
 }
 
 #ifdef WINDOWSNT
 void
 emacs_gnutls_transport_set_errno (gnutls_session_t state, int err)
 {
-  fn_gnutls_transport_set_errno (state, err);
+  gnutls_transport_set_errno (state, err);
 }
 #endif
 
@@ -516,7 +512,7 @@ emacs_gnutls_write (struct Lisp_Process *proc, const char *buf, ptrdiff_t nbyte)
 
   while (nbyte > 0)
     {
-      rtnval = fn_gnutls_record_send (state, buf, nbyte);
+      rtnval = gnutls_record_send (state, buf, nbyte);
 
       if (rtnval < 0)
 	{
@@ -568,7 +564,7 @@ emacs_gnutls_read (struct Lisp_Process *proc, char *buf, ptrdiff_t nbyte)
       proc->gnutls_handshakes_tried = 0;
       return 0;
     }
-  rtnval = fn_gnutls_record_recv (state, buf, nbyte);
+  rtnval = gnutls_record_recv (state, buf, nbyte);
   if (rtnval >= 0)
     return rtnval;
   else if (rtnval == GNUTLS_E_UNEXPECTED_PACKET_LENGTH)
@@ -597,15 +593,17 @@ emacs_gnutls_handle_error (gnutls_session_t session, int err)
   if (err >= 0)
     return 1;
 
+  check_memory_full (err);
+
   max_log_level = global_gnutls_log_level;
 
   /* TODO: use gnutls-error-fatalp and gnutls-error-string.  */
 
-  str = fn_gnutls_strerror (err);
+  str = gnutls_strerror (err);
   if (!str)
     str = "unknown";
 
-  if (fn_gnutls_error_is_fatal (err))
+  if (gnutls_error_is_fatal (err))
     {
       ret = 0;
       GNUTLS_LOG2 (1, max_log_level, "fatal error:", str);
@@ -632,9 +630,9 @@ emacs_gnutls_handle_error (gnutls_session_t session, int err)
   if (err == GNUTLS_E_WARNING_ALERT_RECEIVED
       || err == GNUTLS_E_FATAL_ALERT_RECEIVED)
     {
-      int alert = fn_gnutls_alert_get (session);
+      int alert = gnutls_alert_get (session);
       int level = (err == GNUTLS_E_FATAL_ALERT_RECEIVED) ? 0 : 1;
-      str = fn_gnutls_alert_get_name (alert);
+      str = gnutls_alert_get_name (alert);
       if (!str)
 	str = "unknown";
 
@@ -662,6 +660,7 @@ gnutls_make_error (int err)
       return Qgnutls_e_invalid_session;
     }
 
+  check_memory_full (err);
   return make_number (err);
 }
 
@@ -680,20 +679,20 @@ emacs_gnutls_deinit (Lisp_Object proc)
   if (XPROCESS (proc)->gnutls_x509_cred)
     {
       GNUTLS_LOG (2, log_level, "Deallocating x509 credentials");
-      fn_gnutls_certificate_free_credentials (XPROCESS (proc)->gnutls_x509_cred);
+      gnutls_certificate_free_credentials (XPROCESS (proc)->gnutls_x509_cred);
       XPROCESS (proc)->gnutls_x509_cred = NULL;
     }
 
   if (XPROCESS (proc)->gnutls_anon_cred)
     {
       GNUTLS_LOG (2, log_level, "Deallocating anon credentials");
-      fn_gnutls_anon_free_client_credentials (XPROCESS (proc)->gnutls_anon_cred);
+      gnutls_anon_free_client_credentials (XPROCESS (proc)->gnutls_anon_cred);
       XPROCESS (proc)->gnutls_anon_cred = NULL;
     }
 
   if (XPROCESS (proc)->gnutls_state)
     {
-      fn_gnutls_deinit (XPROCESS (proc)->gnutls_state);
+      gnutls_deinit (XPROCESS (proc)->gnutls_state);
       XPROCESS (proc)->gnutls_state = NULL;
       if (GNUTLS_INITSTAGE (proc) >= GNUTLS_STAGE_INIT)
 	GNUTLS_INITSTAGE (proc) = GNUTLS_STAGE_INIT - 1;
@@ -750,7 +749,7 @@ Usage: (gnutls-error-fatalp ERROR)  */)
   if (! TYPE_RANGED_INTEGERP (int, err))
     error ("Not an error symbol or code");
 
-  if (0 == fn_gnutls_error_is_fatal (XINT (err)))
+  if (0 == gnutls_error_is_fatal (XINT (err)))
     return Qnil;
 
   return Qt;
@@ -782,7 +781,7 @@ usage: (gnutls-error-string ERROR)  */)
   if (! TYPE_RANGED_INTEGERP (int, err))
     return build_string ("Not an error symbol or code");
 
-  return build_string (fn_gnutls_strerror (XINT (err)));
+  return build_string (gnutls_strerror (XINT (err)));
 }
 
 DEFUN ("gnutls-deinit", Fgnutls_deinit, Sgnutls_deinit, 1, 1, 0,
@@ -821,7 +820,8 @@ gnutls_certificate_details (gnutls_x509_crt_t cert)
 
   /* Version. */
   {
-    int version = fn_gnutls_x509_crt_get_version (cert);
+    int version = gnutls_x509_crt_get_version (cert);
+    check_memory_full (version);
     if (version >= GNUTLS_E_SUCCESS)
       res = nconc2 (res, list2 (intern (":version"),
 				make_number (version)));
@@ -829,11 +829,13 @@ gnutls_certificate_details (gnutls_x509_crt_t cert)
 
   /* Serial. */
   buf_size = 0;
-  err = fn_gnutls_x509_crt_get_serial (cert, NULL, &buf_size);
+  err = gnutls_x509_crt_get_serial (cert, NULL, &buf_size);
+  check_memory_full (err);
   if (err == GNUTLS_E_SHORT_MEMORY_BUFFER)
     {
       void *serial = xmalloc (buf_size);
-      err = fn_gnutls_x509_crt_get_serial (cert, serial, &buf_size);
+      err = gnutls_x509_crt_get_serial (cert, serial, &buf_size);
+      check_memory_full (err);
       if (err >= GNUTLS_E_SUCCESS)
 	res = nconc2 (res, list2 (intern (":serial-number"),
 				  gnutls_hex_string (serial, buf_size, "")));
@@ -842,11 +844,13 @@ gnutls_certificate_details (gnutls_x509_crt_t cert)
 
   /* Issuer. */
   buf_size = 0;
-  err = fn_gnutls_x509_crt_get_issuer_dn (cert, NULL, &buf_size);
+  err = gnutls_x509_crt_get_issuer_dn (cert, NULL, &buf_size);
+  check_memory_full (err);
   if (err == GNUTLS_E_SHORT_MEMORY_BUFFER)
     {
       char *dn = xmalloc (buf_size);
-      err = fn_gnutls_x509_crt_get_issuer_dn (cert, dn, &buf_size);
+      err = gnutls_x509_crt_get_issuer_dn (cert, dn, &buf_size);
+      check_memory_full (err);
       if (err >= GNUTLS_E_SUCCESS)
 	res = nconc2 (res, list2 (intern (":issuer"),
 				  make_string (dn, buf_size)));
@@ -859,23 +863,25 @@ gnutls_certificate_details (gnutls_x509_crt_t cert)
        that might add 1 to the year length.  */
     char buf[INT_STRLEN_BOUND (int) + 1 + sizeof "-12-31"];
     struct tm t;
-    time_t tim = fn_gnutls_x509_crt_get_activation_time (cert);
+    time_t tim = gnutls_x509_crt_get_activation_time (cert);
 
     if (gmtime_r (&tim, &t) && strftime (buf, sizeof buf, "%Y-%m-%d", &t))
       res = nconc2 (res, list2 (intern (":valid-from"), build_string (buf)));
 
-    tim = fn_gnutls_x509_crt_get_expiration_time (cert);
+    tim = gnutls_x509_crt_get_expiration_time (cert);
     if (gmtime_r (&tim, &t) && strftime (buf, sizeof buf, "%Y-%m-%d", &t))
       res = nconc2 (res, list2 (intern (":valid-to"), build_string (buf)));
   }
 
   /* Subject. */
   buf_size = 0;
-  err = fn_gnutls_x509_crt_get_dn (cert, NULL, &buf_size);
+  err = gnutls_x509_crt_get_dn (cert, NULL, &buf_size);
+  check_memory_full (err);
   if (err == GNUTLS_E_SHORT_MEMORY_BUFFER)
     {
       char *dn = xmalloc (buf_size);
-      err = fn_gnutls_x509_crt_get_dn (cert, dn, &buf_size);
+      err = gnutls_x509_crt_get_dn (cert, dn, &buf_size);
+      check_memory_full (err);
       if (err >= GNUTLS_E_SUCCESS)
 	res = nconc2 (res, list2 (intern (":subject"),
 				  make_string (dn, buf_size)));
@@ -888,16 +894,17 @@ gnutls_certificate_details (gnutls_x509_crt_t cert)
   {
     unsigned int bits;
 
-    err = fn_gnutls_x509_crt_get_pk_algorithm (cert, &bits);
+    err = gnutls_x509_crt_get_pk_algorithm (cert, &bits);
+    check_memory_full (err);
     if (err >= GNUTLS_E_SUCCESS)
       {
-	const char *name = fn_gnutls_pk_algorithm_get_name (err);
+	const char *name = gnutls_pk_algorithm_get_name (err);
 	if (name)
 	  res = nconc2 (res, list2 (intern (":public-key-algorithm"),
 				    build_string (name)));
 
-	name = fn_gnutls_sec_param_get_name (fn_gnutls_pk_bits_to_sec_param
-					     (err, bits));
+	name = gnutls_sec_param_get_name (gnutls_pk_bits_to_sec_param
+					  (err, bits));
 	res = nconc2 (res, list2 (intern (":certificate-security-level"),
 				  build_string (name)));
       }
@@ -905,11 +912,13 @@ gnutls_certificate_details (gnutls_x509_crt_t cert)
 
   /* Unique IDs. */
   buf_size = 0;
-  err = fn_gnutls_x509_crt_get_issuer_unique_id (cert, NULL, &buf_size);
+  err = gnutls_x509_crt_get_issuer_unique_id (cert, NULL, &buf_size);
+  check_memory_full (err);
   if (err == GNUTLS_E_SHORT_MEMORY_BUFFER)
     {
       char *buf = xmalloc (buf_size);
-      err = fn_gnutls_x509_crt_get_issuer_unique_id (cert, buf, &buf_size);
+      err = gnutls_x509_crt_get_issuer_unique_id (cert, buf, &buf_size);
+      check_memory_full (err);
       if (err >= GNUTLS_E_SUCCESS)
 	res = nconc2 (res, list2 (intern (":issuer-unique-id"),
 				  make_string (buf, buf_size)));
@@ -917,11 +926,13 @@ gnutls_certificate_details (gnutls_x509_crt_t cert)
     }
 
   buf_size = 0;
-  err = fn_gnutls_x509_crt_get_subject_unique_id (cert, NULL, &buf_size);
+  err = gnutls_x509_crt_get_subject_unique_id (cert, NULL, &buf_size);
+  check_memory_full (err);
   if (err == GNUTLS_E_SHORT_MEMORY_BUFFER)
     {
       char *buf = xmalloc (buf_size);
-      err = fn_gnutls_x509_crt_get_subject_unique_id (cert, buf, &buf_size);
+      err = gnutls_x509_crt_get_subject_unique_id (cert, buf, &buf_size);
+      check_memory_full (err);
       if (err >= GNUTLS_E_SUCCESS)
 	res = nconc2 (res, list2 (intern (":subject-unique-id"),
 				  make_string (buf, buf_size)));
@@ -930,10 +941,11 @@ gnutls_certificate_details (gnutls_x509_crt_t cert)
 #endif
 
   /* Signature. */
-  err = fn_gnutls_x509_crt_get_signature_algorithm (cert);
+  err = gnutls_x509_crt_get_signature_algorithm (cert);
+  check_memory_full (err);
   if (err >= GNUTLS_E_SUCCESS)
     {
-      const char *name = fn_gnutls_sign_get_name (err);
+      const char *name = gnutls_sign_get_name (err);
       if (name)
 	res = nconc2 (res, list2 (intern (":signature-algorithm"),
 				  build_string (name)));
@@ -941,11 +953,13 @@ gnutls_certificate_details (gnutls_x509_crt_t cert)
 
   /* Public key ID. */
   buf_size = 0;
-  err = fn_gnutls_x509_crt_get_key_id (cert, 0, NULL, &buf_size);
+  err = gnutls_x509_crt_get_key_id (cert, 0, NULL, &buf_size);
+  check_memory_full (err);
   if (err == GNUTLS_E_SHORT_MEMORY_BUFFER)
     {
       void *buf = xmalloc (buf_size);
-      err = fn_gnutls_x509_crt_get_key_id (cert, 0, buf, &buf_size);
+      err = gnutls_x509_crt_get_key_id (cert, 0, buf, &buf_size);
+      check_memory_full (err);
       if (err >= GNUTLS_E_SUCCESS)
 	res = nconc2 (res, list2 (intern (":public-key-id"),
 				  gnutls_hex_string (buf, buf_size, "sha1:")));
@@ -954,13 +968,15 @@ gnutls_certificate_details (gnutls_x509_crt_t cert)
 
   /* Certificate fingerprint. */
   buf_size = 0;
-  err = fn_gnutls_x509_crt_get_fingerprint (cert, GNUTLS_DIG_SHA1,
-					    NULL, &buf_size);
+  err = gnutls_x509_crt_get_fingerprint (cert, GNUTLS_DIG_SHA1,
+					 NULL, &buf_size);
+  check_memory_full (err);
   if (err == GNUTLS_E_SHORT_MEMORY_BUFFER)
     {
       void *buf = xmalloc (buf_size);
-      err = fn_gnutls_x509_crt_get_fingerprint (cert, GNUTLS_DIG_SHA1,
-						buf, &buf_size);
+      err = gnutls_x509_crt_get_fingerprint (cert, GNUTLS_DIG_SHA1,
+					     buf, &buf_size);
+      check_memory_full (err);
       if (err >= GNUTLS_E_SUCCESS)
 	res = nconc2 (res, list2 (intern (":certificate-id"),
 				  gnutls_hex_string (buf, buf_size, "sha1:")));
@@ -1061,7 +1077,8 @@ The return value is a property list with top-level keys :warnings and
 
   /* Diffie-Hellman prime bits. */
   {
-    int bits = fn_gnutls_dh_get_prime_bits (state);
+    int bits = gnutls_dh_get_prime_bits (state);
+    check_memory_full (bits);
     if (bits > 0)
       result = nconc2 (result, list2 (intern (":diffie-hellman-prime-bits"),
 				      make_number (bits)));
@@ -1070,26 +1087,26 @@ The return value is a property list with top-level keys :warnings and
   /* Key exchange. */
   result = nconc2
     (result, list2 (intern (":key-exchange"),
-		    build_string (fn_gnutls_kx_get_name
-				  (fn_gnutls_kx_get (state)))));
+		    build_string (gnutls_kx_get_name
+				  (gnutls_kx_get (state)))));
 
   /* Protocol name. */
   result = nconc2
     (result, list2 (intern (":protocol"),
-		    build_string (fn_gnutls_protocol_get_name
-				  (fn_gnutls_protocol_get_version (state)))));
+		    build_string (gnutls_protocol_get_name
+				  (gnutls_protocol_get_version (state)))));
 
   /* Cipher name. */
   result = nconc2
     (result, list2 (intern (":cipher"),
-		    build_string (fn_gnutls_cipher_get_name
-				  (fn_gnutls_cipher_get (state)))));
+		    build_string (gnutls_cipher_get_name
+				  (gnutls_cipher_get (state)))));
 
   /* MAC name. */
   result = nconc2
     (result, list2 (intern (":mac"),
-		    build_string (fn_gnutls_mac_get_name
-				  (fn_gnutls_mac_get (state)))));
+		    build_string (gnutls_mac_get_name
+				  (gnutls_mac_get (state)))));
 
 
   return result;
@@ -1104,11 +1121,8 @@ emacs_gnutls_global_init (void)
   int ret = GNUTLS_E_SUCCESS;
 
   if (!gnutls_global_initialized)
-    {
-      fn_gnutls_global_set_mem_functions (xmalloc, xmalloc, NULL,
-					  xrealloc, xfree);
-      ret = fn_gnutls_global_init ();
-    }
+    ret = gnutls_global_init ();
+
   gnutls_global_initialized = 1;
 
   return gnutls_make_error (ret);
@@ -1257,11 +1271,11 @@ one trustfile (usually a CA bundle).  */)
 
   if (TYPE_RANGED_INTEGERP (int, loglevel))
     {
-      fn_gnutls_global_set_log_function (gnutls_log_function);
+      gnutls_global_set_log_function (gnutls_log_function);
 #ifdef HAVE_GNUTLS3
-      fn_gnutls_global_set_audit_log_function (gnutls_audit_log_function);
+      gnutls_global_set_audit_log_function (gnutls_audit_log_function);
 #endif
-      fn_gnutls_global_set_log_level (XINT (loglevel));
+      gnutls_global_set_log_level (XINT (loglevel));
       max_log_level = XINT (loglevel);
       XPROCESS (proc)->gnutls_log_level = max_log_level;
     }
@@ -1291,7 +1305,7 @@ one trustfile (usually a CA bundle).  */)
       unsigned int gnutls_verify_flags = GNUTLS_VERIFY_ALLOW_X509_V1_CA_CRT;
 
       GNUTLS_LOG (2, max_log_level, "allocating x509 credentials");
-      fn_gnutls_certificate_allocate_credentials (&x509_cred);
+      check_memory_full (gnutls_certificate_allocate_credentials (&x509_cred));
       XPROCESS (proc)->gnutls_x509_cred = x509_cred;
 
       verify_flags = Fplist_get (proplist, QCgnutls_bootprop_verify_flags);
@@ -1305,12 +1319,12 @@ one trustfile (usually a CA bundle).  */)
       else
 	GNUTLS_LOG (2, max_log_level, "ignoring invalid verify-flags");
 
-      fn_gnutls_certificate_set_verify_flags (x509_cred, gnutls_verify_flags);
+      gnutls_certificate_set_verify_flags (x509_cred, gnutls_verify_flags);
     }
   else /* Qgnutls_anon: */
     {
       GNUTLS_LOG (2, max_log_level, "allocating anon credentials");
-      fn_gnutls_anon_allocate_client_credentials (&anon_cred);
+      check_memory_full (gnutls_anon_allocate_client_credentials (&anon_cred));
       XPROCESS (proc)->gnutls_anon_cred = anon_cred;
     }
 
@@ -1324,10 +1338,13 @@ one trustfile (usually a CA bundle).  */)
 
 #if GNUTLS_VERSION_MAJOR +					\
   (GNUTLS_VERSION_MINOR > 0 || GNUTLS_VERSION_PATCH >= 20) > 3
-      ret = fn_gnutls_certificate_set_x509_system_trust (x509_cred);
+      ret = gnutls_certificate_set_x509_system_trust (x509_cred);
       if (ret < GNUTLS_E_SUCCESS)
-	GNUTLS_LOG2i (4, max_log_level,
-		      "setting system trust failed with code ", ret);
+	{
+	  check_memory_full (ret);
+	  GNUTLS_LOG2i (4, max_log_level,
+			"setting system trust failed with code ", ret);
+	}
 #endif
 
       for (tail = trustfiles; CONSP (tail); tail = XCDR (tail))
@@ -1344,7 +1361,7 @@ one trustfile (usually a CA bundle).  */)
 		 name using the current ANSI codepage.  */
 	      trustfile = ansi_encode_filename (trustfile);
 #endif
-	      ret = fn_gnutls_certificate_set_x509_trust_file
+	      ret = gnutls_certificate_set_x509_trust_file
 		(x509_cred,
 		 SSDATA (trustfile),
 		 file_format);
@@ -1370,7 +1387,7 @@ one trustfile (usually a CA bundle).  */)
 #ifdef WINDOWSNT
 	      crlfile = ansi_encode_filename (crlfile);
 #endif
-	      ret = fn_gnutls_certificate_set_x509_crl_file
+	      ret = gnutls_certificate_set_x509_crl_file
 		(x509_cred, SSDATA (crlfile), file_format);
 
 	      if (ret < GNUTLS_E_SUCCESS)
@@ -1399,7 +1416,7 @@ one trustfile (usually a CA bundle).  */)
 	      keyfile = ansi_encode_filename (keyfile);
 	      certfile = ansi_encode_filename (certfile);
 #endif
-	      ret = fn_gnutls_certificate_set_x509_key_file
+	      ret = gnutls_certificate_set_x509_key_file
 		(x509_cred, SSDATA (certfile), SSDATA (keyfile), file_format);
 
 	      if (ret < GNUTLS_E_SUCCESS)
@@ -1421,7 +1438,7 @@ one trustfile (usually a CA bundle).  */)
   /* Call gnutls_init here: */
 
   GNUTLS_LOG (1, max_log_level, "gnutls_init");
-  ret = fn_gnutls_init (&state, GNUTLS_CLIENT);
+  ret = gnutls_init (&state, GNUTLS_CLIENT);
   XPROCESS (proc)->gnutls_state = state;
   if (ret < GNUTLS_E_SUCCESS)
     return gnutls_make_error (ret);
@@ -1440,27 +1457,25 @@ one trustfile (usually a CA bundle).  */)
     }
 
   GNUTLS_LOG (1, max_log_level, "setting the priority string");
-  ret = fn_gnutls_priority_set_direct (state,
-				       priority_string_ptr,
-				       NULL);
+  ret = gnutls_priority_set_direct (state, priority_string_ptr, NULL);
   if (ret < GNUTLS_E_SUCCESS)
     return gnutls_make_error (ret);
 
   GNUTLS_INITSTAGE (proc) = GNUTLS_STAGE_PRIORITY;
 
   if (INTEGERP (prime_bits))
-    fn_gnutls_dh_set_prime_bits (state, XUINT (prime_bits));
+    gnutls_dh_set_prime_bits (state, XUINT (prime_bits));
 
   ret = EQ (type, Qgnutls_x509pki)
-    ? fn_gnutls_credentials_set (state, GNUTLS_CRD_CERTIFICATE, x509_cred)
-    : fn_gnutls_credentials_set (state, GNUTLS_CRD_ANON, anon_cred);
+    ? gnutls_credentials_set (state, GNUTLS_CRD_CERTIFICATE, x509_cred)
+    : gnutls_credentials_set (state, GNUTLS_CRD_ANON, anon_cred);
   if (ret < GNUTLS_E_SUCCESS)
     return gnutls_make_error (ret);
 
   if (!gnutls_ip_address_p (c_hostname))
     {
-      ret = fn_gnutls_server_name_set (state, GNUTLS_NAME_DNS, c_hostname,
-				       strlen (c_hostname));
+      ret = gnutls_server_name_set (state, GNUTLS_NAME_DNS, c_hostname,
+				    strlen (c_hostname));
       if (ret < GNUTLS_E_SUCCESS)
 	return gnutls_make_error (ret);
     }
@@ -1476,7 +1491,7 @@ one trustfile (usually a CA bundle).  */)
      check of the certificate's hostname with
      gnutls_x509_crt_check_hostname against :hostname.  */
 
-  ret = fn_gnutls_certificate_verify_peers2 (state, &peer_verification);
+  ret = gnutls_certificate_verify_peers2 (state, &peer_verification);
   if (ret < GNUTLS_E_SUCCESS)
     return gnutls_make_error (ret);
 
@@ -1514,47 +1529,50 @@ one trustfile (usually a CA bundle).  */)
   /* Up to here the process is the same for X.509 certificates and
      OpenPGP keys.  From now on X.509 certificates are assumed.  This
      can be easily extended to work with openpgp keys as well.  */
-  if (fn_gnutls_certificate_type_get (state) == GNUTLS_CRT_X509)
+  if (gnutls_certificate_type_get (state) == GNUTLS_CRT_X509)
     {
       gnutls_x509_crt_t gnutls_verify_cert;
       const gnutls_datum_t *gnutls_verify_cert_list;
       unsigned int gnutls_verify_cert_list_size;
 
-      ret = fn_gnutls_x509_crt_init (&gnutls_verify_cert);
+      ret = gnutls_x509_crt_init (&gnutls_verify_cert);
       if (ret < GNUTLS_E_SUCCESS)
 	return gnutls_make_error (ret);
 
       gnutls_verify_cert_list =
-	fn_gnutls_certificate_get_peers (state, &gnutls_verify_cert_list_size);
+	gnutls_certificate_get_peers (state, &gnutls_verify_cert_list_size);
 
       if (gnutls_verify_cert_list == NULL)
 	{
-	  fn_gnutls_x509_crt_deinit (gnutls_verify_cert);
+	  gnutls_x509_crt_deinit (gnutls_verify_cert);
 	  emacs_gnutls_deinit (proc);
 	  error ("No x509 certificate was found\n");
 	}
 
       /* We only check the first certificate in the given chain.  */
-      ret = fn_gnutls_x509_crt_import (gnutls_verify_cert,
+      ret = gnutls_x509_crt_import (gnutls_verify_cert,
 				       &gnutls_verify_cert_list[0],
 				       GNUTLS_X509_FMT_DER);
 
       if (ret < GNUTLS_E_SUCCESS)
 	{
-	  fn_gnutls_x509_crt_deinit (gnutls_verify_cert);
+	  gnutls_x509_crt_deinit (gnutls_verify_cert);
 	  return gnutls_make_error (ret);
 	}
 
       XPROCESS (proc)->gnutls_certificate = gnutls_verify_cert;
 
-      if (!fn_gnutls_x509_crt_check_hostname (gnutls_verify_cert, c_hostname))
+      int err = gnutls_x509_crt_check_hostname (gnutls_verify_cert,
+						c_hostname);
+      check_memory_full (err);
+      if (!err)
 	{
 	  XPROCESS (proc)->gnutls_extra_peer_verification |=
 	    CERTIFICATE_NOT_MATCHING;
           if (verify_error_all
               || !NILP (Fmember (QCgnutls_bootprop_hostname, verify_error)))
             {
-	      fn_gnutls_x509_crt_deinit (gnutls_verify_cert);
+	      gnutls_x509_crt_deinit (gnutls_verify_cert);
 	      emacs_gnutls_deinit (proc);
 	      error ("The x509 certificate does not match \"%s\"", c_hostname);
             }
@@ -1595,10 +1613,9 @@ This function may also return `gnutls-e-again', or
 
   state = XPROCESS (proc)->gnutls_state;
 
-  fn_gnutls_x509_crt_deinit (XPROCESS (proc)->gnutls_certificate);
+  gnutls_x509_crt_deinit (XPROCESS (proc)->gnutls_certificate);
 
-  ret = fn_gnutls_bye (state,
-		       NILP (cont) ? GNUTLS_SHUT_RDWR : GNUTLS_SHUT_WR);
+  ret = gnutls_bye (state, NILP (cont) ? GNUTLS_SHUT_RDWR : GNUTLS_SHUT_WR);
 
   return gnutls_make_error (ret);
 }

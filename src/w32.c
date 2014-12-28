@@ -3405,10 +3405,10 @@ sys_readdir (DIR *dirp)
       int ln;
 
       strcpy (filename, dir_pathname);
-      ln = strlen (filename) - 1;
-      if (!IS_DIRECTORY_SEP (filename[ln]))
-	strcat (filename, "\\");
-      strcat (filename, "*");
+      ln = strlen (filename);
+      if (!IS_DIRECTORY_SEP (filename[ln - 1]))
+	filename[ln++] = '\\';
+      strcpy (filename + ln, "*");
 
       /* Note: No need to resolve symlinks in FILENAME, because
 	 FindFirst opens the directory that is the target of a
@@ -4969,7 +4969,7 @@ stat_worker (const char * path, struct stat * buf, int follow_symlinks)
 	{
 	  /* Make sure root directories end in a slash.  */
 	  if (!IS_DIRECTORY_SEP (name[len-1]))
-	    strcat (name, "\\");
+	    strcpy (name + len, "\\");
 	  if (GetDriveType (name) < 2)
 	    {
 	      errno = ENOENT;
@@ -5438,8 +5438,7 @@ symlink (char const *filename, char const *linkname)
 	p--;
       if (p > linkfn)
 	strncpy (tem, linkfn, p - linkfn);
-      tem[p - linkfn] = '\0';
-      strcat (tem, filename);
+      strcpy (tem + (p - linkfn), filename);
       dir_access = faccessat (AT_FDCWD, tem, D_OK, AT_EACCESS);
     }
   else

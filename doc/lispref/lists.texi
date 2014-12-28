@@ -84,6 +84,8 @@ structure made out of cons cells as a @dfn{list structure}.
 
 @node List-related Predicates
 @section Predicates on Lists
+@cindex predicates for lists
+@cindex list predicates
 
   The following predicates test whether a Lisp object is an atom,
 whether it is a cons cell or is a list, or whether it is the
@@ -662,6 +664,8 @@ Some examples:
 
 @node List Variables
 @section Modifying List Variables
+@cindex modify a list
+@cindex list modification
 
   These functions, and one macro, provide convenient ways
 to modify a list which is stored in a variable.
@@ -818,6 +822,8 @@ new @sc{car} or @sc{cdr}.
 
 @node Setcar
 @subsection Altering List Elements with @code{setcar}
+@cindex replace list element
+@cindex list, replace element
 
   Changing the @sc{car} of a cons cell is done with @code{setcar}.  When
 used on a list, @code{setcar} replaces one element of a list with a
@@ -923,6 +929,7 @@ x2:              |
 
 @node Setcdr
 @subsection Altering the CDR of a List
+@cindex replace part of list
 
   The lowest-level primitive for modifying a @sc{cdr} is @code{setcdr}:
 
@@ -1759,6 +1766,8 @@ and later discarded; this is not possible with a property list.
 
 @node Plist Access
 @subsection Property Lists Outside Symbols
+@cindex plist access
+@cindex accessing plist properties
 
   The following functions can be used to manipulate property lists.
 They all compare property names using @code{eq}.

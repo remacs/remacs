@@ -138,6 +138,8 @@ disabled, i.e., the position is recorded for all files."
   :version "24.1"
   :type 'regexp :group 'save-place)
 
+(declare-function dired-current-directory "dired" (&optional localp))
+
 (defun toggle-save-place (&optional parg)
   "Toggle whether to save your place in this file between sessions.
 If this mode is enabled, point is recorded when you kill the buffer
@@ -153,7 +155,7 @@ file:
 \(setq-default save-place t)"
   (interactive "P")
   (if (not (or buffer-file-name (and (derived-mode-p 'dired-mode)
-				     dired-directory)))
+				     (dired-current-directory))))
       (message "Buffer `%s' not visiting a file or directory" (buffer-name))
     (setq save-place (if parg
                          (> (prefix-numeric-value parg) 0)
@@ -172,12 +174,13 @@ file:
   ;; file.  If not, do so, then feel free to modify the alist.  It
   ;; will be saved again when Emacs is killed.
   (or save-place-loaded (load-save-place-alist-from-file))
-  (let ((item (or buffer-file-name
-                  (and (derived-mode-p 'dired-mode)
-		       dired-directory
-		       (expand-file-name (if (consp dired-directory)
-					     (car dired-directory)
-					   dired-directory))))))
+  (let* ((directory (and (derived-mode-p 'dired-mode)
+			 (dired-current-directory)))
+	 (item (or buffer-file-name
+		   (and directory
+			(expand-file-name (if (consp directory)
+					      (car directory)
+					    directory))))))
     (when (and item
                (or (not save-place-ignore-files-regexp)
                    (not (string-match save-place-ignore-files-regexp
@@ -186,8 +189,7 @@ file:
             (position (cond ((eq major-mode 'hexl-mode)
 			     (with-no-warnings
 			       (1+ (hexl-current-address))))
-			    ((and (derived-mode-p 'dired-mode)
-				  dired-directory)
+			    ((and (derived-mode-p 'dired-mode) directory)
 			     (let ((filename (dired-get-filename nil t)))
 			       (if filename
 				   `((dired-filename . ,filename))
@@ -305,7 +307,7 @@ may have changed) back to `save-place-alist'."
 	;; save-place checks buffer-file-name too, but we can avoid
 	;; overhead of function call by checking here too.
 	(and (or buffer-file-name (and (derived-mode-p 'dired-mode)
-				       dired-directory))
+				       (dired-current-directory)))
 	     (save-place-to-alist))
 	(setq buf-list (cdr buf-list))))))
 
@@ -325,19 +327,21 @@ may have changed) back to `save-place-alist'."
 (defun save-place-dired-hook ()
   "Position the point in a Dired buffer."
   (or save-place-loaded (load-save-place-alist-from-file))
-  (let ((cell (assoc (and (derived-mode-p 'dired-mode)
-			  dired-directory
-			  (expand-file-name (if (consp dired-directory)
-						(car dired-directory)
-					      dired-directory)))
-		     save-place-alist)))
+  (let* ((directory (and (derived-mode-p 'dired-mode)
+			 (dired-current-directory)))
+	 (cell (assoc (and directory
+			   (expand-file-name (if (consp directory)
+						 (car directory)
+					       directory)))
+		      save-place-alist)))
     (if cell
         (progn
           (or revert-buffer-in-progress-p
-              (if (integerp (cdr cell))
-		  (goto-char (cdr cell))
-		(and (assq 'dired-filename (cdr cell))
-		     (dired-goto-file (cdr (assq 'dired-filename (cdr cell)))))))
+              (cond
+	       ((integerp (cdr cell))
+		(goto-char (cdr cell)))
+	       ((and (listp (cdr cell)) (assq 'dired-filename (cdr cell)))
+		(dired-goto-file (cdr (assq 'dired-filename (cdr cell)))))))
           ;; and make sure it will be saved again for later
           (setq save-place t)))))
 

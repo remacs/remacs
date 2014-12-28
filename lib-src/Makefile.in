@@ -321,7 +321,7 @@ regex.o: $(srcdir)/../src/regex.c $(srcdir)/../src/regex.h $(config_h)
 
 etags_deps = ${srcdir}/etags.c regex.o $(NTLIB) $(config_h)
 etags_cflags = -DEMACS_NAME="\"GNU Emacs\"" -DVERSION="\"${version}\"" -o $@
-etags_libs = regex.o $(LOADLIBES) $(NTLIB)
+etags_libs = regex.o $(NTLIB) $(LOADLIBES)
 
 etags${EXEEXT}: ${etags_deps}
 	$(AM_V_CCLD)$(CC) ${ALL_CFLAGS} $(etags_cflags) $< $(etags_libs)
@@ -336,18 +336,18 @@ ctags${EXEEXT}: ${srcdir}/ctags.c ${etags_deps}
 ebrowse${EXEEXT}: ${srcdir}/ebrowse.c ${srcdir}/../lib/min-max.h $(NTLIB) \
                    $(config_h)
 	$(AM_V_CCLD)$(CC) ${ALL_CFLAGS} -DVERSION="\"${version}\"" \
-	  $< $(LOADLIBES) $(NTLIB) -o $@
+	  $< $(NTLIB) $(LOADLIBES) -o $@
 
 profile${EXEEXT}: ${srcdir}/profile.c $(NTLIB) $(config_h)
 	$(AM_V_CCLD)$(CC) ${ALL_CFLAGS} $< \
-	  $(LOADLIBES) $(NTLIB) $(LIB_CLOCK_GETTIME) -o $@
+	  $(NTLIB) $(LOADLIBES) $(LIB_CLOCK_GETTIME) -o $@
 
 make-docfile${EXEEXT}: ${srcdir}/make-docfile.c $(NTLIB) $(config_h)
-	$(AM_V_CCLD)$(CC) ${ALL_CFLAGS} $< $(LOADLIBES) $(NTLIB) -o $@
+	$(AM_V_CCLD)$(CC) ${ALL_CFLAGS} $< $(NTLIB) $(LOADLIBES) -o $@
 
 movemail${EXEEXT}: ${srcdir}/movemail.c pop.o $(NTLIB) $(config_h)
 	$(AM_V_CCLD)$(CC) ${ALL_CFLAGS} ${MOVE_FLAGS} $< pop.o \
-	  $(LOADLIBES) $(NTLIB) $(LIBS_MOVE) -o $@
+	  $(NTLIB) $(LOADLIBES) $(LIBS_MOVE) -o $@
 
 pop.o: ${srcdir}/pop.c ${srcdir}/pop.h ${srcdir}/../lib/min-max.h $(config_h)
 	$(AM_V_CC)$(CC) -c ${CPP_CFLAGS} ${MOVE_FLAGS} $<
@@ -378,7 +378,7 @@ hexl${EXEEXT}: ${srcdir}/hexl.c $(NTLIB) $(config_h)
 update-game-score${EXEEXT}: ${srcdir}/update-game-score.c $(NTLIB) $(config_h)
 	$(AM_V_CCLD)$(CC) ${ALL_CFLAGS} \
 	  -DHAVE_SHARED_GAME_DIR="\"$(gamedir)\"" \
-	  $< $(LOADLIBES) $(NTLIB) -o $@
+	  $< $(NTLIB) $(LOADLIBES) -o $@
 
 emacsclient.res: ../nt/emacsclient.rc $(NTINC)/../icons/emacs.ico
 	$(WINDRES) -O coff --include-dir=$(NTINC)/.. -o $@ $<

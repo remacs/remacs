@@ -1951,6 +1951,7 @@ foo
 
 @node Variables with Restricted Values
 @section Variables with Restricted Values
+@cindex lisp variables defined in C, restrictions
 
   Ordinary Lisp variables can be assigned any value that is a valid
 Lisp object.  However, certain Lisp variables are not defined in Lisp,
@@ -1987,6 +1988,8 @@ Attempting to assign them any other value will result in an error:
 @node Generalized Variables
 @section Generalized Variables
 
+@cindex generalized variable
+@cindex place form
 A @dfn{generalized variable} or @dfn{place form} is one of the many places
 in Lisp memory where values can be stored.  The simplest place form is
 a regular Lisp variable.  But the @sc{car}s and @sc{cdr}s of lists, elements

@@ -953,7 +953,12 @@ This tests also `file-directory-p' and `file-accessible-directory-p'."
 	    (goto-char (point-min))
 	    (should
 	     (looking-at-p
-	      "\\(total.+[[:digit:]]+\n\\)?.+ \\.\n.+ \\.\\.\n.+ foo$"))))
+	      (concat
+	       ;; There might be a summary line.
+	       "\\(total.+[[:digit:]]+\n\\)?"
+	       ;; We don't know in which order "." and ".." appear.
+	       "\\(.+ \\.?\\.\n\\)\\{2\\}"
+	       ".+ foo$")))))
       (ignore-errors (delete-directory tmp-name1 'recursive)))))
 
 (ert-deftest tramp-test18-file-attributes ()

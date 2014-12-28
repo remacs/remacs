@@ -87,8 +87,8 @@ exec $awk '
     status = 1
   }
 
-  72 < length && $0 ~ space {
-    print "Line longer than 72 characters in commit message"
+  78 < length && $0 ~ space {
+    print "Line longer than 78 characters in commit message"
     status = 1
   }
 

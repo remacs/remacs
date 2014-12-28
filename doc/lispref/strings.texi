@@ -92,6 +92,8 @@ representations and to encode and decode character codes.
 
 @node Predicates for Strings
 @section Predicates for Strings
+@cindex predicates for strings
+@cindex string predicates
 
 For more information about general sequence and array predicates,
 see @ref{Sequences Arrays Vectors}, and @ref{Arrays}.
@@ -113,6 +115,8 @@ character (i.e., an integer), @code{nil} otherwise.
 
 @node Creating Strings
 @section Creating Strings
+@cindex creating strings
+@cindex string creation
 
   The following functions create strings, either from scratch, or by
 putting strings together, or by taking them apart.
@@ -367,6 +371,8 @@ usual value is @w{@code{"[ \f\t\n\r\v]+"}}.
 
 @node Modifying Strings
 @section Modifying Strings
+@cindex modifying strings
+@cindex string modification
 
   The most basic way to alter the contents of an existing string is with
 @code{aset} (@pxref{Array Functions}).  @code{(aset @var{string}
@@ -400,6 +406,7 @@ zeros.  It may also change @var{string}'s length.
 @node Text Comparison
 @section Comparison of Characters and Strings
 @cindex string equality
+@cindex text comparison
 
 @defun char-equal character1 character2
 This function returns @code{t} if the arguments represent the same
@@ -483,17 +490,17 @@ dependent; a @var{locale} "en_US.UTF-8" is applicable on POSIX
 systems, while it would be, e.g., "enu_USA.1252" on MS-Windows
 systems.
 
-If @var{IGNORE-CASE} is non-nil, characters are converted to lower-case
+If @var{ignore-case} is non-@code{nil}, characters are converted to lower-case
 before comparing them.
 
 To emulate Unicode-compliant collation on MS-Windows systems,
-bind @code{w32-collate-ignore-punctuation} to a non-nil value, since
+bind @code{w32-collate-ignore-punctuation} to a non-@code{nil} value, since
 the codeset part of the locale cannot be "UTF-8" on MS-Windows.
 
 If your system does not support a locale environment, this function
 behaves like @code{string-equal}.
 
-Do NOT use this function to compare file names for equality, only
+Do @emph{not} use this function to compare file names for equality, only
 for sorting them.
 @end defun
 
@@ -602,11 +609,11 @@ behave like @code{string-lessp}:
 @end group
 @end example
 
-If @var{IGNORE-CASE} is non-nil, characters are converted to lower-case
+If @var{ignore-case} is non-@code{nil}, characters are converted to lower-case
 before comparing them.
 
 To emulate Unicode-compliant collation on MS-Windows systems,
-bind @code{w32-collate-ignore-punctuation} to a non-nil value, since
+bind @code{w32-collate-ignore-punctuation} to a non-@code{nil} value, since
 the codeset part of the locale cannot be "UTF-8" on MS-Windows.
 
 If your system does not support a locale environment, this function

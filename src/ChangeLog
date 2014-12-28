@@ -1,3 +1,120 @@
+2014-12-28  Paul Eggert  <eggert@Penguin.CS.UCLA.EDU>
+
+	Wrap dll functions more simply
+	* decompress.c, gnutls.c, image.c, xml.c:
+	If WINDOWSNT, use '#define FOO fn_FOO' to wrap dll functions,
+	rather than the inverse when not WINDOWSNT.  This isolates the
+	fn_* business into the WINDOWSNT-specific section of the code,
+	which makes it easier to maintain the generic code.
+	* decompress.c (DEF_ZLIB_FN, LOAD_ZLIB_FN):
+	* gnutls.c (DEF_GNUTLS_FN, LOAD_GNUTLS_FN):
+	* image.c (DEF_IMGLIB_FN, LOAD_IMGLIB_FN):
+	* xml.c (DEF_XML2_FN, LOAD_XML2_FN):
+	Remove.  All uses replaced by DEF_DLL_FN.
+	* decompress.c (inflateInit2): Remove; no longer needed.
+	* w32.h (DEF_DLL_FN, LOAD_DLL_FN): New macros.
+
+	Port memory-full checking to GnuTLS 3.3
+	Instead of using gnutls_global_set_mem_functions, check every call
+	to a GnuTLS function that might return an indication of memory
+	exhaustion.  Suggested by Dmitry Antipov in:
+	http://lists.gnu.org/archive/html/emacs-devel/2014-12/msg02056.html
+	* gnutls.c (gnutls_global_set_mem_functions) [WINDOWSNT]: Remove.
+	(init_gnutls_functions): Do not load gnutls_global_set_mem_functions.
+	(fn_gnutls_global_set_mem_functions) [!WINDOWSNT]: Remove.
+	All uses removed.
+	(check_memory_full): New function.
+	(emacs_gnutls_handshake, emacs_gnutls_handle_error)
+	(gnutls_make_error, gnutls_certificate_details, Fgnutls_peer_status)
+	(Fgnutls_boot): Use it.
+	(emacs_gnutls_global_init): Avoid gnutls_global_set_mem_functions.
+
+2014-12-27  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Fix parse_settings to match internal documentation
+	* xsettings.c (parse_settings): Return the number of settings seen.
+	Count the settings changes accurately.
+	(read_settings): Don't confuse number of settings changes with
+	the return code from XGetWindowProperty.
+
+2014-12-27  Eli Zaretskii  <eliz@gnu.org>
+
+	* xdisp.c (set_iterator_to_next) <GET_FROM_STRING>: Limit search in
+	composition_compute_stop_pos to the number of characters in the
+	string.  (Bug#19435)
+	<GET_FROM_BUFFER, GET_FROM_STRING>: Simplify code.
+
+	* composite.c (composition_compute_stop_pos): If no composition
+	was found in a string before ENDPOS, and ENDPOS is the string end,
+	no need to back up to a safe point.
+
+	* dispextern.h (struct it) <end_charpos>: Improve commentary.
+
+2014-12-27  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* nsimage.m (allocInitFromFile:): Initialize bmRep.
+	(dealloc): Release bmRep.
+        (setPixmapData): Make bmRep local so class member is not
+        set (Bug#19133).
+	(setPixmapData): Rename local variable bmRep to avoid compiler
+	warning.
+
+2014-12-27  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* xterm.c (do_ewmh_fullscreen): Don't remove maximized_horz/vert
+	when going to fullscreen (Bug#0x180004f).
+
+2014-12-27  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* buffer.c (syms_of_buffer) <Vafter_change_functions>: fix docstring.
+
+2014-12-27  Eli Zaretskii  <eliz@gnu.org>
+
+	* gnutls.c (gnutls_init): Fix deprecation warning from GCC.
+
+2014-12-26  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Use bool for boolean in xselect.c, xsettings.c
+	* xselect.c (x_get_local_selection, struct selection_data)
+	(x_selection_request_lisp_error, struct prop_location)
+	(x_handle_selection_request, x_convert_selection)
+	(waiting_for_other_props_on_window, expect_property_change)
+	(wait_for_property_change, x_handle_property_notify)
+	(x_get_foreign_selection, x_get_window_property)
+	(receive_incremental_selection)
+	(x_get_window_property_as_lisp_data)
+	(lisp_data_to_selection_data, Fx_get_selection_internal)
+	(x_send_client_event):
+	* xselect.c, xterm.h (x_handle_dnd_message):
+	* xsettings.c (dpyinfo_valid, parse_settings, read_settings)
+	(apply_xft_settings, read_and_apply_settings)
+	(xft_settings_event, init_gsettings, init_xsettings)
+	(syms_of_xsettings):
+	Use bool for boolean.
+	* xselect.c (x_get_window_property): Omit last arg, which was an
+	unused boolean.
+	* xsettings.c (apply_xft_settings): Remove 2nd arg, which was
+	always true.  All callers changed.
+
+2014-12-26  Eli Zaretskii  <eliz@gnu.org>
+
+	* w32proc.c (sys_spawnve, get_lcid_callback): Use strcpy instead
+	of strcat.
+
+	* w32menu.c (add_menu_item): Use stpcpy instead of strcat.
+
+	* w32.c (sys_readdir, stat_worker, symlink): Use strcpy instead of
+	strcat.
+
+2014-12-26  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Use bool for boolean in xsmfns.c
+	* xsmfns.c, xterm.h (x_session_have_connection):
+	* xsmfns.c (doing_interact, smc_interact_CB, Fhandle_save_session):
+	Use bool for boolean.
+	(x_session_initialize, Fhandle_save_session):
+	Prefer NILP (x) to EQ (x, Qnil).
+
 2014-12-23  Didier Verna  <didier@didierverna.net> (tiny change).
 
 	* nsselect.m (Fns_selection_owner_p): Return a Lisp boolean, not a
@@ -201,6 +318,10 @@
 	(Fgnutls_boot) [GNUTLS >= 3.0.20]:
 	Call gnutls_certificate_set_x509_system_trust.  Log an error message if
 	it fails.
+
+2014-12-14  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* regex.c (analyze_first): Rename from analyze_first.
 
 2014-12-13  Paul Eggert  <eggert@cs.ucla.edu>
 
@@ -870,6 +991,8 @@
 
 	* fileio.c (Fexpand_file_name): Use make_unibyte_string, not
 	build_string, when importing a home directory.  (Bug#18873)
+
+2014-12-27  Eli Zaretskii  <eliz@gnu.org>
 
 	* dispnew.c (buffer_posn_from_coords):
 	Use WINDOW_WANTS_HEADER_LINE_P, not WINDOW_WANTS_MODELINE_P, to

@@ -905,9 +905,9 @@ get_server_config (const char *config_file, struct sockaddr_in *server,
         {
 	  char *path = xmalloc (strlen (home) + strlen (config_file)
 				+ EXTRA_SPACE);
-	  strcpy (path, home);
-	  strcat (path, "/.emacs.d/server/");
-	  strcat (path, config_file);
+	  char *z = stpcpy (path, home);
+	  z = stpcpy (z, "/.emacs.d/server/");
+	  strcpy (z, config_file);
           config = fopen (path, "rb");
 	  free (path);
         }
@@ -916,9 +916,9 @@ get_server_config (const char *config_file, struct sockaddr_in *server,
         {
 	  char *path = xmalloc (strlen (home) + strlen (config_file)
 				+ EXTRA_SPACE);
-	  strcpy (path, home);
-	  strcat (path, "/.emacs.d/server/");
-	  strcat (path, config_file);
+	  char *z = stpcpy (path, home);
+	  z = stpcpy (z, "/.emacs.d/server/");
+	  strcpy (z, config_file);
           config = fopen (path, "rb");
 	  free (path);
         }
@@ -1193,7 +1193,6 @@ set_local_socket (const char *local_socket_name)
       {
 	/* socket_name is a file name component.  */
 	long uid = geteuid ();
-	ptrdiff_t tmpdirlen;
 	use_tmpdir = 1;
 	tmpdir = egetenv ("TMPDIR");
 	if (!tmpdir)
@@ -1212,12 +1211,11 @@ set_local_socket (const char *local_socket_name)
 #endif
               tmpdir = "/tmp";
           }
-	tmpdirlen = strlen (tmpdir);
 	socket_name_storage =
-	  xmalloc (tmpdirlen + strlen (server_name) + EXTRA_SPACE);
-	strcpy (socket_name_storage, tmpdir);
-	sprintf (socket_name_storage + tmpdirlen, "/emacs%ld/", uid);
-	strcat (socket_name_storage + tmpdirlen, server_name);
+	  xmalloc (strlen (tmpdir) + strlen (server_name) + EXTRA_SPACE);
+	char *z = stpcpy (socket_name_storage, tmpdir);
+	z += sprintf (z, "/emacs%ld/", uid);
+	strcpy (z, server_name);
 	local_socket_name = socket_name_storage;
       }
 
@@ -1253,12 +1251,12 @@ set_local_socket (const char *local_socket_name)
 	      {
 		/* We're running under su, apparently. */
 		long uid = pw->pw_uid;
-		ptrdiff_t tmpdirlen = strlen (tmpdir);
 		char *user_socket_name
-		  = xmalloc (tmpdirlen + strlen (server_name) + EXTRA_SPACE);
-		strcpy (user_socket_name, tmpdir);
-		sprintf (user_socket_name + tmpdirlen, "/emacs%ld/", uid);
-		strcat (user_socket_name + tmpdirlen, server_name);
+		  = xmalloc (strlen (tmpdir) + strlen (server_name)
+			     + EXTRA_SPACE);
+		char *z = stpcpy (user_socket_name, tmpdir);
+		z += sprintf (z, "/emacs%ld/", uid);
+		strcpy (z, server_name);
 
 		if (strlen (user_socket_name) < sizeof (server.sun_path))
 		  strcpy (server.sun_path, user_socket_name);
@@ -1507,8 +1505,7 @@ start_daemon_and_retry_set_socket (void)
 	  const char *deq = "--daemon=";
 	  char *daemon_arg = xmalloc (strlen (deq)
 				      + strlen (socket_name) + 1);
-	  strcpy (daemon_arg, deq);
-	  strcat (daemon_arg, socket_name);
+	  strcpy (stpcpy (daemon_arg, deq), socket_name);
 	  d_argv[1] = daemon_arg;
 	}
       execvp ("emacs", d_argv);

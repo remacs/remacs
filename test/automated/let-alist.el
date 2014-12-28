@@ -21,6 +21,7 @@
 
 (require 'ert)
 (require 'cl-lib)
+(require 'let-alist)
 
 (ert-deftest let-alist-surface-test ()
   "Tests basic macro expansion for `let-alist'."
@@ -62,7 +63,7 @@
       '(nil 1 1 2 nil)))))
 
 (ert-deftest let-alist-remove-dot ()
-  "Remove firt dot from symbol."
+  "Remove first dot from symbol."
   (should (equal (let-alist--remove-dot 'hi) 'hi))
   (should (equal (let-alist--remove-dot '.hi) 'hi))
   (should (equal (let-alist--remove-dot '..hi) '.hi)))

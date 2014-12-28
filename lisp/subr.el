@@ -2166,7 +2166,7 @@ keyboard-quit events while waiting for a valid input."
     char))
 
 (defun sit-for (seconds &optional nodisp obsolete)
-  "Perform redisplay, then wait for SECONDS seconds or until input is available.
+  "Redisplay, then wait for SECONDS seconds.  Stop when input is available.
 SECONDS may be a floating-point value.
 \(On operating systems that do not support waiting for fractions of a
 second, floating-point values are rounded down to the nearest integer.)
@@ -2184,7 +2184,7 @@ floating point support."
   (declare (advertised-calling-convention (seconds &optional nodisp) "22.1"))
   ;; This used to be implemented in C until the following discussion:
   ;; http://lists.gnu.org/archive/html/emacs-devel/2006-07/msg00401.html
-  ;; Then it was moved to C using an implementation based on an idle timer,
+  ;; Then it was moved here using an implementation based on an idle timer,
   ;; which was then replaced by the use of read-event.
   (if (numberp nodisp)
       (setq seconds (+ seconds (* 1e-3 nodisp))

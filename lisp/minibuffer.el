@@ -1818,8 +1818,9 @@ variables.")
              ,(if (eq (selected-window) (minibuffer-window))
                   'display-buffer-at-bottom
                 'display-buffer-below-selected))
-	    ,(when temp-buffer-resize-mode
-	       '(window-height . resize-temp-buffer-window))
+	    ,(if temp-buffer-resize-mode
+		 '(window-height . resize-temp-buffer-window)
+	       '(window-height . shrink-window-if-larger-than-buffer))
 	    ,(when temp-buffer-resize-mode
 	       '(preserve-size . (nil . t))))
           nil

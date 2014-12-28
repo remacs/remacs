@@ -2062,7 +2062,10 @@ See Info node `(emacs)Subdir switches' for more details."
     ;; inserted *after* opoint.
     (setq dirname (file-name-as-directory dirname))
     (or (and (not switches)
-	     (dired-goto-subdir dirname))
+	     (when (dired-goto-subdir dirname)
+	       (unless (dired-subdir-hidden-p dirname)
+		 (dired-initial-position dirname))
+	       t))
 	(dired-insert-subdir dirname switches no-error-if-not-dir-p))
     ;; Push mark so that it's easy to find back.  Do this after the
     ;; insert message so that the user sees the `Mark set' message.

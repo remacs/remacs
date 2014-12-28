@@ -77,7 +77,7 @@ symbol, and each cdr is the same symbol without the `.'."
         (mapcar #'let-alist--deep-dot-search data)))))
 
 (defun let-alist--access-sexp (symbol variable)
-  "Return a sexp used to acess SYMBOL inside VARIABLE."
+  "Return a sexp used to access SYMBOL inside VARIABLE."
   (let* ((clean (let-alist--remove-dot symbol))
          (name (symbol-name clean)))
     (if (string-match "\\`\\." name)

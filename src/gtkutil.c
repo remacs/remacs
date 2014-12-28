@@ -1839,12 +1839,12 @@ xg_get_file_with_chooser (struct frame *f,
 
   if (x_gtk_file_dialog_help_text)
     {
-      msgbuf[0] = '\0';
+      char *z = msgbuf;
       /* Gtk+ 2.10 has the file name text entry box integrated in the dialog.
          Show the C-l help text only for versions < 2.10.  */
       if (gtk_check_version (2, 10, 0) && action != GTK_FILE_CHOOSER_ACTION_SAVE)
-        strcat (msgbuf, "\nType C-l to display a file name text entry box.\n");
-      strcat (msgbuf, "\nIf you don't like this file selector, use the "
+        z = stpcpy (z, "\nType C-l to display a file name text entry box.\n");
+      strcpy (z, "\nIf you don't like this file selector, use the "
               "corresponding\nkey binding or customize "
               "use-file-dialog to turn it off.");
 

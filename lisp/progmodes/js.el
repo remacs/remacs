@@ -1637,12 +1637,29 @@ This performs fontification according to `js--class-styles'."
                                    js--font-lock-keywords-3)
   "Font lock keywords for `js-mode'.  See `font-lock-keywords'.")
 
+(defconst js--syntax-propertize-regexp-syntax-table
+  (let ((st (make-char-table 'syntax-table (string-to-syntax "."))))
+    (modify-syntax-entry ?\[ "(]" st)
+    (modify-syntax-entry ?\] ")[" st)
+    (modify-syntax-entry ?\\ "\\" st)
+    st))
+
 (defun js-syntax-propertize-regexp (end)
-  (when (eq (nth 3 (syntax-ppss)) ?/)
-    ;; A /.../ regexp.
-    (when (re-search-forward "\\(?:\\=\\|[^\\]\\)\\(?:\\\\\\\\\\)*/" end 'move)
-      (put-text-property (1- (point)) (point)
-                         'syntax-table (string-to-syntax "\"/")))))
+  (let ((ppss (syntax-ppss)))
+    (when (eq (nth 3 ppss) ?/)
+      ;; A /.../ regexp.
+      (while
+          (when (re-search-forward "\\(?:\\=\\|[^\\]\\)\\(?:\\\\\\\\\\)*/"
+                                   end 'move)
+            (if (nth 1 (with-syntax-table
+                           js--syntax-propertize-regexp-syntax-table
+                         (let ((parse-sexp-lookup-properties nil))
+                           (parse-partial-sexp (nth 8 ppss) (point)))))
+                ;; A / within a character class is not the end of a regexp.
+                t
+              (put-text-property (1- (point)) (point)
+                                 'syntax-table (string-to-syntax "\"/"))
+              nil))))))
 
 (defun js-syntax-propertize (start end)
   ;; Javascript allows immediate regular expression objects, written /.../.
@@ -1656,7 +1673,7 @@ This performs fontification according to `js--class-styles'."
     ;; We can probably just add +, -, !, <, >, %, ^, ~, |, &, ?, : at which
     ;; point I think only * and / would be missing which could also be added,
     ;; but need care to avoid affecting the // and */ comment markers.
-    ("\\(?:^\\|[=([{,:;]\\)\\(?:[ \t]\\)*\\(/\\)[^/*]"
+    ("\\(?:^\\|[=([{,:;]\\|\\_<return\\_>\\)\\(?:[ \t]\\)*\\(/\\)[^/*]"
      (1 (ignore
 	 (forward-char -1)
          (when (or (not (memq (char-after (match-beginning 0)) '(?\s ?\t)))
