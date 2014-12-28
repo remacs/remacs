@@ -1,5 +1,8 @@
 2014-12-28  Ivan Shmakov  <ivan@siamics.net>
 
+	* net/shr.el (shr-tag-table): Fix handling of tbody/header/footer
+	elements in tables (bug#19444).
+
 	* net/eww.el (eww-handle-link): Fix typo in "up" rel handling
 	(bug#19445).
 
