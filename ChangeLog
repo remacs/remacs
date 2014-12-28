@@ -1,3 +1,9 @@
+2014-12-28  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* build-aux/git-hooks/commit-msg: Allow tabs.
+	Treat them as if they were expanded to spaces, with tab stops
+	every 8 columns.
+
 2014-12-17  Paul Eggert  <eggert@cs.ucla.edu>
 
 	* .gitignore: Ignore /conftest*.
