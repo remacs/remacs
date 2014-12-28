@@ -30,6 +30,8 @@
 
 ;;; Code:
 
+(require 'diff-mode)                    ; For diff faces.
+
 (defgroup compare-windows nil
   "Compare text between windows."
   :prefix "compare-"
@@ -128,11 +130,19 @@ out all highlighting later with the command `compare-windows-dehighlight'."
   :group 'compare-windows
   :version "22.1")
 
-(defface compare-windows
-  '((t :inherit lazy-highlight))
-  "Face for highlighting of compare-windows difference regions."
+(defface compare-windows-removed
+  '((t :inherit diff-removed))
+  "Face for highlighting of compare-windows removed regions."
   :group 'compare-windows
-  :version "22.1")
+  :version "25.1")
+
+(defface compare-windows-added
+  '((t :inherit diff-added))
+  "Face for highlighting of compare-windows added regions."
+  :group 'compare-windows
+  :version "25.1")
+
+(define-obsolete-face-alias 'compare-windows 'compare-windows-added "25.1")
 
 (defvar compare-windows-overlay1 nil)
 (defvar compare-windows-overlay2 nil)
@@ -158,7 +168,8 @@ then try to get a window on an iconified frame, and finally
 consider all existing frames."
   (or (get-mru-window 'visible t t)
       (get-mru-window 0 t t)
-      (get-mru-window t t t)))
+      (get-mru-window t t t)
+      (error "No other window")))
 
 (defun compare-windows-get-next-window ()
   "Return the window next in the cyclic ordering of windows.
@@ -393,13 +404,13 @@ on third call it again advances points to the next difference and so on."
     (if compare-windows-overlay1
         (move-overlay compare-windows-overlay1 beg1 end1 b1)
       (setq compare-windows-overlay1 (make-overlay beg1 end1 b1))
-      (overlay-put compare-windows-overlay1 'face 'compare-windows)
+      (overlay-put compare-windows-overlay1 'face 'compare-windows-added)
       (overlay-put compare-windows-overlay1 'priority 1000))
     (overlay-put compare-windows-overlay1 'window w1)
     (if compare-windows-overlay2
         (move-overlay compare-windows-overlay2 beg2 end2 b2)
       (setq compare-windows-overlay2 (make-overlay beg2 end2 b2))
-      (overlay-put compare-windows-overlay2 'face 'compare-windows)
+      (overlay-put compare-windows-overlay2 'face 'compare-windows-removed)
       (overlay-put compare-windows-overlay2 'priority 1000))
     (overlay-put compare-windows-overlay2 'window w2)
     (if (not (eq compare-windows-highlight 'persistent))

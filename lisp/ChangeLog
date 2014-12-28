@@ -1,3 +1,15 @@
+2014-12-28  Juri Linkov  <juri@linkov.net>
+
+	* vc/compare-w.el: Require diff-mode for diff faces.
+	(compare-windows-removed, compare-windows-added): New faces
+	inheriting from diff faces.
+	(compare-windows): Define obsolete face alias.
+	(compare-windows-highlight): Replace face `compare-windows' with
+	new faces `compare-windows-added' and `compare-windows-removed'
+	(bug#19451).
+	(compare-windows-get-recent-window): Signal an error when
+	no other window is found (bug#19170).
+
 2014-12-27  Dmitry Gutov  <dgutov@yandex.ru>
 
 	* progmodes/elisp-mode.el (elisp--xref-identifier-file):
