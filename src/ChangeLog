@@ -1,3 +1,9 @@
+2014-12-28  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Fix produce_composite_width typo
+	* term.c (produce_composite_glyph):
+	Fix typo that confused number of columns for pixel width.
+
 2014-12-28  Paul Eggert  <eggert@Penguin.CS.UCLA.EDU>
 
 	Wrap dll functions more simply
