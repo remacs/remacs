@@ -1,3 +1,13 @@
+2014-12-28  Eli Zaretskii  <eliz@gnu.org>
+
+	* international/mule.el (define-coding-system): Fix typos in the
+	doc string.
+
+2014-12-28  Kenichi Handa  <handa@gnu.org>
+
+	* international/mule.el (define-coding-system): Improve the doc
+	string.
+
 2014-12-27  Fabián Ezequiel Gallina  <fgallina@gnu.org>
 
 	* progmodes/python.el (python-shell-buffer-substring): Handle
