@@ -2327,7 +2327,7 @@
 
 2012-12-08  Fabrice Popineau  <fabrice.popineau@gmail.com>
 
-	* w32fns.c (emacs_abort): Don't do arithmetics on void pointers.
+	* w32fns.c (emacs_abort): Don't do arithmetic on void pointers.
 
 2012-12-08  Eli Zaretskii  <eliz@gnu.org>
 
@@ -4716,7 +4716,7 @@
 	defining an XRectangle structure.
 
 	* w32proc.c (RVA_TO_PTR, w32_executable_type): Fix pointer
-	arithmetics for compatibility with x64.
+	arithmetic for compatibility with x64.
 
 	* w32menu.c (add_menu_item): Use UINT_PTR instead of UINT, for
 	compatibility with x64.

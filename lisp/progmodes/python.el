@@ -2531,7 +2531,7 @@ the python shell:
                     (concat
                      (format "# -*- coding: %s -*-\n" encoding)
                      (make-string
-                      ;; Substract 2 because of the coding cookie.
+                      ;; Subtract 2 because of the coding cookie.
                       (- (line-number-at-pos start) 2) ?\n))))
          (toplevel-block-p (save-excursion
                              (goto-char start)
@@ -3951,7 +3951,7 @@ operator."
 
 (defun python-info-encoding-from-cookie ()
   "Detect current buffer's encoding from its coding cookie.
-Returns the enconding as a symbol."
+Returns the encoding as a symbol."
   (let ((first-two-lines
          (save-excursion
            (save-restriction
@@ -3968,9 +3968,9 @@ Returns the enconding as a symbol."
   "Return encoding for file.
 Try `python-info-encoding-from-cookie', if none is found then
 default to utf-8."
-  ;; If no enconding is defined, then it's safe to use UTF-8: Python 2
+  ;; If no encoding is defined, then it's safe to use UTF-8: Python 2
   ;; uses ASCII as default while Python 3 uses UTF-8.  This means that
-  ;; in the worst case escenario python.el will make things work for
+  ;; in the worst case scenario python.el will make things work for
   ;; Python 2 files with unicode data and no encoding defined.
   (or (python-info-encoding-from-cookie)
       'utf-8))

@@ -725,7 +725,7 @@
 2012-10-01  Eli Zaretskii  <eliz@gnu.org>
 
 	* preprep.c (RVA_TO_PTR): Use 'unsigned char *' instead of
-	'void *', for pointer arithmetics.
+	'void *', for pointer arithmetic.
 	(OFFSET_TO_RVA, RVA_TO_OFFSET, RVA_TO_SECTION_OFFSET): Enclose all
 	macro arguments in parentheses.
 
