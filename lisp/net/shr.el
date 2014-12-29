@@ -78,11 +78,12 @@ If nil, don't draw horizontal table lines."
   :group 'shr
   :type 'character)
 
-(defcustom shr-width fill-column
+(defcustom shr-width nil
   "Frame width to use for rendering.
 May either be an integer specifying a fixed width in characters,
 or nil, meaning that the full width of the window should be
 used."
+  :version "25.1"
   :type '(choice (integer :tag "Fixed width in characters")
 		 (const   :tag "Use the width of the window" nil))
   :group 'shr)

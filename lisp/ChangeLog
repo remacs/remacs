@@ -1,3 +1,11 @@
+2014-12-29  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	* net/eww.el (eww-mode): Truncate overlong lines for prettier
+	display when resizing.
+
+	* net/shr.el (shr-width): Default to using the window width when
+	rendering.
+
 2014-12-29  Dmitry Gutov  <dgutov@yandex.ru>
 
 	Unbreak jumping to an alias's definition.
