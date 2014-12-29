@@ -507,16 +507,6 @@
 
     menu))
 
-(defun menu-bar-next-tag-other-window ()
-  "Find the next definition of the tag already specified."
-  (interactive)
-  (find-tag-other-window nil t))
-
-(defun menu-bar-next-tag ()
-  "Find the next definition of the tag already specified."
-  (interactive)
-  (find-tag nil t))
-
 (define-obsolete-function-alias
   'menu-bar-kill-ring-save 'kill-ring-save "24.1")
 

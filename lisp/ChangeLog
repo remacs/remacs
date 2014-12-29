@@ -1,3 +1,16 @@
+2014-12-29  Dmitry Gutov  <dgutov@yandex.ru>
+
+	Unbreak jumping to an alias's definition.
+
+	* emacs-lisp/find-func.el (find-function-library): Return a pair
+	(ORIG-FUNCTION . LIBRARY) instead of just its second element.
+	(find-function-noselect): Use it.
+
+	* progmodes/elisp-mode.el (elisp--xref-identifier-file): Rename to
+	`elisp--xref-identifier-location', incorporate logic from
+	`elisp--xref-find-definitions', use the changed
+	`find-function-library' return value.
+
 2014-12-29  Juri Linkov  <juri@linkov.net>
 
 	* comint.el (comint-history-isearch-message): Use field-beginning
