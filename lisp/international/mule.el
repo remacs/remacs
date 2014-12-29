@@ -2317,7 +2317,13 @@ ALIST is an alist, each element has the form (FROM . TO).
 FROM and TO are a character or a vector of characters.
 If FROM is a character, that character is translated to TO.
 If FROM is a vector of characters, that sequence is translated to TO.
-The first extra-slot of the value is a translation table for reverse mapping."
+The first extra-slot of the value is a translation table for reverse mapping.
+
+FROM and TO may be nil.  If TO is nil, the translation from FROM
+to nothing is defined in the translation table and that element
+is ignored in the reverse map.  If FROM is nil, the translation
+from TO to nothing is defined in the reverse map only.  A vector
+of length zero has the same meaning as specifying nil."
   (let ((tables (vector (make-char-table 'translation-table)
 			(make-char-table 'translation-table)))
 	table max-lookup from to idx val)
@@ -2330,20 +2336,23 @@ The first extra-slot of the value is a translation table for reverse mapping."
 	  (setq from (cdr elt) to (car elt)))
 	(if (characterp from)
 	    (setq idx from)
-	  (setq idx (aref from 0)
-		max-lookup (max max-lookup (length from))))
-	(setq val (aref table idx))
-	(if val
-	    (progn
-	      (or (consp val)
-		  (setq val (list (cons (vector idx) val))))
-	      (if (characterp from)
-		  (setq from (vector from)))
-	      (setq val (nconc val (list (cons from to)))))
-	  (if (characterp from)
-	      (setq val to)
-	    (setq val (list (cons from to)))))
-	(aset table idx val))
+	  (if (= (length from) 0)
+	      (setq idx nil)
+	    (setq idx (aref from 0)
+		  max-lookup (max max-lookup (length from)))))
+	(when idx
+	  (setq val (aref table idx))
+	  (if val
+	      (progn
+		(or (consp val)
+		    (setq val (list (cons (vector idx) val))))
+		(if (characterp from)
+		    (setq from (vector from)))
+		(setq val (nconc val (list (cons from to)))))
+	    (if (characterp from)
+		(setq val to)
+	      (setq val (list (cons from to)))))
+	  (aset table idx val)))
       (set-char-table-extra-slot table 1 max-lookup))
     (set-char-table-extra-slot (aref tables 0) 0 (aref tables 1))
     (aref tables 0)))
