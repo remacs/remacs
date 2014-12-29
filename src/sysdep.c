@@ -110,6 +110,9 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #define _P_WAIT 0
 int _cdecl _spawnlp (int, const char *, const char *, ...);
 int _cdecl _getpid (void);
+/* The following is needed for O_CLOEXEC, F_SETFD, FD_CLOEXEC, and
+   several prototypes of functions called below.  */
+#include <sys/socket.h>
 #endif
 
 #include "syssignal.h"
