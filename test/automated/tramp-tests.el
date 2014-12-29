@@ -1547,6 +1547,8 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
      '(tramp-adb-file-name-handler
        tramp-gvfs-file-name-handler
        tramp-smb-file-name-handler))))
+  ;; Bug#19463.
+  (skip-unless (not (eq system-type 'windows-nt)))
 
   ;; Newlines, slashes and backslashes in file names are not supported.
   ;; So we don't test.
@@ -1742,10 +1744,9 @@ Since it unloads Tramp, it shall be the last test to run."
 ;;   doesn't work well when an interactive password must be provided.
 ;; * Fix `tramp-test27-start-file-process' for `nc' and on MS
 ;;   Windows (`process-send-eof'?).
-;; * Fix `tramp-test28-shell-command' on MS Windows (nasty plink message).
 ;; * Fix `tramp-test30-special-characters' for `adb', `nc' and `smb'.
-;; * Fix `tramp-test31-utf8' for MS Windows and `nc'/`telnet' (when
-;;   target is a dumb busybox).  Seems to be in `directory-files'.
+;; * Fix `tramp-test31-utf8' for `nc'/`telnet' (when target is a dumb
+;;   busybox).  Seems to be in `directory-files'.
 ;; * Fix Bug#16928.  Set expected error of `tramp-test32-asynchronous-requests'.
 ;; * Fix `tramp-test34-unload' (Not all symbols are unbound).  Set
 ;;   expected error.
