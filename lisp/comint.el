@@ -1532,14 +1532,20 @@ the function `isearch-message'."
     ;; the initial comint prompt.
     (if (overlayp comint-history-isearch-message-overlay)
 	(move-overlay comint-history-isearch-message-overlay
-		      (save-excursion (forward-line 0) (point))
-                      (comint-line-beginning-position))
+		      (save-excursion
+			(goto-char (field-beginning))
+			(forward-line 0)
+			(point))
+                      (field-beginning))
       (setq comint-history-isearch-message-overlay
-	    (make-overlay (save-excursion (forward-line 0) (point))
-                          (comint-line-beginning-position)))
+	    (make-overlay (save-excursion
+			    (goto-char (field-beginning))
+			    (forward-line 0)
+			    (point))
+                          (field-beginning)))
       (overlay-put comint-history-isearch-message-overlay 'evaporate t))
     (overlay-put comint-history-isearch-message-overlay
-		 'display (isearch-message-prefix c-q-hack ellipsis))
+		 'display (isearch-message-prefix ellipsis isearch-nonincremental))
     (if (and comint-input-ring-index (not ellipsis))
 	;; Display the current history index.
 	(message "History item: %d" (1+ comint-input-ring-index))

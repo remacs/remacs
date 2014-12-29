@@ -6,6 +6,12 @@
 	(comint-send-input): Go to the end of the field instead of the end
 	of the line to accept whole multi-line input.
 	http://lists.gnu.org/archive/html/emacs-devel/2014-12/msg00305.html
+	(comint-history-isearch-message): Use field-beginning
+	instead of comint-line-beginning-position - that's more fixes for
+	http://lists.gnu.org/archive/html/emacs-devel/2014-12/msg00305.html
+	(comint-history-isearch-message): Fix args of isearch-message-prefix.
+
+	[Backport]
 
 2015-01-09  Eli Zaretskii  <eliz@gnu.org>
 
