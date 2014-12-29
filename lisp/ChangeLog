@@ -3,6 +3,59 @@
 	* international/mule.el (make-translation-table-from-alist):
 	Accept nil or zero-length vector for FROM and TO.
 
+2014-12-29  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	* net/eww.el (eww-mode): Truncate overlong lines for prettier
+	display when resizing.
+
+	* net/shr.el (shr-width): Default to using the window width when
+	rendering.
+
+2014-12-29  Dmitry Gutov  <dgutov@yandex.ru>
+
+	Unbreak jumping to an alias's definition.
+
+	* emacs-lisp/find-func.el (find-function-library): Return a pair
+	(ORIG-FUNCTION . LIBRARY) instead of just its second element.
+	(find-function-noselect): Use it.
+
+	* progmodes/elisp-mode.el (elisp--xref-identifier-file): Rename to
+	`elisp--xref-identifier-location', incorporate logic from
+	`elisp--xref-find-definitions', use the changed
+	`find-function-library' return value.
+
+2014-12-29  Juri Linkov  <juri@linkov.net>
+
+	* comint.el (comint-history-isearch-message): Use field-beginning
+	instead of comint-line-beginning-position - that's more fixes for
+	http://lists.gnu.org/archive/html/emacs-devel/2014-12/msg00305.html
+	(comint-history-isearch-message): Fix args of isearch-message-prefix.
+
+2014-12-29  Juri Linkov  <juri@linkov.net>
+
+	* vc/vc-dir.el (vc-dir-display-file): New command (bug#19450).
+	(vc-dir-mode-map): Bind it to "\C-o".
+	(vc-dir-menu-map): Add it to menu.
+
+2014-12-29  Dmitry Gutov  <dgutov@yandex.ru>
+
+	* progmodes/etags.el (find-tag-other-window)
+	(find-tag-other-frame, find-tag-regexp, tags-loop-continue)
+	(tags-apropos): Declare obsolete.
+
+	* menu-bar.el (menu-bar-goto-menu): Replace all but one etags item
+	with xref ones.
+
+2014-12-28  Eli Zaretskii  <eliz@gnu.org>
+
+	* international/mule.el (define-coding-system): Fix typos in the
+	doc string.
+
+2014-12-28  Kenichi Handa  <handa@gnu.org>
+
+	* international/mule.el (define-coding-system): Improve the doc
+	string.
+
 2014-12-28  Ivan Shmakov  <ivan@siamics.net>
 
 	* net/shr.el (shr-tag-table): Fix handling of tbody/header/footer

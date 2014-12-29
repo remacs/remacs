@@ -975,6 +975,7 @@ onto a ring and may be popped back to with \\[pop-tag-mark].
 Contrast this with the ring of marks gone to by the command.
 
 See documentation of variable `tags-file-name'."
+  (declare (obsolete xref-find-definitions-other-window "25.1"))
   (interactive (find-tag-interactive "Find tag other window: "))
 
   ;; This hair is to deal with the case where the tag is found in the
@@ -1015,6 +1016,7 @@ onto a ring and may be popped back to with \\[pop-tag-mark].
 Contrast this with the ring of marks gone to by the command.
 
 See documentation of variable `tags-file-name'."
+  (declare (obsolete xref-find-definitions-other-frame "25.1"))
   (interactive (find-tag-interactive "Find tag other frame: "))
   (let ((pop-up-frames t))
     (find-tag-other-window tagname next-p)))
@@ -1037,6 +1039,7 @@ onto a ring and may be popped back to with \\[pop-tag-mark].
 Contrast this with the ring of marks gone to by the command.
 
 See documentation of variable `tags-file-name'."
+  (declare (obsolete xref-find-apropos "25.1"))
   (interactive (find-tag-interactive "Find tag regexp: " t))
   ;; We go through find-tag-other-window to do all the display hair there.
   (funcall (if other-window 'find-tag-other-window 'find-tag)
@@ -1786,6 +1789,7 @@ Two variables control the processing we do on each file: the value of
 interesting (it returns non-nil if so) and `tags-loop-operate' is a form to
 evaluate to operate on an interesting file.  If the latter evaluates to
 nil, we exit; otherwise we scan the next file."
+  (declare (obsolete "use `xref-find-definitions' interface instead." "25.1"))
   (interactive)
   (let (new
 	;; Non-nil means we have finished one file
@@ -1929,6 +1933,7 @@ directory specification."
 ;;;###autoload
 (defun tags-apropos (regexp)
   "Display list of all tags in tags table REGEXP matches."
+  (declare (obsolete xref-find-apropos "25.1"))
   (interactive "sTags apropos (regexp): ")
   (with-output-to-temp-buffer "*Tags List*"
     (princ "Click mouse-2 to follow tags.\n\nTags matching regexp `")

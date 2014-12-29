@@ -378,30 +378,23 @@
     (bindings--define-key menu [separator-tag-file]
       menu-bar-separator)
 
-    (bindings--define-key menu [apropos-tags]
-      '(menu-item "Tags Apropos..." tags-apropos
-                  :help "Find function/variables whose names match regexp"))
-    (bindings--define-key menu [next-tag-otherw]
-      '(menu-item "Next Tag in Other Window"
-                  menu-bar-next-tag-other-window
-                  :enable (and (boundp 'tags-location-ring)
-                               (not (ring-empty-p tags-location-ring)))
-                  :help "Find next function/variable matching last tag name in another window"))
+    (bindings--define-key menu [xref-pop]
+      '(menu-item "Back..." xref-pop-marker-stack
+                  :help "Back to the position of the last search"))
 
-    (bindings--define-key menu [next-tag]
-      '(menu-item "Find Next Tag"
-                  menu-bar-next-tag
-                  :enable (and (boundp 'tags-location-ring)
-                               (not (ring-empty-p tags-location-ring)))
-                  :help "Find next function/variable matching last tag name"))
-    (bindings--define-key menu [find-tag-otherw]
-      '(menu-item "Find Tag in Other Window..." find-tag-other-window
+    (bindings--define-key menu [xref-apropos]
+      '(menu-item "Find Apropos..." xref-find-apropos
+                  :help "Find function/variables whose names match regexp"))
+
+    (bindings--define-key menu [xref-find-otherw]
+      '(menu-item "Find Definition in Other Window..."
+                  xref-find-definitions-other-window
                   :help "Find function/variable definition in another window"))
-    (bindings--define-key menu [find-tag]
-      '(menu-item "Find Tag..." find-tag
+    (bindings--define-key menu [xref-find-def]
+      '(menu-item "Find Definition..." xref-find-definitions
                   :help "Find definition of function or variable"))
 
-    (bindings--define-key menu [separator-tags]
+    (bindings--define-key menu [separator-xref]
       menu-bar-separator)
 
     (bindings--define-key menu [end-of-buf]
@@ -513,16 +506,6 @@
                   :help "Undo last operation"))
 
     menu))
-
-(defun menu-bar-next-tag-other-window ()
-  "Find the next definition of the tag already specified."
-  (interactive)
-  (find-tag-other-window nil t))
-
-(defun menu-bar-next-tag ()
-  "Find the next definition of the tag already specified."
-  (interactive)
-  (find-tag nil t))
 
 (define-obsolete-function-alias
   'menu-bar-kill-ring-save 'kill-ring-save "24.1")

@@ -570,18 +570,26 @@ It can be quoted, or be inside a quoted form."
     (`apropos
      (elisp--xref-find-apropos id))))
 
-(defun elisp--xref-identifier-file (type sym)
-  (pcase type
-    (`defun (when (fboundp sym)
-              (find-function-library sym)))
-    (`defvar (when (boundp sym)
-               (or (symbol-file sym 'defvar)
-                   (help-C-file-name sym 'var))))
-    (`feature (when (featurep sym)
-                (ignore-errors
-                  (find-library-name (symbol-name sym)))))
-    (`defface (when (facep sym)
-                (symbol-file sym 'defface)))))
+(defun elisp--xref-identifier-location (type sym)
+  (let ((file
+         (pcase type
+           (`defun (when (fboundp sym)
+                     (let ((fun-lib
+                            (find-function-library sym)))
+                       (setq sym (car fun-lib))
+                       (cdr fun-lib))))
+           (`defvar (when (boundp sym)
+                      (or (symbol-file sym 'defvar)
+                          (help-C-file-name sym 'var))))
+           (`feature (when (featurep sym)
+                       (ignore-errors
+                         (find-library-name (symbol-name sym)))))
+           (`defface (when (facep sym)
+                       (symbol-file sym 'defface))))))
+    (when file
+      (when (string-match-p "\\.elc\\'" file)
+        (setq file (substring file 0 -1)))
+      (xref-make-elisp-location sym type file))))
 
 (defun elisp--xref-find-definitions (symbol)
   (save-excursion
@@ -589,11 +597,7 @@ It can be quoted, or be inside a quoted form."
       (dolist (type '(feature defface defvar defun))
         (let ((loc
                (condition-case err
-                   (let ((file (elisp--xref-identifier-file type symbol)))
-                     (when file
-                       (when (string-match-p "\\.elc\\'" file)
-                         (setq file (substring file 0 -1)))
-                       (xref-make-elisp-location symbol type file)))
+                   (elisp--xref-identifier-location type symbol)
                  (error
                   (xref-make-bogus-location (error-message-string err))))))
           (when loc

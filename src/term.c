@@ -1736,7 +1736,7 @@ produce_composite_glyph (struct it *it)
     {
       struct composition *cmp = composition_table[it->cmp_it.id];
 
-      it->pixel_width = cmp->width;
+      it->pixel_width = cmp->pixel_width;
     }
   else
     {

@@ -39,7 +39,7 @@ grep -nH --color=always -e "INFO tree" ../info/*
 
 * GNU grep 2.5.1 on lines starting with a number and colon
 
-grep -nH -e "Universal Time" ../lispref/*
+grep -nH --color=always -e "Universal Time" ../doc/lispref/*
 ../lispref/os.texi:1010:0:00 January 1, 1970 UTC (Coordinated [01;31mUniversal Time[00m)
 
 * GNU grep 2.5.1 with context lines
@@ -78,8 +78,8 @@ bzr grep --color=always -in "org-element-map"
 [35mlisp/org/org.el[1;36m:[0m21047[1;36m:[0m		      ([1;31morg-element-map[0m
 
 * git-grep
-  with `[diff "el"] xfuncname = "^(\\(.*)$"' in .gitconfig
-  and `*.el diff=el' in .gitattributes
+  with `[diff "lisp"] xfuncname = "^(\\(.*)$"' in .gitconfig
+  and `*.el diff=lisp' in .gitattributes
 
 git --no-pager grep -inH -p -e "org-element-map"
 lisp/org/org.el[36m=[m20969[36m=[m(defun org-fill-paragraph (&optional justify)

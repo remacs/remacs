@@ -57,7 +57,7 @@ following modifications:
   the rationale for a change; that can be done in the commit message
   between the summary line and the file entries.
 
-** Changelog notes
+** ChangeLog notes
 
 - Emacs generally follows the GNU coding standards when it comes to
   ChangeLogs:
@@ -67,7 +67,7 @@ following modifications:
   now), because `...' is so widely used elsewhere in Emacs.
 
 - Some of the rules in the GNU coding standards section 5.2
-  "Commenting Your Work" also apply to Changelog entries: they must be
+  "Commenting Your Work" also apply to ChangeLog entries: they must be
   in English, and be complete sentences starting with a capital and
   ending with a period (except the summary line should not end in a
   period).
