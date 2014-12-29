@@ -1,3 +1,31 @@
+2014-12-29  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* emacs-lisp/eieio.el (child-of-class-p): Make it accept class objects
+	additionally to class names.
+
+	* emacs-lisp/eieio-core.el (eieio--with-scoped-class): Use let-binding.
+	(object): Remove first (constant) slot; rename second to `class-tag'.
+	(eieio--object-class-object, eieio--object-class-name): New funs
+	to replace eieio--object-class.
+	(eieio--class-object, eieio--class-p): New functions.
+	(same-class-fast-p): Make it a defsubst, change its implementation
+	to check the class objects rather than their names.
+	(eieio-object-p): Rewrite.
+	(eieio-defclass): Adjust the object initialization according to the new
+	object layout.
+	(eieio--scoped-class): Declare it returns a class object (not a class
+	name any more).  Adjust calls accordingly (along with calls to
+	eieio--with-scoped-class).
+	(eieio--slot-name-index): Rename from eieio-slot-name-index and change
+	its class arg to be a class object.  Adjust callers accordingly.
+	(eieio-slot-originating-class-p): Make its start-class arg a class
+	object.  Adjust all callers.
+	(eieio--initarg-to-attribute): Rename from eieio-initarg-to-attribute.
+	Make its `class' arg a class object.  Adjust all callers.
+
+	* emacs-lisp/eieio-base.el (eieio-persistent-validate/fix-slot-value):
+	Use eieio--slot-name-index rather than eieio-slot-name-index.
+
 2014-12-23  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* emacs-lisp/eieio.el (make-instance): Simplify by not adding an object

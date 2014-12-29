@@ -193,7 +193,7 @@ Optional argument IGNORE is an extraneous parameter."
   (let* ((chil nil)
 	 (obj (widget-get widget :value))
 	 (master-group (widget-get widget :eieio-group))
-	 (cv (eieio--class-v (eieio--object-class obj)))
+	 (cv (eieio--object-class-object obj))
 	 (slots (eieio--class-public-a cv))
 	 (flabel (eieio--class-public-custom-label cv))
 	 (fgroup (eieio--class-public-custom-group cv))
@@ -208,7 +208,8 @@ Optional argument IGNORE is an extraneous parameter."
 			 chil)))
     ;; Display information about the group being shown
     (when master-group
-      (let ((groups (class-option (eieio--object-class obj) :custom-groups)))
+      (let ((groups (class-option (eieio--object-class-name obj)
+                                  :custom-groups)))
 	(widget-insert "Groups:")
 	(while groups
 	  (widget-insert "  ")
@@ -261,7 +262,7 @@ Optional argument IGNORE is an extraneous parameter."
 			       (let ((s (symbol-name
 					 (or
 					  (class-slot-initarg
-					   (eieio--object-class obj)
+					   (eieio--object-class-name obj)
 					   (car slots))
 					  (car slots)))))
 				 (capitalize
@@ -288,7 +289,7 @@ Optional argument IGNORE is an extraneous parameter."
   "Get the value of WIDGET."
   (let* ((obj (widget-get widget :value))
 	 (master-group eieio-cog)
-	 (cv (eieio--class-v (eieio--object-class obj)))
+	 (cv (eieio--object-class-object obj))
 	 (fgroup (eieio--class-public-custom-group cv))
 	 (wids (widget-get widget :children))
 	 (name (if (widget-get widget :eieio-show-name)
@@ -296,7 +297,7 @@ Optional argument IGNORE is an extraneous parameter."
 		 nil))
 	 (chil (if (widget-get widget :eieio-show-name)
 		   (nthcdr 1 wids) wids))
-	 (cv (eieio--class-v (eieio--object-class obj)))
+	 (cv (eieio--object-class-object obj))
 	 (slots (eieio--class-public-a cv))
 	 (fcust (eieio--class-public-custom cv)))
     ;; If there are any prefix widgets, clear them.
@@ -451,7 +452,7 @@ Must return the created widget."
 	    (vector (concat "Group " (symbol-name group))
 		    (list 'customize-object obj (list 'quote group))
 		    t))
-	  (class-option (eieio--object-class obj) :custom-groups)))
+	  (class-option (eieio--object-class-name obj) :custom-groups)))
 
 (defvar eieio-read-custom-group-history nil
   "History for the custom group reader.")
@@ -459,7 +460,7 @@ Must return the created widget."
 (defmethod eieio-read-customization-group ((obj eieio-default-superclass))
   "Do a completing read on the name of a customization group in OBJ.
 Return the symbol for the group, or nil"
-  (let ((g (class-option (eieio--object-class obj) :custom-groups)))
+  (let ((g (class-option (eieio--object-class-name obj) :custom-groups)))
     (if (= (length g) 1)
 	(car g)
       ;; Make the association list

@@ -101,17 +101,14 @@ default setting for optimization purposes.")
   "A stack of the classes currently in scope during method invocation.")
 
 (defun eieio--scoped-class ()
-  "Return the class currently in scope, or nil."
+  "Return the class object currently in scope, or nil."
   (car-safe eieio--scoped-class-stack))
 
 (defmacro eieio--with-scoped-class (class &rest forms)
   "Set CLASS as the currently scoped class while executing FORMS."
   (declare (indent 1))
-  `(unwind-protect
-       (progn
-	 (push ,class eieio--scoped-class-stack)
-	 ,@forms)
-     (pop eieio--scoped-class-stack)))
+  `(let ((eieio--scoped-class-stack (cons ,class eieio--scoped-class-stack)))
+     ,@forms))
 
 ;;;
 ;; Field Accessors
@@ -169,8 +166,18 @@ from the default.")
 Stored outright without modifications or stripping.")))
 
 (eieio--define-field-accessors object
-  (-unused-0 ;;Constant slot, set to `object'.
-   (class "class struct defining OBJ")))
+  ;; `class-tag' holds a symbol, which is not the class name, but is instead
+  ;; properly prefixed as an internal EIEIO thingy and which holds the class
+  ;; object/struct in its `symbol-value' slot.
+  ((class-tag "tag containing the class struct")))
+
+(defsubst eieio--object-class-object (obj)
+  (symbol-value (eieio--object-class-tag obj)))
+
+(defsubst eieio--object-class-name (obj)
+  ;; FIXME: Most uses of this function should be changed to use
+  ;; eieio--object-class-object instead!
+  (eieio--class-symbol (eieio--object-class-object obj)))
 
 ;; FIXME: The constants below should have an `eieio-' prefix added!!
 (defconst eieio--method-static 0 "Index into :static tag on a method.")
@@ -202,22 +209,35 @@ Stored outright without modifications or stripping.")))
               (t `(,type ,obj))))
        (signal 'wrong-type-argument (list ',type ,obj))))
 
-(defmacro eieio--class-v (class)
+(defmacro eieio--class-v (class)        ;Use a macro, so it acts as a GV place.
   "Internal: Return the class vector from the CLASS symbol."
   (declare (debug t))
   ;; No check: If eieio gets this far, it has probably been checked already.
   `(get ,class 'eieio-class-definition))
 
+(defsubst eieio--class-object (class)
+  "Return the class object."
+  (if (symbolp class) (eieio--class-v class) class))
+
+(defsubst eieio--class-p (class)
+  "Return non-nil if CLASS is a valid class object."
+  (condition-case nil
+      (eq (aref class 0) 'defclass)
+    (error nil)))
+
 (defsubst class-p (class)
   "Return non-nil if CLASS is a valid class vector.
-CLASS is a symbol."
+CLASS is a symbol."                     ;FIXME: Is it a vector or a symbol?
   ;; this new method is faster since it doesn't waste time checking lots of
   ;; things.
   (condition-case nil
       (eq (aref (eieio--class-v class) 0) 'defclass)
     (error nil)))
 
-(defun eieio-class-name (class) "Return a Lisp like symbol name for CLASS."
+(defun eieio-class-name (class)
+  "Return a Lisp like symbol name for CLASS."
+  ;; FIXME: What's a "Lisp like symbol name"?
+  ;; FIXME: CLOS returns a symbol, but the code returns a string.
   (eieio--check-type class-p class)
   ;; I think this is supposed to return a symbol, but to me CLASS is a symbol,
   ;; and I wanted a string.  Arg!
@@ -231,9 +251,10 @@ CLASS is a symbol."
 (defmacro eieio-class-children-fast (class) "Return child classes to CLASS with no check."
   `(eieio--class-children (eieio--class-v ,class)))
 
-(defmacro same-class-fast-p (obj class)
-  "Return t if OBJ is of class-type CLASS with no error checking."
-  `(eq (eieio--object-class ,obj) ,class))
+(defsubst same-class-fast-p (obj class-name)
+  "Return t if OBJ is of class-type CLASS-NAME with no error checking."
+  ;; (eq (eieio--object-class-name obj) class)
+  (eq (eieio--object-class-object obj) (eieio--class-object class-name)))
 
 (defmacro class-constructor (class)
   "Return the symbol representing the constructor of CLASS."
@@ -289,10 +310,11 @@ Return nil if that option doesn't exist."
 
 (defsubst eieio-object-p (obj)
   "Return non-nil if OBJ is an EIEIO object."
-  (condition-case nil
-      (and (eq (aref obj 0) 'object)
-           (class-p (eieio--object-class obj)))
-    (error nil)))
+  (and (arrayp obj)
+       (condition-case nil
+           (eq (aref (eieio--object-class-object obj) 0) 'defclass)
+         (error nil))))
+
 (defalias 'object-p 'eieio-object-p)
 
 (defsubst class-abstract-p (class)
@@ -648,6 +670,9 @@ See `defclass' for more information."
               ;; FIXME: We should move more of eieio-defclass into the
               ;; defclass macro so we don't have to use `eval' and require
               ;; `gv' at run-time.
+              ;; FIXME: The defmethod above only defines a part of the generic
+              ;; function, but the define-setter below affects the whole
+              ;; generic function!
               (eval `(gv-define-setter ,acces (eieio--store eieio--object)
                        (list 'eieio-oset eieio--object '',name
                              eieio--store)))))
@@ -765,9 +790,15 @@ See `defclass' for more information."
     ;; Create the cached default object.
     (let ((cache (make-vector (+ (length (eieio--class-public-a newc))
                                  (eval-when-compile eieio--object-num-slots))
-                              nil)))
-      (aset cache 0 'object)
-      (setf (eieio--object-class cache) cname)
+                              nil))
+          ;; We don't strictly speaking need to use a symbol, but the old
+          ;; code used the class's name rather than the class's object, so
+          ;; we follow this preference for using a symbol, which is probably
+          ;; convenient to keep the printed representation of such Elisp
+          ;; objects readable.
+          (tag (intern (format "eieio-class-tag--%s" cname))))
+      (set tag newc)
+      (setf (eieio--object-class-tag cache) tag)
       (let ((eieio-skip-typecheck t))
 	;; All type-checking has been done to our satisfaction
 	;; before this call.  Don't waste our time in this call..
@@ -1164,7 +1195,7 @@ IMPL is the symbol holding the method implementation."
                 (list method local-args))
 
       ;; We do have an object.  Make sure it is the right type.
-      (if (not (child-of-class-p (eieio--object-class (car local-args))
+      (if (not (child-of-class-p (eieio--object-class-object (car local-args))
                                  class))
 
           ;; If not the right kind of object, call no applicable
@@ -1177,7 +1208,7 @@ IMPL is the symbol holding the method implementation."
               (eieio-generic-call-key eieio--method-primary)
               (eieio-generic-call-arglst local-args)
               )
-          (eieio--with-scoped-class class
+          (eieio--with-scoped-class (eieio--class-v class)
             (apply impl local-args)))))))
 
 (defsubst eieio-defgeneric-reset-generic-form-primary-only-one (method)
@@ -1291,7 +1322,7 @@ INSTANCE is the object being referenced.  SLOTNAME is the offending
 slot.  If the slot is ok, return VALUE.
 Argument FN is the function calling this verifier."
   (if (and (eq value eieio-unbound) (not eieio-skip-typecheck))
-      (slot-unbound instance (eieio--object-class instance) slotname fn)
+      (slot-unbound instance (eieio--object-class-name instance) slotname fn)
     value))
 
 
@@ -1302,8 +1333,8 @@ Argument FN is the function calling this verifier."
   (eieio--check-type (or eieio-object-p class-p) obj)
   (eieio--check-type symbolp slot)
   (if (class-p obj) (eieio-class-un-autoload obj))
-  (let* ((class (if (class-p obj) obj (eieio--object-class obj)))
-	 (c (eieio-slot-name-index class obj slot)))
+  (let* ((class (if (class-p obj) obj (eieio--object-class-name obj)))
+	 (c (eieio--slot-name-index (eieio--class-v class) obj slot)))
     (if (not c)
 	;; It might be missing because it is a :class allocated slot.
 	;; Let's check that info out.
@@ -1325,8 +1356,8 @@ Argument FN is the function calling this verifier."
 Fills in OBJ's SLOT with its default value."
   (eieio--check-type (or eieio-object-p class-p) obj)
   (eieio--check-type symbolp slot)
-  (let* ((cl (if (eieio-object-p obj) (eieio--object-class obj) obj))
-	 (c (eieio-slot-name-index cl obj slot)))
+  (let* ((cl (if (eieio-object-p obj) (eieio--object-class-name obj) obj))
+	 (c (eieio--slot-name-index (eieio--class-v cl) obj slot)))
     (if (not c)
 	;; It might be missing because it is a :class allocated slot.
 	;; Let's check that info out.
@@ -1361,22 +1392,24 @@ Fills in OBJ's SLOT with its default value."
 Fills in OBJ's SLOT with VALUE."
   (eieio--check-type eieio-object-p obj)
   (eieio--check-type symbolp slot)
-  (let ((c (eieio-slot-name-index (eieio--object-class obj) obj slot)))
+  (let* ((class (eieio--object-class-object obj))
+         (c (eieio--slot-name-index class obj slot)))
     (if (not c)
 	;; It might be missing because it is a :class allocated slot.
 	;; Let's check that info out.
 	(if (setq c
-		  (eieio-class-slot-name-index (eieio--object-class obj) slot))
+		  (eieio-class-slot-name-index (eieio--class-symbol class) slot))
 	    ;; Oset that slot.
 	    (progn
-	      (eieio-validate-class-slot-value (eieio--object-class obj) c value slot)
-	      (aset (eieio--class-class-allocation-values (eieio--class-v (eieio--object-class obj)))
+	      (eieio-validate-class-slot-value (eieio--class-symbol class)
+                                               c value slot)
+	      (aset (eieio--class-class-allocation-values class)
 		    c value))
 	  ;; See oref for comment on `slot-missing'
 	  (slot-missing obj slot 'oset value)
 	  ;;(signal 'invalid-slot-name (list (eieio-object-name obj) slot))
 	  )
-      (eieio-validate-slot-value (eieio--object-class obj) c value slot)
+      (eieio-validate-slot-value (eieio--class-symbol class) c value slot)
       (aset obj c value))))
 
 (defun eieio-oset-default (class slot value)
@@ -1384,8 +1417,8 @@ Fills in OBJ's SLOT with VALUE."
 Fills in the default value in CLASS' in SLOT with VALUE."
   (eieio--check-type class-p class)
   (eieio--check-type symbolp slot)
-  (eieio--with-scoped-class class
-    (let* ((c (eieio-slot-name-index class nil slot)))
+  (eieio--with-scoped-class (eieio--class-v class)
+    (let* ((c (eieio--slot-name-index (eieio--class-v class) nil slot)))
       (if (not c)
 	  ;; It might be missing because it is a :class allocated slot.
 	  ;; Let's check that info out.
@@ -1413,7 +1446,7 @@ Fills in the default value in CLASS' in SLOT with VALUE."
   "Return non-nil if START-CLASS is the first class to define SLOT.
 This is for testing if the class currently in scope is the class that defines SLOT
 so that we can protect private slots."
-  (let ((par (eieio-class-parents-fast start-class))
+  (let ((par (eieio--class-parent start-class))
 	(ret t))
     (if (not par)
 	t
@@ -1423,7 +1456,7 @@ so that we can protect private slots."
 	(setq par (cdr par)))
       ret)))
 
-(defun eieio-slot-name-index (class obj slot)
+(defun eieio--slot-name-index (class obj slot)
   "In CLASS for OBJ find the index of the named SLOT.
 The slot is a symbol which is installed in CLASS by the `defclass'
 call.  OBJ can be nil, but if it is an object, and the slot in question
@@ -1432,7 +1465,7 @@ scoped class.
 If SLOT is the value created with :initarg instead,
 reverse-lookup that name, and recurse with the associated slot value."
   ;; Removed checks to outside this call
-  (let* ((fsym (gethash slot (eieio--class-symbol-hashtable (eieio--class-v class))))
+  (let* ((fsym (gethash slot (eieio--class-symbol-hashtable class)))
 	 (fsi (car fsym)))
     (if (integerp fsi)
 	(cond
@@ -1442,7 +1475,7 @@ reverse-lookup that name, and recurse with the associated slot value."
 	       (eieio--scoped-class)
 	       (or (child-of-class-p class (eieio--scoped-class))
 		   (and (eieio-object-p obj)
-			(child-of-class-p class (eieio--object-class obj)))))
+			(child-of-class-p class (eieio--object-class-object obj)))))
 	  (+ (eval-when-compile eieio--object-num-slots) fsi))
 	 ((and (eq (cdr fsym) 'private)
 	       (or (and (eieio--scoped-class)
@@ -1450,8 +1483,8 @@ reverse-lookup that name, and recurse with the associated slot value."
 		   eieio-initializing-object))
 	  (+ (eval-when-compile eieio--object-num-slots) fsi))
 	 (t nil))
-      (let ((fn (eieio-initarg-to-attribute class slot)))
-	(if fn (eieio-slot-name-index class obj fn) nil)))))
+      (let ((fn (eieio--initarg-to-attribute class slot)))
+	(if fn (eieio--slot-name-index class obj fn) nil)))))
 
 (defun eieio-class-slot-name-index (class slot)
   "In CLASS find the index of the named SLOT.
@@ -1477,20 +1510,20 @@ reverse-lookup that name, and recurse with the associated slot value."
 If SET-ALL is non-nil, then when a default is nil, that value is
 reset.  If SET-ALL is nil, the slots are only reset if the default is
 not nil."
-  (eieio--with-scoped-class (eieio--object-class obj)
+  (eieio--with-scoped-class (eieio--object-class-object obj)
     (let ((eieio-initializing-object t)
-	  (pub (eieio--class-public-a (eieio--class-v (eieio--object-class obj)))))
+	  (pub (eieio--class-public-a (eieio--object-class-object obj))))
       (while pub
 	(let ((df (eieio-oref-default obj (car pub))))
 	  (if (or df set-all)
 	      (eieio-oset obj (car pub) df)))
 	(setq pub (cdr pub))))))
 
-(defun eieio-initarg-to-attribute (class initarg)
+(defun eieio--initarg-to-attribute (class initarg)
   "For CLASS, convert INITARG to the actual attribute name.
 If there is no translation, pass it in directly (so we can cheat if
 need be... May remove that later...)"
-  (let ((tuple (assoc initarg (eieio--class-initarg-tuples (eieio--class-v class)))))
+  (let ((tuple (assoc initarg (eieio--class-initarg-tuples class))))
     (if tuple
 	(cdr tuple)
       nil)))
@@ -1660,7 +1693,7 @@ This should only be called from a generic function."
 	(load (nth 1 (symbol-function firstarg))))
     ;; Determine the class to use.
     (cond ((eieio-object-p firstarg)
-	   (setq mclass (eieio--object-class firstarg)))
+	   (setq mclass (eieio--object-class-name firstarg)))
 	  ((class-p firstarg)
 	   (setq mclass firstarg))
 	  )
@@ -1743,7 +1776,7 @@ This should only be called from a generic function."
     (let ((rval nil) (lastval nil) (found nil))
       (while lambdas
 	(if (car lambdas)
-	    (eieio--with-scoped-class (cdr (car lambdas))
+	    (eieio--with-scoped-class (eieio--class-v (cdr (car lambdas)))
 	      (let* ((eieio-generic-call-key (car keys))
 		     (has-return-val
 		      (or (= eieio-generic-call-key eieio--method-primary)
@@ -1792,7 +1825,7 @@ for this common case to improve performance."
 
     ;; Determine the class to use.
     (cond ((eieio-object-p firstarg)
-	   (setq mclass (eieio--object-class firstarg)))
+	   (setq mclass (eieio--object-class-name firstarg)))
 	  ((not firstarg)
 	   (error "Method %s called on nil" method))
 	  (t
@@ -1811,7 +1844,7 @@ for this common case to improve performance."
 
     ;; Now loop through all occurrences forms which we must execute
     ;; (which are happily sorted now) and execute them all!
-    (eieio--with-scoped-class (cdr lambdas)
+    (eieio--with-scoped-class (eieio--class-v (cdr lambdas))
       (let* ((rval nil) (lastval nil)
 	     (eieio-generic-call-key eieio--method-primary)
 	     ;; Use the cdr, as the first element is the fcn

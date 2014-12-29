@@ -1,3 +1,16 @@
+2014-12-29  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* automated/eieio-test-methodinvoke.el (eieio-test-method-store):
+	Adjust to new semantics of eieio--scoped-class.
+	(eieio-test-match): Improve error feedback.
+
+2014-12-23  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* automated/eieio-tests.el: Remove dummy object names.
+
+	* automated/eieio-test-persist.el (persistent-with-objs-slot-subs):
+	The type FOO-child is the same as FOO.
+
 2014-12-22  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* automated/eieio-test-methodinvoke.el (eieio-test-method-store):

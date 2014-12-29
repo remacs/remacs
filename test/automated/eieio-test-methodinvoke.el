@@ -61,14 +61,16 @@
   "Store current invocation class symbol in the invocation order list."
   (let* ((keysym (aref [ :STATIC :BEFORE :PRIMARY :AFTER ]
 		       (or eieio-generic-call-key 0)))
-	 (c (list keysym (eieio--scoped-class))))
+         ;; FIXME: Don't depend on `eieio--scoped-class'!
+	 (c (list keysym (eieio--class-symbol (eieio--scoped-class)))))
     (push c eieio-test-method-order-list)))
 
 (defun eieio-test-match (rightanswer)
   "Do a test match."
   (if (equal rightanswer eieio-test-method-order-list)
       t
-    (error "eieio-test-methodinvoke.el: Test Failed!")))
+    (error "eieio-test-methodinvoke.el: Test Failed: %S != %S"
+           rightanswer eieio-test-method-order-list)))
 
 (defvar eieio-test-call-next-method-arguments nil
   "List of passed to methods during execution of `call-next-method'.")

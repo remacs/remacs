@@ -267,13 +267,13 @@ variable name of the same name as the slot."
 ;;  well embedded into an object.
 ;;
 (define-obsolete-function-alias
-  'object-class-fast #'eieio--object-class "24.4")
+  'object-class-fast #'eieio--object-class-name "24.4")
 
 (defun eieio-object-name (obj &optional extra)
   "Return a Lisp like symbol string for object OBJ.
 If EXTRA, include that in the string returned to represent the symbol."
   (eieio--check-type eieio-object-p obj)
-  (format "#<%s %s%s>" (symbol-name (eieio--object-class obj))
+  (format "#<%s %s%s>" (eieio--object-class-name obj)
 	  (eieio-object-name-string obj) (or extra "")))
 (define-obsolete-function-alias 'object-name #'eieio-object-name "24.4")
 
@@ -299,9 +299,11 @@ If EXTRA, include that in the string returned to represent the symbol."
 (define-obsolete-function-alias
   'object-set-name-string 'eieio-object-set-name-string "24.4")
 
-(defun eieio-object-class (obj) "Return the class struct defining OBJ."
+(defun eieio-object-class (obj)
+  "Return the class struct defining OBJ."
+  ;; FIXME: We say we return a "struct" but we return a symbol instead!
   (eieio--check-type eieio-object-p obj)
-  (eieio--object-class obj))
+  (eieio--object-class-name obj))
 (define-obsolete-function-alias 'object-class #'eieio-object-class "24.4")
 ;; CLOS name, maybe?
 (define-obsolete-function-alias 'class-of #'eieio-object-class "24.4")
@@ -309,7 +311,7 @@ If EXTRA, include that in the string returned to represent the symbol."
 (defun eieio-object-class-name (obj)
   "Return a Lisp like symbol name for OBJ's class."
   (eieio--check-type eieio-object-p obj)
-  (eieio-class-name (eieio--object-class obj)))
+  (eieio-class-name (eieio--object-class-name obj)))
 (define-obsolete-function-alias
   'object-class-name 'eieio-object-class-name "24.4")
 
@@ -349,28 +351,31 @@ The CLOS function `class-direct-subclasses' is aliased to this function."
   "Return non-nil if OBJ is an instance of CLASS or CLASS' subclasses."
   (eieio--check-type eieio-object-p obj)
   ;; class will be checked one layer down
-  (child-of-class-p (eieio--object-class obj) class))
+  (child-of-class-p (eieio--object-class-object obj) class))
 ;; Backwards compatibility
 (defalias 'obj-of-class-p 'object-of-class-p)
 
 (defun child-of-class-p (child class)
   "Return non-nil if CHILD class is a subclass of CLASS."
-  (eieio--check-type class-p class)
-  (eieio--check-type class-p child)
+  (setq child (eieio--class-object child))
+  (eieio--check-type eieio--class-p child)
   ;; `eieio-default-superclass' is never mentioned in eieio--class-parent,
   ;; so we have to special case it here.
   (or (eq class 'eieio-default-superclass)
       (let ((p nil))
+        (setq class (eieio--class-object class))
+        (eieio--check-type eieio--class-p class)
         (while (and child (not (eq child class)))
-          (setq p (append p (eieio--class-parent (eieio--class-v child)))
-                child (car p)
-                p (cdr p)))
+          ;; FIXME: eieio--class-parent should return class-objects rather than
+          ;; class-names!
+          (setq p (append p (eieio--class-parent child))
+                child (eieio--class-v (pop p))))
         (if child t))))
 
 (defun object-slots (obj)
   "Return list of slots available in OBJ."
   (eieio--check-type eieio-object-p obj)
-  (eieio--class-public-a (eieio--class-v (eieio--object-class obj))))
+  (eieio--class-public-a (eieio--object-class-object obj)))
 
 (defun class-slot-initarg (class slot) "Fetch from CLASS, SLOT's :initarg."
   (eieio--check-type class-p class)
@@ -543,14 +548,14 @@ Use `next-method-p' to find out if there is a next method to call."
   (let ((newargs (or replacement-args eieio-generic-call-arglst))
 	(next (car eieio-generic-call-next-method-list))
 	)
-    (if (or (not next) (not (car next)))
+    (if (not (and next (car next)))
 	(apply #'no-next-method (car newargs) (cdr newargs))
       (let* ((eieio-generic-call-next-method-list
 	      (cdr eieio-generic-call-next-method-list))
 	     (eieio-generic-call-arglst newargs)
 	     (fcn (car next))
 	     )
-	(eieio--with-scoped-class (cdr next)
+	(eieio--with-scoped-class (eieio--class-v (cdr next))
 	  (apply fcn newargs)) ))))
 
 ;;; Here are some CLOS items that need the CL package
@@ -603,10 +608,10 @@ Called from the constructor routine.")
 (defmethod shared-initialize ((obj eieio-default-superclass) slots)
   "Set slots of OBJ with SLOTS which is a list of name/value pairs.
 Called from the constructor routine."
-  (eieio--with-scoped-class (eieio--object-class obj)
+  (eieio--with-scoped-class (eieio--object-class-object obj)
     (while slots
-      (let ((rn (eieio-initarg-to-attribute (eieio--object-class obj)
-					    (car slots))))
+      (let ((rn (eieio--initarg-to-attribute (eieio--object-class-object obj)
+                                             (car slots))))
 	(if (not rn)
 	    (slot-missing obj (car slots) 'oset (car (cdr slots)))
 	  (eieio-oset obj rn (car (cdr slots)))))
@@ -627,7 +632,7 @@ not taken, then new objects of your class will not have their values
 dynamically set from SLOTS."
   ;; First, see if any of our defaults are `lambda', and
   ;; re-evaluate them and apply the value to our slots.
-  (let* ((this-class (eieio--class-v (eieio--object-class this)))
+  (let* ((this-class (eieio--object-class-object this))
 	 (slot (eieio--class-public-a this-class))
 	 (defaults (eieio--class-public-d this-class)))
     (while slot
@@ -883,7 +888,7 @@ variable PRINT-FUNCTION.  Optional argument NOESCAPE is passed to
 
 ;;; Start of automatically extracted autoloads.
 
-;;;### (autoloads nil "eieio-custom" "eieio-custom.el" "3a6fffe3af331fe960f967d0da99e8e9")
+;;;### (autoloads nil "eieio-custom" "eieio-custom.el" "2b4c57cf907e879e8bbc88d8f0e2de4c")
 ;;; Generated autoloads from eieio-custom.el
 
 (autoload 'customize-object "eieio-custom" "\
