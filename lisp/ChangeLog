@@ -1,3 +1,9 @@
+2014-12-29  Juri Linkov  <juri@linkov.net>
+
+	* vc/vc-dir.el (vc-dir-display-file): New command (bug#19450).
+	(vc-dir-mode-map): Bind it to "\C-o".
+	(vc-dir-menu-map): Add it to menu.
+
 2014-12-29  Dmitry Gutov  <dgutov@yandex.ru>
 
 	* progmodes/etags.el (find-tag-other-window)
