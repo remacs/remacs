@@ -456,6 +456,11 @@ easier binding, which is now unoccupied (`M-,').
 alias for a private variable.  `xref-push-marker-stack' and
 `xref-pop-marker-stack' should be used to mutate it instead.
 
+** etags
+As a result of the above, these commands are now obsolete:
+`find-tag-other-window', `find-tag-other-frame', `find-tag-regexp',
+`tags-apropos' and `tags-loop-continue'.
+
 ** Obsolete packages
 
 ---
