@@ -1,3 +1,8 @@
+2014-12-29  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* obsolete/pc-select.el (pc-selection-mode): Use system-type.
+	This is instead of system-name, which is both wrong here and obsolete.
+
 2014-12-29  Dmitry Gutov  <dgutov@yandex.ru>
 
 	* menu-bar.el (menu-bar-next-tag-other-window)
