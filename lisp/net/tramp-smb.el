@@ -513,7 +513,7 @@ pass to the OPERATION."
 		;; Reset the transfer process properties.
 		(tramp-set-connection-property v "process-name" nil)
 		(tramp-set-connection-property v "process-buffer" nil)
-		(when t1 (delete-directory tmpdir 'recurse))))
+		(when t1 (tramp-compat-delete-directory tmpdir 'recurse))))
 
 	    ;; Handle KEEP-DATE argument.
 	    (when keep-date

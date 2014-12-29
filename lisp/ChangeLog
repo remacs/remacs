@@ -1,3 +1,15 @@
+2014-12-29  Michael Albinus  <michael.albinus@gmx.de>
+
+	Sync with Tramp 2.2.11.
+
+	* net/tramp-compat.el (top): Require cl-macs for Emacs 22.
+	Make an alias for `default-toplevel-value' if it doesn't exist.
+
+	* net/tramp-smb.el (tramp-smb-handle-copy-directory):
+	Use `tramp-compat-delete-directory'.
+
+	* net/trampver.el: Update release number.
+
 2014-12-29  Filipp Gunbin  <fgunbin@fastmail.fm>
 
 	* autorevert.el (auto-revert-handler): Fix auto-revert-tail-mode
