@@ -1,3 +1,9 @@
+2014-12-29  Michael Albinus  <michael.albinus@gmx.de>
+
+	Sync with Tramp 2.2.11.
+
+	* trampver.texi: Update release number.
+
 2014-11-10  Tassilo Horn  <tsdh@gnu.org>
 
 	* gnus.texi (HTML): Update section so that it mentions shr and w3m.
@@ -339,6 +345,7 @@
 2014-02-16  Michael Albinus  <michael.albinus@gmx.de>
 
 	Sync with Tramp 2.2.9.
+
 	* trampver.texi: Update release number.
 
 	* efaq-w32.texi (Tramp ssh): Remove also pscp1 and pscp2.
