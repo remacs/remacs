@@ -917,18 +917,6 @@ This function returns the name of the machine you are running on, as a
 string.
 @end defun
 
-  The symbol @code{system-name} is a variable as well as a function.  In
-fact, the function normally returns whatever value the variable
-@code{system-name} currently holds.  Thus, you can set the variable
-@code{system-name} in case Emacs is confused about the name of your
-system.  If you do not set the variable, the function updates
-the variable to the current system name; this behavior can be useful
-if your Emacs process has changed systems or if the system has changed
-names.
-
-The @code{system-name} variable is also useful for constructing frame titles
-(@pxref{Frame Titles}).
-
 @c FIXME seems like this section is not the best place for this option?
 @defopt mail-host-address
 If this variable is non-@code{nil}, it is used instead of

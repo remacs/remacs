@@ -5849,7 +5849,7 @@ give as trustworthy answer as possible."
 
 (defun message-make-fqdn ()
   "Return user's fully qualified domain name."
-  (let* ((system-name (system-name))
+  (let* ((sysname (system-name))
 	 (user-mail (message-user-mail-address))
 	 (user-domain
 	  (if (and user-mail
@@ -5863,10 +5863,10 @@ give as trustworthy answer as possible."
 	   (not (string-match message-bogus-system-names message-user-fqdn)))
       ;; `message-user-fqdn' seems to be valid
       message-user-fqdn)
-     ((and (string-match message-valid-fqdn-regexp system-name)
-	   (not (string-match message-bogus-system-names system-name)))
+     ((and (string-match message-valid-fqdn-regexp sysname)
+	   (not (string-match message-bogus-system-names sysname)))
       ;; `system-name' returned the right result.
-      system-name)
+      sysname)
      ;; Try `mail-host-address'.
      ((and (boundp 'mail-host-address)
 	   (stringp mail-host-address)
@@ -5881,7 +5881,7 @@ give as trustworthy answer as possible."
       user-domain)
      ;; Default to this bogus thing.
      (t
-      (concat system-name
+      (concat sysname
 	      ".i-did-not-set--mail-host-address--so-tickle-me")))))
 
 (defun message-make-domain ()

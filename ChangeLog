@@ -1,6 +1,7 @@
 2014-12-29  Paul Eggert  <eggert@cs.ucla.edu>
 
 	system-name's returned value can vary
+	Also, the system-name variable is now obsolete.
 	Fixes Bug#19438.
 	* doc/lispref/os.texi (System Environment):
 	* etc/NEWS: Document this.
@@ -8,6 +9,7 @@
 	(Displaying the current file name in the titlebar):
 	* lisp/desktop.el (desktop-save-frameset):
 	* lisp/dnd.el (dnd-get-local-file-uri):
+	* lisp/gnus/message.el (message-make-fqdn):
 	* lisp/gnus/nnvirtual.el (nnvirtual-retrieve-headers)
 	(nnvirtual-update-xref-header):
 	* lisp/nxml/rng-uri.el (rng-uri-file-name-1):
@@ -16,14 +18,18 @@
 	* src/xrdb.c (get_environ_db):
 	* src/xterm.c (same_x_server):
 	* src/xterm.c (x_term_init):
-	Prefer (system-name) to system-name.
+	Prefer (system-name) to system-name, and avoid naming
+	locals 'system-name'.
 	* doc/misc/smtpmail.texi (Server workarounds): Fix grammar.
+	* lisp/startup.el (system-name): Now an obsolete variable.
 	* src/editfns.c (cached_system_name): New static var.
 	(init_and_cache_system_name): New function.
 	(init_editfns, Fsystem_name): Use it.
 	(syms_of_editfns): Initialize it and Vsystem_name to the same value.
-	* src/sysdep.c (init_system_name): Don't create a new string if
-	the current value is already correct.
+	* src/sysdep.c [HAVE_SOCKETS]: Don't include <sys/socket.h>, <netdb.h>.
+	(h_errno) [TRY_AGAIN && !HAVE_H_ERRNO]: Remove decl.
+	(init_system_name) [HAVE_SOCKETS]: Don't canonicalize the name.
+	Don't create a new string if the current value is already correct.
 
 2014-12-28  Paul Eggert  <eggert@cs.ucla.edu>
 
