@@ -2811,8 +2811,8 @@ The details of what will be saved are regulated by the variable
 	  (delete-region (point-min) (point-max))
 	  ;;Store clock
 	  (insert (format ";; org-persist.el - %s at %s\n"
-			  system-name (format-time-string
-				       (cdr org-time-stamp-formats))))
+			  (system-name) (format-time-string
+					 (cdr org-time-stamp-formats))))
 	  (if (and (memq org-clock-persist '(t clock))
 		   (setq b (org-clocking-buffer))
 		   (setq b (or (buffer-base-buffer b) b))

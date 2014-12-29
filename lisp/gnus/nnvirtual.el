@@ -151,7 +151,7 @@ component group will show up when you enter the virtual group.")
 		  ;; and clean up the xrefs.
 		  (princ article nntp-server-buffer)
 		  (nnvirtual-update-xref-header cgroup carticle
-						prefix system-name)
+						prefix (system-name))
 		  (forward-line 1))
 		)
 
@@ -393,7 +393,7 @@ component group will show up when you enter the virtual group.")
     (forward-char -1)
     (delete-char 1))
 
-  (insert "Xref: " system-name " " group ":")
+  (insert "Xref: " (system-name) " " group ":")
   (princ article (current-buffer))
   (insert " ")
 

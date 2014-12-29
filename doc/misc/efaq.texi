@@ -1469,7 +1469,7 @@ machine at which Emacs was invoked.  This is done by setting
 @code{frame-title-format} to the default value of
 
 @lisp
-(multiple-frames "%b" ("" invocation-name "@@" system-name))
+(multiple-frames "%b" ("" invocation-name "@@" (system-name)))
 @end lisp
 
 To modify the behavior such that frame titlebars contain the buffer's

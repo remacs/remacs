@@ -940,7 +940,7 @@ Frames with a non-nil `desktop-dont-save' parameter are not saved."
 	(and desktop-restore-frames
 	     (frameset-save nil
 			    :app desktop--app-id
-			    :name (concat user-login-name "@" system-name)
+			    :name (concat user-login-name "@" (system-name))
 			    :predicate #'desktop--check-dont-save))))
 
 ;;;###autoload

@@ -1420,15 +1420,16 @@ extern int h_errno;
 void
 init_system_name (void)
 {
+  char *hostname_alloc = NULL;
+  char *hostname;
 #ifndef HAVE_GETHOSTNAME
   struct utsname uts;
   uname (&uts);
-  Vsystem_name = build_string (uts.nodename);
+  hostname = uts.nodename;
 #else /* HAVE_GETHOSTNAME */
-  char *hostname_alloc = NULL;
   char hostname_buf[256];
   ptrdiff_t hostname_size = sizeof hostname_buf;
-  char *hostname = hostname_buf;
+  hostname = hostname_buf;
 
   /* Try to get the host name; if the buffer is too short, try
      again.  Apparently, the only indication gethostname gives of
@@ -1541,15 +1542,15 @@ init_system_name (void)
 #endif /* !HAVE_GETADDRINFO */
       }
 #endif /* HAVE_SOCKETS */
-  Vsystem_name = build_string (hostname);
-  xfree (hostname_alloc);
 #endif /* HAVE_GETHOSTNAME */
-  {
-    char *p;
-    for (p = SSDATA (Vsystem_name); *p; p++)
-      if (*p == ' ' || *p == '\t')
-	*p = '-';
-  }
+  char *p;
+  for (p = hostname; *p; p++)
+    if (*p == ' ' || *p == '\t')
+      *p = '-';
+  if (! (STRINGP (Vsystem_name) && SBYTES (Vsystem_name) == p - hostname
+	 && strcmp (SSDATA (Vsystem_name), hostname) == 0))
+    Vsystem_name = build_string (hostname);
+  xfree (hostname_alloc);
 }
 
 sigset_t empty_mask;

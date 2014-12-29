@@ -541,6 +541,9 @@ optional repeat-count argument.
 
 ** Function `sort' can deal with vectors.
 
+** Function `system-name' now returns an updated value if the current
+system's name has changed, or if the Emacs process has changed systems.
+
 ---
 ** New utilities in subr-x.el:
 *** New macros `if-let' and `when-let' allow defining bindings and to

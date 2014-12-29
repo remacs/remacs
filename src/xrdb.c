@@ -385,10 +385,11 @@ get_environ_db (void)
     {
       char *home = gethomedir ();
       ptrdiff_t homelen = strlen (home);
+      Lisp_Object system_name = Fsystem_name ();
       ptrdiff_t filenamesize = (homelen + sizeof xdefaults
-				+ SBYTES (Vsystem_name));
+				+ SBYTES (system_name));
       p = filename = xrealloc (home, filenamesize);
-      lispstpcpy (stpcpy (filename + homelen, xdefaults), Vsystem_name);
+      lispstpcpy (stpcpy (filename + homelen, xdefaults), system_name);
     }
 
   db = XrmGetFileDatabase (p);
