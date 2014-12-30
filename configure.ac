@@ -2500,15 +2500,14 @@ HAVE_XWIDGETS=no
 HAVE_WEBKIT=no
 HAVE_GIR=no
 
-if test "${with_xwidgets}" != "no"; then
+if test "${with_xwidgets}" != "no" && test "${USE_GTK_TOOLKIT}" = "GTK3"  && test "$window_system" != "none" ; then
    echo "xwidgets enabled, checking webkit, and others"
    HAVE_XWIDGETS=yes
    AC_DEFINE(HAVE_XWIDGETS, 1, [Define to 1 if you have xwidgets support.])        
-#xwidgets
-#TODO
-# - enable only if gtk/gtk3 enabled
-# - webkit
-# - only webkit_osr is good so remove plain webkit laterish
+dnl xwidgets
+dnl - enable only if GTK3 is enabled, and we have a window system
+dnl - check for webkit and gobject introspection
+
 
 #webkit version for gtk3. 
   WEBKIT_REQUIRED=1.4.0
