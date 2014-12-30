@@ -1403,6 +1403,7 @@ pos_visible_p (struct window *w, ptrdiff_t charpos, int *x, int *y,
   struct text_pos top;
   int visible_p = 0;
   struct buffer *old_buffer = NULL;
+  bool r2l = false;
 
   if (FRAME_INITIAL_P (XFRAME (WINDOW_FRAME (w))))
     return visible_p;
@@ -1688,6 +1689,8 @@ pos_visible_p (struct window *w, ptrdiff_t charpos, int *x, int *y,
 	  *rowh = max (0, (min (bottom_y, it.last_visible_y)
 			   - max (top_y, window_top_y)));
 	  *vpos = it.vpos;
+	  if (it.bidi_it.paragraph_dir == R2L)
+	    r2l = true;
 	}
     }
   else
@@ -1717,6 +1720,8 @@ pos_visible_p (struct window *w, ptrdiff_t charpos, int *x, int *y,
 			   - max (it2.current_y,
 				  WINDOW_HEADER_LINE_HEIGHT (w))));
 	  *vpos = it2.vpos;
+	  if (it2.bidi_it.paragraph_dir == R2L)
+	    r2l = true;
 	}
       else
 	bidi_unshelve_cache (it2data, 1);
@@ -1726,10 +1731,20 @@ pos_visible_p (struct window *w, ptrdiff_t charpos, int *x, int *y,
   if (old_buffer)
     set_buffer_internal_1 (old_buffer);
 
-  if (visible_p && w->hscroll > 0)
-    *x -=
-      window_hscroll_limited (w, WINDOW_XFRAME (w))
-      * WINDOW_FRAME_COLUMN_WIDTH (w);
+  if (visible_p)
+    {
+      if (w->hscroll > 0)
+	*x -=
+	  window_hscroll_limited (w, WINDOW_XFRAME (w))
+	  * WINDOW_FRAME_COLUMN_WIDTH (w);
+      /* For lines in an R2L paragraph, we need to mirror the X pixel
+         coordinate wrt the text area.  For the reasons, see the
+         commentary in buffer_posn_from_coords and the explanation of
+         the geometry used by the move_it_* functions at the end of
+         the large commentart near the beginning of this file.  */
+      if (r2l)
+	*x = window_box_width (w, TEXT_AREA) - *x - 1;
+    }
 
 #if 0
   /* Debugging code.  */

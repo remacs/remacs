@@ -1,3 +1,8 @@
+2014-12-30  Eli Zaretskii  <eliz@gnu.org>
+
+	* xdisp.c (pos_visible_p): Fix up the X coordinate for
+	right-to-left screen lines.  (Bug#19473)
+
 2014-12-28  Eli Zaretskii  <eliz@gnu.org>
 
 	* w32proc.c (Fw32_get_codepage_charset): Doc fix.  (Bug#19458)
