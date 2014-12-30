@@ -1,3 +1,9 @@
+2014-12-30  Dmitry Gutov  <dgutov@yandex.ru>
+
+	* menu-bar.el (menu-bar-goto-uses-etags-p): New function.
+	(menu-bar-goto-menu): Use it to show or hide the `set-tags-name'
+	and `separator-tag-file' items.
+
 2014-12-29  Paul Eggert  <eggert@cs.ucla.edu>
 
 	* obsolete/pc-select.el (pc-selection-mode): Use system-type.

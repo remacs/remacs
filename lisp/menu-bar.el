@@ -373,13 +373,14 @@
 
     (bindings--define-key menu [set-tags-name]
       '(menu-item "Set Tags File Name..." visit-tags-table
-                  :help "Tell Tags commands which tag table file to use"))
+                  :visible (menu-bar-goto-uses-etags-p)
+                  :help "Tell navigation commands which tag table file to use"))
 
     (bindings--define-key menu [separator-tag-file]
-      menu-bar-separator)
+      '(menu-item "--" nil :visible (menu-bar-goto-uses-etags-p)))
 
     (bindings--define-key menu [xref-pop]
-      '(menu-item "Back..." xref-pop-marker-stack
+      '(menu-item "Back" xref-pop-marker-stack
                   :help "Back to the position of the last search"))
 
     (bindings--define-key menu [xref-apropos]
@@ -409,6 +410,9 @@
                   :help "Read a line number and go to that line"))
     menu))
 
+(defun menu-bar-goto-uses-etags-p ()
+  (or (not (boundp 'xref-find-function))
+      (eq xref-find-function 'etags-xref-find)))
 
 (defvar yank-menu (cons (purecopy "Select Yank") nil))
 (fset 'yank-menu (cons 'keymap yank-menu))
