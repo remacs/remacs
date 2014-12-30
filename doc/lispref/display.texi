@@ -1194,12 +1194,6 @@ it prints into the buffer named @var{buffer-or-name} and displays that
 buffer in some window.  Unlike @code{with-output-to-temp-buffer},
 however, it does not automatically switch that buffer to Help mode.
 
-Like @code{with-output-to-temp-buffer} it neither makes the buffer
-specified by @var{buffer-or-name} current when executing @var{body}.
-@findex with-current-buffer-window
-The otherwise identical macro @code{with-current-buffer-window} can be
-used to execute @var{body} with that buffer current.
-
 The argument @var{buffer-or-name} specifies the temporary buffer.  It
 can be either a buffer, which must already exist, or a string, in which
 case a buffer of that name is created, if necessary.  The buffer is
@@ -1207,14 +1201,14 @@ marked as unmodified and read-only when @code{with-temp-buffer-window}
 exits.
 
 This macro does not call @code{temp-buffer-show-function}.  Rather, it
-passes the @var{action} argument to @code{display-buffer} in order to
-display the buffer.
+passes the @var{action} argument to @code{display-buffer}
+(@pxref{Choosing Window}) in order to display the buffer.
 
 The value of the last form in @var{body} is returned, unless the
 argument @var{quit-function} is specified.  In that case, it is called
 with two arguments: the window showing the buffer and the result of
-@var{body}.  The final return value is then whatever
-@var{quit-function} returns.
+@var{body}.  The final return value is then whatever @var{quit-function}
+returns.
 
 @vindex temp-buffer-window-setup-hook
 @vindex temp-buffer-window-show-hook
@@ -1222,6 +1216,56 @@ This macro uses the normal hooks @code{temp-buffer-window-setup-hook}
 and @code{temp-buffer-window-show-hook} in place of the analogous hooks
 run by @code{with-output-to-temp-buffer}.
 @end defmac
+
+The two constructs described next are mostly identical to
+@code{with-temp-buffer-window} but differ from it as specified:
+
+@defmac with-current-buffer-window buffer-or-name action quit-function &rest body
+This macro is like @code{with-temp-buffer-window} but unlike that makes
+the buffer specified by @var{buffer-or-name} current for running
+@var{body}.
+@end defmac
+
+@defmac with-displayed-buffer-window buffer-or-name action quit-function &rest body
+This macro is like @code{with-current-buffer-window} but unlike that
+displays the buffer specified by @var{buffer-or-name} @emph{before}
+running @var{body}.
+@end defmac
+
+A window showing a temporary buffer can be fit to the size of that
+buffer using the following mode:
+
+@defopt temp-buffer-resize-mode
+When this minor mode is enabled, windows showing a temporary buffer are
+automatically resized to fit their buffer's contents.
+
+A window is resized if and only if it has been specially created for the
+buffer.  In particular, windows that have shown another buffer before
+are not resized.  By default, this mode uses @code{fit-window-to-buffer}
+(@pxref{Resizing Windows}) for resizing.  You can specify a different
+function by customizing the options @code{temp-buffer-max-height} and
+@code{temp-buffer-max-width} below.
+@end defopt
+
+@defopt temp-buffer-max-height
+This option specifies the maximum height (in lines) of a window
+displaying a temporary buffer when @code{temp-buffer-resize-mode} is
+enabled.  It can also be a function to be called to choose the height
+for such a buffer.  It gets one argument, the buffer, and should return
+a positive integer.  At the time the function is called, the window to
+be resized is selected.
+@end defopt
+
+@defopt temp-buffer-max-width
+This option specifies the maximum width of a window (in columns)
+displaying a temporary buffer when @code{temp-buffer-resize-mode} is
+enabled.  It can also be a function to be called to choose the width for
+such a buffer.  It gets one argument, the buffer, and should return a
+positive integer.  At the time the function is called, the window to be
+resized is selected.
+@end defopt
+
+The following function uses the current buffer for temporal display:
 
 @defun momentary-string-display string position &optional char message
 This function momentarily displays @var{string} in the current buffer at

@@ -1,3 +1,11 @@
+2014-12-30  Martin Rudalics  <rudalics@gmx.at>
+
+	* display.texi (Temporary Displays): Amend description of
+	`with-temp-buffer-window'.  Add descriptions for
+	`with-current-buffer-window', `with-displayed-buffer-window' and
+	`temp-buffer-resize-mode', `temp-buffer-max-height' and
+	`temp-buffer-max-width'.
+
 2014-12-27  Glenn Morris  <rgm@gnu.org>
 
 	* control.texi (Pattern matching case statement):
