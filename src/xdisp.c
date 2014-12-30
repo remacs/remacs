@@ -1741,7 +1741,7 @@ pos_visible_p (struct window *w, ptrdiff_t charpos, int *x, int *y,
          coordinate wrt the text area.  For the reasons, see the
          commentary in buffer_posn_from_coords and the explanation of
          the geometry used by the move_it_* functions at the end of
-         the large commentart near the beginning of this file.  */
+         the large commentary near the beginning of this file.  */
       if (r2l)
 	*x = window_box_width (w, TEXT_AREA) - *x - 1;
     }
