@@ -1,5 +1,8 @@
 2014-12-30  Dmitry Gutov  <dgutov@yandex.ru>
 
+	* progmodes/xref.el (xref-find-definitions): Mention "no
+	identifier at point" case in the docstring.
+
 	* menu-bar.el (menu-bar-goto-uses-etags-p): New function.
 	(menu-bar-goto-menu): Use it to show or hide the `set-tags-name'
 	and `separator-tag-file' items.

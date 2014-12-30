@@ -467,7 +467,8 @@ Return an alist of the form ((FILENAME . (XREF ...)) ...)."
 ;;;###autoload
 (defun xref-find-definitions (identifier)
   "Find the definition of the identifier at point.
-With prefix argument, prompt for the identifier."
+With prefix argument or when there's no identifier at point,
+prompt for it."
   (interactive (list (xref--read-identifier "Find definitions of: ")))
   (xref--find-definitions identifier nil))
 
