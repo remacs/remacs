@@ -705,6 +705,8 @@ the like."
    (setq-local tool-bar-map eww-tool-bar-map))
   ;; desktop support
   (setq-local desktop-save-buffer 'eww-desktop-misc-data)
+  ;; multi-page isearch support
+  (setq-local multi-isearch-next-buffer-function 'eww-isearch-next-buffer)
   (setq truncate-lines t)
   (buffer-disable-undo)
   (setq buffer-read-only t))
@@ -1884,6 +1886,19 @@ Otherwise, the restored buffer will contain a prompt to do so by using
 	     'eww-history-position)
 (add-to-list 'desktop-buffer-mode-handlers
              '(eww-mode . eww-restore-desktop))
+
+;;; Isearch support
+
+(defun eww-isearch-next-buffer (&optional buffer wrap)
+  "Go to the next page to search using `rel' attribute for navigation."
+  (if wrap
+      (condition-case nil
+	  (eww-top-url)
+	(error nil))
+    (if isearch-forward
+	(eww-next-url)
+      (eww-previous-url)))
+  (current-buffer))
 
 (provide 'eww)
 

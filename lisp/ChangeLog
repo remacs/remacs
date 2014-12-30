@@ -1,3 +1,8 @@
+2014-12-30  Juri Linkov  <juri@linkov.net>
+
+	* net/eww.el (eww-isearch-next-buffer): New function.
+	(eww-mode): Set multi-isearch-next-buffer-function to it.
+
 2014-12-30  Dmitry Gutov  <dgutov@yandex.ru>
 
 	* progmodes/xref.el (xref-find-definitions): Mention "no
