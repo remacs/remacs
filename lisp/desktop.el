@@ -1528,6 +1528,9 @@ If there are no buffers left to create, kill the timer."
         (desktop-read)
         (setq inhibit-startup-screen t)))))
 
+;; So we can restore vc-dir buffers.
+(autoload 'vc-dir-mode "vc-dir" nil t)
+
 (provide 'desktop)
 
 ;;; desktop.el ends here
