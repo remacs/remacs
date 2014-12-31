@@ -1,3 +1,12 @@
+2014-12-31  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Simplify setfattr use by assuming GNU make
+	* Makefile.in (PAXCTL_if_present, SETFATTR_if_present): New macros.
+	(emacs$(EXEEXT), temacs$(EXEEXT), bootstrap-emacs$(EXEEXT)): Use them.
+	Simplify by using GNU make rather than shell conditionals,
+	by using ln -f rather than rm -f followed by ln,
+	and by preferring $@ to spelling out the destination.
+
 2014-12-29  Eli Zaretskii  <eliz@gnu.org>
 
 	* sysdep.c [WINDOWSNT]: Include sys/socket.h, without which this
