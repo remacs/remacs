@@ -2503,20 +2503,20 @@ HAVE_GIR=no
 if test "${with_xwidgets}" != "no" && test "${USE_GTK_TOOLKIT}" = "GTK3"  && test "$window_system" != "none" ; then
    echo "xwidgets enabled, checking webkit, and others"
    HAVE_XWIDGETS=yes
-   AC_DEFINE(HAVE_XWIDGETS, 1, [Define to 1 if you have xwidgets support.])        
+   AC_DEFINE(HAVE_XWIDGETS, 1, [Define to 1 if you have xwidgets support.])
 dnl xwidgets
 dnl - enable only if GTK3 is enabled, and we have a window system
 dnl - check for webkit and gobject introspection
 
 
-#webkit version for gtk3. 
+#webkit version for gtk3.
   WEBKIT_REQUIRED=1.4.0
   WEBKIT_MODULES="webkitgtk-3.0 >= $WEBKIT_REQUIRED"
 
   if test "${with_gtk3}" = "yes"; then
     PKG_CHECK_MODULES(WEBKIT, $WEBKIT_MODULES, HAVE_WEBKIT=yes, HAVE_WEBKIT=no)
     if test $HAVE_WEBKIT = yes; then
-        AC_DEFINE(HAVE_WEBKIT_OSR, 1, [Define to 1 if you have webkit_osr support.])     
+        AC_DEFINE(HAVE_WEBKIT_OSR, 1, [Define to 1 if you have webkit_osr support.])
     fi
   fi
 
@@ -2527,7 +2527,7 @@ dnl - check for webkit and gobject introspection
      AC_DEFINE(HAVE_GIR, 1, [Define to 1 if you have GIR support.])
   fi
 
-  
+
 fi
 
 CFLAGS=$OLD_CFLAGS
