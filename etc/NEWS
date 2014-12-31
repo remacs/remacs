@@ -338,6 +338,11 @@ The remainder were:
 ---
 ** `Info-fontify-maximum-menu-size' can be t for no limit.
 
++++
+** `info-display-manual' can now be given a prefix argument which (any
+non-nil value) directs the command to limit the completion
+alternatives to currently visited manuals.
+
 ---
 ** ntlm.el has support for NTLM2.
 

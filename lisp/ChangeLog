@@ -1,3 +1,8 @@
+2014-12-31  Filipp Gunbin  <fgunbin@fastmail.fm>
+
+	* info.el (info-display-manual): Limit the completion alternatives
+	to currently visited manuals if prefix argument is non-nil.
+
 2014-12-30  Paul Eggert  <eggert@cs.ucla.edu>
 
 	* Makefile.in (semantic): Simplify.
