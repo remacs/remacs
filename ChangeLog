@@ -1,3 +1,13 @@
+2014-12-31  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Less 'make' chatter at top level
+	* Makefile.in (AM_DEFAULT_VERBOSITY, AM_V_GEN, am__v_GEN_)
+	(am__v_GEN_0, am__v_GEN_1, AM_V_at, am__v_at_, am__v_at_0)
+	(am__v_at_1): New macros, copied from src/Makefile.in.
+	($(srcdir)/src/config.in, ${srcdir}/info/dir):
+	Be less chatty when not verbose.
+	($(srcdir)/src/stamp-h.in): Simplify with '$@'.
+
 2014-12-29  Paul Eggert  <eggert@cs.ucla.edu>
 
 	system-name's returned value can vary
