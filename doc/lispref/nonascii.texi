@@ -783,6 +783,8 @@ of them is @code{nil}, it defaults to the first or last codepoint of
 
 @node Scanning Charsets
 @section Scanning for Character Sets
+@cindex scanning for character sets
+@cindex character set, searching
 
   Sometimes it is useful to find out which character set a particular
 character belongs to.  One use for this is in determining which coding
@@ -1620,6 +1622,9 @@ contents (as it usually does), it should examine the contents of
 
 @node Specifying Coding Systems
 @subsection Specifying a Coding System for One Operation
+@cindex specify coding system
+@cindex force coding system for operation
+@cindex coding system for operation
 
   You can specify the coding system for a specific operation by binding
 the variables @code{coding-system-for-read} and/or

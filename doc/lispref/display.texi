@@ -39,6 +39,8 @@ that Emacs presents to the user.
 
 @node Refresh Screen
 @section Refreshing the Screen
+@cindex refresh the screen
+@cindex screen refresh
 
   The function @code{redraw-frame} clears and redisplays the entire
 contents of a given frame (@pxref{Frames}).  This is useful if the
@@ -534,6 +536,7 @@ are logged that share a common prefix ending in @samp{...}.
 
 @node Echo Area Customization
 @subsection Echo Area Customization
+@cindex echo area customization
 
   These variables control details of how the echo area works.
 
@@ -661,6 +664,7 @@ specify a specific warning type.
 
 @node Warning Variables
 @subsection Warning Variables
+@cindex warning variables
 
   Programs can customize how their warnings appear by binding
 the variables described in this section.
@@ -738,6 +742,7 @@ all.
 
 @node Warning Options
 @subsection Warning Options
+@cindex warning options
 
   These variables are used by users to control what happens
 when a Lisp program reports a warning.
@@ -771,6 +776,7 @@ that warning is not logged.
 
 @node Delayed Warnings
 @subsection Delayed Warnings
+@cindex delayed warnings
 
 Sometimes, you may wish to avoid showing a warning while a command is
 running, and only show it only after the end of the command.  You can
@@ -1094,6 +1100,8 @@ You can use a display table to substitute other text for the ellipsis
 
 @node Temporary Displays
 @section Temporary Displays
+@cindex temporary display
+@cindex temporary buffer display
 
   Temporary displays are used by Lisp programs to put output into a
 buffer and then present it to the user for perusal rather than for
@@ -1186,12 +1194,6 @@ it prints into the buffer named @var{buffer-or-name} and displays that
 buffer in some window.  Unlike @code{with-output-to-temp-buffer},
 however, it does not automatically switch that buffer to Help mode.
 
-Like @code{with-output-to-temp-buffer} it neither makes the buffer
-specified by @var{buffer-or-name} current when executing @var{body}.
-@findex with-current-buffer-window
-The otherwise identical macro @code{with-current-buffer-window} can be
-used to execute @var{body} with that buffer current.
-
 The argument @var{buffer-or-name} specifies the temporary buffer.  It
 can be either a buffer, which must already exist, or a string, in which
 case a buffer of that name is created, if necessary.  The buffer is
@@ -1199,14 +1201,14 @@ marked as unmodified and read-only when @code{with-temp-buffer-window}
 exits.
 
 This macro does not call @code{temp-buffer-show-function}.  Rather, it
-passes the @var{action} argument to @code{display-buffer} in order to
-display the buffer.
+passes the @var{action} argument to @code{display-buffer}
+(@pxref{Choosing Window}) in order to display the buffer.
 
 The value of the last form in @var{body} is returned, unless the
 argument @var{quit-function} is specified.  In that case, it is called
 with two arguments: the window showing the buffer and the result of
-@var{body}.  The final return value is then whatever
-@var{quit-function} returns.
+@var{body}.  The final return value is then whatever @var{quit-function}
+returns.
 
 @vindex temp-buffer-window-setup-hook
 @vindex temp-buffer-window-show-hook
@@ -1214,6 +1216,56 @@ This macro uses the normal hooks @code{temp-buffer-window-setup-hook}
 and @code{temp-buffer-window-show-hook} in place of the analogous hooks
 run by @code{with-output-to-temp-buffer}.
 @end defmac
+
+The two constructs described next are mostly identical to
+@code{with-temp-buffer-window} but differ from it as specified:
+
+@defmac with-current-buffer-window buffer-or-name action quit-function &rest body
+This macro is like @code{with-temp-buffer-window} but unlike that makes
+the buffer specified by @var{buffer-or-name} current for running
+@var{body}.
+@end defmac
+
+@defmac with-displayed-buffer-window buffer-or-name action quit-function &rest body
+This macro is like @code{with-current-buffer-window} but unlike that
+displays the buffer specified by @var{buffer-or-name} @emph{before}
+running @var{body}.
+@end defmac
+
+A window showing a temporary buffer can be fit to the size of that
+buffer using the following mode:
+
+@defopt temp-buffer-resize-mode
+When this minor mode is enabled, windows showing a temporary buffer are
+automatically resized to fit their buffer's contents.
+
+A window is resized if and only if it has been specially created for the
+buffer.  In particular, windows that have shown another buffer before
+are not resized.  By default, this mode uses @code{fit-window-to-buffer}
+(@pxref{Resizing Windows}) for resizing.  You can specify a different
+function by customizing the options @code{temp-buffer-max-height} and
+@code{temp-buffer-max-width} below.
+@end defopt
+
+@defopt temp-buffer-max-height
+This option specifies the maximum height (in lines) of a window
+displaying a temporary buffer when @code{temp-buffer-resize-mode} is
+enabled.  It can also be a function to be called to choose the height
+for such a buffer.  It gets one argument, the buffer, and should return
+a positive integer.  At the time the function is called, the window to
+be resized is selected.
+@end defopt
+
+@defopt temp-buffer-max-width
+This option specifies the maximum width of a window (in columns)
+displaying a temporary buffer when @code{temp-buffer-resize-mode} is
+enabled.  It can also be a function to be called to choose the width for
+such a buffer.  It gets one argument, the buffer, and should return a
+positive integer.  At the time the function is called, the window to be
+resized is selected.
+@end defopt
+
+The following function uses the current buffer for temporal display:
 
 @defun momentary-string-display string position &optional char message
 This function momentarily displays @var{string} in the current buffer at
@@ -1305,6 +1357,8 @@ inside the overlay or outside, and likewise for the end of the overlay.
 
 @node Managing Overlays
 @subsection Managing Overlays
+@cindex managing overlays
+@cindex overlays, managing
 
   This section describes the functions to create, delete and move
 overlays, and to examine their contents.  Overlay changes are not
@@ -1465,6 +1519,7 @@ faster if you do @code{(overlay-recenter (point-max))} first.
 
 @node Overlay Properties
 @subsection Overlay Properties
+@cindex overlay properties
 
   Overlay properties are like text properties in that the properties that
 alter how a character is displayed can come from either source.  But in
@@ -1717,6 +1772,8 @@ Properties}.
 
 @node Finding Overlays
 @subsection Searching for Overlays
+@cindex searching for overlays
+@cindex overlays, searching for
 
 @defun overlays-at pos &optional sorted
 This function returns a list of all the overlays that cover the character at
@@ -1784,6 +1841,8 @@ changes.
 
 @node Size of Displayed Text
 @section Size of Displayed Text
+@cindex size of text on display
+@cindex character width on display
 
 Since not all characters have the same width, these functions let you
 check the width of a character.  @xref{Primitive Indent}, and
@@ -2274,6 +2333,7 @@ suitable for use with @code{:stipple} (see above).  It returns
 
 @node Defining Faces
 @subsection Defining Faces
+@cindex defining faces
 
 @cindex face spec
   The usual way to define a face is through the @code{defface} macro.
@@ -2448,6 +2508,7 @@ Any other value of @var{spec-type} is reserved for internal use.
 
 @node Attribute Functions
 @subsection Face Attribute Functions
+@cindex face attributes, access and modification
 
   This section describes functions for directly accessing and
 modifying the attributes of a named face.
@@ -2649,6 +2710,8 @@ a non-@code{nil} @code{:inverse-video} attribute.
 
 @node Displaying Faces
 @subsection Displaying Faces
+@cindex displaying faces
+@cindex face merging
 
   When Emacs displays a given piece of text, the visual appearance of
 the text may be determined by faces drawn from different sources.  If
@@ -2704,6 +2767,7 @@ at the next level of face merging.
 
 @node Face Remapping
 @subsection Face Remapping
+@cindex face remapping
 
   The variable @code{face-remapping-alist} is used for buffer-local or
 global changes in the appearance of a face.  For instance, it is used
@@ -2901,6 +2965,7 @@ usually assign faces to around 400 to 600 characters at each call.
 
 @node Basic Faces
 @subsection Basic Faces
+@cindex basic faces
 
 If your Emacs Lisp program needs to assign some faces to text, it is
 often a good idea to use certain existing faces or inherit from them,
@@ -3067,6 +3132,8 @@ nominal heights and widths would suggest.
 
 @node Font Lookup
 @subsection Looking Up Fonts
+@cindex font lookup
+@cindex looking up fonts
 
 @defun x-list-fonts name &optional reference-face frame maximum width
 This function returns a list of available font names that match
@@ -3124,6 +3191,7 @@ encoding of the font.
 
 @node Fontsets
 @subsection Fontsets
+@cindex fontset
 
   A @dfn{fontset} is a list of fonts, each assigned to a range of
 character codes.  An individual font cannot display the whole range of
@@ -4237,6 +4305,7 @@ display specifications and what they mean.
 
 @node Replacing Specs
 @subsection Display Specs That Replace The Text
+@cindex replacing display specs
 
   Some kinds of display specifications specify something to display
 instead of the text that has the property.  These are called
@@ -5113,6 +5182,7 @@ Supports the @code{:index} property.  @xref{Multi-Frame Images}.
 
 @node Defining Images
 @subsection Defining Images
+@cindex define image
 
   The functions @code{create-image}, @code{defimage} and
 @code{find-image} provide convenient ways to create image descriptors.
@@ -5240,6 +5310,7 @@ Here is an example of using @code{image-load-path-for-library}:
 
 @node Showing Images
 @subsection Showing Images
+@cindex show image
 
   You can use an image descriptor by setting up the @code{display}
 property yourself, but it is easier to use the functions in this

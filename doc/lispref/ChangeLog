@@ -1,3 +1,118 @@
+2014-12-30  Martin Rudalics  <rudalics@gmx.at>
+
+	* display.texi (Temporary Displays): Amend description of
+	`with-temp-buffer-window'.  Add descriptions for
+	`with-current-buffer-window', `with-displayed-buffer-window' and
+	`temp-buffer-resize-mode', `temp-buffer-max-height' and
+	`temp-buffer-max-width'.
+
+2014-12-27  Glenn Morris  <rgm@gnu.org>
+
+	* control.texi (Pattern matching case statement):
+	* os.texi (Desktop Notifications):
+	* modes.texi (Defining Minor Modes, SMIE Lexer): Markup fixes.
+
+2014-12-27  Eli Zaretskii  <eliz@gnu.org>
+
+	* windows.texi (Recombining Windows): Index subject of sections.
+
+	* variables.texi (Variables with Restricted Values)
+	(Generalized Variables): Index subject of sections.
+
+	* text.texi (Buffer Contents, Examining Properties)
+	(Changing Properties, Property Search, Substitution): Index
+	subject of sections.
+
+	* syntax.texi (Motion and Syntax, Parsing Expressions)
+	(Motion via Parsing, Position Parse, Control Parsing): Index
+	subject of sections.
+
+	* strings.texi (Predicates for Strings, Creating Strings)
+	(Modifying Strings, Text Comparison): Index subject of sections.
+
+	* searching.texi (Syntax of Regexps, Regexp Special)
+	(Regexp Functions, Regexp Functions): Index subject of sections.
+
+	* processes.texi (Subprocess Creation, Process Information): Index
+	subject of sections.
+
+	* positions.texi (Screen Lines): Index subject of sections.
+
+	* nonascii.texi (Scanning Charsets, Specifying Coding Systems):
+	Index subject of sections.
+
+	* minibuf.texi (Text from Minibuffer, Object from Minibuffer)
+	(Multiple Queries, Minibuffer Contents): Index subject of
+	sections.
+
+	* markers.texi (Predicates on Markers, Creating Markers)
+	(Information from Markers, Moving Markers): Index subject of
+	sections.
+
+	* macros.texi (Defining Macros, Problems with Macros): Index
+	subject of sections.
+
+	* loading.texi (Loading Non-ASCII, Where Defined): Index subject
+	of sections.
+
+	* lists.texi (List-related Predicates, List Variables, Setcar)
+	(Setcdr, Plist Access): Index subject of sections.
+
+	* keymaps.texi (Controlling Active Maps, Scanning Keymaps)
+	(Modifying Menus): Index subject of sections.
+
+	* help.texi (Accessing Documentation, Help Functions): Index
+	subject of sections.
+
+	* hash.texi (Hash Access): Index subject of sections.
+
+	* functions.texi (Core Advising Primitives)
+	(Advising Named Functions, Porting old advices): Index subject of
+	sections.
+
+	* frames.texi (Creating Frames, Initial Parameters)
+	(Position Parameters, Buffer Parameters, Minibuffers and Frames)
+	(Pop-Up Menus, Drag and Drop): Index subject of sections.
+
+	* files.texi (Visiting Functions, Kinds of Files)
+	(Unique File Names): Index subject of sections.
+
+	* display.texi (Refresh Screen, Echo Area Customization)
+	(Warning Variables, Warning Options, Delayed Warnings)
+	(Temporary Displays, Managing Overlays, Overlay Properties)
+	(Finding Overlays, Size of Displayed Text, Defining Faces)
+	(Attribute Functions, Displaying Faces, Face Remapping)
+	(Basic Faces, Font Lookup, Fontsets, Replacing Specs)
+	(Defining Images, Showing Images): Index subject of sections.
+
+	* debugging.texi (Debugging, Explicit Debug)
+	(Invoking the Debugger, Excess Open, Excess Close): Index subject
+	of sections.
+
+	* customize.texi (Defining New Types, Applying Customizations)
+	(Custom Themes): Index subject of sections.
+
+	* control.texi (Sequencing, Combining Conditions)
+	(Processing of Errors, Cleanups): Index subject of sections.
+
+	* compile.texi (Eval During Compile): Index subject of sections.
+
+	* commands.texi (Using Interactive, Distinguish Interactive)
+	(Command Loop Info, Classifying Events, Event Mod)
+	(Invoking the Input Method): Index subject of sections.
+
+	* buffers.texi (Buffer List, Buffer Gap): Index subject of sections.
+
+	* backups.texi (Making Backups, Numbered Backups, Backup Names)
+	(Reverting): Index subject of sections.
+
+	* abbrevs.texi (Abbrev Tables, Defining Abbrevs, Abbrev Files)
+	(Abbrev Expansion, Standard Abbrev Tables, Abbrev Properties)
+	(Abbrev Table Properties): Index subject of sections.
+
+	* os.texi (Time of Day, Time Conversion, Time Parsing)
+	(Time Calculations, Idle Timers): Index subject of sections.
+
 2014-12-25  Martin Rudalics  <rudalics@gmx.at>
 
 	* windows.texi (Windows): Resync @menu order with @node order.
@@ -36,6 +151,12 @@
 2014-12-18  Eli Zaretskii  <eliz@gnu.org>
 
 	* display.texi (Low-Level Font): Document font-info and query-font.
+
+2014-12-18  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+        * display.texi (Forcing Redisplay): Remove references to
+        redisplay-dont-pause and redisplay-preemption-period (which doesn't
+        even exist).
 
 2014-12-16  Nicolas Petton  <petton.nicolas@gmail.com>
 

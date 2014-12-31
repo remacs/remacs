@@ -329,6 +329,15 @@
 (defun gnus-cloud-server-p (server)
   (member server gnus-cloud-covered-servers))
 
+(defun gnus-cloud-collect-full-newsrc ()
+  (let ((infos nil))
+    (dolist (info (cdr gnus-newsrc-alist))
+      (when (gnus-cloud-server-p
+	     (gnus-method-to-server
+	      (gnus-find-method-for-group (gnus-info-group info))))
+	(push info infos)))
+    ))
+
 (provide 'gnus-cloud)
 
 ;;; gnus-cloud.el ends here

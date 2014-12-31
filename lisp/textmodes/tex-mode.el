@@ -1300,18 +1300,48 @@ Inserts the value of `tex-open-quote' (normally ``) or `tex-close-quote'
 \(normally '') depending on the context.  With prefix argument, always
 inserts \" characters."
   (interactive "*P")
+  ;; Discover if we'll be inserting normal double quotes.
+  ;;
   (if (or arg (memq (char-syntax (preceding-char)) '(?/ ?\\))
-	  (eq (get-text-property (point) 'face) 'tex-verbatim)
-	  (save-excursion
-	    (backward-char (length tex-open-quote))
-	    (when (or (looking-at (regexp-quote tex-open-quote))
-		      (looking-at (regexp-quote tex-close-quote)))
-	      (delete-char (length tex-open-quote))
-	      t)))
+          (eq (get-text-property (point) 'face) 'tex-verbatim)
+          ;; Discover if a preceding occurrence of `tex-open-quote'
+          ;; should be morphed to a normal double quote.
+          ;;
+          (and (>= (point) (+ (point-min) (length tex-open-quote)))
+               (save-excursion
+                 (backward-char (length tex-open-quote))
+                 (when (or (looking-at (regexp-quote tex-open-quote))
+                           (looking-at (regexp-quote tex-close-quote)))
+                   (delete-char (length tex-open-quote))
+                   (when (looking-at (regexp-quote tex-close-quote))
+                     (delete-char (length tex-close-quote)))
+                   t))))
+      ;; Insert the normal quote (eventually letting
+      ;; `electric-pair-mode' do its thing).
+      ;;
       (self-insert-command (prefix-numeric-value arg))
-    (insert (if (or (memq (char-syntax (preceding-char)) '(?\( ?> ?\s))
-                    (memq (preceding-char) '(?~)))
-		tex-open-quote tex-close-quote))))
+    ;; We'll be inserting fancy TeX quotes, but consider and imitate
+    ;; `electric-pair-mode''s two behaviors: pair-insertion and
+    ;; region wrapping.
+    ;;
+    (if (and electric-pair-mode (use-region-p))
+        (let* ((saved (point-marker)))
+          (goto-char (mark))
+          (insert (if (> saved (mark)) tex-open-quote tex-close-quote))
+          (goto-char saved)
+          (insert (if (> saved (mark)) tex-close-quote tex-open-quote)))
+      (if (or (memq (char-syntax (preceding-char)) '(?\( ?> ?\s))
+              (memq (preceding-char) '(?~)))
+          (if electric-pair-mode
+              (if (looking-at (regexp-quote tex-close-quote))
+                  (forward-char (length tex-close-quote))
+                (insert tex-open-quote)
+                (insert tex-close-quote)
+                (backward-char (length tex-close-quote)))
+            (insert tex-open-quote))
+        (if (looking-at (regexp-quote tex-close-quote))
+            (forward-char (length tex-close-quote))
+          (insert tex-close-quote))))))
 
 (defun tex-validate-buffer ()
   "Check current buffer for paragraphs containing mismatched braces or $s.

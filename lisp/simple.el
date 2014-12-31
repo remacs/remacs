@@ -1667,7 +1667,6 @@ invoking, give a prefix argument to `execute-extended-command'."
     (let ((prefix-arg prefixarg))
       (command-execute function 'record))
     ;; If enabled, show which key runs this command.
-    ;; (when binding
     ;; But first wait, and skip the message if there is input.
     (let* ((waited
             ;; If this command displayed something in the echo area;
@@ -1675,10 +1674,11 @@ invoking, give a prefix argument to `execute-extended-command'."
             ;; FIXME: Wait *after* running post-command-hook!
             ;; FIXME: Don't wait if execute-extended-command--shorter won't
             ;; find a better answer anyway!
-            (sit-for (cond
-                      ((zerop (length (current-message))) 0)
-                      ((numberp suggest-key-bindings) suggest-key-bindings)
-                      (t 2)))))
+            (when suggest-key-bindings
+              (sit-for (cond
+                        ((zerop (length (current-message))) 0)
+                        ((numberp suggest-key-bindings) suggest-key-bindings)
+                        (t 2))))))
       (when (and waited (not (consp unread-command-events)))
         (unless (or binding executing-kbd-macro (not (symbolp function))
                     (<= (length (symbol-name function)) 2))

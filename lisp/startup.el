@@ -358,6 +358,8 @@ this variable usefully is to set it while building and dumping Emacs."
   :set (lambda (_variable _value)
 	  (error "Customizing `site-run-file' does not work")))
 
+(make-obsolete-variable 'system-name "use (system-name) instead" "25.1")
+
 (defcustom mail-host-address nil
   "Name of this machine, for purposes of naming users.
 If non-nil, Emacs uses this instead of `system-name' when constructing

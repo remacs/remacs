@@ -337,7 +337,7 @@ but before calling PC Selection mode):
 			    (cadr pc-select-meta-moves-sexps-key-bindings))
 			  (if  (or pc-select-selection-keys-only
 				   (eq window-system 'x)
-				   (memq system-name '(ms-dos windows-nt)))
+				   (memq system-type '(ms-dos windows-nt)))
 			      nil
 			    pc-select-tty-key-bindings)))
 
@@ -346,7 +346,7 @@ but before calling PC Selection mode):
 
 	    (unless  (or pc-select-selection-keys-only
 			 (eq window-system 'x)
-			 (memq system-name '(ms-dos windows-nt)))
+			 (memq system-type '(ms-dos windows-nt)))
 	      ;; it is not clear that we need the following line
 	      ;; I hope it doesn't do too much harm to leave it in, though...
 	      (setq pc-select-old-M-delete-binding
@@ -355,7 +355,7 @@ but before calling PC Selection mode):
 
 	    (when (and (not pc-select-selection-keys-only)
 		       (or (eq window-system 'x)
-			   (memq system-name '(ms-dos windows-nt)))
+			   (memq system-type '(ms-dos windows-nt)))
 		       (fboundp 'normal-erase-is-backspace-mode))
 	      (pc-select-save-and-set-mode normal-erase-is-backspace-mode 1
 					   normal-erase-is-backspace))
@@ -378,13 +378,13 @@ but before calling PC Selection mode):
 			       (current-global-map))
 	(unless  (or pc-select-selection-keys-only
 		     (eq window-system 'x)
-		     (memq system-name '(ms-dos windows-nt)))
+		     (memq system-type '(ms-dos windows-nt)))
 	  ;; it is not clear that we need the following line
 	  ;; I hope it doesn't do too much harm to leave it in, though...
 	  (define-key function-key-map  [M-delete] [?\M-d]))
 	(when (and (not pc-select-selection-keys-only)
 		   (or (eq window-system 'x)
-		       (memq system-name '(ms-dos windows-nt)))
+		       (memq system-type '(ms-dos windows-nt)))
 		   (fboundp 'normal-erase-is-backspace-mode))
 	  (normal-erase-is-backspace-mode 1))
 	(setq highlight-nonselected-windows nil)
@@ -395,7 +395,7 @@ but before calling PC Selection mode):
     (when pc-select-key-bindings-alist
       (when (and (not pc-select-selection-keys-only)
 		 (or (eq window-system 'x)
-		     (memq system-name '(ms-dos windows-nt))))
+		     (memq system-type '(ms-dos windows-nt))))
 	(pc-select-restore-mode normal-erase-is-backspace-mode))
 
       (pc-select-restore-keys

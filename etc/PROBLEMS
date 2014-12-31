@@ -364,8 +364,8 @@ For example, (system-name) returns some variation on
 "localhost.localdomain", rather the name you were expecting.
 
 You need to configure your machine with a fully qualified domain name,
-(i.e. a name with at least one ".") either in /etc/hosts,
-/etc/hostname, the NIS, or wherever your system calls for specifying this.
+(i.e., a name with at least one "."), either in /etc/hostname
+or wherever your system calls for specifying this.
 
 If you cannot fix the configuration, you can set the Lisp variable
 mail-host-address to the value you want.
@@ -456,17 +456,6 @@ problem by adding this to your .cshrc file:
             stty  -icrnl -onlcr -echo susp ^Z
         endif
     endif
-
-*** Emacs startup on GNU/Linux systems (and possibly other systems) is slow.
-
-This can happen if the system is misconfigured and Emacs can't get the
-full qualified domain name, FQDN.  You should have your FQDN in the
-/etc/hosts file, something like this:
-
-127.0.0.1	localhost
-129.187.137.82	nuc04.t30.physik.tu-muenchen.de	nuc04
-
-The way to set this up may vary on non-GNU systems.
 
 *** Attempting to visit remote files via ange-ftp fails.
 

@@ -5057,7 +5057,7 @@ keep it unchanged if this option is either `t' or a list containing
 `vertical-scroll-bars'.
 
 The default value is '(tool-bar-lines) on Lucid, Motif and Windows
-(which means that adding/removing a tool bar does not change the frame
+\(which means that adding/removing a tool bar does not change the frame
 height), nil on all other window systems including GTK+ (which means
 that changing any of the parameters listed above may change the size of
 the frame), and `t' otherwise (which means the frame size never changes

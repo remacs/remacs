@@ -33,26 +33,17 @@ static Lisp_Object Qlibxml2_dll;
 
 #ifdef WINDOWSNT
 
-#include <windows.h>
-#include "w32.h"
+# include <windows.h>
+# include "w32.h"
 
-/* Macro for defining functions that will be loaded from the libxml2 DLL.  */
-#define DEF_XML2_FN(rettype,func,args) static rettype (FAR CDECL *fn_##func)args
-
-/* Macro for loading libxml2 functions from the library.  */
-#define LOAD_XML2_FN(lib,func) {					\
-    fn_##func = (void *) GetProcAddress (lib, #func);			\
-    if (!fn_##func) goto bad_library;					\
-  }
-
-DEF_XML2_FN (htmlDocPtr, htmlReadMemory,
+DEF_DLL_FN (htmlDocPtr, htmlReadMemory,
 	     (const char *, int, const char *, const char *, int));
-DEF_XML2_FN (xmlDocPtr, xmlReadMemory,
+DEF_DLL_FN (xmlDocPtr, xmlReadMemory,
 	     (const char *, int, const char *, const char *, int));
-DEF_XML2_FN (xmlNodePtr, xmlDocGetRootElement, (xmlDocPtr));
-DEF_XML2_FN (void, xmlFreeDoc, (xmlDocPtr));
-DEF_XML2_FN (void, xmlCleanupParser, (void));
-DEF_XML2_FN (void, xmlCheckVersion, (int));
+DEF_DLL_FN (xmlNodePtr, xmlDocGetRootElement, (xmlDocPtr));
+DEF_DLL_FN (void, xmlFreeDoc, (xmlDocPtr));
+DEF_DLL_FN (void, xmlCleanupParser, (void));
+DEF_DLL_FN (void, xmlCheckVersion, (int));
 
 static int
 libxml2_loaded_p (void)
@@ -64,14 +55,33 @@ libxml2_loaded_p (void)
   return 0;
 }
 
-#else  /* !WINDOWSNT */
+# undef htmlReadMemory
+# undef xmlCheckVersion
+# undef xmlCleanupParser
+# undef xmlDocGetRootElement
+# undef xmlFreeDoc
+# undef xmlReadMemory
 
-#define fn_htmlReadMemory       htmlReadMemory
-#define fn_xmlReadMemory        xmlReadMemory
-#define fn_xmlDocGetRootElement xmlDocGetRootElement
-#define fn_xmlFreeDoc           xmlFreeDoc
-#define fn_xmlCleanupParser     xmlCleanupParser
-#define fn_xmlCheckVersion      xmlCheckVersion
+# define htmlReadMemory fn_htmlReadMemory
+# define xmlCheckVersion fn_xmlCheckVersion
+# define xmlCleanupParser fn_xmlCleanupParser
+# define xmlDocGetRootElement fn_xmlDocGetRootElement
+# define xmlFreeDoc fn_xmlFreeDoc
+# define xmlReadMemory fn_xmlReadMemory
+
+static bool
+load_dll_functions (HMODULE library)
+{
+  LOAD_DLL_FN (library, htmlReadMemory);
+  LOAD_DLL_FN (library, xmlReadMemory);
+  LOAD_DLL_FN (library, xmlDocGetRootElement);
+  LOAD_DLL_FN (library, xmlFreeDoc);
+  LOAD_DLL_FN (library, xmlCleanupParser);
+  LOAD_DLL_FN (library, xmlCheckVersion);
+  return true;
+}
+
+#else  /* !WINDOWSNT */
 
 static int
 libxml2_loaded_p (void)
@@ -97,14 +107,8 @@ init_libxml2_functions (void)
 	  return 0;
 	}
 
-      /* LOAD_XML2_FN jumps to bad_library if it fails to find the
-	 named function.  */
-      LOAD_XML2_FN (library, htmlReadMemory);
-      LOAD_XML2_FN (library, xmlReadMemory);
-      LOAD_XML2_FN (library, xmlDocGetRootElement);
-      LOAD_XML2_FN (library, xmlFreeDoc);
-      LOAD_XML2_FN (library, xmlCleanupParser);
-      LOAD_XML2_FN (library, xmlCheckVersion);
+      if (! load_dll_functions (library))
+	goto bad_library;
 
       Vlibrary_cache = Fcons (Fcons (Qlibxml2_dll, Qt), Vlibrary_cache);
       return 1;
@@ -182,7 +186,7 @@ parse_region (Lisp_Object start, Lisp_Object end, Lisp_Object base_url, Lisp_Obj
   const char *burl = "";
   ptrdiff_t istart, iend, istart_byte, iend_byte;
 
-  fn_xmlCheckVersion (LIBXML_VERSION);
+  xmlCheckVersion (LIBXML_VERSION);
 
   validate_region (&start, &end);
 
@@ -201,16 +205,16 @@ parse_region (Lisp_Object start, Lisp_Object end, Lisp_Object base_url, Lisp_Obj
     }
 
   if (htmlp)
-    doc = fn_htmlReadMemory ((char *) BYTE_POS_ADDR (istart_byte),
-			     iend_byte - istart_byte, burl, "utf-8",
-			     HTML_PARSE_RECOVER|HTML_PARSE_NONET|
-			     HTML_PARSE_NOWARNING|HTML_PARSE_NOERROR|
-			     HTML_PARSE_NOBLANKS);
+    doc = htmlReadMemory ((char *) BYTE_POS_ADDR (istart_byte),
+			  iend_byte - istart_byte, burl, "utf-8",
+			  HTML_PARSE_RECOVER|HTML_PARSE_NONET|
+			  HTML_PARSE_NOWARNING|HTML_PARSE_NOERROR|
+			  HTML_PARSE_NOBLANKS);
   else
-    doc = fn_xmlReadMemory ((char *) BYTE_POS_ADDR (istart_byte),
-			    iend_byte - istart_byte, burl, "utf-8",
-			    XML_PARSE_NONET|XML_PARSE_NOWARNING|
-			    XML_PARSE_NOBLANKS |XML_PARSE_NOERROR);
+    doc = xmlReadMemory ((char *) BYTE_POS_ADDR (istart_byte),
+			 iend_byte - istart_byte, burl, "utf-8",
+			 XML_PARSE_NONET|XML_PARSE_NOWARNING|
+			 XML_PARSE_NOBLANKS |XML_PARSE_NOERROR);
 
   if (doc != NULL)
     {
@@ -232,14 +236,14 @@ parse_region (Lisp_Object start, Lisp_Object end, Lisp_Object base_url, Lisp_Obj
       if (NILP (result)) {
 	/* The document doesn't have toplevel comments or we discarded
 	   them.  Get the tree the proper way. */
-	xmlNode *node = fn_xmlDocGetRootElement (doc);
+	xmlNode *node = xmlDocGetRootElement (doc);
 	if (node != NULL)
 	  result = make_dom (node);
       } else
 	result = Fcons (intern ("top"),
 			Fcons (Qnil, Fnreverse (Fcons (r, result))));
 
-      fn_xmlFreeDoc (doc);
+      xmlFreeDoc (doc);
     }
 
   return result;
@@ -249,7 +253,7 @@ void
 xml_cleanup_parser (void)
 {
   if (libxml2_loaded_p ())
-    fn_xmlCleanupParser ();
+    xmlCleanupParser ();
 }
 
 DEFUN ("libxml-parse-html-region", Flibxml_parse_html_region,

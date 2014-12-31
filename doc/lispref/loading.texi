@@ -419,6 +419,8 @@ the shadowed files as a string.
 
 @node Loading Non-ASCII
 @section Loading Non-@acronym{ASCII} Characters
+@cindex loading, and non-ASCII characters
+@cindex non-ASCII characters in loaded files
 
   When Emacs Lisp programs contain string constants with non-@acronym{ASCII}
 characters, these can be represented within Emacs either as unibyte
@@ -907,6 +909,8 @@ with a call to @code{provide}.  The order of the elements in the
 
 @node Where Defined
 @section Which File Defined a Certain Symbol
+@cindex symbol, where defined
+@cindex where was a symbol defined
 
 @defun symbol-file symbol &optional type
 This function returns the name of the file that defined @var{symbol}.

@@ -1814,6 +1814,7 @@ If RECURSIVE, search recursively."
   ;; Require since we bind its variables.
   (require 'shr)
   (let ((article-buffer (current-buffer))
+	(shr-width fill-column)
 	(shr-content-function (lambda (id)
 				(let ((handle (mm-get-content-id id)))
 				  (when handle

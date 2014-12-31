@@ -401,9 +401,12 @@ and comments.
 the color range from `vc-annotate-color-map' is applied to the
 background or to the foreground.
 
-*** compare-windows now compares text with the most recently used window
+*** `compare-windows' now compares text with the most recently used window
 instead of the next window.  The new option `compare-windows-get-window-function'
 allows to customize this.
+
+*** Two new faces `compare-windows-removed' and `compare-windows-added'
+replace the obsolete face `compare-windows'.
 
 ** Calculator: decimal display mode uses "," groups, so it's more
 fitting for use in money calculations; factorial works with
@@ -452,6 +455,11 @@ easier binding, which is now unoccupied (`M-,').
 `xref-marker-ring-length'.  `find-tag-marker-ring' is now an obsolete
 alias for a private variable.  `xref-push-marker-stack' and
 `xref-pop-marker-stack' should be used to mutate it instead.
+
+** etags
+As a result of the above, these commands are now obsolete:
+`find-tag-other-window', `find-tag-other-frame', `find-tag-regexp',
+`tags-apropos' and `tags-loop-continue'.
 
 ** Obsolete packages
 
@@ -532,6 +540,11 @@ permissions set to temporary values (e.g., for creating private files).
 optional repeat-count argument.
 
 ** Function `sort' can deal with vectors.
+
+** Function `system-name' now returns an updated value if the current
+system's name has changed or if the Emacs process has changed systems,
+and to avoid long waits it no longer consults DNS to canonicalize the
+name.  The variable `system-name' is now obsolete.
 
 ---
 ** New utilities in subr-x.el:

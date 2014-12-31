@@ -1,3 +1,7 @@
+2014-12-27  Eli Zaretskii  <eliz@gnu.org>
+
+	* buffers.texi (Kill Buffer): Improve indexing.
+
 2014-12-24  Stephen Leake  <stephen_leake@stephe-leake.org>
 
 	* trouble.texi: Move user-level information from CONTRIBUTE here.

@@ -59,6 +59,7 @@ expanded in the buffer.  For the user-level commands for abbrevs, see
 
 @node Abbrev Tables
 @section Abbrev Tables
+@cindex abbrev tables
 
   This section describes how to create and manipulate abbrev tables.
 
@@ -126,6 +127,7 @@ to add these to @var{name} separately.)
 
 @node Defining Abbrevs
 @section Defining Abbrevs
+@cindex defining abbrevs
 
   @code{define-abbrev} is the low-level basic function for defining an
 abbrev in an abbrev table.
@@ -181,6 +183,7 @@ callers.
 
 @node Abbrev Files
 @section Saving Abbrevs in Files
+@cindex save abbrevs in files
 
   A file of saved abbrev definitions is actually a file of Lisp code.
 The abbrevs are saved in the form of a Lisp program to define the same
@@ -232,6 +235,9 @@ define the same abbrevs.  If @var{filename} is @code{nil} or omitted,
 
 @node Abbrev Expansion
 @section Looking Up and Expanding Abbreviations
+@cindex looking up abbrevs
+@cindex expanding abbrevs
+@cindex abbrevs, looking up and expanding
 
   Abbrevs are usually expanded by certain interactive commands,
 including @code{self-insert-command}.  This section describes the
@@ -367,6 +373,7 @@ definitions of @code{local-abbrev-table} and @code{text-mode-abbrev-table}.
 
 @node Standard Abbrev Tables
 @section Standard Abbrev Tables
+@cindex standard abbrev tables
 
   Here we list the variables that hold the abbrev tables for the
 preloaded major modes of Emacs.
@@ -409,6 +416,7 @@ Properties}.
 
 @node Abbrev Properties
 @section Abbrev Properties
+@cindex abbrev properties
 
 Abbrevs have properties, some of which influence the way they work.
 You can provide them as arguments to @code{define-abbrev}, and
@@ -449,6 +457,7 @@ modifies the capitalization of the expansion.
 
 @node Abbrev Table Properties
 @section Abbrev Table Properties
+@cindex abbrev table properties
 
 Like abbrevs, abbrev tables have properties, some of which influence
 the way they work.  You can provide them as arguments to

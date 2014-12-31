@@ -6074,9 +6074,9 @@ from happening repeatedly and making Emacs nonfunctional.  */);
 	       doc: /* List of functions to call after each text change.
 Three arguments are passed to each function: the positions of
 the beginning and end of the range of changed text,
-and the length in bytes of the pre-change text replaced by that range.
+and the length in chars of the pre-change text replaced by that range.
 \(For an insertion, the pre-change length is zero;
-for a deletion, that length is the number of bytes deleted,
+for a deletion, that length is the number of chars deleted,
 and the post-change beginning and end are at the same place.)
 
 Buffer changes made while executing the `after-change-functions'

@@ -1358,7 +1358,7 @@ searches through each directory in the Emacs Lisp load path, trying to
 find a file matching that library name.  If the library name is
 @samp{@var{foo}}, it tries looking for files named
 @file{@var{foo}.elc}, @file{@var{foo}.el}, and @file{@var{foo}}.  The
-default behaviour is to load the first file found.  This command
+default behavior is to load the first file found.  This command
 prefers @file{.elc} files over @file{.el} files because compiled files
 load and run faster.  If it finds that @file{@var{lib}.el} is newer
 than @file{@var{lib}.elc}, it issues a warning, in case someone made

@@ -87,8 +87,17 @@ exec $awk '
     status = 1
   }
 
-  72 < length && $0 ~ space {
-    print "Line longer than 72 characters in commit message"
+  {
+    # Expand tabs to spaces for length calculations etc.
+    while (match($0, /\t/)) {
+      before_tab = substr($0, 1, RSTART - 1)
+      after_tab = substr($0, RSTART + 1)
+      $0 = sprintf("%s%*s%s", before_tab, 8 - (RSTART - 1) % 8, "", after_tab)
+    }
+  }
+
+  78 < length && $0 ~ space {
+    print "Line longer than 78 characters in commit message"
     status = 1
   }
 
@@ -103,12 +112,7 @@ exec $awk '
   }
 
   $0 ~ non_print {
-    if (gsub(/\t/, "")) {
-      print "Tab in commit message; please use spaces instead"
-    }
-    if ($0 ~ non_print) {
-      print "Unprintable character in commit message"
-    }
+    print "Unprintable character in commit message"
     status = 1
   }
 

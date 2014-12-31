@@ -368,7 +368,7 @@ implement support for common requirements.
 @vindex smtpmail-local-domain
   The variable @code{smtpmail-local-domain} controls the hostname sent
 in the first @code{EHLO} or @code{HELO} command sent to the server.
-It should only be set if the @code{system-name} function returns a
+It should be set only if the @code{system-name} function returns a
 name that isn't accepted by the server.  Do not set this variable
 unless your server complains.
 

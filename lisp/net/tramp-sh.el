@@ -2471,8 +2471,12 @@ The method used must be an out-of-band method."
 		   (mapconcat 'identity (process-command p) " "))
 		  (tramp-set-connection-property p "vector" orig-vec)
 		  (tramp-compat-set-process-query-on-exit-flag p nil)
-		  (tramp-process-actions
-		   p v nil tramp-actions-copy-out-of-band)
+
+		  ;; We must adapt `tramp-local-end-of-line' for
+		  ;; sending the password.
+		  (let ((tramp-local-end-of-line tramp-rsh-end-of-line))
+		    (tramp-process-actions
+		     p v nil tramp-actions-copy-out-of-band))
 
 		  ;; Check the return code.
 		  (goto-char (point-max))
@@ -2883,7 +2887,7 @@ the result will be a local, non-Tramp, file name."
 	   (name1 name)
 	   (i 0)
 	   ;; We do not want to raise an error when
-	   ;; `start-file-process' has been started several time in
+	   ;; `start-file-process' has been started several times in
 	   ;; `eshell' and friends.
 	   (tramp-current-connection nil))
 
@@ -4510,7 +4514,8 @@ Gateway hops are already opened."
 	;; Therefore, we must remember the gateway vector.  But we
 	;; cannot do it as connection property, because it shouldn't
 	;; be persistent.  And we have no started process yet either.
-	(tramp-set-file-property (car target-alist) "" "gateway" hop)))
+	(let ((tramp-verbose 0))
+	  (tramp-set-file-property (car target-alist) "" "gateway" hop))))
 
     ;; Foreign and out-of-band methods are not supported for multi-hops.
     (when (cdr target-alist)
@@ -4687,7 +4692,8 @@ connection if a previous connection has died for some reason."
 			   l-method 'tramp-connection-timeout))
 			 (gw-args
 			  (tramp-get-method-parameter l-method 'tramp-gw-args))
-			 (gw (tramp-get-file-property hop "" "gateway" nil))
+			 (gw (let ((tramp-verbose 0))
+			       (tramp-get-file-property hop "" "gateway" nil)))
 			 (g-method (and gw (tramp-file-name-method gw)))
 			 (g-user (and gw (tramp-file-name-user gw)))
 			 (g-host (and gw (tramp-file-name-real-host gw)))
@@ -4715,8 +4721,10 @@ connection if a previous connection has died for some reason."
 		      (setq login-args (append async-args login-args)))
 
 		    ;; Add gateway arguments if necessary.
-		    (when (and gw gw-args)
-		      (setq login-args (append gw-args login-args)))
+		    (when gw
+		      (tramp-set-connection-property p "gateway" t)
+		      (when gw-args
+			(setq login-args (append gw-args login-args))))
 
 		    ;; Check for port number.  Until now, there's no
 		    ;; need for handling like method, user, host.
@@ -4902,8 +4910,9 @@ FMT and ARGS which are passed to `error'."
   (or (tramp-send-command-and-check vec command)
       (apply 'tramp-error vec 'file-error fmt args)))
 
-(defun tramp-send-command-and-read (vec command &optional noerror)
+(defun tramp-send-command-and-read (vec command &optional noerror marker)
   "Run COMMAND and return the output, which must be a Lisp expression.
+If MARKER is a regexp, read the output after that string.
 In case there is no valid Lisp expression and NOERROR is nil, it
 raises an error."
   (when (if noerror
@@ -4911,8 +4920,17 @@ raises an error."
 	  (tramp-barf-unless-okay
 	   vec command "`%s' returns with error" command))
     (with-current-buffer (tramp-get-connection-buffer vec)
-      ;; Read the expression.
       (goto-char (point-min))
+      ;; Read the marker.
+      (when (stringp marker)
+	(condition-case nil
+	    (re-search-forward marker)
+	  (error (unless noerror
+		   (tramp-error
+		    vec 'file-error
+		    "`%s' does not return the marker `%s': `%s'"
+		    command marker (buffer-string))))))
+      ;; Read the expression.
       (condition-case nil
 	  (prog1 (read (current-buffer))
 	    ;; Error handling.
@@ -5064,25 +5082,22 @@ Return ATTR."
 		   "/bin:/usr/bin")
 		  "/bin:/usr/bin"))))
 	   (own-remote-path
-	    ;; We cannot apply `tramp-send-command-and-read' because
-	    ;; the login shell could return more than just the $PATH
-	    ;; string.  So we emulate that function.
+	    ;; The login shell could return more than just the $PATH
+	    ;; string.  So we use `tramp-end-of-heredoc' as marker.
 	    (when elt2
-	      (tramp-send-command
+	      (tramp-send-command-and-read
 	       vec
 	       (format
-		"%s -l %s 'echo \\\"$PATH\\\"'"
+		"%s -l %s 'echo %s \\\"$PATH\\\"'"
 		(tramp-get-method-parameter
 		 (tramp-file-name-method vec) 'tramp-remote-shell)
 		(mapconcat
 		 'identity
 		 (tramp-get-method-parameter
 		  (tramp-file-name-method vec) 'tramp-remote-shell-args)
-		 " ")))
-	      (with-current-buffer (tramp-get-connection-buffer vec)
-		(goto-char (point-max))
-		(forward-line -1)
-		(read (current-buffer))))))
+		 " ")
+		(tramp-shell-quote-argument tramp-end-of-heredoc))
+	       nil (regexp-quote tramp-end-of-heredoc)))))
 
       ;; Replace place holder `tramp-default-remote-path'.
       (when elt1

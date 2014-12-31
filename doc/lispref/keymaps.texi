@@ -782,6 +782,7 @@ Lookup}.
 
 @node Controlling Active Maps
 @section Controlling the Active Keymaps
+@cindex active keymap, controlling
 
 @defvar global-map
 This variable contains the default global keymap that maps Emacs
@@ -1806,6 +1807,8 @@ local map.
 
 @node Scanning Keymaps
 @section Scanning Keymaps
+@cindex scanning keymaps
+@cindex keymaps, scanning
 
   This section describes functions used to scan all the current keymaps
 for the sake of printing help information.
@@ -2775,6 +2778,7 @@ function keys.
 
 @node Modifying Menus
 @subsection Modifying Menus
+@cindex menu modification
 
   When you insert a new item in an existing menu, you probably want to
 put it in a particular place among the menu's existing items.  If you

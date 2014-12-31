@@ -351,15 +351,15 @@ ns_set_alpha (void *img, int x, int y, unsigned char a)
     {
       if ([rep respondsToSelector: @selector (getBitmapDataPlanes:)])
         {
-          NSBitmapImageRep *bmRep = (NSBitmapImageRep *) rep;
+          NSBitmapImageRep *bmr = (NSBitmapImageRep *) rep;
 
-          if ([bmRep numberOfPlanes] >= 3)
-              [bmRep getBitmapDataPlanes: pixmapData];
+          if ([bmr numberOfPlanes] >= 3)
+              [bmr getBitmapDataPlanes: pixmapData];
 
           /* The next two lines cause the DPI of the image to be ignored.
              This seems to be the behavior users expect. */
           [self setScalesWhenResized: YES];
-          [self setSize: NSMakeSize([bmRep pixelsWide], [bmRep pixelsHigh])];
+          [self setSize: NSMakeSize([bmr pixelsWide], [bmr pixelsHigh])];
 
           break;
         }

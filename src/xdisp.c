@@ -7372,27 +7372,15 @@ set_iterator_to_next (struct it *it, int reseat_p)
       else if (it->cmp_it.id >= 0)
 	{
 	  /* We are currently getting glyphs from a composition.  */
-	  int i;
-
 	  if (! it->bidi_p)
 	    {
 	      IT_CHARPOS (*it) += it->cmp_it.nchars;
 	      IT_BYTEPOS (*it) += it->cmp_it.nbytes;
-	      if (it->cmp_it.to < it->cmp_it.nglyphs)
-		{
-		  it->cmp_it.from = it->cmp_it.to;
-		}
-	      else
-		{
-		  it->cmp_it.id = -1;
-		  composition_compute_stop_pos (&it->cmp_it, IT_CHARPOS (*it),
-						IT_BYTEPOS (*it),
-						it->end_charpos, Qnil);
-		}
 	    }
-	  else if (! it->cmp_it.reversed_p)
+	  else
 	    {
-	      /* Composition created while scanning forward.  */
+	      int i;
+
 	      /* Update IT's char/byte positions to point to the first
 		 character of the next grapheme cluster, or to the
 		 character visually after the current composition.  */
@@ -7400,52 +7388,34 @@ set_iterator_to_next (struct it *it, int reseat_p)
 		bidi_move_to_visually_next (&it->bidi_it);
 	      IT_BYTEPOS (*it) = it->bidi_it.bytepos;
 	      IT_CHARPOS (*it) = it->bidi_it.charpos;
+	    }
 
-	      if (it->cmp_it.to < it->cmp_it.nglyphs)
-		{
-		  /* Proceed to the next grapheme cluster.  */
-		  it->cmp_it.from = it->cmp_it.to;
-		}
-	      else
-		{
-		  /* No more grapheme clusters in this composition.
-		     Find the next stop position.  */
-		  ptrdiff_t stop = it->end_charpos;
-		  if (it->bidi_it.scan_dir < 0)
-		    /* Now we are scanning backward and don't know
-		       where to stop.  */
-		    stop = -1;
-		  composition_compute_stop_pos (&it->cmp_it, IT_CHARPOS (*it),
-						IT_BYTEPOS (*it), stop, Qnil);
-		}
+	  if ((! it->bidi_p || ! it->cmp_it.reversed_p)
+	      && it->cmp_it.to < it->cmp_it.nglyphs)
+	    {
+	      /* Composition created while scanning forward.  Proceed
+		 to the next grapheme cluster.  */
+	      it->cmp_it.from = it->cmp_it.to;
+	    }
+	  else if ((it->bidi_p && it->cmp_it.reversed_p)
+		   && it->cmp_it.from > 0)
+	    {
+	      /* Composition created while scanning backward.  Proceed
+		 to the previous grapheme cluster.  */
+	      it->cmp_it.to = it->cmp_it.from;
 	    }
 	  else
 	    {
-	      /* Composition created while scanning backward.  */
-	      /* Update IT's char/byte positions to point to the last
-		 character of the previous grapheme cluster, or the
-		 character visually after the current composition.  */
-	      for (i = 0; i < it->cmp_it.nchars; i++)
-		bidi_move_to_visually_next (&it->bidi_it);
-	      IT_BYTEPOS (*it) = it->bidi_it.bytepos;
-	      IT_CHARPOS (*it) = it->bidi_it.charpos;
-	      if (it->cmp_it.from > 0)
-		{
-		  /* Proceed to the previous grapheme cluster.  */
-		  it->cmp_it.to = it->cmp_it.from;
-		}
-	      else
-		{
-		  /* No more grapheme clusters in this composition.
-		     Find the next stop position.  */
-		  ptrdiff_t stop = it->end_charpos;
-		  if (it->bidi_it.scan_dir < 0)
-		    /* Now we are scanning backward and don't know
-		       where to stop.  */
-		    stop = -1;
-		  composition_compute_stop_pos (&it->cmp_it, IT_CHARPOS (*it),
-						IT_BYTEPOS (*it), stop, Qnil);
-		}
+	      /* No more grapheme clusters in this composition.
+		 Find the next stop position.  */
+	      ptrdiff_t stop = it->end_charpos;
+
+	      if (it->bidi_it.scan_dir < 0)
+		/* Now we are scanning backward and don't know
+		   where to stop.  */
+		stop = -1;
+	      composition_compute_stop_pos (&it->cmp_it, IT_CHARPOS (*it),
+					    IT_BYTEPOS (*it), stop, Qnil);
 	    }
 	}
       else
@@ -7574,61 +7544,63 @@ set_iterator_to_next (struct it *it, int reseat_p)
 	}
       if (it->cmp_it.id >= 0)
 	{
-	  int i;
-
+	  /* We are delivering display elements from a composition.
+	     Update the string position past the grapheme cluster
+	     we've just processed.  */
 	  if (! it->bidi_p)
 	    {
 	      IT_STRING_CHARPOS (*it) += it->cmp_it.nchars;
 	      IT_STRING_BYTEPOS (*it) += it->cmp_it.nbytes;
-	      if (it->cmp_it.to < it->cmp_it.nglyphs)
-		it->cmp_it.from = it->cmp_it.to;
-	      else
-		{
-		  it->cmp_it.id = -1;
-		  composition_compute_stop_pos (&it->cmp_it,
-						IT_STRING_CHARPOS (*it),
-						IT_STRING_BYTEPOS (*it),
-						it->end_charpos, it->string);
-		}
-	    }
-	  else if (! it->cmp_it.reversed_p)
-	    {
-	      for (i = 0; i < it->cmp_it.nchars; i++)
-		bidi_move_to_visually_next (&it->bidi_it);
-	      IT_STRING_BYTEPOS (*it) = it->bidi_it.bytepos;
-	      IT_STRING_CHARPOS (*it) = it->bidi_it.charpos;
-
-	      if (it->cmp_it.to < it->cmp_it.nglyphs)
-		it->cmp_it.from = it->cmp_it.to;
-	      else
-		{
-		  ptrdiff_t stop = it->end_charpos;
-		  if (it->bidi_it.scan_dir < 0)
-		    stop = -1;
-		  composition_compute_stop_pos (&it->cmp_it,
-						IT_STRING_CHARPOS (*it),
-						IT_STRING_BYTEPOS (*it), stop,
-						it->string);
-		}
 	    }
 	  else
 	    {
+	      int i;
+
 	      for (i = 0; i < it->cmp_it.nchars; i++)
 		bidi_move_to_visually_next (&it->bidi_it);
 	      IT_STRING_BYTEPOS (*it) = it->bidi_it.bytepos;
 	      IT_STRING_CHARPOS (*it) = it->bidi_it.charpos;
-	      if (it->cmp_it.from > 0)
-		it->cmp_it.to = it->cmp_it.from;
-	      else
+	    }
+
+	  /* Did we exhaust all the grapheme clusters of this
+	     composition?  */
+	  if ((! it->bidi_p || ! it->cmp_it.reversed_p)
+	      && (it->cmp_it.to < it->cmp_it.nglyphs))
+	    {
+	      /* Not all the grapheme clusters were processed yet;
+		 advance to the next cluster.  */
+	      it->cmp_it.from = it->cmp_it.to;
+	    }
+	  else if ((it->bidi_p && it->cmp_it.reversed_p)
+		   && it->cmp_it.from > 0)
+	    {
+	      /* Likewise: advance to the next cluster, but going in
+		 the reverse direction.  */
+	      it->cmp_it.to = it->cmp_it.from;
+	    }
+	  else
+	    {
+	      /* This composition was fully processed; find the next
+		 candidate place for checking for composed
+		 characters.  */
+	      /* Always limit string searches to the string length;
+		 any padding spaces are not part of the string, and
+		 there cannot be any compositions in that padding.  */
+	      ptrdiff_t stop = SCHARS (it->string);
+
+	      if (it->bidi_p && it->bidi_it.scan_dir < 0)
+		stop = -1;
+	      else if (it->end_charpos < stop)
 		{
-		  ptrdiff_t stop = it->end_charpos;
-		  if (it->bidi_it.scan_dir < 0)
-		    stop = -1;
-		  composition_compute_stop_pos (&it->cmp_it,
-						IT_STRING_CHARPOS (*it),
-						IT_STRING_BYTEPOS (*it), stop,
-						it->string);
+		  /* Cf. PRECISION in reseat_to_string: we might be
+		     limited in how many of the string characters we
+		     need to deliver.  */
+		  stop = it->end_charpos;
 		}
+	      composition_compute_stop_pos (&it->cmp_it,
+					    IT_STRING_CHARPOS (*it),
+					    IT_STRING_BYTEPOS (*it), stop,
+					    it->string);
 	    }
 	}
       else
@@ -7651,12 +7623,17 @@ set_iterator_to_next (struct it *it, int reseat_p)
 	      bidi_move_to_visually_next (&it->bidi_it);
 	      IT_STRING_BYTEPOS (*it) = it->bidi_it.bytepos;
 	      IT_STRING_CHARPOS (*it) = it->bidi_it.charpos;
+	      /* If the scan direction changes, we may need to update
+		 the place where to check for composed characters.  */
 	      if (prev_scan_dir != it->bidi_it.scan_dir)
 		{
-		  ptrdiff_t stop = it->end_charpos;
+		  ptrdiff_t stop = SCHARS (it->string);
 
 		  if (it->bidi_it.scan_dir < 0)
 		    stop = -1;
+		  else if (it->end_charpos < stop)
+		    stop = it->end_charpos;
+
 		  composition_compute_stop_pos (&it->cmp_it,
 						IT_STRING_CHARPOS (*it),
 						IT_STRING_BYTEPOS (*it), stop,

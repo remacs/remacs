@@ -1,3 +1,8 @@
+2014-12-29  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	* mm-decode.el (mm-shr): Bind `shr-width' to `fill-column' so that
+	lines don't get overlong when responding.
+
 2014-12-18  Paul Eggert  <eggert@cs.ucla.edu>
 
 	* registry.el (registry-db): Set default slot later.

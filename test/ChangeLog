@@ -1,3 +1,72 @@
+2014-12-27  Glenn Morris  <rgm@gnu.org>
+
+	* automated/let-alist.el: Load dependency.
+
+2014-12-27  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	* automated/python-tests.el
+	(python-shell-completion-native-interpreter-disabled-p-1): New
+	test.
+
+2014-12-27  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	* automated/python-tests.el (python-shell-get-or-create-process-1)
+	(python-shell-get-or-create-process-2)
+	(python-shell-get-or-create-process-3): Remove tests.
+
+2014-12-27  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	(python-shell-buffer-substring-9): New test.
+
+2014-12-27  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	* automated/python-tests.el (python-shell-buffer-substring-1)
+	(python-shell-buffer-substring-2, python-shell-buffer-substring-3)
+	(python-shell-buffer-substring-4, python-shell-buffer-substring-5)
+	(python-shell-buffer-substring-6, python-shell-buffer-substring-7)
+	(python-shell-buffer-substring-8)
+	(python-info-encoding-from-cookie-1)
+	(python-info-encoding-from-cookie-2)
+	(python-info-encoding-from-cookie-3)
+	(python-info-encoding-from-cookie-4)
+	(python-info-encoding-from-cookie-5)
+	(python-info-encoding-from-cookie-6)
+	(python-info-encoding-from-cookie-7, python-info-encoding-1)
+	(python-info-encoding-2): New tests.
+
+2014-12-27  Michael Albinus  <michael.albinus@gmx.de>
+
+	* automated/tramp-tests.el (tramp-test17-insert-directory): Do not
+	expect a given order of "." and "..".
+
+2014-12-27  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	* automated/python-tests.el (python-indent-electric-colon-2)
+	(python-indent-electric-colon-3): New tests.
+
+2014-12-27  João Távora  <joaotavora@gmail.com>
+
+	* automated/electric-tests.el (autowrapping-7): Tests for
+	tex-mode.
+
+2014-12-27  Glenn Morris  <rgm@gnu.org>
+
+	* automated/flymake/warnpred/test.pl: Tweak format, since the
+	previous one seems to have stopped giving a warning with perl 5.20.1.
+
+2014-12-26  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	* automated/python-tests.el (python-shell-get-process-name-1)
+	(python-shell-internal-get-process-name-1): Cleanup.
+	(python-shell-get-process-name-2)
+	(python-shell-internal-get-process-name-2): New tests.
+	(python-shell-calculate-command-1)
+	(python-shell-calculate-process-environment-3)
+	(python-shell-calculate-exec-path-2, python-shell-make-comint-1)
+	(python-shell-make-comint-2, python-shell-make-comint-4)
+	(python-shell-get-process-1, python-util-clone-local-variables-1):
+	Replace obsolete function and variable references with current.
+
 2014-12-19  Artur Malabarba  <bruce.connor.am@gmail.com>
 
 	* automated/let-alist.el: require `cl-lib'

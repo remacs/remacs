@@ -2252,7 +2252,10 @@ struct it
   ptrdiff_t base_level_stop;
 
   /* Maximum string or buffer position + 1.  ZV when iterating over
-     current_buffer.  */
+     current_buffer.  When iterating over a string in display_string,
+     this can be smaller or greater than the number of string
+     characters, depending on the values of PRECISION and FIELD_WIDTH
+     with which display_string was called.  */
   ptrdiff_t end_charpos;
 
   /* C string to iterate over.  Non-null means get characters from

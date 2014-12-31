@@ -593,6 +593,29 @@ as the single-shift area.")
 The remaining arguments must come in pairs ATTRIBUTE VALUE.  ATTRIBUTE
 may be any symbol.
 
+A coding system specifies a rule to decode (i.e. to convert a
+byte sequence to a character sequence) and a rule to encode (the
+opposite of decoding).
+
+The decoding is done by at most 3 steps; the first is to convert
+a byte sequence to a character sequence by one of Emacs'
+internal routines specified by `:coding-type' attribute.  The
+optional second step is to convert the character sequence (the
+result of the first step) by a translation table specified
+by `:decode-translation-table' attribute.  The optional third step
+is to convert the above result by a Lisp function specified
+by `:post-read-conversion' attribute.
+
+The encoding is done by at most 3 steps, which are the reverse
+of the decoding steps.  The optional first step converts a
+character sequence to another character sequence by a Lisp
+function specified by `:pre-write-conversion' attribute.  The
+optional second step converts the above result by a translation
+table specified by `:encode-translation-table' attribute.  The
+third step converts the above result to a byte sequence by one
+of the Emacs's internal routines specified by the `:coding-type'
+attribute.
+
 The following attributes have special meanings.  Those labeled as
 \"(required)\" should not be omitted.
 
@@ -602,27 +625,72 @@ VALUE is a character to display on mode line for the coding system.
 
 `:coding-type' (required)
 
-VALUE must be one of `charset', `utf-8', `utf-16', `iso-2022',
-`emacs-mule', `shift-jis', `ccl', `raw-text', `undecided'.
+VALUE specifies the format of byte sequence the coding system
+decodes and encodes to.  It must be one of `charset', `utf-8',
+`utf-16', `iso-2022', `emacs-mule', `shift-jis', `ccl',
+`raw-text', `undecided'.
+
+If VALUE is `charset', the coding system is for handling a
+byte sequence in which each byte or every two- to four-byte
+sequence represents a character code of a charset specified
+by the `:charset-list' attribute.
+
+If VALUE is `utf-8', the coding system is for handling Unicode
+UTF-8 byte sequences.  See also the documentation of the
+attribute `:bom'.
+
+If VALUE is `utf-16', the coding system is for handling Unicode
+UTF-16 byte sequences.  See also the documentation of the
+attributes :bom and `:endian'.
+
+If VALUE is `iso-2022', the coding system is for handling byte
+sequences conforming to ISO/IEC 2022.  See also the documentation
+of the attributes `:charset-list', `:flags', and `:designation'.
+
+If VALUE is `emacs-mule', the coding system is for handling
+byte sequences which Emacs 20 and 21 used for their internal
+representation of characters.
+
+If VALUE is `shift-jis', the coding system is for handling byte
+sequences of Shift_JIS format.  See also the attribute `:charset-list'.
+
+If VALUE is `ccl', the coding system uses CCL programs to decode
+and encode byte sequences.  The CCL programs must be
+specified by the attributes `:ccl-decoder' and `:ccl-encoder'.
+
+If VALUE is `raw-text', the coding system decodes byte sequences
+without any conversions.
 
 `:eol-type'
 
 VALUE is the EOL (end-of-line) format of the coding system.  It must be
 one of `unix', `dos', `mac'.  The symbol `unix' means Unix-like EOL
-\(i.e. single LF), `dos' means DOS-like EOL \(i.e. sequence of CR LF),
-and `mac' means Mac-like EOL \(i.e. single CR).  If omitted, Emacs
-detects the EOL format automatically when decoding.
+\(i.e. a single LF character), `dos' means DOS-like EOL \(i.e. a sequence
+of CR followed by LF), and `mac' means Mac-like EOL \(i.e. a single CR).
+If omitted, Emacs detects the EOL format automatically when decoding.
 
-`:charset-list'
+`:charset-list' (required if `:coding-type' is `charset' or `shift-jis')
 
-VALUE must be a list of charsets supported by the coding system.  On
-encoding by the coding system, if a character belongs to multiple
-charsets in the list, a charset that comes earlier in the list is
-selected.  If `:coding-type' is `iso-2022', VALUE may be `iso-2022',
-which indicates that the coding system supports all ISO-2022 based
-charsets.  If `:coding-type' is `emacs-mule', VALUE may be
-`emacs-mule', which indicates that the coding system supports all
-charsets that have the `:emacs-mule-id' property.
+VALUE must be a list of charsets supported by the coding system.
+
+If `coding-type:' is `charset', then on decoding and encoding by the
+coding system, if a character belongs to multiple charsets in the
+list, a charset that comes first in the list is selected.
+
+If `:coding-type' is `iso-2022', VALUE may be `iso-2022', which
+indicates that the coding system supports all ISO-2022 based
+charsets.
+
+If `:coding-type' is `shift-jis', VALUE must be a list of three
+to four charsets supported by Shift_JIS encoding scheme.  The
+first charset (one dimension) is for code space 0x00..0x7F, the
+second (one dimension) for 0xA1..0xDF, the third (two dimension)
+for 0x8140..0xEFFC, the optional fourth (three dimension) for
+0xF040..0xFCFC.
+
+If `:coding-type' is `emacs-mule', VALUE may be `emacs-mule',
+which indicates that the coding system supports all charsets that
+have the `:emacs-mule-id' property.
 
 `:ascii-compatible-p'
 
@@ -643,9 +711,9 @@ VALUE must be a translation table to use on encoding.
 VALUE must be a function to call after some text is inserted and
 decoded by the coding system itself and before any functions in
 `after-insert-functions' are called.  This function is passed one
-argument; the number of characters in the text to convert, with
+argument: the number of characters in the text to convert, with
 point at the start of the text.  The function should leave point
-the same, and return the new character count.
+unchanged, and should return the new character count.
 
 `:pre-write-conversion'
 
@@ -674,7 +742,7 @@ to lower case.
 `:mime-text-unsuitable'
 
 VALUE non-nil means the `:mime-charset' property names a charset which
-is unsuitable for the top-level media type \"text\".
+is unsuitable for the top-level media of type \"text\".
 
 `:flags'
 
@@ -704,8 +772,8 @@ This attribute is meaningful only when `:coding-type' is `iso-2022'.
 
 `:bom'
 
-This attributes specifies whether the coding system uses a `byte order
-mark'.  VALUE must be nil, t, or cons of coding systems whose
+This attributes specifies whether the coding system uses a \"byte order
+mark\".  VALUE must be nil, t, or a cons cell of coding systems whose
 `:coding-type' is `utf-16' or `utf-8'.
 
 If the value is nil, on decoding, don't treat the first two-byte as
@@ -714,9 +782,9 @@ BOM, and on encoding, don't produce BOM bytes.
 If the value is t, on decoding, skip the first two-byte as BOM, and on
 encoding, produce BOM bytes according to the value of `:endian'.
 
-If the value is cons, on decoding, check the first two-byte.  If they
-are 0xFE 0xFF, use the car part coding system of the value.  If they
-are 0xFF 0xFE, use the cdr part coding system of the value.
+If the value is a cons cell, on decoding, check the first two bytes.
+If they are 0xFE 0xFF, use the car part coding system of the value.
+If they are 0xFF 0xFE, use the cdr part coding system of the value.
 Otherwise, treat them as bytes for a normal character.  On encoding,
 produce BOM bytes according to the value of `:endian'.
 
@@ -730,17 +798,17 @@ little-endian respectively.  The default value is `big'.
 
 This attribute is meaningful only when `:coding-type' is `utf-16'.
 
-`:ccl-decoder'
+`:ccl-decoder' (required if :coding-type is `ccl')
 
-VALUE is a symbol representing the registered CCL program used for
-decoding.  This attribute is meaningful only when `:coding-type' is
-`ccl'.
+VALUE is a CCL program name defined by `define-ccl-program'.  The
+CCL program reads a byte sequence and writes a character sequence
+as a decoding result.
 
-`:ccl-encoder'
+`:ccl-encoder' (required if :coding-type is `ccl')
 
-VALUE is a symbol representing the registered CCL program used for
-encoding.  This attribute is meaningful only when `:coding-type' is
-`ccl'.
+VALUE is a CCL program name defined by `define-ccl-program'.  The
+CCL program reads a character sequence and writes a byte sequence
+as an encoding result.
 
 `:inhibit-null-byte-detection'
 
@@ -2249,7 +2317,13 @@ ALIST is an alist, each element has the form (FROM . TO).
 FROM and TO are a character or a vector of characters.
 If FROM is a character, that character is translated to TO.
 If FROM is a vector of characters, that sequence is translated to TO.
-The first extra-slot of the value is a translation table for reverse mapping."
+The first extra-slot of the value is a translation table for reverse mapping.
+
+FROM and TO may be nil.  If TO is nil, the translation from FROM
+to nothing is defined in the translation table and that element
+is ignored in the reverse map.  If FROM is nil, the translation
+from TO to nothing is defined in the reverse map only.  A vector
+of length zero has the same meaning as specifying nil."
   (let ((tables (vector (make-char-table 'translation-table)
 			(make-char-table 'translation-table)))
 	table max-lookup from to idx val)
@@ -2262,20 +2336,23 @@ The first extra-slot of the value is a translation table for reverse mapping."
 	  (setq from (cdr elt) to (car elt)))
 	(if (characterp from)
 	    (setq idx from)
-	  (setq idx (aref from 0)
-		max-lookup (max max-lookup (length from))))
-	(setq val (aref table idx))
-	(if val
-	    (progn
-	      (or (consp val)
-		  (setq val (list (cons (vector idx) val))))
-	      (if (characterp from)
-		  (setq from (vector from)))
-	      (setq val (nconc val (list (cons from to)))))
-	  (if (characterp from)
-	      (setq val to)
-	    (setq val (list (cons from to)))))
-	(aset table idx val))
+	  (if (= (length from) 0)
+	      (setq idx nil)
+	    (setq idx (aref from 0)
+		  max-lookup (max max-lookup (length from)))))
+	(when idx
+	  (setq val (aref table idx))
+	  (if val
+	      (progn
+		(or (consp val)
+		    (setq val (list (cons (vector idx) val))))
+		(if (characterp from)
+		    (setq from (vector from)))
+		(setq val (nconc val (list (cons from to)))))
+	    (if (characterp from)
+		(setq val to)
+	      (setq val (list (cons from to)))))
+	  (aset table idx val)))
       (set-char-table-extra-slot table 1 max-lookup))
     (set-char-table-extra-slot (aref tables 0) 0 (aref tables 1))
     (aref tables 0)))

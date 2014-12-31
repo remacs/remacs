@@ -63,6 +63,8 @@ Processes}.
 
 @node Subprocess Creation
 @section Functions that Create Subprocesses
+@cindex create subprocess
+@cindex process creation
 
   There are three primitives that create a new subprocess in which to run
 a program.  One of them, @code{start-process}, creates an asynchronous
@@ -734,6 +736,7 @@ happen sooner or later).
 
 @node Process Information
 @section Process Information
+@cindex process information
 
   Several functions return information about processes.
 

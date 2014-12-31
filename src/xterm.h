@@ -1049,10 +1049,10 @@ extern void x_send_client_event (Lisp_Object display,
                                  Lisp_Object format,
                                  Lisp_Object values);
 
-extern int x_handle_dnd_message (struct frame *,
-                                 const XClientMessageEvent *,
-                                 struct x_display_info *,
-                                 struct input_event *);
+extern bool x_handle_dnd_message (struct frame *,
+				  const XClientMessageEvent *,
+				  struct x_display_info *,
+				  struct input_event *);
 extern int x_check_property_data (Lisp_Object);
 extern void x_fill_property_data (Display *,
                                   Lisp_Object,

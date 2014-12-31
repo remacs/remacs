@@ -107,6 +107,7 @@ are available in batch mode.
 
 @node Text from Minibuffer
 @section Reading Text Strings with the Minibuffer
+@cindex minibuffer input, reading text strings
 
   The most basic primitive for minibuffer input is
 @code{read-from-minibuffer}, which can be used to read either a string
@@ -390,6 +391,7 @@ following bindings, in addition to those of @code{minibuffer-local-map}:
 
 @node Object from Minibuffer
 @section Reading Lisp Objects with the Minibuffer
+@cindex minibuffer input, reading lisp objects
 
   This section describes functions for reading Lisp objects with the
 minibuffer.
@@ -2044,6 +2046,7 @@ Do you really want to remove everything? (yes or no)
 
 @node Multiple Queries
 @section Asking Multiple Y-or-N Questions
+@cindex multiple yes-or-no questions
 
   When you have a series of similar questions to ask, such as ``Do you
 want to save this buffer'' for each buffer in turn, you should use
@@ -2285,6 +2288,8 @@ default value is 0.25.
 
 @node Minibuffer Contents
 @section Minibuffer Contents
+@cindex access minibuffer contents
+@cindex minibuffer contents, accessing
 
   These functions access the minibuffer prompt and contents.
 

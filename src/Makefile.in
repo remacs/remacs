@@ -114,6 +114,8 @@ TEMACS_LDFLAGS = $(LD_SWITCH_SYSTEM) $(LD_SWITCH_SYSTEM_TEMACS)
 ## around this, newer ones setfattr.  See Bug#11398 and Bug#16343.
 PAXCTL = @PAXCTL@
 SETFATTR = @SETFATTR@
+PAXCTL_if_present = $(or $(PAXCTL),: paxctl)
+SETFATTR_if_present = $(or $(SETFATTR),: setfattr)
 
 ## Some systems define this to request special libraries.
 LIBS_SYSTEM=@LIBS_SYSTEM@
@@ -459,17 +461,13 @@ $(srcdir)/macuvs.h $(lispsource)/international/charprop.el: \
 emacs$(EXEEXT): temacs$(EXEEXT) \
                 $(etc)/DOC $(lisp) $(leimdir)/leim-list.el \
                 $(lispsource)/international/charprop.el
-	if test "$(CANNOT_DUMP)" = "yes"; then \
-	  rm -f emacs$(EXEEXT); \
-	  ln temacs$(EXEEXT) emacs$(EXEEXT); \
-	else \
-	  LC_ALL=C $(RUN_TEMACS) -batch -l loadup dump || exit 1; \
-	  test "X$(PAXCTL)" = X || $(PAXCTL) -zex emacs$(EXEEXT); \
-	  while test -f bootstrap-emacs$(EXEEXT); do \
-	    rm -f bootstrap-emacs$(EXEEXT); \
-	  done; \
-	  ln emacs$(EXEEXT) bootstrap-emacs$(EXEEXT); \
-	fi
+ifeq ($(CANNOT_DUMP),yes)
+	ln -f temacs$(EXEEXT) $@
+else
+	LC_ALL=C $(RUN_TEMACS) -batch -l loadup dump
+	$(PAXCTL_if_present) -zex $@
+	ln -f $@ bootstrap-emacs$(EXEEXT)
+endif
 
 ## We run make-docfile twice because the command line may get too long
 ## on some systems.  The sed command operating on lisp.mk also reduces
@@ -527,10 +525,10 @@ temacs$(EXEEXT): $(LIBXMENU) $(ALLOBJS) \
 	$(AM_V_CCLD)$(CC) $(ALL_CFLAGS) $(TEMACS_LDFLAGS) $(LDFLAGS) \
 	  -o temacs $(ALLOBJS) $(lib)/libgnu.a $(W32_RES_LINK) $(LIBES)
 	$(MKDIR_P) $(etc)
-	test "$(CANNOT_DUMP)" = "yes" || \
-	  test "X$(PAXCTL)" = X || $(PAXCTL) -r temacs$(EXEEXT)
-	test "$(CANNOT_DUMP)" = "yes" || test -z "$(SETFATTR)" || \
-	  $(SETFATTR) -n user.pax.flags -v er $@
+ifneq ($(CANNOT_DUMP),yes)
+	$(PAXCTL_if_present) -r $@
+	$(SETFATTR_if_present) -n user.pax.flags -v er $@
+endif
 
 ## The following oldxmenu-related rules are only (possibly) used if
 ## HAVE_X11 && !USE_GTK, but there is no harm in always defining them.
@@ -662,14 +660,13 @@ $(lispsource)/loaddefs.el: $(VCSWITNESS) | bootstrap-emacs$(EXEEXT)
 ## files from loadup.el in source form.
 bootstrap-emacs$(EXEEXT): temacs$(EXEEXT)
 	$(MAKE) -C ../lisp update-subdirs
-	if test "$(CANNOT_DUMP)" = "yes"; then \
-	  rm -f bootstrap-emacs$(EXEEXT); \
-	  ln temacs$(EXEEXT) bootstrap-emacs$(EXEEXT); \
-	else \
-	  $(RUN_TEMACS) --batch --load loadup bootstrap || exit 1; \
-	  test "X$(PAXCTL)" = X || $(PAXCTL) -zex emacs$(EXEEXT); \
-	  mv -f emacs$(EXEEXT) bootstrap-emacs$(EXEEXT); \
-	fi
+ifeq ($(CANNOT_DUMP),yes)
+	ln -f temacs$(EXEEXT) $@
+else
+	$(RUN_TEMACS) --batch --load loadup bootstrap
+	$(PAXCTL_if_present) -zex emacs$(EXEEXT)
+	mv -f emacs$(EXEEXT) $@
+endif
 	@: Compile some files earlier to speed up further compilation.
 	$(MAKE) -C ../lisp compile-first EMACS="$(bootstrap_exe)"
 

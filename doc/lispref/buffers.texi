@@ -762,6 +762,7 @@ signal an error if the current buffer is read-only.
 @node Buffer List
 @section The Buffer List
 @cindex buffer list
+@cindex listing all buffers
 
   The @dfn{buffer list} is a list of all live buffers.  The order of the
 buffers in this list is based primarily on how recently each buffer has
@@ -1215,6 +1216,7 @@ in the text it is swapped with will not interfere with auto-saving.
 
 @node Buffer Gap
 @section The Buffer Gap
+@cindex buffer gap
 
   Emacs buffers are implemented using an invisible @dfn{gap} to make
 insertion and deletion faster.  Insertion works by filling in part of

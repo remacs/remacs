@@ -1,3 +1,51 @@
+2014-12-29  Paul Eggert  <eggert@cs.ucla.edu>
+
+	system-name's returned value can vary
+	Also, the system-name variable is now obsolete.
+	Fixes Bug#19438.
+	* doc/lispref/os.texi (System Environment):
+	* etc/NEWS: Document this.
+	* doc/misc/efaq.texi:
+	(Displaying the current file name in the titlebar):
+	* lisp/desktop.el (desktop-save-frameset):
+	* lisp/dnd.el (dnd-get-local-file-uri):
+	* lisp/gnus/message.el (message-make-fqdn):
+	* lisp/gnus/nnvirtual.el (nnvirtual-retrieve-headers)
+	(nnvirtual-update-xref-header):
+	* lisp/nxml/rng-uri.el (rng-uri-file-name-1):
+	* lisp/org/org-clock.el (org-clock-save):
+	* src/filelock.c (current_lock_owner):
+	* src/xrdb.c (get_environ_db):
+	* src/xterm.c (same_x_server):
+	* src/xterm.c (x_term_init):
+	Prefer (system-name) to system-name, and avoid naming
+	locals 'system-name'.
+	* doc/misc/smtpmail.texi (Server workarounds): Fix grammar.
+	* lisp/startup.el (system-name): Now an obsolete variable.
+	* src/editfns.c (cached_system_name): New static var.
+	(init_and_cache_system_name): New function.
+	(init_editfns, Fsystem_name): Use it.
+	(syms_of_editfns): Initialize it and Vsystem_name to the same value.
+	* src/sysdep.c [HAVE_SOCKETS]: Don't include <sys/socket.h>, <netdb.h>.
+	(h_errno) [TRY_AGAIN && !HAVE_H_ERRNO]: Remove decl.
+	(init_system_name) [HAVE_SOCKETS]: Don't canonicalize the name.
+	Don't create a new string if the current value is already correct.
+
+2014-12-28  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* build-aux/git-hooks/commit-msg: Allow tabs.
+	Treat them as if they were expanded to spaces, with tab stops
+	every 8 columns.
+
+2014-12-27  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* .gitignore: Ignore /conftest*.
+
+2014-12-27  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* build-aux/git-hooks/commit-msg (at_sign): Bump up line-length limit
+	to 78.
+
 2014-12-25  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Prefer stpcpy to strcat
@@ -308,7 +356,8 @@
 
 2014-11-11  Eric S. Raymond  <esr@thyrsus.com>
 
-	* Makefile.in: git transition - set VCWITNESS appropriately for git.
+	Git transition.
+	* Makefile.in (src): Set VCSWITNESS appropriately for git.
 
 	All bzr revision IDS, and all CVS revision IDs for which a commit
 	could be identified, were changed to time-date!committer version

@@ -60,7 +60,7 @@
         (cl-progv
             (mapcar #'car bindings)
             (mapcar #'cdr bindings)
-          (self-insert-command 1))))
+          (call-interactively (key-binding `[,last-command-event])))))
     (should (equal (buffer-substring-no-properties (point-min) (point-max))
                    expected-string))
     (should (equal (point)
@@ -569,6 +569,15 @@ baz\"\""
 
 (define-electric-pair-test autowrapping-6
   "foo" "\"" :expected-string "\"foo\"" :expected-point 6
+  :fixture-fn #'(lambda ()
+                  (electric-pair-mode 1)
+                  (goto-char (point-max))
+                  (skip-chars-backward "\"")
+                  (mark-sexp -1)))
+
+(define-electric-pair-test autowrapping-7
+  "foo" "\"" :expected-string "``foo''" :expected-point 8
+  :modes '(tex-mode)
   :fixture-fn #'(lambda ()
                   (electric-pair-mode 1)
                   (goto-char (point-max))

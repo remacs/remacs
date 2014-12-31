@@ -81,6 +81,8 @@ computer program, however, it is good to keep the distinction in mind.
 
 @node Visiting Functions
 @subsection Functions for Visiting Files
+@cindex visiting files, functions for
+@cindex how to visit files
 
   This section describes the functions normally used to visit files.
 For historical reasons, these functions have names starting with
@@ -948,6 +950,8 @@ Unix.  These conventions are also followed by @code{file-attributes}
 
 @node Kinds of Files
 @subsection Distinguishing Kinds of Files
+@cindex file classification
+@cindex classification of file types
 
   This section describes how to distinguish various kinds of files, such
 as directories, symbolic links, and ordinary files.
@@ -2300,6 +2304,8 @@ through the immediately preceding @samp{/}).
 
 @node Unique File Names
 @subsection Generating Unique File Names
+@cindex unique file names
+@cindex temporary files
 
   Some programs need to write temporary files.  Here is the usual way to
 construct a name for such a file:

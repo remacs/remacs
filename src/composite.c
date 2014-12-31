@@ -1032,7 +1032,8 @@ composition_compute_stop_pos (struct composition_it *cmp_it, ptrdiff_t charpos, 
 		}
 	    }
 	}
-      if (charpos == endpos)
+      if (charpos == endpos
+	  && !(STRINGP (string) && endpos == SCHARS (string)))
 	{
 	  /* We couldn't find a composition point before ENDPOS.  But,
 	     some character after ENDPOS may be composed with

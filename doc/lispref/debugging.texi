@@ -5,6 +5,7 @@
 @c See the file elisp.texi for copying conditions.
 @node Debugging
 @chapter Debugging Lisp Programs
+@cindex debugging lisp programs
 
   There are several ways to find and investigate problems in an Emacs
 Lisp program.
@@ -284,6 +285,8 @@ not currently set up to break on entry.
 
 @node Explicit Debug
 @subsection Explicit Entry to the Debugger
+@cindex debugger, explicit entry
+@cindex force entry to debugger
 
   You can cause the debugger to be called at a certain point in your
 program by writing the expression @code{(debug)} at that point.  To do
@@ -456,6 +459,7 @@ Toggle the display of local variables of the current stack frame.
 
 @node Invoking the Debugger
 @subsection Invoking the Debugger
+@cindex invoking lisp debugger
 
   Here we describe in full detail the function @code{debug} that is used
 to invoke the debugger.
@@ -707,6 +711,7 @@ find the mismatch.)
 
 @node Excess Open
 @subsection Excess Open Parentheses
+@cindex excess open parentheses
 
   The first step is to find the defun that is unbalanced.  If there is
 an excess open parenthesis, the way to do this is to go to the end of
@@ -741,6 +746,7 @@ anything.
 
 @node Excess Close
 @subsection Excess Close Parentheses
+@cindex excess close parentheses
 
   To deal with an excess close parenthesis, first go to the beginning
 of the file, then type @kbd{C-u -1 C-M-u} to find the end of the first

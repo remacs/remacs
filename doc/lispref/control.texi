@@ -44,6 +44,8 @@ structure constructs (@pxref{Macros}).
 
 @node Sequencing
 @section Sequencing
+@cindex sequencing
+@cindex sequential execution
 
   Evaluating forms in the order they appear is the most common way
 control passes from one form to another.  In some contexts, such as in a
@@ -368,8 +370,8 @@ that location.
 More specifically, a Q-pattern can take the following forms:
 @table @code
 @item (@var{qpattern1} . @var{qpattern2})
-This pattern matches any cons cell whose @code{car} matches @var{QPATTERN1} and
-whose @code{cdr} matches @var{PATTERN2}.
+This pattern matches any cons cell whose @code{car} matches @var{qpattern1} and
+whose @code{cdr} matches @var{pattern2}.
 @item [@var{qpattern1} @var{qpattern2} @dots{} @var{qpatternm}]
 This pattern matches a vector of length @var{M} whose 0..(@var{M}-1)th
 elements match @var{qpattern1}, @var{qpattern2} @dots{} @var{qpatternm},
@@ -405,6 +407,7 @@ the variable @code{x}.
 
 @node Combining Conditions
 @section Constructs for Combining Conditions
+@cindex combining conditions
 
   This section describes three constructs that are often used together
 with @code{if} and @code{cond} to express complicated conditions.  The
@@ -962,6 +965,7 @@ concept of continuable errors.
 
 @node Processing of Errors
 @subsubsection How Emacs Processes Errors
+@cindex processing of errors
 
 When an error is signaled, @code{signal} searches for an active
 @dfn{handler} for the error.  A handler is a sequence of Lisp
@@ -1367,6 +1371,7 @@ and their conditions.
 
 @node Cleanups
 @subsection Cleaning Up from Nonlocal Exits
+@cindex nonlocal exits, cleaning up
 
   The @code{unwind-protect} construct is essential whenever you
 temporarily put a data structure in an inconsistent state; it permits

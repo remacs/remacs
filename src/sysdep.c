@@ -110,6 +110,9 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #define _P_WAIT 0
 int _cdecl _spawnlp (int, const char *, const char *, ...);
 int _cdecl _getpid (void);
+/* The following is needed for O_CLOEXEC, F_SETFD, FD_CLOEXEC, and
+   several prototypes of functions called below.  */
+#include <sys/socket.h>
 #endif
 
 #include "syssignal.h"
@@ -1406,29 +1409,19 @@ setup_pty (int fd)
 }
 #endif /* HAVE_PTYS */
 
-#ifdef HAVE_SOCKETS
-#include <sys/socket.h>
-#include <netdb.h>
-#endif /* HAVE_SOCKETS */
-
-#ifdef TRY_AGAIN
-#ifndef HAVE_H_ERRNO
-extern int h_errno;
-#endif
-#endif /* TRY_AGAIN */
-
 void
 init_system_name (void)
 {
+  char *hostname_alloc = NULL;
+  char *hostname;
 #ifndef HAVE_GETHOSTNAME
   struct utsname uts;
   uname (&uts);
-  Vsystem_name = build_string (uts.nodename);
+  hostname = uts.nodename;
 #else /* HAVE_GETHOSTNAME */
-  char *hostname_alloc = NULL;
   char hostname_buf[256];
   ptrdiff_t hostname_size = sizeof hostname_buf;
-  char *hostname = hostname_buf;
+  hostname = hostname_buf;
 
   /* Try to get the host name; if the buffer is too short, try
      again.  Apparently, the only indication gethostname gives of
@@ -1446,110 +1439,15 @@ init_system_name (void)
       hostname = hostname_alloc = xpalloc (hostname_alloc, &hostname_size, 1,
 					   min (PTRDIFF_MAX, SIZE_MAX), 1);
     }
-#ifdef HAVE_SOCKETS
-  /* Turn the hostname into the official, fully-qualified hostname.
-     Don't do this if we're going to dump; this can confuse system
-     libraries on some machines and make the dumped emacs core dump. */
-#ifndef CANNOT_DUMP
-  if (initialized)
-#endif /* not CANNOT_DUMP */
-    if (! strchr (hostname, '.'))
-      {
-	int count;
-#ifdef HAVE_GETADDRINFO
-        struct addrinfo *res;
-        struct addrinfo hints;
-        int ret;
-
-        memset (&hints, 0, sizeof (hints));
-        hints.ai_socktype = SOCK_STREAM;
-        hints.ai_flags = AI_CANONNAME;
-
-	for (count = 0;; count++)
-	  {
-            if ((ret = getaddrinfo (hostname, NULL, &hints, &res)) == 0
-                || ret != EAI_AGAIN)
-              break;
-
-            if (count >= 5)
-	      break;
-	    Fsleep_for (make_number (1), Qnil);
-	  }
-
-        if (ret == 0)
-          {
-            struct addrinfo *it = res;
-            while (it)
-              {
-                char *fqdn = it->ai_canonname;
-                if (fqdn && strchr (fqdn, '.')
-                    && strcmp (fqdn, "localhost.localdomain") != 0)
-                  break;
-                it = it->ai_next;
-              }
-            if (it)
-              {
-		ptrdiff_t len = strlen (it->ai_canonname);
-		if (hostname_size <= len)
-		  {
-		    hostname_size = len + 1;
-		    hostname = hostname_alloc = xrealloc (hostname_alloc,
-							  hostname_size);
-		  }
-                strcpy (hostname, it->ai_canonname);
-              }
-            freeaddrinfo (res);
-          }
-#else /* !HAVE_GETADDRINFO */
-        struct hostent *hp;
-	for (count = 0;; count++)
-	  {
-
-#ifdef TRY_AGAIN
-	    h_errno = 0;
-#endif
-	    hp = gethostbyname (hostname);
-#ifdef TRY_AGAIN
-	    if (! (hp == 0 && h_errno == TRY_AGAIN))
-#endif
-
-	      break;
-
-	    if (count >= 5)
-	      break;
-	    Fsleep_for (make_number (1), Qnil);
-	  }
-
-	if (hp)
-	  {
-	    char *fqdn = (char *) hp->h_name;
-
-	    if (!strchr (fqdn, '.'))
-	      {
-		/* We still don't have a fully qualified domain name.
-		   Try to find one in the list of alternate names */
-		char **alias = hp->h_aliases;
-		while (*alias
-		       && (!strchr (*alias, '.')
-			   || !strcmp (*alias, "localhost.localdomain")))
-		  alias++;
-		if (*alias)
-		  fqdn = *alias;
-	      }
-	    hostname = fqdn;
-	  }
-#endif /* !HAVE_GETADDRINFO */
-      }
-#endif /* HAVE_SOCKETS */
-  Vsystem_name = build_string (hostname);
-  xfree (hostname_alloc);
 #endif /* HAVE_GETHOSTNAME */
-  {
-    char *p;
-    for (p = SSDATA (Vsystem_name); *p; p++)
-      if (*p == ' ' || *p == '\t')
-	*p = '-';
-  }
+  char *p;
+  for (p = hostname; *p; p++)
+    if (*p == ' ' || *p == '\t')
+      *p = '-';
+  if (! (STRINGP (Vsystem_name) && SBYTES (Vsystem_name) == p - hostname
+	 && strcmp (SSDATA (Vsystem_name), hostname) == 0))
+    Vsystem_name = build_string (hostname);
+  xfree (hostname_alloc);
 }
 
 sigset_t empty_mask;

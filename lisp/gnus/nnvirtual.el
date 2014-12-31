@@ -99,7 +99,7 @@ component group will show up when you enter the virtual group.")
 	(let ((vbuf (nnheader-set-temp-buffer
 		     (get-buffer-create " *virtual headers*")))
 	      (carticles (nnvirtual-partition-sequence articles))
-	      (system-name (system-name))
+	      (sysname (system-name))
 	      cgroup carticle article result prefix)
 	  (while carticles
 	    (setq cgroup (caar carticles))
@@ -151,7 +151,7 @@ component group will show up when you enter the virtual group.")
 		  ;; and clean up the xrefs.
 		  (princ article nntp-server-buffer)
 		  (nnvirtual-update-xref-header cgroup carticle
-						prefix system-name)
+						prefix sysname)
 		  (forward-line 1))
 		)
 
@@ -378,7 +378,7 @@ component group will show up when you enter the virtual group.")
       (mapc 'nnheader-insert-nov headers))))
 
 
-(defun nnvirtual-update-xref-header (group article prefix system-name)
+(defun nnvirtual-update-xref-header (group article prefix sysname)
   "Edit current NOV header in current buffer to have an xref to the component group, and also server prefix any existing xref lines."
   ;; Move to beginning of Xref field, creating a slot if needed.
   (beginning-of-line)
@@ -393,7 +393,7 @@ component group will show up when you enter the virtual group.")
     (forward-char -1)
     (delete-char 1))
 
-  (insert "Xref: " system-name " " group ":")
+  (insert "Xref: " sysname " " group ":")
   (princ article (current-buffer))
   (insert " ")
 

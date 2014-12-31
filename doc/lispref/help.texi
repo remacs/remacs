@@ -90,6 +90,7 @@ hyperlinks in the @file{*Help*} buffer.)
 
 @node Accessing Documentation
 @section Access to Documentation Strings
+@cindex accessing documentation strings
 
 @defun documentation-property symbol property &optional verbatim
 This function returns the documentation string recorded in
@@ -507,6 +508,7 @@ non-@code{nil}, the return value is always a vector.
 
 @node Help Functions
 @section Help Functions
+@cindex help functions
 
   Emacs provides a variety of built-in help functions, all accessible to
 the user as subcommands of the prefix @kbd{C-h}.  For more information

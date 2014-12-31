@@ -147,6 +147,7 @@ code.
 @node Using Interactive
 @subsection Using @code{interactive}
 @cindex arguments, interactive entry
+@cindex interactive spec, using
 
   This section describes how to write the @code{interactive} form that
 makes a Lisp function an interactively-callable command, and how to
@@ -747,6 +748,8 @@ part of the prompt.
 
 @node Distinguish Interactive
 @section Distinguish Interactive Calls
+@cindex distinguish interactive calls
+@cindex is this call interactive
 
   Sometimes a command should display additional visual feedback (such
 as an informative message in the echo area) for interactive calls
@@ -835,6 +838,7 @@ Here is another example that contrasts direct and indirect calls to
 
 @node Command Loop Info
 @section Information from the Command Loop
+@cindex command loop variables
 
 The editor command loop sets several Lisp variables to keep status
 records for itself and for commands that are run.  With the exception of
@@ -1859,6 +1863,7 @@ bind it to the @code{signal usr1} event sequence:
 @node Classifying Events
 @subsection Classifying Events
 @cindex event type
+@cindex classifying events
 
   Every event has an @dfn{event type}, which classifies the event for
 key binding purposes.  For a keyboard event, the event type equals the
@@ -2584,6 +2589,9 @@ then continues to wait for a valid input character, or keyboard-quit.
 
 @node Event Mod
 @subsection Modifying and Translating Input Events
+@cindex modifiers of events
+@cindex translating input events
+@cindex event translation
 
   Emacs modifies every event it reads according to
 @code{extra-keyboard-modifiers}, then translates it through
@@ -2665,6 +2673,7 @@ at the level of @code{read-key-sequence}.
 
 @node Invoking the Input Method
 @subsection Invoking the Input Method
+@cindex invoking input method
 
   The event-reading functions invoke the current input method, if any
 (@pxref{Input Methods}).  If the value of @code{input-method-function}

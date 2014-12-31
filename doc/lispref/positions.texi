@@ -465,6 +465,7 @@ beginning or end of a line.
 
 @node Screen Lines
 @subsection Motion by Screen Lines
+@cindex screen lines, moving by
 
   The line functions in the previous section count text lines, delimited
 only by newline characters.  By contrast, these functions count screen

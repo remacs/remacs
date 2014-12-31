@@ -592,6 +592,8 @@ in turn, repeatedly, until they all return @code{nil}.
 
 @node Motion and Syntax
 @section Motion and Syntax
+@cindex moving across syntax classes
+@cindex skipping characters of certain syntax
 
   This section describes functions for moving across characters that
 have certain syntax classes.
@@ -631,6 +633,8 @@ expression prefix syntax class, and characters with the @samp{p} flag.
 
 @node Parsing Expressions
 @section Parsing Expressions
+@cindex parsing expressions
+@cindex scanning expressions
 
   This section describes functions for parsing and scanning balanced
 expressions.  We will refer to such expressions as @dfn{sexps},
@@ -673,6 +677,7 @@ result, Emacs treats them as four consecutive empty string constants.
 
 @node Motion via Parsing
 @subsection Motion Commands Based on Parsing
+@cindex motion based on parsing
 
   This section describes simple point-motion functions that operate
 based on parsing expressions.
@@ -738,6 +743,7 @@ cannot exceed that many.
 
 @node Position Parse
 @subsection Finding the Parse State for a Position
+@cindex parse state for a position
 
   For syntactic analysis, such as in indentation, often the useful
 thing is to compute the syntactic state corresponding to a given buffer
@@ -919,6 +925,7 @@ nicely.
 
 @node Control Parsing
 @subsection Parameters to Control Parsing
+@cindex parsing, control parameters
 
 @defvar multibyte-syntax-as-symbol
 If this variable is non-@code{nil}, @code{scan-sexps} treats all

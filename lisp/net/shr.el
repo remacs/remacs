@@ -78,11 +78,12 @@ If nil, don't draw horizontal table lines."
   :group 'shr
   :type 'character)
 
-(defcustom shr-width fill-column
+(defcustom shr-width nil
   "Frame width to use for rendering.
 May either be an integer specifying a fixed width in characters,
 or nil, meaning that the full width of the window should be
 used."
+  :version "25.1"
   :type '(choice (integer :tag "Fixed width in characters")
 		 (const   :tag "Use the width of the window" nil))
   :group 'shr)
@@ -1439,10 +1440,11 @@ The preference is a float determined from `shr-prefer-media-type'."
 
 (defun shr-tag-table (dom)
   (shr-ensure-paragraph)
-  (let* ((caption (dom-child-by-tag dom 'caption))
-	 (header (dom-child-by-tag dom 'thead))
-	 (body (or (dom-child-by-tag dom 'tbody) dom))
-	 (footer (dom-child-by-tag dom 'tfoot))
+  (let* ((caption (dom-children (dom-child-by-tag dom 'caption)))
+	 (header (dom-non-text-children (dom-child-by-tag dom 'thead)))
+	 (body (dom-non-text-children (or (dom-child-by-tag dom 'tbody)
+					  dom)))
+	 (footer (dom-non-text-children (dom-child-by-tag dom 'tfoot)))
          (bgcolor (dom-attr dom 'bgcolor))
 	 (start (point))
 	 (shr-stylesheet (nconc (list (cons 'background-color bgcolor))
@@ -1461,42 +1463,62 @@ The preference is a float determined from `shr-prefer-media-type'."
       ;; It's a real table, so render it.
       (shr-tag-table-1
        (nconc
-	(if caption `((tr (td ,@caption))))
-	(if header
-	    (if footer
-		;; header + body + footer
-		(if (= nheader nbody)
-		    (if (= nbody nfooter)
-			`((tr (td (table (tbody ,@header ,@body ,@footer)))))
-		      (nconc `((tr (td (table (tbody ,@header ,@body)))))
-			     (if (= nfooter 1)
-				 footer
-			       `((tr (td (table (tbody ,@footer))))))))
-		  (nconc `((tr (td (table (tbody ,@header)))))
-			 (if (= nbody nfooter)
-			     `((tr (td (table (tbody ,@body ,@footer)))))
-			   (nconc `((tr (td (table (tbody ,@body)))))
-				  (if (= nfooter 1)
-				      footer
-				    `((tr (td (table (tbody ,@footer))))))))))
-	      ;; header + body
-	      (if (= nheader nbody)
-		  `((tr (td (table (tbody ,@header ,@body)))))
-		(if (= nheader 1)
-		    `(,@header (tr (td (table (tbody ,@body)))))
-		  `((tr (td (table (tbody ,@header))))
-		    (tr (td (table (tbody ,@body))))))))
-	  (if footer
-	      ;; body + footer
-	      (if (= nbody nfooter)
-		  `((tr (td (table (tbody ,@body ,@footer)))))
-		(nconc `((tr (td (table (tbody ,@body)))))
-		       (if (= nfooter 1)
-			   footer
-			 `((tr (td (table (tbody ,@footer))))))))
-	    (if caption
-		`((tr (td (table (tbody ,@body)))))
-	      body))))))
+	(list 'table nil)
+	(if caption `((tr nil (td nil ,@caption))))
+	(cond (header
+	       (if footer
+		   ;; header + body + footer
+		   (if (= nheader nbody)
+		       (if (= nbody nfooter)
+			   `((tr nil (td nil (table nil
+						    (tbody nil ,@header
+							   ,@body ,@footer)))))
+			 (nconc `((tr nil (td nil (table nil
+							 (tbody nil ,@header
+								,@body)))))
+				(if (= nfooter 1)
+				    footer
+				  `((tr nil (td nil (table
+						     nil (tbody
+							  nil ,@footer))))))))
+		     (nconc `((tr nil (td nil (table nil (tbody
+							  nil ,@header)))))
+			    (if (= nbody nfooter)
+				`((tr nil (td nil (table
+						   nil (tbody nil ,@body
+							      ,@footer)))))
+			      (nconc `((tr nil (td nil (table
+							nil (tbody nil
+								   ,@body)))))
+				     (if (= nfooter 1)
+					 footer
+				       `((tr nil (td nil (table
+							  nil
+							  (tbody
+							   nil
+							   ,@footer))))))))))
+		 ;; header + body
+		 (if (= nheader nbody)
+		     `((tr nil (td nil (table nil (tbody nil ,@header
+							 ,@body)))))
+		   (if (= nheader 1)
+		       `(,@header (tr nil (td nil (table
+						   nil (tbody nil ,@body)))))
+		     `((tr nil (td nil (table nil (tbody nil ,@header))))
+		       (tr nil (td nil (table nil (tbody nil ,@body)))))))))
+	      (footer
+	       ;; body + footer
+	       (if (= nbody nfooter)
+		   `((tr nil (td nil (table
+				      nil (tbody nil ,@body ,@footer)))))
+		 (nconc `((tr nil (td nil (table nil (tbody nil ,@body)))))
+			(if (= nfooter 1)
+			    footer
+			  `((tr nil (td nil (table
+					     nil (tbody nil ,@footer)))))))))
+	      (caption
+	       `((tr nil (td nil (table nil (tbody nil ,@body))))))
+	      (body)))))
     (when bgcolor
       (shr-colorize-region start (point) (cdr (assq 'color shr-stylesheet))
 			   bgcolor))

@@ -118,6 +118,8 @@ m1
 
 @node Predicates on Markers
 @section Predicates on Markers
+@cindex predicates for markers
+@cindex markers, predicates for
 
   You can test an object to see whether it is a marker, or whether it is
 either an integer or a marker.  The latter test is useful in connection
@@ -141,6 +143,8 @@ integer or floating point) or a marker, @code{nil} otherwise.
 
 @node Creating Markers
 @section Functions that Create Markers
+@cindex creating markers
+@cindex marker creation
 
   When you create a new marker, you can make it point nowhere, or point
 to the present position of point, or to the beginning or end of the
@@ -269,6 +273,7 @@ if they both point nowhere.
 
 @node Information from Markers
 @section Information from Markers
+@cindex marker information
 
   This section describes the functions for accessing the components of a
 marker object.
@@ -342,6 +347,8 @@ specify the insertion type, create them with insertion type
 
 @node Moving Markers
 @section Moving Marker Positions
+@cindex moving markers
+@cindex marker, how to move position
 
   This section describes how to change the position of an existing
 marker.  When you do this, be sure you know whether the marker is used

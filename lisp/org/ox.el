@@ -493,7 +493,7 @@ t           Allow export of math snippets."
   "The last level which is still exported as a headline.
 
 Inferior levels will usually produce itemize or enumerate lists
-when exported, but back-end behaviour may differ.
+when exported, but back-end behavior may differ.
 
 This option can also be set with the OPTIONS keyword,
 e.g. \"H:2\"."
@@ -1736,13 +1736,13 @@ Assume buffer is in Org mode.  Narrowing, if any, is ignored."
 		      (t
 		       ;; Options in `org-export-options-alist'.
 		       (dolist (property (funcall find-properties key))
-			 (let ((behaviour (nth 4 (assq property options))))
+			 (let ((behavior (nth 4 (assq property options))))
 			   (setq plist
 				 (plist-put
 				  plist property
 				  ;; Handle value depending on specified
 				  ;; BEHAVIOR.
-				  (case behaviour
+				  (case behavior
 				    (space
 				     (if (not (plist-get plist property))
 					 (org-trim val)

@@ -1,3 +1,11 @@
+2014-12-30  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* PROBLEMS: Omit obsolete mention of FQDNs.
+
+2014-12-27  Álvar Ibeas  <ibeas@gmx.com>  (tiny change)
+
+	* tutorials/TUTORIAL.es: Improve style consistency.  Spelling fixes.
+
 2014-12-25  Karl Fogel  <kfogel@red-bean.com>
 
 	* NEWS: Mention new buffer display behavior for `shell'.

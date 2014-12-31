@@ -69,7 +69,7 @@
 ;; Besides that only the standard CPython (2.x and 3.x) shell and
 ;; IPython are officially supported out of the box, the interaction
 ;; should support any other readline based Python shells as well
-;; (e.g. Jython and Pypy have been reported to work).  You can change
+;; (e.g. Jython and PyPy have been reported to work).  You can change
 ;; your default interpreter and commandline arguments by setting the
 ;; `python-shell-interpreter' and `python-shell-interpreter-args'
 ;; variables.  This example enables IPython globally:
@@ -119,18 +119,24 @@
 ;; modify its behavior.
 
 ;; Shell completion: hitting tab will try to complete the current
-;; word.  Shell completion is implemented in such way that if you
-;; change the `python-shell-interpreter' it should be possible to
-;; integrate custom logic to calculate completions.  To achieve this
-;; you just need to set `python-shell-completion-setup-code' and
-;; `python-shell-completion-string-code'.  The default provided code,
-;; enables autocompletion for both CPython and IPython (and ideally
-;; any readline based Python shell).  This code depends on the
-;; readline module, so if you are using some Operating System that
-;; bundles Python without it (like Windows), installing pyreadline
-;; from URL `http://ipython.scipy.org/moin/PyReadline/Intro' should
-;; suffice.  To troubleshoot why you are not getting any completions
-;; you can try the following in your Python shell:
+;; word.  The two built-in mechanisms depend on Python's readline
+;; module: the "native" completion is tried first and is activated
+;; when `python-shell-completion-native-enable' is non-nil, the
+;; current `python-shell-interpreter' is not a member of the
+;; `python-shell-completion-native-disabled-interpreters' variable and
+;; `python-shell-completion-native-setup' succeeds; the "fallback" or
+;; "legacy" mechanism works by executing Python code in the background
+;; and enables auto-completion for shells that do not support
+;; receiving escape sequences (with some limitations, i.e. completion
+;; in blocks does not work).  The code executed for the "fallback"
+;; completion can be found in `python-shell-completion-setup-code' and
+;; `python-shell-completion-string-code' variables.  Their default
+;; values enable completion for both CPython and IPython, and probably
+;; any readline based shell (it's known to work with PyPy).  If your
+;; Python installation lacks readline (like CPython for Windows),
+;; installing pyreadline (URL `http://ipython.org/pyreadline.html')
+;; should suffice.  To troubleshoot why you are not getting any
+;; completions, you can try the following in your Python shell:
 
 ;; >>> import readline, rlcompleter
 
@@ -256,6 +262,7 @@
 (defvar outline-heading-end-regexp)
 
 (autoload 'comint-mode "comint")
+(autoload 'help-function-arglist "help-fns")
 
 ;;;###autoload
 (add-to-list 'auto-mode-alist (cons (purecopy "\\.py\\'")  'python-mode))
@@ -395,7 +402,18 @@
                                          (* ?\\ ?\\) (any ?\' ?\")))
                                 (* ?\\ ?\\)
                                 ;; Match single or triple quotes of any kind.
-                                (group (or  "\"" "\"\"\"" "'" "'''"))))))
+                                (group (or  "\"" "\"\"\"" "'" "'''")))))
+      (coding-cookie . ,(rx line-start ?# (* space)
+                            (or
+                             ;; # coding=<encoding name>
+                             (: "coding" (or ?: ?=) (* space) (group-n 1 (+ (or word ?-))))
+                             ;; # -*- coding: <encoding name> -*-
+                             (: "-*-" (* space) "coding:" (* space)
+                                (group-n 1 (+ (or word ?-))) (* space) "-*-")
+                             ;; # vim: set fileencoding=<encoding name> :
+                             (: "vim:" (* space) "set" (+ space)
+                                "fileencoding" (* space) ?= (* space)
+                                (group-n 1 (+ (or word ?-))) (* space) ":")))))
     "Additional Python specific sexps for `python-rx'")
 
   (defmacro python-rx (&rest regexps)
@@ -1206,12 +1224,18 @@ the line will be re-indented automatically if needed."
            (eolp)
            ;; Avoid re-indenting on extra colon
            (not (equal ?: (char-before (1- (point)))))
-           (not (python-syntax-comment-or-string-p))
-           ;; Never re-indent at beginning of defun
-           (not (save-excursion
-                  (python-nav-beginning-of-statement)
-                  (python-info-looking-at-beginning-of-defun))))
-      (python-indent-line)))))
+           (not (python-syntax-comment-or-string-p)))
+      ;; Just re-indent dedenters
+      (let ((dedenter-pos (python-info-dedenter-statement-p))
+            (current-pos (point)))
+        (when dedenter-pos
+          (save-excursion
+            (goto-char dedenter-pos)
+            (python-indent-line)
+            (unless (= (line-number-at-pos dedenter-pos)
+                       (line-number-at-pos current-pos))
+              ;; Reindent region if this is a multiline statement
+              (python-indent-region dedenter-pos current-pos)))))))))
 
 
 ;;; Navigation
@@ -2087,36 +2111,18 @@ and `python-shell-output-prompt-regexp' using the values from
 
 (defun python-shell-get-process-name (dedicated)
   "Calculate the appropriate process name for inferior Python process.
-If DEDICATED is t and the variable `buffer-file-name' is non-nil
-returns a string with the form
-`python-shell-buffer-name'[variable `buffer-file-name'] else
-returns the value of `python-shell-buffer-name'."
-  (let ((process-name
-         (if (and dedicated
-                  buffer-file-name)
-             (format "%s[%s]" python-shell-buffer-name buffer-file-name)
-           (format "%s" python-shell-buffer-name))))
-    process-name))
+If DEDICATED is t returns a string with the form
+`python-shell-buffer-name'[`buffer-name'] else returns the value
+of `python-shell-buffer-name'."
+  (if dedicated
+      (format "%s[%s]" python-shell-buffer-name (buffer-name))
+    python-shell-buffer-name))
 
 (defun python-shell-internal-get-process-name ()
   "Calculate the appropriate process name for Internal Python process.
 The name is calculated from `python-shell-global-buffer-name' and
-a hash of all relevant global shell settings in order to ensure
-uniqueness for different types of configurations."
-  (format "%s [%s]"
-          python-shell-internal-buffer-name
-          (md5
-           (concat
-            python-shell-interpreter
-            python-shell-interpreter-args
-            python-shell--prompt-calculated-input-regexp
-            python-shell--prompt-calculated-output-regexp
-            (mapconcat #'symbol-value python-shell-setup-codes "")
-            (mapconcat #'identity python-shell-process-environment "")
-            (mapconcat #'identity python-shell-extra-pythonpaths "")
-            (mapconcat #'identity python-shell-exec-path "")
-            (or python-shell-virtualenv-root "")
-            (mapconcat #'identity python-shell-exec-path "")))))
+the `buffer-name'."
+  (format "%s[%s]" python-shell-internal-buffer-name (buffer-name)))
 
 (defun python-shell-calculate-command ()
   "Calculate the string used to execute the inferior Python process."
@@ -2256,11 +2262,9 @@ Avoids `recenter' calls until OUTPUT is completely sent."
   "Execute the forms in BODY with the shell buffer temporarily current.
 Signals an error if no shell buffer is available for current buffer."
   (declare (indent 0) (debug t))
-  (let ((shell-buffer (make-symbol "shell-buffer")))
-    `(let ((,shell-buffer (python-shell-get-buffer)))
-       (when (not ,shell-buffer)
-         (error "No inferior Python buffer available."))
-       (with-current-buffer ,shell-buffer
+  (let ((shell-process (make-symbol "shell-process")))
+    `(let ((,shell-process (python-shell-get-process-or-error)))
+       (with-current-buffer (process-buffer ,shell-process)
          ,@body))))
 
 (defvar python-shell--font-lock-buffer nil)
@@ -2472,12 +2476,12 @@ variable.
   (python-shell-accept-process-output
    (get-buffer-process (current-buffer))))
 
-(defun python-shell-make-comint (cmd proc-name &optional pop internal)
+(defun python-shell-make-comint (cmd proc-name &optional show internal)
   "Create a Python shell comint buffer.
 CMD is the Python command to be executed and PROC-NAME is the
 process name the comint buffer will get.  After the comint buffer
 is created the `inferior-python-mode' is activated.  When
-optional argument POP is non-nil the buffer is shown.  When
+optional argument SHOW is non-nil the buffer is shown.  When
 optional argument INTERNAL is non-nil this process is run on a
 buffer with a name that starts with a space, following the Emacs
 convention for temporary/internal buffers, and also makes sure
@@ -2506,22 +2510,24 @@ killed."
                 (mapconcat #'identity args " ")))
           (with-current-buffer buffer
             (inferior-python-mode))
-          (and pop (pop-to-buffer buffer t))
+          (when show (display-buffer buffer))
           (and internal (set-process-query-on-exit-flag process nil))))
       proc-buffer-name)))
 
 ;;;###autoload
 (defun run-python (&optional cmd dedicated show)
   "Run an inferior Python process.
-Input and output via buffer named after
-`python-shell-buffer-name'.  If there is a process already
-running in that buffer, just switch to it.
 
 Argument CMD defaults to `python-shell-calculate-command' return
 value.  When called interactively with `prefix-arg', it allows
 the user to edit such value and choose whether the interpreter
 should be DEDICATED for the current buffer.  When numeric prefix
 arg is other than 0 or 4 do not SHOW.
+
+For a given buffer and same values of DEDICATED, if a process is
+already running for it, it will do nothing.  This means that if
+the current buffer is using a global process, the user is still
+able to switch it to use a dedicated one.
 
 Runs the hook `inferior-python-mode-hook' after
 `comint-mode-hook' is run.  (Type \\[describe-mode] in the
@@ -2533,10 +2539,10 @@ process buffer for a list of commands.)"
         (y-or-n-p "Make dedicated process? ")
         (= (prefix-numeric-value current-prefix-arg) 4))
      (list (python-shell-calculate-command) nil t)))
-  (python-shell-make-comint
-   (or cmd (python-shell-calculate-command))
-   (python-shell-get-process-name dedicated) show)
-  dedicated)
+  (get-buffer-process
+   (python-shell-make-comint
+    (or cmd (python-shell-calculate-command))
+    (python-shell-get-process-name dedicated) show)))
 
 (defun run-python-internal ()
   "Run an inferior Internal Python process.
@@ -2579,6 +2585,21 @@ If current buffer is in `inferior-python-mode', return it."
   "Return inferior Python process for current buffer."
   (get-buffer-process (python-shell-get-buffer)))
 
+(defun python-shell-get-process-or-error (&optional interactivep)
+  "Return inferior Python process for current buffer or signal error.
+When argument INTERACTIVEP is non-nil, use `user-error' instead
+of `error' with a user-friendly message."
+  (or (python-shell-get-process)
+      (if interactivep
+          (user-error
+           "Start a Python process first with `M-x run-python' or `%s'."
+           ;; Get the binding.
+           (key-description
+            (where-is-internal
+             #'run-python overriding-local-map t)))
+        (error
+         "No inferior Python process running."))))
+
 (defun python-shell-get-or-create-process (&optional cmd dedicated show)
   "Get or create an inferior Python process for current buffer and return it.
 Arguments CMD, DEDICATED and SHOW are those of `run-python' and
@@ -2594,6 +2615,11 @@ be asked for their values."
         (run-python cmd dedicated show)))
     (or shell-process (python-shell-get-process))))
 
+(make-obsolete
+ #'python-shell-get-or-create-process
+ "Instead call `python-shell-get-process' and create one if returns nil."
+ "25.1")
+
 (defvar python-shell-internal-buffer nil
   "Current internal shell buffer for the current buffer.
 This is really not necessary at all for the code to work but it's
@@ -2606,12 +2632,10 @@ there for compatibility with CEDET.")
 
 (defun python-shell-internal-get-or-create-process ()
   "Get or create an inferior Internal Python process."
-  (let* ((proc-name (python-shell-internal-get-process-name))
-         (proc-buffer-name (format " *%s*" proc-name)))
-    (when (not (process-live-p proc-name))
-      (run-python-internal)
-      (setq python-shell-internal-buffer proc-buffer-name))
-    (get-buffer-process proc-buffer-name)))
+  (let ((proc-name (python-shell-internal-get-process-name)))
+    (if (process-live-p proc-name)
+        (get-process proc-name)
+      (run-python-internal))))
 
 (define-obsolete-function-alias
   'python-proc 'python-shell-internal-get-or-create-process "24.3")
@@ -2628,20 +2652,24 @@ there for compatibility with CEDET.")
               (concat (file-remote-p default-directory) "/tmp")
             temporary-file-directory))
          (temp-file-name (make-temp-file "py"))
-         (coding-system-for-write 'utf-8))
+         (coding-system-for-write (python-info-encoding)))
     (with-temp-file temp-file-name
-      (insert "# -*- coding: utf-8 -*-\n") ;Not needed for Python-3.
       (insert string)
       (delete-trailing-whitespace))
     temp-file-name))
 
-(defun python-shell-send-string (string &optional process)
-  "Send STRING to inferior Python PROCESS."
-  (interactive "sPython command: ")
-  (let ((process (or process (python-shell-get-or-create-process))))
+(defun python-shell-send-string (string &optional process msg)
+  "Send STRING to inferior Python PROCESS.
+When optional argument MSG is non-nil, forces display of a
+user-friendly message if there's no process running; defaults to
+t when called interactively."
+  (interactive
+   (list (read-string "Python command: ") nil t))
+  (let ((process (or process (python-shell-get-process-or-error msg))))
     (if (string-match ".\n+." string)   ;Multiline.
-        (let* ((temp-file-name (python-shell--save-temp-file string)))
-          (python-shell-send-file temp-file-name process temp-file-name t))
+        (let* ((temp-file-name (python-shell--save-temp-file string))
+               (file-name (or (buffer-file-name) temp-file-name)))
+          (python-shell-send-file file-name process temp-file-name t))
       (comint-send-string process string)
       (when (or (not (string-match "\n\\'" string))
                 (string-match "\n[ \t].*\n?\\'" string))
@@ -2680,7 +2708,7 @@ detecting a prompt at the end of the buffer."
 (defun python-shell-send-string-no-output (string &optional process)
   "Send STRING to PROCESS and inhibit output.
 Return the output."
-  (let ((process (or process (python-shell-get-or-create-process)))
+  (let ((process (or process (python-shell-get-process-or-error)))
         (comint-preoutput-filter-functions
          '(python-shell-output-filter))
         (python-shell-output-filter-in-progress t)
@@ -2717,12 +2745,6 @@ Returns the output.  See `python-shell-send-string-no-output'."
 (define-obsolete-function-alias
   'python-send-string 'python-shell-internal-send-string "24.3")
 
-(defvar python--use-fake-loc nil
-  "If non-nil, use `compilation-fake-loc' to trace errors back to the buffer.
-If nil, regions of text are prepended by the corresponding number of empty
-lines and Python is told to output error messages referring to the whole
-source file.")
-
 (defun python-shell-buffer-substring (start end &optional nomain)
   "Send buffer substring from START to END formatted for shell.
 This is a wrapper over `buffer-substring' that takes care of
@@ -2732,27 +2754,32 @@ the python shell:
      \"if __name__ == '__main__'\" block will be removed.
   2. When a subregion of the buffer is sent, it takes care of
      appending extra empty lines so tracebacks are correct.
-  3. Wraps indented regions under an \"if True:\" block so the
+  3. When the region sent is a substring of the current buffer, a
+     coding cookie is added.
+  4. Wraps indented regions under an \"if True:\" block so the
      interpreter evaluates them correctly."
-  (let ((substring (buffer-substring-no-properties start end))
-        (fillstr (unless python--use-fake-loc
-                   (make-string (1- (line-number-at-pos start)) ?\n)))
-        (toplevel-block-p (save-excursion
-                            (goto-char start)
-                            (or (zerop (line-number-at-pos start))
-                                (progn
-                                  (python-util-forward-comment 1)
-                                  (zerop (current-indentation)))))))
+  (let* ((substring (buffer-substring-no-properties start end))
+         (starts-at-point-min-p (save-restriction
+                                  (widen)
+                                  (= (point-min) start)))
+         (encoding (python-info-encoding))
+         (fillstr (when (not starts-at-point-min-p)
+                    (concat
+                     (format "# -*- coding: %s -*-\n" encoding)
+                     (make-string
+                      ;; Substract 2 because of the coding cookie.
+                      (- (line-number-at-pos start) 2) ?\n))))
+         (toplevel-block-p (save-excursion
+                             (goto-char start)
+                             (or (zerop (line-number-at-pos start))
+                                 (progn
+                                   (python-util-forward-comment 1)
+                                   (zerop (current-indentation)))))))
     (with-temp-buffer
       (python-mode)
       (if fillstr (insert fillstr))
       (insert substring)
       (goto-char (point-min))
-      (unless python--use-fake-loc
-        ;; python-shell--save-temp-file adds an extra coding line, which would
-        ;; throw off the line-counts, so let's try to compensate here.
-        (if (looking-at "[ \t]*[#\n]")
-            (delete-region (point) (line-beginning-position 2))))
       (when (not toplevel-block-p)
         (insert "if True:")
         (delete-region (point) (line-end-position)))
@@ -2763,53 +2790,65 @@ the python shell:
                        (when (python-nav-if-name-main)
                          (cons (point)
                                (progn (python-nav-forward-sexp-safe)
+                                      ;; Include ending newline
+                                      (forward-line 1)
                                       (point)))))))
                ;; Oh destructuring bind, how I miss you.
                (if-name-main-start (car if-name-main-start-end))
-               (if-name-main-end (cdr if-name-main-start-end)))
+               (if-name-main-end (cdr if-name-main-start-end))
+               (fillstr (make-string
+                         (- (line-number-at-pos if-name-main-end)
+                            (line-number-at-pos if-name-main-start)) ?\n)))
           (when if-name-main-start-end
             (goto-char if-name-main-start)
             (delete-region if-name-main-start if-name-main-end)
-            (insert
-             (make-string
-              (- (line-number-at-pos if-name-main-end)
-                 (line-number-at-pos if-name-main-start)) ?\n)))))
+            (insert fillstr))))
+      ;; Ensure there's only one coding cookie in the generated string.
+      (goto-char (point-min))
+      (when (looking-at-p (python-rx coding-cookie))
+        (forward-line 1)
+        (when (looking-at-p (python-rx coding-cookie))
+          (delete-region
+           (line-beginning-position) (line-end-position))))
       (buffer-substring-no-properties (point-min) (point-max)))))
 
-(declare-function compilation-fake-loc "compile"
-                  (marker file &optional line col))
+(defun python-shell-send-region (start end &optional send-main msg)
+  "Send the region delimited by START and END to inferior Python process.
+When optional argument SEND-MAIN is non-nil, allow execution of
+code inside blocks delimited by \"if __name__== '__main__':\".
+When called interactively SEND-MAIN defaults to nil, unless it's
+called with prefix argument.  When optional argument MSG is
+non-nil, forces display of a user-friendly message if there's no
+process running; defaults to t when called interactively."
+  (interactive
+   (list (region-beginning) (region-end) current-prefix-arg t))
+  (let* ((string (python-shell-buffer-substring start end (not send-main)))
+         (process (python-shell-get-process-or-error msg))
+         (original-string (buffer-substring-no-properties start end))
+         (_ (string-match "\\`\n*\\(.*\\)" original-string)))
+    (message "Sent: %s..." (match-string 1 original-string))
+    (python-shell-send-string string process)))
 
-(defun python-shell-send-region (start end &optional nomain)
-  "Send the region delimited by START and END to inferior Python process."
-  (interactive "r")
-  (let* ((python--use-fake-loc
-          (or python--use-fake-loc (not buffer-file-name)))
-         (string (python-shell-buffer-substring start end nomain))
-         (process (python-shell-get-or-create-process))
-         (_ (string-match "\\`\n*\\(.*\\)" string)))
-    (message "Sent: %s..." (match-string 1 string))
-    (let* ((temp-file-name (python-shell--save-temp-file string))
-           (file-name (or (buffer-file-name) temp-file-name)))
-      (python-shell-send-file file-name process temp-file-name t)
-      (unless python--use-fake-loc
-        (with-current-buffer (process-buffer process)
-          (compilation-fake-loc (copy-marker start) temp-file-name
-                                2)) ;; Not 1, because of the added coding line.
-        ))))
-
-(defun python-shell-send-buffer (&optional arg)
+(defun python-shell-send-buffer (&optional send-main msg)
   "Send the entire buffer to inferior Python process.
-With prefix ARG allow execution of code inside blocks delimited
-by \"if __name__== '__main__':\"."
-  (interactive "P")
+When optional argument SEND-MAIN is non-nil, allow execution of
+code inside blocks delimited by \"if __name__== '__main__':\".
+When called interactively SEND-MAIN defaults to nil, unless it's
+called with prefix argument.  When optional argument MSG is
+non-nil, forces display of a user-friendly message if there's no
+process running; defaults to t when called interactively."
+  (interactive (list current-prefix-arg t))
   (save-restriction
     (widen)
-    (python-shell-send-region (point-min) (point-max) (not arg))))
+    (python-shell-send-region (point-min) (point-max) send-main msg)))
 
-(defun python-shell-send-defun (arg)
+(defun python-shell-send-defun (&optional arg msg)
   "Send the current defun to inferior Python process.
-When argument ARG is non-nil do not include decorators."
-  (interactive "P")
+When argument ARG is non-nil do not include decorators.  When
+optional argument MSG is non-nil, forces display of a
+user-friendly message if there's no process running; defaults to
+t when called interactively."
+  (interactive (list current-prefix-arg t))
   (save-excursion
     (python-shell-send-region
      (progn
@@ -2825,42 +2864,60 @@ When argument ARG is non-nil do not include decorators."
      (progn
        (or (python-nav-end-of-defun)
            (end-of-line 1))
-       (point-marker)))))
+       (point-marker))
+     nil  ;; noop
+     msg)))
 
 (defun python-shell-send-file (file-name &optional process temp-file-name
-                                         delete)
+                                         delete msg)
   "Send FILE-NAME to inferior Python PROCESS.
 If TEMP-FILE-NAME is passed then that file is used for processing
-instead, while internally the shell will continue to use FILE-NAME.
-If DELETE is non-nil, delete the file afterwards."
-  (interactive "fFile to send: ")
-  (let* ((process (or process (python-shell-get-or-create-process)))
+instead, while internally the shell will continue to use
+FILE-NAME.  If TEMP-FILE-NAME and DELETE are non-nil, then
+TEMP-FILE-NAME is deleted after evaluation is performed.  When
+optional argument MSG is non-nil, forces display of a
+user-friendly message if there's no process running; defaults to
+t when called interactively."
+  (interactive
+   (list
+    (read-file-name "File to send: ")   ; file-name
+    nil                                 ; process
+    nil                                 ; temp-file-name
+    nil                                 ; delete
+    t))                                 ; msg
+  (let* ((process (or process (python-shell-get-process-or-error msg)))
+         (encoding (with-temp-buffer
+                     (insert-file-contents
+                      (or temp-file-name file-name))
+                     (python-info-encoding)))
+         (file-name (expand-file-name
+                     (or (file-remote-p file-name 'localname)
+                         file-name)))
          (temp-file-name (when temp-file-name
                            (expand-file-name
                             (or (file-remote-p temp-file-name 'localname)
-                                temp-file-name))))
-         (file-name (or (when file-name
-                          (expand-file-name
-                           (or (file-remote-p file-name 'localname)
-                               file-name)))
-                        temp-file-name)))
-    (when (not file-name)
-      (error "If FILE-NAME is nil then TEMP-FILE-NAME must be non-nil"))
+                                temp-file-name)))))
     (python-shell-send-string
      (format
-      (concat "__pyfile = open('''%s''');"
-              "exec(compile(__pyfile.read(), '''%s''', 'exec'));"
-              "__pyfile.close()%s")
-      (or temp-file-name file-name) file-name
-      (if delete (format "; import os; os.remove('''%s''')"
-                         (or temp-file-name file-name))
-        ""))
+      (concat
+       "import codecs, os;"
+       "__pyfile = codecs.open('''%s''', encoding='''%s''');"
+       "__code = __pyfile.read().encode('''%s''');"
+       "__pyfile.close();"
+       (when (and delete temp-file-name)
+         (format "os.remove('''%s''');" temp-file-name))
+       "exec(compile(__code, '''%s''', 'exec'));")
+      (or temp-file-name file-name) encoding encoding file-name)
      process)))
 
-(defun python-shell-switch-to-shell ()
-  "Switch to inferior Python process buffer."
-  (interactive)
-  (process-buffer (python-shell-get-or-create-process)) t)
+(defun python-shell-switch-to-shell (&optional msg)
+  "Switch to inferior Python process buffer.
+When optional argument MSG is non-nil, forces display of a
+user-friendly message if there's no process running; defaults to
+t when called interactively."
+  (interactive "p")
+  (pop-to-buffer
+   (process-buffer (python-shell-get-process-or-error msg)) nil t))
 
 (defun python-shell-send-setup-code ()
   "Send all setup code for shell.
@@ -2947,6 +3004,194 @@ the full statement in the case of imports."
   "25.1"
   "Completion string code must work for (i)pdb.")
 
+(defcustom python-shell-completion-native-disabled-interpreters
+  ;; PyPy's readline cannot handle some escape sequences yet.
+  (list "pypy")
+  "List of disabled interpreters.
+When a match is found, native completion is disabled."
+  :type '(repeat string))
+
+(defcustom python-shell-completion-native-enable t
+  "Enable readline based native completion."
+  :type 'boolean)
+
+(defcustom python-shell-completion-native-output-timeout 0.01
+  "Time in seconds to wait for completion output before giving up."
+  :type 'float)
+
+(defvar python-shell-completion-native-redirect-buffer
+  " *Python completions redirect*"
+  "Buffer to be used to redirect output of readline commands.")
+
+(defun python-shell-completion-native-interpreter-disabled-p ()
+  "Return non-nil if interpreter has native completion disabled."
+  (when python-shell-completion-native-disabled-interpreters
+    (string-match
+     (regexp-opt python-shell-completion-native-disabled-interpreters)
+     (file-name-nondirectory python-shell-interpreter))))
+
+(defun python-shell-completion-native-try ()
+  "Return non-nil if can trigger native completion."
+  (let ((python-shell-completion-native-enable t))
+    (python-shell-completion-native-get-completions
+     (get-buffer-process (current-buffer))
+     nil "int")))
+
+(defun python-shell-completion-native-setup ()
+  "Try to setup native completion, return non-nil on success."
+  (let ((process (python-shell-get-process)))
+    (python-shell-send-string
+     (funcall
+      'mapconcat
+      #'identity
+      (list
+       "try:"
+       "    import readline, rlcompleter"
+       ;; Remove parens on callables as it breaks completion on
+       ;; arguments (e.g. str(Ari<tab>)).
+       "    class Completer(rlcompleter.Completer):"
+       "        def _callable_postfix(self, val, word):"
+       "            return word"
+       "    readline.set_completer(Completer().complete)"
+       "    if readline.__doc__ and 'libedit' in readline.__doc__:"
+       "        readline.parse_and_bind('bind ^I rl_complete')"
+       "    else:"
+       "        readline.parse_and_bind('tab: complete')"
+       "    print ('python.el: readline is available')"
+       "except:"
+       "    print ('python.el: readline not available')")
+      "\n")
+     process)
+    (python-shell-accept-process-output process)
+    (when (save-excursion
+            (re-search-backward
+             (regexp-quote "python.el: readline is available") nil t 1))
+      (python-shell-completion-native-try))))
+
+(defun python-shell-completion-native-turn-off (&optional msg)
+  "Turn off shell native completions.
+With argument MSG show deactivation message."
+  (interactive "p")
+  (python-shell-with-shell-buffer
+    (set (make-local-variable 'python-shell-completion-native-enable) nil)
+    (when msg
+      (message "Shell native completion is disabled, using fallback"))))
+
+(defun python-shell-completion-native-turn-on (&optional msg)
+  "Turn on shell native completions.
+With argument MSG show deactivation message."
+  (interactive "p")
+  (python-shell-with-shell-buffer
+    (set (make-local-variable 'python-shell-completion-native-enable) t)
+    (python-shell-completion-native-turn-on-maybe msg)))
+
+(defun python-shell-completion-native-turn-on-maybe (&optional msg)
+  "Turn on native completions if enabled and available.
+With argument MSG show activation/deactivation message."
+  (interactive "p")
+  (python-shell-with-shell-buffer
+    (when python-shell-completion-native-enable
+      (cond
+       ((python-shell-completion-native-interpreter-disabled-p)
+        (python-shell-completion-native-turn-off msg))
+       ((python-shell-completion-native-setup)
+        (when msg
+          (message "Shell native completion is enabled.")))
+       (t (lwarn
+           '(python python-shell-completion-native-turn-on-maybe)
+           :warning
+           (concat
+            "Your `python-shell-interpreter' doesn't seem to "
+            "support readline, yet `python-shell-completion-native' "
+            (format "was `t' and %S is not part of the "
+                    (file-name-nondirectory python-shell-interpreter))
+            "`python-shell-completion-native-disabled-interpreters' "
+            "list.  Native completions have been disabled locally. "))
+          (python-shell-completion-native-turn-off msg))))))
+
+(defun python-shell-completion-native-turn-on-maybe-with-msg ()
+  "Like `python-shell-completion-native-turn-on-maybe' but force messages."
+  (python-shell-completion-native-turn-on-maybe t))
+
+(add-hook 'inferior-python-mode-hook
+          #'python-shell-completion-native-turn-on-maybe-with-msg)
+
+(defun python-shell-completion-native-toggle (&optional msg)
+  "Toggle shell native completion.
+With argument MSG show activation/deactivation message."
+  (interactive "p")
+  (python-shell-with-shell-buffer
+    (if python-shell-completion-native-enable
+        (python-shell-completion-native-turn-off msg)
+      (python-shell-completion-native-turn-on msg))
+    python-shell-completion-native-enable))
+
+(defun python-shell-completion-native-get-completions (process import input)
+  "Get completions using native readline for PROCESS.
+When IMPORT is non-nil takes precedence over INPUT for
+completion."
+  (when (and python-shell-completion-native-enable
+             (python-util-comint-last-prompt)
+             (>= (point) (cdr (python-util-comint-last-prompt))))
+    (let* ((input (or import input))
+           (original-filter-fn (process-filter process))
+           (redirect-buffer (get-buffer-create
+                             python-shell-completion-native-redirect-buffer))
+           (separators (python-rx
+                        (or whitespace open-paren close-paren)))
+           (trigger "\t\t\t")
+           (new-input (concat input trigger))
+           (input-length
+            (save-excursion
+              (+ (- (point-max) (comint-bol)) (length new-input))))
+           (delete-line-command (make-string input-length ?\b))
+           (input-to-send (concat new-input delete-line-command)))
+      ;; Ensure restoring the process filter, even if the user quits
+      ;; or there's some other error.
+      (unwind-protect
+          (with-current-buffer redirect-buffer
+            ;; Cleanup the redirect buffer
+            (delete-region (point-min) (point-max))
+            ;; Mimic `comint-redirect-send-command', unfortunately it
+            ;; can't be used here because it expects a newline in the
+            ;; command and that's exactly what we are trying to avoid.
+            (let ((comint-redirect-echo-input nil)
+                  (comint-redirect-verbose nil)
+                  (comint-redirect-perform-sanity-check nil)
+                  (comint-redirect-insert-matching-regexp nil)
+                  ;; Feed it some regex that will never match.
+                  (comint-redirect-finished-regexp "^\\'$")
+                  (comint-redirect-output-buffer redirect-buffer))
+              ;; Compatibility with Emacs 24.x.  Comint changed and
+              ;; now `comint-redirect-filter' gets 3 args.  This
+              ;; checks which version of `comint-redirect-filter' is
+              ;; in use based on its args and uses `apply-partially'
+              ;; to make it up for the 3 args case.
+              (if (= (length
+                      (help-function-arglist 'comint-redirect-filter)) 3)
+                  (set-process-filter
+                   process (apply-partially
+                            #'comint-redirect-filter original-filter-fn))
+                (set-process-filter process #'comint-redirect-filter))
+              (process-send-string process input-to-send)
+              (accept-process-output
+               process
+               python-shell-completion-native-output-timeout)
+              ;; XXX: can't use `python-shell-accept-process-output'
+              ;; here because there are no guarantees on how output
+              ;; ends.  The workaround here is to call
+              ;; `accept-process-output' until we don't find anything
+              ;; else to accept.
+              (while (accept-process-output
+                      process
+                      python-shell-completion-native-output-timeout))
+              (cl-remove-duplicates
+               (split-string
+                (buffer-substring-no-properties
+                 (point-min) (point-max))
+                separators t))))
+        (set-process-filter process original-filter-fn)))))
+
 (defun python-shell-completion-get-completions (process import input)
   "Do completion at point using PROCESS for IMPORT or INPUT.
 When IMPORT is non-nil takes precedence over INPUT for
@@ -3004,11 +3249,15 @@ using that one instead of current buffer's process."
                 last-prompt-end
               (forward-char (length (match-string-no-properties 0)))
               (point))))
-         (end (point)))
+         (end (point))
+         (completion-fn
+          (if python-shell-completion-native-enable
+              #'python-shell-completion-native-get-completions
+            #'python-shell-completion-get-completions)))
     (list start end
           (completion-table-dynamic
            (apply-partially
-            #'python-shell-completion-get-completions
+            completion-fn
             process import-statement)))))
 
 (define-obsolete-function-alias
@@ -4154,6 +4403,32 @@ operator."
                 (group (* not-newline))
                 (* whitespace) line-end))
     (string-equal "" (match-string-no-properties 1))))
+
+(defun python-info-encoding-from-cookie ()
+  "Detect current buffer's encoding from its coding cookie.
+Returns the enconding as a symbol."
+  (let ((first-two-lines
+         (save-excursion
+           (save-restriction
+             (widen)
+             (goto-char (point-min))
+             (forward-line 2)
+             (buffer-substring-no-properties
+              (point)
+              (point-min))))))
+    (when (string-match (python-rx coding-cookie) first-two-lines)
+      (intern (match-string-no-properties 1 first-two-lines)))))
+
+(defun python-info-encoding ()
+  "Return encoding for file.
+Try `python-info-encoding-from-cookie', if none is found then
+default to utf-8."
+  ;; If no enconding is defined, then it's safe to use UTF-8: Python 2
+  ;; uses ASCII as default while Python 3 uses UTF-8.  This means that
+  ;; in the worst case escenario python.el will make things work for
+  ;; Python 2 files with unicode data and no encoding defined.
+  (or (python-info-encoding-from-cookie)
+      'utf-8))
 
 
 ;;; Utility functions

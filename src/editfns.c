@@ -93,6 +93,17 @@ static char const *initial_tz;
    It is OK (though a bit slower) if the user chooses this value.  */
 static char dump_tz_string[] = "TZ=UtC0";
 
+/* The cached value of Vsystem_name.  This is used only to compare it
+   to Vsystem_name, so it need not be visible to the GC.  */
+static Lisp_Object cached_system_name;
+
+static void
+init_and_cache_system_name (void)
+{
+  init_system_name ();
+  cached_system_name = Vsystem_name;
+}
+
 void
 init_editfns (void)
 {
@@ -102,7 +113,7 @@ init_editfns (void)
   Lisp_Object tem;
 
   /* Set up system_name even when dumping.  */
-  init_system_name ();
+  init_and_cache_system_name ();
 
 #ifndef CANNOT_DUMP
   /* When just dumping out, set the time zone to a known unlikely value
@@ -1365,6 +1376,8 @@ DEFUN ("system-name", Fsystem_name, Ssystem_name, 0, 0, 0,
        doc: /* Return the host name of the machine you are running on, as a string.  */)
   (void)
 {
+  if (EQ (Vsystem_name, cached_system_name))
+    init_and_cache_system_name ();
   return Vsystem_name;
 }
 
@@ -4965,6 +4978,7 @@ functions if all the text being accessed has this property.  */);
 
   DEFVAR_LISP ("system-name", Vsystem_name,
 	       doc: /* The host name of the machine Emacs is running on.  */);
+  Vsystem_name = cached_system_name = Qnil;
 
   DEFVAR_LISP ("user-full-name", Vuser_full_name,
 	       doc: /* The full name of the user logged in.  */);

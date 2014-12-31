@@ -740,6 +740,39 @@ def b()
    (python-tests-self-insert ":")
    (should (= (current-indentation) 0))))
 
+(ert-deftest python-indent-electric-colon-2 ()
+  "Test indentation case for dedenter."
+  (python-tests-with-temp-buffer
+   "
+if do:
+    something()
+    else
+"
+   (python-tests-look-at "else")
+   (goto-char (line-end-position))
+   (python-tests-self-insert ":")
+   (should (= (current-indentation) 0))))
+
+(ert-deftest python-indent-electric-colon-3 ()
+  "Test indentation case for multi-line dedenter."
+  (python-tests-with-temp-buffer
+   "
+if do:
+    something()
+    elif (this
+          and
+          that)
+"
+   (python-tests-look-at "that)")
+   (goto-char (line-end-position))
+   (python-tests-self-insert ":")
+   (python-tests-look-at "elif" -1)
+   (should (= (current-indentation) 0))
+   (python-tests-look-at "and")
+   (should (= (current-indentation) 6))
+   (python-tests-look-at "that)")
+   (should (= (current-indentation) 6))))
+
 (ert-deftest python-indent-region-1 ()
   "Test indentation case from Bug#18843."
   (let ((contents "
@@ -1775,52 +1808,41 @@ def f():
 (defvar python-tests-shell-interpreter "python")
 
 (ert-deftest python-shell-get-process-name-1 ()
-  "Check process name calculation on different scenarios."
+  "Check process name calculation sans `buffer-file-name'."
   (python-tests-with-temp-buffer
-      ""
-    (should (string= (python-shell-get-process-name nil)
-                     python-shell-buffer-name))
-    ;; When the `current-buffer' doesn't have `buffer-file-name', even
-    ;; if dedicated flag is non-nil should not include its name.
-    (should (string= (python-shell-get-process-name t)
-                     python-shell-buffer-name)))
+   ""
+   (should (string= (python-shell-get-process-name nil)
+                    python-shell-buffer-name))
+   (should (string= (python-shell-get-process-name t)
+                    (format "%s[%s]" python-shell-buffer-name (buffer-name))))))
+
+(ert-deftest python-shell-get-process-name-2 ()
+  "Check process name calculation with `buffer-file-name'."
   (python-tests-with-temp-file
-      ""
-    ;; `buffer-file-name' is non-nil but the dedicated flag is nil and
-    ;; should be respected.
-    (should (string= (python-shell-get-process-name nil)
-                     python-shell-buffer-name))
-    (should (string=
-             (python-shell-get-process-name t)
-             (format "%s[%s]" python-shell-buffer-name buffer-file-name)))))
+   ""
+   ;; `buffer-file-name' is non-nil but the dedicated flag is nil and
+   ;; should be respected.
+   (should (string= (python-shell-get-process-name nil)
+                    python-shell-buffer-name))
+   (should (string=
+            (python-shell-get-process-name t)
+            (format "%s[%s]" python-shell-buffer-name (buffer-name))))))
 
 (ert-deftest python-shell-internal-get-process-name-1 ()
-  "Check the internal process name is config-unique."
-  (let* ((python-shell-interpreter python-tests-shell-interpreter)
-         (python-shell-interpreter-args "")
-         (python-shell-prompt-regexp ">>> ")
-         (python-shell-prompt-block-regexp "[.][.][.] ")
-         (python-shell-setup-codes "")
-         (python-shell-process-environment "")
-         (python-shell-extra-pythonpaths "")
-         (python-shell-exec-path "")
-         (python-shell-virtualenv-path "")
-         (expected (python-tests-with-temp-buffer
-                       "" (python-shell-internal-get-process-name))))
-    ;; Same configurations should match.
-    (should
-     (string= expected
-              (python-tests-with-temp-buffer
-                  "" (python-shell-internal-get-process-name))))
-    (let ((python-shell-interpreter-args "-B"))
-      ;; A minimal change should generate different names.
-      (should
-       (not (string=
-             expected
-             (python-tests-with-temp-buffer
-                 "" (python-shell-internal-get-process-name))))))))
+  "Check the internal process name is buffer-unique sans `buffer-file-name'."
+  (python-tests-with-temp-buffer
+   ""
+   (should (string= (python-shell-internal-get-process-name)
+                    (format "%s[%s]" python-shell-internal-buffer-name (buffer-name))))))
 
-(ert-deftest python-shell-parse-command-1 ()
+(ert-deftest python-shell-internal-get-process-name-2 ()
+  "Check the internal process name is buffer-unique with `buffer-file-name'."
+  (python-tests-with-temp-file
+   ""
+   (should (string= (python-shell-internal-get-process-name)
+                    (format "%s[%s]" python-shell-internal-buffer-name (buffer-name))))))
+
+(ert-deftest python-shell-calculate-command-1 ()
   "Check the command to execute is calculated correctly.
 Using `python-shell-interpreter' and
 `python-shell-interpreter-args'."
@@ -1832,7 +1854,7 @@ Using `python-shell-interpreter' and
              (format "%s %s"
                      python-shell-interpreter
                      python-shell-interpreter-args)
-             (python-shell-parse-command)))))
+             (python-shell-calculate-command)))))
 
 (ert-deftest python-shell-calculate-process-environment-1 ()
   "Test `python-shell-process-environment' modification."
@@ -1857,17 +1879,17 @@ Using `python-shell-interpreter' and
                     path-separator original-pythonpath)))))
 
 (ert-deftest python-shell-calculate-process-environment-3 ()
-  "Test `python-shell-virtualenv-path' modification."
+  "Test `python-shell-virtualenv-root' modification."
   (let* ((original-path (or (getenv "PATH") ""))
-         (python-shell-virtualenv-path
+         (python-shell-virtualenv-root
           (directory-file-name user-emacs-directory))
          (process-environment
           (python-shell-calculate-process-environment)))
     (should (not (getenv "PYTHONHOME")))
-    (should (string= (getenv "VIRTUAL_ENV") python-shell-virtualenv-path))
+    (should (string= (getenv "VIRTUAL_ENV") python-shell-virtualenv-root))
     (should (equal (getenv "PATH")
                    (format "%s/bin%s%s"
-                           python-shell-virtualenv-path
+                           python-shell-virtualenv-root
                            path-separator original-path)))))
 
 (ert-deftest python-shell-calculate-process-environment-4 ()
@@ -1900,13 +1922,13 @@ Using `python-shell-interpreter' and
 (ert-deftest python-shell-calculate-exec-path-2 ()
   "Test `python-shell-exec-path' modification."
   (let* ((original-exec-path exec-path)
-         (python-shell-virtualenv-path
+         (python-shell-virtualenv-root
           (directory-file-name (expand-file-name user-emacs-directory)))
          (exec-path (python-shell-calculate-exec-path)))
     (should (equal
              exec-path
              (append (cons
-                      (format "%s/bin" python-shell-virtualenv-path)
+                      (format "%s/bin" python-shell-virtualenv-root)
                       original-exec-path))))))
 
 (ert-deftest python-shell-make-comint-1 ()
@@ -1922,7 +1944,7 @@ Using `python-shell-interpreter' and
          (shell-buffer
           (python-tests-with-temp-buffer
            "" (python-shell-make-comint
-               (python-shell-parse-command) proc-name)))
+               (python-shell-calculate-command) proc-name)))
          (process (get-buffer-process shell-buffer)))
     (unwind-protect
         (progn
@@ -1943,7 +1965,7 @@ Using `python-shell-interpreter' and
          (shell-buffer
           (python-tests-with-temp-buffer
            "" (python-shell-make-comint
-               (python-shell-parse-command) proc-name nil t)))
+               (python-shell-calculate-command) proc-name nil t)))
          (process (get-buffer-process shell-buffer)))
     (unwind-protect
         (progn
@@ -2010,7 +2032,7 @@ and `python-shell-interpreter-args' in the new shell buffer."
             (setenv "PYTHONSTARTUP" startup-file)
             (python-tests-with-temp-buffer
              "" (python-shell-make-comint
-                 (python-shell-parse-command) proc-name nil))))
+                 (python-shell-calculate-command) proc-name nil))))
          (process (get-buffer-process shell-buffer)))
     (unwind-protect
         (progn
@@ -2040,10 +2062,10 @@ and `python-shell-interpreter-args' in the new shell buffer."
            (dedicated-proc-name (python-shell-get-process-name t))
            (global-shell-buffer
             (python-shell-make-comint
-             (python-shell-parse-command) global-proc-name))
+             (python-shell-calculate-command) global-proc-name))
            (dedicated-shell-buffer
             (python-shell-make-comint
-             (python-shell-parse-command) dedicated-proc-name))
+             (python-shell-calculate-command) dedicated-proc-name))
            (global-process (get-buffer-process global-shell-buffer))
            (dedicated-process (get-buffer-process dedicated-shell-buffer)))
       (unwind-protect
@@ -2060,84 +2082,6 @@ and `python-shell-interpreter-args' in the new shell buffer."
             (should (not (python-shell-get-process))))
         (ignore-errors (kill-buffer global-shell-buffer))
         (ignore-errors (kill-buffer dedicated-shell-buffer))))))
-
-(ert-deftest python-shell-get-or-create-process-1 ()
-  "Check shell dedicated process creation."
-  (skip-unless (executable-find python-tests-shell-interpreter))
-  (python-tests-with-temp-file
-   ""
-   (let* ((cmd
-           (concat (executable-find python-tests-shell-interpreter) " -i"))
-          (use-dialog-box)
-          (dedicated-process-name (python-shell-get-process-name t))
-          (dedicated-process (python-shell-get-or-create-process cmd t))
-          (dedicated-shell-buffer (process-buffer dedicated-process)))
-     (unwind-protect
-         (progn
-           (set-process-query-on-exit-flag dedicated-process nil)
-           ;; should be dedicated.
-           (should (equal (process-name dedicated-process)
-                          dedicated-process-name))
-           (kill-buffer dedicated-shell-buffer)
-           ;; Check there are no processes for current buffer.
-           (should (not (python-shell-get-process))))
-       (ignore-errors (kill-buffer dedicated-shell-buffer))))))
-
-(ert-deftest python-shell-get-or-create-process-2 ()
-  "Check shell global process creation."
-  (skip-unless (executable-find python-tests-shell-interpreter))
-  (python-tests-with-temp-file
-   ""
-   (let* ((cmd
-           (concat (executable-find python-tests-shell-interpreter) " -i"))
-          (use-dialog-box)
-          (process-name (python-shell-get-process-name nil))
-          (process (python-shell-get-or-create-process cmd))
-          (shell-buffer (process-buffer process)))
-     (unwind-protect
-         (progn
-           (set-process-query-on-exit-flag process nil)
-           ;; should be global.
-           (should (equal (process-name process) process-name))
-           (kill-buffer shell-buffer)
-           ;; Check there are no processes for current buffer.
-           (should (not (python-shell-get-process))))
-       (ignore-errors (kill-buffer shell-buffer))))))
-
-(ert-deftest python-shell-get-or-create-process-3 ()
-  "Check shell dedicated/global process preference."
-  (skip-unless (executable-find python-tests-shell-interpreter))
-  (python-tests-with-temp-file
-   ""
-   (let* ((cmd
-           (concat (executable-find python-tests-shell-interpreter) " -i"))
-          (python-shell-interpreter python-tests-shell-interpreter)
-          (use-dialog-box)
-          (dedicated-process-name (python-shell-get-process-name t))
-          (global-process)
-          (dedicated-process))
-     (progn
-       ;; Create global process
-       (run-python cmd nil)
-       (setq global-process (get-buffer-process "*Python*"))
-       (should global-process)
-       (set-process-query-on-exit-flag global-process nil)
-       ;; Create dedicated process
-       (run-python cmd t)
-       (setq dedicated-process (get-process dedicated-process-name))
-       (should dedicated-process)
-       (set-process-query-on-exit-flag dedicated-process nil)
-       ;; Prefer dedicated.
-       (should (equal (python-shell-get-or-create-process)
-                      dedicated-process))
-       ;; Kill the dedicated so the global takes over.
-       (kill-buffer (process-buffer dedicated-process))
-       ;; Detect global.
-       (should (equal (python-shell-get-or-create-process) global-process))
-       ;; Kill the global.
-       (kill-buffer (process-buffer global-process))
-       ;; Check there are no processes for current buffer.
-       (should (not (python-shell-get-process)))))))
 
 (ert-deftest python-shell-internal-get-or-create-process-1 ()
   "Check internal shell process creation fallback."
@@ -2424,8 +2368,228 @@ and `python-shell-interpreter-args' in the new shell buffer."
                            "^\\(o\\.t \\|\\)")))
       (ignore-errors (delete-file startup-file)))))
 
+(ert-deftest python-shell-buffer-substring-1 ()
+  "Selecting a substring of the whole buffer must match its contents."
+  (python-tests-with-temp-buffer
+   "
+class Foo(models.Model):
+    pass
+
+
+class Bar(models.Model):
+    pass
+"
+   (should (string= (buffer-string)
+                    (python-shell-buffer-substring (point-min) (point-max))))))
+
+(ert-deftest python-shell-buffer-substring-2 ()
+  "Main block should be removed if NOMAIN is non-nil."
+  (python-tests-with-temp-buffer
+   "
+class Foo(models.Model):
+    pass
+
+class Bar(models.Model):
+    pass
+
+if __name__ == \"__main__\":
+    foo = Foo()
+    print (foo)
+"
+   (should (string= (python-shell-buffer-substring (point-min) (point-max) t)
+                    "
+class Foo(models.Model):
+    pass
+
+class Bar(models.Model):
+    pass
+
+
+
+
+"))))
+
+(ert-deftest python-shell-buffer-substring-3 ()
+  "Main block should be removed if NOMAIN is non-nil."
+  (python-tests-with-temp-buffer
+   "
+class Foo(models.Model):
+    pass
+
+if __name__ == \"__main__\":
+    foo = Foo()
+    print (foo)
+
+class Bar(models.Model):
+    pass
+"
+   (should (string= (python-shell-buffer-substring (point-min) (point-max) t)
+                    "
+class Foo(models.Model):
+    pass
+
+
+
+
+
+class Bar(models.Model):
+    pass
+"))))
+
+(ert-deftest python-shell-buffer-substring-4 ()
+  "Coding cookie should be added for substrings."
+  (python-tests-with-temp-buffer
+   "# coding: latin-1
+
+class Foo(models.Model):
+    pass
+
+if __name__ == \"__main__\":
+    foo = Foo()
+    print (foo)
+
+class Bar(models.Model):
+    pass
+"
+   (should (string= (python-shell-buffer-substring
+                     (python-tests-look-at "class Foo(models.Model):")
+                     (progn (python-nav-forward-sexp) (point)))
+                    "# -*- coding: latin-1 -*-
+
+class Foo(models.Model):
+    pass"))))
+
+(ert-deftest python-shell-buffer-substring-5 ()
+  "The proper amount of blank lines is added for a substring."
+  (python-tests-with-temp-buffer
+   "# coding: latin-1
+
+class Foo(models.Model):
+    pass
+
+if __name__ == \"__main__\":
+    foo = Foo()
+    print (foo)
+
+class Bar(models.Model):
+    pass
+"
+   (should (string= (python-shell-buffer-substring
+                     (python-tests-look-at "class Bar(models.Model):")
+                     (progn (python-nav-forward-sexp) (point)))
+                    "# -*- coding: latin-1 -*-
+
+
+
+
+
+
+
+
+class Bar(models.Model):
+    pass"))))
+
+(ert-deftest python-shell-buffer-substring-6 ()
+  "Handle substring with coding cookie in the second line."
+  (python-tests-with-temp-buffer
+   "
+# coding: latin-1
+
+class Foo(models.Model):
+    pass
+
+if __name__ == \"__main__\":
+    foo = Foo()
+    print (foo)
+
+class Bar(models.Model):
+    pass
+"
+   (should (string= (python-shell-buffer-substring
+                     (python-tests-look-at "# coding: latin-1")
+                     (python-tests-look-at "if __name__ == \"__main__\":"))
+                    "# -*- coding: latin-1 -*-
+
+
+class Foo(models.Model):
+    pass
+
+"))))
+
+(ert-deftest python-shell-buffer-substring-7 ()
+  "Ensure first coding cookie gets precedence."
+  (python-tests-with-temp-buffer
+   "# coding: utf-8
+# coding: latin-1
+
+class Foo(models.Model):
+    pass
+
+if __name__ == \"__main__\":
+    foo = Foo()
+    print (foo)
+
+class Bar(models.Model):
+    pass
+"
+   (should (string= (python-shell-buffer-substring
+                     (python-tests-look-at "# coding: latin-1")
+                     (python-tests-look-at "if __name__ == \"__main__\":"))
+                    "# -*- coding: utf-8 -*-
+
+
+class Foo(models.Model):
+    pass
+
+"))))
+
+(ert-deftest python-shell-buffer-substring-8 ()
+  "Ensure first coding cookie gets precedence when sending whole buffer."
+  (python-tests-with-temp-buffer
+   "# coding: utf-8
+# coding: latin-1
+
+class Foo(models.Model):
+    pass
+"
+   (should (string= (python-shell-buffer-substring (point-min) (point-max))
+                    "# coding: utf-8
+
+
+class Foo(models.Model):
+    pass
+"))))
+
+(ert-deftest python-shell-buffer-substring-9 ()
+  "Check substring starting from `point-min'."
+  (python-tests-with-temp-buffer
+   "# coding: utf-8
+
+class Foo(models.Model):
+    pass
+
+class Bar(models.Model):
+    pass
+"
+   (should (string= (python-shell-buffer-substring
+                     (point-min)
+                     (python-tests-look-at "class Bar(models.Model):"))
+                    "# coding: utf-8
+
+class Foo(models.Model):
+    pass
+
+"))))
+
 
 ;;; Shell completion
+
+(ert-deftest python-shell-completion-native-interpreter-disabled-p-1 ()
+  (let* ((python-shell-completion-native-disabled-interpreters (list "pypy"))
+         (python-shell-interpreter "/some/path/to/bin/pypy"))
+    (should (python-shell-completion-native-interpreter-disabled-p))))
+
+
 
 
 ;;; PDB Track integration
@@ -3738,6 +3902,85 @@ foo = True  # another comment
    (forward-line 1)
    (should (python-info-current-line-empty-p))))
 
+(ert-deftest python-info-encoding-from-cookie-1 ()
+  "Should detect it on first line."
+  (python-tests-with-temp-buffer
+   "# coding=latin-1
+
+foo = True  # another comment
+"
+   (should (eq (python-info-encoding-from-cookie) 'latin-1))))
+
+(ert-deftest python-info-encoding-from-cookie-2 ()
+  "Should detect it on second line."
+  (python-tests-with-temp-buffer
+   "
+# coding=latin-1
+
+foo = True  # another comment
+"
+   (should (eq (python-info-encoding-from-cookie) 'latin-1))))
+
+(ert-deftest python-info-encoding-from-cookie-3 ()
+  "Should not be detected on third line (and following ones)."
+  (python-tests-with-temp-buffer
+   "
+
+# coding=latin-1
+foo = True  # another comment
+"
+   (should (not (python-info-encoding-from-cookie)))))
+
+(ert-deftest python-info-encoding-from-cookie-4 ()
+  "Should detect Emacs style."
+  (python-tests-with-temp-buffer
+   "# -*- coding: latin-1 -*-
+
+foo = True  # another comment"
+   (should (eq (python-info-encoding-from-cookie) 'latin-1))))
+
+(ert-deftest python-info-encoding-from-cookie-5 ()
+  "Should detect Vim style."
+  (python-tests-with-temp-buffer
+   "# vim: set fileencoding=latin-1 :
+
+foo = True  # another comment"
+   (should (eq (python-info-encoding-from-cookie) 'latin-1))))
+
+(ert-deftest python-info-encoding-from-cookie-6 ()
+  "First cookie wins."
+  (python-tests-with-temp-buffer
+   "# -*- coding: iso-8859-1 -*-
+# vim: set fileencoding=latin-1 :
+
+foo = True  # another comment"
+   (should (eq (python-info-encoding-from-cookie) 'iso-8859-1))))
+
+(ert-deftest python-info-encoding-from-cookie-7 ()
+  "First cookie wins."
+  (python-tests-with-temp-buffer
+   "# vim: set fileencoding=latin-1 :
+# -*- coding: iso-8859-1 -*-
+
+foo = True  # another comment"
+   (should (eq (python-info-encoding-from-cookie) 'latin-1))))
+
+(ert-deftest python-info-encoding-1 ()
+  "Should return the detected encoding from cookie."
+  (python-tests-with-temp-buffer
+   "# vim: set fileencoding=latin-1 :
+
+foo = True  # another comment"
+   (should (eq (python-info-encoding) 'latin-1))))
+
+(ert-deftest python-info-encoding-2 ()
+  "Should default to utf-8."
+  (python-tests-with-temp-buffer
+   "# No encoding for you
+
+foo = True  # another comment"
+   (should (eq (python-info-encoding) 'utf-8))))
+
 
 ;;; Utility functions
 
@@ -3767,7 +4010,7 @@ def foo(a, b, c):
             . "from IPython.core.completerlib import module_completion")
            (python-shell-completion-string-code
             . "';'.join(get_ipython().Completer.all_completions('''%s'''))\n")
-           (python-shell-virtualenv-path
+           (python-shell-virtualenv-root
             . "/home/user/.virtualenvs/project"))))
     (with-current-buffer buffer
       (kill-all-local-variables)

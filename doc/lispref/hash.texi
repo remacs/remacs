@@ -188,6 +188,8 @@ Such objects may be added to the hash table after it is created.
 
 @node Hash Access
 @section Hash Table Access
+@cindex accessing hash tables
+@cindex hash table access
 
   This section describes the functions for accessing and storing
 associations in a hash table.  In general, any Lisp object can be used

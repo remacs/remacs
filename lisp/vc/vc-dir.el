@@ -169,6 +169,9 @@ See `run-hooks'."
     (define-key map [ise]
       '(menu-item "Isearch Files..." vc-dir-isearch
 		  :help "Incremental search a string in the marked files"))
+    (define-key map [display]
+      '(menu-item "Display in Other Window" vc-dir-display-file
+		  :help "Display the file on the current line, in another window"))
     (define-key map [open-other]
       '(menu-item "Open in Other Window" vc-dir-find-file-other-window
 		  :help "Find the file on the current line, in another window"))
@@ -273,6 +276,7 @@ See `run-hooks'."
     (define-key map "e" 'vc-dir-find-file) ; dired-mode compatibility
     (define-key map "\C-m" 'vc-dir-find-file)
     (define-key map "o" 'vc-dir-find-file-other-window)
+    (define-key map "\C-o" 'vc-dir-display-file)
     (define-key map "\C-c\C-c" 'vc-dir-kill-dir-status-process)
     (define-key map [down-mouse-3] 'vc-dir-menu)
     (define-key map [mouse-2] 'vc-dir-toggle-mark)
@@ -754,6 +758,13 @@ that share the same state."
   (interactive (list last-nonmenu-event))
   (if event (posn-set-point (event-end event)))
   (find-file-other-window (vc-dir-current-file)))
+
+(defun vc-dir-display-file (&optional event)
+  "Display the file on the current line, in another window."
+  (interactive (list last-nonmenu-event))
+  (if event (posn-set-point (event-end event)))
+  (display-buffer (find-file-noselect (vc-dir-current-file))
+		  t))
 
 (defun vc-dir-isearch ()
   "Search for a string through all marked buffers using Isearch."

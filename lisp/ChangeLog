@@ -1,3 +1,324 @@
+2014-12-30  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* Makefile.in (semantic): Simplify.
+
+2014-12-30  Juri Linkov  <juri@linkov.net>
+
+	* net/eww.el (eww-isearch-next-buffer): New function.
+	(eww-mode): Set multi-isearch-next-buffer-function to it.
+
+2014-12-30  Dmitry Gutov  <dgutov@yandex.ru>
+
+	* progmodes/xref.el (xref-find-definitions): Mention "no
+	identifier at point" case in the docstring.
+
+	* menu-bar.el (menu-bar-goto-uses-etags-p): New function.
+	(menu-bar-goto-menu): Use it to show or hide the `set-tags-name'
+	and `separator-tag-file' items.
+
+2014-12-29  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* obsolete/pc-select.el (pc-selection-mode): Use system-type.
+	This is instead of system-name, which is both wrong here and obsolete.
+
+2014-12-29  Dmitry Gutov  <dgutov@yandex.ru>
+
+	* menu-bar.el (menu-bar-next-tag-other-window)
+	(menu-bar-next-tag): Remove.
+
+2014-12-29  K. Handa  <handa@gnu.org>
+
+	* international/mule.el (make-translation-table-from-alist):
+	Accept nil or zero-length vector for FROM and TO.
+
+2014-12-29  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	* net/eww.el (eww-mode): Truncate overlong lines for prettier
+	display when resizing.
+
+	* net/shr.el (shr-width): Default to using the window width when
+	rendering.
+
+2014-12-29  Dmitry Gutov  <dgutov@yandex.ru>
+
+	Unbreak jumping to an alias's definition.
+
+	* emacs-lisp/find-func.el (find-function-library): Return a pair
+	(ORIG-FUNCTION . LIBRARY) instead of just its second element.
+	(find-function-noselect): Use it.
+
+	* progmodes/elisp-mode.el (elisp--xref-identifier-file): Rename to
+	`elisp--xref-identifier-location', incorporate logic from
+	`elisp--xref-find-definitions', use the changed
+	`find-function-library' return value.
+
+2014-12-29  Juri Linkov  <juri@linkov.net>
+
+	* comint.el (comint-history-isearch-message): Use field-beginning
+	instead of comint-line-beginning-position - that's more fixes for
+	http://lists.gnu.org/archive/html/emacs-devel/2014-12/msg00305.html
+	(comint-history-isearch-message): Fix args of isearch-message-prefix.
+
+2014-12-29  Juri Linkov  <juri@linkov.net>
+
+	* vc/vc-dir.el (vc-dir-display-file): New command (bug#19450).
+	(vc-dir-mode-map): Bind it to "\C-o".
+	(vc-dir-menu-map): Add it to menu.
+
+2014-12-29  Dmitry Gutov  <dgutov@yandex.ru>
+
+	* progmodes/etags.el (find-tag-other-window)
+	(find-tag-other-frame, find-tag-regexp, tags-loop-continue)
+	(tags-apropos): Declare obsolete.
+
+	* menu-bar.el (menu-bar-goto-menu): Replace all but one etags item
+	with xref ones.
+
+2014-12-28  Eli Zaretskii  <eliz@gnu.org>
+
+	* international/mule.el (define-coding-system): Fix typos in the
+	doc string.
+
+2014-12-28  Kenichi Handa  <handa@gnu.org>
+
+	* international/mule.el (define-coding-system): Improve the doc
+	string.
+
+2014-12-28  Ivan Shmakov  <ivan@siamics.net>
+
+	* net/shr.el (shr-tag-table): Fix handling of tbody/header/footer
+	elements in tables (bug#19444).
+
+	* net/eww.el (eww-handle-link): Fix typo in "up" rel handling
+	(bug#19445).
+
+2014-12-28  Juri Linkov  <juri@linkov.net>
+
+	* vc/compare-w.el: Require diff-mode for diff faces.
+	(compare-windows-removed, compare-windows-added): New faces
+	inheriting from diff faces.
+	(compare-windows): Define obsolete face alias.
+	(compare-windows-highlight): Replace face `compare-windows' with
+	new faces `compare-windows-added' and `compare-windows-removed'
+	(bug#19451).
+	(compare-windows-get-recent-window): Signal an error when
+	no other window is found (bug#19170).
+
+2014-12-27  Dmitry Gutov  <dgutov@yandex.ru>
+
+	* progmodes/elisp-mode.el (elisp--xref-identifier-file):
+	Skip features that have no sources.
+
+	* simple.el (execute-extended-command):
+	When `suggest-key-bindings' is nil, don't.
+
+2014-12-27  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	python.el: Native readline completion.
+
+	* progmodes/python.el (python-shell-completion-native-disabled-interpreters)
+	(python-shell-completion-native-enable)
+	(python-shell-completion-native-output-timeout): New defcustoms.
+	(python-shell-completion-native-interpreter-disabled-p)
+	(python-shell-completion-native-try)
+	(python-shell-completion-native-setup)
+	(python-shell-completion-native-turn-off)
+	(python-shell-completion-native-turn-on)
+	(python-shell-completion-native-turn-on-maybe)
+	(python-shell-completion-native-turn-on-maybe-with-msg)
+	(python-shell-completion-native-toggle): New functions.
+	(python-shell-completion-native-get-completions): New function.
+	(python-shell-completion-at-point): Use it.
+
+2014-12-27  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	python.el: Enhance shell user interaction and deprecate
+	python-shell-get-or-create-process.
+
+	* progmodes/python.el
+	(python-shell-get-process-or-error): New function.
+	(python-shell-with-shell-buffer): Use it.
+	(python-shell-send-string, python-shell-send-region)
+	(python-shell-send-buffer, python-shell-send-defun)
+	(python-shell-send-file, python-shell-switch-to-shell): Use it.
+	Add argument MSG to display user-friendly message when no process
+	is running.
+	(python-shell-switch-to-shell): Call pop-to-buffer with NORECORD.
+	(python-shell-make-comint): Rename argument SHOW from POP.  Use
+	display-buffer instead of pop-to-buffer.
+	(run-python): Doc fix.  Return process.
+	(python-shell-get-or-create-process): Make obsolete.
+
+2014-12-27  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	* progmodes/python.el (python-shell-buffer-substring): Handle
+	cornercase when region sent starts at point-min.
+
+2014-12-27  Eli Zaretskii  <eliz@gnu.org>
+
+	* language/misc-lang.el (composition-function-table): Add Syriac
+	characters and also ZWJ/ZWNJ.  See
+	http://lists.gnu.org/archive/html/help-gnu-emacs/2014-12/msg00248.html
+	for the details.
+
+2014-12-27  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	python.el: Fix message when sending region.
+
+	* progmodes/python.el (python-shell-send-region): Rename argument
+	send-main from nomain.  Fix message.
+	(python-shell-send-buffer): Rename argument send-main from arg.
+
+2014-12-27  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	python.el: Cleanup temp files even with eval errors.
+
+	* progmodes/python.el (python-shell-send-file): Make file-name
+	mandatory.  Fix temp file removal in the majority of cases.
+
+2014-12-27  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	python.el: Handle file encoding for shell.
+
+	* progmodes/python.el (python-rx-constituents): Add coding-cookie.
+	(python-shell--save-temp-file): Write file with proper encoding.
+	(python-shell-buffer-substring): Add coding cookie for detected
+	encoding to generated content.  Fix blank lines when removing
+	if-name-main block.
+	(python-shell-send-file): Handle file encoding.
+	(python-info-encoding-from-cookie)
+	(python-info-encoding): New functions.
+
+2014-12-27  Michael Albinus  <michael.albinus@gmx.de>
+
+	* net/tramp-sh.el (tramp-do-copy-or-rename-file-out-of-band):
+	Use `tramp-rsh-end-of-line', it ought to be more robust.
+
+2014-12-27  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* progmodes/js.el (js-syntax-propertize): "return" can't be divided
+	(bug#19397).
+
+2014-12-27  Michael Albinus  <michael.albinus@gmx.de>
+
+	* net/tramp.el (tramp-read-passwd): Ignore errors from `auth-source-*'.
+
+	* net/tramp-sh.el (tramp-do-copy-or-rename-file-out-of-band): Use "\n"
+	as end-of-line delimeter for passwords, when running on MS Windows.
+
+2014-12-27  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* progmodes/sh-script.el (sh-set-shell): Don't change the global value
+	of indent-line-function (bug#19433).
+
+2014-12-27  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	Fix line numbers on Python shell.
+	* progmodes/python.el (python-shell--save-temp-file): Do not
+	append coding cookie.
+	(python-shell-send-string): Generalize for
+	python-shell-send-region.
+	(python--use-fake-loc): Delete var.
+	(python-shell-buffer-substring): Cleanup fake-loc logic.
+	(python-shell-send-region): Remove fake-loc logic, simplify.
+
+2014-12-27  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	* progmodes/python.el (python-indent-post-self-insert-function):
+	Make colon to re-indent only for dedenters, handling
+	multiline-statements gracefully.
+
+2014-12-27  Michael Albinus  <michael.albinus@gmx.de>
+
+	* net/tramp.el (tramp-handle-insert-file-contents):
+	Set `find-file-not-found-functions' in case of errors.  (Bug#18623)
+
+2014-12-27  Michael Albinus  <michael.albinus@gmx.de>
+
+	* net/tramp-sh.el (tramp-send-command-and-read): New optional
+	arg MARKER.
+	(tramp-get-remote-path): Use it.
+
+2014-12-27  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* lisp/subr.el (redisplay-dont-pause): Mark as obsolete.
+
+2014-12-27  Michael Albinus  <michael.albinus@gmx.de>
+
+	* net/tramp.el (tramp-error-with-buffer): Call `message' properly.
+	(tramp-accept-process-output): Use nil as argument for
+	`accept-process-output', when there is a gateway prepended.
+
+	* net/tramp-gw.el (tramp-gw-open-connection): Suppress traces in
+	wrong debug buffer.
+	(tramp-gw-open-connection): Set process coding system 'binary.
+	(tramp-gw-open-network-stream): Handle HTTP error 403.
+
+	* net/tramp-sh.el (tramp-compute-multi-hops): Suppress traces in
+	wrong debug buffer.
+	(tramp-maybe-open-connection): Set connection property "gateway".
+
+2014-12-27  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* subr.el (sit-for): Tweak docstring (bug#19381).
+
+2014-12-27  Dmitry Gutov  <dgutov@yandex.ru>
+
+	* vc/vc-git.el (vc-git-after-dir-status-stage): Move `up-to-date'
+	stage to after `diff-index' (bug#19386).
+
+2014-12-27  João Távora  <joaotavora@gmail.com>
+
+	* textmodes/tex-mode.el (tex-insert-quote): Consider and respect
+	`electric-pair-mode' (bug#19356).
+
+2014-12-27  Dmitry Gutov  <dgutov@yandex.ru>
+
+	elisp-xref-find: Don't create buffers eagerly.
+
+	* progmodes/elisp-mode.el (elisp--identifier-location): Fold back
+	into `elisp--company-location'.
+	(elisp--identifier-completion-table): Rename to
+	`elisp--identifier-completion-table', and do not include just any
+	symbols with a property list.
+	(elisp-completion-at-point): Revert the 2014-12-25 change.
+	(elisp--xref-identifier-file): New function.
+	(elisp--xref-find-definitions): Use it.
+
+	* emacs-lisp/find-func.el (find-function-library): New function,
+	extracted from `find-function-noselect'.
+
+	* progmodes/xref.el (xref-elisp-location): New class.
+	(xref-make-elisp-location): New function.
+	(xref-location-marker): New implementation.
+
+2014-12-27  Juri Linkov  <juri@linkov.net>
+
+	* minibuffer.el (minibuffer-completion-help):
+	Use shrink-window-if-larger-than-buffer in window-height
+	when temp-buffer-resize-mode is nil.
+
+	* window.el (with-displayed-buffer-window): Remove window-height
+	from the action alist in the temp-buffer-window-show call
+	when window-height is handled explicitly afterwards (bug#19355).
+
+2014-12-27  Juri Linkov  <juri@linkov.net>
+
+	Support subdirectories when saving places in dired.
+	* saveplace.el (toggle-save-place, save-place-to-alist)
+	(save-places-to-alist, save-place-dired-hook):
+	Use dired-current-directory instead of dired-directory (bug#19436).
+	(save-place-dired-hook): Add check for alist to make the new
+	format future-proof to allow other possible formats.
+
+2014-12-26  Fabián Ezequiel Gallina  <fgallina@gnu.org>
+
+	python.el: Generate clearer shell buffer names.
+
+	* progmodes/python.el (python-shell-get-process-name)
+	(python-shell-internal-get-process-name): Use `buffer-name`.
+	(python-shell-internal-get-or-create-process): Simplify.
+
 2014-12-26  Dmitry Gutov  <dgutov@yandex.ru>
 
 	Add basic xref apropos implementation to elisp-mode.
@@ -8,6 +329,11 @@
 	(elisp-xref-find): Use it.
 
 	* progmodes/xref.el (xref--show-xrefs): Use `user-error'.
+
+2014-12-25  Filipp Gunbin  <fgunbin@fastmail.fm>
+
+	* dired-aux.el (dired-maybe-insert-subdir): Make
+	dired-maybe-insert-subdir always skip trivial files.
 
 2014-12-25  Helmut Eller  <eller.helmut@gmail.com>
             Dmitry Gutov  <dgutov@yandex.ru>
@@ -4642,12 +4968,6 @@
 	backward occurrence of whitespace, open-paren, close-paren or
 	string delimiter.
 	(python-mode): Use it.
-
-2014-07-28  Fabián Ezequiel Gallina  <fgallina@gnu.org>
-
-	Prevent Python process shell buffer to pop twice.
-	* progmodes/python.el (python-shell-switch-to-shell): Do not call
-	pop-to-buffer.
 
 2014-07-28  Fabián Ezequiel Gallina  <fgallina@gnu.org>
 

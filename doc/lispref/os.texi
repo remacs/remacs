@@ -917,13 +917,6 @@ This function returns the name of the machine you are running on, as a
 string.
 @end defun
 
-  The symbol @code{system-name} is a variable as well as a function.  In
-fact, the function returns whatever value the variable
-@code{system-name} currently holds.  Thus, you can set the variable
-@code{system-name} in case Emacs is confused about the name of your
-system.  The variable is also useful for constructing frame titles
-(@pxref{Frame Titles}).
-
 @c FIXME seems like this section is not the best place for this option?
 @defopt mail-host-address
 If this variable is non-@code{nil}, it is used instead of
@@ -1208,6 +1201,7 @@ return value is @code{nil}.
 
 @node Time of Day
 @section Time of Day
+@cindex time of day
 
   This section explains how to determine the current time and time
 zone.
@@ -1320,6 +1314,7 @@ time zone.
 @node Time Conversion
 @section Time Conversion
 @cindex calendrical information
+@cindex time conversion
 
   These functions convert time values (@pxref{Time of Day}) into
 calendrical information and vice versa.
@@ -1415,6 +1410,9 @@ on others, years as early as 1901 do work.
 
 @node Time Parsing
 @section Parsing and Formatting Times
+@cindex time parsing
+@cindex time formatting
+@cindex formatting time values
 
   These functions convert time values to text in a string, and vice versa.
 Time values are lists of two to four integers (@pxref{Time of Day}).
@@ -1643,6 +1641,9 @@ interactively, it prints the duration in the echo area.
 
 @node Time Calculations
 @section Time Calculations
+@cindex time calculations
+@cindex comparing time values
+@cindex calendrical computations
 
   These functions perform calendrical computations using time values
 (@pxref{Time of Day}).
@@ -1823,6 +1824,7 @@ cause anything special to happen.
 
 @node Idle Timers
 @section Idle Timers
+@cindex idle timers
 
   Here is how to set up a timer that runs when Emacs is idle for a
 certain length of time.  Aside from how to set them up, idle timers
@@ -2529,7 +2531,7 @@ The server's version number.
 The specification version the server is compliant with.
 @end table
 
-If @var{SPEC_VERSION} is @code{nil}, the server supports a
+If @var{spec_version} is @code{nil}, the server supports a
 specification prior to @samp{"1.0"}.
 @end defun
 

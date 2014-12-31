@@ -122,17 +122,18 @@ Return nil if URI is not a local file."
 
   ;; The hostname may be our hostname, in that case, convert to a local
   ;; file.  Otherwise return nil.  TODO:  How about an IP-address as hostname?
-  (let ((hostname (when (string-match "^file://\\([^/]*\\)" uri)
+  (let ((sysname (system-name)))
+    (let ((hostname (when (string-match "^file://\\([^/]*\\)" uri)
 		      (downcase (match-string 1 uri))))
-	(system-name-no-dot
-	 (downcase (if (string-match "^[^\\.]+" system-name)
-		       (match-string 0 system-name)
-		     system-name))))
-    (when (and hostname
-	     (or (string-equal "localhost" hostname)
-		 (string-equal (downcase system-name) hostname)
-		 (string-equal system-name-no-dot hostname)))
-	(concat "file://" (substring uri (+ 7 (length hostname)))))))
+	  (sysname-no-dot
+	   (downcase (if (string-match "^[^\\.]+" sysname)
+			 (match-string 0 sysname)
+		       sysname))))
+      (when (and hostname
+		 (or (string-equal "localhost" hostname)
+		     (string-equal (downcase sysname) hostname)
+		     (string-equal sysname-no-dot hostname)))
+	(concat "file://" (substring uri (+ 7 (length hostname))))))))
 
 (defsubst dnd-unescape-uri (uri)
   (replace-regexp-in-string

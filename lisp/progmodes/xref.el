@@ -136,6 +136,31 @@ actual location is not known.")
 
 (defmethod xref-location-group ((_ xref-bogus-location)) "(No location)")
 
+;; This should be in elisp-mode.el, but it's preloaded, and we can't
+;; preload defclass and defmethod (at least, not yet).
+(defclass xref-elisp-location (xref-location)
+  ((symbol :type symbol :initarg :symbol)
+   (type   :type symbol :initarg :type)
+   (file   :type string :initarg :file
+           :reader xref-location-group))
+  :documentation "Location of an Emacs Lisp symbol definition.")
+
+(defun xref-make-elisp-location (symbol type file)
+  (make-instance 'xref-elisp-location :symbol symbol :type type :file file))
+
+(defmethod xref-location-marker ((l xref-elisp-location))
+  (with-slots (symbol type file) l
+    (let ((buffer-point
+           (pcase type
+             (`defun (find-function-search-for-symbol symbol nil file))
+             ((or `defvar `defface)
+              (find-function-search-for-symbol symbol type file))
+             (`feature
+              (cons (find-file-noselect file) 1)))))
+      (with-current-buffer (car buffer-point)
+        (goto-char (or (cdr buffer-point) (point-min)))
+        (point-marker)))))
+
 
 ;;; Cross-reference
 
@@ -442,7 +467,8 @@ Return an alist of the form ((FILENAME . (XREF ...)) ...)."
 ;;;###autoload
 (defun xref-find-definitions (identifier)
   "Find the definition of the identifier at point.
-With prefix argument, prompt for the identifier."
+With prefix argument or when there's no identifier at point,
+prompt for it."
   (interactive (list (xref--read-identifier "Find definitions of: ")))
   (xref--find-definitions identifier nil))
 

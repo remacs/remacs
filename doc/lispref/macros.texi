@@ -194,6 +194,8 @@ During Compile}).
 
 @node Defining Macros
 @section Defining Macros
+@cindex defining macros
+@cindex macro, how to define
 
   A Lisp macro object is a list whose @sc{car} is @code{macro}, and
 whose @sc{cdr} is a function.  Expansion of the macro works
@@ -253,6 +255,7 @@ Form}.
 
 @node Problems with Macros
 @section Common Problems Using Macros
+@cindex macro caveats
 
   Macro expansion can have counterintuitive consequences.  This
 section describes some important consequences that can lead to
