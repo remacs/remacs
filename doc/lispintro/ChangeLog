@@ -1,3 +1,11 @@
+2014-12-31  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Less 'make' chatter for Emacs doc
+	* Makefile.in (AM_DEFAULT_VERBOSITY, AM_V_GEN, am__v_GEN_)
+	(am__v_GEN_0, am__v_GEN_1): New macros, from ../../src/Makefile.in.
+	(ENVADD, $(buildinfodir)/eintr.info, emacs-lisp-intro.html):
+	Use them.
+
 2014-11-09  Glenn Morris  <rgm@gnu.org>
 
 	* Makefile.in (version): Remove variable.

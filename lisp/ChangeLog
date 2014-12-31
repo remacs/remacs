@@ -1,3 +1,10 @@
+2014-12-31  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Less 'make' chatter in lisp directory
+	* Makefile.in (AM_DEFAULT_VERBOSITY, AM_V_GEN, am__v_GEN_)
+	(am__v_GEN_0, am__v_GEN_1): New macros, from ../src/Makefile.in.
+	(custom-deps, finder-data, autoloads, update-subdirs): Use them.
+
 2014-12-31  Filipp Gunbin  <fgunbin@fastmail.fm>
 
 	* info.el (info-display-manual): Limit the completion alternatives

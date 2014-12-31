@@ -59,8 +59,17 @@ TEXI2DVI = texi2dvi
 TEXI2PDF = texi2pdf
 DVIPS = dvips
 
-ENVADD = TEXINPUTS="$(srcdir):$(texinfodir):$(emacsdir):$(TEXINPUTS)" \
-         MAKEINFO="$(MAKEINFO) $(MAKEINFO_OPTS)"
+# 'make' verbosity.
+AM_DEFAULT_VERBOSITY = @AM_DEFAULT_VERBOSITY@
+
+AM_V_GEN = $(am__v_GEN_@AM_V@)
+am__v_GEN_ = $(am__v_GEN_@AM_DEFAULT_V@)
+am__v_GEN_0 = @echo "  GEN     " $@;
+am__v_GEN_1 =
+
+ENVADD = \
+  $(AM_V_GEN)TEXINPUTS="$(srcdir):$(texinfodir):$(emacsdir):$(TEXINPUTS)" \
+  MAKEINFO="$(MAKEINFO) $(MAKEINFO_OPTS)"
 
 DVI_TARGETS = elisp.dvi
 HTML_TARGETS = elisp.html
@@ -137,13 +146,13 @@ ${buildinfodir}:
 	${MKDIR_P} $@
 
 $(buildinfodir)/elisp.info: $(srcs) | ${buildinfodir}
-	$(MAKEINFO) $(MAKEINFO_OPTS) $(INFO_OPTS) -o $@ $<
+	$(AM_V_GEN)$(MAKEINFO) $(MAKEINFO_OPTS) $(INFO_OPTS) -o $@ $<
 
 elisp.dvi: $(srcs)
 	$(ENVADD) $(TEXI2DVI) $<
 
 elisp.html: $(srcs)
-	$(MAKEINFO) $(MAKEINFO_OPTS) $(HTML_OPTS) -o $@ $<
+	$(AM_V_GEN)$(MAKEINFO) $(MAKEINFO_OPTS) $(HTML_OPTS) -o $@ $<
 
 elisp.pdf: $(srcs)
 	$(ENVADD) $(TEXI2PDF) $<
