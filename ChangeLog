@@ -1,5 +1,10 @@
 2015-01-01  Paul Eggert  <eggert@cs.ucla.edu>
 
+	Fix copyright years by hand
+	These are dates that admin/update-copyright did not update, or
+	updated incorrectly.  Also, back out the copyright-date change to
+	doc/misc/texinfo.tex, as upstream hasn't updated that date yet.
+
 	Update copyright year to 2015
 	Run admin/update-copyright.
 
