@@ -1,5 +1,8 @@
 2015-01-01  Paul Eggert  <eggert@cs.ucla.edu>
 
+	Merge from gnulib, incorporating:
+	2015-01-01 version-etc: new year
+
 	* .gitattributes: New file.
 
 2015-01-01  Paul Eggert  <eggert@cs.ucla.edu>
