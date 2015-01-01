@@ -1,6 +1,7 @@
 ;;; jka-compr.el --- reading/writing/loading compressed files
 
-;; Copyright (C) 1993-1995, 1997, 1999-2014 Free Software Foundation, Inc.
+;; Copyright (C) 1993-1995, 1997, 1999-2015 Free Software Foundation,
+;; Inc.
 
 ;; Author: Jay K. Adams <jka@ece.cmu.edu>
 ;; Maintainer: emacs-devel@gnu.org
