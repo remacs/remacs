@@ -1,3 +1,7 @@
+2015-01-01  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* .gitattributes: New file.
+
 2014-12-31  Paul Eggert  <eggert@cs.ucla.edu>
 
 	* autogen.sh: Port better to non-GNU 'cp'.
