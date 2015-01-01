@@ -1,3 +1,17 @@
+2015-01-01  Michael Albinus  <michael.albinus@gmx.de>
+
+	* automated/tramp-tests.el (tramp--test-smb-or-windows-nt-p):
+	New defun.
+	(tramp-test30-special-characters): Use it.  (Bug#19463)
+	(tramp--test-check-files): Filter nil file names out.
+
+2015-01-01  Michael Albinus  <michael.albinus@gmx.de>
+
+	Sync with Tramp 2.2.11.
+
+	* automated/tramp-tests.el (tramp-test30-special-characters):
+	Skip test on MS-Windows.
+
 2014-12-27  Glenn Morris  <rgm@gnu.org>
 
 	* automated/let-alist.el: Load dependency.
@@ -16,7 +30,7 @@
 
 2014-12-27  Fabián Ezequiel Gallina  <fgallina@gnu.org>
 
-	(python-shell-buffer-substring-9): New test.
+	* automated/python-tests.el (python-shell-buffer-substring-9): New test.
 
 2014-12-27  Fabián Ezequiel Gallina  <fgallina@gnu.org>
 

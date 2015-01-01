@@ -35,6 +35,11 @@
 
 (eval-and-compile
 
+  ;; GNU Emacs 22.
+  (unless (fboundp 'ignore-errors)
+    (load "cl" 'noerror)
+    (load "cl-macs" 'noerror))
+
   ;; Some packages must be required for XEmacs, because we compile
   ;; with -no-autoloads.
   (when (featurep 'xemacs)
@@ -585,6 +590,10 @@ and replace a sub-expression, e.g.
 	;; Reconstruct a string from the pieces.
 	(setq matches (cons (substring string start l) matches)) ; leftover
 	(apply #'concat (nreverse matches))))))
+
+;; `default-toplevel-value' has been declared in Emacs 24.
+(unless (fboundp 'default-toplevel-value)
+  (defalias 'default-toplevel-value 'symbol-value))
 
 (add-hook 'tramp-unload-hook
 	  (lambda ()

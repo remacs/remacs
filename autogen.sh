@@ -237,7 +237,7 @@ if test -d .git/hooks; then
 	  *--backup*--verbose*)
 	    cp_options='--backup=numbered --verbose';;
 	  *)
-	    cp_options='';;
+	    cp_options='-f';;
 	esac
 
 	if test -n "$tailored_hooks"; then
