@@ -1,5 +1,8 @@
 2015-01-01  Paul Eggert  <eggert@cs.ucla.edu>
 
+	Update copyright year to 2015
+	Run admin/update-copyright.
+
 	Merge from gnulib, incorporating:
 	2015-01-01 version-etc: new year
 
@@ -14546,7 +14549,7 @@
 ;; coding: utf-8
 ;; End:
 
-  Copyright (C) 1993-1999, 2001-2014 Free Software Foundation, Inc.
+  Copyright (C) 1993-1999, 2001-2015 Free Software Foundation, Inc.
 
   This file is part of GNU Emacs.
 

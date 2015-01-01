@@ -1,7 +1,7 @@
 ;;; vip.el --- a VI Package for GNU Emacs
 
-;; Copyright (C) 1986-1988, 1992-1993, 1998, 2001-2014
-;;   Free Software Foundation, Inc.
+;; Copyright (C) 1986-1988, 1992-1993, 1998, 2001-2015 Free Software
+;; Foundation, Inc.
 
 ;; Author: Masahiko Sato <ms@sail.stanford.edu>
 ;; Keywords: emulations

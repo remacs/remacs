@@ -1,6 +1,7 @@
 ;;; startup.el --- process Emacs shell arguments  -*- lexical-binding: t -*-
 
-;; Copyright (C) 1985-1986, 1992, 1994-2014 Free Software Foundation, Inc.
+;; Copyright (C) 1985-1986, 1992, 1994-2015 Free Software Foundation,
+;; Inc.
 
 ;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: internal

@@ -1,6 +1,7 @@
 ;;; edebug.el --- a source-level debugger for Emacs Lisp  -*- lexical-binding: t -*-
 
-;; Copyright (C) 1988-1995, 1997, 1999-2014 Free Software Foundation, Inc.
+;; Copyright (C) 1988-1995, 1997, 1999-2015 Free Software Foundation,
+;; Inc.
 
 ;; Author: Daniel LaLiberte <liberte@holonexus.org>
 ;; Maintainer: emacs-devel@gnu.org
