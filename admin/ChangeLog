@@ -1,3 +1,7 @@
+2015-01-01  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* update-copyright (emacsver): Change to emacsver.tex.in.
+
 2014-12-24  Glenn Morris  <rgm@gnu.org>
 
 	* authors.el (authors-obsolete-files-regexps)
@@ -2502,7 +2506,7 @@
 ;; coding: utf-8
 ;; End:
 
-  Copyright (C) 2001-2014 Free Software Foundation, Inc.
+  Copyright (C) 2001-2015 Free Software Foundation, Inc.
 
   This file is part of GNU Emacs.
 
