@@ -1,3 +1,10 @@
+2014-12-29  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* message.el (message-make-fqdn):
+	* nnvirtual.el (nnvirtual-retrieve-headers)
+	(nnvirtual-update-xref-header): Prefer (system-name) to system-name,
+	and avoid naming locals 'system-name'.
+
 2014-12-29  Lars Ingebrigtsen  <larsi@gnus.org>
 
 	* mm-decode.el (mm-shr): Bind `shr-width' to `fill-column' so that

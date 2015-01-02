@@ -59,6 +59,12 @@
 
 	* obsolete/pc-select.el (pc-selection-mode): Use system-type.
 	This is instead of system-name, which is both wrong here and obsolete.
+	* desktop.el (desktop-save-frameset):
+	* dnd.el (dnd-get-local-file-uri):
+	* nxml/rng-uri.el (rng-uri-file-name-1):
+	Prefer (system-name) to system-name, and avoid naming
+	locals 'system-name'.
+	* startup.el (system-name): Now an obsolete variable.  (Bug#19438)
 
 2014-12-29  Dmitry Gutov  <dgutov@yandex.ru>
 

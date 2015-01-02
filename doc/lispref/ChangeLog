@@ -14,6 +14,10 @@
 	`temp-buffer-resize-mode', `temp-buffer-max-height' and
 	`temp-buffer-max-width'.
 
+2014-12-29  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* os.texi (System Environment): Update for system-name changes.
+
 2014-12-27  Glenn Morris  <rgm@gnu.org>
 
 	* control.texi (Pattern matching case statement):

@@ -21,6 +21,24 @@
 	* sysdep.c [WINDOWSNT]: Include sys/socket.h, without which this
 	file doesn't compile on MS-Windows.
 
+2014-12-29  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Allow return value of system-name to vary.  (Bug#19438)
+	* filelock.c (current_lock_owner):
+	* xrdb.c (get_environ_db):
+	* xterm.c (same_x_server):
+	* xterm.c (x_term_init):
+	Prefer (system-name) to system-name, and avoid naming
+	locals 'system-name'.
+	* editfns.c (cached_system_name): New static var.
+	(init_and_cache_system_name): New function.
+	(init_editfns, Fsystem_name): Use it.
+	(syms_of_editfns): Initialize it and Vsystem_name to the same value.
+	* sysdep.c [HAVE_SOCKETS]: Don't include <sys/socket.h>, <netdb.h>.
+	(h_errno) [TRY_AGAIN && !HAVE_H_ERRNO]: Remove decl.
+	(init_system_name) [HAVE_SOCKETS]: Don't canonicalize the name.
+	Don't create a new string if the current value is already correct.
+
 2014-12-28  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Fix produce_composite_width typo
