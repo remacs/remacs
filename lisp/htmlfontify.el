@@ -2411,7 +2411,7 @@ You may also want to set `hfy-page-header' and `hfy-page-footer'."
     (load file 'NOERROR nil nil) ))
 
 
-;;;### (autoloads nil "hfy-cmap" "hfy-cmap.el" "27dc80b0f7187aaf582805a8f887819a")
+;;;### (autoloads nil "hfy-cmap" "hfy-cmap.el" "ce07a28b93c09032fd6b225ad74be0df")
 ;;; Generated autoloads from hfy-cmap.el
 
 (autoload 'htmlfontify-load-rgb-file "hfy-cmap" "\
