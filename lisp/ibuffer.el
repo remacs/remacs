@@ -2628,7 +2628,7 @@ will be inserted before the group at point."
 
 ;;; Start of automatically extracted autoloads.
 
-;;;### (autoloads nil "ibuf-ext" "ibuf-ext.el" "e8ce929c4c76419f8d355b444f722c3a")
+;;;### (autoloads nil "ibuf-ext" "ibuf-ext.el" "1132b875829542a46bbf126cbcdd662d")
 ;;; Generated autoloads from ibuf-ext.el
 
 (autoload 'ibuffer-auto-mode "ibuf-ext" "\
