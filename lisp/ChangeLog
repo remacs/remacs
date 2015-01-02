@@ -1,3 +1,42 @@
+2015-01-01  Eli Zaretskii  <eliz@gnu.org>
+
+	* tool-bar.el (tool-bar-local-item)
+	(tool-bar-local-item-from-menu): Call force-mode-line-update to
+	make sure the tool-bar changes show on display.
+
+2015-01-01  Michael Albinus  <michael.albinus@gmx.de>
+
+	Sync with Tramp 2.2.11.
+
+	* net/tramp-compat.el (top): Require cl-macs for Emacs 22.
+	Make an alias for `default-toplevel-value' if it doesn't exist.
+
+	* net/tramp-smb.el (tramp-smb-handle-copy-directory):
+	Use `tramp-compat-delete-directory'.
+
+	* net/trampver.el: Update release number.
+
+2015-01-01  Filipp Gunbin  <fgunbin@fastmail.fm>
+
+	* autorevert.el (auto-revert-handler): Fix auto-revert-tail-mode
+	for remote files.  (Bug#19449)
+
+2015-01-01  Simen Heggestøyl  <simenheg@gmail.com>  (tiny change)
+
+	* textmodes/css-mode.el (scss-mode): Fix typo (bug#19446).
+
+2014-12-31  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Less 'make' chatter in lisp directory
+	* Makefile.in (AM_DEFAULT_VERBOSITY, AM_V_GEN, am__v_GEN_)
+	(am__v_GEN_0, am__v_GEN_1): New macros, from ../src/Makefile.in.
+	(custom-deps, finder-data, autoloads, update-subdirs): Use them.
+
+2014-12-31  Filipp Gunbin  <fgunbin@fastmail.fm>
+
+	* info.el (info-display-manual): Limit the completion alternatives
+	to currently visited manuals if prefix argument is non-nil.
+
 2014-12-30  Paul Eggert  <eggert@cs.ucla.edu>
 
 	* Makefile.in (semantic): Simplify.
@@ -22769,7 +22808,7 @@ See ChangeLog.16 for earlier changes.
 ;; coding: utf-8
 ;; End:
 
-  Copyright (C) 2011-2014 Free Software Foundation, Inc.
+  Copyright (C) 2011-2015 Free Software Foundation, Inc.
 
   This file is part of GNU Emacs.
 

@@ -1,3 +1,21 @@
+2015-01-02  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Less 'make' chatter for unidata
+	* unidata/Makefile.in (AM_DEFAULT_VERBOSITY, AM_V_GEN, am__v_GEN_)
+	(am__v_GEN_0, am__v_GEN_1, AM_V_at, am__v_at_, am__v_at_0, am__v_at_1):
+	New macros, from ../src/Makefile.in.
+	(${top_srcdir}/src/macuvs.h, %.elc, unidata.txt)
+	(${unidir}/charprop.el, unifiles): Use them.
+	(PHONY_EXTRAS): New macro.
+	(.PHONY, ${unidir}/charprop.el): Use it.
+	(FORCE): Remove; all uses replaced by PHONY_EXTRAS manipulation.
+	(${unidir}/charprop.el, extraclean):
+	Use 'make' conditionals rather than shell.
+
+2015-01-01  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* update-copyright (emacsver): Change to emacsver.tex.in.
+
 2014-12-24  Glenn Morris  <rgm@gnu.org>
 
 	* authors.el (authors-obsolete-files-regexps)
@@ -2502,7 +2520,7 @@
 ;; coding: utf-8
 ;; End:
 
-  Copyright (C) 2001-2014 Free Software Foundation, Inc.
+  Copyright (C) 2001-2015 Free Software Foundation, Inc.
 
   This file is part of GNU Emacs.
 

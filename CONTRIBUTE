@@ -180,10 +180,12 @@ by following links from http://savannah.gnu.org/mail/?group=emacs .
 
 Any change that matters to end-users should have an entry in etc/NEWS.
 
-Think about whether your change requires updating the documentation
-(both manuals and doc-strings).  If you know it does not, mark the NEWS
-entry with "---".  If you know that *all* the necessary documentation
-updates have been made, mark the entry with "+++". Otherwise do not mark it.
+Doc-strings should be updated together with the code.
+
+Think about whether your change requires updating the manuals.  If you
+know it does not, mark the NEWS entry with "---".  If you know
+that *all* the necessary documentation updates have been made, mark
+the entry with "+++". Otherwise do not mark it.
 
 ** Understanding Emacs Internals.
 

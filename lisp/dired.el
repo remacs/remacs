@@ -1,7 +1,7 @@
 ;;; dired.el --- directory-browsing commands -*- lexical-binding: t -*-
 
-;; Copyright (C) 1985-1986, 1992-1997, 2000-2014
-;;   Free Software Foundation, Inc.
+;; Copyright (C) 1985-1986, 1992-1997, 2000-2015 Free Software
+;; Foundation, Inc.
 
 ;; Author: Sebastian Kremer <sk@thp.uni-koeln.de>
 ;; Maintainer: emacs-devel@gnu.org
@@ -3884,7 +3884,7 @@ Ask means pop up a menu for the user to select one of copy, move or link."
 
 ;;; Start of automatically extracted autoloads.
 
-;;;### (autoloads nil "dired-aux" "dired-aux.el" "73269f48e7fe2fd0ac580fd69252b33a")
+;;;### (autoloads nil "dired-aux" "dired-aux.el" "65f8aa57ace423283926d92dff903ca7")
 ;;; Generated autoloads from dired-aux.el
 
 (autoload 'dired-diff "dired-aux" "\
@@ -4387,7 +4387,7 @@ instead.
 
 ;;;***
 
-;;;### (autoloads nil "dired-x" "dired-x.el" "994b5d9fc38059ab641ec271c728e56f")
+;;;### (autoloads nil "dired-x" "dired-x.el" "d8d702a50887671b9128ba60bd9ebb8e")
 ;;; Generated autoloads from dired-x.el
 
 (autoload 'dired-jump "dired-x" "\

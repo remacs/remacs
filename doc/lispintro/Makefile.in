@@ -1,6 +1,6 @@
 ### @configure_input@
 
-# Copyright (C) 1994-1999, 2001-2014 Free Software Foundation, Inc.
+# Copyright (C) 1994-1999, 2001-2015 Free Software Foundation, Inc.
 
 # This file is part of GNU Emacs.
 
@@ -55,8 +55,17 @@ TEXI2DVI = texi2dvi
 TEXI2PDF = texi2pdf
 DVIPS = dvips
 
-ENVADD = TEXINPUTS="$(srcdir):$(texinfodir):$(emacsdir):$(TEXINPUTS)" \
-         MAKEINFO="$(MAKEINFO) $(MAKEINFO_OPTS)"
+# 'make' verbosity.
+AM_DEFAULT_VERBOSITY = @AM_DEFAULT_VERBOSITY@
+
+AM_V_GEN = $(am__v_GEN_@AM_V@)
+am__v_GEN_ = $(am__v_GEN_@AM_DEFAULT_V@)
+am__v_GEN_0 = @echo "  GEN     " $@;
+am__v_GEN_1 =
+
+ENVADD = \
+  $(AM_V_GEN)TEXINPUTS="$(srcdir):$(texinfodir):$(emacsdir):$(TEXINPUTS)" \
+  MAKEINFO="$(MAKEINFO) $(MAKEINFO_OPTS)"
 
 DVI_TARGETS = emacs-lisp-intro.dvi
 HTML_TARGETS = emacs-lisp-intro.html
@@ -83,7 +92,7 @@ ${buildinfodir}:
 # The file name eintr must fit within 5 characters, to allow for
 # -NN extensions to fit into DOS 8+3 limits without clashing.
 ${buildinfodir}/eintr.info: ${srcs} | ${buildinfodir}
-	$(MAKEINFO) $(MAKEINFO_OPTS) $(INFO_OPTS) -o $@ $<
+	$(AM_V_GEN)$(MAKEINFO) $(MAKEINFO_OPTS) $(INFO_OPTS) -o $@ $<
 
 emacs-lisp-intro.dvi: ${srcs}
 	$(ENVADD) $(TEXI2DVI) $<
@@ -92,7 +101,7 @@ emacs-lisp-intro.pdf: ${srcs}
 	$(ENVADD) $(TEXI2PDF) $<
 
 emacs-lisp-intro.html: ${srcs}
-	$(MAKEINFO) $(MAKEINFO_OPTS) $(HTML_OPTS) -o $@ $<
+	$(AM_V_GEN)$(MAKEINFO) $(MAKEINFO_OPTS) $(HTML_OPTS) -o $@ $<
 
 emacs-lisp-intro.ps: emacs-lisp-intro.dvi
 	$(DVIPS) -o $@ $<

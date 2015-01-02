@@ -1,7 +1,7 @@
 #!/bin/sh
 ### autogen.sh - tool to help build Emacs from a repository checkout
 
-## Copyright (C) 2011-2014 Free Software Foundation, Inc.
+## Copyright (C) 2011-2015 Free Software Foundation, Inc.
 
 ## Author: Glenn Morris <rgm@gnu.org>
 ## Maintainer: emacs-devel@gnu.org
@@ -237,7 +237,7 @@ if test -d .git/hooks; then
 	  *--backup*--verbose*)
 	    cp_options='--backup=numbered --verbose';;
 	  *)
-	    cp_options='';;
+	    cp_options='-f';;
 	esac
 
 	if test -n "$tailored_hooks"; then

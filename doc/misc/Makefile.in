@@ -1,6 +1,6 @@
 ### @configure_input@
 
-# Copyright (C) 1994, 1996-2014 Free Software Foundation, Inc.
+# Copyright (C) 1994, 1996-2015 Free Software Foundation, Inc.
 
 # This file is part of GNU Emacs.
 
@@ -96,7 +96,15 @@ TEXI2DVI = texi2dvi
 TEXI2PDF = texi2pdf
 DVIPS = dvips
 
-ENVADD = TEXINPUTS="$(srcdir):$(emacsdir):$(TEXINPUTS)" \
+# 'make' verbosity.
+AM_DEFAULT_VERBOSITY = @AM_DEFAULT_VERBOSITY@
+
+AM_V_GEN = $(am__v_GEN_@AM_V@)
+am__v_GEN_ = $(am__v_GEN_@AM_DEFAULT_V@)
+am__v_GEN_0 = @echo "  GEN     " $@;
+am__v_GEN_1 =
+
+ENVADD = $(AM_V_GEN)TEXINPUTS="$(srcdir):$(emacsdir):$(TEXINPUTS)" \
          MAKEINFO="$(MAKEINFO) $(MAKEINFO_OPTS)"
 
 gfdl = ${srcdir}/doclicense.texi
@@ -133,7 +141,8 @@ ${buildinfodir}:
 EXTRA_OPTS =
 
 ${buildinfodir}/%.info: ${srcdir}/%.texi ${gfdl} | ${buildinfodir}
-	$(MAKEINFO) $(MAKEINFO_OPTS) $(INFO_OPTS) $(EXTRA_OPTS) -o $@ $<
+	$(AM_V_GEN)$(MAKEINFO) $(MAKEINFO_OPTS) $(INFO_OPTS) $(EXTRA_OPTS) \
+	  -o $@ $<
 
 ## The short aliases, eg efaq = $(buildinfodir)/efaq.info.
 define info_template
@@ -153,7 +162,8 @@ $(foreach ifile,$(filter-out info.info,$(INFO_TARGETS)),$(eval $(call info_templ
 	$(ENVADD) $(TEXI2PDF) $<
 
 %.html: ${srcdir}/%.texi ${gfdl}
-	$(MAKEINFO) $(MAKEINFO_OPTS) $(HTML_OPTS) $(EXTRA_OPTS) -o $@ $<
+	$(AM_V_GEN)$(MAKEINFO) $(MAKEINFO_OPTS) $(HTML_OPTS) $(EXTRA_OPTS) \
+	  -o $@ $<
 
 %.ps: %.dvi
 	$(DVIPS) -o $@ $<
@@ -175,12 +185,12 @@ $(buildinfodir)/semantic.info semantic.dvi semantic.pdf semantic.html: ${srcdir}
 
 ## Please can we just rename cc-mode.texi to ccmode.texi...
 ${buildinfodir}/ccmode.info: ${srcdir}/cc-mode.texi ${gfdl} | ${buildinfodir}
-	$(MAKEINFO) $(MAKEINFO_OPTS) $(INFO_OPTS) -o $@ $<
+	$(AM_V_GEN)$(MAKEINFO) $(MAKEINFO_OPTS) $(INFO_OPTS) -o $@ $<
 
 ## efaq, efaq_w32 do not depend on gfdl.
 ## Maybe we can use .SECONDEXPANSION for this.
 ${buildinfodir}/efaq%.info: ${srcdir}/efaq%.texi | ${buildinfodir}
-	$(MAKEINFO) $(MAKEINFO_OPTS) $(INFO_OPTS) -o $@ $<
+	$(AM_V_GEN)$(MAKEINFO) $(MAKEINFO_OPTS) $(INFO_OPTS) -o $@ $<
 
 efaq%.dvi: ${srcdir}/efaq%.texi
 	$(ENVADD) $(TEXI2DVI) $<
@@ -189,7 +199,7 @@ efaq%.pdf: ${srcdir}/efaq%.texi
 	$(ENVADD) $(TEXI2PDF) $<
 
 efaq%.html: ${srcdir}/efaq%.texi
-	$(MAKEINFO) $(MAKEINFO_OPTS) $(HTML_OPTS) -o $@ $<
+	$(AM_V_GEN)$(MAKEINFO) $(MAKEINFO_OPTS) $(HTML_OPTS) -o $@ $<
 
 ${buildinfodir}/emacs-mime.info emacs-mime.html: EXTRA_OPTS = --enable-encoding
 

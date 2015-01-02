@@ -1,6 +1,6 @@
 ;;; tool-bar.el --- setting up the tool bar
 
-;; Copyright (C) 2000-2014 Free Software Foundation, Inc.
+;; Copyright (C) 2000-2015 Free Software Foundation, Inc.
 
 ;; Author: Dave Love <fx@gnu.org>
 ;; Keywords: mouse frames
@@ -174,7 +174,8 @@ is less or equal to 256, then ICON.xpm, then ICON.pbm, and finally
 ICON.xbm, using `find-image'."
   (let* ((image-exp (tool-bar--image-expression icon)))
     (define-key-after map (vector key)
-      `(menu-item ,(symbol-name key) ,def :image ,image-exp ,@props))))
+      `(menu-item ,(symbol-name key) ,def :image ,image-exp ,@props))
+    (force-mode-line-update)))
 
 ;;;###autoload
 (defun tool-bar-add-item-from-menu (command icon &optional map &rest props)
@@ -239,7 +240,8 @@ holds a keymap."
             (if (and (consp rest) (consp (car rest)))
                 (setq rest (cdr rest)))
             (append `(menu-item ,(car defn) ,rest)
-                    (list :image image-exp) props)))))))
+                    (list :image image-exp) props))))
+      (force-mode-line-update))))
 
 ;;; Set up some global items.  Additions/deletions up for grabs.
 

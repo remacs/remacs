@@ -2826,7 +2826,7 @@
 2006-07-21  Eli Zaretskii  <eliz@gnu.org>
 
 	* w32.c (convert_time): Use explicit long double constants to
-	ensure long double arithmetics is used throughout.
+	ensure long double arithmetic is used throughout.
 
 2006-07-20  YAMAMOTO Mitsuharu  <mituharu@math.s.chiba-u.ac.jp>
 
@@ -27912,7 +27912,7 @@ See ChangeLog.9 for earlier changes.
 ;; add-log-time-zone-rule: t
 ;; End:
 
-    Copyright (C) 2001-2014 Free Software Foundation, Inc.
+    Copyright (C) 2001-2015 Free Software Foundation, Inc.
 
   This file is part of GNU Emacs.
 

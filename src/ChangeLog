@@ -1,3 +1,12 @@
+2015-01-01  Eli Zaretskii  <eliz@gnu.org>
+
+	* xdisp.c (pos_visible_p): Fix up the X coordinate for
+	right-to-left screen lines.  (Bug#19473)
+
+2015-01-01  Eli Zaretskii  <eliz@gnu.org>
+
+	* w32proc.c (Fw32_get_codepage_charset): Doc fix.  (Bug#19458)
+
 2014-12-31  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Simplify setfattr use by assuming GNU make
@@ -16082,7 +16091,7 @@ See ChangeLog.12 for earlier changes.
 ;; coding: utf-8
 ;; End:
 
-  Copyright (C) 2011-2014 Free Software Foundation, Inc.
+  Copyright (C) 2011-2015 Free Software Foundation, Inc.
 
   This file is part of GNU Emacs.
 

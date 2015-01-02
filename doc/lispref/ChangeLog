@@ -1,3 +1,11 @@
+2014-12-31  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Less 'make' chatter for Emacs doc
+	* Makefile.in (AM_DEFAULT_VERBOSITY, AM_V_GEN, am__v_GEN_)
+	(am__v_GEN_0, am__v_GEN_1): New macros, from ../../src/Makefile.in.
+	(ENVADD, $(buildinfodir)/elisp.info, elisp.html):
+	Use them.
+
 2014-12-30  Martin Rudalics  <rudalics@gmx.at>
 
 	* display.texi (Temporary Displays): Amend description of
@@ -13847,7 +13855,7 @@
 ;; coding: utf-8
 ;; End:
 
-  Copyright (C) 1998-2014 Free Software Foundation, Inc.
+  Copyright (C) 1998-2015 Free Software Foundation, Inc.
 
   This file is part of GNU Emacs.
 

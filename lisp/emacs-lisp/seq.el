@@ -1,6 +1,6 @@
 ;;; seq.el --- Sequence manipulation functions  -*- lexical-binding: t -*-
 
-;; Copyright (C) 2014 Free Software Foundation, Inc.
+;; Copyright (C) 2014-2015 Free Software Foundation, Inc.
 
 ;; Author: Nicolas Petton <petton.nicolas@gmail.com>
 ;; Keywords: sequences

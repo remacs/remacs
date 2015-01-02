@@ -1,6 +1,6 @@
 /* Process support for GNU Emacs on the Microsoft Windows API.
 
-Copyright (C) 1992, 1995, 1999-2014 Free Software Foundation, Inc.
+Copyright (C) 1992, 1995, 1999-2015 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -3070,7 +3070,12 @@ If successful, the new CP is returned, otherwise nil.  */)
 DEFUN ("w32-get-codepage-charset", Fw32_get_codepage_charset,
        Sw32_get_codepage_charset, 1, 1, 0,
        doc: /* Return charset ID corresponding to codepage CP.
-Returns nil if the codepage is not valid.  */)
+Returns nil if the codepage is not valid or its charset ID could
+not be determined.
+
+Note that this function is only guaranteed to work with ANSI
+codepages; most console codepages are not supported and will
+yield nil.  */)
   (Lisp_Object cp)
 {
   CHARSETINFO info;

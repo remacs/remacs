@@ -1,6 +1,6 @@
 ### @configure_input@
 
-# Copyright (C) 1994, 1996-2014 Free Software Foundation, Inc.
+# Copyright (C) 1994, 1996-2015 Free Software Foundation, Inc.
 
 # This file is part of GNU Emacs.
 
@@ -73,8 +73,15 @@ TEXI2DVI = texi2dvi
 TEXI2PDF = texi2pdf
 DVIPS = dvips
 
+# 'make' verbosity.
+AM_DEFAULT_VERBOSITY = @AM_DEFAULT_VERBOSITY@
 
-ENVADD = TEXINPUTS="$(srcdir):$(texinfodir):$(TEXINPUTS)" \
+AM_V_GEN = $(am__v_GEN_@AM_V@)
+am__v_GEN_ = $(am__v_GEN_@AM_DEFAULT_V@)
+am__v_GEN_0 = @echo "  GEN     " $@;
+am__v_GEN_1 =
+
+ENVADD = $(AM_V_GEN)TEXINPUTS="$(srcdir):$(texinfodir):$(TEXINPUTS)" \
          MAKEINFO="$(MAKEINFO) $(MAKEINFO_OPTS)"
 
 DVI_TARGETS = emacs.dvi emacs-xtra.dvi
@@ -162,7 +169,7 @@ ${buildinfodir}:
 # There is no provision for Info files to exist in the build directory.
 # In a distribution of Emacs, the Info files should be up to date.
 $(buildinfodir)/emacs.info: ${EMACSSOURCES} | ${buildinfodir}
-	$(MAKEINFO) $(MAKEINFO_OPTS) $(INFO_OPTS) -o $@ $<
+	$(AM_V_GEN)$(MAKEINFO) $(MAKEINFO_OPTS) $(INFO_OPTS) -o $@ $<
 
 emacs.dvi: ${EMACSSOURCES}
 	$(ENVADD) $(TEXI2DVI) $<
@@ -171,7 +178,7 @@ emacs.pdf: ${EMACSSOURCES}
 	$(ENVADD) $(TEXI2PDF) $<
 
 emacs.html: ${EMACSSOURCES}
-	$(MAKEINFO) $(MAKEINFO_OPTS) $(HTML_OPTS) -o $@ $<
+	$(AM_V_GEN)$(MAKEINFO) $(MAKEINFO_OPTS) $(HTML_OPTS) -o $@ $<
 
 emacs-xtra.dvi: $(EMACS_XTRA)
 	$(ENVADD) $(TEXI2DVI) $<

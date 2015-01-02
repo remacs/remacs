@@ -1,3 +1,33 @@
+2015-01-01  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Fix copyright years by hand
+	These are dates that admin/update-copyright did not update, or
+	updated incorrectly.  Also, back out the copyright-date change to
+	doc/misc/texinfo.tex, as upstream hasn't updated that date yet.
+
+	Update copyright year to 2015
+	Run admin/update-copyright.
+
+	Merge from gnulib, incorporating:
+	2015-01-01 version-etc: new year
+
+	* .gitattributes: New file.
+
+2015-01-01  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* autogen.sh: Port better to non-GNU 'cp'.
+	Problem reported by Han Boetes.
+
+2014-12-31  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Less 'make' chatter at top level
+	* Makefile.in (AM_DEFAULT_VERBOSITY, AM_V_GEN, am__v_GEN_)
+	(am__v_GEN_0, am__v_GEN_1, AM_V_at, am__v_at_, am__v_at_0)
+	(am__v_at_1): New macros, copied from src/Makefile.in.
+	($(srcdir)/src/config.in, ${srcdir}/info/dir):
+	Be less chatty when not verbose.
+	($(srcdir)/src/stamp-h.in): Simplify with '$@'.
+
 2014-12-29  Paul Eggert  <eggert@cs.ucla.edu>
 
 	system-name's returned value can vary
@@ -14524,7 +14554,7 @@
 ;; coding: utf-8
 ;; End:
 
-  Copyright (C) 1993-1999, 2001-2014 Free Software Foundation, Inc.
+  Copyright (C) 1993-1999, 2001-2015 Free Software Foundation, Inc.
 
   This file is part of GNU Emacs.
 

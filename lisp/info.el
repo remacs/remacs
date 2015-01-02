@@ -1,6 +1,6 @@
 ;; info.el --- Info package for Emacs  -*- lexical-binding:t -*-
 
-;; Copyright (C) 1985-1986, 1992-2014 Free Software Foundation, Inc.
+;; Copyright (C) 1985-1986, 1992-2015 Free Software Foundation, Inc.
 
 ;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: help
@@ -5277,13 +5277,15 @@ type returned by `Info-bookmark-make-record', which see."
 (defun info-display-manual (manual)
   "Display an Info buffer displaying MANUAL.
 If there is an existing Info buffer for MANUAL, display it.
-Otherwise, visit the manual in a new Info buffer."
+Otherwise, visit the manual in a new Info buffer.  In interactive
+use, a prefix argument directs this command to limit the
+completion alternatives to currently visited manuals."
   (interactive
    (list
     (progn
       (info-initialize)
       (completing-read "Manual name: "
-		       (info--manual-names)
+		       (info--manual-names current-prefix-arg)
 		       nil t))))
   (let ((blist (buffer-list))
 	(manual-re (concat "\\(/\\|\\`\\)" manual "\\(\\.\\|\\'\\)"))
@@ -5302,7 +5304,7 @@ Otherwise, visit the manual in a new Info buffer."
       (info (Info-find-file manual)
 	    (generate-new-buffer-name "*info*")))))
 
-(defun info--manual-names ()
+(defun info--manual-names (visited-only)
   (let (names)
     (dolist (buffer (buffer-list))
       (with-current-buffer buffer
@@ -5313,11 +5315,12 @@ Otherwise, visit the manual in a new Info buffer."
 		    (file-name-nondirectory Info-current-file))
 		   names))))
     (delete-dups (append (nreverse names)
-			 (all-completions
-			  ""
-			  (apply-partially 'Info-read-node-name-2
-					   Info-directory-list
-					   (mapcar 'car Info-suffix-list)))))))
+			 (when (not visited-only)
+			   (all-completions
+			    ""
+			    (apply-partially 'Info-read-node-name-2
+					     Info-directory-list
+					     (mapcar 'car Info-suffix-list))))))))
 
 (provide 'info)
 

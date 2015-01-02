@@ -1,6 +1,6 @@
 ### @configure_input@
 
-# Copyright (C) 2012-2014 Free Software Foundation, Inc.
+# Copyright (C) 2012-2015 Free Software Foundation, Inc.
 
 # Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011
 #   National Institute of Advanced Industrial Science and Technology (AIST)
@@ -31,6 +31,19 @@ EMACS = ${top_builddir}/src/emacs
 unidir = ${top_srcdir}/lisp/international
 emacs = "${EMACS}" -batch --no-site-file --no-site-lisp
 
+# 'make' verbosity.
+AM_DEFAULT_VERBOSITY = @AM_DEFAULT_VERBOSITY@
+
+AM_V_GEN = $(am__v_GEN_@AM_V@)
+am__v_GEN_ = $(am__v_GEN_@AM_DEFAULT_V@)
+am__v_GEN_0 = @echo "  GEN     " $@;
+am__v_GEN_1 =
+
+AM_V_at = $(am__v_at_@AM_V@)
+am__v_at_ = $(am__v_at_@AM_DEFAULT_V@)
+am__v_at_0 = @
+am__v_at_1 =
+
 .PHONY: all unifiles
 
 all: ${top_srcdir}/src/macuvs.h unifiles
@@ -40,28 +53,31 @@ all: ${top_srcdir}/src/macuvs.h unifiles
 ## Same with charprop.el below.
 ${top_srcdir}/src/macuvs.h: ${srcdir}/uvs.el ${srcdir}/IVD_Sequences.txt | \
   ${srcdir}/uvs.elc
-	${emacs} -L ${srcdir} -l uvs \
+	$(AM_V_GEN)${emacs} -L ${srcdir} -l uvs \
 	  --eval '(uvs-print-table-ivd (unmsys--file-name "${srcdir}/IVD_Sequences.txt") "Adobe-Japan1")' \
 	  > $@
 
 %.elc: %.el
-	${emacs} -f batch-byte-compile $<
+	$(AM_V_GEN)${emacs} -f batch-byte-compile $<
 
 unidata.txt: ${srcdir}/UnicodeData.txt
-	sed -e 's/\([^;]*\);\(.*\)/(#x\1 "\2")/' -e 's/;/" "/g' < $< > $@
+	$(AM_V_GEN)sed -e 's/\([^;]*\);\(.*\)/(#x\1 "\2")/' -e 's/;/" "/g' \
+	  < $< > $@
 
-FORCE =
-FORCE:
-.PHONY: FORCE
+PHONY_EXTRAS =
+.PHONY: $(PHONY_EXTRAS)
 
-${unidir}/charprop.el: ${FORCE} ${srcdir}/unidata-gen.el \
+${unidir}/charprop.el: ${srcdir}/unidata-gen.el \
   ${srcdir}/UnicodeData.txt ${srcdir}/BidiMirroring.txt \
   ${srcdir}/BidiBrackets.txt | \
   ${srcdir}/unidata-gen.elc unidata.txt
-	-if [ -f "$@" ]; then \
-	  cd ${unidir} && chmod +w charprop.el `sed -n 's/^;; FILE: //p' < charprop.el`; \
-	fi
-	${emacs} -L ${srcdir} -l unidata-gen -f unidata-gen-files \
+  ifneq (,$(wildcard $@))
+	$(AM_V_at)cd $(unidir) && \
+	for f in charprop.el `sed -n 's/^;; FILE: //p' < charprop.el`; do \
+	  [ ! -f $$f ] || [ -w $$f ] || chmod +w $$f || exit; \
+	done
+  endif
+	$(AM_V_GEN)${emacs} -L ${srcdir} -l unidata-gen -f unidata-gen-files \
 	  ${srcdir} "${unidir}"
 
 ## Check for deleted uni- files, and if any such, force a rebuild.
@@ -69,8 +85,8 @@ ${unidir}/charprop.el: ${FORCE} ${srcdir}/unidata-gen.el \
 ## to generate a Makefile fragment explicitly listing the uni- files,
 ## which this file could include.  If no fragment, rebuild everything.
 unifiles: ${unidir}/charprop.el
-	for f in `sed -n 's/^;; FILE: //p' < $<`; do \
-	  [ -f ${unidir}/$$f ] || { ${MAKE} $< FORCE=FORCE || exit 1; break; };\
+	$(AM_V_GEN)for f in `sed -n 's/^;; FILE: //p' < $<`; do \
+	  [ -f $(unidir)/$$f ] || exec $(MAKE) PHONY_EXTRAS=$< $<; \
 	done
 
 .PHONY: clean bootstrap-clean distclean maintainer-clean extraclean
@@ -90,7 +106,7 @@ maintainer-clean: distclean
 ## Cf leim/ja-dic (which is much slower).
 extraclean:
 	rm -f ${top_srcdir}/src/macuvs.h
-	if test -f ${unidir}/charprop.el; then \
-	  (cd ${unidir} && rm -f `sed -n 's/^;; FILE: //p' < charprop.el`); \
-	  rm -f ${unidir}/charprop.el; \
-	fi
+  ifneq (,$(wildcard $(unidir)/charprop.el))
+	cd $(unidir) && \
+	  rm -f `sed -n 's/^;; FILE: //p' < charprop.el` charprop.el
+  endif

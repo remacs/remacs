@@ -1,6 +1,6 @@
 ### @configure_input@
 
-# Copyright (C) 2000-2014 Free Software Foundation, Inc.
+# Copyright (C) 2000-2015 Free Software Foundation, Inc.
 
 # This file is part of GNU Emacs.
 
@@ -27,6 +27,14 @@ VPATH = $(srcdir)
 # Empty for all systems except MinGW, where xargs needs an explicit
 # limitation.
 XARGS_LIMIT = @XARGS_LIMIT@
+
+# 'make' verbosity.
+AM_DEFAULT_VERBOSITY = @AM_DEFAULT_VERBOSITY@
+
+AM_V_GEN = $(am__v_GEN_@AM_V@)
+am__v_GEN_ = $(am__v_GEN_@AM_DEFAULT_V@)
+am__v_GEN_0 = @echo "  GEN     " $@;
+am__v_GEN_1 =
 
 # You can specify a different executable on the make command line,
 # e.g. "make EMACS=../src/emacs ...".
@@ -156,7 +164,7 @@ all: compile-main $(lisp)/cus-load.el $(lisp)/finder-inf.el
 $(lisp)/cus-load.el:
 	$(MAKE) custom-deps
 custom-deps:
-	$(setwins_almost); \
+	$(AM_V_GEN)$(setwins_almost); \
 	echo Directories: $$wins; \
 	$(emacs) -l cus-dep \
 	  --eval '(setq generated-custom-dependencies-file (unmsys--file-name "$(srcdir)/cus-load.el"))' \
@@ -165,7 +173,7 @@ custom-deps:
 $(lisp)/finder-inf.el:
 	$(MAKE) finder-data
 finder-data:
-	$(setwins_finder); \
+	$(AM_V_GEN)$(setwins_finder); \
 	echo Directories: $$wins; \
 	$(emacs) -l finder \
 	  --eval '(setq generated-finder-keywords-file (unmsys--file-name "$(srcdir)/finder-inf.el"))' \
@@ -178,7 +186,7 @@ finder-data:
 # If you want to allow autoloads in such files, remove that,
 # and make this depend on leim.
 autoloads: $(LOADDEFS)
-	$(setwins_almost); \
+	$(AM_V_GEN)$(setwins_almost); \
 	echo Directories: $$wins; \
 	$(emacs) -l autoload \
 	    --eval '(setq autoload-ensure-writable t)' \
@@ -191,7 +199,7 @@ autoloads: $(LOADDEFS)
 $(lisp)/subdirs.el:
 	$(MAKE) update-subdirs
 update-subdirs:
-	$(setwins_for_subdirs); \
+	$(AM_V_GEN)$(setwins_for_subdirs); \
 	for file in $$wins; do \
 	   $(srcdir)/../build-aux/update-subdirs $$file; \
 	done;

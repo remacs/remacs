@@ -1,6 +1,6 @@
 ;;; css-mode.el --- Major mode to edit CSS files -*- lexical-binding: t -*-
 
-;; Copyright (C) 2006-2014 Free Software Foundation, Inc.
+;; Copyright (C) 2006-2015 Free Software Foundation, Inc.
 
 ;; Author: Stefan Monnier <monnier@iro.umontreal.ca>
 ;; Keywords: hypermedia
@@ -459,7 +459,7 @@
   "Major mode to edit \"Sassy CSS\" files."
   (setq-local comment-start "// ")
   (setq-local comment-end "")
-  (setq-local comment-start-skip "/[*/]+[ t]*")
+  (setq-local comment-start-skip "/[*/]+[ \t]*")
   (setq-local comment-end-skip "[ \t]*\\(?:\n\\|\\*+/\\)")
   (setq-local font-lock-defaults '(scss-font-lock-keywords nil t)))
 

@@ -1,6 +1,6 @@
 GNU Emacs NEWS -- history of user-visible changes.
 
-Copyright (C) 2014 Free Software Foundation, Inc.
+Copyright (C) 2014-2015 Free Software Foundation, Inc.
 See the end of the file for license conditions.
 
 Please send Emacs bug reports to bug-gnu-emacs@gnu.org.
@@ -337,6 +337,11 @@ The remainder were:
 
 ---
 ** `Info-fontify-maximum-menu-size' can be t for no limit.
+
++++
+** `info-display-manual' can now be given a prefix argument which (any
+non-nil value) directs the command to limit the completion
+alternatives to currently visited manuals.
 
 ---
 ** ntlm.el has support for NTLM2.
