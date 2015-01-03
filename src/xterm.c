@@ -9542,7 +9542,7 @@ x_set_window_size_1 (struct frame *f, bool change_gravity,
     x_wait_for_event (f, ConfigureNotify);
   else
     {
-      change_frame_size (f, pixelwidth, pixelheight, false, true, false, true);
+      change_frame_size (f, width, height, false, true, false, true);
       x_sync (f);
     }
 }

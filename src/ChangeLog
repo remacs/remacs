@@ -1,3 +1,10 @@
+2015-01-03  Martin Rudalics  <rudalics@gmx.at>
+
+	* frame.c (x_set_frame_parameters): Call Fset_frame_size only if
+	f->can_x_set_window_size is true.
+	* xterm.c (x_set_window_size_1): Call change_frame_size with
+	text sizes instead of pixel sizes (Bug#19428).
+
 2015-01-01  Eli Zaretskii  <eliz@gnu.org>
 
 	* xdisp.c (pos_visible_p): Fix up the X coordinate for
