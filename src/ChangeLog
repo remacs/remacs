@@ -1,5 +1,8 @@
 2015-01-03  Paul Eggert  <eggert@cs.ucla.edu>
 
+	Revert previous change to produce_composite_glyph
+	* term.c (produce_composite_glyph): Revert previous change (Bug#19496).
+
 	Pacify gcc -Wparentheses
 	* frame.c (x_set_frame_parameters): Add parens (Bug#19428).
 
