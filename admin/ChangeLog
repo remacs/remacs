@@ -1,3 +1,7 @@
+2015-01-03  Glenn Morris  <rgm@gnu.org>
+
+	* update_autogen (commit): Prepend "# " to commit message.
+
 2014-11-19  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Lessen focus on ChangeLog files, as opposed to change log entries.
