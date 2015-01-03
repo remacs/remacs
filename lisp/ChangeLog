@@ -1,5 +1,11 @@
 2015-01-03  Dmitry Gutov  <dgutov@yandex.ru>
 
+	* progmodes/xref.el (xref-marker-stack-empty-p): New function.
+
+	* menu-bar.el (menu-bar-goto-menu): Use it.
+
+2015-01-03  Dmitry Gutov  <dgutov@yandex.ru>
+
 	* progmodes/xref.el (xref--window-configuration): New variable.
 	(xref-show-location-at-point): New command.
 	(xref--restore-window-configuration): New function.

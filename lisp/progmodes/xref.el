@@ -301,6 +301,10 @@ backward."
       (let ((marker (ring-remove ring)))
         (set-marker marker nil nil)))))
 
+(defun xref-marker-stack-empty-p ()
+  "Return t if the marker stack is empty; nil otherwise."
+  (ring-empty-p xref--marker-ring))
+
 
 (defun xref--goto-location (location)
   "Set buffer and point according to xref-location LOCATION."
