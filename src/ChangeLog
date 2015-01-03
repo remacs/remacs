@@ -1,3 +1,8 @@
+2015-01-03  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Pacify gcc -Wparentheses
+	* frame.c (x_set_frame_parameters): Add parens (Bug#19428).
+
 2015-01-03  Martin Rudalics  <rudalics@gmx.at>
 
 	* frame.c (x_set_frame_parameters): Call Fset_frame_size only if
