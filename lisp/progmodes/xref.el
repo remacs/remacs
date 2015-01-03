@@ -328,6 +328,8 @@ WINDOW controls how the buffer is displayed:
 
 ;; The xref buffer is used to display a set of xrefs.
 
+(defvar-local xref--window-configuration nil)
+
 (defun xref--display-position (pos other-window recenter-arg)
   ;; show the location, but don't hijack focus.
   (with-selected-window (display-buffer (current-buffer) other-window)
@@ -341,46 +343,56 @@ WINDOW controls how the buffer is displayed:
         (xref--display-position (point) t 1))
     (user-error (message (error-message-string err)))))
 
-(defun xref--next-line (backward)
-  (let ((loc (xref--search-property 'xref-location backward)))
+(defun xref-show-location-at-point ()
+  "Display the source of xref at point in the other window, if any."
+  (interactive)
+  (let ((loc (xref--location-at-point)))
     (when loc
-      (save-window-excursion
-        (xref--show-location loc)
-        (sit-for most-positive-fixnum)))))
+      (setq xref--window-configuration (current-window-configuration))
+      (xref--show-location loc))))
+
+(defun xref--restore-window-configuration ()
+  (when xref--window-configuration
+    (set-window-configuration xref--window-configuration)
+    (setq xref--window-configuration nil)))
 
 (defun xref-next-line ()
   "Move to the next xref and display its source in the other window."
   (interactive)
-  (xref--next-line nil))
+  (xref--search-property 'xref-location)
+  (xref-show-location-at-point))
 
 (defun xref-prev-line ()
   "Move to the previous xref and display its source in the other window."
   (interactive)
-  (xref--next-line t))
+  (xref--search-property 'xref-location t)
+  (xref-show-location-at-point))
 
 (defun xref--location-at-point ()
-  (or (get-text-property (point) 'xref-location)
-      (error "No reference at point")))
+  (get-text-property (point) 'xref-location))
 
 (defvar-local xref--window nil)
 
 (defun xref-goto-xref ()
   "Jump to the xref at point and bury the xref buffer."
   (interactive)
-  (let ((loc (xref--location-at-point))
+  (let ((loc (or (xref--location-at-point)
+                 (error "No reference at point")))
         (window xref--window))
     (quit-window)
     (xref--pop-to-location loc window)))
 
 (define-derived-mode xref--xref-buffer-mode fundamental-mode "XREF"
   "Mode for displaying cross-references."
-  (setq buffer-read-only t))
+  (setq buffer-read-only t)
+  (add-hook 'pre-command-hook #'xref--restore-window-configuration nil t))
 
 (let ((map xref--xref-buffer-mode-map))
   (define-key map (kbd "q") #'quit-window)
-  (define-key map [remap next-line] #'xref-next-line)
-  (define-key map [remap previous-line] #'xref-prev-line)
+  (define-key map (kbd "n") #'xref-next-line)
+  (define-key map (kbd "p") #'xref-prev-line)
   (define-key map (kbd "RET") #'xref-goto-xref)
+  (define-key map (kbd "C-o") #'xref-show-location-at-point)
 
   ;; suggested by Johan Claesson "to further reduce finger movement":
   (define-key map (kbd ".") #'xref-next-line)

@@ -1,3 +1,19 @@
+2015-01-03  Dmitry Gutov  <dgutov@yandex.ru>
+
+	* progmodes/xref.el (xref--window-configuration): New variable.
+	(xref-show-location-at-point): New command.
+	(xref--restore-window-configuration): New function.
+	(xref-next-line, xref-prev-line): Delegate to
+	`xref-show-location-at-point'.
+	(xref--location-at-point): Don't signal the error.
+	(xref-goto-xref): Do that here instead.
+	(xref--xref-buffer-mode): Add `xref--restore-window-configuration'
+	to `pre-command-hook'.
+	(xref--xref-buffer-mode-map): Don't remap `next-line' and
+	`previous-line'.  Additionally bind `xref-next-line' and
+	`xref-prev-line' to `n' and `p' respectively.  Bind
+	`xref-show-location-at-point' to `C-o'.
+
 2015-01-01  Eli Zaretskii  <eliz@gnu.org>
 
 	* tool-bar.el (tool-bar-local-item)
