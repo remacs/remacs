@@ -1,5 +1,10 @@
 2015-01-04  Paul Eggert  <eggert@cs.ucla.edu>
 
+	Clarify 'make info'
+	* Makefile.in (info): Use GNU make conditional rather than
+	an '@' rule with a shell conditional, so that the builder can
+	see the submake.
+
 	Less 'make' chatter for VCSWITNESS
 	* Makefile.in (dirstate, VCSWITNESS): New macros.
 	(src): Use them to lessen 'make' chatter.

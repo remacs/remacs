@@ -1043,11 +1043,9 @@ uninstall-ps: $(UNINSTALL_PS)
 # and it's not worth it.  This case is only relevant if you download a
 # release, then change the .texi files.
 info:
-	@if test "$(HAVE_MAKEINFO)" = "no"; then \
-	  echo "Configured --without-makeinfo, not building manuals" ; \
-	else \
-	  $(MAKE) info-real info-dir; \
-	fi
+  ifneq ($(HAVE_MAKEINFO),no)
+	$(MAKE) info-real info-dir
+  endif
 
 ## build-aux/make-info-dir expects only certain dircategories.
 check-info: info
