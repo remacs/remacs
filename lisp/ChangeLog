@@ -1,3 +1,9 @@
+2015-01-04  Dmitry Gutov  <dgutov@yandex.ru>
+
+	Unbreak `mouse-action' property in text buttons.
+
+	* button.el (push-button): Fix regression from 2012-12-06.
+
 2015-01-01  Eli Zaretskii  <eliz@gnu.org>
 
 	* tool-bar.el (tool-bar-local-item)
