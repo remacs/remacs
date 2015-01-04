@@ -1,3 +1,8 @@
+2015-01-04  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Less 'make' chatter for lib-src
+	* Makefile.in (blessmail): Less 'make' chatter here.
+
 2014-12-27  Eli Zaretskii  <eliz@gnu.org>
 
 	* Makefile.in (etags_libs, ebrowse${EXEEXT}, profile${EXEEXT})
