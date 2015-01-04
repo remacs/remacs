@@ -405,6 +405,21 @@ WINDOW controls how the buffer is displayed:
 (defconst xref-buffer-name "*xref*"
   "The name of the buffer to show xrefs.")
 
+(defvar xref--button-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map [(control ?m)] #'xref-goto-xref)
+    (define-key map [mouse-1] #'xref-goto-xref)
+    (define-key map [mouse-2] #'xref--mouse-2)
+    map))
+
+(defun xref--mouse-2 (event)
+  "Move point to the button and show the xref definition."
+  (interactive "e")
+  (mouse-set-point event)
+  (forward-line 0)
+  (xref--search-property 'xref-location)
+  (xref-show-location-at-point))
+
 (defun xref--insert-xrefs (xref-alist)
   "Insert XREF-ALIST in the current-buffer.
 XREF-ALIST is of the form ((GROUP . (XREF ...)) ...).  Where
@@ -417,7 +432,9 @@ GROUP is a string for decoration purposes and XREF is an
                     (with-slots (description location) xref
                       (xref--insert-propertized
                        (list 'xref-location location
-                             'face 'font-lock-keyword-face)
+                             'face 'font-lock-keyword-face
+                             'mouse-face 'highlight
+                             'keymap xref--button-map)
                        description))
                     (when (or more1 more2)
                       (insert "\n")))))

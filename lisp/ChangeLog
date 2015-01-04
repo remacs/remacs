@@ -1,3 +1,12 @@
+2015-01-04  Dmitry Gutov  <dgutov@yandex.ru>
+
+	Add mouse interaction to xref.
+
+	* progmodes/xref.el (xref--button-map): New variable.
+	(xref--mouse-2): New command.
+	(xref--insert-xrefs): Add `mouse-face' and `keymap' properties to
+	the inserted references.
+
 2015-01-04  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Less 'make' chatter for lisp dir
