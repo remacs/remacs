@@ -7690,6 +7690,7 @@ set_iterator_to_next (struct it *it, int reseat_p)
     case GET_FROM_STRETCH:
 #ifdef HAVE_XWIDGETS
     case GET_FROM_XWIDGET:
+#endif
 
       /* The position etc with which we have to proceed are on
 	 the stack.  The position may be at the end of a string,
@@ -7699,7 +7700,6 @@ set_iterator_to_next (struct it *it, int reseat_p)
       if (it->method == GET_FROM_STRING)
 	goto consider_string_end;
       break;
-#endif
 
     default:
       /* There are no other methods defined, so this should be a bug.  */
