@@ -1,5 +1,16 @@
 2015-01-04  Paul Eggert  <eggert@cs.ucla.edu>
 
+	Less 'make' chatter for lisp dir
+	* Makefile.in (THEFILE): Define to be 'no-such-file' by default,
+	to make it clearer that the caller must specify it.
+	(compile-onefile): Remove, replacing by ...
+	($(THEFILE)c): ... new rule.  This lets us use AM_V_GEN here.
+	($(THEFILE)c, .el.elc, $(MH_E_DIR)/mh-loaddefs.el)
+	($(TRAMP_DIR)/tramp-loaddefs.el, $(CAL_DIR)/cal-loaddefs.el)
+	($(CAL_DIR)/diary-loaddefs.el, $(CAL_DIR)/hol-loaddefs.el):
+	Use AM_V_GEN to lessen 'make' chatter.
+	(.el.elc): Omit duplicate comment.
+
 	Less 'make' chatter in batch mode
 	* emacs-lisp/autoload.el (autoload-generate-file-autoloads):
 	* emacs-lisp/bytecomp.el (byte-compile-file):

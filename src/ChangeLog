@@ -1,5 +1,9 @@
 2015-01-04  Paul Eggert  <eggert@cs.ucla.edu>
 
+	Less 'make' chatter for lisp dir
+	* Makefile.in (%.elc): Adjust to compile-onefile change in
+	../lisp/Makefile.in.
+
 	batch write-region no longer says "Wrote FOO"
 	This cuts down on 'make' chatter a bit.
 	* fileio.c (Fwrite_region):
