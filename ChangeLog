@@ -1,3 +1,9 @@
+2015-01-04  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Less 'make' chatter for VCSWITNESS
+	* Makefile.in (dirstate, VCSWITNESS): New macros.
+	(src): Use them to lessen 'make' chatter.
+
 2015-01-01  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Fix copyright years by hand
