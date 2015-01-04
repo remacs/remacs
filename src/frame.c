@@ -334,10 +334,22 @@ predicates which report frame's specific UI-related capabilities.  */)
     return type;
 }
 
-static int
-frame_windows_min_size (Lisp_Object frame, Lisp_Object horizontal, Lisp_Object ignore, Lisp_Object pixelwise)
+/* Placeholder used by temacs -nw before window.el is loaded.  */
+DEFUN ("frame-windows-min-size", Fframe_windows_min_size,
+       Sframe_windows_min_size, 4, 4, 0,
+       doc: /* */)
+     (Lisp_Object frame, Lisp_Object horizontal,
+      Lisp_Object ignore, Lisp_Object pixelwise)
 {
-  return XINT (call4 (Qframe_windows_min_size, frame, horizontal, ignore, pixelwise));
+  return make_number (0);
+}
+
+static int
+frame_windows_min_size (Lisp_Object frame, Lisp_Object horizontal,
+			Lisp_Object ignore, Lisp_Object pixelwise)
+{
+  return XINT (call4 (Qframe_windows_min_size, frame, horizontal,
+		      ignore, pixelwise));
 }
 
 
@@ -5081,6 +5093,7 @@ even if this option is non-nil.  */);
   defsubr (&Sframep);
   defsubr (&Sframe_live_p);
   defsubr (&Swindow_system);
+  defsubr (&Sframe_windows_min_size);
   defsubr (&Smake_terminal_frame);
   defsubr (&Shandle_switch_frame);
   defsubr (&Sselect_frame);

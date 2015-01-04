@@ -1,5 +1,14 @@
 2015-01-04  Paul Eggert  <eggert@cs.ucla.edu>
 
+	'temacs -nw' should not call missing functions
+	Without this patch, "temacs -nw" fails with the diagnostic
+	"emacs: Symbol's function definition is void: frame-windows-min-size"
+	and messes up the tty's state.
+	* frame.c (Fframe_windows_min_size): New placeholder function.
+	(syms_of_frame): Define it.
+	* window.c (Fwindow__sanitize_window_sizes): New placeholder.
+	(syms_of_window): Define it.
+
 	Less 'make' chatter for lisp dir
 	* Makefile.in (%.elc): Adjust to compile-onefile change in
 	../lisp/Makefile.in.

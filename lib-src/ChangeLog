@@ -1,5 +1,9 @@
 2015-01-04  Paul Eggert  <eggert@cs.ucla.edu>
 
+	'temacs -nw' should not call missing functions
+	* make-docfile.c (write_globals):
+	Declare Fframe_windows_min_size with ATTRIBUTE_CONST, too.  Sort.
+
 	Less 'make' chatter for lib-src
 	* Makefile.in (blessmail): Less 'make' chatter here.
 
