@@ -1,3 +1,8 @@
+2015-01-04  Eli Zaretskii  <eliz@gnu.org>
+
+	* emacs.c (syms_of_emacs) <system-configuration>: Doc fix.
+	(Bug#19502)
+
 2014-12-30  Eli Zaretskii  <eliz@gnu.org>
 
 	* xdisp.c (pos_visible_p): Fix up the X coordinate for
