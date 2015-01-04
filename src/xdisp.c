@@ -318,7 +318,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include TERM_HEADER
 #endif /* HAVE_WINDOW_SYSTEM */
 
-#include "font.h"
 #ifdef HAVE_XWIDGETS
 #include "xwidget.h"
 #endif
@@ -7701,6 +7700,7 @@ set_iterator_to_next (struct it *it, int reseat_p)
 	goto consider_string_end;
       break;
 #endif
+
     default:
       /* There are no other methods defined, so this should be a bug.  */
       emacs_abort ();
@@ -13831,13 +13831,6 @@ redisplay_internal (void)
 	      *w->desired_matrix->method = 0;
 	      debug_method_add (w, "optimization 1");
 #endif
-#if HAVE_XWIDGETS
-              //debug optimization movement issue
-              //w->desired_matrix->no_scrolling_p = 1;
-              //*w->desired_matrix->method = 0;
-              //debug_method_add (w, "optimization 1");
-#endif
-
 #ifdef HAVE_WINDOW_SYSTEM
 	      update_window_fringes (w, 0);
 #endif
@@ -17084,11 +17077,6 @@ try_window (Lisp_Object window, struct text_pos pos, int flags)
       if (f->fonts_changed && !(flags & TRY_WINDOW_IGNORE_FONTS_CHANGE))
 	return 0;
     }
-#ifdef HAVE_XWIDGETS_xxx
- //currently this is needed to detect xwidget movement reliably. or probably not.
-  printf("try_window\n");
-    return 0;
-#endif
 
   /* Don't let the cursor end in the scroll margins.  */
   if ((flags & TRY_WINDOW_CHECK_MARGINS)
@@ -17948,13 +17936,6 @@ try_window_id (struct window *w)
   if (inhibit_try_window_id)
     return 0;
 #endif
-
-#ifdef HAVE_XWIDGETS_xxx
-  //maybe needed for proper xwidget movement
-    printf("try_window_id\n");
-    return -1;
-#endif
-
 
   /* This is handy for debugging.  */
 #if 0
