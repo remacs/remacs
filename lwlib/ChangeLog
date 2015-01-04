@@ -5,6 +5,12 @@
 	(AM_V_at, am__v_at_, am__v_at_0, am__v_at_1): New macros.
 	(liblw.a): Use them.
 
+2014-12-25  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* xlwmenu.c (resource_widget_value):
+	Rewrite to avoid the need for strcat, typically by using stpcpy
+	and/or lispstpcpy.  strcat tends to be part of O(N**2) algorithms.
+
 2014-10-20  Glenn Morris  <rgm@gnu.org>
 
 	* Merge in all changes up to 24.4 release.

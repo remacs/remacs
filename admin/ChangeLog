@@ -30,6 +30,10 @@
 
 	* update-copyright (emacsver): Change to emacsver.tex.in.
 
+2014-12-25  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* merge-gnulib (GNULIB_MODULES): Add stpcpy.
+
 2014-12-24  Glenn Morris  <rgm@gnu.org>
 
 	* authors.el (authors-obsolete-files-regexps)
