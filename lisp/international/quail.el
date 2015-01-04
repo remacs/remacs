@@ -2985,7 +2985,7 @@ of each directory."
 	quail-dirs list-buf pkg-list pos)
     (if (not (file-writable-p leim-list))
 	(error "Can't write to file \"%s\"" leim-list))
-    (message "Updating %s ..." leim-list)
+    (or noninteractive (message "Updating %s ..." leim-list))
     (setq list-buf (find-file-noselect leim-list))
 
     ;; At first, clean up the file.
@@ -3077,7 +3077,7 @@ of each directory."
       (let ((coding-system-for-write 'utf-8))
 	(save-buffer 0)))
     (kill-buffer list-buf)
-    (message "Updating %s ... done" leim-list)))
+    (or noninteractive (message "Updating %s ... done" leim-list))))
 
 (defun quail-advice (args)
   "Advise users about the characters input by the current Quail package.

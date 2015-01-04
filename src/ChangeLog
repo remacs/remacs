@@ -1,3 +1,29 @@
+2015-01-04  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Less 'make' chatter for lisp dir
+	* Makefile.in (%.elc): Adjust to compile-onefile change in
+	../lisp/Makefile.in.
+
+	batch write-region no longer says "Wrote FOO"
+	This cuts down on 'make' chatter a bit.
+	* fileio.c (Fwrite_region):
+	Don't output "Wrote /whatever/foo.elc" if noninteractive.
+
+2015-01-03  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Revert previous change to produce_composite_glyph
+	* term.c (produce_composite_glyph): Revert previous change (Bug#19496).
+
+	Pacify gcc -Wparentheses
+	* frame.c (x_set_frame_parameters): Add parens (Bug#19428).
+
+2015-01-03  Martin Rudalics  <rudalics@gmx.at>
+
+	* frame.c (x_set_frame_parameters): Call Fset_frame_size only if
+	f->can_x_set_window_size is true.
+	* xterm.c (x_set_window_size_1): Call change_frame_size with
+	text sizes instead of pixel sizes (Bug#19428).
+
 2015-01-01  Eli Zaretskii  <eliz@gnu.org>
 
 	* xdisp.c (pos_visible_p): Fix up the X coordinate for
@@ -20,6 +46,24 @@
 
 	* sysdep.c [WINDOWSNT]: Include sys/socket.h, without which this
 	file doesn't compile on MS-Windows.
+
+2014-12-29  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Allow return value of system-name to vary.  (Bug#19438)
+	* filelock.c (current_lock_owner):
+	* xrdb.c (get_environ_db):
+	* xterm.c (same_x_server):
+	* xterm.c (x_term_init):
+	Prefer (system-name) to system-name, and avoid naming
+	locals 'system-name'.
+	* editfns.c (cached_system_name): New static var.
+	(init_and_cache_system_name): New function.
+	(init_editfns, Fsystem_name): Use it.
+	(syms_of_editfns): Initialize it and Vsystem_name to the same value.
+	* sysdep.c [HAVE_SOCKETS]: Don't include <sys/socket.h>, <netdb.h>.
+	(h_errno) [TRY_AGAIN && !HAVE_H_ERRNO]: Remove decl.
+	(init_system_name) [HAVE_SOCKETS]: Don't canonicalize the name.
+	Don't create a new string if the current value is already correct.
 
 2014-12-28  Paul Eggert  <eggert@cs.ucla.edu>
 

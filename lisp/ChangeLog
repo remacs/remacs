@@ -1,3 +1,51 @@
+2015-01-04  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Less 'make' chatter for lisp dir
+	* Makefile.in (THEFILE): Define to be 'no-such-file' by default,
+	to make it clearer that the caller must specify it.
+	(compile-onefile): Remove, replacing by ...
+	($(THEFILE)c): ... new rule.  This lets us use AM_V_GEN here.
+	($(THEFILE)c, .el.elc, $(MH_E_DIR)/mh-loaddefs.el)
+	($(TRAMP_DIR)/tramp-loaddefs.el, $(CAL_DIR)/cal-loaddefs.el)
+	($(CAL_DIR)/diary-loaddefs.el, $(CAL_DIR)/hol-loaddefs.el):
+	Use AM_V_GEN to lessen 'make' chatter.
+	(.el.elc): Omit duplicate comment.
+
+	Less 'make' chatter in batch mode
+	* emacs-lisp/autoload.el (autoload-generate-file-autoloads):
+	* emacs-lisp/bytecomp.el (byte-compile-file):
+	* files.el (save-buffer, basic-save-buffer):
+	* international/quail.el (quail-update-leim-list-file):
+	Don't output messages like "Generating ..." in batch mode.
+
+2015-01-04  Dmitry Gutov  <dgutov@yandex.ru>
+
+	Unbreak `mouse-action' property in text buttons.
+
+	* button.el (push-button): Fix regression from 2012-12-06.
+
+2015-01-03  Dmitry Gutov  <dgutov@yandex.ru>
+
+	* progmodes/xref.el (xref-marker-stack-empty-p): New function.
+
+	* menu-bar.el (menu-bar-goto-menu): Use it.
+
+2015-01-03  Dmitry Gutov  <dgutov@yandex.ru>
+
+	* progmodes/xref.el (xref--window-configuration): New variable.
+	(xref-show-location-at-point): New command.
+	(xref--restore-window-configuration): New function.
+	(xref-next-line, xref-prev-line): Delegate to
+	`xref-show-location-at-point'.
+	(xref--location-at-point): Don't signal the error.
+	(xref-goto-xref): Do that here instead.
+	(xref--xref-buffer-mode): Add `xref--restore-window-configuration'
+	to `pre-command-hook'.
+	(xref--xref-buffer-mode-map): Don't remap `next-line' and
+	`previous-line'.  Additionally bind `xref-next-line' and
+	`xref-prev-line' to `n' and `p' respectively.  Bind
+	`xref-show-location-at-point' to `C-o'.
+
 2015-01-01  Eli Zaretskii  <eliz@gnu.org>
 
 	* tool-bar.el (tool-bar-local-item)
@@ -59,6 +107,12 @@
 
 	* obsolete/pc-select.el (pc-selection-mode): Use system-type.
 	This is instead of system-name, which is both wrong here and obsolete.
+	* desktop.el (desktop-save-frameset):
+	* dnd.el (dnd-get-local-file-uri):
+	* nxml/rng-uri.el (rng-uri-file-name-1):
+	Prefer (system-name) to system-name, and avoid naming
+	locals 'system-name'.
+	* startup.el (system-name): Now an obsolete variable.  (Bug#19438)
 
 2014-12-29  Dmitry Gutov  <dgutov@yandex.ru>
 

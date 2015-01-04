@@ -4663,7 +4663,7 @@ See the subroutine `basic-save-buffer' for more information."
     ;; then Rmail-mbox never displays it due to buffer swapping.  If
     ;; the test is ever re-introduced, be sure to handle saving of
     ;; Rmail files.
-    (if (and modp (buffer-file-name))
+    (if (and modp (buffer-file-name) (not noninteractive))
 	(message "Saving file %s..." (buffer-file-name)))
     (basic-save-buffer)
     (and modp (memq arg '(4 64)) (setq buffer-backed-up nil))))
@@ -4805,7 +4805,7 @@ Before and after saving the buffer, this function runs
 	  ;; Support VC `implicit' locking.
 	  (vc-after-save)
 	  (run-hooks 'after-save-hook))
-      (message "(No changes need to be saved)"))))
+      (or noninteractive (message "(No changes need to be saved)")))))
 
 ;; This does the "real job" of writing a buffer into its visited file
 ;; and making a backup file.  This is what is normally done

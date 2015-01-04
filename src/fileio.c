@@ -4741,8 +4741,8 @@ Optional fifth argument VISIT, if t or a string, means
 If VISIT is a string, it is a second file name;
   the output goes to FILENAME, but the buffer is marked as visiting VISIT.
   VISIT is also the file name to lock and unlock for clash detection.
-If VISIT is neither t nor nil nor a string,
-  that means do not display the \"Wrote file\" message.
+If VISIT is neither t nor nil nor a string, or if Emacs is in batch mode,
+  do not display the \"Wrote file\" message.
 The optional sixth arg LOCKNAME, if non-nil, specifies the name to
   use for locking and unlocking, overriding FILENAME and VISIT.
 The optional seventh arg MUSTBENEW, if non-nil, insists on a check
@@ -5109,7 +5109,7 @@ write_region (Lisp_Object start, Lisp_Object end, Lisp_Object filename,
       return Qnil;
     }
 
-  if (!auto_saving)
+  if (!auto_saving && !noninteractive)
     message_with_string ((NUMBERP (append)
 			  ? "Updated %s"
 			  : ! NILP (append)

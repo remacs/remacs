@@ -646,7 +646,7 @@ tags: TAGS ../lisp/TAGS $(lwlibdir)/TAGS
 ## bootstrap-emacs$(EXEEXT) as an order-only prerequisite.
 
 %.elc: %.el | bootstrap-emacs$(EXEEXT)
-	@$(MAKE) -C ../lisp compile-onefile THEFILE=$< EMACS="$(bootstrap_exe)"
+	@$(MAKE) -C ../lisp EMACS="$(bootstrap_exe)" THEFILE=$< $<c
 
 ## VCSWITNESS points to the file that holds info about the current checkout.
 ## We use it as a heuristic to decide when to rebuild loaddefs.el.

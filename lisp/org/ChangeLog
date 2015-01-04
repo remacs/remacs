@@ -1,3 +1,7 @@
+2014-12-29  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* org-clock.el (org-clock-save): Prefer (system-name) to system-name.
+
 2014-10-29  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Simplify use of current-time and friends.
