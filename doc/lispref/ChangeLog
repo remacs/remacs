@@ -1,3 +1,8 @@
+2015-01-04  Paul Eggert  <eggert@cs.ucla.edu>
+
+	batch write-region no longer says "Wrote FOO"
+	* files.texi (Writing to Files): Document this.
+
 2014-12-31  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Less 'make' chatter for Emacs doc

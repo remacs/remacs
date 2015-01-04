@@ -653,8 +653,9 @@ and also calls the functions in the list
 @xref{Format Conversion}.
 
 Normally, @code{write-region} displays the message @samp{Wrote
-@var{filename}} in the echo area.  If @var{visit} is neither @code{t}
-nor @code{nil} nor a string, then this message is inhibited.  This
+@var{filename}} in the echo area.  This message is inhibited if
+@var{visit} is neither @code{t} nor @code{nil} nor a string, or if
+Emacs is operating in batch mode (@pxref{Batch mode}).  This
 feature is useful for programs that use files for internal purposes,
 files that the user does not need to know about.
 @end deffn

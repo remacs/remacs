@@ -1,3 +1,10 @@
+2015-01-04  Paul Eggert  <eggert@cs.ucla.edu>
+
+	batch write-region no longer says "Wrote FOO"
+	This cuts down on 'make' chatter a bit.
+	* fileio.c (Fwrite_region):
+	Don't output "Wrote /whatever/foo.elc" if noninteractive.
+
 2015-01-03  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Revert previous change to produce_composite_glyph
