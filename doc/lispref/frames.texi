@@ -2645,20 +2645,26 @@ colors).
 This function returns the number of color cells the screen supports.
 @end defun
 
-  These functions obtain additional information specifically
-about X displays.
+  These functions obtain additional information about the window
+system in use where Emacs shows the specified @var{display}.  (Their
+names begin with @code{x-} for historical reasons.)
 
 @defun x-server-version &optional display
-This function returns the list of version numbers of the X server
-running the display.  The value is a list of three integers: the major
-and minor version numbers of the X protocol, and the
-distributor-specific release number of the X server software itself.
+This function returns the list of version numbers of the GUI window
+system running on @var{display}, such as the X server on GNU and Unix
+systems.  The value is a list of three integers: the major and minor
+version numbers of the protocol, and the distributor-specific release
+number of the window system software itself.  On GNU and Unix systems,
+these are normally the version of the X protocol and the
+distributor-specific release number of the X server software.  On
+MS-Windows, this is the version of the Windows OS.
 @end defun
 
 @defun x-server-vendor &optional display
-This function returns the ``vendor'' that provided the X server
-software (as a string).  Really this means whoever distributes the X
-server.
+This function returns the ``vendor'' that provided the window system
+software (as a string).  On GNU and Unix systems this really means
+whoever distributes the X server.  On MS-Windows this is the vendor ID
+string of the Windows OS (Microsoft).
 
 When the developers of X labeled software distributors as
 ``vendors'', they showed their false assumption that no system could

@@ -1,3 +1,8 @@
+2015-01-04  Eli Zaretskii  <eliz@gnu.org>
+
+	* frames.texi (Display Feature Testing): Make the description of
+	x-server-version and x-server-vendor less X-specific.  (Bug#19502)
+
 2014-12-24  Glenn Morris  <rgm@gnu.org>
 
 	* control.texi (Pattern matching case statement):

@@ -1,5 +1,9 @@
 2015-01-04  Eli Zaretskii  <eliz@gnu.org>
 
+	* w32fns.c (Fx_server_version, Fx_server_vendor): Doc fix.
+
+	* xfns.c (Fx_server_version, Fx_server_vendor): Doc fix.
+
 	* emacs.c (syms_of_emacs) <system-configuration>: Doc fix.
 	(Bug#19502)
 
