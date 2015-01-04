@@ -1329,7 +1329,7 @@ Property value is a symbol `o' (Open), `c' (Close), or `n' (None)."
 	  (insert (format "(define-char-code-property '%S %S\n  %S)\n"
 			  prop basename docstring))
 	  (with-temp-buffer
-	    (message "Generating %s..." file)
+	    (or noninteractive (message "Generating %s..." file))
 	    (when (file-exists-p file)
 	      (insert-file-contents file)
 	      (goto-char (point-max))
@@ -1356,7 +1356,7 @@ Property value is a symbol `o' (Open), `c' (Close), or `n' (None)."
 			";; End:\n\n"
 			(format ";; %s ends here\n" basename)))
 	    (write-file file)
-	    (message "Generating %s...done" file))))
+	    (or noninteractive (message "Generating %s...done" file)))))
       (message "Writing %s..." charprop-file)
       (insert ";; Local Variables:\n"
 	      ";; coding: utf-8\n"

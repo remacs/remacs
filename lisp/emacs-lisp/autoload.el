@@ -539,7 +539,7 @@ Return non-nil if and only if FILE adds no autoloads to OUTFILE
                                (autoload-find-file file))
         ;; Obey the no-update-autoloads file local variable.
         (unless no-update-autoloads
-          (message "Generating autoloads for %s..." file)
+	  (or noninteractive (message "Generating autoloads for %s..." file))
 	  (setq load-name
 		(if (stringp generated-autoload-load-name)
 		    generated-autoload-load-name
@@ -623,7 +623,8 @@ Return non-nil if and only if FILE adds no autoloads to OUTFILE
                        (nth 5 (file-attributes relfile))))
                     (insert ";;; Generated autoloads from " relfile "\n")))
                 (insert generate-autoload-section-trailer))))
-          (message "Generating autoloads for %s...done" file))
+	  (or noninteractive
+	      (message "Generating autoloads for %s...done" file)))
         (or visited
             ;; We created this buffer, so we should kill it.
             (kill-buffer (current-buffer))))

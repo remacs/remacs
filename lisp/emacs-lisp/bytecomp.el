@@ -1858,7 +1858,7 @@ The value is non-nil if there were no errors, nil if errors."
 		;; recompiled).  Previously this was accomplished by
 		;; deleting target-file before writing it.
 		(rename-file tempfile target-file t)
-		(message "Wrote %s" target-file))
+		(or noninteractive (message "Wrote %s" target-file)))
 	    ;; This is just to give a better error message than write-region
 	    (signal 'file-error
 		    (list "Opening output file"

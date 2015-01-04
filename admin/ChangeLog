@@ -1,3 +1,9 @@
+2015-01-04  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Less chatter in batch mode
+	* unidata/unidata-gen.el (unidata-gen-files):
+	Don't output messages like "Generating ..." in batch mode.
+
 2015-01-02  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Less 'make' chatter for unidata

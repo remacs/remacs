@@ -1,3 +1,12 @@
+2015-01-04  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Less 'make' chatter in batch mode
+	* emacs-lisp/autoload.el (autoload-generate-file-autoloads):
+	* emacs-lisp/bytecomp.el (byte-compile-file):
+	* files.el (save-buffer, basic-save-buffer):
+	* international/quail.el (quail-update-leim-list-file):
+	Don't output messages like "Generating ..." in batch mode.
+
 2015-01-04  Dmitry Gutov  <dgutov@yandex.ru>
 
 	Unbreak `mouse-action' property in text buttons.
