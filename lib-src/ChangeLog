@@ -1,5 +1,8 @@
 2015-01-05  Paul Eggert  <eggert@cs.ucla.edu>
 
+	Use 0 for Qnil
+	* make-docfile.c (compare_globals): Consider 'nil' to be the least.
+
 	Compute C decls for DEFSYMs automatically
 	Fixes Bug#15880.
 	* make-docfile.c: Revamp to generate table of symbols, too.

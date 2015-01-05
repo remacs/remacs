@@ -354,9 +354,11 @@ error !;
 #define lisp_h_XCONS(a) \
    (eassert (CONSP (a)), (struct Lisp_Cons *) XUNTAG (a, Lisp_Cons))
 #define lisp_h_XHASH(a) XUINT (a)
-#define lisp_h_XPNTR(a) ((void *) (intptr_t) (XLI (a) & VALMASK))
+#define lisp_h_XPNTR(a) \
+   (SYMBOLP (a) ? XSYMBOL (a) : (void *) ((intptr_t) (XLI (a) & VALMASK)))
 #define lisp_h_XSYMBOL(a) \
-   (eassert (SYMBOLP (a)), (struct Lisp_Symbol *) XUNTAG (a, Lisp_Symbol))
+   (eassert (SYMBOLP (a)), \
+    (struct Lisp_Symbol *) XUNTAGBASE (a, Lisp_Symbol, lispsym))
 #ifndef GC_CHECK_CONS_LIST
 # define lisp_h_check_cons_list() ((void) 0)
 #endif
@@ -366,7 +368,9 @@ error !;
 # define lisp_h_XFASTINT(a) XINT (a)
 # define lisp_h_XINT(a) (XLI (a) >> INTTYPEBITS)
 # define lisp_h_XTYPE(a) ((enum Lisp_Type) (XLI (a) & ~VALMASK))
-# define lisp_h_XUNTAG(a, type) ((void *) (XLI (a) - (type)))
+# define lisp_h_XUNTAG(a, type) XUNTAGBASE (a, type, 0)
+# define lisp_h_XUNTAGBASE(a, type, base) \
+    ((void *) ((char *) (base) - (type) + (intptr_t) XLI (a)))
 #endif
 
 /* When compiling via gcc -O0, define the key operations as macros, as
@@ -408,6 +412,7 @@ error !;
 #  define XINT(a) lisp_h_XINT (a)
 #  define XTYPE(a) lisp_h_XTYPE (a)
 #  define XUNTAG(a, type) lisp_h_XUNTAG (a, type)
+#  define XUNTAGBASE(a, type, base) lisp_h_XUNTAGBASE (a, type, base)
 # endif
 #endif
 
@@ -447,20 +452,20 @@ error !;
 
 enum Lisp_Type
   {
-    /* Integer.  XINT (obj) is the integer value.  */
-    Lisp_Int0 = 0,
-    Lisp_Int1 = USE_LSB_TAG ? 1 << INTTYPEBITS : 1,
-
     /* Symbol.  XSYMBOL (object) points to a struct Lisp_Symbol.  */
-    Lisp_Symbol = 2,
+    Lisp_Symbol = 0,
 
     /* Miscellaneous.  XMISC (object) points to a union Lisp_Misc,
        whose first member indicates the subtype.  */
-    Lisp_Misc = 3,
+    Lisp_Misc = 1,
+
+    /* Integer.  XINT (obj) is the integer value.  */
+    Lisp_Int0 = 2,
+    Lisp_Int1 = USE_LSB_TAG ? 6 : 3,
 
     /* String.  XSTRING (object) points to a struct Lisp_String.
        The length of the string, and its contents, are stored therein.  */
-    Lisp_String = USE_LSB_TAG ? 1 : 1 << INTTYPEBITS,
+    Lisp_String = 4,
 
     /* Vector of Lisp objects, or something resembling it.
        XVECTOR (object) points to a struct Lisp_Vector, which contains
@@ -469,7 +474,7 @@ enum Lisp_Type
     Lisp_Vectorlike = 5,
 
     /* Cons.  XCONS (object) points to a struct Lisp_Cons.  */
-    Lisp_Cons = 6,
+    Lisp_Cons = USE_LSB_TAG ? 3 : 6,
 
     Lisp_Float = 7
   };
@@ -604,6 +609,8 @@ INLINE bool SUB_CHAR_TABLE_P (Lisp_Object);
 INLINE bool SUBRP (Lisp_Object);
 INLINE bool (SYMBOLP) (Lisp_Object);
 INLINE bool (VECTORLIKEP) (Lisp_Object);
+INLINE struct Lisp_Symbol *XSYMBOL (Lisp_Object);
+INLINE void *(XUNTAGBASE) (Lisp_Object, int, void *);
 INLINE bool WINDOWP (Lisp_Object);
 INLINE struct Lisp_Save_Value *XSAVE_VALUE (Lisp_Object);
 
@@ -720,6 +727,10 @@ struct Lisp_Symbol
 #define TAG_PTR(tag, ptr) \
   ((USE_LSB_TAG ? (tag) : (EMACS_UINT) (tag) << VALBITS) + (uintptr_t) (ptr))
 
+/* Yield an integer that tags PTR as a symbol.  */
+#define TAG_SYMPTR(ptr) \
+  TAG_PTR (Lisp_Symbol, (char *) (ptr) - (char *) (USE_LSB_TAG ? lispsym : 0))
+
 /* Declare extern constants for Lisp symbols.  These can be helpful
    when using a debugger like GDB, on older platforms where the debug
    format does not represent C macros.  Athough these symbols are
@@ -727,7 +738,7 @@ struct Lisp_Symbol
 #define DEFINE_LISP_SYMBOL_BEGIN(name) \
    DEFINE_GDB_SYMBOL_BEGIN (Lisp_Object, name)
 #define DEFINE_LISP_SYMBOL_END(name) \
-   DEFINE_GDB_SYMBOL_END (LISP_INITIALLY (TAG_PTR (Lisp_Symbol, name)))
+   DEFINE_GDB_SYMBOL_END (LISP_INITIALLY (TAG_SYMPTR (name)))
 
 #include "globals.h"
 
@@ -818,6 +829,8 @@ LISP_MACRO_DEFUN (XINT, EMACS_INT, (Lisp_Object a), (a))
 LISP_MACRO_DEFUN (XFASTINT, EMACS_INT, (Lisp_Object a), (a))
 LISP_MACRO_DEFUN (XTYPE, enum Lisp_Type, (Lisp_Object a), (a))
 LISP_MACRO_DEFUN (XUNTAG, void *, (Lisp_Object a, int type), (a, type))
+LISP_MACRO_DEFUN (XUNTAGBASE, void *, (Lisp_Object a, int type, void *base),
+		  (a, type, base))
 
 #else /* ! USE_LSB_TAG */
 
@@ -878,16 +891,21 @@ XTYPE (Lisp_Object a)
   return USE_LSB_TAG ? i & ~VALMASK : i >> VALBITS;
 }
 
+/* Extract A's pointer value, assuming A's type is TYPE.
+   If USE_LSB_TAG, add BASE to A's pointer value while extracting.  */
+INLINE void *
+XUNTAGBASE (Lisp_Object a, int type, void *base)
+{
+  char *b = USE_LSB_TAG ? base : 0;
+  intptr_t i = USE_LSB_TAG ? XLI (a) - type : XLI (a) & VALMASK;
+  return b + i;
+}
+
 /* Extract A's pointer value, assuming A's type is TYPE.  */
 INLINE void *
 XUNTAG (Lisp_Object a, int type)
 {
-  if (USE_LSB_TAG)
-    {
-      intptr_t i = XLI (a) - type;
-      return (void *) i;
-    }
-  return XPNTR (a);
+  return XUNTAGBASE (a, type, 0);
 }
 
 #endif /* ! USE_LSB_TAG */
@@ -1032,7 +1050,10 @@ make_lisp_ptr (void *ptr, enum Lisp_Type type)
 INLINE Lisp_Object
 make_lisp_symbol (struct Lisp_Symbol *sym)
 {
-  return make_lisp_ptr (sym, Lisp_Symbol);
+  Lisp_Object a = XIL (TAG_SYMPTR (sym));
+  eassert (XTYPE (a) == Lisp_Symbol
+	   && XUNTAGBASE (a, Lisp_Symbol, lispsym) == sym);
+  return a;
 }
 
 INLINE Lisp_Object

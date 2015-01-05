@@ -1,5 +1,23 @@
 2015-01-05  Paul Eggert  <eggert@cs.ucla.edu>
 
+	Use 0 for Qnil
+	Fixes Bug#15880.
+	If USE_LSB_TAG, arrange for the representation of Qnil to be zero so
+	that NILP (x) is equivalent to testing whether x is 0 at the
+	machine level.  The overall effects of this and the previous patch
+	shrink the size of the text segment by 2.3% and speeds up
+	compilation of all the .elc files by about 0.5% on my platform,
+	which is Fedora 20 x86-64.
+	* lisp.h (lisp_h_XPNTR, lisp_h_XSYMBOL, lisp_h_XUNTAG)
+	(make_lisp_symbol) [USE_LSB_TAG]:
+	Symbols now tag the difference from lispsym, not the pointer.
+	(lisp_h_XUNTAGBASE, TAG_SYMPTR): New macros.
+	(Lisp_Int0, Lisp_Int1, Lisp_Symbol, Lisp_Misc, Lisp_String, Lisp_Cons):
+	Renumber so that Lisp_Symbol is 0, so that Qnil is zero.
+	(XSYMBOL): New forward decl.
+	(XUNTAGBASE): New function.
+	(XUNTAG): Use it.
+
 	Compute C decls for DEFSYMs automatically
 	Fixes Bug#15880.
 	This patch also makes Q constants (e.g., Qnil) constant addresses

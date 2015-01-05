@@ -613,6 +613,16 @@ compare_globals (const void *a, const void *b)
   if (ga->type != gb->type)
     return ga->type - gb->type;
 
+  /* Consider "nil" to be the least, so that aQnil is firat.  That
+     way, Qnil's internal representation is zero, which is a bit faster.  */
+  if (ga->type == SYMBOL)
+    {
+      bool a_nil = strcmp (ga->name, "Qnil") == 0;
+      bool b_nil = strcmp (gb->name, "Qnil") == 0;
+      if (a_nil | b_nil)
+	return b_nil - a_nil;
+    }
+
   return strcmp (ga->name, gb->name);
 }
 
