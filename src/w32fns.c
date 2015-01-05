@@ -93,19 +93,6 @@ extern char * w32_strerror (int error_no);
 #define IDC_HAND MAKEINTRESOURCE(32649)
 #endif
 
-Lisp_Object Qundefined_color;
-Lisp_Object Qcancel_timer;
-Lisp_Object Qfont_param;
-Lisp_Object Qhyper;
-Lisp_Object Qsuper;
-Lisp_Object Qmeta;
-Lisp_Object Qalt;
-Lisp_Object Qctrl;
-Lisp_Object Qcontrol;
-Lisp_Object Qshift;
-static Lisp_Object Qgeometry, Qworkarea, Qmm_size, Qframes;
-
-
 /* Prefix for system colors.  */
 #define SYSTEM_COLOR_PREFIX "System"
 #define SYSTEM_COLOR_PREFIX_LEN (sizeof (SYSTEM_COLOR_PREFIX) - 1)

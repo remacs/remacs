@@ -98,8 +98,6 @@ AppendMenuW_Proc unicode_append_menu = NULL;
 MessageBoxW_Proc unicode_message_box = NULL;
 #endif /* NTGUI_UNICODE */
 
-Lisp_Object Qdebug_on_next_call, Qunsupported__w32_dialog;
-
 void set_frame_menubar (struct frame *, bool, bool);
 
 #ifdef HAVE_DIALOGS

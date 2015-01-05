@@ -220,10 +220,6 @@ static void w32fullscreen_hook (struct frame *);
 static void x_check_font (struct frame *, struct font *);
 #endif
 
-static Lisp_Object Qvendor_specific_keysyms;
-static Lisp_Object Qadded, Qremoved, Qmodified;
-static Lisp_Object Qrenamed_from, Qrenamed_to;
-
 
 /***********************************************************************
 			      Debugging

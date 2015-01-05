@@ -57,51 +57,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #define JOHAB_CHARSET 130
 #endif
 
-Lisp_Object Qgdi;
-Lisp_Object Quniscribe;
-static Lisp_Object QCformat;
-static Lisp_Object Qmonospace, Qsansserif, Qmono, Qsans, Qsans_serif;
-static Lisp_Object Qserif, Qscript, Qdecorative;
-static Lisp_Object Qraster, Qoutline, Qunknown;
-
-/* antialiasing  */
-static Lisp_Object Qstandard, Qsubpixel, Qnatural;
-
-/* languages */
-static Lisp_Object Qzh;
-
-/* scripts */
-static Lisp_Object Qgreek, Qcoptic, Qcyrillic, Qarmenian, Qhebrew;
-static Lisp_Object Qarabic, Qsyriac, Qnko, Qthaana, Qdevanagari, Qbengali;
-static Lisp_Object Qgurmukhi, Qgujarati, Qoriya, Qtamil, Qtelugu;
-static Lisp_Object Qkannada, Qmalayalam, Qsinhala, Qthai, Qlao;
-static Lisp_Object Qtibetan, Qmyanmar, Qgeorgian, Qhangul, Qethiopic;
-static Lisp_Object Qcherokee, Qcanadian_aboriginal, Qogham, Qrunic;
-static Lisp_Object Qkhmer, Qmongolian, Qbraille, Qhan;
-static Lisp_Object Qideographic_description, Qcjk_misc, Qkana, Qbopomofo;
-static Lisp_Object Qkanbun, Qyi, Qbyzantine_musical_symbol;
-static Lisp_Object Qmusical_symbol, Qmathematical, Qcham, Qphonetic;
-/* Not defined in characters.el, but referenced in fontset.el.  */
-static Lisp_Object Qbalinese, Qbuginese, Qbuhid, Qcuneiform, Qcypriot;
-static Lisp_Object Qdeseret, Qglagolitic, Qgothic, Qhanunoo, Qkharoshthi;
-static Lisp_Object Qlimbu, Qlinear_b, Qold_italic, Qold_persian, Qosmanya;
-static Lisp_Object Qphags_pa, Qphoenician, Qshavian, Qsyloti_nagri;
-static Lisp_Object Qtagalog, Qtagbanwa, Qtai_le, Qtifinagh, Qugaritic;
-
-/* W32 charsets: for use in Vw32_charset_info_alist.  */
-static Lisp_Object Qw32_charset_ansi, Qw32_charset_default;
-static Lisp_Object Qw32_charset_symbol, Qw32_charset_shiftjis;
-static Lisp_Object Qw32_charset_hangeul, Qw32_charset_gb2312;
-static Lisp_Object Qw32_charset_chinesebig5, Qw32_charset_oem;
-static Lisp_Object Qw32_charset_easteurope, Qw32_charset_turkish;
-static Lisp_Object Qw32_charset_baltic, Qw32_charset_russian;
-static Lisp_Object Qw32_charset_arabic, Qw32_charset_greek;
-static Lisp_Object Qw32_charset_hebrew, Qw32_charset_vietnamese;
-static Lisp_Object Qw32_charset_thai, Qw32_charset_johab, Qw32_charset_mac;
-
-/* Font spacing symbols - defined in font.c.  */
-extern Lisp_Object Qc, Qp, Qm;
-
 static void fill_in_logfont (struct frame *, LOGFONT *, Lisp_Object);
 
 static BYTE w32_antialias_type (Lisp_Object);

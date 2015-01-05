@@ -72,8 +72,6 @@ extern BOOL WINAPI IsValidLocale (LCID, DWORD);
 	    + ((DWORD_PTR)(var) - (section)->VirtualAddress)		\
 	    + (filedata).file_base))
 
-Lisp_Object Qhigh, Qlow;
-
 /* Signal handlers...SIG_DFL == 0 so this is initialized correctly.  */
 static signal_handler sig_handlers[NSIG];
 
