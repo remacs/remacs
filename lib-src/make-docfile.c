@@ -658,9 +658,10 @@ write_globals (void)
 	  /* It would be nice to have a cleaner way to deal with these
 	     special hacks, too.  */
 	  if (strcmp (globals[i].name, "Fbyteorder") == 0
-	      || strcmp (globals[i].name, "Ftool_bar_height") == 0
+	      || strcmp (globals[i].name, "Fframe_windows_min_size") == 0
+	      || strcmp (globals[i].name, "Fidentity") == 0
 	      || strcmp (globals[i].name, "Fmax_char") == 0
-	      || strcmp (globals[i].name, "Fidentity") == 0)
+	      || strcmp (globals[i].name, "Ftool_bar_height") == 0)
 	    fputs (" ATTRIBUTE_CONST", stdout);
 
 	  puts (";");

@@ -1,5 +1,7 @@
 2015-01-04  Paul Eggert  <eggert@cs.ucla.edu>
 
+	* INSTALL: Mention 'make WERROR_CFLAGS='.
+
 	Clarify 'make info'
 	* Makefile.in (info): Use GNU make conditional rather than
 	an '@' rule with a shell conditional, so that the builder can
@@ -11,23 +13,12 @@
 
 2015-01-01  Paul Eggert  <eggert@cs.ucla.edu>
 
-	Fix copyright years by hand
-	These are dates that admin/update-copyright did not update, or
-	updated incorrectly.  Also, back out the copyright-date change to
-	doc/misc/texinfo.tex, as upstream hasn't updated that date yet.
-
-	Update copyright year to 2015
-	Run admin/update-copyright.
-
 	Merge from gnulib, incorporating:
 	2015-01-01 version-etc: new year
 
 	* .gitattributes: New file.
 
-2015-01-01  Paul Eggert  <eggert@cs.ucla.edu>
-
-	* autogen.sh: Port better to non-GNU 'cp'.
-	Problem reported by Han Boetes.
+	* autogen.sh: Port better to non-GNU 'cp'.  Reported by Han Boetes.
 
 2014-12-31  Paul Eggert  <eggert@cs.ucla.edu>
 
@@ -56,32 +47,9 @@
 
 2014-12-25  Paul Eggert  <eggert@cs.ucla.edu>
 
-	Prefer stpcpy to strcat
-	* admin/merge-gnulib (GNULIB_MODULES): Add stpcpy.
+	Prefer stpcpy to strcat.
 	* lib/gnulib.mk, m4/gnulib-comp.m4: Regenerate.
 	* lib/stpcpy.c, m4/stpcpy.m4: New files, from gnulib.
-	* lib-src/ebrowse.c (sym_scope_1, operator_name, open_file):
-	* lib-src/emacsclient.c (get_server_config, set_local_socket)
-	(start_daemon_and_retry_set_socket):
-	* lib-src/etags.c (main, C_entries, relative_filename):
-	* lib-src/pop.c (sendline):
-	* lib-src/update-game-score.c (main):
-	* lwlib/xlwmenu.c (resource_widget_value):
-	* src/callproc.c (child_setup):
-	* src/dbusbind.c (xd_signature_cat):
-	* src/doc.c (get_doc_string, Fsnarf_documentation):
-	* src/editfns.c (Fuser_full_name):
-	* src/frame.c (xrdb_get_resource):
-	* src/gtkutil.c (xg_get_file_with_chooser):
-	* src/tparam.c (tparam1):
-	* src/xfns.c (xic_create_fontsetname):
-	* src/xrdb.c (gethomedir, get_user_db, get_environ_db):
-	* src/xsmfns.c (smc_save_yourself_CB):
-	Rewrite to avoid the need for strcat, typically by using stpcpy
-	and/or lispstpcpy.  strcat tends to be part of O(N**2) algorithms.
-	* src/doc.c (sibling_etc):
-	* src/xrdb.c (xdefaults):
-	Now a top-level static constant.
 
 2014-12-24  Stephen Leake  <stephen_leake@stephe-leake.org>
 
@@ -96,16 +64,11 @@
 
 2014-12-23  Paul Eggert  <eggert@cs.ucla.edu>
 
-	Merge from gnulib
+	Merge from gnulib.
 	2014-12-20 utimens: remove unnecessary assert
 	2014-12-16 stdalign: port better to HP compilers
 	2014-12-16 stdalign: work around Apple GCC 4.0 bug
 	* lib/stdalign.in.h, lib/utimens.c, m4/stdalign.m4: Update from gnulib.
-
-2014-12-14  Paul Eggert  <eggert@cs.ucla.edu>
-
-	Spelling fixes.  All uses changed.
-	* src/regex.c (analyze_first): Rename from analyze_first.
 
 2014-12-14  Glenn Morris  <rgm@gnu.org>
 
@@ -119,22 +82,20 @@
 
 2014-12-13  Paul Eggert  <eggert@cs.ucla.edu>
 
-	Git ignore lib/std*.h
 	* .gitignore: Add lib/std*.h, to ignore stdarg.h, stdbool.h, and
 	stddef.h.  Remove subsumed entries.
 	Add !lib/std*.in.h, so as to not ignore the .in.h files.
 
 2014-12-13  Paul Eggert  <eggert@cs.ucla.edu>
 
-	Port commit-msg to mawk
-	Problem reported by Ted Zlatanov in:
+	Port commit-msg to mawk.  Reported by Ted Zlatanov in:
 	http://lists.gnu.org/archive/html/emacs-devel/2014-12/msg01093.html
 	* build-aux/git-hooks/commit-msg (space, non_space, non_print):
 	New vars.  Use them as approximations to POSIX bracket expressions,
 	on implementations like mawk that do not support POSIX regexps.
 
-	Improve commit-msg messages and autosquash
-	Problem reported by Michal Nazarewicz in Bug#19337.
+	Improve commit-msg messages and autosquash.
+	Reported by Michal Nazarewicz in Bug#19337.
 	* build-aux/git-hooks/commit-msg: Add "commit message" to
 	diagnostics.  Distinguish better between tabs and other
 	unprintable chars in diagnostics.  Don't complain if a prefix
@@ -143,7 +104,7 @@
 2014-12-13  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Port commit-message checking to FreeBSD 9.
-	This fixes a bug reported by Jan Djärv in:
+	Reported by Jan Djärv in:
 	http://lists.gnu.org/archive/html/emacs-devel/2014-12/msg00704.html
 	along with some other issues I noticed while testing with FreeBSD.
 	* build-aux/git-hooks/commit-msg: Prefer gawk if available.
@@ -158,7 +119,7 @@
 
 2014-12-12  Paul Eggert  <eggert@cs.ucla.edu>
 
-	Merge from gnulib
+	Merge from gnulib.
 	2014-12-12 stddef: support C11's max_align_t
 	2014-12-11 unistd: fix iOS check conditional
 	2014-12-08 apply _GL_ATTRIBUTE_PURE to some inline functions
@@ -343,7 +304,7 @@
 	build: port to GCC 4.6.4 + glibc 2.5
 	On platforms this old, building with _FORTIFY_SOURCE equal to 2
 	results in duplicate definitions of standard library functions.
-	Problem reported by Nelson H. F. Beebe.
+	Reported by Nelson H. F. Beebe.
 	* configure.ac (_FORTIFY_SOURCE): Sort after GNULIB_PORTCHECK.
 	By default, do not enable this unless GNULIB_PORTCHECK is defined.
 	This better matches the original intent, which as I recall was to
@@ -1359,7 +1320,7 @@
 	Fix problem with MAKE and xcrun configuration.
 	* configure.ac: Don't set MAKE unless 'make' doesn't work.
 	Set it only in the environment, not in the makefile.
-	Problem reported by Glenn Morris in:
+	Reported by Glenn Morris in:
 	http://lists.gnu.org/archive/html/emacs-devel/2013-12/msg00969.html
 
 2013-12-27  Paul Eggert  <eggert@cs.ucla.edu>
@@ -3053,7 +3014,7 @@
 	(bootstrap): Run ./configure, rather than trying to run config.status
 	if it exists.  That builds src/epaths.h more reliably.
 	Run autogen/copy_autogen if autogen.sh fails,
-	to create 'configure'; problem reported by Andreas Schwab in
+	to create 'configure'.  Reported by Andreas Schwab in
 	<http://lists.gnu.org/archive/html/emacs-devel/2012-09/msg00438.html>.
 	* autogen.sh: Exit with status 1 when failing due to missing tools,
 	reverting the 2012-09-10 change to this file.
@@ -4385,8 +4346,7 @@
 
 	Check pkg-config exit status when configuring (Bug#10626).
 	* configure.in (PKG_CHECK_MODULES): Do not assume that pkg-config
-	works; check its exit status.  Problem reported by Jordi Gutiérrez
-	Hermoso in
+	works; check its exit status.  Reported by Jordi Gutiérrez Hermoso in
 	<http://lists.gnu.org/archive/html/emacs-devel/2012-01/msg00787.html>.
 
 2012-04-07  Glenn Morris  <rgm@gnu.org>
@@ -4544,7 +4504,7 @@
 	* configure.in (LIB_PTHREAD): Prepend -lpthread to LIBS (Bug#9852)
 	if the library is found.  Otherwise, later configure-time tests,
 	such as the test for pthread_sigmask, generate the wrong results
-	on some platforms.  Problem reported for FreeBSD by Nali Toja.
+	on some platforms.  Reported by Nali Toja for FreeBSD.
 
 2011-10-20  Paul Eggert  <eggert@cs.ucla.edu>
 
@@ -4775,7 +4735,7 @@
 	* m4/pthread_sigmask.m4 (gl_FUNC_PTHREAD_SIGMASK): Omit gl_THREADLIB
 	test, which runs afoul of Automake installations where, for example,
 	/usr/share/aclocal contains a copy of gl_THREADLIB.
-	Problem reported by Sven Joachim in
+	Reported by Sven Joachim in
 	<http://lists.gnu.org/archive/html/emacs-devel/2011-07/msg00529.html>.
 	This is just a quick temporary fix, specific to Emacs; I'll work
 	with the other gnulib maintainers to get a more-permanent fix.
@@ -5387,7 +5347,7 @@
 
 	* arg-nonnull.h, c++defs.h, warn-on-use.h: Fix licenses.
 	Sync from gnulib, which has been patched to fix the problem
-	with the license notices.  Problem reported by Glenn Morris in
+	with the license notices.  Reported by Glenn Morris in
 	<http://lists.gnu.org/archive/html/emacs-devel/2011-02/msg00403.html>.
 
 2011-02-09  Stefan Monnier  <monnier@iro.umontreal.ca>
@@ -5541,7 +5501,7 @@
 	used.  The code already assumed two's complement, so there's
 	no need to test for alternatives.  All uses removed.
 	(TYPE_MAXIMUM): Don't rely here on overflow behavior not defined by
-	the C standard.  Problem reported by Rich Felker in
+	the C standard.  Reported by Rich Felker in
 	<http://lists.gnu.org/archive/html/bug-gnulib/2011-01/msg00488.html>.
 	(twos_complement_arithmetic): Also check long_int and time_t.
 	(time_t_avg, time_t_add_ok, time_t_int_add_ok): New functions.
