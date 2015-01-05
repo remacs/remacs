@@ -53,8 +53,6 @@ bset_category_table (struct buffer *b, Lisp_Object val)
 
    For the moment, we are not using this feature.  */
 static int category_table_version;
-
-static Lisp_Object Qcategory_table, Qcategoryp, Qcategorysetp, Qcategory_table_p;
 
 /* Category set staff.  */
 

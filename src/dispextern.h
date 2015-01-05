@@ -2907,8 +2907,8 @@ struct redisplay_interface
 
 struct image_type
 {
-  /* A symbol uniquely identifying the image type, .e.g `jpeg'.  */
-  Lisp_Object *type;
+  /* A symbol uniquely identifying the image type, e.g., 'jpeg'.  */
+  struct Lisp_Symbol *type;
 
   /* Check that SPEC is a valid image specification for the given
      image type.  Value is true if SPEC is valid.  */
@@ -3222,7 +3222,6 @@ void move_it_in_display_line (struct it *it,
 			      enum move_operation_enum op);
 bool in_display_vector_p (struct it *);
 int frame_mode_line_height (struct frame *);
-extern Lisp_Object Qtool_bar;
 extern bool redisplaying_p;
 extern bool help_echo_showing_p;
 extern Lisp_Object help_echo_string, help_echo_window;
@@ -3402,7 +3401,6 @@ int face_at_string_position (struct window *w, Lisp_Object string,
 int merge_faces (struct frame *, Lisp_Object, int, int);
 int compute_char_face (struct frame *, int, Lisp_Object);
 void free_all_realized_faces (Lisp_Object);
-extern Lisp_Object Qforeground_color, Qbackground_color;
 extern char unspecified_fg[], unspecified_bg[];
 
 /* Defined in xfns.c.  */
@@ -3492,7 +3490,6 @@ void do_pending_window_change (bool);
 void change_frame_size (struct frame *, int, int, bool, bool, bool, bool);
 void init_display (void);
 void syms_of_display (void);
-extern Lisp_Object Qredisplay_dont_pause;
 extern void spec_glyph_lookup_face (struct window *, GLYPH *);
 extern void fill_up_frame_row_with_spaces (struct glyph_row *, int);
 

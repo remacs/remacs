@@ -29,24 +29,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "process.h"
 
 
-/* Subroutines.  */
-static Lisp_Object Qgfile_add_watch;
-static Lisp_Object Qgfile_rm_watch;
-
-/* Filter objects.  */
-static Lisp_Object Qwatch_mounts;      /* G_FILE_MONITOR_WATCH_MOUNTS  */
-static Lisp_Object Qsend_moved;        /* G_FILE_MONITOR_SEND_MOVED  */
-
-/* Event types.  */
-static Lisp_Object Qchanged;           /* G_FILE_MONITOR_EVENT_CHANGED  */
-static Lisp_Object Qchanges_done_hint; /* G_FILE_MONITOR_EVENT_CHANGES_DONE_HINT  */
-static Lisp_Object Qdeleted;           /* G_FILE_MONITOR_EVENT_DELETED  */
-static Lisp_Object Qcreated;           /* G_FILE_MONITOR_EVENT_CREATED  */
-static Lisp_Object Qattribute_changed; /* G_FILE_MONITOR_EVENT_ATTRIBUTE_CHANGED  */
-static Lisp_Object Qpre_unmount;       /* G_FILE_MONITOR_EVENT_PRE_UNMOUNT  */
-static Lisp_Object Qunmounted;         /* G_FILE_MONITOR_EVENT_UNMOUNTED  */
-static Lisp_Object Qmoved;             /* G_FILE_MONITOR_EVENT_MOVED  */
-
 static Lisp_Object watch_list;
 
 /* This is the callback function for arriving signals from
@@ -258,23 +240,27 @@ globals_of_gfilenotify (void)
 void
 syms_of_gfilenotify (void)
 {
-
   DEFSYM (Qgfile_add_watch, "gfile-add-watch");
   defsubr (&Sgfile_add_watch);
 
   DEFSYM (Qgfile_rm_watch, "gfile-rm-watch");
   defsubr (&Sgfile_rm_watch);
 
-  DEFSYM (Qwatch_mounts, "watch-mounts");
-  DEFSYM (Qsend_moved, "send-moved");
-  DEFSYM (Qchanged, "changed");
+  /* Filter objects.  */
+  DEFSYM (Qwatch_mounts, "watch-mounts"); /* G_FILE_MONITOR_WATCH_MOUNTS  */
+  DEFSYM (Qsend_moved, "send-moved");	/* G_FILE_MONITOR_SEND_MOVED  */
+
+  /* Event types.  */
+  DEFSYM (Qchanged, "changed");	/* G_FILE_MONITOR_EVENT_CHANGED  */
   DEFSYM (Qchanges_done_hint, "changes-done-hint");
-  DEFSYM (Qdeleted, "deleted");
-  DEFSYM (Qcreated, "created");
+				/* G_FILE_MONITOR_EVENT_CHANGES_DONE_HINT  */
+  DEFSYM (Qdeleted, "deleted");	/* G_FILE_MONITOR_EVENT_DELETED  */
+  DEFSYM (Qcreated, "created");	/* G_FILE_MONITOR_EVENT_CREATED  */
   DEFSYM (Qattribute_changed, "attribute-changed");
-  DEFSYM (Qpre_unmount, "pre-unmount");
-  DEFSYM (Qunmounted, "unmounted");
-  DEFSYM (Qmoved, "moved");
+				/* G_FILE_MONITOR_EVENT_ATTRIBUTE_CHANGED  */
+  DEFSYM (Qpre_unmount, "pre-unmount");	/* G_FILE_MONITOR_EVENT_PRE_UNMOUNT  */
+  DEFSYM (Qunmounted, "unmounted");	/* G_FILE_MONITOR_EVENT_UNMOUNTED  */
+  DEFSYM (Qmoved, "moved");	/* G_FILE_MONITOR_EVENT_MOVED  */
 
   staticpro (&watch_list);
 

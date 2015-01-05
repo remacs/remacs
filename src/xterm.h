@@ -1111,9 +1111,6 @@ extern bool x_session_have_connection (void);
 extern void x_session_close (void);
 #endif
 
-/* Defined in xterm.c */
-
-extern Lisp_Object Qx_gtk_map_stock;
 
 /* Is the frame embedded into another application? */
 

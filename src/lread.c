@@ -18,6 +18,8 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
+/* Tell globals.h to define tables needed by init_obarray.  */
+#define DEFINE_SYMBOLS
 
 #include <config.h>
 #include "sysstdio.h"
@@ -64,32 +66,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #define file_tell ftell
 #endif
 
-/* Hash table read constants.  */
-static Lisp_Object Qhash_table, Qdata;
-static Lisp_Object Qtest;
-Lisp_Object Qsize;
-static Lisp_Object Qweakness;
-static Lisp_Object Qrehash_size;
-static Lisp_Object Qrehash_threshold;
-
-static Lisp_Object Qread_char, Qget_file_char, Qcurrent_load_list;
-Lisp_Object Qstandard_input;
-Lisp_Object Qvariable_documentation;
-static Lisp_Object Qascii_character, Qload, Qload_file_name;
-Lisp_Object Qbackquote, Qcomma, Qcomma_at, Qcomma_dot, Qfunction;
-static Lisp_Object Qinhibit_file_name_operation;
-static Lisp_Object Qeval_buffer_list;
-Lisp_Object Qlexical_binding;
-static Lisp_Object Qfile_truename, Qdo_after_load_evaluation; /* ACM 2006/5/16 */
-
-/* Used instead of Qget_file_char while loading *.elc files compiled
-   by Emacs 21 or older.  */
-static Lisp_Object Qget_emacs_mule_file_char;
-
-static Lisp_Object Qload_force_doc_strings;
-
-static Lisp_Object Qload_in_progress;
-
 /* The association list of objects read with the #n=object form.
    Each member of the list has the form (n . object), and is used to
    look up the object for the corresponding #n# construct.
@@ -133,7 +109,6 @@ static file_offset prev_saved_doc_string_position;
    Fread initializes this to false, so we need not specbind it
    or worry about what happens to it when there is an error.  */
 static bool new_backquote_flag;
-static Lisp_Object Qold_style_backquotes;
 
 /* A list of file names for files being loaded in Fload.  Used to
    check for recursive loads.  */
@@ -1429,8 +1404,6 @@ directories, make sure the PREDICATE function returns `dir-ok' for them.  */)
     emacs_close (fd);
   return file;
 }
-
-static Lisp_Object Qdir_ok;
 
 /* Search for a file whose name is STR, looking in directories
    in the Lisp list PATH, and trying suffixes from SUFFIX.
@@ -3792,28 +3765,36 @@ check_obarray (Lisp_Object obarray)
   return obarray;
 }
 
-/* Intern a symbol with name STRING in OBARRAY using bucket INDEX.  */
+/* Intern symbol SYM in OBARRAY using bucket INDEX.  */
 
-Lisp_Object
-intern_driver (Lisp_Object string, Lisp_Object obarray, ptrdiff_t index)
+static Lisp_Object
+intern_sym (Lisp_Object sym, Lisp_Object obarray, Lisp_Object index)
 {
-  Lisp_Object *ptr, sym = Fmake_symbol (string);
+  Lisp_Object *ptr;
 
   XSYMBOL (sym)->interned = (EQ (obarray, initial_obarray)
 			     ? SYMBOL_INTERNED_IN_INITIAL_OBARRAY
 			     : SYMBOL_INTERNED);
 
-  if ((SREF (string, 0) == ':') && EQ (obarray, initial_obarray))
+  if (SREF (SYMBOL_NAME (sym), 0) == ':' && EQ (obarray, initial_obarray))
     {
       XSYMBOL (sym)->constant = 1;
       XSYMBOL (sym)->redirect = SYMBOL_PLAINVAL;
       SET_SYMBOL_VAL (XSYMBOL (sym), sym);
     }
 
-  ptr = aref_addr (obarray, index);
+  ptr = aref_addr (obarray, XINT (index));
   set_symbol_next (sym, SYMBOLP (*ptr) ? XSYMBOL (*ptr) : NULL);
   *ptr = sym;
   return sym;
+}
+
+/* Intern a symbol with name STRING in OBARRAY using bucket INDEX.  */
+
+Lisp_Object
+intern_driver (Lisp_Object string, Lisp_Object obarray, Lisp_Object index)
+{
+  return intern_sym (Fmake_symbol (string), obarray, index);
 }
 
 /* Intern the C string STR: return a symbol with that name,
@@ -3826,7 +3807,7 @@ intern_1 (const char *str, ptrdiff_t len)
   Lisp_Object tem = oblookup (obarray, str, len, len);
 
   return SYMBOLP (tem) ? tem : intern_driver (make_string (str, len),
-					      obarray, XINT (tem));
+					      obarray, tem);
 }
 
 Lisp_Object
@@ -3840,9 +3821,26 @@ intern_c_string_1 (const char *str, ptrdiff_t len)
       /* Creating a non-pure string from a string literal not implemented yet.
 	 We could just use make_string here and live with the extra copy.  */
       eassert (!NILP (Vpurify_flag));
-      tem = intern_driver (make_pure_c_string (str, len), obarray, XINT (tem));
+      tem = intern_driver (make_pure_c_string (str, len), obarray, tem);
     }
   return tem;
+}
+
+static void
+define_symbol (Lisp_Object sym, char const *str)
+{
+  ptrdiff_t len = strlen (str);
+  Lisp_Object string = make_pure_c_string (str, len);
+  init_symbol (sym, string);
+
+  /* Qunbound is uninterned, so that it's not confused with any symbol
+     'unbound' created by a Lisp program.  */
+  if (! EQ (sym, Qunbound))
+    {
+      Lisp_Object bucket = oblookup (initial_obarray, str, len, len);
+      eassert (INTEGERP (bucket));
+      intern_sym (sym, initial_obarray, bucket);
+    }
 }
 
 DEFUN ("intern", Fintern, Sintern, 1, 2, 0,
@@ -3859,8 +3857,8 @@ it defaults to the value of `obarray'.  */)
 
   tem = oblookup (obarray, SSDATA (string), SCHARS (string), SBYTES (string));
   if (!SYMBOLP (tem))
-    tem = intern_driver (NILP (Vpurify_flag) ? string
-			 : Fpurecopy (string), obarray, XINT (tem));
+    tem = intern_driver (NILP (Vpurify_flag) ? string : Fpurecopy (string),
+			 obarray, tem);
   return tem;
 }
 
@@ -4059,24 +4057,17 @@ init_obarray (void)
   initial_obarray = Vobarray;
   staticpro (&initial_obarray);
 
-  Qunbound = Fmake_symbol (build_pure_c_string ("unbound"));
-  /* Set temporary dummy values to Qnil and Vpurify_flag to satisfy the
-     NILP (Vpurify_flag) check in intern_c_string.  */
-  Qnil = make_number (-1); Vpurify_flag = make_number (1);
-  Qnil = intern_c_string ("nil");
+  for (int i = 0; i < ARRAYELTS (lispsym); i++)
+    define_symbol (make_lisp_symbol (&lispsym[i]), defsym_name[i]);
 
-  /* Fmake_symbol inits fields of new symbols with Qunbound and Qnil,
-     so those two need to be fixed manually.  */
-  SET_SYMBOL_VAL (XSYMBOL (Qunbound), Qunbound);
-  set_symbol_function (Qunbound, Qnil);
-  set_symbol_plist (Qunbound, Qnil);
+  DEFSYM (Qunbound, "unbound");
+
+  DEFSYM (Qnil, "nil");
   SET_SYMBOL_VAL (XSYMBOL (Qnil), Qnil);
   XSYMBOL (Qnil)->constant = 1;
   XSYMBOL (Qnil)->declared_special = true;
-  set_symbol_plist (Qnil, Qnil);
-  set_symbol_function (Qnil, Qnil);
 
-  Qt = intern_c_string ("t");
+  DEFSYM (Qt, "t");
   SET_SYMBOL_VAL (XSYMBOL (Qt), Qt);
   XSYMBOL (Qt)->constant = 1;
   XSYMBOL (Qt)->declared_special = true;
@@ -4729,7 +4720,11 @@ that are loaded before your customizations are read!  */);
   DEFSYM (Qstandard_input, "standard-input");
   DEFSYM (Qread_char, "read-char");
   DEFSYM (Qget_file_char, "get-file-char");
+
+  /* Used instead of Qget_file_char while loading *.elc files compiled
+     by Emacs 21 or older.  */
   DEFSYM (Qget_emacs_mule_file_char, "get-emacs-mule-file-char");
+
   DEFSYM (Qload_force_doc_strings, "load-force-doc-strings");
 
   DEFSYM (Qbackquote, "`");

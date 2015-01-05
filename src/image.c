@@ -86,12 +86,6 @@ typedef struct w32_bitmap_record Bitmap_Record;
 #define x_defined_color w32_defined_color
 #define DefaultDepthOfScreen(screen) (one_w32_display_info.n_cbits)
 
-/* Versions of libpng, libgif, and libjpeg that we were compiled with,
-   or -1 if no PNG/GIF support was compiled in.  This is tested by
-   w32-win.el to correctly set up the alist used to search for the
-   respective image libraries.  */
-Lisp_Object Qlibpng_version, Qlibgif_version, Qlibjpeg_version;
-
 #endif /* HAVE_NTGUI */
 
 #ifdef HAVE_NS
@@ -110,11 +104,6 @@ typedef struct ns_bitmap_record Bitmap_Record;
 #define DefaultDepthOfScreen(screen) x_display_list->n_planes
 #endif /* HAVE_NS */
 
-
-/* The symbol `postscript' identifying images of this type.  */
-
-static Lisp_Object Qpostscript;
-
 static void x_disable_image (struct frame *, struct image *);
 static void x_edge_detection (struct frame *, struct image *, Lisp_Object,
                               Lisp_Object);
@@ -125,8 +114,6 @@ static unsigned long lookup_rgb_color (struct frame *f, int r, int g, int b);
 static void free_color_table (void);
 static unsigned long *colors_in_color_table (int *n);
 #endif
-
-static Lisp_Object QCmax_width, QCmax_height;
 
 /* Code to deal with bitmaps.  Bitmaps are referenced by their bitmap
    id, which is just an int that this section returns.  Bitmaps are
@@ -537,24 +524,6 @@ x_create_bitmap_mask (struct frame *f, ptrdiff_t id)
 
 static struct image_type *image_types;
 
-/* The symbol `xbm' which is used as the type symbol for XBM images.  */
-
-static Lisp_Object Qxbm;
-
-/* Keywords.  */
-
-Lisp_Object QCascent, QCmargin, QCrelief;
-Lisp_Object QCconversion;
-static Lisp_Object QCheuristic_mask;
-static Lisp_Object QCcolor_symbols;
-static Lisp_Object QCindex, QCmatrix, QCcolor_adjustment, QCmask, QCgeometry;
-static Lisp_Object QCcrop, QCrotation;
-
-/* Other symbols.  */
-
-static Lisp_Object Qcount, Qextension_data, Qdelay;
-static Lisp_Object Qlaplace, Qemboss, Qedge_detection, Qheuristic;
-
 /* Forward function prototypes.  */
 
 static struct image_type *lookup_image_type (Lisp_Object);
@@ -579,27 +548,28 @@ static struct image_type *
 define_image_type (struct image_type *type)
 {
   struct image_type *p = NULL;
-  Lisp_Object target_type = *type->type;
+  struct Lisp_Symbol *new_type = type->type;
   bool type_valid = 1;
 
   block_input ();
 
   for (p = image_types; p; p = p->next)
-    if (EQ (*p->type, target_type))
+    if (p->type == new_type)
       goto done;
 
   if (type->init)
     {
 #if defined HAVE_NTGUI && defined WINDOWSNT
       /* If we failed to load the library before, don't try again.  */
-      Lisp_Object tested = Fassq (target_type, Vlibrary_cache);
+      Lisp_Object tested = Fassq (make_lisp_symbol (new_type), Vlibrary_cache);
       if (CONSP (tested) && NILP (XCDR (tested)))
 	type_valid = 0;
       else
 #endif
 	{
 	  type_valid = type->init ();
-	  CACHE_IMAGE_TYPE (target_type, type_valid ? Qt : Qnil);
+	  CACHE_IMAGE_TYPE (make_lisp_symbol (new_type),
+			    type_valid ? Qt : Qnil);
 	}
     }
 
@@ -1777,7 +1747,7 @@ lookup_image (struct frame *f, Lisp_Object spec)
 
 	  /* Do image transformations and compute masks, unless we
 	     don't have the image yet.  */
-	  if (!EQ (*img->type->type, Qpostscript))
+	  if (!EQ (make_lisp_symbol (img->type->type), Qpostscript))
 	    postprocess_image (f, img);
 	}
 
@@ -2362,7 +2332,7 @@ static const struct image_keyword xbm_format[XBM_LAST] =
 
 static struct image_type xbm_type =
 {
-  &Qxbm,
+  XSYMBOL_INIT (Qxbm),
   xbm_image_p,
   xbm_load,
   x_clear_image,
@@ -3121,9 +3091,6 @@ static bool xpm_load (struct frame *f, struct image *img);
 #endif /* HAVE_XPM */
 
 #if defined (HAVE_XPM) || defined (HAVE_NS)
-/* The symbol `xpm' identifying XPM-format images.  */
-
-static Lisp_Object Qxpm;
 
 /* Indices of image specification fields in xpm_format, below.  */
 
@@ -3171,7 +3138,7 @@ static bool init_xpm_functions (void);
 
 static struct image_type xpm_type =
 {
-  &Qxpm,
+  XSYMBOL_INIT (Qxpm),
   xpm_image_p,
   xpm_load,
   x_clear_image,
@@ -5059,10 +5026,6 @@ x_build_heuristic_mask (struct frame *f, struct image *img, Lisp_Object how)
 static bool pbm_image_p (Lisp_Object object);
 static bool pbm_load (struct frame *f, struct image *img);
 
-/* The symbol `pbm' identifying images of this type.  */
-
-static Lisp_Object Qpbm;
-
 /* Indices of image specification fields in gs_format, below.  */
 
 enum pbm_keyword_index
@@ -5103,7 +5066,7 @@ static const struct image_keyword pbm_format[PBM_LAST] =
 
 static struct image_type pbm_type =
 {
-  &Qpbm,
+  XSYMBOL_INIT (Qpbm),
   pbm_image_p,
   pbm_load,
   x_clear_image,
@@ -5446,10 +5409,6 @@ pbm_load (struct frame *f, struct image *img)
 static bool png_image_p (Lisp_Object object);
 static bool png_load (struct frame *f, struct image *img);
 
-/* The symbol `png' identifying images of this type.  */
-
-static Lisp_Object Qpng;
-
 /* Indices of image specification fields in png_format, below.  */
 
 enum png_keyword_index
@@ -5494,7 +5453,7 @@ static bool init_png_functions (void);
 
 static struct image_type png_type =
 {
-  &Qpng,
+  XSYMBOL_INIT (Qpng),
   png_image_p,
   png_load,
   x_clear_image,
@@ -6102,10 +6061,6 @@ png_load (struct frame *f, struct image *img)
 static bool jpeg_image_p (Lisp_Object object);
 static bool jpeg_load (struct frame *f, struct image *img);
 
-/* The symbol `jpeg' identifying images of this type.  */
-
-static Lisp_Object Qjpeg;
-
 /* Indices of image specification fields in gs_format, below.  */
 
 enum jpeg_keyword_index
@@ -6150,7 +6105,7 @@ static bool init_jpeg_functions (void);
 
 static struct image_type jpeg_type =
 {
-  &Qjpeg,
+  XSYMBOL_INIT (Qjpeg),
   jpeg_image_p,
   jpeg_load,
   x_clear_image,
@@ -6704,10 +6659,6 @@ jpeg_load (struct frame *f, struct image *img)
 static bool tiff_image_p (Lisp_Object object);
 static bool tiff_load (struct frame *f, struct image *img);
 
-/* The symbol `tiff' identifying images of this type.  */
-
-static Lisp_Object Qtiff;
-
 /* Indices of image specification fields in tiff_format, below.  */
 
 enum tiff_keyword_index
@@ -6754,7 +6705,7 @@ static bool init_tiff_functions (void);
 
 static struct image_type tiff_type =
 {
-  &Qtiff,
+  XSYMBOL_INIT (Qtiff),
   tiff_image_p,
   tiff_load,
   x_clear_image,
@@ -7167,10 +7118,6 @@ static bool gif_image_p (Lisp_Object object);
 static bool gif_load (struct frame *f, struct image *img);
 static void gif_clear_image (struct frame *f, struct image *img);
 
-/* The symbol `gif' identifying images of this type.  */
-
-static Lisp_Object Qgif;
-
 /* Indices of image specification fields in gif_format, below.  */
 
 enum gif_keyword_index
@@ -7217,7 +7164,7 @@ static bool init_gif_functions (void);
 
 static struct image_type gif_type =
 {
-  &Qgif,
+  XSYMBOL_INIT (Qgif),
   gif_image_p,
   gif_load,
   gif_clear_image,
@@ -7841,8 +7788,6 @@ compute_image_size (size_t width, size_t height,
   *d_height = desired_height;
 }
 
-static Lisp_Object Qimagemagick;
-
 static bool imagemagick_image_p (Lisp_Object);
 static bool imagemagick_load (struct frame *, struct image *);
 static void imagemagick_clear_image (struct frame *, struct image *);
@@ -7906,7 +7851,7 @@ static bool init_imagemagick_functions (void);
 
 static struct image_type imagemagick_type =
   {
-    &Qimagemagick,
+    XSYMBOL_INIT (Qimagemagick),
     imagemagick_image_p,
     imagemagick_load,
     imagemagick_clear_image,
@@ -8632,10 +8577,6 @@ static bool svg_load (struct frame *f, struct image *img);
 static bool svg_load_image (struct frame *, struct image *,
 			    unsigned char *, ptrdiff_t, char *);
 
-/* The symbol `svg' identifying images of this type. */
-
-static Lisp_Object Qsvg;
-
 /* Indices of image specification fields in svg_format, below.  */
 
 enum svg_keyword_index
@@ -8682,7 +8623,7 @@ static bool init_svg_functions (void);
 
 static struct image_type svg_type =
 {
-  &Qsvg,
+  XSYMBOL_INIT (Qsvg),
   svg_image_p,
   svg_load,
   x_clear_image,
@@ -8736,8 +8677,6 @@ DEF_DLL_FN (void, g_type_init, (void));
 #  endif
 DEF_DLL_FN (void, g_object_unref, (gpointer));
 DEF_DLL_FN (void, g_error_free, (GError *));
-
-Lisp_Object Qgdk_pixbuf, Qglib, Qgobject;
 
 static bool
 init_svg_functions (void)
@@ -9056,10 +8995,6 @@ static bool gs_image_p (Lisp_Object object);
 static bool gs_load (struct frame *f, struct image *img);
 static void gs_clear_image (struct frame *f, struct image *img);
 
-/* Keyword symbols.  */
-
-static Lisp_Object QCloader, QCbounding_box, QCpt_width, QCpt_height;
-
 /* Indices of image specification fields in gs_format, below.  */
 
 enum gs_keyword_index
@@ -9104,7 +9039,7 @@ static const struct image_keyword gs_format[GS_LAST] =
 
 static struct image_type gs_type =
 {
-  &Qpostscript,
+  XSYMBOL_INIT (Qpostscript),
   gs_image_p,
   gs_load,
   gs_clear_image,
@@ -9479,10 +9414,12 @@ as a ratio to the frame height and width.  If the value is
 non-numeric, there is no explicit limit on the size of images.  */);
   Vmax_image_size = make_float (MAX_IMAGE_SIZE);
 
+  /* Other symbols.  */
   DEFSYM (Qcount, "count");
   DEFSYM (Qextension_data, "extension-data");
   DEFSYM (Qdelay, "delay");
 
+  /* Keywords.  */
   DEFSYM (QCascent, ":ascent");
   DEFSYM (QCmargin, ":margin");
   DEFSYM (QCrelief, ":relief");
@@ -9497,6 +9434,7 @@ non-numeric, there is no explicit limit on the size of images.  */);
   DEFSYM (QCcolor_adjustment, ":color-adjustment");
   DEFSYM (QCmask, ":mask");
 
+  /* Other symbols.  */
   DEFSYM (Qlaplace, "laplace");
   DEFSYM (Qemboss, "emboss");
   DEFSYM (Qedge_detection, "edge-detection");
@@ -9514,6 +9452,10 @@ non-numeric, there is no explicit limit on the size of images.  */);
 #endif /* HAVE_GHOSTSCRIPT */
 
 #ifdef HAVE_NTGUI
+  /* Versions of libpng, libgif, and libjpeg that we were compiled with,
+     or -1 if no PNG/GIF support was compiled in.  This is tested by
+     w32-win.el to correctly set up the alist used to search for the
+     respective image libraries.  */
   DEFSYM (Qlibpng_version, "libpng-version");
   Fset (Qlibpng_version,
 #if HAVE_PNG

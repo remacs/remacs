@@ -76,16 +76,6 @@ static void update_buffer_properties (ptrdiff_t, ptrdiff_t);
 # define HAVE_TM_GMTOFF false
 #endif
 
-static Lisp_Object Qbuffer_access_fontify_functions;
-
-/* Symbol for the text property used to mark fields.  */
-
-Lisp_Object Qfield;
-
-/* A special value for Qfield properties.  */
-
-static Lisp_Object Qboundary;
-
 /* The startup value of the TZ environment variable; null if unset.  */
 static char const *initial_tz;
 
@@ -915,17 +905,11 @@ save_excursion_restore (Lisp_Object info)
   if (! NILP (tem))
     {
       if (! EQ (omark, nmark))
-        {
-          tem = intern ("activate-mark-hook");
-          Frun_hooks (1, &tem);
-        }
+	run_hook (intern ("activate-mark-hook"));
     }
   /* If mark has ceased to be active, run deactivate hook.  */
   else if (! NILP (tem1))
-    {
-      tem = intern ("deactivate-mark-hook");
-      Frun_hooks (1, &tem);
-    }
+    run_hook (intern ("deactivate-mark-hook"));
 
   /* If buffer was visible in a window, and a different window was
      selected, and the old selected window is still showing this
@@ -5009,8 +4993,12 @@ functions if all the text being accessed has this property.  */);
   defsubr (&Sregion_beginning);
   defsubr (&Sregion_end);
 
+  /* Symbol for the text property used to mark fields.  */
   DEFSYM (Qfield, "field");
+
+  /* A special value for Qfield properties.  */
   DEFSYM (Qboundary, "boundary");
+
   defsubr (&Sfield_beginning);
   defsubr (&Sfield_end);
   defsubr (&Sfield_string);

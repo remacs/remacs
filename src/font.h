@@ -56,7 +56,6 @@ INLINE_HEADER_BEGIN
 	Note: Only the method `open' of a font-driver can create this
 	object, and it should never be modified by Lisp.  */
 
-extern Lisp_Object Qfont_spec, Qfont_entity, Qfont_object;
 
 /* An enumerator for each font property.  This is used as an index to
    the vector of FONT-SPEC and FONT-ENTITY.
@@ -239,17 +238,6 @@ enum font_property_index
 #define FONT_BASE(f) ((f)->ascent)
 #define FONT_DESCENT(f) ((f)->descent)
 
-extern Lisp_Object QCspacing, QCdpi, QCscalable, QCotf, QClang, QCscript;
-extern Lisp_Object QCavgwidth, QCantialias, QCfont_entity;
-extern Lisp_Object Qp;
-
-
-/* Important character set symbols.  */
-extern Lisp_Object Qascii_0;
-extern Lisp_Object Qiso8859_1, Qiso10646_1, Qunicode_bmp, Qunicode_sip;
-
-/* Special ADSTYLE properties to avoid fonts used for Latin characters.  */
-extern Lisp_Object Qja, Qko;
 
 /* Structure for a font-spec.  */
 
@@ -791,7 +779,6 @@ extern struct font_driver xfont_driver;
 extern void syms_of_xfont (void);
 extern void syms_of_ftxfont (void);
 #ifdef HAVE_XFT
-extern Lisp_Object Qxft;
 extern struct font_driver xftfont_driver;
 extern void syms_of_xftfont (void);
 #endif
@@ -808,7 +795,6 @@ extern struct font_driver uniscribe_font_driver;
 extern void syms_of_w32font (void);
 #endif	/* HAVE_NTGUI */
 #ifdef HAVE_NS
-extern Lisp_Object Qfontsize;
 extern struct font_driver nsfont_driver;
 extern void syms_of_nsfont (void);
 extern void syms_of_macfont (void);
@@ -817,8 +803,6 @@ extern void syms_of_macfont (void);
 #ifndef FONT_DEBUG
 #define FONT_DEBUG
 #endif
-
-extern Lisp_Object QCfoundry;
 
 extern void font_add_log (const char *, Lisp_Object, Lisp_Object);
 extern void font_deferred_log (const char *, Lisp_Object, Lisp_Object);

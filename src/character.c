@@ -48,15 +48,9 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #endif /* emacs */
 
-Lisp_Object Qcharacterp;
-
-static Lisp_Object Qauto_fill_chars;
-
 /* Char-table of information about which character to unify to which
    Unicode character.  Mainly used by the macro MAYBE_UNIFY_CHAR.  */
 Lisp_Object Vchar_unify_table;
-
-static Lisp_Object Qchar_script_table;
 
 
 

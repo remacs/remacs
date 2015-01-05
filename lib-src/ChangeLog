@@ -1,3 +1,26 @@
+2015-01-05  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Compute C decls for DEFSYMs automatically
+	Fixes Bug#15880.
+	* make-docfile.c: Revamp to generate table of symbols, too.
+	Include <stdbool.h>.
+	(xstrdup): New function.
+	(main): Don't process the same file twice.
+	(SYMBOL): New constant in enum global_type.
+	(struct symbol): Turn 'value' member into a union, either v.value
+	for int or v.svalue for string.  All uses changed.
+	(add_global): New arg svalue, which overrides value, so that globals
+	can have a string value.
+	(close_emacs_global): New arg num_symbols; all uses changed.
+	Output lispsym decl.
+	(write_globals): Output symbol globals too.  Output more
+	ATTRIBUTE_CONST, now that Qnil etc. are C constants.
+	Output defsym_name table.
+	(scan_c_file): Move most of guts into ...
+	(scan_c_stream): ... new function.  Scan for DEFSYMs and
+	record symbols found.  Don't read past EOF if file doesn't
+	end in newline.
+
 2015-01-04  Paul Eggert  <eggert@cs.ucla.edu>
 
 	'temacs -nw' should not call missing functions

@@ -31,11 +31,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "dispextern.h"
 #include "frame.h"
 
-static Lisp_Object Qkill_forward_chars, Qkill_backward_chars;
-
-/* A possible value for a buffer's overwrite-mode variable.  */
-static Lisp_Object Qoverwrite_mode_binary;
-
 static int internal_self_insert (int, EMACS_INT);
 
 DEFUN ("forward-point", Fforward_point, Sforward_point, 1, 1, 0,
@@ -322,9 +317,6 @@ At the end, it runs `post-self-insert-hook'.  */)
    return 0.  A value of 1 indicates this *might* not have been simple.
    A value of 2 means this did things that call for an undo boundary.  */
 
-static Lisp_Object Qexpand_abbrev;
-static Lisp_Object Qpost_self_insert_hook;
-
 static int
 internal_self_insert (int c, EMACS_INT n)
 {
@@ -507,7 +499,7 @@ internal_self_insert (int c, EMACS_INT n)
     }
 
   /* Run hooks for electric keys.  */
-  Frun_hooks (1, &Qpost_self_insert_hook);
+  run_hook (Qpost_self_insert_hook);
 
   return hairy;
 }
@@ -519,7 +511,10 @@ syms_of_cmds (void)
 {
   DEFSYM (Qkill_backward_chars, "kill-backward-chars");
   DEFSYM (Qkill_forward_chars, "kill-forward-chars");
+
+  /* A possible value for a buffer's overwrite-mode variable.  */
   DEFSYM (Qoverwrite_mode_binary, "overwrite-mode-binary");
+
   DEFSYM (Qexpand_abbrev, "expand-abbrev");
   DEFSYM (Qpost_self_insert_hook, "post-self-insert-hook");
 

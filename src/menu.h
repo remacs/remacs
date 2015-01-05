@@ -22,10 +22,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "systime.h" /* for Time */
 #include "../lwlib/lwlib-widget.h"
 
-#ifdef HAVE_NTGUI
-extern Lisp_Object Qunsupported__w32_dialog;
-#endif
-
 /* Bit fields used by terminal-specific menu_show_hook.  */
 
 enum {

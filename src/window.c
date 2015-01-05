@@ -45,20 +45,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "msdos.h"
 #endif
 
-Lisp_Object Qwindowp, Qwindow_live_p;
-static Lisp_Object Qwindow_valid_p;
-static Lisp_Object Qwindow_configuration_p;
-static Lisp_Object Qrecord_window_buffer;
-static Lisp_Object Qwindow_deletable_p, Qdelete_window, Qdisplay_buffer;
-static Lisp_Object Qreplace_buffer_in_windows, Qget_mru_window;
-static Lisp_Object Qwindow_resize_root_window, Qwindow_resize_root_window_vertically;
-static Lisp_Object Qwindow_sanitize_window_sizes;
-static Lisp_Object Qwindow_pixel_to_total;
-static Lisp_Object Qscroll_up, Qscroll_down, Qscroll_command;
-static Lisp_Object Qsafe, Qabove, Qbelow, Qwindow_size, Qclone_of;
-static Lisp_Object Qfloor, Qceiling;
-static Lisp_Object Qwindow_point_insertion_type;
-
 static int displayed_window_lines (struct window *);
 static int count_windows (struct window *);
 static int get_leaf_windows (struct window *, struct window **, int);
@@ -115,14 +101,8 @@ Lisp_Object minibuf_window;
    shown as the selected window when the minibuffer is selected.  */
 Lisp_Object minibuf_selected_window;
 
-/* Hook run at end of temp_output_buffer_show.  */
-static Lisp_Object Qtemp_buffer_show_hook;
-
 /* Incremented for each window created.  */
 static int sequence_number;
-
-/* Hook to run when window config changes.  */
-static Lisp_Object Qwindow_configuration_change_hook;
 
 /* Used by the function window_scroll_pixel_based.  */
 static int window_scroll_pixel_based_preserve_x;
@@ -3653,7 +3633,7 @@ temp_output_buffer_show (register Lisp_Object buf)
         record_unwind_protect (select_window_norecord, prev_window);
         Fselect_window (window, Qt);
         Fset_buffer (w->contents);
-        Frun_hooks (1, &Qtemp_buffer_show_hook);
+        run_hook (Qtemp_buffer_show_hook);
         unbind_to (count, Qnil);
       }
     }

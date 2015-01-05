@@ -125,10 +125,6 @@ extern LWLIB_ID widget_id_tick;
 
 #define MAXREQUEST(dpy) (XMaxRequestSize (dpy))
 
-static Lisp_Object Qundefined_color;
-static Lisp_Object Qcompound_text, Qcancel_timer;
-Lisp_Object Qfont_param;
-
 #ifdef GLYPH_DEBUG
 static ptrdiff_t image_cache_refcount;
 static int dpyinfo_refcount;

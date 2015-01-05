@@ -130,9 +130,6 @@ enum no_color_bit
 
 static int max_frame_cols;
 
-static Lisp_Object Qtty_mode_set_strings;
-static Lisp_Object Qtty_mode_reset_strings;
-
 
 
 #ifdef HAVE_GPM
@@ -2709,12 +2706,6 @@ static const char *menu_help_message, *prev_menu_help_message;
 /* Pane number and item number of the menu item which generated the
    last menu help message.  */
 static int menu_help_paneno, menu_help_itemno;
-
-static Lisp_Object Qtty_menu_navigation_map, Qtty_menu_exit;
-static Lisp_Object Qtty_menu_prev_item, Qtty_menu_next_item;
-static Lisp_Object Qtty_menu_next_menu, Qtty_menu_prev_menu;
-static Lisp_Object Qtty_menu_select, Qtty_menu_ignore;
-static Lisp_Object Qtty_menu_mouse_movement;
 
 typedef struct tty_menu_struct
 {

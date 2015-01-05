@@ -152,11 +152,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 /********** VARIABLES and FUNCTION PROTOTYPES **********/
 
-static Lisp_Object Qfontset;
-static Lisp_Object Qfontset_info;
-static Lisp_Object Qprepend, Qappend;
-Lisp_Object Qlatin;
-
 /* Vector containing all fontsets.  */
 static Lisp_Object Vfontset_table;
 

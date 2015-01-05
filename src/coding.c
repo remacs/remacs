@@ -303,35 +303,6 @@ encode_coding_XXX (struct coding_system *coding)
 
 Lisp_Object Vcoding_system_hash_table;
 
-static Lisp_Object Qcoding_system, Qeol_type;
-static Lisp_Object Qcoding_aliases;
-Lisp_Object Qunix, Qdos;
-static Lisp_Object Qmac;
-Lisp_Object Qbuffer_file_coding_system;
-static Lisp_Object Qpost_read_conversion, Qpre_write_conversion;
-static Lisp_Object Qdefault_char;
-Lisp_Object Qno_conversion, Qundecided;
-Lisp_Object Qcharset, Qutf_8;
-static Lisp_Object Qiso_2022;
-static Lisp_Object Qutf_16, Qshift_jis, Qbig5;
-static Lisp_Object Qbig, Qlittle;
-static Lisp_Object Qcoding_system_history;
-static Lisp_Object Qvalid_codes;
-static Lisp_Object QCcategory, QCmnemonic, QCdefault_char;
-static Lisp_Object QCdecode_translation_table, QCencode_translation_table;
-static Lisp_Object QCpost_read_conversion, QCpre_write_conversion;
-static Lisp_Object QCascii_compatible_p;
-
-Lisp_Object Qcall_process, Qcall_process_region;
-Lisp_Object Qstart_process, Qopen_network_stream;
-static Lisp_Object Qtarget_idx;
-
-static Lisp_Object Qinsufficient_source, Qinvalid_source, Qinterrupted;
-
-/* If a symbol has this property, evaluate the value to define the
-   symbol as a coding system.  */
-static Lisp_Object Qcoding_system_define_form;
-
 /* Format of end-of-line decided by system.  This is Qunix on
    Unix and Mac, Qdos on DOS/Windows.
    This has an effect only for external encoding (i.e. for output to
@@ -340,17 +311,6 @@ static Lisp_Object system_eol_type;
 
 #ifdef emacs
 
-Lisp_Object Qcoding_system_p, Qcoding_system_error;
-
-/* Coding system emacs-mule and raw-text are for converting only
-   end-of-line format.  */
-Lisp_Object Qemacs_mule, Qraw_text;
-Lisp_Object Qutf_8_emacs;
-
-#if defined (WINDOWSNT) || defined (CYGWIN)
-static Lisp_Object Qutf_16le;
-#endif
-
 /* Coding-systems are handed between Emacs Lisp programs and C internal
    routines by the following three variables.  */
 /* Coding system to be used to encode text for terminal display when
@@ -358,11 +318,6 @@ static Lisp_Object Qutf_16le;
 struct coding_system safe_terminal_coding;
 
 #endif /* emacs */
-
-Lisp_Object Qtranslation_table;
-Lisp_Object Qtranslation_table_id;
-static Lisp_Object Qtranslation_table_for_decode;
-static Lisp_Object Qtranslation_table_for_encode;
 
 /* Two special coding systems.  */
 static Lisp_Object Vsjis_coding_system;
@@ -10903,6 +10858,7 @@ syms_of_coding (void)
 
   DEFSYM (Qcoding_system_p, "coding-system-p");
 
+  /* Error signaled when there's a problem with detecting a coding system.  */
   DEFSYM (Qcoding_system_error, "coding-system-error");
   Fput (Qcoding_system_error, Qerror_conditions,
 	listn (CONSTYPE_PURE, 2, Qcoding_system_error, Qerror));
@@ -10917,6 +10873,8 @@ syms_of_coding (void)
 
   DEFSYM (Qvalid_codes, "valid-codes");
 
+  /* Coding system emacs-mule and raw-text are for converting only
+     end-of-line format.  */
   DEFSYM (Qemacs_mule, "emacs-mule");
 
   DEFSYM (QCcategory, ":category");
@@ -10979,6 +10937,9 @@ syms_of_coding (void)
   DEFSYM (Qinsufficient_source, "insufficient-source");
   DEFSYM (Qinvalid_source, "invalid-source");
   DEFSYM (Qinterrupted, "interrupted");
+
+  /* If a symbol has this property, evaluate the value to define the
+     symbol as a coding system.  */
   DEFSYM (Qcoding_system_define_form, "coding-system-define-form");
 
   defsubr (&Scoding_system_p);

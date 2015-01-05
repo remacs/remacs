@@ -409,8 +409,6 @@ msdos_stdcolor_idx (const char *name)
 Lisp_Object
 msdos_stdcolor_name (int idx)
 {
-  extern Lisp_Object Qunspecified;
-
   if (idx == FACE_TTY_DEFAULT_FG_COLOR)
     return build_string (unspecified_fg);
   else if (idx == FACE_TTY_DEFAULT_BG_COLOR)

@@ -148,13 +148,6 @@ static bool malloc_using_checking;
 extern void malloc_enable_thread (void);
 #endif
 
-Lisp_Object Qfile_name_handler_alist;
-
-Lisp_Object Qrisky_local_variable;
-
-Lisp_Object Qkill_emacs;
-static Lisp_Object Qkill_emacs_hook;
-
 /* If true, Emacs should not attempt to use a window-specific code,
    but instead should use the virtual terminal under which it was started.  */
 bool inhibit_window_system;
@@ -1913,7 +1906,7 @@ all of which are called before Emacs is actually killed.  */)
   /* Fsignal calls emacs_abort () if it sees that waiting_for_input is
      set.  */
   waiting_for_input = 0;
-  Frun_hooks (1, &Qkill_emacs_hook);
+  run_hook (Qkill_emacs_hook);
   UNGCPRO;
 
 #ifdef HAVE_X_WINDOWS

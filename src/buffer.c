@@ -115,40 +115,7 @@ static void reset_buffer_local_variables (struct buffer *, bool);
    due to user rplac'ing this alist or its elements.  */
 Lisp_Object Vbuffer_alist;
 
-static Lisp_Object Qkill_buffer_query_functions;
-
-/* Hook run before changing a major mode.  */
-static Lisp_Object Qchange_major_mode_hook;
-
-Lisp_Object Qfirst_change_hook;
-Lisp_Object Qbefore_change_functions;
-Lisp_Object Qafter_change_functions;
-
-static Lisp_Object Qfundamental_mode, Qmode_class, Qpermanent_local;
-static Lisp_Object Qpermanent_local_hook;
-
-static Lisp_Object Qprotected_field;
-
 static Lisp_Object QSFundamental;	/* A string "Fundamental".  */
-
-static Lisp_Object Qkill_buffer_hook;
-static Lisp_Object Qbuffer_list_update_hook;
-
-static Lisp_Object Qget_file_buffer;
-
-static Lisp_Object Qoverlayp;
-
-Lisp_Object Qpriority, Qbefore_string, Qafter_string;
-
-static Lisp_Object Qevaporate;
-
-Lisp_Object Qmodification_hooks;
-Lisp_Object Qinsert_in_front_hooks;
-Lisp_Object Qinsert_behind_hooks;
-
-Lisp_Object Qchoice, Qrange, Qleft, Qright;
-Lisp_Object Qvertical_scroll_bar, Qhorizontal_scroll_bar;
-static Lisp_Object Qoverwrite_mode, Qfraction;
 
 static void alloc_buffer_text (struct buffer *, ptrdiff_t);
 static void free_buffer_text (struct buffer *b);
@@ -1716,7 +1683,7 @@ cleaning up all windows currently displaying the buffer to be killed. */)
       return unbind_to (count, Qt);
 
     /* Then run the hooks.  */
-    Frun_hooks (1, &Qkill_buffer_hook);
+    run_hook (Qkill_buffer_hook);
     unbind_to (count, Qnil);
   }
 
@@ -2740,7 +2707,7 @@ The first thing this function does is run
 the normal hook `change-major-mode-hook'.  */)
   (void)
 {
-  Frun_hooks (1, &Qchange_major_mode_hook);
+  run_hook (Qchange_major_mode_hook);
 
   /* Make sure none of the bindings in local_var_alist
      remain swapped in, in their symbols.  */
@@ -5063,9 +5030,9 @@ init_buffer_once (void)
   /* Make sure all markable slots in buffer_defaults
      are initialized reasonably, so mark_buffer won't choke.  */
   reset_buffer (&buffer_defaults);
-  eassert (EQ (BVAR (&buffer_defaults, name), make_number (0)));
+  eassert (NILP (BVAR (&buffer_defaults, name)));
   reset_buffer_local_variables (&buffer_defaults, 1);
-  eassert (EQ (BVAR (&buffer_local_symbols, name), make_number (0)));
+  eassert (NILP (BVAR (&buffer_local_symbols, name)));
   reset_buffer (&buffer_local_symbols);
   reset_buffer_local_variables (&buffer_local_symbols, 1);
   /* Prevent GC from getting confused.  */

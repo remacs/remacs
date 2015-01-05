@@ -1,3 +1,75 @@
+2015-01-05  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Compute C decls for DEFSYMs automatically
+	Fixes Bug#15880.
+	This patch also makes Q constants (e.g., Qnil) constant addresses
+	from the C point of view.
+	* alloc.c, bidi.c, buffer.c, bytecode.c, callint.c, casefiddle:
+	* casetab.c, category.c, ccl.c, charset.c, chartab.c, cmds.c, coding.c:
+	* composite.c, data.c, dbusbind.c, decompress.c, dired.c, dispnew.c:
+	* doc.c, editfns.c, emacs.c, eval.c, fileio.c, fns.c, font.c, fontset.c:
+	* frame.c, fringe.c, ftfont.c, ftxfont.c, gfilenotify.c, gnutls.c:
+	* image.c, inotify.c, insdel.c, keyboard.c, keymap.c, lread.c:
+	* macfont.m, macros.c, minibuf.c, nsfns.m, nsfont.m, nsimage.m:
+	* nsmenu.m, nsselect.m, nsterm.m, print.c, process.c, profiler.c:
+	* search.c, sound.c, syntax.c, term.c, terminal.c, textprop.c, undo.c:
+	* window.c, xdisp.c, xfaces.c, xfns.c, xftfont.c, xmenu.c, xml.c:
+	* xselect.c, xsettings.c, xterm.c:
+	Remove Q vars that represent symbols (e.g., Qnil, Qt, Qemacs).
+	These names are now defined automatically by make-docfile.
+	* alloc.c (init_symbol): New function.
+	(Fmake_symbol): Use it.
+	(c_symbol_p): New function.
+	(valid_lisp_object_p, purecopy): Use it.
+	* alloc.c (marked_pinned_symbols):
+	Use make_lisp_symbol instead of make_lisp_ptr.
+	(garbage_collect_1): Mark lispsym symbols.
+	(CHECK_ALLOCATED_AND_LIVE_SYMBOL): New macro.
+	(mark_object): Use it.
+	(sweep_symbols): Sweep lispsym symbols.
+	(symbol_uses_obj): New function.
+	(which_symbols): Use it.  Work for lispsym symbols, too.
+	(init_alloc_once): Initialize Vpurify_flag here; no need to wait,
+	since Qt's address is already known now.
+	(syms_of_alloc): Add lispsym count to symbols_consed.
+	* buffer.c (init_buffer_once): Compare to Qnil, not to make_number (0),
+	when testing whether storage is all bits zero.
+	* dispextern (struct image_type):
+	* font.c (font_property_table):
+	* frame.c (struct frame_parm_table, frame_parms):
+	* keyboard.c (scroll_bar_parts, struct event_head):
+	* xdisp.c (struct props):
+	Use XSYMBOL_INIT (Qfoo) and struct Lisp_Symbol * rather than &Qfoo and
+	Lisp_Object *, since Qfoo is no longer an object whose address can be
+	taken.  All uses changed.
+	* eval.c (run_hook): New function.  Most uses of Frun_hooks changed to
+	use it, so that they no longer need to take the address of a Lisp sym.
+	(syms_of_eval): Don't use DEFSYM on Vrun_hooks, as it's a variable.
+	* frame.c (syms_of_frame): Add defsyms for the frame_parms table.
+	* keyboard.c (syms_of_keyboard): Don't DEFSYM Qmenu_bar here.
+	DEFSYM Qdeactivate_mark before the corresponding var.
+	* keymap.c (syms_of_keymap): Use DEFSYM for Qmenu_bar and Qmode_line
+	instead of interning their symbols; this avoids duplicates.
+	(LISP_INITIALLY, TAG_PTR)
+	(DEFINE_LISP_SYMBOL_BEGIN, DEFINE_LISP_SYMBOL_END, XSYMBOL_INIT):
+	New macros.
+	(LISP_INITIALLY_ZERO): Use it.
+	(enum symbol_interned, enum symbol_redirect, struct Lisp_Symbol)
+	(EXFUN, DEFUN_ARGS_MANY, DEFUN_ARGS_UNEVALLED, DEFUN_ARGS_*):
+	Move decls up, to avoid forward uses.  Include globals.h earlier, too.
+	(make_lisp_symbol): New function.
+	(XSETSYMBOL): Use it.
+	(DEFSYM): Now just a placeholder for make-docfile.
+	* lread.c (DEFINE_SYMBOLS): Define, for globals.h.
+	(intern_sym): New function, with body taken from old intern_driver.
+	(intern_driver): Use it.  Last arg is now Lisp integer, not ptrdiff_t.
+	All uses changed.
+	(define_symbol): New function.
+	(init_obarray): Define the C symbols taken from lispsym.
+	Use plain DEFSYM for Qt and Qnil.
+	* syntax.c (init_syntax_once): No need to worry about
+	Qchar_table_extra_slots.
+
 2015-01-04  Paul Eggert  <eggert@cs.ucla.edu>
 
 	'temacs -nw' should not call missing functions

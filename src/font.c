@@ -41,15 +41,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include TERM_HEADER
 #endif /* HAVE_WINDOW_SYSTEM */
 
-Lisp_Object Qopentype;
-
-/* Important character set strings.  */
-Lisp_Object Qascii_0, Qiso8859_1, Qiso10646_1, Qunicode_bmp, Qunicode_sip;
-
 #define DEFAULT_ENCODING Qiso8859_1
-
-/* Unicode category `Cf'.  */
-static Lisp_Object QCf;
 
 /* Vector of Vfont_weight_table, Vfont_slant_table, and Vfont_width_table. */
 static Lisp_Object font_style_table;
@@ -109,21 +101,6 @@ static const struct table_entry width_table[] =
   { 150, { "extra-expanded", "extraexpanded" }},
   { 200, { "ultra-expanded", "ultraexpanded", "wide" }}
 };
-
-Lisp_Object QCfoundry;
-static Lisp_Object QCadstyle, QCregistry;
-/* Symbols representing keys of font extra info.  */
-Lisp_Object QCspacing, QCdpi, QCscalable, QCotf, QClang, QCscript, QCavgwidth;
-Lisp_Object QCantialias, QCfont_entity;
-static Lisp_Object QCfc_unknown_spec;
-/* Symbols representing values of font spacing property.  */
-static Lisp_Object Qc, Qm, Qd;
-Lisp_Object Qp;
-/* Special ADSTYLE properties to avoid fonts used for Latin
-   characters; used in xfont.c and ftfont.c.  */
-Lisp_Object Qja, Qko;
-
-static Lisp_Object QCuser_spec;
 
 /* Alist of font registry symbols and the corresponding charset
    information.  The information is retrieved from
@@ -309,7 +286,7 @@ font_intern_prop (const char *str, ptrdiff_t len, bool force_symbol)
     return tem;
   name = make_specified_string (str, nchars, len,
 				len != nchars && len == nbytes);
-  return intern_driver (name, obarray, XINT (tem));
+  return intern_driver (name, obarray, tem);
 }
 
 /* Return a pixel size of font-spec SPEC on frame F.  */
@@ -663,29 +640,29 @@ font_prop_validate_otf (Lisp_Object prop, Lisp_Object val)
 static const struct
 {
   /* Pointer to the key symbol.  */
-  Lisp_Object *key;
+  struct Lisp_Symbol *key;
   /* Function to validate PROP's value VAL, or NULL if any value is
      ok.  The value is VAL or its regularized value if VAL is valid,
      and Qerror if not.  */
   Lisp_Object (*validator) (Lisp_Object prop, Lisp_Object val);
 } font_property_table[] =
-  { { &QCtype, font_prop_validate_symbol },
-    { &QCfoundry, font_prop_validate_symbol },
-    { &QCfamily, font_prop_validate_symbol },
-    { &QCadstyle, font_prop_validate_symbol },
-    { &QCregistry, font_prop_validate_symbol },
-    { &QCweight, font_prop_validate_style },
-    { &QCslant, font_prop_validate_style },
-    { &QCwidth, font_prop_validate_style },
-    { &QCsize, font_prop_validate_non_neg },
-    { &QCdpi, font_prop_validate_non_neg },
-    { &QCspacing, font_prop_validate_spacing },
-    { &QCavgwidth, font_prop_validate_non_neg },
+  { { XSYMBOL_INIT (QCtype), font_prop_validate_symbol },
+    { XSYMBOL_INIT (QCfoundry), font_prop_validate_symbol },
+    { XSYMBOL_INIT (QCfamily), font_prop_validate_symbol },
+    { XSYMBOL_INIT (QCadstyle), font_prop_validate_symbol },
+    { XSYMBOL_INIT (QCregistry), font_prop_validate_symbol },
+    { XSYMBOL_INIT (QCweight), font_prop_validate_style },
+    { XSYMBOL_INIT (QCslant), font_prop_validate_style },
+    { XSYMBOL_INIT (QCwidth), font_prop_validate_style },
+    { XSYMBOL_INIT (QCsize), font_prop_validate_non_neg },
+    { XSYMBOL_INIT (QCdpi), font_prop_validate_non_neg },
+    { XSYMBOL_INIT (QCspacing), font_prop_validate_spacing },
+    { XSYMBOL_INIT (QCavgwidth), font_prop_validate_non_neg },
     /* The order of the above entries must match with enum
        font_property_index.  */
-    { &QClang, font_prop_validate_symbol },
-    { &QCscript, font_prop_validate_symbol },
-    { &QCotf, font_prop_validate_otf }
+    { XSYMBOL_INIT (QClang), font_prop_validate_symbol },
+    { XSYMBOL_INIT (QCscript), font_prop_validate_symbol },
+    { XSYMBOL_INIT (QCotf), font_prop_validate_otf }
   };
 
 /* Return an index number of font property KEY or -1 if KEY is not an
@@ -697,7 +674,7 @@ get_font_prop_index (Lisp_Object key)
   int i;
 
   for (i = 0; i < ARRAYELTS (font_property_table); i++)
-    if (EQ (key, *font_property_table[i].key))
+    if (EQ (key, make_lisp_symbol (font_property_table[i].key)))
       return i;
   return -1;
 }
@@ -714,7 +691,7 @@ font_prop_validate (int idx, Lisp_Object prop, Lisp_Object val)
   if (NILP (val))
     return val;
   if (NILP (prop))
-    prop = *font_property_table[idx].key;
+    prop = make_lisp_symbol (font_property_table[idx].key);
   else
     {
       idx = get_font_prop_index (prop);
@@ -5169,19 +5146,21 @@ syms_of_font (void)
 
   DEFSYM (Qopentype, "opentype");
 
+  /* Important character set symbols.  */
   DEFSYM (Qascii_0, "ascii-0");
   DEFSYM (Qiso8859_1, "iso8859-1");
   DEFSYM (Qiso10646_1, "iso10646-1");
   DEFSYM (Qunicode_bmp, "unicode-bmp");
   DEFSYM (Qunicode_sip, "unicode-sip");
 
+  /* Unicode category `Cf'.  */
   DEFSYM (QCf, "Cf");
 
+  /* Symbols representing keys of font extra info.  */
   DEFSYM (QCotf, ":otf");
   DEFSYM (QClang, ":lang");
   DEFSYM (QCscript, ":script");
   DEFSYM (QCantialias, ":antialias");
-
   DEFSYM (QCfoundry, ":foundry");
   DEFSYM (QCadstyle, ":adstyle");
   DEFSYM (QCregistry, ":registry");
@@ -5192,11 +5171,14 @@ syms_of_font (void)
   DEFSYM (QCfont_entity, ":font-entity");
   DEFSYM (QCfc_unknown_spec, ":fc-unknown-spec");
 
+  /* Symbols representing values of font spacing property.  */
   DEFSYM (Qc, "c");
   DEFSYM (Qm, "m");
   DEFSYM (Qp, "p");
   DEFSYM (Qd, "d");
 
+  /* Special ADSTYLE properties to avoid fonts used for Latin
+     characters; used in xfont.c and ftfont.c.  */
   DEFSYM (Qja, "ja");
   DEFSYM (Qko, "ko");
 

@@ -30,8 +30,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "keymap.h"
 
 enum case_action {CASE_UP, CASE_DOWN, CASE_CAPITALIZE, CASE_CAPITALIZE_UP};
-
-Lisp_Object Qidentity;
 
 static Lisp_Object
 casify_object (enum case_action flag, Lisp_Object obj)

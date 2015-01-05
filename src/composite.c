@@ -134,8 +134,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 */
 
 
-Lisp_Object Qcomposition;
-
 /* Table of pointers to the structure `composition' indexed by
    COMPOSITION-ID.  This structure is for storing information about
    each composition except for COMPONENTS-VEC.  */
@@ -152,8 +150,6 @@ ptrdiff_t n_compositions;
    COMPOSITION-ID.  */
 Lisp_Object composition_hash_table;
 
-static Lisp_Object Qauto_composed;
-static Lisp_Object Qauto_composition_function;
 /* Maximum number of characters to look back for
    auto-compositions.  */
 #define MAX_AUTO_COMPOSITION_LOOKBACK 3

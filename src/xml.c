@@ -29,8 +29,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "buffer.h"
 
 
-static Lisp_Object Qlibxml2_dll;
-
 #ifdef WINDOWSNT
 
 # include <windows.h>

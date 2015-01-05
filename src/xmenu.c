@@ -108,8 +108,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #define TRUE 1
 #endif /* no TRUE */
 
-static Lisp_Object Qdebug_on_next_call;
-
+
 /* Flag which when set indicates a dialog or menu has been posted by
    Xt on behalf of one of the widget sets.  */
 static int popup_activated_flag;

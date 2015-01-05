@@ -81,8 +81,6 @@ extern bool setup_ccl_program (struct ccl_program *, Lisp_Object);
 extern void ccl_driver (struct ccl_program *, int *, int *, int, int,
                         Lisp_Object);
 
-extern Lisp_Object Qccl, Qcclp;
-
 #define CHECK_CCL_PROGRAM(x)			\
   do {						\
     if (NILP (Fccl_program_p (x)))		\
