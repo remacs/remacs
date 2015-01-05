@@ -1,3 +1,8 @@
+2015-01-05  Dmitry Gutov  <dgutov@yandex.ru>
+
+	* progmodes/xref.el (xref--insert-xrefs): Add `help-echo' property
+	to the references.
+
 2015-01-05  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* minibuffer.el (completion-category-defaults): New var.
