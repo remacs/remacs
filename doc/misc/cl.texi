@@ -2242,8 +2242,8 @@ were non-@code{nil}, the loop returns @code{t}:
 
 @example
 (if (cl-loop for size in size-list always (> size 10))
-    (some-big-sizes)
-  (no-big-sizes))
+    (only-big-sizes)
+  (some-small-sizes))
 @end example
 
 @item never @var{condition}
