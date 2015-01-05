@@ -1,3 +1,9 @@
+2015-01-05  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* minibuffer.el (completion-category-defaults): New var.
+	Set unicode-name to use substring completion.
+	(completion-category-defaults): Set it to nil.
+
 2015-01-04  Dmitry Gutov  <dgutov@yandex.ru>
 
 	Add mouse interaction to xref.

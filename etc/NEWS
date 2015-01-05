@@ -166,6 +166,8 @@ characters, which can be used for geometry-related calculations.
 
 * Editing Changes in Emacs 25.1
 
+** Unicode names entered via C-x 8 RET now use substring completion by default.
+
 ** New minor mode global-eldoc-mode is enabled by default.
 
 ** Emacs now supports "bracketed paste mode" when running on a terminal
