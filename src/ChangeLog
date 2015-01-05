@@ -1,3 +1,9 @@
+2015-01-05  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* lisp.h (XSYMBOL): Parenthesize id in forward decl.
+	Needed when neither optimizing nor inlining.
+	Also, sort decls alphabetically.
+
 2015-01-05  Eli Zaretskii  <eliz@gnu.org>
 
 	* w32proc.c, w32.h, w32fns.c, w32font.c, w32menu.c, w32notify.c:
