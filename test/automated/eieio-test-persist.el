@@ -32,6 +32,14 @@
 (require 'eieio-base)
 (require 'ert)
 
+(defun eieio--attribute-to-initarg (class attribute)
+  "In CLASS, convert the ATTRIBUTE into the corresponding init argument tag.
+This is usually a symbol that starts with `:'."
+  (let ((tuple (rassoc attribute (eieio--class-initarg-tuples class))))
+    (if tuple
+	(car tuple)
+      nil)))
+
 (defun persist-test-save-and-compare (original)
   "Compare the object ORIGINAL against the one read fromdisk."
 
@@ -53,7 +61,8 @@
       (let* ((oneslot (car slot-names))
 	     (origvalue (eieio-oref original oneslot))
 	     (fromdiskvalue (eieio-oref fromdisk oneslot))
-	     (initarg-p (eieio-attribute-to-initarg class oneslot))
+	     (initarg-p (eieio--attribute-to-initarg
+                         (eieio--class-v class) oneslot))
 	     )
 
 	(if initarg-p

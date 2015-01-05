@@ -96,7 +96,8 @@ PREBUTTONTEXT is some text between PREFIX and the object button."
 	    )
 	(while publa
 	  (if (slot-boundp obj (car publa))
-	      (let* ((i (class-slot-initarg cl (car publa)))
+	      (let* ((i (eieio--class-slot-initarg (eieio--class-v cl)
+                                                   (car publa)))
 		     (v (eieio-oref obj (car publa))))
 		(data-debug-insert-thing
 		 v prefix (concat
@@ -104,7 +105,8 @@ PREBUTTONTEXT is some text between PREFIX and the object button."
 			     (symbol-name (car publa)))
 			   " ")))
 	    ;; Unbound case
-	    (let ((i (class-slot-initarg cl (car publa))))
+	    (let ((i (eieio--class-slot-initarg (eieio--class-v cl)
+                                                (car publa))))
 	      (data-debug-insert-custom
 	       "#unbound" prefix
 	       (concat (if i (symbol-name i)

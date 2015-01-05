@@ -1,7 +1,7 @@
 ;;; eieio.el --- Enhanced Implementation of Emacs Interpreted Objects  -*- lexical-binding:t -*-
 ;;;              or maybe Eric's Implementation of Emacs Interpreted Objects
 
-;; Copyright (C) 1995-1996, 1998-2014 Free Software Foundation, Inc.
+;; Copyright (C) 1995-1996, 1998-2015 Free Software Foundation, Inc.
 
 ;; Author: Eric M. Ludlam <zappo@gnu.org>
 ;; Version: 1.4
@@ -319,8 +319,9 @@ If EXTRA, include that in the string returned to represent the symbol."
   "Return parent classes to CLASS.  (overload of variable).
 
 The CLOS function `class-direct-superclasses' is aliased to this function."
-  (eieio--check-type class-p class)
-  (eieio-class-parents-fast class))
+  (let ((c (eieio-class-object class)))
+    (eieio--class-parent c)))
+
 (define-obsolete-function-alias 'class-parents #'eieio-class-parents "24.4")
 
 (defun eieio-class-children (class)
@@ -366,10 +367,8 @@ The CLOS function `class-direct-subclasses' is aliased to this function."
         (setq class (eieio--class-object class))
         (eieio--check-type eieio--class-p class)
         (while (and child (not (eq child class)))
-          ;; FIXME: eieio--class-parent should return class-objects rather than
-          ;; class-names!
           (setq p (append p (eieio--class-parent child))
-                child (eieio--class-v (pop p))))
+                child (pop p)))
         (if child t))))
 
 (defun object-slots (obj)
@@ -377,9 +376,9 @@ The CLOS function `class-direct-subclasses' is aliased to this function."
   (eieio--check-type eieio-object-p obj)
   (eieio--class-public-a (eieio--object-class-object obj)))
 
-(defun class-slot-initarg (class slot) "Fetch from CLASS, SLOT's :initarg."
-  (eieio--check-type class-p class)
-  (let ((ia (eieio--class-initarg-tuples (eieio--class-v class)))
+(defun eieio--class-slot-initarg (class slot) "Fetch from CLASS, SLOT's :initarg."
+  (eieio--check-type eieio--class-p class)
+  (let ((ia (eieio--class-initarg-tuples class))
 	(f nil))
     (while (and ia (not f))
       (if (eq (cdr (car ia)) slot)
@@ -426,11 +425,9 @@ OBJECT can be an instance or a class."
 
 (defun slot-exists-p (object-or-class slot)
   "Return non-nil if OBJECT-OR-CLASS has SLOT."
-  (let ((cv (eieio--class-v (cond ((eieio-object-p object-or-class)
-			    (eieio-object-class object-or-class))
-			   ((class-p object-or-class)
-			    object-or-class))
-		     )))
+  (let ((cv (cond ((eieio-object-p object-or-class)
+                   (eieio--object-class-object object-or-class))
+                  (t (eieio-class-object object-or-class)))))
     (or (memq slot (eieio--class-public-a cv))
 	(memq slot (eieio--class-class-allocation-a cv)))
     ))
@@ -555,7 +552,7 @@ Use `next-method-p' to find out if there is a next method to call."
 	     (eieio-generic-call-arglst newargs)
 	     (fcn (car next))
 	     )
-	(eieio--with-scoped-class (eieio--class-v (cdr next))
+	(eieio--with-scoped-class (cdr next)
 	  (apply fcn newargs)) ))))
 
 ;;; Here are some CLOS items that need the CL package
@@ -579,6 +576,8 @@ Use `next-method-p' to find out if there is a next method to call."
 Its slots are automatically adopted by classes with no specified parents.
 This class is not stored in the `parent' slot of a class vector."
   :abstract t)
+
+(setq eieio-default-superclass (eieio--class-v 'eieio-default-superclass))
 
 (defalias 'standard-class 'eieio-default-superclass)
 
@@ -797,7 +796,7 @@ this object."
 	  (eieio-print-depth (1+ eieio-print-depth)))
       (while publa
 	(when (slot-boundp this (car publa))
-	  (let ((i (class-slot-initarg cl (car publa)))
+	  (let ((i (eieio--class-slot-initarg cv (car publa)))
 		(v (eieio-oref this (car publa)))
 		)
 	    (unless (or (not i) (equal v (car publd)))
@@ -874,11 +873,13 @@ of `eq'."
 Used as advice around `edebug-prin1-to-string', held in the
 variable PRINT-FUNCTION.  Optional argument NOESCAPE is passed to
 `prin1-to-string' when appropriate."
-  (cond ((class-p object) (eieio-class-name object))
+  (cond ((eieio--class-p object) (eieio-class-name object))
 	((eieio-object-p object) (object-print object))
-	((and (listp object) (or (class-p (car object))
+	((and (listp object) (or (eieio--class-p (car object))
 				 (eieio-object-p (car object))))
-	 (concat "(" (mapconcat #'eieio-edebug-prin1-to-string object " ")
+	 (concat "(" (mapconcat
+                      (lambda (x) (eieio-edebug-prin1-to-string print-function x))
+                      object " ")
                  ")"))
 	(t (funcall print-function object noescape))))
 
@@ -888,7 +889,7 @@ variable PRINT-FUNCTION.  Optional argument NOESCAPE is passed to
 
 ;;; Start of automatically extracted autoloads.
 
-;;;### (autoloads nil "eieio-custom" "eieio-custom.el" "2b4c57cf907e879e8bbc88d8f0e2de4c")
+;;;### (autoloads nil "eieio-custom" "eieio-custom.el" "a3f314e2a27e52444df4597c6ae51458")
 ;;; Generated autoloads from eieio-custom.el
 
 (autoload 'customize-object "eieio-custom" "\

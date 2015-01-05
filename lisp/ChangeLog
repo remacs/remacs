@@ -1,3 +1,68 @@
+2015-01-05  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* emacs-lisp/eieio.el (eieio-class-parents): Accept class objects.
+	(eieio--class-slot-initarg): Rename from class-slot-initarg.
+	Change `class' arg to be a class object.  Update all callers.
+	(call-next-method): Adjust to new return value of `eieio-generic-form'.
+	(eieio-default-superclass): Set var to the class object.
+	(eieio-edebug-prin1-to-string): Fix recursive call for lists.
+	Change print behavior to affect class objects rather than
+	class symbols.
+
+	* emacs-lisp/eieio-core.el (eieio-class-object): New function.
+	(eieio-class-parents-fast): Remove macro.
+	(eieio--class-option-assoc): Rename from class-option-assoc.
+	Update all callers.
+	(eieio--class-option): Rename from class-option.  Change `class' arg to
+	be a class object.  Update all callers.
+	(eieio--class-method-invocation-order): Rename from
+	class-method-invocation-order.  Change `class' arg to be a class
+	object.  Update all callers.
+	(eieio-defclass-autoload, eieio-defclass): Set the `parent' field to
+	a list of class objects rather than names.
+	(eieio-defclass): Remove redundant quotes.  Use `eieio-oref-default'
+	for accessors to class allocated slots.
+	(eieio--perform-slot-validation-for-default): Rename from
+	eieio-perform-slot-validation-for-default.  Update all callers.
+	(eieio--add-new-slot): Rename from eieio-add-new-slot.
+	Update all callers.  Use push.
+	(eieio-copy-parents-into-subclass): Adjust to new content of
+	`parent' field.  Use dolist.
+	(eieio-oref): Remove support for providing a class rather than
+	an object.
+	(eieio-oref-default): Prefer class objects over class names.
+	(eieio--slot-originating-class-p): Rename from
+	eieio-slot-originating-class-p.  Update all callers.  Use `or'.
+	(eieio--slot-name-index): Turn check into assertion.
+	(eieio--class-slot-name-index): Rename from
+	eieio-class-slot-name-index.  Change `class' arg to be a class object.
+	Update all callers.
+	(eieio-attribute-to-initarg): Move to eieio-test-persist.el.
+	(eieio--c3-candidate): Rename from eieio-c3-candidate.
+	Update all callers.
+	(eieio--c3-merge-lists): Rename from eieio-c3-merge-lists.
+	Update all callers.
+	(eieio--class-precedence-c3): Rename from eieio-class-precedence-c3.
+	Update all callers.
+	(eieio--class-precedence-dfs): Rename from eieio-class-precedence-dfs.
+	Update all callers.
+	(eieio--class-precedence-bfs): Rename from eieio-class-precedence-bfs.
+	Update all callers.  Adjust to new `parent' content.
+	(eieio--class-precedence-list): Rename from -class-precedence-list.
+	Update all callers.
+	(eieio-generic-call): Use autoloadp and autoload-do-load.
+	Slight simplification.
+	(eieio-generic-call, eieio-generic-call-primary-only): Adjust to new
+	return value of `eieio-generic-form'.
+	(eieiomt-add): Index the hashtable with class objects rather than
+	class names.
+	(eieio-generic-form): Accept class objects as well.
+
+	* emacs-lisp/eieio-base.el (eieio-persistent-convert-list-to-object):
+	Adjust to new convention for eieio-persistent-validate/fix-slot-value.
+	(eieio-persistent-validate/fix-slot-value):
+	Change `class' arg to be a class object.  Update all callers.
+
 2014-12-29  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* emacs-lisp/eieio.el (child-of-class-p): Make it accept class objects

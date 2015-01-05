@@ -1,6 +1,6 @@
 ;;; eieio-tests.el -- eieio tests routines
 
-;; Copyright (C) 1999-2003, 2005-2010, 2012-2014 Free Software Foundation, Inc.
+;; Copyright (C) 1999-2003, 2005-2010, 2012-2015 Free Software Foundation, Inc.
 
 ;; Author: Eric M. Ludlam <zappo@gnu.org>
 
@@ -199,9 +199,9 @@ Argument C is the class bound to this static method."
 (ert-deftest eieio-test-04-static-method ()
   ;; Call static method on a class and see if it worked
   (static-method-class-method static-method-class 'class)
-  (should (eq (oref static-method-class some-slot) 'class))
+  (should (eq (oref-default static-method-class some-slot) 'class))
   (static-method-class-method (static-method-class) 'object)
-  (should (eq (oref static-method-class some-slot) 'object)))
+  (should (eq (oref-default static-method-class some-slot) 'object)))
 
 (ert-deftest eieio-test-05-static-method-2 ()
   (defclass static-method-class-2 (static-method-class)
@@ -215,9 +215,9 @@ Argument C is the class bound to this static method."
     (oset-default c some-slot (intern (concat "moose-" (symbol-name value)))))
 
   (static-method-class-method static-method-class-2 'class)
-  (should (eq (oref static-method-class-2 some-slot) 'moose-class))
+  (should (eq (oref-default static-method-class-2 some-slot) 'moose-class))
   (static-method-class-method (static-method-class-2) 'object)
-  (should (eq (oref static-method-class-2 some-slot) 'moose-object)))
+  (should (eq (oref-default static-method-class-2 some-slot) 'moose-object)))
 
 
 ;;; Perform method testing
@@ -536,7 +536,9 @@ METHOD is the method that was attempting to be called."
   (should (object-of-class-p eitest-ab class-b))
   (should (object-of-class-p eitest-ab class-ab))
   (should (eq (eieio-class-parents class-a) nil))
-  (should (equal (eieio-class-parents class-ab) '(class-a class-b)))
+  ;; FIXME: eieio-class-parents now returns class objects!
+  (should (equal (mapcar #'eieio-class-object (eieio-class-parents class-ab))
+                 (mapcar #'eieio-class-object '(class-a class-b))))
   (should (same-class-p eitest-a class-a))
   (should (class-a-p eitest-a))
   (should (not (class-a-p eitest-ab)))

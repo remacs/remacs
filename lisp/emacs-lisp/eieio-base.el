@@ -270,7 +270,7 @@ identified, and needing more object creation."
 	;; In addition, strip out quotes, list functions, and update
 	;; object constructors as needed.
 	(setq value (eieio-persistent-validate/fix-slot-value
-		     objclass name value))
+		     (eieio--class-v objclass) name value))
 
 	(push name createslots)
 	(push value createslots)
@@ -290,13 +290,13 @@ constructor functions are considered valid.
 Second, any text properties will be stripped from strings."
   (cond ((consp proposed-value)
 	 ;; Lists with something in them need special treatment.
-	 (let ((slot-idx (eieio--slot-name-index (eieio--class-v class)
+	 (let ((slot-idx (eieio--slot-name-index class
                                                  nil slot))
 	       (type nil)
 	       (classtype nil))
 	   (setq slot-idx (- slot-idx
                              (eval-when-compile eieio--object-num-slots)))
-	   (setq type (aref (eieio--class-public-type (eieio--class-v class))
+	   (setq type (aref (eieio--class-public-type class)
 			    slot-idx))
 
 	   (setq classtype (eieio-persistent-slot-type-is-class-p

@@ -1,3 +1,16 @@
+2015-01-05  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* automated/eieio-tests.el (eieio-test-04-static-method)
+	(eieio-test-05-static-method-2): Use oref-default to access
+	class slots.
+	(eieio-test-23-inheritance-check): Don't assume that
+	eieio-class-parents returns class names, or that a class can only have
+	a single name.
+
+	* automated/eieio-test-persist.el (eieio--attribute-to-initarg):
+	Move from eieio-core.el.  Rename from eieio-attribute-to-initarg.
+	Change arg to be a class object.  Update all callers.
+
 2014-12-29  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* automated/eieio-test-methodinvoke.el (eieio-test-method-store):

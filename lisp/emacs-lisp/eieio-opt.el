@@ -81,7 +81,7 @@ If CLASS is actually an object, then also display current values of that object.
   ;; Header line
   (prin1 class)
   (insert " is a"
-	  (if (class-option class :abstract)
+	  (if (eieio--class-option (eieio--class-v class) :abstract)
 	      "n abstract"
 	    "")
 	  " class")
