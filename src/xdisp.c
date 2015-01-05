@@ -9379,6 +9379,7 @@ move_it_to (struct it *it, ptrdiff_t to_charpos, int to_x, int to_y, int to_vpos
       && it->current_x == it->last_visible_x - 1
       && it->c != '\n'
       && it->c != '\t'
+      && it->w->window_end_valid
       && it->vpos < it->w->window_end_vpos)
     {
       it->continuation_lines_width += it->current_x;
@@ -15521,7 +15522,8 @@ try_cursor_movement (Lisp_Object window, struct text_pos startp, int *scroll_ste
   /* Likewise there was a check whether window_end_vpos is nil or larger
      than the window.  Now window_end_vpos is int and so never nil, but
      let's leave eassert to check whether it fits in the window.  */
-  eassert (w->window_end_vpos < w->current_matrix->nrows);
+  eassert (!w->window_end_valid
+	   || w->window_end_vpos < w->current_matrix->nrows);
 
   /* Handle case where text has not changed, only point, and it has
      not moved off the frame.  */
@@ -18185,6 +18187,21 @@ try_window_id (struct window *w)
   if (f->fonts_changed)
     return -1;
 
+  /* The redisplay iterations in display_line above could have
+     triggered font-lock, which could have done something that
+     invalidates IT->w window's end-point information, on which we
+     rely below.  E.g., one package, which will remain unnamed, used
+     to install a font-lock-fontify-region-function that called
+     bury-buffer, whose side effect is to switch the buffer displayed
+     by IT->w, and that predictably resets IT->w's window_end_valid
+     flag, which we already tested at the entry to this function.
+     Amply punish such packages/modes by giving up on this
+     optimization in those cases.  */
+  if (!w->window_end_valid)
+    {
+      clear_glyph_matrix (w->desired_matrix);
+      return -1;
+    }
 
   /* Compute differences in buffer positions, y-positions etc.  for
      lines reused at the bottom of the window.  Compute what we can
