@@ -1,19 +1,21 @@
+2015-01-06  Glenn Morris  <rgm@gnu.org>
+
+	* progmodes/sh-script.el (sh-mode): Doc fix.
+	(sh-basic-indent-line): Handle electric newline.  (Bug#18756)
+
 2014-12-14  Steve Purcell  <steve@sanityinc.com>  (tiny change)
 
 	* emacs-lisp/package.el (package-menu-mode): Use an extra column
-	for the "Version" column, to accomodate date-and-time-based
-	versions.
+	for the "Version" column, to accomodate date-and-time-based versions.
 
 2015-01-04  Paul Eggert  <eggert@cs.ucla.edu>
 
-	Fix dired quoting bug with "Hit`N`Hide"
-	Fixes Bug#19498.
+	Fix dired quoting bug with "Hit`N`Hide".  Fixes Bug#19498.
 	* files.el (shell-quote-wildcard-pattern): Also quote "`".
 
 2015-01-04  Dmitry Gutov  <dgutov@yandex.ru>
 
 	Unbreak `mouse-action' property in text buttons.
-
 	* button.el (push-button): Fix regression from 2012-12-06.
 
 2015-01-01  Eli Zaretskii  <eliz@gnu.org>
