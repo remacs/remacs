@@ -1404,15 +1404,8 @@ x_set_window_size (struct frame *f,
     [view setBoundsOrigin: origin];
   }
 
-  change_frame_size (f, width, height, 0, 1, 0, pixelwise);
-/*  SET_FRAME_GARBAGED (f); // this short-circuits expose call in drawRect */
-
-  mark_window_cursors_off (XWINDOW (f->root_window));
-  cancel_mouse_face (f);
-
+  [view updateFrameSize: NO];
   unblock_input ();
-
-  do_pending_window_change (0);
 }
 
 

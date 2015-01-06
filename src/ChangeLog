@@ -1,3 +1,8 @@
+2015-01-06  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* nsterm.m (x_set_window_size): Call updateFrameSize to get real
+	size instead of using widht/height.  The frame may be constrained.
+
 2015-01-05  Paul Eggert  <eggert@cs.ucla.edu>
 
 	* lisp.h (XSYMBOL): Parenthesize id in forward decl.
