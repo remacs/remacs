@@ -193,9 +193,10 @@ Unicode standards.
 
 When you invoke `shell' interactively, the *shell* buffer will now
 display in a new window.  However, you can customize this behavior via
-the new `shell-display-buffer-actions' variable.  For example, to get
+the `display-buffer-alist' variable.  For example, to get
 the old behavior -- *shell* buffer displays in current window -- use
-(setq shell-display-buffer-actions '(display-buffer-same-window)).
+(add-to-list 'display-buffer-alist
+     '("^\\*shell\\*$" . (display-buffer-same-window))).
 
 ** ido
 *** New command `ido-bury-buffer-at-head' bound to C-S-b

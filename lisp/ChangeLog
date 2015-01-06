@@ -1,3 +1,8 @@
+2015-01-06  Sam Steingold  <sds@gnu.org>
+
+	* shell.el (shell-display-buffer-actions): Remove,
+	use `display-buffer-alist' instead.
+
 2015-01-05  Dmitry Gutov  <dgutov@yandex.ru>
 
 	* progmodes/xref.el (xref--insert-xrefs): Add `help-echo' property
