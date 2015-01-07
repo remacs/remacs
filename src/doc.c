@@ -1,6 +1,7 @@
 /* Record indices of function doc strings stored in a file.
 
-Copyright (C) 1985-1986, 1993-1995, 1997-2014 Free Software Foundation, Inc.
+Copyright (C) 1985-1986, 1993-1995, 1997-2015 Free Software Foundation,
+Inc.
 
 This file is part of GNU Emacs.
 
@@ -33,8 +34,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "buffer.h"
 #include "keyboard.h"
 #include "keymap.h"
-
-Lisp_Object Qfunction_documentation;
 
 /* Buffer used for reading from documentation file.  */
 static char *get_doc_string_buffer;

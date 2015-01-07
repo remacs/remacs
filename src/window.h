@@ -1,5 +1,5 @@
 /* Window definitions for GNU Emacs.
-   Copyright (C) 1985-1986, 1993, 1995, 1997-2014 Free Software
+   Copyright (C) 1985-1986, 1993, 1995, 1997-2015 Free Software
    Foundation, Inc.
 
 This file is part of GNU Emacs.
@@ -1085,7 +1085,6 @@ struct glyph *get_phys_cursor_glyph (struct window *w);
   CHECK_TYPE (WINDOW_LIVE_P (WINDOW), Qwindow_live_p, WINDOW)
 
 /* These used to be in lisp.h.  */
-extern Lisp_Object Qwindow_live_p;
 extern Lisp_Object Vwindow_list;
 
 extern Lisp_Object window_list (void);

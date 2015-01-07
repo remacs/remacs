@@ -1,6 +1,6 @@
 ;;; button.el --- clickable buttons
 ;;
-;; Copyright (C) 2001-2014 Free Software Foundation, Inc.
+;; Copyright (C) 2001-2015 Free Software Foundation, Inc.
 ;;
 ;; Author: Miles Bader <miles@gnu.org>
 ;; Keywords: extensions
@@ -449,7 +449,7 @@ return t."
 	  (if (posn-string posn)
 	      ;; mode-line, header-line, or display string event.
 	      (button-activate (posn-string posn) t)
-	    (push-button (posn-point posn)) t)))
+	    (push-button (posn-point posn) t))))
     ;; POS is just normal position
     (let ((button (button-at (or pos (point)))))
       (when button

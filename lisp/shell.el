@@ -1,6 +1,7 @@
 ;;; shell.el --- specialized comint.el for running the shell -*- lexical-binding: t -*-
 
-;; Copyright (C) 1988, 1993-1997, 2000-2014 Free Software Foundation, Inc.
+;; Copyright (C) 1988, 1993-1997, 2000-2015 Free Software Foundation,
+;; Inc.
 
 ;; Author: Olin Shivers <shivers@cs.cmu.edu>
 ;;	Simon Marshall <simon@gnu.org>
@@ -306,13 +307,6 @@ for Shell mode only."
 		 (const input)
 		 (const history)
 		 (const :tag "on" t))
-  :group 'shell)
-
-(defcustom shell-display-buffer-actions display-buffer-base-action
-  "The `display-buffer' actions for the `*shell*' buffer."
-  :type display-buffer--action-custom-type
-  :risky t
-  :version "25.1"
   :group 'shell)
 
 (defvar shell-dirstack nil
@@ -725,7 +719,7 @@ Otherwise, one argument `-i' is passed to the shell.
 
   ;; The buffer's window must be correctly set when we call comint (so
   ;; that comint sets the COLUMNS env var properly).
-  (pop-to-buffer buffer shell-display-buffer-actions)
+  (pop-to-buffer buffer)
   (unless (comint-check-proc buffer)
     (let* ((prog (or explicit-shell-file-name
 		     (getenv "ESHELL") shell-file-name))

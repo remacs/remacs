@@ -1,3 +1,8 @@
+2015-01-04  Paul Eggert  <eggert@cs.ucla.edu>
+
+	batch write-region no longer says "Wrote FOO"
+	* files.texi (Writing to Files): Document this.
+
 2014-12-31  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Less 'make' chatter for Emacs doc
@@ -13,6 +18,10 @@
 	`with-current-buffer-window', `with-displayed-buffer-window' and
 	`temp-buffer-resize-mode', `temp-buffer-max-height' and
 	`temp-buffer-max-width'.
+
+2014-12-29  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* os.texi (System Environment): Update for system-name changes.
 
 2014-12-27  Glenn Morris  <rgm@gnu.org>
 
@@ -13855,7 +13864,7 @@
 ;; coding: utf-8
 ;; End:
 
-  Copyright (C) 1998-2014 Free Software Foundation, Inc.
+  Copyright (C) 1998-2015 Free Software Foundation, Inc.
 
   This file is part of GNU Emacs.
 

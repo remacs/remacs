@@ -1,5 +1,5 @@
 /* Functions to manipulate menus.
-   Copyright (C) 2008-2014 Free Software Foundation, Inc.
+   Copyright (C) 2008-2015 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -21,10 +21,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "systime.h" /* for Time */
 #include "../lwlib/lwlib-widget.h"
-
-#ifdef HAVE_NTGUI
-extern Lisp_Object Qunsupported__w32_dialog;
-#endif
 
 /* Bit fields used by terminal-specific menu_show_hook.  */
 

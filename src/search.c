@@ -1,6 +1,6 @@
 /* String search routines for GNU Emacs.
 
-Copyright (C) 1985-1987, 1993-1994, 1997-1999, 2001-2014 Free Software
+Copyright (C) 1985-1987, 1993-1994, 1997-1999, 2001-2015 Free Software
 Foundation, Inc.
 
 This file is part of GNU Emacs.
@@ -83,12 +83,6 @@ static struct re_registers search_regs;
    Qt if the last search was done in a string;
    Qnil if no searching has been done yet.  */
 static Lisp_Object last_thing_searched;
-
-/* Error condition signaled when regexp compile_pattern fails.  */
-static Lisp_Object Qinvalid_regexp;
-
-/* Error condition used for failing searches.  */
-static Lisp_Object Qsearch_failed;
 
 static void set_search_regs (ptrdiff_t, ptrdiff_t);
 static void save_search_regs (void);
@@ -3329,7 +3323,10 @@ syms_of_search (void)
     }
   searchbuf_head = &searchbufs[0];
 
+  /* Error condition used for failing searches.  */
   DEFSYM (Qsearch_failed, "search-failed");
+
+  /* Error condition signaled when regexp compile_pattern fails.  */
   DEFSYM (Qinvalid_regexp, "invalid-regexp");
 
   Fput (Qsearch_failed, Qerror_conditions,

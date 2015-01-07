@@ -1,6 +1,6 @@
 /* Implementation of GUI terminal on the Microsoft Windows API.
 
-Copyright (C) 1989, 1993-2014 Free Software Foundation, Inc.
+Copyright (C) 1989, 1993-2015 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -219,10 +219,6 @@ static void w32fullscreen_hook (struct frame *);
 #ifdef GLYPH_DEBUG
 static void x_check_font (struct frame *, struct font *);
 #endif
-
-static Lisp_Object Qvendor_specific_keysyms;
-static Lisp_Object Qadded, Qremoved, Qmodified;
-static Lisp_Object Qrenamed_from, Qrenamed_to;
 
 
 /***********************************************************************

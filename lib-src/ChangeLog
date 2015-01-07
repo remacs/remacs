@@ -1,3 +1,38 @@
+2015-01-05  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Use 0 for Qnil
+	* make-docfile.c (compare_globals): Consider 'nil' to be the least.
+
+	Compute C decls for DEFSYMs automatically
+	Fixes Bug#15880.
+	* make-docfile.c: Revamp to generate table of symbols, too.
+	Include <stdbool.h>.
+	(xstrdup): New function.
+	(main): Don't process the same file twice.
+	(SYMBOL): New constant in enum global_type.
+	(struct symbol): Turn 'value' member into a union, either v.value
+	for int or v.svalue for string.  All uses changed.
+	(add_global): New arg svalue, which overrides value, so that globals
+	can have a string value.
+	(close_emacs_global): New arg num_symbols; all uses changed.
+	Output lispsym decl.
+	(write_globals): Output symbol globals too.  Output more
+	ATTRIBUTE_CONST, now that Qnil etc. are C constants.
+	Output defsym_name table.
+	(scan_c_file): Move most of guts into ...
+	(scan_c_stream): ... new function.  Scan for DEFSYMs and
+	record symbols found.  Don't read past EOF if file doesn't
+	end in newline.
+
+2015-01-04  Paul Eggert  <eggert@cs.ucla.edu>
+
+	'temacs -nw' should not call missing functions
+	* make-docfile.c (write_globals):
+	Declare Fframe_windows_min_size with ATTRIBUTE_CONST, too.  Sort.
+
+	Less 'make' chatter for lib-src
+	* Makefile.in (blessmail): Less 'make' chatter here.
+
 2014-12-27  Eli Zaretskii  <eliz@gnu.org>
 
 	* Makefile.in (etags_libs, ebrowse${EXEEXT}, profile${EXEEXT})
@@ -5,6 +40,17 @@
 	(update-game-score${EXEEXT}): Put $(NTLIB) before $(LOADLIBES),
 	since GCC sometimes calls stpcpy when it sees strcpy, under
 	optimization switches.
+
+2014-12-25  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* ebrowse.c (sym_scope_1, operator_name, open_file):
+	* emacsclient.c (get_server_config, set_local_socket)
+	(start_daemon_and_retry_set_socket):
+	* etags.c (main, C_entries, relative_filename):
+	* pop.c (sendline):
+	* update-game-score.c (main):
+	Rewrite to avoid the need for strcat, typically by using stpcpy
+	and/or lispstpcpy.  strcat tends to be part of O(N**2) algorithms.
 
 2014-12-14  Paul Eggert  <eggert@cs.ucla.edu>
 
@@ -135,8 +181,7 @@
 
 2014-05-26  Paul Eggert  <eggert@cs.ucla.edu>
 
-	Fix rcs2log problems with CVS.
-	Problem reported by Glenn Morris in
+	Fix rcs2log problems with CVS.  Reported by Glenn Morris in
 	<http://lists.gnu.org/archive/html/emacs-devel/2014-05/msg00277.html>.
 	Plus, fix some security and filename quoting problems.
 	* rcs2log (logdir): Prefer mktemp if available.
@@ -3491,7 +3536,7 @@
 2004-04-17  Paul Eggert  <eggert@gnu.org>
 
 	* rcs2log (Help): Clarify wording of the usage message.
-	Problem reported by Alan Mackenzie in
+	Reported by Alan Mackenzie in
 	<http://mail.gnu.org/archive/html/bug-gnu-emacs/2004-04/msg00188.html>.
 
 2004-04-07  Stefan Monnier  <monnier@iro.umontreal.ca>
@@ -8417,7 +8462,7 @@
 ;; coding: utf-8
 ;; End:
 
-  Copyright (C) 1988-1999, 2001-2014 Free Software Foundation, Inc.
+  Copyright (C) 1988-1999, 2001-2015 Free Software Foundation, Inc.
 
   This file is part of GNU Emacs.
 

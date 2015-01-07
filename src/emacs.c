@@ -1,7 +1,7 @@
 /* Fully extensible Emacs, running on Unix, intended for GNU.
 
-Copyright (C) 1985-1987, 1993-1995, 1997-1999, 2001-2014
-  Free Software Foundation, Inc.
+Copyright (C) 1985-1987, 1993-1995, 1997-1999, 2001-2015 Free Software
+Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -147,13 +147,6 @@ static bool malloc_using_checking;
 #elif defined HAVE_PTHREAD && !defined SYSTEM_MALLOC && !defined HYBRID_MALLOC
 extern void malloc_enable_thread (void);
 #endif
-
-Lisp_Object Qfile_name_handler_alist;
-
-Lisp_Object Qrisky_local_variable;
-
-Lisp_Object Qkill_emacs;
-static Lisp_Object Qkill_emacs_hook;
 
 /* If true, Emacs should not attempt to use a window-specific code,
    but instead should use the virtual terminal under which it was started.  */
@@ -1913,7 +1906,7 @@ all of which are called before Emacs is actually killed.  */)
   /* Fsignal calls emacs_abort () if it sees that waiting_for_input is
      set.  */
   waiting_for_input = 0;
-  Frun_hooks (1, &Qkill_emacs_hook);
+  run_hook (Qkill_emacs_hook);
   UNGCPRO;
 
 #ifdef HAVE_X_WINDOWS

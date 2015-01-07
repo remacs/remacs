@@ -1,5 +1,5 @@
 /* GnuTLS glue for GNU Emacs.
-   Copyright (C) 2010-2014 Free Software Foundation, Inc.
+   Copyright (C) 2010-2015 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -35,27 +35,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 static bool emacs_gnutls_handle_error (gnutls_session_t, int);
 
-static Lisp_Object Qgnutls_dll;
-static Lisp_Object Qgnutls_code;
-static Lisp_Object Qgnutls_anon, Qgnutls_x509pki;
-static Lisp_Object Qgnutls_e_interrupted, Qgnutls_e_again,
-  Qgnutls_e_invalid_session, Qgnutls_e_not_ready_for_handshake;
 static bool gnutls_global_initialized;
-
-/* The following are for the property list of `gnutls-boot'.  */
-static Lisp_Object QCgnutls_bootprop_priority;
-static Lisp_Object QCgnutls_bootprop_trustfiles;
-static Lisp_Object QCgnutls_bootprop_keylist;
-static Lisp_Object QCgnutls_bootprop_crlfiles;
-static Lisp_Object QCgnutls_bootprop_callbacks;
-static Lisp_Object QCgnutls_bootprop_loglevel;
-static Lisp_Object QCgnutls_bootprop_hostname;
-static Lisp_Object QCgnutls_bootprop_min_prime_bits;
-static Lisp_Object QCgnutls_bootprop_verify_flags;
-static Lisp_Object QCgnutls_bootprop_verify_error;
-
-/* Callback keys for `gnutls-boot'.  Unused currently.  */
-static Lisp_Object QCgnutls_bootprop_callbacks_verify;
 
 static void gnutls_log_function (int, const char *);
 static void gnutls_log_function2 (int, const char *, const char *);
@@ -1656,13 +1636,14 @@ syms_of_gnutls (void)
   DEFSYM (Qgnutls_code, "gnutls-code");
   DEFSYM (Qgnutls_anon, "gnutls-anon");
   DEFSYM (Qgnutls_x509pki, "gnutls-x509pki");
+
+  /* The following are for the property list of 'gnutls-boot'.  */
   DEFSYM (QCgnutls_bootprop_hostname, ":hostname");
   DEFSYM (QCgnutls_bootprop_priority, ":priority");
   DEFSYM (QCgnutls_bootprop_trustfiles, ":trustfiles");
   DEFSYM (QCgnutls_bootprop_keylist, ":keylist");
   DEFSYM (QCgnutls_bootprop_crlfiles, ":crlfiles");
   DEFSYM (QCgnutls_bootprop_callbacks, ":callbacks");
-  DEFSYM (QCgnutls_bootprop_callbacks_verify, "verify");
   DEFSYM (QCgnutls_bootprop_min_prime_bits, ":min-prime-bits");
   DEFSYM (QCgnutls_bootprop_loglevel, ":loglevel");
   DEFSYM (QCgnutls_bootprop_verify_flags, ":verify-flags");

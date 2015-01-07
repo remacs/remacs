@@ -1,5 +1,5 @@
 /* Interface to libxml2.
-   Copyright (C) 2010-2014 Free Software Foundation, Inc.
+   Copyright (C) 2010-2015 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -29,8 +29,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "buffer.h"
 
 
-static Lisp_Object Qlibxml2_dll;
-
 #ifdef WINDOWSNT
 
 # include <windows.h>

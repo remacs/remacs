@@ -1,5 +1,5 @@
 /* Header for charset handler.
-   Copyright (C) 2001-2014 Free Software Foundation, Inc.
+   Copyright (C) 2001-2015 Free Software Foundation, Inc.
    Copyright (C) 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004,
      2005, 2006, 2007, 2008, 2009, 2010, 2011
      National Institute of Advanced Industrial Science and Technology (AIST)
@@ -519,9 +519,6 @@ extern int iso_charset_table[ISO_MAX_DIMENSION][ISO_MAX_CHARS][ISO_MAX_FINAL];
 
 
 
-extern Lisp_Object Qcharsetp;
-
-extern Lisp_Object Qascii;
 extern int charset_ascii, charset_eight_bit;
 extern int charset_unicode;
 extern int charset_jisx0201_roman;

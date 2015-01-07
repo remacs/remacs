@@ -1,5 +1,5 @@
 /* X Selection processing for Emacs.
-   Copyright (C) 1993-1997, 2000-2014 Free Software Foundation, Inc.
+   Copyright (C) 1993-1997, 2000-2015 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -79,19 +79,6 @@ static void lisp_data_to_selection_data (struct x_display_info *, Lisp_Object,
 #define TRACE1(fmt, a0)		(void) 0
 #define TRACE2(fmt, a0, a1)	(void) 0
 #endif
-
-
-static Lisp_Object QSECONDARY, QSTRING, QINTEGER, QCLIPBOARD, QTIMESTAMP,
-  QTEXT, QDELETE, QMULTIPLE, QINCR, QEMACS_TMP, QTARGETS, QATOM, QNULL,
-  QATOM_PAIR, QCLIPBOARD_MANAGER, QSAVE_TARGETS;
-
-static Lisp_Object QCOMPOUND_TEXT;	/* This is a type of selection.  */
-static Lisp_Object QUTF8_STRING;	/* This is a type of selection.  */
-
-static Lisp_Object Qcompound_text_with_extensions;
-
-static Lisp_Object Qforeign_selection;
-static Lisp_Object Qx_lost_selection_functions, Qx_sent_selection_functions;
 
 /* Bytes needed to represent 'long' data.  This is as per libX11; it
    is not necessarily sizeof (long).  */
@@ -2687,8 +2674,11 @@ A value of 0 means wait as long as necessary.  This is initialized from the
   DEFSYM (QCLIPBOARD, "CLIPBOARD");
   DEFSYM (QTIMESTAMP, "TIMESTAMP");
   DEFSYM (QTEXT, "TEXT");
+
+  /* These are types of selection.  */
   DEFSYM (QCOMPOUND_TEXT, "COMPOUND_TEXT");
   DEFSYM (QUTF8_STRING, "UTF8_STRING");
+
   DEFSYM (QDELETE, "DELETE");
   DEFSYM (QMULTIPLE, "MULTIPLE");
   DEFSYM (QINCR, "INCR");

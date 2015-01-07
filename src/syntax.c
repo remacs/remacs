@@ -1,5 +1,5 @@
 /* GNU Emacs routines to deal with syntax tables; also word and list parsing.
-   Copyright (C) 1985, 1987, 1993-1995, 1997-1999, 2001-2014 Free
+   Copyright (C) 1985, 1987, 1993-1995, 1997-1999, 2001-2015 Free
    Software Foundation, Inc.
 
 This file is part of GNU Emacs.
@@ -136,9 +136,6 @@ enum
     ST_COMMENT_STYLE = 256 + 1,
     ST_STRING_STYLE = 256 + 2
   };
-
-static Lisp_Object Qsyntax_table_p;
-static Lisp_Object Qsyntax_table, Qscan_error;
 
 /* This is the internal form of the parse state used in parse-partial-sexp.  */
 
@@ -3499,11 +3496,6 @@ init_syntax_once (void)
 
   /* This has to be done here, before we call Fmake_char_table.  */
   DEFSYM (Qsyntax_table, "syntax-table");
-
-  /* This variable is DEFSYMed in alloc.c and not initialized yet, so
-     intern it here.  NOTE: you must guarantee that init_syntax_once
-     is called before all other users of this variable.  */
-  Qchar_table_extra_slots = intern_c_string ("char-table-extra-slots");
 
   /* Create objects which can be shared among syntax tables.  */
   Vsyntax_code_object = make_uninit_vector (Smax);

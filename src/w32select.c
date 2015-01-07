@@ -1,6 +1,6 @@
 /* Selection processing for Emacs on the Microsoft Windows API.
 
-Copyright (C) 1993-1994, 2001-2014 Free Software Foundation, Inc.
+Copyright (C) 1993-1994, 2001-2015 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -107,17 +107,11 @@ static Lisp_Object validate_coding_system (Lisp_Object coding_system);
 static void setup_windows_coding_system (Lisp_Object coding_system,
 					 struct coding_system * coding);
 
-
-/* A remnant from X11: Symbol for the CLIPBORD selection type.  Other
-   selections are not used on Windows, so we don't need symbols for
-   PRIMARY and SECONDARY.  */
-Lisp_Object QCLIPBOARD;
-
 /* Internal pseudo-constants, initialized in globals_of_w32select()
    based on current system parameters. */
 static LCID DEFAULT_LCID;
 static UINT ANSICP, OEMCP;
-static Lisp_Object QUNICODE, QANSICP, QOEMCP;
+static Lisp_Object QANSICP, QOEMCP;
 
 /* A hidden window just for the clipboard management. */
 static HWND clipboard_owner;

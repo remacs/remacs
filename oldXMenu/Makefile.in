@@ -15,7 +15,7 @@
 ## without express or implied warranty.
 
 
-## Copyright (C) 2001-2014 Free Software Foundation, Inc.
+## Copyright (C) 2001-2015 Free Software Foundation, Inc.
 
 ## This program is free software: you can redistribute it and/or modify
 ## it under the terms of the GNU General Public License as published by
@@ -101,6 +101,16 @@ am__v_CC_ = $(am__v_CC_@AM_DEFAULT_V@)
 am__v_CC_0 = @echo "  CC      " $@;
 am__v_CC_1 =
 
+AM_V_GEN = $(am__v_GEN_@AM_V@)
+am__v_GEN_ = $(am__v_GEN_@AM_DEFAULT_V@)
+am__v_GEN_0 = @echo "  GEN     " $@;
+am__v_GEN_1 =
+
+AM_V_at = $(am__v_at_@AM_V@)
+am__v_at_ = $(am__v_at_@AM_DEFAULT_V@)
+am__v_at_0 = @
+am__v_at_1 =
+
 DEPDIR = deps
 ## -MMD -MF $(DEPDIR)/$*.d if AUTO_DEPEND; else empty.
 DEPFLAGS = @DEPFLAGS@
@@ -118,9 +128,9 @@ ALL_CFLAGS=$(C_SWITCH_SYSTEM) $(C_SWITCH_MACHINE) \
 	$(AM_V_CC)$(CC) -c ${ALL_CFLAGS} $<
 
 libXMenu11.a: $(OBJS) $(EXTRA)
-	$(RM) $@
-	$(AR) $(ARFLAGS) $@ $(OBJS) $(EXTRA)
-	$(RANLIB) $@
+	$(AM_V_GEN)$(RM) $@
+	$(AM_V_at)$(AR) $(ARFLAGS) $@ $(OBJS) $(EXTRA)
+	$(AM_V_at)$(RANLIB) $@
 
 ## Insert either autodeps.mk (if AUTO_DEPEND), else deps.mk.
 @oldxmenu_deps_frag@

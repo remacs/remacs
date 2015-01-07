@@ -1,5 +1,5 @@
 /* Menu support for GNU Emacs on the Microsoft Windows API.
-   Copyright (C) 1986, 1988, 1993-1994, 1996, 1998-1999, 2001-2014 Free
+   Copyright (C) 1986, 1988, 1993-1994, 1996, 1998-1999, 2001-2015 Free
    Software Foundation, Inc.
 
 This file is part of GNU Emacs.
@@ -97,8 +97,6 @@ SetMenuItemInfoA_Proc set_menu_item_info = NULL;
 AppendMenuW_Proc unicode_append_menu = NULL;
 MessageBoxW_Proc unicode_message_box = NULL;
 #endif /* NTGUI_UNICODE */
-
-Lisp_Object Qdebug_on_next_call, Qunsupported__w32_dialog;
 
 void set_frame_menubar (struct frame *, bool, bool);
 

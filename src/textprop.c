@@ -1,5 +1,5 @@
 /* Interface code for dealing with text properties.
-   Copyright (C) 1993-1995, 1997, 1999-2014 Free Software Foundation,
+   Copyright (C) 1993-1995, 1997, 1999-2015 Free Software Foundation,
    Inc.
 
 This file is part of GNU Emacs.
@@ -44,21 +44,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
   is enforced by the subrs installing properties onto the intervals.  */
 
 
-/* Types of hooks.  */
-static Lisp_Object Qmouse_left;
-static Lisp_Object Qmouse_entered;
-Lisp_Object Qpoint_left;
-Lisp_Object Qpoint_entered;
-Lisp_Object Qcategory;
-Lisp_Object Qlocal_map;
-
-/* Visual properties text (including strings) may have.  */
-static Lisp_Object Qforeground, Qbackground, Qunderline;
-Lisp_Object Qfont;
-static Lisp_Object Qstipple;
-Lisp_Object Qinvisible, Qintangible, Qmouse_face;
-static Lisp_Object Qread_only;
-Lisp_Object Qminibuffer_prompt;
 
 enum property_set_type
 {
@@ -66,9 +51,6 @@ enum property_set_type
   TEXT_PROPERTY_PREPEND,
   TEXT_PROPERTY_APPEND
 };
-
-/* Sticky properties.  */
-Lisp_Object Qfront_sticky, Qrear_nonsticky;
 
 /* If o1 is a cons whose cdr is a cons, return non-zero and set o2 to
    the o1's cdr.  Otherwise, return zero.  This is handy for
@@ -2383,7 +2365,7 @@ inherits it if NONSTICKINESS is nil.  The `front-sticky' and
   interval_insert_in_front_hooks = Qnil;
 
 
-  /* Common attributes one might give text */
+  /* Common attributes one might give text.  */
 
   DEFSYM (Qforeground, "foreground");
   DEFSYM (Qbackground, "background");
@@ -2401,7 +2383,7 @@ inherits it if NONSTICKINESS is nil.  The `front-sticky' and
   DEFSYM (Qmouse_face, "mouse-face");
   DEFSYM (Qminibuffer_prompt, "minibuffer-prompt");
 
-  /* Properties that text might use to specify certain actions */
+  /* Properties that text might use to specify certain actions.  */
 
   DEFSYM (Qmouse_left, "mouse-left");
   DEFSYM (Qmouse_entered, "mouse-entered");

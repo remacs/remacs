@@ -1,5 +1,5 @@
 /* Font backend for the Microsoft W32 Uniscribe API.
-   Copyright (C) 2008-2014 Free Software Foundation, Inc.
+   Copyright (C) 2008-2015 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -46,10 +46,6 @@ struct uniscribe_font_info
 };
 
 int uniscribe_available = 0;
-
-/* Defined in w32font.c, since it is required there as well.  */
-extern Lisp_Object Quniscribe;
-extern Lisp_Object Qopentype;
 
 /* EnumFontFamiliesEx callback.  */
 static int CALLBACK ALIGN_STACK add_opentype_font_name_to_list (ENUMLOGFONTEX *,

@@ -1,5 +1,5 @@
 /* Definitions and headers for communication with NeXT/Open/GNUstep API.
-   Copyright (C) 1989, 1993, 2005, 2008-2014 Free Software Foundation,
+   Copyright (C) 1989, 1993, 2005, 2008-2015 Free Software Foundation,
    Inc.
 
 This file is part of GNU Emacs.
@@ -792,7 +792,6 @@ struct glyph_string;
 void ns_dump_glyphstring (struct glyph_string *s);
 
 /* Implemented in nsterm, published in or needed from nsfns. */
-extern Lisp_Object Qfontsize;
 extern Lisp_Object ns_list_fonts (struct frame *f, Lisp_Object pattern,
                                   int size, int maxnames);
 extern void ns_clear_frame (struct frame *f);

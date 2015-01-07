@@ -1,5 +1,5 @@
 /* xftfont.c -- XFT font driver.
-   Copyright (C) 2006-2014 Free Software Foundation, Inc.
+   Copyright (C) 2006-2015 Free Software Foundation, Inc.
    Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011
      National Institute of Advanced Industrial Science and Technology (AIST)
      Registration Number H13PRO009
@@ -38,9 +38,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 /* Xft font driver.  */
 
-Lisp_Object Qxft;
-static Lisp_Object QChinting, QCautohint, QChintstyle, QCrgba, QCembolden,
-  QClcdfilter;
 
 /* The actual structure for Xft font that can be cast to struct
    font.  */

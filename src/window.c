@@ -1,6 +1,6 @@
 /* Window creation, deletion and examination for GNU Emacs.
    Does not include redisplay.
-   Copyright (C) 1985-1987, 1993-1998, 2000-2014 Free Software
+   Copyright (C) 1985-1987, 1993-1998, 2000-2015 Free Software
    Foundation, Inc.
 
 This file is part of GNU Emacs.
@@ -44,20 +44,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #ifdef MSDOS
 #include "msdos.h"
 #endif
-
-Lisp_Object Qwindowp, Qwindow_live_p;
-static Lisp_Object Qwindow_valid_p;
-static Lisp_Object Qwindow_configuration_p;
-static Lisp_Object Qrecord_window_buffer;
-static Lisp_Object Qwindow_deletable_p, Qdelete_window, Qdisplay_buffer;
-static Lisp_Object Qreplace_buffer_in_windows, Qget_mru_window;
-static Lisp_Object Qwindow_resize_root_window, Qwindow_resize_root_window_vertically;
-static Lisp_Object Qwindow_sanitize_window_sizes;
-static Lisp_Object Qwindow_pixel_to_total;
-static Lisp_Object Qscroll_up, Qscroll_down, Qscroll_command;
-static Lisp_Object Qsafe, Qabove, Qbelow, Qwindow_size, Qclone_of;
-static Lisp_Object Qfloor, Qceiling;
-static Lisp_Object Qwindow_point_insertion_type;
 
 static int displayed_window_lines (struct window *);
 static int count_windows (struct window *);
@@ -115,14 +101,8 @@ Lisp_Object minibuf_window;
    shown as the selected window when the minibuffer is selected.  */
 Lisp_Object minibuf_selected_window;
 
-/* Hook run at end of temp_output_buffer_show.  */
-static Lisp_Object Qtemp_buffer_show_hook;
-
 /* Incremented for each window created.  */
 static int sequence_number;
-
-/* Hook to run when window config changes.  */
-static Lisp_Object Qwindow_configuration_change_hook;
 
 /* Used by the function window_scroll_pixel_based.  */
 static int window_scroll_pixel_based_preserve_x;
@@ -3014,6 +2994,14 @@ resize_root_window (Lisp_Object window, Lisp_Object delta, Lisp_Object horizonta
   return call5 (Qwindow_resize_root_window, window, delta, horizontal, ignore, pixelwise);
 }
 
+/* Placeholder used by temacs -nw before window.el is loaded.  */
+DEFUN ("window--sanitize-window-sizes", Fwindow__sanitize_window_sizes,
+       Swindow__sanitize_window_sizes, 2, 2, 0,
+       doc: /* */)
+     (Lisp_Object frame, Lisp_Object horizontal)
+{
+  return Qnil;
+}
 
 Lisp_Object
 sanitize_window_sizes (Lisp_Object frame, Lisp_Object horizontal)
@@ -3645,7 +3633,7 @@ temp_output_buffer_show (register Lisp_Object buf)
         record_unwind_protect (select_window_norecord, prev_window);
         Fselect_window (window, Qt);
         Fset_buffer (w->contents);
-        Frun_hooks (1, &Qtemp_buffer_show_hook);
+        run_hook (Qtemp_buffer_show_hook);
         unbind_to (count, Qnil);
       }
     }
@@ -7563,6 +7551,7 @@ displayed after a scrolling operation to be somewhat inaccurate.  */);
   defsubr (&Sset_window_display_table);
   defsubr (&Snext_window);
   defsubr (&Sprevious_window);
+  defsubr (&Swindow__sanitize_window_sizes);
   defsubr (&Sget_buffer_window);
   defsubr (&Sdelete_other_windows_internal);
   defsubr (&Sdelete_window_internal);

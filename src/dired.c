@@ -1,5 +1,5 @@
 /* Lisp functions for making directory listings.
-   Copyright (C) 1985-1986, 1993-1994, 1999-2014 Free Software
+   Copyright (C) 1985-1986, 1993-1994, 1999-2015 Free Software
    Foundation, Inc.
 
 This file is part of GNU Emacs.
@@ -50,13 +50,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #ifdef MSDOS
 #include "msdos.h"	/* for fstatat */
 #endif
-
-static Lisp_Object Qdirectory_files;
-static Lisp_Object Qdirectory_files_and_attributes;
-static Lisp_Object Qfile_name_completion;
-static Lisp_Object Qfile_name_all_completions;
-static Lisp_Object Qfile_attributes;
-static Lisp_Object Qfile_attributes_lessp;
 
 static ptrdiff_t scmp (const char *, const char *, ptrdiff_t);
 static Lisp_Object file_attributes (int, char const *, Lisp_Object);
@@ -450,7 +443,6 @@ These are all file names in directory DIRECTORY which begin with FILE.  */)
 }
 
 static int file_name_completion_stat (int, struct dirent *, struct stat *);
-static Lisp_Object Qdefault_directory;
 
 static Lisp_Object
 file_name_completion (Lisp_Object file, Lisp_Object dirname, bool all_flag,

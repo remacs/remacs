@@ -1,6 +1,7 @@
 /* Buffer insertion/deletion and gap motion for GNU Emacs.
 
-Copyright (C) 1985-1986, 1993-1995, 1997-2014 Free Software Foundation, Inc.
+Copyright (C) 1985-1986, 1993-1995, 1997-2015 Free Software Foundation,
+Inc.
 
 This file is part of GNU Emacs.
 
@@ -50,8 +51,6 @@ static Lisp_Object combine_after_change_list;
 
 /* Buffer which combine_after_change_list is about.  */
 static Lisp_Object combine_after_change_buffer;
-
-Lisp_Object Qinhibit_modification_hooks;
 
 static void signal_before_change (ptrdiff_t, ptrdiff_t, ptrdiff_t *);
 
@@ -1780,8 +1779,6 @@ modify_text (ptrdiff_t start, ptrdiff_t end)
   bset_point_before_scroll (current_buffer, Qnil);
 }
 
-Lisp_Object Qregion_extract_function;
-
 /* Check that it is okay to modify the buffer between START and END,
    which are char positions.
 
@@ -1994,7 +1991,7 @@ signal_before_change (ptrdiff_t start_int, ptrdiff_t end_int,
     {
       PRESERVE_VALUE;
       PRESERVE_START_END;
-      Frun_hooks (1, &Qfirst_change_hook);
+      run_hook (Qfirst_change_hook);
     }
 
   /* Now run the before-change-functions if any.  */

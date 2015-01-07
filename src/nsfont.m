@@ -1,6 +1,6 @@
 /* Font back-end driver for the NeXT/Open/GNUstep and MacOSX window system.
    See font.h
-   Copyright (C) 2006-2014 Free Software Foundation, Inc.
+   Copyright (C) 2006-2015 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -45,11 +45,6 @@ Author: Adrian Robert (arobert@cogsci.ucsd.edu)
 #define NSFONT_TRACE 0
 #define LCD_SMOOTHING_MARGIN 2
 
-extern Lisp_Object Qns;
-extern Lisp_Object Qnormal, Qbold, Qitalic;
-static Lisp_Object Qapple, Qroman, Qmedium;
-static Lisp_Object Qcondensed, Qexpanded;
-extern Lisp_Object Qappend;
 extern float ns_antialias_threshold;
 
 
@@ -1493,7 +1488,7 @@ ns_glyph_metrics (struct nsfont_info *font_info, unsigned char block)
         characterIndex: (NSUInteger)charIndex
 {
   len = glyphIndex+length;
-  for (i =glyphIndex; i<len; i++) 
+  for (i =glyphIndex; i<len; i++)
     cglyphs[i] = glyphs[i-glyphIndex];
   if (len > maxGlyph)
     maxGlyph = len;

@@ -1,3 +1,8 @@
+2015-01-01  Michael Albinus  <michael.albinus@gmx.de>
+
+	Sync with Tramp 2.2.11.
+	* trampver.texi: Update release number.
+
 2014-12-31  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Less 'make' chatter for Emacs doc
@@ -6,6 +11,16 @@
 	(ENVADD, $(buildinfodir)/%.info, %.html, ${buildinfodir}/ccmode.info)
 	(${buildinfodir}/efaq%.info, efaq%.html):
 	Use them.
+
+2014-12-31  Filipp Gunbin  <fgunbin@fastmail.fm>
+
+	* info.texi (Create Info buffer): Mention info-display-manual prefix.
+
+2014-12-29  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* efaq.texi (Displaying the current file name in the titlebar):
+	Prefer (system-name) to system-name.
+	* smtpmail.texi (Server workarounds): Fix grammar.
 
 2014-12-18  Eric Abrahamsen  <eric@ericabrahamsen.net>
 
@@ -12019,7 +12034,7 @@
 ;; coding: utf-8
 ;; End:
 
-  Copyright (C) 1993-1999, 2001-2014 Free Software Foundation, Inc.
+  Copyright (C) 1993-1999, 2001-2015 Free Software Foundation, Inc.
 
   This file is part of GNU Emacs.
 

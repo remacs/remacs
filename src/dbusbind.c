@@ -1,5 +1,5 @@
 /* Elisp bindings for D-Bus.
-   Copyright (C) 2007-2014 Free Software Foundation, Inc.
+   Copyright (C) 2007-2015 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -41,37 +41,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #endif
 
 
-/* Subroutines.  */
-static Lisp_Object Qdbus__init_bus;
-static Lisp_Object Qdbus_get_unique_name;
-static Lisp_Object Qdbus_message_internal;
-
-/* D-Bus error symbol.  */
-static Lisp_Object Qdbus_error;
-
-/* Lisp symbols of the system and session buses.  */
-static Lisp_Object QCdbus_system_bus, QCdbus_session_bus;
-
-/* Lisp symbol for method call timeout.  */
-static Lisp_Object QCdbus_timeout;
-
-/* Lisp symbols of D-Bus types.  */
-static Lisp_Object QCdbus_type_byte, QCdbus_type_boolean;
-static Lisp_Object QCdbus_type_int16, QCdbus_type_uint16;
-static Lisp_Object QCdbus_type_int32, QCdbus_type_uint32;
-static Lisp_Object QCdbus_type_int64, QCdbus_type_uint64;
-static Lisp_Object QCdbus_type_double, QCdbus_type_string;
-static Lisp_Object QCdbus_type_object_path, QCdbus_type_signature;
-#ifdef DBUS_TYPE_UNIX_FD
-static Lisp_Object QCdbus_type_unix_fd;
-#endif
-static Lisp_Object QCdbus_type_array, QCdbus_type_variant;
-static Lisp_Object QCdbus_type_struct, QCdbus_type_dict_entry;
-
-/* Lisp symbols of objects in `dbus-registered-objects-table'.  */
-static Lisp_Object QCdbus_registered_serial, QCdbus_registered_method;
-static Lisp_Object QCdbus_registered_signal;
-
 /* Alist of D-Bus buses we are polling for messages.
    The key is the symbol or string of the bus, and the value is the
    connection address.  */
@@ -1755,15 +1724,21 @@ syms_of_dbusbind (void)
   DEFSYM (Qdbus_message_internal, "dbus-message-internal");
   defsubr (&Sdbus_message_internal);
 
+  /* D-Bus error symbol.  */
   DEFSYM (Qdbus_error, "dbus-error");
   Fput (Qdbus_error, Qerror_conditions,
 	list2 (Qdbus_error, Qerror));
   Fput (Qdbus_error, Qerror_message,
 	build_pure_c_string ("D-Bus error"));
 
+  /* Lisp symbols of the system and session buses.  */
   DEFSYM (QCdbus_system_bus, ":system");
   DEFSYM (QCdbus_session_bus, ":session");
+
+  /* Lisp symbol for method call timeout.  */
   DEFSYM (QCdbus_timeout, ":timeout");
+
+  /* Lisp symbols of D-Bus types.  */
   DEFSYM (QCdbus_type_byte, ":byte");
   DEFSYM (QCdbus_type_boolean, ":boolean");
   DEFSYM (QCdbus_type_int16, ":int16");
@@ -1783,6 +1758,8 @@ syms_of_dbusbind (void)
   DEFSYM (QCdbus_type_variant, ":variant");
   DEFSYM (QCdbus_type_struct, ":struct");
   DEFSYM (QCdbus_type_dict_entry, ":dict-entry");
+
+  /* Lisp symbols of objects in `dbus-registered-objects-table'.  */
   DEFSYM (QCdbus_registered_serial, ":serial");
   DEFSYM (QCdbus_registered_method, ":method");
   DEFSYM (QCdbus_registered_signal, ":signal");

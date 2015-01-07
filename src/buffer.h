@@ -1,6 +1,6 @@
 /* Header file for the buffer manipulation primitives.
 
-Copyright (C) 1985-1986, 1993-1995, 1997-2014 Free Software Foundation,
+Copyright (C) 1985-1986, 1993-1995, 1997-2015 Free Software Foundation,
 Inc.
 
 This file is part of GNU Emacs.
@@ -1141,12 +1141,6 @@ record_unwind_current_buffer (void)
   } while (false)
 
 extern Lisp_Object Vbuffer_alist;
-extern Lisp_Object Qbefore_change_functions;
-extern Lisp_Object Qafter_change_functions;
-extern Lisp_Object Qfirst_change_hook;
-extern Lisp_Object Qpriority, Qbefore_string, Qafter_string;
-extern Lisp_Object Qchoice, Qrange, Qleft, Qright;
-extern Lisp_Object Qvertical_scroll_bar, Qhorizontal_scroll_bar;
 
 /* FOR_EACH_LIVE_BUFFER (LIST_VAR, BUF_VAR) followed by a statement is
    a `for' loop which iterates over the buffers from Vbuffer_alist.  */

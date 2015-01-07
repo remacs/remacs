@@ -1,6 +1,6 @@
 ### @configure_input@
 
-# Copyright (C) 1992-2014 Free Software Foundation, Inc.
+# Copyright (C) 1992-2015 Free Software Foundation, Inc.
 
 # This file is part of GNU Emacs.
 
@@ -389,15 +389,13 @@ lib lib-src lisp nt: Makefile
 # repository pull. In git there is no single file that guarantees
 # this, but the local log for the current head should be close enough.
 #
-# Note the use of single quotes in the value of vcswitness.
-# This passes an unexpanded $srcdir to src's Makefile, which then
+# Pass an unexpanded $srcdir to src's Makefile, which then
 # expands it using its own value of srcdir (which points to the
 # source directory of src/).
+dirstate = .git/logs/HEAD
+VCSWITNESS = $(if $(wildcard $(srcdir)/$(dirstate)),$$(srcdir)/../$(dirstate))
 src: Makefile
-	dirstate='.git/logs/HEAD';				\
-	vcswitness='$$(srcdir)/../'$$dirstate;				\
-	[ -r "$(srcdir)/$$dirstate" ] || vcswitness='';			\
-	$(MAKE) -C $@ all VCSWITNESS="$$vcswitness"
+	$(MAKE) -C $@ VCSWITNESS='$(VCSWITNESS)' all
 
 blessmail: Makefile src
 	$(MAKE) -C lib-src maybe-blessmail
@@ -1045,11 +1043,9 @@ uninstall-ps: $(UNINSTALL_PS)
 # and it's not worth it.  This case is only relevant if you download a
 # release, then change the .texi files.
 info:
-	@if test "$(HAVE_MAKEINFO)" = "no"; then \
-	  echo "Configured --without-makeinfo, not building manuals" ; \
-	else \
-	  $(MAKE) info-real info-dir; \
-	fi
+  ifneq ($(HAVE_MAKEINFO),no)
+	$(MAKE) info-real info-dir
+  endif
 
 ## build-aux/make-info-dir expects only certain dircategories.
 check-info: info

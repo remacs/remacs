@@ -57,9 +57,6 @@ static const int chartab_bits[4] =
 /* Preamble for uniprop (Unicode character property) tables.  See the
    comment of "Unicode character property tables".  */
 
-/* Purpose of uniprop tables. */
-static Lisp_Object Qchar_code_property_table;
-
 /* Types of decoder and encoder functions for uniprop values.  */
 typedef Lisp_Object (*uniprop_decoder_t) (Lisp_Object, Lisp_Object);
 typedef Lisp_Object (*uniprop_encoder_t) (Lisp_Object, Lisp_Object);
@@ -1378,6 +1375,7 @@ CHAR-TABLE must be what returned by `unicode-property-table-internal'. */)
 void
 syms_of_chartab (void)
 {
+  /* Purpose of uniprop tables. */
   DEFSYM (Qchar_code_property_table, "char-code-property-table");
 
   defsubr (&Smake_char_table);

@@ -1,5 +1,5 @@
 /* Execution of byte code produced by bytecomp.el.
-   Copyright (C) 1985-1988, 1993, 2000-2014 Free Software Foundation,
+   Copyright (C) 1985-1988, 1993, 2000-2015 Free Software Foundation,
    Inc.
 
 This file is part of GNU Emacs.
@@ -69,7 +69,6 @@ by Hallvard:
 
 #ifdef BYTE_CODE_METER
 
-Lisp_Object Qbyte_code_meter;
 #define METER_2(code1, code2) AREF (AREF (Vbyte_code_meter, code1), code2)
 #define METER_1(code) METER_2 (0, code)
 

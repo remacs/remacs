@@ -1,5 +1,5 @@
 /* undo handling for GNU Emacs.
-   Copyright (C) 1990, 1993-1994, 2000-2014 Free Software Foundation,
+   Copyright (C) 1990, 1993-1994, 2000-2015 Free Software Foundation,
    Inc.
 
 This file is part of GNU Emacs.
@@ -33,12 +33,6 @@ static struct buffer *last_undo_buffer;
 /* Position of point last time we inserted a boundary.  */
 static struct buffer *last_boundary_buffer;
 static ptrdiff_t last_boundary_position;
-
-Lisp_Object Qinhibit_read_only;
-
-/* Marker for function call undo list elements.  */
-
-Lisp_Object Qapply;
 
 /* The first time a command records something for undo.
    it also allocates the undo-boundary object
@@ -461,6 +455,8 @@ void
 syms_of_undo (void)
 {
   DEFSYM (Qinhibit_read_only, "inhibit-read-only");
+
+  /* Marker for function call undo list elements.  */
   DEFSYM (Qapply, "apply");
 
   pending_boundary = Qnil;

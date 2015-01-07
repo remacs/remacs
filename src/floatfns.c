@@ -1,6 +1,7 @@
 /* Primitive operations on floating point for GNU Emacs Lisp interpreter.
 
-Copyright (C) 1988, 1993-1994, 1999, 2001-2014 Free Software Foundation, Inc.
+Copyright (C) 1988, 1993-1994, 1999, 2001-2015 Free Software Foundation,
+Inc.
 
 Author: Wolfgang Rupprecht
 (according to ack.texi)

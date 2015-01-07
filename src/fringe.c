@@ -1,5 +1,5 @@
 /* Fringe handling (split from xdisp.c).
-   Copyright (C) 1985-1988, 1993-1995, 1997-2014 Free Software
+   Copyright (C) 1985-1988, 1993-1995, 1997-2015 Free Software
    Foundation, Inc.
 
 This file is part of GNU Emacs.
@@ -64,10 +64,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
    The `left-fringe' and `right-fringe' display properties
    must specify physical bitmap symbols.
 */
-
-static Lisp_Object Qtruncation, Qcontinuation, Qoverlay_arrow;
-static Lisp_Object Qempty_line, Qtop_bottom;
-static Lisp_Object Qhollow_small;
 
 enum fringe_bitmap_align
 {

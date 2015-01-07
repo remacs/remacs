@@ -1,6 +1,6 @@
 /* Functions for the NeXT/Open/GNUstep and MacOSX window system.
 
-Copyright (C) 1989, 1992-1994, 2005-2006, 2008-2014 Free Software
+Copyright (C) 1989, 1992-1994, 2005-2006, 2008-2015 Free Software
 Foundation, Inc.
 
 This file is part of GNU Emacs.
@@ -60,35 +60,6 @@ int fns_trace_num = 1;
 #ifdef HAVE_NS
 
 extern NSArray *ns_send_types, *ns_return_types, *ns_drag_types;
-
-extern Lisp_Object Qforeground_color;
-extern Lisp_Object Qbackground_color;
-extern Lisp_Object Qcursor_color;
-extern Lisp_Object Qinternal_border_width;
-extern Lisp_Object Qvisibility;
-extern Lisp_Object Qcursor_type;
-extern Lisp_Object Qicon_type;
-extern Lisp_Object Qicon_name;
-extern Lisp_Object Qicon_left;
-extern Lisp_Object Qicon_top;
-extern Lisp_Object Qtop;
-extern Lisp_Object Qdisplay;
-extern Lisp_Object Qvertical_scroll_bars;
-extern Lisp_Object Qhorizontal_scroll_bars;
-extern Lisp_Object Qauto_raise;
-extern Lisp_Object Qauto_lower;
-extern Lisp_Object Qbox;
-extern Lisp_Object Qscroll_bar_width;
-extern Lisp_Object Qscroll_bar_height;
-extern Lisp_Object Qx_resource_name;
-extern Lisp_Object Qface_set_after_frame_default;
-extern Lisp_Object Qunderline, Qundefined;
-extern Lisp_Object Qheight, Qminibuffer, Qname, Qonly, Qwidth;
-extern Lisp_Object Qunsplittable, Qmenu_bar_lines, Qbuffer_predicate, Qtitle;
-
-
-Lisp_Object Qbuffered;
-Lisp_Object Qfontsize;
 
 EmacsTooltip *ns_tooltip = nil;
 

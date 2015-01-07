@@ -1,7 +1,7 @@
 ### @configure_input@
 
-# Copyright (C) 1985, 1987-1988, 1993-1994, 2001-2014
-#   Free Software Foundation, Inc.
+# Copyright (C) 1985, 1987-1988, 1993-1994, 2001-2015 Free Software
+# Foundation, Inc.
 
 # This file is part of GNU Emacs.
 
@@ -223,8 +223,8 @@ $(EXE_FILES): ../lib/libgnu.a
 ## Only used if we need blessmail, but no harm in always defining.
 ## This makes the actual blessmail executable.
 blessmail: $(srcdir)/../lisp/mail/blessmail.el
-	$(EMACS) $(EMACSOPT) -l $<
-	chmod +x $@
+	$(AM_V_GEN)$(EMACS) $(EMACSOPT) -l $<
+	$(AM_V_at)chmod +x $@
 
 ## This checks if we need to run blessmail.
 ## Do not charge ahead and do it!  Let the installer decide.

@@ -1,5 +1,5 @@
 /* Interface to zlib.
-   Copyright (C) 2013-2014 Free Software Foundation, Inc.
+   Copyright (C) 2013-2015 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -27,8 +27,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "buffer.h"
 
 #include <verify.h>
-
-static Lisp_Object Qzlib_dll;
 
 #ifdef WINDOWSNT
 # include <windows.h>

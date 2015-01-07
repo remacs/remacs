@@ -1,7 +1,7 @@
 /* Asynchronous subprocess control for GNU Emacs.
 
-Copyright (C) 1985-1988, 1993-1996, 1998-1999, 2001-2014
-  Free Software Foundation, Inc.
+Copyright (C) 1985-1988, 1993-1996, 1998-1999, 2001-2015 Free Software
+Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -140,12 +140,6 @@ extern int sys_select (int, fd_set *, fd_set *, fd_set *,
 #if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3)
 # pragma GCC diagnostic ignored "-Wstrict-overflow"
 #endif
-
-Lisp_Object Qeuid, Qegid, Qcomm, Qstate, Qppid, Qpgrp, Qsess, Qttname, Qtpgid;
-Lisp_Object Qminflt, Qmajflt, Qcminflt, Qcmajflt, Qutime, Qstime, Qcstime;
-Lisp_Object Qcutime, Qpri, Qnice, Qthcount, Qstart, Qvsize, Qrss, Qargs;
-Lisp_Object Quser, Qgroup, Qetime, Qpcpu, Qpmem, Qtime, Qctime;
-Lisp_Object QCname, QCtype;
 
 /* True if keyboard input is on hold, zero otherwise.  */
 
@@ -190,27 +184,6 @@ process_socket (int domain, int type, int protocol)
 # undef socket
 # define socket(domain, type, protocol) process_socket (domain, type, protocol)
 #endif
-
-Lisp_Object Qprocessp;
-static Lisp_Object Qrun, Qstop, Qsignal;
-static Lisp_Object Qopen, Qclosed, Qconnect, Qfailed, Qlisten;
-Lisp_Object Qlocal;
-static Lisp_Object Qipv4, Qdatagram, Qseqpacket;
-static Lisp_Object Qreal, Qnetwork, Qserial;
-#ifdef AF_INET6
-static Lisp_Object Qipv6;
-#endif
-static Lisp_Object QCport, QCprocess;
-Lisp_Object QCspeed;
-Lisp_Object QCbytesize, QCstopbits, QCparity, Qodd, Qeven;
-Lisp_Object QCflowcontrol, Qhw, Qsw, QCsummary;
-static Lisp_Object QCbuffer, QChost, QCservice;
-static Lisp_Object QClocal, QCremote, QCcoding;
-static Lisp_Object QCserver, QCnowait, QCnoquery, QCstop;
-static Lisp_Object QCsentinel, QClog, QCoptions, QCplist;
-static Lisp_Object Qlast_nonmenu_event;
-static Lisp_Object Qinternal_default_process_sentinel;
-static Lisp_Object Qinternal_default_process_filter;
 
 #define NETCONN_P(p) (EQ (XPROCESS (p)->type, Qnetwork))
 #define NETCONN1_P(p) (EQ (p->type, Qnetwork))
@@ -7228,10 +7201,7 @@ syms_of_process (void)
   DEFSYM (Qsignal, "signal");
 
   /* Qexit is already staticpro'd by syms_of_eval; don't staticpro it
-     here again.
-
-     Qexit = intern_c_string ("exit");
-     staticpro (&Qexit); */
+     here again.  */
 
   DEFSYM (Qopen, "open");
   DEFSYM (Qclosed, "closed");

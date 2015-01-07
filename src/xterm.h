@@ -1,5 +1,5 @@
 /* Definitions and headers for communication with X protocol.
-   Copyright (C) 1989, 1993-1994, 1998-2014 Free Software Foundation,
+   Copyright (C) 1989, 1993-1994, 1998-2015 Free Software Foundation,
    Inc.
 
 This file is part of GNU Emacs.
@@ -1111,9 +1111,6 @@ extern bool x_session_have_connection (void);
 extern void x_session_close (void);
 #endif
 
-/* Defined in xterm.c */
-
-extern Lisp_Object Qx_gtk_map_stock;
 
 /* Is the frame embedded into another application? */
 

@@ -1,5 +1,5 @@
 /* Composite sequence support.
-   Copyright (C) 2001-2014 Free Software Foundation, Inc.
+   Copyright (C) 2001-2015 Free Software Foundation, Inc.
    Copyright (C) 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011
      National Institute of Advanced Industrial Science and Technology (AIST)
      Registration Number H14PRO021
@@ -134,8 +134,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 */
 
 
-Lisp_Object Qcomposition;
-
 /* Table of pointers to the structure `composition' indexed by
    COMPOSITION-ID.  This structure is for storing information about
    each composition except for COMPONENTS-VEC.  */
@@ -152,8 +150,6 @@ ptrdiff_t n_compositions;
    COMPOSITION-ID.  */
 Lisp_Object composition_hash_table;
 
-static Lisp_Object Qauto_composed;
-static Lisp_Object Qauto_composition_function;
 /* Maximum number of characters to look back for
    auto-compositions.  */
 #define MAX_AUTO_COMPOSITION_LOOKBACK 3

@@ -1,6 +1,6 @@
 /* GNU Emacs case conversion functions.
 
-Copyright (C) 1985, 1994, 1997-1999, 2001-2014 Free Software Foundation,
+Copyright (C) 1985, 1994, 1997-1999, 2001-2015 Free Software Foundation,
 Inc.
 
 This file is part of GNU Emacs.
@@ -30,8 +30,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "keymap.h"
 
 enum case_action {CASE_UP, CASE_DOWN, CASE_CAPITALIZE, CASE_CAPITALIZE_UP};
-
-Lisp_Object Qidentity;
 
 static Lisp_Object
 casify_object (enum case_action flag, Lisp_Object obj)

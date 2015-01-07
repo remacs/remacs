@@ -1,5 +1,5 @@
 /* Low-level bidirectional buffer/string-scanning functions for GNU Emacs.
-   Copyright (C) 2000-2001, 2004-2005, 2009-2014 Free Software
+   Copyright (C) 2000-2001, 2004-2005, 2009-2015 Free Software
    Foundation, Inc.
 
 This file is part of GNU Emacs.
@@ -262,7 +262,6 @@ typedef enum {
 } bidi_category_t;
 
 static Lisp_Object paragraph_start_re, paragraph_separate_re;
-static Lisp_Object Qparagraph_start, Qparagraph_separate;
 
 
 /***********************************************************************

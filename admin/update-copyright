@@ -7,7 +7,7 @@
 # By default, this script uses the local-time calendar year.
 # Set the UPDATE_COPYRIGHT_YEAR environment variable to override the default.
 
-# Copyright 2013-2014 Free Software Foundation, Inc.
+# Copyright 2013-2015 Free Software Foundation, Inc.
 
 # This file is part of GNU Emacs.
 
@@ -37,7 +37,7 @@ export UPDATE_COPYRIGHT_USE_INTERVALS
 : ${UPDATE_COPYRIGHT_YEAR=$(date +%Y)}
 export UPDATE_COPYRIGHT_YEAR
 
-emacsver=etc/refcards/emacsver.tex
+emacsver=etc/refcards/emacsver.tex.in
 sed 's/\\def\\year[{][0-9]*[}]/\\def\\year{'"$UPDATE_COPYRIGHT_YEAR"'}'/g \
   $emacsver >$emacsver.aux &&
 { cmp -s $emacsver $emacsver.aux ||

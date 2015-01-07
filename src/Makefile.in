@@ -1,7 +1,7 @@
 ### @configure_input@
 
-# Copyright (C) 1985, 1987-1988, 1993-1995, 1999-2014
-#   Free Software Foundation, Inc.
+# Copyright (C) 1985, 1987-1988, 1993-1995, 1999-2015 Free Software
+# Foundation, Inc.
 
 # This file is part of GNU Emacs.
 
@@ -636,7 +636,7 @@ tags: TAGS ../lisp/TAGS $(lwlibdir)/TAGS
 ## bootstrap-emacs$(EXEEXT) as an order-only prerequisite.
 
 %.elc: %.el | bootstrap-emacs$(EXEEXT)
-	@$(MAKE) -C ../lisp compile-onefile THEFILE=$< EMACS="$(bootstrap_exe)"
+	@$(MAKE) -C ../lisp EMACS="$(bootstrap_exe)" THEFILE=$< $<c
 
 ## VCSWITNESS points to the file that holds info about the current checkout.
 ## We use it as a heuristic to decide when to rebuild loaddefs.el.

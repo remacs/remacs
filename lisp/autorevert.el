@@ -1,6 +1,6 @@
 ;;; autorevert.el --- revert buffers when files on disk change
 
-;; Copyright (C) 1997-1999, 2001-2014 Free Software Foundation, Inc.
+;; Copyright (C) 1997-1999, 2001-2015 Free Software Foundation, Inc.
 
 ;; Author: Anders Lindgren <andersl@andersl.com>
 ;; Keywords: convenience
@@ -589,8 +589,8 @@ This is an internal function used by Auto-Revert Mode."
 	   ;; the values.
 	   (remote-file-name-inhibit-cache t)
 	   (revert
-	    (or (and buffer-file-name
-		     (or auto-revert-remote-files
+	    (if buffer-file-name
+		(and (or auto-revert-remote-files
 			 (not (file-remote-p buffer-file-name)))
 		     (or (not auto-revert-use-notify)
 			 auto-revert-notify-modified-p)
@@ -603,11 +603,11 @@ This is an internal function used by Auto-Revert Mode."
 		       (funcall (or buffer-stale-function
                                     #'buffer-stale--default-function)
                                 t)))
-		(and (or auto-revert-mode
-			 global-auto-revert-non-file-buffers)
-		     (funcall (or buffer-stale-function
-                                  #'buffer-stale--default-function)
-                              t))))
+	      (and (or auto-revert-mode
+		       global-auto-revert-non-file-buffers)
+		   (funcall (or buffer-stale-function
+				#'buffer-stale--default-function)
+			    t))))
 	   eob eoblist)
       (setq auto-revert-notify-modified-p nil)
       (when revert
@@ -690,8 +690,7 @@ the timer when no buffers need to be checked."
     (let ((bufs (if global-auto-revert-mode
 		    (buffer-list)
 		  auto-revert-buffer-list))
-	  (remaining ())
-	  (new ()))
+	  remaining new)
       ;; Partition `bufs' into two halves depending on whether or not
       ;; the buffers are in `auto-revert-remaining-buffers'.  The two
       ;; halves are then re-joined with the "remaining" buffers at the

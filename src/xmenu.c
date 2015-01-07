@@ -1,6 +1,6 @@
 /* X Communication module for terminals which understand the X protocol.
 
-Copyright (C) 1986, 1988, 1993-1994, 1996, 1999-2014 Free Software
+Copyright (C) 1986, 1988, 1993-1994, 1996, 1999-2015 Free Software
 Foundation, Inc.
 
 This file is part of GNU Emacs.
@@ -108,8 +108,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #define TRUE 1
 #endif /* no TRUE */
 
-static Lisp_Object Qdebug_on_next_call;
-
+
 /* Flag which when set indicates a dialog or menu has been posted by
    Xt on behalf of one of the widget sets.  */
 static int popup_activated_flag;

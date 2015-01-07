@@ -1,6 +1,6 @@
 /* Basic character set support.
 
-Copyright (C) 2001-2014 Free Software Foundation, Inc.
+Copyright (C) 2001-2015 Free Software Foundation, Inc.
 
 Copyright (C) 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004,
   2005, 2006, 2007, 2008, 2009, 2010, 2011
@@ -66,16 +66,7 @@ struct charset *charset_table;
 static ptrdiff_t charset_table_size;
 static int charset_table_used;
 
-Lisp_Object Qcharsetp;
-
-/* Special charset symbols.  */
-Lisp_Object Qascii;
-static Lisp_Object Qeight_bit;
-static Lisp_Object Qiso_8859_1;
-static Lisp_Object Qunicode;
-static Lisp_Object Qemacs;
-
-/* The corresponding charsets.  */
+/* Special charsets corresponding to symbols.  */
 int charset_ascii;
 int charset_eight_bit;
 static int charset_iso_8859_1;
@@ -87,9 +78,6 @@ int charset_jisx0201_roman;
 int charset_jisx0208_1978;
 int charset_jisx0208;
 int charset_ksc5601;
-
-/* Value of charset attribute `charset-iso-plane'.  */
-static Lisp_Object Qgl, Qgr;
 
 /* Charset of unibyte characters.  */
 int charset_unibyte;
@@ -2344,12 +2332,14 @@ syms_of_charset (void)
 {
   DEFSYM (Qcharsetp, "charsetp");
 
+  /* Special charset symbols.  */
   DEFSYM (Qascii, "ascii");
   DEFSYM (Qunicode, "unicode");
   DEFSYM (Qemacs, "emacs");
   DEFSYM (Qeight_bit, "eight-bit");
   DEFSYM (Qiso_8859_1, "iso-8859-1");
 
+  /* Value of charset attribute `charset-iso-plane'.  */
   DEFSYM (Qgl, "gl");
   DEFSYM (Qgr, "gr");
 
@@ -2361,10 +2351,6 @@ syms_of_charset (void)
 
   staticpro (&Vemacs_mule_charset_list);
   Vemacs_mule_charset_list = Qnil;
-
-  /* Don't staticpro them here.  It's done in syms_of_fns.  */
-  QCtest = intern_c_string (":test");
-  Qeq = intern_c_string ("eq");
 
   staticpro (&Vcharset_hash_table);
   {

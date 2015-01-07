@@ -1,3 +1,154 @@
+2015-01-06  Jan Djärv  <jan.h.d@swipnet.se>
+
+	* nsterm.m (x_set_window_size): Call updateFrameSize to get real
+	size instead of using widht/height.  The frame may be constrained.
+
+2015-01-05  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* lisp.h (XSYMBOL): Parenthesize id in forward decl.
+	Needed when neither optimizing nor inlining.
+	Also, sort decls alphabetically.
+
+2015-01-05  Eli Zaretskii  <eliz@gnu.org>
+
+	* w32proc.c, w32.h, w32fns.c, w32font.c, w32menu.c, w32notify.c:
+	* w32proc.c, w32select.c, w32term.c, w32uniscribe.c: Remove
+	declarations of Q* variables that represent symbols.
+
+2015-01-05  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Use 0 for Qnil
+	Fixes Bug#15880.
+	If USE_LSB_TAG, arrange for the representation of Qnil to be zero so
+	that NILP (x) is equivalent to testing whether x is 0 at the
+	machine level.  The overall effects of this and the previous patch
+	shrink the size of the text segment by 2.3% and speeds up
+	compilation of all the .elc files by about 0.5% on my platform,
+	which is Fedora 20 x86-64.
+	* lisp.h (lisp_h_XPNTR, lisp_h_XSYMBOL, lisp_h_XUNTAG)
+	(make_lisp_symbol) [USE_LSB_TAG]:
+	Symbols now tag the difference from lispsym, not the pointer.
+	(lisp_h_XUNTAGBASE, TAG_SYMPTR): New macros.
+	(Lisp_Int0, Lisp_Int1, Lisp_Symbol, Lisp_Misc, Lisp_String, Lisp_Cons):
+	Renumber so that Lisp_Symbol is 0, so that Qnil is zero.
+	(XSYMBOL): New forward decl.
+	(XUNTAGBASE): New function.
+	(XUNTAG): Use it.
+
+	Compute C decls for DEFSYMs automatically
+	Fixes Bug#15880.
+	This patch also makes Q constants (e.g., Qnil) constant addresses
+	from the C point of view.
+	* alloc.c, bidi.c, buffer.c, bytecode.c, callint.c, casefiddle:
+	* casetab.c, category.c, ccl.c, charset.c, chartab.c, cmds.c, coding.c:
+	* composite.c, data.c, dbusbind.c, decompress.c, dired.c, dispnew.c:
+	* doc.c, editfns.c, emacs.c, eval.c, fileio.c, fns.c, font.c, fontset.c:
+	* frame.c, fringe.c, ftfont.c, ftxfont.c, gfilenotify.c, gnutls.c:
+	* image.c, inotify.c, insdel.c, keyboard.c, keymap.c, lread.c:
+	* macfont.m, macros.c, minibuf.c, nsfns.m, nsfont.m, nsimage.m:
+	* nsmenu.m, nsselect.m, nsterm.m, print.c, process.c, profiler.c:
+	* search.c, sound.c, syntax.c, term.c, terminal.c, textprop.c, undo.c:
+	* window.c, xdisp.c, xfaces.c, xfns.c, xftfont.c, xmenu.c, xml.c:
+	* xselect.c, xsettings.c, xterm.c:
+	Remove Q vars that represent symbols (e.g., Qnil, Qt, Qemacs).
+	These names are now defined automatically by make-docfile.
+	* alloc.c (init_symbol): New function.
+	(Fmake_symbol): Use it.
+	(c_symbol_p): New function.
+	(valid_lisp_object_p, purecopy): Use it.
+	* alloc.c (marked_pinned_symbols):
+	Use make_lisp_symbol instead of make_lisp_ptr.
+	(garbage_collect_1): Mark lispsym symbols.
+	(CHECK_ALLOCATED_AND_LIVE_SYMBOL): New macro.
+	(mark_object): Use it.
+	(sweep_symbols): Sweep lispsym symbols.
+	(symbol_uses_obj): New function.
+	(which_symbols): Use it.  Work for lispsym symbols, too.
+	(init_alloc_once): Initialize Vpurify_flag here; no need to wait,
+	since Qt's address is already known now.
+	(syms_of_alloc): Add lispsym count to symbols_consed.
+	* buffer.c (init_buffer_once): Compare to Qnil, not to make_number (0),
+	when testing whether storage is all bits zero.
+	* dispextern (struct image_type):
+	* font.c (font_property_table):
+	* frame.c (struct frame_parm_table, frame_parms):
+	* keyboard.c (scroll_bar_parts, struct event_head):
+	* xdisp.c (struct props):
+	Use XSYMBOL_INIT (Qfoo) and struct Lisp_Symbol * rather than &Qfoo and
+	Lisp_Object *, since Qfoo is no longer an object whose address can be
+	taken.  All uses changed.
+	* eval.c (run_hook): New function.  Most uses of Frun_hooks changed to
+	use it, so that they no longer need to take the address of a Lisp sym.
+	(syms_of_eval): Don't use DEFSYM on Vrun_hooks, as it's a variable.
+	* frame.c (syms_of_frame): Add defsyms for the frame_parms table.
+	* keyboard.c (syms_of_keyboard): Don't DEFSYM Qmenu_bar here.
+	DEFSYM Qdeactivate_mark before the corresponding var.
+	* keymap.c (syms_of_keymap): Use DEFSYM for Qmenu_bar and Qmode_line
+	instead of interning their symbols; this avoids duplicates.
+	(LISP_INITIALLY, TAG_PTR)
+	(DEFINE_LISP_SYMBOL_BEGIN, DEFINE_LISP_SYMBOL_END, XSYMBOL_INIT):
+	New macros.
+	(LISP_INITIALLY_ZERO): Use it.
+	(enum symbol_interned, enum symbol_redirect, struct Lisp_Symbol)
+	(EXFUN, DEFUN_ARGS_MANY, DEFUN_ARGS_UNEVALLED, DEFUN_ARGS_*):
+	Move decls up, to avoid forward uses.  Include globals.h earlier, too.
+	(make_lisp_symbol): New function.
+	(XSETSYMBOL): Use it.
+	(DEFSYM): Now just a placeholder for make-docfile.
+	* lread.c (DEFINE_SYMBOLS): Define, for globals.h.
+	(intern_sym): New function, with body taken from old intern_driver.
+	(intern_driver): Use it.  Last arg is now Lisp integer, not ptrdiff_t.
+	All uses changed.
+	(define_symbol): New function.
+	(init_obarray): Define the C symbols taken from lispsym.
+	Use plain DEFSYM for Qt and Qnil.
+	* syntax.c (init_syntax_once): No need to worry about
+	Qchar_table_extra_slots.
+
+2015-01-04  Paul Eggert  <eggert@cs.ucla.edu>
+
+	'temacs -nw' should not call missing functions
+	Without this patch, "temacs -nw" fails with the diagnostic
+	"emacs: Symbol's function definition is void: frame-windows-min-size"
+	and messes up the tty's state.
+	* frame.c (Fframe_windows_min_size): New placeholder function.
+	(syms_of_frame): Define it.
+	* window.c (Fwindow__sanitize_window_sizes): New placeholder.
+	(syms_of_window): Define it.
+
+	Less 'make' chatter for lisp dir
+	* Makefile.in (%.elc): Adjust to compile-onefile change in
+	../lisp/Makefile.in.
+
+	batch write-region no longer says "Wrote FOO"
+	This cuts down on 'make' chatter a bit.
+	* fileio.c (Fwrite_region):
+	Don't output "Wrote /whatever/foo.elc" if noninteractive.
+
+2015-01-03  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Revert previous change to produce_composite_glyph
+	* term.c (produce_composite_glyph): Revert previous change (Bug#19496).
+
+	Pacify gcc -Wparentheses
+	* frame.c (x_set_frame_parameters): Add parens (Bug#19428).
+
+2015-01-03  Martin Rudalics  <rudalics@gmx.at>
+
+	* frame.c (x_set_frame_parameters): Call Fset_frame_size only if
+	f->can_x_set_window_size is true.
+	* xterm.c (x_set_window_size_1): Call change_frame_size with
+	text sizes instead of pixel sizes (Bug#19428).
+
+2015-01-01  Eli Zaretskii  <eliz@gnu.org>
+
+	* xdisp.c (pos_visible_p): Fix up the X coordinate for
+	right-to-left screen lines.  (Bug#19473)
+
+2015-01-01  Eli Zaretskii  <eliz@gnu.org>
+
+	* w32proc.c (Fw32_get_codepage_charset): Doc fix.  (Bug#19458)
+
 2014-12-31  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Simplify setfattr use by assuming GNU make
@@ -11,6 +162,24 @@
 
 	* sysdep.c [WINDOWSNT]: Include sys/socket.h, without which this
 	file doesn't compile on MS-Windows.
+
+2014-12-29  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Allow return value of system-name to vary.  (Bug#19438)
+	* filelock.c (current_lock_owner):
+	* xrdb.c (get_environ_db):
+	* xterm.c (same_x_server):
+	* xterm.c (x_term_init):
+	Prefer (system-name) to system-name, and avoid naming
+	locals 'system-name'.
+	* editfns.c (cached_system_name): New static var.
+	(init_and_cache_system_name): New function.
+	(init_editfns, Fsystem_name): Use it.
+	(syms_of_editfns): Initialize it and Vsystem_name to the same value.
+	* sysdep.c [HAVE_SOCKETS]: Don't include <sys/socket.h>, <netdb.h>.
+	(h_errno) [TRY_AGAIN && !HAVE_H_ERRNO]: Remove decl.
+	(init_system_name) [HAVE_SOCKETS]: Don't canonicalize the name.
+	Don't create a new string if the current value is already correct.
 
 2014-12-28  Paul Eggert  <eggert@cs.ucla.edu>
 
@@ -134,6 +303,24 @@
 	Use bool for boolean.
 	(x_session_initialize, Fhandle_save_session):
 	Prefer NILP (x) to EQ (x, Qnil).
+
+2014-12-25  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* callproc.c (child_setup):
+	* dbusbind.c (xd_signature_cat):
+	* doc.c (get_doc_string, Fsnarf_documentation):
+	* editfns.c (Fuser_full_name):
+	* frame.c (xrdb_get_resource):
+	* gtkutil.c (xg_get_file_with_chooser):
+	* tparam.c (tparam1):
+	* xfns.c (xic_create_fontsetname):
+	* xrdb.c (gethomedir, get_user_db, get_environ_db):
+	* xsmfns.c (smc_save_yourself_CB):
+	Rewrite to avoid the need for strcat, typically by using stpcpy
+	and/or lispstpcpy.  strcat tends to be part of O(N**2) algorithms.
+	* doc.c (sibling_etc):
+	* xrdb.c (xdefaults):
+	Now a top-level static constant.
 
 2014-12-23  Didier Verna  <didier@didierverna.net> (tiny change).
 
@@ -542,7 +729,7 @@
 2014-11-29  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Improve clarity of USE_LSB_TAG definition.
-	Problem reported by Lee Duhem.  Suggestion by Andreas Schwab in:
+	Reported by Lee Duhem.  Suggested by Andreas Schwab in:
 	http://lists.gnu.org/archive/html/emacs-devel/2014-11/msg02222.html
 	* lisp.h (USE_LSB_TAG): Define in terms of the (simpler)
 	VAL_MAX / 2 rather than in terms of the (more complicated)
@@ -568,7 +755,7 @@
 
 2014-11-27  Oscar Fuentes  <ofv@wanadoo.es>
 
-	* src/w32.c, src/w32heap.c, src/w32term.c:
+	* w32.c, w32heap.c, w32term.c:
 	Use MINGW_W64 instead of _W64.
 
 2014-11-27  Stefan Monnier  <monnier@iro.umontreal.ca>
@@ -1038,7 +1225,7 @@
 
 2014-10-25  Noam Postavsky  <npostavs@users.sourceforget.net>
 
-	* src/w32proc.c (create_child): If calling a quoted batch file,
+	* w32proc.c (create_child): If calling a quoted batch file,
 	pass NULL for exe.  (Bug#18745)
 
 2014-10-24  Eli Zaretskii  <eliz@gnu.org>
@@ -1457,7 +1644,7 @@
 	On x86 platforms this works around GCC bug 63495
 	<https://gcc.gnu.org/bugzilla/show_bug.cgi?id=63495>,
 	and more generally should fix a portability problem in Emacs.
-	Problem reported by Stefan Monnier in:
+	Reported by Stefan Monnier in:
 	http://lists.gnu.org/archive/html/emacs-devel/2014-10/msg00261.html
 
 2014-10-08  Leo Liu  <sdl.web@gmail.com>
@@ -1973,7 +2160,7 @@
 2014-09-23  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Fix SAFE_ALLOCA to not exhaust the stack when in a loop.
-	Problem reported by Dmitry Antipov in thread leading to:
+	Reported by Dmitry Antipov in thread leading to:
 	http://lists.gnu.org/archive/html/emacs-devel/2014-09/msg00713.html
 	This patch fixes only SAFE_ALLOCA, SAFE_NALLOCA, and SAFE_ALLOCA_LISP;
 	the experimental local_* macros enabled by USE_LOCAL_ALLOCATORS
@@ -2306,7 +2493,7 @@
 2014-09-10  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Simplify lisp.h by removing the __COUNTER__ business.
-	Problem reported by Dmitry Antipov in:
+	Reported by Dmitry Antipov in:
 	http://lists.gnu.org/archive/html/emacs-devel/2014-09/msg00220.html
 	* lisp.h (make_local_vector, make_local_string)
 	(build_local_string): Simplify by not bothering with __COUNTER__.
@@ -2337,7 +2524,7 @@
 	* lisp.h (DEFINE_GDB_SYMBOL_ENUM): Remove.
 	These can generate a constant with the correct value but the wrong
 	width, which doesn't work as a printf argument.  All uses removed.
-	Problem reported by Dmitry Antipov in:
+	Reported by Dmitry Antipov in:
 	http://lists.gnu.org/archive/html/emacs-devel/2014-09/msg00213.html
 	(ENUMABLE): Remove; no longer needed.
 	(ARRAY_MARK_FLAG_val, PSEUDOVECTOR_FLAG_val, VALMASK_val):
@@ -4828,7 +5015,7 @@
 2014-06-03  Paul Eggert  <eggert@cs.ucla.edu>
 
 	* emacs.c: Include "sysselect.h", to define its inline functions.
-	Problem reported by Glenn Morris in:
+	Reported by Glenn Morris in:
 	http://lists.gnu.org/archive/html/emacs-devel/2014-06/msg00077.html
 
 	Do not require libXt-devel when building with gtk.
@@ -5928,7 +6115,7 @@
 2014-03-27  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Port recent signal-related changes to FreeBSD.
-	Problem reported by Herbert J. Skuhra.
+	Reported by Herbert J. Skuhra.
 	* lisp.h (block_tty_out_signal, unblock_tty_out_signal):
 	Move decls from here ...
 	* syssignal.h: ... to here, so that lisp.h doesn't depend on signal.h.
@@ -6906,7 +7093,7 @@
 2014-01-20  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Avoid undefined behavior by initializing buffer redisplay bit.
-	Problem reported by Dmitry Antipov in
+	Reported by Dmitry Antipov in
 	<http://lists.gnu.org/archive/html/emacs-devel/2014-01/msg01756.html>.
 	* buffer.c (Fget_buffer_create): Initialize redisplay bit.
 
@@ -8747,7 +8934,7 @@
 2013-11-21  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Fix some dependency problems that cause unnecessary recompiles.
-	Problem reported by RMS in
+	Reported by RMS in
 	<http://lists.gnu.org/archive/html/emacs-devel/2013-11/msg00421.html>.
 	* Makefile.in (OLDXMENU_TARGET, OLDXMENU, OLDXMENU_DEPS)
 	(really-lwlib, really-oldXMenu, stamp-oldxmenu)
@@ -9492,8 +9679,7 @@
 
 2013-10-23  Paul Eggert  <eggert@cs.ucla.edu>
 
-	Port to Solaris 10 and its bundled GCC.
-	Problem reported by Timothy C. Burt.
+	Port to Solaris 10 and its bundled GCC.  Reported by Timothy C. Burt.
 	* floatfns.c (isfinite, isnan): Redefine unconditionally.
 
 2013-10-21  Dmitry Antipov  <dmantipov@yandex.ru>
@@ -9897,7 +10083,7 @@
 	so it shouldn't be used all the time.  Perhaps we need two
 	flavors of 'eassert', one for where 'assume' is far more likely
 	to help or to hurt; but that can be done later.
-	Problem reported by Dmitry Antipov in
+	Reported by Dmitry Antipov in
 	<http://lists.gnu.org/archive/html/emacs-devel/2013-10/msg00276.html>.
 	Also, don't include <verify.h>; no longer needed.
 
@@ -13625,8 +13811,7 @@
 
 2013-07-07  Paul Eggert  <eggert@cs.ucla.edu>
 
-	Port to Ubuntu 10 (Bug#14803).
-	Problem reported by T.V. Raman.
+	Port to Ubuntu 10 (Bug#14803).  Reported by T.V. Raman.
 	* process.c (close_on_exec, accept4, process_socket):
 	Define these if !HAVE_ACCEPT4, not if !SOCK_CLOEXEC.
 
@@ -13891,7 +14076,7 @@
 	* emacs.c (malloc_enable_thread): Hoist extern decl to top level.
 	(main) [HAVE_PTHREAD && !SYSTEM_MALLOC && !DOUG_LEA_MALLOC]:
 	Invoke malloc_enable_thread even when not interactive.
-	Problem reported by Ken Brown in <http://bugs.gnu.org/14569#275>.
+	Reported by Ken Brown in <http://bugs.gnu.org/14569#275>.
 	* process.c (init_process_emacs) [CYGWIN]: Tickle glib even
 	in this case, since the underlying bug has now been fixed.
 
@@ -15116,7 +15301,7 @@
 	* unexelf.c: Don't assume ElfW (Half) fits in int.
 	(entry_address, find_section, unexec): Use ptrdiff_t, not int,
 	when dealing with ElfW (Half) values, since they can exceed 2**31
-	on 64-bit OpenBSD hosts.  Problem reported privately by Han Boetes.
+	on 64-bit OpenBSD hosts.  Reported by Han Boetes (privately).
 	(entry_address): Omit unused NUM arg.  All uses changed.
 
 2013-05-07  Juri Linkov  <juri@jurta.org>
@@ -16082,7 +16267,7 @@ See ChangeLog.12 for earlier changes.
 ;; coding: utf-8
 ;; End:
 
-  Copyright (C) 2011-2014 Free Software Foundation, Inc.
+  Copyright (C) 2011-2015 Free Software Foundation, Inc.
 
   This file is part of GNU Emacs.
 

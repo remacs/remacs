@@ -1,6 +1,7 @@
 ;;; finder.el --- topic & keyword-based code finder
 
-;; Copyright (C) 1992, 1997-1999, 2001-2014 Free Software Foundation, Inc.
+;; Copyright (C) 1992, 1997-1999, 2001-2015 Free Software Foundation,
+;; Inc.
 
 ;; Author: Eric S. Raymond <esr@snark.thyrsus.com>
 ;; Created: 16 Jun 1992

@@ -1,6 +1,6 @@
 /* Functions for the X window system.
 
-Copyright (C) 1989, 1992-2014 Free Software Foundation, Inc.
+Copyright (C) 1989, 1992-2015 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -124,10 +124,6 @@ extern LWLIB_ID widget_id_tick;
 #endif /* USE_GTK */
 
 #define MAXREQUEST(dpy) (XMaxRequestSize (dpy))
-
-static Lisp_Object Qundefined_color;
-static Lisp_Object Qcompound_text, Qcancel_timer;
-Lisp_Object Qfont_param;
 
 #ifdef GLYPH_DEBUG
 static ptrdiff_t image_cache_refcount;

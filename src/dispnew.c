@@ -1,6 +1,6 @@
 /* Updating of data structures for redisplay.
 
-Copyright (C) 1985-1988, 1993-1995, 1997-2014 Free Software Foundation,
+Copyright (C) 1985-1988, 1993-1995, 1997-2015 Free Software Foundation,
 Inc.
 
 This file is part of GNU Emacs.
@@ -101,8 +101,6 @@ static void set_window_update_flags (struct window *w, bool on_p);
 /* True means last display completed.  False means it was preempted.  */
 
 bool display_completed;
-
-Lisp_Object Qdisplay_table, Qredisplay_dont_pause;
 
 /* True means SIGWINCH happened when not safe.  */
 
@@ -6191,7 +6189,9 @@ syms_of_display (void)
   frame_and_buffer_state = Fmake_vector (make_number (20), Qlambda);
   staticpro (&frame_and_buffer_state);
 
+  /* This is the "purpose" slot of a display table.  */
   DEFSYM (Qdisplay_table, "display-table");
+
   DEFSYM (Qredisplay_dont_pause, "redisplay-dont-pause");
 
   DEFVAR_INT ("baud-rate", baud_rate,

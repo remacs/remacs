@@ -1,0 +1,40 @@
+# Attributes of Emacs files in the Git repository.
+
+# Copyright 2015 Free Software Foundation, Inc.
+
+# This file is part of GNU Emacs.
+
+# GNU Emacs is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# GNU Emacs is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+
+# A few files use CRLF endings, even on non-Microsoft platforms.
+# Do not warn about trailing whitespace with these files.
+*.bat -whitespace
+admin/charsets/mapfiles/PTCP154 -whitespace
+leim/MISC-DIC/cangjie-table.b5 -whitespace
+leim/MISC-DIC/cangjie-table.cns -whitespace
+leim/MISC-DIC/pinyin.map -whitespace
+lib-src/update-game-score.exe.manifest -whitespace
+nt/nmake.defs -whitespace
+
+# Some files should not be treated as text when diffing or merging.
+*.gpg binary
+*.gz binary
+*.icns binary
+*.ico binary
+*.pbm binary
+*.pdf binary
+*.png binary
+*.sig binary
+*.tiff binary
+test/automated/data/decompress/foo-gzipped binary

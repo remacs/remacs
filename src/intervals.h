@@ -1,5 +1,5 @@
 /* Definitions and global variables for intervals.
-   Copyright (C) 1993-1994, 2000-2014 Free Software Foundation, Inc.
+   Copyright (C) 1993-1994, 2000-2015 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -271,21 +271,7 @@ extern INTERVAL interval_of (ptrdiff_t, Lisp_Object);
 /* Defined in xdisp.c.  */
 extern int invisible_p (Lisp_Object, Lisp_Object);
 
-/* Declared in textprop.c.  */
-
-/* Types of hooks.  */
-extern Lisp_Object Qpoint_left;
-extern Lisp_Object Qpoint_entered;
-extern Lisp_Object Qmodification_hooks;
-extern Lisp_Object Qcategory;
-extern Lisp_Object Qlocal_map;
-
-/* Visual properties text (including strings) may have.  */
-extern Lisp_Object Qinvisible, Qintangible;
-
-/* Sticky properties.  */
-extern Lisp_Object Qfront_sticky, Qrear_nonsticky;
-
+/* Defined in textprop.c.  */
 extern Lisp_Object copy_text_properties (Lisp_Object, Lisp_Object,
                                          Lisp_Object, Lisp_Object,
                                          Lisp_Object, Lisp_Object);

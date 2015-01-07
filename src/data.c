@@ -1,5 +1,5 @@
 /* Primitive operations on Lisp data types for GNU Emacs Lisp interpreter.
-   Copyright (C) 1985-1986, 1988, 1993-1995, 1997-2014 Free Software
+   Copyright (C) 1985-1986, 1988, 1993-1995, 1997-2015 Free Software
    Foundation, Inc.
 
 This file is part of GNU Emacs.
@@ -36,58 +36,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "termhooks.h"  /* For FRAME_KBOARD reference in y-or-n-p.  */
 #include "font.h"
 #include "keymap.h"
-
-Lisp_Object Qnil, Qt, Qquote, Qlambda, Qunbound;
-static Lisp_Object Qsubr;
-Lisp_Object Qerror_conditions, Qerror_message, Qtop_level;
-Lisp_Object Qerror, Quser_error, Qquit, Qargs_out_of_range;
-static Lisp_Object Qwrong_length_argument;
-static Lisp_Object Qwrong_type_argument;
-Lisp_Object Qvoid_variable, Qvoid_function;
-static Lisp_Object Qcyclic_function_indirection;
-static Lisp_Object Qcyclic_variable_indirection;
-Lisp_Object Qcircular_list;
-static Lisp_Object Qsetting_constant;
-Lisp_Object Qinvalid_read_syntax;
-Lisp_Object Qinvalid_function, Qwrong_number_of_arguments, Qno_catch;
-Lisp_Object Qend_of_file, Qarith_error, Qmark_inactive;
-Lisp_Object Qbeginning_of_buffer, Qend_of_buffer, Qbuffer_read_only;
-Lisp_Object Qtext_read_only;
-
-Lisp_Object Qintegerp, Qwholenump, Qsymbolp, Qlistp, Qconsp;
-static Lisp_Object Qnatnump;
-Lisp_Object Qstringp, Qarrayp, Qsequencep, Qbufferp;
-Lisp_Object Qchar_or_string_p, Qmarkerp, Qinteger_or_marker_p, Qvectorp;
-Lisp_Object Qbool_vector_p;
-Lisp_Object Qbuffer_or_string_p;
-static Lisp_Object Qkeywordp, Qboundp;
-Lisp_Object Qfboundp;
-Lisp_Object Qchar_table_p, Qvector_or_char_table_p;
-
-Lisp_Object Qcdr;
-static Lisp_Object Qad_advice_info, Qad_activate_internal;
-
-static Lisp_Object Qdomain_error, Qsingularity_error, Qunderflow_error;
-Lisp_Object Qrange_error, Qoverflow_error;
-
-Lisp_Object Qfloatp;
-Lisp_Object Qnumberp, Qnumber_or_marker_p;
-
-Lisp_Object Qinteger, Qsymbol;
-static Lisp_Object Qcons, Qfloat, Qmisc, Qstring, Qvector;
-Lisp_Object Qwindow;
-static Lisp_Object Qoverlay, Qwindow_configuration;
-static Lisp_Object Qprocess, Qmarker;
-static Lisp_Object Qcompiled_function, Qframe;
-Lisp_Object Qbuffer;
-static Lisp_Object Qchar_table, Qbool_vector, Qhash_table;
-static Lisp_Object Qsubrp;
-static Lisp_Object Qmany, Qunevalled;
-Lisp_Object Qfont_spec, Qfont_entity, Qfont_object;
-static Lisp_Object Qdefun;
-
-Lisp_Object Qinteractive_form;
-static Lisp_Object Qdefalias_fset_function;
 
 static void swap_in_symval_forwarding (struct Lisp_Symbol *,
 				       struct Lisp_Buffer_Local_Value *);
@@ -3583,10 +3531,6 @@ syms_of_data (void)
 	     "Arithmetic overflow error");
   PUT_ERROR (Qunderflow_error, Fcons (Qdomain_error, arith_tail),
 	     "Arithmetic underflow error");
-
-  staticpro (&Qnil);
-  staticpro (&Qt);
-  staticpro (&Qunbound);
 
   /* Types that type-of returns.  */
   DEFSYM (Qinteger, "integer");

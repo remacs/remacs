@@ -1,6 +1,6 @@
 /* Utility and Unix shadow routines for GNU Emacs on the Microsoft Windows API.
 
-Copyright (C) 1994-1995, 2000-2014 Free Software Foundation, Inc.
+Copyright (C) 1994-1995, 2000-2015 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -241,8 +241,6 @@ typedef struct _REPARSE_DATA_BUFFER {
 
 typedef HRESULT (WINAPI * ShGetFolderPath_fn)
   (IN HWND, IN int, IN HANDLE, IN DWORD, OUT char *);
-
-Lisp_Object QCloaded_from;
 
 void globals_of_w32 (void);
 static DWORD get_rid (PSID);

@@ -1,3 +1,10 @@
+2015-01-04  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Less 'make' chatter for oldXMenu
+	* Makefile.in (AM_V_GEN, am__v_GEN_, am__v_GEN_0, am__v_GEN_1)
+	(AM_V_at, am__v_at_, am__v_at_0, am__v_at_1): New macros.
+	(libXMenu11.a): Use them.
+
 2014-10-20  Glenn Morris  <rgm@gnu.org>
 
 	* Merge in all changes up to 24.4 release.
@@ -705,7 +712,7 @@
 ;; coding: utf-8
 ;; End:
 
-  Copyright (C) 1993-1999, 2001-2014 Free Software Foundation, Inc.
+  Copyright (C) 1993-1999, 2001-2015 Free Software Foundation, Inc.
 
   This file is part of GNU Emacs.
 

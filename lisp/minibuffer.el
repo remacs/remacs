@@ -1,6 +1,6 @@
 ;;; minibuffer.el --- Minibuffer completion functions -*- lexical-binding: t -*-
 
-;; Copyright (C) 2008-2014 Free Software Foundation, Inc.
+;; Copyright (C) 2008-2015 Free Software Foundation, Inc.
 
 ;; Author: Stefan Monnier <monnier@iro.umontreal.ca>
 ;; Package: emacs
@@ -826,16 +826,27 @@ styles for specific categories, such as files, buffers, etc."
   :type completion--styles-type
   :version "23.1")
 
-(defcustom completion-category-overrides
-  '((buffer (styles . (basic substring))))
-  "List of `completion-styles' overrides for specific categories.
+(defvar completion-category-defaults
+  '((buffer (styles . (basic substring)))
+    (unicode-name (styles . (basic substring))))
+  "Default settings for specific completion categories.
+Each entry has the shape (CATEGORY . ALIST) where ALIST is
+an association list that can specify properties such as:
+- `styles': the list of `completion-styles' to use for that category.
+- `cycle': the `completion-cycle-threshold' to use for that category.
+Categories are symbols such as `buffer' and `file', used when
+completing buffer and file names, respectively.")
+
+(defcustom completion-category-overrides nil
+  "List of category-specific user overrides for completion styles.
 Each override has the shape (CATEGORY . ALIST) where ALIST is
 an association list that can specify properties such as:
 - `styles': the list of `completion-styles' to use for that category.
 - `cycle': the `completion-cycle-threshold' to use for that category.
 Categories are symbols such as `buffer' and `file', used when
-completing buffer and file names, respectively."
-  :version "24.1"
+completing buffer and file names, respectively.
+This overrides the defaults specified in `completion-category-defaults'."
+  :version "25.1"
   :type `(alist :key-type (choice :tag "Category"
 				  (const buffer)
                                   (const file)
@@ -851,9 +862,13 @@ completing buffer and file names, respectively."
 		 (const :tag "Select one value from the menu." cycle)
                  ,completion--cycling-threshold-type))))
 
+(defun completion--category-override (category tag)
+  (or (assq tag (cdr (assq category completion-category-overrides)))
+      (assq tag (cdr (assq category completion-category-defaults)))))
+
 (defun completion--styles (metadata)
   (let* ((cat (completion-metadata-get metadata 'category))
-         (over (assq 'styles (cdr (assq cat completion-category-overrides)))))
+         (over (completion--category-override cat 'styles)))
     (if over
         (delete-dups (append (cdr over) (copy-sequence completion-styles)))
        completion-styles)))
@@ -967,7 +982,7 @@ completion candidates than this number."
 
 (defun completion--cycle-threshold (metadata)
   (let* ((cat (completion-metadata-get metadata 'category))
-         (over (assq 'cycle (cdr (assq cat completion-category-overrides)))))
+         (over (completion--category-override cat 'cycle)))
     (if over (cdr over) completion-cycle-threshold)))
 
 (defvar-local completion-all-sorted-completions nil)

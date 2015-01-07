@@ -1,6 +1,6 @@
 /* Inotify support for Emacs
 
-Copyright (C) 2012-2014 Free Software Foundation, Inc.
+Copyright (C) 2012-2015 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -28,34 +28,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "character.h"
 #include "frame.h" /* Required for termhooks.h.  */
 #include "termhooks.h"
-
-static Lisp_Object Qaccess;        /* IN_ACCESS */
-static Lisp_Object Qattrib;        /* IN_ATTRIB */
-static Lisp_Object Qclose_write;   /* IN_CLOSE_WRITE */
-static Lisp_Object Qclose_nowrite; /* IN_CLOSE_NOWRITE */
-static Lisp_Object Qcreate;        /* IN_CREATE */
-static Lisp_Object Qdelete;        /* IN_DELETE */
-static Lisp_Object Qdelete_self;   /* IN_DELETE_SELF */
-static Lisp_Object Qmodify;        /* IN_MODIFY */
-static Lisp_Object Qmove_self;     /* IN_MOVE_SELF */
-static Lisp_Object Qmoved_from;    /* IN_MOVED_FROM */
-static Lisp_Object Qmoved_to;      /* IN_MOVED_TO */
-static Lisp_Object Qopen;          /* IN_OPEN */
-
-static Lisp_Object Qall_events;    /* IN_ALL_EVENTS */
-static Lisp_Object Qmove;          /* IN_MOVE */
-static Lisp_Object Qclose;         /* IN_CLOSE */
-
-static Lisp_Object Qdont_follow;   /* IN_DONT_FOLLOW */
-static Lisp_Object Qexcl_unlink;   /* IN_EXCL_UNLINK */
-static Lisp_Object Qmask_add;      /* IN_MASK_ADD */
-static Lisp_Object Qoneshot;       /* IN_ONESHOT */
-static Lisp_Object Qonlydir;       /* IN_ONLYDIR */
-
-static Lisp_Object Qignored;       /* IN_IGNORED */
-static Lisp_Object Qisdir;         /* IN_ISDIR */
-static Lisp_Object Qq_overflow;    /* IN_Q_OVERFLOW */
-static Lisp_Object Qunmount;       /* IN_UNMOUNT */
 
 #include <sys/inotify.h>
 #include <sys/ioctl.h>
@@ -398,33 +370,34 @@ See inotify_rm_watch(2) for more information.
 void
 syms_of_inotify (void)
 {
-  DEFSYM (Qaccess, "access");
-  DEFSYM (Qattrib, "attrib");
-  DEFSYM (Qclose_write, "close-write");
+  DEFSYM (Qaccess, "access");		/* IN_ACCESS */
+  DEFSYM (Qattrib, "attrib");		/* IN_ATTRIB */
+  DEFSYM (Qclose_write, "close-write");	/* IN_CLOSE_WRITE */
   DEFSYM (Qclose_nowrite, "close-nowrite");
-  DEFSYM (Qcreate, "create");
-  DEFSYM (Qdelete, "delete");
-  DEFSYM (Qdelete_self, "delete-self");
-  DEFSYM (Qmodify, "modify");
-  DEFSYM (Qmove_self, "move-self");
-  DEFSYM (Qmoved_from, "moved-from");
-  DEFSYM (Qmoved_to, "moved-to");
-  DEFSYM (Qopen, "open");
+					/* IN_CLOSE_NOWRITE */
+  DEFSYM (Qcreate, "create");		/* IN_CREATE */
+  DEFSYM (Qdelete, "delete");		/* IN_DELETE */
+  DEFSYM (Qdelete_self, "delete-self");	/* IN_DELETE_SELF */
+  DEFSYM (Qmodify, "modify");		/* IN_MODIFY */
+  DEFSYM (Qmove_self, "move-self");	/* IN_MOVE_SELF */
+  DEFSYM (Qmoved_from, "moved-from");	/* IN_MOVED_FROM */
+  DEFSYM (Qmoved_to, "moved-to");	/* IN_MOVED_TO */
+  DEFSYM (Qopen, "open");		/* IN_OPEN */
 
-  DEFSYM (Qall_events, "all-events");
-  DEFSYM (Qmove, "move");
-  DEFSYM (Qclose, "close");
+  DEFSYM (Qall_events, "all-events");	/* IN_ALL_EVENTS */
+  DEFSYM (Qmove, "move");		/* IN_MOVE */
+  DEFSYM (Qclose, "close");		/* IN_CLOSE */
 
-  DEFSYM (Qdont_follow, "dont-follow");
-  DEFSYM (Qexcl_unlink, "excl-unlink");
-  DEFSYM (Qmask_add, "mask-add");
-  DEFSYM (Qoneshot, "oneshot");
-  DEFSYM (Qonlydir, "onlydir");
+  DEFSYM (Qdont_follow, "dont-follow");	/* IN_DONT_FOLLOW */
+  DEFSYM (Qexcl_unlink, "excl-unlink");	/* IN_EXCL_UNLINK */
+  DEFSYM (Qmask_add, "mask-add");	/* IN_MASK_ADD */
+  DEFSYM (Qoneshot, "oneshot");		/* IN_ONESHOT */
+  DEFSYM (Qonlydir, "onlydir");		/* IN_ONLYDIR */
 
-  DEFSYM (Qignored, "ignored");
-  DEFSYM (Qisdir, "isdir");
-  DEFSYM (Qq_overflow, "q-overflow");
-  DEFSYM (Qunmount, "unmount");
+  DEFSYM (Qignored, "ignored");		/* IN_IGNORED */
+  DEFSYM (Qisdir, "isdir");		/* IN_ISDIR */
+  DEFSYM (Qq_overflow, "q-overflow");	/* IN_Q_OVERFLOW */
+  DEFSYM (Qunmount, "unmount");		/* IN_UNMOUNT */
 
   defsubr (&Sinotify_add_watch);
   defsubr (&Sinotify_rm_watch);

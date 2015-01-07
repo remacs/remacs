@@ -1,5 +1,5 @@
 /* Functions related to terminal devices.
-   Copyright (C) 2005-2014 Free Software Foundation, Inc.
+   Copyright (C) 2005-2015 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -36,10 +36,6 @@ static int next_terminal_id;
 
 /* The initial terminal device, created by initial_term_init.  */
 struct terminal *initial_terminal;
-
-Lisp_Object Qrun_hook_with_args;
-static Lisp_Object Qterminal_live_p;
-static Lisp_Object Qdelete_terminal_functions;
 
 static void delete_initial_terminal (struct terminal *);
 

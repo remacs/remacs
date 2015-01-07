@@ -1,5 +1,5 @@
 /* Things for GLYPHS and glyph tables.
-   Copyright (C) 1993, 2001-2014 Free Software Foundation, Inc.
+   Copyright (C) 1993, 2001-2015 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -47,9 +47,6 @@ extern struct Lisp_Char_Table *window_display_table (struct window *);
 
 /* Defined in indent.c.  */
 extern struct Lisp_Char_Table *buffer_display_table (void);
-
-/* This is the `purpose' slot of a display table.  */
-extern Lisp_Object Qdisplay_table;
 
 /* Return the current length of the GLYPH table,
    or 0 if the table isn't currently valid.  */

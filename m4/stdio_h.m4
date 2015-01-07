@@ -1,5 +1,5 @@
-# stdio_h.m4 serial 43
-dnl Copyright (C) 2007-2014 Free Software Foundation, Inc.
+# stdio_h.m4 serial 44
+dnl Copyright (C) 2007-2015 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -11,6 +11,24 @@ AC_DEFUN([gl_STDIO_H],
 
   AC_REQUIRE([gl_STDIO_H_DEFAULTS])
   gl_NEXT_HEADERS([stdio.h])
+
+  dnl Determine whether __USE_MINGW_ANSI_STDIO makes printf and
+  dnl inttypes.h behave like gnu instead of system; we must give our
+  dnl printf wrapper the right attribute to match.
+  AC_CACHE_CHECK([whether inttypes macros match system or gnu printf],
+    [gl_cv_func_printf_attribute_flavor],
+    [AC_EGREP_CPP([findme .(ll|j)d. findme],
+      [#define __STDC_FORMAT_MACROS 1
+       #include <stdio.h>
+       #include <inttypes.h>
+       findme PRIdMAX findme
+      ], [gl_cv_func_printf_attribute_flavor=gnu],
+      [gl_cv_func_printf_attribute_flavor=system])])
+  if test "$gl_cv_func_printf_attribute_flavor" = gnu; then
+    AC_DEFINE([GNULIB_PRINTF_ATTRIBUTE_FLAVOR_GNU], [1],
+      [Define to 1 if printf and friends should be labeled with
+       attribute "__gnu_printf__" instead of "__printf__"])
+  fi
 
   dnl No need to create extra modules for these functions. Everyone who uses
   dnl <stdio.h> likely needs them.
