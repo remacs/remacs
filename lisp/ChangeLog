@@ -1,3 +1,7 @@
+2015-01-07  K. Handa  <handa@gnu.org>
+
+	* international/ccl.el (define-ccl-program): Improve the docstring.
+
 2014-12-31  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Less 'make' chatter in lisp directory

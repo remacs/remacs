@@ -1355,6 +1355,14 @@ IF :=	(if EXPRESSION CCL_BLOCK_0 CCL_BLOCK_1)
 BRANCH := (branch EXPRESSION CCL_BLOCK_0 [CCL_BLOCK_1 ...])
 
 ;; Execute STATEMENTs until (break) or (end) is executed.
+
+;; Create a block of STATEMENTs for repeating.  The STATEMENTs
+;; are executed sequentially unitl REPEAT or BREAK is executed.
+;; If REPEAT statement is executed, STATEMENTs are executed from the
+;; start again.  If BREAK statements is executed, the execution
+;; exits from the block.  If neither REAPEAT nor BREAK is
+;; executed, the execution exits from the block after executing the
+;; last STATEMENT.
 LOOP := (loop STATEMENT [STATEMENT ...])
 
 ;; Terminate the most inner loop.
@@ -1501,17 +1509,42 @@ ARRAY := `[' integer ... `]'
 
 
 TRANSLATE :=
-	(translate-character REG(table) REG(charset) REG(codepoint))
-	| (translate-character SYMBOL REG(charset) REG(codepoint))
-        ;; SYMBOL must refer to a table defined by `define-translation-table'.
+	;; Decode character SRC, translate it by translate table
+	;; TABLE, and encode it back to DST.  TABLE is specified
+	;; by its id number in REG_0, SRC is specified by its
+	;; charset id number and codepoint in REG_1 and REG_2
+	;; respectively.
+	;; On encoding, the charset of highest priority is selected.
+	;; After the execution, DST is specified by its charset
+	;; id number and codepouin in REG_1 and REG_2 respectively.
+	(translate-character REG_0 REG_1 REG_2)
+
+	;; Same as above except for SYMBOL specifying the name of
+	;; the translate table defined by `define-translation-table'.
+	| (translate-character SYMBOL REG_1 REG_2)
+
 LOOKUP :=
-	(lookup-character SYMBOL REG(charset) REG(codepoint))
+	;; Look up character SRC in hash table TABLE.  TABLE is
+	;; specified by its name in SYMBOL, and SRC is specified by
+	;; its charset id number and codepoint in REG_1 and REG_2
+	;; respectively.
+	;; If its associated value is an integer, set REG_1 to that
+	;; value, and set r7 to 1.  Otherwise, set r7 to 0.
+	(lookup-character SYMBOL REG_1 REG_2)
+
+	;; Look up integer value N in hash table TABLE.  TABLE is
+	;; specified by its name in SYMBOL and N is specified in
+	;; REG.
+	;; If its associated value is a character, set REG to that
+	;; value, and set r7 to 1.  Otherwise, set r7 to 0.
 	| (lookup-integer SYMBOL REG(integer))
-        ;; SYMBOL refers to a table defined by `define-translation-hash-table'.
+
 MAP :=
-     (iterate-multiple-map REG REG MAP-IDs)
-     | (map-multiple REG REG (MAP-SET))
-     | (map-single REG REG MAP-ID)
+	;; The following statements are for internal use only. 
+	(iterate-multiple-map REG REG MAP-IDs)
+	| (map-multiple REG REG (MAP-SET))
+	| (map-single REG REG MAP-ID)
+
 MAP-IDs := MAP-ID ...
 MAP-SET := MAP-IDs | (MAP-IDs) MAP-SET
 MAP-ID := integer
