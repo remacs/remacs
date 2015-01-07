@@ -2403,7 +2403,6 @@ struct it
       /* method == GET_FROM_XWIDGET */
       struct {
 	Lisp_Object object;
-        struct xwidget* xwidget;
       } xwidget;
 #endif
     } u;
