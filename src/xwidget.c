@@ -1129,6 +1129,7 @@ DEFUN ("xwidget-webkit-goto-uri", Fxwidget_webkit_goto_uri,  Sxwidget_webkit_got
   (Lisp_Object xwidget, Lisp_Object uri)
 {
   WEBKIT_FN_INIT();
+  CHECK_STRING(uri);
   webkit_web_view_load_uri ( WEBKIT_WEB_VIEW(xw->widget_osr), SDATA(uri));
   return Qnil;
 }
@@ -1140,6 +1141,7 @@ DEFUN ("xwidget-webkit-execute-script", Fxwidget_webkit_execute_script,  Sxwidge
   (Lisp_Object xwidget, Lisp_Object script)
 {
   WEBKIT_FN_INIT();
+  CHECK_STRING(script);
   webkit_web_view_execute_script( WEBKIT_WEB_VIEW(xw->widget_osr), SDATA(script));
   return Qnil;
 }
