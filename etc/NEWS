@@ -1,6 +1,6 @@
 GNU Emacs NEWS -- history of user-visible changes.
 
-Copyright (C) 2014 Free Software Foundation, Inc.
+Copyright (C) 2014, 2015 Free Software Foundation, Inc.
 See the end of the file for license conditions.
 
 Please send Emacs bug reports to bug-gnu-emacs@gnu.org.
@@ -187,6 +187,11 @@ Unicode standards.
 
 
 * Changes in Specialized Modes and Packages in Emacs 25.1
+
+** EIEIO
+*** The <class>-list-p and <class>-child-p functions are declared obsolete.
+*** The <class> variables are declared obsolete.
+*** The <initarg> variables are declared obsolete.
 ** ido
 *** New command `ido-bury-buffer-at-head' bound to C-S-b
 Bury the buffer at the head of `ido-matches', analogous to how C-k

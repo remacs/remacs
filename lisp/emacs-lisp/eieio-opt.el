@@ -230,7 +230,7 @@ Optional argument CLASS is the class to start with.
 If INSTANTIABLE-ONLY is non nil, only allow names of classes which
 are not abstract, otherwise allow all classes.
 Optional argument BUILDLIST is more list to attach and is used internally."
-  (let* ((cc (or class eieio-default-superclass))
+  (let* ((cc (or class 'eieio-default-superclass))
 	 (sublst (eieio--class-children (eieio--class-v cc))))
     (unless (assoc (symbol-name cc) buildlist)
       (when (or (not instantiable-only) (not (class-abstract-p cc)))
@@ -561,7 +561,7 @@ current expansion depth."
   (when (eq (point-min) (point-max))
     ;; This function is only called once, to start the whole deal.
     ;; Create and expand the default object.
-    (eieio-class-button eieio-default-superclass 0)
+    (eieio-class-button 'eieio-default-superclass 0)
     (forward-line -1)
     (speedbar-expand-line)))
 

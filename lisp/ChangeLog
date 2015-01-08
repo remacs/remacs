@@ -1,9 +1,27 @@
 2015-01-08  Stefan Monnier  <monnier@iro.umontreal.ca>
 
+	* emacs-lisp/eieio.el (defclass): Move from eieio-defclass all the code
+	that creates functions, and most of the sanity checks.
+	Mark as obsolete the <class>-child-p function.
+	* emacs-lisp/eieio-core.el (eieio--define-field-accessors): Remove.
+	(eieio--class, eieio--object): Use cl-defstruct.
+	(eieio--object-num-slots): Define manually.
+	(eieio-defclass-autoload): Use eieio--class-make.
+	(eieio-defclass-internal): Rename from eieio-defclass.  Move all the
+	`(lambda...) definitions and most of the sanity checks to `defclass'.
+	Mark as obsolete the <class>-list-p function, the <class> variable and
+	the <initarg> variables.  Use pcase-dolist.
+	(eieio-defclass): New compatibility function.
+	* emacs-lisp/eieio-opt.el (eieio-build-class-alist)
+	(eieio-class-speedbar): Don't use eieio-default-superclass var.
+
+2015-01-08  Stefan Monnier  <monnier@iro.umontreal.ca>
+
 	* emacs-lisp/eieio-generic.el: New file.
 	* emacs-lisp/eieio-core.el: Move all generic function code to
 	eieio-generic.el.
 	(eieio--defmethod): Declare.
+
 	* emacs-lisp/eieio.el: Require eieio-generic.  Move all generic
 	function code to eieio-generic.el.
 	* emacs-lisp/eieio-opt.el (eieio-help-generic): Move to

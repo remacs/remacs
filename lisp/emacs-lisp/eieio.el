@@ -58,13 +58,11 @@
 
 ;;; Defining a new class
 ;;
-(defmacro defclass (name superclass slots &rest options-and-doc)
+(defmacro defclass (name superclasses slots &rest options-and-doc)
   "Define NAME as a new class derived from SUPERCLASS with SLOTS.
 OPTIONS-AND-DOC is used as the class' options and base documentation.
-SUPERCLASS is a list of superclasses to inherit from, with SLOTS
-being the slots residing in that class definition.  NOTE: Currently
-only one slot may exist in SUPERCLASS as multiple inheritance is not
-yet supported.  Supported tags are:
+SUPERCLASSES is a list of superclasses to inherit from, with SLOTS
+being the slots residing in that class definition.  Supported tags are:
 
   :initform   - Initializing form.
   :initarg    - Tag used during initialization.
@@ -115,12 +113,178 @@ Options in CLOS not supported in EIEIO:
 Due to the way class options are set up, you can add any tags you wish,
 and reference them using the function `class-option'."
   (declare (doc-string 4))
-  ;; This is eval-and-compile only to silence spurious compiler warnings
-  ;; about functions and variables not known to be defined.
-  ;; When eieio-defclass code is merged here and this becomes
-  ;; transparent to the compiler, the eval-and-compile can be removed.
-  `(eval-and-compile
-     (eieio-defclass ',name ',superclass ',slots ',options-and-doc)))
+  (eieio--check-type listp superclasses)
+
+  (cond ((and (stringp (car options-and-doc))
+              (/= 1 (% (length options-and-doc) 2)))
+         (error "Too many arguments to `defclass'"))
+        ((and (symbolp (car options-and-doc))
+              (/= 0 (% (length options-and-doc) 2)))
+         (error "Too many arguments to `defclass'")))
+
+  (if (stringp (car options-and-doc))
+      (setq options-and-doc
+            (cons :documentation options-and-doc)))
+
+  ;; Make sure the method invocation order is a valid value.
+  (let ((io (eieio--class-option-assoc options-and-doc
+                                       :method-invocation-order)))
+    (when (and io (not (member io '(:depth-first :breadth-first :c3))))
+      (error "Method invocation order %s is not allowed" io)))
+
+  (let ((testsym1 (intern (concat (symbol-name name) "-p")))
+        (testsym2 (intern (format "eieio--childp--%s" name)))
+        (accessors ()))
+
+    ;; Collect the accessors we need to define.
+    (pcase-dolist (`(,sname . ,soptions) slots)
+      (let* ((acces   (plist-get soptions :accessor))
+	     (initarg (plist-get soptions :initarg))
+	     (reader  (plist-get soptions :reader))
+	     (writer  (plist-get soptions :writer))
+	     (alloc   (plist-get soptions :allocation))
+	     (label   (plist-get soptions :label)))
+
+	(if eieio-error-unsupported-class-tags
+	    (let ((tmp soptions))
+	      (while tmp
+		(if (not (member (car tmp) '(:accessor
+					     :initform
+					     :initarg
+					     :documentation
+					     :protection
+					     :reader
+					     :writer
+					     :allocation
+					     :type
+					     :custom
+					     :label
+					     :group
+					     :printer
+					     :allow-nil-initform
+					     :custom-groups)))
+		    (signal 'invalid-slot-type (list (car tmp))))
+		(setq tmp (cdr (cdr tmp))))))
+
+	;; Make sure the :allocation parameter has a valid value.
+	(if (not (memq alloc '(nil :class :instance)))
+	    (signal 'invalid-slot-type (list :allocation alloc)))
+
+	;; Label is nil, or a string
+	(if (not (or (null label) (stringp label)))
+	    (signal 'invalid-slot-type (list :label label)))
+
+	;; Is there an initarg, but allocation of class?
+	(if (and initarg (eq alloc :class))
+	    (message "Class allocated slots do not need :initarg"))
+
+	;; Anyone can have an accessor function.  This creates a function
+	;; of the specified name, and also performs a `defsetf' if applicable
+	;; so that users can `setf' the space returned by this function.
+	(when acces
+          ;; FIXME: The defmethod below only defines a part of the generic
+          ;; function (good), but the define-setter below affects the whole
+          ;; generic function (bad)!
+          (push `(gv-define-setter ,acces (store object)
+                   ;; Apparently, eieio-oset-default doesn't work like
+                   ;;  oref-default and only accept class arguments!
+                   (list ',(if nil ;; (eq alloc :class)
+                               'eieio-oset-default
+                             'eieio-oset)
+                         object '',sname store))
+                accessors)
+          (push `(defmethod ,acces ,(if (eq alloc :class) :static :primary)
+                   ((this ,name))
+                   ,(format
+                     "Retrieve the slot `%S' from an object of class `%S'."
+                     sname name)
+                   (if (slot-boundp this ',sname)
+                       ;; Use oref-default for :class allocated slots, since
+                       ;; these also accept the use of a class argument instead
+                       ;; of an object argument.
+                       (,(if (eq alloc :class) 'eieio-oref-default 'eieio-oref)
+                        this ',sname)
+                     ;; Else - Some error?  nil?
+                     nil))
+                accessors))
+
+	;; If a writer is defined, then create a generic method of that
+	;; name whose purpose is to set the value of the slot.
+	(if writer
+            (push `(defmethod ,writer ((this ,name) value)
+                     ,(format "Set the slot `%S' of an object of class `%S'."
+                              sname name)
+                     (setf (slot-value this ',sname) value))
+                  accessors))
+	;; If a reader is defined, then create a generic method
+	;; of that name whose purpose is to access this slot value.
+	(if reader
+            (push `(defmethod ,reader ((this ,name))
+                     ,(format "Access the slot `%S' from object of class `%S'."
+                              sname name)
+                     (slot-value this ',sname))
+                  accessors))
+	))
+
+    `(progn
+       ;; This test must be created right away so we can have self-
+       ;; referencing classes.  ei, a class whose slot can contain only
+       ;; pointers to itself.
+
+       ;; Create the test function.
+       (defun ,testsym1 (obj)
+         ,(format "Test OBJ to see if it an object of type %S." name)
+         (and (eieio-object-p obj)
+              (same-class-p obj ',name)))
+
+       (defun ,testsym2 (obj)
+         ,(format
+           "Test OBJ to see if it an object is a child of type %S."
+           name)
+         (and (eieio-object-p obj)
+              (object-of-class-p obj ',name)))
+
+       ,@(when eieio-backward-compatibility
+           (let ((f (intern (format "%s-child-p" name))))
+             `((defalias ',f ',testsym2)
+               (make-obsolete
+                ',f ,(format "use (cl-typep ... '%s) instead" name) "25.1"))))
+
+       ;; When using typep, (typep OBJ 'myclass) returns t for objects which
+       ;; are subclasses of myclass.  For our predicates, however, it is
+       ;; important for EIEIO to be backwards compatible, where
+       ;; myobject-p, and myobject-child-p are different.
+       ;; "cl" uses this technique to specify symbols with specific typep
+       ;; test, so we can let typep have the CLOS documented behavior
+       ;; while keeping our above predicate clean.
+
+       (put ',name 'cl-deftype-satisfies #',testsym2)
+
+       (eieio-defclass-internal ',name ',superclasses ',slots ',options-and-doc)
+
+       ,@accessors
+
+       ;; Create the constructor function
+       ,(if (eieio--class-option-assoc options-and-doc :abstract)
+            ;; Abstract classes cannot be instantiated.  Say so.
+            (let ((abs (eieio--class-option-assoc options-and-doc :abstract)))
+              (if (not (stringp abs))
+                  (setq abs (format "Class %s is abstract" name)))
+              `(defun ,name (&rest _)
+                 ,(format "You cannot create a new object of type %S." name)
+                 (error ,abs)))
+
+          ;; Non-abstract classes need a constructor.
+          `(defun ,name (&rest slots)
+             ,(format "Create a new object with name NAME of class type %S."
+                      name)
+             (if (and slots
+                      (let ((x (car slots)))
+                        (or (stringp x) (null x))))
+                 (funcall (if eieio-backward-compatibility #'ignore #'message)
+                          "Obsolete name %S passed to %S constructor"
+                          (pop slots) ',name))
+             (apply #'eieio-constructor ',name slots))))))
 
 
 ;;; CLOS style implementation of object creators.
