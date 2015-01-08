@@ -31,6 +31,23 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 static Lisp_Object watch_list;
 
+/* Convert a monitor to a Lisp integer and back.  On all known glib
+   platforms, converting the sum of MONITOR and Lisp_Int0 directly to
+   a Lisp_Object value results in a Lisp integer, which is safe.  */
+
+static Lisp_Object
+monitor_to_lisp (GFileMonitor *monitor)
+{
+  return XIL ((intptr_t) monitor + Lisp_Int0);
+}
+
+static GFileMonitor *
+lisp_to_monitor (Lisp_Object watch_descriptor)
+{
+  intptr_t int_monitor = XLI (watch_descriptor) - Lisp_Int0;
+  return (GFileMonitor *) int_monitor;
+}
+
 /* This is the callback function for arriving signals from
    g_file_monitor.  It shall create a Lisp event, and put it into
    Emacs input queue.  */
@@ -77,7 +94,7 @@ dir_monitor_callback (GFileMonitor *monitor,
     }
 
   /* Determine callback function.  */
-  monitor_object = XIL ((intptr_t) monitor);
+  monitor_object = monitor_to_lisp (monitor);
   eassert (INTEGERP (monitor_object));
   watch_object = assq_no_quit (monitor_object, watch_list);
 
@@ -146,7 +163,7 @@ FILE is the name of the file whose event is being reported.  FILE1
 will be reported only in case of the 'moved' event.  */)
   (Lisp_Object file, Lisp_Object flags, Lisp_Object callback)
 {
-  Lisp_Object watch_descriptor, watch_object;
+  Lisp_Object watch_object;
   GFile *gfile;
   GFileMonitor *monitor;
   GFileMonitorFlags gflags = G_FILE_MONITOR_NONE;
@@ -176,10 +193,9 @@ will be reported only in case of the 'moved' event.  */)
   if (! monitor)
     xsignal2 (Qfile_notify_error, build_string ("Cannot watch file"), file);
 
-  /* On all known glib platforms, converting MONITOR directly to a
-     Lisp_Object value results is a Lisp integer, which is safe.  This
-     assumption is dicey, though, so check it now.  */
-  watch_descriptor = XIL ((intptr_t) monitor);
+  Lisp_Object watch_descriptor = monitor_to_lisp (monitor);
+
+  /* Check the dicey assumption that monitor_to_lisp is safe.  */
   if (! INTEGERP (watch_descriptor))
     {
       g_object_unref (monitor);
@@ -203,8 +219,6 @@ DEFUN ("gfile-rm-watch", Fgfile_rm_watch, Sgfile_rm_watch, 1, 1, 0,
 WATCH-DESCRIPTOR should be an object returned by `gfile-add-watch'.  */)
      (Lisp_Object watch_descriptor)
 {
-  intptr_t int_monitor;
-  GFileMonitor *monitor;
   Lisp_Object watch_object = assq_no_quit (watch_descriptor, watch_list);
 
   if (! CONSP (watch_object))
@@ -212,8 +226,7 @@ WATCH-DESCRIPTOR should be an object returned by `gfile-add-watch'.  */)
 	      watch_descriptor);
 
   eassert (INTEGERP (watch_descriptor));
-  int_monitor = XLI (watch_descriptor);
-  monitor = (GFileMonitor *) int_monitor;
+  GFileMonitor *monitor = lisp_to_monitor (watch_descriptor);
   if (!g_file_monitor_cancel (monitor))
     xsignal2 (Qfile_notify_error, build_string ("Could not rm watch"),
 	      watch_descriptor);

@@ -1,3 +1,10 @@
+2015-01-08  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Port GFileMonitor * hack to Qnil==0 platforms
+	Reported by Glenn Morris in: http://bugs.gnu.org/15880#112
+	* gfilenotify.c (monitor_to_lisp, lisp_to_monitor): New functions.
+	(dir_monitor_callback, Fgfile_add_watch, Fgfile_rm_watch): Use them.
+
 2015-01-06  Jan Djärv  <jan.h.d@swipnet.se>
 
 	* nsterm.m (x_set_window_size): Call updateFrameSize to get real
