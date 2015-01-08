@@ -60,7 +60,7 @@ Argument PREFIX is the character prefix to use.
 Argument CH-PREFIX is another character prefix to display."
   (eieio--check-type class-p this-root)
   (let ((myname (symbol-name this-root))
-	(chl (eieio--class-children (class-v this-root)))
+	(chl (eieio--class-children (eieio--class-v this-root)))
 	(fprefix (concat ch-prefix "  +--"))
 	(mprefix (concat ch-prefix "  |  "))
 	(lprefix (concat ch-prefix "     ")))
@@ -81,7 +81,7 @@ If CLASS is actually an object, then also display current values of that object.
   ;; Header line
   (prin1 class)
   (insert " is a"
-	  (if (class-option class :abstract)
+	  (if (eieio--class-option (eieio--class-v class) :abstract)
 	      "n abstract"
 	    "")
 	  " class")
@@ -149,7 +149,7 @@ If CLASS is actually an object, then also display current values of that object.
 (defun eieio-help-class-slots (class)
   "Print help description for the slots in CLASS.
 Outputs to the current buffer."
-  (let* ((cv (class-v class))
+  (let* ((cv (eieio--class-v class))
 	 (docs   (eieio--class-public-doc cv))
 	 (names  (eieio--class-public-a cv))
 	 (deflt  (eieio--class-public-d cv))
@@ -218,11 +218,10 @@ Outputs to the current buffer."
 (defun eieio-build-class-list (class)
   "Return a list of all classes that inherit from CLASS."
   (if (class-p class)
-      (apply #'append
-	     (mapcar
-	      (lambda (c)
-		(append (list c) (eieio-build-class-list c)))
-	      (eieio-class-children-fast class)))
+      (cl-mapcan
+       (lambda (c)
+         (append (list c) (eieio-build-class-list c)))
+       (eieio--class-children (eieio--class-v class)))
     (list class)))
 
 (defun eieio-build-class-alist (&optional class instantiable-only buildlist)
@@ -231,15 +230,16 @@ Optional argument CLASS is the class to start with.
 If INSTANTIABLE-ONLY is non nil, only allow names of classes which
 are not abstract, otherwise allow all classes.
 Optional argument BUILDLIST is more list to attach and is used internally."
-  (let* ((cc (or class eieio-default-superclass))
-	 (sublst (eieio--class-children (class-v cc))))
+  (let* ((cc (or class 'eieio-default-superclass))
+	 (sublst (eieio--class-children (eieio--class-v cc))))
     (unless (assoc (symbol-name cc) buildlist)
       (when (or (not instantiable-only) (not (class-abstract-p cc)))
+        ;; FIXME: Completion tables don't need alists, and ede/generic.el needs
+        ;; the symbols rather than their names.
 	(setq buildlist (cons (cons (symbol-name cc) 1) buildlist))))
-    (while sublst
+    (dolist (elem sublst)
       (setq buildlist (eieio-build-class-alist
-		       (car sublst) instantiable-only buildlist))
-      (setq sublst (cdr sublst)))
+		       elem instantiable-only buildlist)))
     buildlist))
 
 (defvar eieio-read-class nil
@@ -311,132 +311,59 @@ are not abstract."
 	  (eieio-help-class ctr))
 	))))
 
-
-;;;###autoload
-(defun eieio-help-generic (generic)
-  "Describe GENERIC if it is a generic function."
-  (when (and (symbolp generic) (generic-p generic))
-    (save-excursion
-      (goto-char (point-min))
-      (when (re-search-forward " in `.+'.$" nil t)
-	(replace-match ".")))
-    (save-excursion
-      (insert "\n\nThis is a generic function"
-	      (cond
-	       ((and (generic-primary-only-p generic)
-		     (generic-primary-only-one-p generic))
-		" with only one primary method")
-	       ((generic-primary-only-p generic)
-		" with only primary methods")
-	       (t ""))
-	      ".\n\n")
-      (insert (propertize "Implementations:\n\n" 'face 'bold))
-      (let ((i 4)
-	    (prefix [ ":STATIC" ":BEFORE" ":PRIMARY" ":AFTER" ] ))
-	;; Loop over fanciful generics
-	(while (< i 7)
-	  (let ((gm (aref (get generic 'eieio-method-tree) i)))
-	    (when gm
-	      (insert "Generic "
-		      (aref prefix (- i 3))
-		      "\n"
-		      (or (nth 2 gm) "Undocumented")
-		      "\n\n")))
-	  (setq i (1+ i)))
-	(setq i 0)
-	;; Loop over defined class-specific methods
-	(while (< i 4)
-	  (let* ((gm (reverse (aref (get generic 'eieio-method-tree) i)))
-		 cname location)
-	    (while gm
-	      (setq cname (caar gm))
-	      (insert "`")
-	      (help-insert-xref-button (symbol-name cname)
-				       'help-variable cname)
-	      (insert "' " (aref prefix i) " ")
-	      ;; argument list
-	      (let* ((func (cdr (car gm)))
-		     (arglst (help-function-arglist func)))
-		(prin1 arglst (current-buffer)))
-	      (insert "\n"
-		      (or (documentation (cdr (car gm)))
-			  "Undocumented"))
-	      ;; Print file location if available
-	      (when (and (setq location (get generic 'method-locations))
-			 (setq location (assoc cname location)))
-		(setq location (cadr location))
-		(insert "\n\nDefined in `")
-		(help-insert-xref-button
-		 (file-name-nondirectory location)
-		 'eieio-method-def cname generic location)
-		(insert "'\n"))
-	      (setq gm (cdr gm))
-	      (insert "\n")))
-	  (setq i (1+ i)))))))
-
 (defun eieio-all-generic-functions (&optional class)
   "Return a list of all generic functions.
 Optional CLASS argument returns only those functions that contain
 methods for CLASS."
-  (let ((l nil) tree (cn (if class (symbol-name class) nil)))
+  (let ((l nil))
     (mapatoms
      (lambda (symbol)
-       (setq tree (get symbol 'eieio-method-obarray))
-       (if tree
-	   (progn
-	     ;; A symbol might be interned for that class in one of
-	     ;; these three slots in the method-obarray.
-	     (if (or (not class)
-		     (fboundp (intern-soft cn (aref tree 0)))
-		     (fboundp (intern-soft cn (aref tree 1)))
-		     (fboundp (intern-soft cn (aref tree 2))))
-		 (setq l (cons symbol l)))))))
+       (let ((tree (get symbol 'eieio-method-hashtable)))
+         (when tree
+           ;; A symbol might be interned for that class in one of
+           ;; these three slots in the method-obarray.
+           (if (or (not class)
+                   (car (gethash class (aref tree 0)))
+                   (car (gethash class (aref tree 1)))
+                   (car (gethash class (aref tree 2))))
+               (setq l (cons symbol l)))))))
     l))
 
 (defun eieio-method-documentation (generic class)
   "Return a list of the specific documentation of GENERIC for CLASS.
 If there is not an explicit method for CLASS in GENERIC, or if that
 function has no documentation, then return nil."
-  (let ((tree (get generic 'eieio-method-obarray))
-	(cn (symbol-name class))
-	before primary after)
-    (if (not tree)
-	nil
+  (let ((tree (get generic 'eieio-method-hashtable)))
+    (when tree
       ;; A symbol might be interned for that class in one of
-      ;; these three slots in the method-obarray.
-      (setq before (intern-soft cn (aref tree 0))
-	    primary (intern-soft cn (aref tree 1))
-	    after (intern-soft cn (aref tree 2)))
-      (if (not (or (fboundp before)
-		   (fboundp primary)
-		   (fboundp after)))
-	  nil
-	(list (if (fboundp before)
-		  (cons (help-function-arglist before)
-			(documentation before))
-		nil)
-	      (if (fboundp primary)
-		  (cons (help-function-arglist primary)
-			(documentation primary))
-		nil)
-	      (if (fboundp after)
-		  (cons (help-function-arglist after)
-			(documentation after))
-		nil))))))
+      ;; these three slots in the method-hashtable.
+      ;; FIXME: Where do these 0/1/2 come from?  Isn't 0 for :static,
+      ;; 1 for before, and 2 for primary (and 3 for after)?
+      (let ((before  (car (gethash class (aref tree 0))))
+	    (primary (car (gethash class (aref tree 1))))
+	    (after   (car (gethash class (aref tree 2)))))
+        (if (not (or before primary after))
+            nil
+          (list (if before
+                    (cons (help-function-arglist before)
+                          (documentation before))
+                  nil)
+                (if primary
+                    (cons (help-function-arglist primary)
+                          (documentation primary))
+                  nil)
+                (if after
+                    (cons (help-function-arglist after)
+                          (documentation after))
+                  nil)))))))
 
 (defvar eieio-read-generic nil
   "History of the `eieio-read-generic' prompt.")
 
-(defun eieio-read-generic-p (fn)
-  "Function used in function `eieio-read-generic'.
-This is because `generic-p' is a macro.
-Argument FN is the function to test."
-  (generic-p fn))
-
 (defun eieio-read-generic (prompt &optional historyvar)
   "Read a generic function from the minibuffer with PROMPT.
 Optional argument HISTORYVAR is the variable to use as history."
-  (intern (completing-read prompt obarray 'eieio-read-generic-p
+  (intern (completing-read prompt obarray #'generic-p
 			   t nil (or historyvar 'eieio-read-generic))))
 
 ;;; METHOD STATS
@@ -627,21 +554,21 @@ Optional argument HISTORYVAR is the variable to use as history."
   ()
   "Menu part in easymenu format used in speedbar while in `eieio' mode.")
 
-(defun eieio-class-speedbar (dir-or-object depth)
+(defun eieio-class-speedbar (_dir-or-object _depth)
   "Create buttons in speedbar that represents the current project.
 DIR-OR-OBJECT is the object to expand, or nil, and DEPTH is the
 current expansion depth."
   (when (eq (point-min) (point-max))
     ;; This function is only called once, to start the whole deal.
     ;; Create and expand the default object.
-    (eieio-class-button eieio-default-superclass 0)
+    (eieio-class-button 'eieio-default-superclass 0)
     (forward-line -1)
     (speedbar-expand-line)))
 
 (defun eieio-class-button (class depth)
   "Draw a speedbar button at the current point for CLASS at DEPTH."
   (eieio--check-type class-p class)
-  (let ((subclasses (eieio--class-children (class-v class))))
+  (let ((subclasses (eieio--class-children (eieio--class-v class))))
     (if subclasses
 	(speedbar-make-tag-line 'angle ?+
 				'eieio-sb-expand
@@ -666,7 +593,7 @@ Argument INDENT is the depth of indentation."
 	 (speedbar-with-writable
 	   (save-excursion
 	     (end-of-line) (forward-char 1)
-	     (let ((subclasses (eieio--class-children (class-v class))))
+	     (let ((subclasses (eieio--class-children (eieio--class-v class))))
 	       (while subclasses
 		 (eieio-class-button (car subclasses) (1+ indent))
 		 (setq subclasses (cdr subclasses)))))))
@@ -676,7 +603,7 @@ Argument INDENT is the depth of indentation."
 	(t (error "Ooops...  not sure what to do")))
   (speedbar-center-buffer-smartly))
 
-(defun eieio-describe-class-sb (text token indent)
+(defun eieio-describe-class-sb (_text token _indent)
   "Describe the class TEXT in TOKEN.
 INDENT is the current indentation level."
   (dframe-with-attached-buffer

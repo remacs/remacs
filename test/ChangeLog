@@ -1,3 +1,57 @@
+2015-01-08  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* automated/eieio-tests.el (eieio-test-23-inheritance-check): Don't use
+	<foo>-child-p.
+
+	* automated/eieio-test-methodinvoke.el (eieio-test-method-store):
+	Update reference to eieio--generic-call-key.
+
+2015-01-08  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* automated/eieio-tests.el: Use cl-lib.  Don't use <class> as a variable.
+	Don't use <class>-list types and <class>-list-p predicates.
+
+	* automated/eieio-test-persist.el (persistent-with-objs-list-slot):
+	Don't use <class>-list type.
+
+	* automated/eieio-test-methodinvoke.el
+	(eieio-test-method-order-list-4):
+	Don't use <class> as a variable.
+
+2015-01-08  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* automated/eieio-tests.el (eieio-test-04-static-method)
+	(eieio-test-05-static-method-2): Use oref-default to access
+	class slots.
+	(eieio-test-23-inheritance-check): Don't assume that
+	eieio-class-parents returns class names, or that a class can only have
+	a single name.
+
+	* automated/eieio-test-persist.el (eieio--attribute-to-initarg):
+	Move from eieio-core.el.  Rename from eieio-attribute-to-initarg.
+	Change arg to be a class object.  Update all callers.
+
+2015-01-08  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* automated/eieio-test-methodinvoke.el (eieio-test-method-store):
+	Adjust to new semantics of eieio--scoped-class.
+	(eieio-test-match): Improve error feedback.
+
+2015-01-08  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* automated/eieio-tests.el: Remove dummy object names.
+
+	* automated/eieio-test-persist.el (persistent-with-objs-slot-subs):
+	The type FOO-child is the same as FOO.
+
+2015-01-08  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* automated/eieio-test-methodinvoke.el (eieio-test-method-store):
+	Remove use of eieio-generic-call-methodname.
+	(eieio-test-method-order-list-3, eieio-test-method-order-list-6)
+	(eieio-test-method-order-list-7, eieio-test-method-order-list-8):
+	Adjust the expected result accordingly.
+
 2015-01-01  Michael Albinus  <michael.albinus@gmx.de>
 
 	* automated/tramp-tests.el (tramp--test-smb-or-windows-nt-p):
@@ -19,8 +73,7 @@
 2014-12-27  Fabián Ezequiel Gallina  <fgallina@gnu.org>
 
 	* automated/python-tests.el
-	(python-shell-completion-native-interpreter-disabled-p-1): New
-	test.
+	(python-shell-completion-native-interpreter-disabled-p-1): New test.
 
 2014-12-27  Fabián Ezequiel Gallina  <fgallina@gnu.org>
 
@@ -110,8 +163,8 @@
 	(vc-test--create-repo-function): Rename from
 	`vc-test--create-repo-if-not-supported'.  Adapt all callees.
 	(vc-test--create-repo): Check also for revision-granularity.
-	(vc-test--unregister-function): Additional argument FILE.  Adapt
-	all callees.
+	(vc-test--unregister-function): Additional argument FILE.
+	Adapt all callees.
 	(vc-test--working-revision): New defun.
 	(vc-test-*-working-revision): New tests.
 
@@ -148,7 +201,7 @@
 2014-11-21  Ulf Jasper  <ulf.jasper@web.de>
 
 	* automated/libxml-tests.el
-	(libxml-tests--data-comments-preserved): Renamed from
+	(libxml-tests--data-comments-preserved): Rename from
 	'libxml-tests--data'.
 	(libxml-tests--data-comments-discarded): New.
 	(libxml-tests): Check whether 'libxml-parse-xml-region' is
@@ -175,8 +228,8 @@
 
 2014-11-17  Ulf Jasper  <ulf.jasper@web.de>
 
-	* automated/icalendar-tests.el (icalendar-tests--test-export): New
-	optional parameter `alarms'.
+	* automated/icalendar-tests.el (icalendar-tests--test-export):
+	New optional parameter `alarms'.
 	(icalendar-export-alarms): New test for exporting icalendar
 	alarms.
 	(icalendar-tests--test-cycle): Let `icalendar-export-alarms' be nil.
@@ -190,8 +243,8 @@
 
 2014-11-16  Ulf Jasper  <ulf.jasper@web.de>
 
-	* automated/icalendar-tests.el (icalendar--parse-vtimezone): Add
-	testcase where offsets of standard time and daylight saving time
+	* automated/icalendar-tests.el (icalendar--parse-vtimezone):
+	Add testcase where offsets of standard time and daylight saving time
 	are equal.
 	(icalendar-real-world): Fix error in test case.  Expected result
 	was wrong when offsets of standard time and daylight saving time

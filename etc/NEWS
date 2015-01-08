@@ -194,6 +194,11 @@ the old behavior -- *shell* buffer displays in current window -- use
 (add-to-list 'display-buffer-alist
      '("^\\*shell\\*$" . (display-buffer-same-window))).
 
+
+** EIEIO
+*** The <class>-list-p and <class>-child-p functions are declared obsolete.
+*** The <class> variables are declared obsolete.
+*** The <initarg> variables are declared obsolete.
 ** ido
 *** New command `ido-bury-buffer-at-head' bound to C-S-b
 Bury the buffer at the head of `ido-matches', analogous to how C-k

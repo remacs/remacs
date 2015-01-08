@@ -1,3 +1,255 @@
+2015-01-08  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* emacs-lisp/eieio.el (defclass): Move from eieio-defclass all the code
+	that creates functions, and most of the sanity checks.
+	Mark as obsolete the <class>-child-p function.
+	* emacs-lisp/eieio-core.el (eieio--define-field-accessors): Remove.
+	(eieio--class, eieio--object): Use cl-defstruct.
+	(eieio--object-num-slots): Define manually.
+	(eieio-defclass-autoload): Use eieio--class-make.
+	(eieio-defclass-internal): Rename from eieio-defclass.  Move all the
+	`(lambda...) definitions and most of the sanity checks to `defclass'.
+	Mark as obsolete the <class>-list-p function, the <class> variable and
+	the <initarg> variables.  Use pcase-dolist.
+	(eieio-defclass): New compatibility function.
+	* emacs-lisp/eieio-opt.el (eieio-build-class-alist)
+	(eieio-class-speedbar): Don't use eieio-default-superclass var.
+
+2015-01-08  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* emacs-lisp/eieio-generic.el: New file.
+	* emacs-lisp/eieio-core.el: Move all generic function code to
+	eieio-generic.el.
+	(eieio--defmethod): Declare.
+
+	* emacs-lisp/eieio.el: Require eieio-generic.  Move all generic
+	function code to eieio-generic.el.
+	* emacs-lisp/eieio-opt.el (eieio-help-generic): Move to
+	eieio-generic.el.
+	* emacs-lisp/eieio-datadebug.el (eieio-debug-methodinvoke): Update call
+	to eieio--generic-call.
+	* emacs-lisp/eieio-base.el (eieio-instance-inheritor): Don't use
+	<class>-child type.
+
+2015-01-08  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* emacs-lisp/chart.el (chart-add-sequence, chart-bar-quickie):
+	Don't use <class> as a variable.
+
+	* emacs-lisp/eieio.el (same-class-p): Accept class object as well.
+	(call-next-method): Simplify.
+	(clone): Obey eieio-backward-compatibility.
+
+	* emacs-lisp/eieio-opt.el (eieio-read-generic-p): Remove.
+	(eieio-read-generic): Use `generic-p' instead.
+
+	* emacs-lisp/eieio-core.el (eieio-backward-compatibility): New var.
+	(eieio-defclass-autoload): Obey it.
+	(eieio--class-object): Improve error behavior.
+	(eieio-class-children-fast, same-class-fast-p): Remove.  Inline at
+	every use site.
+	(eieio--defgeneric-form-primary-only): Rename from
+	eieio-defgeneric-form-primary-only; update all callers.
+	(eieio--defgeneric-form-primary-only-one): Rename from
+	eieio-defgeneric-form-primary-only-one; update all callers.
+	(eieio-defgeneric-reset-generic-form)
+	(eieio-defgeneric-reset-generic-form-primary-only)
+	(eieio-defgeneric-reset-generic-form-primary-only-one): Remove.
+	(eieio--method-optimize-primary): New function to replace them.
+	(eieio--defmethod, eieio-defmethod): Use it.
+	(eieio--perform-slot-validation): Rename from
+	eieio-perform-slot-validation; update all callers.
+	(eieio--validate-slot-value): Rename from eieio-validate-slot-value.
+	Change `class' to be a class object.  Update all callers.
+	(eieio--validate-class-slot-value): Rename from
+	eieio-validate-class-slot-value.  Change `class' to be a class object.
+	Update all callers.
+	(eieio-oset-default): Accept class object as well.
+	(eieio--generic-call-primary-only): Rename from
+	eieio-generic-call-primary-only.  Update all callers.
+
+	* emacs-lisp/eieio-base.el (eieio-persistent-validate/fix-slot-value):
+	Improve error messages.
+	(eieio-persistent-slot-type-is-class-p): Handle `list-of' types, as
+	well as user-defined types.  Emit errors for legacy types like
+	<class>-child and <class>-list, if not eieio-backward-compatibility.
+
+2015-01-08  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* emacs-lisp/eieio.el (eieio-class-parents): Accept class objects.
+	(eieio--class-slot-initarg): Rename from class-slot-initarg.
+	Change `class' arg to be a class object.  Update all callers.
+	(call-next-method): Adjust to new return value of `eieio-generic-form'.
+	(eieio-default-superclass): Set var to the class object.
+	(eieio-edebug-prin1-to-string): Fix recursive call for lists.
+	Change print behavior to affect class objects rather than
+	class symbols.
+
+	* emacs-lisp/eieio-core.el (eieio-class-object): New function.
+	(eieio-class-parents-fast): Remove macro.
+	(eieio--class-option-assoc): Rename from class-option-assoc.
+	Update all callers.
+	(eieio--class-option): Rename from class-option.  Change `class' arg to
+	be a class object.  Update all callers.
+	(eieio--class-method-invocation-order): Rename from
+	class-method-invocation-order.  Change `class' arg to be a class
+	object.  Update all callers.
+	(eieio-defclass-autoload, eieio-defclass): Set the `parent' field to
+	a list of class objects rather than names.
+	(eieio-defclass): Remove redundant quotes.  Use `eieio-oref-default'
+	for accessors to class allocated slots.
+	(eieio--perform-slot-validation-for-default): Rename from
+	eieio-perform-slot-validation-for-default.  Update all callers.
+	(eieio--add-new-slot): Rename from eieio-add-new-slot.
+	Update all callers.  Use push.
+	(eieio-copy-parents-into-subclass): Adjust to new content of
+	`parent' field.  Use dolist.
+	(eieio-oref): Remove support for providing a class rather than
+	an object.
+	(eieio-oref-default): Prefer class objects over class names.
+	(eieio--slot-originating-class-p): Rename from
+	eieio-slot-originating-class-p.  Update all callers.  Use `or'.
+	(eieio--slot-name-index): Turn check into assertion.
+	(eieio--class-slot-name-index): Rename from
+	eieio-class-slot-name-index.  Change `class' arg to be a class object.
+	Update all callers.
+	(eieio-attribute-to-initarg): Move to eieio-test-persist.el.
+	(eieio--c3-candidate): Rename from eieio-c3-candidate.
+	Update all callers.
+	(eieio--c3-merge-lists): Rename from eieio-c3-merge-lists.
+	Update all callers.
+	(eieio--class-precedence-c3): Rename from eieio-class-precedence-c3.
+	Update all callers.
+	(eieio--class-precedence-dfs): Rename from eieio-class-precedence-dfs.
+	Update all callers.
+	(eieio--class-precedence-bfs): Rename from eieio-class-precedence-bfs.
+	Update all callers.  Adjust to new `parent' content.
+	(eieio--class-precedence-list): Rename from -class-precedence-list.
+	Update all callers.
+	(eieio-generic-call): Use autoloadp and autoload-do-load.
+	Slight simplification.
+	(eieio-generic-call, eieio-generic-call-primary-only): Adjust to new
+	return value of `eieio-generic-form'.
+	(eieiomt-add): Index the hashtable with class objects rather than
+	class names.
+	(eieio-generic-form): Accept class objects as well.
+
+	* emacs-lisp/eieio-base.el (eieio-persistent-convert-list-to-object):
+	Adjust to new convention for eieio-persistent-validate/fix-slot-value.
+	(eieio-persistent-validate/fix-slot-value):
+	Change `class' arg to be a class object.  Update all callers.
+
+2015-01-08  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* emacs-lisp/eieio.el (child-of-class-p): Make it accept class objects
+	additionally to class names.
+
+	* emacs-lisp/eieio-core.el (eieio--with-scoped-class): Use let-binding.
+	(object): Remove first (constant) slot; rename second to `class-tag'.
+	(eieio--object-class-object, eieio--object-class-name): New funs
+	to replace eieio--object-class.
+	(eieio--class-object, eieio--class-p): New functions.
+	(same-class-fast-p): Make it a defsubst, change its implementation
+	to check the class objects rather than their names.
+	(eieio-object-p): Rewrite.
+	(eieio-defclass): Adjust the object initialization according to the new
+	object layout.
+	(eieio--scoped-class): Declare it returns a class object (not a class
+	name any more).  Adjust calls accordingly (along with calls to
+	eieio--with-scoped-class).
+	(eieio--slot-name-index): Rename from eieio-slot-name-index and change
+	its class arg to be a class object.  Adjust callers accordingly.
+	(eieio-slot-originating-class-p): Make its start-class arg a class
+	object.  Adjust all callers.
+	(eieio--initarg-to-attribute): Rename from eieio-initarg-to-attribute.
+	Make its `class' arg a class object.  Adjust all callers.
+
+	* emacs-lisp/eieio-base.el (eieio-persistent-validate/fix-slot-value):
+	Use eieio--slot-name-index rather than eieio-slot-name-index.
+
+2015-01-08  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* emacs-lisp/eieio.el (make-instance): Simplify by not adding an object
+	name argument.
+	(eieio-object-name): Use eieio-object-name-string.
+	(eieio--object-names): New const.
+	(eieio-object-name-string, eieio-object-set-name-string): Re-implement
+	using a hashtable rather than a built-in slot.
+	(eieio-constructor): Rename from `constructor'.  Remove `newname' arg.
+	(clone): Don't mess with the object's "name".
+
+	* emacs-lisp/eieio-custom.el (eieio-widget-test): Remove dummy arg.
+	(eieio-object-value-get): Use eieio-object-set-name-string.
+
+	* emacs-lisp/eieio-core.el (eieio--defalias): Follow aliases.
+	(eieio--object): Remove `name' field.
+	(eieio-defclass): Adjust to new convention where constructors don't
+	take an "object name" any more.
+	(eieio--defgeneric-init-form, eieio--defmethod): Follow aliases.
+	(eieio-validate-slot-value, eieio-oset-default)
+	(eieio-slot-name-index): Don't hardcode eieio--object-num-slots.
+	(eieio-generic-call-primary-only): Simplify.
+
+	* emacs-lisp/eieio-base.el (clone) <eieio-instance-inheritor>:
+	Use call-next-method.
+	(eieio-constructor): Rename from `constructor'.
+	(eieio-persistent-convert-list-to-object): Drop objname.
+	(eieio-persistent-validate/fix-slot-value): Don't hardcode
+	eieio--object-num-slots.
+	(eieio-named): Use a normal slot.
+	(slot-missing) <eieio-named>: Remove.
+	(eieio-object-name-string, eieio-object-set-name-string, clone)
+	<eieio-named>: New methods.
+
+2015-01-08  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* emacs-lisp/eieio-core.el (eieio--class-v): Rename from class-v.
+	(method-*): Add a "eieio--" prefix to those constants.
+
+	* emacs-lisp/eieio.el: Move edebug specs to the corresponding macro.
+
+	* emacs-lisp/eieio-speedbar.el: Use lexical-binding.
+
+2015-01-08  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* emacs-lisp/eieio.el (child-of-class-p): Fix case where `class' is
+	`eieio-default-superclass'.
+
+	* emacs-lisp/eieio-datadebug.el: Use lexical-binding.
+
+	* emacs-lisp/eieio-custom.el: Use lexical-binding.
+	(eieio-object-value-to-abstract): Simplify.
+
+	* emacs-lisp/eieio-opt.el (eieio-build-class-list): Use cl-mapcan.
+	(eieio-build-class-alist): Use dolist.
+	(eieio-all-generic-functions): Adjust to use of hashtables.
+
+	* emacs-lisp/eieio-core.el (class): Rename field symbol-obarray to
+	symbol-hashtable.  It contains a hashtable instead of an obarray.
+	(generic-p): Use symbol property `eieio-method-hashtable' instead of
+	`eieio-method-obarray'.
+	(generic-primary-only-p, generic-primary-only-one-p):
+	Slight optimization.
+	(eieio-defclass-autoload-map): Use a hashtable instead of an obarray.
+	(eieio-defclass-autoload, eieio-defclass): Adjust/simplify accordingly.
+	(eieio-class-un-autoload): Use autoload-do-load.
+	(eieio-defclass): Use dolist, cl-pushnew, cl-callf.
+	Use new cl-deftype-satisfies.  Adjust to use of hashtables.
+	Don't hardcode the value of eieio--object-num-slots.
+	(eieio-defgeneric-form-primary-only-one): Remove `doc-string' arg.
+	Use a closure rather than a backquoted lambda.
+	(eieio--defmethod): Adjust call accordingly.  Set doc-string via the
+	function-documentation property.
+	(eieio-slot-originating-class-p, eieio-slot-name-index)
+	(eieiomt--optimizing-hashtable, eieiomt-install, eieiomt-add)
+	(eieio-generic-form): Adjust to use of hashtables.
+	(eieiomt--sym-optimize): Rename from eieiomt-sym-optimize; take
+	additional class argument.
+	(eieio-generic-call-methodname): Remove, unused.
+
+	* emacs-lisp/eieio-base.el (eieio-persistent-slot-type-is-class-p):
+	Prefer \' to $.
+
 2015-01-08  Eli Zaretskii  <eliz@gnu.org>
 
 	* simple.el (line-move-visual): When converting X pixel coordinate
@@ -609,8 +861,8 @@
 	* electric.el (Electric-pop-up-window):
 	* help.el (resize-temp-buffer-window): Call fit-window-to-buffer
 	with `preserve-size' t.
-	* minibuffer.el (minibuffer-completion-help): Use
-	`resize-temp-buffer-window' instead of `fit-window-to-buffer'
+	* minibuffer.el (minibuffer-completion-help):
+	Use `resize-temp-buffer-window' instead of `fit-window-to-buffer'
 	(Bug#19355).  Preserve size of completions window.
 	* register.el (register-preview): Preserve size of register
 	preview window.

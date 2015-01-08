@@ -188,6 +188,8 @@ Value should be a ... what?")
   "Default history variable for any unhistoried prompt.
 Keeps STRINGS only in the history.")
 
+(defvar semantic-complete-active-default)
+(defvar semantic-complete-current-matched-tag)
 
 (defun semantic-complete-read-tag-engine (collector displayor prompt
 						    default-tag initial-input
@@ -1871,7 +1873,7 @@ completion text in ghost text."
 	       (list 'const
 		     :tag doc1
 		     C)))
-	   (eieio-build-class-alist semantic-displayor-abstract t))
+	   (eieio-build-class-alist 'semantic-displayor-abstract t))
 	  )
   "Possible options for inline completion displayors.
 Use this to enable custom editing.")

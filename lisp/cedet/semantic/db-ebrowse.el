@@ -192,7 +192,7 @@ is specified by `semanticdb-default-save-directory'."
 If DIRECTORY is found to be defunct, it won't load the DB, and will
 warn instead."
   (if (file-directory-p directory)
-      (semanticdb-create-database semanticdb-project-database-ebrowse
+      (semanticdb-create-database 'semanticdb-project-database-ebrowse
 				  directory)
     (let* ((BF (semanticdb-ebrowse-file-for-directory directory))
 	   (BFL (concat BF "-load.el"))

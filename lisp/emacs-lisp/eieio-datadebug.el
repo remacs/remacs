@@ -1,4 +1,4 @@
-;;; eieio-datadebug.el --- EIEIO extensions to the data debugger.
+;;; eieio-datadebug.el --- EIEIO extensions to the data debugger.  -*- lexical-binding:t -*-
 
 ;; Copyright (C) 2007-2015 Free Software Foundation, Inc.
 
@@ -87,7 +87,7 @@ PREBUTTONTEXT is some text between PREFIX and the object button."
 			     prefix
 			     "Name: ")
     (let* ((cl (eieio-object-class obj))
-	   (cv (class-v cl)))
+	   (cv (eieio--class-v cl)))
       (data-debug-insert-thing (class-constructor cl)
 			       prefix
 			       "Class: ")
@@ -96,7 +96,8 @@ PREBUTTONTEXT is some text between PREFIX and the object button."
 	    )
 	(while publa
 	  (if (slot-boundp obj (car publa))
-	      (let* ((i (class-slot-initarg cl (car publa)))
+	      (let* ((i (eieio--class-slot-initarg (eieio--class-v cl)
+                                                   (car publa)))
 		     (v (eieio-oref obj (car publa))))
 		(data-debug-insert-thing
 		 v prefix (concat
@@ -104,7 +105,8 @@ PREBUTTONTEXT is some text between PREFIX and the object button."
 			     (symbol-name (car publa)))
 			   " ")))
 	    ;; Unbound case
-	    (let ((i (class-slot-initarg cl (car publa))))
+	    (let ((i (eieio--class-slot-initarg (eieio--class-v cl)
+                                                (car publa))))
 	      (data-debug-insert-custom
 	       "#unbound" prefix
 	       (concat (if i (symbol-name i)
@@ -135,9 +137,9 @@ PREBUTTONTEXT is some text between PREFIX and the object button."
   (let* ((eieio-pre-method-execution-functions
 	  (lambda (l) (throw 'moose l) ))
 	 (data
-	  (catch 'moose (eieio-generic-call
+	  (catch 'moose (eieio--generic-call
 			 method (list class))))
-	 (buf (data-debug-new-buffer "*Method Invocation*"))
+	 (_buf (data-debug-new-buffer "*Method Invocation*"))
 	 (data2 (mapcar (lambda (sym)
 			  (symbol-function (car sym)))
 			  data)))

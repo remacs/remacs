@@ -32,6 +32,14 @@
 (require 'eieio-base)
 (require 'ert)
 
+(defun eieio--attribute-to-initarg (class attribute)
+  "In CLASS, convert the ATTRIBUTE into the corresponding init argument tag.
+This is usually a symbol that starts with `:'."
+  (let ((tuple (rassoc attribute (eieio--class-initarg-tuples class))))
+    (if tuple
+	(car tuple)
+      nil)))
+
 (defun persist-test-save-and-compare (original)
   "Compare the object ORIGINAL against the one read fromdisk."
 
@@ -40,7 +48,7 @@
   (let* ((file (oref original :file))
 	 (class (eieio-object-class original))
 	 (fromdisk (eieio-persistent-read file class))
-	 (cv (class-v class))
+	 (cv (eieio--class-v class))
 	 (slot-names  (eieio--class-public-a cv))
 	 (slot-deflt  (eieio--class-public-d cv))
 	 )
@@ -53,7 +61,8 @@
       (let* ((oneslot (car slot-names))
 	     (origvalue (eieio-oref original oneslot))
 	     (fromdiskvalue (eieio-oref fromdisk oneslot))
-	     (initarg-p (eieio-attribute-to-initarg class oneslot))
+	     (initarg-p (eieio--attribute-to-initarg
+                         (eieio--class-v class) oneslot))
 	     )
 
 	(if initarg-p
@@ -175,7 +184,7 @@ persistent class.")
 
 (defclass persistent-with-objs-slot-subs (eieio-persistent)
   ((pnp :initarg :pnp
-	:type (or null persist-not-persistent-child)
+	:type (or null persist-not-persistent)
 	:initform nil))
   "Class for testing the saving of slots with objects in them.")
 
@@ -194,7 +203,7 @@ persistent class.")
 ;; A slot that contains another object that isn't persistent
 (defclass persistent-with-objs-list-slot (eieio-persistent)
   ((pnp :initarg :pnp
-	:type persist-not-persistent-list
+	:type (list-of persist-not-persistent)
 	:initform nil))
   "Class for testing the saving of slots with objects in them.")
 

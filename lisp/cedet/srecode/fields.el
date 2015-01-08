@@ -237,7 +237,7 @@ If SET-TO is a string, then replace the text of OLAID wit SET-TO."
 
 (defsubst srecode-active-template-region ()
   "Return the active region for template fields."
-  (oref srecode-template-inserted-region active-region))
+  (oref-default 'srecode-template-inserted-region active-region))
 
 (defun srecode-field-post-command ()
   "Srecode field handler in the post command hook."

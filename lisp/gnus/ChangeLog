@@ -1,3 +1,7 @@
+2015-01-08  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* registry.el: Don't use <class> as a variable.
+
 2014-12-29  Paul Eggert  <eggert@cs.ucla.edu>
 
 	* message.el (message-make-fqdn):
@@ -12,8 +16,8 @@
 
 2014-12-19  Andreas Schwab  <schwab@linux-m68k.org>
 
-	* gnus-group.el (gnus-read-ephemeral-bug-group): Bind
-	coding-system-for-read and coding-system-for-write only around
+	* gnus-group.el (gnus-read-ephemeral-bug-group):
+	Bind coding-system-for-read and coding-system-for-write only around
 	with-temp-file, and make buffer unibyte.  Don't write temp file twice.
 
 2014-12-18  Paul Eggert  <eggert@cs.ucla.edu>
@@ -73,9 +77,9 @@
 
 2014-12-09  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 
-	* gnus-art.el (gnus-article-mime-handles): Refactored out into own
+	* gnus-art.el (gnus-article-mime-handles): Refactor out into own
 	function for reuse.
-	(gnus-mime-buttonize-attachments-in-header): Adjusted.
+	(gnus-mime-buttonize-attachments-in-header): Adjust.
 
 2014-12-07  Lars Magne Ingebrigtsen  <larsi@gnus.org>
 

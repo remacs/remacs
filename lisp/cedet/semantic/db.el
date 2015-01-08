@@ -330,6 +330,10 @@ Adds the number of tags in this file to the object print name."
 
 ;;; DATABASE BASE CLASS
 ;;
+(unless (fboundp 'semanticdb-abstract-table-list-p)
+  (cl-deftype semanticdb-abstract-table-list ()
+    '(list-of semanticdb-abstract-table)))
+
 (defclass semanticdb-project-database (eieio-instance-tracker)
   ((tracking-symbol :initform semanticdb-database-list)
    (reference-directory :type string

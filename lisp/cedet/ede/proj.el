@@ -297,7 +297,7 @@ for the tree being read in.  If ROOTPROJ is nil, then assume that
 the PROJECT being read in is the root project."
   (save-excursion
     (let ((ret (eieio-persistent-read (concat project "Project.ede")
-				      ede-proj-project))
+				      'ede-proj-project))
 	  (subdirs (directory-files project nil "[^.].*" nil)))
       (if (not (object-of-class-p ret 'ede-proj-project))
 	  (error "Corrupt project file"))

@@ -213,7 +213,7 @@ Argument THIS is the target that should insert stuff."
 ;;   "Target class for Emacs/Semantic grammar files." nil nil)
 
 (ede-proj-register-target "semantic grammar"
-			  semantic-ede-proj-target-grammar)
+			  'semantic-ede-proj-target-grammar)
 
 (provide 'semantic/ede-grammar)
 

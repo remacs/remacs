@@ -121,9 +121,9 @@ Argument DIR is the directory from which to derive the list of objects."
   (let ((obj (eieio-speedbar-find-nearest-object)))
     (if (not (eieio-object-p obj))
 	nil
-      (cond ((obj-of-class-p obj ede-project)
+      (cond ((obj-of-class-p obj 'ede-project)
 	     (project-compile-project obj))
-	    ((obj-of-class-p obj ede-target)
+	    ((obj-of-class-p obj 'ede-target)
 	     (project-compile-target obj))
 	    (t (error "Error in speedbar structure"))))))
 
@@ -133,9 +133,9 @@ Argument DIR is the directory from which to derive the list of objects."
   (let ((obj (eieio-speedbar-find-nearest-object)))
     (if (not (eieio-object-p obj))
 	(error "Error in speedbar or ede structure")
-      (if (obj-of-class-p obj ede-target)
+      (if (obj-of-class-p obj 'ede-target)
 	  (setq obj (ede-target-parent obj)))
-      (if (obj-of-class-p obj ede-project)
+      (if (obj-of-class-p obj 'ede-project)
 	  obj
 	(error "Error in speedbar or ede structure")))))
 
