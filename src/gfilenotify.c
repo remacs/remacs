@@ -38,14 +38,13 @@ static Lisp_Object watch_list;
 static Lisp_Object
 monitor_to_lisp (GFileMonitor *monitor)
 {
-  return XIL ((intptr_t) monitor + Lisp_Int0);
+  return XIL (TAG_PTR (Lisp_Int0, monitor));
 }
 
 static GFileMonitor *
 lisp_to_monitor (Lisp_Object watch_descriptor)
 {
-  intptr_t int_monitor = XLI (watch_descriptor) - Lisp_Int0;
-  return (GFileMonitor *) int_monitor;
+  return XUNTAG (watch_descriptor, Lisp_Int0);
 }
 
 /* This is the callback function for arriving signals from
