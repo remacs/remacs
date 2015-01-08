@@ -1,3 +1,9 @@
+2015-01-08  Eli Zaretskii  <eliz@gnu.org>
+
+	* simple.el (line-move-visual): When converting X pixel coordinate
+	to temporary-goal-column, adjust the value for right-to-left
+	screen lines.  This fixes vertical-motion, next/prev-line, etc.
+
 2015-01-08  Glenn Morris  <rgm@gnu.org>
 
 	* files.el (file-tree-walk): Remove; of unknown authorship.  (Bug#19325)
