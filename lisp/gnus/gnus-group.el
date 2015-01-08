@@ -2459,7 +2459,7 @@ the bug number, and browsing the URL must return mbox output."
     (let ((coding-system-for-write 'binary)
 	  (coding-system-for-read 'binary))
       (with-temp-file tmpfile
-	(set-buffer-multibyte nil)
+	(mm-enable-multibyte)
 	(dolist (id ids)
 	  (url-insert-file-contents (format mbox-url id)))
 	(goto-char (point-min))
