@@ -729,7 +729,8 @@ struct Lisp_Symbol
 
 /* Yield an integer that tags PTR as a symbol.  */
 #define TAG_SYMPTR(ptr) \
-  TAG_PTR (Lisp_Symbol, (char *) (ptr) - (char *) (USE_LSB_TAG ? lispsym : 0))
+  TAG_PTR (Lisp_Symbol, \
+	   USE_LSB_TAG ? (char *) (ptr) - (char *) lispsym : (intptr_t) (ptr))
 
 /* Declare extern constants for Lisp symbols.  These can be helpful
    when using a debugger like GDB, on older platforms where the debug

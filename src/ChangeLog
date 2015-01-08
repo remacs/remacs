@@ -1,5 +1,10 @@
 2015-01-08  Paul Eggert  <eggert@cs.ucla.edu>
 
+	* lisp.h (TAG_SYMPTR): Don't do arithmetic on NULL.
+	This is a followup to the "Port Qnil==0 XUNTAG to clang" patch.
+	Although clang doesn't need it, some other compiler might, and
+	it's easy enough to be safe.
+
 	* conf_post.h (ATTRIBUTE_ALLOC_SIZE): Port to clang 3.5.0.
 	Apparently clang removed support for the alloc_size attribute.
 
