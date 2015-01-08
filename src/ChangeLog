@@ -1,3 +1,26 @@
+2015-01-08  Eli Zaretskii  <eliz@gnu.org>
+
+	* xdisp.c (next_element_from_c_string): Use Lisp integer zero as
+	the object.
+	(set_cursor_from_row, try_cursor_movement, dump_glyph)
+	(insert_left_trunc_glyphs, append_space_for_newline)
+	(extend_face_to_end_of_line, highlight_trailing_whitespace)
+	(find_row_edges, ROW_GLYPH_NEWLINE_P, Fmove_point_visually)
+	(Fbidi_resolved_levels, produce_special_glyphs)
+	(rows_from_pos_range, mouse_face_from_buffer_pos)
+	(note_mouse_highlight): Use nil as the object for glyphs inserted
+	by the display engine, and test with NILP instead of INTEGERP.
+	(Bug#19535)
+
+	* w32fns.c (Fx_show_tip): Use NILP to test for glyphs inserted by
+	the display engine.
+
+	* xfns.c (Fx_show_tip): Use NILP to test for glyphs inserted by
+	the display engine.
+
+	* dispextern.h (struct glyph, struct it): Update comments for the
+	OBJECT members.
+
 2015-01-08  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Port new Lisp symbol init to x86 --with-wide-int

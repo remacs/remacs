@@ -5494,7 +5494,7 @@ Text larger than the specified size is clipped.  */)
 	  if (!row->reversed_p)
 	    {
 	      last = &row->glyphs[TEXT_AREA][row->used[TEXT_AREA] - 1];
-	      if (INTEGERP (last->object))
+	      if (NILP (last->object))
 		row_width -= last->pixel_width;
 	    }
 	  else
@@ -5504,7 +5504,7 @@ Text larger than the specified size is clipped.  */)
 		 Don't count that glyph.  */
 	      struct glyph *g = row->glyphs[TEXT_AREA];
 
-	      if (g->type == STRETCH_GLYPH && INTEGERP (g->object))
+	      if (g->type == STRETCH_GLYPH && NILP (g->object))
 		{
 		  row_width -= g->pixel_width;
 		  seen_reversed_p = 1;
@@ -5548,7 +5548,7 @@ Text larger than the specified size is clipped.  */)
 	  if (row->used[TEXT_AREA] && !row->reversed_p)
 	    {
 	      last = &row->glyphs[TEXT_AREA][row->used[TEXT_AREA] - 1];
-	      if (INTEGERP (last->object))
+	      if (NILP (last->object))
 		row_width -= last->pixel_width;
 	    }
 

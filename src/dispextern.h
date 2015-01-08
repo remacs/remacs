@@ -389,10 +389,9 @@ struct glyph
 
   /* Lisp object source of this glyph.  Currently either a buffer or a
      string, if the glyph was produced from characters which came from
-     a buffer or a string; or Lisp integer zero (a.k.a. "null object")
-     if the glyph was inserted by redisplay for its own purposes, such
-     as padding or truncation/continuation glyphs, or the
-     overlay-arrow glyphs on TTYs.  */
+     a buffer or a string; or nil if the glyph was inserted by
+     redisplay for its own purposes, such as padding, truncation, or
+     continuation glyphs, or the overlay-arrow glyphs on TTYs.  */
   Lisp_Object object;
 
   /* Width in pixels.  */
@@ -2525,11 +2524,11 @@ struct it
      Object is normally the buffer which is being rendered, but it can
      also be a Lisp string in case the current display element comes
      from an overlay string or from a display string (before- or
-     after-string).  It may also be nil when a C string is being
-     rendered, e.g., during mode-line or header-line update.  It can
-     also be a cons cell of the form `(space ...)', when we produce a
-     stretch glyph from a `display' specification.  Finally, it can be
-     a zero-valued Lisp integer, but only temporarily, when we are
+     after-string).  It may also be a zero-valued Lisp integer when a
+     C string is being rendered, e.g., during mode-line or header-line
+     update.  It can also be a cons cell of the form `(space ...)',
+     when we produce a stretch glyph from a `display' specification.
+     Finally, it can be nil, but only temporarily, when we are
      producing special glyphs for display purposes, like truncation
      and continuation glyphs, or blanks that extend each line to the
      edge of the window on a TTY.
