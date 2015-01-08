@@ -141,10 +141,6 @@ this has no effect.
 ** A new text property `inhibit-read-only' can be used in read-only
 buffers to allow certain parts of the text to be writable.
 
-** A new function `file-tree-walk' allows to apply a certain action
-to all the files and subdirectories of a directory, similarly to the C
-library function `ftw'.
-
 ** A new function `directory-files-recursively' returns all matching
 files (recursively) under a directory.
 

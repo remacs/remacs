@@ -1,3 +1,7 @@
+2015-01-08  Glenn Morris  <rgm@gnu.org>
+
+	* files.el (file-tree-walk): Remove; of unknown authorship.  (Bug#19325)
+
 2015-01-07  K. Handa  <handa@gnu.org>
 
 	* international/ccl.el (define-ccl-program): Improve the docstring.
