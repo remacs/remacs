@@ -1,5 +1,10 @@
 2015-01-08  Eli Zaretskii  <eliz@gnu.org>
 
+	* .gdbinit (xsymname): New subroutine.
+	(xprintsym, initial-tbreak): Use it to access the name of a symbol
+	in a way that doesn't cause GDB to barf when it tries to
+	dereference a NULL pointer.
+
 	* xdisp.c (next_element_from_c_string): Use Lisp integer zero as
 	the object.
 	(set_cursor_from_row, try_cursor_movement, dump_glyph)

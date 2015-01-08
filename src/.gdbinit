@@ -70,6 +70,16 @@ define xgettype
   set $type = (enum Lisp_Type) (USE_LSB_TAG ? $bugfix & (1 << GCTYPEBITS) - 1 : (EMACS_UINT) $bugfix >> VALBITS)
 end
 
+# Access the name of a symbol
+define xsymname
+  if (CHECK_LISP_OBJECT_TYPE)
+    set $bugfix = $arg0.i
+  else
+    set $bugfix = $arg0
+  end
+  set $symname = ((struct Lisp_Symbol *) ((char *)lispsym + $bugfix))->name
+end
+
 # Set up something to print out s-expressions.
 # We save and restore print_output_debug_flag to prevent the w32 port
 # from calling OutputDebugString, which causes GDB to display each
@@ -1073,8 +1083,8 @@ end
 
 define xprintsym
   xgetptr $arg0
-  set $sym = (struct Lisp_Symbol *) $ptr
-  xgetptr $sym->name
+  xsymname $ptr
+  xgetptr $symname
   set $sym_name = (struct Lisp_String *) $ptr
   xprintstr $sym_name
 end
@@ -1258,8 +1268,8 @@ tbreak init_sys_modes
 commands
   silent
   xgetptr globals.f_Vinitial_window_system
-  set $tem = (struct Lisp_Symbol *) $ptr
-  xgetptr $tem->name
+  xsymname $ptr
+  xgetptr $symname
   set $tem = (struct Lisp_String *) $ptr
   set $tem = (char *) $tem->data
   # If we are running in synchronous mode, we want a chance to look
