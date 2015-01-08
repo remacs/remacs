@@ -1,6 +1,6 @@
 ;;; ede/proj.el --- EDE Generic Project file driver
 
-;; Copyright (C) 1998-2003, 2007-2014 Free Software Foundation, Inc.
+;; Copyright (C) 1998-2003, 2007-2015 Free Software Foundation, Inc.
 
 ;; Author: Eric M. Ludlam <zappo@gnu.org>
 ;; Keywords: project, make
@@ -297,7 +297,7 @@ for the tree being read in.  If ROOTPROJ is nil, then assume that
 the PROJECT being read in is the root project."
   (save-excursion
     (let ((ret (eieio-persistent-read (concat project "Project.ede")
-				      ede-proj-project))
+				      'ede-proj-project))
 	  (subdirs (directory-files project nil "[^.].*" nil)))
       (if (not (object-of-class-p ret 'ede-proj-project))
 	  (error "Corrupt project file"))

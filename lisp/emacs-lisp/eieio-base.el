@@ -333,8 +333,8 @@ Second, any text properties will be stripped from strings."
 		  (unless (and
 			   ;; Do we have a type?
 			   (consp classtype) (class-p (car classtype)))
-		    (error "In save file, list of object constructors found, but no :type specified for slot %S"
-			   slot))
+		    (error "In save file, list of object constructors found, but no :type specified for slot %S of type %S"
+			   slot classtype))
 
 		  ;; We have a predicate, but it doesn't satisfy the predicate?
 		  (dolist (PV (cdr proposed-value))
@@ -367,9 +367,23 @@ If no class is referenced there, then return nil."
   (cond ((class-p type)
 	 ;; If the type is a class, then return it.
 	 type)
+	((and (eq 'list-of (car-safe type)) (class-p (cadr type)))
+	 ;; If it is the type of a list of a class, then return that class and
+	 ;; the type.
+	 (cons (cadr type) type))
+
+        ((and (symbolp type) (get type 'cl-deftype-handler))
+         ;; Macro-expand the type according to cl-deftype definitions.
+         (eieio-persistent-slot-type-is-class-p
+          (funcall (get type 'cl-deftype-handler))))
+
         ;; FIXME: foo-child should not be a valid type!
 	((and (symbolp type) (string-match "-child\\'" (symbol-name type))
 	      (class-p (intern-soft (substring (symbol-name type) 0
+					       (match-beginning 0)))))
+         (unless eieio-backward-compatibility
+           (error "Use of bogus %S type instead of %S"
+                  type (intern-soft (substring (symbol-name type) 0
 					       (match-beginning 0)))))
 	 ;; If it is the predicate ending with -child, then return
 	 ;; that class.  Unfortunately, in EIEIO, typep of just the
@@ -380,13 +394,17 @@ If no class is referenced there, then return nil."
 	((and (symbolp type) (string-match "-list\\'" (symbol-name type))
 	      (class-p (intern-soft (substring (symbol-name type) 0
 					       (match-beginning 0)))))
+         (unless eieio-backward-compatibility
+           (error "Use of bogus %S type instead of (list-of %S)"
+                  type (intern-soft (substring (symbol-name type) 0
+					       (match-beginning 0)))))
 	 ;; If it is the predicate ending with -list, then return
 	 ;; that class and the predicate to use.
 	 (cons (intern-soft (substring (symbol-name type) 0
 				       (match-beginning 0)))
 	       type))
 
-	((and (consp type) (eq (car type) 'or))
+	((eq (car-safe type) 'or)
 	 ;; If type is a list, and is an or, it is possibly something
 	 ;; like (or null myclass), so check for that.
 	 (let ((ans nil))

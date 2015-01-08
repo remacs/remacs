@@ -1,6 +1,6 @@
 ;;; srecode/compile --- Compilation of srecode template files.
 
-;; Copyright (C) 2005, 2007-2014 Free Software Foundation, Inc.
+;; Copyright (C) 2005, 2007-2015 Free Software Foundation, Inc.
 
 ;; Author: Eric M. Ludlam <zappo@gnu.org>
 ;; Keywords: codegeneration
@@ -87,10 +87,10 @@ for push, pop, and peek for the active template.")
 Useful if something goes wrong in SRecode, and the active template
 stack is broken."
   (interactive)
-  (if (oref srecode-template active)
+  (if (oref-default 'srecode-template active)
       (when (y-or-n-p (format "%d active templates.  Flush? "
-			      (length (oref srecode-template active))))
-	(oset-default srecode-template active nil))
+			      (length (oref-default 'srecode-template active))))
+	(oset-default 'srecode-template active nil))
     (message "No active templates to flush."))
   )
 
@@ -514,7 +514,7 @@ to the inserter constructor."
   ;;(message "Compile: %s %S" name props)
   (if (not key)
       (apply 'srecode-template-inserter-variable name props)
-    (let ((classes (eieio-class-children srecode-template-inserter))
+    (let ((classes (eieio-class-children 'srecode-template-inserter))
 	  (new nil))
       ;; Loop over the various subclasses and
       ;; create the correct inserter.

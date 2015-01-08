@@ -221,7 +221,7 @@ Outputs to the current buffer."
       (cl-mapcan
        (lambda (c)
          (append (list c) (eieio-build-class-list c)))
-       (eieio-class-children-fast class))
+       (eieio--class-children (eieio--class-v class)))
     (list class)))
 
 (defun eieio-build-class-alist (&optional class instantiable-only buildlist)
@@ -423,16 +423,10 @@ function has no documentation, then return nil."
 (defvar eieio-read-generic nil
   "History of the `eieio-read-generic' prompt.")
 
-(defun eieio-read-generic-p (fn)
-  "Function used in function `eieio-read-generic'.
-This is because `generic-p' is a macro.
-Argument FN is the function to test."
-  (generic-p fn))
-
 (defun eieio-read-generic (prompt &optional historyvar)
   "Read a generic function from the minibuffer with PROMPT.
 Optional argument HISTORYVAR is the variable to use as history."
-  (intern (completing-read prompt obarray 'eieio-read-generic-p
+  (intern (completing-read prompt obarray #'generic-p
 			   t nil (or historyvar 'eieio-read-generic))))
 
 ;;; METHOD STATS

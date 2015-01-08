@@ -1,6 +1,6 @@
 ;;; ede/base.el --- Baseclasses for EDE.
 
-;; Copyright (C) 2010-2014 Free Software Foundation, Inc.
+;; Copyright (C) 2010-2015 Free Software Foundation, Inc.
 
 ;; Author: Eric M. Ludlam <zappo@gnu.org>
 
@@ -159,6 +159,9 @@ and querying them will cause the actual project to get loaded.")
 ;; Projects can also affect how EDE works, by changing what appears in
 ;; the EDE menu, or how some keys are bound.
 ;;
+(unless (fboundp 'ede-target-list-p)
+  (cl-deftype ede-target-list () '(list-of ede-target)))
+
 (defclass ede-project (ede-project-placeholder)
   ((subproj :initform nil
 	    :type list
@@ -287,16 +290,18 @@ All specific project types must derive from this project."
 ;;
 (defmacro ede-with-projectfile (obj &rest forms)
   "For the project in which OBJ resides, execute FORMS."
-  `(save-window-excursion
-     (let* ((pf (if (obj-of-class-p ,obj ede-target)
-		    (ede-target-parent ,obj)
-		  ,obj))
-	    (dbka (get-file-buffer (oref pf file))))
-       (if (not dbka) (find-file (oref pf file))
-	 (switch-to-buffer dbka))
+  (declare (indent 1))
+  (unless (symbolp obj)
+    (message "Beware! ede-with-projectfile's first arg is copied: %S" obj))
+  `(let* ((pf (if (obj-of-class-p ,obj 'ede-target)
+                  (ede-target-parent ,obj)
+                ,obj))
+          (dbka (get-file-buffer (oref pf file))))
+     (with-current-buffer
+         (if (not dbka) (find-file-noselect (oref pf file))
+           dbka)
        ,@forms
        (if (not dbka) (kill-buffer (current-buffer))))))
-(put 'ede-with-projectfile 'lisp-indent-function 1)
 
 ;;; The EDE persistent cache.
 ;;

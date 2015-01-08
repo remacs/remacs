@@ -1,6 +1,6 @@
 ;;; ede.el --- Emacs Development Environment gloss
 
-;; Copyright (C) 1998-2005, 2007-2014 Free Software Foundation, Inc.
+;; Copyright (C) 1998-2005, 2007-2015 Free Software Foundation, Inc.
 
 ;; Author: Eric M. Ludlam <zappo@gnu.org>
 ;; Keywords: project, make
@@ -248,12 +248,12 @@ Argument LIST-O-O is the list of objects to choose from."
   (let ((obj ede-object))
     (if (consp obj)
 	(setq obj (car obj)))
-    (and obj (obj-of-class-p obj ede-target))))
+    (and obj (obj-of-class-p obj 'ede-target))))
 
 (defun ede-buffer-belongs-to-project-p ()
   "Return non-nil if this buffer belongs to at least one project."
   (if (or (null ede-object) (consp ede-object)) nil
-    (obj-of-class-p ede-object-project ede-project)))
+    (obj-of-class-p ede-object-project 'ede-project)))
 
 (defun ede-menu-obj-of-class-p (class)
   "Return non-nil if some member of `ede-object' is a child of CLASS."
@@ -281,7 +281,7 @@ Argument MENU-DEF is the menu definition to use."
 	;; First, collect the build items from the project
 	(setq newmenu (append newmenu (ede-menu-items-build obj t)))
 	;; Second, declare the current target menu items
-	(if (and ede-obj (ede-menu-obj-of-class-p ede-target))
+	(if (and ede-obj (ede-menu-obj-of-class-p 'ede-target))
 	    (while ede-obj
 	      (setq newmenu (append newmenu
 				    (ede-menu-items-build (car ede-obj) t))
@@ -1078,7 +1078,7 @@ On success, return the added project."
     (error "No project created to add to master list"))
   (when (not (eieio-object-p proj))
     (error "Attempt to add non-object to master project list"))
-  (when (not (obj-of-class-p proj ede-project-placeholder))
+  (when (not (obj-of-class-p proj 'ede-project-placeholder))
     (error "Attempt to add a non-project to the ede projects list"))
   (add-to-list 'ede-projects proj)
   proj)
@@ -1098,6 +1098,8 @@ Flush the dead projects from the project cache."
     (dolist (D dead)
       (ede-delete-project-from-global-list D))
     ))
+
+(defvar ede--disable-inode)             ;Defined in ede/files.el.
 
 (defun ede-global-list-sanity-check ()
   "Perform a sanity check to make sure there are no duplicate projects."

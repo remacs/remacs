@@ -145,7 +145,7 @@
 
 (ert-deftest eieio-test-method-order-list-4 ()
   ;; Both of these situations should succeed.
-  (should (eitest-H eitest-A))
+  (should (eitest-H 'eitest-A))
   (should (eitest-H (eitest-A nil))))
 
 ;;; Return value from :PRIMARY

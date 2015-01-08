@@ -203,7 +203,7 @@ persistent class.")
 ;; A slot that contains another object that isn't persistent
 (defclass persistent-with-objs-list-slot (eieio-persistent)
   ((pnp :initarg :pnp
-	:type persist-not-persistent-list
+	:type (list-of persist-not-persistent)
 	:initform nil))
   "Class for testing the saving of slots with objects in them.")
 

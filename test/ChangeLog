@@ -1,3 +1,15 @@
+2015-01-07  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* automated/eieio-tests.el: Use cl-lib.  Don't use <class> as a variable.
+	Don't use <class>-list types and <class>-list-p predicates.
+
+	* automated/eieio-test-persist.el (persistent-with-objs-list-slot):
+	Don't use <class>-list type.
+
+	* automated/eieio-test-methodinvoke.el
+	(eieio-test-method-order-list-4):
+	Don't use <class> as a variable.
+
 2015-01-05  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* automated/eieio-tests.el (eieio-test-04-static-method)
@@ -2423,7 +2435,7 @@
 ;; coding: utf-8
 ;; End:
 
-  Copyright (C) 2008-2014 Free Software Foundation, Inc.
+  Copyright (C) 2008-2015 Free Software Foundation, Inc.
 
   This file is part of GNU Emacs.
 

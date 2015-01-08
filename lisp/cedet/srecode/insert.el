@@ -1,6 +1,6 @@
 ;;; srecode/insert.el --- Insert srecode templates to an output stream.
 
-;; Copyright (C) 2005, 2007-2014 Free Software Foundation, Inc.
+;; Copyright (C) 2005, 2007-2015 Free Software Foundation, Inc.
 
 ;; Author: Eric M. Ludlam <zappo@gnu.org>
 
@@ -211,7 +211,7 @@ insertions."
 	    (propertize " (most recent at bottom)" 'face '(:slant italic))
 	    ":\n")
     (data-debug-insert-stuff-list
-     (reverse (oref srecode-template active)) "> ")
+     (reverse (oref-default 'srecode-template active)) "> ")
     ;; Show the current dictionary.
     (insert (propertize "Dictionary" 'face '(:weight bold)) "\n")
     (data-debug-insert-thing dictionary "" "> ")
@@ -396,7 +396,7 @@ Specify the :blank argument to enable this inserter.")
 	(pm (point-marker)))
     (when (and inbuff
 	       ;; Don't do this if we are not the active template.
-	       (= (length (oref srecode-template active)) 1))
+	       (= (length (oref-default 'srecode-template active)) 1))
 
       (when (and (eq i t) inbuff (not (eq (oref sti where) 'begin)))
 	(indent-according-to-mode)
@@ -773,7 +773,7 @@ generalized marker will do something else.  See
   ;; valid. Compare this to the actual template nesting depth and
   ;; maybe use the override function which is stored in the cdr.
   (if (and srecode-template-inserter-point-override
-	   (<= (length (oref srecode-template active))
+	   (<= (length (oref-default 'srecode-template active))
 	       (car srecode-template-inserter-point-override)))
       ;; Disable the old override while we do this.
       (let ((over (cdr srecode-template-inserter-point-override))
@@ -943,7 +943,7 @@ this template instance."
     ;; Calculate and store the discovered template
     (let ((tmpl (srecode-template-get-table (srecode-table)
 					    templatenamepart))
-	  (active (oref srecode-template active))
+	  (active (oref-default 'srecode-template active))
 	  ctxt)
       (when (not tmpl)
 	;; If it isn't just available, scan back through
@@ -1053,7 +1053,7 @@ template where a ^ inserter occurs."
 	 (lexical-let ((inserter1 sti))
 	   (cons
 	    ;; DEPTH
-	    (+ (length (oref srecode-template active)) 1)
+	    (+ (length (oref-default 'srecode-template active)) 1)
 	    ;; FUNCTION
 	    (lambda (dict)
 	      (let ((srecode-template-inserter-point-override nil))

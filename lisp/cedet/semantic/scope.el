@@ -1,6 +1,6 @@
 ;;; semantic/scope.el --- Analyzer Scope Calculations
 
-;; Copyright (C) 2007-2014 Free Software Foundation, Inc.
+;; Copyright (C) 2007-2015 Free Software Foundation, Inc.
 
 ;; Author: Eric M. Ludlam <eric@siege-engine.com>
 
@@ -134,7 +134,7 @@ Saves scoping information between runs of the analyzer.")
   "Get the current cached scope, and reset it."
   (when semanticdb-current-table
     (let ((co (semanticdb-cache-get semanticdb-current-table
-				    semantic-scope-cache)))
+				    'semantic-scope-cache)))
       (semantic-reset co))))
 
 (defmethod semantic-scope-set-typecache ((cache semantic-scope-cache)
@@ -706,7 +706,7 @@ The class returned from the scope calculation is variable
       (let* ((TAG  (semantic-current-tag))
 	     (scopecache
 	      (semanticdb-cache-get semanticdb-current-table
-				    semantic-scope-cache))
+				    'semantic-scope-cache))
 	     )
 	(when (not (semantic-equivalent-tag-p TAG (oref scopecache tag)))
 	  (semantic-reset scopecache))

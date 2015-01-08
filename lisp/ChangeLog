@@ -1,3 +1,46 @@
+2015-01-07  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* emacs-lisp/chart.el (chart-add-sequence, chart-bar-quickie):
+	Don't use <class> as a variable.
+
+	* emacs-lisp/eieio.el (same-class-p): Accept class object as well.
+	(call-next-method): Simplify.
+	(clone): Obey eieio-backward-compatibility.
+
+	* emacs-lisp/eieio-opt.el (eieio-read-generic-p): Remove.
+	(eieio-read-generic): Use `generic-p' instead.
+
+	* emacs-lisp/eieio-core.el (eieio-backward-compatibility): New var.
+	(eieio-defclass-autoload): Obey it.
+	(eieio--class-object): Improve error behavior.
+	(eieio-class-children-fast, same-class-fast-p): Remove.  Inline at
+	every use site.
+	(eieio--defgeneric-form-primary-only): Rename from
+	eieio-defgeneric-form-primary-only; update all callers.
+	(eieio--defgeneric-form-primary-only-one): Rename from
+	eieio-defgeneric-form-primary-only-one; update all callers.
+	(eieio-defgeneric-reset-generic-form)
+	(eieio-defgeneric-reset-generic-form-primary-only)
+	(eieio-defgeneric-reset-generic-form-primary-only-one): Remove.
+	(eieio--method-optimize-primary): New function to replace them.
+	(eieio--defmethod, eieio-defmethod): Use it.
+	(eieio--perform-slot-validation): Rename from
+	eieio-perform-slot-validation; update all callers.
+	(eieio--validate-slot-value): Rename from eieio-validate-slot-value.
+	Change `class' to be a class object.  Update all callers.
+	(eieio--validate-class-slot-value): Rename from
+	eieio-validate-class-slot-value.  Change `class' to be a class object.
+	Update all callers.
+	(eieio-oset-default): Accept class object as well.
+	(eieio--generic-call-primary-only): Rename from
+	eieio-generic-call-primary-only.  Update all callers.
+
+	* emacs-lisp/eieio-base.el (eieio-persistent-validate/fix-slot-value):
+	Improve error messages.
+	(eieio-persistent-slot-type-is-class-p): Handle `list-of' types, as
+	well as user-defined types.  Emit errors for legacy types like
+	<class>-child and <class>-list, if not eieio-backward-compatibility.
+
 2015-01-05  Stefan Monnier  <monnier@iro.umontreal.ca>
 
 	* emacs-lisp/eieio.el (eieio-class-parents): Accept class objects.
@@ -22547,7 +22590,7 @@ See ChangeLog.16 for earlier changes.
 ;; coding: utf-8
 ;; End:
 
-  Copyright (C) 2011-2014 Free Software Foundation, Inc.
+  Copyright (C) 2011-2015 Free Software Foundation, Inc.
 
   This file is part of GNU Emacs.
 

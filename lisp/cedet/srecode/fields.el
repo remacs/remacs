@@ -1,6 +1,6 @@
 ;;; srecode/fields.el --- Handling type-in fields in a buffer.
 ;;
-;; Copyright (C) 2009-2014 Free Software Foundation, Inc.
+;; Copyright (C) 2009-2015 Free Software Foundation, Inc.
 ;;
 ;; Author: Eric M. Ludlam <eric@siege-engine.com>
 
@@ -237,7 +237,7 @@ If SET-TO is a string, then replace the text of OLAID wit SET-TO."
 
 (defsubst srecode-active-template-region ()
   "Return the active region for template fields."
-  (oref srecode-template-inserted-region active-region))
+  (oref-default 'srecode-template-inserted-region active-region))
 
 (defun srecode-field-post-command ()
   "Srecode field handler in the post command hook."

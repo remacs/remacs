@@ -1,6 +1,6 @@
 ;;; semantic/bovine/make.el --- Makefile parsing rules.
 
-;; Copyright (C) 2000-2004, 2008-2014 Free Software Foundation, Inc.
+;; Copyright (C) 2000-2004, 2008-2015 Free Software Foundation, Inc.
 
 ;; Author: Eric M. Ludlam <zappo@gnu.org>
 
@@ -178,9 +178,8 @@ This is the same as a regular prototype."
   makefile-mode (context)
   "Return a list of possible completions in a Makefile.
 Uses default implementation, and also gets a list of filenames."
-  (save-excursion
-    (require 'semantic/analyze/complete)
-    (set-buffer (oref context buffer))
+  (require 'semantic/analyze/complete)
+  (with-current-buffer (oref context buffer)
     (let* ((normal (semantic-analyze-possible-completions-default context))
 	   (classes (oref context :prefixclass))
 	   (filetags nil))

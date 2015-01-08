@@ -1,6 +1,6 @@
 ;;; registry.el --- Track and remember data items by various fields
 
-;; Copyright (C) 2011-2014 Free Software Foundation, Inc.
+;; Copyright (C) 2011-2015 Free Software Foundation, Inc.
 
 ;; Author: Teodor Zlatanov <tzz@lifelogs.com>
 ;; Keywords: data
@@ -124,7 +124,7 @@
          :type hash-table
          :documentation "The data hashtable.")))
 ;; Do this separately, since defclass doesn't allow expressions in :initform.
-(oset-default registry-db max-size most-positive-fixnum)
+(oset-default 'registry-db max-size most-positive-fixnum)
 
 (defmethod initialize-instance :BEFORE ((this registry-db) slots)
   "Check whether a registry object needs to be upgraded."

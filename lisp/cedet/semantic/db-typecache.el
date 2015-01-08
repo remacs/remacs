@@ -1,6 +1,6 @@
 ;;; semantic/db-typecache.el --- Manage Datatypes
 
-;; Copyright (C) 2007-2014 Free Software Foundation, Inc.
+;; Copyright (C) 2007-2015 Free Software Foundation, Inc.
 
 ;; Author: Eric M. Ludlam <eric@siege-engine.com>
 
@@ -180,7 +180,7 @@ If there is no table, create one, and fill it in."
 (defmethod semanticdb-get-typecache ((db semanticdb-project-database))
   "Retrieve the typecache from the semantic database DB.
 If there is no table, create one, and fill it in."
-  (semanticdb-cache-get db semanticdb-database-typecache)
+  (semanticdb-cache-get db 'semanticdb-database-typecache)
   )
 
 

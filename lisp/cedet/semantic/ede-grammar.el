@@ -1,6 +1,6 @@
 ;;; semantic/ede-grammar.el --- EDE support for Semantic Grammar Files
 
-;; Copyright (C) 2003-2004, 2007-2014 Free Software Foundation, Inc.
+;; Copyright (C) 2003-2004, 2007-2015 Free Software Foundation, Inc.
 
 ;; Author: Eric M. Ludlam <zappo@gnu.org>
 ;; Keywords: project, make
@@ -213,7 +213,7 @@ Argument THIS is the target that should insert stuff."
 ;;   "Target class for Emacs/Semantic grammar files." nil nil)
 
 (ede-proj-register-target "semantic grammar"
-			  semantic-ede-proj-target-grammar)
+			  'semantic-ede-proj-target-grammar)
 
 (provide 'semantic/ede-grammar)
 

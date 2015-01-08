@@ -1,6 +1,6 @@
 ;;; semantic/fw.el --- Framework for Semantic
 
-;;; Copyright (C) 1999-2014 Free Software Foundation, Inc.
+;;; Copyright (C) 1999-2015 Free Software Foundation, Inc.
 
 ;; Author: Eric M. Ludlam <zappo@gnu.org>
 
@@ -378,11 +378,11 @@ If FORMS includes a call to `semantic-throw-on-input', then
 if a user presses any key during execution, this form macro
 will exit with the value passed to `semantic-throw-on-input'.
 If FORMS completes, then the return value is the same as `progn'."
+  (declare (indent 1))
   `(let ((semantic-current-input-throw-symbol ,symbol)
          (semantic--on-input-start-marker (point-marker)))
      (catch ,symbol
        ,@forms)))
-(put 'semantic-exit-on-input 'lisp-indent-function 1)
 
 (defmacro semantic-throw-on-input (from)
   "Exit with `throw' when in `semantic-exit-on-input' on user input.
@@ -391,15 +391,14 @@ to pass to `throw'.  It is recommended to use the name of the function
 calling this one."
   `(when (and semantic-current-input-throw-symbol
               (or (input-pending-p)
-                  (save-excursion
-                    ;; Timers might run during accept-process-output.
-                    ;; If they redisplay, point must be where the user
-                    ;; expects. (Bug#15045)
-                    (set-buffer (marker-buffer
-                                 semantic--on-input-start-marker))
-                    (goto-char (marker-position
-                                semantic--on-input-start-marker))
-                    (accept-process-output))))
+                  (with-current-buffer
+                      ;; Timers might run during accept-process-output.
+                      ;; If they redisplay, point must be where the user
+                      ;; expects. (Bug#15045)
+                      (marker-buffer semantic--on-input-start-marker)
+                    (save-excursion
+                      (goto-char semantic--on-input-start-marker)
+                      (accept-process-output)))))
      (throw semantic-current-input-throw-symbol ,from)))
 
 

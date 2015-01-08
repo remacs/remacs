@@ -77,6 +77,13 @@ default setting for optimization purposes.")
 (defvar eieio-initializing-object  nil
   "Set to non-nil while initializing an object.")
 
+(defvar eieio-backward-compatibility t
+  "If nil, drop support for some behaviors of older versions of EIEIO.
+Currently under control of this var:
+- Define every class as a var whose value is the class symbol.
+- Define <class>-child-p and <class>-list-p predicates.
+- Allow object names in constructors.")
+
 (defconst eieio-unbound
   (if (and (boundp 'eieio-unbound) (symbolp eieio-unbound))
       eieio-unbound
@@ -217,7 +224,10 @@ Stored outright without modifications or stripping.")))
 
 (defsubst eieio--class-object (class)
   "Return the class object."
-  (if (symbolp class) (eieio--class-v class) class))
+  (if (symbolp class)
+      ;; Keep the symbol if class-v is nil, for better error messages.
+      (or (eieio--class-v class) class)
+    class))
 
 (defsubst eieio--class-p (class)
   "Return non-nil if CLASS is a valid class object."
@@ -250,16 +260,6 @@ CLASS is a symbol."                     ;FIXME: Is it a vector or a symbol?
   ;; and I wanted a string.  Arg!
   (format "#<class %s>" (symbol-name class)))
 (define-obsolete-function-alias 'class-name #'eieio-class-name "24.4")
-
-(defmacro eieio-class-children-fast (class) "Return child classes to CLASS with no check."
-  ;; FIXME: Remove.  And change `children' to contain class objects rather than
-  ;; class names.
-  `(eieio--class-children (eieio--class-v ,class)))
-
-(defsubst same-class-fast-p (obj class-name)
-  "Return t if OBJ is of class-type CLASS-NAME with no error checking."
-  ;; (eq (eieio--object-class-name obj) class)
-  (eq (eieio--object-class-object obj) (eieio--class-object class-name)))
 
 (defmacro class-constructor (class)
   "Return the symbol representing the constructor of CLASS."
@@ -388,7 +388,8 @@ It creates an autoload function for CNAME's constructor."
           (push (eieio--class-v SC) (eieio--class-parent newc)))
 
 	;; turn this into a usable self-pointing symbol
-	(set cname cname)
+        (when eieio-backward-compatibility
+          (set cname cname))
 
 	;; Store the new class vector definition into the symbol.  We need to
 	;; do this first so that we can call defmethod for the accessor.
@@ -499,7 +500,8 @@ See `defclass' for more information."
         (setf (eieio--class-parent newc) (list eieio-default-superclass))))
 
     ;; turn this into a usable self-pointing symbol;  FIXME: Why?
-    (set cname cname)
+    (when eieio-backward-compatibility
+      (set cname cname))
 
     ;; These two tests must be created right away so we can have self-
     ;; referencing classes.  ei, a class whose slot can contain only
@@ -520,7 +522,9 @@ See `defclass' for more information."
 	))
 
     ;; Create a handy child test too
-    (let ((csym (intern (concat (symbol-name cname) "-child-p"))))
+    (let ((csym (if eieio-backward-compatibility
+                    (intern (concat (symbol-name cname) "-child-p"))
+                  (make-symbol (concat (symbol-name cname) "-child-p")))))
       (fset csym
 	    `(lambda (obj)
 	       ,(format
@@ -540,21 +544,22 @@ See `defclass' for more information."
       (put cname 'cl-deftype-satisfies csym))
 
     ;; Create a handy list of the class test too
-    (let ((csym (intern (concat (symbol-name cname) "-list-p"))))
-      (fset csym
-            `(lambda (obj)
-               ,(format
-                 "Test OBJ to see if it a list of objects which are a child of type %s"
-                 cname)
-               (when (listp obj)
-                 (let ((ans t)) ;; nil is valid
-                   ;; Loop over all the elements of the input list, test
-                   ;; each to make sure it is a child of the desired object class.
-                   (while (and obj ans)
-                     (setq ans (and (eieio-object-p (car obj))
-                                    (object-of-class-p (car obj) ,cname)))
-                     (setq obj (cdr obj)))
-                   ans)))))
+    (when eieio-backward-compatibility
+      (let ((csym (intern (concat (symbol-name cname) "-list-p"))))
+        (fset csym
+              `(lambda (obj)
+                 ,(format
+                   "Test OBJ to see if it a list of objects which are a child of type %s"
+                   cname)
+                 (when (listp obj)
+                   (let ((ans t)) ;; nil is valid
+                     ;; Loop over all the elements of the input list, test
+                     ;; each to make sure it is a child of the desired object class.
+                     (while (and obj ans)
+                       (setq ans (and (eieio-object-p (car obj))
+                                      (object-of-class-p (car obj) ,cname)))
+                       (setq obj (cdr obj)))
+                     ans))))))
 
     ;; Before adding new slots, let's add all the methods and classes
     ;; in from the parent class.
@@ -767,7 +772,8 @@ See `defclass' for more information."
                (if (and slots
                         (let ((x (car slots)))
                           (or (stringp x) (null x))))
-                   (message "Obsolete name %S passed to %S constructor"
+                   (funcall (if eieio-backward-compatibility #'ignore #'message)
+                            "Obsolete name %S passed to %S constructor"
                             (pop slots) ',cname))
 	       (apply #'eieio-constructor ',cname slots)))
       )
@@ -833,7 +839,7 @@ If SKIPNIL is non-nil, then if VALUE is nil return t instead."
   (if (not (or (eieio-eval-default-p value) ;FIXME: Why?
                eieio-skip-typecheck
                (and skipnil (null value))
-               (eieio-perform-slot-validation spec value)))
+               (eieio--perform-slot-validation spec value)))
       (signal 'invalid-slot-type (list slot spec value))))
 
 (defun eieio--add-new-slot (newc a d doc type cust label custg print prot init alloc
@@ -1155,24 +1161,12 @@ DOC-STRING is the documentation attached to METHOD."
   (lambda (&rest local-args)
     (eieio-generic-call method local-args)))
 
-(defsubst eieio-defgeneric-reset-generic-form (method)
-  "Setup METHOD to call the generic form."
-  (let ((doc-string (documentation method 'raw)))
-    (put method 'function-documentation doc-string)
-    (fset method (eieio-defgeneric-form method))))
-
-(defun eieio-defgeneric-form-primary-only (method)
+(defun eieio--defgeneric-form-primary-only (method)
   "The lambda form that would be used as the function defined on METHOD.
 All methods should call the same EIEIO function for dispatch.
 DOC-STRING is the documentation attached to METHOD."
   (lambda (&rest local-args)
-    (eieio-generic-call-primary-only method local-args)))
-
-(defsubst eieio-defgeneric-reset-generic-form-primary-only (method)
-  "Setup METHOD to call the generic form."
-  (let ((doc-string (documentation method 'raw)))
-    (put method 'function-documentation doc-string)
-    (fset method (eieio-defgeneric-form-primary-only method))))
+    (eieio--generic-call-primary-only method local-args)))
 
 (declare-function no-applicable-method "eieio" (object method &rest args))
 
@@ -1186,7 +1180,7 @@ Keys are a number representing :before, :primary, and :after methods.")
 During executions, the list is first generated, then as each next method
 is called, the next method is popped off the stack.")
 
-(defun eieio-defgeneric-form-primary-only-one (method class impl)
+(defun eieio--defgeneric-form-primary-only-one (method class impl)
   "The lambda form that would be used as the function defined on METHOD.
 All methods should call the same EIEIO function for dispatch.
 CLASS is the class symbol needed for private method access.
@@ -1219,22 +1213,33 @@ IMPL is the symbol holding the method implementation."
           (eieio--with-scoped-class (eieio--class-v class)
             (apply impl local-args)))))))
 
-(defsubst eieio-defgeneric-reset-generic-form-primary-only-one (method)
-  "Setup METHOD to call the generic form."
-  (let* ((doc-string (documentation method 'raw))
-	 (M (get method 'eieio-method-tree))
-	 (entry (car (aref M eieio--method-primary)))
-	 )
-    (put method 'function-documentation doc-string)
-    (fset method (eieio-defgeneric-form-primary-only-one
-		  method (car entry) (cdr entry)))))
-
 (defun eieio-unbind-method-implementations (method)
   "Make the generic method METHOD have no implementations.
 It will leave the original generic function in place,
 but remove reference to all implementations of METHOD."
   (put method 'eieio-method-tree nil)
   (put method 'eieio-method-hashtable nil))
+
+(defun eieio--method-optimize-primary (method)
+  (when eieio-optimize-primary-methods-flag
+    ;; Optimizing step:
+    ;;
+    ;; If this method, after this setup, only has primary methods, then
+    ;; we can setup the generic that way.
+    (let ((doc-string (documentation method 'raw)))
+      (put method 'function-documentation doc-string)
+      ;; Use `defalias' so as to interact properly with nadvice.el.
+      (defalias method
+        (if (generic-primary-only-p method)
+            ;; If there is only one primary method, then we can go one more
+            ;; optimization step.
+            (if (generic-primary-only-one-p method)
+                (let* ((M (get method 'eieio-method-tree))
+                       (entry (car (aref M eieio--method-primary))))
+                  (eieio--defgeneric-form-primary-only-one
+                   method (car entry) (cdr entry)))
+              (eieio--defgeneric-form-primary-only method))
+          (eieio-defgeneric-form method))))))
 
 (defun eieio--defmethod (method kind argclass code)
   "Work part of the `defmethod' macro defining METHOD with ARGS."
@@ -1272,18 +1277,7 @@ but remove reference to all implementations of METHOD."
     (eieiomt-add method code key argclass)
     )
 
-  (when eieio-optimize-primary-methods-flag
-    ;; Optimizing step:
-    ;;
-    ;; If this method, after this setup, only has primary methods, then
-    ;; we can setup the generic that way.
-    (if (generic-primary-only-p method)
-	;; If there is only one primary method, then we can go one more
-	;; optimization step.
-	(if (generic-primary-only-one-p method)
-	    (eieio-defgeneric-reset-generic-form-primary-only-one method)
-	  (eieio-defgeneric-reset-generic-form-primary-only method))
-      (eieio-defgeneric-reset-generic-form method)))
+  (eieio--method-optimize-primary method)
 
   method)
 
@@ -1293,13 +1287,13 @@ but remove reference to all implementations of METHOD."
 ;; requiring the CL library at run-time.  It can be eliminated if/when
 ;; `typep' is merged into Emacs core.
 
-(defun eieio-perform-slot-validation (spec value)
+(defun eieio--perform-slot-validation (spec value)
   "Return non-nil if SPEC does not match VALUE."
   (or (eq spec t)			; t always passes
       (eq value eieio-unbound)		; unbound always passes
       (cl-typep value spec)))
 
-(defun eieio-validate-slot-value (class slot-idx value slot)
+(defun eieio--validate-slot-value (class slot-idx value slot)
   "Make sure that for CLASS referencing SLOT-IDX, VALUE is valid.
 Checks the :type specifier.
 SLOT is the slot that is being checked, and is only used when throwing
@@ -1308,21 +1302,23 @@ an error."
       nil
     ;; Trim off object IDX junk added in for the object index.
     (setq slot-idx (- slot-idx (eval-when-compile eieio--object-num-slots)))
-    (let ((st (aref (eieio--class-public-type (eieio--class-v class)) slot-idx)))
-      (if (not (eieio-perform-slot-validation st value))
-	  (signal 'invalid-slot-type (list class slot st value))))))
+    (let ((st (aref (eieio--class-public-type class) slot-idx)))
+      (if (not (eieio--perform-slot-validation st value))
+	  (signal 'invalid-slot-type
+                  (list (eieio--class-symbol class) slot st value))))))
 
-(defun eieio-validate-class-slot-value (class slot-idx value slot)
+(defun eieio--validate-class-slot-value (class slot-idx value slot)
   "Make sure that for CLASS referencing SLOT-IDX, VALUE is valid.
 Checks the :type specifier.
 SLOT is the slot that is being checked, and is only used when throwing
 an error."
   (if eieio-skip-typecheck
       nil
-    (let ((st (aref (eieio--class-class-allocation-type (eieio--class-v class))
+    (let ((st (aref (eieio--class-class-allocation-type class)
 		    slot-idx)))
-      (if (not (eieio-perform-slot-validation st value))
-	  (signal 'invalid-slot-type (list class slot st value))))))
+      (if (not (eieio--perform-slot-validation st value))
+	  (signal 'invalid-slot-type
+                  (list (eieio--class-symbol class) slot st value))))))
 
 (defun eieio-barf-if-slot-unbound (value instance slotname fn)
   "Throw a signal if VALUE is a representation of an UNBOUND slot.
@@ -1389,6 +1385,8 @@ Fills in OBJ's SLOT with its default value."
 
 (defun eieio-default-eval-maybe (val)
   "Check VAL, and return what `oref-default' would provide."
+  ;; FIXME: What the hell is this supposed to do?  Shouldn't it evaluate
+  ;; variables as well?  Why not just always call `eval'?
   (cond
    ;; Is it a function call?  If so, evaluate it.
    ((eieio-eval-default-p val)
@@ -1413,41 +1411,41 @@ Fills in OBJ's SLOT with VALUE."
 		  (eieio--class-slot-name-index class slot))
 	    ;; Oset that slot.
 	    (progn
-	      (eieio-validate-class-slot-value (eieio--class-symbol class)
-                                               c value slot)
+	      (eieio--validate-class-slot-value class c value slot)
 	      (aset (eieio--class-class-allocation-values class)
 		    c value))
 	  ;; See oref for comment on `slot-missing'
 	  (slot-missing obj slot 'oset value)
 	  ;;(signal 'invalid-slot-name (list (eieio-object-name obj) slot))
 	  )
-      (eieio-validate-slot-value (eieio--class-symbol class) c value slot)
+      (eieio--validate-slot-value class c value slot)
       (aset obj c value))))
 
 (defun eieio-oset-default (class slot value)
   "Do the work for the macro `oset-default'.
 Fills in the default value in CLASS' in SLOT with VALUE."
-  (eieio--check-type class-p class)
+  (setq class (eieio--class-object class))
+  (eieio--check-type eieio--class-p class)
   (eieio--check-type symbolp slot)
-  (eieio--with-scoped-class (eieio--class-v class)
-    (let* ((c (eieio--slot-name-index (eieio--class-v class) nil slot)))
+  (eieio--with-scoped-class class
+    (let* ((c (eieio--slot-name-index class nil slot)))
       (if (not c)
 	  ;; It might be missing because it is a :class allocated slot.
 	  ;; Let's check that info out.
-	  (if (setq c (eieio--class-slot-name-index (eieio--class-v class) slot))
+	  (if (setq c (eieio--class-slot-name-index class slot))
 	      (progn
 		;; Oref that slot.
-		(eieio-validate-class-slot-value class c value slot)
-		(aset (eieio--class-class-allocation-values (eieio--class-v class)) c
+		(eieio--validate-class-slot-value class c value slot)
+		(aset (eieio--class-class-allocation-values class) c
 		      value))
-	    (signal 'invalid-slot-name (list (eieio-class-name class) slot)))
-	(eieio-validate-slot-value class c value slot)
+	    (signal 'invalid-slot-name (list (eieio--class-symbol class) slot)))
+	(eieio--validate-slot-value class c value slot)
 	;; Set this into the storage for defaults.
 	(setcar (nthcdr (- c (eval-when-compile eieio--object-num-slots))
-                        (eieio--class-public-d (eieio--class-v class)))
+                        (eieio--class-public-d class))
 		value)
 	;; Take the value, and put it into our cache object.
-	(eieio-oset (eieio--class-default-object-cache (eieio--class-v class))
+	(eieio-oset (eieio--class-default-object-cache class)
 		    slot value)
 	))))
 
@@ -1808,7 +1806,7 @@ This should only be called from a generic function."
 	     (list method args))))
       rval)))
 
-(defun eieio-generic-call-primary-only (method args)
+(defun eieio--generic-call-primary-only (method args)
   "Call METHOD with ARGS for methods with only :PRIMARY implementations.
 ARGS provides the context on which implementation to use.
 This should only be called from a generic function.
@@ -2124,18 +2122,7 @@ is memorized for faster future use."
 		   key argclass))
     )
 
-  (when eieio-optimize-primary-methods-flag
-    ;; Optimizing step:
-    ;;
-    ;; If this method, after this setup, only has primary methods, then
-    ;; we can setup the generic that way.
-    (if (generic-primary-only-p method)
-	;; If there is only one primary method, then we can go one more
-	;; optimization step.
-	(if (generic-primary-only-one-p method)
-	    (eieio-defgeneric-reset-generic-form-primary-only-one method)
-	  (eieio-defgeneric-reset-generic-form-primary-only method))
-      (eieio-defgeneric-reset-generic-form method)))
+  (eieio--method-optimize-primary method)
 
   method)
 (make-obsolete 'eieio-defmethod 'eieio--defmethod "24.1")

@@ -1,6 +1,6 @@
 ;;; ede/custom.el --- customization of EDE projects.
 
-;; Copyright (C) 2010-2014 Free Software Foundation, Inc.
+;; Copyright (C) 2010-2015 Free Software Foundation, Inc.
 
 ;; Author: Eric M. Ludlam <zappo@gnu.org>
 
@@ -61,7 +61,7 @@
   "Edit fields of the current target through EIEIO & Custom."
   (interactive)
   (require 'eieio-custom)
-  (if (not (obj-of-class-p ede-object ede-target))
+  (if (not (obj-of-class-p ede-object 'ede-target))
       (error "Current file is not part of a target"))
   (ede-customize-target ede-object))
 
@@ -72,7 +72,7 @@
   "Edit fields of the current target through EIEIO & Custom.
 OBJ is the target object to customize."
   (require 'eieio-custom)
-  (if (and obj (not (obj-of-class-p obj ede-target)))
+  (if (and obj (not (obj-of-class-p obj 'ede-target)))
       (error "No logical target to customize"))
   (ede-customize obj))
 

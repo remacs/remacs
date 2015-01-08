@@ -328,7 +328,7 @@ The CLOS function `class-direct-superclasses' is aliased to this function."
   "Return child classes to CLASS.
 The CLOS function `class-direct-subclasses' is aliased to this function."
   (eieio--check-type class-p class)
-  (eieio-class-children-fast class))
+  (eieio--class-children (eieio--class-v class)))
 (define-obsolete-function-alias
   'class-children #'eieio-class-children "24.4")
 
@@ -343,10 +343,12 @@ The CLOS function `class-direct-subclasses' is aliased to this function."
   `(car (eieio-class-parents ,class)))
 (define-obsolete-function-alias 'class-parent 'eieio-class-parent "24.4")
 
-(defun same-class-p (obj class) "Return t if OBJ is of class-type CLASS."
-  (eieio--check-type class-p class)
+(defun same-class-p (obj class)
+  "Return t if OBJ is of class-type CLASS."
+  (setq class (eieio--class-object class))
+  (eieio--check-type eieio--class-p class)
   (eieio--check-type eieio-object-p obj)
-  (same-class-fast-p obj class))
+  (eq (eieio--object-class-object obj) class))
 
 (defun object-of-class-p (obj class)
   "Return non-nil if OBJ is an instance of CLASS or CLASS' subclasses."
@@ -546,7 +548,7 @@ Use `next-method-p' to find out if there is a next method to call."
 	(next (car eieio-generic-call-next-method-list))
 	)
     (if (not (and next (car next)))
-	(apply #'no-next-method (car newargs) (cdr newargs))
+	(apply #'no-next-method newargs)
       (let* ((eieio-generic-call-next-method-list
 	      (cdr eieio-generic-call-next-method-list))
 	     (eieio-generic-call-arglst newargs)
@@ -723,7 +725,8 @@ first and modify the returned object.")
   "Make a copy of OBJ, and then apply PARAMS."
   (let ((nobj (copy-sequence obj)))
     (if (stringp (car params))
-        (message "Obsolete name %S passed to clone" (pop params)))
+        (funcall (if eieio-backward-compatibility #'ignore #'message)
+                 "Obsolete name %S passed to clone" (pop params)))
     (if params (shared-initialize nobj params))
     nobj))
 
@@ -889,7 +892,7 @@ variable PRINT-FUNCTION.  Optional argument NOESCAPE is passed to
 
 ;;; Start of automatically extracted autoloads.
 
-;;;### (autoloads nil "eieio-custom" "eieio-custom.el" "a3f314e2a27e52444df4597c6ae51458")
+;;;### (autoloads nil "eieio-custom" "eieio-custom.el" "7d3c0bca065713ae74af0c07778dd1f4")
 ;;; Generated autoloads from eieio-custom.el
 
 (autoload 'customize-object "eieio-custom" "\
@@ -900,7 +903,7 @@ Optional argument GROUP is the sub-group of slots to display.
 
 ;;;***
 
-;;;### (autoloads nil "eieio-opt" "eieio-opt.el" "2ff7d98da3f84c6af5c873ffb781930e")
+;;;### (autoloads nil "eieio-opt" "eieio-opt.el" "6377e022e85d377b399f44c98b4eab4a")
 ;;; Generated autoloads from eieio-opt.el
 
 (autoload 'eieio-browse "eieio-opt" "\

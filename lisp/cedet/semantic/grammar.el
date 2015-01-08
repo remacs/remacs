@@ -1,6 +1,6 @@
 ;;; semantic/grammar.el --- Major mode framework for Semantic grammars
 
-;; Copyright (C) 2002-2005, 2007-2014 Free Software Foundation, Inc.
+;; Copyright (C) 2002-2005, 2007-2015 Free Software Foundation, Inc.
 
 ;; Author: David Ponce <david@dponce.com>
 ;; Maintainer: David Ponce <david@dponce.com>
@@ -1665,13 +1665,14 @@ Select the buffer containing the tag's definition, and move point there."
 (declare-function eldoc-get-fnsym-args-string "eldoc")
 (declare-function eldoc-get-var-docstring "eldoc")
 
+(defvar semantic-grammar-eldoc-last-data (cons nil nil))
+
 (defun semantic-grammar-eldoc-get-macro-docstring (macro expander)
   "Return a one-line docstring for the given grammar MACRO.
 EXPANDER is the name of the function that expands MACRO."
   (require 'eldoc)
-  (if (and (eq expander (aref eldoc-last-data 0))
-           (eq 'function (aref eldoc-last-data 2)))
-      (aref eldoc-last-data 1)
+  (if (eq expander (car semantic-grammar-eldoc-last-data))
+      (cdr semantic-grammar-eldoc-last-data)
     (let ((doc (help-split-fundoc (documentation expander t) expander)))
       (cond
        (doc
@@ -1684,7 +1685,7 @@ EXPANDER is the name of the function that expands MACRO."
         (setq doc
 	      (eldoc-docstring-format-sym-doc
 	       macro (format "==> %s %s" expander doc) 'default))
-        (eldoc-last-data-store expander doc 'function))
+        (setq semantic-grammar-eldoc-last-data (cons expander doc)))
       doc)))
 
 (define-mode-local-override semantic-idle-summary-current-symbol-info

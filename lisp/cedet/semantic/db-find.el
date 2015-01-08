@@ -1,6 +1,6 @@
 ;;; semantic/db-find.el --- Searching through semantic databases.
 
-;; Copyright (C) 2000-2014 Free Software Foundation, Inc.
+;; Copyright (C) 2000-2015 Free Software Foundation, Inc.
 
 ;; Author: Eric M. Ludlam <zappo@gnu.org>
 ;; Keywords: tags
@@ -1114,7 +1114,7 @@ for backward compatibility.
 If optional argument BRUTISH is non-nil, then ignore include statements,
 and search all tables in this project tree."
   (let (found match)
-    (save-excursion
+    (save-current-buffer
       ;; If path is a buffer, set ourselves up in that buffer
       ;; so that the override methods work correctly.
       (when (bufferp path) (set-buffer path))
@@ -1127,7 +1127,7 @@ and search all tables in this project tree."
 	    ;; databases and not associated with a file.
 	    (unless (and find-file-match
 			 (obj-of-class-p
-			  (car tableandtags) semanticdb-search-results-table))
+			  (car tableandtags) 'semanticdb-search-results-table))
 	      (when (setq match (funcall function
 					 (car tableandtags) (cdr tableandtags)))
 		(when find-file-match
@@ -1144,7 +1144,7 @@ and search all tables in this project tree."
 	  ;; `semanticdb-search-results-table', since those are system
 	  ;; databases and not associated with a file.
 	  (unless (and find-file-match
-		       (obj-of-class-p table semanticdb-search-results-table))
+		       (obj-of-class-p table 'semanticdb-search-results-table))
 	    (when (and table (setq match (funcall function table nil)))
 	      (semanticdb-find-log-activity table match)
 	      (when find-file-match

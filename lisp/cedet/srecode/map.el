@@ -1,6 +1,6 @@
 ;;; srecode/map.el --- Manage a template file map
 
-;; Copyright (C) 2008-2014 Free Software Foundation, Inc.
+;; Copyright (C) 2008-2015 Free Software Foundation, Inc.
 
 ;; Author: Eric M. Ludlam <eric@siege-engine.com>
 
@@ -298,7 +298,7 @@ if that file is NEW, otherwise assume the mode has not changed."
     (when (not srecode-current-map)
       (condition-case nil
 	  (setq srecode-current-map
-		(eieio-persistent-read srecode-map-save-file srecode-map))
+		(eieio-persistent-read srecode-map-save-file 'srecode-map))
 	(error
 	 ;; There was an error loading the old map.  Create a new one.
 	 (setq srecode-current-map

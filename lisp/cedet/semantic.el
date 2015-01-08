@@ -1,6 +1,6 @@
 ;;; semantic.el --- Semantic buffer evaluator.
 
-;; Copyright (C) 1999-2014 Free Software Foundation, Inc.
+;; Copyright (C) 1999-2015 Free Software Foundation, Inc.
 
 ;; Author: Eric M. Ludlam <zappo@gnu.org>
 ;; Keywords: syntax tools
@@ -573,6 +573,7 @@ string."
 ;; The best way to call the parser from programs is via
 ;; `semantic-fetch-tags'.  This, in turn, uses other internal
 ;; API functions which plug-in parsers can take advantage of.
+(defvar semantic-parser-warnings)
 
 (defun semantic-fetch-tags ()
   "Fetch semantic tags from the current buffer.
@@ -602,49 +603,49 @@ was marked unparseable, then do nothing, and return the cache."
      (garbage-collect)
      (cond
 
-;;;; Try the incremental parser to do a fast update.
-     ((semantic-parse-tree-needs-update-p)
-      (setq res (semantic-parse-changes))
-      (if (semantic-parse-tree-needs-rebuild-p)
-          ;; If the partial reparse fails, jump to a full reparse.
-          (semantic-fetch-tags)
-        ;; Clear the cache of unmatched syntax tokens
-        ;;
-        ;; NOTE TO SELF:
-        ;;
-        ;; Move this into the incremental parser.  This is a bug.
-        ;;
-        (semantic-clear-unmatched-syntax-cache)
-        (run-hook-with-args ;; Let hooks know the updated tags
-         'semantic-after-partial-cache-change-hook res))
-      (setq semantic--completion-cache nil))
+      ;; Try the incremental parser to do a fast update.
+      ((semantic-parse-tree-needs-update-p)
+       (setq res (semantic-parse-changes))
+       (if (semantic-parse-tree-needs-rebuild-p)
+           ;; If the partial reparse fails, jump to a full reparse.
+           (semantic-fetch-tags)
+         ;; Clear the cache of unmatched syntax tokens
+         ;;
+         ;; NOTE TO SELF:
+         ;;
+         ;; Move this into the incremental parser.  This is a bug.
+         ;;
+         (semantic-clear-unmatched-syntax-cache)
+         (run-hook-with-args ;; Let hooks know the updated tags
+          'semantic-after-partial-cache-change-hook res))
+       (setq semantic--completion-cache nil))
 
-;;;; Parse the whole system.
-     ((semantic-parse-tree-needs-rebuild-p)
-      ;; Use Emacs's built-in progress-reporter (only interactive).
-      (if noninteractive
-	  (setq res (semantic-parse-region (point-min) (point-max)))
-	(let ((semantic--progress-reporter
-	       (and (>= (point-max) semantic-minimum-working-buffer-size)
-		    (eq semantic-working-type 'percent)
-		    (make-progress-reporter
-		     (semantic-parser-working-message (buffer-name))
-		     0 100))))
-	  (setq res (semantic-parse-region (point-min) (point-max)))
-	  (if semantic--progress-reporter
-	      (progress-reporter-done semantic--progress-reporter))))
+      ;; Parse the whole system.
+      ((semantic-parse-tree-needs-rebuild-p)
+       ;; Use Emacs's built-in progress-reporter (only interactive).
+       (if noninteractive
+           (setq res (semantic-parse-region (point-min) (point-max)))
+         (let ((semantic--progress-reporter
+                (and (>= (point-max) semantic-minimum-working-buffer-size)
+                     (eq semantic-working-type 'percent)
+                     (make-progress-reporter
+                      (semantic-parser-working-message (buffer-name))
+                      0 100))))
+           (setq res (semantic-parse-region (point-min) (point-max)))
+           (if semantic--progress-reporter
+               (progress-reporter-done semantic--progress-reporter))))
 
-      ;; Clear the caches when we see there were no errors.
-      ;; But preserve the unmatched syntax cache and warnings!
-      (let (semantic-unmatched-syntax-cache
-	    semantic-unmatched-syntax-cache-check
-	    semantic-parser-warnings)
-	(semantic-clear-toplevel-cache))
-      ;; Set up the new overlays
-      (semantic--tag-link-list-to-buffer res)
-      ;; Set up the cache with the new results
-      (semantic--set-buffer-cache res)
-      ))))
+       ;; Clear the caches when we see there were no errors.
+       ;; But preserve the unmatched syntax cache and warnings!
+       (let (semantic-unmatched-syntax-cache
+             semantic-unmatched-syntax-cache-check
+             semantic-parser-warnings)
+         (semantic-clear-toplevel-cache))
+       ;; Set up the new overlays
+       (semantic--tag-link-list-to-buffer res)
+       ;; Set up the cache with the new results
+       (semantic--set-buffer-cache res)
+       ))))
 
   ;; Always return the current parse tree.
   semantic--buffer-cache)

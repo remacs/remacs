@@ -28,7 +28,7 @@
 (require 'eieio-base)
 (require 'eieio-opt)
 
-(eval-when-compile (require 'cl))
+(eval-when-compile (require 'cl-lib))
 
 ;;; Code:
 ;; Set up some test classes
@@ -198,10 +198,10 @@ Argument C is the class bound to this static method."
 
 (ert-deftest eieio-test-04-static-method ()
   ;; Call static method on a class and see if it worked
-  (static-method-class-method static-method-class 'class)
-  (should (eq (oref-default static-method-class some-slot) 'class))
+  (static-method-class-method 'static-method-class 'class)
+  (should (eq (oref-default 'static-method-class some-slot) 'class))
   (static-method-class-method (static-method-class) 'object)
-  (should (eq (oref-default static-method-class some-slot) 'object)))
+  (should (eq (oref-default 'static-method-class some-slot) 'object)))
 
 (ert-deftest eieio-test-05-static-method-2 ()
   (defclass static-method-class-2 (static-method-class)
@@ -214,10 +214,10 @@ Argument C is the class bound to this static method."
     (if (eieio-object-p c) (setq c (eieio-object-class c)))
     (oset-default c some-slot (intern (concat "moose-" (symbol-name value)))))
 
-  (static-method-class-method static-method-class-2 'class)
-  (should (eq (oref-default static-method-class-2 some-slot) 'moose-class))
+  (static-method-class-method 'static-method-class-2 'class)
+  (should (eq (oref-default 'static-method-class-2 some-slot) 'moose-class))
   (static-method-class-method (static-method-class-2) 'object)
-  (should (eq (oref-default static-method-class-2 some-slot) 'moose-object)))
+  (should (eq (oref-default 'static-method-class-2 some-slot) 'moose-object)))
 
 
 ;;; Perform method testing
@@ -473,12 +473,12 @@ METHOD is the method that was attempting to be called."
 
   ;; Slot should be bound
   (should (slot-boundp eitest-a 'classslot))
-  (should (slot-boundp class-a 'classslot))
+  (should (slot-boundp 'class-a 'classslot))
 
   (slot-makeunbound eitest-a 'classslot)
 
   (should-not (slot-boundp eitest-a 'classslot))
-  (should-not (slot-boundp class-a 'classslot)))
+  (should-not (slot-boundp 'class-a 'classslot)))
 
 
 (defvar eieio-test-permuting-value nil)
@@ -529,17 +529,17 @@ METHOD is the method that was attempting to be called."
    :type 'invalid-slot-type))
 
 (ert-deftest eieio-test-23-inheritance-check ()
-  (should (child-of-class-p class-ab class-a))
-  (should (child-of-class-p class-ab class-b))
-  (should (object-of-class-p eitest-a class-a))
-  (should (object-of-class-p eitest-ab class-a))
-  (should (object-of-class-p eitest-ab class-b))
-  (should (object-of-class-p eitest-ab class-ab))
-  (should (eq (eieio-class-parents class-a) nil))
+  (should (child-of-class-p 'class-ab 'class-a))
+  (should (child-of-class-p 'class-ab 'class-b))
+  (should (object-of-class-p eitest-a 'class-a))
+  (should (object-of-class-p eitest-ab 'class-a))
+  (should (object-of-class-p eitest-ab 'class-b))
+  (should (object-of-class-p eitest-ab 'class-ab))
+  (should (eq (eieio-class-parents 'class-a) nil))
   ;; FIXME: eieio-class-parents now returns class objects!
-  (should (equal (mapcar #'eieio-class-object (eieio-class-parents class-ab))
+  (should (equal (mapcar #'eieio-class-object (eieio-class-parents 'class-ab))
                  (mapcar #'eieio-class-object '(class-a class-b))))
-  (should (same-class-p eitest-a class-a))
+  (should (same-class-p eitest-a 'class-a))
   (should (class-a-p eitest-a))
   (should (not (class-a-p eitest-ab)))
   (should (class-a-child-p eitest-a))
@@ -550,10 +550,10 @@ METHOD is the method that was attempting to be called."
 (ert-deftest eieio-test-24-object-predicates ()
   (let ((listooa (list (class-ab) (class-a)))
 	(listoob (list (class-ab) (class-b))))
-    (should (class-a-list-p listooa))
-    (should (class-b-list-p listoob))
-    (should-not (class-b-list-p listooa))
-    (should-not (class-a-list-p listoob))))
+    (should (cl-typep listooa '(list-of class-a)))
+    (should (cl-typep listoob '(list-of class-b)))
+    (should-not (cl-typep listooa '(list-of class-b)))
+    (should-not (cl-typep listoob '(list-of class-a)))))
 
 (defvar eitest-t1 nil)
 (ert-deftest eieio-test-25-slot-tests ()
@@ -568,7 +568,7 @@ METHOD is the method that was attempting to be called."
   ;; Pass string instead of symbol
   (should-error (class-c :moose "not a symbol") :type 'invalid-slot-type)
   (should (eq (get-slot-3 eitest-t1) 'emu))
-  (should (eq (get-slot-3 class-c) 'emu))
+  (should (eq (get-slot-3 'class-c) 'emu))
   ;; Check setf
   (setf (get-slot-3 eitest-t1) 'setf-emu)
   (should (eq (get-slot-3 eitest-t1) 'setf-emu))
@@ -793,7 +793,7 @@ Subclasses to override slot attributes.")
 	  ((type :type string)
 	   )
 	  "This class should throw an error.")))
-  (should (eq (oref-default slotattr-class-ok initform) 'no-init)))
+  (should (eq (oref-default 'slotattr-class-ok initform) 'no-init)))
 
 (ert-deftest eieio-test-32-slot-attribute-override-2 ()
   (let* ((cv (eieio--class-v 'slotattr-ok))
@@ -883,8 +883,8 @@ Subclasses to override slot attributes.")
   "Instantiable child")
 
 (ert-deftest eieio-test-36-build-class-alist ()
-  (should (= (length (eieio-build-class-alist opt-test1 nil)) 2))
-  (should (= (length (eieio-build-class-alist opt-test1 t)) 1)))
+  (should (= (length (eieio-build-class-alist 'opt-test1 nil)) 2))
+  (should (= (length (eieio-build-class-alist 'opt-test1 t)) 1)))
 
 (provide 'eieio-tests)
 
