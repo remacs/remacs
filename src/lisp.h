@@ -368,7 +368,7 @@ error !;
 # define lisp_h_XFASTINT(a) XINT (a)
 # define lisp_h_XINT(a) (XLI (a) >> INTTYPEBITS)
 # define lisp_h_XTYPE(a) ((enum Lisp_Type) (XLI (a) & ~VALMASK))
-# define lisp_h_XUNTAG(a, type) XUNTAGBASE (a, type, 0)
+# define lisp_h_XUNTAG(a, type) ((void *) (intptr_t) (XLI (a) - (type)))
 # define lisp_h_XUNTAGBASE(a, type, base) \
     ((void *) ((char *) (base) - (type) + (intptr_t) XLI (a)))
 #endif
@@ -905,7 +905,8 @@ XUNTAGBASE (Lisp_Object a, int type, void *base)
 INLINE void *
 XUNTAG (Lisp_Object a, int type)
 {
-  return XUNTAGBASE (a, type, 0);
+  intptr_t i = USE_LSB_TAG ? XLI (a) - type : XLI (a) & VALMASK;
+  return (void *) i;
 }
 
 #endif /* ! USE_LSB_TAG */

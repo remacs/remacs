@@ -1,5 +1,12 @@
 2015-01-08  Paul Eggert  <eggert@cs.ucla.edu>
 
+	Port Qnil==0 XUNTAG to clang
+	clang has undefined behavior if the program subtracts an integer
+	from (char *) 0.  Problem reported by YAMAMOTO Mitsuharu in:
+	http://lists.gnu.org/archive/html/emacs-devel/2015-01/msg00132.html
+	* lisp.h (lisp_h_XUNTAG) [USE_LSB_TAG]:
+	(XUNTAG) [!USE_LSB_TAG]: Port to clang 3.5.0.
+
 	Port GFileMonitor * hack to Qnil==0 platforms
 	Reported by Glenn Morris in: http://bugs.gnu.org/15880#112
 	* gfilenotify.c (monitor_to_lisp, lisp_to_monitor): New functions.
